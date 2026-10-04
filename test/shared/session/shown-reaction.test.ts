@@ -59,15 +59,18 @@ function stateAfter(
   )
 }
 
-/** 出している反応の出来事と文（出していなければ `none`）。 */
+/** 出している反応の出来事と文（書いている途中は `writing`、出していなければ `none`）。 */
 function shown(state: SessionState, head: WelcomeHead = NO_WELCOME_HEAD): string {
   const reaction = shownReaction(state, head)
-  return reaction.kind === "shown" ? `${reaction.reaction}:${reaction.line.text}` : "none"
+  if (reaction.kind === "shown") {
+    return `${reaction.reaction}:${reaction.line.text}`
+  }
+  return reaction.kind
 }
 
 describe("shownReaction", () => {
   it.each<[string, readonly SessionEvent[], string]>([
-    ["やり取りが無くセリフも無い", [], "welcome:架空の迎え"],
+    ["やり取りが無くセリフも無いが、まだ挨拶を書き始めていない", [], "none"],
     ["やり取りの前にセリフがある", [SPEECH], "none"],
     ["送った直後", [REQUEST], "accepted:架空の受けた"],
     ["送ったあと speak が届いた", [REQUEST, SPEECH], "none"],
@@ -127,17 +130,39 @@ describe("shownReaction", () => {
   })
 
   describe("迎えの挨拶", () => {
+    const WRITING = {
+      kind: "welcome-greeting-changed",
+      state: { kind: "writing" },
+    } as const satisfies SessionEvent
+
+    const FALLBACK = {
+      kind: "welcome-greeting-changed",
+      state: { kind: "fallback" },
+    } as const satisfies SessionEvent
+
     const GREETED = {
       kind: "welcome-greeting-changed",
-      greeting: {
-        withCard: "架空の挨拶、{札} からどう？",
-        withoutCard: "架空の挨拶だけ",
-        expression: "curious",
+      state: {
+        kind: "written",
+        greeting: {
+          withCard: "架空の挨拶、{札} からどう？",
+          withoutCard: "架空の挨拶だけ",
+          expression: "curious",
+        },
       },
     } as const satisfies SessionEvent
+
     const HEAD: WelcomeHead = { kind: "card", name: "T-1" }
 
-    it("届いていて札があれば、先頭の札の名前を差し込んだ文と挨拶の表情を出す", () => {
+    it("書き始める前は、何も出さない", () => {
+      expect(shown(stateAfter([]), HEAD)).toBe("none")
+    })
+
+    it("書いている途中は、「…」を出す印を出す", () => {
+      expect(shown(stateAfter([WRITING]), HEAD)).toBe("writing")
+    })
+
+    it("書けていて札があれば、先頭の札の名前を差し込んだ文と挨拶の表情を出す", () => {
       const reaction = shownReaction(stateAfter([GREETED]), HEAD)
 
       expect(reaction).toEqual({
@@ -147,15 +172,19 @@ describe("shownReaction", () => {
       })
     })
 
-    it("届いていて札が無ければ、札なしの文を出す", () => {
+    it("書けていて札が無ければ、札なしの文を出す", () => {
       expect(shown(stateAfter([GREETED]))).toBe("welcome:架空の挨拶だけ")
     })
 
-    it("届く前は、パックの迎えの行を出す", () => {
-      expect(shown(stateAfter([]), HEAD)).toBe("welcome:架空の迎え")
+    it("控えに替わったら、パックの迎えの行を出す", () => {
+      expect(shown(stateAfter([FALLBACK]), HEAD)).toBe("welcome:架空の迎え")
     })
 
-    it("パックに迎えの行が無くても、届けば出す", () => {
+    it("控えに替わっても、パックに迎えの行が無ければ出さない", () => {
+      expect(shown(stateAfter([FALLBACK], NO_REACTIONS), HEAD)).toBe("none")
+    })
+
+    it("パックに迎えの行が無くても、書けていれば出す", () => {
       expect(shown(stateAfter([GREETED], NO_REACTIONS), HEAD)).toBe(
         "welcome:架空の挨拶、T-1 からどう？",
       )
@@ -165,13 +194,41 @@ describe("shownReaction", () => {
       expect(shown(stateAfter([GREETED, REQUEST, SPEECH]), HEAD)).toBe("none")
     })
 
-    it("/clear のあとの迎える局面でも出す", () => {
+    it("/clear のあとは古い挨拶が消え、新しく届くまで何も出さない", () => {
       expect(
         shown(
           stateAfter([GREETED, REQUEST, SPEECH, COMPLETED, { kind: "conversation-cleared" }]),
           HEAD,
         ),
-      ).toBe("welcome:架空の挨拶、T-1 からどう？")
+      ).toBe("none")
+    })
+
+    it("/clear のあとに新しく書けば、新しいほうだけを出す", () => {
+      const secondGreeting = {
+        kind: "welcome-greeting-changed",
+        state: {
+          kind: "written",
+          greeting: {
+            withCard: "架空の2回目の挨拶 {札}",
+            withoutCard: "架空の2回目の挨拶",
+            expression: "excited",
+          },
+        },
+      } as const satisfies SessionEvent
+
+      expect(
+        shown(
+          stateAfter([
+            GREETED,
+            REQUEST,
+            SPEECH,
+            COMPLETED,
+            { kind: "conversation-cleared" },
+            secondGreeting,
+          ]),
+          HEAD,
+        ),
+      ).toBe("welcome:架空の2回目の挨拶 T-1")
     })
   })
 })

@@ -323,7 +323,7 @@ export type SessionState = {
   readonly recommendation: readonly RecommendationCard[]
   /**
    * 迎えの挨拶。源は `welcome-greeting-changed` だけ。
-   * `/clear` では残し、起こし直しでは初期の `none` へ戻す（新しい代の挨拶が書き直される）。
+   * `/clear` と起こし直しのどちらでも、いったん初期の `none` へ戻してから新しい代の挨拶が書き直される。
    */
   readonly welcomeGreeting: WelcomeGreetingState
   /**
@@ -693,13 +693,14 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         records: [],
         partialUtterance: "",
         reportDrafting: { kind: "idle" },
+        welcomeGreeting: { kind: "none" },
       }
     case "tasks-changed":
       return { ...state, tasks: event.tasks }
     case "recommendation-changed":
       return { ...state, recommendation: event.cards }
     case "welcome-greeting-changed":
-      return { ...state, welcomeGreeting: { kind: "written", greeting: event.greeting } }
+      return { ...state, welcomeGreeting: event.state }
     case "sessions-changed":
       // `sessionId` もここで決まる（`session-info` は最初の依頼まで届かないので、それまで「いまどのセッションに居るか」を言えるのはこの経路だけ）。
       // 新規に起こしたときは `current` が undefined で、そのときは今の `session` を動かさない。

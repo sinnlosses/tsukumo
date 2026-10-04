@@ -13,6 +13,7 @@ import type { ReactElement } from "react"
 
 import type { ReactionKind } from "../../../../../../../../shared/character-pack/character-reaction.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
+import { TypingDots } from "../../../../../../ui/typing-dots/typing-dots.tsx"
 import { useSpeechPress } from "../../../hooks/use-speech-press.ts"
 import characterViewStyles from "../../character-view.module.css"
 import styles from "./balloon.module.css"
@@ -20,12 +21,15 @@ import styles from "./balloon.module.css"
 /**
  * 押せるか（押せるなら、印の状態と押されたときの呼び先を持つ）。
  * `reaction` は反応の吹き出しで、記録に無いので押せない（`data-reaction` に出来事を出す）。
+ * `writing` は迎えの挨拶を書いている途中の吹き出しで、`props.text` を使わず点3つを出す。
  */
 export type BalloonInteraction =
   | { readonly kind: "reaction"; readonly reaction: ReactionKind }
+  | { readonly kind: "writing" }
   | { readonly kind: "toggleable"; readonly selected: boolean; readonly onToggle: () => void }
 
 export type BalloonProps = {
+  /** `interaction.kind === "writing"` のときは使わない。 */
   readonly text: string
   /** 並びの中でいちばん新しいセリフか（`data-latest` に出し、CSS が最新の見た目を当てる）。 */
   readonly latest: boolean
@@ -41,19 +45,20 @@ const NOOP = (): void => {
 export function Balloon(props: BalloonProps): ReactElement {
   const { interaction } = props
   const press = useSpeechPress(interaction.kind === "toggleable" ? interaction.onToggle : NOOP)
+  const speakerLabel = props.speaker !== undefined && (
+    <Text
+      element="span"
+      size="label"
+      tone="accent"
+      weight="bold"
+      className={styles["balloon-speaker"]}
+    >
+      {props.speaker}
+    </Text>
+  )
   const body = (
     <>
-      {props.speaker !== undefined && (
-        <Text
-          element="span"
-          size="label"
-          tone="accent"
-          weight="bold"
-          className={styles["balloon-speaker"]}
-        >
-          {props.speaker}
-        </Text>
-      )}
+      {speakerLabel}
       <Text
         element="span"
         size="inherit"
@@ -65,6 +70,19 @@ export function Balloon(props: BalloonProps): ReactElement {
       </Text>
     </>
   )
+
+  if (interaction.kind === "writing") {
+    return (
+      <div
+        className={characterViewStyles["balloon"]}
+        data-latest={props.latest}
+        data-writing="true"
+      >
+        {speakerLabel}
+        <TypingDots />
+      </div>
+    )
+  }
 
   if (interaction.kind === "reaction") {
     return (

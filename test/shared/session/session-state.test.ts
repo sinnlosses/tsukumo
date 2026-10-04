@@ -746,6 +746,13 @@ describe("applySessionEvent", () => {
         slashCommands: ["clear"],
         terminalSlashCommands: [],
       },
+      {
+        kind: "welcome-greeting-changed",
+        state: {
+          kind: "written",
+          greeting: { withCard: "架空の挨拶 {札}", withoutCard: "架空の挨拶", expression: "proud" },
+        },
+      },
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "speech", text: "架空のセリフ", expression: "proud" },
       { kind: "utterance", text: "架空のレポート" },
@@ -754,6 +761,7 @@ describe("applySessionEvent", () => {
     // "/clear" 自体も request なので、この時点で吹き出しはすでに空（record は残る）。
     expect(before.speeches).toEqual([])
     expect(before.records.length).toBeGreaterThan(0)
+    expect(before.welcomeGreeting.kind).toBe("written")
 
     const cleared = applySessionEvent(before, { kind: "conversation-cleared" }, 0)
 
@@ -762,6 +770,8 @@ describe("applySessionEvent", () => {
     expect(cleared.speechCalledInTurn).toBe(false)
     expect(cleared.records).toEqual([])
     expect(cleared.partialUtterance).toBe("")
+    // 古い挨拶を出さない（すぐ後にサーバから新しい代の `writing` が届く）。
+    expect(cleared.welcomeGreeting).toEqual({ kind: "none" })
     // 画面が壊れないように、キャラクターとセッション情報は残す。
     expect(cleared.character).toEqual(before.character)
     expect(cleared.characterPacks).toEqual(before.characterPacks)

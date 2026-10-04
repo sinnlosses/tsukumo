@@ -24,7 +24,7 @@ export type BalloonTrackProps = {
 
 export function BalloonTrack(props: BalloonTrackProps): ReactElement {
   const { reaction } = props
-  const reacting = reaction.kind === "shown"
+  const reacting = reaction.kind === "shown" || reaction.kind === "writing"
 
   // key は props.speeches の古い側から数えた位置（＝配列に足される前からの通し番号）。
   // speeches はターンの中で末尾へ積むだけ（`applySessionEvent`）なので、この番号はセリフが増えても既存のセリフでは変わらない。
@@ -43,6 +43,15 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
           latest={true}
           speaker={props.speakerName}
           interaction={{ kind: "reaction", reaction: reaction.reaction }}
+        />
+      )}
+      {reaction.kind === "writing" && (
+        <Balloon
+          key="reaction-writing"
+          text=""
+          latest={true}
+          speaker={props.speakerName}
+          interaction={{ kind: "writing" }}
         />
       )}
       {newestFirst.map((speech, index) => {

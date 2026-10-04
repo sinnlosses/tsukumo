@@ -14,10 +14,19 @@ export type WelcomeGreeting = {
   readonly expression: Expression
 }
 
-/** 状態に持つ挨拶。`none` は届く前（失敗・時間切れも同じ）。 */
+/**
+ * 状態に持つ挨拶。
+ *
+ * - `none`: 書き始める前（または起こし直し・`/clear` の直後でまだ書き始めていない）
+ * - `writing`: 書いている途中（吹き出しには「…」を出す）
+ * - `written`: 書けた
+ * - `fallback`: 問い合わせ直しも失敗、または15秒の締め切りを過ぎたので控えの行に替えた
+ */
 export type WelcomeGreetingState =
   | { readonly kind: "none" }
+  | { readonly kind: "writing" }
   | { readonly kind: "written"; readonly greeting: WelcomeGreeting }
+  | { readonly kind: "fallback" }
 
 /** 迎える口の先頭の札。`name` は挨拶に差し込む名前。 */
 export type WelcomeHead =

@@ -1,7 +1,7 @@
 /* 現れるとき短く弾む行。
    画面を開いたあとに届いた吹き出しだけが対象（`useChatView` の `initialCount`）。
    小さく拡大してから元の大きさへ落ち着く0.2秒ほどの動きで、要素もクラスも増やしたままでよい（`animation-iteration-count` の既定は1回なので、載せ続けても弾み続けない）。
-   `prefers-reduced-motion` は `styles/theme.css` の全体規則が `animation-duration` を潰すので、ここでは重ねて書かない（`.chat-typing-dot` と同じ扱い）。 */
+   `prefers-reduced-motion` は `styles/theme.css` の全体規則が `animation-duration` を潰すので、ここでは重ねて書かない（`.typing-dots-dot` と同じ扱い）。 */
 .chat-entry-pop {
   animation-name: chat-entry-pop;
   animation-duration: 0.2s;

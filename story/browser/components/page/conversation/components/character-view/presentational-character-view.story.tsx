@@ -40,6 +40,14 @@ export const Speaking = {} satisfies Story
 /** セリフも反応も無いときは吹き出しを出さない。 */
 export const NoSpeech = { args: { speeches: [] } } satisfies Story
 
+/** 迎えの挨拶を書いている途中。吹き出しに「…」が出る。 */
+export const Writing = {
+  args: {
+    speeches: [],
+    reaction: { kind: "writing" },
+  },
+} satisfies Story
+
 /** 依頼を受けた直後の反応（パックに書いた1行）。 */
 export const Reacting = {
   args: {

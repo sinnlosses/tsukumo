@@ -17,8 +17,8 @@ export const WELCOME_GREETING_MODEL = "haiku"
 /** 挨拶1つの文の上限（文字。差し込み口も数える）。 */
 export const WELCOME_GREETING_CHARS = 60
 
-/** 問い合わせ1回の時間切れ（ミリ秒）。 */
-export const WELCOME_GREETING_TIMEOUT_MS = 60_000
+/** 書き始め（問い合わせ直しを含めた全体）からの締め切り（ミリ秒）。 */
+export const WELCOME_GREETING_TIMEOUT_MS = 15_000
 
 /** 直近の挨拶として覚えて渡す件数。 */
 export const WELCOME_GREETING_RECENT_LIMIT = 5

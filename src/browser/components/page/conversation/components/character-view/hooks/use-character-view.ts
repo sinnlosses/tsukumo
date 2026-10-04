@@ -57,9 +57,10 @@ export type CharacterViewSpeech = {
   readonly onToggle: () => void
 }
 
-/** 吹き出しの最新に出す反応。 */
+/** 吹き出しの最新に出す反応。`writing` は迎えの挨拶を書いている途中で、「…」を出す。 */
 export type BalloonReaction =
   | { readonly kind: "none" }
+  | { readonly kind: "writing" }
   | { readonly kind: "shown"; readonly reaction: ReactionKind; readonly text: string }
 
 /** `<CharacterView>` が画面に出す形。presenter はこれをそのまま部品へ渡すだけ。 */
@@ -140,13 +141,22 @@ export function useCharacterView(): CharacterViewModel {
     outfit,
     motion,
     speeches: balloonSpeeches(activeSpeeches, defaultTurnId, pinned, defaultIndex, toggleSpeech),
-    reaction:
-      reaction.kind === "shown"
-        ? { kind: "shown", reaction: reaction.reaction, text: reaction.line.text }
-        : { kind: "none" },
+    reaction: balloonReactionOf(reaction),
     speakerName: character?.name,
     pinnedSpeech: pinned,
     onToggleSpeech: toggleSpeech,
+  }
+}
+
+/** `ShownReaction` を `BalloonReaction` の形へ畳む（持ち物をそのまま運ぶだけ）。 */
+function balloonReactionOf(reaction: ShownReaction): BalloonReaction {
+  switch (reaction.kind) {
+    case "shown":
+      return { kind: "shown", reaction: reaction.reaction, text: reaction.line.text }
+    case "writing":
+      return { kind: "writing" }
+    case "none":
+      return { kind: "none" }
   }
 }
 

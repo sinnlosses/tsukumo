@@ -65,11 +65,14 @@ export function wireSessionLaunch(options: {
   readonly viewPort: number
   /** 最初のタブが繋がったら解ける約束。fake driver は疑似セッションをここから流し始める。本物の駆動は待たない。 */
   readonly firstViewer: Promise<void>
-  /** 駆動を起こす直前に、起こす代の種とその代の受け取り口を受け取る口。 */
+  /**
+   * 駆動を起こす直前に、起こす代の種とその代の受け取り口を受け取る口。
+   * 戻り値は、その代の受け取り口に流れた出来事を観る口（その代が続くあいだ、流れた出来事ごとに呼ぶ）。
+   */
   readonly onLaunch: (
     seed: SessionLaunchSeed<CharacterPack>,
     onEvent: (event: SessionEvent) => void,
-  ) => void
+  ) => (event: SessionEvent) => void
 }): {
   readonly manager: Pick<SessionManagerOptions, "launchSession">
   readonly sessionCommands: Pick<SessionCommandPorts, "rememberSessionDefault">
@@ -97,7 +100,11 @@ export function wireSessionLaunch(options: {
           sessionCatalog.listChoices(sessionTag(pack.name, chat, viewPort)),
         refreshSessions: () => sessionCatalog.refresh(),
         startDriver: (seed, onEvent) => {
-          options.onLaunch(seed, onEvent)
+          const observe = options.onLaunch(seed, onEvent)
+          const watched = (event: SessionEvent): void => {
+            onEvent(event)
+            observe(event)
+          }
           return startDriver({
             seed,
             context,
@@ -106,7 +113,7 @@ export function wireSessionLaunch(options: {
             firstViewer: options.firstViewer,
             viewPort,
             onSessionMarked: (sessionId, tag) => sessionCatalog.noteMarked(sessionId, tag),
-            onEvent,
+            onEvent: watched,
           })
         },
         restoreEvents: (resumed, pack) =>

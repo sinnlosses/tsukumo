@@ -10,8 +10,8 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { TypingDots } from "../../../../../../ui/typing-dots/typing-dots.tsx"
 import chatViewStyles from "../../chat-view.module.css"
-import styles from "./chat-typing.module.css"
 
 export function ChatTyping(): ReactElement {
   return (
@@ -20,9 +20,7 @@ export function ChatTyping(): ReactElement {
       data-speaker="typing"
       aria-hidden="true"
     >
-      <span className={styles["chat-typing-dot"]} />
-      <span className={styles["chat-typing-dot"]} />
-      <span className={styles["chat-typing-dot"]} />
+      <TypingDots />
     </div>
   )
 }

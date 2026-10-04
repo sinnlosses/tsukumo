@@ -66,4 +66,23 @@ describe("BalloonTrack", () => {
     expect(previous?.getAttribute("data-latest")).toBe("false")
     expect(previous?.textContent).not.toContain("架空の名前")
   })
+
+  it("(6) 書いている途中（writing）は、セリフより新しい位置に話し手の名前付きの吹き出しが1つ出る", () => {
+    render(
+      <BalloonTrack
+        speeches={[speech("前のセリフ")]}
+        reaction={{ kind: "writing" }}
+        speakerName="架空の名前"
+      />,
+    )
+
+    const balloons = document.querySelectorAll(".balloon")
+    expect(balloons).toHaveLength(2)
+    const writing = balloons[0]
+    expect(writing?.getAttribute("data-latest")).toBe("true")
+    expect(writing?.getAttribute("data-writing")).toBe("true")
+    expect(writing?.textContent).toContain("架空の名前")
+    const previous = screen.getByText("前のセリフ").closest(".balloon")
+    expect(previous?.getAttribute("data-latest")).toBe("false")
+  })
 })
