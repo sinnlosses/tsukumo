@@ -3,6 +3,16 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-04 Beads 方式で着手のあとに `tw edit` で書いた `## やること` の「先に書いた」印が残らない件を、selftest で再現して直す（振り返り: GH-326）
+
+（GH-330 にした）
+
+- 出典: ドラフト `develop/draft/2026-10-04-beads-plan-mark-lost.md`。利用者が `/plan-tasks` の確認で「タスクにする」を選んで承認した
+- 札: 黄 道具（20回目）
+- 根: beads-plan-mark-lost
+- 根拠: GH-326 は着手時に `PLAN_STALE` で、委譲先が作業の前に `tw edit --section 'やること'` で計画を書き `EDITED` を受けたが、受け入れの `tw plan-check` は `PLAN_NOT_FIRST unrecorded` を返し、`tw handback-guard` も1度返却を拒んだ。`task.py` の Beads 方式の edit は、着手の印の持ち主（`tsukumo-2`）が一致していても `task_plan` の metadata を書いていない。原因は確かめていない（claim の `--unset-metadata` とその後の `tw sync` の取り込みの順、か `plan_changed` の判定が候補）
+- 出し先: claude-skills の `task-workflow/scripts/selftest_beads.py` に「登録時の計画が古い（`PLAN_STALE`）タスクを claim → 作業の前に `tw edit --section 'やること'` → `tw plan-check` が `PLAN_FIRST`」の場面を足して落ちることを確かめ、`task.py` の Beads 方式の edit を直すタスク
+
 ## 2026-10-04 Markdown 一式の `import()` 分割を、Suspense の fallback に `aria-busy="true"` を出す形で試し直す（振り返り: GH-202）
 
 （GH-329 にした）
