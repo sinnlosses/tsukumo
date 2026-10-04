@@ -156,7 +156,9 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     },
     setPermissionMode: (mode) => session.setPermissionMode(mode),
     close: () => {
+      queue.settleAll()
       input.end()
+      session.close()
     },
   }
 }

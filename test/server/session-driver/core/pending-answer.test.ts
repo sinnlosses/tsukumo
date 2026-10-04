@@ -236,4 +236,66 @@ describe("createPendingAnswerQueue", () => {
     expect(result.behavior).toBe("deny")
     expect(queue.list()).toEqual([])
   })
+
+  it("中断済みの signal で積むと、列に積まず拒否を返す", async () => {
+    const changes: (readonly PendingAsk[])[] = []
+    const queue = createPendingAnswerQueue({
+      onChange: (pending) => changes.push(pending),
+      onAnswered: () => {},
+    })
+
+    const result = await queue.ask(permissionRequest({ signal: AbortSignal.abort() }))
+
+    expect(result.behavior).toBe("deny")
+    expect(queue.list()).toEqual([])
+    expect(changes).toEqual([])
+  })
+
+  it("settleAll は積まれた全件を拒否で解決し、空の状態を1回だけ知らせる", async () => {
+    const changes: (readonly PendingAsk[])[] = []
+    const queue = createPendingAnswerQueue({
+      onChange: (pending) => changes.push(pending),
+      onAnswered: () => {},
+    })
+
+    const first = queue.ask(permissionRequest())
+    const second = queue.ask(questionRequest())
+    changes.length = 0
+    queue.settleAll()
+
+    expect((await first).behavior).toBe("deny")
+    expect((await second).behavior).toBe("deny")
+    expect(queue.list()).toEqual([])
+    expect(changes).toEqual([[]])
+  })
+
+  it("settleAll は何も積まれていなければ何も知らせない", () => {
+    const changes: (readonly PendingAsk[])[] = []
+    const queue = createPendingAnswerQueue({
+      onChange: (pending) => changes.push(pending),
+      onAnswered: () => {},
+    })
+
+    queue.settleAll()
+
+    expect(changes).toEqual([])
+  })
+
+  it("答えたあとに abort が来ても二重に畳まない", async () => {
+    const changes: (readonly PendingAsk[])[] = []
+    const queue = createPendingAnswerQueue({
+      onChange: (pending) => changes.push(pending),
+      onAnswered: () => {},
+    })
+    const controller = new AbortController()
+
+    const asked = queue.ask(permissionRequest({ signal: controller.signal }))
+    queue.answer("toolu_1", { kind: "allow" })
+    const result = await asked
+    const countBefore = changes.length
+    controller.abort()
+
+    expect(result.behavior).toBe("allow")
+    expect(changes.length).toBe(countBefore)
+  })
 })

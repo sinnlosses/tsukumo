@@ -53,6 +53,8 @@ export type PendingAnswerQueue = {
    * （同じボタンを二度押しても2回目は何も起きない）。答えの種類が合わないときも無視する。
    */
   readonly answer: (id: string, answer: Answer) => boolean
+  /** 積まれているものを全て拒否として畳む。何も積まれていなければ何も知らせない。 */
+  readonly settleAll: () => void
   /** 今の答え待ち。積まれた順（先頭がいちばん古い）。 */
   readonly list: () => readonly PendingAsk[]
 }
@@ -64,11 +66,14 @@ export type PendingAnswerQueue = {
  */
 export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): PendingAnswerQueue {
   const entries = new Map<string, Entry>()
+  const detachers = new Map<string, () => void>()
 
   const list = (): readonly PendingAsk[] => [...entries.values()].map((entry) => entry.ask)
 
   const settle = (id: string, entry: Entry, result: AnswerResult): void => {
     entries.delete(id)
+    detachers.get(id)?.()
+    detachers.delete(id)
     entry.resolve(result)
     handlers.onChange(list())
   }
@@ -76,17 +81,36 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
   return {
     ask: (request) =>
       new Promise<AnswerResult>((resolve) => {
+        if (request.signal?.aborted === true) {
+          resolve({ behavior: "deny", message: DENY_MESSAGE })
+          return
+        }
         const entry: Entry = { ask: toPendingAsk(request), input: request.input, resolve }
         entries.set(request.id, entry)
         // 中断されたターンの許可要求は答えられないまま残る。
         // 放っておくと列の先頭を塞ぐので、拒否として畳む（SDK は応答が無いとそのツールを止めたまま待ち続ける）。
-        request.signal?.addEventListener("abort", () => {
+        const onAbort = (): void => {
           if (entries.get(request.id) === entry) {
             settle(request.id, entry, { behavior: "deny", message: DENY_MESSAGE })
           }
-        })
+        }
+        request.signal?.addEventListener("abort", onAbort, { once: true })
+        detachers.set(request.id, () => request.signal?.removeEventListener("abort", onAbort))
         handlers.onChange(list())
       }),
+
+    settleAll: () => {
+      if (entries.size === 0) {
+        return
+      }
+      for (const [id, entry] of [...entries]) {
+        entries.delete(id)
+        detachers.get(id)?.()
+        detachers.delete(id)
+        entry.resolve({ behavior: "deny", message: DENY_MESSAGE })
+      }
+      handlers.onChange(list())
+    },
 
     answer: (id, answer) => {
       const entry = entries.get(id)
