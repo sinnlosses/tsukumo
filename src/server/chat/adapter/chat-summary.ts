@@ -33,11 +33,6 @@ const UNDELIVERED_MARK = "undelivered"
  */
 export const CHAT_SUMMARY_LIMIT_BYTES = CHAT_MEMORY_BUDGET.synopsisBytes
 
-/** 置き場の親（`~/.tsukumo/chat-summary`）。書き込んでよいのはこの下だけ。 */
-export function chatSummaryDir(): string {
-  return join(tsukumoHomeDir(), CHAT_SUMMARY_DIR_NAME)
-}
-
 /**
  * パック1つぶんの写しの読み書き口を作る。
  * `packName` は {@link isCharacterPackName} を通ったものだけ受け付け、通らない名前はパスを組み立てず、読み書きとも何もしない口を返す。
@@ -85,6 +80,11 @@ export function discardChatSummary(packName: string, root: string = chatSummaryD
   } catch {
     // 消せないだけ。パックはもう一覧に無いので、写しは次に同じ名前で作るまで読まれない。
   }
+}
+
+/** 置き場の親（`~/.tsukumo/chat-summary`）。書き込んでよいのはこの下だけ。 */
+function chatSummaryDir(): string {
+  return join(tsukumoHomeDir(), CHAT_SUMMARY_DIR_NAME)
 }
 
 /** 印だけを書き換える。本文は既にある写しをそのまま保つ（無ければ空のまま）。 */

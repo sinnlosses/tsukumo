@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { useInquiryJump } from "../../../../src/browser/stores/inquiry-jump.ts"
-import { parseHash } from "../../../../src/browser/stores/location-hash.ts"
+import { readHashRoute } from "../../../../src/browser/stores/location-hash.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
 import type { StampedPendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
 import type { Question } from "../../../../src/shared/session-driver/question.ts"
@@ -381,8 +381,8 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     fireEvent.click(screen.getByRole("button", { name: "お伺いへ" }))
 
     expect(document.querySelector(".current-work-list")).toBeNull()
-    expect(parseHash(window.location.hash).screen).toBe("conversation")
-    expect(parseHash(window.location.hash).turn).toBe("newest")
+    expect(readHashRoute().screen).toBe("conversation")
+    expect(readHashRoute().turn).toBe("newest")
     expect(useInquiryJump.getState().jump).toEqual({ signal: 1, focus: false })
   })
 

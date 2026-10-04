@@ -70,7 +70,7 @@ export function endLineOf(block: RevealBlock, base: Element): LineBox | undefine
  * ただし右端は入れ物ではなく描かれた `svg` / `canvas` の右端を使う。
  * mermaid（`.mermaid`）や Chart.js（`.chart-block`）は全幅の入れ物に描くので、入れ物の box をそのまま使うと帯が図の実際の幅より広く残る。
  */
-export function lineBoxesOf(shape: MemberShape): readonly LineBox[] {
+function lineBoxesOf(shape: MemberShape): readonly LineBox[] {
   if (shape.member.kind === "figure") {
     const box = drawnBoxOf(shape.member.element) ?? shape.box
     return box.height > 0 ? [{ top: box.top, bottom: box.bottom, right: box.right }] : []

@@ -36,13 +36,13 @@ export function isOutlineCollapsed(choice: OutlineCollapseChoice, narrow: boolea
   return choice === "unset" ? narrow : choice === "collapsed"
 }
 
-export function clampOutlineWidthPx(value: number): number {
-  return Math.min(OUTLINE_WIDTH_MAX_PX, Math.max(OUTLINE_WIDTH_MIN_PX, value))
-}
-
 /** `LayoutResizer` の `toValue` にそのまま渡す。比率（0〜1）を可動域つきの px にする。 */
 export function outlineWidthFromRatio(ratio: number, rect: DOMRect): number {
   return clampOutlineWidthPx(ratio * rect.width)
+}
+
+function clampOutlineWidthPx(value: number): number {
+  return Math.min(OUTLINE_WIDTH_MAX_PX, Math.max(OUTLINE_WIDTH_MIN_PX, value))
 }
 
 export function loadOutlinePanel(): OutlinePanel {

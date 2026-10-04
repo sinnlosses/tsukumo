@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs"
+import { existsSync, writeFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
 import process from "node:process"
@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { tsukumoHomeDir } from "../../../src/server/adapter/tsukumo-home.ts"
 import { homeCharacterDir } from "../../../src/server/character-pack/adapter/character-pack.ts"
 import { chatArchiveDir } from "../../../src/server/chat/adapter/chat-archive.ts"
-import { chatSummaryDir } from "../../../src/server/chat/adapter/chat-summary.ts"
+import { createChatSummary } from "../../../src/server/chat/adapter/chat-summary.ts"
 import { readRememberedCharacter } from "../../../src/server/session/adapter/remembered-default.ts"
 import { tokenUsageDir } from "../../../src/server/token-usage/adapter/token-usage-log.ts"
 import { useTempDir } from "../../fixture/temp-dir.ts"
@@ -46,9 +46,16 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
     process.env[HOME_ENV_NAME] = dir()
 
     expect(homeCharacterDir()).toBe(join(dir(), "characters"))
-    expect(chatSummaryDir()).toBe(join(dir(), "chat-summary"))
     expect(chatArchiveDir()).toBe(join(dir(), "chat-archive"))
     expect(tokenUsageDir()).toBe(join(dir(), "token-usage"))
+  })
+
+  it("雑談の要約は移った先の chat-summary の下へ書かれる", () => {
+    process.env[HOME_ENV_NAME] = dir()
+
+    createChatSummary("moved-pack").write("架空の要約")
+
+    expect(existsSync(join(dir(), "chat-summary", "moved-pack.md"))).toBe(true)
   })
 
   it("覚えたキャラクター（state.json）も移った先から読まれる", () => {
@@ -70,12 +77,11 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
 })
 
 describe("TSUKUMO_HOME を渡さないときの置き場は今までと同じ", () => {
-  it("未設定なら ~/.tsukumo とその下の4つの置き場", () => {
+  it("未設定なら ~/.tsukumo とその下の3つの置き場", () => {
     const home = join(homedir(), ".tsukumo")
 
     expect(tsukumoHomeDir()).toBe(home)
     expect(homeCharacterDir()).toBe(join(home, "characters"))
-    expect(chatSummaryDir()).toBe(join(home, "chat-summary"))
     expect(chatArchiveDir()).toBe(join(home, "chat-archive"))
     expect(tokenUsageDir()).toBe(join(home, "token-usage"))
   })

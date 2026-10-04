@@ -106,20 +106,6 @@ export function writeHashRoute(route: HashRoute): void {
   window.location.hash = formatHash(route)
 }
 
-export function parseHash(hash: string): HashRoute {
-  const body = hash.startsWith("#") ? hash.slice(1) : hash
-  const queryStart = body.indexOf("?")
-  const path = queryStart === -1 ? body : body.slice(0, queryStart)
-  const params = new URLSearchParams(queryStart === -1 ? "" : body.slice(queryStart + 1))
-  const screen = screenOf(path)
-  return {
-    screen,
-    turn: turnOf(params.get(TURN_PARAM)),
-    pack: screen === "character" ? packOf(params.get(PACK_PARAM)) : IN_USE,
-    achievementDate: screen === "achievement" ? achievementDateOf(params.get(DATE_PARAM)) : TODAY,
-  }
-}
-
 /** `<a href>` にそのまま書ける hash（会話の画面・今回に追従なら `#`）。 */
 export function formatHash(route: HashRoute): string {
   const params = new URLSearchParams()
@@ -134,6 +120,20 @@ export function formatHash(route: HashRoute): string {
   }
   const query = params.toString()
   return `#${pathOf(route.screen)}${query === "" ? "" : `?${query}`}`
+}
+
+function parseHash(hash: string): HashRoute {
+  const body = hash.startsWith("#") ? hash.slice(1) : hash
+  const queryStart = body.indexOf("?")
+  const path = queryStart === -1 ? body : body.slice(0, queryStart)
+  const params = new URLSearchParams(queryStart === -1 ? "" : body.slice(queryStart + 1))
+  const screen = screenOf(path)
+  return {
+    screen,
+    turn: turnOf(params.get(TURN_PARAM)),
+    pack: screen === "character" ? packOf(params.get(PACK_PARAM)) : IN_USE,
+    achievementDate: screen === "achievement" ? achievementDateOf(params.get(DATE_PARAM)) : TODAY,
+  }
 }
 
 function subscribeToHash(onStoreChange: () => void): () => void {

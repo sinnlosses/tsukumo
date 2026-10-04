@@ -10,7 +10,6 @@ import {
   listCharacterPacks,
   readCharacterAsset,
   readCharacterPack,
-  readCharacterPackFile,
 } from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import {
   characterInfo,
@@ -510,12 +509,17 @@ describe("素材の版（revision）", () => {
   })
 })
 
-describe("readCharacterPackFile", () => {
+describe("readCharacterAsset のファイル名の判断", () => {
+  function readFileOf(fileName: string): ReturnType<typeof readCharacterAsset> {
+    const pack = readCharacterPack(dir())
+    return readCharacterAsset(pack, [pack], { pack: pack.name, fileName }, undefined)
+  }
+
   it("character.json の portraits にあるファイルを読める", () => {
     writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
     writeFileSync(join(dir(), "default.svg"), PLAUSIBLE_SVG)
 
-    const file = readCharacterPackFile(readCharacterPack(dir()), "default.svg")
+    const file = readFileOf("default.svg")
 
     expect(file?.contentType).toBe("image/svg+xml; charset=utf-8")
     expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
@@ -528,7 +532,7 @@ describe("readCharacterPackFile", () => {
     )
     writeFileSync(join(dir(), "mini.svg"), PLAUSIBLE_SVG)
 
-    const file = readCharacterPackFile(readCharacterPack(dir()), "mini.svg")
+    const file = readFileOf("mini.svg")
 
     expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
   })
@@ -540,7 +544,7 @@ describe("readCharacterPackFile", () => {
     )
     writeFileSync(join(dir(), "face.svg"), PLAUSIBLE_SVG)
 
-    const file = readCharacterPackFile(readCharacterPack(dir()), "face.svg")
+    const file = readFileOf("face.svg")
 
     expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
   })
@@ -553,7 +557,7 @@ describe("readCharacterPackFile", () => {
     // 中身は見ないので、書体ファイルの実物は使わない（架空のバイト列で足りる）。
     writeFileSync(join(dir(), "shodo.woff2"), "not a real font, just bytes")
 
-    const file = readCharacterPackFile(readCharacterPack(dir()), "shodo.woff2")
+    const file = readFileOf("shodo.woff2")
 
     expect(file?.contentType).toBe("font/woff2")
     expect(file?.content.toString("utf8")).toBe("not a real font, just bytes")
@@ -563,24 +567,24 @@ describe("readCharacterPackFile", () => {
     writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
     writeFileSync(join(dir(), "secret.svg"), PLAUSIBLE_SVG)
 
-    expect(readCharacterPackFile(readCharacterPack(dir()), "secret.svg")).toBeUndefined()
+    expect(readFileOf("secret.svg")).toBeUndefined()
   })
 
   it("`..` を含む要求は、パスから組み立てないので自然に undefined になる", () => {
     writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
 
-    expect(readCharacterPackFile(readCharacterPack(dir()), "../character.json")).toBeUndefined()
+    expect(readFileOf("../character.json")).toBeUndefined()
   })
 
   it("定義にあってもディスクに無ければ undefined", () => {
     writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
     // default.svg をわざと置かない。
 
-    expect(readCharacterPackFile(readCharacterPack(dir()), "default.svg")).toBeUndefined()
+    expect(readFileOf("default.svg")).toBeUndefined()
   })
 
   it("定義が無ければ何も配らない", () => {
-    expect(readCharacterPackFile(readCharacterPack(dir()), "default.svg")).toBeUndefined()
+    expect(readFileOf("default.svg")).toBeUndefined()
   })
 })
 

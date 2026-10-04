@@ -238,7 +238,7 @@ export function findCharacterPack(
  * パック1つの中で、配ってよい1件を読む。`character.json` に載っているファイル名（{@link characterPackFileNames}）だけを許す。
  * パスから組み立てないので、`..` を含む要求や定義に無い名前は undefined になる（呼び出し側は404にする）。
  */
-export function readCharacterPackFile(
+function readCharacterPackFile(
   pack: CharacterPack,
   fileName: string,
 ): CharacterAssetFile | undefined {

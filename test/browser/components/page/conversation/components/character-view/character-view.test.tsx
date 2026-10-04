@@ -4,8 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { CharacterView } from "../../../../../../../src/browser/components/page/conversation/components/character-view/character-view.tsx"
 import {
-  formatHash,
-  parseHash,
+  writeHashRoute,
   type ViewedTurn,
 } from "../../../../../../../src/browser/stores/location-hash.ts"
 import { NO_REACTIONS } from "../../../../../../../src/shared/character-pack/character-reaction.ts"
@@ -52,7 +51,12 @@ function renderCharacterView(
   stateOverrides: Partial<SessionState>,
   viewedTurn: ViewedTurn = "newest",
 ): void {
-  window.location.hash = formatHash({ ...parseHash(""), turn: viewedTurn })
+  writeHashRoute({
+    screen: "conversation",
+    turn: viewedTurn,
+    pack: { kind: "in-use" },
+    achievementDate: { kind: "today" },
+  })
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
   const queryClient = createTestQueryClient()
   render(

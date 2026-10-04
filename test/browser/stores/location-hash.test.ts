@@ -1,37 +1,50 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 
-import { formatHash, parseHash } from "../../../src/browser/stores/location-hash.ts"
+import {
+  formatHash,
+  readHashRoute,
+  type HashRoute,
+} from "../../../src/browser/stores/location-hash.ts"
 
 const IN_USE = { kind: "in-use" } as const
 const TODAY = { kind: "today" } as const
 
-describe("parseHash", () => {
+afterEach(() => {
+  window.location.hash = ""
+})
+
+function readHash(hash: string): HashRoute {
+  window.location.hash = hash
+  return readHashRoute()
+}
+
+describe("readHashRoute", () => {
   it("画面は `?` の前、見ているターンは turn の値から読む", () => {
-    expect(parseHash("")).toEqual({
+    expect(readHash("")).toEqual({
       screen: "conversation",
       turn: "newest",
       pack: IN_USE,
       achievementDate: TODAY,
     })
-    expect(parseHash("#")).toEqual({
+    expect(readHash("#")).toEqual({
       screen: "conversation",
       turn: "newest",
       pack: IN_USE,
       achievementDate: TODAY,
     })
-    expect(parseHash("#?turn=3")).toEqual({
+    expect(readHash("#?turn=3")).toEqual({
       screen: "conversation",
       turn: 3,
       pack: IN_USE,
       achievementDate: TODAY,
     })
-    expect(parseHash("#character")).toEqual({
+    expect(readHash("#character")).toEqual({
       screen: "character",
       turn: "newest",
       pack: IN_USE,
       achievementDate: TODAY,
     })
-    expect(parseHash("#token-usage?turn=-1")).toEqual({
+    expect(readHash("#token-usage?turn=-1")).toEqual({
       screen: "token-usage",
       turn: -1,
       pack: IN_USE,
@@ -40,25 +53,25 @@ describe("parseHash", () => {
   })
 
   it("知らない画面は会話の画面、番号に読めない turn は今回に追従に落ちる", () => {
-    expect(parseHash("#nowhere?turn=2")).toEqual({
+    expect(readHash("#nowhere?turn=2")).toEqual({
       screen: "conversation",
       turn: 2,
       pack: IN_USE,
       achievementDate: TODAY,
     })
-    expect(parseHash("#?turn=abc")).toEqual({
+    expect(readHash("#?turn=abc")).toEqual({
       screen: "conversation",
       turn: "newest",
       pack: IN_USE,
       achievementDate: TODAY,
     })
-    expect(parseHash("#?turn=1.5")).toEqual({
+    expect(readHash("#?turn=1.5")).toEqual({
       screen: "conversation",
       turn: "newest",
       pack: IN_USE,
       achievementDate: TODAY,
     })
-    expect(parseHash("#?turn=")).toEqual({
+    expect(readHash("#?turn=")).toEqual({
       screen: "conversation",
       turn: "newest",
       pack: IN_USE,
@@ -68,13 +81,13 @@ describe("parseHash", () => {
 
   // 選んでいるパックはキャラクター画面のときだけ読む（docs/architecture/screen-design.md「設定の置き場所」）。
   it("キャラクター画面の pack は選んでいるパック、ほかの画面では読まない", () => {
-    expect(parseHash("#character?pack=other&turn=2")).toEqual({
+    expect(readHash("#character?pack=other&turn=2")).toEqual({
       screen: "character",
       turn: 2,
       pack: { kind: "named", name: "other" },
       achievementDate: TODAY,
     })
-    expect(parseHash("#character?pack=")).toEqual({
+    expect(readHash("#character?pack=")).toEqual({
       screen: "character",
       turn: "newest",
       pack: IN_USE,
@@ -84,19 +97,19 @@ describe("parseHash", () => {
 
   // 見ている日は成果の画面のときだけ読む（docs/architecture/screen-design.md「成果の画面」）。
   it("成果の画面の date は見ている日、ほかの画面では読まない", () => {
-    expect(parseHash("#achievement?date=2026-09-20&turn=2")).toEqual({
+    expect(readHash("#achievement?date=2026-09-20&turn=2")).toEqual({
       screen: "achievement",
       turn: 2,
       pack: IN_USE,
       achievementDate: { kind: "chosen", date: "2026-09-20" },
     })
-    expect(parseHash("#achievement?date=")).toEqual({
+    expect(readHash("#achievement?date=")).toEqual({
       screen: "achievement",
       turn: "newest",
       pack: IN_USE,
       achievementDate: TODAY,
     })
-    expect(parseHash("#character?date=2026-09-20")).toEqual({
+    expect(readHash("#character?date=2026-09-20")).toEqual({
       screen: "character",
       turn: "newest",
       pack: IN_USE,
@@ -166,7 +179,7 @@ describe("formatHash", () => {
       },
     ] as const
     for (const route of routes) {
-      expect(parseHash(formatHash(route))).toEqual(route)
+      expect(readHash(formatHash(route))).toEqual(route)
     }
   })
 })

@@ -4,13 +4,15 @@ import type { Config } from "../../../../src/server/core/config.ts"
 import {
   canResume,
   createSessionCatalog,
-  listMarkedSessions,
   readTaggedSessions,
   selectSessionToResume,
 } from "../../../../src/server/session-driver/core/session-catalog.ts"
 import { sessionTag } from "../../../../src/server/session-driver/core/session-mark.ts"
 import { DEFAULT_VIEW_PORT } from "../../../../src/server/view-server/core/port-resolution.ts"
-import { MAX_SESSION_CHOICES } from "../../../../src/shared/session/session-choice.ts"
+import {
+  MAX_SESSION_CHOICES,
+  type SessionChoice,
+} from "../../../../src/shared/session/session-choice.ts"
 
 // 印はキャラクターパックごと・雑談かどうか・ビューのポートごとに違う
 // （`tsukumo:<パック名>@7327` と `tsukumo:<パック名>:chat@7327`。目印はポート番号そのもの）。
@@ -358,14 +360,21 @@ describe("selectSessionToResume", () => {
   })
 })
 
-describe("listMarkedSessions", () => {
-  it("いまの部屋（同じ印）のセッションを新しい順に並べる", () => {
+function listChoicesOf(sessions: unknown, tag: string): Promise<readonly SessionChoice[]> {
+  return createSessionCatalog({
+    read: () => Promise.resolve(sessions),
+    now: () => 1_000,
+  }).listChoices(tag)
+}
+
+describe("createSessionCatalog の切り替え先の一覧", () => {
+  it("いまの部屋（同じ印）のセッションを新しい順に並べる", async () => {
     const sessions = [
       sessionRecord({ sessionId: "s-first", lastModified: 100, tag: TAG }),
       sessionRecord({ sessionId: "s-third", lastModified: 200, tag: TAG }),
     ]
 
-    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
+    expect(await listChoicesOf(sessions, TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-third",
@@ -385,13 +394,13 @@ describe("listMarkedSessions", () => {
 
   // 部屋はビューのポート1つにつき1つ。同じパック・同じモードでも
   // 目印（ポート）が違えば別の部屋なので、一覧には並ばない。
-  it("同じ一族でも目印の違うもの（別の部屋）は並ばない", () => {
+  it("同じ一族でも目印の違うもの（別の部屋）は並ばない", async () => {
     const sessions = [
       sessionRecord({ sessionId: "s-here", lastModified: 100, tag: TAG }),
       sessionRecord({ sessionId: "s-other-room", lastModified: 300, tag: SECOND_TAG }),
     ]
 
-    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
+    expect(await listChoicesOf(sessions, TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-here",
@@ -400,7 +409,7 @@ describe("listMarkedSessions", () => {
         heading: "架空のセッション",
       },
     ])
-    expect(listMarkedSessions(readTaggedSessions(sessions), SECOND_TAG)).toEqual([
+    expect(await listChoicesOf(sessions, SECOND_TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT + 1,
         sessionId: "s-other-room",
@@ -413,14 +422,14 @@ describe("listMarkedSessions", () => {
 
   // 一覧から選んでも、キャラクターも雑談かどうかも変わらない（`session.switchSession`）。
   // 別のパック・別のモードのセッションが混ざると、選んだ瞬間に相手だけが入れ替わる。
-  it("別のパック・別のモードのセッションは落とす", () => {
+  it("別のパック・別のモードのセッションは落とす", async () => {
     const sessions = [
       sessionRecord({ sessionId: "s-work", lastModified: 100, tag: TAG }),
       sessionRecord({ sessionId: "s-chat", lastModified: 300, tag: CHAT_TAG }),
       sessionRecord({ sessionId: "s-other-pack", lastModified: 400, tag: OTHER_PACK_TAG }),
     ]
 
-    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
+    expect(await listChoicesOf(sessions, TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-work",
@@ -429,7 +438,7 @@ describe("listMarkedSessions", () => {
         heading: "架空のセッション",
       },
     ])
-    expect(listMarkedSessions(readTaggedSessions(sessions), CHAT_TAG)).toEqual([
+    expect(await listChoicesOf(sessions, CHAT_TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-chat",
@@ -440,7 +449,7 @@ describe("listMarkedSessions", () => {
     ])
   })
 
-  it("印の無いセッションと壊れた要素は落とす（昔の印は対応するポートの部屋に残す）", () => {
+  it("印の無いセッションと壊れた要素は落とす（昔の印は対応するポートの部屋に残す）", async () => {
     const sessions = [
       null,
       sessionRecord({ sessionId: "s-bare", lastModified: 900 }),
@@ -449,7 +458,7 @@ describe("listMarkedSessions", () => {
       sessionRecord({ sessionId: "s-legacy", lastModified: 500, tag: "tsukumo:架空のパック" }),
     ]
 
-    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
+    expect(await listChoicesOf(sessions, TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-legacy",
@@ -462,13 +471,13 @@ describe("listMarkedSessions", () => {
 
   // かつて目印は1文字だった（`A` が既定のポート、+1 ごとに次の文字）。読み取りでポートへ
   // 戻したあとは、対応するポートの部屋の一覧に並ぶ（別の部屋には並ばない）。
-  it("1文字だった昔の目印も、対応するポートの部屋に並ぶ（互換）", () => {
+  it("1文字だった昔の目印も、対応するポートの部屋に並ぶ（互換）", async () => {
     const sessions = [
       sessionRecord({ sessionId: "s-legacy-a", lastModified: 900, tag: "tsukumo:架空のパック@A" }),
       sessionRecord({ sessionId: "s-legacy-b", lastModified: 800, tag: "tsukumo:架空のパック@B" }),
     ]
 
-    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
+    expect(await listChoicesOf(sessions, TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-legacy-a",
@@ -477,7 +486,7 @@ describe("listMarkedSessions", () => {
         heading: "架空のセッション",
       },
     ])
-    expect(listMarkedSessions(readTaggedSessions(sessions), SECOND_TAG)).toEqual([
+    expect(await listChoicesOf(sessions, SECOND_TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT + 1,
         sessionId: "s-legacy-b",
@@ -489,25 +498,25 @@ describe("listMarkedSessions", () => {
   })
 
   // 印は使うほど増え続ける（実測: このリポジトリで120件）。`<select>` に全部は並べない。
-  it("新しいほうから上限の件数までしか返さない", () => {
+  it("新しいほうから上限の件数までしか返さない", async () => {
     const many = Array.from({ length: MAX_SESSION_CHOICES + 5 }, (_unused, index) =>
       sessionRecord({ sessionId: `s-${String(index)}`, lastModified: index, tag: TAG }),
     )
 
-    const listed = listMarkedSessions(readTaggedSessions(many), TAG)
+    const listed = await listChoicesOf(many, TAG)
     expect(listed).toHaveLength(MAX_SESSION_CHOICES)
     expect(listed[0]?.sessionId).toBe(`s-${String(MAX_SESSION_CHOICES + 4)}`)
   })
 
-  it("一覧が空・形が壊れているときは空（落ちない）", () => {
-    expect(listMarkedSessions(readTaggedSessions([]), TAG)).toEqual([])
-    expect(listMarkedSessions(readTaggedSessions(undefined), TAG)).toEqual([])
-    expect(listMarkedSessions(readTaggedSessions({ sessions: [] }), TAG)).toEqual([])
+  it("一覧が空・形が壊れているときは空（落ちない）", async () => {
+    expect(await listChoicesOf([], TAG)).toEqual([])
+    expect(await listChoicesOf(undefined, TAG)).toEqual([])
+    expect(await listChoicesOf({ sessions: [] }, TAG)).toEqual([])
   })
 
   // SDK の `summary` は行の見出しになる外来の値なので、境界（taggedSession）で検証する。
   // 文字列でない・空・空白だけなら無いものとして畳み、`SessionSwitch` 側の「（題なし）」に任せる。
-  it("summary が読める文字列ならそのまま見出しにし、文字列でない・空・空白だけなら無いものとして畳む", () => {
+  it("summary が読める文字列ならそのまま見出しにし、文字列でない・空・空白だけなら無いものとして畳む", async () => {
     const sessions = [
       sessionRecord({
         sessionId: "s-titled",
@@ -521,7 +530,7 @@ describe("listMarkedSessions", () => {
       sessionRecord({ sessionId: "s-blank", lastModified: 100, tag: TAG, summary: "   " }),
     ]
 
-    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
+    expect(await listChoicesOf(sessions, TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-titled",
@@ -553,14 +562,14 @@ describe("listMarkedSessions", () => {
     ])
   })
 
-  it("始まった時刻は SDK の createdAt を使い、無ければ最終更新時刻に畳む", () => {
+  it("始まった時刻は SDK の createdAt を使い、無ければ最終更新時刻に畳む", async () => {
     const sessions = [
       sessionRecord({ sessionId: "s-created", lastModified: 300, createdAt: 120, tag: TAG }),
       sessionRecord({ sessionId: "s-no-created", lastModified: 200, tag: TAG }),
     ]
 
     expect(
-      listMarkedSessions(readTaggedSessions(sessions), TAG).map(({ sessionId, startedAt }) => ({
+      (await listChoicesOf(sessions, TAG)).map(({ sessionId, startedAt }) => ({
         sessionId,
         startedAt,
       })),

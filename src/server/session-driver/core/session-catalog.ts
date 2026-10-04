@@ -144,33 +144,6 @@ export function selectSessionToResume(
 }
 
 /**
- * 切り替え先として選べるセッションを一覧にする（印そのものがセッションの一覧。別の保存先は作らない）。
- * 新しい順に並べ、tsukumo の印を持たないものと、いまの部屋（渡した `tag`）と違う印のものは落とす。
- *
- * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。
- * 渡す `tag` は、目印まで揃えた印（`sessionTag`）。部屋はビューのポート1つにつき1つなので、切り替え先も自分の部屋のものだけに絞る。
- * 印は目印まで揃えてあるので、昔の印（目印の無いもの・1文字の `@A`）も対応するポートの部屋の一覧に並ぶ。
- *
- * 返すのは新しいほうから {@link MAX_SESSION_CHOICES} 件まで（印は使うほど増え続ける）。
- */
-export function listMarkedSessions(
-  sessions: readonly TaggedSession[],
-  tag: string,
-): readonly SessionChoice[] {
-  return sessions
-    .filter((session) => session.tag === tag)
-    .map(({ viewPort, sessionId, lastModified, startedAt, heading }) => ({
-      viewPort,
-      sessionId,
-      lastModified,
-      startedAt,
-      heading,
-    }))
-    .sort((left, right) => right.lastModified - left.lastModified)
-    .slice(0, MAX_SESSION_CHOICES)
-}
-
-/**
  * SDK の `listSessions` が返した一覧（外来の値）を、印の付いたセッションの並びにする。
  * tsukumo の印を持たないもの・形が壊れているものは落とす（同じ cwd の素の `claude` のセッションはここで消える）。
  * 一覧そのものが配列でなければ空。
@@ -211,6 +184,33 @@ export function withSessionMark(
           lastModified: Math.max(existing.lastModified, marked.at),
         }
   return [...sessions.filter((session) => session.sessionId !== marked.sessionId), updated]
+}
+
+/**
+ * 切り替え先として選べるセッションを一覧にする（印そのものがセッションの一覧。別の保存先は作らない）。
+ * 新しい順に並べ、tsukumo の印を持たないものと、いまの部屋（渡した `tag`）と違う印のものは落とす。
+ *
+ * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。
+ * 渡す `tag` は、目印まで揃えた印（`sessionTag`）。部屋はビューのポート1つにつき1つなので、切り替え先も自分の部屋のものだけに絞る。
+ * 印は目印まで揃えてあるので、昔の印（目印の無いもの・1文字の `@A`）も対応するポートの部屋の一覧に並ぶ。
+ *
+ * 返すのは新しいほうから {@link MAX_SESSION_CHOICES} 件まで（印は使うほど増え続ける）。
+ */
+function listMarkedSessions(
+  sessions: readonly TaggedSession[],
+  tag: string,
+): readonly SessionChoice[] {
+  return sessions
+    .filter((session) => session.tag === tag)
+    .map(({ viewPort, sessionId, lastModified, startedAt, heading }) => ({
+      viewPort,
+      sessionId,
+      lastModified,
+      startedAt,
+      heading,
+    }))
+    .sort((left, right) => right.lastModified - left.lastModified)
+    .slice(0, MAX_SESSION_CHOICES)
 }
 
 /**

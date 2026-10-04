@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
-  clampOutlineWidthPx,
   DEFAULT_OUTLINE_PANEL,
   isOutlineCollapsed,
   loadOutlinePanel,
@@ -79,22 +78,12 @@ describe("isOutlineCollapsed", () => {
   })
 })
 
-describe("clampOutlineWidthPx", () => {
-  it("可動域の内側はそのまま", () => {
-    const value = (OUTLINE_WIDTH_MIN_PX + OUTLINE_WIDTH_MAX_PX) / 2
-    expect(clampOutlineWidthPx(value)).toBe(value)
-  })
-
-  it("下限より小さい値は下限に詰める", () => {
-    expect(clampOutlineWidthPx(OUTLINE_WIDTH_MIN_PX - 50)).toBe(OUTLINE_WIDTH_MIN_PX)
-  })
-
-  it("上限より大きい値は上限に詰める", () => {
-    expect(clampOutlineWidthPx(OUTLINE_WIDTH_MAX_PX + 50)).toBe(OUTLINE_WIDTH_MAX_PX)
-  })
-})
-
 describe("outlineWidthFromRatio", () => {
+  it("比率が小さく px が下限を割るときは下限に詰める", () => {
+    const rect = new DOMRect(0, 0, 1000, 0)
+    expect(outlineWidthFromRatio(0.1, rect)).toBe(OUTLINE_WIDTH_MIN_PX)
+  })
+
   it("比率に器の幅を掛けて px にし、可動域へ詰める", () => {
     const rect = new DOMRect(0, 0, 300, 0)
     expect(outlineWidthFromRatio(0.5, rect)).toBe(150)
