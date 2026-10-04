@@ -5,7 +5,7 @@ import clsx from "clsx"
 import { Check, Minus, Pause } from "lucide-react"
 import type { ReactElement } from "react"
 
-import type { TaskStateKind, TaskStateView } from "../hooks/use-task-board.ts"
+import type { TaskStateKind, TaskStateView } from "../domain/task-board-view.ts"
 import taskBoardStyles from "../task-board.module.css"
 import styles from "./task-state.module.css"
 

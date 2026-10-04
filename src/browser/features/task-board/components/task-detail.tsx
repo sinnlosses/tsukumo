@@ -12,7 +12,7 @@ import type {
   TaskBoardBreadcrumb,
   TaskBoardDetail,
   TaskDependencyCard,
-} from "../hooks/use-task-board.ts"
+} from "../domain/task-board-view.ts"
 import taskBoardStyles from "../task-board.module.css"
 import { TaskBody } from "./task-body.tsx"
 import styles from "./task-detail.module.css"

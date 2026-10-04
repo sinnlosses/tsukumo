@@ -13,7 +13,7 @@ import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import characterStyles from "../../../../character.module.css"
-import type { CharacterDeleteBandModel } from "../../../hooks/use-character-edit.ts"
+import type { CharacterDeleteBandModel } from "../../../../domain/character-edit-model.ts"
 import styles from "./character-delete-confirm.module.css"
 
 export type CharacterDeleteConfirmProps = {

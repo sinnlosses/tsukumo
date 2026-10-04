@@ -5,7 +5,7 @@ import { Repeat } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { Text } from "../../../components/ui/text/text.tsx"
-import type { TaskBoardRow } from "../hooks/use-task-board.ts"
+import type { TaskBoardRow } from "../domain/task-board-view.ts"
 import taskBoardStyles from "../task-board.module.css"
 import styles from "./task-board-list.module.css"
 import { TaskDifficulty } from "./task-difficulty.tsx"

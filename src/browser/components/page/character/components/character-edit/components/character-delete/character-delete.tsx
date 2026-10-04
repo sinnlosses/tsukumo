@@ -9,7 +9,7 @@ import { Button } from "../../../../../../ui/button/button.tsx"
 import { TrashIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import characterStyles from "../../../../character.module.css"
-import type { CharacterDeleteBandModel } from "../../../hooks/use-character-edit.ts"
+import type { CharacterDeleteBandModel } from "../../../../domain/character-edit-model.ts"
 import { CharacterDeleteConfirm } from "../character-delete-confirm/character-delete-confirm.tsx"
 import styles from "./character-delete.module.css"
 

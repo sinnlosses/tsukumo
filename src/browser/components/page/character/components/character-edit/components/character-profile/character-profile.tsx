@@ -11,7 +11,7 @@ import { SwitchIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import characterStyles from "../../../../character.module.css"
-import type { CharacterProfileModel } from "../../../hooks/use-character-edit.ts"
+import type { CharacterProfileModel } from "../../../../domain/character-edit-model.ts"
 import { CharacterProfileEdit } from "../character-profile-edit/character-profile-edit.tsx"
 import styles from "./character-profile.module.css"
 

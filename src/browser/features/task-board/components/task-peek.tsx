@@ -11,10 +11,11 @@ import type { ReactElement } from "react"
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { codeSpanParts } from "../../../domain/code-span.ts"
+import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 import { TaskBody } from "./task-body.tsx"
 import { TaskMark } from "./task-mark.tsx"
 import styles from "./task-peek.module.css"
-import { TaskRunConfirm, type TaskRunConfirmOutcome } from "./task-run-confirm.tsx"
+import { TaskRunConfirm } from "./task-run-confirm.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
 
 /** 「これを始める」を出すか。出すのは着手できて送り先が見つかるタスクだけ。 */

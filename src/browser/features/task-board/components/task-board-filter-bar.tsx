@@ -4,7 +4,7 @@
 import { Search } from "lucide-react"
 import type { ReactElement } from "react"
 
-import type { TaskBoardFilter, TaskBoardFilterChip } from "../hooks/use-task-board.ts"
+import type { TaskBoardFilter, TaskBoardFilterChip } from "../domain/task-board-view.ts"
 import styles from "./task-board-filter-bar.module.css"
 
 export function TaskBoardFilterBar(props: {

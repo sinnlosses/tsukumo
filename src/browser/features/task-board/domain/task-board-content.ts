@@ -1,0 +1,266 @@
+// 一覧のタスクを、行・絞り込みの札・選んだタスクの詳細・操作の帯へ畳む。
+
+import { isIncludedIn } from "remeda"
+
+import {
+  taskReadiness,
+  unfinishedTaskIds,
+  type TaskLocation,
+  type TaskSummaryItem,
+  type TaskSummaryResult,
+} from "../../../../shared/repository/task-summary.ts"
+import { codeSpanParts } from "../../../domain/code-span.ts"
+import type { RunDestination } from "./run-destination.ts"
+import { FILTER_CHIPS, matchesFilter } from "./task-board-filter.ts"
+import type {
+  TaskBoardBreadcrumb,
+  TaskBoardContent,
+  TaskBoardDetail,
+  TaskBoardFilter,
+  TaskBoardOpener,
+  TaskBoardRun,
+  TaskBoardSelection,
+  TaskDependencyCard,
+  TaskDifficultyView,
+  TaskStateKind,
+  TaskStateView,
+} from "./task-board-view.ts"
+import type { TrackedFileList } from "./tracked-file-list.ts"
+
+/** 一覧の1件と、その状態の言い方（行・札・件数で何度も使うので1回だけ作る）。 */
+export type BoardEntry = {
+  readonly task: TaskSummaryItem
+  readonly state: TaskStateView
+  /** 依存のうち、まだ済んでいない（一覧にあって完了・取り下げでない）ものの ID。 */
+  readonly waiting: readonly string[]
+}
+
+export type BoardContentInput = {
+  readonly query: string
+  readonly filter: TaskBoardFilter
+  readonly tracked: TrackedFileList
+  readonly destination: RunDestination
+  readonly openFile: (path: string) => void
+  readonly run: (taskId: string) => void
+  readonly onJump: (id: string) => void
+  readonly breadcrumb: TaskBoardBreadcrumb
+}
+
+/** 「tsukumo に頼む」を押せないときに横に添える理由。保留は待ちが残っているときだけ押せない。 */
+const RUN_UNAVAILABLE_REASON = {
+  blocked: "待ちが終わると頼めます",
+  hold: "待ちが終わると頼めます",
+  doing: "着手済みです",
+  done: "終わったタスクです",
+  dropped: "終わったタスクです",
+  other: "状態が読めないので頼めません",
+} satisfies Record<Exclude<TaskStateKind, "ready">, string>
+
+const DIFFICULTIES = ["haiku", "sonnet", "opus"] as const
+
+const DIFFICULTY_LEVEL = {
+  haiku: 1,
+  sonnet: 2,
+  opus: 3,
+} satisfies Record<(typeof DIFFICULTIES)[number], TaskDifficultyView["level"]>
+
+const TASK_BOARD_LIST_ID = "task-board-list"
+
+/** 値が無い欄に出す文字。 */
+const MISSING = "—"
+
+export function boardEntries(items: readonly TaskSummaryItem[]): readonly BoardEntry[] {
+  const unfinished = unfinishedTaskIds(items)
+  return items.map((task) => {
+    const waiting = task.dependencies.filter((id) => unfinished.has(id))
+    return { task, state: taskStateOf(task, unfinished, waiting), waiting }
+  })
+}
+
+export function boardContent(
+  tasks: TaskSummaryResult,
+  entries: readonly BoardEntry[],
+  byId: ReadonlyMap<string, BoardEntry>,
+  rows: readonly BoardEntry[],
+  selected: BoardEntry | undefined,
+  isVisible: (entry: BoardEntry) => boolean,
+  knownIds: ReadonlySet<string>,
+  input: BoardContentInput,
+): TaskBoardContent {
+  if (tasks.kind !== "known") {
+    return { kind: "unknown" }
+  }
+  if (entries.length === 0) {
+    return { kind: "empty" }
+  }
+
+  return {
+    kind: "known",
+    listId: TASK_BOARD_LIST_ID,
+    query: input.query,
+    chips: FILTER_CHIPS.map((chip) => ({
+      ...chip,
+      count: entries.filter((entry) => matchesFilter(entry.state, chip.filter)).length,
+      pressed: chip.filter === input.filter,
+    })),
+    rows: rows.map((entry) => ({
+      id: entry.task.id,
+      optionId: optionIdOf(entry.task.id),
+      summary: codeSpanParts(entry.task.summary),
+      state: entry.state,
+      loopable: entry.task.loopable === "Y",
+      difficulty: difficultyOf(entry.task.difficulty),
+      selected: entry === selected,
+      outOfFilter: !isVisible(entry),
+    })),
+    activeOptionId: selected === undefined ? undefined : optionIdOf(selected.task.id),
+    selection:
+      selected === undefined ? { kind: "none" } : selectionOf(selected, entries, byId, input),
+    knownIds,
+  }
+}
+
+function selectionOf(
+  entry: BoardEntry,
+  entries: readonly BoardEntry[],
+  byId: ReadonlyMap<string, BoardEntry>,
+  input: BoardContentInput,
+): TaskBoardSelection {
+  const task = entry.task
+  return {
+    kind: "some",
+    detail: {
+      id: task.id,
+      status: task.status ?? MISSING,
+      title: codeSpanParts(task.summary),
+      state: entry.state,
+      difficulty: difficultyOf(task.difficulty),
+      loop: loopOf(task.loopable),
+      location: task.location,
+      dependencies: task.dependencies.map((id) => dependencyCardOf(id, byId)),
+      dependents: dependentsOf(task.id, entries),
+      body: task.body,
+    },
+    breadcrumb: input.breadcrumb,
+    onCopy: () => {
+      // 書けなかったとき（窓にフォーカスが無いなど）は何もしない。押し直せば済む。
+      void navigator.clipboard.writeText(task.id).catch(() => {})
+    },
+    onJump: input.onJump,
+    opener: openerOf(task.location, input),
+    run: runOf(entry, input),
+  }
+}
+
+/** 保留のタスクは、送った先の `/next-task` が着手の前に判断を利用者に尋ねるので頼める。 */
+function runOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRun {
+  const kind = entry.state.kind
+  if (kind === "ready" || (kind === "hold" && entry.waiting.length === 0)) {
+    return input.destination.kind === "missing"
+      ? { kind: "unavailable", reason: `/${input.destination.command} が無いので頼めません` }
+      : { kind: "available", onRun: () => input.run(entry.task.id) }
+  }
+  return { kind: "unavailable", reason: RUN_UNAVAILABLE_REASON[kind] }
+}
+
+function openerOf(location: TaskLocation, input: BoardContentInput): TaskBoardOpener {
+  if (location.kind === "issue") {
+    return { kind: "issue", url: location.url }
+  }
+  if (location.kind === "none") {
+    return { kind: "none" }
+  }
+
+  const availability =
+    input.tracked.kind === "checking"
+      ? "checking"
+      : input.tracked.files.has(location.path)
+        ? "tracked"
+        : "untracked"
+  return { kind: "file", availability, onOpen: () => input.openFile(location.path) }
+}
+
+function dependencyCardOf(id: string, byId: ReadonlyMap<string, BoardEntry>): TaskDependencyCard {
+  const dependency = byId.get(id)
+  if (dependency === undefined) {
+    return { kind: "unlisted", id }
+  }
+  return {
+    kind: "listed",
+    id,
+    state: dependency.state,
+    summary: codeSpanParts(dependency.task.summary),
+  }
+}
+
+/** いまの一覧のうち、`taskId` を依存に持つものの札（並びは一覧の順のまま）。 */
+function dependentsOf(
+  taskId: string,
+  entries: readonly BoardEntry[],
+): readonly TaskDependencyCard[] {
+  return entries
+    .filter((entry) => entry.task.dependencies.includes(taskId))
+    .map((entry) => ({
+      kind: "listed" as const,
+      id: entry.task.id,
+      state: entry.state,
+      summary: codeSpanParts(entry.task.summary),
+    }))
+}
+
+/**
+ * 状態の言い方。`todo` の着手できるかは `taskReadiness` の規則（一覧に無い依存は止めない）に従う。
+ * 待ちと保留は、まだ済んでいない依存の ID を字で添える（色だけで伝えない）。
+ */
+function taskStateOf(
+  task: TaskSummaryItem,
+  unfinished: ReadonlySet<string>,
+  waiting: readonly string[],
+): TaskStateView {
+  const readiness = taskReadiness(task, unfinished)
+  if (readiness !== undefined) {
+    return readiness.kind === "ready"
+      ? { kind: "ready", text: "着手できる" }
+      : { kind: "blocked", text: `待ち ${readiness.blockedBy.join(", ")}` }
+  }
+
+  switch (task.status) {
+    case "hold":
+      return { kind: "hold", text: waiting.length === 0 ? "保留" : `保留 · ${waiting.join(", ")}` }
+    case "doing":
+      return {
+        kind: "doing",
+        text: task.assignee === undefined ? "進行中" : `進行中（${task.assignee}）`,
+      }
+    case "done":
+      return { kind: "done", text: "完了" }
+    case "dropped":
+      return { kind: "dropped", text: "取り下げ" }
+    default:
+      return { kind: "other", text: task.status ?? MISSING }
+  }
+}
+
+function difficultyOf(difficulty: string | undefined): TaskDifficultyView {
+  if (difficulty === undefined) {
+    return { level: 0, text: MISSING }
+  }
+  return {
+    level: isIncludedIn(difficulty, DIFFICULTIES) ? DIFFICULTY_LEVEL[difficulty] : 0,
+    text: difficulty,
+  }
+}
+
+function loopOf(loopable: string | undefined): TaskBoardDetail["loop"] {
+  if (loopable === "Y") {
+    return { on: true, text: "回せる" }
+  }
+  if (loopable === "N") {
+    return { on: false, text: "回さない" }
+  }
+  return { on: false, text: loopable ?? MISSING }
+}
+
+function optionIdOf(taskId: string): string {
+  return `task-board-option-${taskId}`
+}

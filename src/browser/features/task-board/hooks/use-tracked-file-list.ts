@@ -7,11 +7,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { rpc } from "../../../domain/rpc.ts"
-
-/** 取り直している間は `checking`（押せるかをまだ決めない）。読めなかったときは空の `known`。 */
-export type TrackedFileList =
-  | { readonly kind: "checking" }
-  | { readonly kind: "known"; readonly files: ReadonlySet<string> }
+import type { TrackedFileList } from "../domain/tracked-file-list.ts"
 
 export function useTrackedFileList(enabled: boolean): TrackedFileList {
   const { data, isFetching } = useQuery(

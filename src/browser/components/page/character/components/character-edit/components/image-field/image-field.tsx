@@ -9,7 +9,7 @@ import { TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import characterStyles from "../../../../character.module.css"
-import type { ImageFieldModel } from "../../../hooks/use-character-edit.ts"
+import type { ImageFieldModel } from "../../../../domain/character-edit-model.ts"
 import styles from "./image-field.module.css"
 
 const THUMBNAIL_CLASS = {

@@ -11,7 +11,7 @@ import { useRef, useState, type KeyboardEvent, type RefObject } from "react"
 
 import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import { useTaskBoardRequest } from "../../../stores/task-board-request.ts"
-import type { TaskRunConfirmOutcome } from "../components/task-run-confirm.tsx"
+import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 
 export type TaskPeekState =
   | { readonly kind: "closed" }
