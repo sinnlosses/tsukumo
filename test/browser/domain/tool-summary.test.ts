@@ -32,6 +32,12 @@ describe("summarizeToolInput", () => {
     expect(summary.endsWith("…")).toBe(true)
   })
 
+  it("上限の境目の絵文字を割らずに切る", () => {
+    const long = `${"あ".repeat(119)}😀尾`
+
+    expect(summarizeToolInput("Bash", { command: long })).toBe(`${"あ".repeat(119)}😀…`)
+  })
+
   it("要約に使わないフィールドの値は混ざらない", () => {
     const summary = summarizeToolInput("Bash", { command: "echo dummy", secret: "内緒" })
 

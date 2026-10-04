@@ -2,6 +2,7 @@
 
 import { isPlainObject } from "remeda"
 
+import { clipText } from "../../shared/utils/clip-text.ts"
 import { optionalString } from "../../shared/utils/optional-string.ts"
 
 /** ツール入力の要約に出す1行の長さの上限（目安）。 */
@@ -54,7 +55,6 @@ function stringField(input: Readonly<Record<string, unknown>>, field: string): s
 }
 
 function truncateToolSummary(text: string): string {
-  return text.length <= MAX_TOOL_SUMMARY_LENGTH
-    ? text
-    : `${text.slice(0, MAX_TOOL_SUMMARY_LENGTH)}…`
+  const { head, omittedLength } = clipText(text, MAX_TOOL_SUMMARY_LENGTH)
+  return omittedLength > 0 ? `${head}…` : head
 }

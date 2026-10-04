@@ -21,6 +21,7 @@ import { readdir, readFile, stat } from "node:fs/promises"
 import { join } from "node:path"
 import { stripVTControlCharacters } from "node:util"
 
+import { clipText } from "../../../shared/utils/clip-text.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 
 /** Vite の設定ファイル。入口のファイル名と、出す2つのファイル名はここに書いてある。 */
@@ -243,7 +244,6 @@ function failureReason(error: Error, stderr: string): string {
 function clampReason(reason: string): string {
   const lines = reason.split("\n")
   const kept = lines.slice(0, FAILURE_REASON_MAX_LINES).join("\n")
-  const clamped =
-    kept.length > FAILURE_REASON_MAX_CHARS ? kept.slice(0, FAILURE_REASON_MAX_CHARS) : kept
+  const clamped = clipText(kept, FAILURE_REASON_MAX_CHARS).head
   return clamped === reason ? reason : `${clamped}\n…（長いので途中で切った）`
 }

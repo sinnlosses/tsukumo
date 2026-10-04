@@ -6,6 +6,7 @@
 // 利用者が `/rename` などで書き換えた題は上書きしないため、SDK 側の現在値（`customTitle`）が「tsukumo が最後に自分で書いたもの」と一致するときだけ書く。
 
 import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session/session-choice.ts"
+import { clipText } from "../../../shared/utils/clip-text.ts"
 
 /** 見出しを書くかどうかの判断に要る状態。tsukumo が最後に書いた題と、`/clear` の合図をまだ消費していないかを持ち回る。 */
 export type SessionTitleState = {
@@ -61,9 +62,7 @@ export function decideSessionTitle(
 }
 
 function truncateTitle(text: string): string {
-  return text.length <= MAX_SESSION_HEADING_LENGTH
-    ? text
-    : text.slice(0, MAX_SESSION_HEADING_LENGTH)
+  return clipText(text, MAX_SESSION_HEADING_LENGTH).head
 }
 
 /**

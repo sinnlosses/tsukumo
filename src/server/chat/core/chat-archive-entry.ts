@@ -8,6 +8,7 @@
 
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { clipText } from "../../../shared/utils/clip-text.ts"
 import type { ChatArchive } from "./chat-archive-port.ts"
 
 /**
@@ -75,7 +76,6 @@ export function appendChatArchiveConclusion(
 
 /** 先頭 {@link CHAT_MEMORY_BUDGET.workExcerptChars} 文字（コードポイント）で切り、切ったら「…」を付ける。 */
 function excerptOf(text: string): string {
-  const codePoints = [...text]
-  const maxChars = CHAT_MEMORY_BUDGET.workExcerptChars
-  return codePoints.length <= maxChars ? text : `${codePoints.slice(0, maxChars).join("")}…`
+  const { head, omittedLength } = clipText(text, CHAT_MEMORY_BUDGET.workExcerptChars)
+  return omittedLength > 0 ? `${head}…` : head
 }

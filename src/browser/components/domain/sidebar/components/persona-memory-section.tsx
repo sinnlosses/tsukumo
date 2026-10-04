@@ -10,6 +10,7 @@
 
 import { useState, type ReactElement } from "react"
 
+import { clipText } from "../../../../../shared/utils/clip-text.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
@@ -102,10 +103,8 @@ export function PersonaMemorySection(): ReactElement {
 
 /** 先頭を切ってチップに出す形（超えた分は `…`）。コードポイントで数える（サロゲートペアを割らない）。 */
 function truncatedRememberedLine(line: string): string {
-  const characters = [...line]
-  return characters.length <= REMEMBERED_LINE_CHIP_LENGTH
-    ? line
-    : `${characters.slice(0, REMEMBERED_LINE_CHIP_LENGTH).join("")}…`
+  const { head, omittedLength } = clipText(line, REMEMBERED_LINE_CHIP_LENGTH)
+  return omittedLength > 0 ? `${head}…` : head
 }
 
 type PersonaMemoryForgetConfirmProps = {

@@ -22,6 +22,7 @@ import {
 } from "../../../shared/character-pack/expression-choice.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionRecord, SessionState } from "../../../shared/session/session-state.ts"
+import { clipText } from "../../../shared/utils/clip-text.ts"
 import { isWaiting, type VisitWait } from "./visit-timing.ts"
 
 /** 台本を書かせるモデル（軽いもの。仕事のセッションのモデルとは別に決める）。 */
@@ -331,6 +332,6 @@ function describeTool(tool: Extract<SessionRecord, { readonly kind: "tool" }>): 
 }
 
 function clip(text: string, max: number): string {
-  const chars = [...text.trim()]
-  return chars.length > max ? `${chars.slice(0, max).join("")}…` : chars.join("")
+  const { head, omittedLength } = clipText(text.trim(), max)
+  return omittedLength > 0 ? `${head}…` : head
 }

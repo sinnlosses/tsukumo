@@ -15,6 +15,7 @@ import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import { isBlankText } from "../utils/blank-text.ts"
+import { clipText } from "../utils/clip-text.ts"
 import {
   MAX_SESSION_STATE_TURNS,
   type SessionRecord,
@@ -623,9 +624,8 @@ function extractFirstLine(markdown: string): string {
 
   const heading = /^#{1,6}\s+(.*)$/.exec(line)
   const text = heading?.[1] === undefined ? line : heading[1].trim()
-  return text.length <= MAX_STEP_SUMMARY_LENGTH
-    ? text
-    : `${text.slice(0, MAX_STEP_SUMMARY_LENGTH)}…`
+  const { head, omittedLength } = clipText(text, MAX_STEP_SUMMARY_LENGTH)
+  return omittedLength > 0 ? `${head}…` : head
 }
 
 /**

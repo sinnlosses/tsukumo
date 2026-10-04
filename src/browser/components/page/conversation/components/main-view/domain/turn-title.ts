@@ -8,6 +8,7 @@
 // 長さでは切らない。1行に収まらないぶんは CSS が省略する（`.turn-title`）。
 
 import type { MainViewTurn } from "../../../../../../../shared/session/main-view.ts"
+import { clipText } from "../../../../../../../shared/utils/clip-text.ts"
 
 /** 依頼もレポートもタイトルにならないターン（依頼より前の記録で、本文もまだ無い）のタイトル。 */
 const TURN_TITLE_FALLBACK = "（依頼なし）"
@@ -43,9 +44,8 @@ export function turnRequestRest(turn: MainViewTurn): readonly string[] {
 const MAX_REQUEST_HEADING_TEXT_LENGTH = 2000
 
 function truncateRequestText(request: string): string {
-  return request.length <= MAX_REQUEST_HEADING_TEXT_LENGTH
-    ? request
-    : `${request.slice(0, MAX_REQUEST_HEADING_TEXT_LENGTH)}…`
+  const { head, omittedLength } = clipText(request, MAX_REQUEST_HEADING_TEXT_LENGTH)
+  return omittedLength > 0 ? `${head}…` : head
 }
 
 /**
