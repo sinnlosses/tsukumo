@@ -17,6 +17,9 @@ import { runSubprocessOrThrow } from "./subprocess.ts"
 /** テストの中で課題を書き換える作業ツリーの名前（`bd` の actor）。 */
 export const BEADS_TEST_ACTOR = "wt-test"
 
+/** `bd init` は検証を並べて走らせた重い機械で1回あたり十数秒かかるので、全体の `hookTimeout` より長く待つ。 */
+const BEADS_TEMPLATE_TIMEOUT_MS = 60_000
+
 /** `bd init` を済ませた使い捨てのリポジトリ（{@link useBeadsHome} が作る）。 */
 let beadsTemplate: { readonly root: string; readonly repository: string } | undefined
 
@@ -36,7 +39,7 @@ export function useBeadsHome(home: () => string): () => string {
     await bd(repository, templateHome, "init", "--stealth", "-p", "t", "-q")
     await bd(repository, templateHome, "config", "set", "status.custom", "pending:frozen")
     beadsTemplate = { root, repository }
-  })
+  }, BEADS_TEMPLATE_TIMEOUT_MS)
   afterAll(() => {
     if (beadsTemplate !== undefined) {
       rmSync(beadsTemplate.root, { recursive: true, force: true })
