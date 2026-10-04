@@ -107,8 +107,12 @@ export type ReportGateVerdict =
   | { readonly kind: "pass" }
   | { readonly kind: "block"; readonly reason: string }
 
-/** {@link ReportGate} を1つ作る。セッション1つに1つ（ターンの区切りを自分で見ている）。 */
-export function createReportGate(): ReportGate {
+/**
+ * {@link ReportGate} を1つ作る。セッション1つに1つ（ターンの区切りを自分で見ている）。
+ * `nothingNewRejected` が true を返すターンは、`ReportReview.judge` が「新しい事実が無い」で
+ * `report` を差し戻している。渡し直す本文は無いので、本文の量によらず通す。
+ */
+export function createReportGate(nothingNewRejected: () => boolean): ReportGate {
   let unreported: readonly string[] = []
 
   return {
@@ -116,7 +120,7 @@ export function createReportGate(): ReportGate {
       unreported = nextUnreported(unreported, event)
     },
     verdict: (stopHookActive) =>
-      stopHookActive || !exceedsOneLine(unreported)
+      stopHookActive || nothingNewRejected() || !exceedsOneLine(unreported)
         ? { kind: "pass" }
         : { kind: "block", reason: REPORT_GATE_REASON },
   }

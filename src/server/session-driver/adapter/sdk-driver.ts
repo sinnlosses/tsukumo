@@ -65,8 +65,8 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     },
   })
 
-  const reportGate = createReportGate()
   const reportReview = createReportReview()
+  const reportGate = createReportGate(reportReview.nothingNewRejected)
   const speechReview = createSpeechReview()
   // `speak` の差し戻しを `report` の差し戻しより先に通す（ターンの終わりに預かりを出す並びがセリフ → レポートになる）。
   const review = (event: SessionEvent): readonly SessionEvent[] =>

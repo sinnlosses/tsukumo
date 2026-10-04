@@ -150,14 +150,28 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
   const LONG_BODY: SessionEvent = { kind: "utterance", text: "架空の本文の1行目\n架空の2行目" }
 
   it("仕事でも雑談でも Stop だけを登録し、SubagentStop には載せない", () => {
-    expect(Object.keys(stopHooks(WORK_MODE, createReportGate(), () => {}))).toEqual(["Stop"])
     expect(
-      Object.keys(stopHooks(chatMode(fixedChatSummary(undefined)), createReportGate(), () => {})),
+      Object.keys(
+        stopHooks(
+          WORK_MODE,
+          createReportGate(() => false),
+          () => {},
+        ),
+      ),
+    ).toEqual(["Stop"])
+    expect(
+      Object.keys(
+        stopHooks(
+          chatMode(fixedChatSummary(undefined)),
+          createReportGate(() => false),
+          () => {},
+        ),
+      ),
     ).toEqual(["Stop"])
   })
 
   it("1行を超える本文で止まろうとしたら、固定の理由文で block を返す（仕事のときだけ）", async () => {
-    const gate = createReportGate()
+    const gate = createReportGate(() => false)
     gate.observe(LONG_BODY)
 
     expect(
@@ -172,7 +186,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
   })
 
   it("1行以内なら何も返さない（止まってよい）", async () => {
-    const gate = createReportGate()
+    const gate = createReportGate(() => false)
     gate.observe({ kind: "utterance", text: "完了" })
 
     expect(
@@ -184,7 +198,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
   })
 
   it("stop_hook_active のときは長い本文でも block しない", async () => {
-    const gate = createReportGate()
+    const gate = createReportGate(() => false)
     gate.observe(LONG_BODY)
 
     expect(
@@ -196,7 +210,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
   })
 
   it("雑談のときは長い本文でも block しない（関所は仕事だけ）", async () => {
-    const gate = createReportGate()
+    const gate = createReportGate(() => false)
     gate.observe(LONG_BODY)
 
     expect(
@@ -210,7 +224,11 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
   it("effort.level が読めたら effort-changed を流す（仕事でも雑談でも）", async () => {
     const workEvents: SessionEvent[] = []
     await runStop(
-      stopHooks(WORK_MODE, createReportGate(), (event) => workEvents.push(event)),
+      stopHooks(
+        WORK_MODE,
+        createReportGate(() => false),
+        (event) => workEvents.push(event),
+      ),
       false,
       "high",
     )
@@ -218,8 +236,10 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
 
     const chatEvents: SessionEvent[] = []
     await runStop(
-      stopHooks(chatMode(fixedChatSummary(undefined)), createReportGate(), (event) =>
-        chatEvents.push(event),
+      stopHooks(
+        chatMode(fixedChatSummary(undefined)),
+        createReportGate(() => false),
+        (event) => chatEvents.push(event),
       ),
       false,
       "low",
@@ -230,14 +250,22 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
   it("effort が無い・知らない段のときは effort-changed を流さない", async () => {
     const withoutEffort: SessionEvent[] = []
     await runStop(
-      stopHooks(WORK_MODE, createReportGate(), (event) => withoutEffort.push(event)),
+      stopHooks(
+        WORK_MODE,
+        createReportGate(() => false),
+        (event) => withoutEffort.push(event),
+      ),
       false,
     )
     expect(withoutEffort).toEqual([])
 
     const unknownLevel: SessionEvent[] = []
     await runStop(
-      stopHooks(WORK_MODE, createReportGate(), (event) => unknownLevel.push(event)),
+      stopHooks(
+        WORK_MODE,
+        createReportGate(() => false),
+        (event) => unknownLevel.push(event),
+      ),
       false,
       "未来の段",
     )

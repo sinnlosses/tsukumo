@@ -335,6 +335,18 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
     expect(REPORT_NOTHING_NEW_REJECTION_TEXT).not.toContain(OTHER.conclusion)
   })
 
+  it("差し戻したあとは nothingNewRejected が true になり、次のターンの頭で false に戻る", () => {
+    const review = createReportReview()
+    draw(review, "toolu_r1", VALID)
+    expect(review.nothingNewRejected()).toBe(false)
+
+    review.judge(OTHER)
+    expect(review.nothingNewRejected()).toBe(true)
+
+    review.pass(SESSION_INFO)
+    expect(review.nothingNewRejected()).toBe(false)
+  })
+
   it("ターンをまたいでも、自分で始めたターン（依頼なし）で何も届いていなければ差し戻す", () => {
     const review = createReportReview()
     draw(review, "toolu_r1", VALID)

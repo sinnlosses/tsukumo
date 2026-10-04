@@ -40,8 +40,12 @@ const LONG_BODY = utterance("架空の本文の1行目\n架空の本文の2行�
 const ONE_LINE = utterance("完了")
 
 /** 関所に `events` を順に見せて、止まろうとしたときの判定を返す。 */
-function verdictOf(events: readonly SessionEvent[], stopHookActive = false) {
-  const gate = createReportGate()
+function verdictOf(
+  events: readonly SessionEvent[],
+  stopHookActive = false,
+  nothingNewRejected: () => boolean = () => false,
+) {
+  const gate = createReportGate(nothingNewRejected)
   for (const event of events) {
     gate.observe(event)
   }
@@ -49,8 +53,12 @@ function verdictOf(events: readonly SessionEvent[], stopHookActive = false) {
 }
 
 /** 関所に `events` を順に見せて、止まろうとしたときに差し戻すかを返す。 */
-function blocks(events: readonly SessionEvent[], stopHookActive = false): boolean {
-  return verdictOf(events, stopHookActive).kind === "block"
+function blocks(
+  events: readonly SessionEvent[],
+  stopHookActive = false,
+  nothingNewRejected: () => boolean = () => false,
+): boolean {
+  return verdictOf(events, stopHookActive, nothingNewRejected).kind === "block"
 }
 
 describe("createReportGate（Stop の関所）", () => {
@@ -94,6 +102,14 @@ describe("createReportGate（Stop の関所）", () => {
   it("ターンの頭（init）と終わり（turn-finished）で前のターンの本文を持ち越さない", () => {
     expect(blocks([INIT, LONG_BODY, INIT, ONE_LINE])).toBe(false)
     expect(blocks([INIT, LONG_BODY, FINISHED])).toBe(false)
+  })
+
+  it("新しい事実が無い差し戻しがあったターンでは、1行を超える本文でも通す", () => {
+    expect(blocks([INIT, LONG_BODY], false, () => true)).toBe(false)
+  })
+
+  it("新しい事実が無い差し戻しが無いターンでは、これまでどおり差し戻す", () => {
+    expect(blocks([INIT, LONG_BODY], false, () => false)).toBe(true)
   })
 })
 

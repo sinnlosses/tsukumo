@@ -42,6 +42,8 @@ export type ReportReview = {
    * このターンで描いた `report` の送り直し、直前に描いた `report` のあとに新しい事実の届いていない呼び出し、規約違反のどれかなら差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
    */
   readonly judge: (report: ReportDraft) => ReportVerdict
+  /** このターンで「新しい事実が無い」差し戻しをしたか。ターンの頭（`session-info`）で戻る。 */
+  readonly nothingNewRejected: () => boolean
   /**
    * 届いたイベントを流してよい並びに変える（メインのイベントだけを渡す）。
    * `report` は同じ `toolUseId` の `tool-finished` まで預かり、`isError` でなければその直前に出す。
@@ -94,6 +96,7 @@ export function createReportReview(): ReportReview {
       rejectedInTurn = true
       return { kind: "rejected", text: reportRejectionText(violations) }
     },
+    nothingNewRejected: () => nothingNewRejectedInTurn,
     pass: (event) => {
       switch (event.kind) {
         case "report":
