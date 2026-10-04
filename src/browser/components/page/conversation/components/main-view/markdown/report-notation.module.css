@@ -757,7 +757,7 @@
   line-height: 1.75;
   color: var(--ink-soft);
 }
-/* 通った項目の小さな札。高さ 24・角丸 12・最大幅 260、はみ出しは省略記号、折り返して並ぶ。 */
+/* 通った項目の小さな札。高さ 24 から・角丸 12、文字は省かず欄より長ければ札の中で折り返す。札どうしも折り返して並ぶ。 */
 .detail-block .report-checks-passed {
   display: flex;
   flex-wrap: wrap;
@@ -768,16 +768,15 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 24px;
-  max-width: 260px;
+  min-height: 24px;
+  max-width: 100%;
   padding: 0 10px;
   border-radius: 12px;
   background: color-mix(in srgb, var(--state-ok) 7%, transparent);
   font-size: 12px;
+  line-height: 1.6;
   color: var(--ink-quiet);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 .detail-block .report-checks-passed-chip-mark {
   font-weight: 700;
