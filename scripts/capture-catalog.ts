@@ -45,6 +45,7 @@ import { type Browser, chromium, type Page } from "playwright-core"
 
 import { appendDiaryParagraph } from "../src/server/diary/adapter/diary.ts"
 import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
+import { fictionalPng } from "./lib/fictional-png.ts"
 import { escapeHtml } from "./lib/html-escape.ts"
 
 /** tsukumo 自身の場所（このスクリプトの1つ上）。spawn の cwd にも、架空の日記・パックを
@@ -88,6 +89,16 @@ type HomeSetup =
   | { readonly kind: "character"; readonly pack: string }
 
 /**
+ * tsukumo を起こす作業場所（cwd）。レポートが相対パスで指すファイルは、ここから読まれる。
+ * リポジトリの根には書かない。
+ *
+ * - `repository`: リポジトリの根で起こす（ほとんどの件はこれ。何も置かない）
+ * - `report-image`: `--out` の下に件専用の場所を立て、`report-image` 場面が指す画像
+ *   （架空の PNG）を置いてから、そこで起こす
+ */
+type WorkspaceSetup = { readonly kind: "repository" } | { readonly kind: "report-image" }
+
+/**
  * 場面が撮れる状態まで落ち着くのを待つやり方。`tail` は固定の余裕、`selector` は要素が現れるまで。
  * `selector` は上限まで現れなければ撮らずに落とす。`phase` は `prepare` の前に待つか後に待つか
  * （操作で初めて出る要素は `after-prepare`）。
@@ -124,6 +135,7 @@ type CatalogEntry = {
   readonly scene: string
   readonly label: string
   readonly homeSetup: HomeSetup
+  readonly workspaceSetup: WorkspaceSetup
   readonly prepare: readonly Preparation[]
   readonly skipReveal: boolean
   readonly settle: Settle
@@ -235,6 +247,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "question-multi",
     label: "質問（複数選択）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -244,6 +257,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "question-pair",
     label: "質問（2問・長い説明）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -253,6 +267,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "question-long",
     label: "質問（長いラベルと長い説明・複数選択と単一選択）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -262,6 +277,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "question-preview",
     label: "質問（選択肢ごとの preview を札の中、説明の下に出す）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -271,6 +287,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "permission",
     label: "許可プロンプト",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -280,6 +297,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report",
     label: "レポートとツールの進行",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -290,6 +308,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report-tool",
     label: "検証結果の表（ok・ng・unverified）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: CHECKS_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: CHECKS_SELECTOR, phase: "before-prepare" },
@@ -300,6 +319,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report-task-verdict",
     label: "合図の行（検証がすべて通り、お願いがある）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: true,
     settle: { kind: "selector", selector: VERDICT_SELECTOR, phase: "before-prepare" },
@@ -309,6 +329,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report-task-verdict",
     label: "合図の行（畳んだ検証を開いた）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "click", selector: `${VERDICT_SELECTOR} summary` }],
     skipReveal: true,
     settle: { kind: "selector", selector: VERDICT_SELECTOR, phase: "before-prepare" },
@@ -318,6 +339,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "turn-history",
     label: "ターンの札（4件）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -327,6 +349,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "notation",
     label: "レポートの記法（引用・表・注意）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -338,6 +361,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "notation",
     label: "レポートの記法（note の種別。領域を送った先）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: NOTE_KINDS_SELECTOR }],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -347,6 +371,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "notation",
     label: "レポートの記法（メモ。領域を送った先）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: NOTE_MEMO_SELECTOR }],
     skipReveal: true,
     settle: TAIL_SETTLE,
@@ -356,6 +381,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "notation",
     label: "レポートの記法（お願い。領域を送った先）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: NOTE_FAVOR_SELECTOR }],
     // お願いはレポートの末尾なので、図と同じく演出が終わるまで送り位置を戻され続ける。
     skipReveal: true,
@@ -366,6 +392,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "notation",
     label: "レポートの記法（図。領域を送った先）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: MERMAID_SELECTOR }],
     // 図はレポートの末尾に近く、演出が終わるまで自動送りに送り位置を戻され続ける（冒頭の
     // `skipReveal` の説明）。
@@ -377,6 +404,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "notation",
     label: "レポートの記法（グラフ。領域を送った先）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: CHART_SELECTOR }],
     skipReveal: true,
     settle: TAIL_SETTLE,
@@ -386,6 +414,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report-caption",
     label: "図と表の題（表の題は本体の上。長い題は本体の幅で折り返す）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: CAPTIONED_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: CAPTIONED_SELECTOR, phase: "before-prepare" },
@@ -395,6 +424,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report-caption",
     label: "図と表の題（図の題は本体の下。mermaid・グラフ）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: CAPTIONED_FIGURE_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: CAPTIONED_FIGURE_SELECTOR, phase: "before-prepare" },
@@ -404,6 +434,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report-caption",
     label: "図と表の題（見比べ・寸法図・画像）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: DIMENSION_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: CAPTIONED_SELECTOR, phase: "before-prepare" },
@@ -411,8 +442,19 @@ const CATALOG: readonly CatalogEntry[] = [
   {
     name: "report-image-notes",
     scene: "report-image",
-    label: "画像に番号つきの説明を添えた塊（画像を置いていないと「出せない」の札と並ぶ）",
+    label: "画像に番号つきの説明を添えた塊（画像が読めて、説明が番号つきで並ぶ）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [{ kind: "scroll", selector: IMAGE_NOTES_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: IMAGE_NOTES_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-image-missing",
+    scene: "report-image",
+    label: "画像に番号つきの説明を添えた塊（画像を置いていないので「出せない」の札が出る）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: IMAGE_NOTES_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: IMAGE_NOTES_SELECTOR, phase: "before-prepare" },
@@ -422,6 +464,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "notation",
     label: "レポートの記法（流れ。領域を送った先）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: FLOW_SELECTOR }],
     skipReveal: true,
     settle: TAIL_SETTLE,
@@ -431,6 +474,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report",
     label: "タスク一覧のモーダル",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [
       { kind: "click", selector: SIDEBAR_TAB_SELECTOR },
       { kind: "click", selector: TASK_BOARD_SELECTOR },
@@ -443,6 +487,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report",
     label: "「/」のコマンド補完",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "type", selector: COMPOSER_SELECTOR, text: "/c" }],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -452,6 +497,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report",
     label: "「@」のファイル補完",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "type", selector: COMPOSER_SELECTOR, text: "@src/browser/" }],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -461,6 +507,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report",
     label: "キャラクター画面",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "hash", hash: "#character" }],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -470,6 +517,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report",
     label: "キャラクターを作る画面",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "hash", hash: "#character/new" }],
     skipReveal: false,
     settle: TAIL_SETTLE,
@@ -484,6 +532,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "current-work-running",
     label: "帯の「いまの作業」（実行中）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [
       { kind: "click", selector: MENU_TOGGLE_SELECTOR },
       { kind: "click", selector: WORK_TOGGLE_SELECTOR },
@@ -501,6 +550,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "current-work-failed",
     label: "帯の「いまの作業」（失敗した手順）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [
       { kind: "click", selector: MENU_TOGGLE_SELECTOR },
       { kind: "click", selector: WORK_TOGGLE_SELECTOR },
@@ -513,6 +563,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "background-task",
     label: "帯の「いまの作業」（背景のタスク）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [
       { kind: "click", selector: MENU_TOGGLE_SELECTOR },
       { kind: "click", selector: WORK_TOGGLE_SELECTOR },
@@ -526,6 +577,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "work-plan",
     label: "いまの作業の段取り（作業中）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [
       { kind: "click", selector: MENU_TOGGLE_SELECTOR },
       { kind: "click", selector: WORK_TOGGLE_SELECTOR },
@@ -539,6 +591,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "work-plan",
     label: "段取りが移ったメインビュー（中間レポートと最終レポート）",
     homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: true,
     settle: {
@@ -554,6 +607,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "diary-written",
     label: "日記帳の見開き",
     homeSetup: { kind: "diary", date: DIARY_FIXTURE_DATE, body: DIARY_FIXTURE_BODY },
+    workspaceSetup: { kind: "repository" },
     prepare: [
       { kind: "hash", hash: "#achievement" },
       { kind: "click", selector: DIARY_NOTICE_OPEN_SELECTOR },
@@ -567,6 +621,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report",
     label: "表情を消す前の確かめ",
     homeSetup: { kind: "character", pack: SAMPLE_CHARACTER_PACK_NAME },
+    workspaceSetup: { kind: "repository" },
     prepare: [
       { kind: "hash", hash: `#character?pack=${SAMPLE_CHARACTER_PACK_NAME}` },
       { kind: "click", selector: PORTRAIT_CLEAR_BUTTON_SELECTOR },
@@ -579,6 +634,7 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "report",
     label: "キャラクターを消す前の確かめ",
     homeSetup: { kind: "character", pack: SAMPLE_CHARACTER_PACK_NAME },
+    workspaceSetup: { kind: "repository" },
     prepare: [
       { kind: "hash", hash: `#character?pack=${SAMPLE_CHARACTER_PACK_NAME}` },
       { kind: "click", selector: CHARACTER_DELETE_BAND_BUTTON_SELECTOR },
@@ -706,7 +762,7 @@ async function captureEntry(
   }
   const session = spawnFakeTsukumo({
     entry: path.join(REPO_DIR, "src", "cli.ts"),
-    cwd: REPO_DIR,
+    cwd: workspaceOf(entry, outDir),
     scene: entry.scene,
     port: 0,
     home,
@@ -833,6 +889,17 @@ function describePreparation(step: Preparation): string {
     case "hash":
       return `location.hash に ${step.hash} を書く`
   }
+}
+
+/** `entry.workspaceSetup` に合わせて作業場所を用意し、その場所を返す。 */
+function workspaceOf(entry: CatalogEntry, outDir: string): string {
+  if (entry.workspaceSetup.kind === "repository") {
+    return REPO_DIR
+  }
+  const workspace = path.join(outDir, "workspace", entry.name)
+  mkdirSync(path.join(workspace, "report-image-fixture"), { recursive: true })
+  writeFileSync(path.join(workspace, "report-image-fixture", "after.png"), fictionalPng(320, 180))
+  return workspace
 }
 
 /**
