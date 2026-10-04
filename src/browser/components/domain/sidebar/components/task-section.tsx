@@ -5,8 +5,8 @@
 // タスクの購読と、チップで絞っているかどうかの state はここが持つ。
 // `<Layout>` へ上げると木の頂点がタスクを購読することになり、タスクが変わるたびに全領域が描き直される。
 //
-// 絞り込みは1つだけ選べ、同じチップをもう一度押すと全件に戻る。
-// 表示上の状態なので保存しない（リロードやセッションの起こし直しで全件に戻る）。
+// 絞り込みは1つだけ選べ、既定は「すべて」。選んでいるチップをもう一度押しても変わらない。
+// 表示上の状態なので保存しない（リロードやセッションの起こし直しで「すべて」に戻る）。
 // 絞っている最中にタスクが変わって0件になっても選択は外さない（「◯◯のタスクが無い」の一言は `TaskList` が出す）。
 
 import { useState, type ReactElement } from "react"
@@ -25,23 +25,23 @@ import styles from "./task-section.module.css"
 export function TaskSection(): ReactElement {
   const tasks = useSession((session) => session.state.tasks)
   const openList = useTaskBoardRequest((state) => state.openList)
-  const [selectedStatus, setSelectedStatus] = useState<TaskListFilterStatus | undefined>(undefined)
+  const [selectedStatus, setSelectedStatus] = useState<TaskListFilterStatus>("all")
 
   return (
     <SidebarSection
       title="タスク"
       extraClass={styles["sidebar-block-tasks"]}
       action={{ label: "一覧を見る", onAction: openList }}
+      filters={
+        tasks.kind === "known" && (
+          <TaskCountChipList
+            counts={taskListCounts(tasks.items)}
+            selected={selectedStatus}
+            onSelect={setSelectedStatus}
+          />
+        )
+      }
     >
-      {tasks.kind === "known" && (
-        <TaskCountChipList
-          counts={taskListCounts(tasks.items)}
-          selected={selectedStatus}
-          onSelect={(status) => {
-            setSelectedStatus((current) => (current === status ? undefined : status))
-          }}
-        />
-      )}
       <TaskList tasks={tasks} selectedStatus={selectedStatus} />
     </SidebarSection>
   )

@@ -10,9 +10,11 @@ import { useState, type ReactElement } from "react"
 
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { Text } from "../../../components/ui/text/text.tsx"
+import { codeSpanParts } from "../../../domain/code-span.ts"
 import taskBoardStyles from "../task-board.module.css"
 import styles from "./task-item.module.css"
 import { TaskRunButton } from "./task-run-button.tsx"
+import { TaskSummaryText } from "./task-summary-text.tsx"
 
 export function TaskItem(props: {
   readonly task: TaskSummaryItem
@@ -46,7 +48,7 @@ export function TaskItem(props: {
           }}
         >
           <Text element="span" size="label" tone="inherit" weight="inherit" className="">
-            {props.task.summary}
+            <TaskSummaryText parts={codeSpanParts(props.task.summary)} />
           </Text>
         </button>
       </span>

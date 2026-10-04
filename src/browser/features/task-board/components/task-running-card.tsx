@@ -8,8 +8,10 @@ import type { ReactElement } from "react"
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
+import { codeSpanParts } from "../../../domain/code-span.ts"
 import taskBoardStyles from "../task-board.module.css"
 import styles from "./task-running-card.module.css"
+import { TaskSummaryText } from "./task-summary-text.tsx"
 
 export function TaskRunningCard(props: { readonly task: TaskSummaryItem }): ReactElement {
   return (
@@ -39,7 +41,7 @@ export function TaskRunningCard(props: { readonly task: TaskSummaryItem }): Reac
         weight="inherit"
         className={styles["task-running-body"]}
       >
-        {props.task.summary}
+        <TaskSummaryText parts={codeSpanParts(props.task.summary)} />
       </Text>
     </li>
   )

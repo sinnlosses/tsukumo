@@ -20,11 +20,18 @@ describe("タスクの一覧", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("選んでいるチップをもう一度押すと全件に戻る", async () => {
+  it("選んでいるチップをもう一度押しても変わらない", async () => {
     const room = await openTaskListRoom(run, "task-list-filtered-off", ["task-section"])
     const chip = room.page.getByRole("button", { name: "未着手 1" })
     await chip.click()
     await chip.click()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("「すべて」を押すと絞り込みが外れる", async () => {
+    const room = await openTaskListRoom(run, "task-list-filtered-all", ["task-section"])
+    await room.page.getByRole("button", { name: "未着手 1" }).click()
+    await room.page.getByRole("button", { name: "すべて 2" }).click()
     await room.settleAndMatch(ELAPSED_MS)
   })
 

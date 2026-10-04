@@ -44,6 +44,7 @@ export function PersonaMemorySection(): ReactElement {
               },
             }
       }
+      filters={undefined}
     >
       {lines.length === 0 ? (
         <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">

@@ -67,13 +67,13 @@ const TASKS: readonly TaskSummaryItem[] = [
 
 describe("taskList", () => {
   it("tasks が不明のときは一覧の代わりに「不明」を出す", () => {
-    render(<TaskList tasks={{ kind: "unknown" }} selectedStatus={undefined} />)
+    render(<TaskList tasks={{ kind: "unknown" }} selectedStatus="all" />)
 
     expect(screen.getByText("不明")).toBeDefined()
   })
 
   it("空配列のときは「タスクが無い」を出す", () => {
-    render(<TaskList tasks={known([])} selectedStatus={undefined} />)
+    render(<TaskList tasks={known([])} selectedStatus="all" />)
 
     expect(screen.getByText("タスクが無い")).toBeDefined()
   })
@@ -92,26 +92,26 @@ describe("taskList", () => {
         location: { kind: "none" },
       },
     ]
-    render(<TaskList tasks={known(items)} selectedStatus={undefined} />)
+    render(<TaskList tasks={known(items)} selectedStatus="all" />)
 
     expect(document.querySelector(".task-running-assignee")?.textContent).toBe("wt-架空")
   })
 
   it("着手した作業ツリーが分からない進行中のカードには名前の欄を出さない", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
+    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
     expect(document.querySelector(".task-running-assignee")).toBeNull()
   })
 
   it("todo は空の丸の印を持つ", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
+    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
     const items = screen.getAllByRole("listitem")
     expect(items[1]?.querySelector(".task-mark-todo")).not.toBeNull()
   })
 
   it("done は薄く打ち消し線で出す", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
+    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
     const items = screen.getAllByRole("listitem")
     expect(items[2]?.className).toContain("task-done")
@@ -120,7 +120,7 @@ describe("taskList", () => {
   })
 
   it("status が無い要素は印を出さない", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
+    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
     const items = screen.getAllByRole("listitem")
     expect(items[3]?.querySelector(".task-mark-todo")).toBeNull()
@@ -142,7 +142,7 @@ describe("taskList", () => {
         location: { kind: "none" },
       },
     ]
-    render(<TaskList tasks={known(items)} selectedStatus={undefined} />)
+    render(<TaskList tasks={known(items)} selectedStatus="all" />)
 
     expect(screen.getByRole("listitem").querySelector(".task-mark-other")).not.toBeNull()
   })
@@ -164,7 +164,7 @@ describe("taskList", () => {
   })
 
   it("summary を押すと aria-expanded が true になり、もう一度押すと false に戻る", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
+    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
     const summaryToggle = screen.getByRole("button", { name: "架空のタスク1" })
     expect(summaryToggle.getAttribute("aria-expanded")).toBe("false")
@@ -177,7 +177,7 @@ describe("taskList", () => {
   })
 
   it("ID を押しても summary の開閉は変わらない", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
+    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
     fireEvent.click(screen.getByRole("button", { name: "X-001" }))
 

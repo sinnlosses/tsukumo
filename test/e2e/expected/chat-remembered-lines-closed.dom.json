@@ -57,9 +57,17 @@
           },
           "children": [
             {
-              "tag": "h2",
+              "tag": "div",
+              "attributes": {
+                "data-scrolled": "false"
+              },
               "children": [
-                "最近の話題"
+                {
+                  "tag": "h2",
+                  "children": [
+                    "最近の話題"
+                  ]
+                }
               ]
             },
             {
@@ -77,18 +85,26 @@
           },
           "children": [
             {
-              "tag": "h2",
+              "tag": "div",
+              "attributes": {
+                "data-scrolled": "false"
+              },
               "children": [
-                "覚えていること",
                 {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-disabled": "false",
-                    "aria-haspopup": "dialog",
-                    "type": "button"
-                  },
+                  "tag": "h2",
                   "children": [
-                    "編集"
+                    "覚えていること",
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "false",
+                        "aria-haspopup": "dialog",
+                        "type": "button"
+                      },
+                      "children": [
+                        "編集"
+                      ]
+                    }
                   ]
                 }
               ]

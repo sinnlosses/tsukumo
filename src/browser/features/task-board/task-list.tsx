@@ -30,7 +30,7 @@ import styles from "./task-board.module.css"
 
 export type TaskListProps = {
   readonly tasks: TaskSummaryResult
-  readonly selectedStatus: TaskListFilterStatus | undefined
+  readonly selectedStatus: TaskListFilterStatus
 }
 
 export function TaskList(props: TaskListProps): ReactElement {
@@ -65,7 +65,7 @@ export function TaskList(props: TaskListProps): ReactElement {
   }
 
   const filtered = filterTasksForSidebar(props.tasks.items, props.selectedStatus)
-  if (filtered.length === 0 && props.selectedStatus !== undefined) {
+  if (filtered.length === 0 && props.selectedStatus !== "all") {
     return (
       <Text
         element="p"

@@ -28,8 +28,8 @@ const TASKS: readonly TaskSummaryItem[] = [
 ]
 
 describe("filterTasksForSidebar", () => {
-  it("選んでいない（undefined）ときは全件をそのまま返す", () => {
-    expect(filterTasksForSidebar(TASKS, undefined)).toEqual(TASKS)
+  it("「すべて」のときは全件をそのまま返す", () => {
+    expect(filterTasksForSidebar(TASKS, "all")).toEqual(TASKS)
   })
 
   it("選んだ状態のタスクだけを残す", () => {

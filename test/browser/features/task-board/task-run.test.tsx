@@ -63,7 +63,7 @@ const RUNNING_TURN: Partial<SessionState> = { turn: { kind: "running", startedAt
 
 /** サイドバーの区画の一覧。確認は姿と送り口が要るので store で包む。 */
 function renderList(spy: CommandSpy = () => {}, overrides: Partial<SessionState> = {}): void {
-  renderWithStore(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />, spy, overrides)
+  renderWithStore(<TaskList tasks={known(TASKS)} selectedStatus="all" />, spy, overrides)
 }
 
 /**
@@ -180,7 +180,7 @@ describe("タスクIDから実行を頼む", () => {
           task("Y-003", "todo", []),
           task("Y-004", "hold", []),
         ])}
-        selectedStatus={undefined}
+        selectedStatus="all"
       />,
     )
 
@@ -223,7 +223,7 @@ describe("タスクIDから実行を頼む", () => {
 
     cleanup()
     putSession({ ...INITIAL_SESSION_STATE, ...commands }, () => {})
-    render(<TaskList tasks={known(TASKS, "/work {id}")} selectedStatus={undefined} />)
+    render(<TaskList tasks={known(TASKS, "/work {id}")} selectedStatus="all" />)
     expect(screen.queryByRole("button", { name: "X-002" })).toBeNull()
   })
 
