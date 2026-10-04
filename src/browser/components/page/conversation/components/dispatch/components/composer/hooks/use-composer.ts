@@ -21,6 +21,7 @@ import {
 import { useInquiryAnswer } from "../../../../../../../../stores/inquiry-answer.ts"
 import { useInquiryJump } from "../../../../../../../../stores/inquiry-jump.ts"
 import { useSession, useTurnRunning } from "../../../../../../../../stores/session.ts"
+import { isClearWithArgs } from "../../../../../domain/clear-request.ts"
 import type { ComposerKey, ComposerSurface } from "../../../domain/composer-surface.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
 import { useComposerFocusTiming } from "./use-composer-focus.ts"
@@ -33,7 +34,7 @@ import {
 } from "./use-suggestion.ts"
 
 /**
- * `<textarea>` の上の帯。接続が切れているあいだ・会話が終わったあと・答え待ち（お伺い）があるあいだだけ出す（この順に先）。
+ * `<textarea>` の上の帯。接続が切れているあいだ・会話が終わったあと・`/clear` に続く文を止めたあと・答え待ち（お伺い）があるあいだだけ出す（この順に先）。
  * 答えはメインビューのお伺いの札で選ぶ（質問ならここに書いて送ってもよい）。
  * `onJump` は「お伺いへ」の口で、お伺いの札の最初の選択肢へフォーカスを移す。
  */
@@ -41,6 +42,7 @@ export type ComposerBand =
   | { readonly kind: "none" }
   | { readonly kind: "inquiry"; readonly text: string; readonly onJump: () => void }
   | { readonly kind: "disconnected"; readonly text: string }
+  | { readonly kind: "clear-dropped"; readonly text: string }
   | { readonly kind: "ended"; readonly text: string; readonly onRestart: () => void }
 
 /**
@@ -88,6 +90,8 @@ export function useComposer(): ComposerModel {
   const commandDescriptions = useSession((session) => session.state.commandDescriptions)
   const draft = useComposerDraft((state) => state.draft)
   const setDraft = useComposerDraft((state) => state.setDraft)
+  // `/clear` の続きがあって送らなかった文。下書きがこの文のままのあいだだけ帯を出す。
+  const [blockedClearText, setBlockedClearText] = useState<string | undefined>(undefined)
   const surfaceRef = useRef<ComposerSurface | null>(null)
   const [mode, setMode] = useState<ComposerMode>(loadComposerMode)
   useComposerFocusTiming(surfaceRef)
@@ -128,6 +132,9 @@ export function useComposer(): ComposerModel {
     if (inquiry.kind === "question") {
       // 質問に答えている間は依頼として送らない（打った字はいま見ている1問の答えになる）。
       inquiry.onAnswerWithText(trimmed)
+    } else if (isClearWithArgs(trimmed)) {
+      setBlockedClearText(trimmed)
+      return
     } else {
       dispatch.session.prompt({ text: trimmed, images: promptImage.images })
     }
@@ -155,6 +162,9 @@ export function useComposer(): ComposerModel {
         text: `会話が終了しました（理由: ${endedReason}）。新しく始めると、また頼めます`,
         onRestart: () => dispatch.session.startNewSession(),
       }
+    }
+    if (inquiry.kind !== "question" && blockedClearText === draft.text.trim()) {
+      return { kind: "clear-dropped", text: CLEAR_DROPPED_BAND_TEXT }
     }
     if (inquiry.kind === "none") {
       return { kind: "none" }
@@ -223,6 +233,9 @@ const ANSWER_PLACEHOLDER = "選択肢以外の答えを書く…"
 
 const DISCONNECTED_BAND_TEXT =
   "サーバとつながっていません。送れず、下書きは残してあります。サーバを起こし直したなら、ページを開き直してください"
+
+const CLEAR_DROPPED_BAND_TEXT =
+  "/clear のあとの文は捨てられるので、送っていません。/clear だけを送り、続きを書き直してください"
 
 const REQUEST_LABEL = "依頼を書く"
 const ANSWER_LABEL = "質問への答えを書く"

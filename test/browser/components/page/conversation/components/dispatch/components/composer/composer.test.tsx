@@ -279,6 +279,33 @@ describe("Composer", () => {
     expect(useInquiryJump.getState().jump).toEqual({ signal: 1, focus: true })
   })
 
+  it("`/clear` に続けて文を書いて送ろうとすると、送らずに文を残し、帯で知らせる", () => {
+    const calls: unknown[] = []
+    renderComposer({}, (command) => calls.push(command))
+
+    fireEvent.change(textArea(), { target: { value: "/clear 続きの架空の文" } })
+    fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true })
+
+    expect(calls).toEqual([])
+    expect(textArea().value).toBe("/clear 続きの架空の文")
+    expect(screen.getByText(/\/clear のあとの文は捨てられるので、送っていません/)).toBeDefined()
+
+    fireEvent.change(textArea(), { target: { value: "/clear" } })
+
+    expect(screen.queryByText(/捨てられるので、送っていません/)).toBeNull()
+  })
+
+  it("`/clear` だけの文は今までどおり送る", () => {
+    const calls: unknown[] = []
+    renderComposer({}, (command) => calls.push(command))
+
+    fireEvent.change(textArea(), { target: { value: "/clear" } })
+    fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true })
+
+    expect(calls).toEqual([{ procedure: "session.prompt", text: "/clear", images: [] }])
+    expect(screen.queryByText(/捨てられるので、送っていません/)).toBeNull()
+  })
+
   it("質問に答えている間の Command+Enter は、依頼ではなく自由入力の答えとして届く", () => {
     const calls: unknown[] = []
     renderComposer(

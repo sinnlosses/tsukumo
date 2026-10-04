@@ -56,11 +56,11 @@ export function PresentationalComposer({
       className={clsx(dispatchStyles["dispatch-form"], answering && dispatchStyles["is-answering"])}
       onSubmit={onSubmit}
     >
-      {band.kind === "disconnected" && (
+      {(band.kind === "disconnected" || band.kind === "clear-dropped") && (
         <Text
           element="p"
           size="secondary"
-          tone="state-ng"
+          tone={band.kind === "disconnected" ? "state-ng" : "state-warn"}
           weight="inherit"
           className={styles["dispatch-band-text"]}
         >
