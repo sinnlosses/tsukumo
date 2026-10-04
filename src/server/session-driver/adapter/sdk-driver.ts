@@ -17,6 +17,7 @@ import { createReportGate, type ReportGate } from "../../report/core/report-tool
 import { createUsageReviewIntake } from "../../usage-review/core/usage-review-tool.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
+import { createPromptDelayWatch, type PromptDelayWatch } from "../core/prompt-delay.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { isSubagentMessage, toSessionEvents } from "../core/sdk-message.ts"
 import { toCommandDescriptions, toModelEffortSupport, toPlan } from "../core/sdk-query-reply.ts"
@@ -58,7 +59,8 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   // claude が依頼なしで始めた続きのターンに `turn-started` を補うのに、依頼で開いたターンも見ている必要がある（`withSelfStartedTurns`）。
   const ending = createSessionEnding(given.onEvent, given.reportFailure)
   const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(ending.deliver) }
-  const input = createPromptStream()
+  const delayWatch = createPromptDelayWatch(given.reportPromptDelay)
+  const input = createPromptStream(delayWatch, given.now)
   const queue = createPendingAnswerQueue({
     onChange: (pending) => {
       options.onEvent({ kind: "pending-changed", pending })
@@ -114,7 +116,16 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   }
 
   void applyNeutralOutputStyle(session)
-  void relayMessages(session, options, reportGate, review, workPlanReview, titleIntake, titleWriter)
+  void relayMessages(
+    session,
+    options,
+    reportGate,
+    review,
+    workPlanReview,
+    titleIntake,
+    titleWriter,
+    delayWatch,
+  )
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
   void relaySupportedModels(session, options)
@@ -126,15 +137,18 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       // 原寸と控えはここで分かれる。
       // 控えと id だけが記録（`request`）へ行き、原寸はストリーミング入力へ流れる（棚に残っているぶんは棚の寿命で捨てる）。
       emitTurnOpening({ kind: "request", text, images: recordedPromptImages(images) })
+      delayWatch.pushed(options.now())
       input.push({ text, images: images.flatMap(toImageBlocks) })
     },
     promptWithoutRecord: (text) => {
       // `request` を流さない（送った文面をログにも記録にも残さない）。
       // 代わりにターンの始まりだけを流し、吹き出しと進行中の印は依頼と同じに動かす。
       emitTurnOpening({ kind: "turn-started" })
+      delayWatch.pushed(options.now())
       input.push({ text, images: [] })
     },
     interrupt: async () => {
+      delayWatch.discard()
       await session.interrupt()
     },
     answer: (id, answer) => queue.answer(id, answer),
@@ -159,6 +173,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     setPermissionMode: (mode) => session.setPermissionMode(mode),
     ended: ending.ended,
     close: () => {
+      delayWatch.discard()
       queue.settleAll()
       input.end()
       session.close()
@@ -187,12 +202,16 @@ async function relayMessages(
   workPlanReview: WorkPlanReview,
   titleIntake: SessionTitleIntake,
   titleWriter: SessionTitleWriter,
+  delayWatch: PromptDelayWatch,
 ): Promise<void> {
   // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに印を付け直す（`scheduleMarkSession`）。
   let sessionId: string | undefined = undefined
   try {
     for await (const message of session) {
       const fromMain = !isSubagentMessage(message)
+      if (fromMain) {
+        delayWatch.received(options.now())
+      }
       // 環境変数が効かなくなったことに気づくための1行。届いた事実だけで、中身は写さない。
       if (fromMain && isVisibleOutputNudge(message)) {
         process.stderr.write(VISIBLE_OUTPUT_NUDGE_NOTICE)
@@ -354,7 +373,10 @@ type PromptContentBlock = Extract<SDKUserMessage["message"]["content"], readonly
  * 画像を添えられるのはストリーミング入力だけ（単発入力は受け付けない）。
  * 添えたときは `content` を配列にし、画像のブロックを先に、文面を後ろに置く。
  */
-function createPromptStream(): {
+function createPromptStream(
+  delayWatch: PromptDelayWatch,
+  now: () => number,
+): {
   readonly push: (prompt: Prompt) => void
   readonly end: () => void
   readonly stream: () => AsyncIterable<SDKUserMessage>
@@ -397,6 +419,7 @@ function createPromptStream(): {
           parent_tool_use_id: null,
           session_id: "",
         }
+        delayWatch.written(now())
       }
     },
   }

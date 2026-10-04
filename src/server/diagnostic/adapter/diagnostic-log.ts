@@ -57,6 +57,14 @@ const diagnosticRecordSchema = z.discriminatedUnion("flow", [
     errorName: z.custom<SwallowedFailureFootprint["errorName"]>(isDiagnosedErrorName),
     errorCode: z.custom<SwallowedFailureFootprint["errorCode"]>(isDiagnosedErrorCode),
   }),
+  z.object({
+    v: z.literal(DIAGNOSTIC_FORMAT_VERSION),
+    flow: z.literal("prompt-delay"),
+    at: z.number(),
+    pushedAt: z.number(),
+    writeMs: z.number(),
+    replyMs: z.number(),
+  }),
 ])
 
 /** 書き込んでよいのはこの下だけ。 */

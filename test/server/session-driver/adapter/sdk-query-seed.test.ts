@@ -47,6 +47,8 @@ const BASE_OPTIONS: SessionDriverOptions = {
   hasTaskOperation: async () => true,
   onEvent: () => {},
   reportFailure: () => {},
+  now: () => 0,
+  reportPromptDelay: () => {},
 }
 
 describe("buildQuerySeedOptions", () => {

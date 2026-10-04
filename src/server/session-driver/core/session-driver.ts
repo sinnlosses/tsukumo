@@ -7,6 +7,7 @@
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
 import type { EffortLevel, ModelAlias, PermissionMode } from "../../../shared/command.ts"
 import type { ContextUsageReport } from "../../../shared/context-usage/context-usage.ts"
+import type { PromptDelayFootprint } from "../../../shared/diagnostic/diagnostic-record.ts"
 import type { PlanUsageReport } from "../../../shared/plan-usage/plan-usage.ts"
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
 import type { SessionDigest } from "../../../shared/session/session-digest.ts"
@@ -201,6 +202,10 @@ export type SessionDriverOptions = {
   readonly onEvent: (event: SessionEvent) => void
   /** `onEvent` が投げた失敗を診断ログへ書く口。ここで例外を投げないこと。 */
   readonly reportFailure: (error: unknown) => void
+  /** 現在時刻（エポックミリ秒）を返す時計。 */
+  readonly now: () => number
+  /** 依頼が本体へ届くまでの遅れを診断ログへ書く口。ここで例外を投げないこと。 */
+  readonly reportPromptDelay: (footprint: PromptDelayFootprint) => void
 }
 
 export type SessionDriver = {

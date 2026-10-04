@@ -105,6 +105,21 @@ describe("createDiagnosticLog", () => {
     ])
   })
 
+  it("依頼の遅れ（prompt-delay）も区間のミリ秒で往復する", () => {
+    const log = createDiagnosticLog(root())
+    const delay: DiagnosticEntry = {
+      flow: "prompt-delay",
+      at: at(10, 0),
+      pushedAt: at(10, 0) - 4000,
+      writeMs: 3500,
+      replyMs: 500,
+    }
+
+    log.append([delay])
+
+    expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([delay])
+  })
+
   it("壊れた行・版が違う行・知らない種類の行は読み飛ばす", () => {
     const path = join(root(), "2026-09-22.jsonl")
     mkdirSync(root(), { recursive: true })

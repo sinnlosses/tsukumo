@@ -23,6 +23,7 @@ export type DiagnosticEntry =
   | SessionEventFootprint
   | BrowserErrorFootprint
   | SwallowedFailureFootprint
+  | PromptDelayFootprint
 
 /** JSONL に書く1行の形。 */
 export type DiagnosticRecord = DiagnosticEntry & {
@@ -37,6 +38,19 @@ export type SessionEventFootprint = {
   /** そのイベントを生んだ駆動が、プロセスを起こしてから何代目か（1から）。 */
   readonly generation: number
   readonly kind: SessionEvent["kind"]
+}
+
+/** 依頼を SDK へ渡してから本体が受け取るまでが遅れたこと。区間のミリ秒だけを持つ。 */
+export type PromptDelayFootprint = {
+  readonly flow: "prompt-delay"
+  /** 本体から最初のメッセージを受けた時刻（エポックミリ秒）。 */
+  readonly at: number
+  /** 依頼を SDK へ渡した時刻（エポックミリ秒）。 */
+  readonly pushedAt: number
+  /** 渡してから SDK が書き終えるまで。 */
+  readonly writeMs: number
+  /** 書き終えてから本体の最初のメッセージが届くまで。 */
+  readonly replyMs: number
 }
 
 /** ブラウザの例外を拾った経路。 */

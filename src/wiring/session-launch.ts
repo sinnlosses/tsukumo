@@ -50,6 +50,7 @@ import {
 } from "../server/system-prompt/core/system-prompt.ts"
 import { readDismissedUsageProposalKeys } from "../server/usage-review/adapter/usage-proposal-dismissal.ts"
 import { expressionChoices, expressionNames } from "../shared/character-pack/expression-choice.ts"
+import type { PromptDelayFootprint } from "../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
 import type { SessionDefault } from "../shared/session/session-default.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
@@ -121,6 +122,7 @@ export function wireSessionLaunch(options: {
             onSessionMarked: (sessionId, tag) => sessionCatalog.noteMarked(sessionId, tag),
             onEvent: watched,
             reportFailure,
+            reportPromptDelay: (footprint) => options.diagnosticLog.append([footprint]),
           })
         },
         restoreEvents: (resumed, pack) =>
@@ -171,6 +173,8 @@ function startDriver(options: {
   readonly onEvent: (event: SessionEvent) => void
   /** 握りつぶした失敗を診断ログへ書く口。 */
   readonly reportFailure: (place: SwallowedFailurePlace, error: unknown) => void
+  /** 依頼が本体へ届くまでの遅れを診断ログへ書く口。 */
+  readonly reportPromptDelay: (footprint: PromptDelayFootprint) => void
 }): SessionDriver {
   const { seed, context, onEvent } = options
   const { chatArchive, cwd, inheritedEnv, fakeSession } = context
@@ -217,6 +221,8 @@ function startDriver(options: {
     onEvent,
     reportFailure: (error) =>
       options.reportFailure({ feature: "session", place: "event-handler" }, error),
+    now: context.now,
+    reportPromptDelay: options.reportPromptDelay,
   })
 }
 
