@@ -375,6 +375,8 @@ node scripts/stop.ts           # 動いている tsukumo を一覧する（--por
                               #   hook が拒否する。並べて動かすとどれも `node src/cli.ts` に見えて区別できないため）
 node scripts/experience-metric.ts  # 体験の数（依頼から結論まで・答え待ち・立ち直るまでの手数）を集計する
                               #   （--days <n> で期間、--split <YYYY-MM-DD> でその日の前後に分ける）
+node scripts/diagnostic.ts     # 診断ログ（~/.tsukumo/diagnostic/）を時系列に並べる（既定は今日。--from / --to
+                              #   <YYYY-MM-DD[THH:MM[:SS]]> で時刻の範囲、--generation <n> で駆動の代を絞る）
 ```
 
 `main` への push では GitHub Actions（`.github/workflows/ci.yml`）が typecheck・lint・format:check・

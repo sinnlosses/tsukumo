@@ -69,6 +69,22 @@ export function isoWithOffset(epochMilliseconds: number): string {
   })
 }
 
+/**
+ * ローカル時刻の `YYYY-MM-DD` か `YYYY-MM-DDTHH:MM[:SS]` が指す瞬間（エポックミリ秒）。
+ * 日付だけならその日の始まり。読めなければ `undefined`。
+ */
+export function localDateTimeEpochMilliseconds(raw: string): number | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2})?)?$/.test(raw)) {
+    return undefined
+  }
+  try {
+    return Temporal.PlainDateTime.from(raw).toZonedDateTime(Temporal.Now.timeZoneId())
+      .epochMilliseconds
+  } catch {
+    return undefined
+  }
+}
+
 function localTimeAt(epochMilliseconds: number): Temporal.ZonedDateTime {
   return Temporal.Instant.fromEpochMilliseconds(epochMilliseconds).toZonedDateTimeISO(
     Temporal.Now.timeZoneId(),

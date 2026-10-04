@@ -13,6 +13,7 @@ import type {
   ContextUsageEntry,
   ContextUsageLog,
 } from "../../../../src/server/context-usage/core/context-usage.ts"
+import type { DiagnosticLog } from "../../../../src/server/diagnostic/core/diagnostic.ts"
 import type { DiaryWriterSource } from "../../../../src/server/diary/core/diary-writer.ts"
 import type { ExperienceMetricLog } from "../../../../src/server/experience-metric/core/experience-metric.ts"
 import {
@@ -51,6 +52,7 @@ import {
 } from "../../../../src/shared/context-usage/context-usage.ts"
 import type { CharacterEdit } from "../../../../src/shared/contract/character-pack.ts"
 import type { UsageProposalDismissal } from "../../../../src/shared/contract/usage-review.ts"
+import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
 import {
   FRAME_ERROR_REASON,
   PROTOCOL_VERSION,
@@ -101,6 +103,9 @@ const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {}, readRange: () =>
 
 /** 体験の数の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_EXPERIENCE_METRIC_LOG: ExperienceMetricLog = { append: () => {}, readRange: () => [] }
+
+/** 診断ログを気にしないテストに渡す、何もしない書き込み口。 */
+const NOOP_DIAGNOSTIC_LOG: DiagnosticLog = { append: () => {}, readRange: () => [] }
 
 /** コンテキストの内訳の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_CONTEXT_USAGE_LOG: ContextUsageLog = { append: () => {} }
@@ -205,6 +210,7 @@ function startManagerWithStub() {
     project: FICTIONAL_PROJECT,
     tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+    diagnosticLog: NOOP_DIAGNOSTIC_LOG,
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
     reportUsageLog: NOOP_REPORT_USAGE_LOG,
     promptImageShelf: createPromptImageShelf(),
@@ -367,6 +373,7 @@ describe("createSessionManager", () => {
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -461,6 +468,7 @@ describe("createSessionManager", () => {
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -550,6 +558,7 @@ describe("createSessionManager", () => {
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -616,6 +625,7 @@ describe("createSessionManager", () => {
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -696,6 +706,7 @@ describe("createSessionManager", () => {
         project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
@@ -877,6 +888,7 @@ describe("createSessionManager", () => {
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -981,6 +993,7 @@ describe("createSessionManager", () => {
         project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
@@ -1342,6 +1355,7 @@ describe("createSessionManager", () => {
           readRange: () => [],
         },
         experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
@@ -1641,6 +1655,7 @@ describe("createSessionManager", () => {
         project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
         contextUsageLog: {
           append: (entry) => {
             entries.push(entry)
@@ -1812,6 +1827,7 @@ describe("createSessionManager", () => {
         project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: {
           append: (entry) => {
@@ -1894,6 +1910,112 @@ describe("createSessionManager", () => {
       expect(entries).toEqual([])
     })
   })
+
+  describe("診断ログの足跡", () => {
+    function startDiagnosticManagerWithStub() {
+      const stub = createStubDriver()
+      const entries: DiagnosticEntry[] = []
+      let now = 1_000
+      const manager = createSessionManager({
+        now: () => now,
+        openFile: () => Promise.resolve(true),
+        readAchievementDay: () => Promise.resolve(undefined),
+        batchIntervalMs: BATCH_MS,
+        chatConsolidation: NO_CHAT_CONSOLIDATION,
+        watchTasks: NO_TASK_WATCH,
+        visit: NO_VISIT_PORTS,
+        diary: NO_DIARY_WRITER,
+        chatArchive: NOOP_CHAT_ARCHIVE,
+        project: FICTIONAL_PROJECT,
+        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+        diagnosticLog: {
+          append: (appended) => {
+            entries.push(...appended)
+          },
+          readRange: () => [],
+        },
+        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+        reportUsageLog: NOOP_REPORT_USAGE_LOG,
+        promptImageShelf: createPromptImageShelf(),
+        reportImageShelf: createReportImageShelf(),
+        readReportImage: () => undefined,
+        rememberSessionDefault: (sessionDefault) => ({
+          kind: "session-default-changed",
+          sessionDefault,
+        }),
+        rememberVisitEnabled: (visitEnabled) => ({
+          kind: "visit-enabled-changed",
+          visitEnabled,
+        }),
+        launchSession: (onEvent, onRestoredEvents) => {
+          stub.attach(onEvent)
+          stub.attachRestored(onRestoredEvents)
+          return Promise.resolve(stub.driver)
+        },
+        editCharacter: () => Promise.resolve(undefined),
+        createCharacter: () => Promise.resolve(undefined),
+        deleteCharacter: () => Promise.resolve(undefined),
+        forgetRememberedLine: () => Promise.resolve(undefined),
+        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+        writePreviousUsageReview: () => {},
+        dismissUsageProposal: (dismiss) => ({
+          kind: "usage-proposal-dismissed",
+          key: usageProposalKey(dismiss),
+        }),
+      })
+      const advance = (ms: number): void => {
+        now += ms
+      }
+      return { manager, stub, entries, advance }
+    }
+
+    it("畳んだイベントごとに、種類・時刻・駆動の代だけを書く（中身は渡さない）", async () => {
+      const { stub, entries, advance } = startDiagnosticManagerWithStub()
+      await waitForBatch()
+
+      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+      advance(10)
+      stub.emit({ kind: "speech", text: "架空のセリフ", expression: "proud" })
+      await waitForBatch()
+
+      expect(entries).toEqual([
+        { flow: "session-event", at: 1_000, generation: 1, kind: "request" },
+        { flow: "session-event", at: 1_010, generation: 1, kind: "speech" },
+      ])
+    })
+
+    it("起こし直したあとのイベントは次の代として書く", async () => {
+      const { manager, stub, entries } = startDiagnosticManagerWithStub()
+      await waitForBatch()
+
+      stub.emit({ kind: "plan", plan: "架空のプラン" })
+      await manager.commands.session.switchCharacter({ name: "fictional" })
+      stub.emit({ kind: "plan", plan: "架空のプラン" })
+      await waitForBatch()
+
+      expect(entries.map((entry) => entry.generation)).toEqual([1, 2])
+    })
+
+    it("復元で流し直されたイベントは書かない", async () => {
+      const { stub, entries } = startDiagnosticManagerWithStub()
+      await waitForBatch()
+
+      stub.emitRestored(RESTORED_REPLAY)
+      await waitForBatch()
+
+      expect(entries).toEqual([])
+    })
+
+    it("閉じるときは間隔を待たずに積んだぶんを書く", () => {
+      const { manager, stub, entries } = startDiagnosticManagerWithStub()
+
+      stub.emit({ kind: "turn-started" })
+      manager.close()
+
+      expect(entries.map((entry) => entry.kind)).toEqual(["turn-started"])
+    })
+  })
 })
 
 describe("依頼に添えた画像の棚", () => {
@@ -1926,6 +2048,7 @@ describe("依頼に添えた画像の棚", () => {
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: shelf,
@@ -2065,6 +2188,7 @@ describe("レポートの画像の棚", () => {
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -2200,6 +2324,7 @@ describe("createSessionManager（見直し）", () => {
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -2339,6 +2464,7 @@ describe("タスク一覧の見張り", () => {
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -2451,6 +2577,7 @@ describe("訪問", () => {
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),

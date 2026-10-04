@@ -44,6 +44,7 @@ import {
   createContextUsageRecorder,
 } from "../../context-usage/core/context-usage.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
+import { createDiagnosticBuffer, type DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
 import {
   createExperienceMetricRecorder,
   type ExperienceMetricLog,
@@ -99,6 +100,8 @@ export type SessionManagerOptions = {
   readonly contextUsageLog: ContextUsageLog
   /** 体験の数の書き込み口。何を1行にするかは `createExperienceMetricRecorder` が返す係が決める。 */
   readonly experienceMetricLog: ExperienceMetricLog
+  /** 診断ログの書き込み口。畳んだイベントの種類・時刻・駆動の代だけを1件ずつ渡す。 */
+  readonly diagnosticLog: DiagnosticLog
   /** 描いた `report` 1回につき1行、塊の使われ方を書く口。 */
   readonly reportUsageLog: ReportUsageLog
   /**
@@ -191,6 +194,8 @@ export type SessionManager = {
  * イベントを受けるときに見るのはここだけなので、届いたイベントは必ずそれを生んだ代の勘定に積まれる（起こし直しをまたいで混ざらない）。
  */
 type GenerationTally = {
+  /** プロセスを起こしてから何代目か（1から）。 */
+  readonly generation: number
   /** まとめて配る束（代をまたいで積み残しを配らない）。 */
   readonly batch: EventBatch
   /** トークンの累計と、いま進んでいるターンの内訳。 */
@@ -269,6 +274,8 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   const contextUsage = createContextUsageRecorder(options.contextUsageLog)
   // 体験の数の記録。代をまたいで持つ（立ち直りまでの手数は起こし直しをまたいで数える）。
   const experienceMetric = createExperienceMetricRecorder(options.experienceMetricLog)
+  // 診断ログの足跡。代をまたいで持ち、起こし直しで積み残しを捨てない。
+  const diagnostic = createDiagnosticBuffer(options.diagnosticLog, options.batchIntervalMs)
   // 定着が走っているか。代ではなくここに持つ。
   // 起こし直しをまたいでも同時に1本のまま（同じパックへ起こし直した直後に、同じ未定着の行を2本で畳まない）。
   // 走っているあいだの契機は捨てる。
@@ -310,6 +317,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
     replaceState(applySessionEvent(state, event, at))
     tally.batch.add({ at, event })
+    diagnostic.add({ flow: "session-event", at, generation: tally.generation, kind: event.kind })
     experienceMetric.observe(event, state, at)
     // 会話のアーカイブへ1行足す（パックが分かっているときだけ）。
     appendChatArchiveEntry(
@@ -408,6 +416,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     let held = delivery === "after-hello"
     const diaryAbort = new AbortController()
     const tally: GenerationTally = {
+      generation: born,
       batch: createEventBatch({
         intervalMs: options.batchIntervalMs,
         deliver: (events) => {
@@ -600,6 +609,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       generation.close()
       taskWatcher.close()
       consolidationAbort.abort()
+      diagnostic.flush()
     },
   }
 }

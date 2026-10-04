@@ -1,7 +1,7 @@
 // 日付ごとの JSONL の読み書き。
 // 境界（どこに・何のために書くか）は名乗らず、JSONL という形式の扱い方だけを知っている。
 //
-// ここが持つのは「1行を追記する」「日付のファイル名を並べる」「行を JSON として読む」だけ。
+// ここが持つのは「行を追記する」「日付のファイル名を並べる」「行を JSON として読む」だけ。
 // スキーマの検証・索引ファイルの扱い・後ろから読む読み戻しは呼び出し元が持ち、行の形が正しいかはここでは見ない（`unknown` のまま返す）。
 //
 // 書けなくても・読めなくても例外を投げない。壊れた行は1行ずつ読み飛ばす。
@@ -14,9 +14,17 @@ const DATE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
 
 /** 1行を追記する。ディレクトリが無ければ作る。失敗したその回は諦めて次へ進む。 */
 export function appendJsonLine(path: string, record: unknown): void {
+  appendJsonLines(path, [record])
+}
+
+/** 複数行を1回の書き込みで追記する。空なら何もしない。失敗したその回は諦めて次へ進む。 */
+export function appendJsonLines(path: string, records: readonly unknown[]): void {
+  if (records.length === 0) {
+    return
+  }
   try {
     mkdirSync(dirname(path), { recursive: true })
-    appendFileSync(path, `${JSON.stringify(record)}\n`)
+    appendFileSync(path, records.map((record) => `${JSON.stringify(record)}\n`).join(""))
   } catch {
     // 書けなかった回は諦めて次へ進む。
   }

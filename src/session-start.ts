@@ -10,6 +10,7 @@ import { createServerClock } from "./server/adapter/local-time.ts"
 import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import type { Config } from "./server/core/config.ts"
+import type { DiagnosticLog } from "./server/diagnostic/core/diagnostic.ts"
 import { createExperienceMetricLog } from "./server/experience-metric/adapter/experience-metric-log.ts"
 import type { Host } from "./server/host/core/host.ts"
 import { readReportImageFile } from "./server/report/adapter/report-image-file.ts"
@@ -41,6 +42,7 @@ export type SessionStartOptions = {
   /** fake driver の疑似セッション（`TSUKUMO_DRIVER=fake` のときだけ）。あるときは claude を起こさない。 */
   readonly fakeSession: FakeSession | undefined
   readonly tokenUsageLog: TokenUsageLog
+  readonly diagnosticLog: DiagnosticLog
   /** 依頼に添えた画像の原寸の棚。ビューの配信が引く棚と同じ1つを渡す。 */
   readonly promptImageShelf: PromptImageShelf
   /** `image` の塊の画像の棚。ビューの配信が引く棚と同じ1つを渡す。 */
@@ -107,6 +109,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     tokenUsageLog: options.tokenUsageLog,
     contextUsageLog: createContextUsageLog(),
     experienceMetricLog: createExperienceMetricLog(),
+    diagnosticLog: options.diagnosticLog,
     reportUsageLog: createReportUsageLog(),
     promptImageShelf,
     reportImageShelf: options.reportImageShelf,

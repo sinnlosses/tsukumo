@@ -6,7 +6,12 @@
 import process from "node:process"
 
 import { createCurrentCharacter } from "./current-character.ts"
+import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
+import {
+  createDiagnosticLog,
+  pruneDiagnosticFiles,
+} from "./server/diagnostic/adapter/diagnostic-log.ts"
 import type { Host, HostResult } from "./server/host/core/host.ts"
 import { createReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
@@ -75,6 +80,9 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // トークン消費の記録の口は1つをここで作ってセッションとビューの両側へ渡す。
   // 置き場（`~/.tsukumo/token-usage/`）を知っているところを増やさない。
   const tokenUsageLog = createTokenUsageLog()
+  // 診断ログの口も1つだけ作る。古い日付のファイルは起動のたびに1回だけ消す。
+  const diagnosticLog = createDiagnosticLog()
+  pruneDiagnosticFiles(todayLocalDateKey())
   // 依頼に添えた画像の原寸の棚と、レポートの画像の棚も1つずつをここで作って両側へ渡す。
   // 両側が同じ棚を見ないと、置いた原寸をビューが引けない。
   const promptImageShelf = createPromptImageShelf()
@@ -104,6 +112,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     character,
     fakeSession,
     tokenUsageLog,
+    diagnosticLog,
     promptImageShelf,
     reportImageShelf,
     viewPort: view.port,
