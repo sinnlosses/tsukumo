@@ -336,7 +336,9 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   立ち絵はそのまま）。残すのはキャラクター定義・セッション情報（モデル・許可モード）・
   答え待ちの列で、**消すのは吹き出しとメインビューが読む値だけ**。
   **合図は SDK の `conversation_reset` メッセージ**（実測は `docs/history/decision.md`）。
-  tsukumo は依頼の文面が `/clear` かどうかを見ない。**`/compact` では届かない**ので、要約では何もリセットされない
+  tsukumo は依頼の文面が `/clear` かどうかを見ない。**例外は帯の2行目の文言だけ**（`isClearRequest`。
+  依頼の先頭トークンがちょうど `/clear` のあいだ「考えている」の代わりに「会話を片付けている」を出す。
+  `conversation_reset` を待たず、依頼が進んでいるあいだずっと出る）。**`/compact` では届かない**ので、要約では何もリセットされない
 - **レポートの構造は tsukumo 側の規約（`src/server/report/core/report-notation.ts`）と `report` の
   塊の形（`src/shared/report/report-block.ts`）で決める**（正典は
   下の「レポートの記法は、TUI と tsukumo で出し分ける」。グローバルの `asuna.md` は TUI 向けに

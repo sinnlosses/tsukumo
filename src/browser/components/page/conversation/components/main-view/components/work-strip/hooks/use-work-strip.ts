@@ -8,6 +8,7 @@ import type {
 } from "../../../../../../../../../shared/session-driver/pending-ask.ts"
 import type {
   ReportDrafting,
+  SessionRecord,
   TurnProgress,
 } from "../../../../../../../../../shared/session/session-state.ts"
 import type { TurnStep, TurnStepList } from "../../../../../../../../../shared/session/turn-step.ts"
@@ -24,6 +25,7 @@ import { useMainViewContent } from "../../../../../../../../stores/main-view-con
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { useWorkStripSteps } from "../../../../../../../../stores/work-strip-steps.ts"
 import { apiRetryNotice } from "../../../../../domain/api-error-label.ts"
+import { isClearRequest } from "../../../../../domain/clear-request.ts"
 import {
   isTurnCounting,
   turnElapsedLabel,
@@ -111,6 +113,7 @@ const PHASE_STATE_SUFFIX = {
 export function useWorkStrip(): WorkStripModel {
   const turnStepList = useCurrentTurnSteps()
   const content = useMainViewContent((state) => state.content)
+  const records = useSession((session) => session.state.records)
   const turn = useSession((session) => session.state.turn)
   const pending = useSession((session) => session.state.pending)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
@@ -179,6 +182,7 @@ export function useWorkStrip(): WorkStripModel {
       reportDrafting,
       backgroundTasks,
       retry: retryOf(turn, apiTrouble),
+      clearRequest: isClearRequest(currentRequestTextOf(records)),
       now,
     }),
     steps,
@@ -210,8 +214,13 @@ function retryOf(turn: TurnProgress, apiTrouble: ApiTrouble): WorkStripRetry {
     : { kind: "none" }
 }
 
+function currentRequestTextOf(records: readonly SessionRecord[]): string {
+  return records.findLast((record) => record.kind === "request")?.text ?? ""
+}
+
 /**
- * 2行目。強い順に1つ: 答え待ち → report を書いている途中 → 走っている手順 → 背景のタスク → 考えている。
+ * 2行目。強い順に1つ: 答え待ち → report を書いている途中 → 走っている手順 → 背景のタスク →
+ * 考えている（`clearRequest` のときは「会話を片付けている」）。
  * 答え待ちの秒は、答え待ちが届いた時刻から数える。
  */
 function activityOf(source: {
@@ -220,6 +229,7 @@ function activityOf(source: {
   readonly reportDrafting: ReportDrafting
   readonly backgroundTasks: readonly BackgroundTask[]
   readonly retry: WorkStripRetry
+  readonly clearRequest: boolean
   readonly now: number
 }): WorkStripActivity {
   const { turnStepList, firstPending, retry, now } = source
@@ -260,7 +270,12 @@ function activityOf(source: {
   if (background !== undefined) {
     return { text: `背景で ${background}`, tone: "quiet", mono: false, retry }
   }
-  return { text: "考えている", tone: "quiet", mono: false, retry }
+  return {
+    text: source.clearRequest ? "会話を片付けている" : "考えている",
+    tone: "quiet",
+    mono: false,
+    retry,
+  }
 }
 
 /**

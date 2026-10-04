@@ -143,6 +143,24 @@ describe("useWorkStrip（時刻に依るもの）", () => {
   })
 })
 
+describe("useWorkStrip（`/clear` の依頼）", () => {
+  it("依頼の先頭トークンがちょうど `/clear` なら、2行目は「会話を片付けている」", () => {
+    const state = foldTimed([[{ kind: "request", text: "/clear", images: [] }, START]])
+
+    const strip = stripAt(state, START + 5_000)
+
+    expect(strip.kind === "working" && strip.activity.text).toBe("会話を片付けている")
+  })
+
+  it("`/clear-foo` のような別名では、2行目は「考えている」のまま", () => {
+    const state = foldTimed([[{ kind: "request", text: "/clear-foo", images: [] }, START]])
+
+    const strip = stripAt(state, START + 5_000)
+
+    expect(strip.kind === "working" && strip.activity.text).toBe("考えている")
+  })
+})
+
 describe("useWorkStrip（段取りが届く前）", () => {
   it("送った直後から、段の丸の無い「作業中」の帯を回る印つきで出す", () => {
     const state = foldTimed([[request, START]])
