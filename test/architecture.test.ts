@@ -458,6 +458,25 @@ describe("子プロセスを起こす箇所", () => {
   })
 })
 
+// CI（`.github/workflows/ci.yml`）が用意する外部コマンド。`git` は `actions/checkout`、
+// `node`・`pnpm` は `jdx/mise-action`、`bd` は版を固定して入れる段が用意する。
+// ここに足すときは、ci.yml にもそのコマンドを入れる段を足す。
+const CI_AVAILABLE_COMMANDS: ReadonlySet<string> = new Set(["git", "node", "pnpm", "bd"])
+
+const TEST_ROOT = fileURLToPath(new URL("../test", import.meta.url)).replace(/\/$/, "")
+
+describe("テストが起こす外部コマンド", () => {
+  it("test/ が子プロセスで起こすコマンドは、CI が用意する一覧に入っている", () => {
+    const offenders = listSourceFiles(TEST_ROOT).flatMap((relPath) =>
+      subprocessCommandsOf(nonCommentContent(readFileSync(`${TEST_ROOT}/${relPath}`, "utf8")))
+        .filter((command) => !CI_AVAILABLE_COMMANDS.has(command))
+        .map((command) => `test/${relPath}（${command}）`),
+    )
+
+    expect(offenders).toEqual([])
+  })
+})
+
 // 環境変数の読み取りは配線層の1ファイルに集める（docs/coding-standards.md「外部の入力を読む
 // 場所を1つにする」）。コメント中の `` `process.env` `` のような説明文は
 // 拾わない（実コードの行だけを見る）。
@@ -1732,6 +1751,14 @@ function relativeImportSpecifiers(content: string): readonly string[] {
 function importSpecifiers(content: string): readonly string[] {
   const matches = content.matchAll(/(?:from|import)\s+["']([^"']+)["']/g)
   return [...matches].flatMap(([, specifier]) => specifier ?? [])
+}
+
+/** `spawn(` / `runSubprocess(` / `runSubprocessOrThrow(` の最初の引数が文字列リテラルなら拾う。 */
+function subprocessCommandsOf(content: string): readonly string[] {
+  const matches = content.matchAll(
+    /\b(?:spawn|runSubprocess|runSubprocessOrThrow)\(\s*["']([^"']+)["']/g,
+  )
+  return [...matches].flatMap(([, command]) => command ?? [])
 }
 
 /** specifier が相対で、解いた先が `browser/utils/` の中か。 */

@@ -379,6 +379,8 @@ node scripts/experience-metric.ts  # 体験の数（依頼から結論まで・�
 
 `main` への push では GitHub Actions（`.github/workflows/ci.yml`）が typecheck・lint・format:check・
 単体テストを走らせます。Node と pnpm の版は `mise.toml` から入れます。E2E と目視は手元にだけ残します。
+Beads の読み手の単体テストが使う `bd` は CI が版を固定して別に入れ、`test/architecture.test.ts` が
+CI に無い外部コマンドを起こすテストを検査で落とします。
 
 **ブラウザに出た絵は自動テストで守りません。** 配信（バインド先・経路・push）まではテストし、
 実際に見えているかは目視で確認します（手順は `docs/architecture/testing.md`「手で確かめること」）。
