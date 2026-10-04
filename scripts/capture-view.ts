@@ -14,6 +14,8 @@
 //   node scripts/capture-view.ts <URL> --out /tmp/view.png --size 1400x900 \
 //     --measure '[data-region="character"]' --measure '[data-region="sidebar"]'
 //   node scripts/capture-view.ts <URL> --wait-for '[role="table"][aria-label="検証結果"]'
+//   node scripts/capture-view.ts --scene report-blocks --size 600x900 \
+//     --wait-for '[class*="report-files"]' --scroll-to '[class*="report-files"]'
 //
 // `--measure` / `--wait-for` に class セレクタを書くときは `[class*="…"]`。 CSS Modules が
 // `名前_ハッシュ`（`report-note_nkMPPQ`）に焼くので、素の `.report-note` は必ず「無し」になる。
@@ -82,6 +84,7 @@ const USAGE = `使い方:
   --size <幅>x<高さ>    窓の大きさ（既定 ${String(DEFAULT_WIDTH)}x${String(DEFAULT_HEIGHT)}）
   --measure <selector>  位置と大きさを数値で出す要素（何度でも指定できる）
   --wait-for <selector> 要素が出て、演出が終わるまで待ってから撮る（出なければ失敗して終わる）
+  --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる）
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
 `
 
@@ -100,6 +103,7 @@ type Options =
       readonly height: number
       readonly measures: readonly string[]
       readonly waitFor: string | undefined
+      readonly scrollTo: string | undefined
       readonly fullPage: boolean
     }
 
@@ -206,6 +210,11 @@ async function capture(
       return 1
     }
 
+    if (options.scrollTo !== undefined && !(await scrollIntoView(page, options.scrollTo))) {
+      process.stderr.write(`現れなかった: ${options.scrollTo}\n`)
+      return 1
+    }
+
     await page.screenshot({ path: options.out, fullPage: options.fullPage })
     process.stdout.write(
       `撮った: ${options.out}（${String(options.width)}x${String(options.height)}）\n`,
@@ -244,6 +253,18 @@ async function waitForRevealSettled(page: Page, selector: string): Promise<boole
   } catch {
     return false
   }
+}
+
+/** 要素をメインビューのスクロールの容れ物の上端へ送る。要素が無ければ false。 */
+async function scrollIntoView(page: Page, selector: string): Promise<boolean> {
+  const locator = page.locator(selector)
+  if ((await locator.count()) === 0) {
+    return false
+  }
+  await locator.first().evaluate((element) => {
+    element.scrollIntoView({ block: "start" })
+  })
+  return true
 }
 
 /**
@@ -299,6 +320,7 @@ function parseOptions(argv: readonly string[]): Options | undefined {
   let width = DEFAULT_WIDTH
   let height = DEFAULT_HEIGHT
   let waitFor: string | undefined
+  let scrollTo: string | undefined
   let fullPage = false
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -331,6 +353,8 @@ function parseOptions(argv: readonly string[]): Options | undefined {
       measures.push(value)
     } else if (flag === "--wait-for") {
       waitFor = value
+    } else if (flag === "--scroll-to") {
+      scrollTo = value
     } else if (flag === "--scene") {
       scene = value
     } else if (flag === "--size") {
@@ -352,7 +376,7 @@ function parseOptions(argv: readonly string[]): Options | undefined {
   const source = sourceOf(url, scene)
   return source === undefined
     ? undefined
-    : { kind: "capture", source, out, width, height, measures, waitFor, fullPage }
+    : { kind: "capture", source, out, width, height, measures, waitFor, scrollTo, fullPage }
 }
 
 /** URL と場面名のどちらか片方だけが要る。両方・どちらも無いときは undefined。 */
