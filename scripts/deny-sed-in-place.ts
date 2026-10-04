@@ -16,6 +16,7 @@ const REFUSAL = `作業ツリーの中のファイルを Bash のコマンドで
 ファイルの書き換えは Edit ツール（複数箇所なら replace_all）か Write ツールで行うこと。
 作業ツリーの外で組み立てた内容も、Write ツールで作業ツリーのパスへ書く（Bash で書き戻さない）。
 \`tw edit --body-file\` に渡す下書きは Write ツールでスクラッチに書くか、heredoc を標準入力へ直接渡す。
+別の git 作業ツリーにある Python スクリプトは、その作業ツリーへ \`cd\` してから走らせる（\`cd <作業ツリー> && python3 x.py\`）。
 読むだけなら \`sed -n '1,5p' <file>\` は使える。生成物は \`pnpm run format\`・\`pnpm run build\` などプロジェクトのコマンドで作り直す。`
 
 /** Bash ツールの入力のうち、この hook が見るところ。 */

@@ -3,8 +3,8 @@
 // Python と node のコード（`-c` / `-e`・heredoc・作業ツリーの外のスクリプトのファイル）での書き込み。
 // `pnpm`・`git`・作業ツリーの中のスクリプトのように、ツールの中で書くものは判定にかけない。
 
-import { readFileSync, statSync } from "node:fs"
-import { isAbsolute, relative, resolve } from "node:path"
+import { existsSync, readFileSync, statSync } from "node:fs"
+import { dirname, isAbsolute, join, relative, resolve } from "node:path"
 
 import { findQuotedSpans, withSpansBlanked, type QuotedSpan } from "./quoted-span.ts"
 import { parseShellCommand, type ShellWord, type SimpleCommand } from "./shell-command.ts"
@@ -65,10 +65,19 @@ const NODE_OPTIONS_WITH_VALUE: ReadonlySet<string> = new Set([
 /** node の引数のうち、次の語をコードとして実行するもの。 */
 const NODE_EVAL_OPTIONS: ReadonlySet<string> = new Set(["-e", "--eval", "-p", "--print"])
 
+/** `&&` でも `;` でも改行でもない区切り（サブシェル・単独の `&`・`|`・`||`）。 */
+const NON_SEQUENTIAL_SEPARATOR = /[()|]|(?<!&)&(?!&)/
+
+/** リダイレクトの `2>&1`・`&>` の `&`（区切りではない）。 */
+const FILE_DESCRIPTOR_AMPERSAND = /\d*[<>]&|&>>?/g
+
 const TARGET_DIRECTORY_OPTION = "--target-directory="
 
 /** 読んで判定にかけるスクリプトのファイルの大きさの上限（バイト）。 */
 const SCRIPT_SIZE_LIMIT = 1024 * 1024
+
+/** 読んだスクリプトのファイル。`foreign` は、別の git 作業ツリーの中にあり、作業ツリーの外のディレクトリで走らせるもの。 */
+type PythonScript = { readonly text: string; readonly foreign: boolean }
 
 /** パスが作業ツリーのどちら側にあるか。`unknown` は展開や読めない `cd` で決まらないもの。 */
 type Location = "inside" | "outside" | "unknown"
@@ -80,7 +89,7 @@ export function findDeniedBashRule(
   workRoot: string | undefined,
 ): string | undefined {
   return (
-    findDeniedCommandRule(command, workRoot, readPythonScripts(command, cwd)) ??
+    findDeniedCommandRule(command, workRoot, readPythonScripts(command, cwd, workRoot)) ??
     (workRoot !== undefined && writesIntoWorkTree(command, startDirectory(cwd, workRoot), workRoot)
       ? "worktree-write"
       : undefined)
@@ -91,14 +100,18 @@ export function findDeniedBashRule(
 function findDeniedCommandRule(
   command: string,
   workRoot: string | undefined,
-  scriptTexts: readonly string[],
+  scripts: readonly PythonScript[],
 ): string | undefined {
   const spans = findQuotedSpans(command)
   if (
     spans.some(
       (span) => isExecutedPythonCode(command, span) && isDeniedPythonCode(span.content, workRoot),
     ) ||
-    scriptTexts.some((text) => isDeniedPythonCode(text, workRoot))
+    scripts.some((script) =>
+      script.foreign && workRoot !== undefined
+        ? script.text.includes(workRoot)
+        : isDeniedPythonCode(script.text, workRoot),
+    )
   ) {
     return "python-write"
   }
@@ -246,6 +259,14 @@ function directoryAfter(simple: SimpleCommand, directory: string | undefined): s
   return directory === undefined ? undefined : resolve(directory, target.text)
 }
 
+/** 単純コマンドが `cd` 系なら決まらない、そうでなければ変わらない作業ディレクトリ。 */
+function directoryAfterUnsure(
+  simple: SimpleCommand,
+  directory: string | undefined,
+): string | undefined {
+  return ["cd", "pushd", "popd"].includes(simple.argv[0]?.text ?? "") ? undefined : directory
+}
+
 function locatePath(word: ShellWord, directory: string | undefined, workRoot: string): Location {
   if (word.expanded || word.text === "") {
     return "unknown"
@@ -305,23 +326,78 @@ function isOutside(path: string, workRoot: string): boolean {
 }
 
 /** コマンドが走らせる `python3 <path>.py` のうち、読めるファイルの中身。読めないものは含めない。 */
-function readPythonScripts(command: string, cwd: string | undefined): readonly string[] {
+function readPythonScripts(
+  command: string,
+  cwd: string | undefined,
+  workRoot: string | undefined,
+): readonly PythonScript[] {
+  const runDirectories =
+    workRoot === undefined
+      ? undefined
+      : scriptRunDirectories(command, startDirectory(cwd, workRoot))
   return findPythonScriptPaths(command, findQuotedSpans(command)).flatMap((path) => {
-    const text = readScriptFile(path, cwd)
-    return text === undefined ? [] : [text]
+    const directories = runDirectories?.get(path) ?? []
+    const [runDirectory] = directories
+    const resolvesFromRunDirectory =
+      runDirectory !== undefined &&
+      directories.every((directory) => directory === runDirectory) &&
+      (cwd !== undefined || runDirectory !== workRoot)
+    const absolute = absoluteScriptPath(path, resolvesFromRunDirectory ? runDirectory : cwd)
+    const text = absolute === undefined ? undefined : readTextFile(absolute)
+    if (absolute === undefined || text === undefined) {
+      return []
+    }
+    const foreign =
+      workRoot !== undefined &&
+      directories.length > 0 &&
+      directories.every((directory) => directory !== undefined && isOutside(directory, workRoot)) &&
+      isInForeignGitTree(absolute, workRoot)
+    return [{ text, foreign }]
   })
 }
 
-function readScriptFile(path: string, cwd: string | undefined): string | undefined {
-  const absolute = isAbsolute(path)
-    ? path
-    : cwd !== undefined && isAbsolute(cwd)
-      ? resolve(cwd, path)
-      : undefined
-  if (absolute === undefined) {
-    return undefined
+/**
+ * 単純コマンドの引数に現れた `.py` の語ごとに、そのコマンドを走らせる作業ディレクトリ（決まらなければ `undefined`）。
+ * `cd` が次のコマンドへ効くと読むのは、区切りが `&&`・`;`・改行だけのとき。
+ * サブシェル・`&`・`|`・`||` を含むコマンドでは、`cd` のあとの作業ディレクトリを決まらないものにする。
+ */
+function scriptRunDirectories(
+  command: string,
+  start: string,
+): ReadonlyMap<string, readonly (string | undefined)[]> {
+  const skeleton = withSpansBlanked(command, findQuotedSpans(command)).replace(
+    FILE_DESCRIPTOR_AMPERSAND,
+    "",
+  )
+  const followsCd = !NON_SEQUENTIAL_SEPARATOR.test(skeleton)
+  const directories = new Map<string, (string | undefined)[]>()
+  let directory: string | undefined = start
+  for (const simple of parseShellCommand(command)) {
+    for (const word of simple.argv.slice(1)) {
+      if (word.text.endsWith(".py")) {
+        directories.set(word.text, [...(directories.get(word.text) ?? []), directory])
+      }
+    }
+    directory = followsCd
+      ? directoryAfter(simple, directory)
+      : directoryAfterUnsure(simple, directory)
   }
+  return directories
+}
 
+function readScriptFile(path: string, cwd: string | undefined): string | undefined {
+  const absolute = absoluteScriptPath(path, cwd)
+  return absolute === undefined ? undefined : readTextFile(absolute)
+}
+
+function absoluteScriptPath(path: string, cwd: string | undefined): string | undefined {
+  if (isAbsolute(path)) {
+    return path
+  }
+  return cwd !== undefined && isAbsolute(cwd) ? resolve(cwd, path) : undefined
+}
+
+function readTextFile(absolute: string): string | undefined {
   try {
     const stat = statSync(absolute)
     return stat.isFile() && stat.size <= SCRIPT_SIZE_LIMIT
@@ -329,6 +405,18 @@ function readScriptFile(path: string, cwd: string | undefined): string | undefin
       : undefined
   } catch {
     return undefined
+  }
+}
+
+/** スクリプトを含む git 作業ツリーの根が見つかり、その作業ツリーが `workRoot` を含まないか。 */
+function isInForeignGitTree(script: string, workRoot: string): boolean {
+  for (let directory = dirname(script); ; directory = dirname(directory)) {
+    if (existsSync(join(directory, ".git"))) {
+      return isOutside(workRoot, directory) && isOutside(script, workRoot)
+    }
+    if (dirname(directory) === directory) {
+      return false
+    }
   }
 }
 

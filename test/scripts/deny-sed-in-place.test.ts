@@ -1,8 +1,8 @@
 // ファイルを書き換える `sed -i`・`perl -pi` / `perl -i`・Python の書き込みを止める判定を、関数で確かめる。
 // PreToolUse hook の契約（終了コード 2 で実行を止め、stderr で Edit を促す）は、スクリプトを実際に起こして確かめる。
 
-import { writeFileSync } from "node:fs"
-import { join } from "node:path"
+import { mkdirSync, writeFileSync } from "node:fs"
+import { dirname, join } from "node:path"
 import process from "node:process"
 
 import { describe, expect, test } from "vitest"
@@ -252,6 +252,71 @@ describe("python3 で走らせるスクリプトのファイル", () => {
   test("引用符の中にデータとして書いただけの語は通す", () => {
     const path = scriptPath(WRITES_INSIDE)
     expect(isDenied(`echo "python3 ${path}"`)).toBe(false)
+  })
+
+  describe("別の git 作業ツリーにあるスクリプト", () => {
+    const BUILDS_PATH =
+      "import os, tempfile\nbase = tempfile.mkdtemp()\npath = os.path.join(base, 'out.txt')\nopen(path, 'w').write('x')\n"
+
+    function foreignScript(source: string): string {
+      mkdirSync(join(dir(), "other", ".git"), { recursive: true })
+      const path = join(dir(), "other", "selftest.py")
+      writeFileSync(path, source)
+      return path
+    }
+
+    test("その作業ツリーを cwd にして走らせるなら通す", () => {
+      foreignScript(BUILDS_PATH)
+      expect(isDenied("python3 selftest.py", { cwd: join(dir(), "other") })).toBe(false)
+    })
+
+    test("その作業ツリーへ cd してから走らせるなら通す", () => {
+      const path = foreignScript(BUILDS_PATH)
+      expect(isDenied(`cd ${dirname(path)} && python3 ${path}`)).toBe(false)
+    })
+
+    test("相対パスのスクリプトも cd 先から読んで通す", () => {
+      foreignScript(BUILDS_PATH)
+      expect(isDenied(`cd ${join(dir(), "other")} && python3 selftest.py`)).toBe(false)
+    })
+
+    test("cwd に同名のファイルがあっても cd 先のスクリプトを読む", () => {
+      foreignScript("open('/work/tree/f.txt', 'w').write('x')\n")
+      mkdirSync(join(dir(), "here"))
+      writeFileSync(join(dir(), "here", "selftest.py"), BUILDS_PATH)
+      expect(
+        isDenied(`cd ${join(dir(), "other")} && python3 selftest.py`, { cwd: join(dir(), "here") }),
+      ).toBe(true)
+    })
+
+    test("; でつないだ cd のあとなら通す", () => {
+      const path = foreignScript(BUILDS_PATH)
+      expect(isDenied(`cd ${dirname(path)}; python3 ${path}`)).toBe(false)
+    })
+
+    test.each([
+      ["サブシェルの中の cd", (other: string) => `(cd ${other} && true); python3 `],
+      ["& でつないだ cd", (other: string) => `cd ${other} & python3 `],
+      ["| でつないだ cd", (other: string) => `cd ${other} | python3 `],
+      ["|| でつないだ cd", (other: string) => `cd ${other} || python3 `],
+    ])("%s は作業ディレクトリが変わったと読まずに止める", (_name, toPrefix) => {
+      const path = foreignScript(BUILDS_PATH)
+      expect(isDenied(`${toPrefix(dirname(path))}${path}`)).toBe(true)
+    })
+
+    test("作業ツリーの絶対パスを書くスクリプトは cd していても止める", () => {
+      const path = foreignScript("open('/work/tree/f.txt', 'w').write('x')\n")
+      expect(isDenied(`cd ${dirname(path)} && python3 ${path}`)).toBe(true)
+    })
+
+    test.each([
+      ["作業ツリーを cwd にする", "python3"],
+      ["作業ツリーの中へ cd する", "cd /work/tree/src &&"],
+    ])("%s と、パスを組み立てて書くスクリプトも止める", (_name, prefix) => {
+      const path = foreignScript(BUILDS_PATH)
+      const command = prefix.endsWith("python3") ? `${prefix} ${path}` : `${prefix} python3 ${path}`
+      expect(isDenied(command)).toBe(true)
+    })
   })
 
   test("-m はスクリプトのファイルを取らないので通す", () => {
