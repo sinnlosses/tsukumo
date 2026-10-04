@@ -44,6 +44,7 @@ const emptyViewServerOptions: ViewServerOptions = {
     reportBrowserError: () => {},
   }),
   token: "架空の起動トークン",
+  onRuntimeError: () => {},
 }
 
 /** `node:http` の `listen` が投げるエラーに似せた、`code` 付きのエラーを作る。 */

@@ -86,6 +86,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     character,
     viewPort: options.viewPort,
     firstViewer: firstViewer.promise,
+    diagnosticLog: options.diagnosticLog,
     onLaunch: (seed, onEvent) => {
       diary.noteLaunched(seed)
       return welcomeGreeting.noteLaunched(seed, onEvent)

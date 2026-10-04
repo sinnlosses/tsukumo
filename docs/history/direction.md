@@ -12,6 +12,53 @@
 - `/loop` で next-task を続けるとき、main の文脈が大きくなったら区切る仕組みを入れる。使用量の見積もりでは、文脈が 20 万を超えたところで区切れば期間の消費の約 4.6%（22 セッション・115 ターンぶん）が減る。区切ると会話の文脈が消えるので、引き継ぐものは台帳に残っている前提で決める。
 - next-task の SKILL.md（23,172 字）を細くし、まれにしか通らない枝（HOLD を決める・作業先が別のリポジトリ・文書の担当を並べる・目視待ちの報告など）を別ファイルに分けて、通るときだけ読む形にする。起動のたびに全文が main の文脈に入り、そのあとの歩で読み直され続けている。
 
+## 2026-10-04 リポジトリの課題の洗い出し
+
+（GH-341〜GH-345・GH-347・GH-348・GH-350〜GH-352・GH-354〜GH-358 にした）
+
+- 出典: 会話。利用者「このリポジトリの課題を洗い出してタスク化してほしい。」
+- エージェントが規約・テスト・文書と実装のずれ・実行時の堅さの4方面を調べ、既存タスクと重なるもの（テストの重い2ファイルは GH-218 で原因が `bd` と分かり済み、サーバの握りつぶしは GH-335）と効きの薄いもの（巨大関数の分割・コメントの肥大・E2E 足場の固定待ち・Origin の照合）を外して15件に束ねた
+
+## 2026-10-04 別の作業ツリーの `bd github pull` が着手中の課題の assignee と metadata を空にし、戻し処理も効かない件を直す（振り返り: GH-336）
+
+（GH-330 にした）
+
+- 出典: ドラフト `develop/draft/2026-10-04-github-pull-wipes-claim-assignee-metadata.md`。利用者が `/plan-tasks` の確認で4件とも選んで承認した
+- 札: 赤 道具（21回目）
+- 根: beads-plan-mark-lost
+- 根拠: `bd history gh-336 --events` で、10:13:09 の着手（actor `tsukumo-2`）の約2分後、10:14:56 に actor `fuji` の更新が assignee を空・metadata を null にしていた。actor が作業ツリー名でなく `fuji` になるのは `--actor` を渡さない `tracker.py` の `_bd_ok` 経由だけで、`_pull` の `bd github pull`（`tracker.py:231`）がこれに当たる。`_pull` の assignee の戻し（`tracker.py:238-241`）が走った履歴は無く、metadata を戻す処理はそもそも無い。結果として受け入れの直前に `NOT_OWNER`（`STALE:no-owner`）で止まり、`tw release --force` も `bd unclaim` が「not assigned」で落ちたため、人の了承を得て `bd update --assignee` で戻した。`tw plan-check` の `PLAN_NOT_FIRST unrecorded` も、`task_plan_base` が同じ書き込みで消えたためで、GH-330 が疑う読み取り側とは別の経路
+- 出し先: GH-330 に、この書き込み側の経路（GitHub からの取り込みで metadata ごと消え、`was.assignee` が空のときや戻しが失敗したときに戻らない）を再現と修正の範囲として足す。足せないなら claude-skills の `task-workflow` の `tracker.py` の `_pull` が、取り込みの前の assignee と metadata（`task_*` の印）を取り込みのあとに戻し、戻せなかったら `TRACKER\tFAILED` で知らせる形にするタスク。`selftest_beads.py` に「取り込みで metadata が消えても戻る」場面を足す
+
+## 2026-10-04 `capture-catalog.ts` で、レポートの `image` の塊が読める画像のまま撮れるようにする（振り返り: GH-339）
+
+（GH-349 にした）
+
+- 出典: ドラフト `develop/draft/2026-10-04-capture-catalog-readable-report-image.md`。利用者が `/plan-tasks` の確認で4件とも選んで承認した
+- 札: 黄 道具（21回目）
+- 根: capture-catalog-image-unreadable
+- 根拠: `capture-catalog.ts` は tsukumo をリポジトリの根で起こすので、`image` の塊は必ず「画像を出せない」の札で撮れる。GH-339 では読める画像を撮るため使い捨ての `/tmp/gh-339/shoot.ts` を5回直し、その中でツールのエラーが4件出た（hook の `deny-sed-in-place` に `copyFileSync` を止められた・ブラウザの起動で1回落ちた）。後段の GH-340（Before → After の塊）・GH-338（質問の `preview` の画像）も画像を撮る
+- 出し先: タスク。`scripts/capture-catalog.ts` の場面に「画像を棚に置いてから起こす」準備を足し、`report-image` の場面で読める画像と読めない画像を両方撮れるようにする。GH-340 の着手前に入れると、そのタスクの撮影が使い捨てのスクリプト無しで済む
+
+## 2026-10-04 `session-manager.test.ts` で `createSessionManager` の口を1か所の組み立て関数から作り、口を1つ足すたびに十数か所を直さなくて済むようにする（振り返り: GH-337）
+
+（GH-353 にした）
+
+- 出典: ドラフト `develop/draft/2026-10-04-session-manager-test-options-factory.md`。利用者が `/plan-tasks` の確認で4件とも選んで承認した
+- 札: 黄 構造の重さ（2回目）
+- 根: session-manager-test-options-spread
+- 根拠: GH-337 は `SessionManagerOptions` に `questionUsageLog` を1つ足しただけで、`test/server/session/core/session-manager.test.ts` の18か所に同じ1行を足した。同じ日の GH-334（`diagnosticLog`）も同じ18か所に足していて、2つを並べて取り込むと末尾の `describe` どうしが衝突し、互いに足りない口を手で補った
+- 出し先: テストの中で口を全部並べて `createSessionManager` を呼んでいる箇所を、既定の口を返す1つの組み立て関数＋そのテストで差し替える口だけの上書きに寄せるタスク。次に口を足すときはテストの変更が1か所になる
+
+## 2026-10-04 E2E の `inquiry.test.ts` がメッセージの届く順で揺れて落ちる件を、順に依らない待ち方に直す（振り返り: GH-332）
+
+（GH-346 にした）
+
+- 出典: ドラフト `develop/draft/2026-10-04-inquiry-e2e-message-order-flake.md`。利用者が `/plan-tasks` の確認で4件とも選んで承認した
+- 札: 黄 揺れ（10回目）
+- 根: e2e-inquiry-message-order
+- 根拠: GH-332 の委譲先の1回目の `tw verify` が、変更と無関係な `test/e2e/inquiry.test.ts` でメッセージの順の違いにより落ち、打ち直したら変更なしで通った（委譲先の friction log の自己申告）。GH-332 の差分は帯の2行目の文言だけで、質問の記録には触れていない
+- 出し先: `test/e2e/inquiry.test.ts` の落ちた場面を繰り返し走らせて再現し、順に依る待ち・比較を、届いた中身で待つ形に直すタスク（揺れは10回目なので、直したあと同じ型の待ち方を拾う検査を足せるかも同じタスクで見る）
+
 ## 2026-10-04 レポートと質問を文字だけにしない
 
 （GH-337〜GH-340 にした）

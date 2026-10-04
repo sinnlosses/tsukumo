@@ -12,6 +12,7 @@ import {
   type SessionLaunchPorts,
 } from "../../../../src/server/session/core/session-launch.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
+import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
 import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
@@ -84,6 +85,8 @@ type Harness = {
   /** `onRestoredEvents` が呼ばれるたびに受け取った並び。 */
   readonly restoredDeliveries: (readonly SessionEvent[])[]
   readonly calls: string[]
+  /** 診断ログへ積まれた足跡。 */
+  readonly diagnosticEntries: DiagnosticEntry[]
   readonly stub: ReturnType<typeof createStubDriver>
   readonly receive: (event: SessionEvent) => void
   readonly receiveRestored: (events: readonly SessionEvent[]) => void
@@ -95,9 +98,15 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
   const restoredEvents: SessionEvent[] = []
   const restoredDeliveries: (readonly SessionEvent[])[] = []
   const calls: string[] = []
+  const diagnosticEntries: DiagnosticEntry[] = []
   const stub = createStubDriver()
 
   const ports: SessionLaunchPorts<Pack> = {
+    diagnosticLog: {
+      append: (appended) => diagnosticEntries.push(...appended),
+      readRange: () => [],
+    },
+    now: () => 1_000,
     choosePack: (selection) => {
       calls.push(`choosePack:${labelOf(selection)}`)
       return selection.by === "name" ? SWITCHED : INITIAL
@@ -162,6 +171,7 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
     restoredEvents,
     restoredDeliveries,
     calls,
+    diagnosticEntries,
     stub,
     receive: (event) => {
       events.push(event)
@@ -290,6 +300,15 @@ describe("createSessionLaunch", () => {
       "sessions-changed",
     ])
     expect(harness.stub.calls).toEqual(["prompt:架空の依頼"])
+    expect(harness.diagnosticEntries).toEqual([
+      {
+        flow: "swallowed-failure",
+        at: 1_000,
+        place: { feature: "session", place: "restore-events" },
+        errorName: "Error",
+        errorCode: "none",
+      },
+    ])
   })
 
   it("画面から選んで起こし直したときだけ、そのパックを覚える", async () => {

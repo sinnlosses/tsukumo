@@ -49,6 +49,17 @@ function browserErrorFootprint(when: number): DiagnosticEntry {
   }
 }
 
+/** 握りつぶしていた失敗の1件（`error.message` は無い）。 */
+function failureFootprint(when: number): DiagnosticEntry {
+  return {
+    flow: "swallowed-failure",
+    at: when,
+    place: { feature: "session", place: "restart" },
+    errorName: "TypeError",
+    errorCode: "ENOENT",
+  }
+}
+
 describe("createDiagnosticLog", () => {
   it("日付ごとのファイルに、版を付けて1件1行で追記する", () => {
     const log = createDiagnosticLog(root())
@@ -81,6 +92,16 @@ describe("createDiagnosticLog", () => {
 
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([
       browserErrorFootprint(at(9, 0)),
+    ])
+  })
+
+  it("握りつぶしていた失敗（swallowed-failure）も、場所の名前と error.name・code で往復する", () => {
+    const log = createDiagnosticLog(root())
+
+    log.append([failureFootprint(at(10, 0))])
+
+    expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([
+      failureFootprint(at(10, 0)),
     ])
   })
 

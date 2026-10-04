@@ -84,11 +84,14 @@ function range(from: number, to: number): string {
   return `${isoWithOffset(from)}〜${isoWithOffset(to)}`
 }
 
-/** 1件を1行に。`session-event` は代・種類、`browser-error` は経路・`error.name`。 */
+/** 1件を1行に。`session-event` は代・種類、`browser-error` は経路・`error.name`、`swallowed-failure` は場所・`error.name`・code。 */
 function line(entry: DiagnosticEntry): string {
   const when = isoWithOffset(entry.at)
   if (entry.flow === "session-event") {
     return `${when}  ${entry.flow}  代${String(entry.generation)}  ${entry.kind}`
   }
-  return `${when}  ${entry.flow}  ${entry.route}  ${entry.errorName}`
+  if (entry.flow === "browser-error") {
+    return `${when}  ${entry.flow}  ${entry.route}  ${entry.errorName}`
+  }
+  return `${when}  ${entry.flow}  ${entry.place.feature}/${entry.place.place}  ${entry.errorName}  ${entry.errorCode}`
 }

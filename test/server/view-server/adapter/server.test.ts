@@ -91,6 +91,7 @@ async function startView(
   findPromptImage: (id: string) => string | undefined = noPromptImage,
   rpcPorts: Partial<RpcRouterPorts> = {},
   findReportImage: FindReportImage = noReportImage,
+  onRuntimeError: (error: unknown) => void = () => {},
 ): Promise<ViewServer> {
   const server = await startViewServer(0, {
     ui: () => ({
@@ -102,6 +103,7 @@ async function startView(
     findReportImage,
     rpcRouter: createRpcRouter({ ...EMPTY_RPC_PORTS, ...rpcPorts }),
     token: TOKEN,
+    onRuntimeError,
   })
   runningView = server
   return server
@@ -228,6 +230,7 @@ describe("startViewServer", () => {
       findReportImage: noReportImage,
       rpcRouter: createRpcRouter(EMPTY_RPC_PORTS),
       token: TOKEN,
+      onRuntimeError: () => {},
     })
     runningView = server
     const origin = viewOrigin(server)
@@ -729,14 +732,19 @@ describe("startViewServer", () => {
     expect((await fetch(`${origin}/character/fictional/..%2Fdefault.svg`)).status).toBe(404)
   })
 
-  it("listen 後に error が起きても閉じない。stderr に1行書いて配信を続ける", async () => {
-    const server = await startView()
+  it("listen 後に error が起きても閉じない。stderr に1行書き、onRuntimeError にもそのまま渡して配信を続ける", async () => {
+    const runtimeErrors: unknown[] = []
+    const server = await startView(noCharacterAsset, noPromptImage, {}, noReportImage, (error) =>
+      runtimeErrors.push(error),
+    )
     const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
+    const error = new Error("架空のエラー")
 
     try {
-      server.httpServer.emit("error", new Error("架空のエラー"))
+      server.httpServer.emit("error", error)
 
       expect(stderr).toHaveBeenCalledWith(expect.stringContaining("架空のエラー"))
+      expect(runtimeErrors).toEqual([error])
       // プロセスは落ちず、配信も続く。
       expect((await fetch(server.layoutUrl)).status).toBe(200)
     } finally {

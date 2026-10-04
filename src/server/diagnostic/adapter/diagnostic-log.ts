@@ -17,6 +17,12 @@ import {
   type DiagnosticRecord,
   type SessionEventFootprint,
 } from "../../../shared/diagnostic/diagnostic-record.ts"
+import {
+  isDiagnosedErrorCode,
+  isDiagnosedErrorName,
+  isSwallowedFailurePlace,
+  type SwallowedFailureFootprint,
+} from "../../../shared/diagnostic/swallowed-failure.ts"
 import { isSessionEventKind } from "../../../shared/session/session-event-kind.ts"
 import { appendJsonLines, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
 import { localDateKey } from "../../adapter/local-time.ts"
@@ -42,6 +48,14 @@ const diagnosticRecordSchema = z.discriminatedUnion("flow", [
     v: z.literal(DIAGNOSTIC_FORMAT_VERSION),
     flow: z.literal("browser-error"),
     at: z.number(),
+  }),
+  z.object({
+    v: z.literal(DIAGNOSTIC_FORMAT_VERSION),
+    flow: z.literal("swallowed-failure"),
+    at: z.number(),
+    place: z.custom<SwallowedFailureFootprint["place"]>(isSwallowedFailurePlace),
+    errorName: z.custom<SwallowedFailureFootprint["errorName"]>(isDiagnosedErrorName),
+    errorCode: z.custom<SwallowedFailureFootprint["errorCode"]>(isDiagnosedErrorCode),
   }),
 ])
 

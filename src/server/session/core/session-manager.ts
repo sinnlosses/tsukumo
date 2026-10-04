@@ -13,6 +13,7 @@ import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../shared/context-usage/context-usage.ts"
+import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
 import {
   type PlanUsageReport,
@@ -551,9 +552,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       await generation.driver
       announceGeneration()
       return { ok: true }
-    } catch {
+    } catch (error) {
       // 起こせなくても、組み直した姿（キャラクター・モード）は `hello` で配り、束も止めたままにしない。
       // 止めたままだと、見た目の編集などで積んだイベントが次の起こし直しまで届かなくなる。
+      diagnostic.add(
+        swallowedFailureFootprint(options.now(), { feature: "session", place: "restart" }, error),
+      )
       announceGeneration()
       return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
     }
@@ -581,7 +585,14 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       try {
         const started = await generation.driver
         return await started.readContextUsage()
-      } catch {
+      } catch (error) {
+        diagnostic.add(
+          swallowedFailureFootprint(
+            options.now(),
+            { feature: "session", place: "read-context-usage" },
+            error,
+          ),
+        )
         return UNAVAILABLE_CONTEXT_USAGE
       }
     },
@@ -590,7 +601,14 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       try {
         const started = await generation.driver
         return await started.readPlanUsage()
-      } catch {
+      } catch (error) {
+        diagnostic.add(
+          swallowedFailureFootprint(
+            options.now(),
+            { feature: "session", place: "read-plan-usage" },
+            error,
+          ),
+        )
         return UNAVAILABLE_PLAN_USAGE
       }
     },
@@ -601,7 +619,14 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       try {
         const started = await generation.driver
         return await started.readSessionDigest(sessionId)
-      } catch {
+      } catch (error) {
+        diagnostic.add(
+          swallowedFailureFootprint(
+            options.now(),
+            { feature: "session", place: "read-session-digest" },
+            error,
+          ),
+        )
         return UNAVAILABLE_SESSION_DIGEST
       }
     },

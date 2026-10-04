@@ -13,12 +13,16 @@
 import { z } from "zod"
 
 import type { SessionEvent } from "../session/session-event.ts"
+import type { SwallowedFailureFootprint } from "./swallowed-failure.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
 export const DIAGNOSTIC_FORMAT_VERSION = 1 satisfies number
 
 /** 足跡の1件（書き出す前。版を持たない）。`flow` が流れの判別子。 */
-export type DiagnosticEntry = SessionEventFootprint | BrowserErrorFootprint
+export type DiagnosticEntry =
+  | SessionEventFootprint
+  | BrowserErrorFootprint
+  | SwallowedFailureFootprint
 
 /** JSONL に書く1行の形。 */
 export type DiagnosticRecord = DiagnosticEntry & {

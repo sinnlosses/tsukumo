@@ -39,6 +39,8 @@ type Started = {
   readonly pushed: (frame: ServerFrame) => void
   /** いま購読している接続の数。 */
   readonly subscriberCount: () => number
+  /** `onMessageFailure` に渡った値。 */
+  readonly messageFailures: readonly unknown[]
 }
 
 /**
@@ -67,11 +69,13 @@ async function start(openFileResult = true): Promise<Started> {
   const origin = `http://127.0.0.1:${String(port)}`
 
   const openedFiles: string[] = []
+  const messageFailures: unknown[] = []
   const subscribers = new Set<(frame: ServerFrame) => void>()
   const socket = attachSessionSocket({
     httpServer: server,
     token: TOKEN,
     origin,
+    onMessageFailure: (error) => messageFailures.push(error),
     subscribe: (send) => {
       subscribers.add(send)
       send({
@@ -120,6 +124,7 @@ async function start(openFileResult = true): Promise<Started> {
       }
     },
     subscriberCount: () => subscribers.size,
+    messageFailures,
   }
 }
 
@@ -312,6 +317,7 @@ describe("attachSessionSocket", () => {
     await clientOver(client).host.openFile({ path: "src/架空.ts" })
 
     expect(started.openedFiles).toEqual(["src/架空.ts"])
+    expect(started.messageFailures).toEqual([expect.any(SyntaxError), expect.any(TypeError)])
     client.close()
   })
 

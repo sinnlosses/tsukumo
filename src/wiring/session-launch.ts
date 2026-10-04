@@ -9,6 +9,7 @@ import { createPersonaMemory, readRememberedLines } from "../server/chat/adapter
 import { readChatTopics } from "../server/chat/core/chat-consolidation.ts"
 import { createChatRecall } from "../server/chat/core/chat-recall.ts"
 import type { Config } from "../server/core/config.ts"
+import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import { readProjectSettings } from "../server/repository/adapter/project-settings.ts"
 import { startFakeSession } from "../server/session-driver/adapter/fake-driver.ts"
 import {
@@ -73,6 +74,8 @@ export function wireSessionLaunch(options: {
     seed: SessionLaunchSeed<CharacterPack>,
     onEvent: (event: SessionEvent) => void,
   ) => (event: SessionEvent) => void
+  /** 診断ログの書き込み口。前のセッションの履歴の組み直しが失敗したときだけ使う。 */
+  readonly diagnosticLog: DiagnosticLog
 }): {
   readonly manager: Pick<SessionManagerOptions, "launchSession">
   readonly sessionCommands: Pick<SessionCommandPorts, "rememberSessionDefault">
@@ -126,6 +129,8 @@ export function wireSessionLaunch(options: {
                   expressionNames(expressionChoices(pack.definition)),
                 ),
               ),
+        diagnosticLog: options.diagnosticLog,
+        now: context.now,
       }),
     },
     sessionCommands: {
