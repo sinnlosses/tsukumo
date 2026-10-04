@@ -173,6 +173,9 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
    守りたくなったら `page` の場面を増やさず、部品の名前を表に足して場面で選ぶ**
 
 **`*.messages.json` は絞らない。** 書き換わった件数の見積もりと、絞らない理由の数は `docs/history/decision.md`「testing.md E2E の期待値の範囲（部分木に絞る見積もり）」。
+例外は `session-info` の `slashCommands`・`terminalSlashCommands` と `command-descriptions` の
+`descriptions`（コマンド一覧）で、`collapseCommandCatalog`（`test/e2e/scenario-run.ts`）が固定の印に
+畳む。中身を確かめるのは `markdown-composer-suggestion`（入力欄の `/` の候補を見るシナリオ）だけ。
 
 ### E2E の揺れを生まない書き方
 

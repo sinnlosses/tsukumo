@@ -11,15 +11,8 @@
       "sessionId": "fake-session",
       "model": "opus",
       "permissionMode": "auto",
-      "slashCommands": [
-        "clear",
-        "compact",
-        "doctor",
-        "next-task"
-      ],
-      "terminalSlashCommands": [
-        "doctor"
-      ]
+      "slashCommands": "<コマンド一覧>",
+      "terminalSlashCommands": "<コマンド一覧>"
     }
   },
   {
@@ -27,16 +20,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "command-descriptions",
-      "descriptions": [
-        {
-          "name": "clear",
-          "description": "会話を消して始め直す（架空の説明）"
-        },
-        {
-          "name": "compact",
-          "description": "会話を要約してまとめる（架空の説明）"
-        }
-      ]
+      "descriptions": "<コマンド一覧>"
     }
   },
   {

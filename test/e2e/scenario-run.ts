@@ -327,7 +327,7 @@ async function openRoom(
         messages: writeArtifact(
           options.scenario,
           "messages",
-          collapsePartialUtterances(messages.list()),
+          collapsePartialUtterances(collapseCommandCatalog(messages.list(), options.scenario)),
           replacements,
           outDir,
         ),
@@ -663,6 +663,45 @@ function recordMessages(page: Page): MessageRecord {
       })
     },
   }
+}
+
+/**
+ * コマンド一覧を確かめる唯一のシナリオ（入力欄の `/` の候補を見る）。
+ * `docs/architecture/testing.md`「E2E の期待値の範囲」。
+ */
+const COMMAND_CATALOG_SCENARIO = "markdown-composer-suggestion"
+
+const COLLAPSED_COMMAND_CATALOG = "<コマンド一覧>"
+
+/**
+ * `session-info` の `slashCommands`・`terminalSlashCommands` と `command-descriptions` の
+ * `descriptions` を固定の印に畳む。`COMMAND_CATALOG_SCENARIO` だけはそのまま返す。
+ */
+function collapseCommandCatalog(entries: readonly unknown[], scenario: string): readonly unknown[] {
+  if (scenario === COMMAND_CATALOG_SCENARIO) {
+    return entries
+  }
+  return entries.map((entry) => {
+    const record = asRecord(entry)
+    if (record["received"] !== "event") {
+      return entry
+    }
+    const event = asRecord(record["event"])
+    if (event["kind"] === "session-info") {
+      return {
+        ...record,
+        event: {
+          ...event,
+          slashCommands: COLLAPSED_COMMAND_CATALOG,
+          terminalSlashCommands: COLLAPSED_COMMAND_CATALOG,
+        },
+      }
+    }
+    if (event["kind"] === "command-descriptions") {
+      return { ...record, event: { ...event, descriptions: COLLAPSED_COMMAND_CATALOG } }
+    }
+    return entry
+  })
 }
 
 /**
