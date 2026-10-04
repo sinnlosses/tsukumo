@@ -1,0 +1,77 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><style>
+:root{--ground:#191720;--surface:#221f2b;--ink:#e8e3ea;--accent:#f2b0a0;
+--ink-quiet:color-mix(in srgb,var(--ink) 60%,transparent);--rule:color-mix(in srgb,var(--surface),var(--ink) 32%);
+--rule-quiet:color-mix(in srgb,var(--surface),var(--ink) 6%);--surface-accent:color-mix(in srgb,var(--surface),var(--accent) 12%);
+--state-warn:#e3c766;--state-ng:#f2a0a0;--mono:ui-monospace,SFMono-Regular,monospace}
+*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:15px system-ui,sans-serif}
+.scene{position:relative;width:1000px;height:470px;display:flex;border-bottom:1px solid var(--rule)}
+.side{width:260px;background:var(--surface);border-right:1px solid var(--rule);padding:16px}
+.sec{font-size:12px;color:var(--ink-quiet);margin:18px 0 6px;display:flex;justify-content:space-between;align-items:center}
+.row{font-size:13px;padding:6px 0;border-bottom:1px solid var(--rule-quiet)}
+.empty{border:1px dashed var(--rule);border-radius:10px;padding:14px;text-align:center}
+.empty .btn{width:100%}
+.gear{color:var(--ink-quiet);font-size:14px}
+.main{flex:1;position:relative}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.dlg{position:absolute;left:50%;top:40px;transform:translateX(-50%);width:440px;background:var(--surface);
+border:1px solid var(--rule);border-radius:18px;padding:20px 24px}
+.head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.head h2{margin:0;font-size:18px}
+.path{font-family:var(--mono);font-size:12px;color:var(--ink-quiet)}
+.grid{display:grid;grid-template-columns:96px 1fr;gap:12px 14px;align-items:center;margin-top:14px}
+.lbl{font-size:13px;color:var(--ink-quiet)}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden;width:max-content}
+.seg span{padding:6px 16px;font-size:13px;font-family:var(--mono)}.seg .on{background:var(--surface-accent);font-weight:bold;box-shadow:inset 0 -2px var(--accent)}
+.in{border:1px solid var(--rule);background:var(--ground);border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:13px}
+.guess{border-style:dashed;color:var(--ink-quiet)}
+.seg.guess span.on{background:none;color:var(--ink-quiet);box-shadow:inset 0 -2px var(--ink-quiet)}
+.tok{background:var(--surface-accent);color:var(--accent);border-radius:4px;padding:0 4px}
+.foot{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.btn{height:34px;padding:0 16px;border-radius:8px;border:1px solid var(--rule);background:none;color:var(--ink);font-size:13px}
+.pri{background:var(--accent);color:#191720;border:0;font-weight:bold}
+.ngb{border-color:var(--state-ng);color:var(--state-ng)}
+.ng{color:var(--state-ng)}
+.badge{font-size:12px;color:var(--state-ng);border:1px solid var(--state-ng);border-radius:10px;padding:0 8px}
+.pop{position:absolute;right:-20px;bottom:-56px;width:220px;background:var(--surface);border:1px solid var(--state-ng);border-radius:12px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.pop h3{margin:0;font-size:14px}
+.cap{position:absolute;right:14px;bottom:8px;font-size:11px;color:var(--ink-quiet)}
+</style></head><body>
+
+<div class="scene">
+ <div class="side">
+  <div class="sec">タスク</div>
+  <div class="empty"><button class="btn">⚙ 設定する</button></div>
+ </div>
+ <div class="main"><div class="dim"></div>
+  <div class="dlg">
+   <div class="head"><h2>プロジェクト</h2><span class="path">.tsukumo/project.json</span></div>
+   <div class="grid">
+    <span class="lbl">タスク</span><div class="seg guess"><span>files</span><span class="on">beads</span></div>
+    <span class="lbl">主ブランチ</span><div class="in guess" style="width:180px">main</div>
+    <span class="lbl">頼む文面</span><div class="in">/next-task <span class="tok">{id}</span></div>
+   </div>
+   <div class="foot"><button class="btn">やめる</button><button class="btn pri">保存</button></div>
+  </div></div>
+ <div class="cap">① ファイルが無いとき（点線＝推し量った値。触るか保存すると実線になる）</div>
+</div>
+
+<div class="scene">
+ <div class="side">
+  <div class="sec"><span>タスク</span><span class="gear">⚙</span></div>
+  <div class="row ng">⚠ 読めない</div>
+ </div>
+ <div class="main"><div class="dim"></div>
+  <div class="dlg">
+   <div class="head"><h2>プロジェクト</h2><span class="path">.tsukumo/project.json</span><span class="badge">読めない</span></div>
+   <div class="grid">
+    <span class="lbl">タスク</span><div class="seg"><span class="on">files</span><span>beads</span></div>
+    <span class="lbl">主ブランチ</span><div class="in" style="width:180px">main</div>
+    <span class="lbl">頼む文面</span><div class="in">/next-task <span class="tok">{id}</span></div>
+   </div>
+   <div class="foot"><button class="btn">やめる</button><button class="btn pri">保存</button></div>
+   <div class="pop"><h3>上書きする？</h3>
+    <div class="foot" style="margin-top:10px"><button class="btn">やめる</button><button class="btn ngb">上書き</button></div></div>
+  </div></div>
+ <div class="cap">② 読めないとき（保存を押すと確かめが出る）</div>
+</div>
+</body></html>
