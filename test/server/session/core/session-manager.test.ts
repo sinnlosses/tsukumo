@@ -159,11 +159,55 @@ type FlatCommandPorts = Omit<
   "promptImageShelf"
 >
 
+/** どのテストも気にしない口の既定値。共有の棚は呼ぶたびに新しく起こす。 */
+function defaultSessionManagerOptions() {
+  return {
+    now: () => 1_000,
+    openFile: () => Promise.resolve(true),
+    readAchievementDay: () => Promise.resolve(undefined),
+    batchIntervalMs: BATCH_MS,
+    chatConsolidation: NO_CHAT_CONSOLIDATION,
+    watchTasks: NO_TASK_WATCH,
+    visit: NO_VISIT_PORTS,
+    diary: NO_DIARY_WRITER,
+    chatArchive: NOOP_CHAT_ARCHIVE,
+    project: FICTIONAL_PROJECT,
+    tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+    experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+    diagnosticLog: NOOP_DIAGNOSTIC_LOG,
+    contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+    reportUsageLog: NOOP_REPORT_USAGE_LOG,
+    questionUsageLog: NOOP_QUESTION_USAGE_LOG,
+    promptImageShelf: createPromptImageShelf(),
+    reportImageShelf: createReportImageShelf(),
+    readReportImage: () => undefined,
+    rememberSessionDefault: (sessionDefault) => ({
+      kind: "session-default-changed",
+      sessionDefault,
+    }),
+    rememberVisitEnabled: (visitEnabled) => ({ kind: "visit-enabled-changed", visitEnabled }),
+    editCharacter: () => Promise.resolve(undefined),
+    createCharacter: () => Promise.resolve(undefined),
+    deleteCharacter: () => Promise.resolve(undefined),
+    forgetRememberedLine: () => Promise.resolve(undefined),
+    readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+    writePreviousUsageReview: () => {},
+    dismissUsageProposal: (dismiss) => ({
+      kind: "usage-proposal-dismissed",
+      key: usageProposalKey(dismiss),
+    }),
+  } satisfies Partial<SessionManagerOptions & FlatCommandPorts>
+}
+
 /**
  * 平らに並べた口からセッションとコマンドのルータを組む。
  * 受け手そのものの振る舞いは `createCommandRouter` のテストが持ち、ここでコマンドを使うのは代の寿命と反応の順を起こす引き金としてだけ。
  */
-function createSessionManager(options: SessionManagerOptions & FlatCommandPorts) {
+function createSessionManager(
+  overrides: Pick<SessionManagerOptions, "launchSession"> &
+    Partial<SessionManagerOptions & FlatCommandPorts>,
+) {
+  const options = { ...defaultSessionManagerOptions(), ...overrides }
   const {
     rememberSessionDefault,
     readAchievementDay,
@@ -206,30 +250,6 @@ function startManagerWithStub() {
   /** 見送った提案の識別子（書き先は配線層なので、ここでは積むだけ）。 */
   const dismissedUsageProposals: UsageProposalDismissal[] = []
   const manager = createSessionManager({
-    now: () => 1_000,
-    openFile: () => Promise.resolve(true),
-    readAchievementDay: () => Promise.resolve(undefined),
-    batchIntervalMs: BATCH_MS,
-    chatConsolidation: NO_CHAT_CONSOLIDATION,
-    watchTasks: NO_TASK_WATCH,
-    visit: NO_VISIT_PORTS,
-    diary: NO_DIARY_WRITER,
-    chatArchive: NOOP_CHAT_ARCHIVE,
-    project: FICTIONAL_PROJECT,
-    tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-    experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-    diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-    contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-    reportUsageLog: NOOP_REPORT_USAGE_LOG,
-    questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-    promptImageShelf: createPromptImageShelf(),
-    reportImageShelf: createReportImageShelf(),
-    readReportImage: () => undefined,
-    rememberSessionDefault: (sessionDefault) => ({
-      kind: "session-default-changed",
-      sessionDefault,
-    }),
-    rememberVisitEnabled: (visitEnabled) => ({ kind: "visit-enabled-changed", visitEnabled }),
     launchSession: (onEvent, onRestoredEvents) => {
       stub.attach(onEvent)
       stub.attachRestored(onRestoredEvents)
@@ -239,10 +259,6 @@ function startManagerWithStub() {
       edits.push(edit)
       return Promise.resolve(CHARACTER_EVENT)
     },
-    createCharacter: () => Promise.resolve(undefined),
-    deleteCharacter: () => Promise.resolve(undefined),
-    forgetRememberedLine: () => Promise.resolve(undefined),
-    readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
     writePreviousUsageReview: (reviewedAt, findings) => {
       writtenPreviousUsageReviews.push([reviewedAt, findings])
     },
@@ -370,33 +386,6 @@ describe("createSessionManager", () => {
   it("起こし直しの間に届いた再生は、起き上がったあとの hello 1枚に入る", async () => {
     const releases: (() => void)[] = []
     const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      reportImageShelf: createReportImageShelf(),
-      readReportImage: () => undefined,
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
       launchSession: (onEvent, onRestoredEvents, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -407,16 +396,6 @@ describe("createSessionManager", () => {
           releases.push(() => resolve(stub.driver))
         })
       },
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
     })
     releases[0]?.()
     const frames: ServerFrame[] = []
@@ -466,49 +445,12 @@ describe("createSessionManager", () => {
     // 起こされた駆動を、渡された要求と一緒に順に覚える。
     const started: { readonly request: SessionLaunchRequest; readonly stub: StubDriver }[] = []
     const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      reportImageShelf: createReportImageShelf(),
-      readReportImage: () => undefined,
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
       launchSession: (onEvent, _onRestoredEvents, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push({ request, stub })
         return Promise.resolve(stub.driver)
       },
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
     })
 
     const frames: ServerFrame[] = []
@@ -557,33 +499,6 @@ describe("createSessionManager", () => {
     // 切り替わり、前の立ち絵が一瞬出てから新しい hello で入れ替わる。
     const releases: (() => void)[] = []
     const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      reportImageShelf: createReportImageShelf(),
-      readReportImage: () => undefined,
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
       launchSession: (onEvent, _onRestoredEvents, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -592,16 +507,6 @@ describe("createSessionManager", () => {
           releases.push(() => resolve(stub.driver))
         })
       },
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
     })
     releases[0]?.()
     const frames: ServerFrame[] = []
@@ -625,33 +530,6 @@ describe("createSessionManager", () => {
     // 駆動を起こすのに外の世界（transcript の一覧）を読むので、`launchSession` は待てる形で返る。
     const started: StubDriver[] = []
     const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      reportImageShelf: createReportImageShelf(),
-      readReportImage: () => undefined,
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
       launchSession: async (onEvent) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -659,16 +537,6 @@ describe("createSessionManager", () => {
         started.push(stub)
         return stub.driver
       },
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
     })
 
     const frames: ServerFrame[] = []
@@ -702,53 +570,17 @@ describe("createSessionManager", () => {
 
   describe("定着", () => {
     function startChatManagerWithStub(
-      archive: ChatArchive = NOOP_CHAT_ARCHIVE,
-      chatConsolidation: ChatConsolidationSource = NO_CHAT_CONSOLIDATION,
-      diagnosticLog: DiagnosticLog = NOOP_DIAGNOSTIC_LOG,
+      overrides: Partial<
+        Pick<SessionManagerOptions, "chatArchive" | "chatConsolidation" | "diagnosticLog">
+      > = {},
     ) {
       const stub = createStubDriver()
       const manager = createSessionManager({
-        now: () => 1_000,
-        openFile: () => Promise.resolve(true),
-        readAchievementDay: () => Promise.resolve(undefined),
-        batchIntervalMs: BATCH_MS,
-        chatConsolidation,
-        watchTasks: NO_TASK_WATCH,
-        visit: NO_VISIT_PORTS,
-        diary: NO_DIARY_WRITER,
-        chatArchive: archive,
-        project: FICTIONAL_PROJECT,
-        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-        diagnosticLog,
-        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-        reportUsageLog: NOOP_REPORT_USAGE_LOG,
-        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-        promptImageShelf: createPromptImageShelf(),
-        reportImageShelf: createReportImageShelf(),
-        readReportImage: () => undefined,
-        rememberSessionDefault: (sessionDefault) => ({
-          kind: "session-default-changed",
-          sessionDefault,
-        }),
-        rememberVisitEnabled: (visitEnabled) => ({
-          kind: "visit-enabled-changed",
-          visitEnabled,
-        }),
+        ...overrides,
         launchSession: (onEvent) => {
           stub.attach(onEvent)
           return Promise.resolve(stub.driver)
         },
-        editCharacter: () => Promise.resolve(undefined),
-        createCharacter: () => Promise.resolve(undefined),
-        deleteCharacter: () => Promise.resolve(undefined),
-        forgetRememberedLine: () => Promise.resolve(undefined),
-        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-        writePreviousUsageReview: () => {},
-        dismissUsageProposal: (dismiss) => ({
-          kind: "usage-proposal-dismissed",
-          key: usageProposalKey(dismiss),
-        }),
       })
       return { manager, stub }
     }
@@ -789,7 +621,7 @@ describe("createSessionManager", () => {
 
     async function startInChat() {
       const consolidation = createManualConsolidation()
-      const started = startChatManagerWithStub(NOOP_CHAT_ARCHIVE, consolidation.source)
+      const started = startChatManagerWithStub({ chatConsolidation: consolidation.source })
       const frames: ServerFrame[] = []
       started.manager.subscribe((frame) => frames.push(frame))
       await waitForBatch()
@@ -838,9 +670,12 @@ describe("createSessionManager", () => {
     it("失敗は、理由の語と error.name・code の1行を診断ログへ書く（message は入らない）", async () => {
       const entries: DiagnosticEntry[] = []
       const consolidation = createManualConsolidation()
-      const { stub } = startChatManagerWithStub(NOOP_CHAT_ARCHIVE, consolidation.source, {
-        append: (appended) => entries.push(...appended),
-        readRange: () => [],
+      const { stub } = startChatManagerWithStub({
+        chatConsolidation: consolidation.source,
+        diagnosticLog: {
+          append: (appended) => entries.push(...appended),
+          readRange: () => [],
+        },
       })
       stub.emit(CHARACTER_EVENT)
 
@@ -884,9 +719,12 @@ describe("createSessionManager", () => {
           return Promise.reject(new TypeError("架空の失敗文"))
         },
       }
-      const { stub } = startChatManagerWithStub(NOOP_CHAT_ARCHIVE, source, {
-        append: (appended) => entries.push(...appended),
-        readRange: () => [],
+      const { stub } = startChatManagerWithStub({
+        chatConsolidation: source,
+        diagnosticLog: {
+          append: (appended) => entries.push(...appended),
+          readRange: () => [],
+        },
       })
       stub.emit(CHARACTER_EVENT)
 
@@ -916,7 +754,9 @@ describe("createSessionManager", () => {
 
     it("仕事のターンの終わりにも起こし、書けても話題の見出しは流さない", async () => {
       const consolidation = createManualConsolidation()
-      const { manager, stub } = startChatManagerWithStub(NOOP_CHAT_ARCHIVE, consolidation.source)
+      const { manager, stub } = startChatManagerWithStub({
+        chatConsolidation: consolidation.source,
+      })
       const frames: ServerFrame[] = []
       manager.subscribe((frame) => frames.push(frame))
       await waitForBatch()
@@ -959,33 +799,6 @@ describe("createSessionManager", () => {
 
   it("起こし直しに失敗したら定型文の理由を返し、常駐プロセスは落ちない", async () => {
     const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      reportImageShelf: createReportImageShelf(),
-      readReportImage: () => undefined,
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
       launchSession: (onEvent, _onRestoredEvents, request) => {
         if (request.selection.by === "initial") {
           const stub = createStubDriver()
@@ -994,16 +807,6 @@ describe("createSessionManager", () => {
         }
         return Promise.reject(new Error("架空の起こし直し失敗"))
       },
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
     })
 
     expect(await manager.commands.session.switchCharacter({ name: "fictional" })).toEqual({
@@ -1065,48 +868,12 @@ describe("createSessionManager", () => {
         },
       }
       const manager = createSessionManager({
-        now: () => 1_000,
-        openFile: () => Promise.resolve(true),
-        readAchievementDay: () => Promise.resolve(undefined),
-        batchIntervalMs: BATCH_MS,
-        chatConsolidation: NO_CHAT_CONSOLIDATION,
-        watchTasks: NO_TASK_WATCH,
-        visit: NO_VISIT_PORTS,
-        diary: NO_DIARY_WRITER,
         chatArchive,
-        project: FICTIONAL_PROJECT,
-        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-        reportUsageLog: NOOP_REPORT_USAGE_LOG,
-        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-        promptImageShelf: createPromptImageShelf(),
-        reportImageShelf: createReportImageShelf(),
-        readReportImage: () => undefined,
-        rememberSessionDefault: (sessionDefault) => ({
-          kind: "session-default-changed",
-          sessionDefault,
-        }),
-        rememberVisitEnabled: (visitEnabled) => ({
-          kind: "visit-enabled-changed",
-          visitEnabled,
-        }),
         launchSession: (onEvent, onRestoredEvents) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvents)
           return Promise.resolve(stub.driver)
         },
-        editCharacter: () => Promise.resolve(undefined),
-        createCharacter: () => Promise.resolve(undefined),
-        deleteCharacter: () => Promise.resolve(undefined),
-        forgetRememberedLine: () => Promise.resolve(undefined),
-        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-        writePreviousUsageReview: () => {},
-        dismissUsageProposal: (dismiss) => ({
-          kind: "usage-proposal-dismissed",
-          key: usageProposalKey(dismiss),
-        }),
       })
       return { manager, stub, archiveCalls }
     }
@@ -1423,53 +1190,17 @@ describe("createSessionManager", () => {
       const stub = createStubDriver()
       const entries: TokenUsageEntry[] = []
       const manager = createSessionManager({
-        now: () => 1_000,
-        openFile: () => Promise.resolve(true),
-        readAchievementDay: () => Promise.resolve(undefined),
-        batchIntervalMs: BATCH_MS,
-        chatConsolidation: NO_CHAT_CONSOLIDATION,
-        watchTasks: NO_TASK_WATCH,
-        visit: NO_VISIT_PORTS,
-        diary: NO_DIARY_WRITER,
-        chatArchive: NOOP_CHAT_ARCHIVE,
-        project: FICTIONAL_PROJECT,
         tokenUsageLog: {
           append: (entry) => {
             entries.push(entry)
           },
           readRange: () => [],
         },
-        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-        reportUsageLog: NOOP_REPORT_USAGE_LOG,
-        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-        promptImageShelf: createPromptImageShelf(),
-        reportImageShelf: createReportImageShelf(),
-        readReportImage: () => undefined,
-        rememberSessionDefault: (sessionDefault) => ({
-          kind: "session-default-changed",
-          sessionDefault,
-        }),
-        rememberVisitEnabled: (visitEnabled) => ({
-          kind: "visit-enabled-changed",
-          visitEnabled,
-        }),
         launchSession: (onEvent, onRestoredEvents) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvents)
           return Promise.resolve(stub.driver)
         },
-        editCharacter: () => Promise.resolve(undefined),
-        createCharacter: () => Promise.resolve(undefined),
-        deleteCharacter: () => Promise.resolve(undefined),
-        forgetRememberedLine: () => Promise.resolve(undefined),
-        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-        writePreviousUsageReview: () => {},
-        dismissUsageProposal: (dismiss) => ({
-          kind: "usage-proposal-dismissed",
-          key: usageProposalKey(dismiss),
-        }),
       })
       return { manager, stub, entries }
     }
@@ -1729,52 +1460,16 @@ describe("createSessionManager", () => {
         },
       }
       const manager = createSessionManager({
-        now: () => 1_000,
-        openFile: () => Promise.resolve(true),
-        readAchievementDay: () => Promise.resolve(undefined),
-        batchIntervalMs: BATCH_MS,
-        chatConsolidation: NO_CHAT_CONSOLIDATION,
-        watchTasks: NO_TASK_WATCH,
-        visit: NO_VISIT_PORTS,
-        diary: NO_DIARY_WRITER,
-        chatArchive: NOOP_CHAT_ARCHIVE,
-        project: FICTIONAL_PROJECT,
-        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
         contextUsageLog: {
           append: (entry) => {
             entries.push(entry)
           },
         },
-        reportUsageLog: NOOP_REPORT_USAGE_LOG,
-        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-        promptImageShelf: createPromptImageShelf(),
-        reportImageShelf: createReportImageShelf(),
-        readReportImage: () => undefined,
-        rememberSessionDefault: (sessionDefault) => ({
-          kind: "session-default-changed",
-          sessionDefault,
-        }),
-        rememberVisitEnabled: (visitEnabled) => ({
-          kind: "visit-enabled-changed",
-          visitEnabled,
-        }),
         launchSession: (onEvent, onRestoredEvents) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvents)
           return Promise.resolve(driver)
         },
-        editCharacter: () => Promise.resolve(undefined),
-        createCharacter: () => Promise.resolve(undefined),
-        deleteCharacter: () => Promise.resolve(undefined),
-        forgetRememberedLine: () => Promise.resolve(undefined),
-        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-        writePreviousUsageReview: () => {},
-        dismissUsageProposal: (dismiss) => ({
-          kind: "usage-proposal-dismissed",
-          key: usageProposalKey(dismiss),
-        }),
       })
       return { manager, stub, entries, asked: () => asked }
     }
@@ -1902,52 +1597,16 @@ describe("createSessionManager", () => {
       const stub = createStubDriver()
       const entries: ReportUsageEntry[] = []
       const manager = createSessionManager({
-        now: () => 1_000,
-        openFile: () => Promise.resolve(true),
-        readAchievementDay: () => Promise.resolve(undefined),
-        batchIntervalMs: BATCH_MS,
-        chatConsolidation: NO_CHAT_CONSOLIDATION,
-        watchTasks: NO_TASK_WATCH,
-        visit: NO_VISIT_PORTS,
-        diary: NO_DIARY_WRITER,
-        chatArchive: NOOP_CHAT_ARCHIVE,
-        project: FICTIONAL_PROJECT,
-        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: {
           append: (entry) => {
             entries.push(entry)
           },
         },
-        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-        promptImageShelf: createPromptImageShelf(),
-        reportImageShelf: createReportImageShelf(),
-        readReportImage: () => undefined,
-        rememberSessionDefault: (sessionDefault) => ({
-          kind: "session-default-changed",
-          sessionDefault,
-        }),
-        rememberVisitEnabled: (visitEnabled) => ({
-          kind: "visit-enabled-changed",
-          visitEnabled,
-        }),
         launchSession: (onEvent, onRestoredEvents) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvents)
           return Promise.resolve(stub.driver)
         },
-        editCharacter: () => Promise.resolve(undefined),
-        createCharacter: () => Promise.resolve(undefined),
-        deleteCharacter: () => Promise.resolve(undefined),
-        forgetRememberedLine: () => Promise.resolve(undefined),
-        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-        writePreviousUsageReview: () => {},
-        dismissUsageProposal: (dismiss) => ({
-          kind: "usage-proposal-dismissed",
-          key: usageProposalKey(dismiss),
-        }),
       })
       return { manager, stub, entries }
     }
@@ -2039,52 +1698,16 @@ describe("createSessionManager", () => {
       const stub = createStubDriver()
       const entries: QuestionUsageEntry[] = []
       const manager = createSessionManager({
-        now: () => 1_000,
-        openFile: () => Promise.resolve(true),
-        readAchievementDay: () => Promise.resolve(undefined),
-        batchIntervalMs: BATCH_MS,
-        chatConsolidation: NO_CHAT_CONSOLIDATION,
-        watchTasks: NO_TASK_WATCH,
-        visit: NO_VISIT_PORTS,
-        diary: NO_DIARY_WRITER,
-        chatArchive: NOOP_CHAT_ARCHIVE,
-        project: FICTIONAL_PROJECT,
-        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-        reportUsageLog: NOOP_REPORT_USAGE_LOG,
         questionUsageLog: {
           append: (entry) => {
             entries.push(entry)
           },
         },
-        promptImageShelf: createPromptImageShelf(),
-        reportImageShelf: createReportImageShelf(),
-        readReportImage: () => undefined,
-        rememberSessionDefault: (sessionDefault) => ({
-          kind: "session-default-changed",
-          sessionDefault,
-        }),
-        rememberVisitEnabled: (visitEnabled) => ({
-          kind: "visit-enabled-changed",
-          visitEnabled,
-        }),
         launchSession: (onEvent, onRestoredEvents) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvents)
           return Promise.resolve(stub.driver)
         },
-        editCharacter: () => Promise.resolve(undefined),
-        createCharacter: () => Promise.resolve(undefined),
-        deleteCharacter: () => Promise.resolve(undefined),
-        forgetRememberedLine: () => Promise.resolve(undefined),
-        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-        writePreviousUsageReview: () => {},
-        dismissUsageProposal: (dismiss) => ({
-          kind: "usage-proposal-dismissed",
-          key: usageProposalKey(dismiss),
-        }),
       })
       return { manager, stub, entries }
     }
@@ -2142,52 +1765,17 @@ describe("createSessionManager", () => {
       let now = 1_000
       const manager = createSessionManager({
         now: () => now,
-        openFile: () => Promise.resolve(true),
-        readAchievementDay: () => Promise.resolve(undefined),
-        batchIntervalMs: BATCH_MS,
-        chatConsolidation: NO_CHAT_CONSOLIDATION,
-        watchTasks: NO_TASK_WATCH,
-        visit: NO_VISIT_PORTS,
-        diary: NO_DIARY_WRITER,
-        chatArchive: NOOP_CHAT_ARCHIVE,
-        project: FICTIONAL_PROJECT,
-        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
         diagnosticLog: {
           append: (appended) => {
             entries.push(...appended)
           },
           readRange: () => [],
         },
-        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-        reportUsageLog: NOOP_REPORT_USAGE_LOG,
-        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-        promptImageShelf: createPromptImageShelf(),
-        reportImageShelf: createReportImageShelf(),
-        readReportImage: () => undefined,
-        rememberSessionDefault: (sessionDefault) => ({
-          kind: "session-default-changed",
-          sessionDefault,
-        }),
-        rememberVisitEnabled: (visitEnabled) => ({
-          kind: "visit-enabled-changed",
-          visitEnabled,
-        }),
         launchSession: (onEvent, onRestoredEvents) => {
           stub.attach(onEvent)
           stub.attachRestored(onRestoredEvents)
           return Promise.resolve(stub.driver)
         },
-        editCharacter: () => Promise.resolve(undefined),
-        createCharacter: () => Promise.resolve(undefined),
-        deleteCharacter: () => Promise.resolve(undefined),
-        forgetRememberedLine: () => Promise.resolve(undefined),
-        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-        writePreviousUsageReview: () => {},
-        dismissUsageProposal: (dismiss) => ({
-          kind: "usage-proposal-dismissed",
-          key: usageProposalKey(dismiss),
-        }),
       })
       const advance = (ms: number): void => {
         now += ms
@@ -2244,35 +1832,10 @@ describe("createSessionManager", () => {
     it("起こし直しに失敗したら、場所の名前と error.name・code の1行を書く（message は入らない）", async () => {
       const manager = createSessionManager({
         now: () => 2_000,
-        openFile: () => Promise.resolve(true),
-        readAchievementDay: () => Promise.resolve(undefined),
-        batchIntervalMs: BATCH_MS,
-        chatConsolidation: NO_CHAT_CONSOLIDATION,
-        watchTasks: NO_TASK_WATCH,
-        visit: NO_VISIT_PORTS,
-        diary: NO_DIARY_WRITER,
-        chatArchive: NOOP_CHAT_ARCHIVE,
-        project: FICTIONAL_PROJECT,
-        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
         diagnosticLog: {
           append: (appended) => entries.push(...appended),
           readRange: () => [],
         },
-        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-        reportUsageLog: NOOP_REPORT_USAGE_LOG,
-        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-        promptImageShelf: createPromptImageShelf(),
-        reportImageShelf: createReportImageShelf(),
-        readReportImage: () => undefined,
-        rememberSessionDefault: (sessionDefault) => ({
-          kind: "session-default-changed",
-          sessionDefault,
-        }),
-        rememberVisitEnabled: (visitEnabled) => ({
-          kind: "visit-enabled-changed",
-          visitEnabled,
-        }),
         launchSession: (onEvent, _onRestoredEvents, request) => {
           if (request.selection.by === "initial") {
             const stub = createStubDriver()
@@ -2283,16 +1846,6 @@ describe("createSessionManager", () => {
             Object.assign(new Error("架空の起こし直し失敗"), { name: "TypeError" }),
           )
         },
-        editCharacter: () => Promise.resolve(undefined),
-        createCharacter: () => Promise.resolve(undefined),
-        deleteCharacter: () => Promise.resolve(undefined),
-        forgetRememberedLine: () => Promise.resolve(undefined),
-        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-        writePreviousUsageReview: () => {},
-        dismissUsageProposal: (dismiss) => ({
-          kind: "usage-proposal-dismissed",
-          key: usageProposalKey(dismiss),
-        }),
       })
       const entries: DiagnosticEntry[] = []
 
@@ -2314,46 +1867,11 @@ describe("createSessionManager", () => {
       const entries: DiagnosticEntry[] = []
       const manager = createSessionManager({
         now: () => 3_000,
-        openFile: () => Promise.resolve(true),
-        readAchievementDay: () => Promise.resolve(undefined),
-        batchIntervalMs: BATCH_MS,
-        chatConsolidation: NO_CHAT_CONSOLIDATION,
-        watchTasks: NO_TASK_WATCH,
-        visit: NO_VISIT_PORTS,
-        diary: NO_DIARY_WRITER,
-        chatArchive: NOOP_CHAT_ARCHIVE,
-        project: FICTIONAL_PROJECT,
-        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
         diagnosticLog: {
           append: (appended) => entries.push(...appended),
           readRange: () => [],
         },
-        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-        reportUsageLog: NOOP_REPORT_USAGE_LOG,
-        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-        promptImageShelf: createPromptImageShelf(),
-        reportImageShelf: createReportImageShelf(),
-        readReportImage: () => undefined,
-        rememberSessionDefault: (sessionDefault) => ({
-          kind: "session-default-changed",
-          sessionDefault,
-        }),
-        rememberVisitEnabled: (visitEnabled) => ({
-          kind: "visit-enabled-changed",
-          visitEnabled,
-        }),
         launchSession: () => Promise.reject(new Error("架空の起動失敗")),
-        editCharacter: () => Promise.resolve(undefined),
-        createCharacter: () => Promise.resolve(undefined),
-        deleteCharacter: () => Promise.resolve(undefined),
-        forgetRememberedLine: () => Promise.resolve(undefined),
-        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-        writePreviousUsageReview: () => {},
-        dismissUsageProposal: (dismiss) => ({
-          kind: "usage-proposal-dismissed",
-          key: usageProposalKey(dismiss),
-        }),
       })
 
       await manager.readContextUsage()
@@ -2387,50 +1905,15 @@ describe("createSessionManager", () => {
       }
       const manager = createSessionManager({
         now: () => 4_000,
-        openFile: () => Promise.resolve(true),
-        readAchievementDay: () => Promise.resolve(undefined),
-        batchIntervalMs: BATCH_MS,
-        chatConsolidation: NO_CHAT_CONSOLIDATION,
-        watchTasks: NO_TASK_WATCH,
-        visit: NO_VISIT_PORTS,
-        diary: NO_DIARY_WRITER,
-        chatArchive: NOOP_CHAT_ARCHIVE,
-        project: FICTIONAL_PROJECT,
-        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
         diagnosticLog: {
           append: (appended) => entries.push(...appended),
           readRange: () => [],
         },
-        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-        reportUsageLog: NOOP_REPORT_USAGE_LOG,
-        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-        promptImageShelf: createPromptImageShelf(),
-        reportImageShelf: createReportImageShelf(),
-        readReportImage: () => undefined,
-        rememberSessionDefault: (sessionDefault) => ({
-          kind: "session-default-changed",
-          sessionDefault,
-        }),
-        rememberVisitEnabled: (visitEnabled) => ({
-          kind: "visit-enabled-changed",
-          visitEnabled,
-        }),
         launchSession: (onEvent) => {
           stub.attach(onEvent)
           onEvent({ kind: "sessions-changed", sessions: [], current: "fake-current" })
           return Promise.resolve(failingDriver)
         },
-        editCharacter: () => Promise.resolve(undefined),
-        createCharacter: () => Promise.resolve(undefined),
-        deleteCharacter: () => Promise.resolve(undefined),
-        forgetRememberedLine: () => Promise.resolve(undefined),
-        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-        writePreviousUsageReview: () => {},
-        dismissUsageProposal: (dismiss) => ({
-          kind: "usage-proposal-dismissed",
-          key: usageProposalKey(dismiss),
-        }),
       })
 
       await manager.readSessionDigest("fake-current")
@@ -2469,33 +1952,7 @@ describe("依頼に添えた画像の棚", () => {
     const shelf: PromptImageShelf = createPromptImageShelf()
     const prompted: ShelvedPromptImage[][] = []
     const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
       promptImageShelf: shelf,
-      reportImageShelf: createReportImageShelf(),
-      readReportImage: () => undefined,
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
       launchSession: (onEvent) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
@@ -2508,16 +1965,6 @@ describe("依頼に添えた画像の棚", () => {
           },
         })
       },
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
     })
     const prompt = (images: readonly PromptImage[]) =>
       manager.commands.session.prompt({ text: "架空の依頼", images })
@@ -2612,48 +2059,16 @@ describe("レポートの画像の棚", () => {
     const shelf = createReportImageShelf()
     const readPaths: string[] = []
     const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
       reportImageShelf: shelf,
       readReportImage: (path) => {
         readPaths.push(path)
         return FICTIONAL_IMAGE
       },
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({ kind: "visit-enabled-changed", visitEnabled }),
       launchSession: (onEvent, onRestoredEvents) => {
         stub.attach(onEvent)
         stub.attachRestored(onRestoredEvents)
         return Promise.resolve(stub.driver)
       },
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
     })
     return { manager, stub, shelf, readPaths }
   }
@@ -2749,44 +2164,8 @@ describe("createSessionManager（見直し）", () => {
       findings: { days: 7, headline: "架空の前回の一言。", proposals: [] },
     }
     const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      reportImageShelf: createReportImageShelf(),
-      readReportImage: () => undefined,
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
       launchSession: () => Promise.resolve(createStubDriver().driver),
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
       readPreviousUsageReview: (): PreviousUsageReview => previous,
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
     })
 
     const frames: ServerFrame[] = []
@@ -2879,11 +2258,6 @@ describe("タスク一覧の見張り", () => {
       emit: (_event: SessionEvent): void => {},
     }
     const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
       watchTasks: (onEvent) => {
         watch.started += 1
         watch.emit = onEvent
@@ -2896,38 +2270,7 @@ describe("タスク一覧の見張り", () => {
           },
         }
       },
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      reportImageShelf: createReportImageShelf(),
-      readReportImage: () => undefined,
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
       launchSession: () => Promise.resolve(createStubDriver().driver),
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
     })
     return { manager, watch }
   }
@@ -2999,11 +2342,6 @@ describe("訪問", () => {
     const drivers: StubDriver[] = []
     const manager = createSessionManager({
       now: manual.now,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
       visit: {
         timing: VISIT_TIMING,
         clock: manual.clock,
@@ -3011,42 +2349,12 @@ describe("訪問", () => {
         random: () => 0,
         scriptSource: { kind: "pack-only" },
       },
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-      diagnosticLog: NOOP_DIAGNOSTIC_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      reportImageShelf: createReportImageShelf(),
-      readReportImage: () => undefined,
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
       launchSession: (onEvent) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         drivers.push(stub)
         return Promise.resolve(stub.driver)
       },
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
     })
     const emit = (event: SessionEvent): void => {
       drivers.at(-1)?.emit(event)
