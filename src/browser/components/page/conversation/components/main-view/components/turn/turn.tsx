@@ -125,31 +125,37 @@ function Step(props: StepProps): ReactElement | null {
  *
  * 後ろに別のレポートが現れた中間レポート（`step.superseded`）は、何件も開いたまま積まれると見通しが悪いので畳む。
  * 畳んだ分は `<details>` にするだけで中身は DOM に残す。まだ追い越されていない最後の中間レポートは開いた `<section>` のまま。
+ * 畳むのは本文だけで、質問の記録は畳みの外に出す。
  */
 function StepCard(props: StepProps): ReactElement {
   const { step } = props
   const questions = step.actions.filter(isQuestion)
   const folded = step.interim && step.superseded
-  const content = (
+  const questionCards = questions.map((question, index) => (
+    <QuestionRecord entry={question} key={index} />
+  ))
+  const report = step.body.kind === "text" && (
     <>
-      {step.body.kind === "text" && (
-        <>
-          <ReportHead
-            label={reportLabel(step, step.body.task, props.hasInterimReport, folded)}
-            task={step.body.task}
-            phase={step.body.finishedPhase}
-          />
-          <Report markdown={step.body.report} reveal={props.reveal} turnId={props.turnId} />
-        </>
-      )}
-      {questions.map((question, index) => (
-        <QuestionRecord entry={question} key={index} />
-      ))}
+      <ReportHead
+        label={reportLabel(step, step.body.task, props.hasInterimReport, folded)}
+        task={step.body.task}
+        phase={step.body.finishedPhase}
+      />
+      <Report markdown={step.body.report} reveal={props.reveal} turnId={props.turnId} />
     </>
   )
 
-  if (folded) {
+  if (!folded) {
     return (
+      <section className={stepClassName(step)}>
+        {report}
+        {questionCards}
+      </section>
+    )
+  }
+
+  return (
+    <>
       <details className={clsx(mainViewStyles["main-step"], mainViewStyles["is-interim"])}>
         <Text
           element="summary"
@@ -160,12 +166,11 @@ function StepCard(props: StepProps): ReactElement {
         >
           {interimSummary(step.body)}
         </Text>
-        {content}
+        {report}
       </details>
-    )
-  }
-
-  return <section className={stepClassName(step)}>{content}</section>
+      {questionCards}
+    </>
+  )
 }
 
 /**

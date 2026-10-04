@@ -562,6 +562,186 @@
       ]
     },
     {
+      "name": "question-twice",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "質問を2回挟んで報告を書く場面を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "question",
+                "id": "fake-ask-twice-1",
+                "questions": [
+                  {
+                    "header": "架空の選択1",
+                    "text": "架空の質問1：どちらを先に見る？",
+                    "multiSelect": false,
+                    "options": [
+                      { "label": "A案（架空）", "description": "架空の説明A" },
+                      { "label": "B案（架空）", "description": "架空の説明B" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "speech",
+            "text": "1つ目の質問。選んでみて。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 3000,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-call-twice-1"
+          }
+        },
+        {
+          "afterMs": 3300,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "途中まで書いたよ。", "expression": "default" },
+            "toolUseId": "fake-report-call-twice-1",
+            "conclusion": "中間の結論（架空）：1つ目の質問の答えを踏まえて調べた。",
+            "sections": [
+              {
+                "heading": "",
+                "blocks": [
+                  {
+                    "kind": "markdown",
+                    "markdown": "- 架空の下調べの結果その1\n- 架空の下調べの結果その2",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 3350,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-call-twice-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 3500,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-twice-1",
+            "name": "Edit",
+            "input": { "file_path": "/tmp/dummy/twice.ts" }
+          }
+        },
+        {
+          "afterMs": 3900,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-twice-1",
+            "content": "ダミーの書き換え結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 4000,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "question",
+                "id": "fake-ask-twice-2",
+                "questions": [
+                  {
+                    "header": "架空の選択2",
+                    "text": "架空の質問2：このまま閉じてよい？",
+                    "multiSelect": false,
+                    "options": [
+                      { "label": "閉じる（架空）", "description": "架空の説明C" },
+                      { "label": "続ける（架空）", "description": "架空の説明D" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 4100,
+          "event": {
+            "kind": "speech",
+            "text": "2つ目の質問。もう一度選んでみて。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 7000,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-call-twice-2"
+          }
+        },
+        {
+          "afterMs": 7300,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-call-twice-2",
+            "conclusion": "架空の結論：2つ目の質問の答えを踏まえて締めた。",
+            "sections": [
+              {
+                "heading": "",
+                "blocks": [
+                  {
+                    "kind": "markdown",
+                    "markdown": "- 架空のまとめその1\n- 架空のまとめその2",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 7350,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-call-twice-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 7500,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "notation",
       "steps": [
         {

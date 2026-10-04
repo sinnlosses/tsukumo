@@ -1,0 +1,230 @@
+{
+  "main": [
+    {
+      "tag": "main",
+      "attributes": {
+        "data-region": "main",
+        "aria-label": "メインビュー"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": "",
+            "data-main-view": ""
+          },
+          "children": [
+            {
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "report"
+              },
+              "children": [
+                {
+                  "tag": "article",
+                  "children": [
+                    {
+                      "tag": "header",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ古いターンへ",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "‹"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ新しいターンへ",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "›"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h2",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "質問を2回挟んで報告を書く場面を確かめたい（架空の依頼）",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "1 / 1",
+                        "最新"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-outline": "hidden",
+                        "data-outline-collapsed": "false"
+                      },
+                      "children": [
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "section",
+                              "children": [
+                                {
+                                  "tag": "h4",
+                                  "children": [
+                                    "架空の選択1",
+                                    ":",
+                                    "架空の質問1：どちらを先に見る？"
+                                  ]
+                                },
+                                {
+                                  "tag": "ul",
+                                  "children": [
+                                    {
+                                      "tag": "li",
+                                      "children": [
+                                        "●",
+                                        "A案（架空）"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "li",
+                                      "children": [
+                                        "○",
+                                        "B案（架空）"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "details",
+                          "children": [
+                            {
+                              "tag": "summary",
+                              "children": [
+                                "中間レポート: 中間の結論（架空）：1つ目の質問の答えを踏まえて調べた。"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "h4",
+                              "children": [
+                                "架空の選択2",
+                                ":",
+                                "架空の質問2：このまま閉じてよい？"
+                              ]
+                            },
+                            {
+                              "tag": "ul",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "○",
+                                    "続ける（架空）"
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "●",
+                                    "閉じる（架空）"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "header",
+                              "children": [
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "最終レポート"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空の結論：2つ目の質問の答えを踏まえて締めた。"
+                              ]
+                            },
+                            {
+                              "tag": "ul",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "架空のまとめその1"
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "架空のまとめその2"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

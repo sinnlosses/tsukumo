@@ -5,7 +5,8 @@ import { useScenarioRun } from "./scenario-run.ts"
 
 // お伺い（許可要求と質問。docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 許可は場面 `permission`、質問は `question-pair`（単一選択が1問ずつ）・`question-multi`（複数選択）・
-// `question-long`（長いラベルと長い説明）・`question-preview`（選択肢ごとの比較）。
+// `question-long`（長いラベルと長い説明）・`question-preview`（選択肢ごとの比較）・
+// `question-twice`（同じ依頼の中で中間レポートを挟んで2回答える）。
 // どの場面も答え待ちを出したまま、答えると次の `pending-changed` が流れる。
 
 const run = useScenarioRun()
@@ -159,6 +160,41 @@ describe("お伺い", () => {
       expect(hit).toBe(true)
     },
   )
+
+  it("同じ依頼の中で中間レポートを挟んで2回答えた質問は、2件とも出た順にメインビューへ残る", async () => {
+    const room = await run.open({
+      scenario: "inquiry-question-twice",
+      scene: "question-twice",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+    const inquiry = inquiryOf(room.page)
+    const main = room.page.locator('[data-region="main"]')
+
+    await inquiry.getByText("A案（架空）").click()
+    await inquiry.getByRole("button", { name: /これで答える/ }).click()
+    await room.waitForEvent("question-answered")
+
+    await room.waitForEvent("pending-changed", 3)
+    await inquiry.getByText("閉じる（架空）").click()
+    await inquiry.getByRole("button", { name: /これで答える/ }).click()
+    await room.waitForEvent("question-answered", 2)
+    await room.waitForEvent("turn-finished")
+
+    const firstQuestion = main.getByText("架空の質問1：どちらを先に見る？")
+    const secondQuestion = main.getByText("架空の質問2：このまま閉じてよい？")
+    await expect.poll(() => firstQuestion.isVisible()).toBe(true)
+    // 2件目は、間に挟まる中間レポートが畳まれても畳みの外に出て見える。
+    await expect.poll(() => secondQuestion.isVisible()).toBe(true)
+
+    const order = await main.evaluate((element) => {
+      const text = element.textContent ?? ""
+      return text.indexOf("架空の質問1") - text.indexOf("架空の質問2")
+    })
+    expect(order).toBeLessThan(0)
+
+    await room.settleAndMatch(ELAPSED_MS)
+  })
 })
 
 function inquiryOf(page: Page): Locator {
