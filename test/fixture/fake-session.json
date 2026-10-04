@@ -2596,6 +2596,32 @@
                 ]
               },
               {
+                "heading": "架空の見る場所を添えた画面",
+                "blocks": [
+                  {
+                    "kind": "image",
+                    "path": "report-image-fixture/after.png",
+                    "caption": "架空の札の見出しと余白を直した画面",
+                    "notes": [
+                      "左上の札の見出しが 18px から 21px になり、本文との差がはっきりした",
+                      "見出しと本文の間の余白は 28px から 26px に詰まった",
+                      "右下の `保存` の押す口は位置も色も変わっていない"
+                    ],
+                    "fold": ""
+                  },
+                  {
+                    "kind": "image",
+                    "path": "report-image-fixture/missing.png",
+                    "caption": "架空の置いていない画像に添えた説明",
+                    "notes": [
+                      "上の帯の高さが 52px のまま揃っている",
+                      "2行目の札の印が緑の ✓ に変わった"
+                    ],
+                    "fold": ""
+                  }
+                ]
+              },
+              {
                 "heading": "架空の外を指す画像",
                 "blocks": [
                   {

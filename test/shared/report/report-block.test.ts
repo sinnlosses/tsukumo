@@ -110,11 +110,18 @@ describe("parseReportSections", () => {
     })
   })
 
-  it("image の塊を受けて省いた fold を空文字で補い、path か caption の無い塊は落とす", () => {
+  it("image の塊を受けて省いた notes を空の並びで、fold を空文字で補い、path か caption の無い塊は落とす", () => {
     const image = { kind: "image", path: "架空/after.png", caption: "架空の画面" }
+    const annotated = { ...image, notes: ["左上の架空の帯"] }
 
-    expect(parseReportSections([{ heading: "", blocks: [image] }]).sections).toEqual([
-      { heading: "", blocks: [{ ...image, fold: "" }] },
+    expect(parseReportSections([{ heading: "", blocks: [image, annotated] }]).sections).toEqual([
+      {
+        heading: "",
+        blocks: [
+          { ...image, notes: [], fold: "" },
+          { ...annotated, fold: "" },
+        ],
+      },
     ])
     expect(
       parseReportSections([

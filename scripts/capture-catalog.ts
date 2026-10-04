@@ -154,6 +154,7 @@ const NOTE_FAVOR_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-favor_
 const CAPTIONED_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-captioned_"]`
 const CAPTIONED_FIGURE_SELECTOR = `${CAPTIONED_SELECTOR} pre.mermaid svg`
 const DIMENSION_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-dimension_"]`
+const IMAGE_NOTES_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-image-notes_"]`
 /** `list` の `flow`（一本道の手順）。 */
 const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
 /**
@@ -406,6 +407,15 @@ const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "scroll", selector: DIMENSION_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: CAPTIONED_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-image-notes",
+    scene: "report-image",
+    label: "画像に番号つきの説明を添えた塊（画像を置いていないと「出せない」の札と並ぶ）",
+    homeSetup: { kind: "default" },
+    prepare: [{ kind: "scroll", selector: IMAGE_NOTES_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: IMAGE_NOTES_SELECTOR, phase: "before-prepare" },
   },
   {
     name: "notation-flow",

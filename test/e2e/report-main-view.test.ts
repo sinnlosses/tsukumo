@@ -127,7 +127,7 @@ describe("report → メインビュー", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("image の塊が画像として描かれ、無い画像は札になり、外部の URL は描かれない", async () => {
+  it("image の塊が画像として描かれ、無い画像は札になり、notes は画像か札の横に番号つきで並び、外部の URL は描かれない", async () => {
     const room = await run.open({
       scenario: "report-image",
       scene: "report-image",

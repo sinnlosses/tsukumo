@@ -723,6 +723,7 @@ describe("reportSectionsMarkdown", () => {
       kind: "image",
       path: "架空/after.png",
       caption: "架空の<画面>",
+      notes: [],
       fold: "",
     }
 
@@ -737,8 +738,30 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it("image の説明が空なら alt は既定の語で説明の文字は置かず、図の番号だけ付く。棚に置いていない本文では src を付けない", () => {
-    expect(markdownOf({ kind: "image", path: "架空.png", caption: " ", fold: "" })).toBe(
+    expect(markdownOf({ kind: "image", path: "架空.png", caption: " ", notes: [], fold: "" })).toBe(
       figureCaptioned('<img alt="画面の画像">'),
+    )
+  })
+
+  it("image の notes は画像の横に1から番号を振った並びになり、< は逃がし、包みは縮めない", () => {
+    const image: ReportBlock = {
+      kind: "image",
+      path: "架空.png",
+      caption: "架空の画面",
+      notes: ["左上の <帯> が伸びた", "右の `札` が消えた"],
+      fold: "",
+    }
+
+    expect(markdownOf(image)).toBe(
+      figureCaptioned(
+        '<div class="image-notes"><img alt="架空の画面"><ol class="image-note-list">' +
+          '<li><span class="image-note-number" aria-hidden="true">1</span><span class="image-note-text">左上の &lt;帯&gt; が伸びた</span></li>' +
+          '<li><span class="image-note-number" aria-hidden="true">2</span><span class="image-note-text">右の <code>札</code> が消えた</span></li>' +
+          "</ol></div>",
+        "架空の画面",
+        1,
+        false,
+      ),
     )
   })
 
@@ -747,12 +770,14 @@ describe("reportSectionsMarkdown", () => {
       kind: "image",
       path: "架空1.png",
       caption: "架空の1枚目",
+      notes: [],
       fold: "",
     }
     const second: ReportBlock = {
       kind: "image",
       path: "架空2.png",
       caption: "架空の2枚目",
+      notes: [],
       fold: "",
     }
 
@@ -767,6 +792,7 @@ describe("reportSectionsMarkdown", () => {
       kind: "image",
       path: "架空.png",
       caption: "",
+      notes: [],
       fold,
     })
     const table: ReportBlock = {

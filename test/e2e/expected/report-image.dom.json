@@ -149,6 +149,22 @@
                                     "aria-hidden": "true"
                                   }
                                 },
+                                "架空の見る場所を添えた画面"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-level": "section",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
                                 "架空の外を指す画像"
                               ]
                             },
@@ -226,6 +242,137 @@
                             },
                             "図 2",
                             "架空の置いていない画像",
+                            {
+                              "tag": "h4",
+                              "children": [
+                                "架空の見る場所を添えた画面"
+                              ]
+                            },
+                            {
+                              "tag": "img",
+                              "attributes": {
+                                "alt": "架空の札の見出しと余白を直した画面",
+                                "src": "/report-image/fake-report-image-1/report-image-fixture%2Fafter.png"
+                              }
+                            },
+                            {
+                              "tag": "ol",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "1"
+                                      ]
+                                    },
+                                    "左上の札の見出しが 18px から 21px になり、本文との差がはっきりした"
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "2"
+                                      ]
+                                    },
+                                    "見出しと本文の間の余白は 28px から 26px に詰まった"
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "3"
+                                      ]
+                                    },
+                                    "右下の",
+                                    {
+                                      "tag": "code",
+                                      "children": [
+                                        "保存"
+                                      ]
+                                    },
+                                    "の押す口は位置も色も変わっていない"
+                                  ]
+                                }
+                              ]
+                            },
+                            "図 3",
+                            "架空の札の見出しと余白を直した画面",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "role": "img",
+                                "aria-label": "架空の置いていない画像に添えた説明"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "svg"
+                                    },
+                                    "画像を出せない",
+                                    "読めなかったか、tsukumo を起こし直して手放した"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "ol",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "1"
+                                      ]
+                                    },
+                                    "上の帯の高さが 52px のまま揃っている"
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "2"
+                                      ]
+                                    },
+                                    "2行目の札の印が緑の ✓ に変わった"
+                                  ]
+                                }
+                              ]
+                            },
+                            "図 4",
+                            "架空の置いていない画像に添えた説明",
                             {
                               "tag": "h4",
                               "children": [

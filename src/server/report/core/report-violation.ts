@@ -51,7 +51,7 @@ export type ReportViolation =
   | { readonly kind: "crowded-notes"; readonly count: number }
   /** `fold` を持つ `markdown` の塊が `<details>` を含む、または `<details>` が入れ子になっている。`count` は塊の数。 */
   | { readonly kind: "nested-fold"; readonly count: number }
-  /** `options` の候補、または `compare` の側の箇条が6つ以上ある塊がある。`count` は塊の数。 */
+  /** `options` の候補、`compare` の側の箇条、または `image` の `notes` が6つ以上ある塊がある。`count` は塊の数。 */
   | { readonly kind: "too-many-candidates"; readonly count: number }
   /** 候補が採る → 検討 → 採らないの順に並んでいない `options` の塊がある。`count` は塊の数。 */
   | { readonly kind: "unordered-options"; readonly count: number }
@@ -246,7 +246,7 @@ function violationLine(violation: ReportViolation): string {
     case "nested-fold":
       return `\`fold\` と \`<details>\` が入れ子になっている塊が${violation.count}個ある。畳むのは1段だけにする`
     case "too-many-candidates":
-      return `候補・箇条が6つ以上の \`options\` / \`compare\` が${violation.count}個ある。5つまでに絞る`
+      return `候補・箇条・説明が6つ以上の \`options\` / \`compare\` / \`image\` の \`notes\` が${violation.count}個ある。5つまでに絞る`
     case "unordered-options":
       return `候補が採る → 検討 → 採らないの順に並んでいない \`options\` が${violation.count}個ある。採る候補から順に並べ直す`
     case "ragged-table":
@@ -314,6 +314,8 @@ function hasTooManyCandidates(block: ReportBlock): boolean {
       return block.items.length > MAX_CANDIDATES
     case "compare":
       return block.sides.some((side) => side.points.length > MAX_CANDIDATES)
+    case "image":
+      return block.notes.length > MAX_CANDIDATES
     default:
       return false
   }

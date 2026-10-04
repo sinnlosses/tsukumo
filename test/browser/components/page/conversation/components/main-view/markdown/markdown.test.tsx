@@ -834,7 +834,9 @@ describe("Markdown（image の塊の画像）", () => {
       const text = reportSectionsMarkdown([
         {
           heading: "",
-          blocks: [{ kind: "image", path: "架空/after.png", caption: "架空の画面", fold: "" }],
+          blocks: [
+            { kind: "image", path: "架空/after.png", caption: "架空の画面", notes: [], fold: "" },
+          ],
         },
       ])
       const { container } = render(<Markdown text={text} />)
@@ -872,7 +874,10 @@ describe("Markdown（image の塊の画像）", () => {
 
   it("読めなかった画像は「出せない」の札に替わる", () => {
     const text = reportSectionsMarkdown([
-      { heading: "", blocks: [{ kind: "image", path: "架空.png", caption: "架空", fold: "" }] },
+      {
+        heading: "",
+        blocks: [{ kind: "image", path: "架空.png", caption: "架空", notes: [], fold: "" }],
+      },
     ])
     const { container } = render(<Markdown text={text} />)
 

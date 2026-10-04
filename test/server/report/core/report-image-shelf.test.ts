@@ -19,7 +19,13 @@ function imageSections(...paths: readonly string[]): readonly ReportSection[] {
     {
       heading: "",
       blocks: [
-        ...paths.map((path) => ({ kind: "image" as const, path, caption: "", fold: "" })),
+        ...paths.map((path) => ({
+          kind: "image" as const,
+          path,
+          caption: "",
+          notes: [],
+          fold: "",
+        })),
         { kind: "text", text: "架空の本文。", fold: "" },
       ],
     },

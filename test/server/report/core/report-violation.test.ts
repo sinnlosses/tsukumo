@@ -268,15 +268,22 @@ describe("reportViolations", () => {
       ],
       fold: "",
     })
+    const image = (count: number): ReportBlock => ({
+      kind: "image",
+      path: "架空.png",
+      caption: "架空の画面",
+      notes: Array.from({ length: count }, () => "架空の場所"),
+      fold: "",
+    })
 
     it("6つ目から違反", () => {
-      expect(reportViolations(draft([options(6), compare(6)]))).toEqual([
-        { kind: "too-many-candidates", count: 2 },
+      expect(reportViolations(draft([options(6), compare(6), image(6)]))).toEqual([
+        { kind: "too-many-candidates", count: 3 },
       ])
     })
 
     it("5つなら通る", () => {
-      expect(kinds(draft([options(5), compare(5)]))).toEqual([])
+      expect(kinds(draft([options(5), compare(5), image(5)]))).toEqual([])
     })
   })
 

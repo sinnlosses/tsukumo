@@ -421,6 +421,7 @@ function dimensionMarkdown(
 
 /**
  * 画像1枚と、その下の題の行。`src` は棚を引く経路で、棚に置いていない本文では付けない（描く側が「出せない」の札にする）。
+ * `notes` があれば、画像の横に1始まりの番号を振った説明の並びを置き、包みは縮めない。
  */
 function imageMarkdown(
   block: Extract<ReportBlock, { readonly kind: "image" }>,
@@ -433,14 +434,27 @@ function imageMarkdown(
       ? ` src="${htmlAttribute(reportImagePath(imageSource.toolUseId, block.path))}"`
       : ""
   const alt = htmlAttribute(caption === "" ? "画面の画像" : caption)
+  const image = `<img${src} alt="${alt}">`
+  const annotated = block.notes.length > 0
   return captionedMarkdown({
     kind: "figure",
     ordinal,
     title: caption,
-    body: `<img${src} alt="${alt}">`,
+    body: annotated
+      ? `<div class="image-notes">${image}${imageNoteListMarkdown(block.notes)}</div>`
+      : image,
     bodyFormat: "html",
-    fit: true,
+    fit: !annotated,
   })
+}
+
+function imageNoteListMarkdown(notes: readonly string[]): string {
+  const items = notes.map(
+    (note, index) =>
+      `<li><span class="image-note-number" aria-hidden="true">${String(index + 1)}</span>` +
+      `<span class="image-note-text">${htmlInlineWithCode(note)}</span></li>`,
+  )
+  return `<ol class="image-note-list">${items.join("")}</ol>`
 }
 
 function dimensionValueMarkdown(value: string, before: string): string {

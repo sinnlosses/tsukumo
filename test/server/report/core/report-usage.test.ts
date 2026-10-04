@@ -87,7 +87,7 @@ describe("reportUsageEntryOf", () => {
       {
         heading: "",
         blocks: [
-          { kind: "image", path: "架空/after.png", caption: "架空の画面", fold: "" },
+          { kind: "image", path: "架空/after.png", caption: "架空の画面", notes: [], fold: "" },
           { kind: "markdown", markdown: "![架空](架空/before.png)", fold: "" },
         ],
       },
@@ -97,6 +97,26 @@ describe("reportUsageEntryOf", () => {
 
     expect(entry.blockKinds).toEqual(["image", "markdown"])
     expect(entry.notations).toEqual(["image"])
+    expect(entry.blockFields).toEqual([])
+  })
+
+  it("image の塊に notes があれば imageNotes の欄を立てる", () => {
+    const event = reportEvent([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "image",
+            path: "架空/after.png",
+            caption: "架空の画面",
+            notes: ["左上の架空の帯"],
+            fold: "",
+          },
+        ],
+      },
+    ])
+
+    expect(reportUsageEntryOf(event, "claude-session-1", 1_000).blockFields).toEqual(["imageNotes"])
   })
 
   it("matrix の塊も塊の種類として数える", () => {

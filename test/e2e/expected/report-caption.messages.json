@@ -196,6 +196,7 @@
               "kind": "image",
               "path": "report-image-fixture/after.png",
               "caption": "架空の画面で題がとても長く、画像の幅を超えずに折り返して読めるかどうかを確かめるための文",
+              "notes": [],
               "fold": ""
             }
           ]

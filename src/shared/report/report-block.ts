@@ -192,9 +192,17 @@ const imageBlockSchema = z
     kind: z.literal("image"),
     path: z.string().describe("撮った画像のファイル（絶対か cwd から。png・jpeg・gif・webp）"),
     caption: inlineText.describe("何が見えるかの1行"),
+    notes: z
+      .array(inlineText)
+      .default([])
+      .describe(
+        "画像のどこを見るか・何が変わったか。1項目1文で、場所の言葉（左上の帯・2行目の札）から書く。番号は書かない（並びの順に振って描く）。5つまで",
+      ),
     fold,
   })
-  .describe("手で確かめた画面の画像1枚（何が見えたかを文で言い直さない）。前後は2つ並べる")
+  .describe(
+    "手で確かめた画面の画像1枚（何が見えたかを文で言い直さない。見る場所が2つ以上なら notes に並べる）。前後は2つ並べる",
+  )
 
 const REPORT_FILE_CHANGES = ["added", "modified", "deleted", "read"] as const
 

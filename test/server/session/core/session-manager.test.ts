@@ -2306,7 +2306,9 @@ describe("レポートの画像の棚", () => {
       sections: [
         {
           heading: "",
-          blocks: [{ kind: "image", path: "fictional/after.png", caption: "", fold: "" }],
+          blocks: [
+            { kind: "image", path: "fictional/after.png", caption: "", notes: [], fold: "" },
+          ],
         },
       ],
       favor: "",
