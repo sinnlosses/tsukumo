@@ -126,7 +126,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### プロジェクトの設定
 
-- **英語識別子（予定）**: `projectSettings`
+- **英語識別子**: `projectSettings`（読み取りは `projectSettingsOf`・型は `ProjectSettingsRead`。`src/shared/repository/project-settings.ts`）
 - **定義**: 起動先のリポジトリで誰が開いても同じ値の組（タスクの方式・主ブランチ名・
   「tsukumo に頼む」の送る文面）。置き場は起動先の `.tsukumo/project.json` の1つだけで、
   tsukumo はそこに書かれた値だけで動く
@@ -172,7 +172,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### セッション駆動
 
-- **英語識別子**: `sessionDriver`
+- **英語識別子**: `SessionDriver`（型。機能のディレクトリは `session-driver/`）
 - **定義**: SDK を起動し、届いたイベントを tsukumo 内部の型に変換するモジュール。
   原則2の「受け取る」層にあたる
 - **注記**: ここに表示の都合を持ち込まない。何をどう出すかは「決める」層の仕事
@@ -486,7 +486,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 圧縮の区切り
 
-- **英語識別子**: `compactBoundary`
+- **英語識別子**: `compact-boundary`（`SessionEvent` の `kind`）
 - **定義**: claude 自身の圧縮が起きた位置に、雑談のログへ出す**細い線1本**
   （SDK では `system` / `compact_boundary` のメッセージにあたる）。2026-09-25 から tsukumo は
   `/compact` を投げないので、起きるのは claude の自動の圧縮と、利用者が手で打った `/compact` だけ
@@ -678,12 +678,10 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### ビューサーバ
 
-- **英語識別子**: `viewServer`
+- **英語識別子**: `view-server`（機能のディレクトリ `src/server/view-server/`）
 - **定義**: ビューをブラウザに配るローカルの HTTP サーバ。`127.0.0.1` にだけバインドし、
-  本文をメモリに持ち、更新を Server-Sent Events で push する。**依頼・回答・中断は同じサーバへの
-  POST で受ける**（2026-09-11）
-- **注記**: **移行後（2026-09-13 決定）は本文を持たず、ページ・束ねた JS と CSS・同梱物・立ち絵を配り、
-  イベントとコマンドを WebSocket 1本でやり取りする**（`docs/architecture.md`「動きの流れ」）。識別子は `server`
+  ページ・束ねた JS と CSS・同梱物・立ち絵を配り、イベントは WebSocket 1本で流し、
+  コマンドは oRPC で受ける（`docs/architecture.md`「動きの流れ」）
 - **注記**: **本文をファイルに書き出さない。** 会話の一部を含むため
   （`docs/coding-standards.md`「会話内容の扱い」）
 - **避ける言い方**: プレビューサーバ、開発サーバ
@@ -711,7 +709,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **定義**: 雑談中のサイドバーの最上段に出す、いまのパックのキャラクターの名乗り。**顔・名前・
   ひとことプロフィール**と、右端の「変える」（キャラクターの切り替え）を並べる
   （`docs/architecture/screen-design.md` 13.7「雑談のときのサイドバー」）
-- **注記**: 仕事のときは出ない（キャラクターの切り替えは下端の帯の `<select>` に戻る）
+- **注記**: 仕事のときは出ない（キャラクターの切り替えは帯の顔から開く選び口に戻る）
 - **避ける言い方**: プロフィールカード、キャラクターカード（カードはレポートの中の塊の呼び名）
 
 ### ひとことプロフィール
@@ -931,7 +929,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 選択肢の比較
 
-- **英語識別子（予定）**: `questionPreview`（`QuestionOption.preview`。札は `<Inquiry>`）
+- **英語識別子**: `QuestionOption.preview`（`src/shared/session-driver/question.ts`。札は `<Inquiry>`）
 - **定義**: 質問（`AskUserQuestion`）の**選択肢ごとに付く Markdown の本文**と、それをメインビューに
   並べた面。表・図・メリットとデメリットで案を見比べるためのもので、答え待ちの間だけ出る
 - **注記**: **選択肢そのものは入力欄の箱に出たまま**（押す場所と読む場所を分ける。2026-09-21 決定。
@@ -955,7 +953,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 - **英語識別子**: `outfit`
 - **定義**: 実行中のモデルに対応する立ち絵の見た目。`haiku` = 軽装 / `sonnet` = 通常装備 /
-  `opus` = 戦闘配置。モデルは SDK に渡した値から分かる
+  `opus` = 戦闘配置 / `fable` = 戦闘配置（`opus` と同じ。`docs/requirements.md` 4.3）。モデルは SDK に渡した値から分かる
 - **注記**: 「装備の重さ＝モデルの重さ」というメタファーで、Asuna output style の
   「出撃時の掛け声」のモデル分岐と対応する
 - **避ける言い方**: コスチューム、スキン、テーマ
@@ -1329,7 +1327,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### fake driver
 
-- **英語識別子**: `fakeDriver`（`TSUKUMO_DRIVER=fake`）
+- **英語識別子**: `startFakeSession`（引数の型 `FakeDriverOptions`。`TSUKUMO_DRIVER=fake`）
 - **定義**: `SessionDriver`（`src/server/session-driver/core/session-driver.ts` の契約）と同じ形で、手で書いた
   疑似セッションどおりにイベントを流す実装（`src/server/session-driver/adapter/fake-driver.ts`）。claude を起こさずに
   画面全体を動かすための道具

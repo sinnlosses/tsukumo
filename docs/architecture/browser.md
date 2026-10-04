@@ -32,7 +32,7 @@
 | 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turn` の `startedAt` から計算）                                                                                                                                                     |
 | 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                                                                                                                                  |
 | 柱から重ねて開いたサイドバーの開閉                               | `useConversationLayout` の中の `usePopover`（保存しない。中くらいの窓幅の段を出たら閉じる）                                                                                                                        |
-| 出している画面（会話 / キャラクター / 作る）                     | `location.hash` の `?` より前（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。`docs/architecture/screen-design.md` 13.6）。hash の書き方は `stores/location-hash.ts` だけ  |
+| 出している画面（会話 / キャラ / トークン / 成果）                | `location.hash` の `?` より前（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。`docs/architecture/screen-design.md` 13.6）。hash の書き方は `stores/location-hash.ts` だけ  |
 
 画面全体で共有する状態は **zustand の `create()`** で書き、`Context` の `Provider` で配らない
 （書き方と `useShallow` の使いどころは `docs/coding-standards.md`「zustand の store」）。**姿そのものを

@@ -405,7 +405,7 @@ components/page/<ページ>/
 - **部品のディレクトリの外から引いてよいのは `<部品>.tsx` だけ**（例外は `main.tsx` / `app.tsx` /
   `components/app/` とテスト）。ページの部品を画面の外に置くとき（書き終わりの知らせ `DiaryNotice`）は、
   `components/app/layout.tsx` がその `<部品>.tsx` を直に import する
-- 会話の画面は**1ページ**で、4つの領域は `conversation/components/` の下の部品。検査は
+- 会話の画面は**1ページ**で、4つの領域のうち、メインビュー・キャラビュー・入力欄（`dispatch/`）は `conversation/components/` の下、サイドバーは `domain/sidebar/` の部品。検査は
   `test/architecture.test.ts`（`describe("components/page/ の形", …)`）
 
 **`src/browser/` の箱と、置く基準**（判断に迷ったら「その機能しか読まないなら機能の中」が既定。
@@ -934,7 +934,7 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
   最後の依頼と最後のメッセージの時刻を `restored-turn-span` にして畳む。読めなければ足さない
 - 逃げ道は `TSUKUMO_NEW_SESSION=1`（起動時）と、画面から新規に起こすコマンド（契約に
   はまだ足していない）
-- **どのセッションの続きから始めるかは画面から選べる**（サイドバーの「セッション」の `<select>` →
+- **どのセッションの続きから始めるかは画面から選べる**（帯のセッションの札から開く切り替え画面 →
   `session.switchSession` → `session-launch` の起こし直し）。並ぶのは**同じパック・同じモードの、
   目印（`@7327` / `@7328`）違い**で、新しいほうから `MAX_SESSION_CHOICES` 件まで。**起動時は
   自動で続きから始まる**（選ばせる画面は出さない）

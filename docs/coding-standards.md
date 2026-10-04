@@ -817,7 +817,7 @@ store には値だけでなく、React に属さない口も同じく持たせ�
   ホストが JST でも `Temporal.Now.timeZoneId()` は `"UTC"` を返す）。日付の境目を見るテストは、
   オフセットを `+09:00` のように固定せず、`Temporal.Now.timeZoneId()` を基準に時刻を組む。
   固定すると単体テストが見る日の境界とずれ、境界に近い時刻のコミット・イベントが意図と違う日に
-  数えられる（`test/server/adapter/main-history.test.ts` の `isoDateAt`）
+  数えられる（`test/server/achievement/adapter/main-history.test.ts` の `isoDateAt`）
 - 非公開関数は、`export` された関数の振る舞いを通して検証する。テストのためだけに `export`
   しない（上の「関数の並び順」節と同じ規約）
 - **語彙（表情・衣装など全域を列挙する定数）の長さに依存する期待値は、その定数から導く**
