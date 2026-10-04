@@ -451,7 +451,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("options は太字の見出しのあとに候補を書き手の順のままカードにし、頭に判定の語のバッジを置く", () => {
+  it("options は太字の見出しのあとに候補を書き手の順のままカードにし、頭に番号と判定の語のバッジを置く", () => {
     const options: ReportBlock = {
       kind: "options",
       title: "架空の比較",
@@ -463,13 +463,13 @@ describe("reportSectionsMarkdown", () => {
       fold: "",
     }
 
-    // 採る候補を先頭へ動かさない（並べ替えは再構成）。「採る」は演出が筆を留める印（report-pause-point）を併せ持つ。
+    // 判定の順が崩れていても並べ替えない（並べ替えは再構成で、順は検査が差し戻す）。「採る」は演出が筆を留める印（report-pause-point）を併せ持つ。
     expect(markdownOf(options)).toBe(
       "**架空の比較**\n\n" +
         '<div class="options">' +
-        '<div class="option option-reject"><div><span class="badge">採らない</span> <b>架空の案A</b></div>架空の&lt;理由&gt;</div>' +
-        '<div class="option option-adopt report-pause-point"><div><span class="badge badge-ok">採る</span> <b>架空の <code>案B</code></b></div>架空の理由</div>' +
-        '<div class="option"><div><span class="badge">検討</span> <b>架空の案C</b></div></div>' +
+        '<div class="option option-reject"><div><span class="option-number">1</span> <span class="badge">採らない</span> <b>架空の案A</b></div>架空の&lt;理由&gt;</div>' +
+        '<div class="option option-adopt report-pause-point"><div><span class="option-number">2</span> <span class="badge badge-ok">採る</span> <b>架空の <code>案B</code></b></div>架空の理由</div>' +
+        '<div class="option"><div><span class="option-number">3</span> <span class="badge">検討</span> <b>架空の案C</b></div></div>' +
         "</div>",
     )
   })

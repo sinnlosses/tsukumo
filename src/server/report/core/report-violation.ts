@@ -53,6 +53,8 @@ export type ReportViolation =
   | { readonly kind: "nested-fold"; readonly count: number }
   /** `options` の候補、または `compare` の側の箇条が6つ以上ある塊がある。`count` は塊の数。 */
   | { readonly kind: "too-many-candidates"; readonly count: number }
+  /** 候補が採る → 検討 → 採らないの順に並んでいない `options` の塊がある。`count` は塊の数。 */
+  | { readonly kind: "unordered-options"; readonly count: number }
   /** 行のセルの数が `columns` と揃わない表がある。`count` は表の数。 */
   | { readonly kind: "ragged-table"; readonly count: number }
   /** `series` の `values` の数が `labels` と揃わない `chart` の塊がある。`count` は塊の数。 */
@@ -177,6 +179,10 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       kind: "too-many-candidates",
       count: blocks.filter((block) => hasTooManyCandidates(block)).length,
     },
+    {
+      kind: "unordered-options",
+      count: blocks.filter((block) => block.kind === "options" && !isVerdictOrdered(block)).length,
+    },
     { kind: "ragged-table", count: blocks.filter((block) => isRaggedTable(block)).length },
     { kind: "ragged-chart", count: blocks.filter((block) => isRaggedChart(block)).length },
     {
@@ -217,6 +223,7 @@ const VIOLATION_THRESHOLDS = {
   "crowded-notes": 0,
   "nested-fold": 0,
   "too-many-candidates": 0,
+  "unordered-options": 0,
   "ragged-table": 0,
   "ragged-chart": 0,
   "untitled-section": 0,
@@ -240,6 +247,8 @@ function violationLine(violation: ReportViolation): string {
       return `\`fold\` と \`<details>\` が入れ子になっている塊が${violation.count}個ある。畳むのは1段だけにする`
     case "too-many-candidates":
       return `候補・箇条が6つ以上の \`options\` / \`compare\` が${violation.count}個ある。5つまでに絞る`
+    case "unordered-options":
+      return `候補が採る → 検討 → 採らないの順に並んでいない \`options\` が${violation.count}個ある。採る候補から順に並べ直す`
     case "ragged-table":
       return `行のセルの数が \`columns\` と揃わない表（\`matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
     case "ragged-chart":
@@ -258,6 +267,16 @@ function violationLine(violation: ReportViolation): string {
 }
 
 const MAX_CANDIDATES = 5
+
+/** `options` の候補を書く順。 */
+const VERDICT_ORDER = {
+  adopt: 0,
+  consider: 1,
+  reject: 2,
+} as const satisfies Record<
+  Extract<ReportBlock, { readonly kind: "options" }>["items"][number]["verdict"],
+  number
+>
 
 function crowdedNoteCount(sections: readonly ReportSection[]): number {
   return sections.reduce(
@@ -524,6 +543,11 @@ function paragraphs(lines: readonly string[]): readonly string[] {
 }
 
 /** 行のセルの数が列の数と揃わない表か。 */
+function isVerdictOrdered(block: Extract<ReportBlock, { readonly kind: "options" }>): boolean {
+  const ranks = block.items.map((item) => VERDICT_ORDER[item.verdict])
+  return ranks.every((rank, index) => index === 0 || (ranks[index - 1] ?? rank) <= rank)
+}
+
 function isRaggedTable(block: ReportBlock): boolean {
   switch (block.kind) {
     case "table":

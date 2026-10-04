@@ -280,6 +280,27 @@ describe("reportViolations", () => {
     })
   })
 
+  describe("候補は採る → 検討 → 採らないの順", () => {
+    const options = (verdicts: readonly ("adopt" | "consider" | "reject")[]): ReportBlock => ({
+      kind: "options",
+      title: "架空の比較",
+      items: verdicts.map((verdict) => ({ name: "架空", verdict, reason: "架空の理由。" })),
+      fold: "",
+    })
+
+    it("採る候補より前に別の判定があれば違反", () => {
+      expect(
+        reportViolations(draft([options(["consider", "adopt"]), options(["reject", "consider"])])),
+      ).toEqual([{ kind: "unordered-options", count: 2 }])
+    })
+
+    it("順に並んでいれば、抜けている判定や同じ判定の連続があっても通る", () => {
+      expect(
+        kinds(draft([options(["adopt", "adopt", "reject"]), options(["consider", "reject"])])),
+      ).toEqual([])
+    })
+  })
+
   describe("逃げ道に塊の種類がある記法を書かない", () => {
     const notationsOf = (body: string) =>
       reportViolations(draft([markdown(body)])).flatMap((violation) =>

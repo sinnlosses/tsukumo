@@ -94,6 +94,7 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "caption-text",
   "options",
   "option",
+  "option-number",
   "option-adopt",
   "option-reject",
   "files",

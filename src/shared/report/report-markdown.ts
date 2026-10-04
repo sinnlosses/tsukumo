@@ -360,11 +360,14 @@ function progressStepMarkdown(state: ProgressStepState, label: string): string {
   )
 }
 
-/** 候補を書き手の順のままカードにし、頭に判定のバッジを置く（並べ替えは再構成になるのでしない）。 */
+/**
+ * 候補を書き手の順のままカードにし、頭に1始まりの番号と判定のバッジを置く。
+ * 採る → 検討 → 採らないの順は書き手が守り、崩れていれば `reportViolations` が差し戻す（並べ替えは再構成になるのでしない）。
+ */
 function optionsMarkdown(block: Extract<ReportBlock, { readonly kind: "options" }>): string {
-  const cards = block.items.map(({ name, verdict, reason }) => {
+  const cards = block.items.map(({ name, verdict, reason }, index) => {
     const { cardClass, badgeClass, label } = OPTION_VERDICTS[verdict]
-    return `<div class="${cardClass}"><div><span class="${badgeClass}">${label}</span> <b>${htmlInlineWithCode(name)}</b></div>${htmlInlineWithCode(reason)}</div>`
+    return `<div class="${cardClass}"><div><span class="option-number">${String(index + 1)}</span> <span class="${badgeClass}">${label}</span> <b>${htmlInlineWithCode(name)}</b></div>${htmlInlineWithCode(reason)}</div>`
   })
   return joinParts([
     block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,

@@ -170,8 +170,10 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 - **候補の比較は `options`、触ったファイルの一覧は `files` の塊で見せる**（2026-09-28。
   `docs/research/report-block-richness.md` 3章。欄は判定と変更の種別の事実だけ）
   - `options`: `title` と、候補（`name` / `verdict`〔`adopt` / `consider` / `reject`〕/ `reason`）の並び。
-    候補を1枚ずつのカードにして横に並べ（入らなければ折り返す）、頭に判定のバッジを文字（採る / 検討 /
-    採らない）で置く。**並びは書き手の順のまま**（採る候補を先頭へ動かさない）。「採る」は `badge-ok` の
+    候補を1枚ずつのカードにして横に並べ（入らなければ折り返す）、頭に1始まりの番号と判定のバッジを文字
+    （採る / 検討 / 採らない）で置く。**候補は採る → 検討 → 採らないの順に書き手が書き、崩れていれば
+    差し戻す**（2026-10-04 利用者の決定。採る候補が必ず先頭〔左〕に来る。tsukumo が並べ替えるのは
+    再構成なのでしない）。描く並びは書き手の順のまま。「採る」は `badge-ok` の
     バッジと `state-ok` の縦罫、「採らない」はカードの文字を `ink-quiet` に沈める。キャラクターの色は
     入れない（`docs/architecture/screen-design.md` 13.2 の3本のまま）
   - `files`: `path` / `change`〔`added` / `modified` / `deleted` / `read`〕/ `note` の並び。塊の頭に、

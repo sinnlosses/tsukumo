@@ -183,7 +183,9 @@ const optionsBlockSchema = z
       .describe("候補は5つまで"),
     fold,
   })
-  .describe("候補を比べて採る・検討・採らないを言うとき。書いた順に描く")
+  .describe(
+    "候補を比べて採る・検討・採らないを言うとき。採る → 検討 → 採らないの順に書く（崩れると差し戻す）。書いた順に1始まりの番号を振って描く",
+  )
 
 const imageBlockSchema = z
   .object({

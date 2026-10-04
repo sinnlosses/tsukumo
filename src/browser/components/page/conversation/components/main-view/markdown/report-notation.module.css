@@ -272,6 +272,7 @@
 }
 /* 候補の比較（`report` の `options` の塊から tsukumo が組む）。
    候補を1枚ずつのカードにして横に並べ、入らなければ折り返す。並びは書き手の順のまま。
+   頭の番号は入力欄の質問の札の番号と同じ見た目にする。
    判定は頭のバッジの文字（採る / 検討 / 採らない）が持ち、「採る」の縦罫は state-ok（キャラクターの色は入れない）。 */
 .detail-block .report-options {
   display: grid;
@@ -288,6 +289,11 @@
 /* バッジと名前の行。理由はその下に続く。 */
 .detail-block .report-option > div:first-child {
   margin-bottom: 0.3rem;
+}
+.detail-block .report-option-number {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
 }
 .detail-block .report-option-adopt {
   border-left: 3px solid var(--state-ok);
