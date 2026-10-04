@@ -1,5 +1,5 @@
-// ファイルを書き換える `sed -i`・`perl -pi` / `perl -i`・Python の書き込みを止める PreToolUse hook の
-// 契約（終了コード 2 で実行を止め、stderr で Edit を促す）を、スクリプトを実際に起こして確かめる。
+// ファイルを書き換える `sed -i`・`perl -pi` / `perl -i`・Python の書き込みを止める判定を、関数で確かめる。
+// PreToolUse hook の契約（終了コード 2 で実行を止め、stderr で Edit を促す）は、スクリプトを実際に起こして確かめる。
 
 import { writeFileSync } from "node:fs"
 import { join } from "node:path"
@@ -7,6 +7,7 @@ import process from "node:process"
 
 import { describe, expect, test } from "vitest"
 
+import { findDeniedBashRule } from "../../scripts/lib/bash-write-denial.ts"
 import { runSubprocess } from "../fixture/subprocess.ts"
 import { useTempDir } from "../fixture/temp-dir.ts"
 
@@ -14,7 +15,14 @@ const HOOK_PATH = "scripts/deny-sed-in-place.ts"
 const WORK_ROOT = "/work/tree"
 const NO_PROJECT_DIR = Symbol("no CLAUDE_PROJECT_DIR")
 
-describe("ファイルを書き換えるコマンドを拒否する hook", () => {
+function isDenied(
+  command: string,
+  options: { readonly cwd?: string; readonly workRoot?: string } = {},
+): boolean {
+  return findDeniedBashRule(command, options.cwd, options.workRoot ?? WORK_ROOT) !== undefined
+}
+
+describe("ファイルを書き換えるコマンドの判定", () => {
   test.each([
     ["sed -i", "sed -i 's/a/b/' file.ts"],
     ["sed -i.bak", "sed -i.bak 's/a/b/' file.ts"],
@@ -90,23 +98,14 @@ describe("ファイルを書き換えるコマンドを拒否する hook", () =>
       "node の heredoc の書き込み",
       "node --input-type=module - <<'EOF'\nimport { writeFileSync } from 'node:fs'\nwriteFileSync('src/a.ts', 'x')\nEOF",
     ],
-  ])("%s は止めて Edit を促す", async (_name, command) => {
-    const result = await runHook(command)
-    expect(result.exitCode).toBe(2)
-    expect(result.stderr).toContain("Edit")
-    expect(result.stderr).toContain("Write")
-    expect(result.stderr).not.toContain("通る")
+  ])("%s は止める", (_name, command) => {
+    expect(isDenied(command)).toBe(true)
   })
 
-  test("作業ツリーの根が分からないときは外への open も止める", async () => {
-    const result = await runRaw(
-      JSON.stringify({
-        tool_name: "Bash",
-        tool_input: { command: "python3 -c \"open('/tmp/x', 'w').write('x')\"" },
-      }),
-      NO_PROJECT_DIR,
-    )
-    expect(result.exitCode).toBe(2)
+  test("作業ツリーの根が分からないときは外への open も止める", () => {
+    expect(
+      findDeniedBashRule("python3 -c \"open('/tmp/x', 'w').write('x')\"", undefined, undefined),
+    ).toBeDefined()
   })
 
   test.each([
@@ -164,8 +163,21 @@ describe("ファイルを書き換えるコマンドを拒否する hook", () =>
     ["コメントの中の >", "ls # a > b"],
     ["作業ツリーの外への node -e", "node -e \"require('fs').writeFileSync('/tmp/x/a.md', 'x')\""],
     ["作業ツリーの外へ書く bash -c", "bash -c 'echo x > /tmp/x/log'"],
-  ])("%s は通す", async (_name, command) => {
-    expect((await runHook(command)).exitCode).toBe(0)
+  ])("%s は通す", (_name, command) => {
+    expect(isDenied(command)).toBe(false)
+  })
+})
+
+describe("ファイルを書き換えるコマンドを拒否する hook", () => {
+  test("止めるときは終了コード 2 で、stderr に Edit・Write を促す", async () => {
+    const result = await runHook("sed -i 's/a/b/' file.ts")
+    expect(result.exitCode).toBe(2)
+    expect(result.stderr).toContain("Edit")
+    expect(result.stderr).toContain("Write")
+  })
+
+  test("止める形でなければ終了コード 0 で通す", async () => {
+    expect((await runHook("sed -n '1,5p' file.ts")).exitCode).toBe(0)
   })
 
   test("Bash 以外のツールには関わらない", async () => {
@@ -211,50 +223,40 @@ describe("python3 で走らせるスクリプトのファイル", () => {
     ["前置きの環境変数とフラグ", (path: string) => `PYTHONUTF8=1 python3 -u ${path}`],
     ["&& の後ろで引数付き", (path: string) => `cd x && python ${path} --flag`],
     ["引用符つきのパス", (path: string) => `python3 "${path}"`],
-  ])("作業ツリーの中へ書くスクリプト（%s）は止める", async (_name, toCommand) => {
-    const result = await runHook(toCommand(scriptPath(WRITES_INSIDE)))
-    expect(result.exitCode).toBe(2)
+  ])("作業ツリーの中へ書くスクリプト（%s）は止める", (_name, toCommand) => {
+    expect(isDenied(toCommand(scriptPath(WRITES_INSIDE)))).toBe(true)
   })
 
-  test("相対パスは入力の cwd から解いて止める", async () => {
+  test("相対パスは入力の cwd から解いて止める", () => {
     scriptPath(WRITES_INSIDE)
-    const result = await runRaw(
-      JSON.stringify({
-        tool_name: "Bash",
-        tool_input: { command: "python3 split.py" },
-        cwd: dir(),
-      }),
-    )
-    expect(result.exitCode).toBe(2)
+    expect(isDenied("python3 split.py", { cwd: dir() })).toBe(true)
   })
 
-  test("書き先が読めないスクリプトも止める", async () => {
-    const result = await runHook(`python3 ${scriptPath("open(path, 'w').write('x')\n")}`)
-    expect(result.exitCode).toBe(2)
+  test("書き先が読めないスクリプトも止める", () => {
+    expect(isDenied(`python3 ${scriptPath("open(path, 'w').write('x')\n")}`)).toBe(true)
   })
 
-  test("書き先が作業ツリーの外のリテラルなら通す", async () => {
-    const result = await runHook(`python3 ${scriptPath(WRITES_OUTSIDE)}`)
-    expect(result.exitCode).toBe(0)
+  test("書き先が作業ツリーの外のリテラルなら通す", () => {
+    expect(isDenied(`python3 ${scriptPath(WRITES_OUTSIDE)}`)).toBe(false)
   })
 
-  test("読めないパスなら通す", async () => {
-    expect((await runHook(`python3 ${join(dir(), "missing.py")}`)).exitCode).toBe(0)
+  test("読めないパスなら通す", () => {
+    expect(isDenied(`python3 ${join(dir(), "missing.py")}`)).toBe(false)
   })
 
-  test("cwd が無いときの相対パスは読まずに通す", async () => {
+  test("cwd が無いときの相対パスは読まずに通す", () => {
     scriptPath(WRITES_INSIDE)
-    expect((await runHook("python3 split.py")).exitCode).toBe(0)
+    expect(isDenied("python3 split.py")).toBe(false)
   })
 
-  test("引用符の中にデータとして書いただけの語は通す", async () => {
+  test("引用符の中にデータとして書いただけの語は通す", () => {
     const path = scriptPath(WRITES_INSIDE)
-    expect((await runHook(`echo "python3 ${path}"`)).exitCode).toBe(0)
+    expect(isDenied(`echo "python3 ${path}"`)).toBe(false)
   })
 
-  test("-m はスクリプトのファイルを取らないので通す", async () => {
+  test("-m はスクリプトのファイルを取らないので通す", () => {
     scriptPath(WRITES_INSIDE, "pytest.py")
-    expect((await runHook(`python3 -m ${join(dir(), "pytest.py")}`)).exitCode).toBe(0)
+    expect(isDenied(`python3 -m ${join(dir(), "pytest.py")}`)).toBe(false)
   })
 })
 
@@ -274,49 +276,37 @@ describe("node で走らせるスクリプトのファイル", () => {
       "import { writeFileSync } from 'node:fs'\nwriteFileSync(join(root, 'a.ts'), 'x')\n",
     ],
     ["作業ツリーの中への copyFileSync", "fs.copyFileSync('/tmp/x/a', '/work/tree/a.ts')\n"],
-  ])("作業ツリーの中へ書くスクリプト（%s）は止める", async (_name, source) => {
-    const result = await runHook(`node ${scriptPath(source)}`)
-    expect(result.exitCode).toBe(2)
+  ])("作業ツリーの中へ書くスクリプト（%s）は止める", (_name, source) => {
+    expect(isDenied(`node ${scriptPath(source)}`)).toBe(true)
   })
 
-  test("値を取る引数のあとのスクリプトも読む", async () => {
+  test("値を取る引数のあとのスクリプトも読む", () => {
     const path = scriptPath("fs.writeFileSync('src/a.ts', 'x')\n", "edit.ts")
-    expect((await runHook(`node --import tsx ${path} --flag`)).exitCode).toBe(2)
+    expect(isDenied(`node --import tsx ${path} --flag`)).toBe(true)
   })
 
-  test("< で標準入力へ渡すスクリプトも読む", async () => {
+  test("< で標準入力へ渡すスクリプトも読む", () => {
     const path = scriptPath("fs.writeFileSync('src/a.ts', 'x')\n")
-    expect((await runHook(`node < ${path}`)).exitCode).toBe(2)
+    expect(isDenied(`node < ${path}`)).toBe(true)
   })
 
-  test("相対パスは入力の cwd から解いて止める", async () => {
+  test("相対パスは入力の cwd から解いて止める", () => {
     scriptPath("fs.writeFileSync('src/a.ts', 'x')\n")
-    const result = await runRaw(
-      JSON.stringify({ tool_name: "Bash", tool_input: { command: "node edit.mjs" }, cwd: dir() }),
-    )
-    expect(result.exitCode).toBe(2)
+    expect(isDenied("node edit.mjs", { cwd: dir() })).toBe(true)
   })
 
-  test("書き先が作業ツリーの外のリテラルなら通す", async () => {
+  test("書き先が作業ツリーの外のリテラルなら通す", () => {
     const path = scriptPath("fs.writeFileSync('/private/tmp/x/draft.md', 'x')\n")
-    expect((await runHook(`node ${path}`)).exitCode).toBe(0)
+    expect(isDenied(`node ${path}`)).toBe(false)
   })
 
-  test("読めないパスなら通す", async () => {
-    expect((await runHook(`node ${join(dir(), "missing.mjs")}`)).exitCode).toBe(0)
+  test("読めないパスなら通す", () => {
+    expect(isDenied(`node ${join(dir(), "missing.mjs")}`)).toBe(false)
   })
 
-  test("作業ツリーの中のスクリプトは読まずに通す", async () => {
+  test("作業ツリーの中のスクリプトは読まずに通す", () => {
     scriptPath("fs.writeFileSync(path, 'x')\n", "generate.ts")
-    const result = await runRaw(
-      JSON.stringify({
-        tool_name: "Bash",
-        tool_input: { command: "node generate.ts" },
-        cwd: dir(),
-      }),
-      dir(),
-    )
-    expect(result.exitCode).toBe(0)
+    expect(isDenied("node generate.ts", { cwd: dir(), workRoot: dir() })).toBe(false)
   })
 })
 

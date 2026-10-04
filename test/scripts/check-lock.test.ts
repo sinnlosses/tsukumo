@@ -14,8 +14,10 @@ import {
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
 import { useTempDir } from "../fixture/temp-dir.ts"
 
-// 待ちの周期が1秒で、一時リポジトリの git も走らせるので、既定の 5000ms では負荷で足りないことがある。
+// 一時リポジトリの git も走らせるので、既定の 5000ms では負荷で足りないことがある。
 const WAIT_TIMEOUT_MS = 20_000
+const TEST_POLL_INTERVAL_MS = 20
+const SETTLE_PROBE_MS = 150
 
 describe("check の錠", { timeout: WAIT_TIMEOUT_MS }, () => {
   const tempDir = useTempDir("check-lock")
@@ -51,8 +53,8 @@ describe("check の錠", { timeout: WAIT_TIMEOUT_MS }, () => {
     const root = await createRepository()
     const release = await acquireCheckLock(root)
 
-    const second = acquireCheckLock(root)
-    expect(await isSettled(second, 1500)).toBe(false)
+    const second = acquireCheckLock(root, TEST_POLL_INTERVAL_MS)
+    expect(await isSettled(second, SETTLE_PROBE_MS)).toBe(false)
 
     release()
     const releaseSecond = await second
@@ -89,8 +91,12 @@ describe("check の錠", { timeout: WAIT_TIMEOUT_MS }, () => {
     const root = await createRepository()
     const release = await acquireCheckLock(root)
 
-    const waiting = acquireCheckLockUnlessHeld(root, { TSUKUMO_CHECK_LOCK_OWNER: "1" })
-    expect(await isSettled(waiting, 1500)).toBe(false)
+    const waiting = acquireCheckLockUnlessHeld(
+      root,
+      { TSUKUMO_CHECK_LOCK_OWNER: "1" },
+      TEST_POLL_INTERVAL_MS,
+    )
+    expect(await isSettled(waiting, SETTLE_PROBE_MS)).toBe(false)
 
     release()
     ;(await waiting)()
