@@ -106,9 +106,9 @@ describe("phaseShiftOf", () => {
 })
 
 describe("delegatedWorkPlan", () => {
-  it("段の数が合わない前の段取りからは、計画・番号の段・受け入れで引き、合図の段の次を今にする", () => {
+  it("段の数が合わない前の段取りからは、計画・同じ名前の段・受け入れで引き、合図の段の次を今にする", () => {
     const expected = {
-      phases: ["計画", "段 1", "段 2", "段 3", "受け入れ"],
+      phases: ["計画", "実装", "実装", "実装", "受け入れ"],
       current: 2,
       phaseSummary: "",
     }
@@ -151,7 +151,7 @@ describe("delegatedPhaseShiftOf", () => {
     const plan = delegatedWorkPlan({ kind: "none" }, signal(2, 3, "架空のまとめ。"))
 
     expect(delegatedPhaseShiftOf(plan)).toEqual({
-      finished: { kind: "finished", label: "3/5 段 2", summary: "架空のまとめ。" },
+      finished: { kind: "finished", label: "3/5 実装", summary: "架空のまとめ。" },
     })
   })
 

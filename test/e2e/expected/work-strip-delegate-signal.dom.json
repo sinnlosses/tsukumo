@@ -128,7 +128,7 @@
                               "tag": "li",
                               "attributes": {
                                 "data-phase-state": "done",
-                                "aria-label": "2. 段 1（済）"
+                                "aria-label": "2. 実装（済）"
                               },
                               "children": [
                                 {
@@ -146,7 +146,7 @@
                               "tag": "li",
                               "attributes": {
                                 "data-phase-state": "done",
-                                "aria-label": "3. 段 2（済）"
+                                "aria-label": "3. 実装（済）"
                               },
                               "children": [
                                 {
@@ -164,7 +164,7 @@
                               "tag": "li",
                               "attributes": {
                                 "data-phase-state": "current",
-                                "aria-label": "4. 段 3（今の段）"
+                                "aria-label": "4. 実装（今の段）"
                               },
                               "children": [
                                 {
@@ -182,7 +182,7 @@
                               "tag": "li",
                               "attributes": {
                                 "data-phase-state": "upcoming",
-                                "aria-label": "5. 段 4"
+                                "aria-label": "5. 実装"
                               },
                               "children": [
                                 {
@@ -216,7 +216,7 @@
                             }
                           ]
                         },
-                        "段 3",
+                        "実装",
                         "4/6 · 経過 1分00秒",
                         {
                           "tag": "button",
@@ -250,7 +250,7 @@
                             {
                               "tag": "summary",
                               "children": [
-                                "中間レポート: 2/6 段 1"
+                                "中間レポート: 2/6 実装"
                               ]
                             }
                           ]
@@ -274,7 +274,7 @@
                                         "·"
                                       ]
                                     },
-                                    "3/6 段 2"
+                                    "3/6 実装"
                                   ]
                                 }
                               ]

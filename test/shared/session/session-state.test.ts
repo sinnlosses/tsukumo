@@ -1491,12 +1491,12 @@ describe("applySessionEvent（委譲の合図と段取り）", () => {
     expect(plan).toMatchObject({ kind: "planned", current: 3 })
     expect(plan.kind === "planned" && plan.phases).toEqual([
       "計画",
-      "段 1",
-      "段 2",
-      "段 3",
-      "段 4",
-      "段 5",
-      "段 6",
+      "実装",
+      "実装",
+      "実装",
+      "実装",
+      "実装",
+      "実装",
       "受け入れ",
     ])
   })

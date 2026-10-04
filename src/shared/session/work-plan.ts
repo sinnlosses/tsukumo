@@ -107,9 +107,7 @@ export function delegatedWorkPlan(previous: LatestWorkPlan, signal: DelegateSign
       ? previous.phases
       : [
           DELEGATED_PHASE_NAMES.plan,
-          ...Array.from({ length: signal.stepCount }, (_, index) =>
-            DELEGATED_PHASE_NAMES.step(index + 1),
-          ),
+          ...Array.from({ length: signal.stepCount }, () => DELEGATED_PHASE_NAMES.step),
           DELEGATED_PHASE_NAMES.acceptance,
         ]
   return {
@@ -122,11 +120,11 @@ export function delegatedWorkPlan(previous: LatestWorkPlan, signal: DelegateSign
 /** 委譲の合図から段取りを組むときの段の名前。 */
 const DELEGATED_PHASE_NAMES = {
   plan: "計画",
-  step: (index: number) => `段 ${String(index)}`,
+  step: "実装",
   acceptance: "受け入れ",
 } as const satisfies {
   readonly plan: string
-  readonly step: (index: number) => string
+  readonly step: string
   readonly acceptance: string
 }
 
