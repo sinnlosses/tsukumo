@@ -23,6 +23,7 @@ import {
   resolveViewPortFallbackBase,
 } from "./server/view-server/core/port-resolution.ts"
 import { startSession } from "./session-start.ts"
+import type { SwallowedFailurePlace } from "./shared/diagnostic/swallowed-failure.ts"
 import { startViewDelivery } from "./view-delivery.ts"
 import { failureDiagnostic } from "./wiring/failure-diagnostic.ts"
 import { createHost } from "./wiring/host.ts"
@@ -135,7 +136,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     ? await openLayoutView(host, config.driver, view.url)
     : { tracked: false as const }
 
-  stopSessionOnExit(session.manager.close, openedView)
+  stopSessionOnExit(session.manager.close, openedView, reportFailure)
 
   return 0
 }
@@ -147,23 +148,43 @@ type OpenedFakeView =
 
 /**
  * プロセスが終わるときにセッションを閉じる。閉じないと claude の子プロセスが残るので、
- * 割り込み（Ctrl-C）と終了要求の両方で入力を閉じてから抜ける。
+ * 割り込み（Ctrl-C）・終了要求・端末を閉じたとき（SIGHUP）で入力を閉じてから抜ける。
  * `openedView` を追跡しているとき（疑似セッションでビューを開いたとき）だけ、そのビューも閉じる。
+ * 未処理の拒否は記録して続け、未処理の例外は記録してから同じ閉じ方で終わる。
  */
-function stopSessionOnExit(closeSessions: () => void, openedView: OpenedFakeView): void {
-  for (const signal of ["SIGINT", "SIGTERM"] as const) {
+function stopSessionOnExit(
+  closeSessions: () => void,
+  openedView: OpenedFakeView,
+  reportFailure: (place: SwallowedFailurePlace, error: unknown) => void,
+): void {
+  // 閉じるのは最初の1回だけ。あとから来た終了要求は終了コードも含めて無視する。
+  let stopping = false
+  const shutdown = async (exitCode: number): Promise<void> => {
+    if (stopping) {
+      return
+    }
+    stopping = true
+    try {
+      closeSessions()
+      if (openedView.tracked) {
+        await openedView.close()
+      }
+    } finally {
+      process.exit(exitCode)
+    }
+  }
+  for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) {
     process.on(signal, () => {
-      void shutdown(closeSessions, openedView)
+      void shutdown(0)
     })
   }
-}
-
-async function shutdown(closeSessions: () => void, openedView: OpenedFakeView): Promise<void> {
-  closeSessions()
-  if (openedView.tracked) {
-    await openedView.close()
-  }
-  process.exit(0)
+  process.on("unhandledRejection", (reason) => {
+    reportFailure({ feature: "process", place: "unhandled-rejection" }, reason)
+  })
+  process.on("uncaughtException", (error) => {
+    reportFailure({ feature: "process", place: "uncaught-exception" }, error)
+    void shutdown(1)
+  })
 }
 
 // 起動したことと URL は、ペインに残る唯一の出力。

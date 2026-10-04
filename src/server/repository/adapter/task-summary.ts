@@ -100,6 +100,7 @@ export const REAL_TASK_SUMMARY_PORTS = {
  * タスク一覧を見張り始める。
  * 呼んだ時点で1回見に行き、以後は `setWatching(true)` のあいだ、ポーリングで設定と読み元を見る。
  * 1回の見回りが終わってから次の見回りを予約するので、`git`・`bd` が遅くても見回りは重ならない。
+ * 見回りが失敗しても止めず、`onFailure` へ渡して次の間隔でやり直す。
  * 知らせるのは前回知らせたもの（初めは画面の初期の姿と同じ `{ kind: "unknown" }`）と違う結果だけ。
  */
 export function watchTaskSummary(
@@ -109,6 +110,7 @@ export function watchTaskSummary(
     intervals: TASK_SUMMARY_POLL_INTERVALS,
     ports: REAL_TASK_SUMMARY_PORTS,
   },
+  onFailure: (error: unknown) => void = () => {},
 ): TaskSummaryWatcher {
   const { intervals, ports } = options
   const choose = createTaskSourceChooser(cwd, ports)
@@ -140,7 +142,7 @@ export function watchTaskSummary(
   const loop = (): void => {
     cancelTimer = undefined
     polling = true
-    runningPoll = poll()
+    runningPoll = poll().catch(onFailure)
     void runningPoll.then(() => {
       polling = false
       if (closed || !watching) {

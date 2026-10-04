@@ -597,6 +597,8 @@ type FakePortsOptions = {
   /** 取り直すたびに読む変化の印（`undefined` は取れない）。 */
   readonly stamp: () => string | undefined
   readonly commonDirFailsFirst: boolean
+  /** 設定の読みが最初の1回だけ例外を投げる。 */
+  readonly settingsThrowsFirst?: boolean
   readonly runPrompt: string
 }
 
@@ -606,6 +608,7 @@ function fakePorts(
   options: FakePortsOptions,
 ): TaskSummaryPorts {
   let commonDirAsked = 0
+  let settingsAsked = 0
   return {
     runGit: (_cwd, args) => {
       if (args.includes("--git-common-dir")) {
@@ -633,11 +636,16 @@ function fakePorts(
         ],
       })
     },
-    readProjectSettings: () =>
-      Promise.resolve({
+    readProjectSettings: () => {
+      settingsAsked += 1
+      if (options.settingsThrowsFirst === true && settingsAsked === 1) {
+        return Promise.reject(new Error("架空の失敗"))
+      }
+      return Promise.resolve({
         kind: "read",
         tasks: { store: options.store, mainBranch: "main", runPrompt: options.runPrompt },
-      }),
+      })
+    },
     readBeadsIssues: () => {
       calls.push("bd list")
       return Promise.resolve({ kind: "issues", issues: [] })
@@ -661,23 +669,30 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     const calls: FakeCalls = []
     const manual = createManualClock()
     const changes: unknown[] = []
+    const failures: unknown[] = []
     let stamp: string | undefined = "stamp-1"
-    const fake = watchTaskSummary("/cwd", (tasks) => changes.push(tasks), {
-      intervals: FAKE_INTERVALS,
-      ports: fakePorts(calls, manual.clock, {
-        store: "files",
-        stamp: () => stamp,
-        commonDirFailsFirst: false,
-        runPrompt: "/next-task {id}",
-        ...options,
-      }),
-    })
+    const fake = watchTaskSummary(
+      "/cwd",
+      (tasks) => changes.push(tasks),
+      {
+        intervals: FAKE_INTERVALS,
+        ports: fakePorts(calls, manual.clock, {
+          store: "files",
+          stamp: () => stamp,
+          commonDirFailsFirst: false,
+          runPrompt: "/next-task {id}",
+          ...options,
+        }),
+      },
+      (error) => failures.push(error),
+    )
     watcher = fake
     return {
       fake,
       calls,
       manual,
       changes,
+      failures,
       setStamp: (next: string | undefined) => {
         stamp = next
       },
@@ -719,6 +734,21 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     await settle()
 
     expect(count("git common-dir")).toBe(2)
+  })
+
+  it("見回りが1回投げても、失敗を渡して次の間隔でまた読む", async () => {
+    const { fake, manual, changes, failures } = startFake({ settingsThrowsFirst: true })
+    fake.setWatching(true)
+    await settle()
+
+    expect(failures).toHaveLength(1)
+    expect(changes).toEqual([])
+    expect(manual.pending()).toBe(1)
+
+    manual.advance(FAKE_INTERVALS.git)
+    await settle()
+
+    expect(changes).toMatchObject([{ kind: "known" }])
   })
 
   it("見張りを動かさないあいだは、時計を何周進めても起こした時点の1回しか読まない", async () => {

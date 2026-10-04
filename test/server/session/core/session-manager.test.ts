@@ -874,6 +874,35 @@ describe("createSessionManager", () => {
       expect(JSON.stringify(entries)).not.toContain("架空の失敗文")
     })
 
+    it("定着の口が拒否しても、失敗として記録して次のターンの終わりでまた起こす", async () => {
+      const entries: DiagnosticEntry[] = []
+      const calls: string[] = []
+      const source: ChatConsolidationSource = {
+        kind: "consolidate",
+        consolidate: (packName) => {
+          calls.push(packName)
+          return Promise.reject(new TypeError("架空の失敗文"))
+        },
+      }
+      const { stub } = startChatManagerWithStub(NOOP_CHAT_ARCHIVE, source, {
+        append: (appended) => entries.push(...appended),
+        readRange: () => [],
+      })
+      stub.emit(CHARACTER_EVENT)
+
+      stub.emit(TURN_FINISHED)
+      await waitForBatch()
+      stub.emit(TURN_FINISHED)
+      await waitForBatch()
+
+      expect(calls).toEqual(["fictional", "fictional"])
+      expect(entries.filter((entry) => entry.flow === "swallowed-failure")).toMatchObject([
+        { place: { feature: "chat", place: "consolidation-threw" }, errorName: "TypeError" },
+        { place: { feature: "chat", place: "consolidation-threw" }, errorName: "TypeError" },
+      ])
+      expect(JSON.stringify(entries)).not.toContain("架空の失敗文")
+    })
+
     it("書けた時点で別のパックに替わっていれば、見出しを流さない", async () => {
       const { stub, consolidation, frames } = await startInChat()
 

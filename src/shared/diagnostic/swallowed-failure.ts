@@ -21,6 +21,8 @@ const SWALLOWED_FAILURE_PLACES = {
     "persona-forget",
   ],
   recommendation: ["recommend-aborted", "recommend-failed"],
+  repository: ["task-summary-poll"],
+  process: ["unhandled-rejection", "uncaught-exception"],
 } as const satisfies Record<string, readonly string[]>
 
 type SwallowedFailureFeature = keyof typeof SWALLOWED_FAILURE_PLACES

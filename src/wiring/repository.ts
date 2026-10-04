@@ -35,10 +35,18 @@ export function wireRepository(
     manager: {
       watchTasks: (onEvent) => {
         const recommender = startRecommender(context, diagnosticLog, onEvent)
-        const watcher = watchTaskSummary(context.cwd, (tasks) => {
-          onEvent({ kind: "tasks-changed", tasks })
-          recommender.observe(tasks)
-        })
+        const reportFailure = failureDiagnostic(diagnosticLog, context.now)
+        const watcher = watchTaskSummary(
+          context.cwd,
+          (tasks) => {
+            onEvent({ kind: "tasks-changed", tasks })
+            recommender.observe(tasks)
+          },
+          undefined,
+          (error) => {
+            reportFailure({ feature: "repository", place: "task-summary-poll" }, error)
+          },
+        )
         return {
           setWatching: watcher.setWatching,
           close: () => {

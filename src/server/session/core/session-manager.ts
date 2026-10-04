@@ -39,7 +39,10 @@ import {
   appendChatArchiveEntry,
 } from "../../chat/core/chat-archive-entry.ts"
 import type { ChatArchive } from "../../chat/core/chat-archive-port.ts"
-import type { ChatConsolidationSource } from "../../chat/core/chat-consolidation-writer.ts"
+import type {
+  ChatConsolidationOutcome,
+  ChatConsolidationSource,
+} from "../../chat/core/chat-consolidation-writer.ts"
 import {
   type ContextUsageLog,
   createContextUsageRecorder,
@@ -407,26 +410,34 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       return
     }
     consolidating = true
-    void source.consolidate(packName, consolidationAbort.signal).then((outcome) => {
-      consolidating = false
-      if (outcome.kind === "failed") {
-        diagnostic.add(
-          swallowedFailureFootprint(
-            options.now(),
-            { feature: "chat", place: CONSOLIDATION_FAILURE_PLACES[outcome.reason] },
-            outcome.reason === "threw" ? outcome.error : undefined,
-          ),
-        )
-      }
-      if (
-        outcome.kind === "written" &&
-        !closed &&
-        state.chatMode &&
-        state.character?.pack === packName
-      ) {
-        generation.emit({ kind: "chat-topics-changed", topics: outcome.topics })
-      }
+    const reject = (error: unknown): ChatConsolidationOutcome => ({
+      kind: "failed",
+      reason: "threw",
+      error,
     })
+    void source
+      .consolidate(packName, consolidationAbort.signal)
+      .catch(reject)
+      .then((outcome) => {
+        consolidating = false
+        if (outcome.kind === "failed") {
+          diagnostic.add(
+            swallowedFailureFootprint(
+              options.now(),
+              { feature: "chat", place: CONSOLIDATION_FAILURE_PLACES[outcome.reason] },
+              outcome.reason === "threw" ? outcome.error : undefined,
+            ),
+          )
+        }
+        if (
+          outcome.kind === "written" &&
+          !closed &&
+          state.chatMode &&
+          state.character?.pack === packName
+        ) {
+          generation.emit({ kind: "chat-topics-changed", topics: outcome.topics })
+        }
+      })
   }
 
   /** 駆動を1代起こし、その代ぶんの勘定をまとめて作る。 */
