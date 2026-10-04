@@ -226,6 +226,42 @@ describe("useComposer の送信", () => {
     expect(result.current.band.kind).toBe("disconnected")
   })
 
+  it("会話が終わったあとは帯に終了の旨と口を出し、送らず下書きを残す。口は新しいセッションを頼む", () => {
+    const calls: { readonly procedure: string }[] = []
+    const { result } = renderUseComposer({ endedReason: "架空の理由" }, (command) =>
+      calls.push(command),
+    )
+    type(result, "架空の依頼")
+
+    press(result, key("Enter", { meta: true }))
+    act(() => {
+      result.current.onSubmit({ preventDefault: () => {} })
+    })
+
+    expect(calls).toEqual([])
+    expect(result.current.draft.text).toBe("架空の依頼")
+    const band = result.current.band
+    expect(band.kind).toBe("ended")
+    expect(band.kind === "ended" && band.text).toContain("架空の理由")
+
+    act(() => {
+      if (band.kind === "ended") {
+        band.onRestart()
+      }
+    })
+
+    expect(calls).toEqual([{ procedure: "session.startNewSession" }])
+  })
+
+  it("切断の帯は終了の帯より先に出す", () => {
+    const { result } = renderUseComposer({ endedReason: "架空の理由" })
+    act(() => {
+      useSession.getState().setConnection("closed")
+    })
+
+    expect(result.current.band.kind).toBe("disconnected")
+  })
+
   it("初回の接続中は帯を出さず、切れたあと繋ぎ直している間は出し続け、開いたら消す", () => {
     const { result } = renderUseComposer()
     act(() => {

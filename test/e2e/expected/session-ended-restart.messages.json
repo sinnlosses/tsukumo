@@ -1,0 +1,98 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": "<protocol-version>"
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": "<コマンド一覧>",
+      "terminalSlashCommands": "<コマンド一覧>"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": "<コマンド一覧>"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "sent": "session.prompt",
+    "order": 1,
+    "input": {
+      "text": "終わる会話への依頼（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "response",
+    "order": 1,
+    "status": 200,
+    "body": {}
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "終わる会話への依頼（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "終わる会話への依頼（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-ended",
+      "reason": "架空の理由で止まった"
+    }
+  },
+  {
+    "sent": "session.startNewSession",
+    "order": 2
+  },
+  {
+    "received": "hello",
+    "protocolVersion": "<protocol-version>"
+  },
+  {
+    "received": "response",
+    "order": 2,
+    "status": 200,
+    "body": {}
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  }
+]

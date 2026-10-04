@@ -39,6 +39,9 @@ export const ACCEPTED = { ok: true } satisfies DispatchResult
  */
 export function nudge(driver: Promise<SessionDriver>): Promise<DispatchResult> {
   return askDriver(driver, (started) => {
+    if (started.ended()) {
+      return { ok: false, reason: FRAME_ERROR_REASON.sessionEnded }
+    }
     started.promptWithoutRecord(CHAT_NUDGE_PROMPT)
     return ACCEPTED
   })

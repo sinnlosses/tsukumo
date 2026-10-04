@@ -67,6 +67,42 @@ export function PresentationalComposer({
           <span role="status">{band.text}</span>
         </Text>
       )}
+      {band.kind === "ended" && (
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
+          gap="sm"
+          align="center"
+          justify="between"
+          wrap="wrap"
+          className={styles["dispatch-band"]}
+        >
+          <Text
+            element="p"
+            size="secondary"
+            tone="state-ng"
+            weight="inherit"
+            className={styles["dispatch-band-text"]}
+          >
+            <span role="status">{band.text}</span>
+          </Text>
+          <Button
+            variant="outline"
+            size="label"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["dispatch-band-jump"]}
+            onClick={band.onRestart}
+          >
+            {RESTART_LABEL}
+          </Button>
+        </HStack>
+      )}
       {/* 答え待ちのあいだだけ出る帯（誰が何を待っているか）と、お伺いの札へフォーカスを移す口。 */}
       {band.kind === "inquiry" && (
         <HStack
@@ -228,6 +264,7 @@ export function PresentationalComposer({
 }
 
 const INQUIRY_JUMP_LABEL = "お伺いへ"
+const RESTART_LABEL = "新しく始める"
 
 /** 道具の口の絵の一辺（px）。口どうしで揃える。 */
 const TOOL_ICON_SIZE = 18

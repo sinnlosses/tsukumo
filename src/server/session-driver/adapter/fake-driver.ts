@@ -255,6 +255,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   const timers = new Set<ReturnType<typeof setTimeout>>()
   // 最初のビューを待つあいだに閉じられたら、あとから流し始めない。
   let closed = false
+  let ended = false
   let pending: readonly PendingAsk[] = []
   // いま動いているモデルと許可モード。起こした既定から始まり、`setModel` / `setPermissionMode` で変わる（本物は SDK が持つ値で、ここはその代わり）。
   let model: string = options.sessionDefault.model
@@ -270,6 +271,9 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   const emit = (event: SessionEvent): void => {
     if (event.kind === "pending-changed") {
       pending = event.pending
+    }
+    if (event.kind === "session-ended") {
+      ended = true
     }
     const events =
       event.kind === "report" ? reportEvents(event.toolUseId, event, options.expressions) : [event]
@@ -400,6 +404,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       emit({ kind: "session-info", ...sessionInfo() })
       return Promise.resolve()
     },
+    ended: () => ended,
     close: () => {
       closed = true
       for (const timer of timers) {

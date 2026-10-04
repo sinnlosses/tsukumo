@@ -7059,6 +7059,23 @@
           "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
         }
       ]
+    },
+    {
+      "name": "ended-ready",
+      "steps": []
+    },
+    {
+      "name": "session-ended",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": { "kind": "request", "text": "終わる会話への依頼（架空の依頼）", "images": [] }
+        },
+        {
+          "afterMs": 300,
+          "event": { "kind": "session-ended", "reason": "架空の理由で止まった" }
+        }
+      ]
     }
   ],
   "pastSessions": [

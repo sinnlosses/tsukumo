@@ -55,6 +55,9 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
     // 原寸は駆動へ渡す前に棚へ置く（id は `request` のイベントに載って記録へ入る）。
     // 駆動が投げて `request` が流れなかったときの原寸は記録に載らないまま残るが、棚の上限で古いほうから押し出される。
     prompt: toDriver((started, input) => {
+      if (started.ended()) {
+        return { ok: false, reason: FRAME_ERROR_REASON.sessionEnded }
+      }
       started.prompt(input.text, ports.promptImageShelf.shelve(input.images))
       return ACCEPTED
     }),

@@ -44,7 +44,7 @@ export type TurnStatusAction =
       readonly kind: "send"
       readonly label: string
       readonly emphasis: "solid" | "quiet"
-      /** サーバと切れている間は押せない。 */
+      /** サーバと切れている間と、会話が終わったあとは押せない。 */
       readonly disabled: boolean
     }
   | { readonly kind: "interrupt"; readonly label: string; readonly onInterrupt: () => void }
@@ -84,6 +84,7 @@ export function useTurnStatus(): TurnStatusModel {
   // 質問に答えている間は、ターンが進行中でも「中断」ではなく答えるボタンを出す（SDK は答えを待って止まっているので、押す先は中断ではなく送信）。
   const inquiry = useInquiryAnswer()
   const connected = useSession((session) => session.connection === "open")
+  const ended = useSession((session) => session.state.endedReason !== undefined)
   const drafted = useComposerDraft((state) => state.draft.text.trim() !== "")
   // 姿の `turn` は進み具合が変わったときだけ入れ替わるので、そのまま依存にしてよい。
   const turn = useSession((session) => session.state.turn)
@@ -112,7 +113,7 @@ export function useTurnStatus(): TurnStatusModel {
             kind: "send",
             label: sendLabel(inquiry.kind === "question" ? inquiry.last : undefined),
             emphasis: inquiry.kind === "question" && !drafted ? "quiet" : "solid",
-            disabled: !connected,
+            disabled: !connected || ended,
           },
     notice: turnStatusNotice({ turn, apiTrouble, rateLimit, chatMode, now }),
   }

@@ -46,6 +46,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   dismissedUsageProposalKeys: () => [],
   hasTaskOperation: async () => true,
   onEvent: () => {},
+  reportFailure: () => {},
 }
 
 describe("buildQuerySeedOptions", () => {

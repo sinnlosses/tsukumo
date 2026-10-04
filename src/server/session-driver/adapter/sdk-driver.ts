@@ -22,6 +22,7 @@ import { isSubagentMessage, toSessionEvents } from "../core/sdk-message.ts"
 import { toCommandDescriptions, toModelEffortSupport, toPlan } from "../core/sdk-query-reply.ts"
 import { withSelfStartedTurns } from "../core/self-started-turn.ts"
 import type { SessionDriver, SessionDriverOptions } from "../core/session-driver.ts"
+import { createSessionEnding } from "../core/session-ending.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
 import { createSpeechReview } from "../core/speech-review.ts"
 import { TSUKUMO_MCP_SERVER_NAME } from "../core/tsukumo-tool-name.ts"
@@ -55,7 +56,8 @@ export const VISIBLE_OUTPUT_NUDGE_NOTICE =
 export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   // 駆動が送り出すイベントは全部ここを通す（依頼も SDK 由来も）。
   // claude が依頼なしで始めた続きのターンに `turn-started` を補うのに、依頼で開いたターンも見ている必要がある（`withSelfStartedTurns`）。
-  const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(given.onEvent) }
+  const ending = createSessionEnding(given.onEvent, given.reportFailure)
+  const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(ending.deliver) }
   const input = createPromptStream()
   const queue = createPendingAnswerQueue({
     onChange: (pending) => {
@@ -155,6 +157,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       options.onEvent({ kind: "effort-changed", effort })
     },
     setPermissionMode: (mode) => session.setPermissionMode(mode),
+    ended: ending.ended,
     close: () => {
       queue.settleAll()
       input.end()

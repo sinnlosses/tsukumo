@@ -197,8 +197,10 @@ export type SessionDriverOptions = {
    * 読めないときは `false` を返し、例外を投げない。
    */
   readonly hasTaskOperation: () => Promise<boolean>
-  /** 内部イベントの受け取り口。ここで例外を投げないこと（投げるとセッションが終わる）。 */
+  /** 内部イベントの受け取り口。投げても反復は止まらず、投げた失敗は `reportFailure` へ渡る。 */
   readonly onEvent: (event: SessionEvent) => void
+  /** `onEvent` が投げた失敗を診断ログへ書く口。ここで例外を投げないこと。 */
+  readonly reportFailure: (error: unknown) => void
 }
 
 export type SessionDriver = {
@@ -242,6 +244,8 @@ export type SessionDriver = {
   readonly setEffort: (effort: EffortLevel) => Promise<void>
   /** 許可モードを切り替える。 */
   readonly setPermissionMode: (mode: PermissionMode) => Promise<void>
+  /** 会話が終わったか（`session-ended` を流したあと）。終わったあとの依頼は積んでも誰も読まない。 */
+  readonly ended: () => boolean
   /** 入力を閉じてセッションを終える。子プロセスも止まる。 */
   readonly close: () => void
 }

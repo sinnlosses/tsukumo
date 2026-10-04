@@ -215,6 +215,8 @@ function startDriver(options: {
     dismissedUsageProposalKeys: () => readDismissedUsageProposalKeys(),
     hasTaskOperation: async () => (await readProjectSettings(cwd)).kind === "read",
     onEvent,
+    reportFailure: (error) =>
+      options.reportFailure({ feature: "session", place: "event-handler" }, error),
   })
 }
 

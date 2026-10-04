@@ -33,7 +33,7 @@ import {
 } from "./use-suggestion.ts"
 
 /**
- * `<textarea>` の上の帯。接続が切れているあいだと、答え待ち（お伺い）があるあいだだけ出す（切断が先）。
+ * `<textarea>` の上の帯。接続が切れているあいだ・会話が終わったあと・答え待ち（お伺い）があるあいだだけ出す（この順に先）。
  * 答えはメインビューのお伺いの札で選ぶ（質問ならここに書いて送ってもよい）。
  * `onJump` は「お伺いへ」の口で、お伺いの札の最初の選択肢へフォーカスを移す。
  */
@@ -41,6 +41,7 @@ export type ComposerBand =
   | { readonly kind: "none" }
   | { readonly kind: "inquiry"; readonly text: string; readonly onJump: () => void }
   | { readonly kind: "disconnected"; readonly text: string }
+  | { readonly kind: "ended"; readonly text: string; readonly onRestart: () => void }
 
 /**
  * `<Composer>` が画面に出す形。
@@ -79,6 +80,7 @@ export function useComposer(): ComposerModel {
   const turnInProgress = useTurnRunning()
   const connected = useSession((session) => session.connection === "open")
   const linkLost = useSession((session) => session.linkLost)
+  const endedReason = useSession((session) => session.state.endedReason)
   // 答え待ちの質問があるあいだ、入力欄は「依頼を書く場所」ではなく選択肢以外の答えを書く場所になる（札はメインビューに出ている）。
   const inquiry = useInquiryAnswer()
   const requestInquiryJump = useInquiryJump((state) => state.requestJump)
@@ -116,7 +118,7 @@ export function useComposer(): ComposerModel {
   }, [draft])
 
   const submit = (): void => {
-    if (!connected) {
+    if (!connected || endedReason !== undefined) {
       return
     }
     const trimmed = draft.text.trim()
@@ -146,6 +148,13 @@ export function useComposer(): ComposerModel {
   const composerBand = (): ComposerBand => {
     if (linkLost) {
       return { kind: "disconnected", text: DISCONNECTED_BAND_TEXT }
+    }
+    if (endedReason !== undefined) {
+      return {
+        kind: "ended",
+        text: `会話が終了しました（理由: ${endedReason}）。新しく始めると、また頼めます`,
+        onRestart: () => dispatch.session.startNewSession(),
+      }
     }
     if (inquiry.kind === "none") {
       return { kind: "none" }

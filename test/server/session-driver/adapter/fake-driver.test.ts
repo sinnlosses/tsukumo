@@ -147,6 +147,34 @@ describe("startFakeSession", () => {
     ])
   })
 
+  it("session-ended の手を流したあとは ended が真になる", async () => {
+    const sink = collect()
+    const driver = startFakeSession({
+      session: {
+        ...FAKE_SESSION,
+        turns: [
+          {
+            name: "架空の終了",
+            resume: undefined,
+            steps: [{ afterMs: 0, event: { kind: "session-ended", reason: "架空の理由" } }],
+          },
+        ],
+      },
+      scene: undefined,
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
+      expressions: [],
+      onEvent: sink.onEvent,
+    })
+    await tick()
+    expect(driver.ended()).toBe(false)
+    driver.prompt("架空の依頼", [])
+    await tick()
+    driver.close()
+
+    expect(driver.ended()).toBe(true)
+  })
+
   it("起こした直後に既定の effort を、setEffort のたびに受け付けた値を effort-changed で流す", async () => {
     const sink = collect()
     const driver = startFakeSession({

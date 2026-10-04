@@ -19,6 +19,8 @@ export type StubDriver = {
   readonly attachRestored: (onRestoredEvents: (events: readonly SessionEvent[]) => void) => void
   readonly calls: string[]
   answerable: boolean
+  /** `driver.ended()` が返す値。 */
+  ended: boolean
 }
 
 /** 駆動が返すセッションの中身。 */
@@ -70,6 +72,7 @@ export function createStubDriver(): StubDriver {
         calls.push(`setPermissionMode:${mode}`)
         return Promise.resolve()
       },
+      ended: () => stub.ended,
       close: () => calls.push("close"),
     },
     emit: (event: SessionEvent) => onEvent(event),
@@ -82,6 +85,7 @@ export function createStubDriver(): StubDriver {
     },
     calls,
     answerable: true,
+    ended: false,
   }
   return stub
 }

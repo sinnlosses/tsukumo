@@ -219,6 +219,17 @@ describe("createCommandRouter（session）", () => {
     ])
   })
 
+  it("終わった会話への依頼は、定型文の理由で受け付けず駆動へ積まない", async () => {
+    const { commands, stub } = startRouter()
+    stub.ended = true
+
+    expect(await commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
+      ok: false,
+      reason: FRAME_ERROR_REASON.sessionEnded,
+    })
+    expect(stub.calls).toEqual([])
+  })
+
   it("解決済みの答え待ちは、定型文の理由で受け付けない", async () => {
     const { commands, stub } = startRouter()
     stub.answerable = false
@@ -442,6 +453,18 @@ describe("createCommandRouter（session）", () => {
       // 渡るのは `promptWithoutRecord`（記録に残さない口）だけで、`prompt` は呼ばれない
       // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/architecture/screen-design.md「雑談モードの画面」）。
       expect(stub.calls).toEqual([`promptWithoutRecord:${CHAT_NUDGE_PROMPT}`])
+    })
+
+    it("終わった会話には送らない", async () => {
+      const { commands, stub, observe } = startRouter()
+      observe(CHAT_MODE_EVENT)
+      stub.ended = true
+
+      expect(await commands.session.nudge()).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.sessionEnded,
+      })
+      expect(stub.calls).toEqual([])
     })
 
     it("仕事のモードでは受け付けない（メインビューにキャラクター発のターンを混ぜない）", async () => {
