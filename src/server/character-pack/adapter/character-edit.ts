@@ -61,6 +61,7 @@ import type {
   CharacterDelete,
   CharacterEdit,
 } from "../../../shared/contract/character-pack.ts"
+import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import {
   type CharacterPack,
   CHARACTER_DEFINITION_FILE_NAME,
@@ -72,7 +73,6 @@ import {
   isEditableCharacterPack,
   PERSONA_FILE_NAME,
   readCharacterPack,
-  readOptionalFile,
 } from "./character-pack.ts"
 
 /** 表情ごとの立ち絵のほかに1つのパックが持てる画像（ミニ立ち絵1・背景1・顔1・訪問の peek 1）。 */

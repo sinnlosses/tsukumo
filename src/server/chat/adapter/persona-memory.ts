@@ -15,13 +15,13 @@ import { writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../shared/chat/persona-memory.ts"
+import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { copyPackOnce } from "../../character-pack/adapter/character-edit.ts"
 import {
   type CharacterPack,
   homeCharacterDir,
   isEditableCharacterPack,
   PERSONA_FILE_NAME,
-  readOptionalFile,
 } from "../../character-pack/adapter/character-pack.ts"
 import type { PersonaMemory } from "../../session-driver/core/session-driver.ts"
 

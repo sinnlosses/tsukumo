@@ -10,10 +10,9 @@
 // chart.js の `exports` が `dist/` を公開していないので、パッケージの中のファイルは名前では解けない。
 // tsukumo 自身の場所から `node_modules/` を辿る（cwd に依存しない）。
 
-import { readFileSync } from "node:fs"
-
 import { VENDOR_ASSET_CONTENT_TYPES } from "../../../shared/view-server/vendor-asset.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
+import { readOptionalBinaryFile } from "../../adapter/lib/optional-file.ts"
 
 /** 依存の置き場。tsukumo 自身の場所の直下にある（`pnpm install` が作るもの）。 */
 const NODE_MODULES = "node_modules"
@@ -83,13 +82,5 @@ export function createVendorAssetReader(
     const asset = { contentType, content }
     remembered.set(name, asset)
     return asset
-  }
-}
-
-function readOptionalBinaryFile(path: string): Buffer | undefined {
-  try {
-    return readFileSync(path)
-  } catch {
-    return undefined
   }
 }

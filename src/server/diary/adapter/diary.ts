@@ -20,9 +20,9 @@ import {
   type DiaryBookmark,
   type DiaryParagraph,
 } from "../../../shared/diary/diary.ts"
+import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { isoWithOffset } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-import { readOptionalFile } from "../../character-pack/adapter/character-pack.ts"
 import { runGit } from "../../repository/adapter/git.ts"
 
 const DIARY_DIR_NAME = "diary"

@@ -16,8 +16,8 @@ import { dirname, join } from "node:path"
 import { isCharacterPackName } from "../../../shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
+import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-import { readOptionalFile } from "../../character-pack/adapter/character-pack.ts"
 import type { ChatSummary, ChatSummaryRecord } from "../../session-driver/core/session-driver.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-summary/`）。 */

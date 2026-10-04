@@ -4,15 +4,15 @@
 // 検証はしない。読んだ値の形が正しいかは呼び出し元の zod スキーマに委ねる（`unknown` のまま返す）。
 // 書けなくても・読めなくても例外を投げない。
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
+
+import { readOptionalFile } from "./optional-file.ts"
 
 /** JSON として読む。ファイルが無い・壊れているときは undefined。 */
 export function readJsonFile(path: string): unknown {
-  let content: string
-  try {
-    content = readFileSync(path, "utf8")
-  } catch {
+  const content = readOptionalFile(path)
+  if (content === undefined) {
     return undefined
   }
 

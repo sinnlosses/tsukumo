@@ -4,7 +4,7 @@
 // 素材の中身（SVG・画像のバイト列）は `SessionState` にも `character-changed` イベントにも乗せない。
 // ブラウザは `/character/<pack>/<file>` から取りに行く。
 
-import { readdirSync, readFileSync, statSync } from "node:fs"
+import { readdirSync, statSync } from "node:fs"
 import { basename, join } from "node:path"
 
 import {
@@ -24,6 +24,7 @@ import {
 } from "../../../shared/character-pack/character.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
+import { readOptionalBinaryFile, readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 
 /** 定義ファイルの名前。 */
@@ -372,22 +373,5 @@ function hasDefinition(dir: string): boolean {
     return statSync(join(dir, CHARACTER_DEFINITION_FILE_NAME)).isFile()
   } catch {
     return false
-  }
-}
-
-/** 読めなければ `undefined` を返す（無いこと自体はエラーではない読み取りに共通で使う）。 */
-export function readOptionalFile(path: string): string | undefined {
-  try {
-    return readFileSync(path, "utf8")
-  } catch {
-    return undefined
-  }
-}
-
-function readOptionalBinaryFile(path: string): Buffer | undefined {
-  try {
-    return readFileSync(path)
-  } catch {
-    return undefined
   }
 }
