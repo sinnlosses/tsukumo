@@ -105,16 +105,26 @@ const FAKE_PLAN_USAGE = {
   sevenDay: { utilization: 61, resetsAt: 1_800_270_000_000 },
 } satisfies PlanUsage
 
-/** 疑似セッションの1手。`afterMs` はその場面の始まりからの経過（前の手からの差分ではない）。 */
-const fakeSessionStepSchema = z.object({ afterMs: z.number().min(0), event: sessionEventSchema })
+/**
+ * 疑似セッションの1手。`afterMs` はその場面の始まりからの経過（前の手からの差分ではない）。
+ * `waitForAnswer` が true の手は、それまでに積んだ答え待ちがすべて答えられるまで流さず、`afterMs` を答えが届いた時点（先に届いていればその手に着いた時点）からの経過として数える。
+ * 続く手の `afterMs` も、その手が流れた時点を0とする経過になる。
+ */
+const fakeSessionStepSchema = z.object({
+  afterMs: z.number().min(0),
+  event: sessionEventSchema,
+  waitForAnswer: z.boolean().default(false),
+})
 
-/** 手の並びの順に `afterMs` が減る最初の手を、`where`（場面名か opening）と位置つきで拒む。同じ値は通す。 */
+/** 手の並びの順に `afterMs` が減る最初の手を、`where`（場面名か opening）と位置つきで拒む。同じ値は通す。`waitForAnswer` の手は時刻の数え直しなので、前の手とは比べない。 */
 function rejectDescendingSteps(
-  steps: readonly { readonly afterMs: number }[],
+  steps: readonly { readonly afterMs: number; readonly waitForAnswer: boolean }[],
   where: string,
   ctx: z.RefinementCtx,
 ): void {
-  const index = steps.findIndex((step, i) => i > 0 && step.afterMs < (steps[i - 1]?.afterMs ?? 0))
+  const index = steps.findIndex(
+    (step, i) => i > 0 && !step.waitForAnswer && step.afterMs < (steps[i - 1]?.afterMs ?? 0),
+  )
   if (index < 0) {
     return
   }
@@ -154,7 +164,11 @@ const fakeSessionSchema = z.object({
 })
 
 /** 疑似セッションの1手（読み取り専用の形。zod の出力もこの形に収まる）。 */
-export type FakeSessionStep = { readonly afterMs: number; readonly event: SessionEvent }
+export type FakeSessionStep = {
+  readonly afterMs: number
+  readonly event: SessionEvent
+  readonly waitForAnswer: boolean
+}
 
 /**
  * 名前の付いた場面。
@@ -293,11 +307,29 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     }
   }
 
+  // `waitForAnswer` の手の続きを、答え待ちが尽きるまで預かる。
+  let heldUntilAnswered: readonly (() => void)[] = []
+
   // 次の手の setTimeout は前の手が発火してから差分の時間で登録する。
   // 絶対時刻でまとめて登録すると、CPU を奪われて止まったあとに期限切れの手がまとめて発火し、手のあいだの間隔が消える。
   // 同じ afterMs の手は setTimeout を挟まずに続けて流す（挟むと hello と最初の events の境目が揺れる）。
   const play = (steps: readonly FakeSessionStep[], startMs: number): void => {
     const playFrom = (index: number, firedAtMs: number): void => {
+      const step = steps[index]
+      if (step === undefined) {
+        return
+      }
+      if (step.waitForAnswer) {
+        if (pending.length === 0) {
+          playStep(index, 0)
+        } else {
+          heldUntilAnswered = [...heldUntilAnswered, () => playStep(index, 0)]
+        }
+        return
+      }
+      playStep(index, firedAtMs)
+    }
+    const playStep = (index: number, firedAtMs: number): void => {
       const step = steps[index]
       if (step === undefined) {
         return
@@ -329,6 +361,13 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       emit({ kind: "question-answered", questions: ask.questions, answers: answer.labels })
     }
     emit({ kind: "pending-changed", pending: pending.filter((candidate) => candidate.id !== id) })
+    if (pending.length === 0) {
+      const released = heldUntilAnswered
+      heldUntilAnswered = []
+      for (const release of released) {
+        release()
+      }
+    }
     return true
   }
 
@@ -407,6 +446,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     ended: () => ended,
     close: () => {
       closed = true
+      heldUntilAnswered = []
       for (const timer of timers) {
         clearTimeout(timer)
       }

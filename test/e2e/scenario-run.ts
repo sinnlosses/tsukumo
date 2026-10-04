@@ -389,7 +389,7 @@ function assertNextStepGap(
     if (next === undefined) {
       return
     }
-    const gap = next.afterMs - step.afterMs
+    const gap = gapToNext(step, next)
     if (gap < MIN_NEXT_STEP_GAP_MS) {
       throw new Error(
         `${scenario}（場面 ${scene}）は ${waited.kind} の${String(waited.occurrence)}回目から次の手（${next.event.kind}）まで ${String(gap)}ms しかない（${String(MIN_NEXT_STEP_GAP_MS)}ms 要る）。場面を分けて、撮り終えるまで次の手が来ない形にする`,
@@ -402,9 +402,17 @@ function assertNextStepGap(
 /** 時刻の順の予定を、次の手まで `QUIET_GAP_MS` 以上空く最初の手まで切り出す。 */
 function stepsThroughQuietPoint(steps: readonly FakeSessionStep[]): readonly FakeSessionStep[] {
   const quietIndex = steps.findIndex(
-    (step, index) => (steps[index + 1]?.afterMs ?? Infinity) - step.afterMs >= QUIET_GAP_MS,
+    (step, index) => gapToNext(step, steps[index + 1]) >= QUIET_GAP_MS,
   )
   return steps.slice(0, quietIndex + 1)
+}
+
+/** 次の手が答えを待つ手（`waitForAnswer`）なら、答えが届くまで来ないので間合いは無限大。 */
+function gapToNext(step: FakeSessionStep, next: FakeSessionStep | undefined): number {
+  if (next === undefined || next.waitForAnswer) {
+    return Infinity
+  }
+  return next.afterMs - step.afterMs
 }
 
 type TempDirectory = {

@@ -604,14 +604,15 @@
           }
         },
         {
-          "afterMs": 3000,
+          "afterMs": 100,
+          "waitForAnswer": true,
           "event": {
             "kind": "report-drafting",
             "toolUseId": "fake-report-call-twice-1"
           }
         },
         {
-          "afterMs": 3300,
+          "afterMs": 400,
           "event": {
             "kind": "report",
             "task": { "kind": "none" },
@@ -635,7 +636,7 @@
           }
         },
         {
-          "afterMs": 3350,
+          "afterMs": 450,
           "event": {
             "kind": "tool-finished",
             "toolUseId": "fake-report-call-twice-1",
@@ -644,7 +645,7 @@
           }
         },
         {
-          "afterMs": 3500,
+          "afterMs": 600,
           "event": {
             "kind": "tool-started",
             "toolUseId": "fake-tool-twice-1",
@@ -653,7 +654,7 @@
           }
         },
         {
-          "afterMs": 3900,
+          "afterMs": 1000,
           "event": {
             "kind": "tool-finished",
             "toolUseId": "fake-tool-twice-1",
@@ -662,7 +663,7 @@
           }
         },
         {
-          "afterMs": 4000,
+          "afterMs": 1100,
           "event": {
             "kind": "pending-changed",
             "pending": [
@@ -685,7 +686,7 @@
           }
         },
         {
-          "afterMs": 4100,
+          "afterMs": 1200,
           "event": {
             "kind": "speech",
             "text": "2つ目の質問。もう一度選んでみて。",
@@ -693,14 +694,15 @@
           }
         },
         {
-          "afterMs": 7000,
+          "afterMs": 100,
+          "waitForAnswer": true,
           "event": {
             "kind": "report-drafting",
             "toolUseId": "fake-report-call-twice-2"
           }
         },
         {
-          "afterMs": 7300,
+          "afterMs": 400,
           "event": {
             "kind": "report",
             "task": { "kind": "none" },
@@ -724,7 +726,7 @@
           }
         },
         {
-          "afterMs": 7350,
+          "afterMs": 450,
           "event": {
             "kind": "tool-finished",
             "toolUseId": "fake-report-call-twice-2",
@@ -733,7 +735,7 @@
           }
         },
         {
-          "afterMs": 7500,
+          "afterMs": 600,
           "event": {
             "kind": "turn-finished",
             "outcome": { "kind": "completed" }

@@ -19,20 +19,32 @@ import { bundledFakeSession } from "../../../fixture/bundled-fake-session.ts"
 
 // 疑似セッションは手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は
 const FAKE_SESSION = {
-  opening: [{ afterMs: 0, event: { kind: "speech", text: "架空の挨拶", expression: "default" } }],
+  opening: [
+    {
+      afterMs: 0,
+      waitForAnswer: false,
+      event: { kind: "speech", text: "架空の挨拶", expression: "default" },
+    },
+  ],
   turns: [
     {
       name: "架空の場面1",
       resume: undefined,
       steps: [
-        { afterMs: 0, event: { kind: "utterance", text: "架空の本文" } },
-        { afterMs: 0, event: { kind: "turn-finished", outcome: { kind: "completed" } } },
+        { afterMs: 0, waitForAnswer: false, event: { kind: "utterance", text: "架空の本文" } },
+        {
+          afterMs: 0,
+          waitForAnswer: false,
+          event: { kind: "turn-finished", outcome: { kind: "completed" } },
+        },
       ],
     },
     {
       name: "架空の場面2",
       resume: undefined,
-      steps: [{ afterMs: 0, event: { kind: "utterance", text: "架空の本文2" } }],
+      steps: [
+        { afterMs: 0, waitForAnswer: false, event: { kind: "utterance", text: "架空の本文2" } },
+      ],
     },
   ],
   pastSessions: [],
@@ -156,7 +168,13 @@ describe("startFakeSession", () => {
           {
             name: "架空の終了",
             resume: undefined,
-            steps: [{ afterMs: 0, event: { kind: "session-ended", reason: "架空の理由" } }],
+            steps: [
+              {
+                afterMs: 0,
+                waitForAnswer: false,
+                event: { kind: "session-ended", reason: "架空の理由" },
+              },
+            ],
           },
         ],
       },
@@ -282,6 +300,7 @@ describe("startFakeSession", () => {
         opening: [
           {
             afterMs: 0,
+            waitForAnswer: false,
             event: {
               kind: "pending-changed",
               pending: [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {} }],
@@ -305,13 +324,80 @@ describe("startFakeSession", () => {
     driver.close()
   })
 
+  describe("waitForAnswer の手", () => {
+    function startAskThenFollow(
+      sink: ReturnType<typeof collect>,
+    ): ReturnType<typeof startFakeSession> {
+      return startFakeSession({
+        session: {
+          sessionDigests: {},
+          pastSessions: [],
+          opening: [
+            {
+              afterMs: 0,
+              waitForAnswer: false,
+              event: {
+                kind: "pending-changed",
+                pending: [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {} }],
+              },
+            },
+            {
+              afterMs: 5,
+              waitForAnswer: true,
+              event: { kind: "utterance", text: "答えのあとの本文" },
+            },
+          ],
+          turns: [],
+        },
+        scene: undefined,
+        sessionDefault: BUILTIN_SESSION_DEFAULT,
+        firstViewer: Promise.resolve(),
+        expressions: [],
+        onEvent: sink.onEvent,
+      })
+    }
+
+    it("答えが届くまで流さず、届いたら afterMs 後に流す", async () => {
+      const sink = collect()
+      const driver = startAskThenFollow(sink)
+      await new Promise((resolve) => setTimeout(resolve, 60))
+
+      expect(sink.events.some((event) => event.kind === "utterance")).toBe(false)
+
+      driver.answer("ask-1", { kind: "allow" })
+      expect(sink.events.some((event) => event.kind === "utterance")).toBe(false)
+      await new Promise((resolve) => setTimeout(resolve, 60))
+
+      expect(sink.events.at(-1)).toEqual({ kind: "utterance", text: "答えのあとの本文" })
+      driver.close()
+    })
+
+    it("答えを待っているあいだに close したら、答えが届いても流さない", async () => {
+      const sink = collect()
+      const driver = startAskThenFollow(sink)
+      await tick()
+
+      driver.close()
+      driver.answer("ask-1", { kind: "allow" })
+      await new Promise((resolve) => setTimeout(resolve, 40))
+
+      expect(sink.events.some((event) => event.kind === "utterance")).toBe(false)
+    })
+  })
+
   it("close したあとは疑似セッションの続きを流さない", async () => {
     const sink = collect()
     const driver = startFakeSession({
       session: {
         sessionDigests: {},
         pastSessions: [],
-        opening: [{ afterMs: 50, event: { kind: "utterance", text: "遅れて来る本文" } }],
+        opening: [
+          {
+            afterMs: 50,
+            waitForAnswer: false,
+            event: { kind: "utterance", text: "遅れて来る本文" },
+          },
+        ],
         turns: [],
       },
       scene: undefined,
@@ -359,10 +445,10 @@ describe("startFakeSession", () => {
             name: "架空の差し戻し",
             resume: undefined,
             steps: [
-              { afterMs: 0, event: report("fake-r1") },
-              { afterMs: 1, event: finished("fake-r1", true) },
-              { afterMs: 2, event: report("fake-r2") },
-              { afterMs: 3, event: finished("fake-r2", false) },
+              { afterMs: 0, waitForAnswer: false, event: report("fake-r1") },
+              { afterMs: 1, waitForAnswer: false, event: finished("fake-r1", true) },
+              { afterMs: 2, waitForAnswer: false, event: report("fake-r2") },
+              { afterMs: 3, waitForAnswer: false, event: finished("fake-r2", false) },
             ],
           },
         ],
@@ -405,6 +491,7 @@ describe("startFakeSession", () => {
             steps: [
               {
                 afterMs: 0,
+                waitForAnswer: false,
                 event: partial({
                   kind: "report",
                   toolUseId: "fake-r1",
@@ -416,9 +503,14 @@ describe("startFakeSession", () => {
                   closing: { kind: "speech", text: "書けたよ", expression: "知らない表情" },
                 }),
               },
-              { afterMs: 1, event: partial({ kind: "report", toolUseId: "fake-r2" }) },
+              {
+                afterMs: 1,
+                waitForAnswer: false,
+                event: partial({ kind: "report", toolUseId: "fake-r2" }),
+              },
               {
                 afterMs: 2,
+                waitForAnswer: false,
                 event: {
                   kind: "tool-finished",
                   toolUseId: "fake-r1",
@@ -523,6 +615,18 @@ describe("readFakeSession", () => {
 
       expect(reading.kind).toBe("unreadable")
       expect(reading.kind === "unreadable" ? reading.reason : "").toMatch(/opening の手 1/)
+    })
+
+    it("waitForAnswer の手は時刻の数え直しなので、前の手より afterMs が小さくても読める", () => {
+      const waiting = {
+        afterMs: 100,
+        waitForAnswer: true,
+        event: { kind: "utterance", text: "架空の本文" },
+      }
+
+      expect(readWritten(sessionJson([], [step(0), step(300), waiting, step(200)])).kind).toBe(
+        "read",
+      )
     })
 
     it("afterMs が同じ値で続く場面と、手が0本・1本の場面は読める", () => {
