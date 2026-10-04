@@ -59,6 +59,7 @@ function createPorts(
   batch: ChatUnconsolidatedBatch,
   query: (request: ChatConsolidationQuery, signal: AbortSignal) => Promise<unknown>,
   lockAvailable: boolean = true,
+  summaryWritable: boolean = true,
 ) {
   const order: string[] = []
   const lockEvents: string[] = []
@@ -72,6 +73,7 @@ function createPorts(
     write: (next) => {
       order.push("write-summary")
       summary = next
+      return summaryWritable
     },
     markUndelivered: () => {},
     markDelivered: () => {},
@@ -243,25 +245,47 @@ describe("createChatConsolidationWriter", () => {
     expect(ports.summaryPacks).toEqual(["fictional"])
   })
 
-  it.each([
-    ["出力の形が崩れている", () => Promise.resolve({ ...VALID_OUTPUT, episodes: [] })],
-    ["query() が reject した", () => Promise.reject(new Error("架空の失敗"))],
-  ])("%s ときは failed で、索引にもあらすじにも書かない", async (_name, query) => {
-    const ports = createPorts(DUE_BATCH, query)
+  it("出力の形が崩れているときは unreadable-result で、索引にもあらすじにも書かない", async () => {
+    const ports = createPorts(DUE_BATCH, () => Promise.resolve({ ...VALID_OUTPUT, episodes: [] }))
 
-    expect(await ports.write("fictional", NEVER_ABORTED)).toEqual({ kind: "failed" })
+    expect(await ports.write("fictional", NEVER_ABORTED)).toEqual({
+      kind: "failed",
+      reason: "unreadable-result",
+    })
     expect(ports.order).toEqual([])
     expect(ports.summary()).toBe(PREVIOUS_SUMMARY)
   })
 
-  it("中断されたら待たずに failed で返り、そのあと結果が届いても書かない", async () => {
+  it("query() が reject したときは threw で例外を運び、索引にもあらすじにも書かない", async () => {
+    const failure = new Error("架空の失敗")
+    const ports = createPorts(DUE_BATCH, () => Promise.reject(failure))
+
+    expect(await ports.write("fictional", NEVER_ABORTED)).toEqual({
+      kind: "failed",
+      reason: "threw",
+      error: failure,
+    })
+    expect(ports.order).toEqual([])
+    expect(ports.summary()).toBe(PREVIOUS_SUMMARY)
+  })
+
+  it("あらすじの写しが書けなかったときは summary-write", async () => {
+    const ports = createPorts(DUE_BATCH, () => Promise.resolve(VALID_OUTPUT), true, false)
+
+    expect(await ports.write("fictional", NEVER_ABORTED)).toEqual({
+      kind: "failed",
+      reason: "summary-write",
+    })
+  })
+
+  it("中断されたら待たずに aborted で返り、そのあと結果が届いても書かない", async () => {
     const { promise, resolve } = Promise.withResolvers<unknown>()
     const ports = createPorts(DUE_BATCH, () => promise)
     const abort = new AbortController()
 
     const outcome = ports.write("fictional", abort.signal)
     abort.abort()
-    expect(await outcome).toEqual({ kind: "failed" })
+    expect(await outcome).toEqual({ kind: "failed", reason: "aborted" })
 
     resolve(VALID_OUTPUT)
     await promise

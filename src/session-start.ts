@@ -95,7 +95,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   const chat = wireChat(context, character)
   const visit = wireVisit(context, config.quickVisit)
   const usageReview = wireUsageReview()
-  const repository = wireRepository(context)
+  const repository = wireRepository(context, options.diagnosticLog)
   const achievement = wireAchievement(context)
   const host = wireHost(context, options.host)
   const characterPack = wireCharacterPack(character)

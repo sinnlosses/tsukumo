@@ -41,9 +41,10 @@ export type ChatSummary = {
   /**
    * 定着が書き直したあらすじ（話題の組を含む本文）を上書きする。
    * 印は変えない（ファイルが無ければ「未渡し」で書く）。
+   * 書けたら true、書けなかったら false（例外は投げない）。
    * 定着はどのプロセスのどちらのモードのターンからも走り、畳んだ会話を文脈に持っているセッションが決まらないため。
    */
-  readonly write: (summary: string) => void
+  readonly write: (summary: string) => boolean
   /** 印を「未渡し」に戻す（`/clear` を見たとき）。 */
   readonly markUndelivered: () => void
   /** 印を「渡し済み」にする（読んで `systemPrompt` へ載せたとき）。 */

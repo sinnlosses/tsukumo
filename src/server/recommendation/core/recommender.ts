@@ -33,6 +33,11 @@ export type RecommenderPorts = {
   readonly query: (request: StructuredQuery, signal: AbortSignal) => Promise<unknown>
   /** 札の並びを配る（空は「まだ無い」）。 */
   readonly emit: (cards: readonly RecommendationCard[]) => void
+  /**
+   * 問い合わせが失敗したことの知らせ口（中断・時間切れは `recommend-aborted`）。
+   * `error` からは `error.name` と code だけを写すこと。
+   */
+  readonly onFailure: (place: "recommend-aborted" | "recommend-failed", error: unknown) => void
 }
 
 export type Recommender = {
@@ -102,7 +107,7 @@ async function recommend(
     const others = ports.readCache().filter((entry) => entry.key !== key)
     ports.writeCache([{ key, cards }, ...others].slice(0, RECOMMENDATION_CACHE_LIMIT))
     ports.emit(cards)
-  } catch {
-    // 起こせない・中断・時間切れ・API の失敗。どれも既定の並びのまま残すので分けない。
+  } catch (error) {
+    ports.onFailure(bounded.aborted ? "recommend-aborted" : "recommend-failed", error)
   }
 }

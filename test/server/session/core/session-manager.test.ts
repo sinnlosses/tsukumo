@@ -704,6 +704,7 @@ describe("createSessionManager", () => {
     function startChatManagerWithStub(
       archive: ChatArchive = NOOP_CHAT_ARCHIVE,
       chatConsolidation: ChatConsolidationSource = NO_CHAT_CONSOLIDATION,
+      diagnosticLog: DiagnosticLog = NOOP_DIAGNOSTIC_LOG,
     ) {
       const stub = createStubDriver()
       const manager = createSessionManager({
@@ -719,7 +720,7 @@ describe("createSessionManager", () => {
         project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
-        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
+        diagnosticLog,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
         questionUsageLog: NOOP_QUESTION_USAGE_LOG,
@@ -822,7 +823,7 @@ describe("createSessionManager", () => {
       const { manager, stub, consolidation, frames } = await startInChat()
 
       stub.emit(TURN_FINISHED)
-      consolidation.finish({ kind: "failed" })
+      consolidation.finish({ kind: "failed", reason: "aborted" })
       await waitForBatch()
       expect(topicEvents(frames)).toEqual([])
 
@@ -832,6 +833,45 @@ describe("createSessionManager", () => {
 
       manager.close()
       expect(consolidation.calls[1]?.signal.aborted).toBe(true)
+    })
+
+    it("失敗は、理由の語と error.name・code の1行を診断ログへ書く（message は入らない）", async () => {
+      const entries: DiagnosticEntry[] = []
+      const consolidation = createManualConsolidation()
+      const { stub } = startChatManagerWithStub(NOOP_CHAT_ARCHIVE, consolidation.source, {
+        append: (appended) => entries.push(...appended),
+        readRange: () => [],
+      })
+      stub.emit(CHARACTER_EVENT)
+
+      stub.emit(TURN_FINISHED)
+      consolidation.finish({
+        kind: "failed",
+        reason: "threw",
+        error: Object.assign(new Error("架空の失敗文"), { name: "TypeError", code: "EACCES" }),
+      })
+      await waitForBatch()
+      stub.emit(TURN_FINISHED)
+      consolidation.finish({ kind: "failed", reason: "summary-write" })
+      await waitForBatch()
+
+      expect(entries.filter((entry) => entry.flow === "swallowed-failure")).toEqual([
+        {
+          flow: "swallowed-failure",
+          at: 1_000,
+          place: { feature: "chat", place: "consolidation-threw" },
+          errorName: "TypeError",
+          errorCode: "EACCES",
+        },
+        {
+          flow: "swallowed-failure",
+          at: 1_000,
+          place: { feature: "chat", place: "consolidation-summary-write" },
+          errorName: "other",
+          errorCode: "none",
+        },
+      ])
+      expect(JSON.stringify(entries)).not.toContain("架空の失敗文")
     })
 
     it("書けた時点で別のパックに替わっていれば、見出しを流さない", async () => {

@@ -263,6 +263,13 @@ type SessionGeneration = GenerationTally & {
   readonly emit: (event: SessionEvent) => void
 }
 
+const CONSOLIDATION_FAILURE_PLACES = {
+  aborted: "consolidation-aborted",
+  threw: "consolidation-threw",
+  "unreadable-result": "consolidation-unreadable-result",
+  "summary-write": "consolidation-summary-write",
+} as const satisfies Record<string, string>
+
 export function createSessionManager(options: SessionManagerOptions): SessionManager {
   const subscribers = new Set<(frame: ServerFrame) => void>()
   // 前回の見直しの結果だけ、起こしたときにホームから読んで載せる。
@@ -402,6 +409,15 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     consolidating = true
     void source.consolidate(packName, consolidationAbort.signal).then((outcome) => {
       consolidating = false
+      if (outcome.kind === "failed") {
+        diagnostic.add(
+          swallowedFailureFootprint(
+            options.now(),
+            { feature: "chat", place: CONSOLIDATION_FAILURE_PLACES[outcome.reason] },
+            outcome.reason === "threw" ? outcome.error : undefined,
+          ),
+        )
+      }
       if (
         outcome.kind === "written" &&
         !closed &&

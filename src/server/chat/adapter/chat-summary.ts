@@ -8,7 +8,7 @@
 // 印は「次に起こすセッションへ渡す必要があるか」の1ビットで、`DELIVERED_MARK` の1行だけを「渡し済み」と読む。
 // それ以外（別の文字列・無い・読めない）はすべて「未渡し」として扱い、倒れる方向を「同じ要約が2度載る」側にする。
 //
-// 書けなくても例外を投げない。
+// 書けなくても例外を投げない（`write` は書けたかどうかを返す）。
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
@@ -48,7 +48,7 @@ export function createChatSummary(packName: string, root: string = chatSummaryDi
   if (!isCharacterPackName(packName)) {
     return {
       read: () => undefined,
-      write: () => {},
+      write: () => false,
       markUndelivered: () => {},
       markDelivered: () => {},
     }
@@ -62,8 +62,12 @@ export function createChatSummary(packName: string, root: string = chatSummaryDi
         summary: truncatedSummary(summary),
         delivered: readRecord(path)?.delivered ?? false,
       }),
-    markUndelivered: () => rewriteMark(path, false),
-    markDelivered: () => rewriteMark(path, true),
+    markUndelivered: () => {
+      rewriteMark(path, false)
+    },
+    markDelivered: () => {
+      rewriteMark(path, true)
+    },
   }
 }
 
@@ -84,9 +88,9 @@ export function discardChatSummary(packName: string, root: string = chatSummaryD
 }
 
 /** 印だけを書き換える。本文は既にある写しをそのまま保つ（無ければ空のまま）。 */
-function rewriteMark(path: string, delivered: boolean): void {
+function rewriteMark(path: string, delivered: boolean): boolean {
   const current = readRecord(path)
-  writeRecord(path, { summary: current?.summary ?? "", delivered })
+  return writeRecord(path, { summary: current?.summary ?? "", delivered })
 }
 
 /** 写しと印を読む。ファイルが無い・読めないときは undefined。 */
@@ -102,14 +106,15 @@ function readRecord(path: string): ChatSummaryRecord | undefined {
   return { summary, delivered: mark === DELIVERED_MARK }
 }
 
-/** 写しと印を1回の書き込みで揃える（上書き）。失敗しても例外を投げない。 */
-function writeRecord(path: string, record: ChatSummaryRecord): void {
+/** 写しと印を1回の書き込みで揃える（上書き）。書けたら true。失敗しても例外を投げない。 */
+function writeRecord(path: string, record: ChatSummaryRecord): boolean {
   try {
     mkdirSync(dirname(path), { recursive: true })
     const mark = record.delivered ? DELIVERED_MARK : UNDELIVERED_MARK
     writeFileSync(path, `${mark}\n${record.summary}`)
+    return true
   } catch {
-    // 書けなかった回は諦めて次へ進む。
+    return false
   }
 }
 

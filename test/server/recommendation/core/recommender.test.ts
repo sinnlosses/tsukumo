@@ -46,6 +46,7 @@ const CARDS: readonly RecommendationCard[] = [
 function createHarness(initialCache: readonly RecommendationCacheEntry[] = []) {
   let cache = initialCache
   const emitted: (readonly RecommendationCard[])[] = []
+  const failures: string[] = []
   const queries: {
     readonly request: StructuredQuery
     readonly signal: AbortSignal
@@ -64,8 +65,11 @@ function createHarness(initialCache: readonly RecommendationCacheEntry[] = []) {
     emit: (cards) => {
       emitted.push(cards)
     },
+    onFailure: (place) => {
+      failures.push(place)
+    },
   })
-  return { recommender, emitted, queries, cache: () => cache }
+  return { recommender, emitted, queries, failures, cache: () => cache }
 }
 
 /** 解いた問い合わせの続き（検査・書き込み・配る）が走り終わるのを待つ。 */
@@ -111,6 +115,19 @@ describe("createRecommender", () => {
 
     expect(harness.emitted).toEqual([[]])
     expect(harness.cache()).toEqual([])
+    expect(harness.failures).toEqual(["recommend-failed"])
+  })
+
+  it("中断されたあとの失敗は recommend-aborted として知らせる", async () => {
+    const harness = createHarness()
+
+    harness.recommender.observe(tasksOf("X-001"))
+    harness.recommender.close()
+    harness.queries[0]?.fail()
+    await flush()
+
+    expect(harness.emitted).toEqual([[]])
+    expect(harness.failures).toEqual(["recommend-aborted"])
   })
 
   it("候補が変わったら走っている問い合わせを中断し、遅れて届いた古い結果は配らない", async () => {

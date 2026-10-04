@@ -50,8 +50,10 @@ import {
 } from "../server/system-prompt/core/system-prompt.ts"
 import { readDismissedUsageProposalKeys } from "../server/usage-review/adapter/usage-proposal-dismissal.ts"
 import { expressionChoices, expressionNames } from "../shared/character-pack/expression-choice.ts"
+import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
 import type { SessionDefault } from "../shared/session/session-default.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
+import { failureDiagnostic } from "./failure-diagnostic.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
 export function wireSessionLaunch(options: {
@@ -74,13 +76,14 @@ export function wireSessionLaunch(options: {
     seed: SessionLaunchSeed<CharacterPack>,
     onEvent: (event: SessionEvent) => void,
   ) => (event: SessionEvent) => void
-  /** 診断ログの書き込み口。前のセッションの履歴の組み直しが失敗したときだけ使う。 */
+  /** 診断ログの書き込み口。握りつぶした失敗（履歴の組み直し・覚えたことの書き込み）を書く。 */
   readonly diagnosticLog: DiagnosticLog
 }): {
   readonly manager: Pick<SessionManagerOptions, "launchSession">
   readonly sessionCommands: Pick<SessionCommandPorts, "rememberSessionDefault">
 } {
   const { context, config, character, viewPort } = options
+  const reportFailure = failureDiagnostic(options.diagnosticLog, context.now)
   // 印の付いたセッションの一覧。ここで1回読み始め、起こし直しはメモリの一覧から続きを選ぶ。
   // 続きを探さない起こし方なら何も読まない。
   const sessionCatalog = chooseSessionCatalog(context, config)
@@ -117,6 +120,7 @@ export function wireSessionLaunch(options: {
             viewPort,
             onSessionMarked: (sessionId, tag) => sessionCatalog.noteMarked(sessionId, tag),
             onEvent: watched,
+            reportFailure,
           })
         },
         restoreEvents: (resumed, pack) =>
@@ -165,6 +169,8 @@ function startDriver(options: {
   /** 印が付いたセッションのIDと、付けた印を受け取る口。 */
   readonly onSessionMarked: (sessionId: string, tag: string) => void
   readonly onEvent: (event: SessionEvent) => void
+  /** 握りつぶした失敗を診断ログへ書く口。 */
+  readonly reportFailure: (place: SwallowedFailurePlace, error: unknown) => void
 }): SessionDriver {
   const { seed, context, onEvent } = options
   const { chatArchive, cwd, inheritedEnv, fakeSession } = context
@@ -179,7 +185,7 @@ function startDriver(options: {
     })
   }
 
-  const mode = sessionMode(seed, context, onEvent)
+  const mode = sessionMode(seed, context, onEvent, options.reportFailure)
   const tag = sessionTag(seed.pack.name, seed.chat, options.viewPort)
 
   return startSdkDriver({
@@ -230,6 +236,7 @@ function sessionMode(
   seed: SessionLaunchSeed<CharacterPack>,
   context: WiringContext,
   onEvent: (event: SessionEvent) => void,
+  reportFailure: (place: SwallowedFailurePlace, error: unknown) => void,
 ): SessionMode {
   const chatRecall = createChatRecall(context.chatArchive, seed.pack.name, context.now)
   if (!seed.chat) {
@@ -239,8 +246,12 @@ function sessionMode(
   return {
     kind: "chat",
     // 書けた・消せたときだけ、更新後の一覧を画面へ流し直す。
-    personaMemory: createPersonaMemory(seed.pack, context.cwd, undefined, (lines) =>
-      onEvent({ kind: "remembered-lines-changed", lines }),
+    personaMemory: createPersonaMemory(
+      seed.pack,
+      context.cwd,
+      undefined,
+      (lines) => onEvent({ kind: "remembered-lines-changed", lines }),
+      (place, error) => reportFailure({ feature: "chat", place }, error),
     ),
     chatSummary: createChatSummary(seed.pack.name),
     chatRecall,

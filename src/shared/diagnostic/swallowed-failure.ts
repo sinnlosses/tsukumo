@@ -11,6 +11,15 @@ const SWALLOWED_FAILURE_PLACES = {
     "restore-events",
   ],
   "view-server": ["socket-message", "http-server-error"],
+  chat: [
+    "consolidation-aborted",
+    "consolidation-threw",
+    "consolidation-unreadable-result",
+    "consolidation-summary-write",
+    "persona-remember",
+    "persona-forget",
+  ],
+  recommendation: ["recommend-aborted", "recommend-failed"],
 } as const satisfies Record<string, readonly string[]>
 
 type SwallowedFailureFeature = keyof typeof SWALLOWED_FAILURE_PLACES

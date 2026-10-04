@@ -3,7 +3,7 @@
 // ここは1回ぶんだけを持つ。
 // プロセスをまたいで1本に絞るのは定着の錠で、プロセスの中で1本に絞るのは呼び出し側。
 //
-// 書く口は決して reject しない（起こせない・中断・時間切れ・形の崩れはどれも `failed`）。
+// 書く口は決して reject しない（起こせない・中断・時間切れ・形の崩れ・写しの書き込み失敗はどれも理由つきの `failed`）。
 // 行は未定着のまま残り、次の契機で拾い直される。
 //
 // 渡す行も前のあらすじも受け取る出力も会話の内容に当たる。
@@ -30,13 +30,18 @@ import {
  * - `not-due`: 未定着の行が契機（`consolidateEveryBytes`）に届いていないので起こさなかった
  * - `locked`: ほかのプロセスが錠を持っているので起こさなかった（その契機は捨てる）
  * - `written`: 書けた。`topics` は書いたあとのファイルから読み直した最近の話題の見出し
- * - `failed`: 起こせない・中断・時間切れ・形の崩れ（理由は問わない。次の契機で拾い直す）
+ * - `failed`: 書けなかった。次の契機で拾い直す。`reason` で見分ける
+ *   - `aborted`: 中断・時間切れ
+ *   - `unreadable-result`: 結果が検査を通らない
+ *   - `summary-write`: あらすじの写しが書けなかった
+ *   - `threw`: 上以外の例外（起こせない・API の失敗など）。`error` は受け取った側が `error.name` と code だけを写す
  */
 export type ChatConsolidationOutcome =
   | { readonly kind: "not-due" }
   | { readonly kind: "locked" }
   | { readonly kind: "written"; readonly topics: readonly string[] }
-  | { readonly kind: "failed" }
+  | { readonly kind: "failed"; readonly reason: "aborted" | "unreadable-result" | "summary-write" }
+  | { readonly kind: "failed"; readonly reason: "threw"; readonly error: unknown }
 
 /** そのパックの定着を1回走らせる。`signal` が中断されたら、待たずに `failed` で返り、何も書かない。 */
 export type ChatConsolidationWriter = (
@@ -82,7 +87,7 @@ export type ChatConsolidationWriterPorts = {
   readonly now: () => number
 }
 
-const FAILED = { kind: "failed" } as const satisfies ChatConsolidationOutcome
+const ABORTED = { kind: "failed", reason: "aborted" } as const satisfies ChatConsolidationOutcome
 const NOT_DUE = { kind: "not-due" } as const satisfies ChatConsolidationOutcome
 const LOCKED = { kind: "locked" } as const satisfies ChatConsolidationOutcome
 
@@ -146,30 +151,34 @@ async function consolidateLocked(
       batch.entries.length,
     )
     // 中断・時間切れのあとに届いた結果は書かない（呼び出し側はもう次の1本を起こしうる）。
-    if (result === undefined || signal.aborted) {
-      return FAILED
+    if (signal.aborted) {
+      return ABORTED
+    }
+    if (result === undefined) {
+      return { kind: "failed", reason: "unreadable-result" }
     }
 
     ports.archive.appendEpisodes(packName, chatEpisodeDrafts(batch.entries, result.episodes))
-    chatSummary.write(chatSummaryWithTopics(result.synopsis, result.topics))
+    if (!chatSummary.write(chatSummaryWithTopics(result.synopsis, result.topics))) {
+      return { kind: "failed", reason: "summary-write" }
+    }
     return { kind: "written", topics: readChatTopics(chatSummary) }
-  } catch {
-    // 起こせない・中断・API の失敗。どれも行を残して次の契機に回すだけなので分けない。
-    return FAILED
+  } catch (error) {
+    return signal.aborted ? ABORTED : { kind: "failed", reason: "threw", error }
   }
 }
 
-/** `signal` が中断されたら `failed` で返る（口が中断を無視しても待たない）。 */
+/** `signal` が中断されたら `aborted` の `failed` で返る（口が中断を無視しても待たない）。 */
 function abortion(signal: AbortSignal): Promise<ChatConsolidationOutcome> {
   return new Promise((resolve) => {
     if (signal.aborted) {
-      resolve(FAILED)
+      resolve(ABORTED)
       return
     }
     signal.addEventListener(
       "abort",
       () => {
-        resolve(FAILED)
+        resolve(ABORTED)
       },
       { once: true },
     )

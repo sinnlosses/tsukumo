@@ -39,6 +39,14 @@ describe("createChatSummary", () => {
     expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: false })
   })
 
+  it("write は書けたかどうかを返す", () => {
+    const chatSummary = createChatSummary("fictional-pack", root())
+    expect(chatSummary.write(SUMMARY)).toBe(true)
+
+    writeFileSync(join(dir(), "blocked"), "")
+    expect(createChatSummary("fictional-pack", join(dir(), "blocked")).write(SUMMARY)).toBe(false)
+  })
+
   it("write は印を変えない（「渡し済み」も「未渡し」もそのまま）", () => {
     const chatSummary = createChatSummary("fictional-pack", root())
     chatSummary.markDelivered()

@@ -24,7 +24,10 @@ import {
 } from "./server/character-pack/core/character-selection.ts"
 import { discardChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import { discardChatSummary } from "./server/chat/adapter/chat-summary.ts"
-import { forgetRememberedLineFromScreen } from "./server/chat/adapter/persona-memory.ts"
+import {
+  forgetRememberedLineFromScreen,
+  type PersonaMemoryFailureReport,
+} from "./server/chat/adapter/persona-memory.ts"
 import type { Config } from "./server/core/config.ts"
 import {
   readRememberedCharacter,
@@ -92,7 +95,11 @@ export type CurrentCharacter = {
  * 一覧は読み直せる形で持つ。
  * 画面から立ち絵を変えるとホーム（`~/.tsukumo/characters/`）にパックが現れるので、`character-changed` を組むたびに引き直す。
  */
-export function createCurrentCharacter(config: Config, cwd: string): CurrentCharacter {
+export function createCurrentCharacter(
+  config: Config,
+  cwd: string,
+  onPersonaFailure: PersonaMemoryFailureReport,
+): CurrentCharacter {
   const defaultPack = readCharacterPack(
     resolveBundledDir(config.character, cwd, DEFAULT_CHARACTER_DIR_RELATIVE_PATH),
   )
@@ -172,7 +179,7 @@ export function createCurrentCharacter(config: Config, cwd: string): CurrentChar
       return event()
     },
     forgetRememberedLine: (line) => {
-      const lines = forgetRememberedLineFromScreen(current, cwd, line)
+      const lines = forgetRememberedLineFromScreen(current, cwd, line, undefined, onPersonaFailure)
       return lines === undefined ? undefined : { kind: "remembered-lines-changed", lines }
     },
     serveAsset: (location, version) => readCharacterAsset(current, packs, location, version),

@@ -420,6 +420,69 @@ describe("onChange（画面のサイドバーへ流し直す口）", () => {
   })
 })
 
+describe("書けなかったときの知らせ", () => {
+  /** 書き込み先の親がファイルで、ディレクトリを作れない状態にする。 */
+  function blockHome(): void {
+    writeFileSync(home(), "")
+  }
+
+  it("書き足しが書けなかったときだけ onFailure を呼び、onChange は呼ばない", () => {
+    const failures: { place: string; error: unknown }[] = []
+    const changes: (readonly string[])[] = []
+    const pack = readCharacterPack(writeBundledPack("架空"))
+    const memory = createPersonaMemory(
+      pack,
+      dir(),
+      home(),
+      (lines) => changes.push(lines),
+      (place, error) => failures.push({ place, error }),
+    )
+
+    blockHome()
+    memory.remember(LINE)
+
+    expect(failures.map(({ place }) => place)).toEqual(["persona-remember"])
+    expect(failures[0]?.error).toBeInstanceOf(Error)
+    expect(changes).toEqual([])
+  })
+
+  it("消すのが書けなかったときは onFailure を呼び、一致なしでは呼ばない", () => {
+    const failures: string[] = []
+    const pack = readCharacterPack(
+      writeBundledPack("架空", `${PERSONA}\n${REMEMBERED_SECTION_HEADING}\n\n- ${LINE}\n`),
+    )
+    const memory = createPersonaMemory(
+      pack,
+      dir(),
+      home(),
+      () => {},
+      (place) => failures.push(place),
+    )
+
+    memory.forget("覚えていないこと")
+    expect(failures).toEqual([])
+
+    blockHome()
+    memory.forget(LINE)
+    expect(failures).toEqual(["persona-forget"])
+  })
+
+  it("画面から消すのが書けなかったときは onFailure を呼び、結果は一致なしと同じ undefined", () => {
+    const failures: string[] = []
+    const pack = readCharacterPack(
+      writeBundledPack("架空", `${PERSONA}\n${REMEMBERED_SECTION_HEADING}\n\n- ${LINE}\n`),
+    )
+
+    blockHome()
+    const result = forgetRememberedLineFromScreen(pack, dir(), LINE, home(), (place) =>
+      failures.push(place),
+    )
+
+    expect(result).toBeUndefined()
+    expect(failures).toEqual(["persona-forget"])
+  })
+})
+
 describe("readRememberedLines", () => {
   it("ホームの写しがあれば、そこから `- ` を外した一覧を返す（古い→新しいの順）", () => {
     const pack = readCharacterPack(writeBundledPack("架空"))

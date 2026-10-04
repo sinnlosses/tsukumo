@@ -31,6 +31,23 @@ export const REMEMBERED_SECTION_HEADING = "## 覚えたこと"
 /** 節が持てる行数（超えたらいちばん古い行を落とす）。 */
 export const MAX_REMEMBERED_LINES = 20
 
+/** `persona.md` に書けなかったことの知らせ口。`error` からは `error.name` と code だけを写すこと。 */
+export type PersonaMemoryFailureReport = (
+  place: "persona-remember" | "persona-forget",
+  error: unknown,
+) => void
+
+/** 書き足しの結果。 */
+type PersonaWriteResult =
+  | { readonly kind: "written" }
+  | { readonly kind: "failed"; readonly error: unknown }
+
+/** 消す結果。`no-match` は節に一致する行が無かった（正常）。 */
+type PersonaEraseResult =
+  | { readonly kind: "erased" }
+  | { readonly kind: "no-match" }
+  | { readonly kind: "failed"; readonly error: unknown }
+
 /**
  * 覚えたことの書き足し・忘れる口を1つ作る（`remember` と `forget` のツールの裏に立つ）。
  *
@@ -39,7 +56,7 @@ export const MAX_REMEMBERED_LINES = 20
  * - そのターンで既に1行書いている（{@link PersonaMemory.finishTurn} まで受け付けない）
  * - 空の行・改行を含む行・{@link MAX_REMEMBERED_LINE_LENGTH} を超える行
  * - 起動先の `characters/local` と同じ名前のパック（`isEditableCharacterPack`。書いても探索の順で負ける）
- * - ディスクに書けない
+ * - ディスクに書けない（`onFailure` へだけ知らせる）
  *
  * 消さずに黙って何もしないのは、そのターンで既に1行消しているとき・節に一致する行が無いとき・上の3つ目と4つ目。
  * 書いた数と消した数は別に数えるので、同じターンで覚え直せる。
@@ -54,6 +71,7 @@ export function createPersonaMemory(
   cwd: string,
   root: string = homeCharacterDir(),
   onChange: (lines: readonly string[]) => void = () => {},
+  onFailure: PersonaMemoryFailureReport = () => {},
 ): PersonaMemory {
   // このターンで既に1行書いたか・消したか（どちらも1ターン1行の上限）。
   // 別々に数えるので、覚え違いを同じターンで言い直せる。
@@ -67,7 +85,11 @@ export function createPersonaMemory(
         return
       }
 
-      written = writeRememberedLine(pack, join(root, pack.name), trimmed)
+      const result = writeRememberedLine(pack, join(root, pack.name), trimmed)
+      written = result.kind === "written"
+      if (result.kind === "failed") {
+        onFailure("persona-remember", result.error)
+      }
       if (written) {
         onChange(readRememberedLines(pack, root))
       }
@@ -78,7 +100,11 @@ export function createPersonaMemory(
         return
       }
 
-      forgotten = eraseRememberedLine(pack, join(root, pack.name), target)
+      const result = eraseRememberedLine(pack, join(root, pack.name), target)
+      forgotten = result.kind === "erased"
+      if (result.kind === "failed") {
+        onFailure("persona-forget", result.error)
+      }
       if (forgotten) {
         onChange(readRememberedLines(pack, root))
       }
@@ -112,22 +138,25 @@ export function readRememberedLines(
  * 1ターン1行の上限は掛けない。その上限はモデルの暴走を防ぐためのもので、利用者が画面から名指しした削除には要らない。
  *
  * 消せたら更新後の一覧を返す。
- * 一致する行が無い・そのパックが編集できない（`isEditableCharacterPack`）・書けないときは undefined。
+ * 一致する行が無い・そのパックが編集できない（`isEditableCharacterPack`）・書けないときは undefined（書けないときは `onFailure` へも知らせる）。
  */
 export function forgetRememberedLineFromScreen(
   pack: CharacterPack,
   cwd: string,
   line: string,
   root: string = homeCharacterDir(),
+  onFailure: PersonaMemoryFailureReport = () => {},
 ): readonly string[] | undefined {
   const target = forgetTarget(line)
   if (target === "" || !isEditableCharacterPack(pack, cwd)) {
     return undefined
   }
 
-  return eraseRememberedLine(pack, join(root, pack.name), target)
-    ? readRememberedLines(pack, root)
-    : undefined
+  const result = eraseRememberedLine(pack, join(root, pack.name), target)
+  if (result.kind === "failed") {
+    onFailure("persona-forget", result.error)
+  }
+  return result.kind === "erased" ? readRememberedLines(pack, root) : undefined
 }
 
 /** 1行として受け取れる形か（空でない・改行を含まない・長さが上限以内）。 */
@@ -135,15 +164,15 @@ function isWritableLine(line: string): boolean {
   return line !== "" && !/[\n\r]/.test(line) && [...line].length <= MAX_REMEMBERED_LINE_LENGTH
 }
 
-/** ホームのパックの `persona.md` に1行書き足す。書けたら true。 */
-function writeRememberedLine(pack: CharacterPack, dir: string, line: string): boolean {
+/** ホームのパックの `persona.md` に1行書き足す。 */
+function writeRememberedLine(pack: CharacterPack, dir: string, line: string): PersonaWriteResult {
   try {
     copyPackOnce(pack, dir)
     const path = join(dir, PERSONA_FILE_NAME)
     writeFileSync(path, personaWithRememberedLine(readOptionalFile(path) ?? "", line))
-    return true
-  } catch {
-    return false
+    return { kind: "written" }
+  } catch (error) {
+    return { kind: "failed", error }
   }
 }
 
@@ -175,25 +204,25 @@ function forgetTarget(line: string): string {
 }
 
 /**
- * ホームのパックの `persona.md` から1行消す。消せたら true（一致が無ければ false）。
+ * ホームのパックの `persona.md` から1行消す。
  *
  * 突き合わせる相手は、ホームの写しがあればそれ、無ければいま出しているパックの人格。
  * ホームへ写すのは消す行が見つかってから。一致しない呼び出しで写しだけが増えると、次の起動から同梱のパックが写しに隠れる。
  */
-function eraseRememberedLine(pack: CharacterPack, dir: string, target: string): boolean {
+function eraseRememberedLine(pack: CharacterPack, dir: string, target: string): PersonaEraseResult {
   try {
     const path = join(dir, PERSONA_FILE_NAME)
     const current = readOptionalFile(path) ?? pack.persona ?? ""
     const erased = personaWithoutRememberedLine(current, target)
     if (erased === undefined) {
-      return false
+      return { kind: "no-match" }
     }
 
     copyPackOnce(pack, dir)
     writeFileSync(path, erased)
-    return true
-  } catch {
-    return false
+    return { kind: "erased" }
+  } catch (error) {
+    return { kind: "failed", error }
   }
 }
 
