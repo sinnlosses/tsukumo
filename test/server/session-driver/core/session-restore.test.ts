@@ -35,6 +35,33 @@ describe("toRestoredEvents", () => {
     expect(toRestoredEvents([null, { type: "user" }], EXPRESSIONS)).toEqual([])
   })
 
+  it("最後のやり取りの「所要」は、再生した時刻ではなく transcript の最後の依頼から最後のメッセージまでになる", () => {
+    const stamped = (message: unknown, timestamp: string): unknown =>
+      Object.assign({}, message, { timestamp })
+    const messages = [
+      stamped(userMessage("架空の依頼その1"), "2026-01-02T03:00:00.000Z"),
+      stamped(userMessage("架空の依頼その2"), "2026-01-02T03:10:00.000Z"),
+      stamped(assistantMessage([{ type: "text", text: "架空の本文" }]), "2026-01-02T03:12:30.000Z"),
+    ]
+
+    const state = toRestoredEvents(messages, EXPRESSIONS).reduce(
+      (current, event) => applySessionEvent(current, event, 999),
+      INITIAL_SESSION_STATE,
+    )
+
+    expect(state.turn).toMatchObject({
+      kind: "finished",
+      startedAt: 1767323400000,
+      finishedAt: 1767323550000,
+    })
+  })
+
+  it("時刻の読めない transcript では、最後のやり取りの時刻を足さない", () => {
+    const events = toRestoredEvents([userMessage("架空の依頼")], EXPRESSIONS)
+
+    expect(events.some((event) => event.kind === "restored-turn-span")).toBe(false)
+  })
+
   it("依頼・本文・セリフ・ツールの行が起き、ターンの境目が依頼ごとに分かれる", () => {
     const messages = [
       userMessage([{ type: "text", text: "架空の依頼その1" }]),

@@ -774,6 +774,14 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       // ここまでに積んだ依頼とセリフは、前のセッションを組み直したもの。流し直したときに打った時刻を捨て、「時刻が分からない」に書き換える。
       // 起こし直すと記録は空から始まるので、ここまでの記録はすべて再生のぶんになる。
       return { ...state, records: state.records.map(withRestoredTime) }
+    case "restored-turn-span":
+      // 再生の最後のターンは再生した時刻で閉じているので、始まりと終わりを transcript の時刻に置き換える（入力欄と帯の「所要」）。
+      return state.turn.kind === "finished"
+        ? {
+            ...state,
+            turn: { ...state.turn, startedAt: event.startedAt, finishedAt: event.finishedAt },
+          }
+        : state
   }
 }
 

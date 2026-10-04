@@ -382,6 +382,11 @@ export type SessionEvent =
    */
   | { readonly kind: "compact-boundary" }
   /**
+   * 組み直した再生の、最後のやり取りの始まりと終わりの時刻（エポックミリ秒。transcript の時刻から読む）。
+   * 再生の終わり（`history-restored`）の直前に1つ届く。読めなければ届かず、「所要」は再生した時刻どうしの差のまま。
+   */
+  | { readonly kind: "restored-turn-span"; readonly startedAt: number; readonly finishedAt: number }
+  /**
    * 前のセッションの記録を組み直した再生が、ここで終わった（再生の末尾に1つ足す）。
    * ここまでに積んだ依頼とセリフの記録は、起きた時刻が分からない。
    *

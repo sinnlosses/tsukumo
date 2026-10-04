@@ -30,8 +30,10 @@ const HISTORY_RESTORED: SessionEvent = { kind: "history-restored" }
  *
  * - 利用者の依頼（`request`）: `user` のテキストブロックから起こす（ツールの結果は除く）
  * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼の手前と並びの末尾で区切る
+ * - 最後のやり取りの時刻（`restored-turn-span`）: 最後の依頼のメッセージと、並びの最後のメッセージの `timestamp`。
+ *   入力欄と進み具合の帯の「所要」が、起こし直した時刻ではなく本当にかかった時間を出すため。どちらかが読めなければ足さない
  * - 再生の終わり（`history-restored`）: 末尾に1つ。
- *   transcript に残る時刻は読む口（`getSessionMessages`）が落とすので、ここまでの記録は時刻が分からないと畳み込みに伝える
+ *   個々の記録の時刻までは組み直さないので、ここまでの記録は時刻が分からないと畳み込みに伝える
  *
  * 差し戻された `speak` / `report` / `work_plan` の呼び出しも transcript には残るので、動いているときと同じく差し戻し（`SpeechReview.pass` → `ReportReview.pass` → `WorkPlanReview.pass`）に通して落とす。
  *
@@ -60,7 +62,9 @@ export function toRestoredEvents(
     .flatMap((event) => reportReview.pass(event))
     .flatMap((event) => workPlanReview.pass(event))
   // 組み直せたものが無ければ、書き換える記録も無いので `history-restored` を足さない。
-  return events.length === 0 ? events : [...events, HISTORY_RESTORED]
+  return events.length === 0
+    ? events
+    : [...events, ...lastTurnSpanEvents(messages), HISTORY_RESTORED]
 }
 
 export function restoredMessageEvents(
@@ -73,6 +77,31 @@ export function restoredMessageEvents(
   return text === undefined
     ? toSessionEvents(message, expressions)
     : [{ kind: "request", text, images: [] }]
+}
+
+/**
+ * 最後のやり取りの始まり（最後の依頼のメッセージ）と終わり（並びの最後のメッセージ）の時刻。
+ * `timestamp` は `SessionMessage` の型には無いが、`getSessionMessages` が transcript の各行のものを載せて返す（実測）。
+ */
+function lastTurnSpanEvents(messages: readonly unknown[]): readonly SessionEvent[] {
+  const lastRequest = messages.findLast((message) => requestText(message) !== undefined)
+  const startedAt = lastRequest === undefined ? undefined : messageTime(lastRequest)
+  const finishedAt = messageTime(messages.at(-1))
+  return startedAt === undefined || finishedAt === undefined || finishedAt < startedAt
+    ? []
+    : [{ kind: "restored-turn-span", startedAt, finishedAt }]
+}
+
+/** メッセージの `timestamp`（ISO 8601）をエポックミリ秒に直す。無い・読めない綴りは `undefined`。 */
+function messageTime(message: unknown): number | undefined {
+  if (!isPlainObject(message) || typeof message.timestamp !== "string") {
+    return undefined
+  }
+  try {
+    return Temporal.Instant.from(message.timestamp).epochMilliseconds
+  } catch {
+    return undefined
+  }
 }
 
 /**
