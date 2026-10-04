@@ -59,6 +59,10 @@ import {
   type PromptImageShelf,
   releasedPromptImageIds,
 } from "../../session-driver/core/prompt-image-shelf.ts"
+import {
+  type QuestionUsageLog,
+  questionUsageEntriesOf,
+} from "../../session-driver/core/question-usage.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 import {
   createTokenUsageRecorder,
@@ -104,6 +108,8 @@ export type SessionManagerOptions = {
   readonly diagnosticLog: DiagnosticLog
   /** 描いた `report` 1回につき1行、塊の使われ方を書く口。 */
   readonly reportUsageLog: ReportUsageLog
+  /** 答えが確定した質問1件につき1行、選択肢の数と preview の付いた数を書く口。 */
+  readonly questionUsageLog: QuestionUsageLog
   /**
    * 依頼に添えた画像の原寸の棚。`/prompt-image/<id>` で配る側と同じ棚を渡すこと。
    * 置くのと捨てるのはここで、`prompt` を受けたときに置き、記録から依頼が消えたときに捨てる。
@@ -347,6 +353,11 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     // セッションIDが決まる前の行は、どのセッションのものか分からなくなるので書かない。
     if (event.kind === "report" && state.session.kind !== "starting") {
       options.reportUsageLog.append(reportUsageEntryOf(event, state.session.sessionId, at))
+    }
+    if (event.kind === "question-answered" && state.session.kind !== "starting") {
+      for (const entry of questionUsageEntriesOf(event.questions, state.session.sessionId, at)) {
+        options.questionUsageLog.append(entry)
+      }
     }
     if (event.kind === "turn-finished") {
       tally.tokenUsage.finishTurn()

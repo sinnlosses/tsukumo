@@ -7,6 +7,7 @@ import {
   workMemoryPromptParts,
 } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
+import { QUESTION_NOTATION_PROMPT } from "../../../../src/server/session-driver/core/question-notation.ts"
 import type {
   ChatArchiveRecentEntry,
   ChatSummary,
@@ -44,15 +45,15 @@ const RECENT: readonly ChatArchiveRecentEntry[] = [
 const RECENT_CHAT_ARCHIVE = { ...NOOP_CHAT_ARCHIVE, readRecent: () => RECENT } satisfies ChatArchive
 
 describe("takeSystemPromptAppend", () => {
-  it("仕事のときは 人格 → セリフの間合い → 段取り → レポートの記法 の順でつながる", () => {
+  it("仕事のときは 人格 → セリフの間合い → 段取り → レポートの記法 → 質問の書き方 の順でつながる", () => {
     const append = takeSystemPromptAppend({ persona: PERSONA, mode: workMode() })
 
     expect(append).toBe(
-      `${PERSONA}\n\n${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}`,
+      `${PERSONA}\n\n${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}\n\n${QUESTION_NOTATION_PROMPT}`,
     )
   })
 
-  it("仕事のときも記憶があれば、レポートの記法のあとに あらすじ → 直近の会話 が載る（雑談の作法は載らない）", () => {
+  it("仕事のときも記憶があれば、質問の書き方のあとに あらすじ → 直近の会話 が載る（雑談の作法は載らない）", () => {
     const summary = inMemoryChatSummary({ summary: SUMMARY, delivered: true })
     const expectedMemory = workMemoryPromptParts({
       chatSummary: summary,
@@ -73,6 +74,7 @@ describe("takeSystemPromptAppend", () => {
         SPEECH_CADENCE_PROMPT,
         WORK_PLAN_PROMPT,
         REPORT_NOTATION_PROMPT,
+        QUESTION_NOTATION_PROMPT,
         ...expectedMemory,
       ].join("\n\n"),
     )
@@ -100,6 +102,7 @@ describe("takeSystemPromptAppend", () => {
     expect(append).not.toContain(REPORT_NOTATION_PROMPT)
     expect(append).not.toContain(SPEECH_CADENCE_PROMPT)
     expect(append).not.toContain(WORK_PLAN_PROMPT)
+    expect(append).not.toContain(QUESTION_NOTATION_PROMPT)
   })
 
   it("続きから始めて写しが渡し済みなら、雑談の記憶は載らない（人格 → 雑談の作法 だけ）", () => {
@@ -143,6 +146,7 @@ describe("takeSystemPromptAppend", () => {
       ...headings(SPEECH_CADENCE_PROMPT),
       ...headings(WORK_PLAN_PROMPT),
       ...headings(REPORT_NOTATION_PROMPT),
+      ...headings(QUESTION_NOTATION_PROMPT),
       "## これまでのあらすじ",
       "## 直近の会話（そのままの文面）",
     ])
@@ -159,7 +163,7 @@ describe("takeSystemPromptAppend", () => {
     const append = takeSystemPromptAppend({ persona: "", mode: workMode() })
 
     expect(append).toBe(
-      `${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}`,
+      `${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}\n\n${QUESTION_NOTATION_PROMPT}`,
     )
   })
 

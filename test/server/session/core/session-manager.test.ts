@@ -30,6 +30,10 @@ import {
   recordedPromptImages,
   type ShelvedPromptImage,
 } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
+import type {
+  QuestionUsageEntry,
+  QuestionUsageLog,
+} from "../../../../src/server/session-driver/core/question-usage.ts"
 import type { SessionDriver } from "../../../../src/server/session-driver/core/session-driver.ts"
 import type { SessionLaunchRequest } from "../../../../src/server/session/core/session-launch.ts"
 import {
@@ -60,6 +64,7 @@ import {
 } from "../../../../src/shared/frame.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { PromptImage } from "../../../../src/shared/session-driver/prompt-image.ts"
+import type { Question } from "../../../../src/shared/session-driver/question.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
@@ -112,6 +117,9 @@ const NOOP_CONTEXT_USAGE_LOG: ContextUsageLog = { append: () => {} }
 
 /** `report` の塊の使われ方の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_REPORT_USAGE_LOG: ReportUsageLog = { append: () => {} }
+
+/** 質問の使われ方の記録を気にしないテストに渡す、何もしない書き込み口。 */
+const NOOP_QUESTION_USAGE_LOG: QuestionUsageLog = { append: () => {} }
 
 /** 訪問を気にしないテストに渡す口（客の候補が居ないので来ない。時計は起こさない）。 */
 const NO_VISIT_PORTS: VisitPorts = {
@@ -213,6 +221,7 @@ function startManagerWithStub() {
     diagnosticLog: NOOP_DIAGNOSTIC_LOG,
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
     reportUsageLog: NOOP_REPORT_USAGE_LOG,
+    questionUsageLog: NOOP_QUESTION_USAGE_LOG,
     promptImageShelf: createPromptImageShelf(),
     reportImageShelf: createReportImageShelf(),
     readReportImage: () => undefined,
@@ -376,6 +385,7 @@ describe("createSessionManager", () => {
       diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       reportImageShelf: createReportImageShelf(),
       readReportImage: () => undefined,
@@ -471,6 +481,7 @@ describe("createSessionManager", () => {
       diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       reportImageShelf: createReportImageShelf(),
       readReportImage: () => undefined,
@@ -561,6 +572,7 @@ describe("createSessionManager", () => {
       diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       reportImageShelf: createReportImageShelf(),
       readReportImage: () => undefined,
@@ -628,6 +640,7 @@ describe("createSessionManager", () => {
       diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       reportImageShelf: createReportImageShelf(),
       readReportImage: () => undefined,
@@ -709,6 +722,7 @@ describe("createSessionManager", () => {
         diagnosticLog: NOOP_DIAGNOSTIC_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
+        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
         reportImageShelf: createReportImageShelf(),
         readReportImage: () => undefined,
@@ -891,6 +905,7 @@ describe("createSessionManager", () => {
       diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       reportImageShelf: createReportImageShelf(),
       readReportImage: () => undefined,
@@ -996,6 +1011,7 @@ describe("createSessionManager", () => {
         diagnosticLog: NOOP_DIAGNOSTIC_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
+        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
         reportImageShelf: createReportImageShelf(),
         readReportImage: () => undefined,
@@ -1358,6 +1374,7 @@ describe("createSessionManager", () => {
         diagnosticLog: NOOP_DIAGNOSTIC_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
+        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
         reportImageShelf: createReportImageShelf(),
         readReportImage: () => undefined,
@@ -1662,6 +1679,7 @@ describe("createSessionManager", () => {
           },
         },
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
+        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
         reportImageShelf: createReportImageShelf(),
         readReportImage: () => undefined,
@@ -1834,6 +1852,7 @@ describe("createSessionManager", () => {
             entries.push(entry)
           },
         },
+        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
         reportImageShelf: createReportImageShelf(),
         readReportImage: () => undefined,
@@ -1911,6 +1930,132 @@ describe("createSessionManager", () => {
     })
   })
 
+  // 質問（AskUserQuestion）の使われ方の記録。答えが確定した質問ごとに1行、選択肢の数と
+  // preview の付いた数だけを書く（会話の文面は入らない）。
+  describe("質問の使われ方の記録", () => {
+    function sessionInfo(sessionId: string): SessionEvent {
+      return {
+        kind: "session-info",
+        sessionId,
+        model: "opus",
+        permissionMode: "auto",
+        slashCommands: [],
+        terminalSlashCommands: [],
+      }
+    }
+
+    /** 答えが確定した質問の `SessionEvent`（中身はすべて手で書いた架空のもの）。 */
+    function questionAnsweredEvent(questions: readonly Question[]): SessionEvent {
+      return {
+        kind: "question-answered",
+        questions,
+        answers: questions.map(() => ["架空の答え"]),
+      }
+    }
+
+    function question(optionCount: number, previewCount: number): Question {
+      return {
+        header: "架空の見出し",
+        text: "架空の質問文",
+        multiSelect: false,
+        options: Array.from({ length: optionCount }, (_, index) => ({
+          label: `架空の選択肢${index}`,
+          description: "",
+          preview: index < previewCount ? "架空のpreview" : undefined,
+        })),
+      }
+    }
+
+    function startQuestionUsageManagerWithStub() {
+      const stub = createStubDriver()
+      const entries: QuestionUsageEntry[] = []
+      const manager = createSessionManager({
+        now: () => 1_000,
+        openFile: () => Promise.resolve(true),
+        readAchievementDay: () => Promise.resolve(undefined),
+        batchIntervalMs: BATCH_MS,
+        chatConsolidation: NO_CHAT_CONSOLIDATION,
+        watchTasks: NO_TASK_WATCH,
+        visit: NO_VISIT_PORTS,
+        diary: NO_DIARY_WRITER,
+        chatArchive: NOOP_CHAT_ARCHIVE,
+        project: FICTIONAL_PROJECT,
+        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+        diagnosticLog: NOOP_DIAGNOSTIC_LOG,
+        reportUsageLog: NOOP_REPORT_USAGE_LOG,
+        questionUsageLog: {
+          append: (entry) => {
+            entries.push(entry)
+          },
+        },
+        promptImageShelf: createPromptImageShelf(),
+        reportImageShelf: createReportImageShelf(),
+        readReportImage: () => undefined,
+        rememberSessionDefault: (sessionDefault) => ({
+          kind: "session-default-changed",
+          sessionDefault,
+        }),
+        rememberVisitEnabled: (visitEnabled) => ({
+          kind: "visit-enabled-changed",
+          visitEnabled,
+        }),
+        launchSession: (onEvent, onRestoredEvents) => {
+          stub.attach(onEvent)
+          stub.attachRestored(onRestoredEvents)
+          return Promise.resolve(stub.driver)
+        },
+        editCharacter: () => Promise.resolve(undefined),
+        createCharacter: () => Promise.resolve(undefined),
+        deleteCharacter: () => Promise.resolve(undefined),
+        forgetRememberedLine: () => Promise.resolve(undefined),
+        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+        writePreviousUsageReview: () => {},
+        dismissUsageProposal: (dismiss) => ({
+          kind: "usage-proposal-dismissed",
+          key: usageProposalKey(dismiss),
+        }),
+      })
+      return { manager, stub, entries }
+    }
+
+    it("答えが確定した質問ごとに、選択肢の数と preview の付いた数を1行書く", async () => {
+      const { stub, entries } = startQuestionUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emit(questionAnsweredEvent([question(3, 1), question(2, 0)]))
+      await waitForBatch()
+
+      expect(entries).toEqual([
+        { at: 1_000, sessionId: "claude-session-1", optionCount: 3, previewCount: 1 },
+        { at: 1_000, sessionId: "claude-session-1", optionCount: 2, previewCount: 0 },
+      ])
+    })
+
+    it("claude 側のセッションIDが分からないうちは書かない", async () => {
+      const { stub, entries } = startQuestionUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(questionAnsweredEvent([question(2, 0)]))
+      await waitForBatch()
+
+      expect(entries).toEqual([])
+    })
+
+    it("復元で流し直された question-answered では書かない", async () => {
+      const { stub, entries } = startQuestionUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emitRestored([questionAnsweredEvent([question(2, 0)])])
+      await waitForBatch()
+
+      expect(entries).toEqual([])
+    })
+  })
+
   describe("診断ログの足跡", () => {
     function startDiagnosticManagerWithStub() {
       const stub = createStubDriver()
@@ -1937,6 +2082,7 @@ describe("createSessionManager", () => {
         },
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
+        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
         reportImageShelf: createReportImageShelf(),
         readReportImage: () => undefined,
@@ -2051,6 +2197,7 @@ describe("依頼に添えた画像の棚", () => {
       diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
       promptImageShelf: shelf,
       reportImageShelf: createReportImageShelf(),
       readReportImage: () => undefined,
@@ -2191,6 +2338,7 @@ describe("レポートの画像の棚", () => {
       diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       reportImageShelf: shelf,
       readReportImage: (path) => {
@@ -2327,6 +2475,7 @@ describe("createSessionManager（見直し）", () => {
       diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       reportImageShelf: createReportImageShelf(),
       readReportImage: () => undefined,
@@ -2467,6 +2616,7 @@ describe("タスク一覧の見張り", () => {
       diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       reportImageShelf: createReportImageShelf(),
       readReportImage: () => undefined,
@@ -2580,6 +2730,7 @@ describe("訪問", () => {
       diagnosticLog: NOOP_DIAGNOSTIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      questionUsageLog: NOOP_QUESTION_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       reportImageShelf: createReportImageShelf(),
       readReportImage: () => undefined,

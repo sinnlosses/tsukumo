@@ -18,6 +18,7 @@ import { createReportUsageLog } from "./server/report/adapter/report-usage-log.t
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { runGit } from "./server/repository/adapter/git.ts"
 import type { FakeSession } from "./server/session-driver/adapter/fake-driver.ts"
+import { createQuestionUsageLog } from "./server/session-driver/adapter/question-usage-log.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import { EVENT_BATCH_INTERVAL_MS } from "./server/session/core/event-batch.ts"
 import { createSessionManager, type SessionManager } from "./server/session/core/session-manager.ts"
@@ -111,6 +112,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     experienceMetricLog: createExperienceMetricLog(),
     diagnosticLog: options.diagnosticLog,
     reportUsageLog: createReportUsageLog(),
+    questionUsageLog: createQuestionUsageLog(),
     promptImageShelf,
     reportImageShelf: options.reportImageShelf,
     readReportImage: (path) => readReportImageFile(context.cwd, path),

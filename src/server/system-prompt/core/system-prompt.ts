@@ -16,6 +16,7 @@ import {
   workMemoryPromptParts,
 } from "../../chat/core/chat-memory-prompt.ts"
 import { REPORT_NOTATION_PROMPT } from "../../report/core/report-notation.ts"
+import { QUESTION_NOTATION_PROMPT } from "../../session-driver/core/question-notation.ts"
 import type {
   ChatSummary,
   SessionMode,
@@ -92,11 +93,11 @@ export function toSystemPromptMode(
  *
  * 並びはモードで入れ替わる:
  *
- * | 場面                     | 節の並び                                                                |
- * | ------------------------ | ----------------------------------------------------------------------- |
- * | 仕事                     | 人格 → セリフの間合い → 段取り → レポートの記法 → あらすじ → 直近の会話 |
- * | 雑談（記憶が載るとき）   | 人格 → 雑談の作法 → あらすじ → 直近の会話                               |
- * | 雑談（続きから・渡し済） | 人格 → 雑談の作法                                                       |
+ * | 場面                     | 節の並び                                                                              |
+ * | ------------------------ | -------------------------------------------------------------------------------------- |
+ * | 仕事                     | 人格 → セリフの間合い → 段取り → レポートの記法 → 質問の書き方 → あらすじ → 直近の会話 |
+ * | 雑談（記憶が載るとき）   | 人格 → 雑談の作法 → あらすじ → 直近の会話                                             |
+ * | 雑談（続きから・渡し済） | 人格 → 雑談の作法                                                                     |
  *
  * 雑談のときは仕事の2つと入れ替える（並べない。理由は `CHAT_MANNER_PROMPT` の冒頭）。
  *
@@ -116,6 +117,7 @@ function modeParts(mode: SystemPromptMode): readonly string[] {
       SPEECH_CADENCE_PROMPT,
       WORK_PLAN_PROMPT,
       REPORT_NOTATION_PROMPT,
+      QUESTION_NOTATION_PROMPT,
       ...workMemoryPromptParts(mode.memory),
     ]
   }
