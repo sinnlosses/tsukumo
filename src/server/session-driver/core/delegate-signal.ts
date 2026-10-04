@@ -11,6 +11,7 @@ export const SEND_MESSAGE_TOOL_NAME = "SendMessage"
 
 /**
  * `SendMessage` の引数が、メインに宛てた合図 `状況 | n/N | 文` なら段の位置と文（前後の空白を除く）を返す。
+ * 1列目は「状況」の字そのものでも、委譲先が書き換えた状況の語でもよい。
  * 宛先が `main` でない・1行目が合図の形でない・`1 <= n <= N` でないなら undefined。
  */
 export function parseDelegateSignal(input: unknown): DelegateSignal | undefined {
@@ -27,4 +28,4 @@ export function parseDelegateSignal(input: unknown): DelegateSignal | undefined 
   return step >= 1 && step <= stepCount ? { step, stepCount, summary } : undefined
 }
 
-const SIGNAL_FIRST_LINE = /^状況 \| (\d+)\/(\d+) \|(.*)$/
+const SIGNAL_FIRST_LINE = /^[^|]+ \| (\d+)\/(\d+) \|(.*)$/

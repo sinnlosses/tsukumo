@@ -1252,6 +1252,14 @@ describe("toSessionEvents（委譲の合図）", () => {
     })
   })
 
+  it("1列目が「状況」の字でなく実際の状況の語でも、段の位置を読んで delegate-signal を出す", () => {
+    expect(
+      signalsOf(
+        sendMessage({ to: "main", message: "組み立て済み | 3/4 | 架空の進み。" }, "toolu_sub_1"),
+      ),
+    ).toEqual([{ kind: "delegate-signal", step: 3, stepCount: 4, summary: "架空の進み。" }])
+  })
+
   it("3列目が空の合図は、文の空な delegate-signal を出す", () => {
     expect(signalsOf(sendMessage({ to: "main", message: "状況 | 1/2 | " }, "toolu_sub_1"))).toEqual(
       [{ kind: "delegate-signal", step: 1, stepCount: 2, summary: "" }],
