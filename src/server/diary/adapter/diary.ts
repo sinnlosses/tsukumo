@@ -6,8 +6,8 @@
 //
 // 書けなくても・読めなくても例外を投げない。日記の文面はログに出さない。
 
-import { createHash, randomBytes } from "node:crypto"
-import { mkdirSync, readdirSync, renameSync, writeFileSync } from "node:fs"
+import { createHash } from "node:crypto"
+import { mkdirSync, readdirSync } from "node:fs"
 import { basename, dirname, join } from "node:path"
 
 import { identity, sortBy } from "remeda"
@@ -20,6 +20,7 @@ import {
   type DiaryBookmark,
   type DiaryParagraph,
 } from "../../../shared/diary/diary.ts"
+import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { isoWithOffset } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
@@ -167,11 +168,9 @@ function parseDiaryContent(content: string): Diary | undefined {
 
 /** 一時ファイルに書いてから置き換える。失敗したら `false`（例外を投げない）。 */
 function writeDiaryFileAtomic(path: string, diary: Diary): boolean {
-  const tempPath = `${path}.${randomBytes(6).toString("hex")}.tmp`
   try {
     mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(tempPath, JSON.stringify(diary))
-    renameSync(tempPath, path)
+    writeFileAtomic(path, JSON.stringify(diary))
     return true
   } catch {
     return false

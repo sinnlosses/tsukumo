@@ -4,9 +4,10 @@
 // 検証はしない。読んだ値の形が正しいかは呼び出し元の zod スキーマに委ねる（`unknown` のまま返す）。
 // 書けなくても・読めなくても例外を投げない。
 
-import { mkdirSync, writeFileSync } from "node:fs"
+import { mkdirSync } from "node:fs"
 import { dirname } from "node:path"
 
+import { writeFileAtomic } from "./atomic-file.ts"
 import { readOptionalFile } from "./optional-file.ts"
 
 /** JSON として読む。ファイルが無い・壊れているときは undefined。 */
@@ -27,7 +28,7 @@ export function readJsonFile(path: string): unknown {
 export function writeJsonFile(path: string, value: unknown): void {
   try {
     mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(path, JSON.stringify(value))
+    writeFileAtomic(path, JSON.stringify(value))
   } catch {
     // 書けなかった回は諦めて次へ進む。
   }

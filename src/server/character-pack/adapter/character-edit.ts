@@ -61,6 +61,7 @@ import type {
   CharacterDelete,
   CharacterEdit,
 } from "../../../shared/contract/character-pack.ts"
+import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
 import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import {
   type CharacterPack,
@@ -143,7 +144,7 @@ export function createCharacterPack(
       return undefined
     }
 
-    writeFileSync(join(dir, CHARACTER_DEFINITION_FILE_NAME), newDefinitionJson(create, fileNames))
+    writeFileAtomic(join(dir, CHARACTER_DEFINITION_FILE_NAME), newDefinitionJson(create, fileNames))
     return readCharacterPack(dir)
   } catch {
     discardDir(dir)
@@ -215,16 +216,16 @@ function applyEdit(dir: string, edit: CharacterEdit): boolean {
 
   switch (edit.kind) {
     case "setOutfitAccent":
-      writeFileSync(definitionPath, definitionWithOutfitAccent(content, edit.outfit, edit.color))
+      writeFileAtomic(definitionPath, definitionWithOutfitAccent(content, edit.outfit, edit.color))
       return true
     case "setAccent":
-      writeFileSync(definitionPath, definitionWithAccent(content, edit.target, edit.color))
+      writeFileAtomic(definitionPath, definitionWithAccent(content, edit.target, edit.color))
       return true
     case "clearChatAccent":
-      writeFileSync(definitionPath, definitionWithoutChatAccent(content))
+      writeFileAtomic(definitionPath, definitionWithoutChatAccent(content))
       return true
     case "setProfile":
-      writeFileSync(
+      writeFileAtomic(
         definitionPath,
         definitionWithTagline(definitionWithName(content, edit.name), edit.tagline),
       )
@@ -289,7 +290,7 @@ function applyImageEdit<Image extends { readonly base64: string; readonly format
 ): boolean {
   if (edit.kind === "clear") {
     const previous = edit.previousFileName(content)
-    writeFileSync(definitionPath, edit.withoutImage(content))
+    writeFileAtomic(definitionPath, edit.withoutImage(content))
     removeUnreferencedImage(dir, previous)
     return true
   }
@@ -306,7 +307,7 @@ function applyImageEdit<Image extends { readonly base64: string; readonly format
 
   const previous = edit.previousFileName(content)
   writeFileSync(join(dir, fileName), Buffer.from(image.base64, "base64"))
-  writeFileSync(definitionPath, edit.withImage(content, fileName))
+  writeFileAtomic(definitionPath, edit.withImage(content, fileName))
   removeUnreferencedImage(dir, previous)
   return true
 }
