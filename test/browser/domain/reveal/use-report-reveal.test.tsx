@@ -23,7 +23,7 @@ const TURN_ID = 4
 const LONG_TEXT = "架空の本文。".repeat(40)
 
 function Probe(props: { readonly reveal: boolean; readonly bodyText: string }): ReactElement {
-  const rootRef = useReportReveal(props.reveal, TURN_ID)
+  const rootRef = useReportReveal(props.reveal, TURN_ID, () => {})
 
   return (
     <div data-testid="root" ref={rootRef}>
@@ -128,7 +128,7 @@ function measureBoxes(): () => void {
 
 /** 行に見立てた図を並べた本文（`measureBoxes` が矩形を名乗る）。 */
 function LinesProbe(): ReactElement {
-  const rootRef = useReportReveal(true, TURN_ID)
+  const rootRef = useReportReveal(true, TURN_ID, () => {})
 
   return (
     <div ref={rootRef}>

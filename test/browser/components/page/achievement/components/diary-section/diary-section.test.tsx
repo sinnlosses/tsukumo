@@ -108,6 +108,7 @@ function renderSection(overrides: {
       writing={overrides.writing ?? NOT_WRITING}
       portrait={NO_PORTRAIT}
       reveal={overrides.reveal ?? false}
+      onRevealed={NOOP}
       review={overrides.review ?? AVAILABLE_REVIEW}
       onOpenDiaryBook={overrides.onOpenDiaryBook ?? NOOP}
     />,

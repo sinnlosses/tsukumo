@@ -26,7 +26,7 @@ export type CommandLink = ClientLink<ClientContext>
 export type SessionSocket = {
   /**
    * コマンドの手続きを送る口。繋ぎ直しても同じもので、その時点の接続へ送る。
-   * 接続していない間は送らずに捨てる（呼び出し側は状態を見て判断する）。
+   * 接続していない間は送らず、reject する。
    */
   readonly commandLink: CommandLink
   readonly close: () => void
@@ -82,7 +82,7 @@ export function connectSessionSocket(
       call: (path, input, options) =>
         link !== undefined && socket !== undefined && socket.readyState === WebSocket.OPEN
           ? link.call(path, input, options)
-          : Promise.resolve(undefined),
+          : Promise.reject(new Error("サーバに繋がっていない")),
     },
     close: () => {
       closed = true

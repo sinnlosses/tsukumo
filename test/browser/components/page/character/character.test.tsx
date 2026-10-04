@@ -142,8 +142,10 @@ describe("Character", () => {
     fireEvent.click(submitButton)
     expect(calls).toHaveLength(1)
     expect(calls[0]).toMatchObject({ procedure: "characterPack.create", id: "fictional-3" })
-    // まだ一覧に出ていないので、ダイアログは開いたまま。
-    expect(screen.getByRole("heading", { name: "新しいキャラクター" })).toBeDefined()
+    // 作れたと結果が返った時点で閉じる（一覧に現れるのを待たない）。
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { name: "新しいキャラクター" })).toBeNull()
+    })
 
     // 選択肢の増えた character-changed（`hello` で丸ごと入れ替え）が届いたあと。
     act(() => {
@@ -154,7 +156,6 @@ describe("Character", () => {
       })
     })
 
-    expect(screen.queryByRole("heading", { name: "新しいキャラクター" })).toBeNull()
     expect(screen.getByRole("link", { name: /fictional-3/ }).getAttribute("aria-current")).toBe(
       "page",
     )

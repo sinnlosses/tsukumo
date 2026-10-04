@@ -8,8 +8,7 @@
 // 「<パックの名前>と振り返る」ボタンのロジックもここに持つ。
 // 押しても画面は移らない。`session.reflectAchievement { date }` を送るだけで、進みは `SessionState.diaryWriting` から同じ画面の中に出す。
 
-import { useQuery, useQueryClient, type Query } from "@tanstack/react-query"
-import { useEffect } from "react"
+import { useQuery, type Query } from "@tanstack/react-query"
 
 import {
   isEmptyAchievementDay,
@@ -149,6 +148,8 @@ export type UseAchievementResult = {
    * この起動で1回だけ `true` になり、同じ段落を日を開き直して見たときは `false`。
    */
   readonly diaryReveal: boolean
+  /** 書き上げの演出を見せる側に立った合図。この段落を「もう見せた」として覚える。 */
+  readonly onDiaryRevealed: () => void
 }
 
 /**
@@ -161,7 +162,6 @@ const revealedDiaryKeys = new Set<string>()
 export function useAchievement(): UseAchievementResult {
   const selection = useAchievementDateSelection()
   const dispatch = useSession((session) => session.dispatch)
-  const queryClient = useQueryClient()
   const character = useSession((session) => session.state.character)
   const characterPacks = useSession((session) => session.state.characterPacks)
   const diaryWriting = useSession((session) => session.state.diaryWriting)
@@ -199,24 +199,6 @@ export function useAchievement(): UseAchievementResult {
       : `${daySwitch.date}:${latestParagraph.writtenAt}`
   const diaryReveal = revealKey !== undefined && justWritten && !revealedDiaryKeys.has(revealKey)
 
-  // 見せたことを描画のあとで覚える。覚えたあとの描画では「見せてよい」が `false` になる。
-  // 次に書き上げの演出を見るのは、書き足しで `revealKey` が変わったとき（新しい段落）か、次に別の日で書き上がったときだけ。
-  useEffect(() => {
-    if (revealKey !== undefined && justWritten) {
-      revealedDiaryKeys.add(revealKey)
-    }
-  }, [revealKey, justWritten])
-
-  // 日記が書き上がったとき、その日の1日ぶんと暦を取り直す。
-  // 書いた日と見ている日が違っても広く無効化する。
-  // 1日ぶんのクエリキーは日付ごとに分かれるが、同時に描かれているのは見ている日の1件だけなので、広く無効化しても取り直しは1回で済む。
-  // 暦は常に今日を含む固定範囲なので、書いた日を問わず鈴が変わりうる。
-  useEffect(() => {
-    if (diaryWriting.kind === "written") {
-      void queryClient.invalidateQueries({ queryKey: rpc.achievement.key() })
-    }
-  }, [queryClient, diaryWriting])
-
   return {
     view,
     diarySection: diarySectionOf(view, writing),
@@ -246,6 +228,11 @@ export function useAchievement(): UseAchievementResult {
       characterPacks,
     ),
     diaryReveal,
+    onDiaryRevealed: () => {
+      if (revealKey !== undefined) {
+        revealedDiaryKeys.add(revealKey)
+      }
+    },
   }
 }
 

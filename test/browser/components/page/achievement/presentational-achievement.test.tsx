@@ -82,6 +82,7 @@ const DEFAULT_PROPS: PresentationalAchievementProps = {
     portrait: { portraitUrl: undefined, accent: undefined, altText: "" },
   },
   diaryReveal: false,
+  onDiaryRevealed: NOOP,
   calendar: { kind: "loading" },
   onOpenDiaryBook: NOOP,
   diaryBook: CLOSED_DIARY_BOOK,

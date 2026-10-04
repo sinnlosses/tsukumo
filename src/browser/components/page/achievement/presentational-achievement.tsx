@@ -58,6 +58,7 @@ export function PresentationalAchievement(props: PresentationalAchievementProps)
           writing={props.writing}
           portrait={props.diaryPortrait}
           reveal={props.diaryReveal}
+          onRevealed={props.onDiaryRevealed}
           review={props.review}
           onOpenDiaryBook={props.onOpenDiaryBook}
         />

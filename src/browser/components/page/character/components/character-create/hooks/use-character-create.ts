@@ -9,9 +9,9 @@
 // 閉じるたびに呼び出し元が `<CharacterCreate>` を `key` で作り直すので、次に開いたときは自然に空へ戻る。
 //
 // id の形はサーバと同じ規則（`isCharacterPackName`）で先に見て、送ってから黙って落ちるのではなく、押せない理由を id の欄の下に出す。
-// 断られたこと（手続きの `REFUSED`）は画面にまだ出していない。
+// 作れなかったとき（断られた・切れた）はダイアログを閉じず、id の欄の下に失敗を出す。
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import { isCharacterPackName } from "../../../../../../../shared/character-pack/character.ts"
 import { readAccentColor } from "../../../../../../domain/appearance-color.ts"
@@ -25,6 +25,7 @@ const ID_HINT =
   "半角の英数字と . _ - が使えます（. では始められません）。保存するフォルダの名前になります"
 const INVALID_ID_NOTE = "id に使えるのは半角の英数字と . _ - だけ（. では始められない）"
 const TAKEN_ID_NOTE = "その id はもう使われている"
+const FAILED_NOTE = "作れなかった。もう一度押すか、id を変えてみてください"
 
 /** 必須の立ち絵（`default`）を選ぶ大きな枠。 */
 export type PortraitDropModel = {
@@ -37,7 +38,7 @@ export type PortraitDropModel = {
 /** id の欄の下に出す一言。空・形が合う・押せる間は静かな案内、崩れたら理由に変わる。 */
 export type CreateIdNoteModel =
   | { readonly kind: "hint"; readonly text: string }
-  | { readonly kind: "invalid" | "taken"; readonly text: string }
+  | { readonly kind: "invalid" | "taken" | "failed"; readonly text: string }
 
 export type CharacterCreateModel = {
   readonly open: boolean
@@ -58,7 +59,7 @@ export type CharacterCreateModel = {
 
 /** `open` と、作れたら閉じて呼び出し元へ返す `onClose` は呼び出し側の state。 */
 export function useCharacterCreate(open: boolean, onClose: () => void): CharacterCreateModel {
-  const dispatch = useSession((session) => session.dispatch)
+  const dispatchAwaited = useSession((session) => session.dispatchAwaited)
   const characterPacks = useSession((session) => session.state.characterPacks)
 
   const [name, setName] = useState("")
@@ -67,18 +68,8 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   // 差し色の初期値は `--accent`（JS 側に既定の16進を持たない。`readAccentColor`）。
   const [accent, setAccent] = useState(readAccentColor)
   const [chatAccent, setChatAccent] = useState(readAccentColor)
-  // 送った id。作れたかどうかは一覧に出たかで見る（断られたことは画面に出していないので、
-  // 成否の手がかりはこれだけ）。
-  const [sentId, setSentId] = useState<string | undefined>(undefined)
-
-  // 送った id が一覧に出たら作れている。
-  // 一覧でそのパックを選んだ状態にして、呼び出し元へ閉じたことを知らせる。
-  useEffect(() => {
-    if (sentId !== undefined && characterPacks.some((pack) => pack.name === sentId)) {
-      selectPack(sentId)
-      onClose()
-    }
-  }, [sentId, characterPacks, onClose])
+  const [sending, setSending] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   async function holdPortraitFile(file: File): Promise<void> {
     const image = await readDataUrl(file)
@@ -89,28 +80,39 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
 
   const taken = id !== "" && characterPacks.some((pack) => pack.name === id)
   const validFormat = isCharacterPackName(id)
-  const canSubmit = validFormat && !taken && portraitImage !== undefined
+  const canSubmit = validFormat && !taken && portraitImage !== undefined && !sending
 
-  function create(): void {
+  async function create(): Promise<void> {
     if (!canSubmit || portraitImage === undefined) {
       return
     }
 
-    dispatch.characterPack.create({
-      id,
-      name,
-      portraits: { default: portraitImage },
-      accent,
-      chatAccent,
-    })
-    setSentId(id)
+    setSending(true)
+    setFailed(false)
+    try {
+      await dispatchAwaited.characterPack.create({
+        id,
+        name,
+        portraits: { default: portraitImage },
+        accent,
+        chatAccent,
+      })
+    } catch {
+      setFailed(true)
+      setSending(false)
+      return
+    }
+    selectPack(id)
+    onClose()
   }
 
   const idNote: CreateIdNoteModel = taken
     ? { kind: "taken", text: TAKEN_ID_NOTE }
     : id !== "" && !validFormat
       ? { kind: "invalid", text: INVALID_ID_NOTE }
-      : { kind: "hint", text: ID_HINT }
+      : failed
+        ? { kind: "failed", text: FAILED_NOTE }
+        : { kind: "hint", text: ID_HINT }
 
   return {
     open,
@@ -119,7 +121,10 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       name,
       onNameChange: setName,
       id,
-      onIdChange: setId,
+      onIdChange: (next) => {
+        setId(next)
+        setFailed(false)
+      },
       idNote,
       portrait: {
         image:
@@ -155,7 +160,9 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
         onChange: setChatAccent,
       },
       canSubmit,
-      onSubmit: create,
+      onSubmit: () => {
+        void create()
+      },
     },
   }
 }

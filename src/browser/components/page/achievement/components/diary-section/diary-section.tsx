@@ -32,6 +32,8 @@ export type DiarySectionProps = {
   readonly writing: AchievementWriting
   readonly portrait: DiaryWriterPortrait
   readonly reveal: boolean
+  /** 書き上げの演出を見せる側に立ったときに呼ぶ。 */
+  readonly onRevealed: () => void
   readonly review: AchievementReviewButton
   /** 頭の行の「日記帳で読む」。押すとこの日の見開きが開く。 */
   readonly onOpenDiaryBook: () => void
@@ -70,7 +72,7 @@ export function DiarySection(props: DiarySectionProps): ReactElement {
           writing={props.writing}
           onOpenDiaryBook={props.onOpenDiaryBook}
         />
-        <Bubble bubble={diary.bubble} reveal={props.reveal} />
+        <Bubble bubble={diary.bubble} reveal={props.reveal} onRevealed={props.onRevealed} />
         {props.writing.kind === "writing" && <Progress stage={props.writing.stage} />}
         <Cards cards={diary.cards} />
         {diary.ready && <Controls writing={props.writing} review={props.review} />}
@@ -132,6 +134,7 @@ function Header(props: {
 function Bubble(props: {
   readonly bubble: DiarySectionBubble
   readonly reveal: boolean
+  readonly onRevealed: () => void
 }): ReactElement {
   const { bubble } = props
 
@@ -156,6 +159,7 @@ function Bubble(props: {
       key={bubble.key}
       body={bubble.body}
       reveal={props.reveal}
+      onRevealed={props.onRevealed}
       revisionId={bubble.revisionId}
     />
   )
@@ -164,9 +168,10 @@ function Bubble(props: {
 function WrittenBubble(props: {
   readonly body: string
   readonly reveal: boolean
+  readonly onRevealed: () => void
   readonly revisionId: number
 }): ReactElement {
-  const rootRef = useReportReveal(props.reveal, props.revisionId)
+  const rootRef = useReportReveal(props.reveal, props.revisionId, props.onRevealed)
   return (
     <div ref={rootRef} className={styles["achievement-diary-bubble"]}>
       <Text element="p" size="body" tone="ink" weight="inherit" className="">

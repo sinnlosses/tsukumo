@@ -21,7 +21,7 @@
 //
 // `prefers-reduced-motion: reduce` では演出ごと無効（`theme.css` の規則は CSS のアニメーションにしか効かないので、ここでも見る）。
 
-import { useLayoutEffect, useRef, useState, type RefObject } from "react"
+import { useEffectEvent, useLayoutEffect, useRef, useState, type RefObject } from "react"
 
 import { loadRevealSpeed, revealTimingOf, type RevealTiming } from "../reveal-speed.ts"
 import { brushStep } from "./band.ts"
@@ -55,10 +55,16 @@ const SKIP_LISTENER_OPTIONS = { capture: true, passive: true } as const
  *
  * 見るのはマウントした時点の `reveal` だけ。
  * あとから対象でなくなっても（後ろに別のレポートが現れても）始めた演出は最後まで進める（途中で止めると書きかけの本文が残る）。
+ * `onPlayed` は、マウント時の `reveal` が真だったときに1回だけ呼ぶ（呼び出し元が「もう見せた」を覚える口）。
  * 「書き上げる演出の速さ」もマウント時の値だけを見る（速さを変えても、書いている最中の演出は前の速さのまま進み切る）。
  */
-export function useReportReveal(reveal: boolean, turnId: number): RefObject<HTMLDivElement | null> {
+export function useReportReveal(
+  reveal: boolean,
+  turnId: number,
+  onPlayed: () => void,
+): RefObject<HTMLDivElement | null> {
   const rootRef = useRef<HTMLDivElement>(null)
+  const played = useEffectEvent(onPlayed)
   const [revealOnMount] = useState(reveal)
   const [revealSpeed] = useState(loadRevealSpeed)
   // 同じ本文を二度書かない。
@@ -69,6 +75,10 @@ export function useReportReveal(reveal: boolean, turnId: number): RefObject<HTML
   // 依存はどちらもマウント時に決まったきり変わらない（`<Turn>` はやり取りの番号を `key` に持つので、`turnId` が変わるときは部品ごと作り直される）。
   useLayoutEffect(() => {
     const root = rootRef.current
+    // 演出を見せる側に立った時点で知らせる（速さが「切る」・動きを減らす設定で書かなくても、見せたことにする）。
+    if (revealOnMount) {
+      played()
+    }
     if (!revealOnMount || revealedOnce.current || root === null || prefersReducedMotion()) {
       return undefined
     }

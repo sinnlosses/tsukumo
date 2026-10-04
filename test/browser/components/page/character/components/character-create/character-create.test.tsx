@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
@@ -130,6 +130,70 @@ describe("CharacterCreate", () => {
         chatAccent: "#ff8822",
       },
     ])
+  })
+
+  it("作れたら一覧でそのパックを選んだ状態にして、閉じたことを知らせる", async () => {
+    const closed: string[] = []
+    render(
+      characterCreate(true, () => {
+        closed.push("closed")
+      }),
+    )
+    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    await pickPortrait()
+
+    fireEvent.click(submitButton())
+
+    await waitFor(() => {
+      expect(closed).toEqual(["closed"])
+    })
+    expect(window.location.hash).toBe("#character?pack=fictional-2")
+  })
+
+  it("断られたら閉じず、失敗を id の欄の下に出す。id を打ち直すと消える", async () => {
+    const closed: string[] = []
+    render(
+      characterCreate(
+        true,
+        () => {
+          closed.push("closed")
+        },
+        () => Promise.reject(new Error("断り")),
+      ),
+    )
+    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    await pickPortrait()
+
+    fireEvent.click(submitButton())
+
+    await screen.findByText(/作れなかった/u)
+    expect(closed).toEqual([])
+    expect(window.location.hash).toBe("")
+    expect(submitButton().getAttribute("aria-disabled")).toBe("false")
+
+    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-3" } })
+    expect(screen.queryByText(/作れなかった/u)).toBeNull()
+  })
+
+  it("結果が返るまで、続けて押しても1回しか送らない", async () => {
+    const calls: unknown[] = []
+    render(
+      characterCreate(
+        true,
+        () => {},
+        (command) => {
+          calls.push(command)
+          return new Promise(() => {})
+        },
+      ),
+    )
+    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    await pickPortrait()
+
+    fireEvent.click(submitButton())
+    fireEvent.click(submitButton())
+
+    expect(calls).toHaveLength(1)
   })
 
   it("「やめる」で閉じる", () => {

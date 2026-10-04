@@ -14,6 +14,7 @@ import {
   type SessionState,
 } from "../../shared/session/session-state.ts"
 import { SESSION_SOCKET_PATH } from "../../shared/view-server/session-socket.ts"
+import { invalidateAchievement } from "../domain/achievement-cache.ts"
 import { applyRefresh } from "../domain/refresh.ts"
 import { sessionTokenUrl } from "../domain/session-token-url.ts"
 import { type CommandLink, connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"
@@ -26,6 +27,12 @@ import { type CommandLink, connectSessionSocket, type ConnectionStatus } from ".
  * 断られたこと（契約の `REFUSED`）は画面に出さない（画面は同じ条件で先に操作子を塞いでいて、結果はイベントで戻ってくる）。
  */
 export type SessionDispatch = CommandClient
+
+/**
+ * 手続きの結果を待つ呼び出し専用の送り口。型は {@link SessionDispatch} と同じ。
+ * 断られたとき（契約の `REFUSED`）・接続が切れたとき・繋がっていないときは握りつぶさず reject する。
+ */
+export type AwaitedDispatch = CommandClient
 
 /** コマンドの送り先。`connectSessionSocket` の接続がそのまま満たす（閉じるのは store の関心ではない）。 */
 export type CommandSocket = {
@@ -51,6 +58,7 @@ export type SessionStoreState = {
   /** `hello`（姿の丸ごとの入れ替え）を受けた回数。姿の差が新しく起きたことかを見分けるのに使う。 */
   readonly generation: number
   readonly dispatch: SessionDispatch
+  readonly dispatchAwaited: AwaitedDispatch
   /** 届いたフレームを畳む。`refresh` は姿を動かさないので呼び出し側が手前で捌く。 */
   readonly receive: (frame: ServerFrame) => void
   readonly setConnection: (status: ConnectionStatus) => void
@@ -73,6 +81,12 @@ export const useSession = create<SessionStoreState>()((set, get) => {
         (socket?.commandLink.call(path, input, options) ?? Promise.resolve(undefined)).catch(
           () => undefined,
         ),
+    }),
+    dispatchAwaited: createORPCClient({
+      call: (path, input, options) =>
+        socket === undefined
+          ? Promise.reject(new Error("サーバに繋がっていない"))
+          : socket.commandLink.call(path, input, options),
     }),
     receive: (frame) => {
       const current = get()
@@ -136,6 +150,13 @@ export function useSessionConnection(): void {
         if (frame.type === "refresh") {
           applyRefresh(frame.target)
           return
+        }
+        if (
+          frame.type === "hello" ||
+          (frame.type === "events" &&
+            frame.events.some(({ event }) => event.kind === "diary-written"))
+        ) {
+          invalidateAchievement()
         }
         receive(frame)
       },

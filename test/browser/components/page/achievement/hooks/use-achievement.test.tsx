@@ -531,3 +531,94 @@ describe("useAchievement（日記の立ち絵）", () => {
     expect(result.current.diaryPortrait.portrait.portraitUrl).toBeUndefined()
   })
 })
+
+describe("useAchievement（書き上げの演出）", () => {
+  const JUST_WRITTEN = stateWith({
+    diaryWriting: { kind: "written", date: "2026-09-24", writtenAt: 0 },
+  })
+
+  function writtenAt(time: string): DailyAchievement {
+    return {
+      kind: "known",
+      date: "2026-09-24",
+      today: "2026-09-24",
+      commitCount: 3,
+      doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+      graduations: [],
+      milestones: [],
+      diary: {
+        kind: "written",
+        diary: {
+          version: 1,
+          date: "2026-09-24",
+          paragraphs: [
+            {
+              writtenAt: `2026-09-24T${time}+09:00`,
+              body: "架空の日記の本文。",
+              expression: "proud",
+              writer: { pack: "fixture-pack", name: "架空の名前" },
+            },
+          ],
+          bookmark: { kind: "none" },
+        },
+      },
+    }
+  }
+
+  it("書き上がった直後は真で、見せた合図のあとは同じ段落で偽に戻る", async () => {
+    stubAchievementFetch(() => rpcOutput(writtenAt("20:01:00")))
+    const { result, rerender } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(createTestQueryClient(), JUST_WRITTEN),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+    expect(result.current.diaryReveal).toBe(true)
+
+    act(() => {
+      result.current.onDiaryRevealed()
+    })
+    rerender()
+
+    expect(result.current.diaryReveal).toBe(false)
+  })
+
+  it("合図が無ければ何度描き直しても真のまま（描画は印を書かない）", async () => {
+    stubAchievementFetch(() => rpcOutput(writtenAt("20:02:00")))
+    const { result, rerender } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(createTestQueryClient(), JUST_WRITTEN),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    rerender()
+    rerender()
+
+    expect(result.current.diaryReveal).toBe(true)
+  })
+
+  it("書き足して最新の段落が変われば、見せた後でも真に戻る", async () => {
+    stubAchievementFetch(() => rpcOutput(writtenAt("20:03:00")))
+    const client = createTestQueryClient()
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(client, JUST_WRITTEN),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+    act(() => {
+      result.current.onDiaryRevealed()
+    })
+
+    fetchStub?.restore()
+    stubAchievementFetch(() => rpcOutput(writtenAt("20:04:00")))
+    await act(async () => {
+      await client.invalidateQueries()
+    })
+
+    await waitFor(() => {
+      expect(result.current.diaryReveal).toBe(true)
+    })
+  })
+})

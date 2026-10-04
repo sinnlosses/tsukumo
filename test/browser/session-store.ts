@@ -12,9 +12,9 @@ import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/sessi
 /**
  * 部品が送ったコマンドの受け取り口。手続きの名前（`session.prompt` のように `.` で繋いだもの）を
  * `procedure` に、入力のフィールドを同じ階層に平らに並べた記録を受け取る（入力の無い手続きは
- * `procedure` だけ）。
+ * `procedure` だけ）。Promise を返すと手続きの結果になり、reject すれば断りを再現できる。
  */
-export type CommandSpy = (command: SentCommand) => void
+export type CommandSpy = (command: SentCommand) => unknown
 
 /** 送られたコマンド1件の記録。 */
 export type SentCommand = { readonly procedure: string } & Readonly<Record<string, unknown>>
@@ -30,8 +30,9 @@ export function putSession(state: SessionState, spy: CommandSpy = () => {}): voi
     useSession.getState().attachSocket({
       commandLink: {
         call: (path, input) => {
-          spy({ procedure: path.join("."), ...(isPlainObject(input) ? input : {}) })
-          return Promise.resolve(undefined)
+          return Promise.resolve(
+            spy({ procedure: path.join("."), ...(isPlainObject(input) ? input : {}) }),
+          ).then(() => undefined)
         },
       },
     })

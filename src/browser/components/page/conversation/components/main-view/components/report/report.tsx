@@ -24,7 +24,7 @@ export type ReportProps = {
 export function Report(props: ReportProps): ReactElement {
   const blocks = splitReportBlocks(props.markdown)
   // 完成した DOM をそのまま渡す（演出は見せる範囲を進めるだけで、塊の中身には触らない）。
-  const rootRef = useReportReveal(props.reveal, props.turnId)
+  const rootRef = useReportReveal(props.reveal, props.turnId, () => {})
 
   return (
     // `.detail-block` を2つ重ねる。
