@@ -3,6 +3,43 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-04 `scripts/capture-view.ts` に、指した要素までメインビューを送ってから撮る `--scroll-to <selector>` を足す（振り返り: GH-305）
+
+（GH-317 にした）
+
+- 出典: ドラフト `develop/draft/2026-10-04-capture-view-scroll-to-block.md`。利用者が `/plan-tasks` の問いでタスクにすると選んだ
+- 札: 黄 道具（18回目）
+- 根拠: GH-305 の委譲先は、レポートの下のほうにあるファイルの塊を撮る手段が `capture-view.ts` に無く、`spawnFakeTsukumo` を直に呼ぶ一時スクリプト（`scripts/_tmp-capture-files.ts`）を作って撮っては消す往復を3回した（委譲先の friction log）。狭い幅の画は手でスクロールした版と初期位置の版の2枚に分かれた
+- 出し先: `scripts/capture-view.ts` の引数に `--scroll-to <selector>` を足し、`--wait-for` のあとで要素をメインビューの上端へ送ってから撮る。`docs/architecture/testing.md`「手で確かめること」の撮り方に1行足す
+
+## 2026-10-04 CI の単体テストが `bd` の無い ubuntu-latest で落ちないよう、`bd` を起こす単体テストの扱いを決める（振り返り: GH-299）
+
+（GH-318 にした。利用者は `bd` が無いときに skip する案ではなく、CI に `bd` を入れる案を選んだ。push 済みの run 37163592083 で、見立てどおり2ファイルが `spawn bd ENOENT` で落ちていた）
+
+- 出典: ドラフト `develop/draft/2026-10-04-ci-unit-tests-need-bd.md`。利用者が `/plan-tasks` の問いでタスクにすると選んだ
+- 札: 黄 正典の不備（13回目）
+- 根拠: GH-299 で置いた `.github/workflows/ci.yml` は `pnpm run test` を走らせるが、`test/fixture/beads-repository.ts` が `bd init` を打ち、`test/server/repository/adapter/task-summary.test.ts` と `test/server/achievement/adapter/main-history.test.ts` がそれを使う。`bd` が無いときに skip する仕組みは無く、タスク本文は CI の環境に無い外部コマンドに触れていなかった。初回の push で CI が赤くなる公算が大きい（未 push のため未確認）
+- 出し先: 検査。`bd` を起こす単体テストを、`bd` が無いときは skip する1つの口（fixture の側）に寄せるか、CI に `bd` を入れる（外部コマンドの依存が増えるので利用者の承認が要る）かを決めるタスク。どちらでも、外部コマンドを起こすテストの一覧を `test/architecture.test.ts` で数え、CI の段に載せる前に落とす検査を足す
+
+## 2026-10-04 `deny-sed-in-place.ts` が、作業ツリーの外の Python スクリプトを tsukumo を cwd にして走らせるだけの呼び出しを拒まないようにする（振り返り: GH-309）
+
+（GH-319 にした）
+
+- 出典: ドラフト `develop/draft/2026-10-04-deny-sed-false-positive-on-outside-script.md`。利用者が `/plan-tasks` の問いでタスクにすると選んだ
+- 札: 黄 道具（18回目）
+- 根: deny-hook-false-positive
+- 根拠: GH-309 の委譲先が、scratchpad に置いた claude-skills の作業ツリーの `selftest.py`（一時ディレクトリにだけ書く）を走らせたところ、tsukumo を cwd にしたときに2回拒まれた（`2>&1` を付けた形と、外してパイプだけにした形）。claude-skills の作業ツリーを cwd にすると通った。GH-293 で「作業ツリーの外のスクリプトは中身の書き込み先で判定する」にしたが、書き先が一時ディレクトリでも、組み立てたパスや cwd 相対の書き込みを持つスクリプトは作業ツリーの中とみなして拒んでいる。同じ回で、GH-297〜GH-310 の委譲先も Python での書き換えを拒まれて Edit に切り替えている（こちらは意図どおりの拒否）
+- 出し先: 検査。`scripts/deny-sed-in-place.ts` の node・Python のスクリプトの判定で、「cwd と違う git の作業ツリーの中にあるスクリプト」をその作業ツリーの持ち物として読み、tsukumo の作業ツリーへの書き込みでなければ通す。誤って拒んだ形（scratchpad の別リポジトリの selftest を tsukumo を cwd にして走らせる）を `test/scripts/deny-sed-in-place.test.ts` の通す側に足し、GH-311 の拒否の記録（`node scripts/hook-denial-tally.ts`）で `python-write` の件数が減ったかを次の週ごとの振り返りで見る
+
+## 2026-10-04 E2E の messages の期待値から session-info のコマンド一覧を外し、フィクスチャのコマンドを1つ足すたびに全シナリオを撮り直さなくて済むようにする（振り返り: GH-283）
+
+（GH-320 にした）
+
+- 出典: ドラフト `develop/draft/2026-10-04-e2e-messages-session-info-commands.md`。利用者が `/plan-tasks` の問いでタスクにすると選んだ
+- 札: 黄 構造の重さ（1回目）
+- 根拠: GH-283 で `test/fixture/fake-session.json` の `slashCommands` に `next-task` を1つ足しただけで、`test/e2e/expected/*.messages.json` 105 件を撮り直した。105 件とも差分は `session-info` の一覧に1行が増えたことだけで、各シナリオが確かめたいこととは関係がない
+- 出し先: タスク。E2E の messages の期待値を書き出す箇所で `session-info` の `slashCommands`・`commandDescriptions` を件数か印に畳む（またはコマンド一覧を確かめる1シナリオにだけ残す）。次にフィクスチャのコマンドを変えたとき、撮り直しが 105 ファイルから 1 ファイル以下になる
+
 ## 2026-10-04 初めの画面をモック案A「おすすめの札を3つ」に作り替える
 
 （GH-313・GH-314 にした。GH-314 は GH-313 を待つ。モックを `docs/history/mockup/welcome-cards-2026-10-04/` に保存し、1440x900 の画像 `START-A-Cards.png` を添えた）
