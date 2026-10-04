@@ -151,6 +151,13 @@ export type ScenarioRoom = {
    * 続きのターンのたびに来るなど）に、狙った回目まで進める口。
    */
   readonly waitForEvent: (kind: string, occurrence?: number) => Promise<void>
+  /**
+   * `tasks-changed` が、一覧（`tasks.kind === "known"`）に `ids` をすべて含む1件まで待つ。
+   * 主ブランチへ最初のコミットが乗るまでの間、見回りは `git rev-parse` が失敗して `unknown` を
+   * 返しうるので、`waitForEvent("tasks-changed")`（既定 occurrence=1）はその `unknown` の1件で
+   * 抜けてしまう。`develop/task/` を手書きする足場はこちらを使う。
+   */
+  readonly waitForTasksContaining: (ids: readonly string[]) => Promise<void>
   /** 読み上げの領域（`[data-live-announcer]`）に、ページを開いてからいままでに挿入された文。 */
   readonly announced: () => Promise<readonly string[]>
   /**
@@ -286,6 +293,16 @@ async function openRoom(
       await messages.waitForEvent(kind, occurrence)
       lastAwaited = { kind, occurrence }
     },
+    waitForTasksContaining: (ids) =>
+      messages.waitForEventMatching("tasks-changed", (event) => {
+        const tasks = asRecord(event["tasks"])
+        if (tasks["kind"] !== "known") {
+          return false
+        }
+        const items = Array.isArray(tasks["items"]) ? tasks["items"] : []
+        const presentIds = new Set(items.map((item) => String(asRecord(item)["id"])))
+        return ids.every((id) => presentIds.has(id))
+      }),
     announced: () =>
       page.evaluate((logName) => {
         const log: unknown = Reflect.get(window, logName)
@@ -473,6 +490,14 @@ const EVENT_ITERATOR_MESSAGE = 3
 type MessageRecord = {
   readonly list: () => readonly unknown[]
   readonly waitForEvent: (kind: string, occurrence?: number) => Promise<void>
+  /**
+   * `kind` のイベントが届くたびに（登録前に届いていたものも含め）`predicate` で確かめ、
+   * 真になった最初の1件まで待つ。
+   */
+  readonly waitForEventMatching: (
+    kind: string,
+    predicate: (event: Readonly<Record<string, unknown>>) => boolean,
+  ) => Promise<void>
 }
 
 /**
@@ -494,6 +519,14 @@ function recordMessages(page: Page): MessageRecord {
   const waiters: {
     readonly kind: string
     readonly target: number
+    readonly resolve: () => void
+  }[] = []
+  // 届いた生のイベント。条件で待つ口は、登録より前に届いていた分も確かめる。
+  const rawEvents: { readonly kind: string; readonly event: Readonly<Record<string, unknown>> }[] =
+    []
+  const predicateWaiters: {
+    readonly kind: string
+    readonly predicate: (event: Readonly<Record<string, unknown>>) => boolean
     readonly resolve: () => void
   }[] = []
 
@@ -534,10 +567,16 @@ function recordMessages(page: Page): MessageRecord {
           const event = asRecord(record["event"])
           entries.push({ received: "event", at: record["at"], event: trimEvent(event) })
           const kind = String(event["kind"])
+          rawEvents.push({ kind, event })
           const nextCount = (counts.get(kind) ?? 0) + 1
           counts.set(kind, nextCount)
           for (const waiter of waiters.filter(
             (candidate) => candidate.kind === kind && nextCount >= candidate.target,
+          )) {
+            waiter.resolve()
+          }
+          for (const waiter of predicateWaiters.filter(
+            (candidate) => candidate.kind === kind && candidate.predicate(event),
           )) {
             waiter.resolve()
           }
@@ -594,6 +633,28 @@ function recordMessages(page: Page): MessageRecord {
         waiters.push({
           kind,
           target: occurrence,
+          resolve: () => {
+            clearTimeout(timer)
+            resolve()
+          },
+        })
+      })
+    },
+    waitForEventMatching: (kind, predicate) => {
+      if (rawEvents.some((candidate) => candidate.kind === kind && predicate(candidate.event))) {
+        return Promise.resolve()
+      }
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          reject(
+            new Error(
+              `イベント ${kind} が条件を満たさないまま届かない（${String(EVENT_TIMEOUT_MS)}ms）`,
+            ),
+          )
+        }, EVENT_TIMEOUT_MS)
+        predicateWaiters.push({
+          kind,
+          predicate,
           resolve: () => {
             clearTimeout(timer)
             resolve()

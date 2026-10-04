@@ -83,7 +83,7 @@ export async function openTaskListRoom(
   await git(room.cwd, "add", "develop/task")
   await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
 
-  await room.waitForEvent("tasks-changed")
+  await room.waitForTasksContaining(["T-001", "T-002"])
   return room
 }
 
@@ -107,7 +107,7 @@ export async function openTaskListRoomWithRunningTask(
   await git(room.cwd, "add", "develop/task")
   await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
 
-  await room.waitForEvent("tasks-changed")
+  await room.waitForTasksContaining(["T-001", "T-002", "T-003"])
   return room
 }
 
@@ -130,7 +130,7 @@ export async function openReportTaskRoom(
   await git(room.cwd, "add", "develop/task")
   await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
 
-  await room.waitForEvent("tasks-changed")
+  await room.waitForTasksContaining(["T-001", "T-002"])
   return room
 }
 
@@ -180,7 +180,7 @@ export async function openTaskBoardRoom(
   await git(room.cwd, "add", "develop/task")
   await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
 
-  await room.waitForEvent("tasks-changed")
+  await room.waitForTasksContaining(["T-001", "T-002", "T-003", "T-004", "T-005"])
   if (viewport === "narrow") {
     await room.page.getByRole("tab", { name: "サイドバー" }).click()
   }
@@ -237,7 +237,7 @@ export async function openTaskBoardJumpRoom(
   await git(room.cwd, "add", "develop/task")
   await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧（つながり）")
 
-  await room.waitForEvent("tasks-changed")
+  await room.waitForTasksContaining(["T-001", "T-002", "T-003", "T-004"])
   if (viewport === "narrow") {
     await room.page.getByRole("tab", { name: "サイドバー" }).click()
   }
@@ -309,7 +309,7 @@ export async function writeWelcomeTasks(room: ScenarioRoom): Promise<void> {
   writeTask(room.cwd, BLOCKED_TASK_ID, "架空のタスク（依存で止まる）", "todo", [READY_TASK_ID])
   await git(room.cwd, "add", "develop/task")
   await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
-  await room.waitForEvent("tasks-changed")
+  await room.waitForTasksContaining([READY_TASK_ID, BLOCKED_TASK_ID])
 }
 
 /** `git init` して、ファイル方式のプロジェクトの設定を置く。 */
