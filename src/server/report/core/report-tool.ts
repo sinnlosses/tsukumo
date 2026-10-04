@@ -23,7 +23,7 @@ export const REPORT_TOOL_DESCRIPTION =
  * 記法の条（`REPORT_NOTATION_PROMPT` の条1）と同じことを引数の側でも言う（どちらを先に読んでも欄を取り違えないように）。
  */
 export const REPORT_CHECKS_DESCRIPTION =
-  "検証の結果（テスト・型検査・手で確かめたこと）。tsukumo が結論の下に1項目1行の表で描く。" +
+  "検証の結果（テスト・型検査・手で確かめたこと）。tsukumo が結論の下に、全体の判定の札と、落ちた・確かめていない項目の行で描く。" +
   "ここに入れた結果は conclusion と sections に書かない。検証をしていないターンでは省く。" +
   "結果の数は figure に、打ったコマンドは command に分ける（所要時間は tsukumo が測って添えるので書かない）。" +
   "label・figure・detail は素の文字で描かれるので、バッククォートなどの記法を使わない。"

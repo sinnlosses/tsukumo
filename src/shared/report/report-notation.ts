@@ -119,31 +119,43 @@ export const REPORT_NOTATION_NAMES = [
 
 /**
  * tsukumo が `report` の欄から組む印（モデルには教えないので、文面に書き足す決まりの外）。
- * `verdict` は結論のすぐ下の合図の行で、`verdict-favor` はその中のお願いへ飛ぶ口。
- * `checks` は検証結果、`checks-rest` は畳んだ通った行、`check` はその1行で、ほかの `check-` は行の中の部位と状態の色。
+ * `verdict` は結論のすぐ下の合図の行（検証結果の判定だけを運ぶ）。
+ * `checks` は検証結果の塊、`checks-tile` は左の判定の札（記号・件数・ひとこと）。
+ * `checks-body` は右の欄で、全部 ok なら `checks-heading` と一覧（`check` がその1行）、
+ * ng / unverified があれば問題の項目（`checks-problem`）と通った項目の小さな札（`checks-passed-chip`）。
  * `conclusion` は `task` のあるレポートの結論の一文、`conclusion-lead` は `task` の無いレポートの結論。
  * 見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
  */
 export const REPORT_DRAWN_MARK_NAMES = [
   "verdict",
-  "verdict-favor",
   "checks",
-  "checks-summary",
-  "checks-summary-count",
-  "checks-summary-ok",
-  "checks-summary-ng",
-  "checks-summary-warn",
-  "checks-summary-figures",
-  "checks-rest",
+  "checks-tile",
+  "checks-tile-ok",
+  "checks-tile-ng",
+  "checks-tile-unverified",
+  "checks-tile-mark",
+  "checks-tile-count",
+  "checks-tile-hint",
+  "checks-body",
+  "checks-heading",
   "check",
   "check-ok",
-  "check-ng",
-  "check-unverified",
   "check-mark",
   "check-label",
   "check-figure",
   "check-time",
-  "check-body",
+  "checks-problem",
+  "checks-problem-ng",
+  "checks-problem-unverified",
+  "checks-problem-head",
+  "checks-problem-mark",
+  "checks-problem-label",
+  "checks-problem-figure",
+  "checks-problem-time",
+  "checks-problem-detail",
+  "checks-passed",
+  "checks-passed-chip",
+  "checks-passed-chip-mark",
   "conclusion",
   "conclusion-lead",
 ] as const satisfies readonly string[]

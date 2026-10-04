@@ -171,18 +171,39 @@
                               "tag": "div",
                               "attributes": {
                                 "role": "group",
-                                "aria-label": "検証とお願いの合図"
+                                "aria-label": "検証結果"
                               },
                               "children": [
+                                "？",
+                                "1 / 2",
+                                "1 つ未確認",
                                 {
-                                  "tag": "a",
+                                  "tag": "div",
                                   "attributes": {
-                                    "href": "/?t=<token>#favor-fake-report-task-awaiting-answer"
+                                    "role": "table",
+                                    "aria-label": "検証結果の問題"
                                   },
                                   "children": [
-                                    "お願い 1 ↓"
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "row"
+                                      },
+                                      "children": [
+                                        "？ 未確認",
+                                        "段が1つだけの札の見た目（1024×768）",
+                                        {
+                                          "tag": "p",
+                                          "children": [
+                                            "答えが決まるまで見た目を決められないので、まだ見ていない"
+                                          ]
+                                        }
+                                      ]
+                                    }
                                   ]
-                                }
+                                },
+                                "✓",
+                                "pnpm run check"
                               ]
                             },
                             "お願い",

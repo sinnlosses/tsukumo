@@ -581,200 +581,201 @@
 .detail-block .report-status {
   margin: 14px 0 26px;
 }
-/* 合図の行。検証結果は幅いっぱいに置き（開くと行が下に伸びる）、お願いへ飛ぶ口は総括の1行目の右端に重ねる。 */
-.detail-block .report-verdict {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  padding: 4px 0;
-  border-top: 1px solid var(--rule-quiet);
-  border-bottom: 1px solid var(--rule-quiet);
-  font-size: var(--font-secondary);
-  color: var(--ink-soft);
-}
-.detail-block .report-verdict > .report-checks {
-  grid-column: 1 / -1;
-  grid-row: 1;
-}
-.detail-block .report-verdict-favor {
-  grid-column: 2;
-  grid-row: 1;
-  padding-left: 18px;
-}
-/* 総括の1行がお願いの口の下に潜らないよう、右にその幅を空ける。 */
-.detail-block .report-verdict:has(> .report-verdict-favor) .report-checks > details > summary,
-.detail-block .report-verdict:has(> .report-verdict-favor) .report-checks > .report-checks-summary {
-  padding-right: 8em;
-}
-.detail-block .report-verdict-favor a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  white-space: nowrap;
-}
 .detail-block .report-status:last-child {
   margin-bottom: 0;
 }
-/* 検証の行の地と罫は左右に 0.75rem はみ出させ、「✓ OK」の左端を本文の左端にそろえる。 */
-.detail-block .report-status .report-checks {
-  margin: 0 -0.75rem;
+/* 合図の行（検証結果の判定だけを運ぶ）。中身は `.report-checks` の札そのもの。 */
+.detail-block .report-verdict {
+  display: block;
 }
-/* 検証結果の表（`report` の `checks` から tsukumo が組む）。1項目＝1行の grid で読ませる。
-   通った行は「✓ OK」の文字だけに色を付け、行の地や枠は染めない。
-   ng / unverified の行だけ左に縦罫、状態と label を太字にし、detail を2段目に描く。 */
+/* 検証結果（`report` の `checks` から tsukumo が組む）。左に判定の札、右に欄を置く1枚のカード。 */
 .detail-block .report-checks {
   display: flex;
+  gap: 18px;
+  align-items: stretch;
+  min-width: 0;
+  padding: 20px 24px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--surface-raised);
+}
+/* 左の判定の札。幅 112・角丸 14・地と枠は状態の色。 */
+.detail-block .report-checks-tile {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  display: flex;
   flex-direction: column;
-  min-width: 0;
-}
-/* 畳んだ検証は素の行のまま見せる（記法の <details> の地と枠を持たせない）。 */
-.detail-block .report-checks details {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: none;
-}
-.detail-block .report-checks summary {
-  display: flex;
   align-items: center;
-  gap: 0.4rem;
-  min-height: 24px;
-  padding: 0 0.75rem;
-  list-style: none;
+  justify-content: center;
+  gap: 2px;
+  width: 112px;
+  padding: 12px 0;
+  border-radius: 14px;
 }
-.detail-block .report-checks summary::-webkit-details-marker {
-  display: none;
+.detail-block .report-checks-tile-ok {
+  background: color-mix(in srgb, var(--state-ok) 12%, transparent);
+  border: 1px solid var(--state-ok);
 }
-/* `display: flex` の summary は既定の開閉の三角を描かないので、字で描く。 */
-.detail-block .report-checks summary::before {
-  content: "▸";
-  font-size: var(--font-action);
-  color: var(--ink-quiet);
+.detail-block .report-checks-tile-unverified {
+  background: color-mix(in srgb, var(--state-warn) 14%, transparent);
+  border: 1px solid var(--state-warn);
 }
-.detail-block .report-checks details[open] > summary::before {
-  content: "▾";
+.detail-block .report-checks-tile-ng {
+  background: color-mix(in srgb, var(--state-ng) 15%, transparent);
+  border: 1px solid var(--state-ng);
 }
-.detail-block .report-checks details[open] > summary {
-  margin-bottom: 0;
-}
-.detail-block .report-checks-summary {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  min-width: 0;
-  font-size: var(--font-action);
-  color: var(--ink-quiet);
-}
-.detail-block .report-checks > .report-checks-summary {
-  align-items: center;
-  min-height: 24px;
-  padding: 0 0.75rem;
-}
-.detail-block .report-checks-summary-figures {
-  overflow: hidden;
-  min-width: 0;
-  font-family: var(--font-mono);
-  color: var(--ink-soft);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.detail-block .report-checks-rest summary {
-  font-size: var(--font-action);
-  color: var(--ink-quiet);
-  border-top: 1px solid var(--rule-quiet);
-}
-.detail-block .report-checks-summary-count {
-  font-family: var(--font-mono);
-}
-.detail-block .report-checks-summary-ok {
-  color: var(--state-ok);
-}
-.detail-block .report-checks-summary-ng,
-.detail-block .report-checks-summary-warn {
+.detail-block .report-checks-tile-mark {
+  font-size: 28px;
+  line-height: 1;
   font-weight: 700;
 }
-.detail-block .report-checks-summary-ng {
-  color: var(--state-ng);
+.detail-block .report-checks-tile-ok .report-checks-tile-mark {
+  color: var(--state-ok);
 }
-.detail-block .report-checks-summary-warn {
+.detail-block .report-checks-tile-unverified .report-checks-tile-mark {
   color: var(--state-warn);
 }
+.detail-block .report-checks-tile-ng .report-checks-tile-mark {
+  color: var(--state-ng);
+}
+.detail-block .report-checks-tile-count {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+}
+.detail-block .report-checks-tile-hint {
+  font-size: 12px;
+  font-weight: 700;
+}
+.detail-block .report-checks-tile-ok .report-checks-tile-hint {
+  color: var(--state-ok);
+}
+.detail-block .report-checks-tile-unverified .report-checks-tile-hint {
+  color: var(--state-warn);
+}
+.detail-block .report-checks-tile-ng .report-checks-tile-hint {
+  color: var(--state-ng);
+}
+/* 右の欄。全部 ok なら小見出しと一覧、ng / unverified があれば問題の項目と通った項目の札。 */
+.detail-block .report-checks-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.detail-block .report-checks-heading {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-quiet);
+}
+/* 全部 ok の一覧の1行。記号・label・figure・所要時間を詰めて並べる。 */
 .detail-block .report-check {
-  display: grid;
-  grid-template-columns: 5.6em minmax(0, 1fr) auto minmax(4.5em, auto);
-  column-gap: 1rem;
-  row-gap: 0.15rem;
+  display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  padding: 0.3125rem 0.75rem;
-  border-top: 1px solid var(--rule-quiet);
-}
-.detail-block .report-check-ng {
-  box-shadow: inset 2px 0 0 var(--state-ng);
-}
-.detail-block .report-check-unverified {
-  box-shadow: inset 2px 0 0 var(--state-warn);
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 13px;
 }
 .detail-block .report-check-mark {
-  font-family: var(--font-mono);
-  font-size: var(--font-action);
-  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: 700;
 }
 .detail-block .report-check-ok .report-check-mark {
   color: var(--state-ok);
 }
-.detail-block .report-check-ng .report-check-mark {
+.detail-block .report-check-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink-quiet);
+}
+.detail-block .report-check-figure,
+.detail-block .report-check-time {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink-quiet);
+}
+/* 問題の項目（ng → unverified の順に1件ずつ縦へ重ねる）。 */
+.detail-block .report-checks-problem + .report-checks-problem {
+  margin-top: 14px;
+}
+.detail-block .report-checks-problem-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+}
+.detail-block .report-checks-problem-mark {
+  font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
+}
+.detail-block .report-checks-problem-ng .report-checks-problem-mark {
   color: var(--state-ng);
 }
-.detail-block .report-check-unverified .report-check-mark {
-  font-weight: 700;
+.detail-block .report-checks-problem-unverified .report-checks-problem-mark {
   color: var(--state-warn);
 }
-.detail-block .report-check-label {
+.detail-block .report-checks-problem-label {
+  min-width: 0;
   overflow-wrap: anywhere;
-  font-size: var(--font-secondary);
+  font-size: 15px;
+  font-weight: 700;
   color: var(--ink);
 }
-.detail-block .report-check-ng .report-check-label,
-.detail-block .report-check-unverified .report-check-label {
-  font-weight: 700;
+.detail-block .report-checks-problem-figure {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink-quiet);
 }
-.detail-block .report-check-figure {
+.detail-block .report-checks-problem-time {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink-quiet);
+}
+.detail-block .report-checks-problem-detail {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+/* 通った項目の小さな札。高さ 24・角丸 12・最大幅 260、はみ出しは省略記号、折り返して並ぶ。 */
+.detail-block .report-checks-passed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.detail-block .report-checks-passed-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  max-width: 260px;
+  padding: 0 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--state-ok) 7%, transparent);
+  font-size: 12px;
+  color: var(--ink-quiet);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: var(--font-mono);
-  font-size: var(--font-action);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
-  color: var(--ink-quiet);
 }
-.detail-block .report-check-ng .report-check-figure,
-.detail-block .report-check-unverified .report-check-figure {
-  color: var(--ink);
-}
-.detail-block .report-check-time {
-  font-family: var(--font-mono);
-  font-size: var(--font-action);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
-  color: var(--ink-quiet);
-}
-.detail-block .report-check-body {
-  grid-column: 2 / -1;
-  overflow-wrap: anywhere;
-  font-size: var(--font-action);
-}
-.detail-block .report-check-ng .report-check-body {
-  color: var(--state-ng);
-}
-.detail-block .report-check-unverified .report-check-body {
-  color: var(--state-warn);
+.detail-block .report-checks-passed-chip-mark {
+  font-weight: 700;
+  color: var(--state-ok);
 }
 /* `task` のあるレポートの結論の一文。見出し（`report-head.module.css`）のすぐ下に描く。 */
 .detail-block .report-conclusion {

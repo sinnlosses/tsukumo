@@ -224,19 +224,30 @@
                               "tag": "div",
                               "attributes": {
                                 "role": "group",
-                                "aria-label": "検証とお願いの合図"
+                                "aria-label": "検証結果"
                               },
                               "children": [
+                                "✓",
+                                "1 / 1",
+                                "全部通った",
+                                "検証",
                                 {
-                                  "tag": "details",
+                                  "tag": "div",
+                                  "attributes": {
+                                    "role": "table",
+                                    "aria-label": "検証結果"
+                                  },
                                   "children": [
                                     {
-                                      "tag": "summary",
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "row"
+                                      },
                                       "children": [
-                                        "検証",
-                                        "1",
-                                        "✓ すべて通った",
-                                        "12 / 12"
+                                        "✓",
+                                        "pnpm run test",
+                                        "12 / 12",
+                                        "0秒"
                                       ]
                                     }
                                   ]

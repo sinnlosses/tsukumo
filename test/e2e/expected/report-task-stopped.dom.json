@@ -153,17 +153,17 @@
                               "tag": "div",
                               "attributes": {
                                 "role": "group",
-                                "aria-label": "検証とお願いの合図"
+                                "aria-label": "検証結果"
                               },
                               "children": [
-                                "検証",
-                                "1",
-                                "✕ 1 件が落ちた",
+                                "✕",
+                                "0 / 1",
+                                "1 つ落ちた",
                                 {
                                   "tag": "div",
                                   "attributes": {
                                     "role": "table",
-                                    "aria-label": "検証結果"
+                                    "aria-label": "検証結果の問題"
                                   },
                                   "children": [
                                     {
@@ -172,10 +172,15 @@
                                         "role": "row"
                                       },
                                       "children": [
-                                        "✕ NG",
+                                        "✕ 落ちた",
                                         "架空の E2E",
                                         "12 件中 1 件",
-                                        "架空の札の位置がずれた"
+                                        {
+                                          "tag": "p",
+                                          "children": [
+                                            "架空の札の位置がずれた"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]

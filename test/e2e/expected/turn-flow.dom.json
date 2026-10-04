@@ -315,17 +315,17 @@
                                       "tag": "div",
                                       "attributes": {
                                         "role": "group",
-                                        "aria-label": "検証とお願いの合図"
+                                        "aria-label": "検証結果"
                                       },
                                       "children": [
-                                        "検証",
-                                        "3",
-                                        "✕ 1 件が落ちた",
+                                        "✕",
+                                        "1 / 3",
+                                        "1 つ落ちた",
                                         {
                                           "tag": "div",
                                           "attributes": {
                                             "role": "table",
-                                            "aria-label": "検証結果"
+                                            "aria-label": "検証結果の問題"
                                           },
                                           "children": [
                                             {
@@ -334,10 +334,15 @@
                                                 "role": "row"
                                               },
                                               "children": [
-                                                "✕ NG",
+                                                "✕ 落ちた",
                                                 "目盛りの E2E",
                                                 "1 / 56",
-                                                "架空の 1 件が落ちた"
+                                                {
+                                                  "tag": "p",
+                                                  "children": [
+                                                    "架空の 1 件が落ちた"
+                                                  ]
+                                                }
                                               ]
                                             },
                                             {
@@ -348,32 +353,18 @@
                                               "children": [
                                                 "？ 未確認",
                                                 "狭い窓での見た目",
-                                                "手で確かめていない"
+                                                {
+                                                  "tag": "p",
+                                                  "children": [
+                                                    "手で確かめていない"
+                                                  ]
+                                                }
                                               ]
                                             }
                                           ]
                                         },
-                                        {
-                                          "tag": "details",
-                                          "children": [
-                                            {
-                                              "tag": "summary",
-                                              "children": [
-                                                "✓",
-                                                "ほか 1 件はすべて通った"
-                                              ]
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "tag": "a",
-                                          "attributes": {
-                                            "href": "/?t=<token>#favor-fake-report-call-2"
-                                          },
-                                          "children": [
-                                            "お願い 1 ↓"
-                                          ]
-                                        }
+                                        "✓",
+                                        "pnpm run check"
                                       ]
                                     },
                                     "表 1",

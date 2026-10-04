@@ -24,7 +24,7 @@ describe("タスクの作業のレポートの結論部", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("合図の行の「お願い」を押すと、経路の hash を変えずにお願いの塊まで転がる", async () => {
+  it("合図の行に「お願い」の口は出ず、お願いの本文は末尾に出る", async () => {
     const room = await openReportTaskRoom(
       run,
       "report-task-verdict-favor",
@@ -32,22 +32,15 @@ describe("タスクの作業のレポートの結論部", () => {
       [],
     )
     const region = room.page.locator('[data-region="main"]')
-    const hashBefore = await room.page.evaluate(() => window.location.hash)
+    const verdict = region.getByRole("group", { name: "検証結果" })
 
-    await region.getByRole("group", { name: "検証とお願いの合図" }).getByRole("link").click()
+    expect(await verdict.getByRole("link").count()).toBe(0)
 
-    const regionBox = await region.boundingBox()
     const favorBox = await region.locator('[id="favor-fake-report-task-verdict"]').boundingBox()
-    expect(regionBox).not.toBeNull()
     expect(favorBox).not.toBeNull()
-    if (regionBox !== null && favorBox !== null) {
-      expect(favorBox.y).toBeGreaterThanOrEqual(regionBox.y)
-      expect(favorBox.y).toBeLessThan(regionBox.y + regionBox.height)
-    }
-    expect(await room.page.evaluate(() => window.location.hash)).toBe(hashBefore)
   })
 
-  it("すべて通った検証は総括の1行に畳まれ、押すと行の表が開く", async () => {
+  it("すべて通った検証は判定の札が緑になり、右に全行の一覧がそのまま出る（畳まない）", async () => {
     const room = await openReportTaskRoom(
       run,
       "report-task-verdict-open",
@@ -56,11 +49,9 @@ describe("タスクの作業のレポートの結論部", () => {
     )
     const verdict = room.page
       .locator('[data-region="main"]')
-      .getByRole("group", { name: "検証とお願いの合図" })
+      .getByRole("group", { name: "検証結果" })
     const table = verdict.getByRole("table", { name: "検証結果" })
 
-    expect(await table.isVisible()).toBe(false)
-    await verdict.locator("summary").click()
     await table.waitFor()
     expect(await table.getByRole("row").count()).toBe(4)
   })

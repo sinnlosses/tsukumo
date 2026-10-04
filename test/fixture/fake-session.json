@@ -6563,7 +6563,22 @@
             "conclusion": "段が1つだけのときも `1/1` を出すかどうか、答えを待っています。答えが来たら受け入れに戻ります。",
             "sections": [],
             "favor": "段が1つだけのときも `1/1` を出すかどうかを決めてください（架空）。",
-            "checks": []
+            "checks": [
+              {
+                "status": "ok",
+                "label": "pnpm run check",
+                "figure": "単体 3152 · E2E 111",
+                "command": "",
+                "detail": ""
+              },
+              {
+                "status": "unverified",
+                "label": "段が1つだけの札の見た目（1024×768）",
+                "figure": "",
+                "command": "",
+                "detail": "答えが決まるまで見た目を決められないので、まだ見ていない"
+              }
+            ]
           }
         },
         {

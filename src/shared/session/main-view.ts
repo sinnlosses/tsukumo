@@ -327,7 +327,8 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 /**
  * `report` の引数を、`conclusion` → 合図の行 → 節の始まりの印 → `sections` → `favor` の順に1つの本文へ組む。
  * 印は結論か合図の行があり、節も1つ以上あるときだけ置く。
- * 合図の行は {@link verdictMarkdown}。`favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
+ * 合図の行は {@link verdictMarkdown}。
+ * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
  * 空の `sections` / `favor` は塊ごと置かない。
  * `conclusion` は、`task` のあるレポートでは見出しの下の一文として `conclusion` の印で、無いレポートでは見出しの代わりとして `conclusion-lead` の印で包む（`task` そのものは本文に組まない）。
@@ -345,7 +346,6 @@ function reportMarkdown(
       : `<div class="${report.task.kind === "task" ? "conclusion" : "conclusion-lead"}">\n\n${report.conclusion}\n\n</div>`,
     verdictMarkdown(
       reportChecksMarkdown(report.checks, (command) => bashCommandDuration(context, command)),
-      isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", targetId: favorId },
     ),
   ].filter((part) => !isBlankText(part))
   const sections = reportSectionsMarkdown(tidyReportSections(report), {
@@ -364,21 +364,14 @@ function reportMarkdown(
     .join("\n\n")
 }
 
-/** 合図の行に載せるお願いの口。`targetId` はお願いの塊の `id`。 */
-type FavorSignal = { readonly kind: "none" } | { readonly kind: "favor"; readonly targetId: string }
-
 /**
- * 結論のすぐ下の合図の行（検証結果の総括と、お願いへ飛ぶ口）を、結論と本文のあいだの1つのまとまりに包む。
- * どちらも無ければ包みごと置かない。お願いの本文は末尾のまま動かさない。
+ * 結論のすぐ下の合図の行（検証結果の判定）を、結論と本文のあいだの1つのまとまりに包む。
+ * checks が空なら包みごと置かない。お願いの本文は末尾のまま動かさない。
  */
-function verdictMarkdown(checks: string, favor: FavorSignal): string {
-  const favorLink =
-    favor.kind === "none"
-      ? ""
-      : `<span class="verdict-favor"><a href="#${htmlAttribute(favor.targetId)}">お願い 1 ↓</a></span>`
-  return isBlankText(checks) && favorLink === ""
+function verdictMarkdown(checks: string): string {
+  return isBlankText(checks)
     ? ""
-    : `<div class="status">\n\n<div class="verdict" role="group" aria-label="検証とお願いの合図">${checks}${favorLink}</div>\n\n</div>`
+    : `<div class="status">\n\n<div class="verdict" role="group" aria-label="検証結果">${checks}</div>\n\n</div>`
 }
 
 /**

@@ -579,8 +579,6 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(shownReports(turn)).toEqual([
       `${lead("架空の結論。")}\n\n` +
-        '<div class="status">\n\n<div class="verdict" role="group" aria-label="検証とお願いの合図">' +
-        '<span class="verdict-favor"><a href="#favor-toolu_r1">お願い 1 ↓</a></span></div>\n\n</div>\n\n' +
         `${SECTIONS_START}\n\n| 列 |\n| --- |\n| 値 |\n\n<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>`,
     ])
     expect(turn?.steps.map((step) => step.final)).toEqual([true])
@@ -617,7 +615,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual(["架空の答え。\n\n以上です。"])
   })
 
-  it("checks とお願いの口は結論のすぐ下の合図の行に組み、お願いの本文は末尾のまま（body より前）", () => {
+  it("checks は結論のすぐ下の合図の行に組み、口は出ない。お願いの本文は末尾のまま（body より前）", () => {
     const turn = turnOf(
       [
         ask,
@@ -640,17 +638,19 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual([
       `${lead("架空の結論。")}\n\n` +
         '<div class="status">\n\n' +
-        '<div class="verdict" role="group" aria-label="検証とお願いの合図">' +
+        '<div class="verdict" role="group" aria-label="検証結果">' +
         '<div class="checks">' +
-        '<div class="checks-summary">検証 <span class="checks-summary-count">2</span> <span class="checks-summary-warn">？ 1 件を確かめていない</span></div>' +
-        '<div role="table" aria-label="検証結果">' +
-        '<div class="check check-unverified" role="row"><span class="check-mark">？ 未確認</span><span class="check-label">架空の目視</span><span class="check-figure"></span><span class="check-time"></span></div>' +
+        '<div class="checks-tile checks-tile-unverified"><span class="checks-tile-mark">？</span>' +
+        '<span class="checks-tile-count">1 / 2</span><span class="checks-tile-hint">1 つ未確認</span></div>' +
+        '<div class="checks-body">' +
+        '<div role="table" aria-label="検証結果の問題">' +
+        '<div class="checks-problem checks-problem-unverified" role="row"><div class="checks-problem-head">' +
+        '<span class="checks-problem-mark">？ 未確認</span><span class="checks-problem-label">架空の目視</span>' +
+        '<span class="checks-problem-figure"></span><span class="checks-problem-time"></span></div></div>' +
         "</div>" +
-        '<div class="checks-rest"><details><summary><span class="checks-summary-ok">✓</span> ほか 1 件はすべて通った</summary><div role="table" aria-label="通った検証">' +
-        '<div class="check check-ok" role="row"><span class="check-mark">✓ OK</span><span class="check-label">架空の検査</span><span class="check-figure">12 / 3</span><span class="check-time"></span></div>' +
-        "</div></details></div>" +
-        "</div>" +
-        '<span class="verdict-favor"><a href="#favor-toolu_r1">お願い 1 ↓</a></span>' +
+        '<div class="checks-passed">' +
+        '<span class="checks-passed-chip" title="架空の検査"><span class="checks-passed-chip-mark">✓</span>架空の検査</span>' +
+        "</div></div></div>" +
         `</div>\n\n</div>\n\n${SECTIONS_START}\n\n` +
         '架空の根拠。\n\n<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>',
     ])
@@ -695,10 +695,10 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const [shown] = shownReports(mainViewTurns(mainViewEntries(state), SETTLED, true).at(-1))
 
     expect(shown).toContain(
-      '<span class="check-mark">✓ OK</span><span class="check-label">一致する</span><span class="check-figure"></span><span class="check-time">1分02秒</span>',
+      '<span class="check-mark">✓</span><span class="check-label">一致する</span><span class="check-figure"></span><span class="check-time">1分02秒</span>',
     )
     expect(shown).toContain(
-      '<span class="check-mark">✓ OK</span><span class="check-label">一致しない</span><span class="check-figure"></span><span class="check-time"></span>',
+      '<span class="check-mark">✓</span><span class="check-label">一致しない</span><span class="check-figure"></span><span class="check-time"></span>',
     )
   })
 
@@ -765,13 +765,11 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual([lead("架空の結論だけ。")])
   })
 
-  it("checks が無くお願いだけでも、合図の行にお願いの口を出す", () => {
+  it("checks が無ければお願いだけでも合図の行を出さない（お願いの本文は末尾に出る）", () => {
     const turn = turnOf([ask, report("架空の結論。", "", "架空のお願い"), finished], SETTLED, true)
 
     expect(shownReports(turn)).toEqual([
       `${lead("架空の結論。")}\n\n` +
-        '<div class="status">\n\n<div class="verdict" role="group" aria-label="検証とお願いの合図">' +
-        '<span class="verdict-favor"><a href="#favor-toolu_r1">お願い 1 ↓</a></span></div>\n\n</div>\n\n' +
         '<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>',
     ])
   })

@@ -417,44 +417,39 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
     `report` のイベントの形が変わったので `PROTOCOL_VERSION` を 24 に上げた
 - **検証結果はカードでなく、1項目1行の表で描く**（2026-09-28 ユーザー決定「案A」。毎回出る脇役なのに
   1項目1枚のカードは箱と段が多く、場所を取っていたため）。入力の形（`status` / `label` / `figure` /
-  `command` / `detail`）は変えない
-  - 頭に「検証 N」＋全体の状態の総括を置く。`ng` があれば「✕ k 件が落ちた」（赤・太字）、無くて
-    `unverified` があれば「？ k 件を確かめていない」（黄・太字、`?` は全角）、どちらも無ければ
-    「✓ すべて通った」（緑）。総括を置く場所と行の畳み方は、下の「検証の総括とお願いの合図を…合図の行に置き」
-  - 項目は状態・`label`・`figure`・所要時間の4列の grid で1行に並べる。**通った行は「✓ OK」の
-    文字だけに色を付け、行の地や枠は染めない**。`ng` / `unverified` の行だけ左に縦罫を引き、状態と
-    `label` を太字にし、`figure` を本文色にし、`detail` を2段目（4列の2列目〜末尾）に描く
-    （`ok` の行は `detail` を描かない。既存どおり）
+  `command` / `detail`）は変えない。**表の形は 2026-10-04 に下の「判定の札」へ置き換えた**（総括の文・
+  4列の grid・左の縦罫は使っていない）
   - `figure` の書式は「56 件中 1 件」のように何の数かを付けて描かせ、「2849 / 56」のような割り算・
     分数に見える書き方はさせない（`REPORT_CHECKS_DESCRIPTION` と `reportCheckSchema` の `figure` の
     `describe`）
-  - HTML は `report-check.ts` の `reportChecksMarkdown` が組み、表は `role="table"`・行は `role="row"`
-    （`REPORT_SANITIZE_SCHEMA` はもとから `role` を通す）。帯の class は変わらず
-    `REPORT_DRAWN_MARK_NAMES` に置く
 - **検証の総括とお願いの合図を、結論のすぐ下の1行（合図の行）に置き、通った検証は畳む**（2026-10-03。
   提案書 `docs/research/report-redesign.md` 3.1 の骨格の段。1400×900 の窓ではメインビューが 513px しか無く、
-  検証の表を常に全行開いていたので、末尾のお願いが最初の1画面に入らなかった）。見本は
-  `docs/history/mockup/report-redesign-2026-10-02/report-redesign.html`
+  検証の表を常に全行開いていたので、末尾のお願いが最初の1画面に入らなかった）。**合図の行の中身は
+  2026-10-04 に下の「判定の札」へ置き換え**、総括の文・`<details>` での畳み・「お願い 1 ↓」の口は無くなった
   - 並びは「目録の1行 → 見出し（`task` があるとき）→ 結論 → 合図の行 → 本文の節 → お願い」。中間レポートを
     最終レポートの上に時系列で積むのは変えない
-  - **合図の行**（`role="group"`・`aria-label="検証とお願いの合図"`）は、左に検証結果の総括、右端に
-    「お願い 1 ↓」の口を置く。検証もお願いも無いときは行ごと置かない。片方だけでも置く。「お願い 1 ↓」の n は
-    `favor` の塊の数（文字列1つなので常に 1）
-  - **検証がすべて `ok` なら、総括（「検証 N ✓ すべて通った」と `figure` を `·` でつないだもの）を
-    `<summary>` にした `<details>` に全行を畳む**。`ng` / `unverified` があれば総括は畳まずに出し、その行だけを
-    `ng` → `unverified` の順（同じ状態の中は書いた順）に開いて並べ、`ok` の行は「✓ ほか n 件はすべて通った」の
-    `<details>` に畳む（GitHub の merge box・Actions の既定と同じ。`docs/research/agent-report-ui-patterns.md` 3章）。
-    状態は記号と文字が必ず添う。開閉は保存しない（畳んだ中間レポート・`fold` と同じ）
-  - **お願いの本体は末尾のまま**で、合図の行の口はページ内のリンク（`#favor-<toolUseId>`。お願いの塊がこの
-    `id` を持つ）で飛ぶだけ（本文の文字列は変えないので再構成に当たらない）。`location.hash` は画面と見ている
-    ターンの経路なので、ページ内のリンクは押しても hash を書かずに飛び先へ転がす（`markdown.tsx` の
-    `Anchor`。脚注の往復も同じ）
   - 合図の行は帯と同じく `main-view.ts` の `reportMarkdown` が本文の HTML に組み（検証の部分は
     `reportChecksMarkdown`）、節の始まりの印より前に置く。書き上げる演出は節にだけ掛かるので、結論と合図の行は
-    最初から出る。演出の途中で口を押しても、押す操作が演出を打ち切って全部出してから転がる
-  - 合図の行の class（`verdict` / `verdict-favor` / `checks-rest` / `checks-summary-figures`）と
-    `conclusion-lead` は `REPORT_DRAWN_MARK_NAMES` に置く
+    最初から出る
   - **所要は合図の行に置かない**（経過と所要は進み具合の帯の1か所。`docs/architecture/screen-design.md` 13.13）
+- **検証結果は、左の判定の札と右の欄の1枚で描く**（2026-10-04 ユーザー決定「再提案A」。畳んだ表は
+  全部通ったときも開かないと中身が見えず、落ちた・未確認のときも行の中の文字を読まないと結論が分からな
+  かった）。見本は `docs/history/mockup/report-checks-tile-2026-10-04.html`（画は同じ名前の `.png`）
+  - **合図の行**（`role="group"`・`aria-label="検証結果"`）は検証結果だけを運ぶ。`checks` が空なら行ごと置かない
+  - **左の判定の札**（幅 112・角丸 14・地は状態の色の 12〜15%・枠は状態の色）に、上から記号
+    （28px・太字・状態の色。✓／？／✕）、「ok 件数 / 全件数」（13px 等幅）、ひとこと（12px・太字・
+    状態の色。全部通った／`k` つ未確認／`k` つ落ちた）を置く。状態は `ng` が1つでもあれば ✕、
+    無く `unverified` があれば ？、どちらも無ければ ✓。ひとことと数の字は見本の 11.5px を、会話の画面の
+    字の下限（`test/e2e/readability-scan.ts` の `MIN_FONT`）の 12px に上げた
+  - **右の欄**は、全部 `ok` なら小見出し「検証」と全行の一覧（✓・`label`・`figure`・所要時間を詰めて1行。
+    畳まない）。`ng` / `unverified` があれば、問題の項目を `ng` → `unverified` の順（同じ状態の中は書いた順）に
+    1件ずつ、「状態の印＋ `label` ＋ `figure`・所要時間」の行とその下の `detail` の2段で縦に重ね、通った項目は
+    その下に `label` の頭（最初の全角の括弧「（」より前。無ければ全文）だけの小さな札（高さ 24・角丸 12・
+    最大幅 260・はみ出しは省略記号・`title` に `label` の全文）で並べる。一覧と問題の並びは `role="table"`
+  - **「お願い」の口は合図の行に置かない**（未確認の項目は黄の記号と理由で目に留まる。手を動かして
+    ほしいことは末尾のお願いの塊に任せる）。お願いの塊は変わらず末尾に `id="favor-<toolUseId>"` で置く
+  - class（`verdict` / `checks-tile` / `checks-body` / `checks-problem` / `checks-passed` 系と
+    `conclusion-lead`）は `REPORT_DRAWN_MARK_NAMES` に置く
 
 #### 段取り
 

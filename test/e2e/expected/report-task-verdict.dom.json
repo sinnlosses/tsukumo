@@ -252,30 +252,65 @@
                               "tag": "div",
                               "attributes": {
                                 "role": "group",
-                                "aria-label": "検証とお願いの合図"
+                                "aria-label": "検証結果"
                               },
                               "children": [
+                                "✓",
+                                "4 / 4",
+                                "全部通った",
+                                "検証",
                                 {
-                                  "tag": "details",
-                                  "children": [
-                                    {
-                                      "tag": "summary",
-                                      "children": [
-                                        "検証",
-                                        "4",
-                                        "✓ すべて通った",
-                                        "単体 3152 · E2E 111 · ずれ 0px · 迷子 0 件"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "tag": "a",
+                                  "tag": "div",
                                   "attributes": {
-                                    "href": "/?t=<token>#favor-fake-report-task-verdict"
+                                    "role": "table",
+                                    "aria-label": "検証結果"
                                   },
                                   "children": [
-                                    "お願い 1 ↓"
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "row"
+                                      },
+                                      "children": [
+                                        "✓",
+                                        "pnpm run check",
+                                        "単体 3152 · E2E 111",
+                                        "0秒"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "row"
+                                      },
+                                      "children": [
+                                        "✓",
+                                        "1400×900 で段が1つの札を見る",
+                                        "ずれ 0px"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "row"
+                                      },
+                                      "children": [
+                                        "✓",
+                                        "720×900 で同じ札を見る"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "row"
+                                      },
+                                      "children": [
+                                        "✓",
+                                        "node scripts/find-stray-reference.ts",
+                                        "迷子 0 件",
+                                        "0秒"
+                                      ]
+                                    }
                                   ]
                                 }
                               ]
