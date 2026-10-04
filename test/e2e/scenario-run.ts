@@ -158,6 +158,8 @@ export type ScenarioRoom = {
    * 抜けてしまう。`develop/task/` を手書きする足場はこちらを使う。
    */
   readonly waitForTasksContaining: (ids: readonly string[]) => Promise<void>
+  /** `pending-changed` の答え待ちに `id` の札が載るまで待つ（何回目の `pending-changed` かでは待たない）。 */
+  readonly waitForPending: (id: string) => Promise<void>
   /** 読み上げの領域（`[data-live-announcer]`）に、ページを開いてからいままでに挿入された文。 */
   readonly announced: () => Promise<readonly string[]>
   /**
@@ -303,6 +305,12 @@ async function openRoom(
         const presentIds = new Set(items.map((item) => String(asRecord(item)["id"])))
         return ids.every((id) => presentIds.has(id))
       }),
+    waitForPending: (id) =>
+      messages.waitForEventMatching("pending-changed", (event) =>
+        Array.isArray(event["pending"])
+          ? event["pending"].some((ask) => String(asRecord(ask)["id"]) === id)
+          : false,
+      ),
     announced: () =>
       page.evaluate((logName) => {
         const log: unknown = Reflect.get(window, logName)

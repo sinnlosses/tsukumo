@@ -171,11 +171,12 @@ describe("お伺い", () => {
     const inquiry = inquiryOf(room.page)
     const main = room.page.locator('[data-region="main"]')
 
+    await room.waitForPending("fake-ask-twice-1")
     await inquiry.getByText("A案（架空）").click()
     await inquiry.getByRole("button", { name: /これで答える/ }).click()
     await room.waitForEvent("question-answered")
 
-    await room.waitForEvent("pending-changed", 3)
+    await room.waitForPending("fake-ask-twice-2")
     await inquiry.getByText("閉じる（架空）").click()
     await inquiry.getByRole("button", { name: /これで答える/ }).click()
     await room.waitForEvent("question-answered", 2)
