@@ -26,10 +26,11 @@ export const MAX_USAGE_PROPOSALS = 5
 
 /** モデルに見せる `usage_review_stage` の説明。いつ呼ぶかをここに書く（スキルの手順はこれを前提にする）。 */
 export const USAGE_REVIEW_STAGE_TOOL_DESCRIPTION =
-  "トークン消費の減らし方の見直し（スキル token-usage-diet）で、段に入るたびに呼ぶ。" +
+  "トークン消費の減らし方の見直し（スキル tsukumo:token-usage-diet）で、段に入るたびに呼ぶ。" +
   "最初の段に入るときに必ず呼ぶ（この呼び出しで画面が「見直し中」になる）。" +
   `段は ${USAGE_REVIEW_STAGES.join(" → ")} の順。` +
   "戻り値に利用者が見送った提案の識別子（種類:対象）が並んだら、その提案は usage_review_result に入れない。" +
+  "戻り値にタスク運用なしと出たら、提案の followUp に task を使わない。" +
   "見直し以外では呼ばない。"
 
 /** モデルに見せる `usage_review_result` の説明。 */
@@ -61,27 +62,29 @@ export type UsageReviewVerdict =
 
 /** 2つのツールの handler が呼ぶ窓口。 */
 export type UsageReviewIntake = {
-  /** 段に入った。`usage-review-stage` を流し、戻り値の文面（見送った提案の一覧つき）を返す。 */
-  readonly enterStage: (stage: UsageReviewStage, days: number) => string
+  /** 段に入った。`usage-review-stage` を流し、戻り値の文面（見送った提案の一覧とタスク運用の有無つき）を返す。 */
+  readonly enterStage: (stage: UsageReviewStage, days: number) => Promise<string>
   /** 結果を受け付けるか決め、受け付けたら `usage-review-result` を流す。 */
-  readonly submit: (findings: UsageReviewFindings) => UsageReviewVerdict
+  readonly submit: (findings: UsageReviewFindings) => Promise<UsageReviewVerdict>
 }
 
 /**
  * {@link UsageReviewIntake} を1つ作る。
  * `dismissedKeys` は利用者が見送った提案の識別子（`usageProposalKey`）を呼ぶたびに読み直す口（見直しの途中で見送りが増えても効く）。
+ * `hasTaskOperation` は起動先のプロジェクトにタスク運用があるかを呼ぶたびに読み直す口で、無ければ `followUp: "task"` の提案を断る。
  */
 export function createUsageReviewIntake(
   dismissedKeys: () => readonly string[],
+  hasTaskOperation: () => Promise<boolean>,
   onEvent: (event: SessionEvent) => void,
 ): UsageReviewIntake {
   return {
-    enterStage: (stage, days) => {
+    enterStage: async (stage, days) => {
       onEvent({ kind: "usage-review-stage", stage, days })
-      return usageReviewStageReply(dismissedKeys())
+      return usageReviewStageReply(dismissedKeys(), await hasTaskOperation())
     },
-    submit: (findings) => {
-      const violations = usageReviewViolations(findings, dismissedKeys())
+    submit: async (findings) => {
+      const violations = usageReviewViolations(findings, dismissedKeys(), await hasTaskOperation())
       if (violations.length > 0) {
         return { kind: "rejected", text: usageReviewRejectionText(violations) }
       }
@@ -98,10 +101,12 @@ type UsageReviewViolation =
   | { readonly kind: "blank-field"; readonly count: number }
   | { readonly kind: "duplicate-key"; readonly count: number }
   | { readonly kind: "dismissed"; readonly count: number }
+  | { readonly kind: "task-without-operation"; readonly count: number }
 
 function usageReviewViolations(
   findings: UsageReviewFindings,
   dismissed: readonly string[],
+  taskOperation: boolean,
 ): readonly UsageReviewViolation[] {
   const keys = findings.proposals.map(usageProposalKey)
   const counted = [
@@ -114,6 +119,12 @@ function usageReviewViolations(
     },
     { kind: "duplicate-key", count: keys.length - new Set(keys).size },
     { kind: "dismissed", count: keys.filter((key) => dismissed.includes(key)).length },
+    {
+      kind: "task-without-operation",
+      count: taskOperation
+        ? 0
+        : findings.proposals.filter((proposal) => proposal.followUp === "task").length,
+    },
   ] as const satisfies readonly UsageReviewViolation[]
 
   return [
@@ -128,6 +139,7 @@ const VIOLATION_THRESHOLDS = {
   "blank-field": 0,
   "duplicate-key": 0,
   dismissed: 0,
+  "task-without-operation": 0,
 } as const satisfies Record<Exclude<UsageReviewViolation["kind"], "blank-headline">, number>
 
 function usageReviewRejectionText(violations: readonly UsageReviewViolation[]): string {
@@ -149,19 +161,27 @@ function violationLine(violation: UsageReviewViolation): string {
       return `同じ \`kind\` と \`target\` の組が${violation.count}件重なっている。1件にまとめる`
     case "dismissed":
       return `利用者が見送った提案が${violation.count}件入っている。\`usage_review_stage\` の戻り値に並んだ組は除く`
+    case "task-without-operation":
+      return `タスク運用が無いのに \`followUp\` が \`task\` の提案が${violation.count}件ある。\`delegate\` にする`
   }
 }
 
 /**
- * `usage_review_stage` の戻り値。見送った提案が無ければ `"ok"` だけ。
- * 並べるのは tsukumo が記録した識別子だけで、画面の状態は載せない。
+ * `usage_review_stage` の戻り値。見送った提案が無く、タスク運用があれば `"ok"` だけ。
+ * 並べるのは tsukumo が記録した識別子と設定から読んだ有無だけで、画面の状態は載せない。
  */
-function usageReviewStageReply(dismissed: readonly string[]): string {
-  return dismissed.length === 0
-    ? "ok"
-    : [
-        "ok",
-        "利用者が見送った提案（種類:対象）。usage_review_result に入れない:",
-        ...dismissed.map((key) => `- ${key}`),
-      ].join("\n")
+function usageReviewStageReply(dismissed: readonly string[], taskOperation: boolean): string {
+  return [
+    "ok",
+    ...(dismissed.length === 0
+      ? []
+      : [
+          "利用者が見送った提案（種類:対象）。usage_review_result に入れない:",
+          ...dismissed.map((key) => `- ${key}`),
+        ]),
+    ...(taskOperation ? [] : [NO_TASK_OPERATION_LINE]),
+  ].join("\n")
 }
+
+const NO_TASK_OPERATION_LINE =
+  "タスク運用なし（起動先のプロジェクトの設定に tasks が無い）。提案の followUp は delegate だけにする"

@@ -72,7 +72,11 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   const review = (event: SessionEvent): readonly SessionEvent[] =>
     speechReview.pass(event).flatMap((passed) => reportReview.pass(passed))
   const readSessionDigest = createSessionDigestReader(options.expressions)
-  const usageReview = createUsageReviewIntake(options.dismissedUsageProposalKeys, options.onEvent)
+  const usageReview = createUsageReviewIntake(
+    options.dismissedUsageProposalKeys,
+    options.hasTaskOperation,
+    options.onEvent,
+  )
   const titleIntake = createSessionTitleIntake()
   const titleWriter = createSessionTitleWriter()
 

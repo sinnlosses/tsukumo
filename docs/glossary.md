@@ -543,7 +543,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 - **英語識別子**: `usageReview`（状態は `UsageReview`、ツールが渡す結果は `UsageReviewFindings`）
 - **定義**: トークン消費の記録から**消費の減らし方を挙げてもらう1回**。いまの会話の1ターンとして
-  スキル `token-usage-diet` が流れ、結果を下の2つのツールで tsukumo へ渡す。tsukumo は分析せず、
+  tsukumo に同梱したスキル `tsukumo:token-usage-diet` が流れ、結果を下の2つのツールで tsukumo へ渡す。tsukumo は分析せず、
   受け取って整えて描くだけ
 - **注記**: 状態は **ふだん（`idle`）/ 見直し中（`running`）/ 結果（`result`）** の3つ。見直し中に
   なる合図は**そのターンで最初の `usage_review_stage`** で、画面のボタンから頼んだか入力欄で

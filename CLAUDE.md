@@ -31,7 +31,7 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
   `pnpm run build` を打つ（`dist/browser/` は `.gitignore`。無いと起動が前提不足で止まる）
 - `tsukumo` コマンドは `mise run setup`（`pnpm add --global "link:<リポジトリ>"`）で入っている（`docs/requirements.md` 4.6）
 - ホストに依存する操作は1つの抽象の裏に置く（`docs/architecture/adr/0015-single-host-port.md`）。
-  **`orca`・`bd`・`dolt`・`gh` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**
+  **`orca`・`bd`・`dolt`・`gh`・`python3` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**
 - 環境の実測値は `docs/requirements.md`「5. 実行環境・非機能要件」。時間が経つと変わるので、
   前提にする前にその場で確かめる
 

@@ -191,6 +191,11 @@ export type SessionDriverOptions = {
    * 読めないときは空を返し、例外を投げない。
    */
   readonly dismissedUsageProposalKeys: () => readonly string[]
+  /**
+   * 起動先のプロジェクトにタスク運用があるかを読む口。見直しのツールが呼ばれるたびに読み直す（`createUsageReviewIntake`）。
+   * 読めないときは `false` を返し、例外を投げない。
+   */
+  readonly hasTaskOperation: () => Promise<boolean>
   /** 内部イベントの受け取り口。ここで例外を投げないこと（投げるとセッションが終わる）。 */
   readonly onEvent: (event: SessionEvent) => void
 }

@@ -531,6 +531,7 @@ function workServer(
     speechReview,
     createUsageReviewIntake(
       () => dismissed,
+      async () => true,
       (event) => {
         events.push(event)
       },
@@ -545,6 +546,7 @@ function workServer(
 function noopIntake() {
   return createUsageReviewIntake(
     () => [],
+    async () => true,
     () => {},
   )
 }

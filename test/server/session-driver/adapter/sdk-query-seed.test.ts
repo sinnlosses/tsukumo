@@ -44,6 +44,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   inheritedEnv: { PATH: "/usr/bin", HOME: "/tmp/tsukumo-home" },
   claudeConfigDir: undefined,
   dismissedUsageProposalKeys: () => [],
+  hasTaskOperation: async () => true,
   onEvent: () => {},
 }
 

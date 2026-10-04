@@ -3,10 +3,15 @@
 
 import { setImmediate } from "node:timers/promises"
 
-import type { HookCallbackMatcher, HookEvent } from "@anthropic-ai/claude-agent-sdk"
+import type {
+  HookCallbackMatcher,
+  HookEvent,
+  SdkPluginConfig,
+} from "@anthropic-ai/claude-agent-sdk"
 
 import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../../shared/command.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
@@ -39,6 +44,8 @@ export type QuerySeedOptions = {
    * 渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ環境に本体の催促を止める変数を足したもの（`childProcessEnv`）を渡す。
    */
   readonly env: Readonly<Record<string, string | undefined>>
+  /** tsukumo に同梱したプラグイン（`plugin/`。使用量の見直しのスキル `tsukumo:token-usage-diet` を持つ）。 */
+  readonly plugins: SdkPluginConfig[]
 }
 
 /**
@@ -60,6 +67,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     resume: options.start.kind === "resume" ? options.start.sessionId : undefined,
     settings: { language: "japanese" },
     env: childProcessEnv(options.inheritedEnv),
+    plugins: [{ type: "local", path: bundledFilePath("plugin") }],
   }
 }
 

@@ -275,7 +275,7 @@ function usageReviewTools(intake: UsageReviewIntake) {
         days: USAGE_REVIEW_DAYS,
       },
       async ({ stage, days }) => ({
-        content: [{ type: "text" as const, text: intake.enterStage(stage, days) }],
+        content: [{ type: "text" as const, text: await intake.enterStage(stage, days) }],
       }),
     ),
     tool(
@@ -305,7 +305,7 @@ function usageReviewTools(intake: UsageReviewIntake) {
           .describe("提案。効きめの大きい順"),
       },
       async (findings) => {
-        const verdict = intake.submit(findings)
+        const verdict = await intake.submit(findings)
         return verdict.kind === "rejected"
           ? { content: [{ type: "text" as const, text: verdict.text }], isError: true }
           : { content: [{ type: "text" as const, text: "ok" }] }

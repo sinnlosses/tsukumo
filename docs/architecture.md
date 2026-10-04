@@ -319,6 +319,7 @@ src/                          配線（composition root）。cli.ts（入口）�
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts
 story/                        src/<相対パス>.tsx → story/<相対パス>.story.tsx（Storybook。設定は .storybook/）
 characters/<name>/            character.json・persona.md・素材
+plugin/                       セッションに載せる Claude Code のプラグイン（同梱のスキル。`buildQuerySeedOptions` が渡す）
 .tsukumo/project.json         このリポジトリのプロジェクトの設定（下の段）
 ```
 

@@ -3172,7 +3172,7 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
   文で出す（`task-run-confirm.tsx` の「いまターンが動いているので送れない」と同じ言い方）。
   **両方成り立つときは雑談の理由だけ出す**——雑談中はそもそもツール
   （`usage_review_stage` / `usage_review_result`）が読み込まれない
-  （`token-usage-diet` の SKILL.md「返し方は呼ばれた場で変わる」）ので、押しても見直し中には
+  （`plugin/skills/token-usage-diet/SKILL.md`「返し方は呼ばれた場で変わる」）ので、押しても見直し中には
   ならず「ターンが動いている」だけでは利用者が理由を誤解する
 - **直近のセリフの出どころ**: 吹き出しと同じ `SessionState.speeches` の最後の1件
   （まだ無ければ何も出さない）
