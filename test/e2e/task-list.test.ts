@@ -1,6 +1,7 @@
+import type { Locator } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
-import { useScenarioRun } from "./scenario-run.ts"
+import { useScenarioRun, type ScenarioRoom } from "./scenario-run.ts"
 import { openTaskListRoom, openTaskListRoomWithRunningTask } from "./task-room.ts"
 
 const run = useScenarioRun()
@@ -52,27 +53,84 @@ describe("タスクの一覧", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("一覧のIDを押すと実行の確認が開く", async () => {
+  it("行を押すと、状態・ID・題・本文の頭・「全文を開く」を持つのぞき窓が開く", async () => {
+    const room = await openTaskListRoom(run, "task-list-peek", ["task-section"])
+    await taskRow(room, "T-001").click()
+    const peek = taskPeek(room, "T-001")
+    await peek.waitFor()
+
+    const text = await peek.textContent()
+    expect(text).not.toContain("作った")
+    expect(text).not.toContain("担当")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("進行中のカードを押しても、のぞき窓が開く", async () => {
+    const room = await openTaskListRoomWithRunningTask(
+      run,
+      "task-list-peek-running",
+      ["task-section"],
+      "wide",
+    )
+    await taskRow(room, "T-003").click()
+    await taskPeek(room, "T-003").waitFor()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("のぞき窓を開いたまま ↓ を押すと、隣の行へ移って中身が入れ替わる", async () => {
+    const room = await openTaskListRoom(run, "task-list-peek-arrow", ["task-section"])
+    await taskRow(room, "T-001").click()
+    await room.page.keyboard.press("ArrowDown")
+    await taskPeek(room, "T-002").waitFor()
+
+    expect(await focusedId(room)).toBe("task-row-T-002")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("のぞき窓は Esc で閉じ、押した行へフォーカスが戻る", async () => {
+    const room = await openTaskListRoom(run, "task-list-peek-escape", ["task-section"])
+    await taskRow(room, "T-001").click()
+    await taskPeek(room, "T-001").waitFor()
+    await room.page.keyboard.press("Escape")
+    await taskPeek(room, "T-001").waitFor({ state: "detached" })
+
+    expect(await focusedId(room)).toBe("task-row-T-001")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("「全文を開く」で、タスクのモーダルがそのタスクを選んだ状態で開く", async () => {
+    const room = await openTaskListRoom(run, "task-list-peek-open-full", [
+      "task-section",
+      "task-board",
+    ])
+    await taskRow(room, "T-002").click()
+    await room.page.getByRole("button", { name: "全文を開く ↗", exact: true }).click()
+    await room.page.getByRole("dialog", { name: "タスク" }).waitFor()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("のぞき窓の「これを始める」を押すと実行の確認が開く", async () => {
     const room = await openTaskListRoom(run, "task-list-run-confirm", [
       "task-section",
       "task-run-confirm",
     ])
-    await room.page.getByRole("button", { name: "T-001", exact: true }).click()
+    await startFromPeek(room, "T-001")
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("済んだタスクのIDは押せる部品にしない", async () => {
+  it("済んだタスクののぞき窓には「これを始める」を出さない", async () => {
     const room = await openTaskListRoom(run, "task-list-run-done", ["task-section"])
-    await room.page.getByRole("button", { name: "T-001", exact: true }).waitFor()
-    expect(await room.page.getByRole("button", { name: "T-002", exact: true }).count()).toBe(0)
+    await taskRow(room, "T-002").click()
+    await taskPeek(room, "T-002").waitFor()
+    expect(await room.page.getByRole("button", { name: "これを始める →" }).count()).toBe(0)
   })
 
-  it("確認の「実行する」を押すと /next-task <ID> が送られて確認が閉じる", async () => {
+  it("確認の「実行する」を押すと /next-task <ID> が送られて確認とのぞき窓が閉じる", async () => {
     const room = await openTaskListRoom(run, "task-list-run-executed", [
       "task-section",
       "task-run-confirm",
     ])
-    await room.page.getByRole("button", { name: "T-001", exact: true }).click()
+    await startFromPeek(room, "T-001")
     await room.page.getByRole("button", { name: "実行する", exact: true }).click()
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
@@ -84,18 +142,19 @@ describe("タスクの一覧", () => {
       "task-section",
       "task-run-confirm",
     ])
-    await room.page.getByRole("button", { name: "T-001", exact: true }).click()
+    await startFromPeek(room, "T-001")
     await room.page.getByRole("button", { name: "キャンセル", exact: true }).click()
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("確認を Esc で閉じても何も送らない", async () => {
+  it("確認を Esc で閉じても何も送らず、のぞき窓は残る", async () => {
     const room = await openTaskListRoom(run, "task-list-run-escape", [
       "task-section",
       "task-run-confirm",
     ])
-    await room.page.getByRole("button", { name: "T-001", exact: true }).click()
+    await startFromPeek(room, "T-001")
     await room.page.keyboard.press("Escape")
+    await room.page.getByRole("dialog", { name: "タスクの実行" }).waitFor({ state: "detached" })
     await room.settleAndMatch(ELAPSED_MS)
   })
 
@@ -128,26 +187,23 @@ describe("タスクの一覧", () => {
     expect(await toggle.textContent()).not.toMatch(/\d/)
     expect(await room.page.getByRole("button", { name: "一覧を見る" }).count()).toBe(0)
   })
-
-  it("summary を Enter で押すと全文に折り返す", async () => {
-    const room = await openTaskListRoom(run, "task-list-summary-expand", ["task-section"])
-    const summaryToggle = room.page.getByRole("button", {
-      name: "架空のタスク（未着手）",
-      exact: true,
-    })
-    await summaryToggle.focus()
-    await room.page.keyboard.press("Enter")
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("もう一度押すと1行の「…」に戻る", async () => {
-    const room = await openTaskListRoom(run, "task-list-summary-collapse", ["task-section"])
-    const summaryToggle = room.page.getByRole("button", {
-      name: "架空のタスク（未着手）",
-      exact: true,
-    })
-    await summaryToggle.click()
-    await summaryToggle.click()
-    await room.settleAndMatch(ELAPSED_MS)
-  })
 })
+
+/** 区画の行（進行中のカード）のボタン。名前は ID と題をつないだものになるので、DOM の id で当てる。 */
+function taskRow(room: ScenarioRoom, id: string): Locator {
+  return room.page.locator(`#task-row-${id}`)
+}
+
+function taskPeek(room: ScenarioRoom, id: string): Locator {
+  return room.page.getByRole("dialog", { name: `${id} の詳細` })
+}
+
+async function startFromPeek(room: ScenarioRoom, id: string): Promise<void> {
+  await taskRow(room, id).click()
+  await room.page.getByRole("button", { name: "これを始める →", exact: true }).click()
+  await room.page.getByRole("dialog", { name: "タスクの実行" }).waitFor()
+}
+
+async function focusedId(room: ScenarioRoom): Promise<string> {
+  return room.page.evaluate(() => document.activeElement?.id ?? "")
+}

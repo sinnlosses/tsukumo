@@ -1,53 +1,42 @@
-/* ID＋summary を1行に並べ、summary だけを切り詰める側（`.task-item-summary-toggle`）。
-   grid の列は既定で子の内容ぶんの幅を確保しようとする（min-width: auto）ので、ここで 0 に落とさないと summary の text-overflow が働かない。 */
-.task-item-body {
-  display: flex;
-  align-items: baseline;
-  gap: 0.625rem;
-  min-width: 0;
-}
-/* 未着手・完了の行の summary。既定（`aria-expanded="false"`）は1行に収め、入りきらない分は「…」にする。
-   押すと `aria-expanded="true"` になり、折り返して全文を出す。 */
-.task-item-summary-toggle {
-  min-height: 1.5rem;
-  padding: 0;
-  margin: 0;
+/* 行全体のボタン。値は見本 `docs/history/mockup/sidebar-task-peek-2026-10-04.html` の行（印 14px・ID 50px・題・`›` 16px の4列）。
+   題の列を `minmax(0, 1fr)` にしないと、子の内容ぶんの幅を取りに行って text-overflow が働かない。 */
+.task-item-row {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 14px 50px minmax(0, 1fr) 16px;
+  column-gap: 10px;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  padding: 0 8px 0 10px;
   border: none;
-  background: none;
-  font: inherit;
-  text-align: left;
+  border-radius: 9px;
+  background: transparent;
   color: inherit;
+  text-align: left;
+  text-decoration: inherit;
   cursor: pointer;
+}
+.task-item-row:hover {
+  background: rgb(255 255 255 / 0.035);
+}
+.task-item-row:hover > :last-child,
+.task-item-row:focus-visible > :last-child,
+.task-item-row[aria-expanded="true"] > :last-child {
+  color: var(--accent);
+}
+/* 窓を開いている行。色だけで伝えないよう、細い枠も添える。 */
+.task-item-row[aria-expanded="true"] {
+  background: var(--surface-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rule), var(--accent) 45%);
+}
+.task-item-mark {
+  display: inline-flex;
+  justify-content: center;
+}
+.task-item-summary {
   overflow: hidden;
-  min-width: 0;
+  font-size: var(--font-label);
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-.task-item-summary-toggle:hover {
-  color: var(--accent);
-}
-.task-item-summary-toggle[aria-expanded="true"] {
-  overflow: visible;
-  white-space: normal;
-  line-height: 1.5;
-}
-/* status の印（区画の一覧の先頭列）。色だけで状態を伝えない。
-   todo は空の丸、done はチェック（.task-done の打ち消し線と対）、想定外の値は注意色の「!」にする。 */
-.task-mark-todo {
-  display: inline-block;
-  /* 固定 px にする（em だと行の summary の font-size を変えるたびに印の大きさも動く）。 */
-  width: 10px;
-  height: 10px;
-  border: 1.5px solid var(--ink-quiet);
-  border-radius: 50%;
-}
-.task-mark-done::before {
-  content: "✓";
-  color: var(--accent);
-  font-weight: 700;
-}
-.task-mark-other::before {
-  content: "!";
-  color: var(--state-warn);
-  font-weight: 700;
 }

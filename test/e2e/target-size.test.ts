@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest"
 import { git, initGitRepository } from "../fixture/git-repository.ts"
 import { scanReadability } from "./readability-scan.ts"
 import { useScenarioRun } from "./scenario-run.ts"
-import { openTaskListRoomWithRunningTask } from "./task-room.ts"
+import { openTaskListRoomWithRunningTask, READY_TASK_ID } from "./task-room.ts"
 
 // 会話の画面の押せるものが 24x24 以上で名前を持ち、字が 12px 以上・4.5:1 以上であること
 // （docs/architecture/testing.md「E2E のシナリオの一覧」）。期待値は撮らず、割れたものの名前と寸法を差分に出す。
@@ -39,6 +39,24 @@ describe("会話の画面の押す的と字", () => {
         await room.page.getByRole("button", { name: "サイドバー", exact: true }).click()
       }
       await room.page.locator('[data-region="sidebar"]').waitFor()
+      await expectReadable(room.page)
+    },
+  )
+
+  it.each(["large", "medium"] as const)(
+    "サイドバーのタスクののぞき窓の押せるもの・字が下限を割らない（%s）",
+    async (viewport) => {
+      const room = await openTaskListRoomWithRunningTask(
+        run,
+        `target-size-task-peek-${viewport}`,
+        [],
+        viewport,
+      )
+      if (viewport === "medium") {
+        await room.page.getByRole("button", { name: "サイドバー", exact: true }).click()
+      }
+      await room.page.locator(`#task-row-${READY_TASK_ID}`).click()
+      await room.page.getByRole("button", { name: "これを始める →" }).waitFor()
       await expectReadable(room.page)
     },
   )

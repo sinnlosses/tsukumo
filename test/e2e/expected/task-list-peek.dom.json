@@ -196,55 +196,6 @@
                       "children": [
                         "これを始める →"
                       ]
-                    },
-                    {
-                      "tag": "dialog",
-                      "attributes": {
-                        "aria-label": "タスクの実行",
-                        "open": true
-                      },
-                      "children": [
-                        {
-                          "tag": "p",
-                          "children": [
-                            "T-001",
-                            "を実行しますか"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "入力欄に",
-                            {
-                              "tag": "code",
-                              "children": [
-                                "/next-task T-001"
-                              ]
-                            },
-                            "と打つのと同じ。"
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "type": "button"
-                          },
-                          "children": [
-                            "キャンセル"
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "type": "button"
-                          },
-                          "children": [
-                            "実行する"
-                          ]
-                        }
-                      ]
                     }
                   ]
                 }
@@ -270,57 +221,6 @@
                 }
               ]
             }
-          ]
-        }
-      ]
-    }
-  ],
-  "task-run-confirm": [
-    {
-      "tag": "dialog",
-      "attributes": {
-        "aria-label": "タスクの実行",
-        "open": true
-      },
-      "children": [
-        {
-          "tag": "p",
-          "children": [
-            "T-001",
-            "を実行しますか"
-          ]
-        },
-        {
-          "tag": "p",
-          "children": [
-            "入力欄に",
-            {
-              "tag": "code",
-              "children": [
-                "/next-task T-001"
-              ]
-            },
-            "と打つのと同じ。"
-          ]
-        },
-        {
-          "tag": "button",
-          "attributes": {
-            "aria-disabled": "false",
-            "type": "button"
-          },
-          "children": [
-            "キャンセル"
-          ]
-        },
-        {
-          "tag": "button",
-          "attributes": {
-            "aria-disabled": "false",
-            "type": "button"
-          },
-          "children": [
-            "実行する"
           ]
         }
       ]

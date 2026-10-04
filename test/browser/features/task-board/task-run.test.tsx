@@ -114,12 +114,12 @@ function confirmDialog(): Element | null {
   return document.querySelector("dialog.task-run-confirm")
 }
 
-describe("タスクIDから実行を頼む", () => {
+describe("タスクの実行を頼む", () => {
   it("ターンが動いている間は「実行する」を出さず、理由を出す", () => {
     const sent: unknown[] = []
     renderList(collectInto(sent), RUNNING_TURN)
 
-    fireEvent.click(screen.getByRole("button", { name: "X-002" }))
+    startFromPeek("X-002")
 
     expect(screen.queryByRole("button", { name: "実行する" })).toBeNull()
     expect(confirmDialog()?.textContent).toContain("いまターンが動いているので送れない")
@@ -155,7 +155,29 @@ describe("タスクIDから実行を頼む", () => {
     expect(document.querySelector("dialog.task-board")?.hasAttribute("open")).toBe(true)
   })
 
-  it("区画の一覧で押せるIDは着手できる todo だけ", () => {
+  it("のぞき窓の「これを始める」から確認を開き、「実行する」で送ると窓も閉じる", () => {
+    const sent: unknown[] = []
+    renderList(collectInto(sent))
+
+    startFromPeek("X-002")
+    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
+
+    expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-002", images: [] }])
+    expect(confirmDialog()).toBeNull()
+    expect(document.querySelector('dialog[aria-label="X-002 の詳細"]')).toBeNull()
+  })
+
+  it("確認をキャンセルするとのぞき窓は残る", () => {
+    renderList()
+
+    startFromPeek("X-002")
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }))
+
+    expect(confirmDialog()).toBeNull()
+    expect(document.querySelector('dialog[aria-label="X-002 の詳細"]')).not.toBeNull()
+  })
+
+  it("区画の一覧で「これを始める」が出るのは着手できる todo だけ", () => {
     const task = (
       id: string,
       status: string,
@@ -184,9 +206,11 @@ describe("タスクIDから実行を頼む", () => {
       />,
     )
 
-    expect(
-      screen.getAllByRole("button", { name: /^Y-/ }).map((button) => button.textContent),
-    ).toEqual(["Y-003"])
+    const startable = ["Y-001", "Y-002", "Y-003", "Y-004"].filter((id) => {
+      fireEvent.click(rowOf(id))
+      return screen.queryByRole("button", { name: "これを始める →" }) !== null
+    })
+    expect(startable).toEqual(["Y-003"])
   })
 
   it("モーダルからは依存の済んだ保留も頼め、判断を聞かれることを確認に添える", () => {
@@ -224,7 +248,8 @@ describe("タスクIDから実行を頼む", () => {
     cleanup()
     putSession({ ...INITIAL_SESSION_STATE, ...commands }, () => {})
     render(<TaskList tasks={known(TASKS, "/work {id}")} selectedStatus="all" />)
-    expect(screen.queryByRole("button", { name: "X-002" })).toBeNull()
+    fireEvent.click(rowOf("X-002"))
+    expect(screen.queryByRole("button", { name: "これを始める →" })).toBeNull()
   })
 
   it("送り先のコマンドが一覧に在る、または一覧がまだ届いていないときは押せる", () => {
@@ -265,6 +290,21 @@ function holdTask(id: string, dependencies: readonly string[]): TaskSummaryItem 
     body: "",
     location: { kind: "none" },
   }
+}
+
+/** 区画の一覧の行（カード）のボタン。 */
+function rowOf(taskId: string): HTMLElement {
+  const element = document.getElementById(`task-row-${taskId}`)
+  if (element === null) {
+    throw new Error(`${taskId} の行が無い`)
+  }
+  return element
+}
+
+/** 区画の一覧で `taskId` の行を押してのぞき窓を開き、「これを始める」を押す。 */
+function startFromPeek(taskId: string): void {
+  fireEvent.click(rowOf(taskId))
+  fireEvent.click(screen.getByRole("button", { name: "これを始める →" }))
 }
 
 /** モーダルの一覧で `taskId` の行を選び、操作の帯の「tsukumo に頼む」を押す。 */

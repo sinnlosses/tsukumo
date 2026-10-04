@@ -46,7 +46,7 @@
                       },
                       "children": [
                         "すべて",
-                        "2"
+                        "3"
                       ]
                     }
                   ]
@@ -62,7 +62,7 @@
                       },
                       "children": [
                         "進行中",
-                        "0"
+                        "1"
                       ]
                     }
                   ]
@@ -117,17 +117,18 @@
                     "type": "button"
                   },
                   "children": [
-                    "T-001",
-                    "架空のタスク（未着手）",
+                    "進行中",
+                    "T-003",
                     {
                       "tag": "svg"
-                    }
+                    },
+                    "架空のタスク（進行中）"
                   ]
                 },
                 {
                   "tag": "dialog",
                   "attributes": {
-                    "aria-label": "T-001 の詳細",
+                    "aria-label": "T-003 の詳細",
                     "open": true
                   },
                   "children": [
@@ -137,8 +138,8 @@
                         "aria-hidden": "true"
                       }
                     },
-                    "未着手",
-                    "T-001",
+                    "進行中",
+                    "T-003",
                     {
                       "tag": "button",
                       "attributes": {
@@ -155,7 +156,7 @@
                     {
                       "tag": "h3",
                       "children": [
-                        "架空のタスク（未着手）"
+                        "架空のタスク（進行中）"
                       ]
                     },
                     {
@@ -186,65 +187,31 @@
                       "children": [
                         "全文を開く ↗"
                       ]
-                    },
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "ul",
+          "children": [
+            {
+              "tag": "li",
+              "children": [
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-haspopup": "dialog",
+                    "aria-expanded": "false",
+                    "type": "button"
+                  },
+                  "children": [
+                    "T-001",
+                    "架空のタスク（未着手）",
                     {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-haspopup": "dialog",
-                        "type": "button"
-                      },
-                      "children": [
-                        "これを始める →"
-                      ]
-                    },
-                    {
-                      "tag": "dialog",
-                      "attributes": {
-                        "aria-label": "タスクの実行",
-                        "open": true
-                      },
-                      "children": [
-                        {
-                          "tag": "p",
-                          "children": [
-                            "T-001",
-                            "を実行しますか"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "入力欄に",
-                            {
-                              "tag": "code",
-                              "children": [
-                                "/next-task T-001"
-                              ]
-                            },
-                            "と打つのと同じ。"
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "type": "button"
-                          },
-                          "children": [
-                            "キャンセル"
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "type": "button"
-                          },
-                          "children": [
-                            "実行する"
-                          ]
-                        }
-                      ]
+                      "tag": "svg"
                     }
                   ]
                 }
@@ -270,57 +237,6 @@
                 }
               ]
             }
-          ]
-        }
-      ]
-    }
-  ],
-  "task-run-confirm": [
-    {
-      "tag": "dialog",
-      "attributes": {
-        "aria-label": "タスクの実行",
-        "open": true
-      },
-      "children": [
-        {
-          "tag": "p",
-          "children": [
-            "T-001",
-            "を実行しますか"
-          ]
-        },
-        {
-          "tag": "p",
-          "children": [
-            "入力欄に",
-            {
-              "tag": "code",
-              "children": [
-                "/next-task T-001"
-              ]
-            },
-            "と打つのと同じ。"
-          ]
-        },
-        {
-          "tag": "button",
-          "attributes": {
-            "aria-disabled": "false",
-            "type": "button"
-          },
-          "children": [
-            "キャンセル"
-          ]
-        },
-        {
-          "tag": "button",
-          "attributes": {
-            "aria-disabled": "false",
-            "type": "button"
-          },
-          "children": [
-            "実行する"
           ]
         }
       ]

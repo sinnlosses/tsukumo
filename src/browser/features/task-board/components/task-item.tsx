@@ -1,28 +1,24 @@
-// 区画の一覧1件分（進行中を除いた「残り」）。
-// 先頭列に status の印（丸・チェック）、2列目にID＋summary を置く2列の grid 行。
-// IDを押せる部品にするのは着手できるタスク（`runnable`）だけで、それ以外は字のまま出す。
-//
-// 色だけで状態を伝えない: todo は空の丸、done はチェックの印（字も打ち消し線にする）、想定外の値は注意色の「!」にする。
-// summary は既定で1行に収め、押すと全文に折り返す（もう一度押すと戻る）。
+// 区画の一覧1件分（進行中を除いた「残り」）。行全体が1つのボタンで、押すとのぞき窓が開く。
+// 印・ID・題（1行で末尾「…」）・`›` の4列の grid。開いているときは、窓をボタンの後ろ（同じ `<li>` の中）に置く。
 
 import clsx from "clsx"
-import { useState, type ReactElement } from "react"
+import { ChevronRight } from "lucide-react"
+import type { ReactElement, ReactNode } from "react"
 
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
-import { Text } from "../../../components/ui/text/text.tsx"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import taskBoardStyles from "../task-board.module.css"
 import styles from "./task-item.module.css"
-import { TaskRunButton } from "./task-run-button.tsx"
+import { TaskMark } from "./task-mark.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
 
 export function TaskItem(props: {
   readonly task: TaskSummaryItem
-  readonly runnable: boolean
-  readonly runPrompt: string
+  readonly rowId: string
+  readonly peek: TaskItemPeek
+  readonly onToggle: () => void
 }): ReactElement {
-  const [expanded, setExpanded] = useState(false)
-
+  const open = props.peek.kind === "open"
   return (
     <li
       className={clsx(
@@ -30,45 +26,35 @@ export function TaskItem(props: {
         props.task.status === "done" && taskBoardStyles["task-done"],
       )}
     >
-      <span>
-        <TaskMark status={props.task.status} />
-      </span>
-      <span className={styles["task-item-body"]}>
-        {props.runnable ? (
-          <TaskRunButton taskId={props.task.id} runPrompt={props.runPrompt} />
-        ) : (
-          <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
-        )}
-        <button
-          type="button"
-          aria-expanded={expanded}
-          className={styles["task-item-summary-toggle"]}
-          onClick={() => {
-            setExpanded((value) => !value)
-          }}
-        >
-          <Text element="span" size="label" tone="inherit" weight="inherit" className="">
-            <TaskSummaryText parts={codeSpanParts(props.task.summary)} />
-          </Text>
-        </button>
-      </span>
+      <button
+        type="button"
+        id={props.rowId}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-controls={props.peek.kind === "open" ? props.peek.controls : undefined}
+        className={styles["task-item-row"]}
+        onClick={props.onToggle}
+      >
+        <span className={styles["task-item-mark"]}>
+          <TaskMark status={props.task.status} />
+        </span>
+        <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
+        <span className={styles["task-item-summary"]}>
+          <TaskSummaryText parts={codeSpanParts(props.task.summary)} />
+        </span>
+        <ChevronRight
+          className={taskBoardStyles["task-row-chevron"]}
+          size={14}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
+      </button>
+      {props.peek.kind === "open" && props.peek.element}
     </li>
   )
 }
 
-/**
- * status ごとの印。status が無い要素（一覧の要素そのものは壊れていないが status だけ読めない）は印を出さない。
- * todo / done 以外（想定外の値）は、詳しい文字列を持ち込まず注意色の印だけにする（「一覧を見る」のモーダルに status の値がそのまま出る）。
- */
-function TaskMark(props: { readonly status: string | undefined }): ReactElement | null {
-  if (props.status === undefined) {
-    return null
-  }
-  if (props.status === "todo") {
-    return <span className={styles["task-mark-todo"]} title="未着手" />
-  }
-  if (props.status === "done") {
-    return <span className={styles["task-mark-done"]} title="完了" />
-  }
-  return <span className={styles["task-mark-other"]} title={props.status} />
-}
+/** 行の窓。開いているときは、窓の DOM の id（`aria-controls`）と窓そのもの。 */
+export type TaskItemPeek =
+  | { readonly kind: "closed" }
+  | { readonly kind: "open"; readonly controls: string; readonly element: ReactNode }

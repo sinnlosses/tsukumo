@@ -112,20 +112,16 @@
                 {
                   "tag": "button",
                   "attributes": {
-                    "type": "button"
-                  },
-                  "children": [
-                    "T-001"
-                  ]
-                },
-                {
-                  "tag": "button",
-                  "attributes": {
+                    "aria-haspopup": "dialog",
                     "aria-expanded": "false",
                     "type": "button"
                   },
                   "children": [
-                    "架空のタスク（未着手）"
+                    "T-001",
+                    "架空のタスク（未着手）",
+                    {
+                      "tag": "svg"
+                    }
                   ]
                 }
               ]
@@ -133,15 +129,19 @@
             {
               "tag": "li",
               "children": [
-                "T-002",
                 {
                   "tag": "button",
                   "attributes": {
+                    "aria-haspopup": "dialog",
                     "aria-expanded": "false",
                     "type": "button"
                   },
                   "children": [
-                    "架空のタスク（完了）"
+                    "T-002",
+                    "架空のタスク（完了）",
+                    {
+                      "tag": "svg"
+                    }
                   ]
                 }
               ]

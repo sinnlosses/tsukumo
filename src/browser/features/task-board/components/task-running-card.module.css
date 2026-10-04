@@ -1,3 +1,18 @@
+.task-running-item + .task-running-item {
+  margin-top: 0.3rem;
+}
+/* 1行目。札・ID・作業ツリーの名前を左に寄せ、`›` を右端に置く。 */
+.task-running-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.task-running-chevron {
+  flex: none;
+  margin-left: auto;
+  color: color-mix(in srgb, var(--ink-quiet), var(--accent) 40%);
+}
 /* 「進行中」の札。色だけでなく字でも状態を伝える。
    高さ・角丸は件数のチップと揃える（角丸 12px = 高さ 24px の半分でカプセル型になる）。 */
 .task-running-badge {

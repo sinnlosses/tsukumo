@@ -1,0 +1,124 @@
+/* サイドバーのタスクののぞき窓。値は見本 `docs/history/mockup/sidebar-task-peek-2026-10-04.html` の場面3の inline style を `theme.css` のトークンに写したもの
+   （見本の #1f1e28 は --surface、#3a3946 は --rule、#2a2933 は --rule-quiet、浅葱 #66d1be は --accent、字 #0d201c は --ground に当たる）。
+   見本で 12px を割る字（状態の語・ID・関わるタスク 11.5px）は --font-label へ上げてある。
+   left・top・尾の高さと出すかどうかは `placeBesideRow` が style の変数へ書く。 */
+.task-peek {
+  position: fixed;
+  top: var(--task-peek-top, 0);
+  left: var(--task-peek-left, 0);
+  z-index: 20;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(400px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  margin: 0;
+  padding: 16px 18px 14px;
+  overflow: visible;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.55);
+  color: var(--ink);
+  text-decoration: none;
+  white-space: normal;
+}
+/* 押した行を指す右向きの尾。正方形を45度回し、右と上の辺だけ枠を引く。 */
+.task-peek-tail {
+  position: absolute;
+  top: calc(var(--task-peek-tail-top, 24px) - 6px);
+  right: -7px;
+  display: var(--task-peek-tail-display, none);
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+  background: var(--surface);
+  transform: rotate(45deg);
+}
+.task-peek-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.task-peek-state {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.task-peek-id {
+  margin-right: auto;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+/* 箱だけ。顔は `<Button variant="ghost-hover-accent">` が持つ。 */
+.task-peek-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 6px;
+}
+.task-peek-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--font-body);
+  font-weight: 700;
+  line-height: 1.6;
+}
+.task-peek-related {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.task-peek-related-id {
+  font-family: var(--font-mono);
+}
+/* 本文の頭。高さの上限で切り、下の 40px を窓の地へ溶かす。 */
+.task-peek-body {
+  position: relative;
+  max-height: 170px;
+  overflow: hidden;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule-quiet);
+}
+.task-peek-body-fade {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 40px;
+  background: linear-gradient(transparent, var(--surface));
+}
+.task-peek-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* 箱だけ。顔は `<Button variant="link">` が持つ。 */
+.task-peek-open-full {
+  min-height: 24px;
+  margin-right: auto;
+}
+/* 見本の地のグラデーションは `<Button>` の顔に無いので、素のボタンで持つ。 */
+.task-peek-start {
+  height: 32px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 9px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent), white 12%),
+    color-mix(in srgb, var(--accent), black 6%)
+  );
+  color: var(--ground);
+  font-size: var(--font-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.task-peek-start:hover {
+  background: var(--accent);
+}

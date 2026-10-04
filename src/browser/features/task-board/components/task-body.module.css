@@ -88,6 +88,31 @@
   border: none;
   border-top: 1px solid var(--rule-quiet);
 }
+/* のぞき窓の本文の頭。値は見本 `docs/history/mockup/sidebar-task-peek-2026-10-04.html` の本文で、見出しは小さなラベルに組む。 */
+.task-body.task-body-peek {
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  line-height: 1.8;
+}
+.task-body-peek p,
+.task-body-peek ul,
+.task-body-peek ol {
+  margin-bottom: 8px;
+}
+.task-body-peek .task-body-section,
+.task-body-peek .task-body-sub {
+  margin: 0 0 2px;
+  padding-bottom: 0;
+  border-bottom: none;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: 700;
+  line-height: 1.8;
+}
+.task-body-peek ul,
+.task-body-peek ol {
+  padding-left: 18px;
+}
 /* 表は横に溢れたら表だけを転がす。 */
 .task-body-table-scroll {
   margin: 0 0 12px;

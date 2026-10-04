@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
+import { useTaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
@@ -12,6 +13,7 @@ import type {
 
 afterEach(() => {
   cleanup()
+  useTaskBoardRequest.setState(useTaskBoardRequest.getInitialState(), true)
 })
 
 function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
@@ -163,26 +165,133 @@ describe("taskList", () => {
     expect(screen.getByText("未着手のタスクが無い")).toBeDefined()
   })
 
-  it("summary を押すと aria-expanded が true になり、もう一度押すと false に戻る", () => {
+  it("行を押すとのぞき窓が開き、もう一度押すと閉じる", () => {
     render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
-    const summaryToggle = screen.getByRole("button", { name: "架空のタスク1" })
-    expect(summaryToggle.getAttribute("aria-expanded")).toBe("false")
+    fireEvent.click(row("X-001"))
+    expect(row("X-001").getAttribute("aria-expanded")).toBe("true")
+    expect(peekTitle()).toBe("X-001 の詳細")
+    expect(peek()?.textContent).toContain("未着手")
+    expect(peek()?.textContent).toContain("架空のタスク1")
 
-    fireEvent.click(summaryToggle)
-    expect(summaryToggle.getAttribute("aria-expanded")).toBe("true")
-
-    fireEvent.click(summaryToggle)
-    expect(summaryToggle.getAttribute("aria-expanded")).toBe("false")
+    fireEvent.click(row("X-001"))
+    expect(row("X-001").getAttribute("aria-expanded")).toBe("false")
+    expect(peek()).toBeNull()
   })
 
-  it("ID を押しても summary の開閉は変わらない", () => {
+  it("進行中のカードを押しても同じ窓が開く", () => {
     render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
 
-    fireEvent.click(screen.getByRole("button", { name: "X-001" }))
+    fireEvent.click(row("X-004"))
 
-    expect(
-      screen.getByRole("button", { name: "架空のタスク1" }).getAttribute("aria-expanded"),
-    ).toBe("false")
+    expect(peekTitle()).toBe("X-004 の詳細")
+    expect(peek()?.textContent).toContain("進行中")
+  })
+
+  it("依存があるときだけ関わるタスクを出す", () => {
+    const items: readonly TaskSummaryItem[] = [
+      ...TASKS,
+      { ...taskOf("X-005", "todo"), dependencies: ["X-001", "X-009"] },
+    ]
+    render(<TaskList tasks={known(items)} selectedStatus="all" />)
+
+    fireEvent.click(row("X-001"))
+    expect(peek()?.textContent).not.toContain("関わる")
+
+    fireEvent.click(row("X-005"))
+    expect(peek()?.textContent).toContain("関わる X-001, X-009")
+  })
+
+  it("開いている間は ↑↓ で隣の行へ移り、端では止まる", () => {
+    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+
+    fireEvent.click(row("X-001"))
+    fireEvent.keyDown(row("X-001"), { key: "ArrowDown" })
+    expect(peekTitle()).toBe("X-002 の詳細")
+    expect(document.activeElement).toBe(row("X-002"))
+
+    fireEvent.keyDown(row("X-002"), { key: "ArrowUp" })
+    fireEvent.keyDown(row("X-001"), { key: "ArrowUp" })
+    expect(peekTitle()).toBe("X-004 の詳細")
+    fireEvent.keyDown(row("X-004"), { key: "ArrowUp" })
+    expect(peekTitle()).toBe("X-004 の詳細")
+  })
+
+  it("閉じている間の ↑↓ では窓を開かない", () => {
+    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+
+    fireEvent.keyDown(row("X-001"), { key: "ArrowDown" })
+
+    expect(peek()).toBeNull()
+  })
+
+  it("Esc と「×」で閉じ、押した行へフォーカスを戻す", () => {
+    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+
+    fireEvent.click(row("X-001"))
+    fireEvent.keyDown(document, { key: "Escape" })
+    expect(peek()).toBeNull()
+    expect(document.activeElement).toBe(row("X-001"))
+
+    fireEvent.click(row("X-002"))
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }))
+    expect(peek()).toBeNull()
+    expect(document.activeElement).toBe(row("X-002"))
+  })
+
+  it("開いている行が絞り込みで消えたら閉じ、戻しても開き直さない", () => {
+    const { rerender } = render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+
+    fireEvent.click(row("X-001"))
+    rerender(<TaskList tasks={known(TASKS)} selectedStatus="done" />)
+    expect(peek()).toBeNull()
+
+    rerender(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+    expect(peek()).toBeNull()
+  })
+
+  it("「全文を開く」はタスクのモーダルをそのタスクを選んで開くよう頼み、窓を閉じる", () => {
+    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
+
+    fireEvent.click(row("X-002"))
+    fireEvent.click(screen.getByRole("button", { name: "全文を開く ↗" }))
+
+    expect(useTaskBoardRequest.getState().request).toEqual({
+      kind: "open",
+      focus: { kind: "task", id: "X-002" },
+    })
+    expect(peek()).toBeNull()
   })
 })
+
+/** 行（カード）のボタン。 */
+function row(id: string): HTMLElement {
+  const element = document.getElementById(`task-row-${id}`)
+  if (element === null) {
+    throw new Error(`${id} の行が無い`)
+  }
+  return element
+}
+
+/** 開いているのぞき窓（無ければ `null`）。 */
+function peek(): Element | null {
+  return document.querySelector('dialog[aria-label$=" の詳細"]')
+}
+
+function peekTitle(): string | undefined {
+  return peek()?.getAttribute("aria-label") ?? undefined
+}
+
+function taskOf(id: string, status: string): TaskSummaryItem {
+  return {
+    id,
+    summary: `架空のタスク ${id}`,
+    status,
+    difficulty: undefined,
+    loopable: undefined,
+    dependencies: [],
+    assignee: undefined,
+    body: "",
+    location: { kind: "none" },
+  }
+}

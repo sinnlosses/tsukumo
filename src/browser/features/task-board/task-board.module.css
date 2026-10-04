@@ -11,20 +11,26 @@
   padding: 0;
   list-style: none;
 }
+/* カード全体が押せるボタン。ボタンの既定の字と揃えを落とす。 */
 .task-running-card {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 0.375rem;
-  margin: 0 0 0.3rem;
+  width: 100%;
   padding: 0.75rem 0.875rem;
   border-radius: 0.625rem;
   background: var(--surface-accent);
   /* 差し色寄りの枠（素の accent ではなく rule に6割混ぜる）。 */
   border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
-.task-running-card:last-child {
-  margin-bottom: 0;
+.task-running-card:hover,
+.task-running-card[aria-expanded="true"] {
+  border-color: var(--accent);
 }
 /* カードの中のIDは、一覧の行の等幅ID（`.task-item .task-id`）と同じ段（`--font-label`）にしつつ、字を差し色寄りにする。
    一覧の行の「薄く」は opacity だが、地が差し色なので同じ opacity のままだと沈んで読めない。 */
@@ -39,22 +45,20 @@
   list-style: none;
   padding-left: 0;
 }
-/* 各行の上に罫線を引く（`:not(:first-child)` にしない）。
-   最初の行も、直前の要素（件数のチップ・進行中のカード）との間に線が出るのが見本の形。
-   色は `--rule` より薄め。 */
-.task-item {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 0.625rem;
-  align-items: baseline;
-  padding: 0.5rem 0;
-  border-top: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+/* 行どうしは 1px 空ける（罫線は引かない。見本 `docs/history/mockup/sidebar-task-peek-2026-10-04.html`）。 */
+.task-item + .task-item {
+  margin-top: 1px;
 }
 /* done は色を薄くし、打ち消し線を引く。
-   テキスト装飾は子（IDのボタン・summary）にも見た目上つながって出る（CSS の text-decoration は子孫の描画にまたがる）。 */
+   テキスト装飾は行のボタンの子（ID・summary）にも見た目上つながって出る（CSS の text-decoration は子孫の描画にまたがる）。
+   のぞき窓は `position: fixed` なので打ち消し線はつながらない。 */
 .task-item.task-done {
   color: var(--ink-quiet);
   text-decoration: line-through;
+}
+/* 行の右端の `›`。押せることの合図で、ホバー・フォーカス・窓を開いている行でだけ見える。 */
+.task-row-chevron {
+  color: transparent;
 }
 /* 色が既に薄いので、IDの透けを重ねるとコントラストが 4.5:1 を割る。 */
 .task-item.task-done .task-id {
@@ -65,10 +69,12 @@
    body の `overflow-wrap: anywhere`（`theme.css`）でIDの min-content が1文字になり、幅の狭いサイドバーだとIDが2行に割れるため。 */
 .task-item .task-id {
   flex: none;
+  overflow: hidden;
   opacity: 0.8;
   font-family: var(--font-mono);
   font-size: var(--font-label);
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 /* タスクのモーダル。左に一覧、右に選んだタスクの詳細。
    値は見本 `docs/history/mockup/task-board-2026-09-28/TASK-1-List.dc.html` の inline style を `theme.css` のトークンに写したもの（見本の #1f1e28 は --surface、#3a3946 は --rule、#2e2d38・#26252f は --rule-quiet、#15141b・#1a1921 は --ground、#1f2e2e は --surface-accent、#33323e は --surface-raised に当たる）。

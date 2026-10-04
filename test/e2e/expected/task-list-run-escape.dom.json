@@ -112,20 +112,91 @@
                 {
                   "tag": "button",
                   "attributes": {
+                    "aria-haspopup": "dialog",
+                    "aria-expanded": "true",
                     "type": "button"
                   },
                   "children": [
-                    "T-001"
+                    "T-001",
+                    "架空のタスク（未着手）",
+                    {
+                      "tag": "svg"
+                    }
                   ]
                 },
                 {
-                  "tag": "button",
+                  "tag": "dialog",
                   "attributes": {
-                    "aria-expanded": "false",
-                    "type": "button"
+                    "aria-label": "T-001 の詳細",
+                    "open": true
                   },
                   "children": [
-                    "架空のタスク（未着手）"
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    },
+                    "未着手",
+                    "T-001",
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "false",
+                        "aria-label": "閉じる",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "svg"
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "h3",
+                      "children": [
+                        "架空のタスク（未着手）"
+                      ]
+                    },
+                    {
+                      "tag": "h4",
+                      "children": [
+                        "目的"
+                      ]
+                    },
+                    {
+                      "tag": "p",
+                      "children": [
+                        "架空の本文で、実物のタスクではない。"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    },
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "false",
+                        "aria-haspopup": "dialog",
+                        "type": "button"
+                      },
+                      "children": [
+                        "全文を開く ↗"
+                      ]
+                    },
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-haspopup": "dialog",
+                        "type": "button"
+                      },
+                      "children": [
+                        "これを始める →"
+                      ]
+                    }
                   ]
                 }
               ]
@@ -133,15 +204,19 @@
             {
               "tag": "li",
               "children": [
-                "T-002",
                 {
                   "tag": "button",
                   "attributes": {
+                    "aria-haspopup": "dialog",
                     "aria-expanded": "false",
                     "type": "button"
                   },
                   "children": [
-                    "架空のタスク（完了）"
+                    "T-002",
+                    "架空のタスク（完了）",
+                    {
+                      "tag": "svg"
+                    }
                   ]
                 }
               ]

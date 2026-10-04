@@ -1,0 +1,25 @@
+/* 丸は固定 px（em だと隣の字の段を変えるたびに印の大きさも動く）。 */
+.task-mark-todo,
+.task-mark-doing {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.task-mark-todo {
+  border: 1.5px solid var(--ink-quiet);
+}
+.task-mark-doing {
+  background: var(--accent);
+}
+.task-mark-done::before {
+  content: "✓";
+  color: var(--accent);
+  font-weight: 700;
+}
+.task-mark-other::before {
+  content: "!";
+  color: var(--state-warn);
+  font-weight: 700;
+}
