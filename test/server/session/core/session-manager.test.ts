@@ -2171,6 +2171,214 @@ describe("createSessionManager", () => {
 
       expect(sessionEventEntries(entries).map((entry) => entry.kind)).toEqual(["turn-started"])
     })
+
+    it("起こし直しに失敗したら、場所の名前と error.name・code の1行を書く（message は入らない）", async () => {
+      const manager = createSessionManager({
+        now: () => 2_000,
+        openFile: () => Promise.resolve(true),
+        readAchievementDay: () => Promise.resolve(undefined),
+        batchIntervalMs: BATCH_MS,
+        chatConsolidation: NO_CHAT_CONSOLIDATION,
+        watchTasks: NO_TASK_WATCH,
+        visit: NO_VISIT_PORTS,
+        diary: NO_DIARY_WRITER,
+        chatArchive: NOOP_CHAT_ARCHIVE,
+        project: FICTIONAL_PROJECT,
+        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+        diagnosticLog: {
+          append: (appended) => entries.push(...appended),
+          readRange: () => [],
+        },
+        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+        reportUsageLog: NOOP_REPORT_USAGE_LOG,
+        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
+        promptImageShelf: createPromptImageShelf(),
+        reportImageShelf: createReportImageShelf(),
+        readReportImage: () => undefined,
+        rememberSessionDefault: (sessionDefault) => ({
+          kind: "session-default-changed",
+          sessionDefault,
+        }),
+        rememberVisitEnabled: (visitEnabled) => ({
+          kind: "visit-enabled-changed",
+          visitEnabled,
+        }),
+        launchSession: (onEvent, _onRestoredEvents, request) => {
+          if (request.selection.by === "initial") {
+            const stub = createStubDriver()
+            stub.attach(onEvent)
+            return Promise.resolve(stub.driver)
+          }
+          return Promise.reject(
+            Object.assign(new Error("架空の起こし直し失敗"), { name: "TypeError" }),
+          )
+        },
+        editCharacter: () => Promise.resolve(undefined),
+        createCharacter: () => Promise.resolve(undefined),
+        deleteCharacter: () => Promise.resolve(undefined),
+        forgetRememberedLine: () => Promise.resolve(undefined),
+        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+        writePreviousUsageReview: () => {},
+        dismissUsageProposal: (dismiss) => ({
+          kind: "usage-proposal-dismissed",
+          key: usageProposalKey(dismiss),
+        }),
+      })
+      const entries: DiagnosticEntry[] = []
+
+      await manager.commands.session.switchCharacter({ name: "fictional" })
+      await waitForBatch()
+
+      expect(entries).toEqual([
+        {
+          flow: "swallowed-failure",
+          at: 2_000,
+          place: { feature: "session", place: "restart" },
+          errorName: "TypeError",
+          errorCode: "none",
+        },
+      ])
+    })
+
+    it("コンテキストの内訳・プランの内訳・セッションの中身の問い合わせが失敗したら、それぞれ場所の名前で1行書く", async () => {
+      const entries: DiagnosticEntry[] = []
+      const manager = createSessionManager({
+        now: () => 3_000,
+        openFile: () => Promise.resolve(true),
+        readAchievementDay: () => Promise.resolve(undefined),
+        batchIntervalMs: BATCH_MS,
+        chatConsolidation: NO_CHAT_CONSOLIDATION,
+        watchTasks: NO_TASK_WATCH,
+        visit: NO_VISIT_PORTS,
+        diary: NO_DIARY_WRITER,
+        chatArchive: NOOP_CHAT_ARCHIVE,
+        project: FICTIONAL_PROJECT,
+        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+        diagnosticLog: {
+          append: (appended) => entries.push(...appended),
+          readRange: () => [],
+        },
+        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+        reportUsageLog: NOOP_REPORT_USAGE_LOG,
+        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
+        promptImageShelf: createPromptImageShelf(),
+        reportImageShelf: createReportImageShelf(),
+        readReportImage: () => undefined,
+        rememberSessionDefault: (sessionDefault) => ({
+          kind: "session-default-changed",
+          sessionDefault,
+        }),
+        rememberVisitEnabled: (visitEnabled) => ({
+          kind: "visit-enabled-changed",
+          visitEnabled,
+        }),
+        launchSession: () => Promise.reject(new Error("架空の起動失敗")),
+        editCharacter: () => Promise.resolve(undefined),
+        createCharacter: () => Promise.resolve(undefined),
+        deleteCharacter: () => Promise.resolve(undefined),
+        forgetRememberedLine: () => Promise.resolve(undefined),
+        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+        writePreviousUsageReview: () => {},
+        dismissUsageProposal: (dismiss) => ({
+          kind: "usage-proposal-dismissed",
+          key: usageProposalKey(dismiss),
+        }),
+      })
+
+      await manager.readContextUsage()
+      await manager.readPlanUsage()
+      await waitForBatch()
+
+      expect(entries).toEqual([
+        {
+          flow: "swallowed-failure",
+          at: 3_000,
+          place: { feature: "session", place: "read-context-usage" },
+          errorName: "Error",
+          errorCode: "none",
+        },
+        {
+          flow: "swallowed-failure",
+          at: 3_000,
+          place: { feature: "session", place: "read-plan-usage" },
+          errorName: "Error",
+          errorCode: "none",
+        },
+      ])
+    })
+
+    it("セッションの中身の問い合わせが失敗したら、場所の名前で1行書く", async () => {
+      const entries: DiagnosticEntry[] = []
+      const stub = createStubDriver()
+      const failingDriver: SessionDriver = {
+        ...stub.driver,
+        readSessionDigest: () => Promise.reject(new Error("架空のdigest取得失敗")),
+      }
+      const manager = createSessionManager({
+        now: () => 4_000,
+        openFile: () => Promise.resolve(true),
+        readAchievementDay: () => Promise.resolve(undefined),
+        batchIntervalMs: BATCH_MS,
+        chatConsolidation: NO_CHAT_CONSOLIDATION,
+        watchTasks: NO_TASK_WATCH,
+        visit: NO_VISIT_PORTS,
+        diary: NO_DIARY_WRITER,
+        chatArchive: NOOP_CHAT_ARCHIVE,
+        project: FICTIONAL_PROJECT,
+        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
+        diagnosticLog: {
+          append: (appended) => entries.push(...appended),
+          readRange: () => [],
+        },
+        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+        reportUsageLog: NOOP_REPORT_USAGE_LOG,
+        questionUsageLog: NOOP_QUESTION_USAGE_LOG,
+        promptImageShelf: createPromptImageShelf(),
+        reportImageShelf: createReportImageShelf(),
+        readReportImage: () => undefined,
+        rememberSessionDefault: (sessionDefault) => ({
+          kind: "session-default-changed",
+          sessionDefault,
+        }),
+        rememberVisitEnabled: (visitEnabled) => ({
+          kind: "visit-enabled-changed",
+          visitEnabled,
+        }),
+        launchSession: (onEvent) => {
+          stub.attach(onEvent)
+          onEvent({ kind: "sessions-changed", sessions: [], current: "fake-current" })
+          return Promise.resolve(failingDriver)
+        },
+        editCharacter: () => Promise.resolve(undefined),
+        createCharacter: () => Promise.resolve(undefined),
+        deleteCharacter: () => Promise.resolve(undefined),
+        forgetRememberedLine: () => Promise.resolve(undefined),
+        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+        writePreviousUsageReview: () => {},
+        dismissUsageProposal: (dismiss) => ({
+          kind: "usage-proposal-dismissed",
+          key: usageProposalKey(dismiss),
+        }),
+      })
+
+      await manager.readSessionDigest("fake-current")
+      await waitForBatch()
+
+      // 起こすときに流した sessions-changed の足跡と、失敗の1行の2件。
+      expect(entries).toEqual([
+        { flow: "session-event", at: 4_000, generation: 1, kind: "sessions-changed" },
+        {
+          flow: "swallowed-failure",
+          at: 4_000,
+          place: { feature: "session", place: "read-session-digest" },
+          errorName: "Error",
+          errorCode: "none",
+        },
+      ])
+    })
   })
 })
 

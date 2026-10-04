@@ -6,6 +6,7 @@
 //
 // 外の世界（パックの読み込み・覚えた値・claude の transcript）には触らず、すべて渡された関数（`SessionLaunchPorts`）越しに頼む。
 
+import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
 import type { SessionChoice } from "../../../shared/session/session-choice.ts"
 import type { SessionDefault } from "../../../shared/session/session-default.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -13,6 +14,7 @@ import type {
   CharacterSelection,
   NamedCharacterPack,
 } from "../../character-pack/core/character-selection.ts"
+import type { DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
 import type { SessionCatalogRefresh } from "../../session-driver/core/session-catalog.ts"
 import type { SessionDriver, SessionStart } from "../../session-driver/core/session-driver.ts"
 
@@ -111,6 +113,10 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   readonly refreshSessions: () => Promise<SessionCatalogRefresh>
   /** 前のセッションの記録を、画面に出す形のイベントに組み直す。 */
   readonly restoreEvents: (sessionId: string, pack: Pack) => Promise<readonly SessionEvent[]>
+  /** 診断ログの書き込み口。{@link restoreEvents} が失敗したときだけ使う。 */
+  readonly diagnosticLog: DiagnosticLog
+  /** いまのエポックミリ秒（診断ログに打つ時刻）。 */
+  readonly now: () => number
 }
 
 /**
@@ -231,7 +237,14 @@ async function replayRestoredSession<Pack extends NamedCharacterPack>(
 ): Promise<void> {
   try {
     onRestoredEvents(await ports.restoreEvents(sessionId, pack))
-  } catch {
+  } catch (error) {
     // 履歴が出ないだけで、セッションそのものは続く。
+    ports.diagnosticLog.append([
+      swallowedFailureFootprint(
+        ports.now(),
+        { feature: "session", place: "restore-events" },
+        error,
+      ),
+    ])
   }
 }

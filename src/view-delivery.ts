@@ -39,6 +39,7 @@ import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "./shared/context-usage/context-usage.ts"
+import { swallowedFailureFootprint } from "./shared/diagnostic/swallowed-failure.ts"
 import type { RefreshTarget, ServerFrame } from "./shared/frame.ts"
 import { type PlanUsageReport, UNAVAILABLE_PLAN_USAGE } from "./shared/plan-usage/plan-usage.ts"
 import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "./shared/session/session-digest.ts"
@@ -157,6 +158,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       findReportImage: (toolUseId, path) => options.reportImageShelf.find(toolUseId, path),
       rpcRouter,
       token,
+      onRuntimeError: (error) => reportSwallowedFailure(options, "http-server-error", error),
     }),
   )
   if (!started.ok) {
@@ -194,6 +196,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
         httpServer: server.httpServer,
         token,
         origin: new URL(server.layoutUrl).origin,
+        onMessageFailure: (error) => reportSwallowedFailure(options, "socket-message", error),
         subscribe: (send) => {
           viewers.add(send)
           const unsubscribe = manager.subscribe(send)
@@ -208,6 +211,19 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       })
     },
   }
+}
+
+/**
+ * ビューサーバ・`/ws` が握りつぶしていた失敗を診断ログへ書く。
+ */
+function reportSwallowedFailure(
+  options: ViewDeliveryOptions,
+  place: "socket-message" | "http-server-error",
+  error: unknown,
+): void {
+  options.diagnosticLog.append([
+    swallowedFailureFootprint(options.now(), { feature: "view-server", place }, error),
+  ])
 }
 
 /** 開いているタブに取り直しを押す。セッションの状態は動かないので、セッションの管理を通さない。 */

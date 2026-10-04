@@ -49,6 +49,8 @@ export type SessionSocketOptions = {
    * そうならここは断らずに触らない（断りの 403 を書くと、あちらが繋いだ接続を壊す）。
    */
   readonly yieldsUpgrade: (request: IncomingMessage) => boolean
+  /** 手続きの要求が読めなかった・処理が失敗したときに呼ぶ。 */
+  readonly onMessageFailure: (error: unknown) => void
 }
 
 /** `/ws` に載せるルータ（コマンドと押し出しの購読）。 */
@@ -99,7 +101,7 @@ export function attachSessionSocket(options: SessionSocketOptions): SessionSocke
     connection.on("message", (data: RawData) => {
       // 読めないメッセージ（手続きの要求の形でないもの）は黙って捨てる。
       // 受け口の既定（`upgrade`）は投げたものを `console.error` へ出し、JSON の読み違いの理由には届いた文面（会話の内容）の断片が入りうる。
-      procedures.message(connection, messageText(data), { context }).catch(() => {})
+      procedures.message(connection, messageText(data), { context }).catch(options.onMessageFailure)
     })
     connection.on("close", () => {
       procedures.close(connection)

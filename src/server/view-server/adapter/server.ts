@@ -136,6 +136,8 @@ export type ViewServerOptions = {
   readonly rpcRouter: RpcRouter
   /** 起動トークン（{@link createStartupToken}）。`/prompt-image`・`/report-image` と `/rpc` はこれが合わないと配らない（`/ws` と同じ守り方）。 */
   readonly token: string
+  /** 動作中（listen のあと）にサーバそのものが失敗したときに呼ぶ。stderr への1行は変えない。 */
+  readonly onRuntimeError: (error: unknown) => void
 }
 
 export type ViewServer = {
@@ -172,6 +174,7 @@ export function startViewServer(port: number, options: ViewServerOptions): Promi
       }
       // 動作中の失敗で常駐プロセスを落とさない。
       process.stderr.write(`tsukumo: ビューサーバでエラーが起きた: ${error.message}\n`)
+      options.onRuntimeError(error)
     })
 
     server.listen(port, BIND_HOST, () => {
