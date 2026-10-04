@@ -18,8 +18,7 @@ describe("reportChecksMarkdown", () => {
 
     expect(markdown).toContain(
       '<div class="checks-tile checks-tile-ok"><span class="checks-tile-mark">✓</span>' +
-        '<span class="checks-tile-count">3 / 3</span>' +
-        '<span class="checks-tile-hint">全部通った</span></div>',
+        '<span class="checks-tile-count">3 / 3</span></div>',
     )
     expect(markdown).toContain('<div class="checks-heading">検証</div>')
     expect(markdown).toContain('<div role="table" aria-label="検証結果">')

@@ -86,7 +86,7 @@ export function reportChecksMarkdown(
   )
 }
 
-/** 判定の札。記号・「ok 件数 / 全件数」・ひとこと（全部通った / k つ未確認 / k つ落ちた）。 */
+/** 判定の札。記号・「ok 件数 / 全件数」と、ng / unverified のときだけひとこと（k つ落ちた / k つ未確認）。 */
 function checksTileMarkdown(
   verdict: ReportChecksVerdict,
   okCount: number,
@@ -96,15 +96,15 @@ function checksTileMarkdown(
 ): string {
   const hint =
     verdict === "ng"
-      ? `${String(ngCount)} つ落ちた`
+      ? `<span class="checks-tile-hint">${String(ngCount)} つ落ちた</span>`
       : verdict === "unverified"
-        ? `${String(unverifiedCount)} つ未確認`
-        : "全部通った"
+        ? `<span class="checks-tile-hint">${String(unverifiedCount)} つ未確認</span>`
+        : ""
   return (
     `<div class="checks-tile checks-tile-${verdict}">` +
     `<span class="checks-tile-mark">${REPORT_CHECK_TILE_MARK_TEXTS[verdict]}</span>` +
     `<span class="checks-tile-count">${String(okCount)} / ${String(total)}</span>` +
-    `<span class="checks-tile-hint">${hint}</span></div>`
+    `${hint}</div>`
   )
 }
 
