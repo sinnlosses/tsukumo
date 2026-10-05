@@ -53,6 +53,38 @@ const COMPLETED = {
   outcome: { kind: "completed" },
 } as const satisfies SessionEvent
 
+const RESTORED = { kind: "history-restored" } as const satisfies SessionEvent
+
+function report(waitingLine: ReportWaitingLine): SessionEvent {
+  return {
+    kind: "report",
+    toolUseId: "toolu_r1",
+    conclusion: "架空の結論",
+    sections: [],
+    favor: "",
+    checks: [],
+    task: { kind: "none" },
+    closing: { kind: "none" },
+    waitingLine,
+    unknownBlockCount: 0,
+    sessionSummary: undefined,
+  }
+}
+
+const WRITTEN = report({ kind: "speech", text: "架空の待ちの一言", expression: "curious" })
+
+const GREETED = {
+  kind: "welcome-greeting-changed",
+  state: {
+    kind: "written",
+    greeting: {
+      withCard: "架空の挨拶、{札} からどう？",
+      withoutCard: "架空の挨拶だけ",
+      expression: "curious",
+    },
+  },
+} as const satisfies SessionEvent
+
 /** パックを決めてから、`events` を順に畳んだ姿。 */
 function stateAfter(
   events: readonly SessionEvent[],
@@ -135,22 +167,6 @@ describe("shownReaction", () => {
   })
 
   describe("待ちの一言", () => {
-    const report = (waitingLine: ReportWaitingLine): SessionEvent => ({
-      kind: "report",
-      toolUseId: "toolu_r1",
-      conclusion: "架空の結論",
-      sections: [],
-      favor: "",
-      checks: [],
-      task: { kind: "none" },
-      closing: { kind: "none" },
-      waitingLine,
-      unknownBlockCount: 0,
-      sessionSummary: undefined,
-    })
-
-    const WRITTEN = report({ kind: "speech", text: "架空の待ちの一言", expression: "curious" })
-
     const ASKED = {
       kind: "pending-changed",
       pending: [{ kind: "question", id: "架空の問い", questions: [] }],
@@ -254,11 +270,85 @@ describe("shownReaction", () => {
       ])
     })
 
-    it("続きから組み直した記録だけのときは出さない", () => {
-      const state = stateAfter([REQUEST, WRITTEN, COMPLETED, { kind: "history-restored" }])
+    it("続きから組み直した記録だけのときは、出す時刻を持たない（おかえりが代わりに出る）", () => {
+      const state = stateAfter([REQUEST, report({ kind: "none" }), COMPLETED, RESTORED])
 
       expect(waitingLineDueAt(state)).toBeUndefined()
       expect(shown(state, NO_WELCOME_HEAD, LATER)).toBe("none")
+    })
+  })
+
+  describe("おかえり（続きから起こしてまだ依頼が無い間）", () => {
+    const HEAD: WelcomeHead = { kind: "card", name: "T-1" }
+
+    it("前回の最後のターンの待ちの一言があれば、それを迎えるの反応として表情ごと出す", () => {
+      const reaction = shownReaction(
+        stateAfter([REQUEST, SPEECH, WRITTEN, COMPLETED, RESTORED, GREETED]),
+        HEAD,
+        0,
+      )
+
+      expect(reaction).toEqual({
+        kind: "shown",
+        reaction: "welcome",
+        line: { text: "架空の待ちの一言", expression: "curious" },
+      })
+    })
+
+    it("待ちの一言が無ければ、迎えの挨拶を札があっても札なしの文で出す", () => {
+      expect(
+        shown(
+          stateAfter([REQUEST, SPEECH, report({ kind: "none" }), COMPLETED, RESTORED, GREETED]),
+          HEAD,
+        ),
+      ).toBe("welcome:架空の挨拶だけ")
+    })
+
+    it("前回のより前のやり取りの待ちの一言は使わない", () => {
+      expect(
+        shown(stateAfter([REQUEST, WRITTEN, COMPLETED, REQUEST, COMPLETED, RESTORED, GREETED])),
+      ).toBe("welcome:架空の挨拶だけ")
+    })
+
+    it.each<[string, SessionEvent | undefined, string]>([
+      ["書き始める前", undefined, "none"],
+      [
+        "書いている途中",
+        { kind: "welcome-greeting-changed", state: { kind: "writing" } },
+        "writing",
+      ],
+      [
+        "控えに替わった",
+        { kind: "welcome-greeting-changed", state: { kind: "fallback" } },
+        "welcome:架空の迎え",
+      ],
+    ])("待ちの一言が無く、挨拶が%sなら %s", (_, greeting, expected) => {
+      const events = [REQUEST, COMPLETED, RESTORED, ...(greeting === undefined ? [] : [greeting])]
+
+      expect(shown(stateAfter(events))).toBe(expected)
+    })
+
+    it("依頼を送れば消える", () => {
+      expect(shown(stateAfter([REQUEST, WRITTEN, COMPLETED, RESTORED, REQUEST]))).toBe(
+        "accepted:架空の受けた",
+      )
+      expect(
+        shown(stateAfter([REQUEST, WRITTEN, COMPLETED, RESTORED, GREETED, REQUEST, SPEECH])),
+      ).toBe("none")
+    })
+
+    it("雑談では出さない", () => {
+      expect(
+        shown(
+          stateAfter([
+            { kind: "chat-mode-changed", chat: true },
+            REQUEST,
+            WRITTEN,
+            COMPLETED,
+            RESTORED,
+          ]),
+        ),
+      ).toBe("none")
     })
   })
 
@@ -271,18 +361,6 @@ describe("shownReaction", () => {
     const FALLBACK = {
       kind: "welcome-greeting-changed",
       state: { kind: "fallback" },
-    } as const satisfies SessionEvent
-
-    const GREETED = {
-      kind: "welcome-greeting-changed",
-      state: {
-        kind: "written",
-        greeting: {
-          withCard: "架空の挨拶、{札} からどう？",
-          withoutCard: "架空の挨拶だけ",
-          expression: "curious",
-        },
-      },
     } as const satisfies SessionEvent
 
     const HEAD: WelcomeHead = { kind: "card", name: "T-1" }

@@ -5,14 +5,20 @@
 // いちばん新しいやり取りについての反応で、過去のターンを見ているかどうかは見ない。
 // 迎えるときは、挨拶を書いている途中は「…」、書けていればその文、控えに替わればパックの行を出す。
 // 依頼を待つ間が続いたら、本体が `report` に書いた待ちの一言、無ければパックの待ちの行を出す。
+// 続きから起こしてまだ依頼が無い間は、前回の待ちの一言、無ければ迎えの挨拶の札の無い文をおかえりとして出す。
 
 import type {
   CharacterReactions,
   ReactionKind,
   ReactionLine,
 } from "../character-pack/character-reaction.ts"
-import { type WelcomeHead, welcomeGreetingLine } from "../recommendation/welcome-greeting.ts"
+import {
+  NO_WELCOME_HEAD,
+  type WelcomeHead,
+  welcomeGreetingLine,
+} from "../recommendation/welcome-greeting.ts"
 import { conversationMoment } from "./conversation-moment.ts"
+import type { ReportWaitingLine } from "./session-event.ts"
 import type { SessionRecord, SessionState } from "./session-state.ts"
 
 export type ShownReaction =
@@ -26,6 +32,7 @@ export const WAITING_LINE_DELAY_MS = 120_000
 
 const NO_SHOWN_REACTION = { kind: "none" } as const satisfies ShownReaction
 const WRITING_REACTION = { kind: "writing" } as const satisfies ShownReaction
+const NO_WAITING_LINE = { kind: "none" } as const satisfies ReportWaitingLine
 
 /**
  * `head` は迎える口の先頭の札で、迎えの挨拶の名指しに使う。
@@ -44,6 +51,8 @@ export function shownReaction(state: SessionState, head: WelcomeHead, now: numbe
         state.nextTurnId,
         head,
       )
+    case "welcome-back":
+      return shownWelcomeBack(state, state.character.reactions)
     case "idle":
       return shownWaitingLine(state.records, state.character.reactions, state.nextTurnId)
     case "none":
@@ -63,11 +72,15 @@ export function waitingLineDueAt(state: SessionState): number | undefined {
   if (state.chatMode || state.turn.kind !== "finished" || conversationMoment(state) !== "deliver") {
     return undefined
   }
-  const lastRequest = state.records.findLast(isRequestRecord)
-  if (lastRequest === undefined || lastRequest.time.kind === "restored") {
+  if (!state.records.some(isRequestRecord) || isResumedWithoutRequest(state.records)) {
     return undefined
   }
   return state.turn.finishedAt + WAITING_LINE_DELAY_MS
+}
+
+/** いちばん新しい依頼が組み直した記録か（続きから起こして、まだ依頼を送っていない）。 */
+function isResumedWithoutRequest(records: readonly SessionRecord[]): boolean {
+  return records.findLast(isRequestRecord)?.time.kind === "restored"
 }
 
 /** 迎えるときの吹き出し。挨拶の状態（`none` / `writing` / `written` / `fallback`）で出し分ける。 */
@@ -93,23 +106,42 @@ function shownWelcomeReaction(
   }
 }
 
+/**
+ * 続きから起こしてまだ依頼が無い間の吹き出し（おかえり）。
+ * 前回の待ちの一言、無ければ迎えの挨拶の札の無い文（迎える口の札が出ない局面のため）。
+ */
+function shownWelcomeBack(state: SessionState, reactions: CharacterReactions): ShownReaction {
+  const waitingLine = lastWaitingLine(state.records)
+  return waitingLine.kind === "speech"
+    ? { kind: "shown", reaction: "welcome", line: reactionLineOf(waitingLine) }
+    : shownWelcomeReaction(state.welcomeGreeting, reactions, state.nextTurnId, NO_WELCOME_HEAD)
+}
+
 /** 依頼を待つ間の吹き出し。いちばん新しい依頼より後の最後の `report` の待ちの一言、無ければパックの待ちの行。 */
 function shownWaitingLine(
   records: readonly SessionRecord[],
   reactions: CharacterReactions,
   nextTurnId: number,
 ): ShownReaction {
+  const waitingLine = lastWaitingLine(records)
+  return waitingLine.kind === "speech"
+    ? { kind: "shown", reaction: "idle", line: reactionLineOf(waitingLine) }
+    : pickLine(reactions, "idle", nextTurnId)
+}
+
+/** いちばん新しい依頼より後の最後の `report` の待ちの一言。`report` が無ければ書かれていないのと同じ `none`。 */
+function lastWaitingLine(records: readonly SessionRecord[]): ReportWaitingLine {
   const report = records
     .slice(records.findLastIndex(isRequestRecord) + 1)
     .findLast((record) => record.kind === "report")
-  if (report?.kind === "report" && report.waitingLine.kind === "speech") {
-    const { text, expression } = report.waitingLine
-    return { kind: "shown", reaction: "idle", line: { text, expression } }
-  }
-  return pickLine(reactions, "idle", nextTurnId)
+  return report?.kind === "report" ? report.waitingLine : NO_WAITING_LINE
 }
 
-function reactionKindOf(state: SessionState, now: number): ReactionKind | "none" {
+function reactionLineOf({ text, expression }: ReactionLine): ReactionLine {
+  return { text, expression }
+}
+
+function reactionKindOf(state: SessionState, now: number): ReactionKind | "welcome-back" | "none" {
   if (state.apiTrouble.kind === "retrying") {
     return "retrying"
   }
@@ -122,6 +154,9 @@ function reactionKindOf(state: SessionState, now: number): ReactionKind | "none"
     case "stumble":
       return isLimited(state) ? "limited" : "failed"
     case "deliver": {
+      if (isResumedWithoutRequest(state.records)) {
+        return "welcome-back"
+      }
       const dueAt = waitingLineDueAt(state)
       return dueAt !== undefined && now >= dueAt ? "idle" : "none"
     }

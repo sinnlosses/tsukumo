@@ -589,6 +589,40 @@ describe("createSessionLaunch", () => {
     )
   })
 
+  it.each<[string, Partial<SessionLaunchPorts<Pack>>, readonly SessionEvent["kind"][]]>([
+    ["続きから起こした", {}, ["utterance"]],
+    [
+      "新規で起こした",
+      { findResumeSession: (): Promise<SessionStart> => Promise.resolve({ kind: "new" }) },
+      [],
+    ],
+    [
+      "履歴が読めなかった",
+      { restoreEvents: () => Promise.reject(new Error("架空の読み取り失敗")) },
+      [],
+    ],
+  ])(
+    "駆動を起こす口に渡す restored は、%s代の流し終えた履歴で解ける",
+    async (_, overrides, kinds) => {
+      let restored: Promise<readonly SessionEvent[]> = Promise.resolve([])
+      const harness = createHarness({
+        ...overrides,
+        startDriver: (_seed, _onEvent, given) => {
+          restored = given
+          return createStubDriver().driver
+        },
+      })
+
+      await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+        selection: { by: "initial" },
+        chat: undefined,
+        resume: { by: "latest" },
+      })
+
+      expect((await restored).map((event) => event.kind)).toEqual(kinds)
+    },
+  )
+
   it("復元は別の口（onRestoredEvents）へまとめて1回で流れ、駆動のイベントと区別できる", async () => {
     const harness = createHarness({
       restoreEvents: () =>

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  AWAY_BANDS,
+  awayBandOf,
   parseWelcomeGreeting,
   timeBandOf,
   WELCOME_GREETING_CHARS,
@@ -17,6 +19,7 @@ const MATERIAL: WelcomeGreetingMaterial = {
     { name: "excited", label: "架空のわくわく" },
   ],
   calendar: { month: 10, dayOfWeek: 6, hour: 8 },
+  visit: { kind: "start" },
   recent: [{ withCard: "架空の前の挨拶、{札} だ", withoutCard: "架空の前の挨拶" }],
 }
 
@@ -36,6 +39,21 @@ describe("welcomeGreetingQuery", () => {
     expect(query.prompt).toContain("- 時刻の帯: 朝")
     expect(query.prompt).toContain("- excited: 架空のわくわく")
     expect(query.prompt).toContain("- 架空の前の挨拶、{札} だ")
+  })
+
+  it("新しく起こしたときは迎え方だけを書き、前回からの行を書かない", () => {
+    const query = welcomeGreetingQuery(MATERIAL)
+
+    expect(query.prompt).toContain("- 迎え方: 新しく始める")
+    expect(query.prompt).not.toContain("- 前回から:")
+  })
+
+  it("続きから起こしたときは、続きからの印と前回からの経過の帯を書き、指示文に続きから迎えるときの節がある", () => {
+    const query = welcomeGreetingQuery({ ...MATERIAL, visit: { kind: "resume", away: "数時間" } })
+
+    expect(query.prompt).toContain("- 迎え方: 前回の続きに戻ってきた")
+    expect(query.prompt).toContain("- 前回から: 数時間")
+    expect(query.systemPrompt).toContain("## 続きから迎えるとき")
   })
 
   it("人格が空なら指示文だけ", () => {
@@ -92,5 +110,18 @@ describe("timeBandOf", () => {
     [23, "夜"],
   ])("%d 時は %s", (hour, band) => {
     expect(timeBandOf(hour)).toBe(band)
+  })
+})
+
+describe("awayBandOf", () => {
+  it("境目の手前はその帯、境目ちょうどは次の帯", () => {
+    for (const [index, entry] of AWAY_BANDS.entries()) {
+      expect(awayBandOf(entry.belowMs - 1)).toBe(entry.band)
+      expect(awayBandOf(entry.belowMs)).toBe(AWAY_BANDS[index + 1]?.band ?? "1週間以上")
+    }
+  })
+
+  it("0 は最初の帯", () => {
+    expect(awayBandOf(0)).toBe("1時間たらず")
   })
 })

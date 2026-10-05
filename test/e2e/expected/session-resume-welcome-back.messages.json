@@ -1,0 +1,50 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": "<protocol-version>"
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": "<コマンド一覧>",
+      "terminalSlashCommands": "<コマンド一覧>"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": "<コマンド一覧>"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "welcome-greeting-changed",
+      "state": {
+        "kind": "written",
+        "greeting": {
+          "withCard": "おかえり、{札} からどう？架空の挨拶。",
+          "withoutCard": "おかえり、また会えたね。架空の挨拶。",
+          "expression": "excited"
+        }
+      }
+    }
+  }
+]

@@ -96,10 +96,14 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
    * 雑談と仕事は別のセッションなので、引く印も分かれる。
    */
   readonly findResumeSession: (pack: Pack, chat: boolean) => Promise<SessionStart>
-  /** 駆動を1つ起こす（本物か偽物かはここが選ぶ）。 */
+  /**
+   * 駆動を1つ起こす（本物か偽物かはここが選ぶ）。
+   * `restored` は、その代で組み直して流し終えた履歴で解ける（新規で起こした・読めなかったときは空）。
+   */
   readonly startDriver: (
     seed: SessionLaunchSeed<Pack>,
     onEvent: (event: SessionEvent) => void,
+    restored: Promise<readonly SessionEvent[]>,
   ) => SessionDriver
   /**
    * いま切り替え先として選べるセッションを一覧にする（同じパックの、同じモードのものだけ）。読めなかったときは空。
@@ -182,13 +186,20 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
       })
     }
     announceSessions(await ports.listSessions(pack, chat))
-    const driver = ports.startDriver({ pack, start, chat, sessionDefault }, onEvent)
+    const restored = Promise.withResolvers<readonly SessionEvent[]>()
+    const driver = ports.startDriver(
+      { pack, start, chat, sessionDefault },
+      onEvent,
+      restored.promise,
+    )
 
     // 流し終えてから駆動を返す。
     // 起こし直しの `hello` は駆動が返るのを待って配るので、ここで待たないと履歴の無い `hello` が先に出て、立ち絵の表情が既定から続きの表情へもう一度飛ぶ。
-    if (start.kind === "resume") {
-      await replayRestoredSession(ports, start.sessionId, pack, onRestoredEvents)
-    }
+    restored.resolve(
+      start.kind === "resume"
+        ? await replayRestoredSession(ports, start.sessionId, pack, onRestoredEvents)
+        : [],
+    )
     void announceRefreshedSessions(ports, pack, chat, announceSessions)
 
     return driver
@@ -228,15 +239,18 @@ async function announceRefreshedSessions<Pack extends NamedCharacterPack>(
  * 前のセッションの記録を組み直して流す。
  * claude 側の会話は続きから始めること自体が繋いでいるので、ここが失敗しても駆動は動き続ける（読めなかったぶんの履歴が画面に出ないだけ）。
  * 組み上がるのはこのプロセスのメモリの中だけで、どこにも書き出さない。
+ * 戻り値は流した並び（読めなかったときは空）。
  */
 async function replayRestoredSession<Pack extends NamedCharacterPack>(
   ports: SessionLaunchPorts<Pack>,
   sessionId: string,
   pack: Pack,
   onRestoredEvents: (events: readonly SessionEvent[]) => void,
-): Promise<void> {
+): Promise<readonly SessionEvent[]> {
   try {
-    onRestoredEvents(await ports.restoreEvents(sessionId, pack))
+    const events = await ports.restoreEvents(sessionId, pack)
+    onRestoredEvents(events)
+    return events
   } catch (error) {
     // 履歴が出ないだけで、セッションそのものは続く。
     ports.diagnosticLog.append([
@@ -246,5 +260,6 @@ async function replayRestoredSession<Pack extends NamedCharacterPack>(
         error,
       ),
     ])
+    return []
   }
 }

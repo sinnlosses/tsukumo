@@ -87,9 +87,9 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     viewPort: options.viewPort,
     firstViewer: firstViewer.promise,
     diagnosticLog: options.diagnosticLog,
-    onLaunch: (seed, onEvent) => {
+    onLaunch: (seed, onEvent, restored) => {
       diary.noteLaunched(seed)
-      return welcomeGreeting.noteLaunched(seed, onEvent)
+      return welcomeGreeting.noteLaunched(seed, onEvent, restored)
     },
   })
   const chat = wireChat(context, character)

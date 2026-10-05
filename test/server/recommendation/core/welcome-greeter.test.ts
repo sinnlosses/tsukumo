@@ -16,6 +16,7 @@ const MATERIAL = {
   persona: "架空の人格",
   expressions: [{ name: "default", label: "架空のふつう" }],
   calendar: { month: 1, dayOfWeek: 1, hour: 12 },
+  visit: { kind: "start" },
 } as const
 
 const OUTPUT = {

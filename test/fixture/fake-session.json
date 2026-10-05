@@ -7174,6 +7174,45 @@
           "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
         }
       ]
+    },
+    {
+      "name": "session-resume-waiting-line",
+      "resume": "fake-past-session-waiting-line",
+      "steps": []
+    },
+    {
+      "name": "session-resume-welcome-back",
+      "resume": "fake-past-session",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "welcome-greeting-changed",
+            "state": {
+              "kind": "written",
+              "greeting": {
+                "withCard": "おかえり、{札} からどう？架空の挨拶。",
+                "withoutCard": "おかえり、また会えたね。架空の挨拶。",
+                "expression": "excited"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "session-resume-request",
+      "resume": "fake-past-session-waiting-line",
+      "steps": [
+        {
+          "afterMs": 3000,
+          "event": {
+            "kind": "request",
+            "text": "続きから起こしたあとの架空の依頼",
+            "images": []
+          }
+        }
+      ]
     }
   ],
   "pastSessions": [
@@ -7225,6 +7264,59 @@
                 "input": {
                   "conclusion": "前のセッションの架空の結論",
                   "body": "前のセッションの架空の本文。"
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        }
+      ]
+    },
+    {
+      "sessionId": "fake-past-session-waiting-line",
+      "messages": [
+        {
+          "type": "user",
+          "uuid": "past-wl-u-1",
+          "session_id": "fake-past-session-waiting-line",
+          "message": { "role": "user", "content": "前のセッションの架空の依頼（待ちの一言つき）" },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-wl-a-1",
+          "session_id": "fake-past-session-waiting-line",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-wl-speak-1",
+                "name": "mcp__tsukumo__speak",
+                "input": { "text": "前のセッションの架空のセリフだよ。", "expression": "default" }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-wl-a-2",
+          "session_id": "fake-past-session-waiting-line",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-wl-report-1",
+                "name": "mcp__tsukumo__report",
+                "input": {
+                  "conclusion": "前のセッションの架空の結論",
+                  "closing": { "text": "前のセッションの架空の締め。", "expression": "proud" },
+                  "waitingLine": {
+                    "text": "おかえり。前回の架空の待ちの一言だよ。",
+                    "expression": "curious"
+                  }
                 }
               }
             ]

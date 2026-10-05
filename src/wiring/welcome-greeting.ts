@@ -1,5 +1,6 @@
 // 迎えの挨拶の配線。新しく起こすセッションごとに、起こす代のパックで挨拶を背景で書かせ、
-// 続きから起こした代も含めて、その代の受け取り口に `/clear` が流れるたびに書き直す。
+// 続きから起こした代は前回の待ちの一言が無いときだけおかえりを書かせ、
+// どちらの代も、その代の受け取り口に `/clear` が流れるたびに書き直す。
 
 import { localCalendarAt } from "../server/adapter/local-time.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
@@ -8,8 +9,13 @@ import {
   readRecentWelcomeGreetings,
   writeRecentWelcomeGreetings,
 } from "../server/recommendation/adapter/welcome-greeting-memory.ts"
+import { resumedWelcome } from "../server/recommendation/core/resumed-welcome.ts"
 import { createWelcomeGreeter } from "../server/recommendation/core/welcome-greeter.ts"
-import type { WelcomeGreetingMaterial } from "../server/recommendation/core/welcome-greeting.ts"
+import {
+  START_VISIT,
+  type WelcomeGreetingMaterial,
+  type WelcomeVisit,
+} from "../server/recommendation/core/welcome-greeting.ts"
 import type { SessionLaunchSeed } from "../server/session/core/session-launch.ts"
 import { expressionChoices } from "../shared/character-pack/expression-choice.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
@@ -22,20 +28,19 @@ const NO_OBSERVER = (): void => {
 
 export function wireWelcomeGreeting(context: WiringContext): {
   /**
-   * 代を起こすたびに呼ぶ。`onEvent` はその代の受け取り口。
+   * 代を起こすたびに呼ぶ。`onEvent` はその代の受け取り口、`restored` はその代で組み直した履歴。
    * 戻り値は、その代の受け取り口に流れた出来事を観る口（`/clear` が来たら書き直す）。
-   * 迎える局面になるのは、新しく起こした仕事のセッションと、仕事のセッションで `/clear` したとき。
-   * 起こしたときに書かせるのは新しく起こすときだけで、続きから起こした代も `/clear` は観る。
    * 疑似セッション・雑談では書かせない。
    */
   readonly noteLaunched: (
     seed: SessionLaunchSeed<CharacterPack>,
     onEvent: (event: SessionEvent) => void,
+    restored: Promise<readonly SessionEvent[]>,
   ) => (event: SessionEvent) => void
 } {
   const { cwd, inheritedEnv } = context
   return {
-    noteLaunched: (seed, onEvent) => {
+    noteLaunched: (seed, onEvent, restored) => {
       if (context.fakeSession !== undefined || seed.chat) {
         return NO_OBSERVER
       }
@@ -49,17 +54,28 @@ export function wireWelcomeGreeting(context: WiringContext): {
           onEvent({ kind: "welcome-greeting-changed", state })
         },
       })
-      const material = (): Omit<WelcomeGreetingMaterial, "recent"> => ({
+      const material = (visit: WelcomeVisit): Omit<WelcomeGreetingMaterial, "recent"> => ({
         persona: seed.pack.persona ?? "",
         expressions: expressionChoices(seed.pack.definition),
         calendar: localCalendarAt(context.now()),
+        visit,
       })
-      if (seed.start.kind === "new") {
-        greeter.write(material())
+      switch (seed.start.kind) {
+        case "new":
+          greeter.write(material(START_VISIT))
+          break
+        case "resume":
+          void restored.then((events) => {
+            const welcome = resumedWelcome(events, context.now())
+            if (welcome.kind === "write") {
+              greeter.write(material({ kind: "resume", away: welcome.away }))
+            }
+          })
+          break
       }
       return (event) => {
         if (event.kind === "conversation-cleared") {
-          greeter.write(material())
+          greeter.write(material(START_VISIT))
         }
       }
     },
