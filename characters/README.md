@@ -116,10 +116,7 @@ characters/
     "image": "キャラビューに敷く画像",
     "veil": 0.75
   },
-  "diaryFont": "日記の本文に効かせる書体のファイル名",
-  "reactions": {
-    "failed": [{ "text": "失敗で閉じたときの一言", "expression": "sad" }]
-  }
+  "diaryFont": "日記の本文に効かせる書体のファイル名"
 }
 ```
 
@@ -172,9 +169,9 @@ characters/
   パックに同梱した書体ファイル（`.woff2` / `.woff` / `.ttf` / `.otf`）だけを指せる——外部フォント
   は取らない。**キャラクター編集の画面から差し替える口は無い**（手でこのファイルと書体ファイルを
   置く）
-- **`reactions` は機械の出来事への反応**（迎える `welcome`・再試行 `retrying`・
-  失敗 `failed`・利用上限 `limited`。形と出る条件は `docs/architecture/character-pack.md`「反応のセリフ」）。
-  **書かなくてよい**——無ければその出来事で吹き出しは出ない。画面から書く口は無い
+- **再試行・失敗・利用上限・待ちのときの一言は書かない**。`persona.md` の口調で、迎えの挨拶と一緒に
+  セッションごとに書かれる（`docs/architecture/display.md` 4.2「出力の分離（セリフと詳細）」）。
+  前の版の `reactions` の節が残っていても読まれない
 
 ### `persona.md`
 

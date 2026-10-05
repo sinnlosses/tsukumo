@@ -7,7 +7,6 @@ import {
   writeHashRoute,
   type ViewedTurn,
 } from "../../../../../../../src/browser/stores/location-hash.ts"
-import { NO_REACTIONS } from "../../../../../../../src/shared/character-pack/character-reaction.ts"
 import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -31,12 +30,24 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
   ...shownPortraits({ default: "/character/default.png" }),
 })
 
-const CHARACTER_WITH_REACTIONS: NonNullable<SessionState["character"]> = {
+const CHARACTER_WITH_THINKING: NonNullable<SessionState["character"]> = {
   ...FIXTURE_CHARACTER,
   ...shownPortraits({ default: "/character/default.png", thinking: "/character/thinking.png" }),
-  reactions: {
-    ...NO_REACTIONS,
-    retrying: [{ text: "架空の再試行反応", expression: "thinking" }],
+}
+
+/** 迎えの挨拶と同じ答えで、反応の行も書けた姿。 */
+const WRITTEN_GREETING: SessionState["welcomeGreeting"] = {
+  kind: "written",
+  greeting: {
+    withCard: "架空の挨拶 {札}",
+    withoutCard: "架空の挨拶",
+    expression: "default",
+    reactions: {
+      retrying: { text: "架空の再試行反応", expression: "thinking" },
+      failed: { text: "架空の失敗の反応", expression: "sad" },
+      limited: { text: "架空の上限の反応", expression: "default" },
+      idle: { text: "架空の待ちの反応", expression: "default" },
+    },
   },
 }
 
@@ -131,7 +142,8 @@ describe("CharacterView", () => {
           records,
           speeches: [],
           turn: { kind: "running", startedAt: 0 },
-          character: CHARACTER_WITH_REACTIONS,
+          character: CHARACTER_WITH_THINKING,
+          welcomeGreeting: WRITTEN_GREETING,
         },
         0,
       ),
@@ -156,7 +168,8 @@ describe("CharacterView", () => {
         error: "unknown",
       },
       nextTurnId: 1,
-      character: CHARACTER_WITH_REACTIONS,
+      character: CHARACTER_WITH_THINKING,
+      welcomeGreeting: WRITTEN_GREETING,
     })
 
     const balloon = document.querySelector(".balloon")
@@ -245,10 +258,8 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
         finishedAt: 1,
         ending: { kind: "failed", failure: { kind: "execution-error" } },
       },
-      character: {
-        ...CHARACTER_WITH_PROUD,
-        reactions: { ...NO_REACTIONS, failed: [{ text: "架空の失敗の反応", expression: "sad" }] },
-      },
+      character: CHARACTER_WITH_PROUD,
+      welcomeGreeting: WRITTEN_GREETING,
     })
     expect(document.querySelector("[data-reaction='failed']")).not.toBeNull()
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("sad")

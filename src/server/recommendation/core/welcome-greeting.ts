@@ -1,21 +1,25 @@
-// 迎えの挨拶の問い合わせの指示文・依頼の文面・出力の形（JSON Schema）・出力の検査。
+// 迎えの挨拶（と同じ答えで書かせる反応の行）の問い合わせの指示文・依頼の文面・出力の形（JSON Schema）・出力の検査。
 // 純関数と定数だけで、`query()` は起こさない。
 // 材料は人格・表情の選択肢・暦・直近の挨拶・迎え方（続きからなら前回からの経過の帯）だけで、
 // 会話から導いたもの（前のセッションの要約・タスク一覧）を入れない。
 
-import { isPlainObject } from "remeda"
+import { fromKeys, isPlainObject } from "remeda"
 
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
+import type { Expression } from "../../../shared/character-pack/expression.ts"
 import {
+  type ReactionLine,
   WELCOME_GREETING_CARD_MARK,
   type WelcomeGreeting,
+  WRITTEN_REACTION_KINDS,
+  type WrittenReactions,
 } from "../../../shared/recommendation/welcome-greeting.ts"
 import type { StructuredQuery } from "./structured-query.ts"
 
 /** 問い合わせを起こすモデル（軽いもの）。 */
 export const WELCOME_GREETING_MODEL = "haiku"
 
-/** 挨拶1つの文の上限（文字。差し込み口も数える）。 */
+/** 挨拶1つの文と反応の1行の上限（文字。差し込み口も数える）。 */
 export const WELCOME_GREETING_CHARS = 60
 
 /** 書き始め（問い合わせ直しを含めた全体）からの締め切り（ミリ秒）。 */
@@ -72,17 +76,23 @@ export type WelcomeGreetingMaterial = {
   readonly recent: readonly WelcomeGreetingText[]
 }
 
-const WELCOME_GREETING_INSTRUCTION = `あなたはいま、作業を始めようとしている利用者を迎える挨拶を書く役目だけを持つ。口調・一人称・相手の呼び方は上の人格のとおりにする。
+const WELCOME_GREETING_INSTRUCTION = `あなたはいま、作業を始めようとしている利用者を迎える挨拶と、このセッションのあいだ決まった場面で吹き出しに出す一言を書く役目だけを持つ。口調・一人称・相手の呼び方は上の人格のとおりにする。
 
 ## 書くもの
 
 - \`withCard\`: いちばんのおすすめの始め方（札）があるときの挨拶。札の名前を書く位置に \`${WELCOME_GREETING_CARD_MARK}\` をちょうど1回書く（名前は画面が差し込む。タスクの ID か「前回の続き」が入る）。札を押せばすぐ取りかかれることに触れてよい
 - \`withoutCard\`: 札が無いときの挨拶。\`${WELCOME_GREETING_CARD_MARK}\` を書かない
 - \`expression\`: 挨拶に合う表情を、表情の選択肢の名前から1つ
+- \`reactions\`: このセッションのあいだ、あなたがまだ喋れない・もう喋れない場面で吹き出しに出す一言。それぞれ \`text\`（一言）と \`expression\`（合う表情を表情の選択肢の名前から1つ）を書く
+  - \`retrying\`: 向こう（API）が混んでいて、待ってから呼び直しているあいだ
+  - \`failed\`: 作業が途中の失敗で止まったとき
+  - \`limited\`: 利用上限に達して、上限が戻るまで続けられないとき（戻る時刻は画面が出すので書かない）
+  - \`idle\`: ひと仕事を終えて、利用者の次の依頼を待つ間がしばらく続いたとき
 
 ## 書き方
 
-- どちらも1〜2文、${String(WELCOME_GREETING_CHARS)}字まで、改行を含めない
+- 挨拶の2つと \`reactions\` の4つの \`text\` は、どれも1〜2文、${String(WELCOME_GREETING_CHARS)}字まで、改行を含めない
+- \`reactions\` の \`text\` には \`${WELCOME_GREETING_CARD_MARK}\` を書かない。迎え方・暦に合わせず、このセッションのどの時点で出ても通じる一言にする
 - 材料の月・曜日・時刻の帯は、挨拶の手がかりに使ってよい（毎回すべてに触れなくてよい）
 - 直近の挨拶と同じ言い回し・同じ書き出しを避け、毎回ちがう印象にする
 - 札の中身は知らないので、中身を推し量って書かない
@@ -90,7 +100,7 @@ const WELCOME_GREETING_INSTRUCTION = `あなたはいま、作業を始めよう
 
 ## 続きから迎えるとき
 
-材料の迎え方が「前回の続きに戻ってきた」なら、どちらの文も、前回の作業の続きに戻ってきた利用者へのおかえりとして書く。
+材料の迎え方が「前回の続きに戻ってきた」なら、挨拶のどちらの文も、前回の作業の続きに戻ってきた利用者へのおかえりとして書く。
 
 - 前回からの経過の帯は手がかりに使ってよい（「分からない」なら触れない）
 - 前回に何をしたかは知らないので、中身を推し量って書かない`
@@ -126,7 +136,8 @@ export function welcomeGreetingQuery(material: WelcomeGreetingMaterial): Structu
 
 /**
  * 受け取った `structured_output` を検査して挨拶にする。
- * 空・改行入り・上限超え・差し込み口の数の違い・知らない表情・直近と同じ文のどれかに当たれば `undefined`（何も配らない側に倒す）。
+ * 挨拶か反応の行のどれか1つでも、空・改行入り・上限超え・差し込み口の数の違い・知らない表情・欠けに当たるか、
+ * 挨拶が直近と同じ文なら `undefined`（何も配らない側に倒す）。
  */
 export function parseWelcomeGreeting(
   value: unknown,
@@ -137,8 +148,14 @@ export function parseWelcomeGreeting(
   }
   const withCard = toSentence(value.withCard)
   const withoutCard = toSentence(value.withoutCard)
-  const expression = material.expressions.find((choice) => choice.name === value.expression)
-  if (withCard === undefined || withoutCard === undefined || expression === undefined) {
+  const expression = toExpression(value.expression, material.expressions)
+  const reactions = toWrittenReactions(value.reactions, material.expressions)
+  if (
+    withCard === undefined ||
+    withoutCard === undefined ||
+    expression === undefined ||
+    reactions === undefined
+  ) {
     return undefined
   }
   if (markCount(withCard) !== 1 || markCount(withoutCard) !== 0) {
@@ -147,7 +164,7 @@ export function parseWelcomeGreeting(
   const repeated = material.recent.some(
     (text) => text.withCard === withCard || text.withoutCard === withoutCard,
   )
-  return repeated ? undefined : { withCard, withoutCard, expression: expression.name }
+  return repeated ? undefined : { withCard, withoutCard, expression, reactions }
 }
 
 /** 時（0〜23）を時刻の帯の言葉にする。 */
@@ -184,16 +201,69 @@ function visitLines(visit: WelcomeVisit): readonly string[] {
 function welcomeGreetingSchema(
   expressions: readonly ExpressionChoice[],
 ): Readonly<Record<string, unknown>> {
+  const expression = { type: "string", enum: expressions.map((choice) => choice.name) }
+  const reactionLine = {
+    type: "object",
+    properties: { text: { type: "string" }, expression },
+    required: ["text", "expression"],
+    additionalProperties: false,
+  }
   return {
     type: "object",
     properties: {
       withCard: { type: "string" },
       withoutCard: { type: "string" },
-      expression: { type: "string", enum: expressions.map((choice) => choice.name) },
+      expression,
+      reactions: {
+        type: "object",
+        properties: fromKeys(WRITTEN_REACTION_KINDS, () => reactionLine),
+        required: WRITTEN_REACTION_KINDS,
+        additionalProperties: false,
+      },
     },
-    required: ["withCard", "withoutCard", "expression"],
+    required: ["withCard", "withoutCard", "expression", "reactions"],
     additionalProperties: false,
   }
+}
+
+function toWrittenReactions(
+  value: unknown,
+  expressions: readonly ExpressionChoice[],
+): WrittenReactions | undefined {
+  if (!isPlainObject(value)) {
+    return undefined
+  }
+  const retrying = toReactionLine(value.retrying, expressions)
+  const failed = toReactionLine(value.failed, expressions)
+  const limited = toReactionLine(value.limited, expressions)
+  const idle = toReactionLine(value.idle, expressions)
+  return retrying === undefined ||
+    failed === undefined ||
+    limited === undefined ||
+    idle === undefined
+    ? undefined
+    : { retrying, failed, limited, idle }
+}
+
+function toReactionLine(
+  value: unknown,
+  expressions: readonly ExpressionChoice[],
+): ReactionLine | undefined {
+  if (!isPlainObject(value)) {
+    return undefined
+  }
+  const text = toSentence(value.text)
+  const expression = toExpression(value.expression, expressions)
+  return text === undefined || expression === undefined || markCount(text) !== 0
+    ? undefined
+    : { text, expression }
+}
+
+function toExpression(
+  value: unknown,
+  expressions: readonly ExpressionChoice[],
+): Expression | undefined {
+  return expressions.find((choice) => choice.name === value)?.name
 }
 
 /** 空でない・改行を含まない・{@link WELCOME_GREETING_CHARS} 字以下の1行（前後の空白は落とす）。 */

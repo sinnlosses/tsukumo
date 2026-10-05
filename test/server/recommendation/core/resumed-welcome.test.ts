@@ -40,35 +40,29 @@ function span(finishedAt: number): SessionEvent {
 }
 
 describe("resumedWelcome", () => {
-  it("最後の依頼より後の report に待ちの一言があれば、書かせない", () => {
-    expect(
-      resumedWelcome([REQUEST, report(WAITING_LINE), FINISHED, span(NOW - HOUR_MS)], NOW),
-    ).toEqual({ kind: "waiting-line" })
-  })
-
-  it("待ちの一言が無ければ、前回の最後の時刻からの経過の帯で書かせる", () => {
+  it("組み直した依頼があれば、前回の最後の時刻からの経過の帯で続きから迎える", () => {
     expect(
       resumedWelcome([REQUEST, report({ kind: "none" }), FINISHED, span(NOW - 2 * HOUR_MS)], NOW),
-    ).toEqual({ kind: "write", away: "数時間" })
+    ).toEqual({ kind: "resume", away: "数時間" })
   })
 
-  it("最後の依頼より前の report の待ちの一言は見ない", () => {
+  it("前回の最後の report に待ちの一言があっても、続きから迎える", () => {
     expect(
-      resumedWelcome([REQUEST, report(WAITING_LINE), FINISHED, REQUEST, FINISHED], NOW),
-    ).toEqual({ kind: "write", away: "分からない" })
+      resumedWelcome([REQUEST, report(WAITING_LINE), FINISHED, span(NOW - HOUR_MS)], NOW),
+    ).toEqual({ kind: "resume", away: "数時間" })
   })
 
   it("最後の時刻が読めなければ、帯は「分からない」", () => {
     expect(resumedWelcome([REQUEST, FINISHED], NOW)).toEqual({
-      kind: "write",
+      kind: "resume",
       away: "分からない",
     })
   })
 
-  it("組み直した依頼が無ければ迎えない", () => {
-    expect(resumedWelcome([], NOW)).toEqual({ kind: "none" })
+  it("組み直した依頼が無ければ、新しく始めるのと同じに迎える", () => {
+    expect(resumedWelcome([], NOW)).toEqual({ kind: "start" })
     expect(resumedWelcome([{ kind: "utterance", text: "架空の本文" }], NOW)).toEqual({
-      kind: "none",
+      kind: "start",
     })
   })
 })

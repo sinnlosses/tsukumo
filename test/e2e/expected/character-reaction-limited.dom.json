@@ -25,8 +25,8 @@
           "tag": "div",
           "attributes": {
             "role": "img",
-            "aria-label": "つくもの精霊（しょげ）",
-            "data-expression": "sad",
+            "aria-label": "つくもの精霊（たいくつ）",
+            "data-expression": "bored",
             "data-outfit": "heavy",
             "data-motion": "reading"
           },
@@ -44,7 +44,7 @@
           },
           "children": [
             "つくもの精霊",
-            "今日はここまでみたい。上限が戻るまで、ひと休みしよう。"
+            "架空の利用上限の一言。"
           ]
         },
         {

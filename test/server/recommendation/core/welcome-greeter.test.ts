@@ -23,6 +23,12 @@ const OUTPUT = {
   withCard: "架空の挨拶、{札} から",
   withoutCard: "架空の挨拶",
   expression: "default",
+  reactions: {
+    retrying: { text: "架空の再試行", expression: "default" },
+    failed: { text: "架空の失敗", expression: "default" },
+    limited: { text: "架空の上限", expression: "default" },
+    idle: { text: "架空の待ち", expression: "default" },
+  },
 }
 
 const NO_TIMEOUT = 60_000
@@ -86,7 +92,7 @@ describe("greetWelcome", () => {
     expect(emitted[0]).toEqual({ kind: "writing" })
   })
 
-  it("検査を通れば、直近の先頭へ書いてから written を配る", async () => {
+  it("検査を通れば、直近の先頭へ挨拶の2文だけを書いてから、反応の行ごと written を配る", async () => {
     const old = Array.from({ length: WELCOME_GREETING_RECENT_LIMIT }, (_, index) => ({
       withCard: `架空の古い挨拶${String(index)} {札}`,
       withoutCard: `架空の古い挨拶${String(index)}`,
@@ -127,7 +133,7 @@ describe("greetWelcome", () => {
     expect(written).toHaveLength(1)
   })
 
-  it("問い合わせ直しも失敗したら、fallback を配る", async () => {
+  it("問い合わせ直しも失敗したら、unwritten を配る", async () => {
     const { ports, written, emitted, queries } = harness()
 
     const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
@@ -137,11 +143,11 @@ describe("greetWelcome", () => {
     queries[1]?.fail()
     await promise
 
-    expect(emitted).toEqual([{ kind: "writing" }, { kind: "fallback" }])
+    expect(emitted).toEqual([{ kind: "writing" }, { kind: "unwritten" }])
     expect(written).toEqual([])
   })
 
-  it("検査に落ちたときも問い合わせ直し、2回とも落ちれば fallback を配る", async () => {
+  it("検査に落ちたときも問い合わせ直し、2回とも落ちれば unwritten を配る", async () => {
     const { ports, emitted, queries } = harness()
 
     const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
@@ -151,21 +157,21 @@ describe("greetWelcome", () => {
     queries[1]?.settle({ ...OUTPUT, withCard: "差し込み口なし" })
     await promise
 
-    expect(emitted).toEqual([{ kind: "writing" }, { kind: "fallback" }])
+    expect(emitted).toEqual([{ kind: "writing" }, { kind: "unwritten" }])
   })
 
-  it("締め切りを過ぎたら中断して fallback を配り、その後に届いた答えは配らない", async () => {
+  it("締め切りを過ぎたら中断して unwritten を配り、その後に届いた答えは配らない", async () => {
     const { ports, written, emitted, queries } = harness()
 
     await greetWelcome(ports, MATERIAL, new AbortController().signal, 10)
 
-    expect(emitted).toEqual([{ kind: "writing" }, { kind: "fallback" }])
+    expect(emitted).toEqual([{ kind: "writing" }, { kind: "unwritten" }])
     expect(written).toEqual([])
 
     // 締め切りのあとに答えが来ても、呼び終わった greetWelcome はもう何も配らない。
     queries[0]?.settle(OUTPUT)
     await flush()
-    expect(emitted).toEqual([{ kind: "writing" }, { kind: "fallback" }])
+    expect(emitted).toEqual([{ kind: "writing" }, { kind: "unwritten" }])
   })
 
   it("外から渡した signal を中断すると、結果に関わらず何も配らない（writing のあとに何も続かない）", async () => {

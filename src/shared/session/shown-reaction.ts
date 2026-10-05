@@ -3,20 +3,19 @@
 // 反応は `speechExpression`・`speeches`・`records` に書かない（姿が変われば消えるので、戻す処理が要らない）。
 // 本物の `speak` が届けば、どの出来事の条件も外れて消える。
 // いちばん新しいやり取りについての反応で、過去のターンを見ているかどうかは見ない。
-// 迎えるときは、挨拶を書いている途中は「…」、書けていればその文、控えに替わればパックの行を出す。
+// 迎えるときは、挨拶を書いている途中は「…」、書けていればその文を出し、書けなかったら出さない。
 // 依頼を受けてから最初の `speak` までは「…」を出す。
-// 依頼を待つ間が続いたら、本体が `report` に書いた待ちの一言、無ければパックの待ちの行を出す。
+// 再試行・失敗・利用上限は、迎えの挨拶と同じ答えで書かせた行を出し、書けていなければ出さない。
+// 依頼を待つ間が続いたら、本体が `report` に書いた待ちの一言、無ければ書かせた待ちの行を出す。
 // 続きから起こしてまだ依頼が無い間は、前回の待ちの一言、無ければ迎えの挨拶の札の無い文をおかえりとして出す。
 
-import type {
-  CharacterReactions,
-  ReactionKind,
-  ReactionLine,
-} from "../character-pack/character-reaction.ts"
 import {
   NO_WELCOME_HEAD,
+  type ReactionKind,
+  type ReactionLine,
   type WelcomeHead,
   welcomeGreetingLine,
+  type WrittenReactionKind,
 } from "../recommendation/welcome-greeting.ts"
 import { conversationMoment } from "./conversation-moment.ts"
 import type { ReportWaitingLine } from "./session-event.ts"
@@ -46,22 +45,17 @@ export function shownReaction(state: SessionState, head: WelcomeHead, now: numbe
   const reaction = reactionKindOf(state, now)
   switch (reaction) {
     case "welcome":
-      return shownWelcomeReaction(
-        state.welcomeGreeting,
-        state.character.reactions,
-        state.nextTurnId,
-        head,
-      )
+      return shownWelcomeReaction(state.welcomeGreeting, head)
     case "welcome-back":
-      return shownWelcomeBack(state, state.character.reactions)
+      return shownWelcomeBack(state)
     case "idle":
-      return shownWaitingLine(state.records, state.character.reactions, state.nextTurnId)
+      return shownWaitingLine(state)
     case "accepted":
       return WRITING_REACTION
     case "none":
       return NO_SHOWN_REACTION
     default:
-      return pickLine(state.character.reactions, reaction, state.nextTurnId)
+      return shownWrittenLine(state.welcomeGreeting, reaction)
   }
 }
 
@@ -86,11 +80,9 @@ function isResumedWithoutRequest(records: readonly SessionRecord[]): boolean {
   return records.findLast(isRequestRecord)?.time.kind === "restored"
 }
 
-/** 迎えるときの吹き出し。挨拶の状態（`none` / `writing` / `written` / `fallback`）で出し分ける。 */
+/** 迎えるときの吹き出し。挨拶の状態（`none` / `writing` / `written` / `unwritten`）で出し分ける。 */
 function shownWelcomeReaction(
   welcomeGreeting: SessionState["welcomeGreeting"],
-  reactions: CharacterReactions,
-  nextTurnId: number,
   head: WelcomeHead,
 ): ShownReaction {
   switch (welcomeGreeting.kind) {
@@ -102,8 +94,7 @@ function shownWelcomeReaction(
       }
     case "writing":
       return WRITING_REACTION
-    case "fallback":
-      return pickLine(reactions, "welcome", nextTurnId)
+    case "unwritten":
     case "none":
       return NO_SHOWN_REACTION
   }
@@ -113,23 +104,29 @@ function shownWelcomeReaction(
  * 続きから起こしてまだ依頼が無い間の吹き出し（おかえり）。
  * 前回の待ちの一言、無ければ迎えの挨拶の札の無い文（迎える口の札が出ない局面のため）。
  */
-function shownWelcomeBack(state: SessionState, reactions: CharacterReactions): ShownReaction {
+function shownWelcomeBack(state: SessionState): ShownReaction {
   const waitingLine = lastWaitingLine(state.records)
   return waitingLine.kind === "speech"
     ? { kind: "shown", reaction: "welcome", line: reactionLineOf(waitingLine) }
-    : shownWelcomeReaction(state.welcomeGreeting, reactions, state.nextTurnId, NO_WELCOME_HEAD)
+    : shownWelcomeReaction(state.welcomeGreeting, NO_WELCOME_HEAD)
 }
 
-/** 依頼を待つ間の吹き出し。いちばん新しい依頼より後の最後の `report` の待ちの一言、無ければパックの待ちの行。 */
-function shownWaitingLine(
-  records: readonly SessionRecord[],
-  reactions: CharacterReactions,
-  nextTurnId: number,
-): ShownReaction {
-  const waitingLine = lastWaitingLine(records)
+/** 依頼を待つ間の吹き出し。いちばん新しい依頼より後の最後の `report` の待ちの一言、無ければ書かせた待ちの行。 */
+function shownWaitingLine(state: SessionState): ShownReaction {
+  const waitingLine = lastWaitingLine(state.records)
   return waitingLine.kind === "speech"
     ? { kind: "shown", reaction: "idle", line: reactionLineOf(waitingLine) }
-    : pickLine(reactions, "idle", nextTurnId)
+    : shownWrittenLine(state.welcomeGreeting, "idle")
+}
+
+/** 迎えの挨拶と同じ答えで書かせた行。挨拶が書けていなければ出さない。 */
+function shownWrittenLine(
+  welcomeGreeting: SessionState["welcomeGreeting"],
+  reaction: WrittenReactionKind,
+): ShownReaction {
+  return welcomeGreeting.kind === "written"
+    ? { kind: "shown", reaction, line: welcomeGreeting.greeting.reactions[reaction] }
+    : NO_SHOWN_REACTION
 }
 
 /** いちばん新しい依頼より後の最後の `report` の待ちの一言。`report` が無ければ書かれていないのと同じ `none`。 */
@@ -185,15 +182,4 @@ function isLimited(state: SessionState): boolean {
     state.turn.ending.failure.kind === "api-error" &&
     state.turn.ending.failure.error === "rate_limit"
   )
-}
-
-/** 行が複数あれば依頼の通し番号で順に選ぶ（乱数を使わず、描き直しても同じ行になる）。 */
-function pickLine(
-  reactions: CharacterReactions,
-  reaction: ReactionKind,
-  seed: number,
-): ShownReaction {
-  const lines = reactions[reaction]
-  const line = lines[seed % Math.max(lines.length, 1)]
-  return line === undefined ? NO_SHOWN_REACTION : { kind: "shown", reaction, line }
 }

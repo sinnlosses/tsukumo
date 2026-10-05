@@ -4232,6 +4232,26 @@
         {
           "afterMs": 0,
           "event": {
+            "kind": "welcome-greeting-changed",
+            "state": {
+              "kind": "written",
+              "greeting": {
+                "withCard": "架空の挨拶、{札} からどう？",
+                "withoutCard": "架空の挨拶。",
+                "expression": "excited",
+                "reactions": {
+                  "retrying": { "text": "架空の再試行の一言。", "expression": "flustered" },
+                  "failed": { "text": "架空の失敗の一言。", "expression": "sad" },
+                  "limited": { "text": "架空の利用上限の一言。", "expression": "bored" },
+                  "idle": { "text": "架空の待ちの一言（書かせた行）。", "expression": "default" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "afterMs": 0,
+          "event": {
             "kind": "request",
             "text": "API が混んでいる日に調べものを頼む（架空の依頼）",
             "images": []
@@ -4295,6 +4315,26 @@
         {
           "afterMs": 0,
           "event": {
+            "kind": "welcome-greeting-changed",
+            "state": {
+              "kind": "written",
+              "greeting": {
+                "withCard": "架空の挨拶、{札} からどう？",
+                "withoutCard": "架空の挨拶。",
+                "expression": "excited",
+                "reactions": {
+                  "retrying": { "text": "架空の再試行の一言。", "expression": "flustered" },
+                  "failed": { "text": "架空の失敗の一言。", "expression": "sad" },
+                  "limited": { "text": "架空の利用上限の一言。", "expression": "bored" },
+                  "idle": { "text": "架空の待ちの一言（書かせた行）。", "expression": "default" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "afterMs": 0,
+          "event": {
             "kind": "request",
             "text": "API のサーバが不調な日に頼む（架空の依頼）",
             "images": []
@@ -4350,6 +4390,26 @@
     {
       "name": "rate-limit",
       "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "welcome-greeting-changed",
+            "state": {
+              "kind": "written",
+              "greeting": {
+                "withCard": "架空の挨拶、{札} からどう？",
+                "withoutCard": "架空の挨拶。",
+                "expression": "excited",
+                "reactions": {
+                  "retrying": { "text": "架空の再試行の一言。", "expression": "flustered" },
+                  "failed": { "text": "架空の失敗の一言。", "expression": "sad" },
+                  "limited": { "text": "架空の利用上限の一言。", "expression": "bored" },
+                  "idle": { "text": "架空の待ちの一言（書かせた行）。", "expression": "default" }
+                }
+              }
+            }
+          }
+        },
         {
           "afterMs": 0,
           "event": {
@@ -7303,6 +7363,26 @@
         {
           "afterMs": 0,
           "event": {
+            "kind": "welcome-greeting-changed",
+            "state": {
+              "kind": "written",
+              "greeting": {
+                "withCard": "架空の挨拶、{札} からどう？",
+                "withoutCard": "架空の挨拶。",
+                "expression": "excited",
+                "reactions": {
+                  "retrying": { "text": "架空の再試行の一言。", "expression": "flustered" },
+                  "failed": { "text": "架空の失敗の一言。", "expression": "sad" },
+                  "limited": { "text": "架空の利用上限の一言。", "expression": "bored" },
+                  "idle": { "text": "架空の待ちの一言（書かせた行）。", "expression": "default" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "afterMs": 0,
+          "event": {
             "kind": "request",
             "text": "待ちの一言を書かないターンを見るために頼む（架空の依頼）",
             "images": []
@@ -7361,7 +7441,13 @@
               "greeting": {
                 "withCard": "おかえり、{札} からどう？架空の挨拶。",
                 "withoutCard": "おかえり、また会えたね。架空の挨拶。",
-                "expression": "excited"
+                "expression": "excited",
+                "reactions": {
+                  "retrying": { "text": "架空の再試行の一言。", "expression": "flustered" },
+                  "failed": { "text": "架空の失敗の一言。", "expression": "sad" },
+                  "limited": { "text": "架空の利用上限の一言。", "expression": "bored" },
+                  "idle": { "text": "架空の待ちの一言（書かせた行）。", "expression": "default" }
+                }
               }
             }
           }

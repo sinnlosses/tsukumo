@@ -750,7 +750,17 @@ describe("applySessionEvent", () => {
         kind: "welcome-greeting-changed",
         state: {
           kind: "written",
-          greeting: { withCard: "架空の挨拶 {札}", withoutCard: "架空の挨拶", expression: "proud" },
+          greeting: {
+            withCard: "架空の挨拶 {札}",
+            withoutCard: "架空の挨拶",
+            expression: "proud",
+            reactions: {
+              retrying: { text: "架空の再試行", expression: "default" },
+              failed: { text: "架空の失敗", expression: "default" },
+              limited: { text: "架空の上限", expression: "default" },
+              idle: { text: "架空の待ち", expression: "default" },
+            },
+          },
         },
       },
       { kind: "request", text: "架空の依頼", images: [] },

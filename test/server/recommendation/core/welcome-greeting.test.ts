@@ -23,10 +23,18 @@ const MATERIAL: WelcomeGreetingMaterial = {
   recent: [{ withCard: "架空の前の挨拶、{札} だ", withoutCard: "架空の前の挨拶" }],
 }
 
+const REACTIONS = {
+  retrying: { text: "架空の再試行", expression: "default" },
+  failed: { text: "架空の失敗", expression: "default" },
+  limited: { text: "架空の上限", expression: "excited" },
+  idle: { text: "架空の待ち", expression: "default" },
+}
+
 const OUTPUT = {
   withCard: "架空の挨拶、{札} からいこう",
   withoutCard: "架空の挨拶だけ",
   expression: "excited",
+  reactions: REACTIONS,
 }
 
 describe("welcomeGreetingQuery", () => {
@@ -67,13 +75,58 @@ describe("welcomeGreetingQuery", () => {
       properties: { expression: { enum: ["default", "excited"] } },
     })
   })
+
+  it("出力の形に、4つの出来事の行を欠かせない反応の節があり、行の表情も選択肢の名前に限る", () => {
+    const line = {
+      properties: { text: { type: "string" }, expression: { enum: ["default", "excited"] } },
+      required: ["text", "expression"],
+    }
+    expect(welcomeGreetingQuery(MATERIAL).schema).toMatchObject({
+      properties: {
+        reactions: {
+          properties: { retrying: line, failed: line, limited: line, idle: line },
+          required: ["retrying", "failed", "limited", "idle"],
+          additionalProperties: false,
+        },
+      },
+      required: ["withCard", "withoutCard", "expression", "reactions"],
+    })
+  })
 })
 
 describe("parseWelcomeGreeting", () => {
-  it("検査を通れば、前後の空白を落とした挨拶にする", () => {
+  it("検査を通れば、前後の空白を落とした挨拶と反応の行にする", () => {
     expect(
-      parseWelcomeGreeting({ ...OUTPUT, withoutCard: " 架空の挨拶だけ \n" }, MATERIAL),
+      parseWelcomeGreeting(
+        {
+          ...OUTPUT,
+          withoutCard: " 架空の挨拶だけ \n",
+          reactions: { ...REACTIONS, idle: { text: " 架空の待ち ", expression: "default" } },
+        },
+        MATERIAL,
+      ),
     ).toEqual(OUTPUT)
+  })
+
+  it.each<[string, unknown]>([
+    ["反応の節が無い", undefined],
+    ["出来事が欠けている", { retrying: REACTIONS.retrying, failed: REACTIONS.failed }],
+    ["行が空", { ...REACTIONS, failed: { text: " ", expression: "default" } }],
+    ["行が改行入り", { ...REACTIONS, failed: { text: "架空の\n失敗", expression: "default" } }],
+    [
+      "行が上限を超える",
+      {
+        ...REACTIONS,
+        limited: { text: "あ".repeat(WELCOME_GREETING_CHARS + 1), expression: "default" },
+      },
+    ],
+    [
+      "行に差し込み口がある",
+      { ...REACTIONS, idle: { text: "{札} を待つ", expression: "default" } },
+    ],
+    ["行が知らない表情", { ...REACTIONS, retrying: { text: "架空", expression: "架空の表情" } }],
+  ])("%s なら落とす", (_, reactions) => {
+    expect(parseWelcomeGreeting({ ...OUTPUT, reactions }, MATERIAL)).toBeUndefined()
   })
 
   it.each<[string, Record<string, unknown>]>([

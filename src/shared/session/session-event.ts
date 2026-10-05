@@ -322,8 +322,8 @@ export type SessionEvent =
    */
   | { readonly kind: "recommendation-changed"; readonly cards: readonly RecommendationCard[] }
   /**
-   * 迎えの挨拶の状態が変わった（新しく起こしたセッション・`/clear` のたび。出し手はサーバの `greetWelcome`）。
-   * `writing` → `written` または `fallback` の順に流れる。
+   * 迎えの挨拶の状態が変わった（新しく起こした・続きから起こしたセッションと `/clear` のたび。出し手はサーバの `greetWelcome`）。
+   * `writing` → `written` または `unwritten` の順に流れる。
    */
   | { readonly kind: "welcome-greeting-changed"; readonly state: WelcomeGreetingState }
   /**

@@ -11,7 +11,7 @@
 
 import type { ReactElement } from "react"
 
-import type { ReactionKind } from "../../../../../../../../shared/character-pack/character-reaction.ts"
+import type { ReactionKind } from "../../../../../../../../shared/recommendation/welcome-greeting.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { TypingDots } from "../../../../../../ui/typing-dots/typing-dots.tsx"
 import { useSpeechPress } from "../../../hooks/use-speech-press.ts"

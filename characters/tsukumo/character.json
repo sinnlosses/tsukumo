@@ -34,16 +34,5 @@
   "background": {
     "image": "background.png"
   },
-  "diaryFont": "yuji-syuku.ttf",
-  "reactions": {
-    "welcome": [{ "text": "おっ、きみか。今日は何して遊ぶ？", "expression": "excited" }],
-    "retrying": [
-      { "text": "あわわ、向こうが混んでる。もう一回叩いてみるぞ。", "expression": "flustered" }
-    ],
-    "failed": [{ "text": "うぐ、途中で転んじゃった……。", "expression": "sad" }],
-    "limited": [
-      { "text": "今日はもう打ち止めみたい。戻るまでひと休みなのだ。", "expression": "bored" }
-    ],
-    "idle": [{ "text": "次はどうする？ ここで待ってるぞ。", "expression": "default" }]
-  }
+  "diaryFont": "yuji-syuku.ttf"
 }

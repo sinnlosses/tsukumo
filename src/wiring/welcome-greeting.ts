@@ -1,6 +1,6 @@
-// 迎えの挨拶の配線。新しく起こすセッションごとに、起こす代のパックで挨拶を背景で書かせ、
-// 続きから起こした代は前回の待ちの一言が無いときだけおかえりを書かせ、
-// どちらの代も、その代の受け取り口に `/clear` が流れるたびに書き直す。
+// 迎えの挨拶（と同じ答えで書かせる反応の行）の配線。代を起こすたびに、起こす代のパックで背景で書かせ
+// （続きから起こした代は組み直した履歴から決めた迎え方で）、
+// その代の受け取り口に `/clear` が流れるたびに書き直す。
 
 import { localCalendarAt } from "../server/adapter/local-time.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
@@ -66,10 +66,7 @@ export function wireWelcomeGreeting(context: WiringContext): {
           break
         case "resume":
           void restored.then((events) => {
-            const welcome = resumedWelcome(events, context.now())
-            if (welcome.kind === "write") {
-              greeter.write(material({ kind: "resume", away: welcome.away }))
-            }
+            greeter.write(material(resumedWelcome(events, context.now())))
           })
           break
       }

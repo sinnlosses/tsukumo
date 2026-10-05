@@ -1,4 +1,4 @@
-// 迎えの挨拶を書く。誰もこの問い合わせを待たない。
+// 迎えの挨拶と、同じ答えで反応の行を書く。誰もこの問い合わせを待たない。
 
 import type {
   WelcomeGreeting,
@@ -47,7 +47,7 @@ export function createWelcomeGreeter(ports: WelcomeGreeterPorts): WelcomeGreeter
  *
  * 書き始めに `writing` を配る。1回目が失敗・検査落ちで、かつ `signal` も `timeoutMs` の締め切りも
  * まだ来ていなければ1回だけ問い合わせ直す。`signal` が中断していれば（新しい書き手に替わった）
- * 結果に関わらず何も配らない。それ以外で結果が無ければ `fallback`、あれば `written` を配る。
+ * 結果に関わらず何も配らない。それ以外で結果が無ければ `unwritten`、あれば `written` を配る。
  */
 export async function greetWelcome(
   ports: WelcomeGreeterPorts,
@@ -74,7 +74,7 @@ export async function greetWelcome(
     return
   }
   if (greeting === undefined) {
-    ports.emit({ kind: "fallback" })
+    ports.emit({ kind: "unwritten" })
     return
   }
   ports.writeRecent(

@@ -12,12 +12,12 @@
 
 import { useEffect, useState } from "react"
 
-import type { ReactionKind } from "../../../../../../../shared/character-pack/character-reaction.ts"
 import {
   resolveOutfit,
   type Expression,
   type Outfit,
 } from "../../../../../../../shared/character-pack/expression.ts"
+import type { ReactionKind } from "../../../../../../../shared/recommendation/welcome-greeting.ts"
 import {
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
