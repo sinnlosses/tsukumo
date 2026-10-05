@@ -58,6 +58,7 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
     checks: [],
     task: { kind: "none" },
     waitingLine: { kind: "none" },
+    time: STAMPED,
   }
 }
 
@@ -71,6 +72,7 @@ export function workPlanRecord(
     current: 0,
     phaseSummary: "",
     source: "main",
+    time: STAMPED,
     ...overrides,
   }
 }

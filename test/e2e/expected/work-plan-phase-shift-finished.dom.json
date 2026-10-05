@@ -253,6 +253,46 @@
                                 }
                               ]
                             },
+                            "段ごとの時間",
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "role": "table",
+                                "aria-label": "段ごとの所要時間"
+                              },
+                              "children": [
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "role": "row"
+                                  },
+                                  "children": [
+                                    "1/3 今の形を調べる",
+                                    "0秒"
+                                  ]
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "role": "row"
+                                  },
+                                  "children": [
+                                    "2/3 ID の変換を両方の形に対応させる",
+                                    "0秒"
+                                  ]
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "role": "row"
+                                  },
+                                  "children": [
+                                    "3/3 文書と検証を揃える",
+                                    "0秒"
+                                  ]
+                                }
+                              ]
+                            },
                             {
                               "tag": "ul",
                               "children": [

@@ -704,7 +704,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
   })
 
-  it("段取りを渡したやり取りでも、最終レポートと中間レポートの本文に段取りを組まない", () => {
+  it("段取りを渡したやり取りでは、中間レポートはまとめだけで、最終レポートは結論の下に段ごとの所要時間の表を置く", () => {
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",
       phases: ["架空の段A", "架空の段B"],
@@ -723,10 +723,16 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    expect(shownReports(turn)).toEqual([
-      "架空のまとめ。",
-      `${lead("架空の結論。")}\n\n${SECTIONS_START}\n\n架空の根拠。`,
-    ])
+    const [summary, final] = shownReports(turn)
+
+    expect(summary).toBe("架空のまとめ。")
+    expect(
+      final?.startsWith(
+        `${lead("架空の結論。")}\n\n<div class="status">\n\n<div class="phase-times">`,
+      ),
+    ).toBe(true)
+    expect(final).toContain('<span class="phase-time-label">2/2 架空の段B</span>')
+    expect(final?.endsWith(`</div>\n\n${SECTIONS_START}\n\n架空の根拠。`)).toBe(true)
   })
 
   it("task のあるレポートは、結論を一文の印で包み、task を本文に組まずに運ぶ（畳んだときの先頭行は結論）", () => {
@@ -1145,5 +1151,43 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     expect(reportsAfter[1]).not.toBe(reportsBefore[1])
     expect(reportMarkdowns(entriesBefore)[1]).not.toContain("5秒")
     expect(reportMarkdowns(entriesAfter)[1]).toContain('<span class="check-time">5秒</span>')
+  })
+
+  it("段取りのある依頼の report には、検証の表の下に段ごとの所要時間の表が出る", () => {
+    const markdown = reportMarkdowns(
+      mainViewEntries(
+        foldTimed([
+          [ask, 0],
+          [plan(0), 1_000],
+          [bashStarted("toolu_b1", "架空の検査"), 2_000],
+          [bashFinished("toolu_b1"), 3_000],
+          [plan(1, "架空のまとめ。"), 11_000],
+          [report("toolu_r1", "架空の検査"), 15_000],
+        ]),
+      ),
+    )[0]
+
+    expect(markdown).toContain(
+      '<span class="phase-time-label">1/2 架空の段A</span><span class="phase-time-value">10秒</span>',
+    )
+    expect(markdown).toContain(
+      '<span class="phase-time-label">2/2 架空の段B</span><span class="phase-time-value">4秒</span>',
+    )
+    expect(markdown?.indexOf('class="phase-times"')).toBeGreaterThan(
+      markdown?.indexOf('class="verdict"') ?? Infinity,
+    )
+  })
+
+  it("段取りの無い依頼の report には、段ごとの所要時間の表を出さない", () => {
+    const markdown = reportMarkdowns(
+      mainViewEntries(
+        foldTimed([
+          [ask, 0],
+          [report("toolu_r1"), 1_000],
+        ]),
+      ),
+    )[0]
+
+    expect(markdown).not.toContain("phase-times")
   })
 })

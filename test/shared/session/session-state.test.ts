@@ -1688,6 +1688,70 @@ describe("applySessionEvent（委譲の合図と段取り）", () => {
   })
 })
 
+describe("applySessionEvent（段取りとレポートの時刻）", () => {
+  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const mainPlan = (current: number): SessionEvent => ({
+    kind: "work-plan",
+    phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
+    current,
+    phaseSummary: current > 0 && current < 3 ? "架空のまとめ。" : "",
+  })
+  const signal: SessionEvent = { kind: "delegate-signal", step: 1, stepCount: 1, summary: "" }
+  const report: SessionEvent = {
+    kind: "report",
+    toolUseId: "toolu_r1",
+    conclusion: "架空の結論。",
+    sections: [],
+    favor: "",
+    checks: [],
+    closing: { kind: "none" },
+    waitingLine: { kind: "none" },
+    unknownBlockCount: 0,
+    sessionSummary: undefined,
+    task: { kind: "none" },
+  }
+  const applyAt = (...stamped: readonly (readonly [SessionEvent, number])[]): SessionState =>
+    stamped.reduce(
+      (state, [event, at]) => applySessionEvent(state, event, at),
+      INITIAL_SESSION_STATE,
+    )
+  const timesOf = (state: SessionState) =>
+    state.records.flatMap((record) =>
+      record.kind === "work-plan" || record.kind === "report" ? [record.time] : [],
+    )
+
+  it("work-plan・委譲の合図・report の記録は、届いた時刻を持つ", () => {
+    const state = applyAt([request, 0], [mainPlan(0), 1000], [signal, 2000], [report, 3000])
+
+    expect(timesOf(state)).toEqual([
+      { kind: "stamped", at: 1000 },
+      { kind: "stamped", at: 2000 },
+      { kind: "stamped", at: 3000 },
+    ])
+  })
+
+  it("合図から引いた段取りを全部済ませる呼び出しは、その呼び出しの時刻を持つ", () => {
+    const state = applyAt([request, 0], [mainPlan(0), 1000], [signal, 2000], [mainPlan(3), 4000])
+
+    expect(state.records.at(-1)).toMatchObject({
+      kind: "work-plan",
+      source: "delegate-signal",
+      time: { kind: "stamped", at: 4000 },
+    })
+  })
+
+  it("復元した段取りとレポートは時刻が分からない", () => {
+    const state = applyAt(
+      [request, 0],
+      [mainPlan(0), 1000],
+      [report, 2000],
+      [{ kind: "history-restored" }, 3000],
+    )
+
+    expect(timesOf(state)).toEqual([{ kind: "restored" }, { kind: "restored" }])
+  })
+})
+
 describe("applySessionEvent（答え待ちの届いた時刻）", () => {
   const permission = (
     id: string,

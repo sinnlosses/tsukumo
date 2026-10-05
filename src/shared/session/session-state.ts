@@ -83,7 +83,7 @@ export type ToolRunStatus =
     }
 
 /**
- * 依頼とセリフの記録が起きた時刻。雑談のログが行ごとの時刻と日の区切りに使う。
+ * 記録が起きた時刻。雑談のログが行ごとの時刻と日の区切りに、最終レポートが段ごとの所要時間に使う。
  *
  * - `stamped`: 起きた時刻が分かっている。`at` はそのイベントに打たれた時刻（`StampedEvent.at`。
  *   エポックミリ秒）
@@ -130,6 +130,8 @@ export type SessionRecord =
       readonly checks: readonly ReportCheck[]
       readonly task: ReportTask
       readonly waitingLine: ReportWaitingLine
+      /** 受け付けた時刻。最後の段の所要時間を閉じる端になる。 */
+      readonly time: RecordTime
     }
   /**
    * `work_plan` ツールで受け取った段取り。届いた位置に積むだけで、今の段取りは `latestWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
@@ -144,6 +146,8 @@ export type SessionRecord =
        * `delegate-ended` は、委譲先が背景から居なくなったときに、合図から引いた段取りをそのまま積み直したもの。
        */
       readonly source: "main" | "delegate-signal" | "delegate-ended"
+      /** 積んだ時刻。`delegate-ended` は段の位置を変えないので、積み直した元の記録の時刻を持つ。 */
+      readonly time: RecordTime
     }
   /**
    * 答え終わった質問（`question-answered`）。積むのは答えが確定した1回だけで、あとから書き換えない。
@@ -614,15 +618,19 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             checks: event.checks,
             task: event.task,
             waitingLine: event.waitingLine,
+            time: { kind: "stamped", at },
           },
         ],
       }
     case "work-plan":
-      return { ...state, records: [...state.records, ...mainWorkPlanRecords(state.records, event)] }
+      return {
+        ...state,
+        records: [...state.records, ...mainWorkPlanRecords(state.records, event, at)],
+      }
     case "delegate-signal":
       return {
         ...state,
-        records: [...state.records, ...delegateSignalRecords(state.records, event)],
+        records: [...state.records, ...delegateSignalRecords(state.records, event, at)],
       }
     case "tool-started": {
       const nested = event.parentToolUseId !== undefined
@@ -806,7 +814,9 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
 function mainWorkPlanRecords(
   records: readonly SessionRecord[],
   event: Extract<SessionEvent, { readonly kind: "work-plan" }>,
+  at: number,
 ): readonly SessionRecord[] {
+  const time = { kind: "stamped", at } as const
   const delegated = delegatedWorkPlanRecord(records)
   if (delegated === undefined) {
     return [
@@ -816,11 +826,12 @@ function mainWorkPlanRecords(
         current: event.current,
         phaseSummary: event.phaseSummary,
         source: "main",
+        time,
       },
     ]
   }
   return event.current === event.phases.length
-    ? [{ ...delegated, current: delegated.phases.length, phaseSummary: "" }]
+    ? [{ ...delegated, current: delegated.phases.length, phaseSummary: "", time }]
     : []
 }
 
@@ -831,6 +842,7 @@ function mainWorkPlanRecords(
 function delegateSignalRecords(
   records: readonly SessionRecord[],
   signal: Extract<SessionEvent, { readonly kind: "delegate-signal" }>,
+  at: number,
 ): readonly SessionRecord[] {
   const latest = recordsOfLastRequest(records).findLast(isWorkPlanRecord)
   if (latest === undefined) {
@@ -840,7 +852,9 @@ function delegateSignalRecords(
   const backward =
     latest.source === "delegate-signal" &&
     (plan.phases.length !== latest.phases.length || plan.current < latest.current)
-  return backward ? [] : [{ kind: "work-plan", ...plan, source: "delegate-signal" }]
+  return backward
+    ? []
+    : [{ kind: "work-plan", ...plan, source: "delegate-signal", time: { kind: "stamped", at } }]
 }
 
 /**
@@ -874,7 +888,12 @@ function recordsOfLastRequest(records: readonly SessionRecord[]): readonly Sessi
  * （`tool-started` / `tool-finished` は再生でも replay した時刻を積んでいるので、`stamped` のままだと replay の速さが本物の所要時間に見えてしまう）。
  */
 function withRestoredTime(record: SessionRecord): SessionRecord {
-  if (record.kind === "request" || record.kind === "speech") {
+  if (
+    record.kind === "request" ||
+    record.kind === "speech" ||
+    record.kind === "work-plan" ||
+    record.kind === "report"
+  ) {
     return { ...record, time: { kind: "restored" } }
   }
   if (record.kind === "tool") {

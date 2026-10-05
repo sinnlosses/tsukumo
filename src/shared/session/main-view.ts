@@ -9,6 +9,7 @@ import {
   reportSectionsMarkdown,
   SECTIONS_START_MARKDOWN,
 } from "../report/report-markdown.ts"
+import { phaseTimesMarkdown } from "../report/report-phase-time.ts"
 import { NO_REPORT_TASK, type ReportTask } from "../report/report-task.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
@@ -16,6 +17,7 @@ import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { clipText } from "../utils/clip-text.ts"
+import { phaseDurations } from "./phase-duration.ts"
 import {
   MAX_SESSION_STATE_TURNS,
   type SessionRecord,
@@ -278,7 +280,7 @@ function dependenciesOf(record: SessionRecord, context: TurnContext): readonly E
     return [context.plan]
   }
   if (record.kind === "report") {
-    return record.checks.map((check) => lastBashOf(context, check.command))
+    return [...record.checks.map((check) => lastBashOf(context, check.command)), ...context.plans]
   }
   return []
 }
@@ -328,9 +330,9 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 }
 
 /**
- * `report` の引数を、`conclusion` → 合図の行 → 節の始まりの印 → `sections` → `favor` の順に1つの本文へ組む。
- * 印は結論か合図の行があり、節も1つ以上あるときだけ置く。
- * 合図の行は {@link verdictMarkdown}。
+ * `report` の引数を、`conclusion` → 合図の行と段ごとの所要時間 → 節の始まりの印 → `sections` → `favor` の順に1つの本文へ組む。
+ * 印は結論か合図の行か段ごとの所要時間があり、節も1つ以上あるときだけ置く。
+ * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は同じ依頼の段取りから描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
  * 空の `sections` / `favor` は塊ごと置かない。
@@ -347,8 +349,9 @@ function reportMarkdown(
     isBlankText(report.conclusion)
       ? ""
       : `<div class="${report.task.kind === "task" ? "conclusion" : "conclusion-lead"}">\n\n${report.conclusion}\n\n</div>`,
-    verdictMarkdown(
+    statusMarkdown(
       reportChecksMarkdown(report.checks, (command) => bashCommandDuration(context, command)),
+      phaseTimesMarkdown(phaseDurations(context.plans, report.time)),
     ),
   ].filter((part) => !isBlankText(part))
   const sections = reportSectionsMarkdown(tidyReportSections(report), {
@@ -368,13 +371,15 @@ function reportMarkdown(
 }
 
 /**
- * 結論のすぐ下の合図の行（検証結果の判定）を、結論と本文のあいだの1つのまとまりに包む。
- * checks が空なら包みごと置かない。お願いの本文は末尾のまま動かさない。
+ * 結論のすぐ下の合図の行（検証結果の判定）と、その下の段ごとの所要時間の表を、結論と本文のあいだの1つのまとまりに包む。
+ * どちらも空なら包みごと置かない。お願いの本文は末尾のまま動かさない。
  */
-function verdictMarkdown(checks: string): string {
-  return isBlankText(checks)
+function statusMarkdown(checks: string, phaseTimes: string): string {
+  const verdict = isBlankText(checks)
     ? ""
-    : `<div class="status">\n\n<div class="verdict" role="group" aria-label="検証結果">${checks}</div>\n\n</div>`
+    : `<div class="verdict" role="group" aria-label="検証結果">${checks}</div>`
+  const inner = [verdict, phaseTimes].filter((part) => !isBlankText(part)).join("\n\n")
+  return inner === "" ? "" : `<div class="status">\n\n${inner}\n\n</div>`
 }
 
 /**

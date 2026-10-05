@@ -10,15 +10,17 @@ type ToolRecord = Extract<SessionRecord, { readonly kind: "tool" }>
 
 /**
  * 持ち回すもの。
- * `plan` は最後の `work-plan` の記録、`bashByCommand` はコマンドごとの最後の Bash の `tool` の記録。
+ * `plan` は最後の `work-plan` の記録、`plans` は `work-plan` の記録の並び、`bashByCommand` はコマンドごとの最後の Bash の `tool` の記録。
  */
 export type TurnContext = {
   readonly plan: WorkPlanRecord | "none"
+  readonly plans: readonly WorkPlanRecord[]
   readonly bashByCommand: ReadonlyMap<string, ToolRecord>
 }
 
 export const EMPTY_TURN_CONTEXT = {
   plan: "none",
+  plans: [],
   bashByCommand: new Map<string, ToolRecord>(),
 } as const satisfies TurnContext
 
@@ -28,7 +30,7 @@ export function advanceTurnContext(context: TurnContext, record: SessionRecord):
     return EMPTY_TURN_CONTEXT
   }
   if (isWorkPlanRecord(record)) {
-    return { ...context, plan: record }
+    return { ...context, plan: record, plans: [...context.plans, record] }
   }
   if (isToolRecord(record) && record.name === "Bash") {
     return {

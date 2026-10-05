@@ -133,6 +133,7 @@ export const REPORT_NOTATION_NAMES = [
  * `checks` は検証結果の塊、`checks-tile` は左の判定の札（記号・件数・ひとこと）。
  * `checks-body` は右の欄で、全部 ok なら `checks-heading` と一覧（`check` がその1行）、
  * ng / unverified があれば問題の項目（`checks-problem`）と通った項目の小さな札（`checks-passed-chip`）。
+ * `phase-times` は検証結果の下の段ごとの所要時間の表で、`phase-time` がその1行。
  * `conclusion` は `task` のあるレポートの結論の一文、`conclusion-lead` は `task` の無いレポートの結論。
  * 見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
  */
@@ -166,6 +167,12 @@ export const REPORT_DRAWN_MARK_NAMES = [
   "checks-passed",
   "checks-passed-chip",
   "checks-passed-chip-mark",
+  "phase-times",
+  "phase-times-heading",
+  "phase-time",
+  "phase-time-label",
+  "phase-time-value",
+  "phase-time-unknown",
   "conclusion",
   "conclusion-lead",
 ] as const satisfies readonly string[]
