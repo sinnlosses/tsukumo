@@ -3,6 +3,46 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-05 `capture-view.ts` に偽の時計を進める口（`--advance <ms>`）を足し、待ち時間で変わる画を道具で撮れるようにする（振り返り: GH-375）
+
+（GH-380 にした）
+
+- 出典: develop/draft/2026-10-05-capture-view-clock.md。利用者が `/plan-tasks` でドラフト4件をすべて選んだ
+- 札: 黄 道具（24回目）
+- 根: capture-adhoc-playwright
+- 根拠: GH-370 で撮る前の操作を渡す口を足したあとも、GH-375 の委譲先は待ちの一言（ターンが閉じて2分後に出る）を撮るために使い捨ての撮影スクリプトを書いた。`capture-view.ts` には時計を進める口が無く、`page.clock.install` だけでは `Temporal.Now` が差し替わらず1回目は出なかった（委譲先の friction log。`test/e2e/scenario-run.ts` の `installFixedClock` と同じ差し替えが要った）
+- 出し先: タスクにする。`scripts/lib/capture-preparation.ts` の操作に「時計を進める」を足し、`installFixedClock` と同じ差し替え（`Temporal.Now` を含む）を `capture-view.ts` が撮る前に入れる。`docs/architecture/testing.md`「手で確かめること」の `capture-view.ts` の段落に1文足す。2回目なので、手順書への追記ではなく道具の口で塞ぐ
+
+## 2026-10-05 E2E がブラウザを起こす `beforeAll` が上限に当たったとき、起こしかけのヘッドレス Chrome を止めて残さない（振り返り: GH-373）
+
+（GH-381 にした）
+
+- 出典: develop/draft/2026-10-05-e2e-browser-launch-orphan.md。利用者が `/plan-tasks` でドラフト4件をすべて選んだ
+- 札: 黄 揺れ（12回目）
+- 根: e2e-browser-launch-timeout
+- 根拠: GH-373 の1回目の `tw verify` で、`test/e2e/final-report-label.test.ts` のブラウザを起こす `beforeAll` が 60 秒の上限に当たって落ち（`Hook timed out in 60000ms`）、打ち直しで通った。その回のヘッドレス Chrome は親を失って残り（pid 61909 と子）、委譲先が手で止めた。このループの初めから残っていた親の無いヘッドレス Chrome（pid 47012・47022）も同じ形とみられる
+- 出し先: タスクにする。`test/e2e/scenario-run.ts`（または E2E がブラウザを起こす共有の口）で、起動が上限に当たる・`beforeAll` が落ちたときに起こしかけたブラウザのプロセスを必ず止める形にし、起動の上限と負荷の関係を `docs/architecture/testing.md`「E2E の揺れを生まない書き方」に1文足す
+
+## 2026-10-05 質問の記法の指示（`QUESTION_NOTATION_PROMPT`）に、選択肢の preview へ手元の画像を `![説明](パス)` で書けることを足す（振り返り: GH-338）
+
+（GH-382 にした）
+
+- 出典: develop/draft/2026-10-05-question-preview-image-prompt.md。利用者が `/plan-tasks` でドラフト4件をすべて選んだ
+- 札: 黄 前提
+- 根: question-preview-image-unannounced
+- 根拠: GH-338 で質問の preview の Markdown の画像を棚から描けるようにしたが、本体へ渡す質問の記法の指示（`QUESTION_NOTATION_PROMPT`）は preview に画像を書けることを伝えていない。このままでは実際の会話で画像が使われにくい（委譲先の報告。範囲の外として触らなかった）
+- 出し先: タスクにする。`QUESTION_NOTATION_PROMPT` に、preview に手元の画像（作業ツリーの中の png など）を `![説明](パス)` で書けること・外部 URL と `data:` は描かれないことを1〜2文で足し、指示文の単体テストを合わせる。`docs/architecture/display.md`「許可と質問」の preview の項から指示文に伝えていることが分かるようにする
+
+## 2026-10-05 標準入力を待つ `cat > /dev/null` を Bash の hook で拒み、委譲先が120秒の待ちで背景に回るのを防ぐ（振り返り: GH-329）
+
+（GH-383 にした）
+
+- 出典: develop/draft/2026-10-05-stdin-wait-cat.md。利用者が `/plan-tasks` でドラフト4件をすべて選んだ
+- 札: 黄 揺れ
+- 根: stdin-wait-cat
+- 根拠: GH-373 と GH-329 の委譲先が、それぞれ中身の無い `cat > /dev/null` を Bash に混ぜ、標準入力を待って120秒の上限で背景に回り、TaskStop で止めた（どちらも委譲先の friction log。GH-329 では差し戻しの往復ごとに同じ行を書き写している）。同じ日に2件で、手の誤りが仕組みで止まっていない
+- 出し先: タスクにする。Bash の hook（`scripts/lib/bash-write-denial.ts` の並びか、別の deny の hook）で、入力を与えない `cat`（引数もパイプの入力も無い `cat`・`cat > <先>`）を拒み、拒む理由に「標準入力を待って止まる」を返す。hook の単体テストを足す
+
 ## 2026-10-05 tsukumo の魅力を整理して磨く
 
 （GH-372・GH-373・GH-375〜GH-378 にした）
