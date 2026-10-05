@@ -1,5 +1,5 @@
 // タスク一覧の読み元の口。
-// タスクの方式（ファイル方式・Beads）ごとに1つずつ実装があり、見張り（`watchTaskSummary`）がプロジェクトの設定から選んで見回りのたびに `read` を呼ぶ。
+// 見張り（`watchTaskSummary`）がプロジェクトの設定から選んで見回りのたびに `read` を呼ぶ。
 // 読み元は前回読んだものを自分で覚え、変わっていなければ読み直さずに `unchanged` を返してよい。
 
 import type { TaskSummaryItem, TaskSummaryResult } from "../../../shared/repository/task-summary.ts"

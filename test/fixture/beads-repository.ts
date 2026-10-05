@@ -3,11 +3,21 @@
 // `bd init` は利用者の `~/.config/bd/config.yaml` を書き換え、新しい設定では使用状況を外へ送る。
 // そうさせないよう、`HOME` を一時ディレクトリへ向け、送信を止めた設定を先に置いてから起こす。
 // 読み手（`readBeadsIssues`）もこのプロセスの環境で `bd` を起こすので、呼ぶ側は `vi.stubEnv` で
-// 同じ `HOME` を向けておく（`useBeadsHome`）。
+// 同じ `HOME` を向けておく（`useBeadsHome`）。別のプロセスで読むときは、そのプロセスの `HOME` に
+// `writeBeadsConfig` で同じ設定を置く。
 
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import process from "node:process"
 
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 
@@ -20,8 +30,18 @@ export const BEADS_TEST_ACTOR = "wt-test"
 /** `bd init` は検証を並べて走らせた重い機械で1回あたり十数秒かかるので、全体の `hookTimeout` より長く待つ。 */
 const BEADS_TEMPLATE_TIMEOUT_MS = 60_000
 
-/** `bd init` を済ませた使い捨てのリポジトリ（{@link useBeadsHome} が作る）。 */
-let beadsTemplate: { readonly root: string; readonly repository: string } | undefined
+/** `bd init` を済ませた使い捨てのリポジトリと、そのとき使った `HOME`。 */
+type BeadsTemplate = {
+  readonly root: string
+  readonly home: string
+  readonly repository: string
+}
+
+/** {@link useBeadsHome} が作ったもの。 */
+let beadsTemplate: BeadsTemplate | undefined
+
+/** {@link processBeadsTemplate} が作ったもの。 */
+let processTemplate: Promise<BeadsTemplate> | undefined
 
 /**
  * 呼んだファイルで1回だけ `bd init` を済ませたリポジトリを作り、{@link initBeads} がその写しを配る。
@@ -30,15 +50,7 @@ let beadsTemplate: { readonly root: string; readonly repository: string } | unde
  */
 export function useBeadsHome(home: () => string): () => string {
   beforeAll(async () => {
-    const root = mkdtempSync(join(tmpdir(), "tsukumo-beads-template-"))
-    const templateHome = join(root, "home")
-    const repository = join(root, "repository")
-    writeBeadsConfig(templateHome)
-    await initGitRepository(repository)
-    await git(repository, "commit", "--allow-empty", "-m", "init")
-    await bd(repository, templateHome, "init", "--stealth", "-p", "t", "-q")
-    await bd(repository, templateHome, "config", "set", "status.custom", "pending:frozen")
-    beadsTemplate = { root, repository }
+    beadsTemplate = await createBeadsTemplate()
   }, BEADS_TEMPLATE_TIMEOUT_MS)
   afterAll(() => {
     if (beadsTemplate !== undefined) {
@@ -64,13 +76,36 @@ export function initBeads(cwd: string): void {
   if (beadsTemplate === undefined) {
     throw new Error("initBeads は useBeadsHome を呼んだファイルの中でだけ使える")
   }
-  cpSync(join(beadsTemplate.repository, ".beads"), join(cwd, ".beads"), { recursive: true })
-  const exclude = join(cwd, ".git", "info", "exclude")
-  const stealthExclude = readFileSync(join(beadsTemplate.repository, ".git", "info", "exclude"))
-  writeFileSync(exclude, stealthExclude)
+  placeBeads(beadsTemplate.repository, cwd)
 }
 
-function writeBeadsConfig(home: string): void {
+/**
+ * git リポジトリ `cwd` に、`issues`（`bd export` の1行の形）を入れた `.beads` を置く。テストの外のフックを持たないので、
+ * 別のプロセス（tsukumo）が見回っている場所へ置くときに使う。
+ * 課題は写しの側で入れ終えてから1回の名前の付け替えで置くので、見回りが入れかけの `.beads` を読むことは無い。
+ * `bd init` はプロセスで1回だけ済ませる（{@link processBeadsTemplate}）。
+ */
+export async function placeBeadsWithIssues(
+  cwd: string,
+  issues: readonly Readonly<Record<string, unknown>>[],
+): Promise<void> {
+  const template = await processBeadsTemplate()
+  const staging = mkdtempSync(join(tmpdir(), "tsukumo-beads-staging-"))
+  try {
+    cpSync(template.repository, staging, { recursive: true })
+    await runSubprocessOrThrow("bd", ["--actor", BEADS_TEST_ACTOR, "import", "-"], {
+      cwd: staging,
+      env: { ...process.env, HOME: template.home },
+      input: issues.map((issue) => JSON.stringify(issue)).join("\n"),
+    })
+    placeBeads(staging, cwd)
+  } finally {
+    rmSync(staging, { recursive: true, force: true })
+  }
+}
+
+/** 使用状況の送信を止めた `bd` の設定を `home` に置く。 */
+export function writeBeadsConfig(home: string): void {
   mkdirSync(join(home, ".config", "bd"), { recursive: true })
   writeFileSync(join(home, ".config", "bd", "config.yaml"), "metrics:\n    disabled: true\n")
 }
@@ -81,4 +116,36 @@ export async function bd(cwd: string, home: string, ...args: readonly string[]):
     cwd,
     env: { ...process.env, HOME: home },
   })
+}
+
+async function createBeadsTemplate(): Promise<BeadsTemplate> {
+  const root = mkdtempSync(join(tmpdir(), "tsukumo-beads-template-"))
+  const home = join(root, "home")
+  const repository = join(root, "repository")
+  writeBeadsConfig(home)
+  await initGitRepository(repository)
+  await git(repository, "commit", "--allow-empty", "-m", "init")
+  await bd(repository, home, "init", "--stealth", "-p", "t", "-q")
+  await bd(repository, home, "config", "set", "status.custom", "pending:frozen")
+  return { root, home, repository }
+}
+
+/** プロセスで1回だけ作り、プロセスが終わるときに消す。 */
+function processBeadsTemplate(): Promise<BeadsTemplate> {
+  processTemplate ??= createBeadsTemplate().then((template) => {
+    process.once("exit", () => {
+      rmSync(template.root, { recursive: true, force: true })
+    })
+    return template
+  })
+  return processTemplate
+}
+
+/** `source` の `.beads` と、`bd init --stealth` が書いた除外の行を `cwd` へ写す。 */
+function placeBeads(source: string, cwd: string): void {
+  const placing = join(cwd, ".beads-placing")
+  cpSync(join(source, ".beads"), placing, { recursive: true })
+  renameSync(placing, join(cwd, ".beads"))
+  const stealthExclude = readFileSync(join(source, ".git", "info", "exclude"))
+  writeFileSync(join(cwd, ".git", "info", "exclude"), stealthExclude)
 }

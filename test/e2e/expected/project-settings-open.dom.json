@@ -8,23 +8,147 @@
       },
       "children": [
         {
-          "tag": "h2",
-          "children": [
-            "タスク"
-          ]
-        },
-        {
-          "tag": "button",
+          "tag": "section",
           "attributes": {
-            "aria-disabled": "false",
-            "aria-haspopup": "dialog",
-            "type": "button"
+            "aria-label": "タスク"
           },
           "children": [
             {
-              "tag": "svg"
+              "tag": "div",
+              "attributes": {
+                "data-scrolled": "false"
+              },
+              "children": [
+                {
+                  "tag": "h2",
+                  "children": [
+                    "タスク",
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "false",
+                        "aria-haspopup": "dialog",
+                        "type": "button"
+                      },
+                      "children": [
+                        "一覧を見る"
+                      ]
+                    },
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "false",
+                        "aria-label": "プロジェクトの設定",
+                        "aria-haspopup": "dialog",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "svg"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "ul",
+                  "attributes": {
+                    "aria-label": "絞り込み"
+                  },
+                  "children": [
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-pressed": "true",
+                            "type": "button"
+                          },
+                          "children": [
+                            "すべて",
+                            "1"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-pressed": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "進行中",
+                            "0"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-pressed": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "未着手",
+                            "1"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-pressed": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "完了",
+                            "0"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
             },
-            "設定する"
+            {
+              "tag": "ul",
+              "children": [
+                {
+                  "tag": "li",
+                  "children": [
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-haspopup": "dialog",
+                        "aria-expanded": "false",
+                        "type": "button"
+                      },
+                      "children": [
+                        "T-001",
+                        "架空のタスク（未着手）",
+                        {
+                          "tag": "svg"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
           ]
         },
         {
@@ -214,35 +338,6 @@
               ]
             },
             ".tsukumo/project.json",
-            "タスク",
-            {
-              "tag": "div",
-              "attributes": {
-                "role": "group"
-              },
-              "children": [
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-pressed": "true",
-                    "type": "button"
-                  },
-                  "children": [
-                    "files"
-                  ]
-                },
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-pressed": "false",
-                    "type": "button"
-                  },
-                  "children": [
-                    "beads"
-                  ]
-                }
-              ]
-            },
             {
               "tag": "label",
               "children": [

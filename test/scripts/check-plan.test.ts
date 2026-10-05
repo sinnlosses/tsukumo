@@ -89,7 +89,7 @@ describe("collectChangedPaths", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
       await git(root, "init", "--quiet", "--initial-branch=trunk")
       await git(root, "config", "user.email", "test@example.com")
       await git(root, "config", "user.name", "test")
-      writeProjectSettings(root, "files", "trunk")
+      writeProjectSettings(root, "trunk")
       write(root, "README.md", "readme\n")
       write(root, ".gitignore", "ignored/\n")
       await git(root, "add", ".")

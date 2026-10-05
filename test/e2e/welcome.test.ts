@@ -5,7 +5,7 @@ import { useScenarioRun } from "./scenario-run.ts"
 import { BLOCKED_TASK_ID, READY_TASK_ID, writeWelcomeTasks } from "./task-room.ts"
 
 // 依頼前のメインビューの迎える口（docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// 札の並びと理由は疑似セッションの場面 `welcome-recommendation`、続きの要約は `sessionDigests`、タスクは cwd の develop/task/ を手書きして用意する。
+// 札の並びと理由は疑似セッションの場面 `welcome-recommendation`、続きの要約は `sessionDigests`、タスクは cwd に架空の課題の `.beads` を置いて用意する。
 // 要約は手続き（`/rpc`）の応答で届くので、描かれるまで凍らせた時計を少しずつ進める。
 
 const run = useScenarioRun()

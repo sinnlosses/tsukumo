@@ -47,10 +47,9 @@
             "difficulty": "sonnet",
             "loopable": "Y",
             "dependencies": [],
-            "body": "\n## 参照\n\n地の文の T-002 は押せる。T-0021 は語の途中なので押せない。T-999 は一覧に無いので押せない。\n\n中身がまるごと `T-002` の inline code は押せる。`T-0025` はまるごとでないので押せない。\n\n```\nT-002\n```\n",
+            "body": "## 目的・背景\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n\n## 参照\n\n地の文の T-002 は押せる。T-0021 は語の途中なので押せない。T-999 は一覧に無いので押せない。\n\n中身がまるごと `T-002` の inline code は押せる。`T-0025` はまるごとでないので押せない。\n\n```\nT-002\n```\n",
             "location": {
-              "kind": "file",
-              "path": "develop/task/T-001.md"
+              "kind": "none"
             }
           },
           {
@@ -62,10 +61,9 @@
             "dependencies": [
               "T-001"
             ],
-            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
             "location": {
-              "kind": "file",
-              "path": "develop/task/T-002.md"
+              "kind": "none"
             }
           },
           {
@@ -77,10 +75,9 @@
             "dependencies": [
               "T-002"
             ],
-            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
             "location": {
-              "kind": "file",
-              "path": "develop/task/T-003.md"
+              "kind": "none"
             }
           },
           {
@@ -90,10 +87,9 @@
             "difficulty": "sonnet",
             "loopable": "Y",
             "dependencies": [],
-            "body": "\n## 参照\n\n先に T-001 を見る。\n",
+            "body": "## 目的・背景\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n\n## 参照\n\n先に T-001 を見る。\n",
             "location": {
-              "kind": "file",
-              "path": "develop/task/T-004.md"
+              "kind": "none"
             }
           }
         ],

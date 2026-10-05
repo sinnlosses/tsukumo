@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs"
+import { rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { afterEach, describe, expect, it } from "vitest"
@@ -11,9 +11,12 @@ import {
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
 import type { BeadsIssue } from "../../../../src/shared/repository/beads-issue.ts"
-import { PROJECT_SETTINGS_PATH } from "../../../../src/shared/repository/project-settings.ts"
+import {
+  PROJECT_SETTINGS_PATH,
+  type ProjectSettingsRead,
+} from "../../../../src/shared/repository/project-settings.ts"
 import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
-import { claimTask, git, initGitRepository, releaseTask } from "../../../fixture/git-repository.ts"
+import { git, initGitRepository } from "../../../fixture/git-repository.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 import {
   writeProjectSettings,
@@ -21,18 +24,18 @@ import {
 } from "../../../fixture/project-settings.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
-// 本物の `git` を起こす（`main` の先端を見て読み直すことそのものが検査の対象）。リポジトリは
-// 一時ディレクトリに毎回作り、中身は架空のタスクだけにする。
+// 本物の `bd` を、`HOME` を一時ディレクトリへ向けて起こす（`useBeadsHome`）。
+// リポジトリは一時ディレクトリに毎回作り、中身は架空の課題だけにする。
 
-// 実際のポーリング間隔（TASK_SUMMARY_POLL_INTERVALS）を待つとテストが遅くなるので、
+// 実際のポーリング間隔（TASK_SUMMARY_POLL_INTERVAL_MS）を待つとテストが遅くなるので、
 // テストだけ短い間隔に差し替える。
 const TEST_POLL_INTERVAL_MS = 10
 
-/** 通知を待つ上限。1回の見回りは `git` を2回起こすので、間隔より十分長くとる。 */
-const WAIT_LIMIT_MS = 3000
+/** `bd` の見回りは1回が約0.2秒なので、通知を待つ上限を長くとる。 */
+const WAIT_LIMIT_MS = 15_000
 
 /** 「通知が来ない」ことを確かめるときに待つ長さ（見回りが何周もする長さ）。 */
-const QUIET_PERIOD_MS = 300
+const QUIET_PERIOD_MS = 1000
 
 const root = useTempDir("task-summary")
 const home = useBeadsHome(() => join(root(), "home"))
@@ -43,74 +46,42 @@ afterEach(async () => {
   watcher = undefined
 })
 
-/** `branch` を初期ブランチにし、`mainBranch` を主ブランチにしたファイル方式のプロジェクトの設定を置いたリポジトリを作る。 */
-async function initRepository(branch: string, mainBranch = "main"): Promise<string> {
+/** `main` に1件コミットしたリポジトリ（プロジェクトの設定も `.beads` も置かない）。 */
+async function initRepository(): Promise<string> {
   const repository = join(root(), "repository")
-  await initGitRepository(repository, branch)
-  writeProjectSettings(repository, "files", mainBranch)
+  await initGitRepository(repository)
+  writeFileSync(join(repository, "README.md"), "架空のリポジトリ")
+  await git(repository, "add", "README.md")
+  await git(repository, "commit", "-m", "init")
   return repository
 }
 
-/** 新形式（`develop/task/T-xxx.md`）の1件を front matter で書く（claude-skills の
- * `docs/task-workflow-redesign.md` が正典）。 */
-function writeNewFormatTask(cwd: string, id: string, summary: string, status: string): void {
-  mkdirSync(join(cwd, "develop", "task"), { recursive: true })
-  const content = [
-    "---",
-    `id: ${id}`,
-    `summary: ${summary}`,
-    `status: ${status}`,
-    "difficulty: sonnet",
-    "loopable: Y",
-    "dependencies: []",
-    "---",
-    "",
-    "## 目的",
-    "",
-    "架空の本文。",
-    "",
-  ].join("\n")
-  writeFileSync(join(cwd, "develop", "task", `${id}.md`), content)
-}
-
-async function commitNewFormatTasks(
-  cwd: string,
-  tasks: readonly {
-    readonly id: string
-    readonly summary: string
-    readonly status: string
-  }[],
-): Promise<void> {
-  for (const task of tasks) {
-    writeNewFormatTask(cwd, task.id, task.summary, task.status)
-  }
-  await git(cwd, "add", "develop/task")
-  await git(cwd, "commit", "-m", "tasks")
+/** プロジェクトの設定を置き、`.beads` を作ったリポジトリ。 */
+async function initBeadsRepository(): Promise<string> {
+  const repository = await initRepository()
+  writeProjectSettings(repository)
+  initBeads(repository)
+  return repository
 }
 
 /** `main` を出している本体とは別に、`git merge main` をしない作業ツリーを切る。 */
 async function addWorktree(repository: string): Promise<string> {
   const worktree = join(root(), "worktree")
   await git(repository, "worktree", "add", "-b", "feature", worktree)
-  writeProjectSettings(worktree, "files")
   return worktree
 }
 
 function watch(cwd: string, changes: unknown[]): void {
   watcher = watchTaskSummary(cwd, (tasks) => changes.push(tasks), {
-    intervals: { git: TEST_POLL_INTERVAL_MS, beads: TEST_POLL_INTERVAL_MS },
+    intervalMs: TEST_POLL_INTERVAL_MS,
     ports: REAL_TASK_SUMMARY_PORTS,
   })
   watcher.setWatching(true)
 }
 
 /** 通知が `count` 件に達するまで待つ（超えたら、そこまでの通知のまま期待値との比較で落ちる）。 */
-async function waitForChanges(
-  changes: readonly unknown[],
-  count: number,
-  limitMs = WAIT_LIMIT_MS,
-): Promise<void> {
-  const deadline = performance.now() + limitMs
+async function waitForChanges(changes: readonly unknown[], count: number): Promise<void> {
+  const deadline = performance.now() + WAIT_LIMIT_MS
   while (changes.length < count && performance.now() < deadline) {
     await sleep(TEST_POLL_INTERVAL_MS)
   }
@@ -124,289 +95,6 @@ function sleep(ms: number): Promise<void> {
 function known(...items: readonly Record<string, unknown>[]): Record<string, unknown> {
   return { kind: "known", items, runPrompt: "/next-task {id}" }
 }
-
-/** `writeNewFormatTask` が書く本文（front matter より後ろ）。 */
-const WRITTEN_BODY = "\n## 目的\n\n架空の本文。\n"
-
-/** 通知されるはずの1件（`difficulty`・`loopable`・本文は `writeNewFormatTask` の既定値のまま）。 */
-function notified(id: string, summary: string, status: string): Record<string, unknown> {
-  return {
-    id,
-    summary,
-    status,
-    difficulty: "sonnet",
-    loopable: "Y",
-    dependencies: [],
-    body: WRITTEN_BODY,
-    location: { kind: "file", path: `develop/task/${id}.md` },
-  }
-}
-
-const UNKNOWN: Record<string, unknown> = { kind: "unknown" }
-const NONE: Record<string, unknown> = { kind: "none" }
-
-describe("watchTaskSummary", () => {
-  it("起こした時点で main の develop/task/ を読んで通知する", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [
-      { id: "T-001", summary: "ダミーのタスク", status: "todo" },
-    ])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    expect(changes).toEqual([known(notified("T-001", "ダミーのタスク", "todo"))])
-  })
-
-  it("main だけに入ったコミットが、merge main していない作業ツリーに届く（作業ツリーのファイルは見ない）", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
-    const worktree = await addWorktree(repository)
-    const changes: unknown[] = []
-    watch(worktree, changes)
-    await waitForChanges(changes, 1)
-
-    // 作業ツリーのファイルを書き換えても（コミットしても）main が動かなければ読み直さない。
-    await commitNewFormatTasks(worktree, [
-      { id: "T-009", summary: "作業ツリーだけ", status: "todo" },
-    ])
-    await sleep(QUIET_PERIOD_MS)
-    expect(changes).toHaveLength(1)
-
-    await commitNewFormatTasks(repository, [{ id: "T-002", summary: "2つめ", status: "done" }])
-    await waitForChanges(changes, 2)
-
-    expect(changes).toEqual([
-      known(notified("T-001", "1つめ", "todo")),
-      known(notified("T-001", "1つめ", "todo"), notified("T-002", "2つめ", "done")),
-    ])
-  })
-
-  it("main の develop/task/ が無くなったら「不明」を通知し、戻ったら追従する", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    await git(repository, "rm", "--quiet", "-r", "develop/task")
-    await git(repository, "commit", "-m", "remove")
-    await waitForChanges(changes, 2)
-
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
-    await waitForChanges(changes, 3)
-
-    expect(changes).toEqual([
-      known(notified("T-001", "1つめ", "todo")),
-      UNKNOWN,
-      known(notified("T-001", "1つめ", "todo")),
-    ])
-  })
-
-  it("main ブランチが無いリポジトリでは、作業ツリーにファイルがあっても呼ばれない（既定の「不明」のまま）", async () => {
-    const repository = await initRepository("trunk")
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await sleep(QUIET_PERIOD_MS)
-
-    expect(changes).toEqual([])
-  })
-
-  it("設定の主ブランチが master なら、master の develop/task/ から読む", async () => {
-    const repository = await initRepository("master", "master")
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    expect(changes).toEqual([known(notified("T-001", "1つめ", "todo"))])
-  })
-
-  it("git リポジトリでないディレクトリでは、ファイルがあっても呼ばれない（既定の「不明」のまま）", async () => {
-    writeProjectSettings(root(), "files")
-    writeNewFormatTask(root(), "T-001", "1つめ", "todo")
-    const changes: unknown[] = []
-    watch(root(), changes)
-    await sleep(QUIET_PERIOD_MS)
-
-    expect(changes).toEqual([])
-  })
-
-  it("close するとそれ以降は通知しない", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-    await watcher?.close()
-
-    await commitNewFormatTasks(repository, [{ id: "T-002", summary: "2つめ", status: "todo" }])
-    await sleep(QUIET_PERIOD_MS)
-
-    expect(changes).toHaveLength(1)
-  })
-
-  it("main の develop/task/ から ID の数字順で読む（ファイルの順ではない）", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [
-      { id: "T-030", summary: "後ろの番号", status: "todo" },
-      { id: "T-002", summary: "先の番号", status: "done" },
-    ])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    expect(changes).toEqual([
-      known(notified("T-002", "先の番号", "done"), notified("T-030", "後ろの番号", "todo")),
-    ])
-  })
-
-  it("INVALID なファイルはその1件だけ読み飛ばす", async () => {
-    const repository = await initRepository("main")
-    writeNewFormatTask(repository, "T-001", "読める", "todo")
-    writeFileSync(join(repository, "develop", "task", "T-002.md"), "---\nid: T-002\n壊れている")
-    await git(repository, "add", "develop/task")
-    await git(repository, "commit", "-m", "tasks")
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    expect(changes).toEqual([known(notified("T-001", "読める", "todo"))])
-  })
-
-  it("台帳に着手の印があるタスクは doing として出る（ファイルの status は todo のまま）", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [
-      { id: "T-001", summary: "着手中", status: "todo" },
-      { id: "T-002", summary: "未着手", status: "todo" },
-    ])
-    await claimTask(repository, "T-001")
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    expect(changes).toEqual([
-      known(notified("T-001", "着手中", "doing"), notified("T-002", "未着手", "todo")),
-    ])
-  })
-
-  it("着手の印は todo 以外には効かない（done はそのまま）", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "済み", status: "done" }])
-    await claimTask(repository, "T-001")
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    expect(changes).toEqual([known(notified("T-001", "済み", "done"))])
-  })
-
-  // 台帳（着手の印）は共有の `.git` の中だけで完結し、`main` を動かさない（`task claim` /
-  // `task release`。claude-skills の `docs/task-workflow-redesign.md` が正典）。先端が同じ
-  // 見回りでも印だけ読み直して doing / todo を切り替える（受け入れ時の差し戻し）。
-  it("main を動かさずに claim すると、次の見回りで doing になる", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "着手前", status: "todo" }])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-    expect(changes).toEqual([known(notified("T-001", "着手前", "todo"))])
-
-    await claimTask(repository, "T-001")
-    await waitForChanges(changes, 2)
-
-    expect(changes).toEqual([
-      known(notified("T-001", "着手前", "todo")),
-      known(notified("T-001", "着手前", "doing")),
-    ])
-  })
-
-  it("main を動かさずに release すると、次の見回りで todo に戻る", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "着手前", status: "todo" }])
-    await claimTask(repository, "T-001")
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-    expect(changes).toEqual([known(notified("T-001", "着手前", "doing"))])
-
-    await releaseTask(repository, "T-001")
-    await waitForChanges(changes, 2)
-
-    expect(changes).toEqual([
-      known(notified("T-001", "着手前", "doing")),
-      known(notified("T-001", "着手前", "todo")),
-    ])
-  })
-
-  it("develop/task/ が無いときは呼ばれない（既定の「不明」のまま）", async () => {
-    const repository = await initRepository("main")
-    writeFileSync(join(repository, "README.md"), "架空のリポジトリ")
-    await git(repository, "add", "README.md")
-    await git(repository, "commit", "-m", "init")
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await sleep(QUIET_PERIOD_MS)
-
-    expect(changes).toEqual([])
-  })
-
-  it("プロジェクトの設定が無いときは、develop/task/ があっても「タスク運用なし」を通知する", async () => {
-    const repository = await initRepository("main")
-    rmSync(join(repository, PROJECT_SETTINGS_PATH))
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-    await sleep(QUIET_PERIOD_MS)
-
-    expect(changes).toEqual([NONE])
-  })
-
-  it("設定が読めていたものが消えたら「タスク運用なし」を通知する", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    rmSync(join(repository, PROJECT_SETTINGS_PATH))
-    await waitForChanges(changes, 2)
-
-    expect(changes).toEqual([known(notified("T-001", "1つめ", "todo")), NONE])
-  })
-
-  it("設定の形が壊れたら、develop/task/ があっても「設定が読めない」を通知する", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    writeProjectSettingsContent(repository, '{ "tasks": { "store": "files" ')
-    await waitForChanges(changes, 2)
-
-    expect(changes).toEqual([
-      known(notified("T-001", "1つめ", "todo")),
-      { kind: "settings-invalid" },
-    ])
-  })
-
-  it("見回りの途中で設定を書くと、main を動かさずに次の見回りで一覧が出る", async () => {
-    const repository = await initRepository("main")
-    rmSync(join(repository, PROJECT_SETTINGS_PATH))
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    writeProjectSettings(repository, "files")
-    await waitForChanges(changes, 2)
-
-    expect(changes).toEqual([NONE, known(notified("T-001", "1つめ", "todo"))])
-  })
-})
 
 /** 本文・完了条件・やることを付けずに作った課題の本文（`composeBeadsBody` が組む枠だけの骨組み）。 */
 const BEADS_EMPTY_BODY = [
@@ -426,23 +114,22 @@ const BEADS_EMPTY_BODY = [
   "",
 ].join("\n")
 
-// Beads 方式（プロジェクトの設定の `tasks.store` が `beads`）。本物の `bd` を、`HOME` を
-// 一時ディレクトリへ向けて起こす（`useBeadsHome`）。
-describe("watchTaskSummary（Beads 方式）", () => {
-  /** `bd` の見回りは1回が約0.2秒なので、通知を待つ上限を長くとる。 */
-  const BEADS_WAIT_LIMIT_MS = 15_000
-
-  /** Beads 方式の設定を置き、`main` に1件コミットして `.beads` を作ったリポジトリ。 */
-  async function initBeadsRepository(): Promise<string> {
-    const repository = await initRepository("main")
-    writeProjectSettings(repository, "beads")
-    writeFileSync(join(repository, "README.md"), "架空のリポジトリ")
-    await git(repository, "add", "README.md")
-    await git(repository, "commit", "-m", "init")
-    initBeads(repository)
-    return repository
+/** 何も付けずに作った未着手の課題1件の要約。 */
+function plainTodo(id: string, summary: string): Record<string, unknown> {
+  return {
+    id,
+    summary,
+    status: "todo",
+    difficulty: undefined,
+    loopable: undefined,
+    dependencies: [],
+    assignee: undefined,
+    body: BEADS_EMPTY_BODY,
+    location: { kind: "none" },
   }
+}
 
+describe("watchTaskSummary", () => {
   it(
     "bd の課題を状態を読み替えて出し、着手中は作業ツリーの名前を添える。閉じた課題は done で出す",
     { timeout: 60_000 },
@@ -476,54 +163,24 @@ describe("watchTaskSummary（Beads 方式）", () => {
       await bd(repository, home(), "close", "t-001")
       const changes: unknown[] = []
       watch(repository, changes)
-      await waitForChanges(changes, 1, BEADS_WAIT_LIMIT_MS)
+      await waitForChanges(changes, 1)
 
       expect(changes).toEqual([
         known(
+          { ...plainTodo("T-001", "済み"), status: "done" },
           {
-            id: "T-001",
-            summary: "済み",
-            status: "done",
-            difficulty: undefined,
-            loopable: undefined,
-            dependencies: [],
-            assignee: undefined,
-            body: BEADS_EMPTY_BODY,
-            location: { kind: "none" },
-          },
-          {
-            id: "T-002",
-            summary: "保留",
+            ...plainTodo("T-002", "保留"),
             status: "hold",
             difficulty: "haiku",
             loopable: "N",
-            dependencies: [],
-            assignee: undefined,
-            body: BEADS_EMPTY_BODY,
-            location: { kind: "none" },
           },
           {
-            id: "T-003",
-            summary: "着手中",
+            ...plainTodo("T-003", "着手中"),
             status: "doing",
-            difficulty: undefined,
-            loopable: undefined,
             dependencies: ["T-010"],
             assignee: "wt-test",
-            body: BEADS_EMPTY_BODY,
-            location: { kind: "none" },
           },
-          {
-            id: "T-010",
-            summary: "未着手",
-            status: "todo",
-            difficulty: "opus",
-            loopable: "Y",
-            dependencies: [],
-            assignee: undefined,
-            body: BEADS_EMPTY_BODY,
-            location: { kind: "none" },
-          },
+          { ...plainTodo("T-010", "未着手"), difficulty: "opus", loopable: "Y" },
         ),
       ])
     },
@@ -537,69 +194,84 @@ describe("watchTaskSummary（Beads 方式）", () => {
       await bd(repository, home(), "create", "--id", "t-001", "閉じる前")
       const changes: unknown[] = []
       watch(repository, changes)
-      await waitForChanges(changes, 1, BEADS_WAIT_LIMIT_MS)
+      await waitForChanges(changes, 1)
 
       await bd(repository, home(), "close", "t-001")
-      await waitForChanges(changes, 2, BEADS_WAIT_LIMIT_MS)
+      await waitForChanges(changes, 2)
 
       expect(changes).toEqual([
-        known({
-          id: "T-001",
-          summary: "閉じる前",
-          status: "todo",
-          difficulty: undefined,
-          loopable: undefined,
-          dependencies: [],
-          assignee: undefined,
-          body: BEADS_EMPTY_BODY,
-          location: { kind: "none" },
-        }),
-        known({
-          id: "T-001",
-          summary: "閉じる前",
-          status: "done",
-          difficulty: undefined,
-          loopable: undefined,
-          dependencies: [],
-          assignee: undefined,
-          body: BEADS_EMPTY_BODY,
-          location: { kind: "none" },
-        }),
+        known(plainTodo("T-001", "閉じる前")),
+        known({ ...plainTodo("T-001", "閉じる前"), status: "done" }),
       ])
     },
   )
 
-  it("設定の方式を beads に書き換えて .beads が無ければ、develop/task/ を見ずに「不明」", async () => {
-    const repository = await initRepository("main")
-    await commitNewFormatTasks(repository, [
-      { id: "T-001", summary: "ファイルは見ない", status: "todo" },
-    ])
+  it("プロジェクトの設定が無くても、.beads があれば一覧を出す", { timeout: 60_000 }, async () => {
+    const repository = await initRepository()
+    initBeads(repository)
+    await bd(repository, home(), "create", "--id", "t-001", "設定なし")
     const changes: unknown[] = []
     watch(repository, changes)
     await waitForChanges(changes, 1)
 
-    writeProjectSettings(repository, "beads")
-    await waitForChanges(changes, 2, BEADS_WAIT_LIMIT_MS)
-
-    expect(changes).toEqual([known(notified("T-001", "ファイルは見ない", "todo")), UNKNOWN])
+    expect(changes).toEqual([known(plainTodo("T-001", "設定なし"))])
   })
+
+  it("設定を消しても、.beads があれば一覧を出し続ける", { timeout: 60_000 }, async () => {
+    const repository = await initBeadsRepository()
+    await bd(repository, home(), "create", "--id", "t-001", "架空")
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+
+    rmSync(join(repository, PROJECT_SETTINGS_PATH))
+    await sleep(QUIET_PERIOD_MS)
+
+    expect(changes).toEqual([known(plainTodo("T-001", "架空"))])
+  })
+
+  it(".beads が無ければ、設定があっても無くても呼ばれない（既定の「不明」のまま）", async () => {
+    const repository = await initRepository()
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await sleep(QUIET_PERIOD_MS)
+    writeProjectSettings(repository)
+    await sleep(QUIET_PERIOD_MS)
+
+    expect(changes).toEqual([])
+  })
+
+  it(
+    "設定の形が壊れたら、.beads があっても「設定が読めない」を通知する",
+    { timeout: 60_000 },
+    async () => {
+      const repository = await initBeadsRepository()
+      await bd(repository, home(), "create", "--id", "t-001", "架空")
+      const changes: unknown[] = []
+      watch(repository, changes)
+      await waitForChanges(changes, 1)
+
+      writeProjectSettingsContent(repository, '{ "tasks": { "mainBranch": ')
+      await waitForChanges(changes, 2)
+
+      expect(changes).toEqual([known(plainTodo("T-001", "架空")), { kind: "settings-invalid" }])
+    },
+  )
 })
 
 // 偽の口と手で進める時計で、見回りが子プロセスを起こした回数を数える。
 
-const FAKE_INTERVALS = { git: 1500, beads: 5000 }
+const FAKE_INTERVAL_MS = 5000
 
 /** 起こした順の呼び出しの記録。 */
 type FakeCalls = string[]
 
 type FakePortsOptions = {
-  readonly store: "files" | "beads"
   /** 取り直すたびに読む変化の印（`undefined` は取れない）。 */
   readonly stamp: () => string | undefined
-  readonly commonDirFailsFirst: boolean
   /** 設定の読みが最初の1回だけ例外を投げる。 */
-  readonly settingsThrowsFirst?: boolean
-  readonly runPrompt: string
+  readonly settingsThrowsFirst: boolean
+  readonly settings: ProjectSettingsRead
 }
 
 function fakePorts(
@@ -607,54 +279,20 @@ function fakePorts(
   clock: TaskSummaryPorts["clock"],
   options: FakePortsOptions,
 ): TaskSummaryPorts {
-  let commonDirAsked = 0
   let settingsAsked = 0
   return {
-    runGit: (_cwd, args) => {
-      if (args.includes("--git-common-dir")) {
-        calls.push("git common-dir")
-        commonDirAsked += 1
-        return Promise.resolve(
-          options.commonDirFailsFirst && commonDirAsked === 1
-            ? { kind: "failed" }
-            : { kind: "output", stdout: "/common\n" },
-        )
-      }
-      if (args.includes("ls-tree")) {
-        calls.push("git ls-tree")
-        return Promise.resolve({ kind: "output", stdout: "develop/task/T-001.md\n" })
-      }
-      calls.push("git rev-parse main")
-      return Promise.resolve({ kind: "output", stdout: "head-1\n" })
-    },
-    runGitCatFileBatch: () => {
-      calls.push("git cat-file")
-      return Promise.resolve({
-        kind: "output",
-        contents: [
-          "---\nid: T-001\nsummary: 架空\nstatus: todo\ndifficulty: sonnet\nloopable: Y\ndependencies: []\n---\n",
-        ],
-      })
-    },
     readProjectSettings: () => {
       settingsAsked += 1
-      if (options.settingsThrowsFirst === true && settingsAsked === 1) {
+      if (options.settingsThrowsFirst && settingsAsked === 1) {
         return Promise.reject(new Error("架空の失敗"))
       }
-      return Promise.resolve({
-        kind: "read",
-        tasks: { store: options.store, mainBranch: "main", runPrompt: options.runPrompt },
-      })
+      return Promise.resolve(options.settings)
     },
     readBeadsIssues: () => {
       calls.push("bd list")
       return Promise.resolve({ kind: "issues", issues: [] })
     },
     createBeadsStampReader: () => () => Promise.resolve(options.stamp()),
-    readClaimDir: () => {
-      calls.push("readdir")
-      return Promise.resolve(new Set<string>())
-    },
     clock,
   }
 }
@@ -675,12 +313,14 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       "/cwd",
       (tasks) => changes.push(tasks),
       {
-        intervals: FAKE_INTERVALS,
+        intervalMs: FAKE_INTERVAL_MS,
         ports: fakePorts(calls, manual.clock, {
-          store: "files",
           stamp: () => stamp,
-          commonDirFailsFirst: false,
-          runPrompt: "/next-task {id}",
+          settingsThrowsFirst: false,
+          settings: {
+            kind: "read",
+            tasks: { mainBranch: "main", runPrompt: "/next-task {id}" },
+          },
           ...options,
         }),
       },
@@ -700,40 +340,32 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     }
   }
 
-  it.each(["files", "beads"] as const)(
-    "設定の runPrompt が一覧に付いて届く（%s 方式）",
-    async (store) => {
-      const { fake, changes } = startFake({ store, runPrompt: "/work {id}" })
-      fake.setWatching(true)
-      await settle()
-
-      expect(changes).toMatchObject([{ kind: "known", runPrompt: "/work {id}" }])
-    },
-  )
-
-  it("--git-common-dir は起動中に1回しか起こさない", async () => {
-    const { fake, manual, count } = startFake()
+  it("設定の runPrompt が一覧に付いて届く", async () => {
+    const { fake, changes } = startFake({
+      settings: { kind: "read", tasks: { mainBranch: "main", runPrompt: "/work {id}" } },
+    })
     fake.setWatching(true)
     await settle()
-    for (let round = 0; round < 5; round += 1) {
-      manual.advance(FAKE_INTERVALS.git)
-      await settle()
-    }
 
-    expect(count("git rev-parse main")).toBeGreaterThan(5)
-    expect(count("git common-dir")).toBe(1)
+    expect(changes).toMatchObject([{ kind: "known", runPrompt: "/work {id}" }])
   })
 
-  it("--git-common-dir が取れなかった回は覚えず、次の回に取り直す", async () => {
-    const { fake, manual, count } = startFake({ commonDirFailsFirst: true })
+  it("設定が無ければ、既定の文面を付けて Beads を読む", async () => {
+    const { fake, changes, count } = startFake({ settings: { kind: "none" } })
     fake.setWatching(true)
     await settle()
-    manual.advance(FAKE_INTERVALS.git)
-    await settle()
-    manual.advance(FAKE_INTERVALS.git)
+
+    expect(count("bd list")).toBe(1)
+    expect(changes).toMatchObject([{ kind: "known", runPrompt: "/next-task {id}" }])
+  })
+
+  it("設定が読めなければ、Beads を読まずに「設定が読めない」を届ける", async () => {
+    const { fake, changes, count } = startFake({ settings: { kind: "invalid" } })
+    fake.setWatching(true)
     await settle()
 
-    expect(count("git common-dir")).toBe(2)
+    expect(count("bd list")).toBe(0)
+    expect(changes).toEqual([{ kind: "settings-invalid" }])
   })
 
   it("見回りが1回投げても、失敗を渡して次の間隔でまた読む", async () => {
@@ -745,40 +377,37 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     expect(changes).toEqual([])
     expect(manual.pending()).toBe(1)
 
-    manual.advance(FAKE_INTERVALS.git)
+    manual.advance(FAKE_INTERVAL_MS)
     await settle()
 
     expect(changes).toMatchObject([{ kind: "known" }])
   })
 
   it("見張りを動かさないあいだは、時計を何周進めても起こした時点の1回しか読まない", async () => {
-    const { manual, calls } = startFake()
+    const { manual, count } = startFake({ stamp: () => undefined })
     await settle()
-    const afterStart = calls.length
     for (let round = 0; round < 10; round += 1) {
-      manual.advance(FAKE_INTERVALS.beads)
+      manual.advance(FAKE_INTERVAL_MS)
       await settle()
     }
 
-    expect(afterStart).toBeGreaterThan(0)
-    expect(calls).toHaveLength(afterStart)
+    expect(count("bd list")).toBe(1)
     expect(manual.pending()).toBe(0)
   })
 
   it("動かすとすぐ1回読み、間隔ごとに予約する。止めると予約を消す", async () => {
-    const { fake, manual, calls } = startFake()
+    const { fake, manual, count } = startFake({ stamp: () => undefined })
     await settle()
-    const afterStart = calls.length
+    expect(count("bd list")).toBe(1)
 
     fake.setWatching(true)
     await settle()
-    const afterResume = calls.length
-    expect(afterResume).toBeGreaterThan(afterStart)
+    expect(count("bd list")).toBe(2)
     expect(manual.pending()).toBe(1)
 
-    manual.advance(FAKE_INTERVALS.git)
+    manual.advance(FAKE_INTERVAL_MS)
     await settle()
-    expect(calls.length).toBeGreaterThan(afterResume)
+    expect(count("bd list")).toBe(3)
 
     fake.setWatching(false)
     expect(manual.pending()).toBe(0)
@@ -795,83 +424,80 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     expect(manual.pending()).toBe(0)
   })
 
-  describe("Beads 方式", () => {
-    it("変化の印が同じなら、何周進めても bd list を起こさない", async () => {
-      const { fake, manual, count } = startFake({ store: "beads" })
-      fake.setWatching(true)
+  it("変化の印が同じなら、何周進めても bd list を起こさない", async () => {
+    const { fake, manual, count } = startFake()
+    fake.setWatching(true)
+    await settle()
+    for (let round = 0; round < 5; round += 1) {
+      manual.advance(FAKE_INTERVAL_MS)
       await settle()
-      for (let round = 0; round < 5; round += 1) {
-        manual.advance(FAKE_INTERVALS.beads)
-        await settle()
-      }
+    }
 
-      expect(count("bd list")).toBe(1)
+    expect(count("bd list")).toBe(1)
+  })
+
+  it("変化の印が変わると1回読み、要約が同じなら知らせず、次の周は読まない", async () => {
+    const { fake, manual, count, changes, setStamp } = startFake()
+    fake.setWatching(true)
+    await settle()
+
+    setStamp("stamp-2")
+    manual.advance(FAKE_INTERVAL_MS)
+    await settle()
+    manual.advance(FAKE_INTERVAL_MS)
+    await settle()
+
+    expect(count("bd list")).toBe(2)
+    expect(changes).toHaveLength(1)
+  })
+
+  it("変化の印が取れないときは、毎回 bd list を読む", async () => {
+    const { fake, manual, count } = startFake({ stamp: () => undefined })
+    fake.setWatching(true)
+    await settle()
+    for (let round = 0; round < 3; round += 1) {
+      manual.advance(FAKE_INTERVAL_MS)
+      await settle()
+    }
+
+    expect(count("bd list")).toBe(4)
+  })
+
+  it("変化の印が変わってから反映されるまでの遅れは、見回りの間隔以内", async () => {
+    const calls: FakeCalls = []
+    const manual = createManualClock()
+    const changes: unknown[] = []
+    let stamp: string | undefined = "stamp-1"
+    let issueCount = 0
+    const ports = fakePorts(calls, manual.clock, {
+      stamp: () => stamp,
+      settingsThrowsFirst: false,
+      settings: { kind: "none" },
     })
-
-    it("変化の印が変わると1回読み、要約が同じなら知らせず、次の周は読まない", async () => {
-      const { fake, manual, count, changes, setStamp } = startFake({ store: "beads" })
-      fake.setWatching(true)
-      await settle()
-
-      setStamp("stamp-2")
-      manual.advance(FAKE_INTERVALS.beads)
-      await settle()
-      manual.advance(FAKE_INTERVALS.beads)
-      await settle()
-
-      expect(count("bd list")).toBe(2)
-      expect(changes).toHaveLength(1)
-    })
-
-    it("変化の印が取れないときは、毎回 bd list を読む", async () => {
-      const { fake, manual, count } = startFake({ store: "beads", stamp: () => undefined })
-      fake.setWatching(true)
-      await settle()
-      for (let round = 0; round < 3; round += 1) {
-        manual.advance(FAKE_INTERVALS.beads)
-        await settle()
-      }
-
-      expect(count("bd list")).toBe(4)
-    })
-
-    it("変化の印が変わってから反映されるまでの遅れは、見回りの間隔以内", async () => {
-      const calls: FakeCalls = []
-      const manual = createManualClock()
-      const changes: unknown[] = []
-      let stamp: string | undefined = "stamp-1"
-      let issueCount = 0
-      const ports = fakePorts(calls, manual.clock, {
-        store: "beads",
-        stamp: () => stamp,
-        commonDirFailsFirst: false,
-        runPrompt: "/next-task {id}",
-      })
-      watcher = watchTaskSummary("/cwd", (tasks) => changes.push(tasks), {
-        intervals: FAKE_INTERVALS,
-        ports: {
-          ...ports,
-          readBeadsIssues: () => {
-            issueCount += 1
-            return Promise.resolve({
-              kind: "issues",
-              issues: issueCount === 1 ? [] : [FICTIONAL_BEADS_ISSUE],
-            })
-          },
+    watcher = watchTaskSummary("/cwd", (tasks) => changes.push(tasks), {
+      intervalMs: FAKE_INTERVAL_MS,
+      ports: {
+        ...ports,
+        readBeadsIssues: () => {
+          issueCount += 1
+          return Promise.resolve({
+            kind: "issues",
+            issues: issueCount === 1 ? [] : [FICTIONAL_BEADS_ISSUE],
+          })
         },
-      })
-      watcher.setWatching(true)
-      await settle()
-      expect(changes).toHaveLength(1)
-
-      stamp = "stamp-2"
-      manual.advance(FAKE_INTERVALS.beads - 1)
-      await settle()
-      expect(changes).toHaveLength(1)
-      manual.advance(1)
-      await settle()
-      expect(changes).toHaveLength(2)
+      },
     })
+    watcher.setWatching(true)
+    await settle()
+    expect(changes).toHaveLength(1)
+
+    stamp = "stamp-2"
+    manual.advance(FAKE_INTERVAL_MS - 1)
+    await settle()
+    expect(changes).toHaveLength(1)
+    manual.advance(1)
+    await settle()
+    expect(changes).toHaveLength(2)
   })
 })
 
@@ -892,7 +518,7 @@ const FICTIONAL_BEADS_ISSUE: BeadsIssue = {
 
 describe("createBeadsStampReader", () => {
   it("課題を書き換えると変わり、書き換えなければ変わらない", { timeout: 60_000 }, async () => {
-    const repository = await initRepository("main")
+    const repository = await initRepository()
     initBeads(repository)
     await bd(repository, home(), "create", "--id", "t-001", "架空")
     const readStamp = createBeadsStampReader(repository)
@@ -908,7 +534,7 @@ describe("createBeadsStampReader", () => {
   })
 
   it("別の作業ツリーからの書き換えでも変わる", { timeout: 60_000 }, async () => {
-    const repository = await initRepository("main")
+    const repository = await initRepository()
     initBeads(repository)
     await bd(repository, home(), "create", "--id", "t-001", "架空")
     const worktree = await addWorktree(repository)
@@ -922,7 +548,7 @@ describe("createBeadsStampReader", () => {
   })
 
   it(".beads が無ければ取れない（undefined）", async () => {
-    const repository = await initRepository("main")
+    const repository = await initRepository()
 
     expect(await createBeadsStampReader(repository)()).toBeUndefined()
   })

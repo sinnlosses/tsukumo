@@ -31,5 +31,30 @@
       "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
       "expression": "default"
     }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tasks-changed",
+      "tasks": {
+        "kind": "known",
+        "items": [
+          {
+            "id": "T-001",
+            "summary": "架空のタスク（未着手）",
+            "status": "todo",
+            "difficulty": "sonnet",
+            "loopable": "Y",
+            "dependencies": [],
+            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
+            "location": {
+              "kind": "none"
+            }
+          }
+        ],
+        "runPrompt": "/next-task {id}"
+      }
+    }
   }
 ]

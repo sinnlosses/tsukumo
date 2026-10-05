@@ -39,6 +39,7 @@ import {
   startupSteps,
 } from "../../src/server/session-driver/adapter/fake-driver.ts"
 import { PROTOCOL_VERSION } from "../../src/shared/frame.ts"
+import { writeBeadsConfig } from "../fixture/beads-repository.ts"
 import { bundledFakeSession } from "../fixture/bundled-fake-session.ts"
 
 /** サーバとブラウザの時計を凍らせる瞬間（走らせる日に依らない固定の値）。 */
@@ -138,7 +139,7 @@ const DOM_ROOT_SELECTORS = {
 export type ScenarioRoom = {
   readonly page: Page
   /**
-   * 起こした tsukumo の cwd（`realpath` を通した絶対パス）。`main` の develop/task/ を読む
+   * 起こした tsukumo の cwd（`realpath` を通した絶対パス）。cwd の `.beads` を読む
    * タスクの一覧のように、疑似セッションの場面ではなく cwd の中身そのものが元になるシナリオ
    * だけがここへ書き足す（`git init` など）。書き足すのは `open` が部屋を渡したあとにする。
    * 起こす前や繋がる前に用意すると、最初の見回りが `hello` に畳まれてしまい、
@@ -153,9 +154,9 @@ export type ScenarioRoom = {
   readonly waitForEvent: (kind: string, occurrence?: number) => Promise<void>
   /**
    * `tasks-changed` が、一覧（`tasks.kind === "known"`）に `ids` をすべて含む1件まで待つ。
-   * 主ブランチへ最初のコミットが乗るまでの間、見回りは `git rev-parse` が失敗して `unknown` を
-   * 返しうるので、`waitForEvent("tasks-changed")`（既定 occurrence=1）はその `unknown` の1件で
-   * 抜けてしまう。`develop/task/` を手書きする足場はこちらを使う。
+   * `.beads` を置く前の見回りは `bd` が読めずに `unknown` を返しうるので、
+   * `waitForEvent("tasks-changed")`（既定 occurrence=1）は狙いの一覧より前の1件で抜けうる。
+   * 課題を置く足場はこちらを使う。
    */
   readonly waitForTasksContaining: (ids: readonly string[]) => Promise<void>
   /** `pending-changed` の答え待ちに `id` の札が載るまで待つ（何回目の `pending-changed` かでは待たない）。 */
@@ -242,13 +243,16 @@ async function openRoom(
 ): Promise<ScenarioRoom> {
   const home = makeTempDirectory("tsukumo-e2e-home-")
   const cwd = makeTempDirectory("tsukumo-e2e-cwd-")
+  const userHome = makeTempDirectory("tsukumo-e2e-user-home-")
   addCleanup(() => {
     rmSync(home.real, { recursive: true, force: true })
     rmSync(cwd.real, { recursive: true, force: true })
+    rmSync(userHome.real, { recursive: true, force: true })
     return Promise.resolve()
   })
+  writeBeadsConfig(userHome.real)
 
-  const child = spawnTsukumo(options.scene, home.real, cwd.real)
+  const child = spawnTsukumo(options.scene, home.real, userHome.real, cwd.real)
   addCleanup(() => stopTsukumo(child))
   const viewUrl = await waitForViewUrl(child, LAUNCH_TIMEOUT_MS)
   const url = new URL(viewUrl)
@@ -430,16 +434,16 @@ function makeTempDirectory(prefix: string): TempDirectory {
 /**
  * fake driver で tsukumo を1つ起こす。親の `TSUKUMO_` で始まる変数は外してから渡す
  * （手元で立てている値で結果が変わらないように）。キャラクターは指定せず、空のホームで同梱の
- * 既定を使う。
+ * 既定を使う。`HOME` も一時のディレクトリへ向ける（`bd` が利用者の設定を読まないように）。
  */
-function spawnTsukumo(scene: string, home: string, cwd: string): ChildProcess {
+function spawnTsukumo(scene: string, home: string, userHome: string, cwd: string): ChildProcess {
   return spawnFakeTsukumo({
     entry: path.join(REPOSITORY_ROOT, "src", "cli.ts"),
     cwd,
     scene: scene === "none" ? undefined : scene,
     port: 0,
     home,
-    extraEnv: { TSUKUMO_FIXED_CLOCK: FIXED_INSTANT, TZ: TIME_ZONE },
+    extraEnv: { TSUKUMO_FIXED_CLOCK: FIXED_INSTANT, TZ: TIME_ZONE, HOME: userHome },
     dropInheritedTsukumoEnv: true,
     stderr: "pipe",
   })

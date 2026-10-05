@@ -1,6 +1,5 @@
 {
   "tasks": {
-    "store": "beads",
     "mainBranch": "main",
     "runPrompt": "/next-task {id}"
   }

@@ -18,7 +18,7 @@ const run = useScenarioRun()
 const ELAPSED_MS = 60_000
 
 describe("タスクの一覧", () => {
-  it("main の develop/task/ を読み、サイドバーのタスク一覧に並ぶ", async () => {
+  it("Beads の課題を読み、サイドバーのタスク一覧に並ぶ", async () => {
     const room = await openTaskListRoom(run, "task-list", ["task-section"])
     await room.settleAndMatch(ELAPSED_MS)
   })
@@ -51,7 +51,7 @@ describe("タスクの一覧", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("claim した todo は進行中のカードで先頭に出て、残りはファイルの順のまま並ぶ", async () => {
+  it("着手中の課題は進行中のカードで先頭に出て、残りは ID の順のまま並ぶ", async () => {
     const room = await openTaskListRoomWithRunningTask(
       run,
       "task-list-running",
@@ -166,41 +166,40 @@ describe("タスクの一覧", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("プロジェクトの設定が無いと、タスクの節と「一覧を見る」を出さず、設定が無い表示を出す", async () => {
+  it("設定も .beads も無いと、タスクの節に「不明」を出し、見出しの歯車は残す", async () => {
     const room = await run.open({
-      scenario: "task-list-no-project-settings",
+      scenario: "task-list-no-beads",
       scene: "none",
       viewport: "wide",
       domRoots: ["sidebar"],
     })
     const { page } = room
-    await page.getByRole("button", { name: "設定する" }).waitFor()
+    const section = page.locator('section[aria-label="タスク"]')
+    await section.getByText("不明", { exact: true }).waitFor()
 
-    expect(await page.locator('section[aria-label="タスク"]').count()).toBe(0)
-    expect(await page.getByRole("button", { name: "一覧を見る" }).count()).toBe(0)
+    expect(await section.getByRole("button", { name: "プロジェクトの設定" }).count()).toBe(1)
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("プロジェクトの設定が無いと、柱の口に進行中の件数を出さない", async () => {
+  it(".beads が無いと、柱の口に進行中の件数を出さない", async () => {
     const room = await run.open({
-      scenario: "task-list-no-project-settings-rail",
+      scenario: "task-list-no-beads-rail",
       scene: "none",
       viewport: "medium",
       domRoots: [],
     })
     const toggle = room.page.getByRole("button", { name: "サイドバー", exact: true })
     await toggle.click()
-    await room.page.getByRole("button", { name: "設定する" }).waitFor()
+    await room.page.getByText("不明", { exact: true }).waitFor()
 
     expect(await toggle.textContent()).not.toMatch(/\d/)
-    expect(await room.page.getByRole("button", { name: "一覧を見る" }).count()).toBe(0)
   })
 })
 
 describe("プロジェクトの設定を画面から書く", () => {
-  it("設定が無いと「設定する」から書くダイアログが開き、下書きの値が並ぶ", async () => {
+  it("設定が無くても一覧が出て、見出しの歯車から書くダイアログが開き、下書きの値が並ぶ", async () => {
     const room = await openProjectSettingsRoom(run, "project-settings-open", ["sidebar"], "missing")
-    await room.page.getByRole("button", { name: "設定する" }).click()
+    await room.page.getByRole("button", { name: "プロジェクトの設定" }).click()
     const dialog = await projectSettingsDialog(room)
 
     expect(await dialog.getByLabel("主ブランチ").inputValue()).toBe("main")
@@ -208,18 +207,16 @@ describe("プロジェクトの設定を画面から書く", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("保存すると .tsukumo/project.json に書かれ、タスクの節に切り替わる", async () => {
+  it("保存すると .tsukumo/project.json に書かれ、頼む文面が一覧に届く", async () => {
     const room = await openProjectSettingsRoom(run, "project-settings-save", [], "missing")
-    await room.page.getByRole("button", { name: "設定する" }).click()
+    await room.page.getByRole("button", { name: "プロジェクトの設定" }).click()
     const dialog = await projectSettingsDialog(room)
-    await dialog.getByRole("button", { name: "files" }).click()
     await dialog.getByLabel("頼む文面").fill("/work {id}")
     await dialog.getByRole("button", { name: "保存" }).click()
 
-    await room.waitForTasksContaining(["T-001"])
-    await room.page.locator('section[aria-label="タスク"]').waitFor()
+    await room.waitForEvent("tasks-changed", 2)
     expect(readProjectSettingsFile(room)).toEqual({
-      tasks: { store: "files", mainBranch: "main", runPrompt: "/work {id}" },
+      tasks: { mainBranch: "main", runPrompt: "/work {id}" },
     })
   })
 
@@ -229,7 +226,6 @@ describe("プロジェクトの設定を画面から書く", () => {
     await room.page.getByRole("button", { name: "プロジェクトの設定" }).click()
     const dialog = await projectSettingsDialog(room)
     await dialog.getByText("読めない", { exact: true }).waitFor()
-    await dialog.getByRole("button", { name: "files" }).click()
     await dialog.getByRole("button", { name: "保存" }).click()
     const confirm = dialog.getByRole("group", { name: "上書きする？" })
     await confirm.waitFor()
@@ -238,7 +234,7 @@ describe("プロジェクトの設定を画面から書く", () => {
     await confirm.getByRole("button", { name: "上書き" }).click()
     await room.waitForTasksContaining(["T-001"])
     expect(readProjectSettingsFile(room)).toEqual({
-      tasks: { store: "files", mainBranch: "main", runPrompt: "/next-task {id}" },
+      tasks: { mainBranch: "main", runPrompt: "/next-task {id}" },
     })
   })
 })

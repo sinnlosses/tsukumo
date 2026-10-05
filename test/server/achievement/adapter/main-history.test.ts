@@ -31,7 +31,7 @@ let repository: string
 beforeEach(async () => {
   repository = join(root(), "repository")
   await initGitRepository(repository)
-  writeProjectSettings(repository, "files")
+  writeProjectSettings(repository)
 })
 
 /** `date`（`YYYY-MM-DD`）の `hhmm` を、`readAchievement` が読む `Temporal.Now.timeZoneId()` と
@@ -178,7 +178,7 @@ describe("readAchievement", () => {
   it("設定の主ブランチが master なら、master の履歴から数える", async () => {
     const masterRepository = join(root(), "master-repository")
     await initGitRepository(masterRepository, "master")
-    writeProjectSettings(masterRepository, "files", "master")
+    writeProjectSettings(masterRepository, "master")
     await commitAt(masterRepository, "2026-09-23", "12:00", "a.txt")
 
     const achievement = known(
@@ -682,17 +682,17 @@ describe("readAchievement", () => {
   })
 })
 
-// Beads 方式（プロジェクトの設定の `tasks.store` が `beads`）。本物の `bd` を、`HOME` を
+// Beads の閉じた課題を数える。本物の `bd` を、`HOME` を
 // 一時ディレクトリへ向けて起こす（`useBeadsHome`）。`bd close` の時刻は
 // 変えられないので、Beads の側は今日、git の側は過去の日に置く。
 describe("readAchievement（Beads 方式）", () => {
   const home = useBeadsHome(() => join(root(), "home"))
   const today = Temporal.Now.plainDateISO().toString()
-  const BEADS_SETTINGS = JSON.stringify({ tasks: { store: "beads", mainBranch: "main" } })
+  const SETTINGS = JSON.stringify({ tasks: { mainBranch: "main" } })
 
   /**
    * 移す前の git に、done のタスクと未完了のタスクのファイルを置き、過去の日に Beads へ移す
-   * （未完了の方だけを Beads に作り、`develop/task/` を消してプロジェクトの設定の方式を beads にする）。
+   * （未完了の方だけを Beads に作り、`develop/task/` を消してプロジェクトの設定をコミットする）。
    */
   async function migrateToBeads(): Promise<void> {
     await commitNewFormatTask(repository, "2026-09-10", "10:00", "T-001", "git で済んだ", "todo")
@@ -707,7 +707,7 @@ describe("readAchievement（Beads 方式）", () => {
     initBeads(repository)
     await bd(repository, home(), "create", "--id", "t-002", "移した")
     await git(repository, "rm", "--quiet", "-r", "develop/task")
-    await commitAt(repository, "2026-09-20", "10:00", PROJECT_SETTINGS_PATH, BEADS_SETTINGS)
+    await commitAt(repository, "2026-09-20", "10:00", PROJECT_SETTINGS_PATH, SETTINGS)
   }
 
   it(
@@ -746,12 +746,13 @@ describe("readAchievement（Beads 方式）", () => {
     },
   )
 
-  it("設定の方式が beads なのに .beads が無ければ「取れなかった」（部分的な数を出さない）", async () => {
-    await commitAt(repository, "2026-09-20", "10:00", PROJECT_SETTINGS_PATH, BEADS_SETTINGS)
+  it(".beads もタスクファイルの記録も無ければ、終えたタスクは数えない", async () => {
+    await commitAt(repository, "2026-09-20", "10:00", PROJECT_SETTINGS_PATH, SETTINGS)
 
-    expect(
+    const achievement = known(
       await readAchievement(repository, "2026-09-20", today, createAchievementCommitCache()),
-    ).toEqual({ kind: "unavailable" })
+    )
+    expect(achievement.doneTasks).toEqual({ kind: "unknown" })
   })
 })
 

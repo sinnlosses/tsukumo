@@ -1,11 +1,10 @@
 // プロジェクトの設定（起動先の `.tsukumo/project.json`）を書くダイアログ。
-// サイドバーのタスクの節から開く（設定が無いときの「⚙ 設定する」と、節の見出しの歯車）。
+// サイドバーのタスクの節の見出しの歯車から開く。
 // 説明の文を置かず、見た目で伝える: 見出しの横に書き先のパス、推し量った値の欄は点線と薄い字、頼む文面の `{id}` は差し色の札、読めないときは赤い札。
 
 import clsx from "clsx"
 import { type ReactElement, useRef } from "react"
 
-import { TASK_STORES, type TaskStore } from "../../../../../shared/repository/project-settings.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../ui/heading/heading.tsx"
@@ -81,10 +80,6 @@ function ProjectSettingsForm({ form, onClose }: ProjectSettingsFormProps): React
   return (
     <>
       <div className={styles["project-settings-grid"]}>
-        <span className={styles["project-settings-label"]} id="project-settings-store">
-          タスク
-        </span>
-        <StoreSwitch field={form.store} />
         <label className={styles["project-settings-label"]} htmlFor="project-settings-main-branch">
           主ブランチ
         </label>
@@ -140,35 +135,6 @@ function ProjectSettingsForm({ form, onClose }: ProjectSettingsFormProps): React
         {form.confirming && <OverwriteConfirm form={form} />}
       </div>
     </>
-  )
-}
-
-type StoreSwitchProps = {
-  readonly field: ProjectSettingsFieldModel<TaskStore>
-}
-
-function StoreSwitch({ field }: StoreSwitchProps): ReactElement {
-  return (
-    <div
-      role="group"
-      aria-labelledby="project-settings-store"
-      className={clsx(
-        styles["project-settings-switch"],
-        field.inferred && styles["project-settings-inferred"],
-      )}
-    >
-      {TASK_STORES.map((store) => (
-        <button
-          key={store}
-          type="button"
-          aria-pressed={field.value === store}
-          className={styles["project-settings-switch-option"]}
-          onClick={() => field.onChange(store)}
-        >
-          {store}
-        </button>
-      ))}
-    </div>
   )
 }
 

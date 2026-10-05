@@ -219,7 +219,7 @@
                     "aria-hidden": "true"
                   }
                 },
-                "進行中",
+                "進行中（wt-test）",
                 {
                   "tag": "span",
                   "attributes": {
@@ -387,21 +387,6 @@
                     },
                     "回せる"
                   ]
-                },
-                {
-                  "tag": "dt",
-                  "children": [
-                    "ファイル"
-                  ]
-                },
-                {
-                  "tag": "dd",
-                  "children": [
-                    {
-                      "tag": "svg"
-                    },
-                    "develop/task/T-001.md"
-                  ]
                 }
               ]
             },
@@ -506,6 +491,18 @@
                 {
                   "tag": "h4",
                   "children": [
+                    "決まっていること（蒸し返さない）"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "解くべき論点"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
                     "やること"
                   ]
                 },
@@ -524,6 +521,12 @@
                         "二つ目の手順"
                       ]
                     }
+                  ]
+                },
+                {
+                  "tag": "h5",
+                  "children": [
+                    "段の見出し"
                   ]
                 },
                 {
@@ -568,9 +571,15 @@
                   ]
                 },
                 {
-                  "tag": "h5",
+                  "tag": "h4",
                   "children": [
-                    "参考"
+                    "注意"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "参考情報"
                   ]
                 },
                 {
@@ -678,19 +687,6 @@
                   "tag": "svg"
                 },
                 "ID をコピー"
-              ]
-            },
-            {
-              "tag": "button",
-              "attributes": {
-                "aria-disabled": "false",
-                "type": "button"
-              },
-              "children": [
-                {
-                  "tag": "svg"
-                },
-                "エディタで開く"
               ]
             },
             {

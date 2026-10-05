@@ -52,8 +52,8 @@ describe("recommendationCandidates", () => {
     ])
   })
 
-  it("タスク運用が無いときは前回の続きだけ", () => {
-    expect(recommendationCandidates({ kind: "none" })).toEqual([{ kind: "resume" }])
+  it("設定が読めないときは前回の続きだけ", () => {
+    expect(recommendationCandidates({ kind: "settings-invalid" })).toEqual([{ kind: "resume" }])
   })
 
   it("タスクの候補は上限で切る", () => {

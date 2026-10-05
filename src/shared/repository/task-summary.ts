@@ -1,4 +1,4 @@
-// タスク一覧の要約（id・summary・status・difficulty・loopable・依存・着手した作業ツリー）の形と、ファイル方式の develop/task/T-xxx.md の front matter の読み方。
+// タスク一覧の要約（id・summary・status・difficulty・loopable・依存・着手した作業ツリー）の形と、主ブランチの履歴に残る develop/task/T-xxx.md の front matter の読み方。
 // タスク一覧は進捗管理のファイルで、利用者との会話内容とは別物。ここは会話の内容を一切扱わない。
 // ここはファイルI/Oを持たない。
 
@@ -13,14 +13,12 @@ export type TaskSummaryItem = {
   readonly loopable: string | undefined
   readonly dependencies: readonly string[]
   /**
-   * 着手した作業ツリーの名前（Beads の `assignee`）。ファイル方式の台帳の印は持ち主を運ばないので
-   * 常に `undefined`。Beads 方式でも着手していない・持ち主の無い課題では `undefined`。
+   * 着手した作業ツリーの名前（Beads の `assignee`）。着手していない・持ち主の無い課題では `undefined`。
    */
   readonly assignee: string | undefined
   /**
    * タスクの本文（Markdown）。
-   * ファイル方式は `develop/task/<ID>.md` の front matter より後ろ、Beads 方式は `composeBeadsBody` が組んだもの。
-   * 本文が無い課題・ファイルでも空文字列で持つ（`undefined` にしない）。
+   * `composeBeadsBody` が組んだもの。本文が無い課題でも空文字列で持つ（`undefined` にしない）。
    */
   readonly body: string
   readonly location: TaskLocation
@@ -37,16 +35,14 @@ export type TaskLocation =
 
 /**
  * タスクの一覧が読めているかどうか。
- * - `none`: タスク運用なし（プロジェクトの設定が無い・`tasks` が無い）。画面はタスクの節を出さない
  * - `settings-invalid`: プロジェクトの設定が読めない（JSON が壊れている・形が違う）
- * - `unknown`: 読めない（主ブランチが無い・`develop/task/` が無い・`bd` が読めない）か、まだ届いていない
+ * - `unknown`: 読めない（`.beads` が無い・`bd` が読めない）か、まだ届いていない
  * - `known`: 読めた
  *
  * 「まだ届いていない」（状態の初期値）と「読めない」は区別しない。
  * `watchTaskSummary` は前回知らせた結果と同じものを知らせないので、最初から読めないときは初回の通知そのものが来ず、画面の対処も変わらない。
  */
 export type TaskSummaryResult =
-  | { readonly kind: "none" }
   | { readonly kind: "settings-invalid" }
   | { readonly kind: "unknown" }
   | {
@@ -189,38 +185,6 @@ export function parseNewTaskFile(fileName: string, content: string): NewTaskFile
   return { id, summary, status, difficulty, loopable, dependencies, body }
 }
 
-/**
- * 読み終えた {@link NewTaskFile} の並びと、台帳の着手の印から一覧に出す要約を作る。
- * 着手中（台帳に印がある `todo`）は表示用の `status` を `"doing"` に読み替える。並びは ID の数字順。
- *
- * ファイルを読み直さずに済む形で分けてある。
- * `main` の先端が動いていなくても共有の `.git` の台帳（着手の印）だけは動く（`task claim` / `task release` は `main` を動かさない）ので、先端が同じ見回りでも `claimedIds` だけ読み直してここへ通せる。
- */
-export function taskSummaryItemsOfNewTaskFiles(
-  files: readonly NewTaskFile[],
-  claimedIds: ReadonlySet<string>,
-): readonly TaskSummaryItem[] {
-  const items = files.map((task) => taskSummaryItemOfNewTaskFile(task, claimedIds))
-  return [...items].sort((a, b) => newTaskIdNumber(a.id) - newTaskIdNumber(b.id))
-}
-
-function taskSummaryItemOfNewTaskFile(
-  task: NewTaskFile,
-  claimedIds: ReadonlySet<string>,
-): TaskSummaryItem {
-  return {
-    id: task.id,
-    summary: task.summary,
-    status: task.status === "todo" && claimedIds.has(task.id) ? "doing" : task.status,
-    difficulty: task.difficulty,
-    loopable: task.loopable,
-    dependencies: task.dependencies,
-    assignee: undefined,
-    body: task.body,
-    location: { kind: "file", path: `${TASK_DIR_PATH}${task.id}.md` },
-  }
-}
-
 /** `dependencies: [...]` の `[` の次から渡す。区切りは `", "` 固定で、閉じの `]` が無ければ `undefined`。 */
 function newTaskDependenciesOf(depsField: string | undefined): readonly string[] | undefined {
   if (depsField === undefined || !depsField.endsWith("]")) {
@@ -243,9 +207,4 @@ function newTaskDependenciesOf(depsField: string | undefined): readonly string[]
 /** ファイル名の語幹（`T-xxx.md` → `T-xxx`）。パスの区切りは呼び出し側で落としてから渡す前提。 */
 function fileNameStem(fileName: string): string {
   return fileName.endsWith(".md") ? fileName.slice(0, -".md".length) : fileName
-}
-
-/** `T-NNN` → `NNN`。呼ぶ側で {@link NEW_TASK_ID_PATTERN} に通した値だけを渡す。 */
-function newTaskIdNumber(id: string): number {
-  return Number(id.slice("T-".length))
 }

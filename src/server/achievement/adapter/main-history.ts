@@ -2,10 +2,10 @@
 //
 // 読むのは作業ツリーのファイルではなく `main` の上のもの。
 // 作業ツリーのものは `git merge main` するまで別の作業ツリーの分を知らない。
-// 例外はプロジェクトの設定（`readProjectSettings`）で、主ブランチの名前（`tasks.mainBranch`）とタスクの方式をここから読む。
+// 例外はプロジェクトの設定（`readProjectSettings`）で、主ブランチの名前（`tasks.mainBranch`）をここから読む。
 // 設定が無い（ファイルが無い・`tasks` が無い）ときは、起こした作業ツリーのいまのブランチ（`HEAD`）でコミットと暦だけを数え、終えたタスクは読まない。設定が壊れているときは `unknown` にする。
 //
-// Beads 方式（プロジェクトの設定の `tasks.store` が `beads`）では、終えたタスクを git の切り口と Beads の閉じた課題（`closed_at`）の両方から読み、ID で和をとる。
+// 設定があるときは、終えたタスクを git の切り口と Beads の閉じた課題（`closed_at`）の両方から読み、ID で和をとる（`bd` が読めなければ git の切り口だけ）。
 // 移す前は Beads に閉じた課題が無く、移したあとは `main` にタスクファイルが無いので、境を数で持たなくても欠けず、同じ ID が両方にあっても1件にしかならない。
 //
 // 主ブランチが読めない（git リポジトリでない・設定の名前のブランチが無い・`HEAD` が枝を指さない・`git` が無い）ときは `DailyAchievement` の `{ kind: "unknown" }`（200 のまま配ってよい）。
@@ -22,7 +22,6 @@ import { taskIdOfBeadsId, type BeadsIssue } from "../../../shared/repository/bea
 import {
   mainBranchRefOf,
   type ProjectSettingsRead,
-  type TaskSettings,
 } from "../../../shared/repository/project-settings.ts"
 import {
   LEGACY_ARCHIVE_PATH,
@@ -133,7 +132,7 @@ export async function readAchievement(
     ),
     totalAchievementCommitsBeforeDay(cwd, head, dateKey, today, range, cache),
     settings.kind === "read" ? readTaskSnapshotSource(cwd, head) : undefined,
-    settings.kind === "read" ? readBeadsIssuesOfStore(cwd, settings.tasks) : undefined,
+    settings.kind === "read" ? readAllBeadsIssues(cwd) : undefined,
   ])
   if (commits === undefined) {
     return { kind: "unavailable" }
@@ -151,7 +150,7 @@ export async function readAchievement(
   if (
     headSource === undefined ||
     beads === undefined ||
-    (beads === "files" && !hasTaskTracking(headSource))
+    (beads === "missing" && !hasTaskTracking(headSource))
   ) {
     return {
       kind: "ok",
@@ -191,7 +190,7 @@ export async function readAchievement(
   if (deletedFiles === undefined) {
     return { kind: "unavailable" }
   }
-  const issues = beads === "files" ? [] : beads
+  const issues = beads === "missing" ? [] : beads
 
   return {
     kind: "ok",
@@ -215,19 +214,19 @@ export async function readAchievement(
   }
 }
 
-/**
- * Beads 方式なら `bd` の全件を読む。ファイル方式なら `"files"`。
- * `bd` が失敗・タイムアウトしたら `"unavailable"`。
- */
-async function readBeadsIssuesOfStore(
+/** `bd` の全件を読む。`bd` が読めない（`.beads` が無い）なら `"missing"`、タイムアウトしたら `"unavailable"`。 */
+async function readAllBeadsIssues(
   cwd: string,
-  tasks: TaskSettings,
-): Promise<readonly BeadsIssue[] | "files" | "unavailable"> {
-  if (tasks.store === "files") {
-    return "files"
-  }
+): Promise<readonly BeadsIssue[] | "missing" | "unavailable"> {
   const beads = await readBeadsIssues(cwd)
-  return beads.kind === "issues" ? beads.issues : "unavailable"
+  switch (beads.kind) {
+    case "issues":
+      return beads.issues
+    case "failed":
+      return "missing"
+    case "timed-out":
+      return "unavailable"
+  }
 }
 
 /** Beads の課題ごとの作った日（タスクID → ローカルの日付キー）。登録日の表に足す。 */

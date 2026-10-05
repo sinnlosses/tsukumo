@@ -1,7 +1,7 @@
 // プロジェクトの設定のダイアログの状態。
 // 下書き（いまのファイルの状態と欄ごとの初期値）は開くたびに `repository.projectSettingsDraft` で取り直す。
 // 欄の値は触るまで下書きのまま持ち、触った欄だけ利用者の値で上書きする（推し量った値の点線は、触った欄から実線になる）。
-// 保存は `projectSettings.save` を送って閉じる。書けたことはタスクの節が切り替わることで分かる（ダイアログは待たない）。
+// 保存は `projectSettings.save` を送って閉じる（書けたかは待たない）。
 // ファイルが読めないときは、保存の前に「上書きする？」の確かめを1回挟む。
 
 import { useQuery } from "@tanstack/react-query"
@@ -11,7 +11,6 @@ import {
   PROJECT_SETTINGS_PATH,
   type ProjectSettingsDraft,
   type ProjectSettingsDraftField,
-  type TaskStore,
 } from "../../../../../shared/repository/project-settings.ts"
 import { rpc } from "../../../../domain/rpc.ts"
 import { useSession } from "../../../../stores/session.ts"
@@ -26,7 +25,6 @@ export type ProjectSettingsFieldModel<T> = {
 
 export type ProjectSettingsFormModel = {
   readonly fileInvalid: boolean
-  readonly store: ProjectSettingsFieldModel<TaskStore>
   readonly mainBranch: ProjectSettingsFieldModel<string>
   readonly runPrompt: ProjectSettingsFieldModel<string>
   readonly canSave: boolean
@@ -60,13 +58,11 @@ export function useProjectSettingsDialog(
   const { data, isFetching } = useQuery(
     rpc.repository.projectSettingsDraft.queryOptions({ enabled: open, retry: false, staleTime: 0 }),
   )
-  const [store, setStore] = useState<FieldEdit<TaskStore>>(UNTOUCHED)
   const [mainBranch, setMainBranch] = useState<FieldEdit<string>>(UNTOUCHED)
   const [runPrompt, setRunPrompt] = useState<FieldEdit<string>>(UNTOUCHED)
   const [confirming, setConfirming] = useState(false)
 
   const close = (): void => {
-    setStore(UNTOUCHED)
     setMainBranch(UNTOUCHED)
     setRunPrompt(UNTOUCHED)
     setConfirming(false)
@@ -75,12 +71,10 @@ export function useProjectSettingsDialog(
 
   const formModel = (draft: ProjectSettingsDraft): ProjectSettingsFormModel => {
     const fields = {
-      store: fieldModel(draft.store, store, setStore),
       mainBranch: fieldModel(draft.mainBranch, mainBranch, setMainBranch),
       runPrompt: fieldModel(draft.runPrompt, runPrompt, setRunPrompt),
     }
     const tasks = {
-      store: fields.store.value,
       mainBranch: fields.mainBranch.value.trim(),
       runPrompt: fields.runPrompt.value,
     }

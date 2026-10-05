@@ -127,11 +127,12 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### プロジェクトの設定
 
 - **英語識別子**: `projectSettings`（読み取りは `projectSettingsOf`・型は `ProjectSettingsRead`。`src/shared/repository/project-settings.ts`）
-- **定義**: 起動先のリポジトリで誰が開いても同じ値の組（タスクの方式・主ブランチ名・
+- **定義**: 起動先のリポジトリで誰が開いても同じ値の組（主ブランチ名・
   「tsukumo に頼む」の送る文面）。置き場は起動先の `.tsukumo/project.json` の1つだけで、
   tsukumo はそこに書かれた値だけで動く
 - **注記**: 環境変数・歯車の設定と並ぶ3つ目の設定の置き場
-  （`docs/architecture/adr/0022-three-setting-homes.md`）。ファイルが無ければ「タスク運用なし」
+  （`docs/architecture/adr/0022-three-setting-homes.md`）。ファイルが無くてもタスク一覧は Beads から読み、
+  終えたタスクの数は出さない
 - **避ける言い方**: プロジェクト設定ファイル、リポジトリの設定、タスク運用の設定
 
 ## 会話の駆動

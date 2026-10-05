@@ -165,9 +165,7 @@ describe("委譲先の E2E 全段の呼び出しを上限で拒否する hook", 
     mkdirSync(join(dir, ".tsukumo"), { recursive: true })
     writeFileSync(
       join(dir, ".tsukumo", "project.json"),
-      JSON.stringify({
-        tasks: { store: "beads", mainBranch: "main", runPrompt: "/next-task {id}" },
-      }),
+      JSON.stringify({ tasks: { mainBranch: "main", runPrompt: "/next-task {id}" } }),
     )
     await runSubprocessOrThrow("git", ["add", ".tsukumo/project.json"], { cwd: dir })
     await runSubprocessOrThrow(

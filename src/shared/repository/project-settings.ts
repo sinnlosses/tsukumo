@@ -3,15 +3,11 @@
 //
 // ファイルI/Oは持たない。ファイルを読むのは `readProjectSettings`。
 
+import { omit } from "remeda"
 import { z } from "zod"
 
 /** 起動先からの相対パス。 */
 export const PROJECT_SETTINGS_PATH = ".tsukumo/project.json"
-
-export const TASK_STORES = ["files", "beads"] as const
-
-/** タスクの置き場。`files` は `main` の `develop/task/`、`beads` は `bd`。 */
-export type TaskStore = (typeof TASK_STORES)[number]
 
 /** 「tsukumo に頼む」で送る文面の既定。`{id}` をタスクIDに置き換えて送る。 */
 export const DEFAULT_RUN_PROMPT = "/next-task {id}"
@@ -22,14 +18,13 @@ export function runPromptOf(template: string, taskId: string): string {
 }
 
 export type TaskSettings = {
-  readonly store: TaskStore
   readonly mainBranch: string
   readonly runPrompt: string
 }
 
 /**
  * プロジェクトの設定を読んだ結果。
- * - `none`: タスク運用なし（ファイルが無い・`tasks` が無い）
+ * - `none`: 設定が無い（ファイルが無い・`tasks` が無い）
  * - `invalid`: 読めない（JSON が壊れている・形が違う）。既定へ倒さない
  * - `read`: 読めた
  */
@@ -46,14 +41,18 @@ export const MAX_RUN_PROMPT_LENGTH = 1_000
 
 /** 画面から保存するときの `tasks` の形。ファイルの検証も同じ欄を使う。 */
 export const taskSettingsSchema = z.strictObject({
-  store: z.enum(TASK_STORES),
   mainBranch: z.string().min(1).max(MAX_MAIN_BRANCH_LENGTH),
   runPrompt: z.string().min(1).max(MAX_RUN_PROMPT_LENGTH),
 })
 
 const projectSettingsSchema = z.strictObject({
   tasks: taskSettingsSchema
-    .extend({ runPrompt: taskSettingsSchema.shape.runPrompt.default(DEFAULT_RUN_PROMPT) })
+    .extend({
+      runPrompt: taskSettingsSchema.shape.runPrompt.default(DEFAULT_RUN_PROMPT),
+      // 以前の版が書いたタスクの置き場の欄。置き場は Beads だけなので、`beads` なら受けて読み捨てる。
+      store: z.literal("beads").optional(),
+    })
+    .transform((tasks) => omit(tasks, ["store"]))
     .optional(),
 })
 
@@ -77,7 +76,7 @@ export function projectSettingsContentOf(tasks: TaskSettings): string {
   return `${JSON.stringify({ tasks }, undefined, 2)}\n`
 }
 
-/** 下書きの欄1つ。`inferred` は「## タスク運用」節や `origin/HEAD` から推し量った値か（画面は点線で描く）。 */
+/** 下書きの欄1つ。`inferred` は `origin/HEAD` から推し量った値か（画面は点線で描く）。 */
 export type ProjectSettingsDraftField<T> = {
   readonly value: T
   readonly inferred: boolean
@@ -89,14 +88,12 @@ export type ProjectSettingsDraftField<T> = {
  */
 export type ProjectSettingsDraft = {
   readonly file: ProjectSettingsRead["kind"]
-  readonly store: ProjectSettingsDraftField<TaskStore>
   readonly mainBranch: ProjectSettingsDraftField<string>
   readonly runPrompt: ProjectSettingsDraftField<string>
 }
 
 export const projectSettingsDraftSchema = z.object({
   file: z.enum(["none", "invalid", "read"]),
-  store: z.object({ value: z.enum(TASK_STORES), inferred: z.boolean() }),
   mainBranch: z.object({ value: z.string(), inferred: z.boolean() }),
   runPrompt: z.object({ value: z.string(), inferred: z.boolean() }),
 }) satisfies z.ZodType<ProjectSettingsDraft>

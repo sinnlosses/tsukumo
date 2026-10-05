@@ -140,6 +140,7 @@
                       "children": [
                         "進行中",
                         "T-003",
+                        "wt-test",
                         {
                           "tag": "svg"
                         },

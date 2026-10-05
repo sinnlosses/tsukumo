@@ -94,10 +94,9 @@
             "difficulty": "sonnet",
             "loopable": "Y",
             "dependencies": [],
-            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
             "location": {
-              "kind": "file",
-              "path": "develop/task/T-001.md"
+              "kind": "none"
             }
           },
           {
@@ -109,10 +108,9 @@
             "dependencies": [
               "T-001"
             ],
-            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
             "location": {
-              "kind": "file",
-              "path": "develop/task/T-002.md"
+              "kind": "none"
             }
           }
         ],

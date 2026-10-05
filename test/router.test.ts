@@ -843,7 +843,7 @@ describe("createCommandRouter（host。レポートに書かれたパスを開�
 })
 
 describe("createCommandRouter（projectSettings。プロジェクトの設定を書く）", () => {
-  const TASKS = { store: "beads", mainBranch: "trunk", runPrompt: "/work {id}" } as const
+  const TASKS = { mainBranch: "trunk", runPrompt: "/work {id}" } as const
 
   it("書けたら ok を返し、渡した値が書く口に届く（駆動へは渡らない）", async () => {
     const { commands, stub, restarts, savedSettings } = startRouter()

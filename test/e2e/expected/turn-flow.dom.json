@@ -738,23 +738,56 @@
               },
               "children": [
                 {
-                  "tag": "h2",
-                  "children": [
-                    "タスク"
-                  ]
-                },
-                {
-                  "tag": "button",
+                  "tag": "section",
                   "attributes": {
-                    "aria-disabled": "false",
-                    "aria-haspopup": "dialog",
-                    "type": "button"
+                    "aria-label": "タスク"
                   },
                   "children": [
                     {
-                      "tag": "svg"
+                      "tag": "div",
+                      "attributes": {
+                        "data-scrolled": "false"
+                      },
+                      "children": [
+                        {
+                          "tag": "h2",
+                          "children": [
+                            "タスク",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-haspopup": "dialog",
+                                "type": "button"
+                              },
+                              "children": [
+                                "一覧を見る"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-label": "プロジェクトの設定",
+                                "aria-haspopup": "dialog",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
                     },
-                    "設定する"
+                    {
+                      "tag": "p",
+                      "children": [
+                        "不明"
+                      ]
+                    }
                   ]
                 },
                 {

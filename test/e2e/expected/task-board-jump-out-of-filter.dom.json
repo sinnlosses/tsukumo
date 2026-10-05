@@ -311,21 +311,6 @@
                     },
                     "回せる"
                   ]
-                },
-                {
-                  "tag": "dt",
-                  "children": [
-                    "ファイル"
-                  ]
-                },
-                {
-                  "tag": "dd",
-                  "children": [
-                    {
-                      "tag": "svg"
-                    },
-                    "develop/task/T-001.md"
-                  ]
                 }
               ]
             },
@@ -379,6 +364,48 @@
                 "aria-label": "本文"
               },
               "children": [
+                {
+                  "tag": "h4",
+                  "children": [
+                    "目的・背景"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "決まっていること（蒸し返さない）"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "解くべき論点"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "やること"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "完了条件"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "注意"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "参考情報"
+                  ]
+                },
                 {
                   "tag": "h4",
                   "children": [
@@ -461,19 +488,6 @@
                   "tag": "svg"
                 },
                 "ID をコピー"
-              ]
-            },
-            {
-              "tag": "button",
-              "attributes": {
-                "aria-disabled": "false",
-                "type": "button"
-              },
-              "children": [
-                {
-                  "tag": "svg"
-                },
-                "エディタで開く"
               ]
             },
             {

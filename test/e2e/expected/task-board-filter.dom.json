@@ -151,7 +151,7 @@
                     "aria-hidden": "true"
                   }
                 },
-                "進行中",
+                "進行中（wt-test）",
                 {
                   "tag": "span",
                   "attributes": {
@@ -216,7 +216,7 @@
                         "aria-hidden": "true"
                       }
                     },
-                    "進行中"
+                    "進行中（wt-test）"
                   ]
                 },
                 {
@@ -251,21 +251,6 @@
                     },
                     "回せる"
                   ]
-                },
-                {
-                  "tag": "dt",
-                  "children": [
-                    "ファイル"
-                  ]
-                },
-                {
-                  "tag": "dd",
-                  "children": [
-                    {
-                      "tag": "svg"
-                    },
-                    "develop/task/T-003.md"
-                  ]
                 }
               ]
             },
@@ -278,13 +263,49 @@
                 {
                   "tag": "h4",
                   "children": [
-                    "目的"
+                    "目的・背景"
                   ]
                 },
                 {
                   "tag": "p",
                   "children": [
                     "架空の本文で、実物のタスクではない。"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "決まっていること（蒸し返さない）"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "解くべき論点"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "やること"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "完了条件"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "注意"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "参考情報"
                   ]
                 }
               ]
@@ -308,19 +329,6 @@
                   "tag": "svg"
                 },
                 "ID をコピー"
-              ]
-            },
-            {
-              "tag": "button",
-              "attributes": {
-                "aria-disabled": "false",
-                "type": "button"
-              },
-              "children": [
-                {
-                  "tag": "svg"
-                },
-                "エディタで開く"
               ]
             },
             {

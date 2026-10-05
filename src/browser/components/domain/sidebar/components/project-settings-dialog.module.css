@@ -51,43 +51,10 @@
 .project-settings-branch {
   width: 11.25rem;
 }
-.project-settings-switch {
-  display: inline-flex;
-  width: max-content;
-  overflow: hidden;
-  border: 1px solid var(--rule);
-  border-radius: 0.5rem;
-}
-/* 選んだ側は差し色の地と下線。`<Button>` の顔には無い形なので素の `<button>` に描く。 */
-.project-settings-switch-option {
-  height: 1.875rem;
-  padding: 0 1rem;
-  background: none;
-  color: var(--ink);
-  border: 0;
-  border-radius: 0;
-  font-family: var(--font-mono);
-  font-size: var(--font-secondary);
-  cursor: pointer;
-}
-.project-settings-switch-option[aria-pressed="true"] {
-  background: var(--surface-accent);
-  font-weight: bold;
-  box-shadow: inset 0 -2px var(--accent);
-}
 /* 推し量った値を触らずに出している欄。触るか保存すると外れる。
-   欄の箱（.project-settings-input・.project-settings-switch）の線を上書きするので、それより後に置く。 */
+   欄の箱（.project-settings-input）の線を上書きするので、それより後に置く。 */
 .project-settings-inferred {
   border-style: dashed;
-  color: var(--ink-quiet);
-}
-.project-settings-switch.project-settings-inferred
-  .project-settings-switch-option[aria-pressed="true"] {
-  background: none;
-  color: var(--ink-quiet);
-  box-shadow: inset 0 -2px var(--ink-quiet);
-}
-.project-settings-switch.project-settings-inferred .project-settings-switch-option {
   color: var(--ink-quiet);
 }
 /* 頼む文面: 写し（下）と入力欄（上）を同じ升目に重ねる。
