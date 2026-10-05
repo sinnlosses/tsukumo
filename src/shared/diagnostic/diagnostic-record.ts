@@ -12,46 +12,12 @@
 
 import { z } from "zod"
 
+import { isSessionEventKind } from "../session/session-event-kind.ts"
 import type { SessionEvent } from "../session/session-event.ts"
 import type { SwallowedFailureFootprint } from "./swallowed-failure.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
 export const DIAGNOSTIC_FORMAT_VERSION = 1 satisfies number
-
-/** 足跡の1件（書き出す前。版を持たない）。`flow` が流れの判別子。 */
-export type DiagnosticEntry =
-  | SessionEventFootprint
-  | BrowserErrorFootprint
-  | SwallowedFailureFootprint
-  | PromptDelayFootprint
-
-/** JSONL に書く1行の形。 */
-export type DiagnosticRecord = DiagnosticEntry & {
-  readonly v: typeof DIAGNOSTIC_FORMAT_VERSION
-}
-
-/** 駆動から届いた `SessionEvent` を1件畳んだこと。中身は持たない。 */
-export type SessionEventFootprint = {
-  readonly flow: "session-event"
-  /** 畳んだ時刻（エポックミリ秒）。 */
-  readonly at: number
-  /** そのイベントを生んだ駆動が、プロセスを起こしてから何代目か（1から）。 */
-  readonly generation: number
-  readonly kind: SessionEvent["kind"]
-}
-
-/** 依頼を SDK へ渡してから本体が受け取るまでが遅れたこと。区間のミリ秒だけを持つ。 */
-export type PromptDelayFootprint = {
-  readonly flow: "prompt-delay"
-  /** 本体から最初のメッセージを受けた時刻（エポックミリ秒）。 */
-  readonly at: number
-  /** 依頼を SDK へ渡した時刻（エポックミリ秒）。 */
-  readonly pushedAt: number
-  /** 渡してから SDK が書き終えるまで。 */
-  readonly writeMs: number
-  /** 書き終えてから本体の最初のメッセージが届くまで。 */
-  readonly replyMs: number
-}
 
 /** ブラウザの例外を拾った経路。 */
 export const BROWSER_ERROR_ROUTES = ["onerror", "unhandledrejection", "render-failure"] as const
@@ -104,11 +70,52 @@ export const browserErrorReportSchema = z.object({
 /** ブラウザが運ぶ、例外1件の中身（経路・`error.name`・スタックの先頭数フレーム）。 */
 export type BrowserErrorReport = z.infer<typeof browserErrorReportSchema>
 
-/** ブラウザの例外を1件畳んだこと。 */
-export type BrowserErrorFootprint = BrowserErrorReport & {
-  readonly flow: "browser-error"
+export const browserErrorFootprintSchema = browserErrorReportSchema.extend({
+  flow: z.literal("browser-error"),
   /** 畳んだ時刻（エポックミリ秒）。 */
-  readonly at: number
+  at: z.number(),
+})
+
+/** ブラウザの例外を1件畳んだこと。 */
+export type BrowserErrorFootprint = Readonly<z.infer<typeof browserErrorFootprintSchema>>
+
+export const sessionEventFootprintSchema = z.object({
+  flow: z.literal("session-event"),
+  /** 畳んだ時刻（エポックミリ秒）。 */
+  at: z.number(),
+  /** そのイベントを生んだ駆動が、プロセスを起こしてから何代目か（1から）。 */
+  generation: z.number(),
+  kind: z.custom<SessionEvent["kind"]>(isSessionEventKind),
+})
+
+/** 駆動から届いた `SessionEvent` を1件畳んだこと。中身は持たない。 */
+export type SessionEventFootprint = Readonly<z.infer<typeof sessionEventFootprintSchema>>
+
+export const promptDelayFootprintSchema = z.object({
+  flow: z.literal("prompt-delay"),
+  /** 本体から最初のメッセージを受けた時刻（エポックミリ秒）。 */
+  at: z.number(),
+  /** 依頼を SDK へ渡した時刻（エポックミリ秒）。 */
+  pushedAt: z.number(),
+  /** 渡してから SDK が書き終えるまで。 */
+  writeMs: z.number(),
+  /** 書き終えてから本体の最初のメッセージが届くまで。 */
+  replyMs: z.number(),
+})
+
+/** 依頼を SDK へ渡してから本体が受け取るまでが遅れたこと。区間のミリ秒だけを持つ。 */
+export type PromptDelayFootprint = Readonly<z.infer<typeof promptDelayFootprintSchema>>
+
+/** 足跡の1件（書き出す前。版を持たない）。`flow` が流れの判別子。 */
+export type DiagnosticEntry =
+  | SessionEventFootprint
+  | BrowserErrorFootprint
+  | SwallowedFailureFootprint
+  | PromptDelayFootprint
+
+/** JSONL に書く1行の形。 */
+export type DiagnosticRecord = DiagnosticEntry & {
+  readonly v: typeof DIAGNOSTIC_FORMAT_VERSION
 }
 
 /** 外から届いた `error.name` を、既知の名前の合併（知らなければ `"other"`）に写す。 */

@@ -11,19 +11,14 @@ import { groupBy, sortBy } from "remeda"
 import { z } from "zod"
 
 import {
-  browserErrorReportSchema,
+  browserErrorFootprintSchema,
   DIAGNOSTIC_FORMAT_VERSION,
   type DiagnosticEntry,
   type DiagnosticRecord,
-  type SessionEventFootprint,
+  promptDelayFootprintSchema,
+  sessionEventFootprintSchema,
 } from "../../../shared/diagnostic/diagnostic-record.ts"
-import {
-  isDiagnosedErrorCode,
-  isDiagnosedErrorName,
-  isSwallowedFailurePlace,
-  type SwallowedFailureFootprint,
-} from "../../../shared/diagnostic/swallowed-failure.ts"
-import { isSessionEventKind } from "../../../shared/session/session-event-kind.ts"
+import { swallowedFailureFootprintSchema } from "../../../shared/diagnostic/swallowed-failure.ts"
 import { appendJsonLines, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
 import { localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
@@ -35,36 +30,14 @@ const DIAGNOSTIC_DIR_NAME = "diagnostic"
 /** 日付ファイルを残す日数。これより古い日付のファイルは消す。 */
 const DIAGNOSTIC_RETENTION_DAYS = 14
 
-/** 記録の1行の形（{@link DiagnosticRecord} と同じ鍵）。 */
+/** 記録の1行の形。流れごとの schema に版を足して束ねる。 */
+const VERSION = { v: z.literal(DIAGNOSTIC_FORMAT_VERSION) }
+
 const diagnosticRecordSchema = z.discriminatedUnion("flow", [
-  z.object({
-    v: z.literal(DIAGNOSTIC_FORMAT_VERSION),
-    flow: z.literal("session-event"),
-    at: z.number(),
-    generation: z.number(),
-    kind: z.custom<SessionEventFootprint["kind"]>(isSessionEventKind),
-  }),
-  browserErrorReportSchema.extend({
-    v: z.literal(DIAGNOSTIC_FORMAT_VERSION),
-    flow: z.literal("browser-error"),
-    at: z.number(),
-  }),
-  z.object({
-    v: z.literal(DIAGNOSTIC_FORMAT_VERSION),
-    flow: z.literal("swallowed-failure"),
-    at: z.number(),
-    place: z.custom<SwallowedFailureFootprint["place"]>(isSwallowedFailurePlace),
-    errorName: z.custom<SwallowedFailureFootprint["errorName"]>(isDiagnosedErrorName),
-    errorCode: z.custom<SwallowedFailureFootprint["errorCode"]>(isDiagnosedErrorCode),
-  }),
-  z.object({
-    v: z.literal(DIAGNOSTIC_FORMAT_VERSION),
-    flow: z.literal("prompt-delay"),
-    at: z.number(),
-    pushedAt: z.number(),
-    writeMs: z.number(),
-    replyMs: z.number(),
-  }),
+  sessionEventFootprintSchema.extend(VERSION),
+  browserErrorFootprintSchema.extend(VERSION),
+  swallowedFailureFootprintSchema.extend(VERSION),
+  promptDelayFootprintSchema.extend(VERSION),
 ])
 
 /** 書き込んでよいのはこの下だけ。 */

@@ -1,6 +1,8 @@
 // 握りつぶしていた失敗の足跡（`swallowed-failure`）の形。`error.name` と `code` は決まった語に写し、
 // `message` は持たない。
 
+import { z } from "zod"
+
 /** 失敗が起きた場所。機能ごとの語を1つの表で持ち、型と判定（{@link isSwallowedFailurePlace}）を両方そこから作る。 */
 const SWALLOWED_FAILURE_PLACES = {
   session: [
@@ -92,15 +94,17 @@ export function isDiagnosedErrorCode(value: unknown): value is DiagnosedErrorCod
   )
 }
 
-/** 握りつぶしていた失敗を1件畳んだこと。場所の名前と `error.name`・`code` だけを持つ。 */
-export type SwallowedFailureFootprint = {
-  readonly flow: "swallowed-failure"
+export const swallowedFailureFootprintSchema = z.object({
+  flow: z.literal("swallowed-failure"),
   /** 畳んだ時刻（エポックミリ秒）。 */
-  readonly at: number
-  readonly place: SwallowedFailurePlace
-  readonly errorName: DiagnosedErrorName
-  readonly errorCode: DiagnosedErrorCode
-}
+  at: z.number(),
+  place: z.custom<SwallowedFailurePlace>(isSwallowedFailurePlace),
+  errorName: z.custom<DiagnosedErrorName>(isDiagnosedErrorName),
+  errorCode: z.custom<DiagnosedErrorCode>(isDiagnosedErrorCode),
+})
+
+/** 握りつぶしていた失敗を1件畳んだこと。場所の名前と `error.name`・`code` だけを持つ。 */
+export type SwallowedFailureFootprint = Readonly<z.infer<typeof swallowedFailureFootprintSchema>>
 
 /** 握りつぶした失敗1件を足跡にする。`error.message` は読まない。 */
 export function swallowedFailureFootprint(
