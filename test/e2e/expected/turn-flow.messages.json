@@ -117,6 +117,9 @@
         "text": "途中まで書いたよ。",
         "expression": "default"
       },
+      "waitingLine": {
+        "kind": "none"
+      },
       "unknownBlockCount": 0
     }
   },
@@ -307,6 +310,9 @@
         "kind": "speech",
         "text": "書けたよ！",
         "expression": "proud"
+      },
+      "waitingLine": {
+        "kind": "none"
       },
       "unknownBlockCount": 0
     }

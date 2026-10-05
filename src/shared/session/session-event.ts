@@ -57,6 +57,11 @@ export type ReportClosing =
   | Extract<SessionEvent, { readonly kind: "speech" }>
   | { readonly kind: "none" }
 
+/** `report` の待ちの一言（`report` ツールの `waitingLine` 引数）。`none` は本体が書かなかった。 */
+export type ReportWaitingLine =
+  | Extract<SessionEvent, { readonly kind: "speech" }>
+  | { readonly kind: "none" }
+
 /**
  * tsukumo 内部のイベント。
  * SDK のメッセージ由来のものと、駆動が自分で起こすもの（`request` / `pending-changed` / `session-ended`）が1本の流れに混ざり、畳み込みはどちらから来たかを区別しない。
@@ -147,6 +152,7 @@ export type SessionEvent =
    * `sections`（本文の節）と `checks`（検証結果）は無ければ空の配列、`favor` は無ければ空の文字列、`task` は無ければ `none`。
    * `toolUseId` は呼び出しの id で、差し戻しが同じ呼び出しの `tool-finished` と突き合わせるのに使う。
    * `closing`（締めのセリフ）は描いたあとに差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
+   * `waitingLine`（待ちの一言）は記録に写り、依頼を待つ間に `shownReaction` が出す。
    * `unknownBlockCount` は知らない種類で境界で落とした塊の数で、画面の状態は読まない。
    * `sessionSummary` はセッション全体の要約で、書かれていなければ undefined。レポートには描かず、切り替え画面が transcript から読み戻す。
    */
@@ -159,6 +165,7 @@ export type SessionEvent =
       readonly checks: readonly ReportCheck[]
       readonly task: ReportTask
       readonly closing: ReportClosing
+      readonly waitingLine: ReportWaitingLine
       readonly unknownBlockCount: number
       readonly sessionSummary: string | undefined
     }

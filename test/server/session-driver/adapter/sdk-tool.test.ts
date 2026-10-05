@@ -246,6 +246,22 @@ describe("report でターンを閉じる", () => {
     expect(reply.endsTurn).toBe(false)
   })
 
+  it("waitingLine を添えた report も通り、選択肢に無い表情の waitingLine は形の検査で落ちる", async () => {
+    const written = await callTool(workServer(), "report", {
+      conclusion: "架空の結論",
+      closing: CLOSING,
+      waitingLine: { text: "架空の待ちの一言", expression: "default" },
+    })
+    const unknownExpression = await callTool(workServer(), "report", {
+      conclusion: "架空の結論",
+      closing: CLOSING,
+      waitingLine: { text: "架空の待ちの一言", expression: "架空の表情" },
+    })
+
+    expect(written).toEqual({ text: "ok", isError: false, endsTurn: true })
+    expect(unknownExpression.isError).toBe(true)
+  })
+
   it("speak はターンを閉じない", async () => {
     const reply = await callTool(workServer(), "speak", CLOSING)
 

@@ -282,6 +282,9 @@
         "text": "3つの段を終えたよ。",
         "expression": "proud"
       },
+      "waitingLine": {
+        "kind": "none"
+      },
       "unknownBlockCount": 0
     }
   },

@@ -133,6 +133,9 @@
         "text": "書けたよ！",
         "expression": "proud"
       },
+      "waitingLine": {
+        "kind": "none"
+      },
       "unknownBlockCount": 0
     }
   },

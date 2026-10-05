@@ -100,6 +100,9 @@
         "text": "いったんまとめたよ。",
         "expression": "default"
       },
+      "waitingLine": {
+        "kind": "none"
+      },
       "unknownBlockCount": 0
     }
   },
@@ -195,6 +198,9 @@
         "text": "ここまでまとめたよ。",
         "expression": "default"
       },
+      "waitingLine": {
+        "kind": "none"
+      },
       "unknownBlockCount": 0
     }
   },
@@ -284,6 +290,9 @@
         "kind": "speech",
         "text": "まとめたよ。",
         "expression": "default"
+      },
+      "waitingLine": {
+        "kind": "none"
       },
       "unknownBlockCount": 0
     }

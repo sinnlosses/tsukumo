@@ -234,6 +234,9 @@
         "text": "並べたよ！",
         "expression": "proud"
       },
+      "waitingLine": {
+        "kind": "none"
+      },
       "unknownBlockCount": 0
     }
   },

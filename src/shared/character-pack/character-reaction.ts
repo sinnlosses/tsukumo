@@ -13,8 +13,16 @@ import { type Expression, isExpression } from "./expression.ts"
  * - `retrying`: API の呼び出しを待ってから呼び直している
  * - `failed`: 失敗で閉じた
  * - `limited`: 利用上限で閉じた
+ * - `idle`: 依頼を待つ間が続いた（本体が待ちの一言を書かなかったときの控え）
  */
-export const REACTION_KINDS = ["welcome", "accepted", "retrying", "failed", "limited"] as const
+export const REACTION_KINDS = [
+  "welcome",
+  "accepted",
+  "retrying",
+  "failed",
+  "limited",
+  "idle",
+] as const
 
 export type ReactionKind = (typeof REACTION_KINDS)[number]
 
@@ -33,6 +41,7 @@ export const NO_REACTIONS = {
   retrying: [],
   failed: [],
   limited: [],
+  idle: [],
 } as const satisfies CharacterReactions
 
 /**

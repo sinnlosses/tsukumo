@@ -1000,6 +1000,7 @@ describe("toSessionEvents（report ツール）", () => {
           favor: "架空のお願い",
           checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }], // figure と command の無い前の形
           closing: { text: "架空の締め", expression: "proud" },
+          waitingLine: { text: "架空の待ちの一言", expression: "thinking" },
           sessionSummary: "架空の要約",
         },
       },
@@ -1022,10 +1023,32 @@ describe("toSessionEvents（report ツール）", () => {
         ],
         task: { kind: "none" },
         closing: { kind: "speech", text: "架空の締め", expression: "proud" },
+        waitingLine: { kind: "speech", text: "架空の待ちの一言", expression: "thinking" },
         unknownBlockCount: 0,
         sessionSummary: "架空の要約",
       },
     ])
+  })
+
+  it("report の waitingLine が空白だけ・形の崩れなら書かなかったものとして畳む", () => {
+    const waitingLines = [{ text: "   ", expression: "default" }, "架空の文字列だけ"].map(
+      (waitingLine) => {
+        const [event] = toSessionEvents(
+          assistantMessage([
+            {
+              type: "tool_use",
+              id: "toolu_r1",
+              name: REPORT_TOOL_FULL_NAME,
+              input: { conclusion: "架空の結論。", waitingLine },
+            },
+          ]),
+          EXPRESSIONS,
+        )
+        return event?.kind === "report" ? event.waitingLine : undefined
+      },
+    )
+
+    expect(waitingLines).toEqual([{ kind: "none" }, { kind: "none" }])
   })
 
   it("report の sessionSummary が文字列でない・空白だけなら無いものとして畳む", () => {
@@ -1111,6 +1134,7 @@ describe("toSessionEvents（report ツール）", () => {
         checks: [],
         task: { kind: "none" },
         closing: { kind: "none" },
+        waitingLine: { kind: "none" },
         unknownBlockCount: 0,
       },
     ])

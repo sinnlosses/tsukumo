@@ -7078,6 +7078,102 @@
           "event": { "kind": "session-ended", "reason": "架空の理由で止まった" }
         }
       ]
+    },
+    {
+      "name": "waiting-line",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "依頼を待つ間の一言を見るために頼む（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "ちょっと見てくるね。",
+            "expression": "thinking"
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "text": "書けたよ。架空の締め。", "expression": "proud" },
+            "waitingLine": {
+              "text": "次の頼みごと、ここで待ってるね。架空の待ちの一言。",
+              "expression": "curious"
+            },
+            "toolUseId": "fake-report-waiting-line",
+            "conclusion": "架空の結論で、実物の会話ではない。",
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 850,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-waiting-line",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 900,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
+    },
+    {
+      "name": "waiting-idle",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "待ちの一言を書かないターンを見るために頼む（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "ちょっと見てくるね。",
+            "expression": "thinking"
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "text": "書けたよ。架空の締め。", "expression": "proud" },
+            "toolUseId": "fake-report-waiting-idle",
+            "conclusion": "架空の結論で、実物の会話ではない。",
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 850,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-waiting-idle",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 900,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
     }
   ],
   "pastSessions": [

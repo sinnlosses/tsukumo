@@ -99,8 +99,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   Claude Code 本体は `speak` を利用者に見える出力に数えず、`speak` だけのステップが続くと
   "The user hasn't heard from you in a while" をターンの途中に差し込んで言い直しを誘うので、子プロセスに
   `CLAUDE_CODE_SILENT_TURN_REMINDER=0` を渡して切る（`src/server/session-driver/core/visible-output-nudge.ts`。仕事・雑談の両方）
-- **レポートは MCP ツール `report(task, conclusion, checks, sections, favor, closing)` で受け取る**（2026-09-24 決定。
-  `checks` は 2026-09-26 に、`closing` は 2026-09-27 に、`task` は 2026-09-30 に足し、本文は 2026-09-27 に文字列の `body` から
+- **レポートは MCP ツール `report(task, conclusion, checks, sections, favor, closing, waitingLine)` で受け取る**（2026-09-24 決定。
+  `checks` は 2026-09-26 に、`closing` は 2026-09-27 に、`task` は 2026-09-30 に、`waitingLine` は 2026-10-05 に足し、本文は 2026-09-27 に文字列の `body` から
   `sections` に替えた。
   仕事のセッションでは常に載り、雑談では載らない）。**検査を通った `report` はそこでターンを閉じる**
   （2026-09-27 決定。handler が結果に `_meta["claude/endTurn"]` を付け、本体は assistant を挟まずに
@@ -114,7 +114,10 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   （`docs/architecture/screen-design.md`「切り替え画面」）。tsukumo は要約を別の場所へ書き出さない（transcript の
   ツールの入力に残るだけなので、`docs/coding-standards.md`「会話内容の扱い」の例外を増やさない）。
   書かせる条は引数の説明と「レポートの記法（tsukumo）」の1段落で、任意の `title`（セッション一覧の
-  見出し）と同じく差し戻した呼び出しの値は使わない
+  見出し）と同じく差し戻した呼び出しの値は使わない。
+  **任意の引数 `waitingLine`（待ちの一言。`closing` と同じ `text` と `expression`）には、依頼を待つ間に
+  1回だけ吹き出しに出す一言を毎回書かせる**（2026-10-05 利用者決定。出す条件は下の「機械の出来事への反応」の6）。
+  `report` の記録に写り、transcript から組み直しても同じ値が戻る
   ターンの途中の経過は `speak` で言う。雑談には使わない（`report` が無く、1ターンに `speak` を
   何度か呼ぶのが普通の形なので、閉じるツールを置くと切れる）。`report` の外に書いたターンの本文
   （`assistant` のテキスト）は、`report` が1つでも呼ばれたターンでは画面に出さない。呼ばれなかった
@@ -301,8 +304,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   空の吹き出しのプレースホルダー（2026-10-02 に覆した記録）」）。セリフも反応も無ければ、吹き出しは
   1つも出ない
 - **機械の出来事への反応**（2026-10-02 決定）: **吹き出しに出る話し言葉は `speak` と、パックに書いた
-  反応のセリフだけ**（形は `docs/architecture/character-pack.md`「反応のセリフ」。2026-10-05 利用者決定で、
-  本体が `report` の引数で前もって書く待ちの一言を足す。実装するまではいまの形。`docs/requirements.md` 4.3
+  反応のセリフと、本体が `report` の引数 `waitingLine` で前もって書く待ちの一言だけ**（形は
+  `docs/architecture/character-pack.md`「反応のセリフ」。待ちの一言は 2026-10-05 利用者決定。`docs/requirements.md` 4.3
   「黙って立つだけの場面の埋め方」）。**例外は迎えの挨拶**
   （2026-10-04 決定、書く契機と状態は 2026-10-04 に改訂）: 迎える局面に入るたび（新しく起こした仕事の
   セッション・仕事のセッションでの `/clear`。続きから起こしたセッションの `/clear` も含む）に、サーバが背景の使い捨ての `query()`（`haiku`）1回でパックの `persona.md`
@@ -336,6 +339,14 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   4. 局面が働く・尋ねるで、そのターンにまだ `speak` が無い → 受けた `accepted`
   5. 局面がつまずくで、利用上限で閉じた（`rate_limit` のエラーか、利用上限が `rejected`）→ 利用上限
      `limited`、ほかは失敗 `failed`
+  6. 局面が渡すで、ターンが閉じてから2分（`WAITING_LINE_DELAY_MS`）経った → 待ちの一言。いちばん
+     新しい依頼より後の最後の `report` の `waitingLine` を出し、書かれていなければ（`report` を呼ばなかった・
+     引数を省いた）パックの待ち `idle` の行、それも無ければ何も出さない。依頼を送れば局面が働くに移って
+     消え、次のターンが閉じるまで出し直さない（同じ待ちのあいだは出たまま）。続きから起こした直後
+     （いちばん新しい依頼が組み直した記録）には出さない。数え始めはサーバが打ったターンの閉じた時刻なので、
+     入力欄に打ち始めても、画面を離れて戻ってきても数え直さない（戻ってきたときに2分を過ぎていれば
+     もう出ている）。立ち絵の動きは足さない。書く条は `report-notation.ts` の1文と引数の説明
+     （`REPORT_WAITING_LINE_DESCRIPTION`）
   - **反応はそのターンのセリフより新しい位置（最新）に出し**、話し手の名前を添える。押しても遡らない
     （記録に無い）。立ち絵は反応の行の表情になる（`docs/requirements.md` 4.3「表情の源」の例外）。
     押して留めたセリフがあれば、そちらの表情が勝つ

@@ -141,6 +141,7 @@ describe("toRestoredEvents", () => {
         checks: [],
         task: { kind: "none" },
         closing: { kind: "none" },
+        waitingLine: { kind: "none" },
         unknownBlockCount: 0,
       },
     ])

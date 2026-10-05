@@ -1024,11 +1024,33 @@ describe("applySessionEvent（report を書いている間）", () => {
         favor: "",
         checks: [],
         closing: { kind: "none" },
+        waitingLine: { kind: "none" },
         unknownBlockCount: 0,
         sessionSummary: undefined,
         task: { kind: "none" },
       }).reportDrafting,
     ).toEqual({ kind: "idle" })
+  })
+
+  it("report の待ちの一言は記録に写る", () => {
+    const state = apply(REQUEST, {
+      kind: "report",
+      toolUseId: "toolu_r1",
+      conclusion: "架空の結論。",
+      sections: [],
+      favor: "",
+      checks: [],
+      closing: { kind: "none" },
+      waitingLine: { kind: "speech", text: "架空の待ちの一言", expression: "bored" },
+      unknownBlockCount: 0,
+      sessionSummary: undefined,
+      task: { kind: "none" },
+    })
+
+    expect(state.records.at(-1)).toMatchObject({
+      kind: "report",
+      waitingLine: { kind: "speech", text: "架空の待ちの一言", expression: "bored" },
+    })
   })
 
   it("差し戻されて report が届かなくても、同じ呼び出しの tool-finished で下りる", () => {

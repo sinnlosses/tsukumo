@@ -73,6 +73,9 @@
         "text": "送ったよ！",
         "expression": "proud"
       },
+      "waitingLine": {
+        "kind": "none"
+      },
       "unknownBlockCount": 0
     }
   },

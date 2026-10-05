@@ -33,6 +33,7 @@ import {
   REPORT_TASK_DESCRIPTION,
   REPORT_TITLE_DESCRIPTION,
   REPORT_TOOL_DESCRIPTION,
+  REPORT_WAITING_LINE_DESCRIPTION,
 } from "../../report/core/report-tool.ts"
 import {
   USAGE_REVIEW_RESULT_TOOL_DESCRIPTION,
@@ -212,6 +213,10 @@ function reportTool(
       title: z.string().optional().describe(REPORT_TITLE_DESCRIPTION),
       sessionSummary: z.string().optional().describe(REPORT_SESSION_SUMMARY_DESCRIPTION),
       closing: z.object(speechShape(expressions)).describe(REPORT_CLOSING_DESCRIPTION),
+      waitingLine: z
+        .object(speechShape(expressions))
+        .optional()
+        .describe(REPORT_WAITING_LINE_DESCRIPTION),
     },
     async ({ conclusion, sections, favor, checks, title }) => {
       const fileContents = await readReportBlockFiles(cwd, sections ?? [])
@@ -386,7 +391,7 @@ function recallEpisodeTool(chatRecall: ChatRecall) {
   )
 }
 
-/** セリフの引数の形（`speak` と `report` の `closing` で同じ）。 */
+/** セリフの引数の形（`speak` と `report` の `closing`・`waitingLine` で同じ）。 */
 function speechShape(expressions: readonly ExpressionChoice[]) {
   return {
     text: z.string().describe("セリフ。1〜2文の短い一言"),

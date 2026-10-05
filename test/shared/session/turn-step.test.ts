@@ -183,6 +183,7 @@ describe("currentTurnSteps（report ツール）", () => {
         favor: "",
         checks: [],
         closing: { kind: "none" },
+        waitingLine: { kind: "none" },
         unknownBlockCount: 0,
         sessionSummary: undefined,
         task: { kind: "none" },

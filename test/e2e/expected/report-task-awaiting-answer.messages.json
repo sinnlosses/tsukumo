@@ -77,6 +77,9 @@
         "text": "答えを待ってるね。",
         "expression": "default"
       },
+      "waitingLine": {
+        "kind": "none"
+      },
       "unknownBlockCount": 0
     }
   },

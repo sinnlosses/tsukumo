@@ -16,6 +16,7 @@ function reportEvent(
     favor: "",
     checks: [],
     closing: { kind: "none" },
+    waitingLine: { kind: "none" },
     unknownBlockCount,
     sessionSummary: undefined,
     task: { kind: "none" },

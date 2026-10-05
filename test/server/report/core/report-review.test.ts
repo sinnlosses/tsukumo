@@ -53,6 +53,7 @@ const reportEvent = (
   toolUseId,
   ...draft,
   closing,
+  waitingLine: { kind: "none" },
   unknownBlockCount: 0,
   sessionSummary: undefined,
   task: { kind: "none" },

@@ -90,6 +90,9 @@
       "closing": {
         "kind": "none"
       },
+      "waitingLine": {
+        "kind": "none"
+      },
       "unknownBlockCount": 0
     }
   },

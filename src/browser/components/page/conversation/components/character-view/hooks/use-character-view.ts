@@ -2,7 +2,7 @@
 // 表情・衣装・立ち絵の URL・動き・吹き出しに出すセリフを、直近の `speak` とセッションの記録から組み立てて返す。
 //
 // 表情は `state.speechExpression`（直近の `speak` の引数）か、反応を出しているあいだはその行の表情。衣装は `resolveOutfit(state.model)` で決める。
-// 時間経過で顔が変わることはない。
+// 時間経過で顔が変わるのは、依頼を待つ間に待ちの一言（反応）を出し始めたときだけ。
 //
 // 過去のターンのタブを選んでいる間は、そのターンの吹き出しと表情に戻す（`useTurnSelection`）。
 // 立ち絵の「動き」は時間相対のアニメーションなので遡らない。
@@ -28,6 +28,7 @@ import type { SessionRecord, Speech } from "../../../../../../../shared/session/
 import {
   shownReaction,
   type ShownReaction,
+  waitingLineDueAt,
 } from "../../../../../../../shared/session/shown-reaction.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
@@ -105,10 +106,13 @@ export function useCharacterView(): CharacterViewModel {
 
   const [viewed, setViewed] = useState<ViewedSpeech>(LATEST_VIEWED_SPEECH)
 
+  const now = useCharacterClock(turn, lastToolFailureAt, waitingLineDueAt(state))
   const pastTurn = pastTurnSpeech(records, activeTurnId, newestTurnId)
   const activeSpeeches = pastTurn === undefined ? speeches : pastTurn.speeches
   const reaction: ShownReaction =
-    pastTurn === undefined ? shownReaction(state, welcomeHeadOf(welcomeCards)) : { kind: "none" }
+    pastTurn === undefined
+      ? shownReaction(state, welcomeHeadOf(welcomeCards), now)
+      : { kind: "none" }
   // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の行。
   // 反応を出しているあいだは立ち絵が反応に従うので、どの行にも付けない。
   const defaultTurnId = activeTurnId
@@ -129,7 +133,7 @@ export function useCharacterView(): CharacterViewModel {
     setViewed(toggledViewedSpeech(current, turnId, index, speechesOfTurn(turnId)?.length ?? 0))
   }
   const outfit = resolveOutfit(model)
-  const motion = usePortraitMotion({ turn, lastToolFailureAt, draftingReport })
+  const motion = resolvePortraitMotion({ turn, lastToolFailureAt, draftingReport }, now)
 
   const { portraitUrl, accent, altText } = portraitAppearance(character, expression, outfit)
 
@@ -198,20 +202,22 @@ function pastTurnSpeech(
 }
 
 /**
- * 立ち絵にいま当てる動き。完了の反応・失敗でびくっの時間の窓が過ぎた瞬間に読み直すための時計を自前で持つ。
+ * 立ち絵の動きと待ちの一言が時間だけで変わる瞬間に読み直すための時計。いまの時刻を返す。
+ * 完了の反応・失敗でびくっの時間の窓が過ぎた瞬間と、待ちの一言を出し始める時刻（`waitingDueAt`）にだけ描き直す。
  *
- * この2つの窓は同時に効いていることがある（ツールが失敗した直後にターンが終わる、など）。
- * `nextPortraitMotionTransitionDelayMs` が返すのはいちばん早く終わる窓だけなので、1回だけのタイマーだと、発火して `now` を進めたあとにもう一方の窓が残っていても次のタイマーが立たないまま止まる。
- * `lastToolFailureAt` / `turn` 自体はその後変わらないので、依存配列では再計算のきっかけにならない。
- * そこで、タイマーが発火するたびに次の窓までの遅延を計算し直して、無くなるまで立て直す。
+ * 窓と期日は同時に効いていることがある（ツールが失敗した直後にターンが終わる、など）。
+ * 次の描き直しまでの遅延はいちばん早いものだけなので、1回だけのタイマーだと、発火して `now` を進めたあとに残りがあっても次のタイマーが立たないまま止まる。
+ * `lastToolFailureAt` / `turn` / `waitingDueAt` 自体はその後変わらないので、依存配列では再計算のきっかけにならない。
+ * そこで、タイマーが発火するたびに次までの遅延を計算し直して、無くなるまで立て直す。
  *
  * 遅延を計算する前に必ず `now` を進める。
- * 効果が走るまでに窓をすでに過ぎていると、遅延が負でタイマーが立たず、古い `now` のまま動きが戻らなくなる。
+ * 効果が走るまでに時刻をすでに過ぎていると、遅延が負でタイマーが立たず、古い `now` のまま戻らなくなる。
  */
-function usePortraitMotion(input: PortraitMotionInput): PortraitMotion {
-  // 材料は分解して受ける（`input` の入れ物ごと依存にすると、中身が同じでもレンダーのたびに別物になり、タイマーを張り直してしまう）。
-  // `turn` は入れ物だが、進み具合が変わったときだけ入れ替わるので依存にしてよい。
-  const { turn, lastToolFailureAt } = input
+function useCharacterClock(
+  turn: PortraitMotionInput["turn"],
+  lastToolFailureAt: PortraitMotionInput["lastToolFailureAt"],
+  waitingDueAt: number | undefined,
+): number {
   const [now, setNow] = useState(() => nowEpochMilliseconds())
 
   useEffect(() => {
@@ -220,11 +226,14 @@ function usePortraitMotion(input: PortraitMotionInput): PortraitMotion {
     const scheduleNext = (): void => {
       const at = nowEpochMilliseconds()
       setNow(at)
-      const delay = nextPortraitMotionTransitionDelayMs({ turn, lastToolFailureAt }, at)
-      if (delay === undefined) {
+      const delays = [
+        nextPortraitMotionTransitionDelayMs({ turn, lastToolFailureAt }, at),
+        waitingDueAt === undefined ? undefined : waitingDueAt - at,
+      ].filter((ms): ms is number => ms !== undefined && ms > 0)
+      if (delays.length === 0) {
         return
       }
-      timer = setTimeout(scheduleNext, delay)
+      timer = setTimeout(scheduleNext, Math.min(...delays))
     }
 
     scheduleNext()
@@ -233,7 +242,7 @@ function usePortraitMotion(input: PortraitMotionInput): PortraitMotion {
         clearTimeout(timer)
       }
     }
-  }, [turn, lastToolFailureAt])
+  }, [turn, lastToolFailureAt, waitingDueAt])
 
-  return resolvePortraitMotion(input, now)
+  return now
 }

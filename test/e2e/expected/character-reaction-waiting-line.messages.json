@@ -37,7 +37,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "request",
-      "text": "差し戻しの見え方を確かめたい（架空の依頼）",
+      "text": "依頼を待つ間の一言を見るために頼む（架空の依頼）",
       "images": []
     }
   },
@@ -46,27 +46,8 @@
     "at": 1768438800000,
     "event": {
       "kind": "speech",
-      "text": "まとめてみるね。",
-      "expression": "default"
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "tool-finished",
-      "toolUseId": "fake-report-rejected-1",
-      "content": "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:\n- `conclusion` が3文ある。2文以内にし、残りは `sections` へ移す\n- `markdown` の塊に塊で書ける記法（`#` / `##` の見出し・表）がある。代わりに節の `heading`・`table` の塊を使う",
-      "isError": true
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "speech",
-      "text": "差し戻されたから直すね。",
-      "expression": "default"
+      "text": "ちょっと見てくるね。",
+      "expression": "thinking"
     }
   },
   {
@@ -74,20 +55,9 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
-      "toolUseId": "fake-report-rejected-2",
-      "conclusion": "架空の結論: 差し戻しのあとに直したレポートだけが出る。",
-      "sections": [
-        {
-          "heading": "",
-          "blocks": [
-            {
-              "kind": "markdown",
-              "markdown": "## 直した見出し（架空）\n\n**直した表（作り物の値）**\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |",
-              "fold": ""
-            }
-          ]
-        }
-      ],
+      "toolUseId": "fake-report-waiting-line",
+      "conclusion": "架空の結論で、実物の会話ではない。",
+      "sections": [],
       "favor": "",
       "checks": [],
       "task": {
@@ -95,11 +65,13 @@
       },
       "closing": {
         "kind": "speech",
-        "text": "書けたよ！",
+        "text": "書けたよ。架空の締め。",
         "expression": "proud"
       },
       "waitingLine": {
-        "kind": "none"
+        "kind": "speech",
+        "text": "次の頼みごと、ここで待ってるね。架空の待ちの一言。",
+        "expression": "curious"
       },
       "unknownBlockCount": 0
     }
@@ -109,7 +81,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-report-rejected-2",
+      "toolUseId": "fake-report-waiting-line",
       "content": "ok",
       "isError": false
     }
@@ -119,7 +91,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "speech",
-      "text": "書けたよ！",
+      "text": "書けたよ。架空の締め。",
       "expression": "proud"
     }
   },

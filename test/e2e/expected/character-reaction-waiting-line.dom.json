@@ -1,0 +1,79 @@
+{
+  "character": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "character",
+        "aria-label": "キャラクター"
+      },
+      "children": [
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-disabled": "false",
+            "aria-expanded": "false",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "svg"
+            },
+            "ログ"
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "role": "img",
+            "aria-label": "つくもの精霊（きょとん）",
+            "data-expression": "curious",
+            "data-outfit": "heavy",
+            "data-motion": "reading"
+          },
+          "children": [
+            {
+              "tag": "svg"
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "data-latest": "true",
+            "data-reaction": "idle"
+          },
+          "children": [
+            "つくもの精霊",
+            "次の頼みごと、ここで待ってるね。架空の待ちの一言。"
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "data-latest": "false",
+            "data-interactive": "true",
+            "data-selected": "false",
+            "role": "button",
+            "aria-pressed": "false"
+          },
+          "children": [
+            "書けたよ。架空の締め。"
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "data-latest": "false",
+            "data-interactive": "true",
+            "data-selected": "false",
+            "role": "button",
+            "aria-pressed": "false"
+          },
+          "children": [
+            "ちょっと見てくるね。"
+          ]
+        }
+      ]
+    }
+  ]
+}

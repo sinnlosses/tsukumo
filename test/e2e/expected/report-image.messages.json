@@ -146,6 +146,9 @@
         "text": "載せたよ！",
         "expression": "proud"
       },
+      "waitingLine": {
+        "kind": "none"
+      },
       "unknownBlockCount": 0
     }
   },

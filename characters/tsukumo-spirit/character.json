@@ -48,6 +48,7 @@
     ],
     "limited": [
       { "text": "今日はここまでみたい。上限が戻るまで、ひと休みしよう。", "expression": "sad" }
-    ]
+    ],
+    "idle": [{ "text": "次の頼みごとがあったら、いつでも声をかけてね。", "expression": "default" }]
   }
 }

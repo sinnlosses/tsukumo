@@ -30,6 +30,7 @@ const REPORT: SessionEvent = {
   favor: "",
   checks: [],
   closing: { kind: "speech", text: "架空の締め", expression: "default" },
+  waitingLine: { kind: "none" },
   unknownBlockCount: 0,
   sessionSummary: undefined,
   task: { kind: "none" },

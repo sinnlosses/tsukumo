@@ -549,6 +549,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     favor,
     checks,
     closing: { kind: "none" },
+    waitingLine: { kind: "none" },
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task,
@@ -888,6 +889,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     favor: "",
     checks: [],
     closing: { kind: "none" },
+    waitingLine: { kind: "none" },
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task: { kind: "none" },
@@ -1085,6 +1087,7 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
         ? []
         : [{ status: "ok", label: "架空の検査", figure: "", command, detail: "" }],
     closing: { kind: "none" },
+    waitingLine: { kind: "none" },
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task: { kind: "none" },

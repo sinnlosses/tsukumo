@@ -44,7 +44,12 @@ import {
 import { commandCandidates } from "./command-suggestion.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
-import type { CommandDescription, ModelEffortSupport, SessionEvent } from "./session-event.ts"
+import type {
+  CommandDescription,
+  ModelEffortSupport,
+  ReportWaitingLine,
+  SessionEvent,
+} from "./session-event.ts"
 import { splitIntoTurns } from "./turn.ts"
 import { delegatedWorkPlan, isWorkPlanRecord, workPlanOf } from "./work-plan.ts"
 
@@ -114,6 +119,7 @@ export type SessionRecord =
    * `report` ツールで受け取ったレポート。引数をそのまま持ち、1つの本文に組むのはメインビューの導出。
    * 本文（`detail`）とは別の種類にしてあるのは、このレポートがあるターンでは本文を出さないという判定に、どちらから来たかが要るため。
    * `toolUseId` は `image` の塊の画像を棚から引く鍵（`reportImagePath`）。
+   * `waitingLine` はメインビューには描かず、依頼を待つ間の吹き出しが読む（`shownReaction`）。
    */
   | {
       readonly kind: "report"
@@ -123,6 +129,7 @@ export type SessionRecord =
       readonly favor: string
       readonly checks: readonly ReportCheck[]
       readonly task: ReportTask
+      readonly waitingLine: ReportWaitingLine
     }
   /**
    * `work_plan` ツールで受け取った段取り。届いた位置に積むだけで、今の段取りは `latestWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
@@ -605,6 +612,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             favor: event.favor,
             checks: event.checks,
             task: event.task,
+            waitingLine: event.waitingLine,
           },
         ],
       }

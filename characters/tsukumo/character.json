@@ -47,6 +47,7 @@
     "failed": [{ "text": "うぐ、途中で転んじゃった……。", "expression": "sad" }],
     "limited": [
       { "text": "今日はもう打ち止めみたい。戻るまでひと休みなのだ。", "expression": "bored" }
-    ]
+    ],
+    "idle": [{ "text": "次はどうする？ ここで待ってるぞ。", "expression": "default" }]
   }
 }

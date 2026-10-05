@@ -8,13 +8,17 @@ import {
   NO_WELCOME_HEAD,
   type WelcomeHead,
 } from "../../../src/shared/recommendation/welcome-greeting.ts"
-import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
+import type { ReportWaitingLine, SessionEvent } from "../../../src/shared/session/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
-import { shownReaction } from "../../../src/shared/session/shown-reaction.ts"
+import {
+  shownReaction,
+  WAITING_LINE_DELAY_MS,
+  waitingLineDueAt,
+} from "../../../src/shared/session/shown-reaction.ts"
 import { characterChangedEvent } from "../../fixture/character.ts"
 
 const REACTIONS: CharacterReactions = {
@@ -23,6 +27,7 @@ const REACTIONS: CharacterReactions = {
   retrying: [{ text: "架空の再試行", expression: "flustered" }],
   failed: [{ text: "架空の失敗", expression: "sad" }],
   limited: [{ text: "架空の上限", expression: "bored" }],
+  idle: [{ text: "架空の待ち", expression: "default" }],
 }
 
 const REQUEST = { kind: "request", text: "架空の依頼", images: [] } as const satisfies SessionEvent
@@ -60,8 +65,8 @@ function stateAfter(
 }
 
 /** 出している反応の出来事と文（書いている途中は `writing`、出していなければ `none`）。 */
-function shown(state: SessionState, head: WelcomeHead = NO_WELCOME_HEAD): string {
-  const reaction = shownReaction(state, head)
+function shown(state: SessionState, head: WelcomeHead = NO_WELCOME_HEAD, now = 0): string {
+  const reaction = shownReaction(state, head, now)
   if (reaction.kind === "shown") {
     return `${reaction.reaction}:${reaction.line.text}`
   }
@@ -124,9 +129,137 @@ describe("shownReaction", () => {
   })
 
   it("反応の行の表情を返す", () => {
-    const reaction = shownReaction(stateAfter([REQUEST]), NO_WELCOME_HEAD)
+    const reaction = shownReaction(stateAfter([REQUEST]), NO_WELCOME_HEAD, 0)
 
     expect(reaction.kind === "shown" && reaction.line.expression).toBe("thinking")
+  })
+
+  describe("待ちの一言", () => {
+    const report = (waitingLine: ReportWaitingLine): SessionEvent => ({
+      kind: "report",
+      toolUseId: "toolu_r1",
+      conclusion: "架空の結論",
+      sections: [],
+      favor: "",
+      checks: [],
+      task: { kind: "none" },
+      closing: { kind: "none" },
+      waitingLine,
+      unknownBlockCount: 0,
+      sessionSummary: undefined,
+    })
+
+    const WRITTEN = report({ kind: "speech", text: "架空の待ちの一言", expression: "curious" })
+
+    const ASKED = {
+      kind: "pending-changed",
+      pending: [{ kind: "question", id: "架空の問い", questions: [] }],
+    } as const satisfies SessionEvent
+
+    /** ターンが閉じた時刻（`stateAfter` は畳んだ順番を時刻にする）から、出す間を過ぎた時刻。 */
+    const LATER = WAITING_LINE_DELAY_MS + 100
+
+    it("ターンが閉じてから出す間が経つまでは、何も出さない", () => {
+      const state = stateAfter([REQUEST, SPEECH, WRITTEN, COMPLETED])
+      const dueAt = waitingLineDueAt(state)
+
+      expect(dueAt).toBeDefined()
+      expect(shown(state, NO_WELCOME_HEAD, (dueAt ?? 0) - 1)).toBe("none")
+      expect(shown(state, NO_WELCOME_HEAD, dueAt ?? 0)).toBe("idle:架空の待ちの一言")
+    })
+
+    it("出す間が経てば、本体が書いた待ちの一言とその表情を出す", () => {
+      const reaction = shownReaction(
+        stateAfter([REQUEST, SPEECH, WRITTEN, COMPLETED]),
+        NO_WELCOME_HEAD,
+        LATER,
+      )
+
+      expect(reaction).toEqual({
+        kind: "shown",
+        reaction: "idle",
+        line: { text: "架空の待ちの一言", expression: "curious" },
+      })
+    })
+
+    it("本体が書いていなければ、パックの待ちの行を出す", () => {
+      expect(
+        shown(
+          stateAfter([REQUEST, SPEECH, report({ kind: "none" }), COMPLETED]),
+          NO_WELCOME_HEAD,
+          LATER,
+        ),
+      ).toBe("idle:架空の待ち")
+      expect(shown(stateAfter([REQUEST, SPEECH, COMPLETED]), NO_WELCOME_HEAD, LATER)).toBe(
+        "idle:架空の待ち",
+      )
+    })
+
+    it("本体が書いておらずパックにも待ちの行が無ければ、何も出さない", () => {
+      expect(
+        shown(stateAfter([REQUEST, SPEECH, COMPLETED], NO_REACTIONS), NO_WELCOME_HEAD, LATER),
+      ).toBe("none")
+    })
+
+    it("前のやり取りの待ちの一言は使わない", () => {
+      expect(
+        shown(
+          stateAfter([REQUEST, WRITTEN, COMPLETED, REQUEST, SPEECH, COMPLETED]),
+          NO_WELCOME_HEAD,
+          LATER,
+        ),
+      ).toBe("idle:架空の待ち")
+    })
+
+    it("依頼を送れば消え、次のターンが閉じてから数え直す", () => {
+      const sent = stateAfter([REQUEST, WRITTEN, COMPLETED, REQUEST])
+      const closedAgain = stateAfter([REQUEST, WRITTEN, COMPLETED, REQUEST, SPEECH, COMPLETED])
+
+      expect(waitingLineDueAt(sent)).toBeUndefined()
+      expect(shown(sent, NO_WELCOME_HEAD, LATER)).toBe("accepted:架空の受けた")
+      expect(waitingLineDueAt(closedAgain)).toBe(
+        closedAgain.turn.kind === "finished"
+          ? closedAgain.turn.finishedAt + WAITING_LINE_DELAY_MS
+          : "閉じていない",
+      )
+    })
+
+    it("答え待ち・失敗で閉じた・雑談・背景のタスクを待つ間では出さない", () => {
+      const cases = [
+        stateAfter([REQUEST, SPEECH, ASKED]),
+        stateAfter([REQUEST, SPEECH, API_FAILED]),
+        stateAfter([{ kind: "chat-mode-changed", chat: true }, REQUEST, SPEECH, COMPLETED]),
+        stateAfter([
+          REQUEST,
+          SPEECH,
+          {
+            kind: "background-tasks-changed",
+            tasks: [{ taskId: "架空の背景", kind: "shell", description: "架空の背景のタスク" }],
+          },
+          COMPLETED,
+        ]),
+      ]
+
+      expect(cases.map((state) => waitingLineDueAt(state))).toEqual([
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      ])
+      expect(cases.map((state) => shown(state, NO_WELCOME_HEAD, LATER))).toEqual([
+        "none",
+        "failed:架空の失敗",
+        "none",
+        "none",
+      ])
+    })
+
+    it("続きから組み直した記録だけのときは出さない", () => {
+      const state = stateAfter([REQUEST, WRITTEN, COMPLETED, { kind: "history-restored" }])
+
+      expect(waitingLineDueAt(state)).toBeUndefined()
+      expect(shown(state, NO_WELCOME_HEAD, LATER)).toBe("none")
+    })
   })
 
   describe("迎えの挨拶", () => {
@@ -163,7 +296,7 @@ describe("shownReaction", () => {
     })
 
     it("書けていて札があれば、先頭の札の名前を差し込んだ文と挨拶の表情を出す", () => {
-      const reaction = shownReaction(stateAfter([GREETED]), HEAD)
+      const reaction = shownReaction(stateAfter([GREETED]), HEAD, 0)
 
       expect(reaction).toEqual({
         kind: "shown",

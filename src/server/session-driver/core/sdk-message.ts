@@ -482,6 +482,7 @@ function speechEvents(
  * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。
  * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。
  * `closing` の「無い」（引数に `closing` が無かったころの transcript）は `none` に畳む。
+ * `waitingLine` の「無い」（省いた・文が空白だけ・形の崩れ）も `none` に畳む。
  * `sessionSummary` の「無い」（空白だけも）は undefined。
  * `conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、モデルには本体がエラーを返す）。
  */
@@ -509,6 +510,9 @@ export function reportEvents(
       checks: parseReportChecks(input.checks),
       task: parseReportTask(input.task),
       closing: speechEvents(input.closing, expressions)[0] ?? { kind: "none" },
+      waitingLine: speechEvents(input.waitingLine, expressions).find(
+        (speech) => speech.text.trim() !== "",
+      ) ?? { kind: "none" },
       unknownBlockCount: parsed.unknownBlockCount,
       sessionSummary: nonBlankString(input.sessionSummary),
     },

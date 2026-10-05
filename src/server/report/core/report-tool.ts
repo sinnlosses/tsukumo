@@ -56,6 +56,14 @@ export const REPORT_CLOSING_DESCRIPTION =
   "書き終えたことを言う一言にし、レポートの中身を言い直さない。"
 
 /**
+ * `report` の任意の `waitingLine` 引数（待ちの一言）の説明。
+ * 出す時刻と回数は tsukumo が決める（`waitingLineDueAt`）ので、ここでは何を言うかだけを言う。
+ */
+export const REPORT_WAITING_LINE_DESCRIPTION =
+  "待ちの一言（speak と同じ text と expression）。利用者が次の依頼を送らないまましばらく経ったら、吹き出しに1回だけ出る。" +
+  "次の依頼を待っていることを言う一言にし、closing とレポートの中身を言い直さない。"
+
+/**
  * `report` の任意の `title` 引数の説明。セッション一覧の見出しにする題を付けさせる条はここだけ。
  * 利用者の `/rename` を上書きしない判断はモデルに任せず、`decideSessionTitle` が持つ。
  */
