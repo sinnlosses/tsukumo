@@ -38,6 +38,17 @@ describe("buildUiBundle", () => {
     expect(result.ok ? result.bundle.styleSheet.length : 0).toBeGreaterThan(0)
   })
 
+  it("入口から import() で分けたチャンクを、入口かほかのチャンクが import する名前のまま持つ", () => {
+    const result = built
+    const scripts = result.ok ? [result.bundle.uiScript, ...result.bundle.chunks.values()] : []
+    const chunkNames = result.ok ? [...result.bundle.chunks.keys()] : []
+
+    expect(chunkNames.length).toBeGreaterThan(0)
+    for (const name of chunkNames) {
+      expect(scripts.some((script) => script.includes(`./${name}`))).toBe(true)
+    }
+  })
+
   it("CSS Modules の class 名が、CSS の選択子と JS の対応表に同じ綴りで入っている", () => {
     const result = built
 
@@ -58,6 +69,9 @@ describe("readUiBundle", () => {
     expect(read.ok).toBe(true)
     expect(read.ok ? read.bundle.uiScript : "").toBe(built.ok ? built.bundle.uiScript : "")
     expect(read.ok ? read.bundle.styleSheet : "").toBe(built.ok ? built.bundle.styleSheet : "")
+    expect(read.ok ? read.bundle.chunks : new Map()).toEqual(
+      built.ok ? built.bundle.chunks : new Map([["（組み立てに失敗した）", ""]]),
+    )
   })
 
   it("組み立てた直後は古くないと言う", async () => {

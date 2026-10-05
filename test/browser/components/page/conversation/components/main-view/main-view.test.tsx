@@ -1,8 +1,9 @@
 import { QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
+import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/deferred-markdown.tsx"
 import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-answer.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -17,6 +18,10 @@ import {
 import { typedElement } from "../../../../../../typed-element.ts"
 import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { putState, putSession } from "../../../../../session-store.ts"
+
+beforeAll(async () => {
+  await loadMarkdown()
+})
 
 afterEach(() => {
   cleanup()

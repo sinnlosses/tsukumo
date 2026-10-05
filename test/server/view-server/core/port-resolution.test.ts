@@ -23,7 +23,10 @@ import { closeNetServer, listenOnEphemeralPort, portOf } from "../../../fixture/
 import { PLAIN_PROJECT_SETTINGS_DRAFT } from "../../../fixture/project-settings.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
-const emptyViewUi: ViewUi = { kind: "bundle", bundle: { uiScript: "", styleSheet: "" } }
+const emptyViewUi: ViewUi = {
+  kind: "bundle",
+  bundle: { uiScript: "", styleSheet: "", chunks: new Map() },
+}
 
 /** 同じく、配るものの中身は見ない（素材もファイル一覧も集計も空で足りる）。 */
 const emptyViewServerOptions: ViewServerOptions = {

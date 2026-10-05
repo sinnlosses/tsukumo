@@ -14,7 +14,7 @@ import type {
   TaskDependencyCard,
 } from "../domain/task-board-view.ts"
 import taskBoardStyles from "../task-board.module.css"
-import { TaskBody } from "./task-body.tsx"
+import { TaskBody } from "./deferred-task-body.tsx"
 import styles from "./task-detail.module.css"
 import { TaskDifficulty } from "./task-difficulty.tsx"
 import { TaskState } from "./task-state.tsx"

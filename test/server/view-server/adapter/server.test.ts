@@ -51,6 +51,10 @@ const TEST_UI_SCRIPT = "/* テスト用の ui スクリプト */"
 /** CSS の代役。本物のビルドはしない。 */
 const TEST_STYLE_SHEET = "/* テスト用の CSS */"
 
+/** `import()` で分けたチャンクの代役。 */
+const TEST_CHUNK_NAME = "markdown.js"
+const TEST_CHUNK = "/* テスト用のチャンク */"
+
 /**
  * `/character/<pack>/<file>` を配る係の代役。既定では何も配らない（404）。個々のテストが必要な分だけ
  * 上書きする（`readCharacterAsset` の代役）。
@@ -96,7 +100,11 @@ async function startView(
   const server = await startViewServer(0, {
     ui: () => ({
       kind: "bundle",
-      bundle: { uiScript: TEST_UI_SCRIPT, styleSheet: TEST_STYLE_SHEET },
+      bundle: {
+        uiScript: TEST_UI_SCRIPT,
+        styleSheet: TEST_STYLE_SHEET,
+        chunks: new Map([[TEST_CHUNK_NAME, TEST_CHUNK]]),
+      },
     }),
     serveCharacterAsset,
     findPromptImage,
@@ -213,6 +221,24 @@ describe("startViewServer", () => {
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toContain("text/css")
     expect(await response.text()).toBe(TEST_STYLE_SHEET)
+  })
+
+  it("/assets/<チャンクの名前> が、組み立てたチャンクを返す", async () => {
+    const server = await startView()
+
+    const response = await fetch(`${viewOrigin(server)}/assets/${TEST_CHUNK_NAME}`)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("content-type")).toContain("text/javascript")
+    expect(await response.text()).toBe(TEST_CHUNK)
+  })
+
+  it("/assets/ の下で組み立てた名前の一覧に無いものは 404 を返す（ディスクを読みに行かない）", async () => {
+    const server = await startView()
+    const origin = viewOrigin(server)
+
+    expect((await fetch(`${origin}/assets/other.js`)).status).toBe(404)
+    expect((await fetch(`${origin}/assets/..%2Fpackage.json`)).status).toBe(404)
   })
 
   it("開発サーバを差し込んだときは、ページを開発サーバに通し、経路に無い要求をそちらへ回す", async () => {

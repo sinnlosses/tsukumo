@@ -4,6 +4,7 @@
 // スクリプトと CSS は1回の `vite build` から出る対。
 // CSS Modules（`*.module.css`）はハッシュ化した class 名を JS と CSS の両方へ焼き込むので、別々に組み立てると綴りの違う対ができてしまう。
 // 入口はブラウザ側の入口ファイル1つだけで、CSS はそこから import で辿れるもの（`styles/theme.css` と各機能の `*.module.css`）が1本にまとまる。
+// スクリプトは入口の1本と、入口から `import()` で分けたチャンクに分かれる（CSS は分けない）。
 //
 // 成果物は `dist/browser/` に置く（`.gitignore` してあるので、各自が `pnpm run build` で作る）。
 // 起動時に `src/browser/` と成果物の新しさを比べ、古ければ知らせる（`readUiBundle` の `outdated`）。
@@ -34,7 +35,10 @@ const VITE_CLI_RELATIVE_PATH: readonly string[] = ["node_modules", "vite", "bin"
  * 出し先に置かれる対の名前。Vite の設定の `entryFileNames` と `assetFileNames` に合わせる
  * （ハッシュ付きの名前にしないので、出し直しても同じ名前で読める）。
  */
-const UI_SCRIPT_FILE_NAME = "main.js"
+const UI_SCRIPT_FILE_NAME = "ui.js"
+
+/** `import()` で分けたチャンクの拡張子。Vite の設定の `chunkFileNames` に合わせる。 */
+const CHUNK_FILE_EXTENSION = ".js"
 const STYLE_SHEET_FILE_NAME = "main.css"
 
 /**
@@ -72,6 +76,8 @@ const FAILURE_REASON_MAX_CHARS = 2000
 export type UiBundle = {
   readonly uiScript: string
   readonly styleSheet: string
+  /** 入口から `import()` で分けたチャンク（出し先のファイル名 → 中身）。配ってよい名前はこの鍵だけ。 */
+  readonly chunks: ReadonlyMap<string, string>
 }
 
 /**
@@ -172,18 +178,39 @@ function runViteBuild(sourceDir: string, outDir: string): Promise<BundleResult |
 /**
  * 置き場から {@link UI_SCRIPT_FILE_NAME} と {@link STYLE_SHEET_FILE_NAME} を読む。どちらかが
  * 無ければ `undefined`（対で配れないものを「組み上がった」と呼ばない）。置き場そのものが
- * 無いときも同じ。
+ * 無いときも同じ。入口以外の `.js` はチャンクとして名前ごと読む。
  */
 async function readPair(dir: string): Promise<UiBundle | undefined> {
-  const [uiScript, styleSheet] = await Promise.all([
+  const [uiScript, styleSheet, chunks] = await Promise.all([
     readFile(join(dir, UI_SCRIPT_FILE_NAME), "utf8").catch(() => undefined),
     readFile(join(dir, STYLE_SHEET_FILE_NAME), "utf8").catch(() => undefined),
+    readChunks(dir),
   ])
-  if (uiScript === undefined || styleSheet === undefined) {
+  if (uiScript === undefined || styleSheet === undefined || chunks === undefined) {
     return undefined
   }
 
-  return { uiScript, styleSheet }
+  return { uiScript, styleSheet, chunks }
+}
+
+/** 置き場の直下にある、入口以外の `.js`（名前 → 中身）。1つでも読めなければ `undefined`。 */
+async function readChunks(dir: string): Promise<ReadonlyMap<string, string> | undefined> {
+  const names = await readdir(dir).catch(() => undefined)
+  if (names === undefined) {
+    return undefined
+  }
+
+  const chunkNames = names.filter(
+    (name) => name.endsWith(CHUNK_FILE_EXTENSION) && name !== UI_SCRIPT_FILE_NAME,
+  )
+  const contents = await Promise.all(
+    chunkNames.map((name) => readFile(join(dir, name), "utf8").catch(() => undefined)),
+  )
+  const entries = chunkNames.flatMap((name, index) => {
+    const content = contents[index]
+    return content === undefined ? [] : [[name, content] as const]
+  })
+  return entries.length === chunkNames.length ? new Map(entries) : undefined
 }
 
 /**

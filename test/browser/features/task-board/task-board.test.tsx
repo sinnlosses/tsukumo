@@ -1,8 +1,9 @@
 import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactElement } from "react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
+import { loadTaskBody } from "../../../../src/browser/features/task-board/components/deferred-task-body.tsx"
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import type { TaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
@@ -17,6 +18,10 @@ import { putSession } from "../../session-store.ts"
 // フィクスチャはすべて手で書いた架空の課題。
 
 let fetchStub: RpcFetchStub | undefined = undefined
+
+beforeAll(async () => {
+  await loadTaskBody()
+})
 
 afterEach(() => {
   cleanup()

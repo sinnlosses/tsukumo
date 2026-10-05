@@ -57,6 +57,7 @@ export const LAYOUT_PATH = "/"
 /**
  * 自前のブラウザ側スクリプト（`src/browser/` を `vite build` でまとめたもの）と CSS を配る経路。
  * 成果物は `dist/browser/` にあり、起動のときに読んでメモリに持つ。
+ * 入口から `import()` で分けたチャンクは、入口の隣（`/assets/<チャンクの名前>`）で配る。
  */
 const ASSET_PATH_PREFIX = "/assets/"
 const UI_SCRIPT_NAME = "ui.js"
@@ -276,6 +277,15 @@ const ROUTES = [
       writeBundledAsset(response, options.ui(), "text/css", (bundle) => bundle.styleSheet),
   },
   {
+    match: { kind: "prefix", prefix: ASSET_PATH_PREFIX },
+    method: "GET",
+    requiresToken: false,
+    handle: (_request, response, path, { options }) =>
+      writeBundledAsset(response, options.ui(), "text/javascript", (bundle) =>
+        bundle.chunks.get(path.slice(ASSET_PATH_PREFIX.length)),
+      ),
+  },
+  {
     match: { kind: "prefix", prefix: VENDOR_PATH_PREFIX },
     method: "GET",
     requiresToken: false,
@@ -379,16 +389,17 @@ function writeLayoutPage(request: IncomingMessage, response: ServerResponse, ui:
 }
 
 /**
- * 組み立て済みの対の片方を配る。ディスクには無いので、vendor と違ってファイルを読みに行かない。
- * `dev` のときは対を持っていないので 404。
+ * 組み立て済みの束から1本を配る。ディスクには無いので、vendor と違ってファイルを読みに行かない。
+ * `dev` のときは束を持っていないので 404。`pick` が `undefined` を返したとき（束に無い名前）も 404。
  */
 function writeBundledAsset(
   response: ServerResponse,
   ui: ViewUi,
   contentType: string,
-  pick: (bundle: UiBundle) => string,
+  pick: (bundle: UiBundle) => string | undefined,
 ): void {
-  if (ui.kind !== "bundle") {
+  const content = ui.kind === "bundle" ? pick(ui.bundle) : undefined
+  if (content === undefined) {
     writeNotFound(response)
     return
   }
@@ -397,7 +408,7 @@ function writeBundledAsset(
     "content-type": `${contentType}; charset=utf-8`,
     "cache-control": "no-store",
   })
-  response.end(pick(ui.bundle))
+  response.end(content)
 }
 
 function writeNotFound(response: ServerResponse): void {

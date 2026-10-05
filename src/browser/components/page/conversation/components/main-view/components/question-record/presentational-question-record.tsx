@@ -7,7 +7,7 @@ import type { ReactElement } from "react"
 
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import { QuestionPreviewMarkdown } from "../../markdown/markdown.tsx"
+import { QuestionPreviewMarkdown } from "../../markdown/deferred-markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
 import type {
   QuestionRecordAnswerRow,

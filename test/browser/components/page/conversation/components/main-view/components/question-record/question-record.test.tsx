@@ -2,9 +2,10 @@
 // 差し色が当たる側の class を持つことまでを測る。
 
 import { act, cleanup, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { QuestionRecord } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/question-record/question-record.tsx"
+import { loadMarkdown } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/deferred-markdown.tsx"
 import { TEXT_TONE_CLASS } from "../../../../../../../../../src/browser/components/ui/text/text.tsx"
 import type { MainViewQuestion } from "../../../../../../../../../src/shared/session/main-view.ts"
 
@@ -14,6 +15,10 @@ const ACCENT_CLASS = TEXT_TONE_CLASS.accent
 if (ACCENT_CLASS === undefined) {
   throw new Error("TEXT_TONE_CLASS.accent が無い")
 }
+
+beforeAll(async () => {
+  await loadMarkdown()
+})
 
 afterEach(() => {
   cleanup()

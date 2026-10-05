@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 let calls: string[] = []
 
 vi.mock(
-  "../../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx",
+  "../../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/deferred-markdown.tsx",
   () => ({
     Markdown: (props: { readonly text: string }) => {
       calls.push(props.text)

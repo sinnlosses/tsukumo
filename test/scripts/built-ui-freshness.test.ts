@@ -12,7 +12,7 @@ describe("組み立て済みのブラウザ側の鮮度", () => {
   const tempDir = useTempDir("built-ui-freshness")
 
   function writePair(modifiedAtSeconds: number): void {
-    for (const name of ["main.js", "main.css"]) {
+    for (const name of ["ui.js", "main.css"]) {
       const path = join(tempDir(), name)
       writeFileSync(path, "")
       utimesSync(path, modifiedAtSeconds, modifiedAtSeconds)

@@ -8,11 +8,13 @@ import "./lib/zod-jitless.ts"
 import { createRoot } from "react-dom/client"
 
 import { App } from "./app.tsx"
+import { loadMarkdown } from "./components/page/conversation/components/main-view/markdown/deferred-markdown.tsx"
 import {
   applyAppearanceColorOverride,
   loadAppearanceColorOverride,
 } from "./domain/appearance-color.ts"
 import { reportBrowserError } from "./domain/browser-error-report.ts"
+import { loadTaskBody } from "./features/task-board/components/deferred-task-body.tsx"
 // ページ全体の下地（トークン・body・リンク）。グローバルな CSS はこれだけ。
 import "./styles/theme.css"
 
@@ -27,6 +29,10 @@ window.addEventListener("error", (event) => {
 window.addEventListener("unhandledrejection", (event) => {
   reportBrowserError("unhandledrejection", event.reason)
 })
+
+// 最初のレポートとタスクの本文を出す前に読み終えるよう、描き始める前に起こす。
+void loadMarkdown()
+void loadTaskBody()
 
 const appRoot = document.querySelector("#app")
 if (appRoot !== null) {

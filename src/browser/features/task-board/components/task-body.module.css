@@ -7,6 +7,12 @@
   font-size: 14px;
   line-height: 1.85;
 }
+/* 描画一式を読めなかったあいだの本文。Markdown の記法は字のまま出す。 */
+.task-body-plain {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .task-body > :first-child {
   margin-top: 0;
 }

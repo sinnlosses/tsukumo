@@ -26,12 +26,14 @@ import styles from "./task-body.module.css"
 /** `detail` はタスクのモーダルの詳細、`peek` はサイドバーののぞき窓（字を一段小さく組む）。 */
 export type TaskBodyTypesetting = "detail" | "peek"
 
-export function TaskBody(props: {
+export type TaskBodyProps = {
   readonly text: string
   readonly typesetting: TaskBodyTypesetting
   readonly knownIds: ReadonlySet<string>
   readonly onJump: (id: string) => void
-}): ReactElement {
+}
+
+export function TaskBody(props: TaskBodyProps): ReactElement {
   return (
     <div className={clsx(styles["task-body"], TYPESETTING_CLASS[props.typesetting])}>
       <ReactMarkdown

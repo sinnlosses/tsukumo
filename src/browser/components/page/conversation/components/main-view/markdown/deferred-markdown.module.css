@@ -1,0 +1,6 @@
+/* 描画一式を読めなかったあいだの本文。Markdown の記法は字のまま出す。 */
+.plain-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

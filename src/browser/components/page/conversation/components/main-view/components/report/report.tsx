@@ -9,7 +9,7 @@ import { memo, type ReactElement } from "react"
 
 import { useReportReveal } from "../../../../../../../domain/reveal/use-report-reveal.ts"
 import styles from "../../main-view.module.css"
-import { Markdown } from "../../markdown/markdown.tsx"
+import { Markdown } from "../../markdown/deferred-markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
 import { splitReportBlocks } from "../../markdown/split-blocks.ts"
 

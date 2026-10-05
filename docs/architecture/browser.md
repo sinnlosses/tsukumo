@@ -75,8 +75,31 @@ react-markdown
 | mermaid（5.3MB）・Chart.js                                         | **束ねず `/vendor/` で配り、その記法が出たときだけ `<script>` で読む**。`MermaidBlock` / `ChartBlock` が `useEffect` で描く。mermaid は同じソースの図の SVG を覚え、描き直さない | `/vendor/`          |
 
 `/vendor/<name>` が返すのは `node_modules` の実ファイル（`src/server/view-server/adapter/vendor-asset.ts`）で、
-**CDN からは読まない**。`vite build` の出力は1本（コード分割はしない。分割するとディスクに
-置かないメモリ配信と噛み合わない）。
+**CDN からは読まない**。
+
+`vite build` の出力は入口の `ui.js` と、**Markdown の描画一式だけを `import()` で分けたチャンク**。
+Markdown を描く口は2つあり、どちらも `import()` で読む。
+
+| チャンク       | 中身                                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------------------- |
+| `markdown.js`  | レポートの描画（`markdown.tsx` から先の rehype 一式・highlight.js・図とグラフの部品）                    |
+| `task-body.js` | タスクの本文の描画（`task-body.tsx` と ID の自動リンク）                                                 |
+| `lib.js`       | 2つが共に読む react-markdown・remark・micromark 一式（組み立てが自動で括り出す。名前も組み立てが付ける） |
+
+CSS は分けず1本。サーバは起動時にすべてメモリに読み、`/assets/` で**組み立てた名前の一覧にある名前だけ**を
+配る（要求のパスからファイルを組み立てない）。入口の名前は配る URL と同じにする（チャンクは入口を `./ui.js` で
+import するので、食い違うと入口を別のモジュールとして読み React が2つ動く）。
+
+- 使い手は `deferred-markdown.tsx`（`<Report>`・お伺いと質問の記録の preview）と `deferred-task-body.tsx`
+  （タスクのモーダルの詳細・サイドバーののぞき窓）の部品を使い、`markdown.tsx`・`task-body.tsx` を直接
+  import しない（すると一式が入口に戻る）。読み込みの状態の持ち方は2つとも `hooks/deferred-module.ts` の `deferredModule`
+- 読み込みは `main.tsx` が最初の描画の前に `loadMarkdown()`・`loadTaskBody()` で1回ずつ起こし、済んだことを zustand の
+  store に持つ。読み終わっていれば同じ描画で本体を出し、まだなら高さを持たない空の器に `aria-busy="true"` を出す。
+  ブラウザは同じ URL の `import()` の失敗を覚えていて取り直さないので、読めなかったら本文を字のまま出して
+  `aria-busy` を出さず、回復はページの読み直しに任せる
+- **`React.lazy` と `Suspense` は使わない。** `lazy` は読み終わっていても最初の1回は必ず suspend し、
+  store の更新（同期の lane）では fallback をその場でコミットする。React 19 は fallback から本体への
+  差し替えを `setTimeout` で 300ms 間引くので、最初のレポートが 300ms 遅れ、時計を止めた E2E では眠ったままになる
 
 ### 立ち絵の動き
 

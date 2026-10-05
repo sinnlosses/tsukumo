@@ -2,8 +2,9 @@
 // 組み立てを起こす口は `bundleWithVite` だけで、
 // 入口の置き場（root）と出し先（outDir）は起こす側が CLI の引数で渡す。
 //
-// 出す名前は `main.js` と `main.css` に固定する。
-// `readPair` はこの2つの名前で読み、ハッシュ付きの名前は読まない。
+// 出す名前は入口の `ui.js` と `main.css`、`import()` で分けたチャンクの `[name].js` に固定する（ハッシュを付けない）。
+// 入口の名前はサーバが配る URL（`/assets/ui.js`）と同じにする。
+// チャンクは入口を `./ui.js` で import するので、名前が食い違うと入口を別のモジュールとして読み、React が2つ動く。
 //
 // React Compiler（`oxc-transform-react`）を通し、最適化を諦める部品があれば組み立てを落とす。
 // 既定の `panicThreshold` では諦めた部品を黙って素通しし、診断も返さない。
@@ -34,7 +35,8 @@ export default defineConfig({
     rolldownOptions: {
       input: "main.tsx",
       output: {
-        entryFileNames: "main.js",
+        entryFileNames: "ui.js",
+        chunkFileNames: "[name].js",
         assetFileNames: "main[extname]",
       },
     },

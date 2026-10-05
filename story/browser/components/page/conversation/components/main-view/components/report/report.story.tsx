@@ -4,6 +4,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
 import { Report } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/report.tsx"
+import { loadMarkdown } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/deferred-markdown.tsx"
 import type { ReportSection } from "../../../../../../../../../src/shared/report/report-block.ts"
 import {
   type ReportImageSource,
@@ -16,6 +17,7 @@ const NO_IMAGES = { kind: "none" } as const satisfies ReportImageSource
 const meta = {
   component: Report,
   args: { markdown: "", reveal: false, turnId: 1 },
+  loaders: [loadMarkdown],
 } satisfies Meta<typeof Report>
 
 export default meta

@@ -12,7 +12,7 @@ import type { TaskSummaryItem } from "../../../../shared/repository/task-summary
 import { Button } from "../../../components/ui/button/button.tsx"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
-import { TaskBody } from "./task-body.tsx"
+import { TaskBody } from "./deferred-task-body.tsx"
 import { TaskMark } from "./task-mark.tsx"
 import styles from "./task-peek.module.css"
 import { TaskRunConfirm } from "./task-run-confirm.tsx"
