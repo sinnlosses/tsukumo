@@ -60,7 +60,9 @@
   同じ錠を通る。check の中の子は環境変数で持ち主を知らされ、取り直さない。watch では取らない。E2E の1本は vitest のワーカーに加えて
   Chrome と `node src/cli.ts` を起こすので、実際に走るプロセスは `maxWorkers` の本数を大きく超える。
   E2E の設定は `maxWorkers: "30%"`、単体テスト（`vitest.config.ts`）も `"30%"` で、2つ合わせて
-  コア数の 60% までに収める。単体の `setupFiles` の DOM のグローバルは渡さない
+  コア数の 60% までに収める。単体は `dom` と `node` の2つの project に分け、DOM のグローバルを借りる
+  `test/dom-environment.ts` は `dom`（`test/browser/` と、DOM を描くほかの置き場のファイル）にだけ掛ける。
+  `vitest.config.ts` の `DOM_TEST_FILES` に無いファイルが DOM を要するようになったら、そこへ足す
 - **引数なしの `pnpm run check` は、変えたファイルから選んだ E2E のファイルだけを流し**、選んだもの
   （または全件に倒した理由のパス）を1行で出す。**全件は `pnpm run check --full` で、main へ送る直前
   （`tw ship` の送る前の検証コマンドと `scripts/ship.ts`）に1回だけ流す**。選び方（`scripts/lib/e2e-selection.ts`）は
