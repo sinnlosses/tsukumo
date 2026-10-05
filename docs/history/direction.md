@@ -3,6 +3,18 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-05 主流の開発フローに沿って claude-skills の足りないスキルを補う
+
+（GH-390〜GH-392 にした）
+
+- 出典: 会話。利用者「Superpowers の verification-before-completion・dispatching-parallel-agents にあたる独立したスキルは気になるね。今の claude-skills に足りてないものを補充しつつ、主流の開発ワークフローに沿って確立するのを目指したいな」
+- 突き合わせの結果（採る2・検討3）を見て、利用者「1, 2, 5を採ろう」（完了前の検証・並列委譲・薄いスキルの整理）
+- `develop/direction.md` に書いた記述:
+  - claude-skills に、主流の開発フロー（obra/superpowers）に沿って足りないスキルを補う。中身の考え方だけを借り、手元の規則（自分でブランチを切らない・委譲は背景で）と writing-for-agents の文体で書き直す。
+    1. 完了前の検証を独立したスキルにする（superpowers の verification-before-completion にあたる）。完了・修正済み・通過と言う前に、主張ごとに証拠になるコマンドを決めてその場で打ち、出力を読んでから言う。委譲先の「できた」は差分で確かめる。タスクに紐付かない作業や他のプロジェクトでも効くようにし、next-task の `tw verify-check` の段からも引く。
+    2. 並列委譲を独立したスキルにする（dispatching-parallel-agents にあたる）。独立かどうかの判定、自己完結した依頼文、返却後の衝突の確かめ方を正典にし、code-review と next-task が抱えている並列のやり方はそこを引く形にそろえる。
+    3. 薄いスキルを畳む。implement（next-task と重なる）・grill-with-docs（grilling と domain-modeling を読むだけ）・retro（retrospect と重なる）を、残すか・吸収するか・消すかを決めて整理する。
+
 ## 2026-10-05 定型文のセリフをなくす
 
 （GH-386・GH-387 にした）
