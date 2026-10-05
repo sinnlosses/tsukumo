@@ -354,7 +354,12 @@ function reportMarkdown(
       phaseTimesMarkdown(phaseDurations(context.plans, report.time)),
     ),
   ].filter((part) => !isBlankText(part))
-  const sections = reportSectionsMarkdown(tidyReportSections(report), {
+  const tidied = tidyReportSections({
+    conclusion: report.conclusion,
+    sections: report.sections,
+    hasWorkPlan: latestWorkPlanOf(context).kind === "planned",
+  })
+  const sections = reportSectionsMarkdown(tidied, {
     kind: "shelved",
     toolUseId: report.toolUseId,
   })

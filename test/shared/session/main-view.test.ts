@@ -735,6 +735,41 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(final?.endsWith(`</div>\n\n${SECTIONS_START}\n\n架空の根拠。`)).toBe(true)
   })
 
+  it("同じ依頼に段取りがあるレポートは progress の塊を描かず、段取りが無いレポートは描く", () => {
+    const withProgress: SessionEvent = {
+      kind: "report",
+      toolUseId: "toolu_r1",
+      conclusion: "架空の結論。",
+      sections: [
+        {
+          heading: "架空の節",
+          blocks: [
+            { kind: "progress", steps: ["架空の道A", "架空の道B"], current: 0, fold: "" },
+            { kind: "text", text: "架空の根拠。", fold: "" },
+          ],
+        },
+      ],
+      favor: "",
+      checks: [],
+      closing: { kind: "none" },
+      waitingLine: { kind: "none" },
+      unknownBlockCount: 0,
+      sessionSummary: undefined,
+      task: { kind: "none" },
+    }
+    const plan: SessionEvent = {
+      kind: "work-plan",
+      phases: ["架空の段A", "架空の段B"],
+      current: 0,
+      phaseSummary: "",
+    }
+    const finalOf = (events: readonly SessionEvent[]) =>
+      shownReports(turnOf(events, SETTLED, true)).at(-1)
+
+    expect(finalOf([ask, plan, withProgress, finished])).not.toContain("架空の道B")
+    expect(finalOf([ask, withProgress, finished])).toContain("架空の道B")
+  })
+
   it("task のあるレポートは、結論を一文の印で包み、task を本文に組まずに運ぶ（畳んだときの先頭行は結論）", () => {
     const task = { kind: "task", id: "X-7", name: "架空の作業", outcome: "stopped" } as const
     const turn = turnOf(
