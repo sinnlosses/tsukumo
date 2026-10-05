@@ -186,6 +186,15 @@ describe("startViewServer", () => {
     expect(body).toContain('<link rel="stylesheet" href="/assets/style.css">')
   })
 
+  it("/ の応答は、スクリプトを同じオリジンのファイルだけに絞る CSP を付ける", async () => {
+    const server = await startView()
+
+    const policy = (await fetch(server.layoutUrl)).headers.get("content-security-policy") ?? ""
+
+    expect(policy.split("; ")).toContain("script-src 'self'")
+    expect(policy.split("; ")).toContain("object-src 'none'")
+  })
+
   it("/assets/ui.js が、起動時に組み立てたブラウザ側スクリプトを返す", async () => {
     const server = await startView()
 
@@ -235,7 +244,11 @@ describe("startViewServer", () => {
     runningView = server
     const origin = viewOrigin(server)
 
-    const page = await (await fetch(server.layoutUrl)).text()
+    const pageResponse = await fetch(server.layoutUrl)
+    expect(pageResponse.headers.get("content-security-policy")?.split("; ")).toContain(
+      "script-src 'self' 'unsafe-inline'",
+    )
+    const page = await pageResponse.text()
     expect(page).toContain('<script type="module" src="/main.tsx"></script>')
     expect(page).toContain("<!-- hmr -->")
     expect(page).not.toContain("/assets/style.css")
@@ -336,6 +349,20 @@ describe("startViewServer", () => {
 
     expect(cached.headers.get("cache-control")).toBe("max-age=31536000, immutable")
     expect(uncached.headers.get("cache-control")).toBe("no-store")
+  })
+
+  it("/character/<pack>/<file> は、直接開かれてもスクリプトが動かない CSP（sandbox）を付ける", async () => {
+    const server = await startView(() => ({
+      contentType: "image/svg+xml",
+      content: Buffer.from("<svg/>"),
+      versioned: false,
+    }))
+
+    const response = await fetch(`${viewOrigin(server)}/character/a/default.svg`)
+
+    expect(response.headers.get("content-security-policy")?.split("; ")).toEqual(
+      expect.arrayContaining(["default-src 'none'", "sandbox"]),
+    )
   })
 
   it("/character/<pack>/<file> は、定義に無いファイル名（serveCharacterAsset が undefined を返す）なら404", async () => {

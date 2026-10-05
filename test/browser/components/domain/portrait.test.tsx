@@ -97,6 +97,20 @@ describe("Portrait", () => {
     expect(fetchCalls).toEqual(["/character/default.svg", "/character/thinking.svg"])
   })
 
+  it("SVG の中身のスクリプト・イベントハンドラ・foreignObject・javascript: の参照は、DOM に入る前に落ちる", async () => {
+    stubFetch(
+      '<svg xmlns="http://www.w3.org/2000/svg" onload="window.mark = 1"><script>window.mark = 2</script><foreignObject><div xmlns="http://www.w3.org/1999/xhtml">偽の入力欄</div></foreignObject><use href="javascript:alert(1)"/><circle r="1" onerror="window.mark = 3"/></svg>',
+    )
+    renderPortrait({ url: "/character/default.svg" })
+
+    await waitFor(() => {
+      expect(document.querySelector(".portrait circle")).not.toBeNull()
+    })
+    const portrait = portraitWrapper()
+    expect(portrait.querySelector("script, foreignObject")).toBeNull()
+    expect(portrait.innerHTML).not.toMatch(/onload|onerror|javascript:|window\.mark|偽の入力欄/)
+  })
+
   it("ラスタ画像の URL は <img> で出す（fetch しない）", () => {
     renderPortrait({})
 

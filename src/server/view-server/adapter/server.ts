@@ -77,6 +77,32 @@ export type ViewUi =
   | { readonly kind: "bundle"; readonly bundle: UiBundle }
   | { readonly kind: "dev"; readonly devServer: UiDevServer }
 
+/**
+ * ページの `script-src` 以外の CSP。
+ * `style-src` の `'unsafe-inline'` は、mermaid が `innerHTML` で差す図の `<style>` 要素と、立ち絵の SVG の `style` 属性が要る。
+ * `connect-src 'self'` は `/rpc` と、同じホスト・ポートの `ws:`（`/ws` と開発時の `/vite-hmr`）を覆う。
+ */
+const PAGE_POLICY_DIRECTIVES: readonly string[] = [
+  "default-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+]
+
+/** 開発サーバは Vite が HMR の前置きを `<script>` の中身で差し込むので、そのときだけ `'unsafe-inline'` を許す。 */
+const PAGE_CONTENT_SECURITY_POLICY = {
+  bundle: [...PAGE_POLICY_DIRECTIVES, "script-src 'self'"].join("; "),
+  dev: [...PAGE_POLICY_DIRECTIVES, "script-src 'self' 'unsafe-inline'"].join("; "),
+} satisfies Record<ViewUi["kind"], string>
+
+/** `/character/` の SVG がページの外で直接開かれたときに、スクリプトを動かさず同じオリジンにも置かない。 */
+const CHARACTER_ASSET_CONTENT_SECURITY_POLICY =
+  "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
+
 /** `/character/<pack>/<file>` を1件配るために要るもの。中身はキャラクターパックを読むアダプタが決める。 */
 export type CharacterAssetFile = {
   readonly contentType: string
@@ -333,14 +359,18 @@ function respond(
  */
 function writeLayoutPage(request: IncomingMessage, response: ServerResponse, ui: ViewUi): void {
   if (ui.kind === "bundle") {
-    writeHtml(response, buildLayoutPage([styleSheetPath()], uiScriptPath()))
+    writeHtml(
+      response,
+      buildLayoutPage([styleSheetPath()], uiScriptPath()),
+      PAGE_CONTENT_SECURITY_POLICY.bundle,
+    )
     return
   }
 
   ui.devServer
     .transformPage(request.url ?? LAYOUT_PATH, buildLayoutPage([], ui.devServer.entryScriptPath))
     .then(
-      (html) => writeHtml(response, html),
+      (html) => writeHtml(response, html, PAGE_CONTENT_SECURITY_POLICY.dev),
       () => {
         response.writeHead(500, { "content-type": "text/plain; charset=utf-8" })
         response.end("internal server error\n")
@@ -444,6 +474,7 @@ function writeCharacterAsset(
   response.writeHead(200, {
     "content-type": asset.contentType,
     "cache-control": asset.versioned ? "max-age=31536000, immutable" : "no-store",
+    "content-security-policy": CHARACTER_ASSET_CONTENT_SECURITY_POLICY,
   })
   response.end(asset.content)
 }
@@ -583,10 +614,11 @@ function queryValue(request: IncomingMessage, name: string): string | undefined 
   return url.searchParams.get(name) ?? undefined
 }
 
-function writeHtml(response: ServerResponse, html: string): void {
+function writeHtml(response: ServerResponse, html: string, contentSecurityPolicy: string): void {
   response.writeHead(200, {
     "content-type": "text/html; charset=utf-8",
     "cache-control": "no-store",
+    "content-security-policy": contentSecurityPolicy,
   })
   response.end(html)
 }

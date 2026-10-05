@@ -1,5 +1,5 @@
 // 立ち絵1件（<Portrait>）。
-// SVG は `fetch` して中身をそのままインラインにし、ラスタは `<img>` で出す。
+// SVG は `fetch` して `sanitizeSvg` で削ぎ落とした中身をインラインにし、ラスタは `<img>` で出す。
 // SVG を `<img>` で読み込むと独立した文書扱いになり、差し色の CSS 変数 `--outfit-accent` が届かない（`characters/README.md` の実測）。
 // 素材は `/character/<pack>/<file>` から取りに行くだけ。
 //
@@ -16,6 +16,7 @@ import { useEffect, type CSSProperties, type ReactElement } from "react"
 import { classifyPortraitFile } from "../../../shared/character-pack/character-asset.ts"
 import type { Expression, Outfit } from "../../../shared/character-pack/expression.ts"
 import type { PortraitMotion } from "../../../shared/session/portrait-motion.ts"
+import { sanitizeSvg } from "../../utils/sanitize-svg.ts"
 import styles from "./portrait.module.css"
 
 export type PortraitProps = {
@@ -98,7 +99,7 @@ export function usePortraitPreload(portraits: Readonly<Record<string, string>> |
 
 async function fetchSvgMarkup(url: string): Promise<string | undefined> {
   const response = await fetch(url)
-  return response.ok ? await response.text() : undefined
+  return response.ok ? sanitizeSvg(await response.text()) : undefined
 }
 
 /** React の `CSSProperties` は CSS カスタムプロパティの索引シグネチャを持たないので、足した型で受ける。 */
@@ -123,8 +124,8 @@ export function Portrait(props: PortraitProps): ReactElement {
     "data-motion": props.motion,
   }
 
-  // SVG はエスケープせずファイルの中身をそのまま差し込む（インライン埋め込みそのものが目的）。
-  // 読み込みが終わっていない・失敗したときは空のまま。
+  // SVG は削ぎ落とした中身をエスケープせずに差し込む（インライン埋め込みそのものが目的）。
+  // 読み込みが終わっていない・失敗した・SVG として読めなかったときは空のまま。
   // `dangerouslySetInnerHTML` と `children` は同じ要素に同時に渡せない（React が警告する）ので、SVG のときは別の `return` にする。
   if (kind === "svg") {
     return (
