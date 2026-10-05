@@ -48,7 +48,9 @@
       "kind": "work-plan",
       "phases": [
         "計画",
-        "実装",
+        "架空の段1",
+        "架空の段2",
+        "架空の段3",
         "受け入れ"
       ],
       "current": 0,
@@ -83,11 +85,10 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-started",
-      "toolUseId": "fake-delegate-send-1",
-      "name": "SendMessage",
+      "toolUseId": "fake-delegate-back-1",
+      "name": "SubagentHandback",
       "input": {
-        "to": "main",
-        "message": "状況 | 1/4 | 架空の設定が画面から読めるようになった。"
+        "message": "計画 0/3 | 架空の計画が3段にまとまった。\n架空の本文"
       },
       "parentToolUseId": "fake-delegate-agent"
     }
@@ -96,9 +97,62 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "delegate-signal",
-      "step": 1,
-      "stepCount": 4,
+      "kind": "delegate-returned",
+      "summary": "架空の計画が3段にまとまった。"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-delegate-back-1",
+      "content": "ダミーの返却結果",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-delegate-send-1",
+      "name": "SendMessage",
+      "input": {
+        "to": "main",
+        "message": "状況 | 2/3 | 架空の途中の一言。"
+      },
+      "parentToolUseId": "fake-delegate-agent"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-delegate-send-1",
+      "content": "ダミーの送信結果",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-delegate-back-2",
+      "name": "SubagentHandback",
+      "input": {
+        "message": "段 1/3 | 架空の設定が画面から読めるようになった。\n架空の本文"
+      },
+      "parentToolUseId": "fake-delegate-agent"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "delegate-returned",
       "summary": "架空の設定が画面から読めるようになった。"
     }
   },
@@ -107,8 +161,8 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-delegate-send-1",
-      "content": "ダミーの送信結果",
+      "toolUseId": "fake-delegate-back-2",
+      "content": "ダミーの返却結果",
       "isError": false
     }
   },
@@ -117,11 +171,10 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-started",
-      "toolUseId": "fake-delegate-send-2",
-      "name": "SendMessage",
+      "toolUseId": "fake-delegate-back-3",
+      "name": "SubagentHandback",
       "input": {
-        "to": "main",
-        "message": "架空の伝言（合図の形でない）"
+        "message": "止めた 2/3 | 架空の判断が要る。\n架空の本文"
       },
       "parentToolUseId": "fake-delegate-agent"
     }
@@ -131,8 +184,8 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-delegate-send-2",
-      "content": "ダミーの送信結果",
+      "toolUseId": "fake-delegate-back-3",
+      "content": "ダミーの返却結果",
       "isError": false
     }
   },
@@ -141,11 +194,10 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-started",
-      "toolUseId": "fake-delegate-send-3",
-      "name": "SendMessage",
+      "toolUseId": "fake-delegate-back-4",
+      "name": "SubagentHandback",
       "input": {
-        "to": "main",
-        "message": "状況 | 2/4 | 架空の保存先が1つにまとまった。古い置き場は読むだけになる。"
+        "message": "段 2/3 | 架空の保存先が1つにまとまった。古い置き場は読むだけになる。\n架空の本文"
       },
       "parentToolUseId": "fake-delegate-agent"
     }
@@ -154,9 +206,7 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "delegate-signal",
-      "step": 2,
-      "stepCount": 4,
+      "kind": "delegate-returned",
       "summary": "架空の保存先が1つにまとまった。古い置き場は読むだけになる。"
     }
   },
@@ -165,8 +215,8 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-delegate-send-3",
-      "content": "ダミーの送信結果",
+      "toolUseId": "fake-delegate-back-4",
+      "content": "ダミーの返却結果",
       "isError": false
     }
   },

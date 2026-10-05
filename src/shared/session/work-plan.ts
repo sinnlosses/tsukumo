@@ -86,46 +86,39 @@ export function parseWorkPlan(value: unknown): WorkPlan | undefined {
 }
 
 /**
- * 委譲の合図から読んだ段の位置と文。`step` は済んだ段の番号（1始まり）、`stepCount` は段の数。
- * `summary` は合図の3列目で、空なら空の文字列。
+ * サーバが `work_plan` を判定したあとの、いまの段取りの立ち位置（`WorkPlanReview.standing`）。
+ * `rejected` はこのターンで差し戻した呼び出しに、まだ受け付けた呼び出しで応えていない。
+ * `planned` は同じ依頼で受け付けた段取りがあり、`remaining` はまだ済んでいない段の数（全部済みなら 0）。
  */
-export type DelegateSignal = {
-  readonly step: number
-  readonly stepCount: number
-  readonly summary: string
-}
+export type WorkPlanStanding =
+  | { readonly kind: "none" }
+  | { readonly kind: "rejected" }
+  | { readonly kind: "planned"; readonly remaining: number }
+
+/** 段取りを判定しない口（疑似セッション）が渡す立ち位置。 */
+export const NO_WORK_PLAN_STANDING = { kind: "none" } as const satisfies WorkPlanStanding
+
+/** 委譲の返却1回で段取りがどうなるか。`held` は段を動かさない。 */
+export type ReturnAdvance =
+  | { readonly kind: "held" }
+  | { readonly kind: "advanced"; readonly plan: WorkPlan }
 
 /**
- * 委譲の合図から引き直した段取り。段は「計画・合図の N 段・受け入れ」で、今の段は合図の n 段目の次。
- * 段の名前は、`previous` が同じ数（N + 2 段）の段取りならその名前を借り、違えば {@link DELEGATED_PHASE_NAMES} から組む。
- * 段のまとめは合図の文を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもので、n 段目のまとめになる（{@link delegatedPhaseShiftOf}）。
+ * 委譲の返却1回で進めた段取り（{@link ReturnAdvance}）。
+ * 段の並びはそのままで今の段を1つ進め、返却の文を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めて済んだ段のまとめにする。
+ * 最後の段か全部の段を終えた位置からは進めない（返却では全部済みにしない）。
  */
-export function delegatedWorkPlan(previous: LatestWorkPlan, signal: DelegateSignal): WorkPlan {
-  const phaseCount = signal.stepCount + 2
-  const phases =
-    previous.kind === "planned" && previous.phases.length === phaseCount
-      ? previous.phases
-      : [
-          DELEGATED_PHASE_NAMES.plan,
-          ...Array.from({ length: signal.stepCount }, () => DELEGATED_PHASE_NAMES.step),
-          DELEGATED_PHASE_NAMES.acceptance,
-        ]
-  return {
-    phases,
-    current: signal.step + 1,
-    phaseSummary: leadingSentences(signal.summary, MAX_PHASE_SUMMARY_SENTENCES),
-  }
-}
-
-/** 委譲の合図から段取りを組むときの段の名前。 */
-const DELEGATED_PHASE_NAMES = {
-  plan: "計画",
-  step: "実装",
-  acceptance: "受け入れ",
-} as const satisfies {
-  readonly plan: string
-  readonly step: string
-  readonly acceptance: string
+export function advancedByReturn(plan: WorkPlan, summary: string): ReturnAdvance {
+  return plan.current + 1 < plan.phases.length
+    ? {
+        kind: "advanced",
+        plan: {
+          phases: plan.phases,
+          current: plan.current + 1,
+          phaseSummary: leadingSentences(summary, MAX_PHASE_SUMMARY_SENTENCES),
+        },
+      }
+    : { kind: "held" }
 }
 
 /** 記録の範囲で最後の `work-plan` の記録（{@link LatestWorkPlan}）。範囲を依頼1つに絞るのは呼ぶ側。 */
@@ -202,25 +195,6 @@ export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShi
         } as const)
       : ({ kind: "none" } as const)
   return { finished }
-}
-
-/**
- * 委譲の合図から引いた段取り `plan`（{@link delegatedWorkPlan}）1つで、メインビューに出すもの（{@link PhaseShift}）。
- * 前の段取りは見ず、合図1通ごとに、今の段の1つ前（合図の n 段目）を終えた段として出す。
- * 同じ段の合図が続けば、その数だけ出す。段のまとめが空なら何も出さない。
- */
-export function delegatedPhaseShiftOf(plan: WorkPlan): PhaseShift {
-  const index = plan.current - 1
-  const name = plan.phases[index]
-  return name === undefined || isBlankText(plan.phaseSummary)
-    ? NO_PHASE_SHIFT
-    : {
-        finished: {
-          kind: "finished",
-          label: phaseLabel({ kind: "phase", index, count: plan.phases.length, name }),
-          summary: plan.phaseSummary,
-        },
-      }
 }
 
 /** 段の見出し「2/4 段の名前」（いまの作業の札・依頼の手順の一覧・メインビューで同じ字）。 */

@@ -18,7 +18,7 @@ const SESSION_EVENT_KINDS = {
   report: true,
   "work-plan": true,
   "work-plan-called": true,
-  "delegate-signal": true,
+  "delegate-returned": true,
   "tool-started": true,
   "tool-finished": true,
   "pending-changed": true,

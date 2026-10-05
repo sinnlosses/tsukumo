@@ -15,6 +15,10 @@
 // 背景のタスクの終わりはターンの外で届くので、これだけはターンの区切りで戻さない。
 // サブエージェントの `SendMessage` の合図は流れに見えないので数えない。
 //
+// 段取りの残った `report` も差し戻す（段取りの立ち位置は `WorkPlanReview.standing` から受け取る）:
+// 同じターンで差し戻した `work_plan` にまだ応えていないものと、`task.outcome` が `shipped` なのに段が残っているもの。
+// 枠はそれぞれ1ターンに1回までで、規約違反の枠とは分ける。
+//
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`）。
 // `assistant` メッセージの変換は `report` イベントを作るだけで判定しない。
 // `ReportReview.pass` がそのイベントを同じ呼び出しの `tool-finished` まで預かり、handler が返した `isError`（差し戻したら true）に従って描くか捨てるかを決める。
@@ -28,7 +32,9 @@
 
 import { isDeepEqual } from "remeda"
 
+import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { WorkPlanStanding } from "../../../shared/session/work-plan.ts"
 import { type ReportDraft, reportRejectionText, reportViolations } from "./report-violation.ts"
 
 /** handler の判定。`rejected` の `text` はそのまま `report` の戻り値になる。 */
@@ -39,7 +45,8 @@ export type ReportVerdict =
 export type ReportReview = {
   /**
    * `report` の handler から。
-   * このターンで描いた `report` の送り直し、直前に描いた `report` のあとに新しい事実の届いていない呼び出し、規約違反のどれかなら差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
+   * このターンで描いた `report` の送り直し、直前に描いた `report` のあとに新しい事実の届いていない呼び出し、
+   * 応えていない `work_plan` の差し戻し、段の残った `shipped`、規約違反のどれかなら、この順に見て差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
    */
   readonly judge: (report: ReportDraft) => ReportVerdict
   /** このターンで「新しい事実が無い」差し戻しをしたか。ターンの頭（`session-info`）で戻る。 */
@@ -58,11 +65,14 @@ type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 /**
  * {@link ReportReview} を1つ作る。セッション1つに1つ（ターンの区切りを `pass` で見ている）。
  * ターンの頭は `session-info`（SDK のターンの頭に毎回届く）と `turn-finished`。
+ * `workPlanStanding` は判定のたびに呼び、いまの段取りの立ち位置を読む。
  */
-export function createReportReview(): ReportReview {
+export function createReportReview(workPlanStanding: () => WorkPlanStanding): ReportReview {
   let rejectedInTurn = false
   let resendRejectedInTurn = false
   let nothingNewRejectedInTurn = false
+  let unansweredPlanRejectedInTurn = false
+  let unfinishedPhasesRejectedInTurn = false
   let held: readonly ReportEvent[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportEvent[] = []
@@ -76,6 +86,8 @@ export function createReportReview(): ReportReview {
     rejectedInTurn = false
     resendRejectedInTurn = false
     nothingNewRejectedInTurn = false
+    unansweredPlanRejectedInTurn = false
+    unfinishedPhasesRejectedInTurn = false
     drawn = []
   }
 
@@ -88,6 +100,20 @@ export function createReportReview(): ReportReview {
       if (!hasNews && !nothingNewRejectedInTurn) {
         nothingNewRejectedInTurn = true
         return { kind: "rejected", text: REPORT_NOTHING_NEW_REJECTION_TEXT }
+      }
+      const standing = workPlanStanding()
+      if (standing.kind === "rejected" && !unansweredPlanRejectedInTurn) {
+        unansweredPlanRejectedInTurn = true
+        return { kind: "rejected", text: REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT }
+      }
+      if (
+        isShipped(report.task) &&
+        standing.kind === "planned" &&
+        standing.remaining > 0 &&
+        !unfinishedPhasesRejectedInTurn
+      ) {
+        unfinishedPhasesRejectedInTurn = true
+        return { kind: "rejected", text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT }
       }
       const violations = reportViolations(report)
       if (violations.length === 0 || rejectedInTurn) {
@@ -168,6 +194,23 @@ export const REPORT_NOTHING_NEW_REJECTION_TEXT =
   "この `report` は画面に出していない。伝える新しい事実が無いターンは、`report` を" +
   "呼ばず、何も書かずに終えてよい。言い回しを変えて同じ中身の `report` を送り直さないこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
+/** 同じターンで差し戻した `work_plan` にまだ応えていない `report` を差し戻すときの戻り値。固定の文面だけ。 */
+export const REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT =
+  "このターンで差し戻された `work_plan` に、まだ応えていない。" +
+  "差し戻しの直し方に従って `work_plan` を呼び直し、受け付けられてから `report` を呼ぶこと。" +
+  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
+/** `task.outcome` が `shipped` なのに段の残った `report` を差し戻すときの戻り値。固定の文面だけ。 */
+export const REPORT_UNFINISHED_PHASES_REJECTION_TEXT =
+  "`task.outcome` が `shipped` なのに、段取りに済んでいない段が残っている。" +
+  "全部の段を終えたなら、同じ応答の中で `report` より先に `work_plan` で段を1つずつ進め、最後に current に段の数を渡す。" +
+  "途中で止めたなら outcome を `stopped` か `awaiting-answer` にする。" +
+  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
+function isShipped(task: ReportTask): boolean {
+  return task.kind === "task" && task.outcome === "shipped"
+}
 
 /** 描いた `report` の締めのセリフ。`closing` を持たなかったころの呼び出しには無い。 */
 function closingSpeech(report: ReportEvent): readonly SessionEvent[] {

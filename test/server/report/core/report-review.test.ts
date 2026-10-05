@@ -4,11 +4,24 @@ import {
   createReportReview,
   REPORT_NOTHING_NEW_REJECTION_TEXT,
   REPORT_RESEND_REJECTION_TEXT,
+  REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
+  REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
   type ReportReview,
 } from "../../../../src/server/report/core/report-review.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
+import {
+  NO_REPORT_TASK,
+  type ReportTask,
+  type ReportTaskOutcome,
+} from "../../../../src/shared/report/report-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import {
+  NO_WORK_PLAN_STANDING,
+  type WorkPlanStanding,
+} from "../../../../src/shared/session/work-plan.ts"
+
+const noPlan = (): WorkPlanStanding => NO_WORK_PLAN_STANDING
 
 /** 逃げ道の塊1つの節（中身は架空）。 */
 const sectionsOf = (markdown: string): readonly ReportSection[] => [
@@ -21,6 +34,7 @@ const VALID: ReportDraft = {
   favor: "",
   checks: [],
   fileContents: new Map(),
+  task: NO_REPORT_TASK,
 }
 const INVALID: ReportDraft = {
   conclusion: "架空の結論。",
@@ -28,6 +42,7 @@ const INVALID: ReportDraft = {
   favor: "",
   checks: [],
   fileContents: new Map(),
+  task: NO_REPORT_TASK,
 }
 
 const SESSION_INFO: SessionEvent = {
@@ -94,18 +109,18 @@ const runTool = (review: ReportReview, toolUseId: string): void => {
 
 describe("createReportReview の judge", () => {
   it("違反の無い report は通す", () => {
-    expect(createReportReview().judge(VALID)).toEqual({ kind: "accepted" })
+    expect(createReportReview(noPlan).judge(VALID)).toEqual({ kind: "accepted" })
   })
 
   it("違反のある report は、違反した条を文面にして差し戻す", () => {
-    const verdict = createReportReview().judge(INVALID)
+    const verdict = createReportReview(noPlan).judge(INVALID)
 
     expect(verdict.kind).toBe("rejected")
     expect(verdict.kind === "rejected" ? verdict.text : "").toContain("`#` / `##` の見出し")
   })
 
   it("差し戻すのは1ターンに1回まで（2回目は違反があっても通す）", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
 
     expect(review.judge(INVALID).kind).toBe("rejected")
     expect(review.judge(INVALID)).toEqual({ kind: "accepted" })
@@ -113,7 +128,7 @@ describe("createReportReview の judge", () => {
   })
 
   it("ターンの区切り（session-info / turn-finished）で回数が戻る", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
 
     expect(review.judge(INVALID).kind).toBe("rejected")
     review.pass(FINISHED)
@@ -125,7 +140,7 @@ describe("createReportReview の judge", () => {
 
 describe("createReportReview の pass", () => {
   it("report は同じ呼び出しの結果まで預かり、差し戻されなければ結果の直前に出す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
 
     expect(review.pass(report("toolu_r1"))).toEqual([])
     expect(review.pass(finished("toolu_r1", false))).toEqual([
@@ -135,7 +150,7 @@ describe("createReportReview の pass", () => {
   })
 
   it("差し戻された（isError の）report は出さず、呼び直しの report だけを出す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     const passed = [
       report("toolu_r1"),
       finished("toolu_r1", true),
@@ -148,14 +163,14 @@ describe("createReportReview の pass", () => {
   })
 
   it("結果の届かないまま終わったターンの report は、turn-finished の直前に出す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
 
     expect(review.pass(report("toolu_r1"))).toEqual([])
     expect(review.pass(FINISHED)).toEqual([report("toolu_r1"), FINISHED])
   })
 
   it("描いた report の締めのセリフを、結果のすぐ後ろに speech として出す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
 
     review.pass(report("toolu_r1", CLOSING))
     expect(review.pass(finished("toolu_r1", false))).toEqual([
@@ -166,21 +181,21 @@ describe("createReportReview の pass", () => {
   })
 
   it("差し戻した report の締めのセリフは出さない", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
 
     review.pass(report("toolu_r1", CLOSING))
     expect(review.pass(finished("toolu_r1", true))).toEqual([finished("toolu_r1", true)])
   })
 
   it("結果の届かないまま終わったターンの report は、締めのセリフも turn-finished の直前に出す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
 
     review.pass(report("toolu_r1", CLOSING))
     expect(review.pass(FINISHED)).toEqual([report("toolu_r1", CLOSING), CLOSING, FINISHED])
   })
 
   it("report の無い流れ（切り替えないとき）はそのまま通す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     const events: readonly SessionEvent[] = [
       SESSION_INFO,
       { kind: "utterance", text: "架空の本文" },
@@ -207,10 +222,11 @@ describe("createReportReview の judge（送り直し）", () => {
     favor: "",
     checks: [],
     fileContents: new Map(),
+    task: NO_REPORT_TASK,
   }
 
   it("このターンで描いた report と同じ引数の呼び出しは、固定の文面で差し戻す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
 
     expect(review.judge(VALID)).toEqual({ kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT })
@@ -218,7 +234,7 @@ describe("createReportReview の judge（送り直し）", () => {
   })
 
   it("前後の空白だけが違う呼び出しも送り直しとして差し戻す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", OTHER)
 
     const padded = {
@@ -227,12 +243,13 @@ describe("createReportReview の judge（送り直し）", () => {
       favor: " ",
       checks: [],
       fileContents: new Map(),
+      task: NO_REPORT_TASK,
     }
     expect(review.judge(padded).kind).toBe("rejected")
   })
 
   it("中身の違う呼び直しは通す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
     runTool(review, "toolu_t1")
 
@@ -247,7 +264,7 @@ describe("createReportReview の judge（送り直し）", () => {
   })
 
   it("送り直しを差し戻すのは1ターンに1回まで（2回目の送り直しは通す）", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
     runTool(review, "toolu_t1")
 
@@ -257,7 +274,7 @@ describe("createReportReview の judge（送り直し）", () => {
   })
 
   it("規約違反の差し戻しとは別に数える（違反で差し戻して直したあとの送り直しも差し戻す）", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
 
     expect(review.judge(INVALID).kind).toBe("rejected")
     draw(review, "toolu_r2", VALID)
@@ -265,7 +282,7 @@ describe("createReportReview の judge（送り直し）", () => {
   })
 
   it("送り直しを差し戻したあとも、規約違反の1回は残る", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
 
     expect(review.judge(VALID).kind).toBe("rejected")
@@ -275,7 +292,7 @@ describe("createReportReview の judge（送り直し）", () => {
   })
 
   it("差し戻して描かなかった report とは比べない", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     review.pass(reportEvent("toolu_r1", VALID))
     review.pass(finished("toolu_r1", true))
 
@@ -283,7 +300,7 @@ describe("createReportReview の judge（送り直し）", () => {
   })
 
   it("ターンの区切り（session-info / turn-finished）で描いた report を忘れる", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
     runTool(review, "toolu_t1")
     review.pass(FINISHED)
@@ -296,7 +313,7 @@ describe("createReportReview の judge（送り直し）", () => {
   })
 
   it("report の来ない流れ（切り替えないとき）では、同じ引数の呼び出しを差し戻さない", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     const events: readonly SessionEvent[] = [
       SESSION_INFO,
       { kind: "utterance", text: "架空の本文" },
@@ -316,6 +333,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
     favor: "",
     checks: [],
     fileContents: new Map(),
+    task: NO_REPORT_TASK,
   }
   const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const TURN_STARTED: SessionEvent = { kind: "turn-started" }
@@ -326,7 +344,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("描いた report のあと何も届かずに別の中身の report を呼ぶと、固定の文面で差し戻す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
 
     expect(review.judge(OTHER)).toEqual({
@@ -337,7 +355,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("差し戻したあとは nothingNewRejected が true になり、次のターンの頭で false に戻る", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
     expect(review.nothingNewRejected()).toBe(false)
 
@@ -349,7 +367,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("ターンをまたいでも、自分で始めたターン（依頼なし）で何も届いていなければ差し戻す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
     ;[SPEAK_FINISHED, FINISHED, SESSION_INFO].forEach((event) => review.pass(event))
 
@@ -357,7 +375,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("speak の結果（tool-started の無い tool-finished）は新しい事実に数えない", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
     review.pass(SPEAK_FINISHED)
 
@@ -365,7 +383,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("メインのツールの結果が届いたあとの report は通す（中間レポートを落とさない）", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
     runTool(review, "toolu_t1")
 
@@ -373,7 +391,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("サブエージェントのツールの結果は新しい事実に数えない", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
     review.pass(toolStarted("toolu_t1", "toolu_agent"))
     review.pass(finished("toolu_t1", false))
@@ -382,7 +400,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("呼んだだけで結果の届いていないツールは数えない", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
     review.pass(toolStarted("toolu_t1"))
 
@@ -390,7 +408,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("新しい依頼（request / turn-started）のあとの report は通す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
     ;[FINISHED, REQUEST, SESSION_INFO].forEach((event) => review.pass(event))
     expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
@@ -401,7 +419,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("背景のタスクが終わった（顔ぶれから消えた）あとの report は、ターンの外で届いても通す", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     review.pass(backgroundTasks("task_a"))
     draw(review, "toolu_r1", VALID)
     ;[FINISHED, backgroundTasks(), SESSION_INFO].forEach((event) => review.pass(event))
@@ -410,7 +428,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("背景のタスクが増えただけでは新しい事実に数えない", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
     ;[FINISHED, backgroundTasks("task_a"), SESSION_INFO].forEach((event) => review.pass(event))
 
@@ -418,7 +436,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("差し戻すのは1ターンに1回まで（押し切った2回目は通す）で、次のターンで枠が戻る", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
 
     expect(review.judge(OTHER).kind).toBe("rejected")
@@ -428,10 +446,87 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 
   it("差し戻して描かなかった report のあとでも、新しい事実の届いた印は残る", () => {
-    const review = createReportReview()
+    const review = createReportReview(noPlan)
     review.pass(reportEvent("toolu_r1", INVALID))
     review.pass(finished("toolu_r1", true))
 
     expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+})
+
+describe("createReportReview の judge（段取りの残った report）", () => {
+  const taskOf = (outcome: ReportTaskOutcome): ReportTask => ({
+    kind: "task",
+    id: "架空のタスク",
+    name: "架空の作業",
+    outcome,
+  })
+  const withTask = (outcome: ReportTaskOutcome): ReportDraft => ({
+    ...VALID,
+    task: taskOf(outcome),
+  })
+  /** 立ち位置を差し替えられる `ReportReview`。 */
+  const reviewWith = (initial: WorkPlanStanding) => {
+    let standing = initial
+    return {
+      review: createReportReview(() => standing),
+      moveTo: (next: WorkPlanStanding) => {
+        standing = next
+      },
+    }
+  }
+
+  it("応えていない work_plan の差し戻しがあれば差し戻し、応えたあとなら通す", () => {
+    const { review, moveTo } = reviewWith({ kind: "rejected" })
+
+    expect(review.judge(VALID)).toEqual({
+      kind: "rejected",
+      text: REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
+    })
+    moveTo({ kind: "planned", remaining: 1 })
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("shipped で段が残っていれば差し戻し、全部済ませたあとなら通す", () => {
+    const { review, moveTo } = reviewWith({ kind: "planned", remaining: 2 })
+
+    expect(review.judge(withTask("shipped"))).toEqual({
+      kind: "rejected",
+      text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
+    })
+    moveTo({ kind: "planned", remaining: 0 })
+    expect(review.judge(withTask("shipped"))).toEqual({ kind: "accepted" })
+    expect(reviewWith({ kind: "planned", remaining: 0 }).review.judge(withTask("shipped"))).toEqual(
+      { kind: "accepted" },
+    )
+  })
+
+  it("段が残っていても、stopped・awaiting-answer とタスクの無い report は通す", () => {
+    const { review } = reviewWith({ kind: "planned", remaining: 2 })
+
+    expect(review.judge(withTask("stopped"))).toEqual({ kind: "accepted" })
+    expect(review.judge(withTask("awaiting-answer"))).toEqual({ kind: "accepted" })
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("段取りの無い依頼の shipped は通す", () => {
+    expect(createReportReview(noPlan).judge(withTask("shipped"))).toEqual({ kind: "accepted" })
+  })
+
+  it("枠は種類ごとに1ターンに1回で、規約違反の枠とは別に数え、次のターンで戻る", () => {
+    const { review } = reviewWith({ kind: "planned", remaining: 1 })
+    const invalidShipped: ReportDraft = { ...INVALID, task: taskOf("shipped") }
+
+    expect(review.judge(invalidShipped)).toEqual({
+      kind: "rejected",
+      text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
+    })
+    expect(review.judge(invalidShipped).kind).toBe("rejected")
+    expect(review.judge(invalidShipped)).toEqual({ kind: "accepted" })
+    ;[FINISHED, SESSION_INFO].forEach((event) => review.pass(event))
+    expect(review.judge(withTask("shipped"))).toEqual({
+      kind: "rejected",
+      text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
+    })
   })
 })

@@ -70,13 +70,13 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     },
   })
 
-  const reportReview = createReportReview()
+  const workPlanReview = createWorkPlanReview()
+  const reportReview = createReportReview(workPlanReview.standing)
   const reportGate = createReportGate(reportReview.nothingNewRejected)
   const speechReview = createSpeechReview()
   // `speak` の差し戻しを `report` の差し戻しより先に通す（ターンの終わりに預かりを出す並びがセリフ → レポートになる）。
   const review = (event: SessionEvent): readonly SessionEvent[] =>
     speechReview.pass(event).flatMap((passed) => reportReview.pass(passed))
-  const workPlanReview = createWorkPlanReview()
   const readSessionDigest = createSessionDigestReader(options.expressions)
   const usageReview = createUsageReviewIntake(
     options.dismissedUsageProposalKeys,
@@ -190,7 +190,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
  *
  * メインのイベントは先に `speak` と `report` の差し戻し（`review`）を通す。
  * どちらも同じ呼び出しの結果まで預かり、差し戻した呼び出しを描かない。
- * 段の一足飛び（`workPlanReview`）にはメインとサブエージェントの両方のイベントを通す（委譲の合図はサブエージェントから出る）。
+ * 段の一足飛び（`workPlanReview`）にはメインとサブエージェントの両方のイベントを通す（委譲の返却はサブエージェントから出る）。
  *
  * `titleIntake` が覚えている題（`report` の `title` 引数）もターンの終わりに取り出し、`titleWriter` に書く予約をする。
  */

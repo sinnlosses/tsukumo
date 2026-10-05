@@ -51,7 +51,7 @@ import type {
   SessionEvent,
 } from "./session-event.ts"
 import { splitIntoTurns } from "./turn.ts"
-import { delegatedWorkPlan, isWorkPlanRecord, workPlanOf } from "./work-plan.ts"
+import { advancedByReturn, isWorkPlanRecord } from "./work-plan.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが動き続ける以上、記録自体も無限に増やさない。
@@ -134,19 +134,15 @@ export type SessionRecord =
       readonly time: RecordTime
     }
   /**
-   * `work_plan` ツールで受け取った段取り。届いた位置に積むだけで、今の段取りは `latestWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
+   * `work_plan` ツールで受け取った段取りと、委譲の返却で tsukumo が1段進めた段取り。
+   * 届いた位置に積むだけで、今の段取りは `latestWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
    */
   | {
       readonly kind: "work-plan"
       readonly phases: readonly string[]
       readonly current: number
       readonly phaseSummary: string
-      /**
-       * 誰の段取りか。`main` はメインの `work_plan` の呼び出し、`delegate-signal` は委譲の合図から引いたもの。
-       * `delegate-ended` は、委譲先が背景から居なくなったときに、合図から引いた段取りをそのまま積み直したもの。
-       */
-      readonly source: "main" | "delegate-signal" | "delegate-ended"
-      /** 積んだ時刻。`delegate-ended` は段の位置を変えないので、積み直した元の記録の時刻を持つ。 */
+      /** 積んだ時刻。 */
       readonly time: RecordTime
     }
   /**
@@ -625,12 +621,21 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "work-plan":
       return {
         ...state,
-        records: [...state.records, ...mainWorkPlanRecords(state.records, event, at)],
+        records: [
+          ...state.records,
+          {
+            kind: "work-plan",
+            phases: event.phases,
+            current: event.current,
+            phaseSummary: event.phaseSummary,
+            time: { kind: "stamped", at },
+          },
+        ],
       }
-    case "delegate-signal":
+    case "delegate-returned":
       return {
         ...state,
-        records: [...state.records, ...delegateSignalRecords(state.records, event, at)],
+        records: [...state.records, ...delegateReturnRecords(state.records, event.summary, at)],
       }
     case "tool-started": {
       const nested = event.parentToolUseId !== undefined
@@ -762,14 +767,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, visitEnabled: event.visitEnabled }
     case "compact-boundary":
       return { ...state, records: [...state.records, { kind: "compact-boundary" }] }
-    case "background-tasks-changed": {
-      const ended = delegateEndedRecords(state.records, event.tasks)
-      return {
-        ...state,
-        backgroundTasks: event.tasks,
-        records: ended.length === 0 ? state.records : [...state.records, ...ended],
-      }
-    }
+    case "background-tasks-changed":
+      return { ...state, backgroundTasks: event.tasks }
     case "usage-review-stage":
     case "usage-review-result":
     case "usage-proposal-dismissed":
@@ -808,73 +807,22 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
 }
 
 /**
- * メインの `work_plan` の呼び出しを積む記録。
- * 同じ依頼の最後の段取りが委譲の合図から引いたものなら、全部の段を終えた呼び出しだけをその段取りの全部済みとして積み、ほかは積まない。
+ * 委譲の返却1回で積む記録。同じ依頼の最後の段取りを {@link advancedByReturn} で1段進めたもの。
+ * 同じ依頼に段取りが無いときと、進められない（最後の段か全部済み）ときは積まない。
  */
-function mainWorkPlanRecords(
+function delegateReturnRecords(
   records: readonly SessionRecord[],
-  event: Extract<SessionEvent, { readonly kind: "work-plan" }>,
-  at: number,
-): readonly SessionRecord[] {
-  const time = { kind: "stamped", at } as const
-  const delegated = delegatedWorkPlanRecord(records)
-  if (delegated === undefined) {
-    return [
-      {
-        kind: "work-plan",
-        phases: event.phases,
-        current: event.current,
-        phaseSummary: event.phaseSummary,
-        source: "main",
-        time,
-      },
-    ]
-  }
-  return event.current === event.phases.length
-    ? [{ ...delegated, current: delegated.phases.length, phaseSummary: "", time }]
-    : []
-}
-
-/**
- * 委譲の合図を積む記録（合図から引き直した段取り）。
- * 同じ依頼にメインの段取りがまだ無いときと、同じ依頼の最後の段取りが合図から引いたもので、引き直すと段の数が変わるか位置が後ろへ戻るときは積まない。
- */
-function delegateSignalRecords(
-  records: readonly SessionRecord[],
-  signal: Extract<SessionEvent, { readonly kind: "delegate-signal" }>,
+  summary: string,
   at: number,
 ): readonly SessionRecord[] {
   const latest = recordsOfLastRequest(records).findLast(isWorkPlanRecord)
   if (latest === undefined) {
     return []
   }
-  const plan = delegatedWorkPlan(workPlanOf(latest), signal)
-  const backward =
-    latest.source === "delegate-signal" &&
-    (plan.phases.length !== latest.phases.length || plan.current < latest.current)
-  return backward
+  const advance = advancedByReturn(latest, summary)
+  return advance.kind === "held"
     ? []
-    : [{ kind: "work-plan", ...plan, source: "delegate-signal", time: { kind: "stamped", at } }]
-}
-
-/**
- * 背景のタスクの顔ぶれが変わったときに積む記録。
- * 顔ぶれにサブエージェントが1つも無く、同じ依頼の最後の段取りが委譲の合図から引いたものなら、それを `delegate-ended` で積み直す。
- */
-function delegateEndedRecords(
-  records: readonly SessionRecord[],
-  tasks: readonly BackgroundTask[],
-): readonly SessionRecord[] {
-  const delegated = delegatedWorkPlanRecord(records)
-  return delegated === undefined || tasks.some((task) => task.kind === "agent")
-    ? []
-    : [{ ...delegated, source: "delegate-ended" }]
-}
-
-/** 同じ依頼の最後の段取りの記録が委譲の合図から引いたものなら、その記録。 */
-function delegatedWorkPlanRecord(records: readonly SessionRecord[]) {
-  const latest = recordsOfLastRequest(records).findLast(isWorkPlanRecord)
-  return latest?.source === "delegate-signal" ? latest : undefined
+    : [{ kind: "work-plan", ...advance.plan, time: { kind: "stamped", at } }]
 }
 
 /** 最後の依頼より後ろの記録（依頼が無ければ全部）。 */

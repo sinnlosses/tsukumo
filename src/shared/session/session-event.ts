@@ -190,14 +190,11 @@ export type SessionEvent =
       readonly plan: Extract<SessionEvent, { readonly kind: "work-plan" }>
     }
   /**
-   * 委譲の合図（委譲先の `SendMessage` の1行目 `状況 | n/N | 文`）から読んだ段の位置と文。
-   * `step` は済んだ段の番号（1始まり）、`stepCount` は段の数で、`1 <= step <= stepCount`。
-   * `summary` は3列目の文（前後の空白を除く）で、空なら空の文字列。切り詰める前のまま運ぶ。
+   * 段を1つ進める委譲の返却（委譲先の `SubagentHandback` の1行目が `段 n/N | 文` か `計画 0/N | 文`）。
+   * `summary` は1行目の `|` より後ろ（前後の空白を除く）で、空なら空の文字列。切り詰める前のまま運ぶ。
    */
   | {
-      readonly kind: "delegate-signal"
-      readonly step: number
-      readonly stepCount: number
+      readonly kind: "delegate-returned"
       readonly summary: string
     }
   | {

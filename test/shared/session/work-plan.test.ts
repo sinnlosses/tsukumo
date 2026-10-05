@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  type DelegateSignal,
-  delegatedPhaseShiftOf,
-  delegatedWorkPlan,
+  advancedByReturn,
   type LatestWorkPlan,
   parseWorkPlan,
   phaseShiftOf,
@@ -105,63 +103,35 @@ describe("phaseShiftOf", () => {
   })
 })
 
-describe("delegatedWorkPlan", () => {
-  it("段の数が合わない前の段取りからは、計画・同じ名前の段・受け入れで引き、合図の段の次を今にする", () => {
-    const expected = {
-      phases: ["計画", "実装", "実装", "実装", "受け入れ"],
-      current: 2,
-      phaseSummary: "",
-    }
-
-    expect(delegatedWorkPlan({ kind: "none" }, signal(1, 3))).toEqual(expected)
-    expect(delegatedWorkPlan(planned(PHASES, 1), signal(1, 3))).toEqual(expected)
-  })
-
-  it("前の段取りが合図の段の数に計画と受け入れを足した数なら、その名前を借りる", () => {
-    const named = ["架空の計画", "架空の段A", "架空の段B", "架空の受け入れ"]
-
-    expect(delegatedWorkPlan(planned(named, 0), signal(1, 2))).toEqual({
-      phases: named,
-      current: 2,
-      phaseSummary: "",
+describe("advancedByReturn", () => {
+  it("段の並びはそのままで今の段を1つ進め、返却の文を済んだ段のまとめにする", () => {
+    expect(advancedByReturn(next(PHASES, 0), "架空の形が分かった。")).toEqual({
+      kind: "advanced",
+      plan: next(PHASES, 1, "架空の形が分かった。"),
     })
   })
 
-  it("最後の段の合図では受け入れが今の段になる", () => {
-    const plan = delegatedWorkPlan({ kind: "none" }, signal(2, 2))
-
-    expect(plan.phases[plan.current]).toBe("受け入れ")
+  it("最後の段と全部済みの位置からは進めない", () => {
+    expect(advancedByReturn(next(PHASES, 2), "架空のまとめ。")).toEqual({ kind: "held" })
+    expect(advancedByReturn(next(PHASES, 3), "架空のまとめ。")).toEqual({ kind: "held" })
   })
 
-  it("合図の文を段のまとめにし、2文を超えた分は切り詰める（括弧と inline code の中の句点では割らない）", () => {
-    expect(
-      delegatedWorkPlan({ kind: "none" }, signal(1, 2, "架空の形が分かった。")).phaseSummary,
-    ).toBe("架空の形が分かった。")
-    expect(
-      delegatedWorkPlan(
-        { kind: "none" },
-        signal(1, 2, "架空の1文目（中は。を含む）。`a。b` の2文目！架空の3文目。架空の4文目"),
-      ).phaseSummary,
-    ).toBe("架空の1文目（中は。を含む）。`a。b` の2文目！")
-  })
-})
+  it("返却の文が2文を超えた分は切り詰める（括弧と inline code の中の句点では割らない）", () => {
+    const advance = advancedByReturn(
+      next(PHASES, 0),
+      "架空の1文目（中は。を含む）。`a。b` の2文目！架空の3文目。架空の4文目",
+    )
 
-describe("delegatedPhaseShiftOf", () => {
-  it("今の段の1つ前（合図の n 段目）を終えた段として、段のまとめを出す", () => {
-    const plan = delegatedWorkPlan({ kind: "none" }, signal(2, 3, "架空のまとめ。"))
-
-    expect(delegatedPhaseShiftOf(plan)).toEqual({
-      finished: { kind: "finished", label: "3/5 実装", summary: "架空のまとめ。" },
-    })
+    expect(advance.kind === "advanced" && advance.plan.phaseSummary).toBe(
+      "架空の1文目（中は。を含む）。`a。b` の2文目！",
+    )
   })
 
-  it("段のまとめが空なら何も出さない", () => {
-    expect(delegatedPhaseShiftOf(delegatedWorkPlan({ kind: "none" }, signal(2, 3)))).toEqual({
-      finished: { kind: "none" },
+  it("進めた段取りは前の段取りと比べて、済んだ段の中間レポートになる", () => {
+    const advance = advancedByReturn(next(PHASES, 1), "架空のまとめ。")
+
+    expect(advance.kind === "advanced" && phaseShiftOf(planned(PHASES, 1), advance.plan)).toEqual({
+      finished: { kind: "finished", label: "2/3 架空の段B", summary: "架空のまとめ。" },
     })
   })
 })
-
-function signal(step: number, stepCount: number, summary = ""): DelegateSignal {
-  return { step, stepCount, summary }
-}

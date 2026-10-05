@@ -34,7 +34,7 @@ import {
   type TurnContext,
 } from "./turn-context.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
-import { delegatedPhaseShiftOf, type PhaseShift, phaseShiftOf } from "./work-plan.ts"
+import { type PhaseShift, phaseShiftOf } from "./work-plan.ts"
 
 /**
  * 出すやり取りの数。
@@ -94,7 +94,7 @@ export type MainViewEntry =
       readonly task: ReportTask
     }
   /**
-   * `work_plan` の呼び出しで段が移ったこと（{@link phaseShiftOf}）か、委譲の合図で段が済んだこと（{@link delegatedPhaseShiftOf}）。
+   * `work_plan` の呼び出しか委譲の返却で段が移ったこと（{@link phaseShiftOf}）。
    * 出すものが1つも無い記録からは作らない。
    * 終えた段のまとめは中間レポートになる（{@link groupIntoSteps}）。
    */
@@ -293,7 +293,7 @@ function dependenciesOf(record: SessionRecord, context: TurnContext): readonly E
  *
  * `compact-boundary` も落とす（圧縮の区切りは雑談のログだけに出す）。
  *
- * `work-plan` は、段が移ったときだけ `phase-shift` にする。委譲の合図から引いた記録は、前の段取りと比べずに合図1通ごとに `phase-shift` にする。
+ * `work-plan` は、段が移ったときだけ `phase-shift` にする（委譲の返却で進めた記録も同じ）。
  *
  * `tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の付随情報）を落とす（メインビューの部品が見てよいのは名前・入力・結果だけ）。
  */
@@ -302,10 +302,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
     return []
   }
   if (record.kind === "work-plan") {
-    const shift =
-      record.source === "delegate-signal"
-        ? delegatedPhaseShiftOf(record)
-        : phaseShiftOf(latestWorkPlanOf(context), record)
+    const shift = phaseShiftOf(latestWorkPlanOf(context), record)
     return shift.finished.kind === "none" ? [] : [{ kind: "phase-shift", shift }]
   }
   // `request` は時刻（雑談のログだけが読む）を落として通す。仕事のメインビューには時刻を出さない。

@@ -23,6 +23,7 @@ import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
 } from "../../../../src/shared/session/session-state.ts"
+import { NO_WORK_PLAN_STANDING } from "../../../../src/shared/session/work-plan.ts"
 import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 // どのツールが載るか・呼ぶと何が返るかを、モデルが見るのと同じ MCP の `tools/list` /
@@ -66,7 +67,7 @@ describe("tsukumoServer", () => {
       tsukumoServer(
         EXPRESSIONS,
         CHAT_MODE,
-        createReportReview(),
+        createReportReview(() => NO_WORK_PLAN_STANDING),
         createSpeechReview(),
         createWorkPlanReview(),
         noopIntake(),
@@ -88,7 +89,7 @@ describe("tsukumoServer", () => {
       tsukumoServer(
         EXPRESSIONS,
         CHAT_MODE,
-        createReportReview(),
+        createReportReview(() => NO_WORK_PLAN_STANDING),
         createSpeechReview(),
         createWorkPlanReview(),
         noopIntake(),
@@ -131,7 +132,7 @@ describe("recall / recall_episode ツール", () => {
       tsukumoServer(
         EXPRESSIONS,
         chatMode,
-        createReportReview(),
+        createReportReview(() => NO_WORK_PLAN_STANDING),
         createSpeechReview(),
         createWorkPlanReview(),
         noopIntake(),
@@ -172,7 +173,7 @@ describe("recall / recall_episode ツール", () => {
       tsukumoServer(
         EXPRESSIONS,
         workMode,
-        createReportReview(),
+        createReportReview(() => NO_WORK_PLAN_STANDING),
         createSpeechReview(),
         createWorkPlanReview(),
         noopIntake(),
@@ -199,7 +200,7 @@ describe("recall / recall_episode ツール", () => {
       tsukumoServer(
         EXPRESSIONS,
         chatMode,
-        createReportReview(),
+        createReportReview(() => NO_WORK_PLAN_STANDING),
         createSpeechReview(),
         createWorkPlanReview(),
         noopIntake(),
@@ -305,7 +306,7 @@ describe("speak の差し戻し", () => {
       tsukumoServer(
         EXPRESSIONS,
         CHAT_MODE,
-        createReportReview(),
+        createReportReview(() => NO_WORK_PLAN_STANDING),
         spokenReview(),
         createWorkPlanReview(),
         noopIntake(),
@@ -607,7 +608,7 @@ function workServer(
   return tsukumoServer(
     EXPRESSIONS,
     WORK_MODE,
-    createReportReview(),
+    createReportReview(workPlanReview.standing),
     speechReview,
     workPlanReview,
     createUsageReviewIntake(

@@ -10,6 +10,7 @@ import {
   REPORT_MERMAID_KINDS,
   type ReportSection,
 } from "../../../../src/shared/report/report-block.ts"
+import { NO_REPORT_TASK } from "../../../../src/shared/report/report-task.ts"
 
 const draft = (
   blocks: readonly ReportBlock[],
@@ -22,6 +23,7 @@ const draft = (
   favor: "",
   checks: [],
   fileContents: new Map(),
+  task: NO_REPORT_TASK,
 })
 
 const text = (value: string, fold = ""): ReportBlock => ({ kind: "text", text: value, fold })

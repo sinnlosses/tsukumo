@@ -14,8 +14,8 @@ import {
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportSectionSchema } from "../../../shared/report/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report/report-check.ts"
-import { reportTaskSchema } from "../../../shared/report/report-task.ts"
-import { MIN_WORK_PLAN_PHASES, parseWorkPlan } from "../../../shared/session/work-plan.ts"
+import { parseReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
+import { MIN_WORK_PLAN_PHASES } from "../../../shared/session/work-plan.ts"
 import {
   USAGE_PROPOSAL_FOLLOW_UPS,
   USAGE_PROPOSAL_IMPACTS,
@@ -61,8 +61,7 @@ import {
   WORK_PLAN_CURRENT_DESCRIPTION,
   WORK_PLAN_PHASE_SUMMARY_DESCRIPTION,
   WORK_PLAN_PHASES_DESCRIPTION,
-  WORK_PLAN_REJECTION,
-  WORK_PLAN_SKIPPED_PHASE_REJECTION,
+  WORK_PLAN_REJECTIONS,
   WORK_PLAN_TOOL_DESCRIPTION,
 } from "../core/work-plan-tool.ts"
 
@@ -110,7 +109,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と見直しの2つ。
  * `speak` が返すのは、新しい事実の無い呼び出しを差し戻す固定の文面だけ。
  * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の会話の目次と1件の逐語）だけ。
- * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `parseWorkPlan` か `WorkPlanReview` が受け付けなかったときの直し方だけ。
+ * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `WorkPlanReview` が受け付けなかったときの直し方だけ。
  * 見直しの2つが返すのは、利用者が見送った提案の識別子と差し戻しの理由だけ。
  *
  * 常に載るのは `speak` と `recall` / `recall_episode` で、`remember` / `forget` は雑談モードのときだけ載る。
@@ -215,7 +214,7 @@ function reportTool(
       closing: z.object(speechShape(expressions)).describe(REPORT_CLOSING_DESCRIPTION),
       waitingLine: z.object(speechShape(expressions)).describe(REPORT_WAITING_LINE_DESCRIPTION),
     },
-    async ({ conclusion, sections, favor, checks, title }) => {
+    async ({ task, conclusion, sections, favor, checks, title }) => {
       const fileContents = await readReportBlockFiles(cwd, sections ?? [])
       const verdict = review.judge({
         conclusion,
@@ -223,6 +222,7 @@ function reportTool(
         favor: favor ?? "",
         checks: checks ?? [],
         fileContents,
+        task: parseReportTask(task),
       })
       if (verdict.kind === "rejected") {
         return { content: [{ type: "text" as const, text: verdict.text }], isError: true }
@@ -238,7 +238,7 @@ function reportTool(
   )
 }
 
-/** 段取りを受け取るツール。差し戻すかは `parseWorkPlan` と `WorkPlanReview` で決め、形の検査はここの zod の形。 */
+/** 段取りを受け取るツール。差し戻すかは `WorkPlanReview` で決め、形の検査はここの zod の形。 */
 function workPlanTool(review: WorkPlanReview) {
   return tool(
     WORK_PLAN_TOOL_NAME,
@@ -252,16 +252,13 @@ function workPlanTool(review: WorkPlanReview) {
       phaseSummary: z.string().optional().describe(WORK_PLAN_PHASE_SUMMARY_DESCRIPTION),
     },
     async (plan) => {
-      const parsed = parseWorkPlan(plan)
-      if (parsed === undefined) {
-        return { content: [{ type: "text" as const, text: WORK_PLAN_REJECTION }], isError: true }
-      }
-      return review.judge(parsed).kind === "skipped-phase"
-        ? {
-            content: [{ type: "text" as const, text: WORK_PLAN_SKIPPED_PHASE_REJECTION }],
+      const verdict = review.judge(plan)
+      return verdict.kind === "accepted"
+        ? { content: [{ type: "text" as const, text: "ok" }] }
+        : {
+            content: [{ type: "text" as const, text: WORK_PLAN_REJECTIONS[verdict.kind] }],
             isError: true,
           }
-        : { content: [{ type: "text" as const, text: "ok" }] }
     },
   )
 }

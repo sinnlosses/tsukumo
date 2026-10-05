@@ -14,6 +14,7 @@ import {
   type ReportSection,
 } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
+import type { ReportTask } from "../../../shared/report/report-task.ts"
 import { leadingSentences, sentenceCount } from "../../../shared/report/sentence-count.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
 
@@ -25,6 +26,8 @@ export type ReportDraft = {
   readonly checks: readonly ReportCheck[]
   /** `code` の塊の `path` → 読めたファイルの中身。読めなかった `path` は入らない。 */
   readonly fileContents: ReadonlyMap<string, string>
+  /** 載せたタスク。記法の検査には使わず、段の残りの差し戻し（`ReportReview`）が終わり方を読む。 */
+  readonly task: ReportTask
 }
 
 /** 逃げ道の中に書くと差し戻す記法（塊の種類か節の見出しで書けるもの）。 */

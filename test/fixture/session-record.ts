@@ -71,7 +71,6 @@ export function workPlanRecord(
     phases: ["架空の段A", "架空の段B"],
     current: 0,
     phaseSummary: "",
-    source: "main",
     time: STAMPED,
     ...overrides,
   }

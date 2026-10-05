@@ -1515,176 +1515,100 @@ describe("applySessionEvent（API の不調と失敗）", () => {
   })
 })
 
-describe("applySessionEvent（委譲の合図と段取り）", () => {
+describe("applySessionEvent（委譲の返却と段取り）", () => {
   const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const PHASES = ["架空の計画", "架空の段1", "架空の段2", "架空の受け入れ"]
   const mainPlan = (current: number, phaseSummary = ""): SessionEvent => ({
     kind: "work-plan",
-    phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
+    phases: PHASES,
     current,
     phaseSummary,
   })
-  const signal = (step: number, summary = ""): SessionEvent => ({
-    kind: "delegate-signal",
-    step,
-    stepCount: 6,
-    summary,
-  })
+  const returned = (summary = ""): SessionEvent => ({ kind: "delegate-returned", summary })
   const currentPlan = (state: SessionState) => latestWorkPlan(state.records)
+  const currentOf = (state: SessionState) => {
+    const plan = currentPlan(state)
+    return plan.kind === "planned" ? plan.current : undefined
+  }
 
-  it("合図が届くと、メインが呼ばなくても計画・N 段・受け入れの並びで n 段目まで済む", () => {
-    const plan = currentPlan(apply(request, mainPlan(0), signal(2)))
+  it("返却1回ごとに、メインの段取りの並びのまま帯が1段だけ進み、返却の文が段のまとめになる", () => {
+    const once = apply(request, mainPlan(0), returned("架空の計画の要点。"))
+    const twice = applySessionEvent(once, returned("架空の1段目の変化。"), 0)
 
-    expect(plan).toMatchObject({ kind: "planned", current: 3 })
-    expect(plan.kind === "planned" && plan.phases).toEqual([
-      "計画",
-      "実装",
-      "実装",
-      "実装",
-      "実装",
-      "実装",
-      "実装",
-      "受け入れ",
-    ])
-  })
-
-  it("合図の文は段のまとめになり、同じ段の合図が続いても段の位置は動かない", () => {
-    const once = currentPlan(apply(request, mainPlan(0), signal(2, "架空の1通目。")))
-    const twice = currentPlan(
-      apply(request, mainPlan(0), signal(2, "架空の1通目。"), signal(2, "架空の2通目。")),
-    )
-
-    expect(once).toMatchObject({ current: 3, phaseSummary: "架空の1通目。" })
-    expect(twice).toMatchObject({ current: 3, phaseSummary: "架空の2通目。" })
-  })
-
-  it("合図のあとのメインの途中の段取りは帯を変えず、全部の段を終えた段取りは合図の段取りを済ませる", () => {
-    const afterSignal = apply(request, mainPlan(0), signal(6))
-
-    expect(currentPlan(applySessionEvent(afterSignal, mainPlan(1, "架空のまとめ。"), 0))).toEqual(
-      currentPlan(afterSignal),
-    )
-    expect(currentPlan(applySessionEvent(afterSignal, mainPlan(3), 0))).toMatchObject({
+    expect(currentPlan(once)).toEqual({
       kind: "planned",
-      current: 8,
+      phases: PHASES,
+      current: 1,
+      phaseSummary: "架空の計画の要点。",
     })
+    expect(currentPlan(twice)).toMatchObject({ current: 2, phaseSummary: "架空の1段目の変化。" })
   })
 
-  it("2つの委譲の合図が交互に届いても、帯は後ろへ戻らない", () => {
-    const signalOfThree = (step: number): SessionEvent => ({
-      kind: "delegate-signal",
-      step,
-      stepCount: 3,
-      summary: "",
-    })
-    const alternating = [2, 1, 3, 2, 3]
-    const currents = alternating.map((_, index) => {
-      const plan = currentPlan(
-        apply(request, mainPlan(0), ...alternating.slice(0, index + 1).map(signalOfThree)),
-      )
-      return plan.kind === "planned" ? plan.current : undefined
-    })
-
-    expect(currents).toEqual([3, 3, 4, 4, 4])
-  })
-
-  it("合図から引いた段取りのあいだは、段の数の違う合図は帯を動かさない", () => {
-    const afterSignal = apply(request, mainPlan(0), signal(2))
-    const otherCount = applySessionEvent(
-      afterSignal,
-      { kind: "delegate-signal", step: 3, stepCount: 4, summary: "架空の別の委譲。" },
-      0,
+  it("委譲先の途中の合図（SendMessage）と背景のタスクの顔ぶれの変化では、帯は動かない", () => {
+    const before = apply(request, mainPlan(1, "架空のまとめ。"))
+    const after = apply(
+      request,
+      mainPlan(1, "架空のまとめ。"),
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_send",
+        name: "SendMessage",
+        input: { to: "main", message: "状況 | 2/3 | 架空" },
+        parentToolUseId: "toolu_sub",
+      },
+      { kind: "background-tasks-changed", tasks: [] },
     )
 
-    expect(otherCount.records).toEqual(afterSignal.records)
+    expect(currentOf(after)).toBe(currentOf(before))
   })
 
-  it("メインの段取りの無い依頼では、合図は記録を足さない", () => {
+  it("返却では受け入れより先へ進めず、全部済みにはしない", () => {
+    const state = apply(request, mainPlan(2, "架空のまとめ。"), returned("架空の2段目。"))
+
+    expect(currentOf(state)).toBe(3)
+    expect(applySessionEvent(state, returned("架空の余分な返却。"), 0).records).toEqual(
+      state.records,
+    )
+  })
+
+  it("返却で進めた位置のあとのメインの段取りは、そのまま帯に出る", () => {
+    const state = apply(request, mainPlan(0), returned("架空の計画。"), mainPlan(2, "架空。"))
+
+    expect(currentOf(state)).toBe(2)
+  })
+
+  it("メインの段取りの無い依頼では、返却は記録を足さない", () => {
     const before = apply(request)
 
-    expect(applySessionEvent(before, signal(2, "架空の調べもの。"), 0).records).toEqual(
+    expect(applySessionEvent(before, returned("架空の調べもの。"), 0).records).toEqual(
       before.records,
     )
   })
 
-  describe("委譲先が背景から居なくなったとき", () => {
-    const backgroundTasks = (...kinds: readonly BackgroundTask["kind"][]): SessionEvent => ({
-      kind: "background-tasks-changed",
-      tasks: kinds.map((kind, index) => ({
-        taskId: `架空のタスク${String(index)}`,
-        kind,
-        description: "架空の説明",
-      })),
-    })
-    const delegateSignal = (step: number, stepCount: number): SessionEvent => ({
-      kind: "delegate-signal",
-      step,
-      stepCount,
-      summary: "",
-    })
-    const headingPhases = [
-      "計画",
-      "架空の見出し1",
-      "架空の見出し2",
-      "架空の見出し3",
-      "架空の見出し4",
-      "受け入れ",
-    ]
-    const headingPlan: SessionEvent = {
-      kind: "work-plan",
-      phases: headingPhases,
-      current: 1,
-      phaseSummary: "架空のまとめ。",
-    }
-
-    it("計画の回の合図のあとにメインが渡した見出しの段取りが効き、実装の回の合図はその名前のまま進む", () => {
-      const plan = currentPlan(
-        apply(
-          request,
-          backgroundTasks("agent"),
-          delegateSignal(1, 3),
-          backgroundTasks(),
-          headingPlan,
-          backgroundTasks("agent"),
-          delegateSignal(2, 4),
-        ),
-      )
-
-      expect(plan).toEqual({ kind: "planned", phases: headingPhases, current: 3, phaseSummary: "" })
-    })
-
-    it("サブエージェントが背景に残るあいだは、シェルが出入りしてもメインの途中の段取りは帯を変えない", () => {
-      const afterSignal = apply(request, mainPlan(0), backgroundTasks("agent"), signal(2))
-      const shellCameAndWent = apply(
+  it("計画の返却のあとにメインが段の並びを組み替えた段取りは、次の返却でその並びのまま進む", () => {
+    const headingPhases = ["計画", "架空の見出し1", "架空の見出し2", "受け入れ"]
+    const plan = currentPlan(
+      apply(
         request,
-        mainPlan(0),
-        backgroundTasks("agent"),
-        signal(2),
-        backgroundTasks("agent", "shell"),
-        backgroundTasks("agent"),
-        mainPlan(1, "架空のまとめ。"),
-      )
+        { kind: "work-plan", phases: ["計画", "受け入れ"], current: 0, phaseSummary: "" },
+        returned("架空の計画。"),
+        { kind: "work-plan", phases: headingPhases, current: 1, phaseSummary: "架空の計画。" },
+        returned("架空の見出し1の変化。"),
+      ),
+    )
 
-      expect(currentPlan(shellCameAndWent)).toEqual(currentPlan(afterSignal))
-    })
-
-    it("合図から引いた段取りが無ければ、顔ぶれの知らせは記録を足さない", () => {
-      const before = apply(request, mainPlan(0))
-
-      expect(applySessionEvent(before, backgroundTasks("shell"), 0).records).toEqual(before.records)
-      expect(applySessionEvent(before, backgroundTasks(), 0).records).toEqual(before.records)
+    expect(plan).toEqual({
+      kind: "planned",
+      phases: headingPhases,
+      current: 2,
+      phaseSummary: "架空の見出し1の変化。",
     })
   })
 
-  it("次の依頼のあとは、メインの段取りが今どおり効く", () => {
-    const plan = currentPlan(
-      apply(request, mainPlan(0), signal(2), request, mainPlan(1, "架空のまとめ。")),
-    )
+  it("次の依頼の返却は、その依頼の段取りを進める", () => {
+    const state = apply(request, mainPlan(0), returned("架空。"), request, mainPlan(0))
 
-    expect(plan).toMatchObject({
-      kind: "planned",
-      current: 1,
-      phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
-    })
+    expect(currentOf(applySessionEvent(state, returned("架空の次の依頼。"), 0))).toBe(1)
   })
 })
 
@@ -1696,7 +1620,7 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
     current,
     phaseSummary: current > 0 && current < 3 ? "架空のまとめ。" : "",
   })
-  const signal: SessionEvent = { kind: "delegate-signal", step: 1, stepCount: 1, summary: "" }
+  const returned: SessionEvent = { kind: "delegate-returned", summary: "架空の返却。" }
   const report: SessionEvent = {
     kind: "report",
     toolUseId: "toolu_r1",
@@ -1720,24 +1644,14 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
       record.kind === "work-plan" || record.kind === "report" ? [record.time] : [],
     )
 
-  it("work-plan・委譲の合図・report の記録は、届いた時刻を持つ", () => {
-    const state = applyAt([request, 0], [mainPlan(0), 1000], [signal, 2000], [report, 3000])
+  it("work-plan・委譲の返却で進めた段取り・report の記録は、届いた時刻を持つ", () => {
+    const state = applyAt([request, 0], [mainPlan(0), 1000], [returned, 2000], [report, 3000])
 
     expect(timesOf(state)).toEqual([
       { kind: "stamped", at: 1000 },
       { kind: "stamped", at: 2000 },
       { kind: "stamped", at: 3000 },
     ])
-  })
-
-  it("合図から引いた段取りを全部済ませる呼び出しは、その呼び出しの時刻を持つ", () => {
-    const state = applyAt([request, 0], [mainPlan(0), 1000], [signal, 2000], [mainPlan(3), 4000])
-
-    expect(state.records.at(-1)).toMatchObject({
-      kind: "work-plan",
-      source: "delegate-signal",
-      time: { kind: "stamped", at: 4000 },
-    })
   })
 
   it("復元した段取りとレポートは時刻が分からない", () => {

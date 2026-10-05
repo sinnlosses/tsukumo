@@ -55,8 +55,8 @@ export function toRestoredEvents(
   )
   const closed = firstRequest === -1 ? bounded : [...bounded, RESTORED_TURN_FINISHED]
   const speechReview = createSpeechReview()
-  const reportReview = createReportReview()
   const workPlanReview = createWorkPlanReview()
+  const reportReview = createReportReview(workPlanReview.standing)
   const events = closed
     .flatMap((event) => speechReview.pass(event))
     .flatMap((event) => reportReview.pass(event))

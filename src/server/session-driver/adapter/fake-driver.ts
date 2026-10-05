@@ -25,6 +25,7 @@ import {
   type SessionEvent,
   sessionEventSchema,
 } from "../../../shared/session/session-event.ts"
+import { NO_WORK_PLAN_STANDING } from "../../../shared/session/work-plan.ts"
 import { createReportReview } from "../../report/core/report-review.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { reportEvents } from "../core/sdk-message.ts"
@@ -278,7 +279,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   let effort: EffortLevel = FAKE_DEFAULT_EFFORT
   // `report` の差し戻しの預かり（本物の駆動と同じ `ReportReview`）。
   // handler が無いので判定はしない。疑似セッションが書いた `tool-finished` の `isError` に従って、描くか捨てるかだけが決まる。
-  const reportReview = createReportReview()
+  const reportReview = createReportReview(() => NO_WORK_PLAN_STANDING)
   // `speak` の差し戻しの預かりも同じ。判定はせず、場面の `tool-finished` の `isError` に従う。
   const speechReview = createSpeechReview()
 

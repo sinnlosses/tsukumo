@@ -1028,7 +1028,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
   })
 })
 
-describe("mainViewTurns（委譲の合図の中間レポート）", () => {
+describe("mainViewTurns（委譲の返却の中間レポート）", () => {
   const fold = (events: readonly SessionEvent[]) =>
     events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
   const interimOf = (events: readonly SessionEvent[]) =>
@@ -1038,59 +1038,25 @@ describe("mainViewTurns（委譲の合図の中間レポート）", () => {
   const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const mainPlan: SessionEvent = {
     kind: "work-plan",
-    phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
+    phases: ["架空の計画", "架空の段1", "架空の段2", "架空の受け入れ"],
     current: 0,
     phaseSummary: "",
   }
-  const signal = (step: number, summary: string): SessionEvent => ({
-    kind: "delegate-signal",
-    step,
-    stepCount: 4,
-    summary,
-  })
-  const tasks = (...kinds: readonly ("agent" | "shell")[]): SessionEvent => ({
-    kind: "background-tasks-changed",
-    tasks: kinds.map((kind, index) => ({
-      taskId: `架空のタスク${String(index)}`,
-      kind,
-      description: "架空の説明",
-    })),
-  })
+  const returned = (summary: string): SessionEvent => ({ kind: "delegate-returned", summary })
 
-  it("合図1通ごとに、n 段目の中間レポートを合図の文で積む", () => {
+  it("返却1回ごとに、済んだ段の中間レポートを返却の文で積む", () => {
     expect(
-      interimOf([
-        ask,
-        mainPlan,
-        signal(1, "架空の1段目の変化。"),
-        signal(2, "架空の2段目の変化。"),
-      ]),
+      interimOf([ask, mainPlan, returned("架空の計画の要点。"), returned("架空の1段目の変化。")]),
     ).toEqual([
-      ["2/6 実装", "架空の1段目の変化。"],
-      ["3/6 実装", "架空の2段目の変化。"],
+      ["1/4 架空の計画", "架空の計画の要点。"],
+      ["2/4 架空の段1", "架空の1段目の変化。"],
     ])
   })
 
-  it("同じ段の合図が続くと、置き換えずにその数だけ積む", () => {
-    expect(
-      interimOf([ask, mainPlan, signal(2, "架空の1通目。"), signal(2, "架空の2通目。")]),
-    ).toEqual([
-      ["3/6 実装", "架空の1通目。"],
-      ["3/6 実装", "架空の2通目。"],
+  it("文の空な返却は帯だけを進め、中間レポートを出さない", () => {
+    expect(interimOf([ask, mainPlan, returned(""), returned("架空の2段目の変化。")])).toEqual([
+      ["2/4 架空の段1", "架空の2段目の変化。"],
     ])
-  })
-
-  it("文の空な合図と、委譲先が居なくなって積み直した段取りからは出さない", () => {
-    expect(
-      interimOf([
-        ask,
-        mainPlan,
-        tasks("agent"),
-        signal(1, ""),
-        signal(2, "架空の2段目の変化。"),
-        tasks(),
-      ]),
-    ).toEqual([["3/6 実装", "架空の2段目の変化。"]])
   })
 })
 

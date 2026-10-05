@@ -27,12 +27,7 @@ const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
 })
 
 const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
-const DELEGATE_SIGNAL: SessionEvent = {
-  kind: "delegate-signal",
-  step: 1,
-  stepCount: 1,
-  summary: "架空の合図",
-}
+const RETURNED: SessionEvent = { kind: "delegate-returned", summary: "架空の返却。" }
 
 describe("WorkPlanReview の判定", () => {
   it("同じ段の並びのまま位置を2つ以上進めると差し戻し、1つずつなら通す", () => {
@@ -54,17 +49,76 @@ describe("WorkPlanReview の判定", () => {
     ).toBe("accepted")
   })
 
-  it("依頼と委譲の合図のあとは、前の位置を忘れる", () => {
+  it("依頼のあとは、前の位置を忘れる", () => {
     const review = createWorkPlanReview()
-    review.judge(planOf(0))
-    review.pass(DELEGATE_SIGNAL)
-    expect(review.judge(planOf(3)).kind).toBe("accepted")
-
-    review.pass(REQUEST)
     review.judge(planOf(0))
     expect(review.judge(planOf(2)).kind).toBe("skipped-phase")
     review.pass(REQUEST)
     expect(review.judge(planOf(2)).kind).toBe("accepted")
+  })
+
+  it("形の崩れた引数は malformed で差し戻す", () => {
+    const review = createWorkPlanReview()
+
+    expect(review.judge({ phases: PHASES, current: 9 }).kind).toBe("malformed")
+    expect(review.judge({ phases: PHASES, current: 1 }).kind).toBe("malformed")
+  })
+
+  it("委譲の返却で進んだ位置から、メインの呼び出しは +1 だけ通り、+2 は差し戻す", () => {
+    const review = createWorkPlanReview()
+    review.judge(planOf(0))
+    review.pass(RETURNED)
+
+    expect(review.judge(planOf(3)).kind).toBe("skipped-phase")
+    expect(review.judge(planOf(1)).kind).toBe("accepted")
+    review.pass(RETURNED)
+    expect(review.judge(planOf(3)).kind).toBe("accepted")
+  })
+
+  it("委譲の返却は、最後の段より先へ覚えた位置を進めない", () => {
+    const review = createWorkPlanReview()
+    review.judge(planOf(1))
+    review.pass(RETURNED)
+    review.pass(RETURNED)
+
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 1 })
+  })
+
+  it("段取りの無い依頼の返却は何も覚えない", () => {
+    const review = createWorkPlanReview()
+    review.pass(RETURNED)
+
+    expect(review.standing()).toEqual({ kind: "none" })
+  })
+})
+
+describe("WorkPlanReview の立ち位置", () => {
+  it("受け付けた段取りの残りの段の数を返し、全部済みなら 0", () => {
+    const review = createWorkPlanReview()
+    review.judge(planOf(1))
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 2 })
+    review.judge(planOf(2))
+    review.judge(planOf(3))
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 0 })
+  })
+
+  it("差し戻したあとは rejected になり、受け付けた呼び出しで応えると消える", () => {
+    const review = createWorkPlanReview()
+    review.judge(planOf(0))
+    review.judge(planOf(2))
+    expect(review.standing()).toEqual({ kind: "rejected" })
+
+    review.judge(planOf(1))
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 2 })
+  })
+
+  it("差し戻しの覚えはターンの区切りで戻る", () => {
+    const review = createWorkPlanReview()
+    review.judge(planOf(0))
+    review.judge(planOf(2))
+    review.pass({ kind: "turn-finished", outcome: { kind: "completed" } })
+
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
   })
 })
 

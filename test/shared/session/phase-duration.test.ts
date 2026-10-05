@@ -8,7 +8,7 @@ type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
 const PHASES = ["架空の調べ", "架空の実装", "架空の検証"]
 
 function plan(current: number, time: RecordTime, phases = PHASES): WorkPlanRecord {
-  return { kind: "work-plan", phases, current, phaseSummary: "", source: "main", time }
+  return { kind: "work-plan", phases, current, phaseSummary: "", time }
 }
 
 function at(seconds: number): RecordTime {

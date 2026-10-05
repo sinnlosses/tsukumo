@@ -128,7 +128,7 @@
                               "tag": "li",
                               "attributes": {
                                 "data-phase-state": "done",
-                                "aria-label": "2. 実装（済）"
+                                "aria-label": "2. 架空の段1（済）"
                               },
                               "children": [
                                 {
@@ -146,7 +146,7 @@
                               "tag": "li",
                               "attributes": {
                                 "data-phase-state": "done",
-                                "aria-label": "3. 実装（済）"
+                                "aria-label": "3. 架空の段2（済）"
                               },
                               "children": [
                                 {
@@ -164,7 +164,7 @@
                               "tag": "li",
                               "attributes": {
                                 "data-phase-state": "current",
-                                "aria-label": "4. 実装（今の段）"
+                                "aria-label": "4. 架空の段3（今の段）"
                               },
                               "children": [
                                 {
@@ -182,7 +182,7 @@
                               "tag": "li",
                               "attributes": {
                                 "data-phase-state": "upcoming",
-                                "aria-label": "5. 実装"
+                                "aria-label": "5. 受け入れ"
                               },
                               "children": [
                                 {
@@ -195,29 +195,11 @@
                                   ]
                                 }
                               ]
-                            },
-                            {
-                              "tag": "li",
-                              "attributes": {
-                                "data-phase-state": "upcoming",
-                                "aria-label": "6. 受け入れ"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "6"
-                                  ]
-                                }
-                              ]
                             }
                           ]
                         },
-                        "実装",
-                        "4/6 · 経過 1分00秒",
+                        "架空の段3",
+                        "4/5 · 経過 1分00秒",
                         {
                           "tag": "button",
                           "attributes": {
@@ -226,7 +208,7 @@
                             "type": "button"
                           },
                           "children": [
-                            "手順 5 ▾"
+                            "手順 7 ▾"
                           ]
                         },
                         {
@@ -250,7 +232,18 @@
                             {
                               "tag": "summary",
                               "children": [
-                                "中間レポート: 2/6 実装"
+                                "中間レポート: 1/5 計画"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "details",
+                          "children": [
+                            {
+                              "tag": "summary",
+                              "children": [
+                                "中間レポート: 2/5 架空の段1"
                               ]
                             }
                           ]
@@ -274,7 +267,7 @@
                                         "·"
                                       ]
                                     },
-                                    "3/6 実装"
+                                    "3/5 架空の段2"
                                   ]
                                 }
                               ]

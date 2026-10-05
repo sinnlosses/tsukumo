@@ -1220,68 +1220,62 @@ describe("isSubagentMessage", () => {
   })
 })
 
-describe("toSessionEvents（委譲の合図）", () => {
-  function sendMessage(input: unknown, parentToolUseId?: string): Record<string, unknown> {
-    return assistantMessage(
-      [{ type: "tool_use", id: "toolu_send", name: "SendMessage", input }],
-      parentToolUseId,
+describe("toSessionEvents（委譲の返却）", () => {
+  function toolUse(
+    name: string,
+    input: unknown,
+    parentToolUseId?: string,
+  ): Record<string, unknown> {
+    return assistantMessage([{ type: "tool_use", id: "toolu_back", name, input }], parentToolUseId)
+  }
+
+  function handback(message: string, parentToolUseId?: string): Record<string, unknown> {
+    return toolUse("SubagentHandback", { message }, parentToolUseId)
+  }
+
+  function returnsOf(message: unknown): readonly SessionEvent[] {
+    return toSessionEvents(message, EXPRESSIONS).filter(
+      (event) => event.kind === "delegate-returned",
     )
   }
 
-  function signalsOf(message: unknown): readonly SessionEvent[] {
-    return toSessionEvents(message, EXPRESSIONS).filter((event) => event.kind === "delegate-signal")
-  }
-
-  it("サブエージェントがメインへ送った合図は、tool-started の後ろに段の位置と1行目の3列目を持つ delegate-signal を出す", () => {
+  it("委譲先の返却の1行目が「段 n/N | 文」なら、tool-started の後ろに文を持つ delegate-returned を出す", () => {
     const events = toSessionEvents(
-      sendMessage(
-        { to: "main", message: "状況 | 2/5 |  架空の進み。 \n架空の続き" },
-        "toolu_sub_1",
-      ),
+      handback("段 2/5 |  架空の進み。 \n架空の続き", "toolu_sub_1"),
       EXPRESSIONS,
     )
 
-    expect(events.map((event) => event.kind)).toEqual(["tool-started", "delegate-signal"])
-    expect(events[1]).toEqual({
-      kind: "delegate-signal",
-      step: 2,
-      stepCount: 5,
-      summary: "架空の進み。",
-    })
+    expect(events.map((event) => event.kind)).toEqual(["tool-started", "delegate-returned"])
+    expect(events[1]).toEqual({ kind: "delegate-returned", summary: "架空の進み。" })
   })
 
-  it("1列目が「状況」の字でなく実際の状況の語でも、段の位置を読んで delegate-signal を出す", () => {
-    expect(
-      signalsOf(
-        sendMessage({ to: "main", message: "組み立て済み | 3/4 | 架空の進み。" }, "toolu_sub_1"),
-      ),
-    ).toEqual([{ kind: "delegate-signal", step: 3, stepCount: 4, summary: "架空の進み。" }])
+  it("計画だけの返却「計画 0/N | 文」も delegate-returned を出し、文が空なら空の文にする", () => {
+    expect(returnsOf(handback("計画 0/3 | 架空の計画。", "toolu_sub_1"))).toEqual([
+      { kind: "delegate-returned", summary: "架空の計画。" },
+    ])
+    expect(returnsOf(handback("段 1/2 | ", "toolu_sub_1"))).toEqual([
+      { kind: "delegate-returned", summary: "" },
+    ])
   })
 
-  it("3列目が空の合図は、文の空な delegate-signal を出す", () => {
-    expect(signalsOf(sendMessage({ to: "main", message: "状況 | 1/2 | " }, "toolu_sub_1"))).toEqual(
-      [{ kind: "delegate-signal", step: 1, stepCount: 2, summary: "" }],
-    )
-  })
-
-  it("合図の形でない・宛先が main でない・段の位置が範囲の外の SendMessage では出さない", () => {
+  it("止めた返却・形の読めない1行目・message の無い引数では出さない", () => {
     const parent = "toolu_sub_1"
 
-    expect(signalsOf(sendMessage({ to: "main", message: "架空の伝言" }, parent))).toEqual([])
-    expect(signalsOf(sendMessage({ to: "main", message: "状況 | 計画 | 架空" }, parent))).toEqual(
-      [],
-    )
-    expect(
-      signalsOf(sendMessage({ to: "main", message: "架空\n状況 | 1/2 | 架空" }, parent)),
-    ).toEqual([])
-    expect(
-      signalsOf(sendMessage({ to: "架空の相手", message: "状況 | 1/2 | 架空" }, parent)),
-    ).toEqual([])
-    expect(signalsOf(sendMessage({ to: "main", message: "状況 | 3/2 | 架空" }, parent))).toEqual([])
-    expect(signalsOf(sendMessage({ to: "main", message: "状況 | 0/2 | 架空" }, parent))).toEqual([])
+    expect(returnsOf(handback("止めた 2/3 | 架空の理由。", parent))).toEqual([])
+    expect(returnsOf(handback("架空の報告", parent))).toEqual([])
+    expect(returnsOf(handback("架空\n段 1/2 | 架空", parent))).toEqual([])
+    expect(returnsOf(toolUse("SubagentHandback", { text: "段 1/2 | 架空" }, parent))).toEqual([])
   })
 
-  it("メイン（parent_tool_use_id が null）の SendMessage では出さない", () => {
-    expect(signalsOf(sendMessage({ to: "main", message: "状況 | 1/2 | 架空" }))).toEqual([])
+  it("委譲先の途中の合図（SendMessage の「状況 | n/N | 文」）では出さない", () => {
+    expect(
+      returnsOf(
+        toolUse("SendMessage", { to: "main", message: "状況 | 2/3 | 架空" }, "toolu_sub_1"),
+      ),
+    ).toEqual([])
+  })
+
+  it("メイン（parent_tool_use_id が null）の呼び出しでは出さない", () => {
+    expect(returnsOf(handback("段 1/2 | 架空"))).toEqual([])
   })
 })
