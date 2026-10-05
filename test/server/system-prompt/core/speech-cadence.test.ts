@@ -53,10 +53,11 @@ describe("SPEECH_CADENCE_PROMPT", () => {
     // （フォアグラウンドの委譲は吹き出しを数分止める）。
     const append = workAppend(PERSONA)
 
-    expect(SPEECH_CADENCE_PROMPT).toContain("run_in_background")
+    expect(SPEECH_CADENCE_PROMPT).not.toContain("run_in_background")
+    expect(SPEECH_CADENCE_PROMPT).toContain("背景に固定する")
     expect(SPEECH_CADENCE_PROMPT).toContain("状況 | 何をした・何が分かった")
     expect(SPEECH_CADENCE_PROMPT).not.toContain("n/N |")
-    expect(append).toContain("run_in_background")
+    expect(append).toContain("背景に固定する")
     expect(append).toContain("tsukumo が帯を1段だけ進め")
   })
 

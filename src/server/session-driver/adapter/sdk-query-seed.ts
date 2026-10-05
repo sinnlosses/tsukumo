@@ -1,5 +1,5 @@
 // `query()` に渡す `options` のうち `mcpServers` / `canUseTool`（クロージャが要る）を除いた部分と、
-// `Stop` フックの登録を組み立てる。
+// `Stop` と `PreToolUse` のフックの登録を組み立てる。
 
 import { setImmediate } from "node:timers/promises"
 
@@ -13,6 +13,7 @@ import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../../s
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
+import { AGENT_TOOL_NAME, pinToBackground } from "../core/background-delegation.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
 
@@ -68,6 +69,36 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     settings: { language: "japanese" },
     env: childProcessEnv(options.inheritedEnv),
     plugins: [{ type: "local", path: bundledFilePath("plugin") }],
+  }
+}
+
+/**
+ * メインの `Agent` 呼び出しを背景に固定する `PreToolUse` フックを登録する。
+ * `permissionDecision` は返さない（許可の判定には触らず、`updatedInput` だけで足りる）。
+ * `agent_id` はサブエージェント内の呼び出しにだけ付くので、ここで真偽に畳んでから渡す。
+ */
+export function backgroundDelegationHooks(): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
+  return {
+    PreToolUse: [
+      {
+        matcher: AGENT_TOOL_NAME,
+        hooks: [
+          async (input) => {
+            if (input.hook_event_name !== "PreToolUse") {
+              return {}
+            }
+            const pinned = pinToBackground(
+              input.tool_name,
+              input.tool_input,
+              input.agent_id !== undefined,
+            )
+            return pinned.kind === "rewrite"
+              ? { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: pinned.input } }
+              : {}
+          },
+        ],
+      },
+    ],
   }
 }
 

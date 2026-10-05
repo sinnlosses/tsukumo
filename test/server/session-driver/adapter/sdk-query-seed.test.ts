@@ -6,6 +6,7 @@ import {
   REPORT_GATE_REASON,
 } from "../../../../src/server/report/core/report-tool.ts"
 import {
+  backgroundDelegationHooks,
   buildQuerySeedOptions,
   stopHooks,
 } from "../../../../src/server/session-driver/adapter/sdk-query-seed.ts"
@@ -141,6 +142,47 @@ async function runStop(
     signal: new AbortController().signal,
   })
 }
+
+async function runPreToolUse(
+  toolName: string,
+  toolInput: unknown,
+  agentId?: string,
+): Promise<unknown> {
+  const matcher = backgroundDelegationHooks().PreToolUse?.[0]
+  const callback = matcher?.hooks[0]
+  expect(matcher?.matcher).toBe("Agent")
+  expect(callback).toBeDefined()
+  return callback?.(
+    {
+      session_id: "s-1",
+      transcript_path: "/tmp/tsukumo-test/fake.jsonl",
+      cwd: "/tmp/tsukumo-test",
+      hook_event_name: "PreToolUse",
+      tool_name: toolName,
+      tool_input: toolInput,
+      tool_use_id: "t-1",
+      ...(agentId === undefined ? {} : { agent_id: agentId }),
+    },
+    "t-1",
+    { signal: new AbortController().signal },
+  )
+}
+
+describe("backgroundDelegationHooks（Agent を背景に固定する）", () => {
+  it("run_in_background の無い Agent は updatedInput で true にし、permissionDecision は返さない", async () => {
+    expect(await runPreToolUse("Agent", { prompt: "手順" })).toEqual({
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        updatedInput: { prompt: "手順", run_in_background: true },
+      },
+    })
+  })
+
+  it("サブエージェント内の呼び出しと、すでに背景の呼び出しは何も返さない", async () => {
+    expect(await runPreToolUse("Agent", { prompt: "手順" }, "sub-1")).toEqual({})
+    expect(await runPreToolUse("Agent", { run_in_background: true })).toEqual({})
+  })
+})
 
 describe("stopHooks（report の関所と effort の読み取り）", () => {
   const LONG_BODY: SessionEvent = { kind: "utterance", text: "架空の本文の1行目\n架空の2行目" }
