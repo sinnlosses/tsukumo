@@ -20,17 +20,16 @@ export const REPORT_TOOL_DESCRIPTION =
 
 /**
  * `report` の任意の `checks` 引数の説明。
- * 記法の条（`REPORT_NOTATION_PROMPT` の条1）と同じことを引数の側でも言う（どちらを先に読んでも欄を取り違えないように）。
+ * 結果を `conclusion` と `sections` に書かない条は `REPORT_NOTATION_PROMPT` の条1 が持つ。
  */
 export const REPORT_CHECKS_DESCRIPTION =
   "検証の結果（テスト・型検査・手で確かめたこと）。tsukumo が結論の下に、全体の判定の札と、落ちた・確かめていない項目の行で描く。" +
-  "ここに入れた結果は conclusion と sections に書かない。検証をしていないターンでは省く。" +
+  "検証をしていないターンでは省く。" +
   "結果の数は figure に、打ったコマンドは command に分ける（所要時間は tsukumo が測って添えるので書かない）。" +
   "label・figure・detail は素の文字で描かれるので、バッククォートなどの記法を使わない。"
 
 /**
- * `report` の任意の `task` 引数の説明。
- * 記法の条（`REPORT_NOTATION_PROMPT` の条1）と同じ書き分けを引数の側でも言う。
+ * `report` の任意の `task` 引数の説明。`conclusion` との書き分けはここだけが持つ。
  */
 export const REPORT_TASK_DESCRIPTION =
   "タスクの作業のレポートのときだけ渡す（タスクID・作業の名前・終わり方）。tsukumo が結論の上に" +
@@ -44,16 +43,17 @@ export const REPORT_TASK_DESCRIPTION =
  */
 export const REPORT_SECTIONS_DESCRIPTION =
   "結論のあとの根拠・比較・手順。節の並びで、節ごとに塊を並べる。" +
-  "塊の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。2〜3文で終わる答えでは省く。" +
+  "塊の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。" +
   "塊の fold に見出しを書くと畳んで描く（畳んでも結論が通る塊だけ）。"
 
 /**
  * `report` の `closing` 引数（締めのセリフ）の説明。
  * `report` はターンを閉じるので、締めの一言はあとから `speak` で言えず、ここで受け取る。
+ * 何を言うかは `REPORT_NOTATION_PROMPT` が持つ。
  */
 export const REPORT_CLOSING_DESCRIPTION =
   "締めのセリフ（speak と同じ text と expression）。レポートを描いたあとに吹き出しに出る。" +
-  "書き終えたことを言う一言にし、レポートの中身を言い直さない。"
+  "レポートの中身を言い直さない。"
 
 /**
  * `report` の任意の `waitingLine` 引数（待ちの一言）の説明。
@@ -73,7 +73,7 @@ export const REPORT_TITLE_DESCRIPTION =
 
 /**
  * `report` の任意の `sessionSummary` 引数の説明。
- * 切り替え画面に出すセッション全体の要約を書かせる条はここと `REPORT_NOTATION_PROMPT` の1段落だけ。
+ * 切り替え画面に出すセッション全体の要約の書き方はここだけが持つ（毎回入れることは `REPORT_NOTATION_PROMPT` が言う）。
  * 書いた値は transcript の `report` の入力に残り、切り替え画面はそれを読み戻す（tsukumo は別の場所へ書き出さない）。
  */
 export const REPORT_SESSION_SUMMARY_DESCRIPTION =

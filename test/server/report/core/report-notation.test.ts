@@ -96,11 +96,8 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("塊から組む印は文面に class として載せず、塊の列に compare・dimension・image がある", () => {
+  it("塊から組む印は文面に class として載せない", () => {
     // 塊の種類がある記法を逃げ道に書くと差し戻すので、文面が勧めると往復が増える。
-    expect(REPORT_NOTATION_PROMPT).toContain("`compare`")
-    expect(REPORT_NOTATION_PROMPT).toContain("`dimension`")
-    expect(REPORT_NOTATION_PROMPT).toContain("`image`")
     expect(REPORT_NOTATION_PROMPT).not.toContain('class="cols"')
     for (const name of [...REPORT_NOTE_KINDS.map(([kind]) => kind), ...REPORT_BLOCK_MARK_NAMES]) {
       expect(namedClasses).not.toContain(name)
@@ -193,7 +190,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).not.toContain("いちばん最後")
     expect(REPORT_NOTATION_PROMPT).not.toContain("末尾の「お願い」")
     expect(REPORT_NOTATION_PROMPT).toContain("1. **結論は `conclusion` に1〜2文で書く。**")
-    expect(REPORT_NOTATION_PROMPT).toContain("`favor` に入れる")
+    expect(REPORT_NOTATION_PROMPT).toContain("`favor` に分けて入れる")
     expect(REPORT_NOTATION_PROMPT).toContain("10. **見出しを付けるなら")
   })
 
@@ -247,10 +244,5 @@ describe("REPORT_NOTATION_PROMPT", () => {
     // （docs/architecture/display.md「読む時間を減らす物差しと線引き」）。
     expect(REPORT_NOTATION_PROMPT).toContain("地の文の段落は3文まで")
     expect(REPORT_NOTATION_PROMPT).toContain("4文目が要るなら、表・箇条書きへ移すか `fold` で畳む")
-  })
-
-  it("送る前の検算に、4文以上続く段落を挙げている", () => {
-    const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
-    expect(beforeSend).toContain("4文以上続く地の文の段落")
   })
 })

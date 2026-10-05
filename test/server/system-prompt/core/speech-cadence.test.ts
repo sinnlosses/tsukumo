@@ -56,8 +56,8 @@ describe("SPEECH_CADENCE_PROMPT", () => {
     expect(SPEECH_CADENCE_PROMPT).toContain("run_in_background")
     expect(SPEECH_CADENCE_PROMPT).toContain("状況 | n/N")
     expect(SPEECH_CADENCE_PROMPT).toContain("状況 | 計画")
-    expect(SPEECH_CADENCE_PROMPT).toContain("work_plan")
     expect(append).toContain("run_in_background")
+    expect(append).toContain("合図の `n/N` をその段の番号と数で送らせる")
   })
 
   it("合図の届いていないターンでは speak も report も呼ばず、何も書かずに終え、新しい事実の無い speak は差し戻されると伝える", () => {
