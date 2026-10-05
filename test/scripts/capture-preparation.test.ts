@@ -25,6 +25,16 @@ describe("readPreparationFlag", () => {
     })
   })
 
+  test("--advance は正の整数のミリ秒を読む", () => {
+    expect(readPreparationFlag(["--advance", "130000"], 0)).toEqual({
+      step: { kind: "advance", ms: 130000 },
+      consumed: 2,
+    })
+    for (const bad of ["0", "-5", "1.5", "abc"]) {
+      expect(readPreparationFlag(["--advance", bad], 0)).toBeUndefined()
+    }
+  })
+
   test("値が足りない・知らない旗は読まない", () => {
     expect(readPreparationFlag(["--type", "textarea"], 0)).toBeUndefined()
     expect(readPreparationFlag(["--click"], 0)).toBeUndefined()

@@ -33,6 +33,7 @@ import { type Browser, type BrowserServer, chromium, type Page } from "playwrigh
 import { countBy } from "remeda"
 import { afterAll, afterEach, beforeAll, expect } from "vitest"
 
+import { TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../../scripts/lib/capture-clock.ts"
 import { spawnFakeTsukumo, waitForViewUrl } from "../../scripts/lib/fake-tsukumo-process.ts"
 import {
   type FakeSessionStep,
@@ -479,9 +480,7 @@ async function installFixedClock(page: Page): Promise<void> {
   // pauseAt(fixed) が過去を指して投げる。手前で install して fixed へ進めて止める。
   await page.clock.install({ time: fixed - 1000 })
   await page.clock.pauseAt(fixed)
-  await page.addInitScript(
-    "Temporal.Now.instant = () => Temporal.Instant.fromEpochMilliseconds(Date.now())",
-  )
+  await page.addInitScript(TEMPORAL_FOLLOWS_DATE_SCRIPT)
 }
 
 const ANNOUNCED_LOG = "__announced"

@@ -39,6 +39,7 @@ import { fileURLToPath } from "node:url"
 import { chromium, type Page } from "playwright-core"
 
 import { readFakeSession } from "../src/server/session-driver/adapter/fake-driver.ts"
+import { TEMPORAL_FOLLOWS_DATE_SCRIPT } from "./lib/capture-clock.ts"
 import {
   applyPreparation,
   describePreparation,
@@ -100,7 +101,8 @@ const USAGE = `使い方:
   --click <selector>    押してから撮る
   --hover <selector>    触れてから撮る
   --hash <hash>         location.hash を書いてから撮る
-                        （4つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
+  --advance <ms>        偽の時計をミリ秒だけ進めてから撮る（待ち時間で出る画。Temporal.Now も従う）
+                        （5つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
 `
 
@@ -211,8 +213,12 @@ async function capture(
     const page = await browser.newPage({
       viewport: { width: options.width, height: options.height },
     })
-    if (options.waitFor !== undefined) {
+    if (
+      options.waitFor !== undefined ||
+      options.preparations.some((step) => step.kind === "advance")
+    ) {
       await page.clock.install()
+      await page.addInitScript(TEMPORAL_FOLLOWS_DATE_SCRIPT)
     }
     await page.goto(url, { waitUntil: "domcontentloaded" })
     // SSE / WebSocket を繋ぎっぱなしにするページなので `networkidle` は永遠に来ない。
