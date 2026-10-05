@@ -33,10 +33,6 @@
     "welcome": [
       { "text": "あるじ、おかえり。今日は何から手をつけようか。", "expression": "default" }
     ],
-    "accepted": [
-      { "text": "うん、受け取ったよ。ちょっと見てみるね。", "expression": "thinking" },
-      { "text": "わかった。まずは中を覗いてみるね。", "expression": "thinking" }
-    ],
     "retrying": [
       {
         "text": "向こうが混んでるみたい。少し待って、もう一度叩いてみるね。",

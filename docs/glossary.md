@@ -756,10 +756,10 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 反応
 
 - **英語識別子**: `CharacterReactions`（パックの持ち物。出来事は `ReactionKind` で、値は
-  迎える `welcome` / 受けた `accepted` / 再試行 `retrying` / 失敗 `failed` / 利用上限 `limited` / 待ち `idle`。1行は
+  迎える `welcome` / 再試行 `retrying` / 失敗 `failed` / 利用上限 `limited` / 待ち `idle`。1行は
   `ReactionLine`）・`ShownReaction`（いま出す反応。導く関数は `src/shared/session/shown-reaction.ts` の
   `shownReaction`）
-- **定義**: 機械の出来事（迎える・依頼を受けた・API の再試行・失敗・利用上限・依頼を待つ間）に応えて、キャラクターが
+- **定義**: 機械の出来事（迎える・API の再試行・失敗・利用上限・依頼を待つ間）に応えて、キャラクターが
   パックに書いた1行のセリフと表情で吹き出しに出すもの（2026-10-02。依頼を待つ間は 2026-10-05）
 - **注記**: **`speak` ではない**。記録にもセリフのログにも入らず、セッションの姿から導くだけで、
   `speak` が届けば消える。迎えるの行は、下の「迎えの挨拶」が控え（`fallback`）に替わったときの

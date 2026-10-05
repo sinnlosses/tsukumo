@@ -15,8 +15,8 @@ describe("toCharacterReactions", () => {
 
   it("形の崩れた行だけを落とし、ほかの行と出来事は残す", () => {
     const reactions = toCharacterReactions({
-      accepted: [
-        { text: "架空の受けた", expression: "thinking" },
+      retrying: [
+        { text: "架空の再試行", expression: "thinking" },
         { text: "   ", expression: "default" },
         { text: "表情が知らない名前", expression: "架空の表情" },
         { expression: "default" },
@@ -28,7 +28,7 @@ describe("toCharacterReactions", () => {
 
     expect(reactions).toEqual({
       ...NO_REACTIONS,
-      accepted: [{ text: "架空の受けた", expression: "thinking" }],
+      retrying: [{ text: "架空の再試行", expression: "thinking" }],
       limited: [{ text: "架空の上限", expression: "sad" }],
     })
   })

@@ -36,7 +36,7 @@ const CHARACTER_WITH_REACTIONS: NonNullable<SessionState["character"]> = {
   ...shownPortraits({ default: "/character/default.png", thinking: "/character/thinking.png" }),
   reactions: {
     ...NO_REACTIONS,
-    accepted: [{ text: "架空の受けた反応", expression: "thinking" }],
+    retrying: [{ text: "架空の再試行反応", expression: "thinking" }],
   },
 }
 
@@ -146,13 +146,22 @@ describe("CharacterView", () => {
       records: [requestRecord({ text: "架空の依頼" })],
       speeches: [],
       turn: { kind: "running", startedAt: 0 },
+      apiTrouble: {
+        kind: "retrying",
+        at: 0,
+        attempt: 1,
+        maxRetries: 3,
+        retryDelayMs: 1000,
+        errorStatus: undefined,
+        error: "unknown",
+      },
       nextTurnId: 1,
       character: CHARACTER_WITH_REACTIONS,
     })
 
     const balloon = document.querySelector(".balloon")
-    expect(balloon?.getAttribute("data-reaction")).toBe("accepted")
-    expect(balloon?.textContent).toContain("架空の受けた反応")
+    expect(balloon?.getAttribute("data-reaction")).toBe("retrying")
+    expect(balloon?.textContent).toContain("架空の再試行反応")
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("thinking")
   })
 

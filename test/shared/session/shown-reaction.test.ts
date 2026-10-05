@@ -23,7 +23,6 @@ import { characterChangedEvent } from "../../fixture/character.ts"
 
 const REACTIONS: CharacterReactions = {
   welcome: [{ text: "架空の迎え", expression: "excited" }],
-  accepted: [{ text: "架空の受けた", expression: "thinking" }],
   retrying: [{ text: "架空の再試行", expression: "flustered" }],
   failed: [{ text: "架空の失敗", expression: "sad" }],
   limited: [{ text: "架空の上限", expression: "bored" }],
@@ -109,7 +108,7 @@ describe("shownReaction", () => {
   it.each<[string, readonly SessionEvent[], string]>([
     ["やり取りが無くセリフも無いが、まだ挨拶を書き始めていない", [], "none"],
     ["やり取りの前にセリフがある", [SPEECH], "none"],
-    ["送った直後", [REQUEST], "accepted:架空の受けた"],
+    ["送った直後", [REQUEST], "writing"],
     ["送ったあと speak が届いた", [REQUEST, SPEECH], "none"],
     ["呼び直しを待っている", [REQUEST, RETRY], "retrying:架空の再試行"],
     ["セリフのあとに呼び直しを待っている", [REQUEST, SPEECH, RETRY], "retrying:架空の再試行"],
@@ -139,31 +138,34 @@ describe("shownReaction", () => {
     expect(shown(stateAfter(events))).toBe(expected)
   })
 
-  it("パックに反応が無ければ、どの出来事でも出さない", () => {
+  it("パックに反応が無くても、送った直後は「…」を出す", () => {
+    expect(shown(stateAfter([REQUEST], NO_REACTIONS))).toBe("writing")
+  })
+
+  it("パックに反応が無ければ、パックの行を出す出来事では出さない", () => {
     expect(shown(stateAfter([], NO_REACTIONS))).toBe("none")
-    expect(shown(stateAfter([REQUEST], NO_REACTIONS))).toBe("none")
     expect(shown(stateAfter([REQUEST, RETRY, API_FAILED], NO_REACTIONS))).toBe("none")
   })
 
   it("行が2つあれば、依頼ごとに順に選ぶ", () => {
     const reactions: CharacterReactions = {
       ...NO_REACTIONS,
-      accepted: [
+      retrying: [
         { text: "1つ目", expression: "default" },
         { text: "2つ目", expression: "default" },
       ],
     }
 
-    const first = shown(stateAfter([REQUEST], reactions))
-    const second = shown(stateAfter([REQUEST, COMPLETED, REQUEST], reactions))
+    const first = shown(stateAfter([REQUEST, RETRY], reactions))
+    const second = shown(stateAfter([REQUEST, COMPLETED, REQUEST, RETRY], reactions))
 
-    expect([first, second].sort()).toEqual(["accepted:1つ目", "accepted:2つ目"])
+    expect([first, second].sort()).toEqual(["retrying:1つ目", "retrying:2つ目"])
   })
 
   it("反応の行の表情を返す", () => {
-    const reaction = shownReaction(stateAfter([REQUEST]), NO_WELCOME_HEAD, 0)
+    const reaction = shownReaction(stateAfter([REQUEST, RETRY]), NO_WELCOME_HEAD, 0)
 
-    expect(reaction.kind === "shown" && reaction.line.expression).toBe("thinking")
+    expect(reaction.kind === "shown" && reaction.line.expression).toBe("flustered")
   })
 
   describe("待ちの一言", () => {
@@ -232,7 +234,7 @@ describe("shownReaction", () => {
       const closedAgain = stateAfter([REQUEST, WRITTEN, COMPLETED, REQUEST, SPEECH, COMPLETED])
 
       expect(waitingLineDueAt(sent)).toBeUndefined()
-      expect(shown(sent, NO_WELCOME_HEAD, LATER)).toBe("accepted:架空の受けた")
+      expect(shown(sent, NO_WELCOME_HEAD, LATER)).toBe("writing")
       expect(waitingLineDueAt(closedAgain)).toBe(
         closedAgain.turn.kind === "finished"
           ? closedAgain.turn.finishedAt + WAITING_LINE_DELAY_MS
@@ -329,9 +331,7 @@ describe("shownReaction", () => {
     })
 
     it("依頼を送れば消える", () => {
-      expect(shown(stateAfter([REQUEST, WRITTEN, COMPLETED, RESTORED, REQUEST]))).toBe(
-        "accepted:架空の受けた",
-      )
+      expect(shown(stateAfter([REQUEST, WRITTEN, COMPLETED, RESTORED, REQUEST]))).toBe("writing")
       expect(
         shown(stateAfter([REQUEST, WRITTEN, COMPLETED, RESTORED, GREETED, REQUEST, SPEECH])),
       ).toBe("none")
