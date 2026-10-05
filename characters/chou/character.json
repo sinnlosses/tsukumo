@@ -54,7 +54,6 @@
     "welcome": [
       { "text": "せんぱい、お待ちしてました。今日の頁を開きますね。", "expression": "default" }
     ],
-    "accepted": [{ "text": "承りました。まずは中を見てきますね。", "expression": "curious" }],
     "retrying": [
       {
         "text": "わ、向こうが混んでいるみたいです。もう一度試しますね。",

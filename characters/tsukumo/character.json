@@ -37,10 +37,6 @@
   "diaryFont": "yuji-syuku.ttf",
   "reactions": {
     "welcome": [{ "text": "おっ、きみか。今日は何して遊ぶ？", "expression": "excited" }],
-    "accepted": [
-      { "text": "ほいきた、受け取ったぞ。ちょっと覗いてくる。", "expression": "curious" },
-      { "text": "ふむ、任せるのだ。まずは中を見てくるぞ。", "expression": "thinking" }
-    ],
     "retrying": [
       { "text": "あわわ、向こうが混んでる。もう一回叩いてみるぞ。", "expression": "flustered" }
     ],

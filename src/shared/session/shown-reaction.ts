@@ -4,6 +4,7 @@
 // 本物の `speak` が届けば、どの出来事の条件も外れて消える。
 // いちばん新しいやり取りについての反応で、過去のターンを見ているかどうかは見ない。
 // 迎えるときは、挨拶を書いている途中は「…」、書けていればその文、控えに替わればパックの行を出す。
+// 依頼を受けてから最初の `speak` までは「…」を出す。
 // 依頼を待つ間が続いたら、本体が `report` に書いた待ちの一言、無ければパックの待ちの行を出す。
 // 続きから起こしてまだ依頼が無い間は、前回の待ちの一言、無ければ迎えの挨拶の札の無い文をおかえりとして出す。
 
@@ -23,7 +24,7 @@ import type { SessionRecord, SessionState } from "./session-state.ts"
 
 export type ShownReaction =
   | { readonly kind: "none" }
-  /** 迎えの挨拶を書いている途中。吹き出しには「…」を出す。 */
+  /** 迎えの挨拶を書いている途中と、依頼を受けて最初の `speak` までの間。吹き出しには「…」を出す。 */
   | { readonly kind: "writing" }
   | { readonly kind: "shown"; readonly reaction: ReactionKind; readonly line: ReactionLine }
 
@@ -55,6 +56,8 @@ export function shownReaction(state: SessionState, head: WelcomeHead, now: numbe
       return shownWelcomeBack(state, state.character.reactions)
     case "idle":
       return shownWaitingLine(state.records, state.character.reactions, state.nextTurnId)
+    case "accepted":
+      return WRITING_REACTION
     case "none":
       return NO_SHOWN_REACTION
     default:
@@ -141,7 +144,10 @@ function reactionLineOf({ text, expression }: ReactionLine): ReactionLine {
   return { text, expression }
 }
 
-function reactionKindOf(state: SessionState, now: number): ReactionKind | "welcome-back" | "none" {
+function reactionKindOf(
+  state: SessionState,
+  now: number,
+): ReactionKind | "accepted" | "welcome-back" | "none" {
   if (state.apiTrouble.kind === "retrying") {
     return "retrying"
   }

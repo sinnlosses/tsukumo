@@ -15,7 +15,7 @@ const ELAPSED_MS = 60_000
 const WAITING_ELAPSED_MS = WAITING_LINE_DELAY_MS + ELAPSED_MS
 
 describe("機械の出来事 → キャラビューの反応", () => {
-  it("送った直後は、受けたの反応が出る", async () => {
+  it("送った直後は、文を出さず「…」が出る", async () => {
     const room = await run.open({
       scenario: "character-reaction-accepted",
       scene: "reaction-accepted",
@@ -27,7 +27,7 @@ describe("機械の出来事 → キャラビューの反応", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("speak が届くと、受けたの反応は消えてセリフだけになる", async () => {
+  it("speak が届くと、「…」は消えてセリフだけになる", async () => {
     const room = await run.open({
       scenario: "character-reaction-replaced",
       scene: "reaction-accepted",

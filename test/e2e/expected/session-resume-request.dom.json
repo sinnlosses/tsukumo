@@ -25,8 +25,8 @@
           "tag": "div",
           "attributes": {
             "role": "img",
-            "aria-label": "つくもの精霊（思案）",
-            "data-expression": "thinking",
+            "aria-label": "つくもの精霊（通常）",
+            "data-expression": "default",
             "data-outfit": "heavy",
             "data-motion": "waiting"
           },
@@ -40,11 +40,10 @@
           "tag": "div",
           "attributes": {
             "data-latest": "true",
-            "data-reaction": "accepted"
+            "data-writing": "true"
           },
           "children": [
-            "つくもの精霊",
-            "うん、受け取ったよ。ちょっと見てみるね。"
+            "つくもの精霊"
           ]
         }
       ]

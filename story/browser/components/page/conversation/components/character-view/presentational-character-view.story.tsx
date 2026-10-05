@@ -48,13 +48,13 @@ export const Writing = {
   },
 } satisfies Story
 
-/** 依頼を受けた直後の反応（パックに書いた1行）。 */
+/** API の呼び直しを待っているときの反応（パックに書いた1行）。 */
 export const Reacting = {
   args: {
     expression: "thinking",
     portraitUrl: characterAssetPath("tsukumo-spirit", "thinking.svg", undefined),
     speeches: [],
-    reaction: { kind: "shown", reaction: "accepted", text: "うん、受け取ったよ（架空）。" },
+    reaction: { kind: "shown", reaction: "retrying", text: "もう一回やってみるね（架空）。" },
   },
 } satisfies Story
 
