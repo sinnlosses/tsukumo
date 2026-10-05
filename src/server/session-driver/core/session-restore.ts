@@ -107,9 +107,15 @@ function messageTime(message: unknown): number | undefined {
 /**
  * `user` のメッセージから利用者の依頼の文面を取り出す。
  * ツールの結果（`tool_result`）は依頼ではないので undefined を返し、呼び出し側が {@link toSessionEvents} 側の変換に回す。
+ * `is_meta` が真のメッセージは仕掛けが差し込んだもので（実測: 別のエージェントからの伝言とその前後の断り書き、文脈を畳んだあとの要約）、タグの外にも定型の文面を持つので、丸ごと依頼にしない。
  */
 function requestText(message: unknown): string | undefined {
-  if (!isPlainObject(message) || message.type !== "user" || !isPlainObject(message.message)) {
+  if (
+    !isPlainObject(message) ||
+    message.type !== "user" ||
+    message.is_meta === true ||
+    !isPlainObject(message.message)
+  ) {
     return undefined
   }
 
