@@ -8,7 +8,7 @@
 //
 // 開閉は `usePopover` に任せ、開閉のたびに色の注意書きを消す。
 
-import type { RefCallback, RefObject } from "react"
+import { useState, type RefCallback, type RefObject } from "react"
 
 import { isEffortLevel, isModelAlias, type ModelAlias } from "../../../../../shared/command.ts"
 import {
@@ -19,6 +19,7 @@ import {
 import { resolveEffortSelect, type EffortSelect } from "../../../../domain/effort-label.ts"
 import { usePopover } from "../../../../hooks/use-popover.ts"
 import { useSession } from "../../../../stores/session.ts"
+import { isTaskOperationValue, type TaskOperationValue } from "../domain/task-operation-label.ts"
 import {
   isVisitToggleValue,
   visitToggleValueOf,
@@ -57,6 +58,25 @@ export type ScreenNavSettingsVisit = {
   readonly onChange: (value: string) => void
 }
 
+/**
+ * プロジェクトの設定の操作子。
+ * タスク運用の「使う」は、主ブランチなどを確かめてから書くので、選ぶとダイアログを開く（黙って書かない）。
+ * 設定ファイルが読めないときは切り替えを押せず、直すのはダイアログから。
+ */
+export type ScreenNavSettingsProject = {
+  readonly tasks: {
+    readonly value: TaskOperationValue
+    readonly disabled: boolean
+    readonly title: string | undefined
+    readonly onChange: (value: string) => void
+  }
+  readonly onOpenDialog: () => void
+  readonly dialog: {
+    readonly open: boolean
+    readonly onClose: () => void
+  }
+}
+
 export type ScreenNavSettings = {
   readonly open: boolean
   readonly onToggle: () => void
@@ -65,6 +85,7 @@ export type ScreenNavSettings = {
   readonly sessionDefault: ScreenNavSettingsSessionDefault
   readonly revealSpeed: ScreenNavSettingsRevealSpeed
   readonly visit: ScreenNavSettingsVisit
+  readonly project: ScreenNavSettingsProject
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
   readonly onReset: () => void
@@ -81,12 +102,19 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
   const sessionDefault = useSession((session) => session.state.sessionDefault)
   const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
   const visitEnabled = useSession((session) => session.state.visitEnabled)
+  const tasksKind = useSession((session) => session.state.tasks.kind)
+  const [dialogOpen, setDialogOpen] = useState(false)
   const color = useAppearanceColor()
   const revealSpeed = useRevealSpeedSetting()
-  const { open, onToggle, toggleRef } = usePopover({
+  const { open, onToggle, close, toggleRef } = usePopover({
     rootRef: navRef,
     onReset: color.clearNotice,
   })
+
+  function openDialog(): void {
+    close()
+    setDialogOpen(true)
+  }
 
   /** 3つで1組なので、変えた1つに、ほかの2つはいまの値を写して送る。 */
   function sendSessionDefault(change: Partial<SessionDefault>): void {
@@ -135,6 +163,33 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
         if (isVisitToggleValue(value)) {
           dispatch.visit.setEnabled({ enabled: value === "on" })
         }
+      },
+    },
+    project: {
+      tasks: {
+        value: tasksKind === "off" ? "off" : "use",
+        disabled: tasksKind === "settings-invalid",
+        title:
+          tasksKind === "settings-invalid"
+            ? "設定ファイルが読めない。「プロジェクトの設定を開く」から直す"
+            : undefined,
+        onChange: (value) => {
+          if (!isTaskOperationValue(value)) {
+            return
+          }
+          if (value === "off" && tasksKind !== "off") {
+            void dispatch.projectSettings.save("off")
+          } else if (value === "use" && tasksKind === "off") {
+            openDialog()
+          }
+        },
+      },
+      onOpenDialog: openDialog,
+      dialog: {
+        open: dialogOpen,
+        onClose: () => {
+          setDialogOpen(false)
+        },
       },
     },
     toggleRef,

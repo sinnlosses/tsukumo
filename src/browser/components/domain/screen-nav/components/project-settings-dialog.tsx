@@ -1,5 +1,5 @@
 // プロジェクトの設定（起動先の `.tsukumo/project.json`）を書くダイアログ。
-// サイドバーのタスクの節の見出しの歯車から開く。
+// 帯の右端の歯車のポップオーバーの「プロジェクト」の行から開く。
 // 説明の文を置かず、見た目で伝える: 見出しの横に書き先のパス、推し量った値の欄は点線と薄い字、頼む文面の `{id}` は差し色の札、読めないときは赤い札。
 
 import clsx from "clsx"
@@ -236,7 +236,10 @@ function runPromptParts(value: string): readonly RunPromptPart[] {
   return value
     .split(/(\{id\})/)
     .filter((text) => text !== "")
-    .reduce<{ readonly offset: number; readonly parts: readonly RunPromptPart[] }>(
+    .reduce<{
+      readonly offset: number
+      readonly parts: readonly RunPromptPart[]
+    }>(
       (acc, text) => ({
         offset: acc.offset + text.length,
         parts: [...acc.parts, { offset: acc.offset, text, token: text === RUN_PROMPT_ID_TOKEN }],

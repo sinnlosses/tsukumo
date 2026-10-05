@@ -16,7 +16,7 @@ import type {
   CharacterEdit,
 } from "../src/shared/contract/character-pack.ts"
 import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
-import type { TaskSettings } from "../src/shared/repository/project-settings.ts"
+import type { ProjectTasks } from "../src/shared/repository/project-settings.ts"
 import type { PromptImage } from "../src/shared/session-driver/prompt-image.ts"
 import type { SessionDefault } from "../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../src/shared/session/session-event.ts"
@@ -116,7 +116,7 @@ function createRecordingPorts(
   const rememberedVisitEnabled: boolean[] = []
   const forgottenLines: string[] = []
   const openedFiles: string[] = []
-  const savedSettings: TaskSettings[] = []
+  const savedSettings: ProjectTasks[] = []
   const written = (): SessionEvent | undefined =>
     writeResult === "written" ? CHARACTER_EVENT : undefined
   const ports: CommandRouterPorts = {

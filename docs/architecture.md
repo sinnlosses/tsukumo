@@ -327,19 +327,20 @@ plugin/                       セッションに載せる Claude Code のプラ�
 **プロジェクトの設定**（`docs/architecture/adr/0022-three-setting-homes.md`）は、起動先の作業ツリーの
 `.tsukumo/project.json` の1つだけから読む。形は
 `{ "tasks": { "mainBranch": "<ブランチ名>", "runPrompt": "<文面。既定 /next-task {id}>" } }`
-で、検証は `shared/repository/project-settings.ts` の `projectSettingsOf`、読み出しは
+（タスク運用を使わないプロジェクトは `{ "tasks": "off" }`）で、検証は `shared/repository/project-settings.ts` の `projectSettingsOf`、読み出しは
 `server/repository/adapter/project-settings.ts` の `readProjectSettings` の1か所。結果は
-「設定なし（ファイルが無い・`tasks` が無い）・読めない（形が違う）・読めた」の3つで、
+「設定なし（ファイルが無い・`tasks` が無い）・使わない（`tasks` が `"off"`）・読めない（形が違う）・読めた」の4つで、
 起動時に覚えず、タスク一覧の見回りと成果の読み出しのたびに読み直す（画面から書いた値が次に読んだときに効く）。
 以前の版が書いた `"store": "beads"` の欄は受けて読み捨てる（それ以外の値は「読めない」）。
 欄の説明は `README.md`「プロジェクトの設定」。
 
 **タスク一覧の読み元は Beads だけ**（`server/repository/adapter/task-beads-source.ts`。`bd` の課題）。
 見張りの `watchTaskSummary` は、設定が前回と変わった見回りでだけ読み元を選び直し、設定が読めないときは
-決まった結果（`settings-invalid`）を返す読み元（`task-source.ts` の `fixedTaskSource`）を置く。設定が無いときも
+決まった結果（`settings-invalid`）を、使わないときは `off` を返す読み元（`task-source.ts` の `fixedTaskSource`。どちらも Beads を読まない）を置く。設定が無いときも
 Beads を試しに読み、`.beads` が無ければ「不明」になる（値を推し量るのではなく、読めるかを試すだけ）。
 前回知らせたものと同じ結果は知らせない。画面は `settings-invalid` ならサイドバーのタスクの節の中に
-「⚠ 読めない」、`unknown` なら「不明」を出す。設定を書くダイアログはタスクの節の見出しの歯車から開く。
+「⚠ 読めない」、`unknown` なら「不明」を出し、`off` ならタスクの節ごと出さない（迎える口の札とおすすめも `unknown` と同じ扱いで出さない）。
+設定を書くダイアログは帯の右端の歯車のポップオーバーの「プロジェクト」の行から開く。
 設定を書く画面（`docs/architecture/screen-design.md` 13.6）の下書きは
 `repository.projectSettingsDraft`（`/rpc`）で読み、保存は `projectSettings.save`（`/ws`）で書く。下書きの
 推し量り（`origin/HEAD`）は画面の初期値にだけ使い、見張りは読まない。

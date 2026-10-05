@@ -13,7 +13,7 @@ import {
   type ProjectSettingsDraft,
   projectSettingsOf,
   type ProjectSettingsRead,
-  type TaskSettings,
+  type ProjectTasks,
 } from "../../../shared/repository/project-settings.ts"
 import {
   projectSettingsDraftOf,
@@ -39,7 +39,7 @@ export async function readProjectSettingsDraft(cwd: string): Promise<ProjectSett
 }
 
 /** `.tsukumo/` が無ければ作って書く。書けたかどうかを返す（例外を投げない）。 */
-export async function writeProjectSettings(cwd: string, tasks: TaskSettings): Promise<boolean> {
+export async function writeProjectSettings(cwd: string, tasks: ProjectTasks): Promise<boolean> {
   const path = join(cwd, PROJECT_SETTINGS_PATH)
   try {
     await mkdir(dirname(path), { recursive: true })

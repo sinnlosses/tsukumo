@@ -9,7 +9,6 @@ import {
   Plus,
   RefreshCw,
   RotateCcw,
-  Settings,
   Trash2,
   Upload,
 } from "lucide-react"
@@ -53,11 +52,6 @@ export function ArrowRightIcon(): ReactElement {
 /** 一覧から選ぶ（行の並び）。 */
 export function ListIcon(): ReactElement {
   return <List {...ICON_ATTRIBUTES} />
-}
-
-/** 設定を開く（歯車）。 */
-export function SettingsIcon(): ReactElement {
-  return <Settings {...ICON_ATTRIBUTES} />
 }
 
 /** 前のやり取りへ戻る（左回りの矢印）。 */

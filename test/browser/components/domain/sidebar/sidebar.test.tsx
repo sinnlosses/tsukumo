@@ -53,6 +53,21 @@ describe("Sidebar の下端の帯", () => {
   })
 })
 
+describe("Sidebar のタスクの節", () => {
+  it("タスク運用を使わないプロジェクトでは、節ごと出さない", () => {
+    renderSidebar({ tasks: { kind: "off" } })
+
+    expect(screen.queryByRole("region", { name: "タスク" })).toBeNull()
+  })
+
+  it("使わないと決めていなければ節を出し、見出しに歯車は無い", () => {
+    renderSidebar({})
+
+    const section = screen.getByRole("region", { name: "タスク" })
+    expect(section.querySelector('button[aria-label="プロジェクトの設定"]')).toBeNull()
+  })
+})
+
 const RUNNING_SESSION: SessionState["session"] = {
   kind: "running",
   sessionId: "s-fixture",

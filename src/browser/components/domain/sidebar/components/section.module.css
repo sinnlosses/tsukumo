@@ -61,16 +61,3 @@
   padding-inline: 0.5rem;
   margin-inline-end: -0.5rem;
 }
-/* 見出しの右端の歯車。箱だけ（置き方）で、顔は `<Button variant="ghost">` が持つ。
-   字の基線に揃えると絵が浮くので、自分だけ縦の中央に置く。 */
-.sidebar-block-settings {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-self: center;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  margin-inline-end: -0.4rem;
-  border-radius: 0.375rem;
-}

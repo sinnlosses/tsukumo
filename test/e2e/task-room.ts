@@ -288,15 +288,21 @@ export async function writeWelcomeTasks(room: ScenarioRoom): Promise<void> {
 
 /**
  * プロジェクトの設定を画面から書く足場。未着手の1件を置き、設定は置かない（`missing`）か、
- * 壊れた中身で置く（`invalid`。課題より先に置き、一覧が一度も届かないようにする）。
+ * 壊れた中身で置く（`invalid`。課題より先に置き、一覧が一度も届かないようにする）か、
+ * 「使わない」を置く（`off`。課題は置かない）。
  */
 export async function openProjectSettingsRoom(
   run: ScenarioRun,
   scenario: string,
   domRoots: readonly DomRootName[],
-  settings: "missing" | "invalid",
+  settings: "missing" | "invalid" | "off",
 ): Promise<ScenarioRoom> {
   const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
+  if (settings === "off") {
+    writeProjectSettingsContent(room.cwd, '{ "tasks": "off" }')
+    await room.waitForEvent("tasks-changed")
+    return room
+  }
   const tasks = [task("T-001", "架空のタスク（未着手）", "todo")]
   if (settings === "missing") {
     await placeTasks(room, tasks)

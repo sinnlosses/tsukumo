@@ -53,6 +53,11 @@ describe("writeProjectSettings", () => {
     expect(await readProjectSettings(root())).toEqual({ kind: "read", tasks })
   })
 
+  it('"off" を書き、readProjectSettings で読み戻せる', async () => {
+    expect(await writeProjectSettings(root(), "off")).toBe(true)
+    expect(await readProjectSettings(root())).toEqual({ kind: "off" })
+  })
+
   it("読めない中身を上書きする", async () => {
     writeProjectSettingsContent(root(), "{")
 

@@ -36,6 +36,7 @@ export type TaskLocation =
 /**
  * タスクの一覧が読めているかどうか。
  * - `settings-invalid`: プロジェクトの設定が読めない（JSON が壊れている・形が違う）
+ * - `off`: プロジェクトの設定が「タスク運用を使わない」（`tasks: "off"`）。Beads は読まない
  * - `unknown`: 読めない（`.beads` が無い・`bd` が読めない）か、まだ届いていない
  * - `known`: 読めた
  *
@@ -44,6 +45,7 @@ export type TaskLocation =
  */
 export type TaskSummaryResult =
   | { readonly kind: "settings-invalid" }
+  | { readonly kind: "off" }
   | { readonly kind: "unknown" }
   | {
       readonly kind: "known"

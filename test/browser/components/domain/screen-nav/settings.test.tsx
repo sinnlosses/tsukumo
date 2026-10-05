@@ -159,7 +159,7 @@ describe("設定の歯車（帯の右端）", () => {
     expect(document.activeElement).toBe(document.body)
   })
 
-  it("地・領域・字の色の3つ、新しいセッションの既定の3つ、演出の速さの1つ、訪問の1つを出す", () => {
+  it("地・領域・字の色の3つ、新しいセッションの既定の3つ、演出の速さの1つ、訪問の1つ、タスク運用の1つを出す", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
@@ -176,6 +176,7 @@ describe("設定の歯車（帯の右端）", () => {
       "許可モード",
       "速さ",
       "客の出入り",
+      "タスク運用",
     ])
   })
 
@@ -471,5 +472,44 @@ describe("設定の歯車（訪問）", () => {
     fireEvent.change(defaultSelect("客の出入り"), { target: { value: "off" } })
 
     expect(sent).toEqual([{ procedure: "visit.setEnabled", enabled: false }])
+  })
+})
+
+describe("設定の歯車（プロジェクト）", () => {
+  it("タスク運用は既定で「使う」", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    expect(defaultSelect("タスク運用").value).toBe("use")
+  })
+
+  it("設定ファイルが読めないと、タスク運用の切り替えは押せない", () => {
+    renderScreenNav({ tasks: { kind: "settings-invalid" } })
+    fireEvent.click(gear())
+
+    expect(defaultSelect("タスク運用").disabled).toBe(true)
+  })
+
+  it("「使わない」を選ぶと projectSettings.save を送る", () => {
+    const sent: unknown[] = []
+    renderScreenNav({}, (command) => sent.push(command))
+    fireEvent.click(gear())
+
+    fireEvent.change(defaultSelect("タスク運用"), { target: { value: "off" } })
+
+    expect(sent).toHaveLength(1)
+    expect(sent[0]).toMatchObject({ procedure: "projectSettings.save" })
+  })
+
+  it("off のとき「使わない」を出し、「使う」を選ぶと何も書かずダイアログを開く", () => {
+    const sent: unknown[] = []
+    renderScreenNav({ tasks: { kind: "off" } }, (command) => sent.push(command))
+    fireEvent.click(gear())
+    expect(defaultSelect("タスク運用").value).toBe("off")
+
+    fireEvent.change(defaultSelect("タスク運用"), { target: { value: "use" } })
+
+    expect(sent).toEqual([])
+    expect(document.querySelector("dialog")).not.toBeNull()
   })
 })

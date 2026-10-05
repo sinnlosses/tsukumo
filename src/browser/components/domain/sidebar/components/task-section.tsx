@@ -1,7 +1,6 @@
 // サイドバーのまん中の区画（タスク一覧）ひとまとまり。
 // 区画の枠（`SidebarSection`）はサイドバーが持ち、中身の一覧はタスク一覧の機能から借りる。
 // 見出しの「一覧を見る」はタスクのモーダルを開くよう頼むだけで、モーダルそのものは会話の画面が置く（`useTaskBoardRequest`）。
-// 見出しの歯車はプロジェクトの設定のダイアログを開くよう頼むだけで、ダイアログはここに置かない。
 //
 // タスクの購読と、チップで絞っているかどうかの state はここが持つ。
 // `<Layout>` へ上げると木の頂点がタスクを購読することになり、タスクが変わるたびに全領域が描き直される。
@@ -20,15 +19,10 @@ import {
 import { TaskList } from "../../../../features/task-board/task-list.tsx"
 import { useSession } from "../../../../stores/session.ts"
 import { useTaskBoardRequest } from "../../../../stores/task-board-request.ts"
-import { PROJECT_SETTINGS_LABEL } from "./project-settings-dialog.tsx"
 import { SidebarSection } from "./section.tsx"
 import styles from "./task-section.module.css"
 
-export type TaskSectionProps = {
-  readonly onOpenSettings: () => void
-}
-
-export function TaskSection(props: TaskSectionProps): ReactElement {
+export function TaskSection(): ReactElement {
   const tasks = useSession((session) => session.state.tasks)
   const openList = useTaskBoardRequest((state) => state.openList)
   const [selectedStatus, setSelectedStatus] = useState<TaskListFilterStatus>("all")
@@ -38,7 +32,6 @@ export function TaskSection(props: TaskSectionProps): ReactElement {
       title="タスク"
       extraClass={styles["sidebar-block-tasks"]}
       action={{ label: "一覧を見る", onAction: openList }}
-      settings={{ label: PROJECT_SETTINGS_LABEL, onAction: props.onOpenSettings }}
       filters={
         tasks.kind === "known" && (
           <TaskCountChipList

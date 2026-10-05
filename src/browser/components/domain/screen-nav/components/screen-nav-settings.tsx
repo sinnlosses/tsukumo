@@ -18,9 +18,11 @@ import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Select } from "../../../ui/select/select.tsx"
 import { Text } from "../../../ui/text/text.tsx"
+import { TASK_OPERATION_LABELS } from "../domain/task-operation-label.ts"
 import { VISIT_TOGGLE_LABELS } from "../domain/visit-toggle-label.ts"
 import type { ScreenNavSettings } from "../hooks/use-settings.ts"
 import shellStyles from "../screen-nav.module.css"
+import { PROJECT_SETTINGS_LABEL } from "./project-settings-dialog.tsx"
 import styles from "./screen-nav-settings.module.css"
 
 export type ScreenNavSettingsProps = {
@@ -38,9 +40,20 @@ const PERMISSION_MODE_OPTIONS = PERMISSION_MODE_LABELS.filter(([value]) =>
   isSessionDefaultPermissionMode(value),
 ).map(([value, label]) => ({ value, label }))
 
-const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]) => ({ value, label }))
+const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]) => ({
+  value,
+  label,
+}))
 
-const VISIT_TOGGLE_OPTIONS = VISIT_TOGGLE_LABELS.map(([value, label]) => ({ value, label }))
+const VISIT_TOGGLE_OPTIONS = VISIT_TOGGLE_LABELS.map(([value, label]) => ({
+  value,
+  label,
+}))
+
+const TASK_OPERATION_OPTIONS = TASK_OPERATION_LABELS.map(([value, label]) => ({
+  value,
+  label,
+}))
 
 export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
@@ -303,6 +316,63 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               onClick={settings.onReset}
             >
               既定に戻す
+            </Button>
+          </HStack>
+          <Text
+            element="p"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["screen-nav-settings-heading"]}
+          >
+            プロジェクト
+          </Text>
+          <HStack
+            element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
+            gap="lg"
+            align="center"
+            justify="between"
+            wrap="nowrap"
+            className={styles["screen-nav-settings-row"]}
+          >
+            <label htmlFor={`${fieldId}-task-operation`}>タスク運用</label>
+            <Select
+              id={`${fieldId}-task-operation`}
+              ariaLabel="タスク運用の使う・使わない"
+              frameClassName={styles["screen-nav-settings-select-frame"]}
+              className={styles["screen-nav-settings-select"]}
+              value={settings.project.tasks.value}
+              disabled={settings.project.tasks.disabled}
+              title={settings.project.tasks.title}
+              options={TASK_OPERATION_OPTIONS}
+              onChange={settings.project.tasks.onChange}
+            />
+          </HStack>
+          <HStack
+            element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
+            gap="lg"
+            align="center"
+            justify="between"
+            wrap="nowrap"
+            className={styles["screen-nav-settings-row"]}
+          >
+            <Button
+              variant="link"
+              size="label"
+              pressed="none"
+              disabled={false}
+              ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
+              ariaHasPopup="dialog"
+              title={undefined}
+              className={styles["screen-nav-settings-reset"]}
+              onClick={settings.project.onOpenDialog}
+            >
+              {PROJECT_SETTINGS_LABEL}を開く
             </Button>
           </HStack>
         </div>

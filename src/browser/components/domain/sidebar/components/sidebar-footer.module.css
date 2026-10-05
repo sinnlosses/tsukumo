@@ -4,6 +4,7 @@
 
    左右と下の負のマージンは `.layout-region` の内側の余白（`--region-padding`）を消し切るちょうどの値で、帯の縁は領域の枠の内側にぴたりと着く（角の丸めは領域の `overflow` が切る）。
    伸び縮みしない（`flex: 0 0 auto`）ので、余った高さはすべてタスクの区画へ行く。
+   タスクの区画が無いとき（タスク運用を使わない）は、上の余白（`auto`）が余りを受けて帯を下端に置く。
    `position: relative` は、押すと開く詳しい面（`.sidebar-footer-detail`）を帯の真上に重ねる基準。 */
 .sidebar-footer {
   position: relative;
@@ -12,7 +13,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem;
-  margin: 0 calc(-1 * var(--region-padding)) calc(-1 * var(--region-padding));
+  margin: auto calc(-1 * var(--region-padding)) calc(-1 * var(--region-padding));
   padding: 0.625rem 0.75rem;
   border-top: 1px solid var(--rule);
   background: color-mix(in srgb, var(--ground), var(--surface) 50%);

@@ -2,12 +2,12 @@
 
 import type { projectSettingsContract } from "../../../shared/contract/project-settings.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import type { TaskSettings } from "../../../shared/repository/project-settings.ts"
+import type { ProjectTasks } from "../../../shared/repository/project-settings.ts"
 import type { FeatureCommandTable } from "../../core/command-receiver.ts"
 
 export type ProjectSettingsCommandPorts = {
   /** 起動先の `.tsukumo/project.json` を書き、書けたかどうかを返す。 */
-  readonly save: (tasks: TaskSettings) => Promise<boolean>
+  readonly save: (tasks: ProjectTasks) => Promise<boolean>
 }
 
 export function projectSettingsCommands(

@@ -60,7 +60,7 @@ export function createRecommender(ports: RecommenderPorts): Recommender {
   let closed = false
   return {
     observe: (tasks) => {
-      if (closed || tasks.kind === "unknown") {
+      if (closed || tasks.kind === "unknown" || tasks.kind === "off") {
         return
       }
       const candidates = recommendationCandidates(tasks)

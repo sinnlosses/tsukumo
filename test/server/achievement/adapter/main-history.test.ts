@@ -288,6 +288,19 @@ describe("readAchievement", () => {
     expect(achievement).toMatchObject({ commitCount: 2, doneTasks: { kind: "unknown" } })
   })
 
+  it("タスク運用を使わない設定のリポジトリでは、いまのブランチでコミットを数え、タスクは数えない", async () => {
+    writeProjectSettingsContent(repository, '{ "tasks": "off" }')
+    await commitAt(repository, "2026-09-23", "10:00", "main.txt")
+    await git(repository, "checkout", "-q", "-b", "feature")
+    await commitAt(repository, "2026-09-23", "11:00", "feature.txt")
+
+    const achievement = known(
+      await readAchievement(repository, "2026-09-23", "2026-09-24", createAchievementCommitCache()),
+    )
+
+    expect(achievement).toMatchObject({ commitCount: 2, doneTasks: { kind: "unknown" } })
+  })
+
   it("プロジェクトの設定が壊れているリポジトリでは「不明」", async () => {
     writeProjectSettingsContent(repository, "{")
     await commitAt(repository, "2026-09-23", "10:00", "README.md")

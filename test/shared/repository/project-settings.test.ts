@@ -38,10 +38,15 @@ describe("projectSettingsOf", () => {
     expect(projectSettingsOf("{}")).toEqual({ kind: "none" })
   })
 
+  it('tasks が "off" ならタスク運用を使わない', () => {
+    expect(projectSettingsOf('{ "tasks": "off" }')).toEqual({ kind: "off" })
+  })
+
   it.each([
     ["壊れた JSON", '{ "tasks": '],
     ["オブジェクトでない", "[]"],
     ["Beads でない置き場", '{ "tasks": { "store": "files", "mainBranch": "main" } }'],
+    ['"off" 以外の文字列', '{ "tasks": "on" }'],
     ["主ブランチが無い", '{ "tasks": { "runPrompt": "/work {id}" } }'],
     ["主ブランチが空", '{ "tasks": { "mainBranch": "" } }'],
     ["tasks の中の知らない鍵", '{ "tasks": { "mainBranch": "main", "x": 1 } }'],

@@ -127,6 +127,7 @@ const DOM_ROOT_SELECTORS = {
   dispatch: '[data-region="dispatch"]',
   "task-section": 'section[aria-label="タスク"]',
   "task-board": 'dialog[aria-label="タスク"]',
+  "project-settings": 'dialog[aria-label="プロジェクトの設定"]',
   "task-run-confirm": 'dialog[aria-label="タスクの実行"]',
   "session-switcher": 'dialog[aria-label="セッションを切り替える"]',
   "speech-log": 'dialog[aria-label="セリフのログ"]',

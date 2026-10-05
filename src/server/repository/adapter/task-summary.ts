@@ -3,6 +3,7 @@
 // 読み元は設定が前回と変わった見回りでだけ選び直す（読み元が覚えている前回の読みを捨てないため）。
 //
 // - 設定が読めない: 「設定が読めない」。Beads を読まない
+// - `tasks: "off"`: 「使わない」。Beads を読まない
 // - それ以外（設定が無いときも）: `createTaskBeadsSource`（`bd` の課題。`.beads` が無ければ「不明」）
 //
 // 見回りは `setWatching(true)` のあいだだけ回る。起こした時点の1回は、画面が無くても読む。
@@ -176,8 +177,19 @@ function createTaskSourceChooser(
 ): (settings: ProjectSettingsRead) => TaskSource {
   const readBeadsStamp = ports.createBeadsStampReader(cwd)
 
-  return (settings) =>
-    settings.kind === "invalid"
-      ? fixedTaskSource({ kind: "settings-invalid" })
-      : createTaskBeadsSource(cwd, { readBeadsIssues: ports.readBeadsIssues, readBeadsStamp })
+  const beads = createTaskBeadsSource(cwd, {
+    readBeadsIssues: ports.readBeadsIssues,
+    readBeadsStamp,
+  })
+  return (settings) => {
+    switch (settings.kind) {
+      case "invalid":
+        return fixedTaskSource({ kind: "settings-invalid" })
+      case "off":
+        return fixedTaskSource({ kind: "off" })
+      case "none":
+      case "read":
+        return beads
+    }
+  }
 }

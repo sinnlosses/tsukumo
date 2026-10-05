@@ -359,6 +359,15 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     expect(changes).toMatchObject([{ kind: "known", runPrompt: "/next-task {id}" }])
   })
 
+  it("設定が「使わない」なら、Beads を読まずに「使わない」を届ける", async () => {
+    const { fake, changes, count } = startFake({ settings: { kind: "off" } })
+    fake.setWatching(true)
+    await settle()
+
+    expect(count("bd list")).toBe(0)
+    expect(changes).toEqual([{ kind: "off" }])
+  })
+
   it("設定が読めなければ、Beads を読まずに「設定が読めない」を届ける", async () => {
     const { fake, changes, count } = startFake({ settings: { kind: "invalid" } })
     fake.setWatching(true)

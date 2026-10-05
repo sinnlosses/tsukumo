@@ -151,4 +151,13 @@ describe("createRecommender", () => {
     expect(harness.queries).toHaveLength(0)
     expect(harness.emitted).toEqual([])
   })
+
+  it("タスク運用を使わないときも何もしない", () => {
+    const harness = createHarness()
+
+    harness.recommender.observe({ kind: "off" })
+
+    expect(harness.queries).toHaveLength(0)
+    expect(harness.emitted).toEqual([])
+  })
 })

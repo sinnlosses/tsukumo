@@ -11,6 +11,7 @@
 import type { ReactElement } from "react"
 
 import { CurrentWorkPill } from "../../../features/current-work/components/current-work-pill.tsx"
+import { ProjectSettingsDialog } from "./components/project-settings-dialog.tsx"
 import { ScreenNavCharacterPicker } from "./components/screen-nav-character-picker.tsx"
 import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
@@ -37,29 +38,36 @@ export function PresentationalScreenNav({
   ref,
 }: PresentationalScreenNavProps): ReactElement {
   return (
-    <nav className={styles["screen-nav"]} aria-label="画面" data-screen={current} ref={ref}>
-      <div className={styles["screen-nav-identity"]}>
-        <ScreenNavCharacterPicker picker={parts.character} />
-        <ScreenNavSessionTag tag={parts.sessionTag} onOpened={parts.onSelect} />
-      </div>
-      <ScreenNavChatModeToggle chatMode={parts.chatMode} />
-      <span className={styles["screen-nav-divider"]} aria-hidden="true" />
-      <div className={styles["screen-nav-gates"]}>
-        {parts.gates.map((gate) => (
-          <ScreenNavGate key={gate.screen} gate={gate} onSelect={parts.onSelect} />
-        ))}
-      </div>
-      {current !== "conversation" && (
-        <>
-          <div className={styles["screen-nav-work-slot"]}>
-            <CurrentWorkPill work={parts.work} variant="dropdown" />
-          </div>
-          <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
-        </>
-      )}
-      <ScreenNavSettingsGear settings={parts.settings} />
-      <ScreenNavMenu parts={parts} menu={menu} />
-      <SessionSwitcher switcher={switcher} character={parts.character.face} />
-    </nav>
+    <>
+      <nav className={styles["screen-nav"]} aria-label="画面" data-screen={current} ref={ref}>
+        <div className={styles["screen-nav-identity"]}>
+          <ScreenNavCharacterPicker picker={parts.character} />
+          <ScreenNavSessionTag tag={parts.sessionTag} onOpened={parts.onSelect} />
+        </div>
+        <ScreenNavChatModeToggle chatMode={parts.chatMode} />
+        <span className={styles["screen-nav-divider"]} aria-hidden="true" />
+        <div className={styles["screen-nav-gates"]}>
+          {parts.gates.map((gate) => (
+            <ScreenNavGate key={gate.screen} gate={gate} onSelect={parts.onSelect} />
+          ))}
+        </div>
+        {current !== "conversation" && (
+          <>
+            <div className={styles["screen-nav-work-slot"]}>
+              <CurrentWorkPill work={parts.work} variant="dropdown" />
+            </div>
+            <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
+          </>
+        )}
+        <ScreenNavSettingsGear settings={parts.settings} />
+        <ScreenNavMenu parts={parts} menu={menu} />
+        <SessionSwitcher switcher={switcher} character={parts.character.face} />
+      </nav>
+      {/* 狭い画面では帯が `display: none` になるので、ダイアログは帯の外に置く。 */}
+      <ProjectSettingsDialog
+        open={parts.settings.project.dialog.open}
+        onClose={parts.settings.project.dialog.onClose}
+      />
+    </>
   )
 }

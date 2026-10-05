@@ -41,6 +41,15 @@ describe("projectSettingsDraftOf", () => {
     })
   })
 
+  it("使わない設定のときも推し量り、使わないことを file に残す", () => {
+    expect(
+      projectSettingsDraftOf({
+        settings: { kind: "off" },
+        originHead: { kind: "found", branch: "trunk" },
+      }),
+    ).toMatchObject({ file: "off", mainBranch: { value: "trunk", inferred: true } })
+  })
+
   it("ファイルが読めれば、その値をそのまま出して推し量らない", () => {
     expect(
       projectSettingsDraftOf({

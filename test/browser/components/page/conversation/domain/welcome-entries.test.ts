@@ -157,6 +157,7 @@ describe("おすすめの札", () => {
 
   it("タスクが読めないときも空の帳面のときも、札は無い", () => {
     expect(welcomeCardsOf([], undefined, undefined, { kind: "unknown" })).toEqual([])
+    expect(welcomeCardsOf([], undefined, undefined, { kind: "off" })).toEqual([])
     expect(welcomeCardsOf([taskCard("X-1", "理由")], undefined, undefined, NO_TASKS)).toEqual([])
   })
 })

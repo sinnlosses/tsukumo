@@ -129,7 +129,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **英語識別子**: `projectSettings`（読み取りは `projectSettingsOf`・型は `ProjectSettingsRead`。`src/shared/repository/project-settings.ts`）
 - **定義**: 起動先のリポジトリで誰が開いても同じ値の組（主ブランチ名・
   「tsukumo に頼む」の送る文面）。置き場は起動先の `.tsukumo/project.json` の1つだけで、
-  tsukumo はそこに書かれた値だけで動く
+  tsukumo はそこに書かれた値だけで動く。`tasks: "off"` はタスク運用を使わないという意味の値
 - **注記**: 環境変数・歯車の設定と並ぶ3つ目の設定の置き場
   （`docs/architecture/adr/0022-three-setting-homes.md`）。ファイルが無くてもタスク一覧は Beads から読み、
   終えたタスクの数は出さない

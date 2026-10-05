@@ -26,20 +26,6 @@
                   "children": [
                     "一覧を見る"
                   ]
-                },
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-disabled": "false",
-                    "aria-label": "プロジェクトの設定",
-                    "aria-haspopup": "dialog",
-                    "type": "button"
-                  },
-                  "children": [
-                    {
-                      "tag": "svg"
-                    }
-                  ]
                 }
               ]
             },

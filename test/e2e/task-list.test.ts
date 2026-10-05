@@ -166,7 +166,7 @@ describe("タスクの一覧", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("設定も .beads も無いと、タスクの節に「不明」を出し、見出しの歯車は残す", async () => {
+  it("設定も .beads も無いと、タスクの節に「不明」を出し、見出しに歯車は無い", async () => {
     const room = await run.open({
       scenario: "task-list-no-beads",
       scene: "none",
@@ -177,7 +177,7 @@ describe("タスクの一覧", () => {
     const section = page.locator('section[aria-label="タスク"]')
     await section.getByText("不明", { exact: true }).waitFor()
 
-    expect(await section.getByRole("button", { name: "プロジェクトの設定" }).count()).toBe(1)
+    expect(await section.getByRole("button", { name: "プロジェクトの設定" }).count()).toBe(0)
     await room.settleAndMatch(ELAPSED_MS)
   })
 
@@ -197,9 +197,14 @@ describe("タスクの一覧", () => {
 })
 
 describe("プロジェクトの設定を画面から書く", () => {
-  it("設定が無くても一覧が出て、見出しの歯車から書くダイアログが開き、下書きの値が並ぶ", async () => {
-    const room = await openProjectSettingsRoom(run, "project-settings-open", ["sidebar"], "missing")
-    await room.page.getByRole("button", { name: "プロジェクトの設定" }).click()
+  it("設定が無くても一覧が出て、帯の歯車から書くダイアログが開き、下書きの値が並ぶ", async () => {
+    const room = await openProjectSettingsRoom(
+      run,
+      "project-settings-open",
+      ["sidebar", "project-settings"],
+      "missing",
+    )
+    await openProjectSettingsFromGear(room)
     const dialog = await projectSettingsDialog(room)
 
     expect(await dialog.getByLabel("主ブランチ").inputValue()).toBe("main")
@@ -209,7 +214,7 @@ describe("プロジェクトの設定を画面から書く", () => {
 
   it("保存すると .tsukumo/project.json に書かれ、頼む文面が一覧に届く", async () => {
     const room = await openProjectSettingsRoom(run, "project-settings-save", [], "missing")
-    await room.page.getByRole("button", { name: "プロジェクトの設定" }).click()
+    await openProjectSettingsFromGear(room)
     const dialog = await projectSettingsDialog(room)
     await dialog.getByLabel("頼む文面").fill("/work {id}")
     await dialog.getByRole("button", { name: "保存" }).click()
@@ -220,10 +225,10 @@ describe("プロジェクトの設定を画面から書く", () => {
     })
   })
 
-  it("設定が読めないと、見出しの歯車から開いた保存の前に上書きを確かめる", async () => {
+  it("設定が読めないと、帯の歯車から開いた保存の前に上書きを確かめる", async () => {
     const room = await openProjectSettingsRoom(run, "project-settings-overwrite", [], "invalid")
     await room.page.getByText("⚠ 読めない", { exact: true }).waitFor()
-    await room.page.getByRole("button", { name: "プロジェクトの設定" }).click()
+    await openProjectSettingsFromGear(room)
     const dialog = await projectSettingsDialog(room)
     await dialog.getByText("読めない", { exact: true }).waitFor()
     await dialog.getByRole("button", { name: "保存" }).click()
@@ -237,7 +242,42 @@ describe("プロジェクトの設定を画面から書く", () => {
       tasks: { mainBranch: "main", runPrompt: "/next-task {id}" },
     })
   })
+
+  it("「使わない」と書いたプロジェクトでは、サイドバーにタスクの節が出ず、歯車で「使う」を選ぶと書くダイアログが開く", async () => {
+    const room = await openProjectSettingsRoom(
+      run,
+      "project-settings-off",
+      ["sidebar", "project-settings"],
+      "off",
+    )
+    expect(await room.page.locator('section[aria-label="タスク"]').count()).toBe(0)
+
+    await openGear(room)
+    await room.page.getByLabel("タスク運用の使う・使わない").selectOption("use")
+    await projectSettingsDialog(room)
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("歯車で「使わない」を選ぶと .tsukumo/project.json に off が書かれ、タスクの節が消える", async () => {
+    const room = await openProjectSettingsRoom(run, "project-settings-turn-off", [], "missing")
+    await openGear(room)
+    await room.page.getByLabel("タスク運用の使う・使わない").selectOption("off")
+
+    await room.page.locator('section[aria-label="タスク"]').waitFor({ state: "detached" })
+    expect(readProjectSettingsFile(room)).toEqual({ tasks: "off" })
+  })
 })
+
+/** 帯の右端の歯車を押して、ポップオーバーを開く。 */
+async function openGear(room: ScenarioRoom): Promise<void> {
+  await room.page.locator('nav[aria-label="画面"] > div > button[aria-label="設定"]').click()
+}
+
+/** 歯車のポップオーバーの「プロジェクトの設定を開く」から、ダイアログを開く。 */
+async function openProjectSettingsFromGear(room: ScenarioRoom): Promise<void> {
+  await openGear(room)
+  await room.page.getByRole("button", { name: "プロジェクトの設定を開く" }).click()
+}
 
 /** 時計を進める1回ぶんと、進める回数の上限（合わせて 1 秒）。 */
 const CLOCK_STEP_MS = 50
