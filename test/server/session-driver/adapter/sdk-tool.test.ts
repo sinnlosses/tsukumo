@@ -218,11 +218,17 @@ describe("recall / recall_episode ツール", () => {
 /** `report` に渡す締めのセリフ（架空）。 */
 const CLOSING = { text: "架空の締めの一言", expression: "default" }
 
+/** `report` に渡す待ちの一言とセッションの要約（架空）。どちらも必須。 */
+const WAITING_LINE = { text: "架空の待ちの一言", expression: "default" }
+const SUMMARY = "架空の要約"
+
 describe("report でターンを閉じる", () => {
   it("通った report の結果にだけ claude/endTurn を付ける", async () => {
     const reply = await callTool(workServer(), "report", {
       conclusion: "架空の結論",
       closing: CLOSING,
+      sessionSummary: SUMMARY,
+      waitingLine: WAITING_LINE,
     })
 
     expect(reply).toEqual({ text: "ok", isError: false, endsTurn: true })
@@ -233,6 +239,8 @@ describe("report でターンを閉じる", () => {
     const reply = await callTool(workServer(), "report", {
       conclusion: "架空の一文目。架空の二文目。架空の三文目。",
       closing: CLOSING,
+      sessionSummary: SUMMARY,
+      waitingLine: WAITING_LINE,
     })
 
     expect(reply.isError).toBe(true)
@@ -246,20 +254,32 @@ describe("report でターンを閉じる", () => {
     expect(reply.endsTurn).toBe(false)
   })
 
-  it("waitingLine を添えた report も通り、選択肢に無い表情の waitingLine は形の検査で落ちる", async () => {
-    const written = await callTool(workServer(), "report", {
+  it("選択肢に無い表情の waitingLine は形の検査で落ちる", async () => {
+    const reply = await callTool(workServer(), "report", {
       conclusion: "架空の結論",
       closing: CLOSING,
-      waitingLine: { text: "架空の待ちの一言", expression: "default" },
-    })
-    const unknownExpression = await callTool(workServer(), "report", {
-      conclusion: "架空の結論",
-      closing: CLOSING,
+      sessionSummary: SUMMARY,
       waitingLine: { text: "架空の待ちの一言", expression: "架空の表情" },
     })
 
-    expect(written).toEqual({ text: "ok", isError: false, endsTurn: true })
-    expect(unknownExpression.isError).toBe(true)
+    expect(reply.isError).toBe(true)
+    expect(reply.endsTurn).toBe(false)
+  })
+
+  it("waitingLine か sessionSummary の無い report は形の検査で落ち、ターンを閉じない", async () => {
+    const noWaitingLine = await callTool(workServer(), "report", {
+      conclusion: "架空の結論",
+      closing: CLOSING,
+      sessionSummary: SUMMARY,
+    })
+    const noSummary = await callTool(workServer(), "report", {
+      conclusion: "架空の結論",
+      closing: CLOSING,
+      waitingLine: WAITING_LINE,
+    })
+
+    expect(noWaitingLine).toMatchObject({ isError: true, endsTurn: false })
+    expect(noSummary).toMatchObject({ isError: true, endsTurn: false })
   })
 
   it("speak はターンを閉じない", async () => {
@@ -412,11 +432,15 @@ describe("report の本文（sections）", () => {
         },
       ],
       closing: CLOSING,
+      sessionSummary: SUMMARY,
+      waitingLine: WAITING_LINE,
     })
     const rejected = await callTool(workServer(), "report", {
       conclusion: "架空の結論",
       sections: [{ blocks: [{ kind: "markdown", markdown: "- 架空の項目" }] }],
       closing: CLOSING,
+      sessionSummary: SUMMARY,
+      waitingLine: WAITING_LINE,
     })
 
     expect(accepted).toEqual({ text: "ok", isError: false, endsTurn: true })
@@ -432,6 +456,8 @@ describe("report の title", () => {
     const reply = await callTool(workServer([], [], titles), "report", {
       conclusion: "架空の結論",
       closing: CLOSING,
+      sessionSummary: SUMMARY,
+      waitingLine: WAITING_LINE,
       title: "架空の題",
     })
 
@@ -445,6 +471,8 @@ describe("report の title", () => {
     const reply = await callTool(workServer([], [], titles), "report", {
       conclusion: "架空の結論",
       closing: CLOSING,
+      sessionSummary: SUMMARY,
+      waitingLine: WAITING_LINE,
     })
 
     expect(reply.isError).toBe(false)
@@ -457,6 +485,8 @@ describe("report の title", () => {
     const reply = await callTool(workServer([], [], titles), "report", {
       conclusion: "架空の一文目。架空の二文目。架空の三文目。",
       closing: CLOSING,
+      sessionSummary: SUMMARY,
+      waitingLine: WAITING_LINE,
       title: "架空の題",
     })
 

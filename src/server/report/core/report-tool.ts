@@ -56,7 +56,7 @@ export const REPORT_CLOSING_DESCRIPTION =
   "レポートの中身を言い直さない。"
 
 /**
- * `report` の任意の `waitingLine` 引数（待ちの一言）の説明。
+ * `report` の `waitingLine` 引数（待ちの一言）の説明。
  * 出す時刻と回数は tsukumo が決める（`waitingLineDueAt`）ので、ここでは何を言うかだけを言う。
  */
 export const REPORT_WAITING_LINE_DESCRIPTION =
@@ -72,8 +72,8 @@ export const REPORT_TITLE_DESCRIPTION =
   "話の中心がはっきりした最初と、大きく変わったときだけ渡す。変える必要が無ければ省く。"
 
 /**
- * `report` の任意の `sessionSummary` 引数の説明。
- * 切り替え画面に出すセッション全体の要約の書き方はここだけが持つ（毎回入れることは `REPORT_NOTATION_PROMPT` が言う）。
+ * `report` の `sessionSummary` 引数の説明。
+ * 切り替え画面に出すセッション全体の要約の書き方はここだけが持つ。
  * 書いた値は transcript の `report` の入力に残り、切り替え画面はそれを読み戻す（tsukumo は別の場所へ書き出さない）。
  */
 export const REPORT_SESSION_SUMMARY_DESCRIPTION =

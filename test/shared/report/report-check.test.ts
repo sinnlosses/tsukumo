@@ -192,6 +192,27 @@ describe("reportChecksMarkdown", () => {
     expect(markdown).not.toContain("\n")
   })
 
+  it("label・figure・detail のバッククォートは外し、command には手を付けない", () => {
+    const markdown = reportChecksMarkdown(
+      [
+        {
+          status: "ng",
+          label: "`pnpm run check` を打った",
+          figure: "`2` 件",
+          command: "echo `date`",
+          detail: "`a.ts` が落ちた",
+        },
+        { status: "ok", label: "`架空` の確認", figure: "", command: "", detail: "" },
+      ],
+      UNMEASURED,
+    )
+
+    expect(markdown).not.toContain("`")
+    expect(markdown).toContain("pnpm run check を打った")
+    expect(markdown).toContain("a.ts が落ちた")
+    expect(markdown).toContain('title="架空 の確認"')
+  })
+
   it("空なら何も描かない", () => {
     expect(reportChecksMarkdown([], UNMEASURED)).toBe("")
   })

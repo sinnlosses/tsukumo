@@ -62,12 +62,13 @@ type ReportChecksVerdict = ReportCheckStatus
  * モデルの文字列は HTML として逃がし、改行は空白に畳む（HTML の塊が空行で切れないように）。
  */
 export function reportChecksMarkdown(
-  checks: readonly ReportCheck[],
+  rawChecks: readonly ReportCheck[],
   commandDuration: (command: string) => MeasuredTime,
 ): string {
-  if (checks.length === 0) {
+  if (rawChecks.length === 0) {
     return ""
   }
+  const checks = rawChecks.map(withoutBackticks)
   const okCount = checks.filter((check) => check.status === "ok").length
   const ngCount = checks.filter((check) => check.status === "ng").length
   const unverifiedCount = checks.filter((check) => check.status === "unverified").length
@@ -84,6 +85,16 @@ export function reportChecksMarkdown(
     checksTileMarkdown(verdict, okCount, checks.length, ngCount, unverifiedCount) +
     `<div class="checks-body">${body}</div></div>`
   )
+}
+
+/** `label`・`figure`・`detail` の素の文字に記法は使えないので、バッククォートを落とす（`command` は打った文字列のまま）。 */
+function withoutBackticks(check: ReportCheck): ReportCheck {
+  return {
+    ...check,
+    label: check.label.replaceAll("`", ""),
+    figure: check.figure.replaceAll("`", ""),
+    detail: check.detail.replaceAll("`", ""),
+  }
 }
 
 /** 判定の札。記号・「ok 件数 / 全件数」と、ng / unverified のときだけひとこと（k つ落ちた / k つ未確認）。 */

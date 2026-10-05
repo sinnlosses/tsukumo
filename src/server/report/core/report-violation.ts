@@ -14,7 +14,7 @@ import {
   type ReportSection,
 } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
-import { sentenceCount } from "../../../shared/report/sentence-count.ts"
+import { leadingSentences, sentenceCount } from "../../../shared/report/sentence-count.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
 
 /** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
@@ -72,6 +72,18 @@ export type ReportViolation =
     }
   /** `path` を付けた `code` の塊が、そのファイルの中身と一致しない。`paths` は一致しなかった `path`（重複無し）。 */
   | { readonly kind: "code-mismatch"; readonly count: number; readonly paths: readonly string[] }
+  /** `conclusion` の1文目が全角50字を超える（1か0）。 */
+  | { readonly kind: "long-first-sentence"; readonly count: number }
+  /** 節の `heading` が30字を超える、または疑問文（末尾が `?`・`？`）。`count` は該当の節の数。 */
+  | { readonly kind: "bad-heading"; readonly count: number }
+  /** `checks` の `figure` が `数 / 数` の分数に見える。`count` は該当の項目の数。 */
+  | { readonly kind: "fraction-figure"; readonly count: number }
+  /** `text` の塊か表のセルに ` → ` がある（インラインコードの中は除く）。`count` は該当の塊の数。 */
+  | { readonly kind: "arrow-in-prose"; readonly count: number }
+  /** `flow` でない `list` で、`label` の無い項目の `text` が「名前: 説明」で始まる。`count` は該当の項目の数。 */
+  | { readonly kind: "label-in-item"; readonly count: number }
+  /** `text` の塊か節の見出しが、仮名も漢字も無く英語の語が並ぶ地の文になっている。`count` は該当の数。 */
+  | { readonly kind: "non-japanese"; readonly count: number }
 
 /** 逃げ道の外側（HTML の容れ物の中でないところ）に出た記法の種類（重複無し）。 */
 export function notationsInSections(
@@ -198,6 +210,39 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       count: mismatchedCodeBlocks.length,
       paths: [...new Set(mismatchedCodeBlocks.map((block) => block.path))],
     },
+    {
+      kind: "long-first-sentence",
+      count:
+        [
+          ...leadingSentences(report.conclusion, 1)
+            .trim()
+            .replace(/[。！？]+$/, ""),
+        ].length > MAX_FIRST_SENTENCE
+          ? 1
+          : 0,
+    },
+    {
+      kind: "bad-heading",
+      count: report.sections.filter(({ heading }) => isBadHeading(heading)).length,
+    },
+    {
+      kind: "fraction-figure",
+      count: report.checks.filter((check) => FRACTION.test(check.figure)).length,
+    },
+    {
+      kind: "arrow-in-prose",
+      count: blocks.filter((block) => proseTexts(block).some(hasArrow)).length,
+    },
+    {
+      kind: "label-in-item",
+      count: blocks.reduce((total, block) => total + labelInItemCount(block), 0),
+    },
+    {
+      kind: "non-japanese",
+      count:
+        report.sections.filter(({ heading }) => isNonJapanese(heading)).length +
+        blocks.filter((block) => block.kind === "text" && isNonJapanese(block.text)).length,
+    },
   ] as const satisfies readonly ReportViolation[]
 
   return counted.filter((violation) => violation.count > VIOLATION_THRESHOLDS[violation.kind])
@@ -229,6 +274,12 @@ const VIOLATION_THRESHOLDS = {
   "untitled-section": 0,
   "markdown-notation": 0,
   "code-mismatch": 0,
+  "long-first-sentence": 0,
+  "bad-heading": 0,
+  "fraction-figure": 0,
+  "arrow-in-prose": 0,
+  "label-in-item": 0,
+  "non-japanese": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 function violationLine(violation: ReportViolation): string {
@@ -263,10 +314,90 @@ function violationLine(violation: ReportViolation): string {
         .join("・")}を使う`
     case "code-mismatch":
       return `\`path\` 付きの \`code\` の塊が${violation.count}個、ファイルの中身と一致しない（${violation.paths.join("・")}）。実物を読み直して直すか \`path\` を外す`
+    case "long-first-sentence":
+      return `\`conclusion\` の1文目が全角${String(MAX_FIRST_SENTENCE)}字を超える。1文目を短くし、補足は2文目か \`sections\` へ移す`
+    case "bad-heading":
+      return `見出しが${violation.count}個、${String(MAX_HEADING)}字を超えるか疑問文になっている。その節の結論を言う短い語にする`
+    case "fraction-figure":
+      return `\`checks\` の \`figure\` に分数（数 / 数）がある項目が${violation.count}個ある。「56 件中 1 件」のように言い換える`
+    case "arrow-in-prose":
+      return `地の文・表のセルに \`A → B\` と書いた塊が${violation.count}個ある。セルは \`from\` / \`to\`、流れは \`list\` の \`flow\` にする`
+    case "label-in-item":
+      return `\`list\` の項目の \`text\` が「名前: 説明」の形になっているものが${violation.count}個ある。名前を \`label\` に分ける`
+    case "non-japanese":
+      return `仮名も漢字も無い英語の地の文・見出しが${violation.count}個ある。日本語で書き直す（識別子・パス・コマンド・コードは \`\` で囲めば英語のままでよい）`
   }
 }
 
 const MAX_CANDIDATES = 5
+
+/** 英語の地の文とみなす語の数の下限。 */
+const MIN_ENGLISH_WORDS = 3
+
+const KANA_OR_KANJI = /[぀-ヿ㐀-䶿一-鿿]/
+
+/**
+ * 仮名も漢字も無く、英語の語が {@link MIN_ENGLISH_WORDS} 以上ある文字か。
+ * インラインコード・リンク・URL・パスらしい語（`/` `.` `_` を含む）は数えない。
+ */
+function isNonJapanese(text: string): boolean {
+  const words = text
+    .replace(/`[^`\n]*`/g, " ")
+    .replace(/\[[^\]]*\]\([^)]*\)/g, " ")
+    .split(/\s+/)
+    .map((word) => word.replace(/[.,;:!?]+$/, ""))
+  return (
+    !KANA_OR_KANJI.test(words.join(" ")) &&
+    words.filter((word) => /^[A-Za-z]{2,}$/.test(word)).length >= MIN_ENGLISH_WORDS
+  )
+}
+
+const MAX_FIRST_SENTENCE = 50
+const MAX_HEADING = 30
+
+const ARROW = " → "
+
+/** 「名前: 説明」の名前の長さの上限。これより長い頭は文とみなす。 */
+const MAX_ITEM_LABEL = 20
+
+/** 項目の頭の `名前:`。URL の `://` と時刻の `12:30`、句点を含む頭は名前でない。 */
+const ITEM_LABEL = new RegExp(`^[^\`:：。\\n]{1,${String(MAX_ITEM_LABEL)}}[:：](?!//)(?!\\d)`)
+
+function withoutInlineCode(text: string): string {
+  return text.replace(/`[^`\n]*`/g, "")
+}
+
+function hasArrow(text: string): boolean {
+  return withoutInlineCode(text).includes(ARROW)
+}
+
+function proseTexts(block: ReportBlock): readonly string[] {
+  switch (block.kind) {
+    case "text":
+      return [block.text]
+    case "table":
+      return block.rows
+        .flat()
+        .map((cell) => (typeof cell === "string" ? cell : "text" in cell ? cell.text : ""))
+    default:
+      return []
+  }
+}
+
+function labelInItemCount(block: ReportBlock): number {
+  return block.kind === "list" && block.style !== "flow"
+    ? block.items.filter((item) => item.label.trim() === "" && ITEM_LABEL.test(item.text.trim()))
+        .length
+    : 0
+}
+
+/** `数 / 数`（空白は任意）。 */
+const FRACTION = /\d\s*\/\s*\d/
+
+function isBadHeading(heading: string): boolean {
+  const trimmed = heading.trim()
+  return [...trimmed].length > MAX_HEADING || /[?？]$/.test(trimmed)
+}
 
 /** `options` の候補を書く順。 */
 const VERDICT_ORDER = {

@@ -211,12 +211,9 @@ function reportTool(
         ),
       checks: z.array(reportCheckSchema).optional().describe(REPORT_CHECKS_DESCRIPTION),
       title: z.string().optional().describe(REPORT_TITLE_DESCRIPTION),
-      sessionSummary: z.string().optional().describe(REPORT_SESSION_SUMMARY_DESCRIPTION),
+      sessionSummary: z.string().describe(REPORT_SESSION_SUMMARY_DESCRIPTION),
       closing: z.object(speechShape(expressions)).describe(REPORT_CLOSING_DESCRIPTION),
-      waitingLine: z
-        .object(speechShape(expressions))
-        .optional()
-        .describe(REPORT_WAITING_LINE_DESCRIPTION),
+      waitingLine: z.object(speechShape(expressions)).describe(REPORT_WAITING_LINE_DESCRIPTION),
     },
     async ({ conclusion, sections, favor, checks, title }) => {
       const fileContents = await readReportBlockFiles(cwd, sections ?? [])

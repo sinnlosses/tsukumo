@@ -138,12 +138,14 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは中立の文体で書く")
   })
 
-  it("レポートは日本語で書くと決め、送る前の検算にも入れている", () => {
+  it("レポートは日本語で書くと決め、検査が受け持つ項目は送る前の検算に置かない", () => {
     // 読んだコードや英語の文面に引きずられて本文が英語で出たことがある
     // （docs/architecture/display.md「レポートは必ず日本語で書かせる」）。
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは必ず日本語で書く")
     const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
-    expect(beforeSend).toContain("日本語でない地の文")
+    expect(beforeSend).not.toContain("日本語でない地の文")
+    expect(beforeSend).not.toContain("A → B")
+    expect(beforeSend).not.toContain("「名前: 説明」")
   })
 
   it("レポートは report ツールで渡させ、その外に書いた本文は画面に出ないと言う", () => {
