@@ -14,11 +14,14 @@
 //                                 # （変えたファイルを集められないときも5段すべて）
 
 import { spawn, spawnSync } from "node:child_process"
+import { readFileSync, rmSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import process from "node:process"
 import { fileURLToPath } from "node:url"
 
 import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-repository.ts"
-import { describeFailedStages, type StageOutcome } from "./lib/check-failure.ts"
+import { describeFailedStages, parseFailedTests, type StageOutcome } from "./lib/check-failure.ts"
 import { acquireCheckLock, withCheckLockOwner } from "./lib/check-lock-repository.ts"
 import { planStages, type Stage } from "./lib/check-stage.ts"
 import { planE2eRun } from "./lib/e2e-selection-repository.ts"
@@ -86,11 +89,27 @@ function chooseE2eStages(): readonly Stage[] {
   return plan.kind === "none" ? [] : [{ name: "test:e2e", args: plan.args, heavy: true }]
 }
 
+/** 段が書いた JSON レポートを読んで消す。無ければ空。 */
+function readFailedTests(reportPath: string): readonly string[] {
+  try {
+    return parseFailedTests(readFileSync(reportPath, "utf8"), ROOT)
+  } catch {
+    return []
+  } finally {
+    rmSync(reportPath, { force: true })
+  }
+}
+
 type BufferedResult = StageOutcome & { readonly output: string }
 
 function runBuffered(stage: Stage): Promise<BufferedResult> {
+  const reportPath = join(
+    tmpdir(),
+    `tsukumo-check-${process.pid}-${stage.name.replace(":", "-")}.json`,
+  )
+  const reporterArgs = ["--reporter=default", "--reporter=json", `--outputFile.json=${reportPath}`]
   return new Promise((resolve) => {
-    const child = spawn("pnpm", ["run", stage.name, ...stage.args], {
+    const child = spawn("pnpm", ["run", stage.name, ...stage.args, ...reporterArgs], {
       cwd: ROOT,
       env: withCheckLockOwner(process.env),
       stdio: ["ignore", "pipe", "pipe"],
@@ -102,6 +121,7 @@ function runBuffered(stage: Stage): Promise<BufferedResult> {
       resolve({
         name: stage.name,
         status: code ?? 1,
+        failedTests: readFailedTests(reportPath),
         output: Buffer.concat(chunks).toString("utf8"),
       })
     })
