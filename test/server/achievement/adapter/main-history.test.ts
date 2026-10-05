@@ -7,12 +7,16 @@ import {
   createAchievementCommitCache,
   readAchievement,
   readCommitCalendar,
-  type ReadAchievementResult,
 } from "../../../../src/server/achievement/adapter/main-history.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
-import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
 import { PROJECT_SETTINGS_PATH } from "../../../../src/shared/repository/project-settings.ts"
-import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
+import {
+  commitAt,
+  commitNewFormatTask,
+  isoDateAt,
+  known,
+  newFormatTaskContent,
+} from "../../../fixture/dated-commit.ts"
 import { git, initGitRepository } from "../../../fixture/git-repository.ts"
 import {
   writeProjectSettings,
@@ -33,77 +37,6 @@ beforeEach(async () => {
   await initGitRepository(repository)
   writeProjectSettings(repository)
 })
-
-/** `date`（`YYYY-MM-DD`）の `hhmm` を、`readAchievement` が読む `Temporal.Now.timeZoneId()` と
- * 同じゾーンのローカル時刻として絶対時刻（オフセット付き ISO）に直す。固定のオフセット
- * （`+09:00` 決め打ち）は使わない——単体テストの設定がプロセスの `TZ` を `UTC` に固定する
- * （ホストが JST でも変わらない）ため、決め打つと `localDateEpochRange` が見る日の境界と
- * ずれ、境界に近い時刻のコミットが意図と違う日に数えられる。 */
-function isoDateAt(date: string, hhmm: string): string {
-  const zone = Temporal.Now.timeZoneId()
-  return Temporal.PlainDateTime.from(`${date}T${hhmm}:00`)
-    .toZonedDateTime(zone)
-    .toString({ timeZoneName: "never" })
-}
-
-/** ローカル時刻の `date`（`YYYY-MM-DD`）の `hhmm` に、架空のファイルを1件コミットする。
- * committer date と author date を両方固定する（成果はコミットの日付=committer date で
- * 決まるので、これを固定しないとテストの実行日に結果が変わる）。 */
-async function commitAt(
-  cwd: string,
-  date: string,
-  hhmm: string,
-  fileName: string,
-  content = "架空の内容",
-): Promise<void> {
-  const path = join(cwd, fileName)
-  mkdirSync(join(cwd, ...fileName.split("/").slice(0, -1)), { recursive: true })
-  writeFileSync(path, content)
-  await git(cwd, "add", fileName)
-  const isoDate = isoDateAt(date, hhmm)
-  await runSubprocessOrThrow("git", ["commit", "-q", "-m", `commit ${fileName}`], {
-    cwd,
-    env: { ...process.env, GIT_AUTHOR_DATE: isoDate, GIT_COMMITTER_DATE: isoDate },
-  })
-}
-
-/** 新形式（`develop/task/T-xxx.md`）の1件を front matter で書いてコミットする。 */
-async function commitNewFormatTask(
-  cwd: string,
-  date: string,
-  hhmm: string,
-  id: string,
-  summary: string,
-  status: string,
-): Promise<void> {
-  const content = [
-    "---",
-    `id: ${id}`,
-    `summary: ${summary}`,
-    `status: ${status}`,
-    "difficulty: sonnet",
-    "loopable: Y",
-    "dependencies: []",
-    "---",
-    "",
-  ].join("\n")
-  await commitAt(cwd, date, hhmm, `develop/task/${id}.md`, content)
-}
-
-/** 新形式（`develop/task/T-xxx.md`）の内容そのもの（front matter）。 */
-function newFormatTaskContent(id: string, summary: string, status: string): string {
-  return [
-    "---",
-    `id: ${id}`,
-    `summary: ${summary}`,
-    `status: ${status}`,
-    "difficulty: sonnet",
-    "loopable: Y",
-    "dependencies: []",
-    "---",
-    "",
-  ].join("\n")
-}
 
 /** 複数の新形式タスクファイルを1回のコミットで書く（節目（通算のタスクの数）のテストで
  * 大量のタスクを安く用意するための道具。1件ごとに `git commit` すると `git` の起動回数が
@@ -151,15 +84,6 @@ async function commitOldFormatTasks(
   tasks: readonly Record<string, unknown>[],
 ): Promise<void> {
   await commitAt(cwd, date, hhmm, "develop/tasks.json", JSON.stringify(tasks))
-}
-
-/** 「読めた」かつ `doneTasks` が数えられている前提のテストで使う。前提が崩れたら例外を投げて
- * 落とす（`toMatchObject` / `toEqual` の食い違いより先に、なぜ崩れたかが分かる）。 */
-function known(result: ReadAchievementResult): Extract<DailyAchievement, { kind: "known" }> {
-  if (result.kind !== "ok" || result.achievement.kind !== "known") {
-    throw new Error("known な achievement ではなかった")
-  }
-  return result.achievement
 }
 
 describe("readAchievement", () => {
@@ -676,69 +600,9 @@ describe("readAchievement", () => {
   })
 })
 
-// Beads の閉じた課題を数える。本物の `bd` を、`HOME` を
-// 一時ディレクトリへ向けて起こす（`useBeadsHome`）。`bd close` の時刻は
-// 変えられないので、Beads の側は今日、git の側は過去の日に置く。
 describe("readAchievement（Beads 方式）", () => {
-  const home = useBeadsHome(() => join(root(), "home"))
   const today = Temporal.Now.plainDateISO().toString()
   const SETTINGS = JSON.stringify({ tasks: { mainBranch: "main" } })
-
-  /**
-   * 移す前の git に、done のタスクと未完了のタスクのファイルを置き、過去の日に Beads へ移す
-   * （未完了の方だけを Beads に作り、`develop/task/` を消してプロジェクトの設定をコミットする）。
-   */
-  async function migrateToBeads(): Promise<void> {
-    await commitNewFormatTask(repository, "2026-09-10", "10:00", "T-001", "git で済んだ", "todo")
-    await commitNewFormatTask(repository, "2026-09-10", "11:00", "T-002", "移した", "todo")
-    await commitAt(
-      repository,
-      "2026-09-12",
-      "10:00",
-      "develop/task/T-001.md",
-      newFormatTaskContent("T-001", "git で済んだ", "done"),
-    )
-    initBeads(repository)
-    await bd(repository, home(), "create", "--id", "t-002", "移した")
-    await git(repository, "rm", "--quiet", "-r", "develop/task")
-    await commitAt(repository, "2026-09-20", "10:00", PROJECT_SETTINGS_PATH, SETTINGS)
-  }
-
-  it(
-    "境の前は git の done、後は Beads の閉じた課題で数え、二重にも欠けにもならない",
-    { timeout: 60_000 },
-    async () => {
-      await migrateToBeads()
-      await bd(repository, home(), "close", "t-002")
-      await bd(repository, home(), "create", "--id", "t-003", "Beads で作って済んだ")
-      await bd(repository, home(), "close", "t-003")
-      await bd(repository, home(), "create", "--id", "t-004", "やめた", "-l", "cancelled")
-      await bd(repository, home(), "close", "t-004")
-      await bd(repository, home(), "create", "--id", "t-005", "まだ")
-      const cache = createAchievementCommitCache()
-
-      const gitDay = known(await readAchievement(repository, "2026-09-12", today, cache))
-      const migrationDay = known(await readAchievement(repository, "2026-09-20", today, cache))
-      const beadsDay = known(await readAchievement(repository, today, today, cache))
-
-      expect(gitDay.doneTasks).toEqual({
-        kind: "known",
-        items: [{ id: "T-001", summary: "git で済んだ" }],
-      })
-      expect(migrationDay.doneTasks).toEqual({ kind: "known", items: [] })
-      expect(beadsDay.doneTasks).toEqual({
-        kind: "known",
-        items: [
-          { id: "T-002", summary: "移した" },
-          { id: "T-003", summary: "Beads で作って済んだ" },
-        ],
-      })
-      // 移した課題の登録日は git のファイルの日（Beads の作った日は移した日なので使わない）。
-      expect(beadsDay.graduations).toEqual([
-        expect.objectContaining({ id: "T-002", registeredOn: "2026-09-10" }),
-      ])
-    },
-  )
 
   it(".beads もタスクファイルの記録も無ければ、終えたタスクは数えない", async () => {
     await commitAt(repository, "2026-09-20", "10:00", PROJECT_SETTINGS_PATH, SETTINGS)

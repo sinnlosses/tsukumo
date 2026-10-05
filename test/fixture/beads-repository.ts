@@ -80,6 +80,19 @@ export function initBeads(cwd: string): void {
 }
 
 /**
+ * {@link initBeads} と同じ使い方で、`issues`（`bd export` の1行の形）を `bd import` 1回で入れた `.beads` を置く。
+ */
+export async function initBeadsWithIssues(
+  cwd: string,
+  issues: readonly Readonly<Record<string, unknown>>[],
+): Promise<void> {
+  if (beadsTemplate === undefined) {
+    throw new Error("initBeadsWithIssues は useBeadsHome を呼んだファイルの中でだけ使える")
+  }
+  await placeImportedBeads(beadsTemplate, cwd, issues)
+}
+
+/**
  * git リポジトリ `cwd` に、`issues`（`bd export` の1行の形）を入れた `.beads` を置く。テストの外のフックを持たないので、
  * 別のプロセス（tsukumo）が見回っている場所へ置くときに使う。
  * 課題は写しの側で入れ終えてから1回の名前の付け替えで置くので、見回りが入れかけの `.beads` を読むことは無い。
@@ -89,7 +102,14 @@ export async function placeBeadsWithIssues(
   cwd: string,
   issues: readonly Readonly<Record<string, unknown>>[],
 ): Promise<void> {
-  const template = await processBeadsTemplate()
+  await placeImportedBeads(await processBeadsTemplate(), cwd, issues)
+}
+
+async function placeImportedBeads(
+  template: BeadsTemplate,
+  cwd: string,
+  issues: readonly Readonly<Record<string, unknown>>[],
+): Promise<void> {
   const staging = mkdtempSync(join(tmpdir(), "tsukumo-beads-staging-"))
   try {
     cpSync(template.repository, staging, { recursive: true })
