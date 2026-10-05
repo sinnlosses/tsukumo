@@ -7,7 +7,7 @@ import type { ReactElement } from "react"
 
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import { Markdown } from "../../markdown/markdown.tsx"
+import { QuestionPreviewMarkdown } from "../../markdown/markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
 import type {
   QuestionRecordAnswerRow,
@@ -28,13 +28,16 @@ export function PresentationalQuestionRecord(
   return (
     <section className={styles["tool-block"]}>
       {props.questions.map((question) => (
-        <QuestionBlock question={question} key={question.key} />
+        <QuestionBlock toolUseId={props.toolUseId} question={question} key={question.key} />
       ))}
     </section>
   )
 }
 
-function QuestionBlock(props: { readonly question: QuestionRecordQuestionModel }): ReactElement {
+function QuestionBlock(props: {
+  readonly toolUseId: string
+  readonly question: QuestionRecordQuestionModel
+}): ReactElement {
   const { question } = props
 
   return (
@@ -62,6 +65,7 @@ function QuestionBlock(props: { readonly question: QuestionRecordQuestionModel }
           {question.previewsOpened &&
             question.previews.map((preview) => (
               <PreviewBlock
+                toolUseId={props.toolUseId}
                 preview={preview}
                 multiSelect={question.multiSelect}
                 key={preview.label}
@@ -94,6 +98,7 @@ function AnswerRow(props: {
 }
 
 function PreviewBlock(props: {
+  readonly toolUseId: string
   readonly preview: QuestionRecordPreviewRow
   readonly multiSelect: boolean
 }): ReactElement {
@@ -111,7 +116,7 @@ function PreviewBlock(props: {
       >
         <QuestionMark chosen={preview.chosen} multiSelect={multiSelect} /> {preview.label}
       </Text>
-      <Markdown text={preview.preview} />
+      <QuestionPreviewMarkdown text={preview.preview} toolUseId={props.toolUseId} />
     </div>
   )
 }

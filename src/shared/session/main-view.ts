@@ -64,9 +64,11 @@ export type MainViewEntry =
   /**
    * キャラクターからの質問（AskUserQuestion）と、それに対する答え。`answers[i]` は
    * `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。選ばなかった質問は空）。
+   * `toolUseId` は preview の画像の棚を引く鍵。
    */
   | {
       readonly kind: "question"
+      readonly toolUseId: string
       readonly questions: readonly Question[]
       readonly answers: readonly QuestionAnswer[]
     }

@@ -418,6 +418,15 @@
   border: 1px solid var(--rule);
   border-radius: 0.375rem;
 }
+/* 質問の選択肢の preview に Markdown で書いた画像（`shelvedPreviewMarkdown`）。`image` の塊の画像は `figure` の中なので当たらない。
+   札の幅に収め、縦に長い画像で札が伸びきらないよう高さに上限を置く（幅と高さを auto のままにして縦横比を保つ）。 */
+.detail-block :is(p, li, td, th) > img {
+  display: block;
+  max-width: 100%;
+  max-height: 20rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.375rem;
+}
 /* 説明の並びを添えた画像（`report` の `image` の塊の `notes` から tsukumo が組む）。
    左に画像（か「出せない」の札）、右に番号つきの説明を並べ、狭い画面では画像の下に積む（末尾の @media）。 */
 .detail-block .report-image-notes {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  isShelvedImageUrl,
   readReportImageRoute,
   REPORT_IMAGE_PATH_PREFIX,
   REPORT_IMAGE_SRC_PATTERN,
@@ -40,5 +41,24 @@ describe("reportImagePath と readReportImageRoute", () => {
     expect(REPORT_IMAGE_SRC_PATTERN.test("data:image/png;base64,AAAA")).toBe(false)
     expect(REPORT_IMAGE_SRC_PATTERN.test("/tmp/a.png")).toBe(false)
     expect(REPORT_IMAGE_SRC_PATTERN.test("//example.invalid/report-image/a.png")).toBe(false)
+  })
+})
+
+describe("isShelvedImageUrl", () => {
+  it.each(["架空/a.png", "/tmp/架空/b.png", "../上/c.png"])(
+    "手元のパスは棚から引く（%s）",
+    (url) => {
+      expect(isShelvedImageUrl(url)).toBe(true)
+    },
+  )
+
+  it.each([
+    "",
+    "https://example.invalid/a.png",
+    "//example.invalid/a.png",
+    "data:image/png;base64,AAAA",
+    "file:///tmp/a.png",
+  ])("空・スキームか // で始まる行き先は棚から引かない（%s）", (url) => {
+    expect(isShelvedImageUrl(url)).toBe(false)
   })
 })

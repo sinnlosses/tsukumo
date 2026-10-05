@@ -225,9 +225,11 @@ export type SessionEvent =
    *
    * `answers[i]` は `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}）。
    * 質問文も答えも会話の内容なので、ログに出さない・外へ出さない。
+   * `toolUseId` は答え待ちのときの `PendingAsk` の `id` と同じで、preview の画像の棚の鍵になる。
    */
   | {
       readonly kind: "question-answered"
+      readonly toolUseId: string
       readonly questions: readonly Question[]
       readonly answers: readonly QuestionAnswer[]
     }

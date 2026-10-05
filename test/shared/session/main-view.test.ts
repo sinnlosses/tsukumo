@@ -61,6 +61,7 @@ const materialReport = (label: string): string => `## ${label}\n\n- 1つ目の�
 
 const question = (text: string): MainViewEntry => ({
   kind: "question",
+  toolUseId: "toolu_fictional",
   questions: [{ header: "架空", text, multiSelect: false, options: [] }],
   answers: [],
 })

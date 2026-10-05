@@ -562,6 +562,60 @@
       ]
     },
     {
+      "name": "question-preview-image",
+      "steps": [
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "question",
+                "id": "fake-ask-preview-image",
+                "questions": [
+                  {
+                    "header": "架空の画面",
+                    "text": "架空の質問：どの画面の形で進める？",
+                    "multiSelect": false,
+                    "options": [
+                      {
+                        "label": "横長の案",
+                        "description": "架空の説明A",
+                        "preview": "![架空の横長の画面](report-image-fixture/after.png)\n\n架空の一言: 札の幅に収まる。\n"
+                      },
+                      {
+                        "label": "縦長の案",
+                        "description": "架空の説明B",
+                        "preview": "![架空の縦長の画面](report-image-fixture/tall.png)\n"
+                      },
+                      {
+                        "label": "外の画像の案",
+                        "description": "架空の説明C",
+                        "preview": "![架空の外部の画像](https://example.invalid/a.png)\n\n![架空の埋め込みの画像](data:image/png;base64,AAAA)\n"
+                      },
+                      {
+                        "label": "置いていない画像の案",
+                        "description": "架空の説明D",
+                        "preview": "![架空の置いていない画像](report-image-fixture/missing.png)\n"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 1700,
+          "event": {
+            "kind": "speech",
+            "text": "画面の形を画像で並べたよ。",
+            "expression": "excited"
+          }
+        }
+      ]
+    },
+    {
       "name": "question-twice",
       "steps": [
         {

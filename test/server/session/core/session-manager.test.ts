@@ -1678,6 +1678,7 @@ describe("createSessionManager", () => {
     function questionAnsweredEvent(questions: readonly Question[]): SessionEvent {
       return {
         kind: "question-answered",
+        toolUseId: "toolu_fictional",
         questions,
         answers: questions.map(() => ["架空の答え"]),
       }
@@ -2098,6 +2099,56 @@ describe("レポートの画像の棚", () => {
     await manager.commands.session.switchCharacter({ name: "fictional" })
 
     expect(shelf.find("toolu_live", "fictional/after.png")).toBeUndefined()
+  })
+
+  function imageQuestionPending(...ids: readonly string[]): SessionEvent {
+    return {
+      kind: "pending-changed",
+      pending: ids.map((id) => ({
+        kind: "question",
+        id,
+        questions: [
+          {
+            header: "架空の選択",
+            text: "架空の質問",
+            multiSelect: false,
+            options: [
+              {
+                label: "架空の案",
+                description: "",
+                preview: "![架空の画面](fictional/after.png)",
+              },
+            ],
+          },
+        ],
+      })),
+    }
+  }
+
+  it("新しく積まれた質問の preview の画像を1回だけ棚に置き、答えて記録に移っても残す", async () => {
+    const { stub, shelf, readPaths } = startManagerWithReportImageShelf()
+    await waitForBatch()
+
+    stub.emit(imageQuestionPending("toolu_q1"))
+    stub.emit(imageQuestionPending("toolu_q1", "toolu_q2"))
+    stub.emit({ kind: "question-answered", toolUseId: "toolu_q1", questions: [], answers: [] })
+    stub.emit(imageQuestionPending("toolu_q2"))
+    await waitForBatch()
+
+    expect(readPaths).toEqual(["fictional/after.png", "fictional/after.png"])
+    expect(shelf.find("toolu_q1", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
+    expect(shelf.find("toolu_q2", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
+  })
+
+  it("答えずに答え待ちから抜けた質問の画像は棚から捨てる", async () => {
+    const { stub, shelf } = startManagerWithReportImageShelf()
+    await waitForBatch()
+
+    stub.emit(imageQuestionPending("toolu_denied"))
+    stub.emit({ kind: "pending-changed", pending: [] })
+    await waitForBatch()
+
+    expect(shelf.find("toolu_denied", "fictional/after.png")).toBeUndefined()
   })
 })
 

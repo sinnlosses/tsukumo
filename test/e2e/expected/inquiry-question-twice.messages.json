@@ -106,6 +106,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "question-answered",
+      "toolUseId": "fake-ask-twice-1",
       "questions": [
         {
           "header": "架空の選択1",
@@ -287,6 +288,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "question-answered",
+      "toolUseId": "fake-ask-twice-2",
       "questions": [
         {
           "header": "架空の選択2",

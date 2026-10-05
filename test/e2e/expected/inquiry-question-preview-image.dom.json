@@ -1,0 +1,377 @@
+{
+  "main": [
+    {
+      "tag": "main",
+      "attributes": {
+        "data-region": "main",
+        "aria-label": "メインビュー"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": "",
+            "data-main-view": ""
+          },
+          "children": [
+            {
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "welcome"
+              },
+              "children": [
+                {
+                  "tag": "h2",
+                  "children": [
+                    "何から始める？"
+                  ]
+                },
+                {
+                  "tag": "p",
+                  "children": [
+                    "下の入力欄から頼める。"
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    },
+                    "自分で書く",
+                    {
+                      "tag": "kbd",
+                      "children": [
+                        "/"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    },
+                    "タスクの一覧から選ぶ"
+                  ]
+                },
+                {
+                  "tag": "section",
+                  "attributes": {
+                    "aria-label": "お伺い"
+                  },
+                  "children": [
+                    {
+                      "tag": "header",
+                      "children": [
+                        "お伺い",
+                        "質問",
+                        "架空の画面",
+                        "1 / 1",
+                        "·",
+                        "待って",
+                        "1:00"
+                      ]
+                    },
+                    {
+                      "tag": "p",
+                      "children": [
+                        "架空の質問：どの画面の形で進める？"
+                      ]
+                    },
+                    {
+                      "tag": "ul",
+                      "children": [
+                        {
+                          "tag": "li",
+                          "children": [
+                            {
+                              "tag": "label",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "1"
+                                  ]
+                                },
+                                {
+                                  "tag": "input",
+                                  "attributes": {
+                                    "type": "radio",
+                                    "checked": false,
+                                    "value": "on"
+                                  }
+                                },
+                                "横長の案"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空の説明A"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                {
+                                  "tag": "img",
+                                  "attributes": {
+                                    "alt": "架空の横長の画面",
+                                    "src": "/report-image/fake-ask-preview-image/report-image-fixture%2Fafter.png"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空の一言: 札の幅に収まる。"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "li",
+                          "children": [
+                            {
+                              "tag": "label",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "2"
+                                  ]
+                                },
+                                {
+                                  "tag": "input",
+                                  "attributes": {
+                                    "type": "radio",
+                                    "checked": false,
+                                    "value": "on"
+                                  }
+                                },
+                                "外の画像の案"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空の説明C"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "img",
+                                    "aria-label": "架空の外部の画像"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "svg"
+                                        },
+                                        "画像を出せない",
+                                        "読めなかったか、tsukumo を起こし直して手放した"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "img",
+                                    "aria-label": "架空の埋め込みの画像"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "svg"
+                                        },
+                                        "画像を出せない",
+                                        "読めなかったか、tsukumo を起こし直して手放した"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "li",
+                          "children": [
+                            {
+                              "tag": "label",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "3"
+                                  ]
+                                },
+                                {
+                                  "tag": "input",
+                                  "attributes": {
+                                    "type": "radio",
+                                    "checked": false,
+                                    "value": "on"
+                                  }
+                                },
+                                "縦長の案"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空の説明B"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                {
+                                  "tag": "img",
+                                  "attributes": {
+                                    "alt": "架空の縦長の画面",
+                                    "src": "/report-image/fake-ask-preview-image/report-image-fixture%2Ftall.png"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "li",
+                          "children": [
+                            {
+                              "tag": "label",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "4"
+                                  ]
+                                },
+                                {
+                                  "tag": "input",
+                                  "attributes": {
+                                    "type": "radio",
+                                    "checked": false,
+                                    "value": "on"
+                                  }
+                                },
+                                "置いていない画像の案"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空の説明D"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "img",
+                                    "aria-label": "架空の置いていない画像"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "svg"
+                                        },
+                                        "画像を出せない",
+                                        "読めなかったか、tsukumo を起こし直して手放した"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "footer",
+                      "children": [
+                        "選択肢にない答えは、下の入力欄に書いて送れます",
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "type": "button"
+                          },
+                          "children": [
+                            "これで答える",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "⏎"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

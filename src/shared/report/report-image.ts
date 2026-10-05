@@ -15,6 +15,17 @@ const MAX_REPORT_IMAGE_ROUTE_PATH_LENGTH = 1024
 
 const reportImageToolUseIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
 
+/** スキームか `//` で始まる行き先（外部の URL・`data:`）。 */
+const NOT_LOCAL_URL = /^(?:[A-Za-z][A-Za-z0-9+.-]*:|\/\/)/
+
+/**
+ * 質問の preview の Markdown の画像の行き先のうち、棚から引くもの（手元のファイルのパス）か。
+ * サーバが棚に置くパスを拾うときと、ブラウザが `src` を棚の経路に替えるときの両方がこれで決める。
+ */
+export function isShelvedImageUrl(url: string): boolean {
+  return url !== "" && !NOT_LOCAL_URL.test(url)
+}
+
 /** 1枚の経路（起動トークンは付けない。付けるのは取りに行く側）。 */
 export function reportImagePath(toolUseId: string, path: string): string {
   return `${REPORT_IMAGE_PATH_PREFIX}${encodeURIComponent(toolUseId)}/${encodeURIComponent(path)}`

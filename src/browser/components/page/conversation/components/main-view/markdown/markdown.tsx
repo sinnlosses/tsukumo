@@ -16,6 +16,7 @@
 // （`NotationBlock` / `NotationInline` / `NotationOrderedList` / `NotationListItem`）。
 //
 // `img` は `ReportImage` で、棚の画像を起動トークンを付けて読む（読めなければ「出せない」の札）。
+// 質問の preview（`QuestionPreviewMarkdown`）は、Markdown の画像を質問の棚の経路に替える段（`remarkPreviewImage`）を足して描く。
 //
 // 表は横スクロールの器で包む（`Table`）。
 // 器をここで作るのは、`rehype-raw` が生の HTML も同じ hast の木に入れるので、`table` の上書き1つで Markdown の表とレポートが直接書いた `<table>` の両方に効くため。
@@ -44,6 +45,7 @@ import {
   NotationListItem,
   NotationOrderedList,
 } from "./notation.tsx"
+import { remarkPreviewImage } from "./preview-image.ts"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 import {
@@ -89,12 +91,32 @@ export type MarkdownProps = {
 
 /** レポート1件分（または `splitReportBlocks` で割った1塊）の Markdown を描く。 */
 export function Markdown(props: MarkdownProps): ReactElement {
+  return <ReportMarkdown text={props.text} remarkPlugins={[]} />
+}
+
+export type QuestionPreviewMarkdownProps = {
+  readonly text: string
+  /** 質問の tool use id。preview の画像はこの id で棚を引く。 */
+  readonly toolUseId: string
+}
+
+/** 質問の選択肢の `preview` の Markdown を、レポートと同じ経路で描く。手元の画像はその質問の棚から引く。 */
+export function QuestionPreviewMarkdown(props: QuestionPreviewMarkdownProps): ReactElement {
+  return <ReportMarkdown text={props.text} remarkPlugins={[remarkPreviewImage(props.toolUseId)]} />
+}
+
+/** `remarkPlugins` は、共通の段（GFM・CJK）のあとに足す段。 */
+function ReportMarkdown(props: {
+  readonly text: string
+  readonly remarkPlugins: NonNullable<Options["remarkPlugins"]>
+}): ReactElement {
   return (
     <ReactMarkdown
       // remark-cjk-friendly は remark-gfm より後（README の使用例どおり）。
       // 効くのは `` と `*` だけで、GFM の取り消し線 `~~` には効かない（あちらは micromark-extension-gfm-strikethrough の別の判定を通るため。直すには remark-cjk-friendly-gfm-strikethrough が要る）。
       // 取り消し線はレポートの記法（`REPORT_NOTATION_PROMPT`）が勧めていないので、穴のまま置いてある。
-      remarkPlugins={[remarkGfm, remarkCjkFriendly]}
+      // この2段は、サーバが質問の preview から棚に置く画像を拾う読み方（`questionImagePaths`）とそろえる。
+      remarkPlugins={[remarkGfm, remarkCjkFriendly, ...props.remarkPlugins]}
       rehypePlugins={[
         // rehype-raw より前（フェンスのファイル名は `data.meta` に入っていて、raw が木を HTML へ書き出して読み直すと落ちるため）。
         rehypeCodeFileName,

@@ -151,6 +151,7 @@ export type SessionRecord =
    */
   | {
       readonly kind: "question"
+      readonly toolUseId: string
       readonly questions: readonly Question[]
       readonly answers: readonly QuestionAnswer[]
     }
@@ -658,7 +659,12 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         ...state,
         records: [
           ...state.records,
-          { kind: "question", questions: event.questions, answers: event.answers },
+          {
+            kind: "question",
+            toolUseId: event.toolUseId,
+            questions: event.questions,
+            answers: event.answers,
+          },
         ],
       }
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。

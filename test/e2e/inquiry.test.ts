@@ -1,11 +1,16 @@
+import { mkdirSync, writeFileSync } from "node:fs"
+import { join } from "node:path"
+
 import type { Locator, Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
+import { fictionalPng } from "../../scripts/lib/fictional-png.ts"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // お伺い（許可要求と質問。docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 許可は場面 `permission`、質問は `question-pair`（単一選択が1問ずつ）・`question-multi`（複数選択）・
 // `question-long`（長いラベルと長い説明）・`question-preview`（選択肢ごとの比較）・
+// `question-preview-image`（preview に書いた手元の画像と、描かない画像）・
 // `question-twice`（同じ依頼の中で中間レポートを挟んで2回答える）。
 // どの場面も答え待ちを出したまま、答えると次の `pending-changed` が流れる。
 
@@ -194,6 +199,41 @@ describe("お伺い", () => {
     })
     expect(order).toBeLessThan(0)
 
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("preview に書いた手元の画像は棚の経路で札の中に出て、外部の URL・data:・置いていない画像は「画像を出せない」の札になる", async () => {
+    const room = await run.open({
+      scenario: "inquiry-question-preview-image",
+      scene: "question-preview-image",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+    // 場面の質問より先に、preview が指す画像を cwd に置く（置いていないほうの画像は置かない）。
+    mkdirSync(join(room.cwd, "report-image-fixture"))
+    writeFileSync(join(room.cwd, "report-image-fixture", "after.png"), fictionalPng(8, 4))
+    writeFileSync(join(room.cwd, "report-image-fixture", "tall.png"), fictionalPng(4, 40))
+    const inquiry = inquiryOf(room.page)
+
+    await room.waitForPending("fake-ask-preview-image")
+    for (const alt of ["架空の横長の画面", "架空の縦長の画面"]) {
+      const image = inquiry.getByAltText(alt)
+      expect(await image.getAttribute("src")).toMatch(
+        /^\/report-image\/fake-ask-preview-image\/report-image-fixture%2F/,
+      )
+      await expect
+        .poll(() =>
+          image.evaluate((element) =>
+            element instanceof HTMLImageElement ? element.naturalWidth : 0,
+          ),
+        )
+        .toBeGreaterThan(0)
+    }
+    for (const name of ["架空の外部の画像", "架空の埋め込みの画像", "架空の置いていない画像"]) {
+      await expect
+        .poll(() => inquiry.getByRole("img", { name }).evaluate((e) => e.tagName))
+        .toBe("SPAN")
+    }
     await room.settleAndMatch(ELAPSED_MS)
   })
 })

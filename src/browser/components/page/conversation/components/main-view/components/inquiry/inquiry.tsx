@@ -21,7 +21,7 @@ import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { useNowWhile } from "../../../hooks/use-now-while.ts"
-import { Markdown } from "../../markdown/markdown.tsx"
+import { QuestionPreviewMarkdown } from "../../markdown/markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"
 import styles from "./inquiry.module.css"
@@ -155,6 +155,7 @@ export function Inquiry(): ReactElement | null {
         <ul className={styles["inquiry-options"]}>
           {inquiry.options.map((option) => (
             <InquiryOption
+              askId={inquiry.id}
               option={option}
               multiSelect={inquiry.multiSelect}
               onToggle={inquiry.onToggle}
@@ -248,6 +249,7 @@ function waitedText(elapsedMs: number): string {
  * 説明と `preview` はその外に置く（`preview` は表や図になるので、`<label>` にも `<button>` にも入れられない）。
  */
 function InquiryOption(props: {
+  readonly askId: string
   readonly option: InquiryOptionRow
   readonly multiSelect: boolean
   readonly onToggle: (label: string) => void
@@ -312,7 +314,7 @@ function InquiryOption(props: {
         // レポートと同じ見た目（report-notation.module.css の `.detail-block` の子のセレクタ）に乗せる。
         // `.inquiry-option .detail-block` の余白の打ち消し（inquiry.module.css）は、CSS Modules が class 名をファイルごとにハッシュ化するので、そちらの `.detail-block`（この選択子のためだけの空の再定義）も一緒に付ける。
         <div className={clsx(notationStyles["detail-block"], styles["detail-block"])}>
-          <Markdown text={option.preview} />
+          <QuestionPreviewMarkdown text={option.preview} toolUseId={props.askId} />
         </div>
       )}
     </li>

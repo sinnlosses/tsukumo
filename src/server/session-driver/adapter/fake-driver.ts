@@ -358,7 +358,12 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     // 本物の駆動（`PendingAnswerQueue`）と同じで、質問に答えが付いたら記録を流す。
     // これが無いと、疑似セッションで目視するときだけ質問の記録が残らない。
     if (ask.kind === "question" && answer.kind === "answers") {
-      emit({ kind: "question-answered", questions: ask.questions, answers: answer.labels })
+      emit({
+        kind: "question-answered",
+        toolUseId: ask.id,
+        questions: ask.questions,
+        answers: answer.labels,
+      })
     }
     emit({ kind: "pending-changed", pending: pending.filter((candidate) => candidate.id !== id) })
     if (pending.length === 0) {

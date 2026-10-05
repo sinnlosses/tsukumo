@@ -1182,12 +1182,15 @@ describe("applySessionEvent（質問の記録）", () => {
       { kind: "request", text: "架空の依頼", images: [] },
       {
         kind: "question-answered",
+        toolUseId: "toolu_q",
         questions: [singleQuestion],
         answers: [["案B"]],
       },
     )
 
-    expect(entries).toEqual([{ kind: "question", questions: [singleQuestion], answers: [["案B"]] }])
+    expect(entries).toEqual([
+      { kind: "question", toolUseId: "toolu_q", questions: [singleQuestion], answers: [["案B"]] },
+    ])
   })
 
   it("複数選択の答えは1つの文字列に畳まれず、選んだぶんだけ並ぶ", () => {
@@ -1195,13 +1198,19 @@ describe("applySessionEvent（質問の記録）", () => {
       { kind: "request", text: "架空の依頼", images: [] },
       {
         kind: "question-answered",
+        toolUseId: "toolu_q",
         questions: [multiQuestion],
         answers: [["案A", "案C"]],
       },
     )
 
     expect(entries).toEqual([
-      { kind: "question", questions: [multiQuestion], answers: [["案A", "案C"]] },
+      {
+        kind: "question",
+        toolUseId: "toolu_q",
+        questions: [multiQuestion],
+        answers: [["案A", "案C"]],
+      },
     ])
   })
 
@@ -1220,7 +1229,12 @@ describe("applySessionEvent（質問の記録）", () => {
   it("記録は前のやり取りに残り、次の依頼で消えない", () => {
     const view = apply(
       { kind: "request", text: "架空の依頼1", images: [] },
-      { kind: "question-answered", questions: [singleQuestion], answers: [["案A"]] },
+      {
+        kind: "question-answered",
+        toolUseId: "toolu_q",
+        questions: [singleQuestion],
+        answers: [["案A"]],
+      },
       { kind: "request", text: "架空の依頼2", images: [] },
     )
 

@@ -166,7 +166,8 @@ describe("createPendingAnswerQueue", () => {
     const answered: unknown[] = []
     const queue = createPendingAnswerQueue({
       onChange: () => {},
-      onAnswered: (questions, answers) => answered.push({ questions, answers }),
+      onAnswered: (toolUseId, questions, answers) =>
+        answered.push({ toolUseId, questions, answers }),
     })
 
     void queue.ask(questionRequest())
@@ -176,6 +177,7 @@ describe("createPendingAnswerQueue", () => {
 
     expect(answered).toEqual([
       {
+        toolUseId: "toolu_q",
         questions: [
           {
             header: "選択",
@@ -196,7 +198,8 @@ describe("createPendingAnswerQueue", () => {
     const answered: unknown[] = []
     const queue = createPendingAnswerQueue({
       onChange: () => {},
-      onAnswered: (questions, answers) => answered.push({ questions, answers }),
+      onAnswered: (toolUseId, questions, answers) =>
+        answered.push({ toolUseId, questions, answers }),
     })
 
     void queue.ask(permissionRequest())

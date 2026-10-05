@@ -39,6 +39,7 @@ describe("QuestionRecord（選んだ印の色）", () => {
   it("選んだ ● は差し色を当てる class を持ち、文字は DOM に残る", () => {
     const entry: MainViewQuestion = {
       kind: "question",
+      toolUseId: "toolu_fictional",
       questions: [question("確認", "どちらにする？")],
       answers: [["案B"]],
     }
@@ -56,6 +57,7 @@ describe("QuestionRecord（選んだ印の色）", () => {
   it("開いた preview の札にも同じ印の class が付く", () => {
     const entry: MainViewQuestion = {
       kind: "question",
+      toolUseId: "toolu_fictional",
       questions: [
         {
           header: "確認",
@@ -92,6 +94,7 @@ describe("QuestionRecord（単一選択と複数選択で印が変わる）", ()
   it("複数選択の preview の札でも ■/□ を出す", () => {
     const entry: MainViewQuestion = {
       kind: "question",
+      toolUseId: "toolu_fictional",
       questions: [
         {
           header: "確認",
@@ -131,6 +134,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
   it("複数選択の答えは、選んだ選択肢すべてに ■ が付き、選ばなかった選択肢は □ になる", () => {
     const entry: MainViewQuestion = {
       kind: "question",
+      toolUseId: "toolu_fictional",
       questions: [
         {
           ...multiSelectQuestion("確認", "どれを試す？"),
@@ -156,6 +160,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
   it("自由入力の答えは、選択肢の下に別の行で出る", () => {
     const entry: MainViewQuestion = {
       kind: "question",
+      toolUseId: "toolu_fictional",
       questions: [question("確認", "どちらにする？")],
       answers: [["どちらでもない架空の答え"]],
     }
@@ -173,6 +178,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
   it("選択肢は送られた順ではなくラベルの辞書順で出す（並べ替えても答えの印は崩れない）", () => {
     const entry: MainViewQuestion = {
       kind: "question",
+      toolUseId: "toolu_fictional",
       questions: [
         {
           ...question("確認", "どれにする？"),
@@ -195,6 +201,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
   it("質問が2件あると、答えは質問ごとに突き合わせる", () => {
     const entry: MainViewQuestion = {
       kind: "question",
+      toolUseId: "toolu_fictional",
       questions: [
         question("確認1", "1つ目は？"),
         {
@@ -218,6 +225,7 @@ describe("QuestionRecord（残す preview）", () => {
   function entryWithPreview(): MainViewQuestion {
     return {
       kind: "question",
+      toolUseId: "toolu_fictional",
       questions: [
         {
           ...question("確認", "どちらにする？"),
@@ -245,6 +253,7 @@ describe("QuestionRecord（残す preview）", () => {
   it("preview を持つ選択肢が無ければ、折りたたみを作らない", () => {
     const entry: MainViewQuestion = {
       kind: "question",
+      toolUseId: "toolu_fictional",
       questions: [question("確認", "どちらにする？")],
       answers: [["案B"]],
     }
@@ -273,5 +282,59 @@ describe("QuestionRecord（残す preview）", () => {
       (label) => label.textContent,
     )
     expect(labels).toEqual(["○ 案A", "● 案B"])
+  })
+
+  it("preview の手元の画像は質問の id で棚を引き、外部の URL の画像は「画像を出せない」の札になる", () => {
+    const entry: MainViewQuestion = {
+      ...entryWithPreview(),
+      questions: [
+        {
+          ...question("確認", "どちらにする？"),
+          options: [
+            { label: "案A", description: "", preview: "![架空の画面A](架空/a.png)" },
+            {
+              label: "案B",
+              description: "",
+              preview: "![架空の画面B](https://example.invalid/b.png)",
+            },
+          ],
+        },
+      ],
+    }
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    openDetails(container)
+
+    expect(screen.getByAltText("架空の画面A").getAttribute("src")).toMatch(
+      /^\/report-image\/toolu_fictional\/%E6%9E%B6%E7%A9%BA%2Fa\.png/,
+    )
+    expect(screen.getByRole("img", { name: "架空の画面B" }).tagName).toBe("SPAN")
+  })
+
+  it("コードスパン・コードフェンスの中の画像の記法は書き換えず、字のまま出す", () => {
+    const entry: MainViewQuestion = {
+      ...entryWithPreview(),
+      questions: [
+        {
+          ...question("確認", "どちらにする？"),
+          options: [
+            { label: "案A", description: "", preview: "`![架空のスパン](架空/a.png)`" },
+            {
+              label: "案B",
+              description: "",
+              preview: "```md\n![架空のフェンス](架空/b.png)\n```",
+            },
+          ],
+        },
+      ],
+    }
+    const { container } = render(<QuestionRecord entry={entry} />)
+
+    openDetails(container)
+
+    const codes = [...container.querySelectorAll("code")].map((code) => code.textContent)
+    expect(codes).toContain("![架空のスパン](架空/a.png)")
+    expect(codes.some((text) => text?.includes("![架空のフェンス](架空/b.png)"))).toBe(true)
+    expect(container.querySelector("img")).toBeNull()
   })
 })

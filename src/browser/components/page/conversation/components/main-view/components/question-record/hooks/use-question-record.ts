@@ -54,6 +54,8 @@ export type QuestionRecordQuestionModel = {
 }
 
 export type QuestionRecordModel = {
+  /** 質問の tool use id。preview の画像はこの id で棚を引く。 */
+  readonly toolUseId: string
   readonly questions: readonly QuestionRecordQuestionModel[]
 }
 
@@ -61,6 +63,7 @@ export function useQuestionRecord(props: QuestionRecordProps): QuestionRecordMod
   const [openedIndexes, setOpenedIndexes] = useState<ReadonlySet<number>>(new Set())
 
   return {
+    toolUseId: props.entry.toolUseId,
     questions: props.entry.questions.map((question, index) => {
       const answer = props.entry.answers[index] ?? []
       return {

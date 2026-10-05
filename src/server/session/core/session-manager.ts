@@ -53,10 +53,12 @@ import {
   createExperienceMetricRecorder,
   type ExperienceMetricLog,
 } from "../../experience-metric/core/experience-metric.ts"
+import { questionImagePaths } from "../../report/core/question-image-path.ts"
 import {
   type ReadReportImage,
-  releasedReportToolUseIds,
+  releasedImageToolUseIds,
   type ReportImageShelf,
+  reportImagePaths,
 } from "../../report/core/report-image-shelf.ts"
 import { type ReportUsageLog, reportUsageEntryOf } from "../../report/core/report-usage.ts"
 import {
@@ -120,11 +122,11 @@ export type SessionManagerOptions = {
    */
   readonly promptImageShelf: PromptImageShelf
   /**
-   * `image` の塊の画像の棚。`/report-image/` で配る側と同じ棚を渡すこと。
-   * 駆動から届いた `report` を受けたときに置き（続きから復元した再生では置かない）、記録からレポートが消えたときに捨てる。
+   * `image` の塊と質問の preview の画像の棚。`/report-image/` で配る側と同じ棚を渡すこと。
+   * 駆動から届いた `report` と新しく積まれた質問を受けたときに置き（続きから復元した再生では置かない）、記録にも答え待ちにも無くなったときに捨てる。
    */
   readonly reportImageShelf: ReportImageShelf
-  /** `image` の塊のパスを読む口（cwd から解く）。 */
+  /** `image` の塊と質問の preview の画像のパスを読む口（cwd から解く）。 */
   readonly readReportImage: ReadReportImage
   /**
    * セッションを1つ起こす（起こし直しも含む）一続き。
@@ -314,7 +316,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   const replaceState = (next: SessionState): void => {
     if (next.records !== state.records) {
       options.promptImageShelf.release(releasedPromptImageIds(state.records, next.records))
-      options.reportImageShelf.release(releasedReportToolUseIds(state.records, next.records))
+    }
+    if (next.records !== state.records || next.pending !== state.pending) {
+      options.reportImageShelf.release(releasedImageToolUseIds(state, next))
     }
     state = next
   }
@@ -328,9 +332,25 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       return
     }
     const at = options.now()
-    // 画像はブラウザがこのレポートを描く前に棚に無いといけないので、束に積む前に置く。
+    // 画像はブラウザがこのレポートや質問を描く前に棚に無いといけないので、束に積む前に置く。
     if (event.kind === "report") {
-      options.reportImageShelf.shelve(event.toolUseId, event.sections, options.readReportImage)
+      options.reportImageShelf.shelve(
+        event.toolUseId,
+        reportImagePaths(event.sections),
+        options.readReportImage,
+      )
+    }
+    if (event.kind === "pending-changed") {
+      const known = new Set(state.pending.map((ask) => ask.id))
+      for (const ask of event.pending) {
+        if (ask.kind === "question" && !known.has(ask.id)) {
+          options.reportImageShelf.shelve(
+            ask.id,
+            questionImagePaths(ask.questions),
+            options.readReportImage,
+          )
+        }
+      }
     }
     replaceState(applySessionEvent(state, event, at))
     tally.batch.add({ at, event })

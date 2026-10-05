@@ -79,7 +79,7 @@ type HomeSetup =
  * リポジトリの根には書かない。
  *
  * - `repository`: リポジトリの根で起こす（ほとんどの件はこれ。何も置かない）
- * - `report-image`: `--out` の下に件専用の場所を立て、`report-image` 場面が指す画像
+ * - `report-image`: `--out` の下に件専用の場所を立て、`report-image` 場面と `question-preview-image` 場面が指す画像
  *   （架空の PNG）を置いてから、そこで起こす
  */
 type WorkspaceSetup = { readonly kind: "repository" } | { readonly kind: "report-image" }
@@ -153,6 +153,9 @@ const CAPTIONED_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-captioned_"]
 const CAPTIONED_FIGURE_SELECTOR = `${CAPTIONED_SELECTOR} pre.mermaid svg`
 const DIMENSION_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-dimension_"]`
 const IMAGE_NOTES_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-image-notes_"]`
+/** 質問の選択肢の preview に書いた画像（`question-preview-image` 場面の横長の画像と、描かない画像の札）。 */
+const PREVIEW_IMAGE_SELECTOR = `${MAIN_REGION_SELECTOR} img[alt="架空の横長の画面"]`
+const PREVIEW_IMAGE_MISSING_SELECTOR = `${MAIN_REGION_SELECTOR} [role="img"][aria-label="架空の外部の画像"]`
 /** `list` の `flow`（一本道の手順）。 */
 const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
 /**
@@ -267,6 +270,27 @@ const CATALOG: readonly CatalogEntry[] = [
     prepare: [],
     skipReveal: false,
     settle: TAIL_SETTLE,
+  },
+  {
+    name: "question-preview-image",
+    scene: "question-preview-image",
+    label:
+      "質問（preview に書いた手元の画像が札の幅に収まって出る。縦長の画像は高さの上限で止まる）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [{ kind: "scroll", selector: PREVIEW_IMAGE_SELECTOR }],
+    skipReveal: false,
+    settle: { kind: "selector", selector: PREVIEW_IMAGE_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "question-preview-image-missing",
+    scene: "question-preview-image",
+    label: "質問（preview の外部の URL・data:・置いていない画像は「画像を出せない」の札になる）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [{ kind: "scroll", selector: PREVIEW_IMAGE_MISSING_SELECTOR }],
+    skipReveal: false,
+    settle: { kind: "selector", selector: PREVIEW_IMAGE_MISSING_SELECTOR, phase: "before-prepare" },
   },
   {
     name: "permission",
@@ -843,6 +867,7 @@ function workspaceOf(entry: CatalogEntry, outDir: string): string {
   const workspace = path.join(outDir, "workspace", entry.name)
   mkdirSync(path.join(workspace, "report-image-fixture"), { recursive: true })
   writeFileSync(path.join(workspace, "report-image-fixture", "after.png"), fictionalPng(320, 180))
+  writeFileSync(path.join(workspace, "report-image-fixture", "tall.png"), fictionalPng(180, 900))
   return workspace
 }
 
