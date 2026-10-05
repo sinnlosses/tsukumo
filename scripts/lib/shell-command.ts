@@ -17,6 +17,8 @@ export type SimpleCommand = {
   readonly inputs: readonly ShellWord[]
   /** 標準入力へ渡す heredoc の本文と here-string。 */
   readonly stdinTexts: readonly string[]
+  /** 直前の区切りが `|` か `|&` で、前のコマンドの出力を標準入力に受けるか。 */
+  readonly pipedIn: boolean
 }
 
 /**
@@ -36,6 +38,7 @@ type CommandBuilder = {
   readonly writes: ShellWord[]
   readonly inputs: ShellWord[]
   readonly stdinTexts: string[]
+  readonly pipedIn: boolean
 }
 
 type PendingHeredoc = {
@@ -83,11 +86,11 @@ function parseCommands(command: string): readonly CommandBuilder[] {
   let current = newBuilder()
   let index = 0
 
-  const finish = (): void => {
+  const finish = (pipedIn = false): void => {
     if (current.words.length > 0 || current.writes.length > 0 || current.inputs.length > 0) {
       commands.push(current)
     }
-    current = newBuilder()
+    current = newBuilder(pipedIn)
   }
 
   while (index < command.length) {
@@ -148,8 +151,18 @@ function parseCommands(command: string): readonly CommandBuilder[] {
       continue
     }
 
-    if (";&|()".includes(character)) {
+    if (character === "|" && command[index + 1] === "|") {
       finish()
+      index += 2
+      continue
+    }
+    if (character === "|") {
+      finish(true)
+      index += command[index + 1] === "&" ? 2 : 1
+      continue
+    }
+    if (";&|()".includes(character)) {
+      finish(character === "(" && current.words.length === 0 && current.pipedIn)
       index += 1
       continue
     }
@@ -167,8 +180,8 @@ function parseCommands(command: string): readonly CommandBuilder[] {
   return commands
 }
 
-function newBuilder(): CommandBuilder {
-  return { words: [], writes: [], inputs: [], stdinTexts: [] }
+function newBuilder(pipedIn = false): CommandBuilder {
+  return { words: [], writes: [], inputs: [], stdinTexts: [], pipedIn }
 }
 
 /** 改行の直後から、待っている heredoc の本文を順に読み、持ち主のコマンドへ付ける。読み終えた位置を返す。 */
@@ -344,6 +357,7 @@ function toSimpleCommand(parsed: CommandBuilder): SimpleCommand {
     writes: [...parsed.writes],
     inputs: [...parsed.inputs],
     stdinTexts: [...parsed.stdinTexts],
+    pipedIn: parsed.pipedIn,
   }
 }
 
