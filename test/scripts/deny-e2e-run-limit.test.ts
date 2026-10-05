@@ -8,6 +8,7 @@ import process from "node:process"
 import { describe, expect, test } from "vitest"
 
 import {
+  countE2eRuns,
   countFullE2eRuns,
   isOverLimitAfterRecording,
   RUN_LIMIT,
@@ -18,20 +19,35 @@ import { useTempDir } from "../fixture/temp-dir.ts"
 const HOOK_PATH = resolve("scripts/deny-e2e-run-limit.ts")
 const FILE_UNIT_E2E = "pnpm run test:e2e test/e2e/example.test.ts"
 
+function countOf(command: string, changeRunsE2e: boolean): number {
+  return countFullE2eRuns(countE2eRuns(command), changeRunsE2e)
+}
+
 describe("E2E を全部流すコマンドの数え方", () => {
+  test.each([
+    ["tw verify --full", "tw verify --full"],
+    ["pnpm run check --full", "pnpm run check --full"],
+    ["node scripts/check.ts --full", "node scripts/check.ts --full"],
+    ["pnpm run test:e2e", "pnpm run test:e2e"],
+    ["nice を前置きした check --full", "nice pnpm run check --full"],
+    ["ファイルを渡さない期待値の撮り直し", "node scripts/e2e-update.ts --full"],
+    ["E2E の設定でファイルを指さない vitest", "vitest run --config vitest.e2e.config.ts"],
+  ])("%s は変えたファイルに関わらず1回と数える", (_name, command) => {
+    expect(countOf(command, false)).toBe(1)
+  })
+
   test.each([
     ["tw verify", "tw verify"],
     ["pnpm run check", "pnpm run check"],
-    ["pnpm run test:e2e", "pnpm run test:e2e"],
-    ["nice を前置きした check", "nice pnpm run check"],
-    ["ファイルを渡さない期待値の撮り直し", "node scripts/e2e-update.ts --full"],
-    ["E2E の設定でファイルを指さない vitest", "vitest run --config vitest.e2e.config.ts"],
-  ])("%s は1回と数える", (_name, command) => {
-    expect(countFullE2eRuns(command)).toBe(1)
+    ["node scripts/check.ts", "node scripts/check.ts"],
+  ])("%s は E2E が選ばれる変更のときだけ1回と数える", (_name, command) => {
+    expect(countOf(command, true)).toBe(1)
+    expect(countOf(command, false)).toBe(0)
   })
 
   test("1つのコマンド文字列の中の呼び出しは、その数だけ数える", () => {
-    expect(countFullE2eRuns("tw verify && pnpm run check")).toBe(2)
+    expect(countOf("tw verify && pnpm run check --full", false)).toBe(1)
+    expect(countOf("tw verify && pnpm run check", true)).toBe(2)
   })
 
   test.each([
@@ -44,7 +60,7 @@ describe("E2E を全部流すコマンドの数え方", () => {
     ["E2E を含まない pnpm のスクリプト", "pnpm run test"],
     ["tw verify を文字列として持つだけの echo", "echo 'tw verify'"],
   ])("%s は数えない", (_name, command) => {
-    expect(countFullE2eRuns(command)).toBe(0)
+    expect(countOf(command, true)).toBe(0)
   })
 })
 
@@ -140,7 +156,45 @@ describe("委譲先の E2E 全段の呼び出しを上限で拒否する hook", 
     })
   }
 
-  const OVER_LIMIT_COMMAND = Array.from({ length: RUN_LIMIT + 1 }, () => "tw verify").join("; ")
+  const OVER_LIMIT_COMMAND = Array.from({ length: RUN_LIMIT + 1 }, () => "tw verify --full").join(
+    "; ",
+  )
+
+  async function newClaimedRepoWithChange(changedFile: string): Promise<string> {
+    const dir = await newClaimedRepo()
+    mkdirSync(join(dir, ".tsukumo"), { recursive: true })
+    writeFileSync(
+      join(dir, ".tsukumo", "project.json"),
+      JSON.stringify({
+        tasks: { store: "beads", mainBranch: "main", runPrompt: "/next-task {id}" },
+      }),
+    )
+    await runSubprocessOrThrow("git", ["add", ".tsukumo/project.json"], { cwd: dir })
+    await runSubprocessOrThrow(
+      "git",
+      ["-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "--quiet", "-m", "base"],
+      { cwd: dir },
+    )
+    await runSubprocessOrThrow("git", ["branch", "-M", "main"], { cwd: dir })
+    mkdirSync(join(dir, changedFile, ".."), { recursive: true })
+    writeFileSync(join(dir, changedFile), "// changed\n")
+    return dir
+  }
+
+  const OVER_LIMIT_BY_CHANGE = Array.from({ length: RUN_LIMIT + 1 }, () => "tw verify").join("; ")
+
+  test.each([
+    ["文書だけ", "docs/workflow.md"],
+    ["scripts/ だけ", "scripts/example.ts"],
+  ])("E2E が選ばれない変更（%s）では tw verify を上限を超えて打っても通す", async (_name, file) => {
+    const dir = await newClaimedRepoWithChange(file)
+    expect((await runHook(dir, bashInput(OVER_LIMIT_BY_CHANGE, true))).exitCode).toBe(0)
+  })
+
+  test("E2E が選ばれる変更（src/browser/）では tw verify の上限を超える呼び出しを止める", async () => {
+    const dir = await newClaimedRepoWithChange("src/browser/example.ts")
+    expect((await runHook(dir, bashInput(OVER_LIMIT_BY_CHANGE, true))).exitCode).toBe(2)
+  })
 
   test("上限を超える呼び出しは終了コード 2 で止め、ファイル単位の実行を打ってよいことを書く", async () => {
     const dir = await newClaimedRepo()

@@ -47,7 +47,7 @@ describe("拒否の記録", () => {
     mkdirSync(join(repoDir, ".git", "task-open-claims"))
     writeFileSync(join(repoDir, ".git", "task-open-claims", "TASK-A"), "")
     for (let count = 0; count <= E2E_RUN_LIMIT; count++) {
-      await runBashHook("deny-e2e-run-limit", { command: "tw verify", agent: true })
+      await runBashHook("deny-e2e-run-limit", { command: "tw verify --full", agent: true })
     }
     expect(readDenialLines().map((line) => JSON.parse(line))).toMatchObject([
       { hook: "deny-e2e-run-limit", rule: "run-limit", actor: "subagent" },

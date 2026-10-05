@@ -15,9 +15,20 @@ const OPEN_CLAIMS_DIR_NAME = "task-open-claims"
 
 const E2E_CONFIG_NAME = "vitest.e2e.config.ts"
 
-/** コマンド文字列の中で、E2E を全部流す単純コマンドの数。 */
-export function countFullE2eRuns(commandText: string): number {
-  return parseShellCommand(commandText).filter(isFullE2eRun).length
+/** E2E を流すと決まっている呼び出しの数と、`--full` が無く変えたファイル次第の呼び出しの数。 */
+export type E2eRunCounts = { readonly always: number; readonly byChange: number }
+
+export function countE2eRuns(commandText: string): E2eRunCounts {
+  const kinds = parseShellCommand(commandText).map(classifyE2eRun)
+  return {
+    always: kinds.filter((kind) => kind === "always").length,
+    byChange: kinds.filter((kind) => kind === "by-change").length,
+  }
+}
+
+/** 変えたファイルが E2E を流すもの（`changeRunsE2e`）なら、次第の呼び出しも数に入れる。 */
+export function countFullE2eRuns(counts: E2eRunCounts, changeRunsE2e: boolean): number {
+  return counts.always + (changeRunsE2e ? counts.byChange : 0)
 }
 
 /** 今回の `runs` 回を数に足し、足した結果が上限を超えるか。数えられないときは超えない。 */
@@ -39,23 +50,30 @@ export function isOverLimitAfterRecording(gitDir: string, runs: number): boolean
   }
 }
 
-function isFullE2eRun(simple: SimpleCommand): boolean {
+function classifyE2eRun(simple: SimpleCommand): "always" | "by-change" | "no" {
   const words = withoutNice(simple.argv.map((word) => word.text))
   const [head = "", ...rest] = words
   if (head === "tw") {
-    return rest[0] === "verify"
+    return rest[0] === "verify" ? checkKind(rest) : "no"
   }
   if (head === "node") {
     const [script = "", ...scriptArgs] = rest
-    return (
-      script === "scripts/check.ts" ||
-      (script === "scripts/e2e-update.ts" && scriptArgs.every((arg) => arg.startsWith("-")))
-    )
+    if (script === "scripts/check.ts") {
+      return checkKind(scriptArgs)
+    }
+    return script === "scripts/e2e-update.ts" && scriptArgs.every((arg) => arg.startsWith("-"))
+      ? "always"
+      : "no"
   }
   if (head === "pnpm") {
-    return isFullPnpmScript(rest)
+    return classifyPnpmScript(rest)
   }
-  return isFullVitestE2e(words)
+  return isFullVitestE2e(words) ? "always" : "no"
+}
+
+/** `check` の系統の呼び出し。`--full` なら必ず流し、無ければ変えたファイル次第。 */
+function checkKind(args: readonly string[]): "always" | "by-change" {
+  return args.includes("--full") ? "always" : "by-change"
 }
 
 function withoutNice(words: readonly string[]): readonly string[] {
@@ -72,15 +90,15 @@ function isNiceOption(word: string): boolean {
 }
 
 /** `pnpm [run] <script> ...` が `check` か、ファイルを渡していない `test:e2e` か。 */
-function isFullPnpmScript(args: readonly string[]): boolean {
+function classifyPnpmScript(args: readonly string[]): "always" | "by-change" | "no" {
   const [script = "", ...scriptArgs] = args[0] === "run" ? args.slice(1) : args
   if (script === "check") {
-    return true
+    return checkKind(scriptArgs)
   }
   if (script === "test:e2e" || script === "test:e2e:update") {
-    return scriptArgs.every((arg) => arg.startsWith("-") || arg === "--")
+    return scriptArgs.every((arg) => arg.startsWith("-") || arg === "--") ? "always" : "no"
   }
-  return false
+  return "no"
 }
 
 /** `vitest` に E2E の設定を渡し、ファイルの位置引数が無い形か。 */

@@ -17,8 +17,7 @@ import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-re
 import { describeFailedStages, type StageOutcome } from "./lib/check-failure.ts"
 import { acquireCheckLock, withCheckLockOwner } from "./lib/check-lock-repository.ts"
 import { isDocumentOnlyChange } from "./lib/document-change.ts"
-import { readE2eSelection } from "./lib/e2e-selection-repository.ts"
-import { describeE2eSelection } from "./lib/e2e-selection.ts"
+import { planE2eRun } from "./lib/e2e-selection-repository.ts"
 
 type Stage = {
   readonly name: string
@@ -84,18 +83,9 @@ try {
 
 /** `test:e2e` の段（流すものが無ければ空の列）。選んだ結果の1行を出す。 */
 function chooseE2eStages(): readonly Stage[] {
-  if (forceFull) {
-    process.stdout.write("E2E: --full なので全件を流す\n")
-    return [{ name: "test:e2e", args: [], heavy: true }]
-  }
-  const { selection, total } = readE2eSelection(ROOT, changedPaths)
-  process.stdout.write(`${describeE2eSelection(selection, total)}\n`)
-  if (selection.kind === "all") {
-    return [{ name: "test:e2e", args: [], heavy: true }]
-  }
-  return selection.files.length === 0
-    ? []
-    : [{ name: "test:e2e", args: selection.files, heavy: true }]
+  const plan = planE2eRun(ROOT, changedPaths, forceFull)
+  process.stdout.write(`${plan.line}\n`)
+  return plan.kind === "none" ? [] : [{ name: "test:e2e", args: plan.args, heavy: true }]
 }
 
 type BufferedResult = StageOutcome & { readonly output: string }

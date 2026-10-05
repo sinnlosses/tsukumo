@@ -9,7 +9,14 @@
 import { execFileSync } from "node:child_process"
 import process from "node:process"
 
-import { countFullE2eRuns, isOverLimitAfterRecording, RUN_LIMIT } from "./lib/e2e-run-limit.ts"
+import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-repository.ts"
+import {
+  countE2eRuns,
+  countFullE2eRuns,
+  isOverLimitAfterRecording,
+  RUN_LIMIT,
+} from "./lib/e2e-run-limit.ts"
+import { planE2eRun } from "./lib/e2e-selection-repository.ts"
 import { recordHookDenial } from "./lib/hook-denial-record.ts"
 
 /** Bash ツールの PreToolUse hook の入力のうち、この hook が見るところ。 */
@@ -22,7 +29,9 @@ type PreToolUseHookInput = {
 const raw = await readStdin()
 const command = readSubagentBashCommand(raw)
 if (command !== undefined) {
-  const runs = countFullE2eRuns(command)
+  const counts = countE2eRuns(command)
+  const changeRunsE2e = counts.byChange > 0 && (await readChangeRunsE2e())
+  const runs = countFullE2eRuns(counts, changeRunsE2e)
   const gitDir = runs > 0 ? readGitDir() : undefined
   if (gitDir !== undefined && isOverLimitAfterRecording(gitDir, runs)) {
     recordHookDenial({ hook: "deny-e2e-run-limit", rule: "run-limit", actor: "subagent" })
@@ -57,8 +66,26 @@ function readSubagentBashCommand(rawInput: string): string | undefined {
 
 /** この作業ツリーの git dir。引けなければ `undefined`。 */
 function readGitDir(): string | undefined {
+  return readGit(["rev-parse", "--path-format=absolute", "--git-dir"])
+}
+
+/** 変えたファイルから選ぶと `check` が E2E を流すか。調べられないときは流さない側に倒す。 */
+async function readChangeRunsE2e(): Promise<boolean> {
   try {
-    return execFileSync("git", ["rev-parse", "--path-format=absolute", "--git-dir"], {
+    const root = readGit(["rev-parse", "--show-toplevel"])
+    if (root === undefined) {
+      return false
+    }
+    const changedPaths = collectChangedPaths(root, await resolvePrimaryBranch(root))
+    return planE2eRun(root, changedPaths, false).kind === "run"
+  } catch {
+    return false
+  }
+}
+
+function readGit(args: readonly string[]): string | undefined {
+  try {
+    return execFileSync("git", [...args], {
       cwd: process.env["CLAUDE_PROJECT_DIR"] ?? process.cwd(),
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
