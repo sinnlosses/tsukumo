@@ -19,3 +19,18 @@ export function isDocumentPath(path: string): boolean {
 export function isDocumentOnlyChange(paths: readonly string[]): boolean {
   return paths.length > 0 && paths.every(isDocumentPath)
 }
+
+const TASK_REGISTRATION_PATHS = ["develop/direction.md"]
+const TASK_REGISTRATION_DIRECTORIES = ["develop/draft/", "docs/history/"]
+
+/** 変えたファイルが1件以上あり、かつ全件がタスク登録の置き場（指示メモ・ドラフト・履歴）かどうか。 */
+export function isTaskRegistrationOnlyChange(paths: readonly string[]): boolean {
+  return (
+    paths.length > 0 &&
+    paths.every(
+      (path) =>
+        TASK_REGISTRATION_PATHS.includes(path) ||
+        TASK_REGISTRATION_DIRECTORIES.some((directory) => path.startsWith(directory)),
+    )
+  )
+}

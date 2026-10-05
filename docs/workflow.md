@@ -149,7 +149,8 @@ PreToolUse hook（`scripts/deny-e2e-run-limit.ts`）が拒否する（検証は�
 ファイルを指さない `vitest run --config vitest.e2e.config.ts` と、`--full` の無い `tw verify`・
 `pnpm run check`・`node scripts/check.ts` のうち、変えたファイルから `check` が E2E を1件以上流すと
 選ぶとき（`scripts/lib/e2e-selection-repository.ts` の `planE2eRun`。`check` と同じ関数）。
-文書だけ・`scripts/` だけの変更の `tw verify` は数えない。変えたファイルを集められないときも数えない。
+文書だけ・`scripts/` だけの変更の `tw verify` は数えない。タスク登録だけの変更は `--full` でも E2E を
+流さないが、hook は `--full` の付いた呼び出しを数える（多めに数える側）。変えたファイルを集められないときも数えない。
 **着手し直す（印が消えて作り直される）と0に戻る。** E2E のファイル単位の実行
 （`pnpm run test:e2e test/e2e/<ファイル>.test.ts`）は数えず、メインの呼び出しも対象にしない。
 

@@ -1,0 +1,59 @@
+// `pnpm run check` が打つ段の並びを、`--full` の有無と変えたファイルから決める、という概念1つを持つ。
+
+import { isDocumentOnlyChange, isTaskRegistrationOnlyChange } from "./document-change.ts"
+
+export type Stage = {
+  readonly name: string
+  /** `pnpm run <name>` のあとに渡す引数。 */
+  readonly args: readonly string[]
+  /** 錠の中で並べて走らせる重い段か。 */
+  readonly heavy: boolean
+}
+
+/** タスク登録だけの変更で打つ文書の検査。 */
+export const DOCUMENT_CHECK_TEST_FILES = [
+  "test/conflict-marker.test.ts",
+  "test/task-id.test.ts",
+  "test/scripts/section-reference.test.ts",
+] as const
+
+export type StagePlan = {
+  readonly stages: readonly Stage[]
+  /** 段の選び方を知らせる1行（無ければ空）。 */
+  readonly notice: string
+}
+
+/**
+ * `changedPaths` が空なら変えたファイルを集められなかったものとして扱う。
+ * `chooseE2eStages` は E2E の段を選ぶ呼び出しで、タスク登録だけの変更では呼ばない。
+ */
+export function planStages(
+  forceFull: boolean,
+  changedPaths: readonly string[],
+  chooseE2eStages: () => readonly Stage[],
+): StagePlan {
+  if (isTaskRegistrationOnlyChange(changedPaths)) {
+    return {
+      stages: [
+        { name: "format:check", args: [], heavy: false },
+        { name: "test", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
+      ],
+      notice: "タスク登録だけの変更のため format:check と文書の検査だけを打つ",
+    }
+  }
+  const documentOnly = !forceFull && isDocumentOnlyChange(changedPaths)
+  return {
+    stages: [
+      ...(documentOnly
+        ? []
+        : [
+            { name: "typecheck", args: [], heavy: false },
+            { name: "lint", args: [], heavy: false },
+          ]),
+      { name: "format:check", args: [], heavy: false },
+      { name: "test", args: [], heavy: true },
+      ...chooseE2eStages(),
+    ],
+    notice: documentOnly ? "文書だけの変更のため typecheck・lint を省く" : "",
+  }
+}

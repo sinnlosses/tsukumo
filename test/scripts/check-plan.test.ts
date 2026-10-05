@@ -1,7 +1,7 @@
 // `pnpm run check` が重い段（typecheck・lint・test:e2e）を省いてよいかの判定と、
 // その材料になる「変えたファイル」の集め方を検証する。
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 
@@ -11,7 +11,12 @@ import {
   collectChangedPaths,
   resolvePrimaryBranch,
 } from "../../scripts/lib/changed-path-repository.ts"
-import { isDocumentOnlyChange, isDocumentPath } from "../../scripts/lib/document-change.ts"
+import { DOCUMENT_CHECK_TEST_FILES, planStages } from "../../scripts/lib/check-stage.ts"
+import {
+  isDocumentOnlyChange,
+  isDocumentPath,
+  isTaskRegistrationOnlyChange,
+} from "../../scripts/lib/document-change.ts"
 import { writeProjectSettings } from "../fixture/project-settings.ts"
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
 
@@ -53,6 +58,66 @@ describe("isDocumentOnlyChange", () => {
 
   test("変えたファイルが1件も無ければ false（全段を走らせる）", () => {
     expect(isDocumentOnlyChange([])).toBe(false)
+  })
+})
+
+describe("isTaskRegistrationOnlyChange", () => {
+  test("指示メモ・ドラフト・履歴だけなら true", () => {
+    expect(
+      isTaskRegistrationOnlyChange([
+        "develop/direction.md",
+        "develop/draft/idea.md",
+        "docs/history/direction.md",
+      ]),
+    ).toBe(true)
+  })
+
+  test("src/ が混ざれば false", () => {
+    expect(isTaskRegistrationOnlyChange(["docs/history/direction.md", "src/cli.ts"])).toBe(false)
+  })
+
+  test("develop/task/ や docs/ のほかの文書が混ざれば false", () => {
+    expect(
+      isTaskRegistrationOnlyChange(["docs/history/direction.md", "develop/task/sample.md"]),
+    ).toBe(false)
+    expect(isTaskRegistrationOnlyChange(["docs/history/direction.md", "docs/workflow.md"])).toBe(
+      false,
+    )
+  })
+
+  test("変えたファイルが0件なら false", () => {
+    expect(isTaskRegistrationOnlyChange([])).toBe(false)
+  })
+})
+
+describe("planStages", () => {
+  const e2eStage = { name: "test:e2e", args: [], heavy: true }
+  const choose = () => [e2eStage]
+
+  test.each([true, false])("タスク登録だけの変更は forceFull=%s でも2段ちょうど", (forceFull) => {
+    const plan = planStages(forceFull, ["docs/history/direction.md"], () => {
+      throw new Error("E2E は選ばない")
+    })
+    expect(plan.stages).toEqual([
+      { name: "format:check", args: [], heavy: false },
+      { name: "test", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
+    ])
+  })
+
+  test("変えたファイルが空なら --full で5段すべて", () => {
+    expect(planStages(true, [], choose).stages.map((stage) => stage.name)).toEqual([
+      "typecheck",
+      "lint",
+      "format:check",
+      "test",
+      "test:e2e",
+    ])
+  })
+
+  test("文書の検査の3ファイルが実在する", () => {
+    for (const file of DOCUMENT_CHECK_TEST_FILES) {
+      expect(existsSync(file)).toBe(true)
+    }
   })
 })
 

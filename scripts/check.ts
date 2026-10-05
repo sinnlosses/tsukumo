@@ -5,9 +5,13 @@
 // 重い段（`test`・`test:e2e`）は作業ツリーをまたぐ錠を取って、単体と E2E を並べて走らせる。
 // 並べた2段の出力は段ごとに溜め、両方が終わってから段の順に出し、落ちた段は最後の行で名指しする。
 //
+// 変えたファイルが `develop/direction.md`・`develop/draft/`・`docs/history/` だけ（タスク登録だけ）の
+// ときは、`--full` の有無に関わらず `format:check` と文書の検査（`DOCUMENT_CHECK_TEST_FILES`）だけを打つ。
+//
 // 使い方:
 //   node scripts/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら typecheck・lint も省く
-//   node scripts/check.ts --full  # 変えたファイルに関わらず5段すべてを、E2E は全件で走らせる
+//   node scripts/check.ts --full  # タスク登録だけの変更でなければ、5段すべてを、E2E は全件で走らせる
+//                                 # （変えたファイルを集められないときも5段すべて）
 
 import { spawn, spawnSync } from "node:child_process"
 import process from "node:process"
@@ -16,36 +20,18 @@ import { fileURLToPath } from "node:url"
 import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-repository.ts"
 import { describeFailedStages, type StageOutcome } from "./lib/check-failure.ts"
 import { acquireCheckLock, withCheckLockOwner } from "./lib/check-lock-repository.ts"
-import { isDocumentOnlyChange } from "./lib/document-change.ts"
+import { planStages, type Stage } from "./lib/check-stage.ts"
 import { planE2eRun } from "./lib/e2e-selection-repository.ts"
-
-type Stage = {
-  readonly name: string
-  /** `pnpm run <name>` のあとに渡す引数。 */
-  readonly args: readonly string[]
-  /** 錠の中で並べて走らせる重い段か。 */
-  readonly heavy: boolean
-}
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const forceFull = process.argv.includes("--full")
 
-const changedPaths = forceFull ? [] : collectChangedPaths(ROOT, await resolvePrimaryBranch(ROOT))
-const documentOnly = !forceFull && isDocumentOnlyChange(changedPaths)
-if (documentOnly) {
-  process.stdout.write("文書だけの変更のため typecheck・lint を省く\n")
+const changedPaths = await collectPathsForPlan()
+const stagePlan = planStages(forceFull, changedPaths, chooseE2eStages)
+if (stagePlan.notice !== "") {
+  process.stdout.write(`${stagePlan.notice}\n`)
 }
-const activeStages = [
-  ...(documentOnly
-    ? []
-    : [
-        { name: "typecheck", args: [], heavy: false },
-        { name: "lint", args: [], heavy: false },
-      ]),
-  { name: "format:check", args: [], heavy: false },
-  { name: "test", args: [], heavy: true },
-  ...chooseE2eStages(),
-] satisfies readonly Stage[]
+const activeStages = stagePlan.stages
 
 for (const stage of activeStages.filter((candidate) => !candidate.heavy)) {
   const result = spawnSync("pnpm", ["run", stage.name, ...stage.args], {
@@ -79,6 +65,18 @@ try {
   }
 } finally {
   release()
+}
+
+/** 変えたファイル。`--full` で集められないときは空（5段すべてを打つ）。 */
+async function collectPathsForPlan(): Promise<readonly string[]> {
+  try {
+    return collectChangedPaths(ROOT, await resolvePrimaryBranch(ROOT))
+  } catch (error) {
+    if (forceFull) {
+      return []
+    }
+    throw error
+  }
 }
 
 /** `test:e2e` の段（流すものが無ければ空の列）。選んだ結果の1行を出す。 */
