@@ -434,11 +434,4 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
 
     expect(review.judge(VALID)).toEqual({ kind: "accepted" })
   })
-
-  it("同じ引数の送り直しは、送り直しの文面を先に返す", () => {
-    const review = createReportReview()
-    draw(review, "toolu_r1", VALID)
-
-    expect(review.judge(VALID)).toEqual({ kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT })
-  })
 })

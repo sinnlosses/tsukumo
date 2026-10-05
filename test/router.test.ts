@@ -199,8 +199,9 @@ function startRouter(
 }
 
 describe("createCommandRouter（session）", () => {
+  // 帯のドロップダウンはセッション限り（`docs/architecture/screen-design.md`「設定の置き場所」）。既定は書き換わらない。
   it("駆動へそのまま渡す5種は、駆動の口を順に1つずつ呼ぶ", async () => {
-    const { commands, stub } = startRouter()
+    const { commands, stub, remembered } = startRouter()
 
     expect(await commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
       ok: true,
@@ -217,6 +218,7 @@ describe("createCommandRouter（session）", () => {
       "setEffort:high",
       "setPermissionMode:plan",
     ])
+    expect(remembered).toEqual([])
   })
 
   it("終わった会話への依頼は、定型文の理由で受け付けず駆動へ積まない", async () => {
@@ -432,17 +434,6 @@ describe("createCommandRouter（session）", () => {
     ])
   })
 
-  // 帯のドロップダウンはセッション限り（`docs/architecture/screen-design.md`「設定の置き場所」）。既定は書き換わらない。
-  it("帯の session.setModel / session.setPermissionMode では既定を覚えない", async () => {
-    const { commands, stub, remembered } = startRouter()
-
-    await commands.session.setModel({ model: "haiku" })
-    await commands.session.setPermissionMode({ mode: "bypassPermissions" })
-
-    expect(remembered).toEqual([])
-    expect(stub.calls).toEqual(["setModel:haiku", "setPermissionMode:bypassPermissions"])
-  })
-
   describe("キャラクターから話しかけてもらう（nudge）", () => {
     it("雑談モードなら、記録に残さない口へ core が持つ文面を渡す（依頼としては送らない）", async () => {
       const { commands, stub, observe } = startRouter()
@@ -601,26 +592,12 @@ describe("createCommandRouter（session）", () => {
       expect(emitted.map((event) => event.kind)).toEqual(["diary-requested", "diary-failed"])
     })
 
-    it("空の日は断る", async () => {
-      const { commands } = startRouter("written", () => Promise.resolve(EMPTY_DAY))
-
-      expect(await commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
-        ok: false,
-        reason: FRAME_ERROR_REASON.achievementReflectionUnavailable,
-      })
-    })
-
-    it("main が読めない日は断る", async () => {
-      const { commands } = startRouter("written", () => Promise.resolve({ kind: "unknown" }))
-
-      expect(await commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
-        ok: false,
-        reason: FRAME_ERROR_REASON.achievementReflectionUnavailable,
-      })
-    })
-
-    it("成果が読めなかった（undefined）ときも断る", async () => {
-      const { commands } = startRouter("written", () => Promise.resolve(undefined))
+    it.each<[string, DailyAchievement | undefined]>([
+      ["空の日", EMPTY_DAY],
+      ["main が読めない日", { kind: "unknown" }],
+      ["成果が読めなかった（undefined）", undefined],
+    ])("%sは断る", async (_, day) => {
+      const { commands } = startRouter("written", () => Promise.resolve(day))
 
       expect(await commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
         ok: false,

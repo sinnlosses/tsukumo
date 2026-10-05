@@ -99,11 +99,7 @@ describe("boardContent", () => {
     breadcrumb: { kind: "none" },
   }
 
-  function contentOf(
-    tasks: TaskSummaryResult,
-    selectedId: string,
-    input: BoardContentInput = NO_BREADCRUMB,
-  ): TaskBoardContent {
+  function contentOf(tasks: TaskSummaryResult, selectedId: string): TaskBoardContent {
     const items = tasks.kind === "known" ? tasks.items : []
     const entries = boardEntries(items)
     const byId = new Map(entries.map((entry) => [entry.task.id, entry]))
@@ -113,9 +109,9 @@ describe("boardContent", () => {
       byId,
       entries,
       entries.find((entry) => entry.task.id === selectedId),
-      (entry) => matchesFilter(entry.state, input.filter),
+      (entry) => matchesFilter(entry.state, NO_BREADCRUMB.filter),
       new Set(items.map((item) => item.id)),
-      input,
+      NO_BREADCRUMB,
     )
   }
 
@@ -181,20 +177,5 @@ describe("boardContent", () => {
     expect(detail.dependents.map((card) => card.id)).toEqual(["X-003"])
     expect(opener).toMatchObject({ kind: "file", availability: "tracked" })
     expect(run).toEqual({ kind: "unavailable", reason: "待ちが終わると頼めます" })
-  })
-
-  it("送り先のコマンドが無いと、着手できるタスクでも頼めない", () => {
-    const content = contentOf(known([taskOf("X-001", {})]), "X-001", {
-      ...NO_BREADCRUMB,
-      destination: { kind: "missing", command: "next-task" },
-    })
-    if (content.kind !== "known" || content.selection.kind !== "some") {
-      throw new Error("選択があるはず")
-    }
-
-    expect(content.selection.run).toEqual({
-      kind: "unavailable",
-      reason: "/next-task が無いので頼めません",
-    })
   })
 })

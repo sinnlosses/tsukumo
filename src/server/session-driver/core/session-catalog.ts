@@ -157,7 +157,7 @@ export function readTaggedSessions(sessions: unknown): readonly TaggedSession[] 
  * `lastModified` は新しいほうを採る。
  * tsukumo の印として読めない `tag` なら並びをそのまま返す。
  */
-export function withSessionMark(
+function withSessionMark(
   sessions: readonly TaggedSession[],
   marked: { readonly sessionId: string; readonly tag: string; readonly at: number },
 ): readonly TaggedSession[] {

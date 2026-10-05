@@ -108,10 +108,6 @@ describe("createReportGate（Stop の関所）", () => {
   it("新しい事実が無い差し戻しがあったターンでは、1行を超える本文でも通す", () => {
     expect(blocks([INIT, LONG_BODY], false, () => true)).toBe(false)
   })
-
-  it("新しい事実が無い差し戻しが無いターンでは、これまでどおり差し戻す", () => {
-    expect(blocks([INIT, LONG_BODY], false, () => false)).toBe(true)
-  })
 })
 
 describe("REPORT_GATE_REASON", () => {

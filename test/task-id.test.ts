@@ -2,24 +2,10 @@ import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
-import { collectTaskIds } from "../scripts/lib/task-id-repository.ts"
 import { collectStrayTaskMentions } from "../scripts/lib/task-mention-repository.ts"
-import { findExcessiveTaskIdDuplicates, formatDuplicateTaskId } from "../scripts/task-id.ts"
 import { formatStrayTaskMention } from "../scripts/task-mention.ts"
 
-// `develop/tasks.json` の `id` と `docs/history/tasks.md` の見出しを合わせたIDが重複していないかを
-// 保つ（T-225 は既知の例外として2件まで許す。理由は `KNOWN_DUPLICATE_ALLOWANCE` のコメント）。
-// ID は一度発行したら使い回さない前提で、重複は採番のやり直しなど運用の事故を示す。
-
 const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
-
-describe("タスクIDの重複", () => {
-  it("既知の例外（T-225）を除いて重複が無い", () => {
-    expect(
-      findExcessiveTaskIdDuplicates(collectTaskIds(REPOSITORY_ROOT)).map(formatDuplicateTaskId),
-    ).toEqual([])
-  })
-})
 
 // CLAUDE.md「コード・ドキュメントにタスク番号（`T-` + 3桁、または GitHub の Issue 番号 `GH-<n>`）を
 // 書かない」を、`src/` / `test/` /

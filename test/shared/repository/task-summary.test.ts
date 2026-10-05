@@ -172,7 +172,7 @@ describe("parseNewTaskFile（3.4 の読み取りの見本）", () => {
   })
 
   it("loopable が小文字の y のときは INVALID（Y/N だけ）", () => {
-    const content = contentOf({ 4: "loopable: y" })
+    const content = contentOf({ 5: "loopable: y" })
 
     expect(parseNewTaskFile("T-521.md", content)).toBeUndefined()
   })

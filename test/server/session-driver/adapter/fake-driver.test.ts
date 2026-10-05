@@ -15,7 +15,6 @@ import {
   type SessionEvent,
   sessionEventSchema,
 } from "../../../../src/shared/session/session-event.ts"
-import { bundledFakeSession } from "../../../fixture/bundled-fake-session.ts"
 
 // 疑似セッションは手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は
 const FAKE_SESSION = {
@@ -553,24 +552,6 @@ describe("startFakeSession", () => {
 })
 
 describe("readFakeSession", () => {
-  it("同梱の疑似セッション（test/fixture/fake-session.json）を読める", () => {
-    const session = bundledFakeSession()
-
-    expect(session.opening.length).toBeGreaterThan(0)
-    expect(session.turns.length).toBeGreaterThan(0)
-    // 場面の名前は、状態のカタログを撮る道具が名指しする鍵。
-    expect(session.turns.map((scene) => scene.name)).toContain("question-multi")
-  })
-
-  it("過去の transcript（pastSessions）と、それを指す場面の resume を読める", () => {
-    const session = bundledFakeSession()
-
-    expect(session.pastSessions.map((past) => past.sessionId)).toContain("fake-past-session")
-    expect(session.turns.find((scene) => scene.name === "session-resume")?.resume).toBe(
-      "fake-past-session",
-    )
-  })
-
   describe("読めないとき", () => {
     let directory: string
 

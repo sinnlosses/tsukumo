@@ -63,17 +63,15 @@ function key(
   modifiers: {
     readonly ctrl?: boolean
     readonly meta?: boolean
-    readonly composing?: boolean
   } = {},
-  keyCode = 0,
 ): PressedKey {
   let prevented = false
   return {
     key: value,
     ctrlKey: modifiers.ctrl ?? false,
     metaKey: modifiers.meta ?? false,
-    keyCode,
-    isComposing: modifiers.composing ?? false,
+    keyCode: 0,
+    isComposing: false,
     preventDefault: () => {
       prevented = true
     },
@@ -161,19 +159,6 @@ describe("useComposer の送信", () => {
 
     expect(calls).toEqual([{ procedure: "session.prompt", text: "架空の依頼", images: [] }])
     expect(result.current.draft.text).toBe("")
-  })
-
-  it("Enter 単独・IME の変換確定（isComposing / keyCode 229）では送らない", () => {
-    const calls: unknown[] = []
-    const { result } = renderUseComposer({}, (command) => calls.push(command))
-    type(result, "架空の依頼")
-
-    expect(press(result, key("Enter")).prevented()).toBe(false)
-    press(result, key("Enter", { meta: true, composing: true }))
-    press(result, key("Enter", { meta: true }, 229))
-
-    expect(calls).toEqual([])
-    expect(result.current.draft.text).toBe("架空の依頼")
   })
 
   it("空白だけの下書きは送らない", () => {

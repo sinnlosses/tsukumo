@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  achievementCommitsInRange,
   commitMilestoneOf,
   countAchievementCommits,
   type AchievementCommit,
@@ -50,19 +49,6 @@ describe("countAchievementCommits", () => {
     const commits = [commit("a", 100, [])]
 
     expect(countAchievementCommits(commits, 0, 200)).toBe(0)
-  })
-})
-
-describe("achievementCommitsInRange", () => {
-  it("countAchievementCommits と同じ絞り込みで、コミットそのものを返す", () => {
-    const commits = [
-      commit("a", 100, ["src/a.ts"]),
-      commit("b", 150, ["develop/tasks.json"]), // 帳面だけ→外れる
-      commit("c", 199, ["src/c.ts"]),
-      commit("d", 200, ["src/d.ts"]), // end と同じ時刻は含まない
-    ]
-
-    expect(achievementCommitsInRange(commits, 100, 200).map((c) => c.hash)).toEqual(["a", "c"])
   })
 })
 

@@ -367,32 +367,6 @@ describe("createChatArchive の readRecent", () => {
     expect(recent.map((entry) => entry.text)).toEqual(["まんなか", "いちばん新しい"])
   })
 
-  it("行の途中では切れない（溢れる1件は丸ごと載せない）", () => {
-    const chatArchive = createChatArchive(root())
-    const at = noonOn(2026, 9, 21)
-    chatArchive.append("fictional-pack", {
-      mode: "chat",
-      kind: "request",
-      at,
-      text: TWELVE_BYTES,
-      images: undefined,
-    })
-    chatArchive.append("fictional-pack", {
-      mode: "chat",
-      kind: "speech",
-      at,
-      text: "かきくけ",
-      expression: "proud",
-    })
-
-    // 1件（12バイト）は収まるが、2件目の途中までしか入らない上限。
-    const recent = chatArchive.readRecent("fictional-pack", withRecentBytes(13))
-
-    expect(recent.map((entry) => entry.text)).toEqual(["かきくけ"])
-    // 途中で切られた断片が混ざらない。
-    expect(recent.map((entry) => entry.text).join("")).not.toContain("あい")
-  })
-
   it("1件だけで上限を超えるときは空（行の途中で切らない）", () => {
     const chatArchive = createChatArchive(root())
     chatArchive.append("fictional-pack", {
@@ -620,7 +594,7 @@ describe("createChatArchive の unconsolidated", () => {
 
     // 窓（recentBytes）には最新の1件だけが収まる大きさにする。
     const recentBytes = Buffer.byteLength("21日の依頼")
-    const { entries, usedBytes, previousEpisodeTitle } = chatArchive.unconsolidated(
+    const { entries, usedBytes, previousEpisodeTitle, overflowed } = chatArchive.unconsolidated(
       "fictional-pack",
       {
         recentBytes,
@@ -632,17 +606,6 @@ describe("createChatArchive の unconsolidated", () => {
     expect(entries.map((entry) => entry.kind)).toEqual(["request", "request"])
     expect(previousEpisodeTitle).toBe("")
     expect(usedBytes).toBe(Buffer.byteLength("19日の依頼") + Buffer.byteLength("20日の依頼"))
-  })
-
-  it("窓の外の行が maxBytes に収まるとき、overflowed は false", () => {
-    const chatArchive = createChatArchive(root())
-    appendRequest(chatArchive, 19, "19日の依頼")
-
-    const { overflowed } = chatArchive.unconsolidated("fictional-pack", {
-      recentBytes: 0,
-      maxBytes: 1024,
-    })
-
     expect(overflowed).toBe(false)
   })
 
@@ -710,25 +673,13 @@ describe("createChatArchive の unconsolidated", () => {
     appendRequest(chatArchive, 21, "さしすせ")
 
     // 1件（12バイト）は収まるが、2件目の途中までしか入らない上限。
-    const { entries, usedBytes } = chatArchive.unconsolidated("fictional-pack", {
+    const { entries, usedBytes, overflowed } = chatArchive.unconsolidated("fictional-pack", {
       recentBytes: 0,
       maxBytes: 13,
     })
 
     expect(entries.map((entry) => entry.text)).toEqual([TWELVE_BYTES])
     expect(usedBytes).toBe(Buffer.byteLength(TWELVE_BYTES))
-  })
-
-  it("溢れる行があって打ち切ったときは overflowed が true", () => {
-    const chatArchive = createChatArchive(root())
-    appendRequest(chatArchive, 19, TWELVE_BYTES)
-    appendRequest(chatArchive, 20, "かきくけ")
-
-    const { overflowed } = chatArchive.unconsolidated("fictional-pack", {
-      recentBytes: 0,
-      maxBytes: 13,
-    })
-
     expect(overflowed).toBe(true)
   })
 

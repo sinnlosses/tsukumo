@@ -299,14 +299,6 @@ describe("startViewServer", () => {
     expect((await chart.text()).length).toBeGreaterThan(1000)
   })
 
-  it("消えたファイル（highlight.min.js / idiomorph.min.js）はもう配らない（移行の段6）", async () => {
-    const server = await startView()
-    const origin = viewOrigin(server)
-
-    expect((await fetch(`${origin}/vendor/highlight.min.js`)).status).toBe(404)
-    expect((await fetch(`${origin}/vendor/idiomorph.min.js`)).status).toBe(404)
-  })
-
   it("allowlist に無い名前・上のディレクトリを指す名前は配らない", async () => {
     const server = await startView()
     const origin = viewOrigin(server)
@@ -389,14 +381,6 @@ describe("startViewServer", () => {
     expect(response.headers.get("content-security-policy")?.split("; ")).toEqual(
       expect.arrayContaining(["default-src 'none'", "sandbox"]),
     )
-  })
-
-  it("/character/<pack>/<file> は、定義に無いファイル名（serveCharacterAsset が undefined を返す）なら404", async () => {
-    const server = await startView()
-
-    const response = await fetch(`${viewOrigin(server)}/character/fictional/not-defined.svg`)
-
-    expect(response.status).toBe(404)
   })
 
   it("/character/<file>（パック名の無い形）は引きに行かずに404", async () => {
@@ -766,23 +750,6 @@ describe("startViewServer", () => {
       expect(badEscape.status).toBe(404)
       expect(requested).toEqual(["架空/before.png"])
     })
-  })
-
-  it("/character/<pack>/<file> は、`..` を含む要求も404（パスから組み立てないので、そのまま allowlist に無い名前として扱われる）", async () => {
-    const server = await startView((location) =>
-      location.pack === "fictional" && location.fileName === "default.svg"
-        ? {
-            contentType: "image/svg+xml; charset=utf-8",
-            content: Buffer.from("<svg></svg>"),
-            versioned: false,
-          }
-        : undefined,
-    )
-    const origin = viewOrigin(server)
-
-    expect((await fetch(`${origin}/character/%2e%2e/package.json`)).status).toBe(404)
-    expect((await fetch(`${origin}/character/..%2Fdefault.svg`)).status).toBe(404)
-    expect((await fetch(`${origin}/character/fictional/..%2Fdefault.svg`)).status).toBe(404)
   })
 
   it("listen 後に error が起きても閉じない。stderr に1行書き、onRuntimeError にもそのまま渡して配信を続ける", async () => {

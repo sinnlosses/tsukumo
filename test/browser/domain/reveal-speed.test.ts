@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
   DEFAULT_REVEAL_SPEED,
-  isRevealSpeed,
   loadRevealSpeed,
   revealTimingOf,
   saveRevealSpeed,
@@ -37,15 +36,6 @@ describe("loadRevealSpeed", () => {
   it("知らない値は既定へ畳む", () => {
     localStorage.setItem(STORAGE_KEY, "very-fast")
     expect(loadRevealSpeed()).toBe(DEFAULT_REVEAL_SPEED)
-  })
-})
-
-describe("isRevealSpeed", () => {
-  it("standard / fast / off だけを受け取る", () => {
-    expect(isRevealSpeed("standard")).toBe(true)
-    expect(isRevealSpeed("fast")).toBe(true)
-    expect(isRevealSpeed("off")).toBe(true)
-    expect(isRevealSpeed("very-fast")).toBe(false)
   })
 })
 

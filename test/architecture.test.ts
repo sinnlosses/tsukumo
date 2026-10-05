@@ -272,24 +272,6 @@ describe("server/ の共有の箱", () => {
   })
 })
 
-// `orca` コマンドを起こすのはアダプタ1つに閉じ込める（docs/architecture.md「1ファイル = 1つの境界」）。
-// `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、
-// `node:child_process` を import するファイルのうちそこ以外から探す。
-// ホストの種類の値（`TSUKUMO_HOST=orca`）としての "orca" はコマンドを起こさないので拾わない。
-// ファイル名やバッククォートで囲んだ日本語の説明文はクォートされた文字列リテラルではないので拾わない。
-describe("orca コマンドを起こす箇所", () => {
-  it("`orca` コマンドを呼ぶのは src/server/host/adapter/orca-host.ts だけ", () => {
-    const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => relPath !== "server/host/adapter/orca-host.ts")
-      .filter((relPath) => {
-        const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
-        return /from\s+["']node:child_process["']/.test(content) && /["']orca["']/.test(content)
-      })
-
-    expect(offenders).toEqual([])
-  })
-})
-
 // ここから、層の辺だけでは表せない限定の検査（`adapter` の中のどのファイルか、まで絞る）。
 
 // SDK（`@anthropic-ai/claude-agent-sdk`）を import するのは機能の `adapter/` 直下
@@ -443,8 +425,11 @@ describe("shared/ の機能どうしの import", () => {
 // （`main` の上のタスク一覧・成果の集計・git 管理下のファイルの列挙のどれもがここを使う）・
 // `bd` を起こす1つの口（Beads 方式のタスク一覧と成果の集計）・別のチェックアウトの
 // `bin/tsukumo` へ委ねる口の5つの境界に閉じ込める（docs/architecture.md「1ファイル = 1つの境界」）。
+// そのうち `orca` コマンドを起こすのは orca-host.ts だけ。
+// `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、その字面で探す。
+// ファイル名やバッククォートで囲んだ日本語の説明文はクォートされた文字列リテラルではないので拾わない。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは orca-host.ts・bundle.ts・git.ts・beads.ts・checkout-launch.ts だけ", () => {
+  it("`node:child_process` を import するのは orca-host.ts・bundle.ts・git.ts・beads.ts・checkout-launch.ts だけで、`orca` コマンドを呼ぶのは orca-host.ts だけ", () => {
     const allowed = new Set([
       "server/checkout/adapter/checkout-launch.ts",
       "server/host/adapter/orca-host.ts",
@@ -452,13 +437,16 @@ describe("子プロセスを起こす箇所", () => {
       "server/repository/adapter/git.ts",
       "server/repository/adapter/beads.ts",
     ])
-    const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => !allowed.has(relPath))
-      .filter((relPath) =>
-        /from\s+["']node:child_process["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
-      )
+    const spawning = listSourceFiles(SRC_ROOT).filter((relPath) =>
+      /from\s+["']node:child_process["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+    )
 
-    expect(offenders).toEqual([])
+    expect(spawning.filter((relPath) => !allowed.has(relPath))).toEqual([])
+    expect(
+      spawning.filter((relPath) =>
+        /["']orca["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+      ),
+    ).toEqual(["server/host/adapter/orca-host.ts"])
   })
 })
 

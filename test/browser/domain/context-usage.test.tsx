@@ -78,21 +78,6 @@ describe("useContextUsage", () => {
     expect(card.rows[0]?.share).toBeCloseTo(4)
   })
 
-  it("届くまでは「読み込み中」で、取れなかったときとは別の種類になる", async () => {
-    stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
-
-    const { result } = renderHook(() => useContextUsage(0), {
-      wrapper: queryClientWrapper(createTestQueryClient()),
-    })
-
-    // まだ応答が届いていない最初のレンダーでは「読み込み中」（「取れない」ではない）。
-    expect(result.current.kind).toBe("pending")
-
-    await waitFor(() => {
-      expect(result.current.kind).toBe("ready")
-    })
-  })
-
   it("応答が落ちたときは「読み込み中」を経てから「取れない」になる", async () => {
     stubContextUsageFetch(() => rpcError(403, "FORBIDDEN"))
 

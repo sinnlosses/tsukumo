@@ -29,7 +29,7 @@ const ROOM_COLORS = [
  * 語彙の1つめが載るポート。`DEFAULT_VIEW_PORT` と同じ値に揃える。
  * `shared` からサーバ側を import できないので写してある（ずれたらテストが落ちる）。
  */
-export const FIRST_ROOM_PORT = 7327
+const FIRST_ROOM_PORT = 7327
 
 /** 部屋の名前の結び（「空色」＋これ）。 */
 const ROOM_SUFFIX = "の間"

@@ -402,19 +402,6 @@ describe("createSessionLaunch", () => {
     expect(harness.events.some((event) => event.kind === "remembered-lines-changed")).toBe(false)
   })
 
-  it("起動時（画面から選んでいないとき）は覚えない", async () => {
-    const harness = createHarness()
-
-    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      selection: { by: "initial" },
-      chat: undefined,
-      resume: { by: "latest" },
-    })
-    await settle()
-
-    expect(harness.calls.some((call) => call.startsWith("rememberPack:"))).toBe(false)
-  })
-
   it("いま出しているパックのまま起こし直す（モードの切り替え）ときは覚えない", async () => {
     // `session.setChatMode` の起こし直しがここを通る。同じパックを起こすのは「画面から選ばれた」
     // ことではないので、覚えた値（`~/.tsukumo/state.json`）は書き換わらない

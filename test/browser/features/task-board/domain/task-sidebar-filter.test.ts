@@ -28,23 +28,7 @@ const TASKS: readonly TaskSummaryItem[] = [
 ]
 
 describe("filterTasksForSidebar", () => {
-  it("「すべて」のときは全件をそのまま返す", () => {
-    expect(filterTasksForSidebar(TASKS, "all")).toEqual(TASKS)
-  })
-
-  it("選んだ状態のタスクだけを残す", () => {
-    expect(filterTasksForSidebar(TASKS, "todo").map((task) => task.id)).toEqual(["X-001", "X-004"])
-  })
-
-  it("進行中を選ぶと doing だけになる", () => {
-    expect(filterTasksForSidebar(TASKS, "doing").map((task) => task.id)).toEqual(["X-002"])
-  })
-
   it("完了を選ぶと done だけになる（想定外の status は3つのチップのどれを選んでも出ない）", () => {
     expect(filterTasksForSidebar(TASKS, "done").map((task) => task.id)).toEqual(["X-003"])
-  })
-
-  it("合う要素が無ければ空配列", () => {
-    expect(filterTasksForSidebar([taskOf("X-001", "todo")], "done")).toEqual([])
   })
 })

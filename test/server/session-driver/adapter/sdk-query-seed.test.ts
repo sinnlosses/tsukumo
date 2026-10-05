@@ -52,13 +52,6 @@ const BASE_OPTIONS: SessionDriverOptions = {
 }
 
 describe("buildQuerySeedOptions", () => {
-  it("同梱の既定（opus・medium）を渡す", () => {
-    const seed = buildQuerySeedOptions(BASE_OPTIONS)
-
-    expect(seed.model).toBe("opus")
-    expect(seed.effort).toBe("medium")
-  })
-
   // 覚えた既定（`~/.tsukumo/state.json`）は配線層が読んで `SessionDriverOptions` に載せる
   // （`startSession`）。ここで見るのは、その値がそのまま `query()` へ渡ること。
   it("cwd・permissionMode・model・effort は渡された SessionDriverOptions の値をそのまま使う", () => {

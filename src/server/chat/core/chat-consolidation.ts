@@ -385,7 +385,7 @@ function coversLinesContiguously(
  *
  * 中身の良し悪しは判定しない。箇条の印を落とし、空行を飛ばすだけ。
  */
-export function chatTopics(summary: string): readonly string[] {
+function chatTopics(summary: string): readonly string[] {
   const open = summary.lastIndexOf(CHAT_TOPICS_OPEN)
   if (open === -1) {
     return []

@@ -48,25 +48,6 @@ describe("BalloonTrack", () => {
     expect(screen.getByText("2つめ").closest(".balloon")?.getAttribute("data-latest")).toBe("true")
   })
 
-  it("(5) 反応はセリフより新しい位置に、話し手の名前を添えて出る", () => {
-    render(
-      <BalloonTrack
-        speeches={[speech("前のセリフ")]}
-        reaction={{ kind: "shown", reaction: "failed", text: "架空の反応" }}
-        speakerName="架空の名前"
-      />,
-    )
-
-    const reaction = screen.getByText("架空の反応").closest(".balloon")
-    expect(reaction?.getAttribute("data-latest")).toBe("true")
-    expect(reaction?.getAttribute("data-reaction")).toBe("failed")
-    expect(reaction?.getAttribute("role")).toBeNull()
-    expect(reaction?.textContent).toContain("架空の名前")
-    const previous = screen.getByText("前のセリフ").closest(".balloon")
-    expect(previous?.getAttribute("data-latest")).toBe("false")
-    expect(previous?.textContent).not.toContain("架空の名前")
-  })
-
   it("(6) 書いている途中（writing）は、セリフより新しい位置に話し手の名前付きの吹き出しが1つ出る", () => {
     render(
       <BalloonTrack

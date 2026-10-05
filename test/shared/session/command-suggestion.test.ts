@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  commandCandidates,
-  commandSuggestions,
-} from "../../../src/shared/session/command-suggestion.ts"
+import { commandSuggestions } from "../../../src/shared/session/command-suggestion.ts"
 import type { CommandDescription, SessionEvent } from "../../../src/shared/session/session-event.ts"
 import {
   applySessionEvent,
@@ -83,15 +80,5 @@ describe("commandSuggestions", () => {
       { name: "clear", description: "会話をリセットする" },
       { name: "model", description: undefined },
     ])
-  })
-})
-
-describe("commandCandidates", () => {
-  it("端末専用のコマンドを除いた残りを返す", () => {
-    expect(commandCandidates(["clear", "model", "doctor"], ["doctor"])).toEqual(["clear", "model"])
-  })
-
-  it("元の並び順を保つ（並べ替えない）", () => {
-    expect(commandCandidates(["b", "a", "c"], ["a"])).toEqual(["b", "c"])
   })
 })

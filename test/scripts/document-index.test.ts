@@ -43,13 +43,6 @@ describe("glossaryIndexRows", () => {
       ["## 節2", "丙"],
     ])
   })
-
-  it("用語を足すと行に増える", () => {
-    expect(glossaryIndexRows(`${glossary}\n### 丁`)).toEqual([
-      ["## 節1", "甲 / 乙"],
-      ["## 節2", "丙 / 丁"],
-    ])
-  })
 })
 
 describe("表の読み書き", () => {

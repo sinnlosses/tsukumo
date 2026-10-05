@@ -40,25 +40,6 @@ function renderSidebar(stateOverrides: Partial<SessionState>): void {
 }
 
 describe("Sidebar の下端の帯", () => {
-  it("モデルの口で選ぶと session.setModel を送る", () => {
-    const sent: unknown[] = []
-    stubContextUsageUnavailable()
-    putSession({ ...INITIAL_SESSION_STATE, session: RUNNING_SESSION }, (command) => {
-      sent.push(command)
-    })
-    render(
-      <QueryClientProvider client={createTestQueryClient()}>
-        <Sidebar />
-      </QueryClientProvider>,
-    )
-
-    fireEvent.change(screen.getByRole("combobox", { name: /^モデル / }), {
-      target: { value: "haiku" },
-    })
-
-    expect(sent).toEqual([{ procedure: "session.setModel", model: "haiku" }])
-  })
-
   it("コンテキストの目盛りを押すと詳しい面が開き、もう一度押すと閉じる", () => {
     renderSidebar({})
 

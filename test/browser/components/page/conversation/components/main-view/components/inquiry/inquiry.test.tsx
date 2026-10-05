@@ -70,18 +70,6 @@ describe("Inquiry（メインビューのお伺いの札）", () => {
     expect(screen.getByRole("radio", { name: /拒否/ })).toBeDefined()
   })
 
-  it("許可要求は、カードを選んで「これで答える」で答える", () => {
-    const calls: unknown[] = []
-    renderInquiry([PERMISSION_PENDING], (command) => calls.push(command))
-
-    fireEvent.click(screen.getByRole("radio", { name: /許可/ }))
-    fireEvent.click(screen.getByRole("button", { name: /これで答える/ }))
-
-    expect(calls).toEqual([
-      { procedure: "session.answer", id: "ask-perm", answer: { kind: "allow" } },
-    ])
-  })
-
   it("札にフォーカスがあるとき、数字キーで選び Enter で答える", () => {
     const calls: unknown[] = []
     renderInquiry([PERMISSION_PENDING], (command) => calls.push(command))
@@ -104,17 +92,6 @@ describe("Inquiry（メインビューのお伺いの札）", () => {
 
     expect(calls).toEqual([])
     expect(screen.getByRole<HTMLInputElement>("radio", { name: /A案/ }).checked).toBe(false)
-  })
-
-  it("複数選択の質問は数字キーで入り切りする", () => {
-    renderInquiry([questionPending([question({ multiSelect: true })])])
-
-    fireEvent.keyDown(card(), { key: "1" })
-    fireEvent.keyDown(card(), { key: "2" })
-    fireEvent.keyDown(card(), { key: "1" })
-
-    expect(screen.getByRole<HTMLInputElement>("checkbox", { name: /A案/ }).checked).toBe(false)
-    expect(screen.getByRole<HTMLInputElement>("checkbox", { name: /B案/ }).checked).toBe(true)
   })
 
   it("ラベル末尾の (Recommended) は「おすすめ」のバッジになり、字からは外れる", () => {

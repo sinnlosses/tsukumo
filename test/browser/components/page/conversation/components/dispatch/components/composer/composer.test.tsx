@@ -102,11 +102,12 @@ function textArea(): HTMLTextAreaElement {
 }
 
 describe("Composer", () => {
-  it("(3) IME の変換確定中の Command+Enter は送らない（isComposing・古いブラウザ向けの keyCode 229）", () => {
+  it("(3) Enter 単独（preventDefault もしない）と、IME の変換確定中の Command+Enter は送らない（isComposing・古いブラウザ向けの keyCode 229）", () => {
     const calls: unknown[] = []
     renderComposer({}, (command) => calls.push(command))
 
     fireEvent.change(textArea(), { target: { value: "架空の依頼" } })
+    expect(fireEvent.keyDown(textArea(), { key: "Enter" })).toBe(true)
     fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true, isComposing: true })
     fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true, keyCode: 229 })
 

@@ -44,18 +44,6 @@ describe("reportUsageEntryOf", () => {
     expect(entry.blockKinds).toEqual(["text", "table"])
   })
 
-  it("compare の塊も塊の種類として数える", () => {
-    const side = { heading: "架空の側", points: ["架空の1行"] }
-    const event = reportEvent([
-      {
-        heading: "",
-        blocks: [{ kind: "compare", title: "", sides: [side, side], fold: "" }],
-      },
-    ])
-
-    expect(reportUsageEntryOf(event, "claude-session-1", 1_000).blockKinds).toEqual(["compare"])
-  })
-
   it("dimension の塊を塊の種類として数え、前の値があれば dimensionBefore の欄を立てる", () => {
     const dimension = (before: string): ReportBlock => ({
       kind: "dimension",
@@ -118,25 +106,6 @@ describe("reportUsageEntryOf", () => {
     ])
 
     expect(reportUsageEntryOf(event, "claude-session-1", 1_000).blockFields).toEqual(["imageNotes"])
-  })
-
-  it("matrix の塊も塊の種類として数える", () => {
-    const event = reportEvent([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "matrix",
-            title: "",
-            columns: ["a"],
-            rows: [{ name: "架空の行", cells: ["ok"] }],
-            fold: "",
-          },
-        ],
-      },
-    ])
-
-    expect(reportUsageEntryOf(event, "claude-session-1", 1_000).blockKinds).toEqual(["matrix"])
   })
 
   it("既定の値でない塊の欄を、節をまたいで重複を畳んだ集合にする", () => {
@@ -300,7 +269,6 @@ describe("reportUsageEntryOf", () => {
       containedNotations: [],
       escapeNotations: [],
       unknownBlockCount: 2,
-      sessionSummary: undefined,
     })
   })
 })

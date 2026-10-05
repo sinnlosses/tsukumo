@@ -3,44 +3,23 @@ import { describe, expect, it } from "vitest"
 import { parseCharacterDefinition } from "../../../src/shared/character-pack/character-definition.ts"
 import {
   type CharacterInfo,
+  type CharacterInfoSource,
   effectiveAccent,
   toCharacterInfo,
 } from "../../../src/shared/character-pack/character.ts"
 import { expressionChoices } from "../../../src/shared/character-pack/expression-choice.ts"
 import { EXPRESSIONS } from "../../../src/shared/character-pack/expression.ts"
-import { characterInfo } from "../../fixture/character.ts"
+import { characterInfo, FULL_DEFINITION_JSON } from "../../fixture/character.ts"
 
-// characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
-const FULL_DEFINITION_JSON = JSON.stringify({
-  name: "架空の精霊",
-  license: "テスト用に手で書いたもの",
-  accent: "#f2b0a0",
-  expressions: {
-    default: "通常",
-    thinking: "作業中",
-    proud: "どや顔",
-    flustered: "あわあわ",
-  },
-  portraits: {
-    default: "default.svg",
-    thinking: "thinking.svg",
-    proud: "proud.svg",
-    flustered: "flustered.svg",
-  },
-  outfitAccents: {
-    default: "#b8c7ff",
-    light: "#a8e6c0",
-    normal: "#b8c7ff",
-    heavy: "#ffb3a7",
-  },
-})
-
-/** 定義ファイルの JSON から、画面に渡る姿を作る（版の印は付けない）。 */
-function infoOf(json: string): CharacterInfo | undefined {
+/** 定義ファイルの JSON から、画面に渡る姿を作る。 */
+function infoOf(
+  json: string,
+  revision: CharacterInfoSource["revision"] = undefined,
+): CharacterInfo | undefined {
   const definition = parseCharacterDefinition(json)
   return definition === undefined
     ? undefined
-    : toCharacterInfo({ definition, pack: "fictional", revision: undefined, editable: true })
+    : toCharacterInfo({ definition, pack: "fictional", revision, editable: true })
 }
 
 describe("toCharacterInfo の畳み方", () => {
@@ -97,18 +76,8 @@ describe("toCharacterInfo の畳み方", () => {
 
 describe("toCharacterInfo", () => {
   it("ファイル名を /character/<pack>/<file> の URL に変える", () => {
-    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
-    expect(definition).toBeDefined()
-
-    const info =
-      definition === undefined
-        ? undefined
-        : toCharacterInfo({
-            definition,
-            pack: "fictional",
-            revision: undefined,
-            editable: true,
-          })
+    const info = infoOf(FULL_DEFINITION_JSON)
+    expect(info).toBeDefined()
 
     expect(info?.pack).toBe("fictional")
     expect(info?.editable).toBe(true)
@@ -139,140 +108,57 @@ describe("toCharacterInfo", () => {
   })
 
   it("mini があればその URL、無ければ portraits.default に落ちる（縮小して使う）", () => {
-    const withMini = parseCharacterDefinition(
-      JSON.stringify({ mini: "mini.png", portraits: { default: "default.svg" } }),
-    )
-    const withoutMini = parseCharacterDefinition(
-      JSON.stringify({ portraits: { default: "default.svg" } }),
-    )
+    const withMini = JSON.stringify({ mini: "mini.png", portraits: { default: "default.svg" } })
+    const withoutMini = JSON.stringify({ portraits: { default: "default.svg" } })
 
-    expect(
-      withMini === undefined
-        ? undefined
-        : toCharacterInfo({
-            definition: withMini,
-            pack: "fictional",
-            revision: "2",
-            editable: true,
-          }).mini,
-    ).toBe("/character/fictional/mini.png?v=2")
-    expect(
-      withoutMini === undefined
-        ? undefined
-        : toCharacterInfo({
-            definition: withoutMini,
-            pack: "fictional",
-            revision: "2",
-            editable: true,
-          }).mini,
-    ).toBe("/character/fictional/default.svg?v=2")
+    expect(infoOf(withMini, "2")?.mini).toBe("/character/fictional/mini.png?v=2")
+    expect(infoOf(withoutMini, "2")?.mini).toBe("/character/fictional/default.svg?v=2")
   })
 
   it("face があればその URL（mini と違い、default の立ち絵には畳まない）", () => {
-    const definition = parseCharacterDefinition(
-      JSON.stringify({ face: "face.png", portraits: { default: "default.svg" } }),
-    )
+    const json = JSON.stringify({ face: "face.png", portraits: { default: "default.svg" } })
 
-    expect(
-      definition === undefined
-        ? undefined
-        : toCharacterInfo({
-            definition,
-            pack: "fictional",
-            revision: "2",
-            editable: true,
-          }).face,
-    ).toBe("/character/fictional/face.png?v=2")
+    expect(infoOf(json, "2")?.face).toBe("/character/fictional/face.png?v=2")
   })
 
   it("face が無いパックでは undefined（mini や portraits.default から補わない）", () => {
-    const definition = parseCharacterDefinition(
-      JSON.stringify({ portraits: { default: "default.svg" }, mini: "mini.png" }),
-    )
+    const json = JSON.stringify({ portraits: { default: "default.svg" }, mini: "mini.png" })
 
-    expect(
-      definition === undefined
-        ? undefined
-        : toCharacterInfo({ definition, pack: "fictional", revision: "2", editable: true }).face,
-    ).toBeUndefined()
+    expect(infoOf(json, "2")?.face).toBeUndefined()
   })
 
   it("diaryFont があればその URL（無いパックでは undefined。face と同じくフォールバックしない）", () => {
-    const withFont = parseCharacterDefinition(
-      JSON.stringify({ diaryFont: "shodo.woff2", portraits: { default: "default.svg" } }),
-    )
-    const withoutFont = parseCharacterDefinition(
-      JSON.stringify({ portraits: { default: "default.svg" } }),
-    )
+    const withFont = JSON.stringify({
+      diaryFont: "shodo.woff2",
+      portraits: { default: "default.svg" },
+    })
+    const withoutFont = JSON.stringify({ portraits: { default: "default.svg" } })
 
-    expect(
-      withFont === undefined
-        ? undefined
-        : toCharacterInfo({
-            definition: withFont,
-            pack: "fictional",
-            revision: "2",
-            editable: true,
-          }).diaryFont,
-    ).toBe("/character/fictional/shodo.woff2?v=2")
-    expect(
-      withoutFont === undefined
-        ? undefined
-        : toCharacterInfo({
-            definition: withoutFont,
-            pack: "fictional",
-            revision: "2",
-            editable: true,
-          }).diaryFont,
-    ).toBeUndefined()
+    expect(infoOf(withFont, "2")?.diaryFont).toBe("/character/fictional/shodo.woff2?v=2")
+    expect(infoOf(withoutFont, "2")?.diaryFont).toBeUndefined()
   })
 
   it("背景も /character/<pack>/<file> の URL にする（覆いの濃さはそのまま）", () => {
-    const definition = parseCharacterDefinition(
-      JSON.stringify({ background: { image: "background.png", veil: 0.8 } }),
-    )
+    const json = JSON.stringify({ background: { image: "background.png", veil: 0.8 } })
 
-    expect(
-      definition === undefined
-        ? undefined
-        : toCharacterInfo({ definition, pack: "fictional", revision: "2", editable: true })
-            .background,
-    ).toEqual({ image: "/character/fictional/background.png?v=2", veil: 0.8 })
+    expect(infoOf(json, "2")?.background).toEqual({
+      image: "/character/fictional/background.png?v=2",
+      veil: 0.8,
+    })
   })
 
   it("背景が無いパックでは undefined（背景を出さない）", () => {
-    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
-
-    expect(
-      definition === undefined
-        ? undefined
-        : toCharacterInfo({ definition, pack: "fictional", revision: undefined, editable: true })
-            .background,
-    ).toBeUndefined()
+    expect(infoOf(FULL_DEFINITION_JSON)?.background).toBeUndefined()
   })
 
   it("tagline（ひとことプロフィール）があればそのまま持つ", () => {
-    const definition = parseCharacterDefinition(JSON.stringify({ tagline: "架空のひとこと" }))
-
-    expect(
-      definition === undefined
-        ? undefined
-        : toCharacterInfo({ definition, pack: "fictional", revision: undefined, editable: true })
-            .tagline,
-    ).toBe("架空のひとこと")
+    expect(infoOf(JSON.stringify({ tagline: "架空のひとこと" }))?.tagline).toBe("架空のひとこと")
   })
 
   it("chatAccent があればそのまま持つ", () => {
-    const definition = parseCharacterDefinition(
-      JSON.stringify({ accent: "#6fe3cd", chatAccent: "#f2984a" }),
-    )
+    const json = JSON.stringify({ accent: "#6fe3cd", chatAccent: "#f2984a" })
 
-    expect(
-      definition === undefined
-        ? undefined
-        : toCharacterInfo({ definition, pack: "fictional", revision: undefined, editable: true })
-            .chatAccent,
-    ).toBe("#f2984a")
+    expect(infoOf(json)?.chatAccent).toBe("#f2984a")
   })
 
   it("定義が無いときは、立ち絵なし・default だけの形にする", () => {

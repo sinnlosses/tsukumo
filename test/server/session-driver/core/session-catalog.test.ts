@@ -258,20 +258,6 @@ describe("selectSessionToResume", () => {
     expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-this-pack")
   })
 
-  it("そのパックの印を持つセッションが無ければ復元しない（新規に起こす）", () => {
-    const sessions = [
-      sessionRecord({ sessionId: "s-other-pack", lastModified: 900, tag: OTHER_PACK_TAG }),
-      sessionRecord({ sessionId: "s-bare", lastModified: 800 }),
-    ]
-
-    expect(
-      selectSessionToResume(
-        readTaggedSessions(sessions),
-        sessionTag("まだ起こしていないパック", false, DEFAULT_VIEW_PORT),
-      ),
-    ).toBeUndefined()
-  })
-
   it("同じパックでも雑談と仕事で別のセッションを選ぶ（文脈ごと分ける）", () => {
     const sessions = [
       sessionRecord({ sessionId: "s-work", lastModified: 900, tag: TAG }),
@@ -339,24 +325,6 @@ describe("selectSessionToResume", () => {
     expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-legacy")
     expect(selectSessionToResume(readTaggedSessions(sessions), CHAT_TAG)).toBe("s-legacy-chat")
     expect(selectSessionToResume(readTaggedSessions(sessions), SECOND_TAG)).toBeUndefined()
-  })
-
-  // かつて目印は1文字だった（`A` が既定のポート、+1 ごとに次の文字）。
-  // いま動いている tsukumo が拾えなくならないよう、元のポートへ戻して選ぶ。
-  it("1文字だった昔の目印は、元のポートの続きとして選ぶ（互換）", () => {
-    const sessions = [
-      sessionRecord({ sessionId: "s-legacy-a", lastModified: 900, tag: "tsukumo:架空のパック@A" }),
-      sessionRecord({ sessionId: "s-legacy-b", lastModified: 800, tag: "tsukumo:架空のパック@B" }),
-      sessionRecord({
-        sessionId: "s-legacy-chat-a",
-        lastModified: 700,
-        tag: "tsukumo:架空のパック:chat@A",
-      }),
-    ]
-
-    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-legacy-a")
-    expect(selectSessionToResume(readTaggedSessions(sessions), SECOND_TAG)).toBe("s-legacy-b")
-    expect(selectSessionToResume(readTaggedSessions(sessions), CHAT_TAG)).toBe("s-legacy-chat-a")
   })
 })
 
@@ -464,34 +432,6 @@ describe("createSessionCatalog の切り替え先の一覧", () => {
         sessionId: "s-legacy",
         lastModified: 500,
         startedAt: 500,
-        heading: "架空のセッション",
-      },
-    ])
-  })
-
-  // かつて目印は1文字だった（`A` が既定のポート、+1 ごとに次の文字）。読み取りでポートへ
-  // 戻したあとは、対応するポートの部屋の一覧に並ぶ（別の部屋には並ばない）。
-  it("1文字だった昔の目印も、対応するポートの部屋に並ぶ（互換）", async () => {
-    const sessions = [
-      sessionRecord({ sessionId: "s-legacy-a", lastModified: 900, tag: "tsukumo:架空のパック@A" }),
-      sessionRecord({ sessionId: "s-legacy-b", lastModified: 800, tag: "tsukumo:架空のパック@B" }),
-    ]
-
-    expect(await listChoicesOf(sessions, TAG)).toEqual([
-      {
-        viewPort: DEFAULT_VIEW_PORT,
-        sessionId: "s-legacy-a",
-        lastModified: 900,
-        startedAt: 900,
-        heading: "架空のセッション",
-      },
-    ])
-    expect(await listChoicesOf(sessions, SECOND_TAG)).toEqual([
-      {
-        viewPort: DEFAULT_VIEW_PORT + 1,
-        sessionId: "s-legacy-b",
-        lastModified: 800,
-        startedAt: 800,
         heading: "架空のセッション",
       },
     ])

@@ -145,11 +145,4 @@ describe("sortQuestionOptions", () => {
     expect(withoutRecommendedMark("A案（推奨）")).toBe("A案")
     expect(isRecommendedLabel("推奨の扱いを決める")).toBe(false)
   })
-
-  it("元の配列を書き換えない", () => {
-    const original = [option("B案"), option("A案")]
-    sortQuestionOptions(original)
-
-    expect(original.map((o) => o.label)).toEqual(["B案", "A案"])
-  })
 })

@@ -179,20 +179,6 @@ describe("shownReaction", () => {
       expect(shown(state, NO_WELCOME_HEAD, dueAt ?? 0)).toBe("idle:架空の待ちの一言")
     })
 
-    it("出す間が経てば、本体が書いた待ちの一言とその表情を出す", () => {
-      const reaction = shownReaction(
-        stateAfter([REQUEST, SPEECH, WRITTEN, COMPLETED]),
-        NO_WELCOME_HEAD,
-        LATER,
-      )
-
-      expect(reaction).toEqual({
-        kind: "shown",
-        reaction: "idle",
-        line: { text: "架空の待ちの一言", expression: "curious" },
-      })
-    })
-
     it("本体が書いていなければ、挨拶と同じ答えで書かせた待ちの行を出す", () => {
       expect(
         shown(

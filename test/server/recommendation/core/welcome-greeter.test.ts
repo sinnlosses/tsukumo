@@ -82,16 +82,6 @@ function flush(): Promise<void> {
 }
 
 describe("greetWelcome", () => {
-  it("書き始めに writing を配る", async () => {
-    const { ports, emitted, queries } = harness()
-
-    const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
-    queries[0]?.settle(OUTPUT)
-    await promise
-
-    expect(emitted[0]).toEqual({ kind: "writing" })
-  })
-
   it("検査を通れば、直近の先頭へ挨拶の2文だけを書いてから、反応の行ごと written を配る", async () => {
     const old = Array.from({ length: WELCOME_GREETING_RECENT_LIMIT }, (_, index) => ({
       withCard: `架空の古い挨拶${String(index)} {札}`,

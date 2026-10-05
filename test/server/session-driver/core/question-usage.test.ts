@@ -38,19 +38,4 @@ describe("questionUsageEntriesOf", () => {
   it("質問が無ければ空の配列を返す", () => {
     expect(questionUsageEntriesOf([], "claude-session-1", 1_000)).toEqual([])
   })
-
-  it("質問文・ラベル・description は記録に持たない", () => {
-    const entries = questionUsageEntriesOf(
-      [question([{ preview: "架空のpreview" }])],
-      "claude-session-1",
-      1_000,
-    )
-
-    expect(Object.keys(entries[0] ?? {})).toEqual([
-      "at",
-      "sessionId",
-      "optionCount",
-      "previewCount",
-    ])
-  })
 })

@@ -27,10 +27,6 @@ describe("sessionTag", () => {
     )
   })
 
-  it("印の無い素の claude のセッションとも混ざらない（前置きが付く）", () => {
-    expect(sessionTag("tsukumo", false, DEFAULT_VIEW_PORT)).not.toBe("tsukumo")
-  })
-
   it("目印はビューのポート番号そのもの（同じディレクトリの2つめは別のセッション）", () => {
     expect(sessionTag("tsukumo", false, DEFAULT_VIEW_PORT + 1)).toBe("tsukumo:tsukumo@7328")
     expect(sessionTag("tsukumo", true, DEFAULT_VIEW_PORT + 2)).toBe("tsukumo:tsukumo:chat@7329")

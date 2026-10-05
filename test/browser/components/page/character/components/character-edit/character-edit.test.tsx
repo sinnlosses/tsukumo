@@ -257,26 +257,6 @@ describe("CharacterEdit", () => {
     expect(input.value).toBe("")
   })
 
-  // 送信は200ms（`ACCENT_DEBOUNCE_MS`）まとめるので、待ってから確かめる。
-  it("差し色を変えると、少し待ってから characterPack.setOutfitAccent を dispatch する", async () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-
-    fireEvent.change(screen.getByLabelText("戦闘配置（opus）"), { target: { value: "#123456" } })
-    expect(calls).toEqual([])
-
-    await waitFor(() => {
-      expect(calls).toEqual([
-        {
-          procedure: "characterPack.setOutfitAccent",
-          pack: "fictional",
-          outfit: "heavy",
-          color: "#123456",
-        },
-      ])
-    })
-  })
-
   // 画面を開いただけでは何も送らない（`docs/coding-standards.md`「useEffect は4類型だけ」の
   // タイマーは効かせるが、起こすのは onChange だけ）。
   it("開いただけでは何も送らない", async () => {

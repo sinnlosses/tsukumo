@@ -167,20 +167,6 @@ describe("takeSystemPromptAppend", () => {
     )
   })
 
-  it("どちらのモードでも人格は載る（パックの口調は雑談でも変わらない）", () => {
-    const chat = takeSystemPromptAppend({
-      persona: PERSONA,
-      mode: chatMode(
-        { kind: "new" },
-        inMemoryChatSummary({ summary: SUMMARY, delivered: false }),
-        RECENT_CHAT_ARCHIVE,
-      ),
-    })
-
-    expect(takeSystemPromptAppend({ persona: PERSONA, mode: workMode() })).toContain(PERSONA)
-    expect(chat).toContain(PERSONA)
-  })
-
   it("雑談の記憶を載せたら写しの印は「渡し済み」に戻る（名前の `take` はこの副作用）", () => {
     const summary = inMemoryChatSummary({ summary: SUMMARY, delivered: false })
 

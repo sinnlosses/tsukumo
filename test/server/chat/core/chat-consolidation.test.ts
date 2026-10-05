@@ -8,7 +8,6 @@ import {
   CHAT_TOPIC_LIMIT,
   chatConsolidationQuery,
   chatEpisodeDrafts,
-  chatTopics,
   parseChatConsolidationResult,
   readChatTopics,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
@@ -295,34 +294,15 @@ describe("chatEpisodeDrafts", () => {
       },
     ])
   })
-
-  it("1件のエピソードが1行だけを覆うとき、from と to は同じ行を指す", () => {
-    const single: readonly ChatUnconsolidatedEntry[] = [
-      {
-        at: "2026-09-20T10:00:00+09:00",
-        kind: "request",
-        origin: { mode: "chat" },
-        text: "架空の発言1",
-      },
-    ]
-    const episode = { end: 1, title: "架空", gist: "架空", cues: ["架空"], weight: 1 as const }
-
-    expect(chatEpisodeDrafts(single, [episode])).toEqual([
-      {
-        from: "2026-09-20T10:00:00+09:00",
-        to: "2026-09-20T10:00:00+09:00",
-        title: "架空",
-        gist: "架空",
-        cues: ["架空"],
-        weight: 1,
-      },
-    ])
-  })
 })
 
-describe("chatTopics", () => {
+describe("readChatTopics", () => {
+  function topicsOf(summary: string): readonly string[] {
+    return readChatTopics(fixedChatSummary({ summary, delivered: true }))
+  }
+
   it("<topics> と </topics> の間の行を、書かれた順（新しい順）のまま取り出す", () => {
-    expect(chatTopics(SUMMARY_WITH_TOPICS)).toEqual([
+    expect(topicsOf(SUMMARY_WITH_TOPICS)).toEqual([
       "架空の新しい話題",
       "架空の二番目の話題",
       "架空の三番目の話題",
@@ -332,17 +312,17 @@ describe("chatTopics", () => {
   it(`${String(CHAT_TOPIC_LIMIT)}件を超えて書かれていても、先頭から${String(CHAT_TOPIC_LIMIT)}件だけ`, () => {
     const summary = ["<topics>", "- 架空1", "- 架空2", "- 架空3", "- 架空4", "</topics>"].join("\n")
 
-    expect(chatTopics(summary)).toEqual(["架空1", "架空2", "架空3"])
+    expect(topicsOf(summary)).toEqual(["架空1", "架空2", "架空3"])
   })
 
   it("箇条の印（- * ・ 1.）を落とし、空行は数えない", () => {
     const summary = ["<topics>", "* 架空A", "", "・架空B", "2. 架空C", "</topics>"].join("\n")
 
-    expect(chatTopics(summary)).toEqual(["架空A", "架空B", "架空C"])
+    expect(topicsOf(summary)).toEqual(["架空A", "架空B", "架空C"])
   })
 
   it("同じ行に閉じまで書かれていても取り出す", () => {
-    expect(chatTopics("<topics>- 架空の話題</topics>")).toEqual(["架空の話題"])
+    expect(topicsOf("<topics>- 架空の話題</topics>")).toEqual(["架空の話題"])
   })
 
   it("組が2つあるときは最後の組を読む（考えの下書きより要約の本文を優先する）", () => {
@@ -359,31 +339,15 @@ describe("chatTopics", () => {
       "</summary>",
     ].join("\n")
 
-    expect(chatTopics(summary)).toEqual(["本文の架空の話題"])
+    expect(topicsOf(summary)).toEqual(["本文の架空の話題"])
   })
 
   it("印が無い要約（見出しの節を書かなかった）からは何も出さない", () => {
-    expect(chatTopics("架空の要約。話題の節は無い。")).toEqual([])
+    expect(topicsOf("架空の要約。話題の節は無い。")).toEqual([])
   })
 
   it("閉じの印が無い（途中で切れた）ときは何も出さない", () => {
-    expect(chatTopics("<topics>\n- 架空の話題\n")).toEqual([])
-  })
-
-  it("空の文字列からは何も出さない", () => {
-    expect(chatTopics("")).toEqual([])
-  })
-})
-
-describe("readChatTopics", () => {
-  it("写しの本文から見出しを取り出す", () => {
-    const chatSummary = fixedChatSummary({ summary: SUMMARY_WITH_TOPICS, delivered: true })
-
-    expect(readChatTopics(chatSummary)).toEqual([
-      "架空の新しい話題",
-      "架空の二番目の話題",
-      "架空の三番目の話題",
-    ])
+    expect(topicsOf("<topics>\n- 架空の話題\n")).toEqual([])
   })
 
   it("写しがまだ無い（一度も定着していない）ときは空", () => {

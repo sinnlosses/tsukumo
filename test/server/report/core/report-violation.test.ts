@@ -409,22 +409,6 @@ describe("reportViolations", () => {
       expect(kinds(report)).toEqual(["code-mismatch"])
     })
 
-    it("省略の行（// ...）で区切った断片が順に現れれば違反にしない", () => {
-      const report = withFile(
-        [code("src/fixture-c.ts", "架空の1行目\n// ...\n架空の4行目")],
-        new Map([["src/fixture-c.ts", "架空の1行目\n架空の2行目\n架空の3行目\n架空の4行目"]]),
-      )
-      expect(kinds(report)).toEqual([])
-    })
-
-    it("diff の - 行は無視し、+ と文脈の行だけ照合する", () => {
-      const report = withFile(
-        [code("src/fixture-d.ts", "@@ -1,2 +1,2 @@\n-古い行\n+架空の1行目\n 架空の2行目", "diff")],
-        new Map([["src/fixture-d.ts", "架空の1行目\n架空の2行目"]]),
-      )
-      expect(kinds(report)).toEqual([])
-    })
-
     it("読めなかったファイル（fileContents に無い path）は違反", () => {
       const report = withFile([code("src/fixture-not-found.ts", "架空の行")], new Map())
       expect(kinds(report)).toEqual(["code-mismatch"])

@@ -18,10 +18,10 @@ import { isPlainObject } from "remeda"
 import { SPEAK_TOOL_NAME, tsukumoToolFullName } from "./tsukumo-tool-name.ts"
 
 /** 本体が「このツールの呼び出しで終わるターンは正常」と扱うツール名の一覧を受け取る環境変数。 */
-export const TERMINAL_MCP_TOOLS_ENV_NAME = "CLAUDE_CODE_TERMINAL_MCP_TOOLS"
+const TERMINAL_MCP_TOOLS_ENV_NAME = "CLAUDE_CODE_TERMINAL_MCP_TOOLS"
 
 /** 本体の `silent_turn_reminder` を切り替える環境変数。 */
-export const SILENT_TURN_REMINDER_ENV_NAME = "CLAUDE_CODE_SILENT_TURN_REMINDER"
+const SILENT_TURN_REMINDER_ENV_NAME = "CLAUDE_CODE_SILENT_TURN_REMINDER"
 
 /** 本体の催促の固定文の先頭。見分けるのはこの先頭だけで、届いたメッセージの中身は持ち出さない。 */
 const VISIBLE_OUTPUT_NUDGE_PREFIX = "[Your previous response had no visible output."

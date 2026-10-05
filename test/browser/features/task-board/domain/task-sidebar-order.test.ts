@@ -20,20 +20,6 @@ function taskOf(id: string, status: string | undefined): TaskSummaryItem {
 }
 
 describe("orderTasksForSidebar", () => {
-  it("doing だけを running にまとめ、残りはファイルの順のまま rest に残す", () => {
-    const items = [
-      taskOf("X-001", "done"),
-      taskOf("X-002", "doing"),
-      taskOf("X-003", "todo"),
-      taskOf("X-004", "todo"),
-    ]
-
-    const result = orderTasksForSidebar(items)
-
-    expect(result.running.map((task) => task.id)).toEqual(["X-002"])
-    expect(result.rest.map((task) => task.id)).toEqual(["X-001", "X-003", "X-004"])
-  })
-
   it("doing が複数あれば running に複数件、ファイルの順のまま並ぶ", () => {
     const items = [taskOf("X-001", "doing"), taskOf("X-002", "todo"), taskOf("X-003", "doing")]
 

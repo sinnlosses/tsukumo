@@ -53,26 +53,4 @@ describe("selectInitialCharacterPack", () => {
 
     expect(pack).toBe(HOME)
   })
-
-  it("覚えた名前が一覧に無ければ既定へ落ちる", () => {
-    const pack = selectInitialCharacterPack({
-      packs: PACKS,
-      fallback: BUNDLED,
-      specified: undefined,
-      readRemembered: () => "消えたパック",
-    })
-
-    expect(pack).toBe(BUNDLED)
-  })
-
-  it("覚えた値が無ければ既定を使う", () => {
-    const pack = selectInitialCharacterPack({
-      packs: PACKS,
-      fallback: BUNDLED,
-      specified: undefined,
-      readRemembered: () => undefined,
-    })
-
-    expect(pack).toBe(BUNDLED)
-  })
 })

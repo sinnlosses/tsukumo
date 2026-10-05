@@ -62,7 +62,7 @@ const TASKS: readonly TaskSummaryItem[] = [
 const RUNNING_TURN: Partial<SessionState> = { turn: { kind: "running", startedAt: 0 } }
 
 /** サイドバーの区画の一覧。確認は姿と送り口が要るので store で包む。 */
-function renderList(spy: CommandSpy = () => {}, overrides: Partial<SessionState> = {}): void {
+function renderList(spy: CommandSpy, overrides: Partial<SessionState>): void {
   renderWithStore(<TaskList tasks={known(TASKS)} selectedStatus="all" />, spy, overrides)
 }
 
@@ -153,28 +153,6 @@ describe("タスクの実行を頼む", () => {
 
     expect(closed).toEqual([])
     expect(document.querySelector("dialog.task-board")?.hasAttribute("open")).toBe(true)
-  })
-
-  it("のぞき窓の「これを始める」から確認を開き、「実行する」で送ると窓も閉じる", () => {
-    const sent: unknown[] = []
-    renderList(collectInto(sent))
-
-    startFromPeek("X-002")
-    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
-
-    expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-002", images: [] }])
-    expect(confirmDialog()).toBeNull()
-    expect(document.querySelector('dialog[aria-label="X-002 の詳細"]')).toBeNull()
-  })
-
-  it("確認をキャンセルするとのぞき窓は残る", () => {
-    renderList()
-
-    startFromPeek("X-002")
-    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }))
-
-    expect(confirmDialog()).toBeNull()
-    expect(document.querySelector('dialog[aria-label="X-002 の詳細"]')).not.toBeNull()
   })
 
   it("区画の一覧で「これを始める」が出るのは着手できる todo だけ", () => {

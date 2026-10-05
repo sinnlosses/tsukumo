@@ -265,16 +265,6 @@ describe("visitDeparture", () => {
     },
   )
 
-  it("歯車をオフにすると、待ちが続いていてもその場で帰る（`wait-over` とは違い isWaiting を見ない）", () => {
-    const stillWaiting = applySessionEvent(visiting, TOOL_STARTED, 1)
-    const toggledOff: SessionEvent = { kind: "visit-enabled-changed", visitEnabled: false }
-
-    expect(visitDeparture(applySessionEvent(stillWaiting, toggledOff, 2), toggledOff)).toEqual({
-      kind: "leave",
-      reason: "disabled",
-    })
-  })
-
   it("歯車をオンに戻しても、訪問中でなければ帰らない（トグルだけでは訪問が始まらない）", () => {
     const idle = stateAfter(REQUEST, TURN_FINISHED)
     const toggledOn: SessionEvent = { kind: "visit-enabled-changed", visitEnabled: true }

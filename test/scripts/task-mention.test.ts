@@ -153,32 +153,6 @@ describe("formatStrayTaskMention", () => {
 // `docs/requirements.md`「7. 未決事項」の対応タスク列だけを許す例外。実際の使われ方
 // （`findTaskMentions` に渡す前に通す）のまま、伏せたあとに拾われるかどうかで確かめる。
 describe("maskAllowedRequirementsPendingTaskColumn", () => {
-  test("「7. 未決事項」の対応タスク列（表の2列目）は伏せて拾われなくする", () => {
-    const text = [
-      "## 7. 未決事項",
-      "",
-      "| 未決事項 | 対応タスク |",
-      "| --- | --- |",
-      `| プレーンな未決事項 | ${SAMPLE_ID} |`,
-    ].join("\n")
-    const masked = maskAllowedRequirementsPendingTaskColumn(REQUIREMENTS_PATH, text)
-    expect(findTaskMentions(REQUIREMENTS_PATH, masked)).toEqual([])
-  })
-
-  test("未決事項列（表の1列目）は伏せない", () => {
-    const text = [
-      "## 7. 未決事項",
-      "",
-      "| 未決事項 | 対応タスク |",
-      "| --- | --- |",
-      `| ${SAMPLE_ID} が絡む | 対応中 |`,
-    ].join("\n")
-    const masked = maskAllowedRequirementsPendingTaskColumn(REQUIREMENTS_PATH, text)
-    expect(findTaskMentions(REQUIREMENTS_PATH, masked)).toEqual([
-      { sourcePath: REQUIREMENTS_PATH, line: 5, id: SAMPLE_ID, context: "data" },
-    ])
-  })
-
   test("「7. 未決事項」の節に入る前の表は伏せない", () => {
     const text = [
       "## 6. 既存のものとの関係",

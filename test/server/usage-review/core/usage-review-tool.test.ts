@@ -1,28 +1,8 @@
-import { join } from "node:path"
-
 import { describe, expect, it } from "vitest"
 
-import {
-  readDismissedUsageProposalKeys,
-  writeDismissedUsageProposalKey,
-} from "../../../../src/server/usage-review/adapter/usage-proposal-dismissal.ts"
 import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import {
-  type UsageReviewFindings,
-  usageProposalKey,
-} from "../../../../src/shared/usage-review/usage-review.ts"
-import { useTempDir } from "../../../fixture/temp-dir.ts"
-
-// 見送った提案の一覧が、ホームのファイル（読み書きは
-// `readDismissedUsageProposalKeys`）から `createUsageReviewIntake` へ実際に
-// 渡ることを確かめる（別のテストは同じ口を偽の配列で確かめている）。
-
-const dir = useTempDir("usage-review-dismissal-wiring")
-
-function path(): string {
-  return join(dir(), "usage-review-dismissed.json")
-}
+import { usageProposalKey } from "../../../../src/shared/usage-review/usage-review.ts"
 
 const DISMISSED_PROPOSAL = {
   kind: "session-length",
@@ -51,15 +31,12 @@ const TASK_PROPOSAL = {
 const withTaskOperation = async (): Promise<boolean> => true
 const withoutTaskOperation = async (): Promise<boolean> => false
 
-describe("見送った提案の一覧（ホームのファイル → usage-review-tool.ts）", () => {
-  it("見送ったあとの usage_review_stage の戻り値に、実際にホームへ書いた識別子が載る", async () => {
-    writeDismissedUsageProposalKey(usageProposalKey(DISMISSED_PROPOSAL), path())
-
-    const events: SessionEvent[] = []
+describe("見送った提案の一覧（usage_review_stage の戻り値）", () => {
+  it("見送った提案の識別子が、usage_review_stage の戻り値に載る", async () => {
     const intake = createUsageReviewIntake(
-      () => readDismissedUsageProposalKeys(path()),
+      () => [usageProposalKey(DISMISSED_PROPOSAL)],
       withTaskOperation,
-      (event) => events.push(event),
+      () => {},
     )
 
     const reply = await intake.enterStage("model", 7)
@@ -73,51 +50,9 @@ describe("見送った提案の一覧（ホームのファイル → usage-revie
     )
   })
 
-  it("見送った提案を含む結果は差し戻され、状態も変わらない", async () => {
-    writeDismissedUsageProposalKey(usageProposalKey(DISMISSED_PROPOSAL), path())
-
-    const events: SessionEvent[] = []
-    const intake = createUsageReviewIntake(
-      () => readDismissedUsageProposalKeys(path()),
-      withTaskOperation,
-      (event) => events.push(event),
-    )
-
-    const findings: UsageReviewFindings = {
-      days: 7,
-      headline: "架空の冒頭の一言。",
-      proposals: [DISMISSED_PROPOSAL],
-    }
-    const verdict = await intake.submit(findings)
-
-    expect(verdict.kind).toBe("rejected")
-    expect(events).toEqual([])
-  })
-
-  it("見送っていない提案だけの結果は受け付けられる", async () => {
-    writeDismissedUsageProposalKey(usageProposalKey(DISMISSED_PROPOSAL), path())
-
-    const events: SessionEvent[] = []
-    const intake = createUsageReviewIntake(
-      () => readDismissedUsageProposalKeys(path()),
-      withTaskOperation,
-      (event) => events.push(event),
-    )
-
-    const findings: UsageReviewFindings = {
-      days: 7,
-      headline: "架空の冒頭の一言。",
-      proposals: [KEPT_PROPOSAL],
-    }
-    const verdict = await intake.submit(findings)
-
-    expect(verdict).toEqual({ kind: "accepted" })
-    expect(events).toEqual([{ kind: "usage-review-result", findings }])
-  })
-
   it('一度も見送っていないときは usage_review_stage の戻り値が "ok" だけ', async () => {
     const intake = createUsageReviewIntake(
-      () => readDismissedUsageProposalKeys(path()),
+      () => [],
       withTaskOperation,
       () => {},
     )

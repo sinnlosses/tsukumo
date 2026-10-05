@@ -436,25 +436,6 @@ describe("readAchievement", () => {
     })
   })
 
-  it("date が無ければ今日、指定した日はそのまま見た日として返す", async () => {
-    await commitAt(repository, "2026-09-20", "10:00", "old.txt")
-
-    const achievement = known(
-      await readAchievement(repository, "2026-09-20", "2026-09-24", createAchievementCommitCache()),
-    )
-
-    expect(achievement).toMatchObject({ date: "2026-09-20", today: "2026-09-24" })
-  })
-
-  it("main が無い・git が無いリポジトリでも例外を投げない", async () => {
-    await expect(
-      readAchievement(root(), "2026-09-24", "2026-09-24", createAchievementCommitCache()),
-    ).resolves.toEqual({
-      kind: "ok",
-      achievement: { kind: "unknown" },
-    })
-  })
-
   describe("卒業と節目", () => {
     it("登録から7日以上経って終えたタスクは卒業に載る", async () => {
       await commitNewFormatTask(

@@ -202,14 +202,6 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
-  it("local_command_run が無い通常のメッセージでは何も出さない", () => {
-    const message = assistantMessage([{ type: "text", text: "ダミーの本文です。" }])
-
-    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      { kind: "utterance", text: "ダミーの本文です。" },
-    ])
-  })
-
   it("tool_result をツールの終了にする", () => {
     const message = {
       type: "user",
@@ -590,7 +582,13 @@ describe("toSessionEvents", () => {
   })
 
   it("result の success はターンの成功にする", () => {
-    const message = { type: "result", subtype: "success", num_turns: 1, duration_ms: 10 }
+    const message = {
+      type: "result",
+      subtype: "success",
+      num_turns: 1,
+      duration_ms: 10,
+      parent_tool_use_id: null,
+    }
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
       { kind: "turn-finished", outcome: { kind: "completed" } },
@@ -934,41 +932,17 @@ describe("toSessionEvents", () => {
     }
   })
 
-  it("parent_tool_use_id のある result は使用量も出さない（サブエージェントぶんは本体の累計に含まれる）", () => {
+  it("parent_tool_use_id のある result はターンの終わりにせず、使用量も出さない（案4-c。サブエージェントぶんは本体の累計に含まれる）", () => {
     const message = {
       type: "result",
       subtype: "success",
+      num_turns: 1,
+      duration_ms: 10,
       parent_tool_use_id: "toolu_sub_1",
       modelUsage: { "claude-sonnet-fictional": { inputTokens: 10, outputTokens: 2 } },
     }
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
-  })
-
-  it("parent_tool_use_id のある result はターンの終わりにしない（案4-c）", () => {
-    const message = {
-      type: "result",
-      subtype: "success",
-      num_turns: 1,
-      duration_ms: 10,
-      parent_tool_use_id: "toolu_sub_1",
-    }
-
-    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
-  })
-
-  it("parent_tool_use_id が null の result は今までどおりターンの終わりにする", () => {
-    const message = {
-      type: "result",
-      subtype: "success",
-      num_turns: 1,
-      duration_ms: 10,
-      parent_tool_use_id: null,
-    }
-
-    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-    ])
   })
 
   it("知らない種別は無視する（種別は本体の更新で増える）", () => {

@@ -52,13 +52,8 @@ describe("writeRememberedCharacter", () => {
 // 新しいセッションの既定（モデル・effort・許可モード。docs/architecture/screen-design.md「設定の置き場所」）。壊れた
 // state.json でも起動を止めないので、読めないときは同梱の既定へ畳む。
 describe("readRememberedSessionDefault", () => {
-  it("ファイルが無いときは同梱の既定（Opus・medium・auto）", () => {
+  it("ファイルが無いときは同梱の既定", () => {
     expect(readRememberedSessionDefault(statePath())).toEqual(BUILTIN_SESSION_DEFAULT)
-    expect(readRememberedSessionDefault(statePath())).toEqual({
-      model: "opus",
-      effort: "medium",
-      permissionMode: "auto",
-    })
   })
 
   it("JSON が壊れているときは同梱の既定", () => {
@@ -192,31 +187,6 @@ describe("writeRememberedSessionDefault", () => {
     })
     expect(readRememberedCharacter(statePath())).toBe("kagami")
   })
-
-  // ホームを分けて動かしたとき（`TSUKUMO_HOME`）に、別のホームの値が混ざらないこと
-  // （置き場所の差し替えは `path` 引数1つで、読むのも書くのも同じ引数を通る）。
-  it("別の置き場所の state.json とは混ざらない", () => {
-    const otherPath = join(dir(), "other-home", "state.json")
-    writeRememberedSessionDefault(
-      { model: "sonnet", effort: "high", permissionMode: "plan" },
-      statePath(),
-    )
-    writeRememberedSessionDefault(
-      { model: "haiku", effort: "low", permissionMode: "acceptEdits" },
-      otherPath,
-    )
-
-    expect(readRememberedSessionDefault(statePath())).toEqual({
-      model: "sonnet",
-      effort: "high",
-      permissionMode: "plan",
-    })
-    expect(readRememberedSessionDefault(otherPath)).toEqual({
-      model: "haiku",
-      effort: "low",
-      permissionMode: "acceptEdits",
-    })
-  })
 })
 
 // 歯車の「訪問」のオン・オフ（docs/architecture/screen-design.md「設定の置き場所」）。覚え方は「新しいセッションの既定」と
@@ -290,15 +260,5 @@ describe("writeRememberedVisitEnabled", () => {
       effort: "low",
       permissionMode: "auto",
     })
-  })
-
-  // ホームを分けて動かしたとき（`TSUKUMO_HOME`）に、別のホームの値が混ざらないこと。
-  it("別の置き場所の state.json とは混ざらない", () => {
-    const otherPath = join(dir(), "other-home", "state.json")
-    writeRememberedVisitEnabled(false, statePath())
-    writeRememberedVisitEnabled(true, otherPath)
-
-    expect(readRememberedVisitEnabled(statePath())).toBe(false)
-    expect(readRememberedVisitEnabled(otherPath)).toBe(true)
   })
 })

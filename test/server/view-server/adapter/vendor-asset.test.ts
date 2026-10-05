@@ -62,17 +62,11 @@ describe("createVendorAssetReader の覚え方", () => {
 // 場所が変わった、を落とす。本物の `node_modules` を読む（依存が入っていることは
 // `pnpm install` 済みの前提。docs/coding-standards.md「テスト」）。
 describe("readVendorAsset", () => {
-  it("allowlist に載っている名前はすべて node_modules から読める", () => {
-    const names = Object.keys(VENDOR_ASSET_CONTENT_TYPES)
-    expect(names.length).toBeGreaterThan(0)
-
-    const unreadable = names.filter((name) => readVendorAsset(name) === undefined)
-
-    expect(unreadable).toEqual([])
-  })
-
   it("allowlist の Content-Type をそのまま付けて、空でない中身を返す", () => {
-    for (const [name, contentType] of Object.entries(VENDOR_ASSET_CONTENT_TYPES)) {
+    const entries = Object.entries(VENDOR_ASSET_CONTENT_TYPES)
+    expect(entries.length).toBeGreaterThan(0)
+
+    for (const [name, contentType] of entries) {
       const asset = readVendorAsset(name)
 
       expect(asset?.contentType).toBe(contentType)

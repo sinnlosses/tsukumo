@@ -1070,53 +1070,6 @@ describe("createSessionManager", () => {
       expect(archiveCalls).toEqual([])
     })
 
-    it("復元で流し直されたイベントは書かない（起こし直しても同じ行が二重に積まれない）", async () => {
-      const { stub, archiveCalls } = startArchiveManagerWithStub()
-      await waitForBatch()
-
-      // 前のセッションの記録を組み直した再生（`onRestoredEvents`）。
-      stub.emitRestored([
-        CHARACTER_EVENT,
-        { kind: "chat-mode-changed", chat: true },
-        { kind: "request", text: "前のセッションの依頼", images: [] },
-        { kind: "speech", text: "前のセッションのセリフ", expression: "default" },
-      ])
-      await waitForBatch()
-
-      expect(archiveCalls).toEqual([])
-
-      // 駆動から新しく届いたぶんは、いつもどおり書く。
-      stub.emit({ kind: "request", text: "新しい依頼", images: [] })
-      await waitForBatch()
-
-      expect(archiveCalls).toEqual([
-        {
-          packName: "fictional",
-          entry: {
-            mode: "chat",
-            kind: "request",
-            at: 1_000,
-            text: "新しい依頼",
-            images: undefined,
-          },
-        },
-      ])
-    })
-
-    it("復元で流し直された仕事の report・turn-finished は結論を書かない", async () => {
-      const { stub, archiveCalls } = startArchiveManagerWithStub()
-      await waitForBatch()
-
-      stub.emitRestored([
-        CHARACTER_EVENT,
-        reportEvent("前のセッションの結論"),
-        { kind: "turn-finished", outcome: { kind: "completed" } },
-      ])
-      await waitForBatch()
-
-      expect(archiveCalls).toEqual([])
-    })
-
     it("本文（レポート）・ツールの入出力は書かない", async () => {
       const { stub, archiveCalls } = startArchiveManagerWithStub()
       await waitForBatch()
@@ -1274,17 +1227,6 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       expect(entries.map((entry) => entry.mode)).toEqual(["chat"])
-    })
-
-    it("復元で流し直されたぶんは記録しない", async () => {
-      const { stub, entries } = startTokenUsageManagerWithStub()
-      await waitForBatch()
-
-      stub.emit(SESSION_INFO)
-      stub.emitRestored([{ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) }])
-      await waitForBatch()
-
-      expect(entries).toEqual([])
     })
 
     it("そのターンに使ったツールを、名前ごとに畳んで同じ行に入れる", async () => {
@@ -1551,17 +1493,6 @@ describe("createSessionManager", () => {
 
       expect(entries.map((entry) => entry.mode)).toEqual(["chat"])
     })
-
-    it("復元で流し直されたターンでは書かない", async () => {
-      const { stub, entries } = startContextUsageManagerWithStub([readyContextUsage()])
-      await waitForBatch()
-
-      stub.emit(sessionInfo("claude-session-1"))
-      stub.emitRestored([{ kind: "turn-finished", outcome: { kind: "completed" } }])
-      await waitForBatch()
-
-      expect(entries).toEqual([])
-    })
   })
 
   // `report` の塊の使われ方の記録。描いた（差し戻されなかった）report だけが1行になることを
@@ -1647,17 +1578,6 @@ describe("createSessionManager", () => {
 
       expect(entries).toEqual([])
     })
-
-    it("復元で流し直された report では書かない", async () => {
-      const { stub, entries } = startReportUsageManagerWithStub()
-      await waitForBatch()
-
-      stub.emit(sessionInfo("claude-session-1"))
-      stub.emitRestored([reportEvent([])])
-      await waitForBatch()
-
-      expect(entries).toEqual([])
-    })
   })
 
   // 質問（AskUserQuestion）の使われ方の記録。答えが確定した質問ごとに1行、選択肢の数と
@@ -1738,17 +1658,6 @@ describe("createSessionManager", () => {
 
       expect(entries).toEqual([])
     })
-
-    it("復元で流し直された question-answered では書かない", async () => {
-      const { stub, entries } = startQuestionUsageManagerWithStub()
-      await waitForBatch()
-
-      stub.emit(sessionInfo("claude-session-1"))
-      stub.emitRestored([questionAnsweredEvent([question(2, 0)])])
-      await waitForBatch()
-
-      expect(entries).toEqual([])
-    })
   })
 
   describe("診断ログの足跡", () => {
@@ -1813,16 +1722,6 @@ describe("createSessionManager", () => {
       expect(sessionEventEntries(entries).map((entry) => entry.generation)).toEqual([1, 2])
     })
 
-    it("復元で流し直されたイベントは書かない", async () => {
-      const { stub, entries } = startDiagnosticManagerWithStub()
-      await waitForBatch()
-
-      stub.emitRestored(RESTORED_REPLAY)
-      await waitForBatch()
-
-      expect(entries).toEqual([])
-    })
-
     it("閉じるときは間隔を待たずに積んだぶんを書く", () => {
       const { manager, stub, entries } = startDiagnosticManagerWithStub()
 
@@ -1866,7 +1765,7 @@ describe("createSessionManager", () => {
       ])
     })
 
-    it("コンテキストの内訳・プランの内訳・セッションの中身の問い合わせが失敗したら、それぞれ場所の名前で1行書く", async () => {
+    it("コンテキストの内訳・プランの内訳の問い合わせが失敗したら、それぞれ場所の名前で1行書く", async () => {
       const entries: DiagnosticEntry[] = []
       const manager = createSessionManager({
         now: () => 3_000,
@@ -1934,6 +1833,112 @@ describe("createSessionManager", () => {
         },
       ])
     })
+  })
+
+  it("復元で流し直されたぶんは、仕事の report・turn-finished の結論も含めてどの記録にも書かない（新しく届いたぶんは、畳んだパックで書く）", async () => {
+    const stub = createStubDriver()
+    const written: { readonly log: string; readonly entry: unknown }[] = []
+    const record =
+      (log: string) =>
+      (entry: unknown): void => {
+        written.push({ log, entry })
+      }
+    createSessionManager({
+      chatArchive: {
+        ...NOOP_CHAT_ARCHIVE,
+        append: (packName, entry) => record("chat")({ packName, entry }),
+      },
+      tokenUsageLog: { append: record("token"), readRange: () => [] },
+      contextUsageLog: { append: record("context") },
+      reportUsageLog: { append: record("report") },
+      questionUsageLog: { append: record("question") },
+      diagnosticLog: { append: record("diagnostic"), readRange: () => [] },
+      launchSession: (onEvent, onRestoredEvents) => {
+        stub.attach(onEvent)
+        stub.attachRestored(onRestoredEvents)
+        return Promise.resolve(stub.driver)
+      },
+    })
+    await waitForBatch()
+
+    stub.emit({
+      kind: "session-info",
+      sessionId: "claude-session-1",
+      model: "opus",
+      permissionMode: "auto",
+      slashCommands: [],
+      terminalSlashCommands: [],
+    })
+    await waitForBatch()
+    const before = written.length
+
+    stub.emitRestored([
+      CHARACTER_EVENT,
+      {
+        kind: "report",
+        toolUseId: "toolu_r1",
+        conclusion: "前のセッションの結論",
+        sections: [],
+        favor: "",
+        checks: [],
+        closing: { kind: "none" },
+        waitingLine: { kind: "none" },
+        unknownBlockCount: 0,
+        sessionSummary: undefined,
+        task: { kind: "none" },
+      },
+      {
+        kind: "token-usage",
+        cumulative: [
+          {
+            model: "claude-opus-fictional",
+            inputTokens: 100,
+            outputTokens: 20,
+            thinkingTokens: 0,
+            cacheReadInputTokens: 0,
+            cacheCreationInputTokens: 0,
+            costUsd: 0.5,
+          },
+        ],
+      },
+      {
+        kind: "question-answered",
+        toolUseId: "toolu_fictional",
+        questions: [
+          {
+            header: "架空の見出し",
+            text: "架空の質問文",
+            multiSelect: false,
+            options: [{ label: "架空の選択肢", description: "", preview: undefined }],
+          },
+        ],
+        answers: [["架空の答え"]],
+      },
+      ...RESTORED_REPLAY,
+    ])
+    await waitForBatch()
+
+    expect(written.slice(before)).toEqual([])
+
+    stub.emit({ kind: "request", text: "新しい依頼", images: [] })
+    await waitForBatch()
+
+    expect(written.slice(before).filter((call) => call.log === "chat")).toEqual([
+      {
+        log: "chat",
+        entry: {
+          packName: "fictional",
+          entry: {
+            mode: "work",
+            kind: "request",
+            at: 1_000,
+            text: "新しい依頼",
+            project: FICTIONAL_PROJECT,
+            images: undefined,
+          },
+        },
+      },
+    ])
   })
 })
 

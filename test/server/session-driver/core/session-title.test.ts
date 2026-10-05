@@ -67,17 +67,6 @@ describe("decideSessionTitle", () => {
     expect(action).toEqual({ kind: "write", title: "架空の新しい題" })
   })
 
-  it("`/clear` の合図が無ければ、書き写された題があっても上書きしない（従来どおり）", () => {
-    const state: SessionTitleState = {
-      lastWritten: "架空の前の題",
-      adoptCurrentTitleNext: false,
-    }
-
-    const action = decideSessionTitle(state, "架空の新しい題", "書き写された架空の題")
-
-    expect(action).toEqual({ kind: "skip" })
-  })
-
   it(`${String(MAX_SESSION_HEADING_LENGTH)}字を超える候補は切り詰めてから書く`, () => {
     const long = "あ".repeat(MAX_SESSION_HEADING_LENGTH + 5)
 

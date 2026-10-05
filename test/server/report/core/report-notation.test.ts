@@ -10,7 +10,6 @@ import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report/report-block.ts"
 import {
-  REPORT_BLOCK_MARK_NAMES,
   REPORT_DRAWN_MARK_NAMES,
   REPORT_NOTATION_NAMES,
   REPORT_NOTE_KINDS,
@@ -93,14 +92,6 @@ describe("REPORT_NOTATION_PROMPT", () => {
       for (const resolved of element?.className.split(" ") ?? []) {
         expect(STYLE_SHEET_SOURCE).toContain(`.${resolved}`)
       }
-    }
-  })
-
-  it("塊から組む印は文面に class として載せない", () => {
-    // 塊の種類がある記法を逃げ道に書くと差し戻すので、文面が勧めると往復が増える。
-    expect(REPORT_NOTATION_PROMPT).not.toContain('class="cols"')
-    for (const name of [...REPORT_NOTE_KINDS.map(([kind]) => kind), ...REPORT_BLOCK_MARK_NAMES]) {
-      expect(namedClasses).not.toContain(name)
     }
   })
 

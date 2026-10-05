@@ -152,15 +152,6 @@ describe("上限: 1ターンに1行", () => {
 
     expect(rememberedLines(homePersona("架空") ?? "")).toEqual([`- ${LINE}`, "- 次のターンの1行目"])
   })
-
-  it("受け付けられなかった行はターンの1行を使わない（長すぎた次にもう一度書ける）", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
-
-    memory.remember("あ".repeat(MAX_REMEMBERED_LINE_LENGTH + 1))
-    memory.remember(LINE)
-
-    expect(rememberedLines(homePersona("架空") ?? "")).toEqual([`- ${LINE}`])
-  })
 })
 
 describe("上限: 1行の長さ", () => {
@@ -318,17 +309,6 @@ describe("上限: 1ターンに1行消す", () => {
     expect(rememberedLines(homePersona("架空") ?? "")).toEqual(["- 覚えたこと3"])
   })
 
-  it("一致しなかった回はターンの1行を使わない", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
-
-    memory.remember(LINE)
-    memory.finishTurn()
-    memory.forget("覚えていないこと")
-    memory.forget(LINE)
-
-    expect(homePersona("架空")).toBe(`${PERSONA}\n`)
-  })
-
   it("`remember` と `forget` は別に数える（同じターンで覚え直せる）", () => {
     const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
@@ -388,7 +368,7 @@ describe("onChange（画面のサイドバーへ流し直す口）", () => {
     expect(changes).toEqual([[LINE]])
   })
 
-  it("受け付けられなかった回（上限・1ターン2回目）は呼ばない", () => {
+  it("受け付けられなかった回（上限・1ターン2回目）は呼ばず、上限で受け付けなかった行はターンの1行を使わない", () => {
     const changes: (readonly string[])[] = []
     const memory = createPersonaMemory(
       readCharacterPack(writeBundledPack("架空")),
@@ -404,7 +384,7 @@ describe("onChange（画面のサイドバーへ流し直す口）", () => {
     expect(changes).toEqual([[LINE]])
   })
 
-  it("消せたときも、更新後の一覧を渡して呼ぶ（消せなかった回は呼ばない）", () => {
+  it("消せたときも、更新後の一覧を渡して呼ぶ（一致しなかった回は呼ばず、ターンの1行も使わない）", () => {
     const changes: (readonly string[])[] = []
     const pack = readCharacterPack(writeBundledPack("架空"))
     const memory = createPersonaMemory(pack, dir(), home(), (lines) => changes.push(lines))

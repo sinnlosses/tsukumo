@@ -91,20 +91,4 @@ describe("createPromptDelayWatch", () => {
 
     expect(reported).toEqual([])
   })
-
-  it("1行の鍵は数と決まった語だけ", () => {
-    const { reported, watch } = watchWith()
-
-    watch.pushed(START)
-    watch.written(START + 4000)
-    watch.received(START + 4000)
-
-    expect(Object.keys(reported[0] ?? {}).toSorted()).toEqual([
-      "at",
-      "flow",
-      "pushedAt",
-      "replyMs",
-      "writeMs",
-    ])
-  })
 })

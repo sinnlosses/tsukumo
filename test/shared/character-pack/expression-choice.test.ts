@@ -6,32 +6,7 @@ import {
   expressionNames,
   resolveExpressionLabel,
 } from "../../../src/shared/character-pack/expression-choice.ts"
-import { characterDefinition, portraits } from "../../fixture/character.ts"
-
-// characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
-const FULL_DEFINITION_JSON = JSON.stringify({
-  name: "架空の精霊",
-  license: "テスト用に手で書いたもの",
-  accent: "#f2b0a0",
-  expressions: {
-    default: "通常",
-    thinking: "作業中",
-    proud: "どや顔",
-    flustered: "あわあわ",
-  },
-  portraits: {
-    default: "default.svg",
-    thinking: "thinking.svg",
-    proud: "proud.svg",
-    flustered: "flustered.svg",
-  },
-  outfitAccents: {
-    default: "#b8c7ff",
-    light: "#a8e6c0",
-    normal: "#b8c7ff",
-    heavy: "#ffb3a7",
-  },
-})
+import { characterDefinition, FULL_DEFINITION_JSON, portraits } from "../../fixture/character.ts"
 
 describe("expressionChoices", () => {
   it("定義の expressions をラベルにする", () => {

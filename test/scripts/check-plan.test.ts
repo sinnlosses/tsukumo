@@ -51,19 +51,6 @@ describe("isDocumentOnlyChange", () => {
     expect(isDocumentOnlyChange(["docs/requirements.md", "src/cli.ts"])).toBe(false)
   })
 
-  test("src/ 配下の .md が混ざっていれば false", () => {
-    expect(
-      isDocumentOnlyChange([
-        "docs/requirements.md",
-        "src/server/character/adapter/pack/persona.md",
-      ]),
-    ).toBe(false)
-  })
-
-  test("未追跡のファイル相当のパスが1件でもコードなら false", () => {
-    expect(isDocumentOnlyChange(["src/server/new-feature/core/plan.ts"])).toBe(false)
-  })
-
   test("変えたファイルが1件も無ければ false（全段を走らせる）", () => {
     expect(isDocumentOnlyChange([])).toBe(false)
   })

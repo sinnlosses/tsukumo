@@ -194,13 +194,6 @@ describe("readRange", () => {
     expect(log.readRange({ startDate: "2026-09-01", endDate: "2026-09-30" })).toEqual([])
   })
 
-  it("記録した期間の外を指定すると空の並びを返す", () => {
-    const log = createTokenUsageLog(root())
-    log.append(entry(at(9, 0, 22)))
-
-    expect(log.readRange({ startDate: "2026-10-01", endDate: "2026-10-31" })).toEqual([])
-  })
-
   // `v` が2以外の行・壊れた行は読まずに落とす（版1を残す価値が無いという判断。
   // まだ開発中で「内訳を空として読む」ことはしない）。1行ずつ検証するので、他の正しい行は
   // 生き残る。

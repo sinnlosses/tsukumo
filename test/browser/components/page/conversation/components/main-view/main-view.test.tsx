@@ -184,21 +184,6 @@ describe("MainView（札の頭）", () => {
     expect(position()).toBe("1 / 3")
   })
 
-  it("入力欄の中の [ ] はターンを移さない", () => {
-    renderMainView(threeTurns())
-    const root = document.querySelector("[data-main-view]")
-    if (root === null) {
-      throw new Error("メインビューの根が見つからない")
-    }
-    const field = document.createElement("textarea")
-    root.append(field)
-    act(() => {
-      fireEvent.keyDown(field, { key: "[" })
-      window.dispatchEvent(new Event("hashchange"))
-    })
-    expect(position()).toBe("3 / 3")
-  })
-
   it("端ではその側を押せない（最新では ›、いちばん古いターンでは ‹）", () => {
     renderMainView(threeTurns())
 

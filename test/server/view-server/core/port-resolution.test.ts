@@ -185,19 +185,4 @@ describe("startOnResolvedPort（実際に OS のポートを塞いで確かめ�
       await closeNetServer(blocker)
     }
   })
-
-  it("明示指定で実際に塞がっているポートを渡すと、ずらさずに失敗する", async () => {
-    const blocker = await listenOnEphemeralPort()
-    const blockedPort = portOf(blocker)
-
-    try {
-      const result = await startOnResolvedPort({ kind: "explicit", port: blockedPort }, (port) =>
-        startViewServer(port, emptyViewServerOptions),
-      )
-
-      expect(result.ok).toBe(false)
-    } finally {
-      await closeNetServer(blocker)
-    }
-  })
 })

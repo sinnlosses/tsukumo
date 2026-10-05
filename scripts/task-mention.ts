@@ -12,7 +12,7 @@
 // ただしファイル丸ごとではなく、出現の置き場所が `data`（コメントでもテスト名でもない）のときだけ
 // 許す——同じファイルでもコメント（`//`・`/* */`・JSDoc）とテスト名（`describe`/`it`/`test` の
 // 最初の文字列引数）に書かれた出現は拾う。置き場所の判定は `contextRangesOf` が行う、
-// (2) 既知の例外 `T-225`（`KNOWN_DUPLICATE_ALLOWANCE` と同じ理由でここでも例外にする）、
+// (2) 既知の例外 `T-225`、
 // (3) `docs/requirements.md`「7. 未決事項」の表の「対応タスク」列（CLAUDE.md が唯一許す docs の
 // 例外）。(3) は `maskAllowedRequirementsPendingTaskColumn` が、拾う前にその列だけ伏せて実現する
 // （伏せた場所は 1列目や節の外まで広げない）。
@@ -51,7 +51,6 @@ const TABLE_SEPARATOR_ROW_PATTERN = /^\|[\s|:-]+\|$/u
 // タスクファイルの形を確かめるテストが、タスクIDをデータとして使うファイル。
 const ALLOWED_DATA_FILES = [
   "test/task-id.test.ts",
-  "test/scripts/task-id.test.ts",
   "test/server/achievement/core/achievement-commit.test.ts",
   "test/server/achievement/core/done-task-source.test.ts",
   "test/server/achievement/core/task-file-history.test.ts",

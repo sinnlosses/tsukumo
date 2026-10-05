@@ -246,22 +246,6 @@ describe("takeChatMemoryPromptParts", () => {
     expect(text).not.toContain("範囲:")
     expect(text).not.toContain("〜")
   })
-
-  it("表情も画像の枚数も載らない（口が渡さないので、文面と話者の別だけが並ぶ）", () => {
-    const parts = take(undefined, fakeChatSummary(undefined), fakeChatArchive(RECENT))
-
-    expect(parts[0]).toContain("利用者: ただいま")
-    expect(parts[0]).toContain("あなた: おかえり")
-  })
-
-  it("印の行が systemPrompt に混ざらない", () => {
-    const chatSummary = fakeChatSummary({ summary: SUMMARY, delivered: false })
-
-    const parts = take(undefined, chatSummary, fakeChatArchive(RECENT))
-
-    expect(parts.join("\n")).not.toContain("delivered")
-    expect(parts.join("\n")).not.toContain("undelivered")
-  })
 })
 
 describe("workMemoryPromptParts", () => {

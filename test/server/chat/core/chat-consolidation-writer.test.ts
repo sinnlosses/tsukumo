@@ -8,10 +8,11 @@ import type {
 import { createChatConsolidationWriter } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import {
   type ChatConsolidationQuery,
-  chatTopics,
+  readChatTopics,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
 import type { ChatSummary } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
+import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 // `query()` は差し替え、本物の claude は起こさない。
 
@@ -241,7 +242,9 @@ describe("createChatConsolidationWriter", () => {
     // 本文の最後に tsukumo が組を置き、同じ取り出し方で読める。
     expect(ports.summary().startsWith("架空の書き直したあらすじ\n")).toBe(true)
     expect(ports.summary().endsWith("</topics>")).toBe(true)
-    expect(chatTopics(ports.summary())).toEqual(["架空の話題1", "架空の話題2"])
+    expect(readChatTopics(fixedChatSummary({ summary: ports.summary(), delivered: true }))).toEqual(
+      ["架空の話題1", "架空の話題2"],
+    )
     expect(ports.summaryPacks).toEqual(["fictional"])
   })
 

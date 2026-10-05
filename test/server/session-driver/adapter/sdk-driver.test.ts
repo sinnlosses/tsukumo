@@ -5,7 +5,7 @@ import type {
 } from "@anthropic-ai/claude-agent-sdk"
 import { describe, expect, it } from "vitest"
 
-import { EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../../../../src/shared/command.ts"
+import { EFFORT_LEVELS, PERMISSION_MODES } from "../../../../src/shared/command.ts"
 import { API_ERROR_KINDS } from "../../../../src/shared/session-driver/api-trouble.ts"
 
 describe("shared の値の一覧と SDK の型", () => {
@@ -44,10 +44,6 @@ describe("shared の値の一覧と SDK の型", () => {
     } satisfies Record<SDKAssistantMessageError, true>
 
     expect(Object.keys(everySdkError).toSorted()).toEqual(asSdk.toSorted())
-  })
-
-  it("MODEL_ALIASES は既定のモデルを含む4語", () => {
-    expect(MODEL_ALIASES).toEqual(["opus", "sonnet", "haiku", "fable"])
   })
 
   it("EFFORT_LEVELS はすべて SDK の EffortLevel として渡せる値", () => {

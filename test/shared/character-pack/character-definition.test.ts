@@ -12,31 +12,7 @@ import {
   definitionWithPortrait,
   parseCharacterDefinition,
 } from "../../../src/shared/character-pack/character-definition.ts"
-
-// characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
-const FULL_DEFINITION_JSON = JSON.stringify({
-  name: "架空の精霊",
-  license: "テスト用に手で書いたもの",
-  accent: "#f2b0a0",
-  expressions: {
-    default: "通常",
-    thinking: "作業中",
-    proud: "どや顔",
-    flustered: "あわあわ",
-  },
-  portraits: {
-    default: "default.svg",
-    thinking: "thinking.svg",
-    proud: "proud.svg",
-    flustered: "flustered.svg",
-  },
-  outfitAccents: {
-    default: "#b8c7ff",
-    light: "#a8e6c0",
-    normal: "#b8c7ff",
-    heavy: "#ffb3a7",
-  },
-})
+import { FULL_DEFINITION_JSON } from "../../fixture/character.ts"
 
 describe("parseCharacterDefinition", () => {
   it("あるものだけの portraits / outfitAccents をそのまま持つ", () => {
@@ -109,20 +85,6 @@ describe("parseCharacterDefinition", () => {
     )
     expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.chatAccent).toBeUndefined()
     expect(parseCharacterDefinition(JSON.stringify({ chatAccent: 3 }))?.chatAccent).toBeUndefined()
-  })
-
-  it("expressions（表情名 → ラベル）を読む", () => {
-    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
-
-    expect(definition?.expressions.thinking).toBe("作業中")
-  })
-
-  it("expressions が無ければ undefined に落ちる（既定はコード側に持たない）", () => {
-    const definition = parseCharacterDefinition(
-      JSON.stringify({ portraits: { default: "default.svg" } }),
-    )
-
-    expect(definition?.expressions.thinking).toBeUndefined()
   })
 
   it("expressions の型が違うときも undefined に落ちる", () => {
