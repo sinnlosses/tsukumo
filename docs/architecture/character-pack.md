@@ -163,7 +163,8 @@ characters/<name>/
   （`readCharacterAsset` → `readCharacterPackFile`。allowlist はパックごと）
 - **一覧の中の、使用中と同じ名前の1件は使用中のパックに置き換える**（無ければ末尾に足す）。画面に
   出すもの・配るものが「いま出しているもの」とずれない
-- 素材はトークン無しで配る（`docs/architecture.md`「会話内容と安全」）
+- 素材はトークン無しで配る（`docs/architecture.md`「会話内容と安全」）。中身は見ずに配り、SVG の無害化は
+  差し込むブラウザ側が持つ。応答には `sandbox` 付きの CSP を付け、直接開かれた SVG のスクリプトを動かさない
 
 ### 雑談の記憶の置き場
 

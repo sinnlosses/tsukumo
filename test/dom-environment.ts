@@ -59,6 +59,9 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   // （借りないと、測る側が例外で落ちたことに気づけないまま「筆先が出ない」だけに見える）。
   "DOMRect",
   "NodeFilter",
+  // `sanitizeSvg`（立ち絵の SVG を削ぎ落とす）が、XML として読んで書き戻すのに2つセットで要る。
+  "DOMParser",
+  "XMLSerializer",
   "getComputedStyle",
   "requestAnimationFrame",
   "cancelAnimationFrame",

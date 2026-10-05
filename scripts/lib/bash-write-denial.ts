@@ -11,11 +11,11 @@ import { parseShellCommand, type ShellWord, type SimpleCommand } from "./shell-c
 
 /** コマンドの位置（`sudo` `xargs` の後ろを含む）に現れた `sed` に、in-place の引数（`-i`・`-i.bak`・`-ni`・`--in-place`）が続く形。 */
 const SED_IN_PLACE =
-  /(?:^|[;&|(]\s*|\n)\s*(?:(?:sudo|xargs)\s+(?:-\S+\s+)*)?sed\b[^;&|\n]*\s(?:-[a-zA-Z]*i|--in-place)/
+  /(?:^|[;&|(]\s*|\n)\s*(?:(?:sudo|xargs)\s+(?:-\S+\s+)*)?sed\b[^;&|\n]*\s(?:-[a-zA-Z0-9]*i|--in-place)/
 
 /** コマンドの位置に現れた `perl` に、in-place の引数（`-i`・`-i.bak`・`-pi` のような束ね方を含む）が続く形。 */
 const PERL_IN_PLACE =
-  /(?:^|[;&|(]\s*|\n)\s*(?:(?:sudo|xargs)\s+(?:-\S+\s+)*)?perl\b[^;&|\n]*\s-[a-zA-Z]*i[a-zA-Z]*\b/
+  /(?:^|[;&|(]\s*|\n)\s*(?:(?:sudo|xargs)\s+(?:-\S+\s+)*)?perl\b[^;&|\n]*\s-[a-zA-Z0-9]*i[a-zA-Z0-9]*\b/
 
 /** Python のコードの中にある、書き込みモードの `open(...)`。第1引数を書き込み先として捕獲する。 */
 const PYTHON_OPEN_WRITES = [

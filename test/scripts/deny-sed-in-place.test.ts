@@ -34,6 +34,9 @@ describe("ファイルを書き換えるコマンドの判定", () => {
     ["perl -pi", "perl -pi -e 's/a/b/' file.ts"],
     ["perl -i", "perl -i -pe 's/a/b/' file.ts"],
     ["perl -i.bak", "perl -i.bak -pe 's/a/b/' file.ts"],
+    ["数字を含む束ねた perl -0pi", "perl -0pi -e 's/a/b/' file.ts"],
+    ["数字を含む束ねた perl -0777pi", "perl -0777pi -e 's/a/b/' file.ts"],
+    ["数字を含む束ねた sed -0i", "sed -0i 's/a/b/' file.ts"],
     ["python3 -c の書き込みモード", "python3 -c \"with open('f.txt', 'w') as fh: fh.write('x')\""],
     [
       "python3 の heredoc の書き込みモード",
@@ -113,6 +116,8 @@ describe("ファイルを書き換えるコマンドの判定", () => {
     ["標準出力へ出す sed", "sed 's/a/b/' file.ts"],
     ["語として書いただけの grep", "grep 'sed -i' docs/workflow.md"],
     ["読むだけの perl -ne", "perl -ne 'print if /foo/' file.ts"],
+    ["引数に i を含むだけの perl -ne", "perl -ne 'print if /i/' file.ts"],
+    ["数字を含む束ねた読むだけの perl -0ne", "perl -0ne 'print if /i/' file.ts"],
     ["書き戻さない perl -e", "perl -e 'print 1'"],
     ["読むだけの python3 -c", "python3 -c \"with open('f.txt') as fh: print(fh.read())\""],
     ["ファイルを開かない python3 -c", "python3 -c 'import json; print(json.dumps({\"a\": 1}))'"],

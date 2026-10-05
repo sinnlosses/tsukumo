@@ -14,6 +14,56 @@
 - 3. レポートの読みやすさは伸ばすより保つ。毎ターン載るシステムプロンプトの tsukumo の節（レポートの記法・セリフの間合い・段取り・質問の書き方）の量を数え、条どうしの重なりと、機械の検査（差し戻し）が既に守っている条を洗い出して削り、同じ読みやすさをより軽いプロンプトで保つ
 - 裏取りで 2 が要件 4.11 の「その場で反応するものは作らない」とぶつかると分かり、利用者「1と3は検討してほしいかな。体験が良くなるなら決定は覆していいよ」（区切りの挨拶に混ぜる案と、終えた瞬間に反応する案の両方を検討する）。訪問（GH-54）は利用者の選択で hold のまま残す
 
+## 2026-10-05 `deny-sed-in-place` が `perl -0pi` のようにまとめた旗の `-i` を拾わず、作業ツリーのファイルを書き換えられる（振り返り: GH-331）
+
+（GH-367 にした）
+
+- 出典: develop/draft/2026-10-05-deny-perl-combined-flags.md。利用者が `/plan-tasks` でドラフト5件をすべて選んだ
+- 札: 赤 道具（24回目）
+- 根: deny-hook-combined-flags
+- 根拠: GH-331 の委譲先が `perl -0pi` と `cat > file` を1回の Bash に入れたところ、拒まれたと思っていた perl の編集が効いていた（委譲先の friction log）。受け入れでメインが `{"command":"perl -0pi -e s/a/b/ src/main.ts"}` を `node scripts/deny-sed-in-place.ts` に渡すと終了コード 0 で通った。
+- 出し先: タスクにする。`scripts/lib/bash-write-denial.ts` の perl・sed の旗の読み方を、短い旗をまとめて書く形（`-0pi`・`-pie`・`-ni` など、`-i` を含む塊）でも `-i` を拾うようにし、`test/scripts/deny-sed-in-place.test.ts` の止める側の表に足す
+
+## 2026-10-05 `deny-e2e-run-limit` が E2E を走らせない `tw verify` まで1回と数え、差し戻しの続いた委譲先が最後の検証を打てなくなる（振り返り: GH-319）
+
+（GH-368 にした）
+
+- 出典: develop/draft/2026-10-05-e2e-run-limit-counts-verify.md。利用者が `/plan-tasks` でドラフト5件をすべて選んだ
+- 札: 赤 道具（23回目）
+- 根: e2e-run-limit-counts-verify
+- 根拠: GH-319 は scripts/ と test/scripts/ だけの変更で、差し戻しが4往復続いたあと、委譲先の `tw verify` が着手中1件の上限6回に当たって拒まれた（委譲先の friction log「E2E を使わない変更でも `tw verify` が E2E を1回と数える」）。メインが代わりに `tw verify` を打って通した。
+- 出し先: タスクにする。`scripts/lib/e2e-run-limit.ts` の数え方を、`tw verify`・`pnpm run check` のうち実際に E2E を全件走らせるもの（`--full`、または変えたファイルから E2E が選ばれるとき）だけ数える形にするか、上限に当たったときの拒否の文に「メインに検証を頼む」案内を足す。どちらにするかはタスクの論点にする
+
+## 2026-10-05 `capture-view.ts --scene` に撮る前の操作（打つ・押す・接続を落とす）を渡せる口を足し、目視のたびに使い捨ての Playwright スクリプトを書かせない（振り返り: GH-333）
+
+（GH-370 にした）
+
+- 出典: develop/draft/2026-10-05-capture-view-prepare-steps.md。利用者が `/plan-tasks` でドラフト5件をすべて選んだ
+- 札: 黄 道具（23回目）
+- 根: capture-adhoc-playwright
+- 根拠: このループで描画を変えた5件のうち4件（GH-344 の切断の帯・GH-354 のキャラ作成と日記の再訪・GH-351 の長い文・GH-333 の `/clear` の帯）で、委譲先が scratchpad に使い捨ての撮影スクリプトを書いた。`capture-view.ts` は入力欄に打てず、`capture-catalog.ts` は件を足さないと操作を当てられない（GH-333 の friction log）。GH-351 では長い文の場面のために `fake-session.json` へ仮の場面を足して消す往復も出た
+- 出し先: 2回目以上なので仕組みで塞ぐ。`scripts/capture-view.ts` に、`capture-catalog.ts` の `Preparation`（打つ・押す・送る・hash）と同じ語彙の操作を引数で並べて渡せる口を足し、`docs/architecture/testing.md`「手で確かめること」に1段落で書く。委譲の依頼文の「描画を変えるタスク」の項は、この口で撮るよう指す
+
+## 2026-10-04 診断ログの流れの形を zod の schema の1か所で持ち、`DiagnosticEntry` の型をそこから導いて、流れを1つ足すたびに型と schema の2か所を直さなくて済むようにする（振り返り: GH-335）
+
+（GH-369 にした）
+
+- 出典: develop/draft/2026-10-04-diagnostic-entry-from-schema.md。利用者が `/plan-tasks` でドラフト5件をすべて選んだ
+- 札: 黄 構造の重さ（2回目）
+- 根: diagnostic-entry-dual-definition
+- 根拠: GH-335 は `swallowed-failure` の流れを1つ足すのに、`src/shared/diagnostic/diagnostic-record.ts` の `DiagnosticEntry` の合併と `src/server/diagnostic/adapter/diagnostic-log.ts` の `diagnosticRecordSchema` の両方に同じ鍵を書いた（タスクの `## 注意` も「両方に足す」と指示していた）。同じ日の GH-336 も `browser-error` を同じ2か所に足し、2つを並べて取り込むとこの2ファイルとその往復テストで衝突して、メインが手で解いた
+- 出し先: 流れごとの schema を `shared` 側に1つずつ置き、`DiagnosticEntry` を `z.infer` で導いて、adapter はそれに `v` を足すだけにするタスク。次に流れを足すときは schema の1か所と `scripts/diagnostic.ts` の1行の形だけで済む。2回目の札なので、`docs/coding-standards.md` の外部由来の値を検証する節に「同じ形を型と schema で二重に書かない」を足すことも同じタスクで検討する
+
+## 2026-10-04 受け入れのレビュアーが、着手の印の立った作業ツリーで handback-guard に返却を拒まれないようにする（振り返り: GH-335）
+
+（GH-371 にした）
+
+- 出典: develop/draft/2026-10-04-reviewer-blocked-by-handback-guard.md。利用者が `/plan-tasks` でドラフト5件をすべて選んだ
+- 札: 黄 道具（21回目）
+- 根: reviewer-handback-guard
+- 根拠: GH-335 の受け入れで、`/next-task` 手順6のとおり `no-delegate` のレビュアーに「tw コマンドは打たない・ファイルを書き換えない」と頼んだ。ところが返却は `tw handback-guard` に拒まれ、レビュアーは指示に反して `tw pause` を打った。auto mode の判定にも2回拒まれ、3回目でやっと通った
+- 出し先: claude-skills の `next-task` の SKILL.md 手順6「新しい文脈でレビューする」と `tw handback-guard`。読むだけの委譲（レビュアー）は guard の対象から外す仕組み（専用のエージェント定義か、guard が読むだけの返却を見分ける印）にする。依頼文で `tw pause` を許すだけの手当ては、21回目の札なので採らない
+
 ## 2026-10-05 疑似セッションの場面に「答えを待ってから進む」手を足し、E2E が答えの送りと場面の時刻を競らないようにする（振り返り: GH-346）
 
 （タスクにせず、GH-333 の送り出しの前にタスクに紐付かない直しとして積んだ）

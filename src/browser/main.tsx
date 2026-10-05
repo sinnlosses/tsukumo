@@ -1,8 +1,10 @@
 // ブラウザ側の入口。
 // `vite build`（Vite の設定の `input`）がここから辿って、スクリプトと CSS を1回の組み立てで束ねる。
-// 副作用（`createRoot(...).render(...)`）を持つのはここだけ。
+// 副作用（`createRoot(...).render(...)`）を持つのはここと、最初に import する zod の設定だけ。
 // 中身は `<App>` で、ここは描き始める前の1回と mount だけを持つ。
 
+// zod のスキーマが作られる前に評価されないと効かないので、ほかのどの import よりも前に置く。
+import "./lib/zod-jitless.ts"
 import { createRoot } from "react-dom/client"
 
 import { App } from "./app.tsx"
