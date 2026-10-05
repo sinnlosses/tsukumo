@@ -44,6 +44,11 @@ import { fileURLToPath } from "node:url"
 import { type Browser, chromium, type Page } from "playwright-core"
 
 import { appendDiaryParagraph } from "../src/server/diary/adapter/diary.ts"
+import {
+  applyPreparation,
+  describePreparation,
+  type Preparation,
+} from "./lib/capture-preparation.ts"
 import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
 import { fictionalPng } from "./lib/fictional-png.ts"
 import { escapeHtml } from "./lib/html-escape.ts"
@@ -51,25 +56,6 @@ import { escapeHtml } from "./lib/html-escape.ts"
 /** tsukumo 自身の場所（このスクリプトの1つ上）。spawn の cwd にも、架空の日記・パックを
  * 置く先を組み立てるのにも使う。 */
 const REPO_DIR = fileURLToPath(new URL("..", import.meta.url))
-
-/**
- * 撮る前に当てる操作。この5種だけにする（もとは4種で、`docs/research/ui-catalog.md`
- * 「撮れなかった状態は、すべて Playwright で撮れた」が根拠。`hover` は、触れている間だけ出る状態（質問の箱と、メインビューの
- * 比較の札の連動）は押しても出ないため足した）。当てない件は空の並びで表し、「操作が無い」を
- * `undefined` で書かない。
- *
- * - `scroll`: その要素が見えるところまで、それを囲む領域の内側を送る
- * - `click`: 押す（モーダルを開く口・狭い窓のタブ）
- * - `hover`: 触れる（押すと状態が進んでしまう場所）
- * - `type`: 入力欄に打つ（`/` と `@` の補完）
- * - `hash`: `location.hash` を書いて画面を移す（キャラクター画面・作る画面）
- */
-type Preparation =
-  | { readonly kind: "scroll"; readonly selector: string }
-  | { readonly kind: "click"; readonly selector: string }
-  | { readonly kind: "hover"; readonly selector: string }
-  | { readonly kind: "type"; readonly selector: string; readonly text: string }
-  | { readonly kind: "hash"; readonly hash: string }
 
 /**
  * 撮る前に、その件専用の `TSUKUMO_HOME` へ置いておくもの。既定のホーム（利用者の
@@ -807,7 +793,7 @@ async function captureShot(
       await page.keyboard.press(SKIP_REVEAL_KEY)
     }
     for (const step of entry.prepare) {
-      await applyPreparation(page, step)
+      await applyPreparationOrSkip(page, step)
     }
     if (entry.prepare.length > 0) {
       await page.waitForTimeout(PREPARE_SETTLE_MS)
@@ -843,51 +829,9 @@ async function settleScene(
  * （狭い窓でしか出ない領域のタブ）ので、当たらなかったことだけを出して次の手へ進む。
  * 当たらなかった手のぶん画面は動いていないので、撮れた画像を見れば何が出ていないか分かる。
  */
-async function applyPreparation(page: Page, step: Preparation): Promise<void> {
-  try {
-    switch (step.kind) {
-      case "scroll":
-        await page
-          .locator(step.selector)
-          .first()
-          .scrollIntoViewIfNeeded({ timeout: PREPARE_TIMEOUT_MS })
-        break
-      case "click":
-        await page.locator(step.selector).first().click({ timeout: PREPARE_TIMEOUT_MS })
-        break
-      case "hover":
-        await page.locator(step.selector).first().hover({ timeout: PREPARE_TIMEOUT_MS })
-        break
-      case "type":
-        await page
-          .locator(step.selector)
-          .first()
-          .pressSequentially(step.text, { timeout: PREPARE_TIMEOUT_MS })
-        break
-      case "hash":
-        await page.evaluate((hash: string) => {
-          window.location.hash = hash
-        }, step.hash)
-        break
-    }
-  } catch {
+async function applyPreparationOrSkip(page: Page, step: Preparation): Promise<void> {
+  if (!(await applyPreparation(page, step, PREPARE_TIMEOUT_MS))) {
     process.stdout.write(`当てられなかった: ${describePreparation(step)}\n`)
-  }
-}
-
-/** 当てられなかった手を1行で言う（何が出ていない画像なのかを読み手が分かるように）。 */
-function describePreparation(step: Preparation): string {
-  switch (step.kind) {
-    case "scroll":
-      return `${step.selector} が見えるまで送る`
-    case "click":
-      return `${step.selector} を押す`
-    case "hover":
-      return `${step.selector} に触れる`
-    case "type":
-      return `${step.selector} に ${step.text} と打つ`
-    case "hash":
-      return `location.hash に ${step.hash} を書く`
   }
 }
 

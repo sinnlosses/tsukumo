@@ -351,6 +351,12 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 `capture-view.ts --scroll-to <selector>`。** `--wait-for` の待ちが済んだあと、指した要素を
 メインビューのスクロールの容れ物の上端へ送ってから撮る。要素が無ければ撮らずに失敗で終わる。
 
+**入力欄に打つ・押すなど、手を動かさないと出ない状態を撮るときは、`capture-view.ts` に
+`--type <selector> <文字>`・`--click <selector>`・`--hover <selector>`・`--hash <hash>` を並べる。**
+書いた順に、`--wait-for` の待ちのあと・`--scroll-to` の前に当てる。1つでも当たらなければ
+撮らずに失敗で終わる（撮影のカタログの `prepare` は当たらない手を飛ばして撮る）。
+語彙と当て方は `scripts/lib/capture-preparation.ts` で共有している。
+
 **URL を手で拾わずに1件だけ撮るときは `capture-view.ts --scene <場面>`。** fake driver の
 tsukumo を空きポートで自分で起こし、配信 URL を待って撮り、終わったら（失敗しても）自分で
 止める（`node scripts/stop.ts` を別に打たなくてよい）。URL を直に渡す使い方とは併用できない。

@@ -16,6 +16,7 @@
 //   node scripts/capture-view.ts <URL> --wait-for '[role="table"][aria-label="検証結果"]'
 //   node scripts/capture-view.ts --scene report-blocks --size 600x900 \
 //     --wait-for '[class*="report-files"]' --scroll-to '[class*="report-files"]'
+//   node scripts/capture-view.ts --scene <場面> --type textarea '/' --click '[role="option"]'
 //
 // `--measure` / `--wait-for` に class セレクタを書くときは `[class*="…"]`。 CSS Modules が
 // `名前_ハッシュ`（`report-note_nkMPPQ`）に焼くので、素の `.report-note` は必ず「無し」になる。
@@ -38,6 +39,12 @@ import { fileURLToPath } from "node:url"
 import { chromium, type Page } from "playwright-core"
 
 import { readFakeSession } from "../src/server/session-driver/adapter/fake-driver.ts"
+import {
+  applyPreparation,
+  describePreparation,
+  type Preparation,
+  readPreparationFlag,
+} from "./lib/capture-preparation.ts"
 import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
 import { sceneBlockKinds } from "./lib/scene-catalog.ts"
 
@@ -53,6 +60,10 @@ const SETTLE_TIMEOUT_MS = 10_000
 
 /** `--wait-for` が要素の出現と、演出の終わりをそれぞれ待つ上限（ミリ秒）。 */
 const WAIT_FOR_TIMEOUT_MS = 15_000
+
+/** 操作を1つ当てるのに待つ上限と、当て終えてから描き直しを待つ余裕（ミリ秒）。 */
+const PREPARE_TIMEOUT_MS = 2_000
+const PREPARE_SETTLE_MS = 800
 
 /** 演出の終わりを待つあいだ、ブラウザの時計を1回に進める量（ミリ秒）。 */
 const REVEAL_ADVANCE_MS = 1_000
@@ -85,6 +96,11 @@ const USAGE = `使い方:
   --measure <selector>  位置と大きさを数値で出す要素（何度でも指定できる）
   --wait-for <selector> 要素が出て、演出が終わるまで待ってから撮る（出なければ失敗して終わる）
   --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる）
+  --type <selector> <文字>  入力欄に打ってから撮る
+  --click <selector>    押してから撮る
+  --hover <selector>    触れてから撮る
+  --hash <hash>         location.hash を書いてから撮る
+                        （4つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
 `
 
@@ -104,6 +120,7 @@ type Options =
       readonly measures: readonly string[]
       readonly waitFor: string | undefined
       readonly scrollTo: string | undefined
+      readonly preparations: readonly Preparation[]
       readonly fullPage: boolean
     }
 
@@ -208,6 +225,16 @@ async function capture(
     if (options.waitFor !== undefined && !(await waitForRevealSettled(page, options.waitFor))) {
       process.stderr.write(`現れなかった: ${options.waitFor}（${String(WAIT_FOR_TIMEOUT_MS)}ms）\n`)
       return 1
+    }
+
+    for (const step of options.preparations) {
+      if (!(await applyPreparation(page, step, PREPARE_TIMEOUT_MS))) {
+        process.stderr.write(`当てられなかった: ${describePreparation(step)}\n`)
+        return 1
+      }
+    }
+    if (options.preparations.length > 0) {
+      await page.waitForTimeout(PREPARE_SETTLE_MS)
     }
 
     if (options.scrollTo !== undefined && !(await scrollIntoView(page, options.scrollTo))) {
@@ -321,12 +348,19 @@ function parseOptions(argv: readonly string[]): Options | undefined {
   let height = DEFAULT_HEIGHT
   let waitFor: string | undefined
   let scrollTo: string | undefined
+  const preparations: Preparation[] = []
   let fullPage = false
 
   for (let index = 0; index < argv.length; index += 1) {
     const flag = argv[index]
     if (flag === undefined) {
       return undefined
+    }
+    const preparation = readPreparationFlag(argv, index)
+    if (preparation !== undefined) {
+      preparations.push(preparation.step)
+      index += preparation.consumed - 1
+      continue
     }
     if (!flag.startsWith("-")) {
       if (url !== undefined) {
@@ -376,7 +410,18 @@ function parseOptions(argv: readonly string[]): Options | undefined {
   const source = sourceOf(url, scene)
   return source === undefined
     ? undefined
-    : { kind: "capture", source, out, width, height, measures, waitFor, scrollTo, fullPage }
+    : {
+        kind: "capture",
+        source,
+        out,
+        width,
+        height,
+        measures,
+        waitFor,
+        scrollTo,
+        preparations,
+        fullPage,
+      }
 }
 
 /** URL と場面名のどちらか片方だけが要る。両方・どちらも無いときは undefined。 */
