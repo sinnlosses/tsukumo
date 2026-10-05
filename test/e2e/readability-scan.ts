@@ -1,5 +1,7 @@
 import type { Page } from "playwright-core"
 
+import { MIN_FONT_SIZE } from "../../scripts/lib/minimum-font-size.ts"
+
 // 会話の画面の押せるもの・字を走査して、寸法・名前・字の大きさ・コントラストの下限を割るものを返す。
 // キャラクターの領域は背景画像の上の字なので走査しない。
 
@@ -15,13 +17,12 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
   await page.addStyleTag({
     content: "*, *::before, *::after { transition: none !important; animation: none !important; }",
   })
-  return page.evaluate(() => {
+  return page.evaluate((MIN_FONT: number) => {
     const ROOTS =
       '[data-region="main"], [data-region="sidebar"], [data-region="dispatch"], nav[aria-label="画面"], dialog[open]'
     const TARGETS =
       'button, a[href], input, select, textarea, summary, [role="button"], [role="tab"], [role="option"], [role="menuitem"]'
     const MIN_TARGET = 23.95
-    const MIN_FONT = 12
     const MIN_CONTRAST = 4.5
 
     type Rgba = { r: number; g: number; b: number; a: number }
@@ -38,7 +39,12 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
       context.fillStyle = color
       context.fillRect(0, 0, 1, 1)
       const data = context.getImageData(0, 0, 1, 1).data
-      return { r: data[0] ?? 0, g: data[1] ?? 0, b: data[2] ?? 0, a: (data[3] ?? 0) / 255 }
+      return {
+        r: data[0] ?? 0,
+        g: data[1] ?? 0,
+        b: data[2] ?? 0,
+        a: (data[3] ?? 0) / 255,
+      }
     }
     const over = (front: Rgba, back: Rgba): Rgba => ({
       r: front.r * front.a + back.r * (1 - front.a),
@@ -178,5 +184,5 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
       smallText: [...smallText],
       lowContrastText: [...lowContrastText],
     }
-  })
+  }, MIN_FONT_SIZE)
 }
