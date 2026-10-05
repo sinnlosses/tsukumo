@@ -347,6 +347,25 @@ describe("toRestoredEvents", () => {
     ])
   })
 
+  it("仕掛けが is_meta を付けて差し込んだ user メッセージは、塊の外の文面ごと依頼として起こさない", () => {
+    const messages = [
+      Object.assign(
+        {},
+        userMessage(
+          '架空の前置き\n<agent-message from="架空のエージェント">架空の伝言</agent-message>\n\n架空の断り書き',
+        ),
+        { is_meta: true },
+      ),
+      userMessage([{ type: "text", text: "架空の依頼" }]),
+    ]
+
+    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      HISTORY_RESTORED,
+    ])
+  })
+
   it("利用者の文面に混じった塊は、その塊だけ落として前後を残す", () => {
     const messages = [
       userMessage(
