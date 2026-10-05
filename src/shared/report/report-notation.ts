@@ -20,7 +20,7 @@ export const REPORT_NOTE_KINDS = [
 ] as const satisfies readonly (readonly [name: string, label: string])[]
 
 /**
- * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態の印と変化・数の棒・`matrix` / `compare` / `dimension` の塊・`image` の説明の並び・図と表の題の包みと題の行・`stats` の塊・
+ * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態の印と変化・数の棒・`matrix` / `compare` / `beforeAfter` / `dimension` の塊・`image` の説明の並び・図と表の題の包みと題の行・`stats` の塊・
  * 名前付きの `list`・`list` の `flow`・`progress` / `options` / `files` の塊）と、
  * 塊にする前にモデルが逃げ道に書いていた `cols` / `card`。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  */
@@ -80,6 +80,11 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "compare",
   "compare-side",
   "compare-heading",
+  "before-after",
+  "before-after-side",
+  "before-after-label",
+  "before-after-label-after",
+  "before-after-arrow",
   "dimension",
   "dimension-part",
   "dimension-name",

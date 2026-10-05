@@ -494,6 +494,52 @@ describe("reportSectionsMarkdown", () => {
     expect(markdownOf({ ...compare, title: "" })).toBe(figureCaptioned(body, "", 1, false))
   })
 
+  it("beforeAfter は前の側・矢印・後の側を並べ、見出しに「前」「後」を置き、画像は棚を引き、コードはフェンス、箇条は ul にする", () => {
+    const beforeAfter: ReportBlock = {
+      kind: "beforeAfter",
+      title: "架空の<札>",
+      before: { kind: "image", path: "架空/before.png" },
+      after: { kind: "code", language: "ts", source: "const a = 1\n" },
+      fold: "",
+    }
+    const side = (label: string, labelClass: string, content: string): string =>
+      `<div class="before-after-side">\n\n<div class="${labelClass}">${label}</div>\n\n${content}\n\n</div>`
+    const body = (before: string, after: string): string =>
+      `<div class="before-after">\n\n${side("前", "before-after-label", before)}\n\n` +
+      '<div class="before-after-arrow" aria-hidden="true">→</div>\n\n' +
+      `${side("後", "before-after-label before-after-label-after", after)}\n\n</div>`
+
+    expect(
+      reportSectionsMarkdown([section([beforeAfter])], {
+        kind: "shelved",
+        toolUseId: "toolu_fictional",
+      }),
+    ).toBe(
+      fencedFigureCaptioned(
+        body(
+          `<img src="${reportImagePath("toolu_fictional", "架空/before.png")}" alt="前の画面: 架空の&lt;札&gt;">`,
+          "```ts\nconst a = 1\n```",
+        ),
+        "架空の&lt;札&gt;",
+      ),
+    )
+    expect(
+      markdownOf({
+        ...beforeAfter,
+        title: "",
+        before: { kind: "points", points: ["`a` を呼ぶ", "架空の<行>"] },
+        after: { kind: "image", path: "架空/after.png" },
+      }),
+    ).toBe(
+      fencedFigureCaptioned(
+        body(
+          "<ul><li><code>a</code> を呼ぶ</li><li>架空の&lt;行&gt;</li></ul>",
+          '<img alt="後の画面">',
+        ),
+      ),
+    )
+  })
+
   it("dimension は領域を箱に・余白を帯と値にして上から積み、前の値を矢印で添え、size が空の領域は値を置かない", () => {
     const dimension: ReportBlock = {
       kind: "dimension",
@@ -787,7 +833,7 @@ describe("reportSectionsMarkdown", () => {
     expect(markdown).toContain('<span class="caption-number">図 2</span>')
   })
 
-  it("図の5種と表の2種は別々に1から数え、題が空でも fold の中でも数え、options は数えない", () => {
+  it("図の6種と表の2種は別々に1から数え、題が空でも fold の中でも数え、options は数えない", () => {
     const image = (fold: string): ReportBlock => ({
       kind: "image",
       path: "架空.png",

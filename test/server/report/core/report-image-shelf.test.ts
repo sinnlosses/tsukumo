@@ -97,6 +97,32 @@ describe("reportImagePaths", () => {
       "架空/b.png",
     ])
   })
+
+  it("beforeAfter の画像の側のパスも拾い、ほかの種類の側は拾わない", () => {
+    const sections: readonly ReportSection[] = [
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "beforeAfter",
+            title: "",
+            before: { kind: "image", path: "架空/before.png" },
+            after: { kind: "image", path: "架空/after.png" },
+            fold: "",
+          },
+          {
+            kind: "beforeAfter",
+            title: "",
+            before: { kind: "points", points: ["架空の1行"] },
+            after: { kind: "image", path: "" },
+            fold: "",
+          },
+        ],
+      },
+    ]
+
+    expect(reportImagePaths(sections)).toEqual(["架空/before.png", "架空/after.png"])
+  })
 })
 
 describe("releasedImageToolUseIds", () => {

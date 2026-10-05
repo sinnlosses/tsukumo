@@ -45,7 +45,7 @@ type SectionsFold = {
 
 /**
  * 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間に {@link SECTION_BREAK_MARKDOWN} を挟む。
- * 題を持つ塊（図 5種・表 2種）は、節をまたいで並びの順に数えた「図 n」「表 n」の番号を1回だけ受け取る（{@link foldedBlockMarkdown}）。
+ * 題を持つ塊（図 6種・表 2種）は、節をまたいで並びの順に数えた「図 n」「表 n」の番号を1回だけ受け取る（{@link foldedBlockMarkdown}）。
  * 番号は題が空でも、`fold` の中でも数える。
  */
 export function reportSectionsMarkdown(
@@ -209,6 +209,8 @@ function blockMarkdown(
       return matrixMarkdown(block, ordinal)
     case "compare":
       return compareMarkdown(block, ordinal)
+    case "beforeAfter":
+      return beforeAfterMarkdown(block, imageSource, ordinal)
     case "dimension":
       return dimensionMarkdown(block, ordinal)
     case "note":
@@ -255,6 +257,7 @@ function captionKindOf(block: ReportBlock): CaptionKind | undefined {
     case "image":
     case "dimension":
     case "compare":
+    case "beforeAfter":
     case "mermaid":
     case "chart":
       return "figure"
@@ -394,6 +397,71 @@ function compareMarkdown(
   })
 }
 
+type BeforeAfterBlock = Extract<ReportBlock, { readonly kind: "beforeAfter" }>
+
+type BeforeAfterSide = BeforeAfterBlock["before"]
+
+/** 前と後の側の、見出しの文字と見出しの class。 */
+const BEFORE_AFTER_SIDES = {
+  before: { label: "前", labelClass: "before-after-label" },
+  after: { label: "後", labelClass: "before-after-label before-after-label-after" },
+} as const satisfies Record<
+  "before" | "after",
+  { readonly label: string; readonly labelClass: string }
+>
+
+/**
+ * 前の側・矢印・後の側を横に並べる。側の中身はコードのフェンスを含みうるので、容れ物の HTML と中身を空行で区切って組む。
+ * 矢印は飾りで、どちらが前かは見出しの文字が言う。
+ */
+function beforeAfterMarkdown(
+  block: BeforeAfterBlock,
+  imageSource: ReportImageSource,
+  ordinal: number,
+): string {
+  const side = (position: keyof typeof BEFORE_AFTER_SIDES, content: BeforeAfterSide): string => {
+    const { label, labelClass } = BEFORE_AFTER_SIDES[position]
+    return joinParts([
+      '<div class="before-after-side">',
+      `<div class="${labelClass}">${label}</div>`,
+      beforeAfterContentMarkdown(content, imageSource, `${label}の画面`, block.title),
+      "</div>",
+    ])
+  }
+  return captionedMarkdown({
+    kind: "figure",
+    ordinal,
+    title: block.title,
+    body: joinParts([
+      '<div class="before-after">',
+      side("before", block.before),
+      '<div class="before-after-arrow" aria-hidden="true">→</div>',
+      side("after", block.after),
+      "</div>",
+    ]),
+    bodyFormat: "markdown",
+    fit: false,
+  })
+}
+
+function beforeAfterContentMarkdown(
+  content: BeforeAfterSide,
+  imageSource: ReportImageSource,
+  imageLabel: string,
+  title: string,
+): string {
+  switch (content.kind) {
+    case "image": {
+      const alt = title.trim() === "" ? imageLabel : `${imageLabel}: ${title}`
+      return `<img${reportImageSrcAttribute(imageSource, content.path)} alt="${htmlAttribute(alt)}">`
+    }
+    case "code":
+      return fencedMarkdown(content.language, content.source)
+    case "points":
+      return `<ul>${content.points.map((point) => `<li>${htmlInlineWithCode(point)}</li>`).join("")}</ul>`
+  }
+}
+
 /**
  * 領域を箱に、余白を帯と寸法線にして上から積み、値を右に添える。図は模式で、箱と帯の大きさは値に比例させない。
  * 領域の `size` が空なら値を置かない（`before` も出さない）。
@@ -429,12 +497,8 @@ function imageMarkdown(
   ordinal: number,
 ): string {
   const caption = block.caption.trim()
-  const src =
-    imageSource.kind === "shelved"
-      ? ` src="${htmlAttribute(reportImagePath(imageSource.toolUseId, block.path))}"`
-      : ""
   const alt = htmlAttribute(caption === "" ? "画面の画像" : caption)
-  const image = `<img${src} alt="${alt}">`
+  const image = `<img${reportImageSrcAttribute(imageSource, block.path)} alt="${alt}">`
   const annotated = block.notes.length > 0
   return captionedMarkdown({
     kind: "figure",
@@ -446,6 +510,13 @@ function imageMarkdown(
     bodyFormat: "html",
     fit: !annotated,
   })
+}
+
+/** `img` の `src` 属性（前の空白つき）。棚に置いていない本文では空にし、描く側が「出せない」の札にする。 */
+function reportImageSrcAttribute(imageSource: ReportImageSource, path: string): string {
+  return imageSource.kind === "shelved"
+    ? ` src="${htmlAttribute(reportImagePath(imageSource.toolUseId, path))}"`
+    : ""
 }
 
 function imageNoteListMarkdown(notes: readonly string[]): string {

@@ -2496,6 +2496,120 @@
       ]
     },
     {
+      "name": "report-before-after",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "前後の塊の見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "前と後を並べて書くね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-before-after-1",
+            "conclusion": "架空の結論: 札の見出しと設定と手順の前後を並べた。",
+            "sections": [
+              {
+                "heading": "架空の画面の前後",
+                "blocks": [
+                  {
+                    "kind": "beforeAfter",
+                    "title": "架空の札の見出しを 18px から 21px にした画面",
+                    "before": { "kind": "image", "path": "report-image-fixture/before.png" },
+                    "after": { "kind": "image", "path": "report-image-fixture/after.png" },
+                    "fold": ""
+                  }
+                ]
+              },
+              {
+                "heading": "架空の設定の前後",
+                "blocks": [
+                  {
+                    "kind": "beforeAfter",
+                    "title": "架空の読み込みの設定",
+                    "before": {
+                      "kind": "code",
+                      "language": "json",
+                      "source": "{\n  \"cache\": false,\n  \"retry\": 0\n}\n"
+                    },
+                    "after": {
+                      "kind": "code",
+                      "language": "json",
+                      "source": "{\n  \"cache\": true,\n  \"retry\": 3,\n  \"架空の長めの鍵の名前で狭い幅では横に送られる\": \"架空の長めの値で狭い幅では横に送られる\"\n}\n"
+                    },
+                    "fold": ""
+                  }
+                ]
+              },
+              {
+                "heading": "架空の手順の前後",
+                "blocks": [
+                  {
+                    "kind": "beforeAfter",
+                    "title": "",
+                    "before": {
+                      "kind": "points",
+                      "points": [
+                        "要求のたびに素材を読み直していた",
+                        "架空の長めの行: 同じ素材を何度も読むので、画面を開き直すたびに待ちが出て、狭い幅では折り返しが続く",
+                        "`reload` を手で打つ"
+                      ]
+                    },
+                    "after": { "kind": "points", "points": ["素材を1回だけ読む"] },
+                    "fold": ""
+                  }
+                ]
+              },
+              {
+                "heading": "架空の左右で種類が違う前後",
+                "blocks": [
+                  {
+                    "kind": "beforeAfter",
+                    "title": "架空の文言から画面へ",
+                    "before": { "kind": "points", "points": ["押す口の文言は「送る」だった"] },
+                    "after": { "kind": "image", "path": "report-image-fixture/missing.png" },
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1550,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-before-after-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "report-dimension",
       "steps": [
         {

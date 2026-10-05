@@ -894,9 +894,10 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 塊
 
 - **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `matrix` / `compare` / `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/
+  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/
   欄の `from` / `to`（表のセルの前後）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`sides`（`compare` の2つの側。`heading` と `points`）・
+  `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`〕/ `code`〔`language`・`source`〕/ `points` の合併型）・
   `parts`（`dimension` の上から積む並び。領域の `name` / `size` / `before` と余白の `gap` / `before`）・`verdict`（`options` の候補の判定）・`change`（`files` の変更の種別）・
   `path`（`image` の画像のファイル）・`caption`（`image` の何が見えるかの1行）・`notes`（`image` の番号つきの説明の並び）・
   `chartKind`（`chart` の種類。`bar` / `line` / `pie`）・`labels`（`chart` の横軸・扇形の名前）・

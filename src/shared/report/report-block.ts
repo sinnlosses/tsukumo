@@ -103,7 +103,36 @@ const compareBlockSchema = z
     fold,
   })
   .describe(
-    "2つを同時に見比べる（案A と案B・変更前と後）。側ごとに見出しと短い箇条。採否は options、値を揃えるなら table（3つ以上も table）",
+    "2つを同時に見比べる（案A と案B。変更の前と後は beforeAfter）。側ごとに見出しと短い箇条。採否は options、値を揃えるなら table（3つ以上も table）",
+  )
+
+const beforeAfterSideSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("image"),
+    path: z.string().describe("撮った画像のファイル（絶対か cwd から。png・jpeg・gif・webp）"),
+  }),
+  z.object({
+    kind: z.literal("code"),
+    language: z.string().describe("言語名（diff にせず、その側の中身をそのまま書く）"),
+    source: z.string(),
+  }),
+  z.object({
+    kind: z.literal("points"),
+    points: z.array(inlineText).min(1).describe("短い1行の並び。5つまで"),
+  }),
+])
+
+const beforeAfterBlockSchema = z
+  .object({
+    kind: z.literal("beforeAfter"),
+    title: inlineText.describe("何の前後か"),
+    before: beforeAfterSideSchema,
+    after: beforeAfterSideSchema,
+    fold,
+  })
+  .describe(
+    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・設定や文言・構造の前後）。側ごとに image / code / points のどれか（左右で違ってよい）。" +
+      "向きの無い2つは compare、1つの値の前後は table のセルの from / to か stats の before、行ごとの差分は code の diff、寸法の前後は dimension の before",
   )
 
 const dimensionBefore = z.string().default("").describe("変わる前の値（前後を見せるときだけ）")
@@ -201,7 +230,7 @@ const imageBlockSchema = z
     fold,
   })
   .describe(
-    "手で確かめた画面の画像1枚（何が見えたかを文で言い直さない。見る場所が2つ以上なら notes に並べる）。前後は2つ並べる",
+    "手で確かめた画面の画像1枚（何が見えたかを文で言い直さない。見る場所が2つ以上なら notes に並べる）。前後は beforeAfter",
   )
 
 const REPORT_FILE_CHANGES = ["added", "modified", "deleted", "read"] as const
@@ -330,6 +359,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   tableBlockSchema,
   matrixBlockSchema,
   compareBlockSchema,
+  beforeAfterBlockSchema,
   dimensionBlockSchema,
   noteBlockSchema,
   statsBlockSchema,

@@ -276,14 +276,22 @@ describe("reportViolations", () => {
       fold: "",
     })
 
+    const beforeAfter = (count: number): ReportBlock => ({
+      kind: "beforeAfter",
+      title: "架空の前後",
+      before: { kind: "points", points: ["架空"] },
+      after: { kind: "points", points: Array.from({ length: count }, () => "架空") },
+      fold: "",
+    })
+
     it("6つ目から違反", () => {
-      expect(reportViolations(draft([options(6), compare(6), image(6)]))).toEqual([
-        { kind: "too-many-candidates", count: 3 },
+      expect(reportViolations(draft([options(6), compare(6), image(6), beforeAfter(6)]))).toEqual([
+        { kind: "too-many-candidates", count: 4 },
       ])
     })
 
     it("5つなら通る", () => {
-      expect(kinds(draft([options(5), compare(5), image(5)]))).toEqual([])
+      expect(kinds(draft([options(5), compare(5), image(5), beforeAfter(5)]))).toEqual([])
     })
   })
 

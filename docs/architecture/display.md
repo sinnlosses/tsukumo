@@ -126,8 +126,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 **本文は `report` の `sections`（節と塊の並び）で受け取る**（2026-09-27。形の案は
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
-- 塊は `text` / `list` / `table` / `matrix` / `compare` / `dimension` / `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `image` / `files` と、逃げ道の
-  `markdown` の16種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
+- 塊は `text` / `list` / `table` / `matrix` / `compare` / `beforeAfter` / `dimension` / `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `image` / `files` と、逃げ道の
+  `markdown` の17種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
   `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（`svg`・引用・
   区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。同じことを両方に書くと毎ターンの文脈に2回載る。
   **種類の数に上限は置かない**（2026-09-30 改訂。足すかは下の「読む時間を減らす物差しと線引き」、
@@ -210,20 +210,34 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   `points`＝短い1行の並び〕を受ける）。2枚の札を横に並べ、狭い幅（760px 以下）では縦に積む。見分けは見出しの
   文字だけで、判定の色は持たない。**札の中はインラインの文字の箇条だけ**（コードは `code` の `diff`、図は
   `mermaid`、値を揃えるなら `table`）。使い分けは、判定（採る・検討・採らない）を付けるなら `options`、項目ごとに
-  両側の値を揃えるなら `table`（セルの `from` / `to` は1つの値の前後）、3つ以上は `table`。逃げ道の
+  両側の値を揃えるなら `table`（セルの `from` / `to` は1つの値の前後）、3つ以上は `table`、**向きのある変化（前 → 後）は
+  `beforeAfter`**（2026-10-05。`compare` は向きの無い2つ〔案A と案B〕に絞り、側の見出しは書き手が付けるまま）。逃げ道の
   `cols` / `card` はモデルに教えなくなった（描く側と、書かれ続けるかを見る `colsCard` の数は残す）。
   取り違えは差し戻さず、使われ方の記録の「塊の種類 × レポート数」で見る
+- **変更の前と後は `beforeAfter`（前後）の塊で左右に並べる**（2026-10-05。`title`・`before`・`after` を受け、
+  側はちょうど2つ。3つ以上の並びは `table`）。側は `kind` で判別する合併型で、`image`〔`path`〕/ `code`〔`language`・
+  `source`。`diff` にせずその側の中身をそのまま書く〕/ `points`〔短い1行の並び。5つまで〕のどれか。**左右で種類が
+  違ってよい**（設定の文言 → 画面のような前後を書ける）。左に前・右に後の札を同じ幅で並べ、間に `aria-hidden` の
+  「→」を置く。札の頭の見出しは tsukumo が「前」「後」の文字で付け（書き手は書かない。前は `ink-quiet`・後は `ink`
+  で、色は補助）、狭い幅（760px 以下）では前を上・後を下に積んで矢印を下向きに回す。画像の側は `image` の塊と同じ
+  棚（`createReportImageShelf`）から引き、読めなければ同じ「画像を出せない」の札になる。`alt` は「前の画面」
+  「後の画面」に題を添えたもの。**画像の側に `notes` は持たせない**（半分の幅に番号の並びを足すと画像がさらに縮み、
+  前と後の両方に1から番号が振られて読み分けが要る。見る場所を言うなら `image` の塊の `notes`）。題は図として
+  数え、包みは縮めない。使い分けは、向きの無い2つは `compare`、1つの値の前後は表のセルの `from` / `to` か
+  `stats` の `before`、行ごとの差分は `code` の `diff`、縦に積む寸法の前後は `dimension` の `before`。
+  箇条の側が6つ以上なら `options`・`compare` と同じ違反（`too-many-candidates`）で差し戻す。取り違えは差し戻さず、
+  使われ方の記録の「塊の種類 × レポート数」で見る
 - **縦に積む領域の寸法は `dimension`（寸法図）の塊で見せる**（2026-10-01。`title`・`parts`〔上から順に、領域
   `{ name, size, before }` と余白 `{ gap, before }` を混ぜた並び。先頭・末尾の `gap` は外側の余白〕を受ける）。
   左の列に領域の箱と余白の斜線の帯を積み、右の列に値を置き、余白の値には両端に目盛りのある縦の寸法線を引く。
   **1列だけ**で、横並び・入れ子・重なりは逃げ道の `svg` に残す（記法の表の「座標のある図」の行は残し、使う目安を
   位置・重なりに絞った）。**前後は1枚に重ねる**（値ごとの `before` を前の値と矢印にして `ink-quiet` で添える。
-  `compare` で2枚並べない）。**図は模式**で、箱と帯の高さは値に比例させず、数が寸法を言う。描き方は `div` / `span`
+  `compare` でも `beforeAfter` でも2枚並べない）。**図は模式**で、箱と帯の高さは値に比例させず、数が寸法を言う。描き方は `div` / `span`
   と CSS で、許可リストに足す物は無く、書き上げる演出では文字の塊として出る。取り違えは差し戻さず、使われ方の
   記録の「塊の種類 × レポート数」と逃げ道の `svg` の数で見る
 - **手で確かめた画面は `image` の塊で画像として見せる**（2026-10-02。`path`〔撮ったファイル。絶対か cwd からの
-  相対〕・`caption`〔何が見えるかの1行〕を受け、1つの塊に1枚）。**前後は `image` を2つ並べる**（`compare` の側は
-  文の箇条なので画像の欄を足さない）。**`checks` の行とは結ばない**（何を確かめた画像かは `caption` に書く）。
+  相対〕・`caption`〔何が見えるかの1行〕を受け、1つの塊に1枚）。**前後は `beforeAfter` の塊で左右に並べる**（2026-10-05。
+  それまでは `image` を2つ縦に積んでいた）。**`checks` の行とは結ばない**（何を確かめた画像かは `caption` に書く）。
   画像は描いた `report` を受けた時点でサーバが1回読んでメモリの棚に置き（`createReportImageShelf`。続きから復元した
   再生では読まない）、鍵は `report` の呼び出しの id と塊に書かれたままのパスの組。ブラウザは
   `/report-image/<toolUseId>/<path>`（起動トークン付き）で棚を引き、許可リストは `img` の `src` を
@@ -240,7 +254,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   幅を取るので包みを縮めない（`notes` が空なら今までどおり `captioned-fit`）。画像が読めないときも、並びは
   「画像を出せない」の札の横に残る。6つ以上は `options`・`compare` と同じ違反（`too-many-candidates`）で差し戻す
 - **図と表には番号つきの題を付ける**（2026-10-03。利用者決定は 2026-10-02。図〔`image`・`dimension`・
-  `compare`・`mermaid`・`chart`〕は題を本体の**下**に「図 n」、表〔`table`・`matrix`〕は題を本体の**上**に
+  `compare`・`beforeAfter`・`mermaid`・`chart`〕は題を本体の**下**に「図 n」、表〔`table`・`matrix`〕は題を本体の**上**に
   「表 n」。番号は図と表を別々に、`reportSectionsMarkdown` が節をまたいで塊の並びの順に1から数える。
   `options` は候補の採否の札なので数えない）。**題が空でも番号は出し**〔`image` の `caption` が空でも
   「図 n」が付いていた数え方に揃える。題の有無で番号の振り方が変わらない〕、**`fold` で畳んだ中も数える**
@@ -248,7 +262,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   `title` を省いてよい〔空文字〕。**題は本体の幅を超えない**: 包み（`div.captioned`）が本体の幅に縮み
   〔`captioned-fit`。`image`・`table`・`matrix`・`dimension`。20rem を下限にして、短い表の題が何行にも
   折れないようにする〕、題の行は `contain: inline-size` で幅の計算から外れて包みの幅で折り返す。親の幅を
-  取る `chart`・`compare` と、全幅の `pre` に描く `mermaid` は縮めない。題の文字は inline code だけを解く
+  取る `chart`・`compare`・`beforeAfter` と、全幅の `pre` に描く `mermaid` は縮めない。題の文字は inline code だけを解く
   〔太字・リンクは効かない〕
 - **節を書き上げる演出の塊（トピック）の単位にする**（2026-09-27。`docs/research/report-block-richness.md`
   2章）。見出しのタグや水平線を DOM から探して境目を当てるのはやめ（見出しのレベルは節の中の

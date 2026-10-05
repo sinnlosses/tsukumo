@@ -75,11 +75,23 @@ export function createReportImageShelf(): ReportImageShelf {
   }
 }
 
-/** レポートの `image` の塊が指すパス（空のパスは除く）。 */
+/** レポートの `image` の塊と `beforeAfter` の画像の側が指すパス（空のパスは除く）。 */
 export function reportImagePaths(sections: readonly ReportSection[]): readonly string[] {
   return sections
     .flatMap((section) => section.blocks)
-    .flatMap((block) => (block.kind === "image" && block.path !== "" ? [block.path] : []))
+    .flatMap((block) => {
+      switch (block.kind) {
+        case "image":
+          return [block.path]
+        case "beforeAfter":
+          return [block.before, block.after].flatMap((side) =>
+            side.kind === "image" ? [side.path] : [],
+          )
+        default:
+          return []
+      }
+    })
+    .filter((path) => path !== "")
 }
 
 /**

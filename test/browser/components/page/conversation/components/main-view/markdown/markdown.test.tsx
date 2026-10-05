@@ -104,6 +104,39 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(sides.map((side) => side.querySelectorAll("ul > li").length)).toEqual([2, 1])
   })
 
+  it("前後（beforeAfter）は前の側・矢印・後の側の順に並び、側の中のコードはコードの塊として残る", () => {
+    const text = reportSectionsMarkdown([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "beforeAfter",
+            title: "",
+            before: { kind: "points", points: ["架空の一", "架空の二"] },
+            after: { kind: "code", language: "ts", source: "const 架空 = 1" },
+            fold: "",
+          },
+        ],
+      },
+    ])
+    const { container } = render(<Markdown text={text} />)
+
+    const parts = [...(container.querySelector("div.report-before-after")?.children ?? [])]
+    expect(parts.map((part) => part.className)).toEqual([
+      "report-before-after-side",
+      "report-before-after-arrow",
+      "report-before-after-side",
+    ])
+    expect(
+      [parts[0], parts[2]].map(
+        (side) => side?.querySelector(".report-before-after-label")?.textContent,
+      ),
+    ).toEqual(["前", "後"])
+    expect(parts[1]?.getAttribute("aria-hidden")).toBe("true")
+    expect(parts[0]?.querySelectorAll("ul > li")).toHaveLength(2)
+    expect(parts[2]?.querySelector("pre code")?.textContent).toBe("const 架空 = 1\n")
+  })
+
   it("寸法図（dimension）は領域の箱と余白の帯が並びの順のまま残る", () => {
     const text = reportSectionsMarkdown([
       {

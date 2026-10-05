@@ -79,7 +79,7 @@ type HomeSetup =
  * リポジトリの根には書かない。
  *
  * - `repository`: リポジトリの根で起こす（ほとんどの件はこれ。何も置かない）
- * - `report-image`: `--out` の下に件専用の場所を立て、`report-image` 場面と `question-preview-image` 場面が指す画像
+ * - `report-image`: `--out` の下に件専用の場所を立て、`report-image`・`report-before-after`・`question-preview-image` の場面が指す画像
  *   （架空の PNG）を置いてから、そこで起こす
  */
 type WorkspaceSetup = { readonly kind: "repository" } | { readonly kind: "report-image" }
@@ -153,6 +153,10 @@ const CAPTIONED_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-captioned_"]
 const CAPTIONED_FIGURE_SELECTOR = `${CAPTIONED_SELECTOR} pre.mermaid svg`
 const DIMENSION_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-dimension_"]`
 const IMAGE_NOTES_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-image-notes_"]`
+/** 前後の塊（`report-before-after` 場面の先頭は画像の前後）と、その中の最初のコード・箇条。 */
+const BEFORE_AFTER_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-before-after_"]`
+const BEFORE_AFTER_CODE_SELECTOR = `${BEFORE_AFTER_SELECTOR} pre`
+const BEFORE_AFTER_POINTS_SELECTOR = `${BEFORE_AFTER_SELECTOR} ul`
 /** 質問の選択肢の preview に書いた画像（`question-preview-image` 場面の横長の画像と、描かない画像の札）。 */
 const PREVIEW_IMAGE_SELECTOR = `${MAIN_REGION_SELECTOR} img[alt="架空の横長の画面"]`
 const PREVIEW_IMAGE_MISSING_SELECTOR = `${MAIN_REGION_SELECTOR} [role="img"][aria-label="架空の外部の画像"]`
@@ -458,6 +462,36 @@ const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "scroll", selector: IMAGE_NOTES_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: IMAGE_NOTES_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-before-after-image",
+    scene: "report-before-after",
+    label: "前後の塊（画像の前後。前が左・後が右・間に矢印）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [{ kind: "scroll", selector: BEFORE_AFTER_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: BEFORE_AFTER_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-before-after-code",
+    scene: "report-before-after",
+    label: "前後の塊（コードの前後と箇条の前後）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [{ kind: "scroll", selector: BEFORE_AFTER_CODE_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: BEFORE_AFTER_CODE_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-before-after-points",
+    scene: "report-before-after",
+    label: "前後の塊（箇条の前後と、箇条から置いていない画像への前後）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [{ kind: "scroll", selector: BEFORE_AFTER_POINTS_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: BEFORE_AFTER_POINTS_SELECTOR, phase: "before-prepare" },
   },
   {
     name: "report-image-missing",
@@ -866,6 +900,7 @@ function workspaceOf(entry: CatalogEntry, outDir: string): string {
   }
   const workspace = path.join(outDir, "workspace", entry.name)
   mkdirSync(path.join(workspace, "report-image-fixture"), { recursive: true })
+  writeFileSync(path.join(workspace, "report-image-fixture", "before.png"), fictionalPng(240, 180))
   writeFileSync(path.join(workspace, "report-image-fixture", "after.png"), fictionalPng(320, 180))
   writeFileSync(path.join(workspace, "report-image-fixture", "tall.png"), fictionalPng(180, 900))
   return workspace

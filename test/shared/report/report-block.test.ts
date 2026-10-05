@@ -39,6 +39,33 @@ describe("parseReportSections", () => {
     expect(parse({ total: "5" })).toMatchObject({ items: [{ total: "5" }, { total: "" }] })
   })
 
+  it("beforeAfter の塊は前と後の側が画像・コード・箇条のどれかで、左右で種類が違っても受ける", () => {
+    const beforeAfter = {
+      kind: "beforeAfter",
+      title: "架空の前後",
+      before: { kind: "points", points: ["架空の1行"] },
+      after: { kind: "image", path: "架空/after.png" },
+      fold: "",
+    }
+    const parse = (block: object): unknown =>
+      parseReportSections([{ heading: "", blocks: [block] }])
+
+    expect(parse(beforeAfter)).toEqual({
+      sections: [{ heading: "", blocks: [beforeAfter] }],
+      unknownBlockCount: 0,
+    })
+    expect(
+      parse({ ...beforeAfter, before: { kind: "code", language: "ts", source: "架空" } }),
+    ).toMatchObject({ sections: [{ blocks: [{ before: { kind: "code" } }] }] })
+    for (const broken of [
+      { ...beforeAfter, after: undefined },
+      { ...beforeAfter, before: { kind: "points", points: [] } },
+      { ...beforeAfter, before: { kind: "text", text: "架空" } },
+    ]) {
+      expect(parse(broken)).toEqual({ sections: [], unknownBlockCount: 0 })
+    }
+  })
+
   it("compare の塊は側がちょうど2つで箇条があるときだけ受ける", () => {
     const side = { heading: "案A", points: ["架空の1行"] }
     const compare = { kind: "compare", title: "", sides: [side, side], fold: "" }

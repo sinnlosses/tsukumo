@@ -324,6 +324,45 @@
   margin: 0;
   padding-left: 1.1rem;
 }
+/* 前後（`report` の `beforeAfter` の塊から tsukumo が組む）。
+   左に前・右に後の札を同じ幅で並べ、間に矢印を置く。狭い画面では前を上・後を下に積み、矢印を下向きにする（末尾の @media）。
+   どちらが前かは見出しの文字が言い、矢印は飾り。 */
+.detail-block .report-before-after {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.detail-block .report-before-after-side {
+  min-width: 0;
+  padding: 0.5rem 0.75rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface-raised);
+}
+.detail-block .report-before-after-side > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.detail-block .report-before-after-side > * + * {
+  margin-top: 0.4rem;
+}
+.detail-block .report-before-after-label {
+  font-size: var(--font-subheading);
+  font-weight: 700;
+  color: var(--ink-quiet);
+}
+.detail-block .report-before-after-label-after {
+  color: var(--ink);
+}
+.detail-block .report-before-after-side ul {
+  padding-left: 1.1rem;
+}
+.detail-block .report-before-after-arrow {
+  align-self: center;
+  font-size: var(--font-heading);
+  color: var(--ink-quiet);
+}
 /* 寸法図（`report` の `dimension` の塊から tsukumo が組む）。
    左の列に領域の箱と余白の帯を上から積み、右の列に値を置く（行を subgrid にする）。
    図は模式で、箱と帯の高さは値に比例させない。 */
@@ -1381,6 +1420,13 @@
   }
   .detail-block .report-compare {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .detail-block .report-before-after {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .detail-block .report-before-after-arrow {
+    justify-self: center;
+    rotate: 90deg;
   }
   .detail-block .report-image-notes {
     grid-template-columns: minmax(0, 1fr);
