@@ -240,6 +240,9 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
    直後の `getBoundingClientRect()` は古い列幅を返し、次の描画で追いつく。測った値をそのまま
    `expect` に渡さず、期待する寸法になるまで待ってから測る（`report-main-view`: 目次と本文の境界を
    ドラッグした直後の目次の幅の検査で、待たずに測ると古い幅が返った）
+9. **ブラウザの起動には `hookTimeout` より短い上限を持たせ、起こしかけのものも `afterAll` で止める。**
+   負荷の高いときは起動だけで hook の上限に当たりうる。打ち切られた起動を放置すると、親を失った
+   ヘッドレス Chrome が残る（`test/e2e/scenario-run.ts` の `BROWSER_LAUNCH_TIMEOUT_MS`）
 
 ### E2E のシナリオの一覧
 

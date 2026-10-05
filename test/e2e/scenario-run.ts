@@ -63,6 +63,13 @@ const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace
 /** 起こした tsukumo が URL を出すまで待つ上限（ミリ秒）。 */
 const LAUNCH_TIMEOUT_MS = 15_000
 
+/**
+ * ブラウザを起こして繋ぐ全体の上限（ミリ秒）。E2E の hook の上限より短くし、
+ * 起こす段と繋ぐ段で半分ずつ使う。
+ */
+const BROWSER_LAUNCH_TIMEOUT_MS = 48_000
+const BROWSER_STEP_TIMEOUT_MS = BROWSER_LAUNCH_TIMEOUT_MS / 2
+
 /** 狙ったイベントが届くまで待つ上限（ミリ秒）。場面の長さ（20 秒まで）に余裕を持たせる。 */
 const EVENT_TIMEOUT_MS = 30_000
 
@@ -180,11 +187,12 @@ export type ScenarioRun = {
  * シナリオのファイルの先頭で1回呼ぶ。ブラウザを起こす・閉じる、1件ごとの後始末を登録する。
  */
 export function useScenarioRun(): ScenarioRun {
-  let chrome: LaunchedChrome | undefined = undefined
+  let launching: Promise<LaunchedChrome> | undefined = undefined
   const cleanups: (() => Promise<void>)[] = []
 
   beforeAll(async () => {
-    chrome = await launchChrome()
+    launching = launchChrome()
+    await launching
   })
 
   afterEach(async () => {
@@ -196,16 +204,18 @@ export function useScenarioRun(): ScenarioRun {
 
   afterAll(async () => {
     // Chrome は普通に閉じると、最後のコンテキストを閉じてから約 10 秒たつまで終わらない。
+    // beforeAll が上限で打ち切られても、起こしかけのブラウザはここで止める。
+    const chrome = await launching?.catch(() => undefined)
     await chrome?.browser.close()
     await chrome?.server.kill()
   })
 
   return {
     open: async (options) => {
-      if (chrome === undefined) {
+      if (launching === undefined) {
         throw new Error("ブラウザが起きていない（beforeAll が走っていない）")
       }
-      return openRoom(chrome.browser, options, (cleanup) => cleanups.push(cleanup))
+      return openRoom((await launching).browser, options, (cleanup) => cleanups.push(cleanup))
     },
   }
 }
@@ -219,7 +229,10 @@ type LaunchedChrome = {
 async function launchChrome(): Promise<LaunchedChrome> {
   const server = await launchChromeServer()
   try {
-    return { server, browser: await chromium.connect(server.wsEndpoint()) }
+    const browser = await chromium.connect(server.wsEndpoint(), {
+      timeout: BROWSER_STEP_TIMEOUT_MS,
+    })
+    return { server, browser }
   } catch (error) {
     await server.kill()
     throw error
@@ -228,7 +241,11 @@ async function launchChrome(): Promise<LaunchedChrome> {
 
 async function launchChromeServer(): Promise<BrowserServer> {
   try {
-    return await chromium.launchServer({ channel: "chrome", headless: true })
+    return await chromium.launchServer({
+      channel: "chrome",
+      headless: true,
+      timeout: BROWSER_STEP_TIMEOUT_MS,
+    })
   } catch (error) {
     const reason = error instanceof Error ? error.message.split("\n")[0] : String(error)
     throw new Error(
