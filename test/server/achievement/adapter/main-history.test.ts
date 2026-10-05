@@ -14,7 +14,10 @@ import type { DailyAchievement } from "../../../../src/shared/achievement/achiev
 import { PROJECT_SETTINGS_PATH } from "../../../../src/shared/repository/project-settings.ts"
 import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import { git, initGitRepository } from "../../../fixture/git-repository.ts"
-import { writeProjectSettings } from "../../../fixture/project-settings.ts"
+import {
+  writeProjectSettings,
+  writeProjectSettingsContent,
+} from "../../../fixture/project-settings.ts"
 import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -271,9 +274,38 @@ describe("readAchievement", () => {
     })
   })
 
-  it("プロジェクトの設定が無いリポジトリでは、main があっても「不明」（主ブランチを読まない）", async () => {
+  it("プロジェクトの設定が無いリポジトリでは、いまのブランチでコミットを数え、タスクは数えない", async () => {
     rmSync(join(repository, PROJECT_SETTINGS_PATH))
-    await commitNewFormatTask(repository, "2026-09-23", "10:00", "T-001", "架空", "done")
+    await commitAt(repository, "2026-09-23", "10:00", "main.txt")
+    await commitNewFormatTask(repository, "2026-09-23", "10:30", "T-001", "架空", "done")
+    await git(repository, "checkout", "-q", "-b", "feature")
+    await commitAt(repository, "2026-09-23", "11:00", "feature.txt")
+
+    const achievement = known(
+      await readAchievement(repository, "2026-09-23", "2026-09-24", createAchievementCommitCache()),
+    )
+
+    expect(achievement).toMatchObject({ commitCount: 2, doneTasks: { kind: "unknown" } })
+  })
+
+  it("プロジェクトの設定が壊れているリポジトリでは「不明」", async () => {
+    writeProjectSettingsContent(repository, "{")
+    await commitAt(repository, "2026-09-23", "10:00", "README.md")
+
+    const result = await readAchievement(
+      repository,
+      "2026-09-23",
+      "2026-09-24",
+      createAchievementCommitCache(),
+    )
+
+    expect(result).toEqual({ kind: "ok", achievement: { kind: "unknown" } })
+  })
+
+  it("設定が無く HEAD が枝を指さないときは「不明」", async () => {
+    rmSync(join(repository, PROJECT_SETTINGS_PATH))
+    await commitAt(repository, "2026-09-23", "10:00", "README.md")
+    await git(repository, "checkout", "-q", "--detach")
 
     const result = await readAchievement(
       repository,
@@ -742,6 +774,15 @@ describe("readCommitCalendar", () => {
     const result = await readCommitCalendar(repository, TODAY, createAchievementCommitCache())
 
     expect(result).toEqual({ kind: "ok", calendar: { kind: "unknown" } })
+  })
+
+  it("設定が無ければ、いまのブランチの日ごとのコミット数を返す", async () => {
+    rmSync(join(repository, PROJECT_SETTINGS_PATH))
+    await commitAt(repository, "2026-09-23", "10:00", "a.txt")
+
+    const result = await readCommitCalendar(repository, TODAY, createAchievementCommitCache())
+
+    expect(result).toMatchObject({ kind: "ok", calendar: { kind: "known" } })
   })
 
   it("git リポジトリでないディレクトリでは「不明」", async () => {

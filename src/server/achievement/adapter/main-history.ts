@@ -2,12 +2,13 @@
 //
 // 読むのは作業ツリーのファイルではなく `main` の上のもの。
 // 作業ツリーのものは `git merge main` するまで別の作業ツリーの分を知らない。
-// 例外はプロジェクトの設定（`readProjectSettings`）で、主ブランチの名前（`tasks.mainBranch`）とタスクの方式をここから読む。設定が無い・読めないときは主ブランチを読まず、`unknown` にする。
+// 例外はプロジェクトの設定（`readProjectSettings`）で、主ブランチの名前（`tasks.mainBranch`）とタスクの方式をここから読む。
+// 設定が無い（ファイルが無い・`tasks` が無い）ときは、起こした作業ツリーのいまのブランチ（`HEAD`）でコミットと暦だけを数え、終えたタスクは読まない。設定が壊れているときは `unknown` にする。
 //
 // Beads 方式（プロジェクトの設定の `tasks.store` が `beads`）では、終えたタスクを git の切り口と Beads の閉じた課題（`closed_at`）の両方から読み、ID で和をとる。
 // 移す前は Beads に閉じた課題が無く、移したあとは `main` にタスクファイルが無いので、境を数で持たなくても欠けず、同じ ID が両方にあっても1件にしかならない。
 //
-// 主ブランチが読めない（git リポジトリでない・設定の名前のブランチが無い・`git` が無い）ときは `DailyAchievement` の `{ kind: "unknown" }`（200 のまま配ってよい）。
+// 主ブランチが読めない（git リポジトリでない・設定の名前のブランチが無い・`HEAD` が枝を指さない・`git` が無い）ときは `DailyAchievement` の `{ kind: "unknown" }`（200 のまま配ってよい）。
 // それ以外の `git` の呼び出しがタイムアウト・失敗したときは `{ kind: "unavailable" }` で、呼び出し側が 503 にする（部分的な数を出さない）。
 
 import { basename } from "node:path"
@@ -18,7 +19,11 @@ import {
 } from "../../../shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../shared/achievement/achievement.ts"
 import { taskIdOfBeadsId, type BeadsIssue } from "../../../shared/repository/beads-issue.ts"
-import { mainBranchRefOf, type TaskSettings } from "../../../shared/repository/project-settings.ts"
+import {
+  mainBranchRefOf,
+  type ProjectSettingsRead,
+  type TaskSettings,
+} from "../../../shared/repository/project-settings.ts"
 import {
   LEGACY_ARCHIVE_PATH,
   LEGACY_TASKS_PATH,
@@ -113,8 +118,8 @@ export async function readAchievement(
   cache: AchievementCommitCache,
 ): Promise<ReadAchievementResult> {
   const settings = await readProjectSettings(cwd)
-  const head = settings.kind === "read" ? await mainHeadCommit(cwd, settings.tasks) : undefined
-  if (settings.kind !== "read" || head === undefined) {
+  const head = await countedHeadCommit(cwd, settings)
+  if (head === undefined) {
     return { kind: "ok", achievement: { kind: "unknown" } }
   }
 
@@ -127,8 +132,8 @@ export async function readAchievement(
       range.startEpochMilliseconds - SINCE_MARGIN_DAYS * MILLISECONDS_PER_DAY,
     ),
     totalAchievementCommitsBeforeDay(cwd, head, dateKey, today, range, cache),
-    readTaskSnapshotSource(cwd, head),
-    readBeadsIssuesOfStore(cwd, settings.tasks),
+    settings.kind === "read" ? readTaskSnapshotSource(cwd, head) : undefined,
+    settings.kind === "read" ? readBeadsIssuesOfStore(cwd, settings.tasks) : undefined,
   ])
   if (commits === undefined) {
     return { kind: "unavailable" }
@@ -143,7 +148,11 @@ export async function readAchievement(
   if (beads === "unavailable") {
     return { kind: "unavailable" }
   }
-  if (beads === "files" && !hasTaskTracking(headSource)) {
+  if (
+    headSource === undefined ||
+    beads === undefined ||
+    (beads === "files" && !hasTaskTracking(headSource))
+  ) {
     return {
       kind: "ok",
       achievement: dailyAchievementOf({
@@ -296,7 +305,7 @@ export async function readCommitCalendar(
   cache: AchievementCommitCache,
 ): Promise<ReadCommitCalendarResult> {
   const settings = await readProjectSettings(cwd)
-  const head = settings.kind === "read" ? await mainHeadCommit(cwd, settings.tasks) : undefined
+  const head = await countedHeadCommit(cwd, settings)
   if (head === undefined) {
     return { kind: "ok", calendar: { kind: "unknown" } }
   }
@@ -366,14 +375,29 @@ function calendarOf(
   }
 }
 
-/** 主ブランチの先端。取れなければ `undefined`（「主ブランチが読めない」）。 */
-async function mainHeadCommit(cwd: string, tasks: TaskSettings): Promise<string | undefined> {
-  const result = await runGit(cwd, [
-    "rev-parse",
-    "--verify",
-    "--quiet",
-    `${mainBranchRefOf(tasks)}^{commit}`,
-  ])
+/**
+ * 数える枝の先端。取れなければ `undefined`（「主ブランチが読めない」）。
+ * 設定があればその主ブランチ、無ければ `HEAD` が指す枝。設定が壊れているときは数えない。
+ */
+async function countedHeadCommit(
+  cwd: string,
+  settings: ProjectSettingsRead,
+): Promise<string | undefined> {
+  if (settings.kind === "invalid") {
+    return undefined
+  }
+  const ref =
+    settings.kind === "read" ? mainBranchRefOf(settings.tasks) : await currentBranchRef(cwd)
+  if (ref === undefined) {
+    return undefined
+  }
+  const result = await runGit(cwd, ["rev-parse", "--verify", "--quiet", `${ref}^{commit}`])
+  return result.kind === "output" ? result.stdout.trim() : undefined
+}
+
+/** `HEAD` が指す枝の完全な参照名。枝を指さない（detached）ときは `undefined`。 */
+async function currentBranchRef(cwd: string): Promise<string | undefined> {
+  const result = await runGit(cwd, ["symbolic-ref", "--quiet", "HEAD"])
   return result.kind === "output" ? result.stdout.trim() : undefined
 }
 
