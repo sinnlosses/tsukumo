@@ -911,8 +911,8 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
     参考にした）。`QUESTION_NOTATION_PROMPT`（`src/server/session-driver/core/question-notation.ts`）を
     仕事モードのときだけ `systemPrompt` の append に足し、「なぜ今聞くのか」を質問文の前に1行置く・
     選択肢のラベルは選んだあと何が起きるかを言う語にする・おすすめの理由を `description` の頭に書く・
-    見た目や画面の形やデータやコードの構造を選ばせるときは各選択肢の `preview` に図を必ず付ける、の4条を
-    渡す。**答えが確定した質問ごとに、選択肢の数と `preview` の付いた選択肢の数だけを
+    見た目や画面の形やデータやコードの構造を選ばせるときは各選択肢の `preview` に図を必ず付ける〔手元の画像を
+    `![説明](パス)` で書けることと、外部 URL・`data:` は描かれないことも条4が伝える〕、の4条を渡す。**答えが確定した質問ごとに、選択肢の数と `preview` の付いた選択肢の数だけを
     `~/.tsukumo/question-usage/<YYYY-MM-DD>.jsonl` に1行記録する**（質問文・ラベル・`description` は
     持たない。`docs/coding-standards.md`「会話内容の扱い」）。書くのは
     `src/server/session-driver/adapter/question-usage-log.ts`、何を1行にするかは
