@@ -60,8 +60,8 @@
   同じ錠を通る。check の中の子は環境変数で持ち主を知らされ、取り直さない。重い段が無い check
   （タスク登録だけの変更）は錠を取らず、軽い段の vitest にも取らない印を渡す。watch では取らない。E2E の1本は vitest のワーカーに加えて
   Chrome と `node src/cli.ts` を起こすので、実際に走るプロセスは `maxWorkers` の本数を大きく超える。
-  E2E の設定は `maxWorkers: "30%"`、単体テスト（`vitest.config.ts`）も `"30%"` で、2つ合わせて
-  コア数の 60% までに収める。単体は `dom` と `node` の2つの project に分け、DOM のグローバルを借りる
+  E2E の設定は `maxWorkers: "15%"`、単体テスト（`vitest.config.ts`）も `"15%"` で、2つ合わせて
+  コア数の 30% までに収める。単体は `dom` と `node` の2つの project に分け、DOM のグローバルを借りる
   `test/dom-environment.ts` は `dom`（`test/browser/` と、DOM を描くほかの置き場のファイル）にだけ掛ける。
   `vitest.config.ts` の `DOM_TEST_FILES` に無いファイルが DOM を要するようになったら、そこへ足す
 - **引数なしの `pnpm run check` は、変えたファイルから選んだ E2E のファイルだけを流し**、選んだもの

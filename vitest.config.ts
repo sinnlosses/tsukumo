@@ -20,7 +20,7 @@ export default defineConfig({
     environment: "node",
     // hook を起こすテストが、実物の拒否の記録に足さないようにする。
     env: { TZ: "UTC", TSUKUMO_HOOK_DENIAL_RECORD: "off" },
-    maxWorkers: "30%",
+    maxWorkers: "15%",
     projects: [
       {
         extends: true,
