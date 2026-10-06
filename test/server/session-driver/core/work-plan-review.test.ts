@@ -28,7 +28,13 @@ const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
 })
 
 const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
-const RETURNED: SessionEvent = { kind: "delegate-returned", summary: "架空の返却。" }
+const returnedAt = (finishedPhase: number): SessionEvent => ({
+  kind: "delegate-returned",
+  finishedPhase,
+  phaseCount: 1,
+  summary: "架空の返却。",
+})
+const RETURNED = returnedAt(0)
 
 const reportOf = (workPlanClosing: WorkPlanClosing): SessionEvent => ({
   kind: "report",
@@ -87,15 +93,15 @@ describe("WorkPlanReview の判定", () => {
 
     expect(review.judge(planOf(3)).kind).toBe("skipped-phase")
     expect(review.judge(planOf(1)).kind).toBe("accepted")
-    review.pass(RETURNED)
+    review.pass(returnedAt(1))
     expect(review.judge(planOf(3)).kind).toBe("accepted")
   })
 
   it("委譲の返却は、最後の段より先へ覚えた位置を進めない", () => {
     const review = createWorkPlanReview()
     review.judge(planOf(1))
-    review.pass(RETURNED)
-    review.pass(RETURNED)
+    review.pass(returnedAt(1))
+    review.pass(returnedAt(2))
 
     expect(review.standing()).toEqual({ kind: "planned", remaining: 1 })
   })

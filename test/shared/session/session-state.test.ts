@@ -1595,16 +1595,21 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
     current,
     phaseSummary,
   })
-  const returned = (summary = ""): SessionEvent => ({ kind: "delegate-returned", summary })
+  const returned = (finishedPhase: number, summary = ""): SessionEvent => ({
+    kind: "delegate-returned",
+    finishedPhase,
+    phaseCount: 2,
+    summary,
+  })
   const currentPlan = (state: SessionState) => latestWorkPlan(state.records)
   const currentOf = (state: SessionState) => {
     const plan = currentPlan(state)
     return plan.kind === "planned" ? plan.current : undefined
   }
 
-  it("返却1回ごとに、メインの段取りの並びのまま帯が1段だけ進み、返却の文が段のまとめになる", () => {
-    const once = apply(request, mainPlan(0), returned("架空の計画の要点。"))
-    const twice = applySessionEvent(once, returned("架空の1段目の変化。"), 0)
+  it("返却の番号で、メインの段取りの並びのまま帯が進み、返却の文が段のまとめになる", () => {
+    const once = apply(request, mainPlan(0), returned(0, "架空の計画の要点。"))
+    const twice = applySessionEvent(once, returned(1, "架空の1段目の変化。"), 0)
 
     expect(currentPlan(once)).toEqual({
       kind: "planned",
@@ -1613,6 +1618,13 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
       phaseSummary: "架空の計画の要点。",
     })
     expect(currentPlan(twice)).toMatchObject({ current: 2, phaseSummary: "架空の1段目の変化。" })
+  })
+
+  it("止めた返却で返却が1回欠けても、次の番号の返却で帯が委譲先の段と揃い、同じ返却の2回目では動かない", () => {
+    const state = apply(request, mainPlan(0), returned(0), returned(2, "架空の2段目の変化。"))
+
+    expect(currentPlan(state)).toMatchObject({ current: 3, phaseSummary: "架空の2段目の変化。" })
+    expect(applySessionEvent(state, returned(2), 0).records).toEqual(state.records)
   })
 
   it("委譲先の途中の合図（SendMessage）と背景のタスクの顔ぶれの変化では、帯は動かない", () => {
@@ -1634,16 +1646,16 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
   })
 
   it("返却では受け入れより先へ進めず、全部済みにはしない", () => {
-    const state = apply(request, mainPlan(2, "架空のまとめ。"), returned("架空の2段目。"))
+    const state = apply(request, mainPlan(2, "架空のまとめ。"), returned(2, "架空の2段目。"))
 
     expect(currentOf(state)).toBe(3)
-    expect(applySessionEvent(state, returned("架空の余分な返却。"), 0).records).toEqual(
+    expect(applySessionEvent(state, returned(3, "架空の余分な返却。"), 0).records).toEqual(
       state.records,
     )
   })
 
   it("返却で進めた位置のあとのメインの段取りは、そのまま帯に出る", () => {
-    const state = apply(request, mainPlan(0), returned("架空の計画。"), mainPlan(2, "架空。"))
+    const state = apply(request, mainPlan(0), returned(0, "架空の計画。"), mainPlan(2, "架空。"))
 
     expect(currentOf(state)).toBe(2)
   })
@@ -1651,7 +1663,7 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
   it("メインの段取りの無い依頼では、返却は記録を足さない", () => {
     const before = apply(request)
 
-    expect(applySessionEvent(before, returned("架空の調べもの。"), 0).records).toEqual(
+    expect(applySessionEvent(before, returned(0, "架空の調べもの。"), 0).records).toEqual(
       before.records,
     )
   })
@@ -1662,9 +1674,9 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
       apply(
         request,
         { kind: "work-plan", phases: ["計画", "受け入れ"], current: 0, phaseSummary: "" },
-        returned("架空の計画。"),
+        returned(0, "架空の計画。"),
         { kind: "work-plan", phases: headingPhases, current: 1, phaseSummary: "架空の計画。" },
-        returned("架空の見出し1の変化。"),
+        returned(1, "架空の見出し1の変化。"),
       ),
     )
 
@@ -1677,9 +1689,9 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
   })
 
   it("次の依頼の返却は、その依頼の段取りを進める", () => {
-    const state = apply(request, mainPlan(0), returned("架空。"), request, mainPlan(0))
+    const state = apply(request, mainPlan(0), returned(0, "架空。"), request, mainPlan(0))
 
-    expect(currentOf(applySessionEvent(state, returned("架空の次の依頼。"), 0))).toBe(1)
+    expect(currentOf(applySessionEvent(state, returned(0, "架空の次の依頼。"), 0))).toBe(1)
   })
 })
 
@@ -1749,7 +1761,12 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
     current,
     phaseSummary: current > 0 && current < 3 ? "架空のまとめ。" : "",
   })
-  const returned: SessionEvent = { kind: "delegate-returned", summary: "架空の返却。" }
+  const returned: SessionEvent = {
+    kind: "delegate-returned",
+    finishedPhase: 0,
+    phaseCount: 1,
+    summary: "架空の返却。",
+  }
   const report: SessionEvent = {
     kind: "report",
     toolUseId: "toolu_r1",

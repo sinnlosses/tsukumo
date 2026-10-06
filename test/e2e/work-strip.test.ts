@@ -173,7 +173,7 @@ describe("進み具合の帯", () => {
     )
   })
 
-  it("委譲先の返却1回ごとに、メインが呼ばなくても帯が1段だけ進み、途中の SendMessage と止めた返却では動かない", async () => {
+  it("委譲先の返却の段の番号で、メインが呼ばなくても帯の位置が決まり、途中の SendMessage と止めた返却では動かない", async () => {
     const room = await run.open({
       scenario: "work-strip-delegate-return",
       scene: "work-strip-delegate-return",

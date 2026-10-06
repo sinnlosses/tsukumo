@@ -7,8 +7,15 @@ import { isPlainObject } from "remeda"
 /** 委譲先が報告を返す Claude Code のツールの名前。 */
 export const SUBAGENT_HANDBACK_TOOL_NAME = "SubagentHandback"
 
-/** 段を1つ進める返却。`summary` は1行目の `|` より後ろ（前後の空白を除く）で、空なら空の文字列。 */
-export type DelegateReturn = { readonly summary: string }
+/**
+ * 段を進める返却。`finishedPhase` は1行目の `n`（`計画 0/N` は 0）、`phaseCount` は `N`。
+ * `summary` は1行目の `|` より後ろ（前後の空白を除く）で、空なら空の文字列。
+ */
+export type DelegateReturn = {
+  readonly finishedPhase: number
+  readonly phaseCount: number
+  readonly summary: string
+}
 
 /**
  * `SubagentHandback` の引数の1行目が `段 n/N | 文` か `計画 0/N | 文` なら、段のまとめを返す。
@@ -19,7 +26,14 @@ export function parseDelegateReturn(input: unknown): DelegateReturn | undefined 
     return undefined
   }
   const matched = ADVANCING_FIRST_LINE.exec(input.message.split("\n", 1)[0] ?? "")
-  return matched === null ? undefined : { summary: (matched[1] ?? "").trim() }
+  if (matched === null) {
+    return undefined
+  }
+  return {
+    finishedPhase: Number(matched[1] ?? matched[2]),
+    phaseCount: Number(matched[3]),
+    summary: (matched[4] ?? "").trim(),
+  }
 }
 
-const ADVANCING_FIRST_LINE = /^\s*(?:段 \d+\/\d+|計画 0\/\d+) \|(.*)$/
+const ADVANCING_FIRST_LINE = /^\s*(?:段 (\d+)|計画 (0))\/(\d+) \|(.*)$/

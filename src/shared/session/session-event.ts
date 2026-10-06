@@ -192,11 +192,14 @@ export type SessionEvent =
       readonly plan: Extract<SessionEvent, { readonly kind: "work-plan" }>
     }
   /**
-   * 段を1つ進める委譲の返却（委譲先の `SubagentHandback` の1行目が `段 n/N | 文` か `計画 0/N | 文`）。
+   * 段を進める委譲の返却（委譲先の `SubagentHandback` の1行目が `段 n/N | 文` か `計画 0/N | 文`）。
+   * `finishedPhase` は1行目の `n`（`計画 0/N` は 0）、`phaseCount` は `N`。
    * `summary` は1行目の `|` より後ろ（前後の空白を除く）で、空なら空の文字列。切り詰める前のまま運ぶ。
    */
   | {
       readonly kind: "delegate-returned"
+      readonly finishedPhase: number
+      readonly phaseCount: number
       readonly summary: string
     }
   | {

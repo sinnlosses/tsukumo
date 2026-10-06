@@ -103,19 +103,31 @@ export type ReturnAdvance =
   | { readonly kind: "held" }
   | { readonly kind: "advanced"; readonly plan: WorkPlan }
 
+/** 委譲の返却1回が言う位置。`finishedPhase` は済んだ段の番号（計画だけなら 0）、`phaseCount` は委譲先の段の数。 */
+export type DelegateReturnPosition = {
+  readonly finishedPhase: number
+  readonly phaseCount: number
+  readonly summary: string
+}
+
 /**
- * 委譲の返却1回で進めた段取り（{@link ReturnAdvance}）。
- * 段の並びはそのままで今の段を1つ進め、返却の文を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めて済んだ段のまとめにする。
- * 最後の段か全部の段を終えた位置からは進めない（返却では全部済みにしない）。
+ * 委譲の返却1回で位置を決めた段取り（{@link ReturnAdvance}）。
+ * 段の並びは「計画」「委譲先の各段」「受け入れ」なので、今の段は `finishedPhase + 1` になる。
+ * 返却のまとめは {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めて済んだ段のまとめにする。
+ * 委譲先の段の数が帯と合わない・求めた位置が今の位置以下・受け入れより先なら動かさない。
+ * 計画の返却（`finishedPhase` 0）だけは段の数を照合しない（メインが段の並びを組み替える前で、委譲先の段の数を知らない）。
  */
-export function advancedByReturn(plan: WorkPlan, summary: string): ReturnAdvance {
-  return plan.current + 1 < plan.phases.length
+export function advancedByReturn(plan: WorkPlan, returned: DelegateReturnPosition): ReturnAdvance {
+  const target = returned.finishedPhase + 1
+  return (returned.finishedPhase === 0 || returned.phaseCount + 2 === plan.phases.length) &&
+    target > plan.current &&
+    target < plan.phases.length
     ? {
         kind: "advanced",
         plan: {
           phases: plan.phases,
-          current: plan.current + 1,
-          phaseSummary: leadingSentences(summary, MAX_PHASE_SUMMARY_SENTENCES),
+          current: target,
+          phaseSummary: leadingSentences(returned.summary, MAX_PHASE_SUMMARY_SENTENCES),
         },
       }
     : { kind: "held" }

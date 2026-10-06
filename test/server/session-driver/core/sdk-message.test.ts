@@ -1293,15 +1293,20 @@ describe("toSessionEvents（委譲の返却）", () => {
     )
 
     expect(events.map((event) => event.kind)).toEqual(["tool-started", "delegate-returned"])
-    expect(events[1]).toEqual({ kind: "delegate-returned", summary: "架空の進み。" })
+    expect(events[1]).toEqual({
+      kind: "delegate-returned",
+      finishedPhase: 2,
+      phaseCount: 5,
+      summary: "架空の進み。",
+    })
   })
 
   it("計画だけの返却「計画 0/N | 文」も delegate-returned を出し、文が空なら空の文にする", () => {
     expect(returnsOf(handback("計画 0/3 | 架空の計画。", "toolu_sub_1"))).toEqual([
-      { kind: "delegate-returned", summary: "架空の計画。" },
+      { kind: "delegate-returned", finishedPhase: 0, phaseCount: 3, summary: "架空の計画。" },
     ])
     expect(returnsOf(handback("段 1/2 | ", "toolu_sub_1"))).toEqual([
-      { kind: "delegate-returned", summary: "" },
+      { kind: "delegate-returned", finishedPhase: 1, phaseCount: 2, summary: "" },
     ])
   })
 

@@ -1095,11 +1095,21 @@ describe("mainViewTurns（委譲の返却の中間レポート）", () => {
     current: 0,
     phaseSummary: "",
   }
-  const returned = (summary: string): SessionEvent => ({ kind: "delegate-returned", summary })
+  const returned = (finishedPhase: number, summary: string): SessionEvent => ({
+    kind: "delegate-returned",
+    finishedPhase,
+    phaseCount: 2,
+    summary,
+  })
 
-  it("返却1回ごとに、済んだ段の中間レポートを返却の文で積む", () => {
+  it("返却ごとに、済んだ段の中間レポートを返却の文で積む", () => {
     expect(
-      interimOf([ask, mainPlan, returned("架空の計画の要点。"), returned("架空の1段目の変化。")]),
+      interimOf([
+        ask,
+        mainPlan,
+        returned(0, "架空の計画の要点。"),
+        returned(1, "架空の1段目の変化。"),
+      ]),
     ).toEqual([
       ["1/4 架空の計画", "架空の計画の要点。"],
       ["2/4 架空の段1", "架空の1段目の変化。"],
@@ -1107,9 +1117,9 @@ describe("mainViewTurns（委譲の返却の中間レポート）", () => {
   })
 
   it("文の空な返却は帯だけを進め、中間レポートを出さない", () => {
-    expect(interimOf([ask, mainPlan, returned(""), returned("架空の2段目の変化。")])).toEqual([
-      ["2/4 架空の段1", "架空の2段目の変化。"],
-    ])
+    expect(interimOf([ask, mainPlan, returned(0, ""), returned(1, "架空の2段目の変化。")])).toEqual(
+      [["2/4 架空の段1", "架空の2段目の変化。"]],
+    )
   })
 })
 

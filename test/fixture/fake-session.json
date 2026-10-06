@@ -5522,7 +5522,12 @@
         },
         {
           "afterMs": 1510,
-          "event": { "kind": "delegate-returned", "summary": "架空の計画が3段にまとまった。" }
+          "event": {
+            "kind": "delegate-returned",
+            "finishedPhase": 0,
+            "phaseCount": 3,
+            "summary": "架空の計画が3段にまとまった。"
+          }
         },
         {
           "afterMs": 1600,
@@ -5566,6 +5571,8 @@
           "afterMs": 4010,
           "event": {
             "kind": "delegate-returned",
+            "finishedPhase": 1,
+            "phaseCount": 3,
             "summary": "架空の設定が画面から読めるようになった。"
           }
         },
@@ -5613,6 +5620,8 @@
           "afterMs": 6010,
           "event": {
             "kind": "delegate-returned",
+            "finishedPhase": 2,
+            "phaseCount": 3,
             "summary": "架空の保存先が1つにまとまった。古い置き場は読むだけになる。"
           }
         },

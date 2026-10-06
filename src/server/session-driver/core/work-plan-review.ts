@@ -4,7 +4,7 @@
 //
 // 判定の窓口は handler だけ（`WorkPlanReview.judge`）。
 // 覚えるのは、同じ依頼の中で最後に受け付けた段取りだけで、依頼（`request` / `turn-started`）で忘れる。
-// 委譲の返却（`delegate-returned`）は、覚えた段取りを状態の畳み込みと同じ決まり（`advancedByReturn`）で1段進める。
+// 委譲の返却（`delegate-returned`）は、覚えた段取りを状態の畳み込みと同じ決まり（`advancedByReturn`）で返却の番号の位置へ進める。
 // メインの呼び出しはそこから +1 までしか通らない。
 // 段の閉じ方が `finished` の `report`（差し戻されずに流れたもの）は、覚えた段取りを `closedByReport` で閉じる。
 //
@@ -88,8 +88,7 @@ export function createWorkPlanReview(): WorkPlanReview {
           return event.isError ? [event] : [call.plan, event]
         }
         case "delegate-returned": {
-          const advance =
-            accepted === undefined ? undefined : advancedByReturn(accepted, event.summary)
+          const advance = accepted === undefined ? undefined : advancedByReturn(accepted, event)
           if (advance?.kind === "advanced") {
             accepted = advance.plan
           }

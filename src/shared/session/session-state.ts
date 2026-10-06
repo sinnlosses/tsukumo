@@ -56,6 +56,7 @@ import { splitIntoTurns } from "./turn.ts"
 import {
   advancedByReturn,
   closedByReport,
+  type DelegateReturnPosition,
   isWorkPlanRecord,
   type WorkPlanClosing,
 } from "./work-plan.ts"
@@ -658,7 +659,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "delegate-returned":
       return {
         ...state,
-        records: [...state.records, ...delegateReturnRecords(state.records, event.summary, at)],
+        records: [...state.records, ...delegateReturnRecords(state.records, event, at)],
       }
     case "tool-started": {
       const nested = event.parentToolUseId !== undefined
@@ -835,19 +836,19 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
 }
 
 /**
- * 委譲の返却1回で積む記録。同じ依頼の最後の段取りを {@link advancedByReturn} で1段進めたもの。
- * 同じ依頼に段取りが無いときと、進められない（最後の段か全部済み）ときは積まない。
+ * 委譲の返却1回で積む記録。同じ依頼の最後の段取りを {@link advancedByReturn} で返却の番号の位置へ進めたもの。
+ * 同じ依頼に段取りが無いときと、進められないときは積まない。
  */
 function delegateReturnRecords(
   records: readonly SessionRecord[],
-  summary: string,
+  returned: DelegateReturnPosition,
   at: number,
 ): readonly SessionRecord[] {
   const latest = recordsOfLastRequest(records).findLast(isWorkPlanRecord)
   if (latest === undefined) {
     return []
   }
-  const advance = advancedByReturn(latest, summary)
+  const advance = advancedByReturn(latest, returned)
   return advance.kind === "held"
     ? []
     : [{ kind: "work-plan", ...advance.plan, time: { kind: "stamped", at } }]
