@@ -3,6 +3,83 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-07 `/loop /next-task` を文脈のしきい値で止めない
+
+（GH-433 にした）
+
+- `/loop /next-task` は文脈がしきい値を超えても止めずに回し続けたい。tsukumo の外（`mcp__tsukumo__` の送り直しのツールが無いとき）で `context_size.py` が `OVER` を返したら、`/loop` を止めずに次の1件へ進み、文脈は Claude Code の自動の要約（コンパクト）に任せる（claude-skills の `next-task` の続行判断の表）。tsukumo の中で `/clear` して送り直す形は今どおり
+
+## 2026-10-06 成果が「数えられない・読めない」ときの出し方を1か所にだけ書き、ほかの文書は節の名前で指す（振り返り: GH-389）
+
+（GH-434 にした）
+
+- 出典: develop/draft/2026-10-06-achievement-unknown-single-source.md。利用者が `/plan-tasks` で「全部タスク化してほしい」「全部よろしく。」と答えた
+- 札: 黄 文書の重さ（3回目）
+- 根: achievement-behavior-restated
+- 根拠: GH-389 で、git や Beads が読めないときの成果の出し方を `docs/requirements.md` 4.11・`docs/architecture.md`・`docs/architecture/screen-design.md` 13.10 の3か所で直した。委譲先は前の2つと 13.10 の数の札だけを直し、13.10 の暦の節と「空の日・数えられないとき」の表の2か所を古いまま残した。受け入れのレビューで1往復差し戻した。同じ根の機械の出来事の写しには GH-407 がある
+- 出し先: 3回目なので仕組みで塞ぐ。「どの読みが欠けたら何を出すか」の表を `docs/requirements.md` 4.11 の1か所にだけ置き、`docs/architecture.md`・`screen-design.md` 13.10 の写しは節の名前への参照に畳むタスクにする。あわせて、場面の名前（「`main` も Beads も読めない」など）が正典の外の文書に書かれていたら `node scripts/find-stray-reference.ts` と同じ段で落とす検査を足す
+
+## 2026-10-06 claude-skills の段ごとの当たるパスを `check.sh` の判定だけに置き、README と冒頭コメントからは写しを消す（振り返り: GH-415）
+
+（GH-435 にした）
+
+- 出典: develop/draft/2026-10-06-check-stage-paths-single-source.md。利用者が `/plan-tasks` で「全部タスク化してほしい」「全部よろしく。」と答えた
+- 札: 黄 文書の重さ（3回目）
+- 根: check-stage-paths-restated
+- 根拠: GH-415 で、段ごとの当たるパスを `check.sh` の判定・`check.sh` の冒頭コメント・`README.md` の「## 検証」の3か所に書いた。受け入れで README だけが `scripts/` まるごとと書いて判定（`scripts/links.sh`・`scripts/selftest_links.sh`）と食い違い、差し戻して `tw verify` を打ち直した（約13分）。委譲先の差分でも `README.md` を3回、`check.sh` を2回直していた
+- 出し先: claude-skills の `README.md`「## 検証」と `check.sh` の冒頭コメントから当たるパスの列挙を消し、「流す段は `./check.sh --plan` で見る」とだけ書く。次に段の当たるパスを変えるときは `check.sh` の `stage` の呼び出し1か所だけを直せば済む
+
+## 2026-10-06 E2E の設定のダイアログを待つヘルパが、凍らせた時計を回数で進めず、下書きの応答が届くのを待ってから進める（振り返り: GH-420）
+
+（GH-436 にした）
+
+- 出典: develop/draft/2026-10-06-e2e-settings-dialog-wait-rpc.md。利用者が `/plan-tasks` で「全部タスク化してほしい」「全部よろしく。」と答えた
+- 札: 赤 揺れ（15回目）
+- 根: e2e-frozen-clock-wakeup
+- 根拠: GH-420 の `tw verify` の2回目（load 11.3→9.4）で、`test/e2e/task-list.test.ts` の「「使わない」と書いたプロジェクトでは…」が `projectSettingsDialog` の `field.waitFor()` で30秒のタイムアウトになった。単独で流し直すと23件とも通った（load 7.4）。このヘルパは凍らせた時計を 50ms×20 回だけ進めて欄が出るのを待つので、`/rpc` の下書きの応答がその20回より実時間で遅れて届くと、欄はもう描かれない。同じ根に打った手 GH-329 のあとに再発した
+- 根拠（続き）: 送る前の `tw ship` の検証でも同じ件が落ちた（4回中2回）。GH-420 の受け入れで、`task-list.test.ts` のヘルパを `openProjectSettingsDialog` に改め、下書きの応答を `page.waitForResponse` で待ってから時計を進める形にした
+- 出し先: タスクにする。GH-329 は描き直しの合図を store に持たせ、時計を止めた E2E でも描けるようにした。ただし、待つ側が「時計を何回進めるか」に頼る形は残ったので、負荷で応答が遅れると外れる。種類の違う手として、同じ形の待ち（`welcome.test.ts` の `advanceUntil`・`session-switch.test.ts` の `revealDigest`・`chat-compact-boundary.test.ts`）を、待つ実時間の出来事（応答・知らせ）を先に待つ形に揃え、回数だけで待つ書き方を `scenario-run.ts` の共有の口に寄せる
+
+## 2026-10-06 テストの `report` イベントを1つの組み立て関数から作り、直書きを検査で落とす（振り返り: GH-404）
+
+（GH-437 にした）
+
+- 出典: develop/draft/2026-10-06-report-event-test-builder.md。利用者が `/plan-tasks` で「全部タスク化してほしい」「全部よろしく。」と答えた
+- 札: 黄 構造の重さ（5回目）
+- 根: session-event-shape-ripple
+- 根拠: `report` イベントに欄を1つ（`workPlanClosing`）足しただけで、イベントをその場で書き下す単体テスト16ファイルに `workPlanClosing: "none"` を手で足した（`kind: "report"` を直書きする `test/` の `.ts` は17ファイル）。E2E も `messages` の期待値26ファイルを撮り直し、うち24ファイルは既定値の1行が増えただけだった
+- 出し先: タスクにする。テストの `report` イベントと `ReportDraft` を既定値つきの組み立て関数1つから作り、`test/architecture.test.ts` で `kind: "report"` の直書きを落とす。E2E の `messages` の比較で、既定値（`none`）の欄を落としてから比べられないかも同じタスクで測る
+
+## 2026-10-06 `tw edit --section` が括弧書きを除いた節名（「決まっていること」）でも当たるようにする（振り返り: GH-361）
+
+（GH-438 にした）
+
+- 出典: develop/draft/2026-10-06-tw-edit-section-short-name.md。利用者が `/plan-tasks` で「全部タスク化してほしい」「全部よろしく。」と答えた
+- 札: 黄 揺れ（15回目）
+- 根: tw-edit-section-short-name
+- 根拠: GH-361 の段1で、委譲先が `tw edit GH-361 --section '決まっていること'` を打って「枠の見出しでない」で拒まれ、見出しの全文「決まっていること（蒸し返さない）」で打ち直した。同じ1行で続けた `tw step` が先に走って印が立ち、それも打ち直した。next-task の依頼文は `--section '<節名>'` とだけ書いていて、括弧書きまで要ることはどこにも無い
+- 出し先: claude-skills の `skills/task-workflow/scripts/` の `tw edit` の節名の照合で、全角括弧より前の部分が一致すれば同じ節とみなす（「決まっていること」→「決まっていること（蒸し返さない）」）。次に委譲先が節名を短く書いても、拒まれる往復と印の打ち直しが起きなくなる
+
+## 2026-10-07 `tw verify` が落ちた回のログを、打ち直しで上書きせずに残す（振り返り: GH-421）
+
+（GH-439 にした）
+
+- 出典: develop/draft/2026-10-07-keep-failed-verify-log.md。利用者が `/plan-tasks` で「全部タスク化してほしい」「全部よろしく。」と答えた
+- 札: 黄 揺れ（15回目）
+- 根: verify-log-overwritten
+- 根拠: GH-421 の段3で `tw verify` が `markdown-mark-concealment.test.ts` の1件で落ち、3回目の打ち直しで通った。ログは `.tw/task-verify.log` の1本だけで打つたびに上書きされるため、受け入れの時点では落ちた回の失敗の文が残っておらず、揺れの原因を調べられなかった（同じ札は過去14回）
+- 出し先: claude-skills の `tw verify` を、落ちた回のログを `.tw/task-verify.failed-<時刻>.log` のように別名で残す形にするタスク（直近の数本だけ残す）。揺れの札を書くときに、そのログの失敗の行を根拠に引けるようにする
+
+## 2026-10-07 読むだけの tw コマンド（verify-check・plan-check・status など）を、読み取り専用の .git の下でまとめて打つ自己テストを claude-skills に足す（振り返り: GH-423）
+
+（GH-440 にした）
+
+- 出典: develop/draft/2026-10-07-readonly-tw-commands-under-readonly-git.md。利用者が `/plan-tasks` で「全部タスク化してほしい」「全部よろしく。」と答えた
+- 札: 赤 実装の誤り（5回目）
+- 根: read-only-command-writes-git
+- 根拠: GH-423 の段3の返却で、読むだけと定めた `verify-check` が、衝突の判定（`fold.folds_cleanly`）のときに `worktree_tree` の既定・`commit-tree`・`merge-tree --write-tree` で本物の `.git` に object を書いていた。委譲先の `tw verify` は通り、自己テストも書ける `.git` の場合しか見ていなかった。受け入れでメインと新しい目のレビューが見つけて、1往復差し戻した。`readonly_git` の手立ては自己テストにあったが、使っていたのは個々のテストだけで、読むだけのコマンドの一覧には掛かっていなかった
+- 出し先: claude-skills の `skills/task-workflow/scripts/selftest_task.py` に、WORKFLOW.md「`tw` コマンドの参照」で「読むだけ」と書いたサブコマンドを、主ブランチが進んだ・衝突する・作業がある状態で `readonly_git` の下で打つテストを1本足すタスク。落ちず、`.git/objects` も増えないことを縛る
+
 ## 2026-10-07 テストを刈り込んで速くし、改修の手間を減らす
 
 （GH-428〜GH-432 にした）
