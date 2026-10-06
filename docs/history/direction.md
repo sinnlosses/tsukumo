@@ -3,6 +3,56 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-07 E2E の刈り込みの受け入れで残した指摘3件を直す（振り返り: GH-428）
+
+（GH-442 にした）
+
+- 出典: develop/draft/2026-10-07-e2e-trim-leftover-review-findings.md。利用者が GH-428 の受け入れで「このまま送って指摘はドラフトに」と答え、`/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 黄 実装の誤り（6回目）
+- 根: e2e-trim-leftover-review-findings
+- 根拠: GH-428 の受け入れで、3回目の新しい目のレビューに当たる指摘が3件残り、差し戻しの上限（2往復）に達したので、利用者の判断で直さずに送った。(1) `docs/coding-standards.md`「消すかどうか」の表の「E2E の台本が通している振る舞い → 消す候補」の行と、その定義の段落「E2E の台本が通している、とは」が、刈り込んだあとの分担（出し分けと DOM の細部は部品の単体が持ち、E2E の場面で組み直さない。`docs/architecture/testing.md`「E2E に任せず単体テストに残すもの」の末尾）と食い違う。(2) `test/browser/features/task-board/task-board.test.tsx` の「検索と絞り込みは組み合わさり、当たらなければその旨を出して詳細を空にする」が、その旨の文を見ておらず、検索の語だけでも0件になるので組み合わせを検査していない。(3) `main-view.test.tsx` の「中間レポートを挟んで2回答えた質問は、2件とも出た順に残り、畳まれた中間レポートの外に出る」が、畳みの外を2件目でしか見ておらず、中間レポートが畳まれていることも見ていない。あわせて、GH-428 の台帳（`## 注意` の `### 台帳`「切り替えの結果」）は期待値を66ファイルと書いているが、実物は `conversation-tier-narrow` を足した68ファイル。
+- 出し先: 1件のタスクにする。`docs/coding-standards.md` の表の行と定義の段落を新しい分担に合わせて書き直し（E2E が通していることを単体を消す理由にしない）、2つの単体の題どおりに検査を足す（その旨の文・絞り込みだけでは当たる語で組み合わせ・1件目も畳みの外・中間レポートが `details` に畳まれている）。台帳の数は GH-428 の結果に注記する
+
+## 2026-10-07 E2E の期待値・疑似セッションの場面・部分木の口が、どのシナリオからも引かれずに残ったら検査で落とす（振り返り: GH-428）
+
+（GH-443 にした）
+
+- 出典: develop/draft/2026-10-07-e2e-unreferenced-fixture-check.md。利用者が `/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 黄 構造の重さ（6回目）
+- 根: e2e-unreferenced-fixture
+- 根拠: GH-428 で E2E を173件から55件に刈り込んだとき、引かれなくなったものを人の照合で消したため、受け入れのレビューで2往復の差し戻しになった。1回目は期待値3組（`report-task-verdict`・`session-ended`・`turn-history`）と `DOM_ROOT_SELECTORS` の口2つ（`project-settings`・`speech-log`）。2回目は消したシナリオ名を指す文字列の定数 `COMMAND_CATALOG_SCENARIO`。担当は場面の名前で照らしていて、シナリオ名と文字列の定数は照らしていなかった（friction log の 青 構造 2件）。`test/fixture/fake-session.json` は Edit を18回打って直した。
+- 出し先: `test/architecture.test.ts` か E2E の足場の単体に検査を足す。`test/e2e/expected/` のファイル名の組が、残った E2E の渡すシナリオ名（テンプレートの展開と `open…Room` の引数を含む）にちょうど対応すること、`DOM_ROOT_SELECTORS` の各キーをどれかの E2E が `domRoots` に渡していること、`fake-session.json` の `turns` の各場面を E2E・`scripts/`・文書のどれかが引いていること、を機械で確かめる（次に E2E を刈り込む・足すとき、消し残しが人の照合なしに落ちる）
+
+## 2026-10-07 E2E の上限の hook が `tw verify` を、tw が実際に打つコマンドで数える（振り返り: GH-424）
+
+（GH-444 にした）
+
+- 出典: develop/draft/2026-10-07-e2e-run-limit-reads-stamp-command.md。利用者が `/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 赤 正典の不備（15回目）
+- 根: e2e-run-limit-counts-verify
+- 根拠: GH-424 で、`- 送る前の検証コマンド:` の行があると `tw verify` は `pnpm run check --full` を打つようになった。`scripts/lib/e2e-run-limit.ts` は `--full` の無い `tw verify` を「変えたファイル次第（by-change）」と数え、`docs/workflow.md`「E2E の上限」の段落（`--full` の無い `tw verify` の扱い）も同じ前提で書かれている。そのため、全件を流す `tw verify` を変えたファイル次第の1回として数え、文書だけ・`scripts/` だけの変更では数えない。前の手 GH-368 は `tw verify` を名前で分類したので、tw の側で打つコマンドが変わると、また黙ってずれる。
+- 出し先: tsukumo の `scripts/lib/e2e-run-limit.ts` は、`tw verify` を名前で分類しない。CLAUDE.md の「## タスク運用」節から、tw と同じ規則で打つコマンドを読む（送る前の検証コマンドがあればそれ、無ければ検証コマンド）。そのコマンドを `check` の系統の分類にかける。あわせて `docs/workflow.md` の該当段落を直す。前の手（GH-368）は `tw verify` を固定の種類として数えていたので、tw が打つコマンドを変えると追随できなかった。今度は、tw と同じ設定の行を読むことで形ごと塞ぐ。
+
+## 2026-10-07 テストの下ごしらえを差し替えるときは、旧い下ごしらえが通していた本番の経路を数え上げる（振り返り: GH-417）
+
+（GH-445 にした）
+
+- 出典: develop/draft/2026-10-07-fixture-swap-indirect-coverage.md。利用者が `/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 黄 実装の誤り（5回目）
+- 根: fixture-swap-drops-indirect-coverage
+- 根拠: GH-417 で `selftest_beads.py` の `.beads` を `init.py` に作らせる形から、テスト側で `bd init` した写しを使う形へ替えたところ、github のテストが間接に確かめていた `init.py` の `-p gh` の分岐を通るテストが0件になった。`check(` のラベルは1つも消えておらず（227→228）、ラベルの突き合わせでは気付けなかった。受け入れの新しい目のレビューで当たり、差し戻して1件だけ `init.py` に作らせる形に戻した。
+- 出し先: claude-skills の `skills/test-audit/SKILL.md` の消す・畳む判断の節に、「下ごしらえを速い形へ差し替える・テストを割るときは、差し替える前の下ごしらえが通していた本番コードの分岐を挙げ、差し替えたあとも少なくとも1件がそれを通ることを確かめる（check のラベルの数では分からない）」を1項目足す
+
+## 2026-10-07 inquiry の E2E の期待値を、HTTP の応答と WebSocket のイベントの間の前後に依らない比べ方にする（振り返り: GH-426）
+
+（見送った: 揺れた宣言「同じ依頼の中で中間レポートを挟んで2回答えた質問は…」が GH-428 で単体 `main-view.test.tsx` へ移り、E2E から消えたため）
+
+- 出典: develop/draft/2026-10-07-inquiry-e2e-compare-order-per-channel.md。利用者が `/plan-tasks` の問いで「前提が消えたので見送る」を選んだ
+- 札: 赤 揺れ（15回目）
+- 根: e2e-inquiry-message-order
+- 根拠: GH-426 で check の錠を外し、同じマシンで `pnpm run check` を2本同時に流すと、1本が `test/e2e/inquiry.test.ts` の「同じ依頼の中で中間レポートを挟んで2回答えた質問は、2件とも出た順にメインビューへ残る」で落ちた（2本中1本・1件。単独では 12/12 通過）。2つ目の質問のセリフのイベントが、期待では answer の応答（status 200）のあと、実際は answer の入力の前に届いた。前の手（GH-346 の `waitForPending`、2026-10-05 の疑似セッションの `waitForAnswer`）のあとでも再発した
+- 出し先: タスクにする。前の手は「場面の進み方を答えに揃える」型で、負荷で HTTP の応答と WebSocket のイベントの届く前後が入れ替わる競りは残った。今度は期待値の側を変え、`test/e2e/inquiry.test.ts` の届いた記録の比べ方で、HTTP の応答とイベントを1本の並びとして比べるのをやめ、イベントどうしの順と応答の中身を別々に比べる（同じ比べ方をしているほかの E2E も同じタスクで揃える）
+
 ## 2026-10-07 `/loop /next-task` を文脈のしきい値で止めない
 
 （GH-433 にした）
