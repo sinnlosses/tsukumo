@@ -607,14 +607,20 @@ describe("MainView（答えた質問の記録）", () => {
     renderMainView([
       requestRecord({ text: "架空の依頼", turnId: 0 }),
       answered("fake-ask-1", "架空の質問1：どちらを先に見る？"),
-      detailRecord("架空の中間レポート"),
+      reportRecord("架空の中間レポート"),
+      tool({ toolUseId: "fake-write", name: "Write", input: { file_path: "src/a.ts" } }),
       answered("fake-ask-2", "架空の質問2：このまま閉じてよい？"),
       reportRecord("架空の結論"),
     ])
 
     const first = screen.getByRole("heading", { name: /架空の質問1/ })
     const second = screen.getByRole("heading", { name: /架空の質問2/ })
+    expect(first.closest("details")).toBeNull()
     expect(second.closest("details")).toBeNull()
+    const folded = document.querySelectorAll("details")
+    expect(folded).toHaveLength(1)
+    expect(folded[0]?.open).toBe(false)
+    expect(folded[0]?.textContent).toContain("架空の中間レポート")
     expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

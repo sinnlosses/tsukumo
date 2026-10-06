@@ -251,10 +251,15 @@ describe("タスクのモーダル（つながりをたどる）", () => {
     renderSelectionBoard(JUMP_TASKS, OPEN_FIRST)
 
     fireEvent.click(screen.getByRole("button", { name: /^待ち/ }))
-    fireEvent.change(searchBox(), { target: { value: "どこにも無い語" } })
+    fireEvent.change(searchBox(), { target: { value: "地の文" } })
 
     expect(screen.queryByRole("option")).toBeNull()
+    expect(screen.getByText("当てはまるタスクが無い")).toBeDefined()
     expect(screen.queryByRole("region", { name: / の詳細$/ })).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: /^すべて/ }))
+
+    expect(screen.getByRole("option", { name: /X-001/ })).toBeDefined()
   })
 })
 
