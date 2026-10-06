@@ -5,6 +5,8 @@
 //
 // ここが持つのは「状態そのもの」と「イベント1件でどう変わるか」だけで、姿から導くだけのもの（メインビューに出す形・`/` 補完の候補など）は置かない。
 
+import { isPlainObject } from "remeda"
+
 import type { CharacterInfo, CharacterPackEntry } from "../character-pack/character.ts"
 import type { Expression } from "../character-pack/expression.ts"
 import { type EffortLevel, isModelAlias } from "../command.ts"
@@ -81,6 +83,19 @@ export type ToolRunStatus =
         | { readonly kind: "succeeded" }
         | { readonly kind: "failed"; readonly output: ClippedText }
     }
+
+/**
+ * 背景で走らせた Bash（`run_in_background` が true）が走り終えたか。
+ * その tool_result は起動を受け付けた時点で届くので、走り終えた時刻は `background-tool-finished` が届いた時刻にする。
+ *
+ * - `foreground`: 背景で走らせていない
+ * - `awaiting`: 完了の知らせがまだ届いていない
+ * - `notified`: 完了の知らせが届いた。`at` はその時刻
+ */
+export type BackgroundEnd =
+  | { readonly kind: "foreground" }
+  | { readonly kind: "awaiting" }
+  | { readonly kind: "notified"; readonly at: RecordTime }
 
 /**
  * 記録が起きた時刻。雑談のログが行ごとの時刻と日の区切りに、最終レポートが段ごとの所要時間に使う。
@@ -170,6 +185,7 @@ export type SessionRecord =
       /** 始まった時刻（{@link RecordTime}）。所要時間は帯の「依頼の手順」が導く。 */
       readonly startedAt: RecordTime
       readonly status: ToolRunStatus
+      readonly backgroundEnd: BackgroundEnd
     }
   /**
    * 圧縮の区切り（`compact-boundary`）。中身を持たない（画面に出すのは細い線1本だけで、文言も数値も添えない）。
@@ -651,10 +667,15 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             nested,
             startedAt: { kind: "stamped", at },
             status: { kind: "running" },
+            backgroundEnd: runsInBackground(event.name, event.input)
+              ? { kind: "awaiting" }
+              : { kind: "foreground" },
           },
         ],
       }
     }
+    case "background-tool-finished":
+      return notifyBackgroundEnd(state, event.toolUseId, at)
     case "tool-finished":
       return finishTool(
         settleReportDrafting(state, event.toolUseId),
@@ -832,7 +853,7 @@ function recordsOfLastRequest(records: readonly SessionRecord[]): readonly Sessi
 
 /**
  * 依頼・セリフ・ツールの記録を「時刻が分からない」にする（他の種類は時刻を持たないのでそのまま）。
- * ツールは `startedAt` と、終わっていれば `status.finishedAt` の両方を畳み直す
+ * ツールは `startedAt` と、終わっていれば `status.finishedAt`、完了の知らせが届いていれば `backgroundEnd.at` を畳み直す
  * （`tool-started` / `tool-finished` は再生でも replay した時刻を積んでいるので、`stamped` のままだと replay の速さが本物の所要時間に見えてしまう）。
  */
 function withRestoredTime(record: SessionRecord): SessionRecord {
@@ -852,6 +873,10 @@ function withRestoredTime(record: SessionRecord): SessionRecord {
         record.status.kind === "finished"
           ? { ...record.status, finishedAt: { kind: "restored" } }
           : record.status,
+      backgroundEnd:
+        record.backgroundEnd.kind === "notified"
+          ? { kind: "notified", at: { kind: "restored" } }
+          : record.backgroundEnd,
     }
   }
   return record
@@ -1009,6 +1034,31 @@ function finishTool(
       ...state.records.slice(index + 1),
     ],
     lastToolFailureAt: isError ? at : state.lastToolFailureAt,
+  }
+}
+
+/** `run_in_background` が true の Bash か（`input` は外来の値）。 */
+function runsInBackground(name: string, input: unknown): boolean {
+  return name === "Bash" && isPlainObject(input) && input["run_in_background"] === true
+}
+
+/** 同じ `toolUseId` の記録が完了の知らせを待っていれば `notified` にする。前景の記録・知らない id・2回目の知らせでは姿を変えない。 */
+function notifyBackgroundEnd(state: SessionState, toolUseId: string, at: number): SessionState {
+  const index = state.records.findIndex(
+    (record) => record.kind === "tool" && record.toolUseId === toolUseId,
+  )
+  const record = index === -1 ? undefined : state.records[index]
+  if (record === undefined || record.kind !== "tool" || record.backgroundEnd.kind !== "awaiting") {
+    return state
+  }
+
+  return {
+    ...state,
+    records: [
+      ...state.records.slice(0, index),
+      { ...record, backgroundEnd: { kind: "notified", at: { kind: "stamped", at } } },
+      ...state.records.slice(index + 1),
+    ],
   }
 }
 

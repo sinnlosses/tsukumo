@@ -93,6 +93,7 @@ export function toolRecord(
     nested: false,
     startedAt: STAMPED,
     status: { kind: "running" },
+    backgroundEnd: { kind: "foreground" },
     ...overrides,
   }
 }

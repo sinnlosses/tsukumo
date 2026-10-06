@@ -60,9 +60,10 @@ import {
  * - `system` / `compact_boundary` は `compact-boundary` にする。
  *   `compact_metadata`（`trigger` / `pre_tokens` / `post_tokens` / `duration_ms`）は画面に出さないので運ばない
  * - `system` / `background_tasks_changed` は `background-tasks-changed` にする。`ambient` が true のもの（活動でないもの）は落とす
- * - `task_started` / `task_progress` / `task_updated` / `task_notification` は変換しない。
+ * - `task_started` / `task_progress` / `task_updated` は変換しない。
  *   背景のタスクが動いているかは `background_tasks_changed`（顔ぶれ全体を毎回運ぶ水準の知らせ）だけで分かる。
- *   始まり・終わりの対を数えると、取りこぼしで「動いている」が居残る（SDK の型定義がそう勧めている）。
+ *   始まり・終わりの対を数えると、取りこぼしで「動いている」が居残る（SDK の型定義がそう勧めている）
+ * - `task_notification` は顔ぶれには使わず、`tool_use_id` があるときだけ `background-tool-finished` にする（`tool_use_id` は Bash の `tool_use` の id と一致する。実測）。
  *   知らせのあとに claude が依頼なしで始める続きのターンは、ここではなく `withSelfStartedTurns` が `init` の届き方から起こす
  * - `assistant` に乗る `local_command_run` が `{ command: "model", args }` の形のときだけ `model-changed` を出す。
  *   `command` が `model` 以外の局所コマンド（`/clear` など）や、形が崩れている・`args` が無いときは出さない。
@@ -94,6 +95,11 @@ export function toSessionEvents(
       }
       if (message.subtype === "background_tasks_changed") {
         return backgroundTaskEvents(message.tasks)
+      }
+      if (message.subtype === "task_notification") {
+        return typeof message.tool_use_id === "string"
+          ? [{ kind: "background-tool-finished", toolUseId: message.tool_use_id }]
+          : []
       }
       if (message.subtype === "api_retry") {
         return apiRetryEvents(message)

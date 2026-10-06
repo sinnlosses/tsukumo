@@ -46,6 +46,7 @@ function tool(
       finishedAt: { kind: "stamped", at: 0 },
       result: { kind: "succeeded" },
     },
+    backgroundEnd: { kind: "foreground" },
     ...overrides,
   }
 }

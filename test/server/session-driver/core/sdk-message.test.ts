@@ -502,7 +502,7 @@ describe("toSessionEvents", () => {
       ).toEqual([])
     })
 
-    it("task_started / task_progress / task_updated / task_notification はイベントにしない（顔ぶれは background_tasks_changed だけで分かる）", () => {
+    it("task_started / task_progress / task_updated はイベントにしない（顔ぶれは background_tasks_changed だけで分かる）", () => {
       const edges = [
         {
           type: "system",
@@ -526,18 +526,44 @@ describe("toSessionEvents", () => {
           task_id: "bash-1",
           patch: { status: "completed", end_time: 1 },
         },
-        {
-          type: "system",
-          subtype: "task_notification",
-          task_id: "bash-1",
-          tool_use_id: "toolu_1",
-          status: "completed",
-          output_file: "/tmp/dummy/output",
-          summary: "架空の要約",
-        },
       ]
 
       expect(edges.flatMap((message) => toSessionEvents(message, EXPRESSIONS))).toEqual([])
+    })
+
+    it("tool_use_id のある task_notification を background-tool-finished にする（状態は区別しない）", () => {
+      const notification = (status: string) => ({
+        type: "system",
+        subtype: "task_notification",
+        task_id: "bash-1",
+        tool_use_id: "toolu_1",
+        status,
+        output_file: "/tmp/dummy/output",
+        summary: "架空の要約",
+      })
+
+      expect(
+        ["completed", "failed", "stopped"].flatMap((status) =>
+          toSessionEvents(notification(status), EXPRESSIONS),
+        ),
+      ).toEqual([
+        { kind: "background-tool-finished", toolUseId: "toolu_1" },
+        { kind: "background-tool-finished", toolUseId: "toolu_1" },
+        { kind: "background-tool-finished", toolUseId: "toolu_1" },
+      ])
+    })
+
+    it("tool_use_id の無い task_notification はイベントにしない（結び付ける記録が無い）", () => {
+      const message = {
+        type: "system",
+        subtype: "task_notification",
+        task_id: "bash-1",
+        status: "completed",
+        output_file: "/tmp/dummy/output",
+        summary: "架空の要約",
+      }
+
+      expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
     })
 
     it("知らせのあとの続きのターンの result（origin が task-notification）も turn-finished にする", () => {

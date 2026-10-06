@@ -214,6 +214,12 @@ export type SessionEvent =
       readonly content: string
       readonly isError: boolean
     }
+  /**
+   * 背景で走らせたツールが走り終えた（SDK の `system` / `task_notification` の `tool_use_id`）。
+   * 完了・失敗・停止を区別しない。
+   * 前景のツールでも数秒を越えると届く（実測）ので、効かせるかは畳み込みが記録の側で決める。
+   */
+  | { readonly kind: "background-tool-finished"; readonly toolUseId: string }
   /** 答え待ちの列が変わった（積まれた・解決した）。 */
   | { readonly kind: "pending-changed"; readonly pending: readonly PendingAsk[] }
   /**

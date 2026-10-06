@@ -27,6 +27,7 @@ describe("chatLogEntries", () => {
         nested: false,
         startedAt: { kind: "stamped", at: 0 },
         status: { kind: "running" },
+        backgroundEnd: { kind: "foreground" },
       },
       { kind: "question", toolUseId: "toolu_fictional", questions: [], answers: [] },
       speechRecord({ text: "架空のセリフ" }),

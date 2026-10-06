@@ -4,7 +4,7 @@ import { isPlainObject } from "remeda"
 
 import type { ClippedText } from "../utils/clip-text.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
-import type { RecordTime, SessionRecord } from "./session-state.ts"
+import type { BackgroundEnd, RecordTime, SessionRecord } from "./session-state.ts"
 import {
   currentPhaseOf,
   isWorkPlanRecord,
@@ -34,6 +34,7 @@ export type TurnStep = {
   readonly nested: boolean
   readonly startedAt: RecordTime
   readonly status: TurnStepStatus
+  readonly backgroundEnd: BackgroundEnd
   /** 始まったときの段取りの段（{@link WorkPhase}）。 */
   readonly phase: WorkPhase
 }
@@ -41,13 +42,17 @@ export type TurnStep = {
 /** ツール1件の所要時間（{@link toolDuration}）。復元した手順は `unknown`（`RecordTime` を参照）。 */
 export type ToolDuration = MeasuredTime
 
-/** {@link TurnStep} 1件の所要時間。実行中、または開始・終了のどちらかが `restored`（前のセッションから読み戻した手順）なら `unknown`。 */
+/**
+ * {@link TurnStep} 1件の所要時間。実行中、または開始・終了のどちらかが `restored`（前のセッションから読み戻した手順）なら `unknown`。
+ * 背景で走らせた Bash の終了は完了の知らせの時刻で（{@link BackgroundEnd}）、知らせが届いていなければ `unknown`。
+ */
 export function toolDuration(step: TurnStep): ToolDuration {
-  if (step.status.kind === "running") {
+  if (step.status.kind === "running" || step.backgroundEnd.kind === "awaiting") {
     return { kind: "unknown" }
   }
   const { startedAt } = step
-  const { finishedAt } = step.status
+  const finishedAt =
+    step.backgroundEnd.kind === "notified" ? step.backgroundEnd.at : step.status.finishedAt
   return startedAt.kind === "stamped" && finishedAt.kind === "stamped"
     ? { kind: "known", milliseconds: finishedAt.at - startedAt.at }
     : { kind: "unknown" }
@@ -124,6 +129,7 @@ function toTurnStep(
     input: record.input,
     nested: record.nested,
     startedAt: record.startedAt,
+    backgroundEnd: record.backgroundEnd,
     status:
       record.status.kind === "running"
         ? { kind: "running" }

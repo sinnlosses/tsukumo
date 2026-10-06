@@ -704,6 +704,56 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
   })
 
+  it("run_in_background の Bash は完了の知らせまでの時間を添え、知らせが届かなければ空にする", () => {
+    const backgroundStarted = (id: string, command: string): SessionEvent => ({
+      kind: "tool-started",
+      toolUseId: id,
+      name: "Bash",
+      input: { command, run_in_background: true },
+      parentToolUseId: undefined,
+    })
+    const accepted = (id: string): SessionEvent => ({
+      kind: "tool-finished",
+      toolUseId: id,
+      content: "架空の受付",
+      isError: false,
+    })
+    const timed: readonly (readonly [SessionEvent, number])[] = [
+      [ask, 0],
+      [backgroundStarted("toolu_b1", "架空の検査"), 1_000],
+      [accepted("toolu_b1"), 1_300],
+      [backgroundStarted("toolu_b2", "架空の別の検査"), 2_000],
+      [accepted("toolu_b2"), 2_300],
+      [{ kind: "background-tool-finished", toolUseId: "toolu_b1" }, 63_000],
+      [
+        report("架空の結論。", "", "", [
+          { status: "ok", label: "知らせが届いた", figure: "", command: "架空の検査", detail: "" },
+          {
+            status: "ok",
+            label: "知らせが届かない",
+            figure: "",
+            command: "架空の別の検査",
+            detail: "",
+          },
+        ]),
+        64_000,
+      ],
+      [finished, 65_000],
+    ]
+    const state = timed.reduce(
+      (current, [event, at]) => applySessionEvent(current, event, at),
+      INITIAL_SESSION_STATE,
+    )
+    const [shown] = shownReports(mainViewTurns(mainViewEntries(state), SETTLED, true).at(-1))
+
+    expect(shown).toContain(
+      '<span class="check-mark">✓</span><span class="check-label">知らせが届いた</span><span class="check-figure"></span><span class="check-time">1分02秒</span>',
+    )
+    expect(shown).toContain(
+      '<span class="check-mark">✓</span><span class="check-label">知らせが届かない</span><span class="check-figure"></span><span class="check-time"></span>',
+    )
+  })
+
   it("段取りを渡したやり取りでは、中間レポートはまとめだけで、最終レポートは結論の下に段ごとの所要時間の表を置く", () => {
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",

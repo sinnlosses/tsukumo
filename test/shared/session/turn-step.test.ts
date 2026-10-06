@@ -80,6 +80,7 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
         nested: false,
         startedAt: stamped,
         status: { kind: "done", finishedAt: stamped },
+        backgroundEnd: { kind: "foreground" },
         phase: { kind: "none" },
       },
       {
@@ -93,6 +94,7 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
           output: { head: "架空のエラー出力", omittedLength: 0 },
           finishedAt: stamped,
         },
+        backgroundEnd: { kind: "foreground" },
         phase: { kind: "none" },
       },
       {
@@ -102,6 +104,7 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
         nested: false,
         startedAt: stamped,
         status: { kind: "running" },
+        backgroundEnd: { kind: "foreground" },
         phase: { kind: "none" },
       },
     ])
@@ -144,6 +147,28 @@ describe("toolDuration（所要時間。tool-started / tool-finished の at か�
     )
 
     expect(toolDuration(turnSteps(list)[0]!)).toEqual({ kind: "known", milliseconds: 3_500 })
+  })
+
+  it("背景で走らせた Bash は、済みでも知らせを待つあいだは unknown、届いたら開始から知らせまで", () => {
+    const backgroundBash = (backgroundEnd: TurnStep["backgroundEnd"]) =>
+      toolRecord({
+        startedAt: { kind: "stamped", at: 1_000 },
+        status: finishedToolStatus({ finishedAt: { kind: "stamped", at: 1_300 } }),
+        backgroundEnd,
+      })
+    const list = currentTurnSteps(
+      [
+        requestRecord(),
+        backgroundBash({ kind: "awaiting" }),
+        backgroundBash({ kind: "notified", at: { kind: "stamped", at: 61_000 } }),
+      ],
+      false,
+    )
+
+    expect(turnSteps(list).map((step) => toolDuration(step))).toEqual([
+      { kind: "unknown" },
+      { kind: "known", milliseconds: 60_000 },
+    ])
   })
 
   it("実行中は unknown", () => {

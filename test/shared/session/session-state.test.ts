@@ -283,6 +283,7 @@ describe("applySessionEvent", () => {
         nested: false,
         startedAt: { kind: "stamped", at: 0 },
         status: { kind: "running" },
+        backgroundEnd: { kind: "foreground" },
       },
     ])
   })
@@ -314,6 +315,7 @@ describe("applySessionEvent", () => {
           finishedAt: { kind: "stamped", at: 0 },
           result: { kind: "failed", output: { head: "ダミーの結果", omittedLength: 0 } },
         },
+        backgroundEnd: { kind: "foreground" },
       },
     ])
     // メインビューへ渡す tool の記録が持つのは名前・入力・結果だけ（描くかどうかは
@@ -1143,6 +1145,73 @@ describe("applySessionEvent（背景のタスク）", () => {
     )
 
     expect(view.backgroundTasks).toEqual([])
+  })
+})
+
+describe("applySessionEvent（背景で走らせた Bash の終わり）", () => {
+  const bashStarted = (toolUseId: string, input: unknown): SessionEvent => ({
+    kind: "tool-started",
+    toolUseId,
+    name: "Bash",
+    input,
+    parentToolUseId: undefined,
+  })
+  const accepted = (toolUseId: string): SessionEvent => ({
+    kind: "tool-finished",
+    toolUseId,
+    content: "架空の受付",
+    isError: false,
+  })
+  const notified = (toolUseId: string): SessionEvent => ({
+    kind: "background-tool-finished",
+    toolUseId,
+  })
+  const applyAt = (...stamped: readonly (readonly [SessionEvent, number])[]): SessionState =>
+    stamped.reduce(
+      (state, [event, at]) => applySessionEvent(state, event, at),
+      INITIAL_SESSION_STATE,
+    )
+  const backgroundEndsOf = (state: SessionState) =>
+    state.records.flatMap((record) => (record.kind === "tool" ? [record.backgroundEnd] : []))
+
+  it("run_in_background の Bash は知らせを待ち、知らせが届いた時刻を持つ（tool_result の受付は終わりにしない）", () => {
+    const waiting = applyAt(
+      [bashStarted("toolu_bg", { command: "架空の検査", run_in_background: true }), 1_000],
+      [accepted("toolu_bg"), 1_300],
+    )
+    const done = applySessionEvent(waiting, notified("toolu_bg"), 9_000)
+
+    expect(backgroundEndsOf(waiting)).toEqual([{ kind: "awaiting" }])
+    expect(backgroundEndsOf(done)).toEqual([
+      { kind: "notified", at: { kind: "stamped", at: 9_000 } },
+    ])
+  })
+
+  it("前景の Bash・知らない id・2回目の知らせでは姿を変えない（前景でも長いと知らせが届く）", () => {
+    const state = applyAt(
+      [bashStarted("toolu_fg", { command: "架空の検査" }), 0],
+      [notified("toolu_fg"), 4_000],
+      [accepted("toolu_fg"), 4_005],
+      [bashStarted("toolu_bg", { command: "架空の検査", run_in_background: true }), 5_000],
+      [notified("toolu_bg"), 7_000],
+      [notified("toolu_bg"), 8_000],
+      [notified("toolu_unknown"), 9_000],
+    )
+
+    expect(backgroundEndsOf(state)).toEqual([
+      { kind: "foreground" },
+      { kind: "notified", at: { kind: "stamped", at: 7_000 } },
+    ])
+  })
+
+  it("復元した記録は知らせの時刻も分からない", () => {
+    const state = applyAt(
+      [bashStarted("toolu_bg", { command: "架空の検査", run_in_background: true }), 0],
+      [notified("toolu_bg"), 7_000],
+      [{ kind: "history-restored" }, 8_000],
+    )
+
+    expect(backgroundEndsOf(state)).toEqual([{ kind: "notified", at: { kind: "restored" } }])
   })
 })
 

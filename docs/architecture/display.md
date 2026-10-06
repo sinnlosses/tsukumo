@@ -484,6 +484,27 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
     `toolDuration` で、復元した記録は測れないので添えない）。一致しなければ添えない。
     **モデルに時間を書かせる欄は作らない**（2026-09-27 に外した理由がそのまま効く）。段ごとの所要時間も同じく
     tsukumo が記録から求め、検証の表の下に表で描く（「段取り」の節。中間レポートには添えない）
+  - **`run_in_background` の Bash は、走りだした時刻から完了の知らせが届いた時刻までを所要時間にする**
+    （2026-10-06 利用者決定）。その tool_result は起動を受け付けた時点（約0.3秒後）で返るので、tool_result の時刻で
+    測ると起動の瞬間の時間になる。知らせは SDK の `system` / `task_notification` で、`tool_use_id` で記録に結ぶ
+    （変換は `background-tool-finished`、記録の側は `tool` の記録の `backgroundEnd`）。**知らせが届かない・結び付けられない
+    ときは、起動の瞬間の時間を出さず空にする。** 完了を待つ別の Bash（待ちのループ）を挟んでも、測るのは背景の Bash
+    そのもの。背景かどうかは記録の `input` の `run_in_background === true`（Bash だけ）で決める。記録の形が変わったので
+    `PROTOCOL_VERSION` を 41 に上げた。依頼の手順の所要時間も同じ `toolDuration` を通るので同じ値になる
+  - 背景の Bash の知らせの形（2026-10-06 に SDK 0.3.288・本物の claude で実測。キーと型だけを見て、文面は記録していない）:
+    - 届く順は `tool_use`（input に `run_in_background`（boolean））→ `background_tasks_changed`（`task_id` /
+      `task_type` / `description` だけで `tool_use_id` は無い）→ `task_started`（`task_id` / `tool_use_id` /
+      `description` / `is_backgrounded`（true）/ `task_type`（`local_bash`））→ `tool_result` → `result`。完了したときに
+      `background_tasks_changed`（空）→ `task_updated`（`task_id` / `patch.status` / `patch.end_time`（エポックミリ秒））→
+      `task_notification`（`task_id` / `tool_use_id` / `status` / `output_file` / `summary`。Bash では `usage` は無い）が
+      同じミリ秒に届く。時刻を持つのは `patch.end_time` だけで、`task_notification` 自身は持たない。終わりの時刻には
+      知らせが届いた時刻（`StampedEvent.at`）を使う
+    - 鍵: `task_notification` の `tool_use_id` が Bash の `tool_use` の id と一致する。tool_result の文面は読まない。
+      サブエージェントの中の背景の Bash も、`task_started` / `task_notification` が `parent_tool_use_id` 無しでメインの流れに
+      届き、`tool_use_id` は中の Bash の id と一致する。tool_result の `tool_use_result.backgroundTaskId` はメインの Bash にしか
+      載らないので鍵にしない
+    - 前景の Bash・前景のサブエージェントも、数秒を越えると `task_started`（`is_backgrounded` が false）と
+      `task_notification` が届く（tool_result の約5ms前）。なので知らせは背景で走らせた Bash の記録にだけ効かせる
   - 突き合わせはメインビューの組み立て（`main-view.ts`）で描くたびに行い、所要時間を記録には持たない。
     `figure` / `command` の無い前の形の記録は、2つを空文字として読む（`parseReportChecks`）。
     `report` のイベントの形が変わったので `PROTOCOL_VERSION` を 24 に上げた

@@ -21,6 +21,7 @@ const SESSION_EVENT_KINDS = {
   "delegate-returned": true,
   "tool-started": true,
   "tool-finished": true,
+  "background-tool-finished": true,
   "pending-changed": true,
   "question-answered": true,
   "turn-finished": true,
