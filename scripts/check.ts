@@ -22,7 +22,11 @@ import { fileURLToPath } from "node:url"
 
 import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-repository.ts"
 import { describeFailedStages, parseFailedTests, type StageOutcome } from "./lib/check-failure.ts"
-import { acquireCheckLock, withCheckLockOwner } from "./lib/check-lock-repository.ts"
+import {
+  acquireCheckLock,
+  withCheckLockOwner,
+  withoutCheckLock,
+} from "./lib/check-lock-repository.ts"
 import { planStages, type Stage } from "./lib/check-stage.ts"
 import { planE2eRun } from "./lib/e2e-selection-repository.ts"
 
@@ -39,6 +43,7 @@ const activeStages = stagePlan.stages
 for (const stage of activeStages.filter((candidate) => !candidate.heavy)) {
   const result = spawnSync("pnpm", ["run", stage.name, ...stage.args], {
     cwd: ROOT,
+    env: withoutCheckLock(process.env),
     stdio: "inherit",
   })
   if (result.status !== 0) {
@@ -47,27 +52,33 @@ for (const stage of activeStages.filter((candidate) => !candidate.heavy)) {
 }
 
 const heavyStages = activeStages.filter((stage) => stage.heavy)
-const release = await acquireCheckLock(ROOT)
-const onSignal = (signal: NodeJS.Signals): void => {
-  release()
-  process.kill(process.pid, signal)
+if (heavyStages.length > 0) {
+  await runUnderLock(heavyStages)
 }
-process.once("SIGINT", onSignal)
-process.once("SIGTERM", onSignal)
-try {
-  const results = await Promise.all(heavyStages.map((stage) => runBuffered(stage)))
-  for (const result of results) {
-    process.stdout.write(result.output)
+
+async function runUnderLock(stages: readonly Stage[]): Promise<void> {
+  const release = await acquireCheckLock(ROOT)
+  const onSignal = (signal: NodeJS.Signals): void => {
+    release()
+    process.kill(process.pid, signal)
   }
-  for (const line of describeFailedStages(results)) {
-    process.stdout.write(`${line}\n`)
+  process.once("SIGINT", onSignal)
+  process.once("SIGTERM", onSignal)
+  try {
+    const results = await Promise.all(stages.map((stage) => runBuffered(stage)))
+    for (const result of results) {
+      process.stdout.write(result.output)
+    }
+    for (const line of describeFailedStages(results)) {
+      process.stdout.write(`${line}\n`)
+    }
+    const failed = results.find((result) => result.status !== 0)
+    if (failed !== undefined) {
+      process.exitCode = failed.status
+    }
+  } finally {
+    release()
   }
-  const failed = results.find((result) => result.status !== 0)
-  if (failed !== undefined) {
-    process.exitCode = failed.status
-  }
-} finally {
-  release()
 }
 
 /** 変えたファイル。`--full` で集められないときは空（5段すべてを打つ）。 */

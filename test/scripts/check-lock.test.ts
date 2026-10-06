@@ -10,6 +10,7 @@ import {
   acquireCheckLock,
   acquireCheckLockUnlessHeld,
   withCheckLockOwner,
+  withoutCheckLock,
 } from "../../scripts/lib/check-lock-repository.ts"
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
 import { useTempDir } from "../fixture/temp-dir.ts"
@@ -100,6 +101,20 @@ describe("check の錠", { timeout: WAIT_TIMEOUT_MS }, () => {
 
     release()
     ;(await waiting)()
+  })
+
+  test("錠を取らない印の環境では、他に握られていても待たず、錠も作らず消さない", async () => {
+    const root = await createRepository()
+    const release = await acquireCheckLock(root)
+
+    const releaseSkipped = await acquireCheckLockUnlessHeld(root, withoutCheckLock({}))
+    releaseSkipped()
+    expect(existsSync(lockPath(root))).toBe(true)
+    release()
+
+    const releaseFree = await acquireCheckLockUnlessHeld(root, withoutCheckLock({}))
+    expect(existsSync(lockPath(root))).toBe(false)
+    releaseFree()
   })
 
   test("環境に持ち主が無ければ、錠が空いているとき通常どおり取る", async () => {
