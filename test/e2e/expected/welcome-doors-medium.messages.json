@@ -114,7 +114,7 @@
             }
           }
         ],
-        "runPrompt": "/next-task {id}"
+        "runPrompt": "タスク {id} を進めて（bd show {id} で読める）。"
       }
     }
   }

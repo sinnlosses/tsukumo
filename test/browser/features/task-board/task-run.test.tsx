@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
+import { DEFAULT_RUN_PROMPT } from "../../../../src/shared/repository/project-settings.ts"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
@@ -193,13 +194,19 @@ describe("タスクの実行を頼む", () => {
 
   it("モーダルからは依存の済んだ保留も頼め、判断を聞かれることを確認に添える", () => {
     const sent: unknown[] = []
-    renderBoard(collectInto(sent), [], [...TASKS, holdTask("X-003", ["X-001"])])
+    renderBoard(collectInto(sent), [], [...TASKS, holdTask("X-003", ["X-001"])], DEFAULT_RUN_PROMPT)
 
     openRunConfirm("X-003")
-    expect(confirmDialog()?.textContent).toContain("着手の前に判断を聞かれる")
+    expect(confirmDialog()?.textContent).toContain("着手の前に判断を聞いて")
     fireEvent.click(screen.getByRole("button", { name: "実行する" }))
 
-    expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-003", images: [] }])
+    expect(sent).toEqual([
+      {
+        procedure: "session.prompt",
+        text: "タスク X-003 を進めて（bd show X-003 で読める）。このタスクは保留なので、着手の前に判断を聞いて。",
+        images: [],
+      },
+    ])
   })
 
   it("設定の文面の {id} をタスクIDにして送る。既定でない文面では保留の説明を添えない", () => {
@@ -208,7 +215,7 @@ describe("タスクの実行を頼む", () => {
 
     openRunConfirm("X-003")
     expect(confirmDialog()?.textContent).toContain("/work X-003 now")
-    expect(confirmDialog()?.textContent).not.toContain("判断を聞かれる")
+    expect(confirmDialog()?.textContent).not.toContain("判断を聞いて")
     fireEvent.click(screen.getByRole("button", { name: "実行する" }))
 
     expect(sent).toEqual([{ procedure: "session.prompt", text: "/work X-003 now", images: [] }])

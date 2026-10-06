@@ -8,6 +8,7 @@ import {
   readProjectSettingsDraft,
   writeProjectSettings,
 } from "../../../../src/server/repository/adapter/project-settings.ts"
+import { DEFAULT_RUN_PROMPT } from "../../../../src/shared/repository/project-settings.ts"
 import { git, initGitRepository } from "../../../fixture/git-repository.ts"
 import {
   PLAIN_PROJECT_SETTINGS_DRAFT,
@@ -28,7 +29,7 @@ describe("readProjectSettings", () => {
 
     expect(await readProjectSettings(root())).toEqual({
       kind: "read",
-      tasks: { mainBranch: "main", runPrompt: "/next-task {id}" },
+      tasks: { mainBranch: "main", runPrompt: DEFAULT_RUN_PROMPT },
     })
   })
 
@@ -75,7 +76,7 @@ describe("readProjectSettingsDraft", () => {
     expect(await readProjectSettingsDraft(root())).toEqual({
       file: "none",
       mainBranch: { value: "trunk", inferred: true },
-      runPrompt: { value: "/next-task {id}", inferred: false },
+      runPrompt: { value: DEFAULT_RUN_PROMPT, inferred: false },
     })
   })
 

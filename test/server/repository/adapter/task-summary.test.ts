@@ -8,7 +8,10 @@ import {
   watchTaskSummary,
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
-import { PROJECT_SETTINGS_PATH } from "../../../../src/shared/repository/project-settings.ts"
+import {
+  DEFAULT_RUN_PROMPT,
+  PROJECT_SETTINGS_PATH,
+} from "../../../../src/shared/repository/project-settings.ts"
 import { BEADS_TEST_ACTOR, bd, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import {
   writeProjectSettings,
@@ -66,7 +69,7 @@ function sleep(ms: number): Promise<void> {
 
 /** `TaskSummaryResult` の `known` 側を組み立てる。 */
 function known(...items: readonly Record<string, unknown>[]): Record<string, unknown> {
-  return { kind: "known", items, runPrompt: "/next-task {id}" }
+  return { kind: "known", items, runPrompt: DEFAULT_RUN_PROMPT }
 }
 
 /** 本文・完了条件・やることを付けずに作った課題の本文（`composeBeadsBody` が組む枠だけの骨組み）。 */

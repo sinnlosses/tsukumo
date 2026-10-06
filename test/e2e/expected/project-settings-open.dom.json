@@ -353,15 +353,18 @@
             "aria-hidden": "true"
           },
           "children": [
-            "/next-task",
-            "{id}"
+            "タスク",
+            "{id}",
+            "を進めて（bd show",
+            "{id}",
+            "で読める）。"
           ]
         },
         {
           "tag": "input",
           "attributes": {
             "type": "text",
-            "value": "/next-task {id}"
+            "value": "タスク {id} を進めて（bd show {id} で読める）。"
           }
         },
         {

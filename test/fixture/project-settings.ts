@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
 import {
+  DEFAULT_RUN_PROMPT,
   PROJECT_SETTINGS_PATH,
   type ProjectSettingsDraft,
 } from "../../src/shared/repository/project-settings.ts"
@@ -12,7 +13,7 @@ import {
 export const PLAIN_PROJECT_SETTINGS_DRAFT = {
   file: "none",
   mainBranch: { value: "main", inferred: false },
-  runPrompt: { value: "/next-task {id}", inferred: false },
+  runPrompt: { value: DEFAULT_RUN_PROMPT, inferred: false },
 } satisfies ProjectSettingsDraft
 
 /** 主ブランチを `mainBranch`（既定 `main`）にした設定を書く。 */

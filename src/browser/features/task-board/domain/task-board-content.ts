@@ -152,7 +152,7 @@ function selectionOf(
   }
 }
 
-/** 保留のタスクは、送った先の `/next-task` が着手の前に判断を利用者に尋ねるので頼める。 */
+/** 保留のタスクは、文面が着手の前に判断を尋ねさせるので頼める。 */
 function runOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRun {
   const kind = entry.state.kind
   if (kind === "ready" || (kind === "hold" && entry.waiting.length === 0)) {

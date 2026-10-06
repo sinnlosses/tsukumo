@@ -10,11 +10,17 @@ import { z } from "zod"
 export const PROJECT_SETTINGS_PATH = ".tsukumo/project.json"
 
 /** 「tsukumo に頼む」で送る文面の既定。`{id}` をタスクIDに置き換えて送る。 */
-export const DEFAULT_RUN_PROMPT = "/next-task {id}"
+export const DEFAULT_RUN_PROMPT = "タスク {id} を進めて（bd show {id} で読める）。"
 
-/** 文面のひな形の `{id}` をタスクIDに置き換える。 */
-export function runPromptOf(template: string, taskId: string): string {
-  return template.replaceAll("{id}", taskId)
+const HELD_NOTE = "このタスクは保留なので、着手の前に判断を聞いて。"
+
+/**
+ * 文面のひな形の `{id}` をタスクIDに置き換える。
+ * 保留のタスクで文面が既定のときだけ、着手の前に判断を聞く旨を末尾に添える。
+ */
+export function runPromptOf(template: string, taskId: string, held: boolean): string {
+  const prompt = template.replaceAll("{id}", taskId)
+  return held && template === DEFAULT_RUN_PROMPT ? `${prompt}${HELD_NOTE}` : prompt
 }
 
 export type TaskSettings = {

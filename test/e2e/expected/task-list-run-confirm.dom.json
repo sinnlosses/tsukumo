@@ -254,7 +254,7 @@
                             {
                               "tag": "code",
                               "children": [
-                                "/next-task T-001"
+                                "タスク T-001 を進めて（bd show T-001 で読める）。"
                               ]
                             },
                             "と打つのと同じ。"
@@ -333,7 +333,7 @@
             {
               "tag": "code",
               "children": [
-                "/next-task T-001"
+                "タスク T-001 を進めて（bd show T-001 で読める）。"
               ]
             },
             "と打つのと同じ。"

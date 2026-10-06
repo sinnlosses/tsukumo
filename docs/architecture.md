@@ -326,7 +326,7 @@ plugin/                       セッションに載せる Claude Code のプラ�
 
 **プロジェクトの設定**（`docs/architecture/adr/0022-three-setting-homes.md`）は、起動先の作業ツリーの
 `.tsukumo/project.json` の1つだけから読む。形は
-`{ "tasks": { "mainBranch": "<ブランチ名>", "runPrompt": "<文面。既定 /next-task {id}>" } }`
+`{ "tasks": { "mainBranch": "<ブランチ名>", "runPrompt": "<文面。既定 タスク {id} を進めて（bd show {id} で読める）。>" } }`
 （タスク運用を使わないプロジェクトは `{ "tasks": "off" }`）で、検証は `shared/repository/project-settings.ts` の `projectSettingsOf`、読み出しは
 `server/repository/adapter/project-settings.ts` の `readProjectSettings` の1か所。結果は
 「設定なし（ファイルが無い・`tasks` が無い）・使わない（`tasks` が `"off"`）・読めない（形が違う）・読めた」の4つで、

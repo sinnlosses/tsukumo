@@ -133,7 +133,7 @@ describe("タスクの一覧", () => {
     expect(await room.page.getByRole("button", { name: "これを始める →" }).count()).toBe(0)
   })
 
-  it("確認の「実行する」を押すと /next-task <ID> が送られて確認とのぞき窓が閉じる", async () => {
+  it("確認の「実行する」を押すと既定の文面で依頼が送られて確認とのぞき窓が閉じる", async () => {
     const room = await openTaskListRoom(run, "task-list-run-executed", [
       "task-section",
       "task-run-confirm",
@@ -208,7 +208,9 @@ describe("プロジェクトの設定を画面から書く", () => {
     const dialog = await projectSettingsDialog(room)
 
     expect(await dialog.getByLabel("主ブランチ").inputValue()).toBe("main")
-    expect(await dialog.getByLabel("頼む文面").inputValue()).toBe("/next-task {id}")
+    expect(await dialog.getByLabel("頼む文面").inputValue()).toBe(
+      "タスク {id} を進めて（bd show {id} で読める）。",
+    )
     await room.settleAndMatch(ELAPSED_MS)
   })
 
@@ -239,7 +241,7 @@ describe("プロジェクトの設定を画面から書く", () => {
     await confirm.getByRole("button", { name: "上書き" }).click()
     await room.waitForTasksContaining(["T-001"])
     expect(readProjectSettingsFile(room)).toEqual({
-      tasks: { mainBranch: "main", runPrompt: "/next-task {id}" },
+      tasks: { mainBranch: "main", runPrompt: "タスク {id} を進めて（bd show {id} で読める）。" },
     })
   })
 

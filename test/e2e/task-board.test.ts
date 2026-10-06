@@ -41,7 +41,7 @@ describe("タスクのモーダル", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("「tsukumo に頼む」から確認を通すと /next-task <ID> が送られ、モーダルも閉じる", async () => {
+  it("「tsukumo に頼む」から確認を通すと既定の文面で依頼が送られ、モーダルも閉じる", async () => {
     const room = await openTaskBoardRoom(run, "task-board-run", ["task-board", "task-run-confirm"])
     await boardDialog(room).getByRole("button", { name: "tsukumo に頼む" }).click()
     await room.page.getByRole("button", { name: "実行する", exact: true }).click()

@@ -1,11 +1,25 @@
 import { describe, expect, it } from "vitest"
 
-import { projectSettingsOf, runPromptOf } from "../../../src/shared/repository/project-settings.ts"
+import {
+  DEFAULT_RUN_PROMPT,
+  projectSettingsOf,
+  runPromptOf,
+} from "../../../src/shared/repository/project-settings.ts"
 
 describe("runPromptOf", () => {
   it("{id} をタスクIDに置き換える（何か所あってもすべて）", () => {
-    expect(runPromptOf("/next-task {id}", "X-1")).toBe("/next-task X-1")
-    expect(runPromptOf("/a {id} {id}", "X-1")).toBe("/a X-1 X-1")
+    expect(runPromptOf("/next-task {id}", "X-1", false)).toBe("/next-task X-1")
+    expect(runPromptOf("/a {id} {id}", "X-1", false)).toBe("/a X-1 X-1")
+  })
+
+  it("既定の文面は平文で、保留のときだけ判断を聞く旨を添える", () => {
+    expect(runPromptOf(DEFAULT_RUN_PROMPT, "X-1", false)).toBe(
+      "タスク X-1 を進めて（bd show X-1 で読める）。",
+    )
+    expect(runPromptOf(DEFAULT_RUN_PROMPT, "X-1", true)).toBe(
+      "タスク X-1 を進めて（bd show X-1 で読める）。このタスクは保留なので、着手の前に判断を聞いて。",
+    )
+    expect(runPromptOf("/next-task {id}", "X-1", true)).toBe("/next-task X-1")
   })
 })
 
@@ -13,7 +27,7 @@ describe("projectSettingsOf", () => {
   it("tasks を読み、runPrompt を省けば既定の文面にする", () => {
     expect(projectSettingsOf('{ "tasks": { "mainBranch": "trunk" } }')).toEqual({
       kind: "read",
-      tasks: { mainBranch: "trunk", runPrompt: "/next-task {id}" },
+      tasks: { mainBranch: "trunk", runPrompt: DEFAULT_RUN_PROMPT },
     })
     expect(
       projectSettingsOf('{ "tasks": { "mainBranch": "main", "runPrompt": "/work {id}" } }'),

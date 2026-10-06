@@ -8,7 +8,7 @@
 
 import type { ReactElement } from "react"
 
-import { DEFAULT_RUN_PROMPT, runPromptOf } from "../../../../shared/repository/project-settings.ts"
+import { runPromptOf } from "../../../../shared/repository/project-settings.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
@@ -18,7 +18,7 @@ import styles from "./task-run-confirm.module.css"
 
 export type TaskRunConfirmProps = {
   readonly taskId: string
-  /** 保留のタスクなら真。文面が既定（`/next-task`）のときだけ、着手の前に判断を尋ねることを添える。 */
+  /** 保留のタスクなら真。文面が既定のときだけ、着手の前に判断を聞く旨を送る文面に添える。 */
   readonly held: boolean
   /** 文面のひな形。`{id}` を `taskId` に置き換えて送る。 */
   readonly runPrompt: string
@@ -38,7 +38,7 @@ export type TaskRunConfirmProps = {
 export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   const dispatch = useSession((session) => session.dispatch)
   const turnInProgress = useTurnRunning()
-  const prompt = runPromptOf(props.runPrompt, props.taskId)
+  const prompt = runPromptOf(props.runPrompt, props.taskId, props.held)
 
   const run = (): void => {
     dispatch.session.prompt({ text: prompt, images: [] })
@@ -79,9 +79,6 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
           className={styles["task-run-note"]}
         >
           入力欄に <code className={styles["task-run-prompt"]}>{prompt}</code> と打つのと同じ。
-          {props.held &&
-            props.runPrompt === DEFAULT_RUN_PROMPT &&
-            "保留のタスクなので、着手の前に判断を聞かれる。"}
         </Text>
       )}
       <div className={styles["task-run-actions"]}>

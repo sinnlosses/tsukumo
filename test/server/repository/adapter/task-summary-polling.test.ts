@@ -6,7 +6,10 @@ import {
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
 import type { BeadsIssue } from "../../../../src/shared/repository/beads-issue.ts"
-import type { ProjectSettingsRead } from "../../../../src/shared/repository/project-settings.ts"
+import {
+  DEFAULT_RUN_PROMPT,
+  type ProjectSettingsRead,
+} from "../../../../src/shared/repository/project-settings.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 
 // 偽の口と手で進める時計で、見回りが子プロセスを起こした回数を数える。
@@ -113,7 +116,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     await settle()
 
     expect(count("bd list")).toBe(1)
-    expect(changes).toMatchObject([{ kind: "known", runPrompt: "/next-task {id}" }])
+    expect(changes).toMatchObject([{ kind: "known", runPrompt: DEFAULT_RUN_PROMPT }])
   })
 
   it("設定が「使わない」なら、Beads を読まずに「使わない」を届ける", async () => {
