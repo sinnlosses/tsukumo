@@ -14,52 +14,7 @@ const run = useScenarioRun()
 const ELAPSED_MS = 60_000
 
 describe("モデル・effort・許可モードの操作子", () => {
-  it("広い窓のサイドバー下端で、クリックで吊り札が開く", async () => {
-    const room = await run.open({
-      scenario: "run-setting-model-open",
-      scene: "none",
-      viewport: "wide",
-      domRoots: ["sidebar"],
-    })
-
-    const combobox = room.page.getByRole("combobox", { name: /^モデル /u })
-    await combobox.click()
-    await room.page.getByRole("option", { name: "Sonnet" }).waitFor()
-
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("effort の吊り札を開くと、いまの段が縁取られた一覧が出る", async () => {
-    const room = await run.open({
-      scenario: "run-setting-effort-open",
-      scene: "none",
-      viewport: "wide",
-      domRoots: ["sidebar"],
-    })
-
-    const combobox = room.page.getByRole("combobox", { name: /^effort /u })
-    await combobox.click()
-    await room.page.getByRole("option", { name: "High", exact: true }).waitFor()
-
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("許可モードの吊り札を開くと、盾の塗りで段を見せる一覧が出る", async () => {
-    const room = await run.open({
-      scenario: "run-setting-permission-mode-open",
-      scene: "none",
-      viewport: "wide",
-      domRoots: ["sidebar"],
-    })
-
-    const combobox = room.page.getByRole("combobox", { name: /^許可モード /u })
-    await combobox.click()
-    await room.page.getByRole("option", { name: "全部許す" }).waitFor()
-
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("選ぶと session.setModel が流れ、Esc で閉じる", async () => {
+  it("広い窓のサイドバー下端で、クリックで吊り札が開き、選ぶと session.setModel が流れ、Esc で閉じる", async () => {
     const room = await run.open({
       scenario: "run-setting-model-selected",
       scene: "none",

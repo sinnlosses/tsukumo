@@ -27,7 +27,7 @@ async function expectReadable(page: Page): Promise<void> {
 
 describe("会話の画面の押す的と字", () => {
   it.each(["large", "medium"] as const)(
-    "迎える画面とサイドバーの押せるもの・字が下限を割らない（%s）",
+    "迎える画面とサイドバー、サイドバーのタスクののぞき窓の押せるもの・字が下限を割らない（%s）",
     async (viewport) => {
       const room = await openTaskListRoomWithRunningTask(
         run,
@@ -40,21 +40,7 @@ describe("会話の画面の押す的と字", () => {
       }
       await room.page.locator('[data-region="sidebar"]').waitFor()
       await expectReadable(room.page)
-    },
-  )
 
-  it.each(["large", "medium"] as const)(
-    "サイドバーのタスクののぞき窓の押せるもの・字が下限を割らない（%s）",
-    async (viewport) => {
-      const room = await openTaskListRoomWithRunningTask(
-        run,
-        `target-size-task-peek-${viewport}`,
-        [],
-        viewport,
-      )
-      if (viewport === "medium") {
-        await room.page.getByRole("button", { name: "サイドバー", exact: true }).click()
-      }
       await room.page.locator(`#task-row-${READY_TASK_ID}`).click()
       await room.page.getByRole("button", { name: "これを始める →" }).waitFor()
       await expectReadable(room.page)
@@ -116,10 +102,9 @@ describe("会話の画面の押す的と字", () => {
   })
 
   it.each([
-    ["notation", "notation"],
     ["work-plan", "work-plan-quick"],
     ["verdict", "report-task-verdict"],
-  ] as const)("レポートの記法と段取りの字が下限を割らない（%s）", async (name, scene) => {
+  ] as const)("レポートの段取りと検証の字が下限を割らない（%s）", async (name, scene) => {
     const room = await run.open({
       scenario: `target-size-report-${name}`,
       scene,
@@ -135,7 +120,7 @@ describe("レポートの押せるパスの押す的と字", () => {
   const LONG_PATH =
     "src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css"
 
-  it("git 管理下の長いパスが文の中で押せる部品になり、下限を割らない", async () => {
+  it("記法の一覧の字と、文の中で押せる部品になった git 管理下の長いパスが下限を割らない", async () => {
     const room = await run.open({
       scenario: "target-size-report-file-link",
       scene: "notation",

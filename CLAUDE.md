@@ -68,8 +68,10 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 ## テスト方針
 
 配置・モック・消す/足すの判断は `docs/coding-standards.md`「テスト」節。TDD 推奨（`/tdd`）。
-**DOM の構造と画面の流れは E2E で守り、見た目（色・崩れ）は目視で確かめる**（E2E は
-`docs/architecture/testing.md`「E2E の走らせ方」、目視は `docs/architecture/testing.md`「手で確かめること」）。
+**E2E は利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないもの（寸法・入力・サーバとの往復）だけ。
+出し分けと DOM の細部は部品・フックの単体で、見た目（色・崩れ）は目視で確かめる**（2本目を置く条件は
+`docs/architecture/testing.md`「テスト」、E2E は `docs/architecture/testing.md`「E2E の走らせ方」、目視は
+`docs/architecture/testing.md`「手で確かめること」）。
 
 **IMPORTANT**: 変更後は必ず `pnpm run check` を通してから完了を報告する。テスト件数などの根拠なしに
 「完了しました」と言わない。**描画に関わる変更は、加えて何をどう確かめたか**（何が見えたか）を添える。

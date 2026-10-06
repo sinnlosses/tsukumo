@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { CharacterView } from "../../../../../../../src/browser/components/page/conversation/components/character-view/character-view.tsx"
@@ -8,7 +8,12 @@ import {
   type ViewedTurn,
 } from "../../../../../../../src/browser/stores/location-hash.ts"
 import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
+import type {
+  ReportWaitingLine,
+  SessionEvent,
+} from "../../../../../../../src/shared/session/session-event.ts"
 import {
+  applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionRecord,
   type SessionState,
@@ -206,6 +211,96 @@ describe("CharacterView", () => {
   })
 })
 
+describe("CharacterView（反応の吹き出し）", () => {
+  const REQUEST = {
+    kind: "request",
+    text: "架空の依頼",
+    images: [],
+  } as const satisfies SessionEvent
+  const SPEECH = {
+    kind: "speech",
+    text: "架空のセリフ",
+    expression: "default",
+  } as const satisfies SessionEvent
+  const COMPLETED = {
+    kind: "turn-finished",
+    outcome: { kind: "completed" },
+  } as const satisfies SessionEvent
+  const GREETED = {
+    kind: "welcome-greeting-changed",
+    state: WRITTEN_GREETING,
+  } as const satisfies SessionEvent
+
+  function report(waitingLine: ReportWaitingLine): SessionEvent {
+    return {
+      kind: "report",
+      toolUseId: "toolu_r1",
+      conclusion: "架空の結論",
+      sections: [],
+      favor: "",
+      checks: [],
+      task: { kind: "none" },
+      workPlanClosing: "none",
+      closing: { kind: "none" },
+      waitingLine,
+      unknownBlockCount: 0,
+      sessionSummary: undefined,
+    }
+  }
+
+  const WAITING_LINE = report({ kind: "speech", text: "架空の待ちの一言", expression: "default" })
+
+  /** 時刻 0 から1つずつ畳んだ姿。待ちの一言の出る時刻はとうに過ぎている。 */
+  function stateAfter(events: readonly SessionEvent[]): SessionState {
+    return events.reduce(
+      (state, event, index) => applySessionEvent(state, event, index),
+      INITIAL_SESSION_STATE,
+    )
+  }
+
+  it.each<[string, readonly SessionEvent[], string, string]>([
+    [
+      "利用上限で閉じると、前のセリフの下に利用上限の反応が最新として出る",
+      [
+        GREETED,
+        REQUEST,
+        SPEECH,
+        {
+          kind: "rate-limit-changed",
+          rateLimit: { kind: "rejected", bucket: "five-hour", resetsAt: undefined },
+        },
+        { kind: "turn-finished", outcome: { kind: "failed", cause: { kind: "api-error" } } },
+      ],
+      "limited",
+      "架空の上限の反応",
+    ],
+    [
+      "依頼を待つ間が続くと、本体が report に書いた待ちの一言が最新として出る",
+      [GREETED, REQUEST, SPEECH, WAITING_LINE, COMPLETED],
+      "idle",
+      "架空の待ちの一言",
+    ],
+    [
+      "続きから開くと、前回の最後のターンの待ちの一言がおかえりとして最新に出る",
+      [REQUEST, SPEECH, WAITING_LINE, COMPLETED, { kind: "history-restored" }, GREETED],
+      "welcome",
+      "架空の待ちの一言",
+    ],
+    [
+      "続きから開いて待ちの一言が無ければ、迎えの挨拶の札なしの文がおかえりとして出る",
+      [REQUEST, SPEECH, report({ kind: "none" }), COMPLETED, { kind: "history-restored" }, GREETED],
+      "welcome",
+      "架空の挨拶",
+    ],
+  ])("%s", (_, events, reaction, text) => {
+    renderCharacterView({ ...stateAfter(events), character: FIXTURE_CHARACTER })
+
+    const latest = document.querySelector(".balloon[data-latest='true']")
+    expect(latest?.getAttribute("data-reaction")).toBe(reaction)
+    expect(latest?.textContent).toContain(text)
+  })
+})
+
 describe("CharacterView（吹き出しを押すと遡る。docs/architecture/screen-design.md 13.7）", () => {
   const CHARACTER_WITH_PROUD: NonNullable<SessionState["character"]> = {
     ...FIXTURE_CHARACTER,
@@ -247,6 +342,19 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
 
     fireEvent.click(olderBalloon!)
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
+  })
+
+  it("セリフのログの行を押すと、ログの床の立ち絵がその表情になる", () => {
+    renderCharacterView(twoSpeechState())
+    fireEvent.click(screen.getByRole("button", { name: /^ログ$/ }))
+    const log = screen.getByRole("dialog", { name: "セリフのログ", hidden: true })
+    const floorExpression = (): string | null | undefined =>
+      log.querySelector(".speech-log-floor .portrait")?.getAttribute("data-expression")
+    expect(floorExpression()).toBe("proud")
+
+    fireEvent.click(within(log).getByRole("button", { name: "1つ目のセリフ", hidden: true }))
+
+    expect(floorExpression()).toBe("default")
   })
 
   it("反応を出しているときも、セリフを押して留めればそのセリフの表情が勝つ", () => {

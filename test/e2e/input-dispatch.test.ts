@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
@@ -27,23 +27,6 @@ describe("入力欄から送る", () => {
 
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("`/clear` に続けて文を書いて送ろうとすると、送られず、文が残り、帯で知らせる", async () => {
-    const room = await run.open({
-      scenario: "input-dispatch-clear-args",
-      scene: "none",
-      viewport: "wide",
-      domRoots: ["main", "dispatch"],
-    })
-
-    const textArea = room.page.locator("textarea")
-    await textArea.fill("/clear 続きの文（架空の依頼）")
-    await textArea.press("Meta+Enter")
-
-    await room.page.getByText("捨てられるので、送っていません").waitFor()
-    expect(await textArea.inputValue()).toBe("/clear 続きの文（架空の依頼）")
     await room.settleAndMatch(ELAPSED_MS)
   })
 })

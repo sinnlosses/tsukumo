@@ -4,12 +4,11 @@ import { describe, expect, it } from "vitest"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // 失敗で終わったやり取りの頭の失敗の塊と、その次の手（docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// 場面 `api-failure`・`rate-limit`・`stumble-failed-step` は、どれも `turn-finished` で流れ終わる。
+// 場面 `api-failure` は `turn-finished` で流れ終わる。
 
 const run = useScenarioRun()
 
 const FAILURE_REQUEST = "API のサーバが不調な日に頼む（架空の依頼）"
-const RATE_LIMIT_REQUEST = "利用上限の近くで頼む（架空の依頼）"
 
 describe("失敗の塊", () => {
   it("理由を人の言葉で出し、同じ依頼を入力欄に戻せる（送らない）。入力欄の下段は1段のまま", async () => {
@@ -32,45 +31,6 @@ describe("失敗の塊", () => {
     expect(await draft(room.page)).toBe(FAILURE_REQUEST)
     expect(await room.page.locator('[data-main-view-content="report"]').count()).toBe(1)
     expect(await isDispatchRowSingle(room.page)).toBe(true)
-  })
-
-  it("利用上限で終わったら、戻る時刻を添えた口で依頼を入力欄に戻せる。入力欄の下段は1段のまま", async () => {
-    const room = await run.open({
-      scenario: "turn-failure-rate-limit",
-      scene: "rate-limit",
-      viewport: "medium",
-      domRoots: [],
-    })
-    await room.waitForEvent("turn-finished")
-    const block = failureBlock(room.page)
-    await block.waitFor()
-
-    expect(await block.textContent()).not.toContain("rate_limit")
-    const door = block.getByRole("button", { name: /18:00に戻る/ })
-    await door.click()
-
-    expect(await draft(room.page)).toBe(RATE_LIMIT_REQUEST)
-    expect(await isDispatchRowSingle(room.page)).toBe(true)
-  })
-
-  it("失敗した手順を見る口を押すと、進み具合の帯の手順の一覧が開き、失敗の行が見える", async () => {
-    const room = await run.open({
-      scenario: "turn-failure-steps",
-      scene: "stumble-failed-step",
-      viewport: "wide",
-      domRoots: [],
-    })
-    await room.waitForEvent("turn-finished")
-    const block = failureBlock(room.page)
-    await block.waitFor()
-
-    await block.getByRole("button", { name: "失敗した手順を見る" }).click()
-
-    const steps = room.page.getByRole("region", { name: "依頼の手順" })
-    await steps.waitFor()
-    const failedRow = steps.locator("[data-step-failed]")
-    expect(await failedRow.count()).toBe(1)
-    await expect.poll(() => failedRow.isVisible()).toBe(true)
   })
 })
 

@@ -3,9 +3,8 @@ import { describe, it } from "vitest"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // speak → キャラビューの吹き出し（docs/architecture/testing.md「E2E のシナリオの一覧」）。`speech` イベントが
-// キャラビューの吹き出し（`<Balloon>`、`data-latest`）に積まれることを、疑似セッションの2つの場面で
-// 確かめる: `closing-narration`（締めの一言が最終レポートの後ろに続く）と `question-multi`
-// （1つのやり取りの中でセリフが3つ積み上がる）。
+// キャラビューの吹き出し（`<Balloon>`、`data-latest`）に積まれることを、場面 `closing-narration-quick`
+// （締めの一言が最終レポートの後ろに続く）で確かめる。
 
 const run = useScenarioRun()
 
@@ -17,18 +16,6 @@ describe("speak → キャラビューの吹き出し", () => {
     const room = await run.open({
       scenario: "speak-bubble-closing-narration",
       scene: "closing-narration-quick",
-      viewport: "wide",
-      domRoots: ["character"],
-    })
-
-    await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("1つのやり取りの中で speak が3回届くと、吹き出しが3つ並んで残る", async () => {
-    const room = await run.open({
-      scenario: "speak-bubble-question-multi",
-      scene: "question-multi",
       viewport: "wide",
       domRoots: ["character"],
     })

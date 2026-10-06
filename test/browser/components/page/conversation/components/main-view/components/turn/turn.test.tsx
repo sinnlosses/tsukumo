@@ -1,6 +1,8 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import { useComposerDraft } from "../../../../../../../../../src/browser/stores/composer-draft.ts"
+import { useTaskBoardRequest } from "../../../../../../../../../src/browser/stores/task-board-request.ts"
 import type {
   MainViewStep,
   MainViewStepBody,
@@ -34,6 +36,8 @@ const { Turn } =
 afterEach(() => {
   cleanup()
   revealed = []
+  useComposerDraft.setState(useComposerDraft.getInitialState(), true)
+  useTaskBoardRequest.setState(useTaskBoardRequest.getInitialState(), true)
 })
 
 /** 本文を持つステップの `body`。先頭行は本文そのもの（1行の本文しか使わないため）。 */
@@ -214,6 +218,31 @@ describe("Turn（失敗で終わったやり取り）", () => {
       "往復の上限に当たった",
     )
   })
+
+  it("利用上限で終わったやり取りの戻る時刻つきの口を押すと、依頼が入力欄の下書きに入る", () => {
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      rateLimit: {
+        kind: "rejected",
+        bucket: "five-hour",
+        resetsAt: Temporal.Now.instant().add({ hours: 1 }).epochMilliseconds,
+      },
+    })
+    render(
+      <Turn
+        turn={{
+          ...turn([]),
+          failure: { kind: "failed", failure: { kind: "api-error", error: "rate_limit" } },
+        }}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: /に戻る · 依頼を入力欄に戻す$/ }))
+
+    expect(useComposerDraft.getState().draft.text).toBe("架空の依頼")
+  })
 })
 
 describe("Turn（目録の1行と見出し）", () => {
@@ -239,5 +268,63 @@ describe("Turn（目録の1行と見出し）", () => {
     )
 
     expect(screen.queryByRole("button", { name: "X-7" })).toBeNull()
+  })
+
+  it("一覧にあるタスクの ID を押すと、そのタスクを選んでタスクのモーダルを開くよう頼む", () => {
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      tasks: {
+        kind: "known",
+        items: [
+          {
+            id: "X-7",
+            summary: "架空のタスク",
+            status: "done",
+            difficulty: undefined,
+            loopable: undefined,
+            dependencies: [],
+            assignee: undefined,
+            body: "",
+            location: { kind: "none" },
+          },
+        ],
+        runPrompt: "/next-task {id}",
+      },
+    })
+    render(
+      <Turn
+        turn={turn([step({ id: 0, body: taskBody("架空の本文"), final: true })])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "X-7" }))
+
+    expect(useTaskBoardRequest.getState().request).toEqual({
+      kind: "open",
+      focus: { kind: "task", id: "X-7" },
+    })
+  })
+
+  it.each([
+    ["shipped", "X-7·✓ 完了・main へ"],
+    ["awaiting-answer", "X-7·？ 答え待ち"],
+    ["stopped", "X-7"],
+  ] as const)("終わり方 %s の目録の1行は「%s」で、見出しは作業の名前", (outcome, catalog) => {
+    putSession(INITIAL_SESSION_STATE)
+    const body: MainViewStepBody = {
+      kind: "text",
+      report: "架空の本文",
+      firstLine: "架空の本文",
+      task: { ...TASK, outcome },
+      finishedPhase: { kind: "none" },
+    }
+    const { container } = render(
+      <Turn turn={turn([step({ id: 0, body })])} newest freshReport={false} />,
+    )
+
+    expect(container.querySelector("header > p")?.textContent).toBe(catalog)
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("架空の作業 a/b を直す")
   })
 })

@@ -1,11 +1,8 @@
 import { mkdirSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
-import type { Locator } from "playwright-core"
-
 import { FAKE_BEADS_ISSUES_PATH } from "../../src/server/repository/adapter/fake-beads.ts"
 import { BEADS_TEST_ACTOR } from "../fixture/beads-repository.ts"
-import { writeProjectSettingsContent } from "../fixture/project-settings.ts"
 import type { DomRootName, ScenarioOptions, ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧とタスクのモーダルの E2E の足場（docs/architecture/testing.md「E2E のシナリオの一覧」）。
@@ -166,9 +163,8 @@ export async function openTaskBoardRoom(
   run: ScenarioRun,
   scenario: string,
   domRoots: readonly DomRootName[],
-  viewport: "wide" | "narrow" = "wide",
 ): Promise<ScenarioRoom> {
-  const room = await run.open({ scenario, scene: "none", viewport, domRoots })
+  const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
   await placeTasks(room, [
     {
       ...task("T-001", "架空のタスク（`code` を含む要約）", "todo"),
@@ -186,52 +182,6 @@ export async function openTaskBoardRoom(
       description: ["## 目的・背景", "", "架空の保留の理由を本文にだけ書く。"].join("\n"),
     },
   ])
-  if (viewport === "narrow") {
-    await room.page.getByRole("tab", { name: "サイドバー" }).click()
-  }
-  await room.page.getByRole("button", { name: "一覧を見る" }).click()
-  return room
-}
-
-/** 開いているタスクのモーダル（サイドバーのチップと同じ名前の札があるので、操作はこの中に絞る）。 */
-export function boardDialog(room: ScenarioRoom): Locator {
-  return room.page.getByRole("dialog", { name: "タスク" })
-}
-
-/**
- * 一覧の1行（`id` の完全一致）。依存の状態の字（「待ち」に続く ID）が別の行の要約に
- * 混じるので、`getByRole("option")` の `hasText` では絞り切れない。
- */
-export function boardOption(room: ScenarioRoom, id: string): Locator {
-  return boardDialog(room).locator(`#task-board-option-${id}`)
-}
-
-/**
- * 「つながりをたどる」の足場。起点のタスクを2件目が依存に持ち、2件目を3件目が依存に持つ
- * （起点を選ぶと依存元の1件が、2件目を選ぶと依存の起点と依存元の3件目が並ぶ）。
- * 4件目は保留で起点へ本文から言及するだけの、絞り込みの外への飛び先。
- */
-export async function openTaskBoardJumpRoom(
-  run: ScenarioRun,
-  scenario: string,
-  viewport: "wide" | "narrow" = "wide",
-): Promise<ScenarioRoom> {
-  const room = await run.open({ scenario, scene: "none", viewport, domRoots: ["task-board"] })
-  await placeTasks(room, [
-    {
-      ...task("T-001", "架空のタスク（つながりの起点）", "todo"),
-      description: JUMP_DESCRIPTION_T001,
-    },
-    task("T-002", "架空のタスク（T-001 に依存）", "todo", ["T-001"]),
-    task("T-003", "架空のタスク（T-002 に依存）", "todo", ["T-002"]),
-    {
-      ...task("T-004", "架空のタスク（保留・本文で T-001 へ言及）", "hold"),
-      description: JUMP_DESCRIPTION_T004,
-    },
-  ])
-  if (viewport === "narrow") {
-    await room.page.getByRole("tab", { name: "サイドバー" }).click()
-  }
   await room.page.getByRole("button", { name: "一覧を見る" }).click()
   return room
 }
@@ -263,26 +213,6 @@ const RICH_ACCEPTANCE = ["- [ ] まだの条件", "- [x] 済んだ条件"].join(
 /** 先頭のタスクの `## やること`。 */
 const RICH_NOTES = ["1. 一つ目の手順", "2. 二つ目の手順", "", "### 段の見出し"].join("\n")
 
-/**
- * 起点のタスクの本文。地の文の ID・中身がまるごと同じ ID の inline code は一覧に載っている
- * ので押せる。語の途中・まるごとでない inline code・フェンスの中・一覧に無い ID はどれも
- * 押せない字のまま出る。
- */
-const JUMP_DESCRIPTION_T001 = [
-  "## 参照",
-  "",
-  "地の文の T-002 は押せる。T-0021 は語の途中なので押せない。T-999 は一覧に無いので押せない。",
-  "",
-  "中身がまるごと `T-002` の inline code は押せる。`T-0025` はまるごとでないので押せない。",
-  "",
-  "```",
-  "T-002",
-  "```",
-].join("\n")
-
-/** 保留のタスクの本文。地の文で起点のタスクへ言及するだけ。 */
-const JUMP_DESCRIPTION_T004 = ["## 参照", "", "先に T-001 を見る。"].join("\n")
-
 /** 迎える口の足場のタスクの ID。着手できるものと、前者に依存して止まるもの。 */
 export const READY_TASK_ID = "T-001"
 export const BLOCKED_TASK_ID = "T-002"
@@ -295,29 +225,13 @@ export async function writeWelcomeTasks(room: ScenarioRoom): Promise<void> {
   ])
 }
 
-/**
- * プロジェクトの設定を画面から書く足場。未着手の1件を置き、設定は置かない（`missing`）か、
- * 壊れた中身で置く（`invalid`。課題より先に置き、一覧が一度も届かないようにする）か、
- * 「使わない」を置く（`off`。課題は置かない）。
- */
+/** プロジェクトの設定を画面から書く足場。未着手の1件を置き、設定は置かない。 */
 export async function openProjectSettingsRoom(
   run: ScenarioRun,
   scenario: string,
   domRoots: readonly DomRootName[],
-  settings: "missing" | "invalid" | "off",
 ): Promise<ScenarioRoom> {
   const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
-  if (settings === "off") {
-    writeProjectSettingsContent(room.cwd, '{ "tasks": "off" }')
-    await room.waitForEvent("tasks-changed")
-    return room
-  }
-  const tasks = [task("T-001", "架空のタスク（未着手）", "todo")]
-  if (settings === "missing") {
-    await placeTasks(room, tasks)
-    return room
-  }
-  writeProjectSettingsContent(room.cwd, "{")
-  writeTaskFile(room, tasks)
+  await placeTasks(room, [task("T-001", "架空のタスク（未着手）", "todo")])
   return room
 }

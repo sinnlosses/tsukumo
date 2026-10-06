@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
+import { loadTaskBody } from "../../../../src/browser/features/task-board/components/deferred-task-body.tsx"
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
 import { useTaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
 import type {
@@ -10,6 +11,10 @@ import type {
 
 // フィクスチャはすべて手で書いた架空のタスク（develop/tasks.json の内容は会話ではないが、
 // テストのフィクスチャとしても実物は使わない）。
+
+beforeAll(async () => {
+  await loadTaskBody()
+})
 
 afterEach(() => {
   cleanup()
@@ -177,6 +182,28 @@ describe("taskList", () => {
     fireEvent.click(row("X-001"))
     expect(row("X-001").getAttribute("aria-expanded")).toBe("false")
     expect(peek()).toBeNull()
+  })
+
+  it("のぞき窓は状態・ID・題・本文の頭・「全文を開く」を持ち、作った人と担当は出さない", () => {
+    const items: readonly TaskSummaryItem[] = [
+      {
+        ...taskOf("X-007", "todo"),
+        summary: "架空の題",
+        assignee: "wt-架空",
+        body: "架空の本文の頭。\n\n架空の続き。",
+      },
+    ]
+    render(<TaskList tasks={known(items)} selectedStatus="all" />)
+
+    fireEvent.click(row("X-007"))
+
+    const text = peek()?.textContent ?? ""
+    for (const part of ["未着手", "X-007", "架空の題", "架空の本文の頭。", "全文を開く"]) {
+      expect(text).toContain(part)
+    }
+    expect(text).not.toContain("作った")
+    expect(text).not.toContain("担当")
+    expect(text).not.toContain("wt-架空")
   })
 
   it("進行中のカードを押しても同じ窓が開く", () => {

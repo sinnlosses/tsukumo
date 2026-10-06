@@ -1,5 +1,13 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+  type RenderResult,
+} from "@testing-library/react"
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
@@ -12,8 +20,11 @@ import {
 } from "../../../../../../../src/shared/session/session-state.ts"
 import {
   detailRecord,
+  finishedToolStatus,
   reportRecord,
   requestRecord,
+  toolRecord,
+  workPlanRecord,
 } from "../../../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 import { createTestQueryClient } from "../../../../../query-client.tsx"
@@ -532,5 +543,78 @@ describe("MainView（閉じたときの入れ替えとフォーカス）", () =>
 
     expect(shownContent()).toBe("report")
     expect(document.activeElement).toBe(document.body)
+  })
+})
+
+describe("MainView（失敗の塊から帯の手順へ）", () => {
+  it("失敗した手順を見る口を押すと、帯の手順の一覧が開き、失敗の行が1つ出る", () => {
+    renderMainView(
+      [
+        requestRecord({ text: "架空の依頼", turnId: 0 }),
+        workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 0 }),
+        toolRecord({
+          toolUseId: "fake-ok",
+          status: finishedToolStatus(),
+        }),
+        toolRecord({
+          toolUseId: "fake-failed",
+          status: finishedToolStatus({
+            result: { kind: "failed", output: { head: "架空のエラー出力", omittedLength: 0 } },
+          }),
+        }),
+        { kind: "turn-failure", failure: { kind: "execution-error" } },
+      ],
+      {
+        kind: "finished",
+        startedAt: 0,
+        finishedAt: 100,
+        ending: { kind: "failed", failure: { kind: "execution-error" } },
+      },
+    )
+    expect(screen.queryByRole("region", { name: "依頼の手順" })).toBeNull()
+
+    const block = screen.getByRole("note", { name: "失敗で終わった" })
+    act(() => {
+      fireEvent.click(within(block).getByRole("button", { name: "失敗した手順を見る" }))
+    })
+
+    const steps = screen.getByRole("region", { name: "依頼の手順" })
+    expect(steps.querySelectorAll("[data-step-failed]")).toHaveLength(1)
+  })
+})
+
+describe("MainView（答えた質問の記録）", () => {
+  function answered(toolUseId: string, text: string): SessionRecord {
+    return {
+      kind: "question",
+      toolUseId,
+      questions: [
+        {
+          header: "確認",
+          text,
+          multiSelect: false,
+          options: [
+            { label: "案A", description: "", preview: undefined },
+            { label: "案B", description: "", preview: undefined },
+          ],
+        },
+      ],
+      answers: [["案A"]],
+    }
+  }
+
+  it("中間レポートを挟んで2回答えた質問は、2件とも出た順に残り、畳まれた中間レポートの外に出る", () => {
+    renderMainView([
+      requestRecord({ text: "架空の依頼", turnId: 0 }),
+      answered("fake-ask-1", "架空の質問1：どちらを先に見る？"),
+      detailRecord("架空の中間レポート"),
+      answered("fake-ask-2", "架空の質問2：このまま閉じてよい？"),
+      reportRecord("架空の結論"),
+    ])
+
+    const first = screen.getByRole("heading", { name: /架空の質問1/ })
+    const second = screen.getByRole("heading", { name: /架空の質問2/ })
+    expect(second.closest("details")).toBeNull()
+    expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

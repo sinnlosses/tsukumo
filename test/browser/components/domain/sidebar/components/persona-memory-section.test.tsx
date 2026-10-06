@@ -1,8 +1,6 @@
 // 雑談中のサイドバーの3段目「覚えていること」（docs/architecture/chat-mode.md「雑談モード」・docs/architecture/screen-design.md「雑談モードの画面」）。
-// チップの開閉・編集・消す操作は E2E が DOM の写しとメッセージの列で守るので、ここに残すのは
-// 書式の固定（docs/coding-standards.md「消すかどうか」）だけ。
 
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { PersonaMemorySection } from "../../../../../../src/browser/components/domain/sidebar/components/persona-memory-section.tsx"
@@ -18,6 +16,8 @@ afterEach(() => {
 
 const LONG_LINE = "あ".repeat(30)
 
+const LONG_CHIP_NAME = new RegExp(`^${"あ".repeat(20)}…$`)
+
 function renderSection(stateOverrides: Partial<SessionState>): void {
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, () => {})
   render(<PersonaMemorySection />)
@@ -28,7 +28,20 @@ describe("PersonaMemorySection", () => {
     renderSection({ rememberedLines: [LONG_LINE] })
 
     expect(screen.queryByText(LONG_LINE)).toBeNull()
-    const chip = screen.getByRole("button", { name: new RegExp(`^${"あ".repeat(20)}…$`) })
+    const chip = screen.getByRole("button", { name: LONG_CHIP_NAME })
     expect(chip.getAttribute("aria-expanded")).toBe("false")
+  })
+
+  it("チップを押すと全文が開き、もう一度押すと閉じる", () => {
+    renderSection({ rememberedLines: [LONG_LINE] })
+
+    fireEvent.click(screen.getByRole("button", { name: LONG_CHIP_NAME }))
+    const opened = screen.getByRole("button", { name: LONG_LINE })
+    expect(opened.getAttribute("aria-expanded")).toBe("true")
+
+    fireEvent.click(opened)
+    expect(screen.getByRole("button", { name: LONG_CHIP_NAME }).getAttribute("aria-expanded")).toBe(
+      "false",
+    )
   })
 })

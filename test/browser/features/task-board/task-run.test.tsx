@@ -127,6 +127,30 @@ describe("タスクの実行を頼む", () => {
     expect(sent).toEqual([])
   })
 
+  it.each([
+    ["「キャンセル」", () => fireEvent.click(screen.getByRole("button", { name: "キャンセル" }))],
+    [
+      "Esc（ブラウザが流す close）",
+      () => {
+        const dialog = confirmDialog()
+        if (dialog === null) {
+          throw new Error("確認が開いていない")
+        }
+        fireEvent(dialog, new Event("close"))
+      },
+    ],
+  ])("区画の一覧の確認を %s で閉じると、何も送らず確認だけ閉じて、のぞき窓は残る", (_, dismiss) => {
+    const sent: unknown[] = []
+    renderList(collectInto(sent), {})
+
+    startFromPeek("X-002")
+    dismiss()
+
+    expect(sent).toEqual([])
+    expect(confirmDialog()).toBeNull()
+    expect(document.querySelector('dialog[aria-label="X-002 の詳細"]')).not.toBeNull()
+  })
+
   it("モーダルから断ったときは確認だけ閉じ、一覧へ戻れる", () => {
     const closed: string[] = []
     renderBoard(() => {}, closed)

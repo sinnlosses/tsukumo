@@ -94,6 +94,18 @@ describe("Inquiry（メインビューのお伺いの札）", () => {
     expect(screen.getByRole<HTMLInputElement>("radio", { name: /A案/ }).checked).toBe(false)
   })
 
+  it("複数選択の質問は、数字キーで入り切りする", () => {
+    renderInquiry([questionPending([question({ multiSelect: true })])])
+
+    for (const key of ["1", "2", "1"]) {
+      fireEvent.keyDown(card(), { key })
+    }
+
+    expect(
+      screen.getAllByRole<HTMLInputElement>("checkbox").map((checkbox) => checkbox.checked),
+    ).toEqual([false, true])
+  })
+
   it("ラベル末尾の (Recommended) は「おすすめ」のバッジになり、字からは外れる", () => {
     const container = renderInquiry([
       questionPending([question({ options: [option("A案 (Recommended)"), option("B案")] })]),

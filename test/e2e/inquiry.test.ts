@@ -8,10 +8,9 @@ import { fictionalPng } from "../../scripts/lib/fictional-png.ts"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // お伺い（許可要求と質問。docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// 許可は場面 `permission`、質問は `question-pair`（単一選択が1問ずつ）・`question-multi`（複数選択）・
+// 許可は場面 `permission`、質問は `question-pair`（単一選択が1問ずつ）・
 // `question-long`（長いラベルと長い説明）・`question-preview`（選択肢ごとの比較）・
-// `question-preview-image`（preview に書いた手元の画像と、描かない画像）・
-// `question-twice`（同じ依頼の中で中間レポートを挟んで2回答える）。
+// `question-preview-image`（preview に書いた手元の画像と、描かない画像）。
 // どの場面も答え待ちを出したまま、答えると次の `pending-changed` が流れる。
 
 const run = useScenarioRun()
@@ -38,46 +37,6 @@ describe("お伺い", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("許可は、入力欄の帯の「お伺いへ」から 2 と Enter で拒否できる（キー）", async () => {
-    const room = await run.open({
-      scenario: "inquiry-permission-keys",
-      scene: "permission",
-      viewport: "wide",
-      domRoots: ["main"],
-    })
-    const inquiry = inquiryOf(room.page)
-
-    await room.page.getByRole("button", { name: "お伺いへ" }).click()
-    await expect
-      .poll(() => room.page.evaluate(() => document.activeElement?.getAttribute("type")))
-      .toBe("radio")
-    await room.page.keyboard.press("2")
-    expect(await inquiry.getByRole("radio", { name: /拒否/ }).isChecked()).toBe(true)
-    await room.page.keyboard.press("Enter")
-
-    await room.waitForEvent("pending-changed", 2)
-    await expect.poll(() => inquiry.count()).toBe(0)
-  })
-
-  it("答え待ちのあいだ、入力欄の送るボタンは塗らず、札の頭に待っている時間が出る", async () => {
-    const room = await run.open({
-      scenario: "inquiry-question-pair",
-      scene: "question-pair",
-      viewport: "wide",
-      domRoots: ["main", "dispatch"],
-    })
-
-    await room.waitForEvent("turn-finished")
-    const send = room.page.locator('[data-region="dispatch"] button[type="submit"]')
-    expect(await send.getAttribute("data-emphasis")).toBe("quiet")
-    expect(await inquiryOf(room.page).textContent()).toContain("待って")
-
-    await room.page.getByRole("textbox").fill("架空の自由な答え")
-    expect(await send.getAttribute("data-emphasis")).toBe("solid")
-    await room.page.getByRole("textbox").fill("")
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
   it("質問は、カードを選んで「次へ」「これで答える」で1問ずつ答える（マウス）", async () => {
     const room = await run.open({
       scenario: "inquiry-question-mouse",
@@ -97,59 +56,13 @@ describe("お伺い", () => {
     await expect.poll(() => inquiry.count()).toBe(0)
   })
 
-  it("質問は、数字キーで選び Enter で進み、選ぶ前の Enter では進まない（キー）", async () => {
-    const room = await run.open({
-      scenario: "inquiry-question-keys",
-      scene: "question-pair",
-      viewport: "wide",
-      domRoots: ["main"],
-    })
-    const inquiry = inquiryOf(room.page)
-
-    await room.page.getByRole("button", { name: "お伺いへ" }).click()
-    await room.page.keyboard.press("Enter")
-    expect(await inquiry.textContent()).toContain("1 / 2")
-
-    await room.page.keyboard.press("2")
-    await room.page.keyboard.press("Enter")
-    await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
-    await room.page.keyboard.press("1")
-    await room.page.keyboard.press("Enter")
-
-    await room.waitForEvent("question-answered")
-    await expect.poll(() => inquiry.count()).toBe(0)
-  })
-
-  it("複数選択の質問は、数字キーで入り切りする（question-multi）", async () => {
-    const room = await run.open({
-      scenario: "inquiry-question-multi",
-      scene: "question-multi",
-      viewport: "wide",
-      domRoots: ["main", "dispatch"],
-    })
-    const inquiry = inquiryOf(room.page)
-
-    await room.waitForEvent("turn-finished")
-    await room.page.getByRole("button", { name: "お伺いへ" }).click()
-    await room.page.keyboard.press("1")
-    await room.page.keyboard.press("2")
-    await room.page.keyboard.press("1")
-    const checked = await Promise.all(
-      (await inquiry.getByRole("checkbox").all()).map((box) => box.isChecked()),
-    )
-    expect(checked.slice(0, 2)).toEqual([false, true])
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
   it.each([
-    ["inquiry-question-long-large", "question-long", "large"],
-    ["inquiry-question-long-medium", "question-long", "medium"],
-    ["inquiry-question-preview-large", "question-preview", "large"],
-    ["inquiry-question-preview-medium", "question-preview", "medium"],
+    ["inquiry-question-long-medium", "question-long"],
+    ["inquiry-question-preview-medium", "question-preview"],
   ] as const)(
     "%s: 札の「次へ」「これで答える」はメインビューの中にあり、転がさずに押せる",
-    async (scenario, scene, viewport) => {
-      const room = await run.open({ scenario, scene, viewport, domRoots: ["main"] })
+    async (scenario, scene) => {
+      const room = await run.open({ scenario, scene, viewport: "medium", domRoots: ["main"] })
       const main = room.page.locator('[data-region="main"]')
       const answer = inquiryOf(room.page).getByRole("button", { name: /次へ|これで答える/ })
 
@@ -165,42 +78,6 @@ describe("お伺い", () => {
       expect(hit).toBe(true)
     },
   )
-
-  it("同じ依頼の中で中間レポートを挟んで2回答えた質問は、2件とも出た順にメインビューへ残る", async () => {
-    const room = await run.open({
-      scenario: "inquiry-question-twice",
-      scene: "question-twice",
-      viewport: "wide",
-      domRoots: ["main"],
-    })
-    const inquiry = inquiryOf(room.page)
-    const main = room.page.locator('[data-region="main"]')
-
-    await room.waitForPending("fake-ask-twice-1")
-    await inquiry.getByText("A案（架空）").click()
-    await inquiry.getByRole("button", { name: /これで答える/ }).click()
-    await room.waitForEvent("question-answered")
-
-    await room.waitForPending("fake-ask-twice-2")
-    await inquiry.getByText("閉じる（架空）").click()
-    await inquiry.getByRole("button", { name: /これで答える/ }).click()
-    await room.waitForEvent("question-answered", 2)
-    await room.waitForEvent("turn-finished")
-
-    const firstQuestion = main.getByText("架空の質問1：どちらを先に見る？")
-    const secondQuestion = main.getByText("架空の質問2：このまま閉じてよい？")
-    await expect.poll(() => firstQuestion.isVisible()).toBe(true)
-    // 2件目は、間に挟まる中間レポートが畳まれても畳みの外に出て見える。
-    await expect.poll(() => secondQuestion.isVisible()).toBe(true)
-
-    const order = await main.evaluate((element) => {
-      const text = element.textContent ?? ""
-      return text.indexOf("架空の質問1") - text.indexOf("架空の質問2")
-    })
-    expect(order).toBeLessThan(0)
-
-    await room.settleAndMatch(ELAPSED_MS)
-  })
 
   it("preview に書いた手元の画像は棚の経路で札の中に出て、外部の URL・data:・置いていない画像は「画像を出せない」の札になる", async () => {
     const room = await run.open({

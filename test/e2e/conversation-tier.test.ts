@@ -1,7 +1,7 @@
 import type { Locator, Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
-import { useScenarioRun } from "./scenario-run.ts"
+import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 import { openTaskListRoomWithRunningTask } from "./task-room.ts"
 
 // 会話の画面の段（docs/architecture/testing.md「E2E のシナリオの一覧」）。
@@ -68,35 +68,26 @@ describe("会話の画面の段", () => {
     },
   )
 
-  it.each(["large", "tier-edge-large"] as const)(
-    "広い窓幅では柱を出さず、サイドバーと上段の左右の仕切りが並ぶ（%s）",
-    async (viewport) => {
-      const room = await openTaskListRoomWithRunningTask(
-        run,
-        `conversation-tier-${viewport}`,
-        [],
-        viewport,
-      )
-      const { page } = room
-
-      expect(await railToggle(page).isVisible()).toBe(false)
-      expect(await sidebar(page).isVisible()).toBe(true)
-      expect(
-        await page.getByRole("separator", { name: "メインビューとサイドバーの境界" }).isVisible(),
-      ).toBe(true)
-    },
-  )
-
-  it("狭い窓幅では柱を出さず、上段のタブで切り替える", async () => {
+  it("狭い窓幅では柱を出さず上段のタブで切り替え、広い窓幅（1440px と境目の 1101px）では柱を出さずサイドバーと左右の仕切りが並ぶ", async () => {
     const room = await openTaskListRoomWithRunningTask(
       run,
       "conversation-tier-narrow",
-      [],
+      ["page"],
       "narrow",
     )
     const { page } = room
 
+    await page.getByRole("tab", { name: "サイドバー" }).waitFor()
     expect(await railToggle(page).isVisible()).toBe(false)
-    expect(await page.getByRole("tab", { name: "サイドバー" }).isVisible()).toBe(true)
+    await room.settleAndMatch(ELAPSED_MS)
+
+    for (const viewport of [VIEWPORTS.large, VIEWPORTS["tier-edge-large"]]) {
+      await page.setViewportSize(viewport)
+      await sidebar(page).waitFor()
+      expect(await railToggle(page).isVisible()).toBe(false)
+      expect(
+        await page.getByRole("separator", { name: "メインビューとサイドバーの境界" }).isVisible(),
+      ).toBe(true)
+    }
   })
 })

@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Sidebar } from "../../../../../src/browser/components/domain/sidebar/sidebar.tsx"
+import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -66,7 +67,53 @@ describe("Sidebar のタスクの節", () => {
     const section = screen.getByRole("region", { name: "タスク" })
     expect(section.querySelector('button[aria-label="プロジェクトの設定"]')).toBeNull()
   })
+
+  it("チップは1つだけ選べ、押し直しても変わらず、「すべて」で外れ、別のチップで切り替わる", () => {
+    renderSidebar({
+      tasks: {
+        kind: "known",
+        items: [chipTask("X-001", "todo"), chipTask("X-002", "done")],
+        runPrompt: "/next-task {id}",
+      },
+    })
+    const shown = (): readonly string[] =>
+      [...document.querySelectorAll("[id^='task-row-']")].map((element) => element.id)
+    const pressed = (): readonly string[] =>
+      screen.getAllByRole("button", { pressed: true }).map((button) => button.textContent ?? "")
+
+    expect(pressed()).toEqual(["すべて 2"])
+
+    fireEvent.click(screen.getByRole("button", { name: "未着手 1" }))
+    expect(pressed()).toEqual(["未着手 1"])
+    expect(shown()).toEqual(["task-row-X-001"])
+
+    fireEvent.click(screen.getByRole("button", { name: "未着手 1" }))
+    expect(pressed()).toEqual(["未着手 1"])
+    expect(shown()).toEqual(["task-row-X-001"])
+
+    fireEvent.click(screen.getByRole("button", { name: "完了 1" }))
+    expect(pressed()).toEqual(["完了 1"])
+    expect(shown()).toEqual(["task-row-X-002"])
+
+    fireEvent.click(screen.getByRole("button", { name: "すべて 2" }))
+    expect(pressed()).toEqual(["すべて 2"])
+    expect(shown()).toEqual(["task-row-X-001", "task-row-X-002"])
+  })
 })
+
+function chipTask(id: string, status: string): TaskSummaryItem {
+  return {
+    id,
+    summary: `架空のタスク ${id}`,
+    status,
+    difficulty: undefined,
+    loopable: undefined,
+    dependencies: [],
+    assignee: undefined,
+    body: "",
+    location: { kind: "none" },
+  }
+}
 
 const RUNNING_SESSION: SessionState["session"] = {
   kind: "running",

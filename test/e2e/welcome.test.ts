@@ -83,38 +83,4 @@ describe("迎える口", () => {
     await room.waitForEvent("request")
     expect(await draft(room.page)).toBe("打ちかけの架空の依頼")
   })
-
-  it("フォーカスが入力欄の外にあるとき、キー 1 で同じ札が始まる", async () => {
-    const room = await openWelcomeRoom("welcome-start-key", "wide")
-    await room.page.getByRole("heading", { name: "何から始める？" }).click()
-    await room.page.keyboard.press("1")
-    await room.waitForEvent("request")
-  })
-
-  it("入力欄に打っている最中は、キーは字になるだけで札は始まらない", async () => {
-    const room = await openWelcomeRoom("welcome-key-in-input", "wide")
-    await room.page.locator("textarea").click()
-    await room.page.keyboard.press("1")
-    expect(await draft(room.page)).toBe("1")
-    expect(await welcome(room.page).count()).toBe(1)
-  })
-
-  it("「前のやり取りを見る」で切り替え画面が開く", async () => {
-    const room = await openWelcomeRoom("welcome-see-previous", "wide")
-    await mainView(room.page).getByRole("button", { name: "前のやり取りを見る" }).click()
-    await room.page.getByRole("dialog").waitFor()
-  })
-
-  it("空の帳面（タスク0件・続き無し）では札が出ず、「自分で書く」だけが大きく出る", async () => {
-    const room = await run.open({
-      scenario: "welcome-empty",
-      scene: "none",
-      viewport: "wide",
-      domRoots: ["main"],
-    })
-    await room.page.getByRole("heading", { name: "何から始める？" }).waitFor()
-    expect(await welcome(room.page).locator("ul").count()).toBe(0)
-    await mainView(room.page).getByRole("button", { name: "自分で書く" }).waitFor()
-    await room.settleAndMatch(ELAPSED_MS)
-  })
 })

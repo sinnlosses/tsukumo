@@ -20,10 +20,6 @@ async function waitForFocus(page: Page, selector: string): Promise<void> {
   await page.waitForFunction((target) => document.activeElement?.matches(target) === true, selector)
 }
 
-async function isFocused(page: Page, selector: string): Promise<boolean> {
-  return page.evaluate((target) => document.activeElement?.matches(target) === true, selector)
-}
-
 describe("会話の画面の読み上げとフォーカス", () => {
   it("開いた直後は入力欄にフォーカスがあり、名前と輪があり、main が1つで、スキップリンクが最初の Tab 停止になる", async () => {
     const room = await run.open({
@@ -70,97 +66,5 @@ describe("会話の画面の読み上げとフォーカス", () => {
 
     await expect.poll(async () => count(await room.announced(), "レポートが届いた")).toBe(1)
     expect(count(await room.announced(), "作業を始めた")).toBe(1)
-  })
-
-  it("セリフが1回ずつ読まれ、閉じたあとの語が最後に来る", async () => {
-    const room = await run.open({
-      scenario: "live-region-focus-speech",
-      scene: "closing-narration-quick",
-      viewport: "wide",
-      domRoots: [],
-    })
-    await room.waitForEvent("turn-finished")
-
-    await expect.poll(async () => (await room.announced()).at(-1)).toBe("レポートが届いた")
-    const announced = await room.announced()
-    expect(announced.filter((text) => text === "見てくるぞ。")).toHaveLength(1)
-    expect(announced.filter((text) => text === "ほら、片付いたぞ。")).toHaveLength(1)
-    expect(announced.indexOf("見てくるぞ。")).toBeLessThan(announced.indexOf("ほら、片付いたぞ。"))
-  })
-
-  it("答え待ちが来ると「お伺いが届いた」が読まれる", async () => {
-    const room = await run.open({
-      scenario: "live-region-focus-ask",
-      scene: "permission-asking",
-      viewport: "wide",
-      domRoots: [],
-    })
-    await expect.poll(async () => count(await room.announced(), "お伺いが届いた")).toBe(1)
-  })
-
-  it("失敗で終わると「失敗で終わった」が1回読まれる", async () => {
-    const room = await run.open({
-      scenario: "live-region-focus-failure",
-      scene: "api-failure",
-      viewport: "wide",
-      domRoots: [],
-    })
-    await room.waitForEvent("turn-finished")
-    await expect.poll(async () => count(await room.announced(), "失敗で終わった")).toBe(1)
-  })
-
-  it("閉じたとき、フォーカスがメインビューの外にあれば入力欄へ入る", async () => {
-    const room = await run.open({
-      scenario: "live-region-focus-closed",
-      scene: "moment-held",
-      viewport: "wide",
-      domRoots: [],
-    })
-    const { page } = room
-    await page
-      .locator('[data-region="sidebar"]')
-      .getByRole("button", { name: /^コンテキスト/ })
-      .focus()
-    expect(await isFocused(page, "textarea")).toBe(false)
-
-    await room.waitForEvent("turn-finished")
-
-    await waitForFocus(page, COMPOSER)
-  })
-
-  it("閉じたとき、フォーカスがメインビューの中にあれば入力欄へ移さず、メインビューに留める", async () => {
-    const room = await run.open({
-      scenario: "live-region-focus-main",
-      scene: "moment-held",
-      viewport: "wide",
-      domRoots: [],
-    })
-    const { page } = room
-    await page.locator('[data-region="main"] h2 button').focus()
-
-    await room.waitForEvent("turn-finished")
-    await page.waitForSelector('[data-main-view-content="report"]')
-
-    expect(await isFocused(page, COMPOSER)).toBe(false)
-    expect(await isFocused(page, "[data-main-view]")).toBe(true)
-  })
-
-  it("閉じたとき、重なる面（セリフのログ）が開いていれば動かさない", async () => {
-    const room = await run.open({
-      scenario: "live-region-focus-overlay",
-      scene: "moment-held",
-      viewport: "wide",
-      domRoots: [],
-    })
-    const { page } = room
-    await page.getByRole("button", { name: "ログ", exact: true }).click()
-    const dialog = page.locator('dialog[aria-label="セリフのログ"]')
-    await dialog.waitFor({ state: "visible" })
-
-    await room.waitForEvent("turn-finished")
-    await page.waitForSelector('[data-main-view-content="report"]')
-
-    expect(await isFocused(page, COMPOSER)).toBe(false)
-    expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true)
   })
 })

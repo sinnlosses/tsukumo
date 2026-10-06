@@ -103,7 +103,7 @@ const UPDATE_EXPECTED = process.env["E2E_UPDATE"] === "1"
  * シナリオだけ `narrow` を使う。`large` と `medium` は、領域の寸法を窓の大きさごとに測るシナリオが使う。
  * `tier-edge-medium` と `tier-edge-large` はサイドバーを柱に畳む段の境目の両側、`compact` は柱の段で目次の列が既定で畳まれる幅。
  */
-const VIEWPORTS = {
+export const VIEWPORTS = {
   wide: { width: 1400, height: 900 },
   narrow: { width: 720, height: 900 },
   large: { width: 1440, height: 900 },
@@ -135,10 +135,8 @@ const DOM_ROOT_SELECTORS = {
   dispatch: '[data-region="dispatch"]',
   "task-section": 'section[aria-label="タスク"]',
   "task-board": 'dialog[aria-label="タスク"]',
-  "project-settings": 'dialog[aria-label="プロジェクトの設定"]',
   "task-run-confirm": 'dialog[aria-label="タスクの実行"]',
   "session-switcher": 'dialog[aria-label="セッションを切り替える"]',
-  "speech-log": 'dialog[aria-label="セリフのログ"]',
 } as const satisfies Record<string, string>
 
 /**
@@ -358,7 +356,7 @@ async function openRoom(
         messages: writeArtifact(
           options.scenario,
           "messages",
-          collapsePartialUtterances(collapseCommandCatalog(messages.list(), options.scenario)),
+          collapsePartialUtterances(collapseCommandCatalog(messages.list())),
           replacements,
           outDir,
         ),
@@ -702,22 +700,13 @@ function recordMessages(page: Page): MessageRecord {
   }
 }
 
-/**
- * コマンド一覧を確かめる唯一のシナリオ（入力欄の `/` の候補を見る）。
- * `docs/architecture/testing.md`「E2E の期待値の範囲」。
- */
-const COMMAND_CATALOG_SCENARIO = "markdown-composer-suggestion"
-
 const COLLAPSED_COMMAND_CATALOG = "<コマンド一覧>"
 
 /**
  * `session-info` の `slashCommands`・`terminalSlashCommands` と `command-descriptions` の
- * `descriptions` を固定の印に畳む。`COMMAND_CATALOG_SCENARIO` だけはそのまま返す。
+ * `descriptions` を固定の印に畳む。
  */
-function collapseCommandCatalog(entries: readonly unknown[], scenario: string): readonly unknown[] {
-  if (scenario === COMMAND_CATALOG_SCENARIO) {
-    return entries
-  }
+function collapseCommandCatalog(entries: readonly unknown[]): readonly unknown[] {
   return entries.map((entry) => {
     const record = asRecord(entry)
     if (record["received"] !== "event") {

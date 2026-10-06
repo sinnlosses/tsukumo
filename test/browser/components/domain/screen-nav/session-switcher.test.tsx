@@ -106,6 +106,28 @@ describe("セッションの札と切り替え画面", () => {
     expect(screen.getByRole("tooltip").textContent).toContain("セッション FA")
   })
 
+  it("札で開くと、選んでいるセッションの要約と最後のひとことが右の欄に出る", async () => {
+    renderNav({})
+    openByTag()
+
+    expect(await screen.findByText(/架空の要約の一段落目。/u)).toBeDefined()
+    expect(await screen.findByText(/架空の締めのセリフ/u)).toBeDefined()
+  })
+
+  it("「≡」の面の先頭の札からも、同じ切り替え画面が開く", () => {
+    renderNav({})
+    fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
+    const tags = screen.getAllByRole("button", { name: /セッション FA。/u })
+    const menuTag = tags.at(-1)
+    if (menuTag === undefined || tags.length < 2) {
+      throw new Error("「≡」の面の札が無い")
+    }
+
+    fireEvent.click(menuTag)
+
+    expect(switcherOpen()).toBe(true)
+  })
+
   it("一覧は今日・昨日・それより前に分かれ、いまの行に「いま」が付く", () => {
     renderNav({})
     openByTag()

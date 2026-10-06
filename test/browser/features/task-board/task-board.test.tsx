@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
@@ -12,9 +12,7 @@ import { createTestQueryClient } from "../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../rpc-fetch-stub.ts"
 import { putSession } from "../../session-store.ts"
 
-// タスクのモーダルのうち、次の2つ。
-// - Beads 方式の置き場所（Issue）と置き場所の無い課題。E2E の足場は一時の cwd に develop/task/ を手書きするファイル方式しか作れない（`bd` を起こさない）ので、ここで持つ
-// - 選んでいる行の移り方のうち、E2E の場面が持っていないもの（絞り込みで先頭へ落ちたあと・閉じて開き直したあと・一覧が届き直したあと）
+// タスクのモーダルの出し分けと、選んでいる行の移り方・つながりのたどり方。
 // フィクスチャはすべて手で書いた架空の課題。
 
 let fetchStub: RpcFetchStub | undefined = undefined
@@ -151,6 +149,112 @@ describe("タスクのモーダルの検索欄と本文のリンク", () => {
 
     expectShown("X-002")
     expect(screen.getByRole("button", { name: "X-001 に戻る" })).toBeDefined()
+  })
+})
+
+describe("タスクのモーダル（つながりをたどる）", () => {
+  const JUMP_TASKS: readonly TaskSummaryItem[] = [
+    selectionTask(
+      "X-001",
+      "todo",
+      [
+        "地の文の X-002 は押せる。X-0021 は語の途中、X-999 は一覧に無い。",
+        "",
+        "中身がまるごと `X-002` の inline code は押せる。`X-0025` は押せない。",
+        "",
+        "```",
+        "X-002",
+        "```",
+      ].join("\n"),
+    ),
+    { ...selectionTask("X-002", "todo", "架空の本文。\n"), dependencies: ["X-001"] },
+    { ...selectionTask("X-003", "todo", "架空の本文。\n"), dependencies: ["X-002"] },
+  ]
+
+  function body(): HTMLElement {
+    return screen.getByRole("article", { name: "本文" })
+  }
+
+  function option(id: string): HTMLElement {
+    const found = document.getElementById(`task-board-option-${id}`)
+    if (found === null) {
+      throw new Error(`${id} の行が無い`)
+    }
+    return found
+  }
+
+  function frame(): Element {
+    const found = document.querySelector(".task-board-frame")
+    if (found === null) {
+      throw new Error("モーダルの枠が無い")
+    }
+    return found
+  }
+
+  it("本文中の ID は、地の文と中身がまるごと ID の inline code で一覧にあるものだけ押せる", () => {
+    renderSelectionBoard(JUMP_TASKS, OPEN_FIRST)
+
+    expect(within(body()).getAllByRole("link", { name: "X-002" })).toHaveLength(2)
+    for (const name of ["X-0021", "X-999", "X-0025"]) {
+      expect(within(body()).queryByRole("link", { name })).toBeNull()
+    }
+  })
+
+  it("Alt+← でもパンくずの「戻る」と同じ場所へ戻る", () => {
+    renderSelectionBoard(JUMP_TASKS, OPEN_FIRST)
+    fireEvent.click(within(body()).getAllByRole("link", { name: "X-002" })[0] ?? body())
+    expectShown("X-002")
+
+    fireEvent.keyDown(frame(), { key: "ArrowLeft", altKey: true })
+
+    expectShown("X-001")
+  })
+
+  it("「先に終わっていてほしいもの」「これを待っているもの」の札を押すと行き来できる", () => {
+    renderSelectionBoard(JUMP_TASKS, OPEN_FIRST)
+    fireEvent.click(option("X-002"))
+
+    fireEvent.click(
+      within(screen.getByRole("group", { name: "先に終わっていてほしいもの" })).getByRole(
+        "button",
+        { name: /X-001/ },
+      ),
+    )
+    expectShown("X-001")
+
+    fireEvent.click(
+      within(screen.getByRole("group", { name: "これを待っているもの" })).getByRole("button", {
+        name: /X-002/,
+      }),
+    )
+    expectShown("X-002")
+  })
+
+  it("↓ で行を移ると詳細が切り替わり、待ちのタスクは頼めない理由を添える", () => {
+    renderSelectionBoard(JUMP_TASKS, OPEN_FIRST)
+
+    fireEvent.keyDown(frame(), { key: "ArrowDown" })
+
+    expectShown("X-002")
+    expect(
+      within(screen.getByRole("group", { name: "先に終わっていてほしいもの" })).getByRole(
+        "button",
+        { name: /X-001/ },
+      ),
+    ).toBeDefined()
+    expect(document.querySelector(".task-board-run-reason")?.textContent).toBe(
+      "待ちが終わると頼めます",
+    )
+  })
+
+  it("検索と絞り込みは組み合わさり、当たらなければその旨を出して詳細を空にする", () => {
+    renderSelectionBoard(JUMP_TASKS, OPEN_FIRST)
+
+    fireEvent.click(screen.getByRole("button", { name: /^待ち/ }))
+    fireEvent.change(searchBox(), { target: { value: "どこにも無い語" } })
+
+    expect(screen.queryByRole("option")).toBeNull()
+    expect(screen.queryByRole("region", { name: / の詳細$/ })).toBeNull()
   })
 })
 

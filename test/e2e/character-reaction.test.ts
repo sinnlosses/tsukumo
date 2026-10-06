@@ -15,76 +15,21 @@ const ELAPSED_MS = 60_000
 const WAITING_ELAPSED_MS = WAITING_LINE_DELAY_MS + ELAPSED_MS
 
 describe("機械の出来事 → キャラビューの反応", () => {
-  it("送った直後は、文を出さず「…」が出る", async () => {
-    const room = await run.open({
-      scenario: "character-reaction-accepted",
-      scene: "reaction-accepted",
-      viewport: "wide",
-      domRoots: ["character"],
-    })
-
-    await room.waitForEvent("request")
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("speak が届くと、「…」は消えてセリフだけになる", async () => {
+  it("送った直後は文を出さず「…」が出て、speak が届くと「…」は消えてセリフだけになる", async () => {
     const room = await run.open({
       scenario: "character-reaction-replaced",
       scene: "reaction-accepted",
       viewport: "wide",
       domRoots: ["character"],
     })
+    const character = room.page.locator('[data-region="character"]')
+
+    await room.waitForEvent("request")
+    await character.locator('[data-latest="true"][data-writing="true"]').waitFor()
 
     await room.waitForEvent("turn-finished")
+    await character.locator('[data-writing="true"]').waitFor({ state: "detached" })
     await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("API の呼び直しを待っているあいだは、再試行の反応が出る", async () => {
-    const room = await run.open({
-      scenario: "character-reaction-retrying",
-      scene: "api-retry",
-      viewport: "wide",
-      domRoots: ["character"],
-    })
-
-    await room.waitForEvent("api-retry")
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("失敗で閉じると、失敗の反応が出る", async () => {
-    const room = await run.open({
-      scenario: "character-reaction-failed",
-      scene: "api-failure",
-      viewport: "wide",
-      domRoots: ["character"],
-    })
-
-    await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("利用上限で閉じると、前のセリフの下に利用上限の反応が最新として出る", async () => {
-    const room = await run.open({
-      scenario: "character-reaction-limited",
-      scene: "rate-limit",
-      viewport: "wide",
-      domRoots: ["character"],
-    })
-
-    await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("依頼を待つ間が続くと、本体が report に書いた待ちの一言が最新として出る", async () => {
-    const room = await run.open({
-      scenario: "character-reaction-waiting-line",
-      scene: "waiting-line",
-      viewport: "wide",
-      domRoots: ["character"],
-    })
-
-    await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(WAITING_ELAPSED_MS)
   })
 
   it("本体が待ちの一言を書いていなければ、迎えの挨拶と同じ答えで書かせた待ちの行が出る", async () => {
