@@ -204,8 +204,7 @@ describe("プロジェクトの設定を画面から書く", () => {
       ["sidebar", "project-settings"],
       "missing",
     )
-    await openProjectSettingsFromGear(room)
-    const dialog = await projectSettingsDialog(room)
+    const dialog = await openProjectSettingsDialog(room, openProjectSettingsFromGear)
 
     expect(await dialog.getByLabel("主ブランチ").inputValue()).toBe("main")
     expect(await dialog.getByLabel("頼む文面").inputValue()).toBe(
@@ -216,8 +215,7 @@ describe("プロジェクトの設定を画面から書く", () => {
 
   it("保存すると .tsukumo/project.json に書かれ、頼む文面が一覧に届く", async () => {
     const room = await openProjectSettingsRoom(run, "project-settings-save", [], "missing")
-    await openProjectSettingsFromGear(room)
-    const dialog = await projectSettingsDialog(room)
+    const dialog = await openProjectSettingsDialog(room, openProjectSettingsFromGear)
     await dialog.getByLabel("頼む文面").fill("/work {id}")
     await dialog.getByRole("button", { name: "保存" }).click()
 
@@ -230,8 +228,7 @@ describe("プロジェクトの設定を画面から書く", () => {
   it("設定が読めないと、帯の歯車から開いた保存の前に上書きを確かめる", async () => {
     const room = await openProjectSettingsRoom(run, "project-settings-overwrite", [], "invalid")
     await room.page.getByText("⚠ 読めない", { exact: true }).waitFor()
-    await openProjectSettingsFromGear(room)
-    const dialog = await projectSettingsDialog(room)
+    const dialog = await openProjectSettingsDialog(room, openProjectSettingsFromGear)
     await dialog.getByText("読めない", { exact: true }).waitFor()
     await dialog.getByRole("button", { name: "保存" }).click()
     const confirm = dialog.getByRole("group", { name: "上書きする？" })
@@ -254,9 +251,10 @@ describe("プロジェクトの設定を画面から書く", () => {
     )
     expect(await room.page.locator('section[aria-label="タスク"]').count()).toBe(0)
 
-    await openGear(room)
-    await room.page.getByLabel("タスク運用の使う・使わない").selectOption("use")
-    await projectSettingsDialog(room)
+    await openProjectSettingsDialog(room, async () => {
+      await openGear(room)
+      await room.page.getByLabel("タスク運用の使う・使わない").selectOption("use")
+    })
     await room.settleAndMatch(ELAPSED_MS)
   })
 
@@ -286,10 +284,19 @@ const CLOCK_STEP_MS = 50
 const CLOCK_STEPS = 20
 
 /**
- * ダイアログを返す。下書きは手続き（`/rpc`）の応答で届き、React Query はその知らせをタイマーで配るので、
- * 欄が描かれるまで凍らせた時計を少しずつ進める。
+ * `open` でダイアログを開いて返す。下書きは手続き（`/rpc`）の応答で届き、React Query はその知らせをタイマーで配るので、
+ * 応答が届くのを実時間で待ってから、欄が描かれるまで凍らせた時計を少しずつ進める
+ * （先に時計を進め切ると、混んだ機械では応答が遅れて届いたときに欄が描かれない）。
  */
-async function projectSettingsDialog(room: ScenarioRoom): Promise<Locator> {
+async function openProjectSettingsDialog(
+  room: ScenarioRoom,
+  open: (room: ScenarioRoom) => Promise<void>,
+): Promise<Locator> {
+  const draft = room.page.waitForResponse((response) =>
+    response.url().includes("projectSettingsDraft"),
+  )
+  await open(room)
+  await draft
   const dialog = room.page.getByRole("dialog", { name: "プロジェクトの設定" })
   const field = dialog.getByLabel("主ブランチ")
   for (let step = 0; step < CLOCK_STEPS && !(await field.isVisible()); step += 1) {

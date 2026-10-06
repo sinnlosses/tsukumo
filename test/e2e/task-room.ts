@@ -1,14 +1,18 @@
+import { mkdirSync, renameSync, writeFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+
 import type { Locator } from "playwright-core"
 
-import { BEADS_TEST_ACTOR, placeBeadsWithIssues } from "../fixture/beads-repository.ts"
-import { git, initGitRepository } from "../fixture/git-repository.ts"
+import { FAKE_BEADS_ISSUES_PATH } from "../../src/server/repository/adapter/fake-beads.ts"
+import { BEADS_TEST_ACTOR } from "../fixture/beads-repository.ts"
 import { writeProjectSettingsContent } from "../fixture/project-settings.ts"
 import type { DomRootName, ScenarioOptions, ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧とタスクのモーダルの E2E の足場（docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// この一覧だけは疑似セッションの場面ではなく、cwd の Beads（`bd`）の課題が元になる
-// （読み方は `watchTaskSummary` のコメント）。足場として、一時の cwd に `git init` して、
-// 架空の課題を入れた `.beads` を置く（`placeBeadsWithIssues`）。プロジェクトの設定は置かない。
+// この一覧だけは疑似セッションの場面ではなく、cwd の課題のファイルが元になる
+// （疑似セッションの見張りは `bd` の代わりに `readFakeBeadsIssues` でこのファイルを読む）。
+// 足場として、架空の課題を `bd list --json` の形で `FAKE_BEADS_ISSUES_PATH` に置く。
+// プロジェクトの設定は置かない。
 //
 // 課題を置くのは、`open` が部屋を渡した（ブラウザが繋がった）あとにする。
 // 起こす前や繋がる前に用意すると、tsukumo の最初の見回り（起こした時点で1回走る）が
@@ -55,20 +59,25 @@ function task(
   }
 }
 
-/** {@link placeBeadsTasks} のあと、一覧が届くのを待つ。 */
+/** {@link writeTaskFile} のあと、一覧が届くのを待つ。 */
 async function placeTasks(room: ScenarioRoom, tasks: readonly TaskFixture[]): Promise<void> {
-  await placeBeadsTasks(room, tasks)
+  writeTaskFile(room, tasks)
   await room.waitForTasksContaining(tasks.map((fixture) => fixture.id))
 }
 
-/** cwd を git リポジトリにし、`tasks` を入れた `.beads` を置く。 */
-async function placeBeadsTasks(room: ScenarioRoom, tasks: readonly TaskFixture[]): Promise<void> {
-  await initGitRepository(room.cwd)
-  await git(room.cwd, "commit", "--quiet", "--allow-empty", "-m", "架空のリポジトリ")
-  await placeBeadsWithIssues(room.cwd, tasks.map(beadsIssueOf))
+/**
+ * `tasks` を課題のファイルに置く。見回りが書きかけを読まないよう、隣に書いてから名前を付け替える
+ * （書きかけを読むと「不明」が届き、一覧の通知が1回増える）。
+ */
+function writeTaskFile(room: ScenarioRoom, tasks: readonly TaskFixture[]): void {
+  const path = join(room.cwd, FAKE_BEADS_ISSUES_PATH)
+  const writing = `${path}.writing`
+  mkdirSync(dirname(path), { recursive: true })
+  writeFileSync(writing, JSON.stringify(tasks.map(beadsIssueOf)))
+  renameSync(writing, path)
 }
 
-/** `bd export` の1行の形に写す（ID は小文字にする）。 */
+/** `bd list --json` の1件の形に写す（ID は小文字にする）。 */
 function beadsIssueOf(fixture: TaskFixture): Readonly<Record<string, unknown>> {
   const id = beadsIdOf(fixture.id)
   return {
@@ -309,6 +318,6 @@ export async function openProjectSettingsRoom(
     return room
   }
   writeProjectSettingsContent(room.cwd, "{")
-  await placeBeadsTasks(room, tasks)
+  writeTaskFile(room, tasks)
   return room
 }

@@ -148,9 +148,9 @@ const DOM_ROOT_SELECTORS = {
 export type ScenarioRoom = {
   readonly page: Page
   /**
-   * 起こした tsukumo の cwd（`realpath` を通した絶対パス）。cwd の `.beads` を読む
+   * 起こした tsukumo の cwd（`realpath` を通した絶対パス）。cwd の課題のファイルを読む
    * タスクの一覧のように、疑似セッションの場面ではなく cwd の中身そのものが元になるシナリオ
-   * だけがここへ書き足す（`git init` など）。書き足すのは `open` が部屋を渡したあとにする。
+   * だけがここへ書き足す（`FAKE_BEADS_ISSUES_PATH`・`git init` など）。書き足すのは `open` が部屋を渡したあとにする。
    * 起こす前や繋がる前に用意すると、最初の見回りが `hello` に畳まれてしまい、
    * 変化を捕まえる `waitForEvent` の的が無くなる（docs/architecture/testing.md「E2E の走らせ方」）。
    */
@@ -163,7 +163,7 @@ export type ScenarioRoom = {
   readonly waitForEvent: (kind: string, occurrence?: number) => Promise<void>
   /**
    * `tasks-changed` が、一覧（`tasks.kind === "known"`）に `ids` をすべて含む1件まで待つ。
-   * `.beads` を置く前の見回りは `bd` が読めずに `unknown` を返しうるので、
+   * 課題のファイルを置く前の見回りは `unknown` を返しうるので、
    * `waitForEvent("tasks-changed")`（既定 occurrence=1）は狙いの一覧より前の1件で抜けうる。
    * 課題を置く足場はこちらを使う。
    */

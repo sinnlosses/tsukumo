@@ -125,7 +125,8 @@ const beadsIssueSchema = z.object({
   external_ref: z.string().nullish(),
 })
 
-function beadsOutcomeOf(stdout: string): BeadsOutcome {
+/** `bd list --json` の出力（課題の配列）を読み替える。配列でない・JSON でないときは `failed`。 */
+export function beadsOutcomeOf(stdout: string): BeadsOutcome {
   let parsed: unknown
   try {
     parsed = JSON.parse(stdout)

@@ -8,7 +8,10 @@ import {
 import { queryStructured } from "../server/recommendation/adapter/sdk-structured-query.ts"
 import { createRecommender, type Recommender } from "../server/recommendation/core/recommender.ts"
 import { writeProjectSettings } from "../server/repository/adapter/project-settings.ts"
-import { watchTaskSummary } from "../server/repository/adapter/task-summary.ts"
+import {
+  taskSummaryOptionsOf,
+  watchTaskSummary,
+} from "../server/repository/adapter/task-summary.ts"
 import type { ProjectSettingsCommandPorts } from "../server/repository/core/project-settings-command.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
@@ -42,7 +45,7 @@ export function wireRepository(
             onEvent({ kind: "tasks-changed", tasks })
             recommender.observe(tasks)
           },
-          undefined,
+          taskSummaryOptionsOf(context.fakeSession === undefined ? "real" : "fake"),
           (error) => {
             reportFailure({ feature: "repository", place: "task-summary-poll" }, error)
           },

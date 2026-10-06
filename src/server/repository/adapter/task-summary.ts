@@ -17,6 +17,7 @@ import {
 } from "../../../shared/repository/project-settings.ts"
 import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 import { createBeadsStampReader, readBeadsIssues } from "./beads.ts"
+import { createFakeBeadsStampReader, readFakeBeadsIssues } from "./fake-beads.ts"
 import { readProjectSettings } from "./project-settings.ts"
 import { createTaskBeadsSource } from "./task-beads-source.ts"
 import { fixedTaskSource, type TaskSource, type TaskSourceResult } from "./task-source.ts"
@@ -71,6 +72,32 @@ export const REAL_TASK_SUMMARY_PORTS = {
 } satisfies TaskSummaryPorts
 
 /**
+ * 疑似セッションの見回りの間隔。読むのはファイル1つと設定だけなので、
+ * E2E の足場が置いた一覧と画面から書いた設定を、待たせずに届ける。
+ */
+export const FAKE_TASK_SUMMARY_POLL_INTERVAL_MS = 200
+
+/**
+ * 見張りの間隔と口。ふだん（`real`）は `bd` を読み、疑似セッション（`fake`）は `bd` の代わりに
+ * `readFakeBeadsIssues` のファイルを読む。設定の読み出しと時計はどちらも本物。
+ */
+export function taskSummaryOptionsOf(driver: "real" | "fake"): TaskSummaryOptions {
+  switch (driver) {
+    case "real":
+      return { intervalMs: TASK_SUMMARY_POLL_INTERVAL_MS, ports: REAL_TASK_SUMMARY_PORTS }
+    case "fake":
+      return {
+        intervalMs: FAKE_TASK_SUMMARY_POLL_INTERVAL_MS,
+        ports: {
+          ...REAL_TASK_SUMMARY_PORTS,
+          readBeadsIssues: readFakeBeadsIssues,
+          createBeadsStampReader: createFakeBeadsStampReader,
+        },
+      }
+  }
+}
+
+/**
  * タスク一覧を見張り始める。
  * 呼んだ時点で1回見に行き、以後は `setWatching(true)` のあいだ、ポーリングで設定と読み元を見る。
  * 1回の見回りが終わってから次の見回りを予約するので、`bd` が遅くても見回りは重ならない。
@@ -80,10 +107,7 @@ export const REAL_TASK_SUMMARY_PORTS = {
 export function watchTaskSummary(
   cwd: string,
   onChange: (result: TaskSummaryResult) => void,
-  options: TaskSummaryOptions = {
-    intervalMs: TASK_SUMMARY_POLL_INTERVAL_MS,
-    ports: REAL_TASK_SUMMARY_PORTS,
-  },
+  options: TaskSummaryOptions = taskSummaryOptionsOf("real"),
   onFailure: (error: unknown) => void = () => {},
 ): TaskSummaryWatcher {
   const { intervalMs, ports } = options

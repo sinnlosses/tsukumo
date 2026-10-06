@@ -40,9 +40,6 @@ type BeadsTemplate = {
 /** {@link useBeadsHome} が作ったもの。 */
 let beadsTemplate: BeadsTemplate | undefined
 
-/** {@link processBeadsTemplate} が作ったもの。 */
-let processTemplate: Promise<BeadsTemplate> | undefined
-
 /**
  * 呼んだファイルで1回だけ `bd init` を済ませたリポジトリを作り、{@link initBeads} がその写しを配る。
  * 各テストの前に `home` を `HOME` に向け、使用状況の送信を止めた `bd` の設定を置く。
@@ -107,19 +104,6 @@ export async function initBeadsWithIssuesOutsideGit(
   await placeImportedBeads(beadsTemplate, cwd, issues, { kind: "outside-git" })
 }
 
-/**
- * git リポジトリ `cwd` に、`issues`（`bd export` の1行の形）を入れた `.beads` を置く。テストの外のフックを持たないので、
- * 別のプロセス（tsukumo）が見回っている場所へ置くときに使う。
- * 課題は写しの側で入れ終えてから1回の名前の付け替えで置くので、見回りが入れかけの `.beads` を読むことは無い。
- * `bd init` はプロセスで1回だけ済ませる（{@link processBeadsTemplate}）。
- */
-export async function placeBeadsWithIssues(
-  cwd: string,
-  issues: readonly Readonly<Record<string, unknown>>[],
-): Promise<void> {
-  await placeImportedBeads(await processBeadsTemplate(), cwd, issues)
-}
-
 /** 置き先が git リポジトリか。`outside-git` なら除外の行を写さない。 */
 type BeadsPlace = { readonly kind: "git" } | { readonly kind: "outside-git" }
 
@@ -167,17 +151,6 @@ async function createBeadsTemplate(): Promise<BeadsTemplate> {
   await bd(repository, home, "init", "--stealth", "-p", "t", "-q")
   await bd(repository, home, "config", "set", "status.custom", "pending:frozen")
   return { root, home, repository }
-}
-
-/** プロセスで1回だけ作り、プロセスが終わるときに消す。 */
-function processBeadsTemplate(): Promise<BeadsTemplate> {
-  processTemplate ??= createBeadsTemplate().then((template) => {
-    process.once("exit", () => {
-      rmSync(template.root, { recursive: true, force: true })
-    })
-    return template
-  })
-  return processTemplate
 }
 
 /** `source` の `.beads` と、`bd init --stealth` が書いた除外の行を `cwd` へ写す。 */

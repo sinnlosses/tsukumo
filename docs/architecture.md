@@ -335,6 +335,8 @@ plugin/                       セッションに載せる Claude Code のプラ�
 欄の説明は `README.md`「プロジェクトの設定」。
 
 **タスク一覧の読み元は Beads だけ**（`server/repository/adapter/task-beads-source.ts`。`bd` の課題）。
+例外は疑似セッションで、`taskSummaryOptionsOf("fake")` が `bd` の代わりに cwd のファイルを読む口（`fake-beads.ts` の
+`readFakeBeadsIssues`）と短い見回りの間隔に差し替える（E2E の足場が課題を置く。設定の読み出しと読み元の選び方はふだんと同じ）。
 見張りの `watchTaskSummary` は、設定が前回と変わった見回りでだけ読み元を選び直し、設定が読めないときは
 決まった結果（`settings-invalid`）を、使わないときは `off` を返す読み元（`task-source.ts` の `fixedTaskSource`。どちらも Beads を読まない）を置く。設定が無いときも
 Beads を試しに読み、`.beads` が無ければ「不明」になる（値を推し量るのではなく、読めるかを試すだけ）。
