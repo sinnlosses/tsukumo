@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import type { WorkPlanClosing } from "../../../../src/shared/session/work-plan.ts"
 
 const PHASES = ["架空の段A", "架空の段B", "架空の段C"]
 const SUMMARY = "架空のまとめ。"
@@ -28,6 +29,21 @@ const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
 
 const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
 const RETURNED: SessionEvent = { kind: "delegate-returned", summary: "架空の返却。" }
+
+const reportOf = (workPlanClosing: WorkPlanClosing): SessionEvent => ({
+  kind: "report",
+  toolUseId: "toolu_r1",
+  conclusion: "架空の結論。",
+  sections: [],
+  favor: "",
+  checks: [],
+  task: { kind: "none" },
+  workPlanClosing,
+  closing: { kind: "none" },
+  waitingLine: { kind: "none" },
+  unknownBlockCount: 0,
+  sessionSummary: undefined,
+})
 
 describe("WorkPlanReview の判定", () => {
   it("同じ段の並びのまま位置を2つ以上進めると差し戻し、1つずつなら通す", () => {
@@ -119,6 +135,26 @@ describe("WorkPlanReview の立ち位置", () => {
     review.pass({ kind: "turn-finished", outcome: { kind: "completed" } })
 
     expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
+  })
+
+  it("最後の段で finished の report が流れると、残りが 0 になる", () => {
+    const review = createWorkPlanReview()
+    review.judge(planOf(2))
+    review.pass(reportOf("finished"))
+
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 0 })
+  })
+
+  it("stopped の report と、段が2つ以上残った finished の report では位置が動かない", () => {
+    const stopped = createWorkPlanReview()
+    stopped.judge(planOf(2))
+    stopped.pass(reportOf("stopped"))
+    const early = createWorkPlanReview()
+    early.judge(planOf(1))
+    early.pass(reportOf("finished"))
+
+    expect(stopped.standing()).toEqual({ kind: "planned", remaining: 1 })
+    expect(early.standing()).toEqual({ kind: "planned", remaining: 2 })
   })
 })
 

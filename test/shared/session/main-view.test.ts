@@ -554,6 +554,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task,
+    workPlanClosing: "none",
   })
   const toolRun = (id: string): readonly SessionEvent[] => [
     {
@@ -806,6 +807,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       unknownBlockCount: 0,
       sessionSummary: undefined,
       task: { kind: "none" },
+      workPlanClosing: "none",
     }
     const plan: SessionEvent = {
       kind: "work-plan",
@@ -985,6 +987,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task: { kind: "none" },
+    workPlanClosing: "none",
   }
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 
@@ -1149,6 +1152,7 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task: { kind: "none" },
+    workPlanClosing: "none",
   })
   const reportMarkdowns = (entries: readonly MainViewEntry[]) =>
     entries.flatMap((entry) => (entry.kind === "report" ? [entry.markdown] : []))

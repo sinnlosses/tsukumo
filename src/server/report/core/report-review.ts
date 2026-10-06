@@ -15,9 +15,11 @@
 // 背景のタスクの終わりはターンの外で届くので、これだけはターンの区切りで戻さない。
 // サブエージェントの `SendMessage` の合図は流れに見えないので数えない。
 //
-// 段取りの残った `report` も差し戻す（段取りの立ち位置は `WorkPlanReview.standing` から受け取る）:
-// 同じターンで差し戻した `work_plan` にまだ応えていないものと、`task.outcome` が `shipped` なのに段が残っているもの。
-// 枠はそれぞれ1ターンに1回までで、規約違反の枠とは分ける。
+// 段取りの閉じていない `report` も差し戻す（段取りの立ち位置は `WorkPlanReview.standing` から受け取る）:
+// 同じターンで差し戻した `work_plan` にまだ応えていないものと、段の閉じ方（`workPlanClosing`）が合わないもの。
+// 段の閉じ方は同じ依頼に段取りがあるときだけ見て、欄が無い・`finished` なのに段が2つ以上残っている・
+// `task.outcome` が `shipped` なのに `stopped` で段が残っている、のどれかなら差し戻す。
+// 枠は応えていない `work_plan` と段の閉じ方でそれぞれ1ターンに1回までで、規約違反の枠とは分ける。
 //
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`）。
 // `assistant` メッセージの変換は `report` イベントを作るだけで判定しない。
@@ -46,7 +48,7 @@ export type ReportReview = {
   /**
    * `report` の handler から。
    * このターンで描いた `report` の送り直し、直前に描いた `report` のあとに新しい事実の届いていない呼び出し、
-   * 応えていない `work_plan` の差し戻し、段の残った `shipped`、規約違反のどれかなら、この順に見て差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
+   * 応えていない `work_plan` の差し戻し、合わない段の閉じ方、規約違反のどれかなら、この順に見て差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
    */
   readonly judge: (report: ReportDraft) => ReportVerdict
   /** このターンで「新しい事実が無い」差し戻しをしたか。ターンの頭（`session-info`）で戻る。 */
@@ -72,7 +74,7 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
   let resendRejectedInTurn = false
   let nothingNewRejectedInTurn = false
   let unansweredPlanRejectedInTurn = false
-  let unfinishedPhasesRejectedInTurn = false
+  let closingRejectedInTurn = false
   let held: readonly ReportEvent[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportEvent[] = []
@@ -87,7 +89,7 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
     resendRejectedInTurn = false
     nothingNewRejectedInTurn = false
     unansweredPlanRejectedInTurn = false
-    unfinishedPhasesRejectedInTurn = false
+    closingRejectedInTurn = false
     drawn = []
   }
 
@@ -106,14 +108,13 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
         unansweredPlanRejectedInTurn = true
         return { kind: "rejected", text: REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT }
       }
-      if (
-        isShipped(report.task) &&
-        standing.kind === "planned" &&
-        standing.remaining > 0 &&
-        !unfinishedPhasesRejectedInTurn
-      ) {
-        unfinishedPhasesRejectedInTurn = true
-        return { kind: "rejected", text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT }
+      const closingVerdict: ReportVerdict =
+        standing.kind === "planned"
+          ? judgeWorkPlanClosing(report, standing.remaining)
+          : { kind: "accepted" }
+      if (closingVerdict.kind === "rejected" && !closingRejectedInTurn) {
+        closingRejectedInTurn = true
+        return closingVerdict
       }
       const violations = reportViolations(report)
       if (violations.length === 0 || rejectedInTurn) {
@@ -201,12 +202,38 @@ export const REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT =
   "差し戻しの直し方に従って `work_plan` を呼び直し、受け付けられてから `report` を呼ぶこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
-/** `task.outcome` が `shipped` なのに段の残った `report` を差し戻すときの戻り値。固定の文面だけ。 */
-export const REPORT_UNFINISHED_PHASES_REJECTION_TEXT =
-  "`task.outcome` が `shipped` なのに、段取りに済んでいない段が残っている。" +
-  "全部の段を終えたなら、同じ応答の中で `report` より先に `work_plan` で段を1つずつ進め、最後に current に段の数を渡す。" +
-  "途中で止めたなら outcome を `stopped` か `awaiting-answer` にする。" +
+/** 同じ依頼に段取りがあるのに `workPlanClosing` の無い `report` を差し戻すときの戻り値。固定の文面だけ。 */
+export const REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT =
+  "この依頼では `work_plan` で段取りを渡しているので、`report` の workPlanClosing に段の閉じ方を入れる。" +
+  "全部の段を終えたなら `finished`、途中で止めたなら `stopped` を入れて呼び直すこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
+/** `workPlanClosing` が `finished` なのに段が2つ以上残っている `report` を差し戻すときの戻り値。固定の文面だけ。 */
+export const REPORT_UNFINISHED_PHASES_REJECTION_TEXT =
+  "workPlanClosing が `finished` なのに、段取りに済んでいない段が2つ以上残っている。" +
+  "`finished` で tsukumo が閉じるのは最後の段だけなので、同じ応答の中で `report` より先に `work_plan` で段を1つずつ進め、" +
+  "最後の段に来てから `finished` で呼び直す。途中で止めたなら `stopped` にする。" +
+  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
+/** `task.outcome` が `shipped` なのに `workPlanClosing` が `stopped` で段の残った `report` を差し戻すときの戻り値。固定の文面だけ。 */
+export const REPORT_SHIPPED_BUT_STOPPED_REJECTION_TEXT =
+  "`task.outcome` が `shipped` なのに、workPlanClosing が `stopped` で段取りに済んでいない段が残っている。" +
+  "全部の段を終えたなら最後の段まで進めて `finished` にし、途中で止めたなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
+  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
+/** 同じ依頼に段取りがあるときの、段の閉じ方だけで見た判定。`remaining` は済んでいない段の数（全部済みなら 0）。 */
+function judgeWorkPlanClosing(report: ReportDraft, remaining: number): ReportVerdict {
+  if (report.workPlanClosing === "none") {
+    return { kind: "rejected", text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT }
+  }
+  if (report.workPlanClosing === "finished" && remaining >= 2) {
+    return { kind: "rejected", text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT }
+  }
+  if (report.workPlanClosing === "stopped" && remaining > 0 && isShipped(report.task)) {
+    return { kind: "rejected", text: REPORT_SHIPPED_BUT_STOPPED_REJECTION_TEXT }
+  }
+  return { kind: "accepted" }
+}
 
 function isShipped(task: ReportTask): boolean {
   return task.kind === "task" && task.outcome === "shipped"

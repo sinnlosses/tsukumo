@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest"
 
 import {
   advancedByReturn,
+  closedByReport,
   type LatestWorkPlan,
   parseWorkPlan,
+  parseWorkPlanClosing,
   phaseShiftOf,
   type WorkPlan,
 } from "../../../src/shared/session/work-plan.ts"
@@ -133,5 +135,31 @@ describe("advancedByReturn", () => {
     expect(advance.kind === "advanced" && phaseShiftOf(planned(PHASES, 1), advance.plan)).toEqual({
       finished: { kind: "finished", label: "2/3 架空の段B", summary: "架空のまとめ。" },
     })
+  })
+})
+
+describe("parseWorkPlanClosing", () => {
+  it("finished と stopped はそのまま読み、無い・形の崩れは none に畳む", () => {
+    expect([undefined, "finished", "stopped", "done", 1].map(parseWorkPlanClosing)).toEqual([
+      "none",
+      "finished",
+      "stopped",
+      "none",
+      "none",
+    ])
+  })
+})
+
+describe("closedByReport", () => {
+  it("最後の段にいれば、段の並びはそのままで全部の段を終えた位置にする", () => {
+    expect(closedByReport(next(PHASES, 2, "架空のまとめ。"))).toEqual({
+      kind: "closed",
+      plan: next(PHASES, 3),
+    })
+  })
+
+  it("段が2つ以上残っている・全部済みの位置からは動かさない", () => {
+    expect(closedByReport(next(PHASES, 1, "架空のまとめ。"))).toEqual({ kind: "held" })
+    expect(closedByReport(next(PHASES, 3))).toEqual({ kind: "held" })
   })
 })

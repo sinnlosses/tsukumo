@@ -37,6 +37,12 @@ export const REPORT_TASK_DESCRIPTION =
   "渡したら conclusion に作業の名前やタスクID を書かず、これから何が変わるかだけを書く。" +
   "タスクに紐付かないターンでは省く。"
 
+/** `report` の任意の `workPlanClosing` 引数（段の閉じ方）の説明。 */
+export const REPORT_WORK_PLAN_CLOSING_DESCRIPTION =
+  "段の閉じ方。同じ依頼で work_plan を渡したときは必ず入れる。" +
+  "finished（全部の段を終えた。最後の段にいるときに渡すと tsukumo が帯を全部済みにする）/ " +
+  "stopped（途中で止めた。帯は今の段のまま残る）。段取りの無い依頼では省く。"
+
 /**
  * `report` の任意の `sections` 引数（本文。節と塊の並び）の説明。
  * 塊の種類ごとの使いどころは各塊の `describe`（`reportBlockSchema`）が持つので、ここに書かない。

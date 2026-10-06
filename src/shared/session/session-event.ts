@@ -27,6 +27,7 @@ import type { UsageReviewEvent } from "../usage-review/usage-review.ts"
 import type { VisitEvent } from "../visit/visit.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import type { SessionDefault } from "./session-default.ts"
+import type { WorkPlanClosing } from "./work-plan.ts"
 
 /**
  * `/` 補完に出すコマンド1件。
@@ -149,7 +150,7 @@ export type SessionEvent =
   | { readonly kind: "report-drafting"; readonly toolUseId: string }
   /**
    * `report` ツールの呼び出し。メインが呼んだものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
-   * `sections`（本文の節）と `checks`（検証結果）は無ければ空の配列、`favor` は無ければ空の文字列、`task` は無ければ `none`。
+   * `sections`（本文の節）と `checks`（検証結果）は無ければ空の配列、`favor` は無ければ空の文字列、`task` と `workPlanClosing`（段の閉じ方）は無ければ `none`。
    * `toolUseId` は呼び出しの id で、差し戻しが同じ呼び出しの `tool-finished` と突き合わせるのに使う。
    * `closing`（締めのセリフ）は描いたあとに差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
    * `waitingLine`（待ちの一言）は記録に写り、依頼を待つ間に `shownReaction` が出す。
@@ -164,6 +165,7 @@ export type SessionEvent =
       readonly favor: string
       readonly checks: readonly ReportCheck[]
       readonly task: ReportTask
+      readonly workPlanClosing: WorkPlanClosing
       readonly closing: ReportClosing
       readonly waitingLine: ReportWaitingLine
       readonly unknownBlockCount: number

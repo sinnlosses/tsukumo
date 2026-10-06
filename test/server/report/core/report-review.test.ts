@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest"
 
 import {
   createReportReview,
+  REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
   REPORT_NOTHING_NEW_REJECTION_TEXT,
   REPORT_RESEND_REJECTION_TEXT,
+  REPORT_SHIPPED_BUT_STOPPED_REJECTION_TEXT,
   REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
   REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
   type ReportReview,
@@ -18,6 +20,7 @@ import {
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   NO_WORK_PLAN_STANDING,
+  type WorkPlanClosing,
   type WorkPlanStanding,
 } from "../../../../src/shared/session/work-plan.ts"
 
@@ -35,6 +38,7 @@ const VALID: ReportDraft = {
   checks: [],
   fileContents: new Map(),
   task: NO_REPORT_TASK,
+  workPlanClosing: "none",
 }
 const INVALID: ReportDraft = {
   conclusion: "架空の結論。",
@@ -43,6 +47,7 @@ const INVALID: ReportDraft = {
   checks: [],
   fileContents: new Map(),
   task: NO_REPORT_TASK,
+  workPlanClosing: "none",
 }
 
 const SESSION_INFO: SessionEvent = {
@@ -223,6 +228,7 @@ describe("createReportReview の judge（送り直し）", () => {
     checks: [],
     fileContents: new Map(),
     task: NO_REPORT_TASK,
+    workPlanClosing: "none",
   }
 
   it("このターンで描いた report と同じ引数の呼び出しは、固定の文面で差し戻す", () => {
@@ -237,13 +243,14 @@ describe("createReportReview の judge（送り直し）", () => {
     const review = createReportReview(noPlan)
     draw(review, "toolu_r1", OTHER)
 
-    const padded = {
+    const padded: ReportDraft = {
       conclusion: `  ${OTHER.conclusion}\n`,
       sections: sectionsOf("架空の根拠。"),
       favor: " ",
       checks: [],
       fileContents: new Map(),
       task: NO_REPORT_TASK,
+      workPlanClosing: "none",
     }
     expect(review.judge(padded).kind).toBe("rejected")
   })
@@ -334,6 +341,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
     checks: [],
     fileContents: new Map(),
     task: NO_REPORT_TASK,
+    workPlanClosing: "none",
   }
   const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const TURN_STARTED: SessionEvent = { kind: "turn-started" }
@@ -461,10 +469,12 @@ describe("createReportReview の judge（段取りの残った report）", () =>
     name: "架空の作業",
     outcome,
   })
-  const withTask = (outcome: ReportTaskOutcome): ReportDraft => ({
+  const withTask = (outcome: ReportTaskOutcome, workPlanClosing: WorkPlanClosing): ReportDraft => ({
     ...VALID,
     task: taskOf(outcome),
+    workPlanClosing,
   })
+  const closing = (workPlanClosing: WorkPlanClosing): ReportDraft => ({ ...VALID, workPlanClosing })
   /** 立ち位置を差し替えられる `ReportReview`。 */
   const reviewWith = (initial: WorkPlanStanding) => {
     let standing = initial
@@ -484,47 +494,70 @@ describe("createReportReview の judge（段取りの残った report）", () =>
       text: REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
     })
     moveTo({ kind: "planned", remaining: 1 })
-    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+    expect(review.judge(closing("finished"))).toEqual({ kind: "accepted" })
   })
 
-  it("shipped で段が残っていれば差し戻し、全部済ませたあとなら通す", () => {
-    const { review, moveTo } = reviewWith({ kind: "planned", remaining: 2 })
+  it("段取りがあって段の閉じ方の欄が無ければ差し戻す（全部済みのあとでも）", () => {
+    for (const remaining of [2, 1, 0]) {
+      expect(reviewWith({ kind: "planned", remaining }).review.judge(VALID)).toEqual({
+        kind: "rejected",
+        text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
+      })
+    }
+  })
 
-    expect(review.judge(withTask("shipped"))).toEqual({
-      kind: "rejected",
-      text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
-    })
-    moveTo({ kind: "planned", remaining: 0 })
-    expect(review.judge(withTask("shipped"))).toEqual({ kind: "accepted" })
-    expect(reviewWith({ kind: "planned", remaining: 0 }).review.judge(withTask("shipped"))).toEqual(
-      { kind: "accepted" },
+  it("段取りの無い依頼では、欄が無くてもあっても通す", () => {
+    for (const workPlanClosing of ["none", "finished", "stopped"] as const) {
+      expect(createReportReview(noPlan).judge(closing(workPlanClosing))).toEqual({
+        kind: "accepted",
+      })
+    }
+  })
+
+  it("finished で段が2つ以上残っていれば差し戻し、最後の段か全部済みなら通す", () => {
+    expect(reviewWith({ kind: "planned", remaining: 2 }).review.judge(closing("finished"))).toEqual(
+      { kind: "rejected", text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT },
     )
+    for (const remaining of [1, 0]) {
+      expect(reviewWith({ kind: "planned", remaining }).review.judge(closing("finished"))).toEqual({
+        kind: "accepted",
+      })
+    }
   })
 
-  it("段が残っていても、stopped・awaiting-answer とタスクの無い report は通す", () => {
+  it("stopped は段が残っていても通す（タスクが stopped・awaiting-answer でも、タスクが無くても）", () => {
     const { review } = reviewWith({ kind: "planned", remaining: 2 })
 
-    expect(review.judge(withTask("stopped"))).toEqual({ kind: "accepted" })
-    expect(review.judge(withTask("awaiting-answer"))).toEqual({ kind: "accepted" })
-    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+    expect(review.judge(closing("stopped"))).toEqual({ kind: "accepted" })
+    expect(review.judge(withTask("stopped", "stopped"))).toEqual({ kind: "accepted" })
+    expect(review.judge(withTask("awaiting-answer", "stopped"))).toEqual({ kind: "accepted" })
   })
 
-  it("段取りの無い依頼の shipped は通す", () => {
-    expect(createReportReview(noPlan).judge(withTask("shipped"))).toEqual({ kind: "accepted" })
+  it("shipped なのに stopped で段が残っていれば差し戻し、全部済みなら通す", () => {
+    expect(
+      reviewWith({ kind: "planned", remaining: 1 }).review.judge(withTask("shipped", "stopped")),
+    ).toEqual({ kind: "rejected", text: REPORT_SHIPPED_BUT_STOPPED_REJECTION_TEXT })
+    expect(
+      reviewWith({ kind: "planned", remaining: 0 }).review.judge(withTask("shipped", "stopped")),
+    ).toEqual({ kind: "accepted" })
+    expect(
+      reviewWith({ kind: "planned", remaining: 1 }).review.judge(withTask("shipped", "finished")),
+    ).toEqual({ kind: "accepted" })
   })
 
-  it("枠は種類ごとに1ターンに1回で、規約違反の枠とは別に数え、次のターンで戻る", () => {
-    const { review } = reviewWith({ kind: "planned", remaining: 1 })
-    const invalidShipped: ReportDraft = { ...INVALID, task: taskOf("shipped") }
+  it("段の閉じ方の枠は1ターンに1回で、規約違反の枠とは別に数え、次のターンで戻る", () => {
+    const { review } = reviewWith({ kind: "planned", remaining: 2 })
 
-    expect(review.judge(invalidShipped)).toEqual({
+    expect(review.judge(INVALID)).toEqual({
       kind: "rejected",
-      text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
+      text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
     })
-    expect(review.judge(invalidShipped).kind).toBe("rejected")
-    expect(review.judge(invalidShipped)).toEqual({ kind: "accepted" })
+    expect(review.judge({ ...INVALID, workPlanClosing: "finished" }).kind).toBe("rejected")
+    expect(review.judge({ ...INVALID, workPlanClosing: "finished" })).toEqual({
+      kind: "accepted",
+    })
     ;[FINISHED, SESSION_INFO].forEach((event) => review.pass(event))
-    expect(review.judge(withTask("shipped"))).toEqual({
+    expect(review.judge(closing("finished"))).toEqual({
       kind: "rejected",
       text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
     })

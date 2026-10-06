@@ -6,6 +6,7 @@
 // 覚えるのは、同じ依頼の中で最後に受け付けた段取りだけで、依頼（`request` / `turn-started`）で忘れる。
 // 委譲の返却（`delegate-returned`）は、覚えた段取りを状態の畳み込みと同じ決まり（`advancedByReturn`）で1段進める。
 // メインの呼び出しはそこから +1 までしか通らない。
+// 段の閉じ方が `finished` の `report`（差し戻されずに流れたもの）は、覚えた段取りを `closedByReport` で閉じる。
 //
 // 差し戻したあと同じターンで受け付けた呼び出しが無いことも覚え、`report` の差し戻し（`ReportReview`）が `standing` で読む。
 // ターンの区切りは `session-info`（ターンの頭に毎回届く）と `turn-finished`。
@@ -16,6 +17,7 @@
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
   advancedByReturn,
+  closedByReport,
   parseWorkPlan,
   type WorkPlan,
   type WorkPlanStanding,
@@ -90,6 +92,16 @@ export function createWorkPlanReview(): WorkPlanReview {
             accepted === undefined ? undefined : advancedByReturn(accepted, event.summary)
           if (advance?.kind === "advanced") {
             accepted = advance.plan
+          }
+          return [event]
+        }
+        case "report": {
+          const close =
+            accepted === undefined || event.workPlanClosing !== "finished"
+              ? undefined
+              : closedByReport(accepted)
+          if (close?.kind === "closed") {
+            accepted = close.plan
           }
           return [event]
         }

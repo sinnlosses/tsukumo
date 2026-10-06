@@ -95,6 +95,7 @@
       "task": {
         "kind": "none"
       },
+      "workPlanClosing": "none",
       "closing": {
         "kind": "speech",
         "text": "いったんまとめたよ。",
@@ -193,6 +194,7 @@
       "task": {
         "kind": "none"
       },
+      "workPlanClosing": "none",
       "closing": {
         "kind": "speech",
         "text": "ここまでまとめたよ。",

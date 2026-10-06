@@ -34,6 +34,7 @@ const REPORT: SessionEvent = {
   unknownBlockCount: 0,
   sessionSummary: undefined,
   task: { kind: "none" },
+  workPlanClosing: "none",
 }
 const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 const utterance = (text: string): SessionEvent => ({ kind: "utterance", text })

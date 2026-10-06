@@ -16,6 +16,7 @@ import {
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import { leadingSentences, sentenceCount } from "../../../shared/report/sentence-count.ts"
+import type { WorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
 
 /** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
@@ -28,6 +29,8 @@ export type ReportDraft = {
   readonly fileContents: ReadonlyMap<string, string>
   /** 載せたタスク。記法の検査には使わず、段の残りの差し戻し（`ReportReview`）が終わり方を読む。 */
   readonly task: ReportTask
+  /** 段の閉じ方。記法の検査には使わず、段の閉じ方の差し戻し（`ReportReview`）が読む。 */
+  readonly workPlanClosing: WorkPlanClosing
 }
 
 /** 逃げ道の中に書くと差し戻す記法（塊の種類か節の見出しで書けるもの）。 */

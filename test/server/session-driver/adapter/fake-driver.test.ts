@@ -431,6 +431,7 @@ describe("startFakeSession", () => {
         unknownBlockCount: 0,
         sessionSummary: undefined,
         task: { kind: "none" },
+        workPlanClosing: "none",
       }) as const
     const finished = (toolUseId: string, isError: boolean) =>
       ({ kind: "tool-finished", toolUseId, content: "架空の結果", isError }) as const
@@ -542,6 +543,7 @@ describe("startFakeSession", () => {
         favor: "",
         checks: [],
         task: { kind: "none" },
+        workPlanClosing: "none",
         closing: { kind: "speech", text: "書けたよ", expression: "default" },
         waitingLine: { kind: "none" },
         unknownBlockCount: 1,

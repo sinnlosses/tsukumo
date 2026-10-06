@@ -215,20 +215,6 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "work-plan",
-      "phases": [
-        "今の形を調べる",
-        "ID の変換を両方の形に対応させる",
-        "文書と検証を揃える"
-      ],
-      "current": 3,
-      "phaseSummary": ""
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
       "kind": "report-drafting",
       "toolUseId": "fake-work-plan-report"
     }
@@ -277,6 +263,7 @@
       "task": {
         "kind": "none"
       },
+      "workPlanClosing": "finished",
       "closing": {
         "kind": "speech",
         "text": "3つの段を終えたよ。",

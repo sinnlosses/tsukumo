@@ -72,6 +72,7 @@
         "name": "架空の札に段が1つでも `1/1` のように位置を出す",
         "outcome": "awaiting-answer"
       },
+      "workPlanClosing": "none",
       "closing": {
         "kind": "speech",
         "text": "答えを待ってるね。",

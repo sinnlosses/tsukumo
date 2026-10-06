@@ -15,7 +15,11 @@ import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportSectionSchema } from "../../../shared/report/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report/report-check.ts"
 import { parseReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
-import { MIN_WORK_PLAN_PHASES } from "../../../shared/session/work-plan.ts"
+import {
+  MIN_WORK_PLAN_PHASES,
+  parseWorkPlanClosing,
+  WORK_PLAN_CLOSINGS,
+} from "../../../shared/session/work-plan.ts"
 import {
   USAGE_PROPOSAL_FOLLOW_UPS,
   USAGE_PROPOSAL_IMPACTS,
@@ -34,6 +38,7 @@ import {
   REPORT_TITLE_DESCRIPTION,
   REPORT_TOOL_DESCRIPTION,
   REPORT_WAITING_LINE_DESCRIPTION,
+  REPORT_WORK_PLAN_CLOSING_DESCRIPTION,
 } from "../../report/core/report-tool.ts"
 import {
   USAGE_REVIEW_RESULT_TOOL_DESCRIPTION,
@@ -196,6 +201,10 @@ function reportTool(
     REPORT_TOOL_DESCRIPTION,
     {
       task: reportTaskSchema.optional().describe(REPORT_TASK_DESCRIPTION),
+      workPlanClosing: z
+        .enum(WORK_PLAN_CLOSINGS)
+        .optional()
+        .describe(REPORT_WORK_PLAN_CLOSING_DESCRIPTION),
       conclusion: z.string().describe("結論。レポートの冒頭の1〜2文"),
       sections: z
         .array(reportSectionSchema)
@@ -214,7 +223,7 @@ function reportTool(
       closing: z.object(speechShape(expressions)).describe(REPORT_CLOSING_DESCRIPTION),
       waitingLine: z.object(speechShape(expressions)).describe(REPORT_WAITING_LINE_DESCRIPTION),
     },
-    async ({ task, conclusion, sections, favor, checks, title }) => {
+    async ({ task, workPlanClosing, conclusion, sections, favor, checks, title }) => {
       const fileContents = await readReportBlockFiles(cwd, sections ?? [])
       const verdict = review.judge({
         conclusion,
@@ -223,6 +232,7 @@ function reportTool(
         checks: checks ?? [],
         fileContents,
         task: parseReportTask(task),
+        workPlanClosing: parseWorkPlanClosing(workPlanClosing),
       })
       if (verdict.kind === "rejected") {
         return { content: [{ type: "text" as const, text: verdict.text }], isError: true }

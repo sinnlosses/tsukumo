@@ -14,7 +14,7 @@ import {
   MAX_TOOL_TEXT_LENGTH,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
-import { latestWorkPlan } from "../../../src/shared/session/work-plan.ts"
+import { latestWorkPlan, type WorkPlanClosing } from "../../../src/shared/session/work-plan.ts"
 import {
   characterChangedEvent,
   characterInfo,
@@ -1040,6 +1040,7 @@ describe("applySessionEvent（report を書いている間）", () => {
         unknownBlockCount: 0,
         sessionSummary: undefined,
         task: { kind: "none" },
+        workPlanClosing: "none",
       }).reportDrafting,
     ).toEqual({ kind: "idle" })
   })
@@ -1057,6 +1058,7 @@ describe("applySessionEvent（report を書いている間）", () => {
       unknownBlockCount: 0,
       sessionSummary: undefined,
       task: { kind: "none" },
+      workPlanClosing: "none",
     })
 
     expect(state.records.at(-1)).toMatchObject({
@@ -1681,6 +1683,64 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
   })
 })
 
+describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
+  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const PHASES = ["架空の段A", "架空の段B", "架空の段C"]
+  const mainPlan = (current: number): SessionEvent => ({
+    kind: "work-plan",
+    phases: PHASES,
+    current,
+    phaseSummary: current > 0 && current < PHASES.length ? "架空のまとめ。" : "",
+  })
+  const reportOf = (workPlanClosing: WorkPlanClosing): SessionEvent => ({
+    kind: "report",
+    toolUseId: "toolu_r1",
+    conclusion: "架空の結論。",
+    sections: [],
+    favor: "",
+    checks: [],
+    closing: { kind: "none" },
+    waitingLine: { kind: "none" },
+    unknownBlockCount: 0,
+    sessionSummary: undefined,
+    task: { kind: "none" },
+    workPlanClosing,
+  })
+  const currentPlan = (state: SessionState) => latestWorkPlan(state.records)
+
+  it("最後の段で finished の report を受けると、帯が全部済みになる", () => {
+    const state = apply(request, mainPlan(2), reportOf("finished"))
+
+    expect(currentPlan(state)).toEqual({
+      kind: "planned",
+      phases: PHASES,
+      current: PHASES.length,
+      phaseSummary: "",
+    })
+    expect(state.records.at(-1)?.kind).toBe("report")
+  })
+
+  it("stopped の report では、帯は今の段のまま残る", () => {
+    const state = apply(request, mainPlan(2), reportOf("stopped"))
+
+    expect(currentPlan(state)).toMatchObject({ current: 2 })
+  })
+
+  it("段が2つ以上残っていれば、finished でも帯は動かない", () => {
+    const state = apply(request, mainPlan(1), reportOf("finished"))
+
+    expect(currentPlan(state)).toMatchObject({ current: 1 })
+  })
+
+  it("段取りの無い依頼と、前の依頼の段取りには何も積まない", () => {
+    const none = apply(request, reportOf("finished"))
+    const previous = apply(request, mainPlan(2), request, reportOf("finished"))
+
+    expect(none.records.filter((record) => record.kind === "work-plan")).toEqual([])
+    expect(previous.records.filter((record) => record.kind === "work-plan")).toHaveLength(1)
+  })
+})
+
 describe("applySessionEvent（段取りとレポートの時刻）", () => {
   const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const mainPlan = (current: number): SessionEvent => ({
@@ -1702,6 +1762,7 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task: { kind: "none" },
+    workPlanClosing: "none",
   }
   const applyAt = (...stamped: readonly (readonly [SessionEvent, number])[]): SessionState =>
     stamped.reduce(

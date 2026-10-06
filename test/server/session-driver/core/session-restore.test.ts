@@ -140,6 +140,7 @@ describe("toRestoredEvents", () => {
         favor: "",
         checks: [],
         task: { kind: "none" },
+        workPlanClosing: "none",
         closing: { kind: "none" },
         waitingLine: { kind: "none" },
         unknownBlockCount: 0,

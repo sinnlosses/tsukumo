@@ -121,6 +121,36 @@ export function advancedByReturn(plan: WorkPlan, summary: string): ReturnAdvance
     : { kind: "held" }
 }
 
+/** `report` の欄 `workPlanClosing` で渡せる段の閉じ方。`finished` は全部の段を終えた、`stopped` は途中で止めた。 */
+export const WORK_PLAN_CLOSINGS = ["finished", "stopped"] as const
+
+/** `report` が渡した段の閉じ方。欄の無い `report` と、欄を持たなかったころの記録は `none`。 */
+export type WorkPlanClosing = "none" | (typeof WORK_PLAN_CLOSINGS)[number]
+
+/** `report` の引数の `workPlanClosing` を読む。「無い」と形の崩れは `none` に畳む。 */
+export function parseWorkPlanClosing(value: unknown): WorkPlanClosing {
+  return WORK_PLAN_CLOSINGS.find((closing) => closing === value) ?? "none"
+}
+
+/** `finished` の `report` 1回で段取りがどうなるか。`held` は段を動かさない。 */
+export type ReportClose =
+  | { readonly kind: "held" }
+  | { readonly kind: "closed"; readonly plan: WorkPlan }
+
+/**
+ * `finished` の `report` 1回で閉じた段取り（{@link ReportClose}）。
+ * 最後の段にいるときだけ、段の並びはそのままで全部の段を終えた位置にする（最後の段のまとめは最終レポートが担うので持たない）。
+ * 段が2つ以上残っている・全部の段を終えた位置からは動かさない。
+ */
+export function closedByReport(plan: WorkPlan): ReportClose {
+  return plan.current + 1 === plan.phases.length
+    ? {
+        kind: "closed",
+        plan: { phases: plan.phases, current: plan.phases.length, phaseSummary: "" },
+      }
+    : { kind: "held" }
+}
+
 /** 記録の範囲で最後の `work-plan` の記録（{@link LatestWorkPlan}）。範囲を依頼1つに絞るのは呼ぶ側。 */
 export function latestWorkPlan(records: readonly SessionRecord[]): LatestWorkPlan {
   const found = records.findLast(isWorkPlanRecord)

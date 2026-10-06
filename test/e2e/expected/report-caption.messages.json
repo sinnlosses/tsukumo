@@ -229,6 +229,7 @@
       "task": {
         "kind": "none"
       },
+      "workPlanClosing": "none",
       "closing": {
         "kind": "speech",
         "text": "並べたよ！",

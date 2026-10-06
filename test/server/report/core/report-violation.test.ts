@@ -24,6 +24,7 @@ const draft = (
   checks: [],
   fileContents: new Map(),
   task: NO_REPORT_TASK,
+  workPlanClosing: "none",
 })
 
 const text = (value: string, fold = ""): ReportBlock => ({ kind: "text", text: value, fold })

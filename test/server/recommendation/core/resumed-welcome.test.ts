@@ -28,6 +28,7 @@ function report(waitingLine: ReportWaitingLine): SessionEvent {
     favor: "",
     checks: [],
     task: { kind: "none" },
+    workPlanClosing: "none",
     closing: { kind: "none" },
     waitingLine,
     unknownBlockCount: 0,

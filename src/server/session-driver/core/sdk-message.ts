@@ -20,7 +20,7 @@ import type {
 import type { RateLimit, RateLimitBucket } from "../../../shared/session-driver/rate-limit.ts"
 import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { parseWorkPlan } from "../../../shared/session/work-plan.ts"
+import { parseWorkPlan, parseWorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import type { ModelTokenUsage } from "../../../shared/token-usage/token-usage.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
@@ -486,7 +486,7 @@ function speechEvents(
  * `sections` は塊ごとに検証して崩れた塊・知らない種類の塊を落とす（{@link parseReportSections}）。
  * `sections` の無い呼び出し（引数が文字列の `body` だったころの transcript）は、`body` を逃げ道の塊1つの節に畳む（{@link reportSectionsOfBody}）。
  * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。
- * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。
+ * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。`workPlanClosing` も同じ。
  * `closing` の「無い」（引数に `closing` が無かったころの transcript）は `none` に畳む。
  * `waitingLine` の「無い」（省いた・文が空白だけ・形の崩れ）も `none` に畳む。
  * `sessionSummary` の「無い」（空白だけも）は undefined。
@@ -515,6 +515,7 @@ export function reportEvents(
       favor: optionalString(input.favor) ?? "",
       checks: parseReportChecks(input.checks),
       task: parseReportTask(input.task),
+      workPlanClosing: parseWorkPlanClosing(input.workPlanClosing),
       closing: speechEvents(input.closing, expressions)[0] ?? { kind: "none" },
       waitingLine: speechEvents(input.waitingLine, expressions).find(
         (speech) => speech.text.trim() !== "",

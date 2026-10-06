@@ -171,6 +171,7 @@
       "task": {
         "kind": "none"
       },
+      "workPlanClosing": "none",
       "closing": {
         "kind": "speech",
         "text": "途中まで書いたよ。",
@@ -353,6 +354,7 @@
       "task": {
         "kind": "none"
       },
+      "workPlanClosing": "none",
       "closing": {
         "kind": "speech",
         "text": "書けたよ！",

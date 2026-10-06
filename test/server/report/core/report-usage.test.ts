@@ -20,6 +20,7 @@ function reportEvent(
     unknownBlockCount,
     sessionSummary: undefined,
     task: { kind: "none" },
+    workPlanClosing: "none",
   }
 }
 

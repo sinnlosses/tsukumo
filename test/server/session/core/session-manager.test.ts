@@ -856,6 +856,7 @@ describe("createSessionManager", () => {
         unknownBlockCount: 0,
         sessionSummary: undefined,
         task: { kind: "none" },
+        workPlanClosing: "none",
       }
     }
 
@@ -1523,6 +1524,7 @@ describe("createSessionManager", () => {
         unknownBlockCount,
         sessionSummary: undefined,
         task: { kind: "none" },
+        workPlanClosing: "none",
       }
     }
 
@@ -1886,6 +1888,7 @@ describe("createSessionManager", () => {
         unknownBlockCount: 0,
         sessionSummary: undefined,
         task: { kind: "none" },
+        workPlanClosing: "none",
       },
       {
         kind: "token-usage",
@@ -2060,6 +2063,7 @@ describe("レポートの画像の棚", () => {
       unknownBlockCount: 0,
       sessionSummary: undefined,
       task: { kind: "none" },
+      workPlanClosing: "none",
     }
   }
 

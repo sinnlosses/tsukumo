@@ -93,6 +93,7 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task: { kind: "none" },
+    workPlanClosing: "none",
   })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
@@ -184,6 +185,7 @@ describe("mainViewTurnsOf（最終レポートの札は、やり取りが閉じ�
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task: { kind: "none" },
+    workPlanClosing: "none",
   })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
@@ -223,6 +225,7 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task: { kind: "none" },
+    workPlanClosing: "none",
   }
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
@@ -248,6 +251,7 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task: { kind: "none" },
+    workPlanClosing: "none",
   }
 
   // 依頼 → 中間 report → 合図（turn-resumed → speech → ターンの終わり）→ 合図（同じ形）→
@@ -319,6 +323,7 @@ describe("mainViewTurnsOf（変わらないターンとステップの参照）"
     unknownBlockCount: 0,
     sessionSummary: undefined,
     task: { kind: "none" },
+    workPlanClosing: "none",
   }
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const reported = fold([ask, report, finished])

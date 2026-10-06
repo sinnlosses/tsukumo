@@ -87,6 +87,7 @@
       "task": {
         "kind": "none"
       },
+      "workPlanClosing": "none",
       "closing": {
         "kind": "none"
       },

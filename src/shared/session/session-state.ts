@@ -53,7 +53,12 @@ import type {
   SessionEvent,
 } from "./session-event.ts"
 import { splitIntoTurns } from "./turn.ts"
-import { advancedByReturn, isWorkPlanRecord } from "./work-plan.ts"
+import {
+  advancedByReturn,
+  closedByReport,
+  isWorkPlanRecord,
+  type WorkPlanClosing,
+} from "./work-plan.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが動き続ける以上、記録自体も無限に増やさない。
@@ -149,7 +154,7 @@ export type SessionRecord =
       readonly time: RecordTime
     }
   /**
-   * `work_plan` ツールで受け取った段取りと、委譲の返却で tsukumo が1段進めた段取り。
+   * `work_plan` ツールで受け取った段取りと、委譲の返却で tsukumo が1段進めた段取りと、`finished` の `report` で tsukumo が閉じた段取り。
    * 届いた位置に積むだけで、今の段取りは `latestWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
    */
   | {
@@ -616,11 +621,13 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, reportDrafting: { kind: "drafting", toolUseId: event.toolUseId } }
     case "report":
       // `tool-started` と同じく、届いた位置に積むだけ（吹き出しにも帯の「いまの作業」にも出さない）。
+      // 段の閉じ方が `finished` なら、閉じた段取りの記録をその直前に積む。
       return {
         ...settleReportDrafting(state, event.toolUseId),
         bodiesInTurn: { ...state.bodiesInTurn, report: true },
         records: [
           ...state.records,
+          ...reportClosingRecords(state.records, event.workPlanClosing, at),
           {
             kind: "report",
             toolUseId: event.toolUseId,
@@ -844,6 +851,26 @@ function delegateReturnRecords(
   return advance.kind === "held"
     ? []
     : [{ kind: "work-plan", ...advance.plan, time: { kind: "stamped", at } }]
+}
+
+/**
+ * 段の閉じ方が `finished` の `report` 1回で積む記録。同じ依頼の最後の段取りを {@link closedByReport} で閉じたもの。
+ * `finished` でないときと、同じ依頼に段取りが無いとき、閉じられない（段が2つ以上残っている・全部済み）ときは積まない。
+ */
+function reportClosingRecords(
+  records: readonly SessionRecord[],
+  closing: WorkPlanClosing,
+  at: number,
+): readonly SessionRecord[] {
+  const latest =
+    closing === "finished" ? recordsOfLastRequest(records).findLast(isWorkPlanRecord) : undefined
+  if (latest === undefined) {
+    return []
+  }
+  const close = closedByReport(latest)
+  return close.kind === "held"
+    ? []
+    : [{ kind: "work-plan", ...close.plan, time: { kind: "stamped", at } }]
 }
 
 /** 最後の依頼より後ろの記録（依頼が無ければ全部）。 */

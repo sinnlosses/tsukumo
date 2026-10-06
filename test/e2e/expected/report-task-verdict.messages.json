@@ -227,6 +227,7 @@
         "name": "架空の札に段が1つでも `1/1` のように位置を出す",
         "outcome": "shipped"
       },
+      "workPlanClosing": "none",
       "closing": {
         "kind": "speech",
         "text": "送ったよ！",

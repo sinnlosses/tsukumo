@@ -1022,12 +1022,32 @@ describe("toSessionEvents（report ツール）", () => {
           { status: "ok", label: "架空の検査", figure: "", command: "", detail: "架空の件数" },
         ],
         task: { kind: "none" },
+        workPlanClosing: "none",
         closing: { kind: "speech", text: "架空の締め", expression: "proud" },
         waitingLine: { kind: "speech", text: "架空の待ちの一言", expression: "thinking" },
         unknownBlockCount: 0,
         sessionSummary: "架空の要約",
       },
     ])
+  })
+
+  it("report の workPlanClosing はイベントに乗せ、形の崩れは none に畳む", () => {
+    const closings = ["finished", "stopped", "架空の閉じ方"].map((workPlanClosing) => {
+      const [event] = toSessionEvents(
+        assistantMessage([
+          {
+            type: "tool_use",
+            id: "toolu_r1",
+            name: REPORT_TOOL_FULL_NAME,
+            input: { conclusion: "架空の結論。", workPlanClosing },
+          },
+        ]),
+        EXPRESSIONS,
+      )
+      return event?.kind === "report" ? event.workPlanClosing : "report でない"
+    })
+
+    expect(closings).toEqual(["finished", "stopped", "none"])
   })
 
   it("report の waitingLine が空白だけ・形の崩れなら書かなかったものとして畳む", () => {
@@ -1133,6 +1153,7 @@ describe("toSessionEvents（report ツール）", () => {
         favor: "",
         checks: [],
         task: { kind: "none" },
+        workPlanClosing: "none",
         closing: { kind: "none" },
         waitingLine: { kind: "none" },
         unknownBlockCount: 0,
