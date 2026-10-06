@@ -114,7 +114,7 @@ describe("planStages", () => {
     ])
   })
 
-  test("錠を要する重い段は、タスク登録だけの変更には無く、通常の組み立てにはある", () => {
+  test("並べて走らせる重い段は、タスク登録だけの変更には無く、通常の組み立てにはある", () => {
     const registration = planStages(true, ["docs/history/direction.md"], choose)
     const regular = planStages(true, ["src/cli.ts"], choose)
     expect(registration.stages.some((stage) => stage.heavy)).toBe(false)

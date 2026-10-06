@@ -54,11 +54,9 @@
   振る舞いではないので、`src/` の写しの構成には従わない）
 - **`pnpm run check` の中の別の段にする**（`pnpm run test` は既定の設定が `test/e2e/` を外し、E2E は
   `pnpm run test:e2e` が E2E 専用の設定で走らせる）。時間切れの既定を E2E の段だけ延ばし、単体テストを
-  1ファイル走らせるときに Chrome を要らないままにするため。`pnpm run check` は重い段（単体と E2E）を、
-  作業ツリーをまたぐ錠の中で1つの check だけが並べて走らせる。錠は vitest の `globalSetup`
-  （`test/check-lock-setup.ts`）も取るので、`pnpm run test`・`pnpm run test:e2e` を直に打っても
-  同じ錠を通る。check の中の子は環境変数で持ち主を知らされ、取り直さない。重い段が無い check
-  （タスク登録だけの変更）は錠を取らず、軽い段の vitest にも取らない印を渡す。watch では取らない。E2E の1本は vitest のワーカーに加えて
+  1ファイル走らせるときに Chrome を要らないままにするため。`pnpm run check` は軽い段のあとに重い段（単体と E2E）を
+  並べて走らせ、作業ツリーをまたぐ錠は取らない（ほかの作業ツリーの検証とも並ぶ）。負荷は
+  `maxWorkers` で抑える。E2E の1本は vitest のワーカーに加えて
   Chrome と `node src/cli.ts` を起こすので、実際に走るプロセスは `maxWorkers` の本数を大きく超える。
   E2E の設定は `maxWorkers: "15%"`、単体テスト（`vitest.config.ts`）も `"15%"` で、2つ合わせて
   コア数の 30% までに収める。単体は `dom` と `node` の2つの project に分け、DOM のグローバルを借りる

@@ -25,7 +25,6 @@ const SOURCE = {
     [CHAT, ["test/e2e/scenario-run.ts"]],
     [PAGE, ["test/e2e/scenario-run.ts"]],
     ["test/e2e/scenario-run.ts", ["scripts/lib/fake-process.ts"]],
-    ["test/check-lock-setup.ts", ["scripts/lib/check-lock-repository.ts"]],
   ]),
   sources: new Map([
     [REPORT, 'run.open({ scenario: "report-blocks" })'],
@@ -90,7 +89,6 @@ describe("selectE2eFiles が全件に倒す変更", () => {
   test.each([
     ["package.json", "E2E の足場"],
     ["vitest.e2e.config.ts", "E2E の足場"],
-    ["scripts/lib/check-lock-repository.ts", "E2E の足場"],
     ["src/shared/frame.ts", "サーバが読むファイル"],
     ["src/browser/app.tsx", "どの領域の根からも届かないファイル"],
     ["test/e2e/expected/unknown.dom.json", "持ち主の E2E が見つからない期待値"],

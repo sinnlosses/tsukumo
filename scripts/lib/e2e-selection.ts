@@ -35,7 +35,6 @@ const HARNESS_ROOTS = [
   "vitest.e2e.config.ts",
   "scripts/build-ui.ts",
   "test/built-ui-setup.ts",
-  "test/check-lock-setup.ts",
 ]
 
 const EXPECTED_DIRECTORY = "test/e2e/expected/"

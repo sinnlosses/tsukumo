@@ -6,7 +6,7 @@ export type Stage = {
   readonly name: string
   /** `pnpm run <name>` のあとに渡す引数。 */
   readonly args: readonly string[]
-  /** 錠の中で並べて走らせる重い段か。 */
+  /** 軽い段のあとに並べて走らせる重い段か。 */
   readonly heavy: boolean
 }
 

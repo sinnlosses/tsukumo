@@ -2,7 +2,7 @@
 // （選び方は `selectE2eFiles`）、何を選んだかを1行で出す。`docs/`・`develop/` の Markdown しか
 // 変えていないときは `typecheck`・`lint` も省く。`format:check` と単体テスト
 // （タスク番号や節の参照の検査が文書を見ている）は省かない。
-// 重い段（`test`・`test:e2e`）は作業ツリーをまたぐ錠を取って、単体と E2E を並べて走らせる。
+// 重い段（`test`・`test:e2e`）は、軽い段のあとに単体と E2E を並べて走らせる。
 // 並べた2段の出力は段ごとに溜め、両方が終わってから段の順に出し、落ちた段は最後の行で名指しする。
 //
 // 変えたファイルが `develop/direction.md`・`develop/draft/`・`docs/history/` だけ（タスク登録だけ）の
@@ -22,11 +22,6 @@ import { fileURLToPath } from "node:url"
 
 import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-repository.ts"
 import { describeFailedStages, parseFailedTests, type StageOutcome } from "./lib/check-failure.ts"
-import {
-  acquireCheckLock,
-  withCheckLockOwner,
-  withoutCheckLock,
-} from "./lib/check-lock-repository.ts"
 import { planStages, type Stage } from "./lib/check-stage.ts"
 import { planE2eRun } from "./lib/e2e-selection-repository.ts"
 
@@ -43,7 +38,6 @@ const activeStages = stagePlan.stages
 for (const stage of activeStages.filter((candidate) => !candidate.heavy)) {
   const result = spawnSync("pnpm", ["run", stage.name, ...stage.args], {
     cwd: ROOT,
-    env: withoutCheckLock(process.env),
     stdio: "inherit",
   })
   if (result.status !== 0) {
@@ -53,31 +47,20 @@ for (const stage of activeStages.filter((candidate) => !candidate.heavy)) {
 
 const heavyStages = activeStages.filter((stage) => stage.heavy)
 if (heavyStages.length > 0) {
-  await runUnderLock(heavyStages)
+  await runConcurrently(heavyStages)
 }
 
-async function runUnderLock(stages: readonly Stage[]): Promise<void> {
-  const release = await acquireCheckLock(ROOT)
-  const onSignal = (signal: NodeJS.Signals): void => {
-    release()
-    process.kill(process.pid, signal)
+async function runConcurrently(stages: readonly Stage[]): Promise<void> {
+  const results = await Promise.all(stages.map((stage) => runBuffered(stage)))
+  for (const result of results) {
+    process.stdout.write(result.output)
   }
-  process.once("SIGINT", onSignal)
-  process.once("SIGTERM", onSignal)
-  try {
-    const results = await Promise.all(stages.map((stage) => runBuffered(stage)))
-    for (const result of results) {
-      process.stdout.write(result.output)
-    }
-    for (const line of describeFailedStages(results)) {
-      process.stdout.write(`${line}\n`)
-    }
-    const failed = results.find((result) => result.status !== 0)
-    if (failed !== undefined) {
-      process.exitCode = failed.status
-    }
-  } finally {
-    release()
+  for (const line of describeFailedStages(results)) {
+    process.stdout.write(`${line}\n`)
+  }
+  const failed = results.find((result) => result.status !== 0)
+  if (failed !== undefined) {
+    process.exitCode = failed.status
   }
 }
 
@@ -122,7 +105,6 @@ function runBuffered(stage: Stage): Promise<BufferedResult> {
   return new Promise((resolve) => {
     const child = spawn("pnpm", ["run", stage.name, ...stage.args, ...reporterArgs], {
       cwd: ROOT,
-      env: withCheckLockOwner(process.env),
       stdio: ["ignore", "pipe", "pipe"],
     })
     const chunks: Buffer[] = []
