@@ -31,7 +31,7 @@ const WRITTEN_PAGE: DiaryBookPage = {
   tasks: {
     items: [{ id: "T-1", summary: "架空のタスク" }],
     moreCount: 0,
-    commitCount: 5,
+    commits: { kind: "known", count: 5 },
     tasksKnown: true,
   },
   badges: [
@@ -57,7 +57,7 @@ const BLANK_PAGE: DiaryBookPage = {
   lampLevel: "bright",
   lampLabel: "灯り　明るい",
   bookmark: { kind: "pending" },
-  tasks: { items: [], moreCount: 0, commitCount: 4, tasksKnown: true },
+  tasks: { items: [], moreCount: 0, commits: { kind: "known", count: 4 }, tasksKnown: true },
   badges: [],
   right: {
     kind: "blank",
@@ -157,6 +157,21 @@ describe("DiaryBook", () => {
     renderBook(openModel())
     expect(screen.getByText("架空の名前")).toBeDefined()
     expect(document.querySelector(".diary-book-signature-image")).toBeNull()
+  })
+
+  it("「この日に終えたこと」の下の行にコミットの数を出し、分からない日は行ごと出さない", () => {
+    renderBook(openModel())
+    expect(screen.getByText("コミット 5")).toBeDefined()
+    cleanup()
+
+    const page = WRITTEN_PAGE.kind === "ready" ? WRITTEN_PAGE : undefined
+    if (page === undefined) {
+      throw new Error("ready のはず")
+    }
+    renderBook(
+      openModel({ page: { ...page, tasks: { ...page.tasks, commits: { kind: "unknown" } } } }),
+    )
+    expect(screen.queryByText(/コミット \d/)).toBeNull()
   })
 
   it("卒業・節目の丸い印が出る", () => {

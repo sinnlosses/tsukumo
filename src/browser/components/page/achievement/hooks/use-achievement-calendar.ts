@@ -88,7 +88,7 @@ function cellsOf(
     if (date > calendar.today) {
       return { kind: "future", key: date, dateLabel }
     }
-    const level = lampLevel(dayOf.get(date)?.commitCount ?? 0)
+    const level = lampLevel(dayOf.get(date)?.count ?? 0)
     const hasDiary = diaryDates.has(date)
     return {
       kind: "day",

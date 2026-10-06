@@ -49,14 +49,14 @@ export function wireVisit(
  * `query()` は仕事のセッションと同じ作業先・引き継いだ環境で起こす。
  */
 function visitScriptSource(context: WiringContext): VisitScriptSource {
-  const { cwd, inheritedEnv, achievementCommitCache, now } = context
+  const { cwd, inheritedEnv, achievementCache, now } = context
   return {
     kind: "write",
     write: createVisitScriptWriter({
       readCast: (host, guest) => visitCast(listCharacterPacks(cwd), host, guest),
       readAchievement: async () => {
         const today = todayLocalDateKey()
-        const result = await readAchievement(cwd, today, today, achievementCommitCache)
+        const result = await readAchievement(cwd, today, today, achievementCache)
         return result.kind === "ok" ? result.achievement : UNKNOWN_ACHIEVEMENT
       },
       localTime: () => localTimeHHMM(now()),

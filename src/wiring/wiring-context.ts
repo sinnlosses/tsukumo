@@ -1,7 +1,7 @@
 // 機能ごとの組み立てが共有する、起動時に1回だけ決まる値。
 // 2つ以上の組み立てが読むものだけを置き、1つの組み立てしか読まないものはその組み立ての中で作る。
 
-import type { AchievementCommitCache } from "../server/achievement/adapter/main-history.ts"
+import type { AchievementCache } from "../server/achievement/adapter/main-history.ts"
 import type { ChatArchive } from "../server/chat/core/chat-archive-port.ts"
 import type { FakeSession } from "../server/session-driver/adapter/fake-driver.ts"
 
@@ -20,5 +20,5 @@ export type WiringContext = {
    * 成果の振り返りと訪問の台本がその日の成果を数え直すための入れ物。
    * ビューの配信が持つものとは別の1つで、同じ日を両方から数えても結果は変わらない。
    */
-  readonly achievementCommitCache: AchievementCommitCache
+  readonly achievementCache: AchievementCache
 }

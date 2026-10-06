@@ -1,7 +1,8 @@
-// 読み終えた `main` の履歴から、1日ぶんの成果（`DailyAchievement` の `known`）を組み立てる純関数。
+// 読み終えたコミットと Beads の課題から、1日ぶんの成果（`DailyAchievement` の `known`）を組み立てる純関数。
 // ローカル時刻の文字列は呼び出し側から関数で受け取り、ここでは OS のタイムゾーンを読まない。
 
 import type {
+  AchievementCommits,
   AchievementMilestone,
   DailyAchievement,
 } from "../../../shared/achievement/achievement.ts"
@@ -15,42 +16,34 @@ import {
   countAchievementCommits,
   type AchievementCommit,
 } from "./achievement-commit.ts"
-import {
-  doneTasksSince,
-  doneTaskSummaries,
-  taskMilestoneOf,
-  unionDoneTaskSummaries,
-  type TaskSnapshotSource,
-} from "./done-task-source.ts"
-import {
-  deletedDoneTaskSummariesBefore,
-  graduationsOf,
-  taskRegistrationDates,
-  type DeletedTaskFile,
-  type TaskFileHistoryCommit,
-} from "./task-file-history.ts"
+import { doneTasksSince, taskMilestoneOf } from "./done-task.ts"
+import { graduationsOf } from "./graduation.ts"
 
 export function epochSecondsOf(epochMs: number): number {
   return Math.floor(epochMs / 1000)
 }
 
-/** 終えたタスクの材料。日の終わりと始まりの切り口、消えたタスクファイル、Beads の課題、登録日の表の元。 */
+/** 終えたタスクの材料。Beads の課題と、タスクID → 登録日の日付キーの表。 */
 export type DoneTaskSources = {
-  readonly endSource: TaskSnapshotSource
-  readonly startSource: TaskSnapshotSource
-  readonly deletedFiles: readonly DeletedTaskFile[]
   readonly issues: readonly BeadsIssue[]
-  readonly historyCommits: readonly TaskFileHistoryCommit[]
-  /** Beads の課題ごとの作った日（タスクID → 日付キー）。 */
-  readonly beadsCreatedOn: ReadonlyMap<string, string>
+  readonly registeredOn: ReadonlyMap<string, string>
 }
+
+/** コミットの材料。数える枝から読んだコミットと、その日の始まりまでの通算のコミットの数。 */
+export type DailyCommits =
+  | { readonly kind: "unread" }
+  | {
+      readonly kind: "read"
+      readonly commits: readonly AchievementCommit[]
+      readonly totalCommitsBeforeToday: number
+    }
 
 export type DailyAchievementInput = {
   readonly date: string
   readonly today: string
   readonly range: { readonly startEpochMilliseconds: number; readonly endEpochMilliseconds: number }
-  readonly commits: readonly AchievementCommit[]
-  readonly totalCommitsBeforeToday: number
+  /** 数える枝が読めないときは `unread`。 */
+  readonly commits: DailyCommits
   /** 終えたタスクを数えられないときは `untracked`。 */
   readonly tasks: { readonly kind: "untracked" } | ({ readonly kind: "tracked" } & DoneTaskSources)
   /** エポックミリ秒 → `HH:MM`（ローカル時刻）。 */
@@ -59,20 +52,12 @@ export type DailyAchievementInput = {
 
 /** 日記は日記が持つ一覧なので、`diary` は常に「まだ振り返っていない」で返し、実際の値は配線層が差し替える。 */
 export function dailyAchievementOf(input: DailyAchievementInput): DailyAchievement {
-  const startEpochSeconds = epochSecondsOf(input.range.startEpochMilliseconds)
-  const endEpochSeconds = epochSecondsOf(input.range.endEpochMilliseconds)
-  const commitMilestone = commitMilestoneOfDay(
-    achievementCommitsInRange(input.commits, startEpochSeconds, endEpochSeconds).map(
-      (commit) => commit.committedAtEpochSeconds,
-    ),
-    input.totalCommitsBeforeToday,
-    input.timeOf,
-  )
+  const { commits, commitMilestone } = commitsOfDay(input)
   const common = {
     kind: "known",
     date: input.date,
     today: input.today,
-    commitCount: countAchievementCommits(input.commits, startEpochSeconds, endEpochSeconds),
+    commits,
     diary: { kind: "none" },
   } as const
 
@@ -85,48 +70,48 @@ export function dailyAchievementOf(input: DailyAchievementInput): DailyAchieveme
     }
   }
 
-  const endUnion = doneTaskUnionAt(
-    input.tasks,
-    input.tasks.endSource,
-    input.range.endEpochMilliseconds,
-  )
-  const startUnion = doneTaskUnionAt(
-    input.tasks,
-    input.tasks.startSource,
+  const doneBeforeStart = closedBeadsTaskSummariesBefore(
+    input.tasks.issues,
     input.range.startEpochMilliseconds,
   )
-  const items = doneTasksSince(endUnion, startUnion)
-  const registeredOnById = taskRegistrationDates(
-    input.tasks.historyCommits,
-    input.tasks.beadsCreatedOn,
+  const items = doneTasksSince(
+    closedBeadsTaskSummariesBefore(input.tasks.issues, input.range.endEpochMilliseconds),
+    doneBeforeStart,
   )
-  const taskMilestone = taskMilestoneOf(items, startUnion.size)
+  const taskMilestone = taskMilestoneOf(items, doneBeforeStart.size)
   return {
     ...common,
     doneTasks: { kind: "known", items },
-    graduations: graduationsOf(items, registeredOnById, input.date),
+    graduations: graduationsOf(items, input.tasks.registeredOn, input.date),
     milestones: [taskMilestone, commitMilestone].filter(
       (milestone): milestone is AchievementMilestone => milestone !== undefined,
     ),
   }
 }
 
-/** ある時刻までに終えたタスク。切り口・消えたタスクファイル・Beads の閉じた課題の和を ID でとる。 */
-function doneTaskUnionAt(
-  sources: DoneTaskSources,
-  snapshot: TaskSnapshotSource,
-  boundaryEpochMilliseconds: number,
-): ReadonlyMap<string, string> {
-  return unionDoneTaskSummaries(
-    unionDoneTaskSummaries(
-      doneTaskSummaries(snapshot),
-      deletedDoneTaskSummariesBefore(
-        sources.deletedFiles,
-        epochSecondsOf(boundaryEpochMilliseconds),
+/** その日のコミットの数と節目「commit」。コミットを読めていなければ数は `unknown` で節目は無い。 */
+function commitsOfDay(input: DailyAchievementInput): {
+  readonly commits: AchievementCommits
+  readonly commitMilestone: AchievementMilestone | undefined
+} {
+  if (input.commits.kind === "unread") {
+    return { commits: { kind: "unknown" }, commitMilestone: undefined }
+  }
+  const startEpochSeconds = epochSecondsOf(input.range.startEpochMilliseconds)
+  const endEpochSeconds = epochSecondsOf(input.range.endEpochMilliseconds)
+  return {
+    commits: {
+      kind: "known",
+      count: countAchievementCommits(input.commits.commits, startEpochSeconds, endEpochSeconds),
+    },
+    commitMilestone: commitMilestoneOfDay(
+      achievementCommitsInRange(input.commits.commits, startEpochSeconds, endEpochSeconds).map(
+        (commit) => commit.committedAtEpochSeconds,
       ),
+      input.commits.totalCommitsBeforeToday,
+      input.timeOf,
     ),
-    closedBeadsTaskSummariesBefore(sources.issues, boundaryEpochMilliseconds),
-  )
+  }
 }
 
 /** {@link commitMilestoneOf} の結果を {@link AchievementMilestone} の形にする。 */

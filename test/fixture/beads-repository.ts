@@ -93,6 +93,21 @@ export async function initBeadsWithIssues(
 }
 
 /**
+ * {@link initBeadsWithIssues} と同じ使い方で、git リポジトリでないディレクトリ `cwd` に `.beads` を置く。
+ */
+export async function initBeadsWithIssuesOutsideGit(
+  cwd: string,
+  issues: readonly Readonly<Record<string, unknown>>[],
+): Promise<void> {
+  if (beadsTemplate === undefined) {
+    throw new Error(
+      "initBeadsWithIssuesOutsideGit は useBeadsHome を呼んだファイルの中でだけ使える",
+    )
+  }
+  await placeImportedBeads(beadsTemplate, cwd, issues, { kind: "outside-git" })
+}
+
+/**
  * git リポジトリ `cwd` に、`issues`（`bd export` の1行の形）を入れた `.beads` を置く。テストの外のフックを持たないので、
  * 別のプロセス（tsukumo）が見回っている場所へ置くときに使う。
  * 課題は写しの側で入れ終えてから1回の名前の付け替えで置くので、見回りが入れかけの `.beads` を読むことは無い。
@@ -105,10 +120,14 @@ export async function placeBeadsWithIssues(
   await placeImportedBeads(await processBeadsTemplate(), cwd, issues)
 }
 
+/** 置き先が git リポジトリか。`outside-git` なら除外の行を写さない。 */
+type BeadsPlace = { readonly kind: "git" } | { readonly kind: "outside-git" }
+
 async function placeImportedBeads(
   template: BeadsTemplate,
   cwd: string,
   issues: readonly Readonly<Record<string, unknown>>[],
+  place: BeadsPlace = { kind: "git" },
 ): Promise<void> {
   const staging = mkdtempSync(join(tmpdir(), "tsukumo-beads-staging-"))
   try {
@@ -118,7 +137,7 @@ async function placeImportedBeads(
       env: { ...process.env, HOME: template.home },
       input: issues.map((issue) => JSON.stringify(issue)).join("\n"),
     })
-    placeBeads(staging, cwd)
+    placeBeads(staging, cwd, place)
   } finally {
     rmSync(staging, { recursive: true, force: true })
   }
@@ -162,10 +181,13 @@ function processBeadsTemplate(): Promise<BeadsTemplate> {
 }
 
 /** `source` の `.beads` と、`bd init --stealth` が書いた除外の行を `cwd` へ写す。 */
-function placeBeads(source: string, cwd: string): void {
+function placeBeads(source: string, cwd: string, place: BeadsPlace = { kind: "git" }): void {
   const placing = join(cwd, ".beads-placing")
   cpSync(join(source, ".beads"), placing, { recursive: true })
   renameSync(placing, join(cwd, ".beads"))
+  if (place.kind === "outside-git") {
+    return
+  }
   const stealthExclude = readFileSync(join(source, ".git", "info", "exclude"))
   writeFileSync(join(cwd, ".git", "info", "exclude"), stealthExclude)
 }

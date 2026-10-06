@@ -25,17 +25,25 @@ export type AchievementTask = {
 
 /**
  * その日に終えたタスクの一覧。
- * タスクの記録がどちらの形式も無いリポジトリ（tsukumo をほかのプロジェクトで起こしたとき）では `unknown` で、コミットの数だけは出す。
+ * `.beads` が無いリポジトリ（tsukumo をほかのプロジェクトで起こしたとき）と `tasks: "off"` では `unknown` で、コミットの数だけは出す。
  */
 export type AchievementDoneTasks =
   | { readonly kind: "unknown" }
   | { readonly kind: "known"; readonly items: readonly AchievementTask[] }
 
+/**
+ * その日に入ったコミットの数。
+ * 数える枝が読めない（git リポジトリでない・枝が無い・`HEAD` が枝を指さない）けれど Beads は読めたときは `unknown` で、画面はコミットの数を出さない。
+ */
+export type AchievementCommits =
+  | { readonly kind: "unknown" }
+  | { readonly kind: "known"; readonly count: number }
+
 /** 先輩タスクの卒業1件。登録から7日以上経っていた、その日に終えたタスクだけが対象。 */
 export type AchievementGraduation = {
   readonly id: string
   readonly summary: string
-  /** 登録日（`YYYY-MM-DD`）。ファイルが初めて `main` に入ったコミットの日付。 */
+  /** 登録日（`YYYY-MM-DD`）。Beads の課題を作った日。 */
   readonly registeredOn: string
   /** 登録から終えた日までの日数。 */
   readonly days: number
@@ -51,7 +59,7 @@ export type AchievementMilestone =
 
 /**
  * 成果の手続き（1日ぶん）の応答。
- * `main` が読めない（git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは画面ごと `unknown`。
+ * 数える枝も Beads も読めないときは画面ごと `unknown`。
  */
 export type DailyAchievement =
   | { readonly kind: "unknown" }
@@ -61,11 +69,11 @@ export type DailyAchievement =
       readonly date: string
       /** サーバのローカル時刻の今日（`YYYY-MM-DD`）。ブラウザは時計を読まない。 */
       readonly today: string
-      readonly commitCount: number
+      readonly commits: AchievementCommits
       readonly doneTasks: AchievementDoneTasks
-      /** 該当が無ければ空の並び。タスクの記録が無いリポジトリではいつも空。 */
+      /** 該当が無ければ空の並び。終えたタスクが `unknown` ならいつも空。 */
       readonly graduations: readonly AchievementGraduation[]
-      /** 該当が無ければ空の並び。タスクの記録が無いリポジトリでは節目「task」はいつも空。 */
+      /** 該当が無ければ空の並び。終えたタスクが `unknown` なら節目「task」が、コミットが `unknown` なら節目「commit」が出ない。 */
       readonly milestones: readonly AchievementMilestone[]
       /** その日の日記の状態。読めなくても成果そのものは配る（`unreadable`）。 */
       readonly diary: DailyDiaryStatus
@@ -79,6 +87,11 @@ const achievementTaskSchema = z.object({ id: z.string(), summary: z.string() })
 const achievementDoneTasksSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unknown") }),
   z.object({ kind: z.literal("known"), items: z.array(achievementTaskSchema).readonly() }),
+])
+
+const achievementCommitsSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("unknown") }),
+  z.object({ kind: z.literal("known"), count: z.number() }),
 ])
 
 const achievementGraduationSchema = z.object({
@@ -100,7 +113,7 @@ export const dailyAchievementSchema = z.discriminatedUnion("kind", [
     kind: z.literal("known"),
     date: z.string(),
     today: z.string(),
-    commitCount: z.number(),
+    commits: achievementCommitsSchema,
     doneTasks: achievementDoneTasksSchema,
     graduations: z.array(achievementGraduationSchema).readonly(),
     milestones: z.array(achievementMilestoneSchema).readonly(),
@@ -112,15 +125,27 @@ export const dailyAchievementSchema = z.discriminatedUnion("kind", [
 const MAX_LISTED_REQUEST_TASKS = 20
 
 /**
- * 空の日か（コミットも終えたタスクも0）。
+ * 空の日か（コミットも終えたタスクも0）。コミットの数が分からない（`unknown`）ときは0とみなす。
  * 終えたタスクの記録が無い（`unknown`）ときは「空」と決めない。
  * コミットが0でもタスクの有無が分からないので、押せなくする理由にはしない。
  */
 export function isEmptyAchievementDay(
-  commitCount: number,
+  commits: AchievementCommits,
   doneTasks: AchievementDoneTasks,
 ): boolean {
-  return commitCount === 0 && doneTasks.kind === "known" && doneTasks.items.length === 0
+  return (
+    (commits.kind === "unknown" || commits.count === 0) &&
+    doneTasks.kind === "known" &&
+    doneTasks.items.length === 0
+  )
+}
+
+/** 灯りの段階を決める数。コミットの数が分かればそれ、分からなければ終えたタスクの件数。 */
+export function lampCountOf(commits: AchievementCommits, doneTasks: AchievementDoneTasks): number {
+  if (commits.kind === "known") {
+    return commits.count
+  }
+  return doneTasks.kind === "known" ? doneTasks.items.length : 0
 }
 
 /**
@@ -131,7 +156,7 @@ export function isEmptyAchievementDay(
 export function achievementReflectionRequestText(params: {
   readonly date: string
   readonly today: string
-  readonly commitCount: number
+  readonly commits: AchievementCommits
   readonly doneTasks: AchievementDoneTasks
   /** 該当が無ければ空の並び。 */
   readonly graduations: readonly AchievementGraduation[]
@@ -142,11 +167,7 @@ export function achievementReflectionRequestText(params: {
 }): string {
   const dayPhrase = achievementRequestDayPhrase(params.date, params.today)
   const taskCountClause = achievementTaskCountClause(params.doneTasks)
-  const commitClause = `main に入ったコミットは ${String(params.commitCount)} 件`
-  const headLine =
-    taskCountClause === ""
-      ? `${dayPhrase}の成果を一緒に振り返って、この日の日記を書いてほしい。${commitClause}。`
-      : `${dayPhrase}の成果を一緒に振り返って、この日の日記を書いてほしい。${commitClause}、${taskCountClause}`
+  const headLine = `${dayPhrase}の成果を一緒に振り返って、この日の日記を書いてほしい。${achievementCountSentence(params.commits, taskCountClause)}`
 
   const lines = [headLine]
   const taskListLines = achievementTaskListLines(params.doneTasks)
@@ -168,6 +189,15 @@ export function achievementReflectionRequestText(params: {
     `日記は diary ツールで1回書いて。本文はこの日の仕事の感想とねぎらいを短く。${bookmarkClause}ファイルやログは読みに行かず、この一覧だけで書いてほしい。次にやることの提案はいらない。`,
   )
   return lines.join("\n")
+}
+
+/** 依頼文の1行目の数の文。コミットが分からなければ終えたタスクの句だけ。 */
+function achievementCountSentence(commits: AchievementCommits, taskCountClause: string): string {
+  if (commits.kind === "unknown") {
+    return taskCountClause
+  }
+  const commitClause = `main に入ったコミットは ${String(commits.count)} 件`
+  return taskCountClause === "" ? `${commitClause}。` : `${commitClause}、${taskCountClause}`
 }
 
 /** 「小さな驚き:」の下に並べる行（卒業→節目の順）。該当が無ければ空。 */

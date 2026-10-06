@@ -1,38 +1,39 @@
-// `main` の履歴を読み、成果を数える境界。数える判断は core の純関数が持つ。
+// 数える枝の履歴と Beads の閉じた課題を読み、成果を数える境界。数える判断は core の純関数が持つ。
 //
-// 読むのは作業ツリーのファイルではなく `main` の上のもの。
+// コミットは作業ツリーのファイルではなく数える枝の上のものを読む。
 // 作業ツリーのものは `git merge main` するまで別の作業ツリーの分を知らない。
-// 例外はプロジェクトの設定（`readProjectSettings`）で、主ブランチの名前（`tasks.mainBranch`）をここから読む。
-// 設定が無い（ファイルが無い・`tasks` が無い）ときは、起こした作業ツリーのいまのブランチ（`HEAD`）でコミットと暦だけを数え、終えたタスクは読まない。設定が壊れているときは `unknown` にする。
+// 数える枝はプロジェクトの設定（`readProjectSettings`）の主ブランチ（`tasks.mainBranch`）で、設定が無い（ファイルが無い・`tasks` が無い）ときは起こした作業ツリーのいまのブランチ（`HEAD`）。設定が壊れているときは `unknown` にする。
 //
-// 設定があるときは、終えたタスクを git の切り口と Beads の閉じた課題（`closed_at`）の両方から読み、ID で和をとる（`bd` が読めなければ git の切り口だけ）。
-// 移す前は Beads に閉じた課題が無く、移したあとは `main` にタスクファイルが無いので、境を数で持たなくても欠けず、同じ ID が両方にあっても1件にしかならない。
+// 終えたタスクは Beads の閉じた課題（`closed_at`）だけから数える。`tasks: "off"` のときは `bd` を起こさない。
+// `.beads` が無い（`bd where` が見つけない・`bd` が無い）ときは終えたタスクを数えず、`.beads` があるのに `bd` が落ちた・時間切れのときは `{ kind: "unavailable" }`。
 //
-// 主ブランチが読めない（git リポジトリでない・設定の名前のブランチが無い・`HEAD` が枝を指さない・`git` が無い）ときは `DailyAchievement` の `{ kind: "unknown" }`（200 のまま配ってよい）。
+// 数える枝が読めない（git リポジトリでない・設定の名前のブランチが無い・`HEAD` が枝を指さない・`git` が無い）ときは、コミットの数を `unknown` にして終えたタスクと閉じた日の暦だけを返す。
+// Beads も読めない（`.beads` が無い・`tasks: "off"`）ときは `DailyAchievement` の `{ kind: "unknown" }`（200 のまま配ってよい）。
 // それ以外の `git` の呼び出しがタイムアウト・失敗したときは `{ kind: "unavailable" }` で、呼び出し側が 503 にする（部分的な数を出さない）。
 
-import { basename } from "node:path"
+import { countBy } from "remeda"
 
 import {
   achievementCalendarDateKeys,
   type AchievementCalendar,
 } from "../../../shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../shared/achievement/achievement.ts"
-import { taskIdOfBeadsId, type BeadsIssue } from "../../../shared/repository/beads-issue.ts"
+import {
+  doneBeadsTaskClosedAtEpochMilliseconds,
+  taskIdOfBeadsId,
+  type BeadsIssue,
+} from "../../../shared/repository/beads-issue.ts"
 import {
   mainBranchRefOf,
   type ProjectSettingsRead,
 } from "../../../shared/repository/project-settings.ts"
-import {
-  LEGACY_ARCHIVE_PATH,
-  LEGACY_TASKS_PATH,
-  TASK_LEDGER_HISTORY_PATHS,
-  taskFileIdOfPath,
-} from "../../../shared/repository/task-file-ledger.ts"
-import { TASK_DIR_PATH } from "../../../shared/repository/task-summary.ts"
 import { localDateEpochRange, localDateKey, localTimeHHMM } from "../../adapter/local-time.ts"
-import { readBeadsIssues } from "../../repository/adapter/beads.ts"
-import { runGit, runGitCatFileBatch } from "../../repository/adapter/git.ts"
+import {
+  readBeadsIssues,
+  readBeadsStampOf,
+  readBeadsWorkspace,
+} from "../../repository/adapter/beads.ts"
+import { runGit } from "../../repository/adapter/git.ts"
 import { readProjectSettings } from "../../repository/adapter/project-settings.ts"
 import {
   achievementCommitCountsByDate,
@@ -40,34 +41,37 @@ import {
   type AchievementCommit,
   type AchievementCommitWithDate,
 } from "../core/achievement-commit.ts"
-import { dailyAchievementOf, epochSecondsOf } from "../core/daily-achievement.ts"
-import { hasTaskTracking, type TaskSnapshotSource } from "../core/done-task-source.ts"
-import type {
-  DeletedTaskFile,
-  TaskFileChange,
-  TaskFileHistoryCommit,
-} from "../core/task-file-history.ts"
+import { dailyAchievementOf, epochSecondsOf, type DailyCommits } from "../core/daily-achievement.ts"
+
+/** Beads を読んだ結果。`missing` は `.beads` が無い、`unavailable` は `.beads` があるのに読めなかった。 */
+type AchievementBeadsRead = readonly BeadsIssue[] | "missing" | "unavailable"
 
 /**
- * 今日以外の日の数を覚える入れ物。配線が1つ作り、{@link readAchievement} と {@link readCommitCalendar} の両方に渡す。
+ * 成果の読みが覚えるものの入れ物。配線が1つ作り、{@link readAchievement} と {@link readCommitCalendar} の両方に渡す。
  *
  * - 日ごとの数: 暦の日ごとのコミット数（鍵は日付キー）
  * - 通算の数: 節目に使う、その日の始まりまでの通算のコミット数（鍵は見ている日の日付キー）
+ * - Beads の課題: 課題の変化の印が前に読んだときと同じなら `bd list` を起こさず同じ結果を返す
  *
- * どちらも今日の分は覚えない（毎回取り直す）。
+ * コミットの数はどちらも今日の分は覚えない（毎回取り直す）。
  * 覚えた数が後で変わりうるのは、旧形式で過去の日付のコミットが後から `main` に入ったときだけで、そのずれは受け入れる（プロセスを起こし直せば取り直す）。
  */
-export type AchievementCommitCache = {
+export type AchievementCache = {
   readonly dailyCountOf: (dateKey: string) => number | undefined
   readonly rememberDailyCount: (dateKey: string, count: number) => void
   readonly totalBeforeDayOf: (dateKey: string) => number | undefined
   readonly rememberTotalBeforeDay: (dateKey: string, total: number) => void
+  readonly readBeads: () => Promise<AchievementBeadsRead>
 }
 
-/** {@link AchievementCommitCache} を1つ作る。 */
-export function createAchievementCommitCache(): AchievementCommitCache {
+/** `cwd` の {@link AchievementCache} を1つ作る。 */
+export function createAchievementCache(cwd: string): AchievementCache {
   const dailyCounts = new Map<string, number>()
   const totalsBeforeDay = new Map<string, number>()
+  let lastBeadsRead:
+    | { readonly stamp: string; readonly read: Promise<AchievementBeadsRead> }
+    | undefined = undefined
+
   return {
     dailyCountOf: (dateKey) => dailyCounts.get(dateKey),
     rememberDailyCount: (dateKey, count) => {
@@ -77,7 +81,36 @@ export function createAchievementCommitCache(): AchievementCommitCache {
     rememberTotalBeforeDay: (dateKey, total) => {
       totalsBeforeDay.set(dateKey, total)
     },
+    readBeads: async () => {
+      const workspace = await readBeadsWorkspace(cwd)
+      if (workspace.kind === "missing") {
+        return "missing"
+      }
+      if (workspace.kind === "timed-out") {
+        return "unavailable"
+      }
+      // 印は `bd list` の前に読む（読んでいるあいだの更新を次の読みで拾うため）。
+      const stamp = await readBeadsStampOf(workspace.dir)
+      if (stamp !== undefined && lastBeadsRead?.stamp === stamp) {
+        return lastBeadsRead.read
+      }
+      const read = readAllBeadsIssues(cwd)
+      // 読み始めた時点で覚え、同時に来た読みにも同じ `bd list` を渡す。
+      const remembered = stamp === undefined ? undefined : { stamp, read }
+      lastBeadsRead = remembered
+      const result = await read
+      if (typeof result === "string" && lastBeadsRead === remembered) {
+        lastBeadsRead = undefined
+      }
+      return result
+    },
   }
+}
+
+/** `.beads` が見つかったあとに `bd list` で全件を読む。落ちても時間切れでも `unavailable`。 */
+async function readAllBeadsIssues(cwd: string): Promise<AchievementBeadsRead> {
+  const beads = await readBeadsIssues(cwd)
+  return beads.kind === "issues" ? beads.issues : "unavailable"
 }
 
 /**
@@ -95,8 +128,8 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 const COMMIT_RECORD_SEPARATOR = "\x1e"
 
 /**
- * {@link readAchievement} の結果。`unavailable` は一時的な失敗（`git` のタイムアウト・失敗）で、呼び出し側が 503 にする。
- * 「`main` が読めない」は `unavailable` ではなく `{ kind: "ok", achievement: { kind: "unknown" } }`。
+ * {@link readAchievement} の結果。`unavailable` は一時的な失敗（`git`・`bd` のタイムアウト・失敗）で、呼び出し側が 503 にする。
+ * 「数える枝が読めない」は `unavailable` ではなく `{ kind: "ok", achievement: { kind: "unknown" } }`。
  */
 export type ReadAchievementResult =
   | { readonly kind: "ok"; readonly achievement: DailyAchievement }
@@ -114,83 +147,25 @@ export async function readAchievement(
   cwd: string,
   dateKey: string,
   today: string,
-  cache: AchievementCommitCache,
+  cache: AchievementCache,
 ): Promise<ReadAchievementResult> {
   const settings = await readProjectSettings(cwd)
-  const head = await countedHeadCommit(cwd, settings)
-  if (head === undefined) {
+  if (settings.kind === "invalid") {
     return { kind: "ok", achievement: { kind: "unknown" } }
   }
 
   const range = localDateEpochRange(dateKey)
 
-  const [commits, totalCommitsBeforeToday, headSource, beads] = await Promise.all([
-    readCommitsSince(
-      cwd,
-      head,
-      range.startEpochMilliseconds - SINCE_MARGIN_DAYS * MILLISECONDS_PER_DAY,
-    ),
-    totalAchievementCommitsBeforeDay(cwd, head, dateKey, today, range, cache),
-    settings.kind === "read" ? readTaskSnapshotSource(cwd, head) : undefined,
-    settings.kind === "read" ? readAllBeadsIssues(cwd) : undefined,
+  const [commits, beads] = await Promise.all([
+    readDailyCommits(cwd, settings, dateKey, today, range, cache),
+    settings.kind === "off" ? ("off" as const) : cache.readBeads(),
   ])
-  if (commits === undefined) {
+  if (commits === "unavailable" || beads === "unavailable") {
     return { kind: "unavailable" }
   }
-  if (totalCommitsBeforeToday === undefined) {
-    return { kind: "unavailable" }
+  if (commits.kind === "unread" && typeof beads === "string") {
+    return { kind: "ok", achievement: { kind: "unknown" } }
   }
-
-  if (headSource === "unavailable") {
-    return { kind: "unavailable" }
-  }
-  if (beads === "unavailable") {
-    return { kind: "unavailable" }
-  }
-  if (
-    headSource === undefined ||
-    beads === undefined ||
-    (beads === "missing" && !hasTaskTracking(headSource))
-  ) {
-    return {
-      kind: "ok",
-      achievement: dailyAchievementOf({
-        date: dateKey,
-        today,
-        range,
-        commits,
-        totalCommitsBeforeToday,
-        tasks: { kind: "untracked" },
-        timeOf: localTimeHHMM,
-      }),
-    }
-  }
-
-  const [todayCutoff, yesterdayCutoff] = await Promise.all([
-    cutoffCommitBefore(cwd, head, range.endEpochMilliseconds),
-    cutoffCommitBefore(cwd, head, range.startEpochMilliseconds),
-  ])
-  if (todayCutoff.kind === "unavailable" || yesterdayCutoff.kind === "unavailable") {
-    return { kind: "unavailable" }
-  }
-
-  const [todaySource, yesterdaySource] = await Promise.all([
-    readTaskSnapshotSource(cwd, cutoffCommitOf(todayCutoff)),
-    readTaskSnapshotSource(cwd, cutoffCommitOf(yesterdayCutoff)),
-  ])
-  if (todaySource === "unavailable" || yesterdaySource === "unavailable") {
-    return { kind: "unavailable" }
-  }
-
-  const history = await readTaskFileHistory(cwd, head)
-  if (history === undefined) {
-    return { kind: "unavailable" }
-  }
-  const deletedFiles = await readDeletedTaskFiles(cwd, history.deletions)
-  if (deletedFiles === undefined) {
-    return { kind: "unavailable" }
-  }
-  const issues = beads === "missing" ? [] : beads
 
   return {
     kind: "ok",
@@ -199,37 +174,42 @@ export async function readAchievement(
       today,
       range,
       commits,
-      totalCommitsBeforeToday,
-      tasks: {
-        kind: "tracked",
-        endSource: todaySource,
-        startSource: yesterdaySource,
-        deletedFiles,
-        issues,
-        historyCommits: history.commits,
-        beadsCreatedOn: beadsCreatedOn(issues),
-      },
+      tasks:
+        typeof beads === "string"
+          ? { kind: "untracked" }
+          : { kind: "tracked", issues: beads, registeredOn: beadsCreatedOn(beads) },
       timeOf: localTimeHHMM,
     }),
   }
 }
 
-/** `bd` の全件を読む。`bd` が読めない（`.beads` が無い）なら `"missing"`、タイムアウトしたら `"unavailable"`。 */
-async function readAllBeadsIssues(
+/** 1日ぶんのコミットの材料。数える枝が読めなければ `unread`、読めたあとの `git` が失敗・時間切れなら `unavailable`。 */
+async function readDailyCommits(
   cwd: string,
-): Promise<readonly BeadsIssue[] | "missing" | "unavailable"> {
-  const beads = await readBeadsIssues(cwd)
-  switch (beads.kind) {
-    case "issues":
-      return beads.issues
-    case "failed":
-      return "missing"
-    case "timed-out":
-      return "unavailable"
+  settings: ProjectSettingsRead,
+  dateKey: string,
+  today: string,
+  range: { readonly startEpochMilliseconds: number; readonly endEpochMilliseconds: number },
+  cache: AchievementCache,
+): Promise<DailyCommits | "unavailable"> {
+  const head = await countedHeadCommit(cwd, settings)
+  if (head === undefined) {
+    return { kind: "unread" }
   }
+  const [commits, totalCommitsBeforeToday] = await Promise.all([
+    readCommitsSince(
+      cwd,
+      head,
+      range.startEpochMilliseconds - SINCE_MARGIN_DAYS * MILLISECONDS_PER_DAY,
+    ),
+    totalAchievementCommitsBeforeDay(cwd, head, dateKey, today, range, cache),
+  ])
+  return commits === undefined || totalCommitsBeforeToday === undefined
+    ? "unavailable"
+    : { kind: "read", commits, totalCommitsBeforeToday }
 }
 
-/** Beads の課題ごとの作った日（タスクID → ローカルの日付キー）。登録日の表に足す。 */
+/** Beads の課題ごとの作った日（タスクID → ローカルの日付キー）。卒業の登録日に使う。 */
 function beadsCreatedOn(issues: readonly BeadsIssue[]): ReadonlyMap<string, string> {
   return new Map(
     issues.map((issue) => [
@@ -250,7 +230,7 @@ async function totalAchievementCommitsBeforeDay(
   dateKey: string,
   today: string,
   range: { readonly startEpochMilliseconds: number; readonly endEpochMilliseconds: number },
-  cache: AchievementCommitCache,
+  cache: AchievementCache,
 ): Promise<number | undefined> {
   if (dateKey !== today) {
     const cached = cache.totalBeforeDayOf(dateKey)
@@ -292,23 +272,54 @@ async function readAllCommitsUntil(
 }
 
 /**
- * 灯りの暦（直近5週ぶん）の日ごとのコミット数を読む。`today` はサーバのローカル時刻の今日。
- *
- * 範囲の日が1日でも覚えていなければ、`git log` を1回だけ起こして範囲全体を数え直し、今日以外を覚える。
- * すべて覚えていれば、今日の分だけを取り直す。
+ * 灯りの暦（直近5週ぶん）を読む。`today` はサーバのローカル時刻の今日。
+ * 数える枝が読めれば日ごとのコミットの数、読めなければ Beads で日ごとに閉じた課題の数で描く。
  * `diaryDates` は日記が持つ一覧なので、ここでは常に空を返し、実際の値は配線層が差し替える。
  */
 export async function readCommitCalendar(
   cwd: string,
   today: string,
-  cache: AchievementCommitCache,
+  cache: AchievementCache,
 ): Promise<ReadCommitCalendarResult> {
   const settings = await readProjectSettings(cwd)
+  if (settings.kind === "invalid") {
+    return { kind: "ok", calendar: { kind: "unknown" } }
+  }
   const head = await countedHeadCommit(cwd, settings)
-  if (head === undefined) {
+  if (head !== undefined) {
+    return readCommitCountCalendar(cwd, head, today, cache)
+  }
+  if (settings.kind === "off") {
     return { kind: "ok", calendar: { kind: "unknown" } }
   }
 
+  const beads = await cache.readBeads()
+  if (beads === "unavailable") {
+    return { kind: "unavailable" }
+  }
+  if (beads === "missing") {
+    return { kind: "ok", calendar: { kind: "unknown" } }
+  }
+  const countsByDate = countBy(doneBeadsTaskClosedAtEpochMilliseconds(beads), localDateKey)
+  return calendarOf(
+    today,
+    achievementCalendarDateKeys(today),
+    "done-tasks",
+    (date) => countsByDate[date] ?? 0,
+  )
+}
+
+/**
+ * 暦の日ごとのコミット数を読む。
+ * 範囲の日が1日でも覚えていなければ、`git log` を1回だけ起こして範囲全体を数え直し、今日以外を覚える。
+ * すべて覚えていれば、今日の分だけを取り直す。
+ */
+async function readCommitCountCalendar(
+  cwd: string,
+  head: string,
+  today: string,
+  cache: AchievementCache,
+): Promise<ReadCommitCalendarResult> {
   const dateKeys = achievementCalendarDateKeys(today)
   const rangeStart = dateKeys[0]
   if (rangeStart === undefined) {
@@ -332,7 +343,7 @@ export async function readCommitCalendar(
       epochSecondsOf(todayRange.startEpochMilliseconds),
       epochSecondsOf(todayRange.endEpochMilliseconds),
     )
-    return calendarOf(today, dateKeys, (date) =>
+    return calendarOf(today, dateKeys, "commits", (date) =>
       date === today ? todayCount : (cache.dailyCountOf(date) ?? 0),
     )
   }
@@ -355,27 +366,29 @@ export async function readCommitCalendar(
     cache.rememberDailyCount(date, countsByDate.get(date) ?? 0)
   }
 
-  return calendarOf(today, dateKeys, (date) => countsByDate.get(date) ?? 0)
+  return calendarOf(today, dateKeys, "commits", (date) => countsByDate.get(date) ?? 0)
 }
 
 function calendarOf(
   today: string,
   dateKeys: readonly string[],
-  commitCountOf: (date: string) => number,
+  counted: "commits" | "done-tasks",
+  countOf: (date: string) => number,
 ): ReadCommitCalendarResult {
   return {
     kind: "ok",
     calendar: {
       kind: "known",
       today,
-      days: dateKeys.map((date) => ({ date, commitCount: commitCountOf(date) })),
+      counted,
+      days: dateKeys.map((date) => ({ date, count: countOf(date) })),
       diaryDates: [],
     },
   }
 }
 
 /**
- * 数える枝の先端。取れなければ `undefined`（「主ブランチが読めない」）。
+ * 数える枝の先端。取れなければ `undefined`（「数える枝が読めない」）。
  * 設定があればその主ブランチ、無ければ `HEAD` が指す枝。設定が壊れているときは数えない。
  */
 async function countedHeadCommit(
@@ -420,21 +433,11 @@ async function readCommitsSince(
   return result.kind === "output" ? parseCommitLog(result.stdout) : undefined
 }
 
-/** {@link readCommitsSince} の出力を割る。壊れた1件（見出し行が読めない）はその1件だけ捨てる。 */
-function parseCommitLog(output: string): readonly AchievementCommit[] {
-  return parseCommitRecords(output, (bodyLines) => ({
-    changedFiles: bodyLines.filter((line) => line !== ""),
-  }))
-}
-
 /**
  * `%H %ct` の見出し行で始まる、{@link COMMIT_RECORD_SEPARATOR} 区切りの記録を割る。
- * 見出し行が読めない1件は捨て、読めた1件には見出し行より後の行から `bodyOf` が作った値を足す。
+ * 見出し行が読めない1件はその1件だけ捨てる。見出し行より後の空でない行が変更したファイル。
  */
-function parseCommitRecords<Body extends object>(
-  output: string,
-  bodyOf: (bodyLines: readonly string[]) => Body,
-): readonly (Body & { readonly hash: string; readonly committedAtEpochSeconds: number })[] {
+function parseCommitLog(output: string): readonly AchievementCommit[] {
   return output.split(COMMIT_RECORD_SEPARATOR).flatMap((record) => {
     if (record === "") {
       return []
@@ -446,213 +449,18 @@ function parseCommitRecords<Body extends object>(
     if (hash === undefined || hash === "" || !Number.isInteger(committedAtEpochSeconds)) {
       return []
     }
-    return [{ hash, committedAtEpochSeconds, ...bodyOf(lines.slice(1)) }]
+    return [
+      {
+        hash,
+        committedAtEpochSeconds,
+        changedFiles: lines.slice(1).filter((line) => line !== ""),
+      },
+    ]
   })
 }
 
-/** 切り口を探した結果。`empty` は「その時刻より前のコミットが無い」（リポジトリの最初の日）。 */
-type CutoffOutcome =
-  | { readonly kind: "found"; readonly commit: string }
-  | { readonly kind: "empty" }
-  | { readonly kind: "unavailable" }
-
 /**
- * `epochMs` より前の最新のコミット（`--first-parent`）。
- * 空の出力（そのリポジトリの最初の日）は `empty` で、`git` の失敗とは区別する（前者は「空の集合として比べる」、後者は 503）。
- */
-async function cutoffCommitBefore(
-  cwd: string,
-  head: string,
-  epochMs: number,
-): Promise<CutoffOutcome> {
-  const result = await runGit(cwd, [
-    "rev-list",
-    "-1",
-    "--first-parent",
-    `--before=${instantOf(epochMs)}`,
-    head,
-  ])
-  if (result.kind !== "output") {
-    return { kind: "unavailable" }
-  }
-  const commit = result.stdout.trim()
-  return commit === "" ? { kind: "empty" } : { kind: "found", commit }
-}
-
-/** {@link CutoffOutcome} の `found` / `empty` を、{@link readTaskSnapshotSource} が受け取る形にする。 */
-function cutoffCommitOf(outcome: CutoffOutcome): string | undefined {
-  return outcome.kind === "found" ? outcome.commit : undefined
-}
-
-/**
- * 1つの切り口ぶんのタスクの記録を読む。
- * `cutoff` が `undefined`（切り口が無い＝リポジトリの最初の日）なら `git` を起こさずに空の読み元を返す。
- * 新形式の列挙は1回の `git ls-tree`、中身（新形式のファイル・旧形式・アーカイブ）は1回の `git cat-file --batch` にまとめる。
- */
-async function readTaskSnapshotSource(
-  cwd: string,
-  cutoff: string | undefined,
-): Promise<TaskSnapshotSource | "unavailable"> {
-  if (cutoff === undefined) {
-    return { newFormatFiles: [], oldTasksJson: undefined, archiveMarkdown: undefined }
-  }
-
-  const listing = await runGit(cwd, ["ls-tree", "--name-only", cutoff, TASK_DIR_PATH])
-  if (listing.kind !== "output") {
-    return "unavailable"
-  }
-  const taskFilePaths = taskFilePathsOf(listing.stdout)
-
-  const batch = await runGitCatFileBatch(cwd, [
-    ...taskFilePaths.map((path) => `${cutoff}:${path}`),
-    `${cutoff}:${LEGACY_TASKS_PATH}`,
-    `${cutoff}:${LEGACY_ARCHIVE_PATH}`,
-  ])
-  if (batch.kind !== "output") {
-    return "unavailable"
-  }
-
-  const newFormatFiles = taskFilePaths.flatMap((path, index) => {
-    const content = batch.contents[index]
-    return content === undefined ? [] : [{ name: basename(path), content }]
-  })
-
-  return {
-    newFormatFiles,
-    oldTasksJson: batch.contents[taskFilePaths.length],
-    archiveMarkdown: batch.contents[taskFilePaths.length + 1],
-  }
-}
-
-/** `git ls-tree --name-only` の出力を、`.md` のパスだけに絞る。 */
-function taskFilePathsOf(output: string): readonly string[] {
-  return output.split("\n").filter((line) => line.endsWith(".md"))
-}
-
-// --- タスクファイルの出入り（登録日・消えたファイル） ---
-
-/**
- * {@link readTaskFileHistory} の結果。
- * `commits` は登録日の表（`taskRegistrationDates`）に渡す形、`deletions` は消える直前の版を読むための一覧。
- */
-type TaskFileHistory = {
-  readonly commits: readonly TaskFileHistoryCommit[]
-  readonly deletions: readonly TaskFileDeletion[]
-}
-
-/**
- * 消えた（`D`）タスクファイル1件。
- * `request` は `git cat-file --batch` に渡す `<コミット>^:<パス>`（消したコミットの親の版＝消える直前の版）。
- */
-type TaskFileDeletion = {
-  readonly id: string
-  readonly committedAtEpochSeconds: number
-  readonly request: string
-}
-
-/**
- * {@link parseTaskFileHistoryLog} の1コミット分。
- * `hash` は消えたファイルの一覧を組み立てるためだけに要り、core へは渡さない（{@link TaskFileHistoryCommit} は持たない）。
- */
-type RawTaskFileHistoryCommit = {
-  readonly hash: string
-  readonly committedAtEpochSeconds: number
-  readonly changes: readonly TaskFileChange[]
-}
-
-/**
- * タスクファイルと旧形式の一覧の出入りを、`git log --name-status` 1回で読む。
- * `git` が失敗・タイムアウトしたら `undefined`。
- */
-async function readTaskFileHistory(
-  cwd: string,
-  head: string,
-): Promise<TaskFileHistory | undefined> {
-  const result = await runGit(cwd, [
-    "log",
-    head,
-    "--first-parent",
-    `--format=${COMMIT_RECORD_SEPARATOR}%H %ct`,
-    "--name-status",
-    "--",
-    ...TASK_LEDGER_HISTORY_PATHS,
-  ])
-  if (result.kind !== "output") {
-    return undefined
-  }
-
-  const rawCommits = parseTaskFileHistoryLog(result.stdout)
-  const commits = rawCommits.map((commit) => ({
-    committedAtEpochSeconds: commit.committedAtEpochSeconds,
-    localDateKey: localDateKey(commit.committedAtEpochSeconds * 1000),
-    changes: commit.changes,
-  }))
-  const deletions = rawCommits.flatMap((commit) =>
-    commit.changes.flatMap((change) => {
-      if (change.status !== "D") {
-        return []
-      }
-      const id = taskFileIdOfPath(change.path)
-      return id === undefined
-        ? []
-        : [
-            {
-              id,
-              committedAtEpochSeconds: commit.committedAtEpochSeconds,
-              request: `${commit.hash}^:${change.path}`,
-            },
-          ]
-    }),
-  )
-  return { commits, deletions }
-}
-
-/** {@link readTaskFileHistory} の出力を割る。壊れた1件（見出し行が読めない）はその1件だけ捨てる。 */
-function parseTaskFileHistoryLog(output: string): readonly RawTaskFileHistoryCommit[] {
-  return parseCommitRecords(output, (bodyLines) => ({
-    changes: bodyLines.flatMap(taskFileChangeOf),
-  }))
-}
-
-/**
- * `--name-status` の1行（`A\tpath` の形）。リネーム（`R100\told\tnew`）は拾わない。
- * タスクファイルはリネームしない運用で、`old` 側のパスだけ拾っても登録日にも消えたファイルにも使えない。
- */
-function taskFileChangeOf(line: string): readonly TaskFileChange[] {
-  if (line === "") {
-    return []
-  }
-  const [status, path] = line.split("\t")
-  return status === undefined || path === undefined || status.startsWith("R")
-    ? []
-    : [{ status, path }]
-}
-
-/**
- * 消えたファイルの、消える直前の版を1回の `git cat-file --batch` で読む。
- * `git` そのものが失敗・タイムアウトしたときだけ `undefined`。
- * 個々のファイルが読めない（blob が既に無い）だけなら {@link DeletedTaskFile} の `content` が `undefined` になる。
- */
-async function readDeletedTaskFiles(
-  cwd: string,
-  deletions: readonly TaskFileDeletion[],
-): Promise<readonly DeletedTaskFile[] | undefined> {
-  const batch = await runGitCatFileBatch(
-    cwd,
-    deletions.map((deletion) => deletion.request),
-  )
-  if (batch.kind !== "output") {
-    return undefined
-  }
-  return deletions.map((deletion, index) => ({
-    id: deletion.id,
-    committedAtEpochSeconds: deletion.committedAtEpochSeconds,
-    content: batch.contents[index],
-  }))
-}
-
-/**
- * エポックミリ秒を `git` の `--since` / `--before` に渡す ISO 8601（UTC）にする。
+ * エポックミリ秒を `git` の `--since` / `--until` に渡す ISO 8601（UTC）にする。
  * 絶対時刻なので、サーバのタイムゾーンに関わらず `git` 側で正しく解釈される。
  */
 function instantOf(epochMs: number): string {

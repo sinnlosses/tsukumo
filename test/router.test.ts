@@ -486,7 +486,7 @@ describe("createCommandRouter（session）", () => {
       kind: "known",
       date: "2026-09-23",
       today: "2026-09-24",
-      commitCount: 5,
+      commits: { kind: "known", count: 5 },
       doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
       graduations: [],
       milestones: [],
@@ -495,7 +495,7 @@ describe("createCommandRouter（session）", () => {
 
     const EMPTY_DAY: DailyAchievement = {
       ...KNOWN_DAY,
-      commitCount: 0,
+      commits: { kind: "known", count: 0 },
       doneTasks: { kind: "known", items: [] },
     }
 

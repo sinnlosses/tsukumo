@@ -50,28 +50,48 @@ export function createBeadsStampReader(cwd: string): () => Promise<string | unde
   let beadsDir: string | undefined = undefined
 
   return async () => {
-    beadsDir ??= await readBeadsDir(cwd)
-    return beadsDir === undefined ? undefined : readManifestStamp(beadsDir)
+    if (beadsDir === undefined) {
+      const workspace = await readBeadsWorkspace(cwd)
+      beadsDir = workspace.kind === "found" ? workspace.dir : undefined
+    }
+    return beadsDir === undefined ? undefined : readBeadsStampOf(beadsDir)
   }
 }
 
-function readBeadsDir(cwd: string): Promise<string | undefined> {
+/** `bd where` の結果。`missing` は `.beads` が見つからない・`bd` が無い。 */
+export type BeadsWorkspace =
+  | { readonly kind: "found"; readonly dir: string }
+  | { readonly kind: "missing" }
+  | { readonly kind: "timed-out" }
+
+/** `cwd` から `bd` が使う `.beads` の場所を `bd where` で調べる。 */
+export function readBeadsWorkspace(cwd: string): Promise<BeadsWorkspace> {
   return new Promise((resolve) => {
     execFile(
       "bd",
       ["where"],
       { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
       (error, stdout) => {
+        if (error !== null) {
+          resolve({ kind: error.killed === true ? "timed-out" : "missing" })
+          return
+        }
         const firstLine = stdout.split("\n")[0]?.trim()
         resolve(
-          error === null && firstLine !== undefined && firstLine !== "" ? firstLine : undefined,
+          firstLine === undefined || firstLine === ""
+            ? { kind: "missing" }
+            : { kind: "found", dir: firstLine },
         )
       },
     )
   })
 }
 
-async function readManifestStamp(beadsDir: string): Promise<string | undefined> {
+/**
+ * `.beads` の課題の変化の印（Dolt の `noms/manifest` の更新時刻）。
+ * `bd` の内部の置き場に頼るので、取れないとき・形が違うときは `undefined`。
+ */
+export async function readBeadsStampOf(beadsDir: string): Promise<string | undefined> {
   const databasesDir = join(beadsDir, "embeddeddolt")
   try {
     const entries = await readdir(databasesDir, { withFileTypes: true })

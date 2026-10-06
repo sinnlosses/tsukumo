@@ -299,15 +299,16 @@ function achievementLine(achievement: DailyAchievement): string {
   if (achievement.kind === "unknown") {
     return "（分からない）"
   }
-  const commits = `コミット ${String(achievement.commitCount)} 件`
-  if (achievement.doneTasks.kind === "unknown" || achievement.doneTasks.items.length === 0) {
-    return commits
-  }
-  const tasks = achievement.doneTasks.items
+  const doneTasks = achievement.doneTasks.kind === "known" ? achievement.doneTasks.items : []
+  const tasks = doneTasks
     .slice(0, VISIT_SCRIPT_LIMITS.doneTaskCount)
     .map((task) => task.summary)
     .join(" / ")
-  return `${commits}。終えたタスク: ${tasks}`
+  if (achievement.commits.kind === "unknown") {
+    return tasks === "" ? "終えたタスクは無い" : `終えたタスク: ${tasks}`
+  }
+  const commits = `コミット ${String(achievement.commits.count)} 件`
+  return tasks === "" ? commits : `${commits}。終えたタスク: ${tasks}`
 }
 
 /** 走っているトップレベルのツール（いまのやり取り＝最後の依頼より後ろだけ）。 */

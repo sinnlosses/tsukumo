@@ -2,7 +2,10 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { createBeadsStampReader } from "../../../../src/server/repository/adapter/beads.ts"
+import {
+  createBeadsStampReader,
+  readBeadsWorkspace,
+} from "../../../../src/server/repository/adapter/beads.ts"
 import { bd, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import {
   initRepository,
@@ -49,5 +52,22 @@ describe("createBeadsStampReader", () => {
     const repository = await initRepository(root())
 
     expect(await createBeadsStampReader(repository)()).toBeUndefined()
+  })
+})
+
+describe("readBeadsWorkspace", () => {
+  it(".beads があればその場所を返す", { timeout: 60_000 }, async () => {
+    const repository = await initBeadsIssues(root(), [openIssue("t-001", "架空")])
+
+    expect(await readBeadsWorkspace(repository)).toEqual({
+      kind: "found",
+      dir: expect.stringMatching(/\.beads$/),
+    })
+  })
+
+  it(".beads が無ければ missing", async () => {
+    const repository = await initRepository(root())
+
+    expect(await readBeadsWorkspace(repository)).toEqual({ kind: "missing" })
   })
 })

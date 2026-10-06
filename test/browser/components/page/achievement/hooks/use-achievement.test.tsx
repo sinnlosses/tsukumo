@@ -54,7 +54,7 @@ const KNOWN_TODAY: DailyAchievement = {
   kind: "known",
   date: "2026-09-24",
   today: "2026-09-24",
-  commitCount: 3,
+  commits: { kind: "known", count: 3 },
   doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
   graduations: [],
   milestones: [],
@@ -199,16 +199,19 @@ describe("useAchievement", () => {
       vi.useRealTimers()
     }
 
-    const REFRESHED_TODAY: DailyAchievement = { ...KNOWN_TODAY, commitCount: 9 }
+    const REFRESHED_TODAY: DailyAchievement = {
+      ...KNOWN_TODAY,
+      commits: { kind: "known", count: 9 },
+    }
     stubAchievementFetch(() => rpcOutput(REFRESHED_TODAY))
     const reopened = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(client),
     })
 
-    expect(reopened.result.current.view).toMatchObject({ kind: "ready", commitCount: 3 })
+    expect(reopened.result.current.view).toMatchObject({ kind: "ready", commits: { count: 3 } })
 
     await waitFor(() => {
-      expect(reopened.result.current.view).toMatchObject({ kind: "ready", commitCount: 9 })
+      expect(reopened.result.current.view).toMatchObject({ kind: "ready", commits: { count: 9 } })
     })
   })
 })
@@ -392,7 +395,11 @@ describe("useAchievement（日記の区画）", () => {
 
     fetchStub?.restore()
     stubAchievementFetch(() =>
-      rpcOutput({ ...KNOWN_TODAY, commitCount: 0, doneTasks: { kind: "known", items: [] } }),
+      rpcOutput({
+        ...KNOWN_TODAY,
+        commits: { kind: "known", count: 0 },
+        doneTasks: { kind: "known", items: [] },
+      }),
     )
     const empty = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(createTestQueryClient()),
@@ -406,7 +413,11 @@ describe("useAchievement（日記の区画）", () => {
 
     fetchStub?.restore()
     stubAchievementFetch(() =>
-      rpcOutput({ ...KNOWN_TODAY, commitCount: 3, doneTasks: { kind: "known", items: [] } }),
+      rpcOutput({
+        ...KNOWN_TODAY,
+        commits: { kind: "known", count: 3 },
+        doneTasks: { kind: "known", items: [] },
+      }),
     )
     const commitOnly = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(createTestQueryClient()),
@@ -434,6 +445,21 @@ describe("useAchievement（日記の区画）", () => {
         { label: "コミット", value: "3", note: "" },
       ],
     })
+  })
+
+  it("コミットの数が分からない日は「コミット」の札を並べない", async () => {
+    stubAchievementFetch(() => rpcOutput({ ...KNOWN_TODAY, commits: { kind: "unknown" } }))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(createTestQueryClient()),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    const section = result.current.diarySection
+    expect(section.kind === "shown" ? section.cards : undefined).toEqual([
+      { key: "done-tasks", label: "終えたタスク", value: "1", note: "" },
+    ])
   })
 
   it("読み込み中は札が「…」で吹き出しは空", () => {
@@ -540,7 +566,7 @@ describe("useAchievement（書き上げの演出）", () => {
       kind: "known",
       date: "2026-09-24",
       today: "2026-09-24",
-      commitCount: 3,
+      commits: { kind: "known", count: 3 },
       doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
       graduations: [],
       milestones: [],

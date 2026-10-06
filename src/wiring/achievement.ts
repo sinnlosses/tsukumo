@@ -16,7 +16,7 @@ export function wireAchievement(context: WiringContext): {
           context.cwd,
           date,
           todayLocalDateKey(),
-          context.achievementCommitCache,
+          context.achievementCache,
         )
         return result.kind === "ok" ? result.achievement : undefined
       },

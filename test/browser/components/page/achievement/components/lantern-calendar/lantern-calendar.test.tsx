@@ -32,6 +32,7 @@ const DAY_CELLS: readonly CalendarCell[] = DATE_KEYS.map((date): CalendarCell =>
 const KNOWN: AchievementCalendarView = {
   kind: "known",
   today: TODAY,
+  counted: "commits",
   days: [],
   diaryDates: [TODAY],
   cells: [

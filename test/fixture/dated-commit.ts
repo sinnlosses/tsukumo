@@ -1,4 +1,4 @@
-// 日付を固定したコミットで、成果（終えたタスク・コミットの数）の履歴を組み立てる道具。
+// 日付を固定したコミットで、成果（コミットの数）の履歴を組み立てる道具。
 // 成果はコミットの日付（committer date）で決まるので、実行した日に依らず同じ結果になるよう固定する。
 
 import { mkdirSync, writeFileSync } from "node:fs"
@@ -41,39 +41,6 @@ export async function commitAt(
     cwd,
     env: { ...process.env, GIT_AUTHOR_DATE: isoDate, GIT_COMMITTER_DATE: isoDate },
   })
-}
-
-/** 新形式（`develop/task/T-xxx.md`）の1件を front matter で書いてコミットする。 */
-export async function commitNewFormatTask(
-  cwd: string,
-  date: string,
-  hhmm: string,
-  id: string,
-  summary: string,
-  status: string,
-): Promise<void> {
-  await commitAt(
-    cwd,
-    date,
-    hhmm,
-    `develop/task/${id}.md`,
-    newFormatTaskContent(id, summary, status),
-  )
-}
-
-/** 新形式（`develop/task/T-xxx.md`）の内容そのもの（front matter）。 */
-export function newFormatTaskContent(id: string, summary: string, status: string): string {
-  return [
-    "---",
-    `id: ${id}`,
-    `summary: ${summary}`,
-    `status: ${status}`,
-    "difficulty: sonnet",
-    "loopable: Y",
-    "dependencies: []",
-    "---",
-    "",
-  ].join("\n")
 }
 
 /** 「読めた」かつ `doneTasks` が数えられている前提のテストで使う。前提が崩れたら例外を投げて

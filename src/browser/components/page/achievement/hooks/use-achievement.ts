@@ -14,6 +14,7 @@ import {
   isEmptyAchievementDay,
   nextDateKey,
   previousDateKey,
+  type AchievementCommits,
   type AchievementDoneTasks,
   type AchievementGraduation,
   type AchievementMilestone,
@@ -69,7 +70,7 @@ export type AchievementView =
   | { readonly kind: "failed" }
   | {
       readonly kind: "ready"
-      readonly commitCount: number
+      readonly commits: AchievementCommits
       readonly doneTasks: AchievementDoneTasks
       readonly graduations: readonly AchievementGraduation[]
       readonly milestones: readonly AchievementMilestone[]
@@ -274,7 +275,7 @@ function bubbleOf(
   if (writing.kind === "failed") {
     return { kind: "notes", notes: [WRITE_FAILED_NOTE, ...latestBodies] }
   }
-  if (isEmptyAchievementDay(view.commitCount, view.doneTasks)) {
+  if (isEmptyAchievementDay(view.commits, view.doneTasks)) {
     return { kind: "notes", notes: [EMPTY_DAY_NOTE] }
   }
   if (latest === undefined) {
@@ -288,28 +289,30 @@ function bubbleOf(
   }
 }
 
+/** 数の札。コミットの数が分からない日は「コミット」の札を並べない。 */
 function cardsOf(view: AchievementView): readonly DiarySectionCard[] {
   const ready = view.kind === "ready" ? view : undefined
   const doneTasks = ready?.doneTasks
-  return [
-    {
-      key: "done-tasks",
-      label: "終えたタスク",
-      value:
-        doneTasks === undefined
-          ? LOADING_VALUE
-          : doneTasks.kind === "unknown"
-            ? UNKNOWN_VALUE
-            : String(doneTasks.items.length),
-      note: doneTasks?.kind === "unknown" ? UNKNOWN_TASKS_NOTE : "",
-    },
-    {
-      key: "commits",
-      label: "コミット",
-      value: ready === undefined ? LOADING_VALUE : String(ready.commitCount),
-      note: "",
-    },
-  ]
+  const doneTasksCard = {
+    key: "done-tasks",
+    label: "終えたタスク",
+    value:
+      doneTasks === undefined
+        ? LOADING_VALUE
+        : doneTasks.kind === "unknown"
+          ? UNKNOWN_VALUE
+          : String(doneTasks.items.length),
+    note: doneTasks?.kind === "unknown" ? UNKNOWN_TASKS_NOTE : "",
+  }
+  if (ready === undefined) {
+    return [doneTasksCard, { key: "commits", label: "コミット", value: LOADING_VALUE, note: "" }]
+  }
+  return ready.commits.kind === "unknown"
+    ? [doneTasksCard]
+    : [
+        doneTasksCard,
+        { key: "commits", label: "コミット", value: String(ready.commits.count), note: "" },
+      ]
 }
 
 /**
@@ -333,7 +336,7 @@ function reviewButtonOf(
     return { label, availability: { kind: "blocked", reason: "" }, onReview: () => {} }
   }
 
-  const availability = reviewAvailabilityOf(view.commitCount, view.doneTasks, diaryWriting)
+  const availability = reviewAvailabilityOf(view.commits, view.doneTasks, diaryWriting)
 
   return {
     label,
@@ -401,7 +404,7 @@ function viewOf(
   }
   return {
     kind: "ready",
-    commitCount: data.commitCount,
+    commits: data.commits,
     doneTasks: data.doneTasks,
     graduations: data.graduations,
     milestones: data.milestones,

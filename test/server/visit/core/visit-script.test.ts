@@ -206,7 +206,7 @@ describe("visitScriptQuery", () => {
         kind: "known",
         date: "2026-01-01",
         today: "2026-01-01",
-        commitCount: 4,
+        commits: { kind: "known", count: 4 },
         doneTasks: { kind: "known", items: [{ id: "fictional-1", summary: "架空のタスク" }] },
         graduations: [],
         milestones: [],
@@ -237,6 +237,28 @@ describe("visitScriptQuery", () => {
         },
       },
     })
+  })
+
+  it("コミットの数が分からない日は、今日の成果に終えたタスクだけを載せる", () => {
+    const query = visitScriptQuery({
+      cast: CAST,
+      excerpt: { request: "架空の依頼", speeches: [], waitingOn: [] },
+      waitedMs: 60_000,
+      localTime: "14:05",
+      achievement: {
+        kind: "known",
+        date: "2026-01-01",
+        today: "2026-01-01",
+        commits: { kind: "unknown" },
+        doneTasks: { kind: "known", items: [{ id: "fictional-1", summary: "架空のタスク" }] },
+        graduations: [],
+        milestones: [],
+        diary: { kind: "none" },
+      },
+    })
+
+    expect(query.prompt).toContain("- 今日の成果: 終えたタスク: 架空のタスク")
+    expect(query.prompt).not.toContain("コミット")
   })
 })
 

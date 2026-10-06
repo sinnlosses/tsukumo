@@ -155,7 +155,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `character-pack/`    | キャラクターパックの選択・読み込み・画面からの編集                                           |
 | `visit/`             | 訪問。契機・来客・台本・見張り                                                               |
 | `diary/`             | 日記。`diary` ツールと保存                                                                   |
-| `achievement/`       | 成果。`main` の履歴から数える                                                                |
+| `achievement/`       | 成果。コミットは `main` の履歴、終えたタスクは Beads の閉じた課題から数える                  |
 | `usage-review/`      | 見直し。2つのツール・前回の結果・見送り                                                      |
 | `token-usage/`       | トークン消費の記録と集計                                                                     |
 | `context-usage/`     | コンテキストの内訳の記録                                                                     |
@@ -211,7 +211,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `context-usage`       | `session-driver`                                                                                                                                         | core → core（駆動の契約）                                                                                                                                                                                 |
 | `session-driver`      | `chat` `report` `usage-review` `view-server`                                                                                                             | core → core（`report-review` `port-resolution`）・adapter → core（各ツールの判断）                                                                                                                        |
 | `diary`               | `character-pack` `repository` `session-driver`                                                                                                           | adapter → adapter・adapter → core（`sdk-diary` → `session-driver/core/tsukumo-tool-name.ts` の `tsukumoToolFullName`）                                                                                    |
-| `achievement`         | `repository`                                                                                                                                             | adapter → adapter（`main-history` → `git`）                                                                                                                                                               |
+| `achievement`         | `repository`                                                                                                                                             | adapter → adapter（`main-history` → `git` `beads`）                                                                                                                                                       |
 | そのほか              | —（葉。`report` `visit` `usage-review` `token-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation`） | —                                                                                                                                                                                                         |
 
 #### コマンドの受け手と手続きの置き方
@@ -776,8 +776,9 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 - **応答はサーバの今日（`today`）を持つ。** 日の境目を決めるのはサーバの `local-time.ts` の1箇所で、
   ブラウザは時計を読まず、「今日」「昨日」と「次の日」を押せるかを `today` との比較で決める
-- **数える枝（設定の `tasks.mainBranch`、設定が無ければ `HEAD` の枝）が読めないときと、設定が壊れているときは `{ kind: "unknown" }`（200）、数える途中の `git` の失敗は 503** で、
-  部分的な数を配らない。日記が読めないのは `unreadable` として数と一緒に配る
+- **数える枝（設定の `tasks.mainBranch`、設定が無ければ `HEAD` の枝）が読めないときは、Beads が読めればコミットの数を `unknown` にして終えたタスクと閉じた日の暦だけを配る。**
+  Beads も読めないとき（`.beads` が無い・`tasks: "off"`）と設定が壊れているときは `{ kind: "unknown" }`（200）、
+  **数える途中の `git`・`bd` の失敗は 503** で、部分的な数を配らない。日記が読めないのは `unreadable` として数と一緒に配る
 - 入るのは数・時刻・タスクの ID と `summary`・日付と日記だけで、コミットの件名も会話の文面も
   入らない。起動トークンが要る（「会話内容と安全」）
 

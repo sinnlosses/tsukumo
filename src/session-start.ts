@@ -5,7 +5,7 @@ import { basename, dirname } from "node:path"
 
 import type { CurrentCharacter } from "./current-character.ts"
 import { createSocketRouter } from "./router.ts"
-import { createAchievementCommitCache } from "./server/achievement/adapter/main-history.ts"
+import { createAchievementCache } from "./server/achievement/adapter/main-history.ts"
 import { createServerClock } from "./server/adapter/local-time.ts"
 import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
@@ -73,7 +73,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     inheritedEnv: config.inheritedEnv,
     fakeSession: options.fakeSession,
     chatArchive: createChatArchive(),
-    achievementCommitCache: createAchievementCommitCache(),
+    achievementCache: createAchievementCache(options.cwd),
   }
   // 最初のタブが繋がったら解ける約束。
   const firstViewer = Promise.withResolvers<void>()

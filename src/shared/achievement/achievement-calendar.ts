@@ -1,17 +1,17 @@
 // 灯りの暦が取りに行く応答の型と、暦の範囲・灯りの段階の判定。
-// 運ぶのは日付とコミットの数だけで、コミットの件名も会話の文面も入れない。
+// 運ぶのは日付と数だけで、コミットの件名も課題の題も会話の文面も入れない。
 
 import { z } from "zod"
 
-/** 暦の1マス。 */
+/** 暦の1マス。`count` は暦の `counted` が指す数。 */
 export type AchievementCalendarDay = {
   readonly date: string
-  readonly commitCount: number
+  readonly count: number
 }
 
 /**
  * 暦の手続きの応答（見る範囲は常に「今日を含む直近5週」で、日付は選べない）。
- * `main` が読めない（git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは画面ごと `unknown`。
+ * 数える枝も Beads も読めないときは画面ごと `unknown`。
  */
 export type AchievementCalendar =
   | { readonly kind: "unknown" }
@@ -19,6 +19,10 @@ export type AchievementCalendar =
       readonly kind: "known"
       /** サーバのローカル時刻の今日（`YYYY-MM-DD`）。ブラウザは時計を読まない。 */
       readonly today: string
+      /**
+       * マスの数が何の数か。数える枝が読めればその日のコミットの数（`commits`）、読めなければ Beads でその日に閉じた課題の数（`done-tasks`）。
+       */
+      readonly counted: "commits" | "done-tasks"
       /** 暦の範囲ぶん（{@link achievementCalendarDateKeys}）、日付の古い順。 */
       readonly days: readonly AchievementCalendarDay[]
       /** 日記のある日のすべて（新しい順。暦の5週に限らない。日記の保存が無ければ空）。 */
@@ -27,7 +31,7 @@ export type AchievementCalendar =
 
 const achievementCalendarDaySchema = z.object({
   date: z.string(),
-  commitCount: z.number(),
+  count: z.number(),
 })
 
 /** 配る形そのもの（{@link AchievementCalendar} と同じ鍵）。 */
@@ -36,6 +40,7 @@ export const achievementCalendarSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("known"),
     today: z.string(),
+    counted: z.enum(["commits", "done-tasks"]),
     days: z.array(achievementCalendarDaySchema).readonly(),
     diaryDates: z.array(z.string()).readonly(),
   }),
@@ -71,8 +76,8 @@ const LAMP_LEVEL_THRESHOLDS = [
   { min: 0, level: "none" },
 ] as const satisfies readonly { readonly min: number; readonly level: LampLevel }[]
 
-/** その日のコミットの数から灯りの段階を決める。 */
-export function lampLevel(commitCount: number): LampLevel {
-  const matched = LAMP_LEVEL_THRESHOLDS.find((threshold) => commitCount >= threshold.min)
+/** その日の数（コミットの数、分からなければ閉じた課題の数）から灯りの段階を決める。 */
+export function lampLevel(count: number): LampLevel {
+  const matched = LAMP_LEVEL_THRESHOLDS.find((threshold) => count >= threshold.min)
   return matched === undefined ? "none" : matched.level
 }

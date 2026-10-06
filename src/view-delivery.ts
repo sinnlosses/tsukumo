@@ -7,7 +7,7 @@ import process from "node:process"
 import type { CurrentCharacter } from "./current-character.ts"
 import { createRpcRouter } from "./router.ts"
 import {
-  createAchievementCommitCache,
+  createAchievementCache,
   readAchievement,
   readCommitCalendar,
 } from "./server/achievement/adapter/main-history.ts"
@@ -109,8 +109,8 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   let readPlanUsage: () => Promise<PlanUsageReport> = () => Promise.resolve(UNAVAILABLE_PLAN_USAGE)
   let readSessionDigest: (sessionId: string) => Promise<SessionDigest> = () =>
     Promise.resolve(UNAVAILABLE_SESSION_DIGEST)
-  // 成果の画面（1日ぶん・暦）が今日以外の日の数を覚える入れ物。両方の口が同じ1つを見る。
-  const achievementCommitCache = createAchievementCommitCache()
+  // 成果の画面（1日ぶん・暦）が今日以外の日の数と Beads の読みを覚える入れ物。両方の口が同じ1つを見る。
+  const achievementCache = createAchievementCache(options.cwd)
 
   const rpcRouter = createRpcRouter({
     listRepositoryFiles: () => listRepositoryFiles(options.cwd),
@@ -128,7 +128,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       const today = todayLocalDateKey()
       const dateKey = resolveAchievementDateKey(selection, today)
       const [result, diary] = await Promise.all([
-        readAchievement(options.cwd, dateKey, today, achievementCommitCache),
+        readAchievement(options.cwd, dateKey, today, achievementCache),
         readDiaryDay(options.cwd, dateKey),
       ])
       return result.kind === "ok" && result.achievement.kind === "known"
@@ -138,7 +138,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     // 灯りの暦（直近5週ぶん）。日記のある日の一覧もここで合わせる。
     readAchievementCalendar: async () => {
       const [result, diaryDates] = await Promise.all([
-        readCommitCalendar(options.cwd, todayLocalDateKey(), achievementCommitCache),
+        readCommitCalendar(options.cwd, todayLocalDateKey(), achievementCache),
         listDiaryDates(options.cwd),
       ])
       return result.kind === "ok" && result.calendar.kind === "known"

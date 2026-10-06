@@ -9,6 +9,7 @@ const DONE_HEADING = "この日に終えたこと"
 
 export function TaskListing(props: { readonly tasks: DiaryBookTaskList }): ReactElement {
   const { tasks } = props
+  const footer = footerOf(tasks)
   return (
     <div>
       <Text
@@ -50,17 +51,25 @@ export function TaskListing(props: { readonly tasks: DiaryBookTaskList }): React
           {UNKNOWN_TASKS_NOTE}
         </Text>
       )}
-      <Text
-        element="p"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["diary-book-tasks-footer"]}
-      >
-        {tasks.moreCount > 0
-          ? `ほか ${String(tasks.moreCount)} 件 · コミット ${String(tasks.commitCount)}`
-          : `コミット ${String(tasks.commitCount)}`}
-      </Text>
+      {footer !== "" && (
+        <Text
+          element="p"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["diary-book-tasks-footer"]}
+        >
+          {footer}
+        </Text>
+      )}
     </div>
   )
+}
+
+/** 下の行。「ほか n 件」と「コミット n」のあるものだけをつなぐ。どちらも無ければ空文字。 */
+function footerOf(tasks: DiaryBookTaskList): string {
+  return [
+    ...(tasks.moreCount > 0 ? [`ほか ${String(tasks.moreCount)} 件`] : []),
+    ...(tasks.commits.kind === "known" ? [`コミット ${String(tasks.commits.count)}`] : []),
+  ].join(" · ")
 }

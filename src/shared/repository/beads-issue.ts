@@ -87,16 +87,29 @@ export function closedBeadsTaskSummariesBefore(
   issues: readonly BeadsIssue[],
   beforeEpochMilliseconds: number,
 ): ReadonlyMap<string, string> {
-  const closed = issues
-    .filter(
-      (issue) =>
-        issue.status === CLOSED_STATUS &&
-        !issue.labels.includes(CANCELLED_LABEL) &&
-        issue.closedAtEpochMilliseconds !== undefined &&
-        issue.closedAtEpochMilliseconds < beforeEpochMilliseconds,
-    )
+  const closed = doneBeadsIssues(issues)
+    .filter((issue) => issue.closedAtEpochMilliseconds < beforeEpochMilliseconds)
     .map((issue) => ({ id: taskIdOfBeadsId(issue.id), summary: issue.title }))
   return new Map(sortByTaskId(closed).map((task) => [task.id, task.summary]))
+}
+
+/** 閉じた課題のうち `dropped`（label `cancelled`）でないものの、閉じた時刻（エポックミリ秒）。 */
+export function doneBeadsTaskClosedAtEpochMilliseconds(
+  issues: readonly BeadsIssue[],
+): readonly number[] {
+  return doneBeadsIssues(issues).map((issue) => issue.closedAtEpochMilliseconds)
+}
+
+function doneBeadsIssues(
+  issues: readonly BeadsIssue[],
+): readonly (BeadsIssue & { readonly closedAtEpochMilliseconds: number })[] {
+  return issues.flatMap((issue) =>
+    issue.status === CLOSED_STATUS &&
+    !issue.labels.includes(CANCELLED_LABEL) &&
+    issue.closedAtEpochMilliseconds !== undefined
+      ? [{ ...issue, closedAtEpochMilliseconds: issue.closedAtEpochMilliseconds }]
+      : [],
+  )
 }
 
 /**

@@ -55,6 +55,7 @@ const UNKNOWN_DAY_SWITCH: AchievementDaySwitch = { kind: "unknown" }
 const CALENDAR: AchievementCalendarView = {
   kind: "known",
   today: "2026-09-24",
+  counted: "commits",
   days: [],
   diaryDates: ["2026-09-24", "2026-09-16", "2026-08-30", "2026-08-20"],
   cells: [],
@@ -87,7 +88,7 @@ const WRITTEN_DAY: DailyAchievement = {
   kind: "known",
   date: "2026-09-16",
   today: "2026-09-24",
-  commitCount: 5,
+  commits: { kind: "known", count: 5 },
   doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
   graduations: [{ id: "T-2", summary: "架空の卒業", registeredOn: "2026-09-01", days: 15 }],
   milestones: [{ kind: "commit", count: 1000, time: "14:12" }],
@@ -98,14 +99,14 @@ const BLANK_DAY: DailyAchievement = {
   kind: "known",
   date: "2026-09-23",
   today: "2026-09-24",
-  commitCount: 4,
+  commits: { kind: "known", count: 4 },
   doneTasks: { kind: "known", items: [] },
   graduations: [],
   milestones: [],
   diary: { kind: "none" },
 }
 
-const EMPTY_BLANK_DAY: DailyAchievement = { ...BLANK_DAY, commitCount: 0 }
+const EMPTY_BLANK_DAY: DailyAchievement = { ...BLANK_DAY, commits: { kind: "known", count: 0 } }
 
 describe("useDiaryBook（開閉）", () => {
   it("既定は閉じていて、灯りの暦から開くと見ている日も切り替わる", async () => {
@@ -266,6 +267,26 @@ describe("useDiaryBook（書かれた日）", () => {
 
     const page = result.current.page
     expect(page.kind === "ready" ? page.bookmark : undefined).toEqual({ kind: "none" })
+  })
+
+  it("コミットの数が分からない日は、灯りを終えたタスクの件数で決める", async () => {
+    stubFetch(() => rpcOutput({ ...WRITTEN_DAY, commits: { kind: "unknown" } }))
+    const { result } = renderHook(
+      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      { wrapper: wrapper(createTestQueryClient()) },
+    )
+
+    act(() => {
+      result.current.onOpenFromCalendar("2026-09-16")
+    })
+    await waitFor(() => {
+      expect(result.current.page.kind).toBe("ready")
+    })
+
+    expect(result.current.page).toMatchObject({
+      lampLevel: "faint",
+      tasks: { commits: { kind: "unknown" } },
+    })
   })
 })
 

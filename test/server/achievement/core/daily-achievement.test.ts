@@ -4,33 +4,9 @@ import {
   dailyAchievementOf,
   type DailyAchievementInput,
 } from "../../../../src/server/achievement/core/daily-achievement.ts"
-import type { TaskSnapshotSource } from "../../../../src/server/achievement/core/done-task-source.ts"
 import type { BeadsIssue } from "../../../../src/shared/repository/beads-issue.ts"
 
-const EMPTY_SOURCE: TaskSnapshotSource = {
-  newFormatFiles: [],
-  oldTasksJson: undefined,
-  archiveMarkdown: undefined,
-}
-
 const RANGE = { startEpochMilliseconds: 100_000, endEpochMilliseconds: 200_000 }
-
-function taskFile(id: string, summary: string): { name: string; content: string } {
-  return {
-    name: `${id}.md`,
-    content: [
-      "---",
-      `id: ${id}`,
-      `summary: ${summary}`,
-      "status: done",
-      "difficulty: sonnet",
-      "loopable: Y",
-      "dependencies: []",
-      "---",
-      "",
-    ].join("\n"),
-  }
-}
 
 function closedIssue(id: string, title: string, closedAtEpochMilliseconds: number): BeadsIssue {
   return {
@@ -53,8 +29,7 @@ const BASE: Omit<DailyAchievementInput, "tasks"> = {
   date: "2026-01-02",
   today: "2026-01-02",
   range: RANGE,
-  commits: [],
-  totalCommitsBeforeToday: 0,
+  commits: { kind: "read", commits: [], totalCommitsBeforeToday: 0 },
   timeOf: (epochMilliseconds) => `t${epochMilliseconds}`,
 }
 
@@ -68,15 +43,14 @@ describe("dailyAchievementOf", () => {
     expect(
       dailyAchievementOf({
         ...BASE,
-        commits,
-        totalCommitsBeforeToday: 999,
+        commits: { kind: "read", commits, totalCommitsBeforeToday: 999 },
         tasks: { kind: "untracked" },
       }),
     ).toEqual({
       kind: "known",
       date: "2026-01-02",
       today: "2026-01-02",
-      commitCount: 2,
+      commits: { kind: "known", count: 2 },
       doneTasks: { kind: "unknown" },
       graduations: [],
       milestones: [{ kind: "commit", count: 1000, time: "t150000" }],
@@ -84,47 +58,58 @@ describe("dailyAchievementOf", () => {
     })
   })
 
-  it("終わりと始まりの両方で、切り口・消えたファイル・Beads の閉じた課題を足し合わせて差を取る", () => {
+  it("その日のうちに閉じた課題だけを終えたタスクにし、取り下げた課題は数えない", () => {
+    const dropped = { ...closedIssue("t-004", "取り下げ", 160_000), labels: ["cancelled"] }
     const result = dailyAchievementOf({
       ...BASE,
       tasks: {
         kind: "tracked",
-        endSource: {
-          ...EMPTY_SOURCE,
-          newFormatFiles: [taskFile("T-001", "前から"), taskFile("T-002", "今日")],
-        },
-        startSource: { ...EMPTY_SOURCE, newFormatFiles: [taskFile("T-001", "前から")] },
-        deletedFiles: [
-          {
-            id: "T-003",
-            committedAtEpochSeconds: 120,
-            content: taskFile("T-003", "今日消えた").content,
-          },
-          {
-            id: "T-004",
-            committedAtEpochSeconds: 50,
-            content: taskFile("T-004", "前に消えた").content,
-          },
-        ],
         issues: [
-          closedIssue("tsukumo-a", "Beads の今日", 150_000),
-          closedIssue("tsukumo-b", "Beads の前", 50_000),
+          closedIssue("t-001", "前の日", 50_000),
+          closedIssue("t-002", "今日", 150_000),
+          closedIssue("t-003", "次の日", 250_000),
+          dropped,
         ],
-        historyCommits: [],
-        beadsCreatedOn: new Map(),
+        registeredOn: new Map(),
       },
     })
 
     expect(result).toMatchObject({
       kind: "known",
-      doneTasks: {
-        kind: "known",
-        items: [
-          { id: "T-002", summary: "今日" },
-          { id: "T-003", summary: "今日消えた" },
-          { id: expect.any(String), summary: "Beads の今日" },
-        ],
+      doneTasks: { kind: "known", items: [{ id: "T-002", summary: "今日" }] },
+    })
+  })
+
+  it("コミットを読めていなければ、コミットの数は unknown で節目「commit」も出さない", () => {
+    const result = dailyAchievementOf({
+      ...BASE,
+      commits: { kind: "unread" },
+      tasks: {
+        kind: "tracked",
+        issues: [closedIssue("t-001", "今日", 150_000)],
+        registeredOn: new Map(),
       },
+    })
+
+    expect(result).toMatchObject({
+      commits: { kind: "unknown" },
+      doneTasks: { kind: "known", items: [{ id: "T-001", summary: "今日" }] },
+      milestones: [],
+    })
+  })
+
+  it("登録日の表から卒業を決める", () => {
+    const result = dailyAchievementOf({
+      ...BASE,
+      tasks: {
+        kind: "tracked",
+        issues: [closedIssue("t-001", "長く待った", 150_000)],
+        registeredOn: new Map([["T-001", "2025-12-20"]]),
+      },
+    })
+
+    expect(result).toMatchObject({
+      graduations: [{ id: "T-001", registeredOn: "2025-12-20", days: 13 }],
     })
   })
 })

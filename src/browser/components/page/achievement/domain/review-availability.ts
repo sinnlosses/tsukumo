@@ -2,6 +2,7 @@
 
 import {
   isEmptyAchievementDay,
+  type AchievementCommits,
   type AchievementDoneTasks,
 } from "../../../../../shared/achievement/achievement.ts"
 import type { DiaryWriting } from "../../../../../shared/diary/diary.ts"
@@ -15,11 +16,11 @@ export type AchievementReviewAvailability =
 
 /** 両方成り立つときは空の日の理由だけを返す。 */
 export function reviewAvailabilityOf(
-  commitCount: number,
+  commits: AchievementCommits,
   doneTasks: AchievementDoneTasks,
   diaryWriting: DiaryWriting,
 ): AchievementReviewAvailability {
-  if (isEmptyAchievementDay(commitCount, doneTasks)) {
+  if (isEmptyAchievementDay(commits, doneTasks)) {
     return { kind: "blocked", reason: EMPTY_DAY_REASON }
   }
   if (diaryWriting.kind === "writing") {

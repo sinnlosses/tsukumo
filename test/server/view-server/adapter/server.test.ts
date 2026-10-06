@@ -487,7 +487,7 @@ describe("startViewServer", () => {
         kind: "known",
         date: "2026-09-23",
         today: "2026-09-24",
-        commitCount: 3,
+        commits: { kind: "known", count: 3 },
         doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
         graduations: [],
         milestones: [],
@@ -521,7 +521,8 @@ describe("startViewServer", () => {
       const calendar: AchievementCalendar = {
         kind: "known",
         today: "2026-09-25",
-        days: [{ date: "2026-09-25", commitCount: 3 }],
+        counted: "commits",
+        days: [{ date: "2026-09-25", count: 3 }],
         diaryDates: [],
       }
       const server = await startViewWithRpc({

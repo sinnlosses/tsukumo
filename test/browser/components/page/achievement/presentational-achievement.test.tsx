@@ -52,7 +52,7 @@ const CLOSED_DIARY_BOOK: DiaryBookModel = {
 const DEFAULT_PROPS: PresentationalAchievementProps = {
   view: {
     kind: "ready",
-    commitCount: 3,
+    commits: { kind: "known", count: 3 },
     doneTasks: { kind: "known", items: [] },
     graduations: [],
     milestones: [],
@@ -125,7 +125,7 @@ describe("PresentationalAchievement", () => {
     renderScreen({
       view: {
         kind: "ready",
-        commitCount: 3,
+        commits: { kind: "known", count: 3 },
         doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
         graduations: [],
         milestones: [],
