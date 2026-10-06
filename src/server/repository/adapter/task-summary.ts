@@ -6,6 +6,9 @@
 // - `tasks: "off"`: 「使わない」。Beads を読まない
 // - それ以外（設定が無いときも）: `createTaskBeadsSource`（`bd` の課題。`.beads` が無ければ「不明」）
 //
+// 最初の見回りは、設定が `off`・読めないでなければ、前回読めた一覧（`readTaskSummaryMemory`）を読み元の結果を待たずに先に知らせる。
+// 読み元の結果が同じなら知らせず、違えば差し替え、読めなければ「不明」にする。知らせた `known` は覚え直す。
+//
 // 見回りは `setWatching(true)` のあいだだけ回る。起こした時点の1回は、画面が無くても読む。
 // 止めているあいだも覚えた状態は残し、再開の1回で変わっていれば `onChange` する。
 
@@ -21,6 +24,7 @@ import { createFakeBeadsStampReader, readFakeBeadsIssues } from "./fake-beads.ts
 import { readProjectSettings } from "./project-settings.ts"
 import { createTaskBeadsSource } from "./task-beads-source.ts"
 import { fixedTaskSource, type TaskSource, type TaskSourceResult } from "./task-source.ts"
+import { readTaskSummaryMemory, writeTaskSummaryMemory } from "./task-summary-memory.ts"
 
 /**
  * 見回りの間隔。`bd list` は1回が約0.2秒（CPU）かかるので間を空ける。
@@ -48,6 +52,8 @@ export type TaskSummaryPorts = {
   readonly readProjectSettings: typeof readProjectSettings
   readonly readBeadsIssues: typeof readBeadsIssues
   readonly createBeadsStampReader: typeof createBeadsStampReader
+  readonly readTaskSummaryMemory: typeof readTaskSummaryMemory
+  readonly writeTaskSummaryMemory: typeof writeTaskSummaryMemory
   readonly clock: TaskSummaryClock
 }
 
@@ -60,6 +66,8 @@ export const REAL_TASK_SUMMARY_PORTS = {
   readProjectSettings,
   readBeadsIssues,
   createBeadsStampReader,
+  readTaskSummaryMemory,
+  writeTaskSummaryMemory,
   clock: {
     after: (delayMs, wake) => {
       const timer = setTimeout(wake, delayMs)
@@ -114,6 +122,8 @@ export function watchTaskSummary(
   const choose = createTaskSourceChooser(cwd, ports)
   let chosen: ChosenSource | undefined = undefined
   let notified: TaskSummaryResult = { kind: "loading" }
+  let memoryTried = false
+  let shownFromMemory: TaskSummaryResult | undefined = undefined
   let cancelTimer: (() => void) | undefined = undefined
   let watching = false
   let polling = false
@@ -124,6 +134,10 @@ export function watchTaskSummary(
     const settings = await ports.readProjectSettings(cwd)
     if (chosen === undefined || !isDeepEqual(settings, chosen.settings)) {
       chosen = { settings, source: choose(settings) }
+    }
+    if (!memoryTried) {
+      memoryTried = true
+      shownFromMemory = showRemembered(chosen.settings)
     }
     const read = await chosen.source.read()
     if (closed) {
@@ -139,8 +153,30 @@ export function watchTaskSummary(
     if (isDeepEqual(result, notified)) {
       return
     }
+    const alreadyShown = isDeepEqual(result, shownFromMemory)
     notified = result
+    shownFromMemory = undefined
+    if (alreadyShown) {
+      return
+    }
+    if (result.kind === "known") {
+      ports.writeTaskSummaryMemory(cwd, result.items)
+    }
     onChange(result)
+  }
+
+  /** 覚えた一覧があれば知らせて、知らせた結果を返す。`notified` は `loading` のままにして、読んだ結果の初回の通知を必ず届かせる。 */
+  const showRemembered = (settings: ProjectSettingsRead): TaskSummaryResult | undefined => {
+    if (settings.kind === "off" || settings.kind === "invalid") {
+      return undefined
+    }
+    const items = ports.readTaskSummaryMemory(cwd)
+    if (items === undefined || closed) {
+      return undefined
+    }
+    const shown = withRunPrompt({ kind: "known", items }, settings)
+    onChange(shown)
+    return shown
   }
 
   const loop = (): void => {

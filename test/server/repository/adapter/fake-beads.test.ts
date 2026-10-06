@@ -8,6 +8,10 @@ import {
   readFakeBeadsIssues,
 } from "../../../../src/server/repository/adapter/fake-beads.ts"
 import {
+  readTaskSummaryMemory,
+  writeTaskSummaryMemory,
+} from "../../../../src/server/repository/adapter/task-summary-memory.ts"
+import {
   FAKE_TASK_SUMMARY_POLL_INTERVAL_MS,
   REAL_TASK_SUMMARY_PORTS,
   TASK_SUMMARY_POLL_INTERVAL_MS,
@@ -99,7 +103,18 @@ describe("疑似セッションの見張り", () => {
 
 function watchFake(dir: string): TaskSummaryResult[] {
   const changes: TaskSummaryResult[] = []
-  watcher = watchTaskSummary(dir, (result) => changes.push(result), taskSummaryOptionsOf("fake"))
+  const options = taskSummaryOptionsOf("fake")
+  const memoryPath = join(dir, "task-summary-memory.json")
+  watcher = watchTaskSummary(dir, (result) => changes.push(result), {
+    ...options,
+    ports: {
+      ...options.ports,
+      readTaskSummaryMemory: (memoryCwd) => readTaskSummaryMemory(memoryCwd, memoryPath),
+      writeTaskSummaryMemory: (memoryCwd, items) => {
+        writeTaskSummaryMemory(memoryCwd, items, memoryPath)
+      },
+    },
+  })
   watcher.setWatching(true)
   return changes
 }

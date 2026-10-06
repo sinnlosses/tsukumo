@@ -1,15 +1,20 @@
 import { afterEach, describe, expect, it } from "vitest"
 
+import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads.ts"
 import {
   watchTaskSummary,
   type TaskSummaryPorts,
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
-import type { BeadsIssue } from "../../../../src/shared/repository/beads-issue.ts"
+import {
+  taskSummaryItemsOfBeadsIssues,
+  type BeadsIssue,
+} from "../../../../src/shared/repository/beads-issue.ts"
 import {
   DEFAULT_RUN_PROMPT,
   type ProjectSettingsRead,
 } from "../../../../src/shared/repository/project-settings.ts"
+import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 
 // 偽の口と手で進める時計で、見回りが子プロセスを起こした回数を数える。
@@ -23,6 +28,21 @@ afterEach(async () => {
 
 const FAKE_INTERVAL_MS = 5000
 
+const FICTIONAL_BEADS_ISSUE: BeadsIssue = {
+  id: "t-001",
+  title: "架空",
+  status: "open",
+  labels: [],
+  blockedBy: [],
+  assignee: undefined,
+  createdAtEpochMilliseconds: 0,
+  closedAtEpochMilliseconds: undefined,
+  description: "",
+  acceptanceCriteria: "",
+  notes: "",
+  externalRef: undefined,
+}
+
 /** 起こした順の呼び出しの記録。 */
 type FakeCalls = string[]
 
@@ -32,6 +52,12 @@ type FakePortsOptions = {
   /** 設定の読みが最初の1回だけ例外を投げる。 */
   readonly settingsThrowsFirst: boolean
   readonly settings: ProjectSettingsRead
+  /** 前回覚えた一覧。`undefined` は覚えていない。 */
+  readonly remembered: readonly TaskSummaryItem[] | undefined
+  /** `bd list` の結果。 */
+  readonly outcome: BeadsOutcome
+  /** 覚える口へ書かれた一覧（呼ぶ側が置いた入れ物へ足される）。 */
+  readonly writes: (readonly TaskSummaryItem[])[]
 }
 
 function fakePorts(
@@ -41,6 +67,10 @@ function fakePorts(
 ): TaskSummaryPorts {
   let settingsAsked = 0
   return {
+    readTaskSummaryMemory: () => options.remembered,
+    writeTaskSummaryMemory: (_cwd, items) => {
+      options.writes.push(items)
+    },
     readProjectSettings: () => {
       settingsAsked += 1
       if (options.settingsThrowsFirst && settingsAsked === 1) {
@@ -50,7 +80,7 @@ function fakePorts(
     },
     readBeadsIssues: () => {
       calls.push("bd list")
-      return Promise.resolve({ kind: "issues", issues: [] })
+      return Promise.resolve(options.outcome)
     },
     createBeadsStampReader: () => () => Promise.resolve(options.stamp()),
     clock,
@@ -68,6 +98,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     const manual = createManualClock()
     const changes: unknown[] = []
     const failures: unknown[] = []
+    const writes: (readonly TaskSummaryItem[])[] = []
     let stamp: string | undefined = "stamp-1"
     const fake = watchTaskSummary(
       "/cwd",
@@ -81,6 +112,9 @@ describe("watchTaskSummary（偽の口と時計）", () => {
             kind: "read",
             tasks: { mainBranch: "main", runPrompt: "/next-task {id}" },
           },
+          remembered: undefined,
+          outcome: { kind: "issues", issues: [] },
+          writes,
           ...options,
         }),
       },
@@ -93,6 +127,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       manual,
       changes,
       failures,
+      writes,
       setStamp: (next: string | undefined) => {
         stamp = next
       },
@@ -135,6 +170,89 @@ describe("watchTaskSummary（偽の口と時計）", () => {
 
     expect(count("bd list")).toBe(0)
     expect(changes).toEqual([{ kind: "settings-invalid" }])
+  })
+
+  describe("覚えた一覧", () => {
+    const remembered = taskSummaryItemsOfBeadsIssues([FICTIONAL_BEADS_ISSUE])
+    const readNothing: BeadsOutcome = { kind: "issues", issues: [] }
+
+    it("覚えた一覧が先に届き、読んだ結果が違えば差し替わる", async () => {
+      const { fake, changes, writes } = startFake({ remembered, outcome: readNothing })
+      fake.setWatching(true)
+      await settle()
+
+      expect(changes).toStrictEqual([
+        { kind: "known", items: remembered, runPrompt: "/next-task {id}" },
+        { kind: "known", items: [], runPrompt: "/next-task {id}" },
+      ])
+      expect(writes).toStrictEqual([[]])
+    })
+
+    it("読んだ結果が覚えた一覧と同じなら、二度知らせず書き直さない", async () => {
+      const { fake, manual, changes, writes } = startFake({
+        remembered,
+        outcome: { kind: "issues", issues: [FICTIONAL_BEADS_ISSUE] },
+        stamp: () => undefined,
+      })
+      fake.setWatching(true)
+      await settle()
+      manual.advance(FAKE_INTERVAL_MS)
+      await settle()
+
+      expect(changes).toHaveLength(1)
+      expect(writes).toStrictEqual([])
+    })
+
+    it("設定の文面を今の設定から付ける", async () => {
+      const { fake, changes } = startFake({
+        remembered,
+        settings: { kind: "none" },
+      })
+      fake.setWatching(true)
+      await settle()
+
+      expect(changes[0]).toMatchObject({ kind: "known", runPrompt: DEFAULT_RUN_PROMPT })
+    })
+
+    it.each<ProjectSettingsRead>([{ kind: "off" }, { kind: "invalid" }])(
+      "設定が $kind のときは出さない",
+      async (settings) => {
+        const { fake, changes } = startFake({ remembered, settings })
+        fake.setWatching(true)
+        await settle()
+
+        expect(changes).toHaveLength(1)
+        expect(changes[0]).not.toMatchObject({ items: remembered })
+      },
+    )
+
+    it("覚えた一覧が無ければ、読んだ結果だけが届く", async () => {
+      const { fake, changes } = startFake({ remembered: undefined })
+      fake.setWatching(true)
+      await settle()
+
+      expect(changes).toMatchObject([{ kind: "known" }])
+    })
+
+    it("bd が読めなければ、覚えた一覧のあとに「不明」へ変わり、覚え直さない", async () => {
+      const { fake, changes, writes } = startFake({
+        remembered,
+        outcome: { kind: "failed" },
+      })
+      fake.setWatching(true)
+      await settle()
+
+      expect(changes).toMatchObject([{ kind: "known" }, { kind: "unknown" }])
+      expect(writes).toStrictEqual([])
+    })
+
+    it("bd がタイムアウトしても、初回には「不明」が届く", async () => {
+      const { fake, changes } = startFake({ remembered, outcome: { kind: "timed-out" } })
+      fake.setWatching(true)
+      await settle()
+
+      expect(changes).toMatchObject([{ kind: "known" }, { kind: "unknown" }])
+    })
   })
 
   it("見回りが1回投げても、失敗を渡して次の間隔でまた読む", async () => {
@@ -242,6 +360,9 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       stamp: () => stamp,
       settingsThrowsFirst: false,
       settings: { kind: "none" },
+      remembered: undefined,
+      outcome: { kind: "issues", issues: [] },
+      writes: [],
     })
     watcher = watchTaskSummary("/cwd", (tasks) => changes.push(tasks), {
       intervalMs: FAKE_INTERVAL_MS,
@@ -269,18 +390,3 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     expect(changes).toHaveLength(2)
   })
 })
-
-const FICTIONAL_BEADS_ISSUE: BeadsIssue = {
-  id: "t-001",
-  title: "架空",
-  status: "open",
-  labels: [],
-  blockedBy: [],
-  assignee: undefined,
-  createdAtEpochMilliseconds: 0,
-  closedAtEpochMilliseconds: undefined,
-  description: "",
-  acceptanceCriteria: "",
-  notes: "",
-  externalRef: undefined,
-}

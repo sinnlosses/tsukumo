@@ -5,8 +5,13 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads.ts"
 import {
+  readTaskSummaryMemory,
+  writeTaskSummaryMemory,
+} from "../../../../src/server/repository/adapter/task-summary-memory.ts"
+import {
   REAL_TASK_SUMMARY_PORTS,
   watchTaskSummary,
+  type TaskSummaryPorts,
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
 import {
@@ -51,9 +56,21 @@ afterEach(async () => {
 function watch(cwd: string, changes: unknown[]): void {
   watcher = watchTaskSummary(cwd, (tasks) => changes.push(tasks), {
     intervalMs: TEST_POLL_INTERVAL_MS,
-    ports: REAL_TASK_SUMMARY_PORTS,
+    ports: testPorts(),
   })
   watcher.setWatching(true)
+}
+
+/** 本物の口のうち、覚える口だけを一時ディレクトリへ向ける（利用者のホームへ書かない）。 */
+function testPorts(): TaskSummaryPorts {
+  const memoryPath = join(root(), "task-summary.json")
+  return {
+    ...REAL_TASK_SUMMARY_PORTS,
+    readTaskSummaryMemory: (cwd) => readTaskSummaryMemory(cwd, memoryPath),
+    writeTaskSummaryMemory: (cwd, items) => {
+      writeTaskSummaryMemory(cwd, items, memoryPath)
+    },
+  }
 }
 
 /** 通知が `count` 件に達するまで待つ（超えたら、そこまでの通知のまま期待値との比較で落ちる）。 */
@@ -207,7 +224,7 @@ describe("watchTaskSummary", () => {
     watcher = watchTaskSummary(repository, (tasks) => changes.push(tasks), {
       intervalMs: TEST_POLL_INTERVAL_MS,
       ports: {
-        ...REAL_TASK_SUMMARY_PORTS,
+        ...testPorts(),
         readBeadsIssues: () => Promise.resolve(outcomes.shift() ?? { kind: "timed-out" }),
         createBeadsStampReader: () => () => Promise.resolve(undefined),
       },
