@@ -5,6 +5,7 @@
 // 並べて動かすと、どれも同じ `node` の起動コマンドとして見える（`pnpm run dev` 経由でも同じ）。
 // そのため `pkill -f 'pnpm run'` はもちろん、起動コマンドの一部を狙う `pkill` でも、
 // 自分が起こした検証用のインスタンスではなく利用者が使っている本体まで落ちる。
+// リポジトリの台本（`.ts` で終わる名前）と `tw` も、どの作業ツリーでも同じ名前で見えるので同じ扱いにする。
 // `docs/workflow.md`「起こすときの作法」が文章で禁じていた事故を、ここで機構として塞ぐ。
 //
 // 拒否するのは「名前やパターンで薙ぎ払う形」だけで、pid を名指しする `kill` は通す
@@ -29,7 +30,8 @@ const PGREP_PIPED_TO_KILL = /(?:^|[;&|(]\s*|\n)\s*(?:sudo\s+)?pgrep\b[^\n]*\|[^\
  * 他のセッションと取り合う対象。この語のどれかを狙っているときだけ拒否するので、
  * 無関係なプロセス（自分で起こした python など）を名前で止めるのは妨げない。
  */
-const SHARED_PROCESS = /\b(?:pnpm|node|tsukumo|claude|cli\.ts|vite|vitest|playwright|chrome)\b/i
+const SHARED_PROCESS =
+  /\b(?:pnpm|node|tsukumo|claude|vite|vitest|playwright|chrome)\b|\.ts\b|(?<![\w-])tw(?![\w-])/i
 
 const REFUSAL = `この作業ツリーでは複数の tsukumo が同時に動いている。どれも \`node src/cli.ts\` として見えるので、
 名前やパターンで止めると利用者が使っている本体まで落ちる（docs/workflow.md「起こすときの作法」）。
@@ -40,7 +42,8 @@ const REFUSAL = `この作業ツリーでは複数の tsukumo が同時に動い
   node scripts/stop.ts --port 7398     # そのポートで待っているものだけ止める
 
 背景シェルで起こしたなら、そのシェルごと止める（KillShell）のがいちばん確実。
-pid が分かっているなら kill <pid> はそのまま使える。`
+pid が分かっているなら kill <pid> はそのまま使える。
+分からなければ ps で PID を確かめてから kill <PID> で止める。`
 
 /** Bash ツールの入力のうち、この hook が見るところ。 */
 type BashHookInput = {
