@@ -37,15 +37,14 @@ export type TaskLocation =
  * タスクの一覧が読めているかどうか。
  * - `settings-invalid`: プロジェクトの設定が読めない（JSON が壊れている・形が違う）
  * - `off`: プロジェクトの設定が「タスク運用を使わない」（`tasks: "off"`）。Beads は読まない
- * - `unknown`: 読めない（`.beads` が無い・`bd` が読めない）か、まだ届いていない
+ * - `loading`: 最初の見回りの結果がまだ届いていない（状態の初期値。見張りは1回目に必ず `loading` 以外を知らせる）
+ * - `unknown`: 読めない（`.beads` が無い・`bd` が読めない）
  * - `known`: 読めた
- *
- * 「まだ届いていない」（状態の初期値）と「読めない」は区別しない。
- * `watchTaskSummary` は前回知らせた結果と同じものを知らせないので、最初から読めないときは初回の通知そのものが来ず、画面の対処も変わらない。
  */
 export type TaskSummaryResult =
   | { readonly kind: "settings-invalid" }
   | { readonly kind: "off" }
+  | { readonly kind: "loading" }
   | { readonly kind: "unknown" }
   | {
       readonly kind: "known"

@@ -26,6 +26,7 @@ import { TaskBoardHead } from "./components/task-board-head.tsx"
 import { TaskBoardList } from "./components/task-board-list.tsx"
 import { TaskDetail } from "./components/task-detail.tsx"
 import { TaskRunConfirm } from "./components/task-run-confirm.tsx"
+import { TaskSkeleton } from "./components/task-skeleton.tsx"
 import type { TaskBoardView } from "./domain/task-board-view.ts"
 import styles from "./task-board.module.css"
 
@@ -56,6 +57,11 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
           onKeyDown={props.onKeyDown}
         >
           <TaskBoardHead countsText={props.countsText} onClose={props.onClose} />
+          {content.kind === "loading" && (
+            <div className={styles["task-board-message"]}>
+              <TaskSkeleton />
+            </div>
+          )}
           {content.kind === "unknown" && (
             <Text
               element="p"

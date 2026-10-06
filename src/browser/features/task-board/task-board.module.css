@@ -5,6 +5,36 @@
 .task-empty {
   margin: 1em 0;
 }
+/* 読み込み中の帯。行の高さに揃え、`--ink` を薄く重ねた色でゆっくり明滅する（止めるのは `theme.css` の全体の規則と下の指定）。 */
+.task-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1em 0;
+}
+.task-skeleton-bar {
+  display: block;
+  height: 0.875rem;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  animation: task-skeleton-pulse 1.6s ease-in-out infinite;
+}
+.task-skeleton-bar:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.task-skeleton-bar:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes task-skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-skeleton-bar {
+    animation: none;
+  }
+}
 /* 進行中（doing）のタスクのカード（一覧の先頭）。2件以上あれば、この枚数ぶんカードが並ぶ。 */
 .task-running-list {
   margin: 0 0 0.75rem;

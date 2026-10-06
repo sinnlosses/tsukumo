@@ -340,8 +340,10 @@ plugin/                       セッションに載せる Claude Code のプラ�
 見張りの `watchTaskSummary` は、設定が前回と変わった見回りでだけ読み元を選び直し、設定が読めないときは
 決まった結果（`settings-invalid`）を、使わないときは `off` を返す読み元（`task-source.ts` の `fixedTaskSource`。どちらも Beads を読まない）を置く。設定が無いときも
 Beads を試しに読み、`.beads` が無ければ「不明」になる（値を推し量るのではなく、読めるかを試すだけ）。
-前回知らせたものと同じ結果は知らせない。画面は `settings-invalid` ならサイドバーのタスクの節の中に
-「⚠ 読めない」、`unknown` なら「不明」を出し、`off` ならタスクの節ごと出さない（迎える口の札とおすすめも `unknown` と同じ扱いで出さない）。
+前回知らせたものと同じ結果は知らせない。前回の初めは画面の初期値と同じ `loading`（最初の見回りの結果がまだ届いていない）なので、
+最初から読めないときも初回に必ず `unknown` が届く。画面は `loading` ならサイドバーのタスクの節とタスクのモーダルにスケルトン（文字は出さない）、
+`settings-invalid` ならタスクの節の中に「⚠ 読めない」、`unknown` なら「不明」を出し、`off` ならタスクの節ごと出さない
+（迎える口の札とおすすめは `loading` も `unknown` と同じ扱いで出さない）。
 設定を書くダイアログは帯の右端の歯車のポップオーバーの「プロジェクト」の行から開く。
 設定を書く画面（`docs/architecture/screen-design.md` 13.6）の下書きは
 `repository.projectSettingsDraft`（`/rpc`）で読み、保存は `projectSettings.save`（`/ws`）で書く。下書きの

@@ -29,7 +29,7 @@ export type RecommendationCandidate =
  * 並びの順は、問い合わせの結果が届くまでの既定の並びと同じ。
  */
 export function recommendationCandidates(
-  tasks: Exclude<TaskSummaryResult, { readonly kind: "unknown" | "off" }>,
+  tasks: Exclude<TaskSummaryResult, { readonly kind: "unknown" | "off" | "loading" }>,
 ): readonly RecommendationCandidate[] {
   return [{ kind: "resume" }, ...(tasks.kind === "known" ? readyTaskCandidates(tasks.items) : [])]
 }

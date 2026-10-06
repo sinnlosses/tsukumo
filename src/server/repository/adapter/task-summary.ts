@@ -102,7 +102,7 @@ export function taskSummaryOptionsOf(driver: "real" | "fake"): TaskSummaryOption
  * 呼んだ時点で1回見に行き、以後は `setWatching(true)` のあいだ、ポーリングで設定と読み元を見る。
  * 1回の見回りが終わってから次の見回りを予約するので、`bd` が遅くても見回りは重ならない。
  * 見回りが失敗しても止めず、`onFailure` へ渡して次の間隔でやり直す。
- * 知らせるのは前回知らせたもの（初めは画面の初期の姿と同じ `{ kind: "unknown" }`）と違う結果だけ。
+ * 知らせるのは前回知らせたもの（初めは画面の初期の姿と同じ `{ kind: "loading" }`。最初の見回りは必ず1回知らせる）と違う結果だけ。
  */
 export function watchTaskSummary(
   cwd: string,
@@ -113,7 +113,7 @@ export function watchTaskSummary(
   const { intervalMs, ports } = options
   const choose = createTaskSourceChooser(cwd, ports)
   let chosen: ChosenSource | undefined = undefined
-  let notified: TaskSummaryResult = { kind: "unknown" }
+  let notified: TaskSummaryResult = { kind: "loading" }
   let cancelTimer: (() => void) | undefined = undefined
   let watching = false
   let polling = false
@@ -126,10 +126,16 @@ export function watchTaskSummary(
       chosen = { settings, source: choose(settings) }
     }
     const read = await chosen.source.read()
-    if (closed || read.kind === "unchanged") {
+    if (closed) {
       return
     }
-    const result = withRunPrompt(read.result, chosen.settings)
+    // 読み元は最初の読みでは、読んだ結果かタイムアウトで諦めた回しか返さない。
+    // まだ何も知らせていないうちの `unchanged` は、画面を読み込み中のままにしないため「不明」で知らせる。
+    const result: TaskSummaryResult =
+      read.kind === "unchanged" ? { kind: "unknown" } : withRunPrompt(read.result, chosen.settings)
+    if (read.kind === "unchanged" && notified.kind !== "loading") {
+      return
+    }
     if (isDeepEqual(result, notified)) {
       return
     }

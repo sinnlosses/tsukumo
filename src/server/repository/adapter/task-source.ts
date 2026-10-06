@@ -6,7 +6,7 @@ import type { TaskSummaryItem, TaskSummaryResult } from "../../../shared/reposit
 
 /** 読み元が返す一覧。送る文面は設定の持ち物なので、読み元は持たず、見張りが `known` に付ける。 */
 export type TaskSourceResult =
-  | Exclude<TaskSummaryResult, { readonly kind: "known" }>
+  | Exclude<TaskSummaryResult, { readonly kind: "known" | "loading" }>
   | { readonly kind: "known"; readonly items: readonly TaskSummaryItem[] }
 
 /**

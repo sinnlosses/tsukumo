@@ -79,6 +79,13 @@ describe("taskList", () => {
     expect(screen.getByText("不明")).toBeDefined()
   })
 
+  it("tasks が読み込み中のときはスケルトンを出し、「不明」は出さない", () => {
+    render(<TaskList tasks={{ kind: "loading" }} selectedStatus="all" />)
+
+    expect(screen.getByRole("status", { name: "タスクを読み込み中" })).toBeDefined()
+    expect(screen.queryByText("不明")).toBeNull()
+  })
+
   it("空配列のときは「タスクが無い」を出す", () => {
     render(<TaskList tasks={known([])} selectedStatus="all" />)
 

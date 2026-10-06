@@ -24,6 +24,7 @@ import { Text } from "../../components/ui/text/text.tsx"
 import { TaskItem, type TaskItemPeek } from "./components/task-item.tsx"
 import { TaskPeek, type TaskPeekRun } from "./components/task-peek.tsx"
 import { TaskRunningCard } from "./components/task-running-card.tsx"
+import { TaskSkeleton } from "./components/task-skeleton.tsx"
 import type { RunDestination } from "./domain/run-destination.ts"
 import { taskListFilterLabel, type TaskListFilterStatus } from "./domain/task-list-count.ts"
 import { filterTasksForSidebar } from "./domain/task-sidebar-filter.ts"
@@ -64,6 +65,9 @@ export function TaskList(props: TaskListProps): ReactElement {
         ⚠ 読めない
       </Text>
     )
+  }
+  if (props.tasks.kind === "loading") {
+    return <TaskSkeleton />
   }
   if (props.tasks.kind !== "known") {
     return (

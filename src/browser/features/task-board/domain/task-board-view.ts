@@ -101,8 +101,9 @@ export type TaskBoardSelection =
       readonly run: TaskBoardRun
     }
 
-/** 読めない・0件・一覧あり。0件と絞った結果の0件は出す一言が違うので分ける。 */
+/** 読み込み中・読めない・0件・一覧あり。0件と絞った結果の0件は出す一言が違うので分ける。 */
 export type TaskBoardContent =
+  | { readonly kind: "loading" }
   | { readonly kind: "unknown" }
   | { readonly kind: "empty" }
   | {

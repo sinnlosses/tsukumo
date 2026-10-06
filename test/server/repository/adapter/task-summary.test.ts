@@ -3,6 +3,7 @@ import { join } from "node:path"
 
 import { afterEach, describe, expect, it } from "vitest"
 
+import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads.ts"
 import {
   REAL_TASK_SUMMARY_PORTS,
   watchTaskSummary,
@@ -188,15 +189,33 @@ describe("watchTaskSummary", () => {
     expect(changes).toEqual([known(plainTodo("T-001", "架空"))])
   })
 
-  it(".beads が無ければ、設定があっても無くても呼ばれない（既定の「不明」のまま）", async () => {
+  it(".beads が無ければ、初回に「不明」を1回だけ通知し、設定を足しても重ねて通知しない", async () => {
     const repository = await initRepository(root())
     const changes: unknown[] = []
     watch(repository, changes)
-    await sleep(QUIET_PERIOD_MS)
+    await waitForChanges(changes, 1)
     writeProjectSettings(repository)
     await sleep(QUIET_PERIOD_MS)
 
-    expect(changes).toEqual([])
+    expect(changes).toEqual([{ kind: "unknown" }])
+  })
+
+  it("初回の読みがタイムアウトしたら「不明」を知らせ、次に読めたら一覧を知らせる", async () => {
+    const repository = await initRepository(root())
+    const outcomes: BeadsOutcome[] = [{ kind: "timed-out" }, { kind: "issues", issues: [] }]
+    const changes: unknown[] = []
+    watcher = watchTaskSummary(repository, (tasks) => changes.push(tasks), {
+      intervalMs: TEST_POLL_INTERVAL_MS,
+      ports: {
+        ...REAL_TASK_SUMMARY_PORTS,
+        readBeadsIssues: () => Promise.resolve(outcomes.shift() ?? { kind: "timed-out" }),
+        createBeadsStampReader: () => () => Promise.resolve(undefined),
+      },
+    })
+    watcher.setWatching(true)
+    await waitForChanges(changes, 2)
+
+    expect(changes).toEqual([{ kind: "unknown" }, known()])
   })
 
   it(

@@ -321,7 +321,7 @@ export type SessionEvent =
   | { readonly kind: "effort-changed"; readonly effort: EffortLevel }
   /**
    * タスクの一覧が変わった（Beads の課題を見て起こす）。
-   * 読めない・消えたときは `tasks: { kind: "unknown" }`（{@link TaskSummaryResult}。サイドバーの「不明」表示に対応する）。
+   * 起こしてから最初の見回りで必ず1回届く。読めない・消えたときは `tasks: { kind: "unknown" }`（{@link TaskSummaryResult}。サイドバーの「不明」表示に対応する）。
    */
   | { readonly kind: "tasks-changed"; readonly tasks: TaskSummaryResult }
   /**

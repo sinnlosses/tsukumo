@@ -340,9 +340,7 @@ export type SessionState = {
    */
   readonly nextTurnId: number
   /**
-   * タスク一覧。`tasks-changed` が届くまでは `{ kind: "unknown" }`
-   * （読めない・まだ読んでいないのどちらも同じ「不明」にする理由は {@link TaskSummaryResult} を参照）。
-   * タスク運用が無いと分かれば `{ kind: "none" }`。
+   * タスク一覧。`tasks-changed` が届くまでは `{ kind: "loading" }`（{@link TaskSummaryResult}）。
    */
   readonly tasks: TaskSummaryResult
   /**
@@ -478,7 +476,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   turn: { kind: "idle" },
   lastTurnFinishedAt: undefined,
   nextTurnId: 0,
-  tasks: { kind: "unknown" },
+  tasks: { kind: "loading" },
   recommendation: [],
   welcomeGreeting: { kind: "none" },
   character: undefined,

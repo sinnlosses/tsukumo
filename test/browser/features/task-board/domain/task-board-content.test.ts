@@ -119,7 +119,8 @@ describe("boardContent", () => {
     return { kind: "known", items, runPrompt: "/next-task {id}" }
   }
 
-  it("読めないときは unknown、0件なら empty", () => {
+  it("読み込み中は loading、読めないときは unknown、0件なら empty", () => {
+    expect(contentOf({ kind: "loading" }, "")).toEqual({ kind: "loading" })
     expect(contentOf({ kind: "unknown" }, "")).toEqual({ kind: "unknown" })
     expect(contentOf(known([]), "")).toEqual({ kind: "empty" })
   })
