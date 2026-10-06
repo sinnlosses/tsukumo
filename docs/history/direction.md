@@ -3,6 +3,12 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-07 別リポジトリのタスクを閉じた `tw ship` の `NOTHING` で `/loop /next-task` を止めない
+
+（GH-446 にした）
+
+- （claude-skills）`/loop /next-task` が、Beads 方式で tsukumo 側に差分の無いタスク（別リポジトリのタスク）を閉じたときに止まらないようにする。`tw ship` の `NOTHING` を、`ship-stopped.md` の書くとおり `SHIPPED` と同じ完了として next-task の SKILL.md の続行判断と手順8でも扱う（2026-10-07、GH-433 のあとに見つかった食い違い）
+
 ## 2026-10-07 E2E の刈り込みの受け入れで残した指摘3件を直す（振り返り: GH-428）
 
 （GH-442 にした）
