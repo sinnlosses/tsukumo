@@ -48,28 +48,19 @@ describe("プロジェクトの設定を画面から書く", () => {
   })
 })
 
-/** 時計を進める1回ぶんと、進める回数の上限（合わせて 1 秒）。 */
-const CLOCK_STEP_MS = 50
-const CLOCK_STEPS = 20
-
-/**
- * 帯の右端の歯車から、プロジェクトの設定のダイアログを開いて返す。下書きは手続き（`/rpc`）の応答で届き、
- * React Query はその知らせをタイマーで配るので、応答が届くのを実時間で待ってから、欄が描かれるまで凍らせた時計を少しずつ進める
- * （先に時計を進め切ると、混んだ機械では応答が遅れて届いたときに欄が描かれない）。
- */
+/** 帯の右端の歯車から、プロジェクトの設定のダイアログを開いて返す。下書きの欄は手続き（`/rpc`）の応答で描かれる。 */
 async function openProjectSettingsDialog(room: ScenarioRoom): Promise<Locator> {
-  const draft = room.page.waitForResponse((response) =>
-    response.url().includes("projectSettingsDraft"),
-  )
-  await room.page.locator('nav[aria-label="画面"] > div > button[aria-label="設定"]').click()
-  await room.page.getByRole("button", { name: "プロジェクトの設定を開く" }).click()
-  await draft
   const dialog = room.page.getByRole("dialog", { name: "プロジェクトの設定" })
-  const field = dialog.getByLabel("主ブランチ")
-  for (let step = 0; step < CLOCK_STEPS && !(await field.isVisible()); step += 1) {
-    await room.page.clock.runFor(CLOCK_STEP_MS)
-  }
-  await field.waitFor()
+  await room.revealAfterResponse(dialog.getByLabel("主ブランチ"), {
+    response: "projectSettingsDraft",
+    baseline: {
+      kind: "after-act",
+      act: async () => {
+        await room.page.locator('nav[aria-label="画面"] > div > button[aria-label="設定"]').click()
+        await room.page.getByRole("button", { name: "プロジェクトの設定を開く" }).click()
+      },
+    },
+  })
   return dialog
 }
 

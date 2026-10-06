@@ -29,7 +29,13 @@ import path from "node:path"
 import process from "node:process"
 import { fileURLToPath } from "node:url"
 
-import { type Browser, type BrowserServer, chromium, type Page } from "playwright-core"
+import {
+  type Browser,
+  type BrowserServer,
+  chromium,
+  type Locator,
+  type Page,
+} from "playwright-core"
 import { countBy } from "remeda"
 import { afterAll, afterEach, beforeAll, expect } from "vitest"
 
@@ -72,6 +78,9 @@ const BROWSER_STEP_TIMEOUT_MS = BROWSER_LAUNCH_TIMEOUT_MS / 2
 
 /** 狙ったイベントが届くまで待つ上限（ミリ秒）。場面の長さ（20 秒まで）に余裕を持たせる。 */
 const EVENT_TIMEOUT_MS = 30_000
+
+/** `revealAfterResponse` が、応答のあと要素が見えるまで凍らせた時計を進める1回の幅（ミリ秒）。 */
+const REVEAL_CLOCK_STEP_MS = 50
 
 /**
  * 疑似セッションの予定で、次の手までこれ以上空いた時点を静かな区切りと見なす。
@@ -139,6 +148,12 @@ const DOM_ROOT_SELECTORS = {
   "session-switcher": 'dialog[aria-label="セッションを切り替える"]',
 } as const satisfies Record<string, string>
 
+/** `revealAfterResponse` が応答の件数を数え始める基準。 */
+export type ResponseBaseline =
+  | { readonly kind: "after-act"; readonly act: () => Promise<void> }
+  | { readonly kind: "since"; readonly count: number }
+  | { readonly kind: "all" }
+
 /**
  * 起こして開いた1件。シナリオはこれに対して待ち・操作・判定を行う。
  * 渡した時点で、`opening` と名指しの場面の予定のうち最初の静かな区切り（`QUIET_GAP_MS`）までの手は届いている。
@@ -166,6 +181,19 @@ export type ScenarioRoom = {
    * 課題を置く足場はこちらを使う。
    */
   readonly waitForTasksContaining: (ids: readonly string[]) => Promise<void>
+  /**
+   * 手続き（`/rpc`）の応答で届く値から描かれる `target` を、見えるまで待つ。
+   * URL に `response` を含む応答が `baseline` の基準より1件増えるまで実時間で待ってから、
+   * `target` が見えるまで凍らせた時計を進める（時計を進める回数には頼らない）。
+   * 基準は `after-act`（`act` を実行する前の件数）・`since`（`responseCount` で控えた件数）・
+   * `all`（すでに届いた応答も数える）のどれか。
+   */
+  readonly revealAfterResponse: (
+    target: Locator,
+    options: { readonly response: string; readonly baseline: ResponseBaseline },
+  ) => Promise<void>
+  /** URL に `response` を含む応答がここまでに届いた件数。`ResponseBaseline` の `since` に渡す基準を控える。 */
+  readonly responseCount: (response: string) => number
   /** `pending-changed` の答え待ちに `id` の札が載るまで待つ（何回目の `pending-changed` かでは待たない）。 */
   readonly waitForPending: (id: string) => Promise<void>
   /** 読み上げの領域（`[data-live-announcer]`）に、ページを開いてからいままでに挿入された文。 */
@@ -287,6 +315,7 @@ async function openRoom(
   await page.addInitScript(RECORD_ANNOUNCEMENTS_SCRIPT)
 
   const messages = recordMessages(page)
+  const responses = recordResponses(page)
   await page.goto(viewUrl, { waitUntil: "domcontentloaded" })
   await waitForQuietPoint(messages, options.scene)
 
@@ -326,6 +355,12 @@ async function openRoom(
         const presentIds = new Set(items.map((item) => String(asRecord(item)["id"])))
         return ids.every((id) => presentIds.has(id))
       }),
+    responseCount: (response) => responses.count(response),
+    revealAfterResponse: async (target, { response, baseline }) => {
+      const counted = await countedBefore(baseline, () => responses.count(response))
+      await responses.waitForCount(response, counted + 1)
+      await advanceClockUntilVisible(page, target)
+    },
     waitForPending: (id) =>
       messages.waitForEventMatching("pending-changed", (event) =>
         Array.isArray(event["pending"])
@@ -365,6 +400,85 @@ async function openRoom(
       matchArtifact(options.scenario, "messages", texts.messages, outDir)
     },
   }
+}
+
+/** 届いた応答の URL を数える。登録より前に届いた分も数えられるよう、ページを開く前から張る。 */
+function recordResponses(page: Page): {
+  readonly count: (urlPart: string) => number
+  readonly waitForCount: (urlPart: string, atLeast: number) => Promise<void>
+} {
+  const urls: string[] = []
+  const waiters: { readonly check: () => boolean; readonly resolve: () => void }[] = []
+  const count = (urlPart: string): number => urls.filter((url) => url.includes(urlPart)).length
+  page.on("response", (response) => {
+    urls.push(response.url())
+    for (const waiter of waiters.filter((candidate) => candidate.check())) {
+      waiters.splice(waiters.indexOf(waiter), 1)
+      waiter.resolve()
+    }
+  })
+  return {
+    count,
+    waitForCount: (urlPart, atLeast) => {
+      if (count(urlPart) >= atLeast) {
+        return Promise.resolve()
+      }
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          reject(
+            new Error(
+              `応答 ${urlPart} が${String(atLeast)}件届かない（${String(EVENT_TIMEOUT_MS)}ms）`,
+            ),
+          )
+        }, EVENT_TIMEOUT_MS)
+        waiters.push({
+          check: () => count(urlPart) >= atLeast,
+          resolve: () => {
+            clearTimeout(timer)
+            resolve()
+          },
+        })
+      })
+    },
+  }
+}
+
+/** 基準から、「これより後に届いた応答」を数え始める件数を決める。`after-act` は操作を実行してから返す。 */
+async function countedBefore(
+  baseline: ResponseBaseline,
+  currentCount: () => number,
+): Promise<number> {
+  switch (baseline.kind) {
+    case "after-act": {
+      const count = currentCount()
+      await baseline.act()
+      return count
+    }
+    case "since":
+      return baseline.count
+    case "all":
+      return 0
+  }
+}
+
+/** 要素が見えるまで、凍らせた時計を進める。上限は要素を待つ時間で決め、進める回数では決めない。 */
+async function advanceClockUntilVisible(page: Page, target: Locator): Promise<void> {
+  const reached = target.first().waitFor({ state: "visible", timeout: EVENT_TIMEOUT_MS })
+  const progress = { settled: false }
+  const settle = (): void => {
+    progress.settled = true
+  }
+  await Promise.all([
+    reached,
+    (async () => {
+      await reached.then(settle, settle)
+    })(),
+    (async () => {
+      while (!progress.settled) {
+        await page.clock.runFor(REVEAL_CLOCK_STEP_MS)
+      }
+    })(),
+  ])
 }
 
 /**

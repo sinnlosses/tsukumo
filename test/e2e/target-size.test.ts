@@ -134,19 +134,16 @@ describe("レポートの押せるパスの押す的と字", () => {
     writeFileSync(join(room.cwd, LONG_PATH), "")
     await git(room.cwd, "add", LONG_PATH)
     await git(room.cwd, "commit", "--quiet", "-m", "架空のファイル")
-    await room.page.reload({ waitUntil: "domcontentloaded" })
-
     const links = room.page.locator('[data-region="main"] span[role="button"]')
-    // 時計が止まっているので、一覧の応答を React Query が配るのに要るタイマーを自分で進める。
-    await expect
-      .poll(
-        async () => {
-          await room.page.clock.runFor(100)
-          return links.count()
-        },
-        { timeout: 10_000 },
-      )
-      .toBe(3)
+    // 時計が止まっているので、一覧の応答を React Query が配るのに要るタイマーは応答のあとで進める。
+    await room.revealAfterResponse(links.nth(2), {
+      response: "listFiles",
+      baseline: {
+        kind: "after-act",
+        act: () => room.page.reload({ waitUntil: "domcontentloaded" }).then(() => undefined),
+      },
+    })
+    expect(await links.count()).toBe(3)
     await expectReadable(room.page)
   })
 })
