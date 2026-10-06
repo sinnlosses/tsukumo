@@ -3,6 +3,46 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-06 委譲先のエージェント定義に「ファイルは Edit/Write で書く」を入れ、シェル経由の書き込みが hook に拒まれる打ち直しを無くす（振り返り: GH-394）
+
+（GH-410 にした）
+
+- 出典: develop/draft/2026-10-06-subagent-shell-file-write.md。利用者が `/plan-tasks` で「タスクにする」を選んだ
+- 札: 黄 揺れ（14回目）
+- 根: subagent-shell-file-write
+- 根拠: 2026-10-06 の1セッションで、委譲先3件（GH-380・GH-382・GH-394）がいずれも python か heredoc でファイルを書こうとして `scripts/deny-sed-in-place.ts` に拒まれ、Edit/Write で打ち直した。GH-394 では依頼文に「Edit/Write で書く」と明記していても起きた。1回の損は1往復だが、委譲のたびに出る
+- 出し先: claude-skills の `agents/no-delegate.md` の本文に「ファイルの作成・書き換えは Edit/Write で行い、シェル（python・sed・heredoc のリダイレクト）で書かない」を1行足す（依頼文の1行では効かなかったので、毎回読まれる定義の側へ寄せる）
+
+## 2026-10-06 委譲先が `pkill -f` でコマンド名だけを当てて止めるのを hook で拒み、PID か作業ツリーのパスで当てさせる（振り返り: GH-399）
+
+（GH-409 にした）
+
+- 出典: develop/draft/2026-10-06-deny-broad-pkill.md。利用者が `/plan-tasks` で選んだ。裏取りで `scripts/deny-broad-kill.ts` が既にあり、穴は台本の名前（`check.ts`）と `tw` を狙う形だけと分かったので、その穴を塞ぐタスクにした
+- 札: 赤 操作の誤り（3回目）
+- 根: broad-process-kill
+- 根拠: GH-399 の段3で、委譲先が作業ツリーの外の写しで走らせた check を止めるために `pkill -f "check.ts --full"` を打った。同じ文字列はほかの作業ツリーの `tw ship` の送る前の検証にも当たり、別のセッションの全件検証を巻き込んだおそれがある（委譲先の friction log）。CLAUDE.md・`docs/workflow.md` にプロセスの止め方の規則は無く、`scripts/` の PreToolUse hook も `pkill` を見ていない
+- 出し先: 検査。`scripts/` に PreToolUse hook を足し、`pkill`・`killall` でパターンにこの作業ツリーのパスを含まないもの（コマンド名や引数だけで当てるもの）を拒み、「`ps` で PID を確かめて `kill <PID>` で止める」と返す。次に背景のコマンドを止めるとき、ほかの作業ツリーの検証が落ちる事故が仕組みで起きなくなる
+
+## 2026-10-05 task-workflow の自己テストの `## やること` の本文を1か所の組み立て関数から作る（振り返り: GH-384）
+
+（GH-408 にした）
+
+- 出典: develop/draft/2026-10-05-selftest-plan-body-in-one-place.md。利用者が `/plan-tasks` で選んだ
+- 札: 黄 構造の重さ（4回目）
+- 根: selftest-plan-body-inline
+- 根拠: GH-384 で計画の形を `1. 書く` から `### 1. 書く` に変えたところ、自己テストが22件落ちた。`selftest_task.py`・`selftest_beads.py` は `## やること` をそれぞれ28か所に直書きしており、委譲先はこの2ファイルを16回と12回直した
+- 出し先: claude-skills の `skills/task-workflow/scripts/` に、自己テスト用の計画本文の組み立て（段・名指すファイル・作業先を引数に取る）を1つ置き、2つの自己テストの直書きを置き換える。4回目なので、`scripts/check_repo.py` に、自己テストが `### 名指すファイル` を直書きしていたら落とす検査も足す
+
+## 2026-10-05 反応の吹き出しが何を出すかは display.md 4.2 だけに書き、ほかの文書は節の名前で指す（振り返り: GH-387）
+
+（GH-407 にした）
+
+- 出典: develop/draft/2026-10-05-reaction-behavior-in-one-doc.md。利用者が `/plan-tasks` で選んだ
+- 札: 黄 文書の重さ（2回目）
+- 根: reaction-behavior-restated
+- 根拠: GH-387 は「反応の行の源をパックから問い合わせへ移す」1つの決定で文書7ファイル（111行の追加・111行の削除）を直した。そのうち `docs/requirements.md` 4.3（3か所）・`docs/glossary.md`（反応・迎えの挨拶・待ちの一言）・`docs/architecture/screen-design.md`（迎える口2か所と 13.13）・`characters/README.md` の4ファイルは、`docs/architecture/display.md` 4.2「機械の出来事への反応」が決める「どの出来事で何の行を出すか」を言い直した写しだった。写しが残っていても検査は落ちない
+- 出し先: 正典。文書の書き方の正典に「表示物の振る舞い（何を出すか・無ければどうするか）は `docs/architecture/display.md` の該当節だけに書き、要件・用語集・画面設計・パックの README は節の名前で指す」を足し、上の4ファイルの写しを節の名前への参照に畳む。次に反応の源を変えるとき、直す文書が7ファイルから2ファイル（display.md と character-pack.md）に減る
+
 ## 2026-10-06 レポートと段取りの指示を機械で守らせる
 
 （GH-403〜GH-406 にした）
