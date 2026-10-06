@@ -18,8 +18,10 @@ const E2E_CONFIG_NAME = "vitest.e2e.config.ts"
 /** E2E を流すと決まっている呼び出しの数と、`--full` が無く変えたファイル次第の呼び出しの数。 */
 export type E2eRunCounts = { readonly always: number; readonly byChange: number }
 
-export function countE2eRuns(commandText: string): E2eRunCounts {
-  const kinds = parseShellCommand(commandText).map(classifyE2eRun)
+/** `twVerifyCommand` は `tw verify` が打つコマンド。空（読めない）なら `tw verify` の引数だけで分類する。 */
+export function countE2eRuns(commandText: string, twVerifyCommand: string): E2eRunCounts {
+  const twVerifyKind = classifyCommandText(twVerifyCommand)
+  const kinds = parseShellCommand(commandText).map((simple) => classifyE2eRun(simple, twVerifyKind))
   return {
     always: kinds.filter((kind) => kind === "always").length,
     byChange: kinds.filter((kind) => kind === "by-change").length,
@@ -50,11 +52,31 @@ export function isOverLimitAfterRecording(gitDir: string, runs: number): boolean
   }
 }
 
-function classifyE2eRun(simple: SimpleCommand): "always" | "by-change" | "no" {
+type E2eRunKind = "always" | "by-change" | "no"
+
+/** `tw verify` の呼び出しの分類。打つコマンドが読めていなければ `unread`。 */
+type TwVerifyKind = E2eRunKind | "unread"
+
+/** `tw verify` が打つコマンドの分類。入れ子の `tw verify` は数えない。 */
+function classifyCommandText(commandText: string): TwVerifyKind {
+  if (commandText.trim() === "") {
+    return "unread"
+  }
+  const kinds = parseShellCommand(commandText).map((simple) => classifyE2eRun(simple, "no"))
+  if (kinds.includes("always")) {
+    return "always"
+  }
+  return kinds.includes("by-change") ? "by-change" : "no"
+}
+
+function classifyE2eRun(simple: SimpleCommand, twVerifyKind: TwVerifyKind): E2eRunKind {
   const words = withoutNice(simple.argv.map((word) => word.text))
   const [head = "", ...rest] = words
   if (head === "tw") {
-    return rest[0] === "verify" ? checkKind(rest) : "no"
+    if (rest[0] !== "verify") {
+      return "no"
+    }
+    return twVerifyKind === "unread" || rest.includes("--full") ? checkKind(rest) : twVerifyKind
   }
   if (head === "node") {
     const [script = "", ...scriptArgs] = rest

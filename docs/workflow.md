@@ -145,11 +145,14 @@ PreToolUse hook（`scripts/deny-sed-in-place.ts`）が拒否する。ファイ�
 PreToolUse hook（`scripts/deny-e2e-run-limit.ts`）が拒否する（検証は通常1〜3回で、残りは揺らぎの
 確認と hook 登録後の自分の検証の余裕）。数はその作業ツリー固有の git dir の `e2e-full-runs` に置き、
 着手の印（`task-open-claims/<id>`）が無ければ数えない（作業ツリーをまたいで混ざらない）。
-数えるのは `--full` 付きの `tw verify`・`pnpm run check`・`node scripts/check.ts`、`pnpm run test:e2e`、
-ファイルを指さない `vitest run --config vitest.e2e.config.ts` と、`--full` の無い `tw verify`・
-`pnpm run check`・`node scripts/check.ts` のうち、変えたファイルから `check` が E2E を1件以上流すと
+数えるのは `--full` 付きの `pnpm run check`・`node scripts/check.ts`、`pnpm run test:e2e`、
+ファイルを指さない `vitest run --config vitest.e2e.config.ts` と、`--full` の無い `pnpm run check`・
+`node scripts/check.ts` のうち、変えたファイルから `check` が E2E を1件以上流すと
 選ぶとき（`scripts/lib/e2e-selection-repository.ts` の `planE2eRun`。`check` と同じ関数）。
-文書だけ・`scripts/` だけの変更の `tw verify` は数えない。タスク登録だけの変更は `--full` でも E2E を
+`tw verify` は名前では分類せず、設定ファイルの「## タスク運用」節から tw と同じ規則で打つコマンド
+（`- 送る前の検証コマンド:` の行、無ければ `- 検証コマンド:` の行）を読み、そのコマンドを上の数え方にかける。
+`--full` 付きの `tw verify` は常に数える。行が読めないときは `tw verify` の引数だけで分類する。
+タスク登録だけの変更は `--full` でも E2E を
 流さないが、hook は `--full` の付いた呼び出しを数える（多めに数える側）。変えたファイルを集められないときも数えない。
 **着手し直す（印が消えて作り直される）と0に戻る。** E2E のファイル単位の実行
 （`pnpm run test:e2e test/e2e/<ファイル>.test.ts`）は数えず、メインの呼び出しも対象にしない。

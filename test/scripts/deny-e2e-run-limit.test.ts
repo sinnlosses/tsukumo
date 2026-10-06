@@ -13,14 +13,15 @@ import {
   isOverLimitAfterRecording,
   RUN_LIMIT,
 } from "../../scripts/lib/e2e-run-limit.ts"
+import { readTwVerifyCommand } from "../../scripts/lib/verify-command-repository.ts"
 import { runSubprocess, runSubprocessOrThrow } from "../fixture/subprocess.ts"
 import { useTempDir } from "../fixture/temp-dir.ts"
 
 const HOOK_PATH = resolve("scripts/deny-e2e-run-limit.ts")
 const FILE_UNIT_E2E = "pnpm run test:e2e test/e2e/example.test.ts"
 
-function countOf(command: string, changeRunsE2e: boolean): number {
-  return countFullE2eRuns(countE2eRuns(command), changeRunsE2e)
+function countOf(command: string, changeRunsE2e: boolean, twVerifyCommand = ""): number {
+  return countFullE2eRuns(countE2eRuns(command, twVerifyCommand), changeRunsE2e)
 }
 
 describe("E2E を全部流すコマンドの数え方", () => {
@@ -45,6 +46,19 @@ describe("E2E を全部流すコマンドの数え方", () => {
     expect(countOf(command, false)).toBe(0)
   })
 
+  test("tw verify が打つコマンドが check --full なら、変えたファイルに関わらず1回と数える", () => {
+    expect(countOf("tw verify", false, "pnpm run check --full")).toBe(1)
+  })
+
+  test("tw verify が打つコマンドが --full の無い check なら、E2E が選ばれる変更のときだけ数える", () => {
+    expect(countOf("tw verify", true, "pnpm run check")).toBe(1)
+    expect(countOf("tw verify", false, "pnpm run check")).toBe(0)
+  })
+
+  test("tw verify が打つコマンドが E2E を流さないなら、数えない", () => {
+    expect(countOf("tw verify", true, "pnpm run test")).toBe(0)
+  })
+
   test("1つのコマンド文字列の中の呼び出しは、その数だけ数える", () => {
     expect(countOf("tw verify && pnpm run check --full", false)).toBe(1)
     expect(countOf("tw verify && pnpm run check", true)).toBe(2)
@@ -61,6 +75,60 @@ describe("E2E を全部流すコマンドの数え方", () => {
     ["tw verify を文字列として持つだけの echo", "echo 'tw verify'"],
   ])("%s は数えない", (_name, command) => {
     expect(countOf(command, true)).toBe(0)
+  })
+})
+
+describe("tw verify が打つコマンドの読み方", () => {
+  const tempDir = useTempDir("tw-verify-command")
+
+  function section(lines: readonly string[]): string {
+    return `# 架空\n\n## タスク運用\n\n${lines.join("\n")}\n`
+  }
+
+  function write(name: string, text: string): void {
+    writeFileSync(join(tempDir(), name), text)
+  }
+
+  test("送る前の検証コマンドの行があれば、検証コマンドの行より先にそれを読む", () => {
+    write(
+      "CLAUDE.md",
+      section([
+        "- 検証コマンド: `pnpm run check`",
+        "- 送る前の検証コマンド: `pnpm run check --full`",
+      ]),
+    )
+    expect(readTwVerifyCommand(tempDir())).toBe("pnpm run check --full")
+  })
+
+  test.each([
+    ["行が無い", ["- 検証コマンド: `pnpm run check`"]],
+    ["値が なし で始まる", ["- 検証コマンド: `pnpm run check`", "- 送る前の検証コマンド: なし"]],
+  ])("送る前の検証コマンドの%sときは、検証コマンドの行を読む", (_name, lines) => {
+    write("CLAUDE.md", section(lines))
+    expect(readTwVerifyCommand(tempDir())).toBe("pnpm run check")
+  })
+
+  test("AGENTS.md に節があれば CLAUDE.md より先にそちらを読む", () => {
+    write("AGENTS.md", section(["- 検証コマンド: `pnpm run agents-check`"]))
+    write("CLAUDE.md", section(["- 検証コマンド: `pnpm run claude-check`"]))
+    expect(readTwVerifyCommand(tempDir())).toBe("pnpm run agents-check")
+  })
+
+  test("AGENTS.md に節が無ければ CLAUDE.md を読む", () => {
+    write("AGENTS.md", "# 架空\n\n- 検証コマンド: `pnpm run agents-check`\n")
+    write("CLAUDE.md", section(["- 検証コマンド: `pnpm run claude-check`"]))
+    expect(readTwVerifyCommand(tempDir())).toBe("pnpm run claude-check")
+  })
+
+  test.each([
+    ["設定ファイルが無い", undefined],
+    ["節が無い", "# 架空\n\n- 検証コマンド: `pnpm run check`\n"],
+    ["コマンドの行が無い", section(["- 整形コマンド: `pnpm run format`"])],
+  ])("%sときは空文字を返す", (_name, text) => {
+    if (text !== undefined) {
+      write("CLAUDE.md", text)
+    }
+    expect(readTwVerifyCommand(tempDir())).toBe("")
   })
 })
 
@@ -187,6 +255,15 @@ describe("委譲先の E2E 全段の呼び出しを上限で拒否する hook", 
   ])("E2E が選ばれない変更（%s）では tw verify を上限を超えて打っても通す", async (_name, file) => {
     const dir = await newClaimedRepoWithChange(file)
     expect((await runHook(dir, bashInput(OVER_LIMIT_BY_CHANGE, true))).exitCode).toBe(0)
+  })
+
+  test("送る前の検証コマンドが check --full なら、文書だけの変更でも tw verify の上限を超える呼び出しを止める", async () => {
+    const dir = await newClaimedRepoWithChange("docs/workflow.md")
+    writeFileSync(
+      join(dir, "CLAUDE.md"),
+      "# 架空\n\n## タスク運用\n\n- 送る前の検証コマンド: `pnpm run check --full`\n",
+    )
+    expect((await runHook(dir, bashInput(OVER_LIMIT_BY_CHANGE, true))).exitCode).toBe(2)
   })
 
   test("E2E が選ばれる変更（src/browser/）では tw verify の上限を超える呼び出しを止める", async () => {

@@ -18,6 +18,7 @@ import {
 } from "./lib/e2e-run-limit.ts"
 import { planE2eRun } from "./lib/e2e-selection-repository.ts"
 import { recordHookDenial } from "./lib/hook-denial-record.ts"
+import { readTwVerifyCommand } from "./lib/verify-command-repository.ts"
 
 /** Bash ツールの PreToolUse hook の入力のうち、この hook が見るところ。 */
 type PreToolUseHookInput = {
@@ -29,7 +30,7 @@ type PreToolUseHookInput = {
 const raw = await readStdin()
 const command = readSubagentBashCommand(raw)
 if (command !== undefined) {
-  const counts = countE2eRuns(command)
+  const counts = countE2eRuns(command, readTwVerifyCommandOfProject())
   const changeRunsE2e = counts.byChange > 0 && (await readChangeRunsE2e())
   const runs = countFullE2eRuns(counts, changeRunsE2e)
   const gitDir = runs > 0 ? readGitDir() : undefined
@@ -62,6 +63,12 @@ function readSubagentBashCommand(rawInput: string): string | undefined {
   }
   const command = input.tool_input?.command
   return typeof command === "string" ? command : undefined
+}
+
+/** `tw verify` が打つコマンド。作業ツリーの根が引けなければ空文字。 */
+function readTwVerifyCommandOfProject(): string {
+  const root = readGit(["rev-parse", "--show-toplevel"])
+  return root === undefined ? "" : readTwVerifyCommand(root)
 }
 
 /** この作業ツリーの git dir。引けなければ `undefined`。 */
