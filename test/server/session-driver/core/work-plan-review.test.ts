@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import type { WorkPlanClosing } from "../../../../src/shared/session/work-plan.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
 
 const PHASES = ["架空の段A", "架空の段B", "架空の段C"]
 const SUMMARY = "架空のまとめ。"
@@ -36,20 +37,8 @@ const returnedAt = (finishedPhase: number): SessionEvent => ({
 })
 const RETURNED = returnedAt(0)
 
-const reportOf = (workPlanClosing: WorkPlanClosing): SessionEvent => ({
-  kind: "report",
-  toolUseId: "toolu_r1",
-  conclusion: "架空の結論。",
-  sections: [],
-  favor: "",
-  checks: [],
-  task: { kind: "none" },
-  workPlanClosing,
-  closing: { kind: "none" },
-  waitingLine: { kind: "none" },
-  unknownBlockCount: 0,
-  sessionSummary: undefined,
-})
+const reportOf = (workPlanClosing: WorkPlanClosing): SessionEvent =>
+  reportEvent({ workPlanClosing })
 
 describe("WorkPlanReview の判定", () => {
   it("同じ段の並びのまま位置を2つ以上進めると差し戻し、1つずつなら通す", () => {

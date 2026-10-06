@@ -92,6 +92,7 @@ import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 import { createCommandClient } from "../../../fixture/command-client.ts"
 import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
 import {
   createStubDriver,
   FAKE_SESSION_DIGEST,
@@ -839,9 +840,8 @@ describe("createSessionManager", () => {
     // （docs/architecture/chat-mode.md「雑談の会話のアーカイブ」）。
 
     /** `report` の `SessionEvent`（結論だけ差し替えられる。中身はすべて手で書いた架空のもの）。 */
-    function reportEvent(conclusion: string): SessionEvent {
-      return {
-        kind: "report",
+    function reportWithConclusion(conclusion: string): SessionEvent {
+      return reportEvent({
         toolUseId: "toolu_r1",
         conclusion,
         sections: [
@@ -851,13 +851,7 @@ describe("createSessionManager", () => {
         checks: [
           { status: "ok", label: "本文はここに出ない", figure: "", command: "", detail: "" },
         ],
-        closing: { kind: "none" },
-        waitingLine: { kind: "none" },
-        unknownBlockCount: 0,
-        sessionSummary: undefined,
-        task: { kind: "none" },
-        workPlanClosing: "none",
-      }
+      })
     }
 
     function startArchiveManagerWithStub() {
@@ -1002,8 +996,8 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(CHARACTER_EVENT)
-      stub.emit(reportEvent("途中の結論"))
-      stub.emit(reportEvent("最後の結論"))
+      stub.emit(reportWithConclusion("途中の結論"))
+      stub.emit(reportWithConclusion("最後の結論"))
       await waitForBatch()
       // report だけではまだ書かない（turn-finished でどれを書くか決まる）。
       expect(archiveCalls).toEqual([])
@@ -1031,7 +1025,7 @@ describe("createSessionManager", () => {
 
       const longConclusion = "い".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 5)
       stub.emit(CHARACTER_EVENT)
-      stub.emit(reportEvent(longConclusion))
+      stub.emit(reportWithConclusion(longConclusion))
       stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
@@ -1511,21 +1505,16 @@ describe("createSessionManager", () => {
     }
 
     /** 描いた `report` の `SessionEvent`（中身はすべて手で書いた架空のもの）。 */
-    function reportEvent(sections: readonly ReportSection[], unknownBlockCount = 0): SessionEvent {
-      return {
-        kind: "report",
+    function reportWithSections(
+      sections: readonly ReportSection[],
+      unknownBlockCount = 0,
+    ): SessionEvent {
+      return reportEvent({
         toolUseId: "toolu_r1",
         conclusion: "架空の結論。",
         sections,
-        favor: "",
-        checks: [],
-        closing: { kind: "none" },
-        waitingLine: { kind: "none" },
         unknownBlockCount,
-        sessionSummary: undefined,
-        task: { kind: "none" },
-        workPlanClosing: "none",
-      }
+      })
     }
 
     function startReportUsageManagerWithStub() {
@@ -1552,7 +1541,9 @@ describe("createSessionManager", () => {
 
       stub.emit(sessionInfo("claude-session-1"))
       stub.emit(
-        reportEvent([{ heading: "", blocks: [{ kind: "text", text: "架空の根拠。", fold: "" }] }]),
+        reportWithSections([
+          { heading: "", blocks: [{ kind: "text", text: "架空の根拠。", fold: "" }] },
+        ]),
       )
       await waitForBatch()
 
@@ -1575,7 +1566,7 @@ describe("createSessionManager", () => {
       const { stub, entries } = startReportUsageManagerWithStub()
       await waitForBatch()
 
-      stub.emit(reportEvent([]))
+      stub.emit(reportWithSections([]))
       await waitForBatch()
 
       expect(entries).toEqual([])
@@ -1876,20 +1867,7 @@ describe("createSessionManager", () => {
 
     stub.emitRestored([
       CHARACTER_EVENT,
-      {
-        kind: "report",
-        toolUseId: "toolu_r1",
-        conclusion: "前のセッションの結論",
-        sections: [],
-        favor: "",
-        checks: [],
-        closing: { kind: "none" },
-        waitingLine: { kind: "none" },
-        unknownBlockCount: 0,
-        sessionSummary: undefined,
-        task: { kind: "none" },
-        workPlanClosing: "none",
-      },
+      reportEvent({ toolUseId: "toolu_r1", conclusion: "前のセッションの結論" }),
       {
         kind: "token-usage",
         cumulative: [
@@ -2044,10 +2022,8 @@ describe("レポートの画像の棚", () => {
   }
 
   function imageReportEvent(toolUseId: string): SessionEvent {
-    return {
-      kind: "report",
+    return reportEvent({
       toolUseId,
-      conclusion: "架空の結論。",
       sections: [
         {
           heading: "",
@@ -2056,15 +2032,7 @@ describe("レポートの画像の棚", () => {
           ],
         },
       ],
-      favor: "",
-      checks: [],
-      closing: { kind: "none" },
-      waitingLine: { kind: "none" },
-      unknownBlockCount: 0,
-      sessionSummary: undefined,
-      task: { kind: "none" },
-      workPlanClosing: "none",
-    }
+    })
   }
 
   function startManagerWithReportImageShelf() {

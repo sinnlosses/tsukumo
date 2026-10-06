@@ -17,6 +17,7 @@ import {
   waitingLineDueAt,
 } from "../../../src/shared/session/shown-reaction.ts"
 import { characterChangedEvent } from "../../fixture/character.ts"
+import { reportEvent } from "../../fixture/report-event.ts"
 
 const REQUEST = { kind: "request", text: "架空の依頼", images: [] } as const satisfies SessionEvent
 
@@ -44,20 +45,7 @@ const COMPLETED = {
 const RESTORED = { kind: "history-restored" } as const satisfies SessionEvent
 
 function report(waitingLine: ReportWaitingLine): SessionEvent {
-  return {
-    kind: "report",
-    toolUseId: "toolu_r1",
-    conclusion: "架空の結論",
-    sections: [],
-    favor: "",
-    checks: [],
-    task: { kind: "none" },
-    workPlanClosing: "none",
-    closing: { kind: "none" },
-    waitingLine,
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-  }
+  return reportEvent({ waitingLine })
 }
 
 const WRITTEN = report({ kind: "speech", text: "架空の待ちの一言", expression: "curious" })

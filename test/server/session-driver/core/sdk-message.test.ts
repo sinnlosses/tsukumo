@@ -6,6 +6,7 @@ import {
 } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
 import {
   REPORT_TOOL_FULL_NAME,
   SPEAK_TOOL_FULL_NAME,
@@ -1007,8 +1008,7 @@ describe("toSessionEvents（report ツール）", () => {
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      {
-        kind: "report",
+      reportEvent({
         toolUseId: "toolu_r1",
         conclusion: "架空の結論。",
         sections: [
@@ -1021,13 +1021,10 @@ describe("toSessionEvents（report ツール）", () => {
         checks: [
           { status: "ok", label: "架空の検査", figure: "", command: "", detail: "架空の件数" },
         ],
-        task: { kind: "none" },
-        workPlanClosing: "none",
         closing: { kind: "speech", text: "架空の締め", expression: "proud" },
         waitingLine: { kind: "speech", text: "架空の待ちの一言", expression: "thinking" },
-        unknownBlockCount: 0,
         sessionSummary: "架空の要約",
-      },
+      }),
     ])
   })
 
@@ -1145,19 +1142,7 @@ describe("toSessionEvents（report ツール）", () => {
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      {
-        kind: "report",
-        toolUseId: "toolu_r1",
-        conclusion: "架空の結論。",
-        sections: [],
-        favor: "",
-        checks: [],
-        task: { kind: "none" },
-        workPlanClosing: "none",
-        closing: { kind: "none" },
-        waitingLine: { kind: "none" },
-        unknownBlockCount: 0,
-      },
+      reportEvent({ toolUseId: "toolu_r1", conclusion: "架空の結論。" }),
     ])
   })
 

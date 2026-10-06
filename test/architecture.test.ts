@@ -469,6 +469,28 @@ describe("テストが起こす外部コマンド", () => {
   })
 })
 
+// イベントは `test/fixture/report-event.ts` の `reportEvent` から作り、確かめたい欄だけを渡す。
+// `session-record.ts` は `SessionRecord`（イベントではない記録）の組み立て。
+const REPORT_EVENT_LITERAL_FILES: ReadonlySet<string> = new Set([
+  "fixture/report-event.ts",
+  "fixture/session-record.ts",
+])
+
+describe("テストの report イベント", () => {
+  it('`kind: "report"` に `toolUseId` が続くイベントの直書きは、組み立て関数のファイルにだけある', () => {
+    const offenders = listSourceFiles(TEST_ROOT)
+      .filter((relPath) => !REPORT_EVENT_LITERAL_FILES.has(relPath))
+      .filter((relPath) =>
+        /kind:\s*"report",\s*toolUseId/.test(
+          nonCommentContent(readFileSync(`${TEST_ROOT}/${relPath}`, "utf8")),
+        ),
+      )
+      .map((relPath) => `test/${relPath}`)
+
+    expect(offenders).toEqual([])
+  })
+})
+
 // 環境変数の読み取りは配線層の1ファイルに集める（docs/coding-standards.md「外部の入力を読む
 // 場所を1つにする」）。コメント中の `` `process.env` `` のような説明文は
 // 拾わない（実コードの行だけを見る）。

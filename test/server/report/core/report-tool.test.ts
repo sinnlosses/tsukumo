@@ -6,6 +6,7 @@ import {
   REPORT_TOOL_DESCRIPTION,
 } from "../../../../src/server/report/core/report-tool.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
 
 describe("REPORT_TOOL_DESCRIPTION", () => {
   it("MCP ツールの説明文の既定の上限（2048字）に収まり、記法は規約の節を指すだけ", () => {
@@ -22,20 +23,10 @@ const INIT: SessionEvent = {
   slashCommands: [],
   terminalSlashCommands: [],
 }
-const REPORT: SessionEvent = {
-  kind: "report",
+const REPORT: SessionEvent = reportEvent({
   toolUseId: "toolu_r1",
-  conclusion: "架空の結論",
-  sections: [],
-  favor: "",
-  checks: [],
   closing: { kind: "speech", text: "架空の締め", expression: "default" },
-  waitingLine: { kind: "none" },
-  unknownBlockCount: 0,
-  sessionSummary: undefined,
-  task: { kind: "none" },
-  workPlanClosing: "none",
-}
+})
 const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 const utterance = (text: string): SessionEvent => ({ kind: "utterance", text })
 const LONG_BODY = utterance("架空の本文の1行目\n架空の本文の2行目\n架空の本文の3行目")

@@ -5,6 +5,7 @@ import type {
   ReportWaitingLine,
   SessionEvent,
 } from "../../../../src/shared/session/session-event.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
 
 // すべて手で書いた架空の履歴。
 
@@ -20,20 +21,7 @@ const WAITING_LINE = {
 } as const satisfies ReportWaitingLine
 
 function report(waitingLine: ReportWaitingLine): SessionEvent {
-  return {
-    kind: "report",
-    toolUseId: "fictional-report",
-    conclusion: "架空の結論",
-    sections: [],
-    favor: "",
-    checks: [],
-    task: { kind: "none" },
-    workPlanClosing: "none",
-    closing: { kind: "none" },
-    waitingLine,
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-  }
+  return reportEvent({ waitingLine })
 }
 
 function span(finishedAt: number): SessionEvent {

@@ -3,30 +3,18 @@ import { describe, expect, it } from "vitest"
 import { reportUsageEntryOf } from "../../../../src/server/report/core/report-usage.ts"
 import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
 
-function reportEvent(
+function reportOfSections(
   sections: readonly ReportSection[],
   unknownBlockCount = 0,
 ): Extract<SessionEvent, { readonly kind: "report" }> {
-  return {
-    kind: "report",
-    toolUseId: "toolu_r1",
-    conclusion: "架空の結論。",
-    sections,
-    favor: "",
-    checks: [],
-    closing: { kind: "none" },
-    waitingLine: { kind: "none" },
-    unknownBlockCount,
-    sessionSummary: undefined,
-    task: { kind: "none" },
-    workPlanClosing: "none",
-  }
+  return reportEvent({ sections, unknownBlockCount })
 }
 
 describe("reportUsageEntryOf", () => {
   it("塊の種類は節をまたいで重複を畳んだ集合にする", () => {
-    const event = reportEvent([
+    const event = reportOfSections([
       {
         heading: "架空の節1",
         blocks: [
@@ -57,12 +45,12 @@ describe("reportUsageEntryOf", () => {
     })
 
     const plain = reportUsageEntryOf(
-      reportEvent([{ heading: "", blocks: [dimension("")] }]),
+      reportOfSections([{ heading: "", blocks: [dimension("")] }]),
       "claude-session-1",
       1_000,
     )
     const changed = reportUsageEntryOf(
-      reportEvent([{ heading: "", blocks: [dimension("12px")] }]),
+      reportOfSections([{ heading: "", blocks: [dimension("12px")] }]),
       "claude-session-1",
       1_000,
     )
@@ -73,7 +61,7 @@ describe("reportUsageEntryOf", () => {
   })
 
   it("image の塊を塊の種類として数え、逃げ道に書いた画像は塊のある記法として数える", () => {
-    const event = reportEvent([
+    const event = reportOfSections([
       {
         heading: "",
         blocks: [
@@ -91,7 +79,7 @@ describe("reportUsageEntryOf", () => {
   })
 
   it("image の塊に notes があれば imageNotes の欄を立てる", () => {
-    const event = reportEvent([
+    const event = reportOfSections([
       {
         heading: "",
         blocks: [
@@ -110,7 +98,7 @@ describe("reportUsageEntryOf", () => {
   })
 
   it("既定の値でない塊の欄を、節をまたいで重複を畳んだ集合にする", () => {
-    const event = reportEvent([
+    const event = reportOfSections([
       {
         heading: "架空の節1",
         blocks: [
@@ -157,7 +145,7 @@ describe("reportUsageEntryOf", () => {
   })
 
   it("stats の total を渡した回は statsTotal を数える", () => {
-    const event = reportEvent([
+    const event = reportOfSections([
       {
         heading: "",
         blocks: [
@@ -177,7 +165,7 @@ describe("reportUsageEntryOf", () => {
   })
 
   it("逃げ道（markdown の塊）の外側に出た記法の種類を数える", () => {
-    const event = reportEvent([
+    const event = reportOfSections([
       {
         heading: "架空の節",
         blocks: [{ kind: "markdown", markdown: "- 架空の1つ目\n- 架空の2つ目", fold: "" }],
@@ -192,7 +180,7 @@ describe("reportUsageEntryOf", () => {
   })
 
   it("逃げ道の HTML の容れ物の中に出た記法の種類は、外の記法と分けて数える", () => {
-    const event = reportEvent([
+    const event = reportOfSections([
       {
         heading: "架空の節",
         blocks: [
@@ -212,7 +200,7 @@ describe("reportUsageEntryOf", () => {
   })
 
   it("塊の無い記法（cols/card・svg・dl・引用・区切り線・details）の種類を数える", () => {
-    const event = reportEvent([
+    const event = reportOfSections([
       {
         heading: "架空の節",
         blocks: [
@@ -243,7 +231,7 @@ describe("reportUsageEntryOf", () => {
   })
 
   it("逃げ道に書いた chart のフェンスは塊のある記法として数える", () => {
-    const event = reportEvent([
+    const event = reportOfSections([
       {
         heading: "架空の節",
         blocks: [{ kind: "markdown", markdown: "```chart\n{}\n```", fold: "" }],
@@ -257,7 +245,7 @@ describe("reportUsageEntryOf", () => {
   })
 
   it("知らない種類で境界で落とした塊の数と、渡した時刻・セッションIDをそのまま運ぶ", () => {
-    const event = reportEvent([], 2)
+    const event = reportOfSections([], 2)
 
     const entry = reportUsageEntryOf(event, "claude-session-9", 12_345)
 

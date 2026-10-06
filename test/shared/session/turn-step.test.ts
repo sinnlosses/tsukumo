@@ -10,6 +10,7 @@ import {
   toolDuration,
   type TurnStep,
 } from "../../../src/shared/session/turn-step.ts"
+import { reportEvent } from "../../fixture/report-event.ts"
 import {
   finishedToolStatus,
   requestRecord,
@@ -200,20 +201,7 @@ describe("currentTurnSteps（report ツール）", () => {
   it("report の呼び出しは依頼の手順に出ない（speak と同じく tool-started にならない）", () => {
     const events: readonly SessionEvent[] = [
       { kind: "request", text: "架空の依頼", images: [] },
-      {
-        kind: "report",
-        toolUseId: "toolu_r1",
-        conclusion: "架空の結論。",
-        sections: [],
-        favor: "",
-        checks: [],
-        closing: { kind: "none" },
-        waitingLine: { kind: "none" },
-        unknownBlockCount: 0,
-        sessionSummary: undefined,
-        task: { kind: "none" },
-        workPlanClosing: "none",
-      },
+      reportEvent({ toolUseId: "toolu_r1" }),
     ]
     const state = events.reduce(
       (current, event) => applySessionEvent(current, event, 0),

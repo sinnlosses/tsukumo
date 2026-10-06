@@ -12,17 +12,14 @@ import {
 } from "../../../../src/server/report/core/report-review.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
-import {
-  NO_REPORT_TASK,
-  type ReportTask,
-  type ReportTaskOutcome,
-} from "../../../../src/shared/report/report-task.ts"
+import type { ReportTask, ReportTaskOutcome } from "../../../../src/shared/report/report-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   NO_WORK_PLAN_STANDING,
   type WorkPlanClosing,
   type WorkPlanStanding,
 } from "../../../../src/shared/session/work-plan.ts"
+import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"
 
 const noPlan = (): WorkPlanStanding => NO_WORK_PLAN_STANDING
 
@@ -31,24 +28,11 @@ const sectionsOf = (markdown: string): readonly ReportSection[] => [
   { heading: "", blocks: [{ kind: "markdown", markdown, fold: "" }] },
 ]
 
-const VALID: ReportDraft = {
-  conclusion: "架空の結論。",
-  sections: [],
-  favor: "",
-  checks: [],
-  fileContents: new Map(),
-  task: NO_REPORT_TASK,
-  workPlanClosing: "none",
-}
-const INVALID: ReportDraft = {
+const VALID: ReportDraft = reportDraft({ conclusion: "架空の結論。" })
+const INVALID: ReportDraft = reportDraft({
   conclusion: "架空の結論。",
   sections: sectionsOf("# 架空の見出し"),
-  favor: "",
-  checks: [],
-  fileContents: new Map(),
-  task: NO_REPORT_TASK,
-  workPlanClosing: "none",
-}
+})
 
 const SESSION_INFO: SessionEvent = {
   kind: "session-info",
@@ -64,24 +48,24 @@ const NO_CLOSING = { kind: "none" } as const
 const CLOSING = { kind: "speech", text: "架空の締め", expression: "default" } as const
 
 /** handler に届いた引数を、呼び出しをイベントに変える側と同じ形のイベントにする。 */
-const reportEvent = (
+const reportOfDraft = (
   toolUseId: string,
   draft: ReportDraft,
   closing: Extract<SessionEvent, { kind: "report" }>["closing"] = NO_CLOSING,
-): Extract<SessionEvent, { kind: "report" }> => ({
-  kind: "report",
-  toolUseId,
-  ...draft,
-  closing,
-  waitingLine: { kind: "none" },
-  unknownBlockCount: 0,
-  sessionSummary: undefined,
-  task: { kind: "none" },
-})
+): Extract<SessionEvent, { kind: "report" }> =>
+  reportEvent({
+    toolUseId,
+    conclusion: draft.conclusion,
+    sections: draft.sections,
+    favor: draft.favor,
+    checks: draft.checks,
+    workPlanClosing: draft.workPlanClosing,
+    closing,
+  })
 const report = (
   toolUseId: string,
   closing: Extract<SessionEvent, { kind: "report" }>["closing"] = NO_CLOSING,
-): Extract<SessionEvent, { kind: "report" }> => reportEvent(toolUseId, VALID, closing)
+): Extract<SessionEvent, { kind: "report" }> => reportOfDraft(toolUseId, VALID, closing)
 const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
   kind: "tool-finished",
   toolUseId,
@@ -102,7 +86,7 @@ const toolStarted = (
 /** `report` を handler で通して描かせる（pass に呼び出しと結果を流す）。 */
 const draw = (review: ReportReview, toolUseId: string, draft: ReportDraft): void => {
   expect(review.judge(draft)).toEqual({ kind: "accepted" })
-  review.pass(reportEvent(toolUseId, draft))
+  review.pass(reportOfDraft(toolUseId, draft))
   review.pass(finished(toolUseId, false))
 }
 
@@ -221,15 +205,10 @@ describe("createReportReview の pass", () => {
 })
 
 describe("createReportReview の judge（送り直し）", () => {
-  const OTHER: ReportDraft = {
+  const OTHER: ReportDraft = reportDraft({
     conclusion: "別の架空の結論。",
     sections: sectionsOf("架空の根拠。"),
-    favor: "",
-    checks: [],
-    fileContents: new Map(),
-    task: NO_REPORT_TASK,
-    workPlanClosing: "none",
-  }
+  })
 
   it("このターンで描いた report と同じ引数の呼び出しは、固定の文面で差し戻す", () => {
     const review = createReportReview(noPlan)
@@ -243,15 +222,11 @@ describe("createReportReview の judge（送り直し）", () => {
     const review = createReportReview(noPlan)
     draw(review, "toolu_r1", OTHER)
 
-    const padded: ReportDraft = {
+    const padded: ReportDraft = reportDraft({
       conclusion: `  ${OTHER.conclusion}\n`,
       sections: sectionsOf("架空の根拠。"),
       favor: " ",
-      checks: [],
-      fileContents: new Map(),
-      task: NO_REPORT_TASK,
-      workPlanClosing: "none",
-    }
+    })
     expect(review.judge(padded).kind).toBe("rejected")
   })
 
@@ -300,7 +275,7 @@ describe("createReportReview の judge（送り直し）", () => {
 
   it("差し戻して描かなかった report とは比べない", () => {
     const review = createReportReview(noPlan)
-    review.pass(reportEvent("toolu_r1", VALID))
+    review.pass(reportOfDraft("toolu_r1", VALID))
     review.pass(finished("toolu_r1", true))
 
     expect(review.judge(VALID)).toEqual({ kind: "accepted" })
@@ -334,15 +309,7 @@ describe("createReportReview の judge（送り直し）", () => {
 })
 
 describe("createReportReview の judge（新しい事実の無い report）", () => {
-  const OTHER: ReportDraft = {
-    conclusion: "別の架空の結論。",
-    sections: [],
-    favor: "",
-    checks: [],
-    fileContents: new Map(),
-    task: NO_REPORT_TASK,
-    workPlanClosing: "none",
-  }
+  const OTHER: ReportDraft = reportDraft({ conclusion: "別の架空の結論。" })
   const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const TURN_STARTED: SessionEvent = { kind: "turn-started" }
   const SPEAK_FINISHED = finished("toolu_s1", false)
@@ -455,7 +422,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
 
   it("差し戻して描かなかった report のあとでも、新しい事実の届いた印は残る", () => {
     const review = createReportReview(noPlan)
-    review.pass(reportEvent("toolu_r1", INVALID))
+    review.pass(reportOfDraft("toolu_r1", INVALID))
     review.pass(finished("toolu_r1", true))
 
     expect(review.judge(VALID)).toEqual({ kind: "accepted" })

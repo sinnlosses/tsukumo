@@ -11,6 +11,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
+import { reportEvent } from "../../fixture/report-event.ts"
 
 const FIXTURE_STATE: SessionState = {
   ...INITIAL_SESSION_STATE,
@@ -81,20 +82,8 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
   const fold = (events: readonly SessionEvent[]) =>
     events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
   const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
-  const report = (conclusion: string): SessionEvent => ({
-    kind: "report",
-    toolUseId: "toolu_r1",
-    conclusion,
-    sections: [],
-    favor: "",
-    checks: [],
-    closing: { kind: "none" },
-    waitingLine: { kind: "none" },
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-    task: { kind: "none" },
-    workPlanClosing: "none",
-  })
+  const report = (conclusion: string): SessionEvent =>
+    reportEvent({ toolUseId: "toolu_r1", conclusion })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
   /** 出ている本文を、畳んだときの先頭行で並べる（`report` の本文は結論を包んだ HTML なので）。 */
@@ -173,20 +162,8 @@ describe("mainViewTurnsOf（最終レポートの札は、やり取りが閉じ�
   const fold = (events: readonly SessionEvent[]) =>
     events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
   const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
-  const report = (toolUseId: string, conclusion: string): SessionEvent => ({
-    kind: "report",
-    toolUseId,
-    conclusion,
-    sections: [],
-    favor: "",
-    checks: [],
-    closing: { kind: "none" },
-    waitingLine: { kind: "none" },
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-    task: { kind: "none" },
-    workPlanClosing: "none",
-  })
+  const report = (toolUseId: string, conclusion: string): SessionEvent =>
+    reportEvent({ toolUseId, conclusion })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
   const finalStep = (state: SessionState) =>
@@ -213,20 +190,10 @@ describe("mainViewTurnsOf（最終レポートの札は、やり取りが閉じ�
 // 続きのターンが吹き出しを空に戻さないことの両方を、途中の姿で見る。
 describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件ずつ畳む）", () => {
   const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
-  const interimReport: SessionEvent = {
-    kind: "report",
+  const interimReport: SessionEvent = reportEvent({
     toolUseId: "toolu_r1",
     conclusion: "架空の中間レポート",
-    sections: [],
-    favor: "",
-    checks: [],
-    closing: { kind: "none" },
-    waitingLine: { kind: "none" },
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-    task: { kind: "none" },
-    workPlanClosing: "none",
-  }
+  })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
   const speechAfterFirstSignal: SessionEvent = {
@@ -239,20 +206,10 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
     text: "架空のにど目の続き",
     expression: "default",
   }
-  const finalReport: SessionEvent = {
-    kind: "report",
+  const finalReport: SessionEvent = reportEvent({
     toolUseId: "toolu_r2",
     conclusion: "架空の最終レポート",
-    sections: [],
-    favor: "",
-    checks: [],
-    closing: { kind: "none" },
-    waitingLine: { kind: "none" },
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-    task: { kind: "none" },
-    workPlanClosing: "none",
-  }
+  })
 
   // 依頼 → 中間 report → 合図（turn-resumed → speech → ターンの終わり）→ 合図（同じ形）→
   // 完了の返事（speech）→ 最終 report → ターンの終わり、という現実の並び。続きのターンを2回含む。
@@ -311,20 +268,7 @@ describe("mainViewTurnsOf（変わらないターンとステップの参照）"
   const fold = (events: readonly SessionEvent[]) =>
     events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
   const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
-  const report: SessionEvent = {
-    kind: "report",
-    toolUseId: "toolu_r1",
-    conclusion: "架空の結論。",
-    sections: [],
-    favor: "",
-    checks: [],
-    closing: { kind: "none" },
-    waitingLine: { kind: "none" },
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-    task: { kind: "none" },
-    workPlanClosing: "none",
-  }
+  const report: SessionEvent = reportEvent({ toolUseId: "toolu_r1" })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const reported = fold([ask, report, finished])
 

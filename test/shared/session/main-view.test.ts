@@ -18,6 +18,7 @@ import {
   type SessionState,
   type TurnBodies,
 } from "../../../src/shared/session/session-state.ts"
+import { reportEvent } from "../../fixture/report-event.ts"
 
 /** いちばん新しいやり取りの本文がどれも確定している（ターンが終わっている）。 */
 const SETTLED = { report: false, utterance: false } as const satisfies TurnBodies
@@ -542,20 +543,15 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     favor = "",
     checks: readonly ReportCheck[] = [],
     task: ReportTask = { kind: "none" },
-  ): SessionEvent => ({
-    kind: "report",
-    toolUseId: "toolu_r1",
-    conclusion,
-    sections: reportSectionsOfBody(body),
-    favor,
-    checks,
-    closing: { kind: "none" },
-    waitingLine: { kind: "none" },
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-    task,
-    workPlanClosing: "none",
-  })
+  ): SessionEvent =>
+    reportEvent({
+      toolUseId: "toolu_r1",
+      conclusion,
+      sections: reportSectionsOfBody(body),
+      favor,
+      checks,
+      task,
+    })
   const toolRun = (id: string): readonly SessionEvent[] => [
     {
       kind: "tool-started",
@@ -787,10 +783,8 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   })
 
   it("同じ依頼に段取りがあるレポートは progress の塊を描かず、段取りが無いレポートは描く", () => {
-    const withProgress: SessionEvent = {
-      kind: "report",
+    const withProgress: SessionEvent = reportEvent({
       toolUseId: "toolu_r1",
-      conclusion: "架空の結論。",
       sections: [
         {
           heading: "架空の節",
@@ -800,15 +794,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
           ],
         },
       ],
-      favor: "",
-      checks: [],
-      closing: { kind: "none" },
-      waitingLine: { kind: "none" },
-      unknownBlockCount: 0,
-      sessionSummary: undefined,
-      task: { kind: "none" },
-      workPlanClosing: "none",
-    }
+    })
     const plan: SessionEvent = {
       kind: "work-plan",
       phases: ["架空の段A", "架空の段B"],
@@ -975,20 +961,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     current,
     phaseSummary,
   })
-  const report: SessionEvent = {
-    kind: "report",
-    toolUseId: "toolu_r1",
-    conclusion: "架空の結論。",
-    sections: [],
-    favor: "",
-    checks: [],
-    closing: { kind: "none" },
-    waitingLine: { kind: "none" },
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-    task: { kind: "none" },
-    workPlanClosing: "none",
-  }
+  const report: SessionEvent = reportEvent({ toolUseId: "toolu_r1", conclusion: "架空の結論。" })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 
   it("段を進めると、ターンが動いているあいだも終えた段の中間レポートを出す", () => {
@@ -1147,23 +1120,15 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     content: "ok",
     isError: false,
   })
-  const report = (id: string, command = ""): SessionEvent => ({
-    kind: "report",
-    toolUseId: id,
-    conclusion: `架空の結論 ${id}`,
-    sections: [],
-    favor: "",
-    checks:
-      command === ""
-        ? []
-        : [{ status: "ok", label: "架空の検査", figure: "", command, detail: "" }],
-    closing: { kind: "none" },
-    waitingLine: { kind: "none" },
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-    task: { kind: "none" },
-    workPlanClosing: "none",
-  })
+  const report = (id: string, command = ""): SessionEvent =>
+    reportEvent({
+      toolUseId: id,
+      conclusion: `架空の結論 ${id}`,
+      checks:
+        command === ""
+          ? []
+          : [{ status: "ok", label: "架空の検査", figure: "", command, detail: "" }],
+    })
   const reportMarkdowns = (entries: readonly MainViewEntry[]) =>
     entries.flatMap((entry) => (entry.kind === "report" ? [entry.markdown] : []))
 

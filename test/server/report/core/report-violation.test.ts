@@ -10,22 +10,18 @@ import {
   REPORT_MERMAID_KINDS,
   type ReportSection,
 } from "../../../../src/shared/report/report-block.ts"
-import { NO_REPORT_TASK } from "../../../../src/shared/report/report-task.ts"
+import { reportDraft } from "../../../fixture/report-event.ts"
 
 const draft = (
   blocks: readonly ReportBlock[],
   conclusion = "架空の結論。",
   sections: readonly ReportSection[] = [{ heading: "", blocks }],
-): ReportDraft => ({
-  conclusion,
-  sections:
-    blocks.length === 0 ? sections.filter((section) => section.blocks.length > 0) : sections,
-  favor: "",
-  checks: [],
-  fileContents: new Map(),
-  task: NO_REPORT_TASK,
-  workPlanClosing: "none",
-})
+): ReportDraft =>
+  reportDraft({
+    conclusion,
+    sections:
+      blocks.length === 0 ? sections.filter((section) => section.blocks.length > 0) : sections,
+  })
 
 const text = (value: string, fold = ""): ReportBlock => ({ kind: "text", text: value, fold })
 const markdown = (value: string): ReportBlock => ({ kind: "markdown", markdown: value, fold: "" })

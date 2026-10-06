@@ -8,6 +8,7 @@ import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
 } from "../../../../src/shared/session/session-state.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
 import {
   assistantMessage,
   REPORT_TOOL_FULL_NAME,
@@ -131,21 +132,7 @@ describe("toRestoredEvents", () => {
       (event) => event.kind === "report",
     )
 
-    expect(reports).toEqual([
-      {
-        kind: "report",
-        toolUseId: "r-2",
-        conclusion: "架空の二",
-        sections: [],
-        favor: "",
-        checks: [],
-        task: { kind: "none" },
-        workPlanClosing: "none",
-        closing: { kind: "none" },
-        waitingLine: { kind: "none" },
-        unknownBlockCount: 0,
-      },
-    ])
+    expect(reports).toEqual([reportEvent({ toolUseId: "r-2", conclusion: "架空の二" })])
   })
 
   it("差し戻された speak の呼び出しは落とし、通ったセリフだけを結果の直前に残す", () => {

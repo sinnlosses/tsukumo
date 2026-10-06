@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
 
+import { pick } from "remeda"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
@@ -15,6 +16,7 @@ import {
   type SessionEvent,
   sessionEventSchema,
 } from "../../../../src/shared/session/session-event.ts"
+import { reportEvent } from "../../../fixture/report-event.ts"
 
 // 疑似セッションは手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は
 const FAKE_SESSION = {
@@ -418,21 +420,7 @@ describe("startFakeSession", () => {
   })
 
   it("report は結果が届くまで預かり、差し戻された（isError の）ものは流さない（本物の駆動と同じ）", async () => {
-    const report = (toolUseId: string) =>
-      ({
-        kind: "report",
-        toolUseId,
-        conclusion: "架空の結論",
-        sections: [],
-        favor: "",
-        checks: [],
-        closing: { kind: "none" },
-        waitingLine: { kind: "none" },
-        unknownBlockCount: 0,
-        sessionSummary: undefined,
-        task: { kind: "none" },
-        workPlanClosing: "none",
-      }) as const
+    const report = (toolUseId: string) => reportEvent({ toolUseId })
     const finished = (toolUseId: string, isError: boolean) =>
       ({ kind: "tool-finished", toolUseId, content: "架空の結果", isError }) as const
     const sink = collect()
@@ -494,9 +482,11 @@ describe("startFakeSession", () => {
                 afterMs: 0,
                 waitForAnswer: false,
                 event: partial({
-                  kind: "report",
-                  toolUseId: "fake-r1",
-                  conclusion: "架空の結論",
+                  ...pick(reportEvent({ toolUseId: "fake-r1" }), [
+                    "kind",
+                    "toolUseId",
+                    "conclusion",
+                  ]),
                   sections: [
                     { heading: "", blocks: [{ kind: "markdown", markdown: "本文", fold: "" }] },
                     { heading: "", blocks: [{ kind: "no-such-block" }] },
@@ -507,7 +497,7 @@ describe("startFakeSession", () => {
               {
                 afterMs: 1,
                 waitForAnswer: false,
-                event: partial({ kind: "report", toolUseId: "fake-r2" }),
+                event: partial(pick(reportEvent({ toolUseId: "fake-r2" }), ["kind", "toolUseId"])),
               },
               {
                 afterMs: 2,
@@ -535,20 +525,12 @@ describe("startFakeSession", () => {
     driver.close()
 
     expect(sink.events.filter((event) => event.kind === "report")).toEqual([
-      {
-        kind: "report",
+      reportEvent({
         toolUseId: "fake-r1",
-        conclusion: "架空の結論",
         sections: [{ heading: "", blocks: [{ kind: "markdown", markdown: "本文", fold: "" }] }],
-        favor: "",
-        checks: [],
-        task: { kind: "none" },
-        workPlanClosing: "none",
         closing: { kind: "speech", text: "書けたよ", expression: "default" },
-        waitingLine: { kind: "none" },
         unknownBlockCount: 1,
-        sessionSummary: undefined,
-      },
+      }),
     ])
   })
 })

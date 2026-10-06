@@ -19,6 +19,7 @@ import {
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
+import { reportEvent } from "../../../../../../fixture/report-event.ts"
 import { requestRecord, speechRecord } from "../../../../../../fixture/session-record.ts"
 import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { putSession } from "../../../../../session-store.ts"
@@ -232,20 +233,7 @@ describe("CharacterView（反応の吹き出し）", () => {
   } as const satisfies SessionEvent
 
   function report(waitingLine: ReportWaitingLine): SessionEvent {
-    return {
-      kind: "report",
-      toolUseId: "toolu_r1",
-      conclusion: "架空の結論",
-      sections: [],
-      favor: "",
-      checks: [],
-      task: { kind: "none" },
-      workPlanClosing: "none",
-      closing: { kind: "none" },
-      waitingLine,
-      unknownBlockCount: 0,
-      sessionSummary: undefined,
-    }
+    return reportEvent({ waitingLine })
   }
 
   const WAITING_LINE = report({ kind: "speech", text: "架空の待ちの一言", expression: "default" })

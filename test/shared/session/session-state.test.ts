@@ -21,6 +21,7 @@ import {
   shownOutfitAccents,
   shownPortraits,
 } from "../../fixture/character.ts"
+import { reportEvent } from "../../fixture/report-event.ts"
 
 // 時刻に依らないテストでは `now` を固定の 0 で流す（時刻を見る畳み込みは
 // applySessionEvent を直接呼び、進める時刻を明示する）。
@@ -1027,39 +1028,19 @@ describe("applySessionEvent（report を書いている間）", () => {
       kind: "drafting",
       toolUseId: "toolu_r1",
     })
-    expect(
-      apply(REQUEST, DRAFTING, {
-        kind: "report",
-        toolUseId: "toolu_r1",
-        conclusion: "架空の結論。",
-        sections: [],
-        favor: "",
-        checks: [],
-        closing: { kind: "none" },
-        waitingLine: { kind: "none" },
-        unknownBlockCount: 0,
-        sessionSummary: undefined,
-        task: { kind: "none" },
-        workPlanClosing: "none",
-      }).reportDrafting,
-    ).toEqual({ kind: "idle" })
+    expect(apply(REQUEST, DRAFTING, reportEvent({ toolUseId: "toolu_r1" })).reportDrafting).toEqual(
+      { kind: "idle" },
+    )
   })
 
   it("report の待ちの一言は記録に写る", () => {
-    const state = apply(REQUEST, {
-      kind: "report",
-      toolUseId: "toolu_r1",
-      conclusion: "架空の結論。",
-      sections: [],
-      favor: "",
-      checks: [],
-      closing: { kind: "none" },
-      waitingLine: { kind: "speech", text: "架空の待ちの一言", expression: "bored" },
-      unknownBlockCount: 0,
-      sessionSummary: undefined,
-      task: { kind: "none" },
-      workPlanClosing: "none",
-    })
+    const state = apply(
+      REQUEST,
+      reportEvent({
+        toolUseId: "toolu_r1",
+        waitingLine: { kind: "speech", text: "架空の待ちの一言", expression: "bored" },
+      }),
+    )
 
     expect(state.records.at(-1)).toMatchObject({
       kind: "report",
@@ -1704,20 +1685,8 @@ describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
     current,
     phaseSummary: current > 0 && current < PHASES.length ? "架空のまとめ。" : "",
   })
-  const reportOf = (workPlanClosing: WorkPlanClosing): SessionEvent => ({
-    kind: "report",
-    toolUseId: "toolu_r1",
-    conclusion: "架空の結論。",
-    sections: [],
-    favor: "",
-    checks: [],
-    closing: { kind: "none" },
-    waitingLine: { kind: "none" },
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-    task: { kind: "none" },
-    workPlanClosing,
-  })
+  const reportOf = (workPlanClosing: WorkPlanClosing): SessionEvent =>
+    reportEvent({ toolUseId: "toolu_r1", workPlanClosing })
   const currentPlan = (state: SessionState) => latestWorkPlan(state.records)
 
   it("最後の段で finished の report を受けると、帯が全部済みになる", () => {
@@ -1767,20 +1736,7 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
     phaseCount: 1,
     summary: "架空の返却。",
   }
-  const report: SessionEvent = {
-    kind: "report",
-    toolUseId: "toolu_r1",
-    conclusion: "架空の結論。",
-    sections: [],
-    favor: "",
-    checks: [],
-    closing: { kind: "none" },
-    waitingLine: { kind: "none" },
-    unknownBlockCount: 0,
-    sessionSummary: undefined,
-    task: { kind: "none" },
-    workPlanClosing: "none",
-  }
+  const report: SessionEvent = reportEvent({ toolUseId: "toolu_r1" })
   const applyAt = (...stamped: readonly (readonly [SessionEvent, number])[]): SessionState =>
     stamped.reduce(
       (state, [event, at]) => applySessionEvent(state, event, at),
