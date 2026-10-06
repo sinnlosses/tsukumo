@@ -1,13 +1,14 @@
 import { mkdirSync, rmSync } from "node:fs"
 import { join } from "node:path"
 
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   createAchievementCache,
   readAchievement,
   readCommitCalendar,
 } from "../../../../src/server/achievement/adapter/main-history.ts"
+import type * as GitAdapter from "../../../../src/server/repository/adapter/git.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import { PROJECT_SETTINGS_PATH } from "../../../../src/shared/repository/project-settings.ts"
 import {
@@ -29,6 +30,12 @@ import { useTempDir } from "../../../fixture/temp-dir.ts"
 // 固定し、実行した日に依らず同じ結果になるようにする。
 // 終えたタスクは本物の `bd` を、`HOME` を一時ディレクトリへ向けて起こす（`useBeadsHome`）。課題は架空のものだけ。
 
+// 本物の `bd` と `git` は負荷で5秒を超えうるので、製品の上限だけ延ばす。
+vi.mock("../../../../src/server/repository/adapter/git.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof GitAdapter>()),
+  GIT_TIMEOUT_MS: 60_000,
+}))
+
 const root = useTempDir("main-history")
 let repository: string
 
@@ -48,7 +55,7 @@ async function commitOldFormatTasks(
   await commitAt(cwd, date, hhmm, "develop/tasks.json", JSON.stringify(tasks))
 }
 
-describe("readAchievement", () => {
+describe("readAchievement", { timeout: 60_000 }, () => {
   it("main ブランチが無いリポジトリでは「不明」", async () => {
     // init はしたが1つもコミットしていないので main が無い。
     const result = await readAchievement(
@@ -530,7 +537,7 @@ function knownCalendar(
   return result.calendar
 }
 
-describe("readCommitCalendar", () => {
+describe("readCommitCalendar", { timeout: 60_000 }, () => {
   // TODAY は木曜。今週の月曜からその4週前の月曜までが範囲になる
   // （`achievementCalendarDateKeys` のテストと同じ計算）。
   const TODAY = "2026-09-24"
