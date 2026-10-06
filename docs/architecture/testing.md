@@ -179,6 +179,8 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
    部品を足したときにそれを選ぶ場面が無くても、この3場面のどれかの差分に出る。**特定の部品を
    守りたくなったら `page` の場面を増やさず、部品の名前を表に足して場面で選ぶ**
 
+**どこからも引かれずに残ったものは単体の `test/e2e-reference.test.ts` が落とす。** 落とすのは、組のそろっていない・どの E2E のシナリオ名も指さない期待値のファイルと、どの E2E も `domRoots` に渡さない表の名前と、テスト・`scripts/`・`src/`・`docs/architecture/` のどこからも名前で引かれない `fake-session.json` の場面。場面は `turns` の並びで流れることを使い手と数えないので、並びに頼るなら名前で引く形にする。
+
 **`*.messages.json` は絞らない。** 書き換わった件数の見積もりと、絞らない理由の数は `docs/history/decision.md`「testing.md E2E の期待値の範囲（部分木に絞る見積もり）」。
 例外は `session-info` の `slashCommands`・`terminalSlashCommands` と `command-descriptions` の
 `descriptions`（コマンド一覧）で、`collapseCommandCatalog`（`test/e2e/scenario-run.ts`）が固定の印に
