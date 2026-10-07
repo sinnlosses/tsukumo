@@ -871,7 +871,7 @@
   font-weight: 700;
   color: var(--state-ok);
 }
-/* 段ごとの所要時間（検証結果の下に tsukumo が組む）。段の名前と時間の2列で、時間の列を行どうしでそろえる。 */
+/* 段ごとの所要時間（検証結果の下に tsukumo が組む）。段の名前の下に、棒の台と時間の字を並べる。 */
 .detail-block .report-phase-times {
   min-width: 0;
   padding: 0 20px;
@@ -885,23 +885,33 @@
   letter-spacing: 0.08em;
   color: var(--ink-quiet);
 }
-.detail-block .report-phase-times > [role="table"] {
-  display: grid;
-  grid-template-columns: minmax(0, max-content) max-content;
-  column-gap: 16px;
-}
 .detail-block .report-phase-time {
   display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: subgrid;
-  align-items: baseline;
-  padding: 2px 0;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
+  column-gap: 12px;
+  padding: 4px 0;
   font-size: 13px;
 }
 .detail-block .report-phase-time-label {
+  grid-column: 1 / -1;
   min-width: 0;
   overflow-wrap: anywhere;
   color: var(--ink-quiet);
+}
+.detail-block .report-phase-time-track {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--rule);
+  overflow: hidden;
+}
+.detail-block .report-phase-time-bar {
+  display: block;
+  height: 100%;
+  min-width: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rule), var(--accent) 60%);
 }
 .detail-block .report-phase-time-value {
   font-family: var(--font-mono);
@@ -911,6 +921,7 @@
   color: var(--ink-quiet);
 }
 .detail-block .report-phase-time-unknown {
+  grid-column: 1 / -1;
   font-family: inherit;
 }
 /* `task` のあるレポートの結論の一文。見出し（`report-head.module.css`）のすぐ下に描く。 */

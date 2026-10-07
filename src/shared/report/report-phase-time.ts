@@ -1,4 +1,4 @@
-// 最終レポートの段ごとの所要時間の表の形と、HTML の組み立て。
+// 最終レポートの段ごとの所要時間の横棒グラフの形と、HTML の組み立て。
 
 import { formatElapsed, type MeasuredTime } from "../utils/elapsed-time.ts"
 import { htmlInline } from "./report-markdown.ts"
@@ -10,14 +10,18 @@ export type PhaseDuration = {
 }
 
 /**
- * 段ごとの所要時間の表（1つの HTML の塊）。段が無ければ空文字。
- * 列は段と時間の2つで、測れなかった段は「不明」と書く。
+ * 段ごとの所要時間の横棒グラフ（1つの HTML の塊）。段が無ければ空文字。
+ * 棒の長さは測れた段のうち一番長い段に対する比で、測れなかった段は棒を出さず「不明」と書く。
  */
 export function phaseTimesMarkdown(durations: readonly PhaseDuration[]): string {
   if (durations.length === 0) {
     return ""
   }
-  const rows = durations.map(phaseTimeRowMarkdown).join("")
+  const longest = Math.max(
+    0,
+    ...durations.map(({ duration }) => (duration.kind === "known" ? duration.milliseconds : 0)),
+  )
+  const rows = durations.map((phase) => phaseTimeRowMarkdown(phase, longest)).join("")
   return (
     `<div class="phase-times">` +
     `<div class="phase-times-heading">段ごとの時間</div>` +
@@ -25,13 +29,20 @@ export function phaseTimesMarkdown(durations: readonly PhaseDuration[]): string 
   )
 }
 
-function phaseTimeRowMarkdown({ label, duration }: PhaseDuration): string {
-  const value =
-    duration.kind === "known"
-      ? `<span class="phase-time-value">${formatElapsed(Math.round(duration.milliseconds / 1000))}</span>`
-      : `<span class="phase-time-value phase-time-unknown">不明</span>`
+function phaseTimeRowMarkdown({ label, duration }: PhaseDuration, longest: number): string {
+  const name = `<span class="phase-time-label">${htmlInline(label)}</span>`
+  if (duration.kind === "unknown") {
+    return (
+      `<div class="phase-time" role="row">${name}` +
+      `<span class="phase-time-value phase-time-unknown">不明</span></div>`
+    )
+  }
+  const width = longest > 0 ? Math.round((duration.milliseconds / longest) * 100) : 0
+  const time = formatElapsed(Math.round(duration.milliseconds / 1000))
   return (
-    `<div class="phase-time" role="row">` +
-    `<span class="phase-time-label">${htmlInline(label)}</span>${value}</div>`
+    `<div class="phase-time" role="row">${name}` +
+    `<span class="phase-time-track" aria-hidden="true">` +
+    `<span class="phase-time-bar" style="width: ${String(width)}%"></span></span>` +
+    `<span class="phase-time-value">${time}</span></div>`
   )
 }
