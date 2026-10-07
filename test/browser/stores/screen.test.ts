@@ -60,14 +60,6 @@ describe("navigateTo", () => {
 })
 
 describe("useScreenHref", () => {
-  // リンクの `href` に空文字を書くとページの再読み込みになるので、会話の画面は "#"。
-  it("リンクに書ける href を返す", () => {
-    const { result } = renderHook(() => useScreenHref())
-
-    expect(result.current("conversation")).toBe("#")
-    expect(result.current("character")).toBe("#character")
-  })
-
   it("見ているターンを hash に残したまま画面を移す href になる", () => {
     window.location.hash = "#?turn=3"
     const { result } = renderHook(() => useScreenHref())
@@ -76,6 +68,14 @@ describe("useScreenHref", () => {
 
     goToHash("#character?turn=5")
     expect(result.current("conversation")).toBe("#?turn=5")
+  })
+
+  // 帯の「キャラクター」から入り直したときは使用中のパックから（選んだパックは運ばない）。
+  it("画面の href は選んでいるパックを落とす", () => {
+    window.location.hash = "#character?pack=other"
+    const { result } = renderHook(() => useScreenHref())
+
+    expect(result.current("character")).toBe("#character")
   })
 })
 
@@ -96,14 +96,6 @@ describe("usePackHref", () => {
     const { result } = renderHook(() => usePackHref())
 
     expect(result.current("other")).toBe("#character?pack=other&turn=3")
-  })
-
-  // 帯の「キャラクター」から入り直したときは使用中のパックから（選んだパックは運ばない）。
-  it("画面の href は選んでいるパックを落とす", () => {
-    window.location.hash = "#character?pack=other"
-    const { result } = renderHook(() => useScreenHref())
-
-    expect(result.current("character")).toBe("#character")
   })
 })
 

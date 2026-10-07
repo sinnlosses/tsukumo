@@ -18,14 +18,14 @@ export type OutlinePanel = {
   readonly collapse: OutlineCollapseChoice
 }
 
-export const DEFAULT_OUTLINE_PANEL: OutlinePanel = {
+const DEFAULT_OUTLINE_PANEL: OutlinePanel = {
   widthPx: undefined,
   collapse: "unset",
 }
 
 // 仕切りをどちらかの端まで詰めて操作不能にしないための可動域。
-export const OUTLINE_WIDTH_MIN_PX = 128
-export const OUTLINE_WIDTH_MAX_PX = 384
+const OUTLINE_WIDTH_MIN_PX = 128
+const OUTLINE_WIDTH_MAX_PX = 384
 
 const STORAGE_KEY = "tsukumo-outline-panel:v1"
 

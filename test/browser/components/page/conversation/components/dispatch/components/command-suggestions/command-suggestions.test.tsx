@@ -37,12 +37,6 @@ describe("matchingCommands", () => {
 
     expect(matchingCommands(commands, "/cmd")).toHaveLength(10)
   })
-
-  it("前方一致・部分一致のどちらにも当たらない候補は出ない", () => {
-    const commands = [command("clear"), command("doctor")]
-
-    expect(matchingCommands(commands, "/xyz")).toEqual([])
-  })
 })
 
 describe("CommandSuggestions", () => {

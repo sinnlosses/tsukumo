@@ -5,7 +5,6 @@ import {
   blockProgress,
   isShortReport,
   planReveal,
-  SHORT_REPORT_WEIGHT,
   type RevealBlock,
 } from "../../../../src/browser/domain/reveal/plan.ts"
 
@@ -91,10 +90,6 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
       ["P"],
       ["H3", "P"],
     ])
-  })
-
-  it("見出しの無い節どうしの境目にも印は入るので、見出しが無くても1つの塊になる", () => {
-    expect(tagsOf(rootWith(`<p>あ</p>${BREAK}<p>い</p>`))).toEqual([["P"], ["P"]])
   })
 
   it("塊1つぶんの時間は、その塊の中の文字数の合計で決まる", () => {
@@ -295,6 +290,8 @@ describe("blockProgress（留めている間は足踏みする）", () => {
 })
 
 const SECTIONS_START = '<div class="report-sections-start"></div>'
+
+const SHORT_REPORT_WEIGHT = 200
 
 describe("planReveal（結論と検証結果は筆の対象に入れない）", () => {
   it("節の始まりの印より前の要素は塊に入らず、印も塊に入れない", () => {

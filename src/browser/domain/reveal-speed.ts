@@ -27,7 +27,7 @@ export type RevealTiming = {
   readonly maxBlockMs: number
 }
 
-export const DEFAULT_REVEAL_SPEED: RevealSpeed = "standard"
+const DEFAULT_REVEAL_SPEED: RevealSpeed = "standard"
 
 /** `<select>` に出す順とラベル。 */
 export const REVEAL_SPEED_LABELS = [

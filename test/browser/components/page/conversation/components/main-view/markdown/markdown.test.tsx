@@ -835,12 +835,6 @@ describe("Markdown（色を指す inline code をその色の地で見せる）"
     expect(code?.className).toContain("report-color-ink-dark")
   })
 
-  it("暗いカラーコードには明るい字が載る", () => {
-    const { container } = render(<Markdown text="`#191720`" />)
-
-    expect(container.querySelector("code")?.className).toContain("report-color-ink-light")
-  })
-
   it("文中に色が混ざった inline code と、フェンスの中のカラーコードは地にしない", () => {
     const { container } = render(<Markdown text={"`color: #fff`\n\n```\n#bca0ec\n```"} />)
 

@@ -192,7 +192,7 @@ describe("ChatView の時刻と日の区切り", () => {
 })
 
 describe("ChatView のセリフを遡る", () => {
-  it("過去のセリフの行を押すと、立ち絵の表情がその行のものになる", () => {
+  it("過去のセリフの行を押すと、立ち絵の表情がその行のものになり、同じ行をもう一度押すと最新へ戻る", () => {
     renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
 
     const firstSpeech = screen.getByText("1つめのセリフ")
@@ -200,6 +200,19 @@ describe("ChatView のセリフを遡る", () => {
 
     expect(portraitExpression()).toBe("default")
     expect(firstSpeech.getAttribute("aria-pressed")).toBe("true")
+    expect(document.querySelector(".portrait-image")?.getAttribute("alt")).toBe(
+      "架空の精霊（通常）",
+    )
+
+    fireEvent.click(firstSpeech)
+
+    expect(portraitExpression()).toBe("proud")
+    expect(logEntries().map((entry) => entry.getAttribute("aria-pressed"))).toEqual([
+      null,
+      "false",
+      null,
+      "true",
+    ])
   })
 
   it("押せる行はキーボードで辿り着ける（tabindex を持つ）", () => {

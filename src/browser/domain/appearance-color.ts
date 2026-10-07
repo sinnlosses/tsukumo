@@ -26,7 +26,7 @@ export const DEFAULT_APPEARANCE_COLOR_OVERRIDE: AppearanceColorOverride = {
 }
 
 // `ground` と `ink` の組が本文を読める下限。WCAG 2.1 SC 1.4.3（AA、通常テキスト）と同じ 4.5:1 を採る。
-export const MIN_CONTRAST = 4.5
+const MIN_CONTRAST = 4.5
 
 const STORAGE_KEY = "tsukumo-appearance-color:v1"
 const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i
@@ -149,7 +149,7 @@ export function changeAppearanceColor(
  * 定義の側の下限（`MIN_BACKGROUND_VEIL`）から 0.01 ずつ上げ、両端とも満たす最初の値を返す。
  * `ground` と `ink` の組は境界が 4.5 以上に保っているので、覆いが不透明になる端（`MAX_BACKGROUND_VEIL`）まで上げれば必ず満たせる（引き上げが行き止まらない）。
  */
-export function backgroundVeilFloor(ground: string, ink: string): number {
+function backgroundVeilFloor(ground: string, ink: string): number {
   const inkLuminance = relativeLuminance(ink)
   for (let step = MIN_BACKGROUND_VEIL * VEIL_STEPS; step < VEIL_STEPS; step += 1) {
     const veil = step / VEIL_STEPS

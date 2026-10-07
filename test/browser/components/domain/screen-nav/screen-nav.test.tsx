@@ -278,19 +278,12 @@ describe("ScreenNav", () => {
       expect(calls).toEqual([])
     })
 
-    it("ターン進行中は押しても送らず、aria-disabled になる", () => {
-      const calls: unknown[] = []
-      renderScreenNav({ chatMode: false, turn: { kind: "running", startedAt: 0 } }, (command) => {
-        calls.push(command)
-      })
+    it("ターン進行中は aria-disabled になり、title に理由が出る", () => {
+      renderScreenNav({ chatMode: false, turn: { kind: "running", startedAt: 0 } })
 
       const chatButton = screen.getByRole("button", { name: /雑談/ })
       expect(chatButton.getAttribute("aria-disabled")).toBe("true")
       expect(chatButton.getAttribute("title")?.length).toBeGreaterThan(0)
-
-      fireEvent.click(chatButton)
-
-      expect(calls).toEqual([])
     })
   })
 

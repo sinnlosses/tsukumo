@@ -115,7 +115,7 @@ describe("Composer", () => {
     expect(textArea().value).toBe("架空の依頼")
   })
 
-  it("(6) 候補が出ている間は Ctrl+N / Ctrl+P で選択が上下に動く", () => {
+  it("(6) 候補が出ている間は ↓・Ctrl+N で次へ、↑・Ctrl+P で前へ回る。Meta 併用の Ctrl+N は見ない", () => {
     renderComposer({
       slashCommands: ["alpha", "beta"],
       commandDescriptions: [
@@ -139,6 +139,16 @@ describe("Composer", () => {
     const backward = fireEvent.keyDown(textArea(), { key: "p", ctrlKey: true })
     expect(backward).toBe(false)
     expect(selected()).toBe("/alpha")
+
+    expect(fireEvent.keyDown(textArea(), { key: "ArrowDown" })).toBe(false)
+    expect(selected()).toBe("/beta")
+    fireEvent.keyDown(textArea(), { key: "n", ctrlKey: true })
+    expect(selected()).toBe("/alpha")
+    fireEvent.keyDown(textArea(), { key: "ArrowUp" })
+    expect(selected()).toBe("/beta")
+
+    expect(fireEvent.keyDown(textArea(), { key: "n", ctrlKey: true, metaKey: true })).toBe(true)
+    expect(selected()).toBe("/beta")
   })
 
   it("候補が出ていないときは Ctrl+N / Ctrl+P は何もしない（preventDefault も呼ばない）", () => {

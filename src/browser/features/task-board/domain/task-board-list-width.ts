@@ -3,8 +3,8 @@
 
 // 仕切りをどちらかの端まで詰めて操作不能にしないための可動域。
 // 一覧の最小幅と詳細の最小幅は、CSS の `.task-board-list-column` の `clamp` と揃える。
-export const TASK_BOARD_LIST_WIDTH_MIN_PX = 300
-export const TASK_BOARD_LIST_WIDTH_MAX_PX = 760
+const TASK_BOARD_LIST_WIDTH_MIN_PX = 300
+const TASK_BOARD_LIST_WIDTH_MAX_PX = 760
 const DETAIL_MIN_PX = 360
 
 const STORAGE_KEY = "tsukumo-task-board-list-width:v1"

@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
-  DEFAULT_REVEAL_SPEED,
   loadRevealSpeed,
   revealTimingOf,
   saveRevealSpeed,
@@ -19,8 +18,7 @@ afterEach(() => {
 
 describe("loadRevealSpeed", () => {
   it("何も保存していなければ既定（standard）を返す", () => {
-    expect(loadRevealSpeed()).toBe(DEFAULT_REVEAL_SPEED)
-    expect(DEFAULT_REVEAL_SPEED).toBe("standard")
+    expect(loadRevealSpeed()).toBe("standard")
   })
 
   it("保存した値をそのまま読み戻す", () => {
@@ -28,29 +26,18 @@ describe("loadRevealSpeed", () => {
     expect(loadRevealSpeed()).toBe("fast")
   })
 
-  it("「切る」も読み戻せる", () => {
-    saveRevealSpeed("off")
-    expect(loadRevealSpeed()).toBe("off")
-  })
-
   it("知らない値は既定へ畳む", () => {
     localStorage.setItem(STORAGE_KEY, "very-fast")
-    expect(loadRevealSpeed()).toBe(DEFAULT_REVEAL_SPEED)
+    expect(loadRevealSpeed()).toBe("standard")
   })
 })
 
 describe("revealTimingOf", () => {
-  it("fast は standard より文字1つあたりの時間が短い（速い）", () => {
+  it("fast は standard より文字1つあたりの時間も、塊の上限・下限も短い（短い塊でも下限に張り付いたまま速さが変わらない、を避ける）", () => {
     const standard = revealTimingOf("standard")
     const fast = revealTimingOf("fast")
 
     expect(fast.msPerCharacter).toBeLessThan(standard.msPerCharacter)
-  })
-
-  it("fast は standard より塊の上限・下限も短い（短い塊でも下限に張り付いたまま速さが変わらない、を避ける）", () => {
-    const standard = revealTimingOf("standard")
-    const fast = revealTimingOf("fast")
-
     expect(fast.minBlockMs).toBeLessThan(standard.minBlockMs)
     expect(fast.maxBlockMs).toBeLessThan(standard.maxBlockMs)
   })

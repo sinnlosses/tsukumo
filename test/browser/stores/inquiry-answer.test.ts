@@ -120,23 +120,16 @@ describe("useInquiryAnswer の許可要求", () => {
 })
 
 describe("useInquiryAnswer の選択肢", () => {
-  it("番号は並べ替えたあとの並びで 1 から振る", () => {
+  it("選択肢はラベルの辞書順に並べ（送られた順ではない）、番号は並べ替えたあとの並びで 1 から振る", () => {
     const result = renderModel([
-      questionPending([question({ options: [option("B案"), option("A案")] })]),
+      questionPending([question({ options: [option("C案"), option("A案"), option("B案")] })]),
     ])
 
     expect(asking(result.current).options.map((row) => [row.number, row.label])).toEqual([
       [1, "A案"],
       [2, "B案"],
+      [3, "C案"],
     ])
-  })
-
-  it("選択肢はラベルの辞書順に並べる（送られた順ではない）", () => {
-    const result = renderModel([
-      questionPending([question({ options: [option("C案"), option("A案"), option("B案")] })]),
-    ])
-
-    expect(asking(result.current).options.map((row) => row.label)).toEqual(["A案", "B案", "C案"])
   })
 
   it("自由入力（その他）の選択肢は札に出さない（自由入力は入力欄が担う）", () => {

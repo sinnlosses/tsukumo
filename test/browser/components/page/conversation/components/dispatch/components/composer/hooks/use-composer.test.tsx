@@ -107,23 +107,6 @@ describe("useComposer のプレースホルダ", () => {
 })
 
 describe("useComposer の `/` 補完", () => {
-  it("↓・Ctrl+N で次へ、↑・Ctrl+P で前へ回る。Meta 併用の Ctrl+N は見ない", () => {
-    const { result } = renderUseComposer(FIXTURE_COMMANDS)
-    type(result, "/cl")
-
-    expect(press(result, key("ArrowDown")).prevented()).toBe(true)
-    expect(result.current.selectedIndex).toBe(1)
-    press(result, key("n", { ctrl: true }))
-    expect(result.current.selectedIndex).toBe(0)
-    press(result, key("p", { ctrl: true }))
-    expect(result.current.selectedIndex).toBe(1)
-    press(result, key("ArrowUp"))
-    expect(result.current.selectedIndex).toBe(0)
-
-    expect(press(result, key("n", { ctrl: true, meta: true })).prevented()).toBe(false)
-    expect(result.current.selectedIndex).toBe(0)
-  })
-
   it("Tab で選んでいる候補を確定し、送らない", () => {
     const calls: unknown[] = []
     const { result } = renderUseComposer(FIXTURE_COMMANDS, (command) => calls.push(command))

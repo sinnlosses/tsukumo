@@ -24,18 +24,18 @@ export const DEFAULT_SPLIT: Split = {
 }
 
 // 仕切りをどちらかの端まで詰めて操作不能にしないための可動域。
-export const MIN_PERCENT = 15
-export const MAX_PERCENT = 85
+const MIN_PERCENT = 15
+const MAX_PERCENT = 85
 
 const STORAGE_KEY = "tsukumo-layout-split:v1"
-
-export function clampPercent(value: number): number {
-  return Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value))
-}
 
 /** `LayoutResizer` の `toValue` にそのまま渡す。比率（0〜1）を可動域つきの % にする。 */
 export function percentFromRatio(ratio: number): number {
   return clampPercent(ratio * 100)
+}
+
+function clampPercent(value: number): number {
+  return Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value))
 }
 
 function isValidPercent(value: unknown): value is number {

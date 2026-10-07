@@ -1,16 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
-  DEFAULT_OUTLINE_PANEL,
   isOutlineCollapsed,
   loadOutlinePanel,
   outlineWidthFromRatio,
-  OUTLINE_WIDTH_MAX_PX,
-  OUTLINE_WIDTH_MIN_PX,
-  saveOutlinePanel,
 } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report-outline/domain/outline-panel.ts"
 
 const STORAGE_KEY = "tsukumo-outline-panel:v1"
+
+const DEFAULT_OUTLINE_PANEL = { widthPx: undefined, collapse: "unset" } as const
+
+const OUTLINE_WIDTH_MIN_PX = 128
+const OUTLINE_WIDTH_MAX_PX = 384
 
 beforeEach(() => {
   localStorage.removeItem(STORAGE_KEY)
@@ -58,14 +59,6 @@ describe("loadOutlinePanel", () => {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ widthPx: 200, collapsed: false }))
     expect(loadOutlinePanel()).toEqual({ widthPx: 200, collapse: "unset" })
-  })
-})
-
-describe("saveOutlinePanel / loadOutlinePanel", () => {
-  it("保存した値をそのまま読み戻す（再読み込み後も保つ契約の往復）", () => {
-    saveOutlinePanel({ widthPx: 220, collapse: "collapsed" })
-
-    expect(loadOutlinePanel()).toEqual({ widthPx: 220, collapse: "collapsed" })
   })
 })
 

@@ -63,7 +63,7 @@ const SECTIONS_START_SELECTOR = ".report-sections-start"
  * 筆で書く対象の重み（文字数。図は {@link FIGURE_WEIGHT}）の合計がこれに満たないレポートは、演出せずに出す。
  * 速さの設定には左右されない。
  */
-export const SHORT_REPORT_WEIGHT = 200
+const SHORT_REPORT_WEIGHT = 200
 
 /** 節と節の境目の印（`SECTION_BREAK_MARKDOWN` と同じ class 名）。 */
 const SECTION_BREAK_SELECTOR = ".report-section-break"

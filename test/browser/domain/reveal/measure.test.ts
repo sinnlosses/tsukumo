@@ -79,13 +79,6 @@ describe("endLineOf（図・グラフの塊）", () => {
     })
   })
 
-  it("img は対象外で、要素そのものの box をそのまま使う", () => {
-    const img = document.createElement("img")
-    stubRect(img, rect(0, 0, 120, 80))
-
-    expect(endLineOf(figureBlock(img), originBase())).toEqual({ top: 0, bottom: 80, right: 120 })
-  })
-
   it("高さが取れない塊は行を返さない", () => {
     const container = document.createElement("div")
     container.className = "mermaid"

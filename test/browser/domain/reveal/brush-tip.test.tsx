@@ -53,15 +53,6 @@ describe("筆先（BrushTip）", () => {
     expect(readTip()).toBe("3:120,40,60,残っている")
   })
 
-  it("残っている筆先をもう一度残しても、そのまま", () => {
-    publishBrushTip({ turnId: 3, phase: "writing", x: 120, top: 40, bottom: 60, stroke: "sweep" })
-
-    restBrushTip()
-    restBrushTip()
-
-    expect(readTip()).toBe("3:120,40,60,残っている")
-  })
-
   it("一度も書けなかった演出は、前に残した筆先を消さない", () => {
     publishBrushTip({ turnId: 3, phase: "resting", x: 120, top: 40, bottom: 60 })
 

@@ -181,16 +181,7 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
     expect(paragraph().style.clipPath).toBe("")
   })
 
-  it("打ち切ると、届いていない印も全部外れる", () => {
-    renderProbe(true)
-
-    fireEvent.keyDown(window)
-
-    expect(paragraph().hasAttribute("data-reveal")).toBe(false)
-    expect(figure().hasAttribute("data-reveal")).toBe(false)
-  })
-
-  it("キー入力で即座に全部出す", () => {
+  it("キー入力で即座に全部出し、届いていない印も全部外れる", () => {
     renderProbe(true)
 
     fireEvent.keyDown(window)
@@ -198,6 +189,8 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
     expect(root().hasAttribute("data-revealing")).toBe(false)
     expect(paragraph().style.clipPath).toBe("")
     expect(figure().style.opacity).toBe("")
+    expect(paragraph().hasAttribute("data-reveal")).toBe(false)
+    expect(figure().hasAttribute("data-reveal")).toBe(false)
   })
 
   it("クリック（ポインタを下ろした時点）で即座に全部出す", () => {

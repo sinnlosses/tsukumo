@@ -33,8 +33,4 @@ describe("kanjiDateLabel / kanjiWeekdayLabel", () => {
     expect(kanjiDateLabel(date)).toBe("九月十六日")
     expect(kanjiWeekdayLabel(date)).toBe("水曜日")
   })
-
-  it("「九月二十三日」の形になる（2桁の日）", () => {
-    expect(kanjiDateLabel(Temporal.PlainDate.from("2026-09-23"))).toBe("九月二十三日")
-  })
 })

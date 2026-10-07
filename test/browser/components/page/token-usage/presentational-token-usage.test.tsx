@@ -208,7 +208,7 @@ describe("PresentationalTokenUsage", () => {
     ])
   })
 
-  it("期間は「今日 / 7日 / 30日」の3つで、選んでいるものが押された状態になる", () => {
+  it("渡された期間の札を並べ、pressed の札だけが押された状態になる", () => {
     const { getByText } = renderScreen({ days: 7 })
 
     expect(getByText("今日").getAttribute("aria-pressed")).toBe("false")

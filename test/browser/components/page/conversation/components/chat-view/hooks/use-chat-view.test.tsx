@@ -115,28 +115,6 @@ describe("useChatView のセリフを遡る", () => {
     expect(result.current.portraitUrl).toBe("/character/proud.png")
   })
 
-  it("押すとその行へ留まり、同じ行をもう一度押すと最新へ戻る", () => {
-    const { result } = renderUseChatView({
-      records: RECORDS,
-      character: FIXTURE_CHARACTER,
-      speechExpression: "proud",
-    })
-
-    act(() => {
-      speechRows(result.current.rows)[0]?.onToggle()
-    })
-    expect(speechRows(result.current.rows).map((row) => row.selected)).toEqual([true, false])
-    expect(result.current.expression).toBe("default")
-    // alt は出ている絵をそのまま説明する。
-    expect(result.current.altText).toBe("架空の精霊（通常）")
-
-    act(() => {
-      speechRows(result.current.rows)[0]?.onToggle()
-    })
-    expect(speechRows(result.current.rows).map((row) => row.selected)).toEqual([false, true])
-    expect(result.current.expression).toBe("proud")
-  })
-
   it("新しいセリフが来ると留めた選択は失効する", () => {
     const { result } = renderUseChatView({
       records: RECORDS,

@@ -2,14 +2,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
   applyAppearanceColorOverride,
-  backgroundVeilFloor,
   changeAppearanceColor,
   DEFAULT_APPEARANCE_COLOR_OVERRIDE,
   loadAppearanceColorOverride,
   readCurrentColor,
   saveAppearanceColorOverride,
   type AppearanceColorOverride,
-  MIN_CONTRAST,
 } from "../../../src/browser/domain/appearance-color.ts"
 import {
   MAX_BACKGROUND_VEIL,
@@ -17,6 +15,8 @@ import {
 } from "../../../src/shared/character-pack/character-background.ts"
 
 const STORAGE_KEY = "tsukumo-appearance-color:v1"
+
+const MIN_CONTRAST = 4.5
 
 /**
  * 覆いの下に1色の画像があるときの地と、字のコントラスト比（テスト側で独立に計算する。
@@ -103,38 +103,39 @@ describe("saveAppearanceColorOverride / applyAppearanceColorOverride", () => {
   })
 })
 
-describe("backgroundVeilFloor", () => {
-  it("既定の3色では下限（0.7）のまま引き上げない", () => {
-    expect(backgroundVeilFloor("#191720", "#e8e3ea")).toBe(MIN_BACKGROUND_VEIL)
+describe("applyAppearanceColorOverride が差す背景の覆いの下限", () => {
+  it("既定の3色では下限（0.7）のまま引き上げず、documentElement に差す（背景を敷く CSS が読む）", () => {
+    expect(appliedVeilFloor(DEFAULT_APPEARANCE_COLOR_OVERRIDE)).toBe(MIN_BACKGROUND_VEIL)
   })
 
   it("地と字が下限ぎりぎりの組では、覆いを不透明まで引き上げる（行き止まらない）", () => {
     // #767676 と #ffffff の比はちょうど 4.5 前後。覆いを薄くするとどちらの端でも割るので、
     // 上限まで上がる。
-    expect(backgroundVeilFloor("#767676", "#ffffff")).toBe(MAX_BACKGROUND_VEIL)
+    expect(appliedVeilFloor({ ground: "#767676", surface: undefined, ink: "#ffffff" })).toBe(
+      MAX_BACKGROUND_VEIL,
+    )
   })
 
   it("引き上げた覆いは、画像が真っ白でも真っ黒でも 4.5 を満たす", () => {
     const ground = "#3a3a3a"
     const ink = "#ffffff"
-    const veil = backgroundVeilFloor(ground, ink)
+    const veil = appliedVeilFloor({ ground, surface: undefined, ink })
 
     expect(veil).toBeGreaterThanOrEqual(MIN_BACKGROUND_VEIL)
     for (const image of ["#ffffff", "#000000"]) {
       expect(contrastOfVeiled(ground, image, veil, ink)).toBeGreaterThanOrEqual(MIN_CONTRAST)
     }
   })
-
-  it("documentElement に下限を差す（背景を敷く CSS が読む）", () => {
-    applyAppearanceColorOverride(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
-
-    expect(
-      getComputedStyle(document.documentElement)
-        .getPropertyValue("--character-background-veil-floor")
-        .trim(),
-    ).toBe(String(MIN_BACKGROUND_VEIL))
-  })
 })
+
+function appliedVeilFloor(override: AppearanceColorOverride): number {
+  applyAppearanceColorOverride(override)
+  return Number(
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--character-background-veil-floor")
+      .trim(),
+  )
+}
 
 describe("changeAppearanceColor", () => {
   it("読める組み合わせはそのまま受け取る", () => {

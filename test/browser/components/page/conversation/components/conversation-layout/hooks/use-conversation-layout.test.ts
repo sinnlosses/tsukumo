@@ -1,9 +1,8 @@
-import { act, renderHook } from "@testing-library/react"
+import { renderHook } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
   DEFAULT_SPLIT,
-  loadSplit,
   saveSplit,
 } from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/domain/split.ts"
 import { useConversationLayout } from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/hooks/use-conversation-layout.ts"
@@ -33,17 +32,6 @@ describe("useConversationLayout", () => {
     expect(result.current.gridStyle["--layout-row-top"]).toBe("40fr")
     expect(result.current.rowTopStyle["--layout-top-left"]).toBe("20fr")
     expect(result.current.rowBottomStyle["--layout-bottom-left"]).toBe("70fr")
-  })
-
-  it("畳んでいないとき、onRowTopCommit は rowTop を更新し collapsedRowTop は動かさない", () => {
-    saveSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })
-    const { result } = renderHook(() => useConversationLayout(false))
-
-    act(() => {
-      result.current.onRowTopCommit(45)
-    })
-
-    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, rowTop: 45, collapsedRowTop: 80 })
   })
 
   it("畳んでいて雑談用の比率がまだ無いときは、gridStyle が仕事の比率で組み立つ", () => {

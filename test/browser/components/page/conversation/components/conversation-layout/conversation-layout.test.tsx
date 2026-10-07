@@ -135,8 +135,8 @@ describe("ConversationLayout", () => {
     expect(rowTop.style.getPropertyValue("--layout-top-left")).toBe("40fr")
   })
 
-  it("上下の仕切りは行の比率だけを動かし、他の2本の位置を巻き込まない", () => {
-    saveSplit({ ...DEFAULT_SPLIT, rowTop: 60, topLeft: 30, bottomLeft: 40 })
+  it("上下の仕切りは行の比率だけを動かし、他の2本の位置と雑談用の比率を巻き込まない", () => {
+    saveSplit({ ...DEFAULT_SPLIT, rowTop: 60, topLeft: 30, bottomLeft: 40, collapsedRowTop: 80 })
     renderLayout()
     const grid = requireElement(rowTopElement().parentElement, "grid")
     stubBoundingRect(grid, 1000, 500)
@@ -147,7 +147,13 @@ describe("ConversationLayout", () => {
     fireEvent.pointerUp(resizer, { clientX: 0, clientY: 100 })
 
     expect(grid.style.getPropertyValue("--layout-row-top")).toBe("20fr")
-    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, rowTop: 20, topLeft: 30, bottomLeft: 40 })
+    expect(loadSplit()).toEqual({
+      ...DEFAULT_SPLIT,
+      rowTop: 20,
+      topLeft: 30,
+      bottomLeft: 40,
+      collapsedRowTop: 80,
+    })
   })
 
   // 狭い画面でどちらの領域を出すかは CSS（@media）が data-narrow-pane を見て決めるので、

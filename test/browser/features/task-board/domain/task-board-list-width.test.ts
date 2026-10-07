@@ -3,12 +3,13 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import {
   loadTaskBoardListWidth,
   saveTaskBoardListWidth,
-  TASK_BOARD_LIST_WIDTH_MAX_PX,
-  TASK_BOARD_LIST_WIDTH_MIN_PX,
   taskBoardListWidthFromRatio,
 } from "../../../../../src/browser/features/task-board/domain/task-board-list-width.ts"
 
 const STORAGE_KEY = "tsukumo-task-board-list-width:v1"
+
+const TASK_BOARD_LIST_WIDTH_MIN_PX = 300
+const TASK_BOARD_LIST_WIDTH_MAX_PX = 760
 
 beforeEach(() => {
   localStorage.removeItem(STORAGE_KEY)

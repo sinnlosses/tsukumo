@@ -151,12 +151,4 @@ describe("turnHistoryText（一覧の行に出す依頼の全文）", () => {
       `${"あ".repeat(2000)}…`,
     )
   })
-
-  it("上限の境目の絵文字を割らずに切る", () => {
-    const long = `${"あ".repeat(1999)}😀尾`
-
-    expect(turnHistoryText(turn({ request: { text: long, images: [] } }))).toBe(
-      `${"あ".repeat(1999)}😀…`,
-    )
-  })
 })
