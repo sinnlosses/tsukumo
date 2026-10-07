@@ -14,7 +14,12 @@ import type { BackgroundTask } from "../../../../shared/session-driver/backgroun
 import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
 import type { ReportDrafting } from "../../../../shared/session/session-state.ts"
 import type { TurnStep, TurnStepList } from "../../../../shared/session/turn-step.ts"
-import { currentPhaseOf, phaseLabel } from "../../../../shared/session/work-plan.ts"
+import {
+  currentPhaseOf,
+  phaseCount,
+  phaseLabel,
+  plannedPhasesOf,
+} from "../../../../shared/session/work-plan.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
 import { toolInputText } from "../../../domain/tool-summary.ts"
 import { usePopover } from "../../../hooks/use-popover.ts"
@@ -308,7 +313,7 @@ function toPhaseView(turnStepList: TurnStepList, state: CurrentWorkState): Curre
     label:
       phase.kind === "phase"
         ? phaseLabel(phase)
-        : `${String(plan.phases.length)}/${String(plan.phases.length)} 済`,
+        : `${String(phaseCount(plan.phases))}/${String(phaseCount(plan.phases))} 済`,
   }
 }
 
@@ -316,19 +321,15 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Curren
   if (turnStepList.kind !== "turn" || turnStepList.plan.kind === "none") {
     return { kind: "none" }
   }
-  const { phases, current } = turnStepList.plan
   return {
     kind: "planned",
     headingLabel: turnInProgress ? "この依頼の段取り" : "前の依頼の段取り",
-    phases: phases.map((name, index) => {
-      const state = index < current ? "done" : index === current ? "current" : "upcoming"
-      return {
-        key: String(index),
-        mark: state === "done" ? "済" : state === "current" ? "今" : String(index + 1),
-        name,
-        state,
-      }
-    }),
+    phases: plannedPhasesOf(turnStepList.plan).map(({ index, name, state }) => ({
+      key: String(index),
+      mark: state === "done" ? "済" : state === "current" ? "今" : String(index + 1),
+      name,
+      state,
+    })),
   }
 }
 

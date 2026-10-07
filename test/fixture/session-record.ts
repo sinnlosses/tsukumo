@@ -70,6 +70,7 @@ export function workPlanRecord(
     kind: "work-plan",
     phases: ["架空の段A", "架空の段B"],
     current: 0,
+    finishedInGroup: [],
     phaseSummary: "",
     time: STAMPED,
     ...overrides,

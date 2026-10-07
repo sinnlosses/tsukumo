@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { phaseTimesMarkdown } from "../../../src/shared/report/report-phase-time.ts"
 
 const known = (label: string, milliseconds: number) => ({
+  kind: "phase" as const,
   label,
   duration: { kind: "known", milliseconds } as const,
 })
@@ -26,7 +27,7 @@ describe("phaseTimesMarkdown", () => {
   it("測れない段は棒を出さず「不明」と書き、比は測れた段だけで決める", () => {
     const html = phaseTimesMarkdown([
       known("1/2 架空の段A", 5_000),
-      { label: "2/2 架空の段B", duration: { kind: "unknown" } },
+      { kind: "phase", label: "2/2 架空の段B", duration: { kind: "unknown" } },
     ])
 
     expect(html.match(/phase-time-bar/g)).toHaveLength(1)
@@ -47,6 +48,28 @@ describe("phaseTimesMarkdown", () => {
     expect(html.match(/phase-time-bar/g)).toHaveLength(2)
     expect(html).toContain('style="width: 0%"')
     expect(html).not.toContain("不明")
+  })
+
+  it("まとまりは壁時計の見出しの行と中の段の行を1つの包みに入れ、比の基準に壁時計も入れる", () => {
+    const html = phaseTimesMarkdown([
+      known("1/3 架空の段A", 5_000),
+      {
+        kind: "parallel",
+        label: "並列 2·3",
+        wall: { kind: "known", milliseconds: 20_000 },
+        phases: [
+          { label: "2/3 架空の段B", duration: { kind: "known", milliseconds: 10_000 } },
+          { label: "3/3 架空の段C", duration: { kind: "known", milliseconds: 20_000 } },
+        ],
+      },
+    ])
+
+    expect(html).toContain(
+      '<div class="phase-time-group" role="rowgroup"><div class="phase-time phase-time-group-head" role="row"><span class="phase-time-label">並列 2·3</span>',
+    )
+    expect(html.match(/phase-time-bar/g)).toHaveLength(4)
+    expect(html).toContain('style="width: 25%"')
+    expect(html).toContain('style="width: 50%"')
   })
 
   it("段の名前の HTML をエスケープする", () => {

@@ -16,14 +16,12 @@ import {
   type RefObject,
 } from "react"
 import { zip } from "remeda"
-import { useShallow } from "zustand/react/shallow"
 
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
 import type { MainViewTurn } from "../../../../../../shared/session/main-view.ts"
-import type { SessionState } from "../../../../../../shared/session/session-state.ts"
 import { turnResultsOf } from "../../../../../../shared/session/turn-result.ts"
 import { currentPhaseOf, type WorkPhase } from "../../../../../../shared/session/work-plan.ts"
-import { currentTurnStepsOf } from "../../../../../stores/current-turn-steps.ts"
+import { useCurrentTurnSteps } from "../../../../../stores/current-turn-steps.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import {
   type MainViewContent,
@@ -63,7 +61,9 @@ export function MainView(): ReactElement {
   const content = useMainViewContent((state) => state.content)
   const requestInquiryJump = useInquiryJump((state) => state.requestJump)
   const moment = useSession((session) => conversationMoment(session.state))
-  const phase = useSession(useShallow((session) => newestPhaseOf(session.state)))
+  const turnStepList = useCurrentTurnSteps()
+  const phase: WorkPhase =
+    turnStepList.kind === "turn" ? currentPhaseOf(turnStepList.plan) : { kind: "none" }
   const rootRef = useRef<HTMLDivElement>(null)
   const carriedFocusRef = useRef(false)
 
@@ -261,10 +261,4 @@ function shownKeyOf(view: ShownView): string {
     return NO_SHOWN_KEY
   }
   return `${view.kind}:${String(view.card.turn.id)}`
-}
-
-/** いちばん新しい依頼の今の段。 */
-function newestPhaseOf(state: SessionState): WorkPhase {
-  const steps = currentTurnStepsOf(state.records, state.endedReason !== undefined)
-  return steps.kind === "turn" ? currentPhaseOf(steps.plan) : { kind: "none" }
 }

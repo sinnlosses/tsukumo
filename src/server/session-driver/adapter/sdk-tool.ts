@@ -21,6 +21,7 @@ import {
 import { parseReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
+  MIN_PHASE_GROUP_SIZE,
   MIN_WORK_PLAN_PHASES,
   parseWorkPlanClosing,
   WORK_PLAN_CLOSINGS,
@@ -70,6 +71,7 @@ import type { WorkPlanReview } from "../core/work-plan-review.ts"
 import {
   answerWorkPlanCall,
   WORK_PLAN_CURRENT_DESCRIPTION,
+  WORK_PLAN_FINISHED_IN_GROUP_DESCRIPTION,
   WORK_PLAN_PHASE_SUMMARY_DESCRIPTION,
   WORK_PLAN_PHASES_DESCRIPTION,
   WORK_PLAN_TOOL_DESCRIPTION,
@@ -268,10 +270,19 @@ function workPlanTool(review: WorkPlanReview) {
     WORK_PLAN_TOOL_DESCRIPTION,
     {
       phases: z
-        .array(z.string().trim().min(1))
+        .array(
+          z.union([
+            z.string().trim().min(1),
+            z.array(z.string().trim().min(1)).min(MIN_PHASE_GROUP_SIZE),
+          ]),
+        )
         .min(MIN_WORK_PLAN_PHASES)
         .describe(WORK_PLAN_PHASES_DESCRIPTION),
       current: z.number().int().min(0).describe(WORK_PLAN_CURRENT_DESCRIPTION),
+      finishedInGroup: z
+        .array(z.string())
+        .optional()
+        .describe(WORK_PLAN_FINISHED_IN_GROUP_DESCRIPTION),
       phaseSummary: z.string().optional().describe(WORK_PLAN_PHASE_SUMMARY_DESCRIPTION),
     },
     async (input) => {

@@ -15,6 +15,7 @@ import {
   REPORT_TOOL_FULL_NAME,
   SPEAK_TOOL_FULL_NAME,
   userMessage,
+  WORK_PLAN_TOOL_FULL_NAME,
 } from "../../../fixture/sdk-message.ts"
 
 // 本物の claude も起こさない
@@ -155,6 +156,32 @@ describe("toRestoredEvents", () => {
     const reports = eventsOf(messages).filter((event) => event.kind === "report")
 
     expect(reports).toEqual([reportEvent({ toolUseId: "r-2", conclusion: "架空の二" })])
+  })
+
+  it("finishedInGroup を持たない前の work_plan の呼び出しも、空の finishedInGroup の段取りとして組み直す", () => {
+    const workPlanCall = (id: string, input: unknown) => [
+      assistantMessage([{ type: "tool_use", id, name: WORK_PLAN_TOOL_FULL_NAME, input }]),
+      userMessage([{ type: "tool_result", tool_use_id: id, content: "ok" }]),
+    ]
+    const phases = ["架空の段A", "架空の段B"]
+    const messages = [
+      userMessage("架空の依頼"),
+      ...workPlanCall("w-1", { phases, current: 0 }),
+      ...workPlanCall("w-2", { phases, current: 1, phaseSummary: "架空のまとめ。" }),
+    ]
+
+    const plans = eventsOf(messages).filter((event) => event.kind === "work-plan")
+
+    expect(plans).toEqual([
+      { kind: "work-plan", phases, current: 0, finishedInGroup: [], phaseSummary: "" },
+      {
+        kind: "work-plan",
+        phases,
+        current: 1,
+        finishedInGroup: [],
+        phaseSummary: "架空のまとめ。",
+      },
+    ])
   })
 
   it("差し戻された speak の呼び出しは落とし、通ったセリフだけを結果の直前に残す", () => {

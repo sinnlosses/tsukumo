@@ -924,6 +924,13 @@
   grid-column: 1 / -1;
   font-family: inherit;
 }
+/* 段のまとまりの中の段は名前だけを字下げする。棒の台は見出しの行と同じ左端から描く。 */
+.detail-block
+  .report-phase-time-group
+  .report-phase-time:not(.report-phase-time-group-head)
+  .report-phase-time-label {
+  padding-left: 12px;
+}
 /* `task` のあるレポートの結論の一文。見出し（`report-head.module.css`）のすぐ下に描く。 */
 .detail-block .report-conclusion {
   font-size: var(--font-subheading);

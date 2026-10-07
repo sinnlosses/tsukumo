@@ -1,5 +1,7 @@
 // `<WorkStrip>` のロジック。いちばん新しい依頼の段取り・走っている手順・答え待ち・再試行を、帯に出す形へ畳む。
 
+import { groupBy } from "remeda"
+
 import type { ApiTrouble } from "../../../../../../../../../shared/session-driver/api-trouble.ts"
 import type { BackgroundTask } from "../../../../../../../../../shared/session-driver/background-task.ts"
 import type {
@@ -18,7 +20,15 @@ import {
   type TurnResult,
 } from "../../../../../../../../../shared/session/turn-result.ts"
 import type { TurnStep, TurnStepList } from "../../../../../../../../../shared/session/turn-step.ts"
-import type { LatestWorkPlan } from "../../../../../../../../../shared/session/work-plan.ts"
+import {
+  currentPhaseOf,
+  finishedPhaseCount,
+  type LatestWorkPlan,
+  phaseCount,
+  phasePosition,
+  type PlannedPhase,
+  plannedPhasesOf,
+} from "../../../../../../../../../shared/session/work-plan.ts"
 import { formatElapsed } from "../../../../../../../../../shared/utils/elapsed-time.ts"
 import { summarizeToolInput } from "../../../../../../../../domain/tool-summary.ts"
 import {
@@ -53,6 +63,17 @@ export type WorkStripPhase = {
   readonly label: string
   readonly state: WorkStripPhaseState
 }
+
+/** まとまりの `state` は囲みの次の線の色だけに使い、中の段が全部済めば `done`、ほかは `upcoming`。 */
+export type WorkStripSlot =
+  | { readonly kind: "phase"; readonly phase: WorkStripPhase }
+  | {
+      readonly kind: "parallel"
+      readonly key: string
+      readonly label: string
+      readonly state: WorkStripPhaseState
+      readonly phases: readonly WorkStripPhase[]
+    }
 
 /** 2行目の再試行の知らせ。 */
 export type WorkStripRetry =
@@ -95,7 +116,7 @@ export type WorkStripModel =
   | {
       readonly kind: "working"
       readonly result: WorkStripResult
-      readonly phases: readonly WorkStripPhase[]
+      readonly phases: readonly WorkStripSlot[]
       readonly headLabel: string
       readonly sideLabel: string
       readonly activity: WorkStripActivity
@@ -104,7 +125,7 @@ export type WorkStripModel =
   | {
       readonly kind: "finished"
       readonly result: WorkStripResult
-      readonly phases: readonly WorkStripPhase[]
+      readonly phases: readonly WorkStripSlot[]
       readonly headLabel: string
       readonly sideLabel: string
       readonly steps: WorkStripSteps
@@ -145,7 +166,9 @@ export function useWorkStrip(): WorkStripModel {
     return { kind: "none" }
   }
 
-  const { phases, current } = plan.kind === "planned" ? plan : { phases: [], current: 0 }
+  const planned = plan.kind === "planned" ? plannedPhasesOf(plan) : []
+  const nowPhase = currentPhaseOf(plan)
+  const count = String(planned.length)
   const { exchange } = content
   const firstPending = pending[0]
   const list: WorkStripSteps["list"] =
@@ -161,21 +184,20 @@ export function useWorkStrip(): WorkStripModel {
     onToggle: () => toggle(exchange),
     groups: currentWorkStepGroups(turnStepList.steps),
   }
-  const stripPhases = phases.map((name, index) =>
-    toPhase(name, index, phaseState(index, current, working && firstPending !== undefined)),
-  )
+  const stripPhases = slotsOf(planned, working && firstPending !== undefined)
 
   if (!working) {
+    const finishedCount = plan.kind === "planned" ? finishedPhaseCount(plan) : 0
     return {
       kind: "finished",
       result,
       phases: stripPhases,
       headLabel:
-        phases.length === 0
+        planned.length === 0
           ? ""
-          : current >= phases.length
-            ? `${String(phases.length)}段すべて済み`
-            : `${String(phases.length)}段のうち${String(current)}段済み`,
+          : finishedCount >= planned.length
+            ? `${count}段すべて済み`
+            : `${count}段のうち${String(finishedCount)}段済み`,
       sideLabel: elapsedLabel,
       steps,
     }
@@ -186,13 +208,15 @@ export function useWorkStrip(): WorkStripModel {
     phases: stripPhases,
     result,
     headLabel:
-      phases.length === 0
+      planned.length === 0
         ? UNPLANNED_HEAD
-        : (phases[current] ?? `${String(phases.length)}段すべて済み`),
+        : nowPhase.kind === "phase"
+          ? nowPhase.name
+          : `${count}段すべて済み`,
     sideLabel:
-      phases.length === 0
+      planned.length === 0
         ? elapsedLabel
-        : `${String(Math.min(current + 1, phases.length))}/${String(phases.length)} · ${elapsedLabel}`,
+        : `${nowPhase.kind === "phase" ? phasePosition(nowPhase) : `${count}/${count}`} · ${elapsedLabel}`,
     activity: activityOf({
       turnStepList,
       firstPending,
@@ -224,20 +248,30 @@ function stripResultOf(
   if (plan.kind !== "planned") {
     return undefined
   }
-  return plan.current < plan.phases.length ? "stopped" : "done"
+  return finishedPhaseCount(plan) < phaseCount(plan.phases) ? "stopped" : "done"
 }
 
-function phaseState(index: number, current: number, asking: boolean): WorkStripPhaseState {
-  if (index < current) {
-    return "done"
-  }
-  if (index === current) {
-    return asking ? "asking" : "current"
-  }
-  return "upcoming"
+function slotsOf(planned: readonly PlannedPhase[], asking: boolean): readonly WorkStripSlot[] {
+  const entries = Object.values(groupBy(planned, (phase) => phase.entry))
+  return entries.map((members): WorkStripSlot => {
+    const phases = members.map((phase) => toPhase(phase, asking))
+    const [first] = phases
+    if (phases.length === 1 && first !== undefined) {
+      return { kind: "phase", phase: first }
+    }
+    const numbers = members.map((phase) => String(phase.index + 1)).join("·")
+    return {
+      kind: "parallel",
+      key: `group-${String(members[0]?.entry ?? 0)}`,
+      label: `並列 ${numbers}`,
+      state: phases.every((phase) => phase.state === "done") ? "done" : "upcoming",
+      phases,
+    }
+  })
 }
 
-function toPhase(name: string, index: number, state: WorkStripPhaseState): WorkStripPhase {
+function toPhase({ index, name, state: planned }: PlannedPhase, asking: boolean): WorkStripPhase {
+  const state: WorkStripPhaseState = planned === "current" && asking ? "asking" : planned
   return {
     key: String(index),
     mark: state === "done" ? "✓" : state === "asking" ? "?" : String(index + 1),

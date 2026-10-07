@@ -326,7 +326,12 @@ describe("toSessionEvents", () => {
       {
         kind: "work-plan-called",
         toolUseId: "toolu_3",
-        plan: { phases: ["架空の段A", "架空の段B"], current: 1, phaseSummary: "架空のまとめ。" },
+        plan: {
+          phases: ["架空の段A", "架空の段B"],
+          current: 1,
+          finishedInGroup: [],
+          phaseSummary: "架空のまとめ。",
+        },
       },
     ])
   })

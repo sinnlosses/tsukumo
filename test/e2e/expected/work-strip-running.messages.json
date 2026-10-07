@@ -53,6 +53,7 @@
         "文書と検証を揃える"
       ],
       "current": 0,
+      "finishedInGroup": [],
       "phaseSummary": ""
     }
   },
@@ -90,6 +91,7 @@
         "文書と検証を揃える"
       ],
       "current": 1,
+      "finishedInGroup": [],
       "phaseSummary": "架空の数は1か所で数えていた。"
     }
   },

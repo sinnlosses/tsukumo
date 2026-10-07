@@ -14,6 +14,7 @@ import type {
   WorkStripActivity,
   WorkStripModel,
   WorkStripPhase,
+  WorkStripSlot,
   WorkStripSteps,
 } from "./hooks/use-work-strip.ts"
 import styles from "./work-strip.module.css"
@@ -90,22 +91,53 @@ function StepsList(props: {
   )
 }
 
-/** 段の丸を1本の線でつないだ並び。名前は `title` と読み上げで持ち、見えている名前は今の段の字だけ。 */
-function PhaseTrack(props: { readonly phases: readonly WorkStripPhase[] }): ReactElement {
+/**
+ * 段の丸を1本の線でつないだ並び。名前は `title` と読み上げで持ち、見えている名前は今の段の字だけ。
+ * 段のまとまりは中の段の丸を1つの囲みに並べ、囲みの中の丸どうしは線でつながない。
+ */
+function PhaseTrack(props: { readonly phases: readonly WorkStripSlot[] }): ReactElement {
   return (
     <ol className={styles["work-strip-track"]}>
-      {props.phases.map((phase) => (
-        <li
-          key={phase.key}
-          className={styles["work-strip-phase"]}
-          data-phase-state={phase.state}
-          aria-label={phase.label}
-          title={phase.label}
-        >
-          <span aria-hidden="true">{phase.mark}</span>
-        </li>
-      ))}
+      {props.phases.map((slot) =>
+        slot.kind === "phase" ? (
+          <PhaseDot
+            key={slot.phase.key}
+            phase={slot.phase}
+            className={clsx(styles["work-strip-slot"], styles["work-strip-phase"])}
+          />
+        ) : (
+          <li
+            key={slot.key}
+            className={styles["work-strip-slot"]}
+            data-phase-state={slot.state}
+            aria-label={slot.label}
+          >
+            <ol className={styles["work-strip-group"]}>
+              {slot.phases.map((phase) => (
+                <PhaseDot key={phase.key} phase={phase} className={styles["work-strip-phase"]} />
+              ))}
+            </ol>
+          </li>
+        ),
+      )}
     </ol>
+  )
+}
+
+function PhaseDot(props: {
+  readonly phase: WorkStripPhase
+  readonly className: string
+}): ReactElement {
+  const { phase } = props
+  return (
+    <li
+      className={props.className}
+      data-phase-state={phase.state}
+      aria-label={phase.label}
+      title={phase.label}
+    >
+      <span aria-hidden="true">{phase.mark}</span>
+    </li>
   )
 }
 

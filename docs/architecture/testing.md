@@ -450,6 +450,13 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 `report` を出したままで、吹き出しは空にならず前のセリフを保っている
 ことを確かめる（`docs/architecture/screen-design.md` 13.9「背景のタスク」）。
 
+**段のまとまり（`docs/architecture/display.md`「段取り」）の描き方を確かめるときは、疑似セッションの場面
+`work-strip-parallel`・`work-strip-parallel-ask`・`work-plan-parallel` を使う。** 前の2つは帯でまとまりの丸が
+1つの囲みに並び位置が「2·3/4」になること（お伺いでは囲みの中の丸がどれも「?」）、`work-plan-parallel` は
+まとまりの中の段を後ろの番号から済ませて閉じ、帯が全部 ✓ になることと、最終レポートの段ごとの時間に
+「並列 2·3」の壁時計の行と字下げした中の段の行が出ることを見る（`docs/architecture/screen-design.md`
+「進み具合の帯」「レポートの頭（合図の行）」）。
+
 **書き終わりの知らせ（`docs/architecture/screen-design.md` 13.10「書き終わりの知らせ」）を確かめるときは
 疑似セッションの場面 `diary-written`（`TSUKUMO_FAKE_SCENE=diary-written`）を使う。** `diary-requested`
 → `diary-drafting` → `diary-stage`（`write` → `pick`）→ `diary-written` と流れ、成果の画面

@@ -26,6 +26,7 @@ const plan: SessionEvent = {
   kind: "work-plan",
   phases: ["架空の段A", "架空の段B"],
   current: 0,
+  finishedInGroup: [],
   phaseSummary: "",
 }
 
@@ -93,10 +94,10 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(strip.kind === "working" && strip.activity.text).toBe(
       "お伺いが届いた · 許可: Bash  架空のコマンド · 答え待ち 7秒",
     )
-    expect(strip.kind === "working" && strip.phases.map((phase) => phase.state)).toEqual([
-      "asking",
-      "upcoming",
-    ])
+    expect(
+      strip.kind === "working" &&
+        strip.phases.map((slot) => (slot.kind === "phase" ? slot.phase.state : slot.state)),
+    ).toEqual(["asking", "upcoming"])
   })
 
   it("答え待ちと同じ id の手順が無くても、届いた時刻から秒を添える", () => {
@@ -140,6 +141,77 @@ describe("useWorkStrip（時刻に依るもの）", () => {
       kind: "finished",
       headLabel: "2段すべて済み",
       sideLabel: "所要 2分05秒",
+    })
+  })
+})
+
+describe("useWorkStrip（段のまとまり）", () => {
+  const groupedPlan = (current: number, finishedInGroup: readonly string[]): SessionEvent => ({
+    kind: "work-plan",
+    phases: ["架空の段A", ["架空の段B", "架空の段C"]],
+    current,
+    finishedInGroup,
+    phaseSummary: current > 0 || finishedInGroup.length > 0 ? "架空のまとめ。" : "",
+  })
+
+  it("まとまりは中の段の丸を1つにまとめ、今の段が2つなら頭の字と位置をつなぐ", () => {
+    const state = foldTimed([
+      [request, START],
+      [groupedPlan(1, []), START + 1_000],
+    ])
+
+    const strip = stripAt(state, START + 5_000)
+
+    expect(strip).toMatchObject({
+      kind: "working",
+      headLabel: "架空の段B・架空の段C",
+      sideLabel: "2·3/3 · 経過 5秒",
+    })
+    expect(strip.kind === "working" && strip.phases).toMatchObject([
+      { kind: "phase", phase: { mark: "✓", state: "done" } },
+      {
+        kind: "parallel",
+        label: "並列 2·3",
+        phases: [
+          { mark: "2", state: "current" },
+          { mark: "3", state: "current" },
+        ],
+      },
+    ])
+  })
+
+  it("後ろの段から済ませると、済んだ丸だけが ✓ になり、今の段は残った1つ", () => {
+    const state = foldTimed([
+      [request, START],
+      [groupedPlan(1, []), START + 1_000],
+      [groupedPlan(1, ["架空の段C"]), START + 2_000],
+    ])
+
+    const strip = stripAt(state, START + 5_000)
+
+    expect(strip).toMatchObject({ headLabel: "架空の段B", sideLabel: "2/3 · 経過 5秒" })
+    expect(strip.kind === "working" && strip.phases[1]).toMatchObject({
+      phases: [
+        { mark: "2", state: "current" },
+        { mark: "✓", state: "done" },
+      ],
+    })
+  })
+
+  it("重なって走った段があっても、右端の所要は段の和ではなく依頼の壁時計", () => {
+    const state = foldTimed([
+      [request, START],
+      [groupedPlan(0, []), START + 1_000],
+      [groupedPlan(1, []), START + 10_000],
+      [groupedPlan(1, ["架空の段C"]), START + 40_000],
+      [groupedPlan(2, []), START + 50_000],
+      [{ kind: "turn-finished", outcome: { kind: "completed" } }, START + 60_000],
+    ])
+
+    expect(stripAt(state, START + 600_000)).toMatchObject({
+      kind: "finished",
+      headLabel: "3段すべて済み",
+      sideLabel: "所要 1分00秒",
     })
   })
 })

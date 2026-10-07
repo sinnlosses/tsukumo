@@ -37,7 +37,7 @@ describe("headNoticeOf", () => {
         content: REPORT,
         moment: "work",
         viewingPast: true,
-        phase: { kind: "phase", index: 1, count: 3, name: "架空の段" },
+        phase: { kind: "phase", indexes: [1], count: 3, name: "架空の段" },
       },
       { kind: "notice", text: "作業中 2/3", action: "to-newest" },
     ],

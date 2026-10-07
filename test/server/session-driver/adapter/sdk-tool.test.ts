@@ -362,6 +362,22 @@ describe("work_plan（段取り）", () => {
     expect(withoutSummary.endsTurn).toBe(false)
   })
 
+  it("同時に走る段のまとまりと finishedInGroup は形の検査を通り、1段だけのまとまりは落ちる", async () => {
+    const grouped = await callTool(workServer(), "work_plan", {
+      phases: ["架空の段A", ["架空の段B", "架空の段C"]],
+      current: 1,
+      finishedInGroup: ["架空の段C"],
+      phaseSummary: "架空のまとめ。",
+    })
+    const lone = await callTool(workServer(), "work_plan", {
+      phases: ["架空の段A", ["架空の段B"]],
+      current: 0,
+    })
+
+    expect(grouped).toEqual({ text: "ok", isError: false, endsTurn: false })
+    expect(lone.isError).toBe(true)
+  })
+
   it("段が1つだけの段取りは受け付ける", async () => {
     const single = await callTool(workServer(), "work_plan", { phases: ["架空の段A"], current: 0 })
 

@@ -23,6 +23,7 @@ function plan(current: number): SessionEvent {
     kind: "work-plan",
     phases: ["架空の段A", "架空の段B", "架空の段C"],
     current,
+    finishedInGroup: [],
     phaseSummary: "",
   }
 }

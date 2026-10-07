@@ -1,5 +1,5 @@
 // `work_plan` の差し戻し（形の崩れと段の一足飛び）と、いまの段取りの立ち位置。
-// 一足飛びは、同じ依頼の中で同じ段の並びのまま `current` を2つ以上進めた呼び出し。
+// 一足飛びは、同じ依頼の中で同じ段の並びのまま、済んだ段（並びを平らにして数える）を1回で2つ以上増やした呼び出し。
 // 飛ばした段には段のまとめが無く、メインビューの中間レポートがその段だけ抜けるため。
 //
 // 判定の窓口は handler だけ（`WorkPlanReview.judge`）。
@@ -12,10 +12,14 @@
 // `WorkPlanReview.pass` が `work-plan-called` を同じ呼び出しの `tool-finished` まで預かり、`isError`（差し戻したら true）に従って描くか捨てるかを決める。
 // transcript から組み直すときも結果は残っているので、`pass` だけを通せば同じ並びになる。
 
+import { isDeepEqual } from "remeda"
+
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
   closedByReport,
+  finishedPhaseCount,
   parseWorkPlan,
+  phaseCount,
   type WorkPlan,
   type WorkPlanStanding,
 } from "../../../shared/session/work-plan.ts"
@@ -74,7 +78,10 @@ export function createWorkPlanReview(): WorkPlanReview {
       }
       return accepted === undefined
         ? { kind: "none" }
-        : { kind: "planned", remaining: accepted.phases.length - accepted.current }
+        : {
+            kind: "planned",
+            remaining: phaseCount(accepted.phases) - finishedPhaseCount(accepted),
+          }
     },
     pass: (event) => {
       switch (event.kind) {
@@ -121,18 +128,16 @@ export function createWorkPlanReview(): WorkPlanReview {
 }
 
 function advancesWithoutSummary(previous: WorkPlan, next: WorkPlan): boolean {
-  return (
-    next.current > previous.current &&
-    next.phaseSummary === "" &&
-    next.phases.length === previous.phases.length &&
-    next.phases.every((phase, index) => phase === previous.phases[index])
-  )
+  return gainedPhases(previous, next) > 0 && next.phaseSummary === ""
 }
 
 function skipsPhase(previous: WorkPlan, next: WorkPlan): boolean {
-  return (
-    next.current > previous.current + 1 &&
-    next.phases.length === previous.phases.length &&
-    next.phases.every((phase, index) => phase === previous.phases[index])
-  )
+  return gainedPhases(previous, next) > 1
+}
+
+/** 同じ段の並びのまま、済んだ段が増えた数。並びが変わっていれば 0。 */
+function gainedPhases(previous: WorkPlan, next: WorkPlan): number {
+  return isDeepEqual(previous.phases, next.phases)
+    ? finishedPhaseCount(next) - finishedPhaseCount(previous)
+    : 0
 }

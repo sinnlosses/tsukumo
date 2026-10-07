@@ -1523,6 +1523,7 @@ describe("applySessionEvent（委譲と段取り）", () => {
     kind: "work-plan",
     phases: PHASES,
     current,
+    finishedInGroup: [],
     phaseSummary,
   })
   const currentOf = (state: SessionState) => {
@@ -1563,6 +1564,7 @@ describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
     kind: "work-plan",
     phases: PHASES,
     current,
+    finishedInGroup: [],
     phaseSummary: current > 0 && current < PHASES.length ? "架空のまとめ。" : "",
   })
   const reportOf = (workPlanClosing: WorkPlanClosing): SessionEvent =>
@@ -1576,6 +1578,7 @@ describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
       kind: "planned",
       phases: PHASES,
       current: PHASES.length,
+      finishedInGroup: [],
       phaseSummary: "",
     })
     expect(state.records.at(-1)?.kind).toBe("report")
@@ -1608,6 +1611,7 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
     kind: "work-plan",
     phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
     current,
+    finishedInGroup: [],
     phaseSummary: current > 0 && current < 3 ? "架空のまとめ。" : "",
   })
   const report: SessionEvent = reportEvent({ toolUseId: "toolu_r1" })

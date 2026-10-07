@@ -1,7 +1,7 @@
 // 知らせの行（`HeadNotice`）に出す語。いま見ている中身の外で起きたことを1つだけ選ぶ。
 
 import type { ConversationMoment } from "../../../../../../../shared/session/conversation-moment.ts"
-import type { WorkPhase } from "../../../../../../../shared/session/work-plan.ts"
+import { phasePosition, type WorkPhase } from "../../../../../../../shared/session/work-plan.ts"
 import type { MainViewContent } from "../../../../../../stores/main-view-content.ts"
 
 /** `to-newest` は最新のやり取りへ移り、`to-inquiry` は移ったあとお伺いの札まで転がす。 */
@@ -51,7 +51,5 @@ function pastNotice(moment: ConversationMoment, phase: WorkPhase): HeadNotice {
 }
 
 function workingText(phase: WorkPhase): string {
-  return phase.kind === "phase"
-    ? `作業中 ${String(phase.index + 1)}/${String(phase.count)}`
-    : "作業中"
+  return phase.kind === "phase" ? `作業中 ${phasePosition(phase)}` : "作業中"
 }

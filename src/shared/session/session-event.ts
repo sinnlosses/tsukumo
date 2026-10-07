@@ -176,15 +176,9 @@ export type SessionEvent =
   | { readonly kind: "report-rejected"; readonly reasons: readonly string[] }
   /**
    * `work_plan` ツールの呼び出し（段取り）。メインが呼んだもので、`parseWorkPlan` を通ったものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
-   * 毎回、段の並びごと届く。`current` は0始まりで、全部の段が済んだら `phases.length`。
-   * `phaseSummary` は終えた段のまとめで、無ければ空の文字列。
+   * 毎回、段の並びごと届く。欄の意味は `WorkPlan`。
    */
-  | {
-      readonly kind: "work-plan"
-      readonly phases: readonly string[]
-      readonly current: number
-      readonly phaseSummary: string
-    }
+  | ({ readonly kind: "work-plan" } & WorkPlan)
   /**
    * メインが呼んだ `work_plan` の呼び出し。サーバの中だけで流れる。
    * `WorkPlanReview.pass` が同じ `toolUseId` の `tool-finished` まで預かり、差し戻されていなければ `work-plan` に変えて流す（畳み込み・ブラウザには届かない）。

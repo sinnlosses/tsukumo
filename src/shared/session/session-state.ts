@@ -48,7 +48,12 @@ import type {
   SessionEvent,
 } from "./session-event.ts"
 import { splitIntoTurns } from "./turn.ts"
-import { closedByReport, isWorkPlanRecord, type WorkPlanClosing } from "./work-plan.ts"
+import {
+  closedByReport,
+  isWorkPlanRecord,
+  type WorkPlan,
+  type WorkPlanClosing,
+} from "./work-plan.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが動き続ける以上、記録自体も無限に増やさない。
@@ -153,14 +158,11 @@ export type SessionRecord =
    * `work_plan` ツールで受け取った段取りと、`finished` の `report` で tsukumo が閉じた段取り。
    * 届いた位置に積むだけで、今の段取りは `latestWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
    */
-  | {
+  | ({
       readonly kind: "work-plan"
-      readonly phases: readonly string[]
-      readonly current: number
-      readonly phaseSummary: string
       /** 積んだ時刻。 */
       readonly time: RecordTime
-    }
+    } & WorkPlan)
   /**
    * 答え終わった質問（`question-answered`）。積むのは答えが確定した1回だけで、あとから書き換えない。
    * 形は `MainViewEntry` の `question` と同じに揃える（メインビューはそのまま通す）。
@@ -633,6 +635,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             kind: "work-plan",
             phases: event.phases,
             current: event.current,
+            finishedInGroup: event.finishedInGroup,
             phaseSummary: event.phaseSummary,
             time: { kind: "stamped", at },
           },

@@ -51,6 +51,7 @@
         "片付ける"
       ],
       "current": 1,
+      "finishedInGroup": [],
       "phaseSummary": "架空の一時のディレクトリが1つ残っていた。"
     }
   },

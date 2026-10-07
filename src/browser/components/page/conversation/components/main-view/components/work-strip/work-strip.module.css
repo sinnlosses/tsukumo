@@ -67,19 +67,30 @@
   padding: 0;
   list-style: none;
 }
-/* 丸と丸のあいだの線は、2つ目以降の丸の左に描く。済んだ段までの線だけ差し色にする。 */
+/* 丸（とまとまりの囲み）のあいだの線は、2つ目以降の左に描く。済んだ段までの線だけ差し色にする。 */
+.work-strip-slot,
 .work-strip-phase {
   display: flex;
   align-items: center;
 }
-.work-strip-phase + .work-strip-phase::before {
+.work-strip-slot + .work-strip-slot::before {
   content: "";
   width: 0.75rem;
   height: 2px;
   background: var(--rule);
 }
-.work-strip-phase[data-phase-state="done"] + .work-strip-phase::before {
+.work-strip-slot[data-phase-state="done"] + .work-strip-slot::before {
   background: var(--accent);
+}
+.work-strip-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 1px 3px;
+  border: 1.5px solid var(--rule);
+  border-radius: 999px;
+  list-style: none;
 }
 .work-strip-phase > span {
   display: inline-flex;

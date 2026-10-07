@@ -734,6 +734,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       kind: "work-plan",
       phases: ["架空の段A", "架空の段B"],
       current,
+      finishedInGroup: [],
       phaseSummary,
     })
     const turn = turnOf(
@@ -777,6 +778,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       kind: "work-plan",
       phases: ["架空の段A", "架空の段B"],
       current: 0,
+      finishedInGroup: [],
       phaseSummary: "",
     }
     const finalOf = (events: readonly SessionEvent[]) =>
@@ -931,6 +933,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     kind: "work-plan",
     phases: names,
     current,
+    finishedInGroup: [],
     phaseSummary,
   })
   const report: SessionEvent = reportEvent({ toolUseId: "toolu_r1", conclusion: "架空の結論。" })
@@ -1071,6 +1074,7 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     kind: "work-plan",
     phases: ["架空の段A", "架空の段B"],
     current,
+    finishedInGroup: [],
     phaseSummary,
   })
   const bashStarted = (id: string, command: string): SessionEvent => ({
