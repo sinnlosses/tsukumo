@@ -30,11 +30,11 @@ const MIN_CONTRAST = 4.5
 
 const STORAGE_KEY = "tsukumo-appearance-color:v1"
 const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i
-const TOKEN_NAME: Readonly<Record<AppearanceColorKey, string>> = {
+const TOKEN_NAME = {
   ground: "--ground",
   surface: "--surface",
   ink: "--ink",
-}
+} as const satisfies Record<AppearanceColorKey, string>
 const ACCENT_TOKEN_NAME = "--accent"
 /**
  * 背景の覆いの不透明度の下限を渡す先。

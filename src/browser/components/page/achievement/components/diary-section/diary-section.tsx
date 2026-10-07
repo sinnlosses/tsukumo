@@ -20,11 +20,11 @@ import type {
 } from "../../hooks/use-achievement.ts"
 import styles from "./diary-section.module.css"
 
-const STAGE_LABEL: Readonly<Record<DiaryStage, string>> = {
+const STAGE_LABEL = {
   read: "この日のタスクを読む",
   write: "日記を書く",
   pick: "いちばんを選ぶ",
-}
+} as const satisfies Record<DiaryStage, string>
 
 export type DiarySectionProps = {
   readonly diary: DiarySectionModel

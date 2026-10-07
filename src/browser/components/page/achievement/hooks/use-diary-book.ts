@@ -47,11 +47,11 @@ const BLANK_REVIEW_LABEL = "この日を振り返る"
 /** 見開きを開いた口（頭の行の添え書きに出す）。`notice` は書き終わりの知らせの「日記帳で開く」。 */
 export type DiaryBookOpenSource = "calendar" | "diary-section" | "notice"
 
-const OPEN_NOTE: Readonly<Record<DiaryBookOpenSource, string>> = {
+const OPEN_NOTE = {
   calendar: "灯りの暦から開きました",
   "diary-section": "この日の日記から開きました",
   notice: "書き終わりの知らせから開きました",
-}
+} as const satisfies Record<DiaryBookOpenSource, string>
 
 type BookState =
   | { readonly kind: "closed" }
