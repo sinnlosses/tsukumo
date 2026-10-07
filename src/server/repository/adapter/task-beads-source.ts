@@ -1,7 +1,8 @@
 // Beads 方式のタスクの読み元。`bd` の課題を一覧の要約に読み替える。
 // 着手・完了は主ブランチを動かさず、課題は主ブランチの中身にも依らないので、主ブランチの先端は見ない。
 // `bd list` は1回が `git rev-parse` より2桁重いので、課題の変化の印（`createBeadsStampReader`）が前回読んだときと同じなら打たない。印が取れないときは毎回打つ。
-// `bd` が読めないとき（`.beads` が無い・`bd` が無い）は「不明」にし、タイムアウトしたときはその回を諦める。
+// `bd` が読めないとき（`.beads` が無い・`bd` が無い）は「不明」にし、印は覚えず次の見回りで打ち直す。
+// タイムアウトしたときはその回を諦める。
 
 import { taskSummaryItemsOfBeadsIssues } from "../../../shared/repository/task-workflow.ts"
 import type { readBeadsIssues } from "./beads.ts"
@@ -28,13 +29,13 @@ export function createTaskBeadsSource(cwd: string, ports: TaskBeadsSourcePorts):
       if (beads.kind === "timed-out") {
         return { kind: "unchanged" }
       }
+      if (beads.kind === "failed") {
+        return { kind: "read", result: { kind: "unknown" } }
+      }
       readStamp = stamp
       return {
         kind: "read",
-        result:
-          beads.kind === "issues"
-            ? { kind: "known", items: taskSummaryItemsOfBeadsIssues(beads.issues) }
-            : { kind: "unknown" },
+        result: { kind: "known", items: taskSummaryItemsOfBeadsIssues(beads.issues) },
       }
     },
   }

@@ -7,7 +7,8 @@
 // - それ以外（設定が無いときも）: `createTaskBeadsSource`（`bd` の課題。`.beads` が無ければ「不明」）
 //
 // 最初の見回りは、設定が `off`・読めないでなければ、前回読めた一覧（`readTaskSummaryMemory`）を読み元の結果を待たずに先に知らせる。
-// 読み元の結果が同じなら知らせず、違えば差し替え、読めなければ「不明」にする。知らせた `known` は覚え直す。
+// 読み元の結果が同じなら知らせず、違えば差し替える。知らせた `known` は覚え直す。
+// 読めなかった回（`unknown`・最初の読みのタイムアウト）は、一覧を出していれば前の一覧を残し、3回続いたら「不明」にする。一覧を出していなければすぐ「不明」にする。
 //
 // 見回りは `setWatching(true)` のあいだだけ回る。起こした時点の1回は、画面が無くても読む。
 // 止めているあいだも覚えた状態は残し、再開の1回で変わっていれば `onChange` する。
@@ -31,6 +32,9 @@ import { readTaskSummaryMemory, writeTaskSummaryMemory } from "./task-summary-me
  * タスク一覧はタスクの着手・完了で書き換わるだけなので、秒単位の反映で十分。
  */
 const TASK_SUMMARY_POLL_INTERVAL_MS = 5000
+
+/** 一覧を出しているとき、読めなかった回がこの数だけ続いたら「不明」にする。 */
+const MAX_FAILURE_STREAK_WITH_LIST = 3
 
 export type TaskSummaryWatcher = {
   /** ポーリングを止める。実行中の見回り（`bd` の子プロセス）の終わりまで待つ。 */
@@ -124,6 +128,7 @@ export function watchTaskSummary(
   let notified: TaskSummaryResult = { kind: "loading" }
   let memoryTried = false
   let shownFromMemory: TaskSummaryResult | undefined = undefined
+  let failureStreak = 0
   let cancelTimer: (() => void) | undefined = undefined
   let watching = false
   let polling = false
@@ -144,7 +149,19 @@ export function watchTaskSummary(
       return
     }
     // 読み元は最初の読みでは、読んだ結果かタイムアウトで諦めた回しか返さない。
-    // まだ何も知らせていないうちの `unchanged` は、画面を読み込み中のままにしないため「不明」で知らせる。
+    // まだ何も知らせていないうちの `unchanged` は、読めなかった回として数える。
+    const failed =
+      read.kind === "unchanged" ? notified.kind === "loading" : read.result.kind === "unknown"
+    if (failed) {
+      failureStreak += 1
+    } else if (read.kind === "read") {
+      failureStreak = 0
+    }
+    const showingList = notified.kind === "known" || shownFromMemory?.kind === "known"
+    if (failed && showingList && failureStreak < MAX_FAILURE_STREAK_WITH_LIST) {
+      return
+    }
+    // 一覧を出していない `unchanged` は、画面を読み込み中のままにしないため「不明」で知らせる。
     const result: TaskSummaryResult =
       read.kind === "unchanged" ? { kind: "unknown" } : withRunPrompt(read.result, chosen.settings)
     if (read.kind === "unchanged" && notified.kind !== "loading") {

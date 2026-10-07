@@ -56,6 +56,8 @@ type FakePortsOptions = {
   readonly remembered: readonly TaskSummaryItem[] | undefined
   /** `bd list` の結果。 */
   readonly outcome: BeadsOutcome
+  /** 指すと、`bd list` の呼び出しごとに順に返す（尽きたら最後を返し続ける）。`outcome` より優先。 */
+  readonly outcomes: readonly BeadsOutcome[] | undefined
   /** 覚える口へ書かれた一覧（呼ぶ側が置いた入れ物へ足される）。 */
   readonly writes: (readonly TaskSummaryItem[])[]
 }
@@ -66,6 +68,7 @@ function fakePorts(
   options: FakePortsOptions,
 ): TaskSummaryPorts {
   let settingsAsked = 0
+  let listed = 0
   return {
     readTaskSummaryMemory: () => options.remembered,
     writeTaskSummaryMemory: (_cwd, items) => {
@@ -80,7 +83,11 @@ function fakePorts(
     },
     readBeadsIssues: () => {
       calls.push("bd list")
-      return Promise.resolve(options.outcome)
+      const sequence = options.outcomes
+      const outcome =
+        sequence === undefined ? options.outcome : (sequence[listed] ?? sequence.at(-1))
+      listed += 1
+      return Promise.resolve(outcome ?? options.outcome)
     },
     createBeadsStampReader: () => () => Promise.resolve(options.stamp()),
     clock,
@@ -114,6 +121,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
           },
           remembered: undefined,
           outcome: { kind: "issues", issues: [] },
+          outcomes: undefined,
           writes,
           ...options,
         }),
@@ -234,7 +242,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       expect(changes).toMatchObject([{ kind: "known" }])
     })
 
-    it("bd が読めなければ、覚えた一覧のあとに「不明」へ変わり、覚え直さない", async () => {
+    it("bd が読めなかった回は、覚えた一覧を残して覚え直さない", async () => {
       const { fake, changes, writes } = startFake({
         remembered,
         outcome: { kind: "failed" },
@@ -242,16 +250,54 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       fake.setWatching(true)
       await settle()
 
-      expect(changes).toMatchObject([{ kind: "known" }, { kind: "unknown" }])
+      expect(changes).toMatchObject([{ kind: "known" }])
       expect(writes).toStrictEqual([])
     })
 
-    it("bd がタイムアウトしても、初回には「不明」が届く", async () => {
-      const { fake, changes } = startFake({ remembered, outcome: { kind: "timed-out" } })
+    it("覚えた一覧のあと読めない回が3回続いたら「不明」にする", async () => {
+      const { fake, manual, changes } = startFake({ remembered, outcome: { kind: "failed" } })
+      fake.setWatching(true)
+      await settle()
+      for (const _ of [1, 2]) {
+        manual.advance(FAKE_INTERVAL_MS)
+        await settle()
+      }
+
+      expect(changes).toMatchObject([{ kind: "known" }, { kind: "unknown" }])
+    })
+
+    it("最初の読みがタイムアウトしても、覚えた一覧があれば「不明」にしない", async () => {
+      const { fake, manual, changes } = startFake({ remembered, outcome: { kind: "timed-out" } })
+      fake.setWatching(true)
+      await settle()
+      manual.advance(FAKE_INTERVAL_MS)
+      await settle()
+
+      expect(changes).toMatchObject([{ kind: "known" }])
+    })
+
+    it("覚えた一覧が無ければ、読めなかった1回目で「不明」を知らせる", async () => {
+      const { fake, changes } = startFake({ remembered: undefined, outcome: { kind: "failed" } })
       fake.setWatching(true)
       await settle()
 
-      expect(changes).toMatchObject([{ kind: "known" }, { kind: "unknown" }])
+      expect(changes).toMatchObject([{ kind: "unknown" }])
+    })
+
+    it("読めた一覧のあと読めない回が2回続いても「不明」にせず、読めれば数え直す", async () => {
+      const failed: BeadsOutcome = { kind: "failed" }
+      const { fake, manual, changes } = startFake({
+        stamp: () => undefined,
+        outcomes: [readNothing, failed, failed, readNothing, failed, failed, readNothing],
+      })
+      fake.setWatching(true)
+      await settle()
+      for (const _ of [1, 2, 3, 4, 5, 6]) {
+        manual.advance(FAKE_INTERVAL_MS)
+        await settle()
+      }
+
+      expect(changes).toMatchObject([{ kind: "known" }])
     })
   })
 
@@ -362,6 +408,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       settings: { kind: "none" },
       remembered: undefined,
       outcome: { kind: "issues", issues: [] },
+      outcomes: undefined,
       writes: [],
     })
     watcher = watchTaskSummary("/cwd", (tasks) => changes.push(tasks), {
