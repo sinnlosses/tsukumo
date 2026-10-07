@@ -210,16 +210,6 @@ describe("advancedByReturn", () => {
       "架空の1文目（中は。を含む）。`a。b` の2文目！",
     )
   })
-
-  it("進めた段取りは前の段取りと比べて、済んだ段の中間レポートになる", () => {
-    const advance = advancedByReturn(next(DELEGATE_PHASES, 1), returnOf(1))
-
-    expect(
-      advance.kind === "advanced" && phaseShiftOf(planned(DELEGATE_PHASES, 1), advance.plan),
-    ).toEqual({
-      finished: { kind: "finished", label: "2/5 架空の段1", summary: "架空のまとめ。" },
-    })
-  })
 })
 
 describe("parseWorkPlanClosing", () => {

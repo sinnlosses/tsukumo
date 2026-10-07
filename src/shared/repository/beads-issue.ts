@@ -156,7 +156,7 @@ export function claimedTaskStepsOf(
  * `## やること` の中身から、`### <n>. <名前>` の行の名前を書かれた順に読む。
  * 番号の無い `### ` の小見出しと、`#### ` より深い見出しは段に数えない。
  */
-export function planStepNamesOf(plan: string): readonly string[] {
+function planStepNamesOf(plan: string): readonly string[] {
   return plan.split("\n").flatMap((line) => {
     const name = PLAN_STEP_HEADING_PATTERN.exec(line)?.[1]?.trim()
     return name === undefined || name === "" ? [] : [name]

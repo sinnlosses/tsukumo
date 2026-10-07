@@ -142,15 +142,9 @@ describe("parseNewTaskFile（3.4 の読み取りの見本）", () => {
   })
 
   it("summary は前後の空白を落とし、中身はそのまま（`` ` `` 始まり・`:` ・`#` ・`[` を含んでも）", () => {
-    const content = contentOf({ 2: "summary: `a: b` # c [d]" })
+    const content = contentOf({ 2: "summary:   `a: b` # c [d]   " })
 
     expect(parseNewTaskFile("T-521.md", content)?.summary).toBe("`a: b` # c [d]")
-  })
-
-  it("summary の前後の空白は落とす", () => {
-    const content = contentOf({ 2: "summary:   前後に空白   " })
-
-    expect(parseNewTaskFile("T-521.md", content)?.summary).toBe("前後に空白")
   })
 
   it("dependencies: [] は依存なし", () => {

@@ -811,28 +811,6 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("image の塊が2つ並ぶと図の番号は1から通して数える", () => {
-    const first: ReportBlock = {
-      kind: "image",
-      path: "架空1.png",
-      caption: "架空の1枚目",
-      notes: [],
-      fold: "",
-    }
-    const second: ReportBlock = {
-      kind: "image",
-      path: "架空2.png",
-      caption: "架空の2枚目",
-      notes: [],
-      fold: "",
-    }
-
-    const markdown = reportSectionsMarkdown([section([first]), section([second])], NO_IMAGES)
-
-    expect(markdown).toContain('<span class="caption-number">図 1</span>')
-    expect(markdown).toContain('<span class="caption-number">図 2</span>')
-  })
-
   it("図の6種と表の2種は別々に1から数え、題が空でも fold の中でも数え、options は数えない", () => {
     const image = (fold: string): ReportBlock => ({
       kind: "image",

@@ -7,10 +7,9 @@ import process from "node:process"
 
 import { beforeEach, describe, expect, test } from "vitest"
 
+import { RUN_LIMIT } from "../../scripts/lib/e2e-run-limit.ts"
 import { runSubprocess } from "../fixture/subprocess.ts"
 import { useTempDir } from "../fixture/temp-dir.ts"
-
-const E2E_RUN_LIMIT = 6
 
 const tempDir = useTempDir("hook-denial")
 let repoDir = ""
@@ -46,7 +45,7 @@ describe("拒否の記録", () => {
   test("E2E の上限を超えた呼び出しの拒否を記録する", async () => {
     mkdirSync(join(repoDir, ".git", "task-open-claims"))
     writeFileSync(join(repoDir, ".git", "task-open-claims", "TASK-A"), "")
-    for (let count = 0; count <= E2E_RUN_LIMIT; count++) {
+    for (let count = 0; count <= RUN_LIMIT; count++) {
       await runBashHook("deny-e2e-run-limit", { command: "tw verify --full", agent: true })
     }
     expect(readDenialLines().map((line) => JSON.parse(line))).toMatchObject([

@@ -18,13 +18,9 @@ describe("roomName", () => {
     expect(named.some((name) => /^\d+$/.test(name))).toBe(false)
   })
 
-  // 語彙の外はポート番号をそのまま名乗る（13個め以降・遠い番号・OS まかせの 0）。
-  it("13個めから先のポートは、ポート番号をそのまま名乗る", () => {
+  it("語彙の並びから外れたポート（13個めから先・遠い番号・手前の番号・OS まかせの 0）は番号のまま", () => {
     expect(roomName(DEFAULT_VIEW_PORT + 12)).toBe("7339")
     expect(roomName(DEFAULT_VIEW_PORT + 19)).toBe("7346")
-  })
-
-  it("語彙の並びから外れたポート（遠い番号・手前の番号・OS まかせの 0）も番号のまま", () => {
     expect(roomName(9000)).toBe("9000")
     expect(roomName(DEFAULT_VIEW_PORT - 1)).toBe("7326")
     expect(roomName(0)).toBe("0")

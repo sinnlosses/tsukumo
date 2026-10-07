@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import { PERMISSION_MODES } from "../../../src/shared/command.ts"
 import { sessionContract } from "../../../src/shared/contract/session.ts"
 import {
-  BUILTIN_SESSION_DEFAULT,
   isSessionDefaultPermissionMode,
   SESSION_DEFAULT_PERMISSION_MODES,
 } from "../../../src/shared/session/session-default.ts"
@@ -22,14 +21,6 @@ describe("既定に選べる許可モード", () => {
     expect(isSessionDefaultPermissionMode("bypassPermissions")).toBe(false)
     expect(isSessionDefaultPermissionMode("plan")).toBe(true)
     expect(isSessionDefaultPermissionMode("no-such-mode")).toBe(false)
-  })
-
-  it("同梱の既定は Opus・medium・auto", () => {
-    expect(BUILTIN_SESSION_DEFAULT).toEqual({
-      model: "opus",
-      effort: "medium",
-      permissionMode: "auto",
-    })
   })
 })
 

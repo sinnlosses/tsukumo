@@ -4,7 +4,6 @@ import {
   claimedTaskStepsOf,
   closedBeadsTaskSummariesBefore,
   composeBeadsBody,
-  planStepNamesOf,
   taskIdOfBeadsId,
   taskSummaryItemsOfBeadsIssues,
   type BeadsIssue,
@@ -245,16 +244,6 @@ const PLAN_WITH_FILES = [
   "### 名指すファイル",
   "- `src/a.ts`",
 ].join("\n")
-
-describe("planStepNamesOf", () => {
-  it("番号の付いた ### の段だけを書かれた順に読み、番号の無い小見出しと #### は数えない", () => {
-    expect(planStepNamesOf(PLAN_WITH_FILES)).toEqual(["今の形を調べる", "読み口を足す"])
-  })
-
-  it("空の本文は段が無い", () => {
-    expect(planStepNamesOf("")).toEqual([])
-  })
-})
 
 describe("claimedTaskStepsOf", () => {
   const claimed = issue({

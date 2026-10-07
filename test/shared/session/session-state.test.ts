@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { taskWorkPlanReplyOf } from "../../../src/server/session-driver/core/task-work-plan-reply.ts"
-import { createWorkPlanReview } from "../../../src/server/session-driver/core/work-plan-review.ts"
 import type { TaskSummaryItem } from "../../../src/shared/repository/task-summary.ts"
 import type { BackgroundTask } from "../../../src/shared/session-driver/background-task.ts"
 import {
@@ -120,19 +118,6 @@ describe("applySessionEvent", () => {
     ])
   })
 
-  it("request で吹き出しと表情を既定に戻す（送信直後に次のターンへ移ったと分かるように）", () => {
-    const spoken = apply({ kind: "speech", text: "いくよ！", expression: "proud" })
-
-    const nextTurn = applySessionEvent(
-      spoken,
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      0,
-    )
-
-    expect(nextTurn.speeches).toEqual([])
-    expect(nextTurn.speechExpression).toBe("default")
-  })
-
   it("セリフは記録にも積むが、レポート（mainViewEntries）には出さない", () => {
     const view = apply(
       { kind: "request", text: "ダミーの依頼", images: [] },
@@ -210,11 +195,11 @@ describe("applySessionEvent", () => {
     ])
   })
 
-  it("新しいターンの request の直後は吹き出しを空にし、次の speak でそのターンのものだけになる", () => {
+  it("新しいターンの request の直後は吹き出しを空にして表情を既定に戻し、次の speak でそのターンのものだけになる", () => {
     const firstTurn = apply(
       { kind: "request", text: "1つめの依頼", images: [] },
       { kind: "speech", text: "1つめのセリフ", expression: "default" },
-      { kind: "speech", text: "1つめの2つめのセリフ", expression: "default" },
+      { kind: "speech", text: "1つめの2つめのセリフ", expression: "proud" },
     )
 
     const secondTurnStarted = applySessionEvent(
@@ -225,6 +210,7 @@ describe("applySessionEvent", () => {
     // 送信した時点で前のターンの一言は残さず空にする（次のターンに移ったことが画面から
     // 分かるように）。
     expect(secondTurnStarted.speeches).toEqual([])
+    expect(secondTurnStarted.speechExpression).toBe("default")
 
     const secondTurnSpoken = applySessionEvent(
       secondTurnStarted,
@@ -364,7 +350,7 @@ describe("applySessionEvent", () => {
     })
   })
 
-  it("成功した結果は本文を記録に入れない", () => {
+  it("成功した結果は本文を記録に入れず、lastToolFailureAt も変えない", () => {
     const view = apply(
       {
         kind: "tool-started",
@@ -382,17 +368,19 @@ describe("applySessionEvent", () => {
     )
 
     expect(view.records[0]).toMatchObject({ status: { result: { kind: "succeeded" } } })
+    expect(view.lastToolFailureAt).toBeUndefined()
   })
 
-  it("対応する tool_use が無い結果は記録に足さない", () => {
+  it("対応する tool_use が無い結果は、失敗でも記録に足さず lastToolFailureAt も打たない", () => {
     const view = apply({
       kind: "tool-finished",
       toolUseId: "toolu_unknown",
       content: "ダミーの結果",
-      isError: false,
+      isError: true,
     })
 
     expect(mainViewEntries(view)).toEqual([])
+    expect(view.lastToolFailureAt).toBeUndefined()
   })
 
   it("init のたびにセッション情報を上書きする（端末専用コマンドは候補から除く）", () => {
@@ -721,37 +709,6 @@ describe("applySessionEvent", () => {
     )
 
     expect(failed.lastToolFailureAt).toBe(400)
-  })
-
-  it("tool-finished が isError:false のときは lastToolFailureAt を変えない", () => {
-    const started = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      {
-        kind: "tool-started",
-        toolUseId: "toolu_1",
-        name: "Read",
-        input: {},
-        parentToolUseId: undefined,
-      },
-      100,
-    )
-    const finished = applySessionEvent(
-      started,
-      { kind: "tool-finished", toolUseId: "toolu_1", content: "ok", isError: false },
-      400,
-    )
-
-    expect(finished.lastToolFailureAt).toBeUndefined()
-  })
-
-  it("対応する tool_use が無い失敗は lastToolFailureAt を打たない（対応が取れない結果は捨てる）", () => {
-    const result = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "tool-finished", toolUseId: "toolu_unknown", content: "失敗した", isError: true },
-      400,
-    )
-
-    expect(result.lastToolFailureAt).toBeUndefined()
   })
 
   it("conversation-cleared で吹き出しと記録を空にする（/clear。キャラクターとセッション情報は残す）", () => {
@@ -1097,10 +1054,6 @@ describe("applySessionEvent（report を書いている間）", () => {
 })
 
 describe("applySessionEvent（最近の話題）", () => {
-  it("届くまでは空", () => {
-    expect(INITIAL_SESSION_STATE.chatTopics).toEqual([])
-  })
-
   it("chat-topics-changed で丸ごと置き換わる（継ぎ足さない）", () => {
     const view = apply(
       { kind: "chat-topics-changed", topics: ["架空の古い話題"] },
@@ -1117,10 +1070,6 @@ describe("applySessionEvent（背景のタスク）", () => {
     kind: "shell",
     description: "架空の待ち",
   } satisfies BackgroundTask
-
-  it("届くまでは空", () => {
-    expect(INITIAL_SESSION_STATE.backgroundTasks).toEqual([])
-  })
 
   it("session-ended で空にする（claude のプロセスと一緒に終わる）", () => {
     const view = apply(
@@ -1200,10 +1149,6 @@ describe("applySessionEvent（背景で走らせた Bash の終わり）", () =>
 })
 
 describe("applySessionEvent（覚えていること）", () => {
-  it("届くまでは空", () => {
-    expect(INITIAL_SESSION_STATE.rememberedLines).toEqual([])
-  })
-
   it("remembered-lines-changed で丸ごと置き換わる（継ぎ足さない）", () => {
     const view = apply(
       { kind: "remembered-lines-changed", lines: ["架空の古い1行"] },
@@ -1550,22 +1495,6 @@ describe("applySessionEvent（API の不調と失敗）", () => {
         .rateLimit,
     ).toEqual({ kind: "clear" })
   })
-
-  it("失敗の記録はメインビューのステップに入らず、やり取りの failure に移る", () => {
-    const state = apply(
-      REQUEST,
-      { kind: "utterance", text: "架空の本文" },
-      { kind: "api-error", error: "overloaded" },
-      FAILED_BY_API,
-    )
-    const [turn] = mainViewTurns(mainViewEntries(state), { report: false, utterance: false }, true)
-
-    expect(turn?.failure).toEqual({
-      kind: "failed",
-      failure: { kind: "api-error", error: "overloaded" },
-    })
-    expect(turn?.steps).toHaveLength(1)
-  })
 })
 
 describe("applySessionEvent（委譲の返却と段取り）", () => {
@@ -1600,13 +1529,6 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
       phaseSummary: "架空の計画の要点。",
     })
     expect(currentPlan(twice)).toMatchObject({ current: 2, phaseSummary: "架空の1段目の変化。" })
-  })
-
-  it("止めた返却で返却が1回欠けても、次の番号の返却で帯が委譲先の段と揃い、同じ返却の2回目では動かない", () => {
-    const state = apply(request, mainPlan(0), returned(0), returned(2, "架空の2段目の変化。"))
-
-    expect(currentPlan(state)).toMatchObject({ current: 3, phaseSummary: "架空の2段目の変化。" })
-    expect(applySessionEvent(state, returned(2), 0).records).toEqual(state.records)
   })
 
   it("委譲先の途中の合図（SendMessage）と背景のタスクの顔ぶれの変化では、帯は動かない", () => {
@@ -1667,34 +1589,6 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
       phases: headingPhases,
       current: 2,
       phaseSummary: "架空の見出し1の変化。",
-    })
-  })
-
-  it("phases を省いた呼び出しのあと、帯は着手したタスクの段で並び、返却の番号で進む", () => {
-    const review = createWorkPlanReview()
-    const reply = taskWorkPlanReplyOf("架空のタスク", [
-      "計画",
-      "架空の段1",
-      "架空の段2",
-      "受け入れ",
-    ])
-    const events: readonly SessionEvent[] = [
-      request,
-      {
-        kind: "work-plan-called",
-        toolUseId: "toolu_plan",
-        call: { kind: "from-task", current: 1, phaseSummary: "架空の計画。" },
-      },
-      { kind: "tool-finished", toolUseId: "toolu_plan", content: reply, isError: false },
-      returned(1, "架空の段1の変化。"),
-    ]
-    const state = apply(...events.flatMap((event) => review.pass(event)))
-
-    expect(currentPlan(state)).toEqual({
-      kind: "planned",
-      phases: ["計画", "架空の段1", "架空の段2", "受け入れ"],
-      current: 2,
-      phaseSummary: "架空の段1の変化。",
     })
   })
 

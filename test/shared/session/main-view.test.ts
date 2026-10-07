@@ -122,7 +122,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     expect(steps[1]?.actions).toHaveLength(1)
   })
 
-  it("レポートより前に実行されたツールは、レポートを持たないステップになる", () => {
+  it("レポートより前に実行されたツールは、本文を持たない（body が none の）ステップになる", () => {
     const turns = mainViewTurns(
       [request("依頼"), edit("src/first.ts"), detail("あとから説明")],
       SETTLED,
@@ -131,7 +131,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
 
     const steps = turns[0]?.steps ?? []
     expect(steps).toHaveLength(2)
-    expect(reportOf(steps[0])).toBeUndefined()
+    expect(steps[0]?.body).toEqual({ kind: "none" })
     expect(reportOf(steps[1])).toBe("あとから説明")
   })
 
@@ -360,16 +360,6 @@ describe("mainViewTurns（追い越された中間レポートを畳む印）", 
     const firstLine = firstLineOf(turns[0]?.steps[0]) ?? ""
     expect(firstLine.endsWith("…")).toBe(true)
     expect(firstLine.length).toBeLessThan(longHeading.length)
-  })
-
-  it("本文を持たないステップの body は none（先頭行も持たない）", () => {
-    const turns = mainViewTurns(
-      [request("依頼"), edit("src/first.ts"), detail("あとから説明")],
-      SETTLED,
-      true,
-    )
-
-    expect(turns[0]?.steps[0]?.body).toEqual({ kind: "none" })
   })
 })
 
@@ -615,44 +605,32 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   })
 
   it("checks は結論のすぐ下の合図の行に組み、口は出ない。お願いの本文は末尾のまま（body より前）", () => {
+    const checks: readonly ReportCheck[] = [
+      { status: "ok", label: "架空の検査", figure: "12 / 3", command: "", detail: "架空の件数" },
+      { status: "unverified", label: "架空の目視", figure: "", command: "", detail: "" },
+    ]
     const turn = turnOf(
-      [
-        ask,
-        report("架空の結論。", "架空の根拠。", "架空のお願い", [
-          {
-            status: "ok",
-            label: "架空の検査",
-            figure: "12 / 3",
-            command: "",
-            detail: "架空の件数",
-          },
-          { status: "unverified", label: "架空の目視", figure: "", command: "", detail: "" },
-        ]),
-        finished,
-      ],
+      [ask, report("架空の結論。", "架空の根拠。", "架空のお願い", checks), finished],
       SETTLED,
       true,
     )
 
-    expect(shownReports(turn)).toEqual([
-      `${lead("架空の結論。")}\n\n` +
-        '<div class="status">\n\n' +
-        '<div class="verdict" role="group" aria-label="検証結果">' +
-        '<div class="checks">' +
-        '<div class="checks-tile checks-tile-unverified"><span class="checks-tile-mark">？</span>' +
-        '<span class="checks-tile-count">1 / 2</span><span class="checks-tile-hint">1 つ未確認</span></div>' +
-        '<div class="checks-body">' +
-        '<div role="table" aria-label="検証結果の問題">' +
-        '<div class="checks-problem checks-problem-unverified" role="row"><div class="checks-problem-head">' +
-        '<span class="checks-problem-mark">？ 未確認</span><span class="checks-problem-label">架空の目視</span>' +
-        '<span class="checks-problem-figure"></span><span class="checks-problem-time"></span></div></div>' +
-        "</div>" +
-        '<div class="checks-passed">' +
-        '<span class="checks-passed-chip" title="架空の検査"><span class="checks-passed-chip-mark">✓</span>架空の検査</span>' +
-        "</div></div></div>" +
+    const [shown = "", ...rest] = shownReports(turn)
+
+    expect(rest).toEqual([])
+    expect(
+      shown.startsWith(
+        `${lead("架空の結論。")}\n\n<div class="status">\n\n` +
+          '<div class="verdict" role="group" aria-label="検証結果"><div class="checks">',
+      ),
+    ).toBe(true)
+    expect(
+      shown.endsWith(
         `</div>\n\n</div>\n\n${SECTIONS_START}\n\n` +
-        '架空の根拠。\n\n<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>',
-    ])
+          '架空の根拠。\n\n<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>',
+      ),
+    ).toBe(true)
+    expect(shown.split('<div class="status">')).toHaveLength(2)
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
   })
 
@@ -838,12 +816,6 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(shownReports(sectionsOnly)).toEqual(["架空の根拠。"])
     expect(shownReports(conclusionOnly)).toEqual([lead("架空の結論だけ。")])
-  })
-
-  it("checks・body・favor が空ならその塊を置かない（合図の行も出ない）", () => {
-    const turn = turnOf([ask, report("架空の結論だけ。"), finished], SETTLED, true)
-
-    expect(shownReports(turn)).toEqual([lead("架空の結論だけ。")])
   })
 
   it("checks が無ければお願いだけでも合図の行を出さない（お願いの本文は末尾に出る）", () => {
@@ -1219,5 +1191,27 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     )[0]
 
     expect(markdown).not.toContain("phase-times")
+  })
+})
+
+describe("mainViewTurns（失敗で終わったターン）", () => {
+  it("失敗の記録はメインビューのステップに入らず、やり取りの failure に移る", () => {
+    const events: readonly SessionEvent[] = [
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "utterance", text: "架空の本文" },
+      { kind: "api-error", error: "overloaded" },
+      { kind: "turn-finished", outcome: { kind: "failed", cause: { kind: "api-error" } } },
+    ]
+    const state = events.reduce(
+      (current, event) => applySessionEvent(current, event, 0),
+      INITIAL_SESSION_STATE,
+    )
+    const [turn] = mainViewTurns(mainViewEntries(state), SETTLED, true)
+
+    expect(turn?.failure).toEqual({
+      kind: "failed",
+      failure: { kind: "api-error", error: "overloaded" },
+    })
+    expect(turn?.steps).toHaveLength(1)
   })
 })

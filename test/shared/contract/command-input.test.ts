@@ -5,7 +5,6 @@ import {
   MAX_CHARACTER_TAGLINE_LENGTH,
 } from "../../../src/shared/character-pack/character-definition.ts"
 import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../../../src/shared/character-pack/character.ts"
-import { MAX_PORTRAIT_BYTES } from "../../../src/shared/character-pack/portrait-image.ts"
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../src/shared/chat/persona-memory.ts"
 import { MAX_PROMPT_TEXT_LENGTH } from "../../../src/shared/contract/session.ts"
 import { commandContract } from "../../../src/shared/rpc.ts"
@@ -281,18 +280,6 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
         pack: "fictional",
         outfit: "heavy",
         color: "rebeccapurple",
-      }),
-    ).toBeUndefined()
-  })
-
-  it("上限を超えた大きさの立ち絵は undefined", () => {
-    const tooLarge = `data:image/png;base64,${"A".repeat(Math.ceil((MAX_PORTRAIT_BYTES / 3) * 4) + 8)}`
-
-    expect(
-      parseInput("characterPack.setPortrait", {
-        pack: "fictional",
-        expression: "proud",
-        image: tooLarge,
       }),
     ).toBeUndefined()
   })

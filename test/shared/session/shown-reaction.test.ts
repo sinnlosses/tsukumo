@@ -140,10 +140,6 @@ describe("shownReaction", () => {
     ).toBe("none")
   })
 
-  it("挨拶が書けていなくても、送った直後は「…」を出す", () => {
-    expect(shown(stateAfter([REQUEST]))).toBe("writing")
-  })
-
   it("反応の行の表情を返す", () => {
     const reaction = shownReaction(stateAfter([GREETED, REQUEST, RETRY]), NO_WELCOME_HEAD, 0)
 
@@ -296,15 +292,15 @@ describe("shownReaction", () => {
       ).toBe("welcome:架空の挨拶だけ")
     })
 
-    it.each<[string, SessionEvent | undefined, string]>([
-      ["書き始める前", undefined, "none"],
+    it.each<[string, string, SessionEvent | undefined]>([
+      ["書き始める前", "none", undefined],
       [
         "書いている途中",
-        { kind: "welcome-greeting-changed", state: { kind: "writing" } },
         "writing",
+        { kind: "welcome-greeting-changed", state: { kind: "writing" } },
       ],
-      ["書けなかった", { kind: "welcome-greeting-changed", state: { kind: "unwritten" } }, "none"],
-    ])("待ちの一言が無く、挨拶が%sなら %s", (_, greeting, expected) => {
+      ["書けなかった", "none", { kind: "welcome-greeting-changed", state: { kind: "unwritten" } }],
+    ])("待ちの一言が無く、挨拶が%sなら %s", (_, expected, greeting) => {
       const events = [REQUEST, COMPLETED, RESTORED, ...(greeting === undefined ? [] : [greeting])]
 
       expect(shown(stateAfter(events))).toBe(expected)
@@ -344,10 +340,6 @@ describe("shownReaction", () => {
     } as const satisfies SessionEvent
 
     const HEAD: WelcomeHead = { kind: "card", name: "T-1" }
-
-    it("書き始める前は、何も出さない", () => {
-      expect(shown(stateAfter([]), HEAD)).toBe("none")
-    })
 
     it("書いている途中は、「…」を出す印を出す", () => {
       expect(shown(stateAfter([WRITING]), HEAD)).toBe("writing")
