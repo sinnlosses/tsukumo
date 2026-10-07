@@ -16,6 +16,7 @@ const SESSION_EVENT_KINDS = {
   "speak-called": true,
   "report-drafting": true,
   report: true,
+  "report-rejected": true,
   "work-plan": true,
   "work-plan-called": true,
   "tool-started": true,

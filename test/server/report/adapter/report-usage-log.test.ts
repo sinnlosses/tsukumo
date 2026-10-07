@@ -89,4 +89,23 @@ describe("createReportUsageLog", () => {
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)
   })
+
+  it("差し戻しの行は同じ日付ファイルに入り、鍵は版・種類・日時・セッションID・差し戻しの名前だけ", () => {
+    const log = createReportUsageLog(root())
+
+    log.appendRejection({
+      at: at(9, 5),
+      sessionId: "claude-session-1",
+      reasons: ["resend", "long-paragraph"],
+    })
+
+    const [record] = readLines("2026-09-22.jsonl")
+    expect(keysOf(record)).toEqual(["v", "kind", "at", "sessionId", "reasons"])
+    expect(record).toMatchObject({
+      v: REPORT_USAGE_FORMAT_VERSION,
+      kind: "rejected",
+      sessionId: "claude-session-1",
+      reasons: ["resend", "long-paragraph"],
+    })
+  })
 })

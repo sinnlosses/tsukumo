@@ -70,6 +70,7 @@ describe("tsukumoServer", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
       ),
     )
 
@@ -92,6 +93,7 @@ describe("tsukumoServer", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
       ),
     )
 
@@ -135,6 +137,7 @@ describe("recall / recall_episode ツール", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
       )
 
     const listReply = await callTool(server(), "recall", { keyword: "散歩" })
@@ -176,6 +179,7 @@ describe("recall / recall_episode ツール", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
       ),
       "recall_episode",
       { id: "2026-09-25-1" },
@@ -203,6 +207,7 @@ describe("recall / recall_episode ツール", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
       )
 
     const listReply = await callTool(server(), "recall", { keyword: "架空" })
@@ -309,6 +314,7 @@ describe("speak の差し戻し", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
       ),
       "speak",
       CLOSING,
@@ -421,6 +427,26 @@ describe("report の本文（sections）", () => {
     expect(accepted).toEqual({ text: "ok", isError: false, endsTurn: true })
     expect(rejected.isError).toBe(true)
     expect(rejected.text).toContain("`list` の塊")
+  })
+})
+
+describe("report の差し戻しの記録", () => {
+  const draft = {
+    conclusion: "架空の結論",
+    closing: CLOSING,
+    sessionSummary: SUMMARY,
+    waitingLine: WAITING_LINE,
+  }
+
+  it("差し戻した report は種類の名前だけの report-rejected を流し、通した report は流さない", async () => {
+    const events: SessionEvent[] = []
+    await callTool(workServer(events), "report", {
+      ...draft,
+      sections: [{ blocks: [{ kind: "markdown", markdown: "- 架空の項目" }] }],
+    })
+    await callTool(workServer(events), "report", draft)
+
+    expect(events).toEqual([{ kind: "report-rejected", reasons: ["markdown-notation"] }])
   })
 })
 
@@ -596,6 +622,9 @@ function workServer(
       titles.push(title)
     },
     FAKE_CWD,
+    (event) => {
+      events.push(event)
+    },
   )
 }
 

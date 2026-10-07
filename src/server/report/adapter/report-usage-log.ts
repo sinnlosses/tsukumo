@@ -5,12 +5,17 @@ import { join } from "node:path"
 
 import {
   REPORT_USAGE_FORMAT_VERSION,
+  type ReportRejectionRecord,
   type ReportUsageRecord,
 } from "../../../shared/report/report-usage-record.ts"
 import { appendJsonLine } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-import type { ReportUsageEntry, ReportUsageLog } from "../core/report-usage.ts"
+import type {
+  ReportRejectionEntry,
+  ReportUsageEntry,
+  ReportUsageLog,
+} from "../core/report-usage.ts"
 
 const REPORT_USAGE_DIR_NAME = "report-usage"
 
@@ -24,6 +29,19 @@ export function createReportUsageLog(root: string = reportUsageDir()): ReportUsa
     append: (entry) => {
       appendJsonLine(join(root, `${localDateKey(entry.at)}.jsonl`), toRecord(entry))
     },
+    appendRejection: (entry) => {
+      appendJsonLine(join(root, `${localDateKey(entry.at)}.jsonl`), toRejectionRecord(entry))
+    },
+  }
+}
+
+function toRejectionRecord(entry: ReportRejectionEntry): ReportRejectionRecord {
+  return {
+    v: REPORT_USAGE_FORMAT_VERSION,
+    kind: "rejected",
+    at: isoWithOffset(entry.at),
+    sessionId: entry.sessionId,
+    reasons: entry.reasons,
   }
 }
 

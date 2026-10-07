@@ -214,7 +214,11 @@ describe("createReportReview の judge（送り直し）", () => {
     const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
 
-    expect(review.judge(VALID)).toEqual({ kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT })
+    expect(review.judge(VALID)).toEqual({
+      kind: "rejected",
+      text: REPORT_RESEND_REJECTION_TEXT,
+      reasons: ["resend"],
+    })
     expect(REPORT_RESEND_REJECTION_TEXT).not.toContain(VALID.conclusion)
   })
 
@@ -260,7 +264,7 @@ describe("createReportReview の judge（送り直し）", () => {
 
     expect(review.judge(INVALID).kind).toBe("rejected")
     draw(review, "toolu_r2", VALID)
-    expect(review.judge(VALID)).toEqual({ kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT })
+    expect(review.judge(VALID)).toMatchObject({ kind: "rejected", reasons: ["resend"] })
   })
 
   it("送り直しを差し戻したあとも、規約違反の1回は残る", () => {
@@ -325,6 +329,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
     expect(review.judge(OTHER)).toEqual({
       kind: "rejected",
       text: REPORT_NOTHING_NEW_REJECTION_TEXT,
+      reasons: ["nothing-new"],
     })
     expect(REPORT_NOTHING_NEW_REJECTION_TEXT).not.toContain(OTHER.conclusion)
   })
@@ -459,6 +464,7 @@ describe("createReportReview の judge（段取りの残った report）", () =>
     expect(review.judge(VALID)).toEqual({
       kind: "rejected",
       text: REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
+      reasons: ["unanswered-work-plan"],
     })
     moveTo({ kind: "planned", remaining: 1 })
     expect(review.judge(closing("finished"))).toEqual({ kind: "accepted" })
@@ -469,6 +475,7 @@ describe("createReportReview の judge（段取りの残った report）", () =>
       expect(reviewWith({ kind: "planned", remaining }).review.judge(VALID)).toEqual({
         kind: "rejected",
         text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
+        reasons: ["missing-work-plan-closing"],
       })
     }
   })
@@ -483,7 +490,11 @@ describe("createReportReview の judge（段取りの残った report）", () =>
 
   it("finished で段が2つ以上残っていれば差し戻し、最後の段か全部済みなら通す", () => {
     expect(reviewWith({ kind: "planned", remaining: 2 }).review.judge(closing("finished"))).toEqual(
-      { kind: "rejected", text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT },
+      {
+        kind: "rejected",
+        text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
+        reasons: ["unfinished-phases"],
+      },
     )
     for (const remaining of [1, 0]) {
       expect(reviewWith({ kind: "planned", remaining }).review.judge(closing("finished"))).toEqual({
@@ -503,7 +514,11 @@ describe("createReportReview の judge（段取りの残った report）", () =>
   it("タスクが finished なのに stopped で段が残っていれば差し戻し、全部済みなら通す", () => {
     expect(
       reviewWith({ kind: "planned", remaining: 1 }).review.judge(withTask("finished", "stopped")),
-    ).toEqual({ kind: "rejected", text: REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT })
+    ).toEqual({
+      kind: "rejected",
+      text: REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT,
+      reasons: ["finished-but-stopped"],
+    })
     expect(
       reviewWith({ kind: "planned", remaining: 0 }).review.judge(withTask("finished", "stopped")),
     ).toEqual({ kind: "accepted" })
@@ -518,6 +533,7 @@ describe("createReportReview の judge（段取りの残った report）", () =>
     expect(review.judge(INVALID)).toEqual({
       kind: "rejected",
       text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
+      reasons: ["missing-work-plan-closing"],
     })
     expect(review.judge({ ...INVALID, workPlanClosing: "finished" }).kind).toBe("rejected")
     expect(review.judge({ ...INVALID, workPlanClosing: "finished" })).toEqual({
@@ -527,6 +543,41 @@ describe("createReportReview の judge（段取りの残った report）", () =>
     expect(review.judge(closing("finished"))).toEqual({
       kind: "rejected",
       text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
+      reasons: ["unfinished-phases"],
     })
+  })
+})
+
+describe("createReportReview の judge（差し戻しの種類）", () => {
+  it("記法の違反は、当たった違反の種類を重複無しで持つ（文面も本文も入らない）", () => {
+    const verdict = createReportReview(noPlan).judge(INVALID)
+
+    expect(verdict.kind === "rejected" ? verdict.reasons : []).toEqual(["markdown-notation"])
+    expect(JSON.stringify(verdict.kind === "rejected" ? verdict.reasons : [])).not.toContain("架空")
+  })
+
+  it("手続きの差し戻しは、その種類の名前を1つ持つ", () => {
+    const resend = createReportReview(noPlan)
+    draw(resend, "toolu_r1", VALID)
+    expect(resend.judge(VALID)).toMatchObject({ reasons: ["resend"] })
+
+    const nothingNew = createReportReview(noPlan)
+    draw(nothingNew, "toolu_r1", VALID)
+    expect(nothingNew.judge(reportDraft({ conclusion: "架空の別の結論。" }))).toMatchObject({
+      reasons: ["nothing-new"],
+    })
+
+    expect(createReportReview(() => ({ kind: "rejected" })).judge(VALID)).toMatchObject({
+      reasons: ["unanswered-work-plan"],
+    })
+    expect(
+      createReportReview(() => ({ kind: "planned", remaining: 1 })).judge(
+        reportDraft({
+          conclusion: "架空の結論。",
+          task: { kind: "task", id: "架空", name: "架空", outcome: "finished" },
+          workPlanClosing: "stopped",
+        }),
+      ),
+    ).toMatchObject({ reasons: ["finished-but-stopped"] })
   })
 })

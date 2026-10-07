@@ -171,6 +171,10 @@ export type SessionEvent =
       readonly sessionSummary: string | undefined
     }
   /**
+   * `report` の handler が差し戻したときに流す。`reasons` は差し戻しの種類の名前だけで、本文も文面も持たない。
+   */
+  | { readonly kind: "report-rejected"; readonly reasons: readonly string[] }
+  /**
    * `work_plan` ツールの呼び出し（段取り）。メインが呼んだもので、`parseWorkPlan` を通ったものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
    * 毎回、段の並びごと届く。`current` は0始まりで、全部の段が済んだら `phases.length`。
    * `phaseSummary` は終えた段のまとめで、無ければ空の文字列。

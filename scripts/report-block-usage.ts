@@ -12,8 +12,13 @@ import { z } from "zod"
 
 import { dateFileNames, readJsonLines } from "../src/server/adapter/lib/jsonl.ts"
 import { reportUsageDir } from "../src/server/report/adapter/report-usage-log.ts"
+import { REPORT_PROCEDURE_REJECTIONS } from "../src/server/report/core/report-review.ts"
 import { REPORT_BLOCK_FIELDS } from "../src/server/report/core/report-usage.ts"
-import { ESCAPE_NOTATIONS, MARKDOWN_NOTATIONS } from "../src/server/report/core/report-violation.ts"
+import {
+  ESCAPE_NOTATIONS,
+  MARKDOWN_NOTATIONS,
+  REPORT_VIOLATION_KINDS,
+} from "../src/server/report/core/report-violation.ts"
 import { REPORT_BLOCK_KINDS } from "../src/shared/report/report-block.ts"
 import { REPORT_USAGE_FORMAT_VERSION } from "../src/shared/report/report-usage-record.ts"
 
@@ -43,14 +48,22 @@ const recordSchema = z.discriminatedUnion("v", [
 type UsageRecord = z.infer<typeof recordSchema>
 type FieldRecord = Extract<UsageRecord, { readonly v: typeof REPORT_USAGE_FORMAT_VERSION }>
 
+/** 差し戻した呼び出しの行（`kind: "rejected"`）。受け付けの行には `kind` が無い。 */
+const rejectionSchema = z.object({
+  v: z.literal(REPORT_USAGE_FORMAT_VERSION),
+  kind: z.literal("rejected"),
+  reasons: z.array(z.string()),
+})
+type RejectionRecord = z.infer<typeof rejectionSchema>
+
 const days = parseDaysOption(process.argv.slice(2))
 if (days === "invalid") {
   process.stderr.write(`${USAGE}\n`)
   process.exit(2)
 }
 
-const records = readRecentRecords(reportUsageDir(), days)
-if (records.length === 0) {
+const { records, rejections } = readRecentRecords(reportUsageDir(), days)
+if (records.length === 0 && rejections.length === 0) {
   process.stdout.write(`直近${String(days)}日の記録が無い（\`~/.tsukumo/report-usage/\` を見た）\n`)
   process.exit(0)
 }
@@ -92,7 +105,17 @@ process.stdout.write(
 )
 process.stdout.write("\n\n")
 const unknownTotal = records.reduce((total, record) => total + record.unknownBlockCount, 0)
-process.stdout.write(`知らない種類で境界で落とした塊の数（合計）: ${String(unknownTotal)}\n`)
+process.stdout.write(`知らない種類で境界で落とした塊の数（合計）: ${String(unknownTotal)}\n\n`)
+process.stdout.write(
+  table(
+    `差し戻しの種類 × 回数（割合は \`report\` の呼び出し${String(records.length + rejections.length)}回〔受け付け${String(records.length)}＋差し戻し${String(rejections.length)}〕に対する）`,
+    [...REPORT_PROCEDURE_REJECTIONS, ...REPORT_VIOLATION_KINDS],
+    rejections,
+    (record) => record.reasons,
+    records.length + rejections.length,
+  ),
+)
+process.stdout.write("\n")
 
 /** コマンドラインから `--days <n>` を読む。無ければ既定の28日、崩れていれば `"invalid"`。 */
 function parseDaysOption(argv: readonly string[]): number | "invalid" {
@@ -106,39 +129,45 @@ function parseDaysOption(argv: readonly string[]): number | "invalid" {
 }
 
 /** 今日を含む直近 `dayCount` 日の記録を、日付でファイルを絞って読む（壊れた行は読み飛ばす）。 */
-function readRecentRecords(root: string, dayCount: number): readonly UsageRecord[] {
+function readRecentRecords(
+  root: string,
+  dayCount: number,
+): { readonly records: readonly UsageRecord[]; readonly rejections: readonly RejectionRecord[] } {
   const endDate = Temporal.Now.plainDateISO().toString()
   const startDate = Temporal.PlainDate.from(endDate)
     .subtract({ days: dayCount - 1 })
     .toString()
-  return dateFileNames(root)
+  const raws = dateFileNames(root)
     .filter((name) => {
       const date = name.slice(0, 10)
       return date >= startDate && date <= endDate
     })
-    .flatMap((name) => readValidRecords(`${root}/${name}`))
+    .flatMap((name) => readJsonLines(`${root}/${name}`))
+  return {
+    records: raws.flatMap((raw) => {
+      const record = recordSchema.safeParse(raw)
+      return record.success ? [record.data] : []
+    }),
+    rejections: raws.flatMap((raw) => {
+      const rejection = rejectionSchema.safeParse(raw)
+      return rejection.success ? [rejection.data] : []
+    }),
+  }
 }
 
-/** 壊れた JSON・欄が足りない行は読み飛ばす。 */
-function readValidRecords(path: string): readonly UsageRecord[] {
-  return readJsonLines(path).flatMap((raw) => {
-    const record = recordSchema.safeParse(raw)
-    return record.success ? [record.data] : []
-  })
-}
-
-/** 名前ごとに「出たレポートの数」を数えた表。`knownNames` は0件でも出す（外す基準は0回を見る）。 */
-function table<Row extends UsageRecord>(
+/** 名前ごとに「出た行の数」を数えた表。`knownNames` は0件でも出す（外す基準は0回を見る）。`total` は割合の分母で、既定は行の数。 */
+function table<Row>(
   title: string,
   knownNames: readonly string[],
   usageRecords: readonly Row[],
   namesOf: (record: Row) => readonly string[],
+  total: number = usageRecords.length,
 ): string {
   const names = [...new Set([...knownNames, ...usageRecords.flatMap(namesOf)])].toSorted()
   const rows = names.map((name) => {
     const count = usageRecords.filter((record) => namesOf(record).includes(name)).length
-    const percent = ((count / usageRecords.length) * 100).toFixed(1)
-    return `  ${name.padEnd(12)} ${String(count).padStart(5)}  ${percent.padStart(5)}%`
+    const percent = (total === 0 ? 0 : (count / total) * 100).toFixed(1)
+    return `  ${name.padEnd(26)} ${String(count).padStart(5)}  ${percent.padStart(5)}%`
   })
   return [`${title}:`, ...rows].join("\n")
 }

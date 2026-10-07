@@ -37,12 +37,37 @@ import { isDeepEqual } from "remeda"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../../shared/session/work-plan.ts"
-import { type ReportDraft, reportRejectionText, reportViolations } from "./report-violation.ts"
+import {
+  type ReportDraft,
+  reportRejectionText,
+  type ReportViolation,
+  reportViolations,
+} from "./report-violation.ts"
 
-/** handler の判定。`rejected` の `text` はそのまま `report` の戻り値になる。 */
+export const REPORT_PROCEDURE_REJECTIONS = [
+  "resend",
+  "nothing-new",
+  "unanswered-work-plan",
+  "missing-work-plan-closing",
+  "unfinished-phases",
+  "finished-but-stopped",
+] as const satisfies readonly string[]
+
+export type ReportRejectionReason =
+  | (typeof REPORT_PROCEDURE_REJECTIONS)[number]
+  | ReportViolation["kind"]
+
+/**
+ * handler の判定。`rejected` の `text` はそのまま `report` の戻り値になる。
+ * `reasons` は記録に残す種類の名前で、文面もモデルが書いた本文も入らない。
+ */
 export type ReportVerdict =
   | { readonly kind: "accepted" }
-  | { readonly kind: "rejected"; readonly text: string }
+  | {
+      readonly kind: "rejected"
+      readonly text: string
+      readonly reasons: readonly ReportRejectionReason[]
+    }
 
 export type ReportReview = {
   /**
@@ -97,16 +122,24 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
     judge: (report) => {
       if (!resendRejectedInTurn && drawn.some((previous) => isSameReport(previous, report))) {
         resendRejectedInTurn = true
-        return { kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT }
+        return { kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT, reasons: ["resend"] }
       }
       if (!hasNews && !nothingNewRejectedInTurn) {
         nothingNewRejectedInTurn = true
-        return { kind: "rejected", text: REPORT_NOTHING_NEW_REJECTION_TEXT }
+        return {
+          kind: "rejected",
+          text: REPORT_NOTHING_NEW_REJECTION_TEXT,
+          reasons: ["nothing-new"],
+        }
       }
       const standing = workPlanStanding()
       if (standing.kind === "rejected" && !unansweredPlanRejectedInTurn) {
         unansweredPlanRejectedInTurn = true
-        return { kind: "rejected", text: REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT }
+        return {
+          kind: "rejected",
+          text: REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
+          reasons: ["unanswered-work-plan"],
+        }
       }
       const closingVerdict: ReportVerdict =
         standing.kind === "planned"
@@ -121,7 +154,11 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
         return { kind: "accepted" }
       }
       rejectedInTurn = true
-      return { kind: "rejected", text: reportRejectionText(violations) }
+      return {
+        kind: "rejected",
+        text: reportRejectionText(violations),
+        reasons: [...new Set(violations.map((violation) => violation.kind))],
+      }
     },
     nothingNewRejected: () => nothingNewRejectedInTurn,
     pass: (event) => {
@@ -224,13 +261,25 @@ export const REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT =
 /** 同じ依頼に段取りがあるときの、段の閉じ方だけで見た判定。`remaining` は済んでいない段の数（全部済みなら 0）。 */
 function judgeWorkPlanClosing(report: ReportDraft, remaining: number): ReportVerdict {
   if (report.workPlanClosing === "none") {
-    return { kind: "rejected", text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT }
+    return {
+      kind: "rejected",
+      text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
+      reasons: ["missing-work-plan-closing"],
+    }
   }
   if (report.workPlanClosing === "finished" && remaining >= 2) {
-    return { kind: "rejected", text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT }
+    return {
+      kind: "rejected",
+      text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
+      reasons: ["unfinished-phases"],
+    }
   }
   if (report.workPlanClosing === "stopped" && remaining > 0 && isFinished(report.task)) {
-    return { kind: "rejected", text: REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT }
+    return {
+      kind: "rejected",
+      text: REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT,
+      reasons: ["finished-but-stopped"],
+    }
   }
   return { kind: "accepted" }
 }

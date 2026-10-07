@@ -43,9 +43,17 @@ export const REPORT_BLOCK_FIELDS = [
 
 export type ReportBlockField = (typeof REPORT_BLOCK_FIELDS)[number]
 
+/** 差し戻した `report` 1回の記録。種類の名前だけで、本文も差し戻しの文面も持たない。 */
+export type ReportRejectionEntry = {
+  readonly at: number
+  readonly sessionId: string
+  readonly reasons: readonly string[]
+}
+
 /** 書けなくても例外を投げない。 */
 export type ReportUsageLog = {
   readonly append: (entry: ReportUsageEntry) => void
+  readonly appendRejection: (entry: ReportRejectionEntry) => void
 }
 
 /** 描いた（差し戻されなかった）`report` から、記録1行ぶんの中身を作る。 */

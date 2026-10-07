@@ -378,6 +378,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     if (event.kind === "report" && state.session.kind !== "starting") {
       options.reportUsageLog.append(reportUsageEntryOf(event, state.session.sessionId, at))
     }
+    if (event.kind === "report-rejected" && state.session.kind !== "starting") {
+      options.reportUsageLog.appendRejection({
+        at,
+        sessionId: state.session.sessionId,
+        reasons: event.reasons,
+      })
+    }
     if (event.kind === "question-answered" && state.session.kind !== "starting") {
       for (const entry of questionUsageEntriesOf(event.questions, state.session.sessionId, at)) {
         options.questionUsageLog.append(entry)

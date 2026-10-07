@@ -8,6 +8,8 @@
 // 逃げ道（`markdown` の塊）の中だけは Markdown として構文解析せず、行で見る（フェンスの中だけは飛ばす）。
 // 描く側のパーサはブラウザの層にあって使えず、判定に要るのは行頭の形と数えられる印だけなので。
 
+import { keys } from "remeda"
+
 import {
   type ReportBlock,
   REPORT_MERMAID_KINDS,
@@ -293,6 +295,8 @@ const VIOLATION_THRESHOLDS = {
   "label-in-item": 0,
   "non-japanese": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
+
+export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)
 
 function violationLine(violation: ReportViolation): string {
   switch (violation.kind) {

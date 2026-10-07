@@ -21,6 +21,7 @@ import {
   type ReportImage,
 } from "../../../../src/server/report/core/report-image-shelf.ts"
 import type {
+  ReportRejectionEntry,
   ReportUsageEntry,
   ReportUsageLog,
 } from "../../../../src/server/report/core/report-usage.ts"
@@ -109,7 +110,7 @@ const NOOP_DIAGNOSTIC_LOG: DiagnosticLog = { append: () => {}, readRange: () => 
 const NOOP_CONTEXT_USAGE_LOG: ContextUsageLog = { append: () => {} }
 
 /** `report` の塊の使われ方の記録を気にしないテストに渡す、何もしない書き込み口。 */
-const NOOP_REPORT_USAGE_LOG: ReportUsageLog = { append: () => {} }
+const NOOP_REPORT_USAGE_LOG: ReportUsageLog = { append: () => {}, appendRejection: () => {} }
 
 /** 質問の使われ方の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_QUESTION_USAGE_LOG: QuestionUsageLog = { append: () => {} }
@@ -1333,10 +1334,14 @@ describe("createSessionManager", () => {
     function startReportUsageManagerWithStub() {
       const stub = createStubDriver()
       const entries: ReportUsageEntry[] = []
+      const rejections: ReportRejectionEntry[] = []
       const manager = createSessionManager({
         reportUsageLog: {
           append: (entry) => {
             entries.push(entry)
+          },
+          appendRejection: (entry) => {
+            rejections.push(entry)
           },
         },
         launchSession: (onEvent, onRestoredEvents) => {
@@ -1345,7 +1350,7 @@ describe("createSessionManager", () => {
           return Promise.resolve(stub.driver)
         },
       })
-      return { manager, stub, entries }
+      return { manager, stub, entries, rejections }
     }
 
     it("描いた report のたびに、塊の種類と時刻・セッションIDを1行書く", async () => {
@@ -1376,12 +1381,28 @@ describe("createSessionManager", () => {
     })
 
     it("claude 側のセッションIDが分からないうちは書かない", async () => {
-      const { stub, entries } = startReportUsageManagerWithStub()
+      const { stub, entries, rejections } = startReportUsageManagerWithStub()
       await waitForBatch()
 
       stub.emit(reportWithSections([]))
+      stub.emit({ kind: "report-rejected", reasons: ["resend"] })
       await waitForBatch()
 
+      expect(entries).toEqual([])
+      expect(rejections).toEqual([])
+    })
+
+    it("差し戻した report は、種類の名前と時刻・セッションIDだけを差し戻しの行として書く", async () => {
+      const { stub, entries, rejections } = startReportUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emit({ kind: "report-rejected", reasons: ["resend", "long-paragraph"] })
+      await waitForBatch()
+
+      expect(rejections).toEqual([
+        { at: 1_000, sessionId: "claude-session-1", reasons: ["resend", "long-paragraph"] },
+      ])
       expect(entries).toEqual([])
     })
   })
@@ -1656,7 +1677,7 @@ describe("createSessionManager", () => {
       },
       tokenUsageLog: { append: record("token"), readRange: () => [] },
       contextUsageLog: { append: record("context") },
-      reportUsageLog: { append: record("report") },
+      reportUsageLog: { append: record("report"), appendRejection: record("report-rejection") },
       questionUsageLog: { append: record("question") },
       diagnosticLog: { append: record("diagnostic"), readRange: () => [] },
       launchSession: (onEvent, onRestoredEvents) => {

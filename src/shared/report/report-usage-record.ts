@@ -23,3 +23,16 @@ export type ReportUsageRecord = {
   /** 知らない種類で境界で落とした塊の数。 */
   readonly unknownBlockCount: number
 }
+
+/**
+ * 差し戻した `report` 1回の記録の行。受け付けの行と同じファイルに入り、`kind` の有無で見分ける（受け付けの行に `kind` は無い）。
+ * 書いてよいのは時刻・セッションID・差し戻しの種類の名前だけ。
+ */
+export type ReportRejectionRecord = {
+  readonly v: typeof REPORT_USAGE_FORMAT_VERSION
+  readonly kind: "rejected"
+  /** ISO 8601（オフセット付き）。 */
+  readonly at: string
+  readonly sessionId: string
+  readonly reasons: readonly string[]
+}

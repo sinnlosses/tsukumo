@@ -598,6 +598,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     // サーバの中で `work-plan` に変わってから届く（`WorkPlanReview`）。
     case "work-plan-called":
       return state
+    case "report-rejected":
+      return state
     case "report-drafting":
       return { ...state, reportDrafting: { kind: "drafting", toolUseId: event.toolUseId } }
     case "report":
