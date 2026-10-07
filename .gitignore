@@ -14,3 +14,6 @@ characters/local/
 
 # Claude Code のセッションが作るロック（設定ファイルだけを履歴に入れる）
 .claude/scheduled_tasks.lock
+
+# vitest のアーティファクトディレクトリ
+.vitest/
