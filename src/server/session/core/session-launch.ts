@@ -9,7 +9,7 @@
 import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
 import type { SessionChoice } from "../../../shared/session/session-choice.ts"
 import type { SessionDefault } from "../../../shared/session/session-default.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import type {
   CharacterSelection,
   NamedCharacterPack,
@@ -97,7 +97,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   readonly startDriver: (
     seed: SessionLaunchSeed<Pack>,
     onEvent: (event: SessionEvent) => void,
-    restored: Promise<readonly SessionEvent[]>,
+    restored: Promise<readonly RestoredEvent[]>,
   ) => SessionDriver
   /**
    * いま切り替え先として選べるセッションを一覧にする（同じパックの、同じモードのものだけ）。読めなかったときは空。
@@ -110,7 +110,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
    */
   readonly refreshSessions: () => Promise<SessionCatalogRefresh>
   /** 前のセッションの記録を、画面に出す形のイベントに組み直す。 */
-  readonly restoreEvents: (sessionId: string, pack: Pack) => Promise<readonly SessionEvent[]>
+  readonly restoreEvents: (sessionId: string, pack: Pack) => Promise<readonly RestoredEvent[]>
   /** 診断ログの書き込み口。{@link restoreEvents} が失敗したときだけ使う。 */
   readonly diagnosticLog: DiagnosticLog
   /** いまのエポックミリ秒（診断ログに打つ時刻）。 */
@@ -135,7 +135,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
   ports: SessionLaunchPorts<Pack>,
 ): (
   onEvent: (event: SessionEvent) => void,
-  onRestoredEvents: (events: readonly SessionEvent[]) => void,
+  onRestoredEvents: (events: readonly RestoredEvent[]) => void,
   request: SessionLaunchRequest,
 ) => Promise<SessionDriver> {
   return async (onEvent, onRestoredEvents, request) => {
@@ -177,7 +177,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
       })
     }
     announceSessions(await ports.listSessions(pack, chat))
-    const restored = Promise.withResolvers<readonly SessionEvent[]>()
+    const restored = Promise.withResolvers<readonly RestoredEvent[]>()
     const driver = ports.startDriver(
       { pack, start, chat, sessionDefault },
       onEvent,
@@ -236,8 +236,8 @@ async function replayRestoredSession<Pack extends NamedCharacterPack>(
   ports: SessionLaunchPorts<Pack>,
   sessionId: string,
   pack: Pack,
-  onRestoredEvents: (events: readonly SessionEvent[]) => void,
-): Promise<readonly SessionEvent[]> {
+  onRestoredEvents: (events: readonly RestoredEvent[]) => void,
+): Promise<readonly RestoredEvent[]> {
   try {
     const events = await ports.restoreEvents(sessionId, pack)
     onRestoredEvents(events)

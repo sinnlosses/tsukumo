@@ -719,41 +719,13 @@
     },
     {
       "name": "chat-restored-history",
+      "resume": "fake-past-chat-session",
       "steps": [
         {
           "afterMs": 0,
           "event": {
             "kind": "chat-mode-changed",
             "chat": true
-          }
-        },
-        {
-          "afterMs": 100,
-          "event": {
-            "kind": "request",
-            "text": "前のセッションの架空の雑談（組み直したもの）",
-            "images": []
-          }
-        },
-        {
-          "afterMs": 150,
-          "event": {
-            "kind": "speech",
-            "text": "前のセッションの架空のセリフだよ。",
-            "expression": "default"
-          }
-        },
-        {
-          "afterMs": 200,
-          "event": {
-            "kind": "turn-finished",
-            "outcome": { "kind": "completed" }
-          }
-        },
-        {
-          "afterMs": 250,
-          "event": {
-            "kind": "history-restored"
           }
         },
         {
@@ -4587,12 +4559,44 @@
   ],
   "pastSessions": [
     {
+      "sessionId": "fake-past-chat-session",
+      "messages": [
+        {
+          "type": "user",
+          "uuid": "past-chat-u-1",
+          "session_id": "fake-past-chat-session",
+          "timestamp": "2026-01-02T03:00:00.000Z",
+          "message": { "role": "user", "content": "前のセッションの架空の雑談（組み直したもの）" },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-chat-a-1",
+          "session_id": "fake-past-chat-session",
+          "timestamp": "2026-01-02T03:00:05.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-chat-speak-1",
+                "name": "mcp__tsukumo__speak",
+                "input": { "text": "前のセッションの架空のセリフだよ。", "expression": "default" }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        }
+      ]
+    },
+    {
       "sessionId": "fake-past-session",
       "messages": [
         {
           "type": "user",
           "uuid": "past-u-1",
           "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:00:00.000Z",
           "message": { "role": "user", "content": "前のセッションの架空の依頼その1" },
           "parent_tool_use_id": null
         },
@@ -4600,6 +4604,7 @@
           "type": "assistant",
           "uuid": "past-a-1",
           "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:00:05.000Z",
           "message": {
             "role": "assistant",
             "content": [
@@ -4617,6 +4622,7 @@
           "type": "user",
           "uuid": "past-u-2",
           "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:10:00.000Z",
           "message": { "role": "user", "content": "前のセッションの架空の依頼その2" },
           "parent_tool_use_id": null
         },
@@ -4624,6 +4630,7 @@
           "type": "assistant",
           "uuid": "past-a-2",
           "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:10:20.000Z",
           "message": {
             "role": "assistant",
             "content": [
@@ -4637,6 +4644,152 @@
                 }
               }
             ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-3",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:20:00.000Z",
+          "message": { "role": "user", "content": "前のセッションの架空の依頼その3（段取りつき）" },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-3",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:20:02.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-plan-1",
+                "name": "mcp__tsukumo__work_plan",
+                "input": {
+                  "phases": ["架空の調べ", "架空の直し"],
+                  "current": 0,
+                  "phaseSummary": ""
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-4",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:20:03.000Z",
+          "message": {
+            "role": "user",
+            "content": [{ "type": "tool_result", "tool_use_id": "past-plan-1", "content": "ok" }]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-4",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:20:10.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-bash-1",
+                "name": "Bash",
+                "input": { "command": "架空の検査コマンド" }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-5",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:21:40.000Z",
+          "message": {
+            "role": "user",
+            "content": [
+              { "type": "tool_result", "tool_use_id": "past-bash-1", "content": "架空の出力" }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-5",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:22:00.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-plan-2",
+                "name": "mcp__tsukumo__work_plan",
+                "input": {
+                  "phases": ["架空の調べ", "架空の直し"],
+                  "current": 1,
+                  "phaseSummary": "架空の調べを終えた。"
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-6",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:22:01.000Z",
+          "message": {
+            "role": "user",
+            "content": [{ "type": "tool_result", "tool_use_id": "past-plan-2", "content": "ok" }]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-6",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:23:30.000Z",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-report-2",
+                "name": "mcp__tsukumo__report",
+                "input": {
+                  "conclusion": "前のセッションの架空の結論その3",
+                  "checks": [
+                    {
+                      "status": "ok",
+                      "label": "架空の検査",
+                      "figure": "架空 3 件",
+                      "command": "架空の検査コマンド",
+                      "detail": ""
+                    }
+                  ],
+                  "workPlanClosing": "finished"
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-7",
+          "session_id": "fake-past-session",
+          "timestamp": "2026-01-02T03:23:31.000Z",
+          "message": {
+            "role": "user",
+            "content": [{ "type": "tool_result", "tool_use_id": "past-report-2", "content": "ok" }]
           },
           "parent_tool_use_id": null
         }

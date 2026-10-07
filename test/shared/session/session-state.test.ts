@@ -7,8 +7,13 @@ import {
   mainViewEntries,
   mainViewTurns,
 } from "../../../src/shared/session/main-view.ts"
-import type { SessionEvent, StampedEvent } from "../../../src/shared/session/session-event.ts"
+import type {
+  RestoredEvent,
+  SessionEvent,
+  StampedEvent,
+} from "../../../src/shared/session/session-event.ts"
 import {
+  applyRestoredEvents,
   applySessionEvent,
   INITIAL_SESSION_STATE,
   MAX_TOOL_TEXT_LENGTH,
@@ -1136,14 +1141,29 @@ describe("applySessionEvent（背景で走らせた Bash の終わり）", () =>
     ])
   })
 
-  it("復元した記録は知らせの時刻も分からない", () => {
-    const state = applyAt(
-      [bashStarted("toolu_bg", { command: "架空の検査", run_in_background: true }), 0],
-      [notified("toolu_bg"), 7_000],
-      [{ kind: "history-restored" }, 8_000],
+  it("復元した記録の知らせは、読めた時刻の recovered になり、読めなければ restored になる", () => {
+    const start = bashStarted("toolu_bg", { command: "架空の検査", run_in_background: true })
+    const withTime = applyRestoredEvents(
+      INITIAL_SESSION_STATE,
+      [
+        { event: start, time: { kind: "known", at: 0 } },
+        { event: notified("toolu_bg"), time: { kind: "known", at: 7_000 } },
+      ],
+      8_000,
+    )
+    const withoutTime = applyRestoredEvents(
+      INITIAL_SESSION_STATE,
+      [
+        { event: start, time: { kind: "known", at: 0 } },
+        { event: notified("toolu_bg"), time: { kind: "unknown" } },
+      ],
+      8_000,
     )
 
-    expect(backgroundEndsOf(state)).toEqual([{ kind: "notified", at: { kind: "restored" } }])
+    expect(backgroundEndsOf(withTime)).toEqual([
+      { kind: "notified", at: { kind: "recovered", at: 7_000 } },
+    ])
+    expect(backgroundEndsOf(withoutTime)).toEqual([{ kind: "notified", at: { kind: "restored" } }])
   })
 })
 
@@ -1611,15 +1631,24 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
     ])
   })
 
-  it("復元した段取りとレポートは時刻が分からない", () => {
-    const state = applyAt(
-      [request, 0],
-      [mainPlan(0), 1000],
-      [report, 2000],
-      [{ kind: "history-restored" }, 3000],
+  it("復元した段取りとレポートは、読めた時刻の recovered になり、読めなければ restored になる", () => {
+    const events = [request, mainPlan(0), report]
+    const withTime = applyRestoredEvents(
+      INITIAL_SESSION_STATE,
+      events.map((event, index) => ({ event, time: { kind: "known", at: index * 1000 } })),
+      9000,
+    )
+    const withoutTime = applyRestoredEvents(
+      INITIAL_SESSION_STATE,
+      events.map((event) => ({ event, time: { kind: "unknown" } })),
+      9000,
     )
 
-    expect(timesOf(state)).toEqual([{ kind: "restored" }, { kind: "restored" }])
+    expect(timesOf(withTime)).toEqual([
+      { kind: "recovered", at: 1000 },
+      { kind: "recovered", at: 2000 },
+    ])
+    expect(timesOf(withoutTime)).toEqual([{ kind: "restored" }, { kind: "restored" }])
   })
 })
 
@@ -1663,5 +1692,59 @@ describe("applySessionEvent（答え待ちの届いた時刻）", () => {
     )
 
     expect(state.pending.map((ask) => ask.askedAt)).toEqual([3_000])
+  })
+})
+
+describe("applyRestoredEvents（transcript の時刻）", () => {
+  const known = (event: SessionEvent, at: number): RestoredEvent => ({
+    event,
+    time: { kind: "known", at },
+  })
+  const unknown = (event: SessionEvent): RestoredEvent => ({ event, time: { kind: "unknown" } })
+  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const bashStarted: SessionEvent = {
+    kind: "tool-started",
+    toolUseId: "toolu_1",
+    name: "Bash",
+    input: { command: "架空の検査" },
+    parentToolUseId: undefined,
+  }
+  const finished: SessionEvent = {
+    kind: "tool-finished",
+    toolUseId: "toolu_1",
+    content: "架空の結果",
+    isError: false,
+  }
+  const toolOf = (state: SessionState) => state.records.find((found) => found.kind === "tool")
+
+  it("時刻の読める出来事から積んだ記録は、その時刻の recovered になる", () => {
+    const state = applyRestoredEvents(
+      INITIAL_SESSION_STATE,
+      [known(request, 1_000), known(bashStarted, 2_000), known(finished, 5_000)],
+      99_999,
+    )
+
+    expect(state.records[0]).toMatchObject({
+      kind: "request",
+      time: { kind: "recovered", at: 1_000 },
+    })
+    expect(toolOf(state)).toMatchObject({
+      startedAt: { kind: "recovered", at: 2_000 },
+      status: { kind: "finished", finishedAt: { kind: "recovered", at: 5_000 } },
+    })
+  })
+
+  it("時刻の読めない出来事から積んだ記録は restored のまま、読めた端は recovered で残る", () => {
+    const state = applyRestoredEvents(
+      INITIAL_SESSION_STATE,
+      [unknown(request), known(bashStarted, 2_000), unknown(finished)],
+      99_999,
+    )
+
+    expect(state.records[0]).toMatchObject({ kind: "request", time: { kind: "restored" } })
+    expect(toolOf(state)).toMatchObject({
+      startedAt: { kind: "recovered", at: 2_000 },
+      status: { kind: "finished", finishedAt: { kind: "restored" } },
+    })
   })
 })

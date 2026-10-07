@@ -52,7 +52,7 @@ import { expressionChoices, expressionNames } from "../shared/character-pack/exp
 import type { PromptDelayFootprint } from "../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
 import type { SessionDefault } from "../shared/session/session-default.ts"
-import type { SessionEvent } from "../shared/session/session-event.ts"
+import type { RestoredEvent, SessionEvent } from "../shared/session/session-event.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
@@ -76,7 +76,7 @@ export function wireSessionLaunch(options: {
   readonly onLaunch: (
     seed: SessionLaunchSeed<CharacterPack>,
     onEvent: (event: SessionEvent) => void,
-    restored: Promise<readonly SessionEvent[]>,
+    restored: Promise<readonly RestoredEvent[]>,
   ) => (event: SessionEvent) => void
   /** 診断ログの書き込み口。握りつぶした失敗（履歴の組み直し・覚えたことの書き込み）を書く。 */
   readonly diagnosticLog: DiagnosticLog

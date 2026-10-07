@@ -62,7 +62,7 @@ import type { Question } from "../../../../src/shared/session-driver/question.ts
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
-  applySessionEvent,
+  applyRestoredEvents,
   INITIAL_SESSION_STATE,
   MAX_SESSION_STATE_TURNS,
 } from "../../../../src/shared/session/session-state.ts"
@@ -84,6 +84,7 @@ import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 import { createCommandClient } from "../../../fixture/command-client.ts"
 import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
+import { knownRestored } from "../../../fixture/restored-event.ts"
 import {
   createStubDriver,
   FAKE_SESSION_DIGEST,
@@ -268,7 +269,6 @@ const RESTORED_REPLAY: readonly SessionEvent[] = [
   { kind: "tool-finished", toolUseId: "t-restored", content: "架空の結果", isError: false },
   { kind: "speech", text: "前のセッションの架空のセリフ", expression: "proud" },
   { kind: "turn-finished", outcome: { kind: "completed" } },
-  { kind: "history-restored" },
 ]
 
 describe("createSessionManager", () => {
@@ -349,17 +349,14 @@ describe("createSessionManager", () => {
     // 束に残っているうちに再生が届く（hello の姿に入るので、events でもう一度配らない）。
     stub.emit({ kind: "chat-mode-changed", chat: true })
     const stateBeforeReplay = manager.commandSession.state()
-    stub.emitRestored(RESTORED_REPLAY)
+    stub.emitRestored(knownRestored(RESTORED_REPLAY))
     await waitForBatch()
 
     expect(frames.slice(before)).toEqual([
       {
         type: "hello",
         protocolVersion: PROTOCOL_VERSION,
-        state: RESTORED_REPLAY.reduce(
-          (state, event) => applySessionEvent(state, event, 1_000),
-          stateBeforeReplay,
-        ),
+        state: applyRestoredEvents(stateBeforeReplay, knownRestored(RESTORED_REPLAY), 1_000),
       },
     ])
   })
@@ -371,7 +368,7 @@ describe("createSessionManager", () => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         if (request.chat === true) {
-          onRestoredEvents(RESTORED_REPLAY)
+          onRestoredEvents(knownRestored(RESTORED_REPLAY))
         }
         return new Promise((resolve) => {
           releases.push(() => resolve(stub.driver))
@@ -394,10 +391,7 @@ describe("createSessionManager", () => {
     expect(frames.slice(before).map((frame) => frame.type)).toEqual(["hello"])
     const hello = frames[before]
     expect(hello?.type === "hello" && hello.state.records).toEqual(
-      RESTORED_REPLAY.reduce(
-        (state, event) => applySessionEvent(state, event, 1_000),
-        INITIAL_SESSION_STATE,
-      ).records,
+      applyRestoredEvents(INITIAL_SESSION_STATE, knownRestored(RESTORED_REPLAY), 1_000).records,
     )
   })
 
@@ -1684,38 +1678,40 @@ describe("createSessionManager", () => {
     await waitForBatch()
     const before = written.length
 
-    stub.emitRestored([
-      CHARACTER_EVENT,
-      reportEvent({ toolUseId: "toolu_r1", conclusion: "前のセッションの結論" }),
-      {
-        kind: "token-usage",
-        cumulative: [
-          {
-            model: "claude-opus-fictional",
-            inputTokens: 100,
-            outputTokens: 20,
-            thinkingTokens: 0,
-            cacheReadInputTokens: 0,
-            cacheCreationInputTokens: 0,
-            costUsd: 0.5,
-          },
-        ],
-      },
-      {
-        kind: "question-answered",
-        toolUseId: "toolu_fictional",
-        questions: [
-          {
-            header: "架空の見出し",
-            text: "架空の質問文",
-            multiSelect: false,
-            options: [{ label: "架空の選択肢", description: "", preview: undefined }],
-          },
-        ],
-        answers: [["架空の答え"]],
-      },
-      ...RESTORED_REPLAY,
-    ])
+    stub.emitRestored(
+      knownRestored([
+        CHARACTER_EVENT,
+        reportEvent({ toolUseId: "toolu_r1", conclusion: "前のセッションの結論" }),
+        {
+          kind: "token-usage",
+          cumulative: [
+            {
+              model: "claude-opus-fictional",
+              inputTokens: 100,
+              outputTokens: 20,
+              thinkingTokens: 0,
+              cacheReadInputTokens: 0,
+              cacheCreationInputTokens: 0,
+              costUsd: 0.5,
+            },
+          ],
+        },
+        {
+          kind: "question-answered",
+          toolUseId: "toolu_fictional",
+          questions: [
+            {
+              header: "架空の見出し",
+              text: "架空の質問文",
+              multiSelect: false,
+              options: [{ label: "架空の選択肢", description: "", preview: undefined }],
+            },
+          ],
+          answers: [["架空の答え"]],
+        },
+        ...RESTORED_REPLAY,
+      ]),
+    )
     await waitForBatch()
 
     expect(written.slice(before)).toEqual([])
@@ -1877,7 +1873,7 @@ describe("レポートの画像の棚", () => {
     const { stub, shelf, readPaths } = startManagerWithReportImageShelf()
     await waitForBatch()
 
-    stub.emitRestored([imageReportEvent("toolu_restored")])
+    stub.emitRestored(knownRestored([imageReportEvent("toolu_restored")]))
     stub.emit(imageReportEvent("toolu_live"))
     await waitForBatch()
 

@@ -18,8 +18,8 @@
               "tag": "div",
               "attributes": {
                 "role": "img",
-                "aria-label": "つくもの精霊（どや顔）",
-                "data-expression": "proud",
+                "aria-label": "つくもの精霊（通常）",
+                "data-expression": "default",
                 "data-outfit": "heavy",
                 "data-motion": "reading"
               },
@@ -35,21 +35,19 @@
         {
           "tag": "div",
           "attributes": {
-            "data-speaker": "character",
-            "role": "button",
-            "aria-pressed": "false"
-          },
-          "children": [
-            "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
-          ]
-        },
-        {
-          "tag": "div",
-          "attributes": {
             "data-speaker": "user"
           },
           "children": [
             "前のセッションの架空の雑談（組み直したもの）"
+          ]
+        },
+        {
+          "tag": "time",
+          "attributes": {
+            "dateTime": "2026-01-02T12:00+09:00"
+          },
+          "children": [
+            "12:00"
           ]
         },
         {
@@ -61,6 +59,15 @@
           },
           "children": [
             "前のセッションの架空のセリフだよ。"
+          ]
+        },
+        {
+          "tag": "time",
+          "attributes": {
+            "dateTime": "2026-01-02T12:00+09:00"
+          },
+          "children": [
+            "12:00"
           ]
         },
         {
@@ -78,6 +85,26 @@
                 "1月15日（木）"
               ]
             }
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "data-speaker": "character",
+            "role": "button",
+            "aria-pressed": "false"
+          },
+          "children": [
+            "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
+          ]
+        },
+        {
+          "tag": "time",
+          "attributes": {
+            "dateTime": "2026-01-15T10:00+09:00"
+          },
+          "children": [
+            "10:00"
           ]
         },
         {
@@ -103,7 +130,7 @@
           "attributes": {
             "data-speaker": "character",
             "role": "button",
-            "aria-pressed": "true"
+            "aria-pressed": "false"
           },
           "children": [
             "いまの架空のセリフその1だよ。"
@@ -139,9 +166,22 @@
         {
           "tag": "div",
           "attributes": {
-            "data-speaker": "typing",
-            "aria-hidden": "true"
-          }
+            "data-speaker": "character",
+            "role": "button",
+            "aria-pressed": "true"
+          },
+          "children": [
+            "いまの架空のセリフその2だよ。"
+          ]
+        },
+        {
+          "tag": "time",
+          "attributes": {
+            "dateTime": "2026-01-15T10:00+09:00"
+          },
+          "children": [
+            "10:00"
+          ]
         }
       ]
     }

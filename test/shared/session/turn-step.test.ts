@@ -195,6 +195,21 @@ describe("toolDuration（所要時間。tool-started / tool-finished の at か�
 
     expect(toolDuration(turnSteps(list)[0]!)).toEqual({ kind: "unknown" })
   })
+
+  it("transcript から時刻を戻した手順（recovered）は元の時刻の差になる", () => {
+    const list = currentTurnSteps(
+      [
+        requestRecord(),
+        toolRecord({
+          startedAt: { kind: "recovered", at: 1_000 },
+          status: finishedToolStatus({ finishedAt: { kind: "recovered", at: 4_500 } }),
+        }),
+      ],
+      false,
+    )
+
+    expect(toolDuration(turnSteps(list)[0]!)).toEqual({ kind: "known", milliseconds: 3_500 })
+  })
 })
 
 describe("currentTurnSteps（report ツール）", () => {

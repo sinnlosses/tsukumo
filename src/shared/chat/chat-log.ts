@@ -3,7 +3,7 @@
 
 import type { Expression } from "../character-pack/expression.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
-import type { RecordTime, SessionRecord } from "../session/session-state.ts"
+import { type RecordTime, recordTimeAt, type SessionRecord } from "../session/session-state.ts"
 
 /**
  * 会話のログ1件。話したのがどちらかと文面、話した時刻を持つ。
@@ -113,14 +113,13 @@ type RowsInProgress = {
 }
 
 function entryDay(time: RecordTime, timeZone: string): EntryDay {
-  if (time.kind === "restored") {
+  const at = recordTimeAt(time)
+  if (at === undefined) {
     return { kind: "restored" }
   }
   return {
     kind: "date",
-    date: Temporal.Instant.fromEpochMilliseconds(time.at)
-      .toZonedDateTimeISO(timeZone)
-      .toPlainDate(),
+    date: Temporal.Instant.fromEpochMilliseconds(at).toZonedDateTimeISO(timeZone).toPlainDate(),
   }
 }
 

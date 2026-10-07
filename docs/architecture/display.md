@@ -649,7 +649,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   モデルに書かせると書き忘れと、測っていない数が混じる。表から横棒グラフにしたのは 2026-10-07 の利用者決定で、
   どの段に時間がかかったかを長さの比で一目で見るため）。`report` の引数は増やさず、モデルに時間を書かせる欄も作らない
   - **時刻は記録が持つ。** `work-plan` の記録（`finished` の `report` で tsukumo が閉じたものも）と `report` の記録が、届いたイベントの時刻
-    （`RecordTime`）を持つ。復元した記録は `restored` になる（`history-restored`）
+    （`RecordTime`）を持つ。復元した記録は transcript の時刻が読めれば `recovered`、読めなければ `restored`（不明）になる
   - **求め方**（`phaseDurations`。`src/shared/session/phase-duration.ts`）: 段 n の時間は、今の段が n になった記録の時刻から、
     次に別の段へ移った記録の時刻まで。最後の段は全部の段を終えた記録（`finished` の `report` で tsukumo が閉じたものも）の時刻で閉じ、無ければ `report` を受け付けた時刻で閉じる。
     同じ段に戻ったら測れた区間を足す。読む範囲は最後の依頼より後の記録だけ

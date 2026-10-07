@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest"
 import { resumedWelcome } from "../../../../src/server/recommendation/core/resumed-welcome.ts"
 import type {
   ReportWaitingLine,
+  RestoredEvent,
   SessionEvent,
 } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
+import { knownRestored, unknownRestored } from "../../../fixture/restored-event.ts"
 
 // すべて手で書いた架空の履歴。
 
@@ -24,25 +26,29 @@ function report(waitingLine: ReportWaitingLine): SessionEvent {
   return reportEvent({ waitingLine })
 }
 
-function span(finishedAt: number): SessionEvent {
-  return { kind: "restored-turn-span", startedAt: finishedAt - 1000, finishedAt }
+/** 並びの最後の出来事だけが `at` の時刻を持つ履歴。 */
+function endingAt(events: readonly SessionEvent[], at: number): readonly RestoredEvent[] {
+  return [...unknownRestored(events.slice(0, -1)), ...knownRestored(events.slice(-1), at)]
 }
 
 describe("resumedWelcome", () => {
   it("組み直した依頼があれば、前回の最後の時刻からの経過の帯で続きから迎える", () => {
     expect(
-      resumedWelcome([REQUEST, report({ kind: "none" }), FINISHED, span(NOW - 2 * HOUR_MS)], NOW),
+      resumedWelcome(
+        endingAt([REQUEST, report({ kind: "none" }), FINISHED], NOW - 2 * HOUR_MS),
+        NOW,
+      ),
     ).toEqual({ kind: "resume", away: "数時間" })
   })
 
   it("前回の最後の report に待ちの一言があっても、続きから迎える", () => {
     expect(
-      resumedWelcome([REQUEST, report(WAITING_LINE), FINISHED, span(NOW - HOUR_MS)], NOW),
+      resumedWelcome(endingAt([REQUEST, report(WAITING_LINE), FINISHED], NOW - HOUR_MS), NOW),
     ).toEqual({ kind: "resume", away: "数時間" })
   })
 
   it("最後の時刻が読めなければ、帯は「分からない」", () => {
-    expect(resumedWelcome([REQUEST, FINISHED], NOW)).toEqual({
+    expect(resumedWelcome(unknownRestored([REQUEST, FINISHED]), NOW)).toEqual({
       kind: "resume",
       away: "分からない",
     })
@@ -50,7 +56,9 @@ describe("resumedWelcome", () => {
 
   it("組み直した依頼が無ければ、新しく始めるのと同じに迎える", () => {
     expect(resumedWelcome([], NOW)).toEqual({ kind: "start" })
-    expect(resumedWelcome([{ kind: "utterance", text: "架空の本文" }], NOW)).toEqual({
+    expect(
+      resumedWelcome(unknownRestored([{ kind: "utterance", text: "架空の本文" }]), NOW),
+    ).toEqual({
       kind: "start",
     })
   })

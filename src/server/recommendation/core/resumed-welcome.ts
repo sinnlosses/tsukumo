@@ -1,7 +1,7 @@
 // 続きから起こした代の迎え方を、組み直した履歴から決める。
 // 履歴は会話の中身そのものなので、見るのは依頼の有無と最後の時刻だけにし、文面は戻り値に入れない。
 
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { RestoredEvent } from "../../../shared/session/session-event.ts"
 import {
   awayBandOf,
   START_VISIT,
@@ -11,16 +11,15 @@ import {
 
 /**
  * 組み直した依頼があれば、前回からの経過の帯を持つ続きからの迎え方。無ければ新しく始めるのと同じ迎え方。
- * `now` は今のエポックミリ秒。前回の最後の時刻は `restored-turn-span` の `finishedAt`。
+ * `now` は今のエポックミリ秒。前回の最後の時刻は、並びの最後の出来事の時刻。
  */
-export function resumedWelcome(restored: readonly SessionEvent[], now: number): WelcomeVisit {
-  if (!restored.some((event) => event.kind === "request")) {
+export function resumedWelcome(restored: readonly RestoredEvent[], now: number): WelcomeVisit {
+  if (!restored.some(({ event }) => event.kind === "request")) {
     return START_VISIT
   }
-  const span = restored.findLast((event) => event.kind === "restored-turn-span")
+  const last = restored.at(-1)?.time
   return {
     kind: "resume",
-    away:
-      span?.kind === "restored-turn-span" ? awayBandOf(now - span.finishedAt) : UNKNOWN_AWAY_BAND,
+    away: last?.kind === "known" ? awayBandOf(now - last.at) : UNKNOWN_AWAY_BAND,
   }
 }

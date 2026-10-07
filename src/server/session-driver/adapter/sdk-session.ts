@@ -20,7 +20,7 @@ import {
   type SessionDigest,
   UNAVAILABLE_SESSION_DIGEST,
 } from "../../../shared/session/session-digest.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { RestoredEvent } from "../../../shared/session/session-event.ts"
 import { createSessionDigestCache, type TranscriptStamp } from "../core/session-digest-cache.ts"
 import { toSessionDigest } from "../core/session-digest.ts"
 import type { SessionDriverOptions } from "../core/session-driver.ts"
@@ -67,7 +67,7 @@ export async function listRepositorySessions(cwd: string): Promise<unknown> {
 export async function readRestoredEvents(
   sessionId: string,
   expressions: readonly ExpressionChoice[],
-): Promise<readonly SessionEvent[]> {
+): Promise<readonly RestoredEvent[]> {
   try {
     return toRestoredEvents(
       await getSessionMessages(sessionId, { includeSystemMessages: true }),

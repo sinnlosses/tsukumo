@@ -5,6 +5,7 @@ import type { Expression } from "../../../../src/shared/character-pack/expressio
 import { mainViewEntries } from "../../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
+  applyRestoredEvents,
   applySessionEvent,
   INITIAL_SESSION_STATE,
 } from "../../../../src/shared/session/session-state.ts"
@@ -21,33 +22,49 @@ import {
 // docs/architecture.md「1ファイル = 1つの境界」）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
-/** 再生の終わりの印（`toRestoredEvents` が、組み直せたものがあるときだけ末尾に1つ足す）。 */
-const HISTORY_RESTORED: SessionEvent = { kind: "history-restored" }
+/** 組み直した出来事だけを取り出す（時刻は見ない）。 */
+function eventsOf(messages: unknown): readonly SessionEvent[] {
+  return toRestoredEvents(messages, EXPRESSIONS).map(({ event }) => event)
+}
+
+function stamped(message: unknown, timestamp: string): unknown {
+  return Object.assign({}, message, { timestamp })
+}
 
 describe("toRestoredEvents", () => {
-  it("組み直せたものがあれば、再生の終わりの印を末尾に1つだけ足す（空なら足さない）", () => {
-    const events = toRestoredEvents(
-      [userMessage("架空の依頼その1"), userMessage("架空の依頼その2")],
-      EXPRESSIONS,
-    )
-
-    expect(events.filter((event) => event.kind === "history-restored")).toHaveLength(1)
-    expect(events.at(-1)).toEqual(HISTORY_RESTORED)
+  it("組み直せたものが無ければ空", () => {
     expect(toRestoredEvents([null, { type: "user" }], EXPRESSIONS)).toEqual([])
   })
 
-  it("最後のやり取りの「所要」は、再生した時刻ではなく transcript の最後の依頼から最後のメッセージまでになる", () => {
-    const stamped = (message: unknown, timestamp: string): unknown =>
-      Object.assign({}, message, { timestamp })
+  it("出来事は元のメッセージの timestamp を持ち、ターンの境目は直前の出来事の時刻を引き継ぐ", () => {
+    const messages = [
+      stamped(userMessage("架空の依頼その1"), "2026-01-02T03:00:00.000Z"),
+      stamped(assistantMessage([{ type: "text", text: "架空の本文" }]), "2026-01-02T03:05:00.000Z"),
+      stamped(userMessage("架空の依頼その2"), "2026-01-02T03:10:00.000Z"),
+    ]
+
+    expect(
+      toRestoredEvents(messages, EXPRESSIONS).map(({ event, time }) => [event.kind, time]),
+    ).toEqual([
+      ["request", { kind: "known", at: 1767322800000 }],
+      ["utterance", { kind: "known", at: 1767323100000 }],
+      ["turn-finished", { kind: "known", at: 1767323100000 }],
+      ["request", { kind: "known", at: 1767323400000 }],
+      ["turn-finished", { kind: "known", at: 1767323400000 }],
+    ])
+  })
+
+  it("畳むと、最後のやり取りの所要が transcript の依頼から終わりまでの時刻の差になる", () => {
     const messages = [
       stamped(userMessage("架空の依頼その1"), "2026-01-02T03:00:00.000Z"),
       stamped(userMessage("架空の依頼その2"), "2026-01-02T03:10:00.000Z"),
       stamped(assistantMessage([{ type: "text", text: "架空の本文" }]), "2026-01-02T03:12:30.000Z"),
     ]
 
-    const state = toRestoredEvents(messages, EXPRESSIONS).reduce(
-      (current, event) => applySessionEvent(current, event, 999),
+    const state = applyRestoredEvents(
       INITIAL_SESSION_STATE,
+      toRestoredEvents(messages, EXPRESSIONS),
+      999,
     )
 
     expect(state.turn).toMatchObject({
@@ -57,10 +74,18 @@ describe("toRestoredEvents", () => {
     })
   })
 
-  it("時刻の読めない transcript では、最後のやり取りの時刻を足さない", () => {
-    const events = toRestoredEvents([userMessage("架空の依頼")], EXPRESSIONS)
+  it("時刻の読めないメッセージの出来事は unknown", () => {
+    const messages = [
+      stamped(userMessage("架空の依頼"), "読めない綴り"),
+      userMessage("架空の依頼その2"),
+    ]
 
-    expect(events.some((event) => event.kind === "restored-turn-span")).toBe(false)
+    expect(toRestoredEvents(messages, EXPRESSIONS).map(({ time }) => time.kind)).toEqual([
+      "unknown",
+      "unknown",
+      "unknown",
+      "unknown",
+    ])
   })
 
   it("依頼・本文・セリフ・ツールの行が起き、ターンの境目が依頼ごとに分かれる", () => {
@@ -83,7 +108,7 @@ describe("toRestoredEvents", () => {
       assistantMessage([{ type: "text", text: "架空の本文その2" }]),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "request", text: "架空の依頼その1", images: [] },
       { kind: "utterance", text: "架空の本文その1" },
       {
@@ -99,7 +124,6 @@ describe("toRestoredEvents", () => {
       { kind: "request", text: "架空の依頼その2", images: [] },
       { kind: "utterance", text: "架空の本文その2" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
     ])
   })
 
@@ -128,9 +152,7 @@ describe("toRestoredEvents", () => {
       userMessage([{ type: "tool_result", tool_use_id: "r-2", content: "ok" }]),
     ]
 
-    const reports = toRestoredEvents(messages, EXPRESSIONS).filter(
-      (event) => event.kind === "report",
-    )
+    const reports = eventsOf(messages).filter((event) => event.kind === "report")
 
     expect(reports).toEqual([reportEvent({ toolUseId: "r-2", conclusion: "架空の二" })])
   })
@@ -155,13 +177,12 @@ describe("toRestoredEvents", () => {
       ]),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "speech", text: "架空の通ったセリフ", expression: "default" },
       { kind: "tool-finished", toolUseId: "s-1", content: "ok", isError: false },
       { kind: "tool-finished", toolUseId: "s-2", content: "架空の差し戻し", isError: true },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
     ])
   })
 
@@ -193,7 +214,7 @@ describe("toRestoredEvents", () => {
       userMessage([{ type: "tool_result", tool_use_id: "r-2", content: "ok" }]),
     ]
 
-    const shown = toRestoredEvents(messages, EXPRESSIONS)
+    const shown = eventsOf(messages)
       .filter((event) => event.kind === "report" || event.kind === "speech")
       .map((event) => (event.kind === "report" ? event.conclusion : event.text))
 
@@ -213,7 +234,7 @@ describe("toRestoredEvents", () => {
       ]),
       userMessage([{ type: "tool_result", tool_use_id: "r-1", content: "ok" }]),
     ]
-    const state = toRestoredEvents(messages, EXPRESSIONS).reduce(
+    const state = eventsOf(messages).reduce(
       (current, event) => applySessionEvent(current, event, 0),
       INITIAL_SESSION_STATE,
     )
@@ -230,12 +251,9 @@ describe("toRestoredEvents", () => {
   })
 
   it("依頼が1つも無い列にはターンの境目を足さない", () => {
-    const events = toRestoredEvents(
-      [assistantMessage([{ type: "text", text: "架空の本文" }])],
-      EXPRESSIONS,
-    )
+    const events = eventsOf([assistantMessage([{ type: "text", text: "架空の本文" }])])
 
-    expect(events).toEqual([{ kind: "utterance", text: "架空の本文" }, HISTORY_RESTORED])
+    expect(events).toEqual([{ kind: "utterance", text: "架空の本文" }])
   })
 
   it("依頼より前の本文のあとの最初の依頼の手前には境目を足さず、2件目の依頼の手前と末尾にだけ足す", () => {
@@ -246,14 +264,13 @@ describe("toRestoredEvents", () => {
       userMessage("架空の依頼その2"),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "utterance", text: "架空の前置き" },
       { kind: "request", text: "架空の依頼その1", images: [] },
       { kind: "utterance", text: "架空の本文その1" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
       { kind: "request", text: "架空の依頼その2", images: [] },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
     ])
   })
 
@@ -270,11 +287,10 @@ describe("toRestoredEvents", () => {
       assistantMessage([{ type: "text", text: "架空の本文" }]),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
     ])
   })
 
@@ -289,10 +305,9 @@ describe("toRestoredEvents", () => {
       ),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "request", text: "/架空コマンド", images: [] },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
     ])
   })
 
@@ -303,10 +318,9 @@ describe("toRestoredEvents", () => {
       ),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "request", text: "/架空コマンド 架空の引数", images: [] },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
     ])
   })
 
@@ -318,10 +332,9 @@ describe("toRestoredEvents", () => {
       userMessage([{ type: "text", text: "架空の依頼" }]),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
     ])
   })
 
@@ -337,10 +350,9 @@ describe("toRestoredEvents", () => {
       userMessage([{ type: "text", text: "架空の依頼" }]),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
     ])
   })
 
@@ -351,10 +363,9 @@ describe("toRestoredEvents", () => {
       ),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "request", text: "架空の依頼の前半\n\n架空の依頼の後半", images: [] },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
     ])
   })
 
@@ -365,11 +376,10 @@ describe("toRestoredEvents", () => {
       assistantMessage([{ type: "text", text: "架空の本文" }]),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
     ])
   })
 
@@ -383,12 +393,11 @@ describe("toRestoredEvents", () => {
       assistantMessage([{ type: "text", text: "架空の本文" }]),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "compact-boundary" },
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
     ])
   })
 })

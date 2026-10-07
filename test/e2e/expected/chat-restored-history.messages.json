@@ -45,49 +45,6 @@
     "at": 1768438800000,
     "event": {
       "kind": "request",
-      "text": "前のセッションの架空の雑談（組み直したもの）",
-      "images": []
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "speech",
-      "text": "前のセッションの架空のセリフだよ。",
-      "expression": "default"
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "turn-finished",
-      "outcome": {
-        "kind": "completed"
-      }
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "effort-changed",
-      "effort": "medium"
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "history-restored"
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "request",
       "text": "いまの架空の雑談その1",
       "images": []
     }

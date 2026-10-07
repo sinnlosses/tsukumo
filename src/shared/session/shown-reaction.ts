@@ -77,7 +77,8 @@ export function waitingLineDueAt(state: SessionState): number | undefined {
 
 /** いちばん新しい依頼が組み直した記録か（続きから起こして、まだ依頼を送っていない）。 */
 function isResumedWithoutRequest(records: readonly SessionRecord[]): boolean {
-  return records.findLast(isRequestRecord)?.time.kind === "restored"
+  const latest = records.findLast(isRequestRecord)
+  return latest !== undefined && latest.time.kind !== "stamped"
 }
 
 /** 迎えるときの吹き出し。挨拶の状態（`none` / `writing` / `written` / `unwritten`）で出し分ける。 */

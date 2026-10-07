@@ -16,12 +16,13 @@ import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnost
 import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import type { RestoredEvent, SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   characterChangedEvent,
   characterPackEntry,
   shownPortraits,
 } from "../../../fixture/character.ts"
+import { knownRestored } from "../../../fixture/restored-event.ts"
 
 // 本物の claude は起こさない（駆動は下の偽物）。
 type Pack = { readonly name: string }
@@ -89,7 +90,7 @@ type Harness = {
   readonly diagnosticEntries: DiagnosticEntry[]
   readonly stub: ReturnType<typeof createStubDriver>
   readonly receive: (event: SessionEvent) => void
-  readonly receiveRestored: (events: readonly SessionEvent[]) => void
+  readonly receiveRestored: (events: readonly RestoredEvent[]) => void
 }
 
 function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harness {
@@ -155,7 +156,7 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
     },
     restoreEvents: (sessionId) => {
       calls.push(`restoreEvents:${sessionId}`)
-      return Promise.resolve([{ kind: "utterance", text: "架空のターンの本文" }])
+      return Promise.resolve(knownRestored([{ kind: "utterance", text: "架空のターンの本文" }]))
     },
     ...overrides,
   }
@@ -174,9 +175,10 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
       driverEvents.push(event)
     },
     receiveRestored: (delivered) => {
-      events.push(...delivered)
-      restoredEvents.push(...delivered)
-      restoredDeliveries.push(delivered)
+      const bare = delivered.map(({ event }) => event)
+      events.push(...bare)
+      restoredEvents.push(...bare)
+      restoredDeliveries.push(bare)
     },
   }
 }
@@ -231,7 +233,7 @@ describe("createSessionLaunch", () => {
       restoreEvents: () =>
         new Promise((resolve) => {
           setTimeout(() => {
-            resolve([{ kind: "utterance", text: "架空のターンの本文" }])
+            resolve(knownRestored([{ kind: "utterance", text: "架空のターンの本文" }]))
           }, 0)
         }),
     })
@@ -516,7 +518,7 @@ describe("createSessionLaunch", () => {
   ])(
     "駆動を起こす口に渡す restored は、%s代の流し終えた履歴で解ける",
     async (_, overrides, kinds) => {
-      let restored: Promise<readonly SessionEvent[]> = Promise.resolve([])
+      let restored: Promise<readonly RestoredEvent[]> = Promise.resolve([])
       const harness = createHarness({
         ...overrides,
         startDriver: (_seed, _onEvent, given) => {
@@ -531,17 +533,19 @@ describe("createSessionLaunch", () => {
         resume: { by: "latest" },
       })
 
-      expect((await restored).map((event) => event.kind)).toEqual(kinds)
+      expect((await restored).map(({ event }) => event.kind)).toEqual(kinds)
     },
   )
 
   it("復元は別の口（onRestoredEvents）へまとめて1回で流れ、駆動のイベントと区別できる", async () => {
     const harness = createHarness({
       restoreEvents: () =>
-        Promise.resolve([
-          { kind: "utterance", text: "架空のターンの本文その1" },
-          { kind: "utterance", text: "架空のターンの本文その2" },
-        ]),
+        Promise.resolve(
+          knownRestored([
+            { kind: "utterance", text: "架空のターンの本文その1" },
+            { kind: "utterance", text: "架空のターンの本文その2" },
+          ]),
+        ),
     })
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {

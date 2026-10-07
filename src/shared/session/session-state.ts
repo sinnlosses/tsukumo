@@ -44,6 +44,7 @@ import type {
   CommandDescription,
   ModelEffortSupport,
   ReportWaitingLine,
+  RestoredEvent,
   SessionEvent,
 } from "./session-event.ts"
 import { splitIntoTurns } from "./turn.ts"
@@ -96,12 +97,18 @@ export type BackgroundEnd =
  *
  * - `stamped`: 起きた時刻が分かっている。`at` はそのイベントに打たれた時刻（`StampedEvent.at`。
  *   エポックミリ秒）
- * - `restored`: 前のセッションの記録を組み直したもので、起きた時刻が分からない（`history-restored`）。
+ * - `recovered`: 前のセッションの記録を組み直したもので、起きた時刻は transcript から戻せた。`at` はその時刻
+ * - `restored`: 前のセッションの記録を組み直したもので、起きた時刻が分からない（transcript の行に時刻が無い・読めない）。
  *   流し直した時刻を代わりに入れると、昨日の一言が「いま」に見える
  */
 export type RecordTime =
   | { readonly kind: "stamped"; readonly at: number }
+  | { readonly kind: "recovered"; readonly at: number }
   | { readonly kind: "restored" }
+
+export function recordTimeAt(time: RecordTime): number | undefined {
+  return time.kind === "restored" ? undefined : time.at
+}
 
 /**
  * セッションの中で起きたことを起きた順に並べたもの。
@@ -782,18 +789,6 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "diary-written":
     case "diary-failed":
       return { ...state, diaryWriting: applyDiaryEvent(state.diaryWriting, event, at) }
-    case "history-restored":
-      // ここまでに積んだ依頼とセリフは、前のセッションを組み直したもの。流し直したときに打った時刻を捨て、「時刻が分からない」に書き換える。
-      // 起こし直すと記録は空から始まるので、ここまでの記録はすべて再生のぶんになる。
-      return { ...state, records: state.records.map(withRestoredTime) }
-    case "restored-turn-span":
-      // 再生の最後のターンは再生した時刻で閉じているので、始まりと終わりを transcript の時刻に置き換える（入力欄と帯の「所要」）。
-      return state.turn.kind === "finished"
-        ? {
-            ...state,
-            turn: { ...state.turn, startedAt: event.startedAt, finishedAt: event.finishedAt },
-          }
-        : state
   }
 }
 
@@ -823,34 +818,72 @@ function recordsOfLastRequest(records: readonly SessionRecord[]): readonly Sessi
 }
 
 /**
- * 依頼・セリフ・ツールの記録を「時刻が分からない」にする（他の種類は時刻を持たないのでそのまま）。
- * ツールは `startedAt` と、終わっていれば `status.finishedAt`、完了の知らせが届いていれば `backgroundEnd.at` を畳み直す
- * （`tool-started` / `tool-finished` は再生でも replay した時刻を積んでいるので、`stamped` のままだと replay の速さが本物の所要時間に見えてしまう）。
+ * 記録が持つ時刻（{@link RecordTime}）をすべて `map` で写し替える。時刻を持たない種類はそのまま。
+ * ツールは `startedAt` と、終わっていれば `status.finishedAt`、完了の知らせが届いていれば `backgroundEnd.at`。
  */
-function withRestoredTime(record: SessionRecord): SessionRecord {
+function mapRecordTimes(
+  record: SessionRecord,
+  map: (time: RecordTime) => RecordTime,
+): SessionRecord {
   if (
     record.kind === "request" ||
     record.kind === "speech" ||
     record.kind === "work-plan" ||
     record.kind === "report"
   ) {
-    return { ...record, time: { kind: "restored" } }
+    return { ...record, time: map(record.time) }
   }
   if (record.kind === "tool") {
     return {
       ...record,
-      startedAt: { kind: "restored" },
+      startedAt: map(record.startedAt),
       status:
         record.status.kind === "finished"
-          ? { ...record.status, finishedAt: { kind: "restored" } }
+          ? { ...record.status, finishedAt: map(record.status.finishedAt) }
           : record.status,
       backgroundEnd:
         record.backgroundEnd.kind === "notified"
-          ? { kind: "notified", at: { kind: "restored" } }
+          ? { kind: "notified", at: map(record.backgroundEnd.at) }
           : record.backgroundEnd,
     }
   }
   return record
+}
+
+/**
+ * 組み直した出来事を順に畳む。出来事に transcript の時刻があればその時刻で、無ければ直前に読めた時刻（まだ無ければ `now`）で畳む。
+ * 畳んで新しく積まれた・書き換わった記録の `stamped` は、読めた出来事なら `recovered`、読めなかった出来事なら `restored` に写し替える。
+ */
+export function applyRestoredEvents(
+  state: SessionState,
+  events: readonly RestoredEvent[],
+  now: number,
+): SessionState {
+  return events.reduce(
+    (fold, restored) => {
+      const at = restored.time.kind === "known" ? restored.time.at : fold.at
+      const before = new Set(fold.state.records)
+      const next = applySessionEvent(fold.state, restored.event, at)
+      return {
+        at,
+        state: {
+          ...next,
+          records: next.records.map((record) =>
+            before.has(record)
+              ? record
+              : mapRecordTimes(record, (time) =>
+                  time.kind !== "stamped"
+                    ? time
+                    : restored.time.kind === "known"
+                      ? { kind: "recovered", at: time.at }
+                      : { kind: "restored" },
+                ),
+          ),
+        },
+      }
+    },
+    { at: now, state },
+  ).state
 }
 
 /**

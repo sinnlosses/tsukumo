@@ -18,7 +18,7 @@ import {
 } from "../server/recommendation/core/welcome-greeting.ts"
 import type { SessionLaunchSeed } from "../server/session/core/session-launch.ts"
 import { expressionChoices } from "../shared/character-pack/expression-choice.ts"
-import type { SessionEvent } from "../shared/session/session-event.ts"
+import type { RestoredEvent, SessionEvent } from "../shared/session/session-event.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
 /** 何も観ない観る口（疑似セッション・雑談のとき）。 */
@@ -35,7 +35,7 @@ export function wireWelcomeGreeting(context: WiringContext): {
   readonly noteLaunched: (
     seed: SessionLaunchSeed<CharacterPack>,
     onEvent: (event: SessionEvent) => void,
-    restored: Promise<readonly SessionEvent[]>,
+    restored: Promise<readonly RestoredEvent[]>,
   ) => (event: SessionEvent) => void
 } {
   const { cwd, inheritedEnv } = context

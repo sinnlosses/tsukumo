@@ -122,7 +122,7 @@ describe("toSessionDigest", () => {
 
 // 復元（`toRestoredEvents`）の結果を数える従来の組み方。1パスの畳み方と食い違わないことを守る。
 function digestViaRestoredEvents(messages: readonly unknown[]): unknown {
-  const events = toRestoredEvents(messages, EXPRESSIONS)
+  const events = toRestoredEvents(messages, EXPRESSIONS).map(({ event }) => event)
   const summary = events
     .flatMap((event) =>
       event.kind === "report" && event.sessionSummary !== undefined ? [event.sessionSummary] : [],

@@ -24,8 +24,9 @@ import {
   type SessionDigest,
   UNAVAILABLE_SESSION_DIGEST,
 } from "../../../shared/session/session-digest.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import {
+  applyRestoredEvents,
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -138,7 +139,7 @@ export type SessionManagerOptions = {
    */
   readonly launchSession: (
     onEvent: (event: SessionEvent) => void,
-    onRestoredEvents: (events: readonly SessionEvent[]) => void,
+    onRestoredEvents: (events: readonly RestoredEvent[]) => void,
     request: SessionLaunchRequest,
   ) => Promise<SessionDriver>
   /**
@@ -487,17 +488,16 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     /**
      * 前のセッションの記録を組み直した再生を、まとめて1回で畳む。
      * 再生は畳むだけで、アーカイブ・トークン・コンテキスト・report の記録・定着には数えない。
-     * 時刻は1つだけ読む（記録の側は末尾の `history-restored` が「時刻が分からない」に書き換える）。
+     * 出来事の時刻は transcript から戻したもので、読めないものは `applyRestoredEvents` が「時刻が分からない」にする。
      *
      * 束には積まず、配るのは畳んだあとの姿の `hello`。束に残っていたぶんはその姿に入っているので捨てる。
      * 起こし直しの代は `announceGeneration` が `hello` を配るので、ここでは配らない。
      */
-    const receiveRestoredIfCurrent = (events: readonly SessionEvent[]): void => {
+    const receiveRestoredIfCurrent = (events: readonly RestoredEvent[]): void => {
       if (closed || born !== bornCount || events.length === 0) {
         return
       }
-      const at = options.now()
-      replaceState(events.reduce((next, event) => applySessionEvent(next, event, at), state))
+      replaceState(applyRestoredEvents(state, events, options.now()))
       if (!held) {
         tally.batch.discard()
         publish(helloFrame(), subscribers)

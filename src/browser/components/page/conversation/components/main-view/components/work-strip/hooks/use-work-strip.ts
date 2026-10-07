@@ -7,10 +7,11 @@ import type {
   StampedPendingAsk,
 } from "../../../../../../../../../shared/session-driver/pending-ask.ts"
 import { conversationMoment } from "../../../../../../../../../shared/session/conversation-moment.ts"
-import type {
-  ReportDrafting,
-  SessionRecord,
-  TurnProgress,
+import {
+  recordTimeAt,
+  type ReportDrafting,
+  type SessionRecord,
+  type TurnProgress,
 } from "../../../../../../../../../shared/session/session-state.ts"
 import {
   turnResultsOf,
@@ -348,7 +349,8 @@ function toolLine(name: string, input: unknown): string {
 
 /** 手順が始まってからの秒（「12秒」）。始まった時刻が分からなければ空。 */
 function secondsSince(step: TurnStep, now: number): string {
-  return step.startedAt.kind === "stamped"
-    ? formatElapsed(Math.max(0, Math.floor((now - step.startedAt.at) / 1000)))
-    : ""
+  const startedAt = recordTimeAt(step.startedAt)
+  return startedAt === undefined
+    ? ""
+    : formatElapsed(Math.max(0, Math.floor((now - startedAt) / 1000)))
 }

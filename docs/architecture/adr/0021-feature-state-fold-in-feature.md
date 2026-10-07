@@ -34,7 +34,7 @@
   doc コメントごと）を `shared/<機能>/` に置き、`session-event.ts` の `SessionEvent` がそれを和に含める。
   形は変わらないのでプロトコルの変更ではない
 - **またがるイベントは入口の1つの `case` で畳む。** `turn-finished`・`session-ended`・
-  `conversation-cleared`・`history-restored` は、`applySessionEvent` のその `case` を読めば全部の部分への
+  `conversation-cleared` は、`applySessionEvent` のその `case` を読めば全部の部分への
   効き方が分かるように、入口が各部分の名前の付いた関数（見直しなら「ターンの終わりで、結果を渡さずに
   終わった見直しをふだんへ戻す」関数）を呼ぶ。部分の reducer に `SessionEvent` 全体を渡して各自で
   反応させる形にはしない

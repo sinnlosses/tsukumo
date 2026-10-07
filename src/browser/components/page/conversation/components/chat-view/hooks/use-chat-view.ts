@@ -14,7 +14,7 @@ import {
   type ChatLogEntry,
 } from "../../../../../../../shared/chat/chat-log.ts"
 import type { RecordedPromptImage } from "../../../../../../../shared/session-driver/prompt-image.ts"
-import type { RecordTime } from "../../../../../../../shared/session/session-state.ts"
+import { type RecordTime, recordTimeAt } from "../../../../../../../shared/session/session-state.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import { useSession, useTurnRunning } from "../../../../../../stores/session.ts"
 import {
@@ -225,14 +225,15 @@ function chatRows(
 
 /** 発言の脇の時刻（`HH:MM`。秒は出さない）。組み直した発言は時刻が分からない。 */
 function timeStamp(time: RecordTime, timeZone: string): ChatTimeStamp {
-  if (time.kind === "restored") {
+  const at = recordTimeAt(time)
+  if (at === undefined) {
     return { kind: "unknown" }
   }
-  const at = zonedDateTime(time.at, timeZone)
+  const zoned = zonedDateTime(at, timeZone)
   return {
     kind: "known",
-    dateTime: clockDateTime(at),
-    text: clockTime(at),
+    dateTime: clockDateTime(zoned),
+    text: clockTime(zoned),
   }
 }
 

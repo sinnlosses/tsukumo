@@ -6,7 +6,7 @@
 import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import { createReportReview } from "../../report/core/report-review.ts"
 import { toSessionEvents } from "./sdk-message.ts"
 import { createSpeechReview } from "./speech-review.ts"
@@ -21,19 +21,15 @@ const RESTORED_TURN_FINISHED: SessionEvent = {
   outcome: { kind: "completed" },
 }
 
-/** 組み直した再生の終わりの印（{@link toRestoredEvents}）。 */
-const HISTORY_RESTORED: SessionEvent = { kind: "history-restored" }
-
 /**
  * transcript のメッセージ列を内部イベントに変える（メインビューのやり取りと吹き出しのセリフを組み直すため）。
- * メッセージ1件の形は SDK のイベントとほぼ同じなので、変換の本体は {@link toSessionEvents} に任せ、ここが足すのは transcript には残らない3つだけ:
+ * メッセージ1件の形は SDK のイベントとほぼ同じなので、変換の本体は {@link toSessionEvents} に任せ、ここが足すのは transcript には残らない2つだけ:
  *
  * - 利用者の依頼（`request`）: `user` のテキストブロックから起こす（ツールの結果は除く）
- * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼の手前と並びの末尾で区切る
- * - 最後のやり取りの時刻（`restored-turn-span`）: 最後の依頼のメッセージと、並びの最後のメッセージの `timestamp`。
- *   入力欄と進み具合の帯の「所要」が、起こし直した時刻ではなく本当にかかった時間を出すため。どちらかが読めなければ足さない
- * - 再生の終わり（`history-restored`）: 末尾に1つ。
- *   個々の記録の時刻までは組み直さないので、ここまでの記録は時刻が分からないと畳み込みに伝える
+ * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼の手前と並びの末尾で区切る。時刻は直前の出来事のものを引き継ぐ
+ *
+ * 出来事ごとの時刻は、元のメッセージの `timestamp`（読めなければ `unknown`）。
+ * 読めない出来事の時刻は推し量らない。
  *
  * 差し戻された `speak` / `report` / `work_plan` の呼び出しも transcript には残るので、動いているときと同じく差し戻し（`SpeechReview.pass` → `ReportReview.pass` → `WorkPlanReview.pass`）に通して落とす。
  *
@@ -42,29 +38,46 @@ const HISTORY_RESTORED: SessionEvent = { kind: "history-restored" }
 export function toRestoredEvents(
   messages: unknown,
   expressions: readonly Expression[],
-): readonly SessionEvent[] {
+): readonly RestoredEvent[] {
   if (!Array.isArray(messages)) {
     return []
   }
 
-  const converted = messages.flatMap((message) => restoredMessageEvents(message, expressions))
+  const converted = messages.flatMap((message): readonly RestoredEvent[] => {
+    const time = messageTime(message)
+    return restoredMessageEvents(message, expressions).map((event) => ({ event, time }))
+  })
   // 最初の依頼より前には閉じるターンが無い。
-  const firstRequest = converted.findIndex((event) => event.kind === "request")
-  const bounded = converted.flatMap((event, index) =>
-    event.kind === "request" && index > firstRequest ? [RESTORED_TURN_FINISHED, event] : [event],
+  const firstRequest = converted.findIndex(({ event }) => event.kind === "request")
+  const bounded = converted.flatMap((restored, index): readonly RestoredEvent[] =>
+    restored.event.kind === "request" && index > firstRequest
+      ? [
+          { event: RESTORED_TURN_FINISHED, time: converted[index - 1]?.time ?? restored.time },
+          restored,
+        ]
+      : [restored],
   )
-  const closed = firstRequest === -1 ? bounded : [...bounded, RESTORED_TURN_FINISHED]
+  const closed =
+    firstRequest === -1
+      ? bounded
+      : [
+          ...bounded,
+          { event: RESTORED_TURN_FINISHED, time: converted.at(-1)?.time ?? UNKNOWN_TIME },
+        ]
   const speechReview = createSpeechReview()
   const workPlanReview = createWorkPlanReview()
   const reportReview = createReportReview(workPlanReview.standing)
-  const events = closed
-    .flatMap((event) => speechReview.pass(event))
-    .flatMap((event) => reportReview.pass(event))
-    .flatMap((event) => workPlanReview.pass(event))
-  // 組み直せたものが無ければ、書き換える記録も無いので `history-restored` を足さない。
-  return events.length === 0
-    ? events
-    : [...events, ...lastTurnSpanEvents(messages), HISTORY_RESTORED]
+  const passedSpeech = passThrough(closed, speechReview.pass)
+  const passedReport = passThrough(passedSpeech, reportReview.pass)
+  return passThrough(passedReport, workPlanReview.pass)
+}
+
+/** 差し戻しの1段を通す。通ったあとの出来事は、元の出来事の時刻を引き継ぐ。 */
+function passThrough(
+  events: readonly RestoredEvent[],
+  pass: (event: SessionEvent) => readonly SessionEvent[],
+): readonly RestoredEvent[] {
+  return events.flatMap(({ event, time }) => pass(event).map((passed) => ({ event: passed, time })))
 }
 
 export function restoredMessageEvents(
@@ -79,28 +92,20 @@ export function restoredMessageEvents(
     : [{ kind: "request", text, images: [] }]
 }
 
+const UNKNOWN_TIME: RestoredEvent["time"] = { kind: "unknown" }
+
 /**
- * 最後のやり取りの始まり（最後の依頼のメッセージ）と終わり（並びの最後のメッセージ）の時刻。
+ * メッセージの `timestamp`（ISO 8601）を読む。無い・読めない綴りは `unknown`。
  * `timestamp` は `SessionMessage` の型には無いが、`getSessionMessages` が transcript の各行のものを載せて返す（実測）。
  */
-function lastTurnSpanEvents(messages: readonly unknown[]): readonly SessionEvent[] {
-  const lastRequest = messages.findLast((message) => requestText(message) !== undefined)
-  const startedAt = lastRequest === undefined ? undefined : messageTime(lastRequest)
-  const finishedAt = messageTime(messages.at(-1))
-  return startedAt === undefined || finishedAt === undefined || finishedAt < startedAt
-    ? []
-    : [{ kind: "restored-turn-span", startedAt, finishedAt }]
-}
-
-/** メッセージの `timestamp`（ISO 8601）をエポックミリ秒に直す。無い・読めない綴りは `undefined`。 */
-function messageTime(message: unknown): number | undefined {
+function messageTime(message: unknown): RestoredEvent["time"] {
   if (!isPlainObject(message) || typeof message.timestamp !== "string") {
-    return undefined
+    return UNKNOWN_TIME
   }
   try {
-    return Temporal.Instant.from(message.timestamp).epochMilliseconds
+    return { kind: "known", at: Temporal.Instant.from(message.timestamp).epochMilliseconds }
   } catch {
-    return undefined
+    return UNKNOWN_TIME
   }
 }
 

@@ -7,6 +7,7 @@ import {
 } from "../../../src/shared/recommendation/welcome-greeting.ts"
 import type { ReportWaitingLine, SessionEvent } from "../../../src/shared/session/session-event.ts"
 import {
+  applyRestoredEvents,
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -42,7 +43,8 @@ const COMPLETED = {
   outcome: { kind: "completed" },
 } as const satisfies SessionEvent
 
-const RESTORED = { kind: "history-restored" } as const satisfies SessionEvent
+/** 並びの中の、ここまでが前のセッションを組み直した出来事という印。 */
+const RESTORED = "restored" as const
 
 function report(waitingLine: ReportWaitingLine): SessionEvent {
   return reportEvent({ waitingLine })
@@ -71,10 +73,35 @@ const GREETED = {
 } as const satisfies SessionEvent
 
 /** パックを決めてから、`events` を順に畳んだ姿。 */
-function stateAfter(events: readonly SessionEvent[]): SessionState {
-  return [characterChangedEvent(), ...events].reduce(
-    (state, event, index) => applySessionEvent(state, event, index),
-    INITIAL_SESSION_STATE,
+function stateAfter(
+  events: readonly (SessionEvent | typeof RESTORED)[],
+  restoredTime: "known" | "unknown" = "unknown",
+): SessionState {
+  const marker = events.indexOf(RESTORED)
+  const restored = marker === -1 ? [] : events.slice(0, marker)
+  const live = marker === -1 ? events : events.slice(marker + 1)
+  const withCharacter = applySessionEvent(INITIAL_SESSION_STATE, characterChangedEvent(), 0)
+  const afterRestored = applyRestoredEvents(
+    withCharacter,
+    restored.flatMap((event, index) =>
+      event === RESTORED
+        ? []
+        : [
+            {
+              event,
+              time:
+                restoredTime === "known"
+                  ? ({ kind: "known", at: index } as const)
+                  : ({ kind: "unknown" } as const),
+            },
+          ],
+    ),
+    0,
+  )
+  return live.reduce(
+    (state, event, index) =>
+      event === RESTORED ? state : applySessionEvent(state, event, restored.length + index),
+    afterRestored,
   )
 }
 
@@ -284,6 +311,12 @@ describe("shownReaction", () => {
           HEAD,
         ),
       ).toBe("welcome:架空の挨拶だけ")
+    })
+
+    it("組み直した記録の時刻が transcript から読めていても、おかえりが出る", () => {
+      expect(
+        shown(stateAfter([REQUEST, WRITTEN, COMPLETED, RESTORED, GREETED], "known"), HEAD),
+      ).toBe("welcome:架空の待ちの一言")
     })
 
     it("前回のより前のやり取りの待ちの一言は使わない", () => {

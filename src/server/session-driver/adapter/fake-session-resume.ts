@@ -2,7 +2,7 @@
 // transcript は疑似セッションに手書きした架空のメッセージ列で、組み直しは本物と同じ変換を通る。
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
-import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { RestoredEvent } from "../../../shared/session/session-event.ts"
 import type { SessionCatalog } from "../core/session-catalog.ts"
 import { toRestoredEvents } from "../core/session-restore.ts"
 import type { FakeSession } from "./fake-driver.ts"
@@ -30,7 +30,7 @@ export function readFakeRestoredEvents(
   session: FakeSession,
   sessionId: string,
   expressions: readonly Expression[],
-): readonly SessionEvent[] {
+): readonly RestoredEvent[] {
   const past = session.pastSessions.find((candidate) => candidate.sessionId === sessionId)
   return past === undefined ? [] : toRestoredEvents(past.messages, expressions)
 }

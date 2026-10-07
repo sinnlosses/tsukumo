@@ -67,10 +67,10 @@
                         {
                           "tag": "h2",
                           "children": [
-                            "前のセッションの架空の依頼その2"
+                            "前のセッションの架空の依頼その3（段取りつき）"
                           ]
                         },
-                        "2 / 2",
+                        "3 / 3",
                         "最新"
                       ]
                     },
@@ -99,7 +99,49 @@
                             "完了"
                           ]
                         },
-                        "所要 0秒",
+                        {
+                          "tag": "ol",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "data-phase-state": "done",
+                                "aria-label": "1. 架空の調べ（済）"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "✓"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "data-phase-state": "done",
+                                "aria-label": "2. 架空の直し（済）"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "✓"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "2段すべて済み",
+                        "所要 3分31秒",
                         {
                           "tag": "button",
                           "attributes": {
@@ -108,7 +150,7 @@
                             "type": "button"
                           },
                           "children": [
-                            "手順 0 ▾"
+                            "手順 1 ▾"
                           ]
                         }
                       ]
@@ -167,8 +209,29 @@
                               "attributes": {
                                 "data-outline-turn": "1",
                                 "data-result": "done",
-                                "aria-current": "true",
                                 "aria-label": "完了: 前のセッションの架空の依頼その2",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "✓"
+                                  ]
+                                },
+                                "前のセッションの架空の依頼その2"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-outline-turn": "2",
+                                "data-result": "done",
+                                "aria-current": "true",
+                                "aria-label": "完了: 前のセッションの架空の依頼その3（段取りつき）",
                                 "type": "button"
                               },
                               "children": [
@@ -181,7 +244,7 @@
                                     "●"
                                   ]
                                 },
-                                "前のセッションの架空の依頼その2"
+                                "前のセッションの架空の依頼その3（段取りつき）"
                               ]
                             }
                           ]
@@ -195,18 +258,109 @@
                           }
                         },
                         {
+                          "tag": "details",
+                          "children": [
+                            {
+                              "tag": "summary",
+                              "children": [
+                                "中間レポート: 1/2 架空の調べ · 所要 1分58秒"
+                              ]
+                            }
+                          ]
+                        },
+                        {
                           "tag": "section",
                           "children": [
                             {
-                              "tag": "p",
+                              "tag": "header",
                               "children": [
-                                "前のセッションの架空の結論"
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "最終レポート"
+                                  ]
+                                }
                               ]
                             },
                             {
                               "tag": "p",
                               "children": [
-                                "前のセッションの架空の本文。"
+                                "前のセッションの架空の結論その3"
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "role": "group",
+                                "aria-label": "検証結果"
+                              },
+                              "children": [
+                                "✓",
+                                "1 / 1",
+                                "検証",
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "role": "table",
+                                    "aria-label": "検証結果"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "row"
+                                      },
+                                      "children": [
+                                        "✓",
+                                        "架空の検査",
+                                        "架空 3 件",
+                                        "1分30秒"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            "段ごとの時間",
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "role": "table",
+                                "aria-label": "段ごとの所要時間"
+                              },
+                              "children": [
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "role": "row"
+                                  },
+                                  "children": [
+                                    "1/2 架空の調べ",
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      }
+                                    },
+                                    "1分58秒"
+                                  ]
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "role": "row"
+                                  },
+                                  "children": [
+                                    "2/2 架空の直し",
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      }
+                                    },
+                                    "1分30秒"
+                                  ]
+                                }
                               ]
                             }
                           ]

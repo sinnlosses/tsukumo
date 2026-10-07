@@ -61,15 +61,10 @@ describe("createFakeSessionCatalog", () => {
 })
 
 describe("readFakeRestoredEvents", () => {
-  it("過去の transcript を依頼から始まり history-restored で終わる並びに組み直す", () => {
+  it("過去の transcript を依頼から始まる並びに組み直す", () => {
     const events = readFakeRestoredEvents(session(), "past-1", ["default"])
 
-    expect(events.map((event) => event.kind)).toEqual([
-      "request",
-      "speech",
-      "turn-finished",
-      "history-restored",
-    ])
+    expect(events.map(({ event }) => event.kind)).toEqual(["request", "speech", "turn-finished"])
   })
 
   it("知らない ID は空", () => {

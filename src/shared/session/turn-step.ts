@@ -4,7 +4,12 @@ import { isPlainObject } from "remeda"
 
 import type { ClippedText } from "../utils/clip-text.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
-import type { BackgroundEnd, RecordTime, SessionRecord } from "./session-state.ts"
+import {
+  type BackgroundEnd,
+  type RecordTime,
+  recordTimeAt,
+  type SessionRecord,
+} from "./session-state.ts"
 import {
   currentPhaseOf,
   isWorkPlanRecord,
@@ -53,9 +58,11 @@ export function toolDuration(step: TurnStep): ToolDuration {
   const { startedAt } = step
   const finishedAt =
     step.backgroundEnd.kind === "notified" ? step.backgroundEnd.at : step.status.finishedAt
-  return startedAt.kind === "stamped" && finishedAt.kind === "stamped"
-    ? { kind: "known", milliseconds: finishedAt.at - startedAt.at }
-    : { kind: "unknown" }
+  const startAt = recordTimeAt(startedAt)
+  const finishAt = recordTimeAt(finishedAt)
+  return startAt === undefined || finishAt === undefined
+    ? { kind: "unknown" }
+    : { kind: "known", milliseconds: finishAt - startAt }
 }
 
 /** `tool` の記録1件の所要時間（{@link toolDuration}）。 */

@@ -13,6 +13,7 @@ import type {
   SessionEvent,
 } from "../../../../../../../src/shared/session/session-event.ts"
 import {
+  applyRestoredEvents,
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionRecord,
@@ -238,15 +239,29 @@ describe("CharacterView（反応の吹き出し）", () => {
 
   const WAITING_LINE = report({ kind: "speech", text: "架空の待ちの一言", expression: "default" })
 
+  /** 並びの中の、ここまでが前のセッションを組み直した（時刻の分からない）出来事という印。 */
+  const RESTORED = "restored" as const
+
   /** 時刻 0 から1つずつ畳んだ姿。待ちの一言の出る時刻はとうに過ぎている。 */
-  function stateAfter(events: readonly SessionEvent[]): SessionState {
-    return events.reduce(
-      (state, event, index) => applySessionEvent(state, event, index),
+  function stateAfter(events: readonly (SessionEvent | typeof RESTORED)[]): SessionState {
+    const marker = events.indexOf(RESTORED)
+    const restored = marker === -1 ? [] : events.slice(0, marker)
+    const live = marker === -1 ? events : events.slice(marker + 1)
+    const afterRestored = applyRestoredEvents(
       INITIAL_SESSION_STATE,
+      restored.flatMap((event) =>
+        event === RESTORED ? [] : [{ event, time: { kind: "unknown" } as const }],
+      ),
+      0,
+    )
+    return live.reduce(
+      (state, event, index) =>
+        event === RESTORED ? state : applySessionEvent(state, event, restored.length + index),
+      afterRestored,
     )
   }
 
-  it.each<[string, readonly SessionEvent[], string, string]>([
+  it.each<[string, readonly (SessionEvent | typeof RESTORED)[], string, string]>([
     [
       "利用上限で閉じると、前のセリフの下に利用上限の反応が最新として出る",
       [
@@ -270,13 +285,13 @@ describe("CharacterView（反応の吹き出し）", () => {
     ],
     [
       "続きから開くと、前回の最後のターンの待ちの一言がおかえりとして最新に出る",
-      [REQUEST, SPEECH, WAITING_LINE, COMPLETED, { kind: "history-restored" }, GREETED],
+      [REQUEST, SPEECH, WAITING_LINE, COMPLETED, RESTORED, GREETED],
       "welcome",
       "架空の待ちの一言",
     ],
     [
       "続きから開いて待ちの一言が無ければ、迎えの挨拶の札なしの文がおかえりとして出る",
-      [REQUEST, SPEECH, report({ kind: "none" }), COMPLETED, { kind: "history-restored" }, GREETED],
+      [REQUEST, SPEECH, report({ kind: "none" }), COMPLETED, RESTORED, GREETED],
       "welcome",
       "架空の挨拶",
     ],

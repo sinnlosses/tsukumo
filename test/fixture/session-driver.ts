@@ -2,7 +2,7 @@
 
 import type { SessionDriver } from "../../src/server/session-driver/core/session-driver.ts"
 import type { SessionDigest } from "../../src/shared/session/session-digest.ts"
-import type { SessionEvent } from "../../src/shared/session/session-event.ts"
+import type { RestoredEvent, SessionEvent } from "../../src/shared/session/session-event.ts"
 import { readyContextUsage } from "./context-usage.ts"
 import { readyPlanUsage } from "./plan-usage.ts"
 
@@ -15,8 +15,8 @@ export type StubDriver = {
    * 復元の再生（`onRestoredEvents`）をまとめて1回で流す。駆動由来（`emit`）とは別の口
    * （`docs/architecture/character-pack.md`「復元の再生は駆動と別の口」）。
    */
-  readonly emitRestored: (events: readonly SessionEvent[]) => void
-  readonly attachRestored: (onRestoredEvents: (events: readonly SessionEvent[]) => void) => void
+  readonly emitRestored: (events: readonly RestoredEvent[]) => void
+  readonly attachRestored: (onRestoredEvents: (events: readonly RestoredEvent[]) => void) => void
   readonly calls: string[]
   answerable: boolean
   /** `driver.ended()` が返す値。 */
@@ -34,7 +34,7 @@ export const FAKE_SESSION_DIGEST: SessionDigest = {
 export function createStubDriver(): StubDriver {
   const calls: string[] = []
   let onEvent: (event: SessionEvent) => void = () => {}
-  let onRestoredEvents: (events: readonly SessionEvent[]) => void = () => {}
+  let onRestoredEvents: (events: readonly RestoredEvent[]) => void = () => {}
   const stub = {
     driver: {
       prompt: (text: string) => calls.push(`prompt:${text}`),
@@ -79,8 +79,8 @@ export function createStubDriver(): StubDriver {
     attach: (next: (event: SessionEvent) => void) => {
       onEvent = next
     },
-    emitRestored: (events: readonly SessionEvent[]) => onRestoredEvents(events),
-    attachRestored: (next: (events: readonly SessionEvent[]) => void) => {
+    emitRestored: (events: readonly RestoredEvent[]) => onRestoredEvents(events),
+    attachRestored: (next: (events: readonly RestoredEvent[]) => void) => {
       onRestoredEvents = next
     },
     calls,

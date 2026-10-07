@@ -811,15 +811,18 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 持つ。読むのは雑談のログ（`docs/architecture/screen-design.md` 13.7「時刻と日の区切り」）と、キャラビューのセリフのログの依頼の区切りで、
 仕事のメインビューへ渡す形（`MainViewEntry`）には載せない。
 
-- **形は判別可能な合併型**（`RecordTime`）: `stamped` は起きた時刻が分かり、`restored` は前のセッションを
-  組み直したもので時刻が分からない（`at: number | undefined` にしない）
+- **形は判別可能な合併型**（`RecordTime`）: `stamped` は起きた時刻が分かり、`recovered` は前のセッションを
+  組み直したが transcript の `timestamp` から時刻を戻せたもの、`restored` は時刻が分からないもの
+  （`at: number | undefined` にしない）。時刻を読む側は `recordTimeAt` で `stamped` と `recovered` を同じに読む
 - **時刻を打つのはサーバ**（イベントの `at` をそのまま写す）。畳み込みの中で時計は読まない（「SessionEvent」）
 - **ほかの種類には足さない**（雑談のログが拾わないうえ、記録を作る場所すべてに時刻の出どころが要る）
-- **復元した記録の時刻は運ばない**（transcript を読む口が時刻を落として返し、アーカイブと文面で
-  突き合わせると別の時刻を付けうる。間違った時刻より「分からない」を出す）
-- **組み直しの終わりは `history-restored` イベントで伝え**、畳み込みはそこまでの依頼とセリフを
-  `restored` に書き換える。**起こし直すと記録は空から始まる**ので、再生のイベントに打たれる `at`
-  （流し直した時刻）を残すと、起こし直した直後のログが全部「いま」に見える
+- **復元した記録の時刻は transcript の `timestamp` から戻す**（`getSessionMessages` が型に無い
+  `timestamp` を各メッセージに載せて返す。アーカイブと文面で突き合わせない）。読めないメッセージの
+  出来事は「分からない」に倒し、推し量らない
+- **組み直した出来事は `RestoredEvent`（出来事と、読めた時刻か「読めない」）で運び**、`applyRestoredEvents` が
+  順に畳む。読めた出来事で積んだ記録の `stamped` は `recovered`、読めなかった出来事のものは `restored` に
+  写し替える。読めない出来事は直前に読めた時刻（まだ無ければ今）で畳む。流し直した時刻を記録に残すと、
+  起こし直した直後のログが全部「いま」に見える
 
 **`session-state.ts` は純粋な畳み込み。** 姿から導くだけのもの（メインビューに出す形・`/`
 補完の候補）は `main-view.ts` / `command-suggestion.ts` に分けてある。状態を持つのはサーバ側の `session-manager` と
@@ -831,7 +834,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 - **`SessionState` の形は平らなまま変えない。** 部分の reducer は自分の欄だけを受けて返し、`SessionState` を
   受け取らない（別の部分の状態が要るときは入口が値にして渡す）
-- **またがるイベント**（`turn-finished`・`session-ended`・`conversation-cleared`・`history-restored`）は
+- **またがるイベント**（`turn-finished`・`session-ended`・`conversation-cleared`）は
   `applySessionEvent` の1つの `case` で畳み、各部分は名前の付いた関数で反応を出す
 - **テスト**は部分の reducer を直に呼ぶものを `test/shared/<機能>/` に置き、`session-state.test.ts` には芯と、
   委ねていること・またがるイベントの効き方だけを残す
@@ -944,9 +947,10 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 - 画面の履歴の組み直しは「`getSessionMessages` → `SessionEvent[]`（時刻付き）→ `session-manager` の
   `state` に畳む」だけ。接続したブラウザは `hello` の snapshot でそのまま同じ姿になる
   （**ブラウザ側に復元の特別な経路は要らない**）
-- 組み直した記録の1件ごとの時刻は「分からない」に倒すが、**最後のやり取りの「所要」だけは transcript の時刻から戻す**
-  （2026-10-04 利用者の決定）。`getSessionMessages` は型に無い `timestamp` を各メッセージに載せて返すので、
-  最後の依頼と最後のメッセージの時刻を `restored-turn-span` にして畳む。読めなければ足さない
+- 組み直した記録の時刻は transcript の `timestamp` から戻す（段・ツール・checks のコマンドの所要と、
+  最後のやり取りの「所要」が開き直しても出るように。2026-10-04・2026-10-07 の利用者の決定）。
+  `getSessionMessages` は型に無い `timestamp` を各メッセージに載せて返すので、出来事ごとに持たせて
+  `applyRestoredEvents` で畳む。読めなければ「分からない」
 - 逃げ道は `TSUKUMO_NEW_SESSION=1`（起動時）と、画面から新規に起こすコマンド（契約に
   はまだ足していない）
 - **どのセッションの続きから始めるかは画面から選べる**（帯のセッションの札から開く切り替え画面 →

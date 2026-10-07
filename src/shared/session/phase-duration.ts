@@ -4,7 +4,7 @@ import { groupBy } from "remeda"
 
 import type { PhaseDuration } from "../report/report-phase-time.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
-import type { RecordTime, SessionRecord } from "./session-state.ts"
+import { type RecordTime, recordTimeAt, type SessionRecord } from "./session-state.ts"
 import { phaseLabel } from "./work-plan.ts"
 
 type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
@@ -79,9 +79,11 @@ function phaseKeyOf(phases: readonly string[], name: string, index: number): str
 }
 
 function spanOf(start: RecordTime, end: RecordTime): MeasuredTime {
-  return start.kind === "stamped" && end.kind === "stamped"
-    ? { kind: "known", milliseconds: end.at - start.at }
-    : UNKNOWN
+  const startAt = recordTimeAt(start)
+  const endAt = recordTimeAt(end)
+  return startAt === undefined || endAt === undefined
+    ? UNKNOWN
+    : { kind: "known", milliseconds: endAt - startAt }
 }
 
 /** 区間の足し算。区間が無いか、1つでも `unknown` なら `unknown`。 */

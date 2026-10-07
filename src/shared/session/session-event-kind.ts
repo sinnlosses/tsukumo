@@ -43,8 +43,6 @@ const SESSION_EVENT_KINDS = {
   "remembered-lines-changed": true,
   "session-default-changed": true,
   "compact-boundary": true,
-  "restored-turn-span": true,
-  "history-restored": true,
   "background-tasks-changed": true,
   "usage-review-stage": true,
   "usage-review-result": true,

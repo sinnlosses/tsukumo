@@ -382,20 +382,6 @@ export type SessionEvent =
    */
   | { readonly kind: "compact-boundary" }
   /**
-   * 組み直した再生の、最後のやり取りの始まりと終わりの時刻（エポックミリ秒。transcript の時刻から読む）。
-   * 再生の終わり（`history-restored`）の直前に1つ届く。読めなければ届かず、「所要」は再生した時刻どうしの差のまま。
-   */
-  | { readonly kind: "restored-turn-span"; readonly startedAt: number; readonly finishedAt: number }
-  /**
-   * 前のセッションの記録を組み直した再生が、ここで終わった（再生の末尾に1つ足す）。
-   * ここまでに積んだ依頼とセリフの記録は、起きた時刻が分からない。
-   *
-   * 再生のイベントに打たれる `at` は流し直した時刻で、話した時刻ではない。
-   * transcript を読む口（SDK の `getSessionMessages`）が時刻を落とすので、組み直した側に本当の時刻が無い。
-   * 印を畳み込みに渡さないと、起こし直した直後のログが全部「いま」の時刻に見える。
-   */
-  | { readonly kind: "history-restored" }
-  /**
    * 背景のタスクの顔ぶれが変わった（SDK の `system` / `background_tasks_changed`。実測: 背景の Bash・サブエージェントが始まったときと終わったときに1回ずつ届く）。
    * 運ぶのは変わったあとの全員で、受け取る側は丸ごと置き換える
    * （SDK の型定義が「REPLACE semantics」と言う水準の知らせ。始まり・終わりの対を数えないので、片方を取りこぼしても「動いている」が居残らない）。
@@ -411,6 +397,14 @@ export type SessionEvent =
 export type StampedEvent = {
   readonly at: number
   readonly event: SessionEvent
+}
+
+/**
+ * 前のセッションを組み直した出来事1件。時刻は transcript の `timestamp` から読めたものだけ `known` で、読めなければ `unknown`（推し量らない）。
+ */
+export type RestoredEvent = {
+  readonly event: SessionEvent
+  readonly time: { readonly kind: "known"; readonly at: number } | { readonly kind: "unknown" }
 }
 
 /**

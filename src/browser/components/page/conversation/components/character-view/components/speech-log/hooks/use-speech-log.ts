@@ -13,9 +13,10 @@
 import { useEffect, useRef, useState, type RefObject } from "react"
 import { sumBy } from "remeda"
 
-import type {
-  RecordTime,
-  SessionRecord,
+import {
+  type RecordTime,
+  recordTimeAt,
+  type SessionRecord,
 } from "../../../../../../../../../shared/session/session-state.ts"
 import {
   turnSpeeches,
@@ -191,11 +192,12 @@ function speechAge(newerCount: number): SpeechAge {
 
 /** 区切りの時刻（`HH:MM`。秒は出さない）。組み直した依頼は時刻が分からない。 */
 function logTime(time: RecordTime, timeZone: string): SpeechLogTime {
-  if (time.kind !== "stamped") {
+  const at = recordTimeAt(time)
+  if (at === undefined) {
     return { kind: "unknown" }
   }
-  const at = zonedDateTime(time.at, timeZone)
-  return { kind: "known", dateTime: clockDateTime(at), text: clockTime(at) }
+  const zoned = zonedDateTime(at, timeZone)
+  return { kind: "known", dateTime: clockDateTime(zoned), text: clockTime(zoned) }
 }
 
 /** 依頼の1行目（区切りは1行に切る）。空行だけの依頼は空文字。 */
