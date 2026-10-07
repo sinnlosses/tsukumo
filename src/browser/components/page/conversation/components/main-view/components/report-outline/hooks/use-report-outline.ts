@@ -38,6 +38,7 @@ export type ReportOutlineTurn = {
   readonly id: number
   readonly title: string
   readonly result: TurnResult
+  readonly asideCount: number
 }
 
 export type ReportOutlineProps = {

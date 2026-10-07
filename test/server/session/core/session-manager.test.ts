@@ -522,7 +522,7 @@ describe("createSessionManager", () => {
     expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
       ok: true,
     })
-    expect(started[0]?.calls).toEqual(["prompt:架空の依頼"])
+    expect(started[0]?.calls).toEqual(["prompt:request:架空の依頼"])
 
     expect(await manager.commands.session.switchCharacter({ name: "fictional" })).toEqual({
       ok: true,

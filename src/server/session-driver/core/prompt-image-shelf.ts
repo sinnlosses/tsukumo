@@ -102,6 +102,8 @@ export function releasedPromptImageIds(
 
 function recordedPromptImageIds(records: readonly SessionRecord[]): readonly string[] {
   return records.flatMap((record) =>
-    record.kind === "request" ? record.images.map((image) => image.id) : [],
+    record.kind === "request" || record.kind === "aside"
+      ? record.images.map((image) => image.id)
+      : [],
   )
 }

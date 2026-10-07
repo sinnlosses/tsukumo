@@ -546,6 +546,21 @@ describe("createReportReview の judge（段取りの残った report）", () =>
       reasons: ["unfinished-phases"],
     })
   })
+
+  it("脇の話のターンでは、段取りがあっても段の閉じ方の欄が無いことで差し戻さず、ターンが終われば戻る", () => {
+    const { review } = reviewWith({ kind: "planned", remaining: 2 })
+    const aside: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }
+
+    ;[aside, SESSION_INFO].forEach((event) => review.pass(event))
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+
+    ;[FINISHED, SESSION_INFO].forEach((event) => review.pass(event))
+    expect(review.judge({ ...VALID, conclusion: "架空の別の結論。" })).toEqual({
+      kind: "rejected",
+      text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
+      reasons: ["missing-work-plan-closing"],
+    })
+  })
 })
 
 describe("createReportReview の judge（差し戻しの種類）", () => {

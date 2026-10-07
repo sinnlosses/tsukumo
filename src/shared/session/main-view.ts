@@ -110,6 +110,12 @@ export type MainViewEntry =
    * ステップには入れない（やり取りの末尾に1つだけ出す印なので、{@link groupIntoTurns} がステップから外して `MainViewTurn.failure` に移す）。
    */
   | { readonly kind: "turn-failure"; readonly failure: TurnFailure }
+  /**
+   * 脇の話と、それへの答えのセリフ（`answersAside` の `speech`）。
+   * ステップには入れず、{@link groupIntoTurns} が対にして `MainViewTurn.asides` に移す。
+   */
+  | { readonly kind: "aside"; readonly text: string }
+  | { readonly kind: "aside-answer"; readonly text: string }
 
 export type MainViewToolRun = Extract<MainViewEntry, { readonly kind: "tool" }>
 export type MainViewQuestion = Extract<MainViewEntry, { readonly kind: "question" }>
@@ -179,6 +185,13 @@ export type MainViewStepBody =
 
 const NO_BODY = { kind: "none" } as const satisfies MainViewStepBody
 
+export type MainViewAside = {
+  readonly text: string
+  readonly answer:
+    | { readonly kind: "waiting" }
+    | { readonly kind: "answered"; readonly text: string }
+}
+
 /** やり取りの頭に出す依頼。文面と、添えた画像の控えで1つ。添えていなければ `images` は空。 */
 export type MainViewRequest = {
   readonly text: string
@@ -203,6 +216,8 @@ export type MainViewTurn = {
   readonly droppedCount: number
   /** このやり取りが失敗で終わったか（{@link MainViewTurnFailure}）。 */
   readonly failure: MainViewTurnFailure
+  /** このやり取りに吊るした脇の話（古い順）。 */
+  readonly asides: readonly MainViewAside[]
 }
 
 /**
@@ -294,7 +309,7 @@ function dependenciesOf(record: SessionRecord, context: TurnContext): readonly E
 /**
  * `SessionRecord` 1件をメインビューに出す形へ変える（出さないものは空で返す）。
  *
- * `speech` は落とす（セリフは吹き出しだけに出し、レポートに混ぜない）。
+ * `speech` は落とす（セリフは吹き出しだけに出し、レポートに混ぜない）。脇の話への答えのセリフだけは、脇の話の欄に出すので `aside-answer` にする。
  * ターンの通し番号は `request` の記録が持っているので、何を落としても番号はずれない。
  *
  * `compact-boundary` も落とす（圧縮の区切りは雑談のログだけに出す）。
@@ -304,8 +319,14 @@ function dependenciesOf(record: SessionRecord, context: TurnContext): readonly E
  * `tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の付随情報）を落とす（メインビューの部品が見てよいのは名前・入力・結果だけ）。
  */
 function toMainViewEntries(record: SessionRecord, context: TurnContext): readonly MainViewEntry[] {
-  if (record.kind === "speech" || record.kind === "compact-boundary") {
+  if (record.kind === "speech") {
+    return record.answersAside ? [{ kind: "aside-answer", text: record.text }] : []
+  }
+  if (record.kind === "compact-boundary") {
     return []
+  }
+  if (record.kind === "aside") {
+    return [{ kind: "aside", text: record.text }]
   }
   if (record.kind === "work-plan") {
     const shift = phaseShiftOf(latestWorkPlanOf(context), record)
@@ -424,14 +445,20 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly GroupedTurn
         droppedCount: 0,
         failure:
           failure === undefined ? { kind: "none" } : { kind: "failed", failure: failure.failure },
+        asides: pairAsides(turn.records),
       },
       toolReportIds,
     }
   })
 }
 
-/** やり取りの中の記録のうち、ステップに入るもの（失敗の印以外）。 */
-type StepEntry = Exclude<TurnRest<MainViewEntry>, { readonly kind: "turn-failure" }>
+/** やり取りの中の記録のうち、ステップに入らないもの（失敗の印と、脇の話とその答え）。 */
+type OutsideStepEntry = Extract<
+  MainViewEntry,
+  { readonly kind: "turn-failure" | "aside" | "aside-answer" }
+>
+
+type StepEntry = Exclude<TurnRest<MainViewEntry>, OutsideStepEntry>
 
 function isTurnFailure(
   entry: TurnRest<MainViewEntry>,
@@ -440,7 +467,32 @@ function isTurnFailure(
 }
 
 function isStepEntry(entry: TurnRest<MainViewEntry>): entry is StepEntry {
-  return entry.kind !== "turn-failure"
+  return entry.kind !== "turn-failure" && entry.kind !== "aside" && entry.kind !== "aside-answer"
+}
+
+/**
+ * 脇の話と、その後ろ（次の脇の話の手前まで）の答えのセリフを対にする。
+ * 答えのセリフが2つ以上あれば、届いた順に1つの答えにつなぐ。脇の話より前の答えのセリフは捨てる。
+ */
+function pairAsides(entries: readonly TurnRest<MainViewEntry>[]): readonly MainViewAside[] {
+  const pairs = entries.reduce<readonly { text: string; answers: readonly string[] }[]>(
+    (acc, entry) => {
+      if (entry.kind === "aside") {
+        return [...acc, { text: entry.text, answers: [] }]
+      }
+      const last = acc.at(-1)
+      if (entry.kind !== "aside-answer" || last === undefined) {
+        return acc
+      }
+      return [...acc.slice(0, -1), { ...last, answers: [...last.answers, entry.text] }]
+    },
+    [],
+  )
+  return pairs.map(({ text, answers }) => ({
+    text,
+    answer:
+      answers.length === 0 ? { kind: "waiting" } : { kind: "answered", text: answers.join(" ") },
+  }))
 }
 
 /**

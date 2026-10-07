@@ -2403,6 +2403,113 @@
       ]
     },
     {
+      "name": "aside-delegating",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "架空のタスクに着手して、委譲先に任せたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "speech",
+            "text": "段取りを立てて、委譲先に任せるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["計画を確かめる", "委譲先に任せる", "受け入れる"],
+            "current": 0,
+            "finishedInGroup": [],
+            "phaseSummary": ""
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["計画を確かめる", "委譲先に任せる", "受け入れる"],
+            "current": 1,
+            "finishedInGroup": [],
+            "phaseSummary": "架空の計画は3つの段で、委譲先にそのまま渡せる形だった。"
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-aside-agent-1",
+            "name": "Agent",
+            "input": {
+              "description": "架空の委譲",
+              "prompt": "架空の指示",
+              "run_in_background": true
+            }
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-aside-agent-1",
+            "content": "架空の委譲の受付（ID: fake-aside-task-1）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": [
+              { "taskId": "fake-aside-task-1", "kind": "agent", "description": "架空の委譲" }
+            ]
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "speech",
+            "text": "委譲先が戻るまで待ってるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "aside-answer",
+      "steps": [
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "いまは委譲先が段2を進めているところ。落ちたものはまだ無いよ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "current-work-running",
       "steps": [
         {

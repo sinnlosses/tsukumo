@@ -7,18 +7,19 @@ import {
   isEmptyAchievementDay,
 } from "../../../shared/achievement/achievement.ts"
 import type { CommandInputs } from "../../../shared/command.ts"
-import type { sessionContract } from "../../../shared/contract/session.ts"
+import type { PromptRouting, sessionContract } from "../../../shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import {
   BUILTIN_SESSION_DEFAULT,
   type SessionDefault,
 } from "../../../shared/session/session-default.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionState } from "../../../shared/session/session-state.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
 import type { DiaryDayTask } from "../../diary/core/diary-tool.ts"
 import type { DiaryWriteRequest, DiaryWriterSource } from "../../diary/core/diary-writer.ts"
 import type { PromptImageShelf } from "../../session-driver/core/prompt-image-shelf.ts"
-import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
+import type { PromptOpening, SessionDriver } from "../../session-driver/core/session-driver.ts"
 import type { CommandReceiver, CommandSession, SessionReceiver } from "./command-session.ts"
 import { ACCEPTED, askDriver, declined, nudge } from "./driver-command.ts"
 
@@ -50,17 +51,25 @@ type SessionCommandInputs = CommandInputs<typeof sessionContract>
 
 /** `session` が受けるコマンドの表。 */
 export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable {
-  // 駆動へそのまま渡す6種は、駆動の口を1つ呼ぶだけ（待ち方と畳み方は `askDriver`）。
+  // 駆動へそのまま渡す5種は、駆動の口を1つ呼ぶだけ（待ち方と畳み方は `askDriver`）。
   return {
-    // 原寸は駆動へ渡す前に棚へ置く（id は `request` のイベントに載って記録へ入る）。
-    // 駆動が投げて `request` が流れなかったときの原寸は記録に載らないまま残るが、棚の上限で古いほうから押し出される。
-    prompt: toDriver((started, input) => {
-      if (started.ended()) {
-        return { ok: false, reason: FRAME_ERROR_REASON.sessionEnded }
-      }
-      started.prompt(input.text, ports.promptImageShelf.shelve(input.images))
-      return ACCEPTED
-    }),
+    // 原寸は駆動へ渡す前に棚へ置く（id は `request` / `aside` のイベントに載って記録へ入る）。
+    // 駆動が投げてイベントが流れなかったときの原寸は記録に載らないまま残るが、棚の上限で古いほうから押し出される。
+    prompt: {
+      kind: "session",
+      receive: (input, session) =>
+        askDriver(session.driver(), (started) => {
+          if (started.ended()) {
+            return { ok: false, reason: FRAME_ERROR_REASON.sessionEnded }
+          }
+          started.prompt(
+            input.text,
+            ports.promptImageShelf.shelve(input.images),
+            promptOpening(input.routing, session.state()),
+          )
+          return ACCEPTED
+        }),
+    },
     interrupt: toDriver(async (started) => {
       await started.interrupt()
       return ACCEPTED
@@ -148,6 +157,12 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
       failure: FRAME_ERROR_REASON.sessionDefaultFailed,
     },
   }
+}
+
+function promptOpening(routing: PromptRouting, state: SessionState): PromptOpening {
+  return routing === "aside-when-background" && !state.chatMode && state.backgroundTasks.length > 0
+    ? "aside"
+    : "request"
 }
 
 /** 駆動へ1件頼む行（駆動が起き上がるのを待ってから `ask` を呼ぶ）。 */

@@ -138,6 +138,7 @@ export function MarkdownEditorSurface({
                   key: event.key,
                   ctrlKey: event.ctrlKey,
                   metaKey: event.metaKey,
+                  shiftKey: event.shiftKey,
                   keyCode: event.keyCode,
                   isComposing: event.isComposing,
                   preventDefault: () => {

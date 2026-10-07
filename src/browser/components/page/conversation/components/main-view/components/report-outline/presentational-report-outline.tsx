@@ -151,7 +151,7 @@ function TurnRow(props: {
       {...{ [TURN_ROW_ATTRIBUTE]: turn.id }}
       data-result={turn.result}
       aria-current={turn.isActive ? "true" : undefined}
-      aria-label={`${result.label}: ${turn.title}`}
+      aria-label={`${result.label}: ${turn.title}${turn.asideCount > 0 ? `（脇の話 ${String(turn.asideCount)}件）` : ""}`}
       title={turn.title}
       onClick={() => {
         props.onSelectTurn(turn.id)
@@ -160,7 +160,14 @@ function TurnRow(props: {
       <span className={styles["outline-turn-mark"]} aria-hidden="true">
         {turn.isActive ? ACTIVE_TURN_MARK : result.mark}
       </span>
-      <span className={styles["outline-row-text"]}>{turn.title}</span>
+      <span className={styles["outline-turn-body"]}>
+        <span className={styles["outline-row-text"]}>{turn.title}</span>
+        {turn.asideCount > 0 && (
+          <span className={styles["outline-turn-aside"]} aria-hidden="true">
+            {`脇 ${String(turn.asideCount)}`}
+          </span>
+        )}
+      </span>
     </button>
   )
 }

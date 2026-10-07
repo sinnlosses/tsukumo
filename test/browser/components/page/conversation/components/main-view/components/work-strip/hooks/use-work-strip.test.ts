@@ -143,6 +143,36 @@ describe("useWorkStrip（時刻に依るもの）", () => {
       sideLabel: "所要 2分05秒",
     })
   })
+
+  it("委譲中に送った脇の話のあいだも、親の段取り・今の段・依頼からの経過を出し続ける", () => {
+    const state = foldTimed([
+      [request, START],
+      [plan, START + 1_000],
+      [{ ...plan, current: 1, phaseSummary: "架空のまとめ。" }, START + 2_000],
+      [
+        {
+          kind: "background-tasks-changed",
+          tasks: [{ taskId: "fictional-task", kind: "agent", description: "架空の委譲" }],
+        },
+        START + 3_000,
+      ],
+      [{ kind: "turn-finished", outcome: { kind: "completed" } }, START + 4_000],
+      [{ kind: "aside", text: "架空の問い", images: [] }, START + 60_000],
+      [{ kind: "speech", text: "架空の答え", expression: "default" }, START + 61_000],
+    ])
+
+    const strip = stripAt(state, START + 72_000)
+
+    expect(strip).toMatchObject({
+      kind: "working",
+      headLabel: "架空の段B",
+      sideLabel: "2/2 · 経過 1分12秒",
+    })
+    expect(strip.kind === "working" && strip.phases.map((slot) => slot.kind)).toEqual([
+      "phase",
+      "phase",
+    ])
+  })
 })
 
 describe("useWorkStrip（段のまとまり）", () => {

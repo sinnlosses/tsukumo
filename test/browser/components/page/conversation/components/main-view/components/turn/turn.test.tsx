@@ -73,6 +73,7 @@ function turn(steps: readonly MainViewStep[]): MainViewTurn {
     hasInterimReport: false,
     droppedCount: 0,
     failure: { kind: "none" },
+    asides: [],
   }
 }
 

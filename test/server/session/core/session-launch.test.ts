@@ -285,7 +285,7 @@ describe("createSessionLaunch", () => {
       },
     )
     await settle()
-    driver.prompt("架空の依頼", [])
+    driver.prompt("架空の依頼", [], "request")
 
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",

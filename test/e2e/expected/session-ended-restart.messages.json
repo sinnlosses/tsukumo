@@ -37,7 +37,8 @@
     "order": 1,
     "input": {
       "text": "終わる会話への依頼（架空の依頼）",
-      "images": []
+      "images": [],
+      "routing": "aside-when-background"
     }
   },
   {

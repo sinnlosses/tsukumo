@@ -135,6 +135,16 @@ export type SessionRecord =
       readonly images: readonly RecordedPromptImage[]
       readonly time: RecordTime
     }
+  /**
+   * 背景のタスクが残っているあいだに送った言葉（脇の話）。`request` ではないのでターンの境目にならず、親のやり取りの中に積まれる。
+   * 答えは、後ろに続く `answersAside` の `speech` の記録。
+   */
+  | {
+      readonly kind: "aside"
+      readonly text: string
+      readonly images: readonly RecordedPromptImage[]
+      readonly time: RecordTime
+    }
   | { readonly kind: "detail"; readonly markdown: string }
   /**
    * `report` ツールで受け取ったレポート。引数をそのまま持ち、1つの本文に組むのはメインビューの導出。
@@ -178,6 +188,8 @@ export type SessionRecord =
       readonly text: string
       readonly expression: Expression
       readonly time: RecordTime
+      /** 脇の話のターン（{@link SessionState.answeringAside}）で呼ばれた、脇の話への答えか。 */
+      readonly answersAside: boolean
     }
   | {
       readonly kind: "tool"
@@ -284,6 +296,11 @@ export type SessionState = {
    * メインビューが「まだ伸びうる本文」を伏せるときに、前の SDK ターンで確定した本文まで巻き込まないために要る。
    */
   readonly bodiesInTurn: TurnBodies
+  /**
+   * いま走っている SDK ターンが脇の話（`aside`）で始まったか。
+   * `aside` で true になり、依頼・記録を持たないターンの始まり・続きのターン・ターンの終わりで false に戻る。
+   */
+  readonly answeringAside: boolean
   /** 確定した記録。書きかけの本文は含まない。 */
   readonly records: readonly SessionRecord[]
   /** 書きかけの本文。完成した本文が来たら空に戻る。 */
@@ -449,6 +466,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   speechExpression: "default",
   speechCalledInTurn: false,
   bodiesInTurn: NO_TURN_BODIES,
+  answeringAside: false,
   records: [],
   partialUtterance: "",
   pending: [],
@@ -558,6 +576,14 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
           state.chatMode,
         ),
       }
+    case "aside":
+      return {
+        ...beginAside(state, at),
+        records: [
+          ...state.records,
+          { kind: "aside", text: event.text, images: event.images, time: { kind: "stamped", at } },
+        ],
+      }
     case "turn-started":
       // 記録を持たないターンの始まり。積むものが無いだけで、吹き出し・表情・進行中の印は `request` と同じに動かす。
       return beginTurn(state, at)
@@ -584,6 +610,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             text: event.text,
             expression: event.expression,
             time: { kind: "stamped", at },
+            answersAside: state.answeringAside,
           },
         ],
         // 前のターンのセリフが残っているなら、ここで捨てて今のターンだけの並びにする。
@@ -698,6 +725,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         turn: finishTurn(state.turn, at, ending),
         finishedTurnCount: finishedTurnCountOf(state),
         reportDrafting: { kind: "idle" },
+        answeringAside: false,
         usageReview: settleUsageReview(state.usageReview),
         apiTrouble: { kind: "none" },
       }
@@ -707,6 +735,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return {
         ...settleUtterance(state),
         reportDrafting: { kind: "idle" },
+        answeringAside: false,
         endedReason: event.reason,
         turn: finishTurn(state.turn, at, { kind: "ended" }),
         finishedTurnCount: finishedTurnCountOf(state),
@@ -729,6 +758,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         speechExpression: INITIAL_SESSION_STATE.speechExpression,
         speechCalledInTurn: false,
         bodiesInTurn: NO_TURN_BODIES,
+        answeringAside: false,
         records: [],
         partialUtterance: "",
         reportDrafting: { kind: "idle" },
@@ -832,6 +862,7 @@ function mapRecordTimes(
 ): SessionRecord {
   if (
     record.kind === "request" ||
+    record.kind === "aside" ||
     record.kind === "speech" ||
     record.kind === "work-plan" ||
     record.kind === "report"
@@ -909,8 +940,28 @@ function beginTurn(state: SessionState, at: number): SessionState {
     nextTurnId: state.nextTurnId + 1,
     speechCalledInTurn: false,
     bodiesInTurn: NO_TURN_BODIES,
+    answeringAside: false,
     apiTrouble: { kind: "none" },
   }
+}
+
+/**
+ * 脇の話（`aside`）で始まる SDK ターン。
+ * 吹き出し・表情・書きかけは空へ戻す（答えを吹き出しに出すため）。
+ * 親のやり取りの続きなので、ターンの通し番号は進めず、始まった時刻は前のターンのものを引き継ぐ。
+ */
+function beginAside(state: SessionState, at: number): SessionState {
+  return {
+    ...beginTurn(state, at),
+    turn: { kind: "running", startedAt: runningStartedAt(state.turn, at) },
+    nextTurnId: state.nextTurnId,
+    answeringAside: true,
+  }
+}
+
+/** 続きのターンが引き継ぐ始まりの時刻。まだ一度もターンが無ければ `at`。 */
+function runningStartedAt(turn: TurnProgress, at: number): number {
+  return turn.kind === "idle" ? at : turn.startedAt
 }
 
 /**
@@ -968,8 +1019,9 @@ function resumeTurn(state: SessionState, at: number): SessionState {
     ...state,
     partialUtterance: "",
     reportDrafting: { kind: "idle" },
-    turn: { kind: "running", startedAt: state.turn.kind === "idle" ? at : state.turn.startedAt },
+    turn: { kind: "running", startedAt: runningStartedAt(state.turn, at) },
     bodiesInTurn: NO_TURN_BODIES,
+    answeringAside: false,
     apiTrouble: { kind: "none" },
   }
 }

@@ -1213,3 +1213,65 @@ describe("mainViewTurns（失敗で終わったターン）", () => {
     expect(turn?.steps).toHaveLength(1)
   })
 })
+
+describe("mainViewTurns（脇の話）", () => {
+  const plan = (current: number, phaseSummary: string): SessionEvent => ({
+    kind: "work-plan",
+    phases: ["架空の段A", "架空の段B", "架空の段C"],
+    current,
+    finishedInGroup: [],
+    phaseSummary,
+  })
+  const delegating: readonly SessionEvent[] = [
+    { kind: "request", text: "架空の依頼", images: [] },
+    plan(0, ""),
+    plan(1, "架空のまとめ。"),
+    {
+      kind: "background-tasks-changed",
+      tasks: [{ taskId: "fictional-task", kind: "agent", description: "架空の委譲" }],
+    },
+    { kind: "turn-finished", outcome: { kind: "completed" } },
+  ]
+  const turnsOf = (events: readonly SessionEvent[]) =>
+    mainViewTurns(
+      mainViewEntries(
+        events.reduce(
+          (current, event) => applySessionEvent(current, event, 0),
+          INITIAL_SESSION_STATE,
+        ),
+      ),
+      SETTLED,
+      false,
+    )
+
+  it("背景のタスクのあいだの脇の話は札を増やさず、親のやり取りに答えと対で吊るされる", () => {
+    const turns = turnsOf([
+      ...delegating,
+      { kind: "aside", text: "架空の問い", images: [] },
+      { kind: "speech", text: "架空の答え。", expression: "default" },
+      { kind: "speech", text: "架空の続き。", expression: "default" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      { kind: "aside", text: "架空の頼み", images: [] },
+    ])
+
+    expect(turns).toHaveLength(1)
+    expect(turns[0]?.request?.text).toBe("架空の依頼")
+    expect(turns[0]?.asides).toEqual([
+      { text: "架空の問い", answer: { kind: "answered", text: "架空の答え。 架空の続き。" } },
+      { text: "架空の頼み", answer: { kind: "waiting" } },
+    ])
+    expect(turns[0]?.steps.map(reportOf)).toEqual(["架空のまとめ。"])
+  })
+
+  it("脇の話のターンが終わったあとのセリフは答えにならない", () => {
+    const turns = turnsOf([
+      ...delegating,
+      { kind: "aside", text: "架空の問い", images: [] },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      { kind: "turn-resumed" },
+      { kind: "speech", text: "架空の返却の知らせ。", expression: "default" },
+    ])
+
+    expect(turns[0]?.asides).toEqual([{ text: "架空の問い", answer: { kind: "waiting" } }])
+  })
+})

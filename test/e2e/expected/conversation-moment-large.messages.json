@@ -37,7 +37,8 @@
     "order": 1,
     "input": {
       "text": "局面の入れ替えを見たい（架空の依頼）",
-      "images": []
+      "images": [],
+      "routing": "aside-when-background"
     }
   },
   {

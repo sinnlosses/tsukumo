@@ -1,0 +1,36 @@
+/* 脇の話の欄（`AsideThread`）。 */
+.aside-thread {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed var(--rule);
+  border-radius: 0.5rem;
+}
+/* 開閉の印は字の後ろに置くので、ブラウザ既定の三角は消す。 */
+.aside-thread > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.aside-thread > summary::-webkit-details-marker {
+  display: none;
+}
+.aside-thread[open] > summary {
+  margin-bottom: 0.4rem;
+}
+.aside-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 0.75rem;
+  display: grid;
+  gap: 0.3rem;
+}
+/* 長い言葉は2行で切る（全文は行の `title`）。 */
+.aside-row {
+  font-size: var(--font-secondary);
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}

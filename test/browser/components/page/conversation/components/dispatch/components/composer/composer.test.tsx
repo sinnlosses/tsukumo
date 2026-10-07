@@ -313,7 +313,9 @@ describe("Composer", () => {
     fireEvent.change(textArea(), { target: { value: "/clear" } })
     fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true })
 
-    expect(calls).toEqual([{ procedure: "session.prompt", text: "/clear", images: [] }])
+    expect(calls).toEqual([
+      { procedure: "session.prompt", text: "/clear", images: [], routing: "aside-when-background" },
+    ])
     expect(screen.queryByText(/捨てられるので、送っていません/)).toBeNull()
   })
 

@@ -8,6 +8,7 @@ const SESSION_EVENT_KINDS = {
   "command-descriptions": true,
   plan: true,
   request: true,
+  aside: true,
   "turn-started": true,
   "turn-resumed": true,
   "partial-utterance": true,

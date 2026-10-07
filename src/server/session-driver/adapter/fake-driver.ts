@@ -405,9 +405,9 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   }
 
   return {
-    prompt: (text, images) => {
+    prompt: (text, images, opening) => {
       // 疑似セッションを流すだけの駆動でも、控えと id だけを記録へ渡すのは本物と同じ。
-      emit({ kind: "request", text, images: recordedPromptImages(images) })
+      emit({ kind: opening, text, images: recordedPromptImages(images) })
       playNextTurn()
     },
     promptWithoutRecord: () => {

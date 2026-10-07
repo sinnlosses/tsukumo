@@ -156,6 +156,17 @@ describe("TurnStatus", () => {
 
     expect(screen.getByRole("button").dataset["emphasis"]).toBe("solid")
   })
+
+  it("仕事の「送信」の title だけが、脇の話と ⌘⇧⏎ の新しい依頼を案内する", () => {
+    renderTurnStatus({})
+    expect(screen.getByRole("button").title).toBe(
+      "⌘⏎ で送る（委譲中は脇の話）· ⌘⇧⏎ で新しい依頼として送る",
+    )
+    cleanup()
+
+    renderTurnStatus({ chatMode: true })
+    expect(screen.getByRole("button").title).toBe("⌘⏎ で送る")
+  })
   describe("API の知らせ（docs/architecture/display.md 4.2「入力欄」）", () => {
     it("失敗で終わったターンは「所要」ではなく「失敗」と理由の字を出す（色だけに頼らない）", () => {
       renderTurnStatus({

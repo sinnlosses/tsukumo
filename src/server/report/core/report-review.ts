@@ -11,7 +11,7 @@
 //
 // 新しい事実の無い `report` も差し戻す（枠は別に1ターンに1回まで）。
 // 「新しい事実」は文面ではなく、直前に描いた `report` のあとに届いたもので決める:
-// 利用者の依頼（`request` / `turn-started`）、メインが呼んだ `speak` / `report` 以外のツールの結果、背景のタスクの終わり（顔ぶれから消えた）。
+// 利用者の依頼（`request` / `turn-started`）と脇の話（`aside`）、メインが呼んだ `speak` / `report` 以外のツールの結果、背景のタスクの終わり（顔ぶれから消えた）。
 // 背景のタスクの終わりはターンの外で届くので、これだけはターンの区切りで戻さない。
 // サブエージェントの `SendMessage` の合図は流れに見えないので数えない。
 //
@@ -19,6 +19,7 @@
 // 同じターンで差し戻した `work_plan` にまだ応えていないものと、段の閉じ方（`workPlanClosing`）が合わないもの。
 // 段の閉じ方は同じ依頼に段取りがあるときだけ見て、欄が無い・`finished` なのに段が2つ以上残っている・
 // `task.outcome` が `finished` なのに `stopped` で段が残っている、のどれかなら差し戻す。
+// 脇の話のターン（`aside` から次の依頼・続きのターン・ターンの終わりまで）では段の閉じ方を見ない。
 // 枠は応えていない `work_plan` と段の閉じ方でそれぞれ1ターンに1回までで、規約違反の枠とは分ける。
 //
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`）。
@@ -108,6 +109,8 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
   // メインが呼んで結果をまだ受け取っていないツールの id（`speak` / `report` は入らない）。
   let runningTools: ReadonlySet<string> = new Set()
   let backgroundTaskIds: readonly string[] = []
+  // 脇の話（`aside`）で始まったターンか。ターンの頭の `session-info` は脇の話のターンの頭にも届くので、そこでは戻さない。
+  let asideTurn = false
 
   const startTurn = (): void => {
     rejectedInTurn = false
@@ -142,7 +145,7 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
         }
       }
       const closingVerdict: ReportVerdict =
-        standing.kind === "planned"
+        standing.kind === "planned" && !asideTurn
           ? judgeWorkPlanClosing(report, standing.remaining)
           : { kind: "accepted" }
       if (closingVerdict.kind === "rejected" && !closingRejectedInTurn) {
@@ -193,6 +196,14 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
         case "request":
         case "turn-started":
           hasNews = true
+          asideTurn = false
+          return [event]
+        case "aside":
+          hasNews = true
+          asideTurn = true
+          return [event]
+        case "turn-resumed":
+          asideTurn = false
           return [event]
         case "background-tasks-changed": {
           const current = event.tasks.map((task) => task.taskId)
@@ -208,6 +219,7 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
         case "turn-finished": {
           const unsettled = held.flatMap((report) => [report, ...closingSpeech(report)])
           held = []
+          asideTurn = false
           startTurn()
           return [...unsettled, event]
         }

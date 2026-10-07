@@ -63,6 +63,10 @@ function foldEvent(fold: DigestFold, event: SessionEvent): DigestFold {
         requestCount: fold.requestCount + 1,
         turnOpen: true,
       }
+    // 脇の話と続きのターンは依頼に数えず、ターンの区切りだけを畳む。
+    case "aside":
+    case "turn-resumed":
+      return { ...(fold.turnOpen ? adoptHeld(fold) : fold), turnOpen: true }
     case "report":
     case "speak-called":
       return { ...fold, held: [...fold.held, event] }

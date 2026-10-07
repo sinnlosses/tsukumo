@@ -12,6 +12,7 @@ import {
 } from "../../../src/shared/session/turn-step.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import {
+  asideRecord,
   finishedToolStatus,
   requestRecord,
   speechRecord,
@@ -294,5 +295,25 @@ describe("currentTurnSteps（段取り）", () => {
 
     expect(list).toMatchObject({ plan: { kind: "none" } })
     expect(turnSteps(list)[0]?.phase).toEqual({ kind: "none" })
+  })
+
+  it("脇の話を挟んでも、段取りと手順は親の依頼のまま続く", () => {
+    const list = currentTurnSteps(
+      [
+        requestRecord(),
+        workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 1, phaseSummary: "まとめ" }),
+        toolRecord({ toolUseId: "toolu_delegate" }),
+        asideRecord(),
+        speechRecord({ answersAside: true }),
+        toolRecord({ toolUseId: "toolu_after_aside" }),
+      ],
+      false,
+    )
+
+    expect(turnSteps(list).map((step) => step.toolUseId)).toEqual([
+      "toolu_delegate",
+      "toolu_after_aside",
+    ])
+    expect(list).toMatchObject({ plan: { kind: "planned", current: 1 } })
   })
 })

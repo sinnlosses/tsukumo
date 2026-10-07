@@ -117,6 +117,7 @@ describe("ChatView の時刻と日の区切り", () => {
         },
         {
           kind: "speech",
+          answersAside: false,
           text: "架空のセリフ",
           expression: "default",
           time: localAt("2026-09-23T09:06:07"),
@@ -141,6 +142,7 @@ describe("ChatView の時刻と日の区切り", () => {
         },
         {
           kind: "speech",
+          answersAside: false,
           text: "夜の架空のセリフ",
           expression: "default",
           time: localAt("2026-09-23T23:59"),
@@ -163,6 +165,7 @@ describe("ChatView の時刻と日の区切り", () => {
         },
         {
           kind: "speech",
+          answersAside: false,
           text: "前の日の架空のセリフ",
           expression: "default",
           time: localAt("2026-09-22T23:59"),
@@ -176,6 +179,7 @@ describe("ChatView の時刻と日の区切り", () => {
         },
         {
           kind: "speech",
+          answersAside: false,
           text: "次の日の架空のセリフ",
           expression: "default",
           time: localAt("2026-09-23T00:02"),

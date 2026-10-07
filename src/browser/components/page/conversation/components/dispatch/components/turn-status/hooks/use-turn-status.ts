@@ -34,6 +34,9 @@ const SEND_LABEL = "送信"
 const ANSWER_LABEL = "答える"
 const NEXT_LABEL = "次へ"
 const INTERRUPT_LABEL = "中断"
+const WORK_SEND_TITLE = "⌘⏎ で送る（委譲中は脇の話）· ⌘⇧⏎ で新しい依頼として送る"
+const CHAT_SEND_TITLE = "⌘⏎ で送る"
+const ANSWER_TITLE = "⌘⏎ で答える"
 
 /**
  * 押せる口。送信と中断は同時に出さないので、どちらか1つに畳んでから presenter へ渡す。
@@ -46,6 +49,7 @@ export type TurnStatusAction =
       readonly emphasis: "solid" | "quiet"
       /** サーバと切れている間と、会話が終わったあとは押せない。 */
       readonly disabled: boolean
+      readonly title: string
     }
   | { readonly kind: "interrupt"; readonly label: string; readonly onInterrupt: () => void }
 
@@ -114,6 +118,7 @@ export function useTurnStatus(): TurnStatusModel {
             label: sendLabel(inquiry.kind === "question" ? inquiry.last : undefined),
             emphasis: inquiry.kind === "question" && !drafted ? "quiet" : "solid",
             disabled: !connected || ended,
+            title: sendTitle(inquiry.kind === "question", chatMode),
           },
     notice: turnStatusNotice({ turn, apiTrouble, rateLimit, chatMode, now }),
   }
@@ -162,6 +167,16 @@ function rateLimitNotice(
     label: resetText.kind === "known" ? `利用上限 ${resetText.text}まで` : "利用上限",
     detail: resetText.kind === "known" ? `${state}。${resetText.text}に戻る` : state,
   }
+}
+
+/**
+ * 送るボタンの `title`。脇の話になりうるのは仕事のときに依頼を送るときだけなので、⌘⇧⏎ の案内もそのときだけ添える。
+ */
+function sendTitle(answering: boolean, chatMode: boolean): string {
+  if (answering) {
+    return ANSWER_TITLE
+  }
+  return chatMode ? CHAT_SEND_TITLE : WORK_SEND_TITLE
 }
 
 /** 送るボタンの字。答え待ちの質問が無ければ「送信」、あれば最後の1問だけ「答える」で手前は「次へ」。 */

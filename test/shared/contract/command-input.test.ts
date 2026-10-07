@@ -63,7 +63,12 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
       text: "架空の依頼",
       // 画像を添えない依頼は、field ごと省いた形で届いて空に畳まれる。
       images: [],
+      routing: "new-request",
     })
+    expect(
+      parseInput("session.prompt", { text: "架空の依頼", routing: "aside-when-background" }),
+    ).toMatchObject({ routing: "aside-when-background" })
+    expect(parseInput("session.prompt", { text: "架空の依頼", routing: "aside" })).toBeUndefined()
   })
 
   it("nudge・interrupt は入力を持たない（押した事実だけが届く）", () => {
@@ -374,6 +379,7 @@ describe("コマンドの契約の入力（依頼に添える画像）", () => {
     expect(parseInput("session.prompt", promptWithImages(images))).toEqual({
       text: "架空の依頼",
       images,
+      routing: "new-request",
     })
   })
 

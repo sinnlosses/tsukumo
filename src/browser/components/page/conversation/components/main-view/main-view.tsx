@@ -91,6 +91,7 @@ export function MainView(): ReactElement {
     id: turn.id,
     title: turnTitle(turn),
     result,
+    asideCount: turn.asides.length,
   }))
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>): void {

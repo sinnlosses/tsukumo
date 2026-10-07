@@ -16,6 +16,7 @@ export type ComposerKey = {
   readonly key: string
   readonly ctrlKey: boolean
   readonly metaKey: boolean
+  readonly shiftKey: boolean
   readonly keyCode: number
   readonly isComposing: boolean
   readonly preventDefault: () => void

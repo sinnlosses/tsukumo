@@ -73,6 +73,7 @@ describe("useChatView の行への畳み方", () => {
         },
         {
           kind: "speech",
+          answersAside: false,
           text: "前の日のセリフ",
           expression: "default",
           time: localAt("2026-09-22T23:59:30"),

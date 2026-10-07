@@ -35,6 +35,20 @@ export function speechRecord(
     text: "架空のセリフ",
     expression: "default",
     time: STAMPED,
+    answersAside: false,
+    ...overrides,
+  }
+}
+
+/** 背景のタスクが残っているあいだに送った言葉（脇の話）1件。 */
+export function asideRecord(
+  overrides: Partial<Omit<Extract<SessionRecord, { readonly kind: "aside" }>, "kind">> = {},
+): SessionRecord {
+  return {
+    kind: "aside",
+    text: "架空の脇の話",
+    images: [],
+    time: STAMPED,
     ...overrides,
   }
 }

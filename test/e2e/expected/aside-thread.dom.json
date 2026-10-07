@@ -1,0 +1,364 @@
+{
+  "main": [
+    {
+      "tag": "main",
+      "attributes": {
+        "data-region": "main",
+        "aria-label": "メインビュー"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": "",
+            "data-main-view": ""
+          },
+          "children": [
+            {
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "work"
+              },
+              "children": [
+                {
+                  "tag": "article",
+                  "children": [
+                    {
+                      "tag": "header",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ古いターンへ",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "‹"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ新しいターンへ",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "›"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h2",
+                          "children": [
+                            "架空のタスクに着手して、委譲先に任せたい（架空の依頼）"
+                          ]
+                        },
+                        "1 / 1",
+                        "最新"
+                      ]
+                    },
+                    {
+                      "tag": "section",
+                      "attributes": {
+                        "aria-label": "進み具合",
+                        "data-work-strip": "working"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "data-result": "working"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            },
+                            "作業中"
+                          ]
+                        },
+                        {
+                          "tag": "ol",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "data-phase-state": "done",
+                                "aria-label": "1. 計画を確かめる（済）"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "✓"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "data-phase-state": "current",
+                                "aria-label": "2. 委譲先に任せる（今の段）"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "2"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "data-phase-state": "upcoming",
+                                "aria-label": "3. 受け入れる"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "3"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "委譲先に任せる",
+                        "2/3 · 経過 1分00秒",
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "手順 1 ▾"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "背景で 架空の委譲"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-outline": "hidden",
+                        "data-outline-collapsed": "false"
+                      },
+                      "children": [
+                        {
+                          "tag": "details",
+                          "attributes": {
+                            "open": true
+                          },
+                          "children": [
+                            {
+                              "tag": "summary",
+                              "children": [
+                                "脇の話 1件",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "▾"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "ul",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "きみ:",
+                                    "いまどこ？（架空の脇の話）",
+                                    "→",
+                                    "いまは委譲先が段2を進めているところ。落ちたものはまだ無いよ。"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "header",
+                              "children": [
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "中間レポート",
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "·"
+                                      ]
+                                    },
+                                    "1/3 計画を確かめる",
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "·"
+                                      ]
+                                    },
+                                    "所要",
+                                    "0秒"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空の計画は3つの段で、委譲先にそのまま渡せる形だった。"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "dispatch": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "dispatch",
+        "aria-label": "入力欄"
+      },
+      "children": [
+        {
+          "tag": "form",
+          "children": [
+            {
+              "tag": "textarea",
+              "attributes": {
+                "aria-label": "依頼を書く",
+                "value": ""
+              }
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "画像を添える",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "コマンドを補完する",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "ファイルを補完する",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-pressed": "false",
+                "aria-disabled": "false",
+                "aria-label": "マークダウンエディタで書く",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "data-shortcut": "⌘⏎",
+                "data-emphasis": "solid",
+                "type": "submit"
+              },
+              "children": [
+                "送信"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

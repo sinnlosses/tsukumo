@@ -139,7 +139,13 @@ describe("applySessionEvent", () => {
         images: [],
         time: { kind: "stamped", at: 0 },
       },
-      { kind: "speech", text: "いくよ！", expression: "proud", time: { kind: "stamped", at: 0 } },
+      {
+        kind: "speech",
+        text: "いくよ！",
+        expression: "proud",
+        time: { kind: "stamped", at: 0 },
+        answersAside: false,
+      },
       { kind: "detail", markdown: "ダミーのレポート" },
     ])
     // メインビューにはセリフを出さない（吹き出しだけ。docs/architecture/display.md「表示」）。
@@ -167,7 +173,13 @@ describe("applySessionEvent", () => {
         images: [],
         time: { kind: "stamped", at: 0 },
       },
-      { kind: "speech", text: "いくよ！", expression: "proud", time: { kind: "stamped", at: 0 } },
+      {
+        kind: "speech",
+        text: "いくよ！",
+        expression: "proud",
+        time: { kind: "stamped", at: 0 },
+        answersAside: false,
+      },
       { kind: "compact-boundary" },
       {
         kind: "request",
@@ -612,6 +624,56 @@ describe("applySessionEvent", () => {
       finishedAt: 1_500,
       ending: { kind: "ended" },
     })
+  })
+
+  it("aside はターンの通し番号も始まった時刻も進めず、吹き出しを空にして、そのターンのセリフに答えの印を付ける", () => {
+    const delegated = [
+      [{ kind: "request", text: "架空の依頼", images: [] }, 100],
+      [{ kind: "speech", text: "架空の着手のセリフ", expression: "default" }, 150],
+      [{ kind: "turn-finished", outcome: { kind: "completed" } }, 300],
+    ] as const satisfies readonly (readonly [SessionEvent, number])[]
+    const finished = delegated.reduce(
+      (state, [event, at]) => applySessionEvent(state, event, at),
+      INITIAL_SESSION_STATE,
+    )
+    const aside = applySessionEvent(
+      finished,
+      { kind: "aside", text: "架空の問い", images: [] },
+      500,
+    )
+
+    expect(aside.nextTurnId).toBe(finished.nextTurnId)
+    expect(aside.turn).toEqual({ kind: "running", startedAt: 100 })
+    expect(aside.speeches).toEqual([])
+    expect(aside.answeringAside).toBe(true)
+    expect(aside.records.at(-1)).toEqual({
+      kind: "aside",
+      text: "架空の問い",
+      images: [],
+      time: { kind: "stamped", at: 500 },
+    })
+
+    const answered = applySessionEvent(
+      aside,
+      { kind: "speech", text: "架空の答え", expression: "default" },
+      600,
+    )
+    const resumed = [
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      { kind: "turn-resumed" },
+      { kind: "speech", text: "架空の続きのセリフ", expression: "default" },
+    ] as const satisfies readonly SessionEvent[]
+    const after = resumed.reduce((state, event) => applySessionEvent(state, event, 700), answered)
+
+    expect(
+      after.records.flatMap((record) =>
+        record.kind === "speech" ? [[record.text, record.answersAside]] : [],
+      ),
+    ).toEqual([
+      ["架空の着手のセリフ", false],
+      ["架空の答え", true],
+      ["架空の続きのセリフ", false],
+    ])
   })
 
   it("finishedTurnCount は turn が running に戻っても前の値のまま、次の turn-finished で進む（サイドバーの使用量の行・トークン消費の画面の取り直しの合図。受け入れの確認で見つかった不具合の再現）", () => {

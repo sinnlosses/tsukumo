@@ -15,6 +15,7 @@ import type {
   CharacterDelete,
   CharacterEdit,
 } from "../src/shared/contract/character-pack.ts"
+import type { PromptRouting } from "../src/shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
 import type { ProjectTasks } from "../src/shared/repository/project-settings.ts"
 import type { PromptImage } from "../src/shared/session-driver/prompt-image.ts"
@@ -204,13 +205,36 @@ describe("createCommandRouter（session）", () => {
     expect(await commands.session.setPermissionMode({ mode: "plan" })).toEqual({ ok: true })
 
     expect(stub.calls).toEqual([
-      "prompt:架空の依頼",
+      "prompt:request:架空の依頼",
       "interrupt",
       "setModel:sonnet",
       "setEffort:high",
       "setPermissionMode:plan",
     ])
     expect(remembered).toEqual([])
+  })
+
+  it("背景のタスクが残っていて送り方が許すときだけ、仕事の言葉を脇の話として駆動へ渡す", async () => {
+    const { commands, stub, observe } = startRouter()
+    const prompt = (text: string, routing: PromptRouting) =>
+      commands.session.prompt({ text, images: [], routing })
+
+    await prompt("架空の背景の無い問い", "aside-when-background")
+    observe({
+      kind: "background-tasks-changed",
+      tasks: [{ taskId: "fictional-task", kind: "agent", description: "架空の委譲" }],
+    })
+    await prompt("架空の委譲中の問い", "aside-when-background")
+    await prompt("架空の新しい依頼", "new-request")
+    observe({ kind: "chat-mode-changed", chat: true })
+    await prompt("架空の雑談の一言", "aside-when-background")
+
+    expect(stub.calls).toEqual([
+      "prompt:request:架空の背景の無い問い",
+      "prompt:aside:架空の委譲中の問い",
+      "prompt:request:架空の新しい依頼",
+      "prompt:request:架空の雑談の一言",
+    ])
   })
 
   it("終わった会話への依頼は、定型文の理由で受け付けず駆動へ積まない", async () => {

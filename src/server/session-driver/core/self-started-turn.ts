@@ -5,7 +5,7 @@
 // 何も補わないと、畳み込みは前のターンを `finished` のまま持ち続け、帯は「依頼待ち」、吹き出しは前のターンのセリフに続けて積む。
 //
 // 合図は「ターンの外で `init` が届いた」こと。
-// `init`（`session-info`）はターンの頭に毎回届くので、依頼（`request` / `turn-started`）でターンを開いていないのに届いたら、claude が自分でターンを始めたと分かる。
+// `init`（`session-info`）はターンの頭に毎回届くので、依頼（`request` / `aside` / `turn-started`）でターンを開いていないのに届いたら、claude が自分でターンを始めたと分かる。
 // `result` の `origin` は使わない。届くのはターンの終わりで、始まりには間に合わない。
 //
 // 最初のターンより前の `init` では補わない。
@@ -42,6 +42,7 @@ type TurnPosition = "before-first-turn" | "in-turn" | "between-turns"
 function nextPosition(position: TurnPosition, event: SessionEvent): TurnPosition {
   switch (event.kind) {
     case "request":
+    case "aside":
     case "turn-started":
       return "in-turn"
     case "turn-finished":

@@ -37,6 +37,19 @@ describe("withSelfStartedTurns", () => {
     ])
   })
 
+  it("脇の話で始めたターンの init にも何も補わない", () => {
+    const aside: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }
+
+    expect(relayedKinds([REQUEST, INIT, FINISHED, aside, INIT, FINISHED])).toEqual([
+      "request",
+      "session-info",
+      "turn-finished",
+      "aside",
+      "session-info",
+      "turn-finished",
+    ])
+  })
+
   it("ターンが終わったあとに届いた init（知らせで claude が始めた続きのターン）の前に turn-resumed を補う", () => {
     expect(relayedKinds([REQUEST, INIT, FINISHED, INIT, UTTERANCE, FINISHED])).toEqual([
       "request",

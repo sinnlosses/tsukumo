@@ -1,6 +1,9 @@
 // 駆動（`SessionDriver`）の代役。本物の claude は起こさず、呼ばれた口と引数を順に覚える。
 
-import type { SessionDriver } from "../../src/server/session-driver/core/session-driver.ts"
+import type {
+  PromptOpening,
+  SessionDriver,
+} from "../../src/server/session-driver/core/session-driver.ts"
 import type { SessionDigest } from "../../src/shared/session/session-digest.ts"
 import type { RestoredEvent, SessionEvent } from "../../src/shared/session/session-event.ts"
 import { readyContextUsage } from "./context-usage.ts"
@@ -37,7 +40,8 @@ export function createStubDriver(): StubDriver {
   let onRestoredEvents: (events: readonly RestoredEvent[]) => void = () => {}
   const stub = {
     driver: {
-      prompt: (text: string) => calls.push(`prompt:${text}`),
+      prompt: (text: string, _images: unknown, opening: PromptOpening) =>
+        calls.push(`prompt:${opening}:${text}`),
       promptWithoutRecord: (text: string) => calls.push(`promptWithoutRecord:${text}`),
       interrupt: () => {
         calls.push("interrupt")

@@ -63,6 +63,7 @@ function key(
   modifiers: {
     readonly ctrl?: boolean
     readonly meta?: boolean
+    readonly shift?: boolean
   } = {},
 ): PressedKey {
   let prevented = false
@@ -70,6 +71,7 @@ function key(
     key: value,
     ctrlKey: modifiers.ctrl ?? false,
     metaKey: modifiers.meta ?? false,
+    shiftKey: modifiers.shift ?? false,
     keyCode: 0,
     isComposing: false,
     preventDefault: () => {
@@ -140,8 +142,41 @@ describe("useComposer の送信", () => {
 
     expect(press(result, key("Enter", { meta: true })).prevented()).toBe(true)
 
-    expect(calls).toEqual([{ procedure: "session.prompt", text: "架空の依頼", images: [] }])
+    expect(calls).toEqual([
+      {
+        procedure: "session.prompt",
+        text: "架空の依頼",
+        images: [],
+        routing: "aside-when-background",
+      },
+    ])
     expect(result.current.draft.text).toBe("")
+  })
+
+  it("Command+Shift+Enter は新しい依頼として送り、フォームの送信は Command+Enter と同じ送り方", () => {
+    const calls: unknown[] = []
+    const { result } = renderUseComposer({}, (command) => calls.push(command))
+    type(result, "架空の新しい依頼")
+    expect(press(result, key("Enter", { meta: true, shift: true })).prevented()).toBe(true)
+    type(result, "架空のボタンの依頼")
+    act(() => {
+      result.current.onSubmit({ preventDefault: () => {} })
+    })
+
+    expect(calls).toEqual([
+      {
+        procedure: "session.prompt",
+        text: "架空の新しい依頼",
+        images: [],
+        routing: "new-request",
+      },
+      {
+        procedure: "session.prompt",
+        text: "架空のボタンの依頼",
+        images: [],
+        routing: "aside-when-background",
+      },
+    ])
   })
 
   it("空白だけの下書きは送らない", () => {

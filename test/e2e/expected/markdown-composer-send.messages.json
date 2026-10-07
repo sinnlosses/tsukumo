@@ -37,7 +37,8 @@
     "order": 1,
     "input": {
       "text": "## 架空の依頼\nエディタから送る場面を見たい",
-      "images": []
+      "images": [],
+      "routing": "aside-when-background"
     }
   },
   {

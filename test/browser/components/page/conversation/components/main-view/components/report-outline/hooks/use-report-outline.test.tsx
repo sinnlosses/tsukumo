@@ -11,7 +11,7 @@ import notationStyles from "../../../../../../../../../../src/browser/components
 const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
 
 const ONE_TURN = {
-  turns: [{ id: 0, title: "架空の依頼", result: "done" }],
+  turns: [{ id: 0, title: "架空の依頼", result: "done", asideCount: 0 }],
   activeTurnId: 0,
   onSelectTurn: () => undefined,
 } as const satisfies ReportOutlineProps

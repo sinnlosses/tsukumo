@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest"
 
+import { asidePromptText } from "../../../../src/server/session-driver/core/aside-prompt.ts"
 import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
 import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
-import { mainViewEntries } from "../../../../src/shared/session/main-view.ts"
+import { mainViewEntries, mainViewTurns } from "../../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   applyRestoredEvents,
@@ -408,6 +409,66 @@ describe("toRestoredEvents", () => {
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
+  })
+
+  it("包んだ user メッセージは脇の話に戻り、組み直した姿でも札は増えず、知らせのあとの続きのセリフは答えにならない", () => {
+    const speak = (id: string, text: string): unknown =>
+      assistantMessage([
+        {
+          type: "tool_use",
+          id,
+          name: SPEAK_TOOL_FULL_NAME,
+          input: { text, expression: "default" },
+        },
+      ])
+    const messages = [
+      userMessage("架空の依頼"),
+      speak("t-1", "任せてくるね"),
+      userMessage(asidePromptText("架空の問い")),
+      speak("t-2", "架空の答え"),
+      userMessage("<task-notification>\n<task-id>架空のID</task-id>\n</task-notification>"),
+      speak("t-3", "架空の続き"),
+    ]
+
+    const events = eventsOf(messages)
+    expect(events.map((event) => event.kind)).toEqual([
+      "request",
+      "speech",
+      "turn-finished",
+      "aside",
+      "speech",
+      "turn-finished",
+      "turn-resumed",
+      "speech",
+      "turn-finished",
+    ])
+    expect(events[3]).toEqual({ kind: "aside", text: "架空の問い", images: [] })
+
+    const state = applyRestoredEvents(
+      INITIAL_SESSION_STATE,
+      toRestoredEvents(messages, EXPRESSIONS),
+      0,
+    )
+    const turns = mainViewTurns(mainViewEntries(state), { report: false, utterance: false }, true)
+    expect(turns).toHaveLength(1)
+    expect(turns[0]?.asides).toEqual([
+      { text: "架空の問い", answer: { kind: "answered", text: "架空の答え" } },
+    ])
+  })
+
+  it("is_meta の要約が背景のタスクの知らせを含んでも、続きのターンにはしない", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      Object.assign(
+        {},
+        userMessage(
+          "架空の要約\n<task-notification>\n<task-id>架空のID</task-id>\n</task-notification>",
+        ),
+        { is_meta: true },
+      ),
+    ]
+
+    expect(eventsOf(messages).map((event) => event.kind)).toEqual(["request", "turn-finished"])
   })
 
   // 圧縮（`/compact`）が起きると transcript の鎖が切れ、`includeSystemMessages: true` で読んだ

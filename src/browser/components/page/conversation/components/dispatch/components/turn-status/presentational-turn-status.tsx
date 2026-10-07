@@ -94,6 +94,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           )}
           data-shortcut={SEND_SHORTCUT_HINT}
           data-emphasis={props.action.emphasis}
+          title={props.action.title}
         >
           {props.action.label}
         </button>

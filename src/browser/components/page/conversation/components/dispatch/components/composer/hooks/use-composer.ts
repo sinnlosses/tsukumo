@@ -4,6 +4,8 @@
 // 入力欄の規則:
 // - Enter は改行、Command+Enter で送信。IME の変換確定の Command+Enter は送らない
 //   （`isComposing` と、対応していない古いブラウザ向けの `keyCode === 229` の両方を見る）
+// - Command+Enter と送信ボタンは背景のタスクが残っていれば脇の話になる送り方で、Command+Shift+Enter はいつも新しい依頼として送る
+//   （脇の話にするかを決めるのはサーバ。`docs/architecture/display.md`「脇の話」）
 // - 送信後は入力欄を空にしてフォーカスを残す
 // - `/` 補完は前方一致→部分一致、Tab / Enter は確定だけ（送信しない）。選択の上下移動は
 //   矢印キーに加えて Ctrl+P（前へ）/ Ctrl+N（次へ）でも行える（Meta 併用は無視）
@@ -13,6 +15,7 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react"
 
+import type { PromptRouting } from "../../../../../../../../../shared/contract/session.ts"
 import {
   EMPTY_DRAFT,
   useComposerDraft,
@@ -121,7 +124,7 @@ export function useComposer(): ComposerModel {
     }
   }, [draft])
 
-  const submit = (): void => {
+  const submit = (routing: PromptRouting): void => {
     if (!connected || endedReason !== undefined) {
       return
     }
@@ -136,7 +139,7 @@ export function useComposer(): ComposerModel {
       setBlockedClearText(trimmed)
       return
     } else {
-      dispatch.session.prompt({ text: trimmed, images: promptImage.images })
+      dispatch.session.prompt({ text: trimmed, images: promptImage.images, routing })
     }
     setDraft(EMPTY_DRAFT)
     resetPromptImage()
@@ -213,7 +216,7 @@ export function useComposer(): ComposerModel {
       event.preventDefault()
       // 質問に答えている間はターンが進行中でも送れる（答えを待っているのは SDK のほう）。
       if (!turnInProgress || inquiry.kind === "question") {
-        submit()
+        submit(event.shiftKey ? "new-request" : "aside-when-background")
       }
       return true
     },
@@ -222,7 +225,7 @@ export function useComposer(): ComposerModel {
       if (turnInProgress && inquiry.kind !== "question") {
         return
       }
-      submit()
+      submit("aside-when-background")
     },
     onInsertTrigger: insertTrigger,
   }

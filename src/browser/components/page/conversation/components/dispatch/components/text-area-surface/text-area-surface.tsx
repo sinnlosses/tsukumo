@@ -55,6 +55,7 @@ export function TextAreaSurface({
           key: event.key,
           ctrlKey: event.ctrlKey,
           metaKey: event.metaKey,
+          shiftKey: event.shiftKey,
           keyCode: event.keyCode,
           isComposing: event.nativeEvent.isComposing,
           preventDefault: () => {

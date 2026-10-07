@@ -15,6 +15,7 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { createReportReview } from "../../report/core/report-review.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
 import { createUsageReviewIntake } from "../../usage-review/core/usage-review-tool.ts"
+import { asidePromptText } from "../core/aside-prompt.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { createPromptDelayWatch, type PromptDelayWatch } from "../core/prompt-delay.ts"
@@ -137,12 +138,15 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   options.onEvent({ kind: "effort-changed", effort: options.effort })
 
   return {
-    prompt: (text, images) => {
+    prompt: (text, images, opening) => {
       // 原寸と控えはここで分かれる。
-      // 控えと id だけが記録（`request`）へ行き、原寸はストリーミング入力へ流れる（棚に残っているぶんは棚の寿命で捨てる）。
-      emitTurnOpening({ kind: "request", text, images: recordedPromptImages(images) })
+      // 控えと id だけが記録（`request` / `aside`）へ行き、原寸はストリーミング入力へ流れる（棚に残っているぶんは棚の寿命で捨てる）。
+      emitTurnOpening({ kind: opening, text, images: recordedPromptImages(images) })
       delayWatch.pushed(options.now())
-      input.push({ text, images: images.flatMap(toImageBlocks) })
+      input.push({
+        text: opening === "aside" ? asidePromptText(text) : text,
+        images: images.flatMap(toImageBlocks),
+      })
     },
     promptWithoutRecord: (text) => {
       // `request` を流さない（送った文面をログにも記録にも残さない）。

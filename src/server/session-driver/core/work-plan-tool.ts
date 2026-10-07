@@ -64,7 +64,7 @@ export function answerWorkPlanCall(review: WorkPlanReview, input: unknown): Work
 }
 
 /**
- * 段取りの規約。呼ぶ条件・`speak` と `report` との並べ方・委譲中の段を持つ。
+ * 段取りの規約。呼ぶ条件・`speak` と `report` との並べ方・委譲中の段・脇の話の受け方を持つ。
  * 段の切り方と段のまとめはツールと引数の説明が持ち、段を飛ばしたときの直し方は差し戻しの文が持つ。
  */
 export const WORK_PLAN_PROMPT = `## 段取り（tsukumo）
@@ -92,4 +92,9 @@ export const WORK_PLAN_PROMPT = `## 段取り（tsukumo）
   - 受け入れを済ませたら \`finished\` の \`report\` を渡す
 - **セリフ・\`phaseSummary\`・レポートで段の番号や数を言うときは、帯の段で数える**。委譲先の返却や
   タスクの手順に書かれた段の番号・数をそのまま言わない
+- **\`<tsukumo-aside>\` で包まれた言葉は、委譲中に利用者が送った脇の話。** 新しい依頼ではなく、いまの作業の続きの中の一言
+  - 答えは \`speak\` の1〜2文で返す。\`report\` は呼ばず、本文も書かない
+  - 段取りは今のまま続く。止める・方針を変えるよう頼まれたら、今の段取りを \`work_plan\` で組み替えるか、
+    止めるなら \`stopped\` の \`report\` を渡す
+  - 脇の話のあいだに委譲先の返却が届いたら、いつもどおり \`work_plan\` で段を進め、受け入れを済ませたら \`finished\` の \`report\` を渡す
 `

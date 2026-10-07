@@ -208,13 +208,20 @@ export type SessionDriverOptions = {
   readonly reportPromptDelay: (footprint: PromptDelayFootprint) => void
 }
 
+/** 送った言葉をどう開くか。`request` は新しい依頼、`aside` は脇の話（親のやり取りに吊るす）。 */
+export type PromptOpening = "request" | "aside"
+
 export type SessionDriver = {
   /**
-   * 依頼を1つ送る（ストリーミング入力への追加）。`request` イベントも同時に流れる。
+   * 利用者の言葉を1つ送る（ストリーミング入力への追加）。`opening` と同じ種類のイベント（`request` か `aside`）も同時に流れる。
    * `images` は呼ぶ側が棚に置いたあとのもの（原寸と控えの対に、棚が振った id を添えたもの）。
-   * 原寸はモデルへ渡すだけで、`request` イベントには控えと id だけを載せる（分けるのは `recordedPromptImages`）。
+   * 原寸はモデルへ渡すだけで、イベントには控えと id だけを載せる（分けるのは `recordedPromptImages`）。
    */
-  readonly prompt: (text: string, images: readonly ShelvedPromptImage[]) => void
+  readonly prompt: (
+    text: string,
+    images: readonly ShelvedPromptImage[],
+    opening: PromptOpening,
+  ) => void
   /**
    * 依頼を1つ送るが、記録に残さない。
    * 流れるのは `request` ではなく `turn-started` なので、送った文面は画面のログにも記録にも雑談の会話のアーカイブにも残らない。

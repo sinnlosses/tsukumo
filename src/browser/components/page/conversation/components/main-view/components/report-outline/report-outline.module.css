@@ -93,6 +93,17 @@
   color: var(--ink);
   font-weight: 600;
 }
+/* 依頼の1行目と、脇の話のあるやり取りだけに添える2行目（「脇 n」）。 */
+.outline-turn-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.outline-turn-aside {
+  color: var(--ink-quiet);
+  font-size: var(--font-action);
+  font-weight: normal;
+}
 .outline-turn-mark {
   flex: none;
   width: 1em;

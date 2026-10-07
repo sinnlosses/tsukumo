@@ -121,7 +121,7 @@ describe("startFakeSession", () => {
       onEvent: sink.onEvent,
     })
     await tick()
-    driver.prompt("架空の依頼", [])
+    driver.prompt("架空の依頼", [], "request")
     await tick()
     driver.close()
 
@@ -187,7 +187,7 @@ describe("startFakeSession", () => {
     })
     await tick()
     expect(driver.ended()).toBe(false)
-    driver.prompt("架空の依頼", [])
+    driver.prompt("架空の依頼", [], "request")
     await tick()
     driver.close()
 
@@ -247,7 +247,7 @@ describe("startFakeSession", () => {
       onEvent: sink.onEvent,
     })
     await tick()
-    driver.prompt("架空の依頼", [])
+    driver.prompt("架空の依頼", [], "request")
     await tick()
     driver.close()
 

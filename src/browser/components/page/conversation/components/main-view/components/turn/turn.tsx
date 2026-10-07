@@ -1,4 +1,4 @@
-// 1つのやり取り。`<RequestImages>` + ステップの並び（レポート・質問の記録）を縦に1本で積む（番号は振らない）。
+// 1つのやり取り。`<RequestImages>` + 脇の話の欄 + ステップの並び（レポート・質問の記録）を縦に1本で積む（番号は振らない）。
 // ツールの実行は描かない（進行は帯の「いまの作業」が持つ）。
 // 失敗で終わったやり取りは、頭に失敗の塊を出す（色だけでなく字で成功と見分ける）。
 
@@ -18,6 +18,7 @@ import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
 import mainViewStyles from "../../main-view.module.css"
+import { AsideThread } from "../aside-thread/aside-thread.tsx"
 import { QuestionRecord } from "../question-record/question-record.tsx"
 import { ReportHead, type ReportLabel } from "../report-head/report-head.tsx"
 import { Report } from "../report/report.tsx"
@@ -55,6 +56,7 @@ export function Turn(props: TurnProps): ReactElement {
           これ以前の {turn.droppedCount} 件は省略した
         </Text>
       )}
+      {turn.asides.length > 0 && <AsideThread asides={turn.asides} newest={props.newest} />}
       {(turn.steps.length > 0 || turn.failure.kind === "failed") && (
         <VStack
           element="div"

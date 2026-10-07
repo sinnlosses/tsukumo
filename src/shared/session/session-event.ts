@@ -114,6 +114,16 @@ export type SessionEvent =
       readonly images: readonly RecordedPromptImage[]
     }
   /**
+   * 背景のタスクが残っているあいだに利用者が送った言葉（脇の話）。
+   * `request` と違ってターンの境目にならず、親のやり取りに吊るす（ターンの通し番号も進めない）。
+   * 脇の話かどうかはサーバが送った瞬間に決める（`docs/architecture/display.md`「脇の話」）。
+   */
+  | {
+      readonly kind: "aside"
+      readonly text: string
+      readonly images: readonly RecordedPromptImage[]
+    }
+  /**
    * 記録を持たないターンの始まり（キャラクターから話しかけてもらう）。
    * `request` と同じくターンの境目になるが、文面を持たない（送った一言はログにも記録にも残さないので、イベントにも載せない）。
    * 落とすのは組み立ての側ではなくここで、記録に積まないので、雑談のログにもメインビューにも雑談の会話のアーカイブにも初めから流れようが無い。
