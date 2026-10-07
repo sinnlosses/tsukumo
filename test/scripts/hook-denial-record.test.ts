@@ -53,16 +53,6 @@ describe("拒否の記録", () => {
     ])
   })
 
-  test("commit-msg の署名の拒否を記録する", async () => {
-    const messagePath = join(repoDir, "MSG")
-    writeFileSync(messagePath, "件名\n\nCo-Authored-By: Claude <a@b>\n")
-    const result = await runHook(["scripts/deny-claude-signature.ts", messagePath], "")
-    expect(result.exitCode).toBe(1)
-    expect(readDenialLines().map((line) => JSON.parse(line))).toMatchObject([
-      { hook: "deny-claude-signature", rule: "co-author-trailer", actor: "git" },
-    ])
-  })
-
   test("拒まない呼び出しでは増えない", async () => {
     expect((await runBashHook("deny-broad-kill", { command: "kill 123" })).exitCode).toBe(0)
     expect(
@@ -91,7 +81,6 @@ describe("集計", () => {
     expect(result.exitCode).toBe(0)
     expect(result.stdout).toContain("deny-broad-kill: 1\n  pkill-killall: 1")
     expect(result.stdout).toContain("deny-sed-in-place: 0")
-    expect(result.stdout).toContain("deny-claude-signature: 0")
   })
 
   test("記録が無ければ全部0で出す", async () => {
@@ -130,11 +119,6 @@ function writeRegistration(): void {
         ],
       },
     }),
-  )
-  mkdirSync(join(repoDir, ".githooks"))
-  writeFileSync(
-    join(repoDir, ".githooks", "commit-msg"),
-    'exec node scripts/deny-claude-signature.ts "$1"\n',
   )
 }
 

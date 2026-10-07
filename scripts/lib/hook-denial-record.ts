@@ -11,8 +11,7 @@ import process from "node:process"
 
 const DIRECTORY_NAME = "hook-denials"
 
-/** `git` は commit-msg フックで、メインか委譲先かが分からない。 */
-export type DenialActor = "main" | "subagent" | "git"
+export type DenialActor = "main" | "subagent"
 
 export type HookDenial = {
   readonly at: string
@@ -65,7 +64,7 @@ function parseDenial(line: string): readonly HookDenial[] {
       typeof value.at === "string" &&
       typeof value.hook === "string" &&
       typeof value.rule === "string" &&
-      (value.actor === "main" || value.actor === "subagent" || value.actor === "git")
+      (value.actor === "main" || value.actor === "subagent")
     ) {
       Temporal.Instant.from(value.at)
       return [{ at: value.at, hook: value.hook, rule: value.rule, actor: value.actor }]

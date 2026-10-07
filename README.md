@@ -154,12 +154,6 @@ mise run setup
 
 ### 開発しながら動かす
 
-tsukumo 自体を直すときだけ、コミットメッセージの Claude の署名を止める commit-msg フックを有効にします。
-
-```bash
-git config core.hooksPath .githooks
-```
-
 リポジトリ直下で開発しながら動かす場合は `pnpm run start` が `tsukumo` と同じ意味になります。
 `pnpm run dev` は起動の前に `pnpm run build` で1回組み立ててから、`start` と同じものに Vite の
 開発サーバを差し込んで起こします。`src/browser/` を保存すると、開いているタブへ画面の状態を保ったまま

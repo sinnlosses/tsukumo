@@ -1,8 +1,8 @@
 // 登録された hook ごとの拒否の回数を、期間を決めて数えて出す。
 // 使い方: node scripts/hook-denial-tally.ts [--days N]（既定 30）
-// 登録された hook は `.claude/settings.json` の hooks と `.githooks/` のフックから呼ばれる `scripts/deny-*.ts`。
+// 登録された hook は `.claude/settings.json` の hooks から呼ばれる `scripts/deny-*.ts`。
 
-import { readdirSync, readFileSync } from "node:fs"
+import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
 
@@ -39,17 +39,12 @@ function formatTally(
   return `直近 ${periodDays} 日の拒否の回数\n${lines.join("\n")}\n`
 }
 
-/** `.claude/settings.json` と `.githooks/` から呼ばれる拒否の hook の名前。 */
+/** `.claude/settings.json` から呼ばれる拒否の hook の名前。 */
 function listRegisteredHooks(directory: string): readonly string[] {
-  const texts = [
-    readTextOrEmpty(join(directory, ".claude", "settings.json")),
-    ...readDirectoryOrEmpty(join(directory, ".githooks")).map((name) =>
-      readTextOrEmpty(join(directory, ".githooks", name)),
-    ),
-  ]
-  return [
-    ...new Set(texts.flatMap((text) => [...text.matchAll(HOOK_SCRIPT)].map((match) => match[1]))),
-  ].filter((name) => name !== undefined)
+  const text = readTextOrEmpty(join(directory, ".claude", "settings.json"))
+  return [...new Set([...text.matchAll(HOOK_SCRIPT)].map((match) => match[1]))].filter(
+    (name) => name !== undefined,
+  )
 }
 
 function readDays(args: readonly string[]): number {
@@ -67,13 +62,5 @@ function readTextOrEmpty(path: string): string {
     return readFileSync(path, "utf8")
   } catch {
     return ""
-  }
-}
-
-function readDirectoryOrEmpty(path: string): readonly string[] {
-  try {
-    return readdirSync(path)
-  } catch {
-    return []
   }
 }

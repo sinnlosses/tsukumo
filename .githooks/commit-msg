@@ -1,2 +1,0 @@
-#!/bin/sh
-exec node scripts/deny-claude-signature.ts "$1"

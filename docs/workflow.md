@@ -157,18 +157,10 @@ PreToolUse hook（`scripts/deny-e2e-run-limit.ts`）が拒否する（検証は�
 （`pnpm run test:e2e test/e2e/<ファイル>.test.ts`）は数えず、メインの呼び出しも対象にしない。
 
 hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`）の `hook-denials/<年-月>.jsonl` へ
-時刻・hook の名前・規則のキー・呼び出し元（`main` / `subagent`。git のフックは `git`）の1行を足す。
+時刻・hook の名前・規則のキー・呼び出し元（`main` / `subagent`）の1行を足す。
 コマンドの全文・パスは入れない。書き込みに失敗しても hook の判定は変わらない。
-`node scripts/hook-denial-tally.ts [--days N]`（既定30）が、`.claude/settings.json` と `.githooks/` に
+`node scripts/hook-denial-tally.ts [--days N]`（既定30）が、`.claude/settings.json` に
 登録された hook を全部（0件も）規則のキーごとの回数で出す。
-
-**コミットメッセージの Claude の署名は git の `commit-msg` フックが止める**
-（`.githooks/commit-msg` → `scripts/deny-claude-signature.ts`。`Co-Authored-By: Claude …` と
-`Generated with [Claude Code]` の行が入っていると、該当行を出してコミットを拒否する。
-`-m`・`-F`・heredoc・エディタのどの経路でも効く）。フックは `core.hooksPath` が
-`.githooks` を指しているときだけ効く。**この設定は共有の `.git/config` に入る**ので、
-同じリポジトリの作業ツリーは全部で効く（相対パスは各作業ツリーの直下の `.githooks` を指す）。
-新しく clone したときは1回 `git config core.hooksPath .githooks` を打つ。
 
 **自分が直したコードを画面で確かめるときは、直した作業ツリーで起こす**（tsukumo は起こした
 ディレクトリでそのまま動く。グローバルの `tsukumo` も、作業ツリーの中で打てばその作業ツリーの
