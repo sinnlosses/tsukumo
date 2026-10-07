@@ -24,6 +24,7 @@ export type WorkPlanVerdict =
   | { readonly kind: "accepted"; readonly plan: WorkPlan }
   | { readonly kind: "malformed" }
   | { readonly kind: "skipped-phase" }
+  | { readonly kind: "empty-summary" }
 
 export type WorkPlanReview = {
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
@@ -49,6 +50,9 @@ export function createWorkPlanReview(): WorkPlanReview {
   const judgeWellFormed = (plan: WorkPlan): WorkPlanVerdict => {
     if (accepted !== undefined && skipsPhase(accepted, plan)) {
       return { kind: "skipped-phase" }
+    }
+    if (accepted !== undefined && advancesWithoutSummary(accepted, plan)) {
+      return { kind: "empty-summary" }
     }
     accepted = plan
     return { kind: "accepted", plan }
@@ -114,6 +118,15 @@ export function createWorkPlanReview(): WorkPlanReview {
       }
     },
   }
+}
+
+function advancesWithoutSummary(previous: WorkPlan, next: WorkPlan): boolean {
+  return (
+    next.current > previous.current &&
+    next.phaseSummary === "" &&
+    next.phases.length === previous.phases.length &&
+    next.phases.every((phase, index) => phase === previous.phases[index])
+  )
 }
 
 function skipsPhase(previous: WorkPlan, next: WorkPlan): boolean {

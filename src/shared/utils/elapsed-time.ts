@@ -5,6 +5,11 @@ export type MeasuredTime =
   | { readonly kind: "known"; readonly milliseconds: number }
   | { readonly kind: "unknown" }
 
+/** 測った経過時間を表示用の文字列にする。測れなかったら「不明」。 */
+export function formatMeasured(time: MeasuredTime): string {
+  return time.kind === "known" ? formatElapsed(Math.round(time.milliseconds / 1000)) : "不明"
+}
+
 /** 秒数を表示用の文字列にする（60秒未満は `N秒`、以降は `M分SS秒`）。 */
 export function formatElapsed(totalSeconds: number): string {
   if (totalSeconds < 60) {

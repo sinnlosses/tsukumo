@@ -947,7 +947,39 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
       report: "架空のまとめ。",
       firstLine: "1/2 架空の段A",
       task: { kind: "none" },
-      finishedPhase: { kind: "phase", label: "1/2 架空の段A" },
+      finishedPhase: {
+        kind: "phase",
+        label: "1/2 架空の段A",
+        duration: { kind: "known", milliseconds: 0 },
+      },
+    })
+  })
+
+  it("中間レポートには終えた段の所要を記録の時刻から測って載せ、測れなければ不明にする", () => {
+    const foldAt = (events: readonly SessionEvent[]) =>
+      events.reduce(
+        (current, event, index) => applySessionEvent(current, event, index * 7000),
+        INITIAL_SESSION_STATE,
+      )
+    const finishedPhaseOf = (events: readonly SessionEvent[]) => {
+      const body = mainViewTurns(mainViewEntries(foldAt(events)), WRITING, false)
+        .at(-1)
+        ?.steps.at(-1)?.body
+      return body?.kind === "text" ? body.finishedPhase : undefined
+    }
+    const three = ["架空の段A", "架空の段B", "架空の段C"]
+
+    expect(finishedPhaseOf([ask, plan(0), plan(1, "架空のまとめ。")])).toEqual({
+      kind: "phase",
+      label: "1/2 架空の段A",
+      duration: { kind: "known", milliseconds: 7000 },
+    })
+    expect(
+      finishedPhaseOf([ask, plan(1, "架空のまとめ。", three), plan(2, "架空のまとめ。", three)]),
+    ).toEqual({
+      kind: "phase",
+      label: "2/3 架空の段B",
+      duration: { kind: "unknown" },
     })
   })
 
@@ -991,7 +1023,11 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
       report: "架空のまとめ。",
       firstLine: "1/2 架空の段A",
       task: { kind: "none" },
-      finishedPhase: { kind: "phase", label: "1/2 架空の段A" },
+      finishedPhase: {
+        kind: "phase",
+        label: "1/2 架空の段A",
+        duration: { kind: "known", milliseconds: 0 },
+      },
     })
   })
 

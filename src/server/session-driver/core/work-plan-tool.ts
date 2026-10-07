@@ -7,7 +7,7 @@ import type { WorkPlanReview, WorkPlanVerdict } from "./work-plan-review.ts"
 export const WORK_PLAN_TOOL_DESCRIPTION =
   "作業の段取り（段の並びと今の位置）を画面に出す。段が進むたび・段取りを変えたときに、毎回段の並びごと渡す。" +
   "段は作業のまとまりで切り、ファイル単位・操作単位で切らない。" +
-  "段を進めるときは、終えた段のまとめを phaseSummary に入れる（メインビューに中間レポートとして出る）。" +
+  "段を進めるときは、終えた段でしたことを必ず phaseSummary に入れる（メインビューに中間レポートとして、その段の所要とともに出る）。" +
   "委譲中も、返却を受けるたびにこのツールで段を進める。" +
   "呼ぶ条件は「段取り（tsukumo）」の節に従う。"
 
@@ -35,6 +35,11 @@ export const WORK_PLAN_REJECTIONS = {
     "同じ段の並びのまま current を2つ以上進めている。" +
     "飛ばした段の中間レポートが出なくなるので、段は1つずつ進め、呼び出しごとに終えた段のまとめを " +
     "phaseSummary に入れて呼び直すこと。" +
+    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
+  "empty-summary":
+    "段を進めているのに phaseSummary が空。" +
+    "中間レポートには終えた段でしたことが必ず出るので、phaseSummary に終えた段でしたことを1〜2文で入れて呼び直すこと。" +
+    "最後の段を終えるときは work_plan で閉じず、report の workPlanClosing に finished を渡す。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
 } as const satisfies Record<Exclude<WorkPlanVerdict["kind"], "accepted">, string>
 

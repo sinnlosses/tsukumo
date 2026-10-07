@@ -17,7 +17,8 @@ import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { clipText } from "../utils/clip-text.ts"
-import { phaseDurations } from "./phase-duration.ts"
+import type { MeasuredTime } from "../utils/elapsed-time.ts"
+import { finishedPhaseDuration, phaseDurations } from "./phase-duration.ts"
 import {
   MAX_SESSION_STATE_TURNS,
   type SessionRecord,
@@ -98,7 +99,12 @@ export type MainViewEntry =
    * 出すものが1つも無い記録からは作らない。
    * 終えた段のまとめは中間レポートになる（{@link groupIntoSteps}）。
    */
-  | { readonly kind: "phase-shift"; readonly shift: PhaseShift }
+  | {
+      readonly kind: "phase-shift"
+      readonly shift: PhaseShift
+      /** 終えた段の所要。記録の時刻から測れなければ `unknown`。 */
+      readonly duration: MeasuredTime
+    }
   /**
    * 失敗で終わったターンの理由（`SessionRecord` の `turn-failure` をそのまま通す）。
    * ステップには入れない（やり取りの末尾に1つだけ出す印なので、{@link groupIntoTurns} がステップから外して `MainViewTurn.failure` に移す）。
@@ -151,7 +157,7 @@ export type MainViewStep = {
 /** 段の見出しの字（「2/4 段の名前」）。無ければ `none`。 */
 export type MainViewPhaseLabel =
   | { readonly kind: "none" }
-  | { readonly kind: "phase"; readonly label: string }
+  | { readonly kind: "phase"; readonly label: string; readonly duration: MeasuredTime }
 
 const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
 
@@ -303,7 +309,12 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
   }
   if (record.kind === "work-plan") {
     const shift = phaseShiftOf(latestWorkPlanOf(context), record)
-    return shift.finished.kind === "none" ? [] : [{ kind: "phase-shift", shift }]
+    if (shift.finished.kind === "none") {
+      return []
+    }
+    const { label } = shift.finished
+    const duration = finishedPhaseDuration([...context.plans, record], label, record.time)
+    return [{ kind: "phase-shift", shift, duration }]
   }
   // `request` は時刻（雑談のログだけが読む）を落として通す。仕事のメインビューには時刻を出さない。
   if (record.kind === "request") {
@@ -461,7 +472,10 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
         }
       }
       if (entry.kind === "phase-shift") {
-        return { steps: [...steps, phaseShiftStep(id, entry.shift)], toolReportIds }
+        return {
+          steps: [...steps, phaseShiftStep(id, entry.shift, entry.duration)],
+          toolReportIds,
+        }
       }
 
       const step = steps.at(-1)
@@ -498,7 +512,7 @@ function newStep(
  * 段が移った `work_plan` のステップ。終えた段のまとめがあれば本文にし、届いた時点で中間レポートと決める
  * （あとから最終レポートへ回ることが無いので、`interim` をここで立てる）。
  */
-function phaseShiftStep(id: number, shift: PhaseShift): MainViewStep {
+function phaseShiftStep(id: number, shift: PhaseShift, duration: MeasuredTime): MainViewStep {
   const step = newStep(
     id,
     shift.finished.kind === "none"
@@ -508,7 +522,7 @@ function phaseShiftStep(id: number, shift: PhaseShift): MainViewStep {
           report: shift.finished.summary,
           firstLine: extractFirstLine(shift.finished.label),
           task: NO_REPORT_TASK,
-          finishedPhase: { kind: "phase", label: shift.finished.label },
+          finishedPhase: { kind: "phase", label: shift.finished.label, duration },
         },
     [],
   )

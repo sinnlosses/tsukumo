@@ -12,7 +12,7 @@ const planOf = (current: number): Extract<SessionEvent, { kind: "work-plan" }> =
   kind: "work-plan",
   phases: PHASES,
   current,
-  phaseSummary: current > 0 && current < PHASES.length ? SUMMARY : "",
+  phaseSummary: current > 0 ? SUMMARY : "",
 })
 
 const called = (toolUseId: string, current: number): SessionEvent => {
@@ -64,6 +64,17 @@ describe("WorkPlanReview の判定", () => {
     expect(
       review.judge({ phases: ["架空の段X", "架空の段Y"], current: 2, phaseSummary: "" }).kind,
     ).toBe("accepted")
+  })
+
+  it("同じ段の並びのまま位置を進めてまとめが空なら empty-summary で差し戻し、戻る・組み替えは通す", () => {
+    const review = createWorkPlanReview()
+    review.judge(planOf(0))
+    review.judge(planOf(1))
+    review.judge(planOf(2))
+
+    expect(review.judge({ phases: PHASES, current: 3 }).kind).toBe("empty-summary")
+    expect(review.judge({ phases: PHASES, current: 0 }).kind).toBe("accepted")
+    expect(review.judge({ phases: ["架空の段X", "架空の段Y"], current: 2 }).kind).toBe("accepted")
   })
 
   it("依頼のあとは、前の位置を忘れる", () => {

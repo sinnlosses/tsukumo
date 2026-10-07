@@ -49,6 +49,18 @@ export function phaseDurations(
   }))
 }
 
+/**
+ * 段の見出し `label` の段の所要（{@link phaseDurations} と同じ求め方）。
+ * その段が最後の段の並びに無ければ `unknown`。
+ */
+export function finishedPhaseDuration(
+  plans: readonly WorkPlanRecord[],
+  label: string,
+  closedAt: RecordTime,
+): MeasuredTime {
+  return phaseDurations(plans, closedAt).find((found) => found.label === label)?.duration ?? UNKNOWN
+}
+
 /** 全部の段が済んだ位置の鍵。段の鍵は空白だけの名前を含まないので、どの段の鍵とも重ならない。 */
 const ALL_DONE = ""
 

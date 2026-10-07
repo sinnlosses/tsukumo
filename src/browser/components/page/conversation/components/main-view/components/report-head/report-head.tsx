@@ -10,6 +10,7 @@ import type {
   ReportTaskOutcome,
 } from "../../../../../../../../shared/report/report-task.ts"
 import type { MainViewPhaseLabel } from "../../../../../../../../shared/session/main-view.ts"
+import { formatMeasured } from "../../../../../../../../shared/utils/elapsed-time.ts"
 import { codeSpanParts } from "../../../../../../../domain/code-span.ts"
 import { useSession } from "../../../../../../../stores/session.ts"
 import { useTaskBoardRequest } from "../../../../../../../stores/task-board-request.ts"
@@ -33,7 +34,12 @@ export function ReportHead(props: ReportHeadProps): ReactElement | null {
 
   const items = [
     ...(label === "none" ? [] : [<span key="label">{LABEL_TEXT[label]}</span>]),
-    ...(phase.kind === "none" ? [] : [<span key="phase">{phase.label}</span>]),
+    ...(phase.kind === "none"
+      ? []
+      : [
+          <span key="phase">{phase.label}</span>,
+          <span key="phase-time">所要 {formatMeasured(phase.duration)}</span>,
+        ]),
     ...(task.kind === "none"
       ? []
       : [

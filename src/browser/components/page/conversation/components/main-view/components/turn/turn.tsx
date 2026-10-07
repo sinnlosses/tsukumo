@@ -13,6 +13,7 @@ import type {
   MainViewStepBody,
   MainViewTurn,
 } from "../../../../../../../../shared/session/main-view.ts"
+import { formatMeasured } from "../../../../../../../../shared/utils/elapsed-time.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
@@ -210,9 +211,14 @@ function finalReportStepId(turn: MainViewTurn): number | undefined {
 
 /** 畳んだ中間レポートの `<summary>` に出す文字列。先頭行が無ければラベルだけ。 */
 function interimSummary(body: MainViewStepBody): string {
-  return body.kind === "none" || body.firstLine === ""
-    ? "中間レポート"
-    : `中間レポート: ${body.firstLine}`
+  if (body.kind === "none" || body.firstLine === "") {
+    return "中間レポート"
+  }
+  const time =
+    body.finishedPhase.kind === "phase"
+      ? ` · 所要 ${formatMeasured(body.finishedPhase.duration)}`
+      : ""
+  return `中間レポート: ${body.firstLine}${time}`
 }
 
 function isQuestion(
