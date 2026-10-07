@@ -1,0 +1,185 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>札の頭の題の行を無くし、列を「やり取り」にした形（2026-10-08 合意）</title>
+<style>
+  body {
+    margin: 0;
+    background: #18171c;
+    font-family: "Hiragino Sans", sans-serif;
+    color: #e8e6ee;
+    font-size: 13px;
+  }
+  .frame {
+    width: 1100px;
+    margin: 24px;
+    border: 1px solid #3a3944;
+    border-radius: 12px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    overflow: hidden;
+    height: 560px;
+  }
+  .rail {
+    border-right: 1px solid #33323c;
+    padding: 10px 6px;
+    background: #1c1b21;
+  }
+  .rail h4 {
+    margin: 2px 8px 8px;
+    color: #8c8a98;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    font-weight: 400;
+    display: flex;
+    justify-content: space-between;
+  }
+  .row {
+    padding: 6px 8px;
+    border-radius: 6px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .row .t {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+  .row.active {
+    background: #2a2932;
+  }
+  .sub {
+    padding: 3px 8px 3px 26px;
+    color: #9a98a6;
+    font-size: 12px;
+    border-left: 2px solid #33323c;
+    margin-left: 14px;
+  }
+  .sub.on {
+    border-color: #5fd4c0;
+  }
+  .ok {
+    color: #6fd47f;
+  }
+  .dot {
+    color: #5fd4c0;
+  }
+  .badge {
+    background: #5fd4c0;
+    color: #18171c;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .notice {
+    margin: 0 4px 8px;
+    border: 1px solid #e5c55a;
+    color: #e5c55a;
+    border-radius: 8px;
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+  .main {
+    display: flex;
+    flex-direction: column;
+  }
+  .strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #33323c;
+    background: #1e1d23;
+  }
+  .chip {
+    border: 1px solid #e5c55a;
+    color: #e5c55a;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-weight: 700;
+  }
+  .q {
+    color: #8c8a98;
+  }
+  .btn {
+    border: 1px solid #4a4955;
+    border-radius: 8px;
+    padding: 2px 9px;
+  }
+  .sp {
+    flex: 1;
+  }
+  .body {
+    padding: 14px 18px;
+    color: #cfcdd8;
+    line-height: 1.7;
+  }
+  .req {
+    border: 1px solid #3a3944;
+    border-left: 3px solid #8c8a98;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    color: #b8b6c4;
+    font-size: 13px;
+    line-height: 1.6;
+    background: #1c1b21;
+  }
+  .req .lab {
+    font-size: 12px;
+    color: #8c8a98;
+    margin-bottom: 2px;
+  }
+  .more {
+    color: #5fd4c0;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  ul {
+    margin: 0 24px;
+    color: #8c8a98;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+</style>
+<div class="frame">
+  <nav class="rail">
+    <h4>やり取り <span>‹</span></h4>
+    <div class="notice">お伺いが届いた →</div>
+    <div class="row"><span class="ok">✓</span><span class="t">枠が差し色になってるところがあるから…</span></div>
+    <div class="row"><span class="ok">✓</span><span class="t">ありがと。質問を出してみてくれる?</span></div>
+    <div class="row active">
+      <span class="dot">●</span><span class="t">セッション中のやり取りをメイン画面の…</span><span class="badge">最新</span>
+    </div>
+    <div class="sub on">依頼</div>
+    <div class="sub">結論</div>
+    <div class="sub">検証</div>
+  </nav>
+  <div class="main">
+    <div class="strip">
+      <span class="chip">お伺い中</span><span class="q">段の丸の並び・今の段</span><span class="sp"></span
+      ><span class="q">経過 1分12秒</span><span class="btn">手順 4 ▾</span>
+    </div>
+    <div class="body">
+      <div class="req">
+        <div class="lab">依頼</div>
+        セッション中のやり取りをメイン画面のサイドにまとめたから、メイン画面上部を完全になくすことを検討してほしい。<br />
+        目次も、目次ではなくなってる気がするから名前修正。<br />
+        サイドは常に表示で上部いっぱいに(今は帯の下になってるけど)。<br />
+        ユーザー指示が長い場合の表示も工夫を。
+        <div class="more">▾ 続き 3 行</div>
+      </div>
+      結論の一文…<br />
+      レポート本文…
+    </div>
+  </div>
+</div>
+<ul>
+  <li>題の行（‹ › ・題・n / N・最新／最新へ）は無い。前後へは列の行を押すか [ ] キー</li>
+  <li>「最新」の印は列の最新のやり取りの行の右端。知らせ（お伺いが届いた・続きを作業中 など）は列の頭の押せる行（答え待ちの色）</li>
+  <li>列は領域の上端から下端まで。進み具合の帯は列の右の本文側だけ</li>
+  <li>依頼の全文は本文の頭の「依頼」の塊。4行を超えたら畳み、開閉できる。列の行の依頼は1行で省略</li>
+</ul>
