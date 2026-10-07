@@ -16,7 +16,8 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 export const REPORT_TOOL_DESCRIPTION =
   "ターンのレポートをメインビューに出す。task（目録の1行と見出し）→ conclusion → checks（検証結果の表）→ sections → favor の順に描かれ、" +
   "そのあと closing のセリフが吹き出しに出る。受け付けられるとそこでターンが終わる（あとに何も書けない）。" +
-  "書き方は「レポートの記法（tsukumo）」の節に従う。"
+  "書き方は「レポートの記法（tsukumo）」の節に従う。" +
+  "本文は日本語で書く（識別子・パス・コマンド・コードは英語のままでよい）。"
 
 /**
  * `report` の任意の `checks` 引数の説明。

@@ -14,6 +14,12 @@ import {
   type ReportSection,
 } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
+import {
+  MAX_CONCLUSION_SENTENCES,
+  MAX_FIRST_SENTENCE,
+  MAX_HEADING,
+  MAX_ITEM_LABEL,
+} from "../../../shared/report/report-limit.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import { leadingSentences, sentenceCount } from "../../../shared/report/sentence-count.ts"
 import type { WorkPlanClosing } from "../../../shared/session/work-plan.ts"
@@ -267,7 +273,7 @@ export function reportRejectionText(violations: readonly ReportViolation[]): str
 
 /** 違反にしない上限（これを超えたら違反）。 */
 const VIOLATION_THRESHOLDS = {
-  "long-conclusion": 2,
+  "long-conclusion": MAX_CONCLUSION_SENTENCES,
   "long-paragraph": 0,
   "unknown-mermaid": 0,
   "too-many-notes": 2,
@@ -358,13 +364,7 @@ function isNonJapanese(text: string): boolean {
   )
 }
 
-const MAX_FIRST_SENTENCE = 50
-const MAX_HEADING = 30
-
 const ARROW = " → "
-
-/** 「名前: 説明」の名前の長さの上限。これより長い頭は文とみなす。 */
-const MAX_ITEM_LABEL = 20
 
 /** 項目の頭の `名前:`。URL の `://` と時刻の `12:30`、句点を含む頭は名前でない。 */
 const ITEM_LABEL = new RegExp(`^[^\`:：。\\n]{1,${String(MAX_ITEM_LABEL)}}[:：](?!//)(?!\\d)`)

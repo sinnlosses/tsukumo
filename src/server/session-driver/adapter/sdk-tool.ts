@@ -14,6 +14,10 @@ import {
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportSectionSchema } from "../../../shared/report/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report/report-check.ts"
+import {
+  MAX_CONCLUSION_SENTENCES,
+  MAX_FIRST_SENTENCE,
+} from "../../../shared/report/report-limit.ts"
 import { parseReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
 import type { ClaimedTaskSteps } from "../../../shared/repository/task-workflow.ts"
 import {
@@ -207,7 +211,11 @@ function reportTool(
         .enum(WORK_PLAN_CLOSINGS)
         .optional()
         .describe(REPORT_WORK_PLAN_CLOSING_DESCRIPTION),
-      conclusion: z.string().describe("結論。レポートの冒頭の1〜2文"),
+      conclusion: z
+        .string()
+        .describe(
+          `結論。レポートの冒頭の1〜${String(MAX_CONCLUSION_SENTENCES)}文。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内にする`,
+        ),
       sections: z
         .array(reportSectionSchema)
         .min(1)

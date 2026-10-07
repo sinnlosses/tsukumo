@@ -3,6 +3,8 @@
 
 import { z } from "zod"
 
+import { MAX_HEADING, MAX_ITEM_LABEL } from "./report-limit.ts"
+
 const inlineText = z.string()
 
 // 畳むときの見出し。説明は `REPORT_SECTIONS_DESCRIPTION` に1回だけ書く
@@ -30,7 +32,9 @@ const listBlockSchema = z.object({
       z.object({
         label: inlineText
           .default("")
-          .describe("名前と説明の対の名前（「名前: 説明」と text に書かず、名前をここに分ける）"),
+          .describe(
+            `名前と説明の対の名前（「名前: 説明」と text に書かず、名前をここに分ける。${String(MAX_ITEM_LABEL)}字以内）`,
+          ),
         text: inlineText,
         done: z.boolean().default(false),
       }),
@@ -380,7 +384,7 @@ export const reportSectionSchema = z.object({
     .string()
     .default("")
     .describe(
-      "その節の結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。節が1つなら省いてよく、2つ以上なら全部に付ける",
+      `その節の結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。${String(MAX_HEADING)}字以内で、疑問文にしない。節が1つなら省いてよく、2つ以上なら全部に付ける`,
     ),
   blocks: z.array(reportBlockSchema).min(1),
 })
