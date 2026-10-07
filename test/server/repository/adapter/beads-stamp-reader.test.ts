@@ -6,7 +6,7 @@ import {
   createBeadsStampReader,
   readBeadsWorkspace,
 } from "../../../../src/server/repository/adapter/beads.ts"
-import { bd, useBeadsHome } from "../../../fixture/beads-repository.ts"
+import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import {
   initRepository,
   addWorktree,
@@ -57,7 +57,8 @@ describe("createBeadsStampReader", () => {
 
 describe("readBeadsWorkspace", () => {
   it(".beads があればその場所を返す", { timeout: 60_000 }, async () => {
-    const repository = await initBeadsIssues(root(), [openIssue("t-001", "架空")])
+    const repository = await initRepository(root())
+    initBeads(repository)
 
     expect(await readBeadsWorkspace(repository)).toEqual({
       kind: "found",

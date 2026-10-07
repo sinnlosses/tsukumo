@@ -41,14 +41,16 @@ const TEST_POLL_INTERVAL_MS = 10
 /** `bd` の見回りは1回が約0.2秒なので、通知を待つ上限を長くとる。 */
 const WAIT_LIMIT_MS = 15_000
 
-/** 「通知が来ない」ことを確かめるときに待つ長さ（見回りが何周もする長さ）。 */
-const QUIET_PERIOD_MS = 1000
+/** 「通知が来ない」ことを確かめるとき、変えたあとに終わりを待つ見回りの回数（動いていた1回を除く）。 */
+const QUIET_POLLS = 2
 
 const root = useTempDir("task-summary")
 const home = useBeadsHome(() => join(root(), "home"))
 let watcher: TaskSummaryWatcher | undefined
+let pollsFinished = 0
 
 afterEach(async () => {
+  pollsFinished = 0
   await watcher?.close()
   watcher = undefined
 })
@@ -66,6 +68,12 @@ function testPorts(): TaskSummaryPorts {
   const memoryPath = join(root(), "task-summary.json")
   return {
     ...REAL_TASK_SUMMARY_PORTS,
+    clock: {
+      after: (delayMs, wake) => {
+        pollsFinished += 1
+        return REAL_TASK_SUMMARY_PORTS.clock.after(delayMs, wake)
+      },
+    },
     readTaskSummaryMemory: (cwd) => readTaskSummaryMemory(cwd, memoryPath),
     writeTaskSummaryMemory: (cwd, items) => {
       writeTaskSummaryMemory(cwd, items, memoryPath)
@@ -77,6 +85,15 @@ function testPorts(): TaskSummaryPorts {
 async function waitForChanges(changes: readonly unknown[], count: number): Promise<void> {
   const deadline = performance.now() + WAIT_LIMIT_MS
   while (changes.length < count && performance.now() < deadline) {
+    await sleep(TEST_POLL_INTERVAL_MS)
+  }
+}
+
+/** 変えたあとに見回りが `QUIET_POLLS` 回終わるまで待つ（その間に通知が来たかは期待値で確かめる）。 */
+async function waitForQuietPolls(): Promise<void> {
+  const target = pollsFinished + QUIET_POLLS
+  const deadline = performance.now() + WAIT_LIMIT_MS
+  while (pollsFinished < target && performance.now() < deadline) {
     await sleep(TEST_POLL_INTERVAL_MS)
   }
 }
@@ -185,26 +202,25 @@ describe("watchTaskSummary", () => {
     },
   )
 
-  it("プロジェクトの設定が無くても、.beads があれば一覧を出す", { timeout: 60_000 }, async () => {
-    const repository = await initBeadsIssues(root(), [openIssue("t-001", "設定なし")])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
+  it(
+    "設定が無くても .beads があれば一覧を出し、設定を足す・消すでは通知を重ねず、壊れたら「設定が読めない」を通知する",
+    { timeout: 60_000 },
+    async () => {
+      const repository = await initBeadsIssues(root(), [openIssue("t-001", "架空")])
+      const changes: unknown[] = []
+      watch(repository, changes)
+      await waitForChanges(changes, 1)
 
-    expect(changes).toEqual([known(plainTodo("T-001", "設定なし"))])
-  })
+      writeProjectSettings(repository)
+      await waitForQuietPolls()
+      rmSync(join(repository, PROJECT_SETTINGS_PATH))
+      await waitForQuietPolls()
+      writeProjectSettingsContent(repository, '{ "tasks": { "mainBranch": ')
+      await waitForChanges(changes, 2)
 
-  it("設定を消しても、.beads があれば一覧を出し続ける", { timeout: 60_000 }, async () => {
-    const repository = await initBeadsRepository(root(), [openIssue("t-001", "架空")])
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    rmSync(join(repository, PROJECT_SETTINGS_PATH))
-    await sleep(QUIET_PERIOD_MS)
-
-    expect(changes).toEqual([known(plainTodo("T-001", "架空"))])
-  })
+      expect(changes).toEqual([known(plainTodo("T-001", "架空")), { kind: "settings-invalid" }])
+    },
+  )
 
   it(".beads が無ければ、初回に「不明」を1回だけ通知し、設定を足しても重ねて通知しない", async () => {
     const repository = await initRepository(root())
@@ -212,7 +228,7 @@ describe("watchTaskSummary", () => {
     watch(repository, changes)
     await waitForChanges(changes, 1)
     writeProjectSettings(repository)
-    await sleep(QUIET_PERIOD_MS)
+    await waitForQuietPolls()
 
     expect(changes).toEqual([{ kind: "unknown" }])
   })
@@ -234,20 +250,4 @@ describe("watchTaskSummary", () => {
 
     expect(changes).toEqual([{ kind: "unknown" }, known()])
   })
-
-  it(
-    "設定の形が壊れたら、.beads があっても「設定が読めない」を通知する",
-    { timeout: 60_000 },
-    async () => {
-      const repository = await initBeadsRepository(root(), [openIssue("t-001", "架空")])
-      const changes: unknown[] = []
-      watch(repository, changes)
-      await waitForChanges(changes, 1)
-
-      writeProjectSettingsContent(repository, '{ "tasks": { "mainBranch": ')
-      await waitForChanges(changes, 2)
-
-      expect(changes).toEqual([known(plainTodo("T-001", "架空")), { kind: "settings-invalid" }])
-    },
-  )
 })
