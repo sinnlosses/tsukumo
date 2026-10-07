@@ -22,8 +22,6 @@ function taskOf(id: string, overrides: Partial<TaskSummaryItem>): TaskSummaryIte
     id,
     summary: `${id} の要約`,
     status: "todo",
-    difficulty: undefined,
-    loopable: undefined,
     dependencies: [],
     waitingFor: [],
     assignee: undefined,
@@ -61,13 +59,12 @@ describe("boardEntries の状態の言い方", () => {
     expect(states.at(2)).toEqual({ kind: "hold", text: "保留" })
   })
 
-  it("進行中は持ち主を添え、完了・取り下げ・想定外の値はそれぞれの言い方になる", () => {
+  it("進行中は担当を添え、完了・想定外の値はそれぞれの言い方になる", () => {
     expect(
       statesOf([
         taskOf("X-001", { status: "doing", assignee: "tree-1" }),
         taskOf("X-002", { status: "doing" }),
         taskOf("X-003", { status: "done" }),
-        taskOf("X-004", { status: "dropped" }),
         taskOf("X-005", { status: "archived" }),
         taskOf("X-006", { status: undefined }),
       ]),
@@ -75,7 +72,6 @@ describe("boardEntries の状態の言い方", () => {
       { kind: "doing", text: "進行中（tree-1）" },
       { kind: "doing", text: "進行中" },
       { kind: "done", text: "完了" },
-      { kind: "dropped", text: "取り下げ" },
       { kind: "other", text: "archived" },
       { kind: "other", text: "—" },
     ])
@@ -120,21 +116,16 @@ describe("boardContent", () => {
 
   it("一覧を行と札へ畳み、選んだ行に印を付ける", () => {
     const content = contentOf(
-      known([
-        taskOf("X-001", { difficulty: "opus", loopable: "Y" }),
-        taskOf("X-002", { status: "done" }),
-      ]),
+      known([taskOf("X-001", {}), taskOf("X-002", { status: "done" })]),
       "X-001",
     )
     if (content.kind !== "known") {
       throw new Error("known のはず")
     }
 
-    expect(
-      content.rows.map((row) => [row.id, row.selected, row.loopable, row.difficulty.level]),
-    ).toEqual([
-      ["X-001", true, true, 3],
-      ["X-002", false, false, 0],
+    expect(content.rows.map((row) => [row.id, row.selected])).toEqual([
+      ["X-001", true],
+      ["X-002", false],
     ])
     expect(content.activeOptionId).toBe("task-board-option-X-001")
     expect(content.chips.map((chip) => [chip.filter, chip.count, chip.pressed])).toEqual([
@@ -172,5 +163,20 @@ describe("boardContent", () => {
     expect(detail.dependents.map((card) => card.id)).toEqual(["X-003"])
     expect(opener).toEqual({ kind: "issue", url: "https://example.invalid/issues/2" })
     expect(run).toEqual({ kind: "unavailable", reason: "待ちが終わると頼めます" })
+  })
+
+  it("詳細の担当は assignee の字のまま、無ければ「—」", () => {
+    const tasks = known([
+      taskOf("X-001", { status: "doing", assignee: "tree-1" }),
+      taskOf("X-002", {}),
+    ])
+    const assigneeOf = (id: string): string | undefined => {
+      const content = contentOf(tasks, id)
+      return content.kind === "known" && content.selection.kind === "some"
+        ? content.selection.detail.assignee
+        : undefined
+    }
+
+    expect([assigneeOf("X-001"), assigneeOf("X-002")]).toEqual(["tree-1", "—"])
   })
 })

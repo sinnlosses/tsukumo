@@ -31,38 +31,27 @@ describe("doneTasksSince", () => {
 })
 
 describe("taskMilestoneOf", () => {
-  it("ID の順に足していって刻みに届いたタスクを返す", () => {
+  it("渡した順に依らず、閉じた時刻の順に足していって刻みに届いたタスクを返す", () => {
     const items = [
-      { id: "T-102", summary: "b" },
-      { id: "T-101", summary: "a" },
+      { id: "t-1", closedAtEpochMilliseconds: 200 },
+      { id: "t-9", closedAtEpochMilliseconds: 100 },
     ]
 
-    expect(taskMilestoneOf(items, 248)).toEqual({ kind: "task", count: 250, taskId: "T-102" })
+    expect(taskMilestoneOf(items, 248)).toEqual({ kind: "task", count: 250, taskId: "t-1" })
   })
 
   it("刻みに届かなければ undefined", () => {
-    const items = [{ id: "T-001", summary: "a" }]
+    const items = [{ id: "t-1", closedAtEpochMilliseconds: 100 }]
 
     expect(taskMilestoneOf(items, 100)).toBeUndefined()
   })
 
-  it("GH-<n> の ID も番号順に足す（T-xxx と混ざっても数で並ぶ）", () => {
-    const items = [
-      { id: "GH-102", summary: "b" },
-      { id: "T-101", summary: "a" },
-    ]
-
-    expect(taskMilestoneOf(items, 248)).toEqual({ kind: "task", count: 250, taskId: "GH-102" })
-  })
-
   it("1日に複数の刻みをまたいだら、最後にまたいだものだけ返す", () => {
-    // 250件ぶんの刻みを2回またぐには、少なくとも250件超のタスクが同じ日に終わる必要がある
-    // （現実的には稀だが、ロジックが「あとから見つかったほうを残す」ことを確かめる）。
     const items = Array.from({ length: 260 }, (_, index) => ({
-      id: `T-${String(index + 1).padStart(3, "0")}`,
-      summary: "x",
+      id: `t-${String(index + 1)}`,
+      closedAtEpochMilliseconds: index,
     }))
 
-    expect(taskMilestoneOf(items, 248)).toEqual({ kind: "task", count: 500, taskId: "T-252" })
+    expect(taskMilestoneOf(items, 248)).toEqual({ kind: "task", count: 500, taskId: "t-252" })
   })
 })

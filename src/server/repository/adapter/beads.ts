@@ -1,7 +1,7 @@
 // Beads（`bd`）を起こす口。`bd` を起こすのはここだけ（検査の「子プロセスを起こしてよい箇所」の許可はこのファイル）。
 // 起こすのは読むだけの `bd list` で、ネットワークにも出ない。
 //
-// `bd list --json` には作成者（owner）も入るが、境界で落とす（`BeadsIssue` の欄だけを運ぶ）。
+// `bd list --json` には作成者（owner）やラベルも入るが、境界で落とす（`BeadsIssue` の欄だけを運ぶ）。
 // 本文（description・acceptance_criteria・notes）と `external_ref` はタスクのモーダルの詳細が使うので運ぶ（会話内容ではないが、ログには出さない）。
 //
 // 例外を投げない。`.beads` が無い・`bd` が無いときも `failed`。
@@ -12,8 +12,26 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import type { BeadsIssue } from "../../../shared/repository/task-workflow.ts"
 import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "./git.ts"
+
+/**
+ * `bd list --json` の1件のうち、Beads の組み込みの欄でこの読み手が使うものだけ。
+ * `assignee`・`closedAtEpochMilliseconds`・`externalRef` は Beads の側で無ければ `undefined`、本文の3欄は無ければ空文字列。
+ */
+export type BeadsIssue = {
+  readonly id: string
+  readonly title: string
+  readonly status: string
+  /** `blocks` の依存先の Beads ID。 */
+  readonly blockedBy: readonly string[]
+  readonly assignee: string | undefined
+  readonly createdAtEpochMilliseconds: number
+  readonly closedAtEpochMilliseconds: number | undefined
+  readonly description: string
+  readonly acceptanceCriteria: string
+  readonly notes: string
+  readonly externalRef: string | undefined
+}
 
 /** `bd` 1回の結果。タイムアウトだけを分けるのは、その回を諦めるか「不明」にするかが呼び出し側で変わるため。 */
 export type BeadsOutcome =
@@ -114,7 +132,6 @@ const beadsIssueSchema = z.object({
   id: z.string(),
   title: z.string(),
   status: z.string(),
-  labels: z.array(z.string()).nullish(),
   dependencies: z.array(z.object({ depends_on_id: z.string(), type: z.string() })).nullish(),
   assignee: z.string().nullish(),
   created_at: z.iso.datetime({ offset: true }),
@@ -149,7 +166,6 @@ function beadsIssueOf(issue: z.infer<typeof beadsIssueSchema>): BeadsIssue {
     id: issue.id,
     title: issue.title,
     status: issue.status,
-    labels: issue.labels ?? [],
     blockedBy: (issue.dependencies ?? [])
       .filter((dependency) => dependency.type === "blocks")
       .map((dependency) => dependency.depends_on_id),

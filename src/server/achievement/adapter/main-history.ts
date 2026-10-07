@@ -23,8 +23,8 @@ import {
   type ProjectSettingsRead,
 } from "../../../shared/repository/project-settings.ts"
 import type { DoneTask } from "../../../shared/repository/task-summary.ts"
-import { doneTasksOfBeadsIssues } from "../../../shared/repository/task-workflow.ts"
 import { localDateEpochRange, localDateKey, localTimeHHMM } from "../../adapter/local-time.ts"
+import { doneTasksOfBeadsIssues } from "../../repository/adapter/beads-task.ts"
 import {
   readBeadsIssues,
   readBeadsStampOf,
@@ -118,11 +118,8 @@ async function readAllBeadsIssues(cwd: string): Promise<AchievementBeadsRead> {
 const SINCE_MARGIN_DAYS = 7
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
-/**
- * `git log` の1件を区切る印（ファイル名に出てこない前提）。
- * NUL（`\x00`）は使えない。`node:child_process` の `execFile` は引数に NUL を含む文字列を渡すと例外を投げる。
- */
-const COMMIT_RECORD_SEPARATOR = "\x1e"
+/** `git log` の1件を1行（`<ハッシュ> <committer date のエポック秒>`）で出す書式。 */
+const COMMIT_LOG_FORMAT = "--format=%H %ct"
 
 /**
  * {@link readAchievement} の結果。`unavailable` は一時的な失敗（`git`・`bd` のタイムアウト・失敗）で、呼び出し側が 503 にする。
@@ -257,8 +254,7 @@ async function readAllCommitsUntil(
     head,
     "--no-merges",
     `--until=${instantOf(untilEpochMs)}`,
-    `--format=${COMMIT_RECORD_SEPARATOR}%H %ct`,
-    "--name-only",
+    COMMIT_LOG_FORMAT,
   ])
   return result.kind === "output" ? parseCommitLog(result.stdout) : undefined
 }
@@ -409,7 +405,7 @@ async function currentBranchRef(cwd: string): Promise<string | undefined> {
 }
 
 /**
- * `sinceEpochMs` 以降のコミット（`--no-merges`）を、ハッシュ・committer date・変更したファイルの組で読む。
+ * `sinceEpochMs` 以降のコミット（`--no-merges`）を、ハッシュと committer date の組で読む。
  * `git` が失敗・タイムアウトしたら `undefined`。
  */
 async function readCommitsSince(
@@ -422,35 +418,20 @@ async function readCommitsSince(
     head,
     "--no-merges",
     `--since=${instantOf(sinceEpochMs)}`,
-    `--format=${COMMIT_RECORD_SEPARATOR}%H %ct`,
-    "--name-only",
+    COMMIT_LOG_FORMAT,
   ])
   return result.kind === "output" ? parseCommitLog(result.stdout) : undefined
 }
 
-/**
- * `%H %ct` の見出し行で始まる、{@link COMMIT_RECORD_SEPARATOR} 区切りの記録を割る。
- * 見出し行が読めない1件はその1件だけ捨てる。見出し行より後の空でない行が変更したファイル。
- */
+/** `%H %ct` の1行ずつを割る。読めない行はその行だけ捨てる。 */
 function parseCommitLog(output: string): readonly AchievementCommit[] {
-  return output.split(COMMIT_RECORD_SEPARATOR).flatMap((record) => {
-    if (record === "") {
-      return []
-    }
-    const lines = record.split("\n")
-    const header = lines[0]
-    const [hash, committedAt] = header === undefined ? [] : header.split(" ")
+  return output.split("\n").flatMap((line) => {
+    const [hash, committedAt] = line.split(" ")
     const committedAtEpochSeconds = committedAt === undefined ? NaN : Number(committedAt)
     if (hash === undefined || hash === "" || !Number.isInteger(committedAtEpochSeconds)) {
       return []
     }
-    return [
-      {
-        hash,
-        committedAtEpochSeconds,
-        changedFiles: lines.slice(1).filter((line) => line !== ""),
-      },
-    ]
+    return [{ hash, committedAtEpochSeconds }]
   })
 }
 

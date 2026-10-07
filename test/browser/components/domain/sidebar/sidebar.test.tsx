@@ -106,8 +106,6 @@ function chipTask(id: string, status: string): TaskSummaryItem {
     id,
     summary: `架空のタスク ${id}`,
     status,
-    difficulty: undefined,
-    loopable: undefined,
     dependencies: [],
     waitingFor: [],
     assignee: undefined,

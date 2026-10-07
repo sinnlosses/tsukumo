@@ -15,8 +15,6 @@ function taskOf(overrides: Partial<TaskSummaryItem>): TaskSummaryItem {
     id: "X-001",
     summary: "要約",
     status: "todo",
-    difficulty: undefined,
-    loopable: undefined,
     dependencies: [],
     waitingFor: [],
     assignee: undefined,
@@ -28,11 +26,11 @@ function taskOf(overrides: Partial<TaskSummaryItem>): TaskSummaryItem {
 
 describe("matchesFilter", () => {
   const doing: TaskStateView = { kind: "doing", text: "進行中" }
-  const dropped: TaskStateView = { kind: "dropped", text: "取り下げ" }
+  const other: TaskStateView = { kind: "other", text: "archived" }
 
   it("「すべて」はどの状態でも当たる", () => {
     expect(matchesFilter(doing, "all")).toBe(true)
-    expect(matchesFilter(dropped, "all")).toBe(true)
+    expect(matchesFilter(other, "all")).toBe(true)
   })
 
   it("札は同じ種類の状態にだけ当たる", () => {
@@ -40,8 +38,8 @@ describe("matchesFilter", () => {
     expect(matchesFilter(doing, "done")).toBe(false)
   })
 
-  it("取り下げはどの札にも属さない", () => {
-    expect(matchesFilter(dropped, "done")).toBe(false)
+  it("想定外の値はどの札にも属さない", () => {
+    expect(matchesFilter(other, "done")).toBe(false)
   })
 })
 

@@ -111,51 +111,31 @@ function known(...items: readonly Record<string, unknown>[]): Record<string, unk
   return { kind: "known", items, runPrompt: DEFAULT_RUN_PROMPT }
 }
 
-/** 本文・完了条件・やることを付けずに作った課題の本文（`composeBeadsBody` が組む枠だけの骨組み）。 */
-const BEADS_EMPTY_BODY = [
-  "## 目的・背景",
-  "",
-  "## 決まっていること（蒸し返さない）",
-  "",
-  "## 解くべき論点",
-  "",
-  "## やること",
-  "",
-  "## 完了条件",
-  "",
-  "## 注意",
-  "",
-  "## 参考情報",
-  "",
-].join("\n")
-
 /** 何も付けずに作った未着手の課題1件の要約。 */
 function plainTodo(id: string, summary: string): Record<string, unknown> {
   return {
     id,
     summary,
     status: "todo",
-    difficulty: undefined,
-    loopable: undefined,
     dependencies: [],
     waitingFor: [],
     assignee: undefined,
-    body: BEADS_EMPTY_BODY,
+    body: "",
     location: { kind: "none" },
   }
 }
 
 describe("watchTaskSummary", () => {
   it(
-    "bd の課題を状態を読み替えて出し、着手中は作業ツリーの名前を添える。閉じた課題は done で出す",
+    "bd の課題を ID のまま作った時刻の順に出し、状態を読み替えて担当を添える。ラベルは読まない",
     { timeout: 60_000 },
     async () => {
       const repository = await initBeadsRepository(root(), [
-        openIssue("t-010", "未着手", { labels: ["difficulty:opus", "loopable:Y"] }),
-        openIssue("t-002", "保留", {
-          labels: ["difficulty:haiku", "loopable:N"],
-          status: "pending",
+        openIssue("t-010", "未着手", {
+          labels: ["difficulty:opus"],
+          created_at: "2026-01-13T00:00:00Z",
         }),
+        openIssue("t-002", "保留", { status: "deferred" }),
         openIssue("t-003", "着手中", {
           status: "in_progress",
           assignee: BEADS_TEST_ACTOR,
@@ -169,21 +149,16 @@ describe("watchTaskSummary", () => {
 
       expect(changes).toEqual([
         known(
-          { ...plainTodo("T-001", "済み"), status: "done" },
+          plainTodo("t-010", "未着手"),
+          { ...plainTodo("t-001", "済み"), status: "done" },
+          { ...plainTodo("t-002", "保留"), status: "hold" },
           {
-            ...plainTodo("T-002", "保留"),
-            status: "hold",
-            difficulty: "haiku",
-            loopable: "N",
-          },
-          {
-            ...plainTodo("T-003", "着手中"),
+            ...plainTodo("t-003", "着手中"),
             status: "doing",
-            dependencies: ["T-010"],
-            waitingFor: ["T-010"],
+            dependencies: ["t-010"],
+            waitingFor: ["t-010"],
             assignee: "wt-test",
           },
-          { ...plainTodo("T-010", "未着手"), difficulty: "opus", loopable: "Y" },
         ),
       ])
     },
@@ -202,8 +177,8 @@ describe("watchTaskSummary", () => {
       await waitForChanges(changes, 2)
 
       expect(changes).toEqual([
-        known(plainTodo("T-001", "閉じる前")),
-        known({ ...plainTodo("T-001", "閉じる前"), status: "done" }),
+        known(plainTodo("t-001", "閉じる前")),
+        known({ ...plainTodo("t-001", "閉じる前"), status: "done" }),
       ])
     },
   )
@@ -224,7 +199,7 @@ describe("watchTaskSummary", () => {
       writeProjectSettingsContent(repository, '{ "tasks": { "mainBranch": ')
       await waitForChanges(changes, 2)
 
-      expect(changes).toEqual([known(plainTodo("T-001", "架空")), { kind: "settings-invalid" }])
+      expect(changes).toEqual([known(plainTodo("t-001", "架空")), { kind: "settings-invalid" }])
     },
   )
 

@@ -160,12 +160,7 @@
   gap: 10px;
   min-width: 0;
 }
-/* 状態のあとを空けて、ループの印と難易度を右端に寄せる。 */
-.task-board-option-head .task-state {
-  margin-right: auto;
-}
-
-/* 状態の印と言い方。色だけで伝えないよう、印の形（点・輪・一時停止・チェック・横線・「!」）と字を添える。 */
+/* 状態の印と言い方。色だけで伝えないよう、印の形（点・輪・一時停止・チェック・「!」）と字を添える。 */
 .task-state {
   display: inline-flex;
   align-items: center;

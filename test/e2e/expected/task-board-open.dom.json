@@ -144,7 +144,7 @@
                 "data-state": "ready"
               },
               "children": [
-                "T-001",
+                "t-001",
                 {
                   "tag": "span",
                   "attributes": {
@@ -152,25 +152,6 @@
                   }
                 },
                 "着手できる",
-                {
-                  "tag": "span",
-                  "attributes": {
-                    "role": "img",
-                    "aria-label": "ループで回せる"
-                  },
-                  "children": [
-                    {
-                      "tag": "svg"
-                    }
-                  ]
-                },
-                {
-                  "tag": "span",
-                  "attributes": {
-                    "aria-hidden": "true"
-                  }
-                },
-                "opus",
                 "架空のタスク（",
                 {
                   "tag": "code",
@@ -189,18 +170,11 @@
                 "data-state": "done"
               },
               "children": [
-                "T-002",
+                "t-002",
                 {
                   "tag": "svg"
                 },
                 "完了",
-                {
-                  "tag": "span",
-                  "attributes": {
-                    "aria-hidden": "true"
-                  }
-                },
-                "haiku",
                 "架空のタスク（完了）"
               ]
             },
@@ -212,7 +186,7 @@
                 "data-state": "doing"
               },
               "children": [
-                "T-003",
+                "t-003",
                 {
                   "tag": "span",
                   "attributes": {
@@ -220,25 +194,6 @@
                   }
                 },
                 "進行中（wt-test）",
-                {
-                  "tag": "span",
-                  "attributes": {
-                    "role": "img",
-                    "aria-label": "ループで回せる"
-                  },
-                  "children": [
-                    {
-                      "tag": "svg"
-                    }
-                  ]
-                },
-                {
-                  "tag": "span",
-                  "attributes": {
-                    "aria-hidden": "true"
-                  }
-                },
-                "sonnet",
                 "架空のタスク（進行中）"
               ]
             },
@@ -250,33 +205,14 @@
                 "data-state": "blocked"
               },
               "children": [
-                "T-004",
+                "t-004",
                 {
                   "tag": "span",
                   "attributes": {
                     "aria-hidden": "true"
                   }
                 },
-                "待ち T-001",
-                {
-                  "tag": "span",
-                  "attributes": {
-                    "role": "img",
-                    "aria-label": "ループで回せる"
-                  },
-                  "children": [
-                    {
-                      "tag": "svg"
-                    }
-                  ]
-                },
-                {
-                  "tag": "span",
-                  "attributes": {
-                    "aria-hidden": "true"
-                  }
-                },
-                "sonnet",
+                "待ち t-001",
                 "架空のタスク（待ち）"
               ]
             },
@@ -288,18 +224,11 @@
                 "data-state": "hold"
               },
               "children": [
-                "T-005",
+                "t-005",
                 {
                   "tag": "svg"
                 },
-                "保留 · T-001",
-                {
-                  "tag": "span",
-                  "attributes": {
-                    "aria-hidden": "true"
-                  }
-                },
-                "sonnet",
+                "保留 · t-001",
                 "架空のタスク（保留）"
               ]
             }
@@ -316,10 +245,10 @@
         {
           "tag": "section",
           "attributes": {
-            "aria-label": "T-001 の詳細"
+            "aria-label": "t-001 の詳細"
           },
           "children": [
-            "T-001",
+            "t-001",
             "todo",
             {
               "tag": "h3",
@@ -358,34 +287,13 @@
                 {
                   "tag": "dt",
                   "children": [
-                    "難易度"
+                    "担当"
                   ]
                 },
                 {
                   "tag": "dd",
                   "children": [
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
-                    },
-                    "opus"
-                  ]
-                },
-                {
-                  "tag": "dt",
-                  "children": [
-                    "ループ"
-                  ]
-                },
-                {
-                  "tag": "dd",
-                  "children": [
-                    {
-                      "tag": "svg"
-                    },
-                    "回せる"
+                    "—"
                   ]
                 }
               ]
@@ -414,14 +322,14 @@
                             "type": "button"
                           },
                           "children": [
-                            "T-004",
+                            "t-004",
                             {
                               "tag": "span",
                               "attributes": {
                                 "aria-hidden": "true"
                               }
                             },
-                            "待ち T-001",
+                            "待ち t-001",
                             "架空のタスク（待ち）",
                             {
                               "tag": "svg"
@@ -439,11 +347,11 @@
                             "type": "button"
                           },
                           "children": [
-                            "T-005",
+                            "t-005",
                             {
                               "tag": "svg"
                             },
-                            "保留 · T-001",
+                            "保留 · t-001",
                             "架空のタスク（保留）",
                             {
                               "tag": "svg"
@@ -486,94 +394,6 @@
                       ]
                     },
                     "を含む。"
-                  ]
-                },
-                {
-                  "tag": "h4",
-                  "children": [
-                    "決まっていること（蒸し返さない）"
-                  ]
-                },
-                {
-                  "tag": "h4",
-                  "children": [
-                    "解くべき論点"
-                  ]
-                },
-                {
-                  "tag": "h4",
-                  "children": [
-                    "やること"
-                  ]
-                },
-                {
-                  "tag": "ol",
-                  "children": [
-                    {
-                      "tag": "li",
-                      "children": [
-                        "一つ目の手順"
-                      ]
-                    },
-                    {
-                      "tag": "li",
-                      "children": [
-                        "二つ目の手順"
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "tag": "h5",
-                  "children": [
-                    "段の見出し"
-                  ]
-                },
-                {
-                  "tag": "h4",
-                  "children": [
-                    "完了条件"
-                  ]
-                },
-                {
-                  "tag": "ul",
-                  "children": [
-                    {
-                      "tag": "li",
-                      "children": [
-                        {
-                          "tag": "input",
-                          "attributes": {
-                            "type": "checkbox",
-                            "disabled": true,
-                            "checked": false,
-                            "value": "on"
-                          }
-                        },
-                        "まだの条件"
-                      ]
-                    },
-                    {
-                      "tag": "li",
-                      "children": [
-                        {
-                          "tag": "input",
-                          "attributes": {
-                            "type": "checkbox",
-                            "disabled": true,
-                            "checked": true,
-                            "value": "on"
-                          }
-                        },
-                        "済んだ条件"
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "tag": "h4",
-                  "children": [
-                    "注意"
                   ]
                 },
                 {
@@ -664,6 +484,76 @@
                     },
                     "と",
                     "相対のリンク"
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "受け入れ条件"
+                  ]
+                },
+                {
+                  "tag": "ul",
+                  "children": [
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "input",
+                          "attributes": {
+                            "type": "checkbox",
+                            "disabled": true,
+                            "checked": false,
+                            "value": "on"
+                          }
+                        },
+                        "まだの条件"
+                      ]
+                    },
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "input",
+                          "attributes": {
+                            "type": "checkbox",
+                            "disabled": true,
+                            "checked": true,
+                            "value": "on"
+                          }
+                        },
+                        "済んだ条件"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "h4",
+                  "children": [
+                    "メモ"
+                  ]
+                },
+                {
+                  "tag": "ol",
+                  "children": [
+                    {
+                      "tag": "li",
+                      "children": [
+                        "一つ目の手順"
+                      ]
+                    },
+                    {
+                      "tag": "li",
+                      "children": [
+                        "二つ目の手順"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "h5",
+                  "children": [
+                    "段の見出し"
                   ]
                 }
               ]

@@ -114,7 +114,7 @@
                             {
                               "tag": "li",
                               "children": [
-                                "T-001",
+                                "t-001",
                                 "いちばんのおすすめ",
                                 "架空のタスク（未着手）",
                                 {
@@ -127,7 +127,7 @@
                                   "tag": "button",
                                   "attributes": {
                                     "aria-disabled": "false",
-                                    "aria-label": "T-001 を始める（すぐ送る）",
+                                    "aria-label": "t-001 を始める（すぐ送る）",
                                     "type": "button"
                                   },
                                   "children": [

@@ -20,7 +20,7 @@ export function epochSecondsOf(epochMs: number): number {
   return Math.floor(epochMs / 1000)
 }
 
-/** 終えたタスクの材料。終えたタスク（番号の順）と、タスクID → 登録日の日付キーの表。 */
+/** 終えたタスクの材料。終えたタスク（その日の一覧はこの順のまま出す）と、タスクID → 登録日の日付キーの表。 */
 export type DoneTaskSources = {
   readonly done: readonly DoneTask[]
   readonly registeredOn: ReadonlyMap<string, string>
@@ -75,7 +75,14 @@ export function dailyAchievementOf(input: DailyAchievementInput): DailyAchieveme
     doneTaskSummariesBefore(input.tasks.done, input.range.endEpochMilliseconds),
     doneBeforeStart,
   )
-  const taskMilestone = taskMilestoneOf(items, doneBeforeStart.size)
+  const taskMilestone = taskMilestoneOf(
+    input.tasks.done.filter(
+      (task) =>
+        task.closedAtEpochMilliseconds >= input.range.startEpochMilliseconds &&
+        task.closedAtEpochMilliseconds < input.range.endEpochMilliseconds,
+    ),
+    doneBeforeStart.size,
+  )
   return {
     ...common,
     doneTasks: { kind: "known", items },

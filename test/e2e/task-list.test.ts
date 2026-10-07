@@ -24,7 +24,7 @@ describe("タスクの一覧", () => {
       "task-section",
       "task-run-confirm",
     ])
-    await taskRow(room, "T-001").click()
+    await taskRow(room, "t-001").click()
     await room.page.getByRole("button", { name: "これを始める →", exact: true }).click()
     await room.page.getByRole("dialog", { name: "タスクの実行" }).waitFor()
     await room.page.getByRole("button", { name: "実行する", exact: true }).click()

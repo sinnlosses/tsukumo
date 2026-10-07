@@ -1,7 +1,5 @@
 // 一覧のタスクを、行・絞り込みの札・選んだタスクの詳細・操作の帯へ畳む。
 
-import { isIncludedIn } from "remeda"
-
 import {
   taskReadiness,
   type TaskLocation,
@@ -14,13 +12,11 @@ import { FILTER_CHIPS, matchesFilter } from "./task-board-filter.ts"
 import type {
   TaskBoardBreadcrumb,
   TaskBoardContent,
-  TaskBoardDetail,
   TaskBoardFilter,
   TaskBoardOpener,
   TaskBoardRun,
   TaskBoardSelection,
   TaskDependencyCard,
-  TaskDifficultyView,
   TaskStateKind,
   TaskStateView,
 } from "./task-board-view.ts"
@@ -46,17 +42,8 @@ const RUN_UNAVAILABLE_REASON = {
   hold: "待ちが終わると頼めます",
   doing: "着手済みです",
   done: "終わったタスクです",
-  dropped: "終わったタスクです",
   other: "状態が読めないので頼めません",
 } satisfies Record<Exclude<TaskStateKind, "ready">, string>
-
-const DIFFICULTIES = ["haiku", "sonnet", "opus"] as const
-
-const DIFFICULTY_LEVEL = {
-  haiku: 1,
-  sonnet: 2,
-  opus: 3,
-} satisfies Record<(typeof DIFFICULTIES)[number], TaskDifficultyView["level"]>
 
 const TASK_BOARD_LIST_ID = "task-board-list"
 
@@ -101,8 +88,6 @@ export function boardContent(
       optionId: optionIdOf(entry.task.id),
       summary: codeSpanParts(entry.task.summary),
       state: entry.state,
-      loopable: entry.task.loopable === "Y",
-      difficulty: difficultyOf(entry.task.difficulty),
       selected: entry === selected,
       outOfFilter: !isVisible(entry),
     })),
@@ -127,8 +112,7 @@ function selectionOf(
       status: task.status ?? MISSING,
       title: codeSpanParts(task.summary),
       state: entry.state,
-      difficulty: difficultyOf(task.difficulty),
-      loop: loopOf(task.loopable),
+      assignee: task.assignee ?? MISSING,
       location: task.location,
       dependencies: task.dependencies.map((id) => dependencyCardOf(id, byId)),
       dependents: dependentsOf(task.id, entries),
@@ -213,31 +197,9 @@ function taskStateOf(task: TaskSummaryItem): TaskStateView {
       }
     case "done":
       return { kind: "done", text: "完了" }
-    case "dropped":
-      return { kind: "dropped", text: "取り下げ" }
     default:
       return { kind: "other", text: task.status ?? MISSING }
   }
-}
-
-function difficultyOf(difficulty: string | undefined): TaskDifficultyView {
-  if (difficulty === undefined) {
-    return { level: 0, text: MISSING }
-  }
-  return {
-    level: isIncludedIn(difficulty, DIFFICULTIES) ? DIFFICULTY_LEVEL[difficulty] : 0,
-    text: difficulty,
-  }
-}
-
-function loopOf(loopable: string | undefined): TaskBoardDetail["loop"] {
-  if (loopable === "Y") {
-    return { on: true, text: "回せる" }
-  }
-  if (loopable === "N") {
-    return { on: false, text: "回さない" }
-  }
-  return { on: false, text: loopable ?? MISSING }
 }
 
 function optionIdOf(taskId: string): string {

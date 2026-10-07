@@ -4,17 +4,11 @@ import type { TaskLocation } from "../../../../shared/repository/task-summary.ts
 import type { CodeSpanPart } from "../../../domain/code-span.ts"
 import type { TaskRunConfirmOutcome } from "./task-run-confirm-outcome.ts"
 
-export type TaskStateKind = "ready" | "blocked" | "hold" | "doing" | "done" | "dropped" | "other"
+export type TaskStateKind = "ready" | "blocked" | "hold" | "doing" | "done" | "other"
 
 /** 状態の言い方。一覧の行・詳細の情報の表・依存の札で同じものを出す。印の形は `kind` で選ぶ。 */
 export type TaskStateView = {
   readonly kind: TaskStateKind
-  readonly text: string
-}
-
-/** 難易度。`level` は塗る点の数（haiku 1・sonnet 2・opus 3）で、読めない値・無いときは 0。 */
-export type TaskDifficultyView = {
-  readonly level: 0 | 1 | 2 | 3
   readonly text: string
 }
 
@@ -24,9 +18,6 @@ export type TaskBoardRow = {
   readonly optionId: string
   readonly summary: readonly CodeSpanPart[]
   readonly state: TaskStateView
-  /** `loopable` が `Y` のときだけ真（印を出す）。 */
-  readonly loopable: boolean
-  readonly difficulty: TaskDifficultyView
   readonly selected: boolean
   /** 絞り込み・検索には当たらないが、飛んだ先として一時的に出している行なら真。 */
   readonly outOfFilter: boolean
@@ -62,9 +53,8 @@ export type TaskBoardDetail = {
   readonly status: string
   readonly title: readonly CodeSpanPart[]
   readonly state: TaskStateView
-  readonly difficulty: TaskDifficultyView
-  /** `on` は `loopable` が `Y` のとき（印を添える）。 */
-  readonly loop: { readonly on: boolean; readonly text: string }
+  /** 担当（Beads の `assignee` の字のまま）。無ければ「—」。 */
+  readonly assignee: string
   readonly location: TaskLocation
   readonly dependencies: readonly TaskDependencyCard[]
   /** いまの一覧のうち、このタスクを依存に持つもの。 */

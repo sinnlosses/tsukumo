@@ -12,7 +12,7 @@ export type DiaryBookmark =
   | {
       readonly kind: "placed"
       readonly taskId: string
-      /** 選んだ時点のタスクの要約。あとでタスクファイルが消えても見開きで読めるよう、写しを持つ。 */
+      /** 選んだ時点のタスクの要約。あとでタスクが一覧から消えても見開きで読めるよう、写しを持つ。 */
       readonly summary: string
       readonly reason: string
     }

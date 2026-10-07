@@ -30,8 +30,7 @@ export const RECOMMENDATION_INSTRUCTION = `あなたは、これから作業を�
 ## 候補
 
 - \`key: ${RESUME_KEY}\` は「前回の続き」。前のセッションでやり残したことの続きだが、中身は渡されない
-- ほかの候補はタスク。\`key\` はタスクの ID で、要約・難しさ（\`haiku\` < \`sonnet\` < \`opus\` の順に重い。空なら不明）・
-  そのタスクを待っている未完了のタスクの ID が添えてある
+- ほかの候補はタスク。\`key\` はタスクの ID で、要約と、そのタスクを待っている未完了のタスクの ID が添えてある
 
 ## 理由の書き方
 
@@ -86,7 +85,7 @@ function candidateLine(candidate: RecommendationCandidate): string {
     return `- key: ${RESUME_KEY} / 前回の続き（中身は渡さない）`
   }
   const waitedBy = candidate.waitedBy.length === 0 ? "なし" : candidate.waitedBy.join(", ")
-  return `- key: ${candidate.id} / 難しさ: ${candidate.difficulty} / 待っているタスク: ${waitedBy} / 要約: ${candidate.summary}`
+  return `- key: ${candidate.id} / 待っているタスク: ${waitedBy} / 要約: ${candidate.summary}`
 }
 
 /** 出力の JSON Schema（`outputFormat: { type: "json_schema", schema }` にそのまま渡す）。`key` は候補のキーに限る。 */

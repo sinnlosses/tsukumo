@@ -1,7 +1,7 @@
 .task-running-item + .task-running-item {
   margin-top: 0.3rem;
 }
-/* 1行目。札・ID・作業ツリーの名前を左に寄せ、`›` を右端に置く。 */
+/* 1行目。札・ID・担当を左に寄せ、`›` を右端に置く。 */
 .task-running-head {
   display: flex;
   align-items: center;
@@ -26,7 +26,7 @@
   font-size: var(--font-label);
   font-weight: 600;
 }
-/* 着手した作業ツリーの名前。IDの後ろに、IDと同じ段・同じ色で添える。長い名前は末尾を「…」にする。 */
+/* 担当。IDの後ろに、IDと同じ段・同じ色で添える。長い名前は末尾を「…」にする。 */
 .task-running-assignee {
   min-width: 0;
   overflow: hidden;

@@ -10,8 +10,6 @@ function taskOf(id: string, status: string | undefined): TaskSummaryItem {
     id,
     summary: `${id} の要約`,
     status,
-    difficulty: undefined,
-    loopable: undefined,
     dependencies: [],
     waitingFor: [],
     assignee: undefined,

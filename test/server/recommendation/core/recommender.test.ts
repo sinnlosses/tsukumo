@@ -26,8 +26,6 @@ function tasksOf(
       id,
       summary: `架空の${id}`,
       status: "todo",
-      difficulty: "sonnet",
-      loopable: undefined,
       dependencies: [],
       waitingFor: [],
       assignee: undefined,

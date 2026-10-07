@@ -23,8 +23,7 @@
   border: 1.5px solid var(--state-warn);
 }
 .task-state-hold,
-.task-state-done,
-.task-state-dropped {
+.task-state-done {
   color: var(--ink-quiet);
 }
 .task-state-doing {

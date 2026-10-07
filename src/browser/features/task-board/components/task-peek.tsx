@@ -135,7 +135,6 @@ const STATUS_WORD: ReadonlyMap<string, string> = new Map([
   ["doing", "進行中"],
   ["done", "完了"],
   ["hold", "保留"],
-  ["dropped", "取り下げ"],
 ])
 
 /** 想定外の値はそのまま、読めないときは「—」。 */

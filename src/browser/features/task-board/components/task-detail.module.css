@@ -76,9 +76,9 @@
   align-items: center;
   min-width: 0;
 }
-.task-detail-loop {
-  gap: 5px;
+.task-detail-assignee {
   color: color-mix(in srgb, var(--ink) 85%, transparent);
+  overflow-wrap: anywhere;
 }
 .task-detail-location {
   gap: 5px;

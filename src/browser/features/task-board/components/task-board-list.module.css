@@ -24,9 +24,8 @@
   background: var(--surface-accent);
   box-shadow: inset 3px 0 0 var(--accent);
 }
-/* 済んだ行（完了・取り下げ）は薄く出す。 */
-.task-board-option[data-state="done"],
-.task-board-option[data-state="dropped"] {
+/* 済んだ行（完了）は薄く出す。 */
+.task-board-option[data-state="done"] {
   opacity: 0.6;
 }
 .task-board-option-id {
@@ -38,11 +37,6 @@
 }
 .task-board-option[aria-selected="true"] .task-board-option-id {
   color: var(--ink);
-}
-.task-board-loop {
-  display: flex;
-  flex: none;
-  color: var(--ink-quiet);
 }
 /* 要約は2行で省略する。 */
 .task-board-option-summary {

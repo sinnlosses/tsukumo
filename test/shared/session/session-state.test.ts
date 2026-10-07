@@ -775,8 +775,6 @@ describe("applySessionEvent", () => {
         id: "X-001",
         summary: "架空のタスク",
         status: "todo",
-        difficulty: "sonnet",
-        loopable: "Y",
         dependencies: [],
         waitingFor: [],
         assignee: undefined,

@@ -3046,13 +3046,13 @@
             "cards": [
               {
                 "kind": "task",
-                "taskId": "T-003",
+                "taskId": "t-003",
                 "reason": "架空の効き目が大きい。ほかの直しより先に効いてくる"
               },
               { "kind": "resume", "reason": "架空のつながり。前の作業の続きでそのまま入れる" },
               {
                 "kind": "task",
-                "taskId": "T-001",
+                "taskId": "t-001",
                 "reason": "小さく片づく。肩ならしにちょうどいい"
               }
             ]
@@ -4254,7 +4254,7 @@
           "afterMs": 0,
           "event": {
             "kind": "request",
-            "text": "/next-task T-002（架空の依頼）",
+            "text": "/next-task t-002（架空の依頼）",
             "images": []
           }
         },
@@ -4264,7 +4264,7 @@
             "kind": "report",
             "task": {
               "kind": "task",
-              "id": "T-002",
+              "id": "t-002",
               "name": "架空の札に段が1つでも `1/1` のように位置を出す",
               "outcome": "finished"
             },
@@ -4312,7 +4312,7 @@
           "afterMs": 0,
           "event": {
             "kind": "request",
-            "text": "/next-task T-002（架空の依頼）",
+            "text": "/next-task t-002（架空の依頼）",
             "images": []
           }
         },
@@ -4358,7 +4358,7 @@
             "kind": "report",
             "task": {
               "kind": "task",
-              "id": "T-002",
+              "id": "t-002",
               "name": "架空の札に段が1つでも `1/1` のように位置を出す",
               "outcome": "finished"
             },

@@ -40,7 +40,7 @@
       "cards": [
         {
           "kind": "task",
-          "taskId": "T-003",
+          "taskId": "t-003",
           "reason": "架空の効き目が大きい。ほかの直しより先に効いてくる"
         },
         {
@@ -49,7 +49,7 @@
         },
         {
           "kind": "task",
-          "taskId": "T-001",
+          "taskId": "t-001",
           "reason": "小さく片づく。肩ならしにちょうどいい"
         }
       ]
@@ -88,31 +88,27 @@
         "kind": "known",
         "items": [
           {
-            "id": "T-001",
+            "id": "t-001",
             "summary": "架空のタスク（着手できる）",
             "status": "todo",
-            "difficulty": "sonnet",
-            "loopable": "Y",
             "dependencies": [],
             "waitingFor": [],
-            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
+            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n",
             "location": {
               "kind": "none"
             }
           },
           {
-            "id": "T-002",
+            "id": "t-002",
             "summary": "架空のタスク（依存で止まる）",
             "status": "todo",
-            "difficulty": "sonnet",
-            "loopable": "Y",
             "dependencies": [
-              "T-001"
+              "t-001"
             ],
             "waitingFor": [
-              "T-001"
+              "t-001"
             ],
-            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
+            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n",
             "location": {
               "kind": "none"
             }

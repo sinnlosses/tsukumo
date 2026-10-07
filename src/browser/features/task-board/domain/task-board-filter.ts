@@ -13,7 +13,7 @@ export const FILTER_CHIPS = [
   { filter: "done", label: "完了" },
 ] satisfies readonly { readonly filter: TaskBoardFilter; readonly label: string }[]
 
-/** 札の絞り込み。`dropped` と想定外の値はどの札にも属さず、「すべて」でだけ出る。 */
+/** 札の絞り込み。想定外の値はどの札にも属さず、「すべて」でだけ出る。 */
 export function matchesFilter(state: TaskStateView, filter: TaskBoardFilter): boolean {
   return filter === "all" || filter === state.kind
 }

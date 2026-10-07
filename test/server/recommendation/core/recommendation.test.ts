@@ -11,9 +11,9 @@ import {
 
 const CANDIDATES: readonly RecommendationCandidate[] = [
   { kind: "resume" },
-  { kind: "task", id: "X-002", summary: "架空の重い直し", difficulty: "opus", waitedBy: ["X-003"] },
-  { kind: "task", id: "X-005", summary: "架空の軽い直し", difficulty: "haiku", waitedBy: [] },
-  { kind: "task", id: "X-007", summary: "架空の別の直し", difficulty: "", waitedBy: [] },
+  { kind: "task", id: "X-002", summary: "架空の重い直し", waitedBy: ["X-003"] },
+  { kind: "task", id: "X-005", summary: "架空の軽い直し", waitedBy: [] },
+  { kind: "task", id: "X-007", summary: "架空の別の直し", waitedBy: [] },
 ]
 
 describe("recommendationQuery", () => {

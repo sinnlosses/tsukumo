@@ -4,7 +4,7 @@
 // つながりの札（依存・依存元）と本文中の ID は `onJump` で選んでいるタスクを切り替える
 // （`docs/architecture/display.md`「タスクのモーダル」の「つながりをたどる」）。
 
-import { ChevronLeft, ChevronRight, Repeat } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
@@ -16,7 +16,6 @@ import type {
 import taskBoardStyles from "../task-board.module.css"
 import { TaskBody } from "./deferred-task-body.tsx"
 import styles from "./task-detail.module.css"
-import { TaskDifficulty } from "./task-difficulty.tsx"
 import { TaskState } from "./task-state.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
 
@@ -44,15 +43,8 @@ export function TaskDetail(props: {
         <dd>
           <TaskState state={detail.state} />
         </dd>
-        <dt>難易度</dt>
-        <dd>
-          <TaskDifficulty difficulty={detail.difficulty} />
-        </dd>
-        <dt>ループ</dt>
-        <dd className={styles["task-detail-loop"]}>
-          {detail.loop.on && <Repeat size={12} strokeWidth={2} aria-hidden="true" />}
-          {detail.loop.text}
-        </dd>
+        <dt>担当</dt>
+        <dd className={styles["task-detail-assignee"]}>{detail.assignee}</dd>
         {detail.location.kind === "issue" && (
           <>
             <dt>Issue</dt>

@@ -1,11 +1,11 @@
-// サイドバーの一覧に出す並び。進行中（doing）だけ先頭にまとめ、残りはタスクの一覧のファイルの順のままにする（todo と done は混ざったままでよい）。
+// サイドバーの一覧に出す並び。進行中（doing）だけ先頭にまとめ、残りはタスクの一覧の順のままにする（todo と done は混ざったままでよい）。
 
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 
 export type TaskSidebarOrder = {
-  /** 先頭に並べる進行中のタスク（ファイルの順のまま。2件以上あれば2枚以上のカードになる）。 */
+  /** 先頭に並べる進行中のタスク（一覧の順のまま。2件以上あれば2枚以上のカードになる）。 */
   readonly running: readonly TaskSummaryItem[]
-  /** 進行中を除いた残り。ファイルの順のまま（status ごとにまとめない）。 */
+  /** 進行中を除いた残り。一覧の順のまま（status ごとにまとめない）。 */
   readonly rest: readonly TaskSummaryItem[]
 }
 

@@ -21,8 +21,6 @@ function task(id: string, status: string, waitingFor: readonly string[]): TaskSu
     id,
     summary: `架空の${id}`,
     status,
-    difficulty: "sonnet",
-    loopable: "Y",
     dependencies: waitingFor,
     waitingFor,
     assignee: undefined,

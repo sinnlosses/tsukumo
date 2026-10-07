@@ -23,8 +23,8 @@ const BASE: Omit<DailyAchievementInput, "tasks"> = {
 describe("dailyAchievementOf", () => {
   it("終えたタスクを数えられないときは、コミットの節目だけを返す", () => {
     const commits = [
-      { hash: "a", committedAtEpochSeconds: 150, changedFiles: ["src/a.ts"] },
-      { hash: "b", committedAtEpochSeconds: 160, changedFiles: ["src/b.ts"] },
+      { hash: "a", committedAtEpochSeconds: 150 },
+      { hash: "b", committedAtEpochSeconds: 160 },
     ]
 
     expect(

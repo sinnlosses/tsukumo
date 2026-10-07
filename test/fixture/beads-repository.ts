@@ -149,7 +149,6 @@ async function createBeadsTemplate(): Promise<BeadsTemplate> {
   await initGitRepository(repository)
   await git(repository, "commit", "--allow-empty", "-m", "init")
   await bd(repository, home, "init", "--stealth", "-p", "t", "-q")
-  await bd(repository, home, "config", "set", "status.custom", "pending:frozen")
   return { root, home, repository }
 }
 

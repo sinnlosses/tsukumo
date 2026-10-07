@@ -22,8 +22,6 @@ function item(id: string, overrides: Partial<TaskSummaryItem> = {}): TaskSummary
     id,
     summary: `${id} の要約`,
     status: "todo",
-    difficulty: undefined,
-    loopable: undefined,
     dependencies: [],
     waitingFor: [],
     assignee: undefined,
@@ -37,7 +35,6 @@ describe("タスク一覧の記憶", () => {
   it("書いた一覧を、undefined の欄も含めて同じ形で読み戻す", () => {
     const items = [
       item("t-1", {
-        difficulty: "sonnet",
         dependencies: ["t-2"],
         waitingFor: ["t-2"],
         assignee: "tsukumo-2",
@@ -82,8 +79,8 @@ describe("タスク一覧の記憶", () => {
   it.each([
     ["ファイルが無い", undefined],
     ["壊れている", "{ not json"],
-    ["版が違う", JSON.stringify({ v: 1, entries: [{ cwd: "/work/a", items: [] }] })],
-    ["形が違う", JSON.stringify({ v: 2, entries: [{ cwd: "/work/a", items: [{ id: 1 }] }] })],
+    ["版が違う", JSON.stringify({ v: 2, entries: [{ cwd: "/work/a", items: [] }] })],
+    ["形が違う", JSON.stringify({ v: 3, entries: [{ cwd: "/work/a", items: [{ id: 1 }] }] })],
   ])("%sときは無いものとして扱う", (_name, content) => {
     if (content !== undefined) {
       writeFileSync(memoryPath(), content)

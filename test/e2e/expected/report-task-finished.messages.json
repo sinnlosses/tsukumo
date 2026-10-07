@@ -37,7 +37,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "request",
-      "text": "/next-task T-002（架空の依頼）",
+      "text": "/next-task t-002（架空の依頼）",
       "images": []
     }
   },
@@ -64,7 +64,7 @@
       "checks": [],
       "task": {
         "kind": "task",
-        "id": "T-002",
+        "id": "t-002",
         "name": "架空の札に段が1つでも `1/1` のように位置を出す",
         "outcome": "finished"
       },
@@ -126,27 +126,23 @@
         "kind": "known",
         "items": [
           {
-            "id": "T-001",
+            "id": "t-001",
             "summary": "架空のタスク（一覧の先頭）",
             "status": "todo",
-            "difficulty": "sonnet",
-            "loopable": "Y",
             "dependencies": [],
             "waitingFor": [],
-            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
+            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n",
             "location": {
               "kind": "none"
             }
           },
           {
-            "id": "T-002",
+            "id": "t-002",
             "summary": "架空のタスク（レポートが指すもの）",
             "status": "todo",
-            "difficulty": "sonnet",
-            "loopable": "Y",
             "dependencies": [],
             "waitingFor": [],
-            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
+            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n",
             "location": {
               "kind": "none"
             }

@@ -6,49 +6,20 @@ import {
   type AchievementCommit,
 } from "../../../../src/server/achievement/core/achievement-commit.ts"
 
-function commit(
-  hash: string,
-  committedAtEpochSeconds: number,
-  changedFiles: readonly string[],
-): AchievementCommit {
-  return { hash, committedAtEpochSeconds, changedFiles }
+function commit(hash: string, committedAtEpochSeconds: number): AchievementCommit {
+  return { hash, committedAtEpochSeconds }
 }
 
 describe("countAchievementCommits", () => {
   it("範囲 [start, end) に入るコミットだけを数える（終わりは含まない）", () => {
     const commits = [
-      commit("a", 100, ["src/a.ts"]),
-      commit("b", 199, ["src/b.ts"]),
-      commit("c", 200, ["src/c.ts"]), // end と同じ時刻は含まない
-      commit("d", 99, ["src/d.ts"]), // start より前
+      commit("a", 100),
+      commit("b", 199),
+      commit("c", 200), // end と同じ時刻は含まない
+      commit("d", 99), // start より前
     ]
 
     expect(countAchievementCommits(commits, 100, 200)).toBe(2)
-  })
-
-  it("運用の帳面だけを触ったコミットは外す", () => {
-    const commits = [
-      commit("a", 100, ["develop/tasks.json"]),
-      commit("b", 100, ["develop/progress.md"]),
-      commit("c", 100, ["develop/task/T-001.md"]),
-      commit("d", 100, ["docs/history/tasks.md"]),
-      commit("e", 100, ["docs/history/progress.md"]),
-      commit("f", 100, ["src/a.ts"]),
-    ]
-
-    expect(countAchievementCommits(commits, 0, 200)).toBe(1)
-  })
-
-  it("仕事のファイルと帳面を両方触ったコミットは数える", () => {
-    const commits = [commit("a", 100, ["develop/tasks.json", "src/a.ts"])]
-
-    expect(countAchievementCommits(commits, 0, 200)).toBe(1)
-  })
-
-  it("変更ファイルが0件（空コミット）は数えない", () => {
-    const commits = [commit("a", 100, [])]
-
-    expect(countAchievementCommits(commits, 0, 200)).toBe(0)
   })
 })
 

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads.ts"
+import { taskSummaryItemsOfBeadsIssues } from "../../../../src/server/repository/adapter/beads-task.ts"
+import type { BeadsIssue, BeadsOutcome } from "../../../../src/server/repository/adapter/beads.ts"
 import {
   watchTaskSummary,
   type TaskSummaryPorts,
@@ -11,10 +12,6 @@ import {
   type ProjectSettingsRead,
 } from "../../../../src/shared/repository/project-settings.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
-import {
-  taskSummaryItemsOfBeadsIssues,
-  type BeadsIssue,
-} from "../../../../src/shared/repository/task-workflow.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 
 // 偽の口と手で進める時計で、見回りが子プロセスを起こした回数を数える。
@@ -32,7 +29,6 @@ const FICTIONAL_BEADS_ISSUE: BeadsIssue = {
   id: "t-001",
   title: "架空",
   status: "open",
-  labels: [],
   blockedBy: [],
   assignee: undefined,
   createdAtEpochMilliseconds: 0,

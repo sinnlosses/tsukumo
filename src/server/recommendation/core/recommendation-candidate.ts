@@ -14,8 +14,6 @@ export type RecommendationCandidate =
       readonly kind: "task"
       readonly id: string
       readonly summary: string
-      /** タスクの `difficulty`（`haiku` < `sonnet` < `opus` の順に重い）。書かれていなければ空文字。 */
-      readonly difficulty: string
       /** このタスクを依存に挙げている未完了のタスクの ID（一覧の順）。 */
       readonly waitedBy: readonly string[]
     }
@@ -45,7 +43,6 @@ function readyTaskCandidates(
       kind: "task",
       id: task.id,
       summary: task.summary,
-      difficulty: task.difficulty ?? "",
       waitedBy: items
         .filter((other) => other.waitingFor.includes(task.id))
         .map((other) => other.id),

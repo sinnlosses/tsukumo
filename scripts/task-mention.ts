@@ -51,19 +51,12 @@ const TABLE_SEPARATOR_ROW_PATTERN = /^\|[\s|:-]+\|$/u
 // タスクファイルの形を確かめるテストが、タスクIDをデータとして使うファイル。
 const ALLOWED_DATA_FILES = [
   "test/task-id.test.ts",
-  "test/server/achievement/core/achievement-commit.test.ts",
   "test/server/achievement/core/done-task.test.ts",
   "test/server/achievement/core/graduation.test.ts",
   "test/server/achievement/core/daily-achievement.test.ts",
-  "test/server/repository/adapter/task-summary.test.ts",
-  "test/server/achievement/adapter/main-history.test.ts",
-  "test/shared/repository/task-file-ledger.test.ts",
   "test/shared/repository/task-summary.test.ts",
-  "test/shared/repository/task-workflow.test.ts",
   "test/shared/achievement/achievement.test.ts",
-  "test/e2e/task-list.test.ts",
   "test/e2e/task-board.test.ts",
-  "test/e2e/task-room.ts",
   "test/e2e/report-task.test.ts",
 ] as const satisfies readonly string[]
 

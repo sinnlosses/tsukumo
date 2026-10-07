@@ -9,8 +9,6 @@ describe("taskReadiness", () => {
     id,
     summary: `架空の${id}`,
     status,
-    difficulty: undefined,
-    loopable: undefined,
     dependencies: waitingFor,
     waitingFor,
     assignee: undefined,

@@ -45,16 +45,6 @@ beforeEach(async () => {
   writeProjectSettings(repository)
 })
 
-/** 旧形式（`develop/tasks.json`）を書いてコミットする。 */
-async function commitOldFormatTasks(
-  cwd: string,
-  date: string,
-  hhmm: string,
-  tasks: readonly Record<string, unknown>[],
-): Promise<void> {
-  await commitAt(cwd, date, hhmm, "develop/tasks.json", JSON.stringify(tasks))
-}
-
 describe("readAchievement", { timeout: 60_000 }, () => {
   it("main ブランチが無いリポジトリでは「不明」", async () => {
     // init はしたが1つもコミットしていないので main が無い。
@@ -120,9 +110,9 @@ describe("readAchievement", { timeout: 60_000 }, () => {
     })
   })
 
-  it("運用の帳面だけを触ったコミットは数えない", async () => {
+  it("触ったファイルに依らずコミットを数える", async () => {
     await commitAt(repository, "2026-09-23", "10:00", "src/work.ts")
-    await commitOldFormatTasks(repository, "2026-09-23", "11:00", [])
+    await commitAt(repository, "2026-09-23", "11:00", "develop/tasks.json")
     await commitAt(repository, "2026-09-23", "12:00", "develop/progress.md")
 
     const achievement = known(
@@ -134,7 +124,7 @@ describe("readAchievement", { timeout: 60_000 }, () => {
       ),
     )
 
-    expect(achievement).toMatchObject({ commits: { kind: "known", count: 1 } })
+    expect(achievement).toMatchObject({ commits: { kind: "known", count: 3 } })
   })
 
   it("merge commit は数えない", async () => {
@@ -285,7 +275,7 @@ describe("readAchievement（Beads の閉じた課題）", () => {
   }
 
   it(
-    "その日のうちに閉じた課題を終えたタスクにし、前の日に閉じた・取り下げた・開いた課題は数えない",
+    "その日のうちに閉じた課題をラベルに依らず終えたタスクにし、前の日に閉じた・開いた課題は数えない",
     { timeout: 60_000 },
     async () => {
       await commitAt(repository, "2026-09-23", "10:00", "README.md")
@@ -307,7 +297,13 @@ describe("readAchievement（Beads の閉じた課題）", () => {
 
       expect(achievement).toMatchObject({
         commits: { kind: "known", count: 1 },
-        doneTasks: { kind: "known", items: [{ id: "T-002", summary: "今日済んだ" }] },
+        doneTasks: {
+          kind: "known",
+          items: [
+            { id: "t-002", summary: "今日済んだ" },
+            { id: "t-003", summary: "やめた" },
+          ],
+        },
       })
     },
   )
@@ -337,7 +333,7 @@ describe("readAchievement（Beads の閉じた課題）", () => {
       ),
     )
 
-    expect(achievement.milestones).toContainEqual({ kind: "task", count: 250, taskId: "T-250" })
+    expect(achievement.milestones).toContainEqual({ kind: "task", count: 250, taskId: "t-250" })
   })
 
   it(
@@ -361,7 +357,7 @@ describe("readAchievement（Beads の閉じた課題）", () => {
 
       expect(achievement.doneTasks).toEqual({
         kind: "known",
-        items: [{ id: "T-001", summary: "今日済んだ" }],
+        items: [{ id: "t-001", summary: "今日済んだ" }],
       })
     },
   )
@@ -415,11 +411,12 @@ describe("readAchievement（Beads の閉じた課題）", () => {
           doneTasks: {
             kind: "known",
             items: [
-              { id: "T-002", summary: "今日済んだ" },
-              { id: "T-003", summary: "今日済んだ2" },
+              { id: "t-002", summary: "今日済んだ" },
+              { id: "t-003", summary: "今日済んだ2" },
+              { id: "t-004", summary: "やめた" },
             ],
           },
-          graduations: [{ id: "T-002", registeredOn: "2026-09-01", days: 22 }],
+          graduations: [{ id: "t-002", registeredOn: "2026-09-01", days: 22 }],
           milestones: [],
         })
       },
@@ -442,7 +439,7 @@ describe("readAchievement（Beads の閉じた課題）", () => {
         })
         expect(calendar.days.find((day) => day.date === "2026-09-23")).toEqual({
           date: "2026-09-23",
-          count: 2,
+          count: 3,
         })
         expect(calendar.days.find((day) => day.date === TODAY)).toEqual({ date: TODAY, count: 0 })
       },
@@ -467,7 +464,7 @@ describe("readAchievement（Beads の閉じた課題）", () => {
 
         expect(achievement).toMatchObject({
           commits: { kind: "unknown" },
-          doneTasks: { kind: "known", items: [{ id: "T-001", summary: "今日済んだ" }] },
+          doneTasks: { kind: "known", items: [{ id: "t-001", summary: "今日済んだ" }] },
         })
       },
     )
@@ -548,7 +545,6 @@ describe("readCommitCalendar", { timeout: 60_000 }, () => {
     await commitAt(repository, "2026-09-10", "09:00", "middle-a.txt")
     await commitAt(repository, "2026-09-10", "10:00", "middle-b.txt") // 同じ日に2件
     await commitAt(repository, "2026-09-24", "09:00", "today.txt") // 今日
-    await commitOldFormatTasks(repository, "2026-09-10", "11:00", []) // 運用の帳面（数えない）
 
     const calendar = knownCalendar(
       await readCommitCalendar(repository, TODAY, createAchievementCache(repository)),

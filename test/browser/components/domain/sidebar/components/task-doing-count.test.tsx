@@ -29,8 +29,6 @@ describe("TaskDoingCount（柱の口の進行中の件数）", () => {
             id: "X-001",
             summary: "架空の着手中",
             status: "doing",
-            difficulty: undefined,
-            loopable: undefined,
             dependencies: [],
             waitingFor: [],
             assignee: undefined,

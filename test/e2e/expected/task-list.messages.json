@@ -41,27 +41,23 @@
         "kind": "known",
         "items": [
           {
-            "id": "T-001",
+            "id": "t-001",
             "summary": "架空のタスク（未着手）",
             "status": "todo",
-            "difficulty": "sonnet",
-            "loopable": "Y",
             "dependencies": [],
             "waitingFor": [],
-            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
+            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n",
             "location": {
               "kind": "none"
             }
           },
           {
-            "id": "T-002",
+            "id": "t-002",
             "summary": "架空のタスク（完了）",
             "status": "done",
-            "difficulty": "sonnet",
-            "loopable": "Y",
             "dependencies": [],
             "waitingFor": [],
-            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
+            "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n",
             "location": {
               "kind": "none"
             }

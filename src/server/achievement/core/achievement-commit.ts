@@ -3,20 +3,16 @@
 //
 // 会話の文面は扱わない。運ぶのはコミットの数だけ。
 
-import { isTaskLedgerPath } from "../../../shared/repository/task-file-ledger.ts"
-
-/** `git log` から読んだコミット1件（呼び出し側が `--name-only` の出力を割ったもの）。 */
+/** `git log` から読んだコミット1件。 */
 export type AchievementCommit = {
   readonly hash: string
   /** committer date（`%ct`）。エポック秒（`git log` の単位のまま。ミリ秒に直さない）。 */
   readonly committedAtEpochSeconds: number
-  readonly changedFiles: readonly string[]
 }
 
 /**
- * `[startEpochSeconds, endEpochSeconds)` に committer date が入り、変更したファイルがすべて運用の帳面のものではないコミットだけを数える。
+ * `[startEpochSeconds, endEpochSeconds)` に committer date が入るコミットを数える。
  * merge commit は `git log --no-merges` で既に除かれている前提。
- * 変更ファイルが0件（空コミット）は「すべて帳面」に含めて外す。
  */
 export function countAchievementCommits(
   commits: readonly AchievementCommit[],
@@ -35,8 +31,7 @@ export function achievementCommitsInRange(
   return commits.filter(
     (commit) =>
       commit.committedAtEpochSeconds >= startEpochSeconds &&
-      commit.committedAtEpochSeconds < endEpochSeconds &&
-      !commit.changedFiles.every(isTaskLedgerPath),
+      commit.committedAtEpochSeconds < endEpochSeconds,
   )
 }
 
@@ -67,7 +62,7 @@ export function commitMilestoneOf(
 export type AchievementCommitWithDate = AchievementCommit & { readonly localDateKey: string }
 
 /**
- * 暦ぶんのコミットを、日付キーごとのコミット数に畳む（運用の帳面だけを触ったコミットは除く）。
+ * 暦ぶんのコミットを、日付キーごとのコミット数に畳む。
  * merge commit は `git log --no-merges` で既に除かれている前提。
  * コミットが無い日はキーごと出てこない。
  */
@@ -76,9 +71,6 @@ export function achievementCommitCountsByDate(
 ): ReadonlyMap<string, number> {
   const counts = new Map<string, number>()
   for (const commit of commits) {
-    if (commit.changedFiles.every(isTaskLedgerPath)) {
-      continue
-    }
     counts.set(commit.localDateKey, (counts.get(commit.localDateKey) ?? 0) + 1)
   }
   return counts

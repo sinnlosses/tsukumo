@@ -67,7 +67,7 @@
                         {
                           "tag": "h2",
                           "children": [
-                            "/next-task T-002（架空の依頼）"
+                            "/next-task t-002（架空の依頼）"
                           ]
                         },
                         "1 / 1",
@@ -107,7 +107,7 @@
                                         "type": "button"
                                       },
                                       "children": [
-                                        "T-002"
+                                        "t-002"
                                       ]
                                     },
                                     {

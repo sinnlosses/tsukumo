@@ -2,22 +2,18 @@
 // タスク一覧は進捗管理のファイルで、利用者との会話内容とは別物。ここは会話の内容を一切扱わない。
 // ここはファイルI/Oを持たない。
 
-/** タスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。 */
+/** タスク一覧1件分。一覧は読み元が並べた順（作った時刻の順）のまま持つ（status ごとにまとめない）。 */
 export type TaskSummaryItem = {
   readonly id: string
   readonly summary: string
   readonly status: string | undefined
-  readonly difficulty: string | undefined
-  readonly loopable: string | undefined
   readonly dependencies: readonly string[]
   /**
    * 依存のうち、まだ済んでいないもの（`dependencies` の順）。止めるかどうかは読み元が判定して載せる。
    * 済んだタスクでは空。
    */
   readonly waitingFor: readonly string[]
-  /**
-   * 着手した作業ツリーの名前（Beads の `assignee`）。着手していない・持ち主の無い課題では `undefined`。
-   */
+  /** 担当（Beads の `assignee` の字のまま）。担当の無い課題では `undefined`。 */
   readonly assignee: string | undefined
   /** タスクの本文（Markdown）。本文が無い課題でも空文字列で持つ（`undefined` にしない）。 */
   readonly body: string
@@ -34,7 +30,7 @@ export type TaskLocation =
  * - `settings-invalid`: プロジェクトの設定が読めない（JSON が壊れている・形が違う）
  * - `off`: プロジェクトの設定が「タスク運用を使わない」（`tasks: "off"`）。Beads は読まない
  * - `loading`: 最初の見回りの結果がまだ届いていない（状態の初期値。見張りは1回目に必ず `loading` 以外を知らせる）
- * - `unknown`: 読めない（`.beads` が無い・`bd` が読めない）
+ * - `unknown`: 読めない（Beads が無い・読めない）
  * - `known`: 読めた
  */
 export type TaskSummaryResult =
@@ -49,7 +45,7 @@ export type TaskSummaryResult =
       readonly runPrompt: string
     }
 
-/** 終えたタスク1件（取り下げは入らない）。時刻はエポックミリ秒。 */
+/** 終えたタスク1件。時刻はエポックミリ秒。 */
 export type DoneTask = {
   readonly id: string
   readonly summary: string

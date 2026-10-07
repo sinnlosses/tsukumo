@@ -237,7 +237,7 @@ function achievementTaskCountClause(doneTasks: AchievementDoneTasks): string {
   return `終えたタスクは ${String(doneTasks.items.length)} 件。`
 }
 
-/** 「- T-xxx summary」の並び。20件を超えたら「ほか n 件」の1行に畳む。 */
+/** 「- <ID> summary」の並び。20件を超えたら「ほか n 件」の1行に畳む。 */
 function achievementTaskListLines(doneTasks: AchievementDoneTasks): readonly string[] {
   if (doneTasks.kind === "unknown" || doneTasks.items.length === 0) {
     return []

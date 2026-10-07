@@ -4,7 +4,7 @@
 // `bd` が読めないとき（`.beads` が無い・`bd` が無い）は「不明」にし、印は覚えず次の見回りで打ち直す。
 // タイムアウトしたときはその回を諦める。
 
-import { taskSummaryItemsOfBeadsIssues } from "../../../shared/repository/task-workflow.ts"
+import { taskSummaryItemsOfBeadsIssues } from "./beads-task.ts"
 import type { readBeadsIssues } from "./beads.ts"
 import type { TaskSource } from "./task-source.ts"
 

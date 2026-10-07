@@ -1,14 +1,12 @@
-// タスクのモーダルの左の一覧（`role="listbox"`）。行は1段目に ID・状態・ループの印・難易度、2段目に要約。
+// タスクのモーダルの左の一覧（`role="listbox"`）。行は1段目に ID・状態、2段目に要約。
 // 行を押すと選ぶだけで、頼まない（頼むのは操作の帯の「tsukumo に頼む」）。
 
-import { Repeat } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { Text } from "../../../components/ui/text/text.tsx"
 import type { TaskBoardRow } from "../domain/task-board-view.ts"
 import taskBoardStyles from "../task-board.module.css"
 import styles from "./task-board-list.module.css"
-import { TaskDifficulty } from "./task-difficulty.tsx"
 import { TaskState } from "./task-state.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
 
@@ -65,12 +63,6 @@ function TaskBoardOption(props: {
       <span className={taskBoardStyles["task-board-option-head"]}>
         <span className={styles["task-board-option-id"]}>{row.id}</span>
         <TaskState state={row.state} />
-        {row.loopable && (
-          <span className={styles["task-board-loop"]} role="img" aria-label="ループで回せる">
-            <Repeat size={12} strokeWidth={2} aria-hidden="true" />
-          </span>
-        )}
-        <TaskDifficulty difficulty={row.difficulty} />
       </span>
       <span className={styles["task-board-option-summary"]}>
         <TaskSummaryText parts={row.summary} />

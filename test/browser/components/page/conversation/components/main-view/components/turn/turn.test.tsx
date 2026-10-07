@@ -280,8 +280,6 @@ describe("Turn（目録の1行と見出し）", () => {
             id: "X-7",
             summary: "架空のタスク",
             status: "done",
-            difficulty: undefined,
-            loopable: undefined,
             dependencies: [],
             waitingFor: [],
             assignee: undefined,
