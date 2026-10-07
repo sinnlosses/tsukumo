@@ -32,7 +32,6 @@ import { wireHost } from "./wiring/host.ts"
 import { wireRepository } from "./wiring/repository.ts"
 import { wireSessionLaunch } from "./wiring/session-launch.ts"
 import { wireUsageReview } from "./wiring/usage-review.ts"
-import { wireVisit } from "./wiring/visit.ts"
 import { wireWelcomeGreeting } from "./wiring/welcome-greeting.ts"
 import type { WiringContext } from "./wiring/wiring-context.ts"
 
@@ -93,7 +92,6 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     },
   })
   const chat = wireChat(context, character)
-  const visit = wireVisit(context, config.quickVisit)
   const usageReview = wireUsageReview()
   const repository = wireRepository(context, options.diagnosticLog)
   const achievement = wireAchievement(context)
@@ -119,7 +117,6 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     readReportImage: (path) => readReportImageFile(context.cwd, path),
     ...launch.manager,
     ...chat.manager,
-    ...visit.manager,
     ...usageReview.manager,
     ...repository.manager,
   })
@@ -132,7 +129,6 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     },
     characterPack: characterPack.commands,
     chat: chat.commands,
-    visit: visit.commands,
     usageReview: usageReview.commands,
     host: host.commands,
     projectSettings: repository.commands,

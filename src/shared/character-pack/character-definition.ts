@@ -10,7 +10,6 @@ import { fromKeys, isPlainObject } from "remeda"
 import { optionalString } from "../utils/optional-string.ts"
 import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
 import { isDiaryFontFileName } from "./character-diary-font.ts"
-import { type CharacterVisit, toCharacterVisit } from "./character-visit.ts"
 import {
   EXPRESSIONS,
   type Expression,
@@ -73,11 +72,6 @@ export type CharacterDefinition = {
    * 読めない値は {@link toCharacterBackground} が undefined か帯の中の値に畳む。
    */
   readonly background: CharacterBackground | undefined
-  /**
-   * 客として訪ねてくるときにパックが持つもの。型と検証は {@link toCharacterVisit} が持つ。
-   * 任意で、持たないパックは客にならない。
-   */
-  readonly visit: CharacterVisit | undefined
   /**
    * 日記の本文に効かせる書体のファイル名。任意で、無いパックは `--font-serif`（端末の明朝体）のまま。
    * パックに同梱した書体ファイル（`woff2` / `woff` / `ttf` / `otf`）だけを指せる。
@@ -235,7 +229,6 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     miniCall: nonBlankString(value.miniCall),
     outfitAccents: toOutfitAccents(value.outfitAccents),
     background: toCharacterBackground(value.background),
-    visit: toCharacterVisit(value.visit),
     diaryFont: toDiaryFont(value.diaryFont),
   }
 }

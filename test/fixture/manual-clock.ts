@@ -1,10 +1,9 @@
-// 訪問の見張り（`createVisitWatch`）に渡す、手で進める時計。実際の時間を
-// 待たずに 90 秒のしきい値や行の間を越えるために、見張りのテストと session-manager のテストが使う。
+// 手で進める時計。実際の時間を待たずに、時計に掛けた起こしの間隔を越えるために使う。
 
-import type { VisitClock } from "../../src/server/visit/core/visit-watch.ts"
+import type { TaskSummaryClock } from "../../src/server/repository/adapter/task-summary.ts"
 
 export type ManualClock = {
-  readonly clock: VisitClock
+  readonly clock: TaskSummaryClock
   /** いまの時刻（ミリ秒。0 から始まる）。 */
   readonly now: () => number
   /** 時刻を `ms` 進め、そのあいだに来た起こしを時刻の順に呼ぶ（起こしが掛けた起こしも含む）。 */

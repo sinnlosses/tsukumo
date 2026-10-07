@@ -24,7 +24,6 @@ import { sessionDigestContract } from "./contract/session-digest.ts"
 import { sessionContract } from "./contract/session.ts"
 import { tokenUsageContract } from "./contract/token-usage.ts"
 import { usageReviewContract } from "./contract/usage-review.ts"
-import { visitContract } from "./contract/visit.ts"
 
 /** 手続きの口の経路（`POST /rpc/<機能>/<手続き>?t=<起動トークン>`）。 */
 export const RPC_PATH = "/rpc"
@@ -47,7 +46,6 @@ export const commandContract = {
   session: sessionContract,
   characterPack: characterPackContract,
   chat: chatContract,
-  visit: visitContract,
   usageReview: usageReviewContract,
   host: hostContract,
   projectSettings: projectSettingsContract,

@@ -113,7 +113,6 @@ function createRecordingPorts(
   const creates: CharacterCreate[] = []
   const deletes: CharacterDelete[] = []
   const remembered: SessionDefault[] = []
-  const rememberedVisitEnabled: boolean[] = []
   const forgottenLines: string[] = []
   const openedFiles: string[] = []
   const savedSettings: ProjectTasks[] = []
@@ -149,12 +148,6 @@ function createRecordingPorts(
         return Promise.resolve(writeResult === "written" ? REMEMBERED_LINES_EVENT : undefined)
       },
     },
-    visit: {
-      rememberVisitEnabled: (visitEnabled) => {
-        rememberedVisitEnabled.push(visitEnabled)
-        return { kind: "visit-enabled-changed", visitEnabled }
-      },
-    },
     usageReview: {
       dismissUsageProposal: (dismiss) => ({
         kind: "usage-proposal-dismissed",
@@ -180,7 +173,6 @@ function createRecordingPorts(
     creates,
     deletes,
     remembered,
-    rememberedVisitEnabled,
     forgottenLines,
     openedFiles,
     savedSettings,
@@ -845,18 +837,5 @@ describe("createCommandRouter（projectSettings。プロジェクトの設定を
 
     await expect(commands.projectSettings.save({ ...TASKS, mainBranch: "" })).rejects.toThrow()
     expect(savedSettings).toEqual([])
-  })
-})
-
-describe("createCommandRouter（visit）", () => {
-  // 歯車の「訪問」のオン・オフ（`docs/architecture/screen-design.md`「設定の置き場所」）。
-  it("visit.setEnabled を覚えさせ、姿に載せて配る", async () => {
-    const { commands, rememberedVisitEnabled, emitted } = startRouter()
-
-    const result = await commands.visit.setEnabled({ enabled: false })
-
-    expect(result).toEqual({ ok: true })
-    expect(rememberedVisitEnabled).toEqual([false])
-    expect(emitted).toEqual([{ kind: "visit-enabled-changed", visitEnabled: false }])
   })
 })

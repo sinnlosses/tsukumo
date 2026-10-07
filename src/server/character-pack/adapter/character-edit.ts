@@ -76,8 +76,8 @@ import {
   readCharacterPack,
 } from "./character-pack.ts"
 
-/** 表情ごとの立ち絵のほかに1つのパックが持てる画像（ミニ立ち絵1・背景1・顔1・訪問の peek 1）。 */
-const EXTRA_IMAGE_FILES_PER_PACK = 4
+/** 表情ごとの立ち絵のほかに1つのパックが持てる画像（ミニ立ち絵1・背景1・顔1）。 */
+const EXTRA_IMAGE_FILES_PER_PACK = 3
 
 /**
  * 1つのパックが持てる画像の数。表情の全体（{@link EXPRESSIONS}）＋ {@link EXTRA_IMAGE_FILES_PER_PACK}。
@@ -422,7 +422,7 @@ function withinImageFileLimit(dir: string, fileName: string): boolean {
 }
 
 /**
- * 定義が指している素材のファイル名（立ち絵・ミニ立ち絵・背景・顔・訪問の peek。重複なし・ディレクトリを跨がないものだけ）。
+ * 定義が指している素材のファイル名（立ち絵・ミニ立ち絵・背景・顔。重複なし・ディレクトリを跨がないものだけ）。
  * 写す先と消してよいものの両方がこの一覧で決まる。
  */
 function referencedImageFileNames(definition: CharacterDefinition | undefined): readonly string[] {
@@ -431,7 +431,6 @@ function referencedImageFileNames(definition: CharacterDefinition | undefined): 
     definition?.mini,
     definition?.background?.image,
     definition?.face,
-    definition?.visit?.peek,
   ].filter(isCharacterImageFileName)
   return [...new Set(names)]
 }

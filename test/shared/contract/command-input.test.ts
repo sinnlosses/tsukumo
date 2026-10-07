@@ -122,15 +122,6 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
     expect(parseInput("session.reflectAchievement", { date: "9/23" })).toBeUndefined()
     expect(parseInput("session.reflectAchievement", { date: "" })).toBeUndefined()
   })
-
-  it("visit.setEnabled は真偽値をそのまま受け付ける", () => {
-    expect(parseInput("visit.setEnabled", { enabled: false })).toEqual({ enabled: false })
-    expect(parseInput("visit.setEnabled", { enabled: true })).toEqual({ enabled: true })
-  })
-
-  it("visit.setEnabled は真偽値でない enabled を拒む", () => {
-    expect(parseInput("visit.setEnabled", { enabled: "yes" })).toBeUndefined()
-  })
 })
 
 describe("コマンドの契約の入力（キャラクターの見た目）", () => {

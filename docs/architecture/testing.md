@@ -289,7 +289,7 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
 
 **まだ無いシナリオ**: 素の `<textarea>` での `/` の補完（`opening` のコマンド一覧に打つ。エディタの側は `markdown-composer`）・`@` の補完（一時の cwd に手書きの
 ファイルを置く足場が要る）・API の不調の入力欄の行の見た目（`api-failure`・`rate-limit`。下段が1段に収まることは `turn-failure` が判定する。再試行中の帯の2行目と反応の吹き出しは部品の単体が持つ）・書き終わりの知らせ
-（`diary-written`）・訪問の出入り（`visit-long-tool`・`visit-background`。メッセージの列だけ）・確認の
+（`diary-written`）・確認の
 モーダルと日記帳の見開きといまの作業の失敗（疑似セッションに場面が足りない）。成果の画面・キャラクター
 画面・使用量の画面は、一時の cwd とホームに手書きの材料を置く足場ができてから足す。
 
@@ -473,17 +473,6 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 `diary-book` は**件専用の隔離ホーム**（`--out` の下の `home/`）を使う——`HomeSetup`
 （`scripts/capture-catalog.ts`）が、消せるキャラクターパック（同梱の `chou` を別名でコピー）や
 架空の日記を、撮る前にそこへ書く。**既定のホーム（利用者の `~/.tsukumo/`）には触らない。**
-
-**訪問（`docs/requirements.md` 4.13「訪問」）の出入りを確かめるときは、`TSUKUMO_VISIT_QUICK=1`
-を添えて疑似セッションの場面 `visit-long-tool` か `visit-background` を使う**（しきい値が 5 秒に
-縮む。添えないと 90 秒待つ）。画面にはまだ描かないので、見るのは状態だけ——開発者ツールの
-Network タブで `/ws` のフレームを見るか、接続し直して `hello` の `state.visit` を読む。
-`visit-long-tool` はツールが 30 秒走り、5 秒ほどで `visit-started` が届き、2 秒ごとに
-`visit-line-advanced` が進んで、台本を言い終えると `visit-ended`（`script-finished`）になる。同じ
-待ちのあいだに二度は来ない。`visit-background` は背景のタスクだけが動く待ちで来て、9 秒で待ちが
-終わると台本の途中でも `visit-ended`（`wait-over`）になる。訪問中に入力欄から依頼を送ると
-`request` で帰ることも、ここで確かめられる。客は同梱の `chou` で、**ホームに `visit` の無い
-`chou` があると来ない**（ホームのパックが同梱を覆うため）。
 
 **fake driver の質問の場面を Playwright で自動操作すると、`turnInProgress` が解けないまま残る
 ことがある**（再現条件は分かっておらず、手で触ったときには起きていない。操作側の問題の

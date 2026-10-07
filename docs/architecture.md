@@ -153,7 +153,6 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `system-prompt/`     | `systemPrompt` の append の組み立てと、セリフの間合いの規約                                  |
 | `chat/`              | 雑談モード。作法・記憶・話しかけ・アーカイブ・要約・覚えたこと・定着                         |
 | `character-pack/`    | キャラクターパックの選択・読み込み・画面からの編集                                           |
-| `visit/`             | 訪問。契機・来客・台本・見張り                                                               |
 | `diary/`             | 日記。`diary` ツールと保存                                                                   |
 | `achievement/`       | 成果。コミットは `main` の履歴、終えたタスクは Beads の閉じた課題から数える                  |
 | `usage-review/`      | 見直し。2つのツール・前回の結果・見送り                                                      |
@@ -183,7 +182,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   `view-server` → `session` → `session-driver` → `view-server`）が、どちらも1本が
   `adapter → 別の機能の core` で層の辺と同じ向きなので、ファイルの単位では輪にならない
 - **束ねる機能は `session/` の1つ。** `session-manager.ts` は外の世界に触らないので `core` だが、
-  各機能の判断（訪問の見張り・日記・トークン消費・雑談のアーカイブ）を読んで1つのセッションに
+  各機能の判断（日記・トークン消費・雑談のアーカイブ）を読んで1つのセッションに
   まとめる。**外の世界の実装を選んで渡すのは配線（`src/` 直下の `session-start.ts` と `src/wiring/`）**、
   渡されたものを使って順序と状態を持つのが `session/`、という境目
 - **セッションの配線は機能ごとに組み立てる。** `src/wiring/<機能>.ts` の `wire<機能>` が、その機能の
@@ -202,17 +201,17 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 - **機能を足すときは、検査の機能の一覧と下の表に足す**（知らない機能のディレクトリと、
   `core/` `adapter/` の外に置いたファイルは `test/architecture.test.ts` が落とす）
 
-| 機能（import する側） | 読んでよい機能                                                                                                                                           | いまある辺の層                                                                                                                                                                                            |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session`             | `session-driver` `chat` `visit` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                         | core → core だけ（`session-manager` → `report-usage` `report-image-shelf`）                                                                                                                               |
-| `system-prompt`       | `session-driver` `chat` `report`                                                                                                                         | core → core だけ                                                                                                                                                                                          |
-| `view-server`         | `session` `achievement`                                                                                                                                  | adapter → core（`session-socket` / `rpc-guard` → `command-session`）・adapter → adapter（`server` → `main-history`）                                                                                      |
-| `chat`                | `session-driver` `character-pack`                                                                                                                        | core → core と adapter → core（駆動の契約にある `PersonaMemory` `ChatSummary` などと、`chat-archive-port`）・adapter → adapter（`persona-memory` / `chat-summary` → `character-pack` / `character-edit`） |
-| `context-usage`       | `session-driver`                                                                                                                                         | core → core（駆動の契約）                                                                                                                                                                                 |
-| `session-driver`      | `chat` `report` `usage-review` `view-server`                                                                                                             | core → core（`report-review` `port-resolution`）・adapter → core（各ツールの判断）                                                                                                                        |
-| `diary`               | `character-pack` `repository` `session-driver`                                                                                                           | adapter → adapter・adapter → core（`sdk-diary` → `session-driver/core/tsukumo-tool-name.ts` の `tsukumoToolFullName`）                                                                                    |
-| `achievement`         | `repository`                                                                                                                                             | adapter → adapter（`main-history` → `git` `beads`）                                                                                                                                                       |
-| そのほか              | —（葉。`report` `visit` `usage-review` `token-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation`） | —                                                                                                                                                                                                         |
+| 機能（import する側） | 読んでよい機能                                                                                                                                   | いまある辺の層                                                                                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                         | core → core だけ（`session-manager` → `report-usage` `report-image-shelf`）                                                                                                                               |
+| `system-prompt`       | `session-driver` `chat` `report`                                                                                                                 | core → core だけ                                                                                                                                                                                          |
+| `view-server`         | `session` `achievement`                                                                                                                          | adapter → core（`session-socket` / `rpc-guard` → `command-session`）・adapter → adapter（`server` → `main-history`）                                                                                      |
+| `chat`                | `session-driver` `character-pack`                                                                                                                | core → core と adapter → core（駆動の契約にある `PersonaMemory` `ChatSummary` などと、`chat-archive-port`）・adapter → adapter（`persona-memory` / `chat-summary` → `character-pack` / `character-edit`） |
+| `context-usage`       | `session-driver`                                                                                                                                 | core → core（駆動の契約）                                                                                                                                                                                 |
+| `session-driver`      | `chat` `report` `usage-review` `view-server`                                                                                                     | core → core（`report-review` `port-resolution`）・adapter → core（各ツールの判断）                                                                                                                        |
+| `diary`               | `character-pack` `repository` `session-driver`                                                                                                   | adapter → adapter・adapter → core（`sdk-diary` → `session-driver/core/tsukumo-tool-name.ts` の `tsukumoToolFullName`）                                                                                    |
+| `achievement`         | `repository`                                                                                                                                     | adapter → adapter（`main-history` → `git` `beads`）                                                                                                                                                       |
+| そのほか              | —（葉。`report` `usage-review` `token-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation`） | —                                                                                                                                                                                                         |
 
 #### コマンドの受け手と手続きの置き方
 
@@ -282,8 +281,8 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
    ファイルがある（`view-server/adapter/session-socket.ts` → `shared/view-server/`）・ファイル名が
    機能の名前で始まる（`report-block.ts` → `shared/report/`）・サーバでその値を組み立てる（外から来た
    値を検証して型にする）のがその機能（`api-trouble.ts` は SDK のメッセージを畳む `session-driver`）
-2. 手がかりが食い違ったら、**shared の機能どうしの辺が輪にならないほう**（`character-visit.ts` は
-   `character-definition.ts` が読むので、`visit` ではなく `character-pack`）
+2. 手がかりが食い違ったら、**shared の機能どうしの辺が輪にならないほう**（`character-diary-font.ts` は
+   `character-definition.ts` が読むので、`diary` ではなく `character-pack`）
 3. 1に当たらず、`SessionState` / `SessionEvent` から導くだけのものは `session/`
 4. tsukumo の語彙を名乗らない道具は `utils/`（歯止めの3つを満たすもの）、残る封筒と束は直下
 
@@ -628,13 +627,13 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
   （`@anthropic-ai/claude-agent-sdk`）だけは、1つの境界が1ファイルに収まらない**（駆動の本体・
   tsukumo のツール・セッションの一覧と印・コンテキストの内訳）ので、**import してよい先を
   ファイル名で決める: 機能の `adapter/` 直下の `sdk-` で始まるファイルだけ**（いまは
-  `session-driver/` と `visit/`）。一覧ではなく
+  `session-driver/`・`chat/`・`diary/`・`recommendation/`）。一覧ではなく
   名前で決めるのは、ファイルを足しても検査を直さずに済み、名前で SDK の境界を名乗らずに import
   すれば `test/architecture.test.ts` が落とすから。`adapter/sdk/` のようなディレクトリに切らない
   のは、`adapter/` の直下が境界の並びで、その下の段は境界を名乗らない `lib/` だけと決めてある
   から（「`lib/` と `utils/` に置く基準」）。**SDK の境界を1つの機能にまとめない**
-  のは、訪問の台本を書かせる使い捨ての `query()` が訪問の判断とだけ組になっていて、駆動の側に
-  置くと訪問を追うのに2つの機能を開くことになるから
+  のは、日記を書かせる使い捨ての `query()` が日記の判断とだけ組になっていて、駆動の側に
+  置くと日記を追うのに2つの機能を開くことになるから
 - **原則4**: **キャラクターの中身をコードに書かない。** 立ち絵のパス、表情と hook イベントの
   対応、モデルと衣装の対応は定義ファイル側に置く。コードは定義を解釈するだけにする
 - **原則5**: 1ファイルにまとめるか分けるかは、行数でも関数の数でもなく
@@ -819,7 +818,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 補完の候補）は `main-view.ts` / `command-suggestion.ts` に分けてある。状態を持つのはサーバ側の `session-manager` と
 ブラウザ側（`browser/stores/session.ts` の zustand の store）だけで、「イベント1件でどう変わるか」はすべてここのテストで守れる。
 
-**1つの機能だけが動かす欄の畳み方は、その機能の `shared/<機能>/` に置く**（訪問の `applyVisitEvent` の形）。
+**1つの機能だけが動かす欄の畳み方は、その機能の `shared/<機能>/` に置く**（日記の `applyDiaryEvent` の形）。
 当てるのは、その機能のイベントだけで動き、値の置き換えより多い判断を持つ欄の組だけで、値を写すだけの
 イベントと、記録・ターン・セリフ・API の不調の芯は `session-state.ts` に残す。
 
@@ -867,7 +866,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 サーバ側は機能ごとのディレクトリの中が `core/`（判断）と `adapter/`（外の世界に触る境界）に
 分かれている（「サーバの機能と、機能どうしの辺」）。各ファイルの持ち物はそのファイルの冒頭と
 doc コメントが正典で、機能の数え方・契機・上限は `docs/requirements.md`（成果と日記は 4.11、
-見直しは 4.12、訪問は 4.13）。ここには、1ファイルを読んでも分からない横断の規則だけを置く。
+見直しは 4.12）。ここには、1ファイルを読んでも分からない横断の規則だけを置く。
 
 **境目の基準は「`shared` の語彙で書けるか / SDK の語彙を名乗るか」。** 駆動の契約
 （`SessionDriver` と `SessionDriverOptions`）は `session-driver/core/session-driver.ts`、SDK の実装は
@@ -878,7 +877,7 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 **SDK に触るファイルは、SDK のどの口に触るかで分ける**（import してよい先は
 原則3）。駆動の `session-driver/adapter/` に `query()`・ツール・セッションの一覧・
 `/context` の内訳の4つがあり、`sdk-driver.ts` 以外を呼ぶのは駆動と配線だけ。使い捨ての `query()` は、
-それを使う判断と同じ機能に置く（`sdk-visit-script.ts` / `sdk-diary.ts` / `sdk-chat-consolidation.ts`）。
+それを使う判断と同じ機能に置く（`sdk-diary.ts` / `sdk-chat-consolidation.ts`）。
 
 - **`sdk-message.ts` は SDK の型を import しない。** 依存を機能の `adapter/` 直下の `sdk-` で始まる
   ファイルに閉じるため、届くメッセージは `unknown` で受けて検証する（外部由来の値なので、どのみち構造は
@@ -898,7 +897,7 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 
 **代のあいだだけ意味のある勘定は、駆動1代ぶんの持ち物（`SessionGeneration`）に集める。**
 起こし直し（`restart`）はそれを丸ごと作り直すことで、勘定を1つずつ空へ戻す行を持たない
-（足した勘定を `restart` へ戻し忘れても型は落とさないため）。配る束・トークンの累計・訪問の見張り・
+（足した勘定を `restart` へ戻し忘れても型は落とさないため）。配る束・トークンの累計・
 日記の書き手は代をまたがず、コンテキストの内訳を書いた印と依頼の原寸の棚だけがまたぐ。代を
 閉じたあとに届いたイベントは捨てる。
 
@@ -920,13 +919,13 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 - **`speak` のセリフは MCP の handler ではなく `assistant` メッセージの変換から取り出す。**
   handler は `"ok"` を返すだけにして、イベントの流れを1本に保つ
 
-**使い捨ての `query()`**（訪問の台本・日記・雑談の定着）は、会話の駆動と次の形で切り離す:
+**使い捨ての `query()`**（日記・雑談の定着）は、会話の駆動と次の形で切り離す:
 
 - `systemPrompt` は文字列で丸ごと置き換え、組み込みのツール・設定・セッションの保存を持たせない
 - 使用量はトークン消費の記録に混ぜない（記録は会話の `query()` の累計の差で、混ぜると差が崩れる）
 - 疑似セッション（`TSUKUMO_DRIVER=fake`）では起こさない（書き手の出どころで「起こさない」を選ぶ）
 - 書く口は起こせない・中断・時間切れ・形の崩れでも reject せず、「作れた／作れなかった」に畳む
-  （常駐プロセスは落ちない）。訪問の台本と日記の書き手は代の持ち物で、代を閉じると中断する
+  （常駐プロセスは落ちない）。日記の書き手は代の持ち物で、代を閉じると中断する
 - 渡した文面も受け取ったものもログに書かない（「会話内容と安全」）
 
 ## セッションの復元と複数化

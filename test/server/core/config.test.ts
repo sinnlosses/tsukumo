@@ -13,7 +13,6 @@ describe("readConfig", () => {
       host: "orca",
       fakeScene: undefined,
       newSession: false,
-      quickVisit: false,
       claudeConfigDir: undefined,
       fixedClock: undefined,
       inheritedEnv: {},
@@ -30,7 +29,6 @@ describe("readConfig", () => {
       TSUKUMO_HOST: " none ",
       TSUKUMO_FAKE_SCENE: " question-multi ",
       TSUKUMO_NEW_SESSION: "1",
-      TSUKUMO_VISIT_QUICK: "1",
       CLAUDE_CONFIG_DIR: " /somewhere/claude ",
     }
 
@@ -43,7 +41,6 @@ describe("readConfig", () => {
       host: "none",
       fakeScene: "question-multi",
       newSession: true,
-      quickVisit: true,
       claudeConfigDir: "/somewhere/claude",
       fixedClock: undefined,
       // 子プロセスへ引き継ぐ分は、読んだ環境をそのまま持つ

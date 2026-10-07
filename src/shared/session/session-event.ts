@@ -24,7 +24,6 @@ import type { RateLimit } from "../session-driver/rate-limit.ts"
 import type { TurnOutcome } from "../session-driver/turn-failure.ts"
 import type { ModelTokenUsage, StepTokenUsage, TurnUsageScope } from "../token-usage/token-usage.ts"
 import type { UsageReviewEvent } from "../usage-review/usage-review.ts"
-import type { VisitEvent } from "../visit/visit.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import type { SessionDefault } from "./session-default.ts"
 import type { WorkPlanClosing } from "./work-plan.ts"
@@ -388,11 +387,6 @@ export type SessionEvent =
    */
   | { readonly kind: "session-default-changed"; readonly sessionDefault: SessionDefault }
   /**
-   * 歯車の「訪問」のオン・オフが変わった。`visit.setEnabled` で書き換えるたびに流れる。
-   * いま動いているセッションに即座に効く（オフのあいだは客が来ず、訪問中にオフにしたらその場で帰る）。
-   */
-  | { readonly kind: "visit-enabled-changed"; readonly visitEnabled: boolean }
-  /**
    * claude 自身の圧縮（`/compact`）が起きた（SDK の `system` / `compact_boundary`）。
    * 数値（`compact_metadata` の `pre_tokens` / `post_tokens` / `duration_ms`）は運ばない（画面に出さないものを契約に入れない）。
    * 画面に出すのは雑談のログの細い線1本だけで、文言は添えない。
@@ -423,8 +417,6 @@ export type SessionEvent =
   | UsageReviewEvent
   /** 振り返りの進みを動かすイベント。 */
   | DiaryEvent
-  /** 訪問の出入りと台本の進み（出し手はサーバの訪問の見張り）。 */
-  | VisitEvent
 
 /** 時刻を打ったイベント1件。時刻はイベントの発生側（サーバ）が決める（ブラウザ側で読んだ時計を畳み込みに渡さない）。 */
 export type StampedEvent = {

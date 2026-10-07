@@ -75,7 +75,6 @@ import {
   type TokenUsageLog,
   type TokenUsageRecorder,
 } from "../../token-usage/core/token-usage.ts"
-import { createVisitWatch, type VisitPorts, type VisitWatch } from "../../visit/core/visit-watch.ts"
 import type { CommandSession } from "./command-session.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
 import type { SessionLaunchRequest } from "./session-launch.ts"
@@ -153,11 +152,6 @@ export type SessionManagerOptions = {
    */
   readonly writePreviousUsageReview: (reviewedAt: number, findings: UsageReviewFindings) => void
   /**
-   * 訪問の見張りに渡す口（しきい値・時計・客の候補・乱数。`VisitPorts`）。
-   * 見張りは代ごとに1つ作る（{@link GenerationTally.visit}）。
-   */
-  readonly visit: VisitPorts
-  /**
    * 作業ディレクトリのタスク一覧の見張りを起こす。起こし直しをまたいで1つだけ動き、閉じるまで続く。
    * 流すイベントは、そのときの代の駆動のイベントと同じ扱いで畳む。
    */
@@ -218,8 +212,6 @@ type GenerationTally = {
    * まだ起き上がっていない・起こせなかったときは `undefined`。
    */
   readonly liveDriver: () => SessionDriver | undefined
-  /** 訪問の見張り（待ちの勘定と掛けた時計。起こし直すと一緒に捨てる）。 */
-  readonly visit: VisitWatch
   /** 振り返りの書き手を中断する信号。起こし直しで代を閉じたら、書いている最中の問い合わせも中断する。 */
   readonly diarySignal: AbortSignal
   /** そのターンで最後に届いた `report` の結論を預かる入れ物（仕事のときだけ使う）。 */
@@ -414,9 +406,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     if (event.kind === "turn-finished") {
       startConsolidation(state.character?.pack)
     }
-    // 訪問の出入りを決める。
-    // 見張りが出した訪問のイベントもこの受け口へ戻ってくる（`createVisitWatch`）。
-    tally.visit.observe(event, at)
   }
 
   /**
@@ -486,14 +475,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       }),
       tokenUsage: createTokenUsageRecorder(options.tokenUsageLog),
       liveDriver: () => live,
-      visit: createVisitWatch({
-        ...options.visit,
-        now: options.now,
-        readState: () => state,
-        emit: (event) => {
-          receiveIfCurrent(event)
-        },
-      }),
       diarySignal: diaryAbort.signal,
       pendingConclusion: createPendingConclusion(),
     }
@@ -505,7 +486,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
     /**
      * 前のセッションの記録を組み直した再生を、まとめて1回で畳む。
-     * 再生は畳むだけで、アーカイブ・トークン・コンテキスト・report の記録・訪問・定着には数えない。
+     * 再生は畳むだけで、アーカイブ・トークン・コンテキスト・report の記録・定着には数えない。
      * 時刻は1つだけ読む（記録の側は末尾の `history-restored` が「時刻が分からない」に書き換える）。
      *
      * 束には積まず、配るのは畳んだあとの姿の `hello`。束に残っていたぶんはその姿に入っているので捨てる。
@@ -552,7 +533,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       close: () => {
         live?.close()
         tally.batch.discard()
-        tally.visit.close()
         diaryAbort.abort()
       },
       announce: () => {

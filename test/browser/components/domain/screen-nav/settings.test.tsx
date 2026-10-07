@@ -12,7 +12,7 @@ import { putSession, type CommandSpy } from "../../../session-store.ts"
 
 // 帯の右端の歯車で開く設定（docs/architecture/screen-design.md「設定の置き場所」「画面のナビゲーション」）。
 // いまここにある群は「画面の色」・
-// 「新しいセッションの既定」・「書き上げる演出の速さ」・「訪問」の4つ。
+// 「新しいセッションの既定」・「書き上げる演出の速さ」の3つ。
 // 保存の仕方は `saveAppearanceColorOverride` のままなので、鍵も検証も
 // 同じものを見ている。演出の速さの保存は `saveRevealSpeed`（同じ鍵）。
 
@@ -159,7 +159,7 @@ describe("設定の歯車（帯の右端）", () => {
     expect(document.activeElement).toBe(document.body)
   })
 
-  it("地・領域・字の色の3つ、新しいセッションの既定の3つ、演出の速さの1つ、訪問の1つ、タスク運用の1つを出す", () => {
+  it("地・領域・字の色の3つ、新しいセッションの既定の3つ、演出の速さの1つ、タスク運用の1つを出す", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
@@ -175,7 +175,6 @@ describe("設定の歯車（帯の右端）", () => {
       "effort",
       "許可モード",
       "速さ",
-      "客の出入り",
       "タスク運用",
     ])
   })
@@ -443,35 +442,6 @@ describe("設定の歯車（書き上げる演出の速さ）", () => {
     fireEvent.click(gear())
 
     expect(defaultSelect("速さ").value).toBe("fast")
-  })
-})
-
-// 訪問のオン・オフ（docs/architecture/screen-design.md「設定の置き場所」「画面のナビゲーション」）。覚えるのはいま動いているセッションの
-// 値だけ（ディスクには覚えない）ので、ここが見るのは「届いた値をそのまま出す」「選ぶと
-// `visit.setEnabled` を送る」の2つ。
-describe("設定の歯車（訪問）", () => {
-  it("届いた値をそのまま出す（既定は「する」）", () => {
-    renderScreenNav()
-    fireEvent.click(gear())
-
-    expect(defaultSelect("客の出入り").value).toBe("on")
-  })
-
-  it("visitEnabled が false なら「しない」を出す", () => {
-    renderScreenNav({ visitEnabled: false })
-    fireEvent.click(gear())
-
-    expect(defaultSelect("客の出入り").value).toBe("off")
-  })
-
-  it("「しない」を選ぶと visit.setEnabled を送る", () => {
-    const sent: unknown[] = []
-    renderScreenNav({ visitEnabled: true }, (command) => sent.push(command))
-    fireEvent.click(gear())
-
-    fireEvent.change(defaultSelect("客の出入り"), { target: { value: "off" } })
-
-    expect(sent).toEqual([{ procedure: "visit.setEnabled", enabled: false }])
   })
 })
 

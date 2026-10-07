@@ -19,7 +19,6 @@ import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Select } from "../../../ui/select/select.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { TASK_OPERATION_LABELS } from "../domain/task-operation-label.ts"
-import { VISIT_TOGGLE_LABELS } from "../domain/visit-toggle-label.ts"
 import type { ScreenNavSettings } from "../hooks/use-settings.ts"
 import shellStyles from "../screen-nav.module.css"
 import { PROJECT_SETTINGS_LABEL } from "./project-settings-dialog.tsx"
@@ -41,11 +40,6 @@ const PERMISSION_MODE_OPTIONS = PERMISSION_MODE_LABELS.filter(([value]) =>
 ).map(([value, label]) => ({ value, label }))
 
 const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]) => ({
-  value,
-  label,
-}))
-
-const VISIT_TOGGLE_OPTIONS = VISIT_TOGGLE_LABELS.map(([value, label]) => ({
   value,
   label,
 }))
@@ -259,38 +253,6 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               title={undefined}
               options={REVEAL_SPEED_OPTIONS}
               onChange={settings.revealSpeed.onChange}
-            />
-          </HStack>
-          <Text
-            element="p"
-            size="label"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["screen-nav-settings-heading"]}
-          >
-            訪問
-          </Text>
-          <HStack
-            element="div"
-            name={{ kind: "none" }}
-            ref={undefined}
-            gap="lg"
-            align="center"
-            justify="between"
-            wrap="nowrap"
-            className={styles["screen-nav-settings-row"]}
-          >
-            <label htmlFor={`${fieldId}-visit-enabled`}>客の出入り</label>
-            <Select
-              id={`${fieldId}-visit-enabled`}
-              ariaLabel="訪問のオン・オフ"
-              frameClassName={styles["screen-nav-settings-select-frame"]}
-              className={styles["screen-nav-settings-select"]}
-              value={settings.visit.value}
-              disabled={false}
-              title={undefined}
-              options={VISIT_TOGGLE_OPTIONS}
-              onChange={settings.visit.onChange}
             />
           </HStack>
           <HStack

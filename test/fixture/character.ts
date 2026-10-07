@@ -106,7 +106,6 @@ export function characterDefinition(
     miniCall: undefined,
     outfitAccents: outfitAccents(),
     background: undefined,
-    visit: undefined,
     diaryFont: undefined,
     ...overrides,
   }

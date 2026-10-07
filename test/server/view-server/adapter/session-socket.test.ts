@@ -100,7 +100,6 @@ async function start(openFileResult = true): Promise<Started> {
         deleteCharacter: unexpected,
       },
       chat: { forgetRememberedLine: unexpected },
-      visit: { rememberVisitEnabled: unexpected },
       usageReview: { dismissUsageProposal: unexpected },
       host: {
         openFile: (path) => {

@@ -45,10 +45,6 @@ import type {
   TokenUsageEntry,
   TokenUsageLog,
 } from "../../../../src/server/token-usage/core/token-usage.ts"
-import type { VisitGuest } from "../../../../src/server/visit/core/visit-guest.ts"
-import { VISIT_TIMING } from "../../../../src/server/visit/core/visit-timing.ts"
-import type { VisitPorts } from "../../../../src/server/visit/core/visit-watch.ts"
-import type { VisitScript } from "../../../../src/shared/character-pack/character-visit.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import {
   type ContextUsageReport,
@@ -71,7 +67,6 @@ import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   MAX_SESSION_STATE_TURNS,
-  type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
 import type {
   ModelTokenUsage,
@@ -82,7 +77,6 @@ import {
   type PreviousUsageReview,
   usageProposalKey,
 } from "../../../../src/shared/usage-review/usage-review.ts"
-import { VISIT_LINE_MIN_INTERVAL_MS } from "../../../../src/shared/visit/visit-line-timing.ts"
 import {
   characterChangedEvent,
   shownOutfitAccents,
@@ -91,7 +85,6 @@ import {
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 import { createCommandClient } from "../../../fixture/command-client.ts"
 import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.ts"
-import { createManualClock } from "../../../fixture/manual-clock.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import {
   createStubDriver,
@@ -122,15 +115,6 @@ const NOOP_REPORT_USAGE_LOG: ReportUsageLog = { append: () => {} }
 /** 質問の使われ方の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_QUESTION_USAGE_LOG: QuestionUsageLog = { append: () => {} }
 
-/** 訪問を気にしないテストに渡す口（客の候補が居ないので来ない。時計は起こさない）。 */
-const NO_VISIT_PORTS: VisitPorts = {
-  timing: VISIT_TIMING,
-  clock: { after: () => () => {} },
-  listGuests: () => [],
-  random: () => 0,
-  scriptSource: { kind: "pack-only" },
-}
-
 /** タスク一覧を気にしないテストに渡す見張り（何も流さない）。 */
 const NO_TASK_WATCH = (): SessionWatcher => ({ close: () => {}, setWatching: () => {} })
 
@@ -154,7 +138,6 @@ type FlatCommandPorts = Omit<
   CommandRouterPorts["session"] &
     CommandRouterPorts["characterPack"] &
     CommandRouterPorts["chat"] &
-    CommandRouterPorts["visit"] &
     CommandRouterPorts["usageReview"] &
     CommandRouterPorts["host"],
   "promptImageShelf"
@@ -169,7 +152,6 @@ function defaultSessionManagerOptions() {
     batchIntervalMs: BATCH_MS,
     chatConsolidation: NO_CHAT_CONSOLIDATION,
     watchTasks: NO_TASK_WATCH,
-    visit: NO_VISIT_PORTS,
     diary: NO_DIARY_WRITER,
     chatArchive: NOOP_CHAT_ARCHIVE,
     project: FICTIONAL_PROJECT,
@@ -186,7 +168,6 @@ function defaultSessionManagerOptions() {
       kind: "session-default-changed",
       sessionDefault,
     }),
-    rememberVisitEnabled: (visitEnabled) => ({ kind: "visit-enabled-changed", visitEnabled }),
     editCharacter: () => Promise.resolve(undefined),
     createCharacter: () => Promise.resolve(undefined),
     deleteCharacter: () => Promise.resolve(undefined),
@@ -217,7 +198,6 @@ function createSessionManager(
     createCharacter,
     deleteCharacter,
     forgetRememberedLine,
-    rememberVisitEnabled,
     dismissUsageProposal,
     openFile,
     ...rest
@@ -233,7 +213,6 @@ function createSessionManager(
       },
       characterPack: { editCharacter, createCharacter, deleteCharacter },
       chat: { forgetRememberedLine },
-      visit: { rememberVisitEnabled },
       usageReview: { dismissUsageProposal },
       host: { openFile },
       projectSettings: { save: () => Promise.resolve(true) },
@@ -2351,171 +2330,5 @@ describe("タスク一覧の見張り", () => {
     expect(laterHello?.type === "hello" ? laterHello.state.tasks : undefined).toEqual({
       kind: "unknown",
     })
-  })
-})
-
-describe("訪問", () => {
-  const SCRIPT: VisitScript = [
-    { speaker: "guest", expression: "curious", text: "架空の客の一言目" },
-    { speaker: "host", expression: "sad", text: "架空のあるじの返事" },
-    { speaker: "guest", expression: "bored", text: "架空の客の二言目" },
-  ]
-  const GUESTS: readonly VisitGuest[] = [
-    {
-      pack: "fictional-guest",
-      visit: { peek: undefined, farewell: ["架空の帰りの一言"], scripts: [SCRIPT] },
-    },
-  ]
-
-  /** 手で進める時計で訪問を回す session-manager（`guests` が空なら客は来ない）。 */
-  function startManagerWithVisit(guests: readonly VisitGuest[]) {
-    const manual = createManualClock()
-    const drivers: StubDriver[] = []
-    const manager = createSessionManager({
-      now: manual.now,
-      visit: {
-        timing: VISIT_TIMING,
-        clock: manual.clock,
-        listGuests: () => guests,
-        random: () => 0,
-        scriptSource: { kind: "pack-only" },
-      },
-      launchSession: (onEvent) => {
-        const stub = createStubDriver()
-        stub.attach(onEvent)
-        drivers.push(stub)
-        return Promise.resolve(stub.driver)
-      },
-    })
-    const emit = (event: SessionEvent): void => {
-      drivers.at(-1)?.emit(event)
-    }
-    /** いまの snapshot（接続し直したタブが受け取る `hello` の状態）。 */
-    const snapshot = (): SessionState => {
-      const frames: ServerFrame[] = []
-      manager.subscribe((frame) => frames.push(frame))()
-      const [hello] = frames
-      if (hello?.type !== "hello") {
-        throw new Error("hello が届いていない")
-      }
-      return hello.state
-    }
-    return { manager, emit, snapshot, advance: manual.advance, pendingTimers: manual.pending }
-  }
-
-  /** ツールを走らせたまま、訪問が来るしきい値まで待つところまで進める。 */
-  function waitForVisit(run: ReturnType<typeof startManagerWithVisit>): void {
-    run.emit(CHARACTER_EVENT)
-    run.emit({ kind: "request", text: "架空の依頼", images: [] })
-    run.emit({ kind: "speech", text: "架空の前のセリフ", expression: "proud" })
-    run.emit({
-      kind: "tool-started",
-      toolUseId: "fictional-tool-1",
-      name: "Bash",
-      input: { command: "fictional-long-command" },
-      parentToolUseId: undefined,
-    })
-    run.advance(VISIT_TIMING.waitMs)
-  }
-
-  it("接続し直したタブの snapshot には、いま出している台本の行がそのまま載る", async () => {
-    const run = startManagerWithVisit(GUESTS)
-    await Promise.resolve()
-    waitForVisit(run)
-
-    run.advance(VISIT_LINE_MIN_INTERVAL_MS)
-
-    expect(run.snapshot().visit).toEqual({
-      kind: "visiting",
-      guest: "fictional-guest",
-      script: SCRIPT,
-      line: 1,
-      farewell: "架空の帰りの一言",
-    })
-  })
-
-  it("訪問の最中に speak が届くと帰り、speechExpression と records は訪問が無かったときと同じ", async () => {
-    const visited = startManagerWithVisit(GUESTS)
-    const unvisited = startManagerWithVisit([])
-    await Promise.resolve()
-    const speech: SessionEvent = {
-      kind: "speech",
-      text: "架空の新しいセリフ",
-      expression: "flustered",
-    }
-
-    for (const run of [visited, unvisited]) {
-      waitForVisit(run)
-      run.advance(VISIT_LINE_MIN_INTERVAL_MS)
-    }
-    const during = visited.snapshot()
-    for (const run of [visited, unvisited]) {
-      run.emit(speech)
-    }
-    const after = visited.snapshot()
-    const without = unvisited.snapshot()
-
-    expect(during.visit.kind).toBe("visiting")
-    expect(during.speechExpression).toBe("proud")
-    expect(after.visit).toEqual({
-      kind: "left",
-      guest: "fictional-guest",
-      farewell: "架空の帰りの一言",
-      leftAt: VISIT_TIMING.waitMs + VISIT_LINE_MIN_INTERVAL_MS,
-    })
-    expect(after.speechExpression).toBe("flustered")
-    expect({ ...after, visit: without.visit }).toEqual(without)
-  })
-
-  it("起こし直すと訪問は消え、前の代の時計はもう何も起こさない", async () => {
-    const run = startManagerWithVisit(GUESTS)
-    await Promise.resolve()
-    // ターン中は切り替えを断るので、背景のタスクだけが動いている待ち（信号 A）で来させる。
-    run.emit(CHARACTER_EVENT)
-    run.emit({ kind: "request", text: "架空の依頼", images: [] })
-    run.emit({
-      kind: "background-tasks-changed",
-      tasks: [{ taskId: "fictional-bg-1", kind: "shell", description: "架空の待ち" }],
-    })
-    run.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
-    run.advance(VISIT_TIMING.waitMs)
-    expect(run.snapshot().visit.kind).toBe("visiting")
-
-    await run.manager.commands.session.switchCharacter({ name: "fictional" })
-    run.advance(VISIT_LINE_MIN_INTERVAL_MS * 10)
-
-    expect(run.snapshot().visit).toEqual({ kind: "none" })
-    expect(run.pendingTimers()).toBe(0)
-  })
-
-  // 歯車の「訪問」のオン・オフ（`docs/architecture/screen-design.md`「設定の置き場所」「画面のナビゲーション」）。
-  it("歯車をオフにすると訪問中でもその場で帰り、visitEnabled も画面へ流れる", async () => {
-    const run = startManagerWithVisit(GUESTS)
-    await Promise.resolve()
-    waitForVisit(run)
-    run.advance(VISIT_LINE_MIN_INTERVAL_MS)
-    expect(run.snapshot().visit.kind).toBe("visiting")
-
-    const result = await run.manager.commands.visit.setEnabled({ enabled: false })
-
-    expect(result).toEqual({ ok: true })
-    const after = run.snapshot()
-    expect(after.visitEnabled).toBe(false)
-    expect(after.visit).toEqual({
-      kind: "left",
-      guest: "fictional-guest",
-      farewell: "架空の帰りの一言",
-      leftAt: VISIT_TIMING.waitMs + VISIT_LINE_MIN_INTERVAL_MS,
-    })
-  })
-
-  it("歯車がオフのあいだは、しきい値に届いても来ない", async () => {
-    const run = startManagerWithVisit(GUESTS)
-    await Promise.resolve()
-    await run.manager.commands.visit.setEnabled({ enabled: false })
-
-    waitForVisit(run)
-
-    expect(run.snapshot().visit).toEqual({ kind: "none" })
   })
 })

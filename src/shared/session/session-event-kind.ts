@@ -43,7 +43,6 @@ const SESSION_EVENT_KINDS = {
   "chat-topics-changed": true,
   "remembered-lines-changed": true,
   "session-default-changed": true,
-  "visit-enabled-changed": true,
   "compact-boundary": true,
   "restored-turn-span": true,
   "history-restored": true,
@@ -57,9 +56,6 @@ const SESSION_EVENT_KINDS = {
   "diary-failed": true,
   "diary-stage": true,
   "character-changed": true,
-  "visit-started": true,
-  "visit-line-advanced": true,
-  "visit-ended": true,
 } satisfies Record<SessionEvent["kind"], true>
 
 /** `SessionEvent` の種類の名前か。 */

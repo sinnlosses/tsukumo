@@ -54,8 +54,6 @@ import {
   rpcGuard,
   type SocketRpcContext,
 } from "./server/view-server/adapter/rpc-guard.ts"
-import { visitProcedure } from "./server/visit/adapter/visit-procedure.ts"
-import type { VisitCommandPorts } from "./server/visit/core/visit-command.ts"
 import { frameContract } from "./shared/contract/frame.ts"
 import { commandContract, rpcContract } from "./shared/rpc.ts"
 
@@ -87,7 +85,6 @@ export type CommandRouterPorts = {
   readonly session: SessionCommandPorts
   readonly characterPack: CharacterPackCommandPorts
   readonly chat: ChatCommandPorts
-  readonly visit: VisitCommandPorts
   readonly usageReview: UsageReviewCommandPorts
   readonly host: HostCommandPorts
   readonly projectSettings: ProjectSettingsCommandPorts
@@ -103,7 +100,6 @@ export function createCommandRouter(ports: CommandRouterPorts) {
       session: sessionProcedure(ports.session),
       characterPack: characterPackProcedure(ports.characterPack),
       chat: chatProcedure(ports.chat),
-      visit: visitProcedure(ports.visit),
       usageReview: usageReviewProcedure(ports.usageReview),
       host: hostProcedure(ports.host),
       projectSettings: projectSettingsProcedure(ports.projectSettings),

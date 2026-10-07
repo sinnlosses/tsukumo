@@ -6,13 +6,10 @@ import { describe, expect, it } from "vitest"
 import {
   readRememberedCharacter,
   readRememberedSessionDefault,
-  readRememberedVisitEnabled,
   writeRememberedCharacter,
   writeRememberedSessionDefault,
-  writeRememberedVisitEnabled,
 } from "../../../../src/server/session/adapter/remembered-default.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
-import { DEFAULT_VISIT_ENABLED } from "../../../../src/shared/visit/visit.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const dir = useTempDir("remembered-default")
@@ -154,7 +151,7 @@ describe("writeRememberedSessionDefault", () => {
 
   // ディレクトリが無ければ作って書く／書き込み先が塞がっていても例外を投げないのは
   // `writeJsonFile` の契約で、
-  // 3つの覚える口（character・sessionDefault・visitEnabled）はどれもその薄いラッパー。
+  // 2つの覚える口（character・sessionDefault）はどちらもその薄いラッパー。
 
   // 同じファイルを2つの口が書くので、片方の書き込みがもう片方を消さないことを見る
   // （書き込みはファイル丸ごとの置き換え。`writeRememberedSessionDefault`）。
@@ -186,79 +183,5 @@ describe("writeRememberedSessionDefault", () => {
       permissionMode: "plan",
     })
     expect(readRememberedCharacter(statePath())).toBe("kagami")
-  })
-})
-
-// 歯車の「訪問」のオン・オフ（docs/architecture/screen-design.md「設定の置き場所」）。覚え方は「新しいセッションの既定」と
-// 同じ1ファイルだが、値そのものはブール1つだけ。壊れた state.json でも起動を止めないので、
-// 読めないときは同梱の既定（する = true）へ畳む。
-describe("readRememberedVisitEnabled", () => {
-  it("ファイルが無いときは同梱の既定（する）", () => {
-    expect(readRememberedVisitEnabled(statePath())).toBe(DEFAULT_VISIT_ENABLED)
-    expect(readRememberedVisitEnabled(statePath())).toBe(true)
-  })
-
-  it("JSON が壊れているときは同梱の既定", () => {
-    writeFileSync(statePath(), "{ 壊れた")
-    expect(readRememberedVisitEnabled(statePath())).toBe(true)
-  })
-
-  it("欄が無いときは同梱の既定", () => {
-    writeFileSync(statePath(), JSON.stringify({ character: "tsukumo-spirit" }))
-    expect(readRememberedVisitEnabled(statePath())).toBe(true)
-  })
-
-  it("真偽値でない値のときは同梱の既定", () => {
-    writeFileSync(statePath(), JSON.stringify({ visitEnabled: "yes" }))
-    expect(readRememberedVisitEnabled(statePath())).toBe(true)
-  })
-
-  it("書いた false を読み返せる", () => {
-    writeFileSync(statePath(), JSON.stringify({ visitEnabled: false }))
-    expect(readRememberedVisitEnabled(statePath())).toBe(false)
-  })
-})
-
-describe("writeRememberedVisitEnabled", () => {
-  it("書いた値を読み返せる", () => {
-    writeRememberedVisitEnabled(false, statePath())
-    expect(readRememberedVisitEnabled(statePath())).toBe(false)
-
-    writeRememberedVisitEnabled(true, statePath())
-    expect(readRememberedVisitEnabled(statePath())).toBe(true)
-  })
-
-  // 3つの欄を同じファイルが持つので、どれか1つを書いてもほかの2つを消さないことを見る
-  // （書き込みはファイル丸ごとの置き換え。`writeRememberedVisitEnabled`）。
-  it("訪問のオン・オフを書いても、覚えたキャラクターと既定は残る", () => {
-    writeRememberedCharacter("tsukumo", statePath())
-    writeRememberedSessionDefault(
-      { model: "sonnet", effort: "high", permissionMode: "plan" },
-      statePath(),
-    )
-    writeRememberedVisitEnabled(false, statePath())
-
-    expect(readRememberedCharacter(statePath())).toBe("tsukumo")
-    expect(readRememberedSessionDefault(statePath())).toEqual({
-      model: "sonnet",
-      effort: "high",
-      permissionMode: "plan",
-    })
-    expect(readRememberedVisitEnabled(statePath())).toBe(false)
-  })
-
-  it("既定を書き直しても、覚えた訪問のオン・オフは残る", () => {
-    writeRememberedVisitEnabled(false, statePath())
-    writeRememberedSessionDefault(
-      { model: "haiku", effort: "low", permissionMode: "auto" },
-      statePath(),
-    )
-
-    expect(readRememberedVisitEnabled(statePath())).toBe(false)
-    expect(readRememberedSessionDefault(statePath())).toEqual({
-      model: "haiku",
-      effort: "low",
-      permissionMode: "auto",
-    })
   })
 })

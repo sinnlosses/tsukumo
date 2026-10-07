@@ -35,7 +35,6 @@ import type {
 import { sessionTag } from "../server/session-driver/core/session-mark.ts"
 import {
   readRememberedSessionDefault,
-  readRememberedVisitEnabled,
   writeRememberedSessionDefault,
 } from "../server/session/adapter/remembered-default.ts"
 import type { SessionCommandPorts } from "../server/session/core/session-command.ts"
@@ -97,9 +96,6 @@ export function wireSessionLaunch(options: {
         rememberPack: (pack) => character.remember(pack),
         // 覚えた既定は起こすたびに読む（歯車で書き換えたあと、起こし直しで効く）。
         readSessionDefault: () => readRememberedSessionDefault(),
-        // 覚えた「訪問」のオン・オフも起こすたびに読む。
-        // ここで読むのは「起こした直後の初期値」だけで、`visit.setEnabled` はこれとは別にいま動いているセッションにも即座に効く。
-        readVisitEnabled: () => readRememberedVisitEnabled(),
         characterEvent: () => character.event(),
         readChatTopics: (pack) => readChatTopics(createChatSummary(pack.name)),
         readRememberedLines: (pack) => readRememberedLines(pack),

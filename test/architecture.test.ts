@@ -93,7 +93,6 @@ const SERVER_FEATURES = [
   "character-pack",
   "diary",
   "chat",
-  "visit",
   "session-driver",
   "session",
   "view-server",
@@ -119,12 +118,10 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   "character-pack": new Set([]),
   diary: new Set(["character-pack", "repository", "session-driver"]),
   chat: new Set(["character-pack", "session-driver"]),
-  visit: new Set([]),
   "session-driver": new Set(["chat", "report", "usage-review", "view-server"]),
   session: new Set([
     "session-driver",
     "chat",
-    "visit",
     "diary",
     "token-usage",
     "context-usage",
@@ -156,7 +153,6 @@ const SHARED_FEATURES = [
   "token-usage",
   "usage-review",
   "view-server",
-  "visit",
 ] as const satisfies readonly ServerFeature[]
 type SharedFeature = (typeof SHARED_FEATURES)[number]
 

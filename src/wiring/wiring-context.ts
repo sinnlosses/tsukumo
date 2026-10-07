@@ -17,7 +17,7 @@ export type WiringContext = {
   /** 会話のアーカイブの口。書く側（セッションの管理）と読む側（起こすとき・定着）で1つを共有する。 */
   readonly chatArchive: ChatArchive
   /**
-   * 成果の振り返りと訪問の台本がその日の成果を数え直すための入れ物。
+   * 成果の振り返りがその日の成果を数え直すための入れ物。
    * ビューの配信が持つものとは別の1つで、同じ日を両方から数えても結果は変わらない。
    */
   readonly achievementCache: AchievementCache

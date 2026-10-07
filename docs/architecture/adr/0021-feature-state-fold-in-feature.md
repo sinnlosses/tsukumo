@@ -2,9 +2,8 @@
 
 **`SessionState` の欄のうち、1つの機能のイベントだけで動き、値の置き換えより多い判断を持つ欄の組は、
 その機能の `shared/<機能>/` に部分の reducer として置く。** `applySessionEvent` は入口のまま残り、
-その機能のイベントを部分の reducer へ1行で委ねる。先例は訪問（`src/shared/visit/visit.ts` の
-`VisitEvent` / `VisitState` / `applyVisitEvent`）で、日記（`diaryWriting`）と見直し（`usageReview` と
-`previousUsageReview`）をこの形へ移す。
+その機能のイベントを部分の reducer へ1行で委ねる。日記（`diaryWriting`。`src/shared/diary/diary.ts` の
+`DiaryEvent` / `applyDiaryEvent`）と見直し（`usageReview` と `previousUsageReview`）をこの形へ移す。
 
 ## 何が困っていたか
 
@@ -31,7 +30,7 @@
 - **部分の reducer は `SessionState` を受け取らない。** 別の部分の状態が要るとき（見直しの始まった時刻に
   いま走っているターンの始まりを使う、など）は、入口が値にして引数で渡す。shared の機能は `session/` を
   読まない（「shared の機能」の辺の規則）ので、`TurnProgress` のような型も渡さない
-- **イベントの型はその機能に置く。** `VisitEvent` と同じく、その機能のイベントの和（`kind` ごとの
+- **イベントの型はその機能に置く。** `DiaryEvent` と同じく、その機能のイベントの和（`kind` ごとの
   doc コメントごと）を `shared/<機能>/` に置き、`session-event.ts` の `SessionEvent` がそれを和に含める。
   形は変わらないのでプロトコルの変更ではない
 - **またがるイベントは入口の1つの `case` で畳む。** `turn-finished`・`session-ended`・
@@ -41,8 +40,7 @@
   反応させる形にはしない
 - **テストの置き場**: 部分の reducer の振る舞いは、その reducer を直に呼ぶテストとして
   `test/shared/<機能>/` に置く。`test/shared/session/session-state.test.ts` に残すのは、芯の振る舞いと、
-  機能ごとに「そのイベントは自分の欄だけを動かす」ことを1件ずつ（`test/shared/visit/visit.test.ts` の
-  「applySessionEvent の訪問」と同じ形）、それにまたがるイベントの効き方だけ
+  機能ごとに「そのイベントは自分の欄だけを動かす」ことを1件ずつと、それにまたがるイベントの効き方だけ
 
 **機能を足すときの当て方**: 新しい欄が上の2つを満たすなら `shared/<機能>/` に部分の reducer を置き、
 満たさなければ入口に `case` を1行足す。
@@ -54,7 +52,7 @@
   割れている。変わる軸は機能ではなく SDK のメッセージの種類なので、機能で割ると同じ検証の語彙を
   共有する浅いモジュールが並ぶだけになる
 - **`src/server/session/core/session-manager.ts`**: イベントへの機能ごとの反応（トークン消費・
-  コンテキストの内訳・訪問の見張り・会話のアーカイブ・`report` の塊の記録）はすでに各機能の `core` の
+  コンテキストの内訳・会話のアーカイブ・`report` の塊の記録）はすでに各機能の `core` の
   係へ委ねていて、残っているのは代の寿命と、反応を起こす順だけで1つの概念になっている。テストが
   約 3,400 行あるのは、ほかの機能のコマンドの受け手を `createCommandRouter` 越しに確かめるテストが
   同じファイルに集まっているためで、`session-manager.ts` を割っても減らない

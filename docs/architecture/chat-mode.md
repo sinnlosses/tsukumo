@@ -468,7 +468,7 @@ transcript は読まない（`docs/coding-standards.md`「会話内容の扱い�
 **定着に渡したものも受け取ったものも、ログ・stderr・手続きの応答・画面に出さない**（出して
 よいのは件数・長さまで）。
 
-**起こし方は訪問の台本と同じ使い捨ての `query()`**: 軽いモデル（`CHAT_CONSOLIDATION_MODEL`。
+**起こし方は使い捨ての `query()`**: 軽いモデル（`CHAT_CONSOLIDATION_MODEL`。
 はじめは `haiku`）・ツールなし・MCP サーバなし・設定もフックも読まない（`settingSources: []`）・
 1ターン・transcript を書かない（`persistSession: false`）・考える段なし・出力は JSON Schema の
 構造化出力。指示文は `systemPrompt` をそのまま置き換える（Claude Code の既定の指示文も CLAUDE.md も

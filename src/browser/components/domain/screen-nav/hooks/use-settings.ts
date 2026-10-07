@@ -1,8 +1,7 @@
 // 帯の右端の歯車で開く設定のロジック。
-// 画面の色と演出の速さは別のフックが持ち、ここは開閉・新しいセッションの既定・訪問のオン・オフを持って束ねる。
+// 画面の色と演出の速さは別のフックが持ち、ここは開閉と新しいセッションの既定を持って束ねる。
 //
 // - 既定はサーバが覚える値（`~/.tsukumo/state.json`。`session.setSessionDefault` で送り、`SessionState.sessionDefault` を読む）
-// - 訪問のオン・オフはサーバの `SessionState.visitEnabled` だが、ディスクには覚えず、いま動いているセッションに即座に効く（`visit.setEnabled`。オフにすると訪問中でもその場で帰る）
 //
 // 既定は次に起こすときから効くので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンはセッション限りの別物）。
 //
@@ -20,11 +19,6 @@ import { resolveEffortSelect, type EffortSelect } from "../../../../domain/effor
 import { usePopover } from "../../../../hooks/use-popover.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { isTaskOperationValue, type TaskOperationValue } from "../domain/task-operation-label.ts"
-import {
-  isVisitToggleValue,
-  visitToggleValueOf,
-  type VisitToggleValue,
-} from "../domain/visit-toggle-label.ts"
 import {
   useAppearanceColor,
   type ScreenNavSettingsColor,
@@ -47,15 +41,6 @@ export type ScreenNavSettingsSessionDefault = {
   readonly onChangeEffort: (value: string) => void
   readonly permissionMode: SessionDefaultPermissionMode
   readonly onChangePermissionMode: (value: string) => void
-}
-
-/**
- * 訪問のオン・オフの操作子。表示はサーバから届いた値だけに従う。
- * `SessionState.visitEnabled` はディスクに覚えないので、起こし直すたびに既定の「する」へ戻る。
- */
-export type ScreenNavSettingsVisit = {
-  readonly value: VisitToggleValue
-  readonly onChange: (value: string) => void
 }
 
 /**
@@ -84,7 +69,6 @@ export type ScreenNavSettings = {
   readonly colorNotice: ScreenNavSettingsColorNotice
   readonly sessionDefault: ScreenNavSettingsSessionDefault
   readonly revealSpeed: ScreenNavSettingsRevealSpeed
-  readonly visit: ScreenNavSettingsVisit
   readonly project: ScreenNavSettingsProject
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
@@ -101,7 +85,6 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
   const dispatch = useSession((session) => session.dispatch)
   const sessionDefault = useSession((session) => session.state.sessionDefault)
   const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
-  const visitEnabled = useSession((session) => session.state.visitEnabled)
   const tasksKind = useSession((session) => session.state.tasks.kind)
   const [dialogOpen, setDialogOpen] = useState(false)
   const color = useAppearanceColor()
@@ -156,15 +139,6 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
       },
     },
     revealSpeed,
-    visit: {
-      value: visitToggleValueOf(visitEnabled),
-      onChange: (value) => {
-        // 知らない値は送らない（`<select>` の選択肢の外から来たときは何もしない）。
-        if (isVisitToggleValue(value)) {
-          dispatch.visit.setEnabled({ enabled: value === "on" })
-        }
-      },
-    },
     project: {
       tasks: {
         value: tasksKind === "off" ? "off" : "use",

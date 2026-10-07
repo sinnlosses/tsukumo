@@ -79,9 +79,6 @@ export type DailyAchievement =
       readonly diary: DailyDiaryStatus
     }
 
-/** 読めない・配られない形は「取れなかった」に倒す既定値。 */
-export const UNKNOWN_ACHIEVEMENT = { kind: "unknown" } satisfies DailyAchievement
-
 const achievementTaskSchema = z.object({ id: z.string(), summary: z.string() })
 
 const achievementDoneTasksSchema = z.discriminatedUnion("kind", [

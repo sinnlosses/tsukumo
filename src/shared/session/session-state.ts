@@ -37,12 +37,6 @@ import {
 } from "../usage-review/usage-review.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { clipText, type ClippedText } from "../utils/clip-text.ts"
-import {
-  applyVisitEvent,
-  DEFAULT_VISIT_ENABLED,
-  INITIAL_VISIT_STATE,
-  type VisitState,
-} from "../visit/visit.ts"
 import { commandCandidates } from "./command-suggestion.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
@@ -404,12 +398,6 @@ export type SessionState = {
    */
   readonly sessionDefault: SessionDefault
   /**
-   * 歯車の「訪問」のオン・オフ。覚え方は `sessionDefault` と同じ（`~/.tsukumo/state.json`）だが、効き方は違う。
-   * `visit.setEnabled` はいま動いているセッションにも即座に効く（オフなら来ない・訪問中にオフにしたらその場で帰る）。
-   * 源は `visit-enabled-changed` だけ。起こすたびに覚えた値へ流れ直す（届くまでは同梱の既定 {@link DEFAULT_VISIT_ENABLED}）。
-   */
-  readonly visitEnabled: boolean
-  /**
    * 契約プラン。トークン消費の画面の題の右の札に出す。源は `plan` だけ。
    * まだ届いていない・取れなかったのどちらも同じ undefined（画面は区別しないので、型でも分けない）。
    */
@@ -451,11 +439,6 @@ export type SessionState = {
    * だけで、ターンの境目では戻さない（セッションを通した状態で、次の知らせが来るまで持つ）。
    */
   readonly rateLimit: RateLimit
-  /**
-   * 訪問（{@link VisitState}）。源は訪問の3つのイベントだけ。
-   * 台本の表情はここにだけ持ち、`speechExpression` と `records` には書かない。起こし直すと初期値の `none` へ戻る。
-   */
-  readonly visit: VisitState
 }
 
 export const INITIAL_SESSION_STATE: SessionState = {
@@ -488,7 +471,6 @@ export const INITIAL_SESSION_STATE: SessionState = {
   chatTopics: [],
   rememberedLines: [],
   sessionDefault: BUILTIN_SESSION_DEFAULT,
-  visitEnabled: DEFAULT_VISIT_ENABLED,
   plan: undefined,
   backgroundTasks: [],
   usageReview: { kind: "idle" },
@@ -496,7 +478,6 @@ export const INITIAL_SESSION_STATE: SessionState = {
   diaryWriting: { kind: "idle" },
   apiTrouble: { kind: "none" },
   rateLimit: { kind: "clear" },
-  visit: INITIAL_VISIT_STATE,
 }
 
 /**
@@ -790,8 +771,6 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, rememberedLines: event.lines }
     case "session-default-changed":
       return { ...state, sessionDefault: event.sessionDefault }
-    case "visit-enabled-changed":
-      return { ...state, visitEnabled: event.visitEnabled }
     case "compact-boundary":
       return { ...state, records: [...state.records, { kind: "compact-boundary" }] }
     case "background-tasks-changed":
@@ -814,10 +793,6 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "diary-written":
     case "diary-failed":
       return { ...state, diaryWriting: applyDiaryEvent(state.diaryWriting, event, at) }
-    case "visit-started":
-    case "visit-line-advanced":
-    case "visit-ended":
-      return { ...state, visit: applyVisitEvent(state.visit, event, at) }
     case "history-restored":
       // ここまでに積んだ依頼とセリフは、前のセッションを組み直したもの。流し直したときに打った時刻を捨て、「時刻が分からない」に書き換える。
       // 起こし直すと記録は空から始まるので、ここまでの記録はすべて再生のぶんになる。
