@@ -3,6 +3,86 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-07 `pnpm exec vitest` が作業ツリーの根に残す `.vitest/` を `.gitignore` に入れ、計画の前の計測で `tw edit` が `WORK_BEFORE_PLAN` に拒まれないようにする（振り返り: GH-429）
+
+（GH-452 にした）
+
+- 出典: develop/draft/2026-10-07-vitest-dir-blocks-plan.md。利用者が `/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 赤 道具（28回目）
+- 根: vitest-dir-blocks-plan
+- 根拠: GH-429 で委譲先が計画を書く前に `pnpm exec vitest run <2ファイル> --reporter=json --outputFile=…` で所要を測ったところ、作業ツリーの根に未追跡の `.vitest/` ができ、続く `tw edit --section 'やること'` が `WORK_BEFORE_PLAN` で拒まれた（委譲先の friction log。消して打ち直したら通った）。`.gitignore` に `.vitest` の行は無く、「計画の前に測る」タスク（テストの所要を縮める系）では毎回同じ所で止まる
+- 出し先: タスク1件。`.vitest/` ができる条件を確かめ、`.gitignore` に足す（できないようにする設定があればそちら）
+
+## 2026-10-07 サーバのテストの刈り込みで残した3件を片付ける（振り返り: GH-431）
+
+（GH-453 にした）
+
+- 出典: develop/draft/2026-10-07-server-test-campaign-leftovers.md。利用者が `/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 黄 見落とし（1回目）
+- 根: server-test-campaign-leftovers
+- 根拠: GH-431 の受け入れで申し送りとして残ったもの。(1) `src/server/config.ts` の `HOST_ENV_NAME`・`FIXED_CLOCK_ENV_NAME`・`CLAUDE_CONFIG_DIR_ENV_NAME` はどこからも使われていない export。(2) `test/server/repository/adapter/fake-beads.test.ts`「…疑似セッションの間隔で一覧に届く」は待ちの上限がふだんの間隔と同じ 5000ms で、疑似セッションの間隔を確かめ切れていない。(3) GH-429 で足した `task-summary.test.ts` の `waitForQuietPolls` のループに、`oxlint` が `no-unmodified-loop-condition` の警告を2件出している（終了コードは 0）
+- 出し先: タスク1件（difficulty は sonnet 見込み）。3件を直し、(2) は間隔を変える退行を入れると落ちる形にする
+
+## 2026-10-07 単体テストの既定の `TSUKUMO_HOME` を一時ディレクトリに向け、本物の口のテストが利用者のホームへ書けないようにする（振り返り: GH-412）
+
+（GH-454 にした）
+
+- 出典: develop/draft/2026-10-07-unit-tests-pin-tsukumo-home.md。利用者が `/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 黄 構造の重さ（1回目）
+- 根: tests-write-user-home
+- 根拠: GH-412 で見張りの本物の口に「覚える口」を足しただけで、本物の口を使う既存の単体テスト2ファイル（`test/server/repository/adapter/task-summary.test.ts`・`fake-beads.test.ts`）が利用者の `~/.tsukumo/task-summary.json` にテスト用の一覧を書いた。テストを個別に直したが、`vitest.config.ts` の `env` は `TZ` などだけで `TSUKUMO_HOME` を向けておらず、次に本物の口へ書き込みを足したときも同じことが起きる
+- 出し先: タスク1件。`vitest.config.ts` の `env`（か `globalSetup`）で単体テストの `TSUKUMO_HOME` を一時ディレクトリにし、`tsukumoHomeDir()` が利用者のホームを返すテストを機械で落とす
+
+## 2026-10-07 使用量の目盛りに「どのターンの後の値か」の印を持たせ、E2E は応答の件数ではなくその印で待つ（振り返り: GH-436）
+
+（GH-455 にした）
+
+- 出典: develop/draft/2026-10-07-usage-meter-marks-turn.md。利用者が `/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 赤 揺れ（19回目）
+- 根: e2e-frozen-clock-wakeup
+- 根拠: GH-436 で「応答を待ってから時計を進める」共有の口を作ったが、`chat-compact-boundary.test.ts` の待ちは受け入れのレビューで4往復した（画面全体の aria-busy で抜ける → 先に届いた turn-finished で30秒落ちる → 開いた時点の応答で抜ける → turn-finished 前に飛んだ応答で抜ける）。最後の形にも「turn-finished の前に飛んだ取得が遅れて届くと古い値で抜ける」狭い穴が残っている。応答の件数で「どの取得の結果か」を当てる限り、順序の場合分けが尽きない
+- 出し先: タスク1件（前の手 GH-329・GH-436 と違う種類の手）。使用量の目盛り（`use-sidebar-footer.ts` の `busy` の隣）に、値の元になったターンの印（`lastTurnFinishedAt` など）を `data-` 属性で出し、E2E は「目盛りの印が今のターンを指し、取得中でない」を要素の状態で待つ。応答の件数を数える待ちは、印を持てない場面だけに残す
+
+## 2026-10-07 test-audit のキャンペーンの台帳は、宣言の一覧と件数をスクリプトで抜き出してから印を付ける手順にする（振り返り: GH-431）
+
+（GH-456 にした）
+
+- 出典: develop/draft/2026-10-07-campaign-ledger-machine-count.md。利用者が `/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 黄 道具（1回目）
+- 根: campaign-ledger-hand-count
+- 根拠: GH-431 で台帳の件数を手で数えて段2〜6で計5回外し、そのたびに `tw edit` と `tw step` を打ち直した（委譲先の friction log）。`grep -cE 'it(\.each)?\('` が `it.each<…>(` を拾わず数え違えた回もある。段6から `grep -cE '^\s*(it|test)(\.each)?[(<]'` で合計だけ機械で合わせたが、describe ごとの内訳はまた手で外した
+- 出し先: claude-skills の `test-audit` CAMPAIGN.md の段3（台帳）。ファイルごと・describe ごとの宣言名と件数を出すスクリプトを同梱し、台帳はその出力に印と証拠を足して作る形にする
+
+## 2026-10-07 写しを畳むタスクの計画に「消す行ごとに、残る先の行を対応づける」段を必ず置く（振り返り: GH-434）
+
+（GH-457 にした）
+
+- 出典: develop/draft/2026-10-07-collapse-maps-removed-lines.md。利用者が `/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 黄 実装の誤り（8回目）
+- 根: collapse-drops-decision
+- 根拠: GH-434 で requirements・screen-design の写しを正典の表に畳んだとき、消した行にしか無かった決定2つ（見開きの下の行にもコミットを出さない・通算のコミットの数を出さない）が表から落ち、受け入れのレビューで1往復差し戻した。同じ形の写し畳み（GH-387・GH-389・GH-407・GH-415）が続いており、GH-389 でも受け入れで1往復差し戻している
+- 出し先: `plan-tasks` の正典（タスクを書く手順）に、文書の写しを畳むタスクでは `## やること` に「`git diff` の `-` の行を1行ずつ、残る先（正典の表の行・残した文）に対応づけた表を報告に書く」段を置く、と足す。2回目以上なので、できれば `git diff` の消した行の一覧を出す小さなスクリプトを添えて、委譲先が手で数えずに済む形にする
+
+## 2026-10-07 別リポジトリの作業で、委譲先が作業先の本体の作業ツリーにも同じ変更を書き残すのを、受け入れの前に機械で見つける（振り返り: GH-410）
+
+（GH-458 にした）
+
+- 出典: develop/draft/2026-10-07-delegate-edits-other-repo-main-tree.md。利用者が `/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 赤 制約違反（15回目）
+- 根: delegate-edits-other-repo-main-tree
+- 根拠: GH-410 で委譲先は `claude-skills-gh-410` の作業ツリーでコミットしたが、`claude-skills` の本体の作業ツリー（`~/.claude/skills` が symlink で指す、全プロジェクトのスキルの実体）の `agents/no-delegate.md` にも未コミットの同じ変更を残していた（トランスクリプトの `cd .../claude-skills` が3回）。受け入れの `git merge --ff-only` が上書きを拒んで初めて気づき、blob が同じことを確かめてから `git restore` した。依頼文には「本体の作業ツリーで枝を切り替えない」しか無く、書き込みは禁じていなかった
+- 出し先: `next-task` の `other-repo.md`。実装の依頼文に「作業先の本体の作業ツリーのファイルを書き換えない」を足すだけでなく、受け入れ（手順6）の最初に `git -C <作業先の本体> status --short` が空かを見る段を置き、空でなければ枝の中身と比べて報告と食い違うものとして扱う
+
+## 2026-10-07 作業先が別のリポジトリのタスクでも、委譲先の返却を作業先の作業ツリーの検証の控えで止める（振り返り: GH-438）
+
+（GH-459 にした）
+
+- 出典: develop/draft/2026-10-07-other-repo-handback-unguarded.md。利用者が `/plan-tasks` の承認の問いでこのドラフトを選んだ
+- 札: 黄 自己申告の不正確さ（6回目）
+- 根: other-repo-handback-unguarded
+- 根拠: GH-438 で委譲先は `tw verify` が走っている最中に `段 4/4 | 検証実行中です` で返し、検証の判定行が出たのは2回目の返却だった。同じセッションの GH-410 でも、段1だけ渡したのに段2の検証まで済ませて `段 1/2` で返していた。`tw handback-guard` は着手の印が立った作業ツリー（tsukumo-3）の作業と控えだけを見るので、作業が claude-skills の別の作業ツリーにあると「作業なし」として素通りする。委譲先は検証中に `selftest_beads.py` を単体でさらに2本並べて走らせてもいた
+- 出し先: タスク1件。`tw step`・`tw verify` に作業先の作業ツリーを覚えさせ（または `other-repo.md` の依頼文で作業先のパスを台帳に渡させ）、`handback-guard` がそこの `verify-check` を見て、最後の段の返却を `VERIFIED_SAME` 以外では拒むようにする
+
 ## 2026-10-07 別リポジトリのタスクを閉じた `tw ship` の `NOTHING` で `/loop /next-task` を止めない
 
 （GH-446 にした）
