@@ -26,7 +26,7 @@ import { useTempDir } from "../../../fixture/temp-dir.ts"
 // 課題は架空のものだけにする。
 
 /** 通知を待つ上限。疑似セッションの間隔の何周ぶんもとる。 */
-const WAIT_LIMIT_MS = 5000
+const WAIT_LIMIT_MS = FAKE_TASK_SUMMARY_POLL_INTERVAL_MS * 10
 
 const cwd = useTempDir("fake-beads")
 let watcher: TaskSummaryWatcher | undefined
@@ -73,6 +73,7 @@ describe("readFakeBeadsIssues", () => {
 describe("疑似セッションの見張り", () => {
   it("見張りを起こしたあとに置いた課題が、疑似セッションの間隔で一覧に届く", async () => {
     const changes = watchFake(cwd())
+    await waitUntil(() => changes.length > 0)
     writeFakeIssues(cwd(), [issue("t-01", "架空のタスク")])
 
     await waitUntil(() => changes.some((change) => change.kind === "known"))

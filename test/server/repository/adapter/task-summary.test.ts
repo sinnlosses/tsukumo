@@ -91,11 +91,15 @@ async function waitForChanges(changes: readonly unknown[], count: number): Promi
 
 /** 変えたあとに見回りが `QUIET_POLLS` 回終わるまで待つ（その間に通知が来たかは期待値で確かめる）。 */
 async function waitForQuietPolls(): Promise<void> {
-  const target = pollsFinished + QUIET_POLLS
+  const target = pollsFinishedCount() + QUIET_POLLS
   const deadline = performance.now() + WAIT_LIMIT_MS
-  while (pollsFinished < target && performance.now() < deadline) {
+  while (pollsFinishedCount() < target && performance.now() < deadline) {
     await sleep(TEST_POLL_INTERVAL_MS)
   }
+}
+
+function pollsFinishedCount(): number {
+  return pollsFinished
 }
 
 function sleep(ms: number): Promise<void> {

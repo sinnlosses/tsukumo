@@ -27,7 +27,7 @@ export const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
 /** セッションの駆動（`sdk` / `fake`。既定は `sdk`）。 */
 export const DRIVER_ENV_NAME = "TSUKUMO_DRIVER"
 /** ビューとファイルを開くホスト（`orca` / `none`。既定は `orca`）。 */
-export const HOST_ENV_NAME = "TSUKUMO_HOST"
+const HOST_ENV_NAME = "TSUKUMO_HOST"
 /** fake driver で、起こした直後に流す場面の名前（疑似セッションの `turns[].name`）。 */
 export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
 /** `1` で復元せず新規に起こす（`docs/requirements.md`「逃げ道」）。 */
@@ -36,7 +36,7 @@ export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
  * サーバの時計を凍らせる瞬間（ISO 8601 の瞬間。末尾に `Z` かオフセットが要る）。
  * E2E が走らせるたびに同じ成果物を得るための口で、進まない時計になる。
  */
-export const FIXED_CLOCK_ENV_NAME = "TSUKUMO_FIXED_CLOCK"
+const FIXED_CLOCK_ENV_NAME = "TSUKUMO_FIXED_CLOCK"
 /**
  * tsukumo が自分の持ち物を置くホームのパス（相対は cwd 相対、絶対はそのまま。`~` は展開しない。既定は `~/.tsukumo`）。
  * 渡すのは tsukumo を2つ並行させる人が明示するときだけで、`TSUKUMO_VIEW_PORT` と揃えて分けないとホームは共有されたまま。
@@ -47,7 +47,7 @@ export const HOME_ENV_NAME = "TSUKUMO_HOME"
  * Claude Code の設定ディレクトリ（Claude Code の変数で、tsukumo 用ではない）。
  * 未設定・空は `~`。相対は cwd 相対、`~` は展開しない（`TSUKUMO_HOME` と同じ）。
  */
-export const CLAUDE_CONFIG_DIR_ENV_NAME = "CLAUDE_CONFIG_DIR"
+const CLAUDE_CONFIG_DIR_ENV_NAME = "CLAUDE_CONFIG_DIR"
 
 /**
  * セッションの駆動の種類。
