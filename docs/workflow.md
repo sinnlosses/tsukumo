@@ -94,7 +94,6 @@
   見出し（`[Image: source: /private/tmp/claude-<uid>/…/images/<n>.png …]`）のパスから、消える前に
   `docs/history/mockup/` へ写す（tsukumo 側は `src/server/session-driver/core/prompt-image-shelf.ts` の
   メモリにしか持たない）。パスが消えていたら、利用者がファイルに保存してパスで示す
-- 写したことは `docs/history/direction.md` の該当項目に1行で添える（「モックを `…` に保存」）
 
 ## `loopable` の判定（2026-09-15 決定）
 
@@ -227,4 +226,4 @@ hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`�
   `main` へ単独で送る」」に残してある
 - 運用の正典: `~/.claude/skills/task-workflow/WORKFLOW.md`
 - 完了タスク・過去セッションの記録: `docs/history/tasks.md` /
-  `docs/history/progress.md` / `docs/history/direction.md`
+  `docs/history/progress.md`

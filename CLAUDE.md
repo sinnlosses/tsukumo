@@ -162,21 +162,21 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 
 ## 索引
 
-| こういうとき                                                                                    | 読むもの                                                                           |
-| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| 要件・やらないこと・技術制約・未決事項を知りたい                                                | `docs/requirements.md`                                                             |
-| 3層・プロトコル・部品・置き場所を決める                                                         | `docs/architecture.md`（置き場所は「全体構成」）                                   |
-| 色・書体・レイアウト                                                                            | `docs/architecture/screen-design.md`                                               |
-| セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/architecture/display.md`                                                     |
-| 雑談モード                                                                                      | `docs/architecture/chat-mode.md`                                                   |
-| なぜ今の形なのか                                                                                | `docs/architecture.md`「設計判断」（各判断の本文は `docs/architecture/adr/`）      |
-| ブラウザ側の状態・Markdown・立ち絵の動き・CSS・`components/ui/` の部品の作法                    | `docs/architecture/browser.md`                                                     |
-| キャラクターパックの形・探索順・画面から書くときの境界                                          | `docs/architecture/character-pack.md`                                              |
-| テストの方法・E2E・目視の手順                                                                   | `docs/architecture/testing.md`                                                     |
-| 組み立て・開発サーバ・足す依存                                                                  | `docs/architecture/build.md`                                                       |
-| 規約の理由と例外（`Date` を使わない・層の辺など lint とテストが守るものも）                     | `docs/coding-standards.md`                                                         |
-| 用語と識別子                                                                                    | `docs/glossary.md`                                                                 |
-| タスクを書く・受け入れる・作業ツリーを並行させる・tsukumo を起こす                              | `docs/workflow.md`                                                                 |
-| コマンドの全体・環境変数・構成                                                                  | `README.md`                                                                        |
-| スキル（`~/.claude/skills/`。共通なのでこのリポジトリの事情はここと `docs/workflow.md` が補う） | 毎セッションのスキル案内                                                           |
-| 過去の判断の経緯（通読しない。`grep` で節を当てる）                                             | `docs/history/tasks.md` / `docs/history/progress.md` / `docs/history/direction.md` |
+| こういうとき                                                                                    | 読むもの                                                                      |
+| ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 要件・やらないこと・技術制約・未決事項を知りたい                                                | `docs/requirements.md`                                                        |
+| 3層・プロトコル・部品・置き場所を決める                                                         | `docs/architecture.md`（置き場所は「全体構成」）                              |
+| 色・書体・レイアウト                                                                            | `docs/architecture/screen-design.md`                                          |
+| セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/architecture/display.md`                                                |
+| 雑談モード                                                                                      | `docs/architecture/chat-mode.md`                                              |
+| なぜ今の形なのか                                                                                | `docs/architecture.md`「設計判断」（各判断の本文は `docs/architecture/adr/`） |
+| ブラウザ側の状態・Markdown・立ち絵の動き・CSS・`components/ui/` の部品の作法                    | `docs/architecture/browser.md`                                                |
+| キャラクターパックの形・探索順・画面から書くときの境界                                          | `docs/architecture/character-pack.md`                                         |
+| テストの方法・E2E・目視の手順                                                                   | `docs/architecture/testing.md`                                                |
+| 組み立て・開発サーバ・足す依存                                                                  | `docs/architecture/build.md`                                                  |
+| 規約の理由と例外（`Date` を使わない・層の辺など lint とテストが守るものも）                     | `docs/coding-standards.md`                                                    |
+| 用語と識別子                                                                                    | `docs/glossary.md`                                                            |
+| タスクを書く・受け入れる・作業ツリーを並行させる・tsukumo を起こす                              | `docs/workflow.md`                                                            |
+| コマンドの全体・環境変数・構成                                                                  | `README.md`                                                                   |
+| スキル（`~/.claude/skills/`。共通なのでこのリポジトリの事情はここと `docs/workflow.md` が補う） | 毎セッションのスキル案内                                                      |
+| 過去の判断の経緯（通読しない。`grep` で節を当てる）                                             | `docs/history/tasks.md` / `docs/history/progress.md`                          |

@@ -15,5 +15,3 @@
   **2026-09-26 に Node 26 + Vite + Vitest へ移すと決め直した**。理由は `bun test` の罠（`mock.module`
   の漏れ・`--isolate` が返らない）を消すこと、HMR で状態を保ったまま差し替えること、Vite 前提の道具を
   本物の組み立てのまま使えることの3つ。2026-09-27 に完了し、いまの実装スタックは Node + TypeScript
-  （`docs/history/direction.md` の 2026-09-26「zustand・Node + Vite + Vitest への移行・Storybook・
-  React Compiler」）

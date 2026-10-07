@@ -10,8 +10,7 @@
 
 **前提として読んだもの**: `src/` 全体（2026-09-13 時点、約 15,000 行。テスト含む）、`docs/requirements.md`、
 `docs/architecture.md`、`docs/coding-standards.md`、`docs/research/app-shell.md`、
-`docs/research/view-rendering.md`、`develop/tasks.json` の残タスク、`docs/history/direction.md` の
-2026-09-11 の節、`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts`（v0.3.268）。
+`docs/research/view-rendering.md`、`develop/tasks.json` の残タスク、`node_modules/@anthropic-ai/claude-agent-sdk/sdk.d.ts`（v0.3.268）。
 
 ## 結論
 

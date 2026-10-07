@@ -6,7 +6,7 @@ tsukumo 側で切る・畳む・本体へマージする・着手の印を置く
 そのまま claude を起こす**。セッションを分けたいときは、分かれた作業ツリーで tsukumo を
 起こす。
 
-撤去したのは次の5つ（当時の検討は `docs/history/direction.md` の 2026-09-22 にある）:
+撤去したのは次の5つ:
 
 - 起動時に `.git/tsukumo/worktree/<時刻>` を切り、`cwd` をそちらへ向ける（`prepareWorkspace`）
 - 使い終えた worktree を起動時に畳む・畳めなかったものを1行知らせる

@@ -67,22 +67,20 @@ describe("isTaskRegistrationOnlyChange", () => {
       isTaskRegistrationOnlyChange([
         "develop/direction.md",
         "develop/draft/idea.md",
-        "docs/history/direction.md",
+        "docs/history/tasks.md",
       ]),
     ).toBe(true)
   })
 
   test("src/ が混ざれば false", () => {
-    expect(isTaskRegistrationOnlyChange(["docs/history/direction.md", "src/cli.ts"])).toBe(false)
+    expect(isTaskRegistrationOnlyChange(["docs/history/tasks.md", "src/cli.ts"])).toBe(false)
   })
 
   test("develop/task/ や docs/ のほかの文書が混ざれば false", () => {
-    expect(
-      isTaskRegistrationOnlyChange(["docs/history/direction.md", "develop/task/sample.md"]),
-    ).toBe(false)
-    expect(isTaskRegistrationOnlyChange(["docs/history/direction.md", "docs/workflow.md"])).toBe(
+    expect(isTaskRegistrationOnlyChange(["docs/history/tasks.md", "develop/task/sample.md"])).toBe(
       false,
     )
+    expect(isTaskRegistrationOnlyChange(["docs/history/tasks.md", "docs/workflow.md"])).toBe(false)
   })
 
   test("変えたファイルが0件なら false", () => {
@@ -95,7 +93,7 @@ describe("planStages", () => {
   const choose = () => [e2eStage]
 
   test.each([true, false])("タスク登録だけの変更は forceFull=%s でも2段ちょうど", (forceFull) => {
-    const plan = planStages(forceFull, ["docs/history/direction.md"], () => {
+    const plan = planStages(forceFull, ["docs/history/tasks.md"], () => {
       throw new Error("E2E は選ばない")
     })
     expect(plan.stages).toEqual([
@@ -115,7 +113,7 @@ describe("planStages", () => {
   })
 
   test("並べて走らせる重い段は、タスク登録だけの変更には無く、通常の組み立てにはある", () => {
-    const registration = planStages(true, ["docs/history/direction.md"], choose)
+    const registration = planStages(true, ["docs/history/tasks.md"], choose)
     const regular = planStages(true, ["src/cli.ts"], choose)
     expect(registration.stages.some((stage) => stage.heavy)).toBe(false)
     expect(regular.stages.filter((stage) => stage.heavy).map((stage) => stage.name)).toEqual([
