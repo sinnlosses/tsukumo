@@ -79,7 +79,7 @@ const BROWSER_STEP_TIMEOUT_MS = BROWSER_LAUNCH_TIMEOUT_MS / 2
 /** 狙ったイベントが届くまで待つ上限（ミリ秒）。場面の長さ（20 秒まで）に余裕を持たせる。 */
 const EVENT_TIMEOUT_MS = 30_000
 
-/** `revealAfterResponse` が、応答のあと要素が見えるまで凍らせた時計を進める1回の幅（ミリ秒）。 */
+/** `revealAfterResponse`・`revealUsageAfterTurn` が、要素が見えるまで凍らせた時計を進める1回の幅（ミリ秒）。 */
 const REVEAL_CLOCK_STEP_MS = 50
 
 /**
@@ -148,10 +148,12 @@ const DOM_ROOT_SELECTORS = {
   "session-switcher": 'dialog[aria-label="セッションを切り替える"]',
 } as const satisfies Record<string, string>
 
+/** サイドバーの使用量の目盛り（コンテキスト・利用枠）の口の `title`。 */
+const USAGE_GAUGE_TITLES = ["コンテキスト", "利用枠"] as const
+
 /** `revealAfterResponse` が応答の件数を数え始める基準。 */
 export type ResponseBaseline =
   | { readonly kind: "after-act"; readonly act: () => Promise<void> }
-  | { readonly kind: "since"; readonly count: number }
   | { readonly kind: "all" }
 
 /**
@@ -185,15 +187,18 @@ export type ScenarioRoom = {
    * 手続き（`/rpc`）の応答で届く値から描かれる `target` を、見えるまで待つ。
    * URL に `response` を含む応答が `baseline` の基準より1件増えるまで実時間で待ってから、
    * `target` が見えるまで凍らせた時計を進める（時計を進める回数には頼らない）。
-   * 基準は `after-act`（`act` を実行する前の件数）・`since`（`responseCount` で控えた件数）・
-   * `all`（すでに届いた応答も数える）のどれか。
+   * 基準は `after-act`（`act` を実行する前の件数）か `all`（すでに届いた応答も数える）。
    */
   readonly revealAfterResponse: (
     target: Locator,
     options: { readonly response: string; readonly baseline: ResponseBaseline },
   ) => Promise<void>
-  /** URL に `response` を含む応答がここまでに届いた件数。`ResponseBaseline` の `since` に渡す基準を控える。 */
-  readonly responseCount: (response: string) => number
+  /**
+   * `turn-finished` が `occurrence` 回目に届くまで待ち、サイドバーのコンテキストと利用枠の目盛りが
+   * どちらもそのターンの後に取った値（`data-finished-turn-count` が `occurrence`）を出して取得中でなくなるまで、凍らせた時計を進める。
+   * `occurrence` を終わったターンの数として読むので、`opening` と復元でターンを終わらせない場面に限る。
+   */
+  readonly revealUsageAfterTurn: (occurrence: number) => Promise<void>
   /** `pending-changed` の答え待ちに `id` の札が載るまで待つ（何回目の `pending-changed` かでは待たない）。 */
   readonly waitForPending: (id: string) => Promise<void>
   /** 読み上げの領域（`[data-live-announcer]`）に、ページを開いてからいままでに挿入された文。 */
@@ -355,11 +360,22 @@ async function openRoom(
         const presentIds = new Set(items.map((item) => String(asRecord(item)["id"])))
         return ids.every((id) => presentIds.has(id))
       }),
-    responseCount: (response) => responses.count(response),
     revealAfterResponse: async (target, { response, baseline }) => {
       const counted = await countedBefore(baseline, () => responses.count(response))
       await responses.waitForCount(response, counted + 1)
       await advanceClockUntilVisible(page, target)
+    },
+    revealUsageAfterTurn: async (occurrence) => {
+      await messages.waitForEvent("turn-finished", occurrence)
+      lastAwaited = { kind: "turn-finished", occurrence }
+      for (const title of USAGE_GAUGE_TITLES) {
+        await advanceClockUntilVisible(
+          page,
+          page.locator(
+            `button[title="${title}"][data-finished-turn-count="${String(occurrence)}"]:not([aria-busy="true"])`,
+          ),
+        )
+      }
     },
     waitForPending: (id) =>
       messages.waitForEventMatching("pending-changed", (event) =>
@@ -454,8 +470,6 @@ async function countedBefore(
       await baseline.act()
       return count
     }
-    case "since":
-      return baseline.count
     case "all":
       return 0
   }

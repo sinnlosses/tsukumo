@@ -2,9 +2,7 @@
 //
 // ここは `stores/` を import できないので、「いつ取り直すか」を自分では決めない。
 // `refetchKey` を呼び出し側から受け取り、値が変われば取り直す（`useQuery` の `queryKey` に含めるだけ）。
-// 「ターンが終わるたびに取り直す」ための実際の値は `contextUsageRefetchKey` が純関数として持つ。
-// `state.turn` ではなく `state.lastTurnFinishedAt` から作る。
-// `turn` は `running` に移ると終わった時刻を失うので、`turn` から作ると新しいターンが始まった瞬間に合図が `0` へ戻り、ターンの途中で骨組み・古い値へ巻き戻ってしまう（実測）。
+// 「ターンが終わるたびに取り直す」ための実際の値は `state.finishedTurnCount` で、呼び出し側がそのまま渡す。
 // 同じ `state` からは同じ `refetchKey` が出るので、2つの画面が同時にマウントされていても `useQuery` の cache 1本に相乗りし、取り直しは1回で済む。
 //
 // 「取れなかった」は理由を問わず1つに畳む（画面ですることが同じなので）。
@@ -59,16 +57,7 @@ export type UseContextUsageResult =
     }
 
 /**
- * `state.lastTurnFinishedAt` から、内訳を取り直す合図を作る。
- * ターンが終わるたびに違う値になり、ターンが `running` へ移っても（`lastTurnFinishedAt` 自体が戻らないので）そのまま。
- * まだ一度もターンが終わっていなければ `0`（エポックミリ秒として現実には起きない値なので、番兵として使える）。
- */
-export function contextUsageRefetchKey(lastTurnFinishedAt: number | undefined): number {
-  return lastTurnFinishedAt ?? 0
-}
-
-/**
- * `refetchKey` が変わるたびに取り直す。マウント時にも1回引く（`staleTime: 0`）。
+ * `refetchKey` が変わるたびに取り直す。前の鍵の値は持ち越さない（取り直しの間は `pending`）。マウント時にも1回引く（`staleTime: 0`）。
  * 内訳はターンの実行中に呼んでも待たされない（実測は `CONTEXT_USAGE_DETAIL`）ので、進行中でも同じように取りに行く。
  */
 export function useContextUsage(refetchKey: number): UseContextUsageResult {

@@ -28,6 +28,9 @@ export function ContextUsageGauge(props: {
       aria-expanded={props.open}
       aria-controls={props.detailId}
       aria-busy={gauge.busy ? "true" : undefined}
+      data-finished-turn-count={
+        gauge.source.kind === "after" ? String(gauge.source.finishedTurnCount) : undefined
+      }
       title="コンテキスト"
       onClick={props.onToggle}
     >

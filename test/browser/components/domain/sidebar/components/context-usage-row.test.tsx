@@ -23,8 +23,7 @@ import { putSession } from "../../../../session-store.ts"
  * 警告・届く前・取れないときの高さだけを測る。
  *
  * `fetch` は使わず `QueryClient` に直接 `setQueryData` する（`renderRow` の既定の状態
- * — `state.turn` が `idle` — なら `refetchKey` は必ず 0 になる。
- * `contextUsageRefetchKey`）。取得そのものは別のテストが
+ * — `state.finishedTurnCount` が 0 — なら `refetchKey` は必ず 0 になる）。取得そのものは別のテストが
  * 測るので、ここで `fetch` を経由すると非同期の隙間が増えるだけで測るものが増えない
  * ——テストのたびに残る未解決の Promise が、次のテストの act 外の更新として警告を出す
  * 原因にもなっていた。
@@ -40,7 +39,7 @@ function renderRow(report: ContextUsageReport | undefined): void {
   putSession(INITIAL_SESSION_STATE)
   const client = createTestQueryClient()
   if (report !== undefined) {
-    // 鍵は手続きの鍵に取り直しの合図を足したもの（`contextUsageRefetchKey`）。
+    // 鍵は手続きの鍵に取り直しの合図（`state.finishedTurnCount`）を足したもの。
     client.setQueryData([...rpc.contextUsage.report.queryKey(), REFETCH_KEY], report)
   }
   render(

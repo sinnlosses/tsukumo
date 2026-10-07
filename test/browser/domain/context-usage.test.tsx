@@ -1,10 +1,7 @@
 import { cleanup, renderHook, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  contextUsageRefetchKey,
-  useContextUsage,
-} from "../../../src/browser/domain/context-usage.ts"
+import { useContextUsage } from "../../../src/browser/domain/context-usage.ts"
 import { readyContextUsage } from "../../fixture/context-usage.ts"
 import { createTestQueryClient, queryClientWrapper } from "../query-client.tsx"
 import {
@@ -115,48 +112,5 @@ describe("useContextUsage", () => {
     await waitFor(() => {
       expect(fetchCount()).toBe(2)
     })
-  })
-
-  it("finished → running に移っても取り直さず前の値のまま、次の finished で1回取り直す", async () => {
-    stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
-
-    // `state.lastTurnFinishedAt` から作った key の並び（`contextUsageRefetchKey` を経由）。
-    // `running` に移っても `lastTurnFinishedAt` 自体は戻らない（`applySessionEvent`）ので、
-    // ここでは同じ 300 が続くことをそのまま key に反映する——`state.turn` から作っていた旧実装が
-    // 巻き戻っていた場面（受け入れの確認で見つかった不具合）の再現。
-    const { result, rerender } = renderHook(
-      ({ lastTurnFinishedAt }: { lastTurnFinishedAt: number | undefined }) =>
-        useContextUsage(contextUsageRefetchKey(lastTurnFinishedAt)),
-      {
-        wrapper: queryClientWrapper(createTestQueryClient()),
-        initialProps: { lastTurnFinishedAt: 300 },
-      },
-    )
-
-    await waitFor(() => {
-      expect(result.current.kind).toBe("ready")
-    })
-    expect(fetchCount()).toBe(1)
-
-    // 次のターンが running に移っても、直前に終わった時刻（300）のまま——取り直さない。
-    rerender({ lastTurnFinishedAt: 300 })
-    expect(fetchCount()).toBe(1)
-    expect(result.current.kind).toBe("ready")
-
-    // そのターンが終わって lastTurnFinishedAt が進むと、もう1回だけ取り直す。
-    rerender({ lastTurnFinishedAt: 700 })
-    await waitFor(() => {
-      expect(fetchCount()).toBe(2)
-    })
-  })
-})
-
-describe("contextUsageRefetchKey", () => {
-  it("まだ一度もターンが終わっていなければ 0", () => {
-    expect(contextUsageRefetchKey(undefined)).toBe(0)
-  })
-
-  it("最後にターンが終わった時刻をそのまま使う（running に移っても呼び出し側がそのまま渡し続ける）", () => {
-    expect(contextUsageRefetchKey(200)).toBe(200)
   })
 })

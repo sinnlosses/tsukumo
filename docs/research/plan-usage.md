@@ -82,8 +82,8 @@ tsukumo の都合で起こさない。`docs/coding-standards.md`「会話内容�
 **押すと上の口を呼び直す**（最後に届いた知らせを出し直すのではない）。本体の60秒の控えがあるので、
 連打しても claude.ai の口へは60秒に1回までしか行かない。tsukumo 側で間引く仕組みは足さない。
 
-取り直す契機はコンテキストの行に揃える: **開いたとき・ターンが終わるたび**（`lastTurnFinishedAt`
-から作る合図。`browser/domain/context-usage.ts` の `contextUsageRefetchKey` と同じ考え方）、
+取り直す契機はコンテキストの行に揃える: **開いたとき・ターンが終わるたび**（ターンが終わった回数
+`state.finishedTurnCount` を合図にする。`browser/domain/context-usage.ts` の内訳と同じ合図）、
 **加えて再読み込みのボタン**。ターンの途中と、何もしていない間は取り直さない（時計で回すと、
 何もしていない tsukumo が本体に口を叩かせ続けるため）。
 

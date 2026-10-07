@@ -4,20 +4,18 @@
 //
 // 取り直しのあいだは目盛りの口に `aria-busy` を立てる（面を閉じていても立つ）。
 // E2E の「DOM が落ち着くまで待つ」判定はこれを見て、ターンの終わりに始まった取り直しが終わるまで撮らない。
+// 目盛りの口には、出している値を取ったときの `finishedTurnCount` を `data-finished-turn-count` に出す（値を出していない間は出さない）。
 
 import { useId, useRef, useState, type RefObject } from "react"
 
-import {
-  contextUsageRefetchKey,
-  type UseContextUsageResult,
-  useContextUsage,
-} from "../../../../domain/context-usage.ts"
+import { type UseContextUsageResult, useContextUsage } from "../../../../domain/context-usage.ts"
 import { useDismissSignal } from "../../../../hooks/use-dismiss-signal.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { formatCount } from "../../../../utils/format-count.ts"
 import { isContextUsageWarn } from "../domain/context-usage-warn.ts"
 import { isPlanWindowWarn, windowsOf, type WindowDisplay } from "../domain/plan-window.ts"
-import { planUsageRefetchKey, type UsePlanUsageResult, usePlanUsage } from "./use-plan-usage.ts"
+import type { UsageSource } from "../domain/usage-source.ts"
+import { type UsePlanUsageResult, usePlanUsage } from "./use-plan-usage.ts"
 
 const PLACEHOLDER = "—"
 
@@ -30,6 +28,7 @@ export type ContextGauge = {
   readonly compact: { readonly kind: "none" } | { readonly kind: "at"; readonly position: number }
   readonly warn: boolean
   readonly busy: boolean
+  readonly source: UsageSource
 }
 
 /** 枠1つぶんの円と割合。 */
@@ -43,6 +42,7 @@ export type PlanWindowPieView = {
 export type PlanGauge = {
   readonly label: string
   readonly busy: boolean
+  readonly source: UsageSource
   readonly fiveHour: PlanWindowPieView
   readonly sevenDay: PlanWindowPieView
 }
@@ -59,9 +59,9 @@ export type SidebarFooterView = {
 }
 
 export function useSidebarFooter(): SidebarFooterView {
-  const lastTurnFinishedAt = useSession((session) => session.state.lastTurnFinishedAt)
-  const contextUsage = useContextUsage(contextUsageRefetchKey(lastTurnFinishedAt))
-  const planUsage = usePlanUsage(planUsageRefetchKey(lastTurnFinishedAt))
+  const finishedTurnCount = useSession((session) => session.state.finishedTurnCount)
+  const contextUsage = useContextUsage(finishedTurnCount)
+  const planUsage = usePlanUsage(finishedTurnCount)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const detailId = useId()
@@ -83,12 +83,13 @@ export function useSidebarFooter(): SidebarFooterView {
     },
     contextUsage,
     planUsage,
-    contextGauge: toContextGauge(contextUsage),
+    contextGauge: toContextGauge(contextUsage, finishedTurnCount),
     planGauge: toPlanGauge(planUsage),
   }
 }
 
-function toContextGauge(usage: UseContextUsageResult): ContextGauge {
+/** `useContextUsage` は前の鍵の値を持ち越さないので、値を出していればいまの鍵で取った値。 */
+function toContextGauge(usage: UseContextUsageResult, finishedTurnCount: number): ContextGauge {
   return {
     label: contextGaugeLabel(usage),
     percentageText: usage.kind === "ready" ? `${String(usage.percentage)}%` : PLACEHOLDER,
@@ -105,6 +106,7 @@ function toContextGauge(usage: UseContextUsageResult): ContextGauge {
         : { kind: "none" },
     warn: isContextUsageWarn(usage),
     busy: usage.kind === "pending",
+    source: usage.kind === "pending" ? { kind: "none" } : { kind: "after", finishedTurnCount },
   }
 }
 
@@ -113,6 +115,7 @@ function toPlanGauge(planUsage: UsePlanUsageResult): PlanGauge {
   return {
     label: planGaugeLabel(windows),
     busy: planUsage.fetching,
+    source: planUsage.source,
     fiveHour: toPlanWindowPie("5h", windows?.fiveHour),
     sevenDay: toPlanWindowPie("7d", windows?.sevenDay),
   }

@@ -621,38 +621,51 @@ describe("applySessionEvent", () => {
     })
   })
 
-  it("lastTurnFinishedAt は turn が running に戻っても前の値のまま、次の turn-finished で進む（サイドバーの使用量の行・トークン消費の画面の取り直しの合図。受け入れの確認で見つかった不具合の再現）", () => {
-    expect(INITIAL_SESSION_STATE.lastTurnFinishedAt).toBeUndefined()
+  it("finishedTurnCount は turn が running に戻っても前の値のまま、次の turn-finished で進む（サイドバーの使用量の行・トークン消費の画面の取り直しの合図。受け入れの確認で見つかった不具合の再現）", () => {
+    expect(INITIAL_SESSION_STATE.finishedTurnCount).toBe(0)
 
+    // 時刻はすべて同じにする（凍らせたサーバの時計の下でもターンごとに違う値になること）。
+    const at = 300
     const started = applySessionEvent(
       INITIAL_SESSION_STATE,
       { kind: "request", text: "ダミーの依頼", images: [] },
-      100,
+      at,
     )
     const finished = applySessionEvent(
       started,
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      300,
+      at,
     )
-    expect(finished.lastTurnFinishedAt).toBe(300)
+    expect(finished.finishedTurnCount).toBe(1)
 
-    // 次のターンが始まって turn は running に戻っても、直前に終わった時刻のまま
-    // （`turn.finished.finishedAt` は running の腕に無いので読めなくなるが、こちらは戻らない）。
+    // 終わったあとにもう一度届いた終わりでは数えない（1ターンを二重に数えない）。
+    const finishedTwice = applySessionEvent(
+      finished,
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      at,
+    )
+    expect(finishedTwice.finishedTurnCount).toBe(1)
+    const endedAfterFinish = applySessionEvent(
+      finishedTwice,
+      { kind: "session-ended", reason: "セッションが終了した" },
+      at,
+    )
+    expect(endedAfterFinish.finishedTurnCount).toBe(1)
+
     const restarted = applySessionEvent(
       finished,
       { kind: "request", text: "次の依頼", images: [] },
-      400,
+      at,
     )
     expect(restarted.turn.kind).toBe("running")
-    expect(restarted.lastTurnFinishedAt).toBe(300)
+    expect(restarted.finishedTurnCount).toBe(1)
 
-    // そのターンが終わると、もう一度だけ進む。
     const finishedAgain = applySessionEvent(
       restarted,
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      700,
+      at,
     )
-    expect(finishedAgain.lastTurnFinishedAt).toBe(700)
+    expect(finishedAgain.finishedTurnCount).toBe(2)
   })
 
   it("始まっていないターンは session-ended でも終わらない（idle のまま）", () => {
@@ -663,6 +676,7 @@ describe("applySessionEvent", () => {
     )
 
     expect(ended.turn).toEqual({ kind: "idle" })
+    expect(ended.finishedTurnCount).toBe(0)
   })
 
   it("session-ended でも終わった時刻を打つ（中断・異常終了でも経過時間表示が止まる）", () => {

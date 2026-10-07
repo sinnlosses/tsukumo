@@ -560,6 +560,7 @@
                   "attributes": {
                     "aria-label": "コンテキスト 61%（122k / 200k）",
                     "aria-expanded": "false",
+                    "data-finished-turn-count": "1",
                     "type": "button"
                   },
                   "children": [
@@ -584,6 +585,7 @@
                   "attributes": {
                     "aria-label": "利用枠 5時間 34%・7日間 61%",
                     "aria-expanded": "false",
+                    "data-finished-turn-count": "1",
                     "type": "button"
                   },
                   "children": [

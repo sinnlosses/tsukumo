@@ -1997,9 +1997,8 @@ hook 入力の `effort.level`（ターンの終わり。実測は `docs/history/
 - **取得と畳み込みは `browser/domain/context-usage.ts`**——トークン消費の画面の札とサイドバーの
   この行の2つの機能が読むので、`components/page/token-usage/` から `browser/domain/` へ上げてある
   （docs/architecture.md「上げる引き金は「2つ目の読み手が出たとき」」）
-- **取り直すのはターンが終わるたび**（開いたときの1回に加えて）。合図（`contextUsageRefetchKey`）は
-  `state.lastTurnFinishedAt`（直近でターンが終わった時刻。次のターンが始まっても戻らない）から
-  作り、`useQuery` の `queryKey` に含めるだけで取り直せるので、`useEffect` は要らない。ターンの
+- **取り直すのはターンが終わるたび**（開いたときの1回に加えて）。合図は
+  `state.finishedTurnCount`（ターンが終わった回数。次のターンが始まっても戻らない）で、`useQuery` の `queryKey` に含めるだけで取り直せるので、`useEffect` は要らない。ターンの
   途中は前に取った値のまま出し続ける
 - **会話の画面を隠している間もサイドバーは外れない**（`components/app/layout.tsx` の `<Activity mode="hidden">`）
   ので、トークン消費の画面を開いている間もこの行はマウントされたまま。同じ `queryKey` を見る
