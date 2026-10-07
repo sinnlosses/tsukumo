@@ -146,8 +146,9 @@
   outline-width: 1px;
   border-color: color-mix(in srgb, var(--accent) 60%, var(--rule));
 }
-/* 答え待ちのあいだは、フォーカスの枠も答え待ちの色（--state-warn）の系統にする。
-   混ぜ方は上の accent のときと揃える（60%, var(--rule)）。 */
+/* 答え待ちのあいだは、フォーカスの枠と輪（theme.css の :focus-visible の outline）も答え待ちの色（--state-warn）の系統にする。
+   枠の混ぜ方は上の accent のときと揃える（60%, var(--rule)）。 */
 .dispatch-form.is-answering .dispatch-text:focus-visible {
+  outline-color: var(--state-warn);
   border-color: color-mix(in srgb, var(--state-warn) 60%, var(--rule));
 }
