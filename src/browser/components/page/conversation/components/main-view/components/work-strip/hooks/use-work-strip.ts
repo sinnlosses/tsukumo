@@ -6,11 +6,16 @@ import type {
   PendingAsk,
   StampedPendingAsk,
 } from "../../../../../../../../../shared/session-driver/pending-ask.ts"
+import { conversationMoment } from "../../../../../../../../../shared/session/conversation-moment.ts"
 import type {
   ReportDrafting,
   SessionRecord,
   TurnProgress,
 } from "../../../../../../../../../shared/session/session-state.ts"
+import {
+  turnResultsOf,
+  type TurnResult,
+} from "../../../../../../../../../shared/session/turn-result.ts"
 import type { TurnStep, TurnStepList } from "../../../../../../../../../shared/session/turn-step.ts"
 import type { LatestWorkPlan } from "../../../../../../../../../shared/session/work-plan.ts"
 import { formatElapsed } from "../../../../../../../../../shared/utils/elapsed-time.ts"
@@ -22,15 +27,18 @@ import {
 } from "../../../../../../../../features/current-work/domain/current-work-step.ts"
 import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-steps.ts"
 import { useMainViewContent } from "../../../../../../../../stores/main-view-content.ts"
+import { useMainViewTurns } from "../../../../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { useWorkStripSteps } from "../../../../../../../../stores/work-strip-steps.ts"
 import { apiRetryNotice } from "../../../../../domain/api-error-label.ts"
 import { isClearRequest } from "../../../../../domain/clear-request.ts"
 import {
+  FINISHED_LABEL,
   isTurnCounting,
   turnElapsedLabel,
   turnElapsedText,
 } from "../../../../../domain/turn-elapsed.ts"
+import type { WorkStripResult } from "../../../../../domain/turn-result-mark.ts"
 import { useNowWhile } from "../../../../hooks/use-now-while.ts"
 
 /** 段の丸1つの状態。`asking` は今の段で答え待ちが来ているとき。 */
@@ -75,17 +83,18 @@ export type WorkStripSteps = {
 /**
  * 帯に出す形。`headLabel` は丸の右の字、`sideLabel` は右端の等幅の字。
  *
- * - `none`: 帯ごと出さない（段取りの無いまま閉じた依頼）
- * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「4/7 · 経過 6分12秒」・2行目（段取りが届く前は段の丸が無く「作業中」）。
- *   `spinning` は回る印を出すか（答え待ちのあいだは止める）
- * - `finished`: 中身がレポートに入れ替わったあと。済んだ姿の字・「所要 21分49秒」の1行
+ * - `none`: 帯ごと出さない（本文が1つも無いまま閉じた依頼と、段取りも働きも無いとき）
+ * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「4/7 · 経過 6分12秒」・2行目（段取りが届く前は段の丸が無く「作業中」）
+ * - `finished`: 中身がレポートに入れ替わったあと。済んだ姿の字・「所要 21分49秒」の1行（段取りが無ければ字は空）
+ *
+ * `result` は状態のチップの状態。`working` は作業中か答え待ち、`finished` は完了・答え待ち・止めた・失敗。
  */
 export type WorkStripModel =
   | { readonly kind: "none" }
   | {
       readonly kind: "working"
+      readonly result: WorkStripResult
       readonly phases: readonly WorkStripPhase[]
-      readonly spinning: boolean
       readonly headLabel: string
       readonly sideLabel: string
       readonly activity: WorkStripActivity
@@ -93,6 +102,7 @@ export type WorkStripModel =
     }
   | {
       readonly kind: "finished"
+      readonly result: WorkStripResult
       readonly phases: readonly WorkStripPhase[]
       readonly headLabel: string
       readonly sideLabel: string
@@ -121,15 +131,16 @@ export function useWorkStrip(): WorkStripModel {
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
   const opened = useWorkStripSteps((state) => state.opened)
   const toggle = useWorkStripSteps((state) => state.toggle)
+  const turns = useMainViewTurns()
+  const moment = useSession((session) => conversationMoment(session.state))
   const plan = turnStepList.kind === "turn" ? turnStepList.plan : NO_PLAN
   const working = content.kind === "work"
-  const shown = content.kind !== "welcome" && (working || plan.kind === "planned")
+  const newestResult = turnResultsOf(turns, working ? moment : "deliver").at(-1)
+  const result = stripResultOf(newestResult, working, plan)
+  const shown = content.kind !== "welcome" && result !== undefined
   const now = useNowWhile(shown && isTurnCounting(turn, backgroundTasks.length))
 
-  if (content.kind === "welcome" || turnStepList.kind !== "turn") {
-    return { kind: "none" }
-  }
-  if (plan.kind !== "planned" && !working) {
+  if (content.kind === "welcome" || turnStepList.kind !== "turn" || result === undefined) {
     return { kind: "none" }
   }
 
@@ -140,7 +151,9 @@ export function useWorkStrip(): WorkStripModel {
     opened.kind === "open" && opened.exchange === exchange
       ? { kind: "open", failureSignal: opened.failureSignal }
       : { kind: "closed" }
-  const elapsedLabel = `${turnElapsedLabel(turn, backgroundTasks.length)} ${turnElapsedText(turn, backgroundTasks.length, now)}`
+  const elapsedWord =
+    result === "failed" ? FINISHED_LABEL : turnElapsedLabel(turn, backgroundTasks.length)
+  const elapsedLabel = `${elapsedWord} ${turnElapsedText(turn, backgroundTasks.length, now)}`
   const steps: WorkStripSteps = {
     toggleLabel: `手順 ${String(turnStepList.steps.length)} ${list.kind === "open" ? "▴" : "▾"}`,
     list,
@@ -154,11 +167,14 @@ export function useWorkStrip(): WorkStripModel {
   if (!working) {
     return {
       kind: "finished",
+      result,
       phases: stripPhases,
       headLabel:
-        current >= phases.length
-          ? `${String(phases.length)}段すべて済み`
-          : `${String(phases.length)}段のうち${String(current)}段済み`,
+        phases.length === 0
+          ? ""
+          : current >= phases.length
+            ? `${String(phases.length)}段すべて済み`
+            : `${String(phases.length)}段のうち${String(current)}段済み`,
       sideLabel: elapsedLabel,
       steps,
     }
@@ -167,7 +183,7 @@ export function useWorkStrip(): WorkStripModel {
   return {
     kind: "working",
     phases: stripPhases,
-    spinning: firstPending === undefined,
+    result,
     headLabel:
       phases.length === 0
         ? UNPLANNED_HEAD
@@ -187,6 +203,27 @@ export function useWorkStrip(): WorkStripModel {
     }),
     steps,
   }
+}
+
+/**
+ * 最新のやり取りの結果から、チップの状態。出さないなら undefined。
+ * 閉じたのに本文が無いやり取りは、段取りがあれば段の進みから（途中なら止めた、全部済みなら完了）、無ければ出さない。
+ */
+function stripResultOf(
+  newest: TurnResult | undefined,
+  working: boolean,
+  plan: LatestWorkPlan,
+): WorkStripResult | undefined {
+  if (working) {
+    return newest === "awaiting-answer" ? newest : "working"
+  }
+  if (newest !== undefined && newest !== "no-report") {
+    return newest
+  }
+  if (plan.kind !== "planned") {
+    return undefined
+  }
+  return plan.current < plan.phases.length ? "stopped" : "done"
 }
 
 function phaseState(index: number, current: number, asking: boolean): WorkStripPhaseState {

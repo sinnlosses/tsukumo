@@ -75,6 +75,45 @@
                       ]
                     },
                     {
+                      "tag": "section",
+                      "attributes": {
+                        "aria-label": "進み具合",
+                        "data-work-strip": "finished"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "data-result": "done"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "✓"
+                              ]
+                            },
+                            "完了"
+                          ]
+                        },
+                        "所要 0秒",
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "手順 0 ▾"
+                          ]
+                        }
+                      ]
+                    },
+                    {
                       "tag": "div",
                       "attributes": {
                         "data-outline": "shown",

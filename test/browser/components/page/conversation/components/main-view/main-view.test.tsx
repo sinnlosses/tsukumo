@@ -301,7 +301,7 @@ describe("MainView（目次の列: やり取りと見出しの2段）", () => {
       null,
       "true",
     ])
-    expect(outlineTurnRows()[0]?.getAttribute("aria-label")).toBe("済んだ: 1つ目")
+    expect(outlineTurnRows()[0]?.getAttribute("aria-label")).toBe("完了: 1つ目")
   })
 
   it("働いている最中のいちばん新しいやり取りは「…」の印になる", () => {
@@ -318,7 +318,7 @@ describe("MainView（目次の列: やり取りと見出しの2段）", () => {
     chooseOutlineOpen()
     renderMainView(threeTurnsWithHeadings())
 
-    press("済んだ: 1つ目")
+    press("完了: 1つ目")
 
     expect(title()).toBe("1つ目")
     // 見出しは描いた本文の DOM の変化（`MutationObserver`）で拾い直すので、次のタスクで替わる。

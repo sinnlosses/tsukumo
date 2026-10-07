@@ -6,9 +6,9 @@ import clsx from "clsx"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
-import type { TurnResult } from "../../../../../../../../shared/session/turn-result.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { LayoutResizer } from "../../../../../../ui/layout-resizer/layout-resizer.tsx"
+import { TURN_RESULT_MARKS } from "../../../../domain/turn-result-mark.ts"
 import { outlineWidthFromRatio } from "./domain/outline-panel.ts"
 import {
   TURN_ROW_ATTRIBUTE,
@@ -24,15 +24,6 @@ const EXPAND_LABEL = "目次を開く"
 const RESIZER_LABEL = "目次と本文の境界"
 
 const ACTIVE_TURN_MARK = "●"
-
-const RESULT_MARKS = {
-  done: { mark: "✓", label: "済んだ" },
-  "awaiting-answer": { mark: "?", label: "答え待ち" },
-  stopped: { mark: "‖", label: "止めた" },
-  failed: { mark: "✕", label: "失敗" },
-  working: { mark: "…", label: "作業中" },
-  "no-report": { mark: "–", label: "レポートなし" },
-} as const satisfies Record<TurnResult, { readonly mark: string; readonly label: string }>
 
 export type PresentationalReportOutlineProps = ReportOutlineModel & {
   readonly children: ReactNode
@@ -152,7 +143,7 @@ function TurnRow(props: {
   readonly onSelectTurn: (turnId: number) => void
 }): ReactElement {
   const { turn } = props
-  const result = RESULT_MARKS[turn.result]
+  const result = TURN_RESULT_MARKS[turn.result]
   return (
     <button
       type="button"

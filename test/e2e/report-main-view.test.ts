@@ -89,9 +89,7 @@ describe("report → メインビュー", () => {
     await room.page.locator('nav[aria-label="目次"] [data-level="sub"]').waitFor()
     await room.settleAndMatch(ELAPSED_MS)
 
-    await room.page
-      .getByRole("button", { name: "済んだ: 指示をタスクにする（架空の依頼）" })
-      .focus()
+    await room.page.getByRole("button", { name: "完了: 指示をタスクにする（架空の依頼）" }).focus()
     await room.page.keyboard.press("Enter")
     await room.page.locator('[class*="turn-position"]', { hasText: "1 / 5" }).waitFor()
     await room.page

@@ -11,6 +11,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../../../../src/shared/session/session-state.ts"
+import { reportEvent } from "../../../../../../../../../fixture/report-event.ts"
 import { putSession } from "../../../../../../../../session-store.ts"
 
 afterEach(() => {
@@ -162,7 +163,7 @@ describe("useWorkStrip（`/clear` の依頼）", () => {
 })
 
 describe("useWorkStrip（段取りが届く前）", () => {
-  it("送った直後から、段の丸の無い「作業中」の帯を回る印つきで出す", () => {
+  it("送った直後から、段の丸の無い「作業中」の帯を作業中の状態で出す", () => {
     const state = foldTimed([[request, START]])
 
     const strip = stripAt(state, START + 12_000)
@@ -170,18 +171,94 @@ describe("useWorkStrip（段取りが届く前）", () => {
     expect(strip).toMatchObject({
       kind: "working",
       phases: [],
-      spinning: true,
+      result: "working",
       headLabel: "作業中",
       sideLabel: "経過 12秒",
     })
   })
 
-  it("段取りの無いまま閉じたら、帯ごと消す", () => {
+  it("本文が1つも無いまま閉じたら、帯ごと消す", () => {
     const state = foldTimed([
       [request, START],
       [{ kind: "turn-finished", outcome: { kind: "completed" } }, START + 5_000],
     ])
 
     expect(stripAt(state, START + 6_000)).toEqual({ kind: "none" })
+  })
+})
+
+function taskOf(outcome: "finished" | "stopped" | "awaiting-answer"): SessionEvent {
+  return reportEvent({ task: { kind: "task", id: "fictional-task", name: "架空の作業", outcome } })
+}
+
+const completed: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
+
+function askedPending(): SessionEvent {
+  return {
+    kind: "pending-changed",
+    pending: [
+      { kind: "permission", id: "toolu_ask", toolName: "Bash", input: { command: "架空" } },
+    ],
+  }
+}
+
+function resultAfter(events: readonly SessionEvent[]): string | undefined {
+  const strip = stripAt(
+    foldTimed(events.map((event, index) => [event, START + index * 1_000] as const)),
+    START + 60_000,
+  )
+  return strip.kind === "none" ? undefined : strip.result
+}
+
+describe("useWorkStrip（状態）", () => {
+  it("働いているあいだは作業中、答え待ちが届けば答え待ち", () => {
+    expect(resultAfter([request, plan])).toBe("working")
+    expect(resultAfter([request, plan, askedPending()])).toBe("awaiting-answer")
+  })
+
+  it("閉じたあとは、最後の本文の終わり方で完了・答え待ち・止めたを区別する", () => {
+    expect(resultAfter([request, plan, taskOf("finished"), completed])).toBe("done")
+    expect(resultAfter([request, plan, taskOf("awaiting-answer"), completed])).toBe(
+      "awaiting-answer",
+    )
+    expect(resultAfter([request, plan, taskOf("stopped"), completed])).toBe("stopped")
+  })
+
+  it("失敗で終わったら、段取りが無くても帯を残して失敗にする", () => {
+    const failed: SessionEvent = {
+      kind: "turn-finished",
+      outcome: { kind: "failed", cause: { kind: "max-turns" } },
+    }
+
+    expect(resultAfter([request, plan, failed])).toBe("failed")
+    expect(resultAfter([request, failed])).toBe("failed")
+    expect(
+      stripAt(
+        foldTimed([
+          [request, START],
+          [failed, START + 7_000],
+        ]),
+        START + 8_000,
+      ),
+    ).toMatchObject({ kind: "finished", sideLabel: "所要 7秒" })
+  })
+
+  it("段取りの無いまま本文を出して閉じたら、段の丸の無い完了の帯を残す", () => {
+    const strip = stripAt(
+      foldTimed([
+        [request, START],
+        [reportEvent(), START + 1_000],
+        [completed, START + 5_000],
+      ]),
+      START + 6_000,
+    )
+
+    expect(strip).toMatchObject({
+      kind: "finished",
+      result: "done",
+      phases: [],
+      headLabel: "",
+      sideLabel: "所要 5秒",
+    })
   })
 })

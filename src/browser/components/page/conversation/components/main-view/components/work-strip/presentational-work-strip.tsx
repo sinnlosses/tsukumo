@@ -1,4 +1,4 @@
-// 進み具合の帯の器。回る印・段の丸の並び・今の段・位置と経過・手順の口の1行目と、走っている手順の2行目、押すと開く依頼の手順の一覧。
+// 進み具合の帯の器。状態のチップ・段の丸の並び・今の段・位置と経過・手順の口の1行目と、走っている手順の2行目、押すと開く依頼の手順の一覧。
 //
 // `aria-live` は付けない。
 
@@ -8,6 +8,7 @@ import type { ReactElement } from "react"
 import { CurrentWorkStepGroup } from "../../../../../../../features/current-work/components/current-work-step-group.tsx"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
+import { TURN_RESULT_MARKS, type WorkStripResult } from "../../../../domain/turn-result-mark.ts"
 import { useFailedStepFocus } from "./hooks/use-failed-step-focus.ts"
 import type {
   WorkStripActivity,
@@ -29,9 +30,7 @@ export function PresentationalWorkStrip(props: {
   return (
     <section aria-label="進み具合" className={styles["work-strip"]} data-work-strip={strip.kind}>
       <div className={styles["work-strip-line"]}>
-        {strip.kind === "working" && strip.spinning && (
-          <span className={styles["work-strip-spinner"]} aria-hidden="true" />
-        )}
+        <StateChip result={strip.result} />
         {strip.phases.length > 0 && <PhaseTrack phases={strip.phases} />}
         <Text
           element="span"
@@ -58,6 +57,21 @@ export function PresentationalWorkStrip(props: {
         <StepsList groups={strip.steps.groups} failureSignal={strip.steps.list.failureSignal} />
       )}
     </section>
+  )
+}
+
+/** 状態のチップ。印と字を必ず並べ、作業中の印だけは回る輪にする。 */
+function StateChip(props: { readonly result: WorkStripResult }): ReactElement {
+  const { mark, label } = TURN_RESULT_MARKS[props.result]
+  return (
+    <span className={styles["work-strip-chip"]} data-result={props.result}>
+      {props.result === "working" ? (
+        <span className={styles["work-strip-spinner"]} aria-hidden="true" />
+      ) : (
+        <span aria-hidden="true">{mark}</span>
+      )}
+      <span>{label}</span>
+    </span>
   )
 }
 

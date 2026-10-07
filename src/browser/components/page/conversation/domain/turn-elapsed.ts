@@ -6,7 +6,7 @@ import type { TurnProgress } from "../../../../../shared/session/session-state.t
 import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
 
 const ELAPSED_LABEL = "経過"
-const FINISHED_LABEL = "所要"
+export const FINISHED_LABEL = "所要"
 /** 失敗で終わったターンの経過時間に添える字（「所要」の代わり）。 */
 const FAILED_LABEL = "失敗"
 

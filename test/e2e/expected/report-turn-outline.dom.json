@@ -75,6 +75,45 @@
                       ]
                     },
                     {
+                      "tag": "section",
+                      "attributes": {
+                        "aria-label": "進み具合",
+                        "data-work-strip": "finished"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "data-result": "done"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "✓"
+                              ]
+                            },
+                            "完了"
+                          ]
+                        },
+                        "所要 0秒",
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "手順 0 ▾"
+                          ]
+                        }
+                      ]
+                    },
+                    {
                       "tag": "div",
                       "attributes": {
                         "data-outline": "shown",
@@ -107,7 +146,7 @@
                               "attributes": {
                                 "data-outline-turn": "0",
                                 "data-result": "done",
-                                "aria-label": "済んだ: 指示をタスクにする（架空の依頼）",
+                                "aria-label": "完了: 指示をタスクにする（架空の依頼）",
                                 "type": "button"
                               },
                               "children": [
@@ -192,7 +231,7 @@
                                 "data-outline-turn": "4",
                                 "data-result": "done",
                                 "aria-current": "true",
-                                "aria-label": "済んだ: 目次の列を2段にする（架空の依頼）",
+                                "aria-label": "完了: 目次の列を2段にする（架空の依頼）",
                                 "type": "button"
                               },
                               "children": [

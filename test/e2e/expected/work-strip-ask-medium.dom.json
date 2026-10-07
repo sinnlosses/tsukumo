@@ -82,6 +82,24 @@
                       },
                       "children": [
                         {
+                          "tag": "span",
+                          "attributes": {
+                            "data-result": "awaiting-answer"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "?"
+                              ]
+                            },
+                            "答え待ち"
+                          ]
+                        },
+                        {
                           "tag": "ol",
                           "children": [
                             {

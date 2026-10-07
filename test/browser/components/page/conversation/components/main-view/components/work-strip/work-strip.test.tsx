@@ -102,6 +102,7 @@ describe("WorkStrip", () => {
     render(<WorkStrip />)
 
     expect(strip().getAttribute("data-work-strip")).toBe("working")
+    expect(strip().querySelector("[data-result]")?.textContent).toBe("作業中")
     expect(strip().querySelector("p")?.textContent).toContain("再試行中 2/10")
   })
 
@@ -120,6 +121,7 @@ describe("WorkStrip", () => {
 
     expect(strip().getAttribute("data-work-strip")).toBe("finished")
     expect(strip().textContent).toContain("3段すべて済み")
+    expect(strip().querySelector("[data-result]")?.textContent).toBe("✓完了")
     expect(strip().querySelector("p")).toBeNull()
   })
 })

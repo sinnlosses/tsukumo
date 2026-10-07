@@ -84,8 +84,17 @@
                         {
                           "tag": "span",
                           "attributes": {
-                            "aria-hidden": "true"
-                          }
+                            "data-result": "working"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            },
+                            "作業中"
+                          ]
                         },
                         {
                           "tag": "ol",
