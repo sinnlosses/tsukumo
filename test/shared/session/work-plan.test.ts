@@ -1,14 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  advancedByReturn,
   closedByReport,
   type LatestWorkPlan,
   parseWorkPlan,
-  parseWorkPlanCall,
   parseWorkPlanClosing,
   phaseShiftOf,
-  taskWorkPlanOf,
   type WorkPlan,
 } from "../../../src/shared/session/work-plan.ts"
 
@@ -61,45 +58,6 @@ describe("parseWorkPlan の段のまとめ", () => {
   })
 })
 
-describe("parseWorkPlanCall", () => {
-  it("phases があれば parseWorkPlan と同じに読み、無ければ着手したタスクから作る呼び出しにする", () => {
-    expect(parseWorkPlanCall({ phases: PHASES, current: 0 })).toEqual({
-      kind: "phases",
-      plan: next(PHASES, 0),
-    })
-    expect(parseWorkPlanCall({ current: 1, phaseSummary: "架空のまとめ。" })).toEqual({
-      kind: "from-task",
-      current: 1,
-      phaseSummary: "架空のまとめ。",
-    })
-  })
-
-  it("位置が負・整数でない・まとめが長すぎる phases の無い呼び出しは読まない", () => {
-    expect(parseWorkPlanCall({ current: -1 })).toBeUndefined()
-    expect(parseWorkPlanCall({ current: 0.5 })).toBeUndefined()
-    expect(
-      parseWorkPlanCall({ current: 1, phaseSummary: "一つ目。二つ目。三つ目。" }),
-    ).toBeUndefined()
-  })
-})
-
-describe("taskWorkPlanOf", () => {
-  it("タスクの段の前に計画、後ろに受け入れを置いた並びにする", () => {
-    expect(
-      taskWorkPlanOf(PHASES, { kind: "from-task", current: 1, phaseSummary: "架空のまとめ。" }),
-    ).toEqual(next(["計画", ...PHASES, "受け入れ"], 1, "架空のまとめ。"))
-  })
-
-  it("位置が並びを超える・途中の位置に段のまとめが無いと作らない", () => {
-    expect(
-      taskWorkPlanOf(PHASES, { kind: "from-task", current: 6, phaseSummary: "" }),
-    ).toBeUndefined()
-    expect(
-      taskWorkPlanOf(PHASES, { kind: "from-task", current: 2, phaseSummary: "" }),
-    ).toBeUndefined()
-  })
-})
-
 describe("phaseShiftOf", () => {
   it("段を進めると、終えた段のまとめを出す", () => {
     expect(phaseShiftOf(planned(PHASES, 0), next(PHASES, 1, "架空のまとめ。"))).toEqual({
@@ -143,72 +101,6 @@ describe("phaseShiftOf", () => {
     expect(phaseShiftOf({ kind: "none" }, next(PHASES, 1, "架空のまとめ。"))).toEqual(nothing)
     expect(phaseShiftOf(planned(PHASES, 2), next(PHASES, 3, "架空のまとめ。"))).toEqual(nothing)
     expect(phaseShiftOf(planned(["架空の段A"], 0), next(["架空の段A"], 1))).toEqual(nothing)
-  })
-})
-
-describe("advancedByReturn", () => {
-  const DELEGATE_PHASES = ["計画", "架空の段1", "架空の段2", "架空の段3", "受け入れ"]
-  const returnOf = (finishedPhase: number, summary = "架空のまとめ。") => ({
-    finishedPhase,
-    phaseCount: 3,
-    summary,
-  })
-
-  it("段の並びはそのままで今の段を返却の番号 + 1 にし、返却の文を済んだ段のまとめにする", () => {
-    expect(advancedByReturn(next(DELEGATE_PHASES, 0), returnOf(0, "架空の形が分かった。"))).toEqual(
-      { kind: "advanced", plan: next(DELEGATE_PHASES, 1, "架空の形が分かった。") },
-    )
-  })
-
-  it("止めた返却を挟んで1段遅れていても、番号の返却で委譲先の段に揃い、最後は受け入れに着く", () => {
-    const skipped = advancedByReturn(next(DELEGATE_PHASES, 2, "架空。"), returnOf(3))
-
-    expect(skipped).toEqual({ kind: "advanced", plan: next(DELEGATE_PHASES, 4, "架空のまとめ。") })
-  })
-
-  it("同じ返却の2回目と古い番号の返却では動かさない", () => {
-    expect(advancedByReturn(next(DELEGATE_PHASES, 2, "架空。"), returnOf(1))).toEqual({
-      kind: "held",
-    })
-    expect(advancedByReturn(next(DELEGATE_PHASES, 3, "架空。"), returnOf(1))).toEqual({
-      kind: "held",
-    })
-  })
-
-  it("受け入れより先と、全部済みの位置へは進めない", () => {
-    expect(advancedByReturn(next(DELEGATE_PHASES, 4, "架空。"), returnOf(4))).toEqual({
-      kind: "held",
-    })
-    expect(advancedByReturn(next(DELEGATE_PHASES, 5), returnOf(3))).toEqual({ kind: "held" })
-  })
-
-  it("計画の返却は段の数が帯と合わなくても、今の段が計画のときだけ1へ進む", () => {
-    const short = ["計画", "受け入れ"]
-
-    expect(advancedByReturn(next(short, 0), returnOf(0))).toEqual({
-      kind: "advanced",
-      plan: next(short, 1, "架空のまとめ。"),
-    })
-    expect(advancedByReturn(next(DELEGATE_PHASES, 1, "架空。"), returnOf(0))).toEqual({
-      kind: "held",
-    })
-  })
-
-  it("段 n（n が1以上）の返却は、委譲先の段の数が帯と合わないと動かさない", () => {
-    expect(advancedByReturn(next(DELEGATE_PHASES, 0), { ...returnOf(1), phaseCount: 2 })).toEqual({
-      kind: "held",
-    })
-  })
-
-  it("返却の文が2文を超えた分は切り詰める（括弧と inline code の中の句点では割らない）", () => {
-    const advance = advancedByReturn(
-      next(DELEGATE_PHASES, 0),
-      returnOf(0, "架空の1文目（中は。を含む）。`a。b` の2文目！架空の3文目。架空の4文目"),
-    )
-
-    expect(advance.kind === "advanced" && advance.plan.phaseSummary).toBe(
-      "架空の1文目（中は。を含む）。`a。b` の2文目！",
-    )
   })
 })
 

@@ -3,7 +3,7 @@
 
 import { isPlainObject } from "remeda"
 
-import { leadingSentences, sentenceCount } from "../report/sentence-count.ts"
+import { sentenceCount } from "../report/sentence-count.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import type { SessionRecord } from "./session-state.ts"
 
@@ -86,59 +86,6 @@ export function parseWorkPlan(value: unknown): WorkPlan | undefined {
 }
 
 /**
- * `work_plan` の呼び出し1つ。`phases` を渡せば `phases`、省けば `from-task`（並びは着手したタスクの段から作る）。
- */
-export type WorkPlanCall =
-  | { readonly kind: "phases"; readonly plan: WorkPlan }
-  | { readonly kind: "from-task"; readonly current: number; readonly phaseSummary: string }
-
-/**
- * 外来の値（ツールの引数・transcript）を `work_plan` の呼び出しとして読む。
- * `phases` があれば {@link parseWorkPlan} と同じ。
- * 無ければ、位置が0以上の整数で段のまとめが {@link MAX_PHASE_SUMMARY_SENTENCES} 文以内のときだけ `from-task`
- * （位置が段の数を超えないか・途中の位置に段のまとめがあるかは、並びを作る {@link taskWorkPlanOf} が見る）。
- */
-export function parseWorkPlanCall(value: unknown): WorkPlanCall | undefined {
-  if (!isPlainObject(value)) {
-    return undefined
-  }
-  if (value.phases !== undefined) {
-    const plan = parseWorkPlan(value)
-    return plan === undefined ? undefined : { kind: "phases", plan }
-  }
-  const { current } = value
-  const phaseSummary = parsePhaseSummary(value.phaseSummary)
-  return typeof current === "number" &&
-    Number.isInteger(current) &&
-    current >= 0 &&
-    phaseSummary !== undefined &&
-    sentenceCount(phaseSummary) <= MAX_PHASE_SUMMARY_SENTENCES
-    ? { kind: "from-task", current, phaseSummary }
-    : undefined
-}
-
-/** タスクの段から作る並びの頭の段。 */
-export const PLANNING_PHASE = "計画"
-
-/** タスクの段から作る並びの最後の段。 */
-export const ACCEPTANCE_PHASE = "受け入れ"
-
-/**
- * 着手したタスクの段の名前から「計画」「各段」「受け入れ」の並びを作り、呼び出しの位置と段のまとめを合わせた段取り。
- * {@link parseWorkPlan} を通らなければ undefined。
- */
-export function taskWorkPlanOf(
-  steps: readonly string[],
-  call: Extract<WorkPlanCall, { readonly kind: "from-task" }>,
-): WorkPlan | undefined {
-  return parseWorkPlan({
-    phases: [PLANNING_PHASE, ...steps, ACCEPTANCE_PHASE],
-    current: call.current,
-    phaseSummary: call.phaseSummary,
-  })
-}
-
-/**
  * サーバが `work_plan` を判定したあとの、いまの段取りの立ち位置（`WorkPlanReview.standing`）。
  * `rejected` はこのターンで差し戻した呼び出しに、まだ受け付けた呼び出しで応えていない。
  * `planned` は同じ依頼で受け付けた段取りがあり、`remaining` はまだ済んでいない段の数（全部済みなら 0）。
@@ -150,41 +97,6 @@ export type WorkPlanStanding =
 
 /** 段取りを判定しない口（疑似セッション）が渡す立ち位置。 */
 export const NO_WORK_PLAN_STANDING = { kind: "none" } as const satisfies WorkPlanStanding
-
-/** 委譲の返却1回で段取りがどうなるか。`held` は段を動かさない。 */
-export type ReturnAdvance =
-  | { readonly kind: "held" }
-  | { readonly kind: "advanced"; readonly plan: WorkPlan }
-
-/** 委譲の返却1回が言う位置。`finishedPhase` は済んだ段の番号（計画だけなら 0）、`phaseCount` は委譲先の段の数。 */
-export type DelegateReturnPosition = {
-  readonly finishedPhase: number
-  readonly phaseCount: number
-  readonly summary: string
-}
-
-/**
- * 委譲の返却1回で位置を決めた段取り（{@link ReturnAdvance}）。
- * 段の並びは「計画」「委譲先の各段」「受け入れ」なので、今の段は `finishedPhase + 1` になる。
- * 返却のまとめは {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めて済んだ段のまとめにする。
- * 委譲先の段の数が帯と合わない・求めた位置が今の位置以下・受け入れより先なら動かさない。
- * 計画の返却（`finishedPhase` 0）だけは段の数を照合しない（委譲先が `## やること` を書き直した返却で、帯はまだ書き直す前の並び）。
- */
-export function advancedByReturn(plan: WorkPlan, returned: DelegateReturnPosition): ReturnAdvance {
-  const target = returned.finishedPhase + 1
-  return (returned.finishedPhase === 0 || returned.phaseCount + 2 === plan.phases.length) &&
-    target > plan.current &&
-    target < plan.phases.length
-    ? {
-        kind: "advanced",
-        plan: {
-          phases: plan.phases,
-          current: target,
-          phaseSummary: leadingSentences(returned.summary, MAX_PHASE_SUMMARY_SENTENCES),
-        },
-      }
-    : { kind: "held" }
-}
 
 /** `report` の欄 `workPlanClosing` で渡せる段の閉じ方。`finished` は全部の段を終えた、`stopped` は途中で止めた。 */
 export const WORK_PLAN_CLOSINGS = ["finished", "stopped"] as const

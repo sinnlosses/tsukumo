@@ -4248,7 +4248,7 @@
       ]
     },
     {
-      "name": "report-task-shipped",
+      "name": "report-task-finished",
       "steps": [
         {
           "afterMs": 0,
@@ -4266,10 +4266,10 @@
               "kind": "task",
               "id": "T-002",
               "name": "架空の札に段が1つでも `1/1` のように位置を出す",
-              "outcome": "shipped"
+              "outcome": "finished"
             },
-            "closing": { "kind": "speech", "text": "送ったよ！", "expression": "proud" },
-            "toolUseId": "fake-report-task-shipped",
+            "closing": { "kind": "speech", "text": "終わったよ！", "expression": "proud" },
+            "toolUseId": "fake-report-task-finished",
             "conclusion": "次に起こす架空の画面から、段が1つでも札に `1/1` と位置が出ます。",
             "sections": [
               {
@@ -4291,7 +4291,7 @@
           "afterMs": 1050,
           "event": {
             "kind": "tool-finished",
-            "toolUseId": "fake-report-task-shipped",
+            "toolUseId": "fake-report-task-finished",
             "content": "ok",
             "isError": false
           }
@@ -4360,9 +4360,9 @@
               "kind": "task",
               "id": "T-002",
               "name": "架空の札に段が1つでも `1/1` のように位置を出す",
-              "outcome": "shipped"
+              "outcome": "finished"
             },
-            "closing": { "kind": "speech", "text": "送ったよ！", "expression": "proud" },
+            "closing": { "kind": "speech", "text": "終わったよ！", "expression": "proud" },
             "toolUseId": "fake-report-task-verdict",
             "conclusion": "次に起こす架空の画面から、段が1つでも札に `1/1` と位置が出ます。",
             "sections": [

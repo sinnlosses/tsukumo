@@ -326,15 +326,12 @@ describe("toSessionEvents", () => {
       {
         kind: "work-plan-called",
         toolUseId: "toolu_3",
-        call: {
-          kind: "phases",
-          plan: { phases: ["架空の段A", "架空の段B"], current: 1, phaseSummary: "架空のまとめ。" },
-        },
+        plan: { phases: ["架空の段A", "架空の段B"], current: 1, phaseSummary: "架空のまとめ。" },
       },
     ])
   })
 
-  it("phases の無い work_plan は、並びを着手したタスクから作る呼び出しにする", () => {
+  it("phases の無い work_plan は段取りにしない", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -344,13 +341,7 @@ describe("toSessionEvents", () => {
       },
     ])
 
-    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      {
-        kind: "work-plan-called",
-        toolUseId: "toolu_3",
-        call: { kind: "from-task", current: 1, phaseSummary: "架空のまとめ。" },
-      },
-    ])
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
   it("段が途中の位置なのに段のまとめの無い work_plan は、差し戻す呼び出しと同じく段取りにしない", () => {
@@ -1167,7 +1158,7 @@ describe("toSessionEvents（report ツール）", () => {
     const tasks = [
       { id: "X-7", name: "架空の作業", outcome: "stopped" },
       { id: "X-7", name: "架空の作業", outcome: "架空の終わり方" },
-      { id: "X-7", outcome: "shipped" },
+      { id: "X-7", outcome: "finished" },
     ].map((task) => {
       const [event] = toSessionEvents(
         assistantMessage([
@@ -1278,58 +1269,19 @@ describe("toSessionEvents（委譲の返却）", () => {
     return assistantMessage([{ type: "tool_use", id: "toolu_back", name, input }], parentToolUseId)
   }
 
-  function handback(message: string, parentToolUseId?: string): Record<string, unknown> {
-    return toolUse("SubagentHandback", { message }, parentToolUseId)
-  }
+  it("委譲先の SubagentHandback は、1行目が段の番号の形でもほかのツールと同じ tool-started だけを出す", () => {
+    const input = { message: "段 1/3 | 架空の進み。\n架空の続き" }
 
-  function returnsOf(message: unknown): readonly SessionEvent[] {
-    return toSessionEvents(message, EXPRESSIONS).filter(
-      (event) => event.kind === "delegate-returned",
+    expect(toSessionEvents(toolUse("SubagentHandback", input, "toolu_sub_1"), EXPRESSIONS)).toEqual(
+      [
+        {
+          kind: "tool-started",
+          toolUseId: "toolu_back",
+          name: "SubagentHandback",
+          input,
+          parentToolUseId: "toolu_sub_1",
+        },
+      ],
     )
-  }
-
-  it("委譲先の返却の1行目が「段 n/N | 文」なら、tool-started の後ろに文を持つ delegate-returned を出す", () => {
-    const events = toSessionEvents(
-      handback("段 2/5 |  架空の進み。 \n架空の続き", "toolu_sub_1"),
-      EXPRESSIONS,
-    )
-
-    expect(events.map((event) => event.kind)).toEqual(["tool-started", "delegate-returned"])
-    expect(events[1]).toEqual({
-      kind: "delegate-returned",
-      finishedPhase: 2,
-      phaseCount: 5,
-      summary: "架空の進み。",
-    })
-  })
-
-  it("計画だけの返却「計画 0/N | 文」も delegate-returned を出し、文が空なら空の文にする", () => {
-    expect(returnsOf(handback("計画 0/3 | 架空の計画。", "toolu_sub_1"))).toEqual([
-      { kind: "delegate-returned", finishedPhase: 0, phaseCount: 3, summary: "架空の計画。" },
-    ])
-    expect(returnsOf(handback("段 1/2 | ", "toolu_sub_1"))).toEqual([
-      { kind: "delegate-returned", finishedPhase: 1, phaseCount: 2, summary: "" },
-    ])
-  })
-
-  it("止めた返却・形の読めない1行目・message の無い引数では出さない", () => {
-    const parent = "toolu_sub_1"
-
-    expect(returnsOf(handback("止めた 2/3 | 架空の理由。", parent))).toEqual([])
-    expect(returnsOf(handback("架空の報告", parent))).toEqual([])
-    expect(returnsOf(handback("架空\n段 1/2 | 架空", parent))).toEqual([])
-    expect(returnsOf(toolUse("SubagentHandback", { text: "段 1/2 | 架空" }, parent))).toEqual([])
-  })
-
-  it("委譲先の途中の合図（SendMessage の「状況 | n/N | 文」）では出さない", () => {
-    expect(
-      returnsOf(
-        toolUse("SendMessage", { to: "main", message: "状況 | 2/3 | 架空" }, "toolu_sub_1"),
-      ),
-    ).toEqual([])
-  })
-
-  it("メイン（parent_tool_use_id が null）の呼び出しでは出さない", () => {
-    expect(returnsOf(handback("段 1/2 | 架空"))).toEqual([])
   })
 })

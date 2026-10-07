@@ -1498,7 +1498,7 @@ describe("applySessionEvent（API の不調と失敗）", () => {
   })
 })
 
-describe("applySessionEvent（委譲の返却と段取り）", () => {
+describe("applySessionEvent（委譲と段取り）", () => {
   const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const PHASES = ["架空の計画", "架空の段1", "架空の段2", "架空の受け入れ"]
   const mainPlan = (current: number, phaseSummary = ""): SessionEvent => ({
@@ -1507,32 +1507,12 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
     current,
     phaseSummary,
   })
-  const returned = (finishedPhase: number, summary = ""): SessionEvent => ({
-    kind: "delegate-returned",
-    finishedPhase,
-    phaseCount: 2,
-    summary,
-  })
-  const currentPlan = (state: SessionState) => latestWorkPlan(state.records)
   const currentOf = (state: SessionState) => {
-    const plan = currentPlan(state)
+    const plan = latestWorkPlan(state.records)
     return plan.kind === "planned" ? plan.current : undefined
   }
 
-  it("返却の番号で、メインの段取りの並びのまま帯が進み、返却の文が段のまとめになる", () => {
-    const once = apply(request, mainPlan(0), returned(0, "架空の計画の要点。"))
-    const twice = applySessionEvent(once, returned(1, "架空の1段目の変化。"), 0)
-
-    expect(currentPlan(once)).toEqual({
-      kind: "planned",
-      phases: PHASES,
-      current: 1,
-      phaseSummary: "架空の計画の要点。",
-    })
-    expect(currentPlan(twice)).toMatchObject({ current: 2, phaseSummary: "架空の1段目の変化。" })
-  })
-
-  it("委譲先の途中の合図（SendMessage）と背景のタスクの顔ぶれの変化では、帯は動かない", () => {
+  it("委譲先の途中の合図（SendMessage）・返却（SubagentHandback）と背景のタスクの顔ぶれの変化では、帯は動かない", () => {
     const before = apply(request, mainPlan(1, "架空のまとめ。"))
     const after = apply(
       request,
@@ -1544,59 +1524,17 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
         input: { to: "main", message: "状況 | 2/3 | 架空" },
         parentToolUseId: "toolu_sub",
       },
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_handback",
+        name: "SubagentHandback",
+        input: { message: "段 2/2 | 架空の返却。" },
+        parentToolUseId: "toolu_sub",
+      },
       { kind: "background-tasks-changed", tasks: [] },
     )
 
     expect(currentOf(after)).toBe(currentOf(before))
-  })
-
-  it("返却では受け入れより先へ進めず、全部済みにはしない", () => {
-    const state = apply(request, mainPlan(2, "架空のまとめ。"), returned(2, "架空の2段目。"))
-
-    expect(currentOf(state)).toBe(3)
-    expect(applySessionEvent(state, returned(3, "架空の余分な返却。"), 0).records).toEqual(
-      state.records,
-    )
-  })
-
-  it("返却で進めた位置のあとのメインの段取りは、そのまま帯に出る", () => {
-    const state = apply(request, mainPlan(0), returned(0, "架空の計画。"), mainPlan(2, "架空。"))
-
-    expect(currentOf(state)).toBe(2)
-  })
-
-  it("メインの段取りの無い依頼では、返却は記録を足さない", () => {
-    const before = apply(request)
-
-    expect(applySessionEvent(before, returned(0, "架空の調べもの。"), 0).records).toEqual(
-      before.records,
-    )
-  })
-
-  it("計画の返却のあとにメインが段の並びを組み替えた段取りは、次の返却でその並びのまま進む", () => {
-    const headingPhases = ["計画", "架空の見出し1", "架空の見出し2", "受け入れ"]
-    const plan = currentPlan(
-      apply(
-        request,
-        { kind: "work-plan", phases: ["計画", "受け入れ"], current: 0, phaseSummary: "" },
-        returned(0, "架空の計画。"),
-        { kind: "work-plan", phases: headingPhases, current: 1, phaseSummary: "架空の計画。" },
-        returned(1, "架空の見出し1の変化。"),
-      ),
-    )
-
-    expect(plan).toEqual({
-      kind: "planned",
-      phases: headingPhases,
-      current: 2,
-      phaseSummary: "架空の見出し1の変化。",
-    })
-  })
-
-  it("次の依頼の返却は、その依頼の段取りを進める", () => {
-    const state = apply(request, mainPlan(0), returned(0, "架空。"), request, mainPlan(0))
-
-    expect(currentOf(applySessionEvent(state, returned(0, "架空の次の依頼。"), 0))).toBe(1)
   })
 })
 
@@ -1654,12 +1592,6 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
     current,
     phaseSummary: current > 0 && current < 3 ? "架空のまとめ。" : "",
   })
-  const returned: SessionEvent = {
-    kind: "delegate-returned",
-    finishedPhase: 0,
-    phaseCount: 1,
-    summary: "架空の返却。",
-  }
   const report: SessionEvent = reportEvent({ toolUseId: "toolu_r1" })
   const applyAt = (...stamped: readonly (readonly [SessionEvent, number])[]): SessionState =>
     stamped.reduce(
@@ -1671,8 +1603,8 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
       record.kind === "work-plan" || record.kind === "report" ? [record.time] : [],
     )
 
-  it("work-plan・委譲の返却で進めた段取り・report の記録は、届いた時刻を持つ", () => {
-    const state = applyAt([request, 0], [mainPlan(0), 1000], [returned, 2000], [report, 3000])
+  it("work-plan・report の記録は、届いた時刻を持つ", () => {
+    const state = applyAt([request, 0], [mainPlan(0), 1000], [mainPlan(1), 2000], [report, 3000])
 
     expect(timesOf(state)).toEqual([
       { kind: "stamped", at: 1000 },

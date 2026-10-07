@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { taskWorkPlanReplyOf } from "../../../../src/server/session-driver/core/task-work-plan-reply.ts"
 import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import type { WorkPlanClosing } from "../../../../src/shared/session/work-plan.ts"
@@ -18,16 +17,8 @@ const planOf = (current: number): Extract<SessionEvent, { kind: "work-plan" }> =
 
 const called = (toolUseId: string, current: number): SessionEvent => {
   const { kind: _, ...plan } = planOf(current)
-  return { kind: "work-plan-called", toolUseId, call: { kind: "phases", plan } }
+  return { kind: "work-plan-called", toolUseId, plan }
 }
-
-const calledFromTask = (toolUseId: string, current: number): SessionEvent => ({
-  kind: "work-plan-called",
-  toolUseId,
-  call: { kind: "from-task", current, phaseSummary: current > 0 ? SUMMARY : "" },
-})
-
-const CLAIMED = { kind: "claimed", taskId: "架空のタスク", steps: ["架空の段A"] } as const
 
 const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
   kind: "tool-finished",
@@ -37,13 +28,20 @@ const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
 })
 
 const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
-const returnedAt = (finishedPhase: number): SessionEvent => ({
-  kind: "delegate-returned",
-  finishedPhase,
-  phaseCount: 1,
-  summary: "架空の返却。",
+const DELEGATED: SessionEvent = {
+  kind: "tool-started",
+  toolUseId: "toolu_agent",
+  name: "Agent",
+  input: { prompt: "架空の委譲。", run_in_background: true },
+  parentToolUseId: undefined,
+}
+const handback = (message: string): SessionEvent => ({
+  kind: "tool-started",
+  toolUseId: `toolu_handback_${message.length}`,
+  name: "SubagentHandback",
+  input: { message },
+  parentToolUseId: "toolu_agent",
 })
-const RETURNED = returnedAt(0)
 
 const reportOf = (workPlanClosing: WorkPlanClosing): SessionEvent =>
   reportEvent({ workPlanClosing })
@@ -81,33 +79,31 @@ describe("WorkPlanReview の判定", () => {
 
     expect(review.judge({ phases: PHASES, current: 9 }).kind).toBe("malformed")
     expect(review.judge({ phases: PHASES, current: 1 }).kind).toBe("malformed")
+    expect(review.judge({ current: 1, phaseSummary: SUMMARY }).kind).toBe("malformed")
   })
 
-  it("委譲の返却で進んだ位置から、メインの呼び出しは +1 だけ通り、+2 は差し戻す", () => {
+  it("委譲を挟んでも、位置はメインの呼び出しでだけ1段ずつ進み、返却では動かない", () => {
     const review = createWorkPlanReview()
+    review.pass(REQUEST)
     review.judge(planOf(0))
-    review.pass(RETURNED)
+    const passed = [
+      DELEGATED,
+      handback("段 1/1 | 架空の返却。"),
+      handback("段 2/1 | 架空"),
+    ].flatMap(review.pass)
 
-    expect(review.judge(planOf(3)).kind).toBe("skipped-phase")
+    expect(passed.map((event) => event.kind)).toEqual([
+      "tool-started",
+      "tool-started",
+      "tool-started",
+    ])
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
+    expect(review.judge(planOf(2)).kind).toBe("skipped-phase")
     expect(review.judge(planOf(1)).kind).toBe("accepted")
-    review.pass(returnedAt(1))
-    expect(review.judge(planOf(3)).kind).toBe("accepted")
-  })
-
-  it("委譲の返却は、最後の段より先へ覚えた位置を進めない", () => {
-    const review = createWorkPlanReview()
-    review.judge(planOf(1))
-    review.pass(returnedAt(1))
-    review.pass(returnedAt(2))
-
+    review.pass(handback("段 2/2 | 架空の返却。"))
+    expect(review.judge(planOf(3)).kind).toBe("skipped-phase")
+    expect(review.judge(planOf(2)).kind).toBe("accepted")
     expect(review.standing()).toEqual({ kind: "planned", remaining: 1 })
-  })
-
-  it("段取りの無い依頼の返却は何も覚えない", () => {
-    const review = createWorkPlanReview()
-    review.pass(RETURNED)
-
-    expect(review.standing()).toEqual({ kind: "none" })
   })
 })
 
@@ -178,67 +174,5 @@ describe("WorkPlanReview の流れ", () => {
     review.pass(called("toolu_a", 0))
 
     expect(review.pass(turnFinished)).toEqual([planOf(0), turnFinished])
-  })
-
-  it("phases を省いた呼び出しは、結果の文から読み戻した並びで出す", () => {
-    const review = createWorkPlanReview()
-    const reply = taskWorkPlanReplyOf("架空のタスク", ["計画", "架空の段A", "受け入れ"])
-
-    review.pass(calledFromTask("toolu_a", 1))
-
-    expect(
-      review.pass({ kind: "tool-finished", toolUseId: "toolu_a", content: reply, isError: false }),
-    ).toEqual([
-      {
-        kind: "work-plan",
-        phases: ["計画", "架空の段A", "受け入れ"],
-        current: 1,
-        phaseSummary: SUMMARY,
-      },
-      { kind: "tool-finished", toolUseId: "toolu_a", content: reply, isError: false },
-    ])
-  })
-
-  it("phases を省いた呼び出しは、差し戻されたときも結果の届かないまま終わったときも出さない", () => {
-    const review = createWorkPlanReview()
-    const turnFinished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
-
-    review.pass(calledFromTask("toolu_a", 0))
-    expect(review.pass(finished("toolu_a", true))).toEqual([finished("toolu_a", true)])
-    review.pass(calledFromTask("toolu_b", 0))
-    expect(review.pass(turnFinished)).toEqual([turnFinished])
-  })
-})
-
-describe("WorkPlanReview の phases を省いた判定", () => {
-  it("着手したタスクの段から「計画」「各段」「受け入れ」の並びを作って受け付ける", () => {
-    const review = createWorkPlanReview()
-
-    expect(
-      review.judgeFromTask({ kind: "from-task", current: 0, phaseSummary: "" }, CLAIMED),
-    ).toEqual({
-      kind: "accepted",
-      plan: { phases: ["計画", "架空の段A", "受け入れ"], current: 0, phaseSummary: "" },
-    })
-    expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
-  })
-
-  it("着手したタスクの段が読めないと no-claimed-task、位置が並びを超えると malformed で差し戻す", () => {
-    const review = createWorkPlanReview()
-    const call = { kind: "from-task", current: 0, phaseSummary: "" } as const
-
-    expect(review.judgeFromTask(call, { kind: "none" }).kind).toBe("no-claimed-task")
-    expect(review.standing()).toEqual({ kind: "rejected" })
-    expect(review.judgeFromTask({ ...call, current: 4 }, CLAIMED).kind).toBe("malformed")
-  })
-
-  it("作った並びのまま位置を2つ進める呼び出しは、一足飛びとして差し戻す", () => {
-    const review = createWorkPlanReview()
-    const call = { kind: "from-task", current: 0, phaseSummary: "" } as const
-    review.judgeFromTask(call, CLAIMED)
-
-    expect(review.judgeFromTask({ ...call, current: 2, phaseSummary: SUMMARY }, CLAIMED).kind).toBe(
-      "skipped-phase",
-    )
   })
 })

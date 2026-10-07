@@ -224,20 +224,20 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 **結論部の色は見本の16進を固定の値として置く**（トークン消費の画面と同じ扱い。パックからは差せない。
 値は `theme.css`）:
 
-| 塗るもの                               | トークン                                                    |
-| -------------------------------------- | ----------------------------------------------------------- |
-| 目録の字 / 区切りの `·`                | `report-catalog-ink` / `report-catalog-separator`           |
-| タスクID / その点線の下線              | `report-task-id` / `report-task-id-rule`                    |
-| 終わり方（完了・main へ / 答え待ち）   | `report-outcome-shipped` / `report-outcome-awaiting-answer` |
-| 見出し / 一文とインラインコードの字    | `report-headline-ink` / `report-conclusion-ink`             |
-| 見出しと一文の中のインラインコードの地 | `report-code-surface`                                       |
+| 塗るもの                               | トークン                                                     |
+| -------------------------------------- | ------------------------------------------------------------ |
+| 目録の字 / 区切りの `·`                | `report-catalog-ink` / `report-catalog-separator`            |
+| タスクID / その点線の下線              | `report-task-id` / `report-task-id-rule`                     |
+| 終わり方（完了 / 答え待ち）            | `report-outcome-finished` / `report-outcome-awaiting-answer` |
+| 見出し / 一文とインラインコードの字    | `report-headline-ink` / `report-conclusion-ink`              |
+| 見出しと一文の中のインラインコードの地 | `report-code-surface`                                        |
 
 **見本と揃えなかったもの**は書体（見本の丸ゴシック・IBM Plex Mono。`--font-sans` / `--font-mono` のまま）と、
 タスクID の要素（見本の `<a href="#">` ではなくモーダルを開く `<button>`）。
 
 **流れ（`flow`）の丸・線と、図と表の題の「図 n」「表 n」の番号は専用の固定色を使う**（2026-10-02 デザイン
 「流れの塊 案A」。見本は `docs/history/mockup/report-flow-rail-2026-10-02.html`）。値は結論部の
-`report-outcome-shipped` と同じ16進だが、「完了・main へ」とは意味が別なので流用せず、読む順を示す印
+`report-outcome-finished` と同じ16進だが、「完了」とは意味が別なので流用せず、読む順を示す印
 という意味を名に持つ `report-sequence-ink` を別に立てる。暗い側は固定値を持たず
 `color-mix(in srgb, var(--report-sequence-ink), var(--ground) 65%)` で導く。
 
@@ -2892,7 +2892,7 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
 `docs/history/mockup/report-checks-tile-2026-10-04.html`）。左の札だけで、通ったか・どれだけ通ったかが分かるようにする。
 
 ```
- 最終レポート · <タスクID> · ✓ 完了・main へ
+ 最終レポート · <タスクID> · ✓ 完了
  架空の札に段が1つでも 1/1 のように位置を出す                      ← 見出し 19px
  次に起こす架空の画面から、…                                        ← 結論
  ┌──────────────────────────────────────────────────────────┐
@@ -2954,7 +2954,7 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
  └───────────────────────────────────────────────────────┘
 ```
 
-- 種類は記号と色の小さな札: ＋追加（`state-ok`）・～変更（`report-outcome-shipped`）・
+- 種類は記号と色の小さな札: ＋追加（`state-ok`）・～変更（`report-outcome-finished`）・
   −削除（`state-ng`）。見本に無い「読んだ」は補足色（`ink-quiet`）の札にし、記号は `·`。
   地は色を10%、枠は30%で混ぜる（表の状態セルと同じ `color-mix` の導出）
 - 塊の頭に、種類ごとの件数が1つでもある種類だけの合計の札（「＋追加 1」）を右寄せで並べる。

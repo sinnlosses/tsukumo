@@ -250,7 +250,7 @@ describe("Turn（目録の1行と見出し）", () => {
     kind: "task",
     id: "X-7",
     name: "架空の作業 `a/b` を直す",
-    outcome: "shipped",
+    outcome: "finished",
   } as const
 
   function taskBody(report: string): MainViewStepBody {
@@ -309,7 +309,7 @@ describe("Turn（目録の1行と見出し）", () => {
   })
 
   it.each([
-    ["shipped", "X-7·✓ 完了・main へ"],
+    ["finished", "X-7·✓ 完了"],
     ["awaiting-answer", "X-7·？ 答え待ち"],
     ["stopped", "X-7"],
   ] as const)("終わり方 %s の目録の1行は「%s」で、見出しは作業の名前", (outcome, catalog) => {

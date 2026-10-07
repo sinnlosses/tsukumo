@@ -701,7 +701,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   足したときに 27 に、委譲の合図（`delegate-signal` と記録の `source`）を足したときに 31 に、委譲先の終わり
   （`source` の `delegate-ended`）を足したときに 33 に、記録に時刻（`time`）を足したときに 39 に、合図を委譲の
   返却（`delegate-returned`）に替えて記録の `source` を外したときに 40 に、`report` のイベントに段の閉じ方
-  （`workPlanClosing`）を足したときに 42 に上げた
+  （`workPlanClosing`）を足したときに 42 に、委譲の返却（`delegate-returned`）を外したときに 45 に上げた
 
 #### レポートの記法は、TUI と tsukumo で出し分ける
 

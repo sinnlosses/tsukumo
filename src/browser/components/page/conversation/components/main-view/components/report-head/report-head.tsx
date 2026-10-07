@@ -79,7 +79,7 @@ const LABEL_TEXT = {
 } as const satisfies Record<Exclude<ReportLabel, "none">, string>
 
 const OUTCOME_VIEW = {
-  shipped: { mark: "✓", text: "完了・main へ", className: "report-outcome-shipped" },
+  finished: { mark: "✓", text: "完了", className: "report-outcome-finished" },
   "awaiting-answer": { mark: "？", text: "答え待ち", className: "report-outcome-awaiting-answer" },
 } as const satisfies Record<
   DrawnOutcome,

@@ -10,7 +10,6 @@ import { readChatTopics } from "../server/chat/core/chat-consolidation.ts"
 import { createChatRecall } from "../server/chat/core/chat-recall.ts"
 import type { Config } from "../server/core/config.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
-import { readClaimedTaskSteps } from "../server/repository/adapter/claimed-task.ts"
 import { readProjectSettings } from "../server/repository/adapter/project-settings.ts"
 import { startFakeSession } from "../server/session-driver/adapter/fake-driver.ts"
 import {
@@ -217,7 +216,6 @@ function startDriver(options: {
     // 段に入るたびに読み直す（見直しの途中で見送りが増えても効く）。
     dismissedUsageProposalKeys: () => readDismissedUsageProposalKeys(),
     hasTaskOperation: async () => (await readProjectSettings(cwd)).kind === "read",
-    readClaimedTaskSteps: () => readClaimedTaskSteps(cwd),
     onEvent,
     reportFailure: (error) =>
       options.reportFailure({ feature: "session", place: "event-handler" }, error),

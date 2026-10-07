@@ -103,7 +103,7 @@
   --report-catalog-separator: #4a4955; /* 目録の区切りの `·` */
   --report-task-id: #bfeee4; /* 目録のタスクID */
   --report-task-id-rule: #4a6a65; /* タスクIDの点線の下線 */
-  --report-outcome-shipped: #66d1be; /* 完了・main へ */
+  --report-outcome-finished: #66d1be; /* 完了 */
   --report-outcome-awaiting-answer: #e3b95c; /* 答え待ち */
   --report-headline-ink: #e4e2ea; /* 見出し */
   --report-conclusion-ink: #d4d2dc; /* 一文と、見出しと一文の中のコードの字 */

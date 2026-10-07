@@ -47,13 +47,7 @@ import type {
   SessionEvent,
 } from "./session-event.ts"
 import { splitIntoTurns } from "./turn.ts"
-import {
-  advancedByReturn,
-  closedByReport,
-  type DelegateReturnPosition,
-  isWorkPlanRecord,
-  type WorkPlanClosing,
-} from "./work-plan.ts"
+import { closedByReport, isWorkPlanRecord, type WorkPlanClosing } from "./work-plan.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが動き続ける以上、記録自体も無限に増やさない。
@@ -149,7 +143,7 @@ export type SessionRecord =
       readonly time: RecordTime
     }
   /**
-   * `work_plan` ツールで受け取った段取りと、委譲の返却で tsukumo が1段進めた段取りと、`finished` の `report` で tsukumo が閉じた段取り。
+   * `work_plan` ツールで受け取った段取りと、`finished` の `report` で tsukumo が閉じた段取り。
    * 届いた位置に積むだけで、今の段取りは `latestWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
    */
   | {
@@ -635,11 +629,6 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
           },
         ],
       }
-    case "delegate-returned":
-      return {
-        ...state,
-        records: [...state.records, ...delegateReturnRecords(state.records, event, at)],
-      }
     case "tool-started": {
       const nested = event.parentToolUseId !== undefined
       return {
@@ -806,25 +795,6 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
           }
         : state
   }
-}
-
-/**
- * 委譲の返却1回で積む記録。同じ依頼の最後の段取りを {@link advancedByReturn} で返却の番号の位置へ進めたもの。
- * 同じ依頼に段取りが無いときと、進められないときは積まない。
- */
-function delegateReturnRecords(
-  records: readonly SessionRecord[],
-  returned: DelegateReturnPosition,
-  at: number,
-): readonly SessionRecord[] {
-  const latest = recordsOfLastRequest(records).findLast(isWorkPlanRecord)
-  if (latest === undefined) {
-    return []
-  }
-  const advance = advancedByReturn(latest, returned)
-  return advance.kind === "held"
-    ? []
-    : [{ kind: "work-plan", ...advance.plan, time: { kind: "stamped", at } }]
 }
 
 /**

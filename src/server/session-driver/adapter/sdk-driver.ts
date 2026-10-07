@@ -101,7 +101,6 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           reportReview,
           speechReview,
           workPlanReview,
-          options.readClaimedTaskSteps,
           usageReview,
           titleIntake.note,
           options.cwd,
@@ -192,9 +191,8 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
  * `report` の関所（`reportGate`）にはメインのメッセージから出たイベントだけを見せる。
  * サブエージェントの本文を数えない。関所を登録していないときも見せるが、判定されないだけ。
  *
- * メインのイベントは先に `speak` と `report` の差し戻し（`review`）を通す。
- * どちらも同じ呼び出しの結果まで預かり、差し戻した呼び出しを描かない。
- * 段の一足飛び（`workPlanReview`）にはメインとサブエージェントの両方のイベントを通す（委譲の返却はサブエージェントから出る）。
+ * メインのイベントは `speak` と `report` の差し戻し（`review`）と、段の一足飛び（`workPlanReview`）を通す。
+ * どれも同じ呼び出しの結果まで預かり、差し戻した呼び出しを描かない。
  *
  * `titleIntake` が覚えている題（`report` の `title` 引数）もターンの終わりに取り出し、`titleWriter` に書く予約をする。
  */
@@ -221,9 +219,9 @@ async function relayMessages(
         process.stderr.write(VISIBLE_OUTPUT_NUDGE_NOTICE)
       }
       const converted = toSessionEvents(message, toExpressionNames(options.expressions))
-      const events = (fromMain ? converted.flatMap((event) => review(event)) : converted).flatMap(
-        workPlanReview.pass,
-      )
+      const events = fromMain
+        ? converted.flatMap((event) => review(event)).flatMap(workPlanReview.pass)
+        : converted
       for (const event of events) {
         if (fromMain) {
           reportGate.observe(event)

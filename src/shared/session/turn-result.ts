@@ -8,7 +8,7 @@ type MainViewTextBody = Extract<MainViewStepBody, { readonly kind: "text" }>
 /**
  * やり取りがどう終わったか。
  * `working` と `awaiting-answer` の一部（答え待ちの列があるもの）は、まだ閉じていないいちばん新しいやり取りだけがなる。
- * `stopped` は最後の本文の `task.outcome` が `stopped`（止めて main へ送っていない。答えは待っていない）、`no-report` は閉じたのに本文が1つも無いやり取り。
+ * `stopped` は最後の本文の `task.outcome` が `stopped`（止めた。答えは待っていない）、`no-report` は閉じたのに本文が1つも無いやり取り。
  */
 export type TurnResult = "done" | "awaiting-answer" | "stopped" | "failed" | "working" | "no-report"
 
@@ -52,7 +52,7 @@ function closedResultOf(turn: MainViewTurn): TurnResult {
     return "done"
   }
   switch (lastBody.task.outcome) {
-    case "shipped":
+    case "finished":
       return "done"
     case "awaiting-answer":
       return "awaiting-answer"

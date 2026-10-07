@@ -1026,48 +1026,6 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
   })
 })
 
-describe("mainViewTurns（委譲の返却の中間レポート）", () => {
-  const fold = (events: readonly SessionEvent[]) =>
-    events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
-  const interimOf = (events: readonly SessionEvent[]) =>
-    (mainViewTurns(mainViewEntries(fold(events)), WRITING, false).at(-1)?.steps ?? [])
-      .filter((step) => step.interim)
-      .map((step) => [firstLineOf(step), reportOf(step)])
-  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
-  const mainPlan: SessionEvent = {
-    kind: "work-plan",
-    phases: ["架空の計画", "架空の段1", "架空の段2", "架空の受け入れ"],
-    current: 0,
-    phaseSummary: "",
-  }
-  const returned = (finishedPhase: number, summary: string): SessionEvent => ({
-    kind: "delegate-returned",
-    finishedPhase,
-    phaseCount: 2,
-    summary,
-  })
-
-  it("返却ごとに、済んだ段の中間レポートを返却の文で積む", () => {
-    expect(
-      interimOf([
-        ask,
-        mainPlan,
-        returned(0, "架空の計画の要点。"),
-        returned(1, "架空の1段目の変化。"),
-      ]),
-    ).toEqual([
-      ["1/4 架空の計画", "架空の計画の要点。"],
-      ["2/4 架空の段1", "架空の1段目の変化。"],
-    ])
-  })
-
-  it("文の空な返却は帯だけを進め、中間レポートを出さない", () => {
-    expect(interimOf([ask, mainPlan, returned(0, ""), returned(1, "架空の2段目の変化。")])).toEqual(
-      [["2/4 架空の段1", "架空の2段目の変化。"]],
-    )
-  })
-})
-
 describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
   type Timed = readonly [SessionEvent, number]
   const foldTimed = (events: readonly Timed[], from: SessionState = INITIAL_SESSION_STATE) =>

@@ -647,9 +647,9 @@
   border-color: color-mix(in srgb, var(--state-ok) 30%, transparent);
 }
 .detail-block .report-file-change-modified {
-  color: var(--report-outcome-shipped);
-  background: color-mix(in srgb, var(--report-outcome-shipped) 8%, transparent);
-  border-color: color-mix(in srgb, var(--report-outcome-shipped) 25%, transparent);
+  color: var(--report-outcome-finished);
+  background: color-mix(in srgb, var(--report-outcome-finished) 8%, transparent);
+  border-color: color-mix(in srgb, var(--report-outcome-finished) 25%, transparent);
 }
 .detail-block .report-file-change-deleted {
   color: var(--state-ng);

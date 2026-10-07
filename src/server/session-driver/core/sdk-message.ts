@@ -20,11 +20,10 @@ import type {
 import type { RateLimit, RateLimitBucket } from "../../../shared/session-driver/rate-limit.ts"
 import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { parseWorkPlanCall, parseWorkPlanClosing } from "../../../shared/session/work-plan.ts"
+import { parseWorkPlan, parseWorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import type { ModelTokenUsage } from "../../../shared/token-usage/token-usage.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
-import { parseDelegateReturn, SUBAGENT_HANDBACK_TOOL_NAME } from "./delegate-return.ts"
 import { toCommandDescriptions } from "./sdk-query-reply.ts"
 import {
   REPORT_TOOL_NAME,
@@ -44,10 +43,8 @@ import {
  * - `report` の呼び出しも `tool-started` にしない。`report` として別に出す（メインビュー行き）。
  *   `parent_tool_use_id` のある呼び出し（サブエージェントの中）は捨てる。
  *   ターンのレポートはメインが書くもので、委譲先の報告はメインの手元に届くだけにする
- * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを呼び出しの id を付けた `work-plan-called` にし、`parseWorkPlanCall` を通らない引数は捨てる（handler が差し戻した呼び出しと同じ判定）。
+ * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを呼び出しの id を付けた `work-plan-called` にし、`parseWorkPlan` を通らない引数は捨てる（handler が差し戻した呼び出しと同じ判定）。
  *   段の一足飛びで差し戻した呼び出しは `WorkPlanReview` が結果を見て捨てる
- * - サブエージェントの `SubagentHandback` が段を進める返却なら、`tool-started` の後ろに `delegate-returned` を足す（{@link parseDelegateReturn}）。
- *   1行目の `|` より後ろの文を運ぶ。返却1回につき呼び出しは1回届く（実測）
  * - `includePartialMessages` の断片で `report` の呼び出しの塊が開いたら `report-drafting` を出す（立ち絵の「書いている」の材料。メインのものだけ）。
  *   引数の断片（`input_json_delta`）は運ばない。
  *   描くのは確定した `report` だけで、書きかけの引数は JSON としても読めない
@@ -444,26 +441,13 @@ function assistantBlockEvents(
           input: block.input,
           parentToolUseId,
         },
-        ...delegateReturnEvents(block.name, block.input, parentToolUseId),
       ]
     : []
 }
 
-function delegateReturnEvents(
-  name: string,
-  input: unknown,
-  parentToolUseId: string | undefined,
-): readonly SessionEvent[] {
-  if (parentToolUseId === undefined || name !== SUBAGENT_HANDBACK_TOOL_NAME) {
-    return []
-  }
-  const returned = parseDelegateReturn(input)
-  return returned === undefined ? [] : [{ kind: "delegate-returned", ...returned }]
-}
-
 function workPlanEvents(toolUseId: string, input: unknown): readonly SessionEvent[] {
-  const call = parseWorkPlanCall(input)
-  return call === undefined ? [] : [{ kind: "work-plan-called", toolUseId, call }]
+  const plan = parseWorkPlan(input)
+  return plan === undefined ? [] : [{ kind: "work-plan-called", toolUseId, plan }]
 }
 
 function speechEvents(

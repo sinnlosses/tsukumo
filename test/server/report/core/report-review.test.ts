@@ -5,7 +5,7 @@ import {
   REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
   REPORT_NOTHING_NEW_REJECTION_TEXT,
   REPORT_RESEND_REJECTION_TEXT,
-  REPORT_SHIPPED_BUT_STOPPED_REJECTION_TEXT,
+  REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT,
   REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
   REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
   type ReportReview,
@@ -500,15 +500,15 @@ describe("createReportReview の judge（段取りの残った report）", () =>
     expect(review.judge(withTask("awaiting-answer", "stopped"))).toEqual({ kind: "accepted" })
   })
 
-  it("shipped なのに stopped で段が残っていれば差し戻し、全部済みなら通す", () => {
+  it("タスクが finished なのに stopped で段が残っていれば差し戻し、全部済みなら通す", () => {
     expect(
-      reviewWith({ kind: "planned", remaining: 1 }).review.judge(withTask("shipped", "stopped")),
-    ).toEqual({ kind: "rejected", text: REPORT_SHIPPED_BUT_STOPPED_REJECTION_TEXT })
+      reviewWith({ kind: "planned", remaining: 1 }).review.judge(withTask("finished", "stopped")),
+    ).toEqual({ kind: "rejected", text: REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT })
     expect(
-      reviewWith({ kind: "planned", remaining: 0 }).review.judge(withTask("shipped", "stopped")),
+      reviewWith({ kind: "planned", remaining: 0 }).review.judge(withTask("finished", "stopped")),
     ).toEqual({ kind: "accepted" })
     expect(
-      reviewWith({ kind: "planned", remaining: 1 }).review.judge(withTask("shipped", "finished")),
+      reviewWith({ kind: "planned", remaining: 1 }).review.judge(withTask("finished", "finished")),
     ).toEqual({ kind: "accepted" })
   })
 

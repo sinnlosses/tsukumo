@@ -94,7 +94,7 @@ export type MainViewEntry =
       readonly task: ReportTask
     }
   /**
-   * `work_plan` の呼び出しか委譲の返却で段が移ったこと（{@link phaseShiftOf}）。
+   * `work_plan` の呼び出しで段が移ったこと（{@link phaseShiftOf}）。
    * 出すものが1つも無い記録からは作らない。
    * 終えた段のまとめは中間レポートになる（{@link groupIntoSteps}）。
    */
@@ -293,7 +293,7 @@ function dependenciesOf(record: SessionRecord, context: TurnContext): readonly E
  *
  * `compact-boundary` も落とす（圧縮の区切りは雑談のログだけに出す）。
  *
- * `work-plan` は、段が移ったときだけ `phase-shift` にする（委譲の返却で進めた記録も同じ）。
+ * `work-plan` は、段が移ったときだけ `phase-shift` にする。
  *
  * `tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の付随情報）を落とす（メインビューの部品が見てよいのは名前・入力・結果だけ）。
  */

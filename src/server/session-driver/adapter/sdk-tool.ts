@@ -19,7 +19,6 @@ import {
   MAX_FIRST_SENTENCE,
 } from "../../../shared/report/report-limit.ts"
 import { parseReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
-import type { ClaimedTaskSteps } from "../../../shared/repository/task-workflow.ts"
 import {
   MIN_WORK_PLAN_PHASES,
   parseWorkPlanClosing,
@@ -140,7 +139,6 @@ export function tsukumoServer(
   reportReview: ReportReview,
   speechReview: SpeechReview,
   workPlanReview: WorkPlanReview,
-  readClaimedTaskSteps: () => Promise<ClaimedTaskSteps>,
   usageReview: UsageReviewIntake,
   onReportTitle: (title: string) => void,
   cwd: string,
@@ -155,7 +153,7 @@ export function tsukumoServer(
       ...(mode.kind === "work"
         ? [
             reportTool(expressions, reportReview, onReportTitle, cwd),
-            workPlanTool(workPlanReview, readClaimedTaskSteps),
+            workPlanTool(workPlanReview),
             ...usageReviewTools(usageReview),
           ]
         : []),
@@ -259,10 +257,7 @@ function reportTool(
 }
 
 /** 段取りを受け取るツール。差し戻すかと返す文は `answerWorkPlanCall` で決め、形の検査はここの zod の形。 */
-function workPlanTool(
-  review: WorkPlanReview,
-  readClaimedTaskSteps: () => Promise<ClaimedTaskSteps>,
-) {
+function workPlanTool(review: WorkPlanReview) {
   return tool(
     WORK_PLAN_TOOL_NAME,
     WORK_PLAN_TOOL_DESCRIPTION,
@@ -270,13 +265,12 @@ function workPlanTool(
       phases: z
         .array(z.string().trim().min(1))
         .min(MIN_WORK_PLAN_PHASES)
-        .optional()
         .describe(WORK_PLAN_PHASES_DESCRIPTION),
       current: z.number().int().min(0).describe(WORK_PLAN_CURRENT_DESCRIPTION),
       phaseSummary: z.string().optional().describe(WORK_PLAN_PHASE_SUMMARY_DESCRIPTION),
     },
     async (input) => {
-      const answer = await answerWorkPlanCall(review, input, readClaimedTaskSteps)
+      const answer = answerWorkPlanCall(review, input)
       return {
         content: [{ type: "text" as const, text: answer.text }],
         isError: answer.isError,

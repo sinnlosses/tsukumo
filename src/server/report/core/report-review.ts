@@ -18,7 +18,7 @@
 // 段取りの閉じていない `report` も差し戻す（段取りの立ち位置は `WorkPlanReview.standing` から受け取る）:
 // 同じターンで差し戻した `work_plan` にまだ応えていないものと、段の閉じ方（`workPlanClosing`）が合わないもの。
 // 段の閉じ方は同じ依頼に段取りがあるときだけ見て、欄が無い・`finished` なのに段が2つ以上残っている・
-// `task.outcome` が `shipped` なのに `stopped` で段が残っている、のどれかなら差し戻す。
+// `task.outcome` が `finished` なのに `stopped` で段が残っている、のどれかなら差し戻す。
 // 枠は応えていない `work_plan` と段の閉じ方でそれぞれ1ターンに1回までで、規約違反の枠とは分ける。
 //
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`）。
@@ -215,9 +215,9 @@ export const REPORT_UNFINISHED_PHASES_REJECTION_TEXT =
   "最後の段に来てから `finished` で呼び直す。途中で止めたなら `stopped` にする。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
-/** `task.outcome` が `shipped` なのに `workPlanClosing` が `stopped` で段の残った `report` を差し戻すときの戻り値。固定の文面だけ。 */
-export const REPORT_SHIPPED_BUT_STOPPED_REJECTION_TEXT =
-  "`task.outcome` が `shipped` なのに、workPlanClosing が `stopped` で段取りに済んでいない段が残っている。" +
+/** `task.outcome` が `finished` なのに `workPlanClosing` が `stopped` で段の残った `report` を差し戻すときの戻り値。固定の文面だけ。 */
+export const REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT =
+  "`task.outcome` が `finished` なのに、workPlanClosing が `stopped` で段取りに済んでいない段が残っている。" +
   "全部の段を終えたなら最後の段まで進めて `finished` にし、途中で止めたなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
@@ -229,14 +229,14 @@ function judgeWorkPlanClosing(report: ReportDraft, remaining: number): ReportVer
   if (report.workPlanClosing === "finished" && remaining >= 2) {
     return { kind: "rejected", text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT }
   }
-  if (report.workPlanClosing === "stopped" && remaining > 0 && isShipped(report.task)) {
-    return { kind: "rejected", text: REPORT_SHIPPED_BUT_STOPPED_REJECTION_TEXT }
+  if (report.workPlanClosing === "stopped" && remaining > 0 && isFinished(report.task)) {
+    return { kind: "rejected", text: REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT }
   }
   return { kind: "accepted" }
 }
 
-function isShipped(task: ReportTask): boolean {
-  return task.kind === "task" && task.outcome === "shipped"
+function isFinished(task: ReportTask): boolean {
+  return task.kind === "task" && task.outcome === "finished"
 }
 
 /** 描いた `report` の締めのセリフ。`closing` を持たなかったころの呼び出しには無い。 */

@@ -46,7 +46,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
-      "toolUseId": "fake-report-task-shipped",
+      "toolUseId": "fake-report-task-finished",
       "conclusion": "次に起こす架空の画面から、段が1つでも札に `1/1` と位置が出ます。",
       "sections": [
         {
@@ -66,12 +66,12 @@
         "kind": "task",
         "id": "T-002",
         "name": "架空の札に段が1つでも `1/1` のように位置を出す",
-        "outcome": "shipped"
+        "outcome": "finished"
       },
       "workPlanClosing": "none",
       "closing": {
         "kind": "speech",
-        "text": "送ったよ！",
+        "text": "終わったよ！",
         "expression": "proud"
       },
       "waitingLine": {
@@ -85,7 +85,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-report-task-shipped",
+      "toolUseId": "fake-report-task-finished",
       "content": "ok",
       "isError": false
     }
@@ -95,7 +95,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "speech",
-      "text": "送ったよ！",
+      "text": "終わったよ！",
       "expression": "proud"
     }
   },

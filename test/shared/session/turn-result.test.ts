@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { ReportTask } from "../../../src/shared/report/report-task.ts"
+import type { ReportTask, ReportTaskOutcome } from "../../../src/shared/report/report-task.ts"
 import type { MainViewStep, MainViewTurn } from "../../../src/shared/session/main-view.ts"
 import { turnResultsOf } from "../../../src/shared/session/turn-result.ts"
 
@@ -46,7 +46,7 @@ function turn(id: number, overrides: Partial<MainViewTurn>): MainViewTurn {
   }
 }
 
-function taskOf(outcome: "shipped" | "stopped" | "awaiting-answer"): ReportTask {
+function taskOf(outcome: ReportTaskOutcome): ReportTask {
   return { kind: "task", id: "架空-1", name: "架空の作業", outcome }
 }
 
@@ -56,7 +56,7 @@ describe("turnResultsOf（やり取りごとの結果）", () => {
   it("閉じたやり取りを、済んだ・答え待ち・止めた・失敗・レポートの無いやり取りに分ける", () => {
     const turns = [
       DONE,
-      turn(2, { steps: [reportStep(0, taskOf("shipped"))] }),
+      turn(2, { steps: [reportStep(0, taskOf("finished"))] }),
       turn(3, { steps: [reportStep(0, taskOf("awaiting-answer"))] }),
       turn(4, { steps: [reportStep(0, taskOf("stopped"))] }),
       turn(5, {
@@ -80,7 +80,7 @@ describe("turnResultsOf（やり取りごとの結果）", () => {
       turn(1, {
         steps: [
           reportStep(0, taskOf("awaiting-answer")),
-          reportStep(1, taskOf("shipped")),
+          reportStep(1, taskOf("finished")),
           emptyStep(2),
         ],
       }),
@@ -89,7 +89,7 @@ describe("turnResultsOf（やり取りごとの結果）", () => {
   })
 
   it("閉じていないいちばん新しいやり取りは、答え待ちの列の有無で答え待ちか働いている最中", () => {
-    const newest = turn(2, { steps: [reportStep(0, taskOf("shipped"))] })
+    const newest = turn(2, { steps: [reportStep(0, taskOf("finished"))] })
     expect(turnResultsOf([DONE, newest], "work")).toEqual(["done", "working"])
     expect(turnResultsOf([DONE, newest], "ask")).toEqual(["done", "awaiting-answer"])
   })

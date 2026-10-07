@@ -39,8 +39,8 @@
 .report-outcome {
   font-weight: 700;
 }
-.report-outcome-shipped {
-  color: var(--report-outcome-shipped);
+.report-outcome-finished {
+  color: var(--report-outcome-finished);
 }
 .report-outcome-awaiting-answer {
   color: var(--report-outcome-awaiting-answer);

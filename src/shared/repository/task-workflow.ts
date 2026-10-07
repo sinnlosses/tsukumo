@@ -129,43 +129,6 @@ export function taskIdOfBeadsId(beadsId: string): string {
   return ghDigits === undefined ? beadsId : `GH-${ghDigits}`
 }
 
-/** この作業ツリーが着手したタスクの段。読めない・決められないときは `none`。 */
-export type ClaimedTaskSteps =
-  | { readonly kind: "none" }
-  | { readonly kind: "claimed"; readonly taskId: string; readonly steps: readonly string[] }
-
-/**
- * `status` が `in_progress` で `assignee` が `worktreeName` の課題がちょうど1件で、
- * その `## やること`（`notes`）に段が1つ以上あるときだけ、その課題の ID と段の名前を返す。
- */
-export function claimedTaskStepsOf(
-  issues: readonly BeadsIssue[],
-  worktreeName: string,
-): ClaimedTaskSteps {
-  const claimed = issues.filter(
-    (issue) => issue.status === IN_PROGRESS_STATUS && issue.assignee === worktreeName,
-  )
-  const [only] = claimed
-  if (only === undefined || claimed.length > 1) {
-    return { kind: "none" }
-  }
-  const steps = planStepNamesOf(only.notes)
-  return steps.length === 0
-    ? { kind: "none" }
-    : { kind: "claimed", taskId: taskIdOfBeadsId(only.id), steps }
-}
-
-/**
- * `## やること` の中身から、`### <n>. <名前>` の行の名前を書かれた順に読む。
- * 番号の無い `### ` の小見出しと、`#### ` より深い見出しは段に数えない。
- */
-function planStepNamesOf(plan: string): readonly string[] {
-  return plan.split("\n").flatMap((line) => {
-    const name = PLAN_STEP_HEADING_PATTERN.exec(line)?.[1]?.trim()
-    return name === undefined || name === "" ? [] : [name]
-  })
-}
-
 /**
  * 課題の `description`・`acceptanceCriteria`・`notes` を `task show` と同じ並びに組む。
  * 枠の7節をこの順に必ず置き（中身が空でも見出しだけ出す）、枠の外の見出しはそのあと。
@@ -232,8 +195,6 @@ function trimNewlines(value: string): string {
 }
 
 const CLOSED_STATUS = "closed"
-const IN_PROGRESS_STATUS = "in_progress"
-const PLAN_STEP_HEADING_PATTERN = /^### \d+\. (.+)$/
 const CANCELLED_LABEL = "cancelled"
 /** タスク板に残す、閉じた課題の件数（`done` と `dropped` を合わせて数える）。 */
 const CLOSED_TASK_DISPLAY_LIMIT = 10
