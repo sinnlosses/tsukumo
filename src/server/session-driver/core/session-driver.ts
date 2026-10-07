@@ -9,6 +9,7 @@ import type { EffortLevel, ModelAlias, PermissionMode } from "../../../shared/co
 import type { ContextUsageReport } from "../../../shared/context-usage/context-usage.ts"
 import type { PromptDelayFootprint } from "../../../shared/diagnostic/diagnostic-record.ts"
 import type { PlanUsageReport } from "../../../shared/plan-usage/plan-usage.ts"
+import type { ClaimedTaskSteps } from "../../../shared/repository/beads-issue.ts"
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
 import type { SessionDigest } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -198,6 +199,8 @@ export type SessionDriverOptions = {
    * 読めないときは `false` を返し、例外を投げない。
    */
   readonly hasTaskOperation: () => Promise<boolean>
+  /** この作業ツリーが着手したタスクの段を読む口。読めないときは `none` を返し、例外を投げない。 */
+  readonly readClaimedTaskSteps: () => Promise<ClaimedTaskSteps>
   /** 内部イベントの受け取り口。投げても反復は止まらず、投げた失敗は `reportFailure` へ渡る。 */
   readonly onEvent: (event: SessionEvent) => void
   /** `onEvent` が投げた失敗を診断ログへ書く口。ここで例外を投げないこと。 */

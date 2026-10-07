@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { taskWorkPlanReplyOf } from "../../../../src/server/session-driver/core/task-work-plan-reply.ts"
 import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import type { WorkPlanClosing } from "../../../../src/shared/session/work-plan.ts"
@@ -15,11 +16,18 @@ const planOf = (current: number): Extract<SessionEvent, { kind: "work-plan" }> =
   phaseSummary: current > 0 && current < PHASES.length ? SUMMARY : "",
 })
 
-const called = (toolUseId: string, current: number): SessionEvent => ({
+const called = (toolUseId: string, current: number): SessionEvent => {
+  const { kind: _, ...plan } = planOf(current)
+  return { kind: "work-plan-called", toolUseId, call: { kind: "phases", plan } }
+}
+
+const calledFromTask = (toolUseId: string, current: number): SessionEvent => ({
   kind: "work-plan-called",
   toolUseId,
-  plan: planOf(current),
+  call: { kind: "from-task", current, phaseSummary: current > 0 ? SUMMARY : "" },
 })
+
+const CLAIMED = { kind: "claimed", taskId: "架空のタスク", steps: ["架空の段A"] } as const
 
 const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
   kind: "tool-finished",
@@ -170,5 +178,67 @@ describe("WorkPlanReview の流れ", () => {
     review.pass(called("toolu_a", 0))
 
     expect(review.pass(turnFinished)).toEqual([planOf(0), turnFinished])
+  })
+
+  it("phases を省いた呼び出しは、結果の文から読み戻した並びで出す", () => {
+    const review = createWorkPlanReview()
+    const reply = taskWorkPlanReplyOf("架空のタスク", ["計画", "架空の段A", "受け入れ"])
+
+    review.pass(calledFromTask("toolu_a", 1))
+
+    expect(
+      review.pass({ kind: "tool-finished", toolUseId: "toolu_a", content: reply, isError: false }),
+    ).toEqual([
+      {
+        kind: "work-plan",
+        phases: ["計画", "架空の段A", "受け入れ"],
+        current: 1,
+        phaseSummary: SUMMARY,
+      },
+      { kind: "tool-finished", toolUseId: "toolu_a", content: reply, isError: false },
+    ])
+  })
+
+  it("phases を省いた呼び出しは、差し戻されたときも結果の届かないまま終わったときも出さない", () => {
+    const review = createWorkPlanReview()
+    const turnFinished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
+
+    review.pass(calledFromTask("toolu_a", 0))
+    expect(review.pass(finished("toolu_a", true))).toEqual([finished("toolu_a", true)])
+    review.pass(calledFromTask("toolu_b", 0))
+    expect(review.pass(turnFinished)).toEqual([turnFinished])
+  })
+})
+
+describe("WorkPlanReview の phases を省いた判定", () => {
+  it("着手したタスクの段から「計画」「各段」「受け入れ」の並びを作って受け付ける", () => {
+    const review = createWorkPlanReview()
+
+    expect(
+      review.judgeFromTask({ kind: "from-task", current: 0, phaseSummary: "" }, CLAIMED),
+    ).toEqual({
+      kind: "accepted",
+      plan: { phases: ["計画", "架空の段A", "受け入れ"], current: 0, phaseSummary: "" },
+    })
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
+  })
+
+  it("着手したタスクの段が読めないと no-claimed-task、位置が並びを超えると malformed で差し戻す", () => {
+    const review = createWorkPlanReview()
+    const call = { kind: "from-task", current: 0, phaseSummary: "" } as const
+
+    expect(review.judgeFromTask(call, { kind: "none" }).kind).toBe("no-claimed-task")
+    expect(review.standing()).toEqual({ kind: "rejected" })
+    expect(review.judgeFromTask({ ...call, current: 4 }, CLAIMED).kind).toBe("malformed")
+  })
+
+  it("作った並びのまま位置を2つ進める呼び出しは、一足飛びとして差し戻す", () => {
+    const review = createWorkPlanReview()
+    const call = { kind: "from-task", current: 0, phaseSummary: "" } as const
+    review.judgeFromTask(call, CLAIMED)
+
+    expect(review.judgeFromTask({ ...call, current: 2, phaseSummary: SUMMARY }, CLAIMED).kind).toBe(
+      "skipped-phase",
+    )
   })
 })

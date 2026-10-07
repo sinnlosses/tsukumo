@@ -26,7 +26,7 @@ import type { ModelTokenUsage, StepTokenUsage, TurnUsageScope } from "../token-u
 import type { UsageReviewEvent } from "../usage-review/usage-review.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import type { SessionDefault } from "./session-default.ts"
-import type { WorkPlanClosing } from "./work-plan.ts"
+import type { WorkPlanCall, WorkPlanClosing } from "./work-plan.ts"
 
 /**
  * `/` 補完に出すコマンド1件。
@@ -188,7 +188,7 @@ export type SessionEvent =
   | {
       readonly kind: "work-plan-called"
       readonly toolUseId: string
-      readonly plan: Extract<SessionEvent, { readonly kind: "work-plan" }>
+      readonly call: WorkPlanCall
     }
   /**
    * 段を進める委譲の返却（委譲先の `SubagentHandback` の1行目が `段 n/N | 文` か `計画 0/N | 文`）。

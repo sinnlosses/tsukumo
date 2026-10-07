@@ -15,6 +15,7 @@ import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportSectionSchema } from "../../../shared/report/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report/report-check.ts"
 import { parseReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
+import type { ClaimedTaskSteps } from "../../../shared/repository/beads-issue.ts"
 import {
   MIN_WORK_PLAN_PHASES,
   parseWorkPlanClosing,
@@ -63,10 +64,10 @@ import {
 } from "../core/tsukumo-tool-name.ts"
 import type { WorkPlanReview } from "../core/work-plan-review.ts"
 import {
+  answerWorkPlanCall,
   WORK_PLAN_CURRENT_DESCRIPTION,
   WORK_PLAN_PHASE_SUMMARY_DESCRIPTION,
   WORK_PLAN_PHASES_DESCRIPTION,
-  WORK_PLAN_REJECTIONS,
   WORK_PLAN_TOOL_DESCRIPTION,
 } from "../core/work-plan-tool.ts"
 
@@ -126,7 +127,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す（`toSessionEvents`）。
  * 受け取り口を1つにしておくと、イベントの流れが1本で済む。
- * `report` と `work_plan` の引数も同じで、handler が引数を読むのは差し戻すかを決めるためだけ。
+ * `report` と `work_plan` の引数も同じで、handler が引数を読むのは差し戻すかと返す文を決めるためだけ。
  * 見直しの2つだけは逆に handler がイベントを流す（検査を通したものだけを状態に入れるため。`createUsageReviewIntake`）。
  */
 export function tsukumoServer(
@@ -135,6 +136,7 @@ export function tsukumoServer(
   reportReview: ReportReview,
   speechReview: SpeechReview,
   workPlanReview: WorkPlanReview,
+  readClaimedTaskSteps: () => Promise<ClaimedTaskSteps>,
   usageReview: UsageReviewIntake,
   onReportTitle: (title: string) => void,
   cwd: string,
@@ -149,7 +151,7 @@ export function tsukumoServer(
       ...(mode.kind === "work"
         ? [
             reportTool(expressions, reportReview, onReportTitle, cwd),
-            workPlanTool(workPlanReview),
+            workPlanTool(workPlanReview, readClaimedTaskSteps),
             ...usageReviewTools(usageReview),
           ]
         : []),
@@ -248,8 +250,11 @@ function reportTool(
   )
 }
 
-/** 段取りを受け取るツール。差し戻すかは `WorkPlanReview` で決め、形の検査はここの zod の形。 */
-function workPlanTool(review: WorkPlanReview) {
+/** 段取りを受け取るツール。差し戻すかと返す文は `answerWorkPlanCall` で決め、形の検査はここの zod の形。 */
+function workPlanTool(
+  review: WorkPlanReview,
+  readClaimedTaskSteps: () => Promise<ClaimedTaskSteps>,
+) {
   return tool(
     WORK_PLAN_TOOL_NAME,
     WORK_PLAN_TOOL_DESCRIPTION,
@@ -257,18 +262,17 @@ function workPlanTool(review: WorkPlanReview) {
       phases: z
         .array(z.string().trim().min(1))
         .min(MIN_WORK_PLAN_PHASES)
+        .optional()
         .describe(WORK_PLAN_PHASES_DESCRIPTION),
       current: z.number().int().min(0).describe(WORK_PLAN_CURRENT_DESCRIPTION),
       phaseSummary: z.string().optional().describe(WORK_PLAN_PHASE_SUMMARY_DESCRIPTION),
     },
-    async (plan) => {
-      const verdict = review.judge(plan)
-      return verdict.kind === "accepted"
-        ? { content: [{ type: "text" as const, text: "ok" }] }
-        : {
-            content: [{ type: "text" as const, text: WORK_PLAN_REJECTIONS[verdict.kind] }],
-            isError: true,
-          }
+    async (input) => {
+      const answer = await answerWorkPlanCall(review, input, readClaimedTaskSteps)
+      return {
+        content: [{ type: "text" as const, text: answer.text }],
+        isError: answer.isError,
+      }
     },
   )
 }

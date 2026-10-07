@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  claimedTaskStepsOf,
   closedBeadsTaskSummariesBefore,
   composeBeadsBody,
+  planStepNamesOf,
   taskIdOfBeadsId,
   taskSummaryItemsOfBeadsIssues,
   type BeadsIssue,
@@ -232,5 +234,51 @@ describe("composeBeadsBody（task show と同じ並びに組む）", () => {
     expect(composeBeadsBody(description, "", "")).toBe(
       expectedBody({ "## 目的・背景": "目的" }, ["## 独自メモ\n\nメモ本文"]),
     )
+  })
+})
+
+const PLAN_WITH_FILES = [
+  "### 1. 今の形を調べる",
+  "本文",
+  "#### 2. 深い見出し",
+  "### 2. 読み口を足す",
+  "### 名指すファイル",
+  "- `src/a.ts`",
+].join("\n")
+
+describe("planStepNamesOf", () => {
+  it("番号の付いた ### の段だけを書かれた順に読み、番号の無い小見出しと #### は数えない", () => {
+    expect(planStepNamesOf(PLAN_WITH_FILES)).toEqual(["今の形を調べる", "読み口を足す"])
+  })
+
+  it("空の本文は段が無い", () => {
+    expect(planStepNamesOf("")).toEqual([])
+  })
+})
+
+describe("claimedTaskStepsOf", () => {
+  const claimed = issue({
+    id: "gh-7",
+    status: "in_progress",
+    assignee: "wt-a",
+    notes: PLAN_WITH_FILES,
+  })
+
+  it("作業ツリーの名前が着手した課題の ID と段を返す", () => {
+    expect(
+      claimedTaskStepsOf(
+        [claimed, issue({ id: "gh-8", status: "in_progress", assignee: "wt-b" })],
+        "wt-a",
+      ),
+    ).toEqual({ kind: "claimed", taskId: "GH-7", steps: ["今の形を調べる", "読み口を足す"] })
+  })
+
+  it.each([
+    ["別の作業ツリーが着手したとき", [claimed], "wt-b"],
+    ["課題が閉じているとき", [{ ...claimed, status: "closed" }], "wt-a"],
+    ["同じ作業ツリーが2件着手しているとき", [claimed, { ...claimed, id: "gh-9" }], "wt-a"],
+    ["段が無いとき", [{ ...claimed, notes: "### 名指すファイル" }], "wt-a"],
+  ])("%sは none", (_, issues, worktreeName) => {
+    expect(claimedTaskStepsOf(issues, worktreeName)).toEqual({ kind: "none" })
   })
 })

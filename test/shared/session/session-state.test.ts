@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { taskWorkPlanReplyOf } from "../../../src/server/session-driver/core/task-work-plan-reply.ts"
+import { createWorkPlanReview } from "../../../src/server/session-driver/core/work-plan-review.ts"
 import type { TaskSummaryItem } from "../../../src/shared/repository/task-summary.ts"
 import type { BackgroundTask } from "../../../src/shared/session-driver/background-task.ts"
 import {
@@ -1651,6 +1653,34 @@ describe("applySessionEvent（委譲の返却と段取り）", () => {
       phases: headingPhases,
       current: 2,
       phaseSummary: "架空の見出し1の変化。",
+    })
+  })
+
+  it("phases を省いた呼び出しのあと、帯は着手したタスクの段で並び、返却の番号で進む", () => {
+    const review = createWorkPlanReview()
+    const reply = taskWorkPlanReplyOf("架空のタスク", [
+      "計画",
+      "架空の段1",
+      "架空の段2",
+      "受け入れ",
+    ])
+    const events: readonly SessionEvent[] = [
+      request,
+      {
+        kind: "work-plan-called",
+        toolUseId: "toolu_plan",
+        call: { kind: "from-task", current: 1, phaseSummary: "架空の計画。" },
+      },
+      { kind: "tool-finished", toolUseId: "toolu_plan", content: reply, isError: false },
+      returned(1, "架空の段1の変化。"),
+    ]
+    const state = apply(...events.flatMap((event) => review.pass(event)))
+
+    expect(currentPlan(state)).toEqual({
+      kind: "planned",
+      phases: ["計画", "架空の段1", "架空の段2", "受け入れ"],
+      current: 2,
+      phaseSummary: "架空の段1の変化。",
     })
   })
 

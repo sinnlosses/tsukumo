@@ -5,8 +5,10 @@ import {
   closedByReport,
   type LatestWorkPlan,
   parseWorkPlan,
+  parseWorkPlanCall,
   parseWorkPlanClosing,
   phaseShiftOf,
+  taskWorkPlanOf,
   type WorkPlan,
 } from "../../../src/shared/session/work-plan.ts"
 
@@ -56,6 +58,45 @@ describe("parseWorkPlan の段のまとめ", () => {
 
   it("文字列でないまとめは受け付けない", () => {
     expect(parseWorkPlan({ phases: PHASES, current: 0, phaseSummary: 1 })).toBeUndefined()
+  })
+})
+
+describe("parseWorkPlanCall", () => {
+  it("phases があれば parseWorkPlan と同じに読み、無ければ着手したタスクから作る呼び出しにする", () => {
+    expect(parseWorkPlanCall({ phases: PHASES, current: 0 })).toEqual({
+      kind: "phases",
+      plan: next(PHASES, 0),
+    })
+    expect(parseWorkPlanCall({ current: 1, phaseSummary: "架空のまとめ。" })).toEqual({
+      kind: "from-task",
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+    })
+  })
+
+  it("位置が負・整数でない・まとめが長すぎる phases の無い呼び出しは読まない", () => {
+    expect(parseWorkPlanCall({ current: -1 })).toBeUndefined()
+    expect(parseWorkPlanCall({ current: 0.5 })).toBeUndefined()
+    expect(
+      parseWorkPlanCall({ current: 1, phaseSummary: "一つ目。二つ目。三つ目。" }),
+    ).toBeUndefined()
+  })
+})
+
+describe("taskWorkPlanOf", () => {
+  it("タスクの段の前に計画、後ろに受け入れを置いた並びにする", () => {
+    expect(
+      taskWorkPlanOf(PHASES, { kind: "from-task", current: 1, phaseSummary: "架空のまとめ。" }),
+    ).toEqual(next(["計画", ...PHASES, "受け入れ"], 1, "架空のまとめ。"))
+  })
+
+  it("位置が並びを超える・途中の位置に段のまとめが無いと作らない", () => {
+    expect(
+      taskWorkPlanOf(PHASES, { kind: "from-task", current: 6, phaseSummary: "" }),
+    ).toBeUndefined()
+    expect(
+      taskWorkPlanOf(PHASES, { kind: "from-task", current: 2, phaseSummary: "" }),
+    ).toBeUndefined()
   })
 })
 

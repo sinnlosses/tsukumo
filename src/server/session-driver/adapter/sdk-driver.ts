@@ -101,6 +101,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           reportReview,
           speechReview,
           workPlanReview,
+          options.readClaimedTaskSteps,
           usageReview,
           titleIntake.note,
           options.cwd,

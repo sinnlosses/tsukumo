@@ -46,6 +46,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   claudeConfigDir: undefined,
   dismissedUsageProposalKeys: () => [],
   hasTaskOperation: async () => true,
+  readClaimedTaskSteps: async () => ({ kind: "none" }),
   onEvent: () => {},
   reportFailure: () => {},
   now: () => 0,

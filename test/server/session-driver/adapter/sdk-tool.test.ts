@@ -18,6 +18,7 @@ import {
   type WorkPlanReview,
 } from "../../../../src/server/session-driver/core/work-plan-review.ts"
 import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
+import type { ClaimedTaskSteps } from "../../../../src/shared/repository/beads-issue.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   applySessionEvent,
@@ -70,6 +71,7 @@ describe("tsukumoServer", () => {
         createReportReview(() => NO_WORK_PLAN_STANDING),
         createSpeechReview(),
         createWorkPlanReview(),
+        readNoClaimedTask,
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -92,6 +94,7 @@ describe("tsukumoServer", () => {
         createReportReview(() => NO_WORK_PLAN_STANDING),
         createSpeechReview(),
         createWorkPlanReview(),
+        readNoClaimedTask,
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -135,6 +138,7 @@ describe("recall / recall_episode ツール", () => {
         createReportReview(() => NO_WORK_PLAN_STANDING),
         createSpeechReview(),
         createWorkPlanReview(),
+        readNoClaimedTask,
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -176,6 +180,7 @@ describe("recall / recall_episode ツール", () => {
         createReportReview(() => NO_WORK_PLAN_STANDING),
         createSpeechReview(),
         createWorkPlanReview(),
+        readNoClaimedTask,
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -203,6 +208,7 @@ describe("recall / recall_episode ツール", () => {
         createReportReview(() => NO_WORK_PLAN_STANDING),
         createSpeechReview(),
         createWorkPlanReview(),
+        readNoClaimedTask,
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -309,6 +315,7 @@ describe("speak の差し戻し", () => {
         createReportReview(() => NO_WORK_PLAN_STANDING),
         spokenReview(),
         createWorkPlanReview(),
+        readNoClaimedTask,
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -407,6 +414,35 @@ describe("work_plan（段取り）", () => {
 
     expect(empty.isError).toBe(true)
     expect(blank.isError).toBe(true)
+  })
+
+  it("phases を省くと、着手したタスクの段から作った並びを番号付きで返す", async () => {
+    const claimed = async (): Promise<ClaimedTaskSteps> => ({
+      kind: "claimed",
+      taskId: "架空のタスク",
+      steps: ["架空の段A", "架空の段B"],
+    })
+    const server = workServer([], [], [], createSpeechReview(), createWorkPlanReview(), claimed)
+
+    const reply = await callTool(server, "work_plan", {
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+    })
+
+    expect(reply.isError).toBe(false)
+    expect(reply.text.split("\n").slice(1)).toEqual([
+      "1. 計画",
+      "2. 架空の段A",
+      "3. 架空の段B",
+      "4. 受け入れ",
+    ])
+  })
+
+  it("phases を省いたのに着手したタスクの段が読めない呼び出しは差し戻す", async () => {
+    const reply = await callTool(workServer(), "work_plan", { current: 0 })
+
+    expect(reply.isError).toBe(true)
+    expect(reply.endsTurn).toBe(false)
   })
 })
 
@@ -594,6 +630,11 @@ const VALID_FINDINGS = {
   proposals: [VALID_PROPOSAL],
 } as const
 
+/** 着手したタスクの無い作業ツリー。 */
+async function readNoClaimedTask(): Promise<ClaimedTaskSteps> {
+  return { kind: "none" }
+}
+
 /**
  * 仕事のサーバ。見直しのイベントは `events` に積み、見送りの一覧は `dismissed` を返す。
  * `report` が受け取った題は `titles` に積む。
@@ -604,6 +645,7 @@ function workServer(
   titles: string[] = [],
   speechReview: SpeechReview = createSpeechReview(),
   workPlanReview: WorkPlanReview = createWorkPlanReview(),
+  readClaimedTaskSteps: () => Promise<ClaimedTaskSteps> = readNoClaimedTask,
 ): McpSdkServerConfigWithInstance {
   return tsukumoServer(
     EXPRESSIONS,
@@ -611,6 +653,7 @@ function workServer(
     createReportReview(workPlanReview.standing),
     speechReview,
     workPlanReview,
+    readClaimedTaskSteps,
     createUsageReviewIntake(
       () => dismissed,
       async () => true,

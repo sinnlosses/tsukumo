@@ -1,4 +1,4 @@
-// Beads（`bd`）の課題1件を、タスクの一覧と成果が読む形に写す。
+// Beads（`bd`）の課題1件を、タスクの一覧と成果と帯の段取りが読む形に写す。
 // 対応は task-workflow の WORKFLOW.md「Beads 方式」の表が正典
 // （`open` → `todo`・`pending`／`deferred` → `hold`・`in_progress` → 着手中・`closed` → `done`、
 // label `cancelled` があれば `dropped`）。ID は `issue_prefix` が `t` なら `t-<n>` → `T-<n>`、
@@ -126,6 +126,43 @@ export function taskIdOfBeadsId(beadsId: string): string {
   return ghDigits === undefined ? beadsId : `GH-${ghDigits}`
 }
 
+/** この作業ツリーが着手したタスクの段。読めない・決められないときは `none`。 */
+export type ClaimedTaskSteps =
+  | { readonly kind: "none" }
+  | { readonly kind: "claimed"; readonly taskId: string; readonly steps: readonly string[] }
+
+/**
+ * `status` が `in_progress` で `assignee` が `worktreeName` の課題がちょうど1件で、
+ * その `## やること`（`notes`）に段が1つ以上あるときだけ、その課題の ID と段の名前を返す。
+ */
+export function claimedTaskStepsOf(
+  issues: readonly BeadsIssue[],
+  worktreeName: string,
+): ClaimedTaskSteps {
+  const claimed = issues.filter(
+    (issue) => issue.status === IN_PROGRESS_STATUS && issue.assignee === worktreeName,
+  )
+  const [only] = claimed
+  if (only === undefined || claimed.length > 1) {
+    return { kind: "none" }
+  }
+  const steps = planStepNamesOf(only.notes)
+  return steps.length === 0
+    ? { kind: "none" }
+    : { kind: "claimed", taskId: taskIdOfBeadsId(only.id), steps }
+}
+
+/**
+ * `## やること` の中身から、`### <n>. <名前>` の行の名前を書かれた順に読む。
+ * 番号の無い `### ` の小見出しと、`#### ` より深い見出しは段に数えない。
+ */
+export function planStepNamesOf(plan: string): readonly string[] {
+  return plan.split("\n").flatMap((line) => {
+    const name = PLAN_STEP_HEADING_PATTERN.exec(line)?.[1]?.trim()
+    return name === undefined || name === "" ? [] : [name]
+  })
+}
+
 /**
  * 課題の `description`・`acceptanceCriteria`・`notes` を `task show` と同じ並びに組む。
  * task-workflow の `beads.py` の `compose_body`・`_sections`（`taskfile.SECTION_HEADINGS`）の写しで、あちらを変えたら揃える。
@@ -193,6 +230,8 @@ function trimNewlines(value: string): string {
 }
 
 const CLOSED_STATUS = "closed"
+const IN_PROGRESS_STATUS = "in_progress"
+const PLAN_STEP_HEADING_PATTERN = /^### \d+\. (.+)$/
 const CANCELLED_LABEL = "cancelled"
 /** タスク板に残す、閉じた課題の件数（`done` と `dropped` を合わせて数える）。 */
 const CLOSED_TASK_DISPLAY_LIMIT = 10

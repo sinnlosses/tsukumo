@@ -326,12 +326,29 @@ describe("toSessionEvents", () => {
       {
         kind: "work-plan-called",
         toolUseId: "toolu_3",
-        plan: {
-          kind: "work-plan",
-          phases: ["架空の段A", "架空の段B"],
-          current: 1,
-          phaseSummary: "架空のまとめ。",
+        call: {
+          kind: "phases",
+          plan: { phases: ["架空の段A", "架空の段B"], current: 1, phaseSummary: "架空のまとめ。" },
         },
+      },
+    ])
+  })
+
+  it("phases の無い work_plan は、並びを着手したタスクから作る呼び出しにする", () => {
+    const message = assistantMessage([
+      {
+        type: "tool_use",
+        id: "toolu_3",
+        name: WORK_PLAN_TOOL_FULL_NAME,
+        input: { current: 1, phaseSummary: "架空のまとめ。" },
+      },
+    ])
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      {
+        kind: "work-plan-called",
+        toolUseId: "toolu_3",
+        call: { kind: "from-task", current: 1, phaseSummary: "架空のまとめ。" },
       },
     ])
   })

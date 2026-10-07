@@ -20,7 +20,7 @@ import type {
 import type { RateLimit, RateLimitBucket } from "../../../shared/session-driver/rate-limit.ts"
 import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { parseWorkPlan, parseWorkPlanClosing } from "../../../shared/session/work-plan.ts"
+import { parseWorkPlanCall, parseWorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import type { ModelTokenUsage } from "../../../shared/token-usage/token-usage.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
@@ -44,7 +44,7 @@ import {
  * - `report` の呼び出しも `tool-started` にしない。`report` として別に出す（メインビュー行き）。
  *   `parent_tool_use_id` のある呼び出し（サブエージェントの中）は捨てる。
  *   ターンのレポートはメインが書くもので、委譲先の報告はメインの手元に届くだけにする
- * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを呼び出しの id を付けた `work-plan-called` にし、`parseWorkPlan` を通らない引数は捨てる（handler が差し戻した呼び出しと同じ判定）。
+ * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを呼び出しの id を付けた `work-plan-called` にし、`parseWorkPlanCall` を通らない引数は捨てる（handler が差し戻した呼び出しと同じ判定）。
  *   段の一足飛びで差し戻した呼び出しは `WorkPlanReview` が結果を見て捨てる
  * - サブエージェントの `SubagentHandback` が段を進める返却なら、`tool-started` の後ろに `delegate-returned` を足す（{@link parseDelegateReturn}）。
  *   1行目の `|` より後ろの文を運ぶ。返却1回につき呼び出しは1回届く（実測）
@@ -462,10 +462,8 @@ function delegateReturnEvents(
 }
 
 function workPlanEvents(toolUseId: string, input: unknown): readonly SessionEvent[] {
-  const plan = parseWorkPlan(input)
-  return plan === undefined
-    ? []
-    : [{ kind: "work-plan-called", toolUseId, plan: { kind: "work-plan", ...plan } }]
+  const call = parseWorkPlanCall(input)
+  return call === undefined ? [] : [{ kind: "work-plan-called", toolUseId, call }]
 }
 
 function speechEvents(
