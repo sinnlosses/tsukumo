@@ -1,3 +1,8 @@
 # 未対応の指示メモ（ここに書くと次のセッションが `/plan-tasks` でタスク化する。エージェントのドラフトは `develop/draft/` に1件1ファイル。正典: `task-workflow` の `WORKFLOW.md`）
 
 ## ユーザーから
+
+- tsukumo と skills の役割と境界を決めた（2026-10-07 利用者）。tsukumo は特定のスキル（claude-skills の task-workflow・next-task・plan-tasks・retrospect と、その `tw`・Beads の課題の書式・`develop/` の置き場）に依存しない。tsukumo のゴールはレポートを最もキレイに分かりやすく表示し、キャラクターが魅力的に話すこと。タスクを段に分けて計測し表示するのは tsukumo の機能。tsukumo は段を受ける口（`work_plan`・委譲中の進みの合図・`report`）を自分で定めてシステムプロンプトで教え、スキルはその口に段を渡すだけ。スキル側の時間の記録（`tw` の flow）は tsukumo は読まない。この線引きを ADR と `docs/requirements.md`・`docs/architecture.md`・`docs/architecture/display.md` に書き、GH-366（「タスクの読み元は Beads だけ」を前提にしている）の前提も書き直す。下の3件はこの設計を前段に置く
+- 帯の段をスキルの約束事から外す。`work_plan` の `phases` 省略（着手したタスクの Beads の `## やること` から段を作る `from-task`・`claimedTaskStepsOf`・`readClaimedTaskSteps`）を消して `phases` 必須に戻す。委譲中の帯の進みは next-task の返却の1行目（`段 n/N |`・`計画 0/N |`、`delegate-return.ts`）と「計画・各段・受け入れ」の並びの前提に頼らず、tsukumo が定める口（委譲先に送らせる合図か、メインが返却ごとに `work_plan` を呼ぶ形か）に置き換える。`report.task` の outcome の「main へ送った」は一般の語（完了・止めた・答え待ち）にし、人格（`characters/*/persona.md`）の「タスクの難易度でモデルを切り替える運用」の出撃の一言は「委譲先のモデルが変わったとき」の一般の言い方にする
+- タスク一覧・おすすめ・成果は残すが、Beads は外の世界の読み口として adapter に閉じ、画面と core は一般の形（ID・題・状態・依存）だけを扱う。`difficulty`・`loopable`・`T-`/`GH-` の ID の並べ方・7節の本文の組み立てなど task-workflow の語彙は画面から外す（`src/shared/repository/task-workflow.ts` は shared から adapter 側へ寄せる。`project-settings.ts` の既定の文面の `bd show` も一般の文面に）
+- 段ごとの所要時間を tsukumo が残し、出す。(1) 段ごとの所要を保存し、セッションを開き直しても戻るようにする。復元は transcript の各行の `timestamp` を再生の時刻として使い、`withRestoredTime` で全部を「不明」に倒すのをやめる（段・ツール・checks のコマンドの時間が戻る）。(2) 中間レポートには、その段でしたこと（`phaseSummary` か返却のまとめ）とその段の所要を tsukumo が必ず描く（したことが空の段の進みは差し戻す）。(3) 最終レポートの「段ごとの時間」の表を tsukumo が描く横棒グラフに替える（モデルは書かない。測れない段は棒にせず名前だけ添える）
