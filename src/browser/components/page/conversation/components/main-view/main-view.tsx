@@ -1,6 +1,6 @@
 // メインビュー本体。いま出している中身（迎える口・働くあいだの札・レポート）を出し分ける。
 //
-// 1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` で行き来する。
+// 1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` と目次の列のやり取りの行で行き来する。
 // 選んでいるターン（`turnId`）は `useTurnSelection` から読む（キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。
 // 最新を見ているあいだの中身は `useMainViewContent` が決め、過去のターンを見ているあいだはそのターンのレポートを出す。
 //
@@ -15,11 +15,13 @@ import {
   type ReactNode,
   type RefObject,
 } from "react"
+import { zip } from "remeda"
 import { useShallow } from "zustand/react/shallow"
 
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
 import type { MainViewTurn } from "../../../../../../shared/session/main-view.ts"
 import type { SessionState } from "../../../../../../shared/session/session-state.ts"
+import { turnResultsOf } from "../../../../../../shared/session/turn-result.ts"
 import { currentPhaseOf, type WorkPhase } from "../../../../../../shared/session/work-plan.ts"
 import { currentTurnStepsOf } from "../../../../../stores/current-turn-steps.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
@@ -40,7 +42,7 @@ import { Welcome } from "./components/welcome/welcome.tsx"
 import { WorkStrip } from "./components/work-strip/work-strip.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
-import { turnHistoryText, turnRequestRest, turnTitle } from "./domain/turn-title.ts"
+import { turnRequestRest, turnTitle } from "./domain/turn-title.ts"
 import { NO_SHOWN_KEY, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import styles from "./main-view.module.css"
 import { RepositoryFileLinkProvider } from "./markdown/repository-link.tsx"
@@ -85,6 +87,11 @@ export function MainView(): ReactElement {
   }
 
   const cardTurn = view.kind !== "welcome" && view.card.kind === "turn" ? view.card : undefined
+  const outlineTurns = zip(turns, turnResultsOf(turns, moment)).map(([turn, result]) => ({
+    id: turn.id,
+    title: turnTitle(turn),
+    result,
+  }))
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>): void {
     const step = turnStepOf({
@@ -142,7 +149,6 @@ export function MainView(): ReactElement {
                     id: turn.id,
                     title: turnTitle(turn),
                     requestRest: turnRequestRest(turn),
-                    historyText: turnHistoryText(turn),
                   }))}
                   activeTurnId={cardTurn.turn.id}
                   onSelect={selectTurn}
@@ -156,7 +162,11 @@ export function MainView(): ReactElement {
                   <Inquiry />
                 </div>
               )}
-              <ReportOutline positionLabel={positionLabel(turns, cardTurn.turn.id)}>
+              <ReportOutline
+                turns={outlineTurns}
+                activeTurnId={cardTurn.turn.id}
+                onSelectTurn={selectTurn}
+              >
                 {/* `key` にターンの番号を渡す。
                     前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
                 <Turn
@@ -251,11 +261,6 @@ function shownKeyOf(view: ShownView): string {
     return NO_SHOWN_KEY
   }
   return `${view.kind}:${String(view.card.turn.id)}`
-}
-
-function positionLabel(turns: readonly MainViewTurn[], turnId: number): string {
-  const index = turns.findIndex((turn) => turn.id === turnId)
-  return `${String(index + 1)} / ${String(turns.length)}`
 }
 
 /** いちばん新しい依頼の今の段。 */

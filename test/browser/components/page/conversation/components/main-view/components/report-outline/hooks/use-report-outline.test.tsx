@@ -2,10 +2,19 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import type { ReactElement } from "react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { useReportOutline } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report-outline/hooks/use-report-outline.ts"
+import {
+  useReportOutline,
+  type ReportOutlineProps,
+} from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report-outline/hooks/use-report-outline.ts"
 import notationStyles from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css"
 
 const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
+
+const ONE_TURN = {
+  turns: [{ id: 0, title: "架空の依頼", result: "done" }],
+  activeTurnId: 0,
+  onSelectTurn: () => undefined,
+} as const satisfies ReportOutlineProps
 
 // 最後の見出しの下が短く、転がりが縁の上端まで届かない場面を模す。
 
@@ -18,7 +27,7 @@ function stubRect(element: Element, top: number): void {
 }
 
 function Probe(): ReactElement {
-  const { rows, navRef, contentRef, onSelect } = useReportOutline({ positionLabel: "1 / 3" })
+  const { rows, navRef, contentRef, onSelect } = useReportOutline(ONE_TURN)
   return (
     <div>
       <nav ref={navRef}>
@@ -120,9 +129,7 @@ describe("useReportOutline（押した見出しの固定）", () => {
 })
 
 function PanelProbe(): ReactElement {
-  const { collapsed, onToggleCollapse, widthStyle, onWidthCommit } = useReportOutline({
-    positionLabel: "1 / 3",
-  })
+  const { collapsed, onToggleCollapse, widthStyle, onWidthCommit } = useReportOutline(ONE_TURN)
   return (
     <div>
       <button data-testid="toggle" onClick={onToggleCollapse}>
@@ -171,7 +178,7 @@ describe("useReportOutline（畳みと幅の保存）", () => {
 })
 
 function PendingProbe(): ReactElement {
-  const { rows, visible, contentRef } = useReportOutline({ positionLabel: "1 / 1" })
+  const { rows, visible, contentRef } = useReportOutline(ONE_TURN)
   return (
     <div>
       <span data-testid="visible">{String(visible)}</span>

@@ -1,11 +1,9 @@
-/* ターンの札の頭。前後の口・タイトル・「n / N」・過去のやり取りの一覧を持つ。 */
+/* ターンの札の頭。前後の口・タイトル・「n / N」を持つ。 */
 
 /* 札の頭。
-   広い画面は1行（前後の口・タイトル・n / N と最新の印）。
-   `position: relative` は一覧（.turn-history）を頭いっぱいの幅で重ねる基準。 */
+   広い画面は1行（前後の口・タイトル・n / N と最新の印）。 */
 .turn-header {
   --turn-header-min-height: calc(2.5rem + 1px);
-  position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-areas:
@@ -41,148 +39,28 @@
   border-radius: 0.4rem;
   line-height: 1;
 }
-/* タイトル（下向きの矢印を含むボタン）と一覧そのものをまとめる枠。
-   `position` は付けない。一覧（.turn-history）はこの枠のさらに外、`.turn-header`（position: relative）を基準にヘッダーいっぱいの幅で重ねる（下の `.turn-history` 参照）。
-   この枠自体は `useDismissSignal` の「外側」の基準（`ref`）としてだけ使う。一覧を外側扱いさせないため、DOM 上はここに入れたまま見た目だけヘッダー基準にする。 */
-.turn-title-group {
-  grid-area: title;
-  min-width: 0;
-}
-/* 依頼の続きの置き場。中身の見た目は `RequestContinuation` が持つ。
-   左の 1px は、タイトルのボタンの枠（透明）の幅で、タイトルの文字の頭に揃える。 */
+/* 依頼の続きの置き場。中身の見た目は `RequestContinuation` が持つ。 */
 .turn-request-rest {
   grid-area: rest;
   min-width: 0;
-  margin: 4px 0 0 1px;
+  margin: 4px 0 0;
 }
 /* 見ているターンの依頼の1行目。
    ページで唯一の本物の h2（レポートの `##` は h4 に落とす）。
    `Heading` が段・太さを持つ。
-   中身は1つの `<button>`（`.turn-title-toggle`）で、見た目は h2 に付けていたときのまま。 */
+   `line-height` は本文の 1.75（`theme.css` の既定）を継がず、ここだけ 1.3 に詰める（1.75 は長文を読むための余白で、1行の見出しでは頭を押し上げる）。 */
 .turn-title {
-  min-width: 0;
-}
-/* タイトルの文字 + 下向きの矢印を1つにまとめた開く口の箱だけ。顔は `<Button variant="ghost-hover-outline">` が持つ。
-   幅いっぱいに広げて `.turn-title-text` 側で省略するので、タイトルの縮み方は前と変わらない。
-   `line-height` は本文の 1.75（`theme.css` の既定）を継がず、ここだけ 1.3 に詰める（`.detail-block .report-stat b` と同じ値。1.75 は長文を読むための余白で、1行の見出しでは頭を押し上げる）。 */
-.turn-title-toggle {
+  grid-area: title;
   display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  width: 100%;
   min-width: 0;
-  padding: 0.15rem 0.3rem;
-  margin: -0.15rem -0.3rem;
-  border-radius: 0.3rem;
   line-height: 1.3;
-  text-align: left;
 }
-/* 1行に収まらないぶんは省略し、全文はボタンの `title` で読ませる（`turnTitle` は切らない）。
-   字の段は「区画の見出し・強調した要約」（理由はそちらに書く）で、太字で本文と区別する。 */
-/* 字の段・太さは `Text` が持つ。1行で切る組み・幅だけここに置く。 */
+/* 1行に収まらないぶんは省略し、全文は `title` で読ませる（`turnTitle` は切らない）。 */
 .turn-title-text {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   min-width: 0;
-}
-/* 下向きの矢印。
-   字（`⌄`）ではなく線画にする。字は書体ごとに太さも高さも変わり、プルダウンの矢印（select.module.css）と揃わない。
-   形はそれと同じものを `theme.css` のトークンから引き、`currentColor` で塗る。
-   タイトルの縮みを邪魔しないよう固定の大きさにし、色はタイトルより一段薄い「n / N」と同じ扱い。 */
-.turn-title-chevron {
-  flex: none;
-  width: 12px;
-  height: 12px;
-  background: currentColor;
-  color: var(--ink-quiet);
-  mask: var(--icon-chevron-down) center / contain no-repeat;
-}
-/* 窓の中のやり取りの一覧。
-   DOM は `.turn-title-group` の中だが、`position` を持たないその枠を飛ばして`.turn-header`（position: relative）を基準にヘッダーいっぱいの幅で重ねる（`.current-work-list` と同じ「押し下げない」手口だが、`.turn-title-group` は狭い画面でタイトルの下に折り返して幅が読めないので、一覧側は常にヘッダー全幅を使う）。
-   `left: 0; right: 0` は `.turn-header` の padding box 基準になるので、`.turn-card` の内側にきっちり収まり、どの幅でも横スクロールを出さない。 */
-.turn-history {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 2;
-  margin-top: 0.3rem;
-  max-height: 60dvh;
-  overflow-y: auto;
-  padding: 0.5rem 0.6rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.5rem;
-  background: var(--surface);
-  font-size: var(--font-secondary);
-}
-/* 字の色・太さは `Text` が持つ。margin だけここに置く。 */
-.turn-history-heading {
-  margin: 0 0 0.4rem;
-}
-.turn-history-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-/* 一覧の1行の枠（`<div>`）。
-   それ自体は押せない。押せるのは中の `.turn-history-jump` だけ（行ぜんぶが1つの `<button>` だと、中の文字が選択できないため）。 */
-.turn-history-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.3rem 0.4rem;
-  border: 1px solid transparent;
-  border-radius: 0.4rem;
-  color: var(--ink);
-}
-/* 印 + 番号だけの、そのやり取りへ飛ぶ口。
-   形は前の行ボタンの左側（印・番号）をそのまま引き継ぐ（「行の見た目から大きく変えない」）。
-   押せる面だと分かるようホバーと `aria-current` のときだけ枠を出す。 */
-.turn-history-jump {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.15rem 0.3rem;
-  margin: -0.15rem 0;
-  border: 1px solid transparent;
-  border-radius: 0.4rem;
-  background: transparent;
-  cursor: pointer;
-}
-.turn-history-jump:hover {
-  border-color: var(--rule);
-}
-/* 見ているやり取りには色以外の印も付ける（●）。枠も足して二重に示す。 */
-.turn-history-jump[aria-current="true"] {
-  border-color: var(--accent);
-  background: var(--surface-accent);
-}
-/* 色は `Text` が持つ。伸び縮みだけここに置く。 */
-.turn-history-mark {
-  flex: none;
-}
-/* 字の段・色は `Text` が持つ。伸び縮み・幅・書体だけここに置く。 */
-.turn-history-position {
-  flex: none;
-  min-width: 3.2em;
-  font-family: var(--font-mono);
-}
-/* 依頼の全文。
-   選択してコピーするための、ただの文字（ボタンではない）。
-   改行を保ったまま見せ、長い行は折り返す（横スクロールを出さない）。 */
-.turn-history-text {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 0.15rem 0;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  cursor: text;
 }
 .turn-meta {
   grid-area: meta;
@@ -232,7 +110,7 @@
       "title title"
       "rest rest";
   }
-  .turn-title-group {
+  .turn-title {
     margin-top: 0.4rem;
   }
 }

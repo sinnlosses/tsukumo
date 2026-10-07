@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  turnHistoryText,
   turnRequestRest,
   turnTitle,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/turn-title.ts"
@@ -121,34 +120,5 @@ describe("turnRequestRest（タイトルの下に出す依頼の続き）", () =
     const long = `見出し\n${"あ".repeat(2001)}`
 
     expect(rest(long)).toEqual([`${"あ".repeat(1996)}…`])
-  })
-})
-
-describe("turnHistoryText（一覧の行に出す依頼の全文）", () => {
-  it("依頼があれば、改行も空白も詰めずにそのまま返す", () => {
-    expect(
-      turnHistoryText(turn({ request: { text: "1行目\n\n2行目  にも空白", images: [] } })),
-    ).toBe("1行目\n\n2行目  にも空白")
-  })
-
-  it("引用の記号も落とさずそのまま返す（コピーして使うため）", () => {
-    expect(turnHistoryText(turn({ request: { text: "> 架空の依頼\n> 2行目", images: [] } }))).toBe(
-      "> 架空の依頼\n> 2行目",
-    )
-  })
-
-  it("依頼が無いターンは turnTitle と同じ表示にする", () => {
-    const steps = [reportStep(0, "架空のレポートの見出し")]
-
-    expect(turnHistoryText(turn({ request: undefined, steps }))).toBe("架空のレポートの見出し")
-    expect(turnHistoryText(turn({ request: undefined, steps: [] }))).toBe("（依頼なし）")
-  })
-
-  it("長い依頼は上限で切って末尾に … を付ける", () => {
-    const long = "あ".repeat(2001)
-
-    expect(turnHistoryText(turn({ request: { text: long, images: [] } }))).toBe(
-      `${"あ".repeat(2000)}…`,
-    )
   })
 })

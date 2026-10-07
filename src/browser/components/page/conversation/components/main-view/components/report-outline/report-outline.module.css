@@ -1,7 +1,7 @@
-/* レポートの目次。本文の左に、見出しの名前の一覧を常に開いた列として持つ。 */
+/* レポートの目次。本文の左に、窓の中のやり取りと見ているやり取りの見出しの一覧を、常に開いた列として持つ。 */
 
 /* 列と本文を横に並べる器。
-   見出しが2つ未満のときは列を描かず、本文が左いっぱいを使う。
+   列を出さないときは、本文が左いっぱいを使う。
    幅の足りない領域では列ごと隠すので、その判定の基準（`@container`）をこの器に持たせる。 */
 .outline-frame {
   container-type: inline-size;
@@ -28,7 +28,7 @@
 }
 /* 貼り付く位置は札の頭の真下（`--turn-card-head-height`。`main-view.module.css`）。
    札の頭と同じく、転がる器の余白ぶん上へずらした位置が基準（`.turn-card-head`）。
-   見出しが多いときは一覧の中で転がす。 */
+   行が多いときは一覧の中で転がす。 */
 .outline-nav {
   position: sticky;
   top: calc(var(--turn-card-head-height, 0px) - var(--region-padding, 0px));
@@ -48,11 +48,6 @@
   gap: 0.5rem;
   padding: 0.125rem 0.625rem 0.5rem;
 }
-.outline-list-head-text {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
 .outline-toggle {
   flex: none;
   min-width: 24px;
@@ -63,13 +58,20 @@
   font-size: var(--font-label);
   letter-spacing: 0.1em;
 }
-/* 「n / N」は機械が振った番号なので等幅。 */
-.outline-list-position {
-  color: var(--ink-quiet);
-  font-family: var(--font-mono);
-  font-size: var(--font-label);
+/* やり取り1件ぶん（やり取りの行と、見ているやり取りなら子の見出しの行）。
+   見ているやり取りは子の行ごと面に載せる。 */
+.outline-turn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border-radius: 0.45rem;
 }
-.outline-row {
+.outline-turn-group.is-active {
+  padding-bottom: 0.25rem;
+  background: var(--surface-raised);
+}
+/* やり取りの行。頭の印は固定幅で切らず、依頼の1行目だけを省略する。 */
+.outline-turn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -84,8 +86,45 @@
   white-space: nowrap;
   cursor: pointer;
 }
+.outline-turn:hover {
+  background: var(--surface-accent);
+}
+.outline-turn[aria-current="true"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+.outline-turn-mark {
+  flex: none;
+  width: 1em;
+  text-align: center;
+}
+.outline-turn[aria-current="true"] .outline-turn-mark {
+  color: var(--accent);
+}
+.outline-turn[data-result="failed"] .outline-turn-mark {
+  color: var(--state-ng);
+}
+.outline-turn[data-result="awaiting-answer"] .outline-turn-mark {
+  color: var(--state-warn);
+}
+/* 見出しの行。やり取りの行の字の頭（印の幅と間のぶん）まで字下げする。 */
+.outline-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.3rem 0.625rem 0.3rem 1.5rem;
+  border: none;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
 .outline-row[data-level="sub"] {
-  padding-left: 1.625rem;
+  padding-left: 2.5rem;
   font-size: var(--font-action);
 }
 .outline-row.is-in-section {

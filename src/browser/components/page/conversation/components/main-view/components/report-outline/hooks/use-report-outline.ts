@@ -1,10 +1,11 @@
 // `<ReportOutline>` のロジック。
-// 見ているターンのレポートに描かれた見出し（`##` の `h4` と `###` の `h5`）を DOM から拾い、一覧の並びにする。
+// 上の段に窓の中のやり取りを並べ、見ているやり取りの行の下に、そのレポートに描かれた見出し（`##` の `h4` と `###` の `h5`）を DOM から拾って並べる。
 //
 // 見出しの出どころを Markdown の文字ではなく描いた DOM にするのは、押したときに転がす先と、いま読んでいる見出しを決める位置が、どちらも DOM の要素そのものだから。
 // 畳んだ `<details>` の中の見出しは転がしても見えないので拾わない。
 //
-// 列の幅と畳んだ状態は利用者が変えられ、`localStorage` に保つ。キーボードでは ↑↓ で行を移って Enter で飛ぶ。
+// 列の幅と畳んだ状態は利用者が変えられ、`localStorage` に保つ。
+// キーボードでは ↑↓ でやり取りの行と見出しの行を区別なく移り、Enter は行の `<button>` が受ける。
 
 import {
   useLayoutEffect,
@@ -16,6 +17,7 @@ import {
 } from "react"
 import { isDeepEqual } from "remeda"
 
+import type { TurnResult } from "../../../../../../../../../shared/session/turn-result.ts"
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../../../domain/reveal/paint.ts"
 import notationStyles from "../../../markdown/report-notation.module.css"
 import {
@@ -31,9 +33,24 @@ export type ReportOutlineEntry = {
   readonly text: string
 }
 
+/** 上の段に並べるやり取り1件。 */
+export type ReportOutlineTurn = {
+  readonly id: number
+  readonly title: string
+  readonly result: TurnResult
+}
+
 export type ReportOutlineProps = {
-  /** 一覧の上に添える、どのやり取りの見出しか（「n / N」）。 */
-  readonly positionLabel: string
+  /** 窓の中のやり取り。古い順（末尾が最新）。 */
+  readonly turns: readonly ReportOutlineTurn[]
+  readonly activeTurnId: number
+  readonly onSelectTurn: (turnId: number) => void
+}
+
+/** 上の段の1行ぶん。 */
+export type ReportOutlineTurnRow = ReportOutlineTurn & {
+  /** 見ているやり取りか。この行の下にだけ見出しの行を出す。 */
+  readonly isActive: boolean
 }
 
 /** 一覧の1行ぶん。 */
@@ -46,10 +63,12 @@ export type ReportOutlineRow = ReportOutlineEntry & {
 
 /** `<ReportOutline>` が画面に出す形。 */
 export type ReportOutlineModel = {
-  /** 一覧の列を出すか。見出しが2つ未満なら列ごと隠し、本文を左いっぱいまで使う。 */
+  /** 一覧の列を出すか。やり取りが1件で見出しも2つ未満なら列ごと隠し、本文を左いっぱいまで使う。 */
   readonly visible: boolean
+  readonly turnRows: readonly ReportOutlineTurnRow[]
+  readonly onSelectTurn: (turnId: number) => void
+  /** 見ているやり取りの見出しの行。 */
   readonly rows: readonly ReportOutlineRow[]
-  readonly positionLabel: string
   /**
    * 列と本文を横に並べる器。目次と本文の境界のドラッグが比率の基準にし、
    * ドラッグ中はここへ直接 `--outline-rail-width` を書いて列の幅を変える。
@@ -57,7 +76,7 @@ export type ReportOutlineModel = {
   readonly frameRef: RefObject<HTMLDivElement | null>
   /** 見出しを探す本文の器。 */
   readonly contentRef: RefObject<HTMLDivElement | null>
-  /** 一覧の器。いま読んでいる見出しを決める基準の高さになる。 */
+  /** 一覧の器。いま読んでいる見出しを決める基準の高さになり、行が溢れたらこの中で転がす。 */
   readonly navRef: RefObject<HTMLElement | null>
   readonly listRef: RefObject<HTMLDivElement | null>
   readonly onNavKeyDown: (event: KeyboardEvent<HTMLElement>) => void
@@ -80,6 +99,9 @@ const PIN_TOLERANCE_PX = 1
 const HEADING_SELECTOR = `.${notationStyles["detail-block"]} :is(h4, h5)`
 
 const OUTLINE_WIDTH_VARIABLE = "--outline-rail-width"
+
+/** やり取りの行の `<button>` が持つ属性。値はやり取りの id。 */
+export const TURN_ROW_ATTRIBUTE = "data-outline-turn"
 
 /** 札の幅がこれ（rem）を下回るあいだは、利用者が選んでいなければ目次を畳んでおく。 */
 const NARROW_CARD_REM = 48
@@ -196,6 +218,29 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
   }, [])
 
+  const visible = props.turns.length >= 2 || headingTotal >= 2
+
+  // 見ているやり取りの行を、列の中の転がり（DOM）で見える位置へ寄せる。
+  // `scrollIntoView` は転がる祖先の本文まで動かすので、列の `scrollTop` だけを動かす。
+  const activeTurnId = props.activeTurnId
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    if (nav === null || !visible || collapsed) {
+      return
+    }
+    const row = nav.querySelector<HTMLElement>(`[${TURN_ROW_ATTRIBUTE}="${String(activeTurnId)}"]`)
+    if (row === null) {
+      return
+    }
+    const navRect = nav.getBoundingClientRect()
+    const rowRect = row.getBoundingClientRect()
+    if (rowRect.top < navRect.top) {
+      nav.scrollTop -= navRect.top - rowRect.top
+    } else if (rowRect.bottom > navRect.bottom) {
+      nav.scrollTop += rowRect.bottom - navRect.bottom
+    }
+  }, [activeTurnId, collapsed, visible])
+
   function focusRow(step: 1 | -1): void {
     const rows = [...(listRef.current?.querySelectorAll<HTMLButtonElement>("button") ?? [])]
     const current = rows.findIndex((row) => row === document.activeElement)
@@ -204,9 +249,10 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   }
 
   return {
-    visible: headingTotal >= 2,
+    visible,
+    turnRows: props.turns.map((turn) => ({ ...turn, isActive: turn.id === props.activeTurnId })),
+    onSelectTurn: props.onSelectTurn,
     rows: outlineRows(entries, activeIndex),
-    positionLabel: props.positionLabel,
     frameRef,
     contentRef,
     navRef,

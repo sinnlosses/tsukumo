@@ -16,7 +16,7 @@
   line-height: inherit;
   vertical-align: baseline;
 }
-/* 下向きの矢印。タイトルの矢印（`.turn-title-chevron`）と同じ作りで、色は `currentColor`。 */
+/* 下向きの矢印。字ではなく `theme.css` のトークンの線画で、色は `currentColor`。 */
 .request-more-chevron {
   flex: none;
   width: 12px;

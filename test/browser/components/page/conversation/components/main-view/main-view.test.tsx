@@ -5,6 +5,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
   type RenderResult,
 } from "@testing-library/react"
@@ -134,23 +135,24 @@ function button(name: string): HTMLButtonElement {
   return found
 }
 
-/**
- * タイトル + `⌄` の開く口（`TurnHeader` の `.turn-title-toggle`）。アクセシブルネームが
- * 見ているタイトルそのもの（動く文字列）になったので、`button()` の名前検索ではなく
- * class で直接探す。
- */
-function historyToggle(): HTMLButtonElement {
-  const found = document.querySelector('[class*="turn-title-toggle"]')
-  if (!(found instanceof HTMLButtonElement)) {
-    throw new Error("タイトルの `⌄` ボタンが見つからない")
-  }
-  return found
+const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
+
+/** 目次の列を開いたと選んだ状態にする（happy-dom では札の幅が 0 で、選ばなければ畳まれる）。 */
+function chooseOutlineOpen(): void {
+  localStorage.setItem(OUTLINE_PANEL_STORAGE_KEY, JSON.stringify({ collapse: "open" }))
 }
 
-function openHistory(): void {
-  act(() => {
-    fireEvent.click(historyToggle())
-  })
+/** 目次の列のやり取りの行（古い順）。 */
+function outlineTurnRows(): readonly HTMLButtonElement[] {
+  return [...document.querySelectorAll<HTMLButtonElement>("[data-outline-turn]")]
+}
+
+/** 目次の列の行（やり取りの行と見出しの行）の字。やり取りの行は印 + 1行目。 */
+function outlineRowTexts(): readonly string[] {
+  const nav = screen.getByRole("navigation", { name: "目次" })
+  return [...nav.querySelectorAll("button")]
+    .filter((row) => row.getAttribute("aria-label") !== "目次を畳む")
+    .map((row) => row.textContent)
 }
 
 describe("MainView（札の頭）", () => {
@@ -264,110 +266,111 @@ describe("MainView（札の頭）", () => {
     ])
 
     expect(title()).toBe("架空の依頼の1行目")
-    expect(historyToggle().title).toBe("架空の依頼の1行目")
+    expect(document.querySelector('[class*="turn-title-text"]')?.getAttribute("title")).toBe(
+      "架空の依頼の1行目",
+    )
   })
 })
 
-describe("MainView（一覧: 窓の中のやり取りへ飛ぶ）", () => {
-  it("タイトル（`⌄` と同じボタン）を押すと一覧が開き、窓の中の件数ぶんの行が出る。もう一度押すと閉じる", () => {
-    renderMainView(threeTurns())
-
-    expect(document.querySelector(".turn-history")).toBeNull()
-
-    openHistory()
-    expect(document.querySelectorAll(".turn-history-row")).toHaveLength(3)
-    expect(historyToggle().getAttribute("aria-expanded")).toBe("true")
-
-    openHistory()
-    expect(document.querySelector(".turn-history")).toBeNull()
-  })
-
-  it("外側を押しても閉じる", () => {
-    renderMainView(threeTurns())
-
-    openHistory()
-    expect(document.querySelector(".turn-history")).not.toBeNull()
-
-    fireEvent.pointerDown(document.body)
-    expect(document.querySelector(".turn-history")).toBeNull()
-  })
-
-  it("行を押すとそのやり取りへ移り、一覧が閉じる", () => {
-    renderMainView(threeTurns())
-
-    openHistory()
-    press("1 / 3: 1つ目")
-
-    expect(title()).toBe("1つ目")
-    expect(document.querySelector(".turn-history")).toBeNull()
-  })
-
-  it("最新の行を押すと追従に戻る（hash の turn が外れる）", () => {
-    renderMainView(threeTurns())
-
-    press(OLDER)
-    press(OLDER)
-    expect(title()).toBe("1つ目")
-
-    openHistory()
-    press("最新: 3つ目")
-
-    expect(title()).toBe("3つ目")
-    expect(window.location.hash).not.toContain("turn=")
-  })
-
-  it("Escape で閉じ、フォーカスがタイトルの `⌄` ボタンへ戻る", () => {
-    renderMainView(threeTurns())
-    const toggle = historyToggle()
-
-    openHistory()
-    expect(document.querySelector(".turn-history")).not.toBeNull()
-
-    fireEvent.keyDown(document, { key: "Escape" })
-    expect(document.querySelector(".turn-history")).toBeNull()
-    expect(document.activeElement).toBe(toggle)
-  })
-
-  it("見ている行にだけ印（●）が付き、他は○のまま", () => {
-    renderMainView(threeTurns())
-
-    press(OLDER)
-    openHistory()
-
-    const rows = [...document.querySelectorAll(".turn-history-row")]
-    const marks = rows.map((row) => row.querySelector(".turn-history-mark")?.textContent)
-    const current = rows.filter((row) => row.querySelector('[aria-current="true"]') !== null)
-
-    expect(current).toHaveLength(1)
-    expect(current[0]?.querySelector('[aria-current="true"]')?.getAttribute("aria-label")).toBe(
-      "2 / 3: 2つ目",
-    )
-    expect(marks.filter((mark) => mark === "●")).toHaveLength(1)
-    expect(marks.filter((mark) => mark === "○")).toHaveLength(2)
-  })
-
-  it("行は選択できる依頼の全文（複数行）と、飛ぶ口（印 + 番号だけの別のボタン）に分かれる", () => {
-    renderMainView([
-      requestRecord({ text: "1つ目の1行目\n1つ目の2行目", turnId: 0 }),
+describe("MainView（目次の列: やり取りと見出しの2段）", () => {
+  /** 3件目のレポートだけが見出しを2つ持つ。 */
+  function threeTurnsWithHeadings(): readonly SessionRecord[] {
+    return [
+      requestRecord({ text: "1つ目\n2行目は列に出さない", turnId: 0 }),
       detailRecord("1つ目のレポート"),
+      requestRecord({ text: "2つ目", turnId: 1 }),
+      detailRecord("2つ目のレポート"),
+      requestRecord({ text: "3つ目", turnId: 2 }),
+      detailRecord("## 節の一\n\n本文の一\n\n### 小節\n\n本文の二\n\n## 節の二\n\n本文の三"),
+    ]
+  }
+
+  const RUNNING_TURN = { kind: "running", startedAt: 0 } as const satisfies SessionState["turn"]
+
+  afterEach(() => {
+    localStorage.removeItem(OUTLINE_PANEL_STORAGE_KEY)
+  })
+
+  it("上の段にやり取りが古い順に印と依頼の1行目で並び、見ているやり取りだけが ● でその見出しを子に持つ", () => {
+    chooseOutlineOpen()
+    renderMainView(threeTurnsWithHeadings())
+
+    expect(outlineRowTexts()).toEqual(["✓1つ目", "✓2つ目", "●3つ目", "節の一", "小節", "節の二"])
+    expect(outlineTurnRows().map((row) => row.getAttribute("aria-current"))).toEqual([
+      null,
+      null,
+      "true",
     ])
+    expect(outlineTurnRows()[0]?.getAttribute("aria-label")).toBe("済んだ: 1つ目")
+  })
 
-    openHistory()
+  it("働いている最中のいちばん新しいやり取りは「…」の印になる", () => {
+    chooseOutlineOpen()
+    renderMainView(threeTurnsWithHeadings(), RUNNING_TURN)
 
-    const row = document.querySelector(".turn-history-row")
-    if (row === null) {
-      throw new Error("行が見つからない")
+    press(OLDER)
+
+    expect(outlineTurnRows()[2]?.getAttribute("aria-label")).toBe("作業中: 3つ目")
+    expect(outlineTurnRows()[2]?.textContent).toBe("…3つ目")
+  })
+
+  it("やり取りの行を押すとそのやり取りへ移り、見出しの子はそのやり取りのものに替わる", async () => {
+    chooseOutlineOpen()
+    renderMainView(threeTurnsWithHeadings())
+
+    press("済んだ: 1つ目")
+
+    expect(title()).toBe("1つ目")
+    // 見出しは描いた本文の DOM の変化（`MutationObserver`）で拾い直すので、次のタスクで替わる。
+    await waitFor(() => {
+      expect(outlineRowTexts()).toEqual(["●1つ目", "✓2つ目", "✓3つ目"])
+    })
+  })
+
+  // Enter で押せることは行が `<button>` であることで確かめる（happy-dom は Enter を click に変えない）。
+  it("↑↓ でやり取りの行と見出しの行を区別なく移り、やり取りの行（Enter で押せる button）でそのやり取りへ移る", async () => {
+    chooseOutlineOpen()
+    renderMainView(threeTurnsWithHeadings())
+    const nav = screen.getByRole("navigation", { name: "目次" })
+    const [first, second] = outlineTurnRows()
+    if (first === undefined || second === undefined) {
+      throw new Error("やり取りの行が見つからない")
     }
-    const text = row.querySelector(".turn-history-text")
-    const jump = row.querySelector(".turn-history-jump")
 
-    // 全文（2行目以降も含む）が、選択できるただの文字として入っている。
-    expect(text?.textContent).toBe("1つ目の1行目\n1つ目の2行目")
-    // 飛ぶ口は印 + 番号だけで、依頼の文字は持たない（ボタンの中は選択できないため）。
-    expect(jump?.textContent).not.toContain("1つ目の1行目")
-    expect(jump?.tagName).toBe("BUTTON")
-    // 依頼の文字は `<button>` の外にある。
-    expect(text?.closest("button")).toBeNull()
+    act(() => {
+      second.focus()
+    })
+    fireEvent.keyDown(nav, { key: "ArrowDown" })
+    expect(document.activeElement?.textContent).toBe("●3つ目")
+    fireEvent.keyDown(nav, { key: "ArrowDown" })
+    expect(document.activeElement?.textContent).toBe("節の一")
+    fireEvent.keyDown(nav, { key: "ArrowUp" })
+    fireEvent.keyDown(nav, { key: "ArrowUp" })
+    fireEvent.keyDown(nav, { key: "ArrowUp" })
+    expect(document.activeElement).toBe(first)
+    expect(first.tagName).toBe("BUTTON")
+
+    act(() => {
+      fireEvent.click(first)
+      window.dispatchEvent(new Event("hashchange"))
+    })
+    expect(title()).toBe("1つ目")
+    await waitFor(() => {
+      expect(outlineRowTexts()).toEqual(["●1つ目", "✓2つ目", "✓3つ目"])
+    })
+  })
+
+  it("やり取りが1件で見出しも2つ未満なら、列ごと出さない", () => {
+    chooseOutlineOpen()
+    renderMainView([requestRecord({ text: "1つ目", turnId: 0 }), detailRecord("本文")])
+
+    expect(screen.queryByRole("navigation", { name: "目次" })).toBeNull()
+  })
+
+  it("札の頭のタイトルは押す口を持たない", () => {
+    renderMainView(threeTurns())
+
+    expect(document.querySelector('[class*="turn-title-text"]')?.closest("button")).toBeNull()
   })
 })
 
@@ -527,7 +530,7 @@ describe("MainView（閉じたときの入れ替えとフォーカス）", () =>
   it("中にフォーカスがあっても、閉じた瞬間にレポートへ入れ替わり、フォーカスはメインビューの根に残る", () => {
     renderRunning()
     act(() => {
-      historyToggle().focus()
+      button(OLDER).focus()
     })
     close()
 

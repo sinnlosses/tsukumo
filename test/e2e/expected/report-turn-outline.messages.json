@@ -1,0 +1,241 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": "<protocol-version>"
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": "<コマンド一覧>",
+      "terminalSlashCommands": "<コマンド一覧>"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": "<コマンド一覧>"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "指示をタスクにする（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "utterance",
+      "text": "## 登録したタスク（架空）\n\n架空の本文。\n\n## 次にやること（架空）\n\n架空の本文。"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "打ち直して通す（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "failed",
+        "cause": {
+          "kind": "execution-error"
+        }
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "状態の置き場所を決めたい。札の頭と目次の列のどちらに持たせるかを比べて（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "report",
+      "toolUseId": "fake-turn-outline-report-1",
+      "conclusion": "どちらに置くかの判断を待っている（架空）。",
+      "sections": [],
+      "favor": "",
+      "checks": [],
+      "task": {
+        "kind": "task",
+        "id": "GH-9001",
+        "name": "状態の置き場所（架空）",
+        "outcome": "awaiting-answer"
+      },
+      "workPlanClosing": "none",
+      "closing": {
+        "kind": "none"
+      },
+      "waitingLine": {
+        "kind": "none"
+      },
+      "unknownBlockCount": 0
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "古い枝を片付ける（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "report",
+      "toolUseId": "fake-turn-outline-report-2",
+      "conclusion": "前提が崩れていたので止めた（架空）。",
+      "sections": [],
+      "favor": "",
+      "checks": [],
+      "task": {
+        "kind": "task",
+        "id": "GH-9002",
+        "name": "古い枝の片付け（架空）",
+        "outcome": "stopped"
+      },
+      "workPlanClosing": "none",
+      "closing": {
+        "kind": "none"
+      },
+      "waitingLine": {
+        "kind": "none"
+      },
+      "unknownBlockCount": 0
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "目次の列を2段にする（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "utterance",
+      "text": "## 変わったこと（架空）\n\n架空の本文。\n\n## 確かめたこと（架空）\n\n架空の本文。\n\n### E2E の撮り直し（架空）\n\n架空の本文。\n\n## 残したこと（架空）\n\n架空の本文。"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  }
+]

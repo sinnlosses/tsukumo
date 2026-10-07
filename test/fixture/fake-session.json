@@ -949,6 +949,105 @@
       ]
     },
     {
+      "name": "turn-outline",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": { "kind": "request", "text": "指示をタスクにする（架空の依頼）", "images": [] }
+        },
+        {
+          "afterMs": 50,
+          "event": {
+            "kind": "utterance",
+            "text": "## 登録したタスク（架空）\n\n架空の本文。\n\n## 次にやること（架空）\n\n架空の本文。"
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        },
+        {
+          "afterMs": 150,
+          "event": { "kind": "request", "text": "打ち直して通す（架空の依頼）", "images": [] }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "failed", "cause": { "kind": "execution-error" } }
+          }
+        },
+        {
+          "afterMs": 250,
+          "event": {
+            "kind": "request",
+            "text": "状態の置き場所を決めたい。札の頭と目次の列のどちらに持たせるかを比べて（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "report",
+            "task": {
+              "kind": "task",
+              "id": "GH-9001",
+              "name": "状態の置き場所（架空）",
+              "outcome": "awaiting-answer"
+            },
+            "closing": { "kind": "none" },
+            "toolUseId": "fake-turn-outline-report-1",
+            "conclusion": "どちらに置くかの判断を待っている（架空）。",
+            "sections": [],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 350,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        },
+        {
+          "afterMs": 400,
+          "event": { "kind": "request", "text": "古い枝を片付ける（架空の依頼）", "images": [] }
+        },
+        {
+          "afterMs": 450,
+          "event": {
+            "kind": "report",
+            "task": {
+              "kind": "task",
+              "id": "GH-9002",
+              "name": "古い枝の片付け（架空）",
+              "outcome": "stopped"
+            },
+            "closing": { "kind": "none" },
+            "toolUseId": "fake-turn-outline-report-2",
+            "conclusion": "前提が崩れていたので止めた（架空）。",
+            "sections": [],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        },
+        {
+          "afterMs": 550,
+          "event": { "kind": "request", "text": "目次の列を2段にする（架空の依頼）", "images": [] }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "utterance",
+            "text": "## 変わったこと（架空）\n\n架空の本文。\n\n## 確かめたこと（架空）\n\n架空の本文。\n\n### E2E の撮り直し（架空）\n\n架空の本文。\n\n## 残したこと（架空）\n\n架空の本文。"
+          }
+        },
+        { "afterMs": 650, "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } } }
+      ]
+    },
+    {
       "name": "turn-history",
       "steps": [
         {

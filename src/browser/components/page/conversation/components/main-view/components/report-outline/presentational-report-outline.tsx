@@ -1,21 +1,38 @@
 // レポートの目次の器。
-// 本文の左に見出しの名前の一覧を列として置き、本文はその幅ぶん右へ寄る。
+// 本文の左に、窓の中のやり取りと、見ているやり取りの見出しの一覧を列として置き、本文はその幅ぶん右へ寄る。
 // 列は転がしても札の頭のすぐ下に残る。
 
 import clsx from "clsx"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
+import type { TurnResult } from "../../../../../../../../shared/session/turn-result.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { LayoutResizer } from "../../../../../../ui/layout-resizer/layout-resizer.tsx"
 import { outlineWidthFromRatio } from "./domain/outline-panel.ts"
-import type { ReportOutlineModel } from "./hooks/use-report-outline.ts"
+import {
+  TURN_ROW_ATTRIBUTE,
+  type ReportOutlineModel,
+  type ReportOutlineRow,
+  type ReportOutlineTurnRow,
+} from "./hooks/use-report-outline.ts"
 import styles from "./report-outline.module.css"
 
 const OUTLINE_LABEL = "目次"
 const COLLAPSE_LABEL = "目次を畳む"
 const EXPAND_LABEL = "目次を開く"
 const RESIZER_LABEL = "目次と本文の境界"
+
+const ACTIVE_TURN_MARK = "●"
+
+const RESULT_MARKS = {
+  done: { mark: "✓", label: "済んだ" },
+  "awaiting-answer": { mark: "?", label: "答え待ち" },
+  stopped: { mark: "‖", label: "止めた" },
+  failed: { mark: "✕", label: "失敗" },
+  working: { mark: "…", label: "作業中" },
+  "no-report": { mark: "–", label: "レポートなし" },
+} as const satisfies Record<TurnResult, { readonly mark: string; readonly label: string }>
 
 export type PresentationalReportOutlineProps = ReportOutlineModel & {
   readonly children: ReactNode
@@ -27,8 +44,9 @@ export type PresentationalReportOutlineProps = ReportOutlineModel & {
  */
 export function PresentationalReportOutline({
   visible,
+  turnRows,
+  onSelectTurn,
   rows,
-  positionLabel,
   frameRef,
   contentRef,
   navRef,
@@ -76,10 +94,7 @@ export function PresentationalReportOutline({
             ) : (
               <>
                 <div className={styles["outline-list-head"]}>
-                  <span className={styles["outline-list-head-text"]}>
-                    <span className={styles["outline-list-title"]}>{OUTLINE_LABEL}</span>
-                    <span className={styles["outline-list-position"]}>{positionLabel}</span>
-                  </span>
+                  <span className={styles["outline-list-title"]}>{OUTLINE_LABEL}</span>
                   <Button
                     variant="ghost"
                     size="action"
@@ -96,24 +111,17 @@ export function PresentationalReportOutline({
                   </Button>
                 </div>
                 <div className={styles["outline-list"]} ref={listRef}>
-                  {rows.map((row, index) => (
-                    <button
-                      type="button"
-                      key={index}
+                  {turnRows.map((turn) => (
+                    <div
+                      key={turn.id}
                       className={clsx(
-                        styles["outline-row"],
-                        row.inActiveSection && styles["is-in-section"],
+                        styles["outline-turn-group"],
+                        turn.isActive && styles["is-active"],
                       )}
-                      data-level={row.level}
-                      aria-current={row.isActive ? "location" : undefined}
-                      title={row.text}
-                      onClick={() => {
-                        onSelect(index)
-                      }}
                     >
-                      <span className={styles["outline-row-mark"]} aria-hidden="true" />
-                      <span className={styles["outline-row-text"]}>{row.text}</span>
-                    </button>
+                      <TurnRow turn={turn} onSelectTurn={onSelectTurn} />
+                      {turn.isActive && <HeadingRows rows={rows} onSelect={onSelect} />}
+                    </div>
                   ))}
                 </div>
               </>
@@ -136,5 +144,58 @@ export function PresentationalReportOutline({
         {children}
       </div>
     </div>
+  )
+}
+
+function TurnRow(props: {
+  readonly turn: ReportOutlineTurnRow
+  readonly onSelectTurn: (turnId: number) => void
+}): ReactElement {
+  const { turn } = props
+  const result = RESULT_MARKS[turn.result]
+  return (
+    <button
+      type="button"
+      className={styles["outline-turn"]}
+      {...{ [TURN_ROW_ATTRIBUTE]: turn.id }}
+      data-result={turn.result}
+      aria-current={turn.isActive ? "true" : undefined}
+      aria-label={`${result.label}: ${turn.title}`}
+      title={turn.title}
+      onClick={() => {
+        props.onSelectTurn(turn.id)
+      }}
+    >
+      <span className={styles["outline-turn-mark"]} aria-hidden="true">
+        {turn.isActive ? ACTIVE_TURN_MARK : result.mark}
+      </span>
+      <span className={styles["outline-row-text"]}>{turn.title}</span>
+    </button>
+  )
+}
+
+function HeadingRows(props: {
+  readonly rows: readonly ReportOutlineRow[]
+  readonly onSelect: (index: number) => void
+}): ReactElement {
+  return (
+    <>
+      {props.rows.map((row, index) => (
+        <button
+          type="button"
+          key={index}
+          className={clsx(styles["outline-row"], row.inActiveSection && styles["is-in-section"])}
+          data-level={row.level}
+          aria-current={row.isActive ? "location" : undefined}
+          title={row.text}
+          onClick={() => {
+            props.onSelect(index)
+          }}
+        >
+          <span className={styles["outline-row-mark"]} aria-hidden="true" />
+          <span className={styles["outline-row-text"]}>{row.text}</span>
+        </button>
+      ))}
+    </>
   )
 }

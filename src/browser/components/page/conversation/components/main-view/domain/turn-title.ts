@@ -22,15 +22,6 @@ export function turnTitle(turn: MainViewTurn): string {
 }
 
 /**
- * 窓の中のやり取りの一覧（`TurnHistoryList`）の行に出す、依頼の全文。
- * `turnTitle` と違って改行や空白を詰めない（行の中で選択してコピーしたときに、2行目以降まで含めた依頼そのものが入るようにするため）。
- * 依頼が無いターンは `turnTitle` と同じ表示にする。
- */
-export function turnHistoryText(turn: MainViewTurn): string {
-  return turn.request !== undefined ? truncateRequestText(turn.request.text) : turnTitle(turn)
-}
-
-/**
  * 札の頭のタイトルの下に出す、依頼の続き。
  * 依頼が無い・画像だけのときは空の配列。
  */
@@ -40,7 +31,7 @@ export function turnRequestRest(turn: MainViewTurn): readonly string[] {
     : requestLinesAfterTitle(truncateRequestText(turn.request.text))
 }
 
-// 依頼の全文（札の頭の続きと `turnHistoryText`）の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。
+// 札の頭の続きに出す依頼の全文の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。
 const MAX_REQUEST_HEADING_TEXT_LENGTH = 2000
 
 function truncateRequestText(request: string): string {

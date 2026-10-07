@@ -67,23 +67,7 @@
                         {
                           "tag": "h2",
                           "children": [
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "false",
-                                "aria-expanded": "false",
-                                "type": "button"
-                              },
-                              "children": [
-                                "前のセッションの架空の依頼その2",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  }
-                                }
-                              ]
-                            }
+                            "前のセッションの架空の依頼その2"
                           ]
                         },
                         "2 / 2",
@@ -93,10 +77,84 @@
                     {
                       "tag": "div",
                       "attributes": {
-                        "data-outline": "hidden",
+                        "data-outline": "shown",
                         "data-outline-collapsed": "false"
                       },
                       "children": [
+                        {
+                          "tag": "nav",
+                          "attributes": {
+                            "aria-label": "目次"
+                          },
+                          "children": [
+                            "目次",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-label": "目次を畳む",
+                                "aria-expanded": "true",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-outline-turn": "0",
+                                "data-result": "no-report",
+                                "aria-label": "レポートなし: 前のセッションの架空の依頼その1",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "–"
+                                  ]
+                                },
+                                "前のセッションの架空の依頼その1"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-outline-turn": "1",
+                                "data-result": "done",
+                                "aria-current": "true",
+                                "aria-label": "済んだ: 前のセッションの架空の依頼その2",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "●"
+                                  ]
+                                },
+                                "前のセッションの架空の依頼その2"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "role": "separator",
+                            "aria-orientation": "vertical",
+                            "aria-label": "目次と本文の境界"
+                          }
+                        },
                         {
                           "tag": "section",
                           "children": [
