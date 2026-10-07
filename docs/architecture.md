@@ -334,9 +334,10 @@ plugin/                       セッションに載せる Claude Code のプラ�
 欄の説明は `README.md`「プロジェクトの設定」。
 
 **タスク一覧の読み元は Beads だけ**（`server/repository/adapter/task-beads-source.ts`。`bd` の課題）。
-**課題の解釈は task-workflow 方式の1か所に閉じる。** Beads の状態の読み替え・ラベル・本文の7節・依存が着手を止めるかの規則・
-`## やること` の段は `shared/repository/task-workflow.ts`（task-workflow スキルの写し。正典はスキルの側）が持ち、
-タスク一般の形（`TaskSummaryItem`・`DoneTask`。判定済みの `waitingFor` を含む）は `shared/repository/task-summary.ts` に置く。
+**課題の解釈は Beads の読み口の1か所に閉じる**（`docs/architecture/adr/0024-no-skill-dependency.md`）。
+読み口（`server/**/adapter/` の Beads を読むファイル）が、Beads の組み込みの欄（ID・題・状態・依存・作った時刻と閉じた時刻・
+`external_ref`・`assignee`・本文の3欄）だけをタスク一般の形（`TaskSummaryItem`・`DoneTask`。判定済みの `waitingFor` を含む。
+`shared/repository/task-summary.ts`）に写す。特定のスキルが課題に足したラベル・独自の状態・本文の節の書式・ID の書き換えは読まない。
 一覧・迎える口・成果・おすすめは一般の形だけを読む（成果は `bd` を読んだ境界で `DoneTask` に畳む）。
 例外は疑似セッションで、`taskSummaryOptionsOf("fake")` が `bd` の代わりに cwd のファイルを読む口（`fake-beads.ts` の
 `readFakeBeadsIssues`）と短い見回りの間隔に差し替える（E2E の足場が課題を置く。設定の読み出しと読み元の選び方はふだんと同じ）。
@@ -988,8 +989,8 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 | 診断ログ                                           | `~/.tsukumo/diagnostic/<日付>.jsonl` に、不具合の経緯を追う足跡を積む（いまは畳んだ `SessionEvent` 1件につき1行。100 ミリ秒ごとに束ねて書く）。依頼を SDK へ渡してから SDK が書き終えるまで、または書き終えてから本体の最初のメッセージまでが 3 秒を超えたときだけ、区間のミリ秒の1行（`prompt-delay`）も書く。14日を過ぎた日付のファイルは起動のたびに消す。**会話の複製ではない** — 入るのは時刻・駆動の代・決まった語（イベントの種類の名前など）だけで、任意の文字列を受ける欄が型に無い。イベントの中身・`error.message` は入れない（線の正典は `src/shared/diagnostic/diagnostic-record.ts`、線の規約は `docs/coding-standards.md`「会話内容の扱い」）。外へは送らず、stderr にも出さない。読むのは `scripts/diagnostic.ts` が手元で並べるだけ |
 | 見直しの結果と見送りの記録                         | `~/.tsukumo/usage-review.json`（前回の見直しの結果。直前の1回だけ）と `~/.tsukumo/usage-review-dismissed.json`（見送った提案の識別子）。**会話の複製ではない** — 入るのはスキルが渡した見直しの結果（`UsageReviewFindings`。見出し・根拠・やることの文字列を含むが、これ自体が「見直しの結果」であって会話ではない）と、種類:対象の形の識別子の文字列だけ（線の正典は `src/shared/usage-review/usage-review.ts`）                                                                                                                                                                                                                                                                                                                                    |
 | 日記                                               | `~/.tsukumo/diary/<リポジトリ>/<日付>.json` に、振り返りの使い捨ての問い合わせでキャラクターが `diary` ツールで渡した日記（本文・しおり・表情）を、書いた時刻と書いたパックの名前を添えて日ごとに書き足す（**ユーザーの決定**。置き場と形は `src/server/diary/adapter/diary.ts` の冒頭）。**会話の複製ではない** — 入るのはツールが渡した日記（キャラクターがその日の仕事について書いた成果物）と、タスクの ID・`summary`・理由だけで、依頼の文面・セリフ・ほかのツールの引数と結果は通らない（線の正典は `src/shared/diary/diary.ts`）。**文面はログにも 手続きの応答にも stderr にも出さず、画面（成果の画面）にだけ配る**                                                                                                                         |
-| おすすめの札のキャッシュ                           | `~/.tsukumo/recommendation.json` に、おすすめの札の問い合わせに渡した候補の並びと返った札（候補のキーと理由の1行）の組を新しい順に8件まで持つ。**会話の複製ではない** — 候補はタスク一覧（ID・要約・`difficulty`・依存）と中身を持たない「前回の続き」だけで、前のセッションの要約は渡さず書かない（`docs/coding-standards.md`「会話内容の扱い」。線の正典は `src/server/recommendation/core/recommendation-candidate.ts`）                                                                                                                                                                                                                                                                                                                          |
-| タスク一覧の記憶                                   | `~/.tsukumo/task-summary.json` に、作業ディレクトリごとに最後に読めたタスク一覧（ID・要約・状態・`difficulty`・依存・本文）を新しい順に8件まで持つ。**会話の複製ではない** — 入るのは Beads の課題の要約と本文だけで、本文を含むのでログには出さない（線の正典は `src/server/repository/adapter/task-summary-memory.ts`）                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| おすすめの札のキャッシュ                           | `~/.tsukumo/recommendation.json` に、おすすめの札の問い合わせに渡した候補の並びと返った札（候補のキーと理由の1行）の組を新しい順に8件まで持つ。**会話の複製ではない** — 候補はタスク一覧（ID・要約・状態・依存）と中身を持たない「前回の続き」だけで、前のセッションの要約は渡さず書かない（`docs/coding-standards.md`「会話内容の扱い」。線の正典は `src/server/recommendation/core/recommendation-candidate.ts`）                                                                                                                                                                                                                                                                                                                                  |
+| タスク一覧の記憶                                   | `~/.tsukumo/task-summary.json` に、作業ディレクトリごとに最後に読めたタスク一覧（ID・要約・状態・依存・本文）を新しい順に8件まで持つ。**会話の複製ではない** — 入るのは Beads の課題の要約と本文だけで、本文を含むのでログには出さない（線の正典は `src/server/repository/adapter/task-summary-memory.ts`）                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | 迎えの挨拶の直近                                   | `~/.tsukumo/welcome-greeting.json` に、迎えの挨拶の問い合わせが書いた挨拶（札ありの文・札なしの文）を新しい順に5件まで持つ。**会話の複製ではない** — 問い合わせに渡すのは `persona.md`・表情の選択肢・月と曜日と時刻の帯・直近の挨拶・続きからの印と前回からの経過の帯だけで、会話から導いた材料は渡さない（`docs/coding-standards.md`「会話内容の扱い」）                                                                                                                                                                                                                                                                                                                                                                                           |
 | テストのフィクスチャ・fake driver の疑似セッション | 手で書いた架空の会話だけ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
@@ -1014,28 +1015,29 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 
 この表は `pnpm run format` が ADR の1行目の題から書き直すので、手で直さない。
 
-| ファイル                                                      | 判断                                                                       |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `docs/architecture/adr/0001-render-in-browser.md`             | 描く層をブラウザ側へ移す（2026-09-13）                                     |
-| `docs/architecture/adr/0002-render-migration-tech-choice.md`  | 描く層の移行で決めた技術選択（2026-09-13〜17）                             |
-| `docs/architecture/adr/0003-orca-owns-worktree.md`            | worktree を用意するのは orca で、tsukumo はやらない（2026-09-23）          |
-| `docs/architecture/adr/0004-turn-number-from-record.md`       | ターンの通し番号は記録が持ち、位置では決めない（2026-09-22）               |
-| `docs/architecture/adr/0005-css-module-output-in-temp.md`     | CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す（2026-09-20） |
-| `docs/architecture/adr/0006-prebuild-browser.md`              | ブラウザ側は事前に組み立てて置く（2026-09-21）                             |
-| `docs/architecture/adr/0007-vite-build-cli.md`                | 組み立ては `vite build` の CLI を子プロセスで起こす（2026-09-27）          |
-| `docs/architecture/adr/0008-sdk-instead-of-tui.md`            | Claude Code の TUI を捨て、SDK で動かす                                    |
-| `docs/architecture/adr/0009-speech-via-tool.md`               | セリフはテキストの規約ではなく、ツール呼び出しで受け取る                   |
-| `docs/architecture/adr/0010-report-via-tool.md`               | レポートはテキストではなく `report` ツールで受け取る                       |
-| `docs/architecture/adr/0011-separate-shell-and-app.md`        | 箱（Orca のタブ）と中身（Web アプリ）を分ける                              |
-| `docs/architecture/adr/0012-bundle-vendor-library.md`         | 外部ライブラリは CDN から読まず、同梱して自分で配る                        |
-| `docs/architecture/adr/0013-tolerate-missing-display.md`      | 表示物が1つ欠けても起動失敗にしない                                        |
-| `docs/architecture/adr/0014-no-bundled-character-asset.md`    | キャラクター素材はリポジトリに同梱しない                                   |
-| `docs/architecture/adr/0015-single-host-port.md`              | ホスト依存の操作は1つのポートにまとめる                                    |
-| `docs/architecture/adr/0016-html-instead-of-terminal.md`      | 表示はターミナル描画をやめて、すべて HTML にした                           |
-| `docs/architecture/adr/0017-serve-from-local-http.md`         | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）            |
-| `docs/architecture/adr/0018-single-page-view.md`              | ビューは1枚のページにまとめる                                              |
-| `docs/architecture/adr/0019-layer-as-directory.md`            | 層をディレクトリで表し、依存の向きをテストで縛る                           |
-| `docs/architecture/adr/0020-mixed-purity-in-adapter-file.md`  | 境界のファイルの中に、外の世界に触らない関数が混じっていてよい             |
-| `docs/architecture/adr/0021-feature-state-fold-in-feature.md` | 機能だけが動かす状態の畳み方は、その機能の shared に置く（2026-09-30）     |
-| `docs/architecture/adr/0022-three-setting-homes.md`           | 設定は誰の・何に属する値かで3つの置き場に割る（2026-10-03）                |
-| `docs/architecture/adr/0023-local-diagnostic-log.md`          | 不具合の経緯は手元の1本の JSONL に、決まった語だけで残す（2026-10-04）     |
+| ファイル                                                      | 判断                                                                         |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `docs/architecture/adr/0001-render-in-browser.md`             | 描く層をブラウザ側へ移す（2026-09-13）                                       |
+| `docs/architecture/adr/0002-render-migration-tech-choice.md`  | 描く層の移行で決めた技術選択（2026-09-13〜17）                               |
+| `docs/architecture/adr/0003-orca-owns-worktree.md`            | worktree を用意するのは orca で、tsukumo はやらない（2026-09-23）            |
+| `docs/architecture/adr/0004-turn-number-from-record.md`       | ターンの通し番号は記録が持ち、位置では決めない（2026-09-22）                 |
+| `docs/architecture/adr/0005-css-module-output-in-temp.md`     | CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す（2026-09-20）   |
+| `docs/architecture/adr/0006-prebuild-browser.md`              | ブラウザ側は事前に組み立てて置く（2026-09-21）                               |
+| `docs/architecture/adr/0007-vite-build-cli.md`                | 組み立ては `vite build` の CLI を子プロセスで起こす（2026-09-27）            |
+| `docs/architecture/adr/0008-sdk-instead-of-tui.md`            | Claude Code の TUI を捨て、SDK で動かす                                      |
+| `docs/architecture/adr/0009-speech-via-tool.md`               | セリフはテキストの規約ではなく、ツール呼び出しで受け取る                     |
+| `docs/architecture/adr/0010-report-via-tool.md`               | レポートはテキストではなく `report` ツールで受け取る                         |
+| `docs/architecture/adr/0011-separate-shell-and-app.md`        | 箱（Orca のタブ）と中身（Web アプリ）を分ける                                |
+| `docs/architecture/adr/0012-bundle-vendor-library.md`         | 外部ライブラリは CDN から読まず、同梱して自分で配る                          |
+| `docs/architecture/adr/0013-tolerate-missing-display.md`      | 表示物が1つ欠けても起動失敗にしない                                          |
+| `docs/architecture/adr/0014-no-bundled-character-asset.md`    | キャラクター素材はリポジトリに同梱しない                                     |
+| `docs/architecture/adr/0015-single-host-port.md`              | ホスト依存の操作は1つのポートにまとめる                                      |
+| `docs/architecture/adr/0016-html-instead-of-terminal.md`      | 表示はターミナル描画をやめて、すべて HTML にした                             |
+| `docs/architecture/adr/0017-serve-from-local-http.md`         | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）              |
+| `docs/architecture/adr/0018-single-page-view.md`              | ビューは1枚のページにまとめる                                                |
+| `docs/architecture/adr/0019-layer-as-directory.md`            | 層をディレクトリで表し、依存の向きをテストで縛る                             |
+| `docs/architecture/adr/0020-mixed-purity-in-adapter-file.md`  | 境界のファイルの中に、外の世界に触らない関数が混じっていてよい               |
+| `docs/architecture/adr/0021-feature-state-fold-in-feature.md` | 機能だけが動かす状態の畳み方は、その機能の shared に置く（2026-09-30）       |
+| `docs/architecture/adr/0022-three-setting-homes.md`           | 設定は誰の・何に属する値かで3つの置き場に割る（2026-10-03）                  |
+| `docs/architecture/adr/0023-local-diagnostic-log.md`          | 不具合の経緯は手元の1本の JSONL に、決まった語だけで残す（2026-10-04）       |
+| `docs/architecture/adr/0024-no-skill-dependency.md`           | tsukumo は特定のスキルに依存せず、段とタスクを自分の口で受ける（2026-10-07） |
