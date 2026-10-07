@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>目次の列の2段（やり取りと見出し）— 2026-10-07 のラフ</title>
+<style>
+  body { background: #111114; color: #ececf0; font-family: sans-serif; margin: 24px; }
+  h2 { font-size: 14px; color: #9a9aab; font-weight: normal; margin: 28px 0 8px; }
+  svg { width: 100%; max-width: 960px; display: block; }
+</style>
+</head>
+<body>
+<h1 style="font-size:16px">目次の列を2段にする — 上の段にやり取り、見ているやり取りだけ見出しを子に開く（ラフ）</h1>
+
+<h2>左の列: やり取りを依頼の1行目と結果の印（✓ 済んだ / ? 答え待ち / ✕ 失敗）で縦に並べる。見ているやり取り（●）だけ開いて ## と ### を子に出し、脇の話は親の下に「脇 n」で畳む</h2>
+<svg viewBox="0 0 480 200">
+  <rect x="0" y="0" width="150" height="200" fill="none" stroke="currentColor"/>
+  <rect x="150" y="0" width="330" height="200" fill="none" stroke="currentColor"/>
+  <text x="10" y="20" font-size="11" fill="currentColor">✓ 指示をタスクにする</text>
+  <text x="10" y="42" font-size="11" fill="currentColor">✕ 打ち直して通す</text>
+  <rect x="4" y="52" width="142" height="98" fill="currentColor" fill-opacity="0.08"/>
+  <text x="10" y="68" font-size="11" fill="currentColor">● GH-365 に着手</text>
+  <text x="22" y="88" font-size="10" fill="currentColor">変わったこと</text>
+  <text x="22" y="106" font-size="10" fill="currentColor">確かめたこと</text>
+  <text x="30" y="122" font-size="9" fill="currentColor">E2E の撮り直し</text>
+  <text x="22" y="142" font-size="9" fill="currentColor">脇 2</text>
+  <text x="10" y="172" font-size="11" fill="currentColor">? 状態の置き場所</text>
+  <text x="162" y="24" font-size="12" fill="currentColor">本文（見ているやり取りのレポート）</text>
+  <line x1="162" y1="44" x2="460" y2="44" stroke="currentColor" stroke-opacity="0.4"/>
+  <line x1="162" y1="60" x2="430" y2="60" stroke="currentColor" stroke-opacity="0.4"/>
+  <line x1="162" y1="76" x2="450" y2="76" stroke="currentColor" stroke-opacity="0.4"/>
+</svg>
+</body>
+</html>
