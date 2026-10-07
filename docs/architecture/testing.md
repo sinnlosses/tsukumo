@@ -141,6 +141,7 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
 結果とスクリーンショットは `/tmp/tsukumo-e2e/<シナリオ>/` に毎回書き直す。比べ方は `toEqual` で、
 **期待値が無ければ落とす**（黙って書かない）。**期待値の更新**は `pnpm run test:e2e:update` → `git diff
 test/e2e/expected/` で意図した変化だけであることを確かめる → 直した変更と同じコミットに入れる。
+shared の手続き応答に乗る型や DOM の構造を変える計画には、その変更を含むコミットで期待値を撮り直す段を置く。
 
 **期待値と食い違った回**は、`matchArtifact`（`test/e2e/scenario-run.ts`）がその回の成果物と期待値との
 行単位の差分を `/tmp/tsukumo-e2e/failures/<シナリオ>/<Temporal の刻んだ名前>/` へ残す（あとで通った回に
