@@ -131,7 +131,7 @@ function unreflectedMarks<Marked extends { readonly tag: string; readonly at: nu
  * 印は目印まで揃えてあるので（{@link readTaggedSessions}）、昔の印（目印の無いもの・1文字の `@A`）は同じポートの印と一致する。
  * 渡した印のものが1つも無ければ undefined（＝新規に起こす）を返す。
  */
-export function selectSessionToResume(
+function selectSessionToResume(
   sessions: readonly TaggedSession[],
   tag: string,
 ): string | undefined {
@@ -148,7 +148,7 @@ export function selectSessionToResume(
  * tsukumo の印を持たないもの・形が壊れているものは落とす（同じ cwd の素の `claude` のセッションはここで消える）。
  * 一覧そのものが配列でなければ空。
  */
-export function readTaggedSessions(sessions: unknown): readonly TaggedSession[] {
+function readTaggedSessions(sessions: unknown): readonly TaggedSession[] {
   return Array.isArray(sessions) ? sessions.flatMap((session) => taggedSession(session)) : []
 }
 

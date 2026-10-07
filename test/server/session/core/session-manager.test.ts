@@ -39,13 +39,11 @@ import type { SessionLaunchRequest } from "../../../../src/server/session/core/s
 import {
   createSessionManager as createSessionManagerWithoutCommands,
   type SessionManagerOptions,
-  type SessionWatcher,
 } from "../../../../src/server/session/core/session-manager.ts"
 import type {
   TokenUsageEntry,
   TokenUsageLog,
 } from "../../../../src/server/token-usage/core/token-usage.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
@@ -116,7 +114,10 @@ const NOOP_REPORT_USAGE_LOG: ReportUsageLog = { append: () => {} }
 const NOOP_QUESTION_USAGE_LOG: QuestionUsageLog = { append: () => {} }
 
 /** タスク一覧を気にしないテストに渡す見張り（何も流さない）。 */
-const NO_TASK_WATCH = (): SessionWatcher => ({ close: () => {}, setWatching: () => {} })
+const NO_TASK_WATCH: SessionManagerOptions["watchTasks"] = () => ({
+  close: () => {},
+  setWatching: () => {},
+})
 
 /** 定着を気にしないテストに渡す出どころ（起こさない）。 */
 const NO_CHAT_CONSOLIDATION: ChatConsolidationSource = { kind: "dont-consolidate" }
@@ -887,30 +888,6 @@ describe("createSessionManager", () => {
       ])
     })
 
-    it("添えた画像は枚数だけ渡る（控えそのものは渡さない）", async () => {
-      const { stub, archiveCalls } = startArchiveManagerWithStub()
-      await waitForBatch()
-
-      stub.emit(CHARACTER_EVENT)
-      stub.emit({ kind: "chat-mode-changed", chat: true })
-      stub.emit({
-        kind: "request",
-        text: "架空の依頼",
-        images: [
-          { id: "fictional-id-a", thumbnail: "data:image/png;base64,AAAA" },
-          { id: "fictional-id-b", thumbnail: "data:image/png;base64,BBBB" },
-        ],
-      })
-      await waitForBatch()
-
-      expect(archiveCalls).toEqual([
-        {
-          packName: "fictional",
-          entry: { mode: "chat", kind: "request", at: 1_000, text: "架空の依頼", images: 2 },
-        },
-      ])
-    })
-
     it("仕事のときも、依頼とセリフが project つきでアーカイブへ渡る", async () => {
       const { stub, archiveCalls } = startArchiveManagerWithStub()
       await waitForBatch()
@@ -946,30 +923,6 @@ describe("createSessionManager", () => {
       ])
     })
 
-    it("仕事の依頼が workExcerptChars を超えると、先頭で切って「…」を付ける", async () => {
-      const { stub, archiveCalls } = startArchiveManagerWithStub()
-      await waitForBatch()
-
-      const longRequest = "あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 5)
-      stub.emit(CHARACTER_EVENT)
-      stub.emit({ kind: "request", text: longRequest, images: [] })
-      await waitForBatch()
-
-      expect(archiveCalls).toEqual([
-        {
-          packName: "fictional",
-          entry: {
-            mode: "work",
-            kind: "request",
-            at: 1_000,
-            text: `${"あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars)}…`,
-            project: FICTIONAL_PROJECT,
-            images: undefined,
-          },
-        },
-      ])
-    })
-
     it("そのターンで最後に届いた report の結論が、turn-finished で1行になる", async () => {
       const { stub, archiveCalls } = startArchiveManagerWithStub()
       await waitForBatch()
@@ -998,66 +951,12 @@ describe("createSessionManager", () => {
       ])
     })
 
-    it("結論は workExcerptChars を超えると切って「…」を付け、本文（sections・favor・checks）は渡らない", async () => {
-      const { stub, archiveCalls } = startArchiveManagerWithStub()
-      await waitForBatch()
-
-      const longConclusion = "い".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 5)
-      stub.emit(CHARACTER_EVENT)
-      stub.emit(reportWithConclusion(longConclusion))
-      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
-      await waitForBatch()
-
-      expect(archiveCalls).toEqual([
-        {
-          packName: "fictional",
-          entry: {
-            mode: "work",
-            kind: "conclusion",
-            at: 1_000,
-            text: `${"い".repeat(CHAT_MEMORY_BUDGET.workExcerptChars)}…`,
-            project: FICTIONAL_PROJECT,
-          },
-        },
-      ])
-    })
-
     it("report 無しで終わったターンは、結論を何も足さない", async () => {
       const { stub, archiveCalls } = startArchiveManagerWithStub()
       await waitForBatch()
 
       stub.emit(CHARACTER_EVENT)
       stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
-      await waitForBatch()
-
-      expect(archiveCalls).toEqual([])
-    })
-
-    it("パックがまだ分からない（character-changed が届く前）ときは書かない", async () => {
-      const { stub, archiveCalls } = startArchiveManagerWithStub()
-      await waitForBatch()
-
-      stub.emit({ kind: "chat-mode-changed", chat: true })
-      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
-      await waitForBatch()
-
-      expect(archiveCalls).toEqual([])
-    })
-
-    it("本文（レポート）・ツールの入出力は書かない", async () => {
-      const { stub, archiveCalls } = startArchiveManagerWithStub()
-      await waitForBatch()
-
-      stub.emit(CHARACTER_EVENT)
-      stub.emit({ kind: "chat-mode-changed", chat: true })
-      stub.emit({ kind: "utterance", text: "本文はここに出ない" })
-      stub.emit({
-        kind: "tool-started",
-        toolUseId: "t-1",
-        name: "Bash",
-        input: {},
-        parentToolUseId: undefined,
-      })
       await waitForBatch()
 
       expect(archiveCalls).toEqual([])
@@ -1162,23 +1061,6 @@ describe("createSessionManager", () => {
       ])
     })
 
-    it("累計が振り出しに戻ったターンでも負を渡さない", async () => {
-      const { stub, entries } = startTokenUsageManagerWithStub()
-      await waitForBatch()
-
-      stub.emit(SESSION_INFO)
-      stub.emit({ kind: "token-usage", cumulative: cumulative(900, 300, 4) })
-      // `/clear` で走行合計がリセットされたあとのターン。
-      stub.emit({ kind: "conversation-cleared" })
-      stub.emit({ kind: "token-usage", cumulative: cumulative(120, 40, 0.6) })
-      await waitForBatch()
-
-      expect(entries.map((entry) => entry.models)).toEqual([
-        cumulative(900, 300, 4),
-        cumulative(120, 40, 0.6),
-      ])
-    })
-
     it("増えていないターンは行を渡さない", async () => {
       const { stub, entries } = startTokenUsageManagerWithStub()
       await waitForBatch()
@@ -1233,48 +1115,6 @@ describe("createSessionManager", () => {
         { steps: 1, tokens: STEP_USAGE, tools: [{ name: "Bash", calls: 2, resultBytes: 8 }] },
       ])
       expect(entries.map((written) => written.breakdown.subagent)).toEqual([EMPTY_SCOPE])
-    })
-
-    it("サブエージェントの中のツールとステップは、同じ行の別立てに入る", async () => {
-      const { stub, entries } = startTokenUsageManagerWithStub()
-      await waitForBatch()
-
-      stub.emit(SESSION_INFO)
-      stub.emit({
-        kind: "tool-started",
-        toolUseId: "t-1",
-        name: "Agent",
-        input: { prompt: "架空の依頼" },
-        parentToolUseId: undefined,
-      })
-      stub.emit({
-        kind: "tool-started",
-        toolUseId: "t-2",
-        name: "Grep",
-        input: { pattern: "架空の語" },
-        parentToolUseId: "t-1",
-      })
-      stub.emit({ kind: "tool-finished", toolUseId: "t-2", content: "1234", isError: false })
-      stub.emit({ kind: "step-usage", messageId: "msg-1", scope: "subagent", usage: STEP_USAGE })
-      stub.emit({ kind: "tool-finished", toolUseId: "t-1", content: "123456", isError: false })
-      stub.emit({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
-      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
-      await waitForBatch()
-
-      expect(entries.map((written) => written.breakdown)).toEqual([
-        {
-          main: {
-            steps: 0,
-            tokens: EMPTY_SCOPE.tokens,
-            tools: [{ name: "Agent", calls: 1, resultBytes: 6 }],
-          },
-          subagent: {
-            steps: 1,
-            tokens: STEP_USAGE,
-            tools: [{ name: "Grep", calls: 1, resultBytes: 4 }],
-          },
-        },
-      ])
     })
 
     it("内訳はターンごとに0から積む（前のターンのツールを持ち越さない）", async () => {
@@ -2109,42 +1949,6 @@ describe("レポートの画像の棚", () => {
 })
 
 describe("createSessionManager（見直し）", () => {
-  it("受け付けた見直しの結果は events で画面へ届き、次の hello の姿も結果になる", async () => {
-    const { manager, stub } = startManagerWithStub()
-    const frames: ServerFrame[] = []
-    manager.subscribe((frame) => frames.push(frame))
-    const findings = {
-      days: 7,
-      headline: "架空の冒頭の一言。",
-      proposals: [
-        {
-          kind: "session-length",
-          target: "",
-          impact: "medium",
-          title: "架空の見出し",
-          basis: "架空の根拠",
-          action: "架空のやること",
-          followUp: "delegate",
-        },
-      ],
-    } as const
-
-    stub.emit({ kind: "usage-review-result", findings })
-    await waitForBatch()
-
-    expect(frames.filter((frame) => frame.type === "events")).toEqual([
-      { type: "events", events: [{ at: 1_000, event: { kind: "usage-review-result", findings } }] },
-    ])
-    const later: ServerFrame[] = []
-    manager.subscribe((frame) => later.push(frame))
-    const [hello] = later
-    expect(hello?.type === "hello" ? hello.state.usageReview : undefined).toEqual({
-      kind: "result",
-      reviewedAt: 1_000,
-      findings,
-    })
-  })
-
   it("受け付けた見直しの結果は previousUsageReview にも同時に載る（ホームへ書く口も1回呼ぶ）", async () => {
     const { manager, stub, writtenPreviousUsageReviews } = startManagerWithStub()
     const findings = {

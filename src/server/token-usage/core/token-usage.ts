@@ -64,7 +64,7 @@ export type TokenUsageEntry = {
  *
  * ここに文面は入らない（ツールの結果は受け取った時点で長さに畳む）。
  */
-export type TurnUsageTally = {
+type TurnUsageTally = {
   /** 始まったツールの呼び出し1件ずつ（結果の長さを足す先を `toolUseId` で引くため）。 */
   readonly calls: readonly ToolCallTally[]
   /** assistant のステップの使用量。同じ `messageId` は最後の1つだけが残る。 */
@@ -94,7 +94,7 @@ const EMPTY_STEP_USAGE = {
 } satisfies StepTokenUsage
 
 /** ターンの始まりの状態（何も積んでいない）。 */
-export const EMPTY_TURN_USAGE_TALLY = { calls: [], steps: [] } satisfies TurnUsageTally
+const EMPTY_TURN_USAGE_TALLY = { calls: [], steps: [] } satisfies TurnUsageTally
 
 /**
  * 1代ぶんのトークン消費の勘定（駆動1代ぶんの持ち物で、起こし直すと作り直す）。
@@ -183,7 +183,7 @@ export function tokenUsageDelta(
  * - `tool-finished`: 結果の長さだけを、同じ `toolUseId` の呼び出しに足す。本文は捨てる
  * - `step-usage`: 同じ `messageId` の古いぶんを捨てて置き換える。返答が流れている間は同じ `message.id` の `assistant` が何度も届き、途中の `usage` は確定値ではないので（`sdk.d.ts`）、最後に届いたものだけを残す
  */
-export function tallyTurnUsage(tally: TurnUsageTally, event: SessionEvent): TurnUsageTally {
+function tallyTurnUsage(tally: TurnUsageTally, event: SessionEvent): TurnUsageTally {
   switch (event.kind) {
     case "tool-started":
       return {
@@ -226,7 +226,7 @@ export function tallyTurnUsage(tally: TurnUsageTally, event: SessionEvent): Turn
  * 積み上げた内訳を、記録に書く形に畳む。メインループとサブエージェントを別立てにする。
  * ツールを1つも使わなかったターンでも両方の持ち場が 0 で並ぶ（あとから数える側が欄の有無を気にしなくてよい）。
  */
-export function turnUsageBreakdown(tally: TurnUsageTally): TurnUsageBreakdown {
+function turnUsageBreakdown(tally: TurnUsageTally): TurnUsageBreakdown {
   return { main: scopeUsage(tally, "main"), subagent: scopeUsage(tally, "subagent") }
 }
 

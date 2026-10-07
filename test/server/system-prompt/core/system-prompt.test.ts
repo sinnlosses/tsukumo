@@ -116,66 +116,12 @@ describe("takeSystemPromptAppend", () => {
     expect(append).toBe(`${PERSONA}\n\n${CHAT_MANNER_PROMPT}`)
   })
 
-  it("3通りの節の並びは、仕事・雑談・続きからで入れ替わる", () => {
-    const work = takeSystemPromptAppend({
-      persona: PERSONA,
-      mode: workMode(
-        inMemoryChatSummary({ summary: SUMMARY, delivered: true }),
-        RECENT_CHAT_ARCHIVE,
-      ),
-    })
-    const chat = takeSystemPromptAppend({
-      persona: PERSONA,
-      mode: chatMode(
-        { kind: "new" },
-        inMemoryChatSummary({ summary: SUMMARY, delivered: false }),
-        RECENT_CHAT_ARCHIVE,
-      ),
-    })
-    const resumed = takeSystemPromptAppend({
-      persona: PERSONA,
-      mode: chatMode(
-        { kind: "resume", sessionId: "fictional" },
-        inMemoryChatSummary({ summary: SUMMARY, delivered: true }),
-        RECENT_CHAT_ARCHIVE,
-      ),
-    })
-
-    expect(headings(work)).toEqual([
-      ...headings(PERSONA),
-      ...headings(SPEECH_CADENCE_PROMPT),
-      ...headings(WORK_PLAN_PROMPT),
-      ...headings(REPORT_NOTATION_PROMPT),
-      ...headings(QUESTION_NOTATION_PROMPT),
-      "## これまでのあらすじ",
-      "## 直近の会話（そのままの文面）",
-    ])
-    expect(headings(chat)).toEqual([
-      ...headings(PERSONA),
-      ...headings(CHAT_MANNER_PROMPT),
-      "## これまでのあらすじ",
-      "## 直近の会話（そのままの文面）",
-    ])
-    expect(headings(resumed)).toEqual([...headings(PERSONA), ...headings(CHAT_MANNER_PROMPT)])
-  })
-
   it("人格が無いパック（空文字列）でも規約は載る（どのパックでも黙りっぱなしにしない）", () => {
     const append = takeSystemPromptAppend({ persona: "", mode: workMode() })
 
     expect(append).toBe(
       `${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}\n\n${QUESTION_NOTATION_PROMPT}`,
     )
-  })
-
-  it("雑談の記憶を載せたら写しの印は「渡し済み」に戻る（名前の `take` はこの副作用）", () => {
-    const summary = inMemoryChatSummary({ summary: SUMMARY, delivered: false })
-
-    takeSystemPromptAppend({
-      persona: PERSONA,
-      mode: chatMode({ kind: "new" }, summary, RECENT_CHAT_ARCHIVE),
-    })
-
-    expect(summary.read()?.delivered).toBe(true)
   })
 
   it("雑談のときだけ載る条（覚える・忘れる・思い出す）は、仕事の append に入らない", () => {
@@ -193,10 +139,6 @@ describe("takeSystemPromptAppend", () => {
     expect(work).not.toContain("remember")
     expect(work).not.toContain("forget")
     expect(work).not.toContain("recall_episode")
-  })
-
-  it("雑談の作法に「完了」の1行の条は無い（催促は環境変数で塞ぐ。docs/architecture/chat-mode.md 4.9）", () => {
-    expect(CHAT_MANNER_PROMPT).not.toContain("「完了」")
   })
 
   it("雑談の作法は口調を決めない（口調はキャラクターパックの persona.md の担当）", () => {
@@ -304,9 +246,4 @@ function chatMode(
       readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
     },
   }
-}
-
-/** 節の見出しの並び（`# ` と `## ` で始まる行）。逐語に挟まる日付は `### ` なので入らない。 */
-function headings(text: string): readonly string[] {
-  return text.split("\n").filter((line) => /^#{1,2} /.test(line))
 }

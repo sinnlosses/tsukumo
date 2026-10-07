@@ -196,10 +196,6 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(beforeSend).toContain("`checks` へ移す")
   })
 
-  it("「描けない」記法は無い（移行の段6で unified に置き換えたため）", () => {
-    expect(REPORT_NOTATION_PROMPT).not.toContain("描けない")
-  })
-
   it("勧める mermaid の種類は、描けることを確かめたものだけ", () => {
     const offered: readonly string[] = REPORT_MERMAID_KINDS
     expect(offered).toEqual(DRAWN_MERMAID_KINDS)

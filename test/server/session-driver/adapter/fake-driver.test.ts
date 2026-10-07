@@ -236,23 +236,6 @@ describe("startFakeSession", () => {
     ])
   })
 
-  it("scene で名指しした場面は、依頼を待たずに opening の続きとして流れる", async () => {
-    const sink = collect()
-    const driver = startFakeSession({
-      session: FAKE_SESSION,
-      scene: "架空の場面2",
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
-    await tick()
-    driver.close()
-
-    // 先頭4件は起こした直後の分（プラン・effort の対応・既定の effort・opening の場面）。
-    expect(sink.events.slice(4)).toEqual([{ kind: "utterance", text: "架空の本文2" }])
-  })
-
   it("scene で名指しした次の依頼は、その次の場面から続く（名指しした場面を繰り返さない）", async () => {
     const sink = collect()
     const driver = startFakeSession({

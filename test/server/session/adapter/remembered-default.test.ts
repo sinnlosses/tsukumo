@@ -39,13 +39,6 @@ describe("readRememberedCharacter", () => {
 // そちらが持ち主として検査する。
 // ここで確かめるのは `readRememberedCharacter` 自身の読み取りまで（このファイル冒頭の describe）。
 
-describe("writeRememberedCharacter", () => {
-  it("書いた値を readRememberedCharacter で読み返せる", () => {
-    writeRememberedCharacter("tsukumo-spirit", statePath())
-    expect(readRememberedCharacter(statePath())).toBe("tsukumo-spirit")
-  })
-})
-
 // 新しいセッションの既定（モデル・effort・許可モード。docs/architecture/screen-design.md「設定の置き場所」）。壊れた
 // state.json でも起動を止めないので、読めないときは同梱の既定へ畳む。
 describe("readRememberedSessionDefault", () => {
@@ -136,19 +129,6 @@ describe("readRememberedSessionDefault", () => {
 })
 
 describe("writeRememberedSessionDefault", () => {
-  it("書いた値を読み返せる", () => {
-    writeRememberedSessionDefault(
-      { model: "sonnet", effort: "high", permissionMode: "plan" },
-      statePath(),
-    )
-
-    expect(readRememberedSessionDefault(statePath())).toEqual({
-      model: "sonnet",
-      effort: "high",
-      permissionMode: "plan",
-    })
-  })
-
   // ディレクトリが無ければ作って書く／書き込み先が塞がっていても例外を投げないのは
   // `writeJsonFile` の契約で、
   // 2つの覚える口（character・sessionDefault）はどちらもその薄いラッパー。

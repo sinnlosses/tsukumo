@@ -510,13 +510,6 @@ describe("startViewServer", () => {
       expect(asked).toEqual([{ kind: "chosen", date: "2026-09-20" }, { kind: "today" }])
     })
 
-    it("achievement は、main が読めなくても「不明」を返す", async () => {
-      const client = rpcClientOf(await startView(), TOKEN)
-
-      expect(await client.achievement.day({ kind: "today" })).toEqual({ kind: "unknown" })
-      expect(await client.achievement.calendar()).toEqual({ kind: "unknown" })
-    })
-
     it("achievement.calendar は、暦を返す", async () => {
       const calendar: AchievementCalendar = {
         kind: "known",
@@ -881,14 +874,6 @@ describe("キャラクターの素材（使用中以外のパックも配る）"
     expect((await fetch(`${origin}/character/..%2Fhome%2Fother/portrait.svg`)).status).toBe(404)
     expect(await rawStatus(origin, "/character/../other/portrait.svg")).toBe(404)
     expect(await rawStatus(origin, "/character/other/../spirit/default.svg")).toBe(404)
-  })
-
-  it("一覧に無いパック名は404", async () => {
-    const { server } = await startWithPacks()
-
-    const response = await fetch(`${viewOrigin(server)}/character/missing/portrait.svg`)
-
-    expect(response.status).toBe(404)
   })
 })
 

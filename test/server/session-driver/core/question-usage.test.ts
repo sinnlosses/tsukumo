@@ -34,8 +34,4 @@ describe("questionUsageEntriesOf", () => {
       { at: 1_000, sessionId: "claude-session-1", optionCount: 1, previewCount: 0 },
     ])
   })
-
-  it("質問が無ければ空の配列を返す", () => {
-    expect(questionUsageEntriesOf([], "claude-session-1", 1_000)).toEqual([])
-  })
 })

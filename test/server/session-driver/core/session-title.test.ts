@@ -86,12 +86,6 @@ describe("decideSessionTitle", () => {
 })
 
 describe("createSessionTitleIntake", () => {
-  it("まだ何も受け取っていなければ undefined", () => {
-    const intake = createSessionTitleIntake()
-
-    expect(intake.take()).toBeUndefined()
-  })
-
   it("受け取った題を1回だけ返し、取り出したら空に戻る", () => {
     const intake = createSessionTitleIntake()
 

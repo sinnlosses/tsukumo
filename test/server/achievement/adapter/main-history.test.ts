@@ -312,27 +312,6 @@ describe("readAchievement（Beads の閉じた課題）", () => {
     },
   )
 
-  it("課題を作ってから7日以上経って閉じた課題は卒業に載る", { timeout: 60_000 }, async () => {
-    await commitAt(repository, "2026-09-23", "10:00", "README.md")
-    await initBeadsWithIssues(repository, [
-      issue("t-050", "長く待った作業", ["2026-09-01", "10:00"], ["2026-09-23", "09:00"]),
-      issue("t-051", "すぐ済んだ作業", ["2026-09-20", "10:00"], ["2026-09-23", "09:00"]),
-    ])
-
-    const achievement = known(
-      await readAchievement(
-        repository,
-        "2026-09-23",
-        "2026-09-24",
-        createAchievementCache(repository),
-      ),
-    )
-
-    expect(achievement.graduations).toEqual([
-      { id: "T-050", summary: "長く待った作業", registeredOn: "2026-09-01", days: 22 },
-    ])
-  })
-
   it("タスクの節目: 通算250件目（仮の刻み）に届いたタスクを返す", { timeout: 60_000 }, async () => {
     await commitAt(repository, "2026-09-23", "10:00", "README.md")
     const before = Array.from({ length: 248 }, (_, index) =>

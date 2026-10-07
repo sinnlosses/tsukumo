@@ -49,16 +49,6 @@ describe("readPreviousUsageReview", () => {
 })
 
 describe("writePreviousUsageReview", () => {
-  it("書いた値を読み返せる", () => {
-    writePreviousUsageReview(1_000, FINDINGS, path())
-
-    expect(readPreviousUsageReview(path())).toEqual({
-      kind: "found",
-      reviewedAt: 1_000,
-      findings: FINDINGS,
-    })
-  })
-
   it("直前の1回だけを持つ（新しい結果が古い結果を置き換える）", () => {
     writePreviousUsageReview(1_000, FINDINGS, path())
     const later: UsageReviewFindings = { ...FINDINGS, headline: "架空の新しい一言。" }

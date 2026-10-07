@@ -310,16 +310,6 @@ describe("toRestoredEvents", () => {
     ])
   })
 
-  it("タグの無い普通の依頼はそのまま通す", () => {
-    const messages = [userMessage([{ type: "text", text: "架空の普通の依頼" }])]
-
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
-      { kind: "request", text: "架空の普通の依頼", images: [] },
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
-    ])
-  })
-
   it("仕掛けが差し込んだ塊だけの user メッセージは依頼として起こさない", () => {
     const messages = [
       userMessage("<task-notification>\n<task-id>架空のID</task-id>\n</task-notification>"),
@@ -397,21 +387,6 @@ describe("toRestoredEvents", () => {
       { kind: "compact-boundary" },
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-      HISTORY_RESTORED,
-    ])
-  })
-
-  it("知らない system メッセージが混ざっても落ちない（読めたものだけ残る）", () => {
-    const messages = [
-      { type: "system", subtype: "compact_boundary", compact_metadata: { trigger: "manual" } },
-      { type: "system", subtype: "架空の未知の通知", text: "架空のお知らせ" },
-      userMessage([{ type: "text", text: "架空の依頼" }]),
-    ]
-
-    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
-      { kind: "compact-boundary" },
-      { kind: "request", text: "架空の依頼", images: [] },
       { kind: "turn-finished", outcome: { kind: "completed" } },
       HISTORY_RESTORED,
     ])

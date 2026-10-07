@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  EMPTY_TURN_USAGE_TALLY,
-  tallyTurnUsage,
+  createTokenUsageRecorder,
+  type TokenUsageEntry,
   tokenUsageDelta,
-  turnUsageBreakdown,
-  type TurnUsageTally,
 } from "../../../../src/server/token-usage/core/token-usage.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import {
+  applySessionEvent,
+  INITIAL_SESSION_STATE,
+} from "../../../../src/shared/session/session-state.ts"
 import type {
   ModelTokenUsage,
   TurnUsageScope,
@@ -115,25 +117,49 @@ function stepUsage(
   }
 }
 
-function tallyAll(events: readonly SessionEvent[]): TurnUsageTally {
-  return events.reduce(
-    (tally: TurnUsageTally, event) => tallyTurnUsage(tally, event),
-    EMPTY_TURN_USAGE_TALLY,
-  )
+const STARTED_STATE = applySessionEvent(
+  INITIAL_SESSION_STATE,
+  {
+    kind: "session-info",
+    sessionId: "架空のセッション",
+    model: undefined,
+    permissionMode: undefined,
+    slashCommands: [],
+    terminalSlashCommands: [],
+  },
+  0,
+)
+
+/** 1ターンぶんのイベントを積んでから、そのターンの消費を記録へ1行渡し、渡った行を返す。 */
+function writtenRowOf(events: readonly SessionEvent[]): TokenUsageEntry {
+  const written: TokenUsageEntry[] = []
+  const recorder = createTokenUsageRecorder({
+    append: (entry) => {
+      written.push(entry)
+    },
+    readRange: () => [],
+  })
+  for (const event of events) {
+    recorder.tally(event)
+  }
+  recorder.append([usage("opus", 1, 1, 0.01)], 0, STARTED_STATE)
+  const [row] = written
+  if (row === undefined) {
+    throw new Error("記録へ1行も渡っていない")
+  }
+  return row
 }
 
-describe("tallyTurnUsage / turnUsageBreakdown", () => {
+describe("createTokenUsageRecorder の内訳", () => {
   it("同じ名前のツールを1つに畳み、呼び出し回数と結果の長さの合計を数える", () => {
-    const breakdown = turnUsageBreakdown(
-      tallyAll([
-        toolStarted("t-1", "Bash"),
-        toolFinished("t-1", "12345"),
-        toolStarted("t-2", "Bash"),
-        toolFinished("t-2", "123"),
-        toolStarted("t-3", "Read"),
-        toolFinished("t-3", "1"),
-      ]),
-    )
+    const { breakdown } = writtenRowOf([
+      toolStarted("t-1", "Bash"),
+      toolFinished("t-1", "12345"),
+      toolStarted("t-2", "Bash"),
+      toolFinished("t-2", "123"),
+      toolStarted("t-3", "Read"),
+      toolFinished("t-3", "1"),
+    ])
 
     expect(breakdown.main.tools).toEqual([
       { name: "Bash", calls: 2, resultBytes: 8 },
@@ -143,45 +169,39 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
   })
 
   it("結果の長さは UTF-8 のバイト数で数える（文字数ではない）", () => {
-    const breakdown = turnUsageBreakdown(
-      tallyAll([toolStarted("t-1", "Read"), toolFinished("t-1", "あいう")]),
-    )
+    const { breakdown } = writtenRowOf([toolStarted("t-1", "Read"), toolFinished("t-1", "あいう")])
 
     expect(breakdown.main.tools).toEqual([{ name: "Read", calls: 1, resultBytes: 9 }])
   })
 
   it("結果の長さの大きい順に並べる（同じなら名前順）", () => {
-    const breakdown = turnUsageBreakdown(
-      tallyAll([
-        toolStarted("t-1", "Read"),
-        toolFinished("t-1", "1"),
-        toolStarted("t-2", "Bash"),
-        toolFinished("t-2", "123456"),
-        toolStarted("t-3", "Edit"),
-        toolFinished("t-3", "1"),
-      ]),
-    )
+    const { breakdown } = writtenRowOf([
+      toolStarted("t-1", "Read"),
+      toolFinished("t-1", "1"),
+      toolStarted("t-2", "Bash"),
+      toolFinished("t-2", "123456"),
+      toolStarted("t-3", "Edit"),
+      toolFinished("t-3", "1"),
+    ])
 
     expect(breakdown.main.tools.map((tool) => tool.name)).toEqual(["Bash", "Edit", "Read"])
   })
 
   it("結果が返らなかった呼び出しも回数には数える（長さは 0）", () => {
-    const breakdown = turnUsageBreakdown(tallyAll([toolStarted("t-1", "Bash")]))
+    const { breakdown } = writtenRowOf([toolStarted("t-1", "Bash")])
 
     expect(breakdown.main.tools).toEqual([{ name: "Bash", calls: 1, resultBytes: 0 }])
   })
 
   it("サブエージェントの中のツールは別立てで数える（メインに混ぜない）", () => {
-    const breakdown = turnUsageBreakdown(
-      tallyAll([
-        toolStarted("t-1", "Agent"),
-        toolStarted("t-2", "Grep", "t-1"),
-        toolFinished("t-2", "1234"),
-        toolStarted("t-3", "Read", "t-1"),
-        toolFinished("t-3", "12"),
-        toolFinished("t-1", "123456"),
-      ]),
-    )
+    const { breakdown } = writtenRowOf([
+      toolStarted("t-1", "Agent"),
+      toolStarted("t-2", "Grep", "t-1"),
+      toolFinished("t-2", "1234"),
+      toolStarted("t-3", "Read", "t-1"),
+      toolFinished("t-3", "12"),
+      toolFinished("t-1", "123456"),
+    ])
 
     expect(breakdown.main.tools).toEqual([{ name: "Agent", calls: 1, resultBytes: 6 }])
     expect(breakdown.subagent.tools).toEqual([
@@ -193,13 +213,11 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
   // 同じ `message.id` の `assistant` が何度も届く（返答が流れている間。最初の1つは
   // `output_tokens` が 1〜3 になる）ので、最後に届いたものだけを数える。
   it("同じ message.id のステップは最後の usage だけを数える", () => {
-    const breakdown = turnUsageBreakdown(
-      tallyAll([
-        stepUsage("msg-1", "main", 43_145, 1),
-        stepUsage("msg-1", "main", 43_145, 791),
-        stepUsage("msg-1", "main", 43_145, 13_371),
-      ]),
-    )
+    const { breakdown } = writtenRowOf([
+      stepUsage("msg-1", "main", 43_145, 1),
+      stepUsage("msg-1", "main", 43_145, 791),
+      stepUsage("msg-1", "main", 43_145, 13_371),
+    ])
 
     expect(breakdown.main.steps).toBe(1)
     expect(breakdown.main.tokens.outputTokens).toBe(13_371)
@@ -207,13 +225,11 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
   })
 
   it("持ち場ごとにステップ数と usage を足す", () => {
-    const breakdown = turnUsageBreakdown(
-      tallyAll([
-        stepUsage("msg-1", "main", 100, 20),
-        stepUsage("msg-2", "main", 150, 30),
-        stepUsage("msg-3", "subagent", 55_431, 400),
-      ]),
-    )
+    const { breakdown } = writtenRowOf([
+      stepUsage("msg-1", "main", 100, 20),
+      stepUsage("msg-2", "main", 150, 30),
+      stepUsage("msg-3", "subagent", 55_431, 400),
+    ])
 
     expect(breakdown.main.steps).toBe(2)
     expect(breakdown.main.tokens.inputTokens).toBe(250)
@@ -225,7 +241,7 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
   // ターンの合計（`models`）と内訳が矛盾しないための不変条件——同じステップも同じ呼び出しも
   // 二度は数えない（持ち場は排他で、`message.id` は畳まれる）。
   it("内訳を足すと元の数に戻る（持ち場をまたいで二重に数えない）", () => {
-    const tally = tallyAll([
+    const { breakdown } = writtenRowOf([
       stepUsage("msg-1", "main", 100, 20),
       stepUsage("msg-1", "main", 100, 25),
       stepUsage("msg-2", "subagent", 300, 40),
@@ -234,7 +250,6 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
       toolStarted("t-2", "Read", "t-1"),
       toolFinished("t-2", "1234"),
     ])
-    const breakdown = turnUsageBreakdown(tally)
 
     expect(breakdown.main.steps + breakdown.subagent.steps).toBe(2)
     expect(breakdown.main.tokens.inputTokens + breakdown.subagent.tokens.inputTokens).toBe(400)
@@ -245,7 +260,7 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
   })
 
   it("何も積んでいないターンでも、両方の持ち場が 0 で並ぶ", () => {
-    expect(turnUsageBreakdown(EMPTY_TURN_USAGE_TALLY)).toEqual({
+    expect(writtenRowOf([]).breakdown).toEqual({
       main: {
         steps: 0,
         tokens: {
@@ -270,36 +285,31 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
   })
 
   it("本文・セリフ・依頼の文面は内訳に積まない（ツールの呼び出しと usage だけを見る）", () => {
-    const breakdown = turnUsageBreakdown(
-      tallyAll([
-        { kind: "request", text: "架空の依頼の文面", images: [] },
-        { kind: "utterance", text: "架空の本文" },
-        { kind: "speech", text: "架空のセリフ", expression: "default" },
-        { kind: "turn-finished", outcome: { kind: "completed" } },
-      ]),
-    )
+    const { breakdown } = writtenRowOf([
+      { kind: "request", text: "架空の依頼の文面", images: [] },
+      { kind: "utterance", text: "架空の本文" },
+      { kind: "speech", text: "架空のセリフ", expression: "default" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+    ])
 
     expect(breakdown.main.tools).toEqual([])
     expect(breakdown.main.steps).toBe(0)
   })
 
-  // この検査がいちばん重要（docs/coding-standards.md「会話内容の扱い」）。積み上げた入れ物と
-  // 畳んだ内訳のどちらにも、ツールの引数と結果の文面が1文字も残らない。
-  it("ツールの引数と結果の文面は、積み上げた入れ物にも畳んだ内訳にも残らない", () => {
+  // この検査がいちばん重要（docs/coding-standards.md「会話内容の扱い」）。記録へ渡る行に、
+  // ツールの引数と結果の文面が1文字も残らない。
+  it("ツールの引数と結果の文面は、記録へ渡る行に残らない", () => {
     const secrets = ["架空のツールの引数", "架空のツールの結果", "架空の値"]
-    const tally = tallyAll([
+    const row = writtenRowOf([
       toolStarted("t-1", "Bash"),
       toolFinished("t-1", `${secrets[1] ?? ""}${secrets[0] ?? ""}`),
     ])
 
-    for (const written of [JSON.stringify(tally), JSON.stringify(turnUsageBreakdown(tally))]) {
-      for (const secret of secrets) {
-        expect(written).not.toContain(secret)
-      }
+    const written = JSON.stringify(row)
+    for (const secret of secrets) {
+      expect(written).not.toContain(secret)
     }
     // 長さだけは残る（54 バイト = 架空の文面2つ・18文字ぶんの UTF-8 バイト数）。
-    expect(turnUsageBreakdown(tally).main.tools).toEqual([
-      { name: "Bash", calls: 1, resultBytes: 54 },
-    ])
+    expect(row.breakdown.main.tools).toEqual([{ name: "Bash", calls: 1, resultBytes: 54 }])
   })
 })

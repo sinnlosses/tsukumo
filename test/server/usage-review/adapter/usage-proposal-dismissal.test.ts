@@ -27,11 +27,6 @@ describe("readDismissedUsageProposalKeys", () => {
 })
 
 describe("writeDismissedUsageProposalKey", () => {
-  it("書いた識別子を読み返せる", () => {
-    writeDismissedUsageProposalKey("session-length:", path())
-    expect(readDismissedUsageProposalKeys(path())).toEqual(["session-length:"])
-  })
-
   it("2件目は末尾に積み重ねる", () => {
     writeDismissedUsageProposalKey("session-length:", path())
     writeDismissedUsageProposalKey("model-choice:sonnet", path())

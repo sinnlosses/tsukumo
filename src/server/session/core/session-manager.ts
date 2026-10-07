@@ -159,7 +159,7 @@ export type SessionManagerOptions = {
 }
 
 /** 閉じるまで生きている見張り。 */
-export type SessionWatcher = {
+type SessionWatcher = {
   readonly close: () => void
   /** 画面が1つでも購読しているあいだだけ真にする（動かすのは見張りが要るあいだだけ）。 */
   readonly setWatching: (watching: boolean) => void

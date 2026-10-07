@@ -30,7 +30,7 @@ import { readTaskSummaryMemory, writeTaskSummaryMemory } from "./task-summary-me
  * 見回りの間隔。`bd list` は1回が約0.2秒（CPU）かかるので間を空ける。
  * タスク一覧はタスクの着手・完了で書き換わるだけなので、秒単位の反映で十分。
  */
-export const TASK_SUMMARY_POLL_INTERVAL_MS = 5000
+const TASK_SUMMARY_POLL_INTERVAL_MS = 5000
 
 export type TaskSummaryWatcher = {
   /** ポーリングを止める。実行中の見回り（`bd` の子プロセス）の終わりまで待つ。 */

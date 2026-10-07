@@ -98,29 +98,19 @@ function countOccurrences(text: string, needle: string): number {
 }
 
 describe("takeChatMemoryPromptParts", () => {
-  it("新規の雑談（resume が undefined）では要約も逐語も載る。載せたら印が「渡し済み」に戻る", () => {
+  it("新規の雑談（resume が undefined）では要約・直近の逐語（古い→新しい）の順で載る。載せたら印が「渡し済み」に戻る", () => {
     const chatSummary = fakeChatSummary({ summary: SUMMARY, delivered: false })
     const chatArchive = fakeChatArchive(RECENT)
 
     const parts = take(undefined, chatSummary, chatArchive)
 
-    expect(parts.join("\n")).toContain(SUMMARY)
-    expect(parts.join("\n")).toContain("ただいま")
-    expect(parts.join("\n")).toContain("おかえり")
-    expect(chatSummary.markDeliveredCalls()).toBe(1)
-    expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: true })
-  })
-
-  it("要約が先、直近の逐語が後（古い→新しいの順）", () => {
-    const parts = take(
-      undefined,
-      fakeChatSummary({ summary: SUMMARY, delivered: false }),
-      fakeChatArchive(RECENT),
-    )
-
     expect(parts).toHaveLength(2)
     expect(parts[0]).toContain(SUMMARY)
     expect(parts[1]).toContain("ただいま")
+    expect(parts[1]).toContain("おかえり")
+    expect(parts[1]?.indexOf("ただいま")).toBeLessThan(parts[1]?.indexOf("おかえり") ?? -1)
+    expect(chatSummary.markDeliveredCalls()).toBe(1)
+    expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: true })
   })
 
   it("resume のときは逐語も要約も載らない（写しの印が「渡し済み」）。アーカイブも読まない", () => {
@@ -229,22 +219,6 @@ describe("takeChatMemoryPromptParts", () => {
     expect(text.indexOf("### 2026-09-20")).toBeLessThan(text.indexOf("きょうは晴れの話をした"))
     expect(text.indexOf("そうだねと返した")).toBeLessThan(text.indexOf("### 2026-09-21"))
     expect(text.indexOf("### 2026-09-21")).toBeLessThan(text.indexOf("つぎの日にまた話しかけた"))
-  })
-
-  it("1日ぶんしか無いときは見出しが1つだけで、二重にならない", () => {
-    const oneDay = take(
-      undefined,
-      fakeChatSummary(undefined),
-      fakeChatArchive([
-        { kind: "request", origin: { mode: "chat" }, text: "ただいま", date: "2026-09-21" },
-        { kind: "speech", origin: { mode: "chat" }, text: "おかえり", date: "2026-09-21" },
-      ]),
-    )
-    const text = oneDay[0] ?? ""
-
-    expect(countOccurrences(text, "### 2026-09-21")).toBe(1)
-    expect(text).not.toContain("範囲:")
-    expect(text).not.toContain("〜")
   })
 })
 

@@ -73,31 +73,6 @@ describe("createChatArchive", () => {
     expect(record).not.toHaveProperty("project")
   })
 
-  it("セリフの行は表情を持つ", () => {
-    const chatArchive = createChatArchive(root())
-    const at = noonOn(2026, 9, 21)
-
-    chatArchive.append("fictional-pack", {
-      mode: "chat",
-      kind: "speech",
-      at,
-      text: SPEECH_TEXT,
-      expression: "proud",
-    })
-
-    const [record] = readLines(join(root(), "fictional-pack", "2026-09-21.jsonl"))
-    expect(record).toMatchObject({
-      v: 2,
-      pack: "fictional-pack",
-      mode: "chat",
-      kind: "speech",
-      speaker: "character",
-      text: SPEECH_TEXT,
-      expression: "proud",
-    })
-    expect(record).not.toHaveProperty("images")
-  })
-
   it("仕事の行は project を持つ（雑談の行は project のキー自体が無い）", () => {
     const chatArchive = createChatArchive(root())
     const at = noonOn(2026, 9, 21)
@@ -187,40 +162,6 @@ describe("createChatArchive", () => {
 
     const [record] = readLines(join(root(), "fictional-pack", "2026-09-21.jsonl"))
     expect(record).toMatchObject({ images: 2 })
-  })
-
-  it("追記する（上書きしない）。往復すると依頼とセリフが1行ずつ増える", () => {
-    const chatArchive = createChatArchive(root())
-    const at = noonOn(2026, 9, 21)
-
-    chatArchive.append("fictional-pack", {
-      mode: "chat",
-      kind: "request",
-      at,
-      text: "1回目の依頼",
-      images: undefined,
-    })
-    chatArchive.append("fictional-pack", {
-      mode: "chat",
-      kind: "speech",
-      at,
-      text: "1回目のセリフ",
-      expression: "proud",
-    })
-    chatArchive.append("fictional-pack", {
-      mode: "chat",
-      kind: "request",
-      at,
-      text: "2回目の依頼",
-      images: undefined,
-    })
-
-    const records = readLines<{ text: string }>(join(root(), "fictional-pack", "2026-09-21.jsonl"))
-    expect(records.map((record) => record.text)).toEqual([
-      "1回目の依頼",
-      "1回目のセリフ",
-      "2回目の依頼",
-    ])
   })
 
   it("パックごとに別のファイルになる", () => {

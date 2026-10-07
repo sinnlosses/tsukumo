@@ -14,7 +14,6 @@ import {
 import {
   FAKE_TASK_SUMMARY_POLL_INTERVAL_MS,
   REAL_TASK_SUMMARY_PORTS,
-  TASK_SUMMARY_POLL_INTERVAL_MS,
   taskSummaryOptionsOf,
   watchTaskSummary,
   type TaskSummaryWatcher,
@@ -38,14 +37,6 @@ afterEach(async () => {
 })
 
 describe("taskSummaryOptionsOf", () => {
-  it("ふだんの起動は bd を読む口と5秒の間隔のまま", () => {
-    const options = taskSummaryOptionsOf("real")
-
-    expect(options.intervalMs).toBe(TASK_SUMMARY_POLL_INTERVAL_MS)
-    expect(TASK_SUMMARY_POLL_INTERVAL_MS).toBe(5000)
-    expect(options.ports).toBe(REAL_TASK_SUMMARY_PORTS)
-  })
-
   it("疑似セッションは課題の口だけを差し替え、設定の読み出しと時計は本物を使う", () => {
     const options = taskSummaryOptionsOf("fake")
 

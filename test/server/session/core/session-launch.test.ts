@@ -340,7 +340,7 @@ describe("createSessionLaunch", () => {
     ])
   })
 
-  it("雑談で起こすと、写しから取り出した最近の話題を chat-mode-changed のあとに流す", async () => {
+  it("雑談で起こすと、写しから取り出した最近の話題と覚えたことの一覧を chat-mode-changed のすぐあとに順に流す", async () => {
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
@@ -350,30 +350,13 @@ describe("createSessionLaunch", () => {
     })
     await settle()
 
-    const kinds = harness.driverEvents.map((event) => event.kind)
-    expect(kinds.indexOf("chat-topics-changed")).toBe(kinds.indexOf("chat-mode-changed") + 1)
-    expect(harness.driverEvents).toContainEqual({
-      kind: "chat-topics-changed",
-      topics: CHAT_TOPICS,
-    })
-  })
-
-  it("雑談で起こすと、覚えたことの一覧を chat-topics-changed のあとに流す", async () => {
-    const harness = createHarness()
-
-    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      selection: { by: "initial" },
-      chat: true,
-      resume: { by: "latest" },
-    })
-    await settle()
-
-    const kinds = harness.driverEvents.map((event) => event.kind)
-    expect(kinds.indexOf("remembered-lines-changed")).toBe(kinds.indexOf("chat-topics-changed") + 1)
-    expect(harness.driverEvents).toContainEqual({
-      kind: "remembered-lines-changed",
-      lines: REMEMBERED_LINES,
-    })
+    const modeChangedAt = harness.driverEvents.findIndex(
+      (event) => event.kind === "chat-mode-changed",
+    )
+    expect(harness.driverEvents.slice(modeChangedAt + 1, modeChangedAt + 3)).toEqual([
+      { kind: "chat-topics-changed", topics: CHAT_TOPICS },
+      { kind: "remembered-lines-changed", lines: REMEMBERED_LINES },
+    ])
   })
 
   it("仕事で起こすときは写しを読まず、最近の話題も覚えたことも流さない", async () => {
@@ -390,33 +373,6 @@ describe("createSessionLaunch", () => {
     expect(harness.calls.some((call) => call.startsWith("readRememberedLines:"))).toBe(false)
     expect(harness.events.some((event) => event.kind === "chat-topics-changed")).toBe(false)
     expect(harness.events.some((event) => event.kind === "remembered-lines-changed")).toBe(false)
-  })
-
-  it("いま出しているパックのまま起こし直す（モードの切り替え）ときは覚えない", async () => {
-    // `session.setChatMode` の起こし直しがここを通る。同じパックを起こすのは「画面から選ばれた」
-    // ことではないので、覚えた値（`~/.tsukumo/state.json`）は書き換わらない
-    // （docs/architecture/screen-design.md「設定の置き場所」）。
-    const harness = createHarness()
-
-    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      selection: { by: "current" },
-      chat: true,
-      resume: { by: "latest" },
-    })
-    await settle()
-
-    expect(harness.calls).toEqual([
-      "choosePack:current",
-      "readChatTopics:tsukumo-spirit",
-      "readRememberedLines:tsukumo-spirit",
-      "readSessionDefault",
-      "findResumeSession:tsukumo-spirit:chat",
-      "listSessions:tsukumo-spirit:chat",
-      "startDriver:tsukumo-spirit:chat:prev-chat-session",
-      "restoreEvents:prev-chat-session",
-      "refreshSessions",
-    ])
-    expect(harness.calls.some((call) => call.startsWith("rememberPack:"))).toBe(false)
   })
 
   it("画面から選んだセッションは探さずに、そのIDの続きから起こす", async () => {
@@ -442,25 +398,6 @@ describe("createSessionLaunch", () => {
       kind: "sessions-changed",
       sessions: CHOICES,
       current: "other-session",
-    })
-  })
-
-  it("切り替え先の一覧を、起こすたびに画面へ流す", async () => {
-    const harness = createHarness()
-
-    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      selection: { by: "initial" },
-      chat: undefined,
-      resume: { by: "latest" },
-    })
-    await settle()
-
-    // いま起こしたセッション（`current`）も一緒に流れるので、画面は最初の依頼を待たずに
-    // 居場所を指せる。
-    expect(harness.driverEvents).toContainEqual({
-      kind: "sessions-changed",
-      sessions: CHOICES,
-      current: "prev-work-session",
     })
   })
 

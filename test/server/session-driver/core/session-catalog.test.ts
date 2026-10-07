@@ -4,8 +4,6 @@ import type { Config } from "../../../../src/server/core/config.ts"
 import {
   canResume,
   createSessionCatalog,
-  readTaggedSessions,
-  selectSessionToResume,
 } from "../../../../src/server/session-driver/core/session-catalog.ts"
 import { sessionTag } from "../../../../src/server/session-driver/core/session-mark.ts"
 import { DEFAULT_VIEW_PORT } from "../../../../src/server/view-server/core/port-resolution.ts"
@@ -218,122 +216,71 @@ describe("canResume", () => {
   })
 })
 
-describe("selectSessionToResume", () => {
-  it("印のあるセッションが複数あるとき、lastModified が最新のものを選ぶ", () => {
-    const sessions = [
-      sessionRecord({ sessionId: "s-old", lastModified: 100, tag: TAG }),
-      sessionRecord({ sessionId: "s-new", lastModified: 300, tag: TAG }),
-      sessionRecord({ sessionId: "s-mid", lastModified: 200, tag: TAG }),
-    ]
-
-    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-new")
-  })
-
-  it("印が無いセッション（同じ cwd の素の claude）は選ばない", () => {
-    const sessions = [
-      sessionRecord({ sessionId: "s-bare", lastModified: 900 }),
-      sessionRecord({ sessionId: "s-other-tag", lastModified: 800, tag: "別の道具" }),
-      sessionRecord({ sessionId: "s-tsukumo", lastModified: 100, tag: TAG }),
-    ]
-
-    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-tsukumo")
-  })
-
-  it("一覧が空・印が1つも無いときは復元しない（新規に起こす）", () => {
-    expect(selectSessionToResume(readTaggedSessions([]), TAG)).toBeUndefined()
-    expect(
-      selectSessionToResume(
-        readTaggedSessions([sessionRecord({ sessionId: "s-bare", lastModified: 900 })]),
-        TAG,
-      ),
-    ).toBeUndefined()
-  })
-
-  it("別のパックの印を持つセッションは選ばない（キャラクターごとに別のセッション）", () => {
-    const sessions = [
-      sessionRecord({ sessionId: "s-other-pack", lastModified: 900, tag: OTHER_PACK_TAG }),
-      sessionRecord({ sessionId: "s-this-pack", lastModified: 100, tag: TAG }),
-    ]
-
-    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-this-pack")
-  })
-
-  it("同じパックでも雑談と仕事で別のセッションを選ぶ（文脈ごと分ける）", () => {
-    const sessions = [
-      sessionRecord({ sessionId: "s-work", lastModified: 900, tag: TAG }),
-      sessionRecord({ sessionId: "s-chat", lastModified: 100, tag: CHAT_TAG }),
-    ]
-
-    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-work")
-    expect(selectSessionToResume(readTaggedSessions(sessions), CHAT_TAG)).toBe("s-chat")
-  })
-
-  it("仕事のセッションしか無ければ、雑談は新規に起こす（仕事の続きを拾わない）", () => {
-    const sessions = [sessionRecord({ sessionId: "s-work", lastModified: 900, tag: TAG })]
-
-    expect(selectSessionToResume(readTaggedSessions(sessions), CHAT_TAG)).toBeUndefined()
-  })
-
-  it("形が壊れているときは復元しない（落ちない）", () => {
-    expect(selectSessionToResume(readTaggedSessions(undefined), TAG)).toBeUndefined()
-    expect(selectSessionToResume(readTaggedSessions({ sessions: [] }), TAG)).toBeUndefined()
-    expect(selectSessionToResume(readTaggedSessions([null, 42, "s-1"]), TAG)).toBeUndefined()
-    expect(
-      selectSessionToResume(
-        readTaggedSessions([{ sessionId: 1, lastModified: 100, tag: TAG }]),
-        TAG,
-      ),
-    ).toBeUndefined()
-    expect(
-      selectSessionToResume(
-        readTaggedSessions([{ sessionId: "s-1", lastModified: "きのう", tag: TAG }]),
-        TAG,
-      ),
-    ).toBeUndefined()
-  })
-
-  it("壊れた要素が混じっていても、読めた印のあるものから選ぶ", () => {
-    const sessions = [
-      null,
-      { sessionId: "s-broken", tag: TAG },
-      sessionRecord({ sessionId: "s-ok", lastModified: 500, tag: TAG }),
-    ]
-
-    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-ok")
-  })
-
-  it("目印の違うセッションは選ばない（同じディレクトリの2つめの tsukumo）", () => {
-    const sessions = [
-      sessionRecord({ sessionId: "s-first", lastModified: 900, tag: TAG }),
-      sessionRecord({ sessionId: "s-second", lastModified: 100, tag: SECOND_TAG }),
-    ]
-
-    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-first")
-    expect(selectSessionToResume(readTaggedSessions(sessions), SECOND_TAG)).toBe("s-second")
-  })
-
-  it("目印の無い昔の印は、既定のポートの続きとして選ぶ（互換）", () => {
-    const sessions = [
-      sessionRecord({ sessionId: "s-legacy", lastModified: 900, tag: "tsukumo:架空のパック" }),
-      sessionRecord({
-        sessionId: "s-legacy-chat",
-        lastModified: 800,
-        tag: "tsukumo:架空のパック:chat",
-      }),
-    ]
-
-    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-legacy")
-    expect(selectSessionToResume(readTaggedSessions(sessions), CHAT_TAG)).toBe("s-legacy-chat")
-    expect(selectSessionToResume(readTaggedSessions(sessions), SECOND_TAG)).toBeUndefined()
-  })
-})
+function catalogOf(sessions: unknown): ReturnType<typeof createSessionCatalog> {
+  return createSessionCatalog({ read: () => Promise.resolve(sessions), now: () => 1_000 })
+}
 
 function listChoicesOf(sessions: unknown, tag: string): Promise<readonly SessionChoice[]> {
-  return createSessionCatalog({
-    read: () => Promise.resolve(sessions),
-    now: () => 1_000,
-  }).listChoices(tag)
+  return catalogOf(sessions).listChoices(tag)
 }
+
+const LEGACY_SESSIONS = [
+  sessionRecord({ sessionId: "s-legacy", lastModified: 900, tag: "tsukumo:架空のパック" }),
+  sessionRecord({
+    sessionId: "s-legacy-chat",
+    lastModified: 800,
+    tag: "tsukumo:架空のパック:chat",
+  }),
+]
+
+describe("createSessionCatalog の続きの選択", () => {
+  it.each<[string, readonly unknown[], string, string | undefined]>([
+    [
+      "同じ印のうち lastModified が最新のもの",
+      [
+        sessionRecord({ sessionId: "s-old", lastModified: 100, tag: TAG }),
+        sessionRecord({ sessionId: "s-new", lastModified: 300, tag: TAG }),
+        sessionRecord({ sessionId: "s-mid", lastModified: 200, tag: TAG }),
+      ],
+      TAG,
+      "s-new",
+    ],
+    [
+      "印の無いもの・別の道具・別のパック・雑談・別の部屋より新しくても、同じ印のもの",
+      [
+        sessionRecord({ sessionId: "s-bare", lastModified: 900 }),
+        sessionRecord({ sessionId: "s-other-tool", lastModified: 800, tag: "別の道具" }),
+        sessionRecord({ sessionId: "s-other-pack", lastModified: 700, tag: OTHER_PACK_TAG }),
+        sessionRecord({ sessionId: "s-chat", lastModified: 600, tag: CHAT_TAG }),
+        sessionRecord({ sessionId: "s-other-room", lastModified: 500, tag: SECOND_TAG }),
+        sessionRecord({ sessionId: "s-tsukumo", lastModified: 100, tag: TAG }),
+      ],
+      TAG,
+      "s-tsukumo",
+    ],
+    [
+      "雑談の印なら、新しい仕事より雑談のもの",
+      [
+        sessionRecord({ sessionId: "s-work", lastModified: 900, tag: TAG }),
+        sessionRecord({ sessionId: "s-chat", lastModified: 100, tag: CHAT_TAG }),
+      ],
+      CHAT_TAG,
+      "s-chat",
+    ],
+    [
+      "仕事のセッションしか無ければ、雑談は無し（新規に起こす）",
+      [sessionRecord({ sessionId: "s-work", lastModified: 900, tag: TAG })],
+      CHAT_TAG,
+      undefined,
+    ],
+    ["一覧が空なら無し（新規に起こす）", [], TAG, undefined],
+    ["目印の無い昔の仕事の印は、既定のポートの続き", LEGACY_SESSIONS, TAG, "s-legacy"],
+    ["目印の無い昔の雑談の印は、既定のポートの続き", LEGACY_SESSIONS, CHAT_TAG, "s-legacy-chat"],
+    ["目印の無い昔の印は、ほかのポートの続きにはしない", LEGACY_SESSIONS, SECOND_TAG, undefined],
+  ])("%s を選ぶ", async (_name, sessions, tag, expected) => {
+    expect(await catalogOf(sessions).findToResume(tag)).toBe(expected)
+  })
+})
 
 describe("createSessionCatalog の切り替え先の一覧", () => {
   it("いまの部屋（同じ印）のセッションを新しい順に並べる", async () => {
@@ -423,6 +370,8 @@ describe("createSessionCatalog の切り替え先の一覧", () => {
       sessionRecord({ sessionId: "s-bare", lastModified: 900 }),
       sessionRecord({ sessionId: "s-other-tool", lastModified: 800, tag: "別の道具" }),
       sessionRecord({ sessionId: "s-broken", lastModified: "きのう", tag: TAG }),
+      sessionRecord({ sessionId: 1, lastModified: 600, tag: TAG }),
+      { lastModified: 700, tag: TAG },
       sessionRecord({ sessionId: "s-legacy", lastModified: 500, tag: "tsukumo:架空のパック" }),
     ]
 

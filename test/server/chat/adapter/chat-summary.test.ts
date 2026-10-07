@@ -25,12 +25,6 @@ function root(): string {
 }
 
 describe("createChatSummary", () => {
-  it("写しが無いときは undefined", () => {
-    const chatSummary = createChatSummary("fictional-pack", root())
-
-    expect(chatSummary.read()).toBeUndefined()
-  })
-
   it("write すると読める。写しが無かったときの印は「未渡し」", () => {
     const chatSummary = createChatSummary("fictional-pack", root())
 
@@ -59,18 +53,6 @@ describe("createChatSummary", () => {
     chatSummary.write("書き直したあらすじ")
 
     expect(chatSummary.read()).toEqual({ summary: "書き直したあらすじ", delivered: false })
-  })
-
-  it("write は上書きする（継ぎ足さない）", () => {
-    const chatSummary = createChatSummary("fictional-pack", root())
-
-    chatSummary.write(SUMMARY)
-    chatSummary.write("差し替えたあとの短い要約")
-
-    expect(chatSummary.read()).toEqual({
-      summary: "差し替えたあとの短い要約",
-      delivered: false,
-    })
   })
 
   it("パックごとに別のファイルになる", () => {

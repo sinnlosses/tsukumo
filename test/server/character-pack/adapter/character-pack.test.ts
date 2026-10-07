@@ -666,7 +666,7 @@ describe("readCharacterAsset", () => {
       readCharacterAsset(
         current,
         [current, other],
-        { pack: "missing", fileName: "other.svg" },
+        { pack: "missing", fileName: "default.svg" },
         undefined,
       ),
     ).toBeUndefined()
@@ -674,7 +674,7 @@ describe("readCharacterAsset", () => {
       readCharacterAsset(
         current,
         [current, other],
-        { pack: "..", fileName: "other.svg" },
+        { pack: "..", fileName: "default.svg" },
         undefined,
       ),
     ).toBeUndefined()
