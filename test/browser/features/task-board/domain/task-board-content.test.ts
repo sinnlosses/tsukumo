@@ -25,6 +25,7 @@ function taskOf(id: string, overrides: Partial<TaskSummaryItem>): TaskSummaryIte
     difficulty: undefined,
     loopable: undefined,
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body: "",
     location: { kind: "none" },
@@ -41,25 +42,19 @@ describe("boardEntries の状態の言い方", () => {
     expect(statesOf([taskOf("X-001", {})])).toEqual([{ kind: "ready", text: "着手できる" }])
   })
 
-  it("未完了の依存を持つ todo は待ちで、その ID を字に添える", () => {
-    expect(
-      statesOf([taskOf("X-001", {}), taskOf("X-002", { dependencies: ["X-001"] })]).at(1),
-    ).toEqual({ kind: "blocked", text: "待ち X-001" })
-  })
-
-  it("完了した依存と一覧に無い依存は止めない", () => {
+  it("済んでいない依存を持つ todo は待ちで、その ID を字に添える", () => {
     expect(
       statesOf([
-        taskOf("X-001", { status: "done" }),
-        taskOf("X-002", { dependencies: ["X-001", "X-999"] }),
+        taskOf("X-001", {}),
+        taskOf("X-002", { dependencies: ["X-001"], waitingFor: ["X-001"] }),
       ]).at(1),
-    ).toEqual({ kind: "ready", text: "着手できる" })
+    ).toEqual({ kind: "blocked", text: "待ち X-001" })
   })
 
   it("保留は待ちが残っていれば ID を添え、無ければ字だけ", () => {
     const states = statesOf([
       taskOf("X-001", {}),
-      taskOf("X-002", { status: "hold", dependencies: ["X-001"] }),
+      taskOf("X-002", { status: "hold", dependencies: ["X-001"], waitingFor: ["X-001"] }),
       taskOf("X-003", { status: "hold" }),
     ])
     expect(states.at(1)).toEqual({ kind: "hold", text: "保留 · X-001" })
@@ -91,9 +86,7 @@ describe("boardContent", () => {
   const NO_BREADCRUMB: BoardContentInput = {
     query: "",
     filter: "all",
-    tracked: { kind: "known", files: new Set(["develop/task/X-002.md"]) },
     destination: { kind: "present" },
-    openFile: () => {},
     run: () => {},
     onJump: () => {},
     breadcrumb: { kind: "none" },
@@ -160,9 +153,10 @@ describe("boardContent", () => {
         taskOf("X-001", { status: "doing" }),
         taskOf("X-002", {
           dependencies: ["X-001", "X-999"],
-          location: { kind: "file", path: "develop/task/X-002.md" },
+          waitingFor: ["X-001"],
+          location: { kind: "issue", url: "https://example.invalid/issues/2" },
         }),
-        taskOf("X-003", { dependencies: ["X-002"] }),
+        taskOf("X-003", { dependencies: ["X-002"], waitingFor: ["X-002"] }),
       ]),
       "X-002",
     )
@@ -176,7 +170,7 @@ describe("boardContent", () => {
       ["unlisted", "X-999"],
     ])
     expect(detail.dependents.map((card) => card.id)).toEqual(["X-003"])
-    expect(opener).toMatchObject({ kind: "file", availability: "tracked" })
+    expect(opener).toEqual({ kind: "issue", url: "https://example.invalid/issues/2" })
     expect(run).toEqual({ kind: "unavailable", reason: "待ちが終わると頼めます" })
   })
 })

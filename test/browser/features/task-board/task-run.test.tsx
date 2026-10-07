@@ -1,4 +1,3 @@
-import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
@@ -14,18 +13,12 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
-import { createTestQueryClient } from "../../query-client.tsx"
-import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
 
-let fetchStub: RpcFetchStub | undefined = undefined
-
 afterEach(() => {
   cleanup()
-  fetchStub?.restore()
-  fetchStub = undefined
 })
 
 function known(
@@ -43,6 +36,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "haiku",
     loopable: "Y",
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body: "",
     location: { kind: "none" },
@@ -54,6 +48,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "opus",
     loopable: "Y",
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body: "",
     location: { kind: "none" },
@@ -67,10 +62,7 @@ function renderList(spy: CommandSpy, overrides: Partial<SessionState>): void {
   renderWithStore(<TaskList tasks={known(TASKS)} selectedStatus="all" />, spy, overrides)
 }
 
-/**
- * 見出しの「一覧を見る」で開くタスクのモーダル（開いた状態で描く）。閉じる要求は `closed` に溜まる。
- * 「エディタで開く」が引くファイル一覧の手続きは空の一覧を返す代役にする。
- */
+/** 見出しの「一覧を見る」で開くタスクのモーダル（開いた状態で描く）。閉じる要求は `closed` に溜まる。 */
 function renderBoard(
   spy: CommandSpy = () => {},
   closed: string[] = [],
@@ -78,17 +70,14 @@ function renderBoard(
   runPrompt = "/next-task {id}",
   overrides: Partial<SessionState> = {},
 ): void {
-  fetchStub = stubRpcFetch(() => rpcOutput([]))
   renderWithStore(
-    <QueryClientProvider client={createTestQueryClient()}>
-      <TaskBoard
-        tasks={known(tasks, runPrompt)}
-        request={{ kind: "open", focus: { kind: "first" } }}
-        onClose={() => {
-          closed.push("モーダル")
-        }}
-      />
-    </QueryClientProvider>,
+    <TaskBoard
+      tasks={known(tasks, runPrompt)}
+      request={{ kind: "open", focus: { kind: "first" } }}
+      onClose={() => {
+        closed.push("モーダル")
+      }}
+    />,
     spy,
     overrides,
   )
@@ -192,6 +181,7 @@ describe("タスクの実行を頼む", () => {
       difficulty: "sonnet",
       loopable: "Y",
       dependencies,
+      waitingFor: dependencies,
       assignee: undefined,
       body: "",
       location: { kind: "none" },
@@ -218,7 +208,12 @@ describe("タスクの実行を頼む", () => {
 
   it("モーダルからは依存の済んだ保留も頼め、判断を聞かれることを確認に添える", () => {
     const sent: unknown[] = []
-    renderBoard(collectInto(sent), [], [...TASKS, holdTask("X-003", ["X-001"])], DEFAULT_RUN_PROMPT)
+    renderBoard(
+      collectInto(sent),
+      [],
+      [...TASKS, holdTask("X-003", ["X-001"], [])],
+      DEFAULT_RUN_PROMPT,
+    )
 
     openRunConfirm("X-003")
     expect(confirmDialog()?.textContent).toContain("着手の前に判断を聞いて")
@@ -235,7 +230,12 @@ describe("タスクの実行を頼む", () => {
 
   it("設定の文面の {id} をタスクIDにして送る。既定でない文面では保留の説明を添えない", () => {
     const sent: unknown[] = []
-    renderBoard(collectInto(sent), [], [...TASKS, holdTask("X-003", ["X-001"])], "/work {id} now")
+    renderBoard(
+      collectInto(sent),
+      [],
+      [...TASKS, holdTask("X-003", ["X-001"], [])],
+      "/work {id} now",
+    )
 
     openRunConfirm("X-003")
     expect(confirmDialog()?.textContent).toContain("/work X-003 now")
@@ -277,7 +277,7 @@ describe("タスクの実行を頼む", () => {
   })
 
   it("モーダルでも待ちの残る保留は頼めない", () => {
-    renderBoard(() => {}, [], [...TASKS, holdTask("X-003", ["X-002"])])
+    renderBoard(() => {}, [], [...TASKS, holdTask("X-003", ["X-002"], ["X-002"])])
 
     fireEvent.click(screen.getByRole("option", { name: /X-003/ }))
 
@@ -287,7 +287,11 @@ describe("タスクの実行を頼む", () => {
   })
 })
 
-function holdTask(id: string, dependencies: readonly string[]): TaskSummaryItem {
+function holdTask(
+  id: string,
+  dependencies: readonly string[],
+  waitingFor: readonly string[],
+): TaskSummaryItem {
   return {
     id,
     summary: `架空の保留 ${id}`,
@@ -295,6 +299,7 @@ function holdTask(id: string, dependencies: readonly string[]): TaskSummaryItem 
     difficulty: "sonnet",
     loopable: "N",
     dependencies,
+    waitingFor,
     assignee: undefined,
     body: "",
     location: { kind: "none" },

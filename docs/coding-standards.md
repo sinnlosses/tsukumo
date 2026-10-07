@@ -616,7 +616,7 @@ import の輪ができると初期化前参照で落ちる。`typescript/no-impo
 import してよい先が決まっている**（表は二重に書かず `docs/architecture.md`「`src/browser/` の箱と、
 置く基準」を正典とする）。この縦の辺も `test/architecture.test.ts` が落とす。
 
-**ファイルは単数形にする。** 複数は「複数返す」関数名の側で表す（`task-summary.ts` の
+**ファイルは単数形にする。** 複数は「複数返す」関数名の側で表す（`task-workflow.ts` の
 `unfinishedTaskIds`）。理由は、ファイル名が**概念**を指すため（原則5）。概念は1つで、いくつ返すかは
 関数の都合。
 

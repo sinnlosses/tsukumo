@@ -7,14 +7,14 @@ import {
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
 import {
-  taskSummaryItemsOfBeadsIssues,
-  type BeadsIssue,
-} from "../../../../src/shared/repository/beads-issue.ts"
-import {
   DEFAULT_RUN_PROMPT,
   type ProjectSettingsRead,
 } from "../../../../src/shared/repository/project-settings.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
+import {
+  taskSummaryItemsOfBeadsIssues,
+  type BeadsIssue,
+} from "../../../../src/shared/repository/task-workflow.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 
 // 偽の口と手で進める時計で、見回りが子プロセスを起こした回数を数える。

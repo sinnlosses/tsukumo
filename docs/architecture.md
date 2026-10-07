@@ -334,6 +334,10 @@ plugin/                       セッションに載せる Claude Code のプラ�
 欄の説明は `README.md`「プロジェクトの設定」。
 
 **タスク一覧の読み元は Beads だけ**（`server/repository/adapter/task-beads-source.ts`。`bd` の課題）。
+**課題の解釈は task-workflow 方式の1か所に閉じる。** Beads の状態の読み替え・ラベル・本文の7節・依存が着手を止めるかの規則・
+`## やること` の段は `shared/repository/task-workflow.ts`（task-workflow スキルの写し。正典はスキルの側）が持ち、
+タスク一般の形（`TaskSummaryItem`・`DoneTask`。判定済みの `waitingFor` を含む）は `shared/repository/task-summary.ts` に置く。
+一覧・迎える口・成果・おすすめは一般の形だけを読む（成果は `bd` を読んだ境界で `DoneTask` に畳む）。
 例外は疑似セッションで、`taskSummaryOptionsOf("fake")` が `bd` の代わりに cwd のファイルを読む口（`fake-beads.ts` の
 `readFakeBeadsIssues`）と短い見回りの間隔に差し替える（E2E の足場が課題を置く。設定の読み出しと読み元の選び方はふだんと同じ）。
 見張りの `watchTaskSummary` は、設定が前回と変わった見回りでだけ読み元を選び直し、設定が読めないときは

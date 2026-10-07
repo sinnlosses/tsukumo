@@ -4,7 +4,7 @@
 import {
   claimedTaskStepsOf,
   type ClaimedTaskSteps,
-} from "../../../shared/repository/beads-issue.ts"
+} from "../../../shared/repository/task-workflow.ts"
 import { readBeadsIssues } from "./beads.ts"
 import { projectNameOf } from "./project-name.ts"
 import { readProjectSettings } from "./project-settings.ts"

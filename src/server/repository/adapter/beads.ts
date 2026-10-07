@@ -12,7 +12,7 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import type { BeadsIssue } from "../../../shared/repository/beads-issue.ts"
+import type { BeadsIssue } from "../../../shared/repository/task-workflow.ts"
 import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "./git.ts"
 
 /** `bd` 1回の結果。タイムアウトだけを分けるのは、その回を諦めるか「不明」にするかが呼び出し側で変わるため。 */

@@ -13,6 +13,7 @@ function taskOf(id: string, status: string | undefined): TaskSummaryItem {
     difficulty: undefined,
     loopable: undefined,
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body: "",
     location: { kind: "none" },

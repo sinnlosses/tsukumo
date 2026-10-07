@@ -1,4 +1,3 @@
-import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
@@ -8,14 +7,10 @@ import { TaskBoard } from "../../../../src/browser/features/task-board/task-boar
 import type { TaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import { createTestQueryClient } from "../../query-client.tsx"
-import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../rpc-fetch-stub.ts"
 import { putSession } from "../../session-store.ts"
 
 // タスクのモーダルの出し分けと、選んでいる行の移り方・つながりのたどり方。
 // フィクスチャはすべて手で書いた架空の課題。
-
-let fetchStub: RpcFetchStub | undefined = undefined
 
 beforeAll(async () => {
   await loadTaskBody()
@@ -23,8 +18,6 @@ beforeAll(async () => {
 
 afterEach(() => {
   cleanup()
-  fetchStub?.restore()
-  fetchStub = undefined
 })
 
 const ISSUE_URL = "https://example.invalid/foo/bar/issues/12"
@@ -37,6 +30,7 @@ function beadsTask(location: TaskSummaryItem["location"]): TaskSummaryItem {
     difficulty: "sonnet",
     loopable: "Y",
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body: "## 目的・背景\n\n架空の本文。\n",
     location,
@@ -45,15 +39,12 @@ function beadsTask(location: TaskSummaryItem["location"]): TaskSummaryItem {
 
 function renderBoard(task: TaskSummaryItem): void {
   putSession(INITIAL_SESSION_STATE)
-  fetchStub = stubRpcFetch(() => rpcOutput([]))
   render(
-    <QueryClientProvider client={createTestQueryClient()}>
-      <TaskBoard
-        tasks={{ kind: "known", items: [task], runPrompt: "/next-task {id}" }}
-        request={{ kind: "open", focus: { kind: "first" } }}
-        onClose={() => {}}
-      />
-    </QueryClientProvider>,
+    <TaskBoard
+      tasks={{ kind: "known", items: [task], runPrompt: "/next-task {id}" }}
+      request={{ kind: "open", focus: { kind: "first" } }}
+      onClose={() => {}}
+    />,
   )
 }
 
@@ -66,17 +57,13 @@ describe("タスクのモーダルの置き場所（Beads 方式）", () => {
     const open = screen.getByRole("link", { name: "Issue を開く" })
     expect(open.getAttribute("href")).toBe(ISSUE_URL)
     expect(open.getAttribute("target")).toBe("_blank")
-    expect(screen.queryByText("ファイル")).toBeNull()
-    expect(screen.queryByRole("button", { name: "エディタで開く" })).toBeNull()
   })
 
   it("置き場所の無い課題は、置き場所の行も開く口も出さない", () => {
     renderBoard(beadsTask({ kind: "none" }))
 
     expect(screen.queryByText("Issue")).toBeNull()
-    expect(screen.queryByText("ファイル")).toBeNull()
     expect(screen.queryByRole("link", { name: "Issue を開く" })).toBeNull()
-    expect(screen.queryByRole("button", { name: "エディタで開く" })).toBeNull()
   })
 })
 
@@ -167,8 +154,16 @@ describe("タスクのモーダル（つながりをたどる）", () => {
         "```",
       ].join("\n"),
     ),
-    { ...selectionTask("X-002", "todo", "架空の本文。\n"), dependencies: ["X-001"] },
-    { ...selectionTask("X-003", "todo", "架空の本文。\n"), dependencies: ["X-002"] },
+    {
+      ...selectionTask("X-002", "todo", "架空の本文。\n"),
+      dependencies: ["X-001"],
+      waitingFor: ["X-001"],
+    },
+    {
+      ...selectionTask("X-003", "todo", "架空の本文。\n"),
+      dependencies: ["X-002"],
+      waitingFor: ["X-002"],
+    },
   ]
 
   function body(): HTMLElement {
@@ -287,6 +282,7 @@ function selectionTask(id: string, status: string, body: string): TaskSummaryIte
     difficulty: "sonnet",
     loopable: "Y",
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body,
     location: { kind: "none" },
@@ -306,19 +302,15 @@ function renderSelectionBoard(
   readonly rerenderWith: (items: readonly TaskSummaryItem[], request: TaskBoardRequest) => void
 } {
   putSession(INITIAL_SESSION_STATE)
-  fetchStub = stubRpcFetch(() => rpcOutput([]))
-  const client = createTestQueryClient()
   const boardOf = (
     nextItems: readonly TaskSummaryItem[],
     nextRequest: TaskBoardRequest,
   ): ReactElement => (
-    <QueryClientProvider client={client}>
-      <TaskBoard
-        tasks={{ kind: "known", items: nextItems, runPrompt: "/next-task {id}" }}
-        request={nextRequest}
-        onClose={() => {}}
-      />
-    </QueryClientProvider>
+    <TaskBoard
+      tasks={{ kind: "known", items: nextItems, runPrompt: "/next-task {id}" }}
+      request={nextRequest}
+      onClose={() => {}}
+    />
   )
   const { rerender } = render(boardOf(items, request))
   return {

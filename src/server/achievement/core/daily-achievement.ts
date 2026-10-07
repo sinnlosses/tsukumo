@@ -6,10 +6,7 @@ import type {
   AchievementMilestone,
   DailyAchievement,
 } from "../../../shared/achievement/achievement.ts"
-import {
-  closedBeadsTaskSummariesBefore,
-  type BeadsIssue,
-} from "../../../shared/repository/beads-issue.ts"
+import type { DoneTask } from "../../../shared/repository/task-summary.ts"
 import {
   achievementCommitsInRange,
   commitMilestoneOf,
@@ -23,9 +20,9 @@ export function epochSecondsOf(epochMs: number): number {
   return Math.floor(epochMs / 1000)
 }
 
-/** 終えたタスクの材料。Beads の課題と、タスクID → 登録日の日付キーの表。 */
+/** 終えたタスクの材料。終えたタスク（番号の順）と、タスクID → 登録日の日付キーの表。 */
 export type DoneTaskSources = {
-  readonly issues: readonly BeadsIssue[]
+  readonly done: readonly DoneTask[]
   readonly registeredOn: ReadonlyMap<string, string>
 }
 
@@ -70,12 +67,12 @@ export function dailyAchievementOf(input: DailyAchievementInput): DailyAchieveme
     }
   }
 
-  const doneBeforeStart = closedBeadsTaskSummariesBefore(
-    input.tasks.issues,
+  const doneBeforeStart = doneTaskSummariesBefore(
+    input.tasks.done,
     input.range.startEpochMilliseconds,
   )
   const items = doneTasksSince(
-    closedBeadsTaskSummariesBefore(input.tasks.issues, input.range.endEpochMilliseconds),
+    doneTaskSummariesBefore(input.tasks.done, input.range.endEpochMilliseconds),
     doneBeforeStart,
   )
   const taskMilestone = taskMilestoneOf(items, doneBeforeStart.size)
@@ -87,6 +84,18 @@ export function dailyAchievementOf(input: DailyAchievementInput): DailyAchieveme
       (milestone): milestone is AchievementMilestone => milestone !== undefined,
     ),
   }
+}
+
+/** `beforeEpochMilliseconds` より前に終えたタスクを、タスクID → summary で（`done` の順のまま）返す。 */
+function doneTaskSummariesBefore(
+  done: readonly DoneTask[],
+  beforeEpochMilliseconds: number,
+): ReadonlyMap<string, string> {
+  return new Map(
+    done
+      .filter((task) => task.closedAtEpochMilliseconds < beforeEpochMilliseconds)
+      .map((task) => [task.id, task.summary]),
+  )
 }
 
 /** その日のコミットの数と節目「commit」。コミットを読めていなければ数は `unknown` で節目は無い。 */

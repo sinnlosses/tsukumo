@@ -10,7 +10,6 @@ import {
 } from "../../../../../shared/recommendation/welcome-greeting.ts"
 import {
   taskReadiness,
-  unfinishedTaskIds,
   type TaskSummaryResult,
 } from "../../../../../shared/repository/task-summary.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
@@ -98,9 +97,8 @@ function readyTaskCards(tasks: TaskSummaryResult): readonly WelcomeCard[] {
   if (tasks.kind !== "known") {
     return []
   }
-  const unfinished = unfinishedTaskIds(tasks.items)
   return tasks.items
-    .filter((task) => taskReadiness(task, unfinished)?.kind === "ready")
+    .filter((task) => taskReadiness(task)?.kind === "ready")
     .map((task) => ({
       key: task.id,
       id: task.id,

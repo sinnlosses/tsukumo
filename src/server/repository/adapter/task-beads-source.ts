@@ -3,7 +3,7 @@
 // `bd list` は1回が `git rev-parse` より2桁重いので、課題の変化の印（`createBeadsStampReader`）が前回読んだときと同じなら打たない。印が取れないときは毎回打つ。
 // `bd` が読めないとき（`.beads` が無い・`bd` が無い）は「不明」にし、タイムアウトしたときはその回を諦める。
 
-import { taskSummaryItemsOfBeadsIssues } from "../../../shared/repository/beads-issue.ts"
+import { taskSummaryItemsOfBeadsIssues } from "../../../shared/repository/task-workflow.ts"
 import type { readBeadsIssues } from "./beads.ts"
 import type { TaskSource } from "./task-source.ts"
 

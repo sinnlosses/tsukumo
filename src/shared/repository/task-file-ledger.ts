@@ -3,7 +3,8 @@
 //
 // 旧形式の一覧とアーカイブは、ファイル方式へ移す前の履歴にだけ現れる。履歴に残っているので、外すと過去の日のコミットの数が変わる。
 
-import { TASK_DIR_PATH } from "./task-summary.ts"
+/** ファイル方式のタスクファイルの置き場所。`main` からの相対パス。 */
+const TASK_DIR_PATH = "develop/task/"
 
 const LEDGER_FILE_PATHS: ReadonlySet<string> = new Set([
   "develop/tasks.json",

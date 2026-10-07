@@ -15,7 +15,7 @@
 // `phases` を省いた呼び出しの並びは、結果の文（`taskWorkPlanReplyOf`）から読み戻す。
 // transcript から組み直すときも結果は残っているので、`pass` だけを通せば同じ並びになる。
 
-import type { ClaimedTaskSteps } from "../../../shared/repository/beads-issue.ts"
+import type { ClaimedTaskSteps } from "../../../shared/repository/task-workflow.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
   advancedByReturn,

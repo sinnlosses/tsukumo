@@ -1,7 +1,7 @@
 // `work_plan` ツール（段取り）の説明文と、呼ぶ条件・段の切り方の規約と、handler が返す文。
 // ツールは仕事のときだけ載り、規約も仕事の `systemPrompt` の append にだけ入る。
 
-import type { ClaimedTaskSteps } from "../../../shared/repository/beads-issue.ts"
+import type { ClaimedTaskSteps } from "../../../shared/repository/task-workflow.ts"
 import { parseWorkPlanCall, type WorkPlan } from "../../../shared/session/work-plan.ts"
 import { taskWorkPlanReplyOf } from "./task-work-plan-reply.ts"
 import type { WorkPlanReview, WorkPlanVerdict } from "./work-plan-review.ts"

@@ -1,8 +1,7 @@
 // タスクのモーダルの下の操作の帯。ID をコピー・置き場所を開く口・「tsukumo に頼む」。
 // 「tsukumo に頼む」を押せないときは薄くし、横に理由を添える。
-// 置き場所の一覧を取り直している間は、「エディタで開く」を押せるかがまだ決まらないので `aria-busy` を出す。
 
-import { Copy, ExternalLink, FileText, MessageCircle } from "lucide-react"
+import { Copy, ExternalLink, MessageCircle } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
@@ -16,10 +15,7 @@ export function TaskBoardAction(props: {
 }): ReactElement {
   const { opener, run } = props
   return (
-    <div
-      className={styles["task-board-action"]}
-      aria-busy={opener.kind === "file" && opener.availability === "checking"}
-    >
+    <div className={styles["task-board-action"]}>
       <Button
         variant="outline"
         size="secondary"
@@ -35,27 +31,6 @@ export function TaskBoardAction(props: {
         <Copy size={14} strokeWidth={2} aria-hidden="true" />
         ID をコピー
       </Button>
-      {opener.kind === "file" && (
-        <Button
-          variant="outline"
-          size="secondary"
-          pressed="none"
-          disabled={opener.availability !== "tracked"}
-          ariaLabel={undefined}
-          disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={
-            opener.availability === "untracked"
-              ? "この作業ツリーでは git 管理下に無いので開けない"
-              : undefined
-          }
-          className={styles["task-board-action-button"]}
-          onClick={opener.onOpen}
-        >
-          <FileText size={14} strokeWidth={2} aria-hidden="true" />
-          エディタで開く
-        </Button>
-      )}
       {opener.kind === "issue" && (
         <a
           href={opener.url}

@@ -9,7 +9,7 @@ import type { EffortLevel, ModelAlias, PermissionMode } from "../../../shared/co
 import type { ContextUsageReport } from "../../../shared/context-usage/context-usage.ts"
 import type { PromptDelayFootprint } from "../../../shared/diagnostic/diagnostic-record.ts"
 import type { PlanUsageReport } from "../../../shared/plan-usage/plan-usage.ts"
-import type { ClaimedTaskSteps } from "../../../shared/repository/beads-issue.ts"
+import type { ClaimedTaskSteps } from "../../../shared/repository/task-workflow.ts"
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
 import type { SessionDigest } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"

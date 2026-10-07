@@ -671,38 +671,30 @@
           ]
         },
         {
-          "tag": "div",
+          "tag": "button",
           "attributes": {
-            "aria-busy": "false"
+            "aria-disabled": "false",
+            "type": "button"
           },
           "children": [
             {
-              "tag": "button",
-              "attributes": {
-                "aria-disabled": "false",
-                "type": "button"
-              },
-              "children": [
-                {
-                  "tag": "svg"
-                },
-                "ID をコピー"
-              ]
+              "tag": "svg"
             },
+            "ID をコピー"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-disabled": "false",
+            "aria-haspopup": "dialog",
+            "type": "button"
+          },
+          "children": [
             {
-              "tag": "button",
-              "attributes": {
-                "aria-disabled": "false",
-                "aria-haspopup": "dialog",
-                "type": "button"
-              },
-              "children": [
-                {
-                  "tag": "svg"
-                },
-                "tsukumo に頼む"
-              ]
-            }
+              "tag": "svg"
+            },
+            "tsukumo に頼む"
           ]
         }
       ]

@@ -4,7 +4,7 @@
 // つながりの札（依存・依存元）と本文中の ID は `onJump` で選んでいるタスクを切り替える
 // （`docs/architecture/display.md`「タスクのモーダル」の「つながりをたどる」）。
 
-import { ChevronLeft, ChevronRight, FileText, Repeat } from "lucide-react"
+import { ChevronLeft, ChevronRight, Repeat } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
@@ -53,15 +53,6 @@ export function TaskDetail(props: {
           {detail.loop.on && <Repeat size={12} strokeWidth={2} aria-hidden="true" />}
           {detail.loop.text}
         </dd>
-        {detail.location.kind === "file" && (
-          <>
-            <dt>ファイル</dt>
-            <dd className={styles["task-detail-location"]}>
-              <FileText size={14} strokeWidth={2} aria-hidden="true" />
-              {detail.location.path}
-            </dd>
-          </>
-        )}
         {detail.location.kind === "issue" && (
           <>
             <dt>Issue</dt>

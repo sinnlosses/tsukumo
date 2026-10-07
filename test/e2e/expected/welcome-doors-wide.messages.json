@@ -94,6 +94,7 @@
             "difficulty": "sonnet",
             "loopable": "Y",
             "dependencies": [],
+            "waitingFor": [],
             "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",
             "location": {
               "kind": "none"
@@ -106,6 +107,9 @@
             "difficulty": "sonnet",
             "loopable": "Y",
             "dependencies": [
+              "T-001"
+            ],
+            "waitingFor": [
               "T-001"
             ],
             "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n\n## 決まっていること（蒸し返さない）\n\n## 解くべき論点\n\n## やること\n\n## 完了条件\n\n## 注意\n\n## 参考情報\n",

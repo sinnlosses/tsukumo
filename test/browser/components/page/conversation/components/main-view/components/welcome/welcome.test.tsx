@@ -24,6 +24,7 @@ const READY_TASK: TaskSummaryItem = {
   difficulty: "sonnet",
   loopable: "Y",
   dependencies: [],
+  waitingFor: [],
   assignee: undefined,
   body: "",
   location: { kind: "none" },

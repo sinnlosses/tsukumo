@@ -2,11 +2,7 @@
 // 候補はタスク一覧（進捗管理のデータ）と、中身を持たない「前回の続き」だけで、会話を含まない。
 // 前のセッションの要約（「残り：」）も、前のセッションが有るかも候補に入れない（`docs/coding-standards.md`「会話内容の扱い」）。
 
-import {
-  taskReadiness,
-  type TaskSummaryResult,
-  unfinishedTaskIds,
-} from "../../../shared/repository/task-summary.ts"
+import { taskReadiness, type TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 
 /** 問い合わせに渡すタスクの候補の上限（一覧の順に上から）。 */
 export const RECOMMENDATION_TASK_CANDIDATE_LIMIT = 20
@@ -42,9 +38,8 @@ export function recommendationKey(candidates: readonly RecommendationCandidate[]
 function readyTaskCandidates(
   items: Extract<TaskSummaryResult, { readonly kind: "known" }>["items"],
 ): readonly RecommendationCandidate[] {
-  const unfinished = unfinishedTaskIds(items)
   return items
-    .filter((task) => taskReadiness(task, unfinished)?.kind === "ready")
+    .filter((task) => taskReadiness(task)?.kind === "ready")
     .slice(0, RECOMMENDATION_TASK_CANDIDATE_LIMIT)
     .map((task) => ({
       kind: "task",
@@ -52,7 +47,7 @@ function readyTaskCandidates(
       summary: task.summary,
       difficulty: task.difficulty ?? "",
       waitedBy: items
-        .filter((other) => unfinished.has(other.id) && other.dependencies.includes(task.id))
+        .filter((other) => other.waitingFor.includes(task.id))
         .map((other) => other.id),
     }))
 }

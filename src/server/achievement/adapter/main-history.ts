@@ -19,14 +19,11 @@ import {
 } from "../../../shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../shared/achievement/achievement.ts"
 import {
-  doneBeadsTaskClosedAtEpochMilliseconds,
-  taskIdOfBeadsId,
-  type BeadsIssue,
-} from "../../../shared/repository/beads-issue.ts"
-import {
   mainBranchRefOf,
   type ProjectSettingsRead,
 } from "../../../shared/repository/project-settings.ts"
+import type { DoneTask } from "../../../shared/repository/task-summary.ts"
+import { doneTasksOfBeadsIssues } from "../../../shared/repository/task-workflow.ts"
 import { localDateEpochRange, localDateKey, localTimeHHMM } from "../../adapter/local-time.ts"
 import {
   readBeadsIssues,
@@ -43,8 +40,8 @@ import {
 } from "../core/achievement-commit.ts"
 import { dailyAchievementOf, epochSecondsOf, type DailyCommits } from "../core/daily-achievement.ts"
 
-/** Beads を読んだ結果。`missing` は `.beads` が無い、`unavailable` は `.beads` があるのに読めなかった。 */
-type AchievementBeadsRead = readonly BeadsIssue[] | "missing" | "unavailable"
+/** Beads を読んで終えたタスクに畳んだ結果。`missing` は `.beads` が無い、`unavailable` は `.beads` があるのに読めなかった。 */
+type AchievementBeadsRead = readonly DoneTask[] | "missing" | "unavailable"
 
 /**
  * 成果の読みが覚えるものの入れ物。配線が1つ作り、{@link readAchievement} と {@link readCommitCalendar} の両方に渡す。
@@ -110,7 +107,7 @@ export function createAchievementCache(cwd: string): AchievementCache {
 /** `.beads` が見つかったあとに `bd list` で全件を読む。落ちても時間切れでも `unavailable`。 */
 async function readAllBeadsIssues(cwd: string): Promise<AchievementBeadsRead> {
   const beads = await readBeadsIssues(cwd)
-  return beads.kind === "issues" ? beads.issues : "unavailable"
+  return beads.kind === "issues" ? doneTasksOfBeadsIssues(beads.issues) : "unavailable"
 }
 
 /**
@@ -177,7 +174,7 @@ export async function readAchievement(
       tasks:
         typeof beads === "string"
           ? { kind: "untracked" }
-          : { kind: "tracked", issues: beads, registeredOn: beadsCreatedOn(beads) },
+          : { kind: "tracked", done: beads, registeredOn: registeredOnOf(beads) },
       timeOf: localTimeHHMM,
     }),
   }
@@ -209,14 +206,9 @@ async function readDailyCommits(
     : { kind: "read", commits, totalCommitsBeforeToday }
 }
 
-/** Beads の課題ごとの作った日（タスクID → ローカルの日付キー）。卒業の登録日に使う。 */
-function beadsCreatedOn(issues: readonly BeadsIssue[]): ReadonlyMap<string, string> {
-  return new Map(
-    issues.map((issue) => [
-      taskIdOfBeadsId(issue.id),
-      localDateKey(issue.createdAtEpochMilliseconds),
-    ]),
-  )
+/** 終えたタスクごとの作った日（タスクID → ローカルの日付キー）。卒業の登録日に使う。 */
+function registeredOnOf(done: readonly DoneTask[]): ReadonlyMap<string, string> {
+  return new Map(done.map((task) => [task.id, localDateKey(task.createdAtEpochMilliseconds)]))
 }
 
 /**
@@ -300,7 +292,10 @@ export async function readCommitCalendar(
   if (beads === "missing") {
     return { kind: "ok", calendar: { kind: "unknown" } }
   }
-  const countsByDate = countBy(doneBeadsTaskClosedAtEpochMilliseconds(beads), localDateKey)
+  const countsByDate = countBy(
+    beads.map((task) => task.closedAtEpochMilliseconds),
+    localDateKey,
+  )
   return calendarOf(
     today,
     achievementCalendarDateKeys(today),

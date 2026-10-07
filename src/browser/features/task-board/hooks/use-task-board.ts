@@ -8,7 +8,6 @@ import { useReducer, useState } from "react"
 
 import { DEFAULT_RUN_PROMPT } from "../../../../shared/repository/project-settings.ts"
 import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
-import { useSession } from "../../../stores/session.ts"
 import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import { boardContent, boardEntries, type BoardEntry } from "../domain/task-board-content.ts"
 import { countsTextOf, matchesFilter, matchesQuery } from "../domain/task-board-filter.ts"
@@ -22,7 +21,6 @@ import {
   type ShownRow,
 } from "./task-board-state.ts"
 import { useRunDestination } from "./use-run-destination.ts"
-import { useTrackedFileList } from "./use-tracked-file-list.ts"
 
 export function useTaskBoard(
   tasks: TaskSummaryResult,
@@ -37,8 +35,6 @@ export function useTaskBoard(
     send({ kind: "open", request })
   }
   const [confirmingId, setConfirmingId] = useState<string | undefined>(undefined)
-  const dispatch = useSession((session) => session.dispatch)
-  const tracked = useTrackedFileList(open)
   const runPrompt = tasks.kind === "known" ? tasks.runPrompt : DEFAULT_RUN_PROMPT
   const destination = useRunDestination(runPrompt)
 
@@ -89,11 +85,7 @@ export function useTaskBoard(
   const content = boardContent(tasks, entries, byId, rows, selected, isVisible, knownIds, {
     query,
     filter,
-    tracked,
     destination,
-    openFile: (path) => {
-      dispatch.host.openFile({ path })
-    },
     run: setConfirmingId,
     onJump: jumpTo,
     breadcrumb:

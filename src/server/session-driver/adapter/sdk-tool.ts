@@ -15,7 +15,7 @@ import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportSectionSchema } from "../../../shared/report/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report/report-check.ts"
 import { parseReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
-import type { ClaimedTaskSteps } from "../../../shared/repository/beads-issue.ts"
+import type { ClaimedTaskSteps } from "../../../shared/repository/task-workflow.ts"
 import {
   MIN_WORK_PLAN_PHASES,
   parseWorkPlanClosing,

@@ -4,7 +4,6 @@ import { isIncludedIn } from "remeda"
 
 import {
   taskReadiness,
-  unfinishedTaskIds,
   type TaskLocation,
   type TaskSummaryItem,
   type TaskSummaryResult,
@@ -25,22 +24,17 @@ import type {
   TaskStateKind,
   TaskStateView,
 } from "./task-board-view.ts"
-import type { TrackedFileList } from "./tracked-file-list.ts"
 
 /** 一覧の1件と、その状態の言い方（行・札・件数で何度も使うので1回だけ作る）。 */
 export type BoardEntry = {
   readonly task: TaskSummaryItem
   readonly state: TaskStateView
-  /** 依存のうち、まだ済んでいない（一覧にあって完了・取り下げでない）ものの ID。 */
-  readonly waiting: readonly string[]
 }
 
 export type BoardContentInput = {
   readonly query: string
   readonly filter: TaskBoardFilter
-  readonly tracked: TrackedFileList
   readonly destination: RunDestination
-  readonly openFile: (path: string) => void
   readonly run: (taskId: string) => void
   readonly onJump: (id: string) => void
   readonly breadcrumb: TaskBoardBreadcrumb
@@ -70,11 +64,7 @@ const TASK_BOARD_LIST_ID = "task-board-list"
 const MISSING = "—"
 
 export function boardEntries(items: readonly TaskSummaryItem[]): readonly BoardEntry[] {
-  const unfinished = unfinishedTaskIds(items)
-  return items.map((task) => {
-    const waiting = task.dependencies.filter((id) => unfinished.has(id))
-    return { task, state: taskStateOf(task, unfinished, waiting), waiting }
-  })
+  return items.map((task) => ({ task, state: taskStateOf(task) }))
 }
 
 export function boardContent(
@@ -150,7 +140,7 @@ function selectionOf(
       void navigator.clipboard.writeText(task.id).catch(() => {})
     },
     onJump: input.onJump,
-    opener: openerOf(task.location, input),
+    opener: openerOf(task.location),
     run: runOf(entry, input),
   }
 }
@@ -158,7 +148,7 @@ function selectionOf(
 /** 保留のタスクは、文面が着手の前に判断を尋ねさせるので頼める。 */
 function runOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRun {
   const kind = entry.state.kind
-  if (kind === "ready" || (kind === "hold" && entry.waiting.length === 0)) {
+  if (kind === "ready" || (kind === "hold" && entry.task.waitingFor.length === 0)) {
     return input.destination.kind === "missing"
       ? { kind: "unavailable", reason: `/${input.destination.command} が無いので頼めません` }
       : { kind: "available", onRun: () => input.run(entry.task.id) }
@@ -166,21 +156,8 @@ function runOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRun {
   return { kind: "unavailable", reason: RUN_UNAVAILABLE_REASON[kind] }
 }
 
-function openerOf(location: TaskLocation, input: BoardContentInput): TaskBoardOpener {
-  if (location.kind === "issue") {
-    return { kind: "issue", url: location.url }
-  }
-  if (location.kind === "none") {
-    return { kind: "none" }
-  }
-
-  const availability =
-    input.tracked.kind === "checking"
-      ? "checking"
-      : input.tracked.files.has(location.path)
-        ? "tracked"
-        : "untracked"
-  return { kind: "file", availability, onOpen: () => input.openFile(location.path) }
+function openerOf(location: TaskLocation): TaskBoardOpener {
+  return location.kind === "issue" ? { kind: "issue", url: location.url } : { kind: "none" }
 }
 
 function dependencyCardOf(id: string, byId: ReadonlyMap<string, BoardEntry>): TaskDependencyCard {
@@ -212,15 +189,11 @@ function dependentsOf(
 }
 
 /**
- * 状態の言い方。`todo` の着手できるかは `taskReadiness` の規則（一覧に無い依存は止めない）に従う。
+ * 状態の言い方。`todo` の着手できるかは `taskReadiness` に従う。
  * 待ちと保留は、まだ済んでいない依存の ID を字で添える（色だけで伝えない）。
  */
-function taskStateOf(
-  task: TaskSummaryItem,
-  unfinished: ReadonlySet<string>,
-  waiting: readonly string[],
-): TaskStateView {
-  const readiness = taskReadiness(task, unfinished)
+function taskStateOf(task: TaskSummaryItem): TaskStateView {
+  const readiness = taskReadiness(task)
   if (readiness !== undefined) {
     return readiness.kind === "ready"
       ? { kind: "ready", text: "着手できる" }
@@ -229,7 +202,10 @@ function taskStateOf(
 
   switch (task.status) {
     case "hold":
-      return { kind: "hold", text: waiting.length === 0 ? "保留" : `保留 · ${waiting.join(", ")}` }
+      return {
+        kind: "hold",
+        text: task.waitingFor.length === 0 ? "保留" : `保留 · ${task.waitingFor.join(", ")}`,
+      }
     case "doing":
       return {
         kind: "doing",

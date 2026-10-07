@@ -73,13 +73,7 @@ export type TaskBoardDetail = {
   readonly body: string
 }
 
-/** 置き場所を開く口。ファイル方式は作業ツリーの git 管理下にあるときだけ押せる。 */
 export type TaskBoardOpener =
-  | {
-      readonly kind: "file"
-      readonly availability: "checking" | "tracked" | "untracked"
-      readonly onOpen: () => void
-    }
   | { readonly kind: "issue"; readonly url: string }
   | { readonly kind: "none" }
 

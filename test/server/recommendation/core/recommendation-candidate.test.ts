@@ -12,8 +12,9 @@ import type { TaskSummaryItem } from "../../../../src/shared/repository/task-sum
 function task(
   id: string,
   status: string,
-  dependencies: readonly string[],
+  waitingFor: readonly string[],
   difficulty: string | undefined = undefined,
+  dependencies: readonly string[] = waitingFor,
 ): TaskSummaryItem {
   return {
     id,
@@ -22,6 +23,7 @@ function task(
     difficulty,
     loopable: undefined,
     dependencies,
+    waitingFor,
     assignee: undefined,
     body: "",
     location: { kind: "none" },
@@ -35,8 +37,8 @@ describe("recommendationCandidates", () => {
       task("X-002", "todo", [], "opus"),
       task("X-003", "todo", ["X-002"]),
       task("X-004", "hold", ["X-002"]),
-      task("X-005", "todo", ["X-001"], "haiku"),
-      task("X-006", "done", ["X-005"]),
+      task("X-005", "todo", [], "haiku", ["X-001"]),
+      task("X-006", "done", [], undefined, ["X-005"]),
     ]
 
     expect(recommendationCandidates({ kind: "known", items, runPrompt: "{id}" })).toEqual([

@@ -15,7 +15,7 @@ import {
 } from "../../../../src/server/session-driver/core/speech-review.ts"
 import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
 import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
-import type { ClaimedTaskSteps } from "../../../../src/shared/repository/beads-issue.ts"
+import type { ClaimedTaskSteps } from "../../../../src/shared/repository/task-workflow.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   applySessionEvent,

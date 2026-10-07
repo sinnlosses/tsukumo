@@ -12,13 +12,12 @@ import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 const TASK_SUMMARY_MEMORY_FILE_NAME = "task-summary.json"
 
 /** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける。 */
-const TASK_SUMMARY_MEMORY_FORMAT_VERSION = 1 satisfies number
+const TASK_SUMMARY_MEMORY_FORMAT_VERSION = 2 satisfies number
 
 /** 覚える作業ディレクトリの数。超えたら古いものから落とす。 */
 export const TASK_SUMMARY_MEMORY_LIMIT = 8
 
 const taskLocationSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("file"), path: z.string() }),
   z.object({ kind: z.literal("issue"), url: z.string() }),
   z.object({ kind: z.literal("none") }),
 ])
@@ -31,6 +30,7 @@ const taskSummaryItemSchema = z.object({
   difficulty: z.string().optional(),
   loopable: z.string().optional(),
   dependencies: z.array(z.string()),
+  waitingFor: z.array(z.string()),
   assignee: z.string().optional(),
   body: z.string(),
   location: taskLocationSchema,
@@ -82,6 +82,7 @@ function readEntries(path: string): readonly MemoryEntry[] {
           difficulty: item.difficulty,
           loopable: item.loopable,
           dependencies: item.dependencies,
+          waitingFor: item.waitingFor,
           assignee: item.assignee,
           body: item.body,
           location: item.location,

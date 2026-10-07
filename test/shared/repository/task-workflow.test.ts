@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest"
 
 import {
   claimedTaskStepsOf,
-  closedBeadsTaskSummariesBefore,
   composeBeadsBody,
+  doneTasksOfBeadsIssues,
   taskIdOfBeadsId,
   taskSummaryItemsOfBeadsIssues,
   type BeadsIssue,
-} from "../../../src/shared/repository/beads-issue.ts"
+} from "../../../src/shared/repository/task-workflow.ts"
 
 // すべて手で書いた架空の課題。`bd` の実データは使わない。
 
@@ -116,6 +116,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
       difficulty: "opus",
       loopable: "N",
       dependencies: ["T-002", "t-a1b2"],
+      waitingFor: [],
       assignee: undefined,
       body: composeBeadsBody("", "", ""),
       location: { kind: "none" },
@@ -144,26 +145,80 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
 
     expect(items.map((item) => item.id)).toEqual(["T-020", "T-1000", "t-a1b2", "t-zz9"])
   })
+
+  it("waitingFor には閉じていない課題の依存だけを依存の順で残し、閉じた・cancelled・課題に無い依存は止めない", () => {
+    const items = taskSummaryItemsOfBeadsIssues([
+      issue({ id: "t-001", status: "closed", closedAtEpochMilliseconds: 1 }),
+      issue({ id: "t-002", status: "open" }),
+      issue({ id: "t-003", status: "pending" }),
+      issue({
+        id: "t-004",
+        status: "closed",
+        closedAtEpochMilliseconds: 2,
+        labels: ["cancelled"],
+      }),
+      issue({
+        id: "t-005",
+        status: "open",
+        blockedBy: ["t-003", "t-001", "t-004", "t-900", "t-002"],
+      }),
+      issue({ id: "t-006", status: "pending", blockedBy: ["t-002"] }),
+    ])
+
+    expect(items.map((item) => [item.id, item.waitingFor])).toEqual([
+      ["T-001", []],
+      ["T-002", []],
+      ["T-003", []],
+      ["T-004", []],
+      ["T-005", ["T-003", "T-002"]],
+      ["T-006", ["T-002"]],
+    ])
+  })
+
+  it("閉じた課題は、閉じていない依存が残っていても waitingFor を空にする", () => {
+    const items = taskSummaryItemsOfBeadsIssues([
+      issue({ id: "t-001", status: "open" }),
+      issue({ id: "t-002", status: "closed", closedAtEpochMilliseconds: 1, blockedBy: ["t-001"] }),
+    ])
+
+    expect(items.map((item) => item.waitingFor)).toEqual([[], []])
+  })
 })
 
-describe("closedBeadsTaskSummariesBefore", () => {
-  it("その時刻より前に閉じた課題だけを拾い、label cancelled（dropped）は数えない", () => {
-    const summaries = closedBeadsTaskSummariesBefore(
-      [
-        issue({ id: "t-001", status: "closed", closedAtEpochMilliseconds: 999 }),
-        issue({ id: "t-002", status: "closed", closedAtEpochMilliseconds: 1000 }),
-        issue({
-          id: "t-003",
-          status: "closed",
-          closedAtEpochMilliseconds: 10,
-          labels: ["cancelled"],
-        }),
-        issue({ id: "t-004", status: "in_progress" }),
-      ],
-      1000,
-    )
+describe("doneTasksOfBeadsIssues", () => {
+  it("閉じた課題を番号の順に拾い、label cancelled（dropped）と閉じた時刻の無いものは入れない", () => {
+    const done = doneTasksOfBeadsIssues([
+      issue({
+        id: "t-010",
+        status: "closed",
+        createdAtEpochMilliseconds: 5,
+        closedAtEpochMilliseconds: 999,
+      }),
+      issue({ id: "t-002", status: "closed", closedAtEpochMilliseconds: 1000 }),
+      issue({
+        id: "t-003",
+        status: "closed",
+        closedAtEpochMilliseconds: 10,
+        labels: ["cancelled"],
+      }),
+      issue({ id: "t-004", status: "closed" }),
+      issue({ id: "t-005", status: "in_progress" }),
+    ])
 
-    expect([...summaries]).toEqual([["T-001", "架空のt-001"]])
+    expect(done).toEqual([
+      {
+        id: "T-002",
+        summary: "架空のt-002",
+        createdAtEpochMilliseconds: 0,
+        closedAtEpochMilliseconds: 1000,
+      },
+      {
+        id: "T-010",
+        summary: "架空のt-010",
+        createdAtEpochMilliseconds: 5,
+        closedAtEpochMilliseconds: 999,
+      },
+    ])
   })
 })
 

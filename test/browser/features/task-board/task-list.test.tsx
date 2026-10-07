@@ -33,6 +33,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "sonnet",
     loopable: "Y",
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body: "",
     location: { kind: "none" },
@@ -44,6 +45,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "haiku",
     loopable: "Y",
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body: "",
     location: { kind: "none" },
@@ -55,6 +57,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: undefined,
     loopable: undefined,
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body: "",
     location: { kind: "none" },
@@ -66,6 +69,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "sonnet",
     loopable: "N",
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body: "",
     location: { kind: "none" },
@@ -101,6 +105,7 @@ describe("taskList", () => {
         difficulty: undefined,
         loopable: undefined,
         dependencies: [],
+        waitingFor: [],
         assignee: "wt-架空",
         body: "",
         location: { kind: "none" },
@@ -151,6 +156,7 @@ describe("taskList", () => {
         difficulty: undefined,
         loopable: undefined,
         dependencies: [],
+        waitingFor: [],
         assignee: undefined,
         body: "",
         location: { kind: "none" },
@@ -225,7 +231,7 @@ describe("taskList", () => {
   it("依存があるときだけ関わるタスクを出す", () => {
     const items: readonly TaskSummaryItem[] = [
       ...TASKS,
-      { ...taskOf("X-005", "todo"), dependencies: ["X-001", "X-009"] },
+      { ...taskOf("X-005", "todo"), dependencies: ["X-001", "X-009"], waitingFor: ["X-001"] },
     ]
     render(<TaskList tasks={known(items)} selectedStatus="all" />)
 
@@ -324,6 +330,7 @@ function taskOf(id: string, status: string): TaskSummaryItem {
     difficulty: undefined,
     loopable: undefined,
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body: "",
     location: { kind: "none" },

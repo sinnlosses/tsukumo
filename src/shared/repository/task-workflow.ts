@@ -1,14 +1,14 @@
-// Beads（`bd`）の課題1件を、タスクの一覧と成果と帯の段取りが読む形に写す。
-// 対応は task-workflow の WORKFLOW.md「Beads 方式」の表が正典
-// （`open` → `todo`・`pending`／`deferred` → `hold`・`in_progress` → 着手中・`closed` → `done`、
-// label `cancelled` があれば `dropped`）。ID は `issue_prefix` が `t` なら `t-<n>` → `T-<n>`、
-// `gh` なら `gh-<n>` → `GH-<n>`（`taskIdOfBeadsId`）。
+// task-workflow 方式の課題（Beads の `bd` の課題）を、タスク一般の形と帯の段取りが読む形に写す。
+// 規則は task-workflow スキルの写しで、あちらを変えたら揃える。正典は次のとおり。
+// - 状態・ラベル・ID の対応: `WORKFLOW.md`「Beads 方式」の表
+// - 本文の7節と並び: `scripts/beads.py` の `compose_body`・`_sections` と `scripts/taskfile.py` の `SECTION_HEADINGS`
+// - 依存が着手を止めるか: `scripts/task.py` の `is_resolved`・`readiness`
 //
 // ここはファイルI/Oも `bd` も持たない。
 
 import { isIncludedIn, sortBy } from "remeda"
 
-import type { TaskLocation, TaskSummaryItem } from "./task-summary.ts"
+import type { DoneTask, TaskLocation, TaskSummaryItem } from "./task-summary.ts"
 
 /**
  * `bd list --json` の1件のうち、この読み手が使う欄だけ。
@@ -34,30 +34,43 @@ export type BeadsIssue = {
 /**
  * タスクの一覧に出す要約。閉じていない課題はすべて出し、閉じた課題は `closedAtEpochMilliseconds`
  * の新しいものから {@link CLOSED_TASK_DISPLAY_LIMIT} 件だけ出す。
- * 閉じた課題は `done`（label `cancelled` があれば `dropped`）で出し、`unfinishedTaskIds` は
- * どちらも完了扱いにするので `taskReadiness` を止めない。
+ * 閉じた課題は `done`（label `cancelled` があれば `dropped`）で出す。
  * 並びは番号の順で、番号でない ID（トラッカーから取り込んだ振り分け前のもの）は後ろに ID の順で付く。
  */
 export function taskSummaryItemsOfBeadsIssues(
   issues: readonly BeadsIssue[],
 ): readonly TaskSummaryItem[] {
-  const unfinished = issues.filter((issue) => issue.status !== CLOSED_STATUS)
+  const unfinishedIssues = issues.filter((issue) => issue.status !== CLOSED_STATUS)
   const closed = sortBy(
     issues.filter((issue) => issue.status === CLOSED_STATUS),
     [(issue) => issue.closedAtEpochMilliseconds ?? 0, "desc"],
   ).slice(0, CLOSED_TASK_DISPLAY_LIMIT)
+  const unfinished = unfinishedTaskIds(unfinishedIssues)
 
-  return sortByTaskId([...unfinished, ...closed].map(taskSummaryItemOfBeadsIssue))
+  return sortByTaskId(
+    [...unfinishedIssues, ...closed].map((issue) => taskSummaryItemOfBeadsIssue(issue, unfinished)),
+  )
 }
 
-function taskSummaryItemOfBeadsIssue(issue: BeadsIssue): TaskSummaryItem {
+/** 閉じていない課題のタスクID集合。ここに無い依存（閉じた課題・課題に無い ID）は着手を止めない。 */
+function unfinishedTaskIds(unfinishedIssues: readonly BeadsIssue[]): ReadonlySet<string> {
+  return new Set(unfinishedIssues.map((issue) => taskIdOfBeadsId(issue.id)))
+}
+
+function taskSummaryItemOfBeadsIssue(
+  issue: BeadsIssue,
+  unfinished: ReadonlySet<string>,
+): TaskSummaryItem {
+  const dependencies = issue.blockedBy.map(taskIdOfBeadsId)
   return {
     id: taskIdOfBeadsId(issue.id),
     summary: issue.title,
     status: statusOfBeadsIssue(issue),
     difficulty: labelValueOf(issue.labels, DIFFICULTY_LABEL_PREFIX),
     loopable: labelValueOf(issue.labels, LOOPABLE_LABEL_PREFIX),
-    dependencies: issue.blockedBy.map(taskIdOfBeadsId),
+    dependencies,
+    waitingFor:
+      issue.status === CLOSED_STATUS ? [] : dependencies.filter((id) => unfinished.has(id)),
     assignee: issue.assignee,
     body: composeBeadsBody(issue.description, issue.acceptanceCriteria, issue.notes),
     location: locationOfBeadsIssue(issue),
@@ -80,35 +93,25 @@ function statusOfBeadsIssue(issue: BeadsIssue): string {
 }
 
 /**
- * `beforeEpochMilliseconds` より前に閉じた課題のうち `dropped`（label `cancelled`）でないものを、タスクID → summary で返す。
+ * 閉じた課題のうち `dropped`（label `cancelled`）でなく、閉じた時刻のあるもの。
  * 並びはタスク一覧と同じ番号の順（`bd` が返す順は作った順の逆で、画面に出す順として意味が無い）。
  */
-export function closedBeadsTaskSummariesBefore(
-  issues: readonly BeadsIssue[],
-  beforeEpochMilliseconds: number,
-): ReadonlyMap<string, string> {
-  const closed = doneBeadsIssues(issues)
-    .filter((issue) => issue.closedAtEpochMilliseconds < beforeEpochMilliseconds)
-    .map((issue) => ({ id: taskIdOfBeadsId(issue.id), summary: issue.title }))
-  return new Map(sortByTaskId(closed).map((task) => [task.id, task.summary]))
-}
-
-/** 閉じた課題のうち `dropped`（label `cancelled`）でないものの、閉じた時刻（エポックミリ秒）。 */
-export function doneBeadsTaskClosedAtEpochMilliseconds(
-  issues: readonly BeadsIssue[],
-): readonly number[] {
-  return doneBeadsIssues(issues).map((issue) => issue.closedAtEpochMilliseconds)
-}
-
-function doneBeadsIssues(
-  issues: readonly BeadsIssue[],
-): readonly (BeadsIssue & { readonly closedAtEpochMilliseconds: number })[] {
-  return issues.flatMap((issue) =>
-    issue.status === CLOSED_STATUS &&
-    !issue.labels.includes(CANCELLED_LABEL) &&
-    issue.closedAtEpochMilliseconds !== undefined
-      ? [{ ...issue, closedAtEpochMilliseconds: issue.closedAtEpochMilliseconds }]
-      : [],
+export function doneTasksOfBeadsIssues(issues: readonly BeadsIssue[]): readonly DoneTask[] {
+  return sortByTaskId(
+    issues.flatMap((issue) =>
+      issue.status === CLOSED_STATUS &&
+      !issue.labels.includes(CANCELLED_LABEL) &&
+      issue.closedAtEpochMilliseconds !== undefined
+        ? [
+            {
+              id: taskIdOfBeadsId(issue.id),
+              summary: issue.title,
+              createdAtEpochMilliseconds: issue.createdAtEpochMilliseconds,
+              closedAtEpochMilliseconds: issue.closedAtEpochMilliseconds,
+            },
+          ]
+        : [],
+    ),
   )
 }
 
@@ -165,7 +168,6 @@ function planStepNamesOf(plan: string): readonly string[] {
 
 /**
  * 課題の `description`・`acceptanceCriteria`・`notes` を `task show` と同じ並びに組む。
- * task-workflow の `beads.py` の `compose_body`・`_sections`（`taskfile.SECTION_HEADINGS`）の写しで、あちらを変えたら揃える。
  * 枠の7節をこの順に必ず置き（中身が空でも見出しだけ出す）、枠の外の見出しはそのあと。
  * `## 結果`（Beads の comment）は `bd list` に載らないので持たない。
  */
@@ -189,7 +191,7 @@ export function composeBeadsBody(description: string, acceptance: string, notes:
   return text === "" ? "" : `${text}\n`
 }
 
-/** 本文の枠の7節（task-workflow の `taskfile.SECTION_HEADINGS` の写し）。 */
+/** 本文の枠の7節。 */
 const PLAN_HEADING = "## やること"
 const ACCEPTANCE_HEADING = "## 完了条件"
 const SECTION_HEADINGS = [

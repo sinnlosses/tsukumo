@@ -18,6 +18,7 @@ function taskOf(overrides: Partial<TaskSummaryItem>): TaskSummaryItem {
     difficulty: undefined,
     loopable: undefined,
     dependencies: [],
+    waitingFor: [],
     assignee: undefined,
     body: "",
     location: { kind: "none" },

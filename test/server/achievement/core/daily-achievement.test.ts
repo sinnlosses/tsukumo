@@ -4,25 +4,12 @@ import {
   dailyAchievementOf,
   type DailyAchievementInput,
 } from "../../../../src/server/achievement/core/daily-achievement.ts"
-import type { BeadsIssue } from "../../../../src/shared/repository/beads-issue.ts"
+import type { DoneTask } from "../../../../src/shared/repository/task-summary.ts"
 
 const RANGE = { startEpochMilliseconds: 100_000, endEpochMilliseconds: 200_000 }
 
-function closedIssue(id: string, title: string, closedAtEpochMilliseconds: number): BeadsIssue {
-  return {
-    id,
-    title,
-    status: "closed",
-    labels: [],
-    blockedBy: [],
-    assignee: undefined,
-    createdAtEpochMilliseconds: 0,
-    closedAtEpochMilliseconds,
-    description: "",
-    acceptanceCriteria: "",
-    notes: "",
-    externalRef: undefined,
-  }
+function doneTask(id: string, summary: string, closedAtEpochMilliseconds: number): DoneTask {
+  return { id, summary, createdAtEpochMilliseconds: 0, closedAtEpochMilliseconds }
 }
 
 const BASE: Omit<DailyAchievementInput, "tasks"> = {
@@ -58,17 +45,15 @@ describe("dailyAchievementOf", () => {
     })
   })
 
-  it("その日のうちに閉じた課題だけを終えたタスクにし、取り下げた課題は数えない", () => {
-    const dropped = { ...closedIssue("t-004", "取り下げ", 160_000), labels: ["cancelled"] }
+  it("その日のうちに終えたタスクだけを拾う", () => {
     const result = dailyAchievementOf({
       ...BASE,
       tasks: {
         kind: "tracked",
-        issues: [
-          closedIssue("t-001", "前の日", 50_000),
-          closedIssue("t-002", "今日", 150_000),
-          closedIssue("t-003", "次の日", 250_000),
-          dropped,
+        done: [
+          doneTask("T-001", "前の日", 50_000),
+          doneTask("T-002", "今日", 150_000),
+          doneTask("T-003", "次の日", 250_000),
         ],
         registeredOn: new Map(),
       },
@@ -86,7 +71,7 @@ describe("dailyAchievementOf", () => {
       commits: { kind: "unread" },
       tasks: {
         kind: "tracked",
-        issues: [closedIssue("t-001", "今日", 150_000)],
+        done: [doneTask("T-001", "今日", 150_000)],
         registeredOn: new Map(),
       },
     })
@@ -103,7 +88,7 @@ describe("dailyAchievementOf", () => {
       ...BASE,
       tasks: {
         kind: "tracked",
-        issues: [closedIssue("t-001", "長く待った", 150_000)],
+        done: [doneTask("T-001", "長く待った", 150_000)],
         registeredOn: new Map([["T-001", "2025-12-20"]]),
       },
     })

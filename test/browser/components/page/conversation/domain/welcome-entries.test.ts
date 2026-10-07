@@ -16,14 +16,15 @@ function choice(sessionId: string, heading: string | undefined): SessionChoice {
   return { viewPort: 1, sessionId, lastModified: 0, startedAt: 0, heading }
 }
 
-function task(id: string, status: string, dependencies: readonly string[]): TaskSummaryItem {
+function task(id: string, status: string, waitingFor: readonly string[]): TaskSummaryItem {
   return {
     id,
     summary: `架空の${id}`,
     status,
     difficulty: "sonnet",
     loopable: "Y",
-    dependencies,
+    dependencies: waitingFor,
+    waitingFor,
     assignee: undefined,
     body: "",
     location: { kind: "none" },
@@ -149,7 +150,7 @@ describe("おすすめの札", () => {
         task("X-1", "done", []),
         task("X-2", "todo", ["X-3"]),
         task("X-3", "todo", []),
-        task("X-4", "todo", ["X-1"]),
+        task("X-4", "todo", []),
       ]),
     )
     expect(cards.map((card) => card.request)).toEqual(["X-3 に着手して", "X-4 に着手して"])

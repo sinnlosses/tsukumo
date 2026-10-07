@@ -32,6 +32,7 @@ describe("TaskDoingCount（柱の口の進行中の件数）", () => {
             difficulty: undefined,
             loopable: undefined,
             dependencies: [],
+            waitingFor: [],
             assignee: undefined,
             body: "",
             location: { kind: "none" },

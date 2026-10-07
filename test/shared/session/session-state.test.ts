@@ -778,6 +778,7 @@ describe("applySessionEvent", () => {
         difficulty: "sonnet",
         loopable: "Y",
         dependencies: [],
+        waitingFor: [],
         assignee: undefined,
         body: "",
         location: { kind: "none" },

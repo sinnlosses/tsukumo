@@ -16,7 +16,6 @@ import type { ReactElement } from "react"
 import { DEFAULT_RUN_PROMPT } from "../../../shared/repository/project-settings.ts"
 import {
   taskReadiness,
-  unfinishedTaskIds,
   type TaskSummaryItem,
   type TaskSummaryResult,
 } from "../../../shared/repository/task-summary.ts"
@@ -111,7 +110,6 @@ export function TaskList(props: TaskListProps): ReactElement {
 
   const context: PeekContext = {
     peek,
-    unfinished: unfinishedTaskIds(props.tasks.items),
     knownIds: new Set(props.tasks.items.map((task) => task.id)),
     runPrompt: props.tasks.runPrompt,
     destination,
@@ -156,7 +154,6 @@ const EMPTY_ORDER: TaskSidebarOrder = { running: [], rest: [] }
 /** 行ごとの窓を組むのに要る、一覧全体で1つの値。 */
 type PeekContext = {
   readonly peek: TaskPeekControl
-  readonly unfinished: ReadonlySet<string>
   readonly knownIds: ReadonlySet<string>
   readonly runPrompt: string
   readonly destination: RunDestination
@@ -167,9 +164,7 @@ function peekOf(task: TaskSummaryItem, context: PeekContext): TaskItemPeek {
   if (peek.state.kind !== "open" || peek.state.id !== task.id) {
     return { kind: "closed" }
   }
-  const runnable =
-    taskReadiness(task, context.unfinished)?.kind === "ready" &&
-    context.destination.kind !== "missing"
+  const runnable = taskReadiness(task)?.kind === "ready" && context.destination.kind !== "missing"
   const run: TaskPeekRun = runnable
     ? { kind: "available", runPrompt: context.runPrompt, confirming: peek.state.confirming }
     : { kind: "none" }

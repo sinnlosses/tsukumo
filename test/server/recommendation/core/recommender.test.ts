@@ -29,6 +29,7 @@ function tasksOf(
       difficulty: "sonnet",
       loopable: undefined,
       dependencies: [],
+      waitingFor: [],
       assignee: undefined,
       body: "",
       location: { kind: "none" },
