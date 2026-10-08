@@ -461,6 +461,12 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 「並列 2·3」の壁時計の行と字下げした中の段の行が出ることを見る（`docs/architecture/screen-design.md`
 「進み具合の帯」「レポートの頭（合図の行）」）。
 
+**段取りを止めて閉じたときと、段の所要が測れないときの描き方を確かめるときは、疑似セッションの場面
+`work-plan-stopped`・`work-plan-phase-unknown` を使う。** `work-plan-stopped` は段2の途中で
+`task.outcome` が `stopped`・`workPlanClosing: "stopped"` の `report` で閉じ、帯のチップが「止めた」になること、`work-plan-phase-unknown` は
+段2を一度も今にしないまま閉じ、最終レポートの段ごとの時間で段2が「不明」になることを見る
+（`docs/architecture/display.md`「段取り」）。
+
 **書き終わりの知らせ（`docs/architecture/screen-design.md` 13.10「書き終わりの知らせ」）を確かめるときは
 疑似セッションの場面 `diary-written`（`TSUKUMO_FAKE_SCENE=diary-written`）を使う。** `diary-requested`
 → `diary-drafting` → `diary-stage`（`write` → `pick`）→ `diary-written` と流れ、成果の画面
