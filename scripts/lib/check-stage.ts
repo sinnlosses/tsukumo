@@ -39,7 +39,7 @@ export function planStages(
     return {
       stages: [
         { name: "format:check", args: [], heavy: false },
-        { name: "test", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
+        { name: "test:document", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
       ],
       notice: "文書だけの変更のため format:check と文書の検査だけを打つ",
     }

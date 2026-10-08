@@ -67,7 +67,7 @@ describe("planStages", () => {
     })
     expect(plan.stages).toEqual([
       { name: "format:check", args: [], heavy: false },
-      { name: "test", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
+      { name: "test:document", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
     ])
   })
 

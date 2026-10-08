@@ -349,7 +349,7 @@ pnpm run check                 # typecheck + lint + format:check + test + test:e
 pnpm run ship                  # タスクに紐付かない作業を main へ送る（取り込み・検証・送り出しを
                               #   1つに。落ちた段を出して止まる。docs/workflow.md「タスクに紐付
                               #   かない作業を main へ送る」）
-pnpm run test                  # 単体テスト全体（Vitest。`test/e2e/` は外す）
+pnpm run test                  # 単体テスト全体（Vitest。`test/e2e/` は外す。ファイルを渡すと規約のテストも足す）
 npx vitest run test/cli.test.ts  # 単体テストファイルのみ実行
 pnpm run test:coverage         # 単体テストのカバレッジ（src/ が対象。HTML は /tmp/tsukumo-coverage/。check には入れない）
 pnpm run test:e2e              # E2E（組み立ててから test/e2e/ を走らせる。手元の Chrome が要る。成果物と
