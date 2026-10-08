@@ -179,6 +179,7 @@
               {
                 "kind": "question",
                 "id": "fake-ask-2",
+                "briefs": [],
                 "questions": [
                   {
                     "header": "架空の選択",
@@ -255,6 +256,7 @@
               {
                 "kind": "question",
                 "id": "fake-ask-3",
+                "briefs": [],
                 "questions": [
                   {
                     "header": "架空の選択1",
@@ -334,6 +336,7 @@
               {
                 "kind": "question",
                 "id": "fake-ask-4",
+                "briefs": [],
                 "questions": [
                   {
                     "header": "架空の選択（長いラベルと長い説明）",
@@ -413,6 +416,7 @@
               {
                 "kind": "question",
                 "id": "fake-ask-preview",
+                "briefs": [],
                 "questions": [
                   {
                     "header": "架空の選択",
@@ -456,6 +460,95 @@
       ]
     },
     {
+      "name": "question-brief",
+      "steps": [
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "question",
+                "id": "fake-ask-brief",
+                "questions": [
+                  {
+                    "header": "架空の保存先",
+                    "text": "架空の質問：どこに保存する？",
+                    "multiSelect": false,
+                    "options": [
+                      { "label": "A に置く (推奨)", "description": "架空の説明A" },
+                      { "label": "B に置く", "description": "架空の説明B" },
+                      { "label": "C に移す", "description": "架空の説明C" }
+                    ]
+                  },
+                  {
+                    "header": "架空の名前",
+                    "text": "架空の質問：名前はどうする？",
+                    "multiSelect": false,
+                    "options": [
+                      { "label": "今の名前のまま", "description": "架空の説明D" },
+                      { "label": "名前を変える", "description": "架空の説明E" }
+                    ]
+                  }
+                ],
+                "briefs": [
+                  {
+                    "header": "架空の保存先",
+                    "background": "架空の背景の1文目。架空の背景の2文目で、なぜ今聞くかを言う。",
+                    "axes": ["速さ", "戻しやすさ", "依存の数"],
+                    "options": [
+                      {
+                        "label": "A に置く",
+                        "pros": ["架空の良い点A。"],
+                        "cons": ["架空の悪い点A。"],
+                        "byAxis": ["速い", "戻せる", "0"],
+                        "irreversible": false,
+                        "figures": [
+                          {
+                            "kind": "mermaid",
+                            "title": "",
+                            "source": "flowchart LR\n  W[架空の書き手] --> A[架空の置き場A]",
+                            "fold": ""
+                          }
+                        ]
+                      },
+                      {
+                        "label": "B に置く",
+                        "pros": ["架空の良い点B。"],
+                        "cons": ["架空の悪い点B。", "架空の悪い点B2。"],
+                        "byAxis": ["ふつう", "戻せる", "1"],
+                        "irreversible": false,
+                        "figures": [
+                          {
+                            "kind": "table",
+                            "title": "架空の置き場の比べ",
+                            "columns": ["置き場", "架空の値"],
+                            "rows": [
+                              ["A", "架空1"],
+                              ["B", "架空2"]
+                            ],
+                            "fold": ""
+                          }
+                        ]
+                      },
+                      {
+                        "label": "C に移す",
+                        "pros": ["架空の良い点C。"],
+                        "cons": ["架空の悪い点C。"],
+                        "byAxis": ["遅い", "戻せない", "2"],
+                        "irreversible": true,
+                        "figures": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "question-preview-image",
       "steps": [
         {
@@ -466,6 +559,7 @@
               {
                 "kind": "question",
                 "id": "fake-ask-preview-image",
+                "briefs": [],
                 "questions": [
                   {
                     "header": "架空の画面",
@@ -4299,6 +4393,7 @@
               {
                 "kind": "question",
                 "id": "fake-strip-question-1",
+                "briefs": [],
                 "questions": [
                   {
                     "header": "揃える形",

@@ -379,6 +379,18 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
 
 export type ReportBlock = DeepReadonly<z.infer<typeof reportBlockSchema>>
 
+/** レポートの外（質問の添え書き）で図として使える塊。 */
+export const figureBlockSchema = z.discriminatedUnion("kind", [
+  listBlockSchema,
+  tableBlockSchema,
+  compareBlockSchema,
+  mermaidBlockSchema,
+  codeBlockSchema,
+  imageBlockSchema,
+])
+
+export type FigureBlock = DeepReadonly<z.infer<typeof figureBlockSchema>>
+
 export const reportSectionSchema = z.object({
   heading: z
     .string()

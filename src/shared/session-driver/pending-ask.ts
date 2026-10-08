@@ -4,6 +4,7 @@
 
 import { z } from "zod"
 
+import type { QuestionBrief } from "./question-brief.ts"
 import type { Question, QuestionAnswer } from "./question.ts"
 
 /** 答え待ち1件。`id` は SDK の `toolUseID`（1つのツール呼び出しに1つ）。 */
@@ -14,7 +15,13 @@ export type PendingAsk =
       readonly toolName: string
       readonly input: Readonly<Record<string, unknown>>
     }
-  | { readonly kind: "question"; readonly id: string; readonly questions: readonly Question[] }
+  | {
+      readonly kind: "question"
+      readonly id: string
+      readonly questions: readonly Question[]
+      /** 質問と突き合わせが合った添え書き。各件の `header` は `questions` のどれか1つだけを指す。無ければ空。 */
+      readonly briefs: readonly QuestionBrief[]
+    }
 
 /** 状態に積んだ答え待ち1件。`askedAt` は届いた時刻（エポックミリ秒。サーバがイベントに打った時刻）。 */
 export type StampedPendingAsk = PendingAsk & { readonly askedAt: number }

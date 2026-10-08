@@ -4,11 +4,13 @@
 // 許可要求の入力と質問文は会話の内容そのものなので、ログにもファイルにも書かない。
 
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
+import type { QuestionBrief } from "../../../shared/session-driver/question-brief.ts"
 import {
   parseQuestions,
   type Question,
   type QuestionAnswer,
 } from "../../../shared/session-driver/question.ts"
+import { pairQuestionBrief } from "./question-brief.ts"
 
 /** キャラクターが質問するときのツール名。これだけを質問として扱う。 */
 const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion"
@@ -57,7 +59,13 @@ export type PendingAnswerQueue = {
    * （同じボタンを二度押しても2回目は何も起きない）。答えの種類が合わないときも無視する。
    */
   readonly answer: (id: string, answer: Answer) => boolean
-  /** 積まれているものを全て拒否として畳む。何も積まれていなければ何も知らせない。 */
+  /**
+   * 次の `AskUserQuestion` に載せる添え書きを預かる（前に預かったものは置き換わる）。
+   * 次の `AskUserQuestion` で合っても合わなくても使い切り、許可要求では使わない。
+   */
+  readonly holdBrief: (briefs: readonly QuestionBrief[]) => void
+  readonly dropBrief: () => void
+  /** 積まれているものを全て拒否として畳み、預かった添え書きも捨てる。何も積まれていなければ何も知らせない。 */
   readonly settleAll: () => void
   /** 今の答え待ち。積まれた順（先頭がいちばん古い）。 */
   readonly list: () => readonly PendingAsk[]
@@ -72,6 +80,14 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
   const entries = new Map<string, Entry>()
   const detachers = new Map<string, () => void>()
 
+  let heldBrief: readonly QuestionBrief[] = []
+
+  const takeBrief = (): readonly QuestionBrief[] => {
+    const taken = heldBrief
+    heldBrief = []
+    return taken
+  }
+
   const list = (): readonly PendingAsk[] => [...entries.values()].map((entry) => entry.ask)
 
   const settle = (id: string, entry: Entry, result: AnswerResult): void => {
@@ -85,11 +101,12 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
   return {
     ask: (request) =>
       new Promise<AnswerResult>((resolve) => {
+        const briefs = request.toolName === ASK_USER_QUESTION_TOOL_NAME ? takeBrief() : []
         if (request.signal?.aborted === true) {
           resolve({ behavior: "deny", message: DENY_MESSAGE })
           return
         }
-        const entry: Entry = { ask: toPendingAsk(request), input: request.input, resolve }
+        const entry: Entry = { ask: toPendingAsk(request, briefs), input: request.input, resolve }
         entries.set(request.id, entry)
         // 中断されたターンの許可要求は答えられないまま残る。
         // 放っておくと列の先頭を塞ぐので、拒否として畳む（SDK は応答が無いとそのツールを止めたまま待ち続ける）。
@@ -103,7 +120,16 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
         handlers.onChange(list())
       }),
 
+    holdBrief: (briefs) => {
+      heldBrief = briefs
+    },
+
+    dropBrief: () => {
+      heldBrief = []
+    },
+
     settleAll: () => {
+      heldBrief = []
       if (entries.size === 0) {
         return
       }
@@ -151,7 +177,7 @@ type Entry = {
  * 許可要求と質問を見分ける。
  * `AskUserQuestion` でも `questions` の形が読めないときは許可要求として扱う（選択肢を出せないので、許可／拒否で答えてもらうしかない）。
  */
-function toPendingAsk(request: AskRequest): PendingAsk {
+function toPendingAsk(request: AskRequest, briefs: readonly QuestionBrief[]): PendingAsk {
   if (request.toolName !== ASK_USER_QUESTION_TOOL_NAME) {
     return {
       kind: "permission",
@@ -164,7 +190,15 @@ function toPendingAsk(request: AskRequest): PendingAsk {
   const questions = parseQuestions(request.input)
   return questions === undefined
     ? { kind: "permission", id: request.id, toolName: request.toolName, input: request.input }
-    : { kind: "question", id: request.id, questions }
+    : { kind: "question", id: request.id, questions, briefs: pairedBriefs(questions, briefs) }
+}
+
+function pairedBriefs(
+  questions: readonly Question[],
+  briefs: readonly QuestionBrief[],
+): readonly QuestionBrief[] {
+  const pairing = pairQuestionBrief(questions, briefs)
+  return pairing.kind === "paired" ? pairing.briefs : []
 }
 
 /**

@@ -46,7 +46,13 @@ function fixtureQuestion(header: string): Question {
 }
 
 function questionPending(headers: readonly string[]): StampedPendingAsk {
-  return { kind: "question", id: "ask-1", questions: headers.map(fixtureQuestion), askedAt: 0 }
+  return {
+    kind: "question",
+    id: "ask-1",
+    questions: headers.map(fixtureQuestion),
+    briefs: [],
+    askedAt: 0,
+  }
 }
 
 /**

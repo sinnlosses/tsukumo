@@ -1,5 +1,5 @@
 // tsukumo がプロセス内の MCP サーバとして提供するツール。
-// `speak` と `recall` / `recall_episode`、雑談のときの `remember` / `forget`、仕事のときの `report` / `work_plan` / `usage_review_stage` / `usage_review_result`。
+// `speak` と `recall` / `recall_episode`、雑談のときの `remember` / `forget`、仕事のときの `report` / `work_plan` / `question_brief` / `usage_review_stage` / `usage_review_result`。
 // `diary` はここには載らない（会話とは別の使い捨ての問い合わせ。`queryDiary`）。
 //
 // サーバの名前とツールの名前は `TSUKUMO_MCP_SERVER_NAME` と `*_TOOL_NAME` が持つ（`usage_review_*` だけは見直しの機能が持つ）。
@@ -19,6 +19,10 @@ import {
   MAX_FIRST_SENTENCE,
 } from "../../../shared/report/report-limit.ts"
 import { parseReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
+import {
+  type QuestionBrief,
+  questionBriefSchema,
+} from "../../../shared/session-driver/question-brief.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
   MIN_PHASE_GROUP_SIZE,
@@ -55,10 +59,12 @@ import {
   usageProposalKindGuide,
   usageReviewStageGuide,
 } from "../../usage-review/core/usage-review-tool.ts"
+import { answerQuestionBriefCall, QUESTION_BRIEF_TOOL_DESCRIPTION } from "../core/question-brief.ts"
 import type { ChatRecall, PersonaMemory, SessionMode } from "../core/session-driver.ts"
 import type { SpeechReview, SpeechVerdict } from "../core/speech-review.ts"
 import {
   FORGET_TOOL_NAME,
+  QUESTION_BRIEF_TOOL_NAME,
   RECALL_EPISODE_TOOL_NAME,
   RECALL_TOOL_NAME,
   REMEMBER_TOOL_NAME,
@@ -118,7 +124,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
 /**
  * プロセス内の MCP サーバ。
  * 戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情がモデルへ戻る経路を作らない（`docs/architecture/adr/0009-speech-via-tool.md`）。
- * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と見直しの2つ。
+ * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と `question_brief` と見直しの2つ。
  * `speak` が返すのは、新しい事実の無い呼び出しを差し戻す固定の文面だけ。
  * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の会話の目次と1件の逐語）だけ。
  * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `WorkPlanReview` が受け付けなかったときの直し方だけ。
@@ -129,6 +135,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  *
  * `report` は仕事のときだけ載る（仕事ではレポートを常にこれで受け取る。雑談は本文を書かない決まりなので載せない）。
  * `work_plan` も仕事のときだけ。
+ * `question_brief` も仕事のときだけで、返すのは崩れた添え書きの直し方だけ。受け付けた添え書きは `holdBrief` に預ける。
  * 見直しの2つも仕事のときだけ（トークン消費の画面から頼むのは仕事の会話への依頼）。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す（`toSessionEvents`）。
@@ -147,6 +154,7 @@ export function tsukumoServer(
   onReportTitle: (title: string) => void,
   cwd: string,
   onEvent: (event: SessionEvent) => void,
+  holdBrief: (briefs: readonly QuestionBrief[]) => void,
 ) {
   return createSdkMcpServer({
     name: TSUKUMO_MCP_SERVER_NAME,
@@ -159,6 +167,7 @@ export function tsukumoServer(
         ? [
             reportTool(expressions, reportReview, onReportTitle, cwd, onEvent),
             workPlanTool(workPlanReview),
+            questionBriefTool(holdBrief),
             ...usageReviewTools(usageReview),
           ]
         : []),
@@ -287,6 +296,26 @@ function workPlanTool(review: WorkPlanReview) {
     },
     async (input) => {
       const answer = answerWorkPlanCall(review, input)
+      return {
+        content: [{ type: "text" as const, text: answer.text }],
+        isError: answer.isError,
+      }
+    },
+  )
+}
+
+/** 質問の添え書きを受け取るツール。形の外の検査と預け先への受け渡しは `answerQuestionBriefCall`。 */
+function questionBriefTool(holdBrief: (briefs: readonly QuestionBrief[]) => void) {
+  return tool(
+    QUESTION_BRIEF_TOOL_NAME,
+    QUESTION_BRIEF_TOOL_DESCRIPTION,
+    {
+      questions: z
+        .array(questionBriefSchema)
+        .describe("次の AskUserQuestion の質問ごとの添え書き。1〜4件"),
+    },
+    async ({ questions }) => {
+      const answer = answerQuestionBriefCall(questions, holdBrief)
       return {
         content: [{ type: "text" as const, text: answer.text }],
         isError: answer.isError,

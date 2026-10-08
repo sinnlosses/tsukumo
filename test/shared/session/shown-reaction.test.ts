@@ -176,7 +176,7 @@ describe("shownReaction", () => {
   describe("待ちの一言", () => {
     const ASKED = {
       kind: "pending-changed",
-      pending: [{ kind: "question", id: "架空の問い", questions: [] }],
+      pending: [{ kind: "question", id: "架空の問い", questions: [], briefs: [] }],
     } as const satisfies SessionEvent
 
     /** ターンが閉じた時刻（`stateAfter` は畳んだ順番を時刻にする）から、出す間を過ぎた時刻。 */

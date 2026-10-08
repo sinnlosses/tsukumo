@@ -15,6 +15,7 @@ import {
 } from "../../../../src/server/session-driver/core/speech-review.ts"
 import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
 import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
+import type { QuestionBrief } from "../../../../src/shared/session-driver/question-brief.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   applySessionEvent,
@@ -45,7 +46,7 @@ const CHAT_MODE: SessionMode = {
 }
 
 describe("tsukumoServer", () => {
-  it("仕事のときは report と work_plan と見直しの2つと recall / recall_episode が載り、remember / forget は載らない", async () => {
+  it("仕事のときは report と work_plan と question_brief と見直しの2つと recall / recall_episode が載り、remember / forget は載らない", async () => {
     const names = await listedToolNames(workServer())
 
     expect(names).toEqual([
@@ -54,6 +55,7 @@ describe("tsukumoServer", () => {
       "recall_episode",
       "report",
       "work_plan",
+      "question_brief",
       "usage_review_stage",
       "usage_review_result",
     ])
@@ -70,6 +72,7 @@ describe("tsukumoServer", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
         () => {},
       ),
     )
@@ -93,6 +96,7 @@ describe("tsukumoServer", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
         () => {},
       ),
     )
@@ -138,6 +142,7 @@ describe("recall / recall_episode ツール", () => {
         () => {},
         FAKE_CWD,
         () => {},
+        () => {},
       )
 
     const listReply = await callTool(server(), "recall", { keyword: "散歩" })
@@ -180,6 +185,7 @@ describe("recall / recall_episode ツール", () => {
         () => {},
         FAKE_CWD,
         () => {},
+        () => {},
       ),
       "recall_episode",
       { id: "2026-09-25-1" },
@@ -208,6 +214,7 @@ describe("recall / recall_episode ツール", () => {
         () => {},
         FAKE_CWD,
         () => {},
+        () => {},
       )
 
     const listReply = await callTool(server(), "recall", { keyword: "架空" })
@@ -224,6 +231,81 @@ const CLOSING = { text: "架空の締めの一言", expression: "default" }
 /** `report` に渡す待ちの一言とセッションの要約（架空）。どちらも必須。 */
 const WAITING_LINE = { text: "架空の待ちの一言", expression: "default" }
 const SUMMARY = "架空の要約"
+
+describe("question_brief", () => {
+  const BRIEF_ARGS = {
+    questions: [
+      {
+        header: "架空の見出し",
+        background: "架空の背景。",
+        axes: ["速さ"],
+        options: [
+          {
+            label: "A案",
+            pros: ["架空の良い点。"],
+            byAxis: ["速い"],
+            figures: [{ kind: "mermaid", source: "flowchart LR\n  A --> B" }],
+          },
+          { label: "B案", cons: ["架空の悪い点。"], byAxis: ["遅い"], irreversible: true },
+        ],
+      },
+    ],
+  }
+
+  it("通った添え書きは省いた欄を既定で埋めて預け、ok を返す（ターンは閉じない）", async () => {
+    const held: (readonly QuestionBrief[])[] = []
+
+    const reply = await callTool(
+      workServer([], [], [], createSpeechReview(), held),
+      "question_brief",
+      BRIEF_ARGS,
+    )
+
+    expect(reply).toEqual({ text: "ok", isError: false, endsTurn: false })
+    expect(held).toEqual([
+      [
+        {
+          header: "架空の見出し",
+          background: "架空の背景。",
+          axes: ["速さ"],
+          options: [
+            {
+              label: "A案",
+              pros: ["架空の良い点。"],
+              cons: [],
+              byAxis: ["速い"],
+              irreversible: false,
+              figures: [
+                { kind: "mermaid", title: "", source: "flowchart LR\n  A --> B", fold: "" },
+              ],
+            },
+            {
+              label: "B案",
+              pros: [],
+              cons: ["架空の悪い点。"],
+              byAxis: ["遅い"],
+              irreversible: true,
+              figures: [],
+            },
+          ],
+        },
+      ],
+    ])
+  })
+
+  it("崩れた添え書きは預けずに isError で直し方を返す", async () => {
+    const held: (readonly QuestionBrief[])[] = []
+
+    const reply = await callTool(
+      workServer([], [], [], createSpeechReview(), held),
+      "question_brief",
+      { questions: [{ ...BRIEF_ARGS.questions[0], background: "" }] },
+    )
+
+    expect(reply.isError).toBe(true)
+    expect(held).toEqual([])
+  })
+})
 
 describe("report でターンを閉じる", () => {
   it("通った report の結果にだけ claude/endTurn を付ける", async () => {
@@ -314,6 +396,7 @@ describe("speak の差し戻し", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
         () => {},
       ),
       "speak",
@@ -612,13 +695,14 @@ const VALID_FINDINGS = {
 
 /**
  * 仕事のサーバ。見直しのイベントは `events` に積み、見送りの一覧は `dismissed` を返す。
- * `report` が受け取った題は `titles` に積む。
+ * `report` が受け取った題は `titles` に、`question_brief` が預けた添え書きは `heldBriefs` に積む。
  */
 function workServer(
   events: SessionEvent[] = [],
   dismissed: readonly string[] = [],
   titles: string[] = [],
   speechReview: SpeechReview = createSpeechReview(),
+  heldBriefs: (readonly QuestionBrief[])[] = [],
 ): McpSdkServerConfigWithInstance {
   const workPlanReview = createWorkPlanReview()
   return tsukumoServer(
@@ -640,6 +724,9 @@ function workServer(
     FAKE_CWD,
     (event) => {
       events.push(event)
+    },
+    (briefs) => {
+      heldBriefs.push(briefs)
     },
   )
 }

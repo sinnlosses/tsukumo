@@ -59,7 +59,13 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   // 駆動が送り出すイベントは全部ここを通す（依頼も SDK 由来も）。
   // claude が依頼なしで始めた続きのターンに `turn-started` を補うのに、依頼で開いたターンも見ている必要がある（`withSelfStartedTurns`）。
   const ending = createSessionEnding(given.onEvent, given.reportFailure)
-  const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(ending.deliver) }
+  const deliver = (event: SessionEvent): void => {
+    if (event.kind === "turn-finished") {
+      queue.dropBrief()
+    }
+    ending.deliver(event)
+  }
+  const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(deliver) }
   const delayWatch = createPromptDelayWatch(given.reportPromptDelay)
   const input = createPromptStream(delayWatch, given.now)
   const queue = createPendingAnswerQueue({
@@ -106,6 +112,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           titleIntake.note,
           options.cwd,
           options.onEvent,
+          queue.holdBrief,
         ),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>

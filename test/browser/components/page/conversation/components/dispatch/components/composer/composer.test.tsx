@@ -37,6 +37,7 @@ const QUESTION_PENDING = {
       options: [{ label: "A案", description: "架空の説明A", preview: undefined }],
     },
   ],
+  briefs: [],
   askedAt: 0,
 } satisfies StampedPendingAsk
 

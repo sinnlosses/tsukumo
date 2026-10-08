@@ -41,6 +41,7 @@
         {
           "kind": "question",
           "id": "fake-ask-preview-image",
+          "briefs": [],
           "questions": [
             {
               "header": "架空の画面",

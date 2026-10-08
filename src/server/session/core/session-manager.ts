@@ -337,11 +337,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       const known = new Set(state.pending.map((ask) => ask.id))
       for (const ask of event.pending) {
         if (ask.kind === "question" && !known.has(ask.id)) {
-          options.reportImageShelf.shelve(
-            ask.id,
-            questionImagePaths(ask.questions),
-            options.readReportImage,
-          )
+          options.reportImageShelf.shelve(ask.id, questionImagePaths(ask), options.readReportImage)
         }
       }
     }

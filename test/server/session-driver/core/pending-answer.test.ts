@@ -6,6 +6,7 @@ import {
   type PendingAnswerHandlers,
 } from "../../../../src/server/session-driver/core/pending-answer.ts"
 import type { PendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
+import type { QuestionBrief } from "../../../../src/shared/session-driver/question-brief.ts"
 
 /** 合図を見ないときの受け口。 */
 function noHandlers(): PendingAnswerHandlers {
@@ -125,6 +126,7 @@ describe("createPendingAnswerQueue", () => {
             ],
           },
         ],
+        briefs: [],
       },
     ])
   })
@@ -300,5 +302,77 @@ describe("createPendingAnswerQueue", () => {
 
     expect(result.behavior).toBe("allow")
     expect(changes.length).toBe(countBefore)
+  })
+})
+
+describe("添え書きを次の質問に載せる", () => {
+  const BRIEF: QuestionBrief = {
+    header: "選択",
+    background: "架空の背景。",
+    axes: ["架空の軸"],
+    options: ["こっち", "あっち"].map((label) => ({
+      label,
+      pros: ["架空の良い点。"],
+      cons: [],
+      byAxis: ["架空"],
+      irreversible: label === "あっち",
+      figures: [],
+    })),
+  }
+
+  function briefsOf(pending: readonly PendingAsk[]): readonly (readonly QuestionBrief[])[] {
+    return pending.flatMap((ask) => (ask.kind === "question" ? [ask.briefs] : []))
+  }
+
+  it("預けた添え書きは、次の AskUserQuestion の答え待ちに載って onChange に届く", () => {
+    const changes: (readonly PendingAsk[])[] = []
+    const queue = createPendingAnswerQueue({
+      onChange: (pending) => changes.push(pending),
+      onAnswered: () => {},
+    })
+
+    queue.holdBrief([BRIEF])
+    void queue.ask(questionRequest())
+
+    expect(changes.map(briefsOf)).toEqual([[[BRIEF]]])
+  })
+
+  it("質問と合わない添え書きは載せず、質問は添え書き無しで積む", () => {
+    const queue = createPendingAnswerQueue(noHandlers())
+
+    queue.holdBrief([{ ...BRIEF, header: "別の見出し" }])
+    void queue.ask(questionRequest())
+
+    expect(briefsOf(queue.list())).toEqual([[]])
+  })
+
+  it("使い切った添え書きは次の質問には載らない", () => {
+    const queue = createPendingAnswerQueue(noHandlers())
+
+    queue.holdBrief([BRIEF])
+    void queue.ask(questionRequest({ id: "toolu_q1" }))
+    void queue.ask(questionRequest({ id: "toolu_q2" }))
+
+    expect(briefsOf(queue.list())).toEqual([[BRIEF], []])
+  })
+
+  it("dropBrief のあとの質問には載らない", () => {
+    const queue = createPendingAnswerQueue(noHandlers())
+
+    queue.holdBrief([BRIEF])
+    queue.dropBrief()
+    void queue.ask(questionRequest())
+
+    expect(briefsOf(queue.list())).toEqual([[]])
+  })
+
+  it("許可要求では使い切らず、そのあとの質問に載る", () => {
+    const queue = createPendingAnswerQueue(noHandlers())
+
+    queue.holdBrief([BRIEF])
+    void queue.ask(permissionRequest())
+    void queue.ask(questionRequest())
+
+    expect(briefsOf(queue.list())).toEqual([[BRIEF]])
   })
 })

@@ -10,6 +10,8 @@ export const SPEAK_TOOL_NAME = "speak"
 export const REPORT_TOOL_NAME = "report"
 /** 段取りを受け取るツールの名前。載るのは仕事のときだけ。 */
 export const WORK_PLAN_TOOL_NAME = "work_plan"
+/** 質問の添え書きを受け取るツールの名前。載るのは仕事のときだけ。 */
+export const QUESTION_BRIEF_TOOL_NAME = "question_brief"
 export const REMEMBER_TOOL_NAME = "remember"
 export const FORGET_TOOL_NAME = "forget"
 export const RECALL_TOOL_NAME = "recall"

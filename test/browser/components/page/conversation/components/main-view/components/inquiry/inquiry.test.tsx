@@ -35,7 +35,7 @@ function question(overrides: Partial<Question> = {}): Question {
 }
 
 function questionPending(questions: readonly Question[]): StampedPendingAsk {
-  return { kind: "question", id: "ask-1", questions, askedAt: 0 }
+  return { kind: "question", id: "ask-1", questions, briefs: [], askedAt: 0 }
 }
 
 const PERMISSION_PENDING = {
