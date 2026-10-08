@@ -89,11 +89,19 @@ describe("report → メインビュー", () => {
     await room.page.locator('nav[aria-label="やり取り"] [data-level="sub"]').waitFor()
     await room.settleAndMatch(ELAPSED_MS)
 
-    await room.page.getByRole("button", { name: "完了: 指示をタスクにする（架空の依頼）" }).focus()
+    const firstRow = room.page.getByRole("button", {
+      name: "完了: 指示をタスクにする（架空の依頼）",
+    })
+    await firstRow.focus()
     await room.page.keyboard.press("Enter")
-    await room.page.locator('[class*="turn-position"]', { hasText: "1 / 5" }).waitFor()
     await room.page
-      .getByRole("heading", { level: 2, name: "指示をタスクにする（架空の依頼）" })
+      .locator('[data-outline-turn][aria-current="true"]', {
+        hasText: "指示をタスクにする（架空の依頼）",
+      })
+      .waitFor()
+    await room.page
+      .locator("section", { has: room.page.getByRole("heading", { level: 2, name: "依頼" }) })
+      .getByText("指示をタスクにする（架空の依頼）")
       .waitFor()
   })
 })

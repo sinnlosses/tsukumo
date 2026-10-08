@@ -147,7 +147,7 @@ import するので、食い違うと入口を別のモジュールとして読�
 共有の1枚を両方読むときは、自分のものを `styles`、共有の1枚を `<箱の名前>Styles`（`taskBoardStyles` など）で
 import する。
 
-class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）を**そのまま**保ち、部品からは
+class 名は用語集の語（`balloon` / `portrait` / `work-strip` など）を**そのまま**保ち、部品からは
 `styles["balloon-track"]` と引く（キャメルケースへ変換しない）。実際に DOM へ付く名前は
 **組み立てのたびにハッシュ化される**ので、外から要素を指す口が要るところは `data-*` を持つ
 （4領域の `data-region`。`scripts/capture-view.ts` が使う）。

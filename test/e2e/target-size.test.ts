@@ -76,16 +76,16 @@ describe("会話の画面の押す的と字", () => {
     await expectReadable(room.page)
   })
 
-  it("過去のやり取りを見るときの知らせの行の口が下限を割らない", async () => {
+  it("過去のやり取りを見るときの知らせの行と「最新」の札が下限を割らない", async () => {
     const room = await run.open({
       scenario: "target-size-head-notice",
-      scene: "turn-history",
+      scene: "turn-rail-notice",
       viewport: "large",
       domRoots: [],
     })
-    await room.waitForEvent("turn-finished", 4)
-    await room.page.getByRole("button", { name: "1つ古いターンへ" }).click()
-    await room.page.getByRole("button", { name: "最新へ" }).waitFor()
+    await room.waitForEvent("pending-changed")
+    await room.page.getByRole("button", { name: "完了: 枠の色を揃えたい（架空の依頼）" }).click()
+    await room.page.getByRole("button", { name: "お伺いが届いた" }).waitFor()
     await expectReadable(room.page)
   })
 

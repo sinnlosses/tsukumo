@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  turnRequestRest,
+  turnRequestLines,
   turnTitle,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/turn-title.ts"
 import type {
@@ -41,7 +41,7 @@ function turn(overrides: Partial<MainViewTurn>): MainViewTurn {
   }
 }
 
-describe("turnTitle（札の頭のタイトル）", () => {
+describe("turnTitle（やり取りの題）", () => {
   it("依頼の1行目をタイトルにする", () => {
     expect(turnTitle(turn({ request: { text: "架空の依頼\n2行目は出さない", images: [] } }))).toBe(
       "架空の依頼",
@@ -91,35 +91,41 @@ describe("turnTitle（札の頭のタイトル）", () => {
   })
 })
 
-describe("turnRequestRest（タイトルの下に出す依頼の続き）", () => {
-  function rest(text: string): readonly string[] {
-    return turnRequestRest(turn({ request: { text, images: [] } }))
+describe("turnRequestLines（依頼の塊に出す行）", () => {
+  function lines(text: string): readonly string[] {
+    return turnRequestLines({ text, images: [] })
   }
 
-  it("1行の依頼では何も残らない", () => {
-    expect(rest("架空の依頼")).toEqual([])
+  it("1行の依頼はその1行になる", () => {
+    expect(lines("架空の依頼")).toEqual(["架空の依頼"])
   })
 
-  it("複数行の依頼では、タイトルの行より後ろを前後の空行を落として返す", () => {
-    expect(rest("架空の依頼\n\n1. 起こす\n\n2. 落ちる\n\n")).toEqual(["1. 起こす", "", "2. 落ちる"])
+  it("複数行の依頼は1行目から全部を、前後の空行を落として返す", () => {
+    expect(lines("\n\n架空の依頼\n\n1. 起こす\n\n2. 落ちる\n\n")).toEqual([
+      "架空の依頼",
+      "",
+      "1. 起こす",
+      "",
+      "2. 落ちる",
+    ])
   })
 
-  it("先頭の空行は、タイトルの行と一緒に読み飛ばす（タイトルと同じ行を二度出さない）", () => {
-    expect(rest("\n\n架空の依頼\n続きの行")).toEqual(["続きの行"])
+  it("行の頭の引用の記号は落とし、字下げは残す", () => {
+    expect(lines("> 架空の依頼\n> 続きの行\n>   - 字下げ")).toEqual([
+      "架空の依頼",
+      "続きの行",
+      "  - 字下げ",
+    ])
   })
 
-  it("続きの行の頭の引用の記号も落とし、字下げは残す", () => {
-    expect(rest("> 架空の依頼\n> 続きの行\n>   - 字下げ")).toEqual(["続きの行", "  - 字下げ"])
+  it("文面が空・空白だけのときは空になる", () => {
+    expect(lines("")).toEqual([])
+    expect(lines("\n  \n")).toEqual([])
   })
 
-  it("文面が空・依頼が無いときは何も残らない", () => {
-    expect(rest("")).toEqual([])
-    expect(turnRequestRest(turn({ request: undefined }))).toEqual([])
-  })
-
-  it("長い依頼は上限で切った続きになる", () => {
+  it("長い依頼は上限で切る", () => {
     const long = `見出し\n${"あ".repeat(2001)}`
 
-    expect(rest(long)).toEqual([`${"あ".repeat(1996)}…`])
+    expect(lines(long)).toEqual(["見出し", `${"あ".repeat(1996)}…`])
   })
 })

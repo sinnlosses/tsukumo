@@ -99,7 +99,7 @@
                                 "data-outline-turn": "2",
                                 "data-result": "done",
                                 "aria-current": "true",
-                                "aria-label": "完了: 前のセッションの架空の依頼その3（段取りつき）",
+                                "aria-label": "完了: 前のセッションの架空の依頼その3（段取りつき）（最新）",
                                 "type": "button"
                               },
                               "children": [
@@ -112,7 +112,16 @@
                                     "●"
                                   ]
                                 },
-                                "前のセッションの架空の依頼その3（段取りつき）"
+                                "前のセッションの架空の依頼その3（段取りつき）",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "最新"
+                                  ]
+                                }
                               ]
                             }
                           ]
@@ -124,57 +133,6 @@
                             "aria-orientation": "vertical",
                             "aria-label": "やり取りと本文の境界"
                           }
-                        },
-                        {
-                          "tag": "header",
-                          "children": [
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "false",
-                                "aria-label": "1つ古いターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "‹"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "true",
-                                "aria-label": "1つ新しいターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "›"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "h2",
-                              "children": [
-                                "前のセッションの架空の依頼その3（段取りつき）"
-                              ]
-                            },
-                            "3 / 3",
-                            "最新"
-                          ]
                         },
                         {
                           "tag": "section",
@@ -253,6 +211,23 @@
                               },
                               "children": [
                                 "手順 1 ▾"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "h2",
+                              "children": [
+                                "依頼"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "前のセッションの架空の依頼その3（段取りつき）"
                               ]
                             }
                           ]

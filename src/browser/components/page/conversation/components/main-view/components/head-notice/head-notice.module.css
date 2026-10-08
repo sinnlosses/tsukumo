@@ -1,14 +1,31 @@
-/* 知らせの行。「最新」の印と同じ丸い札の形で、札の頭の行の高さに収める。 */
+/* 知らせの行。枠と字は `<Button variant="outline-warn">` が持つ。 */
 .head-notice {
-  max-width: 14rem;
-  min-height: 1.5rem;
-  padding: 0 0.65rem;
-  border-radius: 999px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  line-height: 1.3;
+  text-align: left;
 }
 .head-notice-text {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* 畳んだ列の印だけの口。押せる大きさの床（24px）にそろえる。 */
+.head-notice-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border-radius: 0.4rem;
+  line-height: 1;
+}
+.head-notice-mark-glyph {
+  font-weight: 700;
 }

@@ -20,6 +20,8 @@ describe("ReportOutline のやり取りの行", () => {
         ]}
         activeTurnId={1}
         onSelectTurn={() => undefined}
+        notice={{ kind: "none" }}
+        onNotice={() => undefined}
       >
         <p>架空の本文</p>
       </ReportOutline>,

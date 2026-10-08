@@ -57,7 +57,7 @@
                                 "data-outline-turn": "-1",
                                 "data-result": "done",
                                 "aria-current": "true",
-                                "aria-label": "完了: 答え待ちの箱を出す場面（架空）。答えると箱が消える。",
+                                "aria-label": "完了: 答え待ちの箱を出す場面（架空）。答えると箱が消える。（最新）",
                                 "type": "button"
                               },
                               "children": [
@@ -70,7 +70,16 @@
                                     "●"
                                   ]
                                 },
-                                "答え待ちの箱を出す場面（架空）。答えると箱が消える。"
+                                "答え待ちの箱を出す場面（架空）。答えると箱が消える。",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "最新"
+                                  ]
+                                }
                               ]
                             }
                           ]
@@ -82,57 +91,6 @@
                             "aria-orientation": "vertical",
                             "aria-label": "やり取りと本文の境界"
                           }
-                        },
-                        {
-                          "tag": "header",
-                          "children": [
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "true",
-                                "aria-label": "1つ古いターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "‹"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "true",
-                                "aria-label": "1つ新しいターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "›"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "h2",
-                              "children": [
-                                "答え待ちの箱を出す場面（架空）。答えると箱が消える。"
-                              ]
-                            },
-                            "1 / 1",
-                            "最新"
-                          ]
                         },
                         {
                           "tag": "section",

@@ -1,9 +1,9 @@
-/* メインビュー。ターンの札と頭・依頼の続き・ステップのカードを持つ。 */
+/* メインビュー。ターンの札と頭・依頼の塊の置き場・ステップのカードを持つ。 */
 
-/* `--turn-card-head-height` は札の頭（題の行と進み具合の帯）の外寸で、貼り付いた頭の真下を指す位置に使う。
-   ここの値は測る前の1行ぶんで、`useTurnCardHeadHeight` が実測した高さを同じ名前で書き込む。 */
+/* `--turn-card-head-height` は札の頭（進み具合の帯）の外寸で、貼り付いた帯の真下を指す位置に使う。
+   帯を出さないあいだは 0 で、帯があれば `useTurnCardHeadHeight` が実測した高さを同じ名前で書き込む。 */
 .main-turns {
-  --turn-card-head-height: calc(2.5rem + 1px);
+  --turn-card-head-height: 0px;
   display: flex;
   flex-direction: column;
   /* 札が短くても、やり取りの列が領域の下端まで届くよう、領域の内寸を最低の高さにする（札は余白を打ち消して縁まで広がる）。 */
@@ -42,7 +42,7 @@
   }
 }
 /* ターン1件ぶんの札。
-   左にやり取りの列、右に頭（題の行と進み具合の帯）・お伺い・レポートを置く（`ReportOutline`）。
+   左にやり取りの列、右に進み具合の帯・依頼の塊・お伺い・レポートを置く（`ReportOutline`）。
    札は枠を持たず、領域の余白を打ち消して領域の縁まで広がる（領域の枠と札の枠が二重に見えないように）。
    `overflow` を付けない（付けると頭の `position: sticky` が札の中で効かなくなる）。 */
 .turn-card {
@@ -50,6 +50,10 @@
   flex: 1;
   flex-direction: column;
   margin: calc(-1 * var(--region-padding, 0px));
+}
+/* 依頼の塊の入れ物。左右はレポート本文の余白に揃える。 */
+.turn-card-request {
+  padding: 0.9rem 1.25rem 0;
 }
 /* お伺いの札の入れ物。札は領域の縁まで広がらず、領域の余白のぶん内側に置く。 */
 .turn-card-inquiry {

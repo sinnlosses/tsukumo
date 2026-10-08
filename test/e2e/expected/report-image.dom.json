@@ -57,7 +57,7 @@
                                 "data-outline-turn": "0",
                                 "data-result": "done",
                                 "aria-current": "true",
-                                "aria-label": "完了: 画像の塊の見え方を確かめたい（架空の依頼）",
+                                "aria-label": "完了: 画像の塊の見え方を確かめたい（架空の依頼）（最新）",
                                 "type": "button"
                               },
                               "children": [
@@ -70,7 +70,16 @@
                                     "●"
                                   ]
                                 },
-                                "画像の塊の見え方を確かめたい（架空の依頼）"
+                                "画像の塊の見え方を確かめたい（架空の依頼）",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "最新"
+                                  ]
+                                }
                               ]
                             },
                             {
@@ -149,57 +158,6 @@
                           }
                         },
                         {
-                          "tag": "header",
-                          "children": [
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "true",
-                                "aria-label": "1つ古いターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "‹"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "true",
-                                "aria-label": "1つ新しいターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "›"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "h2",
-                              "children": [
-                                "画像の塊の見え方を確かめたい（架空の依頼）"
-                              ]
-                            },
-                            "1 / 1",
-                            "最新"
-                          ]
-                        },
-                        {
                           "tag": "section",
                           "attributes": {
                             "aria-label": "進み具合",
@@ -234,6 +192,23 @@
                               },
                               "children": [
                                 "手順 0 ▾"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "h2",
+                              "children": [
+                                "依頼"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "画像の塊の見え方を確かめたい（架空の依頼）"
                               ]
                             }
                           ]

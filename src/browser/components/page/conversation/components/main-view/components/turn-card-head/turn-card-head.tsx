@@ -1,4 +1,4 @@
-// 札の頭。題の行と進み具合の帯をまとめて、転がっても上に残す。
+// 札の頭。進み具合の帯を、転がっても札の右の側の上端に残す。
 
 import { useRef, type ReactElement, type ReactNode, type RefObject } from "react"
 

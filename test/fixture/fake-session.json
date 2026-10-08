@@ -1020,6 +1020,66 @@
       ]
     },
     {
+      "name": "turn-rail-notice",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": { "kind": "request", "text": "枠の色を揃えたい（架空の依頼）", "images": [] }
+        },
+        {
+          "afterMs": 50,
+          "event": { "kind": "utterance", "text": "## 枠の色（架空）\n\n架空の本文。" }
+        },
+        {
+          "afterMs": 100,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        },
+        {
+          "afterMs": 150,
+          "event": { "kind": "request", "text": "質問を出してみて（架空の依頼）", "images": [] }
+        },
+        {
+          "afterMs": 200,
+          "event": { "kind": "utterance", "text": "## 質問の出し方（架空）\n\n架空の本文。" }
+        },
+        {
+          "afterMs": 250,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "request",
+            "text": "やり取りの列に一覧がまとまったので、上の行を無くす形を考えてほしい（架空の依頼）\n列の名前も中身に合わせて直したい。\n列は上から下まで伸ばしたい。\n長い依頼の出し方も工夫したい。\n4行を超えたら畳んでほしい。\n開いたあとは畳み直せるようにしたい。\n狭い窓でも知らせに気づけるようにしたい。",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 350,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-rail-notice-1",
+            "name": "Bash",
+            "input": { "command": "rm -rf /tmp/dummy/fake-rail" }
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "permission",
+                "id": "fake-rail-notice-1",
+                "toolName": "Bash",
+                "input": { "command": "rm -rf /tmp/dummy/fake-rail" }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "turn-history",
       "steps": [
         {
@@ -1092,7 +1152,7 @@
           "afterMs": 1200,
           "event": {
             "kind": "request",
-            "text": "札の頭のタイトルが、1行に収まらない長さの依頼の1行目でどう省略されるかを確かめたい。広い画面でも狭い画面でも横に転がらないこと（架空の依頼）",
+            "text": "やり取りの列の行が、1行に収まらない長さの依頼の1行目でどう省略されるかを確かめたい。広い画面でも狭い画面でも横に転がらないこと（架空の依頼）",
             "images": []
           }
         },
@@ -1100,7 +1160,7 @@
           "afterMs": 1300,
           "event": {
             "kind": "utterance",
-            "text": "## 札の頭のタイトル（架空）\n\n架空の本文。札の頭には依頼の1行目が出て、収まらないぶんは省略される。"
+            "text": "## 列の行の依頼（架空）\n\n架空の本文。列の行には依頼の1行目が出て、収まらないぶんは省略される。"
           }
         },
         {

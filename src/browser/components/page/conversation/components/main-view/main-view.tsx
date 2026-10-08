@@ -1,6 +1,6 @@
 // メインビュー本体。いま出している中身（迎える口・働くあいだの札・レポート）を出し分ける。
 //
-// 1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` とやり取りの列のやり取りの行で行き来する。
+// 1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件をやり取りの列のやり取りの行と `[` `]` のキーで行き来する。
 // 選んでいるターン（`turnId`）は `useTurnSelection` から読む（キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。
 // 最新を見ているあいだの中身は `useMainViewContent` が決め、過去のターンを見ているあいだはそのターンのレポートを出す。
 //
@@ -33,14 +33,14 @@ import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { Inquiry } from "./components/inquiry/inquiry.tsx"
 import { MiniPortrait } from "./components/mini-portrait/mini-portrait.tsx"
 import { ReportOutline } from "./components/report-outline/report-outline.tsx"
+import { RequestBlock } from "./components/request-block/request-block.tsx"
 import { TurnCardHead } from "./components/turn-card-head/turn-card-head.tsx"
-import { TurnHeader } from "./components/turn-header/turn-header.tsx"
 import { Turn } from "./components/turn/turn.tsx"
 import { Welcome } from "./components/welcome/welcome.tsx"
 import { WorkStrip } from "./components/work-strip/work-strip.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
-import { turnRequestRest, turnTitle } from "./domain/turn-title.ts"
+import { turnTitle } from "./domain/turn-title.ts"
 import { NO_SHOWN_KEY, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import styles from "./main-view.module.css"
 import { RepositoryFileLinkProvider } from "./markdown/repository-link.tsx"
@@ -148,21 +148,19 @@ export function MainView(): ReactElement {
                 turns={outlineTurns}
                 activeTurnId={cardTurn.turn.id}
                 onSelectTurn={selectTurn}
+                notice={notice}
+                onNotice={onNotice}
               >
-                <TurnCardHead rootRef={rootRef}>
-                  <TurnHeader
-                    turns={turns.map((turn) => ({
-                      id: turn.id,
-                      title: turnTitle(turn),
-                      requestRest: turnRequestRest(turn),
-                    }))}
-                    activeTurnId={cardTurn.turn.id}
-                    onSelect={selectTurn}
-                    notice={notice}
-                    onNotice={onNotice}
-                  />
-                  {!viewingPast && <WorkStrip />}
-                </TurnCardHead>
+                {!viewingPast && (
+                  <TurnCardHead rootRef={rootRef}>
+                    <WorkStrip />
+                  </TurnCardHead>
+                )}
+                {cardTurn.turn.request !== undefined && (
+                  <div className={styles["turn-card-request"]}>
+                    <RequestBlock request={cardTurn.turn.request} key={cardTurn.turn.id} />
+                  </div>
+                )}
                 {!viewingPast && (
                   <div className={styles["turn-card-inquiry"]}>
                     <Inquiry />

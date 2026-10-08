@@ -16,7 +16,7 @@
 .outline-frame[data-outline="shown"][data-outline-collapsed="true"] {
   grid-template-columns: 2.5rem minmax(0, 1fr);
 }
-/* 右の側（札の頭・お伺い・本文）。列があってもなくても同じ幅の取り方にする。 */
+/* 右の側（進み具合の帯・依頼の塊・お伺い・本文）。列があってもなくても同じ幅の取り方にする。 */
 .outline-content {
   /* 仕切りは狭い画面で描かれないので、2列目（`auto`）へ落ちないよう最後の列に置く。 */
   grid-column: -2;
@@ -95,8 +95,30 @@
 /* 依頼の1行目と、脇の話のあるやり取りだけに添える2行目（「脇 n」）。 */
 .outline-turn-body {
   display: flex;
+  flex: 1;
   flex-direction: column;
   min-width: 0;
+}
+/* 最新のやり取りの行の右端の「最新」の札。差し色で塗りつぶし、行の字の太さに左右されない。 */
+.outline-turn-newest {
+  flex: none;
+  padding: 0.0625rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ground);
+  font-size: var(--font-label);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.outline-notice {
+  padding: 0 0.25rem 0.5rem;
+}
+/* 畳んだ列。開き直す口の下に、知らせがあれば印だけの口を縦に並べる。 */
+.outline-collapsed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
 }
 .outline-turn-aside {
   color: var(--ink-quiet);

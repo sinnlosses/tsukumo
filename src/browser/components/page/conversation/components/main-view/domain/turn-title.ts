@@ -1,59 +1,47 @@
-// ターンの札の頭に出すタイトルと、タイトルに取られた残りの依頼。
-// 並びの位置ではなく、ターンの中身から作るので、ターンが1つ進んでも前からある札のタイトルは変わらない。
+// やり取りの列の行に出す題と、依頼の塊に出す依頼の行。
+// 並びの位置ではなく、ターンの中身から作るので、ターンが1つ進んでも前からあるやり取りの題は変わらない。
 //
-// 出どころは依頼の1行目を先に使う。
-// 依頼はターンの始まりと同時に届くので、レポートがまだ1つも無い（走っている最中の）ターンでもタイトルが付き、あとからレポートが届いても入れ替わらない。
+// 題の出どころは依頼の1行目を先に使う。
+// 依頼はターンの始まりと同時に届くので、レポートがまだ1つも無い（走っている最中の）ターンでも題が付き、あとからレポートが届いても入れ替わらない。
 // 依頼が無い・文面が空（画像だけ）のときだけ、最初のレポートの先頭行へ下りる。
 //
-// 長さでは切らない。1行に収まらないぶんは CSS が省略する（`.turn-title`）。
+// 題は長さでは切らない。1行に収まらないぶんは CSS が省略する。
 
-import type { MainViewTurn } from "../../../../../../../shared/session/main-view.ts"
+import type {
+  MainViewRequest,
+  MainViewTurn,
+} from "../../../../../../../shared/session/main-view.ts"
 import { clipText } from "../../../../../../../shared/utils/clip-text.ts"
 
-/** 依頼もレポートもタイトルにならないターン（依頼より前の記録で、本文もまだ無い）のタイトル。 */
+/** 依頼もレポートも題にならないターン（依頼より前の記録で、本文もまだ無い）の題。 */
 const TURN_TITLE_FALLBACK = "（依頼なし）"
 
 export function turnTitle(turn: MainViewTurn): string {
   return (
-    firstLineOf(withoutQuoteMarkers(turn.request?.text ?? ""))?.line ??
+    firstLineOf(withoutQuoteMarkers(turn.request?.text ?? "")) ??
     firstReportLine(turn) ??
     TURN_TITLE_FALLBACK
   )
 }
 
 /**
- * 札の頭のタイトルの下に出す、依頼の続き。
- * 依頼が無い・画像だけのときは空の配列。
+ * 依頼の塊に出す、依頼の全文の行。
+ * 行頭の引用の記号と前後の空行は落とし、字下げは残す。
+ * 画像だけの依頼では空の配列。
  */
-export function turnRequestRest(turn: MainViewTurn): readonly string[] {
-  return turn.request === undefined
-    ? []
-    : requestLinesAfterTitle(truncateRequestText(turn.request.text))
+export function turnRequestLines(request: MainViewRequest): readonly string[] {
+  const lines = withoutQuoteMarkers(truncateRequestText(request.text)).split("\n")
+  const first = lines.findIndex((line) => line.trim() !== "")
+  const last = lines.findLastIndex((line) => line.trim() !== "")
+  return first === -1 ? [] : lines.slice(first, last + 1)
 }
 
-// 札の頭の続きに出す依頼の全文の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。
-const MAX_REQUEST_HEADING_TEXT_LENGTH = 2000
+// 依頼の塊に出す全文の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。
+const MAX_REQUEST_TEXT_LENGTH = 2000
 
 function truncateRequestText(request: string): string {
-  const { head, omittedLength } = clipText(request, MAX_REQUEST_HEADING_TEXT_LENGTH)
+  const { head, omittedLength } = clipText(request, MAX_REQUEST_TEXT_LENGTH)
   return omittedLength > 0 ? `${head}…` : head
-}
-
-/**
- * 依頼の文面のうち、タイトルに取られた行（最初の空でない行）より後ろの行。
- * 行頭の引用の記号は落とす（タイトルと同じ）。
- * 前後の空行は落とし、残りが無ければ空の配列。
- */
-function requestLinesAfterTitle(text: string): readonly string[] {
-  const unquoted = withoutQuoteMarkers(text)
-  const found = firstLineOf(unquoted)
-  if (found === undefined) {
-    return []
-  }
-  const rest = unquoted.split("\n").slice(found.lineIndex + 1)
-  const first = rest.findIndex((line) => line.trim() !== "")
-  const last = rest.findLastIndex((line) => line.trim() !== "")
-  return first === -1 ? [] : rest.slice(first, last + 1)
 }
 
 /** 各行の頭の引用の記号（`>` のあとが空白か行末のもの）を、重ねてあっても全部落とす。 */
@@ -67,7 +55,7 @@ function withoutQuoteMarkers(text: string): string {
 function firstReportLine(turn: MainViewTurn): string | undefined {
   for (const step of turn.steps) {
     if (step.body.kind === "text") {
-      const line = firstLineOf(step.body.firstLine)?.line
+      const line = firstLineOf(step.body.firstLine)
       if (line !== undefined) {
         return line
       }
@@ -77,14 +65,12 @@ function firstReportLine(turn: MainViewTurn): string | undefined {
 }
 
 /**
- * 空でない最初の行と、その行番号。空でない行が無ければ undefined。
- * 行の中の空白の並びは1つに詰める（1行のタイトルの中で折り返させないため）。
+ * 空でない最初の行。空でない行が無ければ undefined。
+ * 行の中の空白の並びは1つに詰める（1行の題の中で折り返させないため）。
  */
-function firstLineOf(
-  text: string,
-): { readonly line: string; readonly lineIndex: number } | undefined {
-  const lines = text.split("\n").map((raw) => raw.replace(/\s+/g, " ").trim())
-  const lineIndex = lines.findIndex((trimmed) => trimmed !== "")
-  const line = lines[lineIndex]
-  return line === undefined ? undefined : { line, lineIndex }
+function firstLineOf(text: string): string | undefined {
+  return text
+    .split("\n")
+    .map((raw) => raw.replace(/\s+/g, " ").trim())
+    .find((trimmed) => trimmed !== "")
 }

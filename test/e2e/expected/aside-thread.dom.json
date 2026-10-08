@@ -57,7 +57,7 @@
                                 "data-outline-turn": "0",
                                 "data-result": "working",
                                 "aria-current": "true",
-                                "aria-label": "作業中: 架空のタスクに着手して、委譲先に任せたい（架空の依頼）（脇の話 1件）",
+                                "aria-label": "作業中: 架空のタスクに着手して、委譲先に任せたい（架空の依頼）（脇の話 1件）（最新）",
                                 "type": "button"
                               },
                               "children": [
@@ -79,6 +79,15 @@
                                   "children": [
                                     "脇 1"
                                   ]
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "最新"
+                                  ]
                                 }
                               ]
                             }
@@ -91,57 +100,6 @@
                             "aria-orientation": "vertical",
                             "aria-label": "やり取りと本文の境界"
                           }
-                        },
-                        {
-                          "tag": "header",
-                          "children": [
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "true",
-                                "aria-label": "1つ古いターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "‹"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "true",
-                                "aria-label": "1つ新しいターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "›"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "h2",
-                              "children": [
-                                "架空のタスクに着手して、委譲先に任せたい（架空の依頼）"
-                              ]
-                            },
-                            "1 / 1",
-                            "最新"
-                          ]
                         },
                         {
                           "tag": "section",
@@ -241,6 +199,23 @@
                               "tag": "p",
                               "children": [
                                 "背景で 架空の委譲"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "h2",
+                              "children": [
+                                "依頼"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空のタスクに着手して、委譲先に任せたい（架空の依頼）"
                               ]
                             }
                           ]

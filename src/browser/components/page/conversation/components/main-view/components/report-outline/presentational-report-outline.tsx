@@ -1,5 +1,6 @@
 // やり取りの列の器。
-// 札の左に、窓の中のやり取りと、見ているやり取りの見出しの一覧を列として置き、札の頭と本文はその幅ぶん右へ寄る。
+// 札の左に、窓の中のやり取りと、見ているやり取りの見出しの一覧を列として置き、進み具合の帯と本文はその幅ぶん右へ寄る。
+// 列の頭には、いま見ている中身の外で起きたことを知らせの行として出す。
 // 列は札の上端から下端まで伸び、転がしても札の上端に残る。
 
 import clsx from "clsx"
@@ -9,6 +10,7 @@ import type { ReactElement, ReactNode } from "react"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { LayoutResizer } from "../../../../../../ui/layout-resizer/layout-resizer.tsx"
 import { TURN_RESULT_MARKS } from "../../../../domain/turn-result-mark.ts"
+import { HeadNotice } from "../head-notice/head-notice.tsx"
 import { outlineWidthFromRatio } from "./domain/outline-panel.ts"
 import {
   TURN_ROW_ATTRIBUTE,
@@ -23,7 +25,10 @@ const COLLAPSE_LABEL = "やり取りを畳む"
 const EXPAND_LABEL = "やり取りを開く"
 const RESIZER_LABEL = "やり取りと本文の境界"
 
+const TURN_STEP_KEY_HINT = "前後のやり取りへは [ ] キー"
+
 const ACTIVE_TURN_MARK = "●"
+const NEWEST_BADGE = "最新"
 
 export type PresentationalReportOutlineProps = ReportOutlineModel & {
   readonly children: ReactNode
@@ -37,6 +42,8 @@ export function PresentationalReportOutline({
   visible,
   turnRows,
   onSelectTurn,
+  notice,
+  onNotice,
   rows,
   frameRef,
   contentRef,
@@ -68,24 +75,31 @@ export function PresentationalReportOutline({
             onKeyDown={onNavKeyDown}
           >
             {collapsed ? (
-              <Button
-                variant="ghost"
-                size="action"
-                pressed="none"
-                disabled={false}
-                ariaLabel={EXPAND_LABEL}
-                disclosure={{ kind: "expander", expanded: false }}
-                ariaHasPopup={undefined}
-                title={undefined}
-                className={styles["outline-toggle"]}
-                onClick={onToggleCollapse}
-              >
-                <ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
-              </Button>
+              <div className={styles["outline-collapsed"]}>
+                <Button
+                  variant="ghost"
+                  size="action"
+                  pressed="none"
+                  disabled={false}
+                  ariaLabel={EXPAND_LABEL}
+                  disclosure={{ kind: "expander", expanded: false }}
+                  ariaHasPopup={undefined}
+                  title={undefined}
+                  className={styles["outline-toggle"]}
+                  onClick={onToggleCollapse}
+                >
+                  <ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
+                </Button>
+                {notice.kind === "notice" && (
+                  <HeadNotice text={notice.text} form="mark" onPress={onNotice} />
+                )}
+              </div>
             ) : (
               <>
                 <div className={styles["outline-list-head"]}>
-                  <span className={styles["outline-list-title"]}>{OUTLINE_LABEL}</span>
+                  <span className={styles["outline-list-title"]} title={TURN_STEP_KEY_HINT}>
+                    {OUTLINE_LABEL}
+                  </span>
                   <Button
                     variant="ghost"
                     size="action"
@@ -101,6 +115,11 @@ export function PresentationalReportOutline({
                     <ChevronLeft size={14} strokeWidth={2} aria-hidden="true" />
                   </Button>
                 </div>
+                {notice.kind === "notice" && (
+                  <div className={styles["outline-notice"]}>
+                    <HeadNotice text={notice.text} form="row" onPress={onNotice} />
+                  </div>
+                )}
                 <div className={styles["outline-list"]} ref={listRef}>
                   {turnRows.map((turn) => (
                     <div
@@ -151,7 +170,7 @@ function TurnRow(props: {
       {...{ [TURN_ROW_ATTRIBUTE]: turn.id }}
       data-result={turn.result}
       aria-current={turn.isActive ? "true" : undefined}
-      aria-label={`${result.label}: ${turn.title}${turn.asideCount > 0 ? `（脇の話 ${String(turn.asideCount)}件）` : ""}`}
+      aria-label={`${result.label}: ${turn.title}${turn.asideCount > 0 ? `（脇の話 ${String(turn.asideCount)}件）` : ""}${turn.isNewest ? `（${NEWEST_BADGE}）` : ""}`}
       title={turn.title}
       onClick={() => {
         props.onSelectTurn(turn.id)
@@ -168,6 +187,11 @@ function TurnRow(props: {
           </span>
         )}
       </span>
+      {turn.isNewest && (
+        <span className={styles["outline-turn-newest"]} aria-hidden="true">
+          {NEWEST_BADGE}
+        </span>
+      )}
     </button>
   )
 }

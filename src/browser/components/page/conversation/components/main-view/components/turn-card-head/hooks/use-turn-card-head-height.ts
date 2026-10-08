@@ -1,4 +1,4 @@
-// 札の頭（題の行と進み具合の帯）の外寸を測り、メインビューの根の `--turn-card-head-height` に書く。
+// 札の頭（進み具合の帯）の外寸を測り、メインビューの根の `--turn-card-head-height` に書く。
 
 import { useLayoutEffect, type RefObject } from "react"
 

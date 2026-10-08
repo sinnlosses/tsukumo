@@ -141,7 +141,7 @@
                                 "data-outline-turn": "4",
                                 "data-result": "done",
                                 "aria-current": "true",
-                                "aria-label": "完了: 目次の列を2段にする（架空の依頼）",
+                                "aria-label": "完了: 目次の列を2段にする（架空の依頼）（最新）",
                                 "type": "button"
                               },
                               "children": [
@@ -154,7 +154,16 @@
                                     "●"
                                   ]
                                 },
-                                "目次の列を2段にする（架空の依頼）"
+                                "目次の列を2段にする（架空の依頼）",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "最新"
+                                  ]
+                                }
                               ]
                             },
                             {
@@ -233,57 +242,6 @@
                           }
                         },
                         {
-                          "tag": "header",
-                          "children": [
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "false",
-                                "aria-label": "1つ古いターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "‹"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "true",
-                                "aria-label": "1つ新しいターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "›"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "h2",
-                              "children": [
-                                "目次の列を2段にする（架空の依頼）"
-                              ]
-                            },
-                            "5 / 5",
-                            "最新"
-                          ]
-                        },
-                        {
                           "tag": "section",
                           "attributes": {
                             "aria-label": "進み具合",
@@ -318,6 +276,23 @@
                               },
                               "children": [
                                 "手順 0 ▾"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "h2",
+                              "children": [
+                                "依頼"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "目次の列を2段にする（架空の依頼）"
                               ]
                             }
                           ]

@@ -19,6 +19,7 @@ import { isDeepEqual } from "remeda"
 
 import type { TurnResult } from "../../../../../../../../../shared/session/turn-result.ts"
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../../../domain/reveal/paint.ts"
+import type { HeadNotice, HeadNoticeAction } from "../../../domain/head-notice.ts"
 import notationStyles from "../../../markdown/report-notation.module.css"
 import {
   isOutlineCollapsed,
@@ -46,12 +47,17 @@ export type ReportOutlineProps = {
   readonly turns: readonly ReportOutlineTurn[]
   readonly activeTurnId: number
   readonly onSelectTurn: (turnId: number) => void
+  /** 列の頭に出す知らせの行。 */
+  readonly notice: HeadNotice
+  readonly onNotice: (action: HeadNoticeAction) => void
 }
 
 /** 上の段の1行ぶん。 */
 export type ReportOutlineTurnRow = ReportOutlineTurn & {
   /** 見ているやり取りか。この行の下にだけ見出しの行を出す。 */
   readonly isActive: boolean
+  /** 窓の中でいちばん新しいやり取りか。右端に「最新」の札を付ける。 */
+  readonly isNewest: boolean
 }
 
 /** 一覧の1行ぶん。 */
@@ -68,6 +74,8 @@ export type ReportOutlineModel = {
   readonly visible: boolean
   readonly turnRows: readonly ReportOutlineTurnRow[]
   readonly onSelectTurn: (turnId: number) => void
+  readonly notice: HeadNotice
+  readonly onNotice: () => void
   /** 見ているやり取りの見出しの行。 */
   readonly rows: readonly ReportOutlineRow[]
   /**
@@ -253,8 +261,18 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 
   return {
     visible,
-    turnRows: props.turns.map((turn) => ({ ...turn, isActive: turn.id === props.activeTurnId })),
+    turnRows: props.turns.map((turn, index) => ({
+      ...turn,
+      isActive: turn.id === props.activeTurnId,
+      isNewest: index === props.turns.length - 1,
+    })),
     onSelectTurn: props.onSelectTurn,
+    notice: props.notice,
+    onNotice: () => {
+      if (props.notice.kind === "notice") {
+        props.onNotice(props.notice.action)
+      }
+    },
     rows: outlineRows(entries, activeIndex),
     frameRef,
     contentRef,
