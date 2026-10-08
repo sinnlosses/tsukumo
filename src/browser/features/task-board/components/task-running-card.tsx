@@ -1,7 +1,7 @@
 // 進行中（doing）のタスクを、区画の一覧の先頭にカードで出す。カード全体が1つのボタンで、押すとのぞき窓が開く。
 // 他の行と違い summary は1行に切り詰めず、折り返して全文を出す（進行中は件数が少なく、いま何をしているかを読みたいため）。
 //
-// 1行目に「進行中」の札とID（担当があればIDの後ろに添える）と右端の `›`、2行目に summary を置く。
+// 1行目に「進行中」の札とIDと右端の `›`、2行目に summary を置く。
 
 import { ChevronRight } from "lucide-react"
 import type { ReactElement } from "react"
@@ -34,11 +34,6 @@ export function TaskRunningCard(props: {
         <span className={styles["task-running-head"]}>
           <span className={styles["task-running-badge"]}>進行中</span>
           <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
-          {props.task.assignee !== undefined && (
-            <span className={styles["task-running-assignee"]} title="担当">
-              {props.task.assignee}
-            </span>
-          )}
           <ChevronRight
             className={styles["task-running-chevron"]}
             size={14}

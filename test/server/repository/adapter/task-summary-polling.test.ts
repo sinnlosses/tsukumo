@@ -30,7 +30,7 @@ const FICTIONAL_BEADS_ISSUE: BeadsIssue = {
   title: "架空",
   status: "open",
   blockedBy: [],
-  assignee: undefined,
+  labels: [],
   createdAtEpochMilliseconds: 0,
   closedAtEpochMilliseconds: undefined,
   description: "",

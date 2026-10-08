@@ -12,7 +12,7 @@ function taskOf(id: string, status: string | undefined): TaskSummaryItem {
     status,
     dependencies: [],
     waitingFor: [],
-    assignee: undefined,
+    labels: [],
     body: "",
     location: { kind: "none" },
   }

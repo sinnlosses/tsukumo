@@ -8,6 +8,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import type {
   TaskBoardBreadcrumb,
   TaskBoardDetail,
@@ -43,8 +45,36 @@ export function TaskDetail(props: {
         <dd>
           <TaskState state={detail.state} />
         </dd>
-        <dt>担当</dt>
-        <dd className={styles["task-detail-assignee"]}>{detail.assignee}</dd>
+        {detail.labels.length > 0 && (
+          <>
+            <dt>ラベル</dt>
+            <dd>
+              <HStack
+                element="span"
+                name={{ kind: "none" }}
+                ref={undefined}
+                gap="xs"
+                align="center"
+                justify="start"
+                wrap="wrap"
+                className={styles["task-detail-labels"]}
+              >
+                {detail.labels.map((label) => (
+                  <Text
+                    key={label}
+                    element="span"
+                    size="label"
+                    tone="ink-quiet"
+                    weight="normal"
+                    className={styles["task-detail-label"]}
+                  >
+                    {label}
+                  </Text>
+                ))}
+              </HStack>
+            </dd>
+          </>
+        )}
         {detail.location.kind === "issue" && (
           <>
             <dt>Issue</dt>

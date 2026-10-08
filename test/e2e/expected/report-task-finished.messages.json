@@ -131,6 +131,7 @@
             "status": "todo",
             "dependencies": [],
             "waitingFor": [],
+            "labels": [],
             "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n",
             "location": {
               "kind": "none"
@@ -142,6 +143,7 @@
             "status": "todo",
             "dependencies": [],
             "waitingFor": [],
+            "labels": [],
             "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n",
             "location": {
               "kind": "none"

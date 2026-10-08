@@ -283,7 +283,7 @@ describe("Turn（目録の1行と見出し）", () => {
             status: "done",
             dependencies: [],
             waitingFor: [],
-            assignee: undefined,
+            labels: [],
             body: "",
             location: { kind: "none" },
           },

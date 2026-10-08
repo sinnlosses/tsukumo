@@ -11,7 +11,7 @@ describe("taskReadiness", () => {
     status,
     dependencies: waitingFor,
     waitingFor,
-    assignee: undefined,
+    labels: [],
     body: "",
     location: { kind: "none" },
   })

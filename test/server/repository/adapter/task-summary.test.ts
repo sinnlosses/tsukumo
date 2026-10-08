@@ -18,7 +18,7 @@ import {
   DEFAULT_RUN_PROMPT,
   PROJECT_SETTINGS_PATH,
 } from "../../../../src/shared/repository/project-settings.ts"
-import { BEADS_TEST_ACTOR, bd, useBeadsHome } from "../../../fixture/beads-repository.ts"
+import { bd, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import {
   writeProjectSettings,
   writeProjectSettingsContent,
@@ -119,7 +119,7 @@ function plainTodo(id: string, summary: string): Record<string, unknown> {
     status: "todo",
     dependencies: [],
     waitingFor: [],
-    assignee: undefined,
+    labels: [],
     body: "",
     location: { kind: "none" },
   }
@@ -127,7 +127,7 @@ function plainTodo(id: string, summary: string): Record<string, unknown> {
 
 describe("watchTaskSummary", () => {
   it(
-    "bd の課題を ID のまま作った時刻の順に出し、状態を読み替えて担当を添える。ラベルは読まない",
+    "bd の課題を ID のまま作った時刻の順に出し、状態を読み替え、ラベルは字のまま写す",
     { timeout: 60_000 },
     async () => {
       const repository = await initBeadsRepository(root(), [
@@ -138,7 +138,6 @@ describe("watchTaskSummary", () => {
         openIssue("t-002", "保留", { status: "deferred" }),
         openIssue("t-003", "着手中", {
           status: "in_progress",
-          assignee: BEADS_TEST_ACTOR,
           dependencies: [{ issue_id: "t-003", depends_on_id: "t-010", type: "blocks" }],
         }),
         openIssue("t-001", "済み", { status: "closed", closed_at: "2026-01-14T12:00:00Z" }),
@@ -149,7 +148,7 @@ describe("watchTaskSummary", () => {
 
       expect(changes).toEqual([
         known(
-          plainTodo("t-010", "未着手"),
+          { ...plainTodo("t-010", "未着手"), labels: ["difficulty:opus"] },
           { ...plainTodo("t-001", "済み"), status: "done" },
           { ...plainTodo("t-002", "保留"), status: "hold" },
           {
@@ -157,7 +156,6 @@ describe("watchTaskSummary", () => {
             status: "doing",
             dependencies: ["t-010"],
             waitingFor: ["t-010"],
-            assignee: "wt-test",
           },
         ),
       ])

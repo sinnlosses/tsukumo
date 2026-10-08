@@ -62,7 +62,7 @@ function taskSummaryItemOfBeadsIssue(
     dependencies: issue.blockedBy,
     waitingFor:
       issue.status === CLOSED_STATUS ? [] : issue.blockedBy.filter((id) => unfinished.has(id)),
-    assignee: issue.assignee,
+    labels: issue.labels,
     body: bodyOfBeadsIssue(issue),
     location: locationOfBeadsIssue(issue),
   }

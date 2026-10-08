@@ -2,7 +2,6 @@ import { mkdirSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
 import { FAKE_BEADS_ISSUES_PATH } from "../../src/server/repository/adapter/fake-beads.ts"
-import { BEADS_TEST_ACTOR } from "../fixture/beads-repository.ts"
 import type { DomRootName, ScenarioOptions, ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧とタスクのモーダルの E2E の足場（docs/architecture/testing.md「E2E のシナリオの一覧」）。
@@ -22,7 +21,7 @@ const CLOSED_AT = "2026-01-14T12:00:00Z"
 
 /**
  * 課題1件。会話の内容ではない架空のタスク。`id` は Beads の ID の字のまま。
- * `status` の `doing` は着手中（`in_progress` と担当）。
+ * `status` の `doing` は着手中（`in_progress`）。
  */
 type TaskFixture = {
   readonly id: string
@@ -84,7 +83,6 @@ function beadsIssueOf(fixture: TaskFixture, index: number): Readonly<Record<stri
     status: BEADS_STATUS[fixture.status],
     created_at: FIRST_CREATED_AT.add({ minutes: index }).toString(),
     ...(fixture.status === "done" ? { closed_at: CLOSED_AT } : {}),
-    ...(fixture.status === "doing" ? { assignee: BEADS_TEST_ACTOR } : {}),
     dependencies: fixture.dependencies.map((dependency) => ({
       issue_id: fixture.id,
       depends_on_id: dependency,

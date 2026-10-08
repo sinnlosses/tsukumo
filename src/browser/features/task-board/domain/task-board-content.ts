@@ -112,7 +112,7 @@ function selectionOf(
       status: task.status ?? MISSING,
       title: codeSpanParts(task.summary),
       state: entry.state,
-      assignee: task.assignee ?? MISSING,
+      labels: task.labels,
       location: task.location,
       dependencies: task.dependencies.map((id) => dependencyCardOf(id, byId)),
       dependents: dependentsOf(task.id, entries),
@@ -191,10 +191,7 @@ function taskStateOf(task: TaskSummaryItem): TaskStateView {
         text: task.waitingFor.length === 0 ? "保留" : `保留 · ${task.waitingFor.join(", ")}`,
       }
     case "doing":
-      return {
-        kind: "doing",
-        text: task.assignee === undefined ? "進行中" : `進行中（${task.assignee}）`,
-      }
+      return { kind: "doing", text: "進行中" }
     case "done":
       return { kind: "done", text: "完了" }
     default:

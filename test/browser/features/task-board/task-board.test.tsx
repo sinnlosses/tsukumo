@@ -29,7 +29,7 @@ function beadsTask(location: TaskSummaryItem["location"]): TaskSummaryItem {
     status: "todo",
     dependencies: [],
     waitingFor: [],
-    assignee: undefined,
+    labels: [],
     body: "## 目的・背景\n\n架空の本文。\n",
     location,
   }
@@ -62,6 +62,21 @@ describe("タスクのモーダルの置き場所（Beads 方式）", () => {
 
     expect(screen.queryByText("Issue")).toBeNull()
     expect(screen.queryByRole("link", { name: "Issue を開く" })).toBeNull()
+  })
+})
+
+describe("タスクのモーダルのラベル", () => {
+  it("ラベルを情報の表に字のまま並べ、無い課題では行ごと出さない", () => {
+    renderBoard({ ...beadsTask({ kind: "none" }), labels: ["loopable:Y", "difficulty:sonnet"] })
+
+    expect(screen.getByText("ラベル", { selector: "dt" })).toBeDefined()
+    expect(screen.getByText("loopable:Y")).toBeDefined()
+    expect(screen.getByText("difficulty:sonnet")).toBeDefined()
+
+    cleanup()
+    renderBoard(beadsTask({ kind: "none" }))
+
+    expect(screen.queryByText("ラベル")).toBeNull()
   })
 })
 
@@ -279,7 +294,7 @@ function selectionTask(id: string, status: string, body: string): TaskSummaryIte
     status,
     dependencies: [],
     waitingFor: [],
-    assignee: undefined,
+    labels: [],
     body,
     location: { kind: "none" },
   }

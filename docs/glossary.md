@@ -138,11 +138,11 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### Beads の読み口
 
 - **英語識別子（予定）**: `beadsTask`（`src/server/**/adapter/` の Beads を読むファイルに置く）
-- **定義**: Beads の課題を、組み込みの欄（ID・題・状態・依存・作った時刻と閉じた時刻・`external_ref`・`assignee`・
+- **定義**: Beads の課題を、組み込みの欄（ID・題・状態・依存・作った時刻と閉じた時刻・`external_ref`・`labels`・
   `description`・`acceptance_criteria`・`notes`）だけからタスク一般の形（`TaskSummaryItem`・`DoneTask`。
   `src/shared/repository/task-summary.ts`）へ写す境界。状態は `open` → todo・`in_progress` → doing・
   `deferred` → hold・`closed` → done に写し、ほかの値は生のまま
-- **注記**: 特定のスキルが課題に足したラベル・独自の状態・本文の節の書式・ID の書き換えは読まない
+- **注記**: ラベルは字のまま並べるだけで解釈せず、担当（`assignee`）は読まない。特定のスキルが課題に足した独自の状態・本文の節の書式・ID の書き換えは読まない
   （`docs/architecture/adr/0024-no-skill-dependency.md`）。一覧・成果・おすすめは写したあとのタスク一般の形だけを読む
 - **避ける言い方**: task-workflow 方式（スキルの名前で、tsukumo はスキルの規則を写さない）、Beads の形
 

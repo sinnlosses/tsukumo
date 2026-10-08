@@ -24,7 +24,7 @@ function taskOf(id: string, overrides: Partial<TaskSummaryItem>): TaskSummaryIte
     status: "todo",
     dependencies: [],
     waitingFor: [],
-    assignee: undefined,
+    labels: [],
     body: "",
     location: { kind: "none" },
     ...overrides,
@@ -59,17 +59,15 @@ describe("boardEntries の状態の言い方", () => {
     expect(states.at(2)).toEqual({ kind: "hold", text: "保留" })
   })
 
-  it("進行中は担当を添え、完了・想定外の値はそれぞれの言い方になる", () => {
+  it("進行中・完了・想定外の値はそれぞれの言い方になる", () => {
     expect(
       statesOf([
-        taskOf("X-001", { status: "doing", assignee: "tree-1" }),
         taskOf("X-002", { status: "doing" }),
         taskOf("X-003", { status: "done" }),
         taskOf("X-005", { status: "archived" }),
         taskOf("X-006", { status: undefined }),
       ]),
     ).toEqual([
-      { kind: "doing", text: "進行中（tree-1）" },
       { kind: "doing", text: "進行中" },
       { kind: "done", text: "完了" },
       { kind: "other", text: "archived" },
@@ -165,18 +163,21 @@ describe("boardContent", () => {
     expect(run).toEqual({ kind: "unavailable", reason: "待ちが終わると頼めます" })
   })
 
-  it("詳細の担当は assignee の字のまま、無ければ「—」", () => {
+  it("詳細のラベルは labels の字のまま、無ければ空", () => {
     const tasks = known([
-      taskOf("X-001", { status: "doing", assignee: "tree-1" }),
+      taskOf("X-001", { labels: ["loopable:Y", "difficulty:sonnet"] }),
       taskOf("X-002", {}),
     ])
-    const assigneeOf = (id: string): string | undefined => {
+    const labelsOf = (id: string): readonly string[] | undefined => {
       const content = contentOf(tasks, id)
       return content.kind === "known" && content.selection.kind === "some"
-        ? content.selection.detail.assignee
+        ? content.selection.detail.labels
         : undefined
     }
 
-    expect([assigneeOf("X-001"), assigneeOf("X-002")]).toEqual(["tree-1", "—"])
+    expect([labelsOf("X-001"), labelsOf("X-002")]).toEqual([
+      ["loopable:Y", "difficulty:sonnet"],
+      [],
+    ])
   })
 })

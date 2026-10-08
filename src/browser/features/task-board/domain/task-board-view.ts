@@ -53,8 +53,8 @@ export type TaskBoardDetail = {
   readonly status: string
   readonly title: readonly CodeSpanPart[]
   readonly state: TaskStateView
-  /** 担当（Beads の `assignee` の字のまま）。無ければ「—」。 */
-  readonly assignee: string
+  /** ラベル（Beads の `labels` の字のまま）。無ければ空。 */
+  readonly labels: readonly string[]
   readonly location: TaskLocation
   readonly dependencies: readonly TaskDependencyCard[]
   /** いまの一覧のうち、このタスクを依存に持つもの。 */

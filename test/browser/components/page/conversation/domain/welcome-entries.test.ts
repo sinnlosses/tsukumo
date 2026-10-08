@@ -23,7 +23,7 @@ function task(id: string, status: string, waitingFor: readonly string[]): TaskSu
     status,
     dependencies: waitingFor,
     waitingFor,
-    assignee: undefined,
+    labels: [],
     body: "",
     location: { kind: "none" },
   }

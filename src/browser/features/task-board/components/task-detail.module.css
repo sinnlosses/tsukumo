@@ -76,8 +76,13 @@
   align-items: center;
   min-width: 0;
 }
-.task-detail-assignee {
-  color: color-mix(in srgb, var(--ink) 85%, transparent);
+.task-detail-labels {
+  font-family: var(--font-mono);
+}
+.task-detail-label {
+  padding: 0 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--ink-quiet) 40%, transparent);
+  border-radius: 12px;
   overflow-wrap: anywhere;
 }
 .task-detail-location {

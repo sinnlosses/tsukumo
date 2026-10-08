@@ -844,7 +844,7 @@ describe("applySessionEvent", () => {
         status: "todo",
         dependencies: [],
         waitingFor: [],
-        assignee: undefined,
+        labels: [],
         body: "",
         location: { kind: "none" },
       },

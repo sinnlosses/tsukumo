@@ -32,7 +32,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     status: "todo",
     dependencies: [],
     waitingFor: [],
-    assignee: undefined,
+    labels: [],
     body: "",
     location: { kind: "none" },
   },
@@ -42,7 +42,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     status: "done",
     dependencies: [],
     waitingFor: [],
-    assignee: undefined,
+    labels: [],
     body: "",
     location: { kind: "none" },
   },
@@ -52,7 +52,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     status: undefined,
     dependencies: [],
     waitingFor: [],
-    assignee: undefined,
+    labels: [],
     body: "",
     location: { kind: "none" },
   },
@@ -62,7 +62,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     status: "doing",
     dependencies: [],
     waitingFor: [],
-    assignee: undefined,
+    labels: [],
     body: "",
     location: { kind: "none" },
   },
@@ -86,30 +86,6 @@ describe("taskList", () => {
     render(<TaskList tasks={known([])} selectedStatus="all" />)
 
     expect(screen.getByText("タスクが無い")).toBeDefined()
-  })
-
-  it("進行中のカードは、着手した作業ツリーが分かればその名前を添える", () => {
-    const items: readonly TaskSummaryItem[] = [
-      {
-        id: "X-006",
-        summary: "架空の着手中",
-        status: "doing",
-        dependencies: [],
-        waitingFor: [],
-        assignee: "wt-架空",
-        body: "",
-        location: { kind: "none" },
-      },
-    ]
-    render(<TaskList tasks={known(items)} selectedStatus="all" />)
-
-    expect(document.querySelector(".task-running-assignee")?.textContent).toBe("wt-架空")
-  })
-
-  it("着手した作業ツリーが分からない進行中のカードには名前の欄を出さない", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
-
-    expect(document.querySelector(".task-running-assignee")).toBeNull()
   })
 
   it("todo は空の丸の印を持つ", () => {
@@ -145,7 +121,7 @@ describe("taskList", () => {
         status: "archived",
         dependencies: [],
         waitingFor: [],
-        assignee: undefined,
+        labels: [],
         body: "",
         location: { kind: "none" },
       },
@@ -185,12 +161,12 @@ describe("taskList", () => {
     expect(peek()).toBeNull()
   })
 
-  it("のぞき窓は状態・ID・題・本文の頭・「全文を開く」を持ち、作った人と担当は出さない", () => {
+  it("のぞき窓は状態・ID・題・本文の頭・「全文を開く」を持ち、作った人とラベルは出さない", () => {
     const items: readonly TaskSummaryItem[] = [
       {
         ...taskOf("X-007", "todo"),
         summary: "架空の題",
-        assignee: "wt-架空",
+        labels: ["loopable:Y"],
         body: "架空の本文の頭。\n\n架空の続き。",
       },
     ]
@@ -203,8 +179,7 @@ describe("taskList", () => {
       expect(text).toContain(part)
     }
     expect(text).not.toContain("作った")
-    expect(text).not.toContain("担当")
-    expect(text).not.toContain("wt-架空")
+    expect(text).not.toContain("loopable:Y")
   })
 
   it("進行中のカードを押しても同じ窓が開く", () => {
@@ -317,7 +292,7 @@ function taskOf(id: string, status: string): TaskSummaryItem {
     status,
     dependencies: [],
     waitingFor: [],
-    assignee: undefined,
+    labels: [],
     body: "",
     location: { kind: "none" },
   }

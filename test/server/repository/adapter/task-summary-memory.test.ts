@@ -24,7 +24,7 @@ function item(id: string, overrides: Partial<TaskSummaryItem> = {}): TaskSummary
     status: "todo",
     dependencies: [],
     waitingFor: [],
-    assignee: undefined,
+    labels: [],
     body: "本文",
     location: { kind: "none" },
     ...overrides,
@@ -32,12 +32,12 @@ function item(id: string, overrides: Partial<TaskSummaryItem> = {}): TaskSummary
 }
 
 describe("タスク一覧の記憶", () => {
-  it("書いた一覧を、undefined の欄も含めて同じ形で読み戻す", () => {
+  it("書いた一覧を、undefined の欄・ラベルも含めて同じ形で読み戻す", () => {
     const items = [
       item("t-1", {
         dependencies: ["t-2"],
         waitingFor: ["t-2"],
-        assignee: "tsukumo-2",
+        labels: ["loopable:Y"],
       }),
       item("t-2", { location: { kind: "issue", url: "https://example.test/2" } }),
     ]

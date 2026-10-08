@@ -10,7 +10,7 @@ function issue(overrides: Partial<BeadsIssue> & Pick<BeadsIssue, "id" | "status"
   return {
     title: `架空の${overrides.id}`,
     blockedBy: [],
-    assignee: undefined,
+    labels: [],
     createdAtEpochMilliseconds: 0,
     closedAtEpochMilliseconds: undefined,
     description: "",
@@ -47,14 +47,14 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
     ])
   })
 
-  it("ID・題・依存・担当は課題の字のまま写す", () => {
+  it("ID・題・依存・ラベルは課題の字のまま写す", () => {
     const [item] = taskSummaryItemsOfBeadsIssues([
       issue({
         id: "gh-12",
         status: "in_progress",
         title: "架空の題",
         blockedBy: ["gh-3", "t-a1b2"],
-        assignee: "wt-a",
+        labels: ["loopable:Y", "difficulty:sonnet"],
       }),
     ])
 
@@ -64,7 +64,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
       status: "doing",
       dependencies: ["gh-3", "t-a1b2"],
       waitingFor: [],
-      assignee: "wt-a",
+      labels: ["loopable:Y", "difficulty:sonnet"],
       body: "",
       location: { kind: "none" },
     })

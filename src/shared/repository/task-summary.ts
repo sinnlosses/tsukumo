@@ -13,8 +13,8 @@ export type TaskSummaryItem = {
    * 済んだタスクでは空。
    */
   readonly waitingFor: readonly string[]
-  /** 担当（Beads の `assignee` の字のまま）。担当の無い課題では `undefined`。 */
-  readonly assignee: string | undefined
+  /** ラベル（Beads の `labels` の字のまま）。無い課題では空。 */
+  readonly labels: readonly string[]
   /** タスクの本文（Markdown）。本文が無い課題でも空文字列で持つ（`undefined` にしない）。 */
   readonly body: string
   readonly location: TaskLocation

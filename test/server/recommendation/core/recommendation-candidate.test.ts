@@ -21,7 +21,7 @@ function task(
     status,
     dependencies,
     waitingFor,
-    assignee: undefined,
+    labels: [],
     body: "",
     location: { kind: "none" },
   }

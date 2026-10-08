@@ -336,8 +336,8 @@ plugin/                       セッションに載せる Claude Code のプラ�
 **タスク一覧の読み元は Beads だけ**（`server/repository/adapter/task-beads-source.ts`。`bd` の課題）。
 **課題の解釈は Beads の読み口の1か所に閉じる**（`docs/architecture/adr/0024-no-skill-dependency.md`）。
 読み口（`server/**/adapter/` の Beads を読むファイル）が、Beads の組み込みの欄（ID・題・状態・依存・作った時刻と閉じた時刻・
-`external_ref`・`assignee`・本文の3欄）だけをタスク一般の形（`TaskSummaryItem`・`DoneTask`。判定済みの `waitingFor` を含む。
-`shared/repository/task-summary.ts`）に写す。特定のスキルが課題に足したラベル・独自の状態・本文の節の書式・ID の書き換えは読まない。
+`external_ref`・`labels`・本文の3欄）だけをタスク一般の形（`TaskSummaryItem`・`DoneTask`。判定済みの `waitingFor` を含む。
+`shared/repository/task-summary.ts`）に写す。ラベルは字のまま並べるだけで解釈せず、担当（`assignee`）は読まない。特定のスキルが課題に足した独自の状態・本文の節の書式・ID の書き換えは読まない。
 一覧・迎える口・成果・おすすめは一般の形だけを読む（成果は `bd` を読んだ境界で `DoneTask` に畳む）。
 例外は疑似セッションで、`taskSummaryOptionsOf("fake")` が `bd` の代わりに cwd のファイルを読む口（`fake-beads.ts` の
 `readFakeBeadsIssues`）と短い見回りの間隔に差し替える（E2E の足場が課題を置く。設定の読み出しと読み元の選び方はふだんと同じ）。

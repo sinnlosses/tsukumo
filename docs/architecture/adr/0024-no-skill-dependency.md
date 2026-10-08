@@ -3,7 +3,7 @@
 **tsukumo は特定のスキル（タスク運用・委譲の手順を決めるスキルと、その道具・課題の書式・置き場）の
 約束事を読まない。** 段取りは `work_plan`、作業の結果は `report` と `report.task` という tsukumo が
 定めた口だけで受け、システムプロンプトで教える。スキルはその口に段を渡すだけにする。タスクは
-Beads の課題を tsukumo が決めた一般の形（ID・題・状態・依存・時刻・置き場所・担当・本文）に写して扱う。
+Beads の課題を tsukumo が決めた一般の形（ID・題・状態・依存・時刻・置き場所・ラベル・本文）に写して扱う。
 **Beads には依存してよく、それを制約とする**（`docs/requirements.md` 2.3）。
 
 ## 何が困っていたか
@@ -44,9 +44,10 @@ tsukumo のゴールは、レポートを分かりやすく表示し、キャラ
 - **タスクの一般の形は Beads の組み込みの欄だけから作る。**
   - ID は Beads の ID そのまま（書き換えない）。題は `title`。依存は `blocks` の依存先
   - 状態は Beads の組み込みの状態を tsukumo の語（`open` → todo・`in_progress` → doing・`deferred` → hold・`closed` → done）に写し、
-    ほかの値は生のまま出す。ラベルは読まない
+    ほかの値は生のまま出す
   - 作った時刻（`created_at`）と閉じた時刻（`closed_at`）、置き場所（`https://` で始まる `external_ref`）、
-    担当（`assignee`。字のまま出すだけで、作業ツリーとの対応は読まない）
+    ラベル（`labels`。字のまま並べて出すだけで、意味は解釈せず、並べ替え・絞り込み・色分けに使わない。2026-10-08 に足した）。
+    担当（`assignee`）は読まない（2026-10-08 に外した）
   - 本文は `description`・`acceptance_criteria`・`notes` を Beads の欄の順に、tsukumo が決めた見出しで並べる（節を並べ替えない）
   - 並びは作った時刻の順
   - 写すのは Beads の読み口（`server/**/adapter/`）で、shared・画面・各機能の core は一般の形だけを扱う

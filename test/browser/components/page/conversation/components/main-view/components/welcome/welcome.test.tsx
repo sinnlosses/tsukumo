@@ -23,7 +23,7 @@ const READY_TASK: TaskSummaryItem = {
   status: "todo",
   dependencies: [],
   waitingFor: [],
-  assignee: undefined,
+  labels: [],
   body: "",
   location: { kind: "none" },
 }

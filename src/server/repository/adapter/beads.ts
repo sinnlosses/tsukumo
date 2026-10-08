@@ -16,7 +16,7 @@ import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "./git.ts"
 
 /**
  * `bd list --json` の1件のうち、Beads の組み込みの欄でこの読み手が使うものだけ。
- * `assignee`・`closedAtEpochMilliseconds`・`externalRef` は Beads の側で無ければ `undefined`、本文の3欄は無ければ空文字列。
+ * `closedAtEpochMilliseconds`・`externalRef` は Beads の側で無ければ `undefined`、`labels` は無ければ空、本文の3欄は無ければ空文字列。
  */
 export type BeadsIssue = {
   readonly id: string
@@ -24,7 +24,7 @@ export type BeadsIssue = {
   readonly status: string
   /** `blocks` の依存先の Beads ID。 */
   readonly blockedBy: readonly string[]
-  readonly assignee: string | undefined
+  readonly labels: readonly string[]
   readonly createdAtEpochMilliseconds: number
   readonly closedAtEpochMilliseconds: number | undefined
   readonly description: string
@@ -133,7 +133,7 @@ const beadsIssueSchema = z.object({
   title: z.string(),
   status: z.string(),
   dependencies: z.array(z.object({ depends_on_id: z.string(), type: z.string() })).nullish(),
-  assignee: z.string().nullish(),
+  labels: z.array(z.string()).nullish(),
   created_at: z.iso.datetime({ offset: true }),
   closed_at: z.iso.datetime({ offset: true }).nullish(),
   description: z.string().nullish(),
@@ -169,7 +169,7 @@ function beadsIssueOf(issue: z.infer<typeof beadsIssueSchema>): BeadsIssue {
     blockedBy: (issue.dependencies ?? [])
       .filter((dependency) => dependency.type === "blocks")
       .map((dependency) => dependency.depends_on_id),
-    assignee: nonEmpty(issue.assignee),
+    labels: issue.labels ?? [],
     createdAtEpochMilliseconds: epochMillisecondsOf(issue.created_at),
     closedAtEpochMilliseconds:
       issue.closed_at === null || issue.closed_at === undefined
