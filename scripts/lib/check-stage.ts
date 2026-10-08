@@ -1,6 +1,6 @@
 // `pnpm run check` が打つ段の並びを、`--full` の有無と変えたファイルから決める、という概念1つを持つ。
 
-import { isDocumentOnlyChange, isTaskRegistrationOnlyChange } from "./document-change.ts"
+import { isDocumentOnlyChange } from "./document-change.ts"
 
 export type Stage = {
   readonly name: string
@@ -10,11 +10,15 @@ export type Stage = {
   readonly heavy: boolean
 }
 
-/** タスク登録だけの変更で打つ文書の検査。 */
+/** 文書だけの変更で打つ文書の検査。 */
 export const DOCUMENT_CHECK_TEST_FILES = [
   "test/conflict-marker.test.ts",
   "test/task-id.test.ts",
-  "test/scripts/section-reference.test.ts",
+  "test/section-reference.test.ts",
+  "test/comment-reference.test.ts",
+  "test/e2e-reference.test.ts",
+  "test/document-index.test.ts",
+  "test/achievement-scene-reference.test.ts",
 ] as const
 
 export type StagePlan = {
@@ -25,35 +29,29 @@ export type StagePlan = {
 
 /**
  * `changedPaths` が空なら変えたファイルを集められなかったものとして扱う。
- * `chooseE2eStages` は E2E の段を選ぶ呼び出しで、タスク登録だけの変更では呼ばない。
+ * `chooseE2eStages` は E2E の段を選ぶ呼び出しで、文書だけの変更では呼ばない。
  */
 export function planStages(
-  forceFull: boolean,
   changedPaths: readonly string[],
   chooseE2eStages: () => readonly Stage[],
 ): StagePlan {
-  if (isTaskRegistrationOnlyChange(changedPaths)) {
+  if (isDocumentOnlyChange(changedPaths)) {
     return {
       stages: [
         { name: "format:check", args: [], heavy: false },
         { name: "test", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
       ],
-      notice: "タスク登録だけの変更のため format:check と文書の検査だけを打つ",
+      notice: "文書だけの変更のため format:check と文書の検査だけを打つ",
     }
   }
-  const documentOnly = !forceFull && isDocumentOnlyChange(changedPaths)
   return {
     stages: [
-      ...(documentOnly
-        ? []
-        : [
-            { name: "typecheck", args: [], heavy: false },
-            { name: "lint", args: [], heavy: false },
-          ]),
+      { name: "typecheck", args: [], heavy: false },
+      { name: "lint", args: [], heavy: false },
       { name: "format:check", args: [], heavy: false },
       { name: "test", args: [], heavy: true },
       ...chooseE2eStages(),
     ],
-    notice: documentOnly ? "文書だけの変更のため typecheck・lint を省く" : "",
+    notice: "",
   }
 }

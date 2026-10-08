@@ -343,9 +343,9 @@ TSUKUMO_CHARACTER=characters/local tsukumo
 
 ```bash
 pnpm run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す。
-                              #   E2E は変えたファイルから選んだものだけ。文書だけの変更は typecheck・lint も
-                              #   省く。--full で5段とも E2E 全件。全件は main へ送る直前に打つ。
-                              #   タスク登録だけの変更は --full でも format:check と文書の検査だけ）
+                              #   E2E は変えたファイルから選んだものだけ。
+                              #   --full で5段とも E2E 全件。全件は main へ送る直前に打つ。
+                              #   文書だけの変更は --full でも format:check と文書の検査だけ）
 pnpm run ship                  # タスクに紐付かない作業を main へ送る（取り込み・検証・送り出しを
                               #   1つに。落ちた段を出して止まる。docs/workflow.md「タスクに紐付
                               #   かない作業を main へ送る」）

@@ -1,16 +1,14 @@
 // `pnpm run check` の入口。`test:e2e` は変えたファイルから選んだ E2E のファイルだけを流し
-// （選び方は `selectE2eFiles`）、何を選んだかを1行で出す。`docs/`・`develop/` の Markdown しか
-// 変えていないときは `typecheck`・`lint` も省く。`format:check` と単体テスト
-// （タスク番号や節の参照の検査が文書を見ている）は省かない。
+// （選び方は `selectE2eFiles`）、何を選んだかを1行で出す。
 // 重い段（`test`・`test:e2e`）は、軽い段のあとに単体と E2E を並べて走らせる。
 // 並べた2段の出力は段ごとに溜め、両方が終わってから段の順に出し、落ちた段は最後の行で名指しする。
 //
-// 変えたファイルが `develop/direction.md`・`develop/draft/`・`docs/history/` だけ（タスク登録だけ）の
-// ときは、`--full` の有無に関わらず `format:check` と文書の検査（`DOCUMENT_CHECK_TEST_FILES`）だけを打つ。
+// 変えたファイルが `docs/`・`develop/` の Markdown と直下の `README.md`・`CLAUDE.md` だけのときは、
+// `--full` の有無に関わらず `format:check` と文書の検査（`DOCUMENT_CHECK_TEST_FILES`）だけを打つ。
 //
 // 使い方:
-//   node scripts/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら typecheck・lint も省く
-//   node scripts/check.ts --full  # タスク登録だけの変更でなければ、5段すべてを、E2E は全件で走らせる
+//   node scripts/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら文書の検査だけにする
+//   node scripts/check.ts --full  # 文書だけの変更でなければ、5段すべてを、E2E は全件で走らせる
 //                                 # （変えたファイルを集められないときも5段すべて）
 
 import { spawn, spawnSync } from "node:child_process"
@@ -29,7 +27,7 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const forceFull = process.argv.includes("--full")
 
 const changedPaths = await collectPathsForPlan()
-const stagePlan = planStages(forceFull, changedPaths, chooseE2eStages)
+const stagePlan = planStages(changedPaths, chooseE2eStages)
 if (stagePlan.notice !== "") {
   process.stdout.write(`${stagePlan.notice}\n`)
 }

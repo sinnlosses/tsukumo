@@ -12,11 +12,7 @@ import {
   resolvePrimaryBranch,
 } from "../../scripts/lib/changed-path-repository.ts"
 import { DOCUMENT_CHECK_TEST_FILES, planStages } from "../../scripts/lib/check-stage.ts"
-import {
-  isDocumentOnlyChange,
-  isDocumentPath,
-  isTaskRegistrationOnlyChange,
-} from "../../scripts/lib/document-change.ts"
+import { isDocumentOnlyChange, isDocumentPath } from "../../scripts/lib/document-change.ts"
 import { writeProjectSettings } from "../fixture/project-settings.ts"
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
 
@@ -61,39 +57,12 @@ describe("isDocumentOnlyChange", () => {
   })
 })
 
-describe("isTaskRegistrationOnlyChange", () => {
-  test("指示メモ・ドラフト・履歴だけなら true", () => {
-    expect(
-      isTaskRegistrationOnlyChange([
-        "develop/direction.md",
-        "develop/draft/idea.md",
-        "docs/history/tasks.md",
-      ]),
-    ).toBe(true)
-  })
-
-  test("src/ が混ざれば false", () => {
-    expect(isTaskRegistrationOnlyChange(["docs/history/tasks.md", "src/cli.ts"])).toBe(false)
-  })
-
-  test("develop/task/ や docs/ のほかの文書が混ざれば false", () => {
-    expect(isTaskRegistrationOnlyChange(["docs/history/tasks.md", "develop/task/sample.md"])).toBe(
-      false,
-    )
-    expect(isTaskRegistrationOnlyChange(["docs/history/tasks.md", "docs/workflow.md"])).toBe(false)
-  })
-
-  test("変えたファイルが0件なら false", () => {
-    expect(isTaskRegistrationOnlyChange([])).toBe(false)
-  })
-})
-
 describe("planStages", () => {
   const e2eStage = { name: "test:e2e", args: [], heavy: true }
   const choose = () => [e2eStage]
 
-  test.each([true, false])("タスク登録だけの変更は forceFull=%s でも2段ちょうど", (forceFull) => {
-    const plan = planStages(forceFull, ["docs/history/tasks.md"], () => {
+  test("文書だけの変更は E2E を選ばず、format:check と文書の検査だけ", () => {
+    const plan = planStages(["docs/workflow.md", "CLAUDE.md"], () => {
       throw new Error("E2E は選ばない")
     })
     expect(plan.stages).toEqual([
@@ -102,8 +71,8 @@ describe("planStages", () => {
     ])
   })
 
-  test("変えたファイルが空なら --full で5段すべて", () => {
-    expect(planStages(true, [], choose).stages.map((stage) => stage.name)).toEqual([
+  test("変えたファイルが空なら5段すべて", () => {
+    expect(planStages([], choose).stages.map((stage) => stage.name)).toEqual([
       "typecheck",
       "lint",
       "format:check",
@@ -112,20 +81,21 @@ describe("planStages", () => {
     ])
   })
 
-  test("並べて走らせる重い段は、タスク登録だけの変更には無く、通常の組み立てにはある", () => {
-    const registration = planStages(true, ["docs/history/tasks.md"], choose)
-    const regular = planStages(true, ["src/cli.ts"], choose)
-    expect(registration.stages.some((stage) => stage.heavy)).toBe(false)
+  test("並べて走らせる重い段は、文書だけの変更には無く、通常の組み立てにはある", () => {
+    const documentOnly = planStages(["docs/history/tasks.md"], choose)
+    const regular = planStages(["src/cli.ts"], choose)
+    expect(documentOnly.stages.some((stage) => stage.heavy)).toBe(false)
     expect(regular.stages.filter((stage) => stage.heavy).map((stage) => stage.name)).toEqual([
       "test",
       "test:e2e",
     ])
   })
 
-  test("文書の検査の3ファイルが実在する", () => {
+  test("文書の検査のファイルが実在し、参照切れを見る test/section-reference.test.ts を含む", () => {
     for (const file of DOCUMENT_CHECK_TEST_FILES) {
       expect(existsSync(file)).toBe(true)
     }
+    expect(DOCUMENT_CHECK_TEST_FILES).toContain("test/section-reference.test.ts")
   })
 })
 
