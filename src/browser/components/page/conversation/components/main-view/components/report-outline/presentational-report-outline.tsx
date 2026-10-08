@@ -1,6 +1,6 @@
-// レポートの目次の器。
-// 本文の左に、窓の中のやり取りと、見ているやり取りの見出しの一覧を列として置き、本文はその幅ぶん右へ寄る。
-// 列は転がしても札の頭のすぐ下に残る。
+// やり取りの列の器。
+// 札の左に、窓の中のやり取りと、見ているやり取りの見出しの一覧を列として置き、札の頭と本文はその幅ぶん右へ寄る。
+// 列は札の上端から下端まで伸び、転がしても札の上端に残る。
 
 import clsx from "clsx"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -18,10 +18,10 @@ import {
 } from "./hooks/use-report-outline.ts"
 import styles from "./report-outline.module.css"
 
-const OUTLINE_LABEL = "目次"
-const COLLAPSE_LABEL = "目次を畳む"
-const EXPAND_LABEL = "目次を開く"
-const RESIZER_LABEL = "目次と本文の境界"
+const OUTLINE_LABEL = "やり取り"
+const COLLAPSE_LABEL = "やり取りを畳む"
+const EXPAND_LABEL = "やり取りを開く"
+const RESIZER_LABEL = "やり取りと本文の境界"
 
 const ACTIVE_TURN_MARK = "●"
 

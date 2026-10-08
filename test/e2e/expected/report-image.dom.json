@@ -24,96 +24,6 @@
                   "tag": "article",
                   "children": [
                     {
-                      "tag": "header",
-                      "children": [
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "true",
-                            "aria-label": "1つ古いターンへ",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "‹"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "true",
-                            "aria-label": "1つ新しいターンへ",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "›"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "h2",
-                          "children": [
-                            "画像の塊の見え方を確かめたい（架空の依頼）"
-                          ]
-                        },
-                        "1 / 1",
-                        "最新"
-                      ]
-                    },
-                    {
-                      "tag": "section",
-                      "attributes": {
-                        "aria-label": "進み具合",
-                        "data-work-strip": "finished"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "data-result": "done"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "✓"
-                              ]
-                            },
-                            "完了"
-                          ]
-                        },
-                        "所要 0秒",
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
-                            "type": "button"
-                          },
-                          "children": [
-                            "手順 0 ▾"
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "tag": "div",
                       "attributes": {
                         "data-outline": "shown",
@@ -123,15 +33,15 @@
                         {
                           "tag": "nav",
                           "attributes": {
-                            "aria-label": "目次"
+                            "aria-label": "やり取り"
                           },
                           "children": [
-                            "目次",
+                            "やり取り",
                             {
                               "tag": "button",
                               "attributes": {
                                 "aria-disabled": "false",
-                                "aria-label": "目次を畳む",
+                                "aria-label": "やり取りを畳む",
                                 "aria-expanded": "true",
                                 "type": "button"
                               },
@@ -235,8 +145,98 @@
                           "attributes": {
                             "role": "separator",
                             "aria-orientation": "vertical",
-                            "aria-label": "目次と本文の境界"
+                            "aria-label": "やり取りと本文の境界"
                           }
+                        },
+                        {
+                          "tag": "header",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "true",
+                                "aria-label": "1つ古いターンへ",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "‹"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "true",
+                                "aria-label": "1つ新しいターンへ",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "›"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "h2",
+                              "children": [
+                                "画像の塊の見え方を確かめたい（架空の依頼）"
+                              ]
+                            },
+                            "1 / 1",
+                            "最新"
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "attributes": {
+                            "aria-label": "進み具合",
+                            "data-work-strip": "finished"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "data-result": "done"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "✓"
+                                  ]
+                                },
+                                "完了"
+                              ]
+                            },
+                            "所要 0秒",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "手順 0 ▾"
+                              ]
+                            }
+                          ]
                         },
                         {
                           "tag": "section",

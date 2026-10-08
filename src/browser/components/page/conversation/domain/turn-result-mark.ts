@@ -1,4 +1,4 @@
-// やり取りの結果（`TurnResult`）を、目次の列と進み具合の帯が同じ印と字で出すための表。
+// やり取りの結果（`TurnResult`）を、やり取りの列と進み具合の帯が同じ印と字で出すための表。
 
 import type { TurnResult } from "../../../../../shared/session/turn-result.ts"
 

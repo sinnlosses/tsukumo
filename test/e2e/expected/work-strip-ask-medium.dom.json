@@ -24,89 +24,41 @@
                   "tag": "article",
                   "children": [
                     {
-                      "tag": "header",
-                      "children": [
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "true",
-                            "aria-label": "1つ古いターンへ",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "‹"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "true",
-                            "aria-label": "1つ新しいターンへ",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "›"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "h2",
-                          "children": [
-                            "一時のディレクトリを片付けたい（架空の依頼）"
-                          ]
-                        },
-                        "1 / 1",
-                        "最新"
-                      ]
-                    },
-                    {
-                      "tag": "section",
+                      "tag": "div",
                       "attributes": {
-                        "aria-label": "進み具合",
-                        "data-work-strip": "working"
+                        "data-outline": "shown",
+                        "data-outline-collapsed": "false"
                       },
                       "children": [
                         {
-                          "tag": "span",
+                          "tag": "nav",
                           "attributes": {
-                            "data-result": "awaiting-answer"
+                            "aria-label": "やり取り"
                           },
                           "children": [
+                            "やり取り",
                             {
-                              "tag": "span",
+                              "tag": "button",
                               "attributes": {
-                                "aria-hidden": "true"
+                                "aria-disabled": "false",
+                                "aria-label": "やり取りを畳む",
+                                "aria-expanded": "true",
+                                "type": "button"
                               },
                               "children": [
-                                "?"
+                                {
+                                  "tag": "svg"
+                                }
                               ]
                             },
-                            "答え待ち"
-                          ]
-                        },
-                        {
-                          "tag": "ol",
-                          "children": [
                             {
-                              "tag": "li",
+                              "tag": "button",
                               "attributes": {
-                                "data-phase-state": "done",
-                                "aria-label": "1. 片付ける場所を調べる（済）"
+                                "data-outline-turn": "0",
+                                "data-result": "awaiting-answer",
+                                "aria-current": "true",
+                                "aria-label": "答え待ち: 一時のディレクトリを片付けたい（架空の依頼）",
+                                "type": "button"
                               },
                               "children": [
                                 {
@@ -115,16 +67,84 @@
                                     "aria-hidden": "true"
                                   },
                                   "children": [
-                                    "✓"
+                                    "●"
+                                  ]
+                                },
+                                "一時のディレクトリを片付けたい（架空の依頼）"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "role": "separator",
+                            "aria-orientation": "vertical",
+                            "aria-label": "やり取りと本文の境界"
+                          }
+                        },
+                        {
+                          "tag": "header",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "true",
+                                "aria-label": "1つ古いターンへ",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "‹"
                                   ]
                                 }
                               ]
                             },
                             {
-                              "tag": "li",
+                              "tag": "button",
                               "attributes": {
-                                "data-phase-state": "asking",
-                                "aria-label": "2. 片付ける（答え待ち）"
+                                "aria-disabled": "true",
+                                "aria-label": "1つ新しいターンへ",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "›"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "h2",
+                              "children": [
+                                "一時のディレクトリを片付けたい（架空の依頼）"
+                              ]
+                            },
+                            "1 / 1",
+                            "最新"
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "attributes": {
+                            "aria-label": "進み具合",
+                            "data-work-strip": "working"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "data-result": "awaiting-answer"
                               },
                               "children": [
                                 {
@@ -135,64 +155,19 @@
                                   "children": [
                                     "?"
                                   ]
-                                }
+                                },
+                                "答え待ち"
                               ]
-                            }
-                          ]
-                        },
-                        "片付ける",
-                        "2/2 · 経過 1分00秒",
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
-                            "type": "button"
-                          },
-                          "children": [
-                            "手順 1 ▾"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "お伺いが届いた · 許可: Bash rm -rf /tmp/dummy/fake-home · 答え待ち 1分00秒"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "section",
-                      "attributes": {
-                        "aria-label": "お伺い"
-                      },
-                      "children": [
-                        {
-                          "tag": "header",
-                          "children": [
-                            "お伺い",
-                            "許可",
-                            "Bash",
-                            "1 / 1",
-                            "·",
-                            "待って",
-                            "1:00"
-                          ]
-                        },
-                        {
-                          "tag": "pre",
-                          "children": [
-                            "rm -rf /tmp/dummy/fake-home"
-                          ]
-                        },
-                        {
-                          "tag": "ul",
-                          "children": [
+                            },
                             {
-                              "tag": "li",
+                              "tag": "ol",
                               "children": [
                                 {
-                                  "tag": "label",
+                                  "tag": "li",
+                                  "attributes": {
+                                    "data-phase-state": "done",
+                                    "aria-label": "1. 片付ける場所を調べる（済）"
+                                  },
                                   "children": [
                                     {
                                       "tag": "span",
@@ -200,70 +175,157 @@
                                         "aria-hidden": "true"
                                       },
                                       "children": [
-                                        "1"
+                                        "✓"
                                       ]
-                                    },
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "attributes": {
+                                    "data-phase-state": "asking",
+                                    "aria-label": "2. 片付ける（答え待ち）"
+                                  },
+                                  "children": [
                                     {
-                                      "tag": "input",
+                                      "tag": "span",
                                       "attributes": {
-                                        "type": "radio",
-                                        "checked": false,
-                                        "value": "on"
-                                      }
-                                    },
-                                    "許可"
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "?"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            "片付ける",
+                            "2/2 · 経過 1分00秒",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "手順 1 ▾"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "お伺いが届いた · 許可: Bash rm -rf /tmp/dummy/fake-home · 答え待ち 1分00秒"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "attributes": {
+                            "aria-label": "お伺い"
+                          },
+                          "children": [
+                            {
+                              "tag": "header",
+                              "children": [
+                                "お伺い",
+                                "許可",
+                                "Bash",
+                                "1 / 1",
+                                "·",
+                                "待って",
+                                "1:00"
+                              ]
+                            },
+                            {
+                              "tag": "pre",
+                              "children": [
+                                "rm -rf /tmp/dummy/fake-home"
+                              ]
+                            },
+                            {
+                              "tag": "ul",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "label",
+                                      "children": [
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "1"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "input",
+                                          "attributes": {
+                                            "type": "radio",
+                                            "checked": false,
+                                            "value": "on"
+                                          }
+                                        },
+                                        "許可"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "label",
+                                      "children": [
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "2"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "input",
+                                          "attributes": {
+                                            "type": "radio",
+                                            "checked": false,
+                                            "value": "on"
+                                          }
+                                        },
+                                        "拒否"
+                                      ]
+                                    }
                                   ]
                                 }
                               ]
                             },
                             {
-                              "tag": "li",
+                              "tag": "footer",
                               "children": [
                                 {
-                                  "tag": "label",
+                                  "tag": "button",
+                                  "attributes": {
+                                    "aria-disabled": "true",
+                                    "type": "button"
+                                  },
                                   "children": [
+                                    "これで答える",
                                     {
                                       "tag": "span",
                                       "attributes": {
                                         "aria-hidden": "true"
                                       },
                                       "children": [
-                                        "2"
+                                        "⏎"
                                       ]
-                                    },
-                                    {
-                                      "tag": "input",
-                                      "attributes": {
-                                        "type": "radio",
-                                        "checked": false,
-                                        "value": "on"
-                                      }
-                                    },
-                                    "拒否"
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "footer",
-                          "children": [
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "true",
-                                "type": "button"
-                              },
-                              "children": [
-                                "これで答える",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "⏎"
+                                    }
                                   ]
                                 }
                               ]
@@ -271,13 +333,6 @@
                           ]
                         }
                       ]
-                    },
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-outline": "hidden",
-                        "data-outline-collapsed": "false"
-                      }
                     }
                   ]
                 }

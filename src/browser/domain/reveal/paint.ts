@@ -16,7 +16,7 @@ import type { RevealBlock } from "./plan.ts"
 /** 何も見せていない状態の `clip-path`（高さ 0 に畳む。場所は取ったまま）。 */
 const HIDDEN_CLIP = "inset(0 0 100% 0)"
 
-/** まだ筆が届いていない塊に付ける印（目次が、届いた節だけを並べるために読む）。 */
+/** まだ筆が届いていない塊に付ける印（やり取りの列が、届いた節だけを並べるために読む）。 */
 export const REVEAL_PENDING_ATTRIBUTE = "data-reveal"
 
 export function hideBlock(block: RevealBlock): void {

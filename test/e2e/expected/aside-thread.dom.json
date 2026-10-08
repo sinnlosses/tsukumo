@@ -24,165 +24,227 @@
                   "tag": "article",
                   "children": [
                     {
-                      "tag": "header",
-                      "children": [
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "true",
-                            "aria-label": "1つ古いターンへ",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "‹"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "true",
-                            "aria-label": "1つ新しいターンへ",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "›"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "h2",
-                          "children": [
-                            "架空のタスクに着手して、委譲先に任せたい（架空の依頼）"
-                          ]
-                        },
-                        "1 / 1",
-                        "最新"
-                      ]
-                    },
-                    {
-                      "tag": "section",
-                      "attributes": {
-                        "aria-label": "進み具合",
-                        "data-work-strip": "working"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "data-result": "working"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              }
-                            },
-                            "作業中"
-                          ]
-                        },
-                        {
-                          "tag": "ol",
-                          "children": [
-                            {
-                              "tag": "li",
-                              "attributes": {
-                                "data-phase-state": "done",
-                                "aria-label": "1. 計画を確かめる（済）"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "✓"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "li",
-                              "attributes": {
-                                "data-phase-state": "current",
-                                "aria-label": "2. 委譲先に任せる（今の段）"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "2"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "li",
-                              "attributes": {
-                                "data-phase-state": "upcoming",
-                                "aria-label": "3. 受け入れる"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "3"
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        "委譲先に任せる",
-                        "2/3 · 経過 1分00秒",
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
-                            "type": "button"
-                          },
-                          "children": [
-                            "手順 1 ▾"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "背景で 架空の委譲"
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "tag": "div",
                       "attributes": {
-                        "data-outline": "hidden",
+                        "data-outline": "shown",
                         "data-outline-collapsed": "false"
                       },
                       "children": [
+                        {
+                          "tag": "nav",
+                          "attributes": {
+                            "aria-label": "やり取り"
+                          },
+                          "children": [
+                            "やり取り",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-label": "やり取りを畳む",
+                                "aria-expanded": "true",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-outline-turn": "0",
+                                "data-result": "working",
+                                "aria-current": "true",
+                                "aria-label": "作業中: 架空のタスクに着手して、委譲先に任せたい（架空の依頼）（脇の話 1件）",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "●"
+                                  ]
+                                },
+                                "架空のタスクに着手して、委譲先に任せたい（架空の依頼）",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "脇 1"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "role": "separator",
+                            "aria-orientation": "vertical",
+                            "aria-label": "やり取りと本文の境界"
+                          }
+                        },
+                        {
+                          "tag": "header",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "true",
+                                "aria-label": "1つ古いターンへ",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "‹"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "true",
+                                "aria-label": "1つ新しいターンへ",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "›"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "h2",
+                              "children": [
+                                "架空のタスクに着手して、委譲先に任せたい（架空の依頼）"
+                              ]
+                            },
+                            "1 / 1",
+                            "最新"
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "attributes": {
+                            "aria-label": "進み具合",
+                            "data-work-strip": "working"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "data-result": "working"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "作業中"
+                              ]
+                            },
+                            {
+                              "tag": "ol",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "attributes": {
+                                    "data-phase-state": "done",
+                                    "aria-label": "1. 計画を確かめる（済）"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "✓"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "attributes": {
+                                    "data-phase-state": "current",
+                                    "aria-label": "2. 委譲先に任せる（今の段）"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "2"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "attributes": {
+                                    "data-phase-state": "upcoming",
+                                    "aria-label": "3. 受け入れる"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "3"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            "委譲先に任せる",
+                            "2/3 · 経過 1分00秒",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "手順 1 ▾"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "背景で 架空の委譲"
+                              ]
+                            }
+                          ]
+                        },
                         {
                           "tag": "details",
                           "attributes": {

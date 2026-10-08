@@ -1,9 +1,8 @@
-/* レポートの目次。本文の左に、窓の中のやり取りと見ているやり取りの見出しの一覧を、常に開いた列として持つ。 */
+/* やり取りの列。札の左に、窓の中のやり取りと見ているやり取りの見出しの一覧を持つ。幅が足りないときは畳んだ細い列になる。 */
 
-/* 列と本文を横に並べる器。
-   列を出さないときは、本文が左いっぱいを使う。
-   幅の足りない領域では列ごと隠すので、その判定の基準（`@container`）をこの器に持たせる。 */
+/* 列と本文を横に並べる器。列の既定の幅は器の幅（`cqw`）から決める。 */
 .outline-frame {
+  flex: 1;
   container-type: inline-size;
 }
 /* 列の幅は `grid-template-columns` の1列目そのもので持つ（列の中身の `width` では持たない。
@@ -17,22 +16,22 @@
 .outline-frame[data-outline="shown"][data-outline-collapsed="true"] {
   grid-template-columns: 2.5rem minmax(0, 1fr);
 }
-/* 本文の余白。列があってもなくても同じ値にする。 */
+/* 右の側（札の頭・お伺い・本文）。列があってもなくても同じ幅の取り方にする。 */
 .outline-content {
+  /* 仕切りは狭い画面で描かれないので、2列目（`auto`）へ落ちないよう最後の列に置く。 */
+  grid-column: -2;
   min-width: 0;
-  padding: 0.9rem 1.25rem 0.75rem;
 }
-/* 列。本文の高さいっぱいに伸びて右の線を引く。中の一覧（`.outline-nav`）だけが札の頭の下に貼り付く。 */
+/* 列。札の上端から下端まで伸びて右の線を引く。中の一覧（`.outline-nav`）だけが札の上端に貼り付く。 */
 .outline-rail {
   border-right: 1px solid var(--rule-quiet);
 }
-/* 貼り付く位置は札の頭の真下（`--turn-card-head-height`。`main-view.module.css`）。
-   札の頭と同じく、転がる器の余白ぶん上へずらした位置が基準（`.turn-card-head`）。
+/* 札の頭と同じく、転がる器の余白ぶん上へずらした位置が貼り付く基準（`.turn-card-head`）。
    行が多いときは一覧の中で転がす。 */
 .outline-nav {
   position: sticky;
-  top: calc(var(--turn-card-head-height, 0px) - var(--region-padding, 0px));
-  max-height: calc(100dvh - var(--turn-card-head-height, 0px) - 2rem);
+  top: calc(-1 * var(--region-padding, 0px));
+  max-height: calc(100dvh - 2rem);
   overflow-y: auto;
   padding: 0.75rem 0.375rem;
 }
@@ -163,24 +162,4 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* 本文の幅が足りない領域（仕切りを寄せた場合を含む）では列ごと隠す。仕切り（role="separator"）も道連れにする。 */
-@container (max-width: 36rem) {
-  .outline-rail,
-  .outline-frame [role="separator"] {
-    display: none;
-  }
-}
-
-/* 狭い画面（1列に畳む幅。`main-view.module.css` と同じ境目）。
-   札の頭が2行に折り返して列の貼り付く位置が定まらないので、列ごと隠す。 */
-@media (max-width: 760px) {
-  .outline-frame[data-outline="shown"] {
-    display: block;
-  }
-  .outline-rail,
-  .outline-frame [role="separator"] {
-    display: none;
-  }
 }

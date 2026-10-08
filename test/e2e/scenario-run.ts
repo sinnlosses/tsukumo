@@ -110,7 +110,7 @@ const UPDATE_EXPECTED = process.env["E2E_UPDATE"] === "1"
 /**
  * 窓の大きさ。広いほうはカタログを撮る道具の広い窓と同じ。狭い窓の積み替えを見る
  * シナリオだけ `narrow` を使う。`large` と `medium` は、領域の寸法を窓の大きさごとに測るシナリオが使う。
- * `tier-edge-medium` と `tier-edge-large` はサイドバーを柱に畳む段の境目の両側、`compact` は柱の段で目次の列が既定で畳まれる幅。
+ * `tier-edge-medium` と `tier-edge-large` はサイドバーを柱に畳む段の境目の両側、`compact` は柱の段でやり取りの列が既定で畳まれる幅。
  */
 export const VIEWPORTS = {
   wide: { width: 1400, height: 900 },

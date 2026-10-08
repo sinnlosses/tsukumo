@@ -71,7 +71,7 @@ export type ReportOutlineModel = {
   /** 見ているやり取りの見出しの行。 */
   readonly rows: readonly ReportOutlineRow[]
   /**
-   * 列と本文を横に並べる器。目次と本文の境界のドラッグが比率の基準にし、
+   * 列と本文を横に並べる器。やり取りと本文の境界のドラッグが比率の基準にし、
    * ドラッグ中はここへ直接 `--outline-rail-width` を書いて列の幅を変える。
    */
   readonly frameRef: RefObject<HTMLDivElement | null>
@@ -104,7 +104,7 @@ const OUTLINE_WIDTH_VARIABLE = "--outline-rail-width"
 /** やり取りの行の `<button>` が持つ属性。値はやり取りの id。 */
 export const TURN_ROW_ATTRIBUTE = "data-outline-turn"
 
-/** 札の幅がこれ（rem）を下回るあいだは、利用者が選んでいなければ目次を畳んでおく。 */
+/** 札の幅がこれ（rem）を下回るあいだは、利用者が選んでいなければ列を畳んでおく。 */
 const NARROW_CARD_REM = 48
 
 export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel {
@@ -116,7 +116,6 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   const pinnedRef = useRef<{ readonly index: number; readonly top: number } | undefined>(undefined)
 
   const [entries, setEntries] = useState<readonly ReportOutlineEntry[]>([])
-  const [headingTotal, setHeadingTotal] = useState(0)
   const [activeIndex, setActiveIndex] = useState(0)
   const [panel, setPanel] = useState<OutlinePanel>(loadOutlinePanel)
   const [narrow, setNarrow] = useState(false)
@@ -153,7 +152,12 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         }
         pinnedRef.current = undefined
       }
-      const base = (navRef.current ?? content).getBoundingClientRect().top
+      const headHeight = Number.parseFloat(
+        getComputedStyle(content).getPropertyValue("--turn-card-head-height"),
+      )
+      const base =
+        (navRef.current ?? content).getBoundingClientRect().top +
+        (Number.isFinite(headHeight) ? headHeight : 0)
       const passed = headings.findLastIndex(
         (heading) => heading.getBoundingClientRect().top <= base + ACTIVE_SLACK_PX,
       )
@@ -161,14 +165,12 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
 
     function readHeadings(): void {
-      const unfolded = [...content.querySelectorAll<HTMLElement>(HEADING_SELECTOR)].filter(
-        (heading) => heading.closest("details:not([open])") === null,
+      // 筆がまだ届いていない節は並べない。
+      const headings = [...content.querySelectorAll<HTMLElement>(HEADING_SELECTOR)].filter(
+        (heading) =>
+          heading.closest("details:not([open])") === null &&
+          heading.closest(`[${REVEAL_PENDING_ATTRIBUTE}="pending"]`) === null,
       )
-      // 筆がまだ届いていない節は並べないが、列を出すかの数には入れる。
-      const headings = unfolded.filter(
-        (heading) => heading.closest(`[${REVEAL_PENDING_ATTRIBUTE}="pending"]`) === null,
-      )
-      setHeadingTotal(unfolded.length)
       headingsRef.current = headings
       const next = headings.map((heading): ReportOutlineEntry => ({
         level: heading.tagName === "H4" ? "section" : "sub",
@@ -219,7 +221,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
   }, [])
 
-  const visible = props.turns.length >= 2 || headingTotal >= 2
+  const visible = props.turns.length >= 1
 
   // 見ているやり取りの行を、列の中の転がり（DOM）で見える位置へ寄せる。
   // `scrollIntoView` は転がる祖先の本文まで動かすので、列の `scrollTop` だけを動かす。

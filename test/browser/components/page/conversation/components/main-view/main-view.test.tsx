@@ -137,21 +137,21 @@ function button(name: string): HTMLButtonElement {
 
 const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
 
-/** 目次の列を開いたと選んだ状態にする（happy-dom では札の幅が 0 で、選ばなければ畳まれる）。 */
+/** やり取りの列を開いたと選んだ状態にする（happy-dom では札の幅が 0 で、選ばなければ畳まれる）。 */
 function chooseOutlineOpen(): void {
   localStorage.setItem(OUTLINE_PANEL_STORAGE_KEY, JSON.stringify({ collapse: "open" }))
 }
 
-/** 目次の列のやり取りの行（古い順）。 */
+/** やり取りの列のやり取りの行（古い順）。 */
 function outlineTurnRows(): readonly HTMLButtonElement[] {
   return [...document.querySelectorAll<HTMLButtonElement>("[data-outline-turn]")]
 }
 
-/** 目次の列の行（やり取りの行と見出しの行）の字。やり取りの行は印 + 1行目。 */
+/** やり取りの列の行（やり取りの行と見出しの行）の字。やり取りの行は印 + 1行目。 */
 function outlineRowTexts(): readonly string[] {
-  const nav = screen.getByRole("navigation", { name: "目次" })
+  const nav = screen.getByRole("navigation", { name: "やり取り" })
   return [...nav.querySelectorAll("button")]
-    .filter((row) => row.getAttribute("aria-label") !== "目次を畳む")
+    .filter((row) => row.getAttribute("aria-label") !== "やり取りを畳む")
     .map((row) => row.textContent)
 }
 
@@ -272,7 +272,7 @@ describe("MainView（札の頭）", () => {
   })
 })
 
-describe("MainView（目次の列: やり取りと見出しの2段）", () => {
+describe("MainView（やり取りの列: やり取りと見出しの2段）", () => {
   /** 3件目のレポートだけが見出しを2つ持つ。 */
   function threeTurnsWithHeadings(): readonly SessionRecord[] {
     return [
@@ -331,7 +331,7 @@ describe("MainView（目次の列: やり取りと見出しの2段）", () => {
   it("↑↓ でやり取りの行と見出しの行を区別なく移り、やり取りの行（Enter で押せる button）でそのやり取りへ移る", async () => {
     chooseOutlineOpen()
     renderMainView(threeTurnsWithHeadings())
-    const nav = screen.getByRole("navigation", { name: "目次" })
+    const nav = screen.getByRole("navigation", { name: "やり取り" })
     const [first, second] = outlineTurnRows()
     if (first === undefined || second === undefined) {
       throw new Error("やり取りの行が見つからない")
@@ -360,11 +360,19 @@ describe("MainView（目次の列: やり取りと見出しの2段）", () => {
     })
   })
 
-  it("やり取りが1件で見出しも2つ未満なら、列ごと出さない", () => {
+  it("やり取りが1件で見出しも無くても、列は出る", () => {
     chooseOutlineOpen()
     renderMainView([requestRecord({ text: "1つ目", turnId: 0 }), detailRecord("本文")])
 
-    expect(screen.queryByRole("navigation", { name: "目次" })).toBeNull()
+    expect(screen.getByRole("navigation", { name: "やり取り" })).toBeTruthy()
+  })
+
+  it("畳んだ列の開き直す口を押すと、やり取りの行が出る", () => {
+    renderMainView(threeTurns())
+
+    expect(outlineTurnRows()).toHaveLength(0)
+    fireEvent.click(screen.getByRole("button", { name: "やり取りを開く" }))
+    expect(outlineTurnRows()).toHaveLength(3)
   })
 
   it("札の頭のタイトルは押す口を持たない", () => {

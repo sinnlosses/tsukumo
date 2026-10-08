@@ -15,7 +15,7 @@
 
   /* 固定の導出（使う人にもパックにも差せない）。 */
   --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
-  /* 読ませる補助の字（表の見出し行・添え書き・目次の節の名前）。本文より弱いが ink-quiet ほど沈めない。 */
+  /* 読ませる補助の字（表の見出し行・添え書き・やり取りの列の見出し）。本文より弱いが ink-quiet ほど沈めない。 */
   --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
   --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
   /* 読む面の静かな罫線。カードの枠や表の行のように、線そのものは意味を持たず「ここで切れている」とだけ言えばよい場所に使う。

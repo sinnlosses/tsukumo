@@ -24,183 +24,236 @@
                   "tag": "article",
                   "children": [
                     {
-                      "tag": "header",
-                      "children": [
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "true",
-                            "aria-label": "1つ古いターンへ",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "‹"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "true",
-                            "aria-label": "1つ新しいターンへ",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "›"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "h2",
-                          "children": [
-                            "集計の関数とスクリプトを足したい（架空の依頼）"
-                          ]
-                        },
-                        "1 / 1",
-                        "最新"
-                      ]
-                    },
-                    {
-                      "tag": "section",
-                      "attributes": {
-                        "aria-label": "進み具合",
-                        "data-work-strip": "working"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "data-result": "working"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              }
-                            },
-                            "作業中"
-                          ]
-                        },
-                        {
-                          "tag": "ol",
-                          "children": [
-                            {
-                              "tag": "li",
-                              "attributes": {
-                                "data-phase-state": "done",
-                                "aria-label": "1. 今の形を調べる（済）"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "✓"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "li",
-                              "attributes": {
-                                "data-phase-state": "current",
-                                "aria-label": "2. 集計の関数とスクリプト（今の段）"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "2"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "li",
-                              "attributes": {
-                                "data-phase-state": "upcoming",
-                                "aria-label": "3. 画面につなぐ"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "3"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "li",
-                              "attributes": {
-                                "data-phase-state": "upcoming",
-                                "aria-label": "4. 文書と検証を揃える"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "4"
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        "集計の関数とスクリプト",
-                        "2/4 · 経過 1分00秒",
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
-                            "type": "button"
-                          },
-                          "children": [
-                            "手順 4 ▾"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "Bash pnpm exec vitest run /tmp/dummy/metric · 1分00秒"
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "tag": "div",
                       "attributes": {
-                        "data-outline": "hidden",
+                        "data-outline": "shown",
                         "data-outline-collapsed": "false"
                       },
                       "children": [
+                        {
+                          "tag": "nav",
+                          "attributes": {
+                            "aria-label": "やり取り"
+                          },
+                          "children": [
+                            "やり取り",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-label": "やり取りを畳む",
+                                "aria-expanded": "true",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-outline-turn": "0",
+                                "data-result": "working",
+                                "aria-current": "true",
+                                "aria-label": "作業中: 集計の関数とスクリプトを足したい（架空の依頼）",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "●"
+                                  ]
+                                },
+                                "集計の関数とスクリプトを足したい（架空の依頼）"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "role": "separator",
+                            "aria-orientation": "vertical",
+                            "aria-label": "やり取りと本文の境界"
+                          }
+                        },
+                        {
+                          "tag": "header",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "true",
+                                "aria-label": "1つ古いターンへ",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "‹"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "true",
+                                "aria-label": "1つ新しいターンへ",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "›"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "h2",
+                              "children": [
+                                "集計の関数とスクリプトを足したい（架空の依頼）"
+                              ]
+                            },
+                            "1 / 1",
+                            "最新"
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "attributes": {
+                            "aria-label": "進み具合",
+                            "data-work-strip": "working"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "data-result": "working"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "作業中"
+                              ]
+                            },
+                            {
+                              "tag": "ol",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "attributes": {
+                                    "data-phase-state": "done",
+                                    "aria-label": "1. 今の形を調べる（済）"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "✓"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "attributes": {
+                                    "data-phase-state": "current",
+                                    "aria-label": "2. 集計の関数とスクリプト（今の段）"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "2"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "attributes": {
+                                    "data-phase-state": "upcoming",
+                                    "aria-label": "3. 画面につなぐ"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "3"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "attributes": {
+                                    "data-phase-state": "upcoming",
+                                    "aria-label": "4. 文書と検証を揃える"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "4"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            "集計の関数とスクリプト",
+                            "2/4 · 経過 1分00秒",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "手順 4 ▾"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "Bash pnpm exec vitest run /tmp/dummy/metric · 1分00秒"
+                              ]
+                            }
+                          ]
+                        },
                         {
                           "tag": "section",
                           "children": [

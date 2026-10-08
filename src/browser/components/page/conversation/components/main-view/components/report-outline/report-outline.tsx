@@ -1,4 +1,4 @@
-// レポートの目次の入口。
+// やり取りの列の入口。
 
 import type { ReactElement, ReactNode } from "react"
 

@@ -24,63 +24,133 @@
                   "tag": "article",
                   "children": [
                     {
-                      "tag": "header",
-                      "children": [
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "true",
-                            "aria-label": "1つ古いターンへ",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "‹"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "true",
-                            "aria-label": "1つ新しいターンへ",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "›"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "h2",
-                          "children": [
-                            "表現の一覧（架空）"
-                          ]
-                        },
-                        "1 / 1",
-                        "最新"
-                      ]
-                    },
-                    {
                       "tag": "div",
                       "attributes": {
-                        "data-outline": "hidden",
+                        "data-outline": "shown",
                         "data-outline-collapsed": "false"
                       },
                       "children": [
+                        {
+                          "tag": "nav",
+                          "attributes": {
+                            "aria-label": "やり取り"
+                          },
+                          "children": [
+                            "やり取り",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-label": "やり取りを畳む",
+                                "aria-expanded": "true",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-outline-turn": "-1",
+                                "data-result": "done",
+                                "aria-current": "true",
+                                "aria-label": "完了: 表現の一覧（架空）",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "●"
+                                  ]
+                                },
+                                "表現の一覧（架空）"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-level": "section",
+                                "aria-current": "location",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "表現の一覧（架空）"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "role": "separator",
+                            "aria-orientation": "vertical",
+                            "aria-label": "やり取りと本文の境界"
+                          }
+                        },
+                        {
+                          "tag": "header",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "true",
+                                "aria-label": "1つ古いターンへ",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "‹"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "true",
+                                "aria-label": "1つ新しいターンへ",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "›"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "h2",
+                              "children": [
+                                "表現の一覧（架空）"
+                              ]
+                            },
+                            "1 / 1",
+                            "最新"
+                          ]
+                        },
                         {
                           "tag": "section",
                           "children": [

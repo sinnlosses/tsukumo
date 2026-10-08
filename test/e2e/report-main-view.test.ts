@@ -9,8 +9,8 @@ import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 // report → メインビュー（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの場面で確かめる:
 // `notation`（記法の一覧）、`report-chart`（グラフの塊。ベンダのスクリプトが描く）、
-// `report-image`（画像の塊。cwd の画像を棚の経路で読む）、`long-report-quick`（目次。札の幅で畳む）、
-// `turn-outline`（目次の列の上の段のやり取りと結果の印）。
+// `report-image`（画像の塊。cwd の画像を棚の経路で読む）、`long-report-quick`（やり取りの列。札の幅で畳む）、
+// `turn-outline`（やり取りの列の上の段のやり取りと結果の印）。
 
 const run = useScenarioRun()
 
@@ -56,7 +56,7 @@ describe("report → メインビュー", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("札の幅が 48rem 未満では目次が既定で畳まれ、開くを選ぶと読み込み直しても開いたまま、狭い画面では目次の列が描かれない", async () => {
+  it("札の幅が 48rem 未満ではやり取りの列が既定で畳まれ、開くを選ぶと読み込み直しても開いたまま、狭い画面でも列が出る", async () => {
     const room = await run.open({
       scenario: "report-outline-compact",
       scene: "long-report-quick",
@@ -65,19 +65,19 @@ describe("report → メインビュー", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    await room.page.getByRole("button", { name: "目次を開く" }).waitFor()
+    await room.page.getByRole("button", { name: "やり取りを開く" }).waitFor()
     await room.settleAndMatch(ELAPSED_MS)
 
-    await room.page.getByRole("button", { name: "目次を開く" }).click()
-    await room.page.getByRole("button", { name: "目次を畳む" }).waitFor()
+    await room.page.getByRole("button", { name: "やり取りを開く" }).click()
+    await room.page.getByRole("button", { name: "やり取りを畳む" }).waitFor()
     await room.page.reload({ waitUntil: "domcontentloaded" })
-    await room.page.getByRole("button", { name: "目次を畳む" }).waitFor()
+    await room.page.getByRole("button", { name: "やり取りを畳む" }).waitFor()
 
     await room.page.setViewportSize(VIEWPORTS.narrow)
-    await room.page.locator('nav[aria-label="目次"]').waitFor({ state: "hidden" })
+    await room.page.locator('nav[aria-label="やり取り"]').waitFor({ state: "visible" })
   })
 
-  it("目次の列の上の段にやり取りが結果の印つきで並び、やり取りの行で Enter を押すとそのやり取りへ移る", async () => {
+  it("やり取りの列の上の段にやり取りが結果の印つきで並び、やり取りの行で Enter を押すとそのやり取りへ移る", async () => {
     const room = await run.open({
       scenario: "report-turn-outline",
       scene: "turn-outline",
@@ -86,7 +86,7 @@ describe("report → メインビュー", () => {
     })
 
     await room.waitForEvent("turn-finished", 5)
-    await room.page.locator('nav[aria-label="目次"] [data-level="sub"]').waitFor()
+    await room.page.locator('nav[aria-label="やり取り"] [data-level="sub"]').waitFor()
     await room.settleAndMatch(ELAPSED_MS)
 
     await room.page.getByRole("button", { name: "完了: 指示をタスクにする（架空の依頼）" }).focus()

@@ -1,6 +1,6 @@
 // メインビュー本体。いま出している中身（迎える口・働くあいだの札・レポート）を出し分ける。
 //
-// 1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` と目次の列のやり取りの行で行き来する。
+// 1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` とやり取りの列のやり取りの行で行き来する。
 // 選んでいるターン（`turnId`）は `useTurnSelection` から読む（キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。
 // 最新を見ているあいだの中身は `useMainViewContent` が決め、過去のターンを見ているあいだはそのターンのレポートを出す。
 //
@@ -144,38 +144,40 @@ export function MainView(): ReactElement {
           )}
           {cardTurn !== undefined && (
             <article className={styles["turn-card"]}>
-              <TurnCardHead rootRef={rootRef}>
-                <TurnHeader
-                  turns={turns.map((turn) => ({
-                    id: turn.id,
-                    title: turnTitle(turn),
-                    requestRest: turnRequestRest(turn),
-                  }))}
-                  activeTurnId={cardTurn.turn.id}
-                  onSelect={selectTurn}
-                  notice={notice}
-                  onNotice={onNotice}
-                />
-                {!viewingPast && <WorkStrip />}
-              </TurnCardHead>
-              {!viewingPast && (
-                <div className={styles["turn-card-inquiry"]}>
-                  <Inquiry />
-                </div>
-              )}
               <ReportOutline
                 turns={outlineTurns}
                 activeTurnId={cardTurn.turn.id}
                 onSelectTurn={selectTurn}
               >
-                {/* `key` にターンの番号を渡す。
+                <TurnCardHead rootRef={rootRef}>
+                  <TurnHeader
+                    turns={turns.map((turn) => ({
+                      id: turn.id,
+                      title: turnTitle(turn),
+                      requestRest: turnRequestRest(turn),
+                    }))}
+                    activeTurnId={cardTurn.turn.id}
+                    onSelect={selectTurn}
+                    notice={notice}
+                    onNotice={onNotice}
+                  />
+                  {!viewingPast && <WorkStrip />}
+                </TurnCardHead>
+                {!viewingPast && (
+                  <div className={styles["turn-card-inquiry"]}>
+                    <Inquiry />
+                  </div>
+                )}
+                <div className={styles["turn-card-body"]}>
+                  {/* `key` にターンの番号を渡す。
                     前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
-                <Turn
-                  turn={cardTurn.turn}
-                  newest={cardTurn.turn.id === newestTurnId}
-                  freshReport={cardTurn.fresh}
-                  key={cardTurn.turn.id}
-                />
+                  <Turn
+                    turn={cardTurn.turn}
+                    newest={cardTurn.turn.id === newestTurnId}
+                    freshReport={cardTurn.fresh}
+                    key={cardTurn.turn.id}
+                  />
+                </div>
               </ReportOutline>
             </article>
           )}
