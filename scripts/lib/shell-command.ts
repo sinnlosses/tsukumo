@@ -115,7 +115,7 @@ function parseCommands(command: string): readonly CommandBuilder[] {
       index = lineEnd === -1 ? command.length : lineEnd
       continue
     }
-    if (character === "(" && command[index + 1] === "(" && current.words.length === 0) {
+    if (character === "(" && command[index + 1] === "(" && onlyPrefixWords(current.words)) {
       index = findClosingParen(command, index + 1) + 1
       while (command[index] === ")") {
         index += 1
@@ -178,6 +178,10 @@ function parseCommands(command: string): readonly CommandBuilder[] {
   }
   finish()
   return commands
+}
+
+function onlyPrefixWords(words: readonly ShellWord[]): boolean {
+  return words.every((word) => PREFIX_WORDS.has(word.text))
 }
 
 function newBuilder(pipedIn = false): CommandBuilder {
