@@ -87,10 +87,12 @@ export type MainViewEntry =
    * `detail` と分けてあるのは、このレポートがあるやり取りでは本文（`detail`）を出さないため（{@link selectToolReports}）。
    * `task` は本文に組まず、描く側が目録の1行と見出しに出す。
    * `conclusion` は組む前の結論で、畳んだときの先頭行に使う（{@link groupIntoSteps}）。
+   * `finalMarkdown` は最終レポートになったときの本文で、`markdown` に段ごとの所要時間を足したもの。
    */
   | {
       readonly kind: "report"
       readonly markdown: string
+      readonly finalMarkdown: string
       readonly conclusion: string
       readonly task: ReportTask
     }
@@ -172,12 +174,14 @@ const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
  * `firstLine` は畳んだときの `<summary>` に出す1行で、段のまとめなら終えた段の見出し、`report` なら結論（空なら作業の名前）、どちらも無ければ本文の先頭行（{@link extractFirstLine}）。
  * `task` は目録の1行と見出しに出すタスクで、`report` ツールの外の本文では常に `none`。
  * `finishedPhase` は目録の1行に添える終えた段の見出しで、段のまとめだけが持つ。
+ * `finalReport` は最終レポートの印が立ったときに `report` と入れ替える本文（{@link markFinalReport}）。違うのは `report` ツールの本文の段ごとの所要時間だけ。
  */
 export type MainViewStepBody =
   | { readonly kind: "none" }
   | {
       readonly kind: "text"
       readonly report: string
+      readonly finalReport: string
       readonly firstLine: string
       readonly task: ReportTask
       readonly finishedPhase: MainViewPhaseLabel
@@ -345,7 +349,8 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
     return [
       {
         kind: "report",
-        markdown: reportMarkdown(record, context),
+        markdown: reportMarkdown(record, context, false),
+        finalMarkdown: reportMarkdown(record, context, true),
         conclusion: record.conclusion,
         task: record.task,
       },
@@ -361,7 +366,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 /**
  * `report` の引数を、`conclusion` → 合図の行と段ごとの所要時間 → 節の始まりの印 → `sections` → `favor` の順に1つの本文へ組む。
  * 印は結論か合図の行か段ごとの所要時間があり、節も1つ以上あるときだけ置く。
- * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は同じ依頼の段取りから描く。
+ * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は `withPhaseTimes` のときだけ、同じ依頼の段取りから描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
  * 空の `sections` / `favor` は塊ごと置かない。
@@ -372,6 +377,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 function reportMarkdown(
   report: Extract<SessionRecord, { readonly kind: "report" }>,
   context: TurnContext,
+  withPhaseTimes: boolean,
 ): string {
   const favorId = `favor-${report.toolUseId}`
   const head = [
@@ -380,7 +386,7 @@ function reportMarkdown(
       : `<div class="${report.task.kind === "task" ? "conclusion" : "conclusion-lead"}">\n\n${report.conclusion}\n\n</div>`,
     statusMarkdown(
       reportChecksMarkdown(report.checks, (command) => bashCommandDuration(context, command)),
-      phaseTimesMarkdown(phaseDurations(context.plans, report.time)),
+      withPhaseTimes ? phaseTimesMarkdown(phaseDurations(context.plans, report.time)) : "",
     ),
   ].filter((part) => !isBlankText(part))
   const tidied = tidyReportSections({
@@ -514,6 +520,7 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
         const body = {
           kind: "text",
           report: entry.markdown,
+          finalReport: entry.kind === "report" ? entry.finalMarkdown : entry.markdown,
           firstLine: extractFirstLine(firstLineSource(entry)),
           task,
           finishedPhase: NO_PHASE_LABEL,
@@ -572,6 +579,7 @@ function phaseShiftStep(id: number, shift: PhaseShift, duration: MeasuredTime): 
       : {
           kind: "text",
           report: shift.finished.summary,
+          finalReport: shift.finished.summary,
           firstLine: extractFirstLine(shift.finished.label),
           task: NO_REPORT_TASK,
           finishedPhase: { kind: "phase", label: shift.finished.label, duration },
@@ -710,6 +718,8 @@ function extractFirstLine(markdown: string): string {
  * 2つに分かれているのは、箱とラベルで条件が違うため。
  * 最終レポートなら常に箱を外し、ラベル（「最終レポート」）は中間レポートのあるやり取りか、本文に `task` があるときだけ出す。
  *
+ * 印を立てた本文は `report` を `finalReport` に入れ替える（段ごとの所要時間を出すのは最終レポートだけ）。
+ *
  * `closed` が false のとき（{@link mainViewTurns} の同名の引数）は `final` を1つも立てない。
  * やり取りがまだ閉じていないあいだは、次の `report` が来てこの本文が中間レポートへ回るかもしれないので、確定していないものに最終レポートの札（ラベルも箱を外すことも）を立てない。
  * `hasInterimReport` は `closed` に関係なく `interim` の集計のまま。
@@ -722,7 +732,11 @@ function markFinalReport(turn: MainViewTurn, closed: boolean): MainViewTurn {
     : undefined
   return {
     ...turn,
-    steps: turn.steps.map((step) => ({ ...step, final: step.id === finalId })),
+    steps: turn.steps.map((step) =>
+      step.id === finalId && step.body.kind === "text"
+        ? { ...step, body: { ...step.body, report: step.body.finalReport }, final: true }
+        : { ...step, final: false },
+    ),
     hasInterimReport: turn.steps.some((step) => step.interim),
   }
 }

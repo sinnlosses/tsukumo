@@ -45,6 +45,7 @@ function text(report: string): MainViewStepBody {
   return {
     kind: "text",
     report,
+    finalReport: report,
     firstLine: report,
     task: { kind: "none" },
     finishedPhase: { kind: "none" },
@@ -255,7 +256,14 @@ describe("Turn（目録の1行と見出し）", () => {
   } as const
 
   function taskBody(report: string): MainViewStepBody {
-    return { kind: "text", report, firstLine: report, task: TASK, finishedPhase: { kind: "none" } }
+    return {
+      kind: "text",
+      report,
+      finalReport: report,
+      firstLine: report,
+      task: TASK,
+      finishedPhase: { kind: "none" },
+    }
   }
 
   it("一覧に無いタスクの ID は押せない", () => {
@@ -315,6 +323,7 @@ describe("Turn（目録の1行と見出し）", () => {
     const body: MainViewStepBody = {
       kind: "text",
       report: "架空の本文",
+      finalReport: "架空の本文",
       firstLine: "架空の本文",
       task: { ...TASK, outcome },
       finishedPhase: { kind: "none" },

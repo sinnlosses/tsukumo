@@ -58,6 +58,7 @@ describe("mainViewTurnsOf", () => {
     expect(mainViewTurnsOf(FIXTURE_STATE)[0]?.steps.at(-1)?.body).toEqual({
       kind: "text",
       report: "架空のレポート",
+      finalReport: "架空のレポート",
       firstLine: "架空のレポート",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },

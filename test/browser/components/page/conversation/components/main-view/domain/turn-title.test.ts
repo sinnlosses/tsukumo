@@ -17,6 +17,7 @@ function reportStep(id: number, firstLine: string): MainViewStep {
     body: {
       kind: "text",
       report: firstLine,
+      finalReport: firstLine,
       firstLine,
       task: { kind: "none" },
       finishedPhase: { kind: "none" },

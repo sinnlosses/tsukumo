@@ -155,7 +155,7 @@ export function useWorkStrip(): WorkStripModel {
   const moment = useSession((session) => conversationMoment(session.state))
   const plan = turnStepList.kind === "turn" ? turnStepList.plan : NO_PLAN
   const working = content.kind === "work"
-  const newestResult = turnResultsOf(turns, working ? moment : "deliver").at(-1)
+  const newestResult = turnResultsOf(turns, moment).at(-1)
   const result = stripResultOf(newestResult, working, plan)
   const shown = content.kind !== "welcome" && result !== undefined
   const now = useNowWhile(shown && isTurnCounting(turn, backgroundTasks.length))

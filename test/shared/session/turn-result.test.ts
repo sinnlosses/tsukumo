@@ -12,6 +12,7 @@ function reportStep(id: number, task: ReportTask): MainViewStep {
     body: {
       kind: "text",
       report: "架空のレポート",
+      finalReport: "架空のレポート",
       firstLine: "架空のレポート",
       task,
       finishedPhase: { kind: "none" },

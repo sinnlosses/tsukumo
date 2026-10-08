@@ -54,6 +54,7 @@ const edit = (path: string): MainViewEntry => ({
 const toolReport = (markdown: string): MainViewEntry => ({
   kind: "report",
   markdown,
+  finalMarkdown: markdown,
   conclusion: "",
   task: { kind: "none" },
 })
@@ -761,6 +762,31 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(final?.endsWith(`</div>\n\n${SECTIONS_START}\n\n架空の根拠。`)).toBe(true)
   })
 
+  it("やり取りが閉じていないあいだの report には、段ごとの所要時間の横棒グラフを出さない", () => {
+    const plan = (current: number, phaseSummary: string): SessionEvent => ({
+      kind: "work-plan",
+      phases: ["架空の段A", "架空の段B"],
+      current,
+      finishedInGroup: [],
+      phaseSummary,
+    })
+    const turn = turnOf(
+      [
+        ask,
+        plan(0, ""),
+        plan(1, "架空のまとめ。"),
+        report("架空の結論。", "架空の根拠。"),
+        finished,
+      ],
+      SETTLED,
+      false,
+    )
+
+    const [, last] = shownReports(turn)
+
+    expect(last).toBe(`${lead("架空の結論。")}\n\n${SECTIONS_START}\n\n架空の根拠。`)
+  })
+
   it("同じ依頼に段取りがあるレポートは progress の塊を描かず、段取りが無いレポートは描く", () => {
     const withProgress: SessionEvent = reportEvent({
       toolUseId: "toolu_r1",
@@ -799,6 +825,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
       report: `<div class="conclusion">\n\n架空の結論。\n\n</div>\n\n${SECTIONS_START}\n\n架空の根拠。`,
+      finalReport: `<div class="conclusion">\n\n架空の結論。\n\n</div>\n\n${SECTIONS_START}\n\n架空の根拠。`,
       firstLine: "架空の結論。",
       task,
       finishedPhase: { kind: "none" },
@@ -848,6 +875,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
       report: lead("架空の結論。"),
+      finalReport: lead("架空の結論。"),
       firstLine: "架空の結論。",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
@@ -882,6 +910,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
       report: lead("唯一の結論。"),
+      finalReport: lead("唯一の結論。"),
       firstLine: "唯一の結論。",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
@@ -948,6 +977,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     expect(step?.body).toEqual({
       kind: "text",
       report: "架空のまとめ。",
+      finalReport: "架空のまとめ。",
       firstLine: "1/2 架空の段A",
       task: { kind: "none" },
       finishedPhase: {
@@ -1024,6 +1054,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     expect(turn?.steps.at(-1)?.body).toEqual({
       kind: "text",
       report: "架空のまとめ。",
+      finalReport: "架空のまとめ。",
       firstLine: "1/2 架空の段A",
       task: { kind: "none" },
       finishedPhase: {
@@ -1101,6 +1132,8 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     })
   const reportMarkdowns = (entries: readonly MainViewEntry[]) =>
     entries.flatMap((entry) => (entry.kind === "report" ? [entry.markdown] : []))
+  const finalMarkdowns = (entries: readonly MainViewEntry[]) =>
+    entries.flatMap((entry) => (entry.kind === "report" ? [entry.finalMarkdown] : []))
 
   it("記録を足しても、前からある記録の結果は同じ参照のまま返る", () => {
     const before: readonly Timed[] = [
@@ -1153,8 +1186,8 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     expect(reportMarkdowns(entriesAfter)[1]).toContain('<span class="check-time">5秒</span>')
   })
 
-  it("段取りのある依頼の report には、検証の表の下に段ごとの所要時間の横棒グラフが出る", () => {
-    const markdown = reportMarkdowns(
+  it("段取りのある依頼の report の最終レポートの本文には、検証の表の下に段ごとの所要時間の横棒グラフが出る", () => {
+    const markdown = finalMarkdowns(
       mainViewEntries(
         foldTimed([
           [ask, 0],
@@ -1179,7 +1212,7 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
   })
 
   it("段取りの無い依頼の report には、段ごとの所要時間の横棒グラフを出さない", () => {
-    const markdown = reportMarkdowns(
+    const markdown = finalMarkdowns(
       mainViewEntries(
         foldTimed([
           [ask, 0],

@@ -1,4 +1,4 @@
-import { cleanup, renderHook } from "@testing-library/react"
+import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
@@ -12,7 +12,7 @@ import {
   type SessionState,
 } from "../../../../../../../../../../src/shared/session/session-state.ts"
 import { reportEvent } from "../../../../../../../../../fixture/report-event.ts"
-import { putSession } from "../../../../../../../../session-store.ts"
+import { putSession, putState } from "../../../../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -324,6 +324,33 @@ describe("useWorkStrip（状態）", () => {
       "awaiting-answer",
     )
     expect(resultAfter([request, plan, taskOf("stopped"), completed])).toBe("stopped")
+  })
+
+  it("レポートに入れ替わったあとで同じやり取りの続きが動き出したら、本文の終わり方ではなく作業中", () => {
+    const closed = foldTimed([
+      [request, START],
+      [plan, START + 1_000],
+      [reportEvent(), START + 2_000],
+      [completed, START + 3_000],
+    ])
+    putSession(closed)
+    act(() => {
+      putState(
+        applySessionEvent(
+          closed,
+          {
+            kind: "background-tasks-changed",
+            tasks: [{ taskId: "fictional-task", kind: "agent", description: "架空の委譲" }],
+          },
+          START + 5_000,
+        ),
+      )
+    })
+
+    expect(renderHook(() => useWorkStrip()).result.current).toMatchObject({
+      kind: "finished",
+      result: "working",
+    })
   })
 
   it("失敗で終わったら、段取りが無くても帯を残して失敗にする", () => {
