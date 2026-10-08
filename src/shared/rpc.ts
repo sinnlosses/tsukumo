@@ -18,7 +18,6 @@ import { diagnosticContract } from "./contract/diagnostic.ts"
 import { frameContract } from "./contract/frame.ts"
 import { hostContract } from "./contract/host.ts"
 import { planUsageContract } from "./contract/plan-usage.ts"
-import { projectSettingsContract } from "./contract/project-settings.ts"
 import { repositoryContract } from "./contract/repository.ts"
 import { sessionDigestContract } from "./contract/session-digest.ts"
 import { sessionContract } from "./contract/session.ts"
@@ -48,7 +47,6 @@ export const commandContract = {
   chat: chatContract,
   usageReview: usageReviewContract,
   host: hostContract,
-  projectSettings: projectSettingsContract,
 }
 
 /** ブラウザがコマンドを送る client の型（契約から導く）。 */

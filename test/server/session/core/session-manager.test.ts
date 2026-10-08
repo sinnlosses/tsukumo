@@ -218,7 +218,6 @@ function createSessionManager(
       chat: { forgetRememberedLine },
       usageReview: { dismissUsageProposal },
       host: { openFile },
-      projectSettings: { save: () => Promise.resolve(true) },
     },
     manager.commandSession,
   )
@@ -2077,7 +2076,7 @@ describe("createSessionManager（見直し）", () => {
 })
 
 describe("タスク一覧の見張り", () => {
-  const KNOWN_TASKS = { kind: "known", items: [], runPrompt: "/next-task {id}" } as const
+  const KNOWN_TASKS = { kind: "known", items: [] } as const
 
   /** 見張りの起こす・閉じるを数え、流す口を手で握る session-manager。 */
   function startManagerWithTaskWatch() {

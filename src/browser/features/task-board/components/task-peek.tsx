@@ -18,10 +18,10 @@ import styles from "./task-peek.module.css"
 import { TaskRunConfirm } from "./task-run-confirm.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
 
-/** 「これを始める」を出すか。出すのは着手できて送り先が見つかるタスクだけ。 */
+/** 「これを始める」を出すか。出すのは着手できるタスクだけ。 */
 export type TaskPeekRun =
   | { readonly kind: "none" }
-  | { readonly kind: "available"; readonly runPrompt: string; readonly confirming: boolean }
+  | { readonly kind: "available"; readonly confirming: boolean }
 
 export type TaskPeekProps = {
   readonly task: TaskSummaryItem
@@ -119,12 +119,7 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
         )}
       </div>
       {run.kind === "available" && run.confirming && (
-        <TaskRunConfirm
-          taskId={task.id}
-          held={false}
-          runPrompt={run.runPrompt}
-          onClose={props.onConfirmClose}
-        />
+        <TaskRunConfirm taskId={task.id} held={false} onClose={props.onConfirmClose} />
       )}
     </dialog>
   )

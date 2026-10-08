@@ -27,23 +27,16 @@ export type TaskLocation =
 
 /**
  * タスクの一覧が読めているかどうか。
- * - `settings-invalid`: プロジェクトの設定が読めない（JSON が壊れている・形が違う）
- * - `off`: プロジェクトの設定が「タスク運用を使わない」（`tasks: "off"`）。Beads は読まない
+ * - `no-beads`: 起動先に `.beads` が無い（タスク運用なし）。Beads は読まない
  * - `loading`: 最初の見回りの結果がまだ届いていない（状態の初期値。見張りは1回目に必ず `loading` 以外を知らせる）
- * - `unknown`: 読めない（Beads が無い・読めない）
+ * - `unknown`: 読めない（`.beads` はあるが `bd` が読めない）
  * - `known`: 読めた
  */
 export type TaskSummaryResult =
-  | { readonly kind: "settings-invalid" }
-  | { readonly kind: "off" }
+  | { readonly kind: "no-beads" }
   | { readonly kind: "loading" }
   | { readonly kind: "unknown" }
-  | {
-      readonly kind: "known"
-      readonly items: readonly TaskSummaryItem[]
-      /** 「tsukumo に頼む」で送る文面のひな形（プロジェクトの設定の `tasks.runPrompt`。`{id}` はタスクIDに置き換える）。 */
-      readonly runPrompt: string
-    }
+  | { readonly kind: "known"; readonly items: readonly TaskSummaryItem[] }
 
 /** 終えたタスク1件。時刻はエポックミリ秒。 */
 export type DoneTask = {

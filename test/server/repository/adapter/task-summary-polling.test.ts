@@ -7,10 +7,6 @@ import {
   type TaskSummaryPorts,
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
-import {
-  DEFAULT_RUN_PROMPT,
-  type ProjectSettingsRead,
-} from "../../../../src/shared/repository/project-settings.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 
@@ -45,9 +41,8 @@ type FakeCalls = string[]
 type FakePortsOptions = {
   /** 取り直すたびに読む変化の印（`undefined` は取れない）。 */
   readonly stamp: () => string | undefined
-  /** 設定の読みが最初の1回だけ例外を投げる。 */
-  readonly settingsThrowsFirst: boolean
-  readonly settings: ProjectSettingsRead
+  /** 印の読みが最初の1回だけ例外を投げる。 */
+  readonly stampThrowsFirst: boolean
   /** 前回覚えた一覧。`undefined` は覚えていない。 */
   readonly remembered: readonly TaskSummaryItem[] | undefined
   /** `bd list` の結果。 */
@@ -63,19 +58,12 @@ function fakePorts(
   clock: TaskSummaryPorts["clock"],
   options: FakePortsOptions,
 ): TaskSummaryPorts {
-  let settingsAsked = 0
+  let stampAsked = 0
   let listed = 0
   return {
     readTaskSummaryMemory: () => options.remembered,
     writeTaskSummaryMemory: (_cwd, items) => {
       options.writes.push(items)
-    },
-    readProjectSettings: () => {
-      settingsAsked += 1
-      if (options.settingsThrowsFirst && settingsAsked === 1) {
-        return Promise.reject(new Error("架空の失敗"))
-      }
-      return Promise.resolve(options.settings)
     },
     readBeadsIssues: () => {
       calls.push("bd list")
@@ -85,7 +73,13 @@ function fakePorts(
       listed += 1
       return Promise.resolve(outcome ?? options.outcome)
     },
-    createBeadsStampReader: () => () => Promise.resolve(options.stamp()),
+    createBeadsStampReader: () => () => {
+      stampAsked += 1
+      if (options.stampThrowsFirst && stampAsked === 1) {
+        return Promise.reject(new Error("架空の失敗"))
+      }
+      return Promise.resolve({ kind: "present", stamp: options.stamp() })
+    },
     clock,
   }
 }
@@ -110,11 +104,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
         intervalMs: FAKE_INTERVAL_MS,
         ports: fakePorts(calls, manual.clock, {
           stamp: () => stamp,
-          settingsThrowsFirst: false,
-          settings: {
-            kind: "read",
-            tasks: { mainBranch: "main", runPrompt: "/next-task {id}" },
-          },
+          stampThrowsFirst: false,
           remembered: undefined,
           outcome: { kind: "issues", issues: [] },
           outcomes: undefined,
@@ -139,41 +129,13 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     }
   }
 
-  it("設定の runPrompt が一覧に付いて届く", async () => {
-    const { fake, changes } = startFake({
-      settings: { kind: "read", tasks: { mainBranch: "main", runPrompt: "/work {id}" } },
-    })
-    fake.setWatching(true)
-    await settle()
-
-    expect(changes).toMatchObject([{ kind: "known", runPrompt: "/work {id}" }])
-  })
-
-  it("設定が無ければ、既定の文面を付けて Beads を読む", async () => {
-    const { fake, changes, count } = startFake({ settings: { kind: "none" } })
+  it("Beads を読んで一覧を届ける", async () => {
+    const { fake, changes, count } = startFake()
     fake.setWatching(true)
     await settle()
 
     expect(count("bd list")).toBe(1)
-    expect(changes).toMatchObject([{ kind: "known", runPrompt: DEFAULT_RUN_PROMPT }])
-  })
-
-  it("設定が「使わない」なら、Beads を読まずに「使わない」を届ける", async () => {
-    const { fake, changes, count } = startFake({ settings: { kind: "off" } })
-    fake.setWatching(true)
-    await settle()
-
-    expect(count("bd list")).toBe(0)
-    expect(changes).toEqual([{ kind: "off" }])
-  })
-
-  it("設定が読めなければ、Beads を読まずに「設定が読めない」を届ける", async () => {
-    const { fake, changes, count } = startFake({ settings: { kind: "invalid" } })
-    fake.setWatching(true)
-    await settle()
-
-    expect(count("bd list")).toBe(0)
-    expect(changes).toEqual([{ kind: "settings-invalid" }])
+    expect(changes).toMatchObject([{ kind: "known" }])
   })
 
   describe("覚えた一覧", () => {
@@ -186,8 +148,8 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       await settle()
 
       expect(changes).toStrictEqual([
-        { kind: "known", items: remembered, runPrompt: "/next-task {id}" },
-        { kind: "known", items: [], runPrompt: "/next-task {id}" },
+        { kind: "known", items: remembered },
+        { kind: "known", items: [] },
       ])
       expect(writes).toStrictEqual([[]])
     })
@@ -206,29 +168,6 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       expect(changes).toHaveLength(1)
       expect(writes).toStrictEqual([])
     })
-
-    it("設定の文面を今の設定から付ける", async () => {
-      const { fake, changes } = startFake({
-        remembered,
-        settings: { kind: "none" },
-      })
-      fake.setWatching(true)
-      await settle()
-
-      expect(changes[0]).toMatchObject({ kind: "known", runPrompt: DEFAULT_RUN_PROMPT })
-    })
-
-    it.each<ProjectSettingsRead>([{ kind: "off" }, { kind: "invalid" }])(
-      "設定が $kind のときは出さない",
-      async (settings) => {
-        const { fake, changes } = startFake({ remembered, settings })
-        fake.setWatching(true)
-        await settle()
-
-        expect(changes).toHaveLength(1)
-        expect(changes[0]).not.toMatchObject({ items: remembered })
-      },
-    )
 
     it("覚えた一覧が無ければ、読んだ結果だけが届く", async () => {
       const { fake, changes } = startFake({ remembered: undefined })
@@ -298,7 +237,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
   })
 
   it("見回りが1回投げても、失敗を渡して次の間隔でまた読む", async () => {
-    const { fake, manual, changes, failures } = startFake({ settingsThrowsFirst: true })
+    const { fake, manual, changes, failures } = startFake({ stampThrowsFirst: true })
     fake.setWatching(true)
     await settle()
 
@@ -400,8 +339,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     let issueCount = 0
     const ports = fakePorts(calls, manual.clock, {
       stamp: () => stamp,
-      settingsThrowsFirst: false,
-      settings: { kind: "none" },
+      stampThrowsFirst: false,
       remembered: undefined,
       outcome: { kind: "issues", issues: [] },
       outcomes: undefined,

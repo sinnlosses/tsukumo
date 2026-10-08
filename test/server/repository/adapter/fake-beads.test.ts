@@ -19,7 +19,6 @@ import {
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
 import type { TaskSummaryResult } from "../../../../src/shared/repository/task-summary.ts"
-import { writeProjectSettingsContent } from "../../../fixture/project-settings.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 疑似セッションの見張りは `bd` を起こさず、cwd のファイルの課題を出す。ふだんの見張りは今どおり `bd` を読む。
@@ -37,7 +36,7 @@ afterEach(async () => {
 })
 
 describe("taskSummaryOptionsOf", () => {
-  it("疑似セッションは課題の口だけを差し替え、設定の読み出しと時計は本物を使う", () => {
+  it("疑似セッションは課題の口だけを差し替え、時計は本物を使う", () => {
     const options = taskSummaryOptionsOf("fake")
 
     expect(options.intervalMs).toBe(FAKE_TASK_SUMMARY_POLL_INTERVAL_MS)
@@ -45,7 +44,6 @@ describe("taskSummaryOptionsOf", () => {
     expect(options.ports.createBeadsStampReader).not.toBe(
       REAL_TASK_SUMMARY_PORTS.createBeadsStampReader,
     )
-    expect(options.ports.readProjectSettings).toBe(REAL_TASK_SUMMARY_PORTS.readProjectSettings)
     expect(options.ports.clock).toBe(REAL_TASK_SUMMARY_PORTS.clock)
   })
 })
@@ -82,14 +80,12 @@ describe("疑似セッションの見張り", () => {
     expect(last?.kind === "known" ? last.items.map((item) => item.id) : []).toEqual(["t-01"])
   })
 
-  it("設定は本物のファイルを読み、tasks: off なら課題を置いても「使わない」", async () => {
-    writeProjectSettingsContent(cwd(), '{ "tasks": "off" }')
-    writeFakeIssues(cwd(), [issue("t-01", "架空のタスク")])
+  it("課題のファイルが無いうちは「Beads なし」を届ける", async () => {
     const changes = watchFake(cwd())
 
     await waitUntil(() => changes.length > 0)
 
-    expect(changes).toEqual([{ kind: "off" }])
+    expect(changes).toEqual([{ kind: "no-beads" }])
   })
 })
 

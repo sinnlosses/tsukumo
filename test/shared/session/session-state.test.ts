@@ -849,7 +849,7 @@ describe("applySessionEvent", () => {
         location: { kind: "none" },
       },
     ]
-    const known = { kind: "known", items, runPrompt: "/next-task {id}" } as const
+    const known = { kind: "known", items } as const
     const withTasks = apply({ kind: "tasks-changed", tasks: known })
     expect(withTasks.tasks).toEqual(known)
 

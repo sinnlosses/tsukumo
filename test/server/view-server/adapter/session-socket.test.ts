@@ -107,7 +107,6 @@ async function start(openFileResult = true): Promise<Started> {
           return Promise.resolve(openFileResult)
         },
       },
-      projectSettings: { save: unexpected },
     }),
     commandSession: IDLE_WORK_SESSION,
     yieldsUpgrade: (request) => request.url === YIELDED_UPGRADE_PATH,

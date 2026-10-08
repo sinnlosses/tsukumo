@@ -110,7 +110,6 @@ export type TaskBoardConfirm =
       readonly kind: "open"
       readonly taskId: string
       readonly held: boolean
-      readonly runPrompt: string
     }
 
 /** `onKeyDown` がフックの中で読む分だけの、キー入力の形（React の `KeyboardEvent` はそのまま渡せる）。 */

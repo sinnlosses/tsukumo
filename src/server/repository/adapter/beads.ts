@@ -60,19 +60,32 @@ export function readBeadsIssues(cwd: string): Promise<BeadsOutcome> {
   })
 }
 
+/** `.beads` が見つからなければ `missing`。あれば課題の変化の印（取れないときは `undefined`）。 */
+export type BeadsStamp =
+  | { readonly kind: "missing" }
+  | { readonly kind: "present"; readonly stamp: string | undefined }
+
 /**
- * 課題の変化の印（Dolt の `noms/manifest` の更新時刻）を読む関数を作る。`.beads` の場所は取れた1回だけ `bd where` で調べて覚える。
- * `bd` の内部の置き場に頼るので、取れないとき・形が違うときは必ず `undefined` を返し、呼ぶ側は毎回 `bd list` で読む。
+ * `.beads` の有無と課題の変化の印（Dolt の `noms/manifest` の更新時刻）を読む関数を作る。
+ * `.beads` の場所は取れた1回だけ `bd where` で調べて覚え、見つからないうちは読むたびに調べ直す。
+ * `bd where` がタイムアウトしたときは `.beads` があるものとして印を `undefined` にする。
+ * `bd` の内部の置き場に頼るので、印が取れないとき・形が違うときは `undefined` を返し、呼ぶ側は毎回 `bd list` で読む。
  */
-export function createBeadsStampReader(cwd: string): () => Promise<string | undefined> {
+export function createBeadsStampReader(cwd: string): () => Promise<BeadsStamp> {
   let beadsDir: string | undefined = undefined
 
   return async () => {
     if (beadsDir === undefined) {
       const workspace = await readBeadsWorkspace(cwd)
-      beadsDir = workspace.kind === "found" ? workspace.dir : undefined
+      if (workspace.kind === "missing") {
+        return { kind: "missing" }
+      }
+      if (workspace.kind === "timed-out") {
+        return { kind: "present", stamp: undefined }
+      }
+      beadsDir = workspace.dir
     }
-    return beadsDir === undefined ? undefined : readBeadsStampOf(beadsDir)
+    return { kind: "present", stamp: await readBeadsStampOf(beadsDir) }
   }
 }
 

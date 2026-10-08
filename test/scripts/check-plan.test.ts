@@ -7,13 +7,9 @@ import { dirname, join } from "node:path"
 
 import { describe, expect, test } from "vitest"
 
-import {
-  collectChangedPaths,
-  resolvePrimaryBranch,
-} from "../../scripts/lib/changed-path-repository.ts"
+import { collectChangedPaths } from "../../scripts/lib/changed-path-repository.ts"
 import { DOCUMENT_CHECK_TEST_FILES, planStages } from "../../scripts/lib/check-stage.ts"
 import { isDocumentOnlyChange, isDocumentPath } from "../../scripts/lib/document-change.ts"
-import { writeProjectSettings } from "../fixture/project-settings.ts"
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
 
 describe("isDocumentPath", () => {
@@ -119,7 +115,6 @@ describe("collectChangedPaths", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
       await git(root, "init", "--quiet", "--initial-branch=trunk")
       await git(root, "config", "user.email", "test@example.com")
       await git(root, "config", "user.name", "test")
-      writeProjectSettings(root, "trunk")
       write(root, "README.md", "readme\n")
       write(root, ".gitignore", "ignored/\n")
       await git(root, "add", ".")
@@ -140,7 +135,7 @@ describe("collectChangedPaths", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
       write(root, "src/untracked.ts", "export {}\n")
       write(root, "ignored/build.js", "x\n")
 
-      expect(collectChangedPaths(root, await resolvePrimaryBranch(root)).toSorted()).toEqual([
+      expect(collectChangedPaths(root, "trunk").toSorted()).toEqual([
         "README.md",
         join("docs", "committed.md"),
         "src/untracked.ts",

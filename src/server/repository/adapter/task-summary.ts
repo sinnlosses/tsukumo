@@ -1,12 +1,7 @@
-// タスク一覧を見張る。見回りのたびにプロジェクトの設定（`readProjectSettings`）を読み、読み元（`TaskSource`）から一覧を読み、前回知らせたものと変わっていれば `onChange` を呼ぶ。
-// 設定は見回りのたびに読み直す（画面から書いた値が主ブランチを動かさずに次の見回りで効く）。
-// 読み元は設定が前回と変わった見回りでだけ選び直す（読み元が覚えている前回の読みを捨てないため）。
+// タスク一覧を見張る。見回りのたびに読み元（`createTaskBeadsSource`。`bd` の課題）から一覧を読み、前回知らせたものと変わっていれば `onChange` を呼ぶ。
+// `.beads` が無い起動先は「Beads なし」（`no-beads`）、`.beads` があって読めないときは「不明」。
 //
-// - 設定が読めない: 「設定が読めない」。Beads を読まない
-// - `tasks: "off"`: 「使わない」。Beads を読まない
-// - それ以外（設定が無いときも）: `createTaskBeadsSource`（`bd` の課題。`.beads` が無ければ「不明」）
-//
-// 最初の見回りは、設定が `off`・読めないでなければ、前回読めた一覧（`readTaskSummaryMemory`）を読み元の結果を待たずに先に知らせる。
+// 最初の見回りは、前回読めた一覧（`readTaskSummaryMemory`）を読み元の結果を待たずに先に知らせる。
 // 読み元の結果が同じなら知らせず、違えば差し替える。知らせた `known` は覚え直す。
 // 読めなかった回（`unknown`・最初の読みのタイムアウト）は、一覧を出していれば前の一覧を残し、3回続いたら「不明」にする。一覧を出していなければすぐ「不明」にする。
 //
@@ -15,16 +10,11 @@
 
 import { isDeepEqual } from "remeda"
 
-import {
-  DEFAULT_RUN_PROMPT,
-  type ProjectSettingsRead,
-} from "../../../shared/repository/project-settings.ts"
 import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 import { createBeadsStampReader, readBeadsIssues } from "./beads.ts"
 import { createFakeBeadsStampReader, readFakeBeadsIssues } from "./fake-beads.ts"
-import { readProjectSettings } from "./project-settings.ts"
 import { createTaskBeadsSource } from "./task-beads-source.ts"
-import { fixedTaskSource, type TaskSource, type TaskSourceResult } from "./task-source.ts"
+import type { TaskSource } from "./task-source.ts"
 import { readTaskSummaryMemory, writeTaskSummaryMemory } from "./task-summary-memory.ts"
 
 /**
@@ -53,7 +43,6 @@ export type TaskSummaryClock = {
 
 /** 見回りが外の世界を読む口。確かめるときは偽に差し替える。 */
 export type TaskSummaryPorts = {
-  readonly readProjectSettings: typeof readProjectSettings
   readonly readBeadsIssues: typeof readBeadsIssues
   readonly createBeadsStampReader: typeof createBeadsStampReader
   readonly readTaskSummaryMemory: typeof readTaskSummaryMemory
@@ -67,7 +56,6 @@ export type TaskSummaryOptions = {
 }
 
 export const REAL_TASK_SUMMARY_PORTS = {
-  readProjectSettings,
   readBeadsIssues,
   createBeadsStampReader,
   readTaskSummaryMemory,
@@ -84,14 +72,14 @@ export const REAL_TASK_SUMMARY_PORTS = {
 } satisfies TaskSummaryPorts
 
 /**
- * 疑似セッションの見回りの間隔。読むのはファイル1つと設定だけなので、
- * E2E の足場が置いた一覧と画面から書いた設定を、待たせずに届ける。
+ * 疑似セッションの見回りの間隔。読むのはファイル1つだけなので、
+ * E2E の足場が置いた一覧を待たせずに届ける。
  */
 export const FAKE_TASK_SUMMARY_POLL_INTERVAL_MS = 200
 
 /**
  * 見張りの間隔と口。ふだん（`real`）は `bd` を読み、疑似セッション（`fake`）は `bd` の代わりに
- * `readFakeBeadsIssues` のファイルを読む。設定の読み出しと時計はどちらも本物。
+ * `readFakeBeadsIssues` のファイルを読む。時計はどちらも本物。
  */
 export function taskSummaryOptionsOf(driver: "real" | "fake"): TaskSummaryOptions {
   switch (driver) {
@@ -111,7 +99,7 @@ export function taskSummaryOptionsOf(driver: "real" | "fake"): TaskSummaryOption
 
 /**
  * タスク一覧を見張り始める。
- * 呼んだ時点で1回見に行き、以後は `setWatching(true)` のあいだ、ポーリングで設定と読み元を見る。
+ * 呼んだ時点で1回見に行き、以後は `setWatching(true)` のあいだ、ポーリングで読み元を見る。
  * 1回の見回りが終わってから次の見回りを予約するので、`bd` が遅くても見回りは重ならない。
  * 見回りが失敗しても止めず、`onFailure` へ渡して次の間隔でやり直す。
  * 知らせるのは前回知らせたもの（初めは画面の初期の姿と同じ `{ kind: "loading" }`。最初の見回りは必ず1回知らせる）と違う結果だけ。
@@ -123,8 +111,10 @@ export function watchTaskSummary(
   onFailure: (error: unknown) => void = () => {},
 ): TaskSummaryWatcher {
   const { intervalMs, ports } = options
-  const choose = createTaskSourceChooser(cwd, ports)
-  let chosen: ChosenSource | undefined = undefined
+  const source: TaskSource = createTaskBeadsSource(cwd, {
+    readBeadsIssues: ports.readBeadsIssues,
+    readBeadsStamp: ports.createBeadsStampReader(cwd),
+  })
   let notified: TaskSummaryResult = { kind: "loading" }
   let memoryTried = false
   let shownFromMemory: TaskSummaryResult | undefined = undefined
@@ -136,15 +126,11 @@ export function watchTaskSummary(
   let runningPoll: Promise<void> = Promise.resolve()
 
   const poll = async (): Promise<void> => {
-    const settings = await ports.readProjectSettings(cwd)
-    if (chosen === undefined || !isDeepEqual(settings, chosen.settings)) {
-      chosen = { settings, source: choose(settings) }
-    }
     if (!memoryTried) {
       memoryTried = true
-      shownFromMemory = showRemembered(chosen.settings)
+      shownFromMemory = showRemembered()
     }
-    const read = await chosen.source.read()
+    const read = await source.read()
     if (closed) {
       return
     }
@@ -162,8 +148,7 @@ export function watchTaskSummary(
       return
     }
     // 一覧を出していない `unchanged` は、画面を読み込み中のままにしないため「不明」で知らせる。
-    const result: TaskSummaryResult =
-      read.kind === "unchanged" ? { kind: "unknown" } : withRunPrompt(read.result, chosen.settings)
+    const result: TaskSummaryResult = read.kind === "unchanged" ? { kind: "unknown" } : read.result
     if (read.kind === "unchanged" && notified.kind !== "loading") {
       return
     }
@@ -183,15 +168,12 @@ export function watchTaskSummary(
   }
 
   /** 覚えた一覧があれば知らせて、知らせた結果を返す。`notified` は `loading` のままにして、読んだ結果の初回の通知を必ず届かせる。 */
-  const showRemembered = (settings: ProjectSettingsRead): TaskSummaryResult | undefined => {
-    if (settings.kind === "off" || settings.kind === "invalid") {
-      return undefined
-    }
+  const showRemembered = (): TaskSummaryResult | undefined => {
     const items = ports.readTaskSummaryMemory(cwd)
     if (items === undefined || closed) {
       return undefined
     }
-    const shown = withRunPrompt({ kind: "known", items }, settings)
+    const shown: TaskSummaryResult = { kind: "known", items }
     onChange(shown)
     return shown
   }
@@ -232,47 +214,5 @@ export function watchTaskSummary(
         loop()
       }
     },
-  }
-}
-
-/** 読み元の `known` に、設定の「tsukumo に頼む」の文面を付ける。 */
-function withRunPrompt(result: TaskSourceResult, settings: ProjectSettingsRead): TaskSummaryResult {
-  if (result.kind !== "known") {
-    return result
-  }
-  const runPrompt = settings.kind === "read" ? settings.tasks.runPrompt : DEFAULT_RUN_PROMPT
-  return { ...result, runPrompt }
-}
-
-/** いま使っている読み元と、それを選んだときの設定。 */
-type ChosenSource = {
-  readonly settings: ProjectSettingsRead
-  readonly source: TaskSource
-}
-
-/**
- * 設定から読み元を作る関数を作る。
- * Beads の変化の印の読み手は起動中に変わらないので、見張り1つにつき1つだけ作り、読み元を選び直しても使い回す。
- */
-function createTaskSourceChooser(
-  cwd: string,
-  ports: TaskSummaryPorts,
-): (settings: ProjectSettingsRead) => TaskSource {
-  const readBeadsStamp = ports.createBeadsStampReader(cwd)
-
-  const beads = createTaskBeadsSource(cwd, {
-    readBeadsIssues: ports.readBeadsIssues,
-    readBeadsStamp,
-  })
-  return (settings) => {
-    switch (settings.kind) {
-      case "invalid":
-        return fixedTaskSource({ kind: "settings-invalid" })
-      case "off":
-        return fixedTaskSource({ kind: "off" })
-      case "none":
-      case "read":
-        return beads
-    }
   }
 }

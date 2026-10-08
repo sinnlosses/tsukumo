@@ -9,7 +9,7 @@
 import { execFileSync } from "node:child_process"
 import process from "node:process"
 
-import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-repository.ts"
+import { collectChangedPaths, PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
 import {
   countE2eRuns,
   countFullE2eRuns,
@@ -83,7 +83,7 @@ async function readChangeRunsE2e(): Promise<boolean> {
     if (root === undefined) {
       return false
     }
-    const changedPaths = collectChangedPaths(root, await resolvePrimaryBranch(root))
+    const changedPaths = collectChangedPaths(root, PRIMARY_BRANCH)
     return planE2eRun(root, changedPaths, false).kind === "run"
   } catch {
     return false

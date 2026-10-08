@@ -80,7 +80,6 @@ describe("boardContent", () => {
   const NO_BREADCRUMB: BoardContentInput = {
     query: "",
     filter: "all",
-    destination: { kind: "present" },
     run: () => {},
     onJump: () => {},
     breadcrumb: { kind: "none" },
@@ -103,7 +102,7 @@ describe("boardContent", () => {
   }
 
   function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
-    return { kind: "known", items, runPrompt: "/next-task {id}" }
+    return { kind: "known", items }
   }
 
   it("読み込み中は loading、読めないときは unknown、0件なら empty", () => {

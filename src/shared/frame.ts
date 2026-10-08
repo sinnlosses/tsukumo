@@ -65,7 +65,6 @@ export const FRAME_ERROR_REASON = {
   forgetRememberedLineOutsideChat: "覚えたことを消せるのは雑談モードのときだけ",
   usageProposalDismissFailed: "提案を見送れなかった",
   openFileFailed: "ファイルを開けなかった",
-  projectSettingsSaveFailed: "プロジェクトの設定を書けなかった",
   achievementReflectionWriting:
     "いま日記を書いている最中は、ほかの日を振り返れない（書き終わると頼める）",
   achievementReflectionUnavailable: "その日の成果が読めない、または振り返る成果が無い",

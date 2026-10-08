@@ -131,7 +131,6 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     chat: chat.commands,
     usageReview: usageReview.commands,
     host: host.commands,
-    projectSettings: repository.commands,
   })
   return {
     manager: {

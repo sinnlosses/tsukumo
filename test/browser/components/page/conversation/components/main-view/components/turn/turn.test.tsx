@@ -288,7 +288,6 @@ describe("Turn（目録の1行と見出し）", () => {
             location: { kind: "none" },
           },
         ],
-        runPrompt: "/next-task {id}",
       },
     })
     render(

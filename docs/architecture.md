@@ -320,18 +320,11 @@ test/                         src/<相対パス>.ts → test/<相対パス>.test
 story/                        src/<相対パス>.tsx → story/<相対パス>.story.tsx（Storybook。設定は .storybook/）
 characters/<name>/            character.json・persona.md・素材
 plugin/                       セッションに載せる Claude Code のプラグイン（同梱のスキル。`buildQuerySeedOptions` が渡す）
-.tsukumo/project.json         このリポジトリのプロジェクトの設定（下の段）
 ```
 
-**プロジェクトの設定**（`docs/architecture/adr/0022-three-setting-homes.md`）は、起動先の作業ツリーの
-`.tsukumo/project.json` の1つだけから読む。形は
-`{ "tasks": { "mainBranch": "<ブランチ名>", "runPrompt": "<文面。既定 タスク {id} を進めて（bd show {id} で読める）。>" } }`
-（タスク運用を使わないプロジェクトは `{ "tasks": "off" }`）で、検証は `shared/repository/project-settings.ts` の `projectSettingsOf`、読み出しは
-`server/repository/adapter/project-settings.ts` の `readProjectSettings` の1か所。結果は
-「設定なし（ファイルが無い・`tasks` が無い）・使わない（`tasks` が `"off"`）・読めない（形が違う）・読めた」の4つで、
-起動時に覚えず、タスク一覧の見回りのたびに読み直す（画面から書いた値が次に読んだときに効く）。
-以前の版が書いた `"store": "beads"` の欄は受けて読み捨てる（それ以外の値は「読めない」）。
-欄の説明は `README.md`「プロジェクトの設定」。
+**設定の置き場は環境変数と歯車の設定の2つ**（`docs/architecture/adr/0025-no-project-settings.md`。リポジトリに属する値の
+置き場は無い）。タスクの節と使い方の見直しの「タスクにする」は、起動先の `.beads` が読めるかだけで出し分ける。
+「tsukumo に頼む」の文面は固定で、`shared/repository/task-run-prompt.ts` の `runPromptOf` が作る。
 
 **タスク一覧の読み元は Beads だけ**（`server/repository/adapter/task-beads-source.ts`。`bd` の課題）。
 **課題の解釈は Beads の読み口の1か所に閉じる**（`docs/architecture/adr/0024-no-skill-dependency.md`）。
@@ -340,23 +333,18 @@ plugin/                       セッションに載せる Claude Code のプラ�
 `shared/repository/task-summary.ts`）に写す。ラベルは字のまま並べるだけで解釈せず、担当（`assignee`）は読まない。特定のスキルが課題に足した独自の状態・本文の節の書式・ID の書き換えは読まない。
 一覧・迎える口・成果・おすすめは一般の形だけを読む（成果は `bd` を読んだ境界で `DoneTask` に畳む）。
 例外は疑似セッションで、`taskSummaryOptionsOf("fake")` が `bd` の代わりに cwd のファイルを読む口（`fake-beads.ts` の
-`readFakeBeadsIssues`）と短い見回りの間隔に差し替える（E2E の足場が課題を置く。設定の読み出しと読み元の選び方はふだんと同じ）。
-見張りの `watchTaskSummary` は、設定が前回と変わった見回りでだけ読み元を選び直し、設定が読めないときは
-決まった結果（`settings-invalid`）を、使わないときは `off` を返す読み元（`task-source.ts` の `fixedTaskSource`。どちらも Beads を読まない）を置く。設定が無いときも
-Beads を試しに読み、`.beads` が無ければ「不明」になる（値を推し量るのではなく、読めるかを試すだけ）。
-成果はプロジェクトの設定を読まず、Beads の閉じた課題だけで数える（`server/achievement/adapter/closed-issue.ts`。
+`readFakeBeadsIssues`）と短い見回りの間隔に差し替える（E2E の足場が課題を置く。課題のファイルがあれば `.beads` があるものとして扱う）。
+見張りの `watchTaskSummary` の読み元（`task-beads-source.ts`）は、変化の印を読む呼び出し（`createBeadsStampReader` の `bd where`）で
+`.beads` の有無を知り、無ければ `bd list` を打たずに `no-beads` を返す。
+成果は Beads の閉じた課題だけで数える（`server/achievement/adapter/closed-issue.ts`。
 `.beads` が無ければ成果ごと `unknown`。`docs/requirements.md` 4.11 の「数えられない・読めないとき」）。
 前回知らせたものと同じ結果は知らせない。前回の初めは画面の初期値と同じ `loading`（最初の見回りの結果がまだ届いていない）なので、
-最初から読めないときも初回に必ず `unknown` が届く。
-起動直後は、設定が `off`・読めないでなければ、前回読めた一覧（`~/.tsukumo/task-summary.json`。作業ディレクトリごと）を
+最初から読めないときも初回に必ず `unknown` か `no-beads` が届く。
+起動直後は、前回読めた一覧（`~/.tsukumo/task-summary.json`。作業ディレクトリごと）を
 `bd` の結果を待たずに先に知らせ、読んだ結果が違えば差し替える（同じなら知らせない。読めなければ `unknown`）。
 知らせた `known` は覚え直す。画面は `loading` ならサイドバーのタスクの節とタスクのモーダルにスケルトン（文字は出さない）、
-`settings-invalid` ならタスクの節の中に「⚠ 読めない」、`unknown` なら「不明」を出し、`off` ならタスクの節ごと出さない
+`unknown` なら「不明」を出し、`no-beads` ならタスクの節ごと出さない
 （迎える口の札とおすすめは `loading` も `unknown` と同じ扱いで出さない）。
-設定を書くダイアログは帯の右端の歯車のポップオーバーの「プロジェクト」の行から開く。
-設定を書く画面（`docs/architecture/screen-design.md` 13.6）の下書きは
-`repository.projectSettingsDraft`（`/rpc`）で読み、保存は `projectSettings.save`（`/ws`）で書く。下書きの
-推し量り（`origin/HEAD`）は画面の初期値にだけ使い、見張りは読まない。
 
 **ファイル名は概念で、単数形**（原則5）。`helpers/` と `common/` は作らない。**ディレクトリ名に単数形の
 縛りは無く**、`src/browser/` の置き場所のディレクトリ（`components/`（とその下の `page/` `domain/` `ui/`）
@@ -1045,3 +1033,4 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 | `docs/architecture/adr/0022-three-setting-homes.md`           | 設定は誰の・何に属する値かで3つの置き場に割る（2026-10-03）                  |
 | `docs/architecture/adr/0023-local-diagnostic-log.md`          | 不具合の経緯は手元の1本の JSONL に、決まった語だけで残す（2026-10-04）       |
 | `docs/architecture/adr/0024-no-skill-dependency.md`           | tsukumo は特定のスキルに依存せず、段とタスクを自分の口で受ける（2026-10-07） |
+| `docs/architecture/adr/0025-no-project-settings.md`           | プロジェクトの設定を無くし、Beads を前提にする（2026-10-08）                 |

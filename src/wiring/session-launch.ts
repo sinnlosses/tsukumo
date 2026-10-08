@@ -10,7 +10,7 @@ import { readChatTopics } from "../server/chat/core/chat-consolidation.ts"
 import { createChatRecall } from "../server/chat/core/chat-recall.ts"
 import type { Config } from "../server/core/config.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
-import { readProjectSettings } from "../server/repository/adapter/project-settings.ts"
+import { readBeadsWorkspace } from "../server/repository/adapter/beads.ts"
 import { startFakeSession } from "../server/session-driver/adapter/fake-driver.ts"
 import {
   createFakeSessionCatalog,
@@ -218,7 +218,7 @@ function startDriver(options: {
     claudeConfigDir: options.claudeConfigDir,
     // 段に入るたびに読み直す（見直しの途中で見送りが増えても効く）。
     dismissedUsageProposalKeys: () => readDismissedUsageProposalKeys(),
-    hasTaskOperation: async () => (await readProjectSettings(cwd)).kind === "read",
+    hasTaskOperation: async () => (await readBeadsWorkspace(cwd)).kind === "found",
     onEvent,
     reportFailure: (error) =>
       options.reportFailure({ feature: "session", place: "event-handler" }, error),

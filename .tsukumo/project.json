@@ -1,6 +1,0 @@
-{
-  "tasks": {
-    "mainBranch": "main",
-    "runPrompt": "/next-task {id}"
-  }
-}

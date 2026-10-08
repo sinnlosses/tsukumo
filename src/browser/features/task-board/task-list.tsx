@@ -13,7 +13,6 @@
 
 import type { ReactElement } from "react"
 
-import { DEFAULT_RUN_PROMPT } from "../../../shared/repository/project-settings.ts"
 import {
   taskReadiness,
   type TaskSummaryItem,
@@ -24,11 +23,9 @@ import { TaskItem, type TaskItemPeek } from "./components/task-item.tsx"
 import { TaskPeek, type TaskPeekRun } from "./components/task-peek.tsx"
 import { TaskRunningCard } from "./components/task-running-card.tsx"
 import { TaskSkeleton } from "./components/task-skeleton.tsx"
-import type { RunDestination } from "./domain/run-destination.ts"
 import { taskListFilterLabel, type TaskListFilterStatus } from "./domain/task-list-count.ts"
 import { filterTasksForSidebar } from "./domain/task-sidebar-filter.ts"
 import { orderTasksForSidebar, type TaskSidebarOrder } from "./domain/task-sidebar-order.ts"
-import { useRunDestination } from "./hooks/use-run-destination.ts"
 import {
   taskPeekDomId,
   taskRowDomId,
@@ -43,28 +40,12 @@ export type TaskListProps = {
 }
 
 export function TaskList(props: TaskListProps): ReactElement {
-  const destination = useRunDestination(
-    props.tasks.kind === "known" ? props.tasks.runPrompt : DEFAULT_RUN_PROMPT,
-  )
   const { running, rest } =
     props.tasks.kind === "known"
       ? orderTasksForSidebar(filterTasksForSidebar(props.tasks.items, props.selectedStatus))
       : EMPTY_ORDER
   const { rootRef, control: peek } = useTaskPeek([...running, ...rest].map((task) => task.id))
 
-  if (props.tasks.kind === "settings-invalid") {
-    return (
-      <Text
-        element="p"
-        size="inherit"
-        tone="state-ng"
-        weight="inherit"
-        className={styles["task-empty"]}
-      >
-        ⚠ 読めない
-      </Text>
-    )
-  }
   if (props.tasks.kind === "loading") {
     return <TaskSkeleton />
   }
@@ -111,8 +92,6 @@ export function TaskList(props: TaskListProps): ReactElement {
   const context: PeekContext = {
     peek,
     knownIds: new Set(props.tasks.items.map((task) => task.id)),
-    runPrompt: props.tasks.runPrompt,
-    destination,
   }
 
   return (
@@ -155,8 +134,6 @@ const EMPTY_ORDER: TaskSidebarOrder = { running: [], rest: [] }
 type PeekContext = {
   readonly peek: TaskPeekControl
   readonly knownIds: ReadonlySet<string>
-  readonly runPrompt: string
-  readonly destination: RunDestination
 }
 
 function peekOf(task: TaskSummaryItem, context: PeekContext): TaskItemPeek {
@@ -164,10 +141,10 @@ function peekOf(task: TaskSummaryItem, context: PeekContext): TaskItemPeek {
   if (peek.state.kind !== "open" || peek.state.id !== task.id) {
     return { kind: "closed" }
   }
-  const runnable = taskReadiness(task)?.kind === "ready" && context.destination.kind !== "missing"
-  const run: TaskPeekRun = runnable
-    ? { kind: "available", runPrompt: context.runPrompt, confirming: peek.state.confirming }
-    : { kind: "none" }
+  const run: TaskPeekRun =
+    taskReadiness(task)?.kind === "ready"
+      ? { kind: "available", confirming: peek.state.confirming }
+      : { kind: "none" }
   const domId = taskPeekDomId(task.id)
   return {
     kind: "open",

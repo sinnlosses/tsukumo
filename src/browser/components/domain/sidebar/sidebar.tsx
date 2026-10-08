@@ -1,6 +1,6 @@
 // サイドバー本体。独立した2つの塊（タスク一覧・下端の帯）を並べる。
 // どちらかの中身が空・不明でも、残りは表示を続ける（それぞれ自分の分だけ見る）。
-// プロジェクトの設定が「タスク運用を使わない」（`tasks.kind === "off"`）のときは、タスクの節ごと出さない。
+// 起動先に `.beads` が無い（`tasks.kind === "no-beads"`）ときは、タスクの節ごと出さない。
 //
 // 下端の帯はモデル・effort・許可モードの操作子と、コンテキストの使用量・利用枠の目盛り（`SidebarFooter`）。
 // 区画ではないので見出しを名乗らず、`SidebarSection` の枠も借りない。
@@ -21,7 +21,7 @@ import styles from "./sidebar.module.css"
 
 export function Sidebar(): ReactElement {
   const chatMode = useSession((session) => session.state.chatMode)
-  const tasksOff = useSession((session) => session.state.tasks.kind === "off")
+  const noBeads = useSession((session) => session.state.tasks.kind === "no-beads")
   return (
     <>
       {chatMode && (
@@ -34,7 +34,7 @@ export function Sidebar(): ReactElement {
           </div>
         </>
       )}
-      {!chatMode && !tasksOff && <TaskSection />}
+      {!chatMode && !noBeads && <TaskSection />}
       <SidebarFooter />
     </>
   )

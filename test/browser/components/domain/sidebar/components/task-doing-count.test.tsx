@@ -36,7 +36,6 @@ describe("TaskDoingCount（柱の口の進行中の件数）", () => {
             location: { kind: "none" },
           },
         ],
-        runPrompt: "/next-task {id}",
       }),
     ).toBe("1")
   })

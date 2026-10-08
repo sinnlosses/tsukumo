@@ -1,4 +1,3 @@
-import { rmSync } from "node:fs"
 import { join } from "node:path"
 
 import { afterEach, describe, expect, it } from "vitest"
@@ -14,18 +13,9 @@ import {
   type TaskSummaryPorts,
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
-import {
-  DEFAULT_RUN_PROMPT,
-  PROJECT_SETTINGS_PATH,
-} from "../../../../src/shared/repository/project-settings.ts"
 import { bd, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import {
-  writeProjectSettings,
-  writeProjectSettingsContent,
-} from "../../../fixture/project-settings.ts"
-import {
   initBeadsIssues,
-  initBeadsRepository,
   initRepository,
   openIssue,
 } from "../../../fixture/task-summary-repository.ts"
@@ -108,7 +98,7 @@ function sleep(ms: number): Promise<void> {
 
 /** `TaskSummaryResult` の `known` 側を組み立てる。 */
 function known(...items: readonly Record<string, unknown>[]): Record<string, unknown> {
-  return { kind: "known", items, runPrompt: DEFAULT_RUN_PROMPT }
+  return { kind: "known", items }
 }
 
 /** 何も付けずに作った未着手の課題1件の要約。 */
@@ -130,7 +120,7 @@ describe("watchTaskSummary", () => {
     "bd の課題を ID のまま作った時刻の順に出し、状態を読み替え、ラベルは字のまま写す",
     { timeout: 60_000 },
     async () => {
-      const repository = await initBeadsRepository(root(), [
+      const repository = await initBeadsIssues(root(), [
         openIssue("t-010", "未着手", {
           labels: ["difficulty:opus"],
           created_at: "2026-01-13T00:00:00Z",
@@ -166,7 +156,7 @@ describe("watchTaskSummary", () => {
     "main を動かさずに bd で閉じると、次の見回りで done に変わる",
     { timeout: 60_000 },
     async () => {
-      const repository = await initBeadsRepository(root(), [openIssue("t-001", "閉じる前")])
+      const repository = await initBeadsIssues(root(), [openIssue("t-001", "閉じる前")])
       const changes: unknown[] = []
       watch(repository, changes)
       await waitForChanges(changes, 1)
@@ -181,35 +171,14 @@ describe("watchTaskSummary", () => {
     },
   )
 
-  it(
-    "設定が無くても .beads があれば一覧を出し、設定を足す・消すでは通知を重ねず、壊れたら「設定が読めない」を通知する",
-    { timeout: 60_000 },
-    async () => {
-      const repository = await initBeadsIssues(root(), [openIssue("t-001", "架空")])
-      const changes: unknown[] = []
-      watch(repository, changes)
-      await waitForChanges(changes, 1)
-
-      writeProjectSettings(repository)
-      await waitForQuietPolls()
-      rmSync(join(repository, PROJECT_SETTINGS_PATH))
-      await waitForQuietPolls()
-      writeProjectSettingsContent(repository, '{ "tasks": { "mainBranch": ')
-      await waitForChanges(changes, 2)
-
-      expect(changes).toEqual([known(plainTodo("t-001", "架空")), { kind: "settings-invalid" }])
-    },
-  )
-
-  it(".beads が無ければ、初回に「不明」を1回だけ通知し、設定を足しても重ねて通知しない", async () => {
+  it(".beads が無ければ、初回に「Beads なし」を1回だけ通知し、見回りを重ねても通知を重ねない", async () => {
     const repository = await initRepository(root())
     const changes: unknown[] = []
     watch(repository, changes)
     await waitForChanges(changes, 1)
-    writeProjectSettings(repository)
     await waitForQuietPolls()
 
-    expect(changes).toEqual([{ kind: "unknown" }])
+    expect(changes).toEqual([{ kind: "no-beads" }])
   })
 
   it("初回の読みがタイムアウトしたら「不明」を知らせ、次に読めたら一覧を知らせる", async () => {
@@ -221,7 +190,7 @@ describe("watchTaskSummary", () => {
       ports: {
         ...testPorts(),
         readBeadsIssues: () => Promise.resolve(outcomes.shift() ?? { kind: "timed-out" }),
-        createBeadsStampReader: () => () => Promise.resolve(undefined),
+        createBeadsStampReader: () => () => Promise.resolve({ kind: "present", stamp: undefined }),
       },
     })
     watcher.setWatching(true)

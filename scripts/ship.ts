@@ -9,13 +9,13 @@ import path from "node:path"
 import process from "node:process"
 import { fileURLToPath } from "node:url"
 
-import { resolvePrimaryBranch } from "./lib/changed-path-repository.ts"
+import { PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
 import { isWorktreeClean, resolveMainWorktreePath } from "./lib/main-worktree.ts"
 import { runShipPlan, type ShipPlanResult } from "./lib/ship-plan.ts"
 
 const ROOT = path.resolve(fileURLToPath(new URL("..", import.meta.url)))
 
-const primaryBranch = await resolvePrimaryBranch(ROOT)
+const primaryBranch = PRIMARY_BRANCH
 const branch = execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
   cwd: ROOT,
   encoding: "utf8",

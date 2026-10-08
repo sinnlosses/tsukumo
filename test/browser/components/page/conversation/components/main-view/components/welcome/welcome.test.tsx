@@ -30,7 +30,7 @@ const READY_TASK: TaskSummaryItem = {
 
 /** 着手できるタスクが1件と、いまのセッションの前のセッションが1件ある帳面。 */
 const FILLED: Partial<SessionState> = {
-  tasks: { kind: "known", items: [READY_TASK], runPrompt: "/next-task {id}" },
+  tasks: { kind: "known", items: [READY_TASK] },
   sessions: [
     {
       viewPort: 1,
@@ -84,7 +84,7 @@ describe("Welcome（ほかの始め方）", () => {
   })
 
   it("空の帳面（タスク0件・続き無し）では札が出ず、「自分で書く」だけが大きく出て、前のやり取りの口も無い", () => {
-    renderWelcome({ tasks: { kind: "known", items: [], runPrompt: "/next-task {id}" } })
+    renderWelcome({ tasks: { kind: "known", items: [] } })
 
     expect(document.body.querySelector("ul")).toBeNull()
     expect(

@@ -6,7 +6,6 @@
 
 import { useReducer, useState } from "react"
 
-import { DEFAULT_RUN_PROMPT } from "../../../../shared/repository/project-settings.ts"
 import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
 import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import { boardContent, boardEntries, type BoardEntry } from "../domain/task-board-content.ts"
@@ -20,7 +19,6 @@ import {
   isPinned,
   type ShownRow,
 } from "./task-board-state.ts"
-import { useRunDestination } from "./use-run-destination.ts"
 
 export function useTaskBoard(
   tasks: TaskSummaryResult,
@@ -35,8 +33,6 @@ export function useTaskBoard(
     send({ kind: "open", request })
   }
   const [confirmingId, setConfirmingId] = useState<string | undefined>(undefined)
-  const runPrompt = tasks.kind === "known" ? tasks.runPrompt : DEFAULT_RUN_PROMPT
-  const destination = useRunDestination(runPrompt)
 
   const { query, filter, chosen } = state
   const items = tasks.kind === "known" ? tasks.items : []
@@ -85,7 +81,6 @@ export function useTaskBoard(
   const content = boardContent(tasks, entries, byId, rows, selected, isVisible, knownIds, {
     query,
     filter,
-    destination,
     run: setConfirmingId,
     onJump: jumpTo,
     breadcrumb:
@@ -105,7 +100,6 @@ export function useTaskBoard(
             kind: "open",
             taskId: confirmingId,
             held: byId.get(confirmingId)?.state.kind === "hold",
-            runPrompt,
           },
     onClose: close,
     onQueryChange: (nextQuery) => {

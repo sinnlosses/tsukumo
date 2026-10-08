@@ -18,7 +18,7 @@ import { join } from "node:path"
 import process from "node:process"
 import { fileURLToPath } from "node:url"
 
-import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-repository.ts"
+import { collectChangedPaths, PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
 import { describeFailedStages, parseFailedTests, type StageOutcome } from "./lib/check-failure.ts"
 import { planStages, type Stage } from "./lib/check-stage.ts"
 import { planE2eRun } from "./lib/e2e-selection-repository.ts"
@@ -65,7 +65,7 @@ async function runConcurrently(stages: readonly Stage[]): Promise<void> {
 /** 変えたファイル。`--full` で集められないときは空（5段すべてを打つ）。 */
 async function collectPathsForPlan(): Promise<readonly string[]> {
   try {
-    return collectChangedPaths(ROOT, await resolvePrimaryBranch(ROOT))
+    return collectChangedPaths(ROOT, PRIMARY_BRANCH)
   } catch (error) {
     if (forceFull) {
       return []

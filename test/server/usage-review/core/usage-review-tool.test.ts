@@ -72,7 +72,7 @@ describe("タスク運用が無いプロジェクトでの見直し", () => {
     expect(await intake.enterStage("model", 7)).toBe(
       [
         "ok",
-        "タスク運用なし（起動先のプロジェクトの設定に tasks が無い）。提案の followUp は delegate だけにする",
+        "タスク運用なし（起動先の .beads が読めない）。提案の followUp は delegate だけにする",
       ].join("\n"),
     )
   })

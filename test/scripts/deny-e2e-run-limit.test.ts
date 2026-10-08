@@ -230,12 +230,8 @@ describe("委譲先の E2E 全段の呼び出しを上限で拒否する hook", 
 
   async function newClaimedRepoWithChange(changedFile: string): Promise<string> {
     const dir = await newClaimedRepo()
-    mkdirSync(join(dir, ".tsukumo"), { recursive: true })
-    writeFileSync(
-      join(dir, ".tsukumo", "project.json"),
-      JSON.stringify({ tasks: { mainBranch: "main", runPrompt: "/next-task {id}" } }),
-    )
-    await runSubprocessOrThrow("git", ["add", ".tsukumo/project.json"], { cwd: dir })
+    writeFileSync(join(dir, "README.md"), "base\n")
+    await runSubprocessOrThrow("git", ["add", "README.md"], { cwd: dir })
     await runSubprocessOrThrow(
       "git",
       ["-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "--quiet", "-m", "base"],

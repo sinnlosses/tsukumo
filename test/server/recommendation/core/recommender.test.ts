@@ -32,7 +32,6 @@ function tasksOf(
       body: "",
       location: { kind: "none" },
     })),
-    runPrompt: "{id}",
   }
 }
 
@@ -151,10 +150,10 @@ describe("createRecommender", () => {
     expect(harness.emitted).toEqual([])
   })
 
-  it("タスク運用を使わないときも何もしない", () => {
+  it(".beads が無いときも何もしない", () => {
     const harness = createHarness()
 
-    harness.recommender.observe({ kind: "off" })
+    harness.recommender.observe({ kind: "no-beads" })
 
     expect(harness.queries).toHaveLength(0)
     expect(harness.emitted).toEqual([])

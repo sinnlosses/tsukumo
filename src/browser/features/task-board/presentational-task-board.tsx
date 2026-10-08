@@ -129,7 +129,6 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
         <TaskRunConfirm
           taskId={props.confirm.taskId}
           held={props.confirm.held}
-          runPrompt={props.confirm.runPrompt}
           onClose={props.onConfirmClose}
         />
       )}

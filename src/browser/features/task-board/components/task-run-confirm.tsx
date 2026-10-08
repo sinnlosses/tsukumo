@@ -1,5 +1,5 @@
 // 「このタスクを実行しますか」の確認。
-// OK まで行くと、設定の文面（`tasks.runPrompt`）の `{id}` を ID にしたものを入力欄を経由せずに dispatch する（`<Composer>` の下書きには触らない）。
+// OK まで行くと、「tsukumo に頼む」の文面（`runPromptOf`）を入力欄を経由せずに dispatch する（`<Composer>` の下書きには触らない）。
 // 送ったあとは、サーバから返る `request` イベントがメインビューに依頼として並ぶので、打ったのと同じ見え方になる。
 //
 // ターンが動いている間は断る（押せなくするのではなく、押したら理由を出す）。
@@ -8,7 +8,7 @@
 
 import type { ReactElement } from "react"
 
-import { runPromptOf } from "../../../../shared/repository/project-settings.ts"
+import { runPromptOf } from "../../../../shared/repository/task-run-prompt.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
@@ -18,10 +18,8 @@ import styles from "./task-run-confirm.module.css"
 
 export type TaskRunConfirmProps = {
   readonly taskId: string
-  /** 保留のタスクなら真。文面が既定のときだけ、着手の前に判断を聞く旨を送る文面に添える。 */
+  /** 保留のタスクなら真。着手の前に判断を聞く旨を送る文面に添える。 */
   readonly held: boolean
-  /** 文面のひな形。`{id}` を `taskId` に置き換えて送る。 */
-  readonly runPrompt: string
   /**
    * 送ったあと・送らずに閉じたあとのどちらでも呼ばれる（開いているかは呼び出し側が持つ）。
    * タスクのモーダルから開いたときは、`sent` でモーダルも閉じる。
@@ -38,7 +36,7 @@ export type TaskRunConfirmProps = {
 export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   const dispatch = useSession((session) => session.dispatch)
   const turnInProgress = useTurnRunning()
-  const prompt = runPromptOf(props.runPrompt, props.taskId, props.held)
+  const prompt = runPromptOf(props.taskId, props.held)
 
   const run = (): void => {
     dispatch.session.prompt({ text: prompt, images: [] })

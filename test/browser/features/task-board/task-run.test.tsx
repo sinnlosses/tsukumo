@@ -4,7 +4,6 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
-import { DEFAULT_RUN_PROMPT } from "../../../../src/shared/repository/project-settings.ts"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
@@ -21,11 +20,8 @@ afterEach(() => {
   cleanup()
 })
 
-function known(
-  items: readonly TaskSummaryItem[],
-  runPrompt = "/next-task {id}",
-): TaskSummaryResult {
-  return { kind: "known", items, runPrompt }
+function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
+  return { kind: "known", items }
 }
 
 const TASKS: readonly TaskSummaryItem[] = [
@@ -63,12 +59,11 @@ function renderBoard(
   spy: CommandSpy = () => {},
   closed: string[] = [],
   tasks: readonly TaskSummaryItem[] = TASKS,
-  runPrompt = "/next-task {id}",
   overrides: Partial<SessionState> = {},
 ): void {
   renderWithStore(
     <TaskBoard
-      tasks={known(tasks, runPrompt)}
+      tasks={known(tasks)}
       request={{ kind: "open", focus: { kind: "first" } }}
       onClose={() => {
         closed.push("モーダル")
@@ -202,12 +197,7 @@ describe("タスクの実行を頼む", () => {
 
   it("モーダルからは依存の済んだ保留も頼め、判断を聞かれることを確認に添える", () => {
     const sent: unknown[] = []
-    renderBoard(
-      collectInto(sent),
-      [],
-      [...TASKS, holdTask("X-003", ["X-001"], [])],
-      DEFAULT_RUN_PROMPT,
-    )
+    renderBoard(collectInto(sent), [], [...TASKS, holdTask("X-003", ["X-001"], [])])
 
     openRunConfirm("X-003")
     expect(confirmDialog()?.textContent).toContain("着手の前に判断を聞いて")
@@ -222,52 +212,21 @@ describe("タスクの実行を頼む", () => {
     ])
   })
 
-  it("設定の文面の {id} をタスクIDにして送る。既定でない文面では保留の説明を添えない", () => {
+  it("保留でないタスクには保留の説明を添えず、固定の文面をタスクIDにして送る", () => {
     const sent: unknown[] = []
-    renderBoard(
-      collectInto(sent),
-      [],
-      [...TASKS, holdTask("X-003", ["X-001"], [])],
-      "/work {id} now",
-    )
+    renderBoard(collectInto(sent))
 
-    openRunConfirm("X-003")
-    expect(confirmDialog()?.textContent).toContain("/work X-003 now")
+    openRunConfirm("X-002")
     expect(confirmDialog()?.textContent).not.toContain("判断を聞いて")
     fireEvent.click(screen.getByRole("button", { name: "実行する" }))
 
-    expect(sent).toEqual([{ procedure: "session.prompt", text: "/work X-003 now", images: [] }])
-  })
-
-  it("送り先のコマンドが一覧に無いと、ボタンを押せず理由を出す（モーダル・区画の一覧）", () => {
-    const commands: Partial<SessionState> = { slashCommands: ["clear", "next-task"] }
-    renderBoard(() => {}, [], TASKS, "/work {id}", commands)
-
-    fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
-    const run = screen.getByRole("button", { name: "tsukumo に頼む" })
-    expect(run.getAttribute("aria-disabled")).toBe("true")
-    expect(run.getAttribute("title")).toBe("/work が無いので頼めません")
-
-    cleanup()
-    putSession({ ...INITIAL_SESSION_STATE, ...commands }, () => {})
-    render(<TaskList tasks={known(TASKS, "/work {id}")} selectedStatus="all" />)
-    fireEvent.click(rowOf("X-002"))
-    expect(screen.queryByRole("button", { name: "これを始める →" })).toBeNull()
-  })
-
-  it("送り先のコマンドが一覧に在る、または一覧がまだ届いていないときは押せる", () => {
-    renderBoard(() => {}, [], TASKS, "/work {id}", { slashCommands: ["work"] })
-    fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
-    expect(
-      screen.getByRole("button", { name: "tsukumo に頼む" }).getAttribute("aria-disabled"),
-    ).not.toBe("true")
-
-    cleanup()
-    renderBoard(() => {}, [], TASKS, "/work {id}")
-    fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
-    expect(
-      screen.getByRole("button", { name: "tsukumo に頼む" }).getAttribute("aria-disabled"),
-    ).not.toBe("true")
+    expect(sent).toEqual([
+      {
+        procedure: "session.prompt",
+        text: "タスク X-002 を進めて（bd show X-002 で読める）。",
+        images: [],
+      },
+    ])
   })
 
   it("モーダルでも待ちの残る保留は頼めない", () => {

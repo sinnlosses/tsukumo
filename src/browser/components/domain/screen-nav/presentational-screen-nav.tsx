@@ -11,7 +11,6 @@
 import type { ReactElement } from "react"
 
 import { CurrentWorkPill } from "../../../features/current-work/components/current-work-pill.tsx"
-import { ProjectSettingsDialog } from "./components/project-settings-dialog.tsx"
 import { ScreenNavCharacterPicker } from "./components/screen-nav-character-picker.tsx"
 import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
@@ -63,11 +62,6 @@ export function PresentationalScreenNav({
         <ScreenNavMenu parts={parts} menu={menu} />
         <SessionSwitcher switcher={switcher} character={parts.character.face} />
       </nav>
-      {/* 狭い画面では帯が `display: none` になるので、ダイアログは帯の外に置く。 */}
-      <ProjectSettingsDialog
-        open={parts.settings.project.dialog.open}
-        onClose={parts.settings.project.dialog.onClose}
-      />
     </>
   )
 }

@@ -10,7 +10,7 @@ import { spawnSync } from "node:child_process"
 import process from "node:process"
 import { fileURLToPath } from "node:url"
 
-import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-repository.ts"
+import { collectChangedPaths, PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
 import { readE2eSelection } from "./lib/e2e-selection-repository.ts"
 import { describeE2eSelection } from "./lib/e2e-selection.ts"
 
@@ -42,7 +42,7 @@ async function chooseTarget(): Promise<UpdateTarget> {
   if (givenFiles.length > 0) {
     return { kind: "files", files: givenFiles }
   }
-  const changedPaths = collectChangedPaths(ROOT, await resolvePrimaryBranch(ROOT))
+  const changedPaths = collectChangedPaths(ROOT, PRIMARY_BRANCH)
   const { selection, total } = readE2eSelection(ROOT, changedPaths)
   process.stdout.write(`${describeE2eSelection(selection, total)}\n`)
   if (selection.kind === "all") {

@@ -39,7 +39,7 @@ function renderBoard(task: TaskSummaryItem): void {
   putSession(INITIAL_SESSION_STATE)
   render(
     <TaskBoard
-      tasks={{ kind: "known", items: [task], runPrompt: "/next-task {id}" }}
+      tasks={{ kind: "known", items: [task] }}
       request={{ kind: "open", focus: { kind: "first" } }}
       onClose={() => {}}
     />,
@@ -318,7 +318,7 @@ function renderSelectionBoard(
     nextRequest: TaskBoardRequest,
   ): ReactElement => (
     <TaskBoard
-      tasks={{ kind: "known", items: nextItems, runPrompt: "/next-task {id}" }}
+      tasks={{ kind: "known", items: nextItems }}
       request={nextRequest}
       onClose={() => {}}
     />

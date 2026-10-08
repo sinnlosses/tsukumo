@@ -55,17 +55,17 @@ describe("Sidebar の下端の帯", () => {
 })
 
 describe("Sidebar のタスクの節", () => {
-  it("タスク運用を使わないプロジェクトでは、節ごと出さない", () => {
-    renderSidebar({ tasks: { kind: "off" } })
+  it(".beads が無い起動先では、節ごと出さない", () => {
+    renderSidebar({ tasks: { kind: "no-beads" } })
 
     expect(screen.queryByRole("region", { name: "タスク" })).toBeNull()
   })
 
-  it("使わないと決めていなければ節を出し、見出しに歯車は無い", () => {
+  it(".beads が無いと分かっていなければ節を出し、見出しに歯車は無い", () => {
     renderSidebar({})
 
     const section = screen.getByRole("region", { name: "タスク" })
-    expect(section.querySelector('button[aria-label="プロジェクトの設定"]')).toBeNull()
+    expect(section.querySelector('button[aria-label="設定"]')).toBeNull()
   })
 
   it("チップは1つだけ選べ、押し直しても変わらず、「すべて」で外れ、別のチップで切り替わる", () => {
@@ -73,7 +73,6 @@ describe("Sidebar のタスクの節", () => {
       tasks: {
         kind: "known",
         items: [chipTask("X-001", "todo"), chipTask("X-002", "done")],
-        runPrompt: "/next-task {id}",
       },
     })
     const shown = (): readonly string[] =>

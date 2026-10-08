@@ -31,9 +31,9 @@ describe("createBeadsStampReader", () => {
     await bd(repository, home(), "update", "t-001", "--claim")
     const after = await readStamp()
 
-    expect(before).toBeDefined()
-    expect(unchanged).toBe(before)
-    expect(after).not.toBe(before)
+    expect(before).toMatchObject({ kind: "present", stamp: expect.any(String) })
+    expect(unchanged).toEqual(before)
+    expect(after).not.toEqual(before)
   })
 
   it("別の作業ツリーからの書き換えでも変わる", { timeout: 60_000 }, async () => {
@@ -44,14 +44,14 @@ describe("createBeadsStampReader", () => {
     const before = await readStamp()
     await bd(worktree, home(), "update", "t-001", "--claim")
 
-    expect(before).toBeDefined()
-    expect(await readStamp()).not.toBe(before)
+    expect(before).toMatchObject({ kind: "present", stamp: expect.any(String) })
+    expect(await readStamp()).not.toEqual(before)
   })
 
-  it(".beads が無ければ取れない（undefined）", async () => {
+  it(".beads が無ければ missing", async () => {
     const repository = await initRepository(root())
 
-    expect(await createBeadsStampReader(repository)()).toBeUndefined()
+    expect(await createBeadsStampReader(repository)()).toEqual({ kind: "missing" })
   })
 })
 

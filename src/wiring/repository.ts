@@ -1,4 +1,4 @@
-// 作業ディレクトリのリポジトリの配線。タスク一覧の見張りと、一覧が届くたびに札を作り直す推薦役を選び、プロジェクトの設定を書く口を組む。
+// 作業ディレクトリのリポジトリの配線。タスク一覧の見張りと、一覧が届くたびに札を作り直す推薦役を選ぶ。
 
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import {
@@ -7,12 +7,10 @@ import {
 } from "../server/recommendation/adapter/recommendation-cache.ts"
 import { queryStructured } from "../server/recommendation/adapter/sdk-structured-query.ts"
 import { createRecommender, type Recommender } from "../server/recommendation/core/recommender.ts"
-import { writeProjectSettings } from "../server/repository/adapter/project-settings.ts"
 import {
   taskSummaryOptionsOf,
   watchTaskSummary,
 } from "../server/repository/adapter/task-summary.ts"
-import type { ProjectSettingsCommandPorts } from "../server/repository/core/project-settings-command.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
@@ -29,12 +27,8 @@ export function wireRepository(
   diagnosticLog: DiagnosticLog,
 ): {
   readonly manager: Pick<SessionManagerOptions, "watchTasks">
-  readonly commands: ProjectSettingsCommandPorts
 } {
   return {
-    commands: {
-      save: (tasks) => writeProjectSettings(context.cwd, tasks),
-    },
     manager: {
       watchTasks: (onEvent) => {
         const recommender = startRecommender(context, diagnosticLog, onEvent)

@@ -38,15 +38,11 @@ describe("recommendationCandidates", () => {
       task("X-006", "done", [], ["X-005"]),
     ]
 
-    expect(recommendationCandidates({ kind: "known", items, runPrompt: "{id}" })).toEqual([
+    expect(recommendationCandidates({ kind: "known", items })).toEqual([
       { kind: "resume" },
       { kind: "task", id: "X-002", summary: "架空のX-002", waitedBy: ["X-003", "X-004"] },
       { kind: "task", id: "X-005", summary: "架空のX-005", waitedBy: [] },
     ])
-  })
-
-  it("設定が読めないときは前回の続きだけ", () => {
-    expect(recommendationCandidates({ kind: "settings-invalid" })).toEqual([{ kind: "resume" }])
   })
 
   it("タスクの候補は上限で切る", () => {
@@ -54,7 +50,7 @@ describe("recommendationCandidates", () => {
       task(`X-${String(index + 100)}`, "todo", []),
     )
 
-    expect(recommendationCandidates({ kind: "known", items, runPrompt: "{id}" })).toHaveLength(
+    expect(recommendationCandidates({ kind: "known", items })).toHaveLength(
       RECOMMENDATION_TASK_CANDIDATE_LIMIT + 1,
     )
   })
@@ -65,12 +61,10 @@ describe("recommendationKey", () => {
     const before = recommendationCandidates({
       kind: "known",
       items: [task("X-002", "todo", [])],
-      runPrompt: "{id}",
     })
     const after = recommendationCandidates({
       kind: "known",
       items: [{ ...task("X-002", "todo", []), summary: "直した架空の要約" }],
-      runPrompt: "{id}",
     })
 
     expect(recommendationKey(before)).toBe(recommendationKey([...before]))

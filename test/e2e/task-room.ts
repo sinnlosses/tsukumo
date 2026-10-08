@@ -8,7 +8,6 @@ import type { DomRootName, ScenarioOptions, ScenarioRoom, ScenarioRun } from "./
 // この一覧だけは疑似セッションの場面ではなく、cwd の課題のファイルが元になる
 // （疑似セッションの見張りは `bd` の代わりに `readFakeBeadsIssues` でこのファイルを読む）。
 // 足場として、架空の課題を `bd list --json` の形で `FAKE_BEADS_ISSUES_PATH` に置く。
-// プロジェクトの設定は置かない。
 //
 // 課題を置くのは、`open` が部屋を渡した（ブラウザが繋がった）あとにする。
 // 起こす前や繋がる前に用意すると、tsukumo の最初の見回り（起こした時点で1回走る）が
@@ -215,15 +214,4 @@ export async function writeWelcomeTasks(room: ScenarioRoom): Promise<void> {
     task(READY_TASK_ID, "架空のタスク（着手できる）", "todo"),
     task(BLOCKED_TASK_ID, "架空のタスク（依存で止まる）", "todo", [READY_TASK_ID]),
   ])
-}
-
-/** プロジェクトの設定を画面から書く足場。未着手の1件を置き、設定は置かない。 */
-export async function openProjectSettingsRoom(
-  run: ScenarioRun,
-  scenario: string,
-  domRoots: readonly DomRootName[],
-): Promise<ScenarioRoom> {
-  const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
-  await placeTasks(room, [task("t-001", "架空のタスク（未着手）", "todo")])
-  return room
 }

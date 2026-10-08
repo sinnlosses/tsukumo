@@ -38,7 +38,6 @@ import {
   type TokenUsageSummary,
 } from "../../../../src/shared/token-usage/token-usage-summary.ts"
 import { readyContextUsage } from "../../../fixture/context-usage.ts"
-import { PLAIN_PROJECT_SETTINGS_DRAFT } from "../../../fixture/project-settings.ts"
 
 // 会話は流さない（配るのはページ・同梱物・立ち絵と、架空のファイル一覧だけ）。
 const TOKEN = createStartupToken()
@@ -80,7 +79,6 @@ function noReportImage(): undefined {
 const EMPTY_RPC_PORTS = {
   listRepositoryFiles: () => Promise.resolve([]),
   projectName: () => "架空のプロジェクト",
-  projectSettingsDraft: () => Promise.resolve(PLAIN_PROJECT_SETTINGS_DRAFT),
   readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
   readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
   readPlanUsage: () => Promise.resolve(UNAVAILABLE_PLAN_USAGE),

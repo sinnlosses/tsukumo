@@ -7,7 +7,6 @@ import {
   type TaskSummaryResult,
 } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"
-import type { RunDestination } from "./run-destination.ts"
 import { FILTER_CHIPS, matchesFilter } from "./task-board-filter.ts"
 import type {
   TaskBoardBreadcrumb,
@@ -30,7 +29,6 @@ export type BoardEntry = {
 export type BoardContentInput = {
   readonly query: string
   readonly filter: TaskBoardFilter
-  readonly destination: RunDestination
   readonly run: (taskId: string) => void
   readonly onJump: (id: string) => void
   readonly breadcrumb: TaskBoardBreadcrumb
@@ -133,9 +131,7 @@ function selectionOf(
 function runOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRun {
   const kind = entry.state.kind
   if (kind === "ready" || (kind === "hold" && entry.task.waitingFor.length === 0)) {
-    return input.destination.kind === "missing"
-      ? { kind: "unavailable", reason: `/${input.destination.command} が無いので頼めません` }
-      : { kind: "available", onRun: () => input.run(entry.task.id) }
+    return { kind: "available", onRun: () => input.run(entry.task.id) }
   }
   return { kind: "unavailable", reason: RUN_UNAVAILABLE_REASON[kind] }
 }
