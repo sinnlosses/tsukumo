@@ -12,6 +12,7 @@ describe("readConfig", () => {
       driver: "sdk",
       host: "orca",
       fakeScene: undefined,
+      fakeSceneUntil: undefined,
       newSession: false,
       claudeConfigDir: undefined,
       fixedClock: undefined,
@@ -28,6 +29,7 @@ describe("readConfig", () => {
       TSUKUMO_DRIVER: "fake",
       TSUKUMO_HOST: " none ",
       TSUKUMO_FAKE_SCENE: " question-multi ",
+      TSUKUMO_FAKE_SCENE_UNTIL: " 3 ",
       TSUKUMO_NEW_SESSION: "1",
       CLAUDE_CONFIG_DIR: " /somewhere/claude ",
     }
@@ -40,6 +42,7 @@ describe("readConfig", () => {
       driver: "fake",
       host: "none",
       fakeScene: "question-multi",
+      fakeSceneUntil: 3,
       newSession: true,
       claudeConfigDir: "/somewhere/claude",
       fixedClock: undefined,

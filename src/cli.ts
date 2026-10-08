@@ -50,6 +50,8 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
   TSUKUMO_FAKE_SCENE  fake のとき、起こした直後に流す疑似セッションの場面の名前（既定は流さない。
                       依頼を送らずにその画面を出すための口で、状態のカタログを撮る
                       scripts/capture-catalog.ts が使う）
+  TSUKUMO_FAKE_SCENE_UNTIL  名指しした場面の手を先頭から何個まで流すか（正の整数。既定は全部。
+                      場面の途中の画を撮る scripts/capture-view.ts の --until-step が使う）
   TSUKUMO_NEW_SESSION 1 を渡すと前の続きから始めず、新しいセッションとして起こす
                       （この起動の間は、切り替えた先のキャラクターも新規から始まる）
   TSUKUMO_HOME        tsukumo が自分の持ち物を置くホーム（既定 ~/.tsukumo。覚えたキャラクター・

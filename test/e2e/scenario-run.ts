@@ -502,7 +502,7 @@ async function advanceClockUntilVisible(page: Page, target: Locator): Promise<vo
 async function waitForQuietPoint(messages: MessageRecord, scene: string): Promise<void> {
   const session = bundledFakeSession()
   const counts = countBy(
-    stepsThroughQuietPoint(startupSteps(session, scene)),
+    stepsThroughQuietPoint(startupSteps(session, scene, undefined)),
     (step) => step.event.kind,
   )
   for (const [kind, count] of Object.entries(counts)) {
@@ -524,7 +524,7 @@ function assertNextStepGap(
   if (scene === "none") {
     return
   }
-  const ordered = startupSteps(bundledFakeSession(), scene)
+  const ordered = startupSteps(bundledFakeSession(), scene, undefined)
   let seen = 0
   for (const [index, step] of ordered.entries()) {
     if (step.event.kind !== waited.kind) {

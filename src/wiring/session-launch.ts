@@ -114,6 +114,7 @@ export function wireSessionLaunch(options: {
             seed,
             context,
             scene: config.fakeScene,
+            sceneUntil: config.fakeSceneUntil,
             claudeConfigDir: config.claudeConfigDir,
             firstViewer: options.firstViewer,
             viewPort,
@@ -163,6 +164,7 @@ function startDriver(options: {
   readonly seed: SessionLaunchSeed<CharacterPack>
   readonly context: WiringContext
   readonly scene: string | undefined
+  readonly sceneUntil: number | undefined
   readonly claudeConfigDir: string | undefined
   readonly firstViewer: Promise<void>
   readonly viewPort: number
@@ -180,6 +182,7 @@ function startDriver(options: {
     return startFakeSession({
       session: fakeSession,
       scene: options.scene,
+      sceneUntil: options.sceneUntil,
       sessionDefault: seed.sessionDefault,
       firstViewer: options.firstViewer,
       expressions: expressionNames(expressionChoices(seed.pack.definition)),

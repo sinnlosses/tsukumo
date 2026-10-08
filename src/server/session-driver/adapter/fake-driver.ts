@@ -207,6 +207,11 @@ export type FakeDriverOptions = {
    */
   readonly scene: string | undefined
   /**
+   * `scene` の手を先頭から何個まで流すか（`TSUKUMO_FAKE_SCENE_UNTIL`）。場面の途中の画を撮るための口。
+   * `undefined` なら全部流す。`opening` と、依頼で流れる次の場面には効かない。
+   */
+  readonly sceneUntil: number | undefined
+  /**
    * このセッションを起こした既定（モデル・許可モード）。
    * 疑似セッションが流す `session-info` にもこの値を載せる。
    * 固定値のままだと、歯車で既定を変えて起こし直しても帯が疑似セッションに書いた値を出してしまう（本物は SDK の `init` が実際に起こした値を返す）。
@@ -389,7 +394,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     if (closed) {
       return
     }
-    play(startupSteps(options.session, options.scene), 0)
+    play(startupSteps(options.session, options.scene, options.sceneUntil), 0)
   })
   const namedIndex = options.session.turns.findIndex((scene) => scene.name === options.scene)
   let playedTurns = namedIndex + 1
@@ -465,16 +470,18 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
  * 最初のビューが繋がってから流す手を、流し始めからの `afterMs` で1本に並べる。
  * `opening` のあとに、名指しの場面（`scene`）を `opening` の一番遅い手の時刻から続ける。
  * 名前が疑似セッションに無ければ `opening` だけ。
+ * `sceneUntil` があれば、場面の手は先頭からその個数で切る。
  */
 export function startupSteps(
   session: FakeSession,
   scene: string | undefined,
+  sceneUntil: number | undefined,
 ): readonly FakeSessionStep[] {
   const namedScene = session.turns.find((candidate) => candidate.name === scene)
   const openingSpanMs = session.opening.reduce((span, step) => Math.max(span, step.afterMs), 0)
   return [
     ...session.opening,
-    ...(namedScene?.steps ?? []).map((step) => ({
+    ...(namedScene?.steps ?? []).slice(0, sceneUntil).map((step) => ({
       ...step,
       afterMs: openingSpanMs + step.afterMs,
     })),

@@ -77,6 +77,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: undefined,
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: [],
@@ -97,6 +98,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: undefined,
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: [],
@@ -115,6 +117,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: undefined,
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: [],
@@ -140,6 +143,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: undefined,
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: [],
@@ -180,6 +184,7 @@ describe("startFakeSession", () => {
         ],
       },
       scene: undefined,
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: [],
@@ -199,6 +204,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: undefined,
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: [],
@@ -218,6 +224,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: "架空の場面2",
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: viewer.promise,
       expressions: [],
@@ -241,6 +248,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: "架空の場面1",
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: [],
@@ -254,11 +262,32 @@ describe("startFakeSession", () => {
     expect(sink.events.at(-1)).toEqual({ kind: "utterance", text: "架空の本文2" })
   })
 
+  it("sceneUntil を渡すと、名指しした場面の手を先頭からその個数で止める（opening は流す）", async () => {
+    const sink = collect()
+    const driver = startFakeSession({
+      session: FAKE_SESSION,
+      scene: "架空の場面1",
+      sceneUntil: 1,
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
+      expressions: [],
+      onEvent: sink.onEvent,
+    })
+    await tick()
+    driver.close()
+
+    expect(sink.events.slice(3)).toEqual([
+      { kind: "speech", text: "架空の挨拶", expression: "default" },
+      { kind: "utterance", text: "架空の本文" },
+    ])
+  })
+
   it("疑似セッションに無い名前を名指ししても、opening だけを流す", async () => {
     const sink = collect()
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: "無い場面",
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: [],
@@ -294,6 +323,7 @@ describe("startFakeSession", () => {
         turns: [],
       },
       scene: undefined,
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: [],
@@ -334,6 +364,7 @@ describe("startFakeSession", () => {
           turns: [],
         },
         scene: undefined,
+        sceneUntil: undefined,
         sessionDefault: BUILTIN_SESSION_DEFAULT,
         firstViewer: Promise.resolve(),
         expressions: [],
@@ -385,6 +416,7 @@ describe("startFakeSession", () => {
         turns: [],
       },
       scene: undefined,
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: [],
@@ -426,6 +458,7 @@ describe("startFakeSession", () => {
         ],
       },
       scene: "架空の差し戻し",
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: [],
@@ -497,6 +530,7 @@ describe("startFakeSession", () => {
         ],
       },
       scene: "架空の省略",
+      sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
       expressions: ["default"],

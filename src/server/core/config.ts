@@ -30,6 +30,8 @@ export const DRIVER_ENV_NAME = "TSUKUMO_DRIVER"
 const HOST_ENV_NAME = "TSUKUMO_HOST"
 /** fake driver で、起こした直後に流す場面の名前（疑似セッションの `turns[].name`）。 */
 export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
+/** fake driver で、名指しした場面の手を先頭から何個まで流すか（正の整数）。 */
+export const FAKE_SCENE_UNTIL_ENV_NAME = "TSUKUMO_FAKE_SCENE_UNTIL"
 /** `1` で復元せず新規に起こす（`docs/requirements.md`「逃げ道」）。 */
 export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
 /**
@@ -76,6 +78,8 @@ export type Config = {
    * `driver` が `sdk` のときは効かない。
    */
   readonly fakeScene: string | undefined
+  /** `fakeScene` の手を流す個数の上限。未設定・正の整数でない値なら undefined ＝ 全部流す。 */
+  readonly fakeSceneUntil: number | undefined
   readonly newSession: boolean
   /** `CLAUDE_CONFIG_DIR` の値（未設定・空なら undefined ＝ `~`）。 */
   readonly claudeConfigDir: string | undefined
@@ -101,6 +105,7 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     driver: env[DRIVER_ENV_NAME]?.trim() === "fake" ? "fake" : "sdk",
     host: env[HOST_ENV_NAME]?.trim() === "none" ? "none" : "orca",
     fakeScene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
+    fakeSceneUntil: parsePositiveInteger(env[FAKE_SCENE_UNTIL_ENV_NAME]),
     newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
     claudeConfigDir: nonEmpty(env[CLAUDE_CONFIG_DIR_ENV_NAME]),
     fixedClock: parseInstant(env[FIXED_CLOCK_ENV_NAME]),
@@ -111,6 +116,15 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
 function nonEmpty(value: string | undefined): string | undefined {
   const trimmed = value?.trim()
   return trimmed === undefined || trimmed === "" ? undefined : trimmed
+}
+
+function parsePositiveInteger(value: string | undefined): number | undefined {
+  const trimmed = nonEmpty(value)
+  if (trimmed === undefined || !/^\d+$/.test(trimmed)) {
+    return undefined
+  }
+  const parsed = Number(trimmed)
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined
 }
 
 function parseInstant(value: string | undefined): Temporal.Instant | undefined {

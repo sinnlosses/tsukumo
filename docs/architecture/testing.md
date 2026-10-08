@@ -381,6 +381,15 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 tsukumo を空きポートで自分で起こし、配信 URL を待って撮り、終わったら（失敗しても）自分で
 止める（`node scripts/stop.ts` を別に打たなくてよい）。URL を直に渡す使い方とは併用できない。
 知らない場面名のとき・URL も `--scene` も無いときは、何も起こさずに理由を出して非0で終わる。
+**場面の途中の画は `--until-step <n>`（`--scene` と一緒にだけ使える）。** 場面の手を先頭から n 個で
+止めて流すので、止めた先の状態が残る（`opening` の手は数えない）。止めた先の要素は `--wait-for` で待つ。
+撮影は読み込みの1〜2秒後なので、遅い手で止めるときは `--wait-for` でその手が出す目印まで待つ
+（`--advance` はページの時計だけでサーバの手は進めない）。
+最終レポートまで流し切って待つときは `--wait-for '[class*="is-final_"]'`（`scripts/capture-catalog.ts`
+の `WORK_PLAN_FINAL_SELECTOR` と同じ。`report-head` や `--advance` で待つと中間レポートや作業中の画を撮る）。
+**幅で画面が切り替わる境目は 1100px と 760px。** 1100px 以下でサイドバーが柱に畳まれ、760px 以下で
+タブになる。境目は `--size 1100x900` と `--size 1101x900`、`--size 760x900` と `--size 761x900` の両側を撮る
+（`docs/architecture/screen-design.md`「13.4 Layout」「狭い画面（760px 以下）」）。
 **どの場面にどの塊が出るかを引くときは `capture-view.ts --list-scenes`。** 場面ごとに `report`
 に出る塊の `kind` を一覧し、`table` は状態のセル（`{ status, text }` の行）を持つものを
 `table(status)` と区別する。検証結果の表（`report` の `checks`）を持つ場面には `checks` も出る。

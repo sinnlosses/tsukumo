@@ -91,6 +91,7 @@ const USAGE = `使い方:
 
   --scene <場面>        fake driver の tsukumo を自分で起こして撮り、終わったら自分で止める
                         （場面は test/fixture/fake-session.json の turns[].name。URL とは併用しない）
+  --until-step <n>      --scene の場面を先頭から n 手目で止めた画を撮る（正の整数。--scene と一緒にだけ使う）
   --list-scenes         場面ごとに report に出る塊の kind を一覧して終わる（撮らない）
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
   --size <幅>x<高さ>    窓の大きさ（既定 ${String(DEFAULT_WIDTH)}x${String(DEFAULT_HEIGHT)}）
@@ -109,7 +110,7 @@ const USAGE = `使い方:
 /** 開く先。URL を直に渡すか、場面の名前で fake driver の tsukumo を自分で起こすか。 */
 type Source =
   | { readonly kind: "url"; readonly url: string }
-  | { readonly kind: "scene"; readonly scene: string }
+  | { readonly kind: "scene"; readonly scene: string; readonly until: number | undefined }
 
 type Options =
   | { readonly kind: "list-scenes" }
@@ -190,7 +191,7 @@ async function openSource(source: Source): Promise<OpenedSource | undefined> {
     scene: source.scene,
     port: 0,
     home: undefined,
-    extraEnv: {},
+    extraEnv: source.until === undefined ? {} : { TSUKUMO_FAKE_SCENE_UNTIL: String(source.until) },
     dropInheritedTsukumoEnv: false,
     stderr: "inherit",
   })
@@ -347,6 +348,7 @@ function round(value: number): number {
 function parseOptions(argv: readonly string[]): Options | undefined {
   let url: string | undefined
   let scene: string | undefined
+  let untilStep: number | undefined
   let listScenes = false
   const measures: string[] = []
   let out = DEFAULT_OUT
@@ -397,6 +399,12 @@ function parseOptions(argv: readonly string[]): Options | undefined {
       scrollTo = value
     } else if (flag === "--scene") {
       scene = value
+    } else if (flag === "--until-step") {
+      const step = Number(value)
+      if (!Number.isInteger(step) || step <= 0) {
+        return undefined
+      }
+      untilStep = step
     } else if (flag === "--size") {
       const size = parseSize(value)
       if (size === undefined) {
@@ -413,7 +421,7 @@ function parseOptions(argv: readonly string[]): Options | undefined {
   if (listScenes) {
     return { kind: "list-scenes" }
   }
-  const source = sourceOf(url, scene)
+  const source = sourceOf(url, scene, untilStep)
   return source === undefined
     ? undefined
     : {
@@ -430,13 +438,17 @@ function parseOptions(argv: readonly string[]): Options | undefined {
       }
 }
 
-/** URL と場面名のどちらか片方だけが要る。両方・どちらも無いときは undefined。 */
-function sourceOf(url: string | undefined, scene: string | undefined): Source | undefined {
-  if (url !== undefined && scene === undefined) {
+/** URL と場面名のどちらか片方だけが要る。両方・どちらも無いとき、場面の無い `--until-step` は undefined。 */
+function sourceOf(
+  url: string | undefined,
+  scene: string | undefined,
+  untilStep: number | undefined,
+): Source | undefined {
+  if (url !== undefined && scene === undefined && untilStep === undefined) {
     return { kind: "url", url }
   }
   if (scene !== undefined && url === undefined) {
-    return { kind: "scene", scene }
+    return { kind: "scene", scene, until: untilStep }
   }
   return undefined
 }
