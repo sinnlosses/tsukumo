@@ -122,7 +122,10 @@ describe("WorkStrip", () => {
 
     expect(strip().getAttribute("data-work-strip")).toBe("finished")
     expect(strip().textContent).toContain("3段すべて済み")
-    expect(strip().querySelector("[data-result]")?.textContent).toBe("✓完了")
+    const chip = strip().querySelector("[data-result]")
+    expect(chip?.getAttribute("data-result")).toBe("done")
+    expect(chip?.textContent).toBe("完了")
+    expect(chip?.querySelector("[aria-hidden]")?.textContent).toBe("")
     expect(strip().querySelector("p")).toBeNull()
   })
 })

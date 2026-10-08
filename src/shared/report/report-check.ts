@@ -54,9 +54,9 @@ type ReportChecksVerdict = ReportCheckStatus
 
 /**
  * 検証結果（1つの HTML の塊）。空なら空文字。
- * 左に判定の札（記号・「ok 件数 / 全件数」・ひとこと）、右に欄を置く。
- * 全部 ok なら、右は小見出し「検証」と全行の一覧。
- * ng / unverified があれば、右は問題の項目（ng → unverified の順）を label・detail つきで並べ、
+ * 頭に小見出し「検証」と判定の一言（n件すべて通過 / n件中 k件 落ちた / n件中 k件 未確認）を置く。
+ * 全部 ok なら、その下は全行の一覧。
+ * ng / unverified があれば、その下は問題の項目（ng → unverified の順）を label・detail つきで並べ、
  * その下に通った項目を label の頭だけの小さな札で並べる。
  * `commandDuration` は `command` から tsukumo が測った所要時間を引く口で、`command` が空の項目には呼ばない。
  * モデルの文字列は HTML として逃がし、改行は空白に畳む（HTML の塊が空行で切れないように）。
@@ -69,7 +69,6 @@ export function reportChecksMarkdown(
     return ""
   }
   const checks = rawChecks.map(withoutBackticks)
-  const okCount = checks.filter((check) => check.status === "ok").length
   const ngCount = checks.filter((check) => check.status === "ng").length
   const unverifiedCount = checks.filter((check) => check.status === "unverified").length
   const verdict: ReportChecksVerdict =
@@ -80,11 +79,8 @@ export function reportChecksMarkdown(
       ? allOkBodyMarkdown(checks, commandDuration)
       : problemsBodyMarkdown(checks, commandDuration)
 
-  return (
-    `<div class="checks">` +
-    checksTileMarkdown(verdict, okCount, checks.length, ngCount, unverifiedCount) +
-    `<div class="checks-body">${body}</div></div>`
-  )
+  const heading = checksHeadingMarkdown(verdict, checks.length, ngCount, unverifiedCount)
+  return `<div class="checks checks-${verdict}"><div class="checks-body">${heading}${body}</div></div>`
 }
 
 /** `label`・`figure`・`detail` の素の文字に記法は使えないので、バッククォートを落とす（`command` は打った文字列のまま）。 */
@@ -97,38 +93,29 @@ function withoutBackticks(check: ReportCheck): ReportCheck {
   }
 }
 
-/** 判定の札。記号・「ok 件数 / 全件数」と、ng / unverified のときだけひとこと（k つ落ちた / k つ未確認）。 */
-function checksTileMarkdown(
+/** 小見出し「検証」と、その右に状態の色で言う判定の一言。 */
+function checksHeadingMarkdown(
   verdict: ReportChecksVerdict,
-  okCount: number,
   total: number,
   ngCount: number,
   unverifiedCount: number,
 ): string {
-  const hint =
+  const word =
     verdict === "ng"
-      ? `<span class="checks-tile-hint">${String(ngCount)} つ落ちた</span>`
+      ? `${String(total)}件中 ${String(ngCount)}件 落ちた`
       : verdict === "unverified"
-        ? `<span class="checks-tile-hint">${String(unverifiedCount)} つ未確認</span>`
-        : ""
-  return (
-    `<div class="checks-tile checks-tile-${verdict}">` +
-    `<span class="checks-tile-mark">${REPORT_CHECK_TILE_MARK_TEXTS[verdict]}</span>` +
-    `<span class="checks-tile-count">${String(okCount)} / ${String(total)}</span>` +
-    `${hint}</div>`
-  )
+        ? `${String(total)}件中 ${String(unverifiedCount)}件 未確認`
+        : `${String(total)}件すべて通過`
+  return `<div class="checks-heading">検証<span class="checks-verdict-word">${word}</span></div>`
 }
 
-/** 全部 ok のときの右の欄。小見出し「検証」と全行の一覧。 */
+/** 全部 ok のときの、小見出しの下の欄。全行の一覧。 */
 function allOkBodyMarkdown(
   checks: readonly ReportCheck[],
   commandDuration: (command: string) => MeasuredTime,
 ): string {
   const rows = checks.map((check) => checkRowMarkdown(check, commandDuration)).join("")
-  return (
-    `<div class="checks-heading">検証</div>` +
-    `<div role="table" aria-label="検証結果">${rows}</div>`
-  )
+  return `<div role="table" aria-label="検証結果">${rows}</div>`
 }
 
 /** 検証1項目のうち、問題として並べるもの（ng / unverified）。 */
@@ -138,7 +125,7 @@ function isReportCheckProblem(check: ReportCheck): check is ReportCheckProblem {
   return check.status !== "ok"
 }
 
-/** ng / unverified があるときの右の欄。問題の項目（ng → unverified の順）と、通った項目の小さな札。 */
+/** ng / unverified があるときの、小見出しの下の欄。問題の項目（ng → unverified の順）と、通った項目の小さな札。 */
 function problemsBodyMarkdown(
   checks: readonly ReportCheck[],
   commandDuration: (command: string) => MeasuredTime,
@@ -214,13 +201,6 @@ function figureAndTimeOf(
     time: duration.kind === "known" ? formatElapsed(Math.round(duration.milliseconds / 1000)) : "",
   }
 }
-
-/** 判定の札に出す記号（状態 → 記号だけ）。 */
-const REPORT_CHECK_TILE_MARK_TEXTS = {
-  ok: "✓",
-  ng: "✕",
-  unverified: "？",
-} as const satisfies Record<ReportChecksVerdict, string>
 
 /** 問題の行に出す「記号＋状態語」。 */
 const REPORT_CHECK_PROBLEM_MARK_TEXTS = {

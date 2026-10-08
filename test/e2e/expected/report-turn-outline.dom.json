@@ -249,10 +249,7 @@
                                   "tag": "span",
                                   "attributes": {
                                     "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "✓"
-                                  ]
+                                  }
                                 },
                                 "完了"
                               ]

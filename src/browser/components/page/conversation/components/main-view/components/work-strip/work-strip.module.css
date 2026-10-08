@@ -15,40 +15,46 @@
   gap: 0.75rem;
   min-width: 0;
 }
-/* 状態のチップ。印と字は縮めず、色は状態ごと（字と印が必ず添う）。 */
+/* 状態のチップ。状態の色は点だけに乗り、字は常に `--ink-soft`。 */
 .work-strip-chip {
+  --work-strip-dot: var(--ink-quiet);
+
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.125rem 0.625rem;
-  border: 1px solid currentcolor;
-  border-radius: 999px;
-  color: var(--ink-quiet);
+  gap: 0.4375rem;
+  color: var(--ink-soft);
   font-size: var(--font-secondary);
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.4;
   white-space: nowrap;
 }
 .work-strip-chip[data-result="working"] {
-  color: var(--accent);
+  --work-strip-dot: var(--accent);
 }
 .work-strip-chip[data-result="awaiting-answer"] {
-  color: var(--state-warn);
+  --work-strip-dot: var(--state-warn);
 }
 .work-strip-chip[data-result="done"] {
-  color: var(--state-ok);
+  --work-strip-dot: var(--state-ok);
 }
 .work-strip-chip[data-result="failed"] {
-  color: var(--state-ng);
+  --work-strip-dot: var(--state-ng);
+}
+.work-strip-dot {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--work-strip-dot);
 }
 /* 作業中のチップの印。差し色の弧が1つだけ欠けた輪
    （`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
 .work-strip-spinner {
   flex: none;
   box-sizing: border-box;
-  width: 1rem;
-  height: 1rem;
+  width: 0.75rem;
+  height: 0.75rem;
   border: 2px solid var(--rule);
   border-top-color: var(--accent);
   border-radius: 50%;
@@ -194,7 +200,6 @@
   }
   .work-strip-chip {
     gap: 0;
-    padding: 0.25rem;
   }
   .work-strip-chip-label {
     position: absolute;

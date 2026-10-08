@@ -622,7 +622,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(
       shown.startsWith(
         `${lead("架空の結論。")}\n\n<div class="status">\n\n` +
-          '<div class="verdict" role="group" aria-label="検証結果"><div class="checks">',
+          '<div class="verdict" role="group" aria-label="検証結果"><div class="checks checks-unverified">',
       ),
     ).toBe(true)
     expect(

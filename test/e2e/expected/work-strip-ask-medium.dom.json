@@ -100,10 +100,7 @@
                                   "tag": "span",
                                   "attributes": {
                                     "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "?"
-                                  ]
+                                  }
                                 },
                                 "答え待ち"
                               ]

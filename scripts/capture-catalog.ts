@@ -166,11 +166,12 @@ const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
 /**
  * 検証結果の表（`report` の `checks`）。class 名でなく role・aria-label で指す
  * （`reportChecksMarkdown` が組む `<div role="table" aria-label="検証結果">`
- * の属性はハッシュ化されない）。すべて通ったときは畳まれて見えない。
+ * の属性はハッシュ化されない）。すべて通ったときは「検証結果」、落ちた・未確認があるときは
+ * 「検証結果の問題」の表で、どちらも畳まずに見える。
  */
-const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label="検証結果"]`
-/** 結論のすぐ下の合図の行（検証結果の総括とお願いの口）。 */
-const VERDICT_SELECTOR = `${MAIN_REGION_SELECTOR} [role="group"][aria-label="検証とお願いの合図"]`
+const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label^="検証結果"]`
+/** 結論のすぐ下の合図の行（`mainViewTurns` が組む。小見出し・一言・罫を含む検証結果の塊）。 */
+const VERDICT_SELECTOR = `${MAIN_REGION_SELECTOR} [role="group"][aria-label="検証結果"]`
 
 /** 最終レポートの器。最終 `report` が届くまで現れず、中間レポートの器（`is-interim`）とは別。 */
 const WORK_PLAN_FINAL_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="is-final_"]`

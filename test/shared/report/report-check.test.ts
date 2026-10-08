@@ -6,7 +6,7 @@ import type { MeasuredTime } from "../../../src/shared/utils/elapsed-time.ts"
 const UNMEASURED = (): MeasuredTime => ({ kind: "unknown" })
 
 describe("reportChecksMarkdown", () => {
-  it("すべて通ったら、左に緑の判定の札、右に小見出しと全行の一覧を置く（畳まない）", () => {
+  it("すべて通ったら、緑の罫と小見出し・一言の下に全行の一覧を置く（畳まない）", () => {
     const markdown = reportChecksMarkdown(
       [
         { status: "ok", label: "架空の一", figure: "単体 12", command: "", detail: "" },
@@ -16,18 +16,18 @@ describe("reportChecksMarkdown", () => {
       UNMEASURED,
     )
 
+    expect(markdown).toContain('<div class="checks checks-ok">')
     expect(markdown).toContain(
-      '<div class="checks-tile checks-tile-ok"><span class="checks-tile-mark">✓</span>' +
-        '<span class="checks-tile-count">3 / 3</span></div>',
+      '<div class="checks-heading">検証<span class="checks-verdict-word">3件すべて通過</span></div>',
     )
-    expect(markdown).toContain('<div class="checks-heading">検証</div>')
+    expect(markdown).not.toContain("checks-tile")
     expect(markdown).toContain('<div role="table" aria-label="検証結果">')
     expect(markdown.match(/<div class="check check-ok" role="row">/gu)).toHaveLength(3)
     expect(markdown).not.toContain("checks-problem")
     expect(markdown).not.toContain("<details>")
   })
 
-  it("ng を含めば赤の判定の札と、問題の項目（ng → unverified の順）＋通った項目の札を置く", () => {
+  it("ng を含めば赤の罫と一言、問題の項目（ng → unverified の順）＋通った項目の札を置く", () => {
     const markdown = reportChecksMarkdown(
       [
         { status: "ok", label: "架空の一", figure: "", command: "", detail: "" },
@@ -38,11 +38,11 @@ describe("reportChecksMarkdown", () => {
       UNMEASURED,
     )
 
+    expect(markdown).toContain('<div class="checks checks-ng">')
     expect(markdown).toContain(
-      '<div class="checks-tile checks-tile-ng"><span class="checks-tile-mark">✕</span>' +
-        '<span class="checks-tile-count">2 / 4</span>' +
-        '<span class="checks-tile-hint">1 つ落ちた</span></div>',
+      '<div class="checks-heading">検証<span class="checks-verdict-word">4件中 1件 落ちた</span></div>',
     )
+    expect(markdown).not.toContain("checks-tile")
     const [open = "", rest = ""] = markdown.split('<div class="checks-passed">')
     expect(open.indexOf("架空の三")).toBeLessThan(open.indexOf("架空の二"))
     expect(open).not.toContain("架空の一")
@@ -52,7 +52,7 @@ describe("reportChecksMarkdown", () => {
     expect(markdown).toContain('<p class="checks-problem-detail">架空の理由</p>')
   })
 
-  it("ng が無く unverified だけなら黄の判定の札にする", () => {
+  it("ng が無く unverified だけなら黄の罫と一言にする", () => {
     const markdown = reportChecksMarkdown(
       [
         { status: "ok", label: "架空の一", figure: "", command: "", detail: "" },
@@ -61,10 +61,9 @@ describe("reportChecksMarkdown", () => {
       UNMEASURED,
     )
 
+    expect(markdown).toContain('<div class="checks checks-unverified">')
     expect(markdown).toContain(
-      '<div class="checks-tile checks-tile-unverified"><span class="checks-tile-mark">？</span>' +
-        '<span class="checks-tile-count">1 / 2</span>' +
-        '<span class="checks-tile-hint">1 つ未確認</span></div>',
+      '<div class="checks-heading">検証<span class="checks-verdict-word">2件中 1件 未確認</span></div>',
     )
   })
 

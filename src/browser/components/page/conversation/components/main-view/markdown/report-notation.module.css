@@ -683,87 +683,43 @@
 .detail-block .report-verdict {
   display: block;
 }
-/* 検証結果（`report` の `checks` から tsukumo が組む）。左に判定の札、右に欄を置く1枚のカード。 */
+/* 検証結果（`report` の `checks` から tsukumo が組む）。左の縁だけが状態の色の罫になる1枚のカード。 */
 .detail-block .report-checks {
-  display: flex;
-  gap: 18px;
-  align-items: stretch;
+  --report-checks-state: var(--state-ok);
+
+  display: block;
   min-width: 0;
   padding: 14px 20px;
   border: 1px solid var(--rule);
-  border-radius: 12px;
+  border-left: 3px solid var(--report-checks-state);
+  border-radius: 4px 12px 12px 4px;
   background: var(--surface-raised);
 }
-/* 左の判定の札。幅 112・角丸 14・地と枠は状態の色。 */
-.detail-block .report-checks-tile {
-  box-sizing: border-box;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  width: 112px;
-  padding: 10px 0;
-  border-radius: 14px;
+.detail-block .report-checks-ok {
+  --report-checks-state: var(--state-ok);
 }
-.detail-block .report-checks-tile-ok {
-  background: color-mix(in srgb, var(--state-ok) 12%, transparent);
-  border: 1px solid var(--state-ok);
+.detail-block .report-checks-ng {
+  --report-checks-state: var(--state-ng);
 }
-.detail-block .report-checks-tile-unverified {
-  background: color-mix(in srgb, var(--state-warn) 14%, transparent);
-  border: 1px solid var(--state-warn);
+.detail-block .report-checks-unverified {
+  --report-checks-state: var(--state-warn);
 }
-.detail-block .report-checks-tile-ng {
-  background: color-mix(in srgb, var(--state-ng) 15%, transparent);
-  border: 1px solid var(--state-ng);
-}
-.detail-block .report-checks-tile-mark {
-  font-size: 28px;
-  line-height: 1;
-  font-weight: 700;
-}
-.detail-block .report-checks-tile-ok .report-checks-tile-mark {
-  color: var(--state-ok);
-}
-.detail-block .report-checks-tile-unverified .report-checks-tile-mark {
-  color: var(--state-warn);
-}
-.detail-block .report-checks-tile-ng .report-checks-tile-mark {
-  color: var(--state-ng);
-}
-.detail-block .report-checks-tile-count {
-  margin-top: 6px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink);
-}
-.detail-block .report-checks-tile-hint {
-  font-size: 12px;
-  font-weight: 700;
-}
-.detail-block .report-checks-tile-ok .report-checks-tile-hint {
-  color: var(--state-ok);
-}
-.detail-block .report-checks-tile-unverified .report-checks-tile-hint {
-  color: var(--state-warn);
-}
-.detail-block .report-checks-tile-ng .report-checks-tile-hint {
-  color: var(--state-ng);
-}
-/* 右の欄。全部 ok なら小見出しと一覧、ng / unverified があれば問題の項目と通った項目の札。 */
+/* 小見出しと、全部 ok なら一覧、ng / unverified があれば問題の項目と通った項目の札。 */
 .detail-block .report-checks-body {
-  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 .detail-block .report-checks-heading {
   font-size: 12px;
   letter-spacing: 0.08em;
   color: var(--ink-quiet);
+}
+.detail-block .report-checks-verdict-word {
+  margin-left: 8px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--report-checks-state);
 }
 /* 全部 ok の一覧の1行。記号・label・figure・所要時間を詰めて並べる。 */
 .detail-block .report-check {

@@ -535,24 +535,24 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
     `reportChecksMarkdown`）、節の始まりの印より前に置く。書き上げる演出は節にだけ掛かるので、結論と合図の行は
     最初から出る
   - **所要は合図の行に置かない**（経過と所要は進み具合の帯の1か所。`docs/architecture/screen-design.md` 13.13）
-- **検証結果は、左の判定の札と右の欄の1枚で描く**（2026-10-04 ユーザー決定「再提案A」。畳んだ表は
-  全部通ったときも開かないと中身が見えず、落ちた・未確認のときも行の中の文字を読まないと結論が分からな
-  かった）。見本は `docs/history/mockup/report-checks-tile-2026-10-04.html`（画は同じ名前の `.png`）
+- **検証結果は、左の色罫と小見出しの一言で描く**（2026-10-08 ユーザー決定「案A 静か」。状態の色が札の字・枠・地の
+  3重に乗って結論より目立っていたため、判定の札を外した。見本は
+  `docs/history/mockup/report-verdict-quiet-2026-10-08.html`（画は同じ名前の `.png`）。
+  2026-10-04 の決定は、左の判定の札〔`docs/history/mockup/report-checks-tile-2026-10-04.html`〕と右の欄の1枚だった）
   - **合図の行**（`role="group"`・`aria-label="検証結果"`）は検証結果だけを運ぶ。`checks` が空なら行ごと置かない
-  - **左の判定の札**（幅 112・角丸 14・地は状態の色の 12〜15%・枠は状態の色）に、上から記号
-    （28px・太字・状態の色。✓／？／✕）、「ok 件数 / 全件数」（13px 等幅）、ひとこと（12px・太字・
-    状態の色。`k` つ未確認／`k` つ落ちた）を置く。全部通ったときはひとことを置かない（2026-10-04 ユーザー決定。
-    ✓ と数で足り、カードの高さを抑えるため）。状態は `ng` が1つでもあれば ✕、
-    無く `unverified` があれば ？、どちらも無ければ ✓。ひとことと数の字は見本の 11.5px を、会話の画面の
-    字の下限（`test/e2e/readability-scan.ts` の `MIN_FONT`）の 12px に上げた
-  - **右の欄**は、全部 `ok` なら小見出し「検証」と全行の一覧（✓・`label`・`figure`・所要時間を詰めて1行。
+  - **左の色罫**: 枠・地・角丸は残し、左の縁を状態の色の 3px の罫にする（角丸は左 4px・右 12px）。
+    状態は `ng` が1つでもあれば `ng`、無く `unverified` があれば `unverified`、どちらも無ければ `ok`
+  - **小見出しの一言**: 小見出し「検証」の右に 8px 空けて、状態の色の太字（12px）で言う。
+    全部 `ok` なら「n件すべて通過」、`ng` があれば「n件中 k件 落ちた」、`ng` が無く `unverified` があれば
+    「n件中 k件 未確認」（n は全件数、k はその状態の件数）。小見出しと一言は `ok` でも問題があっても欄の頭に置く
+  - **小見出しの下の欄**は、全部 `ok` なら全行の一覧（✓・`label`・`figure`・所要時間を詰めて1行。
     畳まない）。`ng` / `unverified` があれば、問題の項目を `ng` → `unverified` の順（同じ状態の中は書いた順）に
     1件ずつ、「状態の印＋ `label` ＋ `figure`・所要時間」の行とその下の `detail` の2段で縦に重ね、通った項目は
     その下に `label` の頭（最初の全角の括弧「（」より前。無ければ全文）だけの小さな札（高さ 24 から・角丸 12・
     文字は省かず、欄より長ければ札の中で折り返す・`title` に `label` の全文）で並べる。一覧と問題の並びは `role="table"`
   - **「お願い」の口は合図の行に置かない**（未確認の項目は黄の記号と理由で目に留まる。手を動かして
     ほしいことは末尾のお願いの塊に任せる）。お願いの塊は変わらず末尾に `id="favor-<toolUseId>"` で置く
-  - class（`verdict` / `checks-tile` / `checks-body` / `checks-problem` / `checks-passed` 系と
+  - class（`verdict` / `checks-ok`・`checks-ng`・`checks-unverified` / `checks-verdict-word` / `checks-body` / `checks-problem` / `checks-passed` 系と
     `conclusion-lead`）は `REPORT_DRAWN_MARK_NAMES` に置く
 
 #### 段取り

@@ -142,10 +142,7 @@
                                   "tag": "span",
                                   "attributes": {
                                     "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "✓"
-                                  ]
+                                  }
                                 },
                                 "完了"
                               ]
@@ -261,9 +258,8 @@
                                 "aria-label": "検証結果"
                               },
                               "children": [
-                                "✓",
-                                "1 / 1",
                                 "検証",
+                                "1件すべて通過",
                                 {
                                   "tag": "div",
                                   "attributes": {

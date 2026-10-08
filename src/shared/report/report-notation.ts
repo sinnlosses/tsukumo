@@ -130,8 +130,9 @@ export const REPORT_NOTATION_NAMES = [
 /**
  * tsukumo が `report` の欄から組む印（モデルには教えないので、文面に書き足す決まりの外）。
  * `verdict` は結論のすぐ下の合図の行（検証結果の判定だけを運ぶ）。
- * `checks` は検証結果の塊、`checks-tile` は左の判定の札（記号・件数・ひとこと）。
- * `checks-body` は右の欄で、全部 ok なら `checks-heading` と一覧（`check` がその1行）、
+ * `checks` は検証結果の塊で、`checks-ok` / `checks-ng` / `checks-unverified` が状態（左の色罫）。
+ * `checks-heading` は小見出し「検証」、`checks-verdict-word` がその右の判定の一言。
+ * `checks-body` の中は、全部 ok なら一覧（`check` がその1行）、
  * ng / unverified があれば問題の項目（`checks-problem`）と通った項目の小さな札（`checks-passed-chip`）。
  * `phase-times` は検証結果の下の段ごとの所要時間の横棒グラフで、`phase-time` がその1行
  * （`phase-time-track` が棒の台、`phase-time-bar` が棒）。`phase-time-group` は段のまとまりの包みで、`phase-time-group-head` がその壁時計の行。
@@ -141,15 +142,12 @@ export const REPORT_NOTATION_NAMES = [
 export const REPORT_DRAWN_MARK_NAMES = [
   "verdict",
   "checks",
-  "checks-tile",
-  "checks-tile-ok",
-  "checks-tile-ng",
-  "checks-tile-unverified",
-  "checks-tile-mark",
-  "checks-tile-count",
-  "checks-tile-hint",
+  "checks-ok",
+  "checks-ng",
+  "checks-unverified",
   "checks-body",
   "checks-heading",
+  "checks-verdict-word",
   "check",
   "check-ok",
   "check-mark",
