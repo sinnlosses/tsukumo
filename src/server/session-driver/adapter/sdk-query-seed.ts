@@ -16,6 +16,7 @@ import type { ReportGate } from "../../report/core/report-tool.ts"
 import { AGENT_TOOL_NAME, pinToBackground } from "../core/background-delegation.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
+import { workflowPluginDir } from "./workflow-plugin.ts"
 
 /** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
 export type QuerySeedOptions = {
@@ -45,7 +46,7 @@ export type QuerySeedOptions = {
    * 渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ環境に本体の催促を止める変数を足したもの（`childProcessEnv`）を渡す。
    */
   readonly env: Readonly<Record<string, string | undefined>>
-  /** tsukumo に同梱したプラグイン（`plugin/`。使用量の見直しのスキル `tsukumo:token-usage-diet` を持つ）。 */
+  /** セッションに載せるプラグイン。同梱の `plugin/`（`tsukumo:token-usage-diet`）と、取り込んだ tsukumo-plugins。 */
   readonly plugins: SdkPluginConfig[]
 }
 
@@ -68,7 +69,10 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     resume: options.start.kind === "resume" ? options.start.sessionId : undefined,
     settings: { language: "japanese" },
     env: childProcessEnv(options.inheritedEnv),
-    plugins: [{ type: "local", path: bundledFilePath("plugin") }],
+    plugins: [
+      { type: "local", path: bundledFilePath("plugin") },
+      { type: "local", path: workflowPluginDir() },
+    ],
   }
 }
 

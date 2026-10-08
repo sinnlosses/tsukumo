@@ -92,7 +92,7 @@ Orca が無いときはタブが自動で開かないだけで、配信は続き
 ### 1. 取ってきて導入する
 
 ```bash
-git clone https://github.com/sinnlosses/tsukumo.git
+git clone --recurse-submodules https://github.com/sinnlosses/tsukumo.git
 cd tsukumo
 mise trust      # このリポジトリの mise.toml を信頼する（初回だけ）
 mise install    # mise.toml が指す node@26 と pnpm@12 を入れる
@@ -137,7 +137,7 @@ git pull
 mise run setup
 ```
 
-導入と同じ `mise run setup` で済みます（`tsukumo` コマンドも入れ直すので、`bin/tsukumo` が変わったときも追随します）。
+導入と同じ `mise run setup` で済みます（`tsukumo` コマンドも入れ直すので、`bin/tsukumo` が変わったときも追随します。取り込んだ `vendor/tsukumo-plugins` も固定したコミットへ揃います）。
 
 ### つまずいたとき
 
@@ -336,7 +336,7 @@ pnpm run build                 # ブラウザ側（src/browser/）を dist/brows
                               #   ので、pnpm install のあとと src/browser/ を直したあとに打つ
 pnpm run start                 # セッションを起こし、ページのタブを Orca 内に開く（`tsukumo` コマンドと同じ。
                               #   TSUKUMO_OPEN_VIEW=0 で自動オープンを止める。本物の claude を子プロセスで起こす。
-                              #   成果物が無ければ前提不足で止まり、ソースのほうが新しければ1行知らせて古いまま配る）
+                              #   成果物か vendor/tsukumo-plugins が無ければ前提不足で止まり、ソースのほうが新しければ1行知らせて古いまま配る）
 pnpm run dev                   # pnpm run build のあと、start と同じ経路を Vite の開発サーバつき（--dev）で起こす
                               #   （src/server/ と src/shared/ を直したときは上げ直しが要る。docs/architecture/build.md）
 pnpm run storybook             # 部品を props ごとに並べる Storybook を http://localhost:6006/ に起こす
@@ -389,7 +389,8 @@ CI に無い外部コマンドを起こすテストを検査で落とします�
 ├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ architecture.test.ts）
 ├── story/                  # Storybook の story（src/ と同じディレクトリ構成。設定は .storybook/）
 ├── characters/             # キャラクター定義と素材（tsukumo-spirit が既定、local/ は .gitignore）
-├── plugin/                 # セッションに載せる同梱の Claude Code プラグイン（スキル）
+├── plugin/                 # セッションに載せる同梱の Claude Code プラグイン（token-usage-diet）
+├── vendor/tsukumo-plugins/ # 取り込んだ tsukumo-plugins（git submodule。タスク運用のスキル・agent・hook）
 ├── scripts/                # 開発の道具（check・ship・stop・撮影・文書の検査・hook の deny-* など）
 ├── assets/                 # ロゴ
 ├── docs/                   # 要件定義・設計・アーキテクチャ・規約・用語集（正典）

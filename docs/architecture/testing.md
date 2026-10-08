@@ -439,7 +439,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 目視するなら `--dev` で起こす（`pnpm run dev`。HMR で差し替わる）か、組み立てのたびに上げ直す。
 
 1. **`pnpm run build` を打ってから** Orca のターミナルで `pnpm run start` を1つ起動する
-   （Claude Code の TUI は開かない）。成果物が無いと起動は前提不足で止まり、`src/browser/` の
+   （Claude Code の TUI は開かない）。成果物か取り込んだプラグイン（`vendor/tsukumo-plugins`）が無いと起動は前提不足で止まり、`src/browser/` の
    ほうが新しいと「古い画面が出る」1行が出る
 2. **tsukumo 自身がレイアウトページのタブを開く**ので、それが**Orca 内のブラウザタブ**に
    出ること（外部ブラウザに出ないこと）を見る。タブだけ閉じてしまったときは

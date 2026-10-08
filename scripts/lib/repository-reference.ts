@@ -19,7 +19,7 @@ import {
 const SCANNED_EXTENSIONS = new Set([".ts", ".tsx", ".css", ".md", ".json", ".html"])
 
 // 降りないディレクトリ（依存物・成果物・git の中身）。
-const SKIPPED_DIRECTORIES = new Set(["node_modules", "dist", ".git"])
+const SKIPPED_DIRECTORIES = new Set(["node_modules", "dist", ".git", "vendor"])
 
 /** `root` 以下を読み、句が参照先に見つからない参照をすべて返す。 */
 export function collectStrayReferences(root: string): StrayReference[] {

@@ -1,7 +1,7 @@
 // 起動の段取り。
 // 前提を確かめる → いま出すキャラクターを決める → ビューを配る → セッションを起こして繋ぐ → 知らせてタブを開く、の順を並べるのがここの仕事。
 // それぞれの中身は `createCurrentCharacter` / `startViewDelivery` / `startSession` が持つ。
-// 即時終了する前提不足は `run` の1つに集めてある（ポート・ブラウザ側の成果物・疑似セッションの3つ）。
+// 即時終了する前提不足は `run` の1つに集めてある（ポート・ブラウザ側の成果物・取り込んだプラグイン・疑似セッションの4つ）。
 
 import process from "node:process"
 
@@ -15,6 +15,10 @@ import {
 import type { Host, HostResult } from "./server/host/core/host.ts"
 import { createReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
+import {
+  readWorkflowPlugin,
+  workflowPluginDir,
+} from "./server/session-driver/adapter/workflow-plugin.ts"
 import { createPromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import { createTokenUsageLog } from "./server/token-usage/adapter/token-usage-log.ts"
 import { builtUiDir, readUiBundle } from "./server/view-server/adapter/bundle.ts"
@@ -66,6 +70,16 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     process.stderr.write(
       "tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい（pnpm run build まで古い画面が出る）\n",
     )
+  }
+
+  // 取り込んだ tsukumo-plugins が空だとワークフローのスキルが載らないので、起動時の前提不足として止める。
+  // fake driver はプラグインを載せないので見ない。
+  if (config.driver !== "fake") {
+    const plugin = await readWorkflowPlugin(workflowPluginDir())
+    if (!plugin.ok) {
+      process.stderr.write(`tsukumo: 取り込んだプラグインを読めない\n${plugin.reason}\n`)
+      return 1
+    }
   }
 
   // fake driver を選んだときは疑似セッションが要る。無ければ起こす意味が無いので、起動時の

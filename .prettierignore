@@ -1,5 +1,8 @@
 node_modules/
 
+# 取り込んだ tsukumo-plugins（git submodule）。上流の整形に任せる
+vendor/
+
 # 上流（mattpocock/skills）由来のスキル。取り直したときに差分が汚れるので整形しない
 .claude/
 

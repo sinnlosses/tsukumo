@@ -1,0 +1,3 @@
+[submodule "vendor/tsukumo-plugins"]
+	path = vendor/tsukumo-plugins
+	url = https://github.com/sinnlosses/tsukumo-plugins.git

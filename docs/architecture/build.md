@@ -26,6 +26,12 @@
   `prepare` を飛ばす**ので、`git pull` のあとの組み立ては `mise run setup`（`mise.toml` の `setup` タスク。
   `pnpm run build` を明示して打つ）に任せる（`tsukumo` はグローバルへのリンクでこのリポジトリを
   指しているので、**「配布」の実体はこのリポジトリそのもの**）
+- **tsukumo-plugins（タスク運用のスキル・agent・hook）は git submodule で `vendor/tsukumo-plugins` に取り込み、コミットで固定する。**
+  `package.json` を持たず pnpm の git 依存にできないので submodule にし、取り込みは `prepare` の
+  `git submodule update --init`（`pnpm run build` の前）が済ませる。`vendor/tsukumo-plugins/.claude-plugin/plugin.json` が無ければ
+  起動は前提不足で止まる（直し方は `git submodule update --init`。`TSUKUMO_DRIVER=fake` は見ない）。`vendor/` は文書の参照検査
+  （`scripts/lib/repository-reference.ts`）と整形（`.prettierignore`）の対象外。新しくするには
+  `git -C vendor/tsukumo-plugins fetch && git -C vendor/tsukumo-plugins checkout <コミット>` のあと、親で `vendor/tsukumo-plugins` を `git add` する
 - **cwd に依存してよいのは起動先プロジェクトのものだけ。** 作業ディレクトリ・
   `develop/task/`・相対指定で渡した素材（`TSUKUMO_CHARACTER` に相対パスを渡した場合）
   はそこに当たる。**自分で持ち歩くもの（既定の立ち絵・`node_modules` の外部ライブラリ）は

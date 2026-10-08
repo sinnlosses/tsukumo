@@ -7,6 +7,8 @@ run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 pnpm install
+# 依存が変わらない pnpm install は prepare を飛ばすので、取り込みも明示する
+git submodule update --init
 # 依存が変わらない pnpm install は prepare を飛ばすので、更新のときのために組み立てを明示する
 pnpm run build
 # pnpm 12 はグローバルの置き場を $PNPM_HOME/bin に移したので、古い pnpm setup の行が残っていても PATH に無い。

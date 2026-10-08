@@ -319,7 +319,8 @@ src/                          配線（composition root）。cli.ts（入口）�
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts
 story/                        src/<相対パス>.tsx → story/<相対パス>.story.tsx（Storybook。設定は .storybook/）
 characters/<name>/            character.json・persona.md・素材
-plugin/                       セッションに載せる Claude Code のプラグイン（契約に型の合うスキルの1つの例。`buildQuerySeedOptions` が渡す）
+plugin/                       セッションに載せる同梱のプラグイン（`token-usage-diet` だけを持つ。`buildQuerySeedOptions` が渡す）
+vendor/tsukumo-plugins/       取り込んだ tsukumo-plugins（git submodule。契約に型の合うスキルの1つの例。`buildQuerySeedOptions` が渡す）
 ```
 
 **設定の置き場は環境変数と歯車の設定の2つ**（`docs/architecture/adr/0025-no-project-settings.md`。リポジトリに属する値の

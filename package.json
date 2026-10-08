@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/cli.ts",
-    "prepare": "pnpm run build",
+    "prepare": "git submodule update --init && pnpm run build",
     "dev": "pnpm run build && node src/cli.ts --dev",
     "build": "pnpm run css-types && node scripts/build-ui.ts",
     "css-types": "hcm 'src/**/*.module.css' --outDir dist/css-module-type --logLevel silent",
