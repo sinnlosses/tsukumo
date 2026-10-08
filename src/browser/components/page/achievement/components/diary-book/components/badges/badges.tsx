@@ -6,6 +6,7 @@ import type { DiaryBookBadge } from "../../../../hooks/use-diary-book.ts"
 import styles from "./badges.module.css"
 
 const GRADUATION_LABEL = "卒業"
+const MILESTONE_UNIT_LABEL = "件目のタスク"
 
 export function Badges(props: { readonly badges: readonly DiaryBookBadge[] }): ReactElement {
   return (
@@ -60,7 +61,7 @@ export function Badges(props: { readonly badges: readonly DiaryBookBadge[] }): R
                 weight="inherit"
                 className={styles["diary-book-badge-sub"]}
               >
-                {badge.unitLabel}
+                {MILESTONE_UNIT_LABEL}
               </Text>
             </>
           )}

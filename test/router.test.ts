@@ -502,8 +502,7 @@ describe("createCommandRouter（session）", () => {
       kind: "known",
       date: "2026-09-23",
       today: "2026-09-24",
-      commits: { kind: "known", count: 5 },
-      doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+      doneTasks: [{ id: "T-1", summary: "架空のタスク" }],
       graduations: [],
       milestones: [],
       diary: { kind: "none" },
@@ -511,8 +510,7 @@ describe("createCommandRouter（session）", () => {
 
     const EMPTY_DAY: DailyAchievement = {
       ...KNOWN_DAY,
-      commits: { kind: "known", count: 0 },
-      doneTasks: { kind: "known", items: [] },
+      doneTasks: [],
     }
 
     /**
@@ -610,7 +608,7 @@ describe("createCommandRouter（session）", () => {
 
     it.each<[string, DailyAchievement | undefined]>([
       ["空の日", EMPTY_DAY],
-      ["main が読めない日", { kind: "unknown" }],
+      ["Beads が読めない日", { kind: "unknown" }],
       ["成果が読めなかった（undefined）", undefined],
     ])("%sは断る", async (_, day) => {
       const { commands } = startRouter("written", () => Promise.resolve(day))

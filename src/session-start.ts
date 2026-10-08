@@ -5,7 +5,7 @@ import { basename, dirname } from "node:path"
 
 import type { CurrentCharacter } from "./current-character.ts"
 import { createSocketRouter } from "./router.ts"
-import { createAchievementCache } from "./server/achievement/adapter/main-history.ts"
+import { createAchievementCache } from "./server/achievement/adapter/closed-issue.ts"
 import { createServerClock } from "./server/adapter/local-time.ts"
 import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"

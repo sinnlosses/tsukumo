@@ -154,7 +154,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `chat/`              | 雑談モード。作法・記憶・話しかけ・アーカイブ・要約・覚えたこと・定着                         |
 | `character-pack/`    | キャラクターパックの選択・読み込み・画面からの編集                                           |
 | `diary/`             | 日記。`diary` ツールと保存                                                                   |
-| `achievement/`       | 成果。コミットは `main` の履歴、終えたタスクは Beads の閉じた課題から数える                  |
+| `achievement/`       | 成果。終えたタスクを Beads の閉じた課題から数える                                            |
 | `usage-review/`      | 見直し。2つのツール・前回の結果・見送り                                                      |
 | `token-usage/`       | トークン消費の記録と集計                                                                     |
 | `context-usage/`     | コンテキストの内訳の記録                                                                     |
@@ -205,12 +205,12 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                         | core → core だけ（`session-manager` → `report-usage` `report-image-shelf`）                                                                                                                               |
 | `system-prompt`       | `session-driver` `chat` `report`                                                                                                                 | core → core だけ                                                                                                                                                                                          |
-| `view-server`         | `session` `achievement`                                                                                                                          | adapter → core（`session-socket` / `rpc-guard` → `command-session`）・adapter → adapter（`server` → `main-history`）                                                                                      |
+| `view-server`         | `session` `achievement`                                                                                                                          | adapter → core（`session-socket` / `rpc-guard` → `command-session`）                                                                                                                                      |
 | `chat`                | `session-driver` `character-pack`                                                                                                                | core → core と adapter → core（駆動の契約にある `PersonaMemory` `ChatSummary` などと、`chat-archive-port`）・adapter → adapter（`persona-memory` / `chat-summary` → `character-pack` / `character-edit`） |
 | `context-usage`       | `session-driver`                                                                                                                                 | core → core（駆動の契約）                                                                                                                                                                                 |
 | `session-driver`      | `chat` `report` `usage-review` `view-server`                                                                                                     | core → core（`report-review` `port-resolution`）・adapter → core（各ツールの判断）                                                                                                                        |
 | `diary`               | `character-pack` `repository` `session-driver`                                                                                                   | adapter → adapter・adapter → core（`sdk-diary` → `session-driver/core/tsukumo-tool-name.ts` の `tsukumoToolFullName`）                                                                                    |
-| `achievement`         | `repository`                                                                                                                                     | adapter → adapter（`main-history` → `git` `beads`）                                                                                                                                                       |
+| `achievement`         | `repository`                                                                                                                                     | adapter → adapter（`closed-issue` → `beads` `beads-task`）                                                                                                                                                |
 | そのほか              | —（葉。`report` `usage-review` `token-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation`） | —                                                                                                                                                                                                         |
 
 #### コマンドの受け手と手続きの置き方
@@ -329,7 +329,7 @@ plugin/                       セッションに載せる Claude Code のプラ�
 （タスク運用を使わないプロジェクトは `{ "tasks": "off" }`）で、検証は `shared/repository/project-settings.ts` の `projectSettingsOf`、読み出しは
 `server/repository/adapter/project-settings.ts` の `readProjectSettings` の1か所。結果は
 「設定なし（ファイルが無い・`tasks` が無い）・使わない（`tasks` が `"off"`）・読めない（形が違う）・読めた」の4つで、
-起動時に覚えず、タスク一覧の見回りと成果の読み出しのたびに読み直す（画面から書いた値が次に読んだときに効く）。
+起動時に覚えず、タスク一覧の見回りのたびに読み直す（画面から書いた値が次に読んだときに効く）。
 以前の版が書いた `"store": "beads"` の欄は受けて読み捨てる（それ以外の値は「読めない」）。
 欄の説明は `README.md`「プロジェクトの設定」。
 
@@ -344,8 +344,8 @@ plugin/                       セッションに載せる Claude Code のプラ�
 見張りの `watchTaskSummary` は、設定が前回と変わった見回りでだけ読み元を選び直し、設定が読めないときは
 決まった結果（`settings-invalid`）を、使わないときは `off` を返す読み元（`task-source.ts` の `fixedTaskSource`。どちらも Beads を読まない）を置く。設定が無いときも
 Beads を試しに読み、`.beads` が無ければ「不明」になる（値を推し量るのではなく、読めるかを試すだけ）。
-成果は、git が無い（数える枝が読めない）ときも Beads の数と閉じた日の暦だけを出し、コミットは並べない
-（`docs/requirements.md` 4.11 の「数えられない・読めないとき」）。数える枝は `tasks.mainBranch`、無ければ起こした作業ツリーの `HEAD`。
+成果はプロジェクトの設定を読まず、Beads の閉じた課題だけで数える（`server/achievement/adapter/closed-issue.ts`。
+`.beads` が無ければ成果ごと `unknown`。`docs/requirements.md` 4.11 の「数えられない・読めないとき」）。
 前回知らせたものと同じ結果は知らせない。前回の初めは画面の初期値と同じ `loading`（最初の見回りの結果がまだ届いていない）なので、
 最初から読めないときも初回に必ず `unknown` が届く。
 起動直後は、設定が `off`・読めないでなければ、前回読めた一覧（`~/.tsukumo/task-summary.json`。作業ディレクトリごと）を
@@ -785,14 +785,14 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 **成果は `SessionState` に入れない。** 成果の画面の中身は、画面が開いているときにブラウザが読み取りの
 手続き（`achievement.day` / `achievement.calendar`）で取りに行く（状態に入れるとどの画面でもフレームと
-再接続のたびに運び、数えるのに `git` を何度も起こす）。応答の決まり:
+再接続のたびに運び、数えるのに `bd` を何度も起こす）。応答の決まり:
 
 - **応答はサーバの今日（`today`）を持つ。** 日の境目を決めるのはサーバの `local-time.ts` の1箇所で、
   ブラウザは時計を読まず、「今日」「昨日」と「次の日」を押せるかを `today` との比較で決める
 - **読めないものは応答の値で伝える**（画面に何を出すかは `docs/requirements.md` 4.11「数えられない・読めないとき」）。
-  コミットの数が読めなければ `unknown`、数えられない場面は `{ kind: "unknown" }`（200）、
-  **数える途中の `git`・`bd` の失敗は 503** で、部分的な数を配らない。日記が読めないのは `unreadable` として数と一緒に配る
-- 入るのは数・時刻・タスクの ID と `summary`・日付と日記だけで、コミットの件名も会話の文面も
+  数えられない場面は `{ kind: "unknown" }`（200）、
+  **数える途中の `bd` の失敗は 503** で、部分的な数を配らない。日記が読めないのは `unreadable` として数と一緒に配る
+- 入るのは数・タスクの ID と `summary`・日付と日記だけで、会話の文面は
   入らない。起動トークンが要る（「会話内容と安全」）
 
 **経過時間**は `turn` が持つ時刻から browser が計算する（`SessionState` に秒数は入れない）。

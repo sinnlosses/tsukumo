@@ -31,12 +31,10 @@ const WRITTEN_PAGE: DiaryBookPage = {
   tasks: {
     items: [{ id: "T-1", summary: "架空のタスク" }],
     moreCount: 0,
-    commits: { kind: "known", count: 5 },
-    tasksKnown: true,
   },
   badges: [
     { kind: "graduation", key: "graduation-T-2", taskId: "T-2" },
-    { kind: "milestone", key: "milestone-commit-14:12", countLabel: "千", unitLabel: "コミット目" },
+    { kind: "milestone", key: "milestone-T-3", countLabel: "五百" },
   ],
   right: {
     kind: "written",
@@ -57,7 +55,7 @@ const BLANK_PAGE: DiaryBookPage = {
   lampLevel: "bright",
   lampLabel: "灯り　明るい",
   bookmark: { kind: "pending" },
-  tasks: { items: [], moreCount: 0, commits: { kind: "known", count: 4 }, tasksKnown: true },
+  tasks: { items: [], moreCount: 0 },
   badges: [],
   right: {
     kind: "blank",
@@ -159,27 +157,25 @@ describe("DiaryBook", () => {
     expect(document.querySelector(".diary-book-signature-image")).toBeNull()
   })
 
-  it("「この日に終えたこと」の下の行にコミットの数を出し、分からない日は行ごと出さない", () => {
+  it("「この日に終えたこと」の下の行に、並べきれなかった件数だけを出し、無ければ行ごと出さない", () => {
     renderBook(openModel())
-    expect(screen.getByText("コミット 5")).toBeDefined()
+    expect(screen.queryByText(/ほか \d+ 件/)).toBeNull()
     cleanup()
 
     const page = WRITTEN_PAGE.kind === "ready" ? WRITTEN_PAGE : undefined
     if (page === undefined) {
       throw new Error("ready のはず")
     }
-    renderBook(
-      openModel({ page: { ...page, tasks: { ...page.tasks, commits: { kind: "unknown" } } } }),
-    )
-    expect(screen.queryByText(/コミット \d/)).toBeNull()
+    renderBook(openModel({ page: { ...page, tasks: { ...page.tasks, moreCount: 3 } } }))
+    expect(screen.getByText("ほか 3 件")).toBeDefined()
   })
 
   it("卒業・節目の丸い印が出る", () => {
     renderBook(openModel())
     expect(screen.getByText("卒業")).toBeDefined()
     expect(screen.getByText("T-2")).toBeDefined()
-    expect(screen.getByText("千")).toBeDefined()
-    expect(screen.getByText("コミット目")).toBeDefined()
+    expect(screen.getByText("五百")).toBeDefined()
+    expect(screen.getByText("件目のタスク")).toBeDefined()
   })
 
   it("白紙の日は「このページは、まだ白紙。」と押せる「この日を振り返る」を出し、押すと onReview が呼ばれる", () => {

@@ -15,7 +15,7 @@ import type { AchievementCalendarView } from "./hooks/use-achievement-calendar.t
 import type { UseAchievementResult } from "./hooks/use-achievement.ts"
 import type { DiaryBookModel } from "./hooks/use-diary-book.ts"
 
-const UNAVAILABLE_NOTE = "このディレクトリでは成果を数えられない（main が読めない）"
+const UNAVAILABLE_NOTE = "このディレクトリでは成果を数えられない（Beads の課題が読めない）"
 
 export type PresentationalAchievementProps = UseAchievementResult & {
   readonly calendar: AchievementCalendarView

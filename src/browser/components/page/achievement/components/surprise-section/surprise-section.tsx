@@ -50,7 +50,7 @@ export function SurpriseSection(props: SurpriseSectionProps): ReactElement | nul
           <GraduationCard key={graduation.id} graduation={graduation} />
         ))}
         {props.milestones.map((milestone) => (
-          <MilestoneCard key={milestoneKey(milestone)} milestone={milestone} />
+          <MilestoneCard key={milestone.taskId} milestone={milestone} />
         ))}
       </div>
     </VStack>
@@ -97,20 +97,14 @@ function MilestoneCard(props: { readonly milestone: AchievementMilestone }): Rea
         </Text>{" "}
         <span className={styles["achievement-surprise-card-number"]}>{count}</span>{" "}
         <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
-          {milestone.kind === "task" ? "件目のタスク" : "コミット目"}
+          件目のタスク
         </Text>
       </p>
       <p className={styles["achievement-surprise-card-footer"]}>
-        {milestone.kind === "task"
-          ? `${milestone.taskId} が ${count} 件目になりました。`
-          : `[${milestone.time}] のコミットが ${count} 件目になりました。`}
+        {`${milestone.taskId} が ${count} 件目になりました。`}
       </p>
     </article>
   )
-}
-
-function milestoneKey(milestone: AchievementMilestone): string {
-  return milestone.kind === "task" ? `task-${milestone.taskId}` : `commit-${milestone.time}`
 }
 
 /** 3桁ごとに区切る。 */

@@ -116,7 +116,7 @@
   }
 }
 
-/* 数の札2枚（終えたタスク → コミットの順）。 */
+/* 数の札（終えたタスク）。札は列の半分の幅に置く。 */
 .achievement-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -136,10 +136,6 @@
 .achievement-card-value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-}
-/* 字の段・色は `Text` が持つ。margin だけここに置く。 */
-.achievement-card-note {
-  margin: 0.2rem 0 0;
 }
 
 /* 振り返りのボタン。 */

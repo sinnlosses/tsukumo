@@ -198,18 +198,16 @@ async function reflectAchievement(
   if (
     achievement === undefined ||
     achievement.kind !== "known" ||
-    isEmptyAchievementDay(achievement.commits, achievement.doneTasks)
+    isEmptyAchievementDay(achievement.doneTasks)
   ) {
     return declined(FRAME_ERROR_REASON.achievementReflectionUnavailable)
   }
 
-  const doneTasks: readonly DiaryDayTask[] =
-    achievement.doneTasks.kind === "known" ? achievement.doneTasks.items : []
+  const doneTasks: readonly DiaryDayTask[] = achievement.doneTasks
   const text = achievementReflectionRequestText({
     date,
     today: achievement.today,
-    commits: achievement.commits,
-    doneTasks: achievement.doneTasks,
+    doneTasks,
     graduations: achievement.graduations,
     milestones: achievement.milestones,
     alreadyWritten: achievement.diary.kind === "written",

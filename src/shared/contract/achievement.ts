@@ -1,5 +1,5 @@
 // 成果の手続きの契約。
-// 運ぶのはコミットの数・タスクの ID と要約・日記で、コミットの件名も会話の文面も入らない。
+// 運ぶのはタスクの ID と要約・数・日記で、会話の文面は入らない。
 
 import { oc } from "@orpc/contract"
 
@@ -10,8 +10,8 @@ import {
 } from "../achievement/achievement.ts"
 
 /**
- * `git` のタイムアウト・失敗（部分的な数を出さない）。
- * `main` が読めないだけなら失敗にせず `{ kind: "unknown" }` を返す。
+ * `.beads` があるのに `bd` が落ちた・時間切れ（部分的な数を出さない）。
+ * `.beads` が無いだけなら失敗にせず `{ kind: "unknown" }` を返す。
  */
 const achievementErrors = oc.errors({ UNAVAILABLE: { status: 503 } })
 

@@ -54,8 +54,7 @@ const KNOWN_TODAY: DailyAchievement = {
   kind: "known",
   date: "2026-09-24",
   today: "2026-09-24",
-  commits: { kind: "known", count: 3 },
-  doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+  doneTasks: [{ id: "T-1", summary: "架空のタスク" }],
   graduations: [],
   milestones: [],
   diary: { kind: "none" },
@@ -201,17 +200,20 @@ describe("useAchievement", () => {
 
     const REFRESHED_TODAY: DailyAchievement = {
       ...KNOWN_TODAY,
-      commits: { kind: "known", count: 9 },
+      doneTasks: [
+        { id: "T-1", summary: "架空のタスク" },
+        { id: "T-2", summary: "架空のタスク2" },
+      ],
     }
     stubAchievementFetch(() => rpcOutput(REFRESHED_TODAY))
     const reopened = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(client),
     })
 
-    expect(reopened.result.current.view).toMatchObject({ kind: "ready", commits: { count: 3 } })
+    expect(reopened.result.current.diarySection).toMatchObject({ doneTaskCount: "1" })
 
     await waitFor(() => {
-      expect(reopened.result.current.view).toMatchObject({ kind: "ready", commits: { count: 9 } })
+      expect(reopened.result.current.diarySection).toMatchObject({ doneTaskCount: "2" })
     })
   })
 })
@@ -372,14 +374,11 @@ describe("useAchievement（日記の区画）", () => {
         body: "架空の日記の本文。",
         revisionId: 1,
       },
-      cards: [
-        { key: "done-tasks", label: "終えたタスク", value: "1", note: "" },
-        { key: "commits", label: "コミット", value: "3", note: "" },
-      ],
+      doneTaskCount: "1",
     })
   })
 
-  it("日記が無い日は「まだこの日の日記は無い。」、空の日は成果が無い旨、コミットだけの日は空の日にしない", async () => {
+  it("日記が無い日は「まだこの日の日記は無い。」、空の日は終えたタスクが無い旨", async () => {
     stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(createTestQueryClient()),
@@ -394,13 +393,7 @@ describe("useAchievement（日記の区画）", () => {
     })
 
     fetchStub?.restore()
-    stubAchievementFetch(() =>
-      rpcOutput({
-        ...KNOWN_TODAY,
-        commits: { kind: "known", count: 0 },
-        doneTasks: { kind: "known", items: [] },
-      }),
-    )
+    stubAchievementFetch(() => rpcOutput({ ...KNOWN_TODAY, doneTasks: [] }))
     const empty = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(createTestQueryClient()),
     })
@@ -408,58 +401,9 @@ describe("useAchievement（日記の区画）", () => {
       expect(empty.result.current.view.kind).toBe("ready")
     })
     expect(empty.result.current.diarySection).toMatchObject({
-      bubble: { kind: "notes", notes: ["この日に main へ入った成果は無い。"] },
+      bubble: { kind: "notes", notes: ["この日に終えたタスクは無い。"] },
+      doneTaskCount: "0",
     })
-
-    fetchStub?.restore()
-    stubAchievementFetch(() =>
-      rpcOutput({
-        ...KNOWN_TODAY,
-        commits: { kind: "known", count: 3 },
-        doneTasks: { kind: "known", items: [] },
-      }),
-    )
-    const commitOnly = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(createTestQueryClient()),
-    })
-    await waitFor(() => {
-      expect(commitOnly.result.current.view.kind).toBe("ready")
-    })
-    expect(commitOnly.result.current.diarySection).toMatchObject({
-      bubble: { kind: "notes", notes: ["まだこの日の日記は無い。"] },
-    })
-  })
-
-  it("タスクの記録が読めなければ札が「—」と添え書きになる", async () => {
-    stubAchievementFetch(() => rpcOutput({ ...KNOWN_TODAY, doneTasks: { kind: "unknown" } }))
-    const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(createTestQueryClient()),
-    })
-    await waitFor(() => {
-      expect(result.current.view.kind).toBe("ready")
-    })
-
-    expect(result.current.diarySection).toMatchObject({
-      cards: [
-        { label: "終えたタスク", value: "—", note: "タスクの記録が無い" },
-        { label: "コミット", value: "3", note: "" },
-      ],
-    })
-  })
-
-  it("コミットの数が分からない日は「コミット」の札を並べない", async () => {
-    stubAchievementFetch(() => rpcOutput({ ...KNOWN_TODAY, commits: { kind: "unknown" } }))
-    const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(createTestQueryClient()),
-    })
-    await waitFor(() => {
-      expect(result.current.view.kind).toBe("ready")
-    })
-
-    const section = result.current.diarySection
-    expect(section.kind === "shown" ? section.cards : undefined).toEqual([
-      { key: "done-tasks", label: "終えたタスク", value: "1", note: "" },
-    ])
   })
 
   it("読み込み中は札が「…」で吹き出しは空", () => {
@@ -471,7 +415,7 @@ describe("useAchievement（日記の区画）", () => {
     expect(result.current.diarySection).toMatchObject({
       ready: false,
       bubble: { kind: "blank" },
-      cards: [{ value: "…" }, { value: "…" }],
+      doneTaskCount: "…",
     })
   })
 
@@ -566,8 +510,7 @@ describe("useAchievement（書き上げの演出）", () => {
       kind: "known",
       date: "2026-09-24",
       today: "2026-09-24",
-      commits: { kind: "known", count: 3 },
-      doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+      doneTasks: [{ id: "T-1", summary: "架空のタスク" }],
       graduations: [],
       milestones: [],
       diary: {

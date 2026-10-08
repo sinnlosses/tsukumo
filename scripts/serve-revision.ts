@@ -25,8 +25,8 @@
 // `package.json` をまたいで比べるときだけこの前提が崩れるので、そのときは取り出し先で
 // `pnpm install` を手で打つ。
 //
-// `.git` も同じく symlink で貸す。無いと成果の画面が「main が読めない」になる
-// （`readCommitCalendar`）。取り出し先で打つ `git` は読み取り専用だけ（`lendGitDirectory` の
+// `.git` も同じく symlink で貸す。無いと `bd where` が Beads を見つけられず、成果の画面が「不明」になる
+// （`readBeadsWorkspace`）。取り出し先で打つ `git` は読み取り専用だけ（`lendGitDirectory` の
 // コメント）なので、貸した `.git` を書き換える心配はない。
 
 import { type ChildProcess, execFileSync } from "node:child_process"
@@ -161,9 +161,9 @@ function lendNodeModules(treeDir: string): void {
 }
 
 /**
- * いま居る作業ツリーの `.git` を symlink で貸す。成果の画面（`main` の履歴。
- * `readCommitCalendar`）が `main` を読むのにこれが要る
- * （無いと「main が読めない」＝`{ kind: "unknown" }` になる）。
+ * いま居る作業ツリーの `.git` を symlink で貸す。
+ * linked worktree には `.beads` が無く、`bd where` は git を辿って本体の作業ツリーの `.beads` を見つけるので、成果の画面（`readBeadsWorkspace`）にこれが要る
+ * （無いと `{ kind: "unknown" }` になる）。日記の置き場も共有の `.git` で決まる。
  *
  * `.git` は本体の作業ツリーそのままの形（ディレクトリでも、linked worktree の gitdir
  * ポインタのファイルでも）を symlink で指すだけ——書き換えない。取り出し先で打つ `git` は

@@ -42,14 +42,12 @@ export function taskMilestoneOf(
     [(item) => item.id, "asc"],
   )
   let running = totalBeforeToday
-  let crossed: { readonly count: number; readonly taskId: string } | undefined
+  let crossed: AchievementMilestone | undefined
   for (const item of sorted) {
     running += 1
     if (running % TASK_MILESTONE_STEP === 0) {
       crossed = { count: running, taskId: item.id }
     }
   }
-  return crossed === undefined
-    ? undefined
-    : { kind: "task", count: crossed.count, taskId: crossed.taskId }
+  return crossed
 }

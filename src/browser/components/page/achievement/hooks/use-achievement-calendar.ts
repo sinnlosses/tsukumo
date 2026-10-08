@@ -33,7 +33,7 @@ export type CalendarCell =
 /**
  * まだ一度も届いていない間は `loading`（初回だけ「取れなかった」と誤読させないための区別）。
  * 届けば `AchievementCalendar` の中身に、マスの並びと範囲の字を足したもの。
- * `unknown` は「main が読めない」と「取りに行って失敗した」の両方をここで畳む。
+ * `unknown` は「Beads が読めない」と「取りに行って失敗した」の両方をここで畳む。
  */
 export type AchievementCalendarView =
   | { readonly kind: "loading" }

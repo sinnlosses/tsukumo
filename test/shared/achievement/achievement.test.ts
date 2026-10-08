@@ -2,22 +2,13 @@ import { describe, expect, it } from "vitest"
 
 import {
   achievementReflectionRequestText,
-  isEmptyAchievementDay,
-  lampCountOf,
   nextDateKey,
   previousDateKey,
   resolveAchievementDateKey,
-  type AchievementCommits,
-  type AchievementDoneTasks,
+  type AchievementTask,
 } from "../../../src/shared/achievement/achievement.ts"
 
 // ここで使う日付・タスクはすべて手で書いた架空のもの（実物の履歴・リポジトリの記録は使わない）。
-
-function commits(count: number): AchievementCommits {
-  return { kind: "known", count }
-}
-
-const UNKNOWN_COMMITS: AchievementCommits = { kind: "unknown" }
 
 describe("previousDateKey / nextDateKey", () => {
   it("前後の日を1日ぶんだけ動かす", () => {
@@ -52,65 +43,25 @@ describe("resolveAchievementDateKey", () => {
   })
 })
 
-const ONE_TASK: AchievementDoneTasks = {
-  kind: "known",
-  items: [{ id: "T-1", summary: "架空のタスク" }],
-}
-
-describe("isEmptyAchievementDay", () => {
-  it("コミットも終えたタスクも0なら空", () => {
-    expect(isEmptyAchievementDay(commits(0), { kind: "known", items: [] })).toBe(true)
-  })
-
-  it("コミットがあれば空ではない", () => {
-    expect(isEmptyAchievementDay(commits(1), { kind: "known", items: [] })).toBe(false)
-  })
-
-  it("終えたタスクがあれば空ではない", () => {
-    expect(isEmptyAchievementDay(commits(0), ONE_TASK)).toBe(false)
-  })
-
-  it("タスクの記録が無いときは、コミットが0でも空と決めない", () => {
-    expect(isEmptyAchievementDay(commits(0), { kind: "unknown" })).toBe(false)
-  })
-
-  it("コミットの数が分からないときは、終えたタスクが0なら空", () => {
-    expect(isEmptyAchievementDay(UNKNOWN_COMMITS, { kind: "known", items: [] })).toBe(true)
-    expect(isEmptyAchievementDay(UNKNOWN_COMMITS, ONE_TASK)).toBe(false)
-  })
-})
-
-describe("lampCountOf", () => {
-  it("コミットの数が分かればそれを使う", () => {
-    expect(lampCountOf(commits(12), ONE_TASK)).toBe(12)
-  })
-
-  it("コミットの数が分からなければ終えたタスクの件数を使う", () => {
-    expect(lampCountOf(UNKNOWN_COMMITS, ONE_TASK)).toBe(1)
-    expect(lampCountOf(UNKNOWN_COMMITS, { kind: "unknown" })).toBe(0)
-  })
-})
+const ONE_TASK: readonly AchievementTask[] = [{ id: "T-1", summary: "架空のタスク" }]
 
 describe("achievementReflectionRequestText", () => {
   const BASE = {
     date: "2026-09-24",
     today: "2026-09-24",
+    doneTasks: ONE_TASK,
     graduations: [],
     milestones: [],
     alreadyWritten: false,
   }
 
-  it("今日・タスクありの依頼文を組む", () => {
+  it("今日の依頼文を、終えたタスクの数と一覧としおりの頼みで組む", () => {
     const text = achievementReflectionRequestText({
       ...BASE,
-      commits: commits(42),
-      doneTasks: {
-        kind: "known",
-        items: [{ id: "T-100", summary: "架空のタスク1" }],
-      },
+      doneTasks: [{ id: "T-100", summary: "架空のタスク1" }],
     })
     expect(text).toContain(
-      "今日の成果を一緒に振り返って、この日の日記を書いてほしい。main に入ったコミットは 42 件、終えたタスクは 1 件。",
+      "今日の成果を一緒に振り返って、この日の日記を書いてほしい。終えたタスクは 1 件。",
     )
     expect(text).toContain("- T-100 架空のタスク1")
     expect(text).toContain("日記は diary ツールで1回書いて。")
@@ -118,54 +69,11 @@ describe("achievementReflectionRequestText", () => {
   })
 
   it("昨日・それより前の言い方", () => {
-    const yesterday = achievementReflectionRequestText({
-      ...BASE,
-      date: "2026-09-23",
-      commits: commits(1),
-      doneTasks: { kind: "known", items: [] },
-    })
+    const yesterday = achievementReflectionRequestText({ ...BASE, date: "2026-09-23" })
     expect(yesterday.startsWith("昨日の成果")).toBe(true)
 
-    const earlier = achievementReflectionRequestText({
-      ...BASE,
-      date: "2026-09-21",
-      commits: commits(1),
-      doneTasks: { kind: "known", items: [] },
-    })
+    const earlier = achievementReflectionRequestText({ ...BASE, date: "2026-09-21" })
     expect(earlier.startsWith("9月21日の成果")).toBe(true)
-  })
-
-  it("終えたタスクが0件なら一覧を出さず「終えたタスクは無いけれど」、しおりは要らないと添える", () => {
-    const text = achievementReflectionRequestText({
-      ...BASE,
-      commits: commits(5),
-      doneTasks: { kind: "known", items: [] },
-    })
-    expect(text).toContain("終えたタスクは無いけれど。")
-    expect(text).not.toContain("終えたタスク:")
-    expect(text).toContain("しおりは要らない。")
-  })
-
-  it("タスクの記録が無いときはタスクの文も一覧も出さない", () => {
-    const text = achievementReflectionRequestText({
-      ...BASE,
-      commits: commits(3),
-      doneTasks: { kind: "unknown" },
-    })
-    expect(text).toContain("main に入ったコミットは 3 件。")
-    expect(text).not.toContain("終えたタスク")
-  })
-
-  it("コミットの数が分からないときはコミットの句を出さず、終えたタスクの数だけを書く", () => {
-    const text = achievementReflectionRequestText({
-      ...BASE,
-      commits: UNKNOWN_COMMITS,
-      doneTasks: ONE_TASK,
-    })
-    expect(text).toContain(
-      "今日の成果を一緒に振り返って、この日の日記を書いてほしい。終えたタスクは 1 件。",
-    )
-    expect(text).not.toContain("コミット")
   })
 
   it("20件を超えると「ほか n 件」に畳む", () => {
@@ -173,11 +81,7 @@ describe("achievementReflectionRequestText", () => {
       id: `T-${String(index)}`,
       summary: `架空のタスク${String(index)}`,
     }))
-    const text = achievementReflectionRequestText({
-      ...BASE,
-      commits: commits(30),
-      doneTasks: { kind: "known", items },
-    })
+    const text = achievementReflectionRequestText({ ...BASE, doneTasks: items })
     expect(text).toContain("- ほか 3 件")
     expect(text.split("\n").filter((line) => line.startsWith("- T-"))).toHaveLength(20)
   })
@@ -185,34 +89,22 @@ describe("achievementReflectionRequestText", () => {
   it("小さな驚き（卒業・節目）があれば行を足す", () => {
     const text = achievementReflectionRequestText({
       ...BASE,
-      commits: commits(38),
-      doneTasks: ONE_TASK,
       graduations: [
         { id: "T-9", summary: "架空の先輩タスク", registeredOn: "2026-09-01", days: 12 },
       ],
-      milestones: [{ kind: "commit", count: 1000, time: "12:00" }],
+      milestones: [{ count: 250, taskId: "T-1" }],
     })
     expect(text).toContain("小さな驚き:")
     expect(text).toContain("- 先輩タスクの卒業: T-9（登録から 12 日）")
-    expect(text).toContain("- 節目: 通算 1000 コミット目")
+    expect(text).toContain("- 節目: 通算 250 件目のタスク")
   })
 
   it("小さな驚きが無ければ行を出さない", () => {
-    const text = achievementReflectionRequestText({
-      ...BASE,
-      commits: commits(1),
-      doneTasks: { kind: "known", items: [] },
-    })
-    expect(text).not.toContain("小さな驚き")
+    expect(achievementReflectionRequestText(BASE)).not.toContain("小さな驚き")
   })
 
   it("その日に既に日記があれば、続きとして書き足す1行を足す", () => {
-    const text = achievementReflectionRequestText({
-      ...BASE,
-      commits: commits(1),
-      doneTasks: { kind: "known", items: [] },
-      alreadyWritten: true,
-    })
+    const text = achievementReflectionRequestText({ ...BASE, alreadyWritten: true })
     expect(text).toContain("この日の日記は既にあるので、続きとして書き足す。")
   })
 })

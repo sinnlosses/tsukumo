@@ -85,8 +85,8 @@ sed -n '/^### 消すかどうか/,/^#\{2,4\} /p' docs/coding-standards.md
 
 **状態を持つ入れ物（キャッシュなど）を配線から渡すときも同じ**——中の `Map` などを型に出して
 呼び出し先に `.set` させず、作る側の閉包に閉じ込めて、覚える・引く口だけを渡す。
-`src/server/achievement/adapter/main-history.ts` の `createAchievementCache()` が例（型は
-`dailyCountOf` / `rememberDailyCount` の関数2つだけを持ち、`Map` は閉包の中）。
+`src/server/achievement/adapter/closed-issue.ts` の `createAchievementCache()` が例（型は
+`readBeads` の関数1つだけを持ち、前に読んだ結果とその印は閉包の中）。
 
 ## 型を迂回するキャストを使わない
 
@@ -831,8 +831,8 @@ store には値だけでなく、React に属さない口も同じく持たせ�
 - **単体テストのプロセスのタイムゾーンは UTC に固定してある**（単体テストの設定の `test.env.TZ`。
   ホストが JST でも `Temporal.Now.timeZoneId()` は `"UTC"` を返す）。日付の境目を見るテストは、
   オフセットを `+09:00` のように固定せず、`Temporal.Now.timeZoneId()` を基準に時刻を組む。
-  固定すると単体テストが見る日の境界とずれ、境界に近い時刻のコミット・イベントが意図と違う日に
-  数えられる（`test/server/achievement/adapter/main-history.test.ts` の `isoDateAt`）
+  固定すると単体テストが見る日の境界とずれ、境界に近い時刻の課題・イベントが意図と違う日に
+  数えられる（`test/server/achievement/adapter/closed-issue.test.ts` の `isoDateAt`）
 - 非公開関数は、`export` された関数の振る舞いを通して検証する。テストのためだけに `export`
   しない（上の「関数の並び順」節と同じ規約）
 - **語彙（表情・衣装など全域を列挙する定数）の長さに依存する期待値は、その定数から導く**

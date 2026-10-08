@@ -1,13 +1,13 @@
 // 成果の手続き。形は `achievementContract`。照合は束ねる側のミドルウェアが済ませている。
 //
-// `git` のタイムアウト・失敗を契約のエラー（`UNAVAILABLE`、503）に訳すのはここだけで、部分的な数を出さない。
-// `main` が読めないだけなら失敗にせず `{ kind: "unknown" }` をそのまま配る。
+// `bd` のタイムアウト・失敗を契約のエラー（`UNAVAILABLE`、503）に訳すのはここだけで、部分的な数を出さない。
+// `.beads` が無いだけなら失敗にせず `{ kind: "unknown" }` をそのまま配る。
 
 import { implement } from "@orpc/server"
 
 import type { AchievementDaySelection } from "../../../shared/achievement/achievement.ts"
 import { achievementContract } from "../../../shared/contract/achievement.ts"
-import type { ReadAchievementResult, ReadCommitCalendarResult } from "./main-history.ts"
+import type { ReadAchievementCalendarResult, ReadAchievementResult } from "./closed-issue.ts"
 
 /** この機能の手続きが使う口（中身は配線が渡す）。 */
 export type AchievementProcedurePorts = {
@@ -18,8 +18,8 @@ export type AchievementProcedurePorts = {
   readonly readAchievementDay: (
     selection: AchievementDaySelection,
   ) => Promise<ReadAchievementResult>
-  /** 灯りの暦（`readCommitCalendar` と日記のある日を束ねたもの）。 */
-  readonly readAchievementCalendar: () => Promise<ReadCommitCalendarResult>
+  /** 灯りの暦（`readAchievementCalendar` と日記のある日を束ねたもの）。 */
+  readonly readAchievementCalendar: () => Promise<ReadAchievementCalendarResult>
 }
 
 export function achievementProcedure(ports: AchievementProcedurePorts) {

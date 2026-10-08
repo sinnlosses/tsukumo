@@ -27,7 +27,6 @@ function stubFetch(reply: () => RpcStubReply): void {
 const KNOWN: AchievementCalendar = {
   kind: "known",
   today: "2026-09-24",
-  counted: "commits",
   days: [{ date: "2026-09-24", count: 5 }],
   diaryDates: ["2026-09-24"],
 }

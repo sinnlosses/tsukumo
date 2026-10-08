@@ -13,14 +13,11 @@ import {
   lampLevel,
   type LampLevel,
 } from "../../../../../shared/achievement/achievement-calendar.ts"
-import {
-  lampCountOf,
-  type AchievementCommits,
-  type AchievementDoneTasks,
-  type AchievementGraduation,
-  type AchievementMilestone,
-  type AchievementTask,
-  type DailyAchievement,
+import type {
+  AchievementGraduation,
+  AchievementMilestone,
+  AchievementTask,
+  DailyAchievement,
 } from "../../../../../shared/achievement/achievement.ts"
 import type {
   CharacterInfo,
@@ -69,15 +66,12 @@ export type DiaryBookBadge =
       readonly kind: "milestone"
       readonly key: string
       readonly countLabel: string
-      readonly unitLabel: string
     }
 
 /** 「この日に終えたこと」。 */
 export type DiaryBookTaskList = {
   readonly items: readonly AchievementTask[]
   readonly moreCount: number
-  readonly commits: AchievementCommits
-  readonly tasksKnown: boolean
 }
 
 /** しおりの区画の状態。`none` は区画ごと省く。 */
@@ -289,7 +283,6 @@ function pageOf(
       ? {
           kind: "blank",
           review: blankReviewOf(
-            data.commits,
             data.doneTasks,
             diaryWriting,
             date,
@@ -306,7 +299,7 @@ function pageOf(
       : written.bookmark.kind === "placed"
         ? written.bookmark
         : { kind: "none" }
-  const lamp = lampLevel(lampCountOf(data.commits, data.doneTasks))
+  const lamp = lampLevel(data.doneTasks.length)
 
   return {
     kind: "ready",
@@ -316,7 +309,7 @@ function pageOf(
     lampLevel: lamp,
     lampLabel: `灯り　${LAMP_LABEL[lamp]}`,
     bookmark,
-    tasks: taskListOf(data.commits, data.doneTasks),
+    tasks: taskListOf(data.doneTasks),
     badges: badgesOf(data.graduations, data.milestones),
     right,
     portraitName: portrait.name,
@@ -337,15 +330,14 @@ function paragraphsOf(diary: Diary): readonly DiaryBookParagraph[] {
 
 /** 白紙の日の主ボタン。押せないのは空の日と、日記を書いている間。 */
 function blankReviewOf(
-  commits: AchievementCommits,
-  doneTasks: AchievementDoneTasks,
+  doneTasks: readonly AchievementTask[],
   diaryWriting: DiaryWriting,
   date: string,
   onDateSelected: (date: string) => void,
   dispatch: SessionDispatch,
   onClose: () => void,
 ): AchievementReviewButton {
-  const availability = reviewAvailabilityOf(commits, doneTasks, diaryWriting)
+  const availability = reviewAvailabilityOf(doneTasks, diaryWriting)
 
   return {
     label: BLANK_REVIEW_LABEL,
@@ -370,15 +362,9 @@ function dialogLabelOf(page: DiaryBookPage): string {
     : `${page.kanjiDate}のページ（まだ白紙）`
 }
 
-function taskListOf(
-  commits: AchievementCommits,
-  doneTasks: AchievementDoneTasks,
-): DiaryBookTaskList {
-  if (doneTasks.kind === "unknown") {
-    return { items: [], moreCount: 0, commits, tasksKnown: false }
-  }
-  const items = doneTasks.items.slice(0, 4)
-  return { items, moreCount: doneTasks.items.length - items.length, commits, tasksKnown: true }
+function taskListOf(doneTasks: readonly AchievementTask[]): DiaryBookTaskList {
+  const items = doneTasks.slice(0, 4)
+  return { items, moreCount: doneTasks.length - items.length }
 }
 
 function badgesOf(
@@ -392,12 +378,8 @@ function badgesOf(
   }))
   const milestoneBadges = milestones.map((milestone): DiaryBookBadge => ({
     kind: "milestone",
-    key:
-      milestone.kind === "task"
-        ? `milestone-task-${milestone.taskId}`
-        : `milestone-commit-${milestone.time}`,
+    key: `milestone-${milestone.taskId}`,
     countLabel: kanjiNumeral(milestone.count),
-    unitLabel: milestone.kind === "task" ? "件目のタスク" : "コミット目",
   }))
   return [...graduationBadges, ...milestoneBadges]
 }

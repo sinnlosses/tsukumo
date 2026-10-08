@@ -14,10 +14,9 @@ import {
   isEmptyAchievementDay,
   nextDateKey,
   previousDateKey,
-  type AchievementCommits,
-  type AchievementDoneTasks,
   type AchievementGraduation,
   type AchievementMilestone,
+  type AchievementTask,
   type DailyAchievement,
 } from "../../../../../shared/achievement/achievement.ts"
 import type { CharacterInfo } from "../../../../../shared/character-pack/character.ts"
@@ -43,8 +42,6 @@ import {
   EMPTY_DAY_NOTE,
   LOADING_VALUE,
   NO_DIARY_NOTE,
-  UNKNOWN_TASKS_NOTE,
-  UNKNOWN_VALUE,
   WRITE_FAILED_NOTE,
 } from "../domain/review-note.ts"
 import { writtenTimeOf } from "../domain/written-time.ts"
@@ -54,7 +51,7 @@ const TODAY_REFETCH_INTERVAL_MS = 60_000
 
 /**
  * 日の切り替えの状態。「いま何日を見ているか」が分かるかどうかで分かれる。
- * main が読めていても、まだ一度も応答が届いていない・直前の取得が失敗して以前の応答も無い間は分からない。
+ * Beads が読めていても、まだ一度も応答が届いていない・直前の取得が失敗して以前の応答も無い間は分からない。
  */
 export type AchievementDaySwitch =
   | { readonly kind: "unknown" }
@@ -62,7 +59,7 @@ export type AchievementDaySwitch =
 
 /**
  * 画面の中身。日の切り替えとは別に持つ。
- * 「main が読めない」ときだけ日の切り替えも隠すので、`unavailable` はここでも特別に扱う。
+ * 「Beads が読めない」ときだけ日の切り替えも隠すので、`unavailable` はここでも特別に扱う。
  */
 export type AchievementView =
   | { readonly kind: "loading" }
@@ -70,8 +67,7 @@ export type AchievementView =
   | { readonly kind: "failed" }
   | {
       readonly kind: "ready"
-      readonly commits: AchievementCommits
-      readonly doneTasks: AchievementDoneTasks
+      readonly doneTasks: readonly AchievementTask[]
       readonly graduations: readonly AchievementGraduation[]
       readonly milestones: readonly AchievementMilestone[]
       readonly diary: DailyDiaryStatus
@@ -106,13 +102,6 @@ export type DiarySectionBubble =
       readonly revisionId: number
     }
 
-export type DiarySectionCard = {
-  readonly key: string
-  readonly label: string
-  readonly value: string
-  readonly note: string
-}
-
 /** 日記の区画が置く値。`view` から畳んだもの。 */
 export type DiarySectionModel =
   | { readonly kind: "failed" }
@@ -126,7 +115,8 @@ export type DiarySectionModel =
         | { readonly kind: "shown"; readonly label: string }
       readonly canOpenBook: boolean
       readonly bubble: DiarySectionBubble
-      readonly cards: readonly DiarySectionCard[]
+      /** 「終えたタスク」の札の数。取れるまでは `LOADING_VALUE`。 */
+      readonly doneTaskCount: string
     }
 
 export type UseAchievementResult = {
@@ -171,7 +161,7 @@ export function useAchievement(): UseAchievementResult {
     // 今日を見ているときは日付を送らない（サーバの既定も今日なので、hash に何も無いことと揃う）。
     // 403・503 は例外になり、取れなかったことは `isError` で伝わる。
     ...rpc.achievement.day.queryOptions({ input: selection }),
-    // 開くたびに・日を切り替えるたびに取り直す（前の日の分もあとから main に入った分で変わりうる）。
+    // 開くたびに・日を切り替えるたびに取り直す（前の日の分も、あとから課題を閉じ直すと変わりうる）。
     staleTime: 0,
     // 画面を離れている間も前回の結果を捨てない（既定の `gcTime` では5分で捨てる）。
     gcTime: Infinity,
@@ -255,7 +245,7 @@ function diarySectionOf(view: AchievementView, writing: AchievementWriting): Dia
         : { kind: "shown", label: `振り返り [${writtenTimeOf(latest.writtenAt) ?? ""}]` },
     canOpenBook: latest !== undefined,
     bubble: bubbleOf(view, writing, written, latest),
-    cards: cardsOf(view),
+    doneTaskCount: view.kind === "ready" ? String(view.doneTasks.length) : LOADING_VALUE,
   }
 }
 
@@ -275,7 +265,7 @@ function bubbleOf(
   if (writing.kind === "failed") {
     return { kind: "notes", notes: [WRITE_FAILED_NOTE, ...latestBodies] }
   }
-  if (isEmptyAchievementDay(view.commits, view.doneTasks)) {
+  if (isEmptyAchievementDay(view.doneTasks)) {
     return { kind: "notes", notes: [EMPTY_DAY_NOTE] }
   }
   if (latest === undefined) {
@@ -287,32 +277,6 @@ function bubbleOf(
     body: latest.body,
     revisionId: written?.paragraphs.length ?? 0,
   }
-}
-
-/** 数の札。コミットの数が分からない日は「コミット」の札を並べない。 */
-function cardsOf(view: AchievementView): readonly DiarySectionCard[] {
-  const ready = view.kind === "ready" ? view : undefined
-  const doneTasks = ready?.doneTasks
-  const doneTasksCard = {
-    key: "done-tasks",
-    label: "終えたタスク",
-    value:
-      doneTasks === undefined
-        ? LOADING_VALUE
-        : doneTasks.kind === "unknown"
-          ? UNKNOWN_VALUE
-          : String(doneTasks.items.length),
-    note: doneTasks?.kind === "unknown" ? UNKNOWN_TASKS_NOTE : "",
-  }
-  if (ready === undefined) {
-    return [doneTasksCard, { key: "commits", label: "コミット", value: LOADING_VALUE, note: "" }]
-  }
-  return ready.commits.kind === "unknown"
-    ? [doneTasksCard]
-    : [
-        doneTasksCard,
-        { key: "commits", label: "コミット", value: String(ready.commits.count), note: "" },
-      ]
 }
 
 /**
@@ -336,7 +300,7 @@ function reviewButtonOf(
     return { label, availability: { kind: "blocked", reason: "" }, onReview: () => {} }
   }
 
-  const availability = reviewAvailabilityOf(view.commits, view.doneTasks, diaryWriting)
+  const availability = reviewAvailabilityOf(view.doneTasks, diaryWriting)
 
   return {
     label,
@@ -404,7 +368,6 @@ function viewOf(
   }
   return {
     kind: "ready",
-    commits: data.commits,
     doneTasks: data.doneTasks,
     graduations: data.graduations,
     milestones: data.milestones,

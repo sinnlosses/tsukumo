@@ -37,7 +37,7 @@ describe("taskMilestoneOf", () => {
       { id: "t-9", closedAtEpochMilliseconds: 100 },
     ]
 
-    expect(taskMilestoneOf(items, 248)).toEqual({ kind: "task", count: 250, taskId: "t-1" })
+    expect(taskMilestoneOf(items, 248)).toEqual({ count: 250, taskId: "t-1" })
   })
 
   it("刻みに届かなければ undefined", () => {
@@ -52,6 +52,6 @@ describe("taskMilestoneOf", () => {
       closedAtEpochMilliseconds: index,
     }))
 
-    expect(taskMilestoneOf(items, 248)).toEqual({ kind: "task", count: 500, taskId: "t-252" })
+    expect(taskMilestoneOf(items, 248)).toEqual({ count: 500, taskId: "t-252" })
   })
 })

@@ -1,5 +1,5 @@
 // 日記の区画。
-// 立ち絵・頭の行・吹き出し・数の札2枚・振り返りのボタン（または3段の進み）を持つ。
+// 立ち絵・頭の行・吹き出し・数の札・振り返りのボタン（または3段の進み）を持つ。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -15,10 +15,11 @@ import type {
   AchievementReviewButton,
   AchievementWriting,
   DiarySectionBubble,
-  DiarySectionCard,
   DiarySectionModel,
 } from "../../hooks/use-achievement.ts"
 import styles from "./diary-section.module.css"
+
+const DONE_TASK_CARD_LABEL = "終えたタスク"
 
 const STAGE_LABEL = {
   read: "この日のタスクを読む",
@@ -74,7 +75,7 @@ export function DiarySection(props: DiarySectionProps): ReactElement {
         />
         <Bubble bubble={diary.bubble} reveal={props.reveal} onRevealed={props.onRevealed} />
         {props.writing.kind === "writing" && <Progress stage={props.writing.stage} />}
-        <Cards cards={diary.cards} />
+        <DoneTaskCard value={diary.doneTaskCount} />
         {diary.ready && <Controls writing={props.writing} review={props.review} />}
       </div>
     </section>
@@ -200,47 +201,24 @@ function Progress(props: { readonly stage: DiaryStage }): ReactElement {
   )
 }
 
-function Cards(props: { readonly cards: readonly DiarySectionCard[] }): ReactElement {
+function DoneTaskCard(props: { readonly value: string }): ReactElement {
   return (
     <div className={styles["achievement-cards"]}>
-      {props.cards.map((card) => (
-        <Card key={card.key} label={card.label} value={card.value} note={card.note} />
-      ))}
-    </div>
-  )
-}
-
-function Card(props: {
-  readonly label: string
-  readonly value: string
-  readonly note: string
-}): ReactElement {
-  return (
-    <section className={styles["achievement-card"]}>
-      <Heading level={3} size="label" tone="ink-quiet" weight="normal" className="">
-        {props.label}
-      </Heading>
-      <Text
-        element="p"
-        size="heading"
-        tone="ink"
-        weight="inherit"
-        className={styles["achievement-card-value"]}
-      >
-        {props.value}
-      </Text>
-      {props.note !== "" && (
+      <section className={styles["achievement-card"]}>
+        <Heading level={3} size="label" tone="ink-quiet" weight="normal" className="">
+          {DONE_TASK_CARD_LABEL}
+        </Heading>
         <Text
           element="p"
-          size="secondary"
-          tone="ink-quiet"
+          size="heading"
+          tone="ink"
           weight="inherit"
-          className={styles["achievement-card-note"]}
+          className={styles["achievement-card-value"]}
         >
-          {props.note}
+          {props.value}
         </Text>
-      )}
-    </section>
+      </section>
+    </div>
   )
 }
 

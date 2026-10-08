@@ -2,8 +2,7 @@
 
 import {
   isEmptyAchievementDay,
-  type AchievementCommits,
-  type AchievementDoneTasks,
+  type AchievementTask,
 } from "../../../../../shared/achievement/achievement.ts"
 import type { DiaryWriting } from "../../../../../shared/diary/diary.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
@@ -16,11 +15,10 @@ export type AchievementReviewAvailability =
 
 /** 両方成り立つときは空の日の理由だけを返す。 */
 export function reviewAvailabilityOf(
-  commits: AchievementCommits,
-  doneTasks: AchievementDoneTasks,
+  doneTasks: readonly AchievementTask[],
   diaryWriting: DiaryWriting,
 ): AchievementReviewAvailability {
-  if (isEmptyAchievementDay(commits, doneTasks)) {
+  if (isEmptyAchievementDay(doneTasks)) {
     return { kind: "blocked", reason: EMPTY_DAY_REASON }
   }
   if (diaryWriting.kind === "writing") {

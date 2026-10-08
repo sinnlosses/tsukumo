@@ -52,8 +52,7 @@ const CLOSED_DIARY_BOOK: DiaryBookModel = {
 const DEFAULT_PROPS: PresentationalAchievementProps = {
   view: {
     kind: "ready",
-    commits: { kind: "known", count: 3 },
-    doneTasks: { kind: "known", items: [] },
+    doneTasks: [],
     graduations: [],
     milestones: [],
     diary: { kind: "none" },
@@ -65,10 +64,7 @@ const DEFAULT_PROPS: PresentationalAchievementProps = {
     reviewedLabel: { kind: "none" },
     canOpenBook: false,
     bubble: { kind: "notes", notes: ["まだこの日の日記は無い。"] },
-    cards: [
-      { key: "done-tasks", label: "終えたタスク", value: "0", note: "" },
-      { key: "commits", label: "コミット", value: "0", note: "" },
-    ],
+    doneTaskCount: "0",
   },
   isFetching: false,
   onPreviousDay: NOOP,
@@ -95,11 +91,11 @@ function renderScreen(
 }
 
 describe("PresentationalAchievement", () => {
-  it("main が読めなければ、日の切り替え・日記の区画・暦を出さず1行だけ", () => {
+  it("Beads が読めなければ、日の切り替え・日記の区画・暦を出さず1行だけ", () => {
     renderScreen({ view: { kind: "unavailable" }, daySwitch: { kind: "unknown" } })
 
     expect(
-      screen.getByText("このディレクトリでは成果を数えられない（main が読めない）"),
+      screen.getByText("このディレクトリでは成果を数えられない（Beads の課題が読めない）"),
     ).toBeDefined()
     // `.achievement-day-switch` は並べるだけの規則だったので `HStack` に置き換わり、
     // 消えている（`docs/architecture/browser.md`「`components/ui/` の部品」）。日の切り替えの中身（`.achievement-day-switch-nav`。
@@ -125,8 +121,7 @@ describe("PresentationalAchievement", () => {
     renderScreen({
       view: {
         kind: "ready",
-        commits: { kind: "known", count: 3 },
-        doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+        doneTasks: [{ id: "T-1", summary: "架空のタスク" }],
         graduations: [],
         milestones: [],
         diary: {

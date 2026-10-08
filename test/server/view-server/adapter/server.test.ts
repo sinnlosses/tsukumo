@@ -487,8 +487,7 @@ describe("startViewServer", () => {
         kind: "known",
         date: "2026-09-23",
         today: "2026-09-24",
-        commits: { kind: "known", count: 3 },
-        doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+        doneTasks: [{ id: "T-1", summary: "架空のタスク" }],
         graduations: [],
         milestones: [],
         diary: { kind: "none" },
@@ -514,7 +513,6 @@ describe("startViewServer", () => {
       const calendar: AchievementCalendar = {
         kind: "known",
         today: "2026-09-25",
-        counted: "commits",
         days: [{ date: "2026-09-25", count: 3 }],
         diaryDates: [],
       }
@@ -525,7 +523,7 @@ describe("startViewServer", () => {
       expect(await rpcClientOf(server, TOKEN).achievement.calendar()).toEqual(calendar)
     })
 
-    it("achievement は、git の呼び出しが一時的に失敗したときは 503 の UNAVAILABLE（部分的な数を出さない）", async () => {
+    it("achievement は、bd の呼び出しが一時的に失敗したときは 503 の UNAVAILABLE（部分的な数を出さない）", async () => {
       const server = await startViewWithRpc({
         readAchievementDay: () => Promise.resolve({ kind: "unavailable" }),
         readAchievementCalendar: () => Promise.reject(new Error("架空の失敗")),

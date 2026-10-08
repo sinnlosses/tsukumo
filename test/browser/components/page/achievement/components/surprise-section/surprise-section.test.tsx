@@ -18,8 +18,8 @@ const GRADUATION: AchievementGraduation = {
   days: 12,
 }
 
-const TASK_MILESTONE: AchievementMilestone = { kind: "task", count: 500, taskId: "T-50" }
-const COMMIT_MILESTONE: AchievementMilestone = { kind: "commit", count: 1000, time: "14:12" }
+const TASK_MILESTONE: AchievementMilestone = { count: 500, taskId: "T-50" }
+const THOUSANDTH_MILESTONE: AchievementMilestone = { count: 1000, taskId: "T-9" }
 
 describe("SurpriseSection", () => {
   it("どちらも無ければ何も描かない", () => {
@@ -45,10 +45,10 @@ describe("SurpriseSection", () => {
     expect(screen.getByText("T-50 が 500 件目になりました。")).toBeDefined()
   })
 
-  it("コミットの節目は3桁区切りとカンマ、時刻の文を出す", () => {
-    render(<SurpriseSection graduations={[]} milestones={[COMMIT_MILESTONE]} />)
+  it("4桁以上の節目はカンマで区切る", () => {
+    render(<SurpriseSection graduations={[]} milestones={[THOUSANDTH_MILESTONE]} />)
 
     expect(screen.getByText("1,000")).toBeDefined()
-    expect(screen.getByText("[14:12] のコミットが 1,000 件目になりました。")).toBeDefined()
+    expect(screen.getByText("T-9 が 1,000 件目になりました。")).toBeDefined()
   })
 })

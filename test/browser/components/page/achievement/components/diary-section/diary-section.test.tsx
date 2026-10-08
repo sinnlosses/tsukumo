@@ -6,7 +6,6 @@ import type { DiaryWriterPortrait } from "../../../../../../../src/browser/compo
 import type {
   AchievementReviewButton,
   AchievementWriting,
-  DiarySectionCard,
   DiarySectionModel,
 } from "../../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
 
@@ -33,25 +32,13 @@ const AVAILABLE_REVIEW: AchievementReviewButton = {
 
 const NOT_WRITING: AchievementWriting = { kind: "none" }
 
-const LOADING_CARDS: readonly DiarySectionCard[] = [
-  { key: "done-tasks", label: "終えたタスク", value: "…", note: "" },
-  { key: "commits", label: "コミット", value: "…", note: "" },
-]
-
-function cardsOf(doneTasks: string, commits: string, note = ""): readonly DiarySectionCard[] {
-  return [
-    { key: "done-tasks", label: "終えたタスク", value: doneTasks, note },
-    { key: "commits", label: "コミット", value: commits, note: "" },
-  ]
-}
-
 const LOADING = {
   kind: "shown",
   ready: false,
   reviewedLabel: { kind: "none" },
   canOpenBook: false,
   bubble: { kind: "blank" },
-  cards: LOADING_CARDS,
+  doneTaskCount: "…",
 } satisfies DiarySectionModel
 
 const READY_WITH_DIARY = {
@@ -65,7 +52,7 @@ const READY_WITH_DIARY = {
     body: "架空の日記の本文。",
     revisionId: 1,
   },
-  cards: cardsOf("1", "4"),
+  doneTaskCount: "1",
 } satisfies DiarySectionModel
 
 const READY_NO_DIARY = {
@@ -74,18 +61,13 @@ const READY_NO_DIARY = {
   reviewedLabel: { kind: "none" },
   canOpenBook: false,
   bubble: { kind: "notes", notes: ["まだこの日の日記は無い。"] },
-  cards: cardsOf("1", "4"),
+  doneTaskCount: "1",
 } satisfies DiarySectionModel
 
 const READY_EMPTY_DAY = {
   ...READY_NO_DIARY,
-  bubble: { kind: "notes", notes: ["この日に main へ入った成果は無い。"] },
-  cards: cardsOf("0", "0"),
-} satisfies DiarySectionModel
-
-const READY_UNKNOWN_TASKS = {
-  ...READY_NO_DIARY,
-  cards: cardsOf("—", "2", "タスクの記録が無い"),
+  bubble: { kind: "notes", notes: ["この日に終えたタスクは無い。"] },
+  doneTaskCount: "0",
 } satisfies DiarySectionModel
 
 const WRITE_FAILED = {
@@ -128,7 +110,7 @@ describe("DiarySection", () => {
     const values = [...document.querySelectorAll(".achievement-card-value")].map(
       (node) => node.textContent,
     )
-    expect(values).toEqual(["…", "…"])
+    expect(values).toEqual(["…"])
     expect(screen.queryByRole("button", { name: /振り返る/ })).toBeNull()
   })
 
@@ -138,7 +120,7 @@ describe("DiarySection", () => {
     expect(document.querySelector(".achievement-diary-bubble")).toBeNull()
   })
 
-  it("空の日は、吹き出しの場所に成果が無い旨、ボタンは押せない", () => {
+  it("空の日は、吹き出しの場所に終えたタスクが無い旨、ボタンは押せない", () => {
     renderSection({
       diary: READY_EMPTY_DAY,
       review: {
@@ -148,20 +130,10 @@ describe("DiarySection", () => {
       },
     })
 
-    expect(screen.getByText("この日に main へ入った成果は無い。")).toBeDefined()
+    expect(screen.getByText("この日に終えたタスクは無い。")).toBeDefined()
     const button = screen.getByRole("button", { name: "架空の名前と振り返る" })
     expect(button.getAttribute("aria-disabled")).toBe("true")
     expect(screen.getByText("振り返る成果が無い")).toBeDefined()
-  })
-
-  it("タスクの記録が無いリポジトリでは、札が「—」で添え書きが出る", () => {
-    renderSection({ diary: READY_UNKNOWN_TASKS })
-
-    const values = [...document.querySelectorAll(".achievement-card-value")].map(
-      (node) => node.textContent,
-    )
-    expect(values).toEqual(["—", "2"])
-    expect(screen.getByText("タスクの記録が無い")).toBeDefined()
   })
 
   it("日記が書き上がっていれば、いちばん新しい段落と時刻を出す", () => {
