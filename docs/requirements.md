@@ -123,8 +123,8 @@ sed -n '/^### 4.1 Claude Code の駆動/,/^#\{2,4\} /p' docs/requirements.md
 
 **tsukumo が磨くのは、レポートを分かりやすく表示することと、キャラクターが魅力的に話すこと**（2026-10-07
 ユーザー決定）。作業を段に分けて測り、帯とレポートに描くのも tsukumo の機能で、段は tsukumo が定めた口
-（`work_plan`・`report`）で受ける。**特定のスキルの約束事には依存しない**（境界は
-`docs/architecture/adr/0024-no-skill-dependency.md`）。
+（`work_plan`・`report`）で受ける。**特定のスキルの約束事には依存しない**（口と Beads の欄は
+`docs/architecture/workflow-contract.md`、境界の判断は `docs/architecture/adr/0024-no-skill-dependency.md`）。
 
 名前は付喪神から。長く使った道具に魂が宿るように、ターミナルという道具に姿と声を与える。
 
@@ -222,9 +222,8 @@ sed -n '/^### 4.1 Claude Code の駆動/,/^#\{2,4\} /p' docs/requirements.md
 
 **作者の運用が揃っていない環境でも、落ちず、黙って機能を欠かさない**（2026-10-03 ユーザー決定）。
 作者の運用とは Beads・`main` という名の主ブランチ・orca を指す。Beads には依存してよく、それを制約とする
-（2026-10-07 ユーザー決定）。特定のスキルには依存しない — スキルの道具・課題の本文の書式・委譲の返却の書式・
-課題のラベル・ファイルの置き場を読まず、Beads の課題は組み込みの欄だけを読む
-（`docs/architecture/adr/0024-no-skill-dependency.md`）。
+（2026-10-07 ユーザー決定）。特定のスキルには依存せず、ワークフローの契約だけを見る
+（`docs/architecture/workflow-contract.md`。判断は `docs/architecture/adr/0024-no-skill-dependency.md`）。
 前提が無いときは、その前提に頼る機能を出さないか、何が無いかを画面で言う。「不明」へ倒して
 空の欄を見せるだけにしない。値を変えられるようにするときの置き場は
 `docs/architecture/adr/0025-no-project-settings.md`（環境変数・歯車の設定の2つ）。

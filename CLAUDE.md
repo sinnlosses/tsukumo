@@ -168,6 +168,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 | 3層・プロトコル・部品・置き場所を決める                                                         | `docs/architecture.md`（置き場所は「全体構成」）                              |
 | 色・書体・レイアウト                                                                            | `docs/architecture/screen-design.md`                                          |
 | セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/architecture/display.md`                                                |
+| ワークフローの契約（`work_plan`・`report` の口、Beads の欄）・独自のワークフローを当てる        | `docs/architecture/workflow-contract.md`                                      |
 | 雑談モード                                                                                      | `docs/architecture/chat-mode.md`                                              |
 | なぜ今の形なのか                                                                                | `docs/architecture.md`「設計判断」（各判断の本文は `docs/architecture/adr/`） |
 | ブラウザ側の状態・Markdown・立ち絵の動き・CSS・`components/ui/` の部品の作法                    | `docs/architecture/browser.md`                                                |

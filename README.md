@@ -412,6 +412,7 @@ CI に無い外部コマンドを起こすテストを検査で落とします�
 - [`docs/architecture/build.md`](./docs/architecture/build.md) — ビルドと依存（事前の組み立て・HMR・足す依存の一覧）
 - [`docs/architecture/screen-design.md`](./docs/architecture/screen-design.md) — 画面のデザイン（色・書体・レイアウトの計画とトークン、雑談モードの画面、背景、画面のナビの帯）
 - [`docs/architecture/display.md`](./docs/architecture/display.md) — 表示（セリフとレポートの出力分離、レポートの記法の規約、立ち絵・吹き出し・メインビュー・入力欄・サイドバーなど各表示物の仕様）
+- [`docs/architecture/workflow-contract.md`](./docs/architecture/workflow-contract.md) — ワークフローの契約（`work_plan`・`report` の口、読む Beads の欄、ワークフローがしてよいこと）
 - [`docs/architecture/chat-mode.md`](./docs/architecture/chat-mode.md) — 雑談モード（遡れる幅、記憶の圧縮と忘却、残す旗、会話のアーカイブ、人格への書き戻し）
 - [`docs/coding-standards.md`](./docs/coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）
 - [`docs/glossary.md`](./docs/glossary.md) — 用語集（日本語表記とコード上の識別子の対応）

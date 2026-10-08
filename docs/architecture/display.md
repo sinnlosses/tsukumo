@@ -564,12 +564,10 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 拾う案（使うかどうかも項目の粒度も tsukumo から縛れない）と、ツールの手順から段を推し量る案
 （推測になる）は採らない。
 
-- **入力は `{ phases, current, finishedInGroup, phaseSummary }` で、毎回段の並びごと渡す**（tsukumo が前の並びを覚えて
-  位置だけを動かす呼び出しは作らない。`phases` を省く呼び出しも作らない）。`phases` は1つ以上の要素の並びで、要素は段の名前か
-  段のまとまり（同時に走る段の名前の配列。下の「同時に走る段は、段のまとまりで受ける」）。空白だけの名前は不可。
-  `current` は0始まりの要素の位置で、全部済んだら要素の数。`finishedInGroup` は今のまとまりの中で済んだ段の名前で、省けば空。
-  `phaseSummary`（段のまとめ）は下の「段が移ったときの
-  中間レポート」。1本道の段取りは `{ phases: string[], current, phaseSummary }` のまま渡せる。形は zod の形が、`current` が要素の数を超えた呼び出し・段のまとめの足りない
+- **入力は `{ phases, current, finishedInGroup, phaseSummary }` で、毎回段の並びごと渡す**（引数の意味は
+  `docs/architecture/workflow-contract.md`「口」。tsukumo が前の並びを覚えて位置だけを動かす呼び出しも、`phases` を省く呼び出しも作らない）。
+  段のまとまりは下の「同時に走る段は、段のまとまりで受ける」、`phaseSummary`（段のまとめ）は下の「段が移ったときの
+  中間レポート」。空白だけの名前は不可。形は zod の形が、`current` が要素の数を超えた呼び出し・段のまとめの足りない
   呼び出しは `parseWorkPlan`（`src/shared/session/work-plan.ts`）を通して `WorkPlanReview` が差し戻す。変換（`sdk-message.ts`）も
   呼び出しの形を読めたメインの呼び出しだけを `work-plan-called` にし、サブエージェントの
   呼び出しは捨てる。戻り値は `"ok"` で、ターンは閉じない。**仕事のときだけ載る**
