@@ -19,7 +19,8 @@ export type ShipPlanResult =
 
 const DEFAULT_MAX_RETRIES = 2
 
-/** {@link ShipPlanHooks} を決まった順で呼び、`--ff-only` が先回りで落ちたら `maxRetries` 回まで
+/**
+ * {@link ShipPlanHooks} を決まった順で呼び、`--ff-only` が先回りで落ちたら `maxRetries` 回まで
  * 取り込みと検証をやり直す。 */
 export function runShipPlan(
   hooks: ShipPlanHooks,

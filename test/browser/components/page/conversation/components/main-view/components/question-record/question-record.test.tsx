@@ -9,7 +9,8 @@ import { loadMarkdown } from "../../../../../../../../../src/browser/components/
 import { TEXT_TONE_CLASS } from "../../../../../../../../../src/browser/components/ui/text/text.tsx"
 import type { MainViewQuestion } from "../../../../../../../../../src/shared/session/main-view.ts"
 
-/** 印（●/○/■/□）は `<QuestionMark>` が描く、`.question-option` / `.question-preview-label` の
+/**
+ * 印（●/○/■/□）は `<QuestionMark>` が描く、`.question-option` / `.question-preview-label` の
  * 直下の唯一の `<span>`（`Text`）。選んだ側だけ `TEXT_TONE_CLASS.accent` を持つ。 */
 const ACCENT_CLASS = TEXT_TONE_CLASS.accent
 if (ACCENT_CLASS === undefined) {

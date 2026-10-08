@@ -3,7 +3,8 @@
 
 import { execFileSync } from "node:child_process"
 
-/** `root` から見た `worktree list --porcelain` の中から、`primaryBranch` を出している作業ツリーの
+/**
+ * `root` から見た `worktree list --porcelain` の中から、`primaryBranch` を出している作業ツリーの
  * パスを返す。見つからなければ例外を投げる。 */
 export function resolveMainWorktreePath(root: string, primaryBranch: string): string {
   const output = execFileSync("git", ["-C", root, "worktree", "list", "--porcelain"], {

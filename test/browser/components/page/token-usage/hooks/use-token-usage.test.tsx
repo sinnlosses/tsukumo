@@ -45,7 +45,8 @@ function askedDays(days: number): boolean {
   )
 }
 
-/** `useQuery` が要る `QueryClientProvider`。client は呼び出し側で1回だけ作る（再レンダーの
+/**
+ * `useQuery` が要る `QueryClientProvider`。client は呼び出し側で1回だけ作る（再レンダーの
  * たびに作り直すとキャッシュが毎回リセットされ、選び直した日数の取り直しが測れない）。
  * `useTokenUsage` は `plan` も姿から読むので、姿も一緒に入れる
  * （既定は `INITIAL_SESSION_STATE` そのまま。`plan` を変えたいテストは `state` を渡す）。 */

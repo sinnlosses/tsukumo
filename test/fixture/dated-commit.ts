@@ -10,7 +10,8 @@ import type { DailyAchievement } from "../../src/shared/achievement/achievement.
 import { git } from "./git-repository.ts"
 import { runSubprocessOrThrow } from "./subprocess.ts"
 
-/** `date`（`YYYY-MM-DD`）の `hhmm` を、`readAchievement` が読む `Temporal.Now.timeZoneId()` と
+/**
+ * `date`（`YYYY-MM-DD`）の `hhmm` を、`readAchievement` が読む `Temporal.Now.timeZoneId()` と
  * 同じゾーンのローカル時刻として絶対時刻（オフセット付き ISO）に直す。固定のオフセット
  * （`+09:00` 決め打ち）は使わない——単体テストの設定がプロセスの `TZ` を `UTC` に固定する
  * （ホストが JST でも変わらない）ため、決め打つと `localDateEpochRange` が見る日の境界と
@@ -22,7 +23,8 @@ export function isoDateAt(date: string, hhmm: string): string {
     .toString({ timeZoneName: "never" })
 }
 
-/** ローカル時刻の `date`（`YYYY-MM-DD`）の `hhmm` に、架空のファイルを1件コミットする。
+/**
+ * ローカル時刻の `date`（`YYYY-MM-DD`）の `hhmm` に、架空のファイルを1件コミットする。
  * committer date と author date を両方固定する（成果はコミットの日付=committer date で
  * 決まるので、これを固定しないとテストの実行日に結果が変わる）。 */
 export async function commitAt(
@@ -43,7 +45,8 @@ export async function commitAt(
   })
 }
 
-/** 「読めた」かつ `doneTasks` が数えられている前提のテストで使う。前提が崩れたら例外を投げて
+/**
+ * 「読めた」かつ `doneTasks` が数えられている前提のテストで使う。前提が崩れたら例外を投げて
  * 落とす（`toMatchObject` / `toEqual` の食い違いより先に、なぜ崩れたかが分かる）。 */
 export function known(result: ReadAchievementResult): Extract<DailyAchievement, { kind: "known" }> {
   if (result.kind !== "ok" || result.achievement.kind !== "known") {

@@ -66,7 +66,8 @@ export function useBeadsHome(home: () => string): () => string {
   return home
 }
 
-/** コミットが1つ以上ある git リポジトリ `cwd`（`main` を出している作業ツリー）に `.beads` を作る。
+/**
+ * コミットが1つ以上ある git リポジトリ `cwd`（`main` を出している作業ツリー）に `.beads` を作る。
  * `--stealth` なので `.beads` はコミットされない。`bd init` 済みの写しを置くので、
  * {@link useBeadsHome} を呼んだファイルの中でだけ使える。 */
 export function initBeads(cwd: string): void {

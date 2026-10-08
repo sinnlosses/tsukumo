@@ -79,7 +79,8 @@ function panelWorkToggle(): HTMLElement {
   )
 }
 
-/** 帯（広い画面）の依頼の手順の一覧。広い画面・狭い画面の両方に同じ内容が2つ描かれるので、
+/**
+ * 帯（広い画面）の依頼の手順の一覧。広い画面・狭い画面の両方に同じ内容が2つ描かれるので、
  * 先頭（帯側）だけを見る。 */
 function workList(): HTMLElement {
   return typedElement(

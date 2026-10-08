@@ -626,6 +626,19 @@ describe("コメント中の呼ぶ側", () => {
   })
 })
 
+const JSDOC_OPENING_WITH_TEXT = /^\s*\/\*\* \S/
+
+describe("複数行の JSDoc の書き出し", () => {
+  it("src / test / scripts / story / .storybook の *.ts / *.tsx で、複数行の JSDoc が `/**` だけの行で書き出される（docs/coding-standards.md「コメント」）", () => {
+    const offenders = offendingCommentLines(
+      TYPESCRIPT_EXTENSIONS,
+      (line) => JSDOC_OPENING_WITH_TEXT.test(line) && !line.includes("*/"),
+    )
+
+    expect(offenders.join("\n")).toBe("")
+  })
+})
+
 const ANNOTATED_RECORD_CONSTANT =
   /^[ \t]*(?:export[ \t]+)?const[ \t]+(\w+)[ \t]*:[ \t]*(?:(?:Readonly|Partial)<\s*)*Record<\s*(?!string\b|number\b)[^,<>]+,(?!\s*(?:Readonly(?:Set|Array|Map)<|readonly\s))/gm
 
@@ -971,7 +984,8 @@ const PAGE_CONCEPT_DIRECTORIES: ReadonlySet<string> = new Set(["markdown"])
 type PageNodeRule = {
   /** このディレクトリ自身が `components/` を持ってよいか。 */
   readonly allowsComponents: boolean
-  /** `components/` を持つとき、その子（部品）がさらに自分の `components/`（＝子部品）を
+  /**
+   * `components/` を持つとき、その子（部品）がさらに自分の `components/`（＝子部品）を
    * 持ってよいか（ページ直下の `components/` の子＝部品だけ持てる）。 */
   readonly allowsGrandchildComponents: boolean
   /** 概念のディレクトリ（`markdown/` など）を許すか（ページの直下では許さない）。 */
@@ -1034,7 +1048,8 @@ function pageNodeViolations(
   })
 }
 
-/** `components/` の直下（ページ・部品どちらの下でも同じ形）を検査する。直下はディレクトリだけで、
+/**
+ * `components/` の直下（ページ・部品どちらの下でも同じ形）を検査する。直下はディレクトリだけで、
  * `hooks/` は固定の置き場、それ以外は部品として `pageNodeViolations` へ再帰する。 */
 function componentsDirViolations(
   relPath: string,
@@ -1055,7 +1070,8 @@ function componentsDirViolations(
   })
 }
 
-/** ページの下の部品ディレクトリ（`components/` の直下で `hooks/` を除いたもの）の一覧。
+/**
+ * ページの下の部品ディレクトリ（`components/` の直下で `hooks/` を除いたもの）の一覧。
  * ネストした子部品も含めて再帰的に集める。 */
 function pageComponentDirectories(): readonly string[] {
   return BROWSER_SCREENS.flatMap((screen) => componentDirectoriesUnder(`browser/${screen}`))
@@ -1242,7 +1258,8 @@ type CssRule = {
   readonly properties: readonly string[]
 }
 
-/** CSS の宣言ブロックを（ネストも含めて）1件ずつ切り出す。`@media` など宣言以外の入れ物は、
+/**
+ * CSS の宣言ブロックを（ネストも含めて）1件ずつ切り出す。`@media` など宣言以外の入れ物は、
  * 中に `{` を持つので除く。 */
 function cssRules(content: string): readonly CssRule[] {
   const withoutComments = content.replace(/\/\*[\s\S]*?\*\//g, "")
@@ -1305,7 +1322,8 @@ function declaredProperties(bodyText: string): readonly string[] {
   return names.flatMap((name) => SHORTHAND_LONGHAND[name] ?? [name])
 }
 
-/** 選択子の最後の複合（最後の結合子より後ろ）が、その class を持つか。`::` の疑似要素は
+/**
+ * 選択子の最後の複合（最後の結合子より後ろ）が、その class を持つか。`::` の疑似要素は
  * 別の持ち物として数えるので対象にしない。 */
 function lastCompoundHasClass(selector: string, className: string): boolean {
   const trimmed = selector.trim()

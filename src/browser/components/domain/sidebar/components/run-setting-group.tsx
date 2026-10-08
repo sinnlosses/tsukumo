@@ -204,7 +204,8 @@ function ModelWeight(props: { readonly weight: number }): ReactElement {
   )
 }
 
-/** effort の段の棒。段の数だけ並べ、いまの段まで字の色で塗る（`litCount` が 0 なら全部を弱い色）。
+/**
+ * effort の段の棒。段の数だけ並べ、いまの段まで字の色で塗る（`litCount` が 0 なら全部を弱い色）。
  * 閉じた口の絵（選ばれている行だけが写る）。 */
 function EffortBars(props: { readonly litCount: number }): ReactElement {
   return (

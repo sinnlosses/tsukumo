@@ -53,7 +53,8 @@ import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
 import { fictionalPng } from "./lib/fictional-png.ts"
 import { escapeHtml } from "./lib/html-escape.ts"
 
-/** tsukumo 自身の場所（このスクリプトの1つ上）。spawn の cwd にも、架空の日記・パックを
+/**
+ * tsukumo 自身の場所（このスクリプトの1つ上）。spawn の cwd にも、架空の日記・パックを
  * 置く先を組み立てるのにも使う。 */
 const REPO_DIR = fileURLToPath(new URL("..", import.meta.url))
 
@@ -217,7 +218,8 @@ const PORTRAIT_CLEAR_BUTTON_SELECTOR = 'button[title="消す"]'
 /** キャラクター画面、最下部の「このキャラクターを消す」帯のボタン（`CharacterDelete`）。 */
 const CHARACTER_DELETE_BAND_BUTTON_SELECTOR = 'button:has-text("を消す")'
 
-/** {@link HomeSetup} の `character` が置くパックのディレクトリ名。同梱の `chou` とは別名にして、
+/**
+ * {@link HomeSetup} の `character` が置くパックのディレクトリ名。同梱の `chou` とは別名にして、
  * 「ホームにしか無いパック」（`removal: "delete"`）にする。 */
 const SAMPLE_CHARACTER_PACK_NAME = "chou-sample"
 
