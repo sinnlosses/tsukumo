@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --ground: #191720; --surface: #221f2b; --ink: #e8e3ea; --accent: #6fe3cd;
+    --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+    --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+    --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
+    --state-ok: #7ee081; --state-ng: #f2a0a0; --state-warn: #e3c766;
+    --mono: ui-monospace, SFMono-Regular, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; background: #121117; color: var(--ink); font-family: system-ui, sans-serif; font-size: 15px; width: 1120px; }
+  .case { margin-bottom: 26px; }
+  .case-title { font-size: 14px; font-weight: 700; margin: 0 0 8px 4px; color: var(--accent); }
+  .case-title small { font-size: 12px; color: var(--ink-quiet); font-weight: 400; margin-left: 10px; }
+  .card { border: 1px solid var(--rule); border-radius: 14px; background: var(--surface); overflow: hidden; }
+  .strip { display: flex; align-items: center; gap: 12px; padding: 10px 18px; background: var(--ground); border-bottom: 1px solid var(--rule-quiet); }
+  .track { display: flex; align-items: center; }
+  .dot { width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; background: color-mix(in srgb, var(--surface), var(--accent) 30%); color: var(--accent); font-family: var(--mono); }
+  .line { width: 12px; height: 2px; background: var(--accent); }
+  .head { flex: 1; }
+  .side { font-family: var(--mono); font-size: 13px; color: var(--ink-quiet); }
+  .toggle { border: 1px solid var(--rule); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+  .body { padding: 14px 22px 18px; }
+  .kicker { font-size: 12px; color: var(--ink-quiet); }
+  .conclusion { font-size: 18px; font-weight: 700; margin: 6px 0 14px; }
+  .checks { border: 1px solid var(--rule); border-radius: 12px; background: var(--surface-raised); padding: 14px 20px; display: flex; gap: 18px; align-items: center; }
+  .item { display: flex; gap: 10px; align-items: baseline; font-size: 13px; padding: 3px 0; }
+  .item .m { color: var(--state-ok); font-weight: 700; }
+  .item .l { color: var(--ink-quiet); }
+  .item .f { font-family: var(--mono); font-size: 12px; color: var(--ink-quiet); }
+  .heading { font-size: 12px; letter-spacing: .08em; color: var(--ink-quiet); }
+
+  /* 現状 */
+  .chip-now { display: inline-flex; gap: 6px; align-items: center; padding: 2px 10px; border: 1px solid var(--state-ok); border-radius: 999px; color: var(--state-ok); font-size: 13px; font-weight: 700; }
+  .tile-now { width: 112px; padding: 10px 0; border-radius: 14px; border: 1px solid var(--state-ok); background: color-mix(in srgb, var(--state-ok) 12%, transparent); display: flex; flex-direction: column; align-items: center; }
+  .tile-now b { font-size: 28px; color: var(--state-ok); line-height: 1; }
+  .tile-now span { margin-top: 6px; font-family: var(--mono); font-size: 13px; }
+
+  /* 案A 静か: 点＋字、検証は左の色罫と見出しの一言 */
+  .chip-a { display: inline-flex; gap: 7px; align-items: center; font-size: 13px; color: var(--ink-soft); }
+  .chip-a i { width: 8px; height: 8px; border-radius: 50%; background: var(--state-ok); }
+  .checks-a { display: block; border-left: 3px solid var(--state-ok); border-radius: 4px 12px 12px 4px; }
+  .checks-a .heading b { color: var(--state-ok); font-weight: 700; letter-spacing: 0; margin-left: 8px; }
+
+  /* 案B タグ: 枠なしの薄い塗り、検証は見出し行の右に小さな札 */
+  .chip-b { display: inline-flex; gap: 5px; align-items: center; padding: 2px 9px; border-radius: 6px; background: color-mix(in srgb, var(--state-ok) 14%, transparent); color: var(--state-ok); font-size: 12px; font-weight: 700; }
+  .checks-b { display: block; }
+  .checks-b .top { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .checks-b .pill { padding: 1px 8px; border-radius: 6px; background: color-mix(in srgb, var(--state-ok) 14%, transparent); color: var(--state-ok); font-size: 12px; font-weight: 700; font-family: var(--mono); }
+
+  /* 案C リング: 印だけの丸、検証は細い輪のメーター */
+  .chip-c { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--state-ok); color: var(--state-ok); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+  .ring { flex: none; width: 52px; height: 52px; border-radius: 50%; background: conic-gradient(var(--state-ok) 0 100%, var(--rule) 0); display: flex; align-items: center; justify-content: center; }
+  .ring span { width: 44px; height: 44px; border-radius: 50%; background: #2a2832; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 13px; }
+  .item .x { color: var(--state-ng); font-weight: 700; }
+  .chip-a.ng i { background: var(--state-ng); }
+  .checks-a.ng { border-left-color: var(--state-ng); }
+  .checks-a.ng .heading b { color: var(--state-ng); }
+</style>
+</head>
+<body>
+<!-- 帯の状態のチップと最終レポートの検証の札を静かにする見本。2026-10-08 に案A を採用。現状・案B・案C は比べた跡として残す。 -->
+
+<div class="case">
+  <p class="case-title">現状</p>
+  <div class="card">
+    <div class="strip"><span class="chip-now">✓ 完了</span><span class="track"><span class="dot">✓</span><span class="line"></span><span class="dot">✓</span><span class="line"></span><span class="dot">✓</span></span><span class="head">3段すべて済み</span><span class="side">所要 12分33秒</span><span class="toggle">手順 77 ▾</span></div>
+    <div class="body"><div class="kicker">最終レポート</div><div class="conclusion">「最新」の札と「作業中」の重なりを無くした。</div>
+      <div class="checks"><div class="tile-now"><b>✓</b><span>2 / 2</span></div><div><div class="heading">検証</div>
+        <div class="item"><span class="m">✓</span><span class="l">pnpm run check --full</span><span class="f">単体 3616・E2E 56</span></div>
+        <div class="item"><span class="m">✓</span><span class="l">3行の Bash を流した疑似セッションを撮影</span><span class="f">23秒</span></div></div></div></div>
+  </div>
+</div>
+
+<div class="case">
+  <p class="case-title">案A 静か（採用）<small>チップは色の点＋字だけ。検証は箱を外し、左の色罫と見出しの一言で判定を言う</small></p>
+  <div class="card">
+    <div class="strip"><span class="chip-a"><i></i>完了</span><span class="track"><span class="dot">✓</span><span class="line"></span><span class="dot">✓</span><span class="line"></span><span class="dot">✓</span></span><span class="head">3段すべて済み</span><span class="side">所要 12分33秒</span><span class="toggle">手順 77 ▾</span></div>
+    <div class="body"><div class="kicker">最終レポート</div><div class="conclusion">「最新」の札と「作業中」の重なりを無くした。</div>
+      <div class="checks checks-a"><div class="heading">検証<b>2件すべて通過</b></div>
+        <div class="item"><span class="m">✓</span><span class="l">pnpm run check --full</span><span class="f">単体 3616・E2E 56</span></div>
+        <div class="item"><span class="m">✓</span><span class="l">3行の Bash を流した疑似セッションを撮影</span><span class="f">23秒</span></div></div></div>
+  </div>
+</div>
+
+<div class="case">
+  <p class="case-title">案B タグ<small>枠を外した薄い塗りの角丸タグ。検証の判定も同じタグで見出しの横に置く</small></p>
+  <div class="card">
+    <div class="strip"><span class="chip-b">✓ 完了</span><span class="track"><span class="dot">✓</span><span class="line"></span><span class="dot">✓</span><span class="line"></span><span class="dot">✓</span></span><span class="head">3段すべて済み</span><span class="side">所要 12分33秒</span><span class="toggle">手順 77 ▾</span></div>
+    <div class="body"><div class="kicker">最終レポート</div><div class="conclusion">「最新」の札と「作業中」の重なりを無くした。</div>
+      <div class="checks checks-b"><div class="top"><span class="heading">検証</span><span class="pill">✓ 2/2</span></div>
+        <div class="item"><span class="m">✓</span><span class="l">pnpm run check --full</span><span class="f">単体 3616・E2E 56</span></div>
+        <div class="item"><span class="m">✓</span><span class="l">3行の Bash を流した疑似セッションを撮影</span><span class="f">23秒</span></div></div></div>
+  </div>
+</div>
+
+<div class="case">
+  <p class="case-title">案C リング<small>チップは印だけの丸（字は読み上げに残す）。検証は通った割合を細い輪で見せる</small></p>
+  <div class="card">
+    <div class="strip"><span class="chip-c">✓</span><span class="track"><span class="dot">✓</span><span class="line"></span><span class="dot">✓</span><span class="line"></span><span class="dot">✓</span></span><span class="head">3段すべて済み</span><span class="side">所要 12分33秒</span><span class="toggle">手順 77 ▾</span></div>
+    <div class="body"><div class="kicker">最終レポート</div><div class="conclusion">「最新」の札と「作業中」の重なりを無くした。</div>
+      <div class="checks"><div class="ring"><span>2/2</span></div><div><div class="heading">検証</div>
+        <div class="item"><span class="m">✓</span><span class="l">pnpm run check --full</span><span class="f">単体 3616・E2E 56</span></div>
+        <div class="item"><span class="m">✓</span><span class="l">3行の Bash を流した疑似セッションを撮影</span><span class="f">23秒</span></div></div></div></div>
+  </div>
+</div>
+
+<div class="case">
+  <p class="case-title">参考: 案A で落ちたとき<small>色が変わるのは点・罫・一言の3か所だけ</small></p>
+  <div class="card">
+    <div class="strip"><span class="chip-a ng"><i></i>失敗</span><span class="head"></span><span class="side">所要 4分02秒</span><span class="toggle">手順 21 ▾</span></div>
+    <div class="body">
+      <div class="checks checks-a ng"><div class="heading">検証<b>3件中 1件 落ちた</b></div>
+        <div class="item"><span class="x">✕</span><span class="l">pnpm run check</span><span class="f">単体 1件</span></div>
+        <div class="item"><span class="m">✓</span><span class="l">型検査</span><span class="f"></span></div>
+        <div class="item"><span class="m">✓</span><span class="l">画面を撮影</span><span class="f"></span></div></div></div>
+  </div>
+</div>
+
+</body>
+</html>
