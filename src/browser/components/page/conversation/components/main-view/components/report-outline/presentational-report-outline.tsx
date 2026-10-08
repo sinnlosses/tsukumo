@@ -28,7 +28,6 @@ const RESIZER_LABEL = "やり取りと本文の境界"
 const TURN_STEP_KEY_HINT = "前後のやり取りへは [ ] キー"
 
 const ACTIVE_TURN_MARK = "●"
-const NEWEST_BADGE = "最新"
 
 export type PresentationalReportOutlineProps = ReportOutlineModel & {
   readonly children: ReactNode
@@ -170,7 +169,7 @@ function TurnRow(props: {
       {...{ [TURN_ROW_ATTRIBUTE]: turn.id }}
       data-result={turn.result}
       aria-current={turn.isActive ? "true" : undefined}
-      aria-label={`${result.label}: ${turn.title}${turn.asideCount > 0 ? `（脇の話 ${String(turn.asideCount)}件）` : ""}${turn.isNewest ? `（${NEWEST_BADGE}）` : ""}`}
+      aria-label={`${result.label}: ${turn.title}${turn.asideCount > 0 ? `（脇の話 ${String(turn.asideCount)}件）` : ""}`}
       title={turn.title}
       onClick={() => {
         props.onSelectTurn(turn.id)
@@ -187,11 +186,6 @@ function TurnRow(props: {
           </span>
         )}
       </span>
-      {turn.isNewest && (
-        <span className={styles["outline-turn-newest"]} aria-hidden="true">
-          {NEWEST_BADGE}
-        </span>
-      )}
     </button>
   )
 }

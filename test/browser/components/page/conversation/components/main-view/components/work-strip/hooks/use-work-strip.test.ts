@@ -265,7 +265,7 @@ describe("useWorkStrip（`/clear` の依頼）", () => {
 })
 
 describe("useWorkStrip（段取りが届く前）", () => {
-  it("送った直後から、段の丸の無い「作業中」の帯を作業中の状態で出す", () => {
+  it("送った直後から、段の丸も見出しの字も無い帯を作業中の状態で出す", () => {
     const state = foldTimed([[request, START]])
 
     const strip = stripAt(state, START + 12_000)
@@ -274,7 +274,7 @@ describe("useWorkStrip（段取りが届く前）", () => {
       kind: "working",
       phases: [],
       result: "working",
-      headLabel: "作業中",
+      headLabel: "",
       sideLabel: "経過 12秒",
     })
   })

@@ -56,8 +56,6 @@ export type ReportOutlineProps = {
 export type ReportOutlineTurnRow = ReportOutlineTurn & {
   /** 見ているやり取りか。この行の下にだけ見出しの行を出す。 */
   readonly isActive: boolean
-  /** 窓の中でいちばん新しいやり取りか。右端に「最新」の札を付ける。 */
-  readonly isNewest: boolean
 }
 
 /** 一覧の1行ぶん。 */
@@ -261,10 +259,9 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 
   return {
     visible,
-    turnRows: props.turns.map((turn, index) => ({
+    turnRows: props.turns.map((turn) => ({
       ...turn,
       isActive: turn.id === props.activeTurnId,
-      isNewest: index === props.turns.length - 1,
     })),
     onSelectTurn: props.onSelectTurn,
     notice: props.notice,

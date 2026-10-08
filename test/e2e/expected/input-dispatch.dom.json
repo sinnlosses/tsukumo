@@ -57,7 +57,7 @@
                                 "data-outline-turn": "0",
                                 "data-result": "done",
                                 "aria-current": "true",
-                                "aria-label": "完了: 入力欄から送る場面を見たい（架空の依頼）（最新）",
+                                "aria-label": "完了: 入力欄から送る場面を見たい（架空の依頼）",
                                 "type": "button"
                               },
                               "children": [
@@ -70,16 +70,7 @@
                                     "●"
                                   ]
                                 },
-                                "入力欄から送る場面を見たい（架空の依頼）",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "最新"
-                                  ]
-                                }
+                                "入力欄から送る場面を見たい（架空の依頼）"
                               ]
                             },
                             {

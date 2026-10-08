@@ -57,7 +57,7 @@
                                 "data-outline-turn": "0",
                                 "data-result": "done",
                                 "aria-current": "true",
-                                "aria-label": "完了: 背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）（最新）",
+                                "aria-label": "完了: 背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）",
                                 "type": "button"
                               },
                               "children": [
@@ -70,16 +70,7 @@
                                     "●"
                                   ]
                                 },
-                                "背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "最新"
-                                  ]
-                                }
+                                "背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）"
                               ]
                             },
                             {

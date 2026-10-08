@@ -106,7 +106,7 @@ export type WorkStripSteps = {
  * 帯に出す形。`headLabel` は丸の右の字、`sideLabel` は右端の等幅の字。
  *
  * - `none`: 帯ごと出さない（本文が1つも無いまま閉じた依頼と、段取りも働きも無いとき）
- * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「4/7 · 経過 6分12秒」・2行目（段取りが届く前は段の丸が無く「作業中」）
+ * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「4/7 · 経過 6分12秒」・2行目（段取りが届く前は段の丸が無く字は空。チップが「作業中」を言うので重ねない）
  * - `finished`: 中身がレポートに入れ替わったあと。済んだ姿の字・「所要 21分49秒」の1行（段取りが無ければ字は空）
  *
  * `result` は状態のチップの状態。`working` は作業中か答え待ち、`finished` は完了・答え待ち・止めた・失敗。
@@ -132,8 +132,6 @@ export type WorkStripModel =
     }
 
 const NO_PLAN = { kind: "none" } as const satisfies LatestWorkPlan
-
-const UNPLANNED_HEAD = "作業中"
 
 const PHASE_STATE_SUFFIX = {
   done: "（済）",
@@ -209,7 +207,7 @@ export function useWorkStrip(): WorkStripModel {
     result,
     headLabel:
       planned.length === 0
-        ? UNPLANNED_HEAD
+        ? ""
         : nowPhase.kind === "phase"
           ? nowPhase.name
           : `${count}段すべて済み`,

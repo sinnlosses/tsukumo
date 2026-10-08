@@ -57,7 +57,7 @@
                                 "data-outline-turn": "-1",
                                 "data-result": "done",
                                 "aria-current": "true",
-                                "aria-label": "完了: 答え待ちの箱を出す場面（架空）。答えると箱が消える。（最新）",
+                                "aria-label": "完了: 答え待ちの箱を出す場面（架空）。答えると箱が消える。",
                                 "type": "button"
                               },
                               "children": [
@@ -70,16 +70,7 @@
                                     "●"
                                   ]
                                 },
-                                "答え待ちの箱を出す場面（架空）。答えると箱が消える。",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "最新"
-                                  ]
-                                }
+                                "答え待ちの箱を出す場面（架空）。答えると箱が消える。"
                               ]
                             }
                           ]

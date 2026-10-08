@@ -57,7 +57,7 @@
                                 "data-outline-turn": "0",
                                 "data-result": "working",
                                 "aria-current": "true",
-                                "aria-label": "作業中: 架空のタスクに着手して、委譲先に任せたい（架空の依頼）（脇の話 1件）（最新）",
+                                "aria-label": "作業中: 架空のタスクに着手して、委譲先に任せたい（架空の依頼）（脇の話 1件）",
                                 "type": "button"
                               },
                               "children": [
@@ -78,15 +78,6 @@
                                   },
                                   "children": [
                                     "脇 1"
-                                  ]
-                                },
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "最新"
                                   ]
                                 }
                               ]

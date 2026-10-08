@@ -57,7 +57,7 @@
                                 "data-outline-turn": "0",
                                 "data-result": "awaiting-answer",
                                 "aria-current": "true",
-                                "aria-label": "答え待ち: 一時のディレクトリを片付けたい（架空の依頼）（最新）",
+                                "aria-label": "答え待ち: 一時のディレクトリを片付けたい（架空の依頼）",
                                 "type": "button"
                               },
                               "children": [
@@ -70,16 +70,7 @@
                                     "●"
                                   ]
                                 },
-                                "一時のディレクトリを片付けたい（架空の依頼）",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "最新"
-                                  ]
-                                }
+                                "一時のディレクトリを片付けたい（架空の依頼）"
                               ]
                             }
                           ]

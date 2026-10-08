@@ -201,22 +201,14 @@ describe("MainView（やり取りの移動）", () => {
     expect(title()).toBe("2つ目")
   })
 
-  it("「最新」の札は最新のやり取りの行にだけ付き、過去を見ても動かない", () => {
+  it("過去を見ているときに最新のやり取りの行を押すと、追従に戻る", () => {
     chooseOutlineOpen()
     renderMainView(threeTurns())
 
-    const newestLabels = (): readonly (string | null)[] =>
-      outlineTurnRows().map(
-        (row) => row.querySelector('[class*="outline-turn-newest"]')?.textContent ?? null,
-      )
-    expect(newestLabels()).toEqual([null, null, "最新"])
-    expect(outlineTurnRows()[2]?.getAttribute("aria-label")).toBe("完了: 3つ目（最新）")
-
     press("完了: 1つ目")
     expect(title()).toBe("1つ目")
-    expect(newestLabels()).toEqual([null, null, "最新"])
 
-    press("完了: 3つ目（最新）")
+    press("完了: 3つ目")
     expect(title()).toBe("3つ目")
     expect(window.location.hash).not.toContain("turn=")
   })
@@ -300,14 +292,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     chooseOutlineOpen()
     renderMainView(threeTurnsWithHeadings())
 
-    expect(outlineRowTexts()).toEqual([
-      "✓1つ目",
-      "✓2つ目",
-      "●3つ目最新",
-      "節の一",
-      "小節",
-      "節の二",
-    ])
+    expect(outlineRowTexts()).toEqual(["✓1つ目", "✓2つ目", "●3つ目", "節の一", "小節", "節の二"])
     expect(outlineTurnRows().map((row) => row.getAttribute("aria-current"))).toEqual([
       null,
       null,
@@ -322,8 +307,8 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
 
     stepTurn("[")
 
-    expect(outlineTurnRows()[2]?.getAttribute("aria-label")).toBe("作業中: 3つ目（最新）")
-    expect(outlineTurnRows()[2]?.textContent).toBe("…3つ目最新")
+    expect(outlineTurnRows()[2]?.getAttribute("aria-label")).toBe("作業中: 3つ目")
+    expect(outlineTurnRows()[2]?.textContent).toBe("…3つ目")
   })
 
   it("やり取りの行を押すとそのやり取りへ移り、見出しの子はそのやり取りのものに替わる", async () => {
@@ -335,7 +320,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     expect(title()).toBe("1つ目")
     // 見出しは描いた本文の DOM の変化（`MutationObserver`）で拾い直すので、次のタスクで替わる。
     await waitFor(() => {
-      expect(outlineRowTexts()).toEqual(["●1つ目", "✓2つ目", "✓3つ目最新"])
+      expect(outlineRowTexts()).toEqual(["●1つ目", "✓2つ目", "✓3つ目"])
     })
   })
 
@@ -353,7 +338,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
       second.focus()
     })
     fireEvent.keyDown(nav, { key: "ArrowDown" })
-    expect(document.activeElement?.textContent).toBe("●3つ目最新")
+    expect(document.activeElement?.textContent).toBe("●3つ目")
     fireEvent.keyDown(nav, { key: "ArrowDown" })
     expect(document.activeElement?.textContent).toBe("節の一")
     fireEvent.keyDown(nav, { key: "ArrowUp" })
@@ -368,7 +353,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
     })
     expect(title()).toBe("1つ目")
     await waitFor(() => {
-      expect(outlineRowTexts()).toEqual(["●1つ目", "✓2つ目", "✓3つ目最新"])
+      expect(outlineRowTexts()).toEqual(["●1つ目", "✓2つ目", "✓3つ目"])
     })
   })
 

@@ -99,7 +99,7 @@
                                 "data-outline-turn": "2",
                                 "data-result": "done",
                                 "aria-current": "true",
-                                "aria-label": "完了: 前のセッションの架空の依頼その3（段取りつき）（最新）",
+                                "aria-label": "完了: 前のセッションの架空の依頼その3（段取りつき）",
                                 "type": "button"
                               },
                               "children": [
@@ -112,16 +112,7 @@
                                     "●"
                                   ]
                                 },
-                                "前のセッションの架空の依頼その3（段取りつき）",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "最新"
-                                  ]
-                                }
+                                "前のセッションの架空の依頼その3（段取りつき）"
                               ]
                             }
                           ]

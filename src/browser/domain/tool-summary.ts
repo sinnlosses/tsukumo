@@ -21,10 +21,11 @@ const TOOL_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
 
 /**
  * ツール名＋入力を、画面に出してよい1行の要約にする。入力がオブジェクトの形でないときは空文字。
- * 切り詰めるだけで、どの欄を読むかは {@link toolInputText} の1箇所で決める。
+ * 改行を空白に畳んで切り詰めるだけで、どの欄を読むかは {@link toolInputText} の1箇所で決める。
+ * 要約は空白を保って組まれることもあるので、改行を残すと1行に収まらない。
  */
 export function summarizeToolInput(toolName: string, input: unknown): string {
-  return truncateToolSummary(toolInputText(toolName, input))
+  return truncateToolSummary(toolInputText(toolName, input).replaceAll(/\s*[\r\n]+\s*/g, " "))
 }
 
 /**

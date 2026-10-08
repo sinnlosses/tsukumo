@@ -57,7 +57,7 @@
                                 "data-outline-turn": "-1",
                                 "data-result": "done",
                                 "aria-current": "true",
-                                "aria-label": "完了: 表現の一覧（架空）（最新）",
+                                "aria-label": "完了: 表現の一覧（架空）",
                                 "type": "button"
                               },
                               "children": [
@@ -70,16 +70,7 @@
                                     "●"
                                   ]
                                 },
-                                "表現の一覧（架空）",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "最新"
-                                  ]
-                                }
+                                "表現の一覧（架空）"
                               ]
                             },
                             {

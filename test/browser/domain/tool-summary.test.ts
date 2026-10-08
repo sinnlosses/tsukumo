@@ -7,6 +7,12 @@ describe("summarizeToolInput", () => {
     expect(summarizeToolInput("Bash", { command: "echo dummy" })).toBe("echo dummy")
   })
 
+  it("複数行の入力は改行を空白に畳んで1行にする", () => {
+    expect(summarizeToolInput("Bash", { command: "echo one &&\n  echo two\r\necho three" })).toBe(
+      "echo one && echo two echo three",
+    )
+  })
+
   it("Edit はファイルパスを出す", () => {
     expect(
       summarizeToolInput("Edit", {

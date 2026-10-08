@@ -57,7 +57,7 @@
                                 "data-outline-turn": "0",
                                 "data-result": "working",
                                 "aria-current": "true",
-                                "aria-label": "作業中: 集計の関数とスクリプトを足したい（架空の依頼）（最新）",
+                                "aria-label": "作業中: 集計の関数とスクリプトを足したい（架空の依頼）",
                                 "type": "button"
                               },
                               "children": [
@@ -70,16 +70,7 @@
                                     "●"
                                   ]
                                 },
-                                "集計の関数とスクリプトを足したい（架空の依頼）",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "最新"
-                                  ]
-                                }
+                                "集計の関数とスクリプトを足したい（架空の依頼）"
                               ]
                             }
                           ]

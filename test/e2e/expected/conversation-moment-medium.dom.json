@@ -57,7 +57,7 @@
                                 "data-outline-turn": "0",
                                 "data-result": "done",
                                 "aria-current": "true",
-                                "aria-label": "完了: 局面の入れ替えを見たい（架空の依頼）（最新）",
+                                "aria-label": "完了: 局面の入れ替えを見たい（架空の依頼）",
                                 "type": "button"
                               },
                               "children": [
@@ -70,16 +70,7 @@
                                     "●"
                                   ]
                                 },
-                                "局面の入れ替えを見たい（架空の依頼）",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "最新"
-                                  ]
-                                }
+                                "局面の入れ替えを見たい（架空の依頼）"
                               ]
                             },
                             {
