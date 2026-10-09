@@ -48,7 +48,7 @@ const UNRELATED_DIRECTORIES = [
   ".github/",
   ".claude/",
   "docs/",
-  "develop/",
+  ".tw/",
 ]
 
 /** 実行時に読まれて import に出ないことがあるディレクトリ。 */

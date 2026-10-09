@@ -15,7 +15,7 @@ import type {
   TaskSummaryResult,
 } from "../../../../../src/shared/repository/task-summary.ts"
 
-// フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
+// フィクスチャはすべて手で書いた架空のタスク（実物のタスクファイルは使わない）。
 
 function taskOf(id: string, overrides: Partial<TaskSummaryItem>): TaskSummaryItem {
   return {

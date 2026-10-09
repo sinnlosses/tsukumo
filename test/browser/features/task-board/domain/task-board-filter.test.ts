@@ -8,7 +8,7 @@ import {
 import type { TaskStateView } from "../../../../../src/browser/features/task-board/domain/task-board-view.ts"
 import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
 
-// フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
+// フィクスチャはすべて手で書いた架空のタスク（実物のタスクファイルは使わない）。
 
 function taskOf(overrides: Partial<TaskSummaryItem>): TaskSummaryItem {
   return {

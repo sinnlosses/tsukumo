@@ -167,10 +167,10 @@ describe("findMissingFileReferences", () => {
 })
 
 describe("isScannedSource", () => {
-  test("docs/history/・docs/research/・develop/ は参照を探す対象にしない", () => {
+  test("docs/history/・docs/research/・.tw/ は参照を探す対象にしない", () => {
     expect(isScannedSource("docs/history/tasks.md")).toBe(false)
     expect(isScannedSource("docs/research/topic.md")).toBe(false)
-    expect(isScannedSource("develop/tasks.json")).toBe(false)
+    expect(isScannedSource(".tw/tasks.json")).toBe(false)
   })
 
   test("それ以外の docs/・src/・CLAUDE.md は対象にする", () => {

@@ -573,7 +573,7 @@ describe("16進の色", () => {
 // コメントに特定の日付を書かない（`docs/coding-standards.md`「コメント」の表。「いつ決まったか・
 // 誰が言ったか（特定の日付・「〜の指摘」「ユーザーの決定」）」は禁止で、理由（Why / Why not）は
 // 残す。日付つきの記録は `docs/architecture.md` と `docs/history/` が持つ）。`oxlint` と同じ
-// `src` `test` `scripts` `story` `.storybook` を見る（`package.json` の `lint`。`docs/` `develop/` は対象外——
+// `src` `test` `scripts` `story` `.storybook` を見る（`package.json` の `lint`。`docs/` `.tw/` は対象外——
 // ドキュメントは日付つきの記録を持つのが正しい）。
 //
 // コメント行は `commentLineIndexes` で拾う（`.css` の `/* */` も含む）。行の途中で開くブロック

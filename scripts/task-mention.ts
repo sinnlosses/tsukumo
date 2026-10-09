@@ -1,5 +1,5 @@
 // `src/` / `test/` / `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のコメント・テスト名・本文に
-// 書かれたタスク番号（`develop/task/T-xxx.md` のパスも `T-` + 3桁以上の並びを含むので同じ形で
+// 書かれたタスク番号（`.tw/task/T-xxx.md` のパスも `T-` + 3桁以上の並びを含むので同じ形で
 // 拾える。トラッカーが `github` の課題番号 `GH-<n>`、ゼロ埋めなしも拾う）を拾う純粋関数。
 //
 // `.beads` は git の外（`--stealth`）なので、切り替えで課題の `description` 末尾に残る

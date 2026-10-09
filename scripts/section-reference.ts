@@ -9,7 +9,7 @@
 // 指す先が文脈でしか決まらないので追わない。
 //
 // 参照を探すのは `docs/history/`（据え置きの記録）・`docs/research/`（調査した時点の正典を引いた
-// 記録で、覆すと決めた句をそのまま引いていることがある）・`develop/`（タスク本文と作業の記録）の
+// 記録で、覆すと決めた句をそのまま引いていることがある）・`.tw/`（タスク本文と作業の記録）の
 // 外だけ。句を探す相手からは `docs/history/` だけを外す（`docs/research/` は正典から引かれる）。
 //
 // 照合は「参照先のファイルに句が含まれるか」で、見出しに限らない（本文の句を引く正当な参照が
@@ -53,7 +53,7 @@ const RECORD_PREFIXES = ["docs/history/"] as const satisfies readonly string[]
 const UNSCANNED_PREFIXES = [
   ...RECORD_PREFIXES,
   "docs/research/",
-  "develop/",
+  ".tw/",
 ] as const satisfies readonly string[]
 
 // ファイル名・閉じのバッククォート・番号・「の」のあとに「 が来る形。`docs/` 配下はサブディレクトリ

@@ -17,8 +17,8 @@ describe("isDocumentPath", () => {
     expect(isDocumentPath("docs/requirements.md")).toBe(true)
   })
 
-  test("develop/ 配下の .md は文書", () => {
-    expect(isDocumentPath("develop/task/sample.md")).toBe(true)
+  test(".tw/ 配下の .md は文書", () => {
+    expect(isDocumentPath(".tw/task/sample.md")).toBe(true)
   })
 
   test("直下の README.md・CLAUDE.md は文書", () => {
@@ -30,8 +30,9 @@ describe("isDocumentPath", () => {
     expect(isDocumentPath("src/server/character/adapter/pack/persona.md")).toBe(false)
   })
 
-  test("docs/・develop/ 配下でも拡張子が .md でなければ文書ではない", () => {
+  test("docs/・.tw/ 配下でも拡張子が .md でなければ文書ではない", () => {
     expect(isDocumentPath("docs/screenshot.png")).toBe(false)
+    expect(isDocumentPath(".tw/config.toml")).toBe(false)
   })
 
   test("同名でもディレクトリの下にある README.md・CLAUDE.md は直下扱いしない", () => {
@@ -41,7 +42,7 @@ describe("isDocumentPath", () => {
 
 describe("isDocumentOnlyChange", () => {
   test("文書だけの変更なら true", () => {
-    expect(isDocumentOnlyChange(["docs/requirements.md", "develop/task/sample.md"])).toBe(true)
+    expect(isDocumentOnlyChange(["docs/requirements.md", ".tw/task/sample.md"])).toBe(true)
   })
 
   test("文書とコードが混ざっていれば false", () => {
@@ -145,7 +146,7 @@ describe("collectChangedPaths", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
 
   test("主ブランチへ送ったあと（マージベースが主ブランチの先端）でも、枝のコミットの差分を拾う", async () => {
     await withRepository(async (root) => {
-      write(root, "develop/task/sample.md", "a\n")
+      write(root, ".tw/task/sample.md", "a\n")
       await git(root, "add", ".")
       await git(root, "commit", "--quiet", "-m", "task")
       await git(root, "switch", "--quiet", "trunk")
@@ -155,7 +156,7 @@ describe("collectChangedPaths", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
       await git(root, "switch", "--quiet", "work")
       await git(root, "rebase", "--quiet", "trunk")
 
-      expect(collectChangedPaths(root, "trunk")).toEqual(["develop/task/sample.md"])
+      expect(collectChangedPaths(root, "trunk")).toEqual([".tw/task/sample.md"])
     })
   })
 })

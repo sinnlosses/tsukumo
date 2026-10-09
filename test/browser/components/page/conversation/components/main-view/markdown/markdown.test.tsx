@@ -507,13 +507,13 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     // 言語名のあとのファイル名は mdast では `code` の `data.meta` に入り、rehype-raw が
     // 木を書き出して読み直す時点で落ちる。属性へ移す `rehypeCodeFileName` とサニタイザの
     // 許可（`code`）が両方効いていないと、ここでラベルが出ない。
-    const { container } = render(<Markdown text={"```diff develop/tasks.json\n-  1\n+  2\n```"} />)
+    const { container } = render(<Markdown text={"```diff .tw/tasks.json\n-  1\n+  2\n```"} />)
 
     const block = container.querySelector("div.code-file")
     expect(block).not.toBeNull()
     // ラベルは <pre> より前（左上）に置く。
     expect(block?.firstElementChild?.className).toBe("code-file-name")
-    expect(block?.firstElementChild?.textContent).toContain("develop/tasks.json")
+    expect(block?.firstElementChild?.textContent).toContain(".tw/tasks.json")
     expect(block?.querySelector("pre code.language-diff")?.textContent).toContain("+  2")
   })
 
@@ -550,7 +550,7 @@ describe("Markdown（フェンス付きコードブロックのコピーのボ�
   it("フェンス付きコードブロックにコピーのボタンが出て、押すと塊の中身そのままを写す（行番号・ラベル・ボタンの文字は含まない）", async () => {
     const { calls } = stubClipboardWriteText()
     const { container } = render(
-      <Markdown text={"```diff develop/tasks.json\n-const a = 1\n+const a = 2\n```"} />,
+      <Markdown text={"```diff .tw/tasks.json\n-const a = 1\n+const a = 2\n```"} />,
     )
 
     const button = typedElement(
@@ -745,20 +745,20 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
 
   it("一覧にあるフェンスのファイル名が押せるボタンになる", () => {
     const opened: string[] = []
-    const wrap = withFiles(["develop/tasks.json"], (path) => opened.push(path))
+    const wrap = withFiles([".tw/tasks.json"], (path) => opened.push(path))
     const { container } = render(
-      wrap(<Markdown text={"```diff develop/tasks.json\n-  1\n+  2\n```"} />),
+      wrap(<Markdown text={"```diff .tw/tasks.json\n-  1\n+  2\n```"} />),
     )
 
     const label = container.querySelector(".code-file-name")
     const button = label?.querySelector('[role="button"]')
-    expect(button?.textContent).toBe("develop/tasks.json")
+    expect(button?.textContent).toBe(".tw/tasks.json")
     fireEvent.click(typedElement(button, HTMLElement, "押せるパス"))
-    expect(opened).toEqual(["develop/tasks.json"])
+    expect(opened).toEqual([".tw/tasks.json"])
   })
 
   it("一覧に無いフェンスのファイル名は素のテキストのまま（別に出るボタンはコピーのボタンだけ）", () => {
-    const wrap = withFiles(["develop/tasks.json"], () => {})
+    const wrap = withFiles([".tw/tasks.json"], () => {})
     const { container } = render(wrap(<Markdown text={"```diff src/nope.ts\n-a\n+b\n```"} />))
 
     const label = container.querySelector(".code-file-name")

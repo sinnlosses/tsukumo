@@ -129,7 +129,7 @@ describe("tw verify が打つコマンドの読み方", () => {
   test(".tw/config.toml が無ければ、CLAUDE.md の旧い節は読まない", () => {
     writeFileSync(
       join(tempDir(), "CLAUDE.md"),
-      "# 架空\n\n## タスク運用\n\n- 検証コマンド: `pnpm run check`\n",
+      "# 架空\n\n## 旧い節\n\n- 検証コマンド: `pnpm run check`\n",
     )
     expect(readTwVerifyCommand(tempDir())).toBe("")
   })

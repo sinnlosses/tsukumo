@@ -14,7 +14,7 @@ import {
 } from "../../../../src/shared/session/session-state.ts"
 import { type CommandSpy, putSession } from "../../session-store.ts"
 
-// フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
+// フィクスチャはすべて手で書いた架空のタスク（実物のタスクファイルは使わない）。
 
 afterEach(() => {
   cleanup()

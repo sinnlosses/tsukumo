@@ -71,12 +71,7 @@ describe("selectE2eFiles が選ぶファイル", () => {
 
   test("文書・単体テスト・E2E から届かない scripts は選ばない", () => {
     expect(
-      select(
-        "README.md",
-        "develop/task/sample.md",
-        "test/scripts/sample.test.ts",
-        "scripts/check.ts",
-      ),
+      select("README.md", ".tw/task/sample.md", "test/scripts/sample.test.ts", "scripts/check.ts"),
     ).toEqual({ kind: "files", files: [] })
   })
 

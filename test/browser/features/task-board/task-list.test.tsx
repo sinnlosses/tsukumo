@@ -9,7 +9,7 @@ import type {
   TaskSummaryResult,
 } from "../../../../src/shared/repository/task-summary.ts"
 
-// フィクスチャはすべて手で書いた架空のタスク（develop/tasks.json の内容は会話ではないが、
+// フィクスチャはすべて手で書いた架空のタスク（タスクファイルの内容は会話ではないが、
 // テストのフィクスチャとしても実物は使わない）。
 
 beforeAll(async () => {

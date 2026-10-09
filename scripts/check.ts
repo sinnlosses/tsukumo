@@ -3,7 +3,7 @@
 // 重い段（`test`・`test:e2e`）は、軽い段のあとに単体と E2E を並べて走らせる。
 // 並べた2段の出力は段ごとに溜め、両方が終わってから段の順に出し、落ちた段は最後の行で名指しする。
 //
-// 変えたファイルが `docs/`・`develop/` の Markdown と直下の `README.md`・`CLAUDE.md` だけのときは、
+// 変えたファイルが `docs/`・`.tw/` の Markdown と直下の `README.md`・`CLAUDE.md` だけのときは、
 // `--full` の有無に関わらず `format:check` と文書の検査（`DOCUMENT_CHECK_TEST_FILES`）だけを打つ。
 //
 // 使い方:

@@ -834,7 +834,7 @@ describe("applySessionEvent", () => {
     expect(cleared.slashCommands).toEqual(["clear"])
   })
 
-  it("tasks-changed で develop/tasks.json の一覧を持ち、届くまでは読み込み中", () => {
+  it("tasks-changed で .tw/tasks.json の一覧を持ち、届くまでは読み込み中", () => {
     expect(INITIAL_SESSION_STATE.tasks).toEqual({ kind: "loading" })
 
     const items: readonly TaskSummaryItem[] = [
