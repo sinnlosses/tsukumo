@@ -1,5 +1,5 @@
 // `<ConversationLayout>` のロジック。
-// 3本の仕切りの比率（`Split`）を state に持ち、狭い画面のタブの選択と合わせて、CSS カスタムプロパティの `style` と仕切りに渡す呼び先へ畳む。
+// 3本の仕切りの比率（`Split`）を state に持ち、CSS カスタムプロパティの `style` と仕切りに渡す呼び先へ畳む。
 //
 // 仕切りの位置が state に入るのはドラッグを離した1回だけ。
 // 動かしている間の位置は過渡的な値で、効くのは CSS カスタムプロパティだけなので、pointermove の間は DOM へ直接書く（`on*Change`）。
@@ -21,12 +21,7 @@ import { DEFAULT_SPLIT, isDefaultSplit, loadSplit, saveSplit, type Split } from 
 // 柱を出す中くらいの窓幅の `@media` と同じ字にする。
 const RAIL_TIER_QUERY = "(min-width: 761px) and (max-width: 1100px)"
 
-/** 狭い画面のとき、上段に出している領域。 */
-export type NarrowPane = "main" | "sidebar"
-
 export type UseConversationLayoutResult = {
-  readonly narrowPane: NarrowPane
-  readonly onNarrowPaneChange: (pane: NarrowPane) => void
   readonly gridRef: RefObject<HTMLDivElement | null>
   readonly rowTopRef: RefObject<HTMLDivElement | null>
   readonly rowBottomRef: RefObject<HTMLDivElement | null>
@@ -60,7 +55,6 @@ export type UseConversationLayoutResult = {
  */
 export function useConversationLayout(collapseCharacter: boolean): UseConversationLayoutResult {
   const [split, setSplit] = useState<Split>(loadSplit)
-  const [narrowPane, setNarrowPane] = useState<NarrowPane>("main")
   const gridRef = useRef<HTMLDivElement>(null)
   const rowTopRef = useRef<HTMLDivElement>(null)
   const rowBottomRef = useRef<HTMLDivElement>(null)
@@ -98,8 +92,6 @@ export function useConversationLayout(collapseCharacter: boolean): UseConversati
   const rowTopPercent = collapseCharacter ? (split.collapsedRowTop ?? split.rowTop) : split.rowTop
 
   return {
-    narrowPane,
-    onNarrowPaneChange: setNarrowPane,
     gridRef,
     rowTopRef,
     rowBottomRef,

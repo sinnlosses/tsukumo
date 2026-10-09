@@ -4,7 +4,7 @@
 // 範囲は依頼1つ（`useCurrentTurnSteps` が、最後の依頼より後のツールの記録から導く）。
 // 要約は `summarizeToolInput` / `toolInputText` を使い、どの欄を読むかを2箇所で別に決めない。
 //
-// 開閉の状態はこの hook が1つだけ持つので、札が2箇所に描かれても押した先の DOM によらず同じ一覧が開く。
+// 開閉の状態はこの hook が1つだけ持ち、どの口から押しても同じ一覧が開く。
 // 開閉は `usePopover` に任せ、閉じるたびに「すべて見る」を畳む。
 
 import { useState, type RefCallback, type RefObject } from "react"
@@ -183,10 +183,8 @@ export type CurrentWork = {
   readonly open: boolean
   readonly onToggle: () => void
   /**
-   * 札の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。
-   * `RefObject` ではなくコールバック ref なのは、同じ札が2箇所に描かれるため。
-   * 入れ物を1つにすると後から付いたほうで上書きされ、面を閉じた時点で戻り先が空になる。
-   * 付いている札を全部集めておき、Esc のときはその全部へ `.focus()` を呼ぶ（見えていないほうは `display: none` で効かない）。
+   * 開く口の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。
+   * 付いている口を全部集め、Esc のときは全部へ `.focus()` を呼ぶ（見えていない口は `display: none` で効かない）。
    */
   readonly toggleRef: RefCallback<HTMLButtonElement>
 }

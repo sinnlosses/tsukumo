@@ -159,9 +159,20 @@
   border-radius: 8px;
   font-size: var(--font-action);
 }
+/* 狭い画面（760px 以下）。開く口は「ログ」ではなく入力欄の上の吹き出しで、ログは画面いっぱいに開く（立ち絵の床は出さない）。 */
 @media (max-width: 760px) {
-  /* 帯はタブ帯へ畳まれて段を持たないので、ログの枠は画面の縁の余白のすぐ下（会話の画面の grid の上端）から始める。 */
+  .speech-log-open {
+    display: none;
+  }
+  .speech-log-floor {
+    visibility: hidden;
+  }
   .speech-log {
-    --speech-log-top: var(--page-padding);
+    --speech-log-top: 0px;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    border: none;
+    border-radius: 0;
   }
 }

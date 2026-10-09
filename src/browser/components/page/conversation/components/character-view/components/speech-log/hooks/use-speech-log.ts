@@ -1,5 +1,6 @@
 // `<SpeechLog>` のロジック。
-// 開いているかどうかを持ち、確定した記録（`SessionRecord`）を並べるだけの形に畳む。
+// 確定した記録（`SessionRecord`）を並べるだけの形に畳む。
+// 開いているかどうかは `useCharacterView` が持つ（開く口が「ログ」と狭い画面の吹き出しの2つあるため）。
 //
 // 並びは `turnSpeeches` で引き直し、別に溜めない。
 // 古い→新しいを上→下に、依頼の区切りとセリフを1本に並べる。
@@ -10,7 +11,7 @@
 // セリフの行を押すとそのセリフの表情へ立ち絵が遡る。
 // 留めた状態そのものは `useCharacterView` が持ち（床の立ち絵と状態を共有するため）、ここは `pinnedSpeech` / `onToggleSpeech` として受け取って印と押す口へ写すだけ。
 
-import { useEffect, useRef, useState, type RefObject } from "react"
+import { useEffect, useRef, type RefObject } from "react"
 import { sumBy } from "remeda"
 
 import {
@@ -69,7 +70,6 @@ export type SpeechLogEntry =
 export type SpeechLogModel = {
   /** 並びを転がす箱に付ける ref。開いた直後に下端（最新）へ転がす。 */
   readonly scrollerRef: RefObject<HTMLElement | null>
-  readonly open: boolean
   /** 古い→新しい。セリフが1件も無いターンは区切りごと落としてある。 */
   readonly entries: readonly SpeechLogEntry[]
   /**
@@ -77,18 +77,16 @@ export type SpeechLogModel = {
    * 呼び名を持たないパックでは `undefined`（区切りは「」だけになる）。
    */
   readonly userCall: string | undefined
-  readonly onOpen: () => void
-  readonly onClose: () => void
 }
 
 export function useSpeechLog(
+  open: boolean,
   pinnedSpeech: PinnedSpeech | undefined,
   onToggleSpeech: (turnId: number, index: number) => void,
 ): SpeechLogModel {
   const records = useSession((session) => session.state.records)
   const userCall = useSession((session) => session.state.character?.userCall)
   const { activeTurnId } = useTurnSelection()
-  const [open, setOpen] = useState(false)
   const scrollerRef = useRef<HTMLElement>(null)
 
   // 開いた直後に下端（最新）を見せる。
@@ -103,13 +101,10 @@ export function useSpeechLog(
 
   return {
     scrollerRef,
-    open,
     entries: open
       ? logEntries(records, localTimeZoneId(), activeTurnId, pinnedSpeech, onToggleSpeech)
       : [],
     userCall,
-    onOpen: () => setOpen(true),
-    onClose: () => setOpen(false),
   }
 }
 

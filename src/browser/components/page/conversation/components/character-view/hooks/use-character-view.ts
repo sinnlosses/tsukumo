@@ -31,6 +31,10 @@ import {
   waitingLineDueAt,
 } from "../../../../../../../shared/session/shown-reaction.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
+import {
+  characterFaceInfo,
+  type CharacterFaceInfo,
+} from "../../../../../../domain/character-face.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
@@ -83,7 +87,24 @@ export type CharacterViewModel = {
   readonly pinnedSpeech: PinnedSpeech | undefined
   /** セリフのログの行を押したとき（`<SpeechLog>` から呼ぶ。吹き出しと同じ状態を動かす）。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void
+  /** セリフのログが開いているか。開く口は「ログ」と狭い画面の吹き出しの2つ。 */
+  readonly speechLogOpen: boolean
+  readonly onOpenSpeechLog: () => void
+  readonly onCloseSpeechLog: () => void
+  /** 狭い画面の顔（パックの `face` の1枚）。 */
+  readonly face: CharacterFaceInfo
+  /** 狭い画面の吹き出しに出す最新の1件。 */
+  readonly phoneLine: PhoneBalloonLine
 }
+
+/**
+ * 狭い画面の吹き出しに出す最新の1件。
+ * 反応を出していればその字（迎えの挨拶を書いている途中なら `writing`）、無ければ表示中のセリフの最後の1件。
+ */
+export type PhoneBalloonLine =
+  | { readonly kind: "none" }
+  | { readonly kind: "writing" }
+  | { readonly kind: "text"; readonly text: string }
 
 export function useCharacterView(): CharacterViewModel {
   const { activeTurnId, newestTurnId } = useTurnSelection()
@@ -105,6 +126,7 @@ export function useCharacterView(): CharacterViewModel {
       : turnSpeeches(records).find((t) => t.id === turnId)?.speeches
 
   const [viewed, setViewed] = useState<ViewedSpeech>(LATEST_VIEWED_SPEECH)
+  const [speechLogOpen, setSpeechLogOpen] = useState(false)
 
   const now = useCharacterClock(turn, lastToolFailureAt, waitingLineDueAt(state))
   const pastTurn = pastTurnSpeech(records, activeTurnId, newestTurnId)
@@ -149,7 +171,23 @@ export function useCharacterView(): CharacterViewModel {
     speakerName: character?.name,
     pinnedSpeech: pinned,
     onToggleSpeech: toggleSpeech,
+    speechLogOpen,
+    onOpenSpeechLog: () => setSpeechLogOpen(true),
+    onCloseSpeechLog: () => setSpeechLogOpen(false),
+    face: characterFaceInfo(character),
+    phoneLine: phoneLineOf(reaction, activeSpeeches),
   }
+}
+
+function phoneLineOf(reaction: ShownReaction, speeches: readonly Speech[]): PhoneBalloonLine {
+  if (reaction.kind === "shown") {
+    return { kind: "text", text: reaction.line.text }
+  }
+  if (reaction.kind === "writing") {
+    return { kind: "writing" }
+  }
+  const latest = speeches.at(-1)
+  return latest === undefined ? { kind: "none" } : { kind: "text", text: latest.text }
 }
 
 /** `ShownReaction` を `BalloonReaction` の形へ畳む（持ち物をそのまま運ぶだけ）。 */

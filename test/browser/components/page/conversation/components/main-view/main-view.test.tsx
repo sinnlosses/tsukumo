@@ -96,6 +96,21 @@ function press(name: string): void {
   })
 }
 
+/**
+ * やり取りの列の頭の知らせを押す。
+ * 同じ知らせが狭い画面用に本文の上端にもあり（どちらを見せるかは CSS が決める）、ここでは列の側を押す。
+ */
+function pressOutlineNotice(name: string): void {
+  act(() => {
+    fireEvent.click(outlineNotice(name))
+    window.dispatchEvent(new Event("hashchange"))
+  })
+}
+
+function outlineNotice(name: string): HTMLElement {
+  return within(screen.getByRole("navigation", { name: "やり取り" })).getByRole("button", { name })
+}
+
 function rerenderMainView(records: readonly SessionRecord[]): void {
   act(() => {
     putState({ ...INITIAL_SESSION_STATE, records })
@@ -237,7 +252,7 @@ describe("MainView（やり取りの移動）", () => {
 
     stepTurn("[")
     const signal = useInquiryJump.getState().jump.signal
-    press("お伺いが届いた")
+    pressOutlineNotice("お伺いが届いた")
 
     expect(title()).toBe("3つ目")
     expect(useInquiryJump.getState().jump).toEqual({ signal: signal + 1, focus: false })
@@ -250,7 +265,7 @@ describe("MainView（やり取りの移動）", () => {
 
     stepTurn("[")
     const signal = useInquiryJump.getState().jump.signal
-    press("作業中")
+    pressOutlineNotice("作業中")
 
     expect(title()).toBe("3つ目")
     expect(useInquiryJump.getState().jump.signal).toBe(signal)
@@ -260,11 +275,11 @@ describe("MainView（やり取りの移動）", () => {
     renderMainView(threeTurns(), ASKING_TURN, PERMISSION)
 
     stepTurn("[")
-    const mark = button("お伺いが届いた")
+    const mark = outlineNotice("お伺いが届いた")
     expect(mark.textContent).toBe("!")
     expect(mark.getAttribute("title")).toBe("お伺いが届いた")
 
-    press("お伺いが届いた")
+    pressOutlineNotice("お伺いが届いた")
     expect(title()).toBe("3つ目")
   })
 })

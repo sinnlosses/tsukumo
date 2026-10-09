@@ -22,6 +22,7 @@ import {
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
 import { reportEvent } from "../../../../../../fixture/report-event.ts"
 import { requestRecord, speechRecord } from "../../../../../../fixture/session-record.ts"
+import { typedElement } from "../../../../../../typed-element.ts"
 import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { putSession } from "../../../../../session-store.ts"
 
@@ -381,5 +382,71 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
     fireEvent.click(olderBalloon!)
 
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
+  })
+})
+
+// 狭い画面の顔と吹き出し（広い画面では CSS が消す。ここでは DOM の出し分けだけを見る）。
+describe("CharacterView（狭い画面の顔と最新の1件）", () => {
+  function phoneText(): string | null | undefined {
+    return document.querySelector(".phone-balloon-text")?.textContent
+  }
+
+  it("吹き出しには最新のセリフ1件だけが出る", () => {
+    renderCharacterView({
+      speeches: [speech("架空の古いセリフ"), speech("架空の新しいセリフ")],
+      character: characterInfo({ face: "/character/face.png" }),
+    })
+
+    expect(document.querySelectorAll(".phone-balloon-bubble")).toHaveLength(1)
+    expect(phoneText()).toBe("架空の新しいセリフ")
+    expect(document.querySelector(".phone-balloon-face")?.getAttribute("src")).toBe(
+      "/character/face.png",
+    )
+  })
+
+  it("反応を出しているあいだは、反応の字が出る", () => {
+    renderCharacterView({
+      records: [
+        requestRecord({ text: "架空の依頼", turnId: 0 }),
+        speechRecord({ text: "架空のセリフ" }),
+      ],
+      speeches: [speech("架空のセリフ")],
+      speechCalledInTurn: true,
+      turn: {
+        kind: "finished",
+        startedAt: 0,
+        finishedAt: 1,
+        ending: { kind: "failed", failure: { kind: "execution-error" } },
+      },
+      character: FIXTURE_CHARACTER,
+      welcomeGreeting: WRITTEN_GREETING,
+    })
+
+    expect(phoneText()).toBe("架空の失敗の反応")
+  })
+
+  it("セリフも反応も無ければ顔だけで、吹き出しを出さない", () => {
+    renderCharacterView({
+      speeches: [],
+      character: characterInfo({ face: "/character/face.png" }),
+    })
+
+    expect(document.querySelector(".phone-balloon-face")).not.toBeNull()
+    expect(document.querySelector(".phone-balloon-bubble")).toBeNull()
+  })
+
+  it("吹き出しを押すとセリフのログが開く", () => {
+    renderCharacterView({ speeches: [speech("架空のセリフ")], character: FIXTURE_CHARACTER })
+
+    fireEvent.click(
+      typedElement(
+        document.querySelector(".phone-balloon-bubble"),
+        HTMLButtonElement,
+        "狭い画面の吹き出し",
+      ),
+    )
+
+    expect(document.querySelector("dialog")?.hasAttribute("open")).toBe(true)
+    expect(screen.getByRole("button", { name: "ログ" }).getAttribute("aria-expanded")).toBe("true")
   })
 })

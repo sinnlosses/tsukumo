@@ -50,7 +50,7 @@ export function usePopover(options: PopoverOptions): Popover {
   function onDismiss(cause: DismissCause): void {
     close()
     if (cause === "escape") {
-      // 押せる状態にある口は1つだけ（もう片方は `display: none` で `.focus()` が効かない）。
+      // 集めた口のうち見えているのは1つだけで、見えていない口は `display: none` なので `.focus()` が効かない。
       for (const node of toggleNodes.current) {
         node.focus()
       }

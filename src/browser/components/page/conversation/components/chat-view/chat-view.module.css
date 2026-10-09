@@ -3,8 +3,15 @@
 
    これはプロトタイプ。
    立ち絵とログの比率は目視で仮に決めたもので、手触りを見てから詰める前提。 */
-.chat-region {
+/* 立ち絵とログの段と、狭い画面でだけ出す顔の行を縦に積む器。広い画面では段が高さいっぱいを取る。 */
+.chat-view {
+  display: flex;
+  flex-direction: column;
   height: 100%;
+}
+.chat-region {
+  flex: 1 1 0;
+  min-height: 0;
   overflow: hidden;
   /* 立ち絵の大きさ（領域の高さに対する割合）。
      メインビューはキャラビューより背が高いので、割合はキャラビュー（78%）より控えめにして、ログの側の幅を確保する。 */
@@ -74,14 +81,25 @@
   border-bottom-right-radius: 0.3rem;
 }
 
-/* 狭い画面。立ち絵を小さくしてログの幅を残す。 */
+/* 狭い画面でだけ出す、ログの下の顔の行。 */
+.chat-face-row {
+  display: none;
+}
+
+/* 狭い画面（760px 以下）。立ち絵を出さず、ログの下（入力欄のすぐ上）に顔だけを置く。
+   最新のセリフはログの末尾にあるので、顔の横に吹き出しは出さない。 */
 @media (max-width: 760px) {
-  .chat-region {
-    /* 狭い画面では領域が縦に長いので、割合を上げないと立ち絵の上に空きが広く残る。 */
-    --chat-portrait-height: 76%;
-    --chat-portrait-drop: 0.4rem;
-  }
   .chat-entry {
     max-width: 92%;
+  }
+  .chat-face-row {
+    display: flex;
+    flex: none;
+    padding-top: 10px;
+  }
+  .chat-face {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
   }
 }

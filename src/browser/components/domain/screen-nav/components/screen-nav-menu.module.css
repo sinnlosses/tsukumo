@@ -1,4 +1,4 @@
-/* 狭い画面（760px 以下）の「≡」と、押すと落ちてくる面。
+/* 狭い画面（760px 以下）の頭の右上の「≡」と、押すと落ちてくる面。
    面の中で他の部品を並べ直す規則（`.screen-nav-panel .screen-nav-session-tag` など）は `screen-nav.module.css` の @media が持つ。 */
 
 /* 「≡」は狭い画面だけの口。広い画面では口がそのまま並ぶので出さない。 */
@@ -7,21 +7,21 @@
 }
 
 @media (max-width: 760px) {
+  /* 落ちてくる面の基準。 */
   .screen-nav-menu {
+    position: relative;
     display: block;
+    flex: none;
   }
-  /* 指で押す口の箱だけ。顔は `<Button variant="outline-surface">`、字の大きさは `size` が持つ。
-     上下の余白と字の大きさをタブ（.layout-tab）に合わせるので、同じ高さに揃う。
-     `line-height` は `theme.css` の既定（本文の 1.75）を継いだままにしておくと、上下の余白と合わせてタブ帯とぴったり同じ高さ（39.1px）に揃う（実測）。
-     ここで上書きしない。 */
+  /* 枠と地は `<Button variant="outline">` が持ち、ここは 36px 角の箱だけ。 */
   .screen-nav-toggle {
-    width: 2.75rem;
-    padding: 0.45rem 0;
-    border-radius: 999px;
-  }
-  /* 閉じている間の答え待ちの印（印が出ているかどうかで分かるので、色だけに頼らない）。 */
-  .screen-nav-toggle-mark {
-    margin-left: 0.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 10px;
   }
   /* 押している間だけ落ちてくる面。重ねて出すので段は増えない。 */
   .screen-nav-panel {

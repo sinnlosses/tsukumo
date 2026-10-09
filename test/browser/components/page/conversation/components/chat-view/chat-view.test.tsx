@@ -81,6 +81,19 @@ describe("ChatView", () => {
       screen.getByText("（まだ何も話していません。立ち絵をつつくと話しかけてくれます）"),
     ).toBeTruthy()
   })
+
+  // 狭い画面では入力欄の上に顔だけを出す（広い画面では CSS が消す。ここでは DOM の出し分けだけを見る）。
+  // 最新のセリフはログの末尾にあるので、顔の横に吹き出しを重ねない。
+  it("ログの下に顔だけの行を置き、吹き出しは添えない", () => {
+    renderChatView({
+      records: [speechRecord({ text: "架空のセリフ" })],
+      character: characterInfo({ face: "/character/face.png" }),
+    })
+
+    const row = document.querySelector(".chat-face-row")
+    expect(row?.querySelector(".chat-face")?.getAttribute("src")).toBe("/character/face.png")
+    expect(row?.textContent).toBe("")
+  })
 })
 
 describe("ChatView の時刻と日の区切り", () => {

@@ -2,8 +2,8 @@
 //
 // ターンが終わっていても `backgroundTasks` が残っている間は「経過」のまま数え続け、残っていないターンの終わりで初めてその時刻に止まる。
 
-import type { TurnProgress } from "../../../../../shared/session/session-state.ts"
-import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
+import type { TurnProgress } from "../../shared/session/session-state.ts"
+import { formatElapsed } from "../../shared/utils/elapsed-time.ts"
 
 const ELAPSED_LABEL = "経過"
 export const FINISHED_LABEL = "所要"
@@ -32,11 +32,38 @@ export function turnElapsedText(
   backgroundTaskCount: number,
   now: number,
 ): string {
+  return turn.kind === "idle"
+    ? "-"
+    : formatElapsed(turnElapsedSeconds(turn, backgroundTaskCount, now))
+}
+
+/**
+ * {@link turnElapsedText} と同じ経過を、狭い画面の頭に出す「20:03」（1時間を超えたら「1:02:03」）の形にする。
+ * まだ一度も依頼が無ければ `-`。
+ */
+export function turnElapsedClock(
+  turn: TurnProgress,
+  backgroundTaskCount: number,
+  now: number,
+): string {
   if (turn.kind === "idle") {
     return "-"
   }
-  if (turn.kind === "finished" && backgroundTaskCount === 0) {
-    return formatElapsed(Math.max(0, Math.floor((turn.finishedAt - turn.startedAt) / 1000)))
-  }
-  return formatElapsed(Math.max(0, Math.floor((now - turn.startedAt) / 1000)))
+  const totalSeconds = turnElapsedSeconds(turn, backgroundTaskCount, now)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const secondsText = String(totalSeconds % 60).padStart(2, "0")
+  return hours > 0
+    ? `${String(hours)}:${String(minutes).padStart(2, "0")}:${secondsText}`
+    : `${String(minutes)}:${secondsText}`
+}
+
+/** 依頼を送ってからの秒。数え終わったターンは終わった時刻で固定される。 */
+function turnElapsedSeconds(
+  turn: Exclude<TurnProgress, { readonly kind: "idle" }>,
+  backgroundTaskCount: number,
+  now: number,
+): number {
+  const until = turn.kind === "finished" && backgroundTaskCount === 0 ? turn.finishedAt : now
+  return Math.max(0, Math.floor((until - turn.startedAt) / 1000))
 }

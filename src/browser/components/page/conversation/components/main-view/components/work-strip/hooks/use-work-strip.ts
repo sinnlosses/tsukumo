@@ -32,10 +32,17 @@ import {
 import { formatElapsed } from "../../../../../../../../../shared/utils/elapsed-time.ts"
 import { summarizeToolInput } from "../../../../../../../../domain/tool-summary.ts"
 import {
+  FINISHED_LABEL,
+  isTurnCounting,
+  turnElapsedLabel,
+  turnElapsedText,
+} from "../../../../../../../../domain/turn-elapsed.ts"
+import {
   backgroundSummaryLabel,
   currentWorkStepGroups,
   type CurrentWorkStepGroup,
 } from "../../../../../../../../features/current-work/domain/current-work-step.ts"
+import { useNowWhile } from "../../../../../../../../hooks/use-now-while.ts"
 import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-steps.ts"
 import { useMainViewContent } from "../../../../../../../../stores/main-view-content.ts"
 import { useMainViewTurns } from "../../../../../../../../stores/main-view-turn.ts"
@@ -43,14 +50,7 @@ import { useSession } from "../../../../../../../../stores/session.ts"
 import { useWorkStripSteps } from "../../../../../../../../stores/work-strip-steps.ts"
 import { apiRetryNotice } from "../../../../../domain/api-error-label.ts"
 import { isClearRequest } from "../../../../../domain/clear-request.ts"
-import {
-  FINISHED_LABEL,
-  isTurnCounting,
-  turnElapsedLabel,
-  turnElapsedText,
-} from "../../../../../domain/turn-elapsed.ts"
 import type { WorkStripResult } from "../../../../../domain/turn-result-mark.ts"
-import { useNowWhile } from "../../../../hooks/use-now-while.ts"
 
 /** 段の丸1つの状態。`asking` は今の段で答え待ちが来ているとき。 */
 export type WorkStripPhaseState = "done" | "current" | "asking" | "upcoming"

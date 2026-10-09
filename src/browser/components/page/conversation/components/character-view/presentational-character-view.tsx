@@ -3,6 +3,8 @@
 // 右上の「ログ」（<SpeechLog>）の床にも同じ立ち絵を立たせるので、立ち絵と話し手の名前はここから渡す。
 //
 // 立ち絵の素材（URL）が無いときは `<Portrait>` を出さず、吹き出しだけで成立させる。
+//
+// 狭い画面（760px 以下）では立ち絵と吹き出しの並びの代わりに `<PhoneBalloon>`（顔と最新の1件）を出す（どちらを出すかは CSS の `@media`）。
 
 import type { ReactElement } from "react"
 
@@ -11,6 +13,7 @@ import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "./character-view.module.css"
 import { BalloonTrack } from "./components/balloon-track/balloon-track.tsx"
+import { PhoneBalloon } from "./components/phone-balloon/phone-balloon.tsx"
 import { SpeechLog } from "./components/speech-log/speech-log.tsx"
 import type { CharacterViewModel } from "./hooks/use-character-view.ts"
 
@@ -28,6 +31,11 @@ export function PresentationalCharacterView({
   speakerName,
   pinnedSpeech,
   onToggleSpeech,
+  speechLogOpen,
+  onOpenSpeechLog,
+  onCloseSpeechLog,
+  face,
+  phoneLine,
 }: PresentationalCharacterViewProps): ReactElement {
   const portrait = portraitUrl !== undefined && (
     <Portrait
@@ -56,20 +64,26 @@ export function PresentationalCharacterView({
         speakerName={speakerName}
         pinnedSpeech={pinnedSpeech}
         onToggleSpeech={onToggleSpeech}
+        open={speechLogOpen}
+        onOpen={onOpenSpeechLog}
+        onClose={onCloseSpeechLog}
       />
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        ref={undefined}
-        gap="none"
-        align="end"
-        justify="start"
-        wrap="wrap"
-        className={styles["character-layout"]}
-      >
-        {portrait}
-        <BalloonTrack speeches={speeches} reaction={reaction} speakerName={speakerName} />
-      </HStack>
+      <PhoneBalloon face={face} line={phoneLine} onOpenLog={onOpenSpeechLog} />
+      <div className={styles["character-stage"]}>
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
+          gap="none"
+          align="end"
+          justify="start"
+          wrap="wrap"
+          className={styles["character-layout"]}
+        >
+          {portrait}
+          <BalloonTrack speeches={speeches} reaction={reaction} speakerName={speakerName} />
+        </HStack>
+      </div>
     </VStack>
   )
 }

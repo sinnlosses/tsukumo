@@ -1,0 +1,112 @@
+/* 依頼の手順の一覧の箱と中身。どこに重ねるかは置く側の class が持つ。 */
+
+/* 超えたら内側でスクロールする（高さの上限は置く側が決める）。 */
+.current-work-list {
+  overflow-y: auto;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  font-size: var(--font-secondary);
+}
+/* 字の太さ・色は `Text` が持つ。margin だけ残す。 */
+.current-work-heading {
+  margin: 0 0 0.4rem;
+}
+/* 答え待ちのときだけ出す「お伺いへ」。顔は `<Button variant="link">` が持ち、ここは箱だけ（置き方・margin）。 */
+.current-work-go-to-inquiry {
+  display: block;
+  margin: 0 0 0.5rem;
+}
+/* 段取り。 */
+.current-work-plan-heading {
+  margin: 0.4rem 0 0.2rem;
+}
+.current-work-plan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.4rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+.current-work-plan-phase {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-quiet);
+}
+.current-work-plan-phase:not(:last-child)::after {
+  content: "→";
+  margin-left: 0.4rem;
+  color: var(--ink-quiet);
+}
+.current-work-plan-phase b {
+  font-weight: 700;
+}
+.current-work-plan-phase-done {
+  background: var(--surface-raised);
+}
+.current-work-plan-phase-current {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--surface), var(--accent) 10%);
+  color: var(--ink);
+}
+.current-work-full {
+  margin: 0 0 0.5rem;
+}
+/* 色は `Text` が持つ。margin だけ残す。 */
+.current-work-full-heading {
+  margin: 0 0 0.2rem;
+}
+.current-work-full-text {
+  margin: 0;
+  padding: 0.4rem;
+  max-height: 12rem;
+  overflow: auto;
+  border-radius: 0.4rem;
+  background: var(--ground);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* 背景で動いているもの。見出しと行の形は依頼の手順に揃える。色は `Text` が持つ。 */
+.current-work-background-heading {
+  margin: 0.4rem 0 0.2rem;
+}
+.current-work-background {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+.current-work-background-kind {
+  font-family: var(--font-mono);
+}
+/* 回る印は実行中の手順と同じ（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
+.current-work-background-mark {
+  display: inline-block;
+  animation: current-work-spin 1s linear infinite;
+}
+/* 色は `Text` が持つ。margin だけ残す。 */
+.current-work-steps-heading {
+  margin: 0.4rem 0 0.2rem;
+}
+@keyframes current-work-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* 手順の一覧を畳む・広げる口。顔は `<Button variant="link">` が持ち、ここは箱だけ（margin）。 */
+.current-work-toggle-all {
+  margin-top: 0.4rem;
+}

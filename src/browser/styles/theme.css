@@ -140,7 +140,7 @@
   --page-padding: 1rem;
 
   /* 画面のナビの帯が最上部で奪う高さ。帯の外寸は帯の地 + 下の罫線の2つの和。
-     帯（screen-nav.module.css）と、そのぶん縮む会話の画面の grid（layout.module.css）の両方が読むので、値はここに1つだけ置く（狭い画面では帯がタブ帯へ畳まれるので、grid は縮まない）。
+     帯（screen-nav.module.css）と、そのぶん縮む会話の画面の grid（layout.module.css）の両方が読むので、値はここに1つだけ置く（狭い画面では帯を出さず、下の @media の縦の flex が grid の高さを決める）。
      `--screen-nav-height` は罫線を含まない帯の地の高さで、口の下線はこの下端に重なる。
      帯の下の隙間は画面の縁と同じだけ空ける。 */
   --screen-nav-height: 52px;
@@ -162,6 +162,20 @@ body {
   font-size: var(--font-body);
   line-height: var(--line-height-body);
   overflow-wrap: anywhere;
+}
+
+/* 狭い画面（760px 以下）の会話の画面は、縁の余白を持たず画面の高さに固定した縦の1列にする。
+   頭（画面のナビ）が上の行を中身なりに取り、会話の画面の grid（conversation-layout.module.css）が残りを取る。
+   どの画面を出しているかは画面のナビの `data-screen` で見る（ほかの画面は縦に流れる1枚のページのまま）。 */
+@media (max-width: 760px) {
+  body:has([data-screen="conversation"]) {
+    padding: 0;
+  }
+  body:has([data-screen="conversation"]) #app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
 }
 
 /* フォーム部品（button/input/select/textarea）はブラウザの既定では親の書体を継がないので、ここで1回だけ継がせる。

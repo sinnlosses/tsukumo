@@ -32,3 +32,9 @@
 .dispatch-elapsed {
   font-family: var(--font-mono);
 }
+/* 狭い画面（760px 以下）では経過を画面の頭が持つので、この行には出さない。 */
+@media (max-width: 760px) {
+  .dispatch-elapsed-row {
+    display: none;
+  }
+}

@@ -56,7 +56,7 @@ describe("report → メインビュー", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("札の幅が 48rem 未満ではやり取りの列が既定で畳まれ、開くを選ぶと読み込み直しても開いたまま、狭い画面でも列が出る", async () => {
+  it("札の幅が 48rem 未満ではやり取りの列が既定で畳まれ、開くを選ぶと読み込み直しても開いたまま、狭い画面（760px 以下）では列を出さない", async () => {
     const room = await run.open({
       scenario: "report-outline-compact",
       scene: "long-report-quick",
@@ -74,7 +74,7 @@ describe("report → メインビュー", () => {
     await room.page.getByRole("button", { name: "やり取りを畳む" }).waitFor()
 
     await room.page.setViewportSize(VIEWPORTS.narrow)
-    await room.page.locator('nav[aria-label="やり取り"]').waitFor({ state: "visible" })
+    await room.page.locator('nav[aria-label="やり取り"]').waitFor({ state: "hidden" })
   })
 
   it("やり取りの列の上の段にやり取りが結果の印つきで並び、やり取りの行で Enter を押すとそのやり取りへ移る", async () => {

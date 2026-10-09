@@ -1,20 +1,15 @@
-// 狭い画面（760px 以下）の「≡」と、押すと落ちてくる面。
+// 狭い画面（760px 以下）の頭の右上の「≡」と、押すと落ちてくる面。
 // 広い画面では CSS で消える（`screen-nav.module.css` の `@media`）ので、ここは幅を測らない。
 //
-// 落ちてくる面は開いている間だけの要素（閉じているときは描かない）。
-// 奪う面積をタブ帯の右端の 44px だけに保つための形で、開いている間は上に重ねて出す（段を増やさない）。
+// 落ちてくる面は開いている間だけの要素（閉じているときは描かない）で、頭の下に重ねて出す。
 //
 // 振る舞い（ターン進行中の扱い・送るコマンド）は広い画面と同じ部品をそのまま使う。
-// 「いまの作業」を押すと、一覧はこの面の中でその場で下に開く（重ねない。面ごと縦に伸び、面の内側でスクロールする）。
-//
-// 狭い画面では「答え待ち」の字を帯に置く幅が無いので、閉じている間は「≡」に印（`●`）を添える。
+// いまの作業は頭が持つので、この面には置かない。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { CurrentWorkPill } from "../../../../features/current-work/components/current-work-pill.tsx"
 import { Button } from "../../../ui/button/button.tsx"
-import { Text } from "../../../ui/text/text.tsx"
 import type { ScreenNavMenu as Menu, ScreenNavParts } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import { ScreenNavCharacterPicker } from "./screen-nav-character-picker.tsx"
@@ -28,17 +23,12 @@ import { ScreenNavSettingsGear } from "./screen-nav-settings.tsx"
 export type ScreenNavMenuProps = {
   /** 帯に並ぶ部品の値ひとそろい。広い画面の帯が受け取るものと同じ束で、ここが決めるのは並べ直す順と入れ子だけ。 */
   readonly parts: ScreenNavParts
-  /** 「≡」そのもの（開閉と、閉じている間の答え待ちの印）。 */
+  /** 「≡」そのもの（開閉）。 */
   readonly menu: Menu
 }
 
-/** 「≡」の字と、読み上げに渡す名前。 */
-const MENU_MARK = "≡"
+/** 読み上げに渡す名前。 */
 const MENU_LABEL = "メニュー"
-const PENDING_NOTE = "答え待ち"
-
-/** 閉じている間の答え待ちの印。 */
-const PENDING_MARK = "●"
 
 export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
   const { parts, menu } = props
@@ -46,29 +36,30 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
   return (
     <div className={styles["screen-nav-menu"]}>
       <Button
-        variant="outline-surface"
+        variant="outline"
         size="secondary"
         pressed="none"
         disabled={false}
-        ariaLabel={menu.pendingActive ? `${MENU_LABEL}（${PENDING_NOTE}）` : MENU_LABEL}
+        ariaLabel={MENU_LABEL}
         ariaHasPopup={undefined}
         disclosure={{ kind: "expander", expanded: menu.open }}
         title={undefined}
         className={styles["screen-nav-toggle"]}
         onClick={menu.onToggle}
       >
-        {MENU_MARK}
-        {menu.pendingActive && (
-          <Text
-            element="span"
-            size="label"
-            tone="state-warn"
-            weight="inherit"
-            className={styles["screen-nav-toggle-mark"]}
-          >
-            {PENDING_MARK}
-          </Text>
-        )}
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 6h16M4 12h16M4 18h10" />
+        </svg>
       </Button>
       {menu.open && (
         // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
@@ -82,7 +73,6 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
           {parts.gates.map((gate) => (
             <ScreenNavGate key={gate.screen} gate={gate} onSelect={parts.onSelect} />
           ))}
-          <CurrentWorkPill work={parts.work} variant="inline" />
           <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
           <ScreenNavSettingsGear settings={parts.settings} />
         </div>

@@ -174,3 +174,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* 狭い画面でだけ出す、本文の上端の知らせの行。 */
+.outline-phone-notice {
+  display: none;
+}
+
+/* 狭い画面（760px 以下）では列を出さず、本文が幅いっぱいを取る。 */
+@media (max-width: 760px) {
+  .outline-frame[data-outline="shown"],
+  .outline-frame[data-outline="shown"][data-outline-collapsed="true"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .outline-rail {
+    display: none;
+  }
+  .outline-phone-notice {
+    display: block;
+    padding-bottom: 0.5rem;
+  }
+}

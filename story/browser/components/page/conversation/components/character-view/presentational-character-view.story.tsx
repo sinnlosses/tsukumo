@@ -28,6 +28,11 @@ const meta = {
     speakerName: "つくもの精霊",
     pinnedSpeech: undefined,
     onToggleSpeech: () => {},
+    speechLogOpen: false,
+    onOpenSpeechLog: () => {},
+    onCloseSpeechLog: () => {},
+    face: { url: undefined, alt: "つくもの精霊" },
+    phoneLine: { kind: "text", text: "次はテストを走らせてみるね（架空）。" },
   },
 } satisfies Meta<typeof PresentationalCharacterView>
 

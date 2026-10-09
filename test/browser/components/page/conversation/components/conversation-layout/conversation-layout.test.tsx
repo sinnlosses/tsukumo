@@ -156,20 +156,14 @@ describe("ConversationLayout", () => {
     })
   })
 
-  // 狭い画面でどちらの領域を出すかは CSS（@media）が data-narrow-pane を見て決めるので、
-  // 部品の側で確かめられるのは「タブを押すと印が入れ替わる」ところまで。
-  it("上段のタブを押すと、出す領域の印が入れ替わる", () => {
+  // 狭い画面で何を隠すかは CSS（@media）が決めるので、部品の側は切り替えのタブを持たず、4領域をそのまま描く。
+  it("上段を切り替えるタブ帯を描かず、4領域はそのまま残る", () => {
     renderLayout()
-    const sidebarTab = screen.getByRole("tab", { name: "サイドバー" })
 
-    expect(rowTopElement().dataset["narrowPane"]).toBe("main")
-
-    fireEvent.click(sidebarTab)
-
-    expect(rowTopElement().dataset["narrowPane"]).toBe("sidebar")
-    expect(sidebarTab.getAttribute("aria-selected")).toBe("true")
-    // 領域そのものは4つとも残る（タブは見せる側を選ぶだけ。docs/requirements.md「画面レイアウト」）。
-    expect(document.querySelector('[data-region="main"]')).not.toBeNull()
+    expect(screen.queryByRole("tablist")).toBeNull()
+    for (const region of ["main", "sidebar", "character", "dispatch"]) {
+      expect(document.querySelector(`[data-region="${region}"]`)).not.toBeNull()
+    }
   })
 
   // 枠と角丸を外して背景を敷く class（`.layout-ground`）は、キャラビューと雑談中のメインビューが

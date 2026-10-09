@@ -2,6 +2,7 @@
 // 札の左に、窓の中のやり取りと、見ているやり取りの見出しの一覧を列として置き、進み具合の帯と本文はその幅ぶん右へ寄る。
 // 列の頭には、いま見ている中身の外で起きたことを知らせの行として出す。
 // 列は札の上端から下端まで伸び、転がしても札の上端に残る。
+// 狭い画面（760px 以下）では列を出さず、知らせの行だけを本文の上端に出す。
 
 import clsx from "clsx"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -150,6 +151,11 @@ export function PresentationalReportOutline({
         />
       )}
       <div className={styles["outline-content"]} ref={contentRef}>
+        {notice.kind === "notice" && (
+          <div className={styles["outline-phone-notice"]}>
+            <HeadNotice text={notice.text} form="row" onPress={onNotice} />
+          </div>
+        )}
         {children}
       </div>
     </div>

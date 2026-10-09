@@ -13,6 +13,12 @@
 import type { ApiTrouble } from "../../../../../../../../../shared/session-driver/api-trouble.ts"
 import type { RateLimit } from "../../../../../../../../../shared/session-driver/rate-limit.ts"
 import type { TurnProgress } from "../../../../../../../../../shared/session/session-state.ts"
+import {
+  isTurnCounting,
+  turnElapsedLabel,
+  turnElapsedText,
+} from "../../../../../../../../domain/turn-elapsed.ts"
+import { useNowWhile } from "../../../../../../../../hooks/use-now-while.ts"
 import { useComposerDraft } from "../../../../../../../../stores/composer-draft.ts"
 import { useInquiryAnswer } from "../../../../../../../../stores/inquiry-answer.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
@@ -22,12 +28,6 @@ import {
   turnFailureLabel,
 } from "../../../../../domain/api-error-label.ts"
 import { rateLimitResetText, rateLimitSubject } from "../../../../../domain/rate-limit-label.ts"
-import {
-  isTurnCounting,
-  turnElapsedLabel,
-  turnElapsedText,
-} from "../../../../../domain/turn-elapsed.ts"
-import { useNowWhile } from "../../../../hooks/use-now-while.ts"
 
 const SEND_LABEL = "送信"
 /** 答え待ちの質問があるあいだの送るボタンの字（最後の1問なら「答える」、手前なら「次へ」）。 */

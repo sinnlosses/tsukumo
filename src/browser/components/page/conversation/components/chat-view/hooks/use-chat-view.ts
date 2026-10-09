@@ -15,6 +15,10 @@ import {
 } from "../../../../../../../shared/chat/chat-log.ts"
 import type { RecordedPromptImage } from "../../../../../../../shared/session-driver/prompt-image.ts"
 import { type RecordTime, recordTimeAt } from "../../../../../../../shared/session/session-state.ts"
+import {
+  characterFaceInfo,
+  type CharacterFaceInfo,
+} from "../../../../../../domain/character-face.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import { useSession, useTurnRunning } from "../../../../../../stores/session.ts"
 import {
@@ -90,6 +94,8 @@ export type ChatViewModel = {
   readonly showTyping: boolean
   /** まだ何も話しておらず「...」も出ていないとき、最初の一言を促す案内を出すか。 */
   readonly showEmptyMessage: boolean
+  /** 狭い画面で入力欄の上に出す顔（パックの `face` の1枚）。 */
+  readonly face: CharacterFaceInfo
 }
 
 /**
@@ -169,6 +175,7 @@ export function useChatView(): ChatViewModel {
     rows: chatRows(shown, localTimeZoneId(), selectedIndex, initialCount, toggle),
     showTyping,
     showEmptyMessage: shown.length === 0 && !showTyping,
+    face: characterFaceInfo(character),
   }
 }
 

@@ -45,6 +45,10 @@
   --balloon-track-basis: clamp(8rem, 83.81cqh, 11rem);
 }
 
+/* 立ち絵と吹き出しの並びを包む箱。広い画面では並びに加わらず、狭い画面でまとめて隠すためだけにある。 */
+.character-stage {
+  display: contents;
+}
 /* 立ち絵も吹き出しの並びも下端で揃える（床に立つ見え方にするため）。
    並びが伸びる向きは上で、過去のセリフは上へ押し上がる（.balloon-track の column-reverse）。
    最新の吹き出しの下端の位置そのものは .balloon-track の margin-bottom（--balloon-bottom-gap）で固定する。
@@ -311,30 +315,25 @@
   color: color-mix(in srgb, var(--ink) 55%, var(--surface));
 }
 
-/* 狭い画面。
-   領域は下段に 9.5rem で固定される（conversation-layout.module.css の @media）ので、高さの基準そのものは残る。
-   変えるのは割合と固定量のほうで、広い領域向けの既定（立ち絵 78% ＋ 2.25rem 沈める、吹き出しの下に 28px の余白）をそのまま当てると、低い領域では立ち絵の顔が切れ、吹き出しが余白に押し出されて領域の外へ出る。
-   立ち絵は領域いっぱいまで使い、下の余白は接地ぶんだけに詰める。 */
+/* 狭い画面（760px 以下）。立ち絵と吹き出しの並びを出さず、顔と最新の1件（`<PhoneBalloon>`）だけを中身なりの高さで出す。
+   領域の高さが中身で決まるので、大きさの封じ込め（`container-type: size`）を外す。
+   セリフのログは画面いっぱいに開き、列は枠の中に置く。 */
 @media (max-width: 760px) {
   .character-region {
-    --portrait-height: 100%;
-    --portrait-drop: 0.4rem;
-    --balloon-bottom-gap: 0.4rem;
-    /* 狭い画面では仕切り自体が無く（layout.module.css の @media で .layout-resizer が display: none）領域の高さは 9.5rem に固定されたまま動かせないので、上の cqh 連動（--balloon-latest-scale / --balloon-past-scale）を効かせない。
-       固定の 9.5rem は仕切りで縮められる下限よりも低く、連動させたままだと常に縮んだ側の値になって既定の見た目が変わってしまう。 */
-    --balloon-latest-scale: var(--font-body);
-    --balloon-past-scale: var(--font-secondary);
+    container-type: normal;
+    height: auto;
   }
-  /* 立ち絵の幅の上限は、低い領域では高さ側が先に当たって効かなくなるぶん、吹き出しの場所を守るために詰める。 */
-  .portrait {
-    max-width: 33%;
+  .character-stage {
+    display: none;
   }
-  /* 吹き出しは低い領域の中で収まるだけ出し、溢れたぶんは自分の中でスクロールする（最新は column-reverse で常に下端に居る）。
-     広い画面の式と同じく下の余白も引く。
-     列は下端から --balloon-bottom-gap 浮いているので、口のぶんだけ引いても足りずに列の上端が口の下へ潜り込む（引かないと 390 幅で 2.4px 重なる）。
-     max() の下限は要らない（領域の高さは 9.5rem に固定されていて、引く量の合計が上回ることはない）。 */
-  .balloon-track {
-    flex-basis: 8rem;
-    max-height: calc(100% - var(--balloon-bottom-gap) - var(--speech-log-open-space));
+  .speech-log-stage::before {
+    top: 0;
+    height: auto;
+    padding-top: 0;
+  }
+  .speech-log-scroller {
+    position: absolute;
+    inset: 44px 0 0;
+    padding: 0 16px 16px;
   }
 }

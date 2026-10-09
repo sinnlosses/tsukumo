@@ -17,6 +17,33 @@
       },
       "children": [
         {
+          "tag": "img",
+          "attributes": {
+            "alt": "つくもの精霊",
+            "src": "/character/tsukumo-spirit/face.svg"
+          }
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "data-work-state": "idle",
+            "data-chat-idle": "false"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                "○"
+              ]
+            },
+            "依頼待ち"
+          ]
+        },
+        "<port>",
+        {
           "tag": "button",
           "attributes": {
             "aria-disabled": "false",
@@ -25,7 +52,9 @@
             "type": "button"
           },
           "children": [
-            "≡"
+            {
+              "tag": "svg"
+            }
           ]
         }
       ]
@@ -39,37 +68,6 @@
         {
           "tag": "div",
           "attributes": {
-            "role": "tablist"
-          },
-          "children": [
-            {
-              "tag": "button",
-              "attributes": {
-                "role": "tab",
-                "aria-selected": "true",
-                "type": "button"
-              },
-              "children": [
-                "メインビュー"
-              ]
-            },
-            {
-              "tag": "button",
-              "attributes": {
-                "role": "tab",
-                "aria-selected": "false",
-                "type": "button"
-              },
-              "children": [
-                "サイドバー"
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "div",
-          "attributes": {
-            "data-narrow-pane": "main",
             "data-sidebar-open": "false"
           },
           "children": [
@@ -196,45 +194,18 @@
               },
               "children": [
                 {
+                  "tag": "img",
+                  "attributes": {
+                    "alt": "つくもの精霊",
+                    "src": "/character/tsukumo-spirit/face.svg"
+                  }
+                },
+                {
                   "tag": "button",
                   "attributes": {
-                    "aria-disabled": "false",
-                    "aria-expanded": "false",
                     "type": "button"
                   },
                   "children": [
-                    {
-                      "tag": "svg"
-                    },
-                    "ログ"
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "role": "img",
-                    "aria-label": "つくもの精霊（通常）",
-                    "data-expression": "default",
-                    "data-outfit": "heavy",
-                    "data-motion": "reading"
-                  },
-                  "children": [
-                    {
-                      "tag": "svg"
-                    }
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "data-latest": "true",
-                    "data-interactive": "true",
-                    "data-selected": "false",
-                    "role": "button",
-                    "aria-pressed": "false"
-                  },
-                  "children": [
-                    "つくもの精霊",
                     "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
                   ]
                 }

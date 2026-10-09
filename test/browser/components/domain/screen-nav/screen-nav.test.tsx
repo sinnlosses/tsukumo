@@ -233,18 +233,12 @@ describe("ScreenNav", () => {
     )
   })
 
-  // 答え待ちの間は「≡」に印が付き、開くと面の中の「いまの作業」の札の語でも分かる
-  // （狭い画面では帯に「答え待ち」を置く幅が無い。13.9「狭い画面」）。
-  it("答え待ちの間は「≡」に印が付き、開くと面の中の札の語でも出る", () => {
+  // 答え待ちは頭の状態の語が言うので、「≡」には印を添えない（13.9「狭い画面（760px 以下）」）。
+  it("答え待ちの間も「≡」の名前は変わらず、頭の状態の語が「答え待ち」になる", () => {
     renderScreenNav({ pending: [FIXTURE_PENDING] })
-    const toggle = screen.getByRole("button", { name: "メニュー（答え待ち）" })
-    expect(document.querySelector(".screen-nav-toggle-mark")).not.toBeNull()
 
-    fireEvent.click(toggle)
-
-    expect(document.querySelector(".screen-nav-panel .current-work-word")?.textContent).toBe(
-      "答え待ち",
-    )
+    expect(screen.getByRole("button", { name: "メニュー" })).toBeDefined()
+    expect(document.querySelector(".phone-head-word")?.textContent).toBe("答え待ち")
   })
 
   describe("仕事 / 雑談のトグル", () => {

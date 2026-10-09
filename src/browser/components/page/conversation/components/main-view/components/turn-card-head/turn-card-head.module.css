@@ -6,3 +6,9 @@
   top: calc(-1 * var(--region-padding, 0px));
   z-index: 1;
 }
+/* 狭い画面（760px 以下）では進み具合を画面の頭が持つので、札の頭は出さない。 */
+@media (max-width: 760px) {
+  .turn-card-head {
+    display: none;
+  }
+}

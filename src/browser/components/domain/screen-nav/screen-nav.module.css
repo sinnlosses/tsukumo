@@ -54,26 +54,23 @@
 }
 
 @media (max-width: 760px) {
-  /* 段を増やさない。会話の画面はいまあるタブ帯（.layout-tabs）の右端 44px に重ねる。
-     そのぶんの余白はタブ帯の側が空けている（layout.module.css の @media）。
-     位置は body の padding に合わせる＝タブ帯の上端と同じ高さに載る。 */
-  .screen-nav[data-screen="conversation"] {
-    position: fixed;
-    top: var(--page-padding);
-    right: var(--page-padding);
-    z-index: 20;
-  }
-  /* 会話以外の画面は縦に流れる1枚のページなので、重ねずにそのまま最上部の行として置く（右端に寄せる）。
-     残るのは「≡」だけなので、帯の地・下の罫線・画面の端へのはみ出しは外す。 */
+  /* 帯は頭（`<PhoneHead>`）の入れ物になる。画面の端から端まで出し、下に罫線を引く。
+     会話以外の画面は body の余白の中に居るので、帯と同じく負の margin で端まで出す。
+     会話の画面は body の余白が 0 で縦の flex の先頭の行になる（theme.css の @media）。 */
   .screen-nav {
-    justify-content: flex-end;
+    display: block;
+    z-index: 20;
     height: auto;
-    margin: 0 0 0.5rem;
-    padding: 0;
-    border: none;
-    background: none;
+    margin: calc(-1 * var(--page-padding)) calc(-1 * var(--page-padding)) var(--page-padding);
+    padding: max(8px, env(safe-area-inset-top)) 14px 10px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--ground);
   }
-  /* 口・トグル・仕切り・いまの作業の札・ドロップダウン・左端の名乗りは「≡」の中へ移る。 */
+  .screen-nav[data-screen="conversation"] {
+    flex: none;
+    margin: 0;
+  }
+  /* 口・トグル・仕切り・ドロップダウン・左端の名乗りは「≡」の中へ、いまの作業の札は頭へ移る。 */
   .screen-nav-gates,
   .screen-nav > .screen-nav-identity,
   .screen-nav > .screen-nav-divider,

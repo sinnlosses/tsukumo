@@ -23,12 +23,11 @@ afterEach(() => {
 })
 
 describe("useConversationLayout", () => {
-  it("初期状態は保存済みの比率を読み、狭い画面のタブはメインビュー", () => {
+  it("初期状態は保存済みの比率を読む", () => {
     saveSplit({ ...DEFAULT_SPLIT, rowTop: 40, topLeft: 20, bottomLeft: 70 })
 
     const { result } = renderHook(() => useConversationLayout(false))
 
-    expect(result.current.narrowPane).toBe("main")
     expect(result.current.gridStyle["--layout-row-top"]).toBe("40fr")
     expect(result.current.rowTopStyle["--layout-top-left"]).toBe("20fr")
     expect(result.current.rowBottomStyle["--layout-bottom-left"]).toBe("70fr")

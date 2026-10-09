@@ -86,8 +86,9 @@
   height: 100%;
   max-width: 100%;
 }
+/* 狭い画面（760px 以下）では立ち絵を出さない（顔だけを入力欄の上に出す。`chat-view.module.css`）。 */
 @media (max-width: 760px) {
   .chat-poke {
-    max-width: 28%;
+    display: none;
   }
 }

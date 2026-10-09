@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 
-import { nowEpochMilliseconds } from "../../../../../utils/clock.ts"
+import { nowEpochMilliseconds } from "../utils/clock.ts"
 
 const TICK_INTERVAL_MS = 1000
 

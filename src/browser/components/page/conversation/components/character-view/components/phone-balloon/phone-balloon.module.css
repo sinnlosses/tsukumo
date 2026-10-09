@@ -1,0 +1,40 @@
+/* 狭い画面（760px 以下）の顔と吹き出し。広い画面では出さない。 */
+
+.phone-balloon {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .phone-balloon {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 10px 12px 0;
+  }
+  .phone-balloon-face {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+  }
+  /* 顔の側の下の角だけ尖らせる。高さが変わって本文が揺れないよう、字は3行で切る。 */
+  .phone-balloon-bubble {
+    min-width: 0;
+    padding: 9px 12px;
+    border: 1px solid color-mix(in srgb, var(--surface-accent), var(--accent) 25%);
+    border-radius: 14px 14px 14px 4px;
+    background: var(--surface-accent);
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.65;
+    text-align: left;
+    cursor: pointer;
+  }
+  .phone-balloon-text {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+}

@@ -61,7 +61,7 @@ export function PresentationalWorkStrip(props: {
   )
 }
 
-/** 状態のチップ。字は読み上げに必ず残し、狭い画面では視覚だけ隠す。印は色の点で、作業中だけ回る輪にする。 */
+/** 状態のチップ。印は色の点で、作業中だけ回る輪にする。 */
 function StateChip(props: { readonly result: WorkStripResult }): ReactElement {
   const { label } = TURN_RESULT_MARKS[props.result]
   return (
@@ -71,7 +71,7 @@ function StateChip(props: { readonly result: WorkStripResult }): ReactElement {
       ) : (
         <span className={styles["work-strip-dot"]} aria-hidden="true" />
       )}
-      <span className={styles["work-strip-chip-label"]}>{label}</span>
+      <span>{label}</span>
     </span>
   )
 }

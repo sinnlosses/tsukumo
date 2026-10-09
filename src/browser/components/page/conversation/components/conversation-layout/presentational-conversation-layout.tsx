@@ -5,8 +5,8 @@
 //
 // 枠を持たない領域（`.layout-ground`）は、キャラビューと雑談中のメインビューで同じ class を共有する（覆いの式を1箇所にしか書かないため）。
 //
-// 狭い画面では上段の2領域をタブで切り替える。
-// どちらを隠すかは CSS（`.layout-row-top[data-narrow-pane]` の `@media`）が決めるので、ここは幅を測らない。
+// 狭い画面では縦の1列に積み、サイドバーと仕切りを出さない。
+// 何を隠すかは CSS の `@media` が決めるので、ここは幅を測らない。
 // 中くらいの窓幅ではサイドバーを柱に畳む。柱を出すか・サイドバーを重ねるかも CSS が決め、ここは開閉の印（`data-sidebar-open`）を立てるだけ。
 
 import clsx from "clsx"
@@ -17,7 +17,7 @@ import { Button } from "../../../../ui/button/button.tsx"
 import { LayoutResizer } from "../../../../ui/layout-resizer/layout-resizer.tsx"
 import styles from "./conversation-layout.module.css"
 import { percentFromRatio } from "./domain/split.ts"
-import type { NarrowPane, UseConversationLayoutResult } from "./hooks/use-conversation-layout.ts"
+import type { UseConversationLayoutResult } from "./hooks/use-conversation-layout.ts"
 
 export type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
   readonly main: ReactNode
@@ -39,11 +39,6 @@ export type PresentationalConversationLayoutProps = UseConversationLayoutResult 
  */
 const RESET_SPLIT_LABEL = "比率を既定に戻す"
 
-const NARROW_PANES = [
-  { pane: "main", label: "メインビュー" },
-  { pane: "sidebar", label: "サイドバー" },
-] satisfies readonly { readonly pane: NarrowPane; readonly label: string }[]
-
 /**
  * props はここだけ分解して受ける。
  * ref を持つ入れ物を `props.gridRef` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
@@ -55,8 +50,6 @@ export function PresentationalConversationLayout({
   gridStyle,
   rowTopStyle,
   rowBottomStyle,
-  narrowPane,
-  onNarrowPaneChange,
   onTopLeftChange,
   onTopLeftCommit,
   onRowTopChange,
@@ -86,26 +79,9 @@ export function PresentationalConversationLayout({
       data-collapse-character={collapseCharacter}
       style={gridStyle}
     >
-      <div className={styles["layout-tabs"]} role="tablist">
-        {NARROW_PANES.map((entry) => (
-          <button
-            type="button"
-            key={entry.pane}
-            role="tab"
-            aria-selected={entry.pane === narrowPane}
-            className={clsx(styles["layout-tab"], entry.pane === narrowPane && styles["is-active"])}
-            onClick={() => {
-              onNarrowPaneChange(entry.pane)
-            }}
-          >
-            {entry.label}
-          </button>
-        ))}
-      </div>
       <div
         className={clsx(styles["layout-row"], styles["layout-row-top"])}
         ref={rowTopRef}
-        data-narrow-pane={narrowPane}
         data-sidebar-open={sidebarOpen}
         style={rowTopStyle}
       >

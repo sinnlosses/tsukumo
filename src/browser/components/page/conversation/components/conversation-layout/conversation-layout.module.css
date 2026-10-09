@@ -2,7 +2,7 @@
    上段（メイン・サイドバー）と下段（キャラビュー・入力欄）で仕切りの位置を独立に動かせるようにするため、上下の行をそれぞれ別の grid（.layout-row-top / .layout-row-bottom）にし、行の高さ・各行の列幅は CSS カスタムプロパティで持つ（<ConversationLayout> がドラッグに応じて style で書き換える）。
    ここに書いた var() の第2引数（フォールバック値）は `DEFAULT_SPLIT` と一致させること。
 
-   狭い画面での畳み方（画面の高さに固定し、上段はタブで1つずつ出す）は、このファイルの末尾の@media にある（他の領域のぶんはそれぞれの *.module.css の末尾）。
+   狭い画面での積み方（画面の高さに固定し、本文・顔と吹き出し・入力欄を縦の1列にする）は、このファイルの末尾の@media にある（他の領域のぶんはそれぞれの *.module.css の末尾）。
    中くらいの窓幅（761〜1100px）でサイドバーを柱に畳む形は、その手前の @media にある。 */
 .layout-grid {
   position: relative;
@@ -102,32 +102,6 @@
 .layout-divider {
   position: relative;
 }
-/* 狭い画面でだけ出る、上段の2領域（メインビュー・サイドバー）を切り替えるタブ。
-   広い画面では display: none なので grid の item にもならず、.layout-grid の行の数は変わらない（両方の領域が今までどおり並ぶ）。
-   どちらを隠すかは下の @media が .layout-row-top[data-narrow-pane] で決める。 */
-.layout-tabs {
-  display: none;
-  gap: 0.25rem;
-}
-/* 指で押す口なので、字の大きさではなく押せる高さ（上下の余白込みで 2.5rem 前後）で決める。 */
-.layout-tab {
-  flex: 1 1 0;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
-  cursor: pointer;
-}
-/* 選ばれたタブは accent を出してよい場所。
-   色だけに頼らないので、地の濃さ（--surface-accent）と文字の濃さも一緒に変える。 */
-.layout-tab.is-active {
-  border-color: var(--accent);
-  background: var(--surface-accent);
-  color: var(--ink);
-}
-
 /* 領域の比率を既定に戻すピル（`<ConversationLayout>` が直接描く）。
    比率が既定と違うときだけ出る。
    上下の仕切りの右端に絵＋字で置く。
@@ -208,51 +182,48 @@
   }
 }
 
-/* 狭い画面（スマホの幅で会話を回せるようにする形）。
-   画面の高さに固定して、スクロールするのは上段の中だけにする。
-   上段はメインビューとサイドバーをタブで1つずつ出し、下段（キャラビュー・入力欄）は常に見えたままにする（入力欄にたどり着くまでにタスク一覧を全部スクロールしていた実測への対処）。
-   高さの単位は dvh（vh だとソフトウェアキーボードが出たときにページごと押し上がる）。
-   各行の中身は DOM の並び順どおりに積むだけで済むので、grid-template-areas は使わない。 */
+/* 狭い画面（760px 以下）。上から本文・顔と吹き出し・入力欄の縦の1列にし、転がるのは本文だけにする。
+   頭はこの grid の外（画面のナビの中）にあり、`#app` の縦の flex（theme.css の @media）がその残りの高さをこの grid に渡す。
+   サイドバーは出さない（行き先は頭の ≡ から開く面）。
+   下段は顔と吹き出し・入力欄の順に積み、どちらも中身なりの高さにする。 */
 @media (max-width: 760px) {
   .layout-grid {
+    flex: 1 1 0;
     grid-template-columns: 1fr;
-    /* タブ / 上段（残り全部） / 下段（中身なり）。body の padding ぶんを差し引く。 */
-    grid-template-rows: auto minmax(0, 1fr) auto;
-    height: calc(100dvh - 2 * var(--page-padding));
-  }
-  /* 狭い画面では帯が段を増やさない（画面のナビは右端の「≡」に畳まれてこのタブ帯に重なる）ので、grid の高さは画面のぶんそのまま。 */
-  .layout-tabs {
-    display: flex;
-    /* 右端の 44px（+ タブどうしの隙間）は「≡」の席として空ける。
-       重なっているのは画面のナビが position: fixed で置いた帯で、DOM 上はここの子ではない。 */
-    padding-right: 3rem;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 0;
+    min-height: 0;
+    height: auto;
   }
   .layout-row-top,
   .layout-row-bottom {
     grid-template-columns: 1fr;
+    gap: 0;
   }
-  /* 出していないほうの領域は隠す。4領域はそのまま4つある（data-region も残る）ので、広い画面に戻せば両方が並ぶ。 */
-  .layout-row-top[data-narrow-pane="main"] .layout-sidebar,
-  .layout-row-top[data-narrow-pane="sidebar"] .layout-main {
+  .layout-row-top .layout-sidebar {
     display: none;
   }
-  /* 下段はキャラビューを低く固定し、残りを入力欄に渡す。
-     固定するのは、立ち絵と吹き出しの大きさが領域の高さの割合で決まっているから（割合の詰め直しは character-view.module.css の @media）。
-     答え待ちの箱で下段が伸びても上段が消えないように、下段全体の上限を切る。 */
-  .layout-row-bottom {
-    grid-template-rows: 9.5rem minmax(0, 1fr);
-    max-height: 58dvh;
+  .layout-main {
+    --region-padding: 14px;
+    padding: var(--region-padding) 16px;
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
   }
-  /* 下段に残るのは入力欄だけなので、キャラビューの 9.5rem のトラックは要らない。 */
+  .layout-row-bottom,
   .layout-row-bottom[data-collapse-character="true"] {
-    grid-template-rows: minmax(0, 1fr);
+    grid-template-rows: auto;
   }
-  /* 仕切りは1列表示では意味を持たないので隠す。
-     比率を戻すボタンも同じ理由で隠す（動かせる比率が無い1列表示では戻す先が無い）。 */
+  .layout-row-bottom .layout-region {
+    overflow-y: visible;
+  }
+  /* 顔と吹き出しの行は無地の地に置く（背景の絵はこの行では敷かない）。 */
+  .layout-row-bottom .layout-ground {
+    padding: 0;
+    background-image: none;
+  }
+  /* 動かせる比率が無いので、上下の仕切りと比率を戻す口は出さない。 */
   .layout-divider {
     display: none;
-  }
-  .layout-dispatch {
-    min-height: 9rem;
   }
 }

@@ -1,0 +1,200 @@
+/* 狭い画面（760px 以下）の頭。広い画面では出さない。 */
+
+.phone-head {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  /* 一覧（.phone-head-steps）を頭の真下に重ねる基準。 */
+  .phone-head {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .phone-head-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  /* 顔の丸の二重の輪（地の色の 2px と差し色の 1.5px）。 */
+  .phone-head-face {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 2px var(--ground),
+      0 0 0 3.5px var(--accent);
+  }
+  .phone-head-back {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    height: 36px;
+    color: var(--ink-quiet);
+    font-size: 13px;
+    text-decoration: none;
+  }
+  .phone-head-main {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .phone-head-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.5;
+  }
+  .phone-head-mark {
+    flex: none;
+    width: 13px;
+    font-size: 9px;
+    line-height: 1;
+    text-align: center;
+  }
+  /* 作業中の回る輪。色は差し色で、薄い地の輪の上を弧が回る。 */
+  .phone-head-spinner {
+    flex: none;
+    box-sizing: border-box;
+    width: 13px;
+    height: 13px;
+    border: 2px solid var(--surface-accent);
+    border-top-color: var(--accent);
+    border-right-color: var(--accent);
+    border-radius: 50%;
+    animation: phone-head-spin 1s linear infinite;
+  }
+  .phone-head-word {
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .phone-head-elapsed {
+    color: var(--ink-quiet);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .phone-head-title {
+    overflow: hidden;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* 状態の語ごとの色（「いまの作業」の札と同じ対応）。語そのものが状態を言うので、色だけで伝えてはいない。 */
+  .phone-head-status[data-work-state="running"],
+  .phone-head-status[data-work-state="diary"] {
+    color: var(--accent);
+  }
+  .phone-head-status[data-work-state="pending"] {
+    color: var(--state-warn);
+  }
+  .phone-head-status[data-work-state="stopped"] {
+    color: var(--state-ng);
+  }
+  .phone-head-status[data-work-state="background"] {
+    color: var(--ink);
+  }
+  .phone-head-status[data-work-state="background"] .phone-head-mark {
+    color: var(--accent);
+  }
+  .phone-head-status[data-work-state="idle"] {
+    color: var(--ink-quiet);
+  }
+  .phone-head-status[data-work-state="idle"][data-chat-idle="true"] {
+    color: var(--accent);
+  }
+  /* 段の点。14px の丸を 10x2 の線でつなぐ。 */
+  .phone-head-dots {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .phone-head-dot {
+    position: relative;
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid var(--rule);
+    border-radius: 50%;
+    color: var(--accent);
+    font-size: 8px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .phone-head-dot + .phone-head-dot {
+    margin-left: 10px;
+  }
+  /* 前の丸とのあいだの線。丸の外側の縁から左へ伸ばす。 */
+  .phone-head-dot + .phone-head-dot::before {
+    content: "";
+    position: absolute;
+    top: calc(50% - 1px);
+    right: calc(100% + 1.5px);
+    width: 10px;
+    height: 2px;
+    background: var(--surface-accent);
+  }
+  /* 線の位置は丸の枠の内側が基準なので、枠の太さだけ外へずらす。 */
+  .phone-head-dot.is-done::before {
+    right: 100%;
+  }
+  .phone-head-dot.is-current::before {
+    right: calc(100% + 2px);
+  }
+  .phone-head-dot.is-done {
+    border: none;
+    background: var(--surface-accent);
+  }
+  .phone-head-dot.is-current {
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+  .phone-head-position {
+    color: var(--ink-quiet);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .phone-head-steps-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 26px;
+    margin-left: auto;
+    padding: 0 8px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-quiet);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .phone-head-step-count {
+    font-family: var(--font-mono);
+  }
+  /* 「手順 n」で開く依頼の手順の一覧。頭の真下に重ねる。 */
+  .phone-head-steps {
+    position: absolute;
+    top: calc(100% + 0.3rem);
+    right: 0;
+    left: 0;
+    z-index: 21;
+    max-height: 70dvh;
+  }
+}
+
+@keyframes phone-head-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

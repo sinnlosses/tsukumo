@@ -4131,6 +4131,59 @@
       ]
     },
     {
+      "name": "phone-layout",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "架空のタスクを進めて、設定の置き場を張り替えたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "phases": [
+              "計画を立て直す",
+              "取り込んで渡す",
+              "文書を合わせる",
+              "レビューと検証",
+              "受け入れて架空の置き場を張り替える"
+            ],
+            "current": 4,
+            "finishedInGroup": [],
+            "phaseSummary": "架空の検証が通った。"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "speech",
+            "text": "その前に、張り替える先の一覧を見てほしいのだ。架空の置き場が11件あって、どれも同じ形をしているから、まとめて張り替えてしまっても差し支えないはずだけれど、念のため確かめてから進めたいのだ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-phone-layout-1",
+            "name": "Bash",
+            "input": { "command": "git commit -m \"架空のコミット\"" }
+          }
+        },
+        {
+          "afterMs": 60000,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "work-strip-ask",
       "steps": [
         {

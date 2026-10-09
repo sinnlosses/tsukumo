@@ -11,6 +11,7 @@ import clsx from "clsx"
 import type { KeyboardEvent, ReactElement } from "react"
 
 import { truncateForDisplay } from "../../../../../../../features/current-work/domain/current-work-step.ts"
+import { useNowWhile } from "../../../../../../../hooks/use-now-while.ts"
 import {
   useInquiryAnswer,
   type InquiryModel,
@@ -20,7 +21,6 @@ import { useInquiryJump } from "../../../../../../../stores/inquiry-jump.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import { useNowWhile } from "../../../hooks/use-now-while.ts"
 import { QuestionPreviewMarkdown } from "../../markdown/deferred-markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"

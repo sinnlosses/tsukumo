@@ -76,18 +76,7 @@ function workToggle(): HTMLElement {
   )
 }
 
-/** 狭い画面の「≡」の面の中にある同じ札（開いていないと無い）。 */
-function panelWorkToggle(): HTMLElement {
-  return typedElement(
-    document.querySelector(".screen-nav-panel .current-work-toggle"),
-    HTMLElement,
-    "面の中のいまの作業の札",
-  )
-}
-
-/**
- * 帯（広い画面）の依頼の手順の一覧。広い画面・狭い画面の両方に同じ内容が2つ描かれるので、
- * 先頭（帯側）だけを見る。 */
+/** 依頼の手順の一覧（開いているのは1つだけ）。 */
 function workList(): HTMLElement {
   return typedElement(
     document.querySelectorAll(".current-work-list")[0],
@@ -772,20 +761,24 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     expect(document.activeElement).toBe(toggle)
   })
 
-  // 狭い画面では札そのものが「≡」の面の中にあり、Esc は面ごと閉じる（「≡」も同じ合図で
-  // 閉じる。`useDismissSignal`）ので、戻り先の札は DOM から消える。
-  // 帯の側の札（狭い画面では `display: none`）へフォーカスを飛ばさないことをここで守る。
-  it("「≡」の面の中の札でも Esc で閉じ、隠れている帯の側の札へは戻さない", () => {
-    renderScreenNav({ records: [requestRecord()] })
+  // 狭い画面では一覧を頭の「手順 n」が開き、「≡」の面には札を置かない（同じ一覧が2つ開いて重ならない）。
+  // 会話の画面には帯の札が無いので、Esc の戻り先は頭の「手順 n」の1つだけ。
+  it("会話の画面では頭の「手順 n」が一覧を開き、Esc でその口へフォーカスを戻す。「≡」の面には札が無い", () => {
+    window.location.hash = "#conversation"
+    renderScreenNav({ turn: { kind: "running", startedAt: 0 }, records: [requestRecord()] })
+    const steps = screen.getByRole("button", { name: /^手順/u })
+
+    fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
+    expect(document.querySelector(".screen-nav-panel .current-work-toggle")).toBeNull()
     fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
 
-    fireEvent.click(panelWorkToggle())
-    expect(document.querySelector(".screen-nav-panel .current-work-list")).not.toBeNull()
+    fireEvent.click(steps)
+    expect(document.querySelectorAll(".current-work-list")).toHaveLength(1)
+    expect(document.querySelectorAll(".current-work-toggle")).toHaveLength(0)
 
     fireEvent.keyDown(document, { key: "Escape" })
 
-    expect(document.querySelector(".screen-nav-panel")).toBeNull()
-    expect(document.activeElement).not.toBe(workToggle())
-    expect(document.activeElement).toBe(document.body)
+    expect(document.querySelector(".current-work-list")).toBeNull()
+    expect(document.activeElement).toBe(steps)
   })
 })

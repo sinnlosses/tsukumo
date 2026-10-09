@@ -1,9 +1,12 @@
 // 雑談ビューの器。左に立ち絵、右に会話のログを置く。
 //
 // 立ち絵の素材（URL）が無いときは立ち絵を出さず、ログだけで成立させる。
+//
+// 狭い画面（760px 以下）では立ち絵の代わりに、ログの下に顔だけの行を出す（どちらを出すかは CSS の `@media`）。
 
 import type { ReactElement } from "react"
 
+import { CharacterFace } from "../../../../domain/character-face.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import styles from "./chat-view.module.css"
 import { ChatLog } from "./components/chat-log/chat-log.tsx"
@@ -28,35 +31,41 @@ export function PresentationalChatView({
   rows,
   showTyping,
   showEmptyMessage,
+  face,
 }: PresentationalChatViewProps): ReactElement {
   return (
-    <HStack
-      element="div"
-      name={{ kind: "none" }}
-      ref={undefined}
-      gap="lg"
-      align="end"
-      justify="start"
-      wrap="nowrap"
-      className={styles["chat-region"]}
-    >
-      {portraitUrl !== undefined && (
-        <NudgePortrait
-          url={portraitUrl}
-          accent={accent}
-          altText={altText}
-          expression={expression}
-          outfit={outfit}
-          turnInProgress={turnInProgress}
-          onNudge={onNudge}
+    <div className={styles["chat-view"]}>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="lg"
+        align="end"
+        justify="start"
+        wrap="nowrap"
+        className={styles["chat-region"]}
+      >
+        {portraitUrl !== undefined && (
+          <NudgePortrait
+            url={portraitUrl}
+            accent={accent}
+            altText={altText}
+            expression={expression}
+            outfit={outfit}
+            turnInProgress={turnInProgress}
+            onNudge={onNudge}
+          />
+        )}
+        <ChatLog
+          logRef={logRef}
+          rows={rows}
+          showTyping={showTyping}
+          showEmptyMessage={showEmptyMessage}
         />
-      )}
-      <ChatLog
-        logRef={logRef}
-        rows={rows}
-        showTyping={showTyping}
-        showEmptyMessage={showEmptyMessage}
-      />
-    </HStack>
+      </HStack>
+      <div className={styles["chat-face-row"]}>
+        <CharacterFace url={face.url} alt={face.alt} className={styles["chat-face"]} />
+      </div>
+    </div>
   )
 }

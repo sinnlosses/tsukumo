@@ -1,5 +1,5 @@
 // 画面のナビの帯のロジック。
-// いま出している画面・口・仕事/雑談のトグル・モデル/許可モードの操作子・狭い画面の「≡」の開閉を、見た目が受け取れる形まで畳んで返す。
+// いま出している画面・口・仕事/雑談のトグル・モデル/許可モードの操作子・狭い画面の頭と「≡」の開閉を、見た目が受け取れる形まで畳んで返す。
 //
 // 口は `<a href>` で、画面の正典は `location.hash` のまま（`navigateTo` は使わない）。
 //
@@ -24,6 +24,7 @@ import {
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"
 import { useCharacterPicker, type ScreenNavCharacterPicker } from "./use-character-picker.ts"
+import { usePhoneHead, type PhoneHead } from "./use-phone-head.ts"
 import { useProjectName } from "./use-project-name.ts"
 import {
   useSessionSwitcher,
@@ -76,8 +77,6 @@ export type ScreenNavParts = {
 /** 狭い画面の「≡」そのもの（広い画面では CSS が消す）。 */
 export type ScreenNavMenu = {
   readonly open: boolean
-  /** 閉じている間だけ「≡」に添える答え待ちの印（●）。 */
-  readonly pendingActive: boolean
   readonly onToggle: () => void
 }
 
@@ -88,6 +87,8 @@ export type ScreenNavView = {
   /** 札を押すと開く切り替え画面（帯の外に1つだけ描く）。 */
   readonly switcher: ScreenNavSessionSwitcher
   readonly menu: ScreenNavMenu
+  /** 狭い画面の頭（広い画面では CSS が消す）。 */
+  readonly head: PhoneHead
   /** 帯の外側を押したかを見るための入れ物（「≡」を閉じる判定に使う）。 */
   readonly ref: RefObject<HTMLElement | null>
 }
@@ -96,7 +97,6 @@ export function useScreenNav(): ScreenNavView {
   const dispatch = useSession((session) => session.dispatch)
   const current = useScreen()
   const screenHref = useScreenHref()
-  const pendingActive = useSession((session) => session.state.pending.length > 0)
   const chatMode = useSession((session) => session.state.chatMode)
   const turnInProgress = useTurnRunning()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -105,7 +105,15 @@ export function useScreenNav(): ScreenNavView {
   const modelPermission = useModelPermission()
   const settings = useSettings(ref)
   const character = useCharacterPicker(ref)
-  const { tag: sessionTag, switcher } = useSessionSwitcher(currentRoomName(), useProjectName())
+  const roomName = currentRoomName()
+  const { tag: sessionTag, switcher } = useSessionSwitcher(roomName, useProjectName())
+  const head = usePhoneHead({
+    current,
+    work,
+    face: character.face,
+    roomName,
+    conversationHref: screenHref("conversation"),
+  })
 
   function onSelect(): void {
     setMenuOpen(false)
@@ -149,7 +157,8 @@ export function useScreenNav(): ScreenNavView {
       onSelect,
     },
     switcher,
-    menu: { open: menuOpen, pendingActive, onToggle: onToggleMenu },
+    menu: { open: menuOpen, onToggle: onToggleMenu },
+    head,
     ref,
   }
 }

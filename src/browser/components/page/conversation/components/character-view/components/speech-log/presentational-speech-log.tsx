@@ -26,6 +26,9 @@ const MORE_LABEL = "もっと前を読む ↑"
 const EMPTY_MESSAGE = "（まだ発話がありません）"
 
 export type PresentationalSpeechLogProps = SpeechLogModel & {
+  readonly open: boolean
+  readonly onOpen: () => void
+  readonly onClose: () => void
   /** キャラビューに立っている立ち絵（素材が無ければ何も描かない）。床に同じものを立たせる。 */
   readonly portrait: ReactNode
   /** 最新の吹き出しに添える話し手の名前（キャラビューの最新の吹き出しと同じ）。 */

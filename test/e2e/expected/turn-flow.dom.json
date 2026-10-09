@@ -172,7 +172,6 @@
         {
           "tag": "div",
           "attributes": {
-            "data-narrow-pane": "main",
             "data-sidebar-open": "false"
           },
           "children": [

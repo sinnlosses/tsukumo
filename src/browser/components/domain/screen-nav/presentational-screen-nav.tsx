@@ -1,16 +1,16 @@
 // 画面のナビの帯の器だけ。フックも算出も持たず、受け取った値と呼び先をそのまま置く。
-// 狭い画面では `<ScreenNavMenu>` の「≡」に畳む（どちらを出すかは `screen-nav.module.css` の `@media` が決める）。
+// 狭い画面では帯の代わりに頭（`<PhoneHead>`）を出し、帯の中身は頭の右上の「≡」に畳む（どちらを出すかは各部品の CSS の `@media` が決める）。
 //
-// `data-screen` でいま出している画面を名乗るのは、狭い画面で帯の置き方が変わるため。
-// 会話の画面だけは、いまあるタブ帯の右端に重ねる。
+// `data-screen` でいま出している画面を名乗るのは、狭い画面で会話の画面だけページの組み方が変わるため（`theme.css` の `@media`）。
 //
 // 会話の画面の広い帯には、いまの作業の札とモデル・effort・許可モードを置かない。
 // 札の役はメインビューの進み具合の帯（`WorkStrip`）、3つの操作子はサイドバーの下端の帯（中くらいの窓幅では柱）が持つ。
-// 「≡」の面はどの画面でも全部を持つ（狭い画面ではサイドバーとメインビューが同時に見えないため）。
+// 「≡」の面はいまの作業の札のほかの全部をどの画面でも持つ（狭い画面ではサイドバーとメインビューが同時に見えないため）。いまの作業は頭が持つ。
 
 import type { ReactElement } from "react"
 
 import { CurrentWorkPill } from "../../../features/current-work/components/current-work-pill.tsx"
+import { PhoneHead } from "./components/phone-head.tsx"
 import { ScreenNavCharacterPicker } from "./components/screen-nav-character-picker.tsx"
 import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
@@ -34,6 +34,7 @@ export function PresentationalScreenNav({
   parts,
   switcher,
   menu,
+  head,
   ref,
 }: PresentationalScreenNavProps): ReactElement {
   return (
@@ -53,13 +54,17 @@ export function PresentationalScreenNav({
         {current !== "conversation" && (
           <>
             <div className={styles["screen-nav-work-slot"]}>
-              <CurrentWorkPill work={parts.work} variant="dropdown" />
+              <CurrentWorkPill work={parts.work} />
             </div>
             <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
           </>
         )}
         <ScreenNavSettingsGear settings={parts.settings} />
-        <ScreenNavMenu parts={parts} menu={menu} />
+        <PhoneHead
+          head={head}
+          work={parts.work}
+          menu={<ScreenNavMenu parts={parts} menu={menu} />}
+        />
         <SessionSwitcher switcher={switcher} character={parts.character.face} />
       </nav>
     </>

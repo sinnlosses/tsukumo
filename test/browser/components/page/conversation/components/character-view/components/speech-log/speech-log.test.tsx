@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { useState, type ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { SpeechLog } from "../../../../../../../../../src/browser/components/page/conversation/components/character-view/components/speech-log/speech-log.tsx"
@@ -27,13 +28,24 @@ function renderSpeechLogWithCall(
     records,
     character: characterInfo({ userCall }),
   })
-  render(
+  render(<OpenableSpeechLog onToggleSpeech={() => {}} />)
+}
+
+/** 開閉はキャラビューが持つので、テストでは開閉の state だけを持つ親で包む。 */
+function OpenableSpeechLog(props: {
+  readonly onToggleSpeech: (turnId: number, index: number) => void
+}): ReactElement {
+  const [open, setOpen] = useState(false)
+  return (
     <SpeechLog
       portrait={<img alt="架空の立ち絵" />}
       speakerName="架空の名前"
       pinnedSpeech={undefined}
-      onToggleSpeech={() => {}}
-    />,
+      onToggleSpeech={props.onToggleSpeech}
+      open={open}
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
+    />
   )
 }
 
@@ -178,14 +190,7 @@ describe("SpeechLog", () => {
       ],
       character: characterInfo({}),
     })
-    render(
-      <SpeechLog
-        portrait={<img alt="架空の立ち絵" />}
-        speakerName="架空の名前"
-        pinnedSpeech={undefined}
-        onToggleSpeech={(turnId, index) => toggled.push([turnId, index])}
-      />,
-    )
+    render(<OpenableSpeechLog onToggleSpeech={(turnId, index) => toggled.push([turnId, index])} />)
     openLog()
 
     const rows = [...document.querySelectorAll(".speech-log-speech .balloon")]
