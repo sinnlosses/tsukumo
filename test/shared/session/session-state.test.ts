@@ -1274,6 +1274,8 @@ describe("applySessionEvent（質問の記録）", () => {
         toolUseId: "toolu_q",
         questions: [singleQuestion],
         answers: [["案B"]],
+        briefed: [false],
+        sentBack: 0,
       },
     )
 
@@ -1290,6 +1292,8 @@ describe("applySessionEvent（質問の記録）", () => {
         toolUseId: "toolu_q",
         questions: [multiQuestion],
         answers: [["案A", "案C"]],
+        briefed: [false],
+        sentBack: 0,
       },
     )
 
@@ -1323,6 +1327,8 @@ describe("applySessionEvent（質問の記録）", () => {
         toolUseId: "toolu_q",
         questions: [singleQuestion],
         answers: [["案A"]],
+        briefed: [false],
+        sentBack: 0,
       },
       { kind: "request", text: "架空の依頼2", images: [] },
     )

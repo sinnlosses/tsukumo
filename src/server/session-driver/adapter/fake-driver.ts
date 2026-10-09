@@ -28,6 +28,7 @@ import {
 import { NO_WORK_PLAN_STANDING } from "../../../shared/session/work-plan.ts"
 import { createReportReview } from "../../report/core/report-review.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
+import { briefedQuestions } from "../core/question-brief.ts"
 import { reportEvents } from "../core/sdk-message.ts"
 import type { SessionDriver } from "../core/session-driver.ts"
 import { createSpeechReview } from "../core/speech-review.ts"
@@ -369,6 +370,8 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
         toolUseId: ask.id,
         questions: ask.questions,
         answers: answer.labels,
+        briefed: briefedQuestions(ask.questions, ask.briefs),
+        sentBack: 0,
       })
     }
     emit({ kind: "pending-changed", pending: pending.filter((candidate) => candidate.id !== id) })

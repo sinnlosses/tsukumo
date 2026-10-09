@@ -27,11 +27,29 @@ describe("questionUsageEntriesOf", () => {
       question([{ preview: undefined }]),
     ]
 
-    const entries = questionUsageEntriesOf(questions, "claude-session-1", 1_000)
+    const entries = questionUsageEntriesOf(
+      { questions, briefed: [true, false], sentBack: 2 },
+      "claude-session-1",
+      1_000,
+    )
 
     expect(entries).toEqual([
-      { at: 1_000, sessionId: "claude-session-1", optionCount: 3, previewCount: 2 },
-      { at: 1_000, sessionId: "claude-session-1", optionCount: 1, previewCount: 0 },
+      {
+        at: 1_000,
+        sessionId: "claude-session-1",
+        optionCount: 3,
+        previewCount: 2,
+        briefed: true,
+        sentBack: 2,
+      },
+      {
+        at: 1_000,
+        sessionId: "claude-session-1",
+        optionCount: 1,
+        previewCount: 0,
+        briefed: false,
+        sentBack: 0,
+      },
     ])
   })
 })

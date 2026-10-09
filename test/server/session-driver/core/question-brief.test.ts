@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest"
 
 import {
   answerQuestionBriefCall,
-  pairQuestionBrief,
+  briefedQuestions,
+  reviewQuestionBriefing,
 } from "../../../../src/server/session-driver/core/question-brief.ts"
 import type {
   QuestionBrief,
@@ -89,12 +90,12 @@ describe("answerQuestionBriefCall", () => {
   })
 })
 
-describe("pairQuestionBrief", () => {
+describe("reviewQuestionBriefing", () => {
   it("header と label の集合が合えば添え書きを載せる", () => {
     const briefs = [brief()]
 
-    expect(pairQuestionBrief([question("架空の見出し", ["B案", "A案"])], briefs)).toEqual({
-      kind: "paired",
+    expect(reviewQuestionBriefing([question("架空の見出し", ["B案", "A案"])], briefs)).toEqual({
+      kind: "accepted",
       briefs,
     })
   })
@@ -102,24 +103,43 @@ describe("pairQuestionBrief", () => {
   it("おすすめの印と自由入力の選択肢を除いて突き合わせる", () => {
     const questions = [question("架空の見出し", ["A案 (推奨)", "B案", "その他"])]
 
-    expect(pairQuestionBrief(questions, [brief()]).kind).toBe("paired")
+    expect(reviewQuestionBriefing(questions, [brief()]).kind).toBe("accepted")
   })
 
-  it("header が質問に当たらなければ理由を返す", () => {
-    const result = pairQuestionBrief([question("別の見出し", ["A案", "B案"])], [brief()])
+  it("header が質問に当たらなければ断る", () => {
+    const result = reviewQuestionBriefing([question("別の見出し", ["A案", "B案"])], [brief()])
 
-    expect(result.kind).toBe("mismatched")
+    expect(result.kind).toBe("rejected")
   })
 
-  it("label の集合が質問と違えば、足りないものと余るものを理由にする", () => {
-    const result = pairQuestionBrief([question("架空の見出し", ["A案", "C案"])], [brief()])
+  it("label の集合が質問と違えば、足りない数と余る数だけを言って断る", () => {
+    const result = reviewQuestionBriefing([question("架空の見出し", ["A案", "C案"])], [brief()])
 
-    expect(result).toEqual({
-      kind: "mismatched",
-      reasons: [
-        "「架空の見出し」の選択肢「C案」に添え書きが無い",
-        "「架空の見出し」の添え書きの「B案」が質問の選択肢に無い",
-      ],
-    })
+    expect(result.kind).toBe("rejected")
+    const message = result.kind === "rejected" ? result.message : ""
+    expect(message).toContain("足りない1個・余る1個")
+    expect(message).not.toContain("C案")
+  })
+
+  it("添え書きが無ければ、header を挙げて断る", () => {
+    const result = reviewQuestionBriefing([question("架空の見出し", ["A案", "B案"])], [])
+
+    expect(result.kind).toBe("rejected")
+    expect(result.kind === "rejected" ? result.message : "").toContain("「架空の見出し」")
+  })
+
+  it("選択肢が1つの質問は添え書きが無くても積み、合わない添え書きは捨てる", () => {
+    const questions = [question("架空の見出し", ["A案"])]
+
+    expect(reviewQuestionBriefing(questions, [])).toEqual({ kind: "accepted", briefs: [] })
+    expect(reviewQuestionBriefing(questions, [brief()])).toEqual({ kind: "accepted", briefs: [] })
+  })
+})
+
+describe("briefedQuestions", () => {
+  it("質問ごとに、header の合う添え書きがあるかを並びのまま返す", () => {
+    const questions = [question("架空の見出し", ["A案", "B案"]), question("別の見出し", ["C案"])]
+
+    expect(briefedQuestions(questions, [brief()])).toEqual([true, false])
   })
 })

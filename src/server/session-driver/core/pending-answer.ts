@@ -10,7 +10,7 @@ import {
   type Question,
   type QuestionAnswer,
 } from "../../../shared/session-driver/question.ts"
-import { pairQuestionBrief } from "./question-brief.ts"
+import { briefedQuestions, reviewQuestionBriefing } from "./question-brief.ts"
 
 /** キャラクターが質問するときのツール名。これだけを質問として扱う。 */
 const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion"
@@ -48,7 +48,15 @@ export type PendingAnswerHandlers = {
     toolUseId: string,
     questions: readonly Question[],
     answers: readonly QuestionAnswer[],
+    briefing: AnsweredBriefing,
   ) => void
+}
+
+/** 答えが付いた質問の添え書きの様子。`briefed[i]` は `questions[i]` に合う添え書きが付いていたか。 */
+export type AnsweredBriefing = {
+  readonly briefed: readonly boolean[]
+  /** その答えまでに添え書きの不足で断った回数。 */
+  readonly sentBack: number
 }
 
 export type PendingAnswerQueue = {
@@ -81,6 +89,8 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
   const detachers = new Map<string, () => void>()
 
   let heldBrief: readonly QuestionBrief[] = []
+  /** 添え書きの不足で断った回数。質問に答えが付くか、列を畳むと 0 に戻る。 */
+  let sentBack = 0
 
   const takeBrief = (): readonly QuestionBrief[] => {
     const taken = heldBrief
@@ -101,12 +111,27 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
   return {
     ask: (request) =>
       new Promise<AnswerResult>((resolve) => {
-        const briefs = request.toolName === ASK_USER_QUESTION_TOOL_NAME ? takeBrief() : []
+        const held = request.toolName === ASK_USER_QUESTION_TOOL_NAME ? takeBrief() : []
         if (request.signal?.aborted === true) {
           resolve({ behavior: "deny", message: DENY_MESSAGE })
           return
         }
-        const entry: Entry = { ask: toPendingAsk(request, briefs), input: request.input, resolve }
+        const questions =
+          request.toolName === ASK_USER_QUESTION_TOOL_NAME
+            ? parseQuestions(request.input)
+            : undefined
+        const briefing =
+          questions === undefined ? undefined : reviewQuestionBriefing(questions, held)
+        if (briefing?.kind === "rejected") {
+          sentBack += 1
+          resolve({ behavior: "deny", message: briefing.message })
+          return
+        }
+        const entry: Entry = {
+          ask: toPendingAsk(request, questions, briefing?.briefs ?? []),
+          input: request.input,
+          resolve,
+        }
         entries.set(request.id, entry)
         // 中断されたターンの許可要求は答えられないまま残る。
         // 放っておくと列の先頭を塞ぐので、拒否として畳む（SDK は応答が無いとそのツールを止めたまま待ち続ける）。
@@ -130,6 +155,7 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
 
     settleAll: () => {
       heldBrief = []
+      sentBack = 0
       if (entries.size === 0) {
         return
       }
@@ -156,8 +182,13 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
       // 質問の記録は答えが確定したここ1回だけ知らせる（未回答のまま終わった質問は残さない）。
       // 解決より先に知らせるので、答えを受けて動き出したツールのイベントより前に記録が積まれる。
       if (entry.ask.kind === "question" && answer.kind === "answers") {
-        handlers.onAnswered(id, entry.ask.questions, answer.labels)
+        const { briefs, questions } = entry.ask
+        handlers.onAnswered(id, questions, answer.labels, {
+          briefed: briefedQuestions(questions, briefs),
+          sentBack,
+        })
       }
+      sentBack = 0
 
       settle(id, entry, result)
       return true
@@ -177,28 +208,14 @@ type Entry = {
  * 許可要求と質問を見分ける。
  * `AskUserQuestion` でも `questions` の形が読めないときは許可要求として扱う（選択肢を出せないので、許可／拒否で答えてもらうしかない）。
  */
-function toPendingAsk(request: AskRequest, briefs: readonly QuestionBrief[]): PendingAsk {
-  if (request.toolName !== ASK_USER_QUESTION_TOOL_NAME) {
-    return {
-      kind: "permission",
-      id: request.id,
-      toolName: request.toolName,
-      input: request.input,
-    }
-  }
-
-  const questions = parseQuestions(request.input)
+function toPendingAsk(
+  request: AskRequest,
+  questions: readonly Question[] | undefined,
+  briefs: readonly QuestionBrief[],
+): PendingAsk {
   return questions === undefined
     ? { kind: "permission", id: request.id, toolName: request.toolName, input: request.input }
-    : { kind: "question", id: request.id, questions, briefs: pairedBriefs(questions, briefs) }
-}
-
-function pairedBriefs(
-  questions: readonly Question[],
-  briefs: readonly QuestionBrief[],
-): readonly QuestionBrief[] {
-  const pairing = pairQuestionBrief(questions, briefs)
-  return pairing.kind === "paired" ? pairing.briefs : []
+    : { kind: "question", id: request.id, questions, briefs }
 }
 
 /**

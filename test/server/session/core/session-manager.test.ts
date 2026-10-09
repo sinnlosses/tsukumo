@@ -1421,12 +1421,18 @@ describe("createSessionManager", () => {
     }
 
     /** 答えが確定した質問の `SessionEvent`（中身はすべて手で書いた架空のもの）。 */
-    function questionAnsweredEvent(questions: readonly Question[]): SessionEvent {
+    function questionAnsweredEvent(
+      questions: readonly Question[],
+      briefed: readonly boolean[] = questions.map(() => false),
+      sentBack = 0,
+    ): SessionEvent {
       return {
         kind: "question-answered",
         toolUseId: "toolu_fictional",
         questions,
         answers: questions.map(() => ["架空の答え"]),
+        briefed,
+        sentBack,
       }
     }
 
@@ -1461,17 +1467,31 @@ describe("createSessionManager", () => {
       return { manager, stub, entries }
     }
 
-    it("答えが確定した質問ごとに、選択肢の数と preview の付いた数を1行書く", async () => {
+    it("答えが確定した質問ごとに、選択肢の数・preview の付いた数・添え書きの有無・断った回数を1行書く", async () => {
       const { stub, entries } = startQuestionUsageManagerWithStub()
       await waitForBatch()
 
       stub.emit(sessionInfo("claude-session-1"))
-      stub.emit(questionAnsweredEvent([question(3, 1), question(2, 0)]))
+      stub.emit(questionAnsweredEvent([question(3, 1), question(2, 0)], [true, false], 2))
       await waitForBatch()
 
       expect(entries).toEqual([
-        { at: 1_000, sessionId: "claude-session-1", optionCount: 3, previewCount: 1 },
-        { at: 1_000, sessionId: "claude-session-1", optionCount: 2, previewCount: 0 },
+        {
+          at: 1_000,
+          sessionId: "claude-session-1",
+          optionCount: 3,
+          previewCount: 1,
+          briefed: true,
+          sentBack: 2,
+        },
+        {
+          at: 1_000,
+          sessionId: "claude-session-1",
+          optionCount: 2,
+          previewCount: 0,
+          briefed: false,
+          sentBack: 0,
+        },
       ])
     })
 
@@ -1728,6 +1748,8 @@ describe("createSessionManager", () => {
             },
           ],
           answers: [["架空の答え"]],
+          briefed: [false],
+          sentBack: 0,
         },
         ...RESTORED_REPLAY,
       ]),
@@ -1944,7 +1966,14 @@ describe("レポートの画像の棚", () => {
 
     stub.emit(imageQuestionPending("toolu_q1"))
     stub.emit(imageQuestionPending("toolu_q1", "toolu_q2"))
-    stub.emit({ kind: "question-answered", toolUseId: "toolu_q1", questions: [], answers: [] })
+    stub.emit({
+      kind: "question-answered",
+      toolUseId: "toolu_q1",
+      questions: [],
+      answers: [],
+      briefed: [],
+      sentBack: 0,
+    })
     stub.emit(imageQuestionPending("toolu_q2"))
     await waitForBatch()
 

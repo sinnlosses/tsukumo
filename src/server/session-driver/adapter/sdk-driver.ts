@@ -86,8 +86,15 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     onChange: (pending) => {
       options.onEvent({ kind: "pending-changed", pending })
     },
-    onAnswered: (toolUseId, questions, answers) => {
-      options.onEvent({ kind: "question-answered", toolUseId, questions, answers })
+    onAnswered: (toolUseId, questions, answers, { briefed, sentBack }) => {
+      options.onEvent({
+        kind: "question-answered",
+        toolUseId,
+        questions,
+        answers,
+        briefed,
+        sentBack,
+      })
     },
   })
 

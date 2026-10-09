@@ -33,5 +33,7 @@ function toRecord(entry: QuestionUsageEntry): QuestionUsageRecord {
     sessionId: entry.sessionId,
     optionCount: entry.optionCount,
     previewCount: entry.previewCount,
+    briefed: entry.briefed,
+    sentBack: entry.sentBack,
   }
 }

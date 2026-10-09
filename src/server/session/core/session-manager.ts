@@ -382,7 +382,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       })
     }
     if (event.kind === "question-answered" && state.session.kind !== "starting") {
-      for (const entry of questionUsageEntriesOf(event.questions, state.session.sessionId, at)) {
+      for (const entry of questionUsageEntriesOf(event, state.session.sessionId, at)) {
         options.questionUsageLog.append(entry)
       }
     }

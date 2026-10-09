@@ -30,7 +30,7 @@ function at(hour: number, minute: number, day = 22): number {
 }
 
 function entry(when: number, sessionId = "claude-session-1"): QuestionUsageEntry {
-  return { at: when, sessionId, optionCount: 3, previewCount: 1 }
+  return { at: when, sessionId, optionCount: 3, previewCount: 1, briefed: true, sentBack: 2 }
 }
 
 function readLines(fileName: string): unknown[] {
@@ -50,18 +50,28 @@ describe("createQuestionUsageLog", () => {
     expect(readLines("2026-09-23.jsonl").length).toBe(1)
   })
 
-  it("1行の鍵は版・日時・セッションID・選択肢の数・preview の付いた数で、日時は ISO 8601（オフセット付き）", () => {
+  it("1行の鍵は版・日時・セッションID・選択肢の数・preview の付いた数・添え書きの有無・断った回数で、日時は ISO 8601（オフセット付き）", () => {
     const log = createQuestionUsageLog(root())
 
     log.append(entry(at(9, 0)))
 
     const [record] = readLines("2026-09-22.jsonl")
-    expect(keysOf(record)).toEqual(["v", "at", "sessionId", "optionCount", "previewCount"])
+    expect(keysOf(record)).toEqual([
+      "v",
+      "at",
+      "sessionId",
+      "optionCount",
+      "previewCount",
+      "briefed",
+      "sentBack",
+    ])
     expect(record).toMatchObject({
       v: QUESTION_USAGE_FORMAT_VERSION,
       sessionId: "claude-session-1",
       optionCount: 3,
       previewCount: 1,
+      briefed: true,
+      sentBack: 2,
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)

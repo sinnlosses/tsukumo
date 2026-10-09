@@ -45,6 +45,28 @@ function questionRequest(overrides: Partial<AskRequest> = {}): AskRequest {
   }
 }
 
+/** `questionRequest()` の質問に合う添え書き。 */
+const BRIEF: QuestionBrief = {
+  header: "選択",
+  background: "架空の背景。",
+  axes: ["架空の軸"],
+  options: ["こっち", "あっち"].map((label) => ({
+    label,
+    pros: ["架空の良い点。"],
+    cons: [],
+    byAxis: ["架空"],
+    irreversible: label === "あっち",
+    figures: [],
+  })),
+}
+
+/** 添え書きを預けてから質問を積める列。 */
+function briefedQueue(handlers: PendingAnswerHandlers = noHandlers()) {
+  const queue = createPendingAnswerQueue(handlers)
+  queue.holdBrief([BRIEF])
+  return queue
+}
+
 describe("createPendingAnswerQueue", () => {
   it("許可要求を積み、答えるまで解決しない", async () => {
     const changes: (readonly PendingAsk[])[] = []
@@ -107,7 +129,7 @@ describe("createPendingAnswerQueue", () => {
   })
 
   it("AskUserQuestion は質問として積む", () => {
-    const queue = createPendingAnswerQueue(noHandlers())
+    const queue = briefedQueue()
 
     void queue.ask(questionRequest())
 
@@ -126,13 +148,13 @@ describe("createPendingAnswerQueue", () => {
             ],
           },
         ],
-        briefs: [],
+        briefs: [BRIEF],
       },
     ])
   })
 
   it("質問の答えを updatedInput.answers の形に組む（questions はそのまま返す）", async () => {
-    const queue = createPendingAnswerQueue(noHandlers())
+    const queue = briefedQueue()
     const request = questionRequest()
 
     const asked = queue.ask(request)
@@ -145,7 +167,7 @@ describe("createPendingAnswerQueue", () => {
   })
 
   it("複数選んだ答えは、SDK へ返すときだけ1つの文字列につなぐ", async () => {
-    const queue = createPendingAnswerQueue(noHandlers())
+    const queue = briefedQueue()
 
     const asked = queue.ask(questionRequest())
     queue.answer("toolu_q", { kind: "answers", labels: [["こっち", "あっち"]] })
@@ -156,7 +178,7 @@ describe("createPendingAnswerQueue", () => {
   })
 
   it("何も選ばれていない質問は SDK へ返す answers に入れない", async () => {
-    const queue = createPendingAnswerQueue(noHandlers())
+    const queue = briefedQueue()
 
     const asked = queue.ask(questionRequest())
     queue.answer("toolu_q", { kind: "answers", labels: [[]] })
@@ -166,7 +188,7 @@ describe("createPendingAnswerQueue", () => {
 
   it("質問に答えると、記録のための合図を質問ごとの並びのまま1回だけ流す", () => {
     const answered: unknown[] = []
-    const queue = createPendingAnswerQueue({
+    const queue = briefedQueue({
       onChange: () => {},
       onAnswered: (toolUseId, questions, answers) =>
         answered.push({ toolUseId, questions, answers }),
@@ -211,7 +233,7 @@ describe("createPendingAnswerQueue", () => {
   })
 
   it("答えの種類が答え待ちの種類に合わないときは無視して残す", () => {
-    const queue = createPendingAnswerQueue(noHandlers())
+    const queue = briefedQueue()
 
     void queue.ask(questionRequest())
     expect(queue.answer("toolu_q", { kind: "allow" })).toBe(false)
@@ -306,20 +328,6 @@ describe("createPendingAnswerQueue", () => {
 })
 
 describe("添え書きを次の質問に載せる", () => {
-  const BRIEF: QuestionBrief = {
-    header: "選択",
-    background: "架空の背景。",
-    axes: ["架空の軸"],
-    options: ["こっち", "あっち"].map((label) => ({
-      label,
-      pros: ["架空の良い点。"],
-      cons: [],
-      byAxis: ["架空"],
-      irreversible: label === "あっち",
-      figures: [],
-    })),
-  }
-
   function briefsOf(pending: readonly PendingAsk[]): readonly (readonly QuestionBrief[])[] {
     return pending.flatMap((ask) => (ask.kind === "question" ? [ask.briefs] : []))
   }
@@ -337,33 +345,24 @@ describe("添え書きを次の質問に載せる", () => {
     expect(changes.map(briefsOf)).toEqual([[[BRIEF]]])
   })
 
-  it("質問と合わない添え書きは載せず、質問は添え書き無しで積む", () => {
-    const queue = createPendingAnswerQueue(noHandlers())
+  it("使い切った添え書きは次の質問には載らず、その質問は断る", async () => {
+    const queue = briefedQueue()
 
-    queue.holdBrief([{ ...BRIEF, header: "別の見出し" }])
-    void queue.ask(questionRequest())
-
-    expect(briefsOf(queue.list())).toEqual([[]])
-  })
-
-  it("使い切った添え書きは次の質問には載らない", () => {
-    const queue = createPendingAnswerQueue(noHandlers())
-
-    queue.holdBrief([BRIEF])
     void queue.ask(questionRequest({ id: "toolu_q1" }))
-    void queue.ask(questionRequest({ id: "toolu_q2" }))
+    const second = await queue.ask(questionRequest({ id: "toolu_q2" }))
 
-    expect(briefsOf(queue.list())).toEqual([[BRIEF], []])
+    expect(briefsOf(queue.list())).toEqual([[BRIEF]])
+    expect(second.behavior).toBe("deny")
   })
 
-  it("dropBrief のあとの質問には載らない", () => {
-    const queue = createPendingAnswerQueue(noHandlers())
+  it("dropBrief のあとの質問は断る", async () => {
+    const queue = briefedQueue()
 
-    queue.holdBrief([BRIEF])
     queue.dropBrief()
-    void queue.ask(questionRequest())
+    const result = await queue.ask(questionRequest())
 
-    expect(briefsOf(queue.list())).toEqual([[]])
+    expect(result.behavior).toBe("deny")
+    expect(queue.list()).toEqual([])
   })
 
   it("許可要求では使い切らず、そのあとの質問に載る", () => {
@@ -374,5 +373,146 @@ describe("添え書きを次の質問に載せる", () => {
     void queue.ask(questionRequest())
 
     expect(briefsOf(queue.list())).toEqual([[BRIEF]])
+  })
+})
+
+describe("選択肢が2つ以上の質問は添え書きが無いと断る", () => {
+  const SINGLE_OPTION_QUESTION = {
+    question: "一つだけ？",
+    header: "一択",
+    multiSelect: false,
+    options: [{ label: "それだけ", description: "ダミーの説明", preview: undefined }],
+  }
+
+  function twoOptionQuestion(header: string): Record<string, unknown> {
+    return {
+      question: "どちらにする？",
+      header,
+      multiSelect: false,
+      options: ["こっち", "あっち"].map((label) => ({
+        label,
+        description: "ダミーの説明",
+        preview: undefined,
+      })),
+    }
+  }
+
+  function requestOf(...questions: readonly Record<string, unknown>[]): AskRequest {
+    return questionRequest({ input: { questions } })
+  }
+
+  it("添え書きが無ければ積まず、聞き直しを促す理由つきで断る", async () => {
+    const changes: (readonly PendingAsk[])[] = []
+    const queue = createPendingAnswerQueue({
+      onChange: (p) => changes.push(p),
+      onAnswered: () => {},
+    })
+
+    const result = await queue.ask(questionRequest())
+
+    expect(result.behavior).toBe("deny")
+    expect(result).toMatchObject({ message: expect.stringContaining("question_brief") })
+    expect(queue.list()).toEqual([])
+    expect(changes).toEqual([])
+  })
+
+  it("断る文に質問文・選択肢のラベル・添え書きの字を入れない", async () => {
+    const queue = createPendingAnswerQueue(noHandlers())
+
+    queue.holdBrief([{ ...BRIEF, options: BRIEF.options.slice(0, 1) }])
+    const result = await queue.ask(questionRequest())
+
+    expect(result.behavior).toBe("deny")
+    const message = result.behavior === "deny" ? result.message : ""
+    for (const secret of ["どちらにする？", "こっち", "あっち", "架空の背景", "架空の良い点"]) {
+      expect(message).not.toContain(secret)
+    }
+  })
+
+  it("header が当たらない添え書きは断る", async () => {
+    const queue = createPendingAnswerQueue(noHandlers())
+
+    queue.holdBrief([{ ...BRIEF, header: "別の見出し" }])
+    const result = await queue.ask(questionRequest())
+
+    expect(result.behavior).toBe("deny")
+    expect(queue.list()).toEqual([])
+  })
+
+  it("選択肢の過不足がある添え書きは断る", async () => {
+    const queue = createPendingAnswerQueue(noHandlers())
+
+    queue.holdBrief([{ ...BRIEF, options: BRIEF.options.slice(0, 1) }])
+    const result = await queue.ask(questionRequest())
+
+    expect(result.behavior).toBe("deny")
+    expect(queue.list()).toEqual([])
+  })
+
+  it("断ったあとも預かりは使い切られ、呼び直した添え書きで積める", async () => {
+    const queue = createPendingAnswerQueue(noHandlers())
+
+    queue.holdBrief([{ ...BRIEF, header: "別の見出し" }])
+    expect((await queue.ask(questionRequest({ id: "toolu_q1" }))).behavior).toBe("deny")
+    expect((await queue.ask(questionRequest({ id: "toolu_q2" }))).behavior).toBe("deny")
+    queue.holdBrief([BRIEF])
+    void queue.ask(questionRequest({ id: "toolu_q3" }))
+
+    expect(queue.list().map((ask) => ask.id)).toEqual(["toolu_q3"])
+  })
+
+  it("2問のうち一方にだけ添え書きがあれば断る", async () => {
+    const queue = briefedQueue()
+
+    const result = await queue.ask(requestOf(twoOptionQuestion("選択"), twoOptionQuestion("別")))
+
+    expect(result.behavior).toBe("deny")
+  })
+
+  it("選択肢が1つの質問には添え書きを求めず、2つ以上の側が合えば積む", () => {
+    const queue = briefedQueue()
+
+    void queue.ask(requestOf(twoOptionQuestion("選択"), SINGLE_OPTION_QUESTION))
+
+    expect(queue.list().map((ask) => ask.kind)).toEqual(["question"])
+  })
+
+  it("選択肢が1つだけの質問は添え書き無しで積む", () => {
+    const queue = createPendingAnswerQueue(noHandlers())
+
+    void queue.ask(requestOf(SINGLE_OPTION_QUESTION))
+
+    expect(queue.list().map((ask) => ask.kind)).toEqual(["question"])
+  })
+
+  it("選択肢が1つだけの質問に合わない添え書きは捨てて積む", () => {
+    const queue = createPendingAnswerQueue(noHandlers())
+
+    queue.holdBrief([BRIEF])
+    void queue.ask(requestOf(SINGLE_OPTION_QUESTION))
+
+    expect(queue.list()).toMatchObject([{ kind: "question", briefs: [] }])
+  })
+
+  it("答えに付けて、断った回数と質問ごとの添え書きの有無を1回だけ流し、数は0に戻る", async () => {
+    const briefings: unknown[] = []
+    const queue = createPendingAnswerQueue({
+      onChange: () => {},
+      onAnswered: (_id, _questions, _answers, briefing) => briefings.push(briefing),
+    })
+
+    await queue.ask(questionRequest({ id: "toolu_q1" }))
+    await queue.ask(questionRequest({ id: "toolu_q2" }))
+    queue.holdBrief([BRIEF])
+    void queue.ask(questionRequest({ id: "toolu_q3" }))
+    queue.answer("toolu_q3", { kind: "answers", labels: [["こっち"]] })
+    queue.holdBrief([BRIEF])
+    void queue.ask(questionRequest({ id: "toolu_q4" }))
+    queue.answer("toolu_q4", { kind: "answers", labels: [["こっち"]] })
+
+    expect(briefings).toEqual([
+      { briefed: [true], sentBack: 2 },
+      { briefed: [true], sentBack: 0 },
+    ])
   })
 })
