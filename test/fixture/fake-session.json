@@ -3329,6 +3329,17 @@
         {
           "afterMs": 0,
           "event": {
+            "kind": "chat-topics-changed",
+            "topics": [
+              "架空の短い話題",
+              "架空の話題はとても長くて空白を含まない語がつながっている",
+              "fictionalverylongtopicwordwithoutanyspacesthatkeepsgoingandgoingandgoingforever"
+            ]
+          }
+        },
+        {
+          "afterMs": 0,
+          "event": {
             "kind": "remembered-lines-changed",
             "lines": [
               "架空の1行",

@@ -12,15 +12,16 @@
   font-size: var(--font-secondary);
 }
 /* 見出しと絞り込みの行（`filters`）をまとめた、スクロールしても上に止まる帯。
-   左右の負のマージンは `--region-padding` と `.sidebar-block` の左右の余白を打ち消して帯を領域の枠いっぱいに広げ、
-   左右の padding は同じ値を取り戻して見出しの左右端を一覧の左右端にそろえる。 */
+   左右の負のマージンは `--block-bleed` と `.sidebar-block` の左右の余白を打ち消して帯を領域の枠いっぱいに広げ、
+   左右の padding は同じ値を取り戻して見出しの左右端を一覧の左右端にそろえる。
+   `--block-bleed` は区画の外側がすでに領域の縁まで出ている分を引くための値で、既定は領域の余白。 */
 .sidebar-block-head {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   flex: 0 0 auto;
-  margin: 0 calc(-1 * var(--region-padding) - 1.125rem);
-  padding: 16px calc(var(--region-padding) + 1.125rem) 10px;
+  margin: 0 calc(-1 * var(--block-bleed, var(--region-padding)) - 1.125rem);
+  padding: 16px calc(var(--block-bleed, var(--region-padding)) + 1.125rem) 10px;
 }
 .sidebar-block-head[data-scrolled="true"] {
   border-bottom: 1px solid var(--rule);

@@ -71,9 +71,29 @@
               ]
             },
             {
-              "tag": "p",
+              "tag": "ul",
+              "attributes": {
+                "aria-label": "最近の話題"
+              },
               "children": [
-                "まだ話題が無い（話が積もると、ここに並ぶ）"
+                {
+                  "tag": "li",
+                  "children": [
+                    "架空の短い話題"
+                  ]
+                },
+                {
+                  "tag": "li",
+                  "children": [
+                    "架空の話題はとても長くて空白を含まない語がつながっている"
+                  ]
+                },
+                {
+                  "tag": "li",
+                  "children": [
+                    "fictionalverylongtopicwordwithoutanyspacesthatkeepsgoingandgoingandgoingforever"
+                  ]
+                }
               ]
             }
           ]

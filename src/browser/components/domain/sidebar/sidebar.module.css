@@ -69,8 +69,10 @@
 
 /* 2段目（最近の話題）と3段目（覚えていること）の入れ物。
    ここだけが伸び縮みし、入りきらないぶんはこの中で転がる（札と下端の帯は動かない）。
-   左右は領域の縁まで広げ、区画（.sidebar-block）の 1.125rem で札・帯と字の位置を揃える。 */
+   左右は領域の縁まで広げ、区画（.sidebar-block）の 1.125rem で札・帯と字の位置を揃える。
+   縁まで出た分は --block-bleed を 0 にして区画の見出しの帯へ伝え、帯が縁より外へはみ出さないようにする。 */
 .sidebar-chat-body {
+  --block-bleed: 0px;
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
