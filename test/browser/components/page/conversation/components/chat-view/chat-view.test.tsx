@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ChatView } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-view.tsx"
+import { useSession } from "../../../../../../../src/browser/stores/session.ts"
 import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -285,16 +286,13 @@ describe("ChatView のセリフを遡る", () => {
 
     fireEvent.click(screen.getByText("2つめのセリフ"))
     act(() => {
-      putState({
-        ...INITIAL_SESSION_STATE,
-        records: [...RECORDS, requestRecord({ turnId: 4, text: "3つめの依頼" })],
-        character: FIXTURE_CHARACTER,
-        // 送った時点でターンが始まり、最新の表情は既定へ戻っている（`beginTurn`）。
-        speechExpression: INITIAL_SESSION_STATE.speechExpression,
-        turn: { kind: "running", startedAt: 0 },
+      useSession.getState().receive({
+        type: "events",
+        events: [{ at: 0, event: { kind: "request", text: "3つめの依頼", images: [] } }],
       })
     })
 
+    expect(useSession.getState().state.turn.kind).toBe("running")
     expect(portraitExpression()).toBe("proud")
     expect(screen.getByText("2つめのセリフ").getAttribute("aria-pressed")).toBe("true")
   })
@@ -309,11 +307,9 @@ describe("ChatView のセリフが現れる（docs/architecture/screen-design.md
   /** 3件目のセリフが届いたところ（2件目までは開いた時点で並んでいる）。 */
   function arrive(text: string, expression: Expression): void {
     act(() => {
-      putState({
-        ...INITIAL_SESSION_STATE,
-        records: [...RECORDS, speechRecord({ text, expression })],
-        character: FIXTURE_CHARACTER,
-        speechExpression: expression,
+      useSession.getState().receive({
+        type: "events",
+        events: [{ at: 0, event: { kind: "speech", text, expression } }],
       })
     })
     // 届いた直後に鳴る、判定の時刻を読み直すタイマー。
@@ -346,6 +342,32 @@ describe("ChatView のセリフが現れる（docs/architecture/screen-design.md
     expect(logEntries()).toHaveLength(5)
     expect(screen.getByText("3つめのセリフ")).toBeTruthy()
     expect(popEntries()).toHaveLength(1)
+  })
+
+  // キャラクターを切り替えると、起こし直した側が前のセッションの記録を組み直し、姿を丸ごと入れ替えて配る。
+  it("姿が丸ごと入れ替わったら、並んだ記録を待たずに全部出し、弾ませない", () => {
+    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER })
+
+    act(() => {
+      putState({ ...INITIAL_SESSION_STATE, character: FIXTURE_CHARACTER })
+    })
+    act(() => {
+      putState({
+        ...INITIAL_SESSION_STATE,
+        records: [
+          speechRecord({ text: "組み直した1つめ" }),
+          speechRecord({ text: "組み直した2つめ" }),
+          speechRecord({ text: "組み直した3つめ" }),
+        ],
+        character: FIXTURE_CHARACTER,
+      })
+    })
+    act(() => {
+      vi.advanceTimersByTime(0)
+    })
+
+    expect(logEntries()).toHaveLength(3)
+    expect(popEntries()).toHaveLength(0)
   })
 })
 
