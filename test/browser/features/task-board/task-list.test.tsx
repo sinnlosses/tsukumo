@@ -131,20 +131,11 @@ describe("taskList", () => {
     expect(screen.getByRole("listitem").querySelector(".task-mark-other")).not.toBeNull()
   })
 
-  it("進行中を選ぶとカードだけ残る", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="doing" />)
-
-    const cards = document.querySelectorAll<HTMLElement>(".task-running-card")
-    expect(cards).toHaveLength(1)
-    expect(cards[0]?.textContent).toContain("X-004")
-    expect(screen.getAllByRole("listitem")).toHaveLength(1)
-  })
-
   it("絞った結果が0件のときは選んだ状態の名前を添えた一言を出す", () => {
     const doneOnly = TASKS.filter((task) => task.status === "done")
-    render(<TaskList tasks={known(doneOnly)} selectedStatus="todo" />)
+    render(<TaskList tasks={known(doneOnly)} selectedStatus="open" />)
 
-    expect(screen.getByText("未着手のタスクが無い")).toBeDefined()
+    expect(screen.getByText("未完了のタスクが無い")).toBeDefined()
   })
 
   it("行を押すとのぞき窓が開き、もう一度押すと閉じる", () => {

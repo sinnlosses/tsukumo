@@ -85,12 +85,12 @@ describe("Sidebar のタスクの節", () => {
 
     expect(pressed()).toEqual(["すべて 2"])
 
-    fireEvent.click(screen.getByRole("button", { name: "未着手 1" }))
-    expect(pressed()).toEqual(["未着手 1"])
+    fireEvent.click(screen.getByRole("button", { name: "未完了 1" }))
+    expect(pressed()).toEqual(["未完了 1"])
     expect(shown()).toEqual(["task-row-X-001"])
 
-    fireEvent.click(screen.getByRole("button", { name: "未着手 1" }))
-    expect(pressed()).toEqual(["未着手 1"])
+    fireEvent.click(screen.getByRole("button", { name: "未完了 1" }))
+    expect(pressed()).toEqual(["未完了 1"])
     expect(shown()).toEqual(["task-row-X-001"])
 
     fireEvent.click(screen.getByRole("button", { name: "完了 1" }))

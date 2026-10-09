@@ -63,9 +63,9 @@ describe("countsTextOf", () => {
   it("件数を「ラベル 数」で ・ でつなぐ", () => {
     expect(
       countsTextOf([
-        { status: "doing", label: "進行中", count: 2 },
-        { status: "todo", label: "未着手", count: 19 },
+        { status: "open", label: "未完了", count: 19 },
+        { status: "done", label: "完了", count: 2 },
       ]),
-    ).toBe("進行中 2 · 未着手 19")
+    ).toBe("未完了 19 · 完了 2")
   })
 })

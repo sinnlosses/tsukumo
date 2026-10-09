@@ -1,7 +1,5 @@
 // サイドバーの件数のチップで絞り込んだときに区画の一覧へ出す並び。
 // 並びは変えず、`orderTasksForSidebar` の前段として出す・出さないだけをここで決める。
-//
-// 想定外の status（todo / doing / done 以外）は3つのチップのどれにも属さないので、「すべて」以外に絞っている間は出ない（「!」の印で出るのは全件のときだけ）。
 
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import type { TaskListFilterStatus } from "./task-list-count.ts"
@@ -14,5 +12,6 @@ export function filterTasksForSidebar(
   if (selected === "all") {
     return items
   }
-  return items.filter((task) => task.status === selected)
+  const wantsDone = selected === "done"
+  return items.filter((task) => (task.status === "done") === wantsDone)
 }

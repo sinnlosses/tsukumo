@@ -61,23 +61,7 @@
                         "type": "button"
                       },
                       "children": [
-                        "進行中",
-                        "0"
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "tag": "li",
-                  "children": [
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-pressed": "false",
-                        "type": "button"
-                      },
-                      "children": [
-                        "未着手",
+                        "未完了",
                         "1"
                       ]
                     }

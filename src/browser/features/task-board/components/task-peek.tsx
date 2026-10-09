@@ -140,8 +140,8 @@ function statusWordOf(status: string | undefined): string {
   return STATUS_WORD.get(status) ?? status
 }
 
-/** 行の左端から窓の右端まで。行はサイドバーの枠から約 32px 内にあり、窓と枠のあいだを約 20px 空ける。 */
-const GAP_FROM_ROW = 52
+/** 行の左端から窓の右端まで。行はサイドバーの枠から約 22px 内にあり、窓と枠のあいだを約 20px 空ける。 */
+const GAP_FROM_ROW = 42
 /** 画面の端から空ける幅。 */
 const VIEWPORT_MARGIN = 8
 /** 尾を窓の上下の角から離す幅。 */

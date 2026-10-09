@@ -27,7 +27,13 @@ const TASKS: readonly TaskSummaryItem[] = [
 ]
 
 describe("filterTasksForSidebar", () => {
-  it("完了を選ぶと done だけになる（想定外の status は3つのチップのどれを選んでも出ない）", () => {
+  it("未完了と完了で全件を done かどうかで分け、想定外の status は未完了に入る", () => {
+    expect(filterTasksForSidebar(TASKS, "open").map((task) => task.id)).toEqual([
+      "X-001",
+      "X-002",
+      "X-004",
+      "X-005",
+    ])
     expect(filterTasksForSidebar(TASKS, "done").map((task) => task.id)).toEqual(["X-003"])
   })
 })

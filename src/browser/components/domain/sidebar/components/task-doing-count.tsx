@@ -3,7 +3,6 @@
 
 import type { ReactElement } from "react"
 
-import { taskListCounts } from "../../../../features/task-board/domain/task-list-count.ts"
 import { useSession } from "../../../../stores/session.ts"
 import styles from "./task-doing-count.module.css"
 
@@ -12,7 +11,7 @@ export function TaskDoingCount(): ReactElement | undefined {
   if (tasks.kind !== "known") {
     return undefined
   }
-  const doing = taskListCounts(tasks.items).find((item) => item.status === "doing")?.count ?? 0
+  const doing = tasks.items.filter((task) => task.status === "doing").length
   return (
     <span
       className={styles["task-doing-count"]}
