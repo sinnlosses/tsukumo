@@ -56,6 +56,11 @@ export function ImageField(props: {
         <Text element="span" size="secondary" tone="inherit" weight="inherit" className="">
           {field.label}
         </Text>
+        {field.rejection.kind === "shown" && (
+          <Text element="span" size="secondary" tone="state-ng" weight="inherit" className="">
+            {field.rejection.text}
+          </Text>
+        )}
         <HStack
           element="div"
           name={{ kind: "none" }}

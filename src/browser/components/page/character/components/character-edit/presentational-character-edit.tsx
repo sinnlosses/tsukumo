@@ -57,6 +57,11 @@ export function PresentationalCharacterEdit(
         <Heading level={2} size="body" tone="inherit" weight="bold" className="">
           <span id="character-expressions">表情</span>
         </Heading>
+        {props.portraitRejection.kind === "shown" && (
+          <Text element="p" size="secondary" tone="state-ng" weight="inherit" className="">
+            {props.portraitRejection.text}
+          </Text>
+        )}
         <div className={styles["character-gallery"]}>
           {props.cards.map((card) => (
             <PortraitCard key={card.expression} card={card} disabled={props.disabled} />

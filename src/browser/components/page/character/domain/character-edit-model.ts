@@ -95,9 +95,15 @@ export type ImageFieldModel = {
   readonly accept: string
   readonly image: { readonly kind: "absent" } | { readonly kind: "present"; readonly url: string }
   readonly label: string
+  readonly rejection: ImageRejectionNoteModel
   readonly onPick: (input: HTMLInputElement) => void
   readonly onClear: () => void
 }
+
+/** 直前に選んだ画像の書き込みを断られたときの一言。次に選び直すと消える。 */
+export type ImageRejectionNoteModel =
+  | { readonly kind: "none" }
+  | { readonly kind: "shown"; readonly text: string }
 
 /**
  * 詳しい設定の最下部、キャラクターを消す／同梱に戻す帯とその確かめ。
@@ -137,6 +143,8 @@ export type CharacterEditModel =
       /** 画面から変えられないパック。口をすべて塞ぐ（理由は `profile.note`）。 */
       readonly disabled: boolean
       readonly cards: readonly PortraitCardModel[]
+      /** 表情の格子の上に出す。カードの中は狭いので、どの表情かは文面で言う。 */
+      readonly portraitRejection: ImageRejectionNoteModel
       /** 画面の差し色（仕事）。`accent` を差す。 */
       readonly workAccent: AccentSwatchModel
       /** 画面の差し色（雑談）。`chatAccent` を持たなければ、仕事の差し色をそのまま見本に出す。 */

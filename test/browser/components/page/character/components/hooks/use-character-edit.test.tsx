@@ -156,6 +156,54 @@ describe("useCharacterEdit", () => {
     })
   })
 
+  it("背景の書き込みを断られたら、背景の欄にだけ一言を出し、選び直すと消す", async () => {
+    let refuse = true
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperFor(FIXTURE_CHARACTER, () =>
+        refuse ? Promise.reject(new Error("REFUSED")) : undefined,
+      ),
+    })
+    const pickBackground = (): void => {
+      const input = document.createElement("input")
+      Object.defineProperty(input, "files", {
+        value: [new File(["x"], "background.png", { type: "image/png" })],
+      })
+      ready(result.current).background.onPick(input)
+    }
+
+    act(pickBackground)
+    await vi.waitFor(() => {
+      expect(ready(result.current).background.rejection.kind).toBe("shown")
+    })
+    expect(ready(result.current).face.rejection).toEqual({ kind: "none" })
+    expect(ready(result.current).portraitRejection).toEqual({ kind: "none" })
+
+    refuse = false
+    act(pickBackground)
+    await vi.waitFor(() => {
+      expect(ready(result.current).background.rejection).toEqual({ kind: "none" })
+    })
+  })
+
+  it("表情の書き込みを断られたら、どの表情かを格子の上の一言で言う", async () => {
+    const { result } = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperFor(FIXTURE_CHARACTER, () => Promise.reject(new Error("REFUSED"))),
+    })
+    const proud = ready(result.current).cards.find((card) => card.expression === "proud")
+    if (proud === undefined) {
+      throw new Error("proud のカードが無い")
+    }
+
+    act(() => {
+      proud.onDropFile(new File(["x"], "proud.png", { type: "image/png" }))
+    })
+
+    await vi.waitFor(() => {
+      const note = ready(result.current).portraitRejection
+      expect(note.kind === "shown" && note.text.startsWith("どや顔を")).toBe(true)
+    })
+  })
+
   // 名前とプロフィールを変えるダイアログの種（`CharacterProfileEdit`）。
   it("名前・ひとこと無しのパックでは editProfile の種が空文字になる", () => {
     const { result } = renderHook(() => useCharacterEdit(), {

@@ -36,8 +36,12 @@ export const MAX_BACKGROUND_VEIL = 1
 /** 画面から受け取れる背景の形式。ファイル名の拡張子にもそのまま使う。 */
 export type BackgroundFormat = "png" | "jpg" | "webp"
 
-/** 背景1枚（デコード後）の上限。 */
-export const MAX_BACKGROUND_BYTES = 2 * 1024 * 1024
+/**
+ * 背景1枚（デコード後）の上限。
+ * 写真が主な素材なので立ち絵（`MAX_PORTRAIT_BYTES`）より広い。
+ * base64 にすると約 6.7 MiB で、WebSocket の `maxPayload`（`MAX_MESSAGE_BYTES`）の内側に収まる。
+ */
+export const MAX_BACKGROUND_BYTES = 5 * 1024 * 1024
 
 /** data URL の文字列の上限（{@link MAX_BACKGROUND_BYTES} を base64 の長さに直したもの）。 */
 export const MAX_BACKGROUND_DATA_URL_LENGTH = maxImageDataUrlLength(MAX_BACKGROUND_BYTES)

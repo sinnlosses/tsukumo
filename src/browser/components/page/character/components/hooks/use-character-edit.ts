@@ -4,6 +4,7 @@
 // `characterPack.*` の手続きはどれも書き込む先のパックの名前（`pack`）を持ち、選んでいるパックの名前を入れる。
 // 使用中以外を直しても使用中の姿は変わらない。
 // ここは選んだ画像を data URL にして渡すだけで、素材をブラウザ側に持ち続けない。
+// 画像の中身（種類・大きさ）の検証はサーバ側で、断られたら選んだ欄に一言を出す。
 //
 // `default` には消す口を出さない（立ち絵が必ず要る1つ。`REQUIRED_EXPRESSIONS`）。
 //
@@ -15,7 +16,12 @@
 import { useState } from "react"
 
 import type { AccentTarget } from "../../../../../../shared/character-pack/character-definition.ts"
-import { OUTFITS, type Outfit } from "../../../../../../shared/character-pack/expression.ts"
+import { resolveExpressionLabel } from "../../../../../../shared/character-pack/expression-choice.ts"
+import {
+  type Expression,
+  OUTFITS,
+  type Outfit,
+} from "../../../../../../shared/character-pack/expression.ts"
 import { readAccentColor } from "../../../../../domain/appearance-color.ts"
 import { useSession, useTurnRunning } from "../../../../../stores/session.ts"
 import type { AccentSwatchModel } from "../../domain/accent-swatch-model.ts"
@@ -25,6 +31,7 @@ import {
   FACE_FILE_ACCEPT,
   FACE_LABEL,
   GALLERY_OUTFIT,
+  IMAGE_REJECTED_NOTE,
   NOT_EDITABLE_NOTE,
   OUTFIT_LABELS,
   SWITCH_BLOCKED_TITLE,
@@ -45,6 +52,8 @@ import { useSelectedPack } from "./use-selected-pack.ts"
 
 export function useCharacterEdit(): CharacterEditModel {
   const dispatch = useSession((session) => session.dispatch)
+  const dispatchAwaited = useSession((session) => session.dispatchAwaited)
+  const [rejected, setRejected] = useState<RejectedImage>({ kind: "none" })
   const selected = useSelectedPack()
   const turnInProgress = useTurnRunning()
   const outfitAccent = useHeldAccent<Outfit>(({ pack, target, color }) => {
@@ -68,9 +77,19 @@ export function useCharacterEdit(): CharacterEditModel {
     heldOutfit[outfit] ?? character.outfitAccents[outfit] ?? accentFallback
 
   const disabled = !character.editable
+  const sendImage = (target: ImageTarget, send: () => Promise<unknown>): void => {
+    setRejected({ kind: "none" })
+    void send().catch(() => {
+      setRejected({ kind: "rejected", pack, target })
+    })
+  }
+  const rejectedTarget = rejectedTargetIn(rejected, pack)
+
   const cards = portraitCards(character, accentOf(GALLERY_OUTFIT), {
     pick: (expression, image) => {
-      dispatch.characterPack.setPortrait({ pack, expression, image })
+      sendImage({ kind: "portrait", expression }, () =>
+        dispatchAwaited.characterPack.setPortrait({ pack, expression, image }),
+      )
     },
     clear: (expression) => {
       dispatch.characterPack.clearPortrait({ pack, expression })
@@ -135,9 +154,13 @@ export function useCharacterEdit(): CharacterEditModel {
     image:
       character.face === undefined ? { kind: "absent" } : { kind: "present", url: character.face },
     label: character.face === undefined ? FACE_LABEL.absent : FACE_LABEL.present,
+    rejection:
+      rejectedTarget.kind === "face"
+        ? { kind: "shown", text: IMAGE_REJECTED_NOTE.face }
+        : { kind: "none" },
     onPick: (input) => {
       void readPicked(input, (image) => {
-        dispatch.characterPack.setFace({ pack, image })
+        sendImage({ kind: "face" }, () => dispatchAwaited.characterPack.setFace({ pack, image }))
       })
     },
     onClear: () => {
@@ -154,9 +177,15 @@ export function useCharacterEdit(): CharacterEditModel {
         ? { kind: "absent" }
         : { kind: "present", url: character.background.image },
     label: character.background === undefined ? BACKGROUND_LABEL.absent : BACKGROUND_LABEL.present,
+    rejection:
+      rejectedTarget.kind === "background"
+        ? { kind: "shown", text: IMAGE_REJECTED_NOTE.background }
+        : { kind: "none" },
     onPick: (input) => {
       void readPicked(input, (image) => {
-        dispatch.characterPack.setBackground({ pack, image })
+        sendImage({ kind: "background" }, () =>
+          dispatchAwaited.characterPack.setBackground({ pack, image }),
+        )
       })
     },
     onClear: () => {
@@ -207,6 +236,15 @@ export function useCharacterEdit(): CharacterEditModel {
     profile,
     disabled,
     cards,
+    portraitRejection:
+      rejectedTarget.kind === "portrait"
+        ? {
+            kind: "shown",
+            text: IMAGE_REJECTED_NOTE.portrait(
+              resolveExpressionLabel(character.expressions, rejectedTarget.expression),
+            ),
+          }
+        : { kind: "none" },
     workAccent,
     chatAccent,
     resetChatAccent,
@@ -215,4 +253,22 @@ export function useCharacterEdit(): CharacterEditModel {
     background,
     deleteBand,
   }
+}
+
+/** 書き込みを断られた画像の欄。 */
+type ImageTarget =
+  | { readonly kind: "face" }
+  | { readonly kind: "background" }
+  | { readonly kind: "portrait"; readonly expression: Expression }
+
+/** 断られた画像と、そのときのパック（一覧で別のパックを選んだら出さない）。 */
+type RejectedImage =
+  | { readonly kind: "none" }
+  | { readonly kind: "rejected"; readonly pack: string; readonly target: ImageTarget }
+
+function rejectedTargetIn(
+  rejected: RejectedImage,
+  pack: string,
+): ImageTarget | { readonly kind: "none" } {
+  return rejected.kind === "rejected" && rejected.pack === pack ? rejected.target : { kind: "none" }
 }

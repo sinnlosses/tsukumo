@@ -1,7 +1,9 @@
 // `<CharacterEdit>` の文言と、顔・背景に選べる種類の表。
 
+import { MAX_BACKGROUND_BYTES } from "../../../../../shared/character-pack/character-background.ts"
 import type { CharacterPackRemoval } from "../../../../../shared/character-pack/character.ts"
 import type { Outfit } from "../../../../../shared/character-pack/expression.ts"
+import { MAX_PORTRAIT_BYTES } from "../../../../../shared/character-pack/portrait-image.ts"
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import type { AccentSwatchModel } from "./accent-swatch-model.ts"
 
@@ -16,6 +18,17 @@ export const FACE_FILE_ACCEPT = ".svg,.png,.gif"
 
 /** 背景に選べる種類。`.gif` は入れない（動く背景は読む面の隣で気が散る）。 */
 export const BACKGROUND_FILE_ACCEPT = ".png,.jpg,.jpeg,.webp"
+
+/**
+ * 画像の書き込みを断られたときに、その欄に出す一言。
+ * 断りの理由はサーバから分けて返らないので、受け付ける種類と大きさを並べて言う。
+ */
+export const IMAGE_REJECTED_NOTE = {
+  face: `差し替えられなかった。顔は SVG・PNG・GIF の ${mebibytes(MAX_PORTRAIT_BYTES)} までの画像にしてほしい`,
+  background: `差し替えられなかった。背景は PNG・JPEG・WebP の ${mebibytes(MAX_BACKGROUND_BYTES)} までの画像にしてほしい`,
+  portrait: (label: string): string =>
+    `${label}を差し替えられなかった。立ち絵は SVG・PNG・GIF の ${mebibytes(MAX_PORTRAIT_BYTES)} までの画像にしてほしい`,
+} as const
 
 /**
  * 衣装のラベル。モデルの重さ（装備の重さ）の言い方はどのキャラクターでも同じなので画面側が持つ。
@@ -77,3 +90,7 @@ export const DELETE_COPY = {
     readonly blockedTitle: string
   }
 >
+
+function mebibytes(bytes: number): string {
+  return `${String(bytes / (1024 * 1024))} MiB`
+}
