@@ -476,7 +476,7 @@ components/page/<ページ>/
   領域の中に置き（`components/domain/sidebar/components/task-section.tsx`）、置かれる機能からは「何を描くか」だけを
   import する。**購読と state を区画が持つ**ので、描き直しはその区画で止まる（`<Root>` へ上げると
   タスクが変わるたびに全領域が描き直される）。例外はタスクのモーダルで、開く口がサイドバーの外（レポートの
-  目録の1行のタスクID）にもあり、狭い画面ではサイドバーが隠れるので、開いているかは store
+  目録の1行のタスクID）にもあり、狭い画面ではタスク一覧が引き出しの中に入るので、開いているかは store
   （`stores/task-board-request.ts`）が持ち、`<dialog>` は会話の画面に1つだけ置く
   （`conversation/components/requested-task-board/`）
 
