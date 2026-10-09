@@ -1,0 +1,9 @@
+# タスク運用の設定（tw が読む）
+verify = "pnpm run check"
+verify_before_ship = "pnpm run check --full"
+hook_tally = "node scripts/hook-denial-tally.ts --days 30"
+format = "pnpm run format"
+branch = "切らない"
+store = "beads"
+tracker = "github"
+github_project = "sinnlosses/1"

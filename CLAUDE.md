@@ -131,15 +131,6 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 
 ## タスク運用
 
-- 検証コマンド: `pnpm run check`（変更後は必ずこれを通す。受け入れ判定に使う）
-- 送る前の検証コマンド: `pnpm run check --full`
-- 規則の発火の集計: `node scripts/hook-denial-tally.ts --days 30`
-- 整形コマンド: `pnpm run format`
-- ブランチ: 切らない（自分でブランチを切らない）。**枝の寿命は作業ツリーの寿命と同じ**で、
-  1本の枝がいくつでもタスクを持つ
-- タスクの置き場: beads
-- トラッカー: github
-- GitHub Project: `sinnlosses/1`
 
 状態はチャットではなく Beads（`task show GH-<n>` で読み、`task edit` で直す。`.beads` は本体の作業ツリーの根で git の外）・`develop/direction.md`・`develop/draft/`（エージェントのドラフト。1件1ファイル）に残す。手順は
 `~/.claude/skills/task-workflow/WORKFLOW.md` が正典で、このリポジトリの上乗せは
