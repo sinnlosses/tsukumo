@@ -1,4 +1,4 @@
-// モデル・effort・許可モードの3つの操作子。サイドバーの下端の帯の左端と、中くらいの窓幅の柱に置く。
+// モデル・effort・許可モードの3つの操作子。サイドバーの下端の帯の左端と、中くらいの窓幅の柱と、狭い画面の引き出しの動き方の段に置く。
 // どれも絵だけの小さな口で、押すと `RunSettingSelect` が吊り札を開く。
 // キーボードの操作・読み上げ・選択肢の開き方はブラウザに任せ、何の値かは `aria-label` と `title` に「モデル Opus」の形で渡す。
 //
@@ -42,11 +42,12 @@ const PERMISSION_MODE_ICON = {
   bypassPermissions: ShieldOff,
 } satisfies Record<PermissionMode, LucideIcon>
 
-export type RunSettingPlacement = "sidebar-footer" | "rail"
+export type RunSettingPlacement = "sidebar-footer" | "rail" | "nav-drawer"
 
 const PLACEMENT_CLASS = {
   "sidebar-footer": styles["run-setting-group-footer"],
   rail: styles["run-setting-group-rail"],
+  "nav-drawer": styles["run-setting-group-drawer"],
 } satisfies Record<RunSettingPlacement, string>
 
 export function RunSettingGroup(props: { readonly placement: RunSettingPlacement }): ReactElement {

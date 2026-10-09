@@ -16,6 +16,7 @@ import {
   workPlanRecord,
 } from "../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../typed-element.ts"
+import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { queryClientWrapper } from "../../../query-client.tsx"
 import { putSession } from "../../../session-store.ts"
 
@@ -43,7 +44,7 @@ function renderHead(state: Partial<SessionState> = {}): HTMLElement {
     character: characterInfo({ face: "/character/face.png" }),
     ...state,
   })
-  render(<ScreenNav />, { wrapper: queryClientWrapper() })
+  render(<ScreenNav drawer={EMPTY_NAV_DRAWER_SLOTS} />, { wrapper: queryClientWrapper() })
   return typedElement(document.querySelector(".phone-head"), HTMLElement, "頭")
 }
 

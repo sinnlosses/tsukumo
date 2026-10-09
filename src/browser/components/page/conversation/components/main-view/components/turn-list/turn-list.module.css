@@ -1,0 +1,91 @@
+/* 狭い画面の引き出しの「やり取り」のタブ。
+   値は見本 `docs/history/mockup/phone-layout-2026-10-09/PHONE-1.dc.html` の2枚目の inline style を `theme.css` のトークンに写したもの。 */
+
+.turn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0 8px;
+  list-style: none;
+}
+.turn-list-row {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  column-gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.turn-list-row:hover {
+  background: var(--surface-raised);
+}
+.turn-list-row.is-working {
+  background: var(--surface-accent);
+  color: var(--ink);
+}
+.turn-list-mark {
+  display: flex;
+  justify-content: center;
+  padding-top: 3px;
+  color: var(--ink-quiet);
+  font-size: 12px;
+  font-weight: 700;
+}
+.turn-list-row[data-result="done"] .turn-list-mark {
+  color: var(--state-ok);
+}
+.turn-list-row[data-result="failed"] .turn-list-mark {
+  color: var(--state-ng);
+}
+.turn-list-row[data-result="awaiting-answer"] .turn-list-mark {
+  color: var(--state-warn);
+}
+.turn-list-spinner {
+  box-sizing: border-box;
+  width: 13px;
+  height: 13px;
+  border: 2px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-top-color: var(--accent);
+  border-right-color: var(--accent);
+  border-radius: 50%;
+  animation: turn-list-spin 1s linear infinite;
+}
+.turn-list-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.turn-list-title {
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.55;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.is-working .turn-list-title {
+  font-weight: 600;
+}
+.turn-list-span {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.turn-list-empty {
+  margin: 0;
+  padding: 12px 22px;
+  color: var(--ink-quiet);
+  font-size: 13px;
+}
+
+@keyframes turn-list-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

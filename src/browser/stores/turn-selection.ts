@@ -9,7 +9,7 @@
 // hash が指すターンが窓（`MAX_MAIN_VIEW_TURNS` 件）に無ければ今回を出す（hash は書き換えない。描くたびに外の状態を書くことになるため）。
 
 import type { SessionState } from "../../shared/session/session-state.ts"
-import { readHashRoute, useHashRoute, writeHashRoute } from "./location-hash.ts"
+import { readHashRoute, useHashRoute, writeHashRoute, type ViewedTurn } from "./location-hash.ts"
 import { mainViewTurnsOf } from "./main-view-turn.ts"
 import { useSession } from "./session.ts"
 
@@ -36,13 +36,18 @@ export function useTurnSelection(): TurnSelectionValue {
   return { activeTurnId, newestTurnId, selectTurn }
 }
 
+/** 会話の画面へ移り、そのターンに留める（ほかの画面からも押せる口のため。留め方は {@link selectTurn} と同じ）。 */
+export function showTurn(turnId: number): void {
+  writeHashRoute({ ...readHashRoute(), screen: "conversation", turn: viewedTurnOf(turnId) })
+}
+
 /** そのターンに留める。今回を選んだときは `turn` を外して追従に戻る。 */
 function selectTurn(turnId: number): void {
-  const newestTurnId = newestTurnIdOf(useSession.getState().state)
-  writeHashRoute({
-    ...readHashRoute(),
-    turn: turnId === newestTurnId ? "newest" : turnId,
-  })
+  writeHashRoute({ ...readHashRoute(), turn: viewedTurnOf(turnId) })
+}
+
+function viewedTurnOf(turnId: number): ViewedTurn {
+  return turnId === newestTurnIdOf(useSession.getState().state) ? "newest" : turnId
 }
 
 /** 札で行き来できるターン（窓の中）は昇順なので、末尾が今回。 */

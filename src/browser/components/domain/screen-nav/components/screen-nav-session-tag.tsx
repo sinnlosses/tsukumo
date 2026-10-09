@@ -2,7 +2,8 @@
 // 「浅葱の間 - FA」のうち短縮IDだけがボタンで、押すと切り替え画面が開く（プルダウンにはしない）。
 // ボタンへのホバーかフォーカスで、いまのセッションの一行（ID・始まった時刻・依頼の数・「押して切り替え」）を下に出す。
 //
-// 狭い画面では帯の左端が無い（「≡」だけになる）ので、同じ部品が「≡」の中の先頭にも出る。
+// 狭い画面では帯の左端が無いので、同じ部品が引き出しの名乗りの行にも出る。
+// 引き出しでは主の字を部屋の名前にし、区切りの「-」を置かずに短縮IDを並べる。
 
 import clsx from "clsx"
 import { useState, type ReactElement } from "react"
@@ -14,13 +15,14 @@ import type {
   ScreenNavSessionTag,
   ScreenNavSessionTitle,
 } from "../hooks/use-session-switcher.ts"
-import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-session-tag.module.css"
+
+/** 札を置く場所。広い画面の帯の左端か、狭い画面の引き出しの名乗りの行か。 */
+export type ScreenNavSessionTagPlacement = "screen-nav" | "nav-drawer"
 
 export type ScreenNavSessionTagProps = {
   readonly tag: ScreenNavSessionTag
-  /** 押したあとに呼ぶもの（「≡」の面の中では面を閉じる）。 */
-  readonly onOpened: () => void
+  readonly placement: ScreenNavSessionTagPlacement
 }
 
 const SWITCH_HINT = "押して切り替え"
@@ -32,17 +34,25 @@ export function ScreenNavSessionTag(props: ScreenNavSessionTagProps): ReactEleme
   const { tag } = props
   const [peeking, setPeeking] = useState(false)
 
-  // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
   return (
     <span
-      className={clsx(styles["screen-nav-session-tag"], shellStyles["screen-nav-session-tag"])}
+      className={clsx(
+        styles["screen-nav-session-tag"],
+        props.placement === "nav-drawer" && styles["is-drawer"],
+      )}
       onFocus={() => setPeeking(true)}
       onBlur={() => setPeeking(false)}
     >
-      <SessionTagTitle title={tag.title} />
-      <span className={styles["screen-nav-session-tag-dash"]} aria-hidden="true">
-        -
-      </span>
+      {props.placement === "screen-nav" ? (
+        <>
+          <SessionTagTitle title={tag.title} />
+          <span className={styles["screen-nav-session-tag-dash"]} aria-hidden="true">
+            -
+          </span>
+        </>
+      ) : (
+        <span className={styles["screen-nav-session-tag-drawer-room"]}>{tag.title.room}</span>
+      )}
       <button
         type="button"
         className={styles["screen-nav-session-tag-button"]}
@@ -51,10 +61,7 @@ export function ScreenNavSessionTag(props: ScreenNavSessionTagProps): ReactEleme
         aria-label={accessibleName(tag.identity)}
         onPointerEnter={() => setPeeking(true)}
         onPointerLeave={() => setPeeking(false)}
-        onClick={() => {
-          tag.onOpen()
-          props.onOpened()
-        }}
+        onClick={tag.onOpen}
       >
         <span className={styles["screen-nav-session-tag-id"]}>
           {tag.identity.kind === "known" ? tag.identity.shortId : NEW_SESSION_LABEL}

@@ -1,8 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
+import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
 import { MODEL_ALIASES } from "../../../../../src/shared/command.ts"
+import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"
 import type { StampedPendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -12,6 +14,7 @@ import {
 import { setPageUrl } from "../../../../dom-environment.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
 import { typedElement } from "../../../../typed-element.ts"
+import { MARKED_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { queryClientWrapper } from "../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession, type SentCommand } from "../../../session-store.ts"
@@ -30,6 +33,7 @@ const DEFAULT_PAGE_URL = "http://127.0.0.1/"
 
 afterEach(() => {
   cleanup()
+  useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   setPageUrl(DEFAULT_PAGE_URL)
   window.location.hash = ""
 })
@@ -47,7 +51,26 @@ const RUNNING_SESSION: Extract<SessionInfo, { kind: "running" }> = {
 
 function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = () => {}): void {
   putSession({ ...INITIAL_SESSION_STATE, ...state }, spy)
-  render(<ScreenNav />, { wrapper: queryClientWrapper() })
+  render(<ScreenNav drawer={MARKED_NAV_DRAWER_SLOTS} />, { wrapper: queryClientWrapper() })
+}
+
+/** 狭い画面の頭の右上の ≡。 */
+function drawerToggle(): HTMLElement {
+  return screen.getByRole("button", { name: "やり取りとタスクを開く" })
+}
+
+function openedDrawer(): HTMLElement {
+  return screen.getByRole("dialog", { name: "引き出し" })
+}
+
+/** Esc を押したときと同じく、開いている `<dialog>` を閉じる（`close` が届く）。 */
+function closeDrawerDialog(): void {
+  const dialog = openedDrawer()
+  act(() => {
+    if (dialog instanceof window.HTMLDialogElement) {
+      dialog.close()
+    }
+  })
 }
 
 describe("ScreenNav", () => {
@@ -172,73 +195,196 @@ describe("ScreenNav", () => {
     })
   })
 
-  // 狭い画面の「≡」（広い画面では CSS が消す。ここでは DOM の有無だけを見る）。
-  // 「≡」の aria-label は「画面を選ぶ」から「メニュー」に直した（13.9「狭い画面」）。
-  it("「≡」を押すと落ちてくる面に4つの口が出て、もう一度押すと閉じる", () => {
-    renderScreenNav()
-    const toggle = screen.getByRole("button", { name: "メニュー" })
-    expect(document.querySelector(".screen-nav-panel")).toBeNull()
+  // 狭い画面の ≡ と引き出し（広い画面では CSS が消す。ここでは DOM の有無だけを見る）。
+  describe("引き出し", () => {
+    it("≡ を押すと、名乗りの行・動き方の段・3つのタブ・下端の2つのボタンがこの順に出る", () => {
+      setPageUrl("http://127.0.0.1:7328/")
+      renderScreenNav({
+        character: characterInfo({ name: "架空の精霊", face: "/character/face.png" }),
+      })
+      const toggle = drawerToggle()
+      expect(screen.queryByRole("dialog", { name: "引き出し" })).toBeNull()
 
-    fireEvent.click(toggle)
-    const opened = document.querySelector(".screen-nav-panel")
-    expect([...(opened?.querySelectorAll("a") ?? [])].map((node) => node.textContent)).toEqual([
-      "会話",
-      "キャラ",
-      "トークン",
-      "成果",
-    ])
-    expect(toggle.getAttribute("aria-expanded")).toBe("true")
+      fireEvent.click(toggle)
 
-    fireEvent.click(toggle)
-    expect(document.querySelector(".screen-nav-panel")).toBeNull()
-  })
-
-  it("落ちてきた口を押すと閉じる（画面が移るので開いたままにしない）", () => {
-    renderScreenNav()
-    fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
-
-    const panelGate = typedElement(
-      document.querySelector(".screen-nav-panel a"),
-      HTMLElement,
-      "落ちてきた面の口",
-    )
-    fireEvent.click(panelGate)
-
-    expect(document.querySelector(".screen-nav-panel")).toBeNull()
-  })
-
-  it("帯の外側を押すと閉じる", () => {
-    renderScreenNav()
-    fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
-
-    fireEvent.pointerDown(document.body)
-
-    expect(document.querySelector(".screen-nav-panel")).toBeNull()
-  })
-
-  // 狭い画面は帯の左端が無い（「≡」だけになる）ので、顔と部屋の名前は落ちてくる面の先頭に出す（docs/architecture/screen-design.md「画面のナビゲーション」）。
-  it("「≡」を開くと、落ちてきた面の先頭にも顔と部屋の名前が出る", () => {
-    setPageUrl("http://127.0.0.1:7328/")
-    renderScreenNav({
-      character: characterInfo({ name: "架空の精霊", face: "/character/face.png" }),
+      const drawer = openedDrawer()
+      expect(toggle.getAttribute("aria-expanded")).toBe("true")
+      expect(drawer.querySelector(".screen-nav-face")?.getAttribute("src")).toBe(
+        "/character/face.png",
+      )
+      expect(drawer.querySelector(".screen-nav-session-tag-drawer-room")?.textContent).toBe(
+        "若葉の間",
+      )
+      expect(within(drawer).getByRole("group", { name: "モード" })).toBeDefined()
+      expect(drawer.querySelector('[data-slot="runSetting"]')).not.toBeNull()
+      expect(
+        within(drawer)
+          .getAllByRole("tab")
+          .map((tab) => tab.textContent),
+      ).toEqual(["やり取り", "タスク", "使用量"])
+      const order = [
+        typedElement(drawer.querySelector(".nav-drawer-identity"), HTMLElement, "名乗りの行"),
+        typedElement(drawer.querySelector(".nav-drawer-run-setting"), HTMLElement, "動き方の段"),
+        within(drawer).getByRole("tablist"),
+        within(drawer).getByRole("tabpanel"),
+        within(drawer).getByRole("button", { name: "＋ 新しいやり取り" }),
+        within(drawer).getByRole("button", { name: "設定" }),
+      ]
+      const all = [...drawer.querySelectorAll("*")]
+      const positions = order.map((node) => all.indexOf(node))
+      expect(positions).toEqual(positions.toSorted((a, b) => a - b))
     })
 
-    fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
+    it("タブを押すとその差し込み口の中身に入れ替わり、閉じて開き直しても選んだタブのまま", () => {
+      renderScreenNav()
+      fireEvent.click(drawerToggle())
+      expect(openedDrawer().querySelector('[data-slot="turns"]')).not.toBeNull()
 
-    expect(document.querySelector(".screen-nav-panel .screen-nav-face")?.getAttribute("src")).toBe(
-      "/character/face.png",
-    )
-    expect(document.querySelector(".screen-nav-panel .screen-nav-room")?.textContent).toBe(
-      "若葉の間",
-    )
-  })
+      fireEvent.click(within(openedDrawer()).getByRole("tab", { name: "使用量" }))
+      expect(openedDrawer().querySelector('[data-slot="usage"]')).not.toBeNull()
+      expect(openedDrawer().querySelector('[data-slot="turns"]')).toBeNull()
+      expect(
+        within(openedDrawer()).getByRole("tab", { name: "使用量" }).getAttribute("aria-selected"),
+      ).toBe("true")
 
-  // 答え待ちは頭の状態の語が言うので、「≡」には印を添えない（13.9「狭い画面（760px 以下）」）。
-  it("答え待ちの間も「≡」の名前は変わらず、頭の状態の語が「答え待ち」になる", () => {
-    renderScreenNav({ pending: [FIXTURE_PENDING] })
+      closeDrawerDialog()
+      fireEvent.click(drawerToggle())
 
-    expect(screen.getByRole("button", { name: "メニュー" })).toBeDefined()
-    expect(document.querySelector(".phone-head-word")?.textContent).toBe("答え待ち")
+      expect(openedDrawer().querySelector('[data-slot="usage"]')).not.toBeNull()
+    })
+
+    it("雑談中は「タスク」のタブの字が「話題」になる", () => {
+      renderScreenNav({ chatMode: true })
+      fireEvent.click(drawerToggle())
+
+      expect(
+        within(openedDrawer())
+          .getAllByRole("tab")
+          .map((tab) => tab.textContent),
+      ).toEqual(["やり取り", "話題", "使用量"])
+    })
+
+    it("「＋ 新しいやり取り」で startNewSession を1回送って閉じる", () => {
+      const sent: SentCommand[] = []
+      renderScreenNav({}, (command) => sent.push(command))
+      fireEvent.click(drawerToggle())
+
+      fireEvent.click(within(openedDrawer()).getByRole("button", { name: "＋ 新しいやり取り" }))
+
+      expect(sent).toEqual([{ procedure: "session.startNewSession" }])
+      expect(screen.queryByRole("dialog", { name: "引き出し" })).toBeNull()
+    })
+
+    it("ターン進行中は「＋ 新しいやり取り」が押せず、理由を title に出し、押しても何も送らない", () => {
+      const sent: SentCommand[] = []
+      renderScreenNav({ turn: { kind: "running", startedAt: 0 } }, (command) => sent.push(command))
+      fireEvent.click(drawerToggle())
+      const newSession = within(openedDrawer()).getByRole("button", { name: "＋ 新しいやり取り" })
+
+      expect(newSession.getAttribute("aria-disabled")).toBe("true")
+      expect(newSession.getAttribute("title")).toBe(FRAME_ERROR_REASON.sessionSwitchDuringTurn)
+      fireEvent.click(newSession)
+
+      expect(sent).toEqual([])
+      expect(screen.getByRole("dialog", { name: "引き出し" })).toBeDefined()
+    })
+
+    // 覆いを押したときも Esc のときも、`<dialog>` の `close` が届いて閉じる。
+    it("覆いを押すと閉じ、≡ へフォーカスが戻る", () => {
+      renderScreenNav()
+      const toggle = drawerToggle()
+      fireEvent.click(toggle)
+
+      fireEvent.click(openedDrawer())
+
+      expect(screen.queryByRole("dialog", { name: "引き出し" })).toBeNull()
+      expect(toggle.getAttribute("aria-expanded")).toBe("false")
+      expect(document.activeElement).toBe(toggle)
+    })
+
+    // Esc で `<dialog>` を閉じるのはブラウザなので、ここでは閉じたあとに届く `close` から先を見る（Esc そのものは E2E）。
+    it("`<dialog>` が閉じると（Esc）引き出しが閉じ、≡ へフォーカスが戻る", () => {
+      renderScreenNav()
+      const toggle = drawerToggle()
+      fireEvent.click(toggle)
+
+      closeDrawerDialog()
+
+      expect(screen.queryByRole("dialog", { name: "引き出し" })).toBeNull()
+      expect(document.activeElement).toBe(toggle)
+    })
+
+    it("引き出しの中でキャラクターの選び口を開いたまま覆いを押して閉じても、開き直したとき選び口は閉じている", () => {
+      renderScreenNav()
+      fireEvent.click(drawerToggle())
+      const face = typedElement(
+        openedDrawer().querySelector(".screen-nav-character-picker-toggle"),
+        HTMLElement,
+        "引き出しの顔",
+      )
+      fireEvent.click(face)
+      expect(openedDrawer().querySelector(".screen-nav-character-picker-panel")).not.toBeNull()
+
+      fireEvent.click(openedDrawer())
+      fireEvent.click(drawerToggle())
+
+      expect(openedDrawer().querySelector(".screen-nav-character-picker-panel")).toBeNull()
+    })
+
+    it("歯車を押すと設定の面に入れ替わり、先頭にキャラ・トークン・成果の口がこの順で出る（会話の口は無い）", () => {
+      renderScreenNav()
+      fireEvent.click(drawerToggle())
+
+      fireEvent.click(within(openedDrawer()).getByRole("button", { name: "設定" }))
+
+      const face = within(openedDrawer()).getByRole("region", { name: "設定" })
+      expect(within(openedDrawer()).queryByRole("tablist")).toBeNull()
+      expect(
+        within(within(face).getByRole("navigation", { name: "ほかの画面" }))
+          .getAllByRole("link")
+          .map((link) => link.textContent),
+      ).toEqual(["キャラ›", "トークン›", "成果›"])
+      expect(within(face).getByText("画面の色")).toBeDefined()
+      expect(
+        within(openedDrawer()).getByRole("button", { name: "＋ 新しいやり取り" }),
+      ).toBeDefined()
+    })
+
+    it("設定の面の口を押すと引き出しを閉じる", () => {
+      renderScreenNav()
+      fireEvent.click(drawerToggle())
+      fireEvent.click(within(openedDrawer()).getByRole("button", { name: "設定" }))
+
+      fireEvent.click(within(openedDrawer()).getByRole("link", { name: /^トークン/u }))
+
+      expect(screen.queryByRole("dialog", { name: "引き出し" })).toBeNull()
+    })
+
+    it("「‹ 戻る」でタブの面へ戻り、フォーカスは歯車へ戻る。閉じて開き直すとタブの面から始まる", () => {
+      renderScreenNav()
+      fireEvent.click(drawerToggle())
+      fireEvent.click(within(openedDrawer()).getByRole("button", { name: "設定" }))
+
+      fireEvent.click(within(openedDrawer()).getByRole("button", { name: "‹ 戻る" }))
+
+      expect(within(openedDrawer()).getByRole("tablist")).toBeDefined()
+      expect(document.activeElement).toBe(
+        within(openedDrawer()).getByRole("button", { name: "設定" }),
+      )
+
+      fireEvent.click(within(openedDrawer()).getByRole("button", { name: "設定" }))
+      closeDrawerDialog()
+      fireEvent.click(drawerToggle())
+      expect(within(openedDrawer()).getByRole("tablist")).toBeDefined()
+    })
+
+    // 答え待ちは頭の状態の語が言うので、≡ には印を添えない（13.9「狭い画面（760px 以下）」）。
+    it("答え待ちの間も ≡ の名前は変わらず、頭の状態の語が「答え待ち」になる", () => {
+      renderScreenNav({ pending: [FIXTURE_PENDING] })
+
+      expect(drawerToggle()).toBeDefined()
+      expect(document.querySelector(".phone-head-word")?.textContent).toBe("答え待ち")
+    })
   })
 
   describe("仕事 / 雑談のトグル", () => {
@@ -355,21 +501,6 @@ describe("ScreenNav", () => {
     it("許可モードが「全部許す」のとき is-danger が付く", () => {
       renderScreenNav({ session: { ...RUNNING_SESSION, permissionMode: "bypassPermissions" } })
       expect(screen.getByLabelText("許可モード").className).toContain("is-danger")
-    })
-
-    // 狭い画面では帯に置く幅が無いので、口と同じく「≡」の中へ入る（docs/architecture/screen-design.md「画面のナビゲーション」）。帯の側にも
-    // 同じ部品が残っているので、`getByLabelText` は使わず落ちてきた面の中だけを見る。
-    it("「≡」を開くと、落ちてきた面にもドロップダウンが出る", () => {
-      renderScreenNav({ model: "claude-haiku-5" })
-
-      fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
-
-      const panelModelSelect = typedElement(
-        document.querySelector(".screen-nav-panel")?.querySelector("[aria-label='モデル']"),
-        HTMLSelectElement,
-        "面の中のモデルの <select>",
-      )
-      expect(panelModelSelect.value).toBe("haiku")
     })
   })
 

@@ -52,10 +52,7 @@ export type ScreenNavSettings = {
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
   readonly onReset: () => void
-  /**
-   * 歯車の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。
-   * 2箇所に描かれるので入れ物は1つにできず、付いている歯車を全部集めるコールバック ref にする。
-   */
+  /** 帯の歯車の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。 */
   readonly toggleRef: RefCallback<HTMLButtonElement>
 }
 

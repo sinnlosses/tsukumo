@@ -1,9 +1,8 @@
 // 帯の右端の歯車と、押すと開く設定のポップオーバー。
 //
-// 同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置く（どちらを出すかは CSS の `@media` が決める）。
-// 開閉の状態は1つの hook が持つので、どちらから押しても同じ面が開く。
+// 歯車を置くのは広い画面の帯だけ（狭い画面では CSS の `@media` が帯から消す）。
+// 中身（`ScreenNavSettingsBody`）は、狭い画面では引き出しの設定の面にも置く。
 // id は `useId()` でこの器ごとに振る（`aria-controls` と `<label for>` が指す先が重ならないようにする）。
-// Esc の戻り先として歯車の DOM を預ける口（`settings.toggleRef`）も、2箇所ぶんを集めるコールバック ref。
 
 import clsx from "clsx"
 import { Settings } from "lucide-react"
@@ -48,7 +47,6 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
   // `settings.toggleRef` の形のまま `ref` に渡すと、`react(refs)` が `settings` への参照ごとレンダー中の ref の読み書きとみなして落ちる。
   const { toggleRef } = settings
   const panelId = useId()
-  const fieldId = useId()
 
   // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
   return (
@@ -56,10 +54,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
       <button
         type="button"
         ref={toggleRef}
-        className={clsx(
-          styles["screen-nav-settings-toggle"],
-          shellStyles["screen-nav-settings-toggle"],
-        )}
+        className={styles["screen-nav-settings-toggle"]}
         aria-expanded={settings.open}
         aria-controls={panelId}
         aria-label={SETTINGS_LABEL}
@@ -71,210 +66,219 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
       {settings.open && (
         <div
           id={panelId}
-          className={clsx(
-            styles["screen-nav-settings-panel"],
-            shellStyles["screen-nav-settings-panel"],
-          )}
+          className={styles["screen-nav-settings-panel"]}
           role="region"
           aria-label={SETTINGS_LABEL}
         >
-          <Text
-            element="p"
-            size="label"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["screen-nav-settings-heading"]}
-          >
-            画面の色
-          </Text>
-          {settings.colors.map((color) => (
-            <HStack
-              element="div"
-              name={{ kind: "none" }}
-              ref={undefined}
-              gap="lg"
-              align="center"
-              justify="between"
-              wrap="nowrap"
-              className={styles["screen-nav-settings-row"]}
-              key={color.key}
-            >
-              <label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>
-              <input
-                id={`${fieldId}-${color.key}`}
-                type="color"
-                value={color.value}
-                onChange={(event) => {
-                  color.onChange(event.target.value)
-                }}
-              />
-            </HStack>
-          ))}
-          {settings.colorNotice.kind === "shown" && (
-            <Text
-              element="p"
-              size="label"
-              tone="state-warn"
-              weight="inherit"
-              className={styles["screen-nav-settings-notice"]}
-            >
-              {settings.colorNotice.text}
-            </Text>
-          )}
-          <Text
-            element="p"
-            size="label"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["screen-nav-settings-heading"]}
-          >
-            新しいセッションの既定
-          </Text>
-          <HStack
-            element="div"
-            name={{ kind: "none" }}
-            ref={undefined}
-            gap="lg"
-            align="center"
-            justify="between"
-            wrap="nowrap"
-            className={styles["screen-nav-settings-row"]}
-          >
-            <label htmlFor={`${fieldId}-default-model`}>モデル</label>
-            <Select
-              id={`${fieldId}-default-model`}
-              ariaLabel="新しいセッションの既定のモデル"
-              frameClassName={styles["screen-nav-settings-select-frame"]}
-              className={styles["screen-nav-settings-select"]}
-              value={settings.sessionDefault.model}
-              disabled={false}
-              title={undefined}
-              options={MODEL_OPTIONS}
-              onChange={settings.sessionDefault.onChangeModel}
-            />
-          </HStack>
-          <HStack
-            element="div"
-            name={{ kind: "none" }}
-            ref={undefined}
-            gap="lg"
-            align="center"
-            justify="between"
-            wrap="nowrap"
-            className={styles["screen-nav-settings-row"]}
-          >
-            <label htmlFor={`${fieldId}-default-effort`}>effort</label>
-            {settings.sessionDefault.effort.kind === "known" ? (
-              <Select
-                id={`${fieldId}-default-effort`}
-                ariaLabel="新しいセッションの既定の effort"
-                frameClassName={styles["screen-nav-settings-select-frame"]}
-                className={styles["screen-nav-settings-select"]}
-                value={settings.sessionDefault.effort.value}
-                disabled={false}
-                title={undefined}
-                options={settings.sessionDefault.effort.options.map((value) => ({
-                  value,
-                  label: effortLabel(value),
-                }))}
-                onChange={settings.sessionDefault.onChangeEffort}
-              />
-            ) : (
-              <Select
-                id={`${fieldId}-default-effort`}
-                ariaLabel="新しいセッションの既定の effort"
-                frameClassName={styles["screen-nav-settings-select-frame"]}
-                className={styles["screen-nav-settings-select"]}
-                value={EFFORT_PLACEHOLDER_VALUE}
-                disabled={true}
-                title={settings.sessionDefault.effort.reason}
-                options={[{ value: EFFORT_PLACEHOLDER_VALUE, label: "—" }]}
-                onChange={() => {}}
-              />
-            )}
-          </HStack>
-          <HStack
-            element="div"
-            name={{ kind: "none" }}
-            ref={undefined}
-            gap="lg"
-            align="center"
-            justify="between"
-            wrap="nowrap"
-            className={styles["screen-nav-settings-row"]}
-          >
-            <label htmlFor={`${fieldId}-default-permission-mode`}>許可モード</label>
-            <Select
-              id={`${fieldId}-default-permission-mode`}
-              ariaLabel="新しいセッションの既定の許可モード"
-              frameClassName={styles["screen-nav-settings-select-frame"]}
-              className={styles["screen-nav-settings-select"]}
-              value={settings.sessionDefault.permissionMode}
-              disabled={false}
-              title={undefined}
-              options={PERMISSION_MODE_OPTIONS}
-              onChange={settings.sessionDefault.onChangePermissionMode}
-            />
-          </HStack>
-          <Text
-            element="p"
-            size="label"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["screen-nav-settings-heading"]}
-          >
-            書き上げる演出の速さ
-          </Text>
-          <HStack
-            element="div"
-            name={{ kind: "none" }}
-            ref={undefined}
-            gap="lg"
-            align="center"
-            justify="between"
-            wrap="nowrap"
-            className={styles["screen-nav-settings-row"]}
-          >
-            <label htmlFor={`${fieldId}-reveal-speed`}>速さ</label>
-            <Select
-              id={`${fieldId}-reveal-speed`}
-              ariaLabel="書き上げる演出の速さ"
-              frameClassName={styles["screen-nav-settings-select-frame"]}
-              className={styles["screen-nav-settings-select"]}
-              value={settings.revealSpeed.value}
-              disabled={false}
-              title={undefined}
-              options={REVEAL_SPEED_OPTIONS}
-              onChange={settings.revealSpeed.onChange}
-            />
-          </HStack>
-          <HStack
-            element="div"
-            name={{ kind: "none" }}
-            ref={undefined}
-            gap="lg"
-            align="center"
-            justify="between"
-            wrap="nowrap"
-            className={styles["screen-nav-settings-row"]}
-          >
-            <Button
-              variant="link"
-              size="label"
-              pressed="none"
-              disabled={settings.resetDisabled}
-              ariaLabel={undefined}
-              disclosure={{ kind: "none" }}
-              ariaHasPopup={undefined}
-              title={undefined}
-              className={styles["screen-nav-settings-reset"]}
-              onClick={settings.onReset}
-            >
-              既定に戻す
-            </Button>
-          </HStack>
+          <ScreenNavSettingsBody settings={settings} />
         </div>
       )}
     </div>
+  )
+}
+
+/** 設定の中身（画面の色〜既定に戻す）。帯の歯車のポップオーバーと、狭い画面の引き出しの設定の面が同じものを置く。 */
+export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactElement {
+  const { settings } = props
+  const fieldId = useId()
+
+  return (
+    <>
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["screen-nav-settings-heading"]}
+      >
+        画面の色
+      </Text>
+      {settings.colors.map((color) => (
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
+          gap="lg"
+          align="center"
+          justify="between"
+          wrap="nowrap"
+          className={styles["screen-nav-settings-row"]}
+          key={color.key}
+        >
+          <label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>
+          <input
+            id={`${fieldId}-${color.key}`}
+            type="color"
+            value={color.value}
+            onChange={(event) => {
+              color.onChange(event.target.value)
+            }}
+          />
+        </HStack>
+      ))}
+      {settings.colorNotice.kind === "shown" && (
+        <Text
+          element="p"
+          size="label"
+          tone="state-warn"
+          weight="inherit"
+          className={styles["screen-nav-settings-notice"]}
+        >
+          {settings.colorNotice.text}
+        </Text>
+      )}
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["screen-nav-settings-heading"]}
+      >
+        新しいセッションの既定
+      </Text>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={styles["screen-nav-settings-row"]}
+      >
+        <label htmlFor={`${fieldId}-default-model`}>モデル</label>
+        <Select
+          id={`${fieldId}-default-model`}
+          ariaLabel="新しいセッションの既定のモデル"
+          frameClassName={styles["screen-nav-settings-select-frame"]}
+          className={styles["screen-nav-settings-select"]}
+          value={settings.sessionDefault.model}
+          disabled={false}
+          title={undefined}
+          options={MODEL_OPTIONS}
+          onChange={settings.sessionDefault.onChangeModel}
+        />
+      </HStack>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={styles["screen-nav-settings-row"]}
+      >
+        <label htmlFor={`${fieldId}-default-effort`}>effort</label>
+        {settings.sessionDefault.effort.kind === "known" ? (
+          <Select
+            id={`${fieldId}-default-effort`}
+            ariaLabel="新しいセッションの既定の effort"
+            frameClassName={styles["screen-nav-settings-select-frame"]}
+            className={styles["screen-nav-settings-select"]}
+            value={settings.sessionDefault.effort.value}
+            disabled={false}
+            title={undefined}
+            options={settings.sessionDefault.effort.options.map((value) => ({
+              value,
+              label: effortLabel(value),
+            }))}
+            onChange={settings.sessionDefault.onChangeEffort}
+          />
+        ) : (
+          <Select
+            id={`${fieldId}-default-effort`}
+            ariaLabel="新しいセッションの既定の effort"
+            frameClassName={styles["screen-nav-settings-select-frame"]}
+            className={styles["screen-nav-settings-select"]}
+            value={EFFORT_PLACEHOLDER_VALUE}
+            disabled={true}
+            title={settings.sessionDefault.effort.reason}
+            options={[{ value: EFFORT_PLACEHOLDER_VALUE, label: "—" }]}
+            onChange={() => {}}
+          />
+        )}
+      </HStack>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={styles["screen-nav-settings-row"]}
+      >
+        <label htmlFor={`${fieldId}-default-permission-mode`}>許可モード</label>
+        <Select
+          id={`${fieldId}-default-permission-mode`}
+          ariaLabel="新しいセッションの既定の許可モード"
+          frameClassName={styles["screen-nav-settings-select-frame"]}
+          className={styles["screen-nav-settings-select"]}
+          value={settings.sessionDefault.permissionMode}
+          disabled={false}
+          title={undefined}
+          options={PERMISSION_MODE_OPTIONS}
+          onChange={settings.sessionDefault.onChangePermissionMode}
+        />
+      </HStack>
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["screen-nav-settings-heading"]}
+      >
+        書き上げる演出の速さ
+      </Text>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={styles["screen-nav-settings-row"]}
+      >
+        <label htmlFor={`${fieldId}-reveal-speed`}>速さ</label>
+        <Select
+          id={`${fieldId}-reveal-speed`}
+          ariaLabel="書き上げる演出の速さ"
+          frameClassName={styles["screen-nav-settings-select-frame"]}
+          className={styles["screen-nav-settings-select"]}
+          value={settings.revealSpeed.value}
+          disabled={false}
+          title={undefined}
+          options={REVEAL_SPEED_OPTIONS}
+          onChange={settings.revealSpeed.onChange}
+        />
+      </HStack>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={styles["screen-nav-settings-row"]}
+      >
+        <Button
+          variant="link"
+          size="label"
+          pressed="none"
+          disabled={settings.resetDisabled}
+          ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["screen-nav-settings-reset"]}
+          onClick={settings.onReset}
+        >
+          既定に戻す
+        </Button>
+      </HStack>
+    </>
   )
 }

@@ -8,12 +8,14 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
+import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
 import type { SessionChoice } from "../../../../../src/shared/session/session-choice.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
 import { setPageUrl } from "../../../../dom-environment.ts"
+import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { createTestQueryClient } from "../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession, type SentCommand } from "../../../session-store.ts"
@@ -22,6 +24,7 @@ let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
+  useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   fetchStub?.restore()
   fetchStub = undefined
   setPageUrl("http://127.0.0.1/")
@@ -65,7 +68,7 @@ function renderNav(state: Partial<SessionState>, spy: CommandSpy = () => {}): vo
   const client = createTestQueryClient()
   render(
     <QueryClientProvider client={client}>
-      <ScreenNav />
+      <ScreenNav drawer={EMPTY_NAV_DRAWER_SLOTS} />
     </QueryClientProvider>,
   )
 }
@@ -114,18 +117,16 @@ describe("セッションの札と切り替え画面", () => {
     expect(await screen.findByText(/架空の締めのセリフ/u)).toBeDefined()
   })
 
-  it("「≡」の面の先頭の札からも、同じ切り替え画面が開く", () => {
+  // 切り替え画面は引き出しの上に重なって開く（引き出しは閉じない）。
+  it("引き出しの名乗りの行の短縮IDからも、同じ切り替え画面が開く", () => {
     renderNav({})
-    fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
-    const tags = screen.getAllByRole("button", { name: /セッション FA。/u })
-    const menuTag = tags.at(-1)
-    if (menuTag === undefined || tags.length < 2) {
-      throw new Error("「≡」の面の札が無い")
-    }
+    fireEvent.click(screen.getByRole("button", { name: "やり取りとタスクを開く" }))
+    const drawer = screen.getByRole("dialog", { name: "引き出し" })
 
-    fireEvent.click(menuTag)
+    fireEvent.click(within(drawer).getByRole("button", { name: /セッション FA。/u }))
 
     expect(switcherOpen()).toBe(true)
+    expect(useNavDrawer.getState().open).toBe(true)
   })
 
   it("一覧は今日・昨日・それより前に分かれ、いまの行に「いま」が付く", () => {

@@ -1,4 +1,4 @@
-// 狭い画面（760px 以下）の頭。1行目に顔・状態の語と経過・題・「≡」、2行目に段の点・n/N・「手順 n」。
+// 狭い画面（760px 以下）の頭。1行目に顔・状態の語と経過・題・≡、2行目に段の点・n/N・「手順 n」。
 // 広い画面では CSS で消える（`phone-head.module.css`）ので、ここは幅を測らない。
 //
 // 「手順 n」は「いまの作業」の開閉をそのまま使い、開いたら依頼の手順の一覧を頭の下に重ねる。
@@ -15,8 +15,8 @@ import styles from "./phone-head.module.css"
 export type PhoneHeadProps = {
   readonly head: Head
   readonly work: CurrentWork
-  /** 1行目の右端に置く「≡」。 */
-  readonly menu: ReactNode
+  /** 1行目の右端に置く、引き出しを開く ≡。 */
+  readonly drawerToggle: ReactNode
 }
 
 const BACK_LABEL = "‹ 会話へ"
@@ -61,7 +61,7 @@ export function PhoneHead(props: PhoneHeadProps): ReactElement {
           )}
           <div className={styles["phone-head-title"]}>{head.title}</div>
         </div>
-        {props.menu}
+        {props.drawerToggle}
       </div>
       {head.progress.kind !== "none" && (
         <PhoneHeadProgressLine progress={head.progress} work={work} listId={listId} />

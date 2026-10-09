@@ -190,19 +190,11 @@ const SIDEBAR_TAB_SELECTOR = '[role="tab"]:has-text("サイドバー")'
 const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
 
 /**
- * 帯の「いまの作業」の外枠（`data-work-state` を持つ div）の中の押す口。広い画面の帯と
- * 狭い画面の「≡」の面の両方に同じ部品が置かれる（`CurrentWorkPill`）ので、
- * 見えているほうだけを `:visible` で絞る。狭い画面では先に {@link MENU_TOGGLE_SELECTOR} を
- * 押さないとこちらは見えない（{@link applyPreparation} が当たらなかった手を飛ばすので、
- * 広い画面ではこの前の「≡」を押す手が黙って空振りする）。
+ * 帯の「いまの作業」の外枠（`data-work-state` を持つ div）の中の押す口（`CurrentWorkPill`）。
+ * 見えているものだけを `:visible` で絞る。狭い画面には帯の札が無いので、この手は空振りする
+ * （{@link applyPreparation} が当たらなかった手を飛ばす）。
  */
 const WORK_TOGGLE_SELECTOR = "[data-work-state] button[aria-controls]:visible"
-
-/**
- * 狭い画面だけの「≡」（`ScreenNavMenu`）。押すと面の中にもう1つ「いまの作業」の札が
- * 現れる。広い画面では常に `display: none` なので、押す手は空振りしてよい。
- */
-const MENU_TOGGLE_SELECTOR = 'button[aria-label="メニュー"]'
 
 /**
  * 書き終わりの知らせ（`DiaryNotice`）の「日記帳で開く」。成果の画面（`#achievement`）
@@ -570,8 +562,7 @@ const CATALOG: readonly CatalogEntry[] = [
     settle: TAIL_SETTLE,
   },
   // 帯の「いまの作業」の3状態（`docs/architecture/testing.md`「手で確かめること」）。どれも
-  // `MENU_TOGGLE_SELECTOR` → `WORK_TOGGLE_SELECTOR` の順で押して一覧を開く
-  // （広い画面では「≡」が無いので前者は空振りしてよい）。
+  // `WORK_TOGGLE_SELECTOR` を押して一覧を開く。
   {
     name: "current-work-running",
     // 自分の `request` を持つ場面（`test/fixture/fake-session.json`）なので、名指しで
@@ -580,10 +571,7 @@ const CATALOG: readonly CatalogEntry[] = [
     label: "帯の「いまの作業」（実行中）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
-    prepare: [
-      { kind: "click", selector: MENU_TOGGLE_SELECTOR },
-      { kind: "click", selector: WORK_TOGGLE_SELECTOR },
-    ],
+    prepare: [{ kind: "click", selector: WORK_TOGGLE_SELECTOR }],
     skipReveal: false,
     settle: TAIL_SETTLE,
   },
@@ -598,10 +586,7 @@ const CATALOG: readonly CatalogEntry[] = [
     label: "帯の「いまの作業」（失敗した手順）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
-    prepare: [
-      { kind: "click", selector: MENU_TOGGLE_SELECTOR },
-      { kind: "click", selector: WORK_TOGGLE_SELECTOR },
-    ],
+    prepare: [{ kind: "click", selector: WORK_TOGGLE_SELECTOR }],
     skipReveal: false,
     settle: TAIL_SETTLE,
   },
@@ -611,10 +596,7 @@ const CATALOG: readonly CatalogEntry[] = [
     label: "帯の「いまの作業」（背景のタスク）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
-    prepare: [
-      { kind: "click", selector: MENU_TOGGLE_SELECTOR },
-      { kind: "click", selector: WORK_TOGGLE_SELECTOR },
-    ],
+    prepare: [{ kind: "click", selector: WORK_TOGGLE_SELECTOR }],
     skipReveal: false,
     settle: TAIL_SETTLE,
   },
@@ -625,10 +607,7 @@ const CATALOG: readonly CatalogEntry[] = [
     label: "いまの作業の段取り（作業中）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
-    prepare: [
-      { kind: "click", selector: MENU_TOGGLE_SELECTOR },
-      { kind: "click", selector: WORK_TOGGLE_SELECTOR },
-    ],
+    prepare: [{ kind: "click", selector: WORK_TOGGLE_SELECTOR }],
     skipReveal: false,
     settle: TAIL_SETTLE,
   },

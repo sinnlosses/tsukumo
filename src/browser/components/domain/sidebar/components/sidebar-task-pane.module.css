@@ -1,0 +1,10 @@
+/* 狭い画面の引き出しの「タスク」「話題」のタブの中身。
+   タブの中身の高さを全部取り、サイドバーと同じく区画の中（タスク一覧・話題と覚えていること）が転がる。
+   区画の見出しの帯が負の余白で左右の縁まで伸びる基準（`--region-padding`）を、サイドバーの領域の外なのでここで決める。 */
+.sidebar-task-pane {
+  --region-padding: 0px;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}

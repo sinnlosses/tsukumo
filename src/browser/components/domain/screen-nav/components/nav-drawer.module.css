@@ -1,0 +1,195 @@
+/* 狭い画面（760px 以下）の頭の ≡ と、押すと右から出る引き出し。
+   値は見本 `docs/history/mockup/phone-layout-2026-10-09/PHONE-1.dc.html` の2枚目の inline style を `theme.css` のトークンに写したもの。
+   覆いは `<Dialog backdrop="veil">` が持つ。
+   名乗りの行の中の顔と選び口の大きさ・位置は `screen-nav.module.css` の @media が持つ。 */
+
+@media (max-width: 760px) {
+  .nav-drawer-toggle {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .nav-drawer-toggle:hover {
+    border-color: var(--accent);
+  }
+
+  /* 面。右端に付けて上から下まで。画面が 390 より狭ければ左に 60 の覆いを残して縮む。 */
+  .nav-drawer {
+    position: fixed;
+    inset: 0 0 0 auto;
+    box-sizing: border-box;
+    width: min(330px, 100vw - 60px);
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: calc(6px + env(safe-area-inset-top)) 0 0;
+    overflow: hidden;
+    border: none;
+    border-left: 1px solid var(--rule);
+    background: var(--surface);
+    box-shadow: -20px 0 50px rgb(0 0 0 / 0.5);
+    color: var(--ink);
+  }
+  .nav-drawer-frame {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+  }
+  /* 名乗りの行。選び口を行の真下に重ねる基準。 */
+  .nav-drawer-identity {
+    position: relative;
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 0 16px;
+  }
+  /* 動き方の段（仕事 / 雑談のトグルとモデル・effort・許可モード）。 */
+  .nav-drawer-run-setting {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+  }
+  .nav-drawer-tabs {
+    display: flex;
+    flex: none;
+    gap: 4px;
+    margin: 0 14px;
+    padding: 3px;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    background: var(--ground);
+  }
+  .nav-drawer-tab {
+    flex: 1 1 0;
+    height: 34px;
+    padding: 0;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--ink-quiet);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+  }
+  .nav-drawer-tab[aria-selected="true"] {
+    background: var(--surface-raised);
+    color: var(--ink);
+    font-weight: 600;
+  }
+  /* タブの中身と設定の面。ここだけが転がる（タスク一覧のように中身が自分で転がるものは、高さを全部渡す）。 */
+  .nav-drawer-panel {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  /* 設定の面。頭の「‹ 戻る」、キャラ・トークン・成果の口（高さ 44 の行）、設定の中身の順。 */
+  .nav-drawer-back {
+    display: flex;
+    flex: none;
+    align-self: flex-start;
+    align-items: center;
+    height: 36px;
+    margin: 0 8px;
+    padding: 0 8px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-quiet);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .nav-drawer-back:hover {
+    color: var(--ink);
+  }
+  .nav-drawer-gates {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 8px 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav-drawer-gate {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 12px;
+    color: var(--ink);
+    font-size: 14px;
+    text-decoration: none;
+  }
+  .nav-drawer-gate:hover {
+    background: var(--surface-raised);
+  }
+  .nav-drawer-gate[aria-current="page"] {
+    background: var(--surface-accent);
+  }
+  .nav-drawer-settings-body {
+    padding: 8px 16px 12px;
+    font-size: var(--font-secondary);
+  }
+  .nav-drawer-settings[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--surface-raised);
+    color: var(--ink);
+  }
+  .nav-drawer-foot {
+    display: flex;
+    flex: none;
+    gap: 8px;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--rule);
+  }
+  .nav-drawer-new-session,
+  .nav-drawer-settings {
+    height: 44px;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+  }
+  .nav-drawer-new-session {
+    flex: 1 1 auto;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+  }
+  .nav-drawer-new-session[aria-disabled="true"] {
+    color: var(--ink-quiet);
+    cursor: not-allowed;
+  }
+  .nav-drawer-settings {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    padding: 0;
+    color: var(--ink-quiet);
+  }
+  .nav-drawer-new-session:not([aria-disabled="true"]):hover,
+  .nav-drawer-settings:hover {
+    border-color: var(--accent);
+  }
+}

@@ -1,6 +1,6 @@
 /* 帯の左端のキャラクターの顔と、押すと開く選び口。
    値は見本 `docs/history/mockup/session-switch-2026-09-27/HD-4-IdTag.dc.html` の inline style を `theme.css` のトークンに写したもの。
-   「≡」の面の中での並べ直しは `screen-nav.module.css` の @media が持つ。 */
+   引き出しの中での大きさと位置は `screen-nav.module.css` の @media が持つ。 */
 
 /* 選び口（.screen-nav-character-picker-panel）を顔の真下に重ねる基準。 */
 .screen-nav-character-picker {

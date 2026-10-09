@@ -6,7 +6,7 @@ import { openTaskListRoomWithRunningTask } from "./task-room.ts"
 
 // 会話の画面の段（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 761〜1100px ではサイドバーを柱に畳み、柱の口で重ねて開く。それより広い窓と狭い窓には柱を出さない。
-// 760px 以下は頭・本文・顔と吹き出し・入力欄の縦の1列になる。
+// 760px 以下は頭・本文・顔と吹き出し・入力欄の縦の1列になり、帯とサイドバーの中身は頭の ≡ から右に出る引き出しへ移る。
 
 const run = useScenarioRun()
 
@@ -23,9 +23,9 @@ function sidebar(page: Page): Locator {
   return page.locator('[data-region="sidebar"]')
 }
 
-/** 狭い画面の頭の右上の「≡」。 */
+/** 狭い画面の頭の右上の ≡。 */
 function menuToggle(page: Page): Locator {
-  return page.getByRole("button", { name: "メニュー", exact: true })
+  return page.getByRole("button", { name: "やり取りとタスクを開く", exact: true })
 }
 
 type Box = { readonly top: number; readonly bottom: number }
@@ -43,6 +43,11 @@ async function rightEdge(locator: Locator): Promise<number> {
 
 async function leftEdge(locator: Locator): Promise<number> {
   return locator.evaluate((element) => element.getBoundingClientRect().left)
+}
+
+/** ページの横の幅（窓より広ければ横に転がる）。 */
+async function scrollWidth(page: Page): Promise<number> {
+  return page.evaluate(() => document.documentElement.scrollWidth)
 }
 
 describe("会話の画面の段", () => {
@@ -166,5 +171,69 @@ describe("会話の画面の段", () => {
     await page.setViewportSize(VIEWPORTS["tier-edge-rail"])
     await railToggle(page).waitFor()
     expect(await menuToggle(page).isVisible()).toBe(false)
+  })
+
+  it("390x844 で ≡ を押すと右から幅 330 の引き出しが出て、タブと歯車の面を切り替えても横に転がらず、Esc・覆い・やり取りの行で閉じる", async () => {
+    const room = await run.open({
+      scenario: "conversation-tier-drawer",
+      scene: "phone-layout",
+      viewport: "phone",
+      domRoots: ["screen-nav"],
+    })
+    const { page } = room
+    const toggle = menuToggle(page)
+    const drawer = page.getByRole("dialog", { name: "引き出し" })
+
+    await page
+      .locator('nav[aria-label="画面"]')
+      .getByRole("button", { name: /^手順/u })
+      .waitFor()
+    await toggle.click()
+    await drawer.waitFor()
+
+    const drawerBox = await drawer.evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      return { right: rect.right, width: rect.width }
+    })
+    expect(drawerBox).toEqual({ right: 390, width: 330 })
+    const tops = await Promise.all(
+      [
+        drawer.getByRole("group", { name: "モード" }),
+        drawer.getByRole("tablist"),
+        drawer.getByRole("tabpanel"),
+        drawer.getByRole("button", { name: "＋ 新しいやり取り" }),
+      ].map(async (locator) => (await box(locator)).top),
+    )
+    expect(tops).toEqual(tops.toSorted((a, b) => a - b))
+    expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
+
+    for (const tab of ["タスク", "使用量", "やり取り"]) {
+      await drawer.getByRole("tab", { name: tab }).click()
+      expect(await drawer.getByRole("tab", { name: tab }).getAttribute("aria-selected")).toBe(
+        "true",
+      )
+      expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
+    }
+    await drawer.getByRole("button", { name: "設定", exact: true }).click()
+    await drawer.getByRole("region", { name: "設定" }).waitFor()
+    expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
+    await drawer.getByRole("button", { name: "‹ 戻る" }).click()
+    await drawer.getByRole("tablist").waitFor()
+    await room.settleAndMatch(PHONE_ELAPSED_MS)
+
+    await page.keyboard.press("Escape")
+    await drawer.waitFor({ state: "hidden" })
+    expect(await toggle.evaluate((element) => element === document.activeElement)).toBe(true)
+
+    await toggle.click()
+    await drawer.waitFor()
+    await page.mouse.click(20, 422)
+    await drawer.waitFor({ state: "hidden" })
+    expect(await toggle.getAttribute("aria-expanded")).toBe("false")
+
+    await toggle.click()
+    await drawer.getByRole("button", { name: /架空のタスクを進めて/u }).click()
+    await drawer.waitFor({ state: "hidden" })
+    expect(await page.locator('[data-region="main"]').isVisible()).toBe(true)
   })
 })

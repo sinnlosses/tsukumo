@@ -7,7 +7,7 @@
    部品ごとの見た目は `screen-nav-*.module.css` に分かれている。
    ここに残すのは、どの部品も単独では持てない帯全体の組み立てと、狭い画面（760px 以下）の `@media` 一式。
 
-   `@media` の中で他の部品の class を指す規則（`.screen-nav > .screen-nav-chat-mode` のように広い画面で隠す・`.screen-nav-panel .screen-nav-model-permission` のように「≡」の面の中で並べ直す）もここに置く。
+   `@media` の中で他の部品の class を指す規則（`.screen-nav > .screen-nav-chat-mode` のように広い画面で隠す・`.nav-drawer-identity .screen-nav-face` のように引き出しの中で大きさを変える）もここに置く。
    CSS Modules は class 名をファイルごとにハッシュ化するので、ここで参照する class 名はこのファイル自身のハッシュになり、部品側のファイルのものとは一致しない。
    そのため各部品の tsx がこのファイルも import し、このファイルのハッシュを自分の要素にも重ねて渡す。 */
 .screen-nav {
@@ -70,7 +70,7 @@
     flex: none;
     margin: 0;
   }
-  /* 口・トグル・仕切り・ドロップダウン・左端の名乗りは「≡」の中へ、いまの作業の札は頭へ移る。 */
+  /* 口・トグル・仕切り・ドロップダウン・左端の名乗りは引き出しへ、いまの作業の札は頭へ移る。 */
   .screen-nav-gates,
   .screen-nav > .screen-nav-identity,
   .screen-nav > .screen-nav-divider,
@@ -80,79 +80,23 @@
   .screen-nav > .screen-nav-settings {
     display: none;
   }
-  /* 面の中の顔・部屋の名前・口は、帯の上の見た目を使わず、面に合わせた小さな形のまま出す。 */
-  .screen-nav-panel .screen-nav-face {
-    width: 26px;
-    height: 26px;
+  /* 引き出しの名乗りの行の顔は 28px で、帯の上の輪は掛けない。 */
+  .nav-drawer-identity .screen-nav-face {
+    width: 28px;
+    height: 28px;
     box-shadow: none;
   }
-  .screen-nav-panel .screen-nav-session-tag {
-    font-size: var(--font-secondary);
-  }
-  /* キャラクターの選び口は、面の中では顔の真下ではなく名乗りの行の下に、面の幅いっぱいで重ねる。
+  /* キャラクターの選び口は、顔の真下ではなく名乗りの行の下に、引き出しの幅いっぱい（左右 16 を残す）で重ねる。
      基準を名乗りの行へ移すため、顔の入れ物は静的に置く。 */
-  .screen-nav-panel .screen-nav-character-picker {
+  .nav-drawer-identity .screen-nav-character-picker {
     position: static;
   }
-  .screen-nav-panel .screen-nav-character-picker-panel {
+  .nav-drawer-identity .screen-nav-character-picker-panel {
     top: calc(100% + 0.3rem);
-    right: 0;
-    left: 0;
+    right: 16px;
+    left: 16px;
     width: auto;
     min-width: 0;
     max-width: none;
-  }
-  .screen-nav-panel .screen-nav-gate {
-    display: block;
-    margin-bottom: 0;
-    padding: 0.2rem 0.7rem;
-    border: 1px solid var(--rule);
-    border-radius: 999px;
-    background: var(--surface);
-    font-size: var(--font-secondary);
-    text-align: center;
-  }
-  .screen-nav-panel .screen-nav-gate:hover {
-    border-color: var(--accent);
-    color: var(--ink-quiet);
-  }
-  .screen-nav-panel .screen-nav-gate.is-active {
-    border-color: var(--accent);
-    background: var(--surface-accent);
-    color: var(--ink);
-    font-weight: normal;
-  }
-  /* 落ちてくる面ではドロップダウンを縦に積む（横に並べる幅が無い）。 */
-  .screen-nav-panel .screen-nav-model-permission {
-    flex-direction: column;
-    margin-left: 0;
-  }
-  /* 設定の歯車も面いっぱいの幅にし、押すと重ねずにその場で下に広がる。
-     歯車の丸のままでは面の幅が余るので、ここだけ角丸の長方形にして横に伸ばす。 */
-  .screen-nav-panel .screen-nav-settings {
-    width: 100%;
-    flex-direction: column;
-  }
-  .screen-nav-panel .screen-nav-settings-toggle {
-    width: 100%;
-    height: auto;
-    padding: 0.2rem 0;
-    border: 1px solid var(--rule);
-    border-radius: 0.6rem;
-    background: var(--surface);
-  }
-  .screen-nav-panel .screen-nav-settings-toggle:hover,
-  .screen-nav-panel .screen-nav-settings-toggle[aria-expanded="true"] {
-    border-color: var(--accent);
-  }
-  /* `box-sizing` が既定（content-box）のままだと、`width: 100%` に padding と枠のぶん（約28px）が足されて面からはみ出し、「既定に戻す」が画面の外に切れる（実測）。
-     ここだけ border-box にして面の幅に収める。 */
-  .screen-nav-panel .screen-nav-settings-panel {
-    position: static;
-    box-sizing: border-box;
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-    margin-top: 0.3rem;
   }
 }

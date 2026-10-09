@@ -6,6 +6,10 @@
 .dialog-backdrop-deep::backdrop {
   background: color-mix(in srgb, var(--ground) 88%, transparent);
 }
+/* 狭い画面の引き出しの覆い。 */
+.dialog-backdrop-veil::backdrop {
+  background: rgb(8 8 12 / 0.6);
+}
 .dialog-backdrop-clear::backdrop {
   background: transparent;
 }

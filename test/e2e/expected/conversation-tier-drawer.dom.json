@@ -1,0 +1,435 @@
+{
+  "screen-nav": [
+    {
+      "tag": "nav",
+      "attributes": {
+        "aria-label": "画面",
+        "data-screen": "conversation"
+      },
+      "children": [
+        {
+          "tag": "img",
+          "attributes": {
+            "alt": "つくもの精霊",
+            "src": "/character/tsukumo-spirit/face.svg"
+          }
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "data-work-state": "running",
+            "data-chat-idle": "false"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              }
+            },
+            "作業中",
+            "0:05"
+          ]
+        },
+        "受け入れて架空の置き場を張り替える",
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-label": "やり取りとタスクを開く",
+            "aria-expanded": "true",
+            "aria-haspopup": "dialog",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "svg"
+            }
+          ]
+        },
+        {
+          "tag": "ol",
+          "attributes": {
+            "aria-label": "段取り"
+          },
+          "children": [
+            {
+              "tag": "li",
+              "attributes": {
+                "aria-label": "1. 計画を立て直す（済）"
+              },
+              "children": [
+                "✓"
+              ]
+            },
+            {
+              "tag": "li",
+              "attributes": {
+                "aria-label": "2. 取り込んで渡す（済）"
+              },
+              "children": [
+                "✓"
+              ]
+            },
+            {
+              "tag": "li",
+              "attributes": {
+                "aria-label": "3. 文書を合わせる（済）"
+              },
+              "children": [
+                "✓"
+              ]
+            },
+            {
+              "tag": "li",
+              "attributes": {
+                "aria-label": "4. レビューと検証（済）"
+              },
+              "children": [
+                "✓"
+              ]
+            },
+            {
+              "tag": "li",
+              "attributes": {
+                "aria-label": "5. 受け入れて架空の置き場を張り替える（今の段）"
+              }
+            }
+          ]
+        },
+        "5/5",
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-expanded": "false",
+            "type": "button"
+          },
+          "children": [
+            "手順",
+            "1",
+            {
+              "tag": "svg"
+            }
+          ]
+        },
+        {
+          "tag": "dialog",
+          "attributes": {
+            "aria-label": "引き出し",
+            "open": true
+          },
+          "children": [
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "キャラクターを選ぶ（いまは つくもの精霊）",
+                "aria-expanded": "false",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "img",
+                  "attributes": {
+                    "alt": "つくもの精霊",
+                    "src": "/character/tsukumo-spirit/face.svg"
+                  }
+                },
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "aria-hidden": "true"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            "<port>",
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-haspopup": "dialog",
+                "aria-expanded": "false",
+                "aria-label": "セッション FA。押すとセッションを切り替える画面を開く",
+                "type": "button"
+              },
+              "children": [
+                "FA"
+              ]
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "role": "group",
+                "aria-label": "モード"
+              },
+              "children": [
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-pressed": "true",
+                    "aria-disabled": "true",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    },
+                    "仕事"
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-pressed": "false",
+                    "aria-disabled": "true",
+                    "aria-label": "雑談",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "role": "group",
+                "aria-label": "実行の設定"
+              },
+              "children": [
+                {
+                  "tag": "select",
+                  "attributes": {
+                    "aria-label": "モデル Opus",
+                    "value": "opus"
+                  },
+                  "children": [
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "selectedcontent",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "O"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "aria-hidden": "true"
+                  }
+                },
+                {
+                  "tag": "select",
+                  "attributes": {
+                    "aria-label": "effort Medium",
+                    "value": "medium"
+                  },
+                  "children": [
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "selectedcontent",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "aria-hidden": "true"
+                  }
+                },
+                {
+                  "tag": "select",
+                  "attributes": {
+                    "aria-label": "許可モード 自動判定",
+                    "value": "auto"
+                  },
+                  "children": [
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "selectedcontent",
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "data-fill": "dashed"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "svg"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "role": "tablist"
+              },
+              "children": [
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "role": "tab",
+                    "aria-selected": "true",
+                    "type": "button"
+                  },
+                  "children": [
+                    "やり取り"
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "role": "tab",
+                    "aria-selected": "false",
+                    "type": "button"
+                  },
+                  "children": [
+                    "タスク"
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "role": "tab",
+                    "aria-selected": "false",
+                    "type": "button"
+                  },
+                  "children": [
+                    "使用量"
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "role": "tabpanel"
+              },
+              "children": [
+                {
+                  "tag": "ol",
+                  "children": [
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "data-result": "working",
+                            "aria-current": "true",
+                            "aria-label": "作業中: 架空のタスクを進めて、設定の置き場を張り替えたい（架空の依頼）",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            },
+                            "架空のタスクを進めて、設定の置き場を張り替えたい（架空の依頼）",
+                            "作業中 0:05"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "true",
+                "type": "button"
+              },
+              "children": [
+                "＋ 新しいやり取り"
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-label": "設定",
+                "aria-pressed": "false",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -35,9 +35,9 @@
         {
           "tag": "button",
           "attributes": {
-            "aria-disabled": "false",
-            "aria-label": "メニュー",
+            "aria-label": "やり取りとタスクを開く",
             "aria-expanded": "false",
+            "aria-haspopup": "dialog",
             "type": "button"
           },
           "children": [

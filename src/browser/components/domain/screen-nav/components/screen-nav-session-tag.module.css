@@ -1,6 +1,6 @@
 /* 帯の左端の部屋の名前とセッションの短縮IDの札。
    値は見本 `docs/history/mockup/session-switch-2026-09-27/HD-4-IdTag.dc.html` の inline style を `theme.css` のトークンに写したもの。
-   「≡」の面の中の見た目は `screen-nav.module.css` の @media が持つ。 */
+   引き出しの中の見た目は末尾の `.is-drawer` が持つ。 */
 
 /* 部屋の名前・「-」・短縮IDのボタンを字の並びで揃える。
    ホバーの一行（.screen-nav-session-tag-tooltip）を札の真下に重ねる基準も兼ねる。 */
@@ -86,4 +86,30 @@
 }
 .screen-nav-session-tag-hint {
   color: color-mix(in srgb, var(--ground) 55%, var(--ink));
+}
+
+/* 引き出しの名乗りの行（狭い画面）。部屋の名前は明朝 16px の太字、短縮IDは等幅 12px の差し色。 */
+.is-drawer {
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.screen-nav-session-tag-drawer-room {
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.is-drawer .screen-nav-session-tag-button {
+  padding: 4px 6px;
+}
+.is-drawer .screen-nav-session-tag-id {
+  border-bottom: none;
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: normal;
 }

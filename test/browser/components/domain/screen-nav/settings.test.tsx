@@ -1,12 +1,14 @@
-import { cleanup, fireEvent, render } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
+import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
 import { typedElement } from "../../../../typed-element.ts"
+import { EMPTY_NAV_DRAWER_SLOTS } from "../../../nav-drawer-slot.tsx"
 import { queryClientWrapper } from "../../../query-client.tsx"
 import { putSession, type CommandSpy } from "../../../session-store.ts"
 
@@ -37,6 +39,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   window.location.hash = ""
   localStorage.removeItem(COLOR_STORAGE_KEY)
   localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
@@ -51,10 +54,10 @@ afterEach(() => {
 
 function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = () => {}): void {
   putSession({ ...INITIAL_SESSION_STATE, ...state }, spy)
-  render(<ScreenNav />, { wrapper: queryClientWrapper() })
+  render(<ScreenNav drawer={EMPTY_NAV_DRAWER_SLOTS} />, { wrapper: queryClientWrapper() })
 }
 
-/** 帯（広い画面）にある歯車。狭い画面の「≡」の面の中のものは数えない。 */
+/** 帯（広い画面）にある歯車。 */
 function gear(): HTMLElement {
   return typedElement(
     document.querySelector(".screen-nav > .screen-nav-settings .screen-nav-settings-toggle"),
@@ -133,30 +136,6 @@ describe("設定の歯車（帯の右端）", () => {
     fireEvent.keyDown(document, { key: "Escape" })
 
     expect(document.activeElement).toBe(gear())
-  })
-
-  // 狭い画面では歯車そのものが「≡」の面の中にあり、Esc は面ごと閉じるので戻り先が消える。
-  // 帯の側の歯車（狭い画面では `display: none`）へフォーカスを飛ばさないことを守る。
-  it("「≡」の面の中の歯車でも Esc で閉じ、隠れている帯の側の歯車へは戻さない", () => {
-    renderScreenNav()
-    fireEvent.click(
-      typedElement(document.querySelector(".screen-nav-toggle"), HTMLElement, "「≡」"),
-    )
-
-    fireEvent.click(
-      typedElement(
-        document.querySelector(".screen-nav-panel .screen-nav-settings-toggle"),
-        HTMLElement,
-        "面の中の歯車",
-      ),
-    )
-    expect(panel()).not.toBeNull()
-
-    fireEvent.keyDown(document, { key: "Escape" })
-
-    expect(document.querySelector(".screen-nav-panel")).toBeNull()
-    expect(document.activeElement).not.toBe(gear())
-    expect(document.activeElement).toBe(document.body)
   })
 
   it("地・領域・字の色の3つ、新しいセッションの既定の3つ、演出の速さの1つを出す", () => {
@@ -317,6 +296,31 @@ describe("設定の歯車（新しいセッションの既定）", () => {
     fireEvent.click(gear())
 
     fireEvent.change(defaultSelect("モデル"), { target: { value: "sonnet" } })
+
+    expect(sent).toEqual([
+      {
+        procedure: "session.setSessionDefault",
+        model: "sonnet",
+        effort: "high",
+        permissionMode: "plan",
+      },
+    ])
+  })
+
+  // 狭い画面では帯の歯車が消え、同じ中身が引き出しの設定の面に出る。
+  it("引き出しの設定の面でモデルを選んでも、同じ session.setSessionDefault を送る", () => {
+    const sent: unknown[] = []
+    renderScreenNav(
+      { sessionDefault: { model: "opus", effort: "high", permissionMode: "plan" } },
+      (command) => sent.push(command),
+    )
+    fireEvent.click(screen.getByRole("button", { name: "やり取りとタスクを開く" }))
+    const drawer = screen.getByRole("dialog", { name: "引き出し" })
+    fireEvent.click(within(drawer).getByRole("button", { name: "設定" }))
+
+    fireEvent.change(within(drawer).getByLabelText("新しいセッションの既定のモデル"), {
+      target: { value: "sonnet" },
+    })
 
     expect(sent).toEqual([
       {

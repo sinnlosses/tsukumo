@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import { ScreenNav } from "../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { useInquiryJump } from "../../../../src/browser/stores/inquiry-jump.ts"
 import { readHashRoute } from "../../../../src/browser/stores/location-hash.ts"
+import { useNavDrawer } from "../../../../src/browser/stores/nav-drawer.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
 import type { StampedPendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
 import type { Question } from "../../../../src/shared/session-driver/question.ts"
@@ -21,11 +22,13 @@ import {
   workPlanRecord,
 } from "../../../fixture/session-record.ts"
 import { typedElement } from "../../../typed-element.ts"
+import { EMPTY_NAV_DRAWER_SLOTS } from "../../nav-drawer-slot.tsx"
 import { queryClientWrapper } from "../../query-client.tsx"
 import { putState, putSession } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
+  useNavDrawer.setState(useNavDrawer.getInitialState(), true)
   // 「お伺いへ」は会話の画面（`#`）へ hash を書き換える（`navigateTo`）ので、次のテストへ
   // 持ち越さない。
   window.location.hash = ""
@@ -64,7 +67,7 @@ function renderScreenNav(state: Partial<SessionState> = {}): void {
     window.location.hash = "#character"
   }
   putSession({ ...INITIAL_SESSION_STATE, ...state })
-  render(<ScreenNav />, { wrapper: queryClientWrapper() })
+  render(<ScreenNav drawer={EMPTY_NAV_DRAWER_SLOTS} />, { wrapper: queryClientWrapper() })
 }
 
 /** 帯（広い画面）にある「いまの作業」の札。 */
@@ -761,16 +764,19 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     expect(document.activeElement).toBe(toggle)
   })
 
-  // 狭い画面では一覧を頭の「手順 n」が開き、「≡」の面には札を置かない（同じ一覧が2つ開いて重ならない）。
+  // 狭い画面では一覧を頭の「手順 n」が開き、引き出しには札を置かない（同じ一覧が2つ開いて重ならない）。
   // 会話の画面には帯の札が無いので、Esc の戻り先は頭の「手順 n」の1つだけ。
-  it("会話の画面では頭の「手順 n」が一覧を開き、Esc でその口へフォーカスを戻す。「≡」の面には札が無い", () => {
+  it("会話の画面では頭の「手順 n」が一覧を開き、Esc でその口へフォーカスを戻す。引き出しには札が無い", () => {
     window.location.hash = "#conversation"
     renderScreenNav({ turn: { kind: "running", startedAt: 0 }, records: [requestRecord()] })
     const steps = screen.getByRole("button", { name: /^手順/u })
 
-    fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
-    expect(document.querySelector(".screen-nav-panel .current-work-toggle")).toBeNull()
-    fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
+    fireEvent.click(screen.getByRole("button", { name: "やり取りとタスクを開く" }))
+    const drawer = screen.getByRole("dialog", { name: "引き出し" })
+    expect(drawer.querySelector(".current-work-toggle")).toBeNull()
+    act(() => {
+      useNavDrawer.getState().close()
+    })
 
     fireEvent.click(steps)
     expect(document.querySelectorAll(".current-work-list")).toHaveLength(1)

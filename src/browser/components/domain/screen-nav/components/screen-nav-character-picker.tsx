@@ -1,6 +1,6 @@
 // 帯の左端のキャラクターの顔と、押すと開くキャラクターの選び口。
 //
-// 同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置くので、id は `useId()` でこの器ごとに振る（`aria-controls` が指す先が重ならない）。
+// 同じ部品を広い画面の帯と狭い画面の引き出しの両方に置くので、id は `useId()` でこの器ごとに振る（`aria-controls` が指す先が重ならない）。
 
 import clsx from "clsx"
 import { ChevronDown } from "lucide-react"

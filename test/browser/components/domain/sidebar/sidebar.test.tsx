@@ -1,7 +1,10 @@
 import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
+import { SidebarTaskPane } from "../../../../../src/browser/components/domain/sidebar/components/sidebar-task-pane.tsx"
+import { UsagePane } from "../../../../../src/browser/components/domain/sidebar/components/usage-pane.tsx"
 import { Sidebar } from "../../../../../src/browser/components/domain/sidebar/sidebar.tsx"
 import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
 import {
@@ -29,15 +32,15 @@ function stubContextUsageUnavailable(): void {
   fetchStub = stubRpcFetch(() => rpcError(500))
 }
 
-function renderSidebar(stateOverrides: Partial<SessionState>): void {
+/** `element` は既定でサイドバー全体。引き出しへ渡す部品だけを描くときはそれを渡す。 */
+function renderSidebar(
+  stateOverrides: Partial<SessionState>,
+  element: ReactElement = <Sidebar />,
+): void {
   stubContextUsageUnavailable()
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
   const client = createTestQueryClient()
-  render(
-    <QueryClientProvider client={client}>
-      <Sidebar />
-    </QueryClientProvider>,
-  )
+  render(<QueryClientProvider client={client}>{element}</QueryClientProvider>)
 }
 
 describe("Sidebar の下端の帯", () => {
@@ -159,5 +162,39 @@ describe("Sidebar（雑談中）", () => {
       "架空の三番目の話題",
     ])
     expect(screen.queryByText(/まだ話題が無い/u)).toBeNull()
+  })
+})
+
+// 狭い画面の引き出しのタブに入る中身（docs/architecture/screen-design.md「狭い画面（760px 以下）」）。
+describe("引き出しへ渡す中身", () => {
+  it("仕事中の「タスク」はタスク一覧の区画で、下端の帯は出さない", () => {
+    renderSidebar({}, <SidebarTaskPane />)
+
+    expect(screen.getByRole("region", { name: "タスク" })).toBeDefined()
+    expect(screen.queryByRole("button", { name: /^コンテキスト/ })).toBeNull()
+  })
+
+  it(".beads が無い起動先の仕事中は何も出さない", () => {
+    renderSidebar({ tasks: { kind: "no-beads" } }, <SidebarTaskPane />)
+
+    expect(screen.queryByRole("region", { name: "タスク" })).toBeNull()
+  })
+
+  it("雑談中の「話題」はプロフィールの札・最近の話題・覚えていることで、タスクの区画は出さない", () => {
+    renderSidebar({ ...CHAT_STATE, chatTopics: ["架空の話題"] }, <SidebarTaskPane />)
+
+    expect(screen.getByText("窓辺に棲む架空の精霊")).toBeDefined()
+    expect(screen.getByRole("list", { name: "最近の話題" })).toBeDefined()
+    expect(screen.getByText("まだ覚えていることが無い")).toBeDefined()
+    expect(screen.queryByRole("region", { name: "タスク" })).toBeNull()
+  })
+
+  it("「使用量」はコンテキストと利用枠の札を、押して開く面にせずそのまま並べる", () => {
+    renderSidebar({}, <UsagePane />)
+
+    const text = document.body.textContent ?? ""
+    expect(text).toContain("コンテキスト")
+    expect(text).toContain("利用枠")
+    expect(screen.queryByRole("region", { name: "使用量の詳しい面" })).toBeNull()
   })
 })

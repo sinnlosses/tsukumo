@@ -15,11 +15,9 @@ import {
   type ReactNode,
   type RefObject,
 } from "react"
-import { zip } from "remeda"
 
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
 import type { MainViewTurn } from "../../../../../../shared/session/main-view.ts"
-import { turnResultsOf } from "../../../../../../shared/session/turn-result.ts"
 import { currentPhaseOf, type WorkPhase } from "../../../../../../shared/session/work-plan.ts"
 import { useCurrentTurnSteps } from "../../../../../stores/current-turn-steps.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
@@ -40,8 +38,8 @@ import { Welcome } from "./components/welcome/welcome.tsx"
 import { WorkStrip } from "./components/work-strip/work-strip.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
-import { turnTitle } from "./domain/turn-title.ts"
 import { NO_SHOWN_KEY, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
+import { useReportOutlineTurns } from "./hooks/use-report-outline-turns.ts"
 import styles from "./main-view.module.css"
 import { RepositoryFileLinkProvider } from "./markdown/repository-link.tsx"
 
@@ -87,12 +85,7 @@ export function MainView(): ReactElement {
   }
 
   const cardTurn = view.kind !== "welcome" && view.card.kind === "turn" ? view.card : undefined
-  const outlineTurns = zip(turns, turnResultsOf(turns, moment)).map(([turn, result]) => ({
-    id: turn.id,
-    title: turnTitle(turn),
-    result,
-    asideCount: turn.asides.length,
-  }))
+  const outlineTurns = useReportOutlineTurns()
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>): void {
     const step = turnStepOf({
