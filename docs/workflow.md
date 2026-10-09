@@ -3,7 +3,7 @@
 **運用の正典は `~/.claude/skills/task-workflow/` の `WORKFLOW.md`**（複数のプロジェクトで
 共通。フィールド定義・`summary` の書き方・`difficulty` の基準・evidence の粒度・
 コミットメッセージ・指示メモ・アーカイブのトリガーと手順は、すべてそちらにある）。
-プロジェクト固有の値は `CLAUDE.md` の「## タスク運用」節が持つ（このリポジトリでは
+プロジェクト固有の値は `.tw/config.toml` が持つ（このリポジトリでは
 検証コマンド = `pnpm run check`、整形コマンド = `pnpm run format`、タスクの置き場 = Beads、
 トラッカー = GitHub の `sinnlosses/tsukumo` と Project 1）。
 
@@ -148,8 +148,8 @@ PreToolUse hook（`scripts/deny-e2e-run-limit.ts`）が拒否する（検証は�
 ファイルを指さない `vitest run --config vitest.e2e.config.ts` と、`--full` の無い `pnpm run check`・
 `node scripts/check.ts` のうち、変えたファイルから `check` が E2E を1件以上流すと
 選ぶとき（`scripts/lib/e2e-selection-repository.ts` の `planE2eRun`。`check` と同じ関数）。
-`tw verify` は名前では分類せず、設定ファイルの「## タスク運用」節から tw と同じ規則で打つコマンド
-（`- 送る前の検証コマンド:` の行、無ければ `- 検証コマンド:` の行）を読み、そのコマンドを上の数え方にかける。
+`tw verify` は名前では分類せず、`.tw/config.toml` から tw と同じ規則で打つコマンド
+（`verify_before_ship`、無ければ `verify`）を読み、そのコマンドを上の数え方にかける。
 `--full` 付きの `tw verify` は常に数える。行が読めないときは `tw verify` の引数だけで分類する。
 文書だけの変更は `--full` でも E2E を
 流さない（付け替えで入った他人のコードはその人の送り出しで検証済み）が、hook は `--full` の付いた呼び出しを数える（多めに数える側）。変えたファイルを集められないときも数えない。

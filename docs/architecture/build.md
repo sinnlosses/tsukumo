@@ -33,7 +33,7 @@
   （`scripts/lib/repository-reference.ts`）と整形（`.prettierignore`）の対象外。新しくするには
   `git -C vendor/tsukumo-plugins fetch && git -C vendor/tsukumo-plugins checkout <コミット>` のあと、親で `vendor/tsukumo-plugins` を `git add` する
 - **cwd に依存してよいのは起動先プロジェクトのものだけ。** 作業ディレクトリ・
-  `develop/task/`・相対指定で渡した素材（`TSUKUMO_CHARACTER` に相対パスを渡した場合）
+  `.tw/`・相対指定で渡した素材（`TSUKUMO_CHARACTER` に相対パスを渡した場合）
   はそこに当たる。**自分で持ち歩くもの（既定の立ち絵・`node_modules` の外部ライブラリ）は
   tsukumo 自身の場所から読む**（`src/server/adapter/bundled-path.ts`）。`tsukumo` コマンドをどの
   プロジェクトのディレクトリで起こしても見つかるようにするための区別

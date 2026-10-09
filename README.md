@@ -112,7 +112,7 @@ pnpm のグローバルの置き場（`$PNPM_HOME/bin`）が `PATH` に無いと
 ### 2. 起動する
 
 作業したいプロジェクトのディレクトリへ移って打ちます（`claude` を打つのと同じ感覚で、
-`characters/` も `develop/` も無いディレクトリでかまいません）。
+`characters/` も `.tw/` も無いディレクトリでかまいません）。
 
 ```bash
 cd ~/path/to/your-project
@@ -394,7 +394,7 @@ CI に無い外部コマンドを起こすテストを検査で落とします�
 ├── scripts/                # 開発の道具（check・ship・stop・撮影・文書の検査・hook の deny-* など）
 ├── assets/                 # ロゴ
 ├── docs/                   # 要件定義・設計・アーキテクチャ・規約・用語集（正典）
-├── develop/                # 進捗管理（task/・direction.md・draft/）。機能には関係しない
+├── .tw/                    # タスク運用の設定と指示（config.toml・direction.md・draft/）。機能には関係しない
 ├── bin/tsukumo             # エントリポイント（mise run setup でグローバルに入る）
 └── package.json
 ```

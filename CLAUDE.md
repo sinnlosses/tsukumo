@@ -131,8 +131,11 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 
 ## タスク運用
 
+機械が読む設定（検証コマンド・整形コマンド・ブランチ・タスクの置き場・トラッカー）は
+`.tw/config.toml`。ブランチは切らず、**枝の寿命は作業ツリーの寿命と同じ**で、1本の枝がいくつでも
+タスクを持つ。
 
-状態はチャットではなく Beads（`task show GH-<n>` で読み、`task edit` で直す。`.beads` は本体の作業ツリーの根で git の外）・`develop/direction.md`・`develop/draft/`（エージェントのドラフト。1件1ファイル）に残す。手順は
+状態はチャットではなく Beads（`task show GH-<n>` で読み、`task edit` で直す。`.beads` は本体の作業ツリーの根で git の外）・`.tw/direction.md`・`.tw/draft/`（エージェントのドラフト。1件1ファイル）に残す。手順は
 `~/.claude/skills/task-workflow/WORKFLOW.md` が正典で、このリポジトリの上乗せは
 `docs/workflow.md`。**タスクは `difficulty` と同じモデルのサブエージェントに委譲し**、判断が
 想定より要ると分かったら押し切らず `difficulty` を上げて再開する。完了は検証できる証拠で判定する。
