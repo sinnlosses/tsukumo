@@ -2,24 +2,11 @@
 
 import { groupBy } from "remeda"
 
-import type { ApiTrouble } from "../../../../../../../../../shared/session-driver/api-trouble.ts"
-import type { BackgroundTask } from "../../../../../../../../../shared/session-driver/background-task.ts"
-import type {
-  PendingAsk,
-  StampedPendingAsk,
-} from "../../../../../../../../../shared/session-driver/pending-ask.ts"
 import { conversationMoment } from "../../../../../../../../../shared/session/conversation-moment.ts"
-import {
-  recordTimeAt,
-  type ReportDrafting,
-  type SessionRecord,
-  type TurnProgress,
-} from "../../../../../../../../../shared/session/session-state.ts"
 import {
   turnResultsOf,
   type TurnResult,
 } from "../../../../../../../../../shared/session/turn-result.ts"
-import type { TurnStep, TurnStepList } from "../../../../../../../../../shared/session/turn-step.ts"
 import {
   currentPhaseOf,
   finishedPhaseCount,
@@ -29,8 +16,6 @@ import {
   type PlannedPhase,
   plannedPhasesOf,
 } from "../../../../../../../../../shared/session/work-plan.ts"
-import { formatElapsed } from "../../../../../../../../../shared/utils/elapsed-time.ts"
-import { summarizeToolInput } from "../../../../../../../../domain/tool-summary.ts"
 import {
   FINISHED_LABEL,
   isTurnCounting,
@@ -38,7 +23,6 @@ import {
   turnElapsedText,
 } from "../../../../../../../../domain/turn-elapsed.ts"
 import {
-  backgroundSummaryLabel,
   currentWorkStepGroups,
   type CurrentWorkStepGroup,
 } from "../../../../../../../../features/current-work/domain/current-work-step.ts"
@@ -48,9 +32,8 @@ import { useMainViewContent } from "../../../../../../../../stores/main-view-con
 import { useMainViewTurns } from "../../../../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { useWorkStripSteps } from "../../../../../../../../stores/work-strip-steps.ts"
-import { apiRetryNotice } from "../../../../../domain/api-error-label.ts"
-import { isClearRequest } from "../../../../../domain/clear-request.ts"
 import type { WorkStripResult } from "../../../../../domain/turn-result-mark.ts"
+import { workActivityOf, type WorkActivity } from "../../../domain/work-activity.ts"
 
 /** 段の丸1つの状態。`asking` は今の段で答え待ちが来ているとき。 */
 export type WorkStripPhaseState = "done" | "current" | "asking" | "upcoming"
@@ -74,21 +57,6 @@ export type WorkStripSlot =
       readonly state: WorkStripPhaseState
       readonly phases: readonly WorkStripPhase[]
     }
-
-/** 2行目の再試行の知らせ。 */
-export type WorkStripRetry =
-  | { readonly kind: "none" }
-  | { readonly kind: "retrying"; readonly label: string; readonly detail: string }
-
-/**
- * 2行目。`tone` は字の色（`asking` は答え待ちの色）、`mono` は等幅で組むか（ツールの要約）。
- */
-export type WorkStripActivity = {
-  readonly text: string
-  readonly tone: "quiet" | "asking"
-  readonly mono: boolean
-  readonly retry: WorkStripRetry
-}
 
 /** 「手順 n」の口と、押すと開く依頼の手順の一覧。 */
 export type WorkStripSteps = {
@@ -119,7 +87,7 @@ export type WorkStripModel =
       readonly phases: readonly WorkStripSlot[]
       readonly headLabel: string
       readonly sideLabel: string
-      readonly activity: WorkStripActivity
+      readonly activity: WorkActivity
       readonly steps: WorkStripSteps
     }
   | {
@@ -215,13 +183,14 @@ export function useWorkStrip(): WorkStripModel {
       planned.length === 0
         ? elapsedLabel
         : `${nowPhase.kind === "phase" ? phasePosition(nowPhase) : `${count}/${count}`} · ${elapsedLabel}`,
-    activity: activityOf({
+    activity: workActivityOf({
       turnStepList,
       firstPending,
       reportDrafting,
       backgroundTasks,
-      retry: retryOf(turn, apiTrouble),
-      clearRequest: isClearRequest(currentRequestTextOf(records)),
+      turn,
+      apiTrouble,
+      records,
       now,
     }),
     steps,
@@ -276,113 +245,4 @@ function toPhase({ index, name, state: planned }: PlannedPhase, asking: boolean)
     label: `${String(index + 1)}. ${name}${PHASE_STATE_SUFFIX[state]}`,
     state,
   }
-}
-
-function retryOf(turn: TurnProgress, apiTrouble: ApiTrouble): WorkStripRetry {
-  return turn.kind === "running" && apiTrouble.kind === "retrying"
-    ? { kind: "retrying", ...apiRetryNotice(apiTrouble) }
-    : { kind: "none" }
-}
-
-function currentRequestTextOf(records: readonly SessionRecord[]): string {
-  return records.findLast((record) => record.kind === "request")?.text ?? ""
-}
-
-/**
- * 2行目。強い順に1つ: 答え待ち → report を書いている途中 → 走っている手順 → 背景のタスク →
- * 考えている（`clearRequest` のときは「会話を片付けている」）。
- * 答え待ちの秒は、答え待ちが届いた時刻から数える。
- */
-function activityOf(source: {
-  readonly turnStepList: Extract<TurnStepList, { readonly kind: "turn" }>
-  readonly firstPending: StampedPendingAsk | undefined
-  readonly reportDrafting: ReportDrafting
-  readonly backgroundTasks: readonly BackgroundTask[]
-  readonly retry: WorkStripRetry
-  readonly clearRequest: boolean
-  readonly now: number
-}): WorkStripActivity {
-  const { turnStepList, firstPending, retry, now } = source
-  if (firstPending !== undefined) {
-    const waited = formatElapsed(Math.max(0, Math.floor((now - firstPending.askedAt) / 1000)))
-    return {
-      text: [`お伺いが届いた`, pendingLabel(firstPending), `答え待ち ${waited}`].join(" · "),
-      tone: "asking",
-      mono: false,
-      retry,
-    }
-  }
-  if (source.reportDrafting.kind === "drafting") {
-    return { text: "レポートを書いています", tone: "quiet", mono: false, retry }
-  }
-  const running = turnStepList.steps.findLast((step) => step.status.kind === "running")
-  if (running !== undefined) {
-    const seconds = secondsSince(running, now)
-    return {
-      text: [toolLine(running.name, running.input), seconds]
-        .filter((part) => part !== "")
-        .join(" · "),
-      tone: "quiet",
-      mono: true,
-      retry,
-    }
-  }
-  const lastDelegated = lastDelegatedStep(source.backgroundTasks, turnStepList.steps)
-  if (lastDelegated !== undefined) {
-    return {
-      text: `背景で · 直前 ${toolLine(lastDelegated.name, lastDelegated.input)}`,
-      tone: "quiet",
-      mono: true,
-      retry,
-    }
-  }
-  const background = backgroundSummaryLabel(source.backgroundTasks)
-  if (background !== undefined) {
-    return { text: `背景で ${background}`, tone: "quiet", mono: false, retry }
-  }
-  return {
-    text: source.clearRequest ? "会話を片付けている" : "考えている",
-    tone: "quiet",
-    mono: false,
-    retry,
-  }
-}
-
-/**
- * いちばん新しい背景のタスクがサブエージェントなら、その依頼でサブエージェントの中で最後に動いた手順。
- * サブエージェントの説明は起こしたときのまま変わらず、同じサブエージェントに続きを頼むと段と食い違うので、説明より先に使う。
- */
-function lastDelegatedStep(
-  backgroundTasks: readonly BackgroundTask[],
-  steps: readonly TurnStep[],
-): TurnStep | undefined {
-  return backgroundTasks.at(-1)?.kind === "agent"
-    ? steps.findLast((step) => step.nested)
-    : undefined
-}
-
-function pendingLabel(pending: PendingAsk): string {
-  if (pending.kind === "permission") {
-    return `許可: ${toolLine(pending.toolName, pending.input)}`
-  }
-  const [first, ...rest] = pending.questions
-  if (first === undefined) {
-    return "質問"
-  }
-  return rest.length > 0
-    ? `質問: ${first.header} ほか${String(rest.length)}問`
-    : `質問: ${first.header}`
-}
-
-function toolLine(name: string, input: unknown): string {
-  const summary = summarizeToolInput(name, input)
-  return summary === "" ? name : `${name}  ${summary}`
-}
-
-/** 手順が始まってからの秒（「12秒」）。始まった時刻が分からなければ空。 */
-function secondsSince(step: TurnStep, now: number): string {
-  const startedAt = recordTimeAt(step.startedAt)
-  return startedAt === undefined
-    ? ""
-    : formatElapsed(Math.max(0, Math.floor((now - startedAt) / 1000)))
 }

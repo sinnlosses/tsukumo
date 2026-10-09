@@ -188,11 +188,19 @@ describe("PhoneHead", () => {
     fireEvent.click(toggle)
 
     expect(toggle.getAttribute("aria-expanded")).toBe("true")
-    const list = typedElement(head.querySelector(".current-work-list"), HTMLElement, "一覧")
+    const sheet = typedElement(head.querySelector("dialog"), HTMLElement, "板")
+    expect(sheet.hasAttribute("open")).toBe(true)
+    expect(sheet.getAttribute("aria-label")).toBe("依頼の手順")
+    const list = typedElement(sheet.querySelector(".current-work-list"), HTMLElement, "一覧")
     expect(list.querySelector("[data-step-failed]")?.textContent).toContain(
       "架空の失敗するコマンド",
     )
     expect(list.textContent).toContain("架空のエラー出力")
+
+    fireEvent(sheet, new Event("close"))
+
+    expect(toggle.getAttribute("aria-expanded")).toBe("false")
+    expect(sheet.hasAttribute("open")).toBe(false)
   })
 
   it("会話の画面でないときは「‹ 会話へ」と画面の名前を出し、答え待ちでなければ状態の語も2行目も出さない", () => {

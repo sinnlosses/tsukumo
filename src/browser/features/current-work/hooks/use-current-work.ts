@@ -182,6 +182,8 @@ export type CurrentWork = {
   readonly stepList: CurrentWorkStepList
   readonly open: boolean
   readonly onToggle: () => void
+  /** 一覧を閉じる(フォーカスは動かさない)。 */
+  readonly onClose: () => void
   /**
    * 開く口の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。
    * 付いている口を全部集め、Esc のときは全部へ `.focus()` を呼ぶ（見えていない口は `display: none` で効かない）。
@@ -270,6 +272,7 @@ export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): Curr
     stepList: toStepListView(turnStepList, { turnInProgress, expanded, onToggleExpanded }),
     open,
     onToggle,
+    onClose: close,
     toggleRef,
   }
 }

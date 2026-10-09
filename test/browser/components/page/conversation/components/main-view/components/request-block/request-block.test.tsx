@@ -45,3 +45,42 @@ describe("RequestBlock", () => {
     expect(screen.getByRole("button", { name: "続き 1 行" })).toBeDefined()
   })
 })
+
+describe("RequestBlock（狭い画面の “ の1行）", () => {
+  function pretendClamped(): () => void {
+    const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollHeight")
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+      configurable: true,
+      get: () => 100,
+    })
+    return () => {
+      if (original === undefined) {
+        Reflect.deleteProperty(HTMLElement.prototype, "scrollHeight")
+      } else {
+        Object.defineProperty(HTMLElement.prototype, "scrollHeight", original)
+      }
+    }
+  }
+
+  it("切れていないときは押せない", () => {
+    renderBlock(["架空の短い依頼"])
+
+    expect(screen.queryByRole("button", { name: /架空の短い依頼/u })).toBeNull()
+  })
+
+  it("切れているときだけ押せて、押すと板で全文を読める", () => {
+    const restore = pretendClamped()
+    try {
+      renderBlock(["架空の1行目", "架空の2行目"])
+      const button = screen.getByRole("button", { name: /架空の1行目/u })
+
+      fireEvent.click(button)
+
+      const sheet = document.querySelector("dialog")
+      expect(sheet?.hasAttribute("open")).toBe(true)
+      expect(sheet?.querySelector("p")?.textContent).toBe("架空の1行目\n架空の2行目")
+    } finally {
+      restore()
+    }
+  })
+})

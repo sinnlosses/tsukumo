@@ -117,6 +117,14 @@
   margin-bottom: 0.5rem;
 }
 
+/* 狭い画面では中間レポートの本文を出さず、一覧の行を押して板で読む(`display: none` は読み上げからも外れる)。 */
+@media (max-width: 760px) {
+  /* 本文の入れ物や頭は別のファイルの `display` を持つので、読み込みの順に関わらず勝たせる。 */
+  .phone-hidden {
+    display: none !important;
+  }
+}
+
 /* 失敗で終わったやり取りの頭の失敗の塊（`TurnFailureBlock`）。
    枠だけを --state-ng にし、見出し「失敗で終わった」の字も同じ色にする。
    字の色は呼び出し側が `Text` の `tone="state-ng"` を渡す（見出しの class へ色の規則を書くと `<Text>` の property と重なり、構造の検査「渡す className は styles["…"] の組み合わせだけで、その class は部品の property と重ならない」が落ちる）。

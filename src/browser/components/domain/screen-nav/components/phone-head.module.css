@@ -182,14 +182,18 @@
   .phone-head-step-count {
     font-family: var(--font-mono);
   }
-  /* 「手順 n」で開く依頼の手順の一覧。頭の真下に重ねる。 */
-  .phone-head-steps {
-    position: absolute;
-    top: calc(100% + 0.3rem);
-    right: 0;
-    left: 0;
-    z-index: 21;
-    max-height: 70dvh;
+  /* 板の頭の題。 */
+  .phone-head-sheet-title {
+    font-size: 14px;
+    font-weight: 700;
+  }
+  /* 「手順 n」で開く依頼の手順の一覧。一覧の箱の枠と地は板が持つので外す(属性で詳細度を上げ、一覧の class に勝つ)。 */
+  .phone-head-steps[role="region"] {
+    padding: 0;
+    overflow: visible;
+    border: none;
+    border-radius: 0;
+    background: transparent;
   }
 }
 

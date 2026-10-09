@@ -19,6 +19,8 @@ export type ReportProps = {
   readonly reveal: boolean
   /** この本文が載っているやり取り（`MainViewTurn.id`）。配る筆先に添える。 */
   readonly turnId: number
+  /** 置く側が足す class(狭い画面で隠すなど)。 */
+  readonly className: string
 }
 
 export function Report(props: ReportProps): ReactElement {
@@ -30,7 +32,10 @@ export function Report(props: ReportProps): ReactElement {
     // `.detail-block` を2つ重ねる。
     // 見た目の本体は report-notation.module.css にあり、ステップの末尾の余白の打ち消し（`.main-step > .detail-block:last-child`）は main-view.module.css にある。
     // CSS Modules は class 名をファイルごとにハッシュ化するので、片方だけでは打ち消しが当たらない。
-    <div className={clsx(notationStyles["detail-block"], styles["detail-block"])} ref={rootRef}>
+    <div
+      className={clsx(notationStyles["detail-block"], styles["detail-block"], props.className)}
+      ref={rootRef}
+    >
       {blocks.map((block) => (
         <ReportBlock key={block} text={block} />
       ))}

@@ -4199,6 +4199,168 @@
       ]
     },
     {
+      "name": "phone-phases",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "架空のタスクを進めて、設定の置き場を張り替えたい（架空の依頼）。長い依頼の文面で、二行を超えたときに切れて、押すと全文を板で読めることを確かめるための、架空の文章をここに続けて書いておく。",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "phases": [
+              "計画を立て直す",
+              "取り込んで渡す",
+              "文書を合わせる",
+              "レビューと検証",
+              "受け入れて架空の置き場を張り替える"
+            ],
+            "current": 0,
+            "finishedInGroup": [],
+            "phaseSummary": ""
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "work-plan",
+            "phases": [
+              "計画を立て直す",
+              "取り込んで渡す",
+              "文書を合わせる",
+              "レビューと検証",
+              "受け入れて架空の置き場を張り替える"
+            ],
+            "current": 1,
+            "finishedInGroup": [],
+            "phaseSummary": "架空の計画を立て直した。\n\n## 検証\n\n| 項目 | 結果 |\n| --- | --- |\n| 架空の計画 | 通った |\n| 架空の見積もり | 通った |\n\n脚注の見本[^1]。\n\n[^1]: 架空の脚注。"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "work-plan",
+            "phases": [
+              "計画を立て直す",
+              "取り込んで渡す",
+              "文書を合わせる",
+              "レビューと検証",
+              "受け入れて架空の置き場を張り替える"
+            ],
+            "current": 2,
+            "finishedInGroup": [],
+            "phaseSummary": "架空の取り込みを渡した。置き場は 11 件で、どれも同じ形だった。"
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "work-plan",
+            "phases": [
+              "計画を立て直す",
+              "取り込んで渡す",
+              "文書を合わせる",
+              "レビューと検証",
+              "受け入れて架空の置き場を張り替える"
+            ],
+            "current": 3,
+            "finishedInGroup": [],
+            "phaseSummary": "架空の文書を合わせた。"
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "work-plan",
+            "phases": [
+              "計画を立て直す",
+              "取り込んで渡す",
+              "文書を合わせる",
+              "レビューと検証",
+              "受け入れて架空の置き場を張り替える"
+            ],
+            "current": 4,
+            "finishedInGroup": [],
+            "phaseSummary": "架空のレビューと検証が通った。"
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "speech",
+            "text": "その前に、張り替える先の一覧を見てほしいのだ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-phone-phases-1",
+            "name": "Bash",
+            "input": { "command": "git commit -m \"架空のコミット\"" }
+          }
+        },
+        {
+          "afterMs": 3000,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-phone-phases-1",
+            "content": "ダミーの結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 3200,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "workPlanClosing": "finished",
+            "closing": { "kind": "speech", "text": "5つの段を終えたよ。", "expression": "proud" },
+            "toolUseId": "fake-phone-phases-report",
+            "conclusion": "架空の結論: 置き場の張り替えが済んだ。",
+            "sections": [
+              {
+                "heading": "",
+                "blocks": [
+                  {
+                    "kind": "list",
+                    "style": "bullet",
+                    "items": [
+                      { "label": "", "text": "架空の置き場 11 件を張り替えた", "done": false }
+                    ],
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": [
+              {
+                "status": "ok",
+                "label": "pnpm run test",
+                "figure": "12 / 12",
+                "command": "pnpm run test",
+                "detail": ""
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 3400,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "work-strip-ask",
       "steps": [
         {

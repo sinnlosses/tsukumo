@@ -18,7 +18,12 @@ import {
 
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
 import type { MainViewTurn } from "../../../../../../shared/session/main-view.ts"
-import { currentPhaseOf, type WorkPhase } from "../../../../../../shared/session/work-plan.ts"
+import type { TurnStepList } from "../../../../../../shared/session/turn-step.ts"
+import {
+  currentPhaseOf,
+  plannedPhasesOf,
+  type WorkPhase,
+} from "../../../../../../shared/session/work-plan.ts"
 import { useCurrentTurnSteps } from "../../../../../stores/current-turn-steps.ts"
 import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import {
@@ -28,8 +33,10 @@ import {
 import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
+import { CurrentStep } from "./components/current-step/current-step.tsx"
 import { Inquiry } from "./components/inquiry/inquiry.tsx"
 import { MiniPortrait } from "./components/mini-portrait/mini-portrait.tsx"
+import { PhaseList } from "./components/phase-list/phase-list.tsx"
 import { ReportOutline } from "./components/report-outline/report-outline.tsx"
 import { RequestBlock } from "./components/request-block/request-block.tsx"
 import { TurnCardHead } from "./components/turn-card-head/turn-card-head.tsx"
@@ -160,6 +167,15 @@ export function MainView(): ReactElement {
                   </div>
                 )}
                 <div className={styles["turn-card-body"]}>
+                  {/* 狭い画面の一覧と「いまの段」。広い画面では CSS で消える。
+                      一覧の板の中の本文を、`<Turn>` が隠した同じ本文より DOM の前に置くため、`<Turn>` の前に並べる。 */}
+                  <PhaseList
+                    turn={cardTurn.turn}
+                    planCount={viewingPast ? 0 : planCountOf(turnStepList)}
+                    turnId={cardTurn.turn.id}
+                    key={cardTurn.turn.id}
+                  />
+                  {!viewingPast && view.kind === "work" && <CurrentStep />}
                   {/* `key` にターンの番号を渡す。
                     前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
                   <Turn
@@ -246,6 +262,13 @@ function shownView(
           newest === undefined ? NO_CARD : { kind: "turn", turn: newest, fresh: content.arrived },
       }
   }
+}
+
+/** 見ているやり取りの段取りの段の数。段取りが無ければ 0。 */
+function planCountOf(turnStepList: TurnStepList): number {
+  return turnStepList.kind === "turn" && turnStepList.plan.kind === "planned"
+    ? plannedPhasesOf(turnStepList.plan).length
+    : 0
 }
 
 const NO_CARD = { kind: "none" } as const satisfies ShownCard

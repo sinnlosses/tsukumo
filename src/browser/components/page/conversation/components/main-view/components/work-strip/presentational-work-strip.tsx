@@ -9,9 +9,9 @@ import { CurrentWorkStepGroup } from "../../../../../../../features/current-work
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { TURN_RESULT_MARKS, type WorkStripResult } from "../../../../domain/turn-result-mark.ts"
+import type { WorkActivity } from "../../domain/work-activity.ts"
 import { useFailedStepFocus } from "./hooks/use-failed-step-focus.ts"
 import type {
-  WorkStripActivity,
   WorkStripModel,
   WorkStripPhase,
   WorkStripSlot,
@@ -160,7 +160,7 @@ function StepsToggle(props: { readonly steps: WorkStripSteps }): ReactElement {
   )
 }
 
-function ActivityLine(props: { readonly activity: WorkStripActivity }): ReactElement {
+function ActivityLine(props: { readonly activity: WorkActivity }): ReactElement {
   const { activity } = props
   return (
     <p className={clsx(styles["work-strip-activity"], activity.mono && styles["is-mono"])}>

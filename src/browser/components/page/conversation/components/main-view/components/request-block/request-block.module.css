@@ -1,3 +1,54 @@
+/* 狭い画面（760px 以下）の依頼。値は見本 `docs/history/mockup/phone-layout-2026-10-09/PHONE-1.dc.html` の1枚目の inline style。
+   広い画面の塊は狭い画面で隠し、こちらは広い画面で隠す。 */
+.request-quote {
+  display: none;
+}
+@media (max-width: 760px) {
+  .request-quote {
+    display: block;
+  }
+  .request-quote-button {
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    column-gap: 8px;
+    width: 100%;
+    padding: 2px 0;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    font: inherit;
+    text-align: left;
+  }
+  button.request-quote-button {
+    cursor: pointer;
+  }
+  .request-quote-mark {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    line-height: 1;
+    color: color-mix(in srgb, var(--accent) 60%, var(--ground));
+  }
+  .request-quote-text {
+    display: -webkit-box;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    font-size: 13.5px;
+    line-height: 1.7;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  .request-sheet-title {
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .request-sheet-text {
+    margin: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+}
+
 /* 依頼の塊。字の段は `Text`・`Heading` が持ち、行の字の色は塊から継ぐ。 */
 .request-block {
   display: flex;
@@ -40,4 +91,10 @@
 }
 .request-chevron.is-expanded {
   transform: rotate(180deg);
+}
+/* 狭い画面では広い画面の塊を出さない(上の `.request-quote` が代わる)。 */
+@media (max-width: 760px) {
+  .request-block {
+    display: none;
+  }
 }

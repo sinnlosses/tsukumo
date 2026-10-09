@@ -24,6 +24,8 @@ export type ReportHeadProps = {
   readonly task: ReportTask
   /** 段のまとめなら、終えた段の見出し。 */
   readonly phase: MainViewPhaseLabel
+  /** 置く側が足す class(狭い画面で隠すなど)。 */
+  readonly className: string
 }
 
 export function ReportHead(props: ReportHeadProps): ReactElement | null {
@@ -49,7 +51,7 @@ export function ReportHead(props: ReportHeadProps): ReactElement | null {
   ]
 
   return (
-    <header className={styles["report-head"]}>
+    <header className={clsx(styles["report-head"], props.className)}>
       <p className={styles["report-catalog"]}>
         {items.map((item, index) => (
           <Fragment key={item.key}>

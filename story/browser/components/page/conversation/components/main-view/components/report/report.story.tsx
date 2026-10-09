@@ -16,7 +16,7 @@ const NO_IMAGES = { kind: "none" } as const satisfies ReportImageSource
 
 const meta = {
   component: Report,
-  args: { markdown: "", reveal: false, turnId: 1 },
+  args: { markdown: "", reveal: false, turnId: 1, className: "" },
   loaders: [loadMarkdown],
 } satisfies Meta<typeof Report>
 

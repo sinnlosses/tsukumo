@@ -134,20 +134,33 @@ function StepCard(props: StepProps): ReactElement {
   const questionCards = questions.map((question, index) => (
     <QuestionRecord entry={question} key={index} />
   ))
+  // 狭い画面は中間レポートの本文を一覧と板で読む。隠すのは本文の側だけで、質問の記録は残す。
+  const phoneHidden = step.interim ? mainViewStyles["phone-hidden"] : ""
   const report = step.body.kind === "text" && (
     <>
       <ReportHead
         label={reportLabel(step, step.body.task, props.hasInterimReport, folded)}
         task={step.body.task}
         phase={step.body.finishedPhase}
+        className={phoneHidden}
       />
-      <Report markdown={step.body.report} reveal={props.reveal} turnId={props.turnId} />
+      <Report
+        markdown={step.body.report}
+        reveal={props.reveal}
+        turnId={props.turnId}
+        className={phoneHidden}
+      />
     </>
   )
 
   if (!folded) {
     return (
-      <section className={stepClassName(step)}>
+      <section
+        className={clsx(
+          stepClassName(step),
+          step.interim && questions.length === 0 && mainViewStyles["phone-hidden"],
+        )}
+      >
         {report}
         {questionCards}
       </section>
@@ -156,7 +169,13 @@ function StepCard(props: StepProps): ReactElement {
 
   return (
     <>
-      <details className={clsx(mainViewStyles["main-step"], mainViewStyles["is-interim"])}>
+      <details
+        className={clsx(
+          mainViewStyles["main-step"],
+          mainViewStyles["is-interim"],
+          mainViewStyles["phone-hidden"],
+        )}
+      >
         <Text
           element="summary"
           size="label"

@@ -1,0 +1,348 @@
+{
+  "screen-nav": [
+    {
+      "tag": "nav",
+      "attributes": {
+        "aria-label": "画面",
+        "data-screen": "conversation"
+      },
+      "children": [
+        {
+          "tag": "img",
+          "attributes": {
+            "alt": "つくもの精霊",
+            "src": "/character/tsukumo-spirit/face.svg"
+          }
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "data-work-state": "running",
+            "data-chat-idle": "false"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              }
+            },
+            "作業中",
+            "0:05"
+          ]
+        },
+        "受け入れて架空の置き場を張り替える",
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-label": "やり取りとタスクを開く",
+            "aria-expanded": "false",
+            "aria-haspopup": "dialog",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "svg"
+            }
+          ]
+        },
+        {
+          "tag": "ol",
+          "attributes": {
+            "aria-label": "段取り"
+          },
+          "children": [
+            {
+              "tag": "li",
+              "attributes": {
+                "aria-label": "1. 計画を立て直す（済）"
+              },
+              "children": [
+                "✓"
+              ]
+            },
+            {
+              "tag": "li",
+              "attributes": {
+                "aria-label": "2. 取り込んで渡す（済）"
+              },
+              "children": [
+                "✓"
+              ]
+            },
+            {
+              "tag": "li",
+              "attributes": {
+                "aria-label": "3. 文書を合わせる（済）"
+              },
+              "children": [
+                "✓"
+              ]
+            },
+            {
+              "tag": "li",
+              "attributes": {
+                "aria-label": "4. レビューと検証（済）"
+              },
+              "children": [
+                "✓"
+              ]
+            },
+            {
+              "tag": "li",
+              "attributes": {
+                "aria-label": "5. 受け入れて架空の置き場を張り替える（今の段）"
+              }
+            }
+          ]
+        },
+        "5/5",
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-expanded": "false",
+            "type": "button"
+          },
+          "children": [
+            "手順",
+            "1",
+            {
+              "tag": "svg"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "main": [
+    {
+      "tag": "main",
+      "attributes": {
+        "data-region": "main",
+        "aria-label": "メインビュー"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": "",
+            "data-main-view": ""
+          },
+          "children": [
+            {
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "work"
+              },
+              "children": [
+                {
+                  "tag": "article",
+                  "children": [
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-outline": "shown",
+                        "data-outline-collapsed": "true"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          },
+                          "children": [
+                            "“"
+                          ]
+                        },
+                        "架空のタスクを進めて、設定の置き場を張り替えたい（架空の依頼）。長い依頼の文面で、二行を超えたときに切れて、押すと全文を板で読めることを確かめるための、架空の文章をここに続けて書いておく。",
+                        {
+                          "tag": "section",
+                          "attributes": {
+                            "aria-label": "済んだ段 · 中間レポート"
+                          },
+                          "children": [
+                            {
+                              "tag": "h4",
+                              "children": [
+                                "済んだ段 · 中間レポート"
+                              ]
+                            },
+                            {
+                              "tag": "ul",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "button",
+                                      "attributes": {
+                                        "aria-haspopup": "dialog",
+                                        "type": "button"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "✓"
+                                          ]
+                                        },
+                                        "1",
+                                        "計画を立て直す",
+                                        "0:00",
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "›"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "button",
+                                      "attributes": {
+                                        "aria-haspopup": "dialog",
+                                        "type": "button"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "✓"
+                                          ]
+                                        },
+                                        "2",
+                                        "取り込んで渡す",
+                                        "0:00",
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "›"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "button",
+                                      "attributes": {
+                                        "aria-haspopup": "dialog",
+                                        "type": "button"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "✓"
+                                          ]
+                                        },
+                                        "3",
+                                        "文書を合わせる",
+                                        "0:00",
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "›"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "button",
+                                      "attributes": {
+                                        "aria-haspopup": "dialog",
+                                        "type": "button"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "✓"
+                                          ]
+                                        },
+                                        "4",
+                                        "レビューと検証",
+                                        "0:00",
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "›"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "attributes": {
+                            "aria-label": "いまの段"
+                          },
+                          "children": [
+                            {
+                              "tag": "h4",
+                              "children": [
+                                "いまの段 · 5 受け入れて架空の置き場を張り替える"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "Bash git commit -m \"架空のコミット\" · 5秒"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

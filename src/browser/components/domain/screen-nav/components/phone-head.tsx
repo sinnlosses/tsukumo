@@ -1,14 +1,16 @@
 // 狭い画面（760px 以下）の頭。1行目に顔・状態の語と経過・題・≡、2行目に段の点・n/N・「手順 n」。
 // 広い画面では CSS で消える（`phone-head.module.css`）ので、ここは幅を測らない。
 //
-// 「手順 n」は「いまの作業」の開閉をそのまま使い、開いたら依頼の手順の一覧を頭の下に重ねる。
+// 「手順 n」は「いまの作業」の開閉をそのまま使い、開いたら依頼の手順の一覧を下から上がる板で開く。
 
 import clsx from "clsx"
-import { useId, type ReactElement, type ReactNode } from "react"
+import { useId, useRef, type ReactElement, type ReactNode } from "react"
 
 import { CurrentWorkList } from "../../../../features/current-work/components/current-work-list.tsx"
 import type { CurrentWork } from "../../../../features/current-work/hooks/use-current-work.ts"
+import { BottomSheet } from "../../../ui/bottom-sheet/bottom-sheet.tsx"
 import { CharacterFace } from "../../character-face.tsx"
+import { usePhoneHeadHeight } from "../hooks/use-phone-head-height.ts"
 import type { PhoneHead as Head, PhoneHeadProgress } from "../hooks/use-phone-head.ts"
 import styles from "./phone-head.module.css"
 
@@ -20,13 +22,16 @@ export type PhoneHeadProps = {
 }
 
 const BACK_LABEL = "‹ 会話へ"
+const STEPS_LABEL = "依頼の手順"
 
 export function PhoneHead(props: PhoneHeadProps): ReactElement {
   const { head, work } = props
   const listId = useId()
+  const headRef = useRef<HTMLDivElement>(null)
+  usePhoneHeadHeight(headRef)
 
   return (
-    <div className={styles["phone-head"]}>
+    <div className={styles["phone-head"]} ref={headRef}>
       <div className={styles["phone-head-line"]}>
         {head.lead.kind === "face" ? (
           <CharacterFace
@@ -66,8 +71,17 @@ export function PhoneHead(props: PhoneHeadProps): ReactElement {
       {head.progress.kind !== "none" && (
         <PhoneHeadProgressLine progress={head.progress} work={work} listId={listId} />
       )}
-      {work.open && head.progress.kind !== "none" && (
-        <CurrentWorkList id={listId} work={work} className={styles["phone-head-steps"]} />
+      {head.progress.kind !== "none" && (
+        <BottomSheet
+          open={work.open}
+          contentKey="steps"
+          ariaLabel={STEPS_LABEL}
+          onClose={work.onClose}
+          header={<span className={styles["phone-head-sheet-title"]}>{STEPS_LABEL}</span>}
+          footer={{ kind: "none" }}
+        >
+          <CurrentWorkList id={listId} work={work} className={styles["phone-head-steps"]} />
+        </BottomSheet>
       )}
     </div>
   )

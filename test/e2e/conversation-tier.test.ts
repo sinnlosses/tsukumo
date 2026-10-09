@@ -236,4 +236,78 @@ describe("会話の画面の段", () => {
     await drawer.waitFor({ state: "hidden" })
     expect(await page.locator('[data-region="main"]').isVisible()).toBe(true)
   })
+
+  it("390x844 で依頼が “ の1行・中間レポートが1行ずつの一覧になり、行を押すと板が上がって ‹ › で前後の段へ移れ、Esc と覆いで閉じ押した行へフォーカスが戻り、頭の「手順 n」も板で開く", async () => {
+    const room = await run.open({
+      scenario: "conversation-tier-phone-sheet",
+      scene: "phone-phases",
+      viewport: "phone",
+      domRoots: ["screen-nav", "main"],
+    })
+    const { page } = room
+    const rows = page.locator('[data-region="main"] button[class*="phase-list-row"]')
+    const sheet = page.getByRole("dialog", { name: "中間レポート" })
+
+    await rows.nth(3).waitFor()
+    expect(await rows.count()).toBe(4)
+    expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
+
+    await rows.nth(1).click()
+    await sheet.waitFor()
+    const sheetBox = await sheet.evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      return { bottom: rect.bottom, height: rect.height }
+    })
+    expect(sheetBox.bottom).toBe(844)
+    expect(sheetBox.height).toBeLessThanOrEqual(600)
+    expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
+
+    await sheet.getByRole("button", { name: /^次の段/u }).click()
+    expect(await sheet.textContent()).toContain("3/5")
+    await sheet.getByRole("button", { name: /^前の段/u }).click()
+    await sheet.getByRole("button", { name: /^前の段/u }).click()
+    expect(
+      await sheet.getByRole("button", { name: /^前の段/u }).getAttribute("aria-disabled"),
+    ).toBe("true")
+
+    await page.keyboard.press("Escape")
+    await sheet.waitFor({ state: "hidden" })
+    expect(await rows.nth(1).evaluate((element) => element === document.activeElement)).toBe(true)
+
+    await rows.nth(0).click()
+    await sheet.waitFor()
+    await page.mouse.click(195, 40)
+    await sheet.waitFor({ state: "hidden" })
+
+    await page
+      .locator('nav[aria-label="画面"]')
+      .getByRole("button", { name: /^手順/u })
+      .click()
+    await page.getByRole("dialog", { name: "依頼の手順" }).waitFor()
+    expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
+    await page.keyboard.press("Escape")
+    await page.getByRole("dialog", { name: "依頼の手順" }).waitFor({ state: "hidden" })
+    await room.settleAndMatch(PHONE_ELAPSED_MS)
+  })
+
+  it("板を開いたまま窓を広げても、広い画面の本文が押せるまま（隠れた板がページを塞がない）", async () => {
+    const room = await run.open({
+      scenario: "conversation-tier-sheet-widen",
+      scene: "phone-phases",
+      viewport: "phone",
+      domRoots: ["page"],
+    })
+    const { page } = room
+    const rows = page.locator('[data-region="main"] button[class*="phase-list-row"]')
+
+    await rows.nth(3).waitFor()
+    await rows.nth(0).click()
+    await page.getByRole("dialog", { name: "中間レポート" }).waitFor()
+    expect(await page.evaluate(() => document.querySelector("dialog:modal") !== null)).toBe(true)
+
+    await page.setViewportSize(VIEWPORTS.large)
+    await sidebar(page).waitFor()
+    expect(await page.evaluate(() => document.querySelector("dialog:modal") !== null)).toBe(false)
+    await page.getByRole("button", { name: "手順", exact: false }).first().click({ timeout: 3_000 })
+  })
 })
