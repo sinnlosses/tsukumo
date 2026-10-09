@@ -56,6 +56,7 @@ describe("tsukumoServer", () => {
       "report",
       "work_plan",
       "question_brief",
+      "clear_and_send",
       "usage_review_stage",
       "usage_review_result",
     ])
@@ -74,11 +75,13 @@ describe("tsukumoServer", () => {
         FAKE_CWD,
         () => {},
         () => {},
+        () => {},
       ),
     )
 
     expect(names).not.toContain("report")
     expect(names).not.toContain("work_plan")
+    expect(names).not.toContain("clear_and_send")
     expect(names).not.toContain("usage_review_result")
     expect(names).not.toContain("diary")
     expect(names).toContain("speak")
@@ -96,6 +99,7 @@ describe("tsukumoServer", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
         () => {},
         () => {},
       ),
@@ -143,6 +147,7 @@ describe("recall / recall_episode ツール", () => {
         FAKE_CWD,
         () => {},
         () => {},
+        () => {},
       )
 
     const listReply = await callTool(server(), "recall", { keyword: "散歩" })
@@ -186,6 +191,7 @@ describe("recall / recall_episode ツール", () => {
         FAKE_CWD,
         () => {},
         () => {},
+        () => {},
       ),
       "recall_episode",
       { id: "2026-09-25-1" },
@@ -213,6 +219,7 @@ describe("recall / recall_episode ツール", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
         () => {},
         () => {},
       )
@@ -396,6 +403,7 @@ describe("speak の差し戻し", () => {
         noopIntake(),
         () => {},
         FAKE_CWD,
+        () => {},
         () => {},
         () => {},
       ),
@@ -728,6 +736,7 @@ function workServer(
     (briefs) => {
       heldBriefs.push(briefs)
     },
+    () => {},
   )
 }
 

@@ -16,6 +16,7 @@ import { createReportReview } from "../../report/core/report-review.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
 import { createUsageReviewIntake } from "../../usage-review/core/usage-review-tool.ts"
 import { asidePromptText } from "../core/aside-prompt.ts"
+import { createClearAndSend } from "../core/clear-and-send.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { createPromptDelayWatch, type PromptDelayWatch } from "../core/prompt-delay.ts"
@@ -59,11 +60,24 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   // 駆動が送り出すイベントは全部ここを通す（依頼も SDK 由来も）。
   // claude が依頼なしで始めた続きのターンに `turn-started` を補うのに、依頼で開いたターンも見ている必要がある（`withSelfStartedTurns`）。
   const ending = createSessionEnding(given.onEvent, given.reportFailure)
+  const clearAndSend = createClearAndSend()
   const deliver = (event: SessionEvent): void => {
     if (event.kind === "turn-finished") {
       queue.dropBrief()
     }
+    if (event.kind === "session-ended") {
+      clearAndSend.discard()
+    }
     ending.deliver(event)
+    if (event.kind === "turn-finished") {
+      // 預かりは取り出した時点で空になるので、`/clear` 自身のターンの終わりでは何も送らない。
+      for (const text of clearAndSend.take({
+        outcome: event.outcome,
+        pendingCount: queue.list().length,
+      })) {
+        sendRequest(text)
+      }
+    }
   }
   const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(deliver) }
   const delayWatch = createPromptDelayWatch(given.reportPromptDelay)
@@ -113,6 +127,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           options.cwd,
           options.onEvent,
           queue.holdBrief,
+          clearAndSend.hold,
         ),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
@@ -125,6 +140,12 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     for (const passed of review(event).flatMap(workPlanReview.pass)) {
       options.onEvent(passed)
     }
+  }
+
+  const sendRequest = (text: string): void => {
+    emitTurnOpening({ kind: "request", text, images: [] })
+    delayWatch.pushed(options.now())
+    input.push({ text, images: [] })
   }
 
   void applyNeutralOutputStyle(session)
@@ -146,6 +167,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
 
   return {
     prompt: (text, images, opening) => {
+      clearAndSend.discard()
       // 原寸と控えはここで分かれる。
       // 控えと id だけが記録（`request` / `aside`）へ行き、原寸はストリーミング入力へ流れる（棚に残っているぶんは棚の寿命で捨てる）。
       emitTurnOpening({ kind: opening, text, images: recordedPromptImages(images) })

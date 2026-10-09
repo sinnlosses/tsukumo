@@ -59,10 +59,12 @@ import {
   usageProposalKindGuide,
   usageReviewStageGuide,
 } from "../../usage-review/core/usage-review-tool.ts"
+import { CLEAR_AND_SEND_TOOL_DESCRIPTION } from "../core/clear-and-send.ts"
 import { answerQuestionBriefCall, QUESTION_BRIEF_TOOL_DESCRIPTION } from "../core/question-brief.ts"
 import type { ChatRecall, PersonaMemory, SessionMode } from "../core/session-driver.ts"
 import type { SpeechReview, SpeechVerdict } from "../core/speech-review.ts"
 import {
+  CLEAR_AND_SEND_TOOL_NAME,
   FORGET_TOOL_NAME,
   QUESTION_BRIEF_TOOL_NAME,
   RECALL_EPISODE_TOOL_NAME,
@@ -136,6 +138,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  * `report` は仕事のときだけ載る（仕事ではレポートを常にこれで受け取る。雑談は本文を書かない決まりなので載せない）。
  * `work_plan` も仕事のときだけ。
  * `question_brief` も仕事のときだけで、返すのは崩れた添え書きの直し方だけ。受け付けた添え書きは `holdBrief` に預ける。
+ * `clear_and_send` も仕事のときだけで、返すのは "ok" だけ。渡された文面は `holdClearAndSend` に預ける。
  * 見直しの2つも仕事のときだけ（トークン消費の画面から頼むのは仕事の会話への依頼）。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す（`toSessionEvents`）。
@@ -155,6 +158,7 @@ export function tsukumoServer(
   cwd: string,
   onEvent: (event: SessionEvent) => void,
   holdBrief: (briefs: readonly QuestionBrief[]) => void,
+  holdClearAndSend: (text: string) => void,
 ) {
   return createSdkMcpServer({
     name: TSUKUMO_MCP_SERVER_NAME,
@@ -168,6 +172,7 @@ export function tsukumoServer(
             reportTool(expressions, reportReview, onReportTitle, cwd, onEvent),
             workPlanTool(workPlanReview),
             questionBriefTool(holdBrief),
+            clearAndSendTool(holdClearAndSend),
             ...usageReviewTools(usageReview),
           ]
         : []),
@@ -320,6 +325,18 @@ function questionBriefTool(holdBrief: (briefs: readonly QuestionBrief[]) => void
         content: [{ type: "text" as const, text: answer.text }],
         isError: answer.isError,
       }
+    },
+  )
+}
+
+function clearAndSendTool(hold: (text: string) => void) {
+  return tool(
+    CLEAR_AND_SEND_TOOL_NAME,
+    CLEAR_AND_SEND_TOOL_DESCRIPTION,
+    { text: z.string().trim().min(1).describe("文脈を空にしたあと、最初の依頼として送る文面") },
+    async ({ text }) => {
+      hold(text)
+      return { content: [{ type: "text" as const, text: "ok" }] }
     },
   )
 }

@@ -12,6 +12,8 @@ export const REPORT_TOOL_NAME = "report"
 export const WORK_PLAN_TOOL_NAME = "work_plan"
 /** 質問の添え書きを受け取るツールの名前。載るのは仕事のときだけ。 */
 export const QUESTION_BRIEF_TOOL_NAME = "question_brief"
+/** 文脈を空にして次の依頼を送るツールの名前。載るのは仕事のときだけ。 */
+export const CLEAR_AND_SEND_TOOL_NAME = "clear_and_send"
 export const REMEMBER_TOOL_NAME = "remember"
 export const FORGET_TOOL_NAME = "forget"
 export const RECALL_TOOL_NAME = "recall"
