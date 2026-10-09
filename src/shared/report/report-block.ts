@@ -25,7 +25,7 @@ const listBlockSchema = z.object({
     .enum(["bullet", "ordered", "check", "flow"])
     .describe(
       "bullet は発見の一覧（候補の採否は options、ファイルは files。項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び / " +
-        "flow は一本道で3段以上辿る流れ（A → B → C と書かず項目を段にする。分岐・合流・戻りがあるなら mermaid の flowchart）",
+        "flow は一本道で3段以上辿る流れ（A → B → C と書かず項目を段にする。分岐・合流・戻りがあるなら graph）",
     ),
   items: z
     .array(
@@ -279,7 +279,6 @@ const codeBlockSchema = z
  * 挙げていない種類には構文が通らないものが混ざる。
  */
 export const REPORT_MERMAID_KINDS = [
-  "flowchart",
   "sequenceDiagram",
   "stateDiagram-v2",
   "classDiagram",
@@ -298,13 +297,57 @@ const mermaidBlockSchema = z
     source: z
       .string()
       .describe(
-        `図のソース。種類は ${REPORT_MERMAID_KINDS.join(" / ")} の${String(REPORT_MERMAID_KINDS.length)}種だけ（迷ったら flowchart）。` +
+        `図のソース。種類は ${REPORT_MERMAID_KINDS.join(" / ")} の${String(REPORT_MERMAID_KINDS.length)}種だけ。flowchart は graph の塊で書く。` +
           "ラベルの引用符・バッククォートは #quot; / #96; と書く",
       ),
     fold,
   })
+  .describe("時間の順（sequenceDiagram）・状態・クラス・ER など、flowchart 以外の図")
+
+export const REPORT_GRAPH_SHAPES = ["box", "round", "decision"] as const
+
+const graphNodeSchema = z.object({
+  id: z.string().min(1).describe("辺で結ぶための名前。この塊の中で重ならない（図には出ない）"),
+  label: z
+    .string()
+    .refine((value) => value.trim() !== "", "ラベルは1字以上")
+    .describe("図に出す名前"),
+  shape: z.enum(REPORT_GRAPH_SHAPES).describe("box は処理 / round は始点・終点 / decision は分岐"),
+})
+
+const graphEdgeSchema = z.object({
+  from: z.string().describe("節点の id"),
+  to: z.string().describe("節点の id"),
+  label: inlineText.default("").describe("辺に添える語。無ければ空"),
+})
+
+const graphBlockSchema = z
+  .object({
+    kind: z.literal("graph"),
+    title: inlineText.default(""),
+    direction: z.enum(["TD", "LR"]).describe("TD は上から下 / LR は左から右"),
+    nodes: z.array(graphNodeSchema).min(1),
+    edges: z.array(graphEdgeSchema),
+    fold,
+  })
+  .superRefine((block, context) => {
+    const ids = block.nodes.map((node) => node.id)
+    if (new Set(ids).size !== ids.length) {
+      context.addIssue({ code: "custom", message: "nodes の id が重複している", path: ["nodes"] })
+    }
+    const known = new Set(ids)
+    block.edges.forEach((edge, index) => {
+      if (!known.has(edge.from) || !known.has(edge.to)) {
+        context.addIssue({
+          code: "custom",
+          message: "edges の from / to が nodes の id に無い",
+          path: ["edges", index],
+        })
+      }
+    })
+  })
   .describe(
-    "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道なら list の flow）",
+    "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道なら list の flow）。flowchart はこれで書く",
   )
 
 export const REPORT_CHART_KINDS = ["bar", "line", "pie"] as const
@@ -369,6 +412,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   statsBlockSchema,
   codeBlockSchema,
   mermaidBlockSchema,
+  graphBlockSchema,
   chartBlockSchema,
   progressBlockSchema,
   optionsBlockSchema,
@@ -385,6 +429,7 @@ export const figureBlockSchema = z.discriminatedUnion("kind", [
   tableBlockSchema,
   compareBlockSchema,
   mermaidBlockSchema,
+  graphBlockSchema,
   codeBlockSchema,
   imageBlockSchema,
 ])

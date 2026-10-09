@@ -230,6 +230,15 @@ function blockMarkdown(
         bodyFormat: "markdown",
         fit: false,
       })
+    case "graph":
+      return captionedMarkdown({
+        kind: "figure",
+        ordinal,
+        title: block.title,
+        body: fencedMarkdown("mermaid", graphSource(block)),
+        bodyFormat: "markdown",
+        fit: false,
+      })
     case "chart":
       return captionedMarkdown({
         kind: "figure",
@@ -259,6 +268,7 @@ function captionKindOf(block: ReportBlock): CaptionKind | undefined {
     case "compare":
     case "beforeAfter":
     case "mermaid":
+    case "graph":
     case "chart":
       return "figure"
     case "table":
@@ -868,6 +878,35 @@ function fencedMarkdown(info: string, source: string): string {
   const longest = Math.max(0, ...[...source.matchAll(/`+/g)].map(([run]) => run.length))
   const fence = "`".repeat(Math.max(3, longest + 1))
   return `${fence}${info}\n${source.replace(/\n$/, "")}\n${fence}`
+}
+
+/**
+ * 書き手の `id` は辺を結ぶためだけに使い、ソースの ID は `n0`, `n1` … を振る（`end` などの予約語を避ける）。
+ * ラベルは節点も辺も必ず引用符で包む（`@`・`(`・`|` などを構文と読ませない）。
+ */
+function graphSource(block: Extract<ReportBlock, { readonly kind: "graph" }>): string {
+  const mermaidId = (index: number): string => `n${String(index)}`
+  const mermaidIdOf = (writerId: string): string =>
+    mermaidId(block.nodes.findIndex((node) => node.id === writerId))
+  const quoted = (label: string): string =>
+    `"${label.replaceAll('"', "#quot;").replaceAll("`", "#96;")}"`
+  const nodeLines = block.nodes.map((node, index) => {
+    const label = quoted(node.label)
+    const id = mermaidId(index)
+    switch (node.shape) {
+      case "box":
+        return `  ${id}[${label}]`
+      case "round":
+        return `  ${id}(${label})`
+      case "decision":
+        return `  ${id}{${label}}`
+    }
+  })
+  const edgeLines = block.edges.map((edge) => {
+    const arrow = edge.label.trim() === "" ? "-->" : `-->|${quoted(edge.label)}|`
+    return `  ${mermaidIdOf(edge.from)} ${arrow} ${mermaidIdOf(edge.to)}`
+  })
+  return [`flowchart ${block.direction}`, ...nodeLines, ...edgeLines].join("\n")
 }
 
 /**

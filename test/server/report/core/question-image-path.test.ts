@@ -46,7 +46,7 @@ describe("questionImagePaths", () => {
           figures: [
             { kind: "image", path: "shot/a.png", caption: "架空", notes: [], fold: "" },
             { kind: "image", path: "shot/d.png", caption: "架空", notes: [], fold: "" },
-            { kind: "mermaid", title: "", source: "flowchart LR\n  A --> B", fold: "" },
+            { kind: "mermaid", title: "", source: "sequenceDiagram\n  A ->> B: x", fold: "" },
           ],
         },
       ],

@@ -305,7 +305,7 @@ function violationLine(violation: ReportViolation): string {
     case "long-paragraph":
       return `4文以上の地の文が${violation.count}個ある。表・箇条書きへ移すか、\`fold\` で畳む`
     case "unknown-mermaid":
-      return `mermaid の図に規約の10種の外の種類が${violation.count}個ある。10種から選ぶ（迷ったら flowchart）`
+      return `mermaid の図に規約の9種の外の種類が${violation.count}個ある。flowchart は graph の塊で書き、それ以外は9種から選ぶ`
     case "too-many-notes":
       return `\`note\` の塊が${violation.count}個ある。2個まで減らす`
     case "crowded-notes":

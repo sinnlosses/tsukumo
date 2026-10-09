@@ -664,10 +664,45 @@ describe("reportSectionsMarkdown", () => {
       markdownOf({
         kind: "mermaid",
         title: "架空の図",
-        source: "flowchart LR\n  A --> B",
+        source: "sequenceDiagram\n  A ->> B: x",
         fold: "",
       }),
-    ).toBe(fencedFigureCaptioned("```mermaid\nflowchart LR\n  A --> B\n```", "架空の図"))
+    ).toBe(fencedFigureCaptioned("```mermaid\nsequenceDiagram\n  A ->> B: x\n```", "架空の図"))
+  })
+
+  it("graph は ID を n0 から振り直し、ラベルを引用符で包んだ flowchart にして図の番号と題を付ける", () => {
+    const nodes = [
+      { id: "end", label: '@a (b) "c" `d`', shape: "box" },
+      { id: "x", label: "架空の丸", shape: "round" },
+      { id: "y", label: "架空の分岐", shape: "decision" },
+    ] as const
+    expect(
+      markdownOf({
+        kind: "graph",
+        title: "架空の図",
+        direction: "LR",
+        nodes,
+        edges: [
+          { from: "end", to: "x", label: "" },
+          { from: "x", to: "y", label: "a|b" },
+        ],
+        fold: "",
+      }),
+    ).toBe(
+      fencedFigureCaptioned(
+        [
+          "```mermaid",
+          "flowchart LR",
+          '  n0["@a (b) #quot;c#quot; #96;d#96;"]',
+          '  n1("架空の丸")',
+          '  n2{"架空の分岐"}',
+          "  n0 --> n1",
+          '  n1 -->|"a|b"| n2',
+          "```",
+        ].join("\n"),
+        "架空の図",
+      ),
+    )
   })
 
   it("chart は Chart.js の設定を組んで chart フェンスに JSON で書く。pie は先頭の系列だけを使う", () => {
@@ -835,7 +870,7 @@ describe("reportSectionsMarkdown", () => {
       ],
       fold: "",
     }
-    const mermaid: ReportBlock = { kind: "mermaid", title: "", source: "flowchart LR", fold: "" }
+    const mermaid: ReportBlock = { kind: "mermaid", title: "", source: "sequenceDiagram", fold: "" }
     const matrix: ReportBlock = {
       kind: "matrix",
       title: "",

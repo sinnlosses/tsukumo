@@ -141,8 +141,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 **本文は `report` の `sections`（節と塊の並び）で受け取る**（2026-09-27。形の案は
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
-- 塊は `text` / `list` / `table` / `matrix` / `compare` / `beforeAfter` / `dimension` / `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `image` / `files` と、逃げ道の
-  `markdown` の17種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
+- 塊は `text` / `list` / `table` / `matrix` / `compare` / `beforeAfter` / `dimension` / `note` / `stats` / `code` / `mermaid` / `graph` / `chart` / `progress` / `options` / `image` / `files` と、逃げ道の
+  `markdown` の18種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
   `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（`svg`・引用・
   区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。同じことを両方に書くと毎ターンの文脈に2回載る。
   **種類の数に上限は置かない**（2026-09-30 改訂。足すかは下の「読む時間を減らす物差しと線引き」、
@@ -154,6 +154,13 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   この塊に一本化し、記法の表から外した。表の数の列に付く横棒（下の「表の描き方は型から決め、
   書き手は何も選ばない」）と役割が重なるので、数が3つ以上並ぶ表を `chart` へ差し戻す検査は
   足さない（正確な値を読ませたい場面は表のままでよい）
+- **flowchart は `graph` の塊で見せる**（2026-10-09 利用者決定）。書き手は `direction`・`nodes`
+  〔`id`・`label`・`shape`: `box` / `round` / `decision`〕・`edges`〔`from`・`to`・`label`〕を構造で渡し、
+  tsukumo が ID を `n0`, `n1` … と振り、ラベルを必ず引用符で包んだ mermaid のソースに組み立てる
+  （mermaid 12.1.0 は引用符の無いラベルの `@`・`(`・`end` などを構文と読んで図が割れるため。書き手の
+  `id` はソースに出ない）。描くのは `mermaid` の塊と同じ経路で、図の番号と題も同じ。辺の行き先が `nodes`
+  に無い・`id` の重複・空のラベルは入口で落とす。`mermaid` の塊に flowchart を書くと `unknown-mermaid`
+  で差し戻し、`graph` の塊へ寄せる
 - **「名前: 説明」「A → B」「A → B → C」「12 → 8」は既存の塊の欄で見せる**（2026-09-27。
   `docs/research/report-block-richness.md` 2章）。欄は事実を言うものだけで、差や増減の割合は tsukumo が計算しない
   - 表のセルの `{ from, to }`: 前の値と矢印の文字を `ink-quiet`、後の値を `ink` で描く。状態（`status`）と
@@ -171,7 +178,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
     逃げ道の `dl` は記法の表から外した（塊の無い記法としては数え続け、欄を足す前後の比較に使う）
   - `list` の `style` の `flow`: 項目を `<ol>` にし、段ごとに番号の丸を1本の線でつないで上から下へ積む
     （2026-10-02 デザイン「流れの塊 案A」。見本は `docs/history/mockup/report-flow-rail-2026-10-02.html`）。
-    **一本道で3段以上辿る流れは `flow`、分岐・合流・戻りがあれば mermaid の flowchart**（段の数の上限は
+    **一本道で3段以上辿る流れは `flow`、分岐・合流・戻りがあれば `graph`**（段の数の上限は
     言わない。縦に積むので長い一本道も `flow` で足り、形の有無のほうが書き手に機械的に決められる）。
     丸・線は `aria-hidden` の飾りで、順番は `<ol>` が伝える。寸法・色は
     `docs/architecture/screen-design.md` 13.2
@@ -271,15 +278,15 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   幅を取るので包みを縮めない（`notes` が空なら今までどおり `captioned-fit`）。画像が読めないときも、並びは
   「画像を出せない」の札の横に残る。6つ以上は `options`・`compare` と同じ違反（`too-many-candidates`）で差し戻す
 - **図と表には番号つきの題を付ける**（2026-10-03。利用者決定は 2026-10-02。図〔`image`・`dimension`・
-  `compare`・`beforeAfter`・`mermaid`・`chart`〕は題を本体の**下**に「図 n」、表〔`table`・`matrix`〕は題を本体の**上**に
+  `compare`・`beforeAfter`・`mermaid`・`graph`・`chart`〕は題を本体の**下**に「図 n」、表〔`table`・`matrix`〕は題を本体の**上**に
   「表 n」。番号は図と表を別々に、`reportSectionsMarkdown` が節をまたいで塊の並びの順に1から数える。
   `options` は候補の採否の札なので数えない）。**題が空でも番号は出し**〔`image` の `caption` が空でも
   「図 n」が付いていた数え方に揃える。題の有無で番号の振り方が変わらない〕、**`fold` で畳んだ中も数える**
-  〔畳んでも番号が飛ばない〕。引数は `title`〔`image` だけ従来どおり `caption`〕で、`mermaid` と `chart` は
+  〔畳んでも番号が飛ばない〕。引数は `title`〔`image` だけ従来どおり `caption`〕で、`mermaid`・`graph`・`chart` は
   `title` を省いてよい〔空文字〕。**題は本体の幅を超えない**: 包み（`div.captioned`）が本体の幅に縮み
   〔`captioned-fit`。`image`・`table`・`matrix`・`dimension`。20rem を下限にして、短い表の題が何行にも
   折れないようにする〕、題の行は `contain: inline-size` で幅の計算から外れて包みの幅で折り返す。親の幅を
-  取る `chart`・`compare`・`beforeAfter` と、全幅の `pre` に描く `mermaid` は縮めない。題の文字は inline code だけを解く
+  取る `chart`・`compare`・`beforeAfter` と、全幅の `pre` に描く `mermaid`・`graph` は縮めない。題の文字は inline code だけを解く
   〔太字・リンクは効かない〕
 - **節を書き上げる演出の塊（トピック）の単位にする**（2026-09-27。`docs/research/report-block-richness.md`
   2章）。見出しのタグや水平線を DOM から探して境目を当てるのはやめ（見出しのレベルは節の中の

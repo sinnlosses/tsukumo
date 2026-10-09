@@ -2304,9 +2304,24 @@
                 "heading": "架空の図",
                 "blocks": [
                   {
-                    "kind": "mermaid",
+                    "kind": "graph",
                     "title": "架空の流れ図で題がとても長く、図の幅を超えずに折り返して読めるかどうかを確かめるための文",
-                    "source": "flowchart LR\n  A[架空の入口] --> B[架空の処理] --> C[架空の出口]",
+                    "direction": "LR",
+                    "nodes": [
+                      { "id": "in", "label": "@架空の入口 (開始)", "shape": "round" },
+                      { "id": "end", "label": "架空の \"処理\" `end`", "shape": "box" },
+                      { "id": "pick", "label": "架空の分岐?", "shape": "decision" }
+                    ],
+                    "edges": [
+                      { "from": "in", "to": "end", "label": "" },
+                      { "from": "end", "to": "pick", "label": "a|b" }
+                    ],
+                    "fold": ""
+                  },
+                  {
+                    "kind": "mermaid",
+                    "title": "",
+                    "source": "sequenceDiagram\n  A->>B: 架空の呼び出し",
                     "fold": ""
                   },
                   {

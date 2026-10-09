@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  figureBlockSchema,
   parseReportSections,
   type ReportBlock,
   reportSectionsOfBody,
@@ -159,7 +160,7 @@ describe("parseReportSections", () => {
   })
 
   it("mermaid と chart の塊は省いた title を空文字で補う", () => {
-    const mermaid = { kind: "mermaid", source: "flowchart LR\n  A --> B" }
+    const mermaid = { kind: "mermaid", source: "sequenceDiagram\n  A ->> B: x" }
     const chart = {
       kind: "chart",
       chartKind: "bar",
@@ -176,6 +177,42 @@ describe("parseReportSections", () => {
         ],
       },
     ])
+  })
+
+  describe("graph の塊", () => {
+    const graph = {
+      kind: "graph",
+      direction: "TD",
+      nodes: [
+        { id: "a", label: "架空の始点", shape: "round" },
+        { id: "b", label: "架空の処理", shape: "box" },
+      ],
+      edges: [{ from: "a", to: "b" }],
+    }
+    const blocksOf = (block: unknown) =>
+      parseReportSections([{ heading: "", blocks: [block] }]).sections.flatMap(
+        (section) => section.blocks,
+      )
+
+    it("通り、title・fold・辺の label は空文字で補う", () => {
+      expect(blocksOf(graph)).toEqual([
+        { ...graph, title: "", fold: "", edges: [{ from: "a", to: "b", label: "" }] },
+      ])
+      expect(figureBlockSchema.safeParse(graph).success).toBe(true)
+    })
+
+    it("辺の行き先が無い・id の重複・空のラベルは落ちる", () => {
+      const [first, second] = graph.nodes
+      const broken = [
+        { ...graph, edges: [{ from: "a", to: "x" }] },
+        { ...graph, nodes: [first, { ...second, id: "a" }] },
+        { ...graph, nodes: [first, { ...second, label: "  " }] },
+      ]
+      for (const block of broken) {
+        expect(blocksOf(block)).toEqual([])
+        expect(figureBlockSchema.safeParse(block).success).toBe(false)
+      }
+    })
   })
 
   it("progress の塊は知らない種類として落とさない（unknownBlockCount が0になる）", () => {

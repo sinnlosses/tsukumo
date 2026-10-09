@@ -48,7 +48,7 @@ describe("reportViolations", () => {
         rows: [["a", { status: "ok", text: "OK" }]],
         fold: "",
       },
-      mermaid("flowchart LR\n  a --> b"),
+      mermaid("sequenceDiagram\n  a ->> b: x"),
       note(),
       markdown('<div class="cols"><div class="card">架空の案A</div></div>'),
     ]
@@ -289,21 +289,38 @@ describe("reportViolations", () => {
     })
   })
 
-  describe("mermaid は規約の10種だけ", () => {
-    it("10種は違反にしない", () => {
+  describe("mermaid は規約の9種だけ", () => {
+    it("9種は違反にしない", () => {
       for (const kind of REPORT_MERMAID_KINDS) {
         expect(kinds(draft([mermaid(kind)]))).toEqual([])
       }
     })
 
-    it("10種の外の種類は違反", () => {
+    it("9種の外の種類は違反", () => {
       expect(reportViolations(draft([mermaid('pie\n  "a" : 1')]))).toEqual([
         { kind: "unknown-mermaid", count: 1 },
       ])
     })
 
+    it("flowchart は旧い graph の書き出しも含めて違反にし、graph の塊は違反にしない", () => {
+      expect(
+        reportViolations(
+          draft([mermaid("flowchart LR\n  a --> b"), mermaid("graph TD\n  a --> b")]),
+        ),
+      ).toEqual([{ kind: "unknown-mermaid", count: 2 }])
+      const graph: ReportBlock = {
+        kind: "graph",
+        title: "",
+        direction: "TD",
+        nodes: [{ id: "a", label: "架空", shape: "box" }],
+        edges: [],
+        fold: "",
+      }
+      expect(kinds(draft([graph]))).toEqual([])
+    })
+
     it("%% の行と先頭の --- の設定は飛ばして種類を読む", () => {
-      const source = ["---", "title: 架空", "---", "%% 架空", "flowchart LR"].join("\n")
+      const source = ["---", "title: 架空", "---", "%% 架空", "sequenceDiagram"].join("\n")
       expect(kinds(draft([mermaid(source)]))).toEqual([])
     })
   })

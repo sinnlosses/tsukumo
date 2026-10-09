@@ -28,7 +28,6 @@ afterEach(() => {
  * 先にメインビューへ出して描けることを確かめる。
  */
 const DRAWN_MERMAID_KINDS = [
-  "flowchart",
   "sequenceDiagram",
   "stateDiagram-v2",
   "classDiagram",

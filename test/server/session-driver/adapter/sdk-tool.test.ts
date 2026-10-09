@@ -251,7 +251,7 @@ describe("question_brief", () => {
             label: "A案",
             pros: ["架空の良い点。"],
             byAxis: ["速い"],
-            figures: [{ kind: "mermaid", source: "flowchart LR\n  A --> B" }],
+            figures: [{ kind: "mermaid", source: "sequenceDiagram\n  A ->> B: x" }],
           },
           { label: "B案", cons: ["架空の悪い点。"], byAxis: ["遅い"], irreversible: true },
         ],
@@ -283,7 +283,7 @@ describe("question_brief", () => {
               byAxis: ["速い"],
               irreversible: false,
               figures: [
-                { kind: "mermaid", title: "", source: "flowchart LR\n  A --> B", fold: "" },
+                { kind: "mermaid", title: "", source: "sequenceDiagram\n  A ->> B: x", fold: "" },
               ],
             },
             {
