@@ -37,6 +37,7 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/chat-compact-boundary.test.ts": "every",
   "test/e2e/chat-remembered-lines.test.ts": ["sidebar", "chat"],
   "test/e2e/chat-restored-history.test.ts": ["main", "chat"],
+  "test/e2e/chat-speech-gap.test.ts": ["main", "chat"],
   "test/e2e/conversation-moment.test.ts": "every",
   "test/e2e/conversation-tier.test.ts": "every",
   "test/e2e/input-dispatch.test.ts": ["main", "dispatch"],

@@ -7,9 +7,9 @@
 // 利用者の発言・日の区切り・圧縮の区切りは、順番が回ってくればその場で出す。
 // 返事を待っている間は雑談中の入力欄が塞がるので、待っている吹き出しの手前に利用者の発言が割り込むことは無い。
 //
-// 出せるところまでは effect ではなくレンダー中に進める。
-// `entries` が増えたときも、時計が2秒の間隔に追いついたときも、判定は純粋関数 `advanceReveal` のやり直しで済む。
-// effect が持つのは、足止めが空く時刻に1回だけ鳴るタイマーで、役目は描き直させる合図を出すことだけ。
+// 出せるところまでは、判定の純粋関数 `advanceReveal` をレンダー中に進める。
+// 判定に使う時刻はレンダー中に読まず、記録が増えたとき・足止めのタイマーが鳴ったときに effect で読んで state に持つ。
+// レンダー中の `nowEpochMilliseconds()` は引数が無いので、React Compiler が画面を開いたときの1回だけの値に固めてしまう。
 
 import { useEffect, useState } from "react"
 import { isDeepEqual } from "remeda"
@@ -40,19 +40,18 @@ export function useRevealedChatLog(entries: readonly ChatLogEntry[]): RevealedCh
   // 直前に吹き出しを出した時刻。マウント時点で並んでいた記録ぶんはここに残さない（undefined のまま）。
   // そのときは根拠なく足止めせず、最初の1件は届き次第そのまま出す。
   const [lastRevealAt, setLastRevealAt] = useState<number | undefined>(undefined)
-  // 足止めが空いて描き直させたときの時刻。
-  // 時刻の読み取りは引数の無い呼び出しで、React Compiler は依存に数えない。
-  // この値を渡して、描き直しのたびに時刻を読み直させる。
-  const [wokeAt, setWokeAt] = useState(0)
+  // 判定に使う時刻と、それを読んだときの記録の件数。
+  // 件数が今と食い違うあいだ（`stale`）は、時刻が古いので出す件数を進めない（古い時刻で出すと、次の足止めが実際より短くなる）。
+  const [clock, setClock] = useState(() => ({
+    length: entries.length,
+    at: nowEpochMilliseconds(),
+  }))
 
-  // 出せるところまでをレンダー中に進める（いまの時刻を読むのはここだけ）。
   // React はレンダー中の `setState` を、コミットする前にもう一度その場でレンダーし直すので、この回のうちに反映される。
-  const advanced = advanceReveal(
-    entries,
-    shown.length,
-    lastRevealAt,
-    Math.max(wokeAt, nowEpochMilliseconds()),
-  )
+  const stale = clock.length !== entries.length
+  const advanced: Advanced = stale
+    ? { kind: "open", count: Math.min(shown.length, entries.length), lastRevealAt }
+    : advanceReveal(entries, shown.length, lastRevealAt, clock.at)
   const prefix = entries.slice(0, advanced.count)
   if (!isDeepEqual(shown, prefix)) {
     setShown(prefix)
@@ -61,29 +60,33 @@ export function useRevealedChatLog(entries: readonly ChatLogEntry[]): RevealedCh
     setLastRevealAt(advanced.lastRevealAt)
   }
 
-  // 足止めしている間だけ、空く時刻に1回だけ描き直させる。
-  // 空いたかどうかの判定自体は上のレンダー中の計算がやり直すので、ここで呼ぶ `setState` は「もう一度描き直して」という合図でしかなく、`entries` や出す件数を直接進めない。
+  // 時刻を読み直させるタイマー。記録が増えた直後は今すぐ、足止めしている間は空く時刻に1回だけ鳴らす。
+  // 空いたかどうかの判定自体は上のレンダー中の計算がやり直すので、ここは `entries` や出す件数を直接進めない。
+  const openAt = advanced.kind === "gated" ? advanced.openAt : undefined
   useEffect(() => {
-    if (advanced.kind === "open") {
+    if (!stale && openAt === undefined) {
       return undefined
     }
-    const { openAt } = advanced
-    let timer = setTimeout(wake, openAt - nowEpochMilliseconds())
+    let timer = setTimeout(
+      wake,
+      stale || openAt === undefined ? 0 : Math.max(0, openAt - nowEpochMilliseconds()),
+    )
     // タイマーが時計より早く鳴ったときは、残りでもう一度張る。
     function wake(): void {
-      const remaining = openAt - nowEpochMilliseconds()
-      if (remaining > 0) {
-        timer = setTimeout(wake, remaining)
+      const now = nowEpochMilliseconds()
+      if (!stale && openAt !== undefined && openAt - now > 0) {
+        timer = setTimeout(wake, openAt - now)
         return
       }
-      setWokeAt(openAt)
+      setClock({ length: entries.length, at: now })
     }
     return () => {
       clearTimeout(timer)
     }
-  }, [advanced])
+  }, [stale, openAt, entries.length])
 
-  return { entries: shown, pending: advanced.count < entries.length }
+  // 時刻を読み直すあいだは、出すかどうかが決まっていないので「...」を出さない。
+  return { entries: shown, pending: !stale && advanced.count < entries.length }
 }
 
 /** {@link advanceReveal} の結果。`gated` は次のセリフが `openAt`（エポックミリ秒）まで足止めされている。 */

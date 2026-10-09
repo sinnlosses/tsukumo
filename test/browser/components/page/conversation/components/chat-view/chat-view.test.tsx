@@ -1,6 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ChatView } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-view.tsx"
 import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
@@ -303,7 +303,19 @@ describe("ChatView のセリフが現れる（docs/architecture/screen-design.md
         speechExpression: expression,
       })
     })
+    // 届いた直後に鳴る、判定の時刻を読み直すタイマー。
+    act(() => {
+      vi.advanceTimersByTime(0)
+    })
   }
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 
   // 弾む動き自体（CSS のアニメーション）はここでは見ない——見えるかどうかは目視で確かめる
   // （docs/architecture/testing.md「手で確かめること」）。ここで守るのは、届いたばかりのセリフが

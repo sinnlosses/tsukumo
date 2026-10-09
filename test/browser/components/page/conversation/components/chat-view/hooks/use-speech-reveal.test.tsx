@@ -34,6 +34,13 @@ function speeches(count: number): readonly ChatLogEntry[] {
   )
 }
 
+/** 記録が増えた直後に鳴る、判定の時刻を読み直すタイマーを済ませる。 */
+function flushClockRead(): void {
+  act(() => {
+    vi.advanceTimersByTime(0)
+  })
+}
+
 /** 空の状態で開き、1件目を出した状態から始める。描画の回数も数える。 */
 function openWithFirstSpeech(): {
   readonly result: { readonly current: ReturnType<typeof useRevealedChatLog> }
@@ -50,11 +57,13 @@ function openWithFirstSpeech(): {
     { initialProps: { entries: speeches(0) } },
   )
   rerender({ entries: speeches(1) })
+  flushClockRead()
   return {
     result,
     renders: () => renderCount,
     rerender: (entries) => {
       rerender({ entries })
+      flushClockRead()
     },
     unmount,
   }

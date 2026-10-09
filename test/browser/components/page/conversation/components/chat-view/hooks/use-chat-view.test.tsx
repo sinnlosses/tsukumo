@@ -1,6 +1,6 @@
-import { act, cleanup, renderHook } from "@testing-library/react"
+import { act as actInReact, cleanup, renderHook } from "@testing-library/react"
 import type { ReactElement, ReactNode } from "react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   useChatView,
@@ -22,9 +22,25 @@ import { putState, putSession } from "../../../../../../session-store.ts"
  * 文面は手で書いた架空のもの
  */
 
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
 })
+
+/**
+ * `act` のあとに、記録が増えた直後に鳴る判定の時刻を読み直すタイマーを済ませる。
+ * これを済ませるまで、届いたセリフを出すかどうかは決まらない。
+ */
+function act(callback: () => void): void {
+  actInReact(callback)
+  actInReact(() => {
+    vi.advanceTimersByTime(0)
+  })
+}
 
 const RECORDS: readonly SessionRecord[] = [
   requestRecord({ turnId: 0, text: "1つめの依頼" }),

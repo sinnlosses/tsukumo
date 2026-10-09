@@ -812,6 +812,42 @@
       ]
     },
     {
+      "name": "chat-speech-gap",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "chat-mode-changed",
+            "chat": true
+          }
+        },
+        {
+          "afterMs": 3000,
+          "event": {
+            "kind": "speech",
+            "text": "架空のセリフその1だよ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 3100,
+          "event": {
+            "kind": "speech",
+            "text": "架空のセリフその2だよ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 3200,
+          "event": {
+            "kind": "speech",
+            "text": "架空のセリフその3だよ。",
+            "expression": "default"
+          }
+        }
+      ]
+    },
+    {
       "name": "chat-restored-history",
       "resume": "fake-past-chat-session",
       "steps": [
