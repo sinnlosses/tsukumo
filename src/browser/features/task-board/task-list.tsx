@@ -1,5 +1,5 @@
 // サイドバーの「タスク一覧」。進行中（doing）だけ先頭のカードにまとめ、残りは一覧の順で出す（todo と done は混ざったまま）。
-// `done` は薄く打ち消し線で出す。行とカードは押すとのぞき窓が開き、「これを始める」を出すのは依存が済んだ `todo` だけ。
+// `done` は薄く打ち消し線で出す。行とカードは押すとのぞき窓が開き、「これを始める」を出すのは依存が済んだ `todo` と保留だけ。
 // 絞り込みで隠れた依存も止めるので、着手できるかは絞る前の全件で判定する。
 // 読めない・まだ届いていないときは undefined。
 //
@@ -13,11 +13,8 @@
 
 import type { ReactElement } from "react"
 
-import {
-  taskReadiness,
-  type TaskSummaryItem,
-  type TaskSummaryResult,
-} from "../../../shared/repository/task-summary.ts"
+import { isTaskRequestable } from "../../../shared/repository/task-run-prompt.ts"
+import type { TaskSummaryItem, TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 import { Text } from "../../components/ui/text/text.tsx"
 import { TaskItem, type TaskItemPeek } from "./components/task-item.tsx"
 import { TaskPeek, type TaskPeekRun } from "./components/task-peek.tsx"
@@ -141,10 +138,9 @@ function peekOf(task: TaskSummaryItem, context: PeekContext): TaskItemPeek {
   if (peek.state.kind !== "open" || peek.state.id !== task.id) {
     return { kind: "closed" }
   }
-  const run: TaskPeekRun =
-    taskReadiness(task)?.kind === "ready"
-      ? { kind: "available", confirming: peek.state.confirming }
-      : { kind: "none" }
+  const run: TaskPeekRun = isTaskRequestable(task)
+    ? { kind: "available", held: task.status === "hold", confirming: peek.state.confirming }
+    : { kind: "none" }
   const domId = taskPeekDomId(task.id)
   return {
     kind: "open",

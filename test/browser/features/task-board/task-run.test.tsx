@@ -160,7 +160,7 @@ describe("タスクの実行を頼む", () => {
     expect(document.querySelector("dialog.task-board")?.hasAttribute("open")).toBe(true)
   })
 
-  it("区画の一覧で「これを始める」が出るのは着手できる todo だけ", () => {
+  it("区画の一覧で「これを始める」が出るのは、着手できる todo と待ちの無い保留", () => {
     const task = (
       id: string,
       status: string,
@@ -183,16 +183,36 @@ describe("タスクの実行を頼む", () => {
           task("Y-002", "todo", ["Y-001"]),
           task("Y-003", "todo", []),
           task("Y-004", "hold", []),
+          task("Y-005", "hold", ["Y-001"]),
         ])}
         selectedStatus="all"
       />,
     )
 
-    const startable = ["Y-001", "Y-002", "Y-003", "Y-004"].filter((id) => {
+    const startable = ["Y-001", "Y-002", "Y-003", "Y-004", "Y-005"].filter((id) => {
       fireEvent.click(rowOf(id))
       return screen.queryByRole("button", { name: "これを始める →" }) !== null
     })
-    expect(startable).toEqual(["Y-003"])
+    expect(startable).toEqual(["Y-003", "Y-004"])
+  })
+
+  it("区画の一覧から保留を頼むと、判断を聞く旨を添えて送る", () => {
+    const sent: unknown[] = []
+    renderWithStore(
+      <TaskList tasks={known([...TASKS, holdTask("X-003", [], [])])} selectedStatus="all" />,
+      collectInto(sent),
+    )
+
+    startFromPeek("X-003")
+    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
+
+    expect(sent).toEqual([
+      {
+        procedure: "session.prompt",
+        text: "タスク X-003 を進めて（bd show X-003 で読める）。このタスクは保留なので、着手の前に判断を聞いて。",
+        images: [],
+      },
+    ])
   })
 
   it("モーダルからは依存の済んだ保留も頼め、判断を聞かれることを確認に添える", () => {

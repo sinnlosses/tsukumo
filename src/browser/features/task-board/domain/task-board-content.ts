@@ -1,5 +1,6 @@
 // 一覧のタスクを、行・絞り込みの札・選んだタスクの詳細・操作の帯へ畳む。
 
+import { isTaskRequestable } from "../../../../shared/repository/task-run-prompt.ts"
 import {
   taskReadiness,
   type TaskLocation,
@@ -127,10 +128,9 @@ function selectionOf(
   }
 }
 
-/** 保留のタスクは、文面が着手の前に判断を尋ねさせるので頼める。 */
 function runOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRun {
   const kind = entry.state.kind
-  if (kind === "ready" || (kind === "hold" && entry.task.waitingFor.length === 0)) {
+  if (kind === "ready" || isTaskRequestable(entry.task)) {
     return { kind: "available", onRun: () => input.run(entry.task.id) }
   }
   return { kind: "unavailable", reason: RUN_UNAVAILABLE_REASON[kind] }
