@@ -81,53 +81,56 @@ describe("E2E を全部流すコマンドの数え方", () => {
 describe("tw verify が打つコマンドの読み方", () => {
   const tempDir = useTempDir("tw-verify-command")
 
-  function section(lines: readonly string[]): string {
-    return `# 架空\n\n## タスク運用\n\n${lines.join("\n")}\n`
+  function config(lines: readonly string[]): string {
+    return `# タスク運用の設定\n\n${lines.join("\n")}\n`
   }
 
-  function write(name: string, text: string): void {
-    writeFileSync(join(tempDir(), name), text)
+  function write(text: string): void {
+    mkdirSync(join(tempDir(), ".tw"), { recursive: true })
+    writeFileSync(join(tempDir(), ".tw/config.toml"), text)
   }
 
-  test("送る前の検証コマンドの行があれば、検証コマンドの行より先にそれを読む", () => {
-    write(
-      "CLAUDE.md",
-      section([
-        "- 検証コマンド: `pnpm run check`",
-        "- 送る前の検証コマンド: `pnpm run check --full`",
-      ]),
-    )
+  test("送る前の検証コマンドがあれば、検証コマンドより先にそれを読む", () => {
+    write(config(['verify = "pnpm run check"', 'verify_before_ship = "pnpm run check --full"']))
     expect(readTwVerifyCommand(tempDir())).toBe("pnpm run check --full")
   })
 
   test.each([
-    ["行が無い", ["- 検証コマンド: `pnpm run check`"]],
-    ["値が なし で始まる", ["- 検証コマンド: `pnpm run check`", "- 送る前の検証コマンド: なし"]],
-  ])("送る前の検証コマンドの%sときは、検証コマンドの行を読む", (_name, lines) => {
-    write("CLAUDE.md", section(lines))
+    ["が無い", ['verify = "pnpm run check"']],
+    ["の値が なし", ['verify = "pnpm run check"', 'verify_before_ship = "なし"']],
+  ])("送る前の検証コマンド%sときは、検証コマンドを読む", (_name, lines) => {
+    write(config(lines))
     expect(readTwVerifyCommand(tempDir())).toBe("pnpm run check")
   })
 
-  test("AGENTS.md に節があれば CLAUDE.md より先にそちらを読む", () => {
-    write("AGENTS.md", section(["- 検証コマンド: `pnpm run agents-check`"]))
-    write("CLAUDE.md", section(["- 検証コマンド: `pnpm run claude-check`"]))
-    expect(readTwVerifyCommand(tempDir())).toBe("pnpm run agents-check")
-  })
-
-  test("AGENTS.md に節が無ければ CLAUDE.md を読む", () => {
-    write("AGENTS.md", "# 架空\n\n- 検証コマンド: `pnpm run agents-check`\n")
-    write("CLAUDE.md", section(["- 検証コマンド: `pnpm run claude-check`"]))
-    expect(readTwVerifyCommand(tempDir())).toBe("pnpm run claude-check")
+  test("コメント・空行・行末コメント・単引用符の値を読み分ける", () => {
+    write(
+      config([
+        '# verify_before_ship = "pnpm run commented"',
+        "",
+        'format = "pnpm run format"',
+        "verify = 'pnpm run check'  # 通常の検証",
+      ]),
+    )
+    expect(readTwVerifyCommand(tempDir())).toBe("pnpm run check")
   })
 
   test.each([
     ["設定ファイルが無い", undefined],
-    ["節が無い", "# 架空\n\n- 検証コマンド: `pnpm run check`\n"],
-    ["コマンドの行が無い", section(["- 整形コマンド: `pnpm run format`"])],
+    ["検証コマンドの値が なし", config(['verify = "なし"'])],
+    ["検証コマンドのキーが無い", config(['format = "pnpm run format"'])],
   ])("%sときは空文字を返す", (_name, text) => {
     if (text !== undefined) {
-      write("CLAUDE.md", text)
+      write(text)
     }
+    expect(readTwVerifyCommand(tempDir())).toBe("")
+  })
+
+  test(".tw/config.toml が無ければ、CLAUDE.md の旧い節は読まない", () => {
+    writeFileSync(
+      join(tempDir(), "CLAUDE.md"),
+      "# 架空\n\n## タスク運用\n\n- 検証コマンド: `pnpm run check`\n",
+    )
     expect(readTwVerifyCommand(tempDir())).toBe("")
   })
 })
@@ -255,10 +258,8 @@ describe("委譲先の E2E 全段の呼び出しを上限で拒否する hook", 
 
   test("送る前の検証コマンドが check --full なら、文書だけの変更でも tw verify の上限を超える呼び出しを止める", async () => {
     const dir = await newClaimedRepoWithChange("docs/workflow.md")
-    writeFileSync(
-      join(dir, "CLAUDE.md"),
-      "# 架空\n\n## タスク運用\n\n- 送る前の検証コマンド: `pnpm run check --full`\n",
-    )
+    mkdirSync(join(dir, ".tw"), { recursive: true })
+    writeFileSync(join(dir, ".tw/config.toml"), 'verify_before_ship = "pnpm run check --full"\n')
     expect((await runHook(dir, bashInput(OVER_LIMIT_BY_CHANGE, true))).exitCode).toBe(2)
   })
 

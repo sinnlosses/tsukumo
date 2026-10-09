@@ -6,7 +6,6 @@ import { describe, expect, it } from "vitest"
 
 import { formatConflictMarker } from "../scripts/conflict-marker.ts"
 import { collectConflictMarkers } from "../scripts/lib/repository-conflict-marker.ts"
-
 import { useTempDir } from "./fixture/temp-dir.ts"
 
 // 手で解いた衝突の印が main に紛れ込んだままにしない。
