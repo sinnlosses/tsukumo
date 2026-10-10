@@ -76,7 +76,8 @@ export const REPORT_WAITING_LINE_DESCRIPTION =
  */
 export const REPORT_TITLE_DESCRIPTION =
   `セッション一覧の見出しにする短い題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。` +
-  "話の中心がはっきりした最初と、大きく変わったときだけ渡す。変える必要が無ければ省く。"
+  "sessionSummary を書き直すたびに、いまの題が要約の中心に合っているかを見る。合っていなければ新しい題を渡し、合っていれば省く。" +
+  "/clear のあとの新しいセッションには前の題が残っていることがあるので、要約の中心と違うなら付け直す。"
 
 /**
  * `report` の `sessionSummary` 引数の説明。
