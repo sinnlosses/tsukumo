@@ -12,6 +12,7 @@ import { useComposerFocus } from "../../../../../../../../stores/composer-focus.
 import { useSessionSwitcherRequest } from "../../../../../../../../stores/session-switcher-request.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { useTaskBoardRequest } from "../../../../../../../../stores/task-board-request.ts"
+import { nowEpochMilliseconds } from "../../../../../../../../utils/clock.ts"
 import type { WelcomeCard } from "../../../../../domain/welcome-entries.ts"
 import { useWelcomeCards } from "../../../../hooks/use-welcome-cards.ts"
 import { welcomeKeyOf } from "../domain/welcome-key.ts"
@@ -36,6 +37,10 @@ export function useWelcome(): WelcomeModel {
   const requestFocus = useComposerFocus((state) => state.requestFocus)
   const openList = useTaskBoardRequest((state) => state.openList)
   const openSwitcher = useSessionSwitcherRequest((state) => state.openSwitcher)
+
+  function onSeePrevious(): void {
+    openSwitcher(nowEpochMilliseconds())
+  }
 
   function onStart(request: string): void {
     dispatch.session.prompt({ text: request, images: [] })
@@ -69,7 +74,7 @@ export function useWelcome(): WelcomeModel {
         requestFocus()
       } else if (hasPrevious) {
         event.preventDefault()
-        openSwitcher()
+        onSeePrevious()
       }
     }
     document.addEventListener("keydown", onKeyDown)
@@ -85,6 +90,6 @@ export function useWelcome(): WelcomeModel {
     onStart,
     onWrite: requestFocus,
     onPickTask: openList,
-    onSeePrevious: openSwitcher,
+    onSeePrevious,
   }
 }

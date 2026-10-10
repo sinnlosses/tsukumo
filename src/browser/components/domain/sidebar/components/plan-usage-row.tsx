@@ -17,7 +17,6 @@ import {
   clockTime,
   dayAwareClockTime,
   localTimeZoneId,
-  nowEpochMilliseconds,
   zonedDateTime,
 } from "../../../../utils/clock.ts"
 import { Button } from "../../../ui/button/button.tsx"
@@ -78,8 +77,16 @@ export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }):
         <div
           className={clsx(fetching && state.kind === "ready" && styles["plan-usage-row-dimmed"])}
         >
-          <PlanUsageWindowRow label="5時間" window={windows.fiveHour} />
-          <PlanUsageWindowRow label="7日間" window={windows.sevenDay} />
+          <PlanUsageWindowRow
+            label="5時間"
+            window={windows.fiveHour}
+            resetLabel={resetText(windows.fiveHour, state)}
+          />
+          <PlanUsageWindowRow
+            label="7日間"
+            window={windows.sevenDay}
+            resetLabel={resetText(windows.sevenDay, state)}
+          />
         </div>
       )}
     </div>
@@ -112,6 +119,7 @@ function PlanUsageNote(props: { readonly state: PlanUsageState }): ReactElement 
 function PlanUsageWindowRow(props: {
   readonly label: string
   readonly window: WindowDisplay
+  readonly resetLabel: string
 }): ReactElement {
   const warn = isPlanWindowWarn(props.window)
   return (
@@ -139,7 +147,7 @@ function PlanUsageWindowRow(props: {
         )}
         {percentageText(props.window)}
       </span>
-      <span className={styles["plan-usage-window-reset"]}>{resetText(props.window)}</span>
+      <span className={styles["plan-usage-window-reset"]}>{props.resetLabel}</span>
     </div>
   )
 }
@@ -164,8 +172,8 @@ function percentageText(window: WindowDisplay): string {
     : `${String(Math.round(window.utilization))}%`
 }
 
-function resetText(window: WindowDisplay): string {
-  return window.resetsAt === undefined
+function resetText(window: WindowDisplay, state: PlanUsageState): string {
+  return window.resetsAt === undefined || state.kind !== "ready"
     ? TIME_PLACEHOLDER
-    : `${dayAwareClockTime(window.resetsAt, nowEpochMilliseconds())}に戻る`
+    : `${dayAwareClockTime(window.resetsAt, state.takenAt)}に戻る`
 }

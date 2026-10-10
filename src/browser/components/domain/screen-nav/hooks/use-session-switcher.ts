@@ -88,7 +88,11 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
   )
   const turnInProgress = useTurnRunning()
   const open = useSessionSwitcherRequest((state) => state.open)
-  const onOpen = useSessionSwitcherRequest((state) => state.openSwitcher)
+  const openSwitcher = useSessionSwitcherRequest((state) => state.openSwitcher)
+  const openedAt = useSessionSwitcherRequest((state) => state.openedAt)
+  const onOpen = (): void => {
+    openSwitcher(nowEpochMilliseconds())
+  }
   const onClose = useSessionSwitcherRequest((state) => state.closeSwitcher)
 
   const shortIds = shortSessionIds([
@@ -96,7 +100,7 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
     ...sessions.map((session) => session.sessionId),
   ])
   const timeZone = localTimeZoneId()
-  const today = zonedDateTime(nowEpochMilliseconds(), timeZone).toPlainDate()
+  const today = zonedDateTime(openedAt, timeZone).toPlainDate()
   const rows = sessions.map((session) =>
     switcherRow(session, shortIds, session.sessionId === currentSessionId, today, timeZone),
   )
