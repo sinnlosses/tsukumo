@@ -45,6 +45,7 @@ function turn(steps: readonly MainViewStep[]): MainViewTurn {
     hasInterimReport: true,
     droppedCount: 0,
     failure: { kind: "none" },
+    usageReviewResult: false,
   }
 }
 

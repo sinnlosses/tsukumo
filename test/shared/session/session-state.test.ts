@@ -1398,7 +1398,26 @@ describe("applySessionEvent（見直し）", () => {
       ...after,
       usageReview: before.usageReview,
       previousUsageReview: before.previousUsageReview,
+      records: before.records,
     }).toEqual(before)
+  })
+
+  it("結果を受け付けたターンだけ、メインビューのやり取りに印が立つ", () => {
+    const events: readonly SessionEvent[] = [
+      { kind: "request", text: "架空の依頼1", images: [] },
+      { kind: "usage-review-stage", stage: "model", days: 7 },
+      { kind: "usage-review-result", findings: FINDINGS },
+      reportEvent(),
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      { kind: "request", text: "架空の依頼2", images: [] },
+      reportEvent({ toolUseId: "fictional-report-2" }),
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+    ]
+    const state = apply(...events)
+    const turns = mainViewTurns(mainViewEntries(state), { report: false, utterance: false }, true)
+
+    expect(turns.map((turn) => turn.usageReviewResult)).toEqual([true, false])
+    expect(turns[0]?.steps).toHaveLength(1)
   })
 
   it("結果を渡さずにターンが終わるとふだんへ戻る", () => {

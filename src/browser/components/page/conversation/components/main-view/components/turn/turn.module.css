@@ -7,3 +7,14 @@
   margin: 0 0 0.5rem;
   letter-spacing: 0.08em;
 }
+/* 字の段・色は `Text` が持つ。押す先の高さと余白、リンクの色だけここに置く。 */
+.usage-review-link {
+  margin: 0;
+}
+.usage-review-link a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-inline-start: 0.5rem;
+  color: var(--accent);
+}

@@ -209,6 +209,11 @@ export type SessionRecord =
    */
   | { readonly kind: "compact-boundary" }
   /**
+   * `usage_review_result` が受け付けられたこと。中身を持たない印で、届いた位置に積む。
+   * メインビューがこの印のあるターンにだけ、トークンの画面の結果の札を開く導線を出す。
+   */
+  | { readonly kind: "usage-review-result" }
+  /**
    * 失敗で終わったターンの理由（`turn-finished` の `outcome` が `failed`）。そのターンの記録の末尾に1つだけ積む。
    * メインビューがターンの末尾に「失敗で終わった」と理由を出すので、過去のターンを遡っても成功と見分けられる。
    * 雑談のログ・依頼の手順・吹き出しは拾わない。
@@ -847,7 +852,6 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "background-tasks-changed":
       return { ...state, backgroundTasks: event.tasks }
     case "usage-review-stage":
-    case "usage-review-result":
     case "usage-proposal-dismissed":
       return {
         ...state,
@@ -857,6 +861,17 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
           at,
           state.turn.kind === "running" ? state.turn.startedAt : at,
         ),
+      }
+    case "usage-review-result":
+      return {
+        ...state,
+        ...applyUsageReviewEvent(
+          { usageReview: state.usageReview, previousUsageReview: state.previousUsageReview },
+          event,
+          at,
+          state.turn.kind === "running" ? state.turn.startedAt : at,
+        ),
+        records: [...state.records, { kind: "usage-review-result" }],
       }
     case "diary-requested":
     case "diary-drafting":

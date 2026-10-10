@@ -58,6 +58,7 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/task-list.test.ts": ["sidebar", "task-board"],
   "test/e2e/turn-failure.test.ts": ["main", "dispatch"],
   "test/e2e/turn-flow.test.ts": "every",
+  "test/e2e/usage-review-link.test.ts": ["main", "other-screens"],
   "test/e2e/welcome.test.ts": ["main"],
   "test/e2e/work-strip.test.ts": ["main", "dispatch"],
 } as const satisfies Record<string, readonly E2eRegion[] | "every">

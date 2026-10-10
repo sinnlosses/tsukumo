@@ -36,6 +36,7 @@ import {
 import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { rpc } from "../../../../domain/rpc.ts"
+import { useHashRoute } from "../../../../stores/location-hash.ts"
 import { useSession, useTurnRunning, type SessionDispatch } from "../../../../stores/session.ts"
 import {
   clockTime,
@@ -149,7 +150,12 @@ export function useUsageReview(): UseUsageReviewResult {
   const previousUsageReview = useSession((session) => session.state.previousUsageReview)
   const character = useSession((session) => session.state.character)
   const speeches = useSession((session) => session.state.speeches)
-  const [viewingPrevious, setViewingPrevious] = useState(false)
+  // スナップショットはプリミティブに限るので、印の有無は文字列で読む。
+  const openedFromLink = useHashRoute((route) => (route.lastReview ? "last" : "")) === "last"
+  // 会話のレポートの導線から入ったとき、今回の結果が消えていれば前回の提案を最初から開く。
+  const [viewingPrevious, setViewingPrevious] = useState(
+    openedFromLink && usageReview.kind !== "result",
+  )
 
   const reviewDays = usageReview.kind === "running" ? asTokenUsageDays(usageReview.days) : undefined
   const summary = useReviewStageSummary(reviewDays)

@@ -9,6 +9,7 @@
 // - `#character?turn=3`           キャラクター画面（使用中のパック）。ターンは会話の画面へ戻ったときのために運ぶ
 // - `#character?pack=tsukumo`     キャラクター画面で `tsukumo` のパックを選んでいる
 // - `#achievement?date=YYYY-MM-DD` 成果の画面でその日を見ている
+// - `#token-usage?review=last`    トークン画面で見直しの結果の札を開いている
 //
 // パックと見ている日を `?` の前に置かないのは、`turn` と同じく画面の上に乗る付随情報だから。
 // `pack` を読むのはキャラクター画面のときだけ、`date` を読むのは成果の画面のときだけで、ほかの画面へ移ると落ちる（戻ると使用中のパック・今日から）。
@@ -69,6 +70,8 @@ export type HashRoute = {
   readonly turn: ViewedTurn
   readonly pack: PackSelection
   readonly achievementDate: AchievementDateSelection
+  /** トークン画面を、見直しの結果の札を開いて出すか（`review=last`）。 */
+  readonly lastReview: boolean
 }
 
 /** hash の値の型。スナップショットが同じ値なら描き直さないよう、プリミティブに限る。 */
@@ -77,6 +80,8 @@ type HashSnapshot = string | number
 const TURN_PARAM = "turn"
 const PACK_PARAM = "pack"
 const DATE_PARAM = "date"
+const REVIEW_PARAM = "review"
+const LAST_REVIEW = "last"
 const IN_USE: PackSelection = { kind: "in-use" }
 const TODAY: AchievementDateSelection = { kind: "today" }
 const TURN_ID_PATTERN = /^-?\d+$/
@@ -110,6 +115,9 @@ export function formatHash(route: HashRoute): string {
   if (route.screen === "achievement" && route.achievementDate.kind === "chosen") {
     params.set(DATE_PARAM, route.achievementDate.date)
   }
+  if (route.screen === "token-usage" && route.lastReview) {
+    params.set(REVIEW_PARAM, LAST_REVIEW)
+  }
   if (route.turn !== "newest") {
     params.set(TURN_PARAM, String(route.turn))
   }
@@ -133,6 +141,7 @@ function parseHash(hash: string): HashRoute {
     turn: turnOf(params.get(TURN_PARAM)),
     pack: screen === "character" ? packOf(params.get(PACK_PARAM)) : IN_USE,
     achievementDate: screen === "achievement" ? achievementDateOf(params.get(DATE_PARAM)) : TODAY,
+    lastReview: screen === "token-usage" && params.get(REVIEW_PARAM) === LAST_REVIEW,
   }
 }
 

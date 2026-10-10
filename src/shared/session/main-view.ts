@@ -113,6 +113,11 @@ export type MainViewEntry =
    */
   | { readonly kind: "turn-failure"; readonly failure: TurnFailure }
   /**
+   * 見直しの結果が受け付けられたこと（`SessionRecord` の `usage-review-result` をそのまま通す）。
+   * ステップには入れず、{@link groupIntoTurns} が `MainViewTurn.usageReviewResult` に移す。
+   */
+  | { readonly kind: "usage-review-result" }
+  /**
    * 脇の話と、それへの答えのセリフ（`answersAside` の `speech`）。
    * {@link groupIntoSteps} が対にして、届いた時点で最後のステップの `MainViewStep.asides` に移す。
    */
@@ -222,6 +227,8 @@ export type MainViewTurn = {
   readonly droppedCount: number
   /** このやり取りが失敗で終わったか（{@link MainViewTurnFailure}）。 */
   readonly failure: MainViewTurnFailure
+  /** このやり取りで `usage_review_result` が受け付けられたか。 */
+  readonly usageReviewResult: boolean
 }
 
 /** やり取りの脇の話を、届いた順に1本にしたもの。 */
@@ -456,14 +463,18 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly GroupedTurn
         droppedCount: 0,
         failure:
           failure === undefined ? { kind: "none" } : { kind: "failed", failure: failure.failure },
+        usageReviewResult: turn.records.some((entry) => entry.kind === "usage-review-result"),
       },
       toolReportIds,
     }
   })
 }
 
-/** やり取りの中の記録のうち、ステップに入らないもの（失敗の印）。 */
-type OutsideStepEntry = Extract<MainViewEntry, { readonly kind: "turn-failure" }>
+/** やり取りの中の記録のうち、ステップに入らないもの（失敗の印と見直しの結果の印）。 */
+type OutsideStepEntry = Extract<
+  MainViewEntry,
+  { readonly kind: "turn-failure" | "usage-review-result" }
+>
 
 type StepEntry = Exclude<TurnRest<MainViewEntry>, OutsideStepEntry>
 
@@ -474,7 +485,7 @@ function isTurnFailure(
 }
 
 function isStepEntry(entry: TurnRest<MainViewEntry>): entry is StepEntry {
-  return entry.kind !== "turn-failure"
+  return entry.kind !== "turn-failure" && entry.kind !== "usage-review-result"
 }
 
 /**

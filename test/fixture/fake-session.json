@@ -5767,6 +5767,113 @@
           "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
         }
       ]
+    },
+    {
+      "name": "usage-review-result",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "コストを抑えたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": { "kind": "usage-review-stage", "stage": "model", "days": 7 }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "usage-review-result",
+            "findings": {
+              "days": 7,
+              "headline": "架空の一言。大きいのは1つだけだったよ。",
+              "proposals": [
+                {
+                  "kind": "tool-result",
+                  "target": "ExampleTool",
+                  "impact": "large",
+                  "title": "架空のツールの結果が大きい",
+                  "basis": "架空の根拠。1回の結果が数万字になっている。",
+                  "action": "架空のやること。結果を絞る。",
+                  "followUp": "delegate"
+                },
+                {
+                  "kind": "session-length",
+                  "target": "",
+                  "impact": "small",
+                  "title": "架空の会話が長い",
+                  "basis": "架空の根拠。",
+                  "action": "架空のやること。",
+                  "followUp": "task"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "none" },
+            "toolUseId": "fake-report-usage-review-1",
+            "conclusion": "見直しの提案を2件出した。",
+            "sections": [],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 450,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-usage-review-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "request",
+            "text": "いまの結果を一言でまとめて（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "none" },
+            "toolUseId": "fake-report-usage-review-2",
+            "conclusion": "見直しを受け付けていないターンの結論。",
+            "sections": [],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 750,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-usage-review-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
     }
   ],
   "pastSessions": [

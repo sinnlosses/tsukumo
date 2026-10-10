@@ -40,7 +40,20 @@ export function navigateTo(screen: Screen): void {
  */
 export function useScreenHref(): (screen: Screen) => string {
   const turn = useHashRoute((route) => route.turn)
-  return (screen) => formatHash({ screen, turn, pack: IN_USE, achievementDate: TODAY })
+  return (screen) =>
+    formatHash({ screen, turn, pack: IN_USE, achievementDate: TODAY, lastReview: false })
+}
+
+/** トークン画面で見直しの結果の札を開く `<a href>`。見ているターンは運ぶ。 */
+export function useLastReviewHref(): string {
+  const turn = useHashRoute((route) => route.turn)
+  return formatHash({
+    screen: "token-usage",
+    turn,
+    pack: IN_USE,
+    achievementDate: TODAY,
+    lastReview: true,
+  })
 }
 
 /** キャラクター画面で選んでいるパック（hash の `pack`）。 */
@@ -59,6 +72,7 @@ export function usePackHref(): (pack: string) => string {
       turn,
       pack: { kind: "named", name: pack },
       achievementDate: TODAY,
+      lastReview: false,
     })
 }
 

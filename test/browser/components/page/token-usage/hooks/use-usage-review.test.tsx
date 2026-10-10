@@ -26,6 +26,7 @@ let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
+  window.location.hash = ""
   fetchStub?.restore()
   fetchStub = undefined
 })
@@ -370,6 +371,44 @@ describe("useUsageReview（前回の提案を開く）", () => {
         result.current.close.onClose()
       }
     })
+
+    expect(result.current.kind).toBe("idle")
+  })
+
+  it("導線（review=last）から入ると、今回の結果が無ければ前回の提案が最初から開く", () => {
+    window.location.hash = "#token-usage?review=last"
+    const state = stateWith({
+      previousUsageReview: { kind: "found", reviewedAt: 0, findings: FIXTURE_FINDINGS },
+    })
+    const { result } = renderUsageReview(state)
+
+    expect(result.current.kind).toBe("result")
+    expect(result.current.kind === "result" ? result.current.close.kind : "").toBe("shown")
+  })
+
+  it("導線から入っても、今回の結果があればそれが出て、閉じるは出ない", () => {
+    window.location.hash = "#token-usage?review=last"
+    const state = stateWith({
+      usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
+      previousUsageReview: { kind: "found", reviewedAt: 0, findings: FIXTURE_FINDINGS },
+    })
+    const { result } = renderUsageReview(state)
+
+    expect(result.current.kind === "result" ? result.current.close.kind : "").toBe("none")
+  })
+
+  it("導線から入っても、前回の結果が無ければふだんのまま", () => {
+    window.location.hash = "#token-usage?review=last"
+    const { result } = renderUsageReview(stateWith({}))
+
+    expect(result.current.kind).toBe("idle")
+  })
+
+  it("導線が無ければ前回の提案があってもふだんから始まる", () => {
+    const state = stateWith({
+      previousUsageReview: { kind: "found", reviewedAt: 0, findings: FIXTURE_FINDINGS },
+    })
+    const { result } = renderUsageReview(state)
 
     expect(result.current.kind).toBe("idle")
   })

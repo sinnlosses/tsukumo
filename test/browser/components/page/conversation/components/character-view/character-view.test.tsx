@@ -75,6 +75,7 @@ function renderCharacterView(
     turn: viewedTurn,
     pack: { kind: "in-use" },
     achievementDate: { kind: "today" },
+    lastReview: false,
   })
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
   const queryClient = createTestQueryClient()

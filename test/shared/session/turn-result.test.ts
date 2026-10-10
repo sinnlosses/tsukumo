@@ -45,6 +45,7 @@ function turn(id: number, overrides: Partial<MainViewTurn>): MainViewTurn {
     hasInterimReport: false,
     droppedCount: 0,
     failure: { kind: "none" },
+    usageReviewResult: false,
     ...overrides,
   }
 }

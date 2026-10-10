@@ -75,6 +75,7 @@ function turn(steps: readonly MainViewStep[]): MainViewTurn {
     hasInterimReport: false,
     droppedCount: 0,
     failure: { kind: "none" },
+    usageReviewResult: false,
   }
 }
 
@@ -370,5 +371,23 @@ describe("Turn（脇の話の欄の位置）", () => {
 
     expect(container.querySelectorAll("section")).toHaveLength(0)
     expect(container.querySelectorAll("details")).toHaveLength(1)
+  })
+})
+
+describe("Turn（見直しの結果の導線）", () => {
+  it("見直しの結果を受け付けたやり取りにだけ、トークンの画面の結果の札を開く導線を出す", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const steps = [step({ id: 0, body: text("本文"), final: true })]
+    const { container, rerender } = render(
+      <Turn turn={{ ...turn(steps), usageReviewResult: true }} newest freshReport={false} />,
+    )
+
+    const link = container.querySelector("a")
+    expect(link?.textContent).toBe("結果を開く")
+    expect(link?.getAttribute("href")).toBe("#token-usage?review=last")
+
+    rerender(<Turn turn={turn(steps)} newest freshReport={false} />)
+
+    expect(container.querySelector("a")).toBeNull()
   })
 })

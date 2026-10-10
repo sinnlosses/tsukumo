@@ -98,6 +98,7 @@ function recordTimes(record: SessionRecord): readonly RecordTime[] {
     case "detail":
     case "question":
     case "compact-boundary":
+    case "usage-review-result":
     case "turn-failure":
       return []
   }
