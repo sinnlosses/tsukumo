@@ -11,6 +11,7 @@ import type { Page } from "playwright-core"
  * - `type`: 入力欄に打つ（`/` と `@` の補完）
  * - `hash`: `location.hash` を書いて画面を移す（キャラクター画面・作る画面）
  * - `advance`: 偽の時計をミリ秒だけ進める（時間が経つと出る画）
+ * - `wait`: 要素が出るのを待つ（`hash` で開いた画面の読み込みなど）
  */
 export type Preparation =
   | { readonly kind: "scroll"; readonly selector: string }
@@ -19,6 +20,10 @@ export type Preparation =
   | { readonly kind: "type"; readonly selector: string; readonly text: string }
   | { readonly kind: "hash"; readonly hash: string }
   | { readonly kind: "advance"; readonly ms: number }
+  | { readonly kind: "wait"; readonly selector: string }
+
+/** `wait` が要素の出現を待つ上限（ミリ秒）。`bd` の読みなど、ほかの手より遅いものを待つ。 */
+const WAIT_TIMEOUT_MS = 40_000
 
 /** 操作を1つ当てる。当たったら true、要素が見つからないなどで当たらなければ false。 */
 export async function applyPreparation(
@@ -45,6 +50,9 @@ export async function applyPreparation(
         break
       case "advance":
         await page.clock.runFor(step.ms)
+        break
+      case "wait":
+        await page.waitForSelector(step.selector, { timeout: WAIT_TIMEOUT_MS })
         break
       case "hash":
         await page.evaluate((hash: string) => {
@@ -73,6 +81,8 @@ export function describePreparation(step: Preparation): string {
       return `location.hash に ${step.hash} を書く`
     case "advance":
       return `時計を ${String(step.ms)}ms 進める`
+    case "wait":
+      return `${step.selector} が出るのを待つ`
   }
 }
 
@@ -91,6 +101,8 @@ export function readPreparationFlag(
       return { step: { kind: "click", selector: first }, consumed: 2 }
     case "--hover":
       return { step: { kind: "hover", selector: first }, consumed: 2 }
+    case "--wait-after":
+      return { step: { kind: "wait", selector: first }, consumed: 2 }
     case "--hash":
       return { step: { kind: "hash", hash: first }, consumed: 2 }
     case "--advance": {

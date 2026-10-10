@@ -372,10 +372,15 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 メインビューのスクロールの容れ物の上端へ送ってから撮る。要素が無ければ撮らずに失敗で終わる。
 
 **入力欄に打つ・押すなど、手を動かさないと出ない状態を撮るときは、`capture-view.ts` に
-`--type <selector> <文字>`・`--click <selector>`・`--hover <selector>`・`--hash <hash>` を並べる。**
+`--type <selector> <文字>`・`--click <selector>`・`--hover <selector>`・`--hash <hash>`・`--wait-after <selector>` を並べる。**
 書いた順に、`--wait-for` の待ちのあと・`--scroll-to` の前に当てる。1つでも当たらなければ
 撮らずに失敗で終わる（撮影のカタログの `prepare` は当たらない手を飛ばして撮る）。
 語彙と当て方は `scripts/lib/capture-preparation.ts` で共有している。
+**`--hash` で開いた画面は読み込みを待たずに撮ると「…」の画になるので、読み終わってからだけ現れる要素を
+`--wait-after` で待つ**（成果の画面は `--hash '#achievement' --wait-after 'section[aria-label="小さな驚き"]'`。
+`bd` の読みで15秒ほどかかる）。`--wait-for` は先頭の1回だけで、準備の手のあとの待ちは `--wait-after`。
+**起動先（`.beads` の有無・課題ファイル）で出し分ける画は `--scene <場面> --cwd <dir>` で、スクラッチに作った
+ディレクトリを起動先にして撮る**（既定はこの作業ツリー。`--cwd` は `--scene` と一緒にだけ使う）。
 タスクの一覧・詳細を撮るときは、作業ツリーの根の `.tsukumo/fake-beads-issues.json` に架空の課題を `bd list --json` の形の配列で置く（撮ったら消す。実データを写さないため）。一覧を開いて行を押すには `capture-view.ts --scene report --click 'button:has-text("一覧を見る")' --click '[role="option"]:has-text("架空の文字")'` の形で当たる（`li:has-text(…)` は当たらない）。狭い窓（720px）では、先に引き出しを開いて（`button[aria-label="やり取りとタスクを開く"]`）タスクのタブ（`[role="tab"]:has-text("タスク")`。話題モードでは「話題」）を押す。
 **待ち時間が経たないと出ない画（待ちの一言など）は `--advance <ms>` で偽の時計を進めて撮る。**
 `Temporal.Now` も進んだ時刻に従うので、経過の秒数のような時刻の表示も進んだ値で描かれる。

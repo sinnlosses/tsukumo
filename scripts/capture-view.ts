@@ -17,6 +17,7 @@
 //   node scripts/capture-view.ts --scene report-blocks --size 600x900 \
 //     --wait-for '[class*="report-files"]' --scroll-to '[class*="report-files"]'
 //   node scripts/capture-view.ts --scene <場面> --type textarea '/' --click '[role="option"]'
+//   node scripts/capture-view.ts --scene <場面> --cwd <dir> --hash '#achievement' --wait-after <selector>
 //
 // `--measure` / `--wait-for` に class セレクタを書くときは `[class*="…"]`。 CSS Modules が
 // `名前_ハッシュ`（`report-note_nkMPPQ`）に焼くので、素の `.report-note` は必ず「無し」になる。
@@ -32,6 +33,7 @@
 // 画像もその扱いに従う（`docs/coding-standards.md`「会話内容の扱い」— 別の場所に複製しない。
 // fake driver の疑似セッションは架空の会話なので、その画像は共有してよい）。
 
+import { statSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
 import { fileURLToPath } from "node:url"
@@ -46,6 +48,7 @@ import {
   type Preparation,
   readPreparationFlag,
 } from "./lib/capture-preparation.ts"
+import { type Source, sourceOf } from "./lib/capture-source.ts"
 import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
 import { sceneBlockKinds } from "./lib/scene-catalog.ts"
 
@@ -91,6 +94,7 @@ const USAGE = `使い方:
 
   --scene <場面>        fake driver の tsukumo を自分で起こして撮り、終わったら自分で止める
                         （場面は test/fixture/fake-session.json の turns[].name。URL とは併用しない）
+  --cwd <dir>           --scene の tsukumo を起こす作業ディレクトリ（.beads や課題ファイルを探す先。既定はこの作業ツリー。--scene と一緒にだけ使う）
   --until-step <n>      --scene の場面を先頭から n 手目で止めた画を撮る（正の整数。--scene と一緒にだけ使う）
   --list-scenes         場面ごとに report に出る塊の kind を一覧して終わる（撮らない）
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
@@ -103,14 +107,10 @@ const USAGE = `使い方:
   --hover <selector>    触れてから撮る
   --hash <hash>         location.hash を書いてから撮る
   --advance <ms>        偽の時計をミリ秒だけ進めてから撮る（待ち時間で出る画。Temporal.Now も従う）
-                        （5つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
+  --wait-after <selector> その位置で要素が出るのを待つ（--hash で開いた画面の読み込みなど。出なければ失敗して終わる）
+                        （6つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
 `
-
-/** 開く先。URL を直に渡すか、場面の名前で fake driver の tsukumo を自分で起こすか。 */
-type Source =
-  | { readonly kind: "url"; readonly url: string }
-  | { readonly kind: "scene"; readonly scene: string; readonly until: number | undefined }
 
 type Options =
   | { readonly kind: "list-scenes" }
@@ -185,9 +185,14 @@ async function openSource(source: Source): Promise<OpenedSource | undefined> {
     return undefined
   }
 
+  if (!isDirectory(source.cwd)) {
+    process.stderr.write(`--cwd がディレクトリではない: ${source.cwd}\n`)
+    return undefined
+  }
+
   const child = spawnFakeTsukumo({
     entry: path.join(repositoryRoot(), "src", "cli.ts"),
-    cwd: repositoryRoot(),
+    cwd: source.cwd,
     scene: source.scene,
     port: 0,
     home: undefined,
@@ -337,6 +342,14 @@ type Locator = {
   }
 }
 
+function isDirectory(target: string): boolean {
+  try {
+    return statSync(target).isDirectory()
+  } catch {
+    return false
+  }
+}
+
 function round(value: number): number {
   return Math.round(value * 100) / 100
 }
@@ -349,6 +362,7 @@ function parseOptions(argv: readonly string[]): Options | undefined {
   let url: string | undefined
   let scene: string | undefined
   let untilStep: number | undefined
+  let cwd: string | undefined
   let listScenes = false
   const measures: string[] = []
   let out = DEFAULT_OUT
@@ -399,6 +413,8 @@ function parseOptions(argv: readonly string[]): Options | undefined {
       scrollTo = value
     } else if (flag === "--scene") {
       scene = value
+    } else if (flag === "--cwd") {
+      cwd = path.resolve(value)
     } else if (flag === "--until-step") {
       const step = Number(value)
       if (!Number.isInteger(step) || step <= 0) {
@@ -421,7 +437,7 @@ function parseOptions(argv: readonly string[]): Options | undefined {
   if (listScenes) {
     return { kind: "list-scenes" }
   }
-  const source = sourceOf(url, scene, untilStep)
+  const source = sourceOf(url, scene, untilStep, cwd, repositoryRoot())
   return source === undefined
     ? undefined
     : {
@@ -436,21 +452,6 @@ function parseOptions(argv: readonly string[]): Options | undefined {
         preparations,
         fullPage,
       }
-}
-
-/** URL と場面名のどちらか片方だけが要る。両方・どちらも無いとき、場面の無い `--until-step` は undefined。 */
-function sourceOf(
-  url: string | undefined,
-  scene: string | undefined,
-  untilStep: number | undefined,
-): Source | undefined {
-  if (url !== undefined && scene === undefined && untilStep === undefined) {
-    return { kind: "url", url }
-  }
-  if (scene !== undefined && url === undefined) {
-    return { kind: "scene", scene, until: untilStep }
-  }
-  return undefined
 }
 
 function parseSize(value: string): { readonly width: number; readonly height: number } | undefined {

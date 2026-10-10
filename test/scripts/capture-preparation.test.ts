@@ -18,6 +18,14 @@ describe("readPreparationFlag", () => {
     })
   })
 
+  test("--wait-after は値1つを使い、値が無ければ読まない", () => {
+    expect(readPreparationFlag(["--wait-after", "[role=table]"], 0)).toEqual({
+      step: { kind: "wait", selector: "[role=table]" },
+      consumed: 2,
+    })
+    expect(readPreparationFlag(["--wait-after"], 0)).toBeUndefined()
+  })
+
   test("--type は値を2つ使う", () => {
     expect(readPreparationFlag(["--type", "textarea", "/"], 0)).toEqual({
       step: { kind: "type", selector: "textarea", text: "/" },
