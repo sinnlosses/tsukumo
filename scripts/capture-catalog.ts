@@ -183,10 +183,12 @@ const DIARY_BODY_SELECTOR = '[class*="diary-book-body_"]'
 const COMPOSER_SELECTOR = "textarea"
 
 /**
- * 狭い窓でだけ出る領域のタブと、タスク一覧を開く口。広い窓ではタブが隠れているので、
- * タブを押す手は空振りする（空振りは飛ばして次の手へ進む。{@link applyPreparation}）。
+ * 狭い窓でだけ出る引き出しを開く口と、その中のタスクのタブ。タスク一覧を開く口もある。
+ * 広い窓では引き出しの口もタブも出ないので、この2手は空振りする
+ * （空振りは飛ばして次の手へ進む。{@link applyPreparation}）。
  */
-const SIDEBAR_TAB_SELECTOR = '[role="tab"]:has-text("サイドバー")'
+const DRAWER_TOGGLE_SELECTOR = '[aria-label="やり取りとタスクを開く"]'
+const DRAWER_TASKS_TAB_SELECTOR = '[role="tab"]:has-text("タスク")'
 const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
 
 /**
@@ -525,7 +527,8 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [
-      { kind: "click", selector: SIDEBAR_TAB_SELECTOR },
+      { kind: "click", selector: DRAWER_TOGGLE_SELECTOR },
+      { kind: "click", selector: DRAWER_TASKS_TAB_SELECTOR },
       { kind: "click", selector: TASK_BOARD_SELECTOR },
     ],
     skipReveal: false,
