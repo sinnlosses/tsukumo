@@ -256,8 +256,8 @@ function inquiryBandText(
 ): string {
   const subject = characterName === undefined ? "" : `${characterName} が`
   return kind === "question"
-    ? `↑ ${subject}質問しています。上の選択肢から選ぶか、ここに書いて答えてください`
-    : `↑ ${subject}実行の許可を待っています`
+    ? `↓ ${subject}質問しています。下の選択肢から選ぶか、ここに書いて答えてください`
+    : `↓ ${subject}実行の許可を待っています`
 }
 
 /**

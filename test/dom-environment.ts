@@ -53,6 +53,8 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "MutationObserver",
   // `useFitDiaryPage`（日記帳の右ページの本文を測って縮める）が、ページの大きさの変化を購読するのに要る。
   "ResizeObserver",
+  // お伺いの札が窓に見えているかを読むのに要る（happy-dom は交差を計算しないので、観測しても通知は来ない）。
+  "IntersectionObserver",
   // `lineBoxesOf`（筆先の居場所を行から測る）のテストが
   // 2つセットで要る。`DOMRect` はhappy-dom がレイアウトを持たないので測った値を
   // 名乗らせるのに、`NodeFilter` は文字の節点をたどる `createTreeWalker` に渡すのに使う

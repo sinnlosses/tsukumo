@@ -14,6 +14,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/deferred-markdown.tsx"
 import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-answer.ts"
+import { useInquiryCardVisibility } from "../../../../../../../src/browser/stores/inquiry-card-visibility.ts"
 import { useInquiryJump } from "../../../../../../../src/browser/stores/inquiry-jump.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -257,6 +258,78 @@ describe("MainView（やり取りの移動）", () => {
     expect(title()).toBe("3つ目")
     expect(useInquiryJump.getState().jump).toEqual({ signal: signal + 1, focus: false })
     expect(screen.queryByRole("button", { name: "お伺いが届いた" })).toBeNull()
+  })
+
+  it("最新が答え待ちのとき、お伺いの札は本文より後ろに出る", () => {
+    renderMainView(threeTurns(), ASKING_TURN, PERMISSION)
+
+    const body = document.querySelector('[class*="turn-card-body"]')
+    if (body === null) {
+      throw new Error("本文の入れ物が見つからない")
+    }
+    const card = screen.getByRole("region", { name: "お伺い" })
+    expect(body.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  describe("お伺い ↓", () => {
+    afterEach(() => {
+      useInquiryCardVisibility.setState(useInquiryCardVisibility.getInitialState(), true)
+    })
+
+    it("答え待ちで札が窓の外にあるあいだだけ出る", () => {
+      renderMainView(threeTurns(), ASKING_TURN, PERMISSION)
+      expect(screen.queryByRole("button", { name: "お伺い ↓" })).toBeNull()
+
+      act(() => {
+        useInquiryCardVisibility.getState().setVisible(false)
+      })
+      expect(screen.queryByRole("button", { name: "お伺い ↓" })).not.toBeNull()
+
+      act(() => {
+        useInquiryCardVisibility.getState().setVisible(true)
+      })
+      expect(screen.queryByRole("button", { name: "お伺い ↓" })).toBeNull()
+    })
+
+    it("答え待ちが無ければ、札が見えていない扱いでも出ない", () => {
+      useInquiryCardVisibility.setState({ visible: false })
+      renderMainView(threeTurns())
+
+      expect(screen.queryByRole("button", { name: "お伺い ↓" })).toBeNull()
+    })
+
+    it("過去のやり取りを見ているあいだは出ない", () => {
+      renderMainView(threeTurns(), ASKING_TURN, PERMISSION)
+      act(() => {
+        useInquiryCardVisibility.getState().setVisible(false)
+      })
+      expect(screen.queryByRole("button", { name: "お伺い ↓" })).not.toBeNull()
+
+      stepTurn("[")
+
+      expect(screen.queryByRole("button", { name: "お伺い ↓" })).toBeNull()
+    })
+
+    it("押すと札まで送る合図が1つ増え、フォーカスは移さない", () => {
+      renderMainView(threeTurns(), ASKING_TURN, PERMISSION)
+      act(() => {
+        useInquiryCardVisibility.getState().setVisible(false)
+      })
+      const signal = useInquiryJump.getState().jump.signal
+
+      fireEvent.click(screen.getByRole("button", { name: "お伺い ↓" }))
+
+      expect(useInquiryJump.getState().jump).toEqual({ signal: signal + 1, focus: false })
+    })
+  })
+
+  it("最新が答え待ちでも、過去のやり取りを見ているあいだはお伺いの札を出さない", () => {
+    renderMainView(threeTurns(), ASKING_TURN, PERMISSION)
+    expect(screen.queryByRole("region", { name: "お伺い" })).not.toBeNull()
+
+    stepTurn("[")
+
+    expect(screen.queryByRole("region", { name: "お伺い" })).toBeNull()
   })
 
   it("最新が作業中のとき過去を見ると「作業中」の行が出て、押すと最新へ移るだけ", () => {

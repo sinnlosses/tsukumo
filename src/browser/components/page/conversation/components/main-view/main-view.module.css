@@ -57,7 +57,7 @@
 }
 /* お伺いの札の入れ物。札は領域の縁まで広がらず、領域の余白のぶん内側に置く。 */
 .turn-card-inquiry {
-  padding: 0 var(--region-padding, 0px);
+  padding: 0.75rem var(--region-padding, 0px) 0;
 }
 /* レポート本文の余白。 */
 .turn-card-body {

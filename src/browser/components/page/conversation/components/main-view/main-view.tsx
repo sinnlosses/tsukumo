@@ -34,6 +34,7 @@ import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { CurrentStep } from "./components/current-step/current-step.tsx"
+import { InquiryJumpFloat } from "./components/inquiry-jump-float/inquiry-jump-float.tsx"
 import { Inquiry } from "./components/inquiry/inquiry.tsx"
 import { MiniPortrait } from "./components/mini-portrait/mini-portrait.tsx"
 import { PhaseList } from "./components/phase-list/phase-list.tsx"
@@ -163,11 +164,6 @@ export function MainView(): ReactElement {
                     <RequestBlock request={cardTurn.turn.request} key={cardTurn.turn.id} />
                   </div>
                 )}
-                {!viewingPast && (
-                  <div className={styles["turn-card-inquiry"]}>
-                    <Inquiry />
-                  </div>
-                )}
                 <div className={styles["turn-card-body"]}>
                   {/* 狭い画面の一覧と「いまの段」。広い画面では CSS で消える。
                       一覧の板の中の本文を、`<Turn>` が隠した同じ本文より DOM の前に置くため、`<Turn>` の前に並べる。 */}
@@ -187,10 +183,16 @@ export function MainView(): ReactElement {
                     key={cardTurn.turn.id}
                   />
                 </div>
+                {!viewingPast && (
+                  <div className={styles["turn-card-inquiry"]}>
+                    <Inquiry />
+                  </div>
+                )}
               </ReportOutline>
             </article>
           )}
         </ContentFrame>
+        {!viewingPast && <InquiryJumpFloat />}
         {/* 筆先に添うミニ立ち絵。この入れ物の原点を基準に置く（`position: absolute`）ので、書き上げたあと残っているあいだも本文と一緒に転がる。
             出ているやり取りを渡すのは、残った筆先が別のやり取りのものなら引っ込ませるため。 */}
         {cardTurn !== undefined && <MiniPortrait shownTurnId={cardTurn.turn.id} />}

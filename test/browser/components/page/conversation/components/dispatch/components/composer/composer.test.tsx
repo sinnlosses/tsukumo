@@ -317,7 +317,11 @@ describe("Composer", () => {
   it("質問が出ている間は、帯とプレースホルダが「答えを書く場所」に変わる", () => {
     renderComposer({ character: FIXTURE_CHARACTER, pending: [QUESTION_PENDING] })
 
-    expect(screen.getByText(/架空の名前 が質問しています/)).toBeDefined()
+    expect(
+      screen.getByText(
+        "↓ 架空の名前 が質問しています。下の選択肢から選ぶか、ここに書いて答えてください",
+      ),
+    ).toBeDefined()
     expect(screen.getByPlaceholderText("選択肢以外の答えを書く…")).toBeDefined()
     expect(screen.queryByPlaceholderText(/依頼を書く/)).toBeNull()
   })
@@ -334,7 +338,7 @@ describe("Composer", () => {
   it("許可を待っている間は、帯だけ出て入力欄はふつうの下書きのまま", () => {
     renderComposer({ character: FIXTURE_CHARACTER, pending: [PERMISSION_PENDING] })
 
-    expect(screen.getByText(/架空の名前 が実行の許可を待っています/)).toBeDefined()
+    expect(screen.getByText("↓ 架空の名前 が実行の許可を待っています")).toBeDefined()
     expect(screen.getByPlaceholderText(/依頼を書く/)).toBeDefined()
   })
 

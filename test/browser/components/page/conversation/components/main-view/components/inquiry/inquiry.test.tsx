@@ -6,6 +6,7 @@ import {
   useInquiryDraft,
   useInquiryFocus,
 } from "../../../../../../../../../src/browser/stores/inquiry-answer.ts"
+import { useInquiryCardVisibility } from "../../../../../../../../../src/browser/stores/inquiry-card-visibility.ts"
 import { useInquiryJump } from "../../../../../../../../../src/browser/stores/inquiry-jump.ts"
 import type { StampedPendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
 import type { QuestionBrief } from "../../../../../../../../../src/shared/session-driver/question-brief.ts"
@@ -81,6 +82,38 @@ describe("Inquiry（メインビューのお伺いの札）", () => {
     expect(renderInquiry([PERMISSION_PENDING]).innerHTML).toBe("")
 
     spy.mockRestore()
+  })
+
+  it("札が窓に見えているかを観測して store に写し、札が消えると見えているに戻す", () => {
+    type FakeCallback = (entries: readonly { readonly isIntersecting: boolean }[]) => void
+    const callbacks: FakeCallback[] = []
+    class FakeObserver {
+      constructor(callback: FakeCallback) {
+        callbacks.push(callback)
+      }
+      observe(): void {}
+      disconnect(): void {}
+    }
+    vi.stubGlobal("IntersectionObserver", FakeObserver)
+    try {
+      renderInquiry([PERMISSION_PENDING])
+      const notify = (isIntersecting: boolean): void => {
+        act(() => {
+          callbacks[0]?.([{ isIntersecting }])
+        })
+      }
+
+      notify(false)
+      expect(useInquiryCardVisibility.getState().visible).toBe(false)
+      notify(true)
+      expect(useInquiryCardVisibility.getState().visible).toBe(true)
+
+      notify(false)
+      cleanup()
+      expect(useInquiryCardVisibility.getState().visible).toBe(true)
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 
   it("許可要求は「許可」の種類・ツール名・対象の全文と、番号つきの「許可」「拒否」を出す", () => {

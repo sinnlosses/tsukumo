@@ -1,4 +1,4 @@
-// お伺いの札（答え待ちの許可要求と質問。メインビューの、いまのやり取りの進み具合の帯と依頼の塊の真下）。
+// お伺いの札（答え待ちの許可要求と質問。メインビューの、いまのやり取りの本文の末尾）。
 // 頭に「お伺い」のチップ・種類・`header` かツール名・「n / N」と待っている時間、本文に問いの文か対象の全文・添え書きの背景と軸・左に選択肢の縦の並びと右にフォーカスした選択肢の詳細・畳める比較表、下端に操作の行を置く。
 // 操作の行は札の下端に残り、本文と選択肢の側が札の内側で転がる。
 //
@@ -27,6 +27,7 @@ import { Text } from "../../../../../../ui/text/text.tsx"
 import { Markdown, QuestionPreviewMarkdown } from "../../markdown/deferred-markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"
+import { useInquiryVisibility } from "./hooks/use-inquiry-visibility.ts"
 import styles from "./inquiry.module.css"
 
 const INQUIRY_CHIP = "お伺い"
@@ -68,6 +69,7 @@ export function InquiryCard(props: { readonly actions: "inline" | "none" }): Rea
   const jump = useInquiryJump((state) => state.jump)
   const askId = inquiry.kind === "none" ? undefined : inquiry.id
   const cardRef = useInquiryScroll(askId, jump)
+  useInquiryVisibility(cardRef, askId !== undefined && props.actions === "inline")
   const now = useNowWhile(inquiry.kind !== "none")
 
   if (inquiry.kind === "none") {

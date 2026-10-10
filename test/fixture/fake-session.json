@@ -4512,6 +4512,109 @@
       ]
     },
     {
+      "name": "inquiry-below-body",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "長い本文のあとに許可を求めたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 50,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
+            "current": 1,
+            "finishedInGroup": [],
+            "phaseSummary": "一つ目の段で架空の材料がそろった。架空の確認も済んでいる。"
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
+            "current": 2,
+            "finishedInGroup": [],
+            "phaseSummary": "二つ目の段で架空の下ごしらえを終えた。架空の確認も済んでいる。"
+          }
+        },
+        {
+          "afterMs": 150,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
+            "current": 3,
+            "finishedInGroup": [],
+            "phaseSummary": "三つ目の段で架空の一覧を作った。架空の確認も済んでいる。"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
+            "current": 4,
+            "finishedInGroup": [],
+            "phaseSummary": "四つ目の段で架空の比べ物を終えた。架空の確認も済んでいる。"
+          }
+        },
+        {
+          "afterMs": 250,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
+            "current": 5,
+            "finishedInGroup": [],
+            "phaseSummary": "五つ目の段で架空の手直しを終えた。架空の確認も済んでいる。"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
+            "current": 6,
+            "finishedInGroup": [],
+            "phaseSummary": "六つ目の段で架空の仕上げを終えた。架空の確認も済んでいる。"
+          }
+        },
+        {
+          "afterMs": 350,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-below-body-1",
+            "name": "Bash",
+            "input": { "command": "echo 架空の確認" }
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "permission",
+                "id": "fake-below-body-1",
+                "toolName": "Bash",
+                "input": { "command": "echo 架空の確認" }
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 20000,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "work-strip-parallel",
       "steps": [
         {

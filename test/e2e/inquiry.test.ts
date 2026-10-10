@@ -8,7 +8,7 @@ import { fictionalPng } from "../../scripts/lib/fictional-png.ts"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // お伺い（許可要求と質問。docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// 許可は場面 `permission`、質問は `question-pair`（単一選択が1問ずつ）・
+// 許可は場面 `permission`（本文が長く札が窓の外に出る場合は `inquiry-below-body`）、質問は `question-pair`（単一選択が1問ずつ）・
 // `question-long`（長いラベルと長い説明）・`question-preview`（選択肢ごとの比較）・
 // `question-preview-image`（preview に書いた手元の画像と、描かない画像）・
 // `question-brief`（添え書き付き。広い窓の2列と、札が狭い窓の1列）。
@@ -36,6 +36,38 @@ describe("お伺い", () => {
     await room.waitForEvent("pending-changed", 2)
     await expect.poll(() => inquiry.count()).toBe(0)
     await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("札は本文の末尾に出て、窓の外のあいだ下端の「お伺い ↓」を押すと札が窓に入り、口が消える", async () => {
+    const room = await run.open({
+      scenario: "inquiry-below-body",
+      scene: "inquiry-below-body",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+    const main = room.page.locator('[data-region="main"]')
+    const inquiry = inquiryOf(room.page)
+    const jump = room.page.getByRole("button", { name: "お伺い ↓" })
+
+    await room.waitForPending("fake-below-body-1")
+    // 届くと札まで送られ、札は本文（最後の中間レポート）より下にある。
+    await expect.poll(() => insideOf(inquiry, main)).toBe(true)
+    const [lastReport, card] = await Promise.all([
+      main.getByText("六つ目の段で架空の仕上げを終えた").boundingBox(),
+      inquiry.boundingBox(),
+    ])
+    expect(lastReport !== null && card !== null && card.y > lastReport.y).toBe(true)
+    expect(await jump.count()).toBe(0)
+
+    await main.evaluate((element) => {
+      element.scrollTop = 0
+    })
+    await expect.poll(() => jump.count()).toBe(1)
+    expect(await insideOf(inquiry, main)).toBe(false)
+
+    await jump.click()
+    await expect.poll(() => insideOf(inquiry, main)).toBe(true)
+    await expect.poll(() => jump.count()).toBe(0)
   })
 
   it("質問は、カードを選んで「次へ」「これで答える」で1問ずつ答える（マウス）", async () => {

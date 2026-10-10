@@ -1,0 +1,19 @@
+/* 「お伺い ↓」の口。高さ 0 の入れ物が領域の下端に貼り付き、口はその上に持ち上げて置く（本文の末尾の余白を食わない）。 */
+.inquiry-float {
+  position: sticky;
+  bottom: 0;
+  height: 0;
+  z-index: 2;
+}
+.inquiry-float-body {
+  position: absolute;
+  right: 1rem;
+  bottom: 0.75rem;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--surface), var(--state-warn) 12%);
+}
+.inquiry-float-button {
+  min-height: 1.5rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.4rem;
+}
