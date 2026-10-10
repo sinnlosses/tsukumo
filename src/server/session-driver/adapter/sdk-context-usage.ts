@@ -8,6 +8,7 @@ import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../shared/context-usage/context-usage.ts"
+import type { UsageFailurePlace } from "../core/session-driver.ts"
 
 /**
  * コンテキストの内訳を取るときの細かさ。`'full'` に固定する（分類ごとに token-count API で数えた値が返る）。
@@ -53,12 +54,22 @@ const sdkContextUsageSchema = z.object({
  * ターンの実行中に呼んでも待たされない（実測: 実行中の呼び出しが13ms で返り、値は直前の応答までの積み上がりを指す）。
  * だから画面は進行中でも同じ経路で取りに行く。
  */
-export async function readContextUsage(session: ContextUsageSource): Promise<ContextUsageReport> {
+export async function readContextUsage(
+  session: ContextUsageSource,
+  reportFailure: (place: UsageFailurePlace, error: unknown) => void,
+): Promise<ContextUsageReport> {
+  let raw: unknown = undefined
   try {
-    return toContextUsage(await session.getContextUsage({ detail: CONTEXT_USAGE_DETAIL }))
-  } catch {
+    raw = await session.getContextUsage({ detail: CONTEXT_USAGE_DETAIL })
+  } catch (error) {
+    reportFailure("context-usage-threw", error)
     return UNAVAILABLE_CONTEXT_USAGE
   }
+  const report = toContextUsage(raw)
+  if (report.kind === "unavailable") {
+    reportFailure("context-usage-unreadable", undefined)
+  }
+  return report
 }
 
 /**

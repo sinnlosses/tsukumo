@@ -53,6 +53,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   reportFailure: () => {},
   now: () => 0,
   reportPromptDelay: () => {},
+  reportUsageFailure: () => {},
 }
 
 describe("buildQuerySeedOptions", () => {

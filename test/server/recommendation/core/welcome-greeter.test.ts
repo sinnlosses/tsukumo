@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   greetWelcome,
+  type UnwrittenPlace,
   type WelcomeGreeterPorts,
 } from "../../../../src/server/recommendation/core/welcome-greeter.ts"
 import {
@@ -43,9 +44,11 @@ function harness(recent: readonly WelcomeGreetingText[] = []): {
     readonly settle: (value: unknown) => void
     readonly fail: () => void
   }[]
+  readonly unwritten: { readonly place: UnwrittenPlace; readonly error: unknown }[]
 } {
   const written: (readonly WelcomeGreetingText[])[] = []
   const emitted: WelcomeGreetingState[] = []
+  const unwritten: { place: UnwrittenPlace; error: unknown }[] = []
   const queries: {
     readonly prompt: string
     readonly settle: (value: unknown) => void
@@ -70,8 +73,11 @@ function harness(recent: readonly WelcomeGreetingText[] = []): {
     emit: (state) => {
       emitted.push(state)
     },
+    onUnwritten: (place, error) => {
+      unwritten.push({ place, error })
+    },
   }
-  return { ports, written, emitted, queries }
+  return { ports, written, emitted, queries, unwritten }
 }
 
 /** 解いた問い合わせの続きが走り終わるのを待つ。 */
@@ -124,7 +130,7 @@ describe("greetWelcome", () => {
   })
 
   it("問い合わせ直しも失敗したら、unwritten を配る", async () => {
-    const { ports, written, emitted, queries } = harness()
+    const { ports, written, emitted, queries, unwritten } = harness()
 
     const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
     queries[0]?.fail()
@@ -135,10 +141,12 @@ describe("greetWelcome", () => {
 
     expect(emitted).toEqual([{ kind: "writing" }, { kind: "unwritten" }])
     expect(written).toEqual([])
+    expect(unwritten.map((entry) => entry.place)).toEqual(["welcome-greeting-failed"])
+    expect(unwritten[0]?.error).toBeInstanceOf(Error)
   })
 
   it("検査に落ちたときも問い合わせ直し、2回とも落ちれば unwritten を配る", async () => {
-    const { ports, emitted, queries } = harness()
+    const { ports, emitted, queries, unwritten } = harness()
 
     const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
     queries[0]?.settle({ ...OUTPUT, withCard: "差し込み口なし" })
@@ -148,15 +156,17 @@ describe("greetWelcome", () => {
     await promise
 
     expect(emitted).toEqual([{ kind: "writing" }, { kind: "unwritten" }])
+    expect(unwritten.map((entry) => entry.place)).toEqual(["welcome-greeting-rejected"])
   })
 
   it("締め切りを過ぎたら中断して unwritten を配り、その後に届いた答えは配らない", async () => {
-    const { ports, written, emitted, queries } = harness()
+    const { ports, written, emitted, queries, unwritten } = harness()
 
     await greetWelcome(ports, MATERIAL, new AbortController().signal, 10)
 
     expect(emitted).toEqual([{ kind: "writing" }, { kind: "unwritten" }])
     expect(written).toEqual([])
+    expect(unwritten.map((entry) => entry.place)).toEqual(["welcome-greeting-timed-out"])
 
     // 締め切りのあとに答えが来ても、呼び終わった greetWelcome はもう何も配らない。
     queries[0]?.settle(OUTPUT)
@@ -165,7 +175,7 @@ describe("greetWelcome", () => {
   })
 
   it("外から渡した signal を中断すると、結果に関わらず何も配らない（writing のあとに何も続かない）", async () => {
-    const { ports, written, emitted, queries } = harness()
+    const { ports, written, emitted, queries, unwritten } = harness()
     const controller = new AbortController()
 
     const promise = greetWelcome(ports, MATERIAL, controller.signal, NO_TIMEOUT)
@@ -176,5 +186,6 @@ describe("greetWelcome", () => {
 
     expect(emitted).toEqual([{ kind: "writing" }])
     expect(written).toEqual([])
+    expect(unwritten).toEqual([])
   })
 })

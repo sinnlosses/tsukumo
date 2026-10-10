@@ -9,6 +9,7 @@ import {
   type PlanUsageWindow,
   UNAVAILABLE_PLAN_USAGE,
 } from "../../../shared/plan-usage/plan-usage.ts"
+import type { UsageFailurePlace } from "../core/session-driver.ts"
 
 /**
  * {@link readPlanUsage} が要る口だけを写した形。
@@ -43,16 +44,24 @@ const sdkPlanUsageSchema = z.object({
  * 渡さないと本体が手元の transcript を7日ぶん走査して `behaviors` を作る。
  * 利用枠を読むだけの都合で、会話の中身に触る処理を tsukumo の側から起こさない（`docs/coding-standards.md`「会話内容の扱い」）。
  */
-export async function readPlanUsage(session: PlanUsageSource): Promise<PlanUsageReport> {
+export async function readPlanUsage(
+  session: PlanUsageSource,
+  reportFailure: (place: UsageFailurePlace, error: unknown) => void,
+): Promise<PlanUsageReport> {
+  let raw: unknown = undefined
   try {
-    return toPlanUsage(
-      await session.usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET({
-        skipBehaviors: true,
-      }),
-    )
-  } catch {
+    raw = await session.usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET({
+      skipBehaviors: true,
+    })
+  } catch (error) {
+    reportFailure("plan-usage-threw", error)
     return UNAVAILABLE_PLAN_USAGE
   }
+  const report = toPlanUsage(raw)
+  if (report.kind === "unavailable") {
+    reportFailure("plan-usage-unreadable", undefined)
+  }
+  return report
 }
 
 /**

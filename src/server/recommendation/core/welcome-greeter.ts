@@ -22,7 +22,24 @@ export type WelcomeGreeterPorts = {
   /** 問い合わせを1回走らせ、`structured_output` をそのまま返す。失敗・中断では reject する。 */
   readonly query: (request: StructuredQuery, signal: AbortSignal) => Promise<unknown>
   readonly emit: (state: WelcomeGreetingState) => void
+  /** `unwritten` を配る理由の知らせ口（中断では呼ばない）。`error` は問い合わせの失敗のときだけ実物が入る。 */
+  readonly onUnwritten: (place: UnwrittenPlace, error: unknown) => void
 }
+
+export type UnwrittenPlace =
+  | "welcome-greeting-failed"
+  | "welcome-greeting-rejected"
+  | "welcome-greeting-timed-out"
+
+type Attempt =
+  | { readonly kind: "written"; readonly greeting: WelcomeGreeting }
+  | { readonly kind: "failed"; readonly error: unknown }
+  | { readonly kind: "rejected" }
+
+const unwrittenPlace = {
+  failed: "welcome-greeting-failed",
+  rejected: "welcome-greeting-rejected",
+} as const satisfies Record<"failed" | "rejected", UnwrittenPlace>
 
 /** 代ごとに1つ持ち、書き直す契機のたびに `write` を呼ぶ。 */
 export type WelcomeGreeter = {
@@ -60,23 +77,32 @@ export async function greetWelcome(
   const recent = ports.readRecent()
   const full = { ...material, recent }
 
-  const attempt = async (): Promise<WelcomeGreeting | undefined> => {
+  const attempt = async (): Promise<Attempt> => {
+    let answer: unknown = undefined
     try {
-      return parseWelcomeGreeting(await ports.query(welcomeGreetingQuery(full), bounded), full)
-    } catch {
-      return undefined
+      answer = await ports.query(welcomeGreetingQuery(full), bounded)
+    } catch (error) {
+      return { kind: "failed", error }
     }
+    const greeting = parseWelcomeGreeting(answer, full)
+    return greeting === undefined ? { kind: "rejected" } : { kind: "written", greeting }
   }
 
-  const greeting = (await attempt()) ?? (bounded.aborted ? undefined : await attempt())
+  const first = await attempt()
+  const last = first.kind !== "written" && !bounded.aborted ? await attempt() : first
 
   if (signal.aborted) {
     return
   }
-  if (greeting === undefined) {
+  if (last.kind !== "written") {
+    ports.onUnwritten(
+      bounded.aborted ? "welcome-greeting-timed-out" : unwrittenPlace[last.kind],
+      last.kind === "failed" ? last.error : undefined,
+    )
     ports.emit({ kind: "unwritten" })
     return
   }
+  const greeting = last.greeting
   ports.writeRecent(
     [{ withCard: greeting.withCard, withoutCard: greeting.withoutCard }, ...recent].slice(
       0,

@@ -243,6 +243,9 @@ function startDriver(options: {
       options.reportFailure({ feature: "session", place: "event-handler" }, error),
     now: context.now,
     reportPromptDelay: options.reportPromptDelay,
+    reportUsageFailure: (place, error) => {
+      options.reportFailure({ feature: "session", place }, error)
+    },
   })
 }
 

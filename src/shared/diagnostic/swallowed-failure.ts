@@ -8,7 +8,11 @@ const SWALLOWED_FAILURE_PLACES = {
   session: [
     "restart",
     "read-context-usage",
+    "context-usage-threw",
+    "context-usage-unreadable",
     "read-plan-usage",
+    "plan-usage-threw",
+    "plan-usage-unreadable",
     "read-session-digest",
     "restore-events",
     "event-handler",
@@ -23,7 +27,13 @@ const SWALLOWED_FAILURE_PLACES = {
     "persona-remember",
     "persona-forget",
   ],
-  recommendation: ["recommend-aborted", "recommend-failed"],
+  recommendation: [
+    "recommend-aborted",
+    "recommend-failed",
+    "welcome-greeting-failed",
+    "welcome-greeting-rejected",
+    "welcome-greeting-timed-out",
+  ],
   repository: ["task-summary-poll"],
   process: ["unhandled-rejection", "uncaught-exception"],
 } as const satisfies Record<string, readonly string[]>

@@ -4,6 +4,7 @@
 
 import { localCalendarAt } from "../server/adapter/local-time.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
+import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import { queryStructured } from "../server/recommendation/adapter/sdk-structured-query.ts"
 import {
   readRecentWelcomeGreetings,
@@ -19,9 +20,13 @@ import {
 import type { SessionLaunchSeed } from "../server/session/core/session-launch.ts"
 import { expressionChoices } from "../shared/character-pack/expression-choice.ts"
 import type { RestoredEvent, SessionEvent } from "../shared/session/session-event.ts"
+import { failureDiagnostic } from "./failure-diagnostic.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
-export function wireWelcomeGreeting(context: WiringContext): {
+export function wireWelcomeGreeting(
+  context: WiringContext,
+  diagnosticLog: DiagnosticLog,
+): {
   /**
    * 代を起こすたびに呼ぶ。`onEvent` はその代の受け取り口、`restored` はその代で組み直した履歴。
    * 戻り値は、その代の受け取り口に流れた出来事を観る口（`/clear` が来たら書き直す）。
@@ -34,6 +39,7 @@ export function wireWelcomeGreeting(context: WiringContext): {
   ) => (event: SessionEvent) => void
 } {
   const { cwd, inheritedEnv } = context
+  const reportFailure = failureDiagnostic(diagnosticLog, context.now)
   return {
     noteLaunched: (seed, onEvent, restored) => {
       if (context.fakeSession !== undefined || seed.chat) {
@@ -47,6 +53,9 @@ export function wireWelcomeGreeting(context: WiringContext): {
         query: (request, signal) => queryStructured(request, { cwd, env: inheritedEnv }, signal),
         emit: (state) => {
           onEvent({ kind: "welcome-greeting-changed", state })
+        },
+        onUnwritten: (place, error) => {
+          reportFailure({ feature: "recommendation", place }, error)
         },
       })
       const material = (visit: WelcomeVisit): Omit<WelcomeGreetingMaterial, "recent"> => ({

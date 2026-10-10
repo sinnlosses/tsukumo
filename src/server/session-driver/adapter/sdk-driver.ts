@@ -179,8 +179,8 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     },
     answer: (id, answer) => queue.answer(id, answer),
     pending: () => queue.list(),
-    readContextUsage: () => readContextUsage(session),
-    readPlanUsage: () => readPlanUsage(session),
+    readContextUsage: () => readContextUsage(session, options.reportUsageFailure),
+    readPlanUsage: () => readPlanUsage(session, options.reportUsageFailure),
     readSessionDigest,
     setModel: async (model) => {
       await session.setModel(model)

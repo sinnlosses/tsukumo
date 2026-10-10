@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest"
 
-import { readPlanUsage } from "../../../../src/server/session-driver/adapter/sdk-plan-usage.ts"
+import { readPlanUsage as readPlanUsageReporting } from "../../../../src/server/session-driver/adapter/sdk-plan-usage.ts"
 import {
   NOT_APPLICABLE_PLAN_USAGE,
   UNAVAILABLE_PLAN_USAGE,
 } from "../../../../src/shared/plan-usage/plan-usage.ts"
+
+function readPlanUsage(
+  session: Parameters<typeof readPlanUsageReporting>[0],
+): ReturnType<typeof readPlanUsageReporting> {
+  return readPlanUsageReporting(session, () => {})
+}
 
 /** SDK が実験中の口で返す形の抜粋（手で書いた架空の値。鍵の綴りは実測に合わせた snake_case）。 */
 const SDK_PLAN_USAGE = {
@@ -101,6 +107,28 @@ describe("readPlanUsage", () => {
     }
 
     expect(await readPlanUsage(failing)).toEqual(UNAVAILABLE_PLAN_USAGE)
+  })
+
+  it("問い合わせが例外なら plan-usage-threw を1件、読めない形なら plan-usage-unreadable を1件知らせる", async () => {
+    const reported: { place: string; error: unknown }[] = []
+    const report = (place: string, error: unknown): void => {
+      reported.push({ place, error })
+    }
+
+    await readPlanUsageReporting(
+      {
+        usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET: () =>
+          Promise.reject(new Error("架空の失敗")),
+      },
+      report,
+    )
+    await readPlanUsageReporting(fakeSession({ rate_limits_available: "たくさん" }), report)
+    await readPlanUsageReporting(fakeSession(SDK_PLAN_USAGE), report)
+
+    expect(reported.map((entry) => entry.place)).toEqual([
+      "plan-usage-threw",
+      "plan-usage-unreadable",
+    ])
   })
 
   it("会話の中身に触らせないため skipBehaviors: true を必ず渡す", async () => {

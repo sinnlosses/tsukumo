@@ -80,7 +80,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   const firstViewer = Promise.withResolvers<void>()
 
   const diary = wireDiary(context)
-  const welcomeGreeting = wireWelcomeGreeting(context)
+  const welcomeGreeting = wireWelcomeGreeting(context, options.diagnosticLog)
   const launch = wireSessionLaunch({
     context,
     config,

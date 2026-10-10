@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import { readContextUsage } from "../../../../src/server/session-driver/adapter/sdk-context-usage.ts"
+import { readContextUsage as readContextUsageReporting } from "../../../../src/server/session-driver/adapter/sdk-context-usage.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
+
+function readContextUsage(
+  session: Parameters<typeof readContextUsageReporting>[0],
+): ReturnType<typeof readContextUsageReporting> {
+  return readContextUsageReporting(session, () => {})
+}
 
 /**
  * SDK が `getContextUsage()` で返す形の抜粋（手で書いた架空の値。鍵の綴りは実測に合わせた
@@ -77,5 +83,24 @@ describe("readContextUsage", () => {
     const failing = { getContextUsage: () => Promise.reject(new Error("架空の失敗")) }
 
     expect(await readContextUsage(failing)).toEqual(UNAVAILABLE_CONTEXT_USAGE)
+  })
+
+  it("問い合わせが例外なら context-usage-threw を1件、読めない形なら context-usage-unreadable を1件知らせる", async () => {
+    const reported: { place: string; error: unknown }[] = []
+    const report = (place: string, error: unknown): void => {
+      reported.push({ place, error })
+    }
+
+    await readContextUsageReporting(
+      { getContextUsage: () => Promise.reject(new Error("架空の失敗")) },
+      report,
+    )
+    await readContextUsageReporting(fakeSession({ totalTokens: "たくさん" }), report)
+    await readContextUsageReporting(fakeSession(SDK_CONTEXT_USAGE), report)
+
+    expect(reported.map((entry) => entry.place)).toEqual([
+      "context-usage-threw",
+      "context-usage-unreadable",
+    ])
   })
 })

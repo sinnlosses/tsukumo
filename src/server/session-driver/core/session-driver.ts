@@ -208,7 +208,16 @@ export type SessionDriverOptions = {
   readonly now: () => number
   /** 依頼が本体へ届くまでの遅れを診断ログへ書く口。ここで例外を投げないこと。 */
   readonly reportPromptDelay: (footprint: PromptDelayFootprint) => void
+  /** 文脈・プラン使用量を「取れない」に畳んだ理由を診断ログへ書く口。ここで例外を投げないこと。 */
+  readonly reportUsageFailure: (place: UsageFailurePlace, error: unknown) => void
 }
+
+/** 使用量の問い合わせを「取れない」に畳んだ場所。 */
+export type UsageFailurePlace =
+  | "context-usage-threw"
+  | "context-usage-unreadable"
+  | "plan-usage-threw"
+  | "plan-usage-unreadable"
 
 /** 送った言葉をどう開くか。`request` は新しい依頼、`aside` は脇の話（親のやり取りに吊るす）。 */
 export type PromptOpening = "request" | "aside"
