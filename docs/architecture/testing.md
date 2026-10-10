@@ -397,6 +397,10 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 （`--advance` はページの時計だけでサーバの手は進めない）。
 最終レポートまで流し切って待つときは `--wait-for '[class*="is-final_"]'`（`scripts/capture-catalog.ts`
 の `WORK_PLAN_FINAL_SELECTOR` と同じ。`report-head` や `--advance` で待つと中間レポートや作業中の画を撮る）。
+**割れた `report` の差し戻しと直した `report` の描画は、場面 `report-mermaid-rejected`**（疑似セッションは判定せず、場面の `tool-finished` の `isError` に従う）。
+差し戻しの画は `--until-step 5 --wait-for 'text=流れを図にして出すね'`（本文に図が無く、吹き出しに直して出し直す一言が出る）、
+描画の画は `--until-step 8 --wait-for '[class*="is-final_"]'`（図が描かれる）。
+広い窓では吹き出しが1字ずつ出るので、最後の吹き出しの文では待たず、先に出る吹き出しの文を待つ。
 **幅で画面が切り替わる境目は 1100px と 760px。** 1100px 以下でサイドバーが柱に畳まれ、760px 以下で
 頭・本文・顔と吹き出し・入力欄の縦の1列と引き出しになる。境目は `--size 1100x900` と `--size 1101x900`、`--size 760x900` と `--size 761x900` の両側を撮る
 （`docs/architecture/screen-design.md`「13.4 Layout」「狭い画面（760px 以下）」）。

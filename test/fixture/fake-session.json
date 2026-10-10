@@ -2398,6 +2398,110 @@
       ]
     },
     {
+      "name": "report-mermaid-rejected",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "呼び出しの流れを図にして見せてほしい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "流れを図にして出すね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "描けた？", "expression": "default" },
+            "toolUseId": "fake-report-mermaid-1",
+            "conclusion": "架空の結論: 呼び出しの流れを図にした。",
+            "sections": [
+              {
+                "heading": "架空の呼び出しの流れ",
+                "blocks": [
+                  {
+                    "kind": "mermaid",
+                    "title": "",
+                    "source": "sequenceDiagram\n  A->>B 架空の呼び出し\n  B-->>A: 架空の返事",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1550,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-mermaid-1",
+            "content": "mermaid の図の構文が割れている（1個目の 2 行目）。その行の書き方を直す",
+            "isError": true
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "speech",
+            "text": "図の構文が割れてたみたい。直して出し直すね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 3800,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "今度は描けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-mermaid-2",
+            "conclusion": "架空の結論: 呼び出しの流れを図にした（構文を直して出し直した）。",
+            "sections": [
+              {
+                "heading": "架空の呼び出しの流れ",
+                "blocks": [
+                  {
+                    "kind": "mermaid",
+                    "title": "",
+                    "source": "sequenceDiagram\n  A->>B: 架空の呼び出し\n  B-->>A: 架空の返事",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 3850,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-mermaid-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 4600,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "background-task",
       "steps": [
         {
