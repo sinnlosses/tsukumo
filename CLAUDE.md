@@ -44,6 +44,7 @@ pnpm run check                 # typecheck + lint + format:check + test + test:e
                               #   E2E は変えたファイルから選んだものだけ。
                               #   --full で5段とも E2E 全件。全件は main へ送る直前に打つ。
                               #   文書だけの変更は --full でも format:check と文書の検査だけ）
+pnpm run format                # 整形（oxfmt。prettier は入っていない）
 pnpm run test                  # 単体テスト（Vitest）。ファイルを渡すと規約のテストも一緒に走る
 pnpm run build                 # src/browser/ を直したら打つ（起動時には組み立てない）
 node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> でそれ1つだけ止める）
