@@ -311,7 +311,7 @@ describe("createSessionCatalog の切り替え先の一覧", () => {
     expect(await listChoicesOf(sessions, TAG)).toEqual([])
   })
 
-  it("いまの作業ツリーの行を先に、その中は新しい順に並べる", async () => {
+  it("作業ツリーをまたいで新しい順に並べる", async () => {
     const sessions = [
       sessionRecord({ sessionId: "s-other-new", lastModified: 900, tag: TAG, cwd: OTHER_CWD }),
       sessionRecord({ sessionId: "s-here-old", lastModified: 100, tag: TAG }),
@@ -320,14 +320,14 @@ describe("createSessionCatalog の切り替え先の一覧", () => {
     ]
 
     expect((await listChoicesOf(sessions, TAG)).map((choice) => choice.sessionId)).toEqual([
-      "s-here-new",
-      "s-here-old",
       "s-other-new",
       "s-other-old",
+      "s-here-new",
+      "s-here-old",
     ])
   })
 
-  it("上限を超えても、いまの作業ツリーの行が別の作業ツリーの新しい行に押し出されない", async () => {
+  it("いまの作業ツリーに上限以上あっても、別の作業ツリーの新しい行が上位に並び、古いものが落ちる", async () => {
     const here = Array.from({ length: MAX_SESSION_CHOICES + 1 }, (_unused, index) =>
       sessionRecord({ sessionId: `s-here-${String(index)}`, lastModified: index, tag: TAG }),
     )
@@ -338,10 +338,11 @@ describe("createSessionCatalog の切り替え先の一覧", () => {
 
     const listed = await listChoicesOf(sessions, TAG)
     expect(listed).toHaveLength(MAX_SESSION_CHOICES)
-    expect(listed.every((choice) => choice.inCurrentWorktree)).toBe(true)
+    expect(listed[0]?.sessionId).toBe("s-other")
+    expect(listed.map((choice) => choice.sessionId)).not.toContain("s-here-0")
   })
 
-  it("いまの作業ツリーの行が少なければ、残りの枠を別の作業ツリーの新しい行で埋める", async () => {
+  it("作業ツリーを問わず新しい順の上限件数で切り、いまの作業ツリーの古い行は入らない", async () => {
     const others = Array.from({ length: 12 }, (_unused, index) =>
       sessionRecord({
         sessionId: `s-other-${String(index)}`,
@@ -356,12 +357,8 @@ describe("createSessionCatalog の切り替え先の一覧", () => {
 
     const listed = await listChoicesOf([...others, ...here], TAG)
     expect(listed).toHaveLength(MAX_SESSION_CHOICES)
-    expect(listed.slice(0, 3).map((choice) => choice.sessionId)).toEqual([
-      "s-here-2",
-      "s-here-1",
-      "s-here-0",
-    ])
-    expect(listed[3]?.sessionId).toBe("s-other-11")
+    expect(listed[0]?.sessionId).toBe("s-other-11")
+    expect(listed.every((choice) => !choice.inCurrentWorktree)).toBe(true)
   })
 
   it("印を付けた一覧に無いセッションは、いまの作業ツリーの行として並ぶ", async () => {

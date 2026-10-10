@@ -18,7 +18,7 @@ export type TaggedSession = SessionChoice & {
 export type SessionCatalog = {
   /**
    * 渡した印と同じパック・同じモードの、切り替え先として選べるセッション。目印（ポート）では絞らない。
-   * いまの作業ツリーの行を先に、その中は新しい順に並べる。最初に読み終わるまでは待つ。
+   * 作業ツリーを問わず新しい順に並べて、先頭から {@link MAX_SESSION_CHOICES} 件まで。最初に読み終わるまでは待つ。
    */
   readonly listChoices: (tag: string) => Promise<readonly SessionChoice[]>
   /**
@@ -184,11 +184,11 @@ function withSessionMark(
 
 /**
  * 切り替え先として選べるセッションを一覧にする（印そのものがセッションの一覧。別の保存先は作らない）。
- * 渡した `tag` と同じパック・同じモード（目印を除いた印）のものだけを、いまの作業ツリーの行を先に、その中は新しい順に並べる。
+ * 渡した `tag` と同じパック・同じモード（目印を除いた印）のものだけを、作業ツリーを問わず新しい順に並べる。
  * 印は目印まで揃えてあるので、昔の印（目印の無いもの・1文字の `@A`）も同じパック・モードの一覧に並ぶ。
  *
  * 返すのは先頭から {@link MAX_SESSION_CHOICES} 件まで（印は使うほど増え続ける）。
- * いまの作業ツリーの行を先に並べてから切るので、ほかの作業ツリーの新しい行に押し出されない。
+ * 作業ツリーを問わず新しい順で切るので、いまの作業ツリーの行が10件に入らないことがある。
  */
 function listMarkedSessions(
   sessions: readonly TaggedSession[],
@@ -198,11 +198,7 @@ function listMarkedSessions(
   return sessions
     .filter((session) => family !== undefined && session.family === family)
     .map((session) => omit(session, ["tag", "family"]))
-    .sort(
-      (left, right) =>
-        Number(right.inCurrentWorktree) - Number(left.inCurrentWorktree) ||
-        right.lastModified - left.lastModified,
-    )
+    .sort((left, right) => right.lastModified - left.lastModified)
     .slice(0, MAX_SESSION_CHOICES)
 }
 
