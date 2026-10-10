@@ -129,7 +129,7 @@ function Others(props: { readonly model: WelcomeModel; readonly primary: boolean
         <ListIcon />
         タスクの一覧から選ぶ
       </OtherButton>
-      {model.hasPrevious && (
+      {model.hasOtherSessions && (
         <OtherButton primary={false} onClick={model.onSeePrevious}>
           <HistoryIcon />
           前のやり取りを見る

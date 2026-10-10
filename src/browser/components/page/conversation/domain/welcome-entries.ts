@@ -35,12 +35,25 @@ export type WelcomeCard = {
   readonly request: string
 }
 
-/** 前回の続きの要約を読む相手。無ければ取りに行かない。 */
+/**
+ * 前回の続きの要約を読む相手。無ければ取りに行かない。
+ * 同じ作業ツリーの行だけから選ぶ（別の作業ツリーの行は札にしない）。
+ */
 export function previousSessionOf(
   sessions: readonly SessionChoice[],
   currentSessionId: string | undefined,
 ): SessionChoice | undefined {
-  return sessions.find((session) => session.sessionId !== currentSessionId)
+  return sessions.find(
+    (session) => session.inCurrentWorktree && session.sessionId !== currentSessionId,
+  )
+}
+
+/** 切り替え画面に、いまのセッション以外の行が1つでもあるか（作業ツリーは問わない）。 */
+export function hasOtherSession(
+  sessions: readonly SessionChoice[],
+  currentSessionId: string | undefined,
+): boolean {
+  return sessions.some((session) => session.sessionId !== currentSessionId)
 }
 
 /** おすすめの並びを先に当て、足りない枠は既定の並びで理由なしに埋める。 */

@@ -43,10 +43,12 @@ describe("readSessionMark", () => {
     expect(readSessionMark(sessionTag("架空のパック", false, DEFAULT_VIEW_PORT))).toEqual({
       viewPort: DEFAULT_VIEW_PORT,
       tag: "tsukumo:架空のパック@7327",
+      family: "tsukumo:架空のパック",
     })
     expect(readSessionMark(sessionTag("架空のパック", true, DEFAULT_VIEW_PORT + 1))).toEqual({
       viewPort: DEFAULT_VIEW_PORT + 1,
       tag: "tsukumo:架空のパック:chat@7328",
+      family: "tsukumo:架空のパック:chat",
     })
   })
 
@@ -54,6 +56,7 @@ describe("readSessionMark", () => {
     expect(readSessionMark(sessionTag("架空のパック", false, 9000))).toEqual({
       viewPort: 9000,
       tag: "tsukumo:架空のパック@9000",
+      family: "tsukumo:架空のパック",
     })
   })
 
@@ -61,10 +64,12 @@ describe("readSessionMark", () => {
     expect(readSessionMark("tsukumo:架空のパック")).toEqual({
       viewPort: DEFAULT_VIEW_PORT,
       tag: sessionTag("架空のパック", false, DEFAULT_VIEW_PORT),
+      family: "tsukumo:架空のパック",
     })
     expect(readSessionMark("tsukumo:架空のパック:chat")).toEqual({
       viewPort: DEFAULT_VIEW_PORT,
       tag: sessionTag("架空のパック", true, DEFAULT_VIEW_PORT),
+      family: "tsukumo:架空のパック:chat",
     })
   })
 
@@ -72,14 +77,17 @@ describe("readSessionMark", () => {
     expect(readSessionMark("tsukumo:架空のパック@A")).toEqual({
       viewPort: DEFAULT_VIEW_PORT,
       tag: sessionTag("架空のパック", false, DEFAULT_VIEW_PORT),
+      family: "tsukumo:架空のパック",
     })
     expect(readSessionMark("tsukumo:架空のパック:chat@B")).toEqual({
       viewPort: DEFAULT_VIEW_PORT + 1,
       tag: sessionTag("架空のパック", true, DEFAULT_VIEW_PORT + 1),
+      family: "tsukumo:架空のパック:chat",
     })
     expect(readSessionMark("tsukumo:架空のパック@Z")).toEqual({
       viewPort: DEFAULT_VIEW_PORT + 25,
       tag: sessionTag("架空のパック", false, DEFAULT_VIEW_PORT + 25),
+      family: "tsukumo:架空のパック",
     })
   })
 
@@ -91,7 +99,7 @@ describe("readSessionMark", () => {
 
   it("名前に @ を含むパックも、組み立てた印と同じ形に揃う", () => {
     const tag = sessionTag("架空@パック", false, DEFAULT_VIEW_PORT)
-    const mark = { viewPort: DEFAULT_VIEW_PORT, tag }
+    const mark = { viewPort: DEFAULT_VIEW_PORT, tag, family: "tsukumo:架空@パック" }
     expect(readSessionMark("tsukumo:架空@パック")).toEqual(mark)
     expect(readSessionMark(tag)).toEqual(mark)
   })
@@ -100,6 +108,7 @@ describe("readSessionMark", () => {
     expect(readSessionMark("tsukumo:架空のパック@65536")).toEqual({
       viewPort: DEFAULT_VIEW_PORT,
       tag: "tsukumo:架空のパック@65536@7327",
+      family: "tsukumo:架空のパック@65536",
     })
   })
 })

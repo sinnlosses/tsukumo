@@ -66,14 +66,18 @@
           "sessionId": "fake-session",
           "lastModified": 1768438500000,
           "startedAt": 1768435920000,
-          "heading": "入力欄の送信ボタンの位置を架空に直す"
+          "heading": "入力欄の送信ボタンの位置を架空に直す",
+          "worktree": "fictional-main",
+          "inCurrentWorktree": true
         },
         {
           "viewPort": 7327,
           "sessionId": "7b3f0000-0000-4000-8000-000000000001",
           "lastModified": 1768399500000,
           "startedAt": 1768389000000,
-          "heading": "架空の成果の画面に振り返りの口を置きたい"
+          "heading": "架空の成果の画面に振り返りの口を置きたい",
+          "worktree": "fictional-main",
+          "inCurrentWorktree": true
         }
       ],
       "current": "fake-session"

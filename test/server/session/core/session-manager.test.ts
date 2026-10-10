@@ -314,6 +314,8 @@ describe("createSessionManager", () => {
           lastModified: 2_000,
           startedAt: 1_000,
           heading: "架空の見出し",
+          worktree: "fictional-tree",
+          inCurrentWorktree: true,
         },
       ],
       current: "fake-current",

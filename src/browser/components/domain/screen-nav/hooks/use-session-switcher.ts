@@ -36,6 +36,8 @@ export type SessionSwitcherRow = {
   /** 右の欄の見出しの横に出す、始まり〜最終更新の範囲（`9/26 20:10 – 23:05`）。 */
   readonly rangeLabel: string
   readonly current: boolean
+  readonly worktree: string
+  readonly inCurrentWorktree: boolean
   /** 別の窓の tsukumo がいま開いているか。いまの行は使用中にしない。 */
   readonly occupiedElsewhere: boolean
 }
@@ -193,6 +195,8 @@ function switcherRow(
         : clockTime(modified),
     rangeLabel: `${monthDayTime(started)} – ${sameDay ? clockTime(modified) : monthDayTime(modified)}`,
     current,
+    worktree: session.worktree,
+    inCurrentWorktree: session.inCurrentWorktree,
     occupiedElsewhere,
   }
 }
@@ -204,7 +208,7 @@ function groupOf(date: Temporal.PlainDate, today: Temporal.PlainDate): SessionSw
   return date.equals(today.subtract({ days: 1 })) ? "yesterday" : "earlier"
 }
 
-/** `M/D HH:MM`（年は出さない。一覧に並ぶのは同じ部屋の直近の作業だけ）。 */
+/** `M/D HH:MM`（年は出さない。一覧に並ぶのは直近の作業だけ）。 */
 function monthDayTime(at: Temporal.ZonedDateTime): string {
   return `${String(at.month)}/${String(at.day)} ${clockTime(at)}`
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  hasOtherSession,
   previousSessionOf,
   welcomeCardsOf,
   welcomeHeadOf,
@@ -12,8 +13,20 @@ import type {
 } from "../../../../../../src/shared/repository/task-summary.ts"
 import type { SessionChoice } from "../../../../../../src/shared/session/session-choice.ts"
 
-function choice(sessionId: string, heading: string | undefined): SessionChoice {
-  return { viewPort: 1, sessionId, lastModified: 0, startedAt: 0, heading }
+function choice(
+  sessionId: string,
+  heading: string | undefined,
+  inCurrentWorktree = true,
+): SessionChoice {
+  return {
+    viewPort: 1,
+    sessionId,
+    lastModified: 0,
+    startedAt: 0,
+    heading,
+    worktree: "fictional-tree",
+    inCurrentWorktree,
+  }
 }
 
 function task(id: string, status: string, waitingFor: readonly string[]): TaskSummaryItem {
@@ -53,6 +66,26 @@ describe("前回のセッション", () => {
 
   it("いまのセッションしか無ければ無い", () => {
     expect(previousSessionOf([choice("now", "今")], "now")).toBeUndefined()
+  })
+
+  it("別の作業ツリーの行は、より新しくても選ばない", () => {
+    const sessions = [choice("other", "別", false), choice("now", "今"), choice("prev", "前")]
+    expect(previousSessionOf(sessions, "now")?.sessionId).toBe("prev")
+  })
+
+  it("別の作業ツリーの行しか無ければ無い", () => {
+    expect(previousSessionOf([choice("other", "別", false)], "now")).toBeUndefined()
+  })
+})
+
+describe("切り替え画面で選べる行", () => {
+  it("別の作業ツリーの行しか無くても、いまのセッション以外の行があれば有る", () => {
+    expect(hasOtherSession([choice("other", "別", false)], "now")).toBe(true)
+  })
+
+  it("いまのセッションしか無ければ無い", () => {
+    expect(hasOtherSession([choice("now", "今")], "now")).toBe(false)
+    expect(hasOtherSession([], undefined)).toBe(false)
   })
 })
 

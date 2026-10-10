@@ -13,6 +13,7 @@ import {
 } from "../../../fixture/sdk-message.ts"
 
 const TAG = "tsukumo:架空のパック@7327"
+const CWD = "/work/fictional-tree"
 
 function session(): FakeSession {
   return {
@@ -44,15 +45,23 @@ function session(): FakeSession {
 
 describe("createFakeSessionCatalog", () => {
   it("続きを持つ場面を名指ししたときだけ、その ID を切り替え先に出す", async () => {
-    const choices = await createFakeSessionCatalog(session(), "with-resume").listChoices(TAG)
+    const choices = await createFakeSessionCatalog(session(), "with-resume", CWD).listChoices(TAG)
 
     expect(choices.map((choice) => choice.sessionId)).toEqual(["past-1"])
+  })
+
+  it("出す1件は、起こした作業ディレクトリの名前のいまの作業ツリーの行", async () => {
+    const choices = await createFakeSessionCatalog(session(), "with-resume", CWD).listChoices(TAG)
+
+    expect(choices).toEqual([
+      expect.objectContaining({ worktree: "fictional-tree", inCurrentWorktree: true }),
+    ])
   })
 
   it.each([["without-resume"], ["dangling-resume"], ["unknown-scene"], [undefined]])(
     "場面が %s のときは切り替え先が空",
     async (scene) => {
-      expect(await createFakeSessionCatalog(session(), scene).listChoices(TAG)).toEqual([])
+      expect(await createFakeSessionCatalog(session(), scene, CWD).listChoices(TAG)).toEqual([])
     },
   )
 })

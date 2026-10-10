@@ -42,6 +42,8 @@ const LOADING = "読み込み中…"
 const UNAVAILABLE = "このセッションの記録は読めなかった"
 const CURRENT_MARK = "いま"
 const OCCUPIED_MARK = "別の窓で使用中"
+const THIS_WORKTREE = "この作業ツリー"
+const OTHER_WORKTREES = "ほかの作業ツリー"
 const CURRENT_BUTTON = "いま出しているセッション"
 
 /** 一覧に出す日の区切りの順。 */
@@ -72,6 +74,13 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
   const selection = useSessionSwitcherSelection(switcher.rows, switcher.onSwitch)
   const idPrefix = useId()
   const optionId = (sessionId: string): string => `${idPrefix}-${sessionId}`
+  // 並びはサーバが「いまの作業ツリーが先」に揃えて届けるので、塊の順がキー操作の順と同じになる。
+  const worktreeBlocks = [
+    { label: THIS_WORKTREE, rows: selection.rows.filter((row) => row.inCurrentWorktree) },
+    { label: OTHER_WORKTREES, rows: selection.rows.filter((row) => !row.inCurrentWorktree) },
+  ].filter((block) => block.rows.length > 0)
+  // 塊は両方に行があるときだけ見出しと group を持つ。
+  const grouped = worktreeBlocks.length > 1
 
   return (
     <div className={styles["session-switcher-frame"]}>
@@ -137,74 +146,101 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
               {NO_MATCH}
             </Text>
           )}
-          {GROUP_ORDER.map((group) => ({
-            group,
-            rows: selection.rows.filter((row) => row.group === group),
-          }))
-            .filter(({ rows }) => rows.length > 0)
-            .map(({ group, rows }) => (
-              <div key={group} role="group" aria-label={SESSION_SWITCHER_GROUP_LABELS[group]}>
-                <div className={styles["session-switcher-group-label"]} aria-hidden="true">
-                  {SESSION_SWITCHER_GROUP_LABELS[group]}
+          {worktreeBlocks.map((block) => (
+            <div
+              key={block.label}
+              role={grouped ? "group" : undefined}
+              aria-label={grouped ? block.label : undefined}
+            >
+              {grouped && (
+                <div className={styles["session-switcher-worktree-label"]} aria-hidden="true">
+                  {block.label}
                 </div>
-                {rows.map((row) => (
-                  <div
-                    key={row.sessionId}
-                    id={optionId(row.sessionId)}
-                    role="option"
-                    aria-selected={row.sessionId === selection.selected?.sessionId}
-                    aria-disabled={row.occupiedElsewhere}
-                    data-current={row.current}
-                    data-occupied={row.occupiedElsewhere}
-                    className={styles["session-switcher-row"]}
-                    onClick={() => selection.onSelect(row.sessionId)}
-                    onDoubleClick={() => switcher.onSwitch(row.sessionId)}
-                  >
-                    <span className={styles["session-switcher-row-id"]}>{row.shortId}</span>
-                    <Text
-                      element="span"
-                      size="secondary"
-                      tone="inherit"
-                      weight="inherit"
-                      className={styles["session-switcher-row-heading"]}
-                    >
-                      {row.heading}
-                    </Text>
-                    {row.current && (
-                      <Text
-                        element="span"
-                        size="label"
-                        tone="accent"
-                        weight="bold"
-                        className={styles["session-switcher-row-current"]}
+              )}
+              {GROUP_ORDER.map((group) => ({
+                group,
+                rows: block.rows.filter((row) => row.group === group),
+              }))
+                .filter(({ rows }) => rows.length > 0)
+                .map(({ group, rows }) => (
+                  <div key={group} role="group" aria-label={SESSION_SWITCHER_GROUP_LABELS[group]}>
+                    <div className={styles["session-switcher-group-label"]} aria-hidden="true">
+                      {SESSION_SWITCHER_GROUP_LABELS[group]}
+                    </div>
+                    {rows.map((row) => (
+                      <div
+                        key={row.sessionId}
+                        id={optionId(row.sessionId)}
+                        role="option"
+                        aria-selected={row.sessionId === selection.selected?.sessionId}
+                        aria-disabled={row.occupiedElsewhere}
+                        data-current={row.current}
+                        data-occupied={row.occupiedElsewhere}
+                        className={styles["session-switcher-row"]}
+                        onClick={() => selection.onSelect(row.sessionId)}
+                        onDoubleClick={() => switcher.onSwitch(row.sessionId)}
                       >
-                        {CURRENT_MARK}
-                      </Text>
-                    )}
-                    {row.occupiedElsewhere && (
-                      <Text
-                        element="span"
-                        size="label"
-                        tone="ink-quiet"
-                        weight="inherit"
-                        className={styles["session-switcher-row-current"]}
-                      >
-                        {OCCUPIED_MARK}
-                      </Text>
-                    )}
-                    <Text
-                      element="span"
-                      size="label"
-                      tone="ink-quiet"
-                      weight="inherit"
-                      className={styles["session-switcher-row-time"]}
-                    >
-                      {row.timeLabel}
-                    </Text>
+                        <span className={styles["session-switcher-row-id"]}>{row.shortId}</span>
+                        <Text
+                          element="span"
+                          size="secondary"
+                          tone="inherit"
+                          weight="inherit"
+                          className={styles["session-switcher-row-heading"]}
+                        >
+                          {row.heading}
+                        </Text>
+                        <span
+                          className={styles["session-switcher-row-worktree-title"]}
+                          title={row.worktree}
+                        >
+                          <Text
+                            element="span"
+                            size="label"
+                            tone="ink-quiet"
+                            weight="inherit"
+                            className={styles["session-switcher-row-worktree"]}
+                          >
+                            {row.worktree}
+                          </Text>
+                        </span>
+                        {row.current && (
+                          <Text
+                            element="span"
+                            size="label"
+                            tone="accent"
+                            weight="bold"
+                            className={styles["session-switcher-row-current"]}
+                          >
+                            {CURRENT_MARK}
+                          </Text>
+                        )}
+                        {row.occupiedElsewhere && (
+                          <Text
+                            element="span"
+                            size="label"
+                            tone="ink-quiet"
+                            weight="inherit"
+                            className={styles["session-switcher-row-current"]}
+                          >
+                            {OCCUPIED_MARK}
+                          </Text>
+                        )}
+                        <Text
+                          element="span"
+                          size="label"
+                          tone="ink-quiet"
+                          weight="inherit"
+                          className={styles["session-switcher-row-time"]}
+                        >
+                          {row.timeLabel}
+                        </Text>
+                      </div>
+                    ))}
                   </div>
                 ))}
-              </div>
-            ))}
+            </div>
+          ))}
         </div>
         {selection.selected !== undefined && (
           <SessionSwitcherDetail

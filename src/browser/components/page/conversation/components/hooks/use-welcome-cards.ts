@@ -3,6 +3,7 @@
 import { useSession } from "../../../../../stores/session.ts"
 import { useSessionDigest } from "../../../../domain/screen-nav/hooks/use-session-digest.ts"
 import {
+  hasOtherSession,
   previousSessionOf,
   welcomeCardsOf,
   type WelcomeCard,
@@ -10,8 +11,8 @@ import {
 
 export type WelcomeCards = {
   readonly cards: readonly WelcomeCard[]
-  /** 前のセッションがあるか。 */
-  readonly hasPrevious: boolean
+  /** 切り替え画面で選べる、いまのセッション以外の行があるか（「前のやり取りを見る」を出すか）。 */
+  readonly hasOtherSessions: boolean
 }
 
 export function useWelcomeCards(): WelcomeCards {
@@ -27,6 +28,6 @@ export function useWelcomeCards(): WelcomeCards {
   const summary = digest.kind === "known" ? digest.summary : undefined
   return {
     cards: welcomeCardsOf(recommendation, previous, summary, tasks),
-    hasPrevious: previous !== undefined,
+    hasOtherSessions: hasOtherSession(sessions, currentSessionId),
   }
 }

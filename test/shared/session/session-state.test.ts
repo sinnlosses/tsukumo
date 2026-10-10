@@ -876,6 +876,8 @@ describe("applySessionEvent", () => {
         lastModified: 2_000,
         startedAt: 1_500,
         heading: "架空の見出しその2",
+        worktree: "fictional-tree",
+        inCurrentWorktree: true,
       },
       {
         viewPort: 7327,
@@ -883,6 +885,8 @@ describe("applySessionEvent", () => {
         lastModified: 1_000,
         startedAt: 500,
         heading: "架空の見出しその1",
+        worktree: "fictional-tree",
+        inCurrentWorktree: true,
       },
     ]
     const listed = apply({ kind: "sessions-changed", sessions, current: "s-架空-1" })
@@ -914,6 +918,8 @@ describe("applySessionEvent", () => {
             lastModified: 0,
             startedAt: 0,
             heading: "架空の見出し",
+            worktree: "fictional-tree",
+            inCurrentWorktree: true,
           },
         ],
         current: "s-架空-新",

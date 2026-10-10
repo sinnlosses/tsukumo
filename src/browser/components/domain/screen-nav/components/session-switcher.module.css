@@ -72,6 +72,14 @@
 .session-switcher-empty {
   padding: 1rem 0.75rem;
 }
+/* 作業ツリーの塊の見出し。日の区切りより一段目立たせ、塊の間をあける。 */
+.session-switcher-worktree-label {
+  padding: 0.75rem 0.75rem 0.125rem;
+  border-bottom: 1px solid var(--rule-quiet);
+  color: var(--ink);
+  font-size: var(--font-label);
+  font-weight: 700;
+}
 .session-switcher-group-label {
   padding: 0.625rem 0.75rem 0.25rem;
   color: var(--ink-quiet);
@@ -126,6 +134,19 @@
 }
 .session-switcher-row-current {
   flex: none;
+}
+/* 作業ツリーの名前。全文を出す `title` の持ち手で、箱は作らず中の名前が行の並びに入る。 */
+.session-switcher-row-worktree-title {
+  display: contents;
+}
+/* 長い名前は行を押し広げず末尾を切る。 */
+.session-switcher-row-worktree {
+  flex: none;
+  max-width: 7rem;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .session-switcher-row-time {
   flex: none;

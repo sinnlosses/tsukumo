@@ -245,7 +245,7 @@ export type SessionDriver = {
    */
   readonly readPlanUsage: () => Promise<PlanUsageReport>
   /**
-   * 同じ部屋のセッション1件の中身（依頼の数・要約・最後のセリフ）を transcript から読む。
+   * 切り替え先の一覧のセッション1件の中身（依頼の数・要約・最後のセリフ）を transcript から読む。
    * ここは ID を絞らない。呼ぶ側が、読んでよい ID に絞ってから渡す。
    * 読めなかったときは「読めない」を返し、例外を投げない。
    */

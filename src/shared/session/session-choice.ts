@@ -5,7 +5,7 @@
 
 /**
  * 画面に並べる切り替え先の上限。
- * 同じディレクトリで作業を続けるほど印の付いたセッションは際限なく増える（実測: このリポジトリで120件）ので、新しいほうから切って渡す。
+ * 同じリポジトリで作業を続けるほど印の付いたセッションは際限なく増える（実測: このリポジトリで120件）ので、新しいほうから切って渡す。
  * 値は切り替え画面の一覧が転がさずに収まる長さ。
  */
 export const MAX_SESSION_CHOICES = 10
@@ -25,8 +25,7 @@ export const MAX_SESSION_ID_LENGTH = 200
 /** 切り替え先のセッション1件。claude 自身の transcript の一覧から、印を読んで作る。 */
 export type SessionChoice = {
   /**
-   * 目印（印を付けた tsukumo のビューのポート番号）。
-   * 一覧はいまの部屋のものだけなので、並ぶ行はすべて同じ値になる（見分けるのは {@link SessionChoice.lastModified} の側）。
+   * 目印（印を付けた tsukumo のビューのポート番号）。行の見分けには使わない（見分けるのは {@link SessionChoice.worktree} の側）。
    * 昔の印（目印の無いもの・1文字の `A` / `B` …）はポートへ戻してある（`readSessionMark`）。
    */
   readonly viewPort: number
@@ -44,4 +43,11 @@ export type SessionChoice = {
    * 外来の値なので境界で検証し、文字列でない・空なら無いものとして畳む。
    */
   readonly heading: string | undefined
+  /**
+   * 作業ツリーの名前（SDK の `cwd` の末尾のディレクトリ名。`cwd` が無ければ `gitBranch`）。
+   * 外来の値なので境界で検証し、どちらも取れない行は一覧に載せない。
+   */
+  readonly worktree: string
+  /** この tsukumo を起こした作業ディレクトリと、SDK の `cwd` が同じか。 */
+  readonly inCurrentWorktree: boolean
 }

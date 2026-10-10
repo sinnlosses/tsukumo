@@ -38,6 +38,8 @@ const FILLED: Partial<SessionState> = {
       lastModified: 0,
       startedAt: 0,
       heading: "架空の前のやり取り",
+      worktree: "fictional-tree",
+      inCurrentWorktree: true,
     },
   ],
 }
@@ -81,6 +83,17 @@ describe("Welcome（ほかの始め方）", () => {
     fireEvent.click(screen.getByRole("button", { name: /前のやり取りを見る/ }))
 
     expect(useSessionSwitcherRequest.getState().open).toBe(true)
+  })
+
+  it("別の作業ツリーの行しか無いときは、前回の続きの札は出ないが「前のやり取りを見る」は出る", () => {
+    const [previous] = FILLED.sessions ?? []
+    renderWelcome({
+      tasks: { kind: "known", items: [] },
+      sessions: previous === undefined ? [] : [{ ...previous, inCurrentWorktree: false }],
+    })
+
+    expect(document.body.querySelector("ul")).toBeNull()
+    expect(screen.getByRole("button", { name: /前のやり取りを見る/ })).toBeTruthy()
   })
 
   it("空の帳面（タスク0件・続き無し）では札が出ず、「自分で書く」だけが大きく出て、前のやり取りの口も無い", () => {

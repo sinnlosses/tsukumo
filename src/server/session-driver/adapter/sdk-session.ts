@@ -46,7 +46,7 @@ const SESSION_TAG_DELAY_MS = 3_000
  *
  * `includeWorktrees` を入れてあるのは、セッションごとに別の worktree で起こされうるため（作業ツリーを用意するのは orca の側）。
  * 起こすたびに違うディレクトリなら、作業ディレクトリだけで絞ると前の続きが一度も見つからなくなる。
- * 同じリポジトリの worktree を全部見たうえで、印（`tsukumo:<パック>@<ポート>`）で絞る。
+ * 同じリポジトリの worktree を全部見たうえで、印のパックとモード（目印を除いた `tsukumo:<パック>`）で絞る。
  */
 export async function listRepositorySessions(cwd: string): Promise<unknown> {
   return listSessions({ dir: cwd, includeWorktrees: true })

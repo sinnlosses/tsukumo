@@ -138,6 +138,8 @@ const CHAT_STATE: Partial<SessionState> = {
       heading: "架空の見出し",
       lastModified: 0,
       startedAt: 0,
+      worktree: "fictional-tree",
+      inCurrentWorktree: true,
     },
   ],
 }

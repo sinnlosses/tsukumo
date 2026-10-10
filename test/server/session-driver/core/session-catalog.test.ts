@@ -13,15 +13,45 @@ import {
 const TAG = sessionTag("架空のパック", false, DEFAULT_VIEW_PORT)
 const CHAT_TAG = sessionTag("架空のパック", true, DEFAULT_VIEW_PORT)
 const OTHER_PACK_TAG = sessionTag("別の架空のパック", false, DEFAULT_VIEW_PORT)
-// 2つめの tsukumo（ポートが1つずれたぶん、目印も 7328 になる＝別の部屋）。
+// 2つめの tsukumo（ポートが1つずれたぶん、目印も 7328 になる）。
 const SECOND_TAG = sessionTag("架空のパック", false, DEFAULT_VIEW_PORT + 1)
 
+// tsukumo を起こした作業ディレクトリ（いまの作業ツリー）と、同じリポジトリの別の作業ツリー。
+const CWD = "/work/架空のリポジトリ/main"
+const WORKTREE = "main"
+const OTHER_CWD = "/work/架空のリポジトリ/wt-other"
+const OTHER_WORKTREE = "wt-other"
+
 function sessionInfo(sessionId: string, lastModified: number, tag: string): unknown {
-  return { sessionId, lastModified, tag, summary: `架空の見出し ${sessionId}` }
+  return { sessionId, lastModified, tag, cwd: CWD, summary: `架空の見出し ${sessionId}` }
 }
 
 function sessionRecord(overrides: Readonly<Record<string, unknown>>): unknown {
-  return { sessionId: "s-0", summary: "架空のセッション", lastModified: 1_000, ...overrides }
+  return {
+    sessionId: "s-0",
+    summary: "架空のセッション",
+    lastModified: 1_000,
+    cwd: CWD,
+    ...overrides,
+  }
+}
+
+/** 一覧に出る行1件の期待。既定はいまの作業ツリーの、既定のポートの行。 */
+function choiceOf(
+  sessionId: string,
+  lastModified: number,
+  overrides: Partial<SessionChoice> = {},
+): SessionChoice {
+  return {
+    viewPort: DEFAULT_VIEW_PORT,
+    sessionId,
+    lastModified,
+    startedAt: lastModified,
+    heading: "架空のセッション",
+    worktree: WORKTREE,
+    inCurrentWorktree: true,
+    ...overrides,
+  }
 }
 
 /** 読むたびに、渡した順に結果を返す偽の `listSessions`。読んだ回数も数える。 */
@@ -46,7 +76,7 @@ describe("createSessionCatalog", () => {
       () =>
         Promise.resolve([sessionInfo("s-work", 200, TAG), sessionInfo("s-chat", 100, CHAT_TAG)]),
     ])
-    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
+    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000, cwd: CWD })
 
     expect((await catalog.listChoices(TAG)).map((choice) => choice.sessionId)).toEqual(["s-work"])
     expect((await catalog.listChoices(CHAT_TAG)).map((choice) => choice.sessionId)).toEqual([
@@ -57,7 +87,7 @@ describe("createSessionCatalog", () => {
 
   it("印を付けたセッションは、読み直す前から切り替え先の一覧に並ぶ", async () => {
     const reads = scriptedRead([() => Promise.resolve([sessionInfo("s-old", 200, TAG)])])
-    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
+    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000, cwd: CWD })
     await catalog.listChoices(TAG)
 
     catalog.noteMarked("s-new", TAG)
@@ -73,7 +103,7 @@ describe("createSessionCatalog", () => {
     const reads = scriptedRead([
       () => Promise.resolve([sessionInfo("s-a", 100, TAG), sessionInfo("s-b", 200, TAG)]),
     ])
-    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
+    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000, cwd: CWD })
 
     catalog.noteMarked("s-a", TAG)
 
@@ -87,7 +117,7 @@ describe("createSessionCatalog", () => {
       () => second.promise,
     ])
     let now = 1_000
-    const catalog = createSessionCatalog({ read: reads.read, now: () => now })
+    const catalog = createSessionCatalog({ read: reads.read, now: () => now, cwd: CWD })
     await catalog.listChoices(TAG)
 
     const refreshing = catalog.refresh()
@@ -109,7 +139,7 @@ describe("createSessionCatalog", () => {
       () => Promise.resolve([sessionInfo("s-a", 100, TAG), sessionInfo("s-b", 200, TAG)]),
     ])
     let now = 1_000
-    const catalog = createSessionCatalog({ read: reads.read, now: () => now })
+    const catalog = createSessionCatalog({ read: reads.read, now: () => now, cwd: CWD })
 
     catalog.noteMarked("s-a", TAG)
     now = 2_000
@@ -119,7 +149,6 @@ describe("createSessionCatalog", () => {
     now = 4_000
     catalog.noteMarked("s-a", TAG)
 
-    expect(await catalog.listChoices(SECOND_TAG)).toEqual([])
     expect(await catalog.listChoices(TAG)).toEqual([
       expect.objectContaining({ sessionId: "s-a", lastModified: 4_000 }),
       expect.objectContaining({ sessionId: "s-b", lastModified: 3_000 }),
@@ -129,7 +158,7 @@ describe("createSessionCatalog", () => {
   it("読めない印を付けても、先に付けた印も一覧も変わらない", async () => {
     const reads = scriptedRead([() => Promise.resolve([sessionInfo("s-a", 100, TAG)])])
     let now = 1_000
-    const catalog = createSessionCatalog({ read: reads.read, now: () => now })
+    const catalog = createSessionCatalog({ read: reads.read, now: () => now, cwd: CWD })
 
     catalog.noteMarked("s-a", TAG)
     now = 2_000
@@ -147,7 +176,7 @@ describe("createSessionCatalog", () => {
       () => Promise.resolve([sessionInfo("s-listed", 1_500, TAG), sessionInfo("s-late", 500, TAG)]),
       () => Promise.resolve([sessionInfo("s-listed", 100, TAG), sessionInfo("s-late", 500, TAG)]),
     ])
-    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
+    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000, cwd: CWD })
 
     catalog.noteMarked("s-listed", TAG)
     catalog.noteMarked("s-late", TAG)
@@ -166,7 +195,7 @@ describe("createSessionCatalog", () => {
       () => Promise.resolve([sessionInfo("s-work", 200, TAG)]),
       () => Promise.reject(new Error("架空の読み取り失敗")),
     ])
-    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
+    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000, cwd: CWD })
 
     expect(await catalog.refresh()).toBe("kept")
     expect((await catalog.listChoices(TAG)).map((choice) => choice.sessionId)).toEqual(["s-work"])
@@ -179,7 +208,7 @@ describe("createSessionCatalog", () => {
       () => slow.promise,
       () => Promise.resolve([sessionInfo("s-fresh", 300, TAG)]),
     ])
-    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
+    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000, cwd: CWD })
 
     const older = catalog.refresh()
     expect(await catalog.refresh()).toBe("refreshed")
@@ -191,14 +220,14 @@ describe("createSessionCatalog", () => {
 
   it("最初に読めなかったときは、切り替え先が空", async () => {
     const reads = scriptedRead([() => Promise.reject(new Error("架空の読み取り失敗"))])
-    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
+    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000, cwd: CWD })
 
     expect(await catalog.listChoices(TAG)).toEqual([])
   })
 })
 
 function catalogOf(sessions: unknown): ReturnType<typeof createSessionCatalog> {
-  return createSessionCatalog({ read: () => Promise.resolve(sessions), now: () => 1_000 })
+  return createSessionCatalog({ read: () => Promise.resolve(sessions), now: () => 1_000, cwd: CWD })
 }
 
 function listChoicesOf(sessions: unknown, tag: string): Promise<readonly SessionChoice[]> {
@@ -215,67 +244,133 @@ const LEGACY_SESSIONS = [
 ]
 
 describe("createSessionCatalog の昔の印", () => {
-  it.each<[string, string, string | undefined]>([
+  it.each<[string, string, string]>([
     ["目印の無い昔の仕事の印は、既定のポートの一覧に並ぶ", TAG, "s-legacy"],
     ["目印の無い昔の雑談の印は、既定のポートの雑談の一覧に並ぶ", CHAT_TAG, "s-legacy-chat"],
-    ["目印の無い昔の印は、ほかのポートの一覧には並ばない", SECOND_TAG, undefined],
+    [
+      "目印の無い昔の印は、ほかのポートの一覧にも並ぶ（ポートでは絞らない）",
+      SECOND_TAG,
+      "s-legacy",
+    ],
   ])("%s", async (_name, tag, expected) => {
-    expect((await listChoicesOf(LEGACY_SESSIONS, tag)).map((choice) => choice.sessionId)).toEqual(
-      expected === undefined ? [] : [expected],
-    )
+    expect((await listChoicesOf(LEGACY_SESSIONS, tag)).map((choice) => choice.sessionId)).toEqual([
+      expected,
+    ])
   })
 })
 
 describe("createSessionCatalog の切り替え先の一覧", () => {
-  it("いまの部屋（同じ印）のセッションを新しい順に並べる", async () => {
+  it("同じ作業ツリーのセッションを新しい順に並べる", async () => {
     const sessions = [
       sessionRecord({ sessionId: "s-first", lastModified: 100, tag: TAG }),
       sessionRecord({ sessionId: "s-third", lastModified: 200, tag: TAG }),
     ]
 
     expect(await listChoicesOf(sessions, TAG)).toEqual([
-      {
-        viewPort: DEFAULT_VIEW_PORT,
-        sessionId: "s-third",
-        lastModified: 200,
-        startedAt: 200,
-        heading: "架空のセッション",
-      },
-      {
-        viewPort: DEFAULT_VIEW_PORT,
-        sessionId: "s-first",
-        lastModified: 100,
-        startedAt: 100,
-        heading: "架空のセッション",
-      },
+      choiceOf("s-third", 200),
+      choiceOf("s-first", 100),
     ])
   })
 
-  // 部屋はビューのポート1つにつき1つ。同じパック・同じモードでも
-  // 目印（ポート）が違えば別の部屋なので、一覧には並ばない。
-  it("同じ一族でも目印の違うもの（別の部屋）は並ばない", async () => {
+  it("同じパック・同じモードなら、目印（ポート）の違うセッションも並ぶ", async () => {
     const sessions = [
       sessionRecord({ sessionId: "s-here", lastModified: 100, tag: TAG }),
-      sessionRecord({ sessionId: "s-other-room", lastModified: 300, tag: SECOND_TAG }),
+      sessionRecord({ sessionId: "s-other-port", lastModified: 300, tag: SECOND_TAG }),
     ]
 
+    const expected = [
+      choiceOf("s-other-port", 300, { viewPort: DEFAULT_VIEW_PORT + 1 }),
+      choiceOf("s-here", 100),
+    ]
+    expect(await listChoicesOf(sessions, TAG)).toEqual(expected)
+    expect(await listChoicesOf(sessions, SECOND_TAG)).toEqual(expected)
+  })
+
+  it.each<[string, Readonly<Record<string, unknown>>, string, boolean]>([
+    ["cwd が起動した作業ディレクトリと同じ", { cwd: CWD }, WORKTREE, true],
+    ["cwd が別の作業ツリー", { cwd: OTHER_CWD, gitBranch: "架空の枝" }, OTHER_WORKTREE, false],
+    ["cwd の末尾にスラッシュが付いている", { cwd: `${OTHER_CWD}/` }, OTHER_WORKTREE, false],
+    ["cwd が無く gitBranch だけ", { cwd: undefined, gitBranch: "架空の枝" }, "架空の枝", false],
+    ["cwd が空文字で gitBranch がある", { cwd: "", gitBranch: "架空の枝" }, "架空の枝", false],
+  ])("作業ツリーの名前と、いまの作業ツリーか: %s", async (_name, fields, worktree, current) => {
+    const sessions = [sessionRecord({ sessionId: "s-w", lastModified: 100, tag: TAG, ...fields })]
+
     expect(await listChoicesOf(sessions, TAG)).toEqual([
-      {
-        viewPort: DEFAULT_VIEW_PORT,
-        sessionId: "s-here",
-        lastModified: 100,
-        startedAt: 100,
-        heading: "架空のセッション",
-      },
+      choiceOf("s-w", 100, { worktree, inCurrentWorktree: current }),
     ])
-    expect(await listChoicesOf(sessions, SECOND_TAG)).toEqual([
-      {
-        viewPort: DEFAULT_VIEW_PORT + 1,
-        sessionId: "s-other-room",
-        lastModified: 300,
-        startedAt: 300,
-        heading: "架空のセッション",
-      },
+  })
+
+  it.each<[string, Readonly<Record<string, unknown>>]>([
+    ["cwd も gitBranch も無い", { cwd: undefined }],
+    ["cwd が根（名前が取れない）で gitBranch が無い", { cwd: "/" }],
+    ["gitBranch が空白だけ", { cwd: undefined, gitBranch: "  " }],
+    ["cwd も gitBranch も文字列でない", { cwd: 12, gitBranch: 34 }],
+  ])("作業ツリーの名前が取れない行は落とす: %s", async (_name, fields) => {
+    const sessions = [sessionRecord({ sessionId: "s-w", lastModified: 100, tag: TAG, ...fields })]
+
+    expect(await listChoicesOf(sessions, TAG)).toEqual([])
+  })
+
+  it("いまの作業ツリーの行を先に、その中は新しい順に並べる", async () => {
+    const sessions = [
+      sessionRecord({ sessionId: "s-other-new", lastModified: 900, tag: TAG, cwd: OTHER_CWD }),
+      sessionRecord({ sessionId: "s-here-old", lastModified: 100, tag: TAG }),
+      sessionRecord({ sessionId: "s-here-new", lastModified: 200, tag: TAG }),
+      sessionRecord({ sessionId: "s-other-old", lastModified: 800, tag: TAG, cwd: OTHER_CWD }),
+    ]
+
+    expect((await listChoicesOf(sessions, TAG)).map((choice) => choice.sessionId)).toEqual([
+      "s-here-new",
+      "s-here-old",
+      "s-other-new",
+      "s-other-old",
+    ])
+  })
+
+  it("上限を超えても、いまの作業ツリーの行が別の作業ツリーの新しい行に押し出されない", async () => {
+    const here = Array.from({ length: MAX_SESSION_CHOICES + 1 }, (_unused, index) =>
+      sessionRecord({ sessionId: `s-here-${String(index)}`, lastModified: index, tag: TAG }),
+    )
+    const sessions = [
+      sessionRecord({ sessionId: "s-other", lastModified: 10_000, tag: TAG, cwd: OTHER_CWD }),
+      ...here,
+    ]
+
+    const listed = await listChoicesOf(sessions, TAG)
+    expect(listed).toHaveLength(MAX_SESSION_CHOICES)
+    expect(listed.every((choice) => choice.inCurrentWorktree)).toBe(true)
+  })
+
+  it("いまの作業ツリーの行が少なければ、残りの枠を別の作業ツリーの新しい行で埋める", async () => {
+    const others = Array.from({ length: 12 }, (_unused, index) =>
+      sessionRecord({
+        sessionId: `s-other-${String(index)}`,
+        lastModified: 1_000 + index,
+        tag: TAG,
+        cwd: OTHER_CWD,
+      }),
+    )
+    const here = Array.from({ length: 3 }, (_unused, index) =>
+      sessionRecord({ sessionId: `s-here-${String(index)}`, lastModified: index, tag: TAG }),
+    )
+
+    const listed = await listChoicesOf([...others, ...here], TAG)
+    expect(listed).toHaveLength(MAX_SESSION_CHOICES)
+    expect(listed.slice(0, 3).map((choice) => choice.sessionId)).toEqual([
+      "s-here-2",
+      "s-here-1",
+      "s-here-0",
+    ])
+    expect(listed[3]?.sessionId).toBe("s-other-11")
+  })
+
+  it("印を付けた一覧に無いセッションは、いまの作業ツリーの行として並ぶ", async () => {
+    const catalog = catalogOf([])
+
+    catalog.noteMarked("s-new", TAG)
+
+    expect(await catalog.listChoices(TAG)).toEqual([
+      choiceOf("s-new", 1_000, { heading: undefined }),
     ])
   })
 
@@ -288,27 +383,11 @@ describe("createSessionCatalog の切り替え先の一覧", () => {
       sessionRecord({ sessionId: "s-other-pack", lastModified: 400, tag: OTHER_PACK_TAG }),
     ]
 
-    expect(await listChoicesOf(sessions, TAG)).toEqual([
-      {
-        viewPort: DEFAULT_VIEW_PORT,
-        sessionId: "s-work",
-        lastModified: 100,
-        startedAt: 100,
-        heading: "架空のセッション",
-      },
-    ])
-    expect(await listChoicesOf(sessions, CHAT_TAG)).toEqual([
-      {
-        viewPort: DEFAULT_VIEW_PORT,
-        sessionId: "s-chat",
-        lastModified: 300,
-        startedAt: 300,
-        heading: "架空のセッション",
-      },
-    ])
+    expect(await listChoicesOf(sessions, TAG)).toEqual([choiceOf("s-work", 100)])
+    expect(await listChoicesOf(sessions, CHAT_TAG)).toEqual([choiceOf("s-chat", 300)])
   })
 
-  it("印の無いセッションと壊れた要素は落とす（昔の印は対応するポートの部屋に残す）", async () => {
+  it("印の無いセッションと壊れた要素は落とす（昔の印は残す）", async () => {
     const sessions = [
       null,
       sessionRecord({ sessionId: "s-bare", lastModified: 900 }),
@@ -319,15 +398,7 @@ describe("createSessionCatalog の切り替え先の一覧", () => {
       sessionRecord({ sessionId: "s-legacy", lastModified: 500, tag: "tsukumo:架空のパック" }),
     ]
 
-    expect(await listChoicesOf(sessions, TAG)).toEqual([
-      {
-        viewPort: DEFAULT_VIEW_PORT,
-        sessionId: "s-legacy",
-        lastModified: 500,
-        startedAt: 500,
-        heading: "架空のセッション",
-      },
-    ])
+    expect(await listChoicesOf(sessions, TAG)).toEqual([choiceOf("s-legacy", 500)])
   })
 
   // 印は使うほど増え続ける（実測: このリポジトリで120件）。`<select>` に全部は並べない。
@@ -364,34 +435,10 @@ describe("createSessionCatalog の切り替え先の一覧", () => {
     ]
 
     expect(await listChoicesOf(sessions, TAG)).toEqual([
-      {
-        viewPort: DEFAULT_VIEW_PORT,
-        sessionId: "s-titled",
-        lastModified: 400,
-        startedAt: 400,
-        heading: "架空の作業その1",
-      },
-      {
-        viewPort: DEFAULT_VIEW_PORT,
-        sessionId: "s-missing",
-        lastModified: 300,
-        startedAt: 300,
-        heading: undefined,
-      },
-      {
-        viewPort: DEFAULT_VIEW_PORT,
-        sessionId: "s-number",
-        lastModified: 200,
-        startedAt: 200,
-        heading: undefined,
-      },
-      {
-        viewPort: DEFAULT_VIEW_PORT,
-        sessionId: "s-blank",
-        lastModified: 100,
-        startedAt: 100,
-        heading: undefined,
-      },
+      choiceOf("s-titled", 400, { heading: "架空の作業その1" }),
+      choiceOf("s-missing", 300, { heading: undefined }),
+      choiceOf("s-number", 200, { heading: undefined }),
+      choiceOf("s-blank", 100, { heading: undefined }),
     ])
   })
 

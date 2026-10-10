@@ -43,27 +43,53 @@
           "sessionId": "fake-session",
           "lastModified": 1768438500000,
           "startedAt": 1768435920000,
-          "heading": "入力欄の送信ボタンの位置を架空に直す"
+          "heading": "入力欄の送信ボタンの位置を架空に直す",
+          "worktree": "fictional-main",
+          "inCurrentWorktree": true
         },
         {
           "viewPort": 7327,
           "sessionId": "7b3f0000-0000-4000-8000-000000000001",
           "lastModified": 1768399500000,
           "startedAt": 1768389000000,
-          "heading": "架空の成果の画面に振り返りの口を置きたい"
+          "heading": "架空の成果の画面に振り返りの口を置きたい",
+          "worktree": "fictional-main",
+          "inCurrentWorktree": true
         },
         {
           "viewPort": 7327,
           "sessionId": "c3a10000-0000-4000-8000-000000000002",
           "lastModified": 1768366920000,
           "startedAt": 1768365000000,
-          "heading": "/retrospect"
+          "heading": "/retrospect",
+          "worktree": "fictional-main",
+          "inCurrentWorktree": true
         },
         {
           "viewPort": 7327,
           "sessionId": "2d000000-0000-4000-8000-000000000003",
           "lastModified": 1768224600000,
-          "startedAt": 1768219200000
+          "startedAt": 1768219200000,
+          "worktree": "fictional-main",
+          "inCurrentWorktree": true
+        },
+        {
+          "viewPort": 7328,
+          "sessionId": "e1000000-0000-4000-8000-000000000004",
+          "lastModified": 1768428000000,
+          "startedAt": 1768420000000,
+          "heading": "架空の別の作業ツリーで設定画面の余白を詰める",
+          "worktree": "fictional-wt-a",
+          "inCurrentWorktree": false
+        },
+        {
+          "viewPort": 7329,
+          "sessionId": "e2000000-0000-4000-8000-000000000005",
+          "lastModified": 1768330000000,
+          "startedAt": 1768326000000,
+          "heading": "架空の別の作業ツリーで一覧の並びを直す",
+          "worktree": "fictional-wt-b",
+          "inCurrentWorktree": false
         }
       ],
       "current": "fake-session"
@@ -106,27 +132,53 @@
           "sessionId": "fake-session",
           "lastModified": 1768438500000,
           "startedAt": 1768435920000,
-          "heading": "入力欄の送信ボタンの位置を架空に直す"
+          "heading": "入力欄の送信ボタンの位置を架空に直す",
+          "worktree": "fictional-main",
+          "inCurrentWorktree": true
         },
         {
           "viewPort": 7327,
           "sessionId": "7b3f0000-0000-4000-8000-000000000001",
           "lastModified": 1768399500000,
           "startedAt": 1768389000000,
-          "heading": "架空の成果の画面に振り返りの口を置きたい"
+          "heading": "架空の成果の画面に振り返りの口を置きたい",
+          "worktree": "fictional-main",
+          "inCurrentWorktree": true
         },
         {
           "viewPort": 7327,
           "sessionId": "c3a10000-0000-4000-8000-000000000002",
           "lastModified": 1768366920000,
           "startedAt": 1768365000000,
-          "heading": "/retrospect"
+          "heading": "/retrospect",
+          "worktree": "fictional-main",
+          "inCurrentWorktree": true
         },
         {
           "viewPort": 7327,
           "sessionId": "2d000000-0000-4000-8000-000000000003",
           "lastModified": 1768224600000,
-          "startedAt": 1768219200000
+          "startedAt": 1768219200000,
+          "worktree": "fictional-main",
+          "inCurrentWorktree": true
+        },
+        {
+          "viewPort": 7328,
+          "sessionId": "e1000000-0000-4000-8000-000000000004",
+          "lastModified": 1768428000000,
+          "startedAt": 1768420000000,
+          "heading": "架空の別の作業ツリーで設定画面の余白を詰める",
+          "worktree": "fictional-wt-a",
+          "inCurrentWorktree": false
+        },
+        {
+          "viewPort": 7329,
+          "sessionId": "e2000000-0000-4000-8000-000000000005",
+          "lastModified": 1768330000000,
+          "startedAt": 1768326000000,
+          "heading": "架空の別の作業ツリーで一覧の並びを直す",
+          "worktree": "fictional-wt-b",
+          "inCurrentWorktree": false
         }
       ],
       "current": "fake-session"

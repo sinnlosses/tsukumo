@@ -164,8 +164,12 @@ export function wireSessionLaunch(options: {
 /** fake driver なら疑似セッションの一覧、それ以外は SDK の一覧。 */
 function chooseSessionCatalog(context: WiringContext, config: Config): SessionCatalog {
   return context.fakeSession === undefined
-    ? createSessionCatalog({ read: () => listRepositorySessions(context.cwd), now: context.now })
-    : createFakeSessionCatalog(context.fakeSession, config.fakeScene)
+    ? createSessionCatalog({
+        read: () => listRepositorySessions(context.cwd),
+        now: context.now,
+        cwd: context.cwd,
+      })
+    : createFakeSessionCatalog(context.fakeSession, config.fakeScene, context.cwd)
 }
 
 /**

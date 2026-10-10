@@ -41,7 +41,7 @@
               "tag": "div",
               "attributes": {
                 "role": "group",
-                "aria-label": "今日"
+                "aria-label": "この作業ツリー"
               },
               "children": [
                 {
@@ -50,23 +50,127 @@
                     "aria-hidden": "true"
                   },
                   "children": [
-                    "今日"
+                    "この作業ツリー"
                   ]
                 },
                 {
                   "tag": "div",
                   "attributes": {
-                    "role": "option",
-                    "aria-selected": "false",
-                    "aria-disabled": "false",
-                    "data-current": "true",
-                    "data-occupied": "false"
+                    "role": "group",
+                    "aria-label": "今日"
                   },
                   "children": [
-                    "FA",
-                    "入力欄の送信ボタンの位置を架空に直す",
-                    "いま",
-                    "09:12〜"
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      },
+                      "children": [
+                        "今日"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "role": "option",
+                        "aria-selected": "false",
+                        "aria-disabled": "false",
+                        "data-current": "true",
+                        "data-occupied": "false"
+                      },
+                      "children": [
+                        "FA",
+                        "入力欄の送信ボタンの位置を架空に直す",
+                        "fictional-main",
+                        "いま",
+                        "09:12〜"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "role": "group",
+                    "aria-label": "昨日"
+                  },
+                  "children": [
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      },
+                      "children": [
+                        "昨日"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "role": "option",
+                        "aria-selected": "false",
+                        "aria-disabled": "true",
+                        "data-current": "false",
+                        "data-occupied": "true"
+                      },
+                      "children": [
+                        "7B",
+                        "架空の成果の画面に振り返りの口を置きたい",
+                        "fictional-main",
+                        "別の窓で使用中",
+                        "23:05"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "role": "option",
+                        "aria-selected": "true",
+                        "aria-disabled": "false",
+                        "data-current": "false",
+                        "data-occupied": "false"
+                      },
+                      "children": [
+                        "C3",
+                        "/retrospect",
+                        "fictional-main",
+                        "14:02"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "role": "group",
+                    "aria-label": "それより前"
+                  },
+                  "children": [
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      },
+                      "children": [
+                        "それより前"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "role": "option",
+                        "aria-selected": "false",
+                        "aria-disabled": "false",
+                        "data-current": "false",
+                        "data-occupied": "false"
+                      },
+                      "children": [
+                        "2D",
+                        "（題なし）",
+                        "fictional-main",
+                        "1/12 22:30"
+                      ]
+                    }
                   ]
                 }
               ]
@@ -75,7 +179,7 @@
               "tag": "div",
               "attributes": {
                 "role": "group",
-                "aria-label": "昨日"
+                "aria-label": "ほかの作業ツリー"
               },
               "children": [
                 {
@@ -84,71 +188,75 @@
                     "aria-hidden": "true"
                   },
                   "children": [
-                    "昨日"
+                    "ほかの作業ツリー"
                   ]
                 },
                 {
                   "tag": "div",
                   "attributes": {
-                    "role": "option",
-                    "aria-selected": "false",
-                    "aria-disabled": "true",
-                    "data-current": "false",
-                    "data-occupied": "true"
+                    "role": "group",
+                    "aria-label": "今日"
                   },
                   "children": [
-                    "7B",
-                    "架空の成果の画面に振り返りの口を置きたい",
-                    "別の窓で使用中",
-                    "23:05"
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      },
+                      "children": [
+                        "今日"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "role": "option",
+                        "aria-selected": "false",
+                        "aria-disabled": "false",
+                        "data-current": "false",
+                        "data-occupied": "false"
+                      },
+                      "children": [
+                        "E1",
+                        "架空の別の作業ツリーで設定画面の余白を詰める",
+                        "fictional-wt-a",
+                        "07:00"
+                      ]
+                    }
                   ]
                 },
                 {
                   "tag": "div",
                   "attributes": {
-                    "role": "option",
-                    "aria-selected": "true",
-                    "aria-disabled": "false",
-                    "data-current": "false",
-                    "data-occupied": "false"
+                    "role": "group",
+                    "aria-label": "昨日"
                   },
                   "children": [
-                    "C3",
-                    "/retrospect",
-                    "14:02"
-                  ]
-                }
-              ]
-            },
-            {
-              "tag": "div",
-              "attributes": {
-                "role": "group",
-                "aria-label": "それより前"
-              },
-              "children": [
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "aria-hidden": "true"
-                  },
-                  "children": [
-                    "それより前"
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "role": "option",
-                    "aria-selected": "false",
-                    "aria-disabled": "false",
-                    "data-current": "false",
-                    "data-occupied": "false"
-                  },
-                  "children": [
-                    "2D",
-                    "（題なし）",
-                    "1/12 22:30"
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      },
+                      "children": [
+                        "昨日"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "role": "option",
+                        "aria-selected": "false",
+                        "aria-disabled": "false",
+                        "data-current": "false",
+                        "data-occupied": "false"
+                      },
+                      "children": [
+                        "E2",
+                        "架空の別の作業ツリーで一覧の並びを直す",
+                        "fictional-wt-b",
+                        "03:46"
+                      ]
+                    }
                   ]
                 }
               ]

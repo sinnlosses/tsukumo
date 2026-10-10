@@ -36,6 +36,8 @@ const CHOICES = [
     lastModified: 2_000,
     startedAt: 1_500,
     heading: "架空の見出しその1",
+    worktree: "fictional-tree",
+    inCurrentWorktree: true,
   },
   {
     viewPort: 7327,
@@ -43,6 +45,8 @@ const CHOICES = [
     lastModified: 1_000,
     startedAt: 500,
     heading: "架空の見出しその2",
+    worktree: "fictional-tree",
+    inCurrentWorktree: true,
   },
 ] as const
 
@@ -390,17 +394,20 @@ describe("createSessionLaunch", () => {
               {
                 sessionId: "s-work",
                 lastModified: 200,
+                cwd: "/work/fictional",
                 tag: sessionTag("tsukumo-spirit", false, 7327),
               },
               {
                 sessionId: "s-chat",
                 lastModified: 100,
+                cwd: "/work/fictional",
                 tag: sessionTag("tsukumo-spirit", true, 7327),
               },
             ])
           : new Promise(() => {})
       },
       now: () => 1_000,
+      cwd: "/work/fictional",
     })
     const harness = createHarness({
       listSessions: (pack, chat) => catalog.listChoices(sessionTag(pack.name, chat, 7327)),

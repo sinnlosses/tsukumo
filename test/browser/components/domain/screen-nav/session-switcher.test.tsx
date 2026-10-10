@@ -37,7 +37,15 @@ const DAY_MS = 24 * HOUR_MS
 
 function session(sessionId: string, heading: string, ageMs: number): SessionChoice {
   const lastModified = Temporal.Now.instant().epochMilliseconds - ageMs
-  return { viewPort: 7327, sessionId, lastModified, startedAt: lastModified - HOUR_MS, heading }
+  return {
+    viewPort: 7327,
+    sessionId,
+    lastModified,
+    startedAt: lastModified - HOUR_MS,
+    heading,
+    worktree: "fictional-tree",
+    inCurrentWorktree: true,
+  }
 }
 
 const SESSIONS: readonly SessionChoice[] = [
@@ -149,6 +157,47 @@ describe("セッションの札と切り替え画面", () => {
     expect(groups).toEqual(["今日", "昨日", "それより前"])
     const current = within(sessionList()).getByRole("option", { name: /架空のいまの作業/u })
     expect(current.textContent).toContain("いま")
+  })
+
+  it("作業ツリーが1つだけなら塊の見出しは出ないが、どの行にも作業ツリーの名前が付く", () => {
+    renderNav({})
+    openByTag()
+
+    expect(within(sessionList()).queryByText("この作業ツリー")).toBeNull()
+    expect(within(sessionList()).getAllByText("fictional-tree")).toHaveLength(SESSIONS.length)
+  })
+
+  it("ほかの作業ツリーの行があると、塊の見出しが出る。各行に作業ツリーの名前が付き、↓ の順は描く順", () => {
+    renderNav({
+      sessions: [
+        ...SESSIONS,
+        {
+          ...session("e1000000-0000", "架空の別の作業ツリーの作業", HOUR_MS),
+          worktree: "fictional-other",
+          inCurrentWorktree: false,
+        },
+      ],
+    })
+    openByTag()
+
+    const list = within(sessionList())
+    expect(
+      list
+        .getAllByRole("group")
+        .filter((group) => group.getAttribute("aria-label")?.includes("作業ツリー"))
+        .map((group) => group.getAttribute("aria-label")),
+    ).toEqual(["この作業ツリー", "ほかの作業ツリー"])
+    expect(list.getByRole("option", { name: /別の作業ツリーの作業/u }).textContent).toContain(
+      "fictional-other",
+    )
+    expect(list.getByRole("option", { name: /架空のいまの作業/u }).textContent).toContain(
+      "fictional-tree",
+    )
+
+    fireEvent.keyDown(searchBox(), { key: "ArrowDown" })
+    expect(selectedHeading()).toContain("架空の古い作業")
+    fireEvent.keyDown(searchBox(), { key: "ArrowDown" })
+    expect(selectedHeading()).toContain("架空の別の作業ツリーの作業")
   })
 
   it("Ctrl+N で下の行を選び Enter で switchSession を送り、閉じる", () => {

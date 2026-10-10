@@ -20,8 +20,8 @@ import { welcomeKeyOf } from "../domain/welcome-key.ts"
 export type WelcomeModel = {
   readonly cards: readonly WelcomeCard[]
   readonly face: CharacterFaceInfo
-  /** 前のセッションがあるか（「前のやり取りを見る」を出すか）。 */
-  readonly hasPrevious: boolean
+  /** 切り替え画面で選べる、いまのセッション以外の行があるか（「前のやり取りを見る」を出すか）。 */
+  readonly hasOtherSessions: boolean
   /** 札の「始める」。入力欄を経由せず依頼を送る。 */
   readonly onStart: (request: string) => void
   readonly onWrite: () => void
@@ -31,7 +31,7 @@ export type WelcomeModel = {
 
 export function useWelcome(): WelcomeModel {
   const dispatch = useSession((session) => session.dispatch)
-  const { cards, hasPrevious } = useWelcomeCards()
+  const { cards, hasOtherSessions } = useWelcomeCards()
   const character = useSession((session) => session.state.character)
   const asking = useSession((session) => session.state.pending.length > 0)
   const requestFocus = useComposerFocus((state) => state.requestFocus)
@@ -72,7 +72,7 @@ export function useWelcome(): WelcomeModel {
       } else if (key.kind === "write") {
         event.preventDefault()
         requestFocus()
-      } else if (hasPrevious) {
+      } else if (hasOtherSessions) {
         event.preventDefault()
         onSeePrevious()
       }
@@ -86,7 +86,7 @@ export function useWelcome(): WelcomeModel {
   return {
     cards,
     face: characterFaceInfo(character),
-    hasPrevious,
+    hasOtherSessions,
     onStart,
     onWrite: requestFocus,
     onPickTask: openList,

@@ -3,28 +3,40 @@
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { RestoredEvent } from "../../../shared/session/session-event.ts"
-import type { SessionCatalog } from "../core/session-catalog.ts"
+import { worktreeNameOf, type SessionCatalog } from "../core/session-catalog.ts"
 import { readSessionMark } from "../core/session-mark.ts"
 import { toRestoredEvents } from "../core/session-restore.ts"
 import type { FakeSession } from "./fake-driver.ts"
 
 /**
  * 名指しの場面が `resume` に過去の transcript を指しているときだけ、それを切り替え先の1件に出す一覧。
- * 印の目印（ポート）は渡された印のものを使う。
+ * 印の目印（ポート）は渡された印のものを使い、行は起こした作業ディレクトリ `cwd` のいまの作業ツリーの行にする。
  */
 export function createFakeSessionCatalog(
   session: FakeSession,
   scene: string | undefined,
+  cwd: string,
 ): SessionCatalog {
   const resume = session.turns.find((candidate) => candidate.name === scene)?.resume
   const sessionId = session.pastSessions.find((past) => past.sessionId === resume)?.sessionId
+  const worktree = worktreeNameOf(cwd, undefined)
   return {
     listChoices: (tag) => {
       const viewPort = readSessionMark(tag)?.viewPort
       return Promise.resolve(
-        sessionId === undefined || viewPort === undefined
+        sessionId === undefined || viewPort === undefined || worktree === undefined
           ? []
-          : [{ viewPort, sessionId, lastModified: 0, startedAt: 0, heading: undefined }],
+          : [
+              {
+                viewPort,
+                sessionId,
+                lastModified: 0,
+                startedAt: 0,
+                heading: undefined,
+                worktree,
+                inCurrentWorktree: true,
+              },
+            ],
       )
     },
     refresh: () => Promise.resolve("kept"),

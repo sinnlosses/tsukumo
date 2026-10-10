@@ -22,7 +22,7 @@ const SESSION_MARK_PORT = /^[0-9]{1,5}$/
 
 /**
  * キャラクターパック1つぶんの、そのモードのセッションの印（SDK の `tagSession`）。
- * 切り替え先のセッションを選ぶ鍵の片方で、もう片方は起動した作業ディレクトリ。
+ * 切り替え先のセッションを選ぶ鍵は、目印を除いた部分（パックとモード）。目印では絞らない。
  *
  * 印にパックの名前を混ぜるのは、キャラクターごとに別のセッションを持つため。
  * 印の無いセッション（同じディレクトリで使った素の `claude`）も、別のパックのセッションも、これで外れる。
@@ -52,10 +52,15 @@ export type SessionMark = {
    */
   readonly viewPort: number
   /**
-   * 目印まで揃えた印。切り替え先の一覧をいまの部屋に絞るときに、これ同士を比べる。
+   * 目印まで揃えた印。
    * `tsukumo:<パック>` と `tsukumo:<パック>@A` と `tsukumo:<パック>@7327` は同じセッションを指す。
    */
   readonly tag: string
+  /**
+   * 目印を除いた印（`tsukumo:<パック>` / `tsukumo:<パック>:chat`）。
+   * 切り替え先の一覧をパックとモードで絞るときに、これ同士を比べる。
+   */
+  readonly family: string
 }
 
 /**
@@ -79,7 +84,7 @@ export function readSessionMark(tag: string): SessionMark | undefined {
   const marked = separator === -1 ? undefined : markedViewPort(tag.slice(separator + 1))
   const family = marked === undefined ? tag : tag.slice(0, separator)
   const viewPort = marked ?? DEFAULT_VIEW_PORT
-  return { viewPort, tag: `${family}${SESSION_MARK_SEPARATOR}${String(viewPort)}` }
+  return { viewPort, tag: `${family}${SESSION_MARK_SEPARATOR}${String(viewPort)}`, family }
 }
 
 /** 目印を外した印（`tsukumo:<パック>` / `tsukumo:<パック>:chat`）。{@link sessionTag} が目印を足すための下ごしらえ。 */
