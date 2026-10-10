@@ -8,7 +8,7 @@ import "./lib/zod-jitless.ts"
 import { createRoot } from "react-dom/client"
 
 import { App } from "./app.tsx"
-import { loadMarkdown } from "./components/page/conversation/components/main-view/markdown/deferred-markdown.tsx"
+import { loadMarkdown } from "./components/page/conversation/components/markdown/markdown.tsx"
 import {
   applyAppearanceColorOverride,
   loadAppearanceColorOverride,

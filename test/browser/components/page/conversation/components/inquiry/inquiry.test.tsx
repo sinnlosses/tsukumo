@@ -1,21 +1,21 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { Inquiry } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/inquiry/inquiry.tsx"
+import { Inquiry } from "../../../../../../../src/browser/components/page/conversation/components/inquiry/inquiry.tsx"
 import {
   useInquiryDraft,
   useInquiryFocus,
-} from "../../../../../../../../../src/browser/stores/inquiry-answer.ts"
-import { useInquiryCardVisibility } from "../../../../../../../../../src/browser/stores/inquiry-card-visibility.ts"
-import { useInquiryJump } from "../../../../../../../../../src/browser/stores/inquiry-jump.ts"
-import type { StampedPendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
-import type { QuestionBrief } from "../../../../../../../../../src/shared/session-driver/question-brief.ts"
+} from "../../../../../../../src/browser/stores/inquiry-answer.ts"
+import { useInquiryCardVisibility } from "../../../../../../../src/browser/stores/inquiry-card-visibility.ts"
+import { useInquiryJump } from "../../../../../../../src/browser/stores/inquiry-jump.ts"
+import type { StampedPendingAsk } from "../../../../../../../src/shared/session-driver/pending-ask.ts"
+import type { QuestionBrief } from "../../../../../../../src/shared/session-driver/question-brief.ts"
 import type {
   Question,
   QuestionOption,
-} from "../../../../../../../../../src/shared/session-driver/question.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../../../../../src/shared/session/session-state.ts"
-import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
+} from "../../../../../../../src/shared/session-driver/question.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
+import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()

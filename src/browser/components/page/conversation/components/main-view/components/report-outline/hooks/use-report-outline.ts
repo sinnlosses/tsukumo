@@ -19,8 +19,8 @@ import { isDeepEqual } from "remeda"
 
 import type { TurnResult } from "../../../../../../../../../shared/session/turn-result.ts"
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../../../domain/reveal/paint.ts"
+import { detailBlockClassName } from "../../../../markdown/markdown.tsx"
 import type { HeadNotice, HeadNoticeAction } from "../../../domain/head-notice.ts"
-import notationStyles from "../../../markdown/report-notation.module.css"
 import {
   isOutlineCollapsed,
   loadOutlinePanel,
@@ -103,7 +103,7 @@ const ACTIVE_SLACK_PX = 24
 /** 固定した見出しの上端が、固定したときの位置からこの距離までは動いていないとみなす（px）。 */
 const PIN_TOLERANCE_PX = 1
 
-const HEADING_SELECTOR = `.${notationStyles["detail-block"]} :is(h4, h5)`
+const HEADING_SELECTOR = `.${detailBlockClassName} :is(h4, h5)`
 
 const OUTLINE_WIDTH_VARIABLE = "--outline-rail-width"
 

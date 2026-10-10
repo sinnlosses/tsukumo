@@ -12,7 +12,7 @@ import {
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
-import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/deferred-markdown.tsx"
+import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-answer.ts"
 import { useInquiryCardVisibility } from "../../../../../../../src/browser/stores/inquiry-card-visibility.ts"
 import { useInquiryJump } from "../../../../../../../src/browser/stores/inquiry-jump.ts"

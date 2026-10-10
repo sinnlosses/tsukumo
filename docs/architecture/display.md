@@ -838,7 +838,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   英語のまま残してよいのは識別子・パス・コマンド・コード・エラー文・原文の引用だけ
 - **HTML・mermaid・chart の規約は tsukumo が持つ。** `query()` の
   `systemPrompt: { type: "preset", preset: "claude_code", append }` で足す。正典がリポジトリ内に
-  来るので、**描ける記法の一覧が `src/browser/components/page/conversation/components/main-view/markdown/sanitize-schema.ts` と同じコミットで動く**
+  来るので、**描ける記法の一覧が `src/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.ts` と同じコミットで動く**
   （レンダラを直したのに規約が古いまま、が起きない）
 - **`~/.claude/settings.json` には触らない**（`outputStyle` も、orca が専有する hooks /
   statusLine も無傷のまま）。書き換えるのは `asuna.md` 1ファイルだけ
@@ -1264,10 +1264,10 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   **ブロックの中に空行を入れてよい**（2026-09-16 決定）。**HTML の中で Markdown を解釈させるには
   CommonMark の規則で空行が要る**ので、「空行を入れない」と規約で縛ると `<details>` の中で表や
   箇条書きが使えなくなる。縛る代わりに、塊に割る側が閉じタグまで割らないようにした
-  （`src/browser/components/page/conversation/components/main-view/markdown/split-blocks.ts`）。
+  （`src/browser/components/page/conversation/components/main-view/components/report/domain/split-blocks.ts`）。
   どちらの経路も**通すのは許可リストに載った要素・属性だけ**で、
   `script` / `style` / `iframe` は中身ごと、`on*` と `javascript:` は属性ごと落とす
-  （`src/browser/components/page/conversation/components/main-view/markdown/sanitize-schema.ts` の `REPORT_SANITIZE_SCHEMA` 1箇所に集約）。ただし**コードスパン
+  （`src/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.ts` の `REPORT_SANITIZE_SCHEMA` 1箇所に集約）。ただし**コードスパン
   （`` `code` ``）の中に書いた HTML はタグにせず、文字のまま出す**。
   `style` 属性は通すが、**外部を読みに行く記法（`url(` / `@import`）を含むものは落とす**。
   段組みは、レンダラー側が**ステップをカードにして縦に1本で積み**（横に並べてZ字に読ませない。
@@ -1282,7 +1282,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   だったので、**ファイルを指すときだけ `<a>` を離れて押せる部品にし、指さないときは押しても何も
   起きない素のテキストにする**。押せる部品は文の中で折り返せるよう `role="button"` と `tabIndex` を付けた
   `<span>` で、Enter・Space でも開く）。押す部品・依頼・サーバ側の検証は
-  `src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx` と
+  `src/browser/components/page/conversation/components/repository-link/repository-link.tsx` と
   `src/shared/contract/host.ts` の `hostContract.openFile`
 - **フェンス付きコードブロックの頭の帯に、クリックで全文をクリップボードへ写すボタンを常に置く**
   （2026-09-28 決定。2026-09-27 ユーザーの指示——デザインの依頼文を `code` の塊で出したとき、写すのに
@@ -1290,7 +1290,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   （mermaid・chart は除く）。書き手が「写してよい文章か」を選び分ける負担を無くし、画面に出る形も
   1通りに保つため。写す中身はフェンスの中身そのまま（行番号・ファイル名のラベル・ボタンの文字を
   含まない、書き上げる演出が終わった後の全文）。写すとボタンの文字が短いあいだ「コピーした」に変わる。
-  実装は `src/browser/components/page/conversation/components/main-view/markdown/copy-button.tsx` と
+  実装は `src/browser/components/page/conversation/components/markdown/renderer/copy-button.tsx` と
   `markdown.tsx` の `Pre`
 - **色を指す inline code は、その色を地にして出す。** 中身の文字全体が1つのカラーコード
   （`#bca0ec` など。3・4・6・8桁）か、ページの色のトークン名（`ink-quiet` / `--ink-quiet` /
@@ -1299,7 +1299,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   読み手が色を見て分かるようにするため。トークンの判定は、ページで実際にその名前の色が解決できるか
   で決める（色の一覧をコードに持たない）。解決した色は、ルート要素の style が変わる
   （画面の色の上書き・差し色）まで覚え、描くたびにスタイルの再計算を起こさない。実装は
-  `src/browser/components/page/conversation/components/main-view/markdown/color-swatch.ts`
+  `src/browser/components/page/conversation/components/markdown/renderer/color-swatch.ts`
 - **使う外部ライブラリ**: コードの色付け（highlight.js）・図（mermaid のコードブロック）・
   グラフ（Chart.js のコードブロック）に使う。**どれも残す**（2026-09-11）。
   **どれも `package.json` の依存**で（2026-09-20 決定）、**CDN からは読まず `node_modules` の

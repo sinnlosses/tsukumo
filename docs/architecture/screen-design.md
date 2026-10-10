@@ -173,7 +173,7 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 （13.1 原則5。1割の染めは地との比 1.19〜1.26:1、その上の `ink` は 10:1 以上を保つ）。
 
 **`note` は6種（情報・注意・異常・疑問・メモ・お願い）に割り、種別のラベルを tsukumo が文字で
-描く**（`markdown/notation.tsx`。2026-09-22）。色は 情報＝`state-info`（青） / 注意＝`state-warn` /
+描く**（`markdown/renderer/notation.tsx`。2026-09-22）。色は 情報＝`state-info`（青） / 注意＝`state-warn` /
 異常＝`state-ng` / 疑問＝`state-ask`（紫） / メモ＝`state-memo`（`ink` の白） / お願い＝`accent` で、
 お願いのほかの5種は、縦罫を実色にして地をその色で1割染める。お願いは縦罫と地を `accent` にし、枠で囲む。
 2026-10-03 に、情報・疑問・メモの色を一周ずらした（以前は 情報＝白・疑問＝青・メモ＝紫）。
@@ -184,7 +184,7 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 
 **コードの色付けは同梱のテーマのまま残す**（`highlight.js` の `github-dark`）。実測でページの中で
 いちばん情報量が多く、読めている。ただし **Chart.js と mermaid の色は `theme.css` のトークンの実効値を
-読んで渡す**（`markdown/chart.ts`・`mermaid-block.tsx`）。Chart.js は軸と格子に `--ink-quiet` / `--rule`、
+読んで渡す**（`markdown/renderer/chart.ts`・`mermaid-block.tsx`）。Chart.js は軸と格子に `--ink-quiet` / `--rule`、
 系列に `--chart-series-*`（内蔵の配色は止め、7本目以降は `--chart-series-other`）。mermaid は
 `theme: "base"` + `darkMode: true` に、トークンを hex に解いた `themeVariables`（地は `surface`・
 ノードは `surface-raised` を `surface` に重ねた色・字は `ink`・線は `ink-soft` を `surface` に重ねた色・
@@ -2926,7 +2926,7 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
 （2026-10-10 利用者決定。答えた質問の記録と同じ並びの位置なので、答えても札が上から下へ飛ばない。2026-10-08 の「依頼の塊の真下」を覆した。
 経緯は `docs/history/decision.md`「display.md 4.2 各表示物 / screen-design.md 13.13 お伺い（札の置き場。2026-10-10 に覆した記録）」）。
 札の置き場は `docs/architecture/display.md` 4.2「各表示物」のメインビュー。
-部品は `components/page/conversation/components/main-view/components/inquiry/inquiry.tsx`、答えの組み立ては
+部品は `components/page/conversation/components/inquiry/inquiry.tsx`、答えの組み立ては
 `stores/inquiry-answer.ts`（入力欄と同じ1つの答えを読み書きする）。
 
 ```

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 const fetchFailure = vi.hoisted(() => ({ fail: false }))
 
 vi.mock(
-  "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx",
+  "../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx",
   async (importOriginal) => {
     if (fetchFailure.fail) {
       throw new Error("チャンクを取れなかった")
@@ -61,5 +61,5 @@ describe("Markdown（描画一式を分けて読む口）", () => {
 
 /** 読み込みの状態が初めの姿のモジュール（`beforeEach` で登録を捨ててから読む）。 */
 function freshDeferredMarkdown() {
-  return import("../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/deferred-markdown.tsx")
+  return import("../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx")
 }

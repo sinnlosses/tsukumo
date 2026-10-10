@@ -6,7 +6,7 @@ import { act, cleanup, render, screen } from "@testing-library/react"
 import { Profiler, type ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { Inquiry } from "../../../src/browser/components/page/conversation/components/main-view/components/inquiry/inquiry.tsx"
+import { Inquiry } from "../../../src/browser/components/page/conversation/components/inquiry/inquiry.tsx"
 import { useSession } from "../../../src/browser/stores/session.ts"
 import { PROTOCOL_VERSION } from "../../../src/shared/frame.ts"
 import type { StampedPendingAsk } from "../../../src/shared/session-driver/pending-ask.ts"

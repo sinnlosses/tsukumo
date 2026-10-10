@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, type RefObject } from "react"
 
-import type { InquiryJump } from "../../../../../../../../stores/inquiry-jump.ts"
+import type { InquiryJump } from "../../../../../../stores/inquiry-jump.ts"
 
 /** 札の中で最初にフォーカスを受ける選択肢。 */
 const FIRST_CHOICE_SELECTOR = "input"

@@ -904,6 +904,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   （`docs/requirements.md` 2.2）。**文体は中立の技術文**で、キャラクターの口調はセリフが担う
   （`docs/architecture/display.md` 4.2）
 - **注記**: 表示単位としては「レポート」と呼ぶ。「詳細」はセリフと対になる役割の名前
+- **注記**: レポート本文と質問の選択肢の `preview` の入れ物の CSS の class 名は `detailBlockClassName`
+  （Markdown の部品が公開する。外の部品は CSS を import せずこの名前を自分の要素に重ねて付ける）
 - **避ける言い方**: ログ、詳細情報
 
 ### 最終レポート
@@ -954,7 +956,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **定義**: **キャラクターから利用者への1件**。利用者にしか決められない・できないこと
   （判断・作業・情報）を、`report` の `favor` に1つだけ入れる。**作業を終えた・止めたあとに残るものに限り**、
   作業の途中で利用者の手が要るときは `report` を呼ばず `AskUserQuestion` で聞く。レポートの最後に印を付けた塊で描かれ、
-  「お願い」のラベルは tsukumo 側（`src/browser/components/page/conversation/components/main-view/markdown/notation.tsx`）が
+  「お願い」のラベルは tsukumo 側（`src/browser/components/page/conversation/components/markdown/renderer/notation.tsx`）が
   文字として付ける
 - **注記**: **向きが「依頼」と逆。** 依頼は利用者からキャラクターへ、お願いは
   キャラクターから利用者へ向く

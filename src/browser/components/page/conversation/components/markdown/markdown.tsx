@@ -6,11 +6,15 @@
 
 import type { ReactElement } from "react"
 
-import { deferredModule } from "../../../../../../hooks/deferred-module.ts"
-import styles from "./deferred-markdown.module.css"
-import type { MarkdownProps, QuestionPreviewMarkdownProps } from "./markdown.tsx"
+import { deferredModule } from "../../../../../hooks/deferred-module.ts"
+import styles from "./markdown.module.css"
+import type { MarkdownProps, QuestionPreviewMarkdownProps } from "./renderer/markdown-renderer.tsx"
+import notationStyles from "./renderer/report-notation.module.css"
 
-const markdownRenderer = deferredModule(() => import("./markdown.tsx"))
+const markdownRenderer = deferredModule(() => import("./renderer/markdown-renderer.tsx"))
+
+/** レポート本文と質問の preview の入れ物の class 名。外の部品が自分の要素に重ねて付ける。 */
+export const detailBlockClassName = notationStyles["detail-block"]
 
 /** 描画一式を読み込む。何度呼んでも読み込みは1回で、済めば待っている部品が描き直る。 */
 export const loadMarkdown = markdownRenderer.load

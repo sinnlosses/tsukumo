@@ -8,10 +8,9 @@ import clsx from "clsx"
 import { memo, type ReactElement } from "react"
 
 import { useReportReveal } from "../../../../../../../domain/reveal/use-report-reveal.ts"
+import { detailBlockClassName, Markdown } from "../../../markdown/markdown.tsx"
 import styles from "../../main-view.module.css"
-import { Markdown } from "../../markdown/deferred-markdown.tsx"
-import notationStyles from "../../markdown/report-notation.module.css"
-import { splitReportBlocks } from "../../markdown/split-blocks.ts"
+import { splitReportBlocks } from "./domain/split-blocks.ts"
 
 export type ReportProps = {
   readonly markdown: string
@@ -33,7 +32,7 @@ export function Report(props: ReportProps): ReactElement {
     // 見た目の本体は report-notation.module.css にあり、ステップの末尾の余白の打ち消し（`.main-step > .detail-block:last-child`）は main-view.module.css にある。
     // CSS Modules は class 名をファイルごとにハッシュ化するので、片方だけでは打ち消しが当たらない。
     <div
-      className={clsx(notationStyles["detail-block"], styles["detail-block"], props.className)}
+      className={clsx(detailBlockClassName, styles["detail-block"], props.className)}
       ref={rootRef}
     >
       {blocks.map((block) => (

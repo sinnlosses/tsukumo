@@ -127,8 +127,7 @@ prototype を持つものを見るときだけ `isObjectType` で、`code` の�
 `description` を添えて投げる。前提（「この要素は `<select>` になっている」）が崩れたときに
 `undefined` のまま先へ進んで**黙って通る**のではなく、その場で落ちて教える。
 
-**`src/` にはこの規則を掛けていない。** `src/browser/components/page/conversation/main-view/
-markdown/` の `children as ReactNode`（react-markdown の型定義が要求する形）や
+**`src/` にはこの規則を掛けていない。** `src/browser/components/page/conversation/components/markdown/renderer/` の `children as ReactNode`（react-markdown の型定義が要求する形）や
 `src/shared/character-pack/character-background.ts` の `value as Record<string, unknown>`
 （境界での検証はこの節の上の「唯一の逃げ道」どおりに1関数へ封じ込めてある）は、DOM 要素の
 キャストとは性質が違う別の関心事なので、直す量に対して1つの規則で縛る効果が薄いと判断した。
@@ -639,7 +638,7 @@ import してよい先が決まっている**（表は二重に書かず `docs/a
 
 **ディレクトリ名には単数形の縛りを掛けない**（2026-09-26 に外した）。置き場所のディレクトリは
 bullet-proof-react の名前（`features/` `components/` `lib/` `stores/` `styles/` `types/`）をそのまま使い、
-機能・領域のディレクトリは `components/page/conversation/components/main-view/markdown/` のように
+機能・領域のディレクトリは `components/page/conversation/components/markdown/renderer/` のように
 **概念の名前**を付ける。**置き場所を名前にしたディレクトリのうち、`lib/` と `utils/` はどの層の中にも作ってよく、
 `helpers/` と `common/` は作らない**（2026-09-21 決定。どちらの箱に置くかの判定手順・`utils/` を
 受け皿にしないための歯止め・層ごとの読み方は二重に書かず `docs/architecture.md`「全体構成」

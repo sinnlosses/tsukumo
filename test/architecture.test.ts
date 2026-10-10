@@ -1066,11 +1066,12 @@ describe("components/ui/ の置き方", () => {
 // container / presenter の対（`<ページ>.tsx` / `presentational-<ページ>.tsx`）・`<ページ>.module.css`・
 // `domain/` `hooks/` `components/` だけ。部品（`components/<部品>/`）も同じ作り（`<部品>.tsx` /
 // `presentational-<部品>.tsx` / `<部品>.module.css` / `hooks/` `domain/` `components/`）で、ほかに
-// 概念のディレクトリを名前の一覧（`PAGE_CONCEPT_DIRECTORIES`。いまは `markdown` だけ）で許す。
+// 概念のディレクトリを名前の一覧（`PAGE_CONCEPT_DIRECTORIES`。いまは `renderer` だけ）で許す。
 // 部品の `components/`（＝子部品）はさらに `components/` を持てない（ネストは1段だけ）。
+// `<部品>.tsx` は自分の `components/` と概念のディレクトリを `export … from` で再エクスポートできない。
 // `components/` の直下はディレクトリだけで、`hooks/` は部品の形（`<名前>.tsx` など）を求めない
 // 固定の置き場として例外にする。
-const PAGE_CONCEPT_DIRECTORIES: ReadonlySet<string> = new Set(["markdown"])
+const PAGE_CONCEPT_DIRECTORIES: ReadonlySet<string> = new Set(["renderer"])
 
 type PageNodeRule = {
   /** このディレクトリ自身が `components/` を持ってよいか。 */
@@ -1079,7 +1080,7 @@ type PageNodeRule = {
    * `components/` を持つとき、その子（部品）がさらに自分の `components/`（＝子部品）を
    * 持ってよいか（ページ直下の `components/` の子＝部品だけ持てる）。 */
   readonly allowsGrandchildComponents: boolean
-  /** 概念のディレクトリ（`markdown/` など）を許すか（ページの直下では許さない）。 */
+  /** 概念のディレクトリ（`renderer/` など）を許すか（ページの直下では許さない）。 */
   readonly allowsConcept: boolean
 }
 
@@ -1100,6 +1101,12 @@ describe("components/page/ の形", () => {
 
   it("部品のディレクトリの外から import してよいのは <部品>.tsx だけ（main.tsx / app.tsx とテストは除く）", () => {
     const offenders = componentBoundaryViolations()
+
+    expect(offenders.join("\n")).toBe("")
+  })
+
+  it("部品の <部品>.tsx は、自分の components/ と概念のディレクトリの中を export … from で再エクスポートしない", () => {
+    const offenders = componentReexportViolations()
 
     expect(offenders.join("\n")).toBe("")
   })
@@ -1218,6 +1225,37 @@ function componentBoundaryViolations(): readonly string[] {
           !edge.fromPath.startsWith(`${componentRelPath}/`),
       )
       .map((edge) => `src/${edge.fromPath} → src/${edge.toPath}（${componentRelPath} の外から）`)
+  })
+}
+
+/**
+ * 部品の `<部品>.tsx` が、自分の `components/`（子部品）と概念のディレクトリの中のファイルを
+ * `export … from` で再エクスポートしている箇所。`hooks/` と `domain/` は数えない。
+ */
+function componentReexportViolations(): readonly string[] {
+  return pageComponentDirectories().flatMap((componentRelPath) => {
+    const dirName = componentRelPath.split("/").pop() ?? ""
+    const entryRelPath = `${componentRelPath}/${dirName}.tsx`
+    if (!existsSync(`${SRC_ROOT}/${entryRelPath}`)) {
+      return []
+    }
+    const ownedPrefixes = [
+      `${componentRelPath}/components/`,
+      ...[...PAGE_CONCEPT_DIRECTORIES].map((concept) => `${componentRelPath}/${concept}/`),
+    ]
+    const content = readFileSync(`${SRC_ROOT}/${entryRelPath}`, "utf8")
+    return [
+      ...content.matchAll(
+        /export\s+(?:type\s+)?(?:\{[^}]*\}|\*(?:\s+as\s+\w+)?)\s+from\s+["'](\.[^"']+)["']/g,
+      ),
+    ].flatMap(([, specifier]) => {
+      const toPath = specifier === undefined ? "" : resolveRelativeImport(entryRelPath, specifier)
+      return ownedPrefixes.some((prefix) => toPath.startsWith(prefix))
+        ? [
+            `src/${entryRelPath} → src/${toPath}（自分の子部品か概念のディレクトリの再エクスポート）`,
+          ]
+        : []
+    })
   })
 }
 

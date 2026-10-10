@@ -3,7 +3,7 @@ import type { ReactElement } from "react"
 
 import type { InquiryModel, InquiryOptionRow } from "../../../../../stores/inquiry-answer.ts"
 import { BottomSheet } from "../../../../ui/bottom-sheet/bottom-sheet.tsx"
-import { InquiryCard } from "../main-view/main-view.tsx"
+import { InquiryCard } from "../inquiry/inquiry.tsx"
 import type { PendingAskChips } from "./domain/pending-ask-chips.ts"
 import styles from "./pending-ask-card.module.css"
 

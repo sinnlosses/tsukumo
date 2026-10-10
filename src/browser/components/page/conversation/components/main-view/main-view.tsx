@@ -33,9 +33,10 @@ import {
 import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
+import { Inquiry } from "../inquiry/inquiry.tsx"
+import { RepositoryFileLinkProvider } from "../repository-link/repository-link.tsx"
 import { CurrentStep } from "./components/current-step/current-step.tsx"
 import { InquiryJumpFloat } from "./components/inquiry-jump-float/inquiry-jump-float.tsx"
-import { Inquiry } from "./components/inquiry/inquiry.tsx"
 import { MiniPortrait } from "./components/mini-portrait/mini-portrait.tsx"
 import { PhaseList } from "./components/phase-list/phase-list.tsx"
 import { ReportOutline } from "./components/report-outline/report-outline.tsx"
@@ -49,9 +50,6 @@ import { neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
 import { NO_SHOWN_KEY, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import { useReportOutlineTurns } from "./hooks/use-report-outline-turns.ts"
 import styles from "./main-view.module.css"
-import { RepositoryFileLinkProvider } from "./markdown/repository-link.tsx"
-
-export { InquiryCard } from "./components/inquiry/inquiry.tsx"
 
 /** 画面に出す中身。`card` は札に載せるターンで、`fresh` は働くあいだの中身から入れ替えたばかりのレポートか。 */
 type ShownView =

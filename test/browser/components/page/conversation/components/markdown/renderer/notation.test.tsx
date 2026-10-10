@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import {
   NotationBlock,
   NotationInline,
-} from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/notation.tsx"
+} from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/notation.tsx"
 
 afterEach(() => {
   cleanup()

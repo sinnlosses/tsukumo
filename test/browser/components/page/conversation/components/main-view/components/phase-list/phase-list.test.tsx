@@ -11,8 +11,9 @@ import { putSession } from "../../../../../../../session-store.ts"
 
 // 本物の Markdown は遅延で読み込まれる重い部品なので、本文の字をそのまま出す代役に差し替える。
 vi.mock(
-  "../../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/deferred-markdown.tsx",
+  "../../../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx",
   () => ({
+    detailBlockClassName: "detail-block",
     Markdown: (props: { readonly text: string }) => <div>{props.text}</div>,
   }),
 )

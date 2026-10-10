@@ -34,6 +34,11 @@ import remarkCjkFriendly from "remark-cjk-friendly"
 import remarkGfm from "remark-gfm"
 
 import { optionalString } from "../../../../../../../shared/utils/optional-string.ts"
+import {
+  repositoryFilePath,
+  RepositoryFileLinkTarget,
+  useRepositoryFileLink,
+} from "../../repository-link/repository-link.tsx"
 import { ChartBlock } from "./chart-block.tsx"
 import { CODE_FILE_NAME_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts"
 import { colorSwatch, readColorToken } from "./color-swatch.ts"
@@ -48,11 +53,6 @@ import {
 import { remarkPreviewImage } from "./preview-image.ts"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
-import {
-  repositoryFilePath,
-  RepositoryFileLinkTarget,
-  useRepositoryFileLink,
-} from "./repository-link.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
 

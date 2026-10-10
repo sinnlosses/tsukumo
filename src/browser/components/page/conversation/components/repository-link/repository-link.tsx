@@ -9,9 +9,9 @@
 
 import { createContext, useContext, type ReactElement, type ReactNode } from "react"
 
-import { useSession } from "../../../../../../stores/session.ts"
-import { isActivationKey } from "../../hooks/activation-key.ts"
-import { useRepositoryFilePaths } from "../../hooks/use-repository-file-paths.ts"
+import { useSession } from "../../../../../stores/session.ts"
+import { isActivationKey } from "../hooks/activation-key.ts"
+import { useRepositoryFilePaths } from "../hooks/use-repository-file-paths.ts"
 
 /** 末尾の `:行` または `:行:桁`（数字だけ）。 */
 const LINE_SUFFIX_PATTERN = /:\d+(?::\d+)?$/

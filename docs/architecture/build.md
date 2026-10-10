@@ -18,7 +18,7 @@
   （`docs/architecture/adr/0006-prebuild-browser.md`）。作るのは `pnpm run build`
   （`scripts/build-ui.ts`）だけで、`pnpm run dev` も起こす前に1回組み立てる（HMR を止めたときに戻る先）
 - `pnpm run build` が起こすのは `node node_modules/vite/bin/vite.js build src/browser --config vite.config.ts --outDir dist/browser`
-  の1本で、入口の `ui.js` と `main.css` の対と、`import()` で分けたチャンク（`markdown.js`・`task-body.js` と、2つが共に読む `lib.js`）が置かれる
+  の1本で、入口の `ui.js` と `main.css` の対と、`import()` で分けたチャンク（`markdown-renderer.js`・`task-body.js` と、2つが共に読む `lib.js`）が置かれる
   （名前をハッシュ付きにせず固定する理由と、JS API ではなく CLI を起こす理由は
   `docs/architecture/adr/0007-vite-build-cli.md`。分け方は `docs/architecture/browser.md`「重いライブラリ」）
 - **`dist/` は `.gitignore` する。** `package.json` の `prepare` が `pnpm run build` を呼ぶので、

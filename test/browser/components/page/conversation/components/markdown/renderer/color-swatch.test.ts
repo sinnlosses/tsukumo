@@ -4,7 +4,7 @@ import {
   cachedColorTokenReader,
   colorSwatch,
   type ResolvedColor,
-} from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/color-swatch.ts"
+} from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/color-swatch.ts"
 
 // トークンを実効の色へ解決するのはブラウザ（`readColorToken`）で、happy-dom は `var()` を
 // 解決しない。ここでは解決済みの色を返す読み口を差して、判定だけを見る。

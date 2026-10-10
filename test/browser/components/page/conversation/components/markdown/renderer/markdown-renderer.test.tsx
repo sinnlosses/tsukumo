@@ -2,15 +2,15 @@ import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx"
-import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx"
+import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
+import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/components/page/conversation/components/repository-link/repository-link.tsx"
 import type { ReportSection } from "../../../../../../../../src/shared/report/report-block.ts"
 import { reportSectionsMarkdown as reportSectionsMarkdownFrom } from "../../../../../../../../src/shared/report/report-markdown.ts"
 import { typedElement } from "../../../../../../../typed-element.ts"
 
 // jsdom には canvas が無く、色のトークンも解けない。
 vi.mock(
-  "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/theme-color.ts",
+  "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/theme-color.ts",
   () => ({
     resolveColor: () => "rgb(0, 0, 0)",
     resolveHex: () => "#000000",

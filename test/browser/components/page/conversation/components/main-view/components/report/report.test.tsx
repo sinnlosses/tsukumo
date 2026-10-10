@@ -8,8 +8,9 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 let calls: string[] = []
 
 vi.mock(
-  "../../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/deferred-markdown.tsx",
+  "../../../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx",
   () => ({
+    detailBlockClassName: "detail-block",
     Markdown: (props: { readonly text: string }) => {
       calls.push(props.text)
       return <div data-markdown-stub="yes">{props.text}</div>

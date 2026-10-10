@@ -387,7 +387,7 @@ components/page/<ページ>/
       <部品>.module.css          この部品（と中の子部品）だけが読む CSS
       hooks/ domain/             この部品（と中の子部品）だけのフック・語彙
       components/<子部品>/       この部品だけが使う子部品。ページの components/ の直下の部品だけが持てる
-      <概念>/                    下の「機能の中を分ける」の概念のディレクトリ（markdown/ など）
+      <概念>/                    下の「機能の中を分ける」の概念のディレクトリ（renderer/ など）
 ```
 
 - **ページの直下は、container / presenter の対と `<ページ>.module.css`、`domain/` `hooks/` `components/`
@@ -411,7 +411,8 @@ components/page/<ページ>/
 
 - **部品のディレクトリの外から引いてよいのは `<部品>.tsx` だけ**（例外は `main.tsx` / `app.tsx` /
   `components/app/` とテスト）。ページの部品を画面の外に置くとき（書き終わりの知らせ `DiaryNotice`）は、
-  `components/app/layout.tsx` がその `<部品>.tsx` を直に import する
+  `components/app/layout.tsx` がその `<部品>.tsx` を直に import する。**`<部品>.tsx` は自分の `components/` と
+  概念のディレクトリの中を `export … from` で再エクスポートしない**（`hooks/` と `domain/` の型は可）
 - 会話の画面は**1ページ**で、4つの領域のうち、メインビュー・キャラビュー・入力欄（`dispatch/`）は `conversation/components/` の下、サイドバーは `domain/sidebar/` の部品。検査は
   `test/architecture.test.ts`（`describe("components/page/ の形", …)`）
 
@@ -532,7 +533,7 @@ components/page/<ページ>/
 - 語彙を持たない汎用の部品は、読み手が1つでも `components/ui/` に置く。**描き直しを止める `memo` は
   presenter 側に残す**（container はフックのぶん毎回描き直される）
 
-**機能の中に、概念の名前のサブディレクトリ（`main-view/markdown/`）を置いてよい。** 切るのは
+**機能の中に、概念の名前のサブディレクトリ（`markdown/renderer/`）を置いてよい。** 切るのは
 **ファイルが3つ以上でその概念だけで閉じている**・**`hooks/` `components/` `domain/` のどれか1つに
 収まらない**・**名前がその機能の中の概念**の3つがそろったときだけで、そろったら `hooks/` などより優先する
 （その概念だけが読むフックも中に入れ、中では接頭辞を落とす）。2つ目の読み手を得たらディレクトリごと上げる

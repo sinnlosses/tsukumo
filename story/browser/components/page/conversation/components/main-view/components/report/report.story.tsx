@@ -4,7 +4,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
 import { Report } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/report.tsx"
-import { loadMarkdown } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/deferred-markdown.tsx"
+import { loadMarkdown } from "../../../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import type { ReportSection } from "../../../../../../../../../src/shared/report/report-block.ts"
 import {
   type ReportImageSource,

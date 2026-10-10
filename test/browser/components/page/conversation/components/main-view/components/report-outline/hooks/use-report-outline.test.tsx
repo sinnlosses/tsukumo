@@ -6,7 +6,7 @@ import {
   useReportOutline,
   type ReportOutlineProps,
 } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report-outline/hooks/use-report-outline.ts"
-import notationStyles from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css"
+import { detailBlockClassName } from "../../../../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 
 const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
 
@@ -44,7 +44,7 @@ function Probe(): ReactElement {
           />
         ))}
       </nav>
-      <div className={notationStyles["detail-block"]} ref={contentRef}>
+      <div className={detailBlockClassName} ref={contentRef}>
         <h4>見出し0</h4>
         <p>本文0</p>
         <h4>見出し1</h4>
@@ -185,7 +185,7 @@ function PendingProbe(): ReactElement {
     <div>
       <span data-testid="visible">{String(visible)}</span>
       <span data-testid="row-count">{rows.length}</span>
-      <div className={notationStyles["detail-block"]} ref={contentRef}>
+      <div className={detailBlockClassName} ref={contentRef}>
         <h4>見出し0</h4>
         <div data-testid="later" data-reveal="pending">
           <h4>見出し1</h4>

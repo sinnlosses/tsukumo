@@ -10,22 +10,21 @@
 import clsx from "clsx"
 import type { KeyboardEvent, ReactElement } from "react"
 
-import { reportSectionsMarkdown } from "../../../../../../../../shared/report/report-markdown.ts"
-import { truncateForDisplay } from "../../../../../../../features/current-work/domain/current-work-step.ts"
-import { useNowWhile } from "../../../../../../../hooks/use-now-while.ts"
-import { usePhoneWidth } from "../../../../../../../hooks/use-phone-width.ts"
+import { reportSectionsMarkdown } from "../../../../../../shared/report/report-markdown.ts"
+import { truncateForDisplay } from "../../../../../features/current-work/domain/current-work-step.ts"
+import { useNowWhile } from "../../../../../hooks/use-now-while.ts"
+import { usePhoneWidth } from "../../../../../hooks/use-phone-width.ts"
 import {
   useInquiryAnswer,
   type InquiryBrief as InquiryBriefModel,
   type InquiryModel,
   type InquiryOptionRow,
-} from "../../../../../../../stores/inquiry-answer.ts"
-import { useInquiryJump } from "../../../../../../../stores/inquiry-jump.ts"
-import { Button } from "../../../../../../ui/button/button.tsx"
-import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
-import { Text } from "../../../../../../ui/text/text.tsx"
-import { Markdown, QuestionPreviewMarkdown } from "../../markdown/deferred-markdown.tsx"
-import notationStyles from "../../markdown/report-notation.module.css"
+} from "../../../../../stores/inquiry-answer.ts"
+import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
+import { Button } from "../../../../ui/button/button.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import { detailBlockClassName, Markdown, QuestionPreviewMarkdown } from "../markdown/markdown.tsx"
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"
 import { useInquiryVisibility } from "./hooks/use-inquiry-visibility.ts"
 import styles from "./inquiry.module.css"
@@ -370,12 +369,12 @@ function InquiryDetail(props: {
       <InquiryPoints label={PROS_LABEL} mark="＋" tone="state-ok" items={option.pros} />
       <InquiryPoints label={CONS_LABEL} mark="－" tone="state-ng" items={option.cons} />
       {option.preview !== undefined && (
-        <div className={clsx(notationStyles["detail-block"], styles["detail-block"])}>
+        <div className={clsx(detailBlockClassName, styles["detail-block"])}>
           <QuestionPreviewMarkdown text={option.preview} toolUseId={props.askId} />
         </div>
       )}
       {figures !== "" && (
-        <div className={clsx(notationStyles["detail-block"], styles["detail-block"])}>
+        <div className={clsx(detailBlockClassName, styles["detail-block"])}>
           <Markdown text={figures} />
         </div>
       )}
@@ -443,7 +442,7 @@ function InquiryCompare(props: {
       <Text element="summary" size="secondary" tone="ink-quiet" weight="bold" className="">
         {COMPARE_SUMMARY}
       </Text>
-      <div className={clsx(notationStyles["detail-block"], styles["detail-block"])}>
+      <div className={clsx(detailBlockClassName, styles["detail-block"])}>
         <Markdown text={table} />
       </div>
     </details>

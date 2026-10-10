@@ -41,7 +41,7 @@
 **`location.hash` を正典にする状態は zustand に写さない**（`useHashRoute` が `useSyncExternalStore` で直接
 購読する。写すと hash と store の2か所に持つことになる）。
 
-### Markdown（`components/page/conversation/components/main-view/markdown/markdown.tsx`）
+### Markdown（`components/page/conversation/components/markdown/renderer/markdown-renderer.tsx`）
 
 ```
 react-markdown
@@ -50,9 +50,12 @@ react-markdown
   components: { code: フェンスの言語で MermaidBlock / ChartBlock / 通常 に振り分け, a: 許可スキームだけ }
 ```
 
-- Markdown 一式は**メインビューの部品の中**に置く（読み手が `<Report>`・お伺いの札・質問の記録・目録の見出しで、
-  どれもメインビューの中なので共有の箱に上げない）。メインビューの外に読み手ができたら、会話の画面の部品
-  `conversation/components/markdown/` に上げる（形は `docs/architecture/adr/0027-markdown-component-entry.md`）
+- Markdown 一式は**会話の画面の部品 `conversation/components/markdown/`** に置く（読み手が `<Report>`・
+  お伺いの札・質問の記録・目録の見出しで、お伺いの札が答え待ちの札と共有されメインビューの外の部品にまたがるため。
+  形は `docs/architecture/adr/0027-markdown-component-entry.md`）。外から引く口は `markdown.tsx` で、
+  `import()` で読む描画一式は `renderer/` に入る。`.detail-block` の class 名は口が `detailBlockClassName` で公開し、
+  外の部品は CSS を import しない。`split-blocks.ts` は `report/domain/`、`repository-link.tsx` は
+  `conversation/components/repository-link/` の部品
 - **`schema` は許可リスト**（要素・属性と `class` の語彙 `note` / `badge` / `compare` など）。`style` 属性は
   `url(` / `@import` を含むものを落とす規則も `schema` の `attributes` の正規表現で表す。**規約
   （`report-notation.ts`）・schema・部品（`notation.tsx`）・CSS の4つは同じコミットで揃える**
@@ -82,22 +85,22 @@ react-markdown
 `vite build` の出力は入口の `ui.js` と、**Markdown の描画一式だけを `import()` で分けたチャンク**。
 Markdown を描く口は2つあり、どちらも `import()` で読む。
 
-| チャンク       | 中身                                                                                                     |
-| -------------- | -------------------------------------------------------------------------------------------------------- |
-| `markdown.js`  | レポートの描画（`markdown.tsx` から先の rehype 一式・highlight.js・図とグラフの部品）                    |
-| `task-body.js` | タスクの本文の描画（`task-body.tsx` と ID の自動リンク）                                                 |
-| `lib.js`       | 2つが共に読む react-markdown・remark・micromark 一式（組み立てが自動で括り出す。名前も組み立てが付ける） |
+| チャンク               | 中身                                                                                                     |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| `markdown-renderer.js` | レポートの描画（`renderer/markdown-renderer.tsx` から先の rehype 一式・highlight.js・図とグラフの部品）  |
+| `task-body.js`         | タスクの本文の描画（`task-body.tsx` と ID の自動リンク）                                                 |
+| `lib.js`               | 2つが共に読む react-markdown・remark・micromark 一式（組み立てが自動で括り出す。名前も組み立てが付ける） |
 
 CSS は分けず1本。サーバは起動時にすべてメモリに読み、`/assets/` で**組み立てた名前の一覧にある名前だけ**を
 配る（要求のパスからファイルを組み立てない）。入口の名前は配る URL と同じにする（チャンクは入口を `./ui.js` で
 import するので、食い違うと入口を別のモジュールとして読み React が2つ動く）。
 
-- 使い手は `deferred-markdown.tsx`（`<Report>`・お伺いと質問の記録の preview）と `deferred-task-body.tsx`
-  （タスクのモーダルの詳細・サイドバーののぞき窓）の部品を使い、`markdown.tsx`・`task-body.tsx` を直接
+- 使い手は Markdown の部品の口 `markdown.tsx`（`<Report>`・お伺いと質問の記録の preview）と `deferred-task-body.tsx`
+  （タスクのモーダルの詳細・サイドバーののぞき窓）を使い、描画一式の `renderer/markdown-renderer.tsx`・`task-body.tsx` を直接
   import しない（すると一式が入口に戻る）。読み込みの状態の持ち方は2つとも `hooks/deferred-module.ts` の `deferredModule`。
-  Markdown を部品に上げたあとは、外から引く口の `markdown.tsx` が遅延読み込みの側になり、描画一式は中の `renderer/` に
-  入るので、描画一式を外から直に import すると部品の境界の検査（`test/architecture.test.ts` の
-  `componentBoundaryViolations`）が落とす
+  外から引く口の `markdown.tsx` が遅延読み込みの側で、描画一式は中の `renderer/` に入るので、描画一式を外から直に
+  import すると部品の境界の検査（`test/architecture.test.ts` の `componentBoundaryViolations`）が落とし、口から
+  `renderer/` を再エクスポートすると再エクスポートの検査が落とす
 - 読み込みは `main.tsx` が最初の描画の前に `loadMarkdown()`・`loadTaskBody()` で1回ずつ起こし、済んだことを zustand の
   store に持つ。読み終わっていれば同じ描画で本体を出し、まだなら高さを持たない空の器に `aria-busy="true"` を出す。
   ブラウザは同じ URL の `import()` の失敗を覚えていて取り直さないので、読めなかったら本文を字のまま出して

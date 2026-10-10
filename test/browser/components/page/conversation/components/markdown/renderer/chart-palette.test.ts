@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { colorsForDataset } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/chart-palette.ts"
+import { colorsForDataset } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/chart-palette.ts"
 
 const PALETTE = { series: ["#aa0001", "#aa0002"], other: "#000000" }
 

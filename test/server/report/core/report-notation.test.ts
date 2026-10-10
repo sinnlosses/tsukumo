@@ -5,8 +5,8 @@ import { cleanup, render } from "@testing-library/react"
 import { createElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/main-view/markdown/notation.tsx"
-import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/components/main-view/markdown/sanitize-schema.ts"
+import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/notation.tsx"
+import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report/report-block.ts"
 import {
@@ -52,13 +52,13 @@ const namedClasses = [...REPORT_NOTATION_PROMPT.matchAll(/class="([^"]+)"/g)].fl
   ([, names]) => names?.split(" ") ?? [],
 )
 
-// 見た目はレポートの記法を描く機能の CSS（`markdown/report-notation.module.css`）にある。
+// 見た目はレポートの記法を描く機能の CSS（`markdown/renderer/report-notation.module.css`）にある。
 // テストの中では class 名が CSS に書いた綴りのまま届く（`cssModuleIdentityPlugin`）ので、
 // 部品が付け直した名前をそのファイルの選択子とそのまま突き合わせられる。
 const STYLE_SHEET_SOURCE = readFileSync(
   fileURLToPath(
     new URL(
-      "../../../../src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css",
+      "../../../../src/browser/components/page/conversation/components/markdown/renderer/report-notation.module.css",
       import.meta.url,
     ),
   ),

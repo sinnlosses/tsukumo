@@ -7,8 +7,7 @@ import type { ReactElement } from "react"
 
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import { QuestionPreviewMarkdown } from "../../markdown/deferred-markdown.tsx"
-import notationStyles from "../../markdown/report-notation.module.css"
+import { detailBlockClassName, QuestionPreviewMarkdown } from "../../../markdown/markdown.tsx"
 import type {
   QuestionRecordAnswerRow,
   QuestionRecordModel,
@@ -106,7 +105,7 @@ function PreviewBlock(props: {
 
   return (
     // レポートと同じ見た目（report-notation.module.css の `.detail-block` の子のセレクタ）に乗せる。
-    <div className={notationStyles["detail-block"]}>
+    <div className={detailBlockClassName}>
       <Text
         element="p"
         size="inherit"

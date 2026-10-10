@@ -51,7 +51,7 @@ const TEST_UI_SCRIPT = "/* テスト用の ui スクリプト */"
 const TEST_STYLE_SHEET = "/* テスト用の CSS */"
 
 /** `import()` で分けたチャンクの代役。 */
-const TEST_CHUNK_NAME = "markdown.js"
+const TEST_CHUNK_NAME = "markdown-renderer.js"
 const TEST_CHUNK = "/* テスト用のチャンク */"
 
 /**

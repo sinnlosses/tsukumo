@@ -3,7 +3,7 @@
 
 import { useEffect, type RefObject } from "react"
 
-import { useInquiryCardVisibility } from "../../../../../../../../stores/inquiry-card-visibility.ts"
+import { useInquiryCardVisibility } from "../../../../../../stores/inquiry-card-visibility.ts"
 
 /** `observing` が false のあいだは観測しない（札が無い・狭い画面の板の中の札）。 */
 export function useInquiryVisibility(
