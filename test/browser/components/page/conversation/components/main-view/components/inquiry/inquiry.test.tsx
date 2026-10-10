@@ -2,9 +2,13 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Inquiry } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/inquiry/inquiry.tsx"
-import { useInquiryDraft } from "../../../../../../../../../src/browser/stores/inquiry-answer.ts"
+import {
+  useInquiryDraft,
+  useInquiryFocus,
+} from "../../../../../../../../../src/browser/stores/inquiry-answer.ts"
 import { useInquiryJump } from "../../../../../../../../../src/browser/stores/inquiry-jump.ts"
 import type { StampedPendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
+import type { QuestionBrief } from "../../../../../../../../../src/shared/session-driver/question-brief.ts"
 import type {
   Question,
   QuestionOption,
@@ -16,6 +20,7 @@ afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
+  useInquiryFocus.setState(useInquiryFocus.getInitialState(), true)
   // 呼ばれた回数はモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryJump.setState(useInquiryJump.getInitialState(), true)
 })
@@ -217,5 +222,77 @@ describe("Inquiry（メインビューのお伺いの札）", () => {
     } finally {
       scrollIntoView.mockRestore()
     }
+  })
+})
+
+describe("Inquiry の添え書きと詳細の面", () => {
+  const brief = {
+    header: "架空の選択",
+    background: "架空の背景の文",
+    axes: ["速さ", "戻しやすさ"],
+    options: [
+      {
+        label: "A案",
+        pros: ["架空の良い点A"],
+        cons: ["架空の悪い点A"],
+        byAxis: ["速い", "戻せる"],
+        irreversible: false,
+        figures: [],
+      },
+      {
+        label: "B案",
+        pros: ["架空の良い点B"],
+        cons: [],
+        byAxis: ["遅い", "戻せない"],
+        irreversible: true,
+        figures: [],
+      },
+    ],
+  } satisfies QuestionBrief
+
+  function renderBriefed(briefs: readonly QuestionBrief[]): void {
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      pending: [{ kind: "question", id: "ask-1", questions: [question()], briefs, askedAt: 0 }],
+    })
+    render(<Inquiry />)
+  }
+
+  it("背景・判断の軸・戻せない選択肢の字つきの印・畳んだ比較表を出し、詳細は先頭の選択肢の良い点と悪い点", () => {
+    renderBriefed([brief])
+
+    expect(screen.getByText(/架空の背景の文/)).toBeDefined()
+    expect(screen.getByText(/速さ \/ 戻しやすさ/)).toBeDefined()
+    expect(screen.getAllByText("⚠ 戻せない")).toHaveLength(1)
+    expect(screen.getByText(/架空の良い点A/)).toBeDefined()
+    expect(screen.getByText(/架空の悪い点A/)).toBeDefined()
+    expect(screen.queryByText(/架空の良い点B/)).toBeNull()
+    expect(card().querySelector("details")?.open).toBe(false)
+  })
+
+  it("選択肢を選び替えると、詳細がその選択肢のものに替わる", () => {
+    renderBriefed([brief])
+
+    fireEvent.click(screen.getByRole("radio", { name: /B案/ }))
+
+    expect(screen.getByText(/架空の良い点B/)).toBeDefined()
+    expect(screen.queryByText(/架空の良い点A/)).toBeNull()
+  })
+
+  it("数字キーで選んでも、詳細が替わる", () => {
+    renderBriefed([brief])
+
+    fireEvent.keyDown(card(), { key: "2" })
+
+    expect(screen.getByText(/架空の良い点B/)).toBeDefined()
+  })
+
+  it("添え書きが無い質問は、背景・表を出さず、詳細の面に説明を出す", () => {
+    renderBriefed([])
+
+    expect(screen.queryByText("背景")).toBeNull()
+    expect(card().querySelector("details")).toBeNull()
+    expect(screen.getByText("架空の説明（A案）")).toBeDefined()
+    expect(screen.queryByText("⚠ 戻せない")).toBeNull()
   })
 })

@@ -116,30 +116,6 @@
                                 },
                                 "横長の案"
                               ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                "架空の説明A"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                {
-                                  "tag": "img",
-                                  "attributes": {
-                                    "alt": "架空の横長の画面",
-                                    "src": "/report-image/fake-ask-preview-image/report-image-fixture%2Fafter.png"
-                                  }
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                "架空の一言: 札の幅に収まる。"
-                              ]
                             }
                           ]
                         },
@@ -167,66 +143,6 @@
                                   }
                                 },
                                 "外の画像の案"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                "架空の説明C"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "role": "img",
-                                    "aria-label": "架空の外部の画像"
-                                  },
-                                  "children": [
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "aria-hidden": "true"
-                                      },
-                                      "children": [
-                                        {
-                                          "tag": "svg"
-                                        },
-                                        "画像を出せない",
-                                        "読めなかったか、tsukumo を起こし直して手放した"
-                                      ]
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "role": "img",
-                                    "aria-label": "架空の埋め込みの画像"
-                                  },
-                                  "children": [
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "aria-hidden": "true"
-                                      },
-                                      "children": [
-                                        {
-                                          "tag": "svg"
-                                        },
-                                        "画像を出せない",
-                                        "読めなかったか、tsukumo を起こし直して手放した"
-                                      ]
-                                    }
-                                  ]
-                                }
                               ]
                             }
                           ]
@@ -256,24 +172,6 @@
                                 },
                                 "縦長の案"
                               ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                "架空の説明B"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                {
-                                  "tag": "img",
-                                  "attributes": {
-                                    "alt": "架空の縦長の画面",
-                                    "src": "/report-image/fake-ask-preview-image/report-image-fixture%2Ftall.png"
-                                  }
-                                }
-                              ]
                             }
                           ]
                         },
@@ -296,42 +194,58 @@
                                   "tag": "input",
                                   "attributes": {
                                     "type": "radio",
-                                    "checked": false,
+                                    "checked": true,
                                     "value": "on"
                                   }
                                 },
                                 "置いていない画像の案"
                               ]
-                            },
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "role": "group",
+                        "aria-label": "置いていない画像の案 の詳細"
+                      },
+                      "children": [
+                        {
+                          "tag": "p",
+                          "children": [
+                            "置いていない画像の案",
+                            "の詳細"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の説明D"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
                             {
-                              "tag": "p",
-                              "children": [
-                                "架空の説明D"
-                              ]
-                            },
-                            {
-                              "tag": "p",
+                              "tag": "span",
+                              "attributes": {
+                                "role": "img",
+                                "aria-label": "架空の置いていない画像"
+                              },
                               "children": [
                                 {
                                   "tag": "span",
                                   "attributes": {
-                                    "role": "img",
-                                    "aria-label": "架空の置いていない画像"
+                                    "aria-hidden": "true"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "aria-hidden": "true"
-                                      },
-                                      "children": [
-                                        {
-                                          "tag": "svg"
-                                        },
-                                        "画像を出せない",
-                                        "読めなかったか、tsukumo を起こし直して手放した"
-                                      ]
-                                    }
+                                      "tag": "svg"
+                                    },
+                                    "画像を出せない",
+                                    "読めなかったか、tsukumo を起こし直して手放した"
                                   ]
                                 }
                               ]
@@ -347,7 +261,7 @@
                         {
                           "tag": "button",
                           "attributes": {
-                            "aria-disabled": "true",
+                            "aria-disabled": "false",
                             "type": "button"
                           },
                           "children": [

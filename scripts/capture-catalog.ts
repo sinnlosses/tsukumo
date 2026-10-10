@@ -271,6 +271,16 @@ const CATALOG: readonly CatalogEntry[] = [
     settle: TAIL_SETTLE,
   },
   {
+    name: "question-brief",
+    scene: "question-brief",
+    label: "質問（背景と判断の軸・左に選択肢・右に詳細・下に畳める比較表）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: false,
+    settle: TAIL_SETTLE,
+  },
+  {
     name: "question-preview-image",
     scene: "question-preview-image",
     label:

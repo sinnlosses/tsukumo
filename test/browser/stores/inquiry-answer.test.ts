@@ -4,9 +4,11 @@ import { afterEach, describe, expect, it } from "vitest"
 import {
   useInquiryAnswer,
   useInquiryDraft,
+  useInquiryFocus,
   type InquiryModel,
 } from "../../../src/browser/stores/inquiry-answer.ts"
 import type { StampedPendingAsk } from "../../../src/shared/session-driver/pending-ask.ts"
+import type { QuestionBrief } from "../../../src/shared/session-driver/question-brief.ts"
 import type { Question, QuestionOption } from "../../../src/shared/session-driver/question.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { type CommandSpy, putSession } from "../session-store.ts"
@@ -20,6 +22,7 @@ afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
+  useInquiryFocus.setState(useInquiryFocus.getInitialState(), true)
 })
 
 const PERMISSION_PENDING = {
@@ -318,5 +321,57 @@ describe("useInquiryAnswer の質問の答え方", () => {
         answer: { kind: "answers", labels: [["架空の自由な答え"], ["C案"]] },
       },
     ])
+  })
+})
+
+describe("useInquiryAnswer の添え書き", () => {
+  const brief = {
+    header: "架空の選択",
+    background: "架空の背景",
+    axes: ["速さ"],
+    options: [
+      {
+        label: "A案",
+        pros: ["良い"],
+        cons: ["悪い"],
+        byAxis: ["速い"],
+        irreversible: false,
+        figures: [],
+      },
+      { label: "B案", pros: [], cons: [], byAxis: ["遅い"], irreversible: true, figures: [] },
+    ],
+  } satisfies QuestionBrief
+
+  function briefedPending(briefs: readonly QuestionBrief[]): StampedPendingAsk {
+    return { kind: "question", id: "ask-1", questions: [question()], briefs, askedAt: 0 }
+  }
+
+  it("header が合う添え書きを、背景と軸は質問に、良い点・悪い点・戻せない印は選択肢の行に載せる", () => {
+    const model = asking(renderModel([briefedPending([brief])]).current)
+
+    expect(model.brief).toEqual({ background: "架空の背景", axes: ["速さ"] })
+    expect(model.options.map((row) => [row.pros, row.irreversible, row.byAxis])).toEqual([
+      [["良い"], false, ["速い"]],
+      [[], true, ["遅い"]],
+    ])
+  })
+
+  it("添え書きが無い、または header が合わないときは添え書き無しの形", () => {
+    for (const briefs of [[], [{ ...brief, header: "別の質問" }]]) {
+      const model = asking(renderModel([briefedPending(briefs)]).current)
+      expect(model.brief).toBeUndefined()
+      expect(model.options.every((row) => !row.irreversible && row.pros.length === 0)).toBe(true)
+    }
+  })
+
+  it("詳細に出す選択肢は、触った選択肢、無ければ最後に選んだもの、それも無ければ先頭", () => {
+    const result = renderModel([briefedPending([brief])])
+    expect(asking(result.current).focusedLabel).toBe("A案")
+
+    act(() => asking(result.current).onFocus("B案"))
+    expect(asking(result.current).focusedLabel).toBe("B案")
+
+    act(() => asking(result.current).onToggle("A案"))
+    expect(asking(result.current).focusedLabel).toBe("A案")
   })
 })

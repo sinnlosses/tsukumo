@@ -1,5 +1,5 @@
 // お伺いの札（答え待ちの許可要求と質問。メインビューの、いまのやり取りの進み具合の帯と依頼の塊の真下）。
-// 頭に「お伺い」のチップ・種類・`header` かツール名・「n / N」と待っている時間、本文に問いの文か対象の全文と番号つきの選択肢、下端に操作の行を置く。
+// 頭に「お伺い」のチップ・種類・`header` かツール名・「n / N」と待っている時間、本文に問いの文か対象の全文・添え書きの背景と軸・左に選択肢の縦の並びと右にフォーカスした選択肢の詳細・畳める比較表、下端に操作の行を置く。
 // 操作の行は札の下端に残り、本文と選択肢の側が札の内側で転がる。
 //
 // 数字キーと Enter が効くのは、札の中にフォーカスがあるときだけ。
@@ -10,10 +10,12 @@
 import clsx from "clsx"
 import type { KeyboardEvent, ReactElement } from "react"
 
+import { reportSectionsMarkdown } from "../../../../../../../../shared/report/report-markdown.ts"
 import { truncateForDisplay } from "../../../../../../../features/current-work/domain/current-work-step.ts"
 import { useNowWhile } from "../../../../../../../hooks/use-now-while.ts"
 import {
   useInquiryAnswer,
+  type InquiryBrief as InquiryBriefModel,
   type InquiryModel,
   type InquiryOptionRow,
 } from "../../../../../../../stores/inquiry-answer.ts"
@@ -21,7 +23,7 @@ import { useInquiryJump } from "../../../../../../../stores/inquiry-jump.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import { QuestionPreviewMarkdown } from "../../markdown/deferred-markdown.tsx"
+import { Markdown, QuestionPreviewMarkdown } from "../../markdown/deferred-markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
 import { useInquiryScroll } from "./hooks/use-inquiry-scroll.ts"
 import styles from "./inquiry.module.css"
@@ -39,6 +41,14 @@ const NEXT_LABEL = "次へ"
 /** 押せる口に添えるキーの字。 */
 const ENTER_KEY_HINT = "⏎"
 const WAITED_PREFIX = "待って"
+const BACKGROUND_LABEL = "背景"
+const AXES_LABEL = "判断の軸"
+const AXES_SEPARATOR = " / "
+const PROS_LABEL = "良い点"
+const CONS_LABEL = "悪い点"
+const IRREVERSIBLE_BADGE = "⚠ 戻せない"
+const DETAIL_SUFFIX = " の詳細"
+const COMPARE_SUMMARY = "並べて比べる"
 /** 単一選択の radio をひとまとまりにする名前（札は1問ずつしか出ないので1つで足りる）。 */
 const OPTION_GROUP_NAME = "inquiry-option"
 /** 入力欄に書いて記録した答え（まだ送っていない問のぶん）の前置き。 */
@@ -56,6 +66,8 @@ export function Inquiry(): ReactElement | null {
   if (inquiry.kind === "none") {
     return null
   }
+
+  const focused = inquiry.options.find((option) => option.label === inquiry.focusedLabel)
 
   const onKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
     if (event.nativeEvent.isComposing || event.metaKey || event.ctrlKey || event.altKey) {
@@ -152,17 +164,30 @@ export function Inquiry(): ReactElement | null {
         {inquiry.kind === "permission" && inquiry.targetText !== "" && (
           <pre className={styles["inquiry-target"]}>{truncateForDisplay(inquiry.targetText)}</pre>
         )}
-        <ul className={styles["inquiry-options"]}>
-          {inquiry.options.map((option) => (
-            <InquiryOption
-              askId={inquiry.id}
-              option={option}
-              multiSelect={inquiry.multiSelect}
-              onToggle={inquiry.onToggle}
-              key={option.label}
-            />
-          ))}
-        </ul>
+        {inquiry.kind === "question" && inquiry.brief !== undefined && (
+          <InquiryBrief brief={inquiry.brief} />
+        )}
+        <div className={styles["inquiry-choose"]}>
+          <ul className={styles["inquiry-options"]}>
+            {inquiry.options.map((option) => (
+              <InquiryOption
+                option={option}
+                multiSelect={inquiry.multiSelect}
+                onToggle={inquiry.onToggle}
+                onFocus={inquiry.onFocus}
+                key={option.label}
+              />
+            ))}
+          </ul>
+          {focused !== undefined && hasDetail(focused) && (
+            <InquiryDetail askId={inquiry.id} option={focused} />
+          )}
+        </div>
+        {inquiry.kind === "question" &&
+          inquiry.brief !== undefined &&
+          inquiry.brief.axes.length > 0 && (
+            <InquiryCompare askId={inquiry.id} brief={inquiry.brief} options={inquiry.options} />
+          )}
         {inquiry.kind === "question" && inquiry.writtenAnswer !== "" && (
           <Text
             element="p"
@@ -244,15 +269,180 @@ function waitedText(elapsedMs: number): string {
   return `${String(minutes)}:${String(seconds % 60).padStart(2, "0")}`
 }
 
-/**
- * 選択肢1つぶんのカード。押す口は `<input>` と `<label>` の組（単一選択は radio、複数選択はチェックボックス）。
- * 説明と `preview` はその外に置く（`preview` は表や図になるので、`<label>` にも `<button>` にも入れられない）。
- */
-function InquiryOption(props: {
+function InquiryBrief(props: { readonly brief: InquiryBriefModel }): ReactElement {
+  return (
+    <div className={styles["inquiry-brief"]}>
+      <Text
+        element="p"
+        size="secondary"
+        tone="inherit"
+        weight="inherit"
+        className={styles["inquiry-brief-line"]}
+      >
+        <Text element="span" size="label" tone="ink-quiet" weight="bold" className="">
+          {BACKGROUND_LABEL}
+        </Text>{" "}
+        {props.brief.background}
+      </Text>
+      {props.brief.axes.length > 0 && (
+        <Text
+          element="p"
+          size="secondary"
+          tone="inherit"
+          weight="inherit"
+          className={styles["inquiry-brief-line"]}
+        >
+          <Text element="span" size="label" tone="ink-quiet" weight="bold" className="">
+            {AXES_LABEL}
+          </Text>{" "}
+          {props.brief.axes.join(AXES_SEPARATOR)}
+        </Text>
+      )}
+    </div>
+  )
+}
+
+/** 詳細の面に出すものがあるか（許可の「許可」「拒否」には無い）。 */
+function hasDetail(option: InquiryOptionRow): boolean {
+  return (
+    option.description !== "" ||
+    option.preview !== undefined ||
+    option.pros.length > 0 ||
+    option.cons.length > 0 ||
+    option.figures.length > 0
+  )
+}
+
+/** フォーカスした選択肢の詳細の面。高さは切らず、札の本文が内側で転がる。 */
+function InquiryDetail(props: {
   readonly askId: string
+  readonly option: InquiryOptionRow
+}): ReactElement {
+  const { option } = props
+  const figures =
+    option.figures.length === 0
+      ? ""
+      : reportSectionsMarkdown([{ heading: "", blocks: option.figures }], {
+          kind: "shelved",
+          toolUseId: props.askId,
+        })
+
+  return (
+    <div
+      className={styles["inquiry-detail"]}
+      role="group"
+      aria-label={`${option.text}${DETAIL_SUFFIX}`}
+    >
+      <Text
+        element="p"
+        size="inherit"
+        tone="inherit"
+        weight="bold"
+        className={styles["inquiry-detail-title"]}
+      >
+        {option.text}
+        {DETAIL_SUFFIX}
+      </Text>
+      {option.description !== "" && (
+        <Text
+          element="p"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["inquiry-detail-description"]}
+        >
+          {option.description}
+        </Text>
+      )}
+      <InquiryPoints label={PROS_LABEL} mark="＋" tone="state-ok" items={option.pros} />
+      <InquiryPoints label={CONS_LABEL} mark="－" tone="state-ng" items={option.cons} />
+      {option.preview !== undefined && (
+        <div className={clsx(notationStyles["detail-block"], styles["detail-block"])}>
+          <QuestionPreviewMarkdown text={option.preview} toolUseId={props.askId} />
+        </div>
+      )}
+      {figures !== "" && (
+        <div className={clsx(notationStyles["detail-block"], styles["detail-block"])}>
+          <Markdown text={figures} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** 良い点・悪い点の箇条書き。字の前の記号は色が見えなくても読める。 */
+function InquiryPoints(props: {
+  readonly label: string
+  readonly mark: string
+  readonly tone: "state-ok" | "state-ng"
+  readonly items: readonly string[]
+}): ReactElement | null {
+  if (props.items.length === 0) {
+    return null
+  }
+  return (
+    <div className={styles["inquiry-points"]}>
+      <Text element="p" size="label" tone={props.tone} weight="bold" className="">
+        {props.label}
+      </Text>
+      <ul className={styles["inquiry-points-list"]}>
+        {props.items.map((item) => (
+          <li key={item}>
+            <Text element="span" size="inherit" tone={props.tone} weight="bold" className="">
+              {props.mark}
+            </Text>{" "}
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function InquiryCompare(props: {
+  readonly askId: string
+  readonly brief: InquiryBriefModel
+  readonly options: readonly InquiryOptionRow[]
+}): ReactElement {
+  const table = reportSectionsMarkdown(
+    [
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "table",
+            title: "",
+            columns: ["", ...props.options.map((option) => option.text)],
+            rows: props.brief.axes.map((axis, index) => [
+              axis,
+              ...props.options.map((option) => option.byAxis[index] ?? ""),
+            ]),
+            fold: "",
+          },
+        ],
+      },
+    ],
+    { kind: "shelved", toolUseId: props.askId },
+  )
+
+  return (
+    <details className={styles["inquiry-compare"]}>
+      <Text element="summary" size="secondary" tone="ink-quiet" weight="bold" className="">
+        {COMPARE_SUMMARY}
+      </Text>
+      <div className={clsx(notationStyles["detail-block"], styles["detail-block"])}>
+        <Markdown text={table} />
+      </div>
+    </details>
+  )
+}
+
+/** 選択肢1つぶんの行。押す口は `<input>` と `<label>` の組（単一選択は radio、複数選択はチェックボックス）。 */
+function InquiryOption(props: {
   readonly option: InquiryOptionRow
   readonly multiSelect: boolean
   readonly onToggle: (label: string) => void
+  readonly onFocus: (label: string) => void
 }): ReactElement {
   const { option } = props
 
@@ -277,6 +467,7 @@ function InquiryOption(props: {
           className={styles["inquiry-option-mark"]}
           checked={option.selected}
           onChange={() => props.onToggle(option.label)}
+          onFocus={() => props.onFocus(option.label)}
         />
         <Text
           element="span"
@@ -298,25 +489,18 @@ function InquiryOption(props: {
             {RECOMMENDED_BADGE}
           </Text>
         )}
+        {option.irreversible && (
+          <Text
+            element="span"
+            size="label"
+            tone="state-ng"
+            weight="bold"
+            className={styles["inquiry-badge"]}
+          >
+            {IRREVERSIBLE_BADGE}
+          </Text>
+        )}
       </HStack>
-      {option.description !== "" && (
-        <Text
-          element="p"
-          size="secondary"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["inquiry-option-description"]}
-        >
-          {option.description}
-        </Text>
-      )}
-      {option.preview !== undefined && (
-        // レポートと同じ見た目（report-notation.module.css の `.detail-block` の子のセレクタ）に乗せる。
-        // `.inquiry-option .detail-block` の余白の打ち消し（inquiry.module.css）は、CSS Modules が class 名をファイルごとにハッシュ化するので、そちらの `.detail-block`（この選択子のためだけの空の再定義）も一緒に付ける。
-        <div className={clsx(notationStyles["detail-block"], styles["detail-block"])}>
-          <QuestionPreviewMarkdown text={option.preview} toolUseId={props.askId} />
-        </div>
-      )}
     </li>
   )
 }

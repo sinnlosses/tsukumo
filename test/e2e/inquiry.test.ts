@@ -10,7 +10,8 @@ import { useScenarioRun } from "./scenario-run.ts"
 // お伺い（許可要求と質問。docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 許可は場面 `permission`、質問は `question-pair`（単一選択が1問ずつ）・
 // `question-long`（長いラベルと長い説明）・`question-preview`（選択肢ごとの比較）・
-// `question-preview-image`（preview に書いた手元の画像と、描かない画像）。
+// `question-preview-image`（preview に書いた手元の画像と、描かない画像）・
+// `question-brief`（添え書き付き。広い窓の2列と、札が狭い窓の1列）。
 // どの場面も答え待ちを出したまま、答えると次の `pending-changed` が流れる。
 
 const run = useScenarioRun()
@@ -79,6 +80,54 @@ describe("お伺い", () => {
     },
   )
 
+  it("添え書き付きの質問は、広い窓で左に選択肢・右に詳細の2列になり、選び替えで詳細が替わり、Enter で次へ進む", async () => {
+    const room = await run.open({
+      scenario: "inquiry-question-brief-wide",
+      scene: "question-brief",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+    const inquiry = inquiryOf(room.page)
+    const detail = inquiry.getByRole("group", { name: /の詳細$/ })
+
+    await expect.poll(() => detail.count()).toBe(1)
+    expect(await inquiry.getByText("⚠ 戻せない").count()).toBe(1)
+    const [options, panel] = await Promise.all([
+      inquiry.getByRole("radio", { name: /B に置く/ }).boundingBox(),
+      detail.boundingBox(),
+    ])
+    expect(options !== null && panel !== null && panel.x > options.x + options.width).toBe(true)
+
+    await inquiry.getByText("並べて比べる").click()
+    await expect.poll(() => inquiry.locator("details table").count()).toBe(1)
+    await inquiry.getByRole("radio", { name: /C に移す/ }).click()
+    await expect.poll(() => detail.getAttribute("aria-label")).toBe("C に移す の詳細")
+
+    await room.page.keyboard.press("Enter")
+    await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
+  })
+
+  it("札が狭い窓では、詳細が選択肢の下に回り、札が横に溢れない", async () => {
+    const room = await run.open({
+      scenario: "inquiry-question-brief-compact",
+      scene: "question-brief",
+      viewport: "compact",
+      domRoots: ["main"],
+    })
+    const inquiry = inquiryOf(room.page)
+    const detail = inquiry.getByRole("group", { name: /の詳細$/ })
+
+    await expect.poll(() => detail.count()).toBe(1)
+    const [last, panel] = await Promise.all([
+      inquiry.getByRole("radio", { name: /C に移す/ }).boundingBox(),
+      detail.boundingBox(),
+    ])
+    expect(last !== null && panel !== null && panel.y >= last.y + last.height).toBe(true)
+    await inquiry.getByText("並べて比べる").click()
+    const overflow = await inquiry.evaluate((element) => element.scrollWidth - element.clientWidth)
+    expect(overflow).toBeLessThanOrEqual(0)
+  })
+
   it("preview に書いた手元の画像は棚の経路で札の中に出て、外部の URL・data:・置いていない画像は「画像を出せない」の札になる", async () => {
     const room = await run.open({
       scenario: "inquiry-question-preview-image",
@@ -93,7 +142,12 @@ describe("お伺い", () => {
     const inquiry = inquiryOf(room.page)
 
     await room.waitForPending("fake-ask-preview-image")
-    for (const alt of ["架空の横長の画面", "架空の縦長の画面"]) {
+    // 詳細の面に出るのは選んでいる選択肢の preview だけなので、画像のある選択肢を順に選ぶ。
+    for (const [choice, alt] of [
+      [/横長の案/, "架空の横長の画面"],
+      [/縦長の案/, "架空の縦長の画面"],
+    ] as const) {
+      await inquiry.getByRole("radio", { name: choice }).click()
       const image = inquiry.getByAltText(alt)
       expect(await image.getAttribute("src")).toMatch(
         /^\/report-image\/fake-ask-preview-image\/report-image-fixture%2F/,
@@ -106,10 +160,16 @@ describe("お伺い", () => {
         )
         .toBeGreaterThan(0)
     }
-    for (const name of ["架空の外部の画像", "架空の埋め込みの画像", "架空の置いていない画像"]) {
-      await expect
-        .poll(() => inquiry.getByRole("img", { name }).evaluate((e) => e.tagName))
-        .toBe("SPAN")
+    for (const [choice, names] of [
+      [/外の画像の案/, ["架空の外部の画像", "架空の埋め込みの画像"]],
+      [/置いていない画像の案/, ["架空の置いていない画像"]],
+    ] as const) {
+      await inquiry.getByRole("radio", { name: choice }).click()
+      for (const name of names) {
+        await expect
+          .poll(() => inquiry.getByRole("img", { name }).evaluate((e) => e.tagName))
+          .toBe("SPAN")
+      }
     }
     await room.settleAndMatch(ELAPSED_MS)
   })

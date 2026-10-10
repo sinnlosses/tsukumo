@@ -4,6 +4,7 @@
    答えると消える一時的な塊なので、地も枠も答え待ちの色（--state-warn）の系統にして、いま答えるものだと分かるようにする。
    高さの上限はメインビューの内寸（`100cqh`。`.layout-main` が `container-type: size`）から貼り付いた札の頭を引いた値で、操作の行を下端に残して本文の側を内側で転がす。 */
 .inquiry {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   max-height: calc(100cqh - var(--turn-card-head-height, 0px) - 1.5rem);
@@ -79,14 +80,77 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-/* 選択肢は横に並べ、入り切らなければ折り返す（狭い画面・選択肢が4つのときは1〜2列に落ちる。列の幅を先に決めるので、ラベルは自分の列の中で折り返すだけになり横へ溢れない）。 */
-.inquiry-options {
+/* 背景と判断の軸の塊。 */
+.inquiry-brief {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px dashed var(--rule);
+  border-radius: 0.5rem;
+}
+.inquiry-brief-line {
+  margin: 0;
+}
+.inquiry-brief-line + .inquiry-brief-line {
+  margin-top: 0.25rem;
+}
+/* 左に選択肢の縦の並び、右に詳細。札の幅が 44rem に満たなければ1列にして、詳細を選択肢の下へ回す。 */
+.inquiry-choose {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: 0.6rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+@container (min-width: 44rem) {
+  .inquiry-choose {
+    grid-template-columns: 16rem minmax(0, 1fr);
+    align-items: start;
+  }
+}
+.inquiry-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+/* フォーカスした選択肢の詳細。高さは切らない（札の本文が転がる）。 */
+.inquiry-detail {
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+.inquiry-detail-title {
+  margin: 0;
+}
+.inquiry-detail-description {
+  margin: 0.35rem 0 0;
+}
+.inquiry-points {
+  margin-top: 0.5rem;
+}
+.inquiry-points-list {
+  margin: 0.15rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.inquiry-points-list li {
+  overflow-wrap: anywhere;
+}
+/* 戻せない選択肢の印。色に加えて字で示す。 */
+.inquiry-badge {
+  flex: 0 0 auto;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid currentcolor;
+  border-radius: 0.3rem;
+}
+/* 並べて比べる表。畳めて、開くと表だけが横に転がる（表の器は `Table`）。 */
+.inquiry-compare {
+  margin-top: 0.75rem;
+}
+.inquiry-compare > summary {
+  cursor: pointer;
 }
 .inquiry-option {
   min-width: 0;
@@ -99,6 +163,10 @@
 .inquiry-option.is-selected {
   border-color: var(--state-warn);
   box-shadow: 0 0 0 1px var(--state-warn) inset;
+}
+/* キーボードで触れていて詳細に出ている行。選んだ行の枠は変えない。 */
+.inquiry-option:focus-within:not(.is-selected) {
+  border-color: var(--ink-quiet);
 }
 /* 押す口（番号・印・ラベル・バッジ）。ラベルが折り返すので、印は行の中央ではなく1行目の文字に揃える（baseline）。 */
 .inquiry-option-choose {
@@ -129,12 +197,9 @@
   border: 1px solid var(--state-warn);
   border-radius: 0.3rem;
 }
-/* 字の段・色は `Text` が持つ。margin だけここに置く。 */
-.inquiry-option-description {
-  margin: 0.35rem 0 0 2.2rem;
-}
-/* 選択肢ごとの preview（Markdown）は説明の下。レポートと同じ語彙（`.detail-block`）に乗せる。 */
-.inquiry-option .detail-block {
+/* 詳細の面の preview と図の Markdown。レポートと同じ語彙（`.detail-block`）に乗せ、余白の打ち消しだけここに置く。 */
+.inquiry-detail .detail-block,
+.inquiry-compare .detail-block {
   margin-top: 0.5rem;
 }
 /* 入力欄に書いて記録した答え（まだ送っていない問のぶん）。 */

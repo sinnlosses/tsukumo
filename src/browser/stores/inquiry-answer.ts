@@ -11,7 +11,9 @@
 
 import { create } from "zustand"
 
+import type { FigureBlock } from "../../shared/report/report-block.ts"
 import type { StampedPendingAsk } from "../../shared/session-driver/pending-ask.ts"
+import type { QuestionBrief } from "../../shared/session-driver/question-brief.ts"
 import {
   FREE_TEXT_OPTION_LABEL,
   isRecommendedLabel,
@@ -35,6 +37,19 @@ export type InquiryOptionRow = {
   readonly description: string
   readonly preview: string | undefined
   readonly selected: boolean
+  /** 選ぶとあとで戻せないか（添え書きが無ければ false）。 */
+  readonly irreversible: boolean
+  readonly pros: readonly string[]
+  readonly cons: readonly string[]
+  /** 判断の軸ごとの評価。`InquiryBrief.axes` と同じ並び（添え書きが無ければ空）。 */
+  readonly byAxis: readonly string[]
+  readonly figures: readonly FigureBlock[]
+}
+
+/** 質問の添え書きのうち、選択肢の外に出す分。選択肢ごとの分は {@link InquiryOptionRow} が持つ。 */
+export type InquiryBrief = {
+  readonly background: string
+  readonly axes: readonly string[]
 }
 
 /** 許可要求と質問のどちらにもある欄。 */
@@ -51,6 +66,9 @@ type InquiryCommon = {
   /** いま見ているのが最後の1問か（答えると全問ぶんを送る）。 */
   readonly last: boolean
   readonly options: readonly InquiryOptionRow[]
+  /** 詳細の面に出す選択肢の `label`。触った選択肢、無ければ最後に選んだもの、それも無ければ先頭。 */
+  readonly focusedLabel: string
+  readonly onFocus: (label: string) => void
   /** 「これで答える」を押せるか（何も選ばず何も書いていなければ押せない）。 */
   readonly canAnswer: boolean
   readonly onToggle: (label: string) => void
@@ -72,6 +90,7 @@ export type InquiryModel =
   | (InquiryCommon & {
       readonly kind: "question"
       readonly header: string
+      readonly brief: InquiryBrief | undefined
       readonly text: string
       /** この問に対して入力欄に書いて記録した答え（まだ送っていない。無ければ空文字）。 */
       readonly writtenAnswer: string
@@ -83,6 +102,7 @@ export function useInquiryAnswer(): InquiryModel {
   const pending = useSession((session) => session.state.pending[0])
   const dispatch = useSession((session) => session.dispatch)
   const draft = useInquiryDraft((state) => state.draft)
+  const touched = useInquiryFocus((state) => state.focus)
 
   if (pending === undefined) {
     return { kind: "none" }
@@ -94,7 +114,7 @@ export function useInquiryAnswer(): InquiryModel {
   }
   return pending.kind === "permission"
     ? permissionModel(pending, { answer, setAnswer }, dispatch)
-    : questionModel(pending, { answer, setAnswer }, dispatch)
+    : questionModel(pending, { answer, setAnswer }, touched, dispatch)
 }
 
 export type InquiryDraftState = {
@@ -103,6 +123,15 @@ export type InquiryDraftState = {
 }
 
 export const useInquiryDraft = create<InquiryDraftState>()(() => ({ draft: undefined }))
+
+export type InquiryFocusState = {
+  /** 詳細の面に出すと触って決めた選択肢。どの答え待ちの何問目かも持ち、別の問に替われば読まない。 */
+  readonly focus:
+    | { readonly pendingId: string; readonly index: number; readonly label: string }
+    | undefined
+}
+
+export const useInquiryFocus = create<InquiryFocusState>()(() => ({ focus: undefined }))
 
 /** 許可要求の選択肢のラベル。並びがそのまま番号になる。 */
 const ALLOW_LABEL = "許可"
@@ -132,6 +161,7 @@ function permissionModel(
   dispatch: SessionDispatch,
 ): InquiryModel {
   const chosen = draft.answer.selections[0]?.[0]
+  const labels = [ALLOW_LABEL, DENY_LABEL]
   return {
     kind: "permission",
     id: pending.id,
@@ -142,7 +172,9 @@ function permissionModel(
     progressLabel: "1 / 1",
     showBack: false,
     last: true,
-    options: [ALLOW_LABEL, DENY_LABEL].map((label, index) => ({
+    focusedLabel: chosen ?? ALLOW_LABEL,
+    onFocus: () => {},
+    options: labels.map((label, index) => ({
       number: index + 1,
       label,
       text: label,
@@ -150,6 +182,11 @@ function permissionModel(
       description: "",
       preview: undefined,
       selected: chosen === label,
+      irreversible: false,
+      pros: [],
+      cons: [],
+      byAxis: [],
+      figures: [],
     })),
     canAnswer: chosen !== undefined,
     onToggle: (label) => {
@@ -172,6 +209,7 @@ function permissionModel(
 function questionModel(
   pending: Extract<StampedPendingAsk, { readonly kind: "question" }>,
   draft: InquiryDraft,
+  touched: InquiryFocusState["focus"],
   dispatch: SessionDispatch,
 ): InquiryModel {
   const questions = pending.questions
@@ -212,21 +250,34 @@ function questionModel(
   }
 
   const canAnswer = selected.length > 0 || writtenAnswer !== ""
+  const brief = pending.briefs.find((candidate) => candidate.header === question.header)
+  const options = optionRows(question, selected, brief)
+  const touchedLabel =
+    touched?.pendingId === pending.id && touched.index === index
+      ? options.find((option) => option.label === touched.label)?.label
+      : undefined
+  const setFocus = (label: string): void => {
+    useInquiryFocus.setState({ focus: { pendingId: pending.id, index, label } })
+  }
 
   return {
     kind: "question",
     id: pending.id,
     askedAt: pending.askedAt,
     header: question.header,
+    brief: brief === undefined ? undefined : { background: brief.background, axes: brief.axes },
     text: question.text,
     multiSelect: question.multiSelect,
     progressLabel: `${String(index + 1)} / ${String(questions.length)}`,
     showBack: index > 0,
     last,
-    options: optionRows(question, selected),
+    options,
+    focusedLabel: touchedLabel ?? selected.at(-1) ?? options[0]?.label ?? "",
+    onFocus: setFocus,
     writtenAnswer,
     canAnswer,
     onToggle: (label) => {
+      setFocus(label)
       // 単一選択は選び直しで置き換え、複数選択は押すたびに入り切りする。
       // どちらも選んだ時点で送らない（送るのは「これで答える」と入力欄の「答える」だけ）。
       const next = question.multiSelect
@@ -285,16 +336,31 @@ function replaced<T>(values: readonly T[], target: number, value: T, filler: T):
  * 自由入力（「その他」）の選択肢は札に出さない（自由入力は入力欄が担うので、押しても意味のない札になる）。
  * `sortQuestionOptions` はそれでも通すので、モデルが「その他」を含めてきたかどうかで残りの並びは変わらない。
  */
-function optionRows(question: Question, selected: readonly string[]): readonly InquiryOptionRow[] {
+function optionRows(
+  question: Question,
+  selected: readonly string[],
+  brief: QuestionBrief | undefined,
+): readonly InquiryOptionRow[] {
   return sortQuestionOptions(question.options)
     .filter((option) => option.label !== FREE_TEXT_OPTION_LABEL)
-    .map((option, index) => ({
-      number: index + 1,
-      label: option.label,
-      text: withoutRecommendedMark(option.label),
-      recommended: isRecommendedLabel(option.label),
-      description: option.description,
-      preview: option.preview,
-      selected: selected.includes(option.label),
-    }))
+    .map((option, index) => {
+      const text = withoutRecommendedMark(option.label)
+      const briefed = brief?.options.find(
+        (candidate) => withoutRecommendedMark(candidate.label) === text,
+      )
+      return {
+        number: index + 1,
+        label: option.label,
+        text,
+        recommended: isRecommendedLabel(option.label),
+        description: option.description,
+        preview: option.preview,
+        selected: selected.includes(option.label),
+        irreversible: briefed?.irreversible ?? false,
+        pros: briefed?.pros ?? [],
+        cons: briefed?.cons ?? [],
+        byAxis: briefed?.byAxis ?? [],
+        figures: briefed?.figures ?? [],
+      }
+    })
 }
