@@ -307,7 +307,9 @@ describe("会話の画面の段", () => {
 
     await page.setViewportSize(VIEWPORTS.large)
     await sidebar(page).waitFor()
-    expect(await page.evaluate(() => document.querySelector("dialog:modal") !== null)).toBe(false)
+    await page.waitForFunction(() => document.querySelector("dialog:modal") === null, undefined, {
+      timeout: 3_000,
+    })
     await page.getByRole("button", { name: "手順", exact: false }).first().click({ timeout: 3_000 })
   })
 })
