@@ -170,7 +170,9 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   （書き手のソースと mermaid のエラー文の引用は写さない）。検査は `happy-dom` を被せた `worker_threads` の
   中（`report/adapter/` の1境界）で `mermaid.parse` だけを走らせ、配置までは見ない。最初の図のときに
   worker を起こして使い回し、読み込みの失敗・時間切れ・worker の異常終了では検査せずに受け付ける
-  （図はブラウザの今のエラー表示に任せる）。質問の添え書き（`figures`）の図には掛けない
+  （図はブラウザの今のエラー表示に任せる）。質問の添え書き（`figures`）の `mermaid` の図にも
+  同じ検査を掛け、割れていれば `question_brief` の呼び出しを同じ形の文面（何個目の何行目か・字句の名前）で
+  差し戻す
 - **「名前: 説明」「A → B」「A → B → C」「12 → 8」は既存の塊の欄で見せる**（2026-09-27。
   `docs/research/report-block-richness.md` 2章）。欄は事実を言うものだけで、差や増減の割合は tsukumo が計算しない
   - 表のセルの `{ from, to }`: 前の値と矢印の文字を `ink-quiet`、後の値を `ink` で描く。状態（`status`）と

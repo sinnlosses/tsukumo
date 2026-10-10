@@ -316,6 +316,17 @@ const VIOLATION_THRESHOLDS = {
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)
 
+/** 割れた図の位置（何個目の何行目・字句の名前）の並び。書き手のソースの文字は入れない。 */
+export function mermaidFaultPositions(faults: readonly MermaidFault[]): string {
+  return faults
+    .map((fault) =>
+      fault.kind === "unlocated"
+        ? `${String(fault.block)}個目`
+        : `${String(fault.block)}個目の ${String(fault.line)} 行目${fault.token === "" ? "" : `・字句 ${fault.token}`}`,
+    )
+    .join("、")
+}
+
 function markdownNotationsAt(
   sections: readonly ReportSection[],
   inContainer: boolean,
@@ -366,13 +377,7 @@ function violationLine(violation: ReportViolation): string {
     case "code-mismatch":
       return `\`path\` 付きの \`code\` の塊が${violation.count}個、ファイルの中身と一致しない（${violation.paths.join("・")}）。実物を読み直して直すか \`path\` を外す`
     case "broken-mermaid":
-      return `mermaid の図の構文が割れている（${violation.faults
-        .map((fault) =>
-          fault.kind === "unlocated"
-            ? `${String(fault.block)}個目`
-            : `${String(fault.block)}個目の ${String(fault.line)} 行目${fault.token === "" ? "" : `・字句 ${fault.token}`}`,
-        )
-        .join("、")}）。その行の書き方を直す`
+      return `mermaid の図の構文が割れている（${mermaidFaultPositions(violation.faults)}）。その行の書き方を直す`
     case "long-first-sentence":
       return `\`conclusion\` の1文目が全角${String(MAX_FIRST_SENTENCE)}字を超える。1文目を短くし、補足は2文目か \`sections\` へ移す`
     case "bad-heading":

@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest"
 import {
   answerQuestionBriefCall,
   briefedQuestions,
+  mermaidSourcesOf,
   reviewQuestionBriefing,
 } from "../../../../src/server/session-driver/core/question-brief.ts"
+import type { FigureBlock } from "../../../../src/shared/report/report-block.ts"
 import type {
   QuestionBrief,
   QuestionBriefOption,
@@ -47,7 +49,7 @@ describe("answerQuestionBriefCall", () => {
     const held: (readonly QuestionBrief[])[] = []
     const briefs = [brief()]
 
-    const answer = answerQuestionBriefCall(briefs, (given) => held.push(given))
+    const answer = answerQuestionBriefCall(briefs, [], (given) => held.push(given))
 
     expect(answer).toEqual({ text: "ok", isError: false })
     expect(held).toEqual([briefs])
@@ -83,10 +85,48 @@ describe("answerQuestionBriefCall", () => {
   ])("%s は預けずに理由つきで差し戻す", (_, briefs) => {
     const held: (readonly QuestionBrief[])[] = []
 
-    const answer = answerQuestionBriefCall(briefs, (given) => held.push(given))
+    const answer = answerQuestionBriefCall(briefs, [], (given) => held.push(given))
 
     expect(answer.isError).toBe(true)
     expect(held).toEqual([])
+  })
+
+  it("割れた mermaid の図は位置と字句の名前だけを添えて、預けずに差し戻す", () => {
+    const held: (readonly QuestionBrief[])[] = []
+    const briefs = [brief()]
+
+    const answer = answerQuestionBriefCall(
+      briefs,
+      [{ kind: "located", block: 1, line: 2, token: "架空の字句" }],
+      (given) => held.push(given),
+    )
+
+    expect(answer.isError).toBe(true)
+    expect(answer.text).toContain("1個目の 2 行目・字句 架空の字句")
+    expect(held).toEqual([])
+  })
+})
+
+describe("mermaidSourcesOf", () => {
+  it("figures の mermaid の塊のソースだけを、質問・選択肢の並びで返す", () => {
+    const mermaid = (source: string): FigureBlock => ({
+      kind: "mermaid",
+      title: "",
+      source,
+      fold: "",
+    })
+    const sources = mermaidSourcesOf([
+      brief({
+        options: [
+          option("A案", {
+            figures: [mermaid("架空の図1"), { kind: "list", style: "bullet", items: [], fold: "" }],
+          }),
+          option("B案", { figures: [mermaid("架空の図2")] }),
+        ],
+      }),
+    ])
+
+    expect(sources).toEqual(["架空の図1", "架空の図2"])
   })
 })
 

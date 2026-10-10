@@ -8,6 +8,7 @@ import {
   type Question,
   withoutRecommendedMark,
 } from "../../../shared/session-driver/question.ts"
+import { type MermaidFault, mermaidFaultPositions } from "../../report/core/report-violation.ts"
 
 /** `AskUserQuestion` が1回に持てる質問の数と同じ。 */
 const MAX_BRIEF_QUESTIONS = 4
@@ -41,12 +42,30 @@ export type QuestionBriefing =
   | { readonly kind: "accepted"; readonly briefs: readonly QuestionBrief[] }
   | { readonly kind: "rejected"; readonly message: string }
 
-/** `question_brief` の呼び出し1つを検査し、通れば `hold` に預けて "ok"、崩れていれば直し方を返す。 */
+/** 添え書きの `figures` の `mermaid` の塊のソースを、`questions` の並びのまま平らにして返す。 */
+export function mermaidSourcesOf(briefs: readonly QuestionBrief[]): readonly string[] {
+  return briefs.flatMap((brief) =>
+    brief.options.flatMap((option) =>
+      option.figures.flatMap((figure) => (figure.kind === "mermaid" ? [figure.source] : [])),
+    ),
+  )
+}
+
+/**
+ * `question_brief` の呼び出し1つを検査し、通れば `hold` に預けて "ok"、崩れていれば直し方を返す。
+ * `mermaidFaults` は `mermaidSourcesOf` の並びで構文検査にかけた結果。
+ */
 export function answerQuestionBriefCall(
   briefs: readonly QuestionBrief[],
+  mermaidFaults: readonly MermaidFault[],
   hold: (briefs: readonly QuestionBrief[]) => void,
 ): QuestionBriefAnswer {
-  const reasons = reviewQuestionBrief(briefs)
+  const reasons = [
+    ...reviewQuestionBrief(briefs),
+    ...(mermaidFaults.length === 0
+      ? []
+      : [`figures の mermaid の図の構文が割れている（${mermaidFaultPositions(mermaidFaults)}）`]),
+  ]
   if (reasons.length > 0) {
     return {
       text: `${reasons.join("。")}。直して呼び直すこと。この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。`,

@@ -61,7 +61,11 @@ import {
   usageReviewStageGuide,
 } from "../../usage-review/core/usage-review-tool.ts"
 import { CLEAR_AND_SEND_TOOL_DESCRIPTION } from "../core/clear-and-send.ts"
-import { answerQuestionBriefCall, QUESTION_BRIEF_TOOL_DESCRIPTION } from "../core/question-brief.ts"
+import {
+  answerQuestionBriefCall,
+  mermaidSourcesOf,
+  QUESTION_BRIEF_TOOL_DESCRIPTION,
+} from "../core/question-brief.ts"
 import type { ChatRecall, PersonaMemory, SessionMode } from "../core/session-driver.ts"
 import type { SpeechReview, SpeechVerdict } from "../core/speech-review.ts"
 import {
@@ -332,7 +336,8 @@ function questionBriefTool(holdBrief: (briefs: readonly QuestionBrief[]) => void
         .describe("次の AskUserQuestion の質問ごとの添え書き。1〜4件"),
     },
     async ({ questions }) => {
-      const answer = answerQuestionBriefCall(questions, holdBrief)
+      const mermaidFaults = await checkMermaidSyntax(mermaidSourcesOf(questions))
+      const answer = answerQuestionBriefCall(questions, mermaidFaults, holdBrief)
       return {
         content: [{ type: "text" as const, text: answer.text }],
         isError: answer.isError,
