@@ -22,6 +22,10 @@
 // 脇の話のターン（`aside` から次の依頼・続きのターン・ターンの終わりまで）では段の閉じ方を見ない。
 // 枠は応えていない `work_plan` と段の閉じ方でそれぞれ1ターンに1回までで、規約違反の枠とは分ける。
 //
+// 背景のシェル（`kind` が `shell`）が生きたままの `report` も差し戻す（枠は別に1ターンに1回まで）。
+// 止めるか待つかをモデルに決めさせる。背景のサブエージェントとその他の種類、脇の話のターンでは見ない。
+// 差し戻しの文面には ID と `description` を載せるが、記録に残すのは種類の名前だけ。
+//
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`）。
 // `assistant` メッセージの変換は `report` イベントを作るだけで判定しない。
 // `ReportReview.pass` がそのイベントを同じ呼び出しの `tool-finished` まで預かり、handler が返した `isError`（差し戻したら true）に従って描くか捨てるかを決める。
@@ -36,6 +40,7 @@
 import { isDeepEqual } from "remeda"
 
 import type { ReportTask } from "../../../shared/report/report-task.ts"
+import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../../shared/session/work-plan.ts"
 import {
@@ -52,6 +57,7 @@ export const REPORT_PROCEDURE_REJECTIONS = [
   "missing-work-plan-closing",
   "unfinished-phases",
   "finished-but-stopped",
+  "background-running",
 ] as const satisfies readonly string[]
 
 export type ReportRejectionReason =
@@ -101,6 +107,7 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
   let nothingNewRejectedInTurn = false
   let unansweredPlanRejectedInTurn = false
   let closingRejectedInTurn = false
+  let backgroundRejectedInTurn = false
   let held: readonly ReportEvent[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportEvent[] = []
@@ -108,7 +115,7 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
   let hasNews = true
   // メインが呼んで結果をまだ受け取っていないツールの id（`speak` / `report` は入らない）。
   let runningTools: ReadonlySet<string> = new Set()
-  let backgroundTaskIds: readonly string[] = []
+  let backgroundTasks: readonly BackgroundTask[] = []
   // 脇の話（`aside`）で始まったターンか。ターンの頭の `session-info` は脇の話のターンの頭にも届くので、そこでは戻さない。
   let asideTurn = false
 
@@ -118,6 +125,7 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
     nothingNewRejectedInTurn = false
     unansweredPlanRejectedInTurn = false
     closingRejectedInTurn = false
+    backgroundRejectedInTurn = false
     drawn = []
   }
 
@@ -151,6 +159,15 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
       if (closingVerdict.kind === "rejected" && !closingRejectedInTurn) {
         closingRejectedInTurn = true
         return closingVerdict
+      }
+      const shells = backgroundTasks.filter((task) => task.kind === "shell")
+      if (shells.length > 0 && !asideTurn && !backgroundRejectedInTurn) {
+        backgroundRejectedInTurn = true
+        return {
+          kind: "rejected",
+          text: reportBackgroundRunningRejectionText(shells),
+          reasons: ["background-running"],
+        }
       }
       const violations = reportViolations(report)
       if (violations.length === 0 || rejectedInTurn) {
@@ -207,12 +224,15 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
           return [event]
         case "background-tasks-changed": {
           const current = event.tasks.map((task) => task.taskId)
-          if (backgroundTaskIds.some((taskId) => !current.includes(taskId))) {
+          if (backgroundTasks.some((task) => !current.includes(task.taskId))) {
             hasNews = true
           }
-          backgroundTaskIds = current
+          backgroundTasks = event.tasks
           return [event]
         }
+        case "session-ended":
+          backgroundTasks = []
+          return [event]
         case "session-info":
           startTurn()
           return [event]
@@ -269,6 +289,21 @@ export const REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT =
   "`task.outcome` が `finished` なのに、workPlanClosing が `stopped` で段取りに済んでいない段が残っている。" +
   "全部の段を終えたなら最後の段まで進めて `finished` にし、途中で止めたなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
+/** 背景のシェルが残っている `report` を差し戻すときの戻り値。残りのシェルの ID と `description` だけを載せ、モデルが書いた本文は写さない。 */
+export function reportBackgroundRunningRejectionText(shells: readonly BackgroundTask[]): string {
+  const listing = shells
+    .map(
+      (task) =>
+        `\`${task.taskId}\`（${task.description === "" ? "背景のコマンド" : task.description}）`,
+    )
+    .join("、")
+  return (
+    `背景で動いているコマンドが残っている: ${listing}。` +
+    "`TaskStop` で止めるか、待つなら待つと決めてから `report` を呼び直すこと。" +
+    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+  )
+}
 
 /** 同じ依頼に段取りがあるときの、段の閉じ方だけで見た判定。`remaining` は済んでいない段の数（全部済みなら 0）。 */
 function judgeWorkPlanClosing(report: ReportDraft, remaining: number): ReportVerdict {

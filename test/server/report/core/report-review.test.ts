@@ -9,10 +9,12 @@ import {
   REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
   REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
   type ReportReview,
+  type ReportVerdict,
 } from "../../../../src/server/report/core/report-review.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { ReportTask, ReportTaskOutcome } from "../../../../src/shared/report/report-task.ts"
+import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   NO_WORK_PLAN_STANDING,
@@ -594,5 +596,87 @@ describe("createReportReview の judge（差し戻しの種類）", () => {
         }),
       ),
     ).toMatchObject({ reasons: ["finished-but-stopped"] })
+  })
+})
+
+describe("createReportReview の judge（背景のシェルが残っている report）", () => {
+  const OTHER: ReportDraft = reportDraft({ conclusion: "別の架空の結論。" })
+  const backgroundTask = (
+    taskId: string,
+    kind: BackgroundTask["kind"],
+    description = "架空の背景",
+  ): BackgroundTask => ({ taskId, kind, description })
+  const tasksChanged = (...tasks: readonly BackgroundTask[]): SessionEvent => ({
+    kind: "background-tasks-changed",
+    tasks,
+  })
+  const withTasks = (...tasks: readonly BackgroundTask[]): ReportReview => {
+    const review = createReportReview(noPlan)
+    review.pass(SESSION_INFO)
+    review.pass(tasksChanged(...tasks))
+    return review
+  }
+  const rejectedText = (verdict: ReportVerdict): string =>
+    verdict.kind === "rejected" ? verdict.text : ""
+
+  it("kind が shell の背景のタスクが残っていて初めての report は、ID と description を載せて差し戻す", () => {
+    const verdict = withTasks(backgroundTask("task_a", "shell", "架空の書き出し")).judge(VALID)
+
+    expect(verdict).toMatchObject({ kind: "rejected", reasons: ["background-running"] })
+    expect(rejectedText(verdict)).toContain("task_a")
+    expect(rejectedText(verdict)).toContain("架空の書き出し")
+    expect(rejectedText(verdict)).toContain("TaskStop")
+    expect(rejectedText(verdict)).not.toContain(VALID.conclusion)
+  })
+
+  it("同じターンの2回目の report は通し、次のターンで枠が戻る", () => {
+    const review = withTasks(backgroundTask("task_a", "shell"))
+
+    expect(review.judge(VALID).kind).toBe("rejected")
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+    review.pass(SESSION_INFO)
+    expect(review.judge(VALID).kind).toBe("rejected")
+  })
+
+  it("description が空のシェルは「背景のコマンド」と ID で載せる", () => {
+    const text = rejectedText(withTasks(backgroundTask("task_a", "shell", "")).judge(VALID))
+
+    expect(text).toContain("task_a")
+    expect(text).toContain("背景のコマンド")
+  })
+
+  it.each(["agent", "other"] as const)("残っているのが %s だけなら通す", (kind) => {
+    expect(withTasks(backgroundTask("task_a", kind)).judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("シェルが終わって顔ぶれが空になったあとは通す", () => {
+    const review = withTasks(backgroundTask("task_a", "shell"))
+    review.pass(tasksChanged())
+
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("脇の話のターンでは見ない", () => {
+    const review = withTasks(backgroundTask("task_a", "shell"))
+    review.pass({ kind: "aside", text: "架空の問い", images: [] })
+
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("session-ended のあとは顔ぶれが空に戻って通す", () => {
+    const review = withTasks(backgroundTask("task_a", "shell"))
+    review.pass({ kind: "session-ended", reason: "架空の終わり" })
+
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("新しい事実の無い report の差し戻しが先で、背景の差し戻しはそのあと", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_r1", VALID)
+    review.pass(tasksChanged(backgroundTask("task_a", "shell")))
+
+    expect(review.judge(OTHER)).toMatchObject({ reasons: ["nothing-new"] })
+    review.pass({ kind: "request", text: "架空の依頼", images: [] })
+    expect(review.judge(OTHER)).toMatchObject({ reasons: ["background-running"] })
   })
 })
