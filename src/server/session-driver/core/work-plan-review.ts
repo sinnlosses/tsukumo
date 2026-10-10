@@ -40,6 +40,8 @@ export type WorkPlanReview = {
   readonly judge: (input: unknown) => WorkPlanVerdict
   /** いまの段取りの立ち位置（{@link WorkPlanStanding}）。 */
   readonly standing: () => WorkPlanStanding
+  /** 返却が届いてから、メインの `work_plan` が受け付けられるまでのあいだ真。 */
+  readonly gateRaised: () => boolean
   /**
    * 届いたイベントを流してよい並びに変える。
    * `work-plan-called` は同じ `toolUseId` の `tool-finished` まで預かり、`isError` でなければその直前に `work-plan` として出す。
@@ -58,6 +60,7 @@ export function createWorkPlanReview(): WorkPlanReview {
   // 返却で進めた位置のままか（メインの受け付けた呼び出しが無いあいだ）と、同じ依頼で最後に受けた返却の段の数。
   let positionFromReturn = false
   let returnedCount: number | undefined = undefined
+  let gateRaised = false
 
   const isReturnedPosition = (plan: WorkPlan): boolean =>
     positionFromReturn && accepted !== undefined && isSamePosition(accepted, plan)
@@ -81,6 +84,7 @@ export function createWorkPlanReview(): WorkPlanReview {
     }
     accepted = plan
     positionFromReturn = false
+    gateRaised = false
     return { kind: "accepted", plan }
   }
 
@@ -105,6 +109,7 @@ export function createWorkPlanReview(): WorkPlanReview {
             remaining: phaseCount(accepted.phases) - finishedPhaseCount(accepted),
           }
     },
+    gateRaised: () => gateRaised,
     pass: (event) => {
       switch (event.kind) {
         case "work-plan-called":
@@ -130,6 +135,7 @@ export function createWorkPlanReview(): WorkPlanReview {
         }
         case "delegate-returned": {
           returnedCount = returnedCountOf(event.handback) ?? returnedCount
+          gateRaised = gateRaised || accepted !== undefined
           const advance =
             accepted === undefined ? undefined : advancedByReturn(accepted, event.handback)
           if (advance?.kind === "advanced") {
@@ -143,6 +149,7 @@ export function createWorkPlanReview(): WorkPlanReview {
           accepted = undefined
           positionFromReturn = false
           returnedCount = undefined
+          gateRaised = false
           unansweredRejection = false
           return [event]
         case "session-info":

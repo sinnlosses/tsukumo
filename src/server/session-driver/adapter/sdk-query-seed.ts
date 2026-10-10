@@ -13,9 +13,10 @@ import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../../s
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
-import { AGENT_TOOL_NAME, pinToBackground } from "../core/background-delegation.ts"
+import { pinToBackground } from "../core/background-delegation.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
+import { judgeToolAgainstGate } from "../core/work-plan-gate.ts"
 import { workflowPluginDir } from "./workflow-plugin.ts"
 
 /** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
@@ -79,25 +80,40 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 }
 
 /**
- * メインの `Agent` 呼び出しを背景に固定する `PreToolUse` フックを登録する。
- * `permissionDecision` は返さない（許可の判定には触らず、`updatedInput` だけで足りる）。
+ * `PreToolUse` フックを1つ登録する。
+ * 関門（`judgeToolAgainstGate`）で拒むときは `permissionDecision: "deny"` を返す。
+ * 通したメインの `Agent` 呼び出しは背景に固定する（`updatedInput` だけを返し、許可の判定には触らない）。
  * `agent_id` はサブエージェント内の呼び出しにだけ付くので、ここで真偽に畳んでから渡す。
+ *
+ * 印を読む前に、拒む側に当たったときだけ1回 macrotask を待つ。
+ * 返却を運ぶメッセージは `relayMessages` の反復へ渡るまで列に積まれ、フックの呼び出しはそれより先に処理されうる。
  */
-export function backgroundDelegationHooks(): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
+export function preToolUseHooks(
+  gateRaised: () => boolean,
+): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     PreToolUse: [
       {
-        matcher: AGENT_TOOL_NAME,
         hooks: [
           async (input) => {
             if (input.hook_event_name !== "PreToolUse") {
               return {}
             }
-            const pinned = pinToBackground(
-              input.tool_name,
-              input.tool_input,
-              input.agent_id !== undefined,
-            )
+            const inSubagent = input.agent_id !== undefined
+            const gated = judgeToolAgainstGate(input.tool_name, inSubagent)
+            if (gated.kind === "deny") {
+              await setImmediate()
+              if (gateRaised()) {
+                return {
+                  hookSpecificOutput: {
+                    hookEventName: "PreToolUse",
+                    permissionDecision: "deny",
+                    permissionDecisionReason: gated.reason,
+                  },
+                }
+              }
+            }
+            const pinned = pinToBackground(input.tool_name, input.tool_input, inSubagent)
             return pinned.kind === "rewrite"
               ? { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: pinned.input } }
               : {}

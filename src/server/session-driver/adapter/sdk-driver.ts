@@ -34,7 +34,7 @@ import { createWorkPlanReview, type WorkPlanReview } from "../core/work-plan-rev
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import { readPlanUsage } from "./sdk-plan-usage.ts"
-import { backgroundDelegationHooks, buildQuerySeedOptions, stopHooks } from "./sdk-query-seed.ts"
+import { buildQuerySeedOptions, preToolUseHooks, stopHooks } from "./sdk-query-seed.ts"
 import {
   createSessionTitleWriter,
   createSessionDigestReader,
@@ -120,7 +120,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       ...buildQuerySeedOptions(options),
       hooks: {
         ...stopHooks(options.mode, reportGate, options.onEvent),
-        ...backgroundDelegationHooks(),
+        ...preToolUseHooks(workPlanReview.gateRaised),
       },
       mcpServers: {
         [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(

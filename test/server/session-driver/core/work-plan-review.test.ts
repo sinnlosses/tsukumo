@@ -334,3 +334,78 @@ describe("WorkPlanReview の流れ", () => {
     expect(review.pass(turnFinished)).toEqual([planOf(0), turnFinished])
   })
 })
+
+describe("WorkPlanReview の関門の印", () => {
+  const FOUR = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
+  const ranged = (current: number, phaseSummary = "") => ({
+    phases: FOUR,
+    current,
+    phaseSummary,
+    delegatedRange: { first: 1, count: 2 },
+  })
+  const started = () => {
+    const review = createWorkPlanReview()
+    review.pass(REQUEST)
+    review.judge(ranged(0))
+    review.judge(ranged(1, SUMMARY))
+    return review
+  }
+
+  it("段取りを受け付けた依頼で返却が届くと立ち、形の読めない返却・止めた・一足飛びでも立つ", () => {
+    for (const message of [
+      "段 1/2 | 架空の返却。",
+      "了解しました",
+      "止めた 1/2 | 架空の理由。",
+      "段 2/2 | 架空の一足飛び。",
+    ]) {
+      const review = started()
+      review.pass(handback(message))
+      expect(review.gateRaised()).toBe(true)
+    }
+  })
+
+  it("段取りを受け付けていない依頼の返却では立たない", () => {
+    const review = createWorkPlanReview()
+    review.pass(REQUEST)
+
+    review.pass(handback("段 1/2 | 架空の返却。"))
+
+    expect(review.gateRaised()).toBe(false)
+  })
+
+  it("受け付けた work_plan で下り、差し戻された work_plan では下りない", () => {
+    const review = started()
+    review.pass(handback("段 1/2 | 架空の返却。"))
+
+    expect(review.judge(ranged(3)).kind).toBe("malformed")
+    expect(review.gateRaised()).toBe(true)
+    expect(review.judge(ranged(2)).kind).toBe("accepted")
+    expect(review.gateRaised()).toBe(false)
+  })
+
+  it("続けて届いた返却も、1回の work_plan で下りる", () => {
+    const review = started()
+    review.pass(handback("段 1/2 | 架空の返却。"))
+    review.pass(handback("段 2/2 | 架空の返却。"))
+
+    expect(review.judge(ranged(3, SUMMARY)).kind).toBe("accepted")
+    expect(review.gateRaised()).toBe(false)
+  })
+
+  it("止めた返却は、同じ位置のまま work_plan を呼べば下りる", () => {
+    const review = started()
+    review.pass(handback("止めた 1/2 | 架空の理由。"))
+
+    expect(review.judge(ranged(1, SUMMARY)).kind).toBe("accepted")
+    expect(review.gateRaised()).toBe(false)
+  })
+
+  it("次の依頼で下りる", () => {
+    const review = started()
+    review.pass(handback("段 1/2 | 架空の返却。"))
+
+    review.pass(REQUEST)
+
+    expect(review.gateRaised()).toBe(false)
+  })
+})

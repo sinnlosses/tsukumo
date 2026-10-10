@@ -6,8 +6,8 @@ import {
   REPORT_GATE_REASON,
 } from "../../../../src/server/report/core/report-tool.ts"
 import {
-  backgroundDelegationHooks,
   buildQuerySeedOptions,
+  preToolUseHooks,
   stopHooks,
 } from "../../../../src/server/session-driver/adapter/sdk-query-seed.ts"
 import type {
@@ -15,6 +15,8 @@ import type {
   SessionDriverOptions,
   SessionMode,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
+import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
+import { parseDelegateReturn } from "../../../../src/shared/session/delegate-return.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { fixedChatSummary } from "../../../fixture/chat.ts"
@@ -160,10 +162,9 @@ async function runPreToolUse(
   toolName: string,
   toolInput: unknown,
   agentId?: string,
+  gateRaised: () => boolean = () => false,
 ): Promise<unknown> {
-  const matcher = backgroundDelegationHooks().PreToolUse?.[0]
-  const callback = matcher?.hooks[0]
-  expect(matcher?.matcher).toBe("Agent")
+  const callback = preToolUseHooks(gateRaised).PreToolUse?.[0]?.hooks[0]
   expect(callback).toBeDefined()
   return callback?.(
     {
@@ -181,7 +182,46 @@ async function runPreToolUse(
   )
 }
 
-describe("backgroundDelegationHooks（Agent を背景に固定する）", () => {
+describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツールを拒む）", () => {
+  const DENIED = {
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: expect.stringContaining("work_plan"),
+    },
+  }
+
+  it("印が立っているあいだ、メインの作業のツールと Agent は拒み、背景固定は返さない", async () => {
+    expect(await runPreToolUse("Bash", { command: "ls" }, undefined, () => true)).toEqual(DENIED)
+    expect(await runPreToolUse("Agent", { prompt: "手順" }, undefined, () => true)).toEqual(DENIED)
+  })
+
+  it("印が立っていても、読み取り・tsukumo のツール・サブエージェントの中の呼び出しは通す", async () => {
+    const raised = () => true
+    expect(await runPreToolUse("Read", {}, undefined, raised)).toEqual({})
+    expect(await runPreToolUse("mcp__tsukumo__report", {}, undefined, raised)).toEqual({})
+    expect(await runPreToolUse("Bash", {}, "sub-1", raised)).toEqual({})
+  })
+
+  it("印が下りていれば作業のツールを通す", async () => {
+    expect(await runPreToolUse("Bash", { command: "ls" })).toEqual({})
+  })
+
+  it("返却を受けた WorkPlanReview の印に従い、受け付けた work_plan のあとは通す", async () => {
+    const review = createWorkPlanReview()
+    const plan = { phases: ["架空の段A", "架空の段B"], current: 0, phaseSummary: "" }
+    review.pass({ kind: "request", text: "架空の依頼", images: [] })
+    review.judge(plan)
+    review.pass({
+      kind: "delegate-returned",
+      handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
+    })
+
+    expect(await runPreToolUse("Bash", {}, undefined, review.gateRaised)).toEqual(DENIED)
+    review.judge({ ...plan, current: 1, phaseSummary: "架空のまとめ。" })
+    expect(await runPreToolUse("Bash", {}, undefined, review.gateRaised)).toEqual({})
+  })
+
   it("run_in_background の無い Agent は updatedInput で true にし、permissionDecision は返さない", async () => {
     expect(await runPreToolUse("Agent", { prompt: "手順" })).toEqual({
       hookSpecificOutput: {
