@@ -59,6 +59,7 @@ function step(overrides: Partial<MainViewStep> & { readonly id: number }): MainV
     superseded: false,
     final: false,
     actions: [],
+    asides: [],
     ...overrides,
   }
 }
@@ -74,7 +75,6 @@ function turn(steps: readonly MainViewStep[]): MainViewTurn {
     hasInterimReport: false,
     droppedCount: 0,
     failure: { kind: "none" },
-    asides: [],
   }
 }
 
@@ -334,5 +334,41 @@ describe("Turn（目録の1行と見出し）", () => {
 
     expect(container.querySelector("header > p")?.textContent).toBe(catalog)
     expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("架空の作業 a/b を直す")
+  })
+})
+
+describe("Turn（脇の話の欄の位置）", () => {
+  it("脇の話の欄は、持ち主のステップの後ろ・次のレポートの前に並ぶ", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const aside = { text: "架空の問い", answer: { kind: "waiting" } } as const
+    const { container } = render(
+      <Turn
+        turn={turn([
+          step({ id: 0, body: text("1つ目の本文"), interim: true, asides: [aside] }),
+          step({ id: 1, body: text("2つ目の本文"), final: true }),
+        ])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    const order = [...container.querySelectorAll("[data-report-stub], details")].map(
+      (element) => element.textContent,
+    )
+    expect(order).toHaveLength(3)
+    expect(order[0]).toBe("1つ目の本文")
+    expect(order[1]).toContain("脇の話 1件")
+    expect(order[2]).toBe("2つ目の本文")
+  })
+
+  it("本文も質問も無いステップの脇の話は、欄だけを描く", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const aside = { text: "架空の問い", answer: { kind: "waiting" } } as const
+    const { container } = render(
+      <Turn turn={turn([step({ id: 0, asides: [aside] })])} newest freshReport={false} />,
+    )
+
+    expect(container.querySelectorAll("section")).toHaveLength(0)
+    expect(container.querySelectorAll("details")).toHaveLength(1)
   })
 })

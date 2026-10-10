@@ -43,6 +43,7 @@ function interim(id: number, title: string, seconds: number): MainViewStep {
     superseded: true,
     final: false,
     actions: [],
+    asides: [],
   }
 }
 
@@ -53,7 +54,6 @@ const TURN: MainViewTurn = {
   hasInterimReport: true,
   droppedCount: 0,
   failure: { kind: "none" },
-  asides: [],
 }
 
 function renderList(turn: MainViewTurn = TURN): void {

@@ -33,6 +33,7 @@ function step(
     superseded: false,
     final: !overrides.interim,
     actions: [],
+    asides: [],
   }
 }
 
@@ -44,7 +45,6 @@ function turn(steps: readonly MainViewStep[]): MainViewTurn {
     hasInterimReport: true,
     droppedCount: 0,
     failure: { kind: "none" },
-    asides: [],
   }
 }
 

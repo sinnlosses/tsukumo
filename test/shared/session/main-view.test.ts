@@ -10,6 +10,7 @@ import {
   type MainViewStep,
   mainViewEntries,
   mainViewTurns,
+  turnAsides,
 } from "../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import {
@@ -1289,7 +1290,7 @@ describe("mainViewTurns（脇の話）", () => {
 
     expect(turns).toHaveLength(1)
     expect(turns[0]?.request?.text).toBe("架空の依頼")
-    expect(turns[0]?.asides).toEqual([
+    expect(turns[0] === undefined ? [] : turnAsides(turns[0])).toEqual([
       { text: "架空の問い", answer: { kind: "answered", text: "架空の答え。 架空の続き。" } },
       { text: "架空の頼み", answer: { kind: "waiting" } },
     ])
@@ -1305,6 +1306,69 @@ describe("mainViewTurns（脇の話）", () => {
       { kind: "speech", text: "架空の返却の知らせ。", expression: "default" },
     ])
 
-    expect(turns[0]?.asides).toEqual([{ text: "架空の問い", answer: { kind: "waiting" } }])
+    expect(turns[0] === undefined ? [] : turnAsides(turns[0])).toEqual([
+      { text: "架空の問い", answer: { kind: "waiting" } },
+    ])
+  })
+
+  it("中間レポートのあとに送った脇の話はそのステップの後ろに入り、次の中間レポートはさらにその後ろに並ぶ", () => {
+    const turns = turnsOf([
+      ...delegating.slice(0, 2),
+      plan(1, "架空の1段目のまとめ。"),
+      { kind: "aside", text: "架空の問い", images: [] },
+      { kind: "speech", text: "架空の答え。", expression: "default" },
+      plan(2, "架空の2段目のまとめ。"),
+      { kind: "aside", text: "架空の頼み", images: [] },
+    ])
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.asides.map((aside) => aside.text))).toEqual([
+      ["架空の問い"],
+      ["架空の頼み"],
+    ])
+    expect(steps.map(reportOf)).toEqual(["架空の1段目のまとめ。", "架空の2段目のまとめ。"])
+  })
+
+  it("何も出ていない依頼の直後の脇の話は、本文なしのステップに入る", () => {
+    const turns = turnsOf([
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "aside", text: "架空の問い", images: [] },
+    ])
+
+    expect(turns[0]?.steps).toHaveLength(1)
+    expect(turns[0]?.steps[0]?.body).toEqual({ kind: "none" })
+    expect(turns[0]?.steps[0]?.asides.map((aside) => aside.text)).toEqual(["架空の問い"])
+  })
+
+  it("脇の話のあとに質問が来ると、質問は脇の話より後ろの別のステップに並ぶ", () => {
+    const turns = mainViewTurns(
+      [
+        request("依頼"),
+        detail("本文"),
+        { kind: "aside", text: "架空の問い" },
+        question("どれにする？"),
+      ],
+      SETTLED,
+      true,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => [step.asides.length, step.actions.length])).toEqual([
+      [1, 0],
+      [0, 1],
+    ])
+  })
+
+  it("次のステップが始まったあとに届いた答えも、最後の脇の話につながる", () => {
+    const turns = turnsOf([
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "aside", text: "架空の問い", images: [] },
+      plan(1, "架空のまとめ。"),
+      { kind: "speech", text: "架空の答え。", expression: "default" },
+    ])
+
+    expect(turns[0] === undefined ? [] : turnAsides(turns[0])).toEqual([
+      { text: "架空の問い", answer: { kind: "answered", text: "架空の答え。" } },
+    ])
   })
 })

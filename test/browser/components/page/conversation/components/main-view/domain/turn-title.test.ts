@@ -26,6 +26,7 @@ function reportStep(id: number, firstLine: string): MainViewStep {
     superseded: false,
     final: false,
     actions: [],
+    asides: [],
   }
 }
 
@@ -37,7 +38,6 @@ function turn(overrides: Partial<MainViewTurn>): MainViewTurn {
     hasInterimReport: false,
     droppedCount: 0,
     failure: { kind: "none" },
-    asides: [],
     ...overrides,
   }
 }

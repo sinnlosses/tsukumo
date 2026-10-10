@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest"
 import { asidePromptText } from "../../../../src/server/session-driver/core/aside-prompt.ts"
 import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
 import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
-import { mainViewEntries, mainViewTurns } from "../../../../src/shared/session/main-view.ts"
+import {
+  mainViewEntries,
+  mainViewTurns,
+  turnAsides,
+} from "../../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   applyRestoredEvents,
@@ -453,7 +457,7 @@ describe("toRestoredEvents", () => {
     )
     const turns = mainViewTurns(mainViewEntries(state), { report: false, utterance: false }, true)
     expect(turns).toHaveLength(1)
-    expect(turns[0]?.asides).toEqual([
+    expect(turns[0] === undefined ? [] : turnAsides(turns[0])).toEqual([
       { text: "架空の問い", answer: { kind: "answered", text: "架空の答え" } },
     ])
   })

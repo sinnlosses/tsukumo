@@ -4,6 +4,7 @@
 import { zip } from "remeda"
 
 import { conversationMoment } from "../../../../../../../shared/session/conversation-moment.ts"
+import { turnAsides } from "../../../../../../../shared/session/main-view.ts"
 import { turnResultsOf, type TurnResult } from "../../../../../../../shared/session/turn-result.ts"
 import { useMainViewTurns } from "../../../../../../stores/main-view-turn.ts"
 import { useSession } from "../../../../../../stores/session.ts"
@@ -24,6 +25,6 @@ export function useReportOutlineTurns(): readonly ReportOutlineTurnEntry[] {
     id: turn.id,
     title: turnTitle(turn),
     result,
-    asideCount: turn.asides.length,
+    asideCount: turnAsides(turn).length,
   }))
 }

@@ -21,6 +21,7 @@ function reportStep(id: number, task: ReportTask): MainViewStep {
     superseded: false,
     final: true,
     actions: [],
+    asides: [],
   }
 }
 
@@ -32,6 +33,7 @@ function emptyStep(id: number): MainViewStep {
     superseded: false,
     final: false,
     actions: [],
+    asides: [],
   }
 }
 
@@ -43,7 +45,6 @@ function turn(id: number, overrides: Partial<MainViewTurn>): MainViewTurn {
     hasInterimReport: false,
     droppedCount: 0,
     failure: { kind: "none" },
-    asides: [],
     ...overrides,
   }
 }

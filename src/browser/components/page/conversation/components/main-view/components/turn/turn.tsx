@@ -1,9 +1,9 @@
-// 1つのやり取り。脇の話の欄 + ステップの並び（レポート・質問の記録）を縦に1本で積む（番号は振らない）。
+// 1つのやり取り。ステップの並び（レポート・質問の記録と、届いた位置に足す脇の話の欄）を縦に1本で積む（番号は振らない）。
 // ツールの実行は描かない（進行は帯の「いまの作業」が持つ）。
 // 失敗で終わったやり取りは、頭に失敗の塊を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
-import { useState, type ReactElement } from "react"
+import { Fragment, useState, type ReactElement } from "react"
 
 import type { ReportTask } from "../../../../../../../../shared/report/report-task.ts"
 import type {
@@ -53,7 +53,6 @@ export function Turn(props: TurnProps): ReactElement {
           これ以前の {turn.droppedCount} 件は省略した
         </Text>
       )}
-      {turn.asides.length > 0 && <AsideThread asides={turn.asides} newest={props.newest} />}
       {(turn.steps.length > 0 || turn.failure.kind === "failed") && (
         <VStack
           element="div"
@@ -75,13 +74,15 @@ export function Turn(props: TurnProps): ReactElement {
           {/* `key` は配列の添字ではなく `step.id`（`MainViewStep.id`。古いステップを落とす前に振った通し番号）を使う。
               添字だと、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える。 */}
           {turn.steps.map((step) => (
-            <Step
-              step={step}
-              turnId={turn.id}
-              reveal={step.id === revealStepId}
-              hasInterimReport={turn.hasInterimReport}
-              key={step.id}
-            />
+            <Fragment key={step.id}>
+              <Step
+                step={step}
+                turnId={turn.id}
+                reveal={step.id === revealStepId}
+                hasInterimReport={turn.hasInterimReport}
+              />
+              {step.asides.length > 0 && <AsideThread asides={step.asides} newest={props.newest} />}
+            </Fragment>
           ))}
         </VStack>
       )}

@@ -114,7 +114,7 @@ export type MainViewEntry =
   | { readonly kind: "turn-failure"; readonly failure: TurnFailure }
   /**
    * 脇の話と、それへの答えのセリフ（`answersAside` の `speech`）。
-   * ステップには入れず、{@link groupIntoTurns} が対にして `MainViewTurn.asides` に移す。
+   * {@link groupIntoSteps} が対にして、届いた時点で最後のステップの `MainViewStep.asides` に移す。
    */
   | { readonly kind: "aside"; readonly text: string }
   | { readonly kind: "aside-answer"; readonly text: string }
@@ -160,6 +160,8 @@ export type MainViewStep = {
   readonly superseded: boolean
   readonly final: boolean
   readonly actions: readonly MainViewAction[]
+  /** このステップの後ろに足す脇の話（古い順）。 */
+  readonly asides: readonly MainViewAside[]
 }
 
 /** 段の見出しの字（「2/4 段の名前」）。無ければ `none`。 */
@@ -220,8 +222,11 @@ export type MainViewTurn = {
   readonly droppedCount: number
   /** このやり取りが失敗で終わったか（{@link MainViewTurnFailure}）。 */
   readonly failure: MainViewTurnFailure
-  /** このやり取りに吊るした脇の話（古い順）。 */
-  readonly asides: readonly MainViewAside[]
+}
+
+/** やり取りの脇の話を、届いた順に1本にしたもの。 */
+export function turnAsides(turn: MainViewTurn): readonly MainViewAside[] {
+  return turn.steps.flatMap((step) => step.asides)
 }
 
 /**
@@ -451,18 +456,14 @@ function groupIntoTurns(entries: readonly MainViewEntry[]): readonly GroupedTurn
         droppedCount: 0,
         failure:
           failure === undefined ? { kind: "none" } : { kind: "failed", failure: failure.failure },
-        asides: pairAsides(turn.records),
       },
       toolReportIds,
     }
   })
 }
 
-/** やり取りの中の記録のうち、ステップに入らないもの（失敗の印と、脇の話とその答え）。 */
-type OutsideStepEntry = Extract<
-  MainViewEntry,
-  { readonly kind: "turn-failure" | "aside" | "aside-answer" }
->
+/** やり取りの中の記録のうち、ステップに入らないもの（失敗の印）。 */
+type OutsideStepEntry = Extract<MainViewEntry, { readonly kind: "turn-failure" }>
 
 type StepEntry = Exclude<TurnRest<MainViewEntry>, OutsideStepEntry>
 
@@ -473,32 +474,7 @@ function isTurnFailure(
 }
 
 function isStepEntry(entry: TurnRest<MainViewEntry>): entry is StepEntry {
-  return entry.kind !== "turn-failure" && entry.kind !== "aside" && entry.kind !== "aside-answer"
-}
-
-/**
- * 脇の話と、その後ろ（次の脇の話の手前まで）の答えのセリフを対にする。
- * 答えのセリフが2つ以上あれば、届いた順に1つの答えにつなぐ。脇の話より前の答えのセリフは捨てる。
- */
-function pairAsides(entries: readonly TurnRest<MainViewEntry>[]): readonly MainViewAside[] {
-  const pairs = entries.reduce<readonly { text: string; answers: readonly string[] }[]>(
-    (acc, entry) => {
-      if (entry.kind === "aside") {
-        return [...acc, { text: entry.text, answers: [] }]
-      }
-      const last = acc.at(-1)
-      if (entry.kind !== "aside-answer" || last === undefined) {
-        return acc
-      }
-      return [...acc.slice(0, -1), { ...last, answers: [...last.answers, entry.text] }]
-    },
-    [],
-  )
-  return pairs.map(({ text, answers }) => ({
-    text,
-    answer:
-      answers.length === 0 ? { kind: "waiting" } : { kind: "answered", text: answers.join(" ") },
-  }))
+  return entry.kind !== "turn-failure"
 }
 
 /**
@@ -537,18 +513,66 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
         }
       }
 
+      if (entry.kind === "aside") {
+        const aside = {
+          text: entry.text,
+          answer: { kind: "waiting" },
+        } as const satisfies MainViewAside
+        const last = steps.at(-1)
+        return {
+          steps:
+            last === undefined
+              ? [{ ...newStep(id, NO_BODY, []), asides: [aside] }]
+              : replaceStep(steps, steps.length - 1, { ...last, asides: [...last.asides, aside] }),
+          toolReportIds,
+        }
+      }
+      if (entry.kind === "aside-answer") {
+        return { steps: answerLastAside(steps, entry.text), toolReportIds }
+      }
+
       const step = steps.at(-1)
       // レポートより前に起きたことは、レポートを持たないステップにまとめる。
+      // 脇の話が最後に出ているステップへ足すと脇の話の欄より上に描かれるので、新しいステップに入れる。
       return {
         steps:
-          step === undefined
-            ? [newStep(id, NO_BODY, [entry])]
-            : [...steps.slice(0, -1), { ...step, actions: [...step.actions, entry] }],
+          step === undefined || step.asides.length > 0
+            ? [...steps, newStep(id, NO_BODY, [entry])]
+            : replaceStep(steps, steps.length - 1, { ...step, actions: [...step.actions, entry] }),
         toolReportIds,
       }
     },
     { steps: [], toolReportIds: [] },
   )
+}
+
+/**
+ * やり取りで最後の脇の話に答えのセリフをつなぐ（2つ以上は届いた順に空白でつなぐ）。
+ * 脇の話より前の答えのセリフは捨てる。
+ */
+function answerLastAside(steps: readonly MainViewStep[], text: string): readonly MainViewStep[] {
+  const index = steps.findLastIndex((step) => step.asides.length > 0)
+  const step = steps[index]
+  const last = step?.asides.at(-1)
+  if (step === undefined || last === undefined) {
+    return steps
+  }
+  const answered = last.answer.kind === "answered" ? `${last.answer.text} ${text}` : text
+  return replaceStep(steps, index, {
+    ...step,
+    asides: [
+      ...step.asides.slice(0, -1),
+      { text: last.text, answer: { kind: "answered", text: answered } },
+    ],
+  })
+}
+
+function replaceStep(
+  steps: readonly MainViewStep[],
+  index: number,
+  step: MainViewStep,
+): readonly MainViewStep[] {
+  return steps.map((current, currentIndex) => (currentIndex === index ? step : current))
 }
 
 /** 作ったばかりのステップ。印（`interim` / `superseded` / `final`）はあとのパスが立てる。 */
@@ -564,6 +588,7 @@ function newStep(
     superseded: false,
     final: false,
     actions,
+    asides: [],
   }
 }
 
@@ -768,12 +793,13 @@ function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
 
 /**
  * そのステップが画面に出す記録の件数。
- * 描く側が描くもの（レポート・質問の記録）だけを数え、ツールの実行は数えない（メインビューに出ないため）。
+ * 描く側が描くもの（レポート・質問の記録・脇の話）だけを数え、ツールの実行は数えない（メインビューに出ないため）。
  * 描く側が出すものを変えたら、ここも揃える。
  */
 function shownEntryCount(step: MainViewStep): number {
   return (
     (step.body.kind === "none" ? 0 : 1) +
-    step.actions.filter((action) => action.kind === "question").length
+    step.actions.filter((action) => action.kind === "question").length +
+    step.asides.length
   )
 }

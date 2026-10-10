@@ -212,43 +212,6 @@
                           ]
                         },
                         {
-                          "tag": "details",
-                          "attributes": {
-                            "open": true
-                          },
-                          "children": [
-                            {
-                              "tag": "summary",
-                              "children": [
-                                "脇の話 1件",
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "▾"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "ul",
-                              "children": [
-                                {
-                                  "tag": "li",
-                                  "children": [
-                                    "きみ:",
-                                    "いまどこ？（架空の脇の話）",
-                                    "→",
-                                    "いまは委譲先が段2を進めているところ。落ちたものはまだ無いよ。"
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
                           "tag": "section",
                           "children": [
                             {
@@ -287,6 +250,43 @@
                               "tag": "p",
                               "children": [
                                 "架空の計画は3つの段で、委譲先にそのまま渡せる形だった。"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "details",
+                          "attributes": {
+                            "open": true
+                          },
+                          "children": [
+                            {
+                              "tag": "summary",
+                              "children": [
+                                "脇の話 1件",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "▾"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "ul",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "きみ:",
+                                    "いまどこ？（架空の脇の話）",
+                                    "→",
+                                    "いまは委譲先が段2を進めているところ。落ちたものはまだ無いよ。"
+                                  ]
+                                }
                               ]
                             }
                           ]
