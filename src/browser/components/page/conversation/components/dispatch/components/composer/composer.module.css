@@ -53,3 +53,70 @@
   padding: 0;
   border-radius: 0.5rem;
 }
+/* 狭い画面（760px 以下）。左に ＋、まん中に丸い欄、右に丸ボタン（<PhoneTurnAction>）。
+   道具の行は API の知らせだけを残して欄の上に置く。 */
+@media (max-width: 760px) {
+  .dispatch-input-row {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .dispatch-text-wrap {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .dispatch-toolbar {
+    order: -1;
+    padding-top: 0;
+  }
+  .dispatch-tool {
+    display: none;
+  }
+  .phone-attach {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--rule);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-quiet);
+    font-size: 20px;
+    cursor: pointer;
+  }
+  .phone-attach-cover {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 9;
+    border: none;
+    background: transparent;
+  }
+  .phone-attach-sheet {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    left: 10px;
+    bottom: 100%;
+    z-index: 10;
+    min-width: 200px;
+    padding: 4px;
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+  .phone-attach-sheet button {
+    height: 44px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+  }
+}

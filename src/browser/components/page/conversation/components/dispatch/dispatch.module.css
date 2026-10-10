@@ -146,9 +146,45 @@
   outline-width: 1px;
   border-color: color-mix(in srgb, var(--accent) 60%, var(--rule));
 }
+/* 狭い画面（760px 以下）の入力欄。右の丸ボタンと丸い欄に替わるので、広い画面の送る・中断は出さない。
+   欄は打つと縦に伸び、上限は画面の高さの 30%。 */
+@media (max-width: 760px) {
+  .dispatch-form {
+    position: relative;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    gap: 8px;
+    border-top: 1px solid var(--rule);
+    background: color-mix(in srgb, var(--ground) 50%, var(--surface));
+  }
+  .dispatch-send,
+  .dispatch-interrupt {
+    display: none;
+  }
+  .dispatch-text {
+    box-sizing: border-box;
+    min-height: 40px;
+    max-height: 30dvh;
+    padding: 9px 14px;
+    border-radius: 20px;
+    background: var(--surface);
+    border-color: var(--rule);
+    font-size: 14px;
+    field-sizing: content;
+    overflow-y: auto;
+  }
+}
 /* 答え待ちのあいだは、フォーカスの枠と輪（theme.css の :focus-visible の outline）も答え待ちの色（--state-warn）の系統にする。
    枠の混ぜ方は上の accent のときと揃える（60%, var(--rule)）。 */
 .dispatch-form.is-answering .dispatch-text:focus-visible {
   outline-color: var(--state-warn);
   border-color: color-mix(in srgb, var(--state-warn) 60%, var(--rule));
+}
+/* 狭い画面では答え待ちでも入力欄の枠と余白を変えない（答え待ちの札が受け持つ）。 */
+@media (max-width: 760px) {
+  .dispatch-form.is-answering {
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    border: none;
+    border-top: 1px solid var(--rule);
+    border-radius: 0;
+  }
 }

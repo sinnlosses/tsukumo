@@ -1,5 +1,6 @@
 // 入力欄へフォーカスを入れる時機。
 // やり取りが閉じているときにマウントされたとき・閉じたとき（会話の画面へ戻ったときも同じ）と、スキップリンクが押されたとき。
+// 狭い画面（760px 以下）は、開いただけでキーボードと吹き出しの畳みを起こさないよう、前の2つでは入れない。
 
 import { useEffect, type RefObject } from "react"
 
@@ -9,13 +10,14 @@ import { useComposerFocus } from "../../../../../../../../stores/composer-focus.
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { isFocusWithinMainView } from "../../../../../domain/main-view-focus.ts"
 import type { ComposerSurface } from "../../../domain/composer-surface.ts"
+import { isPhoneWidth } from "./use-phone-width.ts"
 
 export function useComposerFocusTiming(surfaceRef: RefObject<ComposerSurface | null>): void {
   const closed = useSession((session) => isExchangeClosed(session.state))
   const signal = useComposerFocus((state) => state.signal)
 
   useEffect(() => {
-    if (closed && !holdsFocusElsewhere()) {
+    if (closed && !isPhoneWidth() && !holdsFocusElsewhere()) {
       surfaceRef.current?.focus()
     }
   }, [closed, surfaceRef])

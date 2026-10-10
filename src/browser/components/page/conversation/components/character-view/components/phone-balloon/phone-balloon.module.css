@@ -30,6 +30,10 @@
     text-align: left;
     cursor: pointer;
   }
+  /* 入力欄の欄にフォーカスがあるあいだは顔だけにする。 */
+  body:has([data-region="dispatch"] textarea:focus) .phone-balloon-bubble {
+    display: none;
+  }
   .phone-balloon-text {
     display: -webkit-box;
     overflow: hidden;

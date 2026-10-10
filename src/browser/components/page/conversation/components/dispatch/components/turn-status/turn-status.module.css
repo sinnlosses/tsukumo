@@ -38,3 +38,83 @@
     display: none;
   }
 }
+/* 狭い画面だけに出る右の丸ボタン（<PhoneTurnAction>）。広い画面では消す。
+   確かめの札は入力欄の `<form>`（位置の基準）の上に重ねる。 */
+.phone-turn-send,
+.phone-turn-stop {
+  display: none;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.phone-turn-send {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--ground);
+  font-size: 20px;
+  font-weight: 700;
+}
+.phone-turn-send:disabled {
+  border-color: var(--rule);
+  background: transparent;
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+}
+.phone-turn-stop-mark {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--ink);
+}
+.phone-turn-cover,
+.phone-turn-confirm {
+  display: none;
+}
+@media (max-width: 760px) {
+  .phone-turn-send,
+  .phone-turn-stop {
+    display: grid;
+  }
+  .phone-turn-cover {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 9;
+    border: none;
+    background: transparent;
+  }
+  .phone-turn-confirm {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 100%;
+    z-index: 10;
+    padding: 8px;
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  .phone-turn-confirm-stop,
+  .phone-turn-confirm-keep {
+    height: 44px;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .phone-turn-confirm-stop {
+    border-color: var(--state-ng);
+    color: var(--state-ng);
+  }
+}

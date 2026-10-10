@@ -217,6 +217,14 @@
   .layout-row-bottom .layout-region {
     overflow-y: visible;
   }
+  /* 入力欄の領域は余白・枠・角丸を持たず、入力欄の地と罫線が幅いっぱいに敷かれる。 */
+  .layout-row-bottom .layout-dispatch {
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+  }
   /* 顔と吹き出しの行は無地の地に置く（背景の絵はこの行では敷かない）。 */
   .layout-row-bottom .layout-ground {
     padding: 0;

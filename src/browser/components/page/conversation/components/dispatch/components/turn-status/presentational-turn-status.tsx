@@ -10,8 +10,80 @@ import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import dispatchStyles from "../../dispatch.module.css"
+import type { PhoneTurnActionModel } from "./hooks/use-phone-turn-action.ts"
 import type { TurnStatusModel } from "./hooks/use-turn-status.ts"
 import styles from "./turn-status.module.css"
+
+const PHONE_ASK_LABEL = "中断する"
+const PHONE_STOP_LABEL = "止める"
+const PHONE_KEEP_LABEL = "続ける"
+const PHONE_CONFIRM_LABEL = "作業を止めるか確かめる"
+
+export function PresentationalPhoneTurnAction(props: PhoneTurnActionModel): ReactElement {
+  if (props.kind === "send") {
+    return (
+      <button
+        type="submit"
+        disabled={props.disabled}
+        className={styles["phone-turn-send"]}
+        aria-label={props.label}
+        title={props.title}
+      >
+        ↑
+      </button>
+    )
+  }
+  return (
+    <>
+      <button
+        type="button"
+        className={styles["phone-turn-stop"]}
+        aria-label={PHONE_ASK_LABEL}
+        onClick={props.onAsk}
+      >
+        <span className={styles["phone-turn-stop-mark"]} />
+      </button>
+      {props.confirming && (
+        <>
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            className={styles["phone-turn-cover"]}
+            onClick={props.onKeep}
+          />
+          <div
+            role="group"
+            aria-label={PHONE_CONFIRM_LABEL}
+            className={styles["phone-turn-confirm"]}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.stopPropagation()
+                props.onKeep()
+              }
+            }}
+          >
+            <button
+              type="button"
+              className={styles["phone-turn-confirm-stop"]}
+              onClick={props.onStop}
+            >
+              {PHONE_STOP_LABEL}
+            </button>
+            <button
+              type="button"
+              autoFocus
+              className={styles["phone-turn-confirm-keep"]}
+              onClick={props.onKeep}
+            >
+              {PHONE_KEEP_LABEL}
+            </button>
+          </div>
+        </>
+      )}
+    </>
+  )
+}
 
 /** Command+Enter で送信できることを示す記号（`dispatch.module.css` が `::after` で描く）。 */
 const SEND_SHORTCUT_HINT = "⌘⏎"

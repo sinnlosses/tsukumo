@@ -3,7 +3,7 @@
 
 import clsx from "clsx"
 import { AtSign, Heading, ImageIcon, Slash } from "lucide-react"
-import type { ReactElement } from "react"
+import { useState, type ReactElement, type ReactNode } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../../../shared/session-driver/prompt-image.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
@@ -16,9 +16,11 @@ import { CommandSuggestions } from "../command-suggestions/command-suggestions.t
 import { FileSuggestions } from "../file-suggestions/file-suggestions.tsx"
 import { MarkdownEditorSurface } from "../markdown-editor-surface/markdown-editor-surface.tsx"
 import { TextAreaSurface } from "../text-area-surface/text-area-surface.tsx"
-import { TurnStatus } from "../turn-status/turn-status.tsx"
+import { PhoneTurnAction, TurnStatus } from "../turn-status/turn-status.tsx"
 import styles from "./composer.module.css"
 import type { ComposerModel } from "./hooks/use-composer.ts"
+import { usePhoneWidth } from "./hooks/use-phone-width.ts"
+import type { CompletionTrigger } from "./hooks/use-suggestion.ts"
 
 export type PresentationalComposerProps = ComposerModel
 
@@ -51,6 +53,7 @@ export function PresentationalComposer({
   onImagesChosen,
   onInsertTrigger,
 }: PresentationalComposerProps): ReactElement {
+  const phone = usePhoneWidth()
   return (
     <form
       className={clsx(dispatchStyles["dispatch-form"], answering && dispatchStyles["is-answering"])}
@@ -140,58 +143,60 @@ export function PresentationalComposer({
           </Button>
         </HStack>
       )}
-      <VStack
-        element="div"
-        name={{ kind: "none" }}
-        ref={undefined}
-        gap="none"
-        align="stretch"
-        justify="start"
-        wrap="nowrap"
-        className={styles["dispatch-text-wrap"]}
-      >
-        <PromptImageChips images={images} onRemove={onRemoveImage} />
-        {mode === "plain" && (
-          <TextAreaSurface
-            ref={surfaceRef}
-            draft={draft}
-            placeholder={placeholder}
-            label={label}
-            onChange={onChange}
-            onKeyDown={onKeyDown}
-            onPaste={onPaste}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-          />
-        )}
-        {mode === "markdown" && (
-          <MarkdownEditorSurface
-            ref={surfaceRef}
-            draft={draft}
-            placeholder={placeholder}
-            label={label}
-            onChange={onChange}
-            onKeyDown={onKeyDown}
-            onPaste={onPaste}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-          />
-        )}
-        {suggestions.kind === "command" && (
-          <CommandSuggestions
-            matches={suggestions.matches}
-            selectedIndex={selectedIndex}
-            onSelect={onSelectSuggestion}
-          />
-        )}
-        {suggestions.kind === "file" && (
-          <FileSuggestions
-            matches={suggestions.matches}
-            selectedIndex={selectedIndex}
-            onSelect={onSelectSuggestion}
-          />
-        )}
-      </VStack>
+      <InputRow phone={phone} onPickImages={onPickImages} onInsertTrigger={onInsertTrigger}>
+        <VStack
+          element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
+          gap="none"
+          align="stretch"
+          justify="start"
+          wrap="nowrap"
+          className={styles["dispatch-text-wrap"]}
+        >
+          <PromptImageChips images={images} onRemove={onRemoveImage} />
+          {(mode === "plain" || phone) && (
+            <TextAreaSurface
+              ref={surfaceRef}
+              draft={draft}
+              placeholder={placeholder}
+              label={label}
+              onChange={onChange}
+              onKeyDown={onKeyDown}
+              onPaste={onPaste}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+            />
+          )}
+          {mode === "markdown" && !phone && (
+            <MarkdownEditorSurface
+              ref={surfaceRef}
+              draft={draft}
+              placeholder={placeholder}
+              label={label}
+              onChange={onChange}
+              onKeyDown={onKeyDown}
+              onPaste={onPaste}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+            />
+          )}
+          {suggestions.kind === "command" && (
+            <CommandSuggestions
+              matches={suggestions.matches}
+              selectedIndex={selectedIndex}
+              onSelect={onSelectSuggestion}
+            />
+          )}
+          {suggestions.kind === "file" && (
+            <FileSuggestions
+              matches={suggestions.matches}
+              selectedIndex={selectedIndex}
+              onSelect={onSelectSuggestion}
+            />
+          )}
+        </VStack>
+      </InputRow>
       <div className={styles["dispatch-toolbar"]}>
         <Button
           variant="ghost"
@@ -263,6 +268,95 @@ export function PresentationalComposer({
   )
 }
 
+/** 狭い画面（760px 以下）だけ、欄の左右に ＋ と丸ボタンを置く。広い画面では欄だけを描く。 */
+function InputRow({
+  phone,
+  onPickImages,
+  onInsertTrigger,
+  children,
+}: {
+  readonly phone: boolean
+  readonly onPickImages: () => void
+  readonly onInsertTrigger: (trigger: CompletionTrigger) => void
+  readonly children: ReactNode
+}): ReactElement {
+  if (!phone) {
+    return <>{children}</>
+  }
+  return (
+    <div className={styles["dispatch-input-row"]}>
+      <PhoneAttach onPickImages={onPickImages} onInsertTrigger={onInsertTrigger} />
+      {children}
+      <PhoneTurnAction />
+    </div>
+  )
+}
+
+/** 狭い画面（760px 以下）の入力欄の左の ＋ と、押すと欄の上に開く3行の面。 */
+function PhoneAttach({
+  onPickImages,
+  onInsertTrigger,
+}: {
+  readonly onPickImages: () => void
+  readonly onInsertTrigger: (trigger: CompletionTrigger) => void
+}): ReactElement {
+  const [open, setOpen] = useState(false)
+  const choose = (action: () => void) => () => {
+    setOpen(false)
+    action()
+  }
+  return (
+    <>
+      <button
+        type="button"
+        aria-label={ATTACH_LABEL}
+        aria-expanded={open}
+        className={styles["phone-attach"]}
+        onClick={() => {
+          setOpen(!open)
+        }}
+      >
+        ＋
+      </button>
+      {open && (
+        <>
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            className={styles["phone-attach-cover"]}
+            onClick={() => {
+              setOpen(false)
+            }}
+          />
+          <div
+            role="group"
+            aria-label={ATTACH_LABEL}
+            className={styles["phone-attach-sheet"]}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.stopPropagation()
+                setOpen(false)
+              }
+            }}
+          >
+            <button type="button" autoFocus onClick={choose(onPickImages)}>
+              画像を添える
+            </button>
+            <button type="button" onClick={choose(() => onInsertTrigger("/"))}>
+              / コマンド
+            </button>
+            <button type="button" onClick={choose(() => onInsertTrigger("@"))}>
+              @ ファイル
+            </button>
+          </div>
+        </>
+      )}
+    </>
+  )
+}
+
+const ATTACH_LABEL = "添える"
 const INQUIRY_JUMP_LABEL = "お伺いへ"
 const RESTART_LABEL = "新しく始める"
 

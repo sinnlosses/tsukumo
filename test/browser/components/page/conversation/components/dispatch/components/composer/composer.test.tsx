@@ -1,6 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Composer } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/composer.tsx"
 import { useComposerDraft } from "../../../../../../../../../src/browser/stores/composer-draft.ts"
@@ -59,7 +59,28 @@ const FIXTURE_FILE_PATHS = [
 
 let fetchStub: RpcFetchStub | undefined = undefined
 
+let restorePhoneWidth: (() => void) | undefined
+
+/** 窓が狭い画面（760px 以下）に当たる、という答えを `matchMedia` に返させる。 */
+function stubPhoneWidth(): void {
+  const spy = vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+    matches: true,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  }))
+  restorePhoneWidth = () => {
+    spy.mockRestore()
+  }
+}
+
 afterEach(() => {
+  restorePhoneWidth?.()
+  restorePhoneWidth = undefined
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
@@ -176,6 +197,31 @@ describe("Composer", () => {
     expect(textArea().value).toBe("/")
     expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual(["/clear"])
     expect(calls).toEqual([])
+  })
+
+  it("狭い画面の ＋ は3行の面を開き、「/ コマンド」は `/` を打って面を閉じる", () => {
+    stubPhoneWidth()
+    renderComposer({ slashCommands: ["clear"] })
+
+    fireEvent.click(screen.getByRole("button", { name: "添える" }))
+    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual(
+      expect.arrayContaining(["画像を添える", "/ コマンド", "@ ファイル"]),
+    )
+    fireEvent.click(screen.getByRole("button", { name: "/ コマンド" }))
+
+    expect(textArea().value).toBe("/")
+    expect(screen.queryByRole("button", { name: "@ ファイル" })).toBeNull()
+  })
+
+  it("狭い画面の ＋ の面は Esc で何もせず閉じる", () => {
+    stubPhoneWidth()
+    renderComposer()
+
+    fireEvent.click(screen.getByRole("button", { name: "添える" }))
+    fireEvent.keyDown(screen.getByRole("button", { name: "@ ファイル" }), { key: "Escape" })
+
+    expect(screen.queryByRole("button", { name: "@ ファイル" })).toBeNull()
+    expect(textArea().value).toBe("")
   })
 
   it("「ファイルを補完する」は語の途中なら空白を挟んで `@` を打ち、ファイルの候補が開く", async () => {

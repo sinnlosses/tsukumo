@@ -222,6 +222,17 @@
                   "tag": "form",
                   "children": [
                     {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-label": "添える",
+                        "aria-expanded": "false",
+                        "type": "button"
+                      },
+                      "children": [
+                        "＋"
+                      ]
+                    },
+                    {
                       "tag": "textarea",
                       "attributes": {
                         "aria-label": "依頼を書く",
@@ -231,65 +242,12 @@
                     {
                       "tag": "button",
                       "attributes": {
-                        "aria-disabled": "false",
-                        "aria-label": "画像を添える",
-                        "type": "button"
+                        "aria-label": "送信",
+                        "type": "submit",
+                        "disabled": true
                       },
                       "children": [
-                        {
-                          "tag": "svg"
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "false",
-                        "aria-label": "コマンドを補完する",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "svg"
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "false",
-                        "aria-label": "ファイルを補完する",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "svg"
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-pressed": "false",
-                        "aria-disabled": "false",
-                        "aria-label": "マークダウンエディタで書く",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "svg"
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "data-shortcut": "⌘⏎",
-                        "data-emphasis": "solid",
-                        "type": "submit"
-                      },
-                      "children": [
-                        "送信"
+                        "↑"
                       ]
                     }
                   ]
