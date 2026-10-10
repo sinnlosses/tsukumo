@@ -7,6 +7,7 @@ export type ShipPlanHooks = {
   readonly rebaseOntoMain: () => "ok" | "conflict"
   readonly verify: () => number
   readonly mergeFfOnly: () => "ok" | "not-fast-forward"
+  readonly syncSubmodules: () => void
 }
 
 export type ShipPlanResult =
@@ -44,6 +45,7 @@ export function runShipPlan(
     }
 
     if (hooks.mergeFfOnly() === "ok") {
+      hooks.syncSubmodules()
       return { outcome: "ok" }
     }
 

@@ -10,7 +10,7 @@ import process from "node:process"
 import { fileURLToPath } from "node:url"
 
 import { PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
-import { isWorktreeClean, resolveMainWorktreePath } from "./lib/main-worktree.ts"
+import { isWorktreeClean, resolveMainWorktreePath, syncSubmodules } from "./lib/main-worktree.ts"
 import { runShipPlan, type ShipPlanResult } from "./lib/ship-plan.ts"
 
 const ROOT = path.resolve(fileURLToPath(new URL("..", import.meta.url)))
@@ -51,6 +51,9 @@ const result = runShipPlan({
     } catch {
       return "not-fast-forward"
     }
+  },
+  syncSubmodules: () => {
+    syncSubmodules(mainWorktreePath)
   },
 })
 

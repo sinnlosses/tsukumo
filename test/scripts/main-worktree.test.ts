@@ -4,9 +4,13 @@
 import { mkdirSync, realpathSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 
-import { isWorktreeClean, resolveMainWorktreePath } from "../../scripts/lib/main-worktree.ts"
+import {
+  isWorktreeClean,
+  resolveMainWorktreePath,
+  syncSubmodules,
+} from "../../scripts/lib/main-worktree.ts"
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
 import { useTempDir } from "../fixture/temp-dir.ts"
 
@@ -47,6 +51,83 @@ describe("main-worktree", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
     test("そのブランチを出している作業ツリーが無ければ例外を投げる", async () => {
       const { root } = await createRepositoryWithMainWorktree()
       expect(() => resolveMainWorktreePath(root, "trunk")).toThrow()
+    })
+  })
+
+  describe("syncSubmodules", () => {
+    async function commitSubmodule(mainWorktree: string): Promise<string> {
+      const upstream = join(tempDir(), "upstream")
+      mkdirSync(upstream, { recursive: true })
+      await git(upstream, "init", "--quiet", "--initial-branch=main")
+      await git(upstream, "config", "user.email", "test@example.com")
+      await git(upstream, "config", "user.name", "test")
+      writeFileSync(join(upstream, "a.txt"), "1\n")
+      await git(upstream, "add", ".")
+      await git(upstream, "commit", "--quiet", "-m", "first")
+      await git(
+        mainWorktree,
+        "-c",
+        "protocol.file.allow=always",
+        "submodule",
+        "add",
+        "--quiet",
+        upstream,
+        "sub",
+      )
+      await git(mainWorktree, "commit", "--quiet", "-m", "add sub")
+      return upstream
+    }
+
+    test("ポインタを進めて中身が古いまま残った本体を、記録した版へ揃える", async () => {
+      const { mainWorktree } = await createRepositoryWithMainWorktree()
+      await commitSubmodule(mainWorktree)
+      const sub = join(mainWorktree, "sub")
+      await git(sub, "config", "user.email", "test@example.com")
+      await git(sub, "config", "user.name", "test")
+      writeFileSync(join(sub, "a.txt"), "2\n")
+      await git(sub, "commit", "--quiet", "-am", "second")
+      await git(mainWorktree, "commit", "--quiet", "-am", "advance sub")
+      await git(sub, "checkout", "--quiet", "HEAD~1")
+      expect(isWorktreeClean(mainWorktree)).toBe(false)
+
+      syncSubmodules(mainWorktree)
+
+      expect(isWorktreeClean(mainWorktree)).toBe(true)
+    })
+
+    test(".gitmodules が無ければ何もしない", async () => {
+      const { mainWorktree } = await createRepositoryWithMainWorktree()
+      const write = vi.spyOn(process.stderr, "write")
+      syncSubmodules(mainWorktree)
+      expect(write).not.toHaveBeenCalled()
+      expect(isWorktreeClean(mainWorktree)).toBe(true)
+      write.mockRestore()
+    })
+
+    test("揃えられなければ例外にせず、標準エラーに1行だけ書く", async () => {
+      const { mainWorktree } = await createRepositoryWithMainWorktree()
+      writeFileSync(
+        join(mainWorktree, ".gitmodules"),
+        `[submodule "sub"]\n\tpath = sub\n\turl = ${join(tempDir(), "missing")}\n`,
+      )
+      await git(mainWorktree, "add", ".gitmodules")
+      await git(
+        mainWorktree,
+        "update-index",
+        "--add",
+        "--cacheinfo",
+        "160000,1234567890123456789012345678901234567890,sub",
+      )
+      const write = vi.spyOn(process.stderr, "write").mockReturnValue(true)
+
+      expect(() => {
+        syncSubmodules(mainWorktree)
+      }).not.toThrow()
+      expect(write).toHaveBeenCalledTimes(1)
+      expect(String(write.mock.calls[0]?.[0])).toBe(
+        `サブモジュールを揃えられなかった: ${mainWorktree}\n`,
+      )
+      write.mockRestore()
     })
   })
 

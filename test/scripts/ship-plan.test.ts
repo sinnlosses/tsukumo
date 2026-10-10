@@ -30,12 +30,15 @@ function fakeHooks(overrides: Partial<ShipPlanHooks> = {}): {
       calls.push("mergeFfOnly")
       return overrides.mergeFfOnly?.() ?? "ok"
     },
+    syncSubmodules: () => {
+      calls.push("syncSubmodules")
+    },
   }
   return { hooks, calls }
 }
 
 describe("runShipPlan", () => {
-  test("正常系は5つのフックを1回ずつ、宣言順に呼ぶ", () => {
+  test("正常系は6つのフックを1回ずつ、宣言順に呼ぶ", () => {
     const { hooks, calls } = fakeHooks()
     expect(runShipPlan(hooks)).toEqual({ outcome: "ok" })
     expect(calls).toEqual([
@@ -44,6 +47,7 @@ describe("runShipPlan", () => {
       "rebaseOntoMain",
       "verify",
       "mergeFfOnly",
+      "syncSubmodules",
     ])
   })
 
@@ -77,16 +81,18 @@ describe("runShipPlan", () => {
     expect(calls.filter((name) => name === "rebaseOntoMain")).toHaveLength(3)
     expect(calls.filter((name) => name === "verify")).toHaveLength(3)
     expect(calls.filter((name) => name === "mergeFfOnly")).toHaveLength(3)
+    expect(calls).not.toContain("syncSubmodules")
   })
 
   test("mergeFfOnly が1回だけ落ちても、やり直して通れば ok になる", () => {
     let mergeCallCount = 0
-    const { hooks } = fakeHooks({
+    const { hooks, calls } = fakeHooks({
       mergeFfOnly: () => {
         mergeCallCount += 1
         return mergeCallCount === 1 ? "not-fast-forward" : "ok"
       },
     })
     expect(runShipPlan(hooks)).toEqual({ outcome: "ok" })
+    expect(calls.filter((name) => name === "syncSubmodules")).toHaveLength(1)
   })
 })
