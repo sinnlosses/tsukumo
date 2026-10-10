@@ -537,6 +537,11 @@ components/page/<ページ>/
 収まらない**・**名前がその機能の中の概念**の3つがそろったときだけで、そろったら `hooks/` などより優先する
 （その概念だけが読むフックも中に入れ、中では接頭辞を落とす）。2つ目の読み手を得たらディレクトリごと上げる
 （演出の `reveal/` は `browser/domain/reveal/`）。
+ページの中で2つ目の部品の読み手を得たときの上げ先は、上の置き場の表の「`components/` の下の2つ以上の部品」の行の
+「部品」（ページの `components/<概念>/`）で、外から引く口を `<概念>.tsx` 1つにそろえる。外の読み手が中身を
+直に引いていたら、読み手を数え直して表の行へ置き直す。`import()` で読む本体を持つ概念は、口の `<概念>.tsx` を
+遅延読み込みの側にし、本体を部品の中の概念のディレクトリに置く
+（`docs/architecture/adr/0027-markdown-component-entry.md`）。
 
 **機能の中の `components/` はストアを読んでよい**が、**2つそろったときだけ**: (1) props で降ろす道に
 `memo` か、その事情を知らない部品が挟まっている（降ろすと `memo` の前提が崩れ、黙って描き直しが増える。
@@ -1012,31 +1017,32 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 
 この表は `pnpm run format` が ADR の1行目の題から書き直すので、手で直さない。
 
-| ファイル                                                      | 判断                                                                           |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `docs/architecture/adr/0001-render-in-browser.md`             | 描く層をブラウザ側へ移す（2026-09-13）                                         |
-| `docs/architecture/adr/0002-render-migration-tech-choice.md`  | 描く層の移行で決めた技術選択（2026-09-13〜17）                                 |
-| `docs/architecture/adr/0003-orca-owns-worktree.md`            | worktree を用意するのは orca で、tsukumo はやらない（2026-09-23）              |
-| `docs/architecture/adr/0004-turn-number-from-record.md`       | ターンの通し番号は記録が持ち、位置では決めない（2026-09-22）                   |
-| `docs/architecture/adr/0005-css-module-output-in-temp.md`     | CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す（2026-09-20）     |
-| `docs/architecture/adr/0006-prebuild-browser.md`              | ブラウザ側は事前に組み立てて置く（2026-09-21）                                 |
-| `docs/architecture/adr/0007-vite-build-cli.md`                | 組み立ては `vite build` の CLI を子プロセスで起こす（2026-09-27）              |
-| `docs/architecture/adr/0008-sdk-instead-of-tui.md`            | Claude Code の TUI を捨て、SDK で動かす                                        |
-| `docs/architecture/adr/0009-speech-via-tool.md`               | セリフはテキストの規約ではなく、ツール呼び出しで受け取る                       |
-| `docs/architecture/adr/0010-report-via-tool.md`               | レポートはテキストではなく `report` ツールで受け取る                           |
-| `docs/architecture/adr/0011-separate-shell-and-app.md`        | 箱（Orca のタブ）と中身（Web アプリ）を分ける                                  |
-| `docs/architecture/adr/0012-bundle-vendor-library.md`         | 外部ライブラリは CDN から読まず、同梱して自分で配る                            |
-| `docs/architecture/adr/0013-tolerate-missing-display.md`      | 表示物が1つ欠けても起動失敗にしない                                            |
-| `docs/architecture/adr/0014-no-bundled-character-asset.md`    | キャラクター素材はリポジトリに同梱しない                                       |
-| `docs/architecture/adr/0015-single-host-port.md`              | ホスト依存の操作は1つのポートにまとめる                                        |
-| `docs/architecture/adr/0016-html-instead-of-terminal.md`      | 表示はターミナル描画をやめて、すべて HTML にした                               |
-| `docs/architecture/adr/0017-serve-from-local-http.md`         | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）                |
-| `docs/architecture/adr/0018-single-page-view.md`              | ビューは1枚のページにまとめる                                                  |
-| `docs/architecture/adr/0019-layer-as-directory.md`            | 層をディレクトリで表し、依存の向きをテストで縛る                               |
-| `docs/architecture/adr/0020-mixed-purity-in-adapter-file.md`  | 境界のファイルの中に、外の世界に触らない関数が混じっていてよい                 |
-| `docs/architecture/adr/0021-feature-state-fold-in-feature.md` | 機能だけが動かす状態の畳み方は、その機能の shared に置く（2026-09-30）         |
-| `docs/architecture/adr/0022-three-setting-homes.md`           | 設定は誰の・何に属する値かで3つの置き場に割る（2026-10-03）                    |
-| `docs/architecture/adr/0023-local-diagnostic-log.md`          | 不具合の経緯は手元の1本の JSONL に、決まった語だけで残す（2026-10-04）         |
-| `docs/architecture/adr/0024-no-skill-dependency.md`           | tsukumo はワークフローの契約だけを定め、特定のスキルに依存しない（2026-10-08） |
-| `docs/architecture/adr/0025-no-project-settings.md`           | プロジェクトの設定を無くし、Beads を前提にする（2026-10-08）                   |
-| `docs/architecture/adr/0026-session-claim-file.md`            | 使用中のセッションは名乗りのファイルとプロセスの生存で知る（2026-10-10）       |
+| ファイル                                                      | 判断                                                                                   |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `docs/architecture/adr/0001-render-in-browser.md`             | 描く層をブラウザ側へ移す（2026-09-13）                                                 |
+| `docs/architecture/adr/0002-render-migration-tech-choice.md`  | 描く層の移行で決めた技術選択（2026-09-13〜17）                                         |
+| `docs/architecture/adr/0003-orca-owns-worktree.md`            | worktree を用意するのは orca で、tsukumo はやらない（2026-09-23）                      |
+| `docs/architecture/adr/0004-turn-number-from-record.md`       | ターンの通し番号は記録が持ち、位置では決めない（2026-09-22）                           |
+| `docs/architecture/adr/0005-css-module-output-in-temp.md`     | CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す（2026-09-20）             |
+| `docs/architecture/adr/0006-prebuild-browser.md`              | ブラウザ側は事前に組み立てて置く（2026-09-21）                                         |
+| `docs/architecture/adr/0007-vite-build-cli.md`                | 組み立ては `vite build` の CLI を子プロセスで起こす（2026-09-27）                      |
+| `docs/architecture/adr/0008-sdk-instead-of-tui.md`            | Claude Code の TUI を捨て、SDK で動かす                                                |
+| `docs/architecture/adr/0009-speech-via-tool.md`               | セリフはテキストの規約ではなく、ツール呼び出しで受け取る                               |
+| `docs/architecture/adr/0010-report-via-tool.md`               | レポートはテキストではなく `report` ツールで受け取る                                   |
+| `docs/architecture/adr/0011-separate-shell-and-app.md`        | 箱（Orca のタブ）と中身（Web アプリ）を分ける                                          |
+| `docs/architecture/adr/0012-bundle-vendor-library.md`         | 外部ライブラリは CDN から読まず、同梱して自分で配る                                    |
+| `docs/architecture/adr/0013-tolerate-missing-display.md`      | 表示物が1つ欠けても起動失敗にしない                                                    |
+| `docs/architecture/adr/0014-no-bundled-character-asset.md`    | キャラクター素材はリポジトリに同梱しない                                               |
+| `docs/architecture/adr/0015-single-host-port.md`              | ホスト依存の操作は1つのポートにまとめる                                                |
+| `docs/architecture/adr/0016-html-instead-of-terminal.md`      | 表示はターミナル描画をやめて、すべて HTML にした                                       |
+| `docs/architecture/adr/0017-serve-from-local-http.md`         | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）                        |
+| `docs/architecture/adr/0018-single-page-view.md`              | ビューは1枚のページにまとめる                                                          |
+| `docs/architecture/adr/0019-layer-as-directory.md`            | 層をディレクトリで表し、依存の向きをテストで縛る                                       |
+| `docs/architecture/adr/0020-mixed-purity-in-adapter-file.md`  | 境界のファイルの中に、外の世界に触らない関数が混じっていてよい                         |
+| `docs/architecture/adr/0021-feature-state-fold-in-feature.md` | 機能だけが動かす状態の畳み方は、その機能の shared に置く（2026-09-30）                 |
+| `docs/architecture/adr/0022-three-setting-homes.md`           | 設定は誰の・何に属する値かで3つの置き場に割る（2026-10-03）                            |
+| `docs/architecture/adr/0023-local-diagnostic-log.md`          | 不具合の経緯は手元の1本の JSONL に、決まった語だけで残す（2026-10-04）                 |
+| `docs/architecture/adr/0024-no-skill-dependency.md`           | tsukumo はワークフローの契約だけを定め、特定のスキルに依存しない（2026-10-08）         |
+| `docs/architecture/adr/0025-no-project-settings.md`           | プロジェクトの設定を無くし、Beads を前提にする（2026-10-08）                           |
+| `docs/architecture/adr/0026-session-claim-file.md`            | 使用中のセッションは名乗りのファイルとプロセスの生存で知る（2026-10-10）               |
+| `docs/architecture/adr/0027-markdown-component-entry.md`      | 会話の画面の Markdown を部品に上げるときは、遅延読み込みの口を入口にする（2026-10-10） |
