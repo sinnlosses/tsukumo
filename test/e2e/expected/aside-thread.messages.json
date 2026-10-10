@@ -55,6 +55,9 @@
     "at": 1768438800000,
     "event": {
       "kind": "work-plan",
+      "delegatedRange": {
+        "kind": "none"
+      },
       "phases": [
         "計画を確かめる",
         "委譲先に任せる",
@@ -70,6 +73,9 @@
     "at": 1768438800000,
     "event": {
       "kind": "work-plan",
+      "delegatedRange": {
+        "kind": "none"
+      },
       "phases": [
         "計画を確かめる",
         "委譲先に任せる",

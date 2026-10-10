@@ -86,6 +86,7 @@ export function workPlanRecord(
     current: 0,
     finishedInGroup: [],
     phaseSummary: "",
+    delegatedRange: { kind: "none" },
     time: STAMPED,
     ...overrides,
   }

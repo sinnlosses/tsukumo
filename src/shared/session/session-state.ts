@@ -49,6 +49,7 @@ import type {
 } from "./session-event.ts"
 import { splitIntoTurns } from "./turn.ts"
 import {
+  advancedByReturn,
   closedByReport,
   isWorkPlanRecord,
   type WorkPlan,
@@ -663,6 +664,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     // サーバの中で `work-plan` に変わってから届く（`WorkPlanReview`）。
     case "work-plan-called":
       return state
+    case "delegate-returned":
+      return { ...state, records: [...state.records, ...returnRecords(state.records, event, at)] }
     case "report-rejected":
       return state
     case "report-drafting":
@@ -700,6 +703,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             current: event.current,
             finishedInGroup: event.finishedInGroup,
             phaseSummary: event.phaseSummary,
+            delegatedRange: event.delegatedRange,
             time: { kind: "stamped", at },
           },
         ],
@@ -881,6 +885,25 @@ function reportClosingRecords(
   return close.kind === "held"
     ? []
     : [{ kind: "work-plan", ...close.plan, time: { kind: "stamped", at } }]
+}
+
+/**
+ * 委譲の返却 1 回で積む記録。同じ依頼の最後の段取りを {@link advancedByReturn} で進めたもの（返却の届いた時刻）。
+ * 進まないとき（同じ依頼に段取りが無い・動かさない返却）は積まない。
+ */
+function returnRecords(
+  records: readonly SessionRecord[],
+  event: Extract<SessionEvent, { readonly kind: "delegate-returned" }>,
+  at: number,
+): readonly SessionRecord[] {
+  const latest = recordsOfLastRequest(records).findLast(isWorkPlanRecord)
+  if (latest === undefined) {
+    return []
+  }
+  const advance = advancedByReturn(latest, event.handback)
+  return advance.kind === "advanced"
+    ? [{ kind: "work-plan", ...advance.plan, time: { kind: "stamped", at } }]
+    : []
 }
 
 /** 最後の依頼より後ろの記録（依頼が無ければ全部）。 */

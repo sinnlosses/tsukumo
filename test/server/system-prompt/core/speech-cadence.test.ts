@@ -58,7 +58,8 @@ describe("SPEECH_CADENCE_PROMPT", () => {
     expect(SPEECH_CADENCE_PROMPT).toContain("状況 | 何をした・何が分かった")
     expect(SPEECH_CADENCE_PROMPT).not.toContain("n/N |")
     expect(append).toContain("背景に固定する")
-    expect(append).toContain("委譲先から返却を受けるたびに")
+    expect(append).toContain("委譲先の返却で進む")
+    expect(append).toContain("delegatedRange")
   })
 
   it("合図の届いていないターンでは speak も report も呼ばず、何も書かずに終え、新しい事実の無い speak は差し戻されると伝える", () => {

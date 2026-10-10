@@ -24,6 +24,7 @@ import type { RateLimit } from "../session-driver/rate-limit.ts"
 import type { TurnOutcome } from "../session-driver/turn-failure.ts"
 import type { ModelTokenUsage, StepTokenUsage, TurnUsageScope } from "../token-usage/token-usage.ts"
 import type { UsageReviewEvent } from "../usage-review/usage-review.ts"
+import type { DelegateReturn } from "./delegate-return.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import type { SessionDefault } from "./session-default.ts"
 import type { WorkPlan, WorkPlanClosing } from "./work-plan.ts"
@@ -198,6 +199,10 @@ export type SessionEvent =
       readonly toolUseId: string
       readonly plan: WorkPlan
     }
+  /**
+   * 委譲先の返却（`SubagentHandback`）が届いた。1行目を読んだ形を運ぶ。形の読めない返却も `unreadable` で届く。
+   */
+  | { readonly kind: "delegate-returned"; readonly handback: DelegateReturn }
   | {
       readonly kind: "tool-started"
       readonly toolUseId: string

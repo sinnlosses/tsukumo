@@ -178,13 +178,21 @@ describe("toRestoredEvents", () => {
     const plans = eventsOf(messages).filter((event) => event.kind === "work-plan")
 
     expect(plans).toEqual([
-      { kind: "work-plan", phases, current: 0, finishedInGroup: [], phaseSummary: "" },
+      {
+        kind: "work-plan",
+        phases,
+        current: 0,
+        finishedInGroup: [],
+        phaseSummary: "",
+        delegatedRange: { kind: "none" },
+      },
       {
         kind: "work-plan",
         phases,
         current: 1,
         finishedInGroup: [],
         phaseSummary: "架空のまとめ。",
+        delegatedRange: { kind: "none" },
       },
     ])
   })
@@ -493,5 +501,103 @@ describe("toRestoredEvents", () => {
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
+  })
+})
+
+describe("toRestoredEvents（委譲の返却）", () => {
+  // transcript の返却は is_meta の user メッセージで、origin.body は字下げの無い前置きの行のあとに返却の各行が2字下げで入る
+  function handbackMessage(returnLines: readonly string[], timestamp?: string): unknown {
+    const body = ["架空の前置き", ...returnLines.map((line) => `  ${line}`)].join("\n")
+    const message = Object.assign({}, userMessage(`<agent-message>\n${body}\n</agent-message>`), {
+      is_meta: true,
+      origin: { kind: "peer", from: "架空のID", handback: true, body },
+    })
+    return timestamp === undefined ? message : stamped(message, timestamp)
+  }
+
+  it("3形と形の読めない返却を delegate-returned にし、依頼としては起こさない", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      handbackMessage(["計画 0/2 | 架空の計画。"]),
+      handbackMessage([
+        "",
+        "[harness: 架空の注記]",
+        "段 1/2 | 架空の要約。",
+        "段 2/2 | 読まない行",
+      ]),
+      handbackMessage(["止めた 2/2 | 架空の理由"]),
+      handbackMessage(["了解しました"]),
+    ]
+
+    expect(eventsOf(messages).map((event) => event)).toEqual([
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "delegate-returned", handback: { kind: "plan", count: 2, summary: "架空の計画。" } },
+      {
+        kind: "delegate-returned",
+        handback: { kind: "phase-done", phase: 1, count: 2, summary: "架空の要約。" },
+      },
+      {
+        kind: "delegate-returned",
+        handback: { kind: "stopped", phase: 2, count: 2, summary: "架空の理由" },
+      },
+      { kind: "delegate-returned", handback: { kind: "unreadable" } },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+    ])
+  })
+
+  it("handback の印の無い伝言と、本文の読めない返却の扱い", () => {
+    const notHandback = Object.assign({}, handbackMessage(["段 1/2 | 架空"]), {
+      origin: { kind: "peer", from: "架空のID", body: "x\n  段 1/2 | 架空" },
+    })
+    const noBody = Object.assign({}, handbackMessage([]), {
+      origin: { kind: "peer", from: "架空のID", handback: true },
+    })
+
+    expect(
+      eventsOf([userMessage("架空の依頼"), notHandback, noBody]).map(({ kind }) => kind),
+    ).toEqual(["request", "delegate-returned", "turn-finished"])
+  })
+
+  it("返却の timestamp で段が済み、生きたセッションと同じ位置の帯が戻る", () => {
+    const phases = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
+    const workPlan = (id: string, input: unknown, timestamp: string) => [
+      stamped(
+        assistantMessage([{ type: "tool_use", id, name: WORK_PLAN_TOOL_FULL_NAME, input }]),
+        timestamp,
+      ),
+      stamped(userMessage([{ type: "tool_result", tool_use_id: id, content: "ok" }]), timestamp),
+    ]
+    const messages = [
+      stamped(userMessage("架空の依頼"), "2026-01-02T03:00:00.000Z"),
+      ...workPlan("w-1", { phases, current: 0 }, "2026-01-02T03:01:00.000Z"),
+      ...workPlan(
+        "w-2",
+        {
+          phases,
+          current: 1,
+          phaseSummary: "架空の計画だった。",
+          delegatedRange: { first: 1, count: 2 },
+        },
+        "2026-01-02T03:02:00.000Z",
+      ),
+      handbackMessage(["段 1/2 | 架空の1つ目。"], "2026-01-02T03:10:00.000Z"),
+      handbackMessage(["段 2/2 | 架空の2つ目。"], "2026-01-02T03:20:00.000Z"),
+    ]
+
+    const state = applyRestoredEvents(
+      INITIAL_SESSION_STATE,
+      toRestoredEvents(messages, EXPRESSIONS),
+      999,
+    )
+    const plans = state.records.filter((record) => record.kind === "work-plan")
+
+    expect(plans.map((record) => record.current)).toEqual([0, 1, 2, 3])
+    expect(plans.at(-1)).toMatchObject({
+      phaseSummary: "架空の2つ目。",
+      time: {
+        kind: "recovered",
+        at: Temporal.Instant.from("2026-01-02T03:20:00.000Z").epochMilliseconds,
+      },
+    })
   })
 })

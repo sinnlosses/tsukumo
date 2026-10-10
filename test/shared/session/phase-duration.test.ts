@@ -24,7 +24,15 @@ function plan(
   phases: readonly WorkPlanEntry[] = PHASES,
   finishedInGroup: readonly string[] = [],
 ): WorkPlanRecord {
-  return { kind: "work-plan", phases, current, finishedInGroup, phaseSummary: "", time }
+  return {
+    kind: "work-plan",
+    phases,
+    current,
+    finishedInGroup,
+    phaseSummary: "",
+    delegatedRange: { kind: "none" },
+    time,
+  }
 }
 
 function at(seconds: number): RecordTime {

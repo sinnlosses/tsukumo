@@ -19,6 +19,7 @@ import type {
 } from "../../../shared/session-driver/background-task.ts"
 import type { RateLimit, RateLimitBucket } from "../../../shared/session-driver/rate-limit.ts"
 import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
+import { parseDelegateReturn } from "../../../shared/session/delegate-return.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { parseWorkPlan, parseWorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import type { ModelTokenUsage } from "../../../shared/token-usage/token-usage.ts"
@@ -45,6 +46,8 @@ import {
  *   ターンのレポートはメインが書くもので、委譲先の報告はメインの手元に届くだけにする
  * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを呼び出しの id を付けた `work-plan-called` にし、`parseWorkPlan` を通らない引数は捨てる（handler が差し戻した呼び出しと同じ判定）。
  *   段の一足飛びで差し戻した呼び出しは `WorkPlanReview` が結果を見て捨てる
+ * - 委譲先（`parent_tool_use_id` 付き）の `SubagentHandback` の呼び出しは、`message` の1行目を読んで `delegate-returned` にする（形の読めない返却も `unreadable` で届く）。
+ *   `tool-started` にはしない
  * - `includePartialMessages` の断片で `report` の呼び出しの塊が開いたら `report-drafting` を出す（立ち絵の「書いている」の材料。メインのものだけ）。
  *   引数の断片（`input_json_delta`）は運ばない。
  *   描くのは確定した `report` だけで、書きかけの引数は JSON としても読めない
@@ -477,6 +480,21 @@ function assistantBlockEvents(
       : []
   }
 
+  if (
+    block.name === SUBAGENT_HANDBACK_TOOL_NAME &&
+    parentToolUseId !== undefined &&
+    isPlainObject(block.input)
+  ) {
+    return [
+      {
+        kind: "delegate-returned",
+        handback: parseDelegateReturn(
+          typeof block.input.message === "string" ? block.input.message : "",
+        ),
+      },
+    ]
+  }
+
   return typeof block.id === "string"
     ? [
         {
@@ -489,6 +507,9 @@ function assistantBlockEvents(
       ]
     : []
 }
+
+/** 委譲先が返却を渡すツールの名前。メインの query に `parent_tool_use_id` 付きで流れる。 */
+const SUBAGENT_HANDBACK_TOOL_NAME = "SubagentHandback"
 
 function workPlanEvents(toolUseId: string, input: unknown): readonly SessionEvent[] {
   const plan = parseWorkPlan(input)

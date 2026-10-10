@@ -479,6 +479,29 @@ describe("work_plan（段取り）", () => {
     expect(withoutSummary.endsTurn).toBe(false)
   })
 
+  it("委譲先の段の範囲は形の検査を通り、並びをはみ出す範囲と整数でない範囲は差し戻す", async () => {
+    const phases = ["架空の計画", "架空の実装", "架空の受け入れ"]
+    const ok = await callTool(workServer(), "work_plan", {
+      phases,
+      current: 0,
+      delegatedRange: { first: 1, count: 1 },
+    })
+    const overflow = await callTool(workServer(), "work_plan", {
+      phases,
+      current: 0,
+      delegatedRange: { first: 2, count: 2 },
+    })
+    const zero = await callTool(workServer(), "work_plan", {
+      phases,
+      current: 0,
+      delegatedRange: { first: 1, count: 0 },
+    })
+
+    expect(ok).toEqual({ text: "ok", isError: false, endsTurn: false })
+    expect(overflow.isError).toBe(true)
+    expect(zero.isError).toBe(true)
+  })
+
   it("同時に走る段のまとまりと finishedInGroup は形の検査を通り、1段だけのまとまりは落ちる", async () => {
     const grouped = await callTool(workServer(), "work_plan", {
       phases: ["架空の段A", ["架空の段B", "架空の段C"]],

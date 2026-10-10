@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { TaskSummaryItem } from "../../../src/shared/repository/task-summary.ts"
 import type { BackgroundTask } from "../../../src/shared/session-driver/background-task.ts"
+import type { DelegateReturn } from "../../../src/shared/session/delegate-return.ts"
 import {
   MAX_MAIN_VIEW_TURNS,
   mainViewEntries,
@@ -19,7 +20,11 @@ import {
   MAX_TOOL_TEXT_LENGTH,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
-import { latestWorkPlan, type WorkPlanClosing } from "../../../src/shared/session/work-plan.ts"
+import {
+  latestWorkPlan,
+  type WorkPlan,
+  type WorkPlanClosing,
+} from "../../../src/shared/session/work-plan.ts"
 import {
   characterChangedEvent,
   characterInfo,
@@ -1589,6 +1594,7 @@ describe("applySessionEvent（委譲と段取り）", () => {
   const PHASES = ["架空の計画", "架空の段1", "架空の段2", "架空の受け入れ"]
   const mainPlan = (current: number, phaseSummary = ""): SessionEvent => ({
     kind: "work-plan",
+    delegatedRange: { kind: "none" },
     phases: PHASES,
     current,
     finishedInGroup: [],
@@ -1625,11 +1631,91 @@ describe("applySessionEvent（委譲と段取り）", () => {
   })
 })
 
+describe("applySessionEvent（委譲の返却で進む段取り）", () => {
+  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const PHASES = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
+  const plan = (current: number, delegatedRange: WorkPlan["delegatedRange"]): SessionEvent => ({
+    kind: "work-plan",
+    phases: PHASES,
+    current,
+    finishedInGroup: [],
+    phaseSummary: current > 0 ? "架空のまとめ。" : "",
+    delegatedRange,
+  })
+  const RANGE = { kind: "range", first: 1, count: 2 } as const
+  const returned = (handback: DelegateReturn): SessionEvent => ({
+    kind: "delegate-returned",
+    handback,
+  })
+  const done = (phase: number, summary = "架空の要約。"): DelegateReturn => ({
+    kind: "phase-done",
+    phase,
+    count: 2,
+    summary,
+  })
+
+  it("返却の届いた時刻で、段を済ませた段取りの記録を積む", () => {
+    const planned = applySessionEvent(
+      applySessionEvent(INITIAL_SESSION_STATE, request, 1_000),
+      plan(1, RANGE),
+      2_000,
+    )
+
+    const state = applySessionEvent(planned, returned(done(1)), 9_000)
+
+    expect(state.records.at(-1)).toMatchObject({
+      kind: "work-plan",
+      current: 2,
+      phaseSummary: "架空の要約。",
+      delegatedRange: RANGE,
+      time: { kind: "stamped", at: 9_000 },
+    })
+  })
+
+  it("メインが work_plan を呼ばなくても返却ごとに進み、同じ返却をもう一度受けても記録を足さない", () => {
+    const state = [plan(1, RANGE), returned(done(1)), returned(done(1)), returned(done(2))].reduce(
+      (view, event) => applySessionEvent(view, event, 0),
+      applySessionEvent(INITIAL_SESSION_STATE, request, 0),
+    )
+
+    expect(state.records.filter((record) => record.kind === "work-plan")).toHaveLength(3)
+    expect(latestWorkPlan(state.records)).toMatchObject({ current: 3 })
+  })
+
+  it.each([
+    ["一足飛び", done(2)],
+    ["計画", { kind: "plan", count: 2, summary: "架空" } as const],
+    ["止めた", { kind: "stopped", phase: 1, count: 2, summary: "架空" } as const],
+    ["形の読めない返却", { kind: "unreadable" } as const],
+  ])("%s は帯を動かさない", (_, handback) => {
+    const planned = [request, plan(1, RANGE)].reduce(
+      (view, event) => applySessionEvent(view, event, 0),
+      INITIAL_SESSION_STATE,
+    )
+
+    expect(applySessionEvent(planned, returned(handback), 5_000)).toEqual(planned)
+  })
+
+  it("範囲の無い段取りと、段取りの無い依頼では動かさない", () => {
+    const noRange = apply(request, plan(1, { kind: "none" }))
+
+    expect(applySessionEvent(noRange, returned(done(1)), 5_000)).toEqual(noRange)
+    expect(applySessionEvent(apply(request), returned(done(1)), 5_000)).toEqual(apply(request))
+  })
+
+  it("前の依頼の段取りは進めない", () => {
+    const state = apply(request, plan(1, RANGE), request)
+
+    expect(applySessionEvent(state, returned(done(1)), 5_000)).toEqual(state)
+  })
+})
+
 describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
   const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const PHASES = ["架空の段A", "架空の段B", "架空の段C"]
   const mainPlan = (current: number): SessionEvent => ({
     kind: "work-plan",
+    delegatedRange: { kind: "none" },
     phases: PHASES,
     current,
     finishedInGroup: [],
@@ -1648,6 +1734,7 @@ describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
       current: PHASES.length,
       finishedInGroup: [],
       phaseSummary: "",
+      delegatedRange: { kind: "none" },
     })
     expect(state.records.at(-1)?.kind).toBe("report")
   })
@@ -1677,6 +1764,7 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
   const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const mainPlan = (current: number): SessionEvent => ({
     kind: "work-plan",
+    delegatedRange: { kind: "none" },
     phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
     current,
     finishedInGroup: [],

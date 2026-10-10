@@ -3,8 +3,9 @@
 
 import { isPlainObject } from "remeda"
 
-import { sentenceCount } from "../report/sentence-count.ts"
+import { leadingSentences, sentenceCount } from "../report/sentence-count.ts"
 import { isBlankText } from "../utils/blank-text.ts"
+import type { DelegateReturn } from "./delegate-return.ts"
 import type { SessionRecord } from "./session-state.ts"
 
 /** 段のまとまり。同時に走る段の名前の並びで、{@link MIN_PHASE_GROUP_SIZE} 個以上の重ならない名前を持つ。 */
@@ -17,13 +18,25 @@ export type WorkPlanEntry = string | PhaseGroup
  * `current` は要素の0始まりの位置で、全部の段が済んだら `phases.length`。
  * `finishedInGroup` は `current` が指すまとまりの中で済んだ段の名前で、まとまりを指していなければ空。
  * `phaseSummary` は終えた段のまとめ（段のまとめ）で、無ければ空の文字列。
+ * `delegatedRange` は委譲先の段の範囲で、委譲しなければ `none`。
  */
 export type WorkPlan = {
   readonly phases: readonly WorkPlanEntry[]
   readonly current: number
   readonly finishedInGroup: readonly string[]
   readonly phaseSummary: string
+  readonly delegatedRange: DelegatedRange
 }
+
+/**
+ * 委譲先の段の範囲。`first` は委譲先の段1に当たる位置（平らにした並びで0始まり）、`count` は委譲先の段の数。
+ * 委譲先の段 `n` は平らにした並びの `first + n - 1` の段に当たる。
+ */
+export type DelegatedRange =
+  | { readonly kind: "none" }
+  | { readonly kind: "range"; readonly first: number; readonly count: number }
+
+export const NO_DELEGATED_RANGE = { kind: "none" } as const satisfies DelegatedRange
 
 /** 段取りが持つ段の数の下限。段が無い段取りは位置を言う意味が無いので受け付けない。 */
 export const MIN_WORK_PLAN_PHASES = 1
@@ -83,7 +96,9 @@ export type PhaseShift = {
  * 要素が {@link MIN_WORK_PLAN_PHASES} 個より少ない・空白だけの名前がある・
  * まとまりの段が {@link MIN_PHASE_GROUP_SIZE} 個より少ないか名前が重なる・位置が0から要素の数までの整数でない・
  * `finishedInGroup` が今のまとまりの重ならない名前の一部でない・
- * 途中（済んだ段が1つ以上あり、全部は済んでいない）なのに段のまとめが無い・段のまとめが {@link MAX_PHASE_SUMMARY_SENTENCES} 文を超える。
+ * 段のまとめが {@link MAX_PHASE_SUMMARY_SENTENCES} 文を超える・
+ * 委譲先の段の範囲が整数でない・並びをはみ出す・段のまとまりの端をまたぐ。
+ * 途中なのに段のまとめが無いことは、返却で進んだ位置を同じまま渡す呼び出しがあるので、ここでは見ない（`WorkPlanReview` が見る）。
  * ツールの handler が差し戻すかどうかと、変換がイベントにするかどうかは、この1つで決まる。
  */
 export function parseWorkPlan(value: unknown): WorkPlan | undefined {
@@ -107,19 +122,64 @@ export function parseWorkPlan(value: unknown): WorkPlan | undefined {
   }
   const finishedInGroup = parseFinishedInGroup(value.finishedInGroup, phases[current])
   const phaseSummary = parsePhaseSummary(value.phaseSummary)
-  if (finishedInGroup === undefined || phaseSummary === undefined) {
-    return undefined
-  }
-  const plan = { phases, current, finishedInGroup, phaseSummary }
-  const finished = finishedPhaseCount(plan)
+  const delegatedRange = parseDelegatedRange(value.delegatedRange, phases)
   if (
-    (finished > 0 && finished < phaseCount(phases) && phaseSummary === "") ||
+    finishedInGroup === undefined ||
+    phaseSummary === undefined ||
+    delegatedRange === undefined ||
     sentenceCount(phaseSummary) > MAX_PHASE_SUMMARY_SENTENCES
   ) {
     return undefined
   }
-  return plan
+  return { phases, current, finishedInGroup, phaseSummary, delegatedRange }
 }
+
+/** 途中（済んだ段が1つ以上あり、全部は済んでいない）か。 */
+export function isMidWay(plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup">): boolean {
+  const finished = finishedPhaseCount(plan)
+  return finished > 0 && finished < phaseCount(plan.phases)
+}
+
+/** 返却を受けて段取りを進めた結果。`held` は帯を動かさない。 */
+export type ReturnAdvance =
+  | { readonly kind: "held" }
+  | { readonly kind: "advanced"; readonly plan: WorkPlan }
+
+/**
+ * 委譲の返却 `段 n/N` で、覚えている段取りを進めた結果。
+ * 範囲があり `N` が範囲の段の数と同じで、段 `n` に当たる段が今の段の集合に入っているときだけ、その段を済ませる。
+ * 一足飛び・済んだ段・範囲の無い段取り・`計画`・`止めた`・形の読めない返却・並びの最後の段（返却では全部済みにしない）は動かさない。
+ * 段のまとめは返却の要約を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもの。
+ */
+export function advancedByReturn(plan: WorkPlan, handback: DelegateReturn): ReturnAdvance {
+  if (
+    handback.kind !== "phase-done" ||
+    plan.delegatedRange.kind !== "range" ||
+    plan.delegatedRange.count !== handback.count
+  ) {
+    return HELD
+  }
+  const target = plan.delegatedRange.first + handback.phase - 1
+  const phase = plannedPhasesOf(plan).find((candidate) => candidate.index === target)
+  if (phase === undefined || phase.state !== "current") {
+    return HELD
+  }
+  const entry = plan.phases[phase.entry]
+  const finishedInGroup = typeof entry === "string" ? [] : [...plan.finishedInGroup, phase.name]
+  const entryDone =
+    entry === undefined || typeof entry === "string" || finishedInGroup.length === entry.length
+  const advanced: WorkPlan = {
+    ...plan,
+    current: entryDone ? plan.current + 1 : plan.current,
+    finishedInGroup: entryDone ? [] : finishedInGroup,
+    phaseSummary: leadingSentences(handback.summary, MAX_PHASE_SUMMARY_SENTENCES),
+  }
+  return finishedPhaseCount(advanced) >= phaseCount(advanced.phases)
+    ? HELD
+    : { kind: "advanced", plan: advanced }
+}
+
+const HELD = { kind: "held" } as const satisfies ReturnAdvance
 
 /** 並びを平らにした段（{@link PlannedPhase}）。読み順に並ぶ。 */
 export function plannedPhasesOf(
@@ -195,6 +255,7 @@ export function closedByReport(plan: WorkPlan): ReportClose {
           current: plan.phases.length,
           finishedInGroup: [],
           phaseSummary: "",
+          delegatedRange: plan.delegatedRange,
         },
       }
     : { kind: "held" }
@@ -216,6 +277,7 @@ export function workPlanOf(
     current: record.current,
     finishedInGroup: record.finishedInGroup,
     phaseSummary: record.phaseSummary,
+    delegatedRange: record.delegatedRange,
   }
 }
 
@@ -356,6 +418,43 @@ function parseFinishedInGroup(
     new Set(names).size === names.length &&
     names.every((name) => currentEntry.includes(name))
     ? names
+    : undefined
+}
+
+/**
+ * 委譲先の段の範囲を読む。無ければ `none`。
+ * 整数でない・`count` が1未満・並びをはみ出す・範囲の端が段のまとまりの中にある（まとまりをまたぐ）なら undefined。
+ */
+function parseDelegatedRange(
+  value: unknown,
+  phases: readonly WorkPlanEntry[],
+): DelegatedRange | undefined {
+  if (value === undefined) {
+    return NO_DELEGATED_RANGE
+  }
+  if (!isPlainObject(value)) {
+    return undefined
+  }
+  const { first, count } = value
+  if (
+    typeof first !== "number" ||
+    typeof count !== "number" ||
+    !Number.isInteger(first) ||
+    !Number.isInteger(count) ||
+    first < 0 ||
+    count < 1 ||
+    first + count > phaseCount(phases)
+  ) {
+    return undefined
+  }
+  const boundaries = new Set(
+    phases.reduce<readonly number[]>(
+      (starts, entry) => [...starts, (starts.at(-1) ?? 0) + entryNames(entry).length],
+      [0],
+    ),
+  )
+  return boundaries.has(first) && boundaries.has(first + count)
+    ? { kind: "range", first, count }
     : undefined
 }
 

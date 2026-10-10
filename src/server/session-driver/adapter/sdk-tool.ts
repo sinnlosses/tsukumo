@@ -80,6 +80,7 @@ import type { WorkPlanReview } from "../core/work-plan-review.ts"
 import {
   answerWorkPlanCall,
   WORK_PLAN_CURRENT_DESCRIPTION,
+  WORK_PLAN_DELEGATED_RANGE_DESCRIPTION,
   WORK_PLAN_FINISHED_IN_GROUP_DESCRIPTION,
   WORK_PLAN_PHASE_SUMMARY_DESCRIPTION,
   WORK_PLAN_PHASES_DESCRIPTION,
@@ -305,6 +306,10 @@ function workPlanTool(review: WorkPlanReview) {
         .optional()
         .describe(WORK_PLAN_FINISHED_IN_GROUP_DESCRIPTION),
       phaseSummary: z.string().optional().describe(WORK_PLAN_PHASE_SUMMARY_DESCRIPTION),
+      delegatedRange: z
+        .object({ first: z.number().int().min(0), count: z.number().int().min(1) })
+        .optional()
+        .describe(WORK_PLAN_DELEGATED_RANGE_DESCRIPTION),
     },
     async (input) => {
       const answer = answerWorkPlanCall(review, input)

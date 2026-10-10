@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 
+import type { DelegateReturn } from "../../../src/shared/session/delegate-return.ts"
 import {
+  advancedByReturn,
   closedByReport,
   currentPhaseOf,
   type LatestWorkPlan,
@@ -23,7 +25,14 @@ function planned(
   current: number,
   finishedInGroup: readonly string[] = [],
 ): LatestWorkPlan {
-  return { kind: "planned", phases, current, finishedInGroup, phaseSummary: "" }
+  return {
+    kind: "planned",
+    phases,
+    current,
+    finishedInGroup,
+    phaseSummary: "",
+    delegatedRange: { kind: "none" },
+  }
 }
 
 function next(
@@ -32,7 +41,7 @@ function next(
   phaseSummary = "",
   finishedInGroup: readonly string[] = [],
 ): WorkPlan {
-  return { phases, current, finishedInGroup, phaseSummary }
+  return { phases, current, finishedInGroup, phaseSummary, delegatedRange: { kind: "none" } }
 }
 
 describe("parseWorkPlan の段のまとめ", () => {
@@ -42,12 +51,13 @@ describe("parseWorkPlan の段のまとめ", () => {
       current: 0,
       finishedInGroup: [],
       phaseSummary: "",
+      delegatedRange: { kind: "none" },
     })
   })
 
-  it("途中の位置なのにまとめが無ければ受け付けない", () => {
-    expect(parseWorkPlan({ phases: PHASES, current: 1 })).toBeUndefined()
-    expect(parseWorkPlan({ phases: PHASES, current: 2, phaseSummary: "  " })).toBeUndefined()
+  it("途中の位置でまとめが無くても読める（要否は WorkPlanReview が見る）", () => {
+    expect(parseWorkPlan({ phases: PHASES, current: 1 })?.phaseSummary).toBe("")
+    expect(parseWorkPlan({ phases: PHASES, current: 2, phaseSummary: "  " })?.phaseSummary).toBe("")
   })
 
   it("最初の位置と、全部の段を終えた位置では、まとめが無くても受け付ける", () => {
@@ -114,14 +124,14 @@ describe("parseWorkPlan の段のまとまり", () => {
     }
   })
 
-  it("まとまりの中の段が済んだ途中の位置では、まとめが無ければ受け付けない", () => {
+  it("まとまりの中の段が済んだ途中の位置は、まとめが無くても読める", () => {
     expect(
       parseWorkPlan({
         phases: [["架空の段A", "架空の段B"]],
         current: 0,
         finishedInGroup: ["架空の段B"],
-      }),
-    ).toBeUndefined()
+      })?.finishedInGroup,
+    ).toEqual(["架空の段B"])
   })
 })
 
@@ -264,6 +274,122 @@ describe("closedByReport", () => {
     expect(closedByReport(next(group, 1, "架空のまとめ。", ["架空の段B"]))).toEqual({
       kind: "closed",
       plan: next(group, 2),
+    })
+  })
+})
+
+describe("parseWorkPlan の委譲先の段の範囲", () => {
+  const read = (delegatedRange: unknown, phases: readonly WorkPlanEntry[] = GROUPED) =>
+    parseWorkPlan({ phases, current: 0, delegatedRange })?.delegatedRange
+
+  it("無ければ none、あれば first と count を読む", () => {
+    expect(read(undefined)).toEqual({ kind: "none" })
+    expect(read({ first: 1, count: 2 })).toEqual({ kind: "range", first: 1, count: 2 })
+  })
+
+  it("範囲の端が段のまとまりの端に揃っていれば、範囲の中にまとまりを含んでよい", () => {
+    expect(read({ first: 0, count: 4 })).toEqual({ kind: "range", first: 0, count: 4 })
+    expect(read({ first: 1, count: 3 })).toEqual({ kind: "range", first: 1, count: 3 })
+  })
+
+  it.each([
+    { first: 1, count: 1 },
+    { first: 2, count: 1 },
+    { first: 3, count: 2 },
+    { first: 0, count: 5 },
+    { first: -1, count: 2 },
+    { first: 0, count: 0 },
+    { first: 0.5, count: 2 },
+    { first: 0 },
+    "range",
+  ])("まとまりをまたぐ・並びをはみ出す・整数でない範囲は受け付けない: %j", (range) => {
+    expect(parseWorkPlan({ phases: GROUPED, current: 0, delegatedRange: range })).toBeUndefined()
+  })
+})
+
+describe("advancedByReturn", () => {
+  const RANGE = { kind: "range", first: 1, count: 2 } as const
+  const SERIAL: readonly WorkPlanEntry[] = [
+    "架空の計画",
+    "架空の実装A",
+    "架空の実装B",
+    "架空の受け入れ",
+  ]
+  const planAt = (
+    current: number,
+    phases: readonly WorkPlanEntry[] = SERIAL,
+    finishedInGroup: readonly string[] = [],
+    delegatedRange: WorkPlan["delegatedRange"] = RANGE,
+  ): WorkPlan => ({ phases, current, finishedInGroup, phaseSummary: "", delegatedRange })
+  const phaseDone = (phase: number, count = 2, summary = "架空の要約。"): DelegateReturn => ({
+    kind: "phase-done",
+    phase,
+    count,
+    summary,
+  })
+
+  it("段 n/N で、段 n に当たる今の段を済ませ、要約を段のまとめにする", () => {
+    expect(advancedByReturn(planAt(1), phaseDone(1))).toEqual({
+      kind: "advanced",
+      plan: { ...planAt(2), phaseSummary: "架空の要約。" },
+    })
+    expect(advancedByReturn(planAt(2), phaseDone(2))).toEqual({
+      kind: "advanced",
+      plan: { ...planAt(3), phaseSummary: "架空の要約。" },
+    })
+  })
+
+  it("要約は2文に切り詰める", () => {
+    const result = advancedByReturn(planAt(1), phaseDone(1, 2, "一つ目。二つ目。三つ目。"))
+
+    expect(result.kind === "advanced" && result.plan.phaseSummary).toBe("一つ目。二つ目。")
+  })
+
+  it("まとまりの中の段は finishedInGroup に足し、最後の段で current を進めて空にする", () => {
+    const grouped: readonly WorkPlanEntry[] = [
+      "架空の計画",
+      ["架空の実装A", "架空の実装B"],
+      "架空の受け入れ",
+    ]
+    const first = advancedByReturn(planAt(1, grouped), phaseDone(2))
+    const second = advancedByReturn(planAt(1, grouped, ["架空の実装B"]), phaseDone(1))
+
+    expect(first).toMatchObject({
+      kind: "advanced",
+      plan: { current: 1, finishedInGroup: ["架空の実装B"] },
+    })
+    expect(second).toMatchObject({
+      kind: "advanced",
+      plan: { current: 2, finishedInGroup: [] },
+    })
+  })
+
+  it("一足飛び・済んだ段・N の食い違いは動かさない", () => {
+    expect(advancedByReturn(planAt(1), phaseDone(2))).toEqual({ kind: "held" })
+    expect(advancedByReturn(planAt(2), phaseDone(1))).toEqual({ kind: "held" })
+    expect(advancedByReturn(planAt(1), phaseDone(1, 3))).toEqual({ kind: "held" })
+  })
+
+  it("範囲の無い段取りと、計画・止めた・形の読めない返却は動かさない", () => {
+    expect(advancedByReturn(planAt(1, SERIAL, [], { kind: "none" }), phaseDone(1))).toEqual({
+      kind: "held",
+    })
+    for (const handback of [
+      { kind: "plan", count: 2, summary: "架空" },
+      { kind: "stopped", phase: 1, count: 2, summary: "架空" },
+      { kind: "unreadable" },
+    ] as const) {
+      expect(advancedByReturn(planAt(1), handback)).toEqual({ kind: "held" })
+    }
+  })
+
+  it("並びの最後の段は返却では済ませない（閉じるのは report）", () => {
+    const whole = { kind: "range", first: 0, count: 2 } as const
+
+    expect(
+      advancedByReturn(planAt(1, ["架空の段A", "架空の段B"], [], whole), phaseDone(2)),
+    ).toEqual({
+      kind: "held",
     })
   })
 })

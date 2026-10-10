@@ -331,6 +331,7 @@ describe("toSessionEvents", () => {
           current: 1,
           finishedInGroup: [],
           phaseSummary: "架空のまとめ。",
+          delegatedRange: { kind: "none" },
         },
       },
     ])
@@ -349,7 +350,7 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
-  it("段が途中の位置なのに段のまとめの無い work_plan は、差し戻す呼び出しと同じく段取りにしない", () => {
+  it("段が途中の位置で段のまとめの無い work_plan も段取りにする（まとめの要否は WorkPlanReview が決める）", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -359,7 +360,9 @@ describe("toSessionEvents", () => {
       },
     ])
 
-    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+    expect(toSessionEvents(message, EXPRESSIONS)).toMatchObject([
+      { kind: "work-plan-called", plan: { current: 1, phaseSummary: "" } },
+    ])
   })
 
   it("サブエージェントの中の work_plan と、位置が段の数を超えた work_plan は捨てる", () => {
@@ -1274,19 +1277,41 @@ describe("toSessionEvents（委譲の返却）", () => {
     return assistantMessage([{ type: "tool_use", id: "toolu_back", name, input }], parentToolUseId)
   }
 
-  it("委譲先の SubagentHandback は、1行目が段の番号の形でもほかのツールと同じ tool-started だけを出す", () => {
+  it("委譲先の SubagentHandback は、段の番号の形の1行目を読んだ delegate-returned だけを出す", () => {
     const input = { message: "段 1/3 | 架空の進み。\n架空の続き" }
 
     expect(toSessionEvents(toolUse("SubagentHandback", input, "toolu_sub_1"), EXPRESSIONS)).toEqual(
       [
         {
-          kind: "tool-started",
-          toolUseId: "toolu_back",
-          name: "SubagentHandback",
-          input,
-          parentToolUseId: "toolu_sub_1",
+          kind: "delegate-returned",
+          handback: { kind: "phase-done", phase: 1, count: 3, summary: "架空の進み。" },
         },
       ],
     )
+  })
+
+  describe("委譲先の返却", () => {
+    it("形の読めない返却と message が文字でない返却も unreadable で届く", () => {
+      const unreadable = { kind: "delegate-returned", handback: { kind: "unreadable" } }
+      const odd = assistantMessage(
+        [
+          { type: "tool_use", id: "t1", name: "SubagentHandback", input: { message: "了解" } },
+          { type: "tool_use", id: "t2", name: "SubagentHandback", input: { message: 1 } },
+        ],
+        "toolu_agent",
+      )
+
+      expect(toSessionEvents(odd, EXPRESSIONS)).toEqual([unreadable, unreadable])
+    })
+
+    it("メイン自身の SubagentHandback は返却にしない", () => {
+      const message = assistantMessage([
+        { type: "tool_use", id: "t3", name: "SubagentHandback", input: { message: "段 1/2 | x" } },
+      ])
+
+      expect(toSessionEvents(message, EXPRESSIONS).map((event) => event.kind)).toEqual([
+        "tool-started",
+      ])
+    })
   })
 })

@@ -1,4 +1,5 @@
-// `work_plan` の差し戻し（形の崩れと段の一足飛び）と、いまの段取りの立ち位置。
+// `work_plan` の差し戻し（形の崩れ・段の一足飛び・委譲先の段の範囲と返却の `N` の食い違い）と、いまの段取りの立ち位置。
+// 返却で進んだ位置のままメインが同じ位置を渡す呼び出しは、段のまとめが無くても通す。
 // 一足飛びは、同じ依頼の中で同じ段の並びのまま、済んだ段（並びを平らにして数える）を1回で2つ以上増やした呼び出し。
 // 飛ばした段には段のまとめが無く、メインビューの中間レポートがその段だけ抜けるため。
 //
@@ -14,10 +15,13 @@
 
 import { isDeepEqual } from "remeda"
 
+import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
+  advancedByReturn,
   closedByReport,
   finishedPhaseCount,
+  isMidWay,
   parseWorkPlan,
   phaseCount,
   type WorkPlan,
@@ -29,6 +33,7 @@ export type WorkPlanVerdict =
   | { readonly kind: "malformed" }
   | { readonly kind: "skipped-phase" }
   | { readonly kind: "empty-summary" }
+  | { readonly kind: "range-mismatch" }
 
 export type WorkPlanReview = {
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
@@ -50,8 +55,24 @@ export function createWorkPlanReview(): WorkPlanReview {
   let accepted: WorkPlan | undefined = undefined
   let unansweredRejection = false
   let held: readonly WorkPlanCalled[] = []
+  // 返却で進めた位置のままか（メインの受け付けた呼び出しが無いあいだ）と、同じ依頼で最後に受けた返却の段の数。
+  let positionFromReturn = false
+  let returnedCount: number | undefined = undefined
+
+  const isReturnedPosition = (plan: WorkPlan): boolean =>
+    positionFromReturn && accepted !== undefined && isSamePosition(accepted, plan)
 
   const judgeWellFormed = (plan: WorkPlan): WorkPlanVerdict => {
+    if (
+      plan.delegatedRange.kind === "range" &&
+      returnedCount !== undefined &&
+      plan.delegatedRange.count !== returnedCount
+    ) {
+      return { kind: "range-mismatch" }
+    }
+    if (isMidWay(plan) && plan.phaseSummary === "" && !isReturnedPosition(plan)) {
+      return { kind: "malformed" }
+    }
     if (accepted !== undefined && skipsPhase(accepted, plan)) {
       return { kind: "skipped-phase" }
     }
@@ -59,6 +80,7 @@ export function createWorkPlanReview(): WorkPlanReview {
       return { kind: "empty-summary" }
     }
     accepted = plan
+    positionFromReturn = false
     return { kind: "accepted", plan }
   }
 
@@ -106,9 +128,21 @@ export function createWorkPlanReview(): WorkPlanReview {
           }
           return [event]
         }
+        case "delegate-returned": {
+          returnedCount = returnedCountOf(event.handback) ?? returnedCount
+          const advance =
+            accepted === undefined ? undefined : advancedByReturn(accepted, event.handback)
+          if (advance?.kind === "advanced") {
+            accepted = advance.plan
+            positionFromReturn = true
+          }
+          return [event]
+        }
         case "request":
         case "turn-started":
           accepted = undefined
+          positionFromReturn = false
+          returnedCount = undefined
           unansweredRejection = false
           return [event]
         case "session-info":
@@ -125,6 +159,20 @@ export function createWorkPlanReview(): WorkPlanReview {
       }
     },
   }
+}
+
+/** 返却の `N`。形の読めない返却は持たない。 */
+function returnedCountOf(handback: DelegateReturn): number | undefined {
+  return handback.kind === "unreadable" ? undefined : handback.count
+}
+
+/** 段の並びと位置が同じか。段のまとめと範囲は見ない。 */
+function isSamePosition(previous: WorkPlan, next: WorkPlan): boolean {
+  return (
+    isDeepEqual(previous.phases, next.phases) &&
+    previous.current === next.current &&
+    isDeepEqual(previous.finishedInGroup, next.finishedInGroup)
+  )
 }
 
 function advancesWithoutSummary(previous: WorkPlan, next: WorkPlan): boolean {

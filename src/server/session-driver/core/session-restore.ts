@@ -6,6 +6,7 @@
 import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
+import { parseDelegateReturn } from "../../../shared/session/delegate-return.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import { createReportReview } from "../../report/core/report-review.ts"
 import { asideTextOf } from "./aside-prompt.ts"
@@ -26,6 +27,7 @@ const RESTORED_TURN_FINISHED: SessionEvent = {
  * transcript のメッセージ列を内部イベントに変える（メインビューのやり取りと吹き出しのセリフを組み直すため）。
  * メッセージ1件の形は SDK のイベントとほぼ同じなので、変換の本体は {@link toSessionEvents} に任せ、ここが足すのは transcript には残らない2つだけ:
  *
+ * - 委譲先の返却（`delegate-returned`）: `origin.handback` が真の `user` メッセージから、`origin.body` の字下げした行の1行目を読む（依頼にはしない）
  * - 利用者の依頼（`request`）と脇の話（`aside`）: `user` のテキストブロックから起こす（ツールの結果は除く）。脇の話は `asideTextOf` の包みで見分ける
  * - 続きのターンの始まり（`turn-resumed`）: 背景のタスクの知らせだけの `user` メッセージから起こす
  * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼・脇の話・続きのターンの手前と並びの末尾で区切る。時刻は直前の出来事のものを引き継ぐ
@@ -82,6 +84,10 @@ export function restoredMessageEvents(
   message: unknown,
   expressions: readonly Expression[],
 ): readonly SessionEvent[] {
+  const handback = handbackBodyOf(message)
+  if (handback !== undefined) {
+    return [{ kind: "delegate-returned", handback: parseDelegateReturn(handback) }]
+  }
   if (isTaskNotificationOnly(message)) {
     return [{ kind: "turn-resumed" }]
   }
@@ -95,6 +101,26 @@ export function restoredMessageEvents(
   return aside === undefined
     ? [{ kind: "request", text, images: [] }]
     : [{ kind: "aside", text: aside, images: [] }]
+}
+
+/**
+ * 委譲先の返却の本文。`origin.handback` が真の `user` メッセージの `origin.body` のうち、字下げ付きの行だけが返却の本文。
+ * 返却だが本文が読めないときは空の文字列。返却でなければ undefined。
+ */
+function handbackBodyOf(message: unknown): string | undefined {
+  if (!isPlainObject(message) || message.type !== "user" || !isPlainObject(message.origin)) {
+    return undefined
+  }
+  const { origin } = message
+  if (origin.handback !== true) {
+    return undefined
+  }
+  return typeof origin.body === "string"
+    ? origin.body
+        .split(/\r?\n/u)
+        .filter((line) => /^\s/u.test(line))
+        .join("\n")
+    : ""
 }
 
 /** 差し戻しの1段を通す。通ったあとの出来事は、元の出来事の時刻を引き継ぐ。 */

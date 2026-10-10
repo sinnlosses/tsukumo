@@ -16,6 +16,12 @@ import {
   type SessionEvent,
   sessionEventSchema,
 } from "../../../../src/shared/session/session-event.ts"
+import {
+  applySessionEvent,
+  INITIAL_SESSION_STATE,
+} from "../../../../src/shared/session/session-state.ts"
+import { latestWorkPlan } from "../../../../src/shared/session/work-plan.ts"
+import { bundledFakeSession } from "../../../fixture/bundled-fake-session.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 
 // 疑似セッションは手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は
@@ -619,5 +625,23 @@ describe("readFakeSession", () => {
       )
       expect(readWritten(sessionJson([step(5)], [])).kind).toBe("read")
     })
+  })
+})
+
+describe("同梱の疑似セッションの委譲の返却", () => {
+  it("場面 delegated-handback は、契約の形の返却だけで帯を最後の1段の手前まで進める", () => {
+    const scene = bundledFakeSession().turns.find((turn) => turn.name === "delegated-handback")
+    if (scene === undefined) {
+      throw new Error("場面 delegated-handback が無い")
+    }
+
+    const state = scene.steps.reduce(
+      (view, { event }) => applySessionEvent(view, event, 0),
+      INITIAL_SESSION_STATE,
+    )
+    const plans = state.records.filter((record) => record.kind === "work-plan")
+
+    expect(plans.map((record) => record.current)).toEqual([1, 2, 3])
+    expect(latestWorkPlan(state.records)).toMatchObject({ current: 3 })
   })
 })

@@ -734,6 +734,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   it("段取りを渡したやり取りでは、中間レポートはまとめだけで、最終レポートは結論の下に段ごとの所要時間の横棒グラフを置く", () => {
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",
+      delegatedRange: { kind: "none" },
       phases: ["架空の段A", "架空の段B"],
       current,
       finishedInGroup: [],
@@ -766,6 +767,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   it("やり取りが閉じていないあいだの report には、段ごとの所要時間の横棒グラフを出さない", () => {
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",
+      delegatedRange: { kind: "none" },
       phases: ["架空の段A", "架空の段B"],
       current,
       finishedInGroup: [],
@@ -803,6 +805,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     })
     const plan: SessionEvent = {
       kind: "work-plan",
+      delegatedRange: { kind: "none" },
       phases: ["架空の段A", "架空の段B"],
       current: 0,
       finishedInGroup: [],
@@ -961,6 +964,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
   const phases = ["架空の段A", "架空の段B"]
   const plan = (current: number, phaseSummary = "", names = phases): SessionEvent => ({
     kind: "work-plan",
+    delegatedRange: { kind: "none" },
     phases: names,
     current,
     finishedInGroup: [],
@@ -1104,6 +1108,7 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
   const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const plan = (current: number, phaseSummary = ""): SessionEvent => ({
     kind: "work-plan",
+    delegatedRange: { kind: "none" },
     phases: ["架空の段A", "架空の段B"],
     current,
     finishedInGroup: [],
@@ -1251,6 +1256,7 @@ describe("mainViewTurns（失敗で終わったターン）", () => {
 describe("mainViewTurns（脇の話）", () => {
   const plan = (current: number, phaseSummary: string): SessionEvent => ({
     kind: "work-plan",
+    delegatedRange: { kind: "none" },
     phases: ["架空の段A", "架空の段B", "架空の段C"],
     current,
     finishedInGroup: [],
