@@ -1,0 +1,233 @@
+{
+  "session-switcher": [
+    {
+      "tag": "dialog",
+      "attributes": {
+        "aria-label": "セッションを切り替える",
+        "open": true
+      },
+      "children": [
+        {
+          "tag": "svg"
+        },
+        {
+          "tag": "input",
+          "attributes": {
+            "aria-label": "セッションを探す",
+            "role": "combobox",
+            "aria-expanded": "true",
+            "type": "search",
+            "value": ""
+          }
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-disabled": "false",
+            "type": "button"
+          },
+          "children": [
+            "＋ 新しいセッション"
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "role": "listbox",
+            "aria-label": "セッション"
+          },
+          "children": [
+            {
+              "tag": "div",
+              "attributes": {
+                "role": "group",
+                "aria-label": "今日"
+              },
+              "children": [
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "aria-hidden": "true"
+                  },
+                  "children": [
+                    "今日"
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "role": "option",
+                    "aria-selected": "false",
+                    "aria-disabled": "false",
+                    "data-current": "true",
+                    "data-occupied": "false"
+                  },
+                  "children": [
+                    "FA",
+                    "入力欄の送信ボタンの位置を架空に直す",
+                    "いま",
+                    "09:12〜"
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "role": "group",
+                "aria-label": "昨日"
+              },
+              "children": [
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "aria-hidden": "true"
+                  },
+                  "children": [
+                    "昨日"
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "role": "option",
+                    "aria-selected": "false",
+                    "aria-disabled": "true",
+                    "data-current": "false",
+                    "data-occupied": "true"
+                  },
+                  "children": [
+                    "7B",
+                    "架空の成果の画面に振り返りの口を置きたい",
+                    "別の窓で使用中",
+                    "23:05"
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "role": "option",
+                    "aria-selected": "true",
+                    "aria-disabled": "false",
+                    "data-current": "false",
+                    "data-occupied": "false"
+                  },
+                  "children": [
+                    "C3",
+                    "/retrospect",
+                    "14:02"
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "role": "group",
+                "aria-label": "それより前"
+              },
+              "children": [
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "aria-hidden": "true"
+                  },
+                  "children": [
+                    "それより前"
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "role": "option",
+                    "aria-selected": "false",
+                    "aria-disabled": "false",
+                    "data-current": "false",
+                    "data-occupied": "false"
+                  },
+                  "children": [
+                    "2D",
+                    "（題なし）",
+                    "1/12 22:30"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "section",
+          "attributes": {
+            "aria-label": "セッション C3"
+          },
+          "children": [
+            "C3",
+            "1/14 13:30 – 14:02 · 依頼 1",
+            {
+              "tag": "img",
+              "attributes": {
+                "alt": "",
+                "src": "/character/tsukumo-spirit/face.svg"
+              }
+            },
+            "つくもの精霊",
+            {
+              "tag": "h3",
+              "children": [
+                "このセッションの要約"
+              ]
+            },
+            {
+              "tag": "p",
+              "children": [
+                "要約はまだ無い（このセッションの report に要約が書かれていない）"
+              ]
+            },
+            "最後のひとこと",
+            "つくもの精霊",
+            "「",
+            "振り返りはここまで。",
+            "」",
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "type": "button"
+              },
+              "children": [
+                "C3 に切り替える"
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "kbd",
+          "children": [
+            "↑"
+          ]
+        },
+        {
+          "tag": "kbd",
+          "children": [
+            "↓"
+          ]
+        },
+        "選ぶ",
+        {
+          "tag": "kbd",
+          "children": [
+            "Enter"
+          ]
+        },
+        "切り替える",
+        {
+          "tag": "kbd",
+          "children": [
+            "Esc"
+          ]
+        },
+        "閉じる"
+      ]
+    }
+  ]
+}

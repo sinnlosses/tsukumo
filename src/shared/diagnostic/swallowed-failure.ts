@@ -12,6 +12,7 @@ const SWALLOWED_FAILURE_PLACES = {
     "read-session-digest",
     "restore-events",
     "event-handler",
+    "session-claim",
   ],
   "view-server": ["socket-message", "http-server-error"],
   chat: [

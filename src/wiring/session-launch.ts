@@ -22,9 +22,14 @@ import {
   readRestoredEvents,
 } from "../server/session-driver/adapter/sdk-session.ts"
 import {
+  createSessionClaimFile,
+  defaultSessionClaimPlace,
+} from "../server/session-driver/adapter/session-claim-file.ts"
+import {
   createSessionCatalog,
   type SessionCatalog,
 } from "../server/session-driver/core/session-catalog.ts"
+import { createSessionClaim } from "../server/session-driver/core/session-claim.ts"
 import type { SessionDriver, SessionMode } from "../server/session-driver/core/session-driver.ts"
 import { sessionTag } from "../server/session-driver/core/session-mark.ts"
 import {
@@ -78,12 +83,24 @@ export function wireSessionLaunch(options: {
   readonly diagnosticLog: DiagnosticLog
 }): {
   readonly manager: Pick<SessionManagerOptions, "launchSession">
-  readonly sessionCommands: Pick<SessionCommandPorts, "rememberSessionDefault">
+  readonly sessionCommands: Pick<
+    SessionCommandPorts,
+    "rememberSessionDefault" | "reserveSession" | "withdrawSessionClaim"
+  >
+  /** このプロセスの名乗りを消す（プロセスを閉じるとき）。 */
+  readonly releaseSessionClaim: () => void
 } {
   const { context, config, character, viewPort } = options
   const reportFailure = failureDiagnostic(options.diagnosticLog, context.now)
   // 印の付いたセッションの一覧。ここで1回読み始め、起こし直しはメモリの一覧から切り替え先を出す。
   const sessionCatalog = chooseSessionCatalog(context, config)
+  const sessionClaim = createSessionClaim(
+    createSessionClaimFile({
+      place: defaultSessionClaimPlace(),
+      reportFailure: (error) =>
+        reportFailure({ feature: "session", place: "session-claim" }, error),
+    }),
+  )
   return {
     manager: {
       launchSession: createSessionLaunch<CharacterPack>({
@@ -98,10 +115,12 @@ export function wireSessionLaunch(options: {
           sessionCatalog.listChoices(sessionTag(pack.name, chat, viewPort)),
         refreshSessions: () => sessionCatalog.refresh(),
         startDriver: (seed, onEvent, restored) => {
+          const observeClaim = sessionClaim.noteLaunched(seed.start)
           const observe = options.onLaunch(seed, onEvent, restored)
           const watched = (event: SessionEvent): void => {
             onEvent(event)
             observe(event)
+            observeClaim(event)
           }
           return startDriver({
             seed,
@@ -135,7 +154,10 @@ export function wireSessionLaunch(options: {
     sessionCommands: {
       // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
       rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
+      reserveSession: (sessionId) => sessionClaim.reserve(sessionId),
+      withdrawSessionClaim: () => sessionClaim.withdraw(),
     },
+    releaseSessionClaim: () => sessionClaim.withdraw(),
   }
 }
 

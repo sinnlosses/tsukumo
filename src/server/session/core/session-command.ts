@@ -19,6 +19,7 @@ import type { DispatchResult } from "../../core/command-receiver.ts"
 import type { DiaryDayTask } from "../../diary/core/diary-tool.ts"
 import type { DiaryWriteRequest, DiaryWriterSource } from "../../diary/core/diary-writer.ts"
 import type { PromptImageShelf } from "../../session-driver/core/prompt-image-shelf.ts"
+import type { SessionReservation } from "../../session-driver/core/session-claim.ts"
 import type { PromptOpening, SessionDriver } from "../../session-driver/core/session-driver.ts"
 import type { CommandReceiver, CommandSession, SessionReceiver } from "./command-session.ts"
 import { ACCEPTED, askDriver, declined, nudge } from "./driver-command.ts"
@@ -40,6 +41,10 @@ export type SessionCommandPorts = {
   readonly readAchievementDay: (date: string) => Promise<DailyAchievement | undefined>
   /** 成果の振り返りの書き手の出どころ（`DiaryWriterSource`）。疑似セッションでは `dont-write`。 */
   readonly diary: DiaryWriterSource
+  /** 選んだセッションのIDを名乗ってから、別の窓が使っていないかを確かめる（`SessionClaim.reserve`）。 */
+  readonly reserveSession: (sessionId: string) => Promise<SessionReservation>
+  /** 名乗りを消す（起こし直しに失敗したとき）。 */
+  readonly withdrawSessionClaim: () => void
 }
 
 /** `session` が受けるコマンドの表（契約 `sessionContract` の手続きごとに1行）。 */
@@ -122,12 +127,20 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
     // 一覧は同じパック・同じモードのものしか出していないので、選んだ先で相手が入れ替わることもない。
     switchSession: {
       kind: "session",
-      receive: (input, session) =>
-        session.restart({
+      receive: async (input, session) => {
+        if ((await ports.reserveSession(input.sessionId)) === "occupied") {
+          return declined(FRAME_ERROR_REASON.sessionOccupied)
+        }
+        const result = await session.restart({
           selection: { by: "current" },
           chat: session.state().chatMode,
           resume: { by: "id", sessionId: input.sessionId },
-        }),
+        })
+        if (!result.ok) {
+          ports.withdrawSessionClaim()
+        }
+        return result
+      },
     },
     // キャラクターもモードもいま出しているまま、続きを探さずに新規で起こす。
     startNewSession: {

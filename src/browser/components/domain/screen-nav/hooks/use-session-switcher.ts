@@ -6,7 +6,7 @@
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
 import { useSessionSwitcherRequest } from "../../../../stores/session-switcher-request.ts"
-import { useSession, useTurnRunning } from "../../../../stores/session.ts"
+import { isRefusedFor, useSession, useTurnRunning } from "../../../../stores/session.ts"
 import {
   clockTime,
   localTimeZoneId,
@@ -14,6 +14,7 @@ import {
   zonedDateTime,
 } from "../../../../utils/clock.ts"
 import { shortSessionIds } from "../domain/session-short-id.ts"
+import { useOccupiedSessions } from "./use-occupied-sessions.ts"
 
 /** 一覧の日の区切り（見本の「今日」「昨日」「それより前」）。 */
 export type SessionSwitcherGroup = "today" | "yesterday" | "earlier"
@@ -35,6 +36,8 @@ export type SessionSwitcherRow = {
   /** 右の欄の見出しの横に出す、始まり〜最終更新の範囲（`9/26 20:10 – 23:05`）。 */
   readonly rangeLabel: string
   readonly current: boolean
+  /** 別の窓の tsukumo がいま開いているか。いまの行は使用中にしない。 */
+  readonly occupiedElsewhere: boolean
 }
 
 /** 帯の札に出す、いまのセッションの名乗り。ID が分かる前（新規に起こして最初の依頼を送る前）は短縮IDを出せない。 */
@@ -82,6 +85,7 @@ const NO_HEADING_LABEL = "（題なし）"
 
 export function useSessionSwitcher(room: string, project: string): SessionSwitcherView {
   const dispatch = useSession((session) => session.dispatch)
+  const dispatchAwaited = useSession((session) => session.dispatchAwaited)
   const sessions = useSession((session) => session.state.sessions)
   const currentSessionId = useSession((session) =>
     session.state.session.kind === "starting" ? undefined : session.state.session.sessionId,
@@ -94,6 +98,7 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
     openSwitcher(nowEpochMilliseconds())
   }
   const onClose = useSessionSwitcherRequest((state) => state.closeSwitcher)
+  const occupied = useOccupiedSessions(open)
 
   const shortIds = shortSessionIds([
     ...(currentSessionId === undefined ? [] : [currentSessionId]),
@@ -101,9 +106,13 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
   ])
   const timeZone = localTimeZoneId()
   const today = zonedDateTime(openedAt, timeZone).toPlainDate()
-  const rows = sessions.map((session) =>
-    switcherRow(session, shortIds, session.sessionId === currentSessionId, today, timeZone),
-  )
+  const rows = sessions.map((session) => {
+    const current = session.sessionId === currentSessionId
+    return switcherRow(session, shortIds, today, timeZone, {
+      current,
+      occupiedElsewhere: !current && occupied.has(session.sessionId),
+    })
+  })
   const currentChoice = sessions.find((session) => session.sessionId === currentSessionId)
 
   return {
@@ -131,14 +140,24 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
       blocked: turnInProgress,
       blockedTitle: turnInProgress ? FRAME_ERROR_REASON.sessionSwitchDuringTurn : undefined,
       onSwitch: (sessionId) => {
-        if (turnInProgress) {
+        if (
+          turnInProgress ||
+          rows.some((row) => row.sessionId === sessionId && row.occupiedElsewhere)
+        ) {
           return
         }
         onClose()
         // いま出しているものを選び直しても起こし直さない（会話が消えるだけで何も変わらない）。
-        if (sessionId !== currentSessionId) {
-          dispatch.session.switchSession({ sessionId })
+        if (sessionId === currentSessionId) {
+          return
         }
+        // 開いたあとで別の窓が開いたセッションは、サーバが起こす直前に断る。
+        // 開き直すと使用中を聞き直すので、その行が使用中で出る。ほかの失敗は画面に出さない。
+        dispatchAwaited.session.switchSession({ sessionId }).catch((error: unknown) => {
+          if (isRefusedFor(error, FRAME_ERROR_REASON.sessionOccupied)) {
+            openSwitcher(nowEpochMilliseconds())
+          }
+        })
       },
       onStartNew: () => {
         if (turnInProgress) {
@@ -154,9 +173,9 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
 function switcherRow(
   session: SessionChoice,
   shortIds: ReadonlyMap<string, string>,
-  current: boolean,
   today: Temporal.PlainDate,
   timeZone: string,
+  { current, occupiedElsewhere }: Pick<SessionSwitcherRow, "current" | "occupiedElsewhere">,
 ): SessionSwitcherRow {
   const started = zonedDateTime(session.startedAt, timeZone)
   const modified = zonedDateTime(session.lastModified, timeZone)
@@ -174,6 +193,7 @@ function switcherRow(
         : clockTime(modified),
     rangeLabel: `${monthDayTime(started)} – ${sameDay ? clockTime(modified) : monthDayTime(modified)}`,
     current,
+    occupiedElsewhere,
   }
 }
 

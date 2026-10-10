@@ -3,12 +3,14 @@
 // E2E が凍らせた時計では見えない日の区切りと、送るコマンドの分かれ目。
 //
 
+import { ORPCError } from "@orpc/client"
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
+import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"
 import type { SessionChoice } from "../../../../../src/shared/session/session-choice.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -44,18 +46,26 @@ const SESSIONS: readonly SessionChoice[] = [
   session("c3000000-0000", "架空の古い作業", 5 * DAY_MS),
 ]
 
-function renderNav(state: Partial<SessionState>, spy: CommandSpy = () => {}): void {
+function renderNav(
+  state: Partial<SessionState>,
+  spy: CommandSpy = () => {},
+  occupied: readonly string[] = [],
+): void {
   setPageUrl("http://127.0.0.1:7327/")
-  fetchStub = stubRpcFetch((call) =>
-    call.procedure === "repository/projectName"
-      ? rpcOutput("fictional-project")
-      : rpcOutput({
-          kind: "known",
-          requestCount: 4,
-          summary: "架空の要約の一段落目。\n\n残り：架空の残り。",
-          lastLine: "架空の締めのセリフ",
-        }),
-  )
+  fetchStub = stubRpcFetch((call) => {
+    if (call.procedure === "repository/projectName") {
+      return rpcOutput("fictional-project")
+    }
+    if (call.procedure === "sessionClaim/occupied") {
+      return rpcOutput(occupied)
+    }
+    return rpcOutput({
+      kind: "known",
+      requestCount: 4,
+      summary: "架空の要約の一段落目。\n\n残り：架空の残り。",
+      lastLine: "架空の締めのセリフ",
+    })
+  })
   putSession(
     {
       ...INITIAL_SESSION_STATE,
@@ -200,4 +210,52 @@ describe("セッションの札と切り替え画面", () => {
       screen.getByRole("button", { name: "＋ 新しいセッション" }).getAttribute("aria-disabled"),
     ).toBe("true")
   })
+
+  it("別の窓で使用中の行は「別の窓で使用中」と出て選べず、選びも ↑↓ も飛ばす。いまの行は使用中にしない", async () => {
+    const sent: SentCommand[] = []
+    renderNav({}, (command) => sent.push(command), ["fa000000-0000", "7b000000-0000"])
+    openByTag()
+
+    const occupiedRow = within(sessionList()).getByRole("option", { name: /架空の昨日の作業/u })
+    await within(occupiedRow).findByText("別の窓で使用中")
+    expect(occupiedRow.getAttribute("aria-disabled")).toBe("true")
+    const current = within(sessionList()).getByRole("option", { name: /架空のいまの作業/u })
+    expect(current.textContent).not.toContain("別の窓で使用中")
+    expect(selectedHeading()).toContain("架空の古い作業")
+
+    fireEvent.keyDown(searchBox(), { key: "ArrowUp" })
+    expect(selectedHeading()).toContain("架空のいまの作業")
+
+    fireEvent.click(occupiedRow)
+    fireEvent.doubleClick(occupiedRow)
+    expect(occupiedRow.getAttribute("aria-selected")).toBe("false")
+    expect(sent).toEqual([])
+  })
+
+  it("選んだ先が起こす直前に使用中と分かって断られたら、切り替え画面を開き直す", async () => {
+    renderNav({}, (command) =>
+      command.procedure === "session.switchSession"
+        ? Promise.reject(
+            new ORPCError("REFUSED", { data: { reason: FRAME_ERROR_REASON.sessionOccupied } }),
+          )
+        : undefined,
+    )
+    openByTag()
+
+    fireEvent.keyDown(searchBox(), { key: "Enter" })
+    expect(switcherOpen()).toBe(false)
+
+    await waitFor(() => {
+      expect(switcherOpen()).toBe(true)
+    })
+  })
 })
+
+/** 一覧で選んでいる行の字。 */
+function selectedHeading(): string {
+  return (
+    within(sessionList())
+      .getAllByRole("option")
+      .find((option) => option.getAttribute("aria-selected") === "true")?.textContent ?? ""
+  )
+}

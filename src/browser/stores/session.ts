@@ -2,8 +2,9 @@
 // 部品は `useSession((session) => session.state.turn)` のように自分が読む値だけを購読する。
 // サーバは 100ms ごとにフレームを押すので、姿ごと読むとターンが流れている間は毎秒10回描き直しになる。
 
-import { createORPCClient } from "@orpc/client"
+import { createORPCClient, ORPCError } from "@orpc/client"
 import { startTransition, useEffect } from "react"
+import { isPlainObject } from "remeda"
 import { create } from "zustand"
 
 import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
@@ -168,6 +169,16 @@ export function useSessionConnection(): void {
       attachSocket(undefined)
     }
   }, [])
+}
+
+/** `dispatchAwaited` の失敗が、その理由で断られたもの（契約の `REFUSED`）か。 */
+export function isRefusedFor(error: unknown, reason: string): boolean {
+  return (
+    error instanceof ORPCError &&
+    error.code === "REFUSED" &&
+    isPlainObject(error.data) &&
+    error.data.reason === reason
+  )
 }
 
 function applyFrame(state: SessionState, frame: ServerFrame): SessionState {

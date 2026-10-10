@@ -33,6 +33,10 @@ import {
   repositoryProcedure,
 } from "./server/repository/adapter/repository-procedure.ts"
 import {
+  type SessionClaimProcedurePorts,
+  sessionClaimProcedure,
+} from "./server/session/adapter/session-claim-procedure.ts"
+import {
   type SessionDigestProcedurePorts,
   sessionDigestProcedure,
 } from "./server/session/adapter/session-digest-procedure.ts"
@@ -61,6 +65,7 @@ export type RpcRouterPorts = RepositoryProcedurePorts &
   PlanUsageProcedurePorts &
   AchievementProcedurePorts &
   SessionDigestProcedurePorts &
+  SessionClaimProcedurePorts &
   DiagnosticProcedurePorts
 
 /** 読み取りの手続きを束ね、照合のミドルウェアを全部の前に掛ける（`/rpc` に載る）。 */
@@ -75,6 +80,7 @@ export function createRpcRouter(ports: RpcRouterPorts) {
       planUsage: planUsageProcedure(ports),
       achievement: achievementProcedure(ports),
       sessionDigest: sessionDigestProcedure(ports),
+      sessionClaim: sessionClaimProcedure(ports),
       diagnostic: diagnosticProcedure(ports),
     })
 }

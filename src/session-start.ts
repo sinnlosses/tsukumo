@@ -138,6 +138,10 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   return {
     manager: {
       ...manager,
+      close: () => {
+        manager.close()
+        launch.releaseSessionClaim()
+      },
       subscribe: (send) => {
         const unsubscribe = manager.subscribe(send)
         firstViewer.resolve()

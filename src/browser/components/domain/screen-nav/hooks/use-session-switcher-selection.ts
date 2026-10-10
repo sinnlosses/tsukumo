@@ -29,16 +29,21 @@ export function useSessionSwitcherSelection(
   const [query, setQuery] = useState("")
   // 開いた直後は、いま出しているもの以外でいちばん新しい行を選ぶ（切り替えたい先はふつうそちら）。
   const [selectedId, setSelectedId] = useState<string | undefined>(
-    () => (allRows.find((row) => !row.current) ?? allRows[0])?.sessionId,
+    () => (allRows.find((row) => !row.current && !row.occupiedElsewhere) ?? allRows[0])?.sessionId,
   )
 
   const rows = allRows.filter((row) => matches(row, query))
-  const selected = rows.find((row) => row.sessionId === selectedId) ?? rows[0]
+  const selectable = rows.filter((row) => !row.occupiedElsewhere)
+  // 選んでいた行が後から使用中になっても、いまの行へは落とさない。
+  const selected =
+    selectable.find((row) => row.sessionId === selectedId) ??
+    selectable.find((row) => !row.current) ??
+    selectable[0]
   const digest = useSessionDigest(selected?.sessionId)
 
   const move = (step: number): void => {
-    const index = rows.findIndex((row) => row.sessionId === selected?.sessionId)
-    const next = rows[Math.min(Math.max(index + step, 0), rows.length - 1)]
+    const index = selectable.findIndex((row) => row.sessionId === selected?.sessionId)
+    const next = selectable[Math.min(Math.max(index + step, 0), selectable.length - 1)]
     if (next !== undefined) {
       setSelectedId(next.sessionId)
     }
@@ -50,7 +55,11 @@ export function useSessionSwitcherSelection(
     rows,
     selected,
     digest,
-    onSelect: setSelectedId,
+    onSelect: (sessionId) => {
+      if (selectable.some((row) => row.sessionId === sessionId)) {
+        setSelectedId(sessionId)
+      }
+    },
     onKeyDown: (event) => {
       if (event.nativeEvent.isComposing) {
         return

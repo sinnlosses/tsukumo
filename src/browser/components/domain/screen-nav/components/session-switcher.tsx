@@ -41,6 +41,7 @@ const NO_SESSIONS = "切り替えられるセッションはまだ無い"
 const LOADING = "読み込み中…"
 const UNAVAILABLE = "このセッションの記録は読めなかった"
 const CURRENT_MARK = "いま"
+const OCCUPIED_MARK = "別の窓で使用中"
 const CURRENT_BUTTON = "いま出しているセッション"
 
 /** 一覧に出す日の区切りの順。 */
@@ -152,7 +153,9 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
                     id={optionId(row.sessionId)}
                     role="option"
                     aria-selected={row.sessionId === selection.selected?.sessionId}
+                    aria-disabled={row.occupiedElsewhere}
                     data-current={row.current}
+                    data-occupied={row.occupiedElsewhere}
                     className={styles["session-switcher-row"]}
                     onClick={() => selection.onSelect(row.sessionId)}
                     onDoubleClick={() => switcher.onSwitch(row.sessionId)}
@@ -176,6 +179,17 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
                         className={styles["session-switcher-row-current"]}
                       >
                         {CURRENT_MARK}
+                      </Text>
+                    )}
+                    {row.occupiedElsewhere && (
+                      <Text
+                        element="span"
+                        size="label"
+                        tone="ink-quiet"
+                        weight="inherit"
+                        className={styles["session-switcher-row-current"]}
+                      >
+                        {OCCUPIED_MARK}
                       </Text>
                     )}
                     <Text

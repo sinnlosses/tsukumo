@@ -19,6 +19,7 @@ import { frameContract } from "./contract/frame.ts"
 import { hostContract } from "./contract/host.ts"
 import { planUsageContract } from "./contract/plan-usage.ts"
 import { repositoryContract } from "./contract/repository.ts"
+import { sessionClaimContract } from "./contract/session-claim.ts"
 import { sessionDigestContract } from "./contract/session-digest.ts"
 import { sessionContract } from "./contract/session.ts"
 import { tokenUsageContract } from "./contract/token-usage.ts"
@@ -34,6 +35,7 @@ export const rpcContract = {
   planUsage: planUsageContract,
   achievement: achievementContract,
   sessionDigest: sessionDigestContract,
+  sessionClaim: sessionClaimContract,
   diagnostic: diagnosticContract,
 }
 

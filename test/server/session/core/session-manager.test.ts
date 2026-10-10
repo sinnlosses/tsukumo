@@ -213,6 +213,8 @@ function createSessionManager(
         rememberSessionDefault,
         readAchievementDay,
         diary,
+        reserveSession: () => Promise.resolve("reserved"),
+        withdrawSessionClaim: () => {},
       },
       characterPack: { editCharacter, createCharacter, deleteCharacter },
       chat: { forgetRememberedLine },

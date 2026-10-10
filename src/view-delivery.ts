@@ -17,6 +17,10 @@ import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { projectNameOf } from "./server/repository/adapter/project-name.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
+import {
+  defaultSessionClaimPlace,
+  readOccupiedSessionIds,
+} from "./server/session-driver/adapter/session-claim-file.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import { summarizeRecentTokenUsage } from "./server/token-usage/core/token-usage-summary.ts"
 import type { TokenUsageLog } from "./server/token-usage/core/token-usage.ts"
@@ -120,6 +124,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     readContextUsage: () => readContextUsage(),
     readPlanUsage: () => readPlanUsage(),
     readSessionDigest: (sessionId) => readSessionDigest(sessionId),
+    readOccupiedSessionIds: () => readOccupiedSessionIds(defaultSessionClaimPlace()),
     // 見る日の検証・今日への丸め込みも呼ぶたびにここで済ませ、`readAchievement` には検証済みの日付キーだけを渡す。
     // 日記はここで合わせる（`readAchievement` は数だけを持ち、日記の置き場を知らない）。
     readAchievementDay: async (selection) => {

@@ -107,6 +107,16 @@
 .session-switcher-row[data-current="true"] .session-switcher-row-id {
   color: var(--ink);
 }
+/* 別の窓で使用中の行は選べない。押せそうに見せない。 */
+.session-switcher-row[data-occupied="true"] {
+  cursor: not-allowed;
+}
+.session-switcher-row[data-occupied="true"]:hover {
+  background: none;
+}
+.session-switcher-row[data-occupied="true"] .session-switcher-row-id {
+  color: var(--ink-quiet);
+}
 .session-switcher-row-heading {
   flex: 1 1 auto;
   min-width: 0;

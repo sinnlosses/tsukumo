@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import type { CommandRouterPorts } from "../src/router.ts"
 import { CHAT_NUDGE_PROMPT } from "../src/server/chat/core/chat-nudge.ts"
+import type { DispatchResult } from "../src/server/core/command-receiver.ts"
 import type { DiaryWriteRequest, DiaryWriterSource } from "../src/server/diary/core/diary-writer.ts"
 import {
   createPromptImageShelf,
@@ -71,7 +72,10 @@ type FakeSession = {
   readonly observe: (event: SessionEvent) => void
 }
 
-function createFakeSession(stub: StubDriver = createStubDriver()): FakeSession {
+function createFakeSession(
+  stub: StubDriver = createStubDriver(),
+  restartResult: DispatchResult = { ok: true },
+): FakeSession {
   const emitted: SessionEvent[] = []
   const restarts: SessionLaunchRequest[] = []
   const diaryAbort = new AbortController()
@@ -85,7 +89,7 @@ function createFakeSession(stub: StubDriver = createStubDriver()): FakeSession {
       driver: () => Promise.resolve(stub.driver),
       restart: (request) => {
         restarts.push(request)
-        return Promise.resolve({ ok: true })
+        return Promise.resolve(restartResult)
       },
       generation: () => ({
         emit: (event) => {
@@ -115,6 +119,10 @@ function createRecordingPorts(
   const remembered: SessionDefault[] = []
   const forgottenLines: string[] = []
   const openedFiles: string[] = []
+  /** 別の窓が名乗っていることにするセッションのID。 */
+  const occupiedElsewhere = new Set<string>()
+  const reserved: string[] = []
+  let withdrawCount = 0
   const written = (): SessionEvent | undefined =>
     writeResult === "written" ? CHARACTER_EVENT : undefined
   const ports: CommandRouterPorts = {
@@ -126,6 +134,13 @@ function createRecordingPorts(
       },
       readAchievementDay,
       diary,
+      reserveSession: (sessionId) => {
+        reserved.push(sessionId)
+        return Promise.resolve(occupiedElsewhere.has(sessionId) ? "occupied" : "reserved")
+      },
+      withdrawSessionClaim: () => {
+        withdrawCount += 1
+      },
     },
     characterPack: {
       editCharacter: (edit) => {
@@ -168,6 +183,9 @@ function createRecordingPorts(
     remembered,
     forgottenLines,
     openedFiles,
+    occupiedElsewhere,
+    reserved,
+    withdrawCount: () => withdrawCount,
   }
 }
 
@@ -363,6 +381,37 @@ describe("createCommandRouter（session）", () => {
         resume: { by: "id", sessionId: "架空の別セッション" },
       },
     ])
+  })
+
+  it("別の窓が名乗っているセッションへの session.switchSession は定型文の理由で断り、起こし直さない", async () => {
+    const { commands, restarts, occupiedElsewhere, reserved, stub } = startRouter()
+    occupiedElsewhere.add("架空の別の窓のセッション")
+
+    expect(await commands.session.switchSession({ sessionId: "架空の別の窓のセッション" })).toEqual(
+      { ok: false, reason: FRAME_ERROR_REASON.sessionOccupied },
+    )
+    expect(reserved).toEqual(["架空の別の窓のセッション"])
+    expect(restarts).toEqual([])
+    expect(stub.calls).toEqual([])
+  })
+
+  it("session.switchSession の起こし直しに失敗したら、名乗りを消す", async () => {
+    const fake = createFakeSession(undefined, {
+      ok: false,
+      reason: FRAME_ERROR_REASON.driverFailed,
+    })
+    const recorded = createRecordingPorts(
+      "written",
+      () => Promise.resolve(undefined),
+      NO_DIARY_WRITER,
+    )
+    const commands = createCommandClient(recorded.ports, fake.session)
+
+    expect(await commands.session.switchSession({ sessionId: "架空の別セッション" })).toEqual({
+      ok: false,
+      reason: FRAME_ERROR_REASON.driverFailed,
+    })
+    expect(recorded.withdrawCount()).toBe(1)
   })
 
   it("ターン進行中の session.switchSession は定型文の理由で受け付けず、駆動を閉じない", async () => {

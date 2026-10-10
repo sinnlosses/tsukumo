@@ -93,6 +93,8 @@ async function start(openFileResult = true): Promise<Started> {
         rememberSessionDefault: unexpected,
         readAchievementDay: unexpected,
         diary: { kind: "dont-write" },
+        reserveSession: unexpected,
+        withdrawSessionClaim: unexpected,
       },
       characterPack: {
         editCharacter: unexpected,

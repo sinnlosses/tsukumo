@@ -40,6 +40,7 @@ const emptyViewServerOptions: ViewServerOptions = {
     readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
     readPlanUsage: () => Promise.resolve(UNAVAILABLE_PLAN_USAGE),
     readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
+    readOccupiedSessionIds: () => Promise.resolve([]),
     readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
     readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
     reportBrowserError: () => {},
