@@ -376,6 +376,7 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 書いた順に、`--wait-for` の待ちのあと・`--scroll-to` の前に当てる。1つでも当たらなければ
 撮らずに失敗で終わる（撮影のカタログの `prepare` は当たらない手を飛ばして撮る）。
 語彙と当て方は `scripts/lib/capture-preparation.ts` で共有している。
+タスクの一覧・詳細を撮るときは、作業ツリーの根の `.tsukumo/fake-beads-issues.json` に架空の課題を `bd list --json` の形の配列で置く（撮ったら消す。実データを写さないため）。一覧を開いて行を押すには `capture-view.ts --scene report --click 'button:has-text("一覧を見る")' --click '[role="option"]:has-text("架空の文字")'` の形で当たる（`li:has-text(…)` は当たらない）。狭い窓（720px）では、先に引き出しを開いて（`button[aria-label="やり取りとタスクを開く"]`）タスクのタブ（`[role="tab"]:has-text("タスク")`。話題モードでは「話題」）を押す。
 **待ち時間が経たないと出ない画（待ちの一言など）は `--advance <ms>` で偽の時計を進めて撮る。**
 `Temporal.Now` も進んだ時刻に従うので、経過の秒数のような時刻の表示も進んだ値で描かれる。
 
