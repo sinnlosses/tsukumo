@@ -29,7 +29,8 @@
   line-height: 1.4;
   white-space: nowrap;
 }
-.work-strip-chip[data-result="working"] {
+.work-strip-chip[data-result="working"],
+.work-strip-chip[data-result="background"] {
   --work-strip-dot: var(--accent);
 }
 .work-strip-chip[data-result="awaiting-answer"] {

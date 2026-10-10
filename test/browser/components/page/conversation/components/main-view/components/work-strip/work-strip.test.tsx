@@ -107,6 +107,28 @@ describe("WorkStrip", () => {
     expect(strip().querySelector("p")?.textContent).toContain("再試行中 2/10")
   })
 
+  it("ターンが終わって背景のタスクだけ残るあいだは、チップが「背景で作業中」を回さない点で言う", () => {
+    putSession(
+      stateAfter([
+        REQUEST,
+        plan(1),
+        {
+          kind: "background-tasks-changed",
+          tasks: [{ taskId: "fake-bg-1", kind: "shell", description: "架空の待ち" }],
+        },
+        { kind: "turn-finished", outcome: { kind: "completed" } },
+      ]),
+    )
+    render(<WorkStrip />)
+
+    const chip = strip().querySelector("[data-result]")
+    expect(strip().getAttribute("data-work-strip")).toBe("working")
+    expect(chip?.getAttribute("data-result")).toBe("background")
+    expect(chip?.textContent).toBe("背景で作業中")
+    expect(chip?.querySelector("[class*='work-strip-spinner']")).toBeNull()
+    expect(chip?.querySelector("[class*='work-strip-dot']")).not.toBeNull()
+  })
+
   it("ターンが閉じると帯は済んだ姿の1行で残り、段の数だけ済んだと言う", () => {
     putSession(
       stateAfter([

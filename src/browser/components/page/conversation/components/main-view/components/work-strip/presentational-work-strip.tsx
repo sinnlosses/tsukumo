@@ -8,7 +8,7 @@ import type { ReactElement } from "react"
 import { CurrentWorkStepGroup } from "../../../../../../../features/current-work/components/current-work-step-group.tsx"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import { TURN_RESULT_MARKS, type WorkStripResult } from "../../../../domain/turn-result-mark.ts"
+import { WORK_STRIP_MARKS, type WorkStripResult } from "../../../../domain/turn-result-mark.ts"
 import type { WorkActivity } from "../../domain/work-activity.ts"
 import { useFailedStepFocus } from "./hooks/use-failed-step-focus.ts"
 import type {
@@ -63,7 +63,7 @@ export function PresentationalWorkStrip(props: {
 
 /** 状態のチップ。印は色の点で、作業中だけ回る輪にする。 */
 function StateChip(props: { readonly result: WorkStripResult }): ReactElement {
-  const { label } = TURN_RESULT_MARKS[props.result]
+  const { label } = WORK_STRIP_MARKS[props.result]
   return (
     <span className={styles["work-strip-chip"]} data-result={props.result}>
       {props.result === "working" ? (

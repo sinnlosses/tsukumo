@@ -318,6 +318,17 @@ describe("useWorkStrip（状態）", () => {
     expect(resultAfter([request, plan, askedPending()])).toBe("awaiting-answer")
   })
 
+  it("ターンが終わって背景のタスクだけ残るあいだは背景で作業中、答え待ちがあれば答え待ち、背景が無ければ今までどおり", () => {
+    const left: SessionEvent = {
+      kind: "background-tasks-changed",
+      tasks: [{ taskId: "fake-bg-1", kind: "shell", description: "架空の待ち" }],
+    }
+    expect(resultAfter([request, plan, left])).toBe("working")
+    expect(resultAfter([request, plan, left, completed])).toBe("background")
+    expect(resultAfter([request, plan, left, askedPending(), completed])).toBe("awaiting-answer")
+    expect(resultAfter([request, plan, taskOf("finished"), completed])).toBe("done")
+  })
+
   it("閉じたあとは、最後の本文の終わり方で完了・答え待ち・止めたを区別する", () => {
     expect(resultAfter([request, plan, taskOf("finished"), completed])).toBe("done")
     expect(resultAfter([request, plan, taskOf("awaiting-answer"), completed])).toBe(

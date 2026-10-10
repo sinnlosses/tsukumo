@@ -77,7 +77,7 @@ export type WorkStripSteps = {
  * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「4/7 · 経過 6分12秒」・2行目（段取りが届く前は段の丸が無く字は空。チップが「作業中」を言うので重ねない）
  * - `finished`: 中身がレポートに入れ替わったあと。済んだ姿の字・「所要 21分49秒」の1行（段取りが無ければ字は空）
  *
- * `result` は状態のチップの状態。`working` は作業中か答え待ち、`finished` は完了・答え待ち・止めた・失敗。
+ * `result` は状態のチップの状態。`working` は作業中・答え待ち・背景で作業中（ターンが終わって背景のタスクだけ残る）、`finished` は完了・答え待ち・止めた・失敗。
  */
 export type WorkStripModel =
   | { readonly kind: "none" }
@@ -124,7 +124,9 @@ export function useWorkStrip(): WorkStripModel {
   const plan = turnStepList.kind === "turn" ? turnStepList.plan : NO_PLAN
   const working = content.kind === "work"
   const newestResult = turnResultsOf(turns, moment).at(-1)
-  const result = stripResultOf(newestResult, working, plan)
+  const result = stripResultOf(newestResult, working, plan, {
+    leftToBackground: turn.kind !== "running" && pending.length === 0 && backgroundTasks.length > 0,
+  })
   const shown = content.kind !== "welcome" && result !== undefined
   const now = useNowWhile(shown && isTurnCounting(turn, backgroundTasks.length))
 
@@ -205,9 +207,13 @@ function stripResultOf(
   newest: TurnResult | undefined,
   working: boolean,
   plan: LatestWorkPlan,
+  { leftToBackground }: { readonly leftToBackground: boolean },
 ): WorkStripResult | undefined {
   if (working) {
-    return newest === "awaiting-answer" ? newest : "working"
+    if (newest === "awaiting-answer") {
+      return newest
+    }
+    return leftToBackground ? "background" : "working"
   }
   if (newest !== undefined && newest !== "no-report") {
     return newest
