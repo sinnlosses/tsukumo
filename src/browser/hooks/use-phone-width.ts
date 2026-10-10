@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react"
 
-const PHONE_QUERY = "(max-width: 760px)"
+export const PHONE_QUERY = "(max-width: 760px)"
 
 export function usePhoneWidth(): boolean {
   return useSyncExternalStore(subscribe, isPhoneWidth, readServer)

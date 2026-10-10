@@ -312,4 +312,25 @@ describe("会話の画面の段", () => {
     })
     await page.getByRole("button", { name: "手順", exact: false }).first().click({ timeout: 3_000 })
   })
+
+  it("引き出しを開いたまま窓を広げても、広い画面の本文が押せるまま（隠れた引き出しがページを塞がない）", async () => {
+    const room = await run.open({
+      scenario: "conversation-tier-drawer-widen",
+      scene: "phone-layout",
+      viewport: "phone",
+      domRoots: ["screen-nav"],
+    })
+    const { page } = room
+
+    await menuToggle(page).click()
+    await page.getByRole("dialog", { name: "引き出し" }).waitFor()
+    expect(await page.evaluate(() => document.querySelector("dialog:modal") !== null)).toBe(true)
+
+    await room.resize(VIEWPORTS.large)
+    await sidebar(page).waitFor()
+    await page.waitForFunction(() => document.querySelector("dialog:modal") === null, undefined, {
+      timeout: 3_000,
+    })
+    await page.getByRole("button", { name: "手順", exact: false }).first().click({ timeout: 3_000 })
+  })
 })

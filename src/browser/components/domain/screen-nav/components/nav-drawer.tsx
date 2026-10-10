@@ -1,5 +1,5 @@
 // 狭い画面（760px 以下）の頭の右上の ≡ と、押すと右から出る引き出し。
-// 広い画面では ≡ ごと頭が CSS で消えるので、ここは幅を測らない。
+// 広い画面では ≡ ごと頭が CSS で消えるので、幅を見るのは開いたまま広がったときに閉じる側だけ。
 //
 // 引き出しはモーダルの `<dialog>` で、閉じ方（覆い・Esc）は `<Dialog>` が持つ。
 // ≡ は覆いの下になるので、開いているあいだに ≡ の位置を押すと覆いに当たって閉じる。
@@ -10,6 +10,7 @@ import clsx from "clsx"
 import { Settings } from "lucide-react"
 import { useId, useRef, type ReactElement, type ReactNode } from "react"
 
+import { useCloseWhenWide } from "../../../../hooks/use-close-when-wide.ts"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import type { NavDrawerView, ScreenNavParts } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
@@ -74,6 +75,7 @@ export type NavDrawerProps = {
 
 export function NavDrawer(props: NavDrawerProps): ReactElement {
   const { drawer } = props
+  useCloseWhenWide(drawer.open, drawer.onClose)
   return (
     <Dialog
       open={drawer.open}
