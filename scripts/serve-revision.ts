@@ -9,8 +9,8 @@
 //
 // 使い方:
 //   node scripts/serve-revision.ts HEAD~1                      # 1つ前のコミットを起こす
-//   node scripts/serve-revision.ts HEAD~1 --port 7341 --scene notation-figure
-//   node scripts/stop.ts --port 7340                           # 止める（必ず打つ）
+//   node scripts/serve-revision.ts HEAD~1 --port 7336 --scene notation-figure
+//   node scripts/stop.ts --port 7338                           # 止める（必ず打つ）
 //
 // 起こしたものは自分では止まらない。撮り終えたら `node scripts/stop.ts --port` で止める
 // （`pkill` / `killall` は広く狙う形を拒否する hook に止められる）。この道具は子が死ぬと一緒に
@@ -44,11 +44,12 @@ import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
 const SCRATCH_ROOT = "/tmp/tsukumo-revision"
 
 /**
- * 既定のポート。利用者の tsukumo（7327〜7330 あたり）から離し、かつ `node scripts/stop.ts` を
+ * 既定のポート。部屋の名前が色名になる範囲（`roomName`）の末尾で、利用者の tsukumo
+ * （7327〜7330 あたり）から離れている。かつ `node scripts/stop.ts` を
  * 引数なしで打ったときに一覧する範囲（既定ポートから `VIEW_PORT_FALLBACK_ATTEMPTS` 個ぶん）の
  * 中に収める — 止め忘れたときに一覧から見つかるようにする。
  */
-const DEFAULT_PORT = 7340
+const DEFAULT_PORT = 7338
 
 /** 起こした tsukumo が URL を出すまで待つ上限（ミリ秒）。 */
 const LAUNCH_TIMEOUT_MS = 30_000
@@ -130,12 +131,14 @@ function extractRevision(commit: string): Revision | undefined {
     return undefined
   }
 
-  const treeDir = path.join(SCRATCH_ROOT, sha, "tree")
-  const homeDir = path.join(SCRATCH_ROOT, sha, "home")
+  const treeName = path.basename(repositoryRoot())
+  const scratchDir = path.join(SCRATCH_ROOT, sha, treeName)
+  const treeDir = path.join(scratchDir, treeName)
+  const homeDir = path.join(scratchDir, "home")
   mkdirSync(treeDir, { recursive: true })
   mkdirSync(homeDir, { recursive: true })
 
-  const indexFile = path.join(SCRATCH_ROOT, sha, "index")
+  const indexFile = path.join(scratchDir, "index")
   if (
     git(["read-tree", sha], indexFile) === undefined ||
     git(["--work-tree", treeDir, "checkout-index", "-a", "-f"], indexFile) === undefined
