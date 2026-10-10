@@ -5,6 +5,7 @@
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { readE2eUpdateArgument } from "./e2e-update-argument.ts"
 import { parseShellCommand, type SimpleCommand } from "./shell-command.ts"
 
 /** 着手中の1件につき、E2E を全部流してよい回数。 */
@@ -83,9 +84,11 @@ function classifyE2eRun(simple: SimpleCommand, twVerifyKind: TwVerifyKind): E2eR
     if (script === "scripts/check.ts") {
       return checkKind(scriptArgs)
     }
-    return script === "scripts/e2e-update.ts" && scriptArgs.every((arg) => arg.startsWith("-"))
-      ? "always"
-      : "no"
+    if (script === "scripts/e2e-update.ts") {
+      const { kind } = readE2eUpdateArgument(scriptArgs)
+      return kind === "full" || kind === "changed" ? "always" : "no"
+    }
+    return "no"
   }
   if (head === "pnpm") {
     return classifyPnpmScript(rest)

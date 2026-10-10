@@ -33,8 +33,20 @@ describe("E2E を全部流すコマンドの数え方", () => {
     ["nice を前置きした check --full", "nice pnpm run check --full"],
     ["ファイルを渡さない期待値の撮り直し", "node scripts/e2e-update.ts --full"],
     ["E2E の設定でファイルを指さない vitest", "vitest run --config vitest.e2e.config.ts"],
+    [
+      "--full にファイルが続く期待値の撮り直し",
+      "node scripts/e2e-update.ts --full test/e2e/example.test.ts",
+    ],
   ])("%s は変えたファイルに関わらず1回と数える", (_name, command) => {
     expect(countOf(command, false)).toBe(1)
+  })
+
+  test.each([
+    ["--help の期待値の撮り直し", "node scripts/e2e-update.ts --help"],
+    ["知らないフラグの期待値の撮り直し", "node scripts/e2e-update.ts --foo"],
+    ["ファイルを渡す期待値の撮り直し", "node scripts/e2e-update.ts test/e2e/example.test.ts"],
+  ])("%s は E2E を全部流さないので数えない", (_name, command) => {
+    expect(countOf(command, true)).toBe(0)
   })
 
   test.each([
