@@ -41,28 +41,6 @@ export function colorSwatch(text: string, readToken: ColorTokenReader): ColorSwa
 }
 
 /**
- * ページのトークンを実効の色に解決する（ブラウザの中でだけ動く）。
- * `getComputedStyle` でカスタムプロパティを直接読むと式のまま返るので、いったん要素の `color` に載せてから読み戻す。
- * 色でないトークン（`font-body` など）は `color` に載せると無効になって親の色を継ぐので、親に置いた見張りの色がそのまま返ってきたら色ではないと見なす。
- */
-function readColorTokenFromPage(name: string): ResolvedColor | undefined {
-  const root = document.documentElement
-  if (getComputedStyle(root).getPropertyValue(`--${name}`).trim() === "") {
-    return undefined
-  }
-  const sentinel = document.createElement("span")
-  sentinel.style.color = SENTINEL_COLOR
-  const probe = document.createElement("span")
-  probe.style.color = `var(--${name})`
-  sentinel.append(probe)
-  root.append(sentinel)
-  const sentinelColor = getComputedStyle(sentinel).color
-  const probeColor = getComputedStyle(probe).color
-  sentinel.remove()
-  return probeColor === sentinelColor ? undefined : parseComputedColor(probeColor)
-}
-
-/**
  * 読み口を包み、同じ名前は stamp が変わるまで覚えた色を返す（`undefined` も覚える）。
  * 色を動かす書き込みはすべてルート要素の style 属性に入る（上書きの3色・差し色）ので、stamp にはその属性の文字列を渡す。
  */
@@ -90,6 +68,28 @@ export const readColorToken: ColorTokenReader = cachedColorTokenReader(
   readColorTokenFromPage,
   rootStyleStamp,
 )
+
+/**
+ * ページのトークンを実効の色に解決する（ブラウザの中でだけ動く）。
+ * `getComputedStyle` でカスタムプロパティを直接読むと式のまま返るので、いったん要素の `color` に載せてから読み戻す。
+ * 色でないトークン（`font-body` など）は `color` に載せると無効になって親の色を継ぐので、親に置いた見張りの色がそのまま返ってきたら色ではないと見なす。
+ */
+function readColorTokenFromPage(name: string): ResolvedColor | undefined {
+  const root = document.documentElement
+  if (getComputedStyle(root).getPropertyValue(`--${name}`).trim() === "") {
+    return undefined
+  }
+  const sentinel = document.createElement("span")
+  sentinel.style.color = SENTINEL_COLOR
+  const probe = document.createElement("span")
+  probe.style.color = `var(--${name})`
+  sentinel.append(probe)
+  root.append(sentinel)
+  const sentinelColor = getComputedStyle(sentinel).color
+  const probeColor = getComputedStyle(probe).color
+  sentinel.remove()
+  return probeColor === sentinelColor ? undefined : parseComputedColor(probeColor)
+}
 
 function rootStyleStamp(): string {
   return document.documentElement.getAttribute("style") ?? ""

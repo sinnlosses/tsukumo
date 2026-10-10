@@ -93,13 +93,13 @@ export function htmlInline(text: string): string {
   return escapeHtml(text.replace(/\s+/g, " ").trim())
 }
 
-function escapeHtml(text: string): string {
-  return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
-}
-
 /** 二重引用符で囲む HTML 属性の値に埋める1行の文字。`htmlInline` に加えて `"` も逃がす。 */
 export function htmlAttribute(text: string): string {
   return htmlInline(text).replaceAll('"', "&quot;")
+}
+
+function escapeHtml(text: string): string {
+  return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 }
 
 /**

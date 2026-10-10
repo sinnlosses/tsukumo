@@ -74,11 +74,6 @@ export type HashRoute = {
 /** hash の値の型。スナップショットが同じ値なら描き直さないよう、プリミティブに限る。 */
 type HashSnapshot = string | number
 
-/** 画面と hash の `?` より前の対応。会話の画面だけ空（`#` だけになる）で、ほかは画面名そのまま。 */
-function pathOf(screen: Screen): string {
-  return screen === "conversation" ? "" : screen
-}
-
 const TURN_PARAM = "turn"
 const PACK_PARAM = "pack"
 const DATE_PARAM = "date"
@@ -120,6 +115,11 @@ export function formatHash(route: HashRoute): string {
   }
   const query = params.toString()
   return `#${pathOf(route.screen)}${query === "" ? "" : `?${query}`}`
+}
+
+/** 画面と hash の `?` より前の対応。会話の画面だけ空（`#` だけになる）で、ほかは画面名そのまま。 */
+function pathOf(screen: Screen): string {
+  return screen === "conversation" ? "" : screen
 }
 
 function parseHash(hash: string): HashRoute {

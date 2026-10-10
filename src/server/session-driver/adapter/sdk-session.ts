@@ -113,18 +113,6 @@ export function createSessionDigestReader(
   }
 }
 
-/** transcript の印。大きさの分からない保存先・印が読めなかったときは undefined（毎回読む）。 */
-async function readTranscriptStamp(sessionId: string): Promise<TranscriptStamp | undefined> {
-  try {
-    const info = await getSessionInfo(sessionId)
-    return info?.fileSize === undefined
-      ? undefined
-      : { lastModified: info.lastModified, fileSize: info.fileSize }
-  } catch {
-    return undefined
-  }
-}
-
 /**
  * ターンの終わりに tsukumo の印を付け直す予約をする（次に起こしたときに自分のセッションを見分けるため）。
  * 本体側の書き込みと重ならないように {@link SESSION_TAG_DELAY_MS} だけ待つ。
@@ -134,19 +122,6 @@ export function scheduleMarkSession(sessionId: string, options: SessionDriverOpt
   setTimeout(() => {
     void markSession(sessionId, options)
   }, SESSION_TAG_DELAY_MS).unref()
-}
-
-/**
- * セッションに tsukumo の印を付け、付いたら `onSessionMarked` で知らせる。失敗しても続行する。
- * 付かなかったときに起きるのは「次回は新規から始まる」ことだけで、いま動いているセッションには影響しない。
- */
-async function markSession(sessionId: string, options: SessionDriverOptions): Promise<void> {
-  try {
-    await tagSession(sessionId, options.tag, { dir: options.cwd })
-    options.onSessionMarked(sessionId)
-  } catch {
-    // 印が付かないだけなので、何も流さずに諦める。
-  }
 }
 
 /**
@@ -199,5 +174,30 @@ export function createSessionTitleWriter(): SessionTitleWriter {
     noteConversationCleared() {
       state = noteConversationCleared(state)
     },
+  }
+}
+
+/** transcript の印。大きさの分からない保存先・印が読めなかったときは undefined（毎回読む）。 */
+async function readTranscriptStamp(sessionId: string): Promise<TranscriptStamp | undefined> {
+  try {
+    const info = await getSessionInfo(sessionId)
+    return info?.fileSize === undefined
+      ? undefined
+      : { lastModified: info.lastModified, fileSize: info.fileSize }
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * セッションに tsukumo の印を付け、付いたら `onSessionMarked` で知らせる。失敗しても続行する。
+ * 付かなかったときに起きるのは「次回は新規から始まる」ことだけで、いま動いているセッションには影響しない。
+ */
+async function markSession(sessionId: string, options: SessionDriverOptions): Promise<void> {
+  try {
+    await tagSession(sessionId, options.tag, { dir: options.cwd })
+    options.onSessionMarked(sessionId)
+  } catch {
+    // 印が付かないだけなので、何も流さずに諦める。
   }
 }

@@ -223,6 +223,33 @@ export function chatEpisodeDrafts(
 }
 
 /**
+ * パック1つぶんの写しを読み、最近の話題の見出しにして返す（写しがまだ無い・読めないときは空）。
+ * 書いたあとの写しを読み直すので、画面に出る見出しは次に起こしたときと同じものになる。
+ */
+export function readChatTopics(chatSummary: ChatSummary): readonly string[] {
+  return chatTopics(chatSummary.read()?.summary ?? "")
+}
+
+/**
+ * あらすじの本文のいちばん最後に、話題の見出しを {@link CHAT_TOPICS_OPEN} と {@link CHAT_TOPICS_CLOSE} の行で挟んで置く（1行1件、`- ` で始める）。
+ * 末尾に置くのは、上限で古いほう（先頭側）の行から落ちても組が先に落ちないため。
+ * 見出しが0件でも組は置く（{@link chatTopics} が空を読む）。
+ */
+export function chatSummaryWithTopics(synopsis: string, topics: readonly string[]): string {
+  const block = [CHAT_TOPICS_OPEN, ...topics.map((topic) => `- ${topic}`), CHAT_TOPICS_CLOSE]
+  const body = synopsis.trimEnd()
+  return [...(body === "" ? [] : [body]), ...block].join("\n")
+}
+
+/**
+ * 写しの本文から話題の組（{@link CHAT_TOPICS_OPEN} から次の {@link CHAT_TOPICS_CLOSE} まで）をすべて除いた、あらすじの地の文を返す。
+ * 閉じの無い組は組と見なさず残す。
+ */
+export function chatSynopsis(summary: string): string {
+  return summary.replaceAll(TOPICS_BLOCK, "").trim()
+}
+
+/**
  * 依頼の文面。
  * 畳む行を1始まりの行番号つきで並べ（日付が変わるところに見出しを挟む）、前のあらすじと直前のエピソードの見出しを続ける。
  */
@@ -403,31 +430,4 @@ function chatTopics(summary: string): readonly string[] {
     .map((line) => line.trim().replace(LIST_MARKER, "").trim())
     .filter((topic) => topic !== "")
     .slice(0, CHAT_TOPIC_LIMIT)
-}
-
-/**
- * パック1つぶんの写しを読み、最近の話題の見出しにして返す（写しがまだ無い・読めないときは空）。
- * 書いたあとの写しを読み直すので、画面に出る見出しは次に起こしたときと同じものになる。
- */
-export function readChatTopics(chatSummary: ChatSummary): readonly string[] {
-  return chatTopics(chatSummary.read()?.summary ?? "")
-}
-
-/**
- * あらすじの本文のいちばん最後に、話題の見出しを {@link CHAT_TOPICS_OPEN} と {@link CHAT_TOPICS_CLOSE} の行で挟んで置く（1行1件、`- ` で始める）。
- * 末尾に置くのは、上限で古いほう（先頭側）の行から落ちても組が先に落ちないため。
- * 見出しが0件でも組は置く（{@link chatTopics} が空を読む）。
- */
-export function chatSummaryWithTopics(synopsis: string, topics: readonly string[]): string {
-  const block = [CHAT_TOPICS_OPEN, ...topics.map((topic) => `- ${topic}`), CHAT_TOPICS_CLOSE]
-  const body = synopsis.trimEnd()
-  return [...(body === "" ? [] : [body]), ...block].join("\n")
-}
-
-/**
- * 写しの本文から話題の組（{@link CHAT_TOPICS_OPEN} から次の {@link CHAT_TOPICS_CLOSE} まで）をすべて除いた、あらすじの地の文を返す。
- * 閉じの無い組は組と見なさず残す。
- */
-export function chatSynopsis(summary: string): string {
-  return summary.replaceAll(TOPICS_BLOCK, "").trim()
 }

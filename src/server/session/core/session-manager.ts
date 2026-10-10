@@ -229,20 +229,6 @@ type PendingConclusion = {
   readonly takeAndClear: () => string | undefined
 }
 
-function createPendingConclusion(): PendingConclusion {
-  let current: string | undefined = undefined
-  return {
-    hold: (conclusion) => {
-      current = conclusion
-    },
-    takeAndClear: () => {
-      const conclusion = current
-      current = undefined
-      return conclusion
-    },
-  }
-}
-
 /**
  * 駆動1代ぶんの持ち物。起こし直しはこれを丸ごと作り直すことで、代のあいだだけ意味のある勘定を1つずつ手で空へ戻さない。
  * 代をまたいで残るもの（購読者・棚・コンテキストの内訳を書いたセッションID）はここに入れない。
@@ -692,5 +678,19 @@ function isReadableSession(state: SessionState, sessionId: string): boolean {
 function publish(frame: ServerFrame, subscribers: ReadonlySet<(frame: ServerFrame) => void>): void {
   for (const send of subscribers) {
     send(frame)
+  }
+}
+
+function createPendingConclusion(): PendingConclusion {
+  let current: string | undefined = undefined
+  return {
+    hold: (conclusion) => {
+      current = conclusion
+    },
+    takeAndClear: () => {
+      const conclusion = current
+      current = undefined
+      return conclusion
+    },
   }
 }

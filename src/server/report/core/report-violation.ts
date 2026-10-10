@@ -116,23 +116,6 @@ export function containedNotationsInSections(
   return markdownNotationsAt(sections, true)
 }
 
-function markdownNotationsAt(
-  sections: readonly ReportSection[],
-  inContainer: boolean,
-): readonly MarkdownNotation[] {
-  const markdowns = markdownsOf(sections)
-  return MARKDOWN_NOTATIONS.filter((notation) =>
-    markdowns.some((markdown) => hasNotation(markdown, notation, inContainer)),
-  )
-}
-
-/** 逃げ道（`markdown` の塊）の中身を、塊ごとにフェンスの外の行とフェンスの並びに分けたもの。 */
-function markdownsOf(sections: readonly ReportSection[]): readonly SplitMarkdown[] {
-  return sections
-    .flatMap((section) => section.blocks)
-    .flatMap((block) => (block.kind === "markdown" ? [splitFences(block.markdown)] : []))
-}
-
 /**
  * 塊の無い記法（塊に当てはまらない記法）。
  * `colsCard` は表から外したあとも、書かれ続けるかを見るために数える。
@@ -297,6 +280,23 @@ const VIOLATION_THRESHOLDS = {
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)
+
+function markdownNotationsAt(
+  sections: readonly ReportSection[],
+  inContainer: boolean,
+): readonly MarkdownNotation[] {
+  const markdowns = markdownsOf(sections)
+  return MARKDOWN_NOTATIONS.filter((notation) =>
+    markdowns.some((markdown) => hasNotation(markdown, notation, inContainer)),
+  )
+}
+
+/** 逃げ道（`markdown` の塊）の中身を、塊ごとにフェンスの外の行とフェンスの並びに分けたもの。 */
+function markdownsOf(sections: readonly ReportSection[]): readonly SplitMarkdown[] {
+  return sections
+    .flatMap((section) => section.blocks)
+    .flatMap((block) => (block.kind === "markdown" ? [splitFences(block.markdown)] : []))
+}
 
 function violationLine(violation: ReportViolation): string {
   switch (violation.kind) {

@@ -105,54 +105,6 @@ export function findSectionReferences(sourcePath: string, text: string): Section
 }
 
 /**
- * パス（と番号・「の」）で行が終わり、次の行の頭（継続行の記号を除いたあと）が「で始まる形を拾う。
- */
-function findReferenceAcrossLineBreak(
-  sourcePath: string,
-  lines: readonly string[],
-  index: number,
-  lineText: string,
-): SectionReference[] {
-  const nextLine = lines[index + 1]
-  if (nextLine === undefined) {
-    return []
-  }
-  const strippedNextLine = nextLine.replace(CONTINUATION_PREFIX, "")
-  if (!strippedNextLine.startsWith("「")) {
-    return []
-  }
-  const match = REFERENCE_HEAD_WITHOUT_BRACKET.exec(lineText)
-  if (match === null) {
-    return []
-  }
-  return toReference(
-    sourcePath,
-    index + 1,
-    match[1],
-    strippedNextLine.slice("「".length),
-    lines.slice(index + 2, index + 2 + MAX_CONTINUATION_LINES),
-  )
-}
-
-/** 一致から参照を1つ組み立てる。参照先が無い・記録先・句が読めない・空のときは捨てる。 */
-function toReference(
-  sourcePath: string,
-  line: number,
-  targetPath: string | undefined,
-  afterOpen: string,
-  continuation: readonly string[],
-): SectionReference[] {
-  if (targetPath === undefined || isRecord(targetPath)) {
-    return []
-  }
-  const phrase = readPhrase(afterOpen, continuation)
-  if (phrase === undefined || phrase.length === 0) {
-    return []
-  }
-  return [{ sourcePath, line, targetPath, phrase }]
-}
-
-/**
  * 参照のうち、句が参照先に見つからないものを返す。`targets` は参照先のパスから本文への対応で、
  * 無いパスは「参照先が無い」として返す。
  */
@@ -208,6 +160,54 @@ export function formatStrayReference(stray: StrayReference): string {
 /** 参照を拾う対象にするかどうか（記録は外す）。パスはリポジトリ直下からの相対。 */
 export function isScannedSource(path: string): boolean {
   return !UNSCANNED_PREFIXES.some((prefix) => path.startsWith(prefix))
+}
+
+/**
+ * パス（と番号・「の」）で行が終わり、次の行の頭（継続行の記号を除いたあと）が「で始まる形を拾う。
+ */
+function findReferenceAcrossLineBreak(
+  sourcePath: string,
+  lines: readonly string[],
+  index: number,
+  lineText: string,
+): SectionReference[] {
+  const nextLine = lines[index + 1]
+  if (nextLine === undefined) {
+    return []
+  }
+  const strippedNextLine = nextLine.replace(CONTINUATION_PREFIX, "")
+  if (!strippedNextLine.startsWith("「")) {
+    return []
+  }
+  const match = REFERENCE_HEAD_WITHOUT_BRACKET.exec(lineText)
+  if (match === null) {
+    return []
+  }
+  return toReference(
+    sourcePath,
+    index + 1,
+    match[1],
+    strippedNextLine.slice("「".length),
+    lines.slice(index + 2, index + 2 + MAX_CONTINUATION_LINES),
+  )
+}
+
+/** 一致から参照を1つ組み立てる。参照先が無い・記録先・句が読めない・空のときは捨てる。 */
+function toReference(
+  sourcePath: string,
+  line: number,
+  targetPath: string | undefined,
+  afterOpen: string,
+  continuation: readonly string[],
+): SectionReference[] {
+  if (targetPath === undefined || isRecord(targetPath)) {
+    return []
+  }
+  const phrase = readPhrase(afterOpen, continuation)
+  if (phrase === undefined || phrase.length === 0) {
+    return []
+  }
+  return [{ sourcePath, line, targetPath, phrase }]
 }
 
 function isRecord(path: string): boolean {

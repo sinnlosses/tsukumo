@@ -136,6 +136,51 @@ export function isSubagentMessage(message: unknown): boolean {
   return isPlainObject(message) && optionalString(message.parent_tool_use_id) !== undefined
 }
 
+/**
+ * `report` の引数を取り出す。
+ * `sections` は塊ごとに検証して崩れた塊・知らない種類の塊を落とす（{@link parseReportSections}）。
+ * `sections` の無い呼び出し（引数が文字列の `body` だったころの transcript）は、`body` を逃げ道の塊1つの節に畳む（{@link reportSectionsOfBody}）。
+ * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。
+ * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。`workPlanClosing` も同じ。
+ * `closing` の「無い」（引数に `closing` が無かったころの transcript）は `none` に畳む。
+ * `waitingLine` の「無い」（省いた・文が空白だけ・形の崩れ）も `none` に畳む。
+ * `sessionSummary` の「無い」（空白だけも）は undefined。
+ * `conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、モデルには本体がエラーを返す）。
+ */
+export function reportEvents(
+  toolUseId: string,
+  input: unknown,
+  expressions: readonly Expression[],
+): readonly SessionEvent[] {
+  if (!isPlainObject(input) || typeof input.conclusion !== "string") {
+    return []
+  }
+
+  const parsed =
+    input.sections === undefined
+      ? { sections: reportSectionsOfBody(optionalString(input.body) ?? ""), unknownBlockCount: 0 }
+      : parseReportSections(input.sections)
+
+  return [
+    {
+      kind: "report",
+      toolUseId,
+      conclusion: input.conclusion,
+      sections: parsed.sections,
+      favor: optionalString(input.favor) ?? "",
+      checks: parseReportChecks(input.checks),
+      task: parseReportTask(input.task),
+      workPlanClosing: parseWorkPlanClosing(input.workPlanClosing),
+      closing: speechEvents(input.closing, expressions)[0] ?? { kind: "none" },
+      waitingLine: speechEvents(input.waitingLine, expressions).find(
+        (speech) => speech.text.trim() !== "",
+      ) ?? { kind: "none" },
+      unknownBlockCount: parsed.unknownBlockCount,
+      sessionSummary: nonBlankString(input.sessionSummary),
+    },
+  ]
+}
+
 function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly SessionEvent[] {
   if (typeof message.session_id !== "string") {
     return []
@@ -460,51 +505,6 @@ function speechEvents(
 
   return [
     { kind: "speech", text: input.text, expression: toExpression(input.expression, expressions) },
-  ]
-}
-
-/**
- * `report` の引数を取り出す。
- * `sections` は塊ごとに検証して崩れた塊・知らない種類の塊を落とす（{@link parseReportSections}）。
- * `sections` の無い呼び出し（引数が文字列の `body` だったころの transcript）は、`body` を逃げ道の塊1つの節に畳む（{@link reportSectionsOfBody}）。
- * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。
- * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。`workPlanClosing` も同じ。
- * `closing` の「無い」（引数に `closing` が無かったころの transcript）は `none` に畳む。
- * `waitingLine` の「無い」（省いた・文が空白だけ・形の崩れ）も `none` に畳む。
- * `sessionSummary` の「無い」（空白だけも）は undefined。
- * `conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、モデルには本体がエラーを返す）。
- */
-export function reportEvents(
-  toolUseId: string,
-  input: unknown,
-  expressions: readonly Expression[],
-): readonly SessionEvent[] {
-  if (!isPlainObject(input) || typeof input.conclusion !== "string") {
-    return []
-  }
-
-  const parsed =
-    input.sections === undefined
-      ? { sections: reportSectionsOfBody(optionalString(input.body) ?? ""), unknownBlockCount: 0 }
-      : parseReportSections(input.sections)
-
-  return [
-    {
-      kind: "report",
-      toolUseId,
-      conclusion: input.conclusion,
-      sections: parsed.sections,
-      favor: optionalString(input.favor) ?? "",
-      checks: parseReportChecks(input.checks),
-      task: parseReportTask(input.task),
-      workPlanClosing: parseWorkPlanClosing(input.workPlanClosing),
-      closing: speechEvents(input.closing, expressions)[0] ?? { kind: "none" },
-      waitingLine: speechEvents(input.waitingLine, expressions).find(
-        (speech) => speech.text.trim() !== "",
-      ) ?? { kind: "none" },
-      unknownBlockCount: parsed.unknownBlockCount,
-      sessionSummary: nonBlankString(input.sessionSummary),
-    },
   ]
 }
 

@@ -65,12 +65,6 @@ export function createAchievementCache(cwd: string): AchievementCache {
   }
 }
 
-/** `.beads` が見つかったあとに `bd list` で全件を読む。落ちても時間切れでも `unavailable`。 */
-async function readAllBeadsIssues(cwd: string): Promise<AchievementBeadsRead> {
-  const beads = await readBeadsIssues(cwd)
-  return beads.kind === "issues" ? doneTasksOfBeadsIssues(beads.issues) : "unavailable"
-}
-
 type AchievementRead = { readonly kind: "ok"; readonly achievement: DailyAchievement }
 type AchievementCalendarRead = { readonly kind: "ok"; readonly calendar: AchievementCalendar }
 type BeadsUnavailable = { readonly kind: "unavailable" }
@@ -135,6 +129,12 @@ export function readAchievementCalendar(
       }
     },
   )
+}
+
+/** `.beads` が見つかったあとに `bd list` で全件を読む。落ちても時間切れでも `unavailable`。 */
+async function readAllBeadsIssues(cwd: string): Promise<AchievementBeadsRead> {
+  const beads = await readBeadsIssues(cwd)
+  return beads.kind === "issues" ? doneTasksOfBeadsIssues(beads.issues) : "unavailable"
 }
 
 /** Beads を読み、終えたタスクを `toResult` で結果に組む。 */

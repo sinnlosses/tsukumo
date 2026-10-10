@@ -2,21 +2,6 @@
 
 const KANJI_DIGITS = ["〇", "一", "二", "三", "四", "五", "六", "七", "八", "九"] as const
 
-/** 4桁までの塊（千・百・十・一の位）を漢数字にする。0 なら空文字。 */
-function kanjiGroup(value: number): string {
-  const thousands = Math.floor(value / 1000)
-  const hundreds = Math.floor((value % 1000) / 100)
-  const tens = Math.floor((value % 100) / 10)
-  const ones = value % 10
-  const thousandsPart =
-    thousands === 0 ? "" : `${thousands === 1 ? "" : (KANJI_DIGITS[thousands] ?? "")}千`
-  const hundredsPart =
-    hundreds === 0 ? "" : `${hundreds === 1 ? "" : (KANJI_DIGITS[hundreds] ?? "")}百`
-  const tensPart = tens === 0 ? "" : `${tens === 1 ? "" : (KANJI_DIGITS[tens] ?? "")}十`
-  const onesPart = ones === 0 ? "" : (KANJI_DIGITS[ones] ?? "")
-  return `${thousandsPart}${hundredsPart}${tensPart}${onesPart}`
-}
-
 /**
  * 漢数字（0〜9999万台まで）。
  * 「万」は1でも頭に数字を置く（一万）が、「千」「百」「十」は1のとき数字を置かない（千・百・十）のが日本語の慣例で、そのとおりに書き分けている。
@@ -41,4 +26,19 @@ const WEEKDAY_KANJI = ["月", "火", "水", "木", "金", "土", "日"] satisfie
 /** 「水曜日」の形（`Temporal.PlainDate.dayOfWeek` は月曜が1、日曜が7）。 */
 export function kanjiWeekdayLabel(date: Temporal.PlainDate): string {
   return `${WEEKDAY_KANJI[date.dayOfWeek - 1] ?? ""}曜日`
+}
+
+/** 4桁までの塊（千・百・十・一の位）を漢数字にする。0 なら空文字。 */
+function kanjiGroup(value: number): string {
+  const thousands = Math.floor(value / 1000)
+  const hundreds = Math.floor((value % 1000) / 100)
+  const tens = Math.floor((value % 100) / 10)
+  const ones = value % 10
+  const thousandsPart =
+    thousands === 0 ? "" : `${thousands === 1 ? "" : (KANJI_DIGITS[thousands] ?? "")}千`
+  const hundredsPart =
+    hundreds === 0 ? "" : `${hundreds === 1 ? "" : (KANJI_DIGITS[hundreds] ?? "")}百`
+  const tensPart = tens === 0 ? "" : `${tens === 1 ? "" : (KANJI_DIGITS[tens] ?? "")}十`
+  const onesPart = ones === 0 ? "" : (KANJI_DIGITS[ones] ?? "")
+  return `${thousandsPart}${hundredsPart}${tensPart}${onesPart}`
 }

@@ -120,6 +120,59 @@ const DIARY_ALREADY_WRITTEN_REASON = "この問い合わせではもう `diary` 
 
 const DIARY_SAVE_FAILED_REASON = "いまは書けない。呼び直さなくてよい。"
 
+/** `diary` の引数の最上位に現れる、しおりの鍵。 */
+const DIARY_BOOKMARK_KEY = "bookmark"
+
+/**
+ * 引数の断片（累積した JSON の途中経過）の最上位に、しおりの鍵 `bookmark` が現れたかどうか。
+ * 文字列の中かどうかと入れ子の深さを数えながら読む。
+ * 呼ぶ側は累積したものを毎回渡し直す（鍵の名前が断片の切れ目をまたいでも拾えるのはそのため）。
+ */
+export function diaryArgumentHasBookmarkKey(accumulatedPartialJson: string): boolean {
+  let depth = 0
+  let inString = false
+  let escaped = false
+  let keyStart: number | undefined
+
+  const text = accumulatedPartialJson
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i]
+    if (inString) {
+      if (escaped) {
+        escaped = false
+      } else if (char === "\\") {
+        escaped = true
+      } else if (char === '"') {
+        inString = false
+        if (
+          depth === 1 &&
+          keyStart !== undefined &&
+          text.slice(keyStart, i) === DIARY_BOOKMARK_KEY
+        ) {
+          // 閉じた文字列が最上位の `bookmark` なら、続く `:`（間の空白は読み飛ばす）を確かめる。
+          let cursor = i + 1
+          while (cursor < text.length && /\s/.test(text[cursor] ?? "")) {
+            cursor += 1
+          }
+          if (text[cursor] === ":") {
+            return true
+          }
+        }
+      }
+      continue
+    }
+    if (char === '"') {
+      inString = true
+      keyStart = i + 1
+    } else if (char === "{" || char === "[") {
+      depth += 1
+    } else if (char === "}" || char === "]") {
+      depth -= 1
+    }
+  }
+  return false
+}
+
 function diaryBodyViolation(body: string): string | undefined {
   if (body.trim() === "") {
     return "`body` が空。空の本文は書けない。"
@@ -173,57 +226,4 @@ function diaryBookmarkOf(
       reason: submitted.reason,
     },
   }
-}
-
-/** `diary` の引数の最上位に現れる、しおりの鍵。 */
-const DIARY_BOOKMARK_KEY = "bookmark"
-
-/**
- * 引数の断片（累積した JSON の途中経過）の最上位に、しおりの鍵 `bookmark` が現れたかどうか。
- * 文字列の中かどうかと入れ子の深さを数えながら読む。
- * 呼ぶ側は累積したものを毎回渡し直す（鍵の名前が断片の切れ目をまたいでも拾えるのはそのため）。
- */
-export function diaryArgumentHasBookmarkKey(accumulatedPartialJson: string): boolean {
-  let depth = 0
-  let inString = false
-  let escaped = false
-  let keyStart: number | undefined
-
-  const text = accumulatedPartialJson
-  for (let i = 0; i < text.length; i += 1) {
-    const char = text[i]
-    if (inString) {
-      if (escaped) {
-        escaped = false
-      } else if (char === "\\") {
-        escaped = true
-      } else if (char === '"') {
-        inString = false
-        if (
-          depth === 1 &&
-          keyStart !== undefined &&
-          text.slice(keyStart, i) === DIARY_BOOKMARK_KEY
-        ) {
-          // 閉じた文字列が最上位の `bookmark` なら、続く `:`（間の空白は読み飛ばす）を確かめる。
-          let cursor = i + 1
-          while (cursor < text.length && /\s/.test(text[cursor] ?? "")) {
-            cursor += 1
-          }
-          if (text[cursor] === ":") {
-            return true
-          }
-        }
-      }
-      continue
-    }
-    if (char === '"') {
-      inString = true
-      keyStart = i + 1
-    } else if (char === "{" || char === "[") {
-      depth += 1
-    } else if (char === "}" || char === "]") {
-      depth -= 1
-    }
-  }
-  return false
 }

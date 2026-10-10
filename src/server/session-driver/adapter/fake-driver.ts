@@ -118,24 +118,6 @@ const fakeSessionStepSchema = z.object({
   waitForAnswer: z.boolean().default(false),
 })
 
-/** 手の並びの順に `afterMs` が減る最初の手を、`where`（場面名か opening）と位置つきで拒む。同じ値は通す。`waitForAnswer` の手は時刻の数え直しなので、前の手とは比べない。 */
-function rejectDescendingSteps(
-  steps: readonly { readonly afterMs: number; readonly waitForAnswer: boolean }[],
-  where: string,
-  ctx: z.RefinementCtx,
-): void {
-  const index = steps.findIndex(
-    (step, i) => i > 0 && !step.waitForAnswer && step.afterMs < (steps[i - 1]?.afterMs ?? 0),
-  )
-  if (index < 0) {
-    return
-  }
-  ctx.addIssue({
-    code: "custom",
-    message: `${where} の手 ${String(index)}（0始まり）の afterMs ${String(steps[index]?.afterMs)} が前の手の ${String(steps[index - 1]?.afterMs)} より小さい（afterMs は場面の始まりからの経過で、手の並びの順に増える）`,
-  })
-}
-
 /** 依頼1回ぶんの場面。名前で名指しできる（{@link FakeDriverOptions.scene}）。 */
 const fakeSessionSceneSchema = z
   .object({
@@ -489,6 +471,24 @@ export function startupSteps(
       afterMs: openingSpanMs + step.afterMs,
     })),
   ]
+}
+
+/** 手の並びの順に `afterMs` が減る最初の手を、`where`（場面名か opening）と位置つきで拒む。同じ値は通す。`waitForAnswer` の手は時刻の数え直しなので、前の手とは比べない。 */
+function rejectDescendingSteps(
+  steps: readonly { readonly afterMs: number; readonly waitForAnswer: boolean }[],
+  where: string,
+  ctx: z.RefinementCtx,
+): void {
+  const index = steps.findIndex(
+    (step, i) => i > 0 && !step.waitForAnswer && step.afterMs < (steps[i - 1]?.afterMs ?? 0),
+  )
+  if (index < 0) {
+    return
+  }
+  ctx.addIssue({
+    code: "custom",
+    message: `${where} の手 ${String(index)}（0始まり）の afterMs ${String(steps[index]?.afterMs)} が前の手の ${String(steps[index - 1]?.afterMs)} より小さい（afterMs は場面の始まりからの経過で、手の並びの順に増える）`,
+  })
 }
 
 /**

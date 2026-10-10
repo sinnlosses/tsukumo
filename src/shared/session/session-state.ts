@@ -533,6 +533,42 @@ export function applySessionEvent(
   )
 }
 
+/**
+ * 組み直した出来事を順に畳む。出来事に transcript の時刻があればその時刻で、無ければ直前に読めた時刻（まだ無ければ `now`）で畳む。
+ * 畳んで新しく積まれた・書き換わった記録の `stamped` は、読めた出来事なら `recovered`、読めなかった出来事なら `restored` に写し替える。
+ */
+export function applyRestoredEvents(
+  state: SessionState,
+  events: readonly RestoredEvent[],
+  now: number,
+): SessionState {
+  return events.reduce(
+    (fold, restored) => {
+      const at = restored.time.kind === "known" ? restored.time.at : fold.at
+      const before = new Set(fold.state.records)
+      const next = applySessionEvent(fold.state, restored.event, at)
+      return {
+        at,
+        state: {
+          ...next,
+          records: next.records.map((record) =>
+            before.has(record)
+              ? record
+              : mapRecordTimes(record, (time) =>
+                  time.kind !== "stamped"
+                    ? time
+                    : restored.time.kind === "known"
+                      ? { kind: "recovered", at: time.at }
+                      : { kind: "restored" },
+                ),
+          ),
+        },
+      }
+    },
+    { at: now, state },
+  ).state
+}
+
 /** {@link applySessionEvent} の本体（API の不調を下ろしたあとの姿に、イベント1件を畳む）。 */
 function foldSessionEvent(state: SessionState, event: SessionEvent, at: number): SessionState {
   switch (event.kind) {
@@ -884,42 +920,6 @@ function mapRecordTimes(
     }
   }
   return record
-}
-
-/**
- * 組み直した出来事を順に畳む。出来事に transcript の時刻があればその時刻で、無ければ直前に読めた時刻（まだ無ければ `now`）で畳む。
- * 畳んで新しく積まれた・書き換わった記録の `stamped` は、読めた出来事なら `recovered`、読めなかった出来事なら `restored` に写し替える。
- */
-export function applyRestoredEvents(
-  state: SessionState,
-  events: readonly RestoredEvent[],
-  now: number,
-): SessionState {
-  return events.reduce(
-    (fold, restored) => {
-      const at = restored.time.kind === "known" ? restored.time.at : fold.at
-      const before = new Set(fold.state.records)
-      const next = applySessionEvent(fold.state, restored.event, at)
-      return {
-        at,
-        state: {
-          ...next,
-          records: next.records.map((record) =>
-            before.has(record)
-              ? record
-              : mapRecordTimes(record, (time) =>
-                  time.kind !== "stamped"
-                    ? time
-                    : restored.time.kind === "known"
-                      ? { kind: "recovered", at: time.at }
-                      : { kind: "restored" },
-                ),
-          ),
-        },
-      }
-    },
-    { at: now, state },
-  ).state
 }
 
 /**

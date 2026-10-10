@@ -38,10 +38,6 @@ export type BalloonProps = {
   readonly interaction: BalloonInteraction
 }
 
-const NOOP = (): void => {
-  // reaction のときは使わない（フックは条件分岐せず常に呼ぶ）。
-}
-
 export function Balloon(props: BalloonProps): ReactElement {
   const { interaction } = props
   const press = useSpeechPress(interaction.kind === "toggleable" ? interaction.onToggle : NOOP)
@@ -112,4 +108,8 @@ export function Balloon(props: BalloonProps): ReactElement {
       {body}
     </div>
   )
+}
+
+const NOOP = (): void => {
+  // reaction のときは使わない（フックは条件分岐せず常に呼ぶ）。
 }

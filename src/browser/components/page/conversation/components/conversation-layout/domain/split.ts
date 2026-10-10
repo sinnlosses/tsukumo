@@ -34,19 +34,6 @@ export function percentFromRatio(ratio: number): number {
   return clampPercent(ratio * 100)
 }
 
-function clampPercent(value: number): number {
-  return Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value))
-}
-
-function isValidPercent(value: unknown): value is number {
-  return (
-    typeof value === "number" &&
-    Number.isFinite(value) &&
-    value >= MIN_PERCENT &&
-    value <= MAX_PERCENT
-  )
-}
-
 export function loadSplit(): Split {
   let raw: string | null = null
   try {
@@ -101,4 +88,17 @@ export function saveSplit(value: Split): void {
   } catch {
     // プライベートウィンドウなどで書けないだけなので、保存できないまま続ける。
   }
+}
+
+function clampPercent(value: number): number {
+  return Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value))
+}
+
+function isValidPercent(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= MIN_PERCENT &&
+    value <= MAX_PERCENT
+  )
 }

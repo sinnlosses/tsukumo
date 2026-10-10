@@ -78,14 +78,6 @@ export function toRestoredEvents(
   return passThrough(passedReport, workPlanReview.pass)
 }
 
-/** 差し戻しの1段を通す。通ったあとの出来事は、元の出来事の時刻を引き継ぐ。 */
-function passThrough(
-  events: readonly RestoredEvent[],
-  pass: (event: SessionEvent) => readonly SessionEvent[],
-): readonly RestoredEvent[] {
-  return events.flatMap(({ event, time }) => pass(event).map((passed) => ({ event: passed, time })))
-}
-
 export function restoredMessageEvents(
   message: unknown,
   expressions: readonly Expression[],
@@ -103,6 +95,14 @@ export function restoredMessageEvents(
   return aside === undefined
     ? [{ kind: "request", text, images: [] }]
     : [{ kind: "aside", text: aside, images: [] }]
+}
+
+/** 差し戻しの1段を通す。通ったあとの出来事は、元の出来事の時刻を引き継ぐ。 */
+function passThrough(
+  events: readonly RestoredEvent[],
+  pass: (event: SessionEvent) => readonly SessionEvent[],
+): readonly RestoredEvent[] {
+  return events.flatMap(({ event, time }) => pass(event).map((passed) => ({ event: passed, time })))
 }
 
 function isTurnOpening(event: SessionEvent): boolean {

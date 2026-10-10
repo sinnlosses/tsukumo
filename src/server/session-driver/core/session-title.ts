@@ -61,10 +61,6 @@ export function decideSessionTitle(
   return { kind: "write", title }
 }
 
-function truncateTitle(text: string): string {
-  return clipText(text, MAX_SESSION_HEADING_LENGTH).head
-}
-
 /**
  * `report` の handler が受け取った題の候補を、ターンの終わりまで1件だけ覚えておく入れ物。
  * 空白だけの題は無いものとして扱う。
@@ -94,4 +90,8 @@ export function createSessionTitleIntake(): SessionTitleIntake {
       return title
     },
   }
+}
+
+function truncateTitle(text: string): string {
+  return clipText(text, MAX_SESSION_HEADING_LENGTH).head
 }

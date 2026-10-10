@@ -38,26 +38,6 @@ export type PortraitProps = {
 }
 
 /**
- * SVG の中身を `fetch` する（TanStack Query）。
- * `/character/<pack>/<file>` の URL はパックの名前を経路に、素材の版を問い合わせ文字列に含む（`characterAssetPath`）ので、立ち絵や差し色を変えると URL 自体が変わる。
- * だから `queryKey` は URL だけでよく、同じ URL の中身はセッション中変わらないので取り直さない（`staleTime` / `gcTime` を `Infinity` にする）。
- *
- * 読めなかったときは、読み込みが終わっていないときと同じ `undefined` を返す（立ち絵が出ないだけで、落ちない）。
- */
-function useSvgMarkup(url: string | undefined): string | undefined {
-  const { data } = useQuery({
-    queryKey: [url] as const,
-    queryFn: async ({ queryKey: [target] }) =>
-      target === undefined ? undefined : await fetchSvgMarkup(target),
-    enabled: url !== undefined,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
-
-  return data
-}
-
-/**
  * キャラクターの立ち絵を表情の数だけ先に読んでおく。
  * 仕事 / 雑談を切り替えると立ち絵は別の領域で新しくマウントされ、表情も切り替え前と違うことがある。
  * 読んでいない絵だと、読み終わるまで立ち絵の場所が空いたまま移り変わりが終わり、そのあとで絵がいきなり現れる（実測: 初めての表情で約250ms）。
@@ -95,11 +75,6 @@ export function usePortraitPreload(portraits: Readonly<Record<string, string>> |
       }
     }
   }, [portraits, queryClient])
-}
-
-async function fetchSvgMarkup(url: string): Promise<string | undefined> {
-  const response = await fetch(url)
-  return response.ok ? sanitizeSvg(await response.text()) : undefined
 }
 
 /** React の `CSSProperties` は CSS カスタムプロパティの索引シグネチャを持たないので、足した型で受ける。 */
@@ -143,4 +118,29 @@ export function Portrait(props: PortraitProps): ReactElement {
       )}
     </div>
   )
+}
+
+/**
+ * SVG の中身を `fetch` する（TanStack Query）。
+ * `/character/<pack>/<file>` の URL はパックの名前を経路に、素材の版を問い合わせ文字列に含む（`characterAssetPath`）ので、立ち絵や差し色を変えると URL 自体が変わる。
+ * だから `queryKey` は URL だけでよく、同じ URL の中身はセッション中変わらないので取り直さない（`staleTime` / `gcTime` を `Infinity` にする）。
+ *
+ * 読めなかったときは、読み込みが終わっていないときと同じ `undefined` を返す（立ち絵が出ないだけで、落ちない）。
+ */
+function useSvgMarkup(url: string | undefined): string | undefined {
+  const { data } = useQuery({
+    queryKey: [url] as const,
+    queryFn: async ({ queryKey: [target] }) =>
+      target === undefined ? undefined : await fetchSvgMarkup(target),
+    enabled: url !== undefined,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  })
+
+  return data
+}
+
+async function fetchSvgMarkup(url: string): Promise<string | undefined> {
+  const response = await fetch(url)
+  return response.ok ? sanitizeSvg(await response.text()) : undefined
 }

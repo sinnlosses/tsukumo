@@ -176,6 +176,11 @@ export function tokenUsageDelta(
   })
 }
 
+/** 費用は浮動小数の誤差が出るので、足し引きのあとにここで丸める。 */
+export function roundCost(value: number): number {
+  return Math.round(value * 1e10) / 1e10
+}
+
 /**
  * イベント1件を内訳に積む。見るのは3種類だけで、他のイベントはそのまま返す。
  *
@@ -228,11 +233,6 @@ function tallyTurnUsage(tally: TurnUsageTally, event: SessionEvent): TurnUsageTa
  */
 function turnUsageBreakdown(tally: TurnUsageTally): TurnUsageBreakdown {
   return { main: scopeUsage(tally, "main"), subagent: scopeUsage(tally, "subagent") }
-}
-
-/** 費用は浮動小数の誤差が出るので、足し引きのあとにここで丸める。 */
-export function roundCost(value: number): number {
-  return Math.round(value * 1e10) / 1e10
 }
 
 /** 1つでも数が減っていれば、そのモデルの走行合計は振り出しに戻っている。 */

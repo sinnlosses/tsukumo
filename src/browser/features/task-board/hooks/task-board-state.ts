@@ -75,6 +75,17 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
   }
 }
 
+export function isChosen(chosen: ChosenRow, id: string): boolean {
+  return chosen.kind !== "first" && chosen.id === id
+}
+
+/** 絞り込み・検索に当たらなくても一覧に一時的に出す行か。 */
+export function isPinned(chosen: ChosenRow, id: string): boolean {
+  return (
+    isChosen(chosen, id) && (chosen.kind === "jumped" || (chosen.kind === "row" && chosen.pinned))
+  )
+}
+
 /** 開くよう頼まれたときの選択。タスクを選んで開くなら、絞り込み・検索の外でも一覧にその行を出す。 */
 function chosenOnOpen(request: TaskBoardRequest): ChosenRow {
   return request.kind === "open" && request.focus.kind === "task"
@@ -91,15 +102,4 @@ function settledOn(chosen: ChosenRow, shown: ShownRow): ChosenRow {
     return chosen
   }
   return { kind: "row", id: shown.id, pinned: false }
-}
-
-export function isChosen(chosen: ChosenRow, id: string): boolean {
-  return chosen.kind !== "first" && chosen.id === id
-}
-
-/** 絞り込み・検索に当たらなくても一覧に一時的に出す行か。 */
-export function isPinned(chosen: ChosenRow, id: string): boolean {
-  return (
-    isChosen(chosen, id) && (chosen.kind === "jumped" || (chosen.kind === "row" && chosen.pinned))
-  )
 }

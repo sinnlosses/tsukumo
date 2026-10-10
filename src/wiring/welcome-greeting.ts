@@ -21,11 +21,6 @@ import { expressionChoices } from "../shared/character-pack/expression-choice.ts
 import type { RestoredEvent, SessionEvent } from "../shared/session/session-event.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
-/** 何も観ない観る口（疑似セッション・雑談のとき）。 */
-const NO_OBSERVER = (): void => {
-  // 疑似セッション・雑談では書かせない。
-}
-
 export function wireWelcomeGreeting(context: WiringContext): {
   /**
    * 代を起こすたびに呼ぶ。`onEvent` はその代の受け取り口、`restored` はその代で組み直した履歴。
@@ -77,4 +72,9 @@ export function wireWelcomeGreeting(context: WiringContext): {
       }
     },
   }
+}
+
+/** 何も観ない観る口（疑似セッション・雑談のとき）。 */
+const NO_OBSERVER = (): void => {
+  // 疑似セッション・雑談では書かせない。
 }

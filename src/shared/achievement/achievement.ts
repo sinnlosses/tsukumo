@@ -133,6 +133,35 @@ export function achievementReflectionRequestText(params: {
   return lines.join("\n")
 }
 
+/** 前の日の日付キー（`Temporal.PlainDate` の引き算。時計は読まない）。 */
+export function previousDateKey(dateKey: string): string {
+  return Temporal.PlainDate.from(dateKey).subtract({ days: 1 }).toString()
+}
+
+/** 次の日の日付キー（`Temporal.PlainDate` の足し算。時計は読まない）。 */
+export function nextDateKey(dateKey: string): string {
+  return Temporal.PlainDate.from(dateKey).add({ days: 1 }).toString()
+}
+
+/**
+ * 見る日を日付キーに決める。
+ * 今日を選んだ・`YYYY-MM-DD` に読めない・`today` より先のときは `today` に倒す（呼ぶ側が書き間違えても画面は出る）。
+ * 「今日」を決めるのは呼ぶ側（サーバのローカル時刻）で、ここは比べるだけ。
+ */
+export function resolveAchievementDateKey(
+  selection: AchievementDaySelection,
+  today: string,
+): string {
+  if (selection.kind === "today") {
+    return today
+  }
+  const date = dateKeyOf(selection.date)
+  if (date === undefined) {
+    return today
+  }
+  return date.toString() > today ? today : date.toString()
+}
+
 /** 「小さな驚き:」の下に並べる行（卒業→節目の順）。該当が無ければ空。 */
 function achievementSurpriseLines(
   graduations: readonly AchievementGraduation[],
@@ -166,35 +195,6 @@ function achievementTaskListLines(doneTasks: readonly AchievementTask[]): readon
   const rest = doneTasks.length - shown.length
   const lines = shown.map((task) => `- ${task.id} ${task.summary}`)
   return rest > 0 ? [...lines, `- ほか ${String(rest)} 件`] : lines
-}
-
-/** 前の日の日付キー（`Temporal.PlainDate` の引き算。時計は読まない）。 */
-export function previousDateKey(dateKey: string): string {
-  return Temporal.PlainDate.from(dateKey).subtract({ days: 1 }).toString()
-}
-
-/** 次の日の日付キー（`Temporal.PlainDate` の足し算。時計は読まない）。 */
-export function nextDateKey(dateKey: string): string {
-  return Temporal.PlainDate.from(dateKey).add({ days: 1 }).toString()
-}
-
-/**
- * 見る日を日付キーに決める。
- * 今日を選んだ・`YYYY-MM-DD` に読めない・`today` より先のときは `today` に倒す（呼ぶ側が書き間違えても画面は出る）。
- * 「今日」を決めるのは呼ぶ側（サーバのローカル時刻）で、ここは比べるだけ。
- */
-export function resolveAchievementDateKey(
-  selection: AchievementDaySelection,
-  today: string,
-): string {
-  if (selection.kind === "today") {
-    return today
-  }
-  const date = dateKeyOf(selection.date)
-  if (date === undefined) {
-    return today
-  }
-  return date.toString() > today ? today : date.toString()
 }
 
 /** `YYYY-MM-DD` として読めれば {@link Temporal.PlainDate}、読めなければ `undefined`。 */

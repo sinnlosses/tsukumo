@@ -63,13 +63,6 @@ const ASSET_PATH_PREFIX = "/assets/"
 const UI_SCRIPT_NAME = "ui.js"
 const STYLE_SHEET_NAME = "style.css"
 
-function uiScriptPath(): string {
-  return `${ASSET_PATH_PREFIX}${UI_SCRIPT_NAME}`
-}
-function styleSheetPath(): string {
-  return `${ASSET_PATH_PREFIX}${STYLE_SHEET_NAME}`
-}
-
 /**
  * ブラウザ側をどこから配るか。`bundle` は組み立て済みのスクリプトと CSS の対を `/assets/` から、
  * `dev` は Vite の開発サーバが入口から辿るモジュールを、ここの経路に無い要求として配る。
@@ -325,6 +318,13 @@ const ROUTES = [
     handle: (request, response, _path, runtime) => serveRpc(request, response, runtime),
   },
 ] as const satisfies readonly ViewRoute[]
+
+function uiScriptPath(): string {
+  return `${ASSET_PATH_PREFIX}${UI_SCRIPT_NAME}`
+}
+function styleSheetPath(): string {
+  return `${ASSET_PATH_PREFIX}${STYLE_SHEET_NAME}`
+}
 
 function matchesRoute(match: RouteMatch, path: string): boolean {
   return match.kind === "exact" ? path === match.path : path.startsWith(match.prefix)

@@ -41,10 +41,6 @@ export function outlineWidthFromRatio(ratio: number, rect: DOMRect): number {
   return clampOutlineWidthPx(ratio * rect.width)
 }
 
-function clampOutlineWidthPx(value: number): number {
-  return Math.min(OUTLINE_WIDTH_MAX_PX, Math.max(OUTLINE_WIDTH_MIN_PX, value))
-}
-
 export function loadOutlinePanel(): OutlinePanel {
   let raw: string | null = null
   try {
@@ -104,4 +100,8 @@ function isValidWidthPx(value: unknown): value is number {
     value >= OUTLINE_WIDTH_MIN_PX &&
     value <= OUTLINE_WIDTH_MAX_PX
   )
+}
+
+function clampOutlineWidthPx(value: number): number {
+  return Math.min(OUTLINE_WIDTH_MAX_PX, Math.max(OUTLINE_WIDTH_MIN_PX, value))
 }
