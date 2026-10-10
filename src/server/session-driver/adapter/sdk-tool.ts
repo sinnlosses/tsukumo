@@ -243,7 +243,7 @@ function reportTool(
         .string()
         .optional()
         .describe(
-          "利用者へのお願い（判断・作業・情報）が実際にあるときだけ1つ（2件あってもまとめる）。無ければ省く",
+          "作業を終えた・止めたあとに残る利用者へのお願い（判断・作業・情報）が実際にあるときだけ1つ（2件あってもまとめる）。無ければ省く。作業の途中で利用者の手が要るときは report を呼ばず AskUserQuestion で聞く",
         ),
       checks: z.array(reportCheckSchema).optional().describe(REPORT_CHECKS_DESCRIPTION),
       title: z.string().optional().describe(REPORT_TITLE_DESCRIPTION),

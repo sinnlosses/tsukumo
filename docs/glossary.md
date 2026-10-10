@@ -920,7 +920,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 - **英語識別子**: `favor`（`report` ツールの引数の名前。描くときは `note-favor` の塊）
 - **定義**: **キャラクターから利用者への1件**。利用者にしか決められない・できないこと
-  （判断・作業・情報）を、`report` の `favor` に1つだけ入れる。レポートの最後に印を付けた塊で描かれ、
+  （判断・作業・情報）を、`report` の `favor` に1つだけ入れる。**作業を終えた・止めたあとに残るものに限り**、
+  作業の途中で利用者の手が要るときは `report` を呼ばず `AskUserQuestion` で聞く。レポートの最後に印を付けた塊で描かれ、
   「お願い」のラベルは tsukumo 側（`src/browser/components/page/conversation/components/main-view/markdown/notation.tsx`）が
   文字として付ける
 - **注記**: **向きが「依頼」と逆。** 依頼は利用者からキャラクターへ、お願いは
