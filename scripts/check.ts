@@ -21,6 +21,12 @@ import { fileURLToPath } from "node:url"
 import { collectChangedPaths, PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
 import { describeFailedStages, parseFailedTests, type StageOutcome } from "./lib/check-failure.ts"
 import { planStages, type Stage } from "./lib/check-stage.ts"
+import {
+  acquireLock,
+  LockWaitTimeoutError,
+  REAL_LOCK_ENVIRONMENT,
+  sharedLockPath,
+} from "./lib/e2e-full-lock.ts"
 import { planE2eRun } from "./lib/e2e-selection-repository.ts"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
@@ -49,7 +55,7 @@ if (heavyStages.length > 0) {
 }
 
 async function runConcurrently(stages: readonly Stage[]): Promise<void> {
-  const results = await Promise.all(stages.map((stage) => runBuffered(stage)))
+  const results = await Promise.all(stages.map((stage) => runLockedIfFullE2e(stage)))
   for (const result of results) {
     process.stdout.write(result.output)
   }
@@ -59,6 +65,32 @@ async function runConcurrently(stages: readonly Stage[]): Promise<void> {
   const failed = results.find((result) => result.status !== 0)
   if (failed !== undefined) {
     process.exitCode = failed.status
+  }
+}
+
+/** `--full` の E2E の段だけ、ほかの作業ツリーの全件と重ならないよう錠を取って走らせる。 */
+async function runLockedIfFullE2e(stage: Stage): Promise<BufferedResult> {
+  if (!forceFull || stage.name !== "test:e2e") {
+    return runBuffered(stage)
+  }
+  let release: () => void
+  try {
+    release = await acquireLock(sharedLockPath(ROOT), REAL_LOCK_ENVIRONMENT)
+  } catch (error) {
+    if (!(error instanceof LockWaitTimeoutError)) {
+      throw error
+    }
+    return {
+      name: stage.name,
+      status: 1,
+      failedTests: [],
+      output: `${error.message}\n`,
+    }
+  }
+  try {
+    return await runBuffered(stage)
+  } finally {
+    release()
   }
 }
 
