@@ -199,19 +199,23 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 - **Agent SDK を import してよいのは、機能の `adapter/` の直下の `sdk-` で始まるファイルだけ**
   （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）
 - **機能を足すときは、検査の機能の一覧と下の表に足す**（知らない機能のディレクトリと、
-  `core/` `adapter/` の外に置いたファイルは `test/architecture.test.ts` が落とす）
+  `core/` `adapter/` の外に置いたファイルと、表と `SERVER_FEATURE_IMPORTS` のずれは
+  `test/architecture.test.ts` が落とす）
 
-| 機能（import する側） | 読んでよい機能                                                                                                                                   | いまある辺の層                                                                                                                                                                                            |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                         | core → core だけ（`session-manager` → `report-usage` `report-image-shelf`）                                                                                                                               |
-| `system-prompt`       | `session-driver` `chat` `report`                                                                                                                 | core → core だけ                                                                                                                                                                                          |
-| `view-server`         | `session` `achievement`                                                                                                                          | adapter → core（`session-socket` / `rpc-guard` → `command-session`）                                                                                                                                      |
-| `chat`                | `session-driver` `character-pack`                                                                                                                | core → core と adapter → core（駆動の契約にある `PersonaMemory` `ChatSummary` などと、`chat-archive-port`）・adapter → adapter（`persona-memory` / `chat-summary` → `character-pack` / `character-edit`） |
-| `context-usage`       | `session-driver`                                                                                                                                 | core → core（駆動の契約）                                                                                                                                                                                 |
-| `session-driver`      | `chat` `report` `usage-review` `view-server`                                                                                                     | core → core（`report-review` `port-resolution`）・adapter → core（各ツールの判断）                                                                                                                        |
-| `diary`               | `character-pack` `repository` `session-driver`                                                                                                   | adapter → adapter・adapter → core（`sdk-diary` → `session-driver/core/tsukumo-tool-name.ts` の `tsukumoToolFullName`）                                                                                    |
-| `achievement`         | `repository`                                                                                                                                     | adapter → adapter（`closed-issue` → `beads` `beads-task`）                                                                                                                                                |
-| そのほか              | —（葉。`report` `usage-review` `token-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation`） | —                                                                                                                                                                                                         |
+| 機能（import する側） | 読んでよい機能                                                                                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                                      |
+| `system-prompt`       | `session-driver` `chat` `report`                                                                                                                              |
+| `view-server`         | `session`                                                                                                                                                     |
+| `chat`                | `session-driver` `character-pack`                                                                                                                             |
+| `context-usage`       | `session-driver`                                                                                                                                              |
+| `session-driver`      | `chat` `report` `usage-review` `view-server`                                                                                                                  |
+| `diary`               | `repository` `session-driver`                                                                                                                                 |
+| `achievement`         | `repository`                                                                                                                                                  |
+| そのほか              | —（葉。`report` `usage-review` `token-usage` `plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation`） |
+
+表は `test/architecture.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
+辺が `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。
 
 #### コマンドの受け手と手続きの置き方
 

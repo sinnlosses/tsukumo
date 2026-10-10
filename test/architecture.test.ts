@@ -36,6 +36,7 @@ const ALLOWED_IMPORTS: Readonly<Record<Layer, ReadonlySet<Layer>>> = {
 const OUTSIDE_WORLD_IMPORT = /from\s+["'](node:|@anthropic-ai\/|ws")/
 
 const SRC_ROOT = fileURLToPath(new URL("../src", import.meta.url)).replace(/\/$/, "")
+const DOC_ROOT = fileURLToPath(new URL("../docs", import.meta.url)).replace(/\/$/, "")
 
 type Violation = {
   readonly fromPath: string
@@ -99,8 +100,8 @@ const SERVER_FEATURES = [
 ] as const
 type ServerFeature = (typeof SERVER_FEATURES)[number]
 
-// 機能 A が import してよい機能 B（同じ節の2つめの表そのもの。表に無い組は落とす）。共有の箱は
-// どの機能からも読んでよいので、ここには出てこない。
+// 機能 A が import してよい機能 B（同じ節の2つめの表と一致を検査する。表に無い組と、使われない組は落とす）。
+// 共有の箱はどの機能からも読んでよいので、ここには出てこない。
 const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerFeature>>> = {
   report: new Set([]),
   "system-prompt": new Set(["report", "chat", "session-driver"]),
@@ -116,7 +117,7 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   checkout: new Set([]),
   achievement: new Set(["repository"]),
   "character-pack": new Set([]),
-  diary: new Set(["character-pack", "repository", "session-driver"]),
+  diary: new Set(["repository", "session-driver"]),
   chat: new Set(["character-pack", "session-driver"]),
   "session-driver": new Set(["chat", "report", "usage-review", "view-server"]),
   session: new Set([
@@ -130,7 +131,7 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
     "character-pack",
     "report",
   ]),
-  "view-server": new Set(["session", "achievement"]),
+  "view-server": new Set(["session"]),
 }
 
 // shared の機能の一覧（docs/architecture.md「shared の機能」）。`satisfies` で
@@ -183,6 +184,39 @@ describe("server/ の機能どうしの import", () => {
       )
 
     expect(offenders.join("\n")).toBe("")
+  })
+
+  it("SERVER_FEATURE_IMPORTS の組は、どれも実際の import に1本以上ある", () => {
+    const used = new Set(
+      serverFeatureEdges().map((edge) => `${edge.fromFeature} → ${edge.toFeature}`),
+    )
+    const unused = SERVER_FEATURES.flatMap((from) =>
+      [...SERVER_FEATURE_IMPORTS[from]].map((to) => `${from} → ${to}`),
+    ).filter((pair) => !used.has(pair))
+
+    expect(unused.join("\n")).toBe("")
+  })
+
+  it("docs/architecture.md の機能どうしの辺の表は、SERVER_FEATURE_IMPORTS と同じ", () => {
+    const table = featureEdgeTable()
+    const mismatches = SERVER_FEATURES.flatMap((feature) => {
+      const documented = table.get(feature)
+      const actual = [...SERVER_FEATURE_IMPORTS[feature]].toSorted()
+      if (documented === undefined) {
+        return [`${feature}: 表に行も葉の列挙も無い`]
+      }
+      return documented.toSorted().join(" ") === actual.join(" ")
+        ? []
+        : [
+            `${feature}: 表 [${documented.join(" ")}] / SERVER_FEATURE_IMPORTS [${actual.join(" ")}]`,
+          ]
+    })
+    const known = new Set<string>(SERVER_FEATURES)
+    const unknown = [...table.keys()].filter((feature) => !known.has(feature))
+
+    expect(
+      [...mismatches, ...unknown.map((feature) => `${feature}: 知らない機能が表にある`)].join("\n"),
+    ).toBe("")
   })
 
   it("機能の core/ どうし・adapter/ どうしの辺は、それぞれ循環しない", () => {
@@ -1943,6 +1977,30 @@ function serverSharedBoxReadersOf(targetRelPath: string): {
     features: [...new Set(readers.flatMap((relPath) => featureOf(relPath) ?? []))],
     outsideFeatureCount: readers.filter((relPath) => featureOf(relPath) === undefined).length,
   }
+}
+
+/** docs/architecture.md の機能どうしの辺の表から、機能 → 読んでよい機能を取り出す（`そのほか` 行の葉は空）。 */
+function featureEdgeTable(): ReadonlyMap<string, readonly string[]> {
+  const doc = readFileSync(`${DOC_ROOT}/architecture.md`, "utf8")
+  const start = doc.indexOf("\n| 機能（import する側） |")
+  const end = doc.indexOf("\n\n", start + 1)
+  const quoted = (cell: string): readonly string[] =>
+    [...cell.matchAll(/`([^`]+)`/g)].map((match) => match[1] ?? "")
+  const rows = doc
+    .slice(start, end)
+    .split("\n")
+    .filter((line) => line.startsWith("| `") || line.startsWith("| そのほか"))
+    .map((line) => line.split("|").map((cell) => cell.trim()))
+    .filter((cells) => cells[2] !== undefined && cells[1] !== "機能")
+  return new Map(
+    rows.flatMap((cells): readonly (readonly [string, readonly string[]])[] => {
+      const [, first = "", second = ""] = cells
+      if (first === "そのほか") {
+        return quoted(second).map((leaf) => [leaf, []] as const)
+      }
+      return [[quoted(first)[0] ?? "", quoted(second)]]
+    }),
+  )
 }
 
 /** `server/` の機能のファイルから、別の機能のファイルへの相対 import をすべて返す。 */
