@@ -322,6 +322,15 @@ describe("Composer", () => {
     expect(screen.queryByPlaceholderText(/依頼を書く/)).toBeNull()
   })
 
+  it("狭い画面では、質問が出ている間もお伺いの帯を出さず、プレースホルダは「答えを書くか、上で選ぶ」になる", () => {
+    stubPhoneWidth()
+    renderComposer({ character: FIXTURE_CHARACTER, pending: [QUESTION_PENDING] })
+
+    expect(screen.queryByRole("button", { name: "お伺いへ" })).toBeNull()
+    expect(screen.queryByText(/質問しています/)).toBeNull()
+    expect(screen.getByPlaceholderText("答えを書くか、上で選ぶ")).toBeDefined()
+  })
+
   it("許可を待っている間は、帯だけ出て入力欄はふつうの下書きのまま", () => {
     renderComposer({ character: FIXTURE_CHARACTER, pending: [PERMISSION_PENDING] })
 

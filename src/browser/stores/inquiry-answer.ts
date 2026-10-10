@@ -61,6 +61,7 @@ type InquiryCommon = {
   readonly multiSelect: boolean
   /** 「1 / 2」。1問でも出す。 */
   readonly progressLabel: string
+  readonly questionCount: number
   /** 「戻る」を出すか（2問目以降）。 */
   readonly showBack: boolean
   /** いま見ているのが最後の1問か（答えると全問ぶんを送る）。 */
@@ -72,6 +73,8 @@ type InquiryCommon = {
   /** 「これで答える」を押せるか（何も選ばず何も書いていなければ押せない）。 */
   readonly canAnswer: boolean
   readonly onToggle: (label: string) => void
+  /** 選んだ瞬間に答える（許可と単一選択。複数選択では使わない）。 */
+  readonly onChoose: (label: string) => void
   readonly onAnswer: () => void
   readonly onBack: () => void
 }
@@ -170,6 +173,7 @@ function permissionModel(
     targetText: toolInputText(pending.toolName, pending.input),
     multiSelect: false,
     progressLabel: "1 / 1",
+    questionCount: 1,
     showBack: false,
     last: true,
     focusedLabel: chosen ?? ALLOW_LABEL,
@@ -191,6 +195,12 @@ function permissionModel(
     canAnswer: chosen !== undefined,
     onToggle: (label) => {
       draft.setAnswer({ ...draft.answer, selections: [[label]] })
+    },
+    onChoose: (label) => {
+      dispatch.session.answer({
+        id: pending.id,
+        answer: { kind: label === ALLOW_LABEL ? "allow" : "deny" },
+      })
     },
     onAnswer: () => {
       if (chosen === undefined) {
@@ -269,6 +279,7 @@ function questionModel(
     text: question.text,
     multiSelect: question.multiSelect,
     progressLabel: `${String(index + 1)} / ${String(questions.length)}`,
+    questionCount: questions.length,
     showBack: index > 0,
     last,
     options,
@@ -293,6 +304,12 @@ function questionModel(
           ? draft.answer.writtenAnswers
           : replaced(draft.answer.writtenAnswers, index, "", ""),
       })
+    },
+    onChoose: (label) => {
+      if (question.multiSelect) {
+        return
+      }
+      advance([label], "")
     },
     onAnswer: () => {
       if (!canAnswer) {

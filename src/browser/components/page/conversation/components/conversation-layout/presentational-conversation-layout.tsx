@@ -24,6 +24,8 @@ export type PresentationalConversationLayoutProps = UseConversationLayoutResult 
   readonly sidebar: ReactNode
   readonly character: ReactNode
   readonly dispatch: ReactNode
+  /** 狭い画面で顔と吹き出しと入力欄のあいだに固定する、答え待ちの札。 */
+  readonly inquiry: ReactNode
   /** 中くらいの窓幅の柱の、開く口の中に置くもの。 */
   readonly railBadge: ReactNode
   /** 中くらいの窓幅の柱の、開く口の下に並べるもの。 */
@@ -67,6 +69,7 @@ export function PresentationalConversationLayout({
   sidebar,
   character,
   dispatch,
+  inquiry,
   railBadge,
   railTools,
   collapseCharacter,
@@ -199,6 +202,7 @@ export function PresentationalConversationLayout({
             />
           </>
         )}
+        <div className={styles["layout-inquiry"]}>{inquiry}</div>
         <section
           className={clsx(styles["layout-region"], styles["layout-dispatch"])}
           data-region="dispatch"

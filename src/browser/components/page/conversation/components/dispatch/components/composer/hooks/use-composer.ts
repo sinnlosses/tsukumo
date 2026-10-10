@@ -16,6 +16,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react"
 
 import type { PromptRouting } from "../../../../../../../../../shared/contract/session.ts"
+import { usePhoneWidth } from "../../../../../../../../hooks/use-phone-width.ts"
 import {
   EMPTY_DRAFT,
   useComposerDraft,
@@ -86,9 +87,10 @@ export function useComposer(): ComposerModel {
   const connected = useSession((session) => session.connection === "open")
   const linkLost = useSession((session) => session.linkLost)
   const endedReason = useSession((session) => session.state.endedReason)
-  // 答え待ちの質問があるあいだ、入力欄は「依頼を書く場所」ではなく選択肢以外の答えを書く場所になる（札はメインビューに出ている）。
+  // 答え待ちの質問があるあいだ、入力欄は「依頼を書く場所」ではなく選択肢以外の答えを書く場所になる。
   const inquiry = useInquiryAnswer()
   const requestInquiryJump = useInquiryJump((state) => state.requestJump)
+  const phone = usePhoneWidth()
   const slashCommands = useSession((session) => session.state.slashCommands)
   const commandDescriptions = useSession((session) => session.state.commandDescriptions)
   const draft = useComposerDraft((state) => state.draft)
@@ -169,7 +171,7 @@ export function useComposer(): ComposerModel {
     if (inquiry.kind !== "question" && blockedClearText === draft.text.trim()) {
       return { kind: "clear-dropped", text: CLEAR_DROPPED_BAND_TEXT }
     }
-    if (inquiry.kind === "none") {
+    if (inquiry.kind === "none" || phone) {
       return { kind: "none" }
     }
     return {
@@ -191,7 +193,7 @@ export function useComposer(): ComposerModel {
       saveComposerMode(next)
     },
     placeholder:
-      inquiry.kind === "question" ? ANSWER_PLACEHOLDER : composerPlaceholder(characterName),
+      inquiry.kind === "question" ? answerPlaceholder(phone) : composerPlaceholder(characterName),
     label: inquiry.kind === "question" ? ANSWER_LABEL : REQUEST_LABEL,
     band: composerBand(),
     answering: inquiry.kind === "question",
@@ -231,8 +233,12 @@ export function useComposer(): ComposerModel {
   }
 }
 
-/** 質問に答えている間のプレースホルダ（選択肢の札はメインビューに出ている）。 */
 const ANSWER_PLACEHOLDER = "選択肢以外の答えを書く…"
+const PHONE_ANSWER_PLACEHOLDER = "答えを書くか、上で選ぶ"
+
+function answerPlaceholder(phone: boolean): string {
+  return phone ? PHONE_ANSWER_PLACEHOLDER : ANSWER_PLACEHOLDER
+}
 
 const DISCONNECTED_BAND_TEXT =
   "サーバとつながっていません。送れず、下書きは残してあります。サーバを起こし直したなら、ページを開き直してください"

@@ -4146,6 +4146,104 @@
       ]
     },
     {
+      "name": "phone-inquiry-pick",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "架空の置き場を張り替えたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "speech",
+            "text": "張り替える先を確かめたいのだ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "question",
+                "id": "fake-ask-phone-pick",
+                "questions": [
+                  {
+                    "header": "張り替え",
+                    "text": "次の 8 件を張り替えてよい？",
+                    "multiSelect": false,
+                    "options": [
+                      { "label": "まとめて張り替える (推奨)", "description": "架空の説明A" },
+                      { "label": "1件ずつ確かめる", "description": "架空の説明B" },
+                      { "label": "やめておく", "description": "架空の説明C" }
+                    ]
+                  }
+                ],
+                "briefs": [
+                  {
+                    "header": "張り替え",
+                    "background": "架空の背景。張り替える置き場が8件あり、どれも同じ形をしている。",
+                    "axes": ["速さ", "戻しやすさ"],
+                    "options": [
+                      {
+                        "label": "まとめて張り替える",
+                        "pros": ["架空の良い点A。"],
+                        "cons": ["架空の悪い点A。"],
+                        "byAxis": ["速い", "戻せる"],
+                        "irreversible": false,
+                        "figures": [
+                          {
+                            "kind": "list",
+                            "style": "bullet",
+                            "items": [
+                              { "label": "next-task", "text": "" },
+                              { "label": "plan-tasks", "text": "" },
+                              { "label": "list-tasks", "text": "" },
+                              { "label": "setup-tasks", "text": "" },
+                              { "label": "task-workflow", "text": "" },
+                              { "label": "retro", "text": "" },
+                              { "label": "tdd", "text": "" },
+                              { "label": "research", "text": "" }
+                            ],
+                            "fold": ""
+                          }
+                        ]
+                      },
+                      {
+                        "label": "1件ずつ確かめる",
+                        "pros": ["架空の良い点B。"],
+                        "cons": ["架空の悪い点B。"],
+                        "byAxis": ["遅い", "戻せる"],
+                        "irreversible": false,
+                        "figures": []
+                      },
+                      {
+                        "label": "やめておく",
+                        "pros": [],
+                        "cons": ["架空の悪い点C。"],
+                        "byAxis": ["速い", "戻せない"],
+                        "irreversible": true,
+                        "figures": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 60000,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
+    },
+    {
       "name": "phone-layout",
       "steps": [
         {

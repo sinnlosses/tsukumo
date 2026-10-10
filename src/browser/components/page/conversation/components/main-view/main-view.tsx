@@ -50,6 +50,8 @@ import { useReportOutlineTurns } from "./hooks/use-report-outline-turns.ts"
 import styles from "./main-view.module.css"
 import { RepositoryFileLinkProvider } from "./markdown/repository-link.tsx"
 
+export { InquiryCard } from "./components/inquiry/inquiry.tsx"
+
 /** 画面に出す中身。`card` は札に載せるターンで、`fresh` は働くあいだの中身から入れ替えたばかりのレポートか。 */
 type ShownView =
   | { readonly kind: "welcome" }

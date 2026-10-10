@@ -6,6 +6,7 @@ import { AtSign, Heading, ImageIcon, Slash } from "lucide-react"
 import { useState, type ReactElement, type ReactNode } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../../../shared/session-driver/prompt-image.ts"
+import { usePhoneWidth } from "../../../../../../../hooks/use-phone-width.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -19,7 +20,6 @@ import { TextAreaSurface } from "../text-area-surface/text-area-surface.tsx"
 import { PhoneTurnAction, TurnStatus } from "../turn-status/turn-status.tsx"
 import styles from "./composer.module.css"
 import type { ComposerModel } from "./hooks/use-composer.ts"
-import { usePhoneWidth } from "./hooks/use-phone-width.ts"
 import type { CompletionTrigger } from "./hooks/use-suggestion.ts"
 
 export type PresentationalComposerProps = ComposerModel

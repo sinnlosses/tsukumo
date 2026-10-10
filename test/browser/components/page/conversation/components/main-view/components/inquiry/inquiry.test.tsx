@@ -66,6 +66,23 @@ describe("Inquiry（メインビューのお伺いの札）", () => {
     expect(renderInquiry([]).innerHTML).toBe("")
   })
 
+  it("狭い画面（760px 以下）では、答え待ちがあっても本文に札を描かない", () => {
+    const spy = vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }))
+
+    expect(renderInquiry([PERMISSION_PENDING]).innerHTML).toBe("")
+
+    spy.mockRestore()
+  })
+
   it("許可要求は「許可」の種類・ツール名・対象の全文と、番号つきの「許可」「拒否」を出す", () => {
     renderInquiry([PERMISSION_PENDING])
 

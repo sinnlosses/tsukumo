@@ -15,6 +15,7 @@ import { ConversationLayout } from "./components/conversation-layout/conversatio
 import { Dispatch } from "./components/dispatch/dispatch.tsx"
 import { LiveAnnouncer } from "./components/live-announcer/live-announcer.tsx"
 import { MainView } from "./components/main-view/main-view.tsx"
+import { PendingAskCard } from "./components/pending-ask-card/pending-ask-card.tsx"
 import { RequestedTaskBoard } from "./components/requested-task-board/requested-task-board.tsx"
 
 export type PresentationalConversationProps = {
@@ -29,6 +30,7 @@ export function PresentationalConversation(props: PresentationalConversationProp
         sidebar={<Sidebar />}
         character={<CharacterView />}
         dispatch={<Dispatch />}
+        inquiry={!props.chatMode && <PendingAskCard />}
         railBadge={!props.chatMode && <TaskDoingCount />}
         railTools={<RunSettingGroup placement="rail" />}
         collapseCharacter={props.chatMode}

@@ -30,6 +30,10 @@
 .layout-row-bottom {
   grid-template-columns: var(--layout-bottom-left, 50fr) auto var(--layout-bottom-right, 50fr);
 }
+/* 答え待ちの札の席。狭い画面でだけ出す。 */
+.layout-inquiry {
+  display: none;
+}
 /* キャラビューを畳んだとき（雑談モード。立ち絵が上段へ移る）。
    領域と仕切りは <ConversationLayout> が描かないので、ここは残った入力欄に全幅を渡すだけ。 */
 .layout-row-bottom[data-collapse-character="true"] {
@@ -229,6 +233,15 @@
   .layout-row-bottom .layout-ground {
     padding: 0;
     background-image: none;
+  }
+  /* 札が無いあいだは余白も取らない。 */
+  .layout-inquiry {
+    display: block;
+    flex: none;
+    padding: 10px 12px 0;
+  }
+  .layout-inquiry:empty {
+    display: none;
   }
   /* 動かせる比率が無いので、上下の仕切りと比率を戻す口は出さない。 */
   .layout-divider {

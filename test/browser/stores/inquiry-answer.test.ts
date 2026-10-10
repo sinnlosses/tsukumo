@@ -122,6 +122,72 @@ describe("useInquiryAnswer の許可要求", () => {
   })
 })
 
+describe("useInquiryAnswer の押した瞬間に答える口", () => {
+  it("許可は「許可」「拒否」を選んだ瞬間に allow / deny を送る", () => {
+    const calls: unknown[] = []
+    const result = renderModel([PERMISSION_PENDING], (command) => calls.push(command))
+
+    act(() => permission(result.current).onChoose("拒否"))
+
+    expect(calls).toEqual([
+      { procedure: "session.answer", id: "ask-perm", answer: { kind: "deny" } },
+    ])
+  })
+
+  it("1問だけの単一選択は、選んだ瞬間に答えを送る", () => {
+    const calls: unknown[] = []
+    const result = renderModel([questionPending([question()])], (command) => calls.push(command))
+
+    act(() => asking(result.current).onChoose("B案"))
+
+    expect(calls).toEqual([
+      {
+        procedure: "session.answer",
+        id: "ask-1",
+        answer: { kind: "answers", labels: [["B案"]] },
+      },
+    ])
+  })
+
+  it("2問のとき、1問目は次の問いへ進むだけで送らず、2問目で全問ぶんを送る", () => {
+    const calls: unknown[] = []
+    const result = renderModel(
+      [
+        questionPending([
+          question({ header: "1問目", options: [option("A案"), option("B案")] }),
+          question({ header: "2問目", options: [option("C案"), option("D案")] }),
+        ]),
+      ],
+      (command) => calls.push(command),
+    )
+
+    act(() => asking(result.current).onChoose("A案"))
+    expect(calls).toEqual([])
+    expect(asking(result.current).header).toBe("2問目")
+
+    act(() => asking(result.current).onChoose("D案"))
+    expect(calls).toEqual([
+      {
+        procedure: "session.answer",
+        id: "ask-1",
+        answer: { kind: "answers", labels: [["A案"], ["D案"]] },
+      },
+    ])
+  })
+
+  it("複数選択では何もしない", () => {
+    const calls: unknown[] = []
+    const result = renderModel([questionPending([question({ multiSelect: true })])], (command) =>
+      calls.push(command),
+    )
+
+    act(() => asking(result.current).onChoose("A案"))
+
+    expect(calls).toEqual([])
+    expect(asking(result.current).options.some((row) => row.selected)).toBe(false)
+  })
+})
+
 describe("useInquiryAnswer の選択肢", () => {
   it("選択肢はラベルの辞書順に並べ（送られた順ではない）、番号は並べ替えたあとの並びで 1 から振る", () => {
     const result = renderModel([

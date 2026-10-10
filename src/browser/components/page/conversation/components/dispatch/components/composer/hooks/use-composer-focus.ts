@@ -6,11 +6,11 @@ import { useEffect, type RefObject } from "react"
 
 import { isExchangeClosed } from "../../../../../../../../../shared/session/conversation-moment.ts"
 import { isOverlayOpen } from "../../../../../../../../hooks/open-overlay.ts"
+import { isPhoneWidth } from "../../../../../../../../hooks/use-phone-width.ts"
 import { useComposerFocus } from "../../../../../../../../stores/composer-focus.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { isFocusWithinMainView } from "../../../../../domain/main-view-focus.ts"
 import type { ComposerSurface } from "../../../domain/composer-surface.ts"
-import { isPhoneWidth } from "./use-phone-width.ts"
 
 export function useComposerFocusTiming(surfaceRef: RefObject<ComposerSurface | null>): void {
   const closed = useSession((session) => isExchangeClosed(session.state))

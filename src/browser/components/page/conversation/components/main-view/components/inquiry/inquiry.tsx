@@ -13,6 +13,7 @@ import type { KeyboardEvent, ReactElement } from "react"
 import { reportSectionsMarkdown } from "../../../../../../../../shared/report/report-markdown.ts"
 import { truncateForDisplay } from "../../../../../../../features/current-work/domain/current-work-step.ts"
 import { useNowWhile } from "../../../../../../../hooks/use-now-while.ts"
+import { usePhoneWidth } from "../../../../../../../hooks/use-phone-width.ts"
 import {
   useInquiryAnswer,
   type InquiryBrief as InquiryBriefModel,
@@ -57,6 +58,12 @@ const WRITTEN_ANSWER_PREFIX = "入力欄に書いた答え: "
 const CHOICE_KEY = /^[1-9]$/
 
 export function Inquiry(): ReactElement | null {
+  const phone = usePhoneWidth()
+  return phone ? null : <InquiryCard actions="inline" />
+}
+
+/** `actions` が `none` のときは操作の行を出さない（狭い画面の板が、下端に自前の口を置く）。 */
+export function InquiryCard(props: { readonly actions: "inline" | "none" }): ReactElement | null {
   const inquiry = useInquiryAnswer()
   const jump = useInquiryJump((state) => state.jump)
   const askId = inquiry.kind === "none" ? undefined : inquiry.id
@@ -91,64 +98,66 @@ export function Inquiry(): ReactElement | null {
 
   return (
     <section
-      className={styles["inquiry"]}
+      className={clsx(styles["inquiry"], props.actions === "none" && styles["is-bare"])}
       ref={cardRef}
       tabIndex={-1}
       aria-label={INQUIRY_CHIP}
       onKeyDown={onKeyDown}
     >
-      <HStack
-        element="header"
-        name={{ kind: "none" }}
-        ref={undefined}
-        gap="sm"
-        align="center"
-        justify="start"
-        wrap="wrap"
-        className={styles["inquiry-head"]}
-      >
-        <span className={styles["inquiry-chip"]}>{INQUIRY_CHIP}</span>
-        <Text
-          element="span"
-          size="secondary"
-          tone="state-warn"
-          weight="bold"
-          className={styles["inquiry-kind"]}
+      {props.actions === "inline" && (
+        <HStack
+          element="header"
+          name={{ kind: "none" }}
+          ref={undefined}
+          gap="sm"
+          align="center"
+          justify="start"
+          wrap="wrap"
+          className={styles["inquiry-head"]}
         >
-          {KIND_LABEL[inquiry.kind]}
-        </Text>
-        {inquiry.kind === "permission" && (
+          <span className={styles["inquiry-chip"]}>{INQUIRY_CHIP}</span>
           <Text
             element="span"
             size="secondary"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["inquiry-tool"]}
+            tone="state-warn"
+            weight="bold"
+            className={styles["inquiry-kind"]}
           >
-            {inquiry.toolName}
+            {KIND_LABEL[inquiry.kind]}
           </Text>
-        )}
-        {inquiry.kind === "question" && (
+          {inquiry.kind === "permission" && (
+            <Text
+              element="span"
+              size="secondary"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["inquiry-tool"]}
+            >
+              {inquiry.toolName}
+            </Text>
+          )}
+          {inquiry.kind === "question" && (
+            <Text
+              element="span"
+              size="secondary"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["inquiry-subject"]}
+            >
+              {inquiry.header}
+            </Text>
+          )}
           <Text
             element="span"
-            size="secondary"
+            size="label"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["inquiry-subject"]}
+            className={styles["inquiry-progress"]}
           >
-            {inquiry.header}
+            {inquiry.progressLabel} · {WAITED_PREFIX} {waitedText(now - inquiry.askedAt)}
           </Text>
-        )}
-        <Text
-          element="span"
-          size="label"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["inquiry-progress"]}
-        >
-          {inquiry.progressLabel} · {WAITED_PREFIX} {waitedText(now - inquiry.askedAt)}
-        </Text>
-      </HStack>
+        </HStack>
+      )}
       <div className={styles["inquiry-body"]}>
         {inquiry.kind === "question" && (
           <Text
@@ -201,63 +210,65 @@ export function Inquiry(): ReactElement | null {
           </Text>
         )}
       </div>
-      <HStack
-        element="footer"
-        name={{ kind: "none" }}
-        ref={undefined}
-        gap="sm"
-        align="center"
-        justify="end"
-        wrap="wrap"
-        className={styles["inquiry-foot"]}
-      >
-        {inquiry.kind === "question" && (
-          <Text
-            element="span"
-            size="label"
-            tone="ink-quiet"
-            weight="inherit"
-            className={styles["inquiry-hint"]}
-          >
-            {FREE_TEXT_HINT}
-          </Text>
-        )}
-        {inquiry.showBack && (
+      {props.actions === "inline" && (
+        <HStack
+          element="footer"
+          name={{ kind: "none" }}
+          ref={undefined}
+          gap="sm"
+          align="center"
+          justify="end"
+          wrap="wrap"
+          className={styles["inquiry-foot"]}
+        >
+          {inquiry.kind === "question" && (
+            <Text
+              element="span"
+              size="label"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["inquiry-hint"]}
+            >
+              {FREE_TEXT_HINT}
+            </Text>
+          )}
+          {inquiry.showBack && (
+            <Button
+              variant="outline-hover-warn"
+              size="secondary"
+              pressed="none"
+              disabled={false}
+              ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
+              ariaHasPopup={undefined}
+              title={undefined}
+              className={styles["inquiry-back"]}
+              onClick={inquiry.onBack}
+            >
+              {BACK_LABEL}
+            </Button>
+          )}
           <Button
-            variant="outline-hover-warn"
+            variant="solid-warn"
             size="secondary"
             pressed="none"
-            disabled={false}
+            disabled={!inquiry.canAnswer}
             ariaLabel={undefined}
             disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["inquiry-back"]}
-            onClick={inquiry.onBack}
+            className={styles["inquiry-answer"]}
+            onClick={inquiry.onAnswer}
           >
-            {BACK_LABEL}
+            <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+              {inquiry.last ? ANSWER_LABEL : NEXT_LABEL}
+            </Text>
+            <span className={styles["inquiry-key"]} aria-hidden="true">
+              {ENTER_KEY_HINT}
+            </span>
           </Button>
-        )}
-        <Button
-          variant="solid-warn"
-          size="secondary"
-          pressed="none"
-          disabled={!inquiry.canAnswer}
-          ariaLabel={undefined}
-          disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
-          className={styles["inquiry-answer"]}
-          onClick={inquiry.onAnswer}
-        >
-          <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
-            {inquiry.last ? ANSWER_LABEL : NEXT_LABEL}
-          </Text>
-          <span className={styles["inquiry-key"]} aria-hidden="true">
-            {ENTER_KEY_HINT}
-          </span>
-        </Button>
-      </HStack>
+        </HStack>
+      )}
     </section>
   )
 }

@@ -45,6 +45,7 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/live-region-focus.test.ts": "every",
   "test/e2e/markdown-composer.test.ts": ["dispatch"],
   "test/e2e/phone-composer.test.ts": ["dispatch", "character"],
+  "test/e2e/phone-inquiry.test.ts": ["main", "dispatch", "character"],
   "test/e2e/report-main-view.test.ts": ["main"],
   "test/e2e/report-task.test.ts": ["main"],
   "test/e2e/run-setting.test.ts": ["sidebar"],

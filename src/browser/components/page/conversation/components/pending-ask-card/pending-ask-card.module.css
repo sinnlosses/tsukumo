@@ -1,0 +1,154 @@
+/* 狭い画面の答え待ちの札。高さの上限を超えたら問いと等幅の札の側が転がり、答えのボタンは下端に残す。 */
+.pending-ask-card {
+  display: flex;
+  flex-direction: column;
+  max-height: 50dvh;
+  padding: 14px 14px 12px;
+  border: 1px solid color-mix(in srgb, var(--state-warn) 45%, transparent);
+  border-radius: 16px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--state-warn) 10%, transparent),
+    color-mix(in srgb, var(--state-warn) 4%, transparent)
+  );
+}
+.pending-ask-card-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+.pending-ask-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11.5px;
+}
+.pending-ask-card-label {
+  flex: none;
+  color: var(--state-warn);
+  font-weight: 700;
+}
+.pending-ask-card-subject {
+  min-width: 0;
+  color: var(--ink-quiet);
+}
+.pending-ask-card-head-end {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+/* 添え書きを板で読む口。 */
+.pending-ask-card-detail {
+  height: 26px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-quiet);
+  font-size: 12px;
+  cursor: pointer;
+}
+.pending-ask-card-sheet-answer {
+  flex: 1;
+}
+.pending-ask-card-progress.is-pushed {
+  margin-left: auto;
+}
+.pending-ask-card-progress {
+  flex: none;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+}
+.pending-ask-card-question {
+  margin: 6px 0 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.pending-ask-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+/* 入力欄にフォーカスがあるあいだ（ソフトウェアキーボードで窓が低い）は、並びを1行に畳む。 */
+@media (max-width: 760px) {
+  body:has([data-region="dispatch"] textarea:focus) .pending-ask-card-chips {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  body:has([data-region="dispatch"] textarea:focus) .pending-ask-card-chips > li {
+    flex: none;
+  }
+}
+.pending-ask-card-chip {
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--surface-raised);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+.pending-ask-card-omitted {
+  padding: 2px 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink-quiet);
+  font-size: 11.5px;
+}
+.pending-ask-card-actions {
+  flex: none;
+  margin-top: 12px;
+}
+.pending-ask-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.pending-ask-card-grid.is-two-columns {
+  grid-template-columns: 1fr 1fr;
+}
+.pending-ask-card-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+}
+.pending-ask-card-button.is-recommended {
+  border-color: var(--state-warn);
+  background: var(--state-warn);
+  color: var(--ground);
+  font-weight: 700;
+}
+.pending-ask-card-button.is-selected {
+  border-color: var(--state-warn);
+}
+.pending-ask-card-button[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: default;
+}
+.pending-ask-card-button-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.pending-ask-card-mark {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.7;
+}
