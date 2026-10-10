@@ -111,5 +111,39 @@
       "kind": "effort-changed",
       "effort": "medium"
     }
+  },
+  {
+    "sent": "session.switchSession",
+    "order": 1,
+    "input": {
+      "sessionId": "fake-past-chat-session"
+    }
+  },
+  {
+    "received": "hello",
+    "protocolVersion": "<protocol-version>"
+  },
+  {
+    "received": "response",
+    "order": 1,
+    "status": 200,
+    "body": {}
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "chat-mode-changed",
+      "chat": true
+    }
   }
 ]

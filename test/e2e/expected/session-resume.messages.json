@@ -31,5 +31,31 @@
       "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
       "expression": "default"
     }
+  },
+  {
+    "sent": "session.switchSession",
+    "order": 1,
+    "input": {
+      "sessionId": "fake-past-session"
+    }
+  },
+  {
+    "received": "hello",
+    "protocolVersion": "<protocol-version>"
+  },
+  {
+    "received": "response",
+    "order": 1,
+    "status": 200,
+    "body": {}
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
   }
 ]

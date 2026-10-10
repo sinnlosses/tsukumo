@@ -104,7 +104,7 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
         session.restart({
           selection: { by: "name", name: input.name },
           chat: session.state().chatMode,
-          resume: { by: "latest" },
+          resume: { by: "new" },
         }),
     },
     // いま出しているパックのまま起こし直す（雑談に入るとキャラクターが変わる、とは決めていない）。
@@ -115,7 +115,7 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
         session.restart({
           selection: { by: "current" },
           chat: input.chat,
-          resume: { by: "latest" },
+          resume: { by: "new" },
         }),
     },
     // キャラクターもモードもいま出しているまま（変わるのは、どの transcript の続きから始めるかだけ）。

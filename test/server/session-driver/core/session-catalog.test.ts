@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import type { Config } from "../../../../src/server/core/config.ts"
-import {
-  canResume,
-  createSessionCatalog,
-} from "../../../../src/server/session-driver/core/session-catalog.ts"
+import { createSessionCatalog } from "../../../../src/server/session-driver/core/session-catalog.ts"
 import { sessionTag } from "../../../../src/server/session-driver/core/session-mark.ts"
 import { DEFAULT_VIEW_PORT } from "../../../../src/server/view-server/core/port-resolution.ts"
 import {
@@ -45,27 +41,27 @@ function scriptedRead(results: readonly (() => Promise<unknown>)[]): {
 }
 
 describe("createSessionCatalog", () => {
-  it("作ったときに1回だけ読み、続きの選択と切り替え先の一覧では読み直さない", async () => {
+  it("作ったときに1回だけ読み、切り替え先の一覧を何度引いても読み直さない", async () => {
     const reads = scriptedRead([
       () =>
         Promise.resolve([sessionInfo("s-work", 200, TAG), sessionInfo("s-chat", 100, CHAT_TAG)]),
     ])
     const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
 
-    expect(await catalog.findToResume(TAG)).toBe("s-work")
-    expect(await catalog.findToResume(CHAT_TAG)).toBe("s-chat")
     expect((await catalog.listChoices(TAG)).map((choice) => choice.sessionId)).toEqual(["s-work"])
+    expect((await catalog.listChoices(CHAT_TAG)).map((choice) => choice.sessionId)).toEqual([
+      "s-chat",
+    ])
     expect(reads.count()).toBe(1)
   })
 
-  it("印を付けたセッションは、読み直す前から続きとして選ばれ、切り替え先の一覧にも並ぶ", async () => {
+  it("印を付けたセッションは、読み直す前から切り替え先の一覧に並ぶ", async () => {
     const reads = scriptedRead([() => Promise.resolve([sessionInfo("s-old", 200, TAG)])])
     const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
-    await catalog.findToResume(TAG)
+    await catalog.listChoices(TAG)
 
     catalog.noteMarked("s-new", TAG)
 
-    expect(await catalog.findToResume(TAG)).toBe("s-new")
     expect((await catalog.listChoices(TAG)).map((choice) => choice.sessionId)).toEqual([
       "s-new",
       "s-old",
@@ -73,7 +69,7 @@ describe("createSessionCatalog", () => {
     expect(reads.count()).toBe(1)
   })
 
-  it("古いセッションに印を付け直すと、そちらが最新として続きに選ばれる", async () => {
+  it("古いセッションに印を付け直すと、そちらが一覧の先頭に来る", async () => {
     const reads = scriptedRead([
       () => Promise.resolve([sessionInfo("s-a", 100, TAG), sessionInfo("s-b", 200, TAG)]),
     ])
@@ -81,7 +77,7 @@ describe("createSessionCatalog", () => {
 
     catalog.noteMarked("s-a", TAG)
 
-    expect(await catalog.findToResume(TAG)).toBe("s-a")
+    expect((await catalog.listChoices(TAG))[0]?.sessionId).toBe("s-a")
   })
 
   it("読み直すと見出しや新しいセッションが入れ替わり、読み直しの間に付けた印も残る", async () => {
@@ -92,7 +88,7 @@ describe("createSessionCatalog", () => {
     ])
     let now = 1_000
     const catalog = createSessionCatalog({ read: reads.read, now: () => now })
-    await catalog.findToResume(TAG)
+    await catalog.listChoices(TAG)
 
     const refreshing = catalog.refresh()
     now = 2_000
@@ -173,7 +169,7 @@ describe("createSessionCatalog", () => {
     const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
 
     expect(await catalog.refresh()).toBe("kept")
-    expect(await catalog.findToResume(TAG)).toBe("s-work")
+    expect((await catalog.listChoices(TAG)).map((choice) => choice.sessionId)).toEqual(["s-work"])
   })
 
   it("後から始めた読み直しが先に終わったら、遅れて終わった古い読み直しは採らない", async () => {
@@ -190,29 +186,14 @@ describe("createSessionCatalog", () => {
     slow.resolve([sessionInfo("s-stale", 100, TAG)])
     expect(await older).toBe("kept")
 
-    expect(await catalog.findToResume(TAG)).toBe("s-fresh")
+    expect((await catalog.listChoices(TAG)).map((choice) => choice.sessionId)).toEqual(["s-fresh"])
   })
 
-  it("最初に読めなかったときは、続きが無い（新規に起こす）", async () => {
+  it("最初に読めなかったときは、切り替え先が空", async () => {
     const reads = scriptedRead([() => Promise.reject(new Error("架空の読み取り失敗"))])
     const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
 
-    expect(await catalog.findToResume(TAG)).toBeUndefined()
     expect(await catalog.listChoices(TAG)).toEqual([])
-  })
-})
-
-describe("canResume", () => {
-  function config(overrides: Partial<Pick<Config, "newSession">>): Pick<Config, "newSession"> {
-    return { newSession: false, ...overrides }
-  }
-
-  it("既定（新規指定なし）では続きを探す", () => {
-    expect(canResume(config({}))).toBe(true)
-  })
-
-  it("TSUKUMO_NEW_SESSION=1（newSession）のときは探さない", () => {
-    expect(canResume(config({ newSession: true }))).toBe(false)
   })
 })
 
@@ -233,52 +214,15 @@ const LEGACY_SESSIONS = [
   }),
 ]
 
-describe("createSessionCatalog の続きの選択", () => {
-  it.each<[string, readonly unknown[], string, string | undefined]>([
-    [
-      "同じ印のうち lastModified が最新のもの",
-      [
-        sessionRecord({ sessionId: "s-old", lastModified: 100, tag: TAG }),
-        sessionRecord({ sessionId: "s-new", lastModified: 300, tag: TAG }),
-        sessionRecord({ sessionId: "s-mid", lastModified: 200, tag: TAG }),
-      ],
-      TAG,
-      "s-new",
-    ],
-    [
-      "印の無いもの・別の道具・別のパック・雑談・別の部屋より新しくても、同じ印のもの",
-      [
-        sessionRecord({ sessionId: "s-bare", lastModified: 900 }),
-        sessionRecord({ sessionId: "s-other-tool", lastModified: 800, tag: "別の道具" }),
-        sessionRecord({ sessionId: "s-other-pack", lastModified: 700, tag: OTHER_PACK_TAG }),
-        sessionRecord({ sessionId: "s-chat", lastModified: 600, tag: CHAT_TAG }),
-        sessionRecord({ sessionId: "s-other-room", lastModified: 500, tag: SECOND_TAG }),
-        sessionRecord({ sessionId: "s-tsukumo", lastModified: 100, tag: TAG }),
-      ],
-      TAG,
-      "s-tsukumo",
-    ],
-    [
-      "雑談の印なら、新しい仕事より雑談のもの",
-      [
-        sessionRecord({ sessionId: "s-work", lastModified: 900, tag: TAG }),
-        sessionRecord({ sessionId: "s-chat", lastModified: 100, tag: CHAT_TAG }),
-      ],
-      CHAT_TAG,
-      "s-chat",
-    ],
-    [
-      "仕事のセッションしか無ければ、雑談は無し（新規に起こす）",
-      [sessionRecord({ sessionId: "s-work", lastModified: 900, tag: TAG })],
-      CHAT_TAG,
-      undefined,
-    ],
-    ["一覧が空なら無し（新規に起こす）", [], TAG, undefined],
-    ["目印の無い昔の仕事の印は、既定のポートの続き", LEGACY_SESSIONS, TAG, "s-legacy"],
-    ["目印の無い昔の雑談の印は、既定のポートの続き", LEGACY_SESSIONS, CHAT_TAG, "s-legacy-chat"],
-    ["目印の無い昔の印は、ほかのポートの続きにはしない", LEGACY_SESSIONS, SECOND_TAG, undefined],
-  ])("%s を選ぶ", async (_name, sessions, tag, expected) => {
-    expect(await catalogOf(sessions).findToResume(tag)).toBe(expected)
+describe("createSessionCatalog の昔の印", () => {
+  it.each<[string, string, string | undefined]>([
+    ["目印の無い昔の仕事の印は、既定のポートの一覧に並ぶ", TAG, "s-legacy"],
+    ["目印の無い昔の雑談の印は、既定のポートの雑談の一覧に並ぶ", CHAT_TAG, "s-legacy-chat"],
+    ["目印の無い昔の印は、ほかのポートの一覧には並ばない", SECOND_TAG, undefined],
+  ])("%s", async (_name, tag, expected) => {
+    expect((await listChoicesOf(LEGACY_SESSIONS, tag)).map((choice) => choice.sessionId)).toEqual(
+      expected === undefined ? [] : [expected],
+    )
   })
 })
 

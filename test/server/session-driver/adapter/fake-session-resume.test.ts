@@ -43,19 +43,16 @@ function session(): FakeSession {
 }
 
 describe("createFakeSessionCatalog", () => {
-  it("続きを持つ場面を名指ししたときだけ、その ID を続きにする", async () => {
-    expect(await createFakeSessionCatalog(session(), "with-resume").findToResume(TAG)).toBe(
-      "past-1",
-    )
+  it("続きを持つ場面を名指ししたときだけ、その ID を切り替え先に出す", async () => {
+    const choices = await createFakeSessionCatalog(session(), "with-resume").listChoices(TAG)
+
+    expect(choices.map((choice) => choice.sessionId)).toEqual(["past-1"])
   })
 
   it.each([["without-resume"], ["dangling-resume"], ["unknown-scene"], [undefined]])(
-    "場面が %s のときは続きを探さない",
+    "場面が %s のときは切り替え先が空",
     async (scene) => {
-      const catalog = createFakeSessionCatalog(session(), scene)
-
-      expect(await catalog.findToResume(TAG)).toBeUndefined()
-      expect(await catalog.listChoices(TAG)).toEqual([])
+      expect(await createFakeSessionCatalog(session(), scene).listChoices(TAG)).toEqual([])
     },
   )
 })

@@ -147,7 +147,7 @@ export type SessionMode =
       readonly chatRecall: ChatRecall
     }
 
-/** このセッションを新規に起こすか、続きから始めるか。続きから始める ID は `SessionCatalog.findToResume` が選ぶ。 */
+/** このセッションを新規に起こすか、続きから始めるか。続きから始める ID は、画面の切り替えで選ばれたもの。 */
 export type SessionStart =
   /** 新規に起こす。 */
   | { readonly kind: "new" }

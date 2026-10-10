@@ -2,14 +2,12 @@ import { describe, expect, it } from "vitest"
 
 import type { CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
 import { createSessionCatalog } from "../../../../src/server/session-driver/core/session-catalog.ts"
-import type {
-  SessionDriver,
-  SessionStart,
-} from "../../../../src/server/session-driver/core/session-driver.ts"
+import type { SessionDriver } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { sessionTag } from "../../../../src/server/session-driver/core/session-mark.ts"
 import {
   createSessionLaunch,
   type SessionLaunchPorts,
+  type SessionLaunchRequest,
 } from "../../../../src/server/session/core/session-launch.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
 import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
@@ -47,6 +45,9 @@ const CHOICES = [
     heading: "架空の見出しその2",
   },
 ] as const
+
+/** 切り替え画面から前の仕事のセッションを選んだときの決め方。 */
+const PREVIOUS_WORK = { by: "id", sessionId: "prev-work-session" } as const
 
 const CHAT_TOPICS = ["架空の話題その1", "架空の話題その2"] as const
 
@@ -135,11 +136,6 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
       calls.push(`readRememberedLines:${pack.name}`)
       return REMEMBERED_LINES
     },
-    findResumeSession: (pack, chat) => {
-      calls.push(`findResumeSession:${pack.name}:${modeOf(chat)}`)
-      const sessionId = `prev-${modeOf(chat)}-session`
-      return Promise.resolve({ kind: "resume", sessionId })
-    },
     listSessions: (pack, chat) => {
       calls.push(`listSessions:${pack.name}:${modeOf(chat)}`)
       return Promise.resolve(CHOICES)
@@ -199,23 +195,21 @@ function settle(): Promise<void> {
 }
 
 describe("createSessionLaunch", () => {
-  it("起動時は覚えた値のパックで起こし、続きの履歴を流す", async () => {
+  it("新規で起こすと、前のセッションを探さず、履歴を流さない", async () => {
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: undefined,
-      resume: { by: "latest" },
+      resume: { by: "new" },
     })
     await settle()
 
     expect(harness.calls).toEqual([
       "choosePack:initial",
       "readSessionDefault",
-      "findResumeSession:tsukumo-spirit:work",
       "listSessions:tsukumo-spirit:work",
-      "startDriver:tsukumo-spirit:work:prev-work-session",
-      "restoreEvents:prev-work-session",
+      "startDriver:tsukumo-spirit:work:",
       "refreshSessions",
     ])
     expect(harness.events.map((event) => event.kind)).toEqual([
@@ -223,8 +217,12 @@ describe("createSessionLaunch", () => {
       "chat-mode-changed",
       "session-default-changed",
       "sessions-changed",
-      "utterance",
     ])
+    expect(harness.driverEvents).toContainEqual({
+      kind: "sessions-changed",
+      sessions: CHOICES,
+      current: undefined,
+    })
   })
 
   it("駆動を返す前に、続きの履歴を流し終えている", async () => {
@@ -241,33 +239,12 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "current" },
       chat: true,
-      resume: { by: "latest" },
+      resume: PREVIOUS_WORK,
     })
 
     // 起こし直しの `hello` はここで配られる（session-manager の restart）ので、履歴が
     // 入っていないと画面は既定の表情で描いたあとに続きの表情へもう一度飛ぶ。
     expect(harness.restoredEvents.map((event) => event.kind)).toEqual(["utterance"])
-  })
-
-  it("続きから始めるセッションが無ければ、履歴を流さない", async () => {
-    const harness = createHarness({
-      findResumeSession: (): Promise<SessionStart> => Promise.resolve({ kind: "new" }),
-    })
-
-    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      selection: { by: "initial" },
-      chat: undefined,
-      resume: { by: "latest" },
-    })
-    await settle()
-
-    expect(harness.calls.some((call) => call.startsWith("restoreEvents:"))).toBe(false)
-    expect(harness.events.map((event) => event.kind)).toEqual([
-      "character-changed",
-      "chat-mode-changed",
-      "session-default-changed",
-      "sessions-changed",
-    ])
   })
 
   it("再生が失敗しても駆動は動き続ける", async () => {
@@ -281,7 +258,7 @@ describe("createSessionLaunch", () => {
       {
         selection: { by: "initial" },
         chat: undefined,
-        resume: { by: "latest" },
+        resume: PREVIOUS_WORK,
       },
     )
     await settle()
@@ -311,7 +288,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "name", name: "kagami" },
       chat: undefined,
-      resume: { by: "latest" },
+      resume: PREVIOUS_WORK,
     })
     await settle()
 
@@ -319,13 +296,13 @@ describe("createSessionLaunch", () => {
     expect(harness.calls).toContain("startDriver:kagami:work:prev-work-session")
   })
 
-  it("雑談で起こすと、雑談の側の続きを探して雑談の駆動を起こす（仕事の続きを拾わない）", async () => {
+  it("雑談で新規に起こすと、雑談の駆動を新規で起こす（仕事の続きを拾わない）", async () => {
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: true,
-      resume: { by: "latest" },
+      resume: { by: "new" },
     })
     await settle()
 
@@ -334,10 +311,8 @@ describe("createSessionLaunch", () => {
       "readChatTopics:tsukumo-spirit",
       "readRememberedLines:tsukumo-spirit",
       "readSessionDefault",
-      "findResumeSession:tsukumo-spirit:chat",
       "listSessions:tsukumo-spirit:chat",
-      "startDriver:tsukumo-spirit:chat:prev-chat-session",
-      "restoreEvents:prev-chat-session",
+      "startDriver:tsukumo-spirit:chat:",
       "refreshSessions",
     ])
   })
@@ -348,7 +323,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: true,
-      resume: { by: "latest" },
+      resume: PREVIOUS_WORK,
     })
     await settle()
 
@@ -367,7 +342,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: false,
-      resume: { by: "latest" },
+      resume: PREVIOUS_WORK,
     })
     await settle()
 
@@ -377,7 +352,7 @@ describe("createSessionLaunch", () => {
     expect(harness.events.some((event) => event.kind === "remembered-lines-changed")).toBe(false)
   })
 
-  it("画面から選んだセッションは探さずに、そのIDの続きから起こす", async () => {
+  it("画面から選んだセッションは、そのIDの続きから起こす", async () => {
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
@@ -387,7 +362,6 @@ describe("createSessionLaunch", () => {
     })
     await settle()
 
-    // `findResumeSession` は呼ばない（印から探すのではなく、選ばれたIDがそのまま続き）。
     expect(harness.calls).toEqual([
       "choosePack:current",
       "readSessionDefault",
@@ -403,7 +377,7 @@ describe("createSessionLaunch", () => {
     })
   })
 
-  it("起こし直しは transcript の一覧を読まずに続きを選び、読み直しを待たずに駆動を返す", async () => {
+  it("起こし直しは transcript の一覧を読まず、読み直しを待たずに駆動を返す", async () => {
     const calls: string[] = []
     // 最初の1回だけ読み終わり、読み直しはいつまでも終わらない。
     let reads = 0
@@ -429,10 +403,6 @@ describe("createSessionLaunch", () => {
       now: () => 1_000,
     })
     const harness = createHarness({
-      findResumeSession: async (pack, chat) => {
-        const sessionId = await catalog.findToResume(sessionTag(pack.name, chat, 7327))
-        return sessionId === undefined ? { kind: "new" } : { kind: "resume", sessionId }
-      },
       listSessions: (pack, chat) => catalog.listChoices(sessionTag(pack.name, chat, 7327)),
       refreshSessions: () => catalog.refresh(),
       startDriver: (seed) => {
@@ -445,23 +415,23 @@ describe("createSessionLaunch", () => {
     await launch(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: undefined,
-      resume: { by: "latest" },
+      resume: { by: "new" },
     })
     calls.length = 0
 
     await launch(harness.receive, harness.receiveRestored, {
       selection: { by: "current" },
       chat: true,
-      resume: { by: "latest" },
+      resume: { by: "new" },
     })
     await launch(harness.receive, harness.receiveRestored, {
       selection: { by: "current" },
       chat: false,
-      resume: { by: "latest" },
+      resume: { by: "new" },
     })
 
     // 読むのは駆動を起こしたあとの読み直しだけで、どちらの起こし直しもそれを待たずに返っている。
-    expect(calls).toEqual(["startDriver:chat:s-chat", "read", "startDriver:work:s-work", "read"])
+    expect(calls).toEqual(["startDriver:chat:", "read", "startDriver:work:", "read"])
   })
 
   it("読み直しが終わったら、読み直した切り替え先の一覧をもう一度流す", async () => {
@@ -478,7 +448,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: undefined,
-      resume: { by: "latest" },
+      resume: PREVIOUS_WORK,
     })
     await settle()
 
@@ -494,7 +464,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: undefined,
-      resume: { by: "latest" },
+      resume: PREVIOUS_WORK,
     })
     await settle()
 
@@ -503,21 +473,25 @@ describe("createSessionLaunch", () => {
     )
   })
 
-  it.each<[string, Partial<SessionLaunchPorts<Pack>>, readonly SessionEvent["kind"][]]>([
-    ["続きから起こした", {}, ["utterance"]],
+  it.each<
     [
-      "新規で起こした",
-      { findResumeSession: (): Promise<SessionStart> => Promise.resolve({ kind: "new" }) },
-      [],
-    ],
+      string,
+      SessionLaunchRequest["resume"],
+      Partial<SessionLaunchPorts<Pack>>,
+      readonly SessionEvent["kind"][],
+    ]
+  >([
+    ["続きから起こした", PREVIOUS_WORK, {}, ["utterance"]],
+    ["新規で起こした", { by: "new" }, {}, []],
     [
       "履歴が読めなかった",
+      PREVIOUS_WORK,
       { restoreEvents: () => Promise.reject(new Error("架空の読み取り失敗")) },
       [],
     ],
   ])(
     "駆動を起こす口に渡す restored は、%s代の流し終えた履歴で解ける",
-    async (_, overrides, kinds) => {
+    async (_, resume, overrides, kinds) => {
       let restored: Promise<readonly RestoredEvent[]> = Promise.resolve([])
       const harness = createHarness({
         ...overrides,
@@ -530,7 +504,7 @@ describe("createSessionLaunch", () => {
       await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
         selection: { by: "initial" },
         chat: undefined,
-        resume: { by: "latest" },
+        resume,
       })
 
       expect((await restored).map(({ event }) => event.kind)).toEqual(kinds)
@@ -551,7 +525,7 @@ describe("createSessionLaunch", () => {
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
       chat: undefined,
-      resume: { by: "latest" },
+      resume: PREVIOUS_WORK,
     })
     await settle()
 

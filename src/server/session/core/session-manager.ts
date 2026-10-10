@@ -538,7 +538,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     {
       selection: { by: "initial" },
       chat: undefined,
-      resume: { by: "latest" },
+      resume: { by: "new" },
     },
     "immediate",
   )

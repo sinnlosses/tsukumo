@@ -323,7 +323,7 @@ describe("createCommandRouter（session）", () => {
 
     // 名前で渡すのは画面から選ばれたときだけ（＝覚える側。docs/architecture/screen-design.md「設定の置き場所」）。
     expect(restarts).toEqual([
-      { selection: { by: "name", name: "fictional" }, chat: true, resume: { by: "latest" } },
+      { selection: { by: "name", name: "fictional" }, chat: true, resume: { by: "new" } },
     ])
   })
 
@@ -393,9 +393,7 @@ describe("createCommandRouter（session）", () => {
     // パックは「いま出しているまま」として渡す（名前では渡さない）。名前で渡すと画面から
     // 選ばれたのと区別がつかず、モードを切り替えただけで覚えた値が書き換わる
     // （docs/architecture/screen-design.md「設定の置き場所」）。
-    expect(restarts).toEqual([
-      { selection: { by: "current" }, chat: true, resume: { by: "latest" } },
-    ])
+    expect(restarts).toEqual([{ selection: { by: "current" }, chat: true, resume: { by: "new" } }])
   })
 
   it("雑談から仕事へ戻すときも起こし直す", async () => {

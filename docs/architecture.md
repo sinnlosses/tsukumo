@@ -665,7 +665,7 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
 4. `view-delivery.ts` が**起動トークン**を1つ作り、`server.ts` を `127.0.0.1` で listen させる
    （`--dev` のときは Vite の開発サーバもここで差し込む。`docs/architecture/build.md`「作り直しを押す仕組み」）
 5. `session-start.ts` が `session-manager.ts` にセッションを1つ作る。駆動は `TSUKUMO_DRIVER` が
-   `fake` なら fake driver、それ以外は SDK。復元（「セッションの復元と複数化」）はここで判定する
+   `fake` なら fake driver、それ以外は SDK。起動は常に新規のセッション（「セッションの復元と複数化」）
    （どちらも起こす組み立ての `src/wiring/session-launch.ts`）。起こしたセッションは
    `view-delivery.ts` の `connect` で `/ws` に繋ぐ
 6. ホストのポートで `http://127.0.0.1:<port>/?t=<token>` を開く（失敗しても続行）
@@ -673,9 +673,9 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
 **起こし直し**（`session.switchCharacter` / `session.setChatMode` / `session.switchSession`）も、駆動を
 起こす一続き（`session/core/session-launch.ts` の `createSessionLaunch`）は起動時とまったく同じものを
 通る。違うのは `session-manager.ts` が `generation` を1つ進めて古い駆動のイベントを捨ててから同じ
-一続きをもう一度呼ぶ、という外側だけ（「セッションの復元と複数化」）。一続きの中の順序（パックと記憶の状態 → 続きから始めるか
-→ 切り替え先の一覧 → 駆動 → 続きからなら履歴の再生 → 一覧の読み直し）は `createSessionLaunch` が正典。
-続きの選択と切り替え先の一覧はメモリに持った一覧（`session-driver/core/session-catalog.ts`）から出し、
+一続きをもう一度呼ぶ、という外側だけ（「セッションの復元と複数化」）。一続きの中の順序（パックと記憶の状態 → 画面で選ばれた ID か新規か
+→ 切り替え先の一覧 → 駆動 → 選ばれた ID なら履歴の再生 → 一覧の読み直し）は `createSessionLaunch` が正典。
+切り替え先の一覧はメモリに持った一覧（`session-driver/core/session-catalog.ts`）から出し、
 transcript の一覧を読み直すのは駆動を返したあとなので、起こし直しの `hello` はそれを待たない。
 タスク一覧の見張り（`watchTaskSummary`）は一続きの外で `session-manager.ts` が1つだけ持ち、
 起こし直しでは作り直さない。タスク一覧は作業ディレクトリのもので駆動1代の持ち物ではないので、
@@ -944,12 +944,11 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
   最後のやり取りの「所要」が開き直しても出るように。2026-10-04・2026-10-07 の利用者の決定）。
   `getSessionMessages` は型に無い `timestamp` を各メッセージに載せて返すので、出来事ごとに持たせて
   `applyRestoredEvents` で畳む。読めなければ「分からない」
-- 逃げ道は `TSUKUMO_NEW_SESSION=1`（起動時）と、画面から新規に起こすコマンド（契約に
-  はまだ足していない）
+- 起動・キャラクターの切り替え・モードの切り替えは常に新規のセッション（2026-10-10。環境変数の逃げ道は持たない）
 - **どのセッションの続きから始めるかは画面から選べる**（帯のセッションの札から開く切り替え画面 →
   `session.switchSession` → `session-launch` の起こし直し）。並ぶのは**同じパック・同じモードの、
   目印（`@7327` / `@7328`）違い**で、新しいほうから `MAX_SESSION_CHOICES` 件まで。**起動時は
-  自動で続きから始まる**（選ばせる画面は出さない）
+  新規から始まる**（選ばせる画面は出さない）
 - **ビューの本文はメモリにしかない。** プロセスを落とすとブラウザのタブは繋ぎ先を失う
   （WebSocket が指数バックオフで繋ぎ直し続ける。「再接続」）。起動し直せば
   同じ URL でそのまま復帰し、**前の続きから始まる**（claude 側の会話は `resume`、画面の履歴は

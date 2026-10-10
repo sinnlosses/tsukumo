@@ -1,5 +1,5 @@
 // セッションを起こす配線。
-// どの駆動で起こすか（本物の SDK か疑似セッションの fake driver か）と、続きから始めるセッションをどう探すかをここで決める。
+// どの駆動で起こすか（本物の SDK か疑似セッションの fake driver か）と、切り替え先の一覧をどこから読むかをここで決める。
 // 起こす順序そのものは `createSessionLaunch` に任せる（起動時も起こし直しも同じ関数を通る）。
 
 import type { CurrentCharacter } from "../current-character.ts"
@@ -22,16 +22,10 @@ import {
   readRestoredEvents,
 } from "../server/session-driver/adapter/sdk-session.ts"
 import {
-  canResume,
   createSessionCatalog,
-  EMPTY_SESSION_CATALOG,
   type SessionCatalog,
 } from "../server/session-driver/core/session-catalog.ts"
-import type {
-  SessionDriver,
-  SessionMode,
-  SessionStart,
-} from "../server/session-driver/core/session-driver.ts"
+import type { SessionDriver, SessionMode } from "../server/session-driver/core/session-driver.ts"
 import { sessionTag } from "../server/session-driver/core/session-mark.ts"
 import {
   readRememberedSessionDefault,
@@ -88,8 +82,7 @@ export function wireSessionLaunch(options: {
 } {
   const { context, config, character, viewPort } = options
   const reportFailure = failureDiagnostic(options.diagnosticLog, context.now)
-  // 印の付いたセッションの一覧。ここで1回読み始め、起こし直しはメモリの一覧から続きを選ぶ。
-  // 続きを探さない起こし方なら何も読まない。
+  // 印の付いたセッションの一覧。ここで1回読み始め、起こし直しはメモリの一覧から切り替え先を出す。
   const sessionCatalog = chooseSessionCatalog(context, config)
   return {
     manager: {
@@ -101,8 +94,6 @@ export function wireSessionLaunch(options: {
         characterEvent: () => character.event(),
         readChatTopics: (pack) => readChatTopics(createChatSummary(pack.name)),
         readRememberedLines: (pack) => readRememberedLines(pack),
-        findResumeSession: (pack, chat) =>
-          findPackSessionToResume(sessionCatalog, pack.name, chat, viewPort),
         listSessions: (pack, chat) =>
           sessionCatalog.listChoices(sessionTag(pack.name, chat, viewPort)),
         refreshSessions: () => sessionCatalog.refresh(),
@@ -148,11 +139,8 @@ export function wireSessionLaunch(options: {
   }
 }
 
-/** 続きを探さない起こし方なら空、fake driver なら疑似セッションの一覧、それ以外は SDK の一覧。 */
+/** fake driver なら疑似セッションの一覧、それ以外は SDK の一覧。 */
 function chooseSessionCatalog(context: WiringContext, config: Config): SessionCatalog {
-  if (!canResume(config)) {
-    return EMPTY_SESSION_CATALOG
-  }
   return context.fakeSession === undefined
     ? createSessionCatalog({ read: () => listRepositorySessions(context.cwd), now: context.now })
     : createFakeSessionCatalog(context.fakeSession, config.fakeScene)
@@ -270,24 +258,4 @@ function sessionMode(
     chatSummary: createChatSummary(seed.pack.name),
     chatRecall,
   }
-}
-
-/**
- * これから起こすキャラクターパックの、そのモードの続きから始めるセッションを探す。
- * 見つからないときと、探さない起こし方（`canResume` が偽、または fake driver で続きを持たない場面）のときは `{ kind: "new" }`（新規に起こす）。
- *
- * 雑談と仕事で引く印が違う（`sessionTag` の `chat`）。
- * 雑談へ入っても仕事の会話は続きにならず、そのパックで一度も雑談のターンを終えていなければ新規から始まる。
- * 同じディレクトリで2つめの tsukumo を起こしたときも目印が違うので、先に起きている側のセッションは引かない。
- *
- * 印はターンが終わってから少し遅れて付く（`SESSION_TAG_DELAY_MS`）ので、ターンを1つも終えずに離れたセッションは次に来たときに見つからず、新規から始まる。
- */
-async function findPackSessionToResume(
-  sessionCatalog: SessionCatalog,
-  characterName: string,
-  chat: boolean,
-  viewPort: number,
-): Promise<SessionStart> {
-  const sessionId = await sessionCatalog.findToResume(sessionTag(characterName, chat, viewPort))
-  return sessionId === undefined ? { kind: "new" } : { kind: "resume", sessionId }
 }

@@ -437,11 +437,11 @@ describe("createSessionManager", () => {
       ok: true,
     })
 
-    // 起動の1代目は初期パック・続きは印から探す（どちらも覚えない側）。
+    // 起動の1代目は初期パック・新規のセッション（どちらも覚えない側）。
     expect(started[0]?.request).toEqual({
       selection: { by: "initial" },
       chat: undefined,
-      resume: { by: "latest" },
+      resume: { by: "new" },
     })
     // 前の駆動は閉じ、新しい駆動が起きている。
     expect(started[0]?.stub.calls).toContain("close")

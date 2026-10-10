@@ -55,7 +55,7 @@
           "attributes": {
             "data-speaker": "character",
             "role": "button",
-            "aria-pressed": "false"
+            "aria-pressed": "true"
           },
           "children": [
             "前のセッションの架空のセリフだよ。"
@@ -68,119 +68,6 @@
           },
           "children": [
             "12:00"
-          ]
-        },
-        {
-          "tag": "div",
-          "attributes": {
-            "data-day": "2026-01-15"
-          },
-          "children": [
-            {
-              "tag": "time",
-              "attributes": {
-                "dateTime": "2026-01-15"
-              },
-              "children": [
-                "1月15日（木）"
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "div",
-          "attributes": {
-            "data-speaker": "character",
-            "role": "button",
-            "aria-pressed": "false"
-          },
-          "children": [
-            "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
-          ]
-        },
-        {
-          "tag": "time",
-          "attributes": {
-            "dateTime": "2026-01-15T10:00+09:00"
-          },
-          "children": [
-            "10:00"
-          ]
-        },
-        {
-          "tag": "div",
-          "attributes": {
-            "data-speaker": "user"
-          },
-          "children": [
-            "いまの架空の雑談その1"
-          ]
-        },
-        {
-          "tag": "time",
-          "attributes": {
-            "dateTime": "2026-01-15T10:00+09:00"
-          },
-          "children": [
-            "10:00"
-          ]
-        },
-        {
-          "tag": "div",
-          "attributes": {
-            "data-speaker": "character",
-            "role": "button",
-            "aria-pressed": "false"
-          },
-          "children": [
-            "いまの架空のセリフその1だよ。"
-          ]
-        },
-        {
-          "tag": "time",
-          "attributes": {
-            "dateTime": "2026-01-15T10:00+09:00"
-          },
-          "children": [
-            "10:00"
-          ]
-        },
-        {
-          "tag": "div",
-          "attributes": {
-            "data-speaker": "user"
-          },
-          "children": [
-            "いまの架空の雑談その2"
-          ]
-        },
-        {
-          "tag": "time",
-          "attributes": {
-            "dateTime": "2026-01-15T10:00+09:00"
-          },
-          "children": [
-            "10:00"
-          ]
-        },
-        {
-          "tag": "div",
-          "attributes": {
-            "data-speaker": "character",
-            "role": "button",
-            "aria-pressed": "true"
-          },
-          "children": [
-            "いまの架空のセリフその2だよ。"
-          ]
-        },
-        {
-          "tag": "time",
-          "attributes": {
-            "dateTime": "2026-01-15T10:00+09:00"
-          },
-          "children": [
-            "10:00"
           ]
         }
       ]

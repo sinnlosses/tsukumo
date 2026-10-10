@@ -49,8 +49,6 @@ export type SessionLaunchRequest = {
 
 /** これから起こすセッションの決め方。 */
 export type SessionResume =
-  /** 印から最新の1つを探す。 */
-  | { readonly by: "latest" }
   /**
    * 画面から選ばれたセッション。探さずに、一覧に出したIDをそのまま続きにする。
    * claude 側が知らないIDだったときは新規のセッションとして起き上がる。
@@ -85,11 +83,6 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
    * 雑談で起こすときだけ呼ばれる。
    */
   readonly readRememberedLines: (pack: Pack) => readonly string[]
-  /**
-   * そのパックの、そのモードの続きから始めるセッションを探す（見つからなければ `{ kind: "new" }`）。
-   * 雑談と仕事は別のセッションなので、引く印も分かれる。
-   */
-  readonly findResumeSession: (pack: Pack, chat: boolean) => Promise<SessionStart>
   /**
    * 駆動を1つ起こす（本物か偽物かはここが選ぶ）。
    * `restored` は、その代で組み直して流し終えた履歴で解ける（新規で起こした・読めなかったときは空）。
@@ -163,9 +156,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     const sessionDefault = ports.readSessionDefault()
     onEvent({ kind: "session-default-changed", sessionDefault })
 
-    // キャラクターごと・モードごとに別のセッションを持つ。起動時も切り替え時も、これから起こす側の続きを探す。
-    // 画面から選ばれたときだけは探さない（選ばれたIDがそのまま続きになる）。
-    const start = await sessionStartOf(ports, request.resume, pack, chat)
+    const start = sessionStartOf(request.resume)
     // 切り替え先の一覧も、起こすたびに流し直す（画面はこのイベントでしか一覧を知れず、起こし直すと状態が初期値へ戻る）。
     // どれを出しているかも一緒に流すので、最初の依頼を送る前でも画面は居場所を指せる。
     // 画面へ渡す形（`current: string | undefined`）はここで畳む。`SessionStart` は core と adapter の間の語彙で、画面へ運ぶ語彙ではない。
@@ -197,20 +188,12 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
   }
 }
 
-/** これから起こすセッションを決める。画面から選ばれたIDと新規は探さない。 */
-async function sessionStartOf<Pack extends NamedCharacterPack>(
-  ports: SessionLaunchPorts<Pack>,
-  resume: SessionResume,
-  pack: Pack,
-  chat: boolean,
-): Promise<SessionStart> {
+function sessionStartOf(resume: SessionResume): SessionStart {
   switch (resume.by) {
     case "id":
       return { kind: "resume", sessionId: resume.sessionId }
     case "new":
       return { kind: "new" }
-    case "latest":
-      return ports.findResumeSession(pack, chat)
   }
 }
 

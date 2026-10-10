@@ -4,12 +4,13 @@
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { RestoredEvent } from "../../../shared/session/session-event.ts"
 import type { SessionCatalog } from "../core/session-catalog.ts"
+import { readSessionMark } from "../core/session-mark.ts"
 import { toRestoredEvents } from "../core/session-restore.ts"
 import type { FakeSession } from "./fake-driver.ts"
 
 /**
- * 名指しの場面が `resume` に過去の transcript を指しているときだけ、それを続きにする一覧。
- * 印は見ない。切り替え先の一覧は常に空。
+ * 名指しの場面が `resume` に過去の transcript を指しているときだけ、それを切り替え先の1件に出す一覧。
+ * 印の目印（ポート）は渡された印のものを使う。
  */
 export function createFakeSessionCatalog(
   session: FakeSession,
@@ -18,8 +19,14 @@ export function createFakeSessionCatalog(
   const resume = session.turns.find((candidate) => candidate.name === scene)?.resume
   const sessionId = session.pastSessions.find((past) => past.sessionId === resume)?.sessionId
   return {
-    findToResume: () => Promise.resolve(sessionId),
-    listChoices: () => Promise.resolve([]),
+    listChoices: (tag) => {
+      const viewPort = readSessionMark(tag)?.viewPort
+      return Promise.resolve(
+        sessionId === undefined || viewPort === undefined
+          ? []
+          : [{ viewPort, sessionId, lastModified: 0, startedAt: 0, heading: undefined }],
+      )
+    },
     refresh: () => Promise.resolve("kept"),
     noteMarked: () => {},
   }

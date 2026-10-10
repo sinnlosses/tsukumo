@@ -32,8 +32,6 @@ const HOST_ENV_NAME = "TSUKUMO_HOST"
 export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
 /** fake driver で、名指しした場面の手を先頭から何個まで流すか（正の整数）。 */
 export const FAKE_SCENE_UNTIL_ENV_NAME = "TSUKUMO_FAKE_SCENE_UNTIL"
-/** `1` で復元せず新規に起こす（`docs/requirements.md`「逃げ道」）。 */
-export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
 /**
  * サーバの時計を凍らせる瞬間（ISO 8601 の瞬間。末尾に `Z` かオフセットが要る）。
  * E2E が走らせるたびに同じ成果物を得るための口で、進まない時計になる。
@@ -80,7 +78,6 @@ export type Config = {
   readonly fakeScene: string | undefined
   /** `fakeScene` の手を流す個数の上限。未設定・正の整数でない値なら undefined ＝ 全部流す。 */
   readonly fakeSceneUntil: number | undefined
-  readonly newSession: boolean
   /** `CLAUDE_CONFIG_DIR` の値（未設定・空なら undefined ＝ `~`）。 */
   readonly claudeConfigDir: string | undefined
   /** 凍らせる瞬間。未設定・読めない値なら undefined ＝ 本物の時計。 */
@@ -106,7 +103,6 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     host: env[HOST_ENV_NAME]?.trim() === "none" ? "none" : "orca",
     fakeScene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
     fakeSceneUntil: parsePositiveInteger(env[FAKE_SCENE_UNTIL_ENV_NAME]),
-    newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
     claudeConfigDir: nonEmpty(env[CLAUDE_CONFIG_DIR_ENV_NAME]),
     fixedClock: parseInstant(env[FIXED_CLOCK_ENV_NAME]),
     inheritedEnv: env,

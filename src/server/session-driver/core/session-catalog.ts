@@ -1,11 +1,10 @@
 // 印の付いたセッションの一覧を、このプロセスのメモリに持つ。
-// 続きの選択と切り替え先の一覧は持っている一覧から出し、SDK の一覧を読み直すのは作ったときと `refresh` のときだけ。
+// 切り替え先の一覧は持っている一覧から出し、SDK の一覧を読み直すのは作ったときと `refresh` のときだけ。
 // 持つのは印・ID・時刻・見出しだけで、会話の内容は持たない。
 
 import { isPlainObject } from "remeda"
 
 import { MAX_SESSION_CHOICES, type SessionChoice } from "../../../shared/session/session-choice.ts"
-import type { Config } from "../../core/config.ts"
 import { readSessionMark } from "./session-mark.ts"
 
 /** 印の付いたセッション1件（目印まで揃えた印つき）。 */
@@ -15,8 +14,6 @@ export type TaggedSession = SessionChoice & {
 }
 
 export type SessionCatalog = {
-  /** その印の続きから始めるセッション（無ければ undefined）。最初に読み終わるまでは待つ。 */
-  readonly findToResume: (tag: string) => Promise<string | undefined>
   /** その印の、切り替え先として選べるセッション。最初に読み終わるまでは待つ。 */
   readonly listChoices: (tag: string) => Promise<readonly SessionChoice[]>
   /**
@@ -30,23 +27,6 @@ export type SessionCatalog = {
 
 /** 読み直した一覧を採ったか（`refreshed`）、持っている一覧のままか（`kept`）。 */
 export type SessionCatalogRefresh = "refreshed" | "kept"
-
-/**
- * 続きを探す起こし方かどうか。探さないときは、切り替え先の一覧も空、続きも `{ kind: "new" }` にする。
- * `TSUKUMO_NEW_SESSION=1` は探さない。新規に起こすと決めているときに続きを探しても無駄。
- * fake driver は疑似セッションの名指しの場面が続きを持つときだけ探す（探す先は fake の一覧が決める）。
- */
-export function canResume(config: Pick<Config, "newSession">): boolean {
-  return !config.newSession
-}
-
-/** 何も読まず、続きも切り替え先も無い一覧（続きを探さない起こし方のとき）。 */
-export const EMPTY_SESSION_CATALOG: SessionCatalog = {
-  findToResume: () => Promise.resolve(undefined),
-  listChoices: () => Promise.resolve([]),
-  refresh: () => Promise.resolve("kept"),
-  noteMarked: () => {},
-}
 
 /**
  * 一覧を1つ作り、その場で1回読み始める。
@@ -83,7 +63,6 @@ export function createSessionCatalog(options: {
   }
 
   return {
-    findToResume: async (tag) => selectSessionToResume(await current(), tag),
     listChoices: async (tag) => listMarkedSessions(await current(), tag),
     refresh: async () => {
       refreshCount += 1
@@ -122,25 +101,6 @@ function unreflectedMarks<Marked extends { readonly tag: string; readonly at: nu
       )
     }),
   )
-}
-
-/**
- * 続きから始めるセッションを選ぶ。印（`tagSession` で付けたもの）のあるもののうち、`lastModified` が最新の1つ。
- *
- * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提で、ここは印だけを見る。
- * 印は目印まで揃えてあるので（{@link readTaggedSessions}）、昔の印（目印の無いもの・1文字の `@A`）は同じポートの印と一致する。
- * 渡した印のものが1つも無ければ undefined（＝新規に起こす）を返す。
- */
-function selectSessionToResume(
-  sessions: readonly TaggedSession[],
-  tag: string,
-): string | undefined {
-  const matched = sessions.filter((session) => session.tag === tag)
-  return matched.reduce<TaggedSession | undefined>(
-    (latest, session) =>
-      latest === undefined || session.lastModified > latest.lastModified ? session : latest,
-    undefined,
-  )?.sessionId
 }
 
 /**

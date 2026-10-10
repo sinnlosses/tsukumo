@@ -3,9 +3,9 @@ import { describe, it } from "vitest"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // 復元した雑談の履歴（docs/architecture/testing.md「E2E のシナリオの一覧」）。疑似セッションの場面
-// `chat-restored-history` は、前のセッションの1件のやり取りを `resume` で組み直して持ち、
-// 続けていまのセッションの2件のやり取りを流す。2回目の `turn-finished` まで待つと、
-// 前のセッションといまのやり取りがどちらも履歴に残った状態になる。
+// `chat-restored-history` は、前のセッションの1件のやり取りを `resume` で切り替え先に出し、
+// 起動した代にはいまのセッションの2件のやり取りを流す。2回目の `turn-finished` を待ってから
+// 切り替え画面で前のセッションを選ぶと、雑談のまま、組み直した履歴だけに起き直す。
 
 const run = useScenarioRun()
 
@@ -16,7 +16,7 @@ const ELAPSED_MS = 60_000
 const LAST_TURN_FINISHED_OCCURRENCE = 2
 
 describe("復元した雑談の履歴", () => {
-  it("組み直した履歴を持って起きても、前のセッションといまの履歴がどちらも残る", async () => {
+  it("雑談のまま前のセッションを選ぶと、組み直した履歴に起き直す", async () => {
     const room = await run.open({
       scenario: "chat-restored-history",
       scene: "chat-restored-history",
@@ -25,6 +25,11 @@ describe("復元した雑談の履歴", () => {
     })
 
     await room.waitForEvent("turn-finished", LAST_TURN_FINISHED_OCCURRENCE)
+    await room.page.getByRole("button", { name: /押すとセッションを切り替える画面を開く/u }).click()
+    const search = room.page.getByRole("combobox", { name: "セッションを探す" })
+    await search.waitFor()
+    await search.press("ArrowDown")
+    await search.press("Enter")
     await room.settleAndMatch(ELAPSED_MS)
   })
 })
