@@ -46,7 +46,7 @@ export type QuerySeedOptions = {
    * 渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ環境に本体の催促を止める変数を足したもの（`childProcessEnv`）を渡す。
    */
   readonly env: Readonly<Record<string, string | undefined>>
-  /** セッションに載せるプラグイン。同梱の `plugin/`（`tsukumo:token-usage-diet`）と、取り込んだ tsukumo-plugins。 */
+  /** セッションに載せるプラグイン。同梱の `plugin/`（`tsukumo:token-usage-diet`）と、取り込んだ tsukumo-plugins（`mountWorkflowPlugin` のときだけ）。 */
   readonly plugins: SdkPluginConfig[]
 }
 
@@ -71,7 +71,9 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     env: childProcessEnv(options.inheritedEnv),
     plugins: [
       { type: "local", path: bundledFilePath("plugin") },
-      { type: "local", path: workflowPluginDir() },
+      ...(options.mountWorkflowPlugin
+        ? [{ type: "local" as const, path: workflowPluginDir() }]
+        : []),
     ],
   }
 }

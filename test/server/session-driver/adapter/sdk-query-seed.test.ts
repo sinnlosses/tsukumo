@@ -44,6 +44,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   mode: WORK_MODE,
   inheritedEnv: { PATH: "/usr/bin", HOME: "/tmp/tsukumo-home" },
   claudeConfigDir: undefined,
+  mountWorkflowPlugin: true,
   dismissedUsageProposalKeys: () => [],
   hasTaskOperation: async () => true,
   onEvent: () => {},
@@ -99,6 +100,18 @@ describe("buildQuerySeedOptions", () => {
       CLAUDE_CODE_TERMINAL_MCP_TOOLS: "mcp__tsukumo__speak",
       CLAUDE_CODE_SILENT_TURN_REMINDER: "0",
     })
+  })
+
+  it("取り込んだ tsukumo-plugins は mountWorkflowPlugin のときだけ plugins に載せる", () => {
+    const mounted = buildQuerySeedOptions(BASE_OPTIONS).plugins.map((plugin) => plugin.path)
+    const unmounted = buildQuerySeedOptions({
+      ...BASE_OPTIONS,
+      mountWorkflowPlugin: false,
+    }).plugins.map((plugin) => plugin.path)
+
+    expect(mounted).toHaveLength(2)
+    expect(mounted[1]).toMatch(/vendor\/tsukumo-plugins$/)
+    expect(unmounted).toEqual([mounted[0]])
   })
 })
 

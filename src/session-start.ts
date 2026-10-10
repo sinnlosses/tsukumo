@@ -53,6 +53,8 @@ export type SessionStartOptions = {
   readonly cwd: string
   /** レポートのパスを開くホスト。 */
   readonly host: Host
+  /** 取り込んだ tsukumo-plugins をセッションに載せるか。利用者が同じものを入れていれば載せない。 */
+  readonly mountWorkflowPlugin: boolean
 }
 
 /** 起こしたセッションと、開いたタブがそれを触るコマンドの手続き。 */
@@ -84,6 +86,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     config,
     character,
     viewPort: options.viewPort,
+    mountWorkflowPlugin: options.mountWorkflowPlugin,
     firstViewer: firstViewer.promise,
     diagnosticLog: options.diagnosticLog,
     onLaunch: (seed, onEvent, restored) => {

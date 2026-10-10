@@ -390,7 +390,7 @@ CI に無い外部コマンドを起こすテストを検査で落とします�
 ├── story/                  # Storybook の story（src/ と同じディレクトリ構成。設定は .storybook/）
 ├── characters/             # キャラクター定義と素材（tsukumo-spirit が既定、local/ は .gitignore）
 ├── plugin/                 # セッションに載せる同梱の Claude Code プラグイン（token-usage-diet）
-├── vendor/tsukumo-plugins/ # 取り込んだ tsukumo-plugins（git submodule。タスク運用のスキル・agent・hook）
+├── vendor/tsukumo-plugins/ # 取り込んだ tsukumo-plugins（git submodule。タスク運用のスキル・agent・hook。利用者がリンクで入れていれば載せない）
 ├── scripts/                # 開発の道具（check・ship・stop・撮影・文書の検査・hook の deny-* など）
 ├── assets/                 # ロゴ
 ├── docs/                   # 要件定義・設計・アーキテクチャ・規約・用語集（正典）

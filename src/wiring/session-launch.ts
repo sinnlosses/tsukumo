@@ -66,6 +66,8 @@ export function wireSessionLaunch(options: {
    * 同じディレクトリで2つめを起こすとポートがずれ、目印も分かれるので、互いのセッションを取り合わない。
    */
   readonly viewPort: number
+  /** 取り込んだ tsukumo-plugins をセッションに載せるか。 */
+  readonly mountWorkflowPlugin: boolean
   /** 最初のタブが繋がったら解ける約束。fake driver は疑似セッションをここから流し始める。本物の駆動は待たない。 */
   readonly firstViewer: Promise<void>
   /**
@@ -116,6 +118,7 @@ export function wireSessionLaunch(options: {
             scene: config.fakeScene,
             sceneUntil: config.fakeSceneUntil,
             claudeConfigDir: config.claudeConfigDir,
+            mountWorkflowPlugin: options.mountWorkflowPlugin,
             firstViewer: options.firstViewer,
             viewPort,
             onSessionMarked: (sessionId, tag) => sessionCatalog.noteMarked(sessionId, tag),
@@ -166,6 +169,7 @@ function startDriver(options: {
   readonly scene: string | undefined
   readonly sceneUntil: number | undefined
   readonly claudeConfigDir: string | undefined
+  readonly mountWorkflowPlugin: boolean
   readonly firstViewer: Promise<void>
   readonly viewPort: number
   /** 印が付いたセッションのIDと、付けた印を受け取る口。 */
@@ -216,6 +220,7 @@ function startDriver(options: {
     mode,
     inheritedEnv,
     claudeConfigDir: options.claudeConfigDir,
+    mountWorkflowPlugin: options.mountWorkflowPlugin,
     // 段に入るたびに読み直す（見直しの途中で見送りが増えても効く）。
     dismissedUsageProposalKeys: () => readDismissedUsageProposalKeys(),
     hasTaskOperation: async () => (await readBeadsWorkspace(cwd)).kind === "found",

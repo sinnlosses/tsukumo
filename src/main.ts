@@ -17,6 +17,7 @@ import { createReportImageShelf } from "./server/report/core/report-image-shelf.
 import { readFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
 import {
   readWorkflowPlugin,
+  readWorkflowPluginMount,
   workflowPluginDir,
 } from "./server/session-driver/adapter/workflow-plugin.ts"
 import { createPromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
@@ -74,13 +75,14 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
 
   // 取り込んだ tsukumo-plugins が空だとワークフローのスキルが載らないので、起動時の前提不足として止める。
   // fake driver はプラグインを載せないので見ない。
-  if (config.driver !== "fake") {
-    const plugin = await readWorkflowPlugin(workflowPluginDir())
-    if (!plugin.ok) {
-      process.stderr.write(`tsukumo: 取り込んだプラグインを読めない\n${plugin.reason}\n`)
-      return 1
-    }
+  const workflowPlugin =
+    config.driver === "fake"
+      ? ({ ok: true, mount: true } as const)
+      : await checkWorkflowPlugin(config.claudeConfigDir)
+  if (!workflowPlugin.ok) {
+    return 1
   }
+  const mountWorkflowPlugin = workflowPlugin.mount
 
   // fake driver を選んだときは疑似セッションが要る。無ければ起こす意味が無いので、起動時の
   // 前提不足として扱う。
@@ -141,6 +143,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     viewPort: view.port,
     cwd: launch.cwd,
     host,
+    mountWorkflowPlugin,
   })
   view.connect(session)
 
@@ -159,6 +162,31 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
 type OpenedFakeView =
   | { readonly tracked: false }
   | { readonly tracked: true; readonly close: () => Promise<HostResult> }
+
+/**
+ * 取り込んだ tsukumo-plugins が読めるかの検査と、セッションに載せるかの判定。
+ * 読めないとき、と載せない・一部だけのときは、理由を stderr に1行出す。
+ */
+async function checkWorkflowPlugin(
+  claudeConfigDir: string | undefined,
+): Promise<{ readonly ok: true; readonly mount: boolean } | { readonly ok: false }> {
+  const plugin = await readWorkflowPlugin(workflowPluginDir())
+  if (!plugin.ok) {
+    process.stderr.write(`tsukumo: 取り込んだプラグインを読めない\n${plugin.reason}\n`)
+    return { ok: false }
+  }
+  const mount = await readWorkflowPluginMount(workflowPluginDir(), claudeConfigDir)
+  if (mount.kind === "user-installed") {
+    process.stderr.write(
+      "tsukumo: 利用者の設定ディレクトリにタスク運用のスキルとエージェントが揃っているので、取り込んだプラグインは載せない\n",
+    )
+  } else if (mount.kind === "partial") {
+    process.stderr.write(
+      `tsukumo: 利用者側にタスク運用の一部が無い（${mount.missing.join("・")}）ので、取り込んだプラグインを載せる\n`,
+    )
+  }
+  return { ok: true, mount: mount.kind !== "user-installed" }
+}
 
 /**
  * プロセスが終わるときにセッションを閉じる。閉じないと claude の子プロセスが残るので、
