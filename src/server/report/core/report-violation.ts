@@ -96,6 +96,8 @@ export type ReportViolation =
   | { readonly kind: "arrow-in-prose"; readonly count: number }
   /** `flow` でない `list` で、`label` の無い項目の `text` が「名前: 説明」で始まる。`count` は該当の項目の数。 */
   | { readonly kind: "label-in-item"; readonly count: number }
+  /** 項目が3つ以上の `ordered` の `list` で、全部の項目に `label` がある。`count` は該当の塊の数。 */
+  | { readonly kind: "labeled-ordered"; readonly count: number }
   /** `text` の塊か節の見出しが、仮名も漢字も無く英語の語が並ぶ地の文になっている。`count` は該当の数。 */
   | { readonly kind: "non-japanese"; readonly count: number }
 
@@ -235,6 +237,10 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       count: blocks.reduce((total, block) => total + labelInItemCount(block), 0),
     },
     {
+      kind: "labeled-ordered",
+      count: blocks.filter((block) => isLabeledOrdered(block)).length,
+    },
+    {
       kind: "non-japanese",
       count:
         report.sections.filter(({ heading }) => isNonJapanese(heading)).length +
@@ -276,6 +282,7 @@ const VIOLATION_THRESHOLDS = {
   "fraction-figure": 0,
   "arrow-in-prose": 0,
   "label-in-item": 0,
+  "labeled-ordered": 0,
   "non-japanese": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
@@ -340,6 +347,8 @@ function violationLine(violation: ReportViolation): string {
       return `地の文・表のセルに \`A → B\` と書いた塊が${violation.count}個ある。セルは \`from\` / \`to\`、流れは \`list\` の \`flow\` にする`
     case "label-in-item":
       return `\`list\` の項目の \`text\` が「名前: 説明」の形になっているものが${violation.count}個ある。名前を \`label\` に分ける`
+    case "labeled-ordered":
+      return `全部の項目に \`label\` がある3段以上の \`ordered\` の \`list\` が${violation.count}個ある。名前の付いた段を辿る流れは \`flow\` にする`
     case "non-japanese":
       return `仮名も漢字も無い英語の地の文・見出しが${violation.count}個ある。日本語で書き直す（識別子・パス・コマンド・コードは \`\` で囲めば英語のままでよい）`
   }
@@ -399,6 +408,17 @@ function labelInItemCount(block: ReportBlock): number {
     ? block.items.filter((item) => item.label.trim() === "" && ITEM_LABEL.test(item.text.trim()))
         .length
     : 0
+}
+
+const MIN_FLOW_STAGES = 3
+
+function isLabeledOrdered(block: ReportBlock): boolean {
+  return (
+    block.kind === "list" &&
+    block.style === "ordered" &&
+    block.items.length >= MIN_FLOW_STAGES &&
+    block.items.every((item) => item.label.trim() !== "")
+  )
 }
 
 /** `数 / 数`（空白は任意）。 */

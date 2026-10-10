@@ -101,7 +101,7 @@ describe("reportViolations", () => {
   describe("矢印と「名前: 説明」", () => {
     const list = (
       items: readonly { label?: string; text: string }[],
-      style: "bullet" | "flow" = "bullet",
+      style: "bullet" | "ordered" | "flow" = "bullet",
     ): ReportBlock => ({
       kind: "list",
       style,
@@ -148,6 +148,20 @@ describe("reportViolations", () => {
         ),
       ).toEqual([])
       expect(kinds(draft([list([{ text: "架空の文。次の文: 以下" }])]))).toEqual([])
+    })
+
+    it("3段以上の ordered で全項目に label があれば flow へ差し戻す", () => {
+      const stages = [
+        { label: "架空の段", text: "架空の説明" },
+        { label: "架空の次の段", text: "架空の説明" },
+        { label: "架空の最後の段", text: "架空の説明" },
+      ]
+      expect(kinds(draft([list(stages, "ordered")]))).toEqual(["labeled-ordered"])
+      expect(kinds(draft([list(stages, "flow")]))).toEqual([])
+      expect(kinds(draft([list(stages.slice(0, 2), "ordered")]))).toEqual([])
+      expect(
+        kinds(draft([list([...stages.slice(0, 2), { text: "架空の説明" }], "ordered")])),
+      ).toEqual([])
     })
   })
 
