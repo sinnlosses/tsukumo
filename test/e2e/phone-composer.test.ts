@@ -1,4 +1,4 @@
-import type { Locator, Page } from "playwright-core"
+import type { Locator } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
@@ -18,13 +18,6 @@ async function expectTouchSize(locator: Locator): Promise<void> {
   expect(box?.width).toBeGreaterThanOrEqual(MIN_SIZE)
   expect(box?.height).toBeGreaterThanOrEqual(MIN_SIZE)
   expect(box?.height).toBeLessThanOrEqual(MAX_SIZE)
-}
-
-async function waitForScrollHeight(page: Page, height: number): Promise<void> {
-  await page.waitForFunction(
-    (expected) => document.scrollingElement?.scrollHeight === expected,
-    height,
-  )
 }
 
 describe("狭い画面の入力欄", () => {
@@ -74,11 +67,13 @@ describe("狭い画面の入力欄", () => {
     await balloon.waitFor()
     expect(await balloon.isVisible()).toBe(true)
 
-    await page.setViewportSize({ width: 390, height: KEYBOARD_HEIGHT })
-    await waitForScrollHeight(page, KEYBOARD_HEIGHT)
+    await room.resize({ width: 390, height: KEYBOARD_HEIGHT })
     const field = page.getByRole("textbox")
     await field.focus()
-    await waitForScrollHeight(page, KEYBOARD_HEIGHT)
+    await page.waitForFunction(
+      (expected) => document.scrollingElement?.scrollHeight === expected,
+      KEYBOARD_HEIGHT,
+    )
 
     expect(await balloon.isVisible()).toBe(false)
     const box = await field.boundingBox()

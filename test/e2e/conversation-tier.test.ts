@@ -107,7 +107,7 @@ describe("会話の画面の段", () => {
     await room.settleAndMatch(ELAPSED_MS)
 
     for (const viewport of [VIEWPORTS.large, VIEWPORTS["tier-edge-large"]]) {
-      await page.setViewportSize(viewport)
+      await room.resize(viewport)
       await sidebar(page).waitFor()
       expect(await railToggle(page).isVisible()).toBe(false)
       expect(
@@ -164,11 +164,11 @@ describe("会話の画面の段", () => {
     expect(await character.locator("[data-expression]").first().isVisible()).toBe(false)
     await room.settleAndMatch(PHONE_ELAPSED_MS)
 
-    await page.setViewportSize(VIEWPORTS["tier-edge-narrow"])
+    await room.resize(VIEWPORTS["tier-edge-narrow"])
     expect(await menuToggle(page).isVisible()).toBe(true)
     expect(await railToggle(page).isVisible()).toBe(false)
 
-    await page.setViewportSize(VIEWPORTS["tier-edge-rail"])
+    await room.resize(VIEWPORTS["tier-edge-rail"])
     await railToggle(page).waitFor()
     expect(await menuToggle(page).isVisible()).toBe(false)
   })
@@ -305,7 +305,7 @@ describe("会話の画面の段", () => {
     await page.getByRole("dialog", { name: "中間レポート" }).waitFor()
     expect(await page.evaluate(() => document.querySelector("dialog:modal") !== null)).toBe(true)
 
-    await page.setViewportSize(VIEWPORTS.large)
+    await room.resize(VIEWPORTS.large)
     await sidebar(page).waitFor()
     await page.waitForFunction(() => document.querySelector("dialog:modal") === null, undefined, {
       timeout: 3_000,

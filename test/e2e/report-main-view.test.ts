@@ -73,7 +73,7 @@ describe("report → メインビュー", () => {
     await room.page.reload({ waitUntil: "domcontentloaded" })
     await room.page.getByRole("button", { name: "やり取りを畳む" }).waitFor()
 
-    await room.page.setViewportSize(VIEWPORTS.narrow)
+    await room.resize(VIEWPORTS.narrow)
     await room.page.locator('nav[aria-label="やり取り"]').waitFor({ state: "hidden" })
   })
 
