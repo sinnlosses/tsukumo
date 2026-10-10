@@ -433,7 +433,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 関門
 
-- **英語識別子**: `judgeToolAgainstGate`（ツールを通すか拒むかの判定）、`WorkPlanReview.gateRaised`（印）
+- **英語識別子**: `judgeToolAgainstGate`（ツールを通すか拒むかの判定）、`CallReview.gateRaised`（印）
 - **定義**: 委譲の返却が届いてからメインが `work_plan` を呼ぶまでのあいだ、メインの作業のツールを拒む仕掛け。
   `report` の関所（`ReportGate`）とは別物
 - **注記**: 立つ・下りる条件と通すツールの正典は `docs/architecture/workflow-contract.md`「委譲の返却」
@@ -441,7 +441,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 呼び出しの差し戻し
 
-- **英語識別子（予定）**: `CallReview`（セッション1つに1つ）
+- **英語識別子**: `CallReview`（`src/server/session-driver/core/call-review.ts`。セッション1つに1つ）
 - **定義**: メインの `speak`・`report`・`work_plan` の呼び出しを、handler で判定して差し戻し、差し戻した呼び出しを
   画面に出さない仕掛けの一式。3つのツールの判定の窓口と、メインのイベントを「差し戻しを済ませた並び」に変える口を持つ。
   呼び出しを描いてよいかを決める「新しい事実」の帳面も、3つのツールでここに1つだけ持つ

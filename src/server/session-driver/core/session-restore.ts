@@ -8,11 +8,9 @@ import { isPlainObject } from "remeda"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { parseDelegateReturn } from "../../../shared/session/delegate-return.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
-import { createReportReview } from "../../report/core/report-review.ts"
 import { asideTextOf } from "./aside-prompt.ts"
+import { createCallReview } from "./call-review.ts"
 import { toSessionEvents } from "./sdk-message.ts"
-import { createSpeechReview } from "./speech-review.ts"
-import { createWorkPlanReview } from "./work-plan-review.ts"
 
 /**
  * 組み直した履歴のターンの終わり。transcript には `result`（ターンの終わり）が残らないので、終わり方は分からない。
@@ -35,7 +33,7 @@ const RESTORED_TURN_FINISHED: SessionEvent = {
  * 出来事ごとの時刻は、元のメッセージの `timestamp`（読めなければ `unknown`）。
  * 読めない出来事の時刻は推し量らない。
  *
- * 差し戻された `speak` / `report` / `work_plan` の呼び出しも transcript には残るので、動いているときと同じく差し戻し（`SpeechReview.pass` → `ReportReview.pass` → `WorkPlanReview.pass`）に通して落とす。
+ * 差し戻された `speak` / `report` / `work_plan` の呼び出しも transcript には残るので、動いているときと同じく差し戻し（`CallReview.pass`）に通して落とす。
  *
  * 壊れた要素は {@link toSessionEvents} が空の並びに倒すので、読めたものだけが残る。
  */
@@ -72,12 +70,7 @@ export function toRestoredEvents(
           ...bounded,
           { event: RESTORED_TURN_FINISHED, time: converted.at(-1)?.time ?? UNKNOWN_TIME },
         ]
-  const speechReview = createSpeechReview()
-  const workPlanReview = createWorkPlanReview()
-  const reportReview = createReportReview(workPlanReview.standing)
-  const passedSpeech = passThrough(closed, speechReview.pass)
-  const passedReport = passThrough(passedSpeech, reportReview.pass)
-  return passThrough(passedReport, workPlanReview.pass)
+  return passThrough(closed, createCallReview().pass)
 }
 
 export function restoredMessageEvents(

@@ -1,7 +1,8 @@
 // `work_plan` ツール（段取り）の説明文と、呼ぶ条件・段の切り方の規約と、handler が返す文。
 // ツールは仕事のときだけ載り、規約も仕事の `systemPrompt` の append にだけ入る。
 
-import type { WorkPlanReview, WorkPlanVerdict } from "./work-plan-review.ts"
+import type { CallReview } from "./call-review.ts"
+import type { WorkPlanVerdict } from "./work-plan-review.ts"
 
 /** モデルに見せる `work_plan` ツールの説明。呼ぶ条件は「段取り（tsukumo）」の節が持つ。 */
 export const WORK_PLAN_TOOL_DESCRIPTION =
@@ -36,7 +37,7 @@ export const WORK_PLAN_DELEGATED_RANGE_DESCRIPTION =
   "count は委譲先の段の数。委譲先の段 n は first + n - 1 番目の段に当たる。" +
   "範囲の端は同時に走らせる段の配列の途中に置かない。委譲しないときは省く"
 
-/** `WorkPlanReview` が差し戻した呼び出しに返す直し方。差し戻しの種類ごとに1つ。 */
+/** `CallReview` が差し戻した呼び出しに返す直し方。差し戻しの種類ごとに1つ。 */
 export const WORK_PLAN_REJECTIONS = {
   malformed:
     "current は 0 から phases の要素の数までの整数にする。" +
@@ -67,8 +68,11 @@ export const WORK_PLAN_REJECTIONS = {
 export type WorkPlanAnswer = { readonly text: string; readonly isError: boolean }
 
 /** `work_plan` の呼び出し1つを判定して返す文を決める。 */
-export function answerWorkPlanCall(review: WorkPlanReview, input: unknown): WorkPlanAnswer {
-  const verdict = review.judge(input)
+export function answerWorkPlanCall(
+  review: Pick<CallReview, "judgeWorkPlan">,
+  input: unknown,
+): WorkPlanAnswer {
+  const verdict = review.judgeWorkPlan(input)
   return verdict.kind === "accepted"
     ? { text: "ok", isError: false }
     : { text: WORK_PLAN_REJECTIONS[verdict.kind], isError: true }

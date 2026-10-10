@@ -125,7 +125,7 @@ export type ReportGateVerdict =
 
 /**
  * {@link ReportGate} を1つ作る。セッション1つに1つ（ターンの区切りを自分で見ている）。
- * `nothingNewRejected` が true を返すターンは、`ReportReview.judge` が「新しい事実が無い」で
+ * `nothingNewRejected` が true を返すターンは、`CallReview.judgeReport` が「新しい事実が無い」で
  * `report` を差し戻している。渡し直す本文は無いので、本文の量によらず通す。
  */
 export function createReportGate(nothingNewRejected: () => boolean): ReportGate {

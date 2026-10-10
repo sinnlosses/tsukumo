@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  createReportReview,
+  createReportReview as createReviewWithNews,
   REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
   REPORT_NOTHING_NEW_REJECTION_TEXT,
   REPORT_RESEND_REJECTION_TEXT,
@@ -16,14 +16,10 @@ import type { ReportSection } from "../../../../src/shared/report/report-block.t
 import type { ReportTask, ReportTaskOutcome } from "../../../../src/shared/report/report-task.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import {
-  NO_WORK_PLAN_STANDING,
-  type WorkPlanClosing,
-  type WorkPlanStanding,
-} from "../../../../src/shared/session/work-plan.ts"
+import type { WorkPlanClosing, WorkPlanStanding } from "../../../../src/shared/session/work-plan.ts"
 import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"
 
-const noPlan = (): WorkPlanStanding => NO_WORK_PLAN_STANDING
+const noPlan = (): WorkPlanStanding => ({ kind: "none" })
 
 /** 逃げ道の塊1つの節（中身は架空）。 */
 const sectionsOf = (markdown: string): readonly ReportSection[] => [
@@ -46,14 +42,10 @@ const SESSION_INFO: SessionEvent = {
 }
 const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 
-const NO_CLOSING = { kind: "none" } as const
-const CLOSING = { kind: "speech", text: "架空の締め", expression: "default" } as const
-
 /** handler に届いた引数を、呼び出しをイベントに変える側と同じ形のイベントにする。 */
 const reportOfDraft = (
   toolUseId: string,
   draft: ReportDraft,
-  closing: Extract<SessionEvent, { kind: "report" }>["closing"] = NO_CLOSING,
 ): Extract<SessionEvent, { kind: "report" }> =>
   reportEvent({
     toolUseId,
@@ -62,28 +54,43 @@ const reportOfDraft = (
     favor: draft.favor,
     checks: draft.checks,
     workPlanClosing: draft.workPlanClosing,
-    closing,
   })
-const report = (
-  toolUseId: string,
-  closing: Extract<SessionEvent, { kind: "report" }>["closing"] = NO_CLOSING,
-): Extract<SessionEvent, { kind: "report" }> => reportOfDraft(toolUseId, VALID, closing)
 const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
   kind: "tool-finished",
   toolUseId,
   content: isError ? "架空の差し戻し" : "ok",
   isError,
 })
-const toolStarted = (
-  toolUseId: string,
-  parentToolUseId: string | undefined = undefined,
-): SessionEvent => ({
-  kind: "tool-started",
-  toolUseId,
-  name: "Read",
-  input: {},
-  parentToolUseId,
-})
+
+/**
+ * 新しい事実の帳面は `CallReview` が持つので、ここでは手で動かせる帳面を渡す。
+ * `raiseNews` は新しい事実が届いたこと、`setTasks` は生きている背景のタスクの顔ぶれを表す。
+ */
+type TestReview = ReportReview & {
+  readonly raiseNews: () => void
+  readonly setTasks: (tasks: readonly BackgroundTask[]) => void
+}
+
+function createReportReview(workPlanStanding: () => WorkPlanStanding): TestReview {
+  let hasNews = true
+  let tasks: readonly BackgroundTask[] = []
+  const review = createReviewWithNews(workPlanStanding, {
+    hasNews: () => hasNews,
+    markDrawn: () => {
+      hasNews = false
+    },
+    backgroundTasks: () => tasks,
+  })
+  return {
+    ...review,
+    raiseNews: () => {
+      hasNews = true
+    },
+    setTasks: (next) => {
+      tasks = next
+    },
+  }
+}
 
 /** `report` を handler で通して描かせる（pass に呼び出しと結果を流す）。 */
 const draw = (review: ReportReview, toolUseId: string, draft: ReportDraft): void => {
@@ -92,10 +99,9 @@ const draw = (review: ReportReview, toolUseId: string, draft: ReportDraft): void
   review.pass(finished(toolUseId, false))
 }
 
-/** メインが `speak` / `report` 以外のツールを呼び、結果を受け取る。 */
-const runTool = (review: ReportReview, toolUseId: string): void => {
-  review.pass(toolStarted(toolUseId))
-  review.pass(finished(toolUseId, false))
+/** メインが `speak` / `report` 以外のツールの結果を受け取った（新しい事実が届いた）。 */
+const runTool = (review: TestReview): void => {
+  review.raiseNews()
 }
 
 describe("createReportReview の judge", () => {
@@ -126,83 +132,6 @@ describe("createReportReview の judge", () => {
     expect(review.judge(INVALID).kind).toBe("rejected")
     review.pass(SESSION_INFO)
     expect(review.judge(INVALID).kind).toBe("rejected")
-  })
-})
-
-describe("createReportReview の pass", () => {
-  it("report は同じ呼び出しの結果まで預かり、差し戻されなければ結果の直前に出す", () => {
-    const review = createReportReview(noPlan)
-
-    expect(review.pass(report("toolu_r1"))).toEqual([])
-    expect(review.pass(finished("toolu_r1", false))).toEqual([
-      report("toolu_r1"),
-      finished("toolu_r1", false),
-    ])
-  })
-
-  it("差し戻された（isError の）report は出さず、呼び直しの report だけを出す", () => {
-    const review = createReportReview(noPlan)
-    const passed = [
-      report("toolu_r1"),
-      finished("toolu_r1", true),
-      report("toolu_r2"),
-      finished("toolu_r2", false),
-      FINISHED,
-    ].flatMap((event) => review.pass(event))
-
-    expect(passed.filter((event) => event.kind === "report")).toEqual([report("toolu_r2")])
-  })
-
-  it("結果の届かないまま終わったターンの report は、turn-finished の直前に出す", () => {
-    const review = createReportReview(noPlan)
-
-    expect(review.pass(report("toolu_r1"))).toEqual([])
-    expect(review.pass(FINISHED)).toEqual([report("toolu_r1"), FINISHED])
-  })
-
-  it("描いた report の締めのセリフを、結果のすぐ後ろに speech として出す", () => {
-    const review = createReportReview(noPlan)
-
-    review.pass(report("toolu_r1", CLOSING))
-    expect(review.pass(finished("toolu_r1", false))).toEqual([
-      report("toolu_r1", CLOSING),
-      finished("toolu_r1", false),
-      CLOSING,
-    ])
-  })
-
-  it("差し戻した report の締めのセリフは出さない", () => {
-    const review = createReportReview(noPlan)
-
-    review.pass(report("toolu_r1", CLOSING))
-    expect(review.pass(finished("toolu_r1", true))).toEqual([finished("toolu_r1", true)])
-  })
-
-  it("結果の届かないまま終わったターンの report は、締めのセリフも turn-finished の直前に出す", () => {
-    const review = createReportReview(noPlan)
-
-    review.pass(report("toolu_r1", CLOSING))
-    expect(review.pass(FINISHED)).toEqual([report("toolu_r1", CLOSING), CLOSING, FINISHED])
-  })
-
-  it("report の無い流れ（切り替えないとき）はそのまま通す", () => {
-    const review = createReportReview(noPlan)
-    const events: readonly SessionEvent[] = [
-      SESSION_INFO,
-      { kind: "utterance", text: "架空の本文" },
-      {
-        kind: "tool-started",
-        toolUseId: "toolu_t1",
-        name: "Read",
-        input: {},
-        parentToolUseId: undefined,
-      },
-      finished("toolu_t1", false),
-      { kind: "speech", text: "架空の締め", expression: "default" },
-      FINISHED,
-    ]
-
-    expect(events.flatMap((event) => review.pass(event))).toEqual([...events])
   })
 })
 
@@ -239,7 +168,7 @@ describe("createReportReview の judge（送り直し）", () => {
   it("中身の違う呼び直しは通す", () => {
     const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
-    runTool(review, "toolu_t1")
+    runTool(review)
 
     expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
     expect(review.judge({ ...VALID, favor: "架空のお願い。" })).toEqual({ kind: "accepted" })
@@ -254,7 +183,7 @@ describe("createReportReview の judge（送り直し）", () => {
   it("送り直しを差し戻すのは1ターンに1回まで（2回目の送り直しは通す）", () => {
     const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
-    runTool(review, "toolu_t1")
+    runTool(review)
 
     expect(review.judge(VALID).kind).toBe("rejected")
     expect(review.judge(VALID)).toEqual({ kind: "accepted" })
@@ -274,7 +203,7 @@ describe("createReportReview の judge（送り直し）", () => {
     draw(review, "toolu_r1", VALID)
 
     expect(review.judge(VALID).kind).toBe("rejected")
-    runTool(review, "toolu_t1")
+    runTool(review)
     const verdict = review.judge(INVALID)
     expect(verdict.kind === "rejected" ? verdict.text : "").toContain("`#` / `##` の見出し")
   })
@@ -290,12 +219,12 @@ describe("createReportReview の judge（送り直し）", () => {
   it("ターンの区切り（session-info / turn-finished）で描いた report を忘れる", () => {
     const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
-    runTool(review, "toolu_t1")
+    runTool(review)
     review.pass(FINISHED)
     expect(review.judge(VALID)).toEqual({ kind: "accepted" })
 
     draw(review, "toolu_r2", OTHER)
-    runTool(review, "toolu_t2")
+    runTool(review)
     review.pass(SESSION_INFO)
     expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
   })
@@ -316,14 +245,6 @@ describe("createReportReview の judge（送り直し）", () => {
 
 describe("createReportReview の judge（新しい事実の無い report）", () => {
   const OTHER: ReportDraft = reportDraft({ conclusion: "別の架空の結論。" })
-  const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
-  const TURN_STARTED: SessionEvent = { kind: "turn-started" }
-  const SPEAK_FINISHED = finished("toolu_s1", false)
-  const backgroundTasks = (...taskIds: readonly string[]): SessionEvent => ({
-    kind: "background-tasks-changed",
-    tasks: taskIds.map((taskId) => ({ taskId, kind: "agent", description: "架空の委譲" })),
-  })
-
   it("描いた report のあと何も届かずに別の中身の report を呼ぶと、固定の文面で差し戻す", () => {
     const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
@@ -348,73 +269,12 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
     expect(review.nothingNewRejected()).toBe(false)
   })
 
-  it("ターンをまたいでも、自分で始めたターン（依頼なし）で何も届いていなければ差し戻す", () => {
-    const review = createReportReview(noPlan)
-    draw(review, "toolu_r1", VALID)
-    ;[SPEAK_FINISHED, FINISHED, SESSION_INFO].forEach((event) => review.pass(event))
-
-    expect(review.judge(OTHER).kind).toBe("rejected")
-  })
-
-  it("speak の結果（tool-started の無い tool-finished）は新しい事実に数えない", () => {
-    const review = createReportReview(noPlan)
-    draw(review, "toolu_r1", VALID)
-    review.pass(SPEAK_FINISHED)
-
-    expect(review.judge(OTHER).kind).toBe("rejected")
-  })
-
   it("メインのツールの結果が届いたあとの report は通す（中間レポートを落とさない）", () => {
     const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
-    runTool(review, "toolu_t1")
+    runTool(review)
 
     expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
-  })
-
-  it("サブエージェントのツールの結果は新しい事実に数えない", () => {
-    const review = createReportReview(noPlan)
-    draw(review, "toolu_r1", VALID)
-    review.pass(toolStarted("toolu_t1", "toolu_agent"))
-    review.pass(finished("toolu_t1", false))
-
-    expect(review.judge(OTHER).kind).toBe("rejected")
-  })
-
-  it("呼んだだけで結果の届いていないツールは数えない", () => {
-    const review = createReportReview(noPlan)
-    draw(review, "toolu_r1", VALID)
-    review.pass(toolStarted("toolu_t1"))
-
-    expect(review.judge(OTHER).kind).toBe("rejected")
-  })
-
-  it("新しい依頼（request / turn-started）のあとの report は通す", () => {
-    const review = createReportReview(noPlan)
-    draw(review, "toolu_r1", VALID)
-    ;[FINISHED, REQUEST, SESSION_INFO].forEach((event) => review.pass(event))
-    expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
-
-    draw(review, "toolu_r2", OTHER)
-    ;[FINISHED, TURN_STARTED, SESSION_INFO].forEach((event) => review.pass(event))
-    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
-  })
-
-  it("背景のタスクが終わった（顔ぶれから消えた）あとの report は、ターンの外で届いても通す", () => {
-    const review = createReportReview(noPlan)
-    review.pass(backgroundTasks("task_a"))
-    draw(review, "toolu_r1", VALID)
-    ;[FINISHED, backgroundTasks(), SESSION_INFO].forEach((event) => review.pass(event))
-
-    expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
-  })
-
-  it("背景のタスクが増えただけでは新しい事実に数えない", () => {
-    const review = createReportReview(noPlan)
-    draw(review, "toolu_r1", VALID)
-    ;[FINISHED, backgroundTasks("task_a"), SESSION_INFO].forEach((event) => review.pass(event))
-
-    expect(review.judge(OTHER).kind).toBe("rejected")
   })
 
   it("差し戻すのは1ターンに1回まで（押し切った2回目は通す）で、次のターンで枠が戻る", () => {
@@ -606,14 +466,10 @@ describe("createReportReview の judge（背景のシェルが残っている re
     kind: BackgroundTask["kind"],
     description = "架空の背景",
   ): BackgroundTask => ({ taskId, kind, description })
-  const tasksChanged = (...tasks: readonly BackgroundTask[]): SessionEvent => ({
-    kind: "background-tasks-changed",
-    tasks,
-  })
-  const withTasks = (...tasks: readonly BackgroundTask[]): ReportReview => {
+  const withTasks = (...tasks: readonly BackgroundTask[]): TestReview => {
     const review = createReportReview(noPlan)
     review.pass(SESSION_INFO)
-    review.pass(tasksChanged(...tasks))
+    review.setTasks(tasks)
     return review
   }
   const rejectedText = (verdict: ReportVerdict): string =>
@@ -651,7 +507,7 @@ describe("createReportReview の judge（背景のシェルが残っている re
 
   it("シェルが終わって顔ぶれが空になったあとは通す", () => {
     const review = withTasks(backgroundTask("task_a", "shell"))
-    review.pass(tasksChanged())
+    review.setTasks([])
 
     expect(review.judge(VALID)).toEqual({ kind: "accepted" })
   })
@@ -663,20 +519,13 @@ describe("createReportReview の judge（背景のシェルが残っている re
     expect(review.judge(VALID)).toEqual({ kind: "accepted" })
   })
 
-  it("session-ended のあとは顔ぶれが空に戻って通す", () => {
-    const review = withTasks(backgroundTask("task_a", "shell"))
-    review.pass({ kind: "session-ended", reason: "架空の終わり" })
-
-    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
-  })
-
   it("新しい事実の無い report の差し戻しが先で、背景の差し戻しはそのあと", () => {
     const review = createReportReview(noPlan)
     draw(review, "toolu_r1", VALID)
-    review.pass(tasksChanged(backgroundTask("task_a", "shell")))
+    review.setTasks([backgroundTask("task_a", "shell")])
 
     expect(review.judge(OTHER)).toMatchObject({ reasons: ["nothing-new"] })
-    review.pass({ kind: "request", text: "架空の依頼", images: [] })
+    review.raiseNews()
     expect(review.judge(OTHER)).toMatchObject({ reasons: ["background-running"] })
   })
 })

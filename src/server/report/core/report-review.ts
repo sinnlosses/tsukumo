@@ -94,6 +94,13 @@ export type ReportReview = {
   readonly pass: (event: SessionEvent) => readonly SessionEvent[]
 }
 
+/** 新しい事実の帳面（`CallReview` が1つだけ持つ）のうち、`report` が読む口。 */
+export type ReportNews = {
+  readonly hasNews: () => boolean
+  readonly markDrawn: () => void
+  readonly backgroundTasks: () => readonly BackgroundTask[]
+}
+
 type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 
 /**
@@ -101,7 +108,10 @@ type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
  * ターンの頭は `session-info`（SDK のターンの頭に毎回届く）と `turn-finished`。
  * `workPlanStanding` は判定のたびに呼び、いまの段取りの立ち位置を読む。
  */
-export function createReportReview(workPlanStanding: () => WorkPlanStanding): ReportReview {
+export function createReportReview(
+  workPlanStanding: () => WorkPlanStanding,
+  news: ReportNews,
+): ReportReview {
   let rejectedInTurn = false
   let resendRejectedInTurn = false
   let nothingNewRejectedInTurn = false
@@ -111,11 +121,6 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
   let held: readonly ReportEvent[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportEvent[] = []
-  // 直前に描いた `report` のあとに新しい事実が届いたか（セッションの頭は届いたものとする）。
-  let hasNews = true
-  // メインが呼んで結果をまだ受け取っていないツールの id（`speak` / `report` は入らない）。
-  let runningTools: ReadonlySet<string> = new Set()
-  let backgroundTasks: readonly BackgroundTask[] = []
   // 脇の話（`aside`）で始まったターンか。ターンの頭の `session-info` は脇の話のターンの頭にも届くので、そこでは戻さない。
   let asideTurn = false
 
@@ -135,7 +140,7 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
         resendRejectedInTurn = true
         return { kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT, reasons: ["resend"] }
       }
-      if (!hasNews && !nothingNewRejectedInTurn) {
+      if (!news.hasNews() && !nothingNewRejectedInTurn) {
         nothingNewRejectedInTurn = true
         return {
           kind: "rejected",
@@ -160,7 +165,7 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
         closingRejectedInTurn = true
         return closingVerdict
       }
-      const shells = backgroundTasks.filter((task) => task.kind === "shell")
+      const shells = news.backgroundTasks().filter((task) => task.kind === "shell")
       if (shells.length > 0 && !asideTurn && !backgroundRejectedInTurn) {
         backgroundRejectedInTurn = true
         return {
@@ -186,18 +191,7 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
         case "report":
           held = [...held, event]
           return []
-        case "tool-started":
-          // サブエージェントのツールは数えない（委譲中の言い直しがまさに差し戻したいもの）。
-          if (event.parentToolUseId === undefined) {
-            runningTools = new Set([...runningTools, event.toolUseId])
-          }
-          return [event]
         case "tool-finished": {
-          if (runningTools.has(event.toolUseId)) {
-            runningTools = new Set([...runningTools].filter((id) => id !== event.toolUseId))
-            hasNews = true
-            return [event]
-          }
           const report = held.find((candidate) => candidate.toolUseId === event.toolUseId)
           if (report === undefined) {
             return [event]
@@ -207,31 +201,18 @@ export function createReportReview(workPlanStanding: () => WorkPlanStanding): Re
             return [event]
           }
           drawn = [...drawn, report]
-          hasNews = false
+          news.markDrawn()
           return [report, event, ...closingSpeech(report)]
         }
         case "request":
         case "turn-started":
-          hasNews = true
           asideTurn = false
           return [event]
         case "aside":
-          hasNews = true
           asideTurn = true
           return [event]
         case "turn-resumed":
           asideTurn = false
-          return [event]
-        case "background-tasks-changed": {
-          const current = event.tasks.map((task) => task.taskId)
-          if (backgroundTasks.some((task) => !current.includes(task.taskId))) {
-            hasNews = true
-          }
-          backgroundTasks = event.tasks
-          return [event]
-        }
-        case "session-ended":
-          backgroundTasks = []
           return [event]
         case "session-info":
           startTurn()

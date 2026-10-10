@@ -222,9 +222,6 @@ export type WorkPlanStanding =
   | { readonly kind: "rejected" }
   | { readonly kind: "planned"; readonly remaining: number }
 
-/** 段取りを判定しない口（疑似セッション）が渡す立ち位置。 */
-export const NO_WORK_PLAN_STANDING = { kind: "none" } as const satisfies WorkPlanStanding
-
 /** `report` の欄 `workPlanClosing` で渡せる段の閉じ方。`finished` は全部の段を終えた、`stopped` は途中で止めた。 */
 export const WORK_PLAN_CLOSINGS = ["finished", "stopped"] as const
 

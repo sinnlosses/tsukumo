@@ -146,7 +146,7 @@ export type SessionEvent =
   | { readonly kind: "speech"; readonly text: string; readonly expression: Expression }
   /**
    * メインが呼んだ `speak` の呼び出し。サーバの中だけで流れる。
-   * `SpeechReview.pass` が同じ `toolUseId` の `tool-finished` まで預かり、差し戻されていなければ `speech` に変えて流す（畳み込み・ブラウザには届かない）。
+   * `CallReview.pass` が同じ `toolUseId` の `tool-finished` まで預かり、差し戻されていなければ `speech` に変えて流す（畳み込み・ブラウザには届かない）。
    */
   | {
       readonly kind: "speak-called"
@@ -192,7 +192,7 @@ export type SessionEvent =
   | ({ readonly kind: "work-plan" } & WorkPlan)
   /**
    * メインが呼んだ `work_plan` の呼び出し。サーバの中だけで流れる。
-   * `WorkPlanReview.pass` が同じ `toolUseId` の `tool-finished` まで預かり、差し戻されていなければ `work-plan` に変えて流す（畳み込み・ブラウザには届かない）。
+   * `CallReview.pass` が同じ `toolUseId` の `tool-finished` まで預かり、差し戻されていなければ `work-plan` に変えて流す（畳み込み・ブラウザには届かない）。
    */
   | {
       readonly kind: "work-plan-called"

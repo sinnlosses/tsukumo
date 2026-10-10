@@ -39,7 +39,6 @@ import {
 import { chatRecallEpisodeText, chatRecallListText } from "../../chat/core/chat-memory-prompt.ts"
 import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
 import { checkMermaidSyntax } from "../../report/adapter/report-mermaid-syntax.ts"
-import type { ReportReview } from "../../report/core/report-review.ts"
 import {
   REPORT_CHECKS_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
@@ -60,6 +59,7 @@ import {
   usageProposalKindGuide,
   usageReviewStageGuide,
 } from "../../usage-review/core/usage-review-tool.ts"
+import type { CallReview } from "../core/call-review.ts"
 import { CLEAR_AND_SEND_TOOL_DESCRIPTION } from "../core/clear-and-send.ts"
 import {
   answerQuestionBriefCall,
@@ -67,7 +67,7 @@ import {
   QUESTION_BRIEF_TOOL_DESCRIPTION,
 } from "../core/question-brief.ts"
 import type { ChatRecall, PersonaMemory, SessionMode } from "../core/session-driver.ts"
-import type { SpeechReview, SpeechVerdict } from "../core/speech-review.ts"
+import type { SpeechVerdict } from "../core/speech-review.ts"
 import {
   CLEAR_AND_SEND_TOOL_NAME,
   FORGET_TOOL_NAME,
@@ -80,7 +80,6 @@ import {
   TSUKUMO_MCP_SERVER_NAME,
   WORK_PLAN_TOOL_NAME,
 } from "../core/tsukumo-tool-name.ts"
-import type { WorkPlanReview } from "../core/work-plan-review.ts"
 import {
   answerWorkPlanCall,
   WORK_PLAN_CURRENT_DESCRIPTION,
@@ -135,7 +134,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と `question_brief` と見直しの2つ。
  * `speak` が返すのは、新しい事実の無い呼び出しを差し戻す固定の文面だけ。
  * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の会話の目次と1件の逐語）だけ。
- * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `WorkPlanReview` が受け付けなかったときの直し方だけ。
+ * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `CallReview` が受け付けなかったときの直し方だけ。
  * 見直しの2つが返すのは、利用者が見送った提案の識別子と差し戻しの理由だけ。
  *
  * 常に載るのは `speak` と `recall` / `recall_episode` で、`remember` / `forget` は雑談モードのときだけ載る。
@@ -156,9 +155,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
 export function tsukumoServer(
   expressions: readonly ExpressionChoice[],
   mode: SessionMode,
-  reportReview: ReportReview,
-  speechReview: SpeechReview,
-  workPlanReview: WorkPlanReview,
+  callReview: CallReview,
   usageReview: UsageReviewIntake,
   onReportTitle: (title: string) => void,
   cwd: string,
@@ -170,13 +167,13 @@ export function tsukumoServer(
     name: TSUKUMO_MCP_SERVER_NAME,
     version: "0.0.0",
     tools: [
-      speakTool(expressions, mode, speechReview),
+      speakTool(expressions, mode, callReview),
       recallTool(mode.chatRecall),
       recallEpisodeTool(mode.chatRecall),
       ...(mode.kind === "work"
         ? [
-            reportTool(expressions, reportReview, onReportTitle, cwd, onEvent),
-            workPlanTool(workPlanReview),
+            reportTool(expressions, callReview, onReportTitle, cwd, onEvent),
+            workPlanTool(callReview),
             questionBriefTool(holdBrief),
             clearAndSendTool(holdClearAndSend),
             ...usageReviewTools(usageReview),
@@ -189,14 +186,14 @@ export function tsukumoServer(
   })
 }
 
-/** セリフを受け取るツール。差し戻すかは仕事のときだけ `SpeechReview` が決める。 */
+/** セリフを受け取るツール。差し戻すかは仕事のときだけ `CallReview` が決める。 */
 function speakTool(
   expressions: readonly ExpressionChoice[],
   mode: SessionMode,
-  review: SpeechReview,
+  review: CallReview,
 ) {
   return tool(SPEAK_TOOL_NAME, SPEAK_TOOL_DESCRIPTION, speechShape(expressions), async () => {
-    const verdict = mode.kind === "work" ? review.judge() : ACCEPTED_SPEECH
+    const verdict = mode.kind === "work" ? review.judgeSpeak() : ACCEPTED_SPEECH
     return verdict.kind === "rejected"
       ? { content: [{ type: "text" as const, text: verdict.text }], isError: true }
       : { content: [{ type: "text" as const, text: "ok" }] }
@@ -206,7 +203,7 @@ function speakTool(
 const ACCEPTED_SPEECH = { kind: "accepted" } as const satisfies SpeechVerdict
 
 /**
- * レポートを受け取るツール。差し戻しの判定の窓口はここだけ（`ReportReview`）。
+ * レポートを受け取るツール。差し戻しの判定の窓口はここだけ（`CallReview.judgeReport`）。
  * 通すときの戻り値は "ok" だけ、差し戻すときは規約違反と直し方だけを `isError` 付きで返す（画面の事情は載せない）。
  * 描くか捨てるかはこの `isError` を見て決まる。
  * レポートにする引数（締めのセリフの `closing` も）は、ここではなく `assistant` メッセージの変換が取り出す（`toSessionEvents`）。
@@ -221,7 +218,7 @@ const ACCEPTED_SPEECH = { kind: "accepted" } as const satisfies SpeechVerdict
  */
 function reportTool(
   expressions: readonly ExpressionChoice[],
-  review: ReportReview,
+  review: CallReview,
   onReportTitle: (title: string) => void,
   cwd: string,
   onEvent: (event: SessionEvent) => void,
@@ -264,7 +261,7 @@ function reportTool(
           section.blocks.flatMap((block) => (block.kind === "mermaid" ? [block.source] : [])),
         ),
       )
-      const verdict = review.judge({
+      const verdict = review.judgeReport({
         conclusion,
         sections: sections ?? [],
         favor: favor ?? "",
@@ -290,7 +287,7 @@ function reportTool(
 }
 
 /** 段取りを受け取るツール。差し戻すかと返す文は `answerWorkPlanCall` で決め、形の検査はここの zod の形。 */
-function workPlanTool(review: WorkPlanReview) {
+function workPlanTool(review: CallReview) {
   return tool(
     WORK_PLAN_TOOL_NAME,
     WORK_PLAN_TOOL_DESCRIPTION,

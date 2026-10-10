@@ -2,18 +2,16 @@ import type { McpSdkServerConfigWithInstance } from "@anthropic-ai/claude-agent-
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
-import { createReportReview } from "../../../../src/server/report/core/report-review.ts"
 import { tsukumoServer } from "../../../../src/server/session-driver/adapter/sdk-tool.ts"
+import {
+  type CallReview,
+  createCallReview,
+} from "../../../../src/server/session-driver/core/call-review.ts"
 import type {
   ChatRecall,
   SessionMode,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
-import {
-  createSpeechReview,
-  SPEECH_NOTHING_NEW_REJECTION_TEXT,
-  type SpeechReview,
-} from "../../../../src/server/session-driver/core/speech-review.ts"
-import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
+import { SPEECH_NOTHING_NEW_REJECTION_TEXT } from "../../../../src/server/session-driver/core/speech-review.ts"
 import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
 import type { QuestionBrief } from "../../../../src/shared/session-driver/question-brief.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
@@ -21,7 +19,6 @@ import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
 } from "../../../../src/shared/session/session-state.ts"
-import { NO_WORK_PLAN_STANDING } from "../../../../src/shared/session/work-plan.ts"
 import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 // どのツールが載るか・呼ぶと何が返るかを、モデルが見るのと同じ MCP の `tools/list` /
@@ -67,9 +64,7 @@ describe("tsukumoServer", () => {
       tsukumoServer(
         EXPRESSIONS,
         CHAT_MODE,
-        createReportReview(() => NO_WORK_PLAN_STANDING),
-        createSpeechReview(),
-        createWorkPlanReview(),
+        createCallReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -93,9 +88,7 @@ describe("tsukumoServer", () => {
       tsukumoServer(
         EXPRESSIONS,
         CHAT_MODE,
-        createReportReview(() => NO_WORK_PLAN_STANDING),
-        createSpeechReview(),
-        createWorkPlanReview(),
+        createCallReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -139,9 +132,7 @@ describe("recall / recall_episode ツール", () => {
       tsukumoServer(
         EXPRESSIONS,
         chatMode,
-        createReportReview(() => NO_WORK_PLAN_STANDING),
-        createSpeechReview(),
-        createWorkPlanReview(),
+        createCallReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -183,9 +174,7 @@ describe("recall / recall_episode ツール", () => {
       tsukumoServer(
         EXPRESSIONS,
         workMode,
-        createReportReview(() => NO_WORK_PLAN_STANDING),
-        createSpeechReview(),
-        createWorkPlanReview(),
+        createCallReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -213,9 +202,7 @@ describe("recall / recall_episode ツール", () => {
       tsukumoServer(
         EXPRESSIONS,
         chatMode,
-        createReportReview(() => NO_WORK_PLAN_STANDING),
-        createSpeechReview(),
-        createWorkPlanReview(),
+        createCallReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -263,7 +250,7 @@ describe("question_brief", () => {
     const held: (readonly QuestionBrief[])[] = []
 
     const reply = await callTool(
-      workServer([], [], [], createSpeechReview(), held),
+      workServer([], [], [], createCallReview(), held),
       "question_brief",
       BRIEF_ARGS,
     )
@@ -304,7 +291,7 @@ describe("question_brief", () => {
     const held: (readonly QuestionBrief[])[] = []
 
     const reply = await callTool(
-      workServer([], [], [], createSpeechReview(), held),
+      workServer([], [], [], createCallReview(), held),
       "question_brief",
       { questions: [{ ...BRIEF_ARGS.questions[0], background: "" }] },
     )
@@ -423,9 +410,7 @@ describe("speak の差し戻し", () => {
       tsukumoServer(
         EXPRESSIONS,
         CHAT_MODE,
-        createReportReview(() => NO_WORK_PLAN_STANDING),
         spokenReview(),
-        createWorkPlanReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -441,9 +426,9 @@ describe("speak の差し戻し", () => {
   })
 })
 
-/** セリフを1つ描いたあと、新しい事実の届いていない `SpeechReview`。 */
-function spokenReview(): SpeechReview {
-  const review = createSpeechReview()
+/** セリフを1つ描いたあと、新しい事実の届いていない `CallReview`。 */
+function spokenReview(): CallReview {
+  const review = createCallReview()
   review.pass({
     kind: "speak-called",
     toolUseId: "toolu_speak_1",
@@ -758,16 +743,13 @@ function workServer(
   events: SessionEvent[] = [],
   dismissed: readonly string[] = [],
   titles: string[] = [],
-  speechReview: SpeechReview = createSpeechReview(),
+  callReview: CallReview = createCallReview(),
   heldBriefs: (readonly QuestionBrief[])[] = [],
 ): McpSdkServerConfigWithInstance {
-  const workPlanReview = createWorkPlanReview()
   return tsukumoServer(
     EXPRESSIONS,
     WORK_MODE,
-    createReportReview(workPlanReview.standing),
-    speechReview,
-    workPlanReview,
+    callReview,
     createUsageReviewIntake(
       () => dismissed,
       async () => true,

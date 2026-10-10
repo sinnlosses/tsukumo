@@ -10,12 +10,12 @@ import {
   preToolUseHooks,
   stopHooks,
 } from "../../../../src/server/session-driver/adapter/sdk-query-seed.ts"
+import { createCallReview } from "../../../../src/server/session-driver/core/call-review.ts"
 import type {
   ChatSummary,
   SessionDriverOptions,
   SessionMode,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
-import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
 import { parseDelegateReturn } from "../../../../src/shared/session/delegate-return.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
@@ -207,18 +207,18 @@ describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツ�
     expect(await runPreToolUse("Bash", { command: "ls" })).toEqual({})
   })
 
-  it("返却を受けた WorkPlanReview の印に従い、受け付けた work_plan のあとは通す", async () => {
-    const review = createWorkPlanReview()
+  it("返却を受けた CallReview の印に従い、受け付けた work_plan のあとは通す", async () => {
+    const review = createCallReview()
     const plan = { phases: ["架空の段A", "架空の段B"], current: 0, phaseSummary: "" }
     review.pass({ kind: "request", text: "架空の依頼", images: [] })
-    review.judge(plan)
+    review.judgeWorkPlan(plan)
     review.pass({
       kind: "delegate-returned",
       handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
     })
 
     expect(await runPreToolUse("Bash", {}, undefined, review.gateRaised)).toEqual(DENIED)
-    review.judge({ ...plan, current: 1, phaseSummary: "架空のまとめ。" })
+    review.judgeWorkPlan({ ...plan, current: 1, phaseSummary: "架空のまとめ。" })
     expect(await runPreToolUse("Bash", {}, undefined, review.gateRaised)).toEqual({})
   })
 

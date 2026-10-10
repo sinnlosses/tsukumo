@@ -28,20 +28,21 @@ export type SpeechReview = {
   readonly pass: (event: SessionEvent) => readonly SessionEvent[]
 }
 
+/** 新しい事実の帳面（`CallReview` が1つだけ持つ）のうち、`speak` が読む口。 */
+export type SpeechNews = {
+  readonly hasNews: () => boolean
+  readonly markDrawn: () => void
+}
+
 type SpeakCalled = Extract<SessionEvent, { readonly kind: "speak-called" }>
 
 /** {@link SpeechReview} を1つ作る。セッション1つに1つ。 */
-export function createSpeechReview(): SpeechReview {
+export function createSpeechReview(news: SpeechNews): SpeechReview {
   let held: readonly SpeakCalled[] = []
-  // 直前に描いたセリフのあとに新しい事実が届いたか（セッションの頭は届いたものとする）。
-  let hasNews = true
-  // メインが呼んで結果をまだ受け取っていないツールの id（`speak` / `report` / `work_plan` は入らない）。
-  let runningTools: ReadonlySet<string> = new Set()
-  let backgroundTaskIds: readonly string[] = []
 
   return {
     judge: () =>
-      hasNews
+      news.hasNews()
         ? { kind: "accepted" }
         : { kind: "rejected", text: SPEECH_NOTHING_NEW_REJECTION_TEXT },
     pass: (event) => {
@@ -49,17 +50,7 @@ export function createSpeechReview(): SpeechReview {
         case "speak-called":
           held = [...held, event]
           return []
-        case "tool-started":
-          if (event.parentToolUseId === undefined) {
-            runningTools = new Set([...runningTools, event.toolUseId])
-          }
-          return [event]
         case "tool-finished": {
-          if (runningTools.has(event.toolUseId)) {
-            runningTools = new Set([...runningTools].filter((id) => id !== event.toolUseId))
-            hasNews = true
-            return [event]
-          }
           const call = held.find((candidate) => candidate.toolUseId === event.toolUseId)
           if (call === undefined) {
             return [event]
@@ -68,21 +59,8 @@ export function createSpeechReview(): SpeechReview {
           if (event.isError) {
             return [event]
           }
-          hasNews = false
+          news.markDrawn()
           return [call.speech, event]
-        }
-        case "request":
-        case "turn-started":
-        case "session-info":
-          hasNews = true
-          return [event]
-        case "background-tasks-changed": {
-          const current = event.tasks.map((task) => task.taskId)
-          if (backgroundTaskIds.some((taskId) => !current.includes(taskId))) {
-            hasNews = true
-          }
-          backgroundTaskIds = current
-          return [event]
         }
         case "turn-finished": {
           const unsettled = held.map((call) => call.speech)

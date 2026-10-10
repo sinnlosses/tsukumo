@@ -25,13 +25,11 @@ import {
   type SessionEvent,
   sessionEventSchema,
 } from "../../../shared/session/session-event.ts"
-import { NO_WORK_PLAN_STANDING } from "../../../shared/session/work-plan.ts"
-import { createReportReview } from "../../report/core/report-review.ts"
+import { createCallReview } from "../core/call-review.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { briefedQuestions } from "../core/question-brief.ts"
 import { reportEvents } from "../core/sdk-message.ts"
 import type { SessionDriver } from "../core/session-driver.ts"
-import { createSpeechReview } from "../core/speech-review.ts"
 
 /** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
 const DEFAULT_SESSION_URL = new URL("../../../../test/fixture/fake-session.json", import.meta.url)
@@ -265,11 +263,9 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   let permissionMode: string = options.sessionDefault.permissionMode
   // いま効いている effort。起こした直後・`setEffort` のたび・ターンが終わるたびに画面へ流す。
   let effort: EffortLevel = FAKE_DEFAULT_EFFORT
-  // `report` の差し戻しの預かり（本物の駆動と同じ `ReportReview`）。
+  // 差し戻しの預かり（本物の駆動と同じ `CallReview`）。
   // handler が無いので判定はしない。疑似セッションが書いた `tool-finished` の `isError` に従って、描くか捨てるかだけが決まる。
-  const reportReview = createReportReview(() => NO_WORK_PLAN_STANDING)
-  // `speak` の差し戻しの預かりも同じ。判定はせず、場面の `tool-finished` の `isError` に従う。
-  const speechReview = createSpeechReview()
+  const callReview = createCallReview()
 
   const emit = (event: SessionEvent): void => {
     if (event.kind === "pending-changed") {
@@ -280,9 +276,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     }
     const events =
       event.kind === "report" ? reportEvents(event.toolUseId, event, options.expressions) : [event]
-    const passedEvents = events
-      .flatMap((normalized) => speechReview.pass(normalized))
-      .flatMap((spoken) => reportReview.pass(spoken))
+    const passedEvents = events.flatMap((normalized) => callReview.pass(normalized))
     for (const passed of passedEvents) {
       // 疑似セッションが書いた `session-info` のモデル・許可モードはいまの値で置き換える（疑似セッションの持ち物ではなく、起こし方で決まる値なので）。
       options.onEvent(
@@ -290,7 +284,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       )
     }
     // ターンが終わるたびに、そのとき効いている effort を読めたことにする（本物の `Stop` フック入力を疑似する）。
-    // `reportReview.pass` は通さない（`report` の差し戻しとは無関係）。
+    // `callReview.pass` は通さない（差し戻しとは無関係）。
     if (event.kind === "turn-finished") {
       options.onEvent({ kind: "effort-changed", effort })
     }

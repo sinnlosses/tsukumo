@@ -663,10 +663,10 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         speechExpression: event.expression,
         speechCalledInTurn: true,
       }
-    // サーバの中で `speech` に変わってから届く（`SpeechReview`）。
+    // サーバの中で `speech` に変わってから届く（`CallReview`）。
     case "speak-called":
       return state
-    // サーバの中で `work-plan` に変わってから届く（`WorkPlanReview`）。
+    // サーバの中で `work-plan` に変わってから届く（`CallReview`）。
     case "work-plan-called":
       return state
     case "delegate-returned":
