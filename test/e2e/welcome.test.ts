@@ -1,7 +1,7 @@
 import type { Locator, Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
-import { useScenarioRun } from "./scenario-run.ts"
+import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 import { BLOCKED_TASK_ID, READY_TASK_ID, writeWelcomeTasks } from "./task-room.ts"
 
 // 依頼前のメインビューの迎える口（docs/architecture/testing.md「E2E のシナリオの一覧」）。
@@ -45,27 +45,29 @@ function draft(page: Page): Promise<string> {
 }
 
 describe("迎える口", () => {
-  it.each(["wide", "medium"] as const)(
-    "理由つきのおすすめの札と「ほかの始め方」が並ぶ（%s）",
-    async (viewport) => {
-      const room = await openWelcomeRoom(`welcome-doors-${viewport}`, viewport)
-      const page = room.page
-      await mainView(page).getByRole("button", { name: READY_CARD }).waitFor()
-      expect(
-        await mainView(page)
-          .getByRole("button", { name: new RegExp(BLOCKED_TASK_ID) })
-          .count(),
-      ).toBe(0)
-      expect(await welcome(page).locator("ul > li").count()).toBe(2)
-      expect(await welcome(page).getByText("いちばんのおすすめ").count()).toBe(1)
-      for (const name of ["自分で書く", "タスクの一覧から選ぶ", "前のやり取りを見る"]) {
-        expect(await mainView(page).getByRole("button", { name }).count()).toBe(1)
-      }
-      const overflow = await mainView(page).evaluate((el) => el.scrollWidth - el.clientWidth)
-      expect(overflow).toBeLessThanOrEqual(0)
-      await room.settleAndMatch(ELAPSED_MS)
-    },
-  )
+  it("理由つきのおすすめの札と「ほかの始め方」が並び、広い窓でも中くらいの窓でも横にあふれない", async () => {
+    const room = await openWelcomeRoom("welcome-doors", "wide")
+    const page = room.page
+    await mainView(page).getByRole("button", { name: READY_CARD }).waitFor()
+    expect(
+      await mainView(page)
+        .getByRole("button", { name: new RegExp(BLOCKED_TASK_ID) })
+        .count(),
+    ).toBe(0)
+    expect(await welcome(page).locator("ul > li").count()).toBe(2)
+    expect(await welcome(page).getByText("いちばんのおすすめ").count()).toBe(1)
+    for (const name of ["自分で書く", "タスクの一覧から選ぶ", "前のやり取りを見る"]) {
+      expect(await mainView(page).getByRole("button", { name }).count()).toBe(1)
+    }
+    const overflow = await mainView(page).evaluate((el) => el.scrollWidth - el.clientWidth)
+    expect(overflow).toBeLessThanOrEqual(0)
+    await room.settleAndMatch(ELAPSED_MS)
+
+    await room.resize(VIEWPORTS.medium)
+    await mainView(page).getByRole("button", { name: READY_CARD }).waitFor()
+    const mediumOverflow = await mainView(page).evaluate((el) => el.scrollWidth - el.clientWidth)
+    expect(mediumOverflow).toBeLessThanOrEqual(0)
+  })
 
   it("「始める」を押すと、入力欄を経由せず依頼が送られ、下書きは残る", async () => {
     const room = await openWelcomeRoom("welcome-start-button", "wide")

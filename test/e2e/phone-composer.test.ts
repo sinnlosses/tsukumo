@@ -21,7 +21,7 @@ async function expectTouchSize(locator: Locator): Promise<void> {
 }
 
 describe("狭い画面の入力欄", () => {
-  it("390x844 で ＋・丸ボタン・＋ の面・■ の確かめの札の押せる大きさが 40〜44 に収まり、■ は確かめてから止める", async () => {
+  it("390x844 で ＋・丸ボタン・＋ の面・■ の確かめの札の押せる大きさが 40〜44 に収まり、■ は確かめてから止める。キーボードを模した低い窓でも入力欄が窓に収まる", async () => {
     const room = await run.open({
       scenario: "phone-composer-size",
       scene: "phone-layout",
@@ -50,20 +50,10 @@ describe("狭い画面の入力欄", () => {
     await expectTouchSize(page.getByRole("button", { name: "続ける", exact: true }))
     await page.getByRole("button", { name: "続ける", exact: true }).click()
     expect(await page.getByRole("button", { name: "止める", exact: true }).count()).toBe(0)
-  })
 
-  it("キーボードを模した低い窓で、入力欄が窓に収まり、吹き出しは顔だけに畳まれる", async () => {
-    const room = await run.open({
-      scenario: "phone-composer-keyboard",
-      scene: "phone-layout",
-      viewport: "phone",
-      domRoots: [],
-    })
-    const { page } = room
     const balloon = page.locator('[data-region="character"]').getByRole("button", {
       name: /^その前に/u,
     })
-    await page.getByRole("button", { name: "中断する" }).waitFor()
     await balloon.waitFor()
     expect(await balloon.isVisible()).toBe(true)
 

@@ -5,13 +5,13 @@ import type { Locator, Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
 import { fictionalPng } from "../../scripts/lib/fictional-png.ts"
-import { useScenarioRun } from "./scenario-run.ts"
+import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 
 // お伺い（許可要求と質問。docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 許可は場面 `permission`（本文が長く札が窓の外に出る場合は `inquiry-below-body`）、質問は `question-pair`（単一選択が1問ずつ）・
 // `question-long`（長いラベルと長い説明）・`question-preview`（選択肢ごとの比較）・
 // `question-preview-image`（preview に書いた手元の画像と、描かない画像）・
-// `question-brief`（添え書き付き。広い窓の2列と、札が狭い窓の1列）。
+// `question-brief`（添え書き付き。広い窓の2列から、窓を狭めて札の1列へ）。
 // どの場面も答え待ちを出したまま、答えると次の `pending-changed` が流れる。
 
 const run = useScenarioRun()
@@ -135,29 +135,21 @@ describe("お伺い", () => {
     await inquiry.getByRole("radio", { name: /C に移す/ }).click()
     await expect.poll(() => detail.getAttribute("aria-label")).toBe("C に移す の詳細")
 
-    await room.page.keyboard.press("Enter")
-    await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
-  })
-
-  it("札が狭い窓では、詳細が選択肢の下に回り、札が横に溢れない", async () => {
-    const room = await run.open({
-      scenario: "inquiry-question-brief-compact",
-      scene: "question-brief",
-      viewport: "compact",
-      domRoots: ["main"],
-    })
-    const inquiry = inquiryOf(room.page)
-    const detail = inquiry.getByRole("group", { name: /の詳細$/ })
-
+    // 札が窓より高くなりページが転がるので、`resize` の「ページが窓に収まる」待ちは使えない。
+    await room.page.setViewportSize(VIEWPORTS.compact)
     await expect.poll(() => detail.count()).toBe(1)
-    const [last, panel] = await Promise.all([
+    const [last, stackedPanel] = await Promise.all([
       inquiry.getByRole("radio", { name: /C に移す/ }).boundingBox(),
       detail.boundingBox(),
     ])
-    expect(last !== null && panel !== null && panel.y >= last.y + last.height).toBe(true)
-    await inquiry.getByText("並べて比べる").click()
+    expect(last !== null && stackedPanel !== null && stackedPanel.y >= last.y + last.height).toBe(
+      true,
+    )
     const overflow = await inquiry.evaluate((element) => element.scrollWidth - element.clientWidth)
     expect(overflow).toBeLessThanOrEqual(0)
+
+    await room.page.keyboard.press("Enter")
+    await expect.poll(() => inquiry.textContent()).toContain("2 / 2")
   })
 
   it("preview に書いた手元の画像は棚の経路で札の中に出て、外部の URL・data:・置いていない画像は「画像を出せない」の札になる", async () => {

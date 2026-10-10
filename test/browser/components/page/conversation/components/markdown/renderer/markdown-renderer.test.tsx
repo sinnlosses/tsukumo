@@ -882,6 +882,40 @@ describe("Markdown（image の塊の画像）", () => {
     })
   })
 
+  it("notes は画像の横に番号つきで並び、読めなかった画像でも札の横に並ぶ", () => {
+    withPageToken(() => {
+      const text = reportSectionsMarkdown([
+        {
+          heading: "",
+          blocks: [
+            {
+              kind: "image",
+              path: "架空/after.png",
+              caption: "架空の画面",
+              notes: ["架空の1つ目 `code`", "架空の2つ目"],
+              fold: "",
+            },
+          ],
+        },
+      ])
+      const { container } = render(<Markdown text={text} />)
+
+      const notes = container.querySelector("div.report-image-notes")
+      expect(notes?.querySelector("img")).not.toBeNull()
+      const items = [...(notes?.querySelectorAll("ol > li") ?? [])]
+      expect(items.map((item) => item.querySelector("[class*=number]")?.textContent)).toEqual([
+        "1",
+        "2",
+      ])
+      expect(items[0]?.querySelector("code")?.textContent).toBe("code")
+      expect(items[1]?.textContent).toContain("架空の2つ目")
+
+      fireEvent.error(typedElement(notes?.querySelector("img") ?? null, HTMLImageElement, "画像"))
+      expect(container.querySelector(MISSING_SELECTOR)).not.toBeNull()
+      expect(container.querySelectorAll("div.report-image-notes ol > li")).toHaveLength(2)
+    })
+  })
+
   it("外部の URL・data:・ほかのパスの画像は img にならず「出せない」の札になる", () => {
     const { container } = render(
       <Markdown

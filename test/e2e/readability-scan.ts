@@ -1,4 +1,5 @@
 import type { Page } from "playwright-core"
+import { expect } from "vitest"
 
 import { MIN_FONT_SIZE } from "../../scripts/lib/minimum-font-size.ts"
 
@@ -185,4 +186,13 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
       lowContrastText: [...lowContrastText],
     }
   }, MIN_FONT_SIZE)
+}
+
+export async function expectReadable(page: Page): Promise<void> {
+  expect(await scanReadability(page)).toEqual({
+    smallTargets: [],
+    unnamedControls: [],
+    smallText: [],
+    lowContrastText: [],
+  })
 }

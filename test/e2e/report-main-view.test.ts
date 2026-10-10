@@ -1,15 +1,11 @@
-import { mkdirSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { describe, it } from "vitest"
 
-import { fictionalPng } from "../../scripts/lib/fictional-png.ts"
 import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 
 // report → メインビュー（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの場面で確かめる:
 // `notation`（記法の一覧）、`report-chart`（グラフの塊。ベンダのスクリプトが描く）、
-// `report-image`（画像の塊。cwd の画像を棚の経路で読む）、`long-report-quick`（やり取りの列。札の幅で畳む）、
+// `long-report-quick`（やり取りの列。札の幅で畳む）、
 // `turn-outline`（やり取りの列の上の段のやり取りと結果の印）。
 
 const run = useScenarioRun()
@@ -37,20 +33,6 @@ describe("report → メインビュー", () => {
       viewport: "wide",
       domRoots: ["main"],
     })
-
-    await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
-  it("image の塊が画像として描かれ、無い画像は札になり、notes は画像か札の横に番号つきで並び、外部の URL は描かれない", async () => {
-    const room = await run.open({
-      scenario: "report-image",
-      scene: "report-image",
-      viewport: "wide",
-      domRoots: ["main"],
-    })
-    mkdirSync(join(room.cwd, "report-image-fixture"))
-    writeFileSync(join(room.cwd, "report-image-fixture", "after.png"), fictionalPng(8, 4))
 
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)

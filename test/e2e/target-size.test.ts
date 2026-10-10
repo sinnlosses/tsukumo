@@ -1,12 +1,11 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
-import type { Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
 import { git, initGitRepository } from "../fixture/git-repository.ts"
-import { scanReadability } from "./readability-scan.ts"
-import { useScenarioRun } from "./scenario-run.ts"
+import { expectReadable } from "./readability-scan.ts"
+import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 import { openTaskListRoomWithRunningTask, READY_TASK_ID } from "./task-room.ts"
 
 // 会話の画面の押せるものが 24x24 以上で名前を持ち、字が 12px 以上・4.5:1 以上であること
@@ -14,65 +13,37 @@ import { openTaskListRoomWithRunningTask, READY_TASK_ID } from "./task-room.ts"
 
 const run = useScenarioRun()
 
-const LONG_TOOL_OCCURRENCE = 4
-
-async function expectReadable(page: Page): Promise<void> {
-  expect(await scanReadability(page)).toEqual({
-    smallTargets: [],
-    unnamedControls: [],
-    smallText: [],
-    lowContrastText: [],
-  })
-}
-
 describe("会話の画面の押す的と字", () => {
-  it.each(["large", "medium"] as const)(
-    "迎える画面とサイドバー、サイドバーのタスクののぞき窓の押せるもの・字が下限を割らない（%s）",
-    async (viewport) => {
-      const room = await openTaskListRoomWithRunningTask(
-        run,
-        `target-size-welcome-${viewport}`,
-        [],
-        viewport,
-      )
-      if (viewport === "medium") {
-        await room.page.getByRole("button", { name: "サイドバー", exact: true }).click()
-      }
-      await room.page.locator('[data-region="sidebar"]').waitFor()
-      await expectReadable(room.page)
+  it("迎える画面とサイドバー、サイドバーのタスクののぞき窓の押せるもの・字が下限を割らない（medium と large）", async () => {
+    const room = await openTaskListRoomWithRunningTask(run, "target-size-welcome", [], "medium")
+    await room.page.getByRole("button", { name: "サイドバー", exact: true }).click()
+    await room.page.locator('[data-region="sidebar"]').waitFor()
+    await expectReadable(room.page)
 
-      await room.page.locator(`#task-row-${READY_TASK_ID}`).click()
-      await room.page.getByRole("button", { name: "これを始める →" }).waitFor()
-      await expectReadable(room.page)
-    },
-  )
+    await room.page.locator(`#task-row-${READY_TASK_ID}`).click()
+    await room.page.getByRole("button", { name: "これを始める →" }).waitFor()
+    await expectReadable(room.page)
 
-  it.each(["large", "medium"] as const)(
-    "お伺いで選択肢を選んだあとの押せるもの・字が下限を割らない（%s）",
-    async (viewport) => {
-      const room = await run.open({
-        scenario: `target-size-inquiry-${viewport}`,
-        scene: "question-multi",
-        viewport,
-        domRoots: [],
-      })
-      await room.waitForEvent("turn-finished")
-      await room.page.getByRole("checkbox").first().check()
-      const answer = room.page.getByRole("button", { name: /これで答える/ })
-      await expect.poll(() => answer.getAttribute("aria-disabled")).not.toBe("true")
-      await expectReadable(room.page)
-    },
-  )
+    await room.resize(VIEWPORTS.large)
+    await room.page.getByRole("button", { name: "これを始める →" }).waitFor()
+    await expectReadable(room.page)
+  })
 
-  it("失敗の塊の押せるもの・字が下限を割らない", async () => {
+  it("お伺いで選択肢を選んだあとの押せるもの・字が下限を割らない（medium と large）", async () => {
     const room = await run.open({
-      scenario: "target-size-failure",
-      scene: "api-failure",
+      scenario: "target-size-inquiry",
+      scene: "question-multi",
       viewport: "medium",
       domRoots: [],
     })
     await room.waitForEvent("turn-finished")
-    await room.page.getByRole("button", { name: "同じ依頼を入力欄に戻す" }).waitFor()
+    await room.page.getByRole("checkbox").first().check()
+    const answer = room.page.getByRole("button", { name: /これで答える/ })
+    await expect.poll(() => answer.getAttribute("aria-disabled")).not.toBe("true")
+    await expectReadable(room.page)
+
+    await room.resize(VIEWPORTS.large)
+    await expect.poll(() => answer.getAttribute("aria-disabled")).not.toBe("true")
     await expectReadable(room.page)
   })
 
@@ -86,18 +57,6 @@ describe("会話の画面の押す的と字", () => {
     await room.waitForEvent("pending-changed")
     await room.page.getByRole("button", { name: "完了: 枠の色を揃えたい（架空の依頼）" }).click()
     await room.page.getByRole("button", { name: "お伺いが届いた" }).waitFor()
-    await expectReadable(room.page)
-  })
-
-  it("進み具合の帯の手順の口が下限を割らない", async () => {
-    const room = await run.open({
-      scenario: "target-size-work-strip",
-      scene: "work-strip-running",
-      viewport: "medium",
-      domRoots: [],
-    })
-    await room.waitForEvent("tool-started", LONG_TOOL_OCCURRENCE)
-    await room.page.getByRole("button", { name: /手順/ }).waitFor()
     await expectReadable(room.page)
   })
 

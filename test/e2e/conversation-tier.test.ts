@@ -1,7 +1,7 @@
 import type { Locator, Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
-import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
+import { type ScenarioRoom, useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 import { openTaskListRoomWithRunningTask } from "./task-room.ts"
 
 // 会話の画面の段（docs/architecture/testing.md「E2E のシナリオの一覧」）。
@@ -50,46 +50,52 @@ async function scrollWidth(page: Page): Promise<number> {
   return page.evaluate(() => document.documentElement.scrollWidth)
 }
 
-describe("会話の画面の段", () => {
-  it.each(["medium", "tier-edge-medium"] as const)(
-    "中くらいの窓幅ではサイドバーが柱に畳まれ、柱の口で重ねて開き、Esc と外側で閉じる（%s）",
-    async (viewport) => {
-      const room = await openTaskListRoomWithRunningTask(
-        run,
-        `conversation-tier-${viewport}`,
-        ["sidebar"],
-        viewport,
-      )
-      const { page } = room
-      const toggle = railToggle(page)
+/** `match` は部屋につき1回だけ真にする（`settleAndMatch` は時計を止める）。 */
+async function expectRailOverlay(room: ScenarioRoom, match: boolean): Promise<void> {
+  const { page } = room
+  const toggle = railToggle(page)
 
-      expect(await sidebar(page).isVisible()).toBe(false)
-      expect(await toggle.getAttribute("aria-expanded")).toBe("false")
-      await toggle.getByText("1", { exact: true }).waitFor()
-      const runSettings = page.getByRole("group", { name: "実行の設定" })
-      const visibleRunSettings = await runSettings.evaluateAll(
-        (elements) => elements.filter((element) => element.checkVisibility()).length,
-      )
-      expect(visibleRunSettings).toBe(1)
-      expect(await sidebar(page).getByRole("group", { name: "実行の設定" }).isVisible()).toBe(false)
-
-      await toggle.click()
-      expect(await toggle.getAttribute("aria-expanded")).toBe("true")
-      await sidebar(page).waitFor()
-      expect(await rightEdge(sidebar(page))).toBeLessThan(await leftEdge(toggle))
-      await room.settleAndMatch(ELAPSED_MS)
-
-      await page.keyboard.press("Escape")
-      await sidebar(page).waitFor({ state: "hidden" })
-      expect(await toggle.evaluate((element) => element === document.activeElement)).toBe(true)
-
-      await toggle.click()
-      await sidebar(page).waitFor()
-      await page.locator('[data-region="main"]').click({ position: { x: 20, y: 20 } })
-      await sidebar(page).waitFor({ state: "hidden" })
-      expect(await toggle.getAttribute("aria-expanded")).toBe("false")
-    },
+  expect(await sidebar(page).isVisible()).toBe(false)
+  expect(await toggle.getAttribute("aria-expanded")).toBe("false")
+  await toggle.getByText("1", { exact: true }).waitFor()
+  const runSettings = page.getByRole("group", { name: "実行の設定" })
+  const visibleRunSettings = await runSettings.evaluateAll(
+    (elements) => elements.filter((element) => element.checkVisibility()).length,
   )
+  expect(visibleRunSettings).toBe(1)
+  expect(await sidebar(page).getByRole("group", { name: "実行の設定" }).isVisible()).toBe(false)
+
+  await toggle.click()
+  expect(await toggle.getAttribute("aria-expanded")).toBe("true")
+  await sidebar(page).waitFor()
+  expect(await rightEdge(sidebar(page))).toBeLessThan(await leftEdge(toggle))
+  if (match) {
+    await room.settleAndMatch(ELAPSED_MS)
+  }
+
+  await page.keyboard.press("Escape")
+  await sidebar(page).waitFor({ state: "hidden" })
+  expect(await toggle.evaluate((element) => element === document.activeElement)).toBe(true)
+
+  await toggle.click()
+  await sidebar(page).waitFor()
+  await page.locator('[data-region="main"]').click({ position: { x: 20, y: 20 } })
+  await sidebar(page).waitFor({ state: "hidden" })
+  expect(await toggle.getAttribute("aria-expanded")).toBe("false")
+}
+
+describe("会話の画面の段", () => {
+  it("中くらいの窓幅（1024px と境目の 1100px）ではサイドバーが柱に畳まれ、柱の口で重ねて開き、Esc と外側で閉じる", async () => {
+    const room = await openTaskListRoomWithRunningTask(
+      run,
+      "conversation-tier-medium",
+      ["sidebar"],
+      "medium",
+    )
+    await expectRailOverlay(room, true)
+    await room.resize(VIEWPORTS["tier-edge-medium"])
+    await expectRailOverlay(room, false)
+  })
 
   it("狭い窓幅では柱もタブ帯もサイドバーも出さずに頭の「≡」を出し、広い窓幅（1440px と境目の 1101px）では柱を出さずサイドバーと左右の仕切りが並ぶ", async () => {
     const room = await openTaskListRoomWithRunningTask(
@@ -116,7 +122,7 @@ describe("会話の画面の段", () => {
     }
   })
 
-  it("390x844 では上から頭・本文・顔と吹き出し・入力欄の縦の1列で、転がるのは本文だけ。吹き出しは3行で切れ、境目の 760px は頭のまま、761px は柱の段に戻る", async () => {
+  it("390x844 では上から頭・本文・顔と吹き出し・入力欄の縦の1列で、転がるのは本文だけ。吹き出しは3行で切れ、境目の 760px は頭のまま、761px は柱の段に戻る。≡ の引き出しも開閉でき、開いたまま窓を広げても本文が押せる", async () => {
     const room = await run.open({
       scenario: "conversation-tier-phone",
       scene: "phone-layout",
@@ -164,6 +170,8 @@ describe("会話の画面の段", () => {
     expect(await character.locator("[data-expression]").first().isVisible()).toBe(false)
     await room.settleAndMatch(PHONE_ELAPSED_MS)
 
+    await expectDrawerFlow(room)
+
     await room.resize(VIEWPORTS["tier-edge-narrow"])
     expect(await menuToggle(page).isVisible()).toBe(true)
     expect(await railToggle(page).isVisible()).toBe(false)
@@ -171,23 +179,16 @@ describe("会話の画面の段", () => {
     await room.resize(VIEWPORTS["tier-edge-rail"])
     await railToggle(page).waitFor()
     expect(await menuToggle(page).isVisible()).toBe(false)
+
+    await room.resize(VIEWPORTS.phone)
+    await expectDrawerSurvivesWiden(room)
   })
 
-  it("390x844 で ≡ を押すと右から幅 330 の引き出しが出て、タブと歯車の面を切り替えても横に転がらず、Esc・覆い・やり取りの行で閉じる", async () => {
-    const room = await run.open({
-      scenario: "conversation-tier-drawer",
-      scene: "phone-layout",
-      viewport: "phone",
-      domRoots: ["screen-nav"],
-    })
+  async function expectDrawerFlow(room: ScenarioRoom): Promise<void> {
     const { page } = room
     const toggle = menuToggle(page)
     const drawer = page.getByRole("dialog", { name: "引き出し" })
 
-    await page
-      .locator('nav[aria-label="画面"]')
-      .getByRole("button", { name: /^手順/u })
-      .waitFor()
     await toggle.click()
     await drawer.waitFor()
 
@@ -219,7 +220,6 @@ describe("会話の画面の段", () => {
     expect(await scrollWidth(page)).toBeLessThanOrEqual(390)
     await drawer.getByRole("button", { name: "‹ 戻る" }).click()
     await drawer.getByRole("tablist").waitFor()
-    await room.settleAndMatch(PHONE_ELAPSED_MS)
 
     await page.keyboard.press("Escape")
     await drawer.waitFor({ state: "hidden" })
@@ -235,7 +235,7 @@ describe("会話の画面の段", () => {
     await drawer.getByRole("button", { name: /架空のタスクを進めて/u }).click()
     await drawer.waitFor({ state: "hidden" })
     expect(await page.locator('[data-region="main"]').isVisible()).toBe(true)
-  })
+  }
 
   it("390x844 で依頼が “ の1行・中間レポートが1行ずつの一覧になり、行を押すと板が上がって ‹ › で前後の段へ移れ、Esc と覆いで閉じ押した行へフォーカスが戻り、頭の「手順 n」も板で開く", async () => {
     const room = await run.open({
@@ -288,19 +288,7 @@ describe("会話の画面の段", () => {
     await page.keyboard.press("Escape")
     await page.getByRole("dialog", { name: "依頼の手順" }).waitFor({ state: "hidden" })
     await room.settleAndMatch(PHONE_ELAPSED_MS)
-  })
 
-  it("板を開いたまま窓を広げても、広い画面の本文が押せるまま（隠れた板がページを塞がない）", async () => {
-    const room = await run.open({
-      scenario: "conversation-tier-sheet-widen",
-      scene: "phone-phases",
-      viewport: "phone",
-      domRoots: ["page"],
-    })
-    const { page } = room
-    const rows = page.locator('[data-region="main"] button[class*="phase-list-row"]')
-
-    await rows.nth(3).waitFor()
     await rows.nth(0).click()
     await page.getByRole("dialog", { name: "中間レポート" }).waitFor()
     expect(await page.evaluate(() => document.querySelector("dialog:modal") !== null)).toBe(true)
@@ -313,13 +301,7 @@ describe("会話の画面の段", () => {
     await page.getByRole("button", { name: "手順", exact: false }).first().click({ timeout: 3_000 })
   })
 
-  it("引き出しを開いたまま窓を広げても、広い画面の本文が押せるまま（隠れた引き出しがページを塞がない）", async () => {
-    const room = await run.open({
-      scenario: "conversation-tier-drawer-widen",
-      scene: "phone-layout",
-      viewport: "phone",
-      domRoots: ["screen-nav"],
-    })
+  async function expectDrawerSurvivesWiden(room: ScenarioRoom): Promise<void> {
     const { page } = room
 
     await menuToggle(page).click()
@@ -332,5 +314,5 @@ describe("会話の画面の段", () => {
       timeout: 3_000,
     })
     await page.getByRole("button", { name: "手順", exact: false }).first().click({ timeout: 3_000 })
-  })
+  }
 })

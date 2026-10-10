@@ -50,15 +50,7 @@ describe("会話の画面の読み上げとフォーカス", () => {
     await page.getByRole("button", { name: "入力欄へ移る" }).focus()
     await page.keyboard.press("Enter")
     await waitForFocus(page, COMPOSER)
-  })
 
-  it("送ると「作業を始めた」、閉じると「レポートが届いた」が1回ずつ読まれる", async () => {
-    const room = await run.open({
-      scenario: "live-region-focus-send",
-      scene: "none",
-      viewport: "wide",
-      domRoots: [],
-    })
     const textArea = room.page.locator("textarea")
     await textArea.fill("読み上げを確かめたい（架空の依頼）")
     await textArea.press("Meta+Enter")

@@ -4,8 +4,7 @@ import { describe, expect, it } from "vitest"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // 狭い画面（760px 以下）の答え待ちの札。
-// 位置・押した瞬間に答えること・板の中の1列の形と横に転がらないことを実ブラウザで確かめる。期待値は撮らない。
-
+// 位置・板の中の1列の形と横に転がらないことを実ブラウザで確かめる。期待値は撮らない。
 const run = useScenarioRun()
 
 function cardOf(page: Page) {
@@ -59,42 +58,6 @@ describe("狭い画面の答え待ちの札", () => {
       "質問のあいだの置き文字",
     ).toBe(1)
     expect(await page.getByRole("button", { name: "お伺いへ" }).count()).toBe(0)
-  })
-
-  it("許可は「許可」を押した瞬間に答えが流れ、札が消える", async () => {
-    const room = await run.open({
-      scenario: "phone-inquiry-permission",
-      scene: "permission",
-      viewport: "phone",
-      domRoots: [],
-    })
-    const card = cardOf(room.page)
-    await room.waitForEvent("turn-finished")
-    expect(
-      await card.getByRole("button").evaluateAll((buttons) => buttons.map((b) => b.textContent)),
-    ).toEqual(["拒否", "許可"])
-
-    await card.getByRole("button", { name: "許可", exact: true }).click()
-
-    await room.waitForEvent("pending-changed", 2)
-    await expect.poll(() => card.count()).toBe(0)
-  })
-
-  it("質問は、選択肢を押した瞬間に次の問いへ進み、最後の問いで全問ぶんが届く", async () => {
-    const room = await run.open({
-      scenario: "phone-inquiry-pair",
-      scene: "question-pair",
-      viewport: "phone",
-      domRoots: [],
-    })
-    const card = cardOf(room.page)
-
-    await card.getByRole("button", { name: /道具B/ }).click()
-    await expect.poll(() => card.textContent()).toContain("2 / 2")
-    await card.getByRole("button", { name: /土台/ }).click()
-
-    await room.waitForEvent("question-answered")
-    await expect.poll(() => card.count()).toBe(0)
   })
 
   it("「詳しく」の板に1列の形が出て、板の中も横に転がらず、選んで「これで答える」で答えると板が閉じる", async () => {

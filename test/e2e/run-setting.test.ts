@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { useScenarioRun } from "./scenario-run.ts"
+import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 
 // モデル・effort・許可モードの操作子（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面は名指しせず（`opening` のまま）。広い窓のサイドバー下端と、中くらいの窓幅の柱の両方で、
@@ -42,41 +42,30 @@ describe("モデル・effort・許可モードの操作子", () => {
       .toBe(false)
 
     await room.settleAndMatch(ELAPSED_MS)
-  })
 
-  it("中くらいの窓幅の柱でも、クリックで吊り札が開き、選ぶと session.setEffort が流れる", async () => {
-    const room = await run.open({
-      scenario: "run-setting-rail-select",
-      scene: "none",
-      viewport: "medium",
-      domRoots: [],
-    })
-
-    const combobox = room.page.getByRole("combobox", { name: /^effort /u })
-    const comboboxBox = await combobox.boundingBox()
-    await combobox.click()
+    await room.resize(VIEWPORTS.medium)
+    const effort = room.page.getByRole("combobox", { name: /^effort /u })
+    const effortBox = await effort.boundingBox()
+    await effort.click()
     const option = room.page.getByRole("option", { name: "High", exact: true })
     await option.waitFor()
     const optionBox = await option.boundingBox()
 
     // 柱では吊り札を横へ吊る（決まっていること）。右端の柱では窓の外へ出ないよう左右どちらかへ
     // 寄るので、縦に重ねて下へ積まれていないことだけを見る。
-    expect(comboboxBox).not.toBeNull()
+    expect(effortBox).not.toBeNull()
     expect(optionBox).not.toBeNull()
-    if (comboboxBox !== null && optionBox !== null) {
+    if (effortBox !== null && optionBox !== null) {
       const hangsToSide =
-        optionBox.x + optionBox.width <= comboboxBox.x ||
-        optionBox.x >= comboboxBox.x + comboboxBox.width
+        optionBox.x + optionBox.width <= effortBox.x || optionBox.x >= effortBox.x + effortBox.width
       expect(hangsToSide).toBe(true)
     }
 
     await option.click()
     await expect
       .poll(() =>
-        combobox.evaluate((element) => (element instanceof HTMLSelectElement ? element.value : "")),
+        effort.evaluate((element) => (element instanceof HTMLSelectElement ? element.value : "")),
       )
       .toBe("high")
-
-    await room.settleAndMatch(ELAPSED_MS)
   })
 })

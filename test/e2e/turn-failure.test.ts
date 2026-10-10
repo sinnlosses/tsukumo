@@ -1,6 +1,7 @@
 import type { Locator, Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
+import { expectReadable } from "./readability-scan.ts"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // 失敗で終わったやり取りの頭の失敗の塊と、その次の手（docs/architecture/testing.md「E2E のシナリオの一覧」）。
@@ -25,6 +26,8 @@ describe("失敗の塊", () => {
     expect(await block.textContent()).not.toContain("server_error")
     expect(await block.locator('[title*="server_error"]').count()).toBe(1)
     expect(await isAtHeadOfCard(block)).toBe(true)
+    await block.getByRole("button", { name: "同じ依頼を入力欄に戻す" }).waitFor()
+    await expectReadable(room.page)
 
     await block.getByRole("button", { name: "同じ依頼を入力欄に戻す" }).click()
 

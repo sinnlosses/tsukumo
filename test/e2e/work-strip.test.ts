@@ -1,6 +1,7 @@
 import type { Locator, Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
+import { expectReadable } from "./readability-scan.ts"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // 進み具合の帯（docs/architecture/testing.md「E2E のシナリオの一覧」）。
@@ -43,6 +44,9 @@ describe("進み具合の帯", () => {
     expect(await topOf(strip)).toBe(topBefore)
 
     await room.settleAndMatch(ELAPSED_MS)
+
+    await room.page.getByRole("button", { name: /手順/ }).waitFor()
+    await expectReadable(room.page)
   })
 
   it("1024x768 で許可の答え待ちが届くと、今の段の丸が答え待ちになり、2行目が何を待っているかを言い、札の口は覆われない", async () => {
