@@ -7,7 +7,7 @@
    部品ごとの見た目は `screen-nav-*.module.css` に分かれている。
    ここに残すのは、どの部品も単独では持てない帯全体の組み立てと、狭い画面（760px 以下）の `@media` 一式。
 
-   `@media` の中で他の部品の class を指す規則（`.screen-nav > .screen-nav-chat-mode` のように広い画面で隠す・`.nav-drawer-identity .screen-nav-face` のように引き出しの中で大きさを変える）もここに置く。
+   `@media` の中で他の部品の class を指す規則（`.screen-nav > .screen-nav-identity` のように広い画面で隠す・`.nav-drawer-identity .screen-nav-face` のように引き出しの中で大きさを変える）もここに置く。
    CSS Modules は class 名をファイルごとにハッシュ化するので、ここで参照する class 名はこのファイル自身のハッシュになり、部品側のファイルのものとは一致しない。
    そのため各部品の tsx がこのファイルも import し、このファイルのハッシュを自分の要素にも重ねて渡す。 */
 .screen-nav {
@@ -28,9 +28,11 @@
   align-items: center;
   gap: 12px;
 }
-/* トグルと口の間の縦の仕切り（飾りなので読み上げない）。 */
+/* 仕事・雑談の門とほかの画面の門の間の縦の仕切り（飾りなので読み上げない）。 */
 .screen-nav-divider {
   flex: none;
+  align-self: center;
+  margin: 0 10px;
   width: 1px;
   height: 24px;
   background: var(--rule);
@@ -70,11 +72,9 @@
     flex: none;
     margin: 0;
   }
-  /* 口・トグル・仕切り・ドロップダウン・左端の名乗りは引き出しへ、いまの作業の札は頭へ移る。 */
+  /* 口・仕切り・ドロップダウン・左端の名乗りは引き出しへ、いまの作業の札は頭へ移る。 */
   .screen-nav-gates,
   .screen-nav > .screen-nav-identity,
-  .screen-nav > .screen-nav-divider,
-  .screen-nav > .screen-nav-chat-mode,
   .screen-nav > .screen-nav-work-slot,
   .screen-nav > .screen-nav-model-permission,
   .screen-nav > .screen-nav-settings {

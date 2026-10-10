@@ -16,13 +16,13 @@ import type { NavDrawerView, ScreenNavParts } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./nav-drawer.module.css"
 import { ScreenNavCharacterPicker } from "./screen-nav-character-picker.tsx"
-import { ScreenNavChatModeToggle } from "./screen-nav-chat-mode.tsx"
+import { ScreenNavGate } from "./screen-nav-gate.tsx"
 import { ScreenNavSessionTag } from "./screen-nav-session-tag.tsx"
 import { ScreenNavSettingsBody } from "./screen-nav-settings.tsx"
 
 /** 引き出しに差し込む中身。 */
 export type NavDrawerSlots = {
-  /** 動き方の段の、仕事 / 雑談のトグルの右に置くモデル・effort・許可モードの口。 */
+  /** 動き方の段の、仕事・雑談の門の右に置くモデル・effort・許可モードの口。 */
   readonly runSetting: ReactNode
   readonly turns: ReactNode
   readonly tasks: ReactNode
@@ -102,7 +102,13 @@ function NavDrawerBody(props: NavDrawerProps): ReactElement {
         <ScreenNavSessionTag tag={parts.sessionTag} placement="nav-drawer" />
       </div>
       <div className={styles["nav-drawer-run-setting"]}>
-        <ScreenNavChatModeToggle chatMode={parts.chatMode} />
+        <div className={styles["nav-drawer-mode-gates"]}>
+          {parts.gates
+            .filter((gate) => gate.screen === "conversation")
+            .map((gate) => (
+              <ScreenNavGate key={gate.label} gate={gate} onSelect={parts.onSelect} />
+            ))}
+        </div>
         {slots.runSetting}
       </div>
       {drawer.face === "tabs" ? (

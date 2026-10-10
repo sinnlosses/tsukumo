@@ -24,3 +24,26 @@
   color: var(--ink);
   font-weight: 500;
 }
+/* ターン進行中の、いまと違うモードの口。押せないことを字の薄さと禁止のカーソルで示す。 */
+.screen-nav-gate.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.screen-nav-gate.is-disabled:hover {
+  color: var(--ink-quiet);
+}
+/* 会話の画面にいないあいだ、戻り先のモードの口に付ける差し色の小さな点。 */
+.screen-nav-gate.has-return-mark {
+  position: relative;
+}
+/* 字の上端（行の高さ 1.4 の半分だけ中心から上）に合わせ、門の高さに頼らない。 */
+.screen-nav-gate.has-return-mark::after {
+  content: "";
+  position: absolute;
+  top: calc(50% - 0.8em);
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}

@@ -69,47 +69,13 @@
           ]
         },
         {
-          "tag": "div",
+          "tag": "a",
           "attributes": {
-            "role": "group",
-            "aria-label": "モード"
+            "href": "/?t=<token>"
           },
           "children": [
-            {
-              "tag": "button",
-              "attributes": {
-                "aria-pressed": "false",
-                "aria-disabled": "false",
-                "aria-label": "仕事",
-                "type": "button"
-              },
-              "children": [
-                {
-                  "tag": "svg"
-                }
-              ]
-            },
-            {
-              "tag": "button",
-              "attributes": {
-                "aria-pressed": "true",
-                "aria-disabled": "false",
-                "type": "button"
-              },
-              "children": [
-                {
-                  "tag": "svg"
-                },
-                "雑談"
-              ]
-            }
+            "仕事"
           ]
-        },
-        {
-          "tag": "span",
-          "attributes": {
-            "aria-hidden": "true"
-          }
         },
         {
           "tag": "a",
@@ -118,8 +84,14 @@
             "href": "/?t=<token>"
           },
           "children": [
-            "会話"
+            "雑談"
           ]
+        },
+        {
+          "tag": "span",
+          "attributes": {
+            "aria-hidden": "true"
+          }
         },
         {
           "tag": "a",

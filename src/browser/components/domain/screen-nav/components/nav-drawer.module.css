@@ -56,7 +56,12 @@
     min-width: 0;
     padding: 0 16px;
   }
-  /* 動き方の段（仕事 / 雑談のトグルとモデル・effort・許可モード）。 */
+  /* 動き方の段（仕事・雑談の門とモデル・effort・許可モード）。 */
+  .nav-drawer-mode-gates {
+    display: flex;
+    flex: none;
+    gap: 2px;
+  }
   .nav-drawer-run-setting {
     display: flex;
     flex: none;

@@ -15,7 +15,6 @@ import { CurrentWorkPill } from "../../../features/current-work/components/curre
 import { NavDrawer, NavDrawerToggle, type NavDrawerSlots } from "./components/nav-drawer.tsx"
 import { PhoneHead } from "./components/phone-head.tsx"
 import { ScreenNavCharacterPicker } from "./components/screen-nav-character-picker.tsx"
-import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
 import { ScreenNavModelPermissionSelect } from "./components/screen-nav-model-permission.tsx"
 import { ScreenNavSessionTag } from "./components/screen-nav-session-tag.tsx"
@@ -42,6 +41,8 @@ export function PresentationalScreenNav({
   ref,
   slots,
 }: PresentationalScreenNavProps): ReactElement {
+  const modeGates = parts.gates.filter((gate) => gate.screen === "conversation")
+  const screenGates = parts.gates.filter((gate) => gate.screen !== "conversation")
   return (
     <>
       <nav className={styles["screen-nav"]} aria-label="画面" data-screen={current} ref={ref}>
@@ -49,11 +50,13 @@ export function PresentationalScreenNav({
           <ScreenNavCharacterPicker picker={parts.character} />
           <ScreenNavSessionTag tag={parts.sessionTag} placement="screen-nav" />
         </div>
-        <ScreenNavChatModeToggle chatMode={parts.chatMode} />
-        <span className={styles["screen-nav-divider"]} aria-hidden="true" />
         <div className={styles["screen-nav-gates"]}>
-          {parts.gates.map((gate) => (
-            <ScreenNavGate key={gate.screen} gate={gate} onSelect={parts.onSelect} />
+          {modeGates.map((gate) => (
+            <ScreenNavGate key={gate.label} gate={gate} onSelect={parts.onSelect} />
+          ))}
+          <span className={styles["screen-nav-divider"]} aria-hidden="true" />
+          {screenGates.map((gate) => (
+            <ScreenNavGate key={gate.label} gate={gate} onSelect={parts.onSelect} />
           ))}
         </div>
         {current !== "conversation" && (

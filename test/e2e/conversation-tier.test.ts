@@ -198,7 +198,7 @@ describe("会話の画面の段", () => {
     expect(drawerBox).toEqual({ right: 390, width: 330 })
     const tops = await Promise.all(
       [
-        drawer.getByRole("group", { name: "モード" }),
+        drawer.getByRole("link", { name: "仕事" }),
         drawer.getByRole("tablist"),
         drawer.getByRole("tabpanel"),
         drawer.getByRole("button", { name: "＋ 新しいやり取り" }),

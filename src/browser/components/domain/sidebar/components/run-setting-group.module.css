@@ -23,7 +23,7 @@
   width: 18px;
   height: 1px;
 }
-/* 狭い画面の引き出しでは、仕事 / 雑談のトグルの右に並べ、外寸の高さ（40px）をトグルに揃える。 */
+/* 狭い画面の引き出しでは、仕事・雑談の門の右に並べる。 */
 .run-setting-group-drawer {
   padding: 4px 2px;
 }

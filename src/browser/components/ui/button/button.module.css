@@ -231,8 +231,7 @@
   background: color-mix(in srgb, var(--state-warn) 85%, var(--ink));
 }
 
-/* 地も枠も無い静かな字。押されている（`pressed: "on"`）ときは地を差し色にする
-   （`screen-nav-chat-mode-button` の元の規則をそのまま持ってきた）。 */
+/* 地も枠も無い静かな字。押されている（`pressed: "on"`）ときは地を差し色にする。 */
 .button-variant-ghost {
   border: none;
   background: none;

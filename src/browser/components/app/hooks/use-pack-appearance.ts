@@ -5,6 +5,7 @@
 import { useEffect } from "react"
 
 import { effectiveAccent } from "../../../../shared/character-pack/character.ts"
+import { useScreen } from "../../../stores/screen.tsx"
 import { useSession } from "../../../stores/session.ts"
 
 /** 画面の根で1回だけ呼ぶ。 */
@@ -20,9 +21,11 @@ export function usePackAppearance(): void {
  */
 const DIARY_FONT_FAMILY_NAME = "tsukumo-diary"
 
+/** 雑談の色は会話の画面でだけ流す。ほかの画面はパックの差し色のまま。 */
 function useAccent(): void {
+  const onConversation = useScreen() === "conversation"
   const accent = useSession((session) =>
-    effectiveAccent(session.state.character, session.state.chatMode),
+    effectiveAccent(session.state.character, onConversation && session.state.chatMode),
   )
   useEffect(() => {
     if (accent === undefined) {

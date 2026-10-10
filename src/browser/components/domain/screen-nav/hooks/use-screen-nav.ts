@@ -1,9 +1,9 @@
 // 画面のナビの帯のロジック。
-// いま出している画面・口・仕事/雑談のトグル・モデル/許可モードの操作子・狭い画面の頭と引き出しを、見た目が受け取れる形まで畳んで返す。
+// いま出している画面・口（仕事/雑談は会話の画面の2つの口）・モデル/許可モードの操作子・狭い画面の頭と引き出しを、見た目が受け取れる形まで畳んで返す。
 //
 // 口は `<a href>` で、画面の正典は `location.hash` のまま（`navigateTo` は使わない）。
 //
-// 動き方の操作子（仕事/雑談・モデル・許可モード）の表示はサーバから届いた値だけに従い、押した側へ先に倒さない。
+// 動き方の操作子（仕事/雑談の口・モデル・許可モード）の表示はサーバから届いた値だけに従い、押した側へ先に倒さない。
 //
 // 2つの面（広い画面の帯・狭い画面の引き出し）へは、部品の値を1つの束（`ScreenNavParts`）で配る。
 
@@ -37,28 +37,26 @@ import {
 } from "./use-session-switcher.ts"
 import { useSettings, type ScreenNavSettings } from "./use-settings.ts"
 
-/** 帯に並ぶ口1つ。「いま出している画面か」は畳んで渡す（部品は判定を持たない）。 */
+/**
+ * 帯に並ぶ口1つ。「いまの画面か」「押せるか」は畳んで渡す（部品は判定を持たない）。
+ * 仕事・雑談の口はどちらも会話の画面へのリンクで、`onGo` が違うモードなら `session.setChatMode` を送る。
+ */
 export type ScreenNavGate = {
   readonly screen: Screen
   readonly label: string
   readonly href: string
   readonly active: boolean
-}
-
-/**
- * 仕事 / 雑談のトグルが受け取れる形。
- * いまの側を押しても・ターン進行中も何も送らないことは `onChange` の中で決めていて、部品は「送るかどうか」を持たない。
- */
-export type ScreenNavChatMode = {
-  readonly chat: boolean
-  /** ターン進行中は押せない（起こし直しなので）。 */
+  /** 会話の画面にいないあいだ、裏で生きているセッションのモードの口に付く戻り先の印。 */
+  readonly returnMark: boolean
+  /** ターン進行中の、いまと違うモードの口。 */
   readonly disabled: boolean
   /**
    * `disabled` のときだけ理由を持つ。
    * `aria-disabled` の要素はブラウザ既定のツールチップに頼れないので、`title` に定型文を出す。
    */
   readonly title: string | undefined
-  readonly onChange: (chat: boolean) => void
+  /** 押したとき。同じモードの口・モードを持たない口では何も送らない。 */
+  readonly onGo: () => void
 }
 
 /**
@@ -70,7 +68,6 @@ export type ScreenNavParts = {
   readonly character: ScreenNavCharacterPicker
   readonly sessionTag: ScreenNavSessionTag
   readonly gates: readonly ScreenNavGate[]
-  readonly chatMode: ScreenNavChatMode
   readonly modelPermission: ModelPermissionControl
   readonly work: CurrentWork
   readonly settings: ScreenNavSettings
@@ -137,6 +134,20 @@ const TAB_LABELS = {
   usage: "使用量",
 } satisfies Record<NavDrawerTab, string>
 
+/**
+ * 帯の門の並び。仕事・雑談はどちらも会話の画面で、押すとモードも決まる。
+ * `chat` は会話の画面の門だけが読む。ほかの画面の字は画面の一覧（`SCREEN_NAV_ITEMS`）のまま。
+ */
+const GATE_LIST = [
+  { screen: "conversation", label: "仕事", chat: false },
+  { screen: "conversation", label: "雑談", chat: true },
+  ...SCREEN_NAV_ITEMS.filter((item) => item.screen !== "conversation").map((item) => ({
+    screen: item.screen,
+    label: item.label,
+    chat: false,
+  })),
+] satisfies readonly { readonly screen: Screen; readonly label: string; readonly chat: boolean }[]
+
 const CHAT_TASKS_LABEL = "話題"
 
 const TAB_ORDER = ["turns", "tasks", "usage"] as const satisfies readonly NavDrawerTab[]
@@ -171,12 +182,25 @@ export function useScreenNav(): ScreenNavView {
     conversationHref: screenHref("conversation"),
   })
 
-  const gates = SCREEN_NAV_ITEMS.map((entry) => ({
-    screen: entry.screen,
-    label: entry.label,
-    href: screenHref(entry.screen),
-    active: entry.screen === current,
-  }))
+  const gates = GATE_LIST.map((entry): ScreenNavGate => {
+    const isConversation = entry.screen === "conversation"
+    const modeDiffers = isConversation && entry.chat !== chatMode
+    const blocked = modeDiffers && turnInProgress
+    return {
+      screen: entry.screen,
+      label: entry.label,
+      href: screenHref(entry.screen),
+      active: entry.screen === current && !modeDiffers,
+      returnMark: isConversation && current !== "conversation" && !modeDiffers,
+      disabled: blocked,
+      title: blocked ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
+      onGo: () => {
+        if (modeDiffers && !turnInProgress) {
+          dispatch.session.setChatMode({ chat: entry.chat })
+        }
+      },
+    }
+  })
 
   // `<dialog>` の `close` はどの閉じ方（覆い・Esc・中から閉じる）でも届くので、≡ へ戻すのはここ1箇所。
   // 覆いを押した先は `<nav>` の中の `<dialog>` なので、中で開いていたキャラクターの選び口は自分では閉じない。ここで一緒に閉じる。
@@ -192,17 +216,6 @@ export function useScreenNav(): ScreenNavView {
       character,
       sessionTag,
       gates,
-      chatMode: {
-        chat: chatMode,
-        disabled: turnInProgress,
-        title: turnInProgress ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
-        onChange: (chat) => {
-          if (turnInProgress || chat === chatMode) {
-            return
-          }
-          dispatch.session.setChatMode({ chat })
-        },
-      },
       modelPermission,
       work,
       settings,
