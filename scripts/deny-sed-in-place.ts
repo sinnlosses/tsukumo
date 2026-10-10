@@ -10,9 +10,11 @@ import process from "node:process"
 import { findDeniedBashRule } from "./lib/bash-write-denial.ts"
 import { recordHookDenial } from "./lib/hook-denial-record.ts"
 
-const REFUSAL = `作業ツリーの中のファイルを Bash のコマンドで書き換えない。
+const REFUSAL = `作業ツリー（CLAUDE_PROJECT_DIR）の中のファイルを Bash のコマンドで書き換えない。
 止める形: \`sed -i\`・\`perl -i\`、リダイレクト（\`>\`・\`>>\`）と \`tee\` での書き込み、作業ツリーの外からの \`cp\` / \`mv\`、Python・node のコードやスクリプトでの書き込み。
-書き先が変数やコマンド置換で決まるものも、作業ツリーの中への書き込みとみなして止める。
+書き先が作業ツリーの外のパス（別のリポジトリ・\`/tmp\`）と決まるものは止めない。
+書き先が変数やコマンド置換で決まるものは、展開しないと分からないので作業ツリーの中への書き込みとみなして止める。書き先を絶対パスで書けば通る。
+作業ツリーの外から画像（\`.png\`・\`.jpg\`・\`.gif\`・\`.webp\`・\`.avif\`・\`.ico\`）を \`cp\` / \`mv\` で置くのは止めない。
 ファイルの書き換えは Edit ツール（複数箇所なら replace_all）か Write ツールで行うこと。
 作業ツリーの外で組み立てた内容も、Write ツールで作業ツリーのパスへ書く（Bash で書き戻さない）。
 \`tw edit --body-file\` に渡す下書きは Write ツールでスクラッチに書くか、heredoc を標準入力へ直接渡す。

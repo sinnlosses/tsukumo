@@ -27,6 +27,19 @@ describe("ファイルを書き換えるコマンドの判定", () => {
     ["sed -i", "sed -i 's/a/b/' file.ts"],
     ["sed -i.bak", "sed -i.bak 's/a/b/' file.ts"],
     ["sed -i と空の接尾辞", "sed -i '' 's/a/b/' file.ts"],
+    ["作業ツリーの中の絶対パスへの sed -i", "sed -i 's/a/b/' /work/tree/src/a.ts"],
+    ["-e でスクリプトを渡した sed -i", "sed -i -e 's/a/b/' src/a.ts"],
+    ["書き先が変数の sed -i", "sed -i 's/a/b/' \"$FILE\""],
+    [
+      "作業ツリーの外から作業ツリーへ cd し直したあとの sed -i",
+      "cd /tmp/x && cd /work/tree && sed -i 's/a/b/' a",
+    ],
+    ["xargs の sed -i", "git ls-files | xargs sed -i 's/a/b/'"],
+    ["作業ツリーの中への画像でない cp", "cp /tmp/x/a.svg src/a.svg"],
+    ["画像を画像でないファイルへ書く cp", "cp /tmp/x/a.png src/run.ts"],
+    ["画像を拡張子の無いファイルへ書く cp", "cp /tmp/x/a.png Makefile"],
+    ["画像をドットファイルへ書く cp", "cp /tmp/x/a.png .env"],
+    ["画像を画像でないファイルへ書く mv", "mv /tmp/x/a.png src/run.ts"],
     ["sed --in-place", "sed --in-place 's/a/b/' file.ts"],
     ["sed の他の短い引数とまとめた -ni", "sed -ni 's/a/b/p' file.ts"],
     ["パイプの後ろの sed -i", "cat list | xargs sed -i 's/a/b/'"],
@@ -106,6 +119,13 @@ describe("ファイルを書き換えるコマンドの判定", () => {
     expect(isDenied(command)).toBe(true)
   })
 
+  test.each([
+    ["sed", "git ls-files | xargs sed -i 's/a/b/'", "sed-in-place"],
+    ["perl", "git ls-files | xargs perl -pi -e 's/a/b/'", "perl-in-place"],
+  ])("xargs の %s は規則のキーを分ける", (_name, command, rule) => {
+    expect(findDeniedBashRule(command, undefined, WORK_ROOT)).toBe(rule)
+  })
+
   test("作業ツリーの根が分からないときは外への open も止める", () => {
     expect(
       findDeniedBashRule("python3 -c \"open('/tmp/x', 'w').write('x')\"", undefined, undefined),
@@ -139,6 +159,17 @@ describe("ファイルを書き換えるコマンドの判定", () => {
     [
       "作業ツリーの外への mode 引数の open",
       "python3 -c \"open('/tmp/x.md', encoding='utf-8', mode='w').write('x')\"",
+    ],
+    ["別のリポジトリへの sed -i", "sed -i 's/a/b/' /other/repo/src/a.ts"],
+    ["別のリポジトリへ cd したあとの sed -i", "cd /other/repo && sed -i 's/a/b/' src/a.ts"],
+    ["別のリポジトリへの sed -i と空の接尾辞", "sed -i '' -E 's/a/b/' /other/repo/a.ts"],
+    ["別のリポジトリへの perl -pi", "perl -pi -e 's/a/b/' /other/repo/a.ts"],
+    ["/tmp への sed -i", "sed -i 's/a/b/' /tmp/x/a.ts"],
+    ["作業ツリーの外の絶対パスへの tee", "echo x | tee /tmp/x/a.ts"],
+    ["作業ツリーの外から中へ置く画像の cp", "cp /tmp/x/sample.png src/assets/sample.png"],
+    [
+      "作業ツリーの外から中のディレクトリへ置く画像の mv",
+      "mv /tmp/x/a.PNG /tmp/x/b.webp src/assets/",
     ],
     ["pnpm run format", "pnpm run format"],
     ["pnpm run build", "pnpm run build"],
@@ -381,6 +412,17 @@ describe("node で走らせるスクリプトのファイル", () => {
   test("作業ツリーの中のスクリプトは読まずに通す", () => {
     scriptPath("fs.writeFileSync(path, 'x')\n", "generate.ts")
     expect(isDenied("node generate.ts", { cwd: dir(), workRoot: dir() })).toBe(false)
+  })
+})
+
+describe("画像の cp の書き先が実在するディレクトリのとき", () => {
+  const dir = useTempDir("deny-image-cp")
+
+  test("拡張子の無いディレクトリへ置くなら通す", () => {
+    mkdirSync(join(dir(), "assets"))
+    const options = { cwd: dir(), workRoot: dir() }
+    expect(isDenied("cp /tmp/x/a.png assets", options)).toBe(false)
+    expect(isDenied("cp /tmp/x/a.png Makefile", options)).toBe(true)
   })
 })
 

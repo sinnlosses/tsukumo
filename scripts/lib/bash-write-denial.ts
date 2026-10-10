@@ -1,21 +1,46 @@
 // 作業ツリーの中のファイルへ書き込む Bash のコマンドの判定。
-// 当たるのは `sed -i`・`perl -i`、書き込みのリダイレクト・`tee`、作業ツリーの外からの `cp` / `mv`、
+// 当たるのは、書き先が作業ツリーの中にある（または展開しないと決まらない）
+// `sed -i`・`perl -i`、書き込みのリダイレクト・`tee`、作業ツリーの外からの `cp` / `mv`（画像のみは通す）、
 // Python と node のコード（`-c` / `-e`・heredoc・作業ツリーの外のスクリプトのファイル）での書き込み。
+// 書き先が作業ツリーの外と決まるものは当たらない。
 // `pnpm`・`git`・作業ツリーの中のスクリプトのように、ツールの中で書くものは判定にかけない。
 
 import { existsSync, readFileSync, statSync } from "node:fs"
-import { dirname, isAbsolute, join, relative, resolve } from "node:path"
+import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path"
 
 import { findQuotedSpans, withSpansBlanked, type QuotedSpan } from "./quoted-span.ts"
 import { parseShellCommand, type ShellWord, type SimpleCommand } from "./shell-command.ts"
 
-/** コマンドの位置（`sudo` `xargs` の後ろを含む）に現れた `sed` に、in-place の引数（`-i`・`-i.bak`・`-ni`・`--in-place`）が続く形。 */
-const SED_IN_PLACE =
-  /(?:^|[;&|(]\s*|\n)\s*(?:(?:sudo|xargs)\s+(?:-\S+\s+)*)?sed\b[^;&|\n]*\s(?:-[a-zA-Z0-9]*i|--in-place)/
+/**
+ * in-place で書き換える `sed` / `perl` の引数の形。
+ * `inPlace` は in-place の引数（`-i`・`-i.bak`・`-ni`・`-pi`・`--in-place`）、
+ * `scriptOption` は次の語をスクリプトとして取る引数（`-e`・`-pe`・`-f`）、
+ * `scriptAssignment` はスクリプトを `=` でつなぐ引数。
+ */
+const SED_OPTIONS = {
+  inPlace: /^(?:-[a-zA-Z0-9]*i|--in-place)/,
+  scriptOption: /^(?:-[a-zA-Z0-9]*[ef]|--expression|--file)$/,
+  scriptAssignment: /^--(?:expression|file)=/,
+} satisfies Record<string, RegExp>
 
-/** コマンドの位置に現れた `perl` に、in-place の引数（`-i`・`-i.bak`・`-pi` のような束ね方を含む）が続く形。 */
-const PERL_IN_PLACE =
-  /(?:^|[;&|(]\s*|\n)\s*(?:(?:sudo|xargs)\s+(?:-\S+\s+)*)?perl\b[^;&|\n]*\s-[a-zA-Z0-9]*i[a-zA-Z0-9]*\b/
+const PERL_OPTIONS = {
+  inPlace: /^-[a-zA-Z0-9]*i[a-zA-Z0-9.]*$/,
+  scriptOption: /^-[a-zA-Z0-9]*[eE]$/,
+  scriptAssignment: /(?!)/,
+} satisfies Record<string, RegExp>
+
+type InPlaceOptions = typeof SED_OPTIONS
+
+/** 書き込み先が作業ツリーの中でも、Edit・Write では作れない画像として通す拡張子。 */
+const BINARY_EXTENSIONS: ReadonlySet<string> = new Set([
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+  ".avif",
+  ".ico",
+])
 
 /** Python のコードの中にある、書き込みモードの `open(...)`。第1引数を書き込み先として捕獲する。 */
 const PYTHON_OPEN_WRITES = [
@@ -90,13 +115,13 @@ export function findDeniedBashRule(
 ): string | undefined {
   return (
     findDeniedCommandRule(command, workRoot, readPythonScripts(command, cwd, workRoot)) ??
-    (workRoot !== undefined && writesIntoWorkTree(command, startDirectory(cwd, workRoot), workRoot)
-      ? "worktree-write"
-      : undefined)
+    (workRoot === undefined
+      ? undefined
+      : findWorkTreeWriteRule(command, startDirectory(cwd, workRoot), workRoot))
   )
 }
 
-/** コマンドが `sed -i`・`perl -pi` 等の構造に当たるか、引用符・heredoc・スクリプトのファイルの中で Python がファイルへ書き戻すコードを持つかを見て、当たった規則のキーを返す。 */
+/** 引用符・heredoc・スクリプトのファイルの中で Python がファイルへ書き戻すコードを持つかを見て、当たれば規則のキーを返す。 */
 function findDeniedCommandRule(
   command: string,
   workRoot: string | undefined,
@@ -115,60 +140,123 @@ function findDeniedCommandRule(
   ) {
     return "python-write"
   }
-
-  const skeleton = withSpansBlanked(command, spans)
-  if (SED_IN_PLACE.test(skeleton)) {
-    return "sed-in-place"
-  }
-  return PERL_IN_PLACE.test(skeleton) ? "perl-in-place" : undefined
+  return undefined
 }
 
 /**
- * 単純コマンドを順に見て、作業ツリーの中（または書き先が決まらないところ）へ書くものがあるか。
+ * 単純コマンドを順に見て、作業ツリーの中（または書き先が決まらないところ）へ書くものの規則のキー。
  * 相対パスは `cd` を追って解く。
  */
-function writesIntoWorkTree(command: string, start: string, workRoot: string): boolean {
+function findWorkTreeWriteRule(
+  command: string,
+  start: string,
+  workRoot: string,
+): string | undefined {
   let directory: string | undefined = start
   for (const simple of parseShellCommand(command)) {
-    if (writesInto(simple, directory, workRoot)) {
-      return true
+    const rule = writeRuleOf(simple, directory, workRoot)
+    if (rule !== undefined) {
+      return rule
     }
     directory = directoryAfter(simple, directory)
   }
-  return false
+  return undefined
 }
 
-function writesInto(
+function writeRuleOf(
   simple: SimpleCommand,
   directory: string | undefined,
   workRoot: string,
-): boolean {
+): string | undefined {
   const locate = (word: ShellWord): Location => locatePath(word, directory, workRoot)
   const name = simple.argv[0] === undefined ? "" : baseName(simple.argv[0].text)
   const args = simple.argv.slice(1)
+  const writes = (denied: boolean, rule = "worktree-write"): string | undefined =>
+    denied ? rule : undefined
 
   if (name !== "[[" && simple.writes.some((word) => locate(word) !== "outside")) {
-    return true
+    return "worktree-write"
   }
   switch (name) {
+    case "sed":
+      return writes(editsInPlace(args, SED_OPTIONS, locate), "sed-in-place")
+    case "perl":
+      return writes(editsInPlace(args, PERL_OPTIONS, locate), "perl-in-place")
+    case "xargs":
+      return xargsInPlaceRule(args)
     case "tee":
-      return operands(args).some((word) => locate(word) !== "outside")
+      return writes(operands(args).some((word) => locate(word) !== "outside"))
     case "cp":
     case "mv":
-      return copiesIntoWorkTree(args, locate)
+      return writes(copiesIntoWorkTree(args, locate, directory))
     case "node":
-      return nodeCodes(args, simple, locate, directory).some((code) =>
-        hasUnsafeWrite(code, NODE_WRITES, workRoot),
+      return writes(
+        nodeCodes(args, simple, locate, directory).some((code) =>
+          hasUnsafeWrite(code, NODE_WRITES, workRoot),
+        ),
       )
     default:
-      return false
+      return undefined
   }
 }
 
-/** `cp` / `mv` の書き先が作業ツリーの外でなく、移す元のどれかが作業ツリーの中と決まっていないか。 */
+/** in-place の引数があり、書き換えるファイルのどれかが作業ツリーの外でないか。 */
+function editsInPlace(
+  args: readonly ShellWord[],
+  options: InPlaceOptions,
+  locate: (word: ShellWord) => Location,
+): boolean {
+  if (!args.some((word) => options.inPlace.test(word.text))) {
+    return false
+  }
+  return inPlaceTargets(args, options).some((word) => locate(word) !== "outside")
+}
+
+/** `sed` / `perl` の引数のうち、書き換えるファイル。スクリプトを引数で渡さないときの先頭の語はスクリプトなので除く。 */
+function inPlaceTargets(args: readonly ShellWord[], options: InPlaceOptions): readonly ShellWord[] {
+  const rest: ShellWord[] = []
+  let hasScriptOption = false
+  for (let index = 0; index < args.length; index += 1) {
+    const word = args[index]
+    if (word === undefined) {
+      break
+    }
+    if (word.text === "--") {
+      rest.push(...args.slice(index + 1))
+      break
+    }
+    if (options.scriptOption.test(word.text)) {
+      hasScriptOption = true
+      index += 1
+    } else if (options.scriptAssignment.test(word.text)) {
+      hasScriptOption = true
+    } else if (!word.text.startsWith("-") && word.text !== "") {
+      rest.push(word)
+    }
+  }
+  return hasScriptOption ? rest : rest.slice(1)
+}
+
+/** `xargs` が `sed` / `perl` を in-place で走らせる形の規則のキー。書き換えるファイルは標準入力から来るので決まらない。 */
+function xargsInPlaceRule(args: readonly ShellWord[]): string | undefined {
+  const commandAt = args.findIndex((word) => ["sed", "perl"].includes(baseName(word.text)))
+  const command = args[commandAt]
+  if (command === undefined) {
+    return undefined
+  }
+  const isSed = baseName(command.text) === "sed"
+  const options = isSed ? SED_OPTIONS : PERL_OPTIONS
+  const rule = isSed ? "sed-in-place" : "perl-in-place"
+  return args.slice(commandAt + 1).some((word) => options.inPlace.test(word.text))
+    ? rule
+    : undefined
+}
+
+/** `cp` / `mv` の書き先が作業ツリーの外でなく、移す元のどれかが作業ツリーの中と決まっておらず、画像のみでもないか。 */
 function copiesIntoWorkTree(
   args: readonly ShellWord[],
   locate: (word: ShellWord) => Location,
+  directory: string | undefined,
 ): boolean {
   const flagAt = args.findIndex((word) => word.text === "-t")
   const option = args.find((word) => word.text.startsWith(TARGET_DIRECTORY_OPTION))
@@ -186,7 +274,36 @@ function copiesIntoWorkTree(
   if (destination === undefined || sources.length === 0) {
     return false
   }
-  return locate(destination) !== "outside" && sources.some((word) => locate(word) !== "inside")
+  const placesImages =
+    sources.every(isBinaryFile) &&
+    (targetDirectory !== undefined ||
+      isDirectory(destination, directory) ||
+      isBinaryFile(destination))
+  return (
+    !placesImages &&
+    locate(destination) !== "outside" &&
+    sources.some((word) => locate(word) !== "inside")
+  )
+}
+
+function isBinaryFile(word: ShellWord): boolean {
+  return BINARY_EXTENSIONS.has(extname(word.text).toLowerCase())
+}
+
+/** 末尾が `/` か、`cd` を追って解いたパスが実在するディレクトリか。 */
+function isDirectory(word: ShellWord, directory: string | undefined): boolean {
+  if (word.expanded) {
+    return false
+  }
+  if (word.text.endsWith("/")) {
+    return true
+  }
+  const absolute = absoluteScriptPath(word.text, directory)
+  try {
+    return absolute !== undefined && statSync(absolute).isDirectory()
+  } catch {
+    return false
+  }
 }
 
 /** 引数のうち、`-` で始まる引数を除いたもの（`--` の後ろはすべて）。 */
