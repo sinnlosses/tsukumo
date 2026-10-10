@@ -339,6 +339,32 @@ describe("report でターンを閉じる", () => {
     expect(reply.endsTurn).toBe(false)
   })
 
+  it("構文が割れる mermaid の図を含む report は差し戻し、直した report は通す", async () => {
+    const withDiagram = (source: string) => ({
+      conclusion: "架空の結論",
+      sections: [{ blocks: [{ kind: "mermaid", source }] }],
+      closing: CLOSING,
+      sessionSummary: SUMMARY,
+      waitingLine: WAITING_LINE,
+    })
+
+    const broken = await callTool(
+      workServer(),
+      "report",
+      withDiagram("sequenceDiagram\n  A->>B: hi; there"),
+    )
+    const fixed = await callTool(
+      workServer(),
+      "report",
+      withDiagram("sequenceDiagram\n  A->>B: hi"),
+    )
+
+    expect(broken.isError).toBe(true)
+    expect(broken.text).toContain("1個目の 2 行目")
+    expect(broken.text).not.toContain("there")
+    expect(fixed).toEqual({ text: "ok", isError: false, endsTurn: true })
+  })
+
   it("closing の無い report は形の検査で落ち、ターンを閉じない", async () => {
     const reply = await callTool(workServer(), "report", { conclusion: "架空の結論" })
 
@@ -822,14 +848,14 @@ async function request<T>(
   return reply
 }
 
-/** 応答が控えに届くまで、macrotask を1回ずつ譲って待つ（届かなければ 50 回で諦めて落とす）。 */
+/** 応答が控えに届くまで待つ。mermaid の worker の初回の読み込みを待てる長さにしてある。 */
 async function waitForReply<T>(replies: readonly unknown[], schema: z.ZodType<T>): Promise<T> {
-  for (let attempt = 0; attempt < 50; attempt += 1) {
+  for (let attempt = 0; attempt < 2000; attempt += 1) {
     const found = replies.find((reply) => schema.safeParse(reply).success)
     if (found !== undefined) {
       return schema.parse(found)
     }
-    await new Promise((resolve) => setImmediate(resolve))
+    await new Promise((resolve) => setTimeout(resolve, 5))
   }
   throw new Error("応答が届かなかった")
 }

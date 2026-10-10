@@ -165,6 +165,12 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   `id` はソースに出ない）。描くのは `mermaid` の塊と同じ経路で、図の番号と題も同じ。辺の行き先が `nodes`
   に無い・`id` の重複・空のラベルは入口で落とす。`mermaid` の塊に flowchart を書くと `unknown-mermaid`
   で差し戻し、`graph` の塊へ寄せる
+- **`mermaid` の塊の構文は、受け付ける前にサーバが同梱の mermaid で検査する**（2026-10-10 利用者決定）。
+  割れる図があれば `broken-mermaid` で差し戻し、文面は何個目の塊の何行目か・字句の名前だけを返す
+  （書き手のソースと mermaid のエラー文の引用は写さない）。検査は `happy-dom` を被せた `worker_threads` の
+  中（`report/adapter/` の1境界）で `mermaid.parse` だけを走らせ、配置までは見ない。最初の図のときに
+  worker を起こして使い回し、読み込みの失敗・時間切れ・worker の異常終了では検査せずに受け付ける
+  （図はブラウザの今のエラー表示に任せる）。質問の添え書き（`figures`）の図には掛けない
 - **「名前: 説明」「A → B」「A → B → C」「12 → 8」は既存の塊の欄で見せる**（2026-09-27。
   `docs/research/report-block-richness.md` 2章）。欄は事実を言うものだけで、差や増減の割合は tsukumo が計算しない
   - 表のセルの `{ from, to }`: 前の値と矢印の文字を `ink-quiet`、後の値を `ink` で描く。状態（`status`）と

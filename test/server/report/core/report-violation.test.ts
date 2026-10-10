@@ -608,4 +608,34 @@ describe("reportRejectionText", () => {
     const rejection = reportRejectionText(reportViolations(report))
     expect(rejection).toContain("src/fixture-f.ts")
   })
+
+  describe("broken-mermaid", () => {
+    const withFaults = (mermaidFaults: ReportDraft["mermaidFaults"]): ReportDraft => ({
+      ...draft([mermaid("sequenceDiagram\n  A->>B: 架空の秘密; there")]),
+      mermaidFaults,
+    })
+
+    it("割れた図があると違反になり、文面は位置と字句の名前だけを持ちソースを含まない", () => {
+      const fault = { kind: "located", block: 2, line: 3, token: "NEWLINE" } as const
+      const report = withFaults([fault])
+      expect(reportViolations(report)).toEqual([
+        { kind: "broken-mermaid", count: 1, faults: [fault] },
+      ])
+      const rejection = reportRejectionText(reportViolations(report))
+      expect(rejection).toContain("2個目の 3 行目・字句 NEWLINE")
+      expect(rejection).not.toContain("架空の秘密")
+    })
+
+    it("行が取れない図は行を出さず、何個目かだけを言う", () => {
+      const rejection = reportRejectionText(
+        reportViolations(withFaults([{ kind: "unlocated", block: 1 }])),
+      )
+      expect(rejection).toContain("（1個目）")
+      expect(rejection).not.toContain("行目")
+    })
+
+    it("割れた図が無い（検査できなかったときも同じ）なら違反にならない", () => {
+      expect(reportViolations(withFaults([]))).toEqual([])
+    })
+  })
 })

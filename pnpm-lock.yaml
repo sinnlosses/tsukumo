@@ -214,6 +214,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      happy-dom:
+        specifier: ^20.14.5
+        version: 20.14.5
       highlight.js:
         specifier: ^11.12.0
         version: 11.12.0
@@ -305,9 +308,6 @@ importers:
       happy-css-modules:
         specifier: ^5.0.2
         version: 5.0.2(postcss@8.5.28)
-      happy-dom:
-        specifier: ^20.14.5
-        version: 20.14.5
       oxc-transform-react:
         specifier: ~0.152.0
         version: 0.152.0

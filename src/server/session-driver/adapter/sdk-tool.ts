@@ -38,6 +38,7 @@ import {
 } from "../../../shared/usage-review/usage-review.ts"
 import { chatRecallEpisodeText, chatRecallListText } from "../../chat/core/chat-memory-prompt.ts"
 import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
+import { checkMermaidSyntax } from "../../report/adapter/report-mermaid-syntax.ts"
 import type { ReportReview } from "../../report/core/report-review.ts"
 import {
   REPORT_CHECKS_DESCRIPTION,
@@ -253,12 +254,18 @@ function reportTool(
     },
     async ({ task, workPlanClosing, conclusion, sections, favor, checks, title }) => {
       const fileContents = await readReportBlockFiles(cwd, sections ?? [])
+      const mermaidFaults = await checkMermaidSyntax(
+        (sections ?? []).flatMap((section) =>
+          section.blocks.flatMap((block) => (block.kind === "mermaid" ? [block.source] : [])),
+        ),
+      )
       const verdict = review.judge({
         conclusion,
         sections: sections ?? [],
         favor: favor ?? "",
         checks: checks ?? [],
         fileContents,
+        mermaidFaults,
         task: parseReportTask(task),
         workPlanClosing: parseWorkPlanClosing(workPlanClosing),
       })

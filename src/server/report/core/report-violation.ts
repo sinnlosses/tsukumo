@@ -27,6 +27,20 @@ import { leadingSentences, sentenceCount } from "../../../shared/report/sentence
 import type { WorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
 
+/**
+ * 構文が割れた `mermaid` の塊の位置。`block` は `mermaid` の塊の通し番号（1始まり）。
+ * `located` は構文エラーの行が取れたもの。`line` は図の中の行、`token` は mermaid の字句の名前（無いときは空）。
+ * `unlocated` は行が取れないもの（未知の図種など）。どちらも書き手のソースの文字は持たない。
+ */
+export type MermaidFault =
+  | {
+      readonly kind: "located"
+      readonly block: number
+      readonly line: number
+      readonly token: string
+    }
+  | { readonly kind: "unlocated"; readonly block: number }
+
 /** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
 export type ReportDraft = {
   readonly conclusion: string
@@ -35,6 +49,8 @@ export type ReportDraft = {
   readonly checks: readonly ReportCheck[]
   /** `code` の塊の `path` → 読めたファイルの中身。読めなかった `path` は入らない。 */
   readonly fileContents: ReadonlyMap<string, string>
+  /** 構文が割れた `mermaid` の塊。検査できなかったときも、割れた塊が無いときも空。 */
+  readonly mermaidFaults: readonly MermaidFault[]
   /** 載せたタスク。記法の検査には使わず、段の残りの差し戻し（`ReportReview`）が終わり方を読む。 */
   readonly task: ReportTask
   /** 段の閉じ方。記法の検査には使わず、段の閉じ方の差し戻し（`ReportReview`）が読む。 */
@@ -86,6 +102,12 @@ export type ReportViolation =
     }
   /** `path` を付けた `code` の塊が、そのファイルの中身と一致しない。`paths` は一致しなかった `path`（重複無し）。 */
   | { readonly kind: "code-mismatch"; readonly count: number; readonly paths: readonly string[] }
+  /** `mermaid` の塊の構文が割れている。`faults` は位置と字句の名前だけで、図のソースは持たない。 */
+  | {
+      readonly kind: "broken-mermaid"
+      readonly count: number
+      readonly faults: readonly MermaidFault[]
+    }
   /** `conclusion` の1文目が全角50字を超える（1か0）。 */
   | { readonly kind: "long-first-sentence"; readonly count: number }
   /** 節の `heading` が30字を超える、または疑問文（末尾が `?`・`？`）。`count` は該当の節の数。 */
@@ -205,6 +227,11 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     { kind: "markdown-notation", count: notations.length, notations },
     {
+      kind: "broken-mermaid",
+      count: report.mermaidFaults.length,
+      faults: report.mermaidFaults,
+    },
+    {
       kind: "code-mismatch",
       count: mismatchedCodeBlocks.length,
       paths: [...new Set(mismatchedCodeBlocks.map((block) => block.path))],
@@ -276,6 +303,7 @@ const VIOLATION_THRESHOLDS = {
   "ragged-chart": 0,
   "untitled-section": 0,
   "markdown-notation": 0,
+  "broken-mermaid": 0,
   "code-mismatch": 0,
   "long-first-sentence": 0,
   "bad-heading": 0,
@@ -337,6 +365,14 @@ function violationLine(violation: ReportViolation): string {
         .join("・")}を使う`
     case "code-mismatch":
       return `\`path\` 付きの \`code\` の塊が${violation.count}個、ファイルの中身と一致しない（${violation.paths.join("・")}）。実物を読み直して直すか \`path\` を外す`
+    case "broken-mermaid":
+      return `mermaid の図の構文が割れている（${violation.faults
+        .map((fault) =>
+          fault.kind === "unlocated"
+            ? `${String(fault.block)}個目`
+            : `${String(fault.block)}個目の ${String(fault.line)} 行目${fault.token === "" ? "" : `・字句 ${fault.token}`}`,
+        )
+        .join("、")}）。その行の書き方を直す`
     case "long-first-sentence":
       return `\`conclusion\` の1文目が全角${String(MAX_FIRST_SENTENCE)}字を超える。1文目を短くし、補足は2文目か \`sections\` へ移す`
     case "bad-heading":

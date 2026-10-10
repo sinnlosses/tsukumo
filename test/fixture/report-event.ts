@@ -33,6 +33,7 @@ export function reportDraft(overrides: Partial<ReportDraft> = {}): ReportDraft {
     favor: "",
     checks: [],
     fileContents: new Map(),
+    mermaidFaults: [],
     task: { kind: "none" },
     workPlanClosing: "none",
     ...overrides,
