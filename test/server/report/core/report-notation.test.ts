@@ -195,6 +195,15 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(beforeSend).toContain("`checks` へ移す")
   })
 
+  it("経路・構造・画面が変わった作業は、前後を beforeAfter で見せさせる", () => {
+    const article8 = REPORT_NOTATION_PROMPT.split("8. **").at(1)?.split("9. **").at(0) ?? ""
+    expect(article8).toContain("`beforeAfter`")
+    expect(article8).toContain("経路")
+    expect(article8).toContain("構造")
+    expect(article8).toContain("画面")
+    expect(article8).toContain("1行の設定や文言の変更には使わない")
+  })
+
   it("勧める mermaid の種類は、描けることを確かめたものだけ", () => {
     const offered: readonly string[] = REPORT_MERMAID_KINDS
     expect(offered).toEqual(DRAWN_MERMAID_KINDS)
