@@ -10,6 +10,7 @@
 // 整形は塊ごとに掛ける。逃げ道（`markdown` の塊）は Markdown として構文解析せず、行で見る（フェンスの中は触らない）。
 
 import type { ReportBlock, ReportSection } from "./report-block.ts"
+import { fencedLineFlags } from "./report-fence.ts"
 
 /** 整形にかけるレポート。 */
 export type ReportTidyInput = {
@@ -109,39 +110,6 @@ const TRAILING_PUNCTUATION = /[。．.！!]+$/
 
 /** ATX 見出し（行頭の空白は3つまで）。1つ目が `#` の数、2つ目が文字（閉じの `#` は除く）。 */
 const ATX_HEADING = /^ {0,3}(#{1,6})(?:[ \t]+(.*?))?(?:[ \t]+#+)?[ \t]*$/
-
-/** フェンスの開き（CommonMark。行頭の空白は3つまで、`` ` `` か `~` を3つ以上）。 */
-const FENCE_OPEN = /^ {0,3}(`{3,}|~{3,})/
-
-/**
- * 行ごとに、フェンスに属するか（開き・中身・閉じのどれか）。閉じの無いフェンスは末尾まで続く。
- */
-function fencedLineFlags(lines: readonly string[]): readonly boolean[] {
-  const initial: { readonly flags: readonly boolean[]; readonly marker: string | undefined } = {
-    flags: [],
-    marker: undefined,
-  }
-  return lines.reduce((state, line) => {
-    if (state.marker !== undefined) {
-      return {
-        flags: [...state.flags, true],
-        marker: closesFence(line, state.marker) ? undefined : state.marker,
-      }
-    }
-    const opening = FENCE_OPEN.exec(line)?.[1]
-    return { flags: [...state.flags, opening !== undefined], marker: opening }
-  }, initial).flags
-}
-
-/** フェンスの閉じか（開きと同じ文字を、開き以上の数だけ並べた行）。 */
-function closesFence(line: string, marker: string): boolean {
-  const trimmed = line.trim()
-  return (
-    /^ {0,3}\S/.test(line) &&
-    trimmed.length >= marker.length &&
-    [...trimmed].every((char) => char === marker[0])
-  )
-}
 
 /**
  * 冒頭の段落の頭から数えて、つなげると `conclusion` と同じになる行（行の前後の空白と

@@ -117,6 +117,18 @@ describe("splitReportBlocks", () => {
     expect(splitReportBlocks(markdown)).toEqual(['```html\n<div class="cols">\n```', "後書き"])
   })
 
+  it("バッククォート4個の柵の中の3個の行と空行は、柵の中として1つの塊に残す", () => {
+    const markdown = "````md\n```js\n\nconst a = 1\n\n```\n\n````"
+
+    expect(splitReportBlocks(markdown)).toEqual([markdown])
+  })
+
+  it("チルダの柵の中のバッククォートの行と空行は、柵の中として1つの塊に残す", () => {
+    const markdown = "~~~\n```\n\nbody\n\n```\n\n~~~"
+
+    expect(splitReportBlocks(markdown)).toEqual([markdown])
+  })
+
   it("コードスパンの中のタグは数えない", () => {
     const markdown =
       "<details>\n<summary>見出し</summary>\n\n`</details>` と書いた行\n\n</details>\n\n後書き"

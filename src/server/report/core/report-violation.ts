@@ -16,6 +16,7 @@ import {
   type ReportSection,
 } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
+import { closesFence, openingFence } from "../../../shared/report/report-fence.ts"
 import {
   MAX_CONCLUSION_SENTENCES,
   MAX_FIRST_SENTENCE,
@@ -577,9 +578,6 @@ const SECTION_HEADING = /^ {0,3}#{1,2}(?:[ \t]|$)/
 /** 箇条書き・番号付きリスト・チェックリストの項目の頭。 */
 const LIST_ITEM = /^ {0,3}(?:[-*+]|\d{1,9}[.)])[ \t]/
 
-/** フェンスの開き（CommonMark。行頭の空白は3つまで、`` ` `` か `~` を3つ以上）。 */
-const FENCE_OPEN = /^ {0,3}(`{3,}|~{3,})(.*)$/
-
 /** 表の区切りの行（`| --- | :---: |`）。`|` を1つ以上含み、セルは `-` と両端の `:` だけ。 */
 const TABLE_DELIMITER = /^ *\|?(?: *:?-+:? *\|)+(?: *:?-+:? *)?$|^ *:?-+:? *\|(?: *:?-+:? *\|?)*$/
 
@@ -633,16 +631,16 @@ function splitFences(markdown: string): SplitMarkdown {
             open: { ...open, content: [...open.content, line] },
           }
     }
-    const opening = FENCE_OPEN.exec(line)
-    if (opening === null) {
+    const opening = openingFence(line)
+    if (opening === undefined) {
       return { ...state, outside: [...state.outside, line] }
     }
     return {
       ...state,
       outside: [...state.outside, ""],
       open: {
-        marker: opening[1] ?? "```",
-        info: (opening[2] ?? "").trim().split(/\s+/)[0] ?? "",
+        marker: opening.marker,
+        info: opening.info,
         content: [],
         line: state.outside.length,
       },
@@ -657,16 +655,6 @@ function splitFences(markdown: string): SplitMarkdown {
 
 function fenceOf({ info, content, line }: Fence): Fence {
   return { info, content, line }
-}
-
-/** フェンスの閉じか（開きと同じ文字を、開き以上の数だけ並べた行）。 */
-function closesFence(line: string, marker: string): boolean {
-  const trimmed = line.trim()
-  return (
-    /^ {0,3}\S/.test(line) &&
-    trimmed.length >= marker.length &&
-    [...trimmed].every((char) => char === marker[0])
-  )
 }
 
 /**

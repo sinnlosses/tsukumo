@@ -1,3 +1,5 @@
+import { fencedLineFlags } from "../../../../../../../../../shared/report/report-fence.ts"
+
 // 書きかけの本文を、空行を境にした塊へ割る。呼び出し側が塊ごとに `Markdown` を独立して描き、変わらない塊は `memo` で描き直さない。
 //
 // 塊をまたぐ Markdown の参照は成立しない。
@@ -41,9 +43,6 @@ const HTML_BLOCK_START_PATTERN = /^ {0,3}<([a-zA-Z][a-zA-Z0-9-]*)/
 /** コードスパン（`` `…` ``）。中に書かれたタグは文字であって要素ではない。 */
 const CODE_SPAN_PATTERN = /`[^`]*`/g
 
-/** フェンス付きコードブロックの区切り行（`` ``` `` / `~~~`、行頭インデント3つまで）。 */
-const FENCE_DELIMITER_PATTERN = /^ {0,3}(`{3,}|~{3,})/
-
 /**
  * フェンス付きコードブロックと HTML ブロックの中の空行では割らない。
  * 閉じていないもの（発話が途中で切れた等）は最後の塊の中に閉じるので、続きの行が表や見出しに化けたり、`<details>` の中身が外へこぼれたりしない。
@@ -52,13 +51,12 @@ export function splitReportBlocks(markdown: string): readonly string[] {
   const lines = markdown.replaceAll("\r\n", "\n").split("\n")
   const blocks: string[] = []
   let current: string[] = []
-  let inFence = false
+  const fenced = fencedLineFlags(lines)
   let htmlDepth = 0
 
-  for (const line of lines) {
-    if (isFenceDelimiterLine(line)) {
-      inFence = !inFence
-    } else if (!inFence && (htmlDepth > 0 || startsHtmlBlock(line))) {
+  for (const [index, line] of lines.entries()) {
+    const inFence = fenced[index] === true
+    if (!inFence && (htmlDepth > 0 || startsHtmlBlock(line))) {
       htmlDepth = Math.max(0, htmlDepth + htmlBlockDepthDelta(line))
     }
 
@@ -76,10 +74,6 @@ export function splitReportBlocks(markdown: string): readonly string[] {
   }
 
   return blocks
-}
-
-function isFenceDelimiterLine(line: string): boolean {
-  return FENCE_DELIMITER_PATTERN.test(line)
 }
 
 function startsHtmlBlock(line: string): boolean {
