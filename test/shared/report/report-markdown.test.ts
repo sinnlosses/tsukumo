@@ -540,6 +540,29 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("beforeAfter の graph と mermaid の側は mermaid のフェンスにする", () => {
+    const markdown = markdownOf({
+      kind: "beforeAfter",
+      title: "",
+      before: {
+        kind: "graph",
+        direction: "LR",
+        nodes: [
+          { id: "a", label: "架空の始点", shape: "round" },
+          { id: "b", label: "架空の処理", shape: "box" },
+        ],
+        edges: [{ from: "a", to: "b", label: "" }],
+      },
+      after: { kind: "mermaid", source: "sequenceDiagram\n  A->>B: 架空\n" },
+      fold: "",
+    })
+
+    expect(markdown).toContain(
+      '```mermaid\nflowchart LR\n  n0("架空の始点")\n  n1["架空の処理"]\n  n0 --> n1\n```',
+    )
+    expect(markdown).toContain("```mermaid\nsequenceDiagram\n  A->>B: 架空\n```")
+  })
+
   it("dimension は領域を箱に・余白を帯と値にして上から積み、前の値を矢印で添え、size が空の領域は値を置かない", () => {
     const dimension: ReportBlock = {
       kind: "dimension",

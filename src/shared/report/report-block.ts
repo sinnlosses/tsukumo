@@ -110,7 +110,35 @@ const compareBlockSchema = z
     "2つを同時に見比べる（案A と案B。変更の前と後は beforeAfter）。側ごとに見出しと短い箇条。採否は options、値を揃えるなら table（3つ以上も table）",
   )
 
+export const REPORT_GRAPH_SHAPES = ["box", "round", "decision"] as const
+
+const graphNodeSchema = z.object({
+  id: z.string().min(1).describe("辺で結ぶための名前。この塊の中で重ならない（図には出ない）"),
+  label: z
+    .string()
+    .refine((value) => value.trim() !== "", "ラベルは1字以上")
+    .describe("図に出す名前"),
+  shape: z.enum(REPORT_GRAPH_SHAPES).describe("box は処理 / round は始点・終点 / decision は分岐"),
+})
+
+const graphEdgeSchema = z.object({
+  from: z.string().describe("節点の id"),
+  to: z.string().describe("節点の id"),
+  label: inlineText.default("").describe("辺に添える語。無ければ空"),
+})
+
+const graphFields = {
+  direction: z.enum(["TD", "LR"]).describe("TD は上から下 / LR は左から右"),
+  nodes: z.array(graphNodeSchema).min(1),
+  edges: z.array(graphEdgeSchema),
+}
+
 const beforeAfterSideSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("graph"), ...graphFields }).superRefine(checkGraphReferences),
+  z.object({
+    kind: z.literal("mermaid"),
+    source: z.string().describe("flowchart 以外の図のソース"),
+  }),
   z.object({
     kind: z.literal("image"),
     path: z.string().describe("撮った画像のファイル（絶対か cwd から。png・jpeg・gif・webp）"),
@@ -135,7 +163,7 @@ const beforeAfterBlockSchema = z
     fold,
   })
   .describe(
-    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・設定や文言・構造の前後）。側ごとに image / code / points のどれか（左右で違ってよい）。" +
+    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・設定や文言・構造の前後）。側ごとに image / code / points / graph / mermaid のどれか（左右で違ってよい）。構造・呼び出しの前後は graph の側、時間の順の前後は mermaid の側。" +
       "向きの無い2つは compare、1つの値の前後は table のセルの from / to か stats の before、行ごとの差分は code の diff、寸法の前後は dimension の before",
   )
 
@@ -304,48 +332,14 @@ const mermaidBlockSchema = z
   })
   .describe("時間の順（sequenceDiagram）・状態・クラス・ER など、flowchart 以外の図")
 
-export const REPORT_GRAPH_SHAPES = ["box", "round", "decision"] as const
-
-const graphNodeSchema = z.object({
-  id: z.string().min(1).describe("辺で結ぶための名前。この塊の中で重ならない（図には出ない）"),
-  label: z
-    .string()
-    .refine((value) => value.trim() !== "", "ラベルは1字以上")
-    .describe("図に出す名前"),
-  shape: z.enum(REPORT_GRAPH_SHAPES).describe("box は処理 / round は始点・終点 / decision は分岐"),
-})
-
-const graphEdgeSchema = z.object({
-  from: z.string().describe("節点の id"),
-  to: z.string().describe("節点の id"),
-  label: inlineText.default("").describe("辺に添える語。無ければ空"),
-})
-
 const graphBlockSchema = z
   .object({
     kind: z.literal("graph"),
     title: inlineText.default(""),
-    direction: z.enum(["TD", "LR"]).describe("TD は上から下 / LR は左から右"),
-    nodes: z.array(graphNodeSchema).min(1),
-    edges: z.array(graphEdgeSchema),
+    ...graphFields,
     fold,
   })
-  .superRefine((block, context) => {
-    const ids = block.nodes.map((node) => node.id)
-    if (new Set(ids).size !== ids.length) {
-      context.addIssue({ code: "custom", message: "nodes の id が重複している", path: ["nodes"] })
-    }
-    const known = new Set(ids)
-    block.edges.forEach((edge, index) => {
-      if (!known.has(edge.from) || !known.has(edge.to)) {
-        context.addIssue({
-          code: "custom",
-          message: "edges の from / to が nodes の id に無い",
-          path: ["edges", index],
-        })
-      }
-    })
-  })
+  .superRefine(checkGraphReferences)
   .describe(
     "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道なら list の flow）。flowchart はこれで書く",
   )
@@ -420,6 +414,8 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   filesBlockSchema,
   markdownBlockSchema,
 ])
+
+export type ReportGraph = DeepReadonly<z.infer<z.ZodObject<typeof graphFields>>>
 
 export type ReportBlock = DeepReadonly<z.infer<typeof reportBlockSchema>>
 
@@ -519,4 +515,21 @@ const blockKindSchema = z.object({ kind: z.string() })
 function isUnknownKindBlock(block: unknown): boolean {
   const kind = blockKindSchema.safeParse(block)
   return kind.success && !REPORT_BLOCK_KINDS.some((known) => known === kind.data.kind)
+}
+
+function checkGraphReferences(graph: ReportGraph, context: z.RefinementCtx): void {
+  const ids = graph.nodes.map((node) => node.id)
+  if (new Set(ids).size !== ids.length) {
+    context.addIssue({ code: "custom", message: "nodes の id が重複している", path: ["nodes"] })
+  }
+  const known = new Set(ids)
+  graph.edges.forEach((edge, index) => {
+    if (!known.has(edge.from) || !known.has(edge.to)) {
+      context.addIssue({
+        code: "custom",
+        message: "edges の from / to が nodes の id に無い",
+        path: ["edges", index],
+      })
+    }
+  })
 }

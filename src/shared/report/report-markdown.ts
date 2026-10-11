@@ -10,6 +10,7 @@ import {
   REPORT_CELL_STATUSES,
   REPORT_MATRIX_STATUSES,
   type ReportBlock,
+  type ReportGraph,
   type ReportSection,
 } from "./report-block.ts"
 import { reportImagePath } from "./report-image.ts"
@@ -469,6 +470,10 @@ function beforeAfterContentMarkdown(
       return fencedMarkdown(content.language, content.source)
     case "points":
       return `<ul>${content.points.map((point) => `<li>${htmlInlineWithCode(point)}</li>`).join("")}</ul>`
+    case "graph":
+      return fencedMarkdown("mermaid", graphSource(content))
+    case "mermaid":
+      return fencedMarkdown("mermaid", content.source)
   }
 }
 
@@ -884,7 +889,7 @@ function fencedMarkdown(info: string, source: string): string {
  * 書き手の `id` は辺を結ぶためだけに使い、ソースの ID は `n0`, `n1` … を振る（`end` などの予約語を避ける）。
  * ラベルは節点も辺も必ず引用符で包む（`@`・`(`・`|` などを構文と読ませない）。
  */
-function graphSource(block: Extract<ReportBlock, { readonly kind: "graph" }>): string {
+function graphSource(block: ReportGraph): string {
   const mermaidId = (index: number): string => `n${String(index)}`
   const mermaidIdOf = (writerId: string): string =>
     mermaidId(block.nodes.findIndex((node) => node.id === writerId))

@@ -252,7 +252,9 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   取り違えは差し戻さず、使われ方の記録の「塊の種類 × レポート数」で見る
 - **変更の前と後は `beforeAfter`（前後）の塊で左右に並べる**（2026-10-05。`title`・`before`・`after` を受け、
   側はちょうど2つ。3つ以上の並びは `table`）。側は `kind` で判別する合併型で、`image`〔`path`〕/ `code`〔`language`・
-  `source`。`diff` にせずその側の中身をそのまま書く〕/ `points`〔短い1行の並び。5つまで〕のどれか。**左右で種類が
+  `source`。`diff` にせずその側の中身をそのまま書く〕/ `points`〔短い1行の並び。5つまで〕/ `graph`〔`graph` の塊と同じ `direction`・`nodes`・`edges`。`title`・`fold` は持たず、
+  `id` の重複と行き先の無い辺の検査も塊と共通〕/ `mermaid`〔`source` だけ。flowchart 以外の9種で、時間の順の前後に使う。
+  構文が割れれば `broken-mermaid`、9種の外は `unknown-mermaid` で差し戻し、位置は `mermaid` のソースの出現順で言う〕のどれか。**左右で種類が
   違ってよい**（設定の文言 → 画面のような前後を書ける）。左に前・右に後の札を同じ幅で並べ、間に `aria-hidden` の
   「→」を置く。札の頭の見出しは tsukumo が「前」「後」の文字で付け（書き手は書かない。前は `ink-quiet`・後は `ink`
   で、色は補助）、狭い幅（760px 以下）では前を上・後を下に積んで矢印を下向きに回す。画像の側は `image` の塊と同じ

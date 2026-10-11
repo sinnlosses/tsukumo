@@ -67,6 +67,49 @@ describe("parseReportSections", () => {
     }
   })
 
+  it("beforeAfter の側に graph と mermaid を置け、graph の側は id の重複と行き先の無い辺を落とす", () => {
+    const graph = {
+      kind: "graph",
+      direction: "LR",
+      nodes: [
+        { id: "a", label: "架空の始点", shape: "round" },
+        { id: "b", label: "架空の処理", shape: "box" },
+      ],
+      edges: [{ from: "a", to: "b" }],
+    }
+    const parse = (block: object): unknown =>
+      parseReportSections([{ heading: "", blocks: [block] }])
+    const beforeAfter = (before: object, after: object) => ({
+      kind: "beforeAfter",
+      title: "",
+      before,
+      after,
+      fold: "",
+    })
+    const mermaid = { kind: "mermaid", source: "sequenceDiagram\n  A->>B: 架空" }
+
+    expect(parse(beforeAfter(graph, mermaid))).toMatchObject({
+      sections: [
+        {
+          blocks: [
+            {
+              before: { kind: "graph", edges: [{ from: "a", to: "b", label: "" }] },
+              after: mermaid,
+            },
+          ],
+        },
+      ],
+      unknownBlockCount: 0,
+    })
+    const [first, second] = graph.nodes
+    for (const broken of [
+      { ...graph, edges: [{ from: "a", to: "x" }] },
+      { ...graph, nodes: [first, { ...second, id: "a" }] },
+    ]) {
+      expect(parse(beforeAfter(broken, mermaid))).toEqual({ sections: [], unknownBlockCount: 0 })
+    }
+  })
+
   it("compare の塊は側がちょうど2つで箇条があるときだけ受ける", () => {
     const side = { heading: "案A", points: ["架空の1行"] }
     const compare = { kind: "compare", title: "", sides: [side, side], fold: "" }

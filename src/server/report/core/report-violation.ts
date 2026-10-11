@@ -195,8 +195,8 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     {
       kind: "unknown-mermaid",
-      count: blocks.filter(
-        (block) => block.kind === "mermaid" && !MERMAID_KINDS.has(mermaidKind(block.source)),
+      count: mermaidSourcesInSections(report.sections).filter(
+        (source) => !MERMAID_KINDS.has(mermaidKind(source)),
       ).length,
     },
     { kind: "too-many-notes", count: blocks.filter((block) => block.kind === "note").length },
@@ -315,6 +315,27 @@ const VIOLATION_THRESHOLDS = {
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)
+
+/**
+ * `MermaidFault.block` はこの並びの通し番号。
+ * 塊の出現順に並び、`beforeAfter` は前の側が先。並びを変えると位置がずれる。
+ */
+export function mermaidSourcesInSections(sections: readonly ReportSection[]): readonly string[] {
+  return sections
+    .flatMap((section) => section.blocks)
+    .flatMap((block) => {
+      switch (block.kind) {
+        case "mermaid":
+          return [block.source]
+        case "beforeAfter":
+          return [block.before, block.after].flatMap((side) =>
+            side.kind === "mermaid" ? [side.source] : [],
+          )
+        default:
+          return []
+      }
+    })
+}
 
 /** 割れた図の位置（何個目の何行目・字句の名前）の並び。書き手のソースの文字は入れない。 */
 export function mermaidFaultPositions(faults: readonly MermaidFault[]): string {

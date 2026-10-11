@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  mermaidSourcesInSections,
   type ReportDraft,
   reportRejectionText,
   reportViolations,
@@ -22,6 +23,8 @@ const draft = (
     sections:
       blocks.length === 0 ? sections.filter((section) => section.blocks.length > 0) : sections,
   })
+
+type Side = Extract<ReportBlock, { readonly kind: "beforeAfter" }>["before"]
 
 const text = (value: string, fold = ""): ReportBlock => ({ kind: "text", text: value, fold })
 const markdown = (value: string): ReportBlock => ({ kind: "markdown", markdown: value, fold: "" })
@@ -331,6 +334,45 @@ describe("reportViolations", () => {
         fold: "",
       }
       expect(kinds(draft([graph]))).toEqual([])
+    })
+
+    it("beforeAfter の mermaid の側も数え、graph の側は違反にしない", () => {
+      const side = (source: string): Side => ({ kind: "mermaid", source })
+      const beforeAfter = (before: Side, after: Side): ReportBlock => ({
+        kind: "beforeAfter",
+        title: "",
+        before,
+        after,
+        fold: "",
+      })
+      const graphSide: Side = {
+        kind: "graph",
+        direction: "LR",
+        nodes: [{ id: "a", label: "架空", shape: "box" }],
+        edges: [],
+      }
+      expect(kinds(draft([beforeAfter(side("sequenceDiagram"), side("stateDiagram-v2"))]))).toEqual(
+        [],
+      )
+      expect(
+        reportViolations(draft([beforeAfter(side("flowchart LR\n  a --> b"), graphSide)])),
+      ).toEqual([{ kind: "unknown-mermaid", count: 1 }])
+      expect(kinds(draft([beforeAfter(graphSide, graphSide)]))).toEqual([])
+    })
+
+    it("検査に渡すソースは、単独の塊と側を出現順（前が先）に集める", () => {
+      const side = (source: string): Side => ({ kind: "mermaid", source })
+      const pair: ReportBlock = {
+        kind: "beforeAfter",
+        title: "",
+        before: side("B"),
+        after: { kind: "points", points: ["架空"] },
+        fold: "",
+      }
+      const both: ReportBlock = { ...pair, before: side("C"), after: side("D") }
+      expect(
+        mermaidSourcesInSections([{ heading: "", blocks: [mermaid("A"), pair, both] }]),
+      ).toEqual(["A", "B", "C", "D"])
     })
 
     it("%% の行と先頭の --- の設定は飛ばして種類を読む", () => {

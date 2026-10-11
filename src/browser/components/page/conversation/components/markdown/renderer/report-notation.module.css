@@ -358,6 +358,16 @@
 .detail-block .report-before-after-side ul {
   padding-left: 1.1rem;
 }
+/* 側の mermaid の図は側の幅に収める（`mermaid` の class は `MermaidBlock` が素の名前で付ける）。 */
+.detail-block .report-before-after-side pre:global(.mermaid) {
+  min-width: 0;
+}
+.detail-block .report-before-after-side pre:global(.mermaid) svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
 .detail-block .report-before-after-arrow {
   align-self: center;
   font-size: var(--font-heading);

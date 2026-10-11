@@ -50,6 +50,7 @@ import {
   REPORT_WAITING_LINE_DESCRIPTION,
   REPORT_WORK_PLAN_CLOSING_DESCRIPTION,
 } from "../../report/core/report-tool.ts"
+import { mermaidSourcesInSections } from "../../report/core/report-violation.ts"
 import {
   USAGE_REVIEW_RESULT_TOOL_DESCRIPTION,
   USAGE_REVIEW_RESULT_TOOL_NAME,
@@ -256,11 +257,7 @@ function reportTool(
     },
     async ({ task, workPlanClosing, conclusion, sections, favor, checks, title }) => {
       const fileContents = await readReportBlockFiles(cwd, sections ?? [])
-      const mermaidFaults = await checkMermaidSyntax(
-        (sections ?? []).flatMap((section) =>
-          section.blocks.flatMap((block) => (block.kind === "mermaid" ? [block.source] : [])),
-        ),
-      )
+      const mermaidFaults = await checkMermaidSyntax(mermaidSourcesInSections(sections ?? []))
       const verdict = review.judgeReport({
         conclusion,
         sections: sections ?? [],

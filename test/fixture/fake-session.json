@@ -1979,6 +1979,63 @@
                     "fold": ""
                   }
                 ]
+              },
+              {
+                "heading": "架空の構造の前後",
+                "blocks": [
+                  {
+                    "kind": "beforeAfter",
+                    "title": "架空の呼び出しの前後",
+                    "before": {
+                      "kind": "graph",
+                      "direction": "TD",
+                      "nodes": [
+                        { "id": "a", "label": "架空の入口", "shape": "round" },
+                        { "id": "b", "label": "架空の長めの名前の処理その一", "shape": "box" },
+                        { "id": "c", "label": "架空の分岐", "shape": "decision" },
+                        { "id": "d", "label": "架空の長めの名前の処理その二", "shape": "box" }
+                      ],
+                      "edges": [
+                        { "from": "a", "to": "b", "label": "" },
+                        { "from": "b", "to": "c", "label": "渡す" },
+                        { "from": "c", "to": "d", "label": "呼ぶ" },
+                        { "from": "a", "to": "d", "label": "" }
+                      ]
+                    },
+                    "after": {
+                      "kind": "graph",
+                      "direction": "LR",
+                      "nodes": [
+                        { "id": "a", "label": "架空の入口", "shape": "round" },
+                        { "id": "b", "label": "架空の長めの名前の深いモジュール", "shape": "box" },
+                        { "id": "c", "label": "架空の出口", "shape": "round" }
+                      ],
+                      "edges": [
+                        { "from": "a", "to": "b", "label": "渡す" },
+                        { "from": "b", "to": "c", "label": "" }
+                      ]
+                    },
+                    "fold": ""
+                  }
+                ]
+              },
+              {
+                "heading": "架空の時間の順の前後",
+                "blocks": [
+                  {
+                    "kind": "beforeAfter",
+                    "title": "架空の往復の前後",
+                    "before": {
+                      "kind": "mermaid",
+                      "source": "sequenceDiagram\n  participant A as 架空の画面\n  participant B as 架空のサーバ\n  A->>B: 要求\n  B-->>A: 応答\n  A->>B: 要求をもう一度\n  B-->>A: 応答"
+                    },
+                    "after": {
+                      "kind": "mermaid",
+                      "source": "sequenceDiagram\n  participant A as 架空の画面\n  participant B as 架空のサーバ\n  A->>B: 要求\n  B-->>A: 応答"
+                    },
+                    "fold": ""
+                  }
+                ]
               }
             ],
             "favor": "",
