@@ -1,9 +1,11 @@
+import { mkdir, utimes, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
 import {
   createBeadsStampReader,
+  readBeadsStampOf,
   readBeadsWorkspace,
 } from "../../../../src/server/repository/adapter/beads.ts"
 import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
@@ -52,6 +54,45 @@ describe("createBeadsStampReader", () => {
     const repository = await initRepository(root())
 
     expect(await createBeadsStampReader(repository)()).toEqual({ kind: "missing" })
+  })
+})
+
+describe("readBeadsStampOf", () => {
+  async function writeManifest(beadsDir: string, content: string): Promise<string> {
+    const nomsDir = join(beadsDir, "embeddeddolt", "t", ".dolt", "noms")
+    await mkdir(nomsDir, { recursive: true })
+    const manifest = join(nomsDir, "manifest")
+    await writeFile(manifest, content)
+    return manifest
+  }
+
+  it("中身が同じなら、更新時刻だけ進んでも印は変わらない", async () => {
+    const manifest = await writeManifest(root(), "5:__DOLT__:root-1")
+    const before = await readBeadsStampOf(root())
+
+    await utimes(manifest, 1_000, 2_000)
+
+    expect(before).toEqual(expect.any(String))
+    expect(await readBeadsStampOf(root())).toBe(before)
+  })
+
+  it("中身が書き変わると印が変わる", async () => {
+    await writeManifest(root(), "5:__DOLT__:root-1")
+    const before = await readBeadsStampOf(root())
+
+    await writeManifest(root(), "5:__DOLT__:root-2")
+
+    expect(await readBeadsStampOf(root())).not.toBe(before)
+  })
+
+  it("embeddeddolt・データベース・manifest のどれかが無ければ undefined", async () => {
+    expect(await readBeadsStampOf(root())).toBeUndefined()
+
+    await mkdir(join(root(), "embeddeddolt"), { recursive: true })
+    expect(await readBeadsStampOf(root())).toBeUndefined()
+
+    await mkdir(join(root(), "embeddeddolt", "t"), { recursive: true })
+    expect(await readBeadsStampOf(root())).toBeUndefined()
   })
 })
 

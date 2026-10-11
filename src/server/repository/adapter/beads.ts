@@ -7,7 +7,7 @@
 // 例外を投げない。`.beads` が無い・`bd` が無いときも `failed`。
 
 import { execFile } from "node:child_process"
-import { readdir, stat } from "node:fs/promises"
+import { readdir, readFile } from "node:fs/promises"
 import { join } from "node:path"
 
 import { z } from "zod"
@@ -78,7 +78,7 @@ export type BeadsStamp =
   | { readonly kind: "present"; readonly stamp: string | undefined }
 
 /**
- * `.beads` の有無と課題の変化の印（Dolt の `noms/manifest` の更新時刻）を読む関数を作る。
+ * `.beads` の有無と課題の変化の印（Dolt の `noms/manifest` の中身）を読む関数を作る。
  * `.beads` の場所は取れた1回だけ `bd where` で調べて覚え、見つからないうちは読むたびに調べ直す。
  * `bd where` がタイムアウトしたときは `.beads` があるものとして印を `undefined` にする。
  * `bd` の内部の置き場に頼るので、印が取れないとき・形が違うときは `undefined` を返し、呼ぶ側は毎回 `bd list` で読む。
@@ -131,22 +131,22 @@ export function readBeadsWorkspace(cwd: string): Promise<BeadsWorkspace> {
 }
 
 /**
- * `.beads` の課題の変化の印（Dolt の `noms/manifest` の更新時刻）。
+ * `.beads` の課題の変化の印（Dolt の `noms/manifest` の中身）。
+ * `bd` は読むだけでも manifest の更新時刻を進めるが、中身は書いたときだけ変わる。
  * `bd` の内部の置き場に頼るので、取れないとき・形が違うときは `undefined`。
  */
 export async function readBeadsStampOf(beadsDir: string): Promise<string | undefined> {
   const databasesDir = join(beadsDir, "embeddeddolt")
   try {
     const entries = await readdir(databasesDir, { withFileTypes: true })
-    const times = await Promise.all(
+    const manifests = await Promise.all(
       entries
         .filter((entry) => entry.isDirectory())
-        .map(async (entry) => {
-          const manifest = await stat(join(databasesDir, entry.name, ".dolt", "noms", "manifest"))
-          return manifest.mtimeMs
-        }),
+        .map((entry) =>
+          readFile(join(databasesDir, entry.name, ".dolt", "noms", "manifest"), "utf8"),
+        ),
     )
-    return times.length === 0 ? undefined : times.join(",")
+    return manifests.length === 0 ? undefined : manifests.join(",")
   } catch {
     return undefined
   }
