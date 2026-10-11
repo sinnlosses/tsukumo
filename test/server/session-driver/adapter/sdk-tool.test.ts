@@ -7,6 +7,7 @@ import {
   type CallReview,
   createCallReview,
 } from "../../../../src/server/session-driver/core/call-review.ts"
+import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import type {
   ChatRecall,
   SessionMode,
@@ -20,6 +21,7 @@ import {
   INITIAL_SESSION_STATE,
 } from "../../../../src/shared/session/session-state.ts"
 import { fixedChatSummary } from "../../../fixture/chat.ts"
+import { WORK_PLAN_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
 
 // どのツールが載るか・呼ぶと何が返るかを、モデルが見るのと同じ MCP の `tools/list` /
 // `tools/call` で確かめる（サーバの中身を覗かず、公開された口だけを通す）。本物の claude は
@@ -564,6 +566,69 @@ describe("work_plan（段取り）", () => {
 
     expect(reply.isError).toBe(true)
     expect(reply.endsTurn).toBe(false)
+  })
+
+  it.each([
+    { name: "1段", input: { phases: ["架空の段A"], current: 0 } },
+    {
+      name: "まとまりの途中",
+      input: {
+        phases: ["架空の段A", ["架空の段B", "架空の段C"]],
+        current: 1,
+        finishedInGroup: ["架空の段C"],
+        phaseSummary: "架空のまとめ。",
+      },
+    },
+    {
+      name: "委譲先の範囲",
+      input: {
+        phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
+        current: 0,
+        delegatedRange: { first: 1, count: 1 },
+      },
+    },
+    { name: "空白だけの名前", input: { phases: ["架空の段A", "  "], current: 0 } },
+    { name: "位置が段の数を超える", input: { phases: ["架空の段A"], current: 2 } },
+    {
+      name: "まとまりの名前の重なり",
+      input: { phases: [["架空の段A", "架空の段A"]], current: 0 },
+    },
+    {
+      name: "まとまり全部が済んだと渡す",
+      input: {
+        phases: [["架空の段A", "架空の段B"], "架空の段C"],
+        current: 0,
+        finishedInGroup: ["架空の段A", "架空の段B"],
+      },
+    },
+    {
+      name: "まとめが3文",
+      input: { phases: ["架空の段A", "架空の段B"], current: 1, phaseSummary: "一。二。三。" },
+    },
+    {
+      name: "範囲がまとまりをまたぐ",
+      input: {
+        phases: ["架空の段A", ["架空の段B", "架空の段C"]],
+        current: 0,
+        delegatedRange: { first: 0, count: 2 },
+      },
+    },
+  ])("handler が受け付けた引数だけが work-plan-called になる: $name", async ({ input }) => {
+    const reply = await callTool(workServer(), "work_plan", input)
+    const events = toSessionEvents(
+      {
+        type: "assistant",
+        message: {
+          role: "assistant",
+          content: [{ type: "tool_use", id: "toolu_1", name: WORK_PLAN_TOOL_FULL_NAME, input }],
+        },
+        session_id: "s-1",
+        parent_tool_use_id: null,
+      },
+      ["default"],
+    )
+
+    expect(events.some((event) => event.kind === "work-plan-called")).toBe(!reply.isError)
   })
 })
 

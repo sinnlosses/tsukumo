@@ -25,10 +25,9 @@ import {
 } from "../../../shared/session-driver/question-brief.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
-  MIN_PHASE_GROUP_SIZE,
-  MIN_WORK_PLAN_PHASES,
   parseWorkPlanClosing,
   WORK_PLAN_CLOSINGS,
+  workPlanShape,
 } from "../../../shared/session/work-plan.ts"
 import {
   USAGE_PROPOSAL_FOLLOW_UPS,
@@ -283,31 +282,22 @@ function reportTool(
   )
 }
 
-/** 段取りを受け取るツール。差し戻すかと返す文は `answerWorkPlanCall` で決め、形の検査はここの zod の形。 */
+/**
+ * 段取りを受け取るツール。引数の形は shared の `workPlanShape` に説明文を足したもの。
+ * 欄をまたぐ検査は `workPlanSchema` にあり、`answerWorkPlanCall` の判定が同じ `parseWorkPlan` で行って差し戻す。
+ */
 function workPlanTool(review: CallReview) {
   return tool(
     WORK_PLAN_TOOL_NAME,
     WORK_PLAN_TOOL_DESCRIPTION,
     {
-      phases: z
-        .array(
-          z.union([
-            z.string().trim().min(1),
-            z.array(z.string().trim().min(1)).min(MIN_PHASE_GROUP_SIZE),
-          ]),
-        )
-        .min(MIN_WORK_PLAN_PHASES)
-        .describe(WORK_PLAN_PHASES_DESCRIPTION),
-      current: z.number().int().min(0).describe(WORK_PLAN_CURRENT_DESCRIPTION),
-      finishedInGroup: z
-        .array(z.string())
-        .optional()
-        .describe(WORK_PLAN_FINISHED_IN_GROUP_DESCRIPTION),
-      phaseSummary: z.string().optional().describe(WORK_PLAN_PHASE_SUMMARY_DESCRIPTION),
-      delegatedRange: z
-        .object({ first: z.number().int().min(0), count: z.number().int().min(1) })
-        .optional()
-        .describe(WORK_PLAN_DELEGATED_RANGE_DESCRIPTION),
+      phases: workPlanShape.phases.describe(WORK_PLAN_PHASES_DESCRIPTION),
+      current: workPlanShape.current.describe(WORK_PLAN_CURRENT_DESCRIPTION),
+      finishedInGroup: workPlanShape.finishedInGroup.describe(
+        WORK_PLAN_FINISHED_IN_GROUP_DESCRIPTION,
+      ),
+      phaseSummary: workPlanShape.phaseSummary.describe(WORK_PLAN_PHASE_SUMMARY_DESCRIPTION),
+      delegatedRange: workPlanShape.delegatedRange.describe(WORK_PLAN_DELEGATED_RANGE_DESCRIPTION),
     },
     async (input) => {
       const answer = answerWorkPlanCall(review, input)

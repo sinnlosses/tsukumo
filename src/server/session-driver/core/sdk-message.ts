@@ -44,7 +44,7 @@ import {
  * - `report` の呼び出しも `tool-started` にしない。`report` として別に出す（メインビュー行き）。
  *   `parent_tool_use_id` のある呼び出し（サブエージェントの中）は捨てる。
  *   ターンのレポートはメインが書くもので、委譲先の報告はメインの手元に届くだけにする
- * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを呼び出しの id を付けた `work-plan-called` にし、`parseWorkPlan` を通らない引数は捨てる（handler が差し戻した呼び出しと同じ判定）。
+ * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを呼び出しの id を付けた `work-plan-called` にし、`parseWorkPlan`（引数の形の正典 `workPlanSchema`）を通らない引数は捨てる。handler も同じ `parseWorkPlan` で差し戻す。
  *   段の一足飛びで差し戻した呼び出しは `CallReview` が結果を見て捨てる
  * - 委譲先（`parent_tool_use_id` 付き）の `SubagentHandback` の呼び出しは、`message` の1行目を読んで `delegate-returned` にする（形の読めない返却も `unreadable` で届く）。
  *   `tool-started` にはしない

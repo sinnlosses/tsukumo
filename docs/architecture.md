@@ -729,6 +729,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 経路なので厳密に見る。`text` の上限もここ）。`ServerFrame` は**封筒（`type` / `protocolVersion`）だけ** zod で、中身
 （`state` / `events`）は検証しない。**`SessionEvent` と `SessionState` は zod にしない**（TS の型のまま。
 状態にフィールドを1つ足すたびにスキーマを二重に直す手間のほうが効いてくるため）。
+ツールの引数の検査（`work_plan` の `workPlanSchema`）も境界の入力なので zod が正典で、ツールの形はそこから作る。
 境界（WebSocket の両端）で1回だけ検証し、中では検証済みの型を使う。`shared` の中に `node:` も
 `document` も持ち込まない（「層と依存の向き」）。
 

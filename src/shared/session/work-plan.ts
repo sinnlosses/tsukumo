@@ -1,7 +1,7 @@
 // 段取り（`work_plan` ツールで受け取る段の並びと今の位置）の形と、記録から段取りを導く決まり。
 // 状態に別の入れ物は持たず、`work-plan` の記録から描くたびに導く。
 
-import { isPlainObject } from "remeda"
+import { z } from "zod"
 
 import { leadingSentences, sentenceCount } from "../report/sentence-count.ts"
 import { isBlankText } from "../utils/blank-text.ts"
@@ -93,48 +93,91 @@ export type PhaseShift = {
     | { readonly kind: "finished"; readonly label: string; readonly summary: string }
 }
 
+const phaseNameSchema = z.string().refine((name) => !isBlankText(name))
+
 /**
- * 外来の値（ツールの引数・transcript）を段取りとして読む。
- * 次のどれかなら undefined:
+ * `work_plan` の引数の欄。ツールはこの欄に説明文を足して渡す。
+ * 欄をまたぐ検査は {@link workPlanSchema} が持つ。
+ */
+export const workPlanShape = {
+  phases: z
+    .array(z.union([phaseNameSchema, z.array(phaseNameSchema).min(MIN_PHASE_GROUP_SIZE)]))
+    .min(MIN_WORK_PLAN_PHASES),
+  current: z.number().int().min(0),
+  finishedInGroup: z.array(z.string()).optional(),
+  phaseSummary: z.string().optional(),
+  delegatedRange: z
+    .object({ first: z.number().int().min(0), count: z.number().int().min(1) })
+    .optional(),
+}
+
+/**
+ * `work_plan` の引数の形の正典。
+ * 次のどれかなら通らない:
  * 要素が {@link MIN_WORK_PLAN_PHASES} 個より少ない・空白だけの名前がある・
  * まとまりの段が {@link MIN_PHASE_GROUP_SIZE} 個より少ないか名前が重なる・位置が0から要素の数までの整数でない・
  * `finishedInGroup` が今のまとまりの重ならない名前の一部でない・
  * 段のまとめが {@link MAX_PHASE_SUMMARY_SENTENCES} 文を超える・
  * 委譲先の段の範囲が整数でない・並びをはみ出す・段のまとまりの端をまたぐ。
  * 途中なのに段のまとめが無いことは、返却で進んだ位置を同じまま渡す呼び出しがあるので、ここでは見ない（`WorkPlanReview` が見る）。
+ */
+export const workPlanSchema = z.object(workPlanShape).superRefine((value, context) => {
+  const { phases, current, finishedInGroup = [], phaseSummary = "", delegatedRange } = value
+  const reject = (path: string): void => {
+    context.addIssue({ code: "custom", message: "invalid work plan", path: [path] })
+  }
+  if (phases.some((entry) => typeof entry !== "string" && new Set(entry).size !== entry.length)) {
+    reject("phases")
+  }
+  if (current > phases.length) {
+    reject("current")
+  }
+  if (finishedInGroup.length > 0) {
+    const currentEntry = phases[current]
+    if (
+      currentEntry === undefined ||
+      typeof currentEntry === "string" ||
+      finishedInGroup.length >= currentEntry.length ||
+      new Set(finishedInGroup).size !== finishedInGroup.length ||
+      !finishedInGroup.every((name) => currentEntry.includes(name))
+    ) {
+      reject("finishedInGroup")
+    }
+  }
+  if (!isBlankText(phaseSummary) && sentenceCount(phaseSummary) > MAX_PHASE_SUMMARY_SENTENCES) {
+    reject("phaseSummary")
+  }
+  if (delegatedRange !== undefined) {
+    const { first, count } = delegatedRange
+    const boundaries = entryBoundaries(phases)
+    if (
+      first + count > phaseCount(phases) ||
+      !boundaries.has(first) ||
+      !boundaries.has(first + count)
+    ) {
+      reject("delegatedRange")
+    }
+  }
+})
+
+/**
+ * 外来の値（ツールの引数・transcript）を段取りとして読む。{@link workPlanSchema} を通らなければ undefined。
  * ツールの handler が差し戻すかどうかと、変換がイベントにするかどうかは、この1つで決まる。
  */
 export function parseWorkPlan(value: unknown): WorkPlan | undefined {
-  if (!isPlainObject(value) || !Array.isArray(value.phases)) {
+  const parsed = workPlanSchema.safeParse(value)
+  if (!parsed.success) {
     return undefined
   }
-  const phases = value.phases.flatMap((entry: unknown): readonly WorkPlanEntry[] => {
-    const parsed = parseEntry(entry)
-    return parsed === undefined ? [] : [parsed]
-  })
-  const { current } = value
-  if (
-    phases.length !== value.phases.length ||
-    phases.length < MIN_WORK_PLAN_PHASES ||
-    typeof current !== "number" ||
-    !Number.isInteger(current) ||
-    current < 0 ||
-    current > phases.length
-  ) {
-    return undefined
+  const { phases, current, finishedInGroup = [], phaseSummary = "", delegatedRange } = parsed.data
+  return {
+    phases,
+    current,
+    finishedInGroup,
+    phaseSummary: isBlankText(phaseSummary) ? "" : phaseSummary,
+    delegatedRange:
+      delegatedRange === undefined ? NO_DELEGATED_RANGE : { kind: "range", ...delegatedRange },
   }
-  const finishedInGroup = parseFinishedInGroup(value.finishedInGroup, phases[current])
-  const phaseSummary = parsePhaseSummary(value.phaseSummary)
-  const delegatedRange = parseDelegatedRange(value.delegatedRange, phases)
-  if (
-    finishedInGroup === undefined ||
-    phaseSummary === undefined ||
-    delegatedRange === undefined ||
-    sentenceCount(phaseSummary) > MAX_PHASE_SUMMARY_SENTENCES
-  ) {
-    return undefined
-  }
-  return { phases, current, finishedInGroup, phaseSummary, delegatedRange }
 }
 
 /** 途中（済んだ段が1つ以上あり、全部は済んでいない）か。 */
@@ -385,98 +428,12 @@ function entryPhaseState(
   return plan.finishedInGroup.includes(name) ? "done" : "current"
 }
 
-/** 並びの要素1つを読む。空白だけの名前・小さすぎるまとまり・名前の重なるまとまりなら undefined。 */
-function parseEntry(entry: unknown): WorkPlanEntry | undefined {
-  if (typeof entry === "string") {
-    return isBlankText(entry) ? undefined : entry
-  }
-  if (!Array.isArray(entry)) {
-    return undefined
-  }
-  const names = entry.filter(
-    (name): name is string => typeof name === "string" && !isBlankText(name),
-  )
-  return names.length === entry.length &&
-    names.length >= MIN_PHASE_GROUP_SIZE &&
-    new Set(names).size === names.length
-    ? names
-    : undefined
-}
-
-/**
- * `finishedInGroup` を読む。無ければ空。
- * 今の要素がまとまりでないなら空でなければならず、まとまりなら重ならないその中の名前で、全部ではないこと。
- */
-function parseFinishedInGroup(
-  value: unknown,
-  currentEntry: WorkPlanEntry | undefined,
-): readonly string[] | undefined {
-  if (value === undefined) {
-    return []
-  }
-  if (!Array.isArray(value)) {
-    return undefined
-  }
-  const names = value.filter((name): name is string => typeof name === "string")
-  if (names.length !== value.length) {
-    return undefined
-  }
-  if (names.length === 0) {
-    return names
-  }
-  return currentEntry !== undefined &&
-    typeof currentEntry !== "string" &&
-    names.length < currentEntry.length &&
-    new Set(names).size === names.length &&
-    names.every((name) => currentEntry.includes(name))
-    ? names
-    : undefined
-}
-
-/**
- * 委譲先の段の範囲を読む。無ければ `none`。
- * 整数でない・`count` が1未満・並びをはみ出す・範囲の端が段のまとまりの中にある（まとまりをまたぐ）なら undefined。
- */
-function parseDelegatedRange(
-  value: unknown,
-  phases: readonly WorkPlanEntry[],
-): DelegatedRange | undefined {
-  if (value === undefined) {
-    return NO_DELEGATED_RANGE
-  }
-  if (!isPlainObject(value)) {
-    return undefined
-  }
-  const { first, count } = value
-  if (
-    typeof first !== "number" ||
-    typeof count !== "number" ||
-    !Number.isInteger(first) ||
-    !Number.isInteger(count) ||
-    first < 0 ||
-    count < 1 ||
-    first + count > phaseCount(phases)
-  ) {
-    return undefined
-  }
-  const boundaries = new Set(
+/** 並びの要素の切れ目（平らにした並びでの位置）。先頭の0と、各要素の終わり。 */
+function entryBoundaries(phases: readonly WorkPlanEntry[]): ReadonlySet<number> {
+  return new Set(
     phases.reduce<readonly number[]>(
       (starts, entry) => [...starts, (starts.at(-1) ?? 0) + entryNames(entry).length],
       [0],
     ),
   )
-  return boundaries.has(first) && boundaries.has(first + count)
-    ? { kind: "range", first, count }
-    : undefined
-}
-
-/** 段のまとめを読む。無い・空白だけなら空の文字列、文字列でなければ undefined。 */
-function parsePhaseSummary(value: unknown): string | undefined {
-  if (value === undefined) {
-    return ""
-  }
-  if (typeof value !== "string") {
-    return undefined
-  }
-  return isBlankText(value) ? "" : value
 }
