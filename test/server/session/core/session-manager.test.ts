@@ -420,6 +420,97 @@ describe("createSessionManager", () => {
     }
   })
 
+  describe("モードを戻したときの続き", () => {
+    /** 起こした駆動ごとに、渡された要求と、そのセッションの ID を名乗らせる口を持つ。 */
+    function startManagerRecordingLaunches() {
+      const launches: { readonly request: SessionLaunchRequest; readonly stub: StubDriver }[] = []
+      const manager = createSessionManager({
+        launchSession: (onEvent, _onRestoredEvents, request) => {
+          const stub = createStubDriver()
+          stub.attach(onEvent)
+          launches.push({ request, stub })
+          return Promise.resolve(stub.driver)
+        },
+      })
+      // 本物の駆動が起きたときに流す2つ（モードと、名乗るセッション）を代わりに流す。
+      const identify = (index: number, sessionId: string): void => {
+        launches[index]?.stub.emit({
+          kind: "chat-mode-changed",
+          chat: launches[index].request.chat === true,
+        })
+        launches[index]?.stub.emit({
+          kind: "session-info",
+          sessionId,
+          model: undefined,
+          permissionMode: undefined,
+          slashCommands: [],
+          terminalSlashCommands: [],
+        })
+      }
+      return { manager, launches, identify }
+    }
+
+    it("仕事 → 雑談 → 仕事で、2回目の仕事は最初の仕事のセッションの続きになる", async () => {
+      const { manager, launches, identify } = startManagerRecordingLaunches()
+      identify(0, "架空の仕事")
+
+      await manager.commands.session.setChatMode({ chat: true })
+      expect(launches[1]?.request.resume).toEqual({ by: "new" })
+      identify(1, "架空の雑談")
+      await manager.commands.session.setChatMode({ chat: false })
+
+      expect(launches[2]?.request).toEqual({
+        selection: { by: "current" },
+        chat: false,
+        resume: { by: "id", sessionId: "架空の仕事" },
+      })
+    })
+
+    it("雑談 → 仕事 → 雑談でも、直前の雑談の続きになる", async () => {
+      const { manager, launches, identify } = startManagerRecordingLaunches()
+      identify(0, "架空の仕事")
+      await manager.commands.session.setChatMode({ chat: true })
+      identify(1, "架空の雑談")
+      await manager.commands.session.setChatMode({ chat: false })
+      identify(2, "架空の仕事の続き")
+
+      await manager.commands.session.setChatMode({ chat: true })
+
+      expect(launches[3]?.request.resume).toEqual({ by: "id", sessionId: "架空の雑談" })
+    })
+
+    it("キャラクターの切り替えは新規のままで、別のパックでは覚えたセッションを使わない", async () => {
+      const { manager, launches, identify } = startManagerRecordingLaunches()
+      identify(0, "架空の仕事")
+      await manager.commands.session.setChatMode({ chat: true })
+      identify(1, "架空の雑談")
+
+      await manager.commands.session.switchCharacter({ name: "fictional" })
+      expect(launches[2]?.request.resume).toEqual({ by: "new" })
+
+      // 仕事(パックA) → 雑談 → 切り替え(パックB) → 仕事: Aの仕事は戻さない
+      identify(2, "架空の別の雑談")
+      await manager.commands.session.setChatMode({ chat: false })
+      expect(launches[3]?.request.resume).toEqual({ by: "new" })
+    })
+
+    it("パックを切り替えたあとは、そのパックで覚え直した雑談の続きになる", async () => {
+      const { manager, launches, identify } = startManagerRecordingLaunches()
+      identify(0, "架空の仕事")
+      await manager.commands.session.switchCharacter({ name: "fictional" })
+      identify(1, "架空の別パックの仕事")
+      await manager.commands.session.setChatMode({ chat: true })
+      identify(2, "架空の別パックの雑談")
+
+      await manager.commands.session.setChatMode({ chat: false })
+
+      expect(launches[3]?.request.resume).toEqual({
+        by: "id",
+        sessionId: "架空の別パックの仕事",
+      })
+    })
+  })
+
   it("session.switchCharacter で駆動を閉じ、別のパックで起こし直して新しい hello を配る", async () => {
     // 起こされた駆動を、渡された要求と一緒に順に覚える。
     const started: { readonly request: SessionLaunchRequest; readonly stub: StubDriver }[] = []

@@ -53,6 +53,7 @@ function unexpected(): never {
 /** 仕事のとき・ターンの外にいるセッションの口（受け手へは渡らない前提の架空のもの）。 */
 const IDLE_WORK_SESSION: CommandSession = {
   state: () => INITIAL_SESSION_STATE,
+  modeSession: unexpected,
   driver: unexpected,
   restart: unexpected,
   generation: () => ({ emit: () => {}, diarySignal: new AbortController().signal }),

@@ -22,10 +22,25 @@ export type CommandGeneration = {
   readonly diarySignal: AbortSignal
 }
 
-/** 受け手が使うセッションの口。この4つだけで、代・束・購読者は見せない。 */
+/** モードの直前のセッション。覚えていないときは `none`。 */
+export type RememberedSession =
+  | { readonly kind: "none" }
+  | { readonly kind: "remembered"; readonly sessionId: string }
+
+export interface ModeSessions {
+  readonly work: RememberedSession
+  readonly chat: RememberedSession
+}
+
+/** 受け手が使うセッションの口。この5つだけで、代・束・購読者は見せない。 */
 export type CommandSession = {
   /** いまの姿。 */
   readonly state: () => SessionState
+  /**
+   * 指したモードの直前のセッション。モードを切り替えて起こし直す直前に、そのとき出していたセッションを覚える。
+   * 起こし直しでは残り、プロセスを越えては覚えない。ブラウザへは配らない。
+   */
+  readonly modeSession: (chat: boolean) => RememberedSession
   /** いまの代の駆動が起き上がるのを待つ。 */
   readonly driver: () => Promise<SessionDriver>
   /** 起こし直す（失敗しても投げず、定型文の理由を返す）。 */

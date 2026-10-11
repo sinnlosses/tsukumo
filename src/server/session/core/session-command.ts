@@ -114,14 +114,32 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
     },
     // いま出しているパックのまま起こし直す（雑談に入るとキャラクターが変わる、とは決めていない）。
     // 名前では渡さない。渡すと「画面から選ばれた名前」と区別がつかず、モードを切り替えただけで覚えた値が書き換わる。
+    // 戻す先のモードの直前のセッションが分かり、使用中でなければその続きから起こす。
     setChatMode: {
       kind: "session",
-      receive: (input, session) =>
-        session.restart({
+      receive: async (input, session) => {
+        const target = session.modeSession(input.chat)
+        if (
+          input.chat === session.state().chatMode ||
+          target.kind === "none" ||
+          (await ports.reserveSession(target.sessionId)) === "occupied"
+        ) {
+          return session.restart({
+            selection: { by: "current" },
+            chat: input.chat,
+            resume: { by: "new" },
+          })
+        }
+        const result = await session.restart({
           selection: { by: "current" },
           chat: input.chat,
-          resume: { by: "new" },
-        }),
+          resume: { by: "id", sessionId: target.sessionId },
+        })
+        if (!result.ok) {
+          ports.withdrawSessionClaim()
+        }
+        return result
+      },
     },
     // キャラクターもモードもいま出しているまま（変わるのは、どの transcript の続きから始めるかだけ）。
     // 一覧は同じパック・同じモードのものしか出していないので、選んだ先で相手が入れ替わることもない。

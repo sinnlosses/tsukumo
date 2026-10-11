@@ -86,6 +86,7 @@ function createFakeSession(
   return {
     session: {
       state: () => state,
+      modeSession: () => ({ kind: "none" }),
       driver: () => Promise.resolve(stub.driver),
       restart: (request) => {
         restarts.push(request)
@@ -452,6 +453,72 @@ describe("createCommandRouter（session）", () => {
     await commands.session.setChatMode({ chat: false })
 
     expect(restarts.map((request) => request.chat)).toEqual([true, false])
+  })
+
+  describe("session.setChatMode が戻す先のモードに覚えがあるとき", () => {
+    /** 雑談に居て、仕事の直前のセッションを覚えている口。 */
+    function rememberingWorkSession(session: CommandSession): CommandSession {
+      return {
+        ...session,
+        state: () => ({ ...session.state(), chatMode: true }),
+        modeSession: (chat) =>
+          chat ? { kind: "none" } : { kind: "remembered", sessionId: "架空の仕事" },
+      }
+    }
+
+    function startRouterRemembering() {
+      const fake = createFakeSession()
+      const recorded = createRecordingPorts(
+        "written",
+        () => Promise.resolve(undefined),
+        NO_DIARY_WRITER,
+      )
+      const session = rememberingWorkSession(fake.session)
+      return { ...fake, ...recorded, commands: createCommandClient(recorded.ports, session) }
+    }
+
+    it("その続きから起こす", async () => {
+      const { commands, restarts, reserved } = startRouterRemembering()
+
+      expect(await commands.session.setChatMode({ chat: false })).toEqual({ ok: true })
+
+      expect(reserved).toEqual(["架空の仕事"])
+      expect(restarts).toEqual([
+        {
+          selection: { by: "current" },
+          chat: false,
+          resume: { by: "id", sessionId: "架空の仕事" },
+        },
+      ])
+    })
+
+    it("使用中なら新規で起こす", async () => {
+      const { commands, restarts, occupiedElsewhere } = startRouterRemembering()
+      occupiedElsewhere.add("架空の仕事")
+
+      expect(await commands.session.setChatMode({ chat: false })).toEqual({ ok: true })
+
+      expect(restarts).toEqual([
+        { selection: { by: "current" }, chat: false, resume: { by: "new" } },
+      ])
+    })
+
+    it("起こし直しに失敗したら名乗りを消す", async () => {
+      const fake = createFakeSession(undefined, {
+        ok: false,
+        reason: FRAME_ERROR_REASON.driverFailed,
+      })
+      const recorded = createRecordingPorts(
+        "written",
+        () => Promise.resolve(undefined),
+        NO_DIARY_WRITER,
+      )
+      const commands = createCommandClient(recorded.ports, rememberingWorkSession(fake.session))
+
+      await commands.session.setChatMode({ chat: false })
+
+      expect(recorded.withdrawCount()).toBe(1)
+    })
   })
 
   it("ターン進行中の session.setChatMode は定型文の理由で受け付けず、駆動を閉じない", async () => {

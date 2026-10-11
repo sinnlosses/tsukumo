@@ -76,7 +76,7 @@ import {
   type TokenUsageLog,
   type TokenUsageRecorder,
 } from "../../token-usage/core/token-usage.ts"
-import type { CommandSession } from "./command-session.ts"
+import type { CommandSession, ModeSessions } from "./command-session.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
 import type { SessionLaunchRequest } from "./session-launch.ts"
 
@@ -254,6 +254,8 @@ const CONSOLIDATION_FAILURE_PLACES = {
   "summary-write": "consolidation-summary-write",
 } as const satisfies Record<string, string>
 
+const NO_MODE_SESSIONS: ModeSessions = { work: { kind: "none" }, chat: { kind: "none" } }
+
 export function createSessionManager(options: SessionManagerOptions): SessionManager {
   const subscribers = new Set<(frame: ServerFrame) => void>()
   // 前回の見直しの結果だけ、起こしたときにホームから読んで載せる。
@@ -264,6 +266,8 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   }
   // 閉じたあとに駆動が投げてくるイベントは捨てる（配る先がもう無いのにタイマーを立てない）。
   let closed = false
+  // 起こし直しをまたいで持つ（状態に入れないのでブラウザへは配らない）。
+  let modeSessions: ModeSessions = NO_MODE_SESSIONS
   // 何代目まで起こしたか。閉じた駆動があとから投げてくるイベントを捨てるための印。
   // 起こし直したとき、前の駆動の最後のイベントが新しい状態に混ざらない。
   let bornCount = 0
@@ -556,6 +560,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     try {
       generation.close()
       experienceMetric.noteRestart()
+      modeSessions = rememberedModeSessions(modeSessions, state, request)
       // `previousUsageReview`・タスク一覧・おすすめの札は起こし直しをまたいで残す。
       // どれも駆動1代の持ち物ではない（`usageReview` は起こし直すとふだんへ戻る）。
       replaceState({
@@ -589,6 +594,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   // 受け手へ見せる口。代は呼ばれたその時点のものを返す（起こし直しをまたいで持ち回らない）。
   const commandSession: CommandSession = {
     state: () => state,
+    modeSession: (chat) => (chat ? modeSessions.chat : modeSessions.work),
     driver: () => generation.driver,
     restart,
     generation: () => ({ emit: generation.emit, diarySignal: generation.diarySignal }),
@@ -664,6 +670,31 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       diagnostic.flush()
     },
   }
+}
+
+/**
+ * モードを切り替える起こし直しのときだけ、いま出しているセッションをいまのモードの欄へ書く。
+ * パックを名指しする起こし直しでは捨てる（セッションの印はパックごとなので、別のパックで続きにできない）。
+ */
+function rememberedModeSessions(
+  modeSessions: ModeSessions,
+  state: SessionState,
+  request: SessionLaunchRequest,
+): ModeSessions {
+  if (request.selection.by === "name") {
+    return NO_MODE_SESSIONS
+  }
+  if (
+    request.chat === undefined ||
+    request.chat === state.chatMode ||
+    state.session.kind === "starting"
+  ) {
+    return modeSessions
+  }
+  const remembered = { kind: "remembered", sessionId: state.session.sessionId } as const
+  return state.chatMode
+    ? { ...modeSessions, chat: remembered }
+    : { ...modeSessions, work: remembered }
 }
 
 /** 画面から中身を頼まれてよいセッションか（一覧に載ったものか、いま出しているもの）。 */
