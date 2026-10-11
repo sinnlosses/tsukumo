@@ -392,7 +392,7 @@ CI に無い外部コマンドを起こすテストを検査で落とします�
 ├── scripts/                # 開発の道具（check・ship・stop・撮影・文書の検査・hook の deny-* など）
 ├── assets/                 # ロゴ
 ├── docs/                   # 要件定義・設計・アーキテクチャ・規約・用語集（正典）
-├── .tw/                    # タスク運用の設定と指示（config.toml・direction.md・draft/）。機能には関係しない
+├── .tw/                    # タスク運用の設定（config.toml）。機能には関係しない
 ├── bin/tsukumo             # エントリポイント（mise run setup でグローバルに入る）
 └── package.json
 ```

@@ -9,7 +9,7 @@ import { collectConflictMarkers } from "../scripts/lib/repository-conflict-marke
 import { useTempDir } from "./fixture/temp-dir.ts"
 
 // 手で解いた衝突の印が main に紛れ込んだままにしない。
-// `merge=union` は .tw/direction.md にしか効かず、手で rebase したときは印が残りうる。
+// 手で rebase したときに印が残りうる。
 
 const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
 const MARKER_TEXT = "<<<<<<< HEAD\na\n=======\nb\n>>>>>>> other\n"
@@ -25,7 +25,7 @@ describe(".tw の衝突の印", () => {
     mkdirSync(join(tempDir(), ".tw/local"), { recursive: true })
     writeFileSync(join(tempDir(), ".tw/local/task-verify.log"), MARKER_TEXT)
     expect(collectConflictMarkers(tempDir())).toEqual([])
-    writeFileSync(join(tempDir(), ".tw/direction.md"), MARKER_TEXT)
+    writeFileSync(join(tempDir(), ".tw/config.toml"), MARKER_TEXT)
     expect(collectConflictMarkers(tempDir())).not.toEqual([])
   })
 
