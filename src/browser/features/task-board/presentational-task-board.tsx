@@ -128,7 +128,7 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
       {props.confirm.kind === "open" && (
         <TaskRunConfirm
           taskId={props.confirm.taskId}
-          held={props.confirm.held}
+          request={props.confirm.request}
           onClose={props.onConfirmClose}
         />
       )}

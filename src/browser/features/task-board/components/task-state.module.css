@@ -23,6 +23,7 @@
   border: 1.5px solid var(--state-warn);
 }
 .task-state-hold,
+.task-state-draft,
 .task-state-done {
   color: var(--ink-quiet);
 }

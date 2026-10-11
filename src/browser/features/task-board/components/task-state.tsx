@@ -22,6 +22,7 @@ const TASK_STATE_CLASS = {
   ready: styles["task-state-ready"],
   blocked: styles["task-state-blocked"],
   hold: styles["task-state-hold"],
+  draft: styles["task-state-draft"],
   doing: styles["task-state-doing"],
   done: styles["task-state-done"],
   other: styles["task-state-other"],

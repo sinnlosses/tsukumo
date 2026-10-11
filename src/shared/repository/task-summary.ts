@@ -12,6 +12,7 @@ export type TaskLoopable = (typeof TASK_LOOPABLES)[number]
 export type TaskSummaryItem = {
   readonly id: string
   readonly summary: string
+  /** 読み元の状態を写した字（`todo`・`doing`・`hold`・`draft`・`done` など。表に無い状態は読み元の語のまま）。 */
   readonly status: string | undefined
   readonly dependencies: readonly string[]
   /**

@@ -29,4 +29,11 @@ describe("orderTasksForSidebar", () => {
     expect(result.running.map((task) => task.id)).toEqual(["X-001", "X-003"])
     expect(result.rest.map((task) => task.id)).toEqual(["X-002"])
   })
+
+  it("draft は先頭に出さず、ファイルの順のまま rest に入る", () => {
+    const result = orderTasksForSidebar([taskOf("X-001", "draft"), taskOf("X-002", "todo")])
+
+    expect(result.running).toEqual([])
+    expect(result.rest.map((task) => task.id)).toEqual(["X-001", "X-002"])
+  })
 })

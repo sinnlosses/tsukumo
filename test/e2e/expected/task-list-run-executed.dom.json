@@ -77,6 +77,22 @@
                         "type": "button"
                       },
                       "children": [
+                        "ドラフト",
+                        "0"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "li",
+                  "children": [
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-pressed": "false",
+                        "type": "button"
+                      },
+                      "children": [
                         "完了",
                         "1"
                       ]

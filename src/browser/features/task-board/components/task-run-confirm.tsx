@@ -1,5 +1,5 @@
 // 「このタスクを実行しますか」の確認。
-// OK まで行くと、「tsukumo に頼む」の文面（`runPromptOf`）を入力欄を経由せずに dispatch する（`<Composer>` の下書きには触らない）。
+// OK まで行くと、「tsukumo に頼む」の文面（`requestPromptOf`）を入力欄を経由せずに dispatch する（`<Composer>` の下書きには触らない）。
 // 送ったあとは、サーバから返る `request` イベントがメインビューに依頼として並ぶので、打ったのと同じ見え方になる。
 //
 // ターンが動いている間は断る（押せなくするのではなく、押したら理由を出す）。
@@ -8,7 +8,7 @@
 
 import type { ReactElement } from "react"
 
-import { runPromptOf } from "../../../../shared/repository/task-run-prompt.ts"
+import { requestPromptOf, type TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
@@ -18,8 +18,8 @@ import styles from "./task-run-confirm.module.css"
 
 export type TaskRunConfirmProps = {
   readonly taskId: string
-  /** 保留のタスクなら真。着手の前に判断を聞く旨を送る文面に添える。 */
-  readonly held: boolean
+  /** 頼みの種類。送る文面を決める（保留の着手には、着手の前に判断を聞く旨が添わる）。 */
+  readonly request: TaskRequest
   /**
    * 送ったあと・送らずに閉じたあとのどちらでも呼ばれる（開いているかは呼び出し側が持つ）。
    * タスクのモーダルから開いたときは、`sent` でモーダルも閉じる。
@@ -36,7 +36,7 @@ export type TaskRunConfirmProps = {
 export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   const dispatch = useSession((session) => session.dispatch)
   const turnInProgress = useTurnRunning()
-  const prompt = runPromptOf(props.taskId, props.held)
+  const prompt = requestPromptOf(props.taskId, props.request)
 
   const run = (): void => {
     dispatch.session.prompt({ text: prompt, images: [] })
@@ -56,7 +56,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
       className={styles["task-run-confirm"]}
     >
       <Text element="p" size="heading" tone="inherit" weight="semibold" className="">
-        {props.taskId} を実行しますか
+        {props.taskId} {HEADING_OF[props.request.kind]}
       </Text>
       {turnInProgress ? (
         <Text
@@ -107,10 +107,22 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
             className={styles["task-run-ok"]}
             onClick={run}
           >
-            実行する
+            {OK_LABEL_OF[props.request.kind]}
           </Button>
         )}
       </div>
     </Dialog>
   )
 }
+
+const HEADING_OF = {
+  start: "を実行しますか",
+  plan: "の計画を頼みますか",
+  drop: "の却下を頼みますか",
+} satisfies Record<TaskRequest["kind"], string>
+
+const OK_LABEL_OF = {
+  start: "実行する",
+  plan: "頼む",
+  drop: "頼む",
+} satisfies Record<TaskRequest["kind"], string>

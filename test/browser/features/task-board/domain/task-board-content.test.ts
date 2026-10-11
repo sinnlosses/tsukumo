@@ -61,6 +61,12 @@ describe("boardEntries の状態の言い方", () => {
     expect(states.at(2)).toEqual({ kind: "hold", text: "保留" })
   })
 
+  it("ドラフトは todo・hold と別の言い方になる", () => {
+    expect(statesOf([taskOf("X-001", { status: "draft" })])).toEqual([
+      { kind: "draft", text: "ドラフト" },
+    ])
+  })
+
   it("進行中・完了・想定外の値はそれぞれの言い方になる", () => {
     expect(
       statesOf([
@@ -132,6 +138,7 @@ describe("boardContent", () => {
       ["ready", 1, false],
       ["blocked", 0, false],
       ["hold", 0, false],
+      ["draft", 0, false],
       ["doing", 0, false],
       ["done", 1, false],
     ])
@@ -162,6 +169,18 @@ describe("boardContent", () => {
     expect(detail.dependents.map((card) => card.id)).toEqual(["X-003"])
     expect(opener).toEqual({ kind: "issue", url: "https://example.invalid/issues/2" })
     expect(run).toEqual({ kind: "unavailable", reason: "待ちが終わると頼めます" })
+  })
+
+  it("ドラフトの詳細では「tsukumo に頼む」を押せず、のぞき窓へ誘う理由を添える", () => {
+    const content = contentOf(known([taskOf("X-001", { status: "draft" })]), "X-001")
+    if (content.kind !== "known" || content.selection.kind !== "some") {
+      throw new Error("選択があるはず")
+    }
+
+    expect(content.selection.run).toEqual({
+      kind: "unavailable",
+      reason: "ドラフトは、サイドバーののぞき窓から計画か却下を頼めます",
+    })
   })
 
   it("詳細に属性が写る", () => {

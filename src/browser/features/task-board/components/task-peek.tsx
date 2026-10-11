@@ -8,20 +8,23 @@
 import { X } from "lucide-react"
 import type { ReactElement } from "react"
 
+import type { TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
+import type { TaskPeekConfirm } from "../hooks/use-task-peek.ts"
 import { TaskBody } from "./deferred-task-body.tsx"
 import { TaskMark } from "./task-mark.tsx"
 import styles from "./task-peek.module.css"
 import { TaskRunConfirm } from "./task-run-confirm.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
 
-/** 「これを始める」を出すか。出すのは頼めるタスクだけ。 */
+/** 窓の下端の頼みの口。`available` は「これを始める」（頼めるタスクだけ）、`draft` は「却下する」「計画する」。 */
 export type TaskPeekRun =
   | { readonly kind: "none" }
-  | { readonly kind: "available"; readonly held: boolean; readonly confirming: boolean }
+  | { readonly kind: "available"; readonly held: boolean; readonly confirm: TaskPeekConfirm }
+  | { readonly kind: "draft"; readonly confirm: TaskPeekConfirm }
 
 export type TaskPeekProps = {
   readonly task: TaskSummaryItem
@@ -32,7 +35,7 @@ export type TaskPeekProps = {
   readonly knownIds: ReadonlySet<string>
   readonly onClose: () => void
   readonly onOpenFull: (id: string) => void
-  readonly onStart: () => void
+  readonly onRequest: (request: TaskRequest) => void
   readonly onConfirmClose: (outcome: TaskRunConfirmOutcome) => void
 }
 
@@ -112,14 +115,50 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
             type="button"
             aria-haspopup="dialog"
             className={styles["task-peek-start"]}
-            onClick={props.onStart}
+            onClick={() => {
+              props.onRequest({ kind: "start", held: run.held })
+            }}
           >
             これを始める →
           </button>
         )}
+        {run.kind === "draft" && (
+          <>
+            <Button
+              variant="link"
+              size="action"
+              pressed="none"
+              disabled={false}
+              ariaLabel={undefined}
+              ariaHasPopup="dialog"
+              disclosure={{ kind: "none" }}
+              title={undefined}
+              className={styles["task-peek-drop"]}
+              onClick={() => {
+                props.onRequest({ kind: "drop" })
+              }}
+            >
+              却下する
+            </Button>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              className={styles["task-peek-start"]}
+              onClick={() => {
+                props.onRequest({ kind: "plan" })
+              }}
+            >
+              計画する
+            </button>
+          </>
+        )}
       </div>
-      {run.kind === "available" && run.confirming && (
-        <TaskRunConfirm taskId={task.id} held={run.held} onClose={props.onConfirmClose} />
+      {run.kind !== "none" && run.confirm.kind === "request" && (
+        <TaskRunConfirm
+          taskId={task.id}
+          request={run.confirm.request}
+          onClose={props.onConfirmClose}
+        />
       )}
     </dialog>
   )
@@ -130,6 +169,7 @@ const STATUS_WORD: ReadonlyMap<string, string> = new Map([
   ["doing", "進行中"],
   ["done", "完了"],
   ["hold", "保留"],
+  ["draft", "ドラフト"],
 ])
 
 /** 想定外の値はそのまま、読めないときは「—」。 */

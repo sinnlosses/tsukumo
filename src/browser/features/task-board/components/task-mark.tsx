@@ -1,5 +1,5 @@
 // status ごとの印（サイドバーの行とのぞき窓の状態の行）。色だけで状態を伝えない。
-// todo は空の丸、doing は塗った丸、done はチェック、想定外の値は注意色の「!」。status が読めない要素は印を出さない。
+// todo は空の丸、draft は破線の丸、doing は塗った丸、done はチェック、想定外の値は注意色の「!」。status が読めない要素は印を出さない。
 
 import type { ReactElement } from "react"
 
@@ -11,6 +11,9 @@ export function TaskMark(props: { readonly status: string | undefined }): ReactE
   }
   if (props.status === "todo") {
     return <span className={styles["task-mark-todo"]} title="未着手" />
+  }
+  if (props.status === "draft") {
+    return <span className={styles["task-mark-draft"]} title="ドラフト" />
   }
   if (props.status === "doing") {
     return <span className={styles["task-mark-doing"]} title="進行中" />

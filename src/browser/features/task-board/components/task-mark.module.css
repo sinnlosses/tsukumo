@@ -1,5 +1,6 @@
 /* 丸は固定 px（em だと隣の字の段を変えるたびに印の大きさも動く）。 */
 .task-mark-todo,
+.task-mark-draft,
 .task-mark-doing {
   display: inline-block;
   box-sizing: border-box;
@@ -9,6 +10,9 @@
 }
 .task-mark-todo {
   border: 1.5px solid var(--ink-quiet);
+}
+.task-mark-draft {
+  border: 1.5px dashed var(--ink-quiet);
 }
 .task-mark-doing {
   background: var(--accent);

@@ -12,6 +12,8 @@ export function filterTasksForSidebar(
   if (selected === "all") {
     return items
   }
-  const wantsDone = selected === "done"
-  return items.filter((task) => (task.status === "done") === wantsDone)
+  if (selected === "open") {
+    return items.filter((task) => task.status !== "done" && task.status !== "draft")
+  }
+  return items.filter((task) => task.status === selected)
 }

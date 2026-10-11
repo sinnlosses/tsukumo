@@ -221,6 +221,66 @@ describe("タスクの実行を頼む", () => {
     ])
   })
 
+  it("ドラフトののぞき窓には「計画する」「却下する」が出て、「これを始める」は出ない", () => {
+    putSession(INITIAL_SESSION_STATE, () => {})
+    render(<TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />)
+
+    fireEvent.click(rowOf("X-004"))
+    expect(screen.getByRole("button", { name: "計画する" })).toBeDefined()
+    expect(screen.getByRole("button", { name: "却下する" })).toBeDefined()
+    expect(screen.queryByRole("button", { name: "これを始める →" })).toBeNull()
+
+    fireEvent.click(rowOf("X-002"))
+    expect(screen.getByRole("button", { name: "これを始める →" })).toBeDefined()
+    expect(screen.queryByRole("button", { name: "計画する" })).toBeNull()
+  })
+
+  it("ドラフトの「計画する」は確認の「頼む」で計画の文面を送り、窓を閉じる", () => {
+    const sent: unknown[] = []
+    renderWithStore(
+      <TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />,
+      collectInto(sent),
+    )
+
+    fireEvent.click(rowOf("X-004"))
+    fireEvent.click(screen.getByRole("button", { name: "計画する" }))
+    expect(confirmDialog()?.textContent).toContain("X-004 の計画を頼みますか")
+    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
+
+    expect(sent).toEqual([
+      {
+        procedure: "session.prompt",
+        text: "ドラフト X-004 を計画して（bd show X-004 で読める）。## 完了条件 と ## やること を書いて、着手できる todo にする。",
+        images: [],
+      },
+    ])
+    expect(screen.queryByRole("dialog", { name: "X-004 の詳細" })).toBeNull()
+  })
+
+  it("ドラフトの「却下する」は却下の文面を送り、キャンセルでは送らず窓が残る", () => {
+    const sent: unknown[] = []
+    renderWithStore(
+      <TaskList tasks={known([...TASKS, draftTask("X-004")])} selectedStatus="all" />,
+      collectInto(sent),
+    )
+
+    fireEvent.click(rowOf("X-004"))
+    fireEvent.click(screen.getByRole("button", { name: "却下する" }))
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }))
+    expect(sent).toEqual([])
+    expect(screen.getByRole("button", { name: "却下する" })).toBeDefined()
+
+    fireEvent.click(screen.getByRole("button", { name: "却下する" }))
+    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
+    expect(sent).toEqual([
+      {
+        procedure: "session.prompt",
+        text: "ドラフト X-004 を却下して（bd show X-004 で読める）。理由を ## 結果 に書いて、dropped で閉じる。",
+        images: [],
+      },
+    ])
+  })
+
   it("モーダルからは依存の済んだ保留も頼め、判断を聞かれることを確認に添える", () => {
     const sent: unknown[] = []
     renderBoard(collectInto(sent), [], [...TASKS, holdTask("X-003", ["X-001"], [])])
@@ -283,6 +343,10 @@ function holdTask(
     body: "",
     location: { kind: "none" },
   }
+}
+
+function draftTask(id: string): TaskSummaryItem {
+  return { ...holdTask(id, [], []), summary: `架空のドラフト ${id}`, status: "draft" }
 }
 
 /** 区画の一覧の行（カード）のボタン。 */

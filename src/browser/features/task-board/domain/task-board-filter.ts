@@ -9,6 +9,7 @@ export const FILTER_CHIPS = [
   { filter: "ready", label: "着手できる" },
   { filter: "blocked", label: "待ち" },
   { filter: "hold", label: "保留" },
+  { filter: "draft", label: "ドラフト" },
   { filter: "doing", label: "進行中" },
   { filter: "done", label: "完了" },
 ] satisfies readonly { readonly filter: TaskBoardFilter; readonly label: string }[]

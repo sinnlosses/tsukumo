@@ -13,6 +13,7 @@ function issue(overrides: Partial<BeadsIssue> & Pick<BeadsIssue, "id" | "status"
     labels: [],
     difficulty: undefined,
     loopable: undefined,
+    draft: false,
     createdAtEpochMilliseconds: 0,
     closedAtEpochMilliseconds: undefined,
     description: "",
@@ -46,6 +47,30 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
       ["t-4", "done"],
       ["t-5", "pending"],
       ["t-6", "blocked"],
+    ])
+  })
+
+  it("ドラフトの印は着手前（open・deferred）だけ draft にし、ほかは印があっても状態のまま", () => {
+    const items = taskSummaryItemsOfBeadsIssues([
+      issue({ id: "t-1", status: "deferred", draft: true, createdAtEpochMilliseconds: 1 }),
+      issue({ id: "t-2", status: "open", draft: true, createdAtEpochMilliseconds: 2 }),
+      issue({ id: "t-3", status: "in_progress", draft: true, createdAtEpochMilliseconds: 3 }),
+      issue({
+        id: "t-4",
+        status: "closed",
+        draft: true,
+        createdAtEpochMilliseconds: 4,
+        closedAtEpochMilliseconds: 10,
+      }),
+      issue({ id: "t-5", status: "deferred", createdAtEpochMilliseconds: 5 }),
+    ])
+
+    expect(items.map((item) => [item.id, item.status])).toEqual([
+      ["t-1", "draft"],
+      ["t-2", "draft"],
+      ["t-3", "doing"],
+      ["t-4", "done"],
+      ["t-5", "hold"],
     ])
   })
 

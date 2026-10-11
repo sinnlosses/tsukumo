@@ -13,7 +13,7 @@
             "タスク"
           ]
         },
-        "すべて 5 · 未完了 4 · 完了 1",
+        "すべて 5 · 未完了 4 · ドラフト 0 · 完了 1",
         {
           "tag": "kbd",
           "children": [
@@ -103,6 +103,17 @@
               "children": [
                 "保留",
                 "1"
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-pressed": "false",
+                "type": "button"
+              },
+              "children": [
+                "ドラフト",
+                "0"
               ]
             },
             {

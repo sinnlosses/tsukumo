@@ -39,6 +39,7 @@ export type BoardContentInput = {
 const RUN_UNAVAILABLE_REASON = {
   blocked: "待ちが終わると頼めます",
   hold: "待ちが終わると頼めます",
+  draft: "ドラフトは、サイドバーののぞき窓から計画か却下を頼めます",
   doing: "着手済みです",
   done: "終わったタスクです",
   other: "状態が読めないので頼めません",
@@ -190,6 +191,8 @@ function taskStateOf(task: TaskSummaryItem): TaskStateView {
         kind: "hold",
         text: task.waitingFor.length === 0 ? "保留" : `保留 · ${task.waitingFor.join(", ")}`,
       }
+    case "draft":
+      return { kind: "draft", text: "ドラフト" }
     case "doing":
       return { kind: "doing", text: "進行中" }
     case "done":

@@ -103,6 +103,10 @@
   min-height: 24px;
   margin-right: auto;
 }
+/* 箱だけ。顔は `<Button variant="link">` が持つ。 */
+.task-peek-drop {
+  min-height: 24px;
+}
 /* 見本の地のグラデーションは `<Button>` の顔に無いので、素のボタンで持つ。 */
 .task-peek-start {
   height: 32px;

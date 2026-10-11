@@ -35,6 +35,8 @@ export type BeadsIssue = {
   readonly difficulty: TaskDifficulty | undefined
   /** metadata の `loopable`。無い・表に無い値は `undefined`。 */
   readonly loopable: TaskLoopable | undefined
+  /** metadata の `draft` が `"Y"`（エージェントが積んだドラフトの印）。それ以外・無いときは偽。 */
+  readonly draft: boolean
   readonly createdAtEpochMilliseconds: number
   readonly closedAtEpochMilliseconds: number | undefined
   readonly description: string
@@ -188,6 +190,7 @@ export function beadsOutcomeOf(stdout: string): BeadsOutcome {
 const metadataSchema = z.record(z.string(), z.unknown())
 const difficultySchema = z.enum(TASK_DIFFICULTIES)
 const loopableSchema = z.enum(TASK_LOOPABLES)
+const DRAFT_MARK = "Y"
 
 function beadsIssueOf(issue: z.infer<typeof beadsIssueSchema>): BeadsIssue {
   const metadata = metadataSchema.safeParse(issue.metadata)
@@ -203,6 +206,7 @@ function beadsIssueOf(issue: z.infer<typeof beadsIssueSchema>): BeadsIssue {
     labels: issue.labels ?? [],
     difficulty: difficulty.success ? difficulty.data : undefined,
     loopable: loopable.success ? loopable.data : undefined,
+    draft: metadata.data?.["draft"] === DRAFT_MARK,
     createdAtEpochMilliseconds: epochMillisecondsOf(issue.created_at),
     closedAtEpochMilliseconds:
       issue.closed_at === null || issue.closed_at === undefined

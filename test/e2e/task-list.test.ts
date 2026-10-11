@@ -2,7 +2,7 @@ import type { Locator } from "playwright-core"
 import { describe, it } from "vitest"
 
 import { useScenarioRun, type ScenarioRoom } from "./scenario-run.ts"
-import { openTaskListRoom } from "./task-room.ts"
+import { openTaskListRoom, openTaskListRoomWithDraft } from "./task-room.ts"
 
 const run = useScenarioRun()
 
@@ -24,6 +24,21 @@ describe("タスクの一覧", () => {
     await room.page.getByRole("button", { name: "これを始める →", exact: true }).click()
     await room.page.getByRole("dialog", { name: "タスクの実行" }).waitFor()
     await room.page.getByRole("button", { name: "実行する", exact: true }).click()
+    await room.waitForEvent("request")
+    await room.waitForEvent("turn-finished")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("ドラフトのチップで絞り、のぞき窓の「計画する」から確認の「頼む」を押すと計画の文面で依頼が送られる", async () => {
+    const room = await openTaskListRoomWithDraft(run, "task-list-draft-plan", [
+      "task-section",
+      "task-run-confirm",
+    ])
+    await room.page.getByRole("button", { name: "ドラフト 1", exact: true }).click()
+    await taskRow(room, "t-003").click()
+    await room.page.getByRole("button", { name: "計画する", exact: true }).click()
+    await room.page.getByRole("dialog", { name: "タスクの実行" }).waitFor()
+    await room.page.getByRole("button", { name: "頼む", exact: true }).click()
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)

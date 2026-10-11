@@ -40,6 +40,13 @@ describe("matchesFilter", () => {
     expect(matchesFilter(doing, "done")).toBe(false)
   })
 
+  it("ドラフトの札はドラフトにだけ当たる", () => {
+    const draft: TaskStateView = { kind: "draft", text: "ドラフト" }
+    expect(matchesFilter(draft, "draft")).toBe(true)
+    expect(matchesFilter(draft, "hold")).toBe(false)
+    expect(matchesFilter({ kind: "hold", text: "保留" }, "draft")).toBe(false)
+  })
+
   it("想定外の値はどの札にも属さない", () => {
     expect(matchesFilter(other, "done")).toBe(false)
   })

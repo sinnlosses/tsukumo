@@ -24,7 +24,18 @@ function attributesOf(extra: Record<string, unknown>) {
   return { difficulty: issue.difficulty, loopable: issue.loopable, labels: issue.labels }
 }
 
+function draftOf(extra: Record<string, unknown>): boolean | undefined {
+  const outcome = beadsOutcomeOf(JSON.stringify([issueOf(extra)]))
+  return outcome.kind === "issues" ? outcome.issues[0]?.draft : undefined
+}
+
 describe("beadsOutcomeOf の metadata", () => {
+  it("draft が Y なら draft、無いか Y 以外なら draft でない", () => {
+    expect(draftOf({ metadata: { draft: "Y" } })).toBe(true)
+    expect(draftOf({ metadata: {} })).toBe(false)
+    expect(draftOf({ metadata: { draft: "N" } })).toBe(false)
+  })
+
   it("difficulty と loopable を読む", () => {
     expect(attributesOf({ metadata: { difficulty: "sonnet", loopable: "Y" } })).toMatchObject({
       difficulty: "sonnet",

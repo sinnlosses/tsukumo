@@ -99,7 +99,7 @@ export function useTaskBoard(
         : {
             kind: "open",
             taskId: confirmingId,
-            held: byId.get(confirmingId)?.state.kind === "hold",
+            request: { kind: "start", held: byId.get(confirmingId)?.state.kind === "hold" },
           },
     onClose: close,
     onQueryChange: (nextQuery) => {

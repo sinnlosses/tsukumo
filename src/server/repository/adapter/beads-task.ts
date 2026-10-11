@@ -58,7 +58,7 @@ function taskSummaryItemOfBeadsIssue(
   return {
     id: issue.id,
     summary: issue.title,
-    status: TASK_STATUS_OF_BEADS_STATUS.get(issue.status) ?? issue.status,
+    status: taskStatusOf(issue),
     dependencies: issue.blockedBy,
     waitingFor:
       issue.status === CLOSED_STATUS ? [] : issue.blockedBy.filter((id) => unfinished.has(id)),
@@ -68,6 +68,14 @@ function taskSummaryItemOfBeadsIssue(
     body: bodyOfBeadsIssue(issue),
     location: locationOfBeadsIssue(issue),
   }
+}
+
+/** ドラフトの印は、着手前（`open`・`deferred`）の課題でだけ状態になる。 */
+function taskStatusOf(issue: BeadsIssue): string {
+  if (issue.draft && (issue.status === "open" || issue.status === "deferred")) {
+    return "draft"
+  }
+  return TASK_STATUS_OF_BEADS_STATUS.get(issue.status) ?? issue.status
 }
 
 /** 課題の `external_ref` が `https://` で始まる URL のときだけそれを置き場所にする。 */

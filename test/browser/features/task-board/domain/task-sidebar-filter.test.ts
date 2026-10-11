@@ -26,16 +26,18 @@ const TASKS: readonly TaskSummaryItem[] = [
   taskOf("X-003", "done"),
   taskOf("X-004", "todo"),
   taskOf("X-005", "archived"),
+  taskOf("X-006", "draft"),
 ]
 
 describe("filterTasksForSidebar", () => {
-  it("未完了と完了で全件を done かどうかで分け、想定外の status は未完了に入る", () => {
+  it("未完了・ドラフト・完了で全件を分け、想定外の status は未完了に入り、ドラフトは未完了に入らない", () => {
     expect(filterTasksForSidebar(TASKS, "open").map((task) => task.id)).toEqual([
       "X-001",
       "X-002",
       "X-004",
       "X-005",
     ])
+    expect(filterTasksForSidebar(TASKS, "draft").map((task) => task.id)).toEqual(["X-006"])
     expect(filterTasksForSidebar(TASKS, "done").map((task) => task.id)).toEqual(["X-003"])
   })
 })

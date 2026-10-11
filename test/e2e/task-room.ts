@@ -26,7 +26,7 @@ const CLOSED_AT = "2026-01-14T12:00:00Z"
 type TaskFixture = {
   readonly id: string
   readonly summary: string
-  readonly status: "todo" | "doing" | "done" | "hold"
+  readonly status: "todo" | "doing" | "done" | "hold" | "draft"
   readonly dependencies: readonly string[]
   readonly description: string
   readonly acceptance: string
@@ -95,10 +95,20 @@ function beadsIssueOf(fixture: TaskFixture, index: number): Readonly<Record<stri
     description: fixture.description,
     acceptance_criteria: fixture.acceptance,
     notes: fixture.notes,
-    ...(fixture.difficulty === undefined && fixture.loopable === undefined
+    ...(fixture.difficulty === undefined && fixture.loopable === undefined && !isDraft(fixture)
       ? {}
-      : { metadata: { difficulty: fixture.difficulty, loopable: fixture.loopable } }),
+      : {
+          metadata: {
+            difficulty: fixture.difficulty,
+            loopable: fixture.loopable,
+            ...(isDraft(fixture) ? { draft: "Y" } : {}),
+          },
+        }),
   }
+}
+
+function isDraft(fixture: TaskFixture): boolean {
+  return fixture.status === "draft"
 }
 
 const BEADS_STATUS = {
@@ -106,6 +116,7 @@ const BEADS_STATUS = {
   doing: "in_progress",
   done: "closed",
   hold: "deferred",
+  draft: "deferred",
 } as const satisfies Record<TaskFixture["status"], string>
 
 export async function openTaskListRoom(
@@ -117,6 +128,21 @@ export async function openTaskListRoom(
   await placeTasks(room, [
     task("t-001", "架空のタスク（未着手）", "todo"),
     task("t-002", "架空のタスク（完了）", "done"),
+  ])
+  return room
+}
+
+/** 上と同じ2件に、ドラフトの1件を加える。 */
+export async function openTaskListRoomWithDraft(
+  run: ScenarioRun,
+  scenario: string,
+  domRoots: readonly DomRootName[],
+): Promise<ScenarioRoom> {
+  const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
+  await placeTasks(room, [
+    task("t-001", "架空のタスク（未着手）", "todo"),
+    task("t-002", "架空のタスク（完了）", "done"),
+    task("t-003", "架空のタスク（ドラフト）", "draft"),
   ])
   return room
 }

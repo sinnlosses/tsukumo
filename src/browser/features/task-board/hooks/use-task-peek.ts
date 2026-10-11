@@ -9,13 +9,19 @@
 
 import { useRef, useState, type KeyboardEvent, type RefObject } from "react"
 
+import type { TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
 import { useDismissSignal, type DismissCause } from "../../../hooks/use-dismiss-signal.ts"
 import { useTaskBoardRequest } from "../../../stores/task-board-request.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 
+/** 開いている確認。`request` のあいだ、確認の `<dialog>` が窓の中に組み立てられる。 */
+export type TaskPeekConfirm =
+  | { readonly kind: "none" }
+  | { readonly kind: "request"; readonly request: TaskRequest }
+
 export type TaskPeekState =
   | { readonly kind: "closed" }
-  | { readonly kind: "open"; readonly id: string; readonly confirming: boolean }
+  | { readonly kind: "open"; readonly id: string; readonly confirm: TaskPeekConfirm }
 
 export type TaskPeek = {
   /** 行と窓をまとめる器。この中の `pointerdown` では閉じない。 */
@@ -32,8 +38,8 @@ export type TaskPeekControl = {
   readonly onClose: () => void
   /** 「全文を開く」と本文中の ID。タスクのモーダルをそのタスクを選んで開き、窓は閉じる。 */
   readonly onOpenFull: (id: string) => void
-  /** 「これを始める」。 */
-  readonly onStart: () => void
+  /** 「これを始める」「計画する」「却下する」。確認を重ねる。 */
+  readonly onRequest: (request: TaskRequest) => void
   readonly onConfirmClose: (outcome: TaskRunConfirmOutcome) => void
 }
 
@@ -77,7 +83,7 @@ export function useTaskPeek(shownIds: readonly string[]): TaskPeek {
   }
 
   useDismissSignal({
-    open: state.kind === "open" && !state.confirming,
+    open: state.kind === "open" && state.confirm.kind === "none",
     rootRef,
     onDismiss,
   })
@@ -85,7 +91,7 @@ export function useTaskPeek(shownIds: readonly string[]): TaskPeek {
   const control: TaskPeekControl = {
     state,
     onKeyDown: (event) => {
-      if (state.kind !== "open" || state.confirming) {
+      if (state.kind !== "open" || state.confirm.kind === "request") {
         return
       }
       if (event.nativeEvent.isComposing || event.metaKey || event.ctrlKey || event.altKey) {
@@ -101,13 +107,13 @@ export function useTaskPeek(shownIds: readonly string[]): TaskPeek {
         return
       }
       focusRow(next)
-      setState({ kind: "open", id: next, confirming: false })
+      setState({ kind: "open", id: next, confirm: { kind: "none" } })
     },
     onToggle: (id) => {
       setState(
         state.kind === "open" && state.id === id
           ? { kind: "closed" }
-          : { kind: "open", id, confirming: false },
+          : { kind: "open", id, confirm: { kind: "none" } },
       )
     },
     onClose: closeToRow,
@@ -115,9 +121,9 @@ export function useTaskPeek(shownIds: readonly string[]): TaskPeek {
       setState({ kind: "closed" })
       openTask(id)
     },
-    onStart: () => {
+    onRequest: (request) => {
       if (state.kind === "open") {
-        setState({ ...state, confirming: true })
+        setState({ ...state, confirm: { kind: "request", request } })
       }
     },
     onConfirmClose: (outcome) => {
@@ -125,7 +131,7 @@ export function useTaskPeek(shownIds: readonly string[]): TaskPeek {
         return
       }
       focusRow(state.id)
-      setState(outcome === "sent" ? { kind: "closed" } : { ...state, confirming: false })
+      setState(outcome === "sent" ? { kind: "closed" } : { ...state, confirm: { kind: "none" } })
     },
   }
   return { rootRef, control }

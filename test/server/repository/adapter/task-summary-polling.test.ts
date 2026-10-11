@@ -29,6 +29,7 @@ const FICTIONAL_BEADS_ISSUE: BeadsIssue = {
   labels: [],
   difficulty: undefined,
   loopable: undefined,
+  draft: false,
   createdAtEpochMilliseconds: 0,
   closedAtEpochMilliseconds: undefined,
   description: "",

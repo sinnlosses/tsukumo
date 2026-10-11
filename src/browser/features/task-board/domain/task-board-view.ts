@@ -1,5 +1,6 @@
 // `<TaskBoard>`（タスクのモーダル）が画面に出す形。フックが畳み、presenter と部品が `kind` で出し分けて置く。
 
+import type { TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
 import type {
   TaskDifficulty,
   TaskLocation,
@@ -8,7 +9,7 @@ import type {
 import type { CodeSpanPart } from "../../../domain/code-span.ts"
 import type { TaskRunConfirmOutcome } from "./task-run-confirm-outcome.ts"
 
-export type TaskStateKind = "ready" | "blocked" | "hold" | "doing" | "done" | "other"
+export type TaskStateKind = "ready" | "blocked" | "hold" | "draft" | "doing" | "done" | "other"
 
 /** 状態の言い方。一覧の行・詳細の情報の表・依存の札で同じものを出す。印の形は `kind` で選ぶ。 */
 export type TaskStateView = {
@@ -29,7 +30,7 @@ export type TaskBoardRow = {
   readonly outOfFilter: boolean
 }
 
-export type TaskBoardFilter = "all" | "ready" | "blocked" | "hold" | "doing" | "done"
+export type TaskBoardFilter = "all" | "ready" | "blocked" | "hold" | "draft" | "doing" | "done"
 
 export type TaskBoardFilterChip = {
   readonly filter: TaskBoardFilter
@@ -117,7 +118,7 @@ export type TaskBoardConfirm =
   | {
       readonly kind: "open"
       readonly taskId: string
-      readonly held: boolean
+      readonly request: TaskRequest
     }
 
 /** `onKeyDown` がフックの中で読む分だけの、キー入力の形（React の `KeyboardEvent` はそのまま渡せる）。 */

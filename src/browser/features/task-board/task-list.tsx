@@ -27,6 +27,7 @@ import {
   taskPeekDomId,
   taskRowDomId,
   useTaskPeek,
+  type TaskPeekConfirm,
   type TaskPeekControl,
 } from "./hooks/use-task-peek.ts"
 import styles from "./task-board.module.css"
@@ -133,14 +134,21 @@ type PeekContext = {
   readonly knownIds: ReadonlySet<string>
 }
 
+function peekRunOf(task: TaskSummaryItem, confirm: TaskPeekConfirm): TaskPeekRun {
+  if (task.status === "draft") {
+    return { kind: "draft", confirm }
+  }
+  return isTaskRequestable(task)
+    ? { kind: "available", held: task.status === "hold", confirm }
+    : { kind: "none" }
+}
+
 function peekOf(task: TaskSummaryItem, context: PeekContext): TaskItemPeek {
   const { peek } = context
   if (peek.state.kind !== "open" || peek.state.id !== task.id) {
     return { kind: "closed" }
   }
-  const run: TaskPeekRun = isTaskRequestable(task)
-    ? { kind: "available", held: task.status === "hold", confirming: peek.state.confirming }
-    : { kind: "none" }
+  const run = peekRunOf(task, peek.state.confirm)
   const domId = taskPeekDomId(task.id)
   return {
     kind: "open",
@@ -154,7 +162,7 @@ function peekOf(task: TaskSummaryItem, context: PeekContext): TaskItemPeek {
         knownIds={context.knownIds}
         onClose={peek.onClose}
         onOpenFull={peek.onOpenFull}
-        onStart={peek.onStart}
+        onRequest={peek.onRequest}
         onConfirmClose={peek.onConfirmClose}
       />
     ),

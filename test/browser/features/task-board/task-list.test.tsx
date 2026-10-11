@@ -141,6 +141,20 @@ describe("taskList", () => {
     expect(screen.getByRole("listitem").querySelector(".task-mark-other")).not.toBeNull()
   })
 
+  it("ドラフトは破線の丸の印で出て、ドラフトで絞ると他の行は消え、todo の印は変わらない", () => {
+    const draft: TaskSummaryItem = { ...TASKS[0]!, id: "X-009", status: "draft" }
+    const { container, rerender } = render(
+      <TaskList tasks={known([...TASKS, draft])} selectedStatus="all" />,
+    )
+
+    expect(container.querySelector(".task-mark-draft")).not.toBeNull()
+    expect(container.querySelectorAll(".task-mark-todo")).toHaveLength(1)
+
+    rerender(<TaskList tasks={known([...TASKS, draft])} selectedStatus="draft" />)
+    expect(screen.getAllByRole("listitem")).toHaveLength(1)
+    expect(screen.getByText("X-009")).toBeDefined()
+  })
+
   it("絞った結果が0件のときは選んだ状態の名前を添えた一言を出す", () => {
     const doneOnly = TASKS.filter((task) => task.status === "done")
     render(<TaskList tasks={known(doneOnly)} selectedStatus="open" />)

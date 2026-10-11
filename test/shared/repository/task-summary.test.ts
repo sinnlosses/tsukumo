@@ -22,6 +22,10 @@ describe("taskReadiness", () => {
     expect(taskReadiness(item("X-001", "hold", []))).toBeUndefined()
   })
 
+  it("draft は判定しない", () => {
+    expect(taskReadiness(item("X-004", "draft", []))).toBeUndefined()
+  })
+
   it("済んでいない依存が無ければ着手できる", () => {
     expect(taskReadiness(item("X-002", "todo", []))).toEqual({ kind: "ready" })
   })
