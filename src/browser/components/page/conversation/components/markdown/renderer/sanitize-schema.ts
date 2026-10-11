@@ -30,7 +30,7 @@ import { CODE_FILE_NAME_PROPERTY } from "./code-file-name.ts"
  * - `small` / `kbd` / `samp` / `figure` / `figcaption` のように、既定のままだとタイプスケールや配色から外れるので、report-notation.module.css の `.detail-block` 配下で当て直したもの
  *
  * `mark` は通さない。
- * 既定の黄地に黒文字はこの配色から浮くうえ、当て直すと強調の道具が `strong` / `badge` と並んで3通りになる。タグが落ちても中の文字は残る。
+ * 既定の黄地に黒文字はこの配色から浮くうえ、当て直すと、地付きの強調を担う `strong` と `badge` に並んで強調の道具が3通りになる。タグが落ちても中の文字は残る。
  *
  * `h2` / `h3` は記法が勧める見出し（`##` / `###`）が hast に変換されたときのタグ名（`h1` は、記法が「レポートの見出しに `#` は使わない」と決めているため通さない）。
  * DOM に出るのは実際には `h4` / `h5`（`SectionHeading` / `SubHeading` が写す）。

@@ -1158,6 +1158,14 @@
 .detail-block > :is(p, ul, ol) {
   margin: var(--report-block-gap) 0;
 }
+/* 地付きの強調は地の文の段落の直下だけ。
+   表・箇条書き・`stats`・`note` の中の `strong` は `.detail-block` の直の子の `p` の下にならないので掛からない。 */
+.detail-block > p :is(strong, b) {
+  padding: 0 0.25em;
+  border-radius: 0.2em;
+  background: color-mix(in srgb, var(--surface), var(--state-info) 10%);
+  box-decoration-break: clone;
+}
 /* 見出しの直後の塊は、上の margin を見出しのあきに差し替える（塊のあきのほうが大きく、相殺で見出しのあきが消えるため）。
    変数で差し替えるのは、塊ごとの規則のほうが詳細度が高く、margin を直に書いても負けるから。 */
 .detail-block > :is(h4, h5) + * {
