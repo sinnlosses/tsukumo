@@ -134,6 +134,8 @@ enum・キャラクターパックの読み込み）は起こし直さないと�
 同じ形で、作業ツリーの中のファイルへ書き込む Bash のコマンド（`sed -i`・`perl -i`、
 リダイレクトと `tee`、作業ツリーの外からの `cp` / `mv`、Python・node のコードでの書き込み）も
 PreToolUse hook（`scripts/deny-sed-in-place.ts`）が拒否する。ファイルの書き換えは Edit / Write で行う。
+`tw edit --body-file` に渡す下書きは、作業ツリーの外のパス（`/tmp/<名前>/plan.md`）に Write で書いて
+`--body-file` でそのパスを渡すか、`--body-file -` へ heredoc を渡す。作業ツリーの中のパスには書かない。
 `pnpm`・`git`・作業ツリーの中のスクリプトのように、ツールの中で書くものは止めない。
 
 委譲先（サブエージェント）が `tw verify`（検査の全段。3〜4分）を `run_in_background: true` で

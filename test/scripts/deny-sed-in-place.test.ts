@@ -216,6 +216,12 @@ describe("ファイルを書き換えるコマンドを拒否する hook", () =>
     expect(result.stderr).toContain("Write")
   })
 
+  test("止めるときは tw edit --body-file の下書きの渡し方を案内する", async () => {
+    const result = await runHook("sed -i 's/a/b/' file.ts")
+    expect(result.stderr).toContain("--body-file")
+    expect(result.stderr).toContain("/tmp")
+  })
+
   test("止める形でなければ終了コード 0 で通す", async () => {
     expect((await runHook("sed -n '1,5p' file.ts")).exitCode).toBe(0)
   })
