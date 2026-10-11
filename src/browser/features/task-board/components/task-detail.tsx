@@ -17,6 +17,7 @@ import type {
 } from "../domain/task-board-view.ts"
 import taskBoardStyles from "../task-board.module.css"
 import { TaskBody } from "./deferred-task-body.tsx"
+import { TaskAttribute } from "./task-attribute.tsx"
 import styles from "./task-detail.module.css"
 import { TaskState } from "./task-state.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
@@ -45,6 +46,28 @@ export function TaskDetail(props: {
         <dd>
           <TaskState state={detail.state} />
         </dd>
+        {detail.difficulty !== undefined && (
+          <>
+            <dt>難しさ</dt>
+            <dd>
+              <TaskAttribute
+                attribute={{ kind: "difficulty", value: detail.difficulty }}
+                scope="detail"
+              />
+            </dd>
+          </>
+        )}
+        {detail.loopable !== undefined && (
+          <>
+            <dt>ループ</dt>
+            <dd>
+              <TaskAttribute
+                attribute={{ kind: "loopable", value: detail.loopable }}
+                scope="detail"
+              />
+            </dd>
+          </>
+        )}
         {detail.labels.length > 0 && (
           <>
             <dt>ラベル</dt>

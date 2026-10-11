@@ -6,6 +6,7 @@ import type { ReactElement } from "react"
 import { Text } from "../../../components/ui/text/text.tsx"
 import type { TaskBoardRow } from "../domain/task-board-view.ts"
 import taskBoardStyles from "../task-board.module.css"
+import { TaskRowAttributes } from "./task-attribute.tsx"
 import styles from "./task-board-list.module.css"
 import { TaskState } from "./task-state.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
@@ -63,6 +64,9 @@ function TaskBoardOption(props: {
       <span className={taskBoardStyles["task-board-option-head"]}>
         <span className={styles["task-board-option-id"]}>{row.id}</span>
         <TaskState state={row.state} />
+        <span className={styles["task-board-option-attributes"]}>
+          <TaskRowAttributes difficulty={row.difficulty} loopable={row.loopable} />
+        </span>
       </span>
       <span className={styles["task-board-option-summary"]}>
         <TaskSummaryText parts={row.summary} />

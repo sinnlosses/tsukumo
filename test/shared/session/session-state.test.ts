@@ -850,6 +850,8 @@ describe("applySessionEvent", () => {
         dependencies: [],
         waitingFor: [],
         labels: [],
+        difficulty: undefined,
+        loopable: undefined,
         body: "",
         location: { kind: "none" },
       },

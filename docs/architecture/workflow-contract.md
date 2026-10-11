@@ -111,13 +111,15 @@ tsukumo は推し量らない。
 
 ## Beads の欄
 
-**タスクは Beads の組み込みの欄だけから作る。** 写すのは Beads の読み口（`server/**/adapter/`）の1か所で、shared・画面・各機能の core は
+**タスクは Beads の組み込みの欄と、metadata の2つの属性（`difficulty`・`loopable`）だけから作る。** 写すのは Beads の読み口（`server/**/adapter/`）の1か所で、shared・画面・各機能の core は
 一般の形（`TaskSummaryItem`・`DoneTask`）だけを扱う。
 
 - ID（そのまま）・題（`title`）・依存（`blocks` の依存先）
 - 状態: `open` → todo・`in_progress` → doing・`deferred` → hold・`closed` → done。ほかの値は生のまま出す
 - 作った時刻（`created_at`）・閉じた時刻（`closed_at`）・置き場所（`https://` で始まる `external_ref`）
-- `labels`: 字のまま並べるだけで、意味は解釈せず、並べ替え・絞り込み・色分けに使わない
+- metadata の `difficulty`（`haiku`・`sonnet`・`opus`）・`loopable`（`Y`・`N`）: 板に出すだけで、おすすめの選びには使わない。
+  無い・表に無い値は「無い」として読み、label からは読まない
+- `labels`: 字のまま並べるだけで、意味は解釈せず、並べ替え・絞り込み・色分けに使わない。属性とは別の欄
 - 本文: `description`・`acceptance_criteria`・`notes` を Beads の欄の順に、tsukumo が決めた見出しで並べる
 
 読まないもの: 担当（`assignee`）、スキルが足した独自の状態・ラベルの意味、本文の節の書式（`## やること` の段など）、ID の書き換え。

@@ -25,6 +25,8 @@ function taskOf(id: string, overrides: Partial<TaskSummaryItem>): TaskSummaryIte
     dependencies: [],
     waitingFor: [],
     labels: [],
+    difficulty: undefined,
+    loopable: undefined,
     body: "",
     location: { kind: "none" },
     ...overrides,
@@ -160,6 +162,24 @@ describe("boardContent", () => {
     expect(detail.dependents.map((card) => card.id)).toEqual(["X-003"])
     expect(opener).toEqual({ kind: "issue", url: "https://example.invalid/issues/2" })
     expect(run).toEqual({ kind: "unavailable", reason: "待ちが終わると頼めます" })
+  })
+
+  it("詳細に属性が写る", () => {
+    const tasks = known([
+      taskOf("X-001", { difficulty: "haiku", loopable: "N" }),
+      taskOf("X-002", {}),
+    ])
+    const attributesOf = (id: string): readonly unknown[] => {
+      const content = contentOf(tasks, id)
+      return content.kind === "known" && content.selection.kind === "some"
+        ? [content.selection.detail.difficulty, content.selection.detail.loopable]
+        : []
+    }
+
+    expect([attributesOf("X-001"), attributesOf("X-002")]).toEqual([
+      ["haiku", "N"],
+      [undefined, undefined],
+    ])
   })
 
   it("詳細のラベルは labels の字のまま、無ければ空", () => {

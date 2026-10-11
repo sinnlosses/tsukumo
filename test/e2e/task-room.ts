@@ -2,6 +2,7 @@ import { mkdirSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
 import { FAKE_BEADS_ISSUES_PATH } from "../../src/server/repository/adapter/fake-beads.ts"
+import type { TaskDifficulty, TaskLoopable } from "../../src/shared/repository/task-summary.ts"
 import type { DomRootName, ScenarioOptions, ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧とタスクのモーダルの E2E の足場（docs/architecture/testing.md「E2E のシナリオの一覧」）。
@@ -30,6 +31,8 @@ type TaskFixture = {
   readonly description: string
   readonly acceptance: string
   readonly notes: string
+  readonly difficulty: TaskDifficulty | undefined
+  readonly loopable: TaskLoopable | undefined
 }
 
 /** 本文を指定しないタスクの本文（`## 目的・背景` の中身）。 */
@@ -50,6 +53,8 @@ function task(
     description: DEFAULT_DESCRIPTION,
     acceptance: "",
     notes: "",
+    difficulty: undefined,
+    loopable: undefined,
   }
 }
 
@@ -90,6 +95,9 @@ function beadsIssueOf(fixture: TaskFixture, index: number): Readonly<Record<stri
     description: fixture.description,
     acceptance_criteria: fixture.acceptance,
     notes: fixture.notes,
+    ...(fixture.difficulty === undefined && fixture.loopable === undefined
+      ? {}
+      : { metadata: { difficulty: fixture.difficulty, loopable: fixture.loopable } }),
   }
 }
 
@@ -164,10 +172,16 @@ export async function openTaskBoardRoom(
       description: RICH_DESCRIPTION,
       acceptance: RICH_ACCEPTANCE,
       notes: RICH_NOTES,
+      difficulty: "sonnet",
+      loopable: "Y",
     },
     task("t-002", "架空のタスク（完了）", "done"),
     task("t-003", "架空のタスク（進行中）", "doing"),
-    task("t-004", "架空のタスク（待ち）", "todo", ["t-001"]),
+    {
+      ...task("t-004", "架空のタスク（待ち）", "todo", ["t-001"]),
+      difficulty: "opus",
+      loopable: "N",
+    },
     {
       ...task("t-005", "架空のタスク（保留）", "hold", ["t-001"]),
       description: ["## 目的・背景", "", "架空の保留の理由を本文にだけ書く。"].join("\n"),

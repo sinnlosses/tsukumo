@@ -37,6 +37,8 @@ function task(id: string, status: string, waitingFor: readonly string[]): TaskSu
     dependencies: waitingFor,
     waitingFor,
     labels: [],
+    difficulty: undefined,
+    loopable: undefined,
     body: "",
     location: { kind: "none" },
   }

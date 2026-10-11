@@ -152,6 +152,15 @@
                   }
                 },
                 "着手できる",
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "data-attribute": "difficulty"
+                  },
+                  "children": [
+                    "sonnet"
+                  ]
+                },
                 "架空のタスク（",
                 {
                   "tag": "code",
@@ -213,6 +222,24 @@
                   }
                 },
                 "待ち t-001",
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "data-attribute": "difficulty"
+                  },
+                  "children": [
+                    "opus"
+                  ]
+                },
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "data-attribute": "loopable"
+                  },
+                  "children": [
+                    "loop:N"
+                  ]
+                },
                 "架空のタスク（待ち）"
               ]
             },
@@ -282,6 +309,46 @@
                       }
                     },
                     "着手できる"
+                  ]
+                },
+                {
+                  "tag": "dt",
+                  "children": [
+                    "難しさ"
+                  ]
+                },
+                {
+                  "tag": "dd",
+                  "children": [
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "data-attribute": "difficulty"
+                      },
+                      "children": [
+                        "sonnet"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "dt",
+                  "children": [
+                    "ループ"
+                  ]
+                },
+                {
+                  "tag": "dd",
+                  "children": [
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "data-attribute": "loopable"
+                      },
+                      "children": [
+                        "Y"
+                      ]
+                    }
                   ]
                 }
               ]

@@ -122,7 +122,7 @@ describe("watchTaskSummary", () => {
     async () => {
       const repository = await initBeadsIssues(root(), [
         openIssue("t-010", "未着手", {
-          labels: ["difficulty:opus"],
+          labels: ["任意のタグ"],
           created_at: "2026-01-13T00:00:00Z",
         }),
         openIssue("t-002", "保留", { status: "deferred" }),
@@ -138,7 +138,7 @@ describe("watchTaskSummary", () => {
 
       expect(changes).toEqual([
         known(
-          { ...plainTodo("t-010", "未着手"), labels: ["difficulty:opus"] },
+          { ...plainTodo("t-010", "未着手"), labels: ["任意のタグ"] },
           { ...plainTodo("t-001", "済み"), status: "done" },
           { ...plainTodo("t-002", "保留"), status: "hold" },
           {

@@ -47,6 +47,8 @@
             "dependencies": [],
             "waitingFor": [],
             "labels": [],
+            "difficulty": "sonnet",
+            "loopable": "Y",
             "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。`inline code` と **強調** を含む。\n\n## 参考情報\n\n| 項目 | 値 |\n| --- | --- |\n| 甲 | 1 |\n\n```sh\necho 架空\n```\n\n<b>生の HTML は字のまま出る</b>\n\n[外のリンク](https://example.invalid/foo) と [相対のリンク](foo/bar.md)\n\n## 受け入れ条件\n\n- [ ] まだの条件\n- [x] 済んだ条件\n\n## メモ\n\n1. 一つ目の手順\n2. 二つ目の手順\n\n### 段の見出し\n",
             "location": {
               "kind": "none"
@@ -87,6 +89,8 @@
               "t-001"
             ],
             "labels": [],
+            "difficulty": "opus",
+            "loopable": "N",
             "body": "## 目的・背景\n\n架空の本文で、実物のタスクではない。\n",
             "location": {
               "kind": "none"

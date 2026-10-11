@@ -2,6 +2,12 @@
 // タスク一覧は進捗管理のファイルで、利用者との会話内容とは別物。ここは会話の内容を一切扱わない。
 // ここはファイルI/Oを持たない。
 
+export const TASK_DIFFICULTIES = ["haiku", "sonnet", "opus"] as const
+export type TaskDifficulty = (typeof TASK_DIFFICULTIES)[number]
+
+export const TASK_LOOPABLES = ["Y", "N"] as const
+export type TaskLoopable = (typeof TASK_LOOPABLES)[number]
+
 /** タスク一覧1件分。一覧は読み元が並べた順（作った時刻の順）のまま持つ（status ごとにまとめない）。 */
 export type TaskSummaryItem = {
   readonly id: string
@@ -13,8 +19,10 @@ export type TaskSummaryItem = {
    * 済んだタスクでは空。
    */
   readonly waitingFor: readonly string[]
-  /** ラベル（Beads の `labels` の字のまま）。無い課題では空。 */
+  /** ラベル（Beads の `labels` の字のまま）。無い課題では空。属性（下の2欄）とは別。 */
   readonly labels: readonly string[]
+  readonly difficulty: TaskDifficulty | undefined
+  readonly loopable: TaskLoopable | undefined
   /** タスクの本文（Markdown）。本文が無い課題でも空文字列で持つ（`undefined` にしない）。 */
   readonly body: string
   readonly location: TaskLocation

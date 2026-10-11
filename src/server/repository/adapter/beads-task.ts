@@ -1,4 +1,4 @@
-// Beads の課題を、組み込みの欄だけからタスク一般の形（一覧の要約と、終えたタスク）に写す。
+// Beads の課題を、組み込みの欄と metadata の `difficulty`・`loopable` からタスク一般の形（一覧の要約と、終えたタスク）に写す。
 //
 // ここはファイルI/Oも `bd` も持たない。
 
@@ -63,6 +63,8 @@ function taskSummaryItemOfBeadsIssue(
     waitingFor:
       issue.status === CLOSED_STATUS ? [] : issue.blockedBy.filter((id) => unfinished.has(id)),
     labels: issue.labels,
+    difficulty: issue.difficulty,
+    loopable: issue.loopable,
     body: bodyOfBeadsIssue(issue),
     location: locationOfBeadsIssue(issue),
   }

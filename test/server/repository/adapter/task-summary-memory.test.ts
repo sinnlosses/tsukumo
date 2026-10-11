@@ -25,6 +25,8 @@ function item(id: string, overrides: Partial<TaskSummaryItem> = {}): TaskSummary
     dependencies: [],
     waitingFor: [],
     labels: [],
+    difficulty: undefined,
+    loopable: undefined,
     body: "本文",
     location: { kind: "none" },
     ...overrides,
@@ -37,7 +39,9 @@ describe("タスク一覧の記憶", () => {
       item("t-1", {
         dependencies: ["t-2"],
         waitingFor: ["t-2"],
-        labels: ["loopable:Y"],
+        labels: ["任意のタグ"],
+        difficulty: "opus",
+        loopable: "N",
       }),
       item("t-2", { location: { kind: "issue", url: "https://example.test/2" } }),
     ]
@@ -80,7 +84,8 @@ describe("タスク一覧の記憶", () => {
     ["ファイルが無い", undefined],
     ["壊れている", "{ not json"],
     ["版が違う", JSON.stringify({ v: 2, entries: [{ cwd: "/work/a", items: [] }] })],
-    ["形が違う", JSON.stringify({ v: 3, entries: [{ cwd: "/work/a", items: [{ id: 1 }] }] })],
+    ["版が 4（属性を持つ前）", JSON.stringify({ v: 4, entries: [{ cwd: "/work/a", items: [] }] })],
+    ["形が違う", JSON.stringify({ v: 5, entries: [{ cwd: "/work/a", items: [{ id: 1 }] }] })],
   ])("%sときは無いものとして扱う", (_name, content) => {
     if (content !== undefined) {
       writeFileSync(memoryPath(), content)

@@ -5,14 +5,18 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import type { TaskSummaryItem } from "../../../shared/repository/task-summary.ts"
+import {
+  TASK_DIFFICULTIES,
+  TASK_LOOPABLES,
+  type TaskSummaryItem,
+} from "../../../shared/repository/task-summary.ts"
 import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 
 const TASK_SUMMARY_MEMORY_FILE_NAME = "task-summary.json"
 
 /** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける。 */
-const TASK_SUMMARY_MEMORY_FORMAT_VERSION = 4 satisfies number
+const TASK_SUMMARY_MEMORY_FORMAT_VERSION = 5 satisfies number
 
 /** 覚える作業ディレクトリの数。超えたら古いものから落とす。 */
 export const TASK_SUMMARY_MEMORY_LIMIT = 8
@@ -30,6 +34,8 @@ const taskSummaryItemSchema = z.object({
   dependencies: z.array(z.string()),
   waitingFor: z.array(z.string()),
   labels: z.array(z.string()),
+  difficulty: z.enum(TASK_DIFFICULTIES).optional(),
+  loopable: z.enum(TASK_LOOPABLES).optional(),
   body: z.string(),
   location: taskLocationSchema,
 })
@@ -80,6 +86,8 @@ function readEntries(path: string): readonly MemoryEntry[] {
           dependencies: item.dependencies,
           waitingFor: item.waitingFor,
           labels: item.labels,
+          difficulty: item.difficulty,
+          loopable: item.loopable,
           body: item.body,
           location: item.location,
         }) satisfies TaskSummaryItem,

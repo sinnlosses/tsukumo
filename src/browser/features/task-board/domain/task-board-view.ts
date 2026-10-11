@@ -1,6 +1,10 @@
 // `<TaskBoard>`（タスクのモーダル）が画面に出す形。フックが畳み、presenter と部品が `kind` で出し分けて置く。
 
-import type { TaskLocation } from "../../../../shared/repository/task-summary.ts"
+import type {
+  TaskDifficulty,
+  TaskLocation,
+  TaskLoopable,
+} from "../../../../shared/repository/task-summary.ts"
 import type { CodeSpanPart } from "../../../domain/code-span.ts"
 import type { TaskRunConfirmOutcome } from "./task-run-confirm-outcome.ts"
 
@@ -18,6 +22,8 @@ export type TaskBoardRow = {
   readonly optionId: string
   readonly summary: readonly CodeSpanPart[]
   readonly state: TaskStateView
+  readonly difficulty: TaskDifficulty | undefined
+  readonly loopable: TaskLoopable | undefined
   readonly selected: boolean
   /** 絞り込み・検索には当たらないが、飛んだ先として一時的に出している行なら真。 */
   readonly outOfFilter: boolean
@@ -55,6 +61,8 @@ export type TaskBoardDetail = {
   readonly state: TaskStateView
   /** ラベル（Beads の `labels` の字のまま）。無ければ空。 */
   readonly labels: readonly string[]
+  readonly difficulty: TaskDifficulty | undefined
+  readonly loopable: TaskLoopable | undefined
   readonly location: TaskLocation
   readonly dependencies: readonly TaskDependencyCard[]
   /** いまの一覧のうち、このタスクを依存に持つもの。 */

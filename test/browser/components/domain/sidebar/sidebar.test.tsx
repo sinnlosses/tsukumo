@@ -111,6 +111,8 @@ function chipTask(id: string, status: string): TaskSummaryItem {
     dependencies: [],
     waitingFor: [],
     labels: [],
+    difficulty: undefined,
+    loopable: undefined,
     body: "",
     location: { kind: "none" },
   }

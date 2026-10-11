@@ -1,7 +1,7 @@
 // Beads（`bd`）を起こす口。`bd` を起こすのはここだけ（検査の「子プロセスを起こしてよい箇所」の許可はこのファイル）。
 // 起こすのは読むだけの `bd list` で、ネットワークにも出ない。
 //
-// `bd list --json` には作成者（owner）やラベルも入るが、境界で落とす（`BeadsIssue` の欄だけを運ぶ）。
+// `bd list --json` には作成者（owner）なども入るが、境界で落とす（`BeadsIssue` の欄だけを運ぶ）。
 // 本文（description・acceptance_criteria・notes）と `external_ref` はタスクのモーダルの詳細が使うので運ぶ（会話内容ではないが、ログには出さない）。
 //
 // 例外を投げない。`.beads` が無い・`bd` が無いときも `failed`。
@@ -12,6 +12,12 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
+import {
+  TASK_DIFFICULTIES,
+  TASK_LOOPABLES,
+  type TaskDifficulty,
+  type TaskLoopable,
+} from "../../../shared/repository/task-summary.ts"
 import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "./git.ts"
 
 /**
@@ -25,6 +31,10 @@ export type BeadsIssue = {
   /** `blocks` の依存先の Beads ID。 */
   readonly blockedBy: readonly string[]
   readonly labels: readonly string[]
+  /** metadata の `difficulty`。無い・表に無い値は `undefined`。 */
+  readonly difficulty: TaskDifficulty | undefined
+  /** metadata の `loopable`。無い・表に無い値は `undefined`。 */
+  readonly loopable: TaskLoopable | undefined
   readonly createdAtEpochMilliseconds: number
   readonly closedAtEpochMilliseconds: number | undefined
   readonly description: string
@@ -147,6 +157,7 @@ const beadsIssueSchema = z.object({
   status: z.string(),
   dependencies: z.array(z.object({ depends_on_id: z.string(), type: z.string() })).nullish(),
   labels: z.array(z.string()).nullish(),
+  metadata: z.unknown().optional(),
   created_at: z.iso.datetime({ offset: true }),
   closed_at: z.iso.datetime({ offset: true }).nullish(),
   description: z.string().nullish(),
@@ -174,7 +185,14 @@ export function beadsOutcomeOf(stdout: string): BeadsOutcome {
   return { kind: "issues", issues }
 }
 
+const metadataSchema = z.record(z.string(), z.unknown())
+const difficultySchema = z.enum(TASK_DIFFICULTIES)
+const loopableSchema = z.enum(TASK_LOOPABLES)
+
 function beadsIssueOf(issue: z.infer<typeof beadsIssueSchema>): BeadsIssue {
+  const metadata = metadataSchema.safeParse(issue.metadata)
+  const difficulty = difficultySchema.safeParse(metadata.data?.["difficulty"])
+  const loopable = loopableSchema.safeParse(metadata.data?.["loopable"])
   return {
     id: issue.id,
     title: issue.title,
@@ -183,6 +201,8 @@ function beadsIssueOf(issue: z.infer<typeof beadsIssueSchema>): BeadsIssue {
       .filter((dependency) => dependency.type === "blocks")
       .map((dependency) => dependency.depends_on_id),
     labels: issue.labels ?? [],
+    difficulty: difficulty.success ? difficulty.data : undefined,
+    loopable: loopable.success ? loopable.data : undefined,
     createdAtEpochMilliseconds: epochMillisecondsOf(issue.created_at),
     closedAtEpochMilliseconds:
       issue.closed_at === null || issue.closed_at === undefined

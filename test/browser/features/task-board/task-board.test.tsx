@@ -30,6 +30,8 @@ function beadsTask(location: TaskSummaryItem["location"]): TaskSummaryItem {
     dependencies: [],
     waitingFor: [],
     labels: [],
+    difficulty: undefined,
+    loopable: undefined,
     body: "## 目的・背景\n\n架空の本文。\n",
     location,
   }
@@ -77,6 +79,54 @@ describe("タスクのモーダルのラベル", () => {
     renderBoard(beadsTask({ kind: "none" }))
 
     expect(screen.queryByText("ラベル")).toBeNull()
+  })
+})
+
+describe("タスクのモーダルの属性", () => {
+  it("難しさとループをラベルとは別の行に出し、無い課題では行ごと出さない", () => {
+    renderBoard({ ...beadsTask({ kind: "none" }), difficulty: "opus", loopable: "N" })
+
+    expect(screen.getByText("難しさ", { selector: "dt" })).toBeDefined()
+    expect(screen.getByText("opus", { selector: "dd *" })).toBeDefined()
+    expect(screen.getByText("ループ", { selector: "dt" })).toBeDefined()
+    expect(screen.getByText("N", { selector: "dd *" })).toBeDefined()
+    expect(screen.queryByText("ラベル")).toBeNull()
+
+    cleanup()
+    renderBoard(beadsTask({ kind: "none" }))
+
+    expect(screen.queryByText("難しさ")).toBeNull()
+    expect(screen.queryByText("ループ")).toBeNull()
+  })
+})
+
+describe("タスクのモーダルの一覧の行の属性", () => {
+  it("行に難しさを出し、loopable は N のときだけ loop:N と出す。属性の無い行には出さない", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const base = beadsTask({ kind: "none" })
+    render(
+      <TaskBoard
+        tasks={{
+          kind: "known",
+          items: [
+            { ...base, id: "X-021", difficulty: "sonnet", loopable: "Y" },
+            { ...base, id: "X-022", difficulty: "opus", loopable: "N" },
+            { ...base, id: "X-023" },
+          ],
+        }}
+        request={{ kind: "open", focus: { kind: "first" } }}
+        onClose={() => {}}
+      />,
+    )
+
+    const option = (id: string): HTMLElement => screen.getByRole("option", { name: new RegExp(id) })
+    expect(option("X-021").textContent).toContain("sonnet")
+    expect(option("X-021").textContent).not.toContain("loop:")
+    expect(option("X-022").textContent).toContain("opus")
+    expect(option("X-022").textContent).toContain("loop:N")
+    expect(option("X-023").querySelector("[data-attribute]")).toBeNull()
+    const placed = option("X-022").querySelector("[data-attribute]")?.parentElement?.parentElement
+    expect(placed?.className).toContain("task-board-option-attributes")
   })
 })
 
@@ -295,6 +345,8 @@ function selectionTask(id: string, status: string, body: string): TaskSummaryIte
     dependencies: [],
     waitingFor: [],
     labels: [],
+    difficulty: undefined,
+    loopable: undefined,
     body,
     location: { kind: "none" },
   }

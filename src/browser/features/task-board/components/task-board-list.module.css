@@ -38,6 +38,9 @@
 .task-board-option[aria-selected="true"] .task-board-option-id {
   color: var(--ink);
 }
+.task-board-option-attributes {
+  margin-left: auto;
+}
 /* 要約は2行で省略する。 */
 .task-board-option-summary {
   display: -webkit-box;

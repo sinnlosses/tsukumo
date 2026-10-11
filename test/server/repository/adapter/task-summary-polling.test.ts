@@ -27,6 +27,8 @@ const FICTIONAL_BEADS_ISSUE: BeadsIssue = {
   status: "open",
   blockedBy: [],
   labels: [],
+  difficulty: undefined,
+  loopable: undefined,
   createdAtEpochMilliseconds: 0,
   closedAtEpochMilliseconds: undefined,
   description: "",

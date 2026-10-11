@@ -11,6 +11,8 @@ function issue(overrides: Partial<BeadsIssue> & Pick<BeadsIssue, "id" | "status"
     title: `架空の${overrides.id}`,
     blockedBy: [],
     labels: [],
+    difficulty: undefined,
+    loopable: undefined,
     createdAtEpochMilliseconds: 0,
     closedAtEpochMilliseconds: undefined,
     description: "",
@@ -54,7 +56,9 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
         status: "in_progress",
         title: "架空の題",
         blockedBy: ["gh-3", "t-a1b2"],
-        labels: ["loopable:Y", "difficulty:sonnet"],
+        labels: ["任意のタグ"],
+        difficulty: "sonnet",
+        loopable: "Y",
       }),
     ])
 
@@ -64,9 +68,23 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
       status: "doing",
       dependencies: ["gh-3", "t-a1b2"],
       waitingFor: [],
-      labels: ["loopable:Y", "difficulty:sonnet"],
+      labels: ["任意のタグ"],
+      difficulty: "sonnet",
+      loopable: "Y",
       body: "",
       location: { kind: "none" },
+    })
+  })
+
+  it("属性が無い課題でも labels は字のまま出し、label から属性を作らない", () => {
+    const [item] = taskSummaryItemsOfBeadsIssues([
+      issue({ id: "gh-13", status: "open", labels: ["difficulty:opus", "loopable:N"] }),
+    ])
+
+    expect(item).toMatchObject({
+      labels: ["difficulty:opus", "loopable:N"],
+      difficulty: undefined,
+      loopable: undefined,
     })
   })
 

@@ -1,0 +1,19 @@
+.task-attribute-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.task-attribute {
+  flex: none;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  white-space: nowrap;
+}
+.task-attribute-manual {
+  flex: none;
+  padding: 0 0.4rem;
+  border: 1px solid var(--state-warn);
+  border-radius: 6px;
+  color: color-mix(in srgb, var(--state-warn) 60%, var(--ink));
+}
