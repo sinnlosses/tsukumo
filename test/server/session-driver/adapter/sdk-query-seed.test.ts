@@ -10,6 +10,7 @@ import {
 } from "../../../../src/server/report/core/report-tool.ts"
 import {
   buildQuerySeedOptions,
+  handbackNoteHooks,
   preToolUseHooks,
   stopHooks,
 } from "../../../../src/server/session-driver/adapter/sdk-query-seed.ts"
@@ -253,6 +254,72 @@ describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツ�
   it("サブエージェント内の呼び出しと、すでに背景の呼び出しは何も返さない", async () => {
     expect(await runPreToolUse("Agent", { prompt: "手順" }, "sub-1")).toEqual({})
     expect(await runPreToolUse("Agent", { run_in_background: true })).toEqual({})
+  })
+})
+
+describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", () => {
+  const HANDBACK_PROMPT =
+    '<agent-message from="架空の委譲先">\n[架空の前置き]\n  段 1/2 | 架空の返却。'
+
+  async function runUserPromptSubmit(
+    takeHandbackNote: () => string,
+    prompt: string,
+    agentId?: string,
+  ): Promise<unknown> {
+    const callback = handbackNoteHooks(takeHandbackNote).UserPromptSubmit?.[0]?.hooks[0]
+    expect(callback).toBeDefined()
+    return callback?.(
+      {
+        session_id: "s-1",
+        transcript_path: "/tmp/tsukumo-test/fake.jsonl",
+        cwd: "/tmp/tsukumo-test",
+        hook_event_name: "UserPromptSubmit",
+        prompt,
+        ...(agentId === undefined ? {} : { agent_id: agentId }),
+      },
+      undefined,
+      { signal: new AbortController().signal },
+    )
+  }
+
+  const startedReview = () => {
+    const review = createCallReview()
+    review.pass({ kind: "request", text: "架空の依頼", images: [] })
+    review.judgeWorkPlan({
+      phases: ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"],
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+      delegatedRange: { first: 1, count: 2 },
+    })
+    review.pass({
+      kind: "delegate-returned",
+      handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
+    })
+    return review
+  }
+
+  it("メインの返却の入力に、済んだ帯の段と帯の位置の注記を additionalContext で1回だけ添える", async () => {
+    const review = startedReview()
+
+    expect(await runUserPromptSubmit(review.takeHandbackNote, HANDBACK_PROMPT)).toEqual({
+      hookSpecificOutput: {
+        hookEventName: "UserPromptSubmit",
+        additionalContext:
+          "tsukumo の注記（委譲先の返却の本文ではない）:返却 `段 1/2` で帯の 2/4 架空の実装A が済んだ。" +
+          "帯の今の段は 3/4 架空の実装B。委譲先の段 1〜2 は帯の 2〜3 番目（委譲先の段 n は帯の 1 + n 番目）。",
+      },
+    })
+    expect(await runUserPromptSubmit(review.takeHandbackNote, HANDBACK_PROMPT)).toEqual({})
+  })
+
+  it("返却でない入力とサブエージェントの中の入力では何も返さず、注記を取り出さない", async () => {
+    const review = startedReview()
+
+    expect(await runUserPromptSubmit(review.takeHandbackNote, "架空の依頼")).toEqual({})
+    expect(await runUserPromptSubmit(review.takeHandbackNote, HANDBACK_PROMPT, "agent-1")).toEqual(
+      {},
+    )
+    expect(review.takeHandbackNote()).toContain("返却 `段 1/2`")
   })
 })
 

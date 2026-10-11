@@ -545,6 +545,24 @@ describe("toRestoredEvents（委譲の返却）", () => {
     ])
   })
 
+  it("返却のあとに残るフックの注記の添付は、依頼にも2つ目の返却にもしない", () => {
+    const note = {
+      type: "attachment",
+      attachment: {
+        type: "hook_additional_context",
+        content: ["tsukumo の注記（委譲先の返却の本文ではない）:架空の注記。"],
+        hookName: "UserPromptSubmit",
+        hookEvent: "UserPromptSubmit",
+      },
+    }
+
+    expect(
+      eventsOf([userMessage("架空の依頼"), handbackMessage(["段 1/2 | 架空の要約。"]), note]).map(
+        ({ kind }) => kind,
+      ),
+    ).toEqual(["request", "delegate-returned", "turn-finished"])
+  })
+
   it("handback の印の無い伝言と、本文の読めない返却の扱い", () => {
     const notHandback = Object.assign({}, handbackMessage(["段 1/2 | 架空"]), {
       origin: { kind: "peer", from: "架空のID", body: "x\n  段 1/2 | 架空" },

@@ -354,6 +354,21 @@ export function phasePosition(phase: Extract<WorkPhase, { readonly kind: "phase"
   return `${phase.indexes.map((index) => String(index + 1)).join("·")}/${String(phase.count)}`
 }
 
+/**
+ * 委譲の返却で済む帯の段。帯を動かさない返却（{@link advancedByReturn} が `plan` をそのまま返す場合）では `unmoved`。
+ */
+export function phaseFinishedByReturn(plan: WorkPlan, handback: DelegateReturn): ReturnedPhase {
+  const returned = returnedByReturn({ kind: "planned", ...plan }, handback)
+  return returned.kind === "finished" ? { kind: "finished", phase: returned.phase } : UNMOVED
+}
+
+/** 委譲の返却1件が帯の段を済ませたか（{@link phaseFinishedByReturn}）。 */
+export type ReturnedPhase =
+  | { readonly kind: "unmoved" }
+  | { readonly kind: "finished"; readonly phase: PlannedPhase }
+
+const UNMOVED = { kind: "unmoved" } as const satisfies ReturnedPhase
+
 const PHASE_NAME_SEPARATOR = "・"
 
 const NO_PHASE_SHIFT = {
@@ -367,17 +382,31 @@ const NO_PHASE_SHIFT = {
  * 段のまとめは返却の要約を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもの。
  */
 function advancedByReturn(plan: PlannedWorkPlan, handback: DelegateReturn): PlannedWorkPlan {
+  const returned = returnedByReturn(plan, handback)
+  return returned.kind === "finished" ? returned.advanced : plan
+}
+
+function returnedByReturn(
+  plan: PlannedWorkPlan,
+  handback: DelegateReturn,
+):
+  | { readonly kind: "unmoved" }
+  | {
+      readonly kind: "finished"
+      readonly phase: PlannedPhase
+      readonly advanced: PlannedWorkPlan
+    } {
   if (
     handback.kind !== "phase-done" ||
     plan.delegatedRange.kind !== "range" ||
     plan.delegatedRange.count !== handback.count
   ) {
-    return plan
+    return UNMOVED
   }
   const target = plan.delegatedRange.first + handback.phase - 1
   const phase = plannedPhasesOf(plan).find((candidate) => candidate.index === target)
   if (phase === undefined || phase.state !== "current") {
-    return plan
+    return UNMOVED
   }
   const entry = plan.phases[phase.entry]
   const finishedInGroup = typeof entry === "string" ? [] : [...plan.finishedInGroup, phase.name]
@@ -389,7 +418,9 @@ function advancedByReturn(plan: PlannedWorkPlan, handback: DelegateReturn): Plan
     finishedInGroup: entryDone ? [] : finishedInGroup,
     phaseSummary: leadingSentences(handback.summary, MAX_PHASE_SUMMARY_SENTENCES),
   }
-  return finishedPhaseCount(advanced) >= phaseCount(advanced.phases) ? plan : advanced
+  return finishedPhaseCount(advanced) >= phaseCount(advanced.phases)
+    ? UNMOVED
+    : { kind: "finished", phase, advanced }
 }
 
 /**

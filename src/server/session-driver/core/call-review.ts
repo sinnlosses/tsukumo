@@ -31,6 +31,8 @@ export type CallReview = {
   readonly gateRaised: () => boolean
   /** 関門の拒否文に足す帯の位置の文。段取りが無ければ空。 */
   readonly bandPosition: () => string
+  /** 返却を運ぶメインの入力に添える注記を取り出す（`WorkPlanReview.takeHandbackNote`）。 */
+  readonly takeHandbackNote: () => string
   /** このターンで「新しい事実が無い」`report` の差し戻しをしたか。 */
   readonly nothingNewRejected: () => boolean
 }
@@ -74,8 +76,24 @@ export function createCallReview(): CallReview {
     },
     gateRaised: workPlanReview.gateRaised,
     bandPosition: workPlanReview.bandPosition,
+    takeHandbackNote: workPlanReview.takeHandbackNote,
     nothingNewRejected: reportReview.nothingNewRejected,
   }
+}
+
+/**
+ * SDK のメッセージ1件から変換したイベントのうち、差し戻しに通すものを通す。
+ * メインのメッセージのイベントはすべて、委譲先のメッセージのイベントは返却（`delegate-returned`）だけを通す。
+ * 返却は委譲先の `SubagentHandback` の呼び出しから作るので、委譲先のメッセージにしか載らない。
+ */
+export function passRelayedEvents(
+  review: Pick<CallReview, "pass">,
+  events: readonly SessionEvent[],
+  fromMain: boolean,
+): readonly SessionEvent[] {
+  return events.flatMap((event) =>
+    fromMain || event.kind === "delegate-returned" ? review.pass(event) : [event],
+  )
 }
 
 type NewsLedger = {

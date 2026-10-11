@@ -13,6 +13,7 @@ import {
   nextWorkPlan,
   parseWorkPlan,
   parseWorkPlanClosing,
+  phaseFinishedByReturn,
   phaseShiftOf,
   plannedPhasesOf,
   type WorkPlan,
@@ -415,6 +416,31 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     })
 
     expect(returned(lastPhase, phaseDone(2))).toEqual(lastPhase)
+  })
+
+  it("phaseFinishedByReturn は返却で済む帯の段を返し、帯を動かさない返却では unmoved", () => {
+    const serial = next(SERIAL, 1)
+    const ranged: WorkPlan = { ...serial, delegatedRange: RANGE }
+    const UNMOVED = { kind: "unmoved" }
+
+    expect(phaseFinishedByReturn(ranged, phaseDone(1))).toMatchObject({
+      kind: "finished",
+      phase: { index: 1, name: "架空の実装A" },
+    })
+    expect(phaseFinishedByReturn(ranged, phaseDone(2))).toEqual(UNMOVED)
+    expect(phaseFinishedByReturn(serial, phaseDone(1))).toEqual(UNMOVED)
+    expect(
+      phaseFinishedByReturn(
+        {
+          ...next(["架空の段A", "架空の段B"], 1),
+          delegatedRange: { kind: "range", first: 0, count: 2 },
+        },
+        phaseDone(2),
+      ),
+    ).toEqual(UNMOVED)
+    expect(
+      phaseFinishedByReturn(ranged, { kind: "stopped", phase: 1, count: 2, summary: "架空" }),
+    ).toEqual(UNMOVED)
   })
 })
 

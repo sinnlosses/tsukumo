@@ -26,7 +26,7 @@ import {
   type WorkPlan,
   type WorkPlanStanding,
 } from "../../../shared/session/work-plan.ts"
-import { bandPositionText } from "./band-position.ts"
+import { bandPositionText, handbackLineText, handbackNoteText } from "./band-position.ts"
 
 export type WorkPlanVerdict =
   | { readonly kind: "accepted"; readonly plan: WorkPlan }
@@ -44,6 +44,11 @@ export type WorkPlanReview = {
   readonly gateRaised: () => boolean
   /** 受け付け済みの段取りの帯の位置の文（返却で進めた位置を含む）。段取りが無ければ空。 */
   readonly bandPosition: () => string
+  /**
+   * 返却を運ぶメインの入力に添える注記（`handbackNoteText`）を取り出し、溜めた返却を忘れる。
+   * 溜めるのは段取りがあるときの返却だけで、受け付けた `work_plan`・`request`・`turn-started` で捨てる。無ければ空。
+   */
+  readonly takeHandbackNote: () => string
   /**
    * 届いたイベントを流してよい並びに変える。
    * `work-plan-called` は同じ `toolUseId` の `tool-finished` まで預かり、`isError` でなければその直前に `work-plan` として出す。
@@ -63,6 +68,7 @@ export function createWorkPlanReview(): WorkPlanReview {
   let positionFromReturn = false
   let returnedCount: number | undefined = undefined
   let gateRaised = false
+  let handbackLines: readonly string[] = []
 
   const isReturnedPosition = (plan: WorkPlan): boolean =>
     positionFromReturn && accepted.kind === "planned" && isSamePosition(accepted, plan)
@@ -87,6 +93,7 @@ export function createWorkPlanReview(): WorkPlanReview {
     accepted = nextWorkPlan(accepted, { kind: "work-plan", ...plan })
     positionFromReturn = false
     gateRaised = false
+    handbackLines = []
     return { kind: "accepted", plan }
   }
 
@@ -113,6 +120,11 @@ export function createWorkPlanReview(): WorkPlanReview {
     },
     gateRaised: () => gateRaised,
     bandPosition: () => bandPositionText(accepted),
+    takeHandbackNote: () => {
+      const note = handbackNoteText(handbackLines, accepted)
+      handbackLines = []
+      return note
+    },
     pass: (event) => {
       switch (event.kind) {
         case "work-plan-called":
@@ -132,6 +144,9 @@ export function createWorkPlanReview(): WorkPlanReview {
         case "delegate-returned": {
           returnedCount = returnedCountOf(event.handback) ?? returnedCount
           gateRaised = gateRaised || accepted.kind === "planned"
+          if (accepted.kind === "planned") {
+            handbackLines = [...handbackLines, handbackLineText(accepted, event.handback)]
+          }
           const next = nextWorkPlan(accepted, event)
           positionFromReturn = positionFromReturn || !isDeepEqual(next, accepted)
           accepted = next
@@ -142,11 +157,13 @@ export function createWorkPlanReview(): WorkPlanReview {
           positionFromReturn = false
           returnedCount = undefined
           gateRaised = false
+          handbackLines = []
           unansweredRejection = false
           return [event]
         case "turn-started":
           returnedCount = undefined
           gateRaised = false
+          handbackLines = []
           unansweredRejection = false
           return [event]
         case "session-info":

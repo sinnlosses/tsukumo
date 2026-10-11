@@ -15,7 +15,7 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
 import { createUsageReviewIntake } from "../../usage-review/core/usage-review-tool.ts"
 import { asidePromptText } from "../core/aside-prompt.ts"
-import { type CallReview, createCallReview } from "../core/call-review.ts"
+import { type CallReview, createCallReview, passRelayedEvents } from "../core/call-review.ts"
 import { createClearAndSend } from "../core/clear-and-send.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
@@ -33,7 +33,12 @@ import { readClaudeAccountTier } from "./claude-account.ts"
 import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import { readPlanUsage } from "./sdk-plan-usage.ts"
-import { buildQuerySeedOptions, preToolUseHooks, stopHooks } from "./sdk-query-seed.ts"
+import {
+  buildQuerySeedOptions,
+  handbackNoteHooks,
+  preToolUseHooks,
+  stopHooks,
+} from "./sdk-query-seed.ts"
 import {
   createSessionTitleWriter,
   createSessionDigestReader,
@@ -116,6 +121,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
         {
           ...stopHooks(options.mode, reportGate, options.onEvent),
           ...preToolUseHooks(callReview.gateRaised, callReview.bandPosition),
+          ...handbackNoteHooks(callReview.takeHandbackNote),
         },
         options.mountWorkflowPlugin,
         runAskGuard,
@@ -219,7 +225,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
  * `report` の関所（`reportGate`）にはメインのメッセージから出たイベントだけを見せる。
  * サブエージェントの本文を数えない。関所を登録していないときも見せるが、判定されないだけ。
  *
- * メインのイベントは `CallReview` を通す。
+ * メインのイベントと、委譲先のメッセージから出た返却は `CallReview` を通す（`passRelayedEvents`）。
  * 呼び出しは同じ呼び出しの結果まで預かり、差し戻した呼び出しを描かない。
  *
  * `titleIntake` が覚えている題（`report` の `title` 引数）もターンの終わりに取り出し、`titleWriter` に書く予約をする。
@@ -246,7 +252,7 @@ async function relayMessages(
         process.stderr.write(VISIBLE_OUTPUT_NUDGE_NOTICE)
       }
       const converted = toSessionEvents(message, toExpressionNames(options.expressions))
-      const events = fromMain ? converted.flatMap((event) => callReview.pass(event)) : converted
+      const events = passRelayedEvents(callReview, converted, fromMain)
       for (const event of events) {
         if (fromMain) {
           reportGate.observe(event)

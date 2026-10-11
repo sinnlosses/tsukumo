@@ -135,6 +135,48 @@ export function preToolUseHooks(
 }
 
 /**
+ * `UserPromptSubmit` フックを1つ登録し、委譲先の返却を運ぶメインの入力に、溜めた返却の注記を `additionalContext` で添える。
+ * 返却は、メインが手すきでもターンの途中でも `<agent-message` で始まる `prompt` としてこのフックを1回通る。
+ * `source` は SDK 0.3.288 の実測で常に undefined なので見ない。
+ *
+ * 注記を読む前に1回 macrotask を待つ（{@link preToolUseHooks} と同じく、返却を運ぶメッセージが `relayMessages` の反復へ渡るのを待つ）。
+ */
+export function handbackNoteHooks(
+  takeHandbackNote: () => string,
+): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
+  return {
+    UserPromptSubmit: [
+      {
+        hooks: [
+          async (input) => {
+            if (
+              input.hook_event_name !== "UserPromptSubmit" ||
+              input.agent_id !== undefined ||
+              !input.prompt.trimStart().startsWith(HANDBACK_PROMPT_HEAD)
+            ) {
+              return {}
+            }
+            await setImmediate()
+            const note = takeHandbackNote()
+            return note === ""
+              ? {}
+              : {
+                  hookSpecificOutput: {
+                    hookEventName: "UserPromptSubmit",
+                    additionalContext: note,
+                  },
+                }
+          },
+        ],
+      },
+    ],
+  }
+}
+
+/** 委譲先の返却を運ぶメインの入力の頭（本体が返却を包む塊）。 */
+const HANDBACK_PROMPT_HEAD = "<agent-message"
+
+/**
  * `Stop` フックを1つ登録する。
  * モードによらず常に登録する。effort を読む口は仕事でも雑談でも要るが、`report` の関所（`createReportGate`）で止めるのは仕事のときだけ。
  * `SubagentStop` には載せない（サブエージェントの `report` は捨てるので、渡し直させても画面に出ない。effort もメインの手元の値だけを読めばよい）。

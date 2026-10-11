@@ -5,6 +5,7 @@ import type { ReportDraft } from "../../../../src/server/report/core/report-viol
 import {
   type CallReview,
   createCallReview,
+  passRelayedEvents,
 } from "../../../../src/server/session-driver/core/call-review.ts"
 import { SPEECH_NOTHING_NEW_REJECTION_TEXT } from "../../../../src/server/session-driver/core/speech-review.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
@@ -473,6 +474,35 @@ describe("CallReview の新しい事実の数え方の差", () => {
 
     expect(isSpeechRejected(review)).toBe(false)
     expect(isReportRejectedForNothingNew(review, OTHER)).toBe(true)
+  })
+})
+
+describe("passRelayedEvents", () => {
+  const RETURNED: SessionEvent = {
+    kind: "delegate-returned",
+    handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
+  }
+
+  it("委譲先のメッセージからは返却だけを差し戻しに通し、関門の印と注記がそれで立つ", () => {
+    const review = createCallReview()
+    review.pass(REQUEST)
+    review.judgeWorkPlan({
+      phases: ["架空の計画", "架空の実装A", "架空の受け入れ"],
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+      delegatedRange: { first: 1, count: 1 },
+    })
+    const report = reportEvent({})
+
+    expect(passRelayedEvents(review, [report, RETURNED], false)).toEqual([report, RETURNED])
+    expect(review.gateRaised()).toBe(true)
+    expect(review.takeHandbackNote()).toContain("返却 `段 1/2`")
+  })
+
+  it("メインのメッセージのイベントはすべて差し戻しに通す（report は結果まで預かる）", () => {
+    const review = createCallReview()
+
+    expect(passRelayedEvents(review, [reportEvent({})], true)).toEqual([])
   })
 })
 

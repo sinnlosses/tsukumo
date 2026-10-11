@@ -260,6 +260,88 @@ describe("WorkPlanReview の委譲の返却", () => {
   })
 })
 
+describe("WorkPlanReview の返却の注記", () => {
+  const FOUR = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
+  const ranged = (current: number, phaseSummary = "") => ({
+    phases: FOUR,
+    current,
+    phaseSummary,
+    delegatedRange: { first: 1, count: 2 },
+  })
+  const started = () => {
+    const review = createWorkPlanReview()
+    review.pass(REQUEST)
+    review.judge(ranged(0))
+    review.judge(ranged(1, SUMMARY))
+    return review
+  }
+
+  it("返却で溜まった注記は1回だけ取り出せ、済んだ帯の段と返却後の帯の位置を言う", () => {
+    const review = started()
+    review.pass(handback("段 1/2 | 架空の返却。"))
+
+    expect(review.takeHandbackNote()).toBe(
+      "tsukumo の注記（委譲先の返却の本文ではない）:返却 `段 1/2` で帯の 2/4 架空の実装A が済んだ。" +
+        "帯の今の段は 3/4 架空の実装B。委譲先の段 1〜2 は帯の 2〜3 番目（委譲先の段 n は帯の 1 + n 番目）。",
+    )
+    expect(review.takeHandbackNote()).toBe("")
+  })
+
+  it("並列の返却が続けて届くと、返却ごとの文を重ね、帯の位置の文は末尾に1回だけ付ける", () => {
+    const review = createWorkPlanReview()
+    const group = ["架空の計画", ["架空の実装A", "架空の実装B"], "架空の受け入れ"]
+    review.pass(REQUEST)
+    review.judge({ phases: group, current: 0 })
+    review.judge({
+      phases: group,
+      current: 1,
+      phaseSummary: SUMMARY,
+      delegatedRange: { first: 1, count: 2 },
+    })
+    review.pass(handback("段 2/2 | 架空の返却B。"))
+    review.pass(handback("段 1/2 | 架空の返却A。"))
+
+    const note = review.takeHandbackNote()
+    expect(note).toContain("返却 `段 2/2` で帯の 3/4 架空の実装B が済んだ。")
+    expect(note).toContain("返却 `段 1/2` で帯の 2/4 架空の実装A が済んだ。")
+    expect(note.match(/帯の今の段は/gu)).toHaveLength(1)
+    expect(note).toMatch(/帯の今の段は 4\/4 架空の受け入れ。/u)
+  })
+
+  it("受け付けた work_plan・依頼・利用者の送ったターンの始まりのあとは、溜めた注記を捨てる", () => {
+    const accepted = started()
+    accepted.pass(handback("段 1/2 | 架空の返却。"))
+    accepted.judge(ranged(2))
+    expect(accepted.takeHandbackNote()).toBe("")
+
+    const requested = started()
+    requested.pass(handback("段 1/2 | 架空の返却。"))
+    requested.pass(REQUEST)
+    expect(requested.takeHandbackNote()).toBe("")
+
+    const turnStarted = started()
+    turnStarted.pass(handback("段 1/2 | 架空の返却。"))
+    turnStarted.pass({ kind: "turn-started" })
+    expect(turnStarted.takeHandbackNote()).toBe("")
+  })
+
+  it("差し戻した work_plan では注記を捨てない", () => {
+    const review = started()
+    review.pass(handback("段 1/2 | 架空の返却。"))
+    review.judge(ranged(3))
+
+    expect(review.takeHandbackNote()).toContain("返却 `段 1/2`")
+  })
+
+  it("段取りが無ければ、返却が届いても注記を溜めない", () => {
+    const review = createWorkPlanReview()
+    review.pass(REQUEST)
+    review.pass(handback("段 1/2 | 架空の返却。"))
+
+    expect(review.takeHandbackNote()).toBe("")
+  })
+})
+
 describe("WorkPlanReview の立ち位置", () => {
   it("受け付けた段取りの残りの段の数を返し、全部済みなら 0", () => {
     const review = createWorkPlanReview()
