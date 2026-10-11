@@ -3,7 +3,7 @@
 
 import { z } from "zod"
 
-import { MAX_HEADING, MAX_ITEM_LABEL } from "./report-limit.ts"
+import { MAX_CANDIDATES, MAX_HEADING, MAX_ITEM_LABEL } from "./report-limit.ts"
 
 const inlineText = z.string()
 
@@ -99,7 +99,10 @@ const compareBlockSchema = z
       .array(
         z.object({
           heading: inlineText,
-          points: z.array(inlineText).min(1).describe("5つまで"),
+          points: z
+            .array(inlineText)
+            .min(1)
+            .describe(`${String(MAX_CANDIDATES)}つまで`),
         }),
       )
       .min(2)
@@ -150,7 +153,10 @@ const beforeAfterSideSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     kind: z.literal("points"),
-    points: z.array(inlineText).min(1).describe("短い1行の並び。5つまで"),
+    points: z
+      .array(inlineText)
+      .min(1)
+      .describe(`短い1行の並び。${String(MAX_CANDIDATES)}つまで`),
   }),
 ])
 
@@ -241,7 +247,7 @@ const optionsBlockSchema = z
         }),
       )
       .min(2)
-      .describe("候補は5つまで"),
+      .describe(`候補は${String(MAX_CANDIDATES)}つまで`),
     fold,
   })
   .describe(
@@ -257,7 +263,7 @@ const imageBlockSchema = z
       .array(inlineText)
       .default([])
       .describe(
-        "画像のどこを見るか・何が変わったか。1項目1文で、場所の言葉（左上の帯・2行目の札）から書く。番号は書かない（並びの順に振って描く）。5つまで",
+        `画像のどこを見るか・何が変わったか。1項目1文で、場所の言葉（左上の帯・2行目の札）から書く。番号は書かない（並びの順に振って描く）。${String(MAX_CANDIDATES)}つまで`,
       ),
     fold,
   })

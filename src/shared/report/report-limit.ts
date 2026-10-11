@@ -1,5 +1,8 @@
 // `report` の記法の数で決まる規則の上限。
 
+/** `options` の候補、`compare` / `beforeAfter` の側の箇条、`image` の `notes` の数の上限。 */
+export const MAX_CANDIDATES = 5
+
 /** `conclusion` の文の数の上限。 */
 export const MAX_CONCLUSION_SENTENCES = 2
 

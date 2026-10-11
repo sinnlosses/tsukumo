@@ -18,6 +18,7 @@ import {
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import { closesFence, openingFence } from "../../../shared/report/report-fence.ts"
 import {
+  MAX_CANDIDATES,
   MAX_CONCLUSION_SENTENCES,
   MAX_FIRST_SENTENCE,
   MAX_HEADING,
@@ -82,7 +83,7 @@ export type ReportViolation =
   | { readonly kind: "crowded-notes"; readonly count: number }
   /** `fold` を持つ `markdown` の塊が `<details>` を含む、または `<details>` が入れ子になっている。`count` は塊の数。 */
   | { readonly kind: "nested-fold"; readonly count: number }
-  /** `options` の候補、`compare` / `beforeAfter` の側の箇条、または `image` の `notes` が6つ以上ある塊がある。`count` は塊の数。 */
+  /** `options` の候補、`compare` / `beforeAfter` の側の箇条、または `image` の `notes` が上限を超えている塊がある。`count` は塊の数。 */
   | { readonly kind: "too-many-candidates"; readonly count: number }
   /** 候補が採る → 検討 → 採らないの順に並んでいない `options` の塊がある。`count` は塊の数。 */
   | { readonly kind: "unordered-options"; readonly count: number }
@@ -381,7 +382,7 @@ function violationLine(violation: ReportViolation): string {
     case "nested-fold":
       return `\`fold\` と \`<details>\` が入れ子になっている塊が${violation.count}個ある。畳むのは1段だけにする`
     case "too-many-candidates":
-      return `候補・箇条・説明が6つ以上の \`options\` / \`compare\` / \`beforeAfter\` / \`image\` の \`notes\` が${violation.count}個ある。5つまでに絞る`
+      return `候補・箇条・説明が${String(MAX_CANDIDATES + 1)}つ以上の \`options\` / \`compare\` / \`beforeAfter\` / \`image\` の \`notes\` が${violation.count}個ある。${String(MAX_CANDIDATES)}つまでに絞る`
     case "unordered-options":
       return `候補が採る → 検討 → 採らないの順に並んでいない \`options\` が${violation.count}個ある。採る候補から順に並べ直す`
     case "ragged-table":
@@ -416,8 +417,6 @@ function violationLine(violation: ReportViolation): string {
       return `仮名も漢字も無い英語の地の文・見出しが${violation.count}個ある。日本語で書き直す（識別子・パス・コマンド・コードは \`\` で囲めば英語のままでよい）`
   }
 }
-
-const MAX_CANDIDATES = 5
 
 /** 英語の地の文とみなす語の数の下限。 */
 const MIN_ENGLISH_WORDS = 3

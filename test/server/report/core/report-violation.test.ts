@@ -11,6 +11,7 @@ import {
   REPORT_MERMAID_KINDS,
   type ReportSection,
 } from "../../../../src/shared/report/report-block.ts"
+import { MAX_CANDIDATES } from "../../../../src/shared/report/report-limit.ts"
 import { reportDraft } from "../../../fixture/report-event.ts"
 
 const draft = (
@@ -475,14 +476,22 @@ describe("reportViolations", () => {
       fold: "",
     })
 
-    it("6つ目から違反", () => {
-      expect(reportViolations(draft([options(6), compare(6), image(6), beforeAfter(6)]))).toEqual([
-        { kind: "too-many-candidates", count: 4 },
-      ])
+    it("上限を1つ超えたら違反", () => {
+      const over = MAX_CANDIDATES + 1
+      expect(
+        reportViolations(draft([options(over), compare(over), image(over), beforeAfter(over)])),
+      ).toEqual([{ kind: "too-many-candidates", count: 4 }])
     })
 
-    it("5つなら通る", () => {
-      expect(kinds(draft([options(5), compare(5), image(5), beforeAfter(5)]))).toEqual([])
+    it("上限ちょうどなら通る", () => {
+      const max = MAX_CANDIDATES
+      expect(kinds(draft([options(max), compare(max), image(max), beforeAfter(max)]))).toEqual([])
+    })
+
+    it("差し戻しの文面に上限の数が出る", () => {
+      const text = reportRejectionText([{ kind: "too-many-candidates", count: 1 }])
+      expect(text).toContain(`${String(MAX_CANDIDATES + 1)}つ以上`)
+      expect(text).toContain(`${String(MAX_CANDIDATES)}つまでに絞る`)
     })
   })
 
