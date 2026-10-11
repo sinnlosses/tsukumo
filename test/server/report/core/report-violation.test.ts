@@ -78,6 +78,15 @@ describe("reportViolations", () => {
       ])
     })
 
+    it.each([
+      [51, "。"],
+      [63, "！"],
+    ])("1文目が%i字の差し戻しは、実測の字数を値と文面に持つ", (length, end) => {
+      const violations = reportViolations(draft([text("架空。")], `${"あ".repeat(length)}${end}`))
+      expect(violations).toEqual([{ kind: "long-first-sentence", count: 1, length }])
+      expect(reportRejectionText(violations)).toContain(`いま${String(length)}字`)
+    })
+
     it("2文目が長くても1文目が短ければ通る", () => {
       expect(kinds(draft([text("架空。")], `短い。${"あ".repeat(60)}。`))).toEqual([])
     })

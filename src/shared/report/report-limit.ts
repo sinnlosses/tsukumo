@@ -9,6 +9,12 @@ export const MAX_CONCLUSION_SENTENCES = 2
 /** `conclusion` の1文目の長さの上限（全角の字数）。 */
 export const MAX_FIRST_SENTENCE = 50
 
+/** `conclusion` の1文目の目安の字数。説明文に出すだけで、検査には使わない。 */
+export const FIRST_SENTENCE_TARGET = 30
+
+/** `conclusion` の1文目の読点の数の目安。検査には使わない。 */
+export const FIRST_SENTENCE_TARGET_COMMAS = 1
+
 /** 節の `heading` の長さの上限（字数）。 */
 export const MAX_HEADING = 30
 

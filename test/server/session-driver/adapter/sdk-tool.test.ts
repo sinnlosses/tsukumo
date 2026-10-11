@@ -14,6 +14,7 @@ import type {
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { SPEECH_NOTHING_NEW_REJECTION_TEXT } from "../../../../src/server/session-driver/core/speech-review.ts"
 import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
+import { FIRST_SENTENCE_TARGET } from "../../../../src/shared/report/report-limit.ts"
 import type { QuestionBrief } from "../../../../src/shared/session-driver/question-brief.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
@@ -640,6 +641,22 @@ describe("report の本文（sections）", () => {
 
     expect(Object.keys(properties ?? {})).toContain("sections")
     expect(Object.keys(properties ?? {})).not.toContain("body")
+  })
+
+  it("conclusion の説明に、目安の字数・読点の数・悪い例と良い例がある", async () => {
+    const reply = await request(workServer(), "tools/list", {}, TOOLS_SCHEMA_REPLY)
+    const conclusion = z
+      .object({ description: z.string() })
+      .parse(
+        reply.result.tools.find((tool) => tool.name === "report")?.inputSchema.properties[
+          "conclusion"
+        ],
+      )
+
+    expect(conclusion.description).toContain(`目安は${String(FIRST_SENTENCE_TARGET)}字`)
+    expect(conclusion.description).toContain("読点は1つまで")
+    expect(conclusion.description).toContain("悪い例")
+    expect(conclusion.description).toContain("良い例")
   })
 
   it("塊で書いた report は通り、逃げ道に塊の種類がある記法を書いた report は差し戻す", async () => {

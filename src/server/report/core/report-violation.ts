@@ -110,8 +110,8 @@ export type ReportViolation =
       readonly count: number
       readonly faults: readonly MermaidFault[]
     }
-  /** `conclusion` の1文目が全角50字を超える（1か0）。 */
-  | { readonly kind: "long-first-sentence"; readonly count: number }
+  /** `conclusion` の1文目が全角50字を超える。`count` は1か0、`length` は1文目の字数。 */
+  | { readonly kind: "long-first-sentence"; readonly count: number; readonly length: number }
   /** 節の `heading` が30字を超える、または疑問文（末尾が `?`・`？`）。`count` は該当の節の数。 */
   | { readonly kind: "bad-heading"; readonly count: number }
   /** `checks` の `figure` が `数 / 数` の分数に見える。`count` は該当の項目の数。 */
@@ -181,6 +181,11 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
         block.kind === "code" && block.path.trim() !== "",
     )
     .filter((block) => !codeBlockMatchesFile(block, report.fileContents.get(block.path)))
+  const firstSentenceLength = [
+    ...leadingSentences(report.conclusion, 1)
+      .trim()
+      .replace(/[。！？]+$/, ""),
+  ].length
 
   const counted = [
     { kind: "long-conclusion", count: sentenceCount(report.conclusion) },
@@ -240,14 +245,8 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     {
       kind: "long-first-sentence",
-      count:
-        [
-          ...leadingSentences(report.conclusion, 1)
-            .trim()
-            .replace(/[。！？]+$/, ""),
-        ].length > MAX_FIRST_SENTENCE
-          ? 1
-          : 0,
+      count: firstSentenceLength > MAX_FIRST_SENTENCE ? 1 : 0,
+      length: firstSentenceLength,
     },
     {
       kind: "bad-heading",
@@ -402,7 +401,7 @@ function violationLine(violation: ReportViolation): string {
     case "broken-mermaid":
       return `mermaid の図の構文が割れている（${mermaidFaultPositions(violation.faults)}）。その行の書き方を直す`
     case "long-first-sentence":
-      return `\`conclusion\` の1文目が全角${String(MAX_FIRST_SENTENCE)}字を超える。1文目を短くし、補足は2文目か \`sections\` へ移す`
+      return `\`conclusion\` の1文目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1文目を短くし、補足は2文目か \`sections\` へ移す`
     case "bad-heading":
       return `見出しが${violation.count}個、${String(MAX_HEADING)}字を超えるか疑問文になっている。その節の結論を言う短い語にする`
     case "fraction-figure":
