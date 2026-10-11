@@ -7,19 +7,29 @@ export type StageOutcome = {
   readonly status: number
   /** `parseFailedTests` の結果。JSON が読めなかった段は空。 */
   readonly failedTests: readonly string[]
+  /** 別の段が落ちたため、走っている途中で止めた段。 */
+  readonly stopped: boolean
+}
+
+/** 終わった段のどれかが自分で落ちたなら、まだ走っている段を止める。止められた段は数えない。 */
+export function shouldStopRunningStages(finished: readonly StageOutcome[]): boolean {
+  return finished.some((outcome) => outcome.status !== 0 && !outcome.stopped)
 }
 
 /**
- * 終了コードが 0 でない段ごとに、段の名前と終了コードの1行と、
+ * 自分で落ちた段（止めた段を除く終了コードが 0 でない段）ごとに、段の名前と終了コードの1行と、
  * 続けて落ちたテストの `<段>: <ファイル> > <テスト名>` を1件1行で、入力の順に返す。
+ * 止めた段があれば、最後に `止めた段: <段>, …` の1行を足す。
  */
 export function describeFailedStages(outcomes: readonly StageOutcome[]): readonly string[] {
-  return outcomes
-    .filter((outcome) => outcome.status !== 0)
+  const failed = outcomes
+    .filter((outcome) => outcome.status !== 0 && !outcome.stopped)
     .flatMap((outcome) => [
       `${outcome.name} が終了コード ${outcome.status} で落ちた`,
       ...outcome.failedTests.map((test) => `${outcome.name}: ${test}`),
     ])
+  const stopped = outcomes.filter((outcome) => outcome.stopped).map((outcome) => outcome.name)
+  return stopped.length === 0 ? failed : [...failed, `止めた段: ${stopped.join(", ")}`]
 }
 
 /**

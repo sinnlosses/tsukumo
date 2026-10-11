@@ -11,7 +11,7 @@
 //   node scripts/check.ts --full  # 文書だけの変更でなければ、5段すべてを、E2E は全件で走らせる
 //                                 # （変えたファイルを集められないときも5段すべて）
 
-import { spawn, spawnSync } from "node:child_process"
+import { type ChildProcess, spawn, spawnSync } from "node:child_process"
 import { readFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -19,8 +19,14 @@ import process from "node:process"
 import { fileURLToPath } from "node:url"
 
 import { collectChangedPaths, PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
-import { describeFailedStages, parseFailedTests, type StageOutcome } from "./lib/check-failure.ts"
-import { planStages, type Stage } from "./lib/check-stage.ts"
+import {
+  describeFailedStages,
+  parseFailedTests,
+  shouldStopRunningStages,
+  type StageOutcome,
+} from "./lib/check-failure.ts"
+import { e2eStage, planStages, type Stage } from "./lib/check-stage.ts"
+import { E2E_FULL_ENVIRONMENT } from "./lib/e2e-full-guard.ts"
 import {
   acquireLock,
   LockWaitTimeoutError,
@@ -54,24 +60,75 @@ if (heavyStages.length > 0) {
   await runConcurrently(heavyStages)
 }
 
+/** 走らせている段。`stop` は自分が起こした子の pid だけに `SIGTERM` を送る。 */
+type RunningStage = {
+  readonly result: Promise<BufferedResult>
+  readonly stop: () => void
+}
+
 async function runConcurrently(stages: readonly Stage[]): Promise<void> {
-  const results = await Promise.all(stages.map((stage) => runLockedIfFullE2e(stage)))
+  const running = stages.map((stage) => startStage(stage))
+  const finished: BufferedResult[] = []
+  const results = await Promise.all(
+    running.map(async (run) => {
+      const result = await run.result
+      finished.push(result)
+      if (shouldStopRunningStages(finished)) {
+        for (const other of running) {
+          other.stop()
+        }
+      }
+      return result
+    }),
+  )
   for (const result of results) {
     process.stdout.write(result.output)
   }
   for (const line of describeFailedStages(results)) {
     process.stdout.write(`${line}\n`)
   }
-  const failed = results.find((result) => result.status !== 0)
+  const failed = results.find((result) => result.status !== 0 && !result.stopped)
   if (failed !== undefined) {
     process.exitCode = failed.status
   }
 }
 
+function startStage(stage: Stage): RunningStage {
+  const control = createStopControl()
+  return { result: runLockedIfFullE2e(stage, control), stop: control.stop }
+}
+
+type StopControl = {
+  readonly stop: () => void
+  readonly isStopRequested: () => boolean
+  /** 起こした子を渡す。止める依頼がすでにあれば、その場で止める。 */
+  readonly attach: (child: ChildProcess) => void
+}
+
+function createStopControl(): StopControl {
+  let stopRequested = false
+  let running: ChildProcess | undefined
+  return {
+    stop: () => {
+      stopRequested = true
+      if (running !== undefined && running.exitCode === null) {
+        running.kill("SIGTERM")
+      }
+    },
+    isStopRequested: () => stopRequested,
+    attach: (child) => {
+      running = child
+      if (stopRequested) {
+        child.kill("SIGTERM")
+      }
+    },
+  }
+}
+
 /** `--full` の E2E の段だけ、ほかの作業ツリーの全件と重ならないよう錠を取って走らせる。 */
-async function runLockedIfFullE2e(stage: Stage): Promise<BufferedResult> {
+async function runLockedIfFullE2e(stage: Stage, control: StopControl): Promise<BufferedResult> {
   if (!forceFull || stage.name !== "test:e2e") {
-    return runBuffered(stage)
+    return runBuffered(stage, control)
   }
   let release: () => void
   try {
@@ -84,11 +141,12 @@ async function runLockedIfFullE2e(stage: Stage): Promise<BufferedResult> {
       name: stage.name,
       status: 1,
       failedTests: [],
+      stopped: false,
       output: `${error.message}\n`,
     }
   }
   try {
-    return await runBuffered(stage)
+    return await runBuffered(stage, control)
   } finally {
     release()
   }
@@ -110,7 +168,7 @@ async function collectPathsForPlan(): Promise<readonly string[]> {
 function chooseE2eStages(): readonly Stage[] {
   const plan = planE2eRun(ROOT, changedPaths, forceFull)
   process.stdout.write(`${plan.line}\n`)
-  return plan.kind === "none" ? [] : [{ name: "test:e2e", args: plan.args, heavy: true }]
+  return plan.kind === "none" ? [] : [e2eStage(plan.args)]
 }
 
 /** 段が書いた JSON レポートを読んで消す。無ければ空。 */
@@ -126,7 +184,16 @@ function readFailedTests(reportPath: string): readonly string[] {
 
 type BufferedResult = StageOutcome & { readonly output: string }
 
-function runBuffered(stage: Stage): Promise<BufferedResult> {
+function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult> {
+  if (control.isStopRequested()) {
+    return Promise.resolve({
+      name: stage.name,
+      status: 1,
+      failedTests: [],
+      stopped: true,
+      output: "",
+    })
+  }
   const reportPath = join(
     tmpdir(),
     `tsukumo-check-${process.pid}-${stage.name.replace(":", "-")}.json`,
@@ -135,15 +202,19 @@ function runBuffered(stage: Stage): Promise<BufferedResult> {
   return new Promise((resolve) => {
     const child = spawn("pnpm", ["run", stage.name, ...stage.args, ...reporterArgs], {
       cwd: ROOT,
+      env: stage.name === "test:e2e" ? { ...process.env, ...E2E_FULL_ENVIRONMENT } : process.env,
       stdio: ["ignore", "pipe", "pipe"],
     })
+    control.attach(child)
     const chunks: Buffer[] = []
     child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk))
     child.stderr.on("data", (chunk: Buffer) => chunks.push(chunk))
     child.on("close", (code) => {
+      const status = code ?? 1
       resolve({
         name: stage.name,
-        status: code ?? 1,
+        status,
+        stopped: status !== 0 && control.isStopRequested(),
         failedTests: readFailedTests(reportPath),
         output: Buffer.concat(chunks).toString("utf8"),
       })

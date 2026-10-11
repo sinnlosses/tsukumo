@@ -2,41 +2,45 @@
 
 import { describe, expect, test } from "vitest"
 
-import { describeFailedStages, parseFailedTests } from "../../scripts/lib/check-failure.ts"
+import {
+  describeFailedStages,
+  parseFailedTests,
+  shouldStopRunningStages,
+  type StageOutcome,
+} from "../../scripts/lib/check-failure.ts"
+
+function outcome(
+  name: string,
+  status: number,
+  failedTests: readonly string[] = [],
+  stopped = false,
+): StageOutcome {
+  return { name, status, failedTests, stopped }
+}
 
 describe("describeFailedStages", () => {
   test("全段が通ったときは空", () => {
-    expect(
-      describeFailedStages([
-        { name: "test", status: 0, failedTests: [] },
-        { name: "test:e2e", status: 0, failedTests: [] },
-      ]),
-    ).toEqual([])
+    expect(describeFailedStages([outcome("test", 0), outcome("test:e2e", 0)])).toEqual([])
   })
 
   test("落ちた段だけを名前と終了コードの1行にする", () => {
-    expect(
-      describeFailedStages([
-        { name: "test", status: 0, failedTests: [] },
-        { name: "test:e2e", status: 2, failedTests: [] },
-      ]),
-    ).toEqual(["test:e2e が終了コード 2 で落ちた"])
+    expect(describeFailedStages([outcome("test", 0), outcome("test:e2e", 2)])).toEqual([
+      "test:e2e が終了コード 2 で落ちた",
+    ])
   })
 
   test("複数落ちたときは入力の順に並べる", () => {
-    expect(
-      describeFailedStages([
-        { name: "test", status: 1, failedTests: [] },
-        { name: "test:e2e", status: 2, failedTests: [] },
-      ]),
-    ).toEqual(["test が終了コード 1 で落ちた", "test:e2e が終了コード 2 で落ちた"])
+    expect(describeFailedStages([outcome("test", 1), outcome("test:e2e", 2)])).toEqual([
+      "test が終了コード 1 で落ちた",
+      "test:e2e が終了コード 2 で落ちた",
+    ])
   })
 
   test("落ちたテストは段の行のあとに段ごとに並べる", () => {
     expect(
       describeFailedStages([
-        { name: "test", status: 1, failedTests: ["test/a.test.ts > a b"] },
-        { name: "test:e2e", status: 2, failedTests: ["test/e2e/c.test.ts > c"] },
+        outcome("test", 1, ["test/a.test.ts > a b"]),
+        outcome("test:e2e", 2, ["test/e2e/c.test.ts > c"]),
       ]),
     ).toEqual([
       "test が終了コード 1 で落ちた",
@@ -44,6 +48,30 @@ describe("describeFailedStages", () => {
       "test:e2e が終了コード 2 で落ちた",
       "test:e2e: test/e2e/c.test.ts > c",
     ])
+  })
+
+  test("止めた段は落ちた段に数えず、最後の行に分けて出す", () => {
+    expect(
+      describeFailedStages([
+        outcome("test", 1, ["test/a.test.ts"]),
+        outcome("test:e2e", 143, [], true),
+      ]),
+    ).toEqual(["test が終了コード 1 で落ちた", "test: test/a.test.ts", "止めた段: test:e2e"])
+  })
+})
+
+describe("shouldStopRunningStages", () => {
+  test("終わった段が無い・全部通ったときは止めない", () => {
+    expect(shouldStopRunningStages([])).toBe(false)
+    expect(shouldStopRunningStages([outcome("test", 0)])).toBe(false)
+  })
+
+  test("終わった段のどれかが自分で落ちたら止める", () => {
+    expect(shouldStopRunningStages([outcome("test", 0), outcome("test:e2e", 1)])).toBe(true)
+  })
+
+  test("止められただけの段では、ほかを止めない", () => {
+    expect(shouldStopRunningStages([outcome("test", 143, [], true)])).toBe(false)
   })
 })
 

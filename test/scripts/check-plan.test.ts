@@ -1,14 +1,14 @@
 // `pnpm run check` が重い段（typecheck・lint・test:e2e）を省いてよいかの判定と、
 // その材料になる「変えたファイル」の集め方を検証する。
 
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 
 import { describe, expect, test } from "vitest"
 
 import { collectChangedPaths } from "../../scripts/lib/changed-path-repository.ts"
-import { DOCUMENT_CHECK_TEST_FILES, planStages } from "../../scripts/lib/check-stage.ts"
+import { DOCUMENT_CHECK_TEST_FILES, e2eStage, planStages } from "../../scripts/lib/check-stage.ts"
 import { isDocumentOnlyChange, isDocumentPath } from "../../scripts/lib/document-change.ts"
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
 
@@ -51,6 +51,19 @@ describe("isDocumentOnlyChange", () => {
 
   test("変えたファイルが1件も無ければ false（全段を走らせる）", () => {
     expect(isDocumentOnlyChange([])).toBe(false)
+  })
+})
+
+describe("E2E の bail", () => {
+  test("check の E2E の段は bail を持ち、渡したファイルを前に置く", () => {
+    expect(e2eStage([]).args).toEqual(["--bail=3"])
+    expect(e2eStage(["test/e2e/a.test.ts"]).args).toEqual(["test/e2e/a.test.ts", "--bail=3"])
+  })
+
+  test("撮り直し（e2e-update）と E2E の設定は bail を持たない", () => {
+    for (const file of ["scripts/e2e-update.ts", "vitest.e2e.config.ts"]) {
+      expect(readFileSync(file, "utf8")).not.toContain("bail")
+    }
   })
 })
 

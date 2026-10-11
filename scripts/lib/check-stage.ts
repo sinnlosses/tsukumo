@@ -10,6 +10,13 @@ export type Stage = {
   readonly heavy: boolean
 }
 
+const E2E_BAIL_COUNT = 3
+
+/** `files` は流す E2E のファイル（空なら全件）。 */
+export function e2eStage(files: readonly string[]): Stage {
+  return { name: "test:e2e", args: [...files, `--bail=${E2E_BAIL_COUNT}`], heavy: true }
+}
+
 /** 文書だけの変更で打つ文書の検査。 */
 export const DOCUMENT_CHECK_TEST_FILES = [
   "test/conflict-marker.test.ts",

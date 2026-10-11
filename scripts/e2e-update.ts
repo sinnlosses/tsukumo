@@ -6,6 +6,7 @@ import process from "node:process"
 import { fileURLToPath } from "node:url"
 
 import { collectChangedPaths, PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
+import { E2E_FULL_ENVIRONMENT } from "./lib/e2e-full-guard.ts"
 import { readE2eSelection } from "./lib/e2e-selection-repository.ts"
 import { describeE2eSelection } from "./lib/e2e-selection.ts"
 import { type E2eUpdateArgument, readE2eUpdateArgument } from "./lib/e2e-update-argument.ts"
@@ -37,7 +38,7 @@ if (argument.kind === "help") {
     const files = target.kind === "files" ? target.files : []
     const result = spawnSync("pnpm", ["run", "test:e2e", ...files], {
       cwd: ROOT,
-      env: { ...process.env, E2E_UPDATE: "1" },
+      env: { ...process.env, ...E2E_FULL_ENVIRONMENT, E2E_UPDATE: "1" },
       stdio: "inherit",
     })
     process.exitCode = result.status ?? 1

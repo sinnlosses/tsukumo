@@ -22,7 +22,7 @@
     "test": "node scripts/test.ts",
     "test:document": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "pnpm run build && vitest run --config vitest.e2e.config.ts",
+    "test:e2e": "node scripts/e2e.ts",
     "test:e2e:update": "node scripts/e2e-update.ts",
     "check": "nice node scripts/check.ts",
     "ship": "node scripts/ship.ts",
