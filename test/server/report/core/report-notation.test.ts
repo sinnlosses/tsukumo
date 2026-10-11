@@ -8,7 +8,10 @@ import { afterEach, describe, expect, it } from "vitest"
 import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
-import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report/report-block.ts"
+import {
+  REPORT_BLOCK_KINDS,
+  REPORT_MERMAID_KINDS,
+} from "../../../../src/shared/report/report-block.ts"
 import {
   REPORT_DRAWN_MARK_NAMES,
   REPORT_NOTATION_NAMES,
@@ -45,6 +48,7 @@ const DRAWN_MERMAID_KINDS = [
  */
 const KINDS_NOT_TO_OFFER = ["sankey", "architecture", "requirementDiagram", "journey", "xychart"]
 
+const article8 = REPORT_NOTATION_PROMPT.split("8. **").at(1)?.split("9. **").at(0) ?? ""
 const namedTags = [...REPORT_NOTATION_PROMPT.matchAll(/<([a-z]+)[\s>]/g)].flatMap(
   ([, tag]) => tag ?? [],
 )
@@ -196,12 +200,50 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("経路・構造・画面が変わった作業は、前後を beforeAfter で見せさせる", () => {
-    const article8 = REPORT_NOTATION_PROMPT.split("8. **").at(1)?.split("9. **").at(0) ?? ""
     expect(article8).toContain("`beforeAfter`")
     expect(article8).toContain("経路")
     expect(article8).toContain("構造")
     expect(article8).toContain("画面")
-    expect(article8).toContain("1行の設定や文言の変更には使わない")
+    expect(article8).toContain("`beforeAfter` は、1行の設定や文言の変更には使わない")
+  })
+
+  it("条8の表の第一候補は、report ツールの塊の種類に実在する", () => {
+    const rows = article8
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("|") && !line.startsWith("| ---"))
+      .slice(1)
+    const names = rows.flatMap((row) =>
+      [...(row.split("|").at(2) ?? "").matchAll(/`([^`]+)`/g)].flatMap(([, name]) => name ?? []),
+    )
+    // 塊の種類ではなく、塊の欄の名前
+    const fieldNames = ["notes", "before", "from", "to"]
+    const known: readonly string[] = [...REPORT_BLOCK_KINDS, ...REPORT_MERMAID_KINDS, ...fieldNames]
+
+    expect(rows).toHaveLength(5)
+    for (const kind of [
+      "beforeAfter",
+      "image",
+      "mermaid",
+      "stats",
+      "table",
+      "chart",
+      "options",
+      "compare",
+    ]) {
+      expect(names).toContain(kind)
+    }
+    for (const name of names) {
+      expect(known).toContain(name)
+    }
+    expect(article8.replace(/^\s*\|.*$/gm, "")).not.toContain(
+      "呼び出しの経路・層やモジュールの構造・画面の見た目が変わった作業は",
+    )
+  })
+
+  it("画像は、撮った画像があるときだけ優先させる", () => {
+    expect(REPORT_NOTATION_PROMPT).toContain("この作業で撮った画像があるときだけ優先する")
+    expect(REPORT_NOTATION_PROMPT).toContain("撮っていない作業に画像を求めない")
   })
 
   it("勧める mermaid の種類は、描けることを確かめたものだけ", () => {
