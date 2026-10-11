@@ -1469,6 +1469,9 @@ describe("createSessionManager", () => {
           containedNotations: [],
           escapeNotations: [],
           unknownBlockCount: 0,
+          hasModifiedFiles: false,
+          hasBeforeAfterOrImage: false,
+          forTask: false,
           sessionSummary: undefined,
         },
       ])

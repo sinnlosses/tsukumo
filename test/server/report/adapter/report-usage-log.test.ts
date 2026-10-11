@@ -39,6 +39,9 @@ function entry(when: number, sessionId = "claude-session-1"): ReportUsageEntry {
     containedNotations: [],
     escapeNotations: [],
     unknownBlockCount: 0,
+    hasModifiedFiles: true,
+    hasBeforeAfterOrImage: false,
+    forTask: true,
   }
 }
 
@@ -75,6 +78,9 @@ describe("createReportUsageLog", () => {
       "containedNotations",
       "escapeNotations",
       "unknownBlockCount",
+      "hasModifiedFiles",
+      "hasBeforeAfterOrImage",
+      "forTask",
     ])
     expect(record).toMatchObject({
       v: REPORT_USAGE_FORMAT_VERSION,
@@ -85,6 +91,9 @@ describe("createReportUsageLog", () => {
       containedNotations: [],
       escapeNotations: [],
       unknownBlockCount: 0,
+      hasModifiedFiles: true,
+      hasBeforeAfterOrImage: false,
+      forTask: true,
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)

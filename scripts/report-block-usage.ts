@@ -37,20 +37,32 @@ const commonRecordShape = {
   unknownBlockCount: z.number(),
 }
 
+/** 欄を記録し、前後図・画像の有無を記録する前の版。 */
+const VISUALLESS_FORMAT_VERSION = 3
+
 const recordSchema = z.discriminatedUnion("v", [
   z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
   z.object({
+    v: z.literal(VISUALLESS_FORMAT_VERSION),
+    blockFields: z.array(z.string()),
+    ...commonRecordShape,
+  }),
+  z.object({
     v: z.literal(REPORT_USAGE_FORMAT_VERSION),
     blockFields: z.array(z.string()),
+    hasModifiedFiles: z.boolean(),
+    hasBeforeAfterOrImage: z.boolean(),
+    forTask: z.boolean(),
     ...commonRecordShape,
   }),
 ])
 type UsageRecord = z.infer<typeof recordSchema>
-type FieldRecord = Extract<UsageRecord, { readonly v: typeof REPORT_USAGE_FORMAT_VERSION }>
+type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[] }>
+type VisualRecord = Extract<UsageRecord, { readonly v: typeof REPORT_USAGE_FORMAT_VERSION }>
 
 /** 差し戻した呼び出しの行（`kind: "rejected"`）。受け付けの行には `kind` が無い。 */
 const rejectionSchema = z.object({
-  v: z.literal(REPORT_USAGE_FORMAT_VERSION),
+  v: z.union([z.literal(VISUALLESS_FORMAT_VERSION), z.literal(REPORT_USAGE_FORMAT_VERSION)]),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),
 })
@@ -74,7 +86,10 @@ process.stdout.write(
 )
 process.stdout.write("\n\n")
 const fieldRecords = records.filter(
-  (record): record is FieldRecord => record.v === REPORT_USAGE_FORMAT_VERSION,
+  (record): record is FieldRecord => record.v !== FIELDLESS_FORMAT_VERSION,
+)
+const visualRecords = records.filter(
+  (record): record is VisualRecord => record.v === REPORT_USAGE_FORMAT_VERSION,
 )
 process.stdout.write(
   fieldRecords.length === 0
@@ -86,6 +101,8 @@ process.stdout.write(
         (record) => record.blockFields,
       ),
 )
+process.stdout.write("\n\n")
+process.stdout.write(modifiedWithoutVisualSection(visualRecords))
 process.stdout.write("\n\n")
 process.stdout.write(
   table("逃げ道の外の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
@@ -153,6 +170,27 @@ function readRecentRecords(
       return rejection.success ? [rejection.data] : []
     }),
   }
+}
+
+/** modified のファイルがあるレポートのうち、前後図も画像も無かった数。外す基準の対象ではない。 */
+function modifiedWithoutVisualSection(visualRecords: readonly VisualRecord[]): string {
+  if (visualRecords.length === 0) {
+    return "modified のファイルがあるのに前後図も画像も無いレポート: 記録した行が無い"
+  }
+  const line = (label: string, rows: readonly VisualRecord[]): string => {
+    const modified = rows.filter((record) => record.hasModifiedFiles)
+    const missing = modified.filter((record) => !record.hasBeforeAfterOrImage).length
+    const percent = (modified.length === 0 ? 0 : (missing / modified.length) * 100).toFixed(1)
+    return `  ${label.padEnd(16)} modified あり ${String(modified.length).padStart(5)}  うち前後図も画像も無し ${String(missing).padStart(5)}  ${percent.padStart(5)}%`
+  }
+  return [
+    `modified のファイルがあるのに前後図も画像も無いレポート（前後図・画像の有無を記録した${String(visualRecords.length)}件のうち。外す基準の対象ではない）:`,
+    line("全レポート", visualRecords),
+    line(
+      "task の最終レポート",
+      visualRecords.filter((record) => record.forTask),
+    ),
+  ].join("\n")
 }
 
 /** 名前ごとに「出た行の数」を数えた表。`knownNames` は0件でも出す（外す基準は0回を見る）。`total` は割合の分母で、既定は行の数。 */

@@ -56,5 +56,8 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     containedNotations: entry.containedNotations,
     escapeNotations: entry.escapeNotations,
     unknownBlockCount: entry.unknownBlockCount,
+    hasModifiedFiles: entry.hasModifiedFiles,
+    hasBeforeAfterOrImage: entry.hasBeforeAfterOrImage,
+    forTask: entry.forTask,
   }
 }

@@ -25,6 +25,12 @@ export type ReportUsageEntry = {
   /** その回に逃げ道に出た、塊の無い記法の種類（重複無し）。 */
   readonly escapeNotations: readonly EscapeNotation[]
   readonly unknownBlockCount: number
+  /** `files` の塊に `modified` の項目があるか。 */
+  readonly hasModifiedFiles: boolean
+  /** `beforeAfter` か `image` の塊が1つでもあるか。 */
+  readonly hasBeforeAfterOrImage: boolean
+  /** `task` を渡した最終レポートか。 */
+  readonly forTask: boolean
 }
 
 /**
@@ -71,7 +77,18 @@ export function reportUsageEntryOf(
     containedNotations: containedNotationsInSections(event.sections),
     escapeNotations: escapeNotationsInSections(event.sections),
     unknownBlockCount: event.unknownBlockCount,
+    hasModifiedFiles: blocksOf(event.sections).some(
+      (block) => block.kind === "files" && block.items.some((item) => item.change === "modified"),
+    ),
+    hasBeforeAfterOrImage: blocksOf(event.sections).some(
+      (block) => block.kind === "beforeAfter" || block.kind === "image",
+    ),
+    forTask: event.task.kind === "task",
   }
+}
+
+function blocksOf(sections: readonly ReportSection[]): readonly ReportBlock[] {
+  return sections.flatMap((section) => section.blocks)
 }
 
 function blockKindsOf(sections: readonly ReportSection[]): readonly string[] {
@@ -79,7 +96,7 @@ function blockKindsOf(sections: readonly ReportSection[]): readonly string[] {
 }
 
 function blockFieldsOf(sections: readonly ReportSection[]): readonly ReportBlockField[] {
-  const blocks = sections.flatMap((section) => section.blocks)
+  const blocks = blocksOf(sections)
   return REPORT_BLOCK_FIELDS.filter((field) => blocks.some((block) => hasField(block, field)))
 }
 

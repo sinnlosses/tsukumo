@@ -2,7 +2,7 @@
 // 書いてよいのは時刻・セッションID・塊と記法の名前・数だけで、塊の中身・逃げ道の文字は入れない。
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 3 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 4 satisfies number
 
 export type ReportUsageRecord = {
   readonly v: typeof REPORT_USAGE_FORMAT_VERSION
@@ -22,6 +22,12 @@ export type ReportUsageRecord = {
   readonly escapeNotations: readonly string[]
   /** 知らない種類で境界で落とした塊の数。 */
   readonly unknownBlockCount: number
+  /** `files` の塊に `modified` の項目があるか（版4から）。 */
+  readonly hasModifiedFiles: boolean
+  /** `beforeAfter` か `image` の塊が1つでもあるか（版4から）。 */
+  readonly hasBeforeAfterOrImage: boolean
+  /** `task` を渡した最終レポートか（版4から）。 */
+  readonly forTask: boolean
 }
 
 /**

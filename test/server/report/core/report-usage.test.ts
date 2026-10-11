@@ -60,6 +60,53 @@ describe("reportUsageEntryOf", () => {
     expect(changed.blockFields).toEqual(["dimensionBefore"])
   })
 
+  it("modified のファイルの有無・前後図か画像の有無・task の有無を、塊の欄とは別の真偽値で持つ", () => {
+    const files = (change: "modified" | "read"): ReportBlock => ({
+      kind: "files",
+      items: [{ path: "架空/a.ts", change, note: "" }],
+      fold: "",
+    })
+    const beforeAfter: ReportBlock = {
+      kind: "beforeAfter",
+      title: "架空の前後",
+      before: { kind: "points", points: ["前"] },
+      after: { kind: "points", points: ["後"] },
+      fold: "",
+    }
+    const image: ReportBlock = {
+      kind: "image",
+      path: "架空/after.png",
+      caption: "架空の画面",
+      notes: [],
+      fold: "",
+    }
+    const task = { kind: "task", id: "架空-1", name: "架空の作業", outcome: "finished" } as const
+    const table: readonly {
+      readonly blocks: readonly ReportBlock[]
+      readonly task: boolean
+      readonly expected: readonly [boolean, boolean, boolean]
+    }[] = [
+      { blocks: [files("modified")], task: false, expected: [true, false, false] },
+      { blocks: [files("modified")], task: true, expected: [true, false, true] },
+      { blocks: [files("modified"), beforeAfter], task: false, expected: [true, true, false] },
+      { blocks: [files("modified"), image], task: true, expected: [true, true, true] },
+      { blocks: [files("read")], task: false, expected: [false, false, false] },
+      { blocks: [files("read"), image], task: false, expected: [false, true, false] },
+    ]
+
+    for (const row of table) {
+      const event = reportEvent({
+        sections: [{ heading: "", blocks: row.blocks }],
+        task: row.task ? task : { kind: "none" },
+      })
+      const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+
+      expect([entry.hasModifiedFiles, entry.hasBeforeAfterOrImage, entry.forTask]).toEqual(
+        row.expected,
+      )
+    }
+  })
+
   it("image の塊を塊の種類として数え、逃げ道に書いた画像は塊のある記法として数える", () => {
     const event = reportOfSections([
       {
@@ -258,6 +305,9 @@ describe("reportUsageEntryOf", () => {
       containedNotations: [],
       escapeNotations: [],
       unknownBlockCount: 2,
+      hasModifiedFiles: false,
+      hasBeforeAfterOrImage: false,
+      forTask: false,
     })
   })
 })
