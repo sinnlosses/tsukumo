@@ -668,10 +668,10 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   - **欄は `finished`（全部の段を終えた）か `stopped`（途中で止めた）**。`task.outcome` を広げる案は採らない
     （タスクの `report` にしか無く、タスクに紐付かない作業のターンを覆えない）。帯を閉じるときに読むのはこの欄だけで、
     `task.outcome` は目録の1行の終わり方のまま帯には使わない
-  - **`finished` の `report` を受け付けたら、同じ依頼の最後の段取りを `closedByReport` で閉じる**。閉じるのは最後の
+  - **`finished` の `report` を受け付けたら、同じ依頼の最後の段取りを段取りの畳み方（`nextWorkPlan`）で閉じる**。閉じるのは最後の
     段にいるときだけで、`current` を段の数にした `work-plan` の記録を `report` の記録の直前に積む（同じ時刻を持つ）。
     段が2つ以上残っている・全部済みの位置からは動かさない（帯は1回に1段しか進めない）。`stopped` では積まず、止まった段が
-    「今」のまま残る。`WorkPlanReview` も同じ決まりで覚えた段取りを閉じる。差し戻されなかった `report` だけが
+    「今」のまま残る。`WorkPlanReview` も同じ畳み方の結果を覚える。差し戻されなかった `report` だけが
     イベントとして流れるので、閉じるのはイベントの側で、transcript から組み直すときも同じ変換を通って閉じた帯が戻る
   - **`work_plan` で `current` に段の数を渡す呼び出しは受け付けたまま残す**（組み直した古い transcript と、メインが自分で
     閉じた呼び出しを壊さない）。閉じたあとの `finished` は残りが 0 なので何もしない。条と引数の説明からは、`current` に
@@ -773,7 +773,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   持たない（下の「各表示物」のメインビュー）。検証の行は左右にはみ出させ、「✓ OK」の左端を本文の左端にそろえる
   （それまでの 28px・44px と最終レポートの札の内側の余白は `docs/history/decision.md`「display.md 4.2 / screen-design.md 13.2
   最終レポートの箱と、常に開いた検証の表（2026-10-03 に覆した記録）」）
-- 状態は `work-plan` の記録を届いた位置に積むだけで、今の段取り（`latestWorkPlan`）と手順ごとの段
+- 状態は `work-plan` の記録を届いた位置に積むだけで、今の段取り（`currentWorkPlan`）と手順ごとの段
   （`currentTurnSteps`）は記録から導く。記録の形が増えたので `PROTOCOL_VERSION` を 25 に上げ、段のまとめを
   足したときに 27 に、委譲の合図（`delegate-signal` と記録の `source`）を足したときに 31 に、委譲先の終わり
   （`source` の `delegate-ended`）を足したときに 33 に、記録に時刻（`time`）を足したときに 39 に、合図を委譲の

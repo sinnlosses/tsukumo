@@ -20,7 +20,7 @@ import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
 } from "../../../../src/shared/session/session-state.ts"
-import { latestWorkPlan } from "../../../../src/shared/session/work-plan.ts"
+import { currentWorkPlan } from "../../../../src/shared/session/work-plan.ts"
 import { bundledFakeSession } from "../../../fixture/bundled-fake-session.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 
@@ -642,6 +642,6 @@ describe("同梱の疑似セッションの委譲の返却", () => {
     const plans = state.records.filter((record) => record.kind === "work-plan")
 
     expect(plans.map((record) => record.current)).toEqual([1, 2, 3])
-    expect(latestWorkPlan(state.records)).toMatchObject({ current: 3 })
+    expect(currentWorkPlan(state.records)).toMatchObject({ current: 3 })
   })
 })

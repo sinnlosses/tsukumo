@@ -4,8 +4,7 @@
 // 飛ばした段には段のまとめが無く、メインビューの中間レポートがその段だけ抜けるため。
 //
 // 判定の窓口は handler だけ（`WorkPlanReview.judge`）。
-// 覚えるのは、同じ依頼の中で最後に受け付けた段取りだけで、依頼（`request` / `turn-started`）で忘れる。
-// 段の閉じ方が `finished` の `report`（差し戻されずに流れたもの）は、覚えた段取りを `closedByReport` で閉じる。
+// 覚える段取りは `nextWorkPlan` で畳んだ結果だけで、忘れる区切りも返却と `report` での進め方もここでは決めない。
 //
 // 差し戻したあと同じターンで受け付けた呼び出しが無いことも覚え、`report` の差し戻し（`ReportReview`）が `standing` で読む。
 // ターンの区切りは `session-info`（ターンの頭に毎回届く）と `turn-finished`。
@@ -18,10 +17,10 @@ import { isDeepEqual } from "remeda"
 import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
-  advancedByReturn,
-  closedByReport,
   finishedPhaseCount,
   isMidWay,
+  type LatestWorkPlan,
+  nextWorkPlan,
   parseWorkPlan,
   phaseCount,
   type WorkPlan,
@@ -54,7 +53,7 @@ type WorkPlanCalled = Extract<SessionEvent, { readonly kind: "work-plan-called" 
 
 /** {@link WorkPlanReview} を1つ作る。セッション1つに1つ。 */
 export function createWorkPlanReview(): WorkPlanReview {
-  let accepted: WorkPlan | undefined = undefined
+  let accepted: LatestWorkPlan = { kind: "none" }
   let unansweredRejection = false
   let held: readonly WorkPlanCalled[] = []
   // 返却で進めた位置のままか（メインの受け付けた呼び出しが無いあいだ）と、同じ依頼で最後に受けた返却の段の数。
@@ -63,7 +62,7 @@ export function createWorkPlanReview(): WorkPlanReview {
   let gateRaised = false
 
   const isReturnedPosition = (plan: WorkPlan): boolean =>
-    positionFromReturn && accepted !== undefined && isSamePosition(accepted, plan)
+    positionFromReturn && accepted.kind === "planned" && isSamePosition(accepted, plan)
 
   const judgeWellFormed = (plan: WorkPlan): WorkPlanVerdict => {
     if (
@@ -76,13 +75,13 @@ export function createWorkPlanReview(): WorkPlanReview {
     if (isMidWay(plan) && plan.phaseSummary === "" && !isReturnedPosition(plan)) {
       return { kind: "malformed" }
     }
-    if (accepted !== undefined && skipsPhase(accepted, plan)) {
+    if (accepted.kind === "planned" && skipsPhase(accepted, plan)) {
       return { kind: "skipped-phase" }
     }
-    if (accepted !== undefined && advancesWithoutSummary(accepted, plan)) {
+    if (accepted.kind === "planned" && advancesWithoutSummary(accepted, plan)) {
       return { kind: "empty-summary" }
     }
-    accepted = plan
+    accepted = nextWorkPlan(accepted, { kind: "work-plan", ...plan })
     positionFromReturn = false
     gateRaised = false
     return { kind: "accepted", plan }
@@ -102,7 +101,7 @@ export function createWorkPlanReview(): WorkPlanReview {
       if (unansweredRejection) {
         return { kind: "rejected" }
       }
-      return accepted === undefined
+      return accepted.kind === "none"
         ? { kind: "none" }
         : {
             kind: "planned",
@@ -123,31 +122,25 @@ export function createWorkPlanReview(): WorkPlanReview {
           held = held.filter((candidate) => candidate !== called)
           return event.isError ? [event] : [{ kind: "work-plan", ...called.plan }, event]
         }
-        case "report": {
-          const close =
-            accepted === undefined || event.workPlanClosing !== "finished"
-              ? undefined
-              : closedByReport(accepted)
-          if (close?.kind === "closed") {
-            accepted = close.plan
-          }
+        case "report":
+          accepted = nextWorkPlan(accepted, event)
           return [event]
-        }
         case "delegate-returned": {
           returnedCount = returnedCountOf(event.handback) ?? returnedCount
-          gateRaised = gateRaised || accepted !== undefined
-          const advance =
-            accepted === undefined ? undefined : advancedByReturn(accepted, event.handback)
-          if (advance?.kind === "advanced") {
-            accepted = advance.plan
-            positionFromReturn = true
-          }
+          gateRaised = gateRaised || accepted.kind === "planned"
+          const next = nextWorkPlan(accepted, event)
+          positionFromReturn = positionFromReturn || !isDeepEqual(next, accepted)
+          accepted = next
           return [event]
         }
         case "request":
-        case "turn-started":
-          accepted = undefined
+          accepted = nextWorkPlan(accepted, event)
           positionFromReturn = false
+          returnedCount = undefined
+          gateRaised = false
+          unansweredRejection = false
+          return [event]
+        case "turn-started":
           returnedCount = undefined
           gateRaised = false
           unansweredRejection = false

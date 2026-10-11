@@ -21,7 +21,7 @@ import {
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 import {
-  latestWorkPlan,
+  currentWorkPlan,
   type WorkPlan,
   type WorkPlanClosing,
 } from "../../../src/shared/session/work-plan.ts"
@@ -1628,7 +1628,7 @@ describe("applySessionEvent（委譲と段取り）", () => {
     phaseSummary,
   })
   const currentOf = (state: SessionState) => {
-    const plan = latestWorkPlan(state.records)
+    const plan = currentWorkPlan(state.records)
     return plan.kind === "planned" ? plan.current : undefined
   }
 
@@ -1706,7 +1706,7 @@ describe("applySessionEvent（委譲の返却で進む段取り）", () => {
     )
 
     expect(state.records.filter((record) => record.kind === "work-plan")).toHaveLength(3)
-    expect(latestWorkPlan(state.records)).toMatchObject({ current: 3 })
+    expect(currentWorkPlan(state.records)).toMatchObject({ current: 3 })
   })
 
   it.each([
@@ -1750,7 +1750,7 @@ describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
   })
   const reportOf = (workPlanClosing: WorkPlanClosing): SessionEvent =>
     reportEvent({ toolUseId: "toolu_r1", workPlanClosing })
-  const currentPlan = (state: SessionState) => latestWorkPlan(state.records)
+  const currentPlan = (state: SessionState) => currentWorkPlan(state.records)
 
   it("最後の段で finished の report を受けると、帯が全部済みになる", () => {
     const state = apply(request, mainPlan(2), reportOf("finished"))

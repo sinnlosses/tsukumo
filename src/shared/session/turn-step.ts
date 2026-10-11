@@ -13,8 +13,8 @@ import {
 import {
   currentPhaseOf,
   isWorkPlanRecord,
-  workPlanOf,
   type LatestWorkPlan,
+  nextWorkPlan,
   type WorkPhase,
 } from "./work-plan.ts"
 
@@ -106,7 +106,7 @@ export function currentTurnSteps(
   let plan: LatestWorkPlan = { kind: "none" }
   for (const record of records.slice(requestIndex + 1)) {
     if (isWorkPlanRecord(record)) {
-      plan = workPlanOf(record)
+      plan = nextWorkPlan(plan, record)
     } else if (isToolRecord(record) && !(sessionEnded && record.status.kind === "running")) {
       steps.push(toTurnStep(record, currentPhaseOf(plan)))
     }

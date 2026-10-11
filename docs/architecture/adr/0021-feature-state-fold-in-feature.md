@@ -24,6 +24,9 @@
   - 記録・ターン・セリフ・API の不調の芯（`records` `turn` `speeches` `partialUtterance`
     `reportDrafting` `apiTrouble` など）は `session-state.ts` に残す。ほとんどのイベントが記録とターンの
     欄を同時に動かすので、割るとまたがるイベントのほうが多くなる
+  - 今の段取りは `work-plan` の記録から導くもので記録の芯の中にあるので、部分の reducer にはしない。畳み方
+    （`nextWorkPlan`・`currentWorkPlan`）は `shared/session/work-plan.ts` に置き、`session-state.ts` とサーバの
+    差し戻し（`WorkPlanReview`）がその結果を読む（2026-10-11）
 - **`SessionState` の形は変えない。** 欄は平らなままで、部分の reducer は自分の欄（見直しなら2つの欄の組）
   だけを受け取って返し、入口が `SessionState` へ広げ直す。状態の形を変えると `PROTOCOL_VERSION` が
   上がり、ブラウザの読み手すべてに波及する（「版と互換」）

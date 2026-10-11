@@ -3,8 +3,15 @@ import { describe, expect, it } from "vitest"
 import { createWorkPlanReview } from "../../../../src/server/session-driver/core/work-plan-review.ts"
 import { parseDelegateReturn } from "../../../../src/shared/session/delegate-return.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import type { WorkPlanClosing } from "../../../../src/shared/session/work-plan.ts"
+import {
+  finishedPhaseCount,
+  type LatestWorkPlan,
+  phaseCount,
+  type WorkPlanClosing,
+  type WorkPlanStanding,
+} from "../../../../src/shared/session/work-plan.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
+import { WORK_PLAN_SCENES } from "../../../fixture/work-plan-scene.ts"
 
 const PHASES = ["架空の段A", "架空の段B", "架空の段C"]
 const SUMMARY = "架空のまとめ。"
@@ -300,5 +307,28 @@ describe("WorkPlanReview の立ち位置", () => {
 
     expect(stopped.standing()).toEqual({ kind: "planned", remaining: 1 })
     expect(early.standing()).toEqual({ kind: "planned", remaining: 2 })
+  })
+})
+
+describe("WorkPlanReview の今の段取り", () => {
+  const standingOf = (plan: LatestWorkPlan): WorkPlanStanding =>
+    plan.kind === "none"
+      ? { kind: "none" }
+      : { kind: "planned", remaining: phaseCount(plan.phases) - finishedPhaseCount(plan) }
+
+  it.each(WORK_PLAN_SCENES)("$name", ({ events, plan }) => {
+    const review = createWorkPlanReview()
+    for (const event of events) {
+      if (event.kind === "work-plan") {
+        const { kind: _, delegatedRange, ...input } = event
+        expect(
+          review.judge(delegatedRange.kind === "range" ? { ...input, delegatedRange } : input).kind,
+        ).toBe("accepted")
+      } else {
+        review.pass(event)
+      }
+    }
+
+    expect(review.standing()).toEqual(standingOf(plan))
   })
 })

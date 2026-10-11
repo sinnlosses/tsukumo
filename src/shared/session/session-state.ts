@@ -5,7 +5,7 @@
 //
 // ここが持つのは「状態そのもの」と「イベント1件でどう変わるか」だけで、姿から導くだけのもの（メインビューに出す形・`/` 補完の候補など）は置かない。
 
-import { isPlainObject } from "remeda"
+import { isDeepEqual, isPlainObject } from "remeda"
 
 import type { CharacterInfo, CharacterPackEntry } from "../character-pack/character.ts"
 import type { Expression } from "../character-pack/expression.ts"
@@ -48,13 +48,7 @@ import type {
   SessionEvent,
 } from "./session-event.ts"
 import { splitIntoTurns } from "./turn.ts"
-import {
-  advancedByReturn,
-  closedByReport,
-  isWorkPlanRecord,
-  type WorkPlan,
-  type WorkPlanClosing,
-} from "./work-plan.ts"
+import { currentWorkPlan, nextWorkPlan, type WorkPlan, type WorkPlanEvent } from "./work-plan.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが動き続ける以上、記録自体も無限に増やさない。
@@ -167,7 +161,7 @@ export type SessionRecord =
     }
   /**
    * `work_plan` ツールで受け取った段取りと、`finished` の `report` で tsukumo が閉じた段取り。
-   * 届いた位置に積むだけで、今の段取りは `latestWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
+   * 届いた位置に積むだけで、今の段取りは `currentWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
    */
   | ({
       readonly kind: "work-plan"
@@ -670,7 +664,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "work-plan-called":
       return state
     case "delegate-returned":
-      return { ...state, records: [...state.records, ...returnRecords(state.records, event, at)] }
+      return { ...state, records: [...state.records, ...workPlanRecords(state.records, event, at)] }
     case "report-rejected":
       return state
     case "report-drafting":
@@ -683,7 +677,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         bodiesInTurn: { ...state.bodiesInTurn, report: true },
         records: [
           ...state.records,
-          ...reportClosingRecords(state.records, event.workPlanClosing, at),
+          ...workPlanRecords(state.records, event, at),
           {
             kind: "report",
             toolUseId: event.toolUseId,
@@ -883,47 +877,18 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
 }
 
 /**
- * 段の閉じ方が `finished` の `report` 1回で積む記録。同じ依頼の最後の段取りを {@link closedByReport} で閉じたもの。
- * `finished` でないときと、同じ依頼に段取りが無いとき、閉じられない（段が2つ以上残っている・全部済み）ときは積まない。
+ * 委譲の返却か `report` 1件で積む記録。記録から畳んだ今の段取りを {@link nextWorkPlan} で畳み、変わったときだけその段取りを届いた時刻で1件積む。
  */
-function reportClosingRecords(
+function workPlanRecords(
   records: readonly SessionRecord[],
-  closing: WorkPlanClosing,
+  event: Extract<WorkPlanEvent, { readonly kind: "delegate-returned" | "report" }>,
   at: number,
 ): readonly SessionRecord[] {
-  const latest =
-    closing === "finished" ? recordsOfLastRequest(records).findLast(isWorkPlanRecord) : undefined
-  if (latest === undefined) {
-    return []
-  }
-  const close = closedByReport(latest)
-  return close.kind === "held"
+  const current = currentWorkPlan(records)
+  const next = nextWorkPlan(current, event)
+  return next.kind === "none" || isDeepEqual(next, current)
     ? []
-    : [{ kind: "work-plan", ...close.plan, time: { kind: "stamped", at } }]
-}
-
-/**
- * 委譲の返却 1 回で積む記録。同じ依頼の最後の段取りを {@link advancedByReturn} で進めたもの（返却の届いた時刻）。
- * 進まないとき（同じ依頼に段取りが無い・動かさない返却）は積まない。
- */
-function returnRecords(
-  records: readonly SessionRecord[],
-  event: Extract<SessionEvent, { readonly kind: "delegate-returned" }>,
-  at: number,
-): readonly SessionRecord[] {
-  const latest = recordsOfLastRequest(records).findLast(isWorkPlanRecord)
-  if (latest === undefined) {
-    return []
-  }
-  const advance = advancedByReturn(latest, event.handback)
-  return advance.kind === "advanced"
-    ? [{ kind: "work-plan", ...advance.plan, time: { kind: "stamped", at } }]
-    : []
-}
-
-/** 最後の依頼より後ろの記録（依頼が無ければ全部）。 */
-function recordsOfLastRequest(records: readonly SessionRecord[]): readonly SessionRecord[] {
-  return records.slice(records.findLastIndex((record) => record.kind === "request") + 1)
+    : [{ ...next, kind: "work-plan", time: { kind: "stamped", at } }]
 }
 
 /**

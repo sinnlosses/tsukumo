@@ -1,18 +1,26 @@
 import { describe, expect, it } from "vitest"
 
 import type { DelegateReturn } from "../../../src/shared/session/delegate-return.ts"
+import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import {
-  advancedByReturn,
-  closedByReport,
+  applySessionEvent,
+  INITIAL_SESSION_STATE,
+} from "../../../src/shared/session/session-state.ts"
+import {
   currentPhaseOf,
+  currentWorkPlan,
   type LatestWorkPlan,
+  nextWorkPlan,
   parseWorkPlan,
   parseWorkPlanClosing,
   phaseShiftOf,
   plannedPhasesOf,
   type WorkPlan,
   type WorkPlanEntry,
+  type WorkPlanEvent,
 } from "../../../src/shared/session/work-plan.ts"
+import { reportEvent } from "../../fixture/report-event.ts"
+import { WORK_PLAN_SCENES } from "../../fixture/work-plan-scene.ts"
 
 // 段の名前とまとめはすべて架空のもの。
 
@@ -254,26 +262,35 @@ describe("parseWorkPlanClosing", () => {
   })
 })
 
-describe("closedByReport", () => {
+describe("nextWorkPlan（finished の report で閉じる）", () => {
+  const closed = (plan: WorkPlan): LatestWorkPlan =>
+    nextWorkPlan({ kind: "planned", ...plan }, reportEvent({ workPlanClosing: "finished" }))
+
   it("最後の段にいれば、段の並びはそのままで全部の段を終えた位置にする", () => {
-    expect(closedByReport(next(PHASES, 2, "架空のまとめ。"))).toEqual({
-      kind: "closed",
-      plan: next(PHASES, 3),
+    expect(closed(next(PHASES, 2, "架空のまとめ。"))).toEqual({
+      kind: "planned",
+      ...next(PHASES, 3),
     })
   })
 
   it("段が2つ以上残っている・全部済みの位置からは動かさない", () => {
-    expect(closedByReport(next(PHASES, 1, "架空のまとめ。"))).toEqual({ kind: "held" })
-    expect(closedByReport(next(PHASES, 3))).toEqual({ kind: "held" })
+    expect(closed(next(PHASES, 1, "架空のまとめ。"))).toEqual({
+      kind: "planned",
+      ...next(PHASES, 1, "架空のまとめ。"),
+    })
+    expect(closed(next(PHASES, 3))).toEqual({ kind: "planned", ...next(PHASES, 3) })
   })
 
   it("最後のまとまりは、残りが1段になってから閉じる", () => {
     const group = ["架空の段A", ["架空の段B", "架空の段C"]] as const
 
-    expect(closedByReport(next(group, 1, "架空のまとめ。"))).toEqual({ kind: "held" })
-    expect(closedByReport(next(group, 1, "架空のまとめ。", ["架空の段B"]))).toEqual({
-      kind: "closed",
-      plan: next(group, 2),
+    expect(closed(next(group, 1, "架空のまとめ。"))).toEqual({
+      kind: "planned",
+      ...next(group, 1, "架空のまとめ。"),
+    })
+    expect(closed(next(group, 1, "架空のまとめ。", ["架空の段B"]))).toEqual({
+      kind: "planned",
+      ...next(group, 2),
     })
   })
 })
@@ -307,7 +324,7 @@ describe("parseWorkPlan の委譲先の段の範囲", () => {
   })
 })
 
-describe("advancedByReturn", () => {
+describe("nextWorkPlan（委譲の返却で進める）", () => {
   const RANGE = { kind: "range", first: 1, count: 2 } as const
   const SERIAL: readonly WorkPlanEntry[] = [
     "架空の計画",
@@ -320,29 +337,38 @@ describe("advancedByReturn", () => {
     phases: readonly WorkPlanEntry[] = SERIAL,
     finishedInGroup: readonly string[] = [],
     delegatedRange: WorkPlan["delegatedRange"] = RANGE,
-  ): WorkPlan => ({ phases, current, finishedInGroup, phaseSummary: "", delegatedRange })
+  ): LatestWorkPlan => ({
+    kind: "planned",
+    phases,
+    current,
+    finishedInGroup,
+    phaseSummary: "",
+    delegatedRange,
+  })
   const phaseDone = (phase: number, count = 2, summary = "架空の要約。"): DelegateReturn => ({
     kind: "phase-done",
     phase,
     count,
     summary,
   })
+  const returned = (plan: LatestWorkPlan, handback: DelegateReturn): LatestWorkPlan =>
+    nextWorkPlan(plan, { kind: "delegate-returned", handback })
 
   it("段 n/N で、段 n に当たる今の段を済ませ、要約を段のまとめにする", () => {
-    expect(advancedByReturn(planAt(1), phaseDone(1))).toEqual({
-      kind: "advanced",
-      plan: { ...planAt(2), phaseSummary: "架空の要約。" },
+    expect(returned(planAt(1), phaseDone(1))).toEqual({
+      ...planAt(2),
+      phaseSummary: "架空の要約。",
     })
-    expect(advancedByReturn(planAt(2), phaseDone(2))).toEqual({
-      kind: "advanced",
-      plan: { ...planAt(3), phaseSummary: "架空の要約。" },
+    expect(returned(planAt(2), phaseDone(2))).toEqual({
+      ...planAt(3),
+      phaseSummary: "架空の要約。",
     })
   })
 
   it("要約は2文に切り詰める", () => {
-    const result = advancedByReturn(planAt(1), phaseDone(1, 2, "一つ目。二つ目。三つ目。"))
-
-    expect(result.kind === "advanced" && result.plan.phaseSummary).toBe("一つ目。二つ目。")
+    expect(returned(planAt(1), phaseDone(1, 2, "一つ目。二つ目。三つ目。"))).toMatchObject({
+      phaseSummary: "一つ目。二つ目。",
+    })
   })
 
   it("まとまりの中の段は finishedInGroup に足し、最後の段で current を進めて空にする", () => {
@@ -351,45 +377,66 @@ describe("advancedByReturn", () => {
       ["架空の実装A", "架空の実装B"],
       "架空の受け入れ",
     ]
-    const first = advancedByReturn(planAt(1, grouped), phaseDone(2))
-    const second = advancedByReturn(planAt(1, grouped, ["架空の実装B"]), phaseDone(1))
 
-    expect(first).toMatchObject({
-      kind: "advanced",
-      plan: { current: 1, finishedInGroup: ["架空の実装B"] },
+    expect(returned(planAt(1, grouped), phaseDone(2))).toMatchObject({
+      current: 1,
+      finishedInGroup: ["架空の実装B"],
     })
-    expect(second).toMatchObject({
-      kind: "advanced",
-      plan: { current: 2, finishedInGroup: [] },
+    expect(returned(planAt(1, grouped, ["架空の実装B"]), phaseDone(1))).toMatchObject({
+      current: 2,
+      finishedInGroup: [],
     })
   })
 
   it("一足飛び・済んだ段・N の食い違いは動かさない", () => {
-    expect(advancedByReturn(planAt(1), phaseDone(2))).toEqual({ kind: "held" })
-    expect(advancedByReturn(planAt(2), phaseDone(1))).toEqual({ kind: "held" })
-    expect(advancedByReturn(planAt(1), phaseDone(1, 3))).toEqual({ kind: "held" })
+    expect(returned(planAt(1), phaseDone(2))).toEqual(planAt(1))
+    expect(returned(planAt(2), phaseDone(1))).toEqual(planAt(2))
+    expect(returned(planAt(1), phaseDone(1, 3))).toEqual(planAt(1))
   })
 
   it("範囲の無い段取りと、計画・止めた・形の読めない返却は動かさない", () => {
-    expect(advancedByReturn(planAt(1, SERIAL, [], { kind: "none" }), phaseDone(1))).toEqual({
-      kind: "held",
-    })
+    const noRange = planAt(1, SERIAL, [], { kind: "none" })
+
+    expect(returned(noRange, phaseDone(1))).toEqual(noRange)
     for (const handback of [
       { kind: "plan", count: 2, summary: "架空" },
       { kind: "stopped", phase: 1, count: 2, summary: "架空" },
       { kind: "unreadable" },
     ] as const) {
-      expect(advancedByReturn(planAt(1), handback)).toEqual({ kind: "held" })
+      expect(returned(planAt(1), handback)).toEqual(planAt(1))
     }
   })
 
   it("並びの最後の段は返却では済ませない（閉じるのは report）", () => {
-    const whole = { kind: "range", first: 0, count: 2 } as const
-
-    expect(
-      advancedByReturn(planAt(1, ["架空の段A", "架空の段B"], [], whole), phaseDone(2)),
-    ).toEqual({
-      kind: "held",
+    const lastPhase = planAt(1, ["架空の段A", "架空の段B"], [], {
+      kind: "range",
+      first: 0,
+      count: 2,
     })
+
+    expect(returned(lastPhase, phaseDone(2))).toEqual(lastPhase)
+  })
+})
+
+describe("イベントの並びから畳んだ今の段取り", () => {
+  const isWorkPlanEvent = (event: SessionEvent): event is WorkPlanEvent =>
+    event.kind === "request" ||
+    event.kind === "work-plan" ||
+    event.kind === "delegate-returned" ||
+    event.kind === "report"
+  const foldedPlanAfter = (events: readonly SessionEvent[]): LatestWorkPlan =>
+    events.reduce<LatestWorkPlan>(
+      (plan, event) => (isWorkPlanEvent(event) ? nextWorkPlan(plan, event) : plan),
+      { kind: "none" },
+    )
+  const recordedPlanAfter = (events: readonly SessionEvent[]): LatestWorkPlan =>
+    currentWorkPlan(
+      events.reduce((state, event) => applySessionEvent(state, event, 0), INITIAL_SESSION_STATE)
+        .records,
+    )
+
+  it.each(WORK_PLAN_SCENES)("$name", ({ events, plan }) => {
+    expect(foldedPlanAfter(events)).toEqual(plan)
+    expect(recordedPlanAfter(events)).toEqual(plan)
   })
 })

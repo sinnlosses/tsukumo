@@ -6,6 +6,7 @@ import { isPlainObject } from "remeda"
 import { leadingSentences, sentenceCount } from "../report/sentence-count.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import type { DelegateReturn } from "./delegate-return.ts"
+import type { SessionEvent } from "./session-event.ts"
 import type { SessionRecord } from "./session-state.ts"
 
 /** 段のまとまり。同時に走る段の名前の並びで、{@link MIN_PHASE_GROUP_SIZE} 個以上の重ならない名前を持つ。 */
@@ -48,7 +49,9 @@ export const MIN_PHASE_GROUP_SIZE = 2
 export const MAX_PHASE_SUMMARY_SENTENCES = 2
 
 /** 記録の範囲で最後に渡された段取り。1度も渡されていなければ `none`。 */
-export type LatestWorkPlan = { readonly kind: "none" } | ({ readonly kind: "planned" } & WorkPlan)
+export type LatestWorkPlan = { readonly kind: "none" } | PlannedWorkPlan
+
+type PlannedWorkPlan = { readonly kind: "planned" } & WorkPlan
 
 export type PlannedPhaseState = "done" | "current" | "upcoming"
 
@@ -140,47 +143,6 @@ export function isMidWay(plan: Pick<WorkPlan, "phases" | "current" | "finishedIn
   return finished > 0 && finished < phaseCount(plan.phases)
 }
 
-/** 返却を受けて段取りを進めた結果。`held` は帯を動かさない。 */
-export type ReturnAdvance =
-  | { readonly kind: "held" }
-  | { readonly kind: "advanced"; readonly plan: WorkPlan }
-
-/**
- * 委譲の返却 `段 n/N` で、覚えている段取りを進めた結果。
- * 範囲があり `N` が範囲の段の数と同じで、段 `n` に当たる段が今の段の集合に入っているときだけ、その段を済ませる。
- * 一足飛び・済んだ段・範囲の無い段取り・`計画`・`止めた`・形の読めない返却・並びの最後の段（返却では全部済みにしない）は動かさない。
- * 段のまとめは返却の要約を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもの。
- */
-export function advancedByReturn(plan: WorkPlan, handback: DelegateReturn): ReturnAdvance {
-  if (
-    handback.kind !== "phase-done" ||
-    plan.delegatedRange.kind !== "range" ||
-    plan.delegatedRange.count !== handback.count
-  ) {
-    return HELD
-  }
-  const target = plan.delegatedRange.first + handback.phase - 1
-  const phase = plannedPhasesOf(plan).find((candidate) => candidate.index === target)
-  if (phase === undefined || phase.state !== "current") {
-    return HELD
-  }
-  const entry = plan.phases[phase.entry]
-  const finishedInGroup = typeof entry === "string" ? [] : [...plan.finishedInGroup, phase.name]
-  const entryDone =
-    entry === undefined || typeof entry === "string" || finishedInGroup.length === entry.length
-  const advanced: WorkPlan = {
-    ...plan,
-    current: entryDone ? plan.current + 1 : plan.current,
-    finishedInGroup: entryDone ? [] : finishedInGroup,
-    phaseSummary: leadingSentences(handback.summary, MAX_PHASE_SUMMARY_SENTENCES),
-  }
-  return finishedPhaseCount(advanced) >= phaseCount(advanced.phases)
-    ? HELD
-    : { kind: "advanced", plan: advanced }
-}
-
-const HELD = { kind: "held" } as const satisfies ReturnAdvance
-
 /** 並びを平らにした段（{@link PlannedPhase}）。読み順に並ぶ。 */
 export function plannedPhasesOf(
   plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup">,
@@ -233,48 +195,51 @@ export function parseWorkPlanClosing(value: unknown): WorkPlanClosing {
   return WORK_PLAN_CLOSINGS.find((closing) => closing === value) ?? "none"
 }
 
-/** `finished` の `report` 1回で段取りがどうなるか。`held` は段を動かさない。 */
-export type ReportClose =
-  | { readonly kind: "held" }
-  | { readonly kind: "closed"; readonly plan: WorkPlan }
+/** 今の段取りを動かすイベント。ほかのイベント（`turn-started` も）は段取りを動かさない。 */
+export type WorkPlanEvent = Extract<
+  SessionEvent,
+  { readonly kind: "request" | "work-plan" | "delegate-returned" | "report" }
+>
 
 /**
- * `finished` の `report` 1回で閉じた段取り（{@link ReportClose}）。
- * 残りが1段のときだけ、段の並びはそのままで全部の段を終えた位置にする（最後の段のまとめは最終レポートが担うので持たない）。
- * 段が2つ以上残っている・全部の段を終えた位置からは動かさない。
+ * イベント1件を受けたあとの今の段取り。
+ * 依頼で忘れ、`work-plan` で置き換え、委譲の返却は {@link advancedByReturn}、段の閉じ方が `finished` の `report` は {@link closedByReport} で畳む。
  */
-export function closedByReport(plan: WorkPlan): ReportClose {
-  return phaseCount(plan.phases) - finishedPhaseCount(plan) === 1
-    ? {
-        kind: "closed",
-        plan: {
-          phases: plan.phases,
-          current: plan.phases.length,
-          finishedInGroup: [],
-          phaseSummary: "",
-          delegatedRange: plan.delegatedRange,
-        },
-      }
-    : { kind: "held" }
+export function nextWorkPlan(plan: LatestWorkPlan, event: WorkPlanEvent): LatestWorkPlan {
+  switch (event.kind) {
+    case "request":
+      return NO_WORK_PLAN
+    case "work-plan":
+      return workPlanOf(event)
+    case "delegate-returned":
+      return plan.kind === "none" ? plan : advancedByReturn(plan, event.handback)
+    case "report":
+      return plan.kind === "none" || event.workPlanClosing !== "finished"
+        ? plan
+        : closedByReport(plan)
+  }
 }
 
-/** 記録の範囲で最後の `work-plan` の記録（{@link LatestWorkPlan}）。範囲を依頼1つに絞るのは呼ぶ側。 */
-export function latestWorkPlan(records: readonly SessionRecord[]): LatestWorkPlan {
-  const found = records.findLast(isWorkPlanRecord)
-  return found === undefined ? { kind: "none" } : workPlanOf(found)
+/** 記録の並びから畳んだ今の段取り。記録に残る `request` と `work-plan` を {@link nextWorkPlan} に通す。 */
+export function currentWorkPlan(records: readonly SessionRecord[]): LatestWorkPlan {
+  return records.reduce<LatestWorkPlan>(
+    (plan, record) =>
+      record.kind === "request" || record.kind === "work-plan" ? nextWorkPlan(plan, record) : plan,
+    NO_WORK_PLAN,
+  )
 }
 
-/** `work-plan` の記録1件が運ぶ段取り。 */
-export function workPlanOf(
-  record: Extract<SessionRecord, { readonly kind: "work-plan" }>,
-): LatestWorkPlan {
+const NO_WORK_PLAN = { kind: "none" } as const satisfies LatestWorkPlan
+
+/** `work-plan` のイベントか記録1件が運ぶ段取り（段取りの欄だけを拾う）。 */
+export function workPlanOf(plan: WorkPlan): PlannedWorkPlan {
   return {
     kind: "planned",
-    phases: record.phases,
-    current: record.current,
-    finishedInGroup: record.finishedInGroup,
-    phaseSummary: record.phaseSummary,
-    delegatedRange: record.delegatedRange,
+    phases: plan.phases,
+    current: plan.current,
+    finishedInGroup: plan.finishedInGroup,
+    phaseSummary: plan.phaseSummary,
+    delegatedRange: plan.delegatedRange,
   }
 }
 
@@ -351,6 +316,56 @@ const PHASE_NAME_SEPARATOR = "・"
 const NO_PHASE_SHIFT = {
   finished: { kind: "none" },
 } as const satisfies PhaseShift
+
+/**
+ * 委譲の返却 `段 n/N` で進めた段取り。
+ * 範囲があり `N` が範囲の段の数と同じで、段 `n` に当たる段が今の段の集合に入っているときだけ、その段を済ませる。
+ * 一足飛び・済んだ段・範囲の無い段取り・`計画`・`止めた`・形の読めない返却・並びの最後の段（返却では全部済みにしない）では `plan` をそのまま返す。
+ * 段のまとめは返却の要約を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもの。
+ */
+function advancedByReturn(plan: PlannedWorkPlan, handback: DelegateReturn): PlannedWorkPlan {
+  if (
+    handback.kind !== "phase-done" ||
+    plan.delegatedRange.kind !== "range" ||
+    plan.delegatedRange.count !== handback.count
+  ) {
+    return plan
+  }
+  const target = plan.delegatedRange.first + handback.phase - 1
+  const phase = plannedPhasesOf(plan).find((candidate) => candidate.index === target)
+  if (phase === undefined || phase.state !== "current") {
+    return plan
+  }
+  const entry = plan.phases[phase.entry]
+  const finishedInGroup = typeof entry === "string" ? [] : [...plan.finishedInGroup, phase.name]
+  const entryDone =
+    entry === undefined || typeof entry === "string" || finishedInGroup.length === entry.length
+  const advanced: PlannedWorkPlan = {
+    ...plan,
+    current: entryDone ? plan.current + 1 : plan.current,
+    finishedInGroup: entryDone ? [] : finishedInGroup,
+    phaseSummary: leadingSentences(handback.summary, MAX_PHASE_SUMMARY_SENTENCES),
+  }
+  return finishedPhaseCount(advanced) >= phaseCount(advanced.phases) ? plan : advanced
+}
+
+/**
+ * `finished` の `report` 1回で閉じた段取り。
+ * 残りが1段のときだけ、段の並びはそのままで全部の段を終えた位置にする（最後の段のまとめは最終レポートが担うので持たない）。
+ * 段が2つ以上残っている・全部の段を終えた位置では `plan` をそのまま返す。
+ */
+function closedByReport(plan: PlannedWorkPlan): PlannedWorkPlan {
+  return phaseCount(plan.phases) - finishedPhaseCount(plan) === 1
+    ? {
+        kind: "planned",
+        phases: plan.phases,
+        current: plan.phases.length,
+        finishedInGroup: [],
+        phaseSummary: "",
+        delegatedRange: plan.delegatedRange,
+      }
+    : plan
+}
 
 function entryNames(entry: WorkPlanEntry): readonly string[] {
   return typeof entry === "string" ? [entry] : entry
