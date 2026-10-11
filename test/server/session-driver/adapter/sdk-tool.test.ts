@@ -445,7 +445,43 @@ describe("work_plan（段取り）", () => {
       current: 2,
     })
 
-    expect(reply).toEqual({ text: "ok", isError: false, endsTurn: false })
+    expect(reply).toEqual({
+      text: "ok\n帯の段は全部済んでいる。",
+      isError: false,
+      endsTurn: false,
+    })
+  })
+
+  it("受け付けた戻り値は帯の今の段の位置と名前を言い、範囲があれば委譲先の段の帯での位置を言う", async () => {
+    const reply = await callTool(workServer(), "work_plan", {
+      phases: ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"],
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+      delegatedRange: { first: 1, count: 2 },
+    })
+
+    expect(reply.text).toBe(
+      "ok\n帯の今の段は 2/4 架空の実装A。委譲先の段 1〜2 は帯の 2〜3 番目（委譲先の段 n は帯の 1 + n 番目）。",
+    )
+  })
+
+  it("計画を練り直して first と総数が変わると、戻り値は新しい番号を言う", async () => {
+    const review = createCallReview()
+    const before = await callTool(workServer([], [], [], review), "work_plan", {
+      phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
+      current: 0,
+      delegatedRange: { first: 1, count: 1 },
+    })
+    const after = await callTool(workServer([], [], [], review), "work_plan", {
+      phases: ["架空の計画", "架空の調べ", "架空の実装A", "架空の実装B", "架空の受け入れ"],
+      current: 0,
+      delegatedRange: { first: 2, count: 2 },
+    })
+
+    expect(before.text).toContain("帯の今の段は 1/3 架空の計画。")
+    expect(before.text).toContain("帯の 2〜2 番目")
+    expect(after.text).toContain("帯の今の段は 1/5 架空の計画。")
+    expect(after.text).toContain("帯の 3〜4 番目")
   })
 
   it("途中の位置の呼び出しは、段のまとめがあれば通し、無ければ差し戻す", async () => {
@@ -459,7 +495,7 @@ describe("work_plan（段取り）", () => {
       current: 1,
     })
 
-    expect(withSummary).toEqual({ text: "ok", isError: false, endsTurn: false })
+    expect(withSummary).toMatchObject({ isError: false, endsTurn: false })
     expect(withoutSummary.isError).toBe(true)
     expect(withoutSummary.endsTurn).toBe(false)
   })
@@ -482,7 +518,7 @@ describe("work_plan（段取り）", () => {
       delegatedRange: { first: 1, count: 0 },
     })
 
-    expect(ok).toEqual({ text: "ok", isError: false, endsTurn: false })
+    expect(ok).toMatchObject({ isError: false, endsTurn: false })
     expect(overflow.isError).toBe(true)
     expect(zero.isError).toBe(true)
   })
@@ -499,14 +535,14 @@ describe("work_plan（段取り）", () => {
       current: 0,
     })
 
-    expect(grouped).toEqual({ text: "ok", isError: false, endsTurn: false })
+    expect(grouped).toMatchObject({ isError: false, endsTurn: false })
     expect(lone.isError).toBe(true)
   })
 
   it("段が1つだけの段取りは受け付ける", async () => {
     const single = await callTool(workServer(), "work_plan", { phases: ["架空の段A"], current: 0 })
 
-    expect(single).toEqual({ text: "ok", isError: false, endsTurn: false })
+    expect(single).toMatchObject({ isError: false, endsTurn: false })
   })
 
   it("段が0・空白だけの名前の段取りは形の検査で落ちる", async () => {

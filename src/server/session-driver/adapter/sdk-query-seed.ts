@@ -99,6 +99,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  */
 export function preToolUseHooks(
   gateRaised: () => boolean,
+  bandPosition: () => string,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     PreToolUse: [
@@ -109,10 +110,10 @@ export function preToolUseHooks(
               return {}
             }
             const inSubagent = input.agent_id !== undefined
-            const gated = judgeToolAgainstGate(input.tool_name, inSubagent)
-            if (gated.kind === "deny") {
+            if (judgeToolAgainstGate(input.tool_name, inSubagent, "").kind === "deny") {
               await setImmediate()
-              if (gateRaised()) {
+              const gated = judgeToolAgainstGate(input.tool_name, inSubagent, bandPosition())
+              if (gated.kind === "deny" && gateRaised()) {
                 return {
                   hookSpecificOutput: {
                     hookEventName: "PreToolUse",

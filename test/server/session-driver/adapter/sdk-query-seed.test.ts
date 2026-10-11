@@ -173,8 +173,9 @@ async function runPreToolUse(
   toolInput: unknown,
   agentId?: string,
   gateRaised: () => boolean = () => false,
+  bandPosition: () => string = () => "",
 ): Promise<unknown> {
-  const callback = preToolUseHooks(gateRaised).PreToolUse?.[0]?.hooks[0]
+  const callback = preToolUseHooks(gateRaised, bandPosition).PreToolUse?.[0]?.hooks[0]
   expect(callback).toBeDefined()
   return callback?.(
     {
@@ -227,7 +228,15 @@ describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツ�
       handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
     })
 
-    expect(await runPreToolUse("Bash", {}, undefined, review.gateRaised)).toEqual(DENIED)
+    expect(
+      await runPreToolUse("Bash", {}, undefined, review.gateRaised, review.bandPosition),
+    ).toEqual({
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "deny",
+        permissionDecisionReason: expect.stringContaining("帯の今の段は 1/2 架空の段A。"),
+      },
+    })
     review.judgeWorkPlan({ ...plan, current: 1, phaseSummary: "架空のまとめ。" })
     expect(await runPreToolUse("Bash", {}, undefined, review.gateRaised)).toEqual({})
   })

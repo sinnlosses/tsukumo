@@ -1,6 +1,7 @@
 // `work_plan` ツール（段取り）の説明文と、呼ぶ条件・段の切り方の規約と、handler が返す文。
 // ツールは仕事のときだけ載り、規約も仕事の `systemPrompt` の append にだけ入る。
 
+import { bandPositionText } from "./band-position.ts"
 import type { CallReview } from "./call-review.ts"
 import type { WorkPlanVerdict } from "./work-plan-review.ts"
 
@@ -74,7 +75,7 @@ export function answerWorkPlanCall(
 ): WorkPlanAnswer {
   const verdict = review.judgeWorkPlan(input)
   return verdict.kind === "accepted"
-    ? { text: "ok", isError: false }
+    ? { text: `ok\n${bandPositionText({ kind: "planned", ...verdict.plan })}`, isError: false }
     : { text: WORK_PLAN_REJECTIONS[verdict.kind], isError: true }
 }
 
@@ -112,8 +113,9 @@ export const WORK_PLAN_PROMPT = `## 段取り（tsukumo）
   - **同時に走らせる段は、\`phases\` の中で名前の配列にして1つの要素で渡す**（どれを同時に走らせるかは自分で決める）。
     委譲先がどの順で返っても、段 \`n\` に当たる帯の段が返却で済む
   - 受け入れを済ませたら \`finished\` の \`report\` を渡す
-- **セリフ・\`phaseSummary\`・レポートで段の番号や数を言うときは、帯の段で数える**。委譲先の段 \`n\` は帯では範囲の先頭から \`n\` 個目
-  （範囲の前に自分の段があれば \`first\` だけずれる）なので、委譲先の返却やタスクの手順に書かれた番号をそのまま言わない
+- **セリフ・\`phaseSummary\`・レポートで段の番号や数を言うときは、帯の段で数える**。
+  \`work_plan\` の戻り値と関門の拒否文が帯の今の位置と委譲先の段の帯での番号を返すので、それを使って言い、
+  委譲先の返却やタスクの手順に書かれた番号をそのまま言わない
 - **\`<tsukumo-aside>\` で包まれた言葉は、委譲中に利用者が送った脇の話。** 新しい依頼ではなく、いまの作業の続きの中の一言
   - 答えは \`speak\` の1〜2文で返す。\`report\` は呼ばず、本文も書かない
   - 段取りは今のまま続く。止める・方針を変えるよう頼まれたら、今の段取りを \`work_plan\` で組み替えるか、

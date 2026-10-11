@@ -113,7 +113,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       ...buildQuerySeedOptions(options),
       hooks: {
         ...stopHooks(options.mode, reportGate, options.onEvent),
-        ...preToolUseHooks(callReview.gateRaised),
+        ...preToolUseHooks(callReview.gateRaised, callReview.bandPosition),
       },
       mcpServers: {
         [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(

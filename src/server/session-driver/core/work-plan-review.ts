@@ -26,6 +26,7 @@ import {
   type WorkPlan,
   type WorkPlanStanding,
 } from "../../../shared/session/work-plan.ts"
+import { bandPositionText } from "./band-position.ts"
 
 export type WorkPlanVerdict =
   | { readonly kind: "accepted"; readonly plan: WorkPlan }
@@ -41,6 +42,8 @@ export type WorkPlanReview = {
   readonly standing: () => WorkPlanStanding
   /** 返却が届いてから、メインの `work_plan` が受け付けられるまでのあいだ真。 */
   readonly gateRaised: () => boolean
+  /** 受け付け済みの段取りの帯の位置の文（返却で進めた位置を含む）。段取りが無ければ空。 */
+  readonly bandPosition: () => string
   /**
    * 届いたイベントを流してよい並びに変える。
    * `work-plan-called` は同じ `toolUseId` の `tool-finished` まで預かり、`isError` でなければその直前に `work-plan` として出す。
@@ -109,6 +112,7 @@ export function createWorkPlanReview(): WorkPlanReview {
           }
     },
     gateRaised: () => gateRaised,
+    bandPosition: () => bandPositionText(accepted),
     pass: (event) => {
       switch (event.kind) {
         case "work-plan-called":

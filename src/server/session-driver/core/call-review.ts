@@ -29,6 +29,8 @@ export type CallReview = {
   readonly pass: (event: SessionEvent) => readonly SessionEvent[]
   /** 返却が届いてからメインの `work_plan` が受け付けられるまでのあいだ真（関門の印）。 */
   readonly gateRaised: () => boolean
+  /** 関門の拒否文に足す帯の位置の文。段取りが無ければ空。 */
+  readonly bandPosition: () => string
   /** このターンで「新しい事実が無い」`report` の差し戻しをしたか。 */
   readonly nothingNewRejected: () => boolean
 }
@@ -71,6 +73,7 @@ export function createCallReview(): CallReview {
       return speechReview.pass(event).flatMap(reportReview.pass).flatMap(workPlanReview.pass)
     },
     gateRaised: workPlanReview.gateRaised,
+    bandPosition: workPlanReview.bandPosition,
     nothingNewRejected: reportReview.nothingNewRejected,
   }
 }
