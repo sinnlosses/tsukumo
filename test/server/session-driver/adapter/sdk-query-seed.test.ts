@@ -1,6 +1,9 @@
+import { join } from "node:path"
+
 import type { HookCallbackMatcher, HookEvent, StopHookInput } from "@anthropic-ai/claude-agent-sdk"
 import { describe, expect, it } from "vitest"
 
+import { tsukumoHomeDir } from "../../../../src/server/adapter/tsukumo-home.ts"
 import {
   createReportGate,
   REPORT_GATE_REASON,
@@ -88,6 +91,12 @@ describe("buildQuerySeedOptions", () => {
       buildQuerySeedOptions({ ...BASE_OPTIONS, start: { kind: "resume", sessionId: "s-1" } })
         .resume,
     ).toBe("s-1")
+  })
+
+  it("キャラクターパックの置き場だけを cwd の外の読める場所として渡す", () => {
+    expect(buildQuerySeedOptions(BASE_OPTIONS).additionalDirectories).toEqual([
+      join(tsukumoHomeDir(), "characters"),
+    ])
   })
 
   it("settings.language を japanese 固定で渡す", () => {

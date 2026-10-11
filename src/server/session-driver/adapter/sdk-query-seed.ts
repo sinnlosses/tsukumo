@@ -1,6 +1,7 @@
 // `query()` に渡す `options` のうち `mcpServers` / `canUseTool`（クロージャが要る）を除いた部分と、
 // `Stop` と `PreToolUse` のフックの登録を組み立てる。
 
+import { join } from "node:path"
 import { setImmediate } from "node:timers/promises"
 
 import type {
@@ -12,6 +13,7 @@ import type {
 import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../../shared/command.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
+import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
 import { pinToBackground } from "../core/background-delegation.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
@@ -22,6 +24,12 @@ import { workflowPluginDir } from "./workflow-plugin.ts"
 /** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
 export type QuerySeedOptions = {
   readonly cwd: string
+  /**
+   * cwd の外で、許可を聞かずに読める場所。キャラクターパックの置き場（`~/.tsukumo/characters/`）だけ。
+   * 雑談の画面には許可の問い合わせが出ないので、無いと cwd の外の読み取りは答えが来ないまま止まる。
+   * 会話のアーカイブなどホームのほかの置き場は含めない。
+   */
+  readonly additionalDirectories: string[]
   readonly includePartialMessages: true
   readonly systemPrompt: {
     readonly type: "preset"
@@ -62,6 +70,7 @@ export type QuerySeedOptions = {
 export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
   return {
     cwd: options.cwd,
+    additionalDirectories: [join(tsukumoHomeDir(), "characters")],
     includePartialMessages: true,
     systemPrompt: { type: "preset", preset: "claude_code", append: options.systemPromptAppend },
     permissionMode: options.permissionMode,
