@@ -4,13 +4,18 @@
 import {
   ArrowLeftRight,
   ArrowRight,
+  Briefcase,
+  Coins,
   List,
+  MessageCircle,
   Pencil,
   Plus,
   RefreshCw,
   RotateCcw,
   Trash2,
+  Trophy,
   Upload,
+  UserRound,
 } from "lucide-react"
 import type { ReactElement } from "react"
 
@@ -57,6 +62,31 @@ export function ListIcon(): ReactElement {
 /** 前のやり取りへ戻る（左回りの矢印）。 */
 export function HistoryIcon(): ReactElement {
   return <RotateCcw {...ICON_ATTRIBUTES} />
+}
+
+/** 仕事の口（かばん）。 */
+export function WorkIcon(): ReactElement {
+  return <Briefcase {...ICON_ATTRIBUTES} />
+}
+
+/** 雑談の口（吹き出し）。 */
+export function ChatIcon(): ReactElement {
+  return <MessageCircle {...ICON_ATTRIBUTES} />
+}
+
+/** キャラクターの口（人影）。 */
+export function CharacterIcon(): ReactElement {
+  return <UserRound {...ICON_ATTRIBUTES} />
+}
+
+/** トークンの口（硬貨）。 */
+export function TokenIcon(): ReactElement {
+  return <Coins {...ICON_ATTRIBUTES} />
+}
+
+/** 成果の口（トロフィー）。 */
+export function AchievementIcon(): ReactElement {
+  return <Trophy {...ICON_ATTRIBUTES} />
 }
 
 const ICON_ATTRIBUTES = { size: 15, strokeWidth: 1.9 } as const

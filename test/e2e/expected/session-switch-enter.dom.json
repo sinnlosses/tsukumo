@@ -76,6 +76,17 @@
             "href": "/?t=<token>"
           },
           "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
             "仕事"
           ]
         },
@@ -85,6 +96,17 @@
             "href": "/?t=<token>"
           },
           "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
             "雑談"
           ]
         },
@@ -100,6 +122,17 @@
             "href": "/?t=<token>#character"
           },
           "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
             "キャラ"
           ]
         },
@@ -109,6 +142,17 @@
             "href": "/?t=<token>#token-usage"
           },
           "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
             "トークン"
           ]
         },
@@ -118,6 +162,17 @@
             "href": "/?t=<token>#achievement"
           },
           "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
             "成果"
           ]
         },

@@ -4,8 +4,23 @@
 import clsx from "clsx"
 import type { MouseEvent, ReactElement } from "react"
 
+import {
+  AchievementIcon,
+  CharacterIcon,
+  ChatIcon,
+  TokenIcon,
+  WorkIcon,
+} from "../../../ui/icon/icon.tsx"
 import type { ScreenNavGate as Gate } from "../hooks/use-screen-nav.ts"
 import styles from "./screen-nav-gate.module.css"
+
+const GATE_ICONS = {
+  work: <WorkIcon />,
+  chat: <ChatIcon />,
+  character: <CharacterIcon />,
+  token: <TokenIcon />,
+  achievement: <AchievementIcon />,
+} satisfies Record<Gate["icon"], ReactElement>
 
 export type ScreenNavGateProps = {
   readonly gate: Gate
@@ -39,6 +54,9 @@ export function ScreenNavGate(props: ScreenNavGateProps): ReactElement {
       title={gate.title}
       onClick={onClick}
     >
+      <span className={styles["screen-nav-gate-icon"]} aria-hidden="true">
+        {GATE_ICONS[gate.icon]}
+      </span>
       {gate.label}
     </a>
   )

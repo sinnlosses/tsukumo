@@ -6,6 +6,7 @@
 .screen-nav-gate {
   display: flex;
   align-items: center;
+  gap: 6px;
   margin-bottom: calc(-1 * var(--screen-nav-rule));
   padding: 0 12px;
   border-bottom: 2px solid transparent;
@@ -23,6 +24,11 @@
   border-bottom-color: var(--accent);
   color: var(--ink);
   font-weight: 500;
+}
+/* 絵は字と同じ色で字の隣に添える（飾りなので読み上げない）。 */
+.screen-nav-gate-icon {
+  display: inline-flex;
+  flex: none;
 }
 /* ターン進行中の、いまと違うモードの口。押せないことを字の薄さと禁止のカーソルで示す。 */
 .screen-nav-gate.is-disabled {

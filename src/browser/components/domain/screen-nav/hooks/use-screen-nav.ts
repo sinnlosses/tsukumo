@@ -37,6 +37,9 @@ import {
 } from "./use-session-switcher.ts"
 import { useSettings, type ScreenNavSettings } from "./use-settings.ts"
 
+/** 口に添える絵の種類。絵そのものは口の部品が引く。 */
+export type ScreenNavGateIcon = "work" | "chat" | "character" | "token" | "achievement"
+
 /**
  * 帯に並ぶ口1つ。「いまの画面か」「押せるか」は畳んで渡す（部品は判定を持たない）。
  * 仕事・雑談の口はどちらも会話の画面へのリンクで、`onGo` が違うモードなら `session.setChatMode` を送る。
@@ -44,6 +47,7 @@ import { useSettings, type ScreenNavSettings } from "./use-settings.ts"
 export type ScreenNavGate = {
   readonly screen: Screen
   readonly label: string
+  readonly icon: ScreenNavGateIcon
   readonly href: string
   readonly active: boolean
   /** 会話の画面にいないあいだ、裏で生きているセッションのモードの口に付く戻り先の印。 */
@@ -134,19 +138,33 @@ const TAB_LABELS = {
   usage: "使用量",
 } satisfies Record<NavDrawerTab, string>
 
+/** 会話を除く画面の口の絵。会話は仕事・雑談の2つに割れるので、並びの側が決める。 */
+const OTHER_SCREEN_ICONS = {
+  conversation: "work",
+  character: "character",
+  "token-usage": "token",
+  achievement: "achievement",
+} satisfies Record<Screen, ScreenNavGateIcon>
+
 /**
  * 帯の門の並び。仕事・雑談はどちらも会話の画面で、押すとモードも決まる。
  * `chat` は会話の画面の門だけが読む。ほかの画面の字は画面の一覧（`SCREEN_NAV_ITEMS`）のまま。
  */
 const GATE_LIST = [
-  { screen: "conversation", label: "仕事", chat: false },
-  { screen: "conversation", label: "雑談", chat: true },
+  { screen: "conversation", label: "仕事", icon: "work", chat: false },
+  { screen: "conversation", label: "雑談", icon: "chat", chat: true },
   ...SCREEN_NAV_ITEMS.filter((item) => item.screen !== "conversation").map((item) => ({
     screen: item.screen,
     label: item.label,
+    icon: OTHER_SCREEN_ICONS[item.screen],
     chat: false,
   })),
-] satisfies readonly { readonly screen: Screen; readonly label: string; readonly chat: boolean }[]
+] satisfies readonly {
+  readonly screen: Screen
+  readonly label: string
+  readonly icon: ScreenNavGateIcon
+  readonly chat: boolean
+}[]
 
 const CHAT_TASKS_LABEL = "話題"
 
@@ -189,6 +207,7 @@ export function useScreenNav(): ScreenNavView {
     return {
       screen: entry.screen,
       label: entry.label,
+      icon: entry.icon,
       href: screenHref(entry.screen),
       active: entry.screen === current && !modeDiffers,
       returnMark: isConversation && current !== "conversation" && !modeDiffers,
