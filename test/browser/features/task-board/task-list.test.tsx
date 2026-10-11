@@ -197,16 +197,16 @@ describe("taskList", () => {
     expect(text).not.toContain("loopable:Y")
   })
 
-  it("行に難しさを出し、loopable は N のものだけ loop:N と出す", () => {
+  it("行に難しさは出さず、loopable は N のものだけ loop:N と出す", () => {
     const items: readonly TaskSummaryItem[] = [
       { ...taskOf("X-011", "todo"), difficulty: "sonnet", loopable: "Y" },
       { ...taskOf("X-012", "todo"), difficulty: "opus", loopable: "N" },
     ]
     render(<TaskList tasks={known(items)} selectedStatus="all" />)
 
-    expect(row("X-011").textContent).toContain("sonnet")
+    expect(row("X-011").textContent).not.toContain("sonnet")
     expect(row("X-011").textContent).not.toContain("loopable")
-    expect(row("X-012").textContent).toContain("opus")
+    expect(row("X-012").textContent).not.toContain("opus")
     expect(row("X-012").textContent).toContain("loop:N")
   })
 
@@ -216,13 +216,13 @@ describe("taskList", () => {
     expect(row("X-013").querySelector("[data-attribute]")).toBeNull()
   })
 
-  it("行にはラベルを出さず属性だけを出す", () => {
+  it("行にはラベルも難しさも出さない", () => {
     const items: readonly TaskSummaryItem[] = [
       { ...taskOf("X-014", "todo"), labels: ["任意のタグ"], difficulty: "haiku" },
     ]
     render(<TaskList tasks={known(items)} selectedStatus="all" />)
 
-    expect(row("X-014").textContent).toContain("haiku")
+    expect(row("X-014").textContent).not.toContain("haiku")
     expect(row("X-014").textContent).not.toContain("任意のタグ")
   })
 

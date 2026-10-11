@@ -8,7 +8,7 @@ import type { ReactElement, ReactNode } from "react"
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import taskBoardStyles from "../task-board.module.css"
-import { TaskRowAttributes } from "./task-attribute.tsx"
+import { TaskRowLoopable } from "./task-attribute.tsx"
 import styles from "./task-item.module.css"
 import { TaskMark } from "./task-mark.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
@@ -43,7 +43,7 @@ export function TaskItem(props: {
         <span className={styles["task-item-summary"]}>
           <TaskSummaryText parts={codeSpanParts(props.task.summary)} />
         </span>
-        <TaskRowAttributes difficulty={props.task.difficulty} loopable={props.task.loopable} />
+        <TaskRowLoopable loopable={props.task.loopable} />
         <ChevronRight
           className={taskBoardStyles["task-row-chevron"]}
           size={14}
