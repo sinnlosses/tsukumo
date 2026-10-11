@@ -30,6 +30,7 @@ import { createSessionTitleIntake, type SessionTitleIntake } from "../core/sessi
 import { TSUKUMO_MCP_SERVER_NAME } from "../core/tsukumo-tool-name.ts"
 import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
+import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import { readPlanUsage } from "./sdk-plan-usage.ts"
 import { buildQuerySeedOptions, preToolUseHooks, stopHooks } from "./sdk-query-seed.ts"
@@ -111,10 +112,14 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     prompt: input.stream(),
     options: {
       ...buildQuerySeedOptions(options),
-      hooks: {
-        ...stopHooks(options.mode, reportGate, options.onEvent),
-        ...preToolUseHooks(callReview.gateRaised, callReview.bandPosition),
-      },
+      hooks: withAskGuard(
+        {
+          ...stopHooks(options.mode, reportGate, options.onEvent),
+          ...preToolUseHooks(callReview.gateRaised, callReview.bandPosition),
+        },
+        options.mountWorkflowPlugin,
+        runAskGuard,
+      ),
       mcpServers: {
         [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(
           options.expressions,

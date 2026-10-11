@@ -455,18 +455,19 @@ describe("shared/ の機能どうしの import", () => {
 // `node:child_process` を起こすのはホスト（orca）・ビルド（vite build）・`git` を起こす1つの口
 // （`main` の上のタスク一覧・成果の集計・git 管理下のファイルの列挙のどれもがここを使う）・
 // `bd` を起こす1つの口（Beads 方式のタスク一覧と成果の集計）・別のチェックアウトの
-// `bin/tsukumo` へ委ねる口の5つの境界に閉じ込める（docs/architecture.md「1ファイル = 1つの境界」）。
+// `bin/tsukumo` へ委ねる口・取り込んだワークフローの `ask-guard`（python3）を起こす口の6つの境界に閉じ込める（docs/architecture.md「1ファイル = 1つの境界」）。
 // そのうち `orca` コマンドを起こすのは orca-host.ts だけ。
 // `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、その字面で探す。
 // ファイル名やバッククォートで囲んだ日本語の説明文はクォートされた文字列リテラルではないので拾わない。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは orca-host.ts・bundle.ts・git.ts・beads.ts・checkout-launch.ts だけで、`orca` コマンドを呼ぶのは orca-host.ts だけ", () => {
+  it("`node:child_process` を import するのは orca-host.ts・bundle.ts・git.ts・beads.ts・checkout-launch.ts・sdk-ask-guard.ts だけで、`orca` コマンドを呼ぶのは orca-host.ts だけ", () => {
     const allowed = new Set([
       "server/checkout/adapter/checkout-launch.ts",
       "server/host/adapter/orca-host.ts",
       "server/view-server/adapter/bundle.ts",
       "server/repository/adapter/git.ts",
       "server/repository/adapter/beads.ts",
+      "server/session-driver/adapter/sdk-ask-guard.ts",
     ])
     const spawning = listSourceFiles(SRC_ROOT).filter((relPath) =>
       /from\s+["']node:child_process["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
