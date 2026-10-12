@@ -111,7 +111,7 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   diagnostic: new Set([]),
   "plan-usage": new Set([]),
   "token-usage": new Set([]),
-  "usage-review": new Set([]),
+  "usage-review": new Set(["session-driver"]),
   host: new Set([]),
   repository: new Set([]),
   recommendation: new Set([]),
@@ -120,7 +120,7 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   "character-pack": new Set([]),
   diary: new Set(["repository", "session-driver"]),
   chat: new Set(["character-pack", "session-driver"]),
-  "session-driver": new Set(["chat", "report", "usage-review", "view-server"]),
+  "session-driver": new Set(["chat", "report", "view-server"]),
   session: new Set([
     "session-driver",
     "chat",

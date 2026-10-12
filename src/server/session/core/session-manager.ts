@@ -31,10 +31,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../shared/session/session-state.ts"
-import type {
-  PreviousUsageReview,
-  UsageReviewFindings,
-} from "../../../shared/usage-review/usage-review.ts"
+import type { PreviousUsageReview } from "../../../shared/usage-review/usage-review.ts"
 import {
   appendChatArchiveConclusion,
   appendChatArchiveEntry,
@@ -151,11 +148,6 @@ export type SessionManagerOptions = {
    * 起こしたときに1回だけ読み、初期の姿（{@link SessionState.previousUsageReview}）に載せる。
    */
   readonly readPreviousUsageReview: () => PreviousUsageReview
-  /**
-   * 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く。
-   * 駆動由来（`"driver"`）の `usage-review-result` を畳んだときだけ呼ぶ。
-   */
-  readonly writePreviousUsageReview: (reviewedAt: number, findings: UsageReviewFindings) => void
   /**
    * 作業ディレクトリのタスク一覧の見張りを起こす。起こし直しをまたいで1つだけ動き、閉じるまで続く。
    * 流すイベントは、そのときの代の駆動のイベントと同じ扱いで畳む。
@@ -372,10 +364,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
     // トークン消費の内訳を、1ターンぶんだけ持つところから捨てる（次のターンでまた0から数える）。
     // `token-usage` は `turn-finished` より先に届く（変換する側が `result` 1つをこの順に変換する）ので、書き終えたあとに捨てることになる。
-    // 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く。
-    if (event.kind === "usage-review-result") {
-      options.writePreviousUsageReview(at, event.findings)
-    }
     // セッションIDが決まる前の行は、どのセッションのものか分からなくなるので書かない。
     if (event.kind === "report" && state.session.kind !== "starting") {
       options.reportUsageLog.append(
@@ -584,11 +572,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       generation.close()
       experienceMetric.noteRestart()
       modeSessions = rememberedModeSessions(modeSessions, state, request)
-      // `previousUsageReview`・タスク一覧・おすすめの札は起こし直しをまたいで残す。
-      // どれも駆動1代の持ち物ではない（`usageReview` は起こし直すとふだんへ戻る）。
+      // 見直しの欄・タスク一覧・おすすめの札は起こし直しをまたいで残す。どれも駆動1代の持ち物ではない。
       replaceState({
         ...INITIAL_SESSION_STATE,
+        usageReview: state.usageReview,
         previousUsageReview: state.previousUsageReview,
+        usageProposalRun: state.usageProposalRun,
         tasks: state.tasks,
         recommendation: state.recommendation,
       })

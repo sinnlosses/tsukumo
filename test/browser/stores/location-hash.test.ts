@@ -25,7 +25,6 @@ function route(overrides: Partial<HashRoute>): HashRoute {
     turn: "newest",
     pack: IN_USE,
     achievementDate: TODAY,
-    lastReview: false,
     ...overrides,
   }
 }
@@ -66,14 +65,6 @@ describe("readHashRoute", () => {
     expect(readHash("#achievement?date=")).toEqual(route({ screen: "achievement" }))
     expect(readHash("#character?date=2026-09-20")).toEqual(route({ screen: "character" }))
   })
-
-  it("トークン画面の review=last は結果の札を開く印、ほかの画面では読まない", () => {
-    expect(readHash("#token-usage?review=last")).toEqual(
-      route({ screen: "token-usage", lastReview: true }),
-    )
-    expect(readHash("#token-usage?review=other")).toEqual(route({ screen: "token-usage" }))
-    expect(readHash("#character?review=last")).toEqual(route({ screen: "character" }))
-  })
 })
 
 describe("formatHash", () => {
@@ -103,12 +94,5 @@ describe("formatHash", () => {
       "#achievement?date=2026-09-20&turn=3",
     )
     expect(formatHash(route({ achievementDate: chosen }))).toBe("#")
-  })
-
-  it("結果の札を開く印は review=last に書き、トークン画面以外では落とす", () => {
-    expect(formatHash(route({ screen: "token-usage", lastReview: true }))).toBe(
-      "#token-usage?review=last",
-    )
-    expect(formatHash(route({ lastReview: true }))).toBe("#")
   })
 })

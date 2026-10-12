@@ -1385,11 +1385,11 @@ describe("applySessionEvent（見直し）", () => {
     ],
   } as const
 
-  /** 依頼を 100 で送り、最初の段を 300、次の段を 500 で渡した見直し中の姿。 */
+  /** 会話のターンが 100 で始まって進行中のところへ、見直しを 300 で始めて段を 500 で渡した姿。 */
   function running(): SessionState {
     const events: readonly StampedEvent[] = [
       { at: 100, event: { kind: "request", text: "架空の依頼", images: [] } },
-      { at: 300, event: { kind: "usage-review-stage", stage: "model", days: 7 } },
+      { at: 300, event: { kind: "usage-review-started" } },
       { at: 500, event: { kind: "usage-review-stage", stage: "cache", days: 7 } },
     ]
     return events.reduce<SessionState>(
@@ -1398,64 +1398,53 @@ describe("applySessionEvent（見直し）", () => {
     )
   }
 
-  it("見直しのイベントは見直しの2つの欄だけを動かし、始まりはそのターンの始まりになる", () => {
+  it("見直しのイベントは見直しの欄だけを動かし、会話の記録とターンを動かさない", () => {
     const before = applySessionEvent(
       INITIAL_SESSION_STATE,
       { kind: "request", text: "架空の依頼", images: [] },
       100,
     )
-    const after = applySessionEvent(
-      before,
+    const events: readonly SessionEvent[] = [
+      { kind: "usage-review-started" },
+      { kind: "usage-review-stage", stage: "model", days: 7 },
+      { kind: "usage-review-speech", text: "架空のセリフ" },
       { kind: "usage-review-result", findings: FINDINGS },
-      700,
-    )
+      { kind: "usage-review-ended" },
+      { kind: "usage-proposal-run-started", key: "memory-file:~/.claude/CLAUDE.md" },
+      {
+        kind: "usage-proposal-run-ended",
+        key: "memory-file:~/.claude/CLAUDE.md",
+        outcome: "succeeded",
+      },
+      { kind: "usage-proposal-dismissed", key: "memory-file:~/.claude/CLAUDE.md" },
+    ]
+    const after = events.reduce((state, event) => applySessionEvent(state, event, 700), before)
 
     expect(running().usageReview).toEqual({
       kind: "running",
-      startedAt: 100,
-      days: 7,
-      stage: "cache",
+      startedAt: 300,
+      progress: { kind: "stage", stage: "cache", days: 7 },
+      speech: { kind: "none" },
     })
+    expect(after.usageReview.kind).toBe("result")
     expect({
       ...after,
       usageReview: before.usageReview,
       previousUsageReview: before.previousUsageReview,
-      records: before.records,
+      usageProposalRun: before.usageProposalRun,
     }).toEqual(before)
   })
 
-  it("結果を受け付けたターンだけ、メインビューのやり取りに印が立つ", () => {
-    const events: readonly SessionEvent[] = [
-      { kind: "request", text: "架空の依頼1", images: [] },
-      { kind: "usage-review-stage", stage: "model", days: 7 },
-      { kind: "usage-review-result", findings: FINDINGS },
-      reportEvent(),
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-      { kind: "request", text: "架空の依頼2", images: [] },
-      reportEvent({ toolUseId: "fictional-report-2" }),
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-    ]
-    const state = apply(...events)
-    const turns = mainViewTurns(mainViewEntries(state), { report: false, utterance: false }, true)
-
-    expect(turns.map((turn) => turn.usageReviewResult)).toEqual([true, false])
-    expect(turns[0]?.steps).toHaveLength(1)
-  })
-
-  it("結果を渡さずにターンが終わるとふだんへ戻る", () => {
+  it("見直し中に会話のターンが終わっても、セッションが終わっても、見直しは見直し中のまま", () => {
     const finished = applySessionEvent(
       running(),
       { kind: "turn-finished", outcome: { kind: "completed" } },
       800,
     )
-
-    expect(finished.usageReview).toEqual({ kind: "idle" })
-  })
-
-  it("見直し中にセッションが終わってもふだんへ戻る", () => {
     const ended = applySessionEvent(running(), { kind: "session-ended", reason: "架空" }, 800)
 
-    expect(ended.usageReview).toEqual({ kind: "idle" })
+    expect(finished.usageReview).toEqual(running().usageReview)
+    expect(ended.usageReview).toEqual(running().usageReview)
   })
 })
 

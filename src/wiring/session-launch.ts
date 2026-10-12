@@ -10,7 +10,6 @@ import { readChatTopics } from "../server/chat/core/chat-consolidation.ts"
 import { createChatRecall } from "../server/chat/core/chat-recall.ts"
 import type { Config } from "../server/core/config.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
-import { readBeadsWorkspace } from "../server/repository/adapter/beads.ts"
 import { startFakeSession } from "../server/session-driver/adapter/fake-driver.ts"
 import {
   createFakeSessionCatalog,
@@ -46,7 +45,6 @@ import {
   takeSystemPromptAppend,
   toSystemPromptMode,
 } from "../server/system-prompt/core/system-prompt.ts"
-import { readDismissedUsageProposalKeys } from "../server/usage-review/adapter/usage-proposal-dismissal.ts"
 import { expressionChoices, expressionNames } from "../shared/character-pack/expression-choice.ts"
 import type { PromptDelayFootprint } from "../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
@@ -235,9 +233,6 @@ function startDriver(options: {
     inheritedEnv,
     claudeConfigDir: options.claudeConfigDir,
     mountWorkflowPlugin: options.mountWorkflowPlugin,
-    // 段に入るたびに読み直す（見直しの途中で見送りが増えても効く）。
-    dismissedUsageProposalKeys: () => readDismissedUsageProposalKeys(),
-    hasTaskOperation: async () => (await readBeadsWorkspace(cwd)).kind === "found",
     onEvent,
     reportFailure: (error) =>
       options.reportFailure({ feature: "session", place: "event-handler" }, error),

@@ -143,6 +143,16 @@ const fakeSessionSchema = z.object({
   turns: z.array(fakeSessionSceneSchema),
   pastSessions: z.array(fakePastSessionSchema).default([]),
   sessionDigests: z.record(z.string(), sessionDigestSchema).default({}),
+  usageReview: z
+    .object({
+      review: z
+        .array(fakeSessionStepSchema)
+        .superRefine((steps, ctx) => rejectDescendingSteps(steps, "usageReview.review", ctx)),
+      proposal: z
+        .array(fakeSessionStepSchema)
+        .superRefine((steps, ctx) => rejectDescendingSteps(steps, "usageReview.proposal", ctx)),
+    })
+    .default({ review: [], proposal: [] }),
 })
 
 /** 疑似セッションの1手（読み取り専用の形。zod の出力もこの形に収まる）。 */
@@ -178,6 +188,14 @@ export type FakeSession = {
    * キーはセッションのID で、一覧に載せるのは場面が流す `sessions-changed`。無いIDは「読めない」になる。
    */
   readonly sessionDigests: Readonly<Record<string, SessionDigest>>
+  /**
+   * トークン消費の画面から頼んだ見直し（`review`）と提案の実行（`proposal`）で、問い合わせを起こさずに流す手順。
+   * `afterMs` はその走りの始まりからの経過で、`waitForAnswer` は見ない。
+   */
+  readonly usageReview: {
+    readonly review: readonly FakeSessionStep[]
+    readonly proposal: readonly FakeSessionStep[]
+  }
 }
 
 export type FakeDriverOptions = {

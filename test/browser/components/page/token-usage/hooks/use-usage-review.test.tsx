@@ -3,19 +3,16 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { useUsageReview } from "../../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
 import type { SessionState } from "../../../../../../src/shared/session/session-state.ts"
-import {
-  USAGE_REVIEW_REQUEST_TEXT,
-  type UsageProposal,
-  type UsageReviewFindings,
+import type {
+  UsageProposal,
+  UsageProposalRun,
+  UsageReview,
+  UsageReviewFindings,
+  UsageReviewStage,
 } from "../../../../../../src/shared/usage-review/usage-review.ts"
 import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../rpc-fetch-stub.ts"
-import {
-  type CommandSpy,
-  putSession,
-  type SentCommand,
-  stateWith,
-} from "../../../../session-store.ts"
+import { type CommandSpy, putSession, stateWith } from "../../../../session-store.ts"
 
 /**
  * 画面（`TokenUsage`）を丸ごと描かずに、区画のロジックだけを測る
@@ -58,6 +55,24 @@ function stubSummaryFetch(): void {
   fetchStub = stubRpcFetch(() => rpcOutput(FIXTURE_SUMMARY))
 }
 
+/** その段に入った見直し中の状態（始まりは 0、セリフはまだ無い）。 */
+function runningReview(stage: UsageReviewStage, days: number): UsageReview {
+  return {
+    kind: "running",
+    startedAt: 0,
+    progress: { kind: "stage", stage, days },
+    speech: { kind: "none" },
+  }
+}
+
+/** FIXTURE_PROPOSAL（`tool-result:架空ツール`）を頼んでいる最中。 */
+const RUNNING_PROPOSAL_RUN: UsageProposalRun = {
+  kind: "running",
+  key: "tool-result:架空ツール",
+  startedAt: 0,
+  speech: { kind: "said", text: "架空の実行の声" },
+}
+
 function renderUsageReview(
   state: SessionState,
   spy: CommandSpy = () => {},
@@ -77,23 +92,21 @@ describe("useUsageReview（ふだん）", () => {
     expect(result.current.kind === "idle" && result.current.start).toEqual({ kind: "available" })
   })
 
-  it.each([
-    ["雑談中", { chatMode: true }, "雑談"],
-    ["ターンが進行中", { turn: { kind: "running", startedAt: 0 } }, "ターン"],
-    [
-      "雑談中かつターンが進行中（雑談を優先）",
-      { chatMode: true, turn: { kind: "running", startedAt: 0 } },
-      "雑談",
-    ],
-  ] as const)("%sは押せず、理由に「%s」を含む", (_name, overrides, keyword) => {
-    const { result } = renderUsageReview(stateWith(overrides))
+  it("雑談中でもターンが進行中でも押せる", () => {
+    const { result } = renderUsageReview(
+      stateWith({ chatMode: true, turn: { kind: "running", startedAt: 0 } }),
+    )
 
-    expect(result.current.kind === "idle" && result.current.start.kind).toBe("blocked")
-    expect(
-      result.current.kind === "idle" && result.current.start.kind === "blocked"
-        ? result.current.start.reason
-        : "",
-    ).toContain(keyword)
+    expect(result.current.kind === "idle" && result.current.start).toEqual({ kind: "available" })
+  })
+
+  it("提案の実行が走っている間は押せず、理由が出る", () => {
+    const { result } = renderUsageReview(stateWith({ usageProposalRun: RUNNING_PROPOSAL_RUN }))
+
+    expect(result.current.kind === "idle" && result.current.start).toEqual({
+      kind: "blocked",
+      reason: "いま提案を頼んでいる。終わってからもう一度押す。",
+    })
   })
 
   it("前回の提案が無ければ previousReview は none", () => {
@@ -122,26 +135,25 @@ describe("useUsageReview（ふだん）", () => {
     )
   })
 
-  it("押すと USAGE_REVIEW_REQUEST_TEXT を1回だけ会話へ送る", () => {
+  it("押すと usageReview.start を1回だけ送り、会話へは送らない", () => {
     const sent: unknown[] = []
-    const { result } = renderUsageReview(stateWith({}), (command) => sent.push(command))
+    const { result } = renderUsageReview(
+      stateWith({ turn: { kind: "running", startedAt: 0 } }),
+      (command) => sent.push(command),
+    )
 
     expect(result.current.kind).toBe("idle")
     if (result.current.kind === "idle") {
       result.current.onStart()
     }
 
-    expect(sent).toEqual([
-      { procedure: "session.prompt", text: USAGE_REVIEW_REQUEST_TEXT, images: [] },
-    ])
+    expect(sent).toEqual([{ procedure: "usageReview.start" }])
   })
 })
 
 describe("useUsageReview（見直し中）", () => {
   it("段は並びどおりに done / running / pending に分かれる", () => {
-    const state = stateWith({
-      usageReview: { kind: "running", startedAt: 0, days: 7, stage: "tool" },
-    })
+    const state = stateWith({ usageReview: runningReview("tool", 7) })
     const { result } = renderUsageReview(state)
 
     expect(result.current.kind).toBe("running")
@@ -162,10 +174,23 @@ describe("useUsageReview（見直し中）", () => {
     ])
   })
 
-  it("モデル・キャッシュ・ツールの3段だけ、集計から数を引く", async () => {
+  it("最初の段が届くまでは、見直し中のまま全部の段が未着手", () => {
     const state = stateWith({
-      usageReview: { kind: "running", startedAt: 0, days: 7, stage: "tool" },
+      usageReview: {
+        kind: "running",
+        startedAt: 0,
+        progress: { kind: "preparing" },
+        speech: { kind: "none" },
+      },
     })
+    const { result } = renderUsageReview(state)
+
+    const stages = result.current.kind === "running" ? result.current.stages : []
+    expect(stages.map((stage) => stage.status)).toEqual(Array(5).fill("pending"))
+  })
+
+  it("モデル・キャッシュ・ツールの3段だけ、集計から数を引く", async () => {
+    const state = stateWith({ usageReview: runningReview("tool", 7) })
     const { result } = renderUsageReview(state)
 
     await waitFor(() => {
@@ -180,51 +205,42 @@ describe("useUsageReview（見直し中）", () => {
   })
 
   it("見直しの期間が1/7/30以外なら、数を出さない", () => {
-    const state = stateWith({
-      usageReview: { kind: "running", startedAt: 0, days: 3, stage: "model" },
-    })
+    const state = stateWith({ usageReview: runningReview("model", 3) })
     const { result } = renderUsageReview(state)
 
     const stages = result.current.kind === "running" ? result.current.stages : []
     expect(stages.every((stage) => stage.count.kind === "none")).toBe(true)
   })
 
-  it("直近のセリフは speeches の最後の1件、無ければ none", () => {
-    const running = { kind: "running" as const, startedAt: 0, days: 7, stage: "model" as const }
-
-    const withSpeech = renderUsageReview(
+  it("直近のセリフは会話の吹き出しではなく、見直しのセリフから引く", () => {
+    const { result } = renderUsageReview(
       stateWith({
-        usageReview: running,
-        speeches: [
-          { text: "ひとつめ", expression: "default", time: { kind: "stamped", at: 0 } },
-          { text: "ふたつめ", expression: "default", time: { kind: "stamped", at: 0 } },
-        ],
+        usageReview: {
+          kind: "running",
+          startedAt: 0,
+          progress: { kind: "stage", stage: "model", days: 7 },
+          speech: { kind: "said", text: "見直しの声" },
+        },
+        speeches: [{ text: "会話の声", expression: "default", time: { kind: "stamped", at: 0 } }],
       }),
     )
-    expect(
-      withSpeech.result.current.kind === "running" ? withSpeech.result.current.speech : undefined,
-    ).toEqual({ kind: "said", text: "ふたつめ" })
 
-    const withoutSpeech = renderUsageReview(stateWith({ usageReview: running, speeches: [] }))
-    expect(
-      withoutSpeech.result.current.kind === "running"
-        ? withoutSpeech.result.current.speech
-        : undefined,
-    ).toEqual({ kind: "none" })
+    expect(result.current.kind === "running" ? result.current.speech : undefined).toEqual({
+      kind: "said",
+      text: "見直しの声",
+    })
   })
 
-  it("「止める」は interrupt を1回だけ送る", () => {
+  it("「止める」は usageReview.interrupt を1回だけ送り、会話は止めない", () => {
     const sent: unknown[] = []
-    const state = stateWith({
-      usageReview: { kind: "running", startedAt: 0, days: 7, stage: "model" },
-    })
+    const state = stateWith({ usageReview: runningReview("model", 7) })
     const { result } = renderUsageReview(state, (command) => sent.push(command))
 
     if (result.current.kind === "running") {
       result.current.onInterrupt()
     }
 
-    expect(sent).toEqual([{ procedure: "session.interrupt" }])
+    expect(sent).toEqual([{ procedure: "usageReview.interrupt" }])
   })
 })
 
@@ -275,8 +291,8 @@ describe("useUsageReview（結果）", () => {
     expect(result.current.kind === "result" ? result.current.periodLabel : "").toBe("今日")
   })
 
-  it("主ボタンは会話へ依頼を1回送る", () => {
-    const sent: SentCommand[] = []
+  it("主ボタンは種類と対象を添えて usageReview.runProposal を1回送る", () => {
+    const sent: unknown[] = []
     const state = stateWith({
       usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
     })
@@ -286,9 +302,53 @@ describe("useUsageReview（結果）", () => {
       result.current.proposals[0]?.onPrimary()
     }
 
-    expect(sent).toHaveLength(1)
-    expect(sent[0]?.procedure).toBe("session.prompt")
-    expect(sent[0]?.["text"]).toEqual(expect.stringContaining("架空の提案"))
+    expect(sent).toEqual([
+      { procedure: "usageReview.runProposal", kind: "tool-result", target: "架空ツール" },
+    ])
+  })
+
+  it("実行した提案の札にだけ実行の様子が出て、止めるは usageReview.interrupt を送る", () => {
+    const sent: unknown[] = []
+    const other = { ...FIXTURE_PROPOSAL, target: "別の架空ツール" }
+    const state = stateWith({
+      usageReview: {
+        kind: "result",
+        reviewedAt: 0,
+        findings: { ...FIXTURE_FINDINGS, proposals: [FIXTURE_PROPOSAL, other] },
+      },
+      usageProposalRun: RUNNING_PROPOSAL_RUN,
+    })
+    const { result } = renderUsageReview(state, (command) => sent.push(command))
+
+    const proposals = result.current.kind === "result" ? result.current.proposals : []
+    const run = proposals[0]?.run
+    expect(run?.kind).toBe("running")
+    expect(run?.kind === "running" ? run.speech : undefined).toEqual({
+      kind: "said",
+      text: "架空の実行の声",
+    })
+    expect(proposals[1]?.run).toEqual({ kind: "none" })
+    if (run?.kind === "running") {
+      run.onInterrupt()
+    }
+    expect(sent).toEqual([{ procedure: "usageReview.interrupt" }])
+  })
+
+  it("終わった実行は、その札に終わり方とセリフを出す", () => {
+    const state = stateWith({
+      usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
+      usageProposalRun: {
+        kind: "ended",
+        key: "tool-result:架空ツール",
+        outcome: "failed",
+        speech: { kind: "none" },
+      },
+    })
+    const { result } = renderUsageReview(state)
+
+    expect(result.current.kind === "result" ? result.current.proposals[0]?.run : undefined).toEqual(
+      { kind: "ended", outcome: "failed", speech: { kind: "none" } },
+    )
   })
 
   it("見送るは種類と対象を添えて usageReview.dismissProposal を1回送る", () => {
@@ -307,7 +367,7 @@ describe("useUsageReview（結果）", () => {
     ])
   })
 
-  it("もう一度見てもらうは USAGE_REVIEW_REQUEST_TEXT を送る", () => {
+  it("もう一度見てもらうは usageReview.start を送る", () => {
     const sent: unknown[] = []
     const state = stateWith({
       usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
@@ -318,15 +378,13 @@ describe("useUsageReview（結果）", () => {
       result.current.onRetry()
     }
 
-    expect(sent).toEqual([
-      { procedure: "session.prompt", text: USAGE_REVIEW_REQUEST_TEXT, images: [] },
-    ])
+    expect(sent).toEqual([{ procedure: "usageReview.start" }])
   })
 
-  it("ターンが進行中は retry が blocked になる", () => {
+  it("提案の実行が走っている間は retry が blocked になる", () => {
     const state = stateWith({
       usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
-      turn: { kind: "running", startedAt: 0 },
+      usageProposalRun: RUNNING_PROPOSAL_RUN,
     })
     const { result } = renderUsageReview(state)
 
@@ -375,36 +433,7 @@ describe("useUsageReview（前回の提案を開く）", () => {
     expect(result.current.kind).toBe("idle")
   })
 
-  it("導線（review=last）から入ると、今回の結果が無ければ前回の提案が最初から開く", () => {
-    window.location.hash = "#token-usage?review=last"
-    const state = stateWith({
-      previousUsageReview: { kind: "found", reviewedAt: 0, findings: FIXTURE_FINDINGS },
-    })
-    const { result } = renderUsageReview(state)
-
-    expect(result.current.kind).toBe("result")
-    expect(result.current.kind === "result" ? result.current.close.kind : "").toBe("shown")
-  })
-
-  it("導線から入っても、今回の結果があればそれが出て、閉じるは出ない", () => {
-    window.location.hash = "#token-usage?review=last"
-    const state = stateWith({
-      usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
-      previousUsageReview: { kind: "found", reviewedAt: 0, findings: FIXTURE_FINDINGS },
-    })
-    const { result } = renderUsageReview(state)
-
-    expect(result.current.kind === "result" ? result.current.close.kind : "").toBe("none")
-  })
-
-  it("導線から入っても、前回の結果が無ければふだんのまま", () => {
-    window.location.hash = "#token-usage?review=last"
-    const { result } = renderUsageReview(stateWith({}))
-
-    expect(result.current.kind).toBe("idle")
-  })
-
-  it("導線が無ければ前回の提案があってもふだんから始まる", () => {
+  it("前回の提案があってもふだんから始まる", () => {
     const state = stateWith({
       previousUsageReview: { kind: "found", reviewedAt: 0, findings: FIXTURE_FINDINGS },
     })

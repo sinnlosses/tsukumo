@@ -319,6 +319,28 @@
 .usage-review-proposal-note-label {
   color: var(--usage-ink-note);
 }
+/* 提案の実行の様子の行。セリフが長いと折り返す。 */
+.usage-review-proposal-run {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--usage-rule);
+}
+.usage-review-proposal-run-status {
+  color: var(--usage-ink-label);
+  font-size: var(--font-label);
+  font-weight: 700;
+}
+.usage-review-proposal-run-running .usage-review-proposal-run-status {
+  color: var(--accent);
+}
+.usage-review-proposal-run .usage-review-speech {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
 .usage-review-proposal-actions {
   display: flex;
   flex-direction: column;

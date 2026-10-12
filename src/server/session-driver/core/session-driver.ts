@@ -189,17 +189,6 @@ export type SessionDriverOptions = {
   readonly claudeConfigDir: string | undefined
   /** 取り込んだ tsukumo-plugins を `plugins` に載せるか（利用者が同じスキルとエージェントを入れていれば載せない）。 */
   readonly mountWorkflowPlugin: boolean
-  /**
-   * 利用者が見送った提案の識別子（`usageProposalKey`）を読む口。
-   * 見直しのツールが呼ばれるたびに読み直す（`createUsageReviewIntake`）。
-   * 読めないときは空を返し、例外を投げない。
-   */
-  readonly dismissedUsageProposalKeys: () => readonly string[]
-  /**
-   * 起動先のプロジェクトにタスク運用があるかを読む口。見直しのツールが呼ばれるたびに読み直す（`createUsageReviewIntake`）。
-   * 読めないときは `false` を返し、例外を投げない。
-   */
-  readonly hasTaskOperation: () => Promise<boolean>
   /** 内部イベントの受け取り口。投げても反復は止まらず、投げた失敗は `reportFailure` へ渡る。 */
   readonly onEvent: (event: SessionEvent) => void
   /** `onEvent` が投げた失敗を診断ログへ書く口。ここで例外を投げないこと。 */

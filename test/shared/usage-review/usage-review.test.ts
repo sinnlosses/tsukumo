@@ -2,9 +2,8 @@ import { describe, expect, it } from "vitest"
 
 import {
   applyUsageReviewEvent,
-  settleUsageReview,
   type UsageProposal,
-  type UsageReview,
+  type UsageReviewEvent,
   type UsageReviewFields,
   type UsageReviewFindings,
   usageProposalKey,
@@ -74,86 +73,125 @@ describe("applyUsageReviewEvent", () => {
     proposals: [PROPOSAL, { ...PROPOSAL, target: "another-server" }],
   } as const satisfies UsageReviewFindings
 
+  const KEY = usageProposalKey(PROPOSAL)
+
   const IDLE: UsageReviewFields = {
     usageReview: { kind: "idle" },
     previousUsageReview: { kind: "none" },
+    usageProposalRun: { kind: "idle" },
   }
-
-  const STAGE_EVENT = { kind: "usage-review-stage", stage: "model", days: 7 } as const
 
   const RESULT: UsageReviewFields = {
     usageReview: { kind: "result", reviewedAt: 700, findings: FINDINGS },
     previousUsageReview: { kind: "found", reviewedAt: 700, findings: FINDINGS },
+    usageProposalRun: { kind: "idle" },
   }
 
-  it("段が届くと見直し中になり、始まりは渡された時刻・段は届いた段", () => {
-    expect(applyUsageReviewEvent(IDLE, STAGE_EVENT, 300, 100)).toEqual({
-      usageReview: { kind: "running", startedAt: 100, days: 7, stage: "model" },
-      previousUsageReview: { kind: "none" },
+  /** 時刻つきのイベントを順に畳む。 */
+  function fold(
+    fields: UsageReviewFields,
+    events: readonly (readonly [number, UsageReviewEvent])[],
+  ): UsageReviewFields {
+    return events.reduce(
+      (current, [at, event]) => applyUsageReviewEvent(current, event, at),
+      fields,
+    )
+  }
+
+  it("始まると、段の届く前から見直し中になり、始まりはそのイベントの時刻", () => {
+    expect(fold(IDLE, [[100, { kind: "usage-review-started" }]]).usageReview).toEqual({
+      kind: "running",
+      startedAt: 100,
+      progress: { kind: "preparing" },
+      speech: { kind: "none" },
     })
   })
 
-  it("見直し中に次の段が届いても始まりは動かさない", () => {
-    const running = applyUsageReviewEvent(IDLE, STAGE_EVENT, 300, 100)
-    const next = applyUsageReviewEvent(
-      running,
-      { kind: "usage-review-stage", stage: "cache", days: 7 },
-      500,
-      500,
-    )
+  it("段とセリフが届いても始まりは動かず、段とセリフだけが差し替わる", () => {
+    const running = fold(IDLE, [
+      [100, { kind: "usage-review-started" }],
+      [300, { kind: "usage-review-stage", stage: "model", days: 7 }],
+      [400, { kind: "usage-review-speech", text: "架空のセリフ" }],
+      [500, { kind: "usage-review-stage", stage: "cache", days: 7 }],
+    ])
 
-    expect(next.usageReview).toEqual({ kind: "running", startedAt: 100, days: 7, stage: "cache" })
+    expect(running.usageReview).toEqual({
+      kind: "running",
+      startedAt: 100,
+      progress: { kind: "stage", stage: "cache", days: 7 },
+      speech: { kind: "said", text: "架空のセリフ" },
+    })
   })
 
-  it("結果が届くと、見直しと前回の結果が同じ結果に揃う", () => {
-    const running = applyUsageReviewEvent(IDLE, STAGE_EVENT, 300, 100)
+  it("結果が届くと、見直しと前回の結果が同じ結果に揃い、そのあとの終わりは結果を残す", () => {
+    const result = fold(IDLE, [
+      [100, { kind: "usage-review-started" }],
+      [700, { kind: "usage-review-result", findings: FINDINGS }],
+    ])
 
+    expect(result).toEqual(RESULT)
+    expect(fold(result, [[800, { kind: "usage-review-ended" }]])).toEqual(RESULT)
+  })
+
+  it("結果を渡さずに終わると、ふだんへ戻る", () => {
+    const ended = fold(IDLE, [
+      [100, { kind: "usage-review-started" }],
+      [300, { kind: "usage-review-stage", stage: "model", days: 7 }],
+      [800, { kind: "usage-review-ended" }],
+    ])
+
+    expect(ended).toEqual(IDLE)
+  })
+
+  it("提案の実行は始まり→セリフ→終わりで、終わった姿にセリフと終わり方が残る", () => {
+    const running = fold(RESULT, [
+      [900, { kind: "usage-proposal-run-started", key: KEY }],
+      [950, { kind: "usage-review-speech", text: "架空のセリフ" }],
+    ])
+    const ended = fold(running, [
+      [1000, { kind: "usage-proposal-run-ended", key: KEY, outcome: "succeeded" }],
+    ])
+
+    expect(running.usageProposalRun).toEqual({
+      kind: "running",
+      key: KEY,
+      startedAt: 900,
+      speech: { kind: "said", text: "架空のセリフ" },
+    })
+    expect(ended).toEqual({
+      ...RESULT,
+      usageProposalRun: {
+        kind: "ended",
+        key: KEY,
+        outcome: "succeeded",
+        speech: { kind: "said", text: "架空のセリフ" },
+      },
+    })
+  })
+
+  it("走っていない提案の終わりと、何も走っていないときのセリフは何も変えない", () => {
     expect(
-      applyUsageReviewEvent(running, { kind: "usage-review-result", findings: FINDINGS }, 700, 700),
+      fold(RESULT, [
+        [1000, { kind: "usage-proposal-run-ended", key: KEY, outcome: "failed" }],
+        [1100, { kind: "usage-review-speech", text: "架空のセリフ" }],
+      ]),
     ).toEqual(RESULT)
   })
 
   it("見送った提案は、見直しと前回の結果の両方から除かれる", () => {
-    const dismissed = applyUsageReviewEvent(
-      RESULT,
-      { kind: "usage-proposal-dismissed", key: usageProposalKey(PROPOSAL) },
-      800,
-      800,
-    )
+    const dismissed = fold(RESULT, [[800, { kind: "usage-proposal-dismissed", key: KEY }]])
     const remaining = { ...FINDINGS, proposals: [FINDINGS.proposals[1]] }
 
     expect(dismissed).toEqual({
       usageReview: { kind: "result", reviewedAt: 700, findings: remaining },
       previousUsageReview: { kind: "found", reviewedAt: 700, findings: remaining },
+      usageProposalRun: { kind: "idle" },
     })
   })
 
   it("結果でも前回の結果でもなければ、見送りは何も変えない", () => {
-    const running = applyUsageReviewEvent(IDLE, STAGE_EVENT, 300, 100)
+    const running = fold(IDLE, [[100, { kind: "usage-review-started" }]])
 
-    expect(
-      applyUsageReviewEvent(
-        running,
-        { kind: "usage-proposal-dismissed", key: usageProposalKey(PROPOSAL) },
-        800,
-        800,
-      ),
-    ).toEqual(running)
-  })
-})
-
-describe("settleUsageReview", () => {
-  it("見直し中はふだんへ戻し、結果とふだんはそのままにする", () => {
-    const result = {
-      kind: "result",
-      reviewedAt: 700,
-      findings: { days: 7, headline: "架空の冒頭の一言。", proposals: [] },
-    } as const satisfies UsageReview
-
-    expect(settleUsageReview({ kind: "running", startedAt: 100, days: 7, stage: "model" })).toEqual(
-      { kind: "idle" },
-    )
-    expect(settleUsageReview(result)).toEqual(result)
-    expect(settleUsageReview({ kind: "idle" })).toEqual({ kind: "idle" })
+    expect(fold(running, [[800, { kind: "usage-proposal-dismissed", key: KEY }]])).toEqual(running)
   })
 })

@@ -18,7 +18,7 @@ import type { SessionState } from "./session/session-state.ts"
  * コマンドの形を変えたときも上げる。
  * 同じ `/ws` に乗るので、形の違うタブとプロセスの組はコマンドが1件も通らなくなる（知らせで読み込み直してもらう）。
  */
-export const PROTOCOL_VERSION = 48
+export const PROTOCOL_VERSION = 49
 
 /**
  * 配っているものを取り直す先。
@@ -65,6 +65,10 @@ export const FRAME_ERROR_REASON = {
   forgetRememberedLineFailed: "覚えたことを消せなかった",
   forgetRememberedLineOutsideChat: "覚えたことを消せるのは雑談モードのときだけ",
   usageProposalDismissFailed: "提案を見送れなかった",
+  usageReviewRunning:
+    "見直しか提案の実行が走っている最中は、ほかを始められない（終わるか止めると頼める）",
+  usageProposalNotFound: "その提案が見つからない（見直しをやり直すと出てくる）",
+  usageReviewInterruptFailed: "見直しを止められなかった",
   openFileFailed: "ファイルを開けなかった",
   achievementReflectionWriting:
     "いま日記を書いている最中は、ほかの日を振り返れない（書き終わると頼める）",

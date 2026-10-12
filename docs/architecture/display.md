@@ -806,7 +806,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   サーバの姿の `backgroundTasks` が1件以上・送り方（`PromptRouting`）が `aside-when-background` の3つ。本文は読まない。
   ブラウザが渡すのは送り方だけで、背景のタスクの有無は見ない（駆動が動くのはサーバの姿の上なので、判定もそこで1回だけ行う）。
   入力欄の ⌘⏎ は `aside-when-background`、⌘⇧⏎ は `new-request` で、背景のタスクがあっても新しい依頼として札を割る。
-  迎える口・タスクの実行・見直しから送る依頼は送り方を省き、`new-request` になる
+  迎える口・タスクの実行から送る依頼は送り方を省き、`new-request` になる
 - **脇の話は `request` ではない別の出来事と記録 `aside` にする**（`text`・`images`・時刻。ターンの通し番号は持たない）。
   `request` でないので、札の割り方（`splitIntoTurns`）・記録の窓・同じ依頼の範囲を読むもの（段取り・依頼の手順・
   `WorkPlanReview`）は、脇の話を親のやり取りの中として読む。札も「n / N」も増えず、帯は親の段取り・今の段・経過を出し続ける。

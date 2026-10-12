@@ -55,7 +55,6 @@ const TURN: MainViewTurn = {
   hasInterimReport: true,
   droppedCount: 0,
   failure: { kind: "none" },
-  usageReviewResult: false,
 }
 
 function renderList(turn: MainViewTurn = TURN): void {

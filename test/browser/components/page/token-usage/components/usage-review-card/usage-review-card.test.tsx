@@ -164,6 +164,7 @@ describe("UsageReviewCard（結果）", () => {
       followUp: "delegate",
       onPrimary: () => {},
       onDismiss: () => {},
+      run: { kind: "none" },
     },
     {
       key: "model-choice:",
@@ -174,6 +175,7 @@ describe("UsageReviewCard（結果）", () => {
       followUp: "task",
       onPrimary: () => {},
       onDismiss: () => {},
+      run: { kind: "none" },
     },
   ]
 
@@ -243,27 +245,22 @@ describe("UsageReviewCard（結果）", () => {
     expect(retried).toBe(1)
   })
 
-  it("ターンが進行中は主ボタンともう一度見てもらうが押せず、理由が出る", () => {
+  it("押せないときは主ボタンともう一度見てもらうが押せず、理由が出る", () => {
     const review: UseUsageReviewResult = {
       ...resultReview,
-      retry: {
-        kind: "blocked",
-        reason: "いまターンが動いているので送れない。終わってからもう一度押す。",
-      },
+      retry: { kind: "blocked", reason: "架空の押せない理由。" },
     }
     const { getByText } = render(<UsageReviewCard review={review} />)
 
     expect(getByText("もう一度見てもらう").hasAttribute("disabled")).toBe(true)
     expect(getByText("tsukumo に頼む").hasAttribute("disabled")).toBe(true)
-    expect(
-      getByText("いまターンが動いているので送れない。終わってからもう一度押す。"),
-    ).not.toBeNull()
+    expect(getByText("架空の押せない理由。")).not.toBeNull()
   })
 
-  it("「見送る」はターンが進行中でも押せる", () => {
+  it("「見送る」は押せないときでも押せる", () => {
     const review: UseUsageReviewResult = {
       ...resultReview,
-      retry: { kind: "blocked", reason: "いまターンが動いているので送れない。" },
+      retry: { kind: "blocked", reason: "架空の押せない理由。" },
     }
     const { getAllByText } = render(<UsageReviewCard review={review} />)
 
@@ -285,5 +282,76 @@ describe("UsageReviewCard（結果）", () => {
 
     fireEvent.click(getByText("閉じる"))
     expect(closed).toBe(1)
+  })
+})
+
+describe("UsageReviewCard（提案の実行の様子）", () => {
+  const proposal: UsageReviewResultProposalView = {
+    key: "tool-result:Bash",
+    impact: "large",
+    title: "架空の見出し",
+    basis: "架空の根拠。",
+    action: "架空のやること。",
+    followUp: "delegate",
+    onPrimary: () => {},
+    onDismiss: () => {},
+    run: { kind: "none" },
+  }
+  const withRun = (run: UsageReviewResultProposalView["run"]): UseUsageReviewResult => ({
+    kind: "result",
+    face: FIXTURE_FACE,
+    reviewedAtLabel: "09-23 15:40",
+    periodLabel: "直近 7 日",
+    headline: "架空の一言。",
+    proposals: [
+      { ...proposal, run },
+      { ...proposal, key: "model-choice:", title: "架空の別の札" },
+    ],
+    retry: { kind: "available" },
+    onRetry: () => {},
+    close: { kind: "none" },
+  })
+
+  it("頼んでいない札には実行の様子の行を出さない", () => {
+    const { container } = render(<UsageReviewCard review={withRun({ kind: "none" })} />)
+
+    expect(container.querySelector(".usage-review-proposal-run")).toBeNull()
+  })
+
+  it("頼んでいる札にだけ、頼んでいる・経過・セリフ・止めるが出て、止めるで interrupt が1回呼ばれる", () => {
+    let interrupted = 0
+    const { container, getByText } = render(
+      <UsageReviewCard
+        review={withRun({
+          kind: "running",
+          elapsedText: "0:42",
+          speech: { kind: "said", text: "架空のセリフ" },
+          onInterrupt: () => (interrupted += 1),
+        })}
+      />,
+    )
+
+    expect(container.querySelectorAll(".usage-review-proposal-run")).toHaveLength(1)
+    expect(getByText("頼んでいる…")).not.toBeNull()
+    expect(getByText("0:42")).not.toBeNull()
+    expect(getByText("「架空のセリフ」")).not.toBeNull()
+    fireEvent.click(getByText("止める"))
+    expect(interrupted).toBe(1)
+  })
+
+  it.each([
+    ["succeeded", "済んだ"],
+    ["failed", "できなかった"],
+    ["interrupted", "止めた"],
+  ] as const)("終わった札には終わり方（%s）とセリフが出て、止めるは出ない", (outcome, label) => {
+    const { getByText, queryByText } = render(
+      <UsageReviewCard
+        review={withRun({ kind: "ended", outcome, speech: { kind: "said", text: "架空のセリフ" } })}
+      />,
+    )
+
+    expect(getByText(label)).not.toBeNull()
+    expect(getByText("「架空のセリフ」")).not.toBeNull()
+    expect(queryByText("止める")).toBeNull()
   })
 })

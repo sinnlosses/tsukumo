@@ -50,7 +50,7 @@ import {
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../../src/shared/context-usage/context-usage.ts"
 import type { CharacterEdit } from "../../../../src/shared/contract/character-pack.ts"
-import type { UsageProposalDismissal } from "../../../../src/shared/contract/usage-review.ts"
+import type { UsageProposalKeyInput } from "../../../../src/shared/contract/usage-review.ts"
 import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
 import {
   FRAME_ERROR_REASON,
@@ -177,11 +177,11 @@ function defaultSessionManagerOptions() {
     deleteCharacter: () => Promise.resolve(undefined),
     forgetRememberedLine: () => Promise.resolve(undefined),
     readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-    writePreviousUsageReview: () => {},
     dismissUsageProposal: (dismiss) => ({
       kind: "usage-proposal-dismissed",
       key: usageProposalKey(dismiss),
     }),
+    runner: { startReview: () => false, runProposal: () => false, interrupt: () => {} },
   } satisfies Partial<SessionManagerOptions & FlatCommandPorts>
 }
 
@@ -203,6 +203,7 @@ function createSessionManager(
     deleteCharacter,
     forgetRememberedLine,
     dismissUsageProposal,
+    runner,
     openFile,
     ...rest
   } = options
@@ -219,7 +220,7 @@ function createSessionManager(
       },
       characterPack: { editCharacter, createCharacter, deleteCharacter },
       chat: { forgetRememberedLine },
-      usageReview: { dismissUsageProposal },
+      usageReview: { dismissUsageProposal, runner },
       host: { openFile },
     },
     manager.commandSession,
@@ -230,10 +231,8 @@ function createSessionManager(
 function startManagerWithStub() {
   const stub = createStubDriver()
   const edits: CharacterEdit[] = []
-  /** ホームへ書いた「前回の見直しの結果」（書き先は配線層なので、ここでは積むだけ）。 */
-  const writtenPreviousUsageReviews: [number, unknown][] = []
   /** 見送った提案の識別子（書き先は配線層なので、ここでは積むだけ）。 */
-  const dismissedUsageProposals: UsageProposalDismissal[] = []
+  const dismissedUsageProposals: UsageProposalKeyInput[] = []
   const manager = createSessionManager({
     launchSession: (onEvent, onRestoredEvents) => {
       stub.attach(onEvent)
@@ -244,15 +243,12 @@ function startManagerWithStub() {
       edits.push(edit)
       return Promise.resolve(CHARACTER_EVENT)
     },
-    writePreviousUsageReview: (reviewedAt, findings) => {
-      writtenPreviousUsageReviews.push([reviewedAt, findings])
-    },
     dismissUsageProposal: (dismiss) => {
       dismissedUsageProposals.push(dismiss)
       return { kind: "usage-proposal-dismissed", key: usageProposalKey(dismiss) }
     },
   })
-  return { manager, stub, edits, writtenPreviousUsageReviews, dismissedUsageProposals }
+  return { manager, stub, edits, dismissedUsageProposals }
 }
 
 function waitForBatch(): Promise<void> {
@@ -2142,8 +2138,8 @@ describe("レポートの画像の棚", () => {
 })
 
 describe("createSessionManager（見直し）", () => {
-  it("受け付けた見直しの結果は previousUsageReview にも同時に載る（ホームへ書く口も1回呼ぶ）", async () => {
-    const { manager, stub, writtenPreviousUsageReviews } = startManagerWithStub()
+  it("受け付けた見直しの結果は previousUsageReview にも同時に載る", async () => {
+    const { manager, stub } = startManagerWithStub()
     const findings = {
       days: 7,
       headline: "架空の冒頭の一言。",
@@ -2161,7 +2157,6 @@ describe("createSessionManager（見直し）", () => {
       reviewedAt: 1_000,
       findings,
     })
-    expect(writtenPreviousUsageReviews).toEqual([[1_000, findings]])
   })
 
   it("起こしたときにホームから読んだ前回の結果が、最初の hello の previousUsageReview になる", () => {
@@ -2182,10 +2177,11 @@ describe("createSessionManager（見直し）", () => {
     expect(hello?.type === "hello" ? hello.state.previousUsageReview : undefined).toEqual(previous)
   })
 
-  it("起こし直しても previousUsageReview は残る（usageReview はふだんへ戻る）", async () => {
+  it("起こし直しても、見直しの結果・前回の結果・提案の実行の状態はどれも残る", async () => {
     const { manager, stub } = startManagerWithStub()
     const findings = { days: 7, headline: "架空の一言。", proposals: [] } as const
     stub.emit({ kind: "usage-review-result", findings })
+    stub.emit({ kind: "usage-proposal-run-started", key: "session-length:" })
     await waitForBatch()
 
     await manager.commands.session.switchCharacter({ name: "fictional" })
@@ -2193,11 +2189,14 @@ describe("createSessionManager（見直し）", () => {
     const frames: ServerFrame[] = []
     manager.subscribe((frame) => frames.push(frame))
     const [hello] = frames
-    expect(hello?.type === "hello" ? hello.state.usageReview : undefined).toEqual({ kind: "idle" })
-    expect(hello?.type === "hello" ? hello.state.previousUsageReview : undefined).toEqual({
-      kind: "found",
-      reviewedAt: 1_000,
-      findings,
+    const state = hello?.type === "hello" ? hello.state : undefined
+    expect(state?.usageReview).toEqual({ kind: "result", reviewedAt: 1_000, findings })
+    expect(state?.previousUsageReview).toEqual({ kind: "found", reviewedAt: 1_000, findings })
+    expect(state?.usageProposalRun).toEqual({
+      kind: "running",
+      key: "session-length:",
+      startedAt: 1_000,
+      speech: { kind: "none" },
     })
   })
 

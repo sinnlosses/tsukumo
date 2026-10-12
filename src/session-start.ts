@@ -83,6 +83,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
 
   const diary = wireDiary(context)
   const welcomeGreeting = wireWelcomeGreeting(context, options.diagnosticLog)
+  const usageReview = wireUsageReview(context, options.mountWorkflowPlugin)
   const launch = wireSessionLaunch({
     context,
     config,
@@ -93,11 +94,11 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     diagnosticLog: options.diagnosticLog,
     onLaunch: (seed, onEvent, restored) => {
       diary.noteLaunched(seed)
+      usageReview.noteLaunched(seed)
       return welcomeGreeting.noteLaunched(seed, onEvent, restored)
     },
   })
   const chat = wireChat(context, character)
-  const usageReview = wireUsageReview()
   const repository = wireRepository(context, options.diagnosticLog)
   const achievement = wireAchievement(context)
   const host = wireHost(context, options.host)
@@ -142,6 +143,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
       ...manager,
       close: () => {
         manager.close()
+        usageReview.close()
         launch.releaseSessionClaim()
       },
       subscribe: (send) => {

@@ -67,6 +67,7 @@ const FAKE_SESSION = {
       lastLine: "架空のセリフ",
     },
   },
+  usageReview: { review: [], proposal: [] },
 } as const
 
 function collect(): {
@@ -367,6 +368,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: {
         sessionDigests: {},
+        usageReview: { review: [], proposal: [] },
         pastSessions: [],
         opening: [
           {
@@ -403,6 +405,7 @@ describe("startFakeSession", () => {
       return startFakeSession({
         session: {
           sessionDigests: {},
+          usageReview: { review: [], proposal: [] },
           pastSessions: [],
           opening: [
             {
@@ -463,6 +466,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: {
         sessionDigests: {},
+        usageReview: { review: [], proposal: [] },
         pastSessions: [],
         opening: [
           {
@@ -500,6 +504,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: {
         sessionDigests: {},
+        usageReview: { review: [], proposal: [] },
         pastSessions: [],
         opening: [],
         turns: [
@@ -545,6 +550,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: {
         sessionDigests: {},
+        usageReview: { review: [], proposal: [] },
         pastSessions: [],
         opening: [],
         turns: [

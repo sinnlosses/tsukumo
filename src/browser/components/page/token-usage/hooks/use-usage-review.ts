@@ -1,43 +1,44 @@
 // トークン消費の画面の「減らし方を見てもらう」区画（ふだん・見直し中・結果）のロジック。
 //
-// 見直し中かどうか・段の進み・結果・前回の提案はサーバの状態（`SessionState.usageReview` / `previousUsageReview`）が持つ。
+// 見直しと提案の実行は会話とは別の問い合わせで走り、見直し中かどうか・段の進み・セリフ・結果・前回の提案・提案の実行の様子は
+// サーバの状態（`SessionState.usageReview` / `previousUsageReview` / `usageProposalRun`）が持つ。
 // ここが畳むのは:
 // - 経過時間の刻み（ローカルなタイマー）
 // - 段の右に添える数（モデルの数・キャッシュ読み・ツールの種類）。
 //   スキルからは受け取らず、既存の集計（手続き `tokenUsage.summary` に見直しの期間を渡す）から引く。
 //   手続きの入力は選べる日数（1/7/30）だけなので、見直しの期間がそれ以外なら数を出さない
-// - ボタンを押せない理由（ターンが進行中・雑談中）。
-//   結果の場面の主ボタン・「もう一度見てもらう」にも同じ理由を使う（どちらも会話へ依頼を送る点は同じ）
+// - ボタンを押せない理由（提案の実行が走っている間だけ）。
+//   結果の場面の主ボタン・「もう一度見てもらう」にも同じ理由を使う
 // - 「前回の提案」を開いた・閉じたの1つの真偽値（`viewingPrevious`）。
-//   `usageReview` は起こし直すとふだんへ戻るので、「前回の結果を見ている」はサーバの状態に持たず、この区画だけのローカルな見た目にする
+//   `usageReview` はプロセスを起こし直すとふだんへ戻るので、「前回の結果を見ている」はサーバの状態に持たず、この区画だけのローカルな見た目にする
 
 import { skipToken, useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 
-import type { Speech } from "../../../../../shared/session/session-state.ts"
 import {
   TOKEN_USAGE_DAYS_CHOICES,
   type TokenUsageDays,
   type TokenUsageSummary,
 } from "../../../../../shared/token-usage/token-usage-summary.ts"
 import {
-  USAGE_REVIEW_REQUEST_TEXT,
   USAGE_REVIEW_STAGE_LABELS,
   USAGE_REVIEW_STAGES,
   usageProposalKey,
-  usageProposalRequestText,
   type PreviousUsageReview,
   type UsageProposal,
   type UsageProposalImpact,
   type UsageProposalFollowUp,
+  type UsageProposalRun,
+  type UsageProposalRunOutcome,
   type UsageReviewFindings,
+  type UsageReviewProgress,
+  type UsageReviewSpeech,
   type UsageReviewStage,
 } from "../../../../../shared/usage-review/usage-review.ts"
 import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { rpc } from "../../../../domain/rpc.ts"
-import { useHashRoute } from "../../../../stores/location-hash.ts"
-import { useSession, useTurnRunning, type SessionDispatch } from "../../../../stores/session.ts"
+import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
 import {
   clockTime,
   localTimeZoneId,
@@ -47,8 +48,7 @@ import {
 import { formatCount } from "../../../../utils/format-count.ts"
 import { totalUsage } from "../domain/usage-format.ts"
 
-const CHAT_MODE_BLOCKED_REASON = "雑談中は使えない。仕事に切り替えてから押す。"
-const TURN_RUNNING_BLOCKED_REASON = "いまターンが動いているので送れない。終わってからもう一度押す。"
+const PROPOSAL_RUNNING_BLOCKED_REASON = "いま提案を頼んでいる。終わってからもう一度押す。"
 const TICK_INTERVAL_MS = 1000
 
 /** ボタンを押せるか（押せないときは理由を添える）。 */
@@ -71,10 +71,29 @@ export type UsageReviewStageView = {
   readonly count: UsageReviewStageCount
 }
 
-/** 直近のセリフ（吹き出しと同じ最新の `speak`）。まだ無ければ `none`。 */
-export type UsageReviewSpeechView =
+/** 走っている見直しか提案の実行の直近のセリフ。まだ無ければ `none`。 */
+export type UsageReviewSpeechView = UsageReviewSpeech
+
+/**
+ * 札1枚ぶんの提案の実行の様子。実行した提案（`usageProposalRun.key`）の札にだけ出す。
+ *
+ * - `none`: この提案はまだ頼んでいない（ほかの提案を頼んだ・一度も頼んでいない）
+ * - `running`: 頼んでいる。経過・セリフ・止める口を添える
+ * - `ended`: 終わった。次に頼むまで終わり方とセリフを出し続ける
+ */
+export type UsageProposalRunView =
   | { readonly kind: "none" }
-  | { readonly kind: "said"; readonly text: string }
+  | {
+      readonly kind: "running"
+      readonly elapsedText: string
+      readonly speech: UsageReviewSpeechView
+      readonly onInterrupt: () => void
+    }
+  | {
+      readonly kind: "ended"
+      readonly outcome: UsageProposalRunOutcome
+      readonly speech: UsageReviewSpeechView
+    }
 
 /** 「前回の提案」のリンク。無ければ出さない。 */
 export type PreviousUsageReviewView =
@@ -99,10 +118,11 @@ export type UsageReviewResultProposalView = {
   readonly action: string
   /** 主ボタンの押す口（`delegate` / `task`）。文言は見た目の側が持つ。 */
   readonly followUp: UsageProposalFollowUp
-  /** 主ボタンを押すと会話へ依頼を1回送る。 */
+  /** 主ボタンを押すと `usageReview.runProposal` を1回送る。 */
   readonly onPrimary: () => void
   /** 「見送る」を押すと `usageReview.dismissProposal` を1回送る。 */
   readonly onDismiss: () => void
+  readonly run: UsageProposalRunView
 }
 
 export type UseUsageReviewResult = {
@@ -133,7 +153,7 @@ export type UseUsageReviewResult = {
       readonly proposals: readonly UsageReviewResultProposalView[]
       /**
        * 「もう一度見てもらう」を押せるか。押せないときは各提案の主ボタンも押せない。
-       * 「ターンが動いている」を主ボタンの数だけ繰り返さずここに1つだけ出す。
+       * 押せない理由を主ボタンの数だけ繰り返さずここに1つだけ出す。
        */
       readonly retry: UsageReviewStartAvailability
       readonly onRetry: () => void
@@ -144,48 +164,54 @@ export type UseUsageReviewResult = {
 
 export function useUsageReview(): UseUsageReviewResult {
   const dispatch = useSession((session) => session.dispatch)
-  const turnRunning = useTurnRunning()
-  const chatMode = useSession((session) => session.state.chatMode)
   const usageReview = useSession((session) => session.state.usageReview)
   const previousUsageReview = useSession((session) => session.state.previousUsageReview)
+  const usageProposalRun = useSession((session) => session.state.usageProposalRun)
   const character = useSession((session) => session.state.character)
-  const speeches = useSession((session) => session.state.speeches)
-  // スナップショットはプリミティブに限るので、印の有無は文字列で読む。
-  const openedFromLink = useHashRoute((route) => (route.lastReview ? "last" : "")) === "last"
-  // 会話のレポートの導線から入ったとき、今回の結果が消えていれば前回の提案を最初から開く。
-  const [viewingPrevious, setViewingPrevious] = useState(
-    openedFromLink && usageReview.kind !== "result",
-  )
+  const [viewingPrevious, setViewingPrevious] = useState(false)
 
-  const reviewDays = usageReview.kind === "running" ? asTokenUsageDays(usageReview.days) : undefined
+  const reviewDays =
+    usageReview.kind === "running" && usageReview.progress.kind === "stage"
+      ? asTokenUsageDays(usageReview.progress.days)
+      : undefined
   const summary = useReviewStageSummary(reviewDays)
 
   const [now, setNow] = useState(() => nowEpochMilliseconds())
+  const ticking = usageReview.kind === "running" || usageProposalRun.kind === "running"
   useEffect(() => {
-    if (usageReview.kind !== "running") {
+    if (!ticking) {
       return undefined
     }
     const timer = setInterval(() => setNow(nowEpochMilliseconds()), TICK_INTERVAL_MS)
     return () => clearInterval(timer)
-  }, [usageReview])
+  }, [ticking])
 
   const face = characterFaceInfo(character)
   const start = () => {
     setViewingPrevious(false)
-    dispatch.session.prompt({ text: USAGE_REVIEW_REQUEST_TEXT, images: [] })
+    dispatch.usageReview.start()
   }
-  const dismiss = (proposal: UsageProposal): void => {
-    dispatch.usageReview.dismissProposal({ kind: proposal.kind, target: proposal.target })
+  const interrupt = () => {
+    dispatch.usageReview.interrupt()
   }
+  const elapsedText = (startedAt: number): string =>
+    formatElapsed(Math.max(0, Math.floor((now - startedAt) / 1000)))
+  const proposalActions: ProposalActions = {
+    dispatch,
+    run: usageProposalRun,
+    elapsedText,
+    interrupt,
+  }
+  const availability = startAvailability(usageProposalRun)
 
   if (usageReview.kind === "running") {
     return {
       kind: "running",
       face,
-      elapsedText: formatElapsed(Math.max(0, Math.floor((now - usageReview.startedAt) / 1000))),
-      speech: latestSpeechView(speeches),
-      onInterrupt: () => dispatch.session.interrupt(),
-      stages: stageViews(usageReview.stage, summary),
+      elapsedText: elapsedText(usageReview.startedAt),
+      speech: usageReview.speech,
+      onInterrupt: interrupt,
+      stages: stageViews(usageReview.progress, summary),
     }
   }
 
@@ -193,8 +219,8 @@ export function useUsageReview(): UseUsageReviewResult {
     return {
       kind: "result",
       face,
-      ...resultView(usageReview.reviewedAt, usageReview.findings, dispatch, dismiss),
-      retry: startAvailability(chatMode, turnRunning),
+      ...resultView(usageReview.reviewedAt, usageReview.findings, proposalActions),
+      retry: availability,
       onRetry: start,
       close: { kind: "none" },
     }
@@ -204,13 +230,8 @@ export function useUsageReview(): UseUsageReviewResult {
     return {
       kind: "result",
       face,
-      ...resultView(
-        previousUsageReview.reviewedAt,
-        previousUsageReview.findings,
-        dispatch,
-        dismiss,
-      ),
-      retry: startAvailability(chatMode, turnRunning),
+      ...resultView(previousUsageReview.reviewedAt, previousUsageReview.findings, proposalActions),
+      retry: availability,
       onRetry: start,
       close: { kind: "shown", onClose: () => setViewingPrevious(false) },
     }
@@ -219,20 +240,24 @@ export function useUsageReview(): UseUsageReviewResult {
   return {
     kind: "idle",
     face,
-    start: startAvailability(chatMode, turnRunning),
+    start: availability,
     onStart: start,
     previousReview: previousReviewView(previousUsageReview, () => setViewingPrevious(true)),
   }
 }
 
-function startAvailability(chatMode: boolean, turnRunning: boolean): UsageReviewStartAvailability {
-  if (chatMode) {
-    return { kind: "blocked", reason: CHAT_MODE_BLOCKED_REASON }
-  }
-  if (turnRunning) {
-    return { kind: "blocked", reason: TURN_RUNNING_BLOCKED_REASON }
-  }
-  return { kind: "available" }
+type ProposalActions = {
+  readonly dispatch: SessionDispatch
+  readonly run: UsageProposalRun
+  readonly elapsedText: (startedAt: number) => string
+  readonly interrupt: () => void
+}
+
+/** 見直しも提案の実行も1度に1つだけ走るので、提案の実行が走っている間は始められない。 */
+function startAvailability(run: UsageProposalRun): UsageReviewStartAvailability {
+  return run.kind === "running"
+    ? { kind: "blocked", reason: PROPOSAL_RUNNING_BLOCKED_REASON }
+    : { kind: "available" }
 }
 
 function previousReviewView(
@@ -252,8 +277,7 @@ function previousReviewView(
 function resultView(
   reviewedAt: number,
   findings: UsageReviewFindings,
-  dispatch: SessionDispatch,
-  dismiss: (proposal: UsageProposal) => void,
+  actions: ProposalActions,
 ): Pick<
   Extract<UseUsageReviewResult, { readonly kind: "result" }>,
   "reviewedAtLabel" | "periodLabel" | "headline" | "proposals"
@@ -262,32 +286,51 @@ function resultView(
     reviewedAtLabel: reviewedAtLabel(reviewedAt),
     periodLabel: periodLabel(findings.days),
     headline: findings.headline,
-    proposals: findings.proposals.map((proposal) => ({
-      key: usageProposalKey(proposal),
-      impact: proposal.impact,
-      title: proposal.title,
-      basis: proposal.basis,
-      action: proposal.action,
-      followUp: proposal.followUp,
-      onPrimary: () =>
-        dispatch.session.prompt({ text: usageProposalRequestText(proposal), images: [] }),
-      onDismiss: () => dismiss(proposal),
-    })),
+    proposals: findings.proposals.map((proposal) => {
+      const key = usageProposalKey(proposal)
+      const target = proposalTarget(proposal)
+      return {
+        key,
+        impact: proposal.impact,
+        title: proposal.title,
+        basis: proposal.basis,
+        action: proposal.action,
+        followUp: proposal.followUp,
+        onPrimary: () => actions.dispatch.usageReview.runProposal(target),
+        onDismiss: () => actions.dispatch.usageReview.dismissProposal(target),
+        run: proposalRunView(key, actions),
+      }
+    }),
   }
 }
 
-/** 直近のセリフ（吹き出しと同じ `state.speeches` の最後の1件）。 */
-function latestSpeechView(speeches: readonly Speech[]): UsageReviewSpeechView {
-  const text = speeches.at(-1)?.text
-  return text === undefined ? { kind: "none" } : { kind: "said", text }
+function proposalTarget(proposal: UsageProposal): Pick<UsageProposal, "kind" | "target"> {
+  return { kind: proposal.kind, target: proposal.target }
 }
 
-/** 段の並び（{@link USAGE_REVIEW_STAGES}）より前は済、いまの段は進行中、後は未着手。 */
+/** 提案の実行の様子を、実行した提案の札にだけ出す。 */
+function proposalRunView(key: string, actions: ProposalActions): UsageProposalRunView {
+  const { run } = actions
+  if (run.kind === "idle" || run.key !== key) {
+    return { kind: "none" }
+  }
+  if (run.kind === "running") {
+    return {
+      kind: "running",
+      elapsedText: actions.elapsedText(run.startedAt),
+      speech: run.speech,
+      onInterrupt: actions.interrupt,
+    }
+  }
+  return { kind: "ended", outcome: run.outcome, speech: run.speech }
+}
+
+/** 段の並び（{@link USAGE_REVIEW_STAGES}）より前は済、いまの段は進行中、後は未着手。最初の段が届くまでは全部未着手。 */
 function stageViews(
-  currentStage: UsageReviewStage,
+  progress: UsageReviewProgress,
   summary: TokenUsageSummary | undefined,
 ): readonly UsageReviewStageView[] {
-  const currentIndex = USAGE_REVIEW_STAGES.indexOf(currentStage)
+  const currentIndex = progress.kind === "stage" ? USAGE_REVIEW_STAGES.indexOf(progress.stage) : -1
   return USAGE_REVIEW_STAGES.map((stage, index) => ({
     stage,
     label: USAGE_REVIEW_STAGE_LABELS[stage],

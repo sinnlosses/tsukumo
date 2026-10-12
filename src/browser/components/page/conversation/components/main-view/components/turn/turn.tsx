@@ -13,7 +13,6 @@ import type {
   MainViewTurn,
 } from "../../../../../../../../shared/session/main-view.ts"
 import { formatMeasured } from "../../../../../../../../shared/utils/elapsed-time.ts"
-import { useLastReviewHref } from "../../../../../../../stores/screen.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import mainViewStyles from "../../main-view.module.css"
@@ -54,7 +53,7 @@ export function Turn(props: TurnProps): ReactElement {
           これ以前の {turn.droppedCount} 件は省略した
         </Text>
       )}
-      {(turn.steps.length > 0 || turn.failure.kind === "failed" || turn.usageReviewResult) && (
+      {(turn.steps.length > 0 || turn.failure.kind === "failed") && (
         <VStack
           element="div"
           name={{ kind: "none" }}
@@ -85,27 +84,9 @@ export function Turn(props: TurnProps): ReactElement {
               {step.asides.length > 0 && <AsideThread asides={step.asides} newest={props.newest} />}
             </Fragment>
           ))}
-          {turn.usageReviewResult && <UsageReviewLink />}
         </VStack>
       )}
     </div>
-  )
-}
-
-/** 見直しの結果が受け付けられたやり取りの末尾に置く、トークンの画面の結果の札を開く導線。 */
-function UsageReviewLink(): ReactElement {
-  const href = useLastReviewHref()
-  return (
-    <Text
-      element="p"
-      size="secondary"
-      tone="ink-quiet"
-      weight="inherit"
-      className={styles["usage-review-link"]}
-    >
-      見直しの結果はトークンの画面に出した。
-      <a href={href}>結果を開く</a>
-    </Text>
   )
 }
 

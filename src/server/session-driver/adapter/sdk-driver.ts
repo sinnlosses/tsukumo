@@ -13,7 +13,6 @@ import { expressionNames as toExpressionNames } from "../../../shared/character-
 import { parsePromptImage, type PromptImage } from "../../../shared/session-driver/prompt-image.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
-import { createUsageReviewIntake } from "../../usage-review/core/usage-review-tool.ts"
 import { asidePromptText } from "../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../core/call-review.ts"
 import { createClearAndSend } from "../core/clear-and-send.ts"
@@ -105,11 +104,6 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   const callReview = createCallReview()
   const reportGate = createReportGate(callReview.nothingNewRejected)
   const readSessionDigest = createSessionDigestReader(options.expressions)
-  const usageReview = createUsageReviewIntake(
-    options.dismissedUsageProposalKeys,
-    options.hasTaskOperation,
-    options.onEvent,
-  )
   const titleIntake = createSessionTitleIntake()
   const titleWriter = createSessionTitleWriter()
 
@@ -131,7 +125,6 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           options.expressions,
           options.mode,
           callReview,
-          usageReview,
           titleIntake.note,
           options.cwd,
           options.onEvent,

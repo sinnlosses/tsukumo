@@ -14,15 +14,11 @@ import type {
   SessionMode,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { SPEECH_NOTHING_NEW_REJECTION_TEXT } from "../../../../src/server/session-driver/core/speech-review.ts"
-import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
 import { FIRST_SENTENCE_TARGET } from "../../../../src/shared/report/report-limit.ts"
 import type { QuestionBrief } from "../../../../src/shared/session-driver/question-brief.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import {
-  applySessionEvent,
-  INITIAL_SESSION_STATE,
-} from "../../../../src/shared/session/session-state.ts"
 import { fixedChatSummary } from "../../../fixture/chat.ts"
+import { callTool, listedToolNames, mcpRequest } from "../../../fixture/mcp-server.ts"
 import { WORK_PLAN_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
 
 // どのツールが載るか・呼ぶと何が返るかを、モデルが見るのと同じ MCP の `tools/list` /
@@ -47,7 +43,7 @@ const CHAT_MODE: SessionMode = {
 }
 
 describe("tsukumoServer", () => {
-  it("仕事のときは report と work_plan と question_brief と見直しの2つと recall / recall_episode が載り、remember / forget は載らない", async () => {
+  it("仕事のときは report と work_plan と question_brief と recall / recall_episode が載り、remember / forget と見直しの2つは載らない", async () => {
     const names = await listedToolNames(workServer())
 
     expect(names).toEqual([
@@ -58,8 +54,6 @@ describe("tsukumoServer", () => {
       "work_plan",
       "question_brief",
       "clear_and_send",
-      "usage_review_stage",
-      "usage_review_result",
     ])
   })
 
@@ -69,7 +63,6 @@ describe("tsukumoServer", () => {
         EXPRESSIONS,
         CHAT_MODE,
         createCallReview(),
-        noopIntake(),
         () => {},
         FAKE_CWD,
         () => {},
@@ -93,7 +86,6 @@ describe("tsukumoServer", () => {
         EXPRESSIONS,
         CHAT_MODE,
         createCallReview(),
-        noopIntake(),
         () => {},
         FAKE_CWD,
         () => {},
@@ -137,7 +129,6 @@ describe("recall / recall_episode ツール", () => {
         EXPRESSIONS,
         chatMode,
         createCallReview(),
-        noopIntake(),
         () => {},
         FAKE_CWD,
         () => {},
@@ -179,7 +170,6 @@ describe("recall / recall_episode ツール", () => {
         EXPRESSIONS,
         workMode,
         createCallReview(),
-        noopIntake(),
         () => {},
         FAKE_CWD,
         () => {},
@@ -207,7 +197,6 @@ describe("recall / recall_episode ツール", () => {
         EXPRESSIONS,
         chatMode,
         createCallReview(),
-        noopIntake(),
         () => {},
         FAKE_CWD,
         () => {},
@@ -254,7 +243,7 @@ describe("question_brief", () => {
     const held: (readonly QuestionBrief[])[] = []
 
     const reply = await callTool(
-      workServer([], [], [], createCallReview(), held),
+      workServer([], [], createCallReview(), held),
       "question_brief",
       BRIEF_ARGS,
     )
@@ -294,11 +283,9 @@ describe("question_brief", () => {
   it("崩れた添え書きは預けずに isError で直し方を返す", async () => {
     const held: (readonly QuestionBrief[])[] = []
 
-    const reply = await callTool(
-      workServer([], [], [], createCallReview(), held),
-      "question_brief",
-      { questions: [{ ...BRIEF_ARGS.questions[0], background: "" }] },
-    )
+    const reply = await callTool(workServer([], [], createCallReview(), held), "question_brief", {
+      questions: [{ ...BRIEF_ARGS.questions[0], background: "" }],
+    })
 
     expect(reply.isError).toBe(true)
     expect(held).toEqual([])
@@ -400,7 +387,7 @@ describe("report でターンを閉じる", () => {
 
 describe("speak の差し戻し", () => {
   it("仕事のときは、描いたセリフのあとに新しい事実の無い speak を差し戻しの一文で返す", async () => {
-    const reply = await callTool(workServer([], [], [], spokenReview()), "speak", CLOSING)
+    const reply = await callTool(workServer([], [], spokenReview()), "speak", CLOSING)
 
     expect(reply).toEqual({
       text: SPEECH_NOTHING_NEW_REJECTION_TEXT,
@@ -415,7 +402,6 @@ describe("speak の差し戻し", () => {
         EXPRESSIONS,
         CHAT_MODE,
         spokenReview(),
-        noopIntake(),
         () => {},
         FAKE_CWD,
         () => {},
@@ -466,22 +452,22 @@ describe("範囲の外の段の番号の差し戻し", () => {
     })
 
     expect(
-      await callTool(workServer([], [], [], rangedReview()), "speak", {
+      await callTool(workServer([], [], rangedReview()), "speak", {
         text: "段3が返った",
         expression: "default",
       }),
     ).toEqual(rejected)
     expect(
-      await callTool(workServer([], [], [], rangedReview()), "report", report("段3まで済んだ")),
+      await callTool(workServer([], [], rangedReview()), "report", report("段3まで済んだ")),
     ).toEqual(rejected)
     expect(
-      await callTool(workServer([], [], [], rangedReview()), "speak", {
+      await callTool(workServer([], [], rangedReview()), "speak", {
         text: "段2が返った",
         expression: "default",
       }),
     ).toMatchObject({ isError: false })
     expect(
-      await callTool(workServer([], [], [], rangedReview()), "report", report("段2まで済んだ")),
+      await callTool(workServer([], [], rangedReview()), "report", report("段2まで済んだ")),
     ).toMatchObject({ isError: false, endsTurn: true })
   })
 
@@ -533,12 +519,12 @@ describe("work_plan（段取り）", () => {
 
   it("計画を練り直して first と総数が変わると、戻り値は新しい番号を言う", async () => {
     const review = createCallReview()
-    const before = await callTool(workServer([], [], [], review), "work_plan", {
+    const before = await callTool(workServer([], [], review), "work_plan", {
       phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
       current: 0,
       delegatedRange: { first: 1, count: 1 },
     })
-    const after = await callTool(workServer([], [], [], review), "work_plan", {
+    const after = await callTool(workServer([], [], review), "work_plan", {
       phases: ["架空の計画", "架空の調べ", "架空の実装A", "架空の実装B", "架空の受け入れ"],
       current: 0,
       delegatedRange: { first: 2, count: 2 },
@@ -696,7 +682,7 @@ describe("work_plan（段取り）", () => {
 
 describe("report の本文（sections）", () => {
   it("引数は節と塊の並び（sections）で、文字列の body は無い", async () => {
-    const reply = await request(workServer(), "tools/list", {}, TOOLS_SCHEMA_REPLY)
+    const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_SCHEMA_REPLY)
     const properties = reply.result.tools.find((tool) => tool.name === "report")?.inputSchema
       .properties
 
@@ -705,7 +691,7 @@ describe("report の本文（sections）", () => {
   })
 
   it("conclusion の説明に、目安の字数・読点の数・悪い例と良い例がある", async () => {
-    const reply = await request(workServer(), "tools/list", {}, TOOLS_SCHEMA_REPLY)
+    const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_SCHEMA_REPLY)
     const conclusion = z
       .object({ description: z.string() })
       .parse(
@@ -774,7 +760,7 @@ describe("report の title", () => {
   it("通った report の title を渡す", async () => {
     const titles: string[] = []
 
-    const reply = await callTool(workServer([], [], titles), "report", {
+    const reply = await callTool(workServer([], titles), "report", {
       conclusion: "架空の結論",
       closing: CLOSING,
       sessionSummary: SUMMARY,
@@ -789,7 +775,7 @@ describe("report の title", () => {
   it("title を渡さなくても report は通る", async () => {
     const titles: string[] = []
 
-    const reply = await callTool(workServer([], [], titles), "report", {
+    const reply = await callTool(workServer([], titles), "report", {
       conclusion: "架空の結論",
       closing: CLOSING,
       sessionSummary: SUMMARY,
@@ -803,7 +789,7 @@ describe("report の title", () => {
   it("規約違反で差し戻された report の title は渡さない", async () => {
     const titles: string[] = []
 
-    const reply = await callTool(workServer([], [], titles), "report", {
+    const reply = await callTool(workServer([], titles), "report", {
       conclusion: "架空の一文目。架空の二文目。架空の三文目。",
       closing: CLOSING,
       sessionSummary: SUMMARY,
@@ -816,111 +802,12 @@ describe("report の title", () => {
   })
 })
 
-describe("見直しのツール", () => {
-  it("正しい結果を渡すと ok が返り、畳んだ状態が結果になる", async () => {
-    const events: SessionEvent[] = []
-
-    const reply = await callTool(workServer(events), "usage_review_result", VALID_FINDINGS)
-
-    expect(reply).toEqual({ text: "ok", isError: false, endsTurn: false })
-    expect(events).toEqual([{ kind: "usage-review-result", findings: VALID_FINDINGS }])
-    const state = events.reduce(
-      (current, event) => applySessionEvent(current, event, 2_000),
-      INITIAL_SESSION_STATE,
-    )
-    expect(state.usageReview).toEqual({
-      kind: "result",
-      reviewedAt: 2_000,
-      findings: VALID_FINDINGS,
-    })
-  })
-
-  it("段を渡すとイベントが流れ、見送った提案の識別子が戻り値に並ぶ", async () => {
-    const events: SessionEvent[] = []
-
-    const reply = await callTool(
-      workServer(events, ["unused-mcp:example-server"]),
-      "usage_review_stage",
-      { stage: "cache", days: 7 },
-    )
-
-    expect(events).toEqual([{ kind: "usage-review-stage", stage: "cache", days: 7 }])
-    expect(reply.isError).toBe(false)
-    expect(reply.text.split("\n")[0]).toBe("ok")
-    expect(reply.text).toContain("- unused-mcp:example-server")
-  })
-
-  it("列挙に無い種類は境界で断られ、理由が戻り値で返り、イベントは流れない", async () => {
-    const events: SessionEvent[] = []
-
-    const reply = await callTool(workServer(events), "usage_review_result", {
-      ...VALID_FINDINGS,
-      proposals: [{ ...VALID_PROPOSAL, kind: "unknown-kind" }],
-    })
-
-    expect(reply.isError).toBe(true)
-    expect(reply.text).toContain("kind")
-    expect(events).toEqual([])
-  })
-
-  it("形は合っていても条に外れる結果は、直し方つきで差し戻される", async () => {
-    const events: SessionEvent[] = []
-
-    const reply = await callTool(
-      workServer(events, ["unused-mcp:example-server"]),
-      "usage_review_result",
-      { ...VALID_FINDINGS, headline: " ", proposals: [VALID_PROPOSAL, VALID_PROPOSAL] },
-    )
-
-    expect(reply.isError).toBe(true)
-    expect(reply.text).toContain("`headline` が空")
-    expect(reply.text).toContain("同じ `kind` と `target` の組が1件重なっている")
-    expect(reply.text).toContain("利用者が見送った提案が2件入っている")
-    expect(events).toEqual([])
-  })
-
-  it("提案が上限を超えると差し戻される", async () => {
-    const events: SessionEvent[] = []
-    const proposals = ["a", "b", "c", "d", "e", "f"].map((target) => ({
-      ...VALID_PROPOSAL,
-      kind: "tool-result",
-      target,
-    }))
-
-    const reply = await callTool(workServer(events), "usage_review_result", {
-      ...VALID_FINDINGS,
-      proposals,
-    })
-
-    expect(reply.isError).toBe(true)
-    expect(reply.text).toContain("提案が6件ある")
-    expect(events).toEqual([])
-  })
-})
-
-const VALID_PROPOSAL = {
-  kind: "unused-mcp",
-  target: "example-server",
-  impact: "small",
-  title: "架空の MCP サーバを外す",
-  basis: "架空の根拠（10 ターンぶん）",
-  action: "架空のやること",
-  followUp: "delegate",
-} as const
-
-const VALID_FINDINGS = {
-  days: 7,
-  headline: "架空の冒頭の一言。",
-  proposals: [VALID_PROPOSAL],
-} as const
-
 /**
- * 仕事のサーバ。見直しのイベントは `events` に積み、見送りの一覧は `dismissed` を返す。
+ * 仕事のサーバ。handler が流したイベントは `events` に積む。
  * `report` が受け取った題は `titles` に、`question_brief` が預けた添え書きは `heldBriefs` に積む。
  */
 function workServer(
   events: SessionEvent[] = [],
-  dismissed: readonly string[] = [],
   titles: string[] = [],
   callReview: CallReview = createCallReview(),
   heldBriefs: (readonly QuestionBrief[])[] = [],
@@ -929,13 +816,6 @@ function workServer(
     EXPRESSIONS,
     WORK_MODE,
     callReview,
-    createUsageReviewIntake(
-      () => dismissed,
-      async () => true,
-      (event) => {
-        events.push(event)
-      },
-    ),
     (title) => {
       titles.push(title)
     },
@@ -950,20 +830,6 @@ function workServer(
   )
 }
 
-function noopIntake() {
-  return createUsageReviewIntake(
-    () => [],
-    async () => true,
-    () => {},
-  )
-}
-
-/** `tools/list` の応答のうち、ここで読む形（名前の並び）。 */
-const TOOLS_LIST_REPLY = z.object({
-  id: z.literal(1),
-  result: z.object({ tools: z.array(z.object({ name: z.string() })) }),
-})
-
 /** `tools/list` の応答のうち、ここで読む形（名前と、引数の schema の欄の名前）。 */
 const TOOLS_SCHEMA_REPLY = z.object({
   id: z.literal(1),
@@ -976,70 +842,3 @@ const TOOLS_SCHEMA_REPLY = z.object({
     ),
   }),
 })
-
-/** `tools/call` の応答のうち、ここで読む形（文面と `isError` と、ターンを閉じる印）。 */
-const TOOLS_CALL_REPLY = z.object({
-  id: z.literal(1),
-  result: z.object({
-    content: z.array(z.object({ type: z.literal("text"), text: z.string() })),
-    isError: z.boolean().optional(),
-    _meta: z.record(z.string(), z.unknown()).optional(),
-  }),
-})
-
-async function listedToolNames(server: McpSdkServerConfigWithInstance): Promise<string[]> {
-  const reply = await request(server, "tools/list", {}, TOOLS_LIST_REPLY)
-  return reply.result.tools.map((tool) => tool.name)
-}
-
-async function callTool(
-  server: McpSdkServerConfigWithInstance,
-  name: string,
-  args: unknown,
-): Promise<{ readonly text: string; readonly isError: boolean; readonly endsTurn: boolean }> {
-  const reply = await request(server, "tools/call", { name, arguments: args }, TOOLS_CALL_REPLY)
-  const { _meta: meta } = reply.result
-  return {
-    text: reply.result.content.map((block) => block.text).join("\n"),
-    isError: reply.result.isError ?? false,
-    endsTurn: meta?.["claude/endTurn"] === true,
-  }
-}
-
-/**
- * サーバをメモリ上の口につなぎ、要求を1回送って返ってきた応答を読む。
- * 口は送り返しを控えるだけの最小のもの（MCP の `Transport` の形）。
- */
-async function request<T>(
-  server: McpSdkServerConfigWithInstance,
-  method: string,
-  params: Record<string, unknown>,
-  schema: z.ZodType<T>,
-): Promise<T> {
-  const replies: unknown[] = []
-  const transport: Parameters<McpSdkServerConfigWithInstance["instance"]["connect"]>[0] = {
-    start: async () => {},
-    close: async () => {},
-    send: async (message) => {
-      replies.push(message)
-    },
-  }
-  await server.instance.connect(transport)
-  transport.onmessage?.({ jsonrpc: "2.0", id: 1, method, params })
-
-  const reply = await waitForReply(replies, schema)
-  await server.instance.close()
-  return reply
-}
-
-/** 応答が控えに届くまで待つ。mermaid の worker の初回の読み込みを待てる長さにしてある。 */
-async function waitForReply<T>(replies: readonly unknown[], schema: z.ZodType<T>): Promise<T> {
-  for (let attempt = 0; attempt < 2000; attempt += 1) {
-    const found = replies.find((reply) => schema.safeParse(reply).success)
-    if (found !== undefined) {
-      return schema.parse(found)
-    }
-    await new Promise((resolve) => setTimeout(resolve, 5))
-  }
-  throw new Error("応答が届かなかった")
-}

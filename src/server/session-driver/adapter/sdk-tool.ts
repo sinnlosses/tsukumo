@@ -1,8 +1,8 @@
 // tsukumo がプロセス内の MCP サーバとして提供するツール。
-// `speak` と `recall` / `recall_episode`、雑談のときの `remember` / `forget`、仕事のときの `report` / `work_plan` / `question_brief` / `usage_review_stage` / `usage_review_result`。
-// `diary` はここには載らない（会話とは別の使い捨ての問い合わせ。`queryDiary`）。
+// `speak` と `recall` / `recall_episode`、雑談のときの `remember` / `forget`、仕事のときの `report` / `work_plan` / `question_brief` / `clear_and_send`。
+// `diary` と `usage_review_*` はここには載らない（どちらも会話とは別の使い捨ての問い合わせ。`queryDiary` / `queryUsageReview`）。
 //
-// サーバの名前とツールの名前は `TSUKUMO_MCP_SERVER_NAME` と `*_TOOL_NAME` が持つ（`usage_review_*` だけは見直しの機能が持つ）。
+// サーバの名前とツールの名前は `TSUKUMO_MCP_SERVER_NAME` と `*_TOOL_NAME` が持つ。
 
 import { createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
@@ -31,12 +31,6 @@ import {
   WORK_PLAN_CLOSINGS,
   workPlanShape,
 } from "../../../shared/session/work-plan.ts"
-import {
-  USAGE_PROPOSAL_FOLLOW_UPS,
-  USAGE_PROPOSAL_IMPACTS,
-  USAGE_PROPOSAL_KINDS,
-  USAGE_REVIEW_STAGES,
-} from "../../../shared/usage-review/usage-review.ts"
 import { chatRecallEpisodeText, chatRecallListText } from "../../chat/core/chat-memory-prompt.ts"
 import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
 import { checkMermaidSyntax } from "../../report/adapter/report-mermaid-syntax.ts"
@@ -52,15 +46,6 @@ import {
   REPORT_WORK_PLAN_CLOSING_DESCRIPTION,
 } from "../../report/core/report-tool.ts"
 import { mermaidSourcesInSections } from "../../report/core/report-violation.ts"
-import {
-  USAGE_REVIEW_RESULT_TOOL_DESCRIPTION,
-  USAGE_REVIEW_RESULT_TOOL_NAME,
-  USAGE_REVIEW_STAGE_TOOL_DESCRIPTION,
-  USAGE_REVIEW_STAGE_TOOL_NAME,
-  type UsageReviewIntake,
-  usageProposalKindGuide,
-  usageReviewStageGuide,
-} from "../../usage-review/core/usage-review-tool.ts"
 import type { CallReview } from "../core/call-review.ts"
 import { CLEAR_AND_SEND_TOOL_DESCRIPTION } from "../core/clear-and-send.ts"
 import { stringsIn } from "../core/phase-mention.ts"
@@ -134,11 +119,10 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
 /**
  * プロセス内の MCP サーバ。
  * 戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情がモデルへ戻る経路を作らない（`docs/architecture/adr/0009-speech-via-tool.md`）。
- * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と `question_brief` と見直しの2つ。
+ * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と `question_brief`。
  * `speak` が返すのは、新しい事実の無い呼び出しを差し戻す固定の文面だけ。
  * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の会話の目次と1件の逐語）だけ。
  * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `CallReview` が受け付けなかったときの直し方だけ。
- * 見直しの2つが返すのは、利用者が見送った提案の識別子と差し戻しの理由だけ。
  *
  * 常に載るのは `speak` と `recall` / `recall_episode` で、`remember` / `forget` は雑談モードのときだけ載る。
  * 仕事のときに `remember` / `forget` を出すと、作業の文脈が人格に入り込む経路になる。
@@ -147,19 +131,16 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  * `work_plan` も仕事のときだけ。
  * `question_brief` も仕事のときだけで、返すのは崩れた添え書きの直し方だけ。受け付けた添え書きは `holdBrief` に預ける。
  * `clear_and_send` も仕事のときだけで、返すのは "ok" だけ。渡された文面は `holdClearAndSend` に預ける。
- * 見直しの2つも仕事のときだけ（トークン消費の画面から頼むのは仕事の会話への依頼）。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す（`toSessionEvents`）。
  * 受け取り口を1つにしておくと、イベントの流れが1本で済む。
  * `report` と `work_plan` の引数も同じで、handler が引数を読むのは差し戻すかと返す文を決めるためだけ。
- * 見直しの2つだけは逆に handler がイベントを流す（検査を通したものだけを状態に入れるため。`createUsageReviewIntake`）。
  * `report` の差し戻しだけは `report-rejected` を流す（差し戻した呼び出しは変換のあとに捨てられ、記録の口が無いため）。
  */
 export function tsukumoServer(
   expressions: readonly ExpressionChoice[],
   mode: SessionMode,
   callReview: CallReview,
-  usageReview: UsageReviewIntake,
   onReportTitle: (title: string) => void,
   cwd: string,
   onEvent: (event: SessionEvent) => void,
@@ -179,7 +160,6 @@ export function tsukumoServer(
             workPlanTool(callReview),
             questionBriefTool(holdBrief),
             clearAndSendTool(holdClearAndSend),
-            ...usageReviewTools(usageReview),
           ]
         : []),
       ...(mode.kind === "chat"
@@ -360,64 +340,6 @@ function clearAndSendTool(hold: (text: string) => void) {
 
 /** ツールの結果の `_meta` に true で載せると、本体がそこでターンを閉じるキー。 */
 const END_TURN_META_KEY = "claude/endTurn"
-
-/** 見直しの期間の引数（2つのツールで同じ）。 */
-const USAGE_REVIEW_DAYS = z.number().int().positive().describe("見た期間。今日を含む直近何日か")
-
-/**
- * 見直しを受け取る2つのツール（`usage_review_stage` / `usage_review_result`）。
- * 形の検査はここの zod の形で、崩れた引数は handler に届かずに SDK が理由を返す。
- * 形の外の条と、受け付けたときにイベントを流すのは {@link UsageReviewIntake}。
- * 提案の件数の上限を zod に書かないのは、差し戻しの文面を core の1箇所で揃えるため。
- */
-function usageReviewTools(intake: UsageReviewIntake) {
-  return [
-    tool(
-      USAGE_REVIEW_STAGE_TOOL_NAME,
-      USAGE_REVIEW_STAGE_TOOL_DESCRIPTION,
-      {
-        stage: z.enum(USAGE_REVIEW_STAGES).describe(usageReviewStageGuide()),
-        days: USAGE_REVIEW_DAYS,
-      },
-      async ({ stage, days }) => ({
-        content: [{ type: "text" as const, text: await intake.enterStage(stage, days) }],
-      }),
-    ),
-    tool(
-      USAGE_REVIEW_RESULT_TOOL_NAME,
-      USAGE_REVIEW_RESULT_TOOL_DESCRIPTION,
-      {
-        days: USAGE_REVIEW_DAYS,
-        headline: z.string().describe("冒頭の一言。キャラクターの口調で、見てきた結果を1〜2文で"),
-        proposals: z
-          .array(
-            z.object({
-              kind: z.enum(USAGE_PROPOSAL_KINDS).describe(usageProposalKindGuide()),
-              target: z.string().describe("対象の名前（入れ方は kind の説明のとおり。無ければ空）"),
-              impact: z
-                .enum(USAGE_PROPOSAL_IMPACTS)
-                .describe("効きめ。large（大）/ medium（中）/ small（小）"),
-              title: z.string().describe("見出し。何を変えるかが分かる短い1行"),
-              basis: z.string().describe("根拠。どの数から言っているか（記録の件数つき）"),
-              action: z.string().describe("やること。利用者が何をすればよいか"),
-              followUp: z
-                .enum(USAGE_PROPOSAL_FOLLOW_UPS)
-                .describe(
-                  "押す口。delegate（tsukumo に頼む。この会話ですぐ変えられる）/ task（タスクにする。あとでやる作業）",
-                ),
-            }),
-          )
-          .describe("提案。効きめの大きい順"),
-      },
-      async (findings) => {
-        const verdict = await intake.submit(findings)
-        return verdict.kind === "rejected"
-          ? { content: [{ type: "text" as const, text: verdict.text }], isError: true }
-          : { content: [{ type: "text" as const, text: "ok" }] }
-      },
-    ),
-  ]
-}
 
 /** 覚えたことを書き足すツール。上限に当たった回も "ok" を返す（受け付けたかどうかをモデルへ戻さない）。 */
 function rememberTool(memory: PersonaMemory) {

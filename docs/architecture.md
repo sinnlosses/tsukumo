@@ -155,7 +155,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `character-pack/`    | キャラクターパックの選択・読み込み・画面からの編集                                                        |
 | `diary/`             | 日記。`diary` ツールと保存                                                                                |
 | `achievement/`       | 成果。終えたタスクを Beads の閉じた課題から数える                                                         |
-| `usage-review/`      | 見直し。2つのツール・前回の結果・見送り                                                                   |
+| `usage-review/`      | 見直し。見直しと提案の実行の走り（使い捨ての `query()`）・2つのツール・前回の結果・見送り                 |
 | `token-usage/`       | トークン消費の記録と集計                                                                                  |
 | `context-usage/`     | コンテキストの内訳の記録                                                                                  |
 | `plan-usage/`        | 利用枠（`/usage` と同じ上限）の手続き                                                                     |
@@ -202,17 +202,18 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   `core/` `adapter/` の外に置いたファイルと、表と `SERVER_FEATURE_IMPORTS` のずれは
   `test/architecture.test.ts` が落とす）
 
-| 機能（import する側） | 読んでよい機能                                                                                                                                                |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                                      |
-| `system-prompt`       | `session-driver` `chat` `report`                                                                                                                              |
-| `view-server`         | `session`                                                                                                                                                     |
-| `chat`                | `session-driver` `character-pack`                                                                                                                             |
-| `context-usage`       | `session-driver`                                                                                                                                              |
-| `session-driver`      | `chat` `report` `usage-review` `view-server`                                                                                                                  |
-| `diary`               | `repository` `session-driver`                                                                                                                                 |
-| `achievement`         | `repository`                                                                                                                                                  |
-| そのほか              | —（葉。`report` `usage-review` `token-usage` `plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation`） |
+| 機能（import する側） | 読んでよい機能                                                                                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                       |
+| `system-prompt`       | `session-driver` `chat` `report`                                                                                                               |
+| `view-server`         | `session`                                                                                                                                      |
+| `chat`                | `session-driver` `character-pack`                                                                                                              |
+| `context-usage`       | `session-driver`                                                                                                                               |
+| `session-driver`      | `chat` `report` `view-server`                                                                                                                  |
+| `diary`               | `repository` `session-driver`                                                                                                                  |
+| `usage-review`        | `session-driver`                                                                                                                               |
+| `achievement`         | `repository`                                                                                                                                   |
+| そのほか              | —（葉。`report` `token-usage` `plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation`） |
 
 表は `test/architecture.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
 辺が `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。
@@ -246,6 +247,9 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   `host` を読む辺（いまの表に無い）が要り、`session` がまた全部を知る場所に戻る。配線なら
   **機能どうしの辺の表は増えない**。葉の機能の表と手続きが読むのは `shared` と共有の `core`
   （`command-receiver.ts`）と自分の機能だけ
+- **葉の機能の手続きが context の `session` から見るのは、イベントを流す口（`CommandEventSink`）だけ。**
+  見直しだけは、提案を識別子で引くのと会話のモデルを読むために、`state()` の欄を3つ（モデル・いまの結果・
+  前回の結果）だけ型に足して見る（`UsageReviewSession`）。型は `shared` の `SessionState` から選ぶので、辺は増えない
 - **押し出しも手続き**（購読 `frame.subscribe`）。`/ws` の上は**すべて oRPC の手続きの要求と応答**で、
   `hello` / `events` / `refresh` のフレームは Event Iterator で届く。購読の元を**取りこぼさず・捨てずに**
   写し、接続が切れたら購読を外す。購読には照合（`rpcGuard`）だけを掛け、断る条件は見ない
@@ -929,17 +933,23 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 - **イベントを作るのは、預かりが要るかで決める。** 差し戻しの判定が出るまで預かる `report` は
   `assistant` メッセージの変換（`sdk-message.ts`）が作る。預かりの要らない見直しと日記は、検査を
   通したときに handler が流し、変換はそのツールを知らない。handler が流したものは復元の再生に
-  出てこないので、起こし直すと状態は初期値から始まる
+  出てこないので、起こし直すと状態は初期値から始まる（見直しの欄だけは `restart` が残す）。
+  見直しの2つは仕事の会話には載らず、見直しの使い捨ての `query()` にだけ載る
 - **`speak` のセリフは MCP の handler ではなく `assistant` メッセージの変換から取り出す。**
   handler は `"ok"` を返すだけにして、イベントの流れを1本に保つ
 
-**使い捨ての `query()`**（日記・雑談の定着）は、会話の駆動と次の形で切り離す:
+**使い捨ての `query()`**（日記・雑談の定着・トークン消費の見直しと提案の実行）は、会話の駆動と次の形で切り離す:
 
-- `systemPrompt` は文字列で丸ごと置き換え、組み込みのツール・設定・セッションの保存を持たせない
+- `systemPrompt` は文字列で丸ごと置き換え、組み込みのツール・設定・セッションの保存を持たせない。
+  ただし見直しと提案の実行は、同梱のスキルを読ませるために `claude_code` の preset に人格と役目を append し、
+  組み込みのツールは `allowedTools` で押す口ごとに絞って `permissionMode: "dontAsk"` でほかを断る
+  （`docs/architecture/adr/0029-usage-review-own-query.md`）
 - 使用量はトークン消費の記録に混ぜない（記録は会話の `query()` の累計の差で、混ぜると差が崩れる）
-- 疑似セッション（`TSUKUMO_DRIVER=fake`）では起こさない（書き手の出どころで「起こさない」を選ぶ）
+- 疑似セッション（`TSUKUMO_DRIVER=fake`）では起こさない（書き手の出どころで「起こさない」を選ぶ。
+  見直しは疑似セッションに書いた手順を流し直す）
 - 書く口は起こせない・中断・時間切れ・形の崩れでも reject せず、「作れた／作れなかった」に畳む
-  （常駐プロセスは落ちない）。日記の書き手は代の持ち物で、代を閉じると中断する
+  （常駐プロセスは落ちない）。日記の書き手は代の持ち物で、代を閉じると中断する。見直しの走りは代の持ち物
+  ではなく、起こし直しをまたいで続き、流すイベントは流すたびにその時点の代へ届く
 - 渡した文面も受け取ったものもログに書かない（「会話内容と安全」）
 
 ## セッションの復元と複数化
@@ -1053,3 +1063,4 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 | `docs/architecture/adr/0026-session-claim-file.md`            | 使用中のセッションは名乗りのファイルとプロセスの生存で知る（2026-10-10）               |
 | `docs/architecture/adr/0027-markdown-component-entry.md`      | 会話の画面の Markdown を部品に上げるときは、遅延読み込みの口を入口にする（2026-10-10） |
 | `docs/architecture/adr/0028-report-block-priority.md`         | レポートの塊は、内容の形で並べた1本の梯子を上から試して選ぶ（2026-10-12）              |
+| `docs/architecture/adr/0029-usage-review-own-query.md`        | トークン消費の見直しは、会話とは別の使い捨ての `query()` で走らせる（2026-10-12）      |

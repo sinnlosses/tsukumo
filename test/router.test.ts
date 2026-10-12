@@ -19,14 +19,17 @@ import type {
 import type { PromptRouting } from "../src/shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
 import type { PromptImage } from "../src/shared/session-driver/prompt-image.ts"
-import type { SessionDefault } from "../src/shared/session/session-default.ts"
+import {
+  BUILTIN_SESSION_DEFAULT,
+  type SessionDefault,
+} from "../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../src/shared/session/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../src/shared/session/session-state.ts"
-import { usageProposalKey } from "../src/shared/usage-review/usage-review.ts"
+import { type UsageProposal, usageProposalKey } from "../src/shared/usage-review/usage-review.ts"
 import { characterChangedEvent, shownPortraits } from "./fixture/character.ts"
 import { createCommandClient } from "./fixture/command-client.ts"
 import { createStubDriver, type StubDriver } from "./fixture/session-driver.ts"
@@ -124,6 +127,18 @@ function createRecordingPorts(
   const occupiedElsewhere = new Set<string>()
   const reserved: string[] = []
   let withdrawCount = 0
+  /** 見直しの走りへの頼み（頼まれた順）。走りは止められるまで「走っている」ままにする。 */
+  const usageReviewCalls: string[] = []
+  let usageReviewRunning = false
+  const runUsageReview = (call: string, onEvent: (event: SessionEvent) => void): boolean => {
+    usageReviewCalls.push(call)
+    if (usageReviewRunning) {
+      return false
+    }
+    usageReviewRunning = true
+    onEvent({ kind: "usage-review-started" })
+    return true
+  }
   const written = (): SessionEvent | undefined =>
     writeResult === "written" ? CHARACTER_EVENT : undefined
   const ports: CommandRouterPorts = {
@@ -168,6 +183,15 @@ function createRecordingPorts(
         kind: "usage-proposal-dismissed",
         key: usageProposalKey(dismiss),
       }),
+      runner: {
+        startReview: (model, onEvent) => runUsageReview(`start:${model}`, onEvent),
+        runProposal: (proposal, model, onEvent) =>
+          runUsageReview(`runProposal:${usageProposalKey(proposal)}:${model}`, onEvent),
+        interrupt: () => {
+          usageReviewCalls.push("interrupt")
+          usageReviewRunning = false
+        },
+      },
     },
     host: {
       openFile: (path) => {
@@ -187,6 +211,7 @@ function createRecordingPorts(
     occupiedElsewhere,
     reserved,
     withdrawCount: () => withdrawCount,
+    usageReviewCalls,
   }
 }
 
@@ -905,6 +930,66 @@ describe("createCommandRouter（chat。画面の「編集」から覚えたこ�
       ok: false,
       reason: FRAME_ERROR_REASON.forgetRememberedLineFailed,
     })
+  })
+})
+
+describe("createCommandRouter（usageReview。トークン消費の画面の見直し）", () => {
+  const proposal = {
+    kind: "tool-result",
+    target: "ExampleTool",
+    impact: "large",
+    title: "架空の見出し",
+    basis: "架空の根拠",
+    action: "架空のやること",
+    followUp: "delegate",
+  } as const satisfies UsageProposal
+  const resultEvent = {
+    kind: "usage-review-result",
+    findings: { days: 7, headline: "架空の一言。", proposals: [proposal] },
+  } as const satisfies SessionEvent
+
+  it("start はターン中でも受け、会話のモデル（無ければ既定）で頼んで走りのイベントをいまの代へ流す。走っている間の2回目は断る", async () => {
+    const { commands, stub, observe, emitted, usageReviewCalls } = startRouter()
+    observe(REQUEST_EVENT)
+
+    expect(await commands.usageReview.start()).toEqual({ ok: true })
+    expect(await commands.usageReview.start()).toEqual({
+      ok: false,
+      reason: FRAME_ERROR_REASON.usageReviewRunning,
+    })
+
+    const model = BUILTIN_SESSION_DEFAULT.model
+    expect(usageReviewCalls).toEqual([`start:${model}`, `start:${model}`])
+    expect(emitted).toEqual([{ kind: "usage-review-started" }])
+    expect(stub.calls).toEqual([])
+  })
+
+  it("runProposal は結果にある提案を識別子で引いて頼み、見つからない識別子は走りへ渡さずに断る", async () => {
+    const { commands, observe, usageReviewCalls } = startRouter()
+    observe(resultEvent)
+
+    expect(
+      await commands.usageReview.runProposal({ kind: "tool-result", target: "UnknownTool" }),
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.usageProposalNotFound })
+    expect(
+      await commands.usageReview.runProposal({ kind: proposal.kind, target: proposal.target }),
+    ).toEqual({ ok: true })
+
+    expect(usageReviewCalls).toEqual([
+      `runProposal:${usageProposalKey(proposal)}:${BUILTIN_SESSION_DEFAULT.model}`,
+    ])
+  })
+
+  it("interrupt は走っていなくても受け、止めたあとは次の start を受ける", async () => {
+    const { commands, usageReviewCalls } = startRouter()
+
+    expect(await commands.usageReview.interrupt()).toEqual({ ok: true })
+    expect(await commands.usageReview.start()).toEqual({ ok: true })
+    expect(await commands.usageReview.interrupt()).toEqual({ ok: true })
+    expect(await commands.usageReview.start()).toEqual({ ok: true })
+
+    const model = BUILTIN_SESSION_DEFAULT.model
+    expect(usageReviewCalls).toEqual(["interrupt", `start:${model}`, "interrupt", `start:${model}`])
   })
 })
 

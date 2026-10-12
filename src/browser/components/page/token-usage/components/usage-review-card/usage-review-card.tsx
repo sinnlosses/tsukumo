@@ -8,12 +8,14 @@ import type { ReactElement } from "react"
 import type {
   UsageProposalFollowUp,
   UsageProposalImpact,
+  UsageProposalRunOutcome,
 } from "../../../../../../shared/usage-review/usage-review.ts"
 import { CharacterFace } from "../../../../domain/character-face.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import type {
+  UsageProposalRunView,
   UsageReviewResultProposalView,
   UsageReviewStageStatus,
   UsageReviewStageView,
@@ -30,8 +32,7 @@ const START_LABEL = "減らし方を見てもらう"
 const PREVIOUS_LABEL_PREFIX = "前回の提案"
 const RUNNING_HEADING = "見直し中…"
 const STOP_LABEL = "止める"
-const CONTINUES_NOTE =
-  "ほかの画面に移っても続きます。終わったらヘッダーとキャラの吹き出しで知らせます。"
+const CONTINUES_NOTE = "ほかの画面に移っても続きます。"
 const RETRY_LABEL = "もう一度見てもらう"
 const CLOSE_LABEL = "閉じる"
 const DISMISS_LABEL = "見送る"
@@ -44,6 +45,14 @@ const IMPACT_LABELS = {
   medium: "中",
   small: "小",
 } as const satisfies Record<UsageProposalImpact, string>
+
+const RUN_RUNNING_LABEL = "頼んでいる…"
+
+const RUN_OUTCOME_LABELS = {
+  succeeded: "済んだ",
+  failed: "できなかった",
+  interrupted: "止めた",
+} as const satisfies Record<UsageProposalRunOutcome, string>
 
 /** 主ボタンの文言（押す口は2つに固定）。 */
 const FOLLOW_UP_LABELS = {
@@ -330,6 +339,7 @@ function ProposalCard(props: {
           <span className={styles["usage-review-proposal-note-label"]}>やること：</span>
           {proposal.action}
         </p>
+        {proposal.run.kind !== "none" && <ProposalRunRow run={proposal.run} />}
       </div>
       <div className={styles["usage-review-proposal-actions"]}>
         <button
@@ -349,6 +359,36 @@ function ProposalCard(props: {
         </button>
       </div>
     </article>
+  )
+}
+
+function ProposalRunRow(props: {
+  readonly run: Exclude<UsageProposalRunView, { readonly kind: "none" }>
+}): ReactElement {
+  const { run } = props
+  const label = run.kind === "running" ? RUN_RUNNING_LABEL : RUN_OUTCOME_LABELS[run.outcome]
+
+  return (
+    <div
+      className={clsx(
+        styles["usage-review-proposal-run"],
+        run.kind === "running" && styles["usage-review-proposal-run-running"],
+      )}
+      aria-busy={run.kind === "running"}
+    >
+      <span className={styles["usage-review-proposal-run-status"]}>{label}</span>
+      {run.kind === "running" && (
+        <span className={styles["usage-review-elapsed"]}>{run.elapsedText}</span>
+      )}
+      {run.speech.kind === "said" && (
+        <span className={styles["usage-review-speech"]}>{`「${run.speech.text}」`}</span>
+      )}
+      {run.kind === "running" && (
+        <button type="button" className={styles["usage-review-stop"]} onClick={run.onInterrupt}>
+          {STOP_LABEL}
+        </button>
+      )}
+    </div>
   )
 }
 

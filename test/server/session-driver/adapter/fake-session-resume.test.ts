@@ -40,6 +40,7 @@ function session(): FakeSession {
       },
     ],
     sessionDigests: {},
+    usageReview: { review: [], proposal: [] },
   }
 }
 

@@ -5,22 +5,60 @@ import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
 
 import type { COMMAND_ERRORS } from "../../../shared/command.ts"
 import { usageReviewContract } from "../../../shared/contract/usage-review.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
+import { type DispatchResult, receiveFeatureCommand } from "../../core/command-receiver.ts"
 import {
-  type CommandEventSink,
-  type DispatchResult,
-  receiveFeatureCommand,
-} from "../../core/command-receiver.ts"
-import { type UsageReviewCommandPorts, usageReviewCommands } from "../core/usage-review-command.ts"
+  findUsageProposal,
+  type UsageReviewCommandPorts,
+  type UsageReviewSession,
+  usageReviewCommands,
+} from "../core/usage-review-command.ts"
 
 export function usageReviewProcedure(ports: UsageReviewCommandPorts) {
-  const table = usageReviewCommands(ports)
   const procedure = implement(usageReviewContract).$context<{
-    readonly session: CommandEventSink
+    readonly session: UsageReviewSession
   }>()
   return procedure.router({
+    start: procedure.start.handler(({ input, context, errors }) =>
+      refusedUnlessAccepted(
+        receiveFeatureCommand(
+          usageReviewCommands(ports, context.session).start,
+          input,
+          context.session,
+        ),
+        errors,
+      ),
+    ),
+    runProposal: procedure.runProposal.handler(({ input, context, errors }) => {
+      if (findUsageProposal(context.session.state(), input) === undefined) {
+        throw errors.REFUSED({ data: { reason: FRAME_ERROR_REASON.usageProposalNotFound } })
+      }
+      return refusedUnlessAccepted(
+        receiveFeatureCommand(
+          usageReviewCommands(ports, context.session).runProposal,
+          input,
+          context.session,
+        ),
+        errors,
+      )
+    }),
+    interrupt: procedure.interrupt.handler(({ input, context, errors }) =>
+      refusedUnlessAccepted(
+        receiveFeatureCommand(
+          usageReviewCommands(ports, context.session).interrupt,
+          input,
+          context.session,
+        ),
+        errors,
+      ),
+    ),
     dismissProposal: procedure.dismissProposal.handler(({ input, context, errors }) =>
       refusedUnlessAccepted(
-        receiveFeatureCommand(table.dismissProposal, input, context.session),
+        receiveFeatureCommand(
+          usageReviewCommands(ports, context.session).dismissProposal,
+          input,
+          context.session,
+        ),
         errors,
       ),
     ),

@@ -32,7 +32,7 @@ import type {
 import {
   applyUsageReviewEvent,
   type PreviousUsageReview,
-  settleUsageReview,
+  type UsageProposalRun,
   type UsageReview,
 } from "../usage-review/usage-review.ts"
 import { isBlankText } from "../utils/blank-text.ts"
@@ -203,11 +203,6 @@ export type SessionRecord =
    * {@link trimToRecentTurns} の数え方（`request` の数）は変えない（他の記録と同じく、窓から外れれば一緒に落ちる）。
    */
   | { readonly kind: "compact-boundary" }
-  /**
-   * `usage_review_result` が受け付けられたこと。中身を持たない印で、届いた位置に積む。
-   * メインビューがこの印のあるターンにだけ、トークンの画面の結果の札を開く導線を出す。
-   */
-  | { readonly kind: "usage-review-result" }
   /**
    * 失敗で終わったターンの理由（`turn-finished` の `outcome` が `failed`）。そのターンの記録の末尾に1つだけ積む。
    * メインビューがターンの末尾に「失敗で終わった」と理由を出すので、過去のターンを遡っても成功と見分けられる。
@@ -461,17 +456,21 @@ export type SessionState = {
    */
   readonly backgroundTasks: readonly BackgroundTask[]
   /**
-   * 見直しの状態。源は `usage-review-stage` / `usage-review-result` の2つ（ツールが受け付けた呼び出し）。
-   * 見直し中のままターンが終わったら（止めた・失敗したも同じ）ふだんへ戻す。
-   * 起こし直すと初期値のふだんから始まる（前回の結果を出すのはこの状態ではない）。
+   * 見直しの状態。源は見直しのイベント（`UsageReviewEvent`）だけ。
+   * 見直しは会話とは別の使い捨ての問い合わせで走るので、会話の `turn-finished` / `session-ended` では動かさず、起こし直しでも残す。
+   * 前回の結果を出すのはこの状態ではない。
    */
   readonly usageReview: UsageReview
   /**
    * 前回の見直しの結果。{@link usageReview} とは別の状態で、起こし直しでもプロセスの再起動でも消えない
-   * （源は `usage-review-result` が届くたびと、起こしたとき1回だけホームのファイルを読む口）。
+   * （源は `usage-review-result` が届くたびと、プロセスを起こしたとき1回だけホームのファイルを読む口）。
    * `usage-proposal-dismissed` が届くと、見送った提案をここからも取り除く（「前回の提案」を開き直したときに、見送ったはずの札が出ないようにするため）。
    */
   readonly previousUsageReview: PreviousUsageReview
+  /**
+   * 結果の提案の実行（「tsukumo に頼む」「タスクにする」）の状態。源は見直しのイベントだけで、{@link usageReview} と同じく会話のターンでは動かさない。
+   */
+  readonly usageProposalRun: UsageProposalRun
   /**
    * 成果の振り返りの進み。帯の「いまの作業」の「振り返り中」が読む。
    *
@@ -533,6 +532,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   backgroundTasks: [],
   usageReview: { kind: "idle" },
   previousUsageReview: { kind: "none" },
+  usageProposalRun: { kind: "idle" },
   diaryWriting: { kind: "idle" },
   apiTrouble: { kind: "none" },
   rateLimit: { kind: "clear" },
@@ -826,19 +826,18 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
     case "turn-finished": {
       const ending = turnEnding(event.outcome, state.apiTrouble)
-      // `diaryWriting` はここでは動かさない（振り返りは会話とは別の使い捨ての問い合わせで並んで進むため）。
+      // `diaryWriting` と見直しの欄はここでは動かさない（どちらも会話とは別の使い捨ての問い合わせで並んで進むため）。
       return {
         ...recordTurnFailure(settleUtterance(state), ending),
         turn: finishTurn(state.turn, at, ending),
         finishedTurnCount: finishedTurnCountOf(state),
         reportDrafting: { kind: "idle" },
         answeringAside: false,
-        usageReview: settleUsageReview(state.usageReview),
         apiTrouble: { kind: "none" },
       }
     }
     case "session-ended":
-      // `diaryWriting` はここでは動かさない（`turn-finished` と同じ理由）。
+      // `diaryWriting` と見直しの欄はここでは動かさない（`turn-finished` と同じ理由）。
       return {
         ...settleUtterance(state),
         reportDrafting: { kind: "idle" },
@@ -847,7 +846,6 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         turn: finishTurn(state.turn, at, { kind: "ended" }),
         finishedTurnCount: finishedTurnCountOf(state),
         backgroundTasks: [],
-        usageReview: settleUsageReview(state.usageReview),
         apiTrouble: { kind: "none" },
       }
     case "api-retry":
@@ -913,27 +911,25 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, records: [...state.records, { kind: "compact-boundary" }] }
     case "background-tasks-changed":
       return { ...state, backgroundTasks: event.tasks }
+    case "usage-review-started":
     case "usage-review-stage":
+    case "usage-review-result":
+    case "usage-review-ended":
+    case "usage-review-speech":
+    case "usage-proposal-run-started":
+    case "usage-proposal-run-ended":
     case "usage-proposal-dismissed":
       return {
         ...state,
         ...applyUsageReviewEvent(
-          { usageReview: state.usageReview, previousUsageReview: state.previousUsageReview },
+          {
+            usageReview: state.usageReview,
+            previousUsageReview: state.previousUsageReview,
+            usageProposalRun: state.usageProposalRun,
+          },
           event,
           at,
-          state.turn.kind === "running" ? state.turn.startedAt : at,
         ),
-      }
-    case "usage-review-result":
-      return {
-        ...state,
-        ...applyUsageReviewEvent(
-          { usageReview: state.usageReview, previousUsageReview: state.previousUsageReview },
-          event,
-          at,
-          state.turn.kind === "running" ? state.turn.startedAt : at,
-        ),
-        records: [...state.records, { kind: "usage-review-result" }],
       }
     case "diary-requested":
     case "diary-drafting":
