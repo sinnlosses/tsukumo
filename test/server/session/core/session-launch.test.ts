@@ -94,7 +94,7 @@ type Harness = {
   /** 診断ログへ積まれた足跡。 */
   readonly diagnosticEntries: DiagnosticEntry[]
   readonly stub: ReturnType<typeof createStubDriver>
-  readonly receive: (event: SessionEvent) => void
+  readonly receive: (event: SessionEvent) => boolean
   readonly receiveRestored: (events: readonly RestoredEvent[]) => void
 }
 
@@ -173,6 +173,7 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
     receive: (event) => {
       events.push(event)
       driverEvents.push(event)
+      return true
     },
     receiveRestored: (delivered) => {
       const bare = delivered.map(({ event }) => event)

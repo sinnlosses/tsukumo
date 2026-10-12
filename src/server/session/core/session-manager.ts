@@ -134,12 +134,13 @@ export type SessionManagerOptions = {
    * 駆動を起こすだけでなく、パックを決めて続きを探し、復元した履歴を流すところまでを1つでやる（`createSessionLaunch` が実体）。
    * ここは駆動の種類（SDK か fake driver か）を知らない。
    *
-   * 受け口は2つ。`onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvents` は前のセッションの記録を組み直した再生だけを、まとめて1回で受ける。
+   * 受け口は2つ。`onEvent` は駆動（と見張り）から新しく届くイベントで、いまの代が受け取ったら `true`、閉じた代のものを捨てたら `false` を返す。
+   * `onRestoredEvents` は前のセッションの記録を組み直した再生だけを、まとめて1回で受ける。
    *
    * 知らない名前のときに何を起こすかも、名前を覚えるかどうかも呼び出し側が決める。
    */
   readonly launchSession: (
-    onEvent: (event: SessionEvent) => void,
+    onEvent: (event: SessionEvent) => boolean,
     onRestoredEvents: (events: readonly RestoredEvent[]) => void,
     request: SessionLaunchRequest,
   ) => Promise<SessionDriver>
@@ -483,11 +484,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       pendingConclusion: createPendingConclusion(),
       turnImageRead: createTurnImageRead(),
     }
-    const receiveIfCurrent = (event: SessionEvent): void => {
+    const receiveIfCurrent = (event: SessionEvent): boolean => {
       if (born !== bornCount) {
-        return
+        return false
       }
       receive(tally, event)
+      return true
     }
     /**
      * 前のセッションの記録を組み直した再生を、まとめて1回で畳む。
@@ -509,9 +511,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
 
     const driver = options.launchSession(
-      (event) => {
-        receiveIfCurrent(event)
-      },
+      (event) => receiveIfCurrent(event),
       (events) => {
         receiveRestoredIfCurrent(events)
       },

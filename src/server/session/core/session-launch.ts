@@ -89,7 +89,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
    */
   readonly startDriver: (
     seed: SessionLaunchSeed<Pack>,
-    onEvent: (event: SessionEvent) => void,
+    onEvent: (event: SessionEvent) => boolean,
     restored: Promise<readonly RestoredEvent[]>,
   ) => SessionDriver
   /**
@@ -127,7 +127,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
 export function createSessionLaunch<Pack extends NamedCharacterPack>(
   ports: SessionLaunchPorts<Pack>,
 ): (
-  onEvent: (event: SessionEvent) => void,
+  onEvent: (event: SessionEvent) => boolean,
   onRestoredEvents: (events: readonly RestoredEvent[]) => void,
   request: SessionLaunchRequest,
 ) => Promise<SessionDriver> {

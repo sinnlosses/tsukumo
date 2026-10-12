@@ -23,7 +23,8 @@ export type SessionClaim = {
   /**
    * 駆動を起こすときに呼ぶ。続きからならそのIDを、新規なら何も名乗らない。
    * 戻り値はその代の駆動のイベントを見る口で、`session-info` のIDへ名乗り替え、`session-ended` でその代の名乗りだけを外す。
-   * あとの代を起こしたあと（と `withdraw` のあと）は、前の代の口に届いたイベントを捨てる（閉じた駆動の `session-ended` は後から届く）。
+   * `withdraw` のあと（と、あとの代を起こしたあと）は、前の代の口に届いたイベントを捨てる。
+   * 起こし直しの失敗と閉じるときは代がいまのままなので、代の絞りでは外れず、この印が要る。
    */
   readonly noteLaunched: (start: SessionStart) => (event: SessionEvent) => void
   /**
@@ -43,7 +44,7 @@ export type SessionClaimRecord = {
 
 export function createSessionClaim(store: SessionClaimStore): SessionClaim {
   let held: readonly string[] = []
-  // 何代目の駆動の名乗りか。古い代の口に届いたイベントを捨てるのに使う。
+  // 何代目の駆動の名乗りか。`withdraw` のあとに届くイベントを捨てるのに使う。
   let launchCount = 0
 
   const hold = (sessionIds: readonly string[]): void => {

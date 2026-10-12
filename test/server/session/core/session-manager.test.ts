@@ -397,6 +397,23 @@ describe("createSessionManager", () => {
     )
   })
 
+  it("起こし直したあと、閉じた代の onEvent は false を返し、いまの代の onEvent は true を返す", async () => {
+    const sinks: ((event: SessionEvent) => boolean)[] = []
+    const manager = createSessionManager({
+      launchSession: (onEvent) => {
+        sinks.push(onEvent)
+        return Promise.resolve(createStubDriver().driver)
+      },
+    })
+
+    expect(await manager.commands.session.setChatMode({ chat: true })).toEqual({ ok: true })
+
+    const ended = { kind: "session-ended", reason: "架空の終了" } satisfies SessionEvent
+    const [closedGeneration, currentGeneration] = sinks
+    expect(closedGeneration?.(ended)).toBe(false)
+    expect(currentGeneration?.(ended)).toBe(true)
+  })
+
   it("書きかけの本文は1バッチの中で1件に連結される", async () => {
     const { manager, stub } = startManagerWithStub()
     const frames: ServerFrame[] = []

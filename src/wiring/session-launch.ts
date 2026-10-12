@@ -116,9 +116,10 @@ export function wireSessionLaunch(options: {
           const observeClaim = sessionClaim.noteLaunched(seed.start)
           const observe = options.onLaunch(seed, onEvent, restored)
           const watched = (event: SessionEvent): void => {
-            onEvent(event)
-            observe(event)
-            observeClaim(event)
+            if (onEvent(event)) {
+              observe(event)
+              observeClaim(event)
+            }
           }
           return startDriver({
             seed,
