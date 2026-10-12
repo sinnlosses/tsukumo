@@ -7,7 +7,7 @@
   list-style: none;
 }
 .sidebar-topic {
-  padding: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
   border-top: 1px solid var(--rule);
   color: var(--ink);
   overflow-wrap: anywhere;
