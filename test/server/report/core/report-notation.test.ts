@@ -8,7 +8,9 @@ import { afterEach, describe, expect, it } from "vitest"
 import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
+import { readGraphSource } from "../../../../src/shared/report/graph-source.ts"
 import {
+  parseReportSections,
   REPORT_BLOCK_KINDS,
   REPORT_MERMAID_KINDS,
 } from "../../../../src/shared/report/report-block.ts"
@@ -49,6 +51,20 @@ const DRAWN_MERMAID_KINDS = [
 const KINDS_NOT_TO_OFFER = ["sankey", "architecture", "requirementDiagram", "journey", "xychart"]
 
 const article8 = REPORT_NOTATION_PROMPT.split("8. **").at(1)?.split("9. **").at(0) ?? ""
+
+function backticked(cell: string): string[] {
+  return [...cell.matchAll(/`([^`]+)`/g)].flatMap(([, text]) => text ?? [])
+}
+
+function articleEightRows(): string[][] {
+  return article8
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("|") && !line.startsWith("| ---"))
+    .slice(1)
+    .map((line) => line.split("|").slice(1, -1))
+}
+
 const namedTags = [...REPORT_NOTATION_PROMPT.matchAll(/<([a-z]+)[\s>]/g)].flatMap(
   ([, tag]) => tag ?? [],
 )
@@ -199,30 +215,61 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(beforeSend).toContain("`checks` へ移す")
   })
 
-  it("前と後があるときは、選んだ塊を beforeAfter の側に入れさせる", () => {
-    expect(article8).toContain("選んだ塊を `beforeAfter` の側に入れる")
+  it("前後は、構造は graph の印、画面は beforeAfter の image、1つの値は table の from / to に分けて書く", () => {
+    expect(article8).not.toContain("の側に入れる")
+    expect(article8).not.toContain("梯子")
+    expect(article8).toContain("|構造の変更|`graph`|")
+    expect(article8).toContain("|撮った画面|`image`|`beforeAfter`|")
+    expect(article8).toContain("|1つの値の前後|`table`|`from` / `to`|")
   })
 
-  it("条8の梯子の表の塊は、report ツールの塊の種類に実在する", () => {
-    const rows = article8
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.startsWith("|") && !line.startsWith("| ---"))
-      .slice(1)
-    const names = rows.flatMap((row) =>
-      [...(row.split("|").at(2) ?? "").matchAll(/`([^`]+)`/g)].flatMap(([, name]) => name ?? []),
-    )
+  it("条8の情報の形の表の塊は、report ツールの塊の種類に実在する", () => {
+    const names = articleEightRows().flatMap((cells) => backticked(cells.at(1) ?? ""))
     const known: readonly string[] = REPORT_BLOCK_KINDS
 
-    expect(rows).toHaveLength(5)
-    for (const kind of ["image", "mermaid", "graph", "svg", "chart", "table", "list", "text"]) {
+    for (const kind of ["mermaid", "graph", "svg", "image", "chart", "table", "list", "text"]) {
       expect(names).toContain(kind)
     }
     for (const name of names) {
       expect(known).toContain(name)
     }
-    expect(article8).toContain("迷ったら上の段で描く")
+    expect(article8).toContain("迷ったら上の行で描く")
     expect(article8).not.toContain("第一候補")
+  })
+
+  it("文のままでよい条件は本文の塊の節の1箇所だけにあり、条8はそこを指して言い直さない", () => {
+    const condition = "一息（2〜3文）で言い切れて関係するものが1つしかない"
+
+    expect(article8).toContain("文で言えることでも、表・図・数の塊で見せられるなら")
+    expect(article8).toContain("文のままでよいのは下に挙げたときだけ")
+    expect(article8).not.toContain("一息")
+    expect(REPORT_NOTATION_PROMPT.split(condition)).toHaveLength(2)
+    expect(REPORT_NOTATION_PROMPT).toContain("**文のままでよいのは次のときだけ**")
+  })
+
+  it("条8の表の graph と mermaid の見本は、report の入口を通る", () => {
+    const rows = articleEightRows()
+    const samples = (kind: string): string[][] =>
+      rows
+        .filter((cells) => backticked(cells.at(1) ?? "").includes(kind))
+        .map((cells) => backticked(cells.at(2) ?? ""))
+    const [arrowSample = [], marks = []] = samples("graph")
+    const [arrow = ""] = arrowSample
+    const graphSource = [arrow, ...marks.map((mark) => `${mark}架空 -> 架空2`)].join("\n")
+    const mermaidSources = samples("mermaid").flatMap((sample) => sample)
+    const blocks = [
+      { kind: "graph", direction: "LR", source: graphSource },
+      ...mermaidSources.map((source) => ({ kind: "mermaid", source })),
+    ]
+
+    expect(mermaidSources).toEqual(["sequenceDiagram", "stateDiagram-v2"])
+    for (const block of blocks) {
+      expect(parseReportSections([{ heading: "", blocks: [block] }])).toMatchObject({
+        sections: [{ blocks: [{ kind: block.kind }] }],
+        unknownBlockCount: 0,
+      })
+    }
+    expect(readGraphSource(graphSource).brokenLines).toEqual([])
   })
 
   it("画像は、撮った画像があるときだけ優先させる", () => {
