@@ -46,9 +46,9 @@ export function wireWelcomeGreeting(
         return NO_OBSERVER
       }
       const greeter = createWelcomeGreeter({
-        readRecent: () => readRecentWelcomeGreetings(),
+        readRecent: () => readRecentWelcomeGreetings(seed.pack.name),
         writeRecent: (recent) => {
-          writeRecentWelcomeGreetings(recent)
+          writeRecentWelcomeGreetings(seed.pack.name, recent)
         },
         query: (request, signal) => queryStructured(request, { cwd, env: inheritedEnv }, signal),
         emit: (state) => {
