@@ -97,6 +97,7 @@ function createCharacter(id: string, overrides: Partial<CharacterCreate> = {}): 
     portraits: { default: SVG_DATA_URL },
     accent: "#b8c7ff",
     chatAccent: "#eaa77a",
+    persona: "",
     ...overrides,
   }
 }
@@ -727,6 +728,31 @@ describe("createCharacterPack", () => {
 
     expect(created?.dir).toBe(join(home(), "fictional-2"))
     expect(created?.definition?.name).toBe("架空の2号")
+  })
+
+  it("人格の本文を渡すと persona.md に書き、読み直したパックの人格に載る", () => {
+    const created = createCharacterPack(
+      createCharacter("fictional-2", { persona: "# 架空の2号\n\n架空の人格。" }),
+      [],
+      home(),
+    )
+
+    expect(readFileSync(join(home(), "fictional-2", "persona.md"), "utf8")).toBe(
+      "# 架空の2号\n\n架空の人格。\n",
+    )
+    expect(created?.persona).toBe("# 架空の2号\n\n架空の人格。\n")
+  })
+
+  it("人格の本文が空（空白だけも）なら persona.md を書かない", () => {
+    for (const [id, persona] of [
+      ["fictional-2", ""],
+      ["fictional-3", " \n\n"],
+    ] as const) {
+      const created = createCharacterPack(createCharacter(id, { persona }), [], home())
+
+      expect(existsSync(join(home(), id, "persona.md"))).toBe(false)
+      expect(created?.persona).toBeUndefined()
+    }
   })
 
   it("作ったパックは切り替えの一覧に出て、次の起動でも残る", () => {

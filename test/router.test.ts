@@ -11,6 +11,7 @@ import {
 import type { CommandSession } from "../src/server/session/core/command-session.ts"
 import type { SessionLaunchRequest } from "../src/server/session/core/session-launch.ts"
 import type { DailyAchievement } from "../src/shared/achievement/achievement.ts"
+import type { GeneratedCharacter } from "../src/shared/character-pack/generated-character.ts"
 import type {
   CharacterCreate,
   CharacterDelete,
@@ -41,6 +42,18 @@ const NOW = 1_000
 const CHARACTER_EVENT: SessionEvent = characterChangedEvent({
   ...shownPortraits({ default: "/character/default.png?v=fictional@2" }),
 })
+
+/** 立ち絵から生成できたときに口が返す欄の値（手で書いた架空のキャラクター）。 */
+const GENERATED_CHARACTER = {
+  id: "fictional-3",
+  name: "架空の3号",
+  accent: "#b8c7ff",
+  chatAccent: "#eaa77a",
+  persona: "# 架空の3号\n\n架空の人格。",
+} satisfies GeneratedCharacter
+
+/** 生成に渡す立ち絵（中身は見ないので最小の png の data URL）。 */
+const PORTRAIT_PNG_DATA_URL = "data:image/png;base64,AAAA"
 
 /** 覚えたことを1行消したあとに流し直す `remembered-lines-changed`（作り物の1行）。 */
 const REMEMBERED_LINES_EVENT: SessionEvent = {
@@ -120,6 +133,7 @@ function createRecordingPorts(
   const edits: CharacterEdit[] = []
   const creates: CharacterCreate[] = []
   const deletes: CharacterDelete[] = []
+  const generations: string[] = []
   const remembered: SessionDefault[] = []
   const forgottenLines: string[] = []
   const openedFiles: string[] = []
@@ -171,6 +185,10 @@ function createRecordingPorts(
         deletes.push(remove)
         return Promise.resolve(written())
       },
+      generateFromPortrait: (portrait) => {
+        generations.push(portrait)
+        return Promise.resolve(writeResult === "written" ? GENERATED_CHARACTER : undefined)
+      },
     },
     chat: {
       forgetRememberedLine: (line) => {
@@ -205,6 +223,7 @@ function createRecordingPorts(
     edits,
     creates,
     deletes,
+    generations,
     remembered,
     forgottenLines,
     openedFiles,
@@ -809,6 +828,7 @@ describe("createCommandRouter（characterPack）", () => {
         },
         accent: "#b8c7ff",
         chatAccent: "#eaa77a",
+        persona: "",
       }),
     ).toEqual({ ok: true })
 
@@ -832,8 +852,30 @@ describe("createCommandRouter（characterPack）", () => {
         },
         accent: "#b8c7ff",
         chatAccent: "#eaa77a",
+        persona: "",
       }),
     ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterCreateFailed })
+  })
+
+  it("立ち絵からの生成は、口が返した欄の値をそのまま応答にし、駆動にも画面にも何も流さない", async () => {
+    const { commands, stub, generations, emitted, restarts } = startRouter()
+
+    expect(
+      await commands.characterPack.generateFromPortrait({ portrait: PORTRAIT_PNG_DATA_URL }),
+    ).toEqual({ ok: true, output: GENERATED_CHARACTER })
+
+    expect(generations).toEqual([PORTRAIT_PNG_DATA_URL])
+    expect(stub.calls).toEqual([])
+    expect(restarts).toEqual([])
+    expect(emitted).toEqual([])
+  })
+
+  it("立ち絵から生成できなかったら、生成の定型文の理由を返す", async () => {
+    const { commands } = startRouter("rejected")
+
+    expect(
+      await commands.characterPack.generateFromPortrait({ portrait: PORTRAIT_PNG_DATA_URL }),
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterGenerationFailed })
   })
 
   it("パックを消すコマンドも駆動へ渡さず、ターン中でも選択肢の減った character-changed を配る", async () => {

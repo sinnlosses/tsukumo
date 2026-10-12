@@ -213,7 +213,12 @@ function createSessionManager(
         reserveSession: () => Promise.resolve("reserved"),
         withdrawSessionClaim: () => {},
       },
-      characterPack: { editCharacter, createCharacter, deleteCharacter },
+      characterPack: {
+        editCharacter,
+        createCharacter,
+        deleteCharacter,
+        generateFromPortrait: () => Promise.resolve(undefined),
+      },
       chat: { forgetRememberedLine },
       usageReview: { dismissUsageProposal, runner },
       host: { openFile },

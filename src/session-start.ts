@@ -105,7 +105,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   const repository = wireRepository(context, options.diagnosticLog)
   const achievement = wireAchievement(context)
   const host = wireHost(context, options.host)
-  const characterPack = wireCharacterPack(character)
+  const characterPack = wireCharacterPack(context, character, options.diagnosticLog)
 
   const manager = createSessionManager({
     // 時刻はエポックミリ秒の数のまま渡す（`Temporal.Instant` にしない）。

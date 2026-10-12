@@ -1,5 +1,5 @@
 // コマンドのルータを、画面と同じ門（照合と断る条件）ごと手元で呼ぶ client。
-// 結果は `{ ok: true }` か、断った理由の `{ ok: false, reason }` に畳む。
+// 結果は `{ ok: true }`（値を返す手続きなら `{ ok: true, output }`）か、断った理由の `{ ok: false, reason }` に畳む。
 
 import { createRouterClient, ORPCError } from "@orpc/server"
 import { isPlainObject } from "remeda"
@@ -20,7 +20,13 @@ export function createCommandClient(ports: CommandRouterPorts, session: CommandS
       serverOrigin: TEST_ORIGIN,
       session,
     },
-    interceptors: [({ next }) => next().then(() => ({ ok: true }), refusalOf)],
+    interceptors: [
+      ({ next }) =>
+        next().then(
+          (output) => (output === undefined ? { ok: true } : { ok: true, output }),
+          refusalOf,
+        ),
+    ],
   })
 }
 

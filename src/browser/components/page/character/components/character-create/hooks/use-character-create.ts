@@ -1,6 +1,9 @@
 // 新しく作るダイアログのロジック。
-// 名前・id・立ち絵1枚・画面の差し色2つ（仕事・雑談）の作りかけの値を持ち、押せるか・id の欄の下に出す一言・作る先を畳んで返す。
+// 名前・id・立ち絵1枚・画面の差し色2つ（仕事・雑談）・人格の本文の作りかけの値を持ち、押せるか・欄の下に出す一言・作る先を畳んで返す。
 // 表情を足す・背景を敷くのは、作ったあと `<CharacterEdit>` の側で行う。
+//
+// 「立ち絵から生成」を押すと、置いた立ち絵からサーバが生成した id・名前・差し色2つ・人格で5つの欄を上書きする。
+// 置いただけでは生成しない。生成中は「作る」も押せず、生成できなかったときは欄と立ち絵に触らずボタンの下に知らせる。
 //
 // 作れたら一覧で作ったパックを選んだ状態にして、呼び出し元へ閉じたことを知らせる。
 // `session.switchCharacter` は送らない（切り替えは `<CharacterEdit>` の「このキャラクターに切り替える」の仕事）。
@@ -14,10 +17,12 @@
 import { useState } from "react"
 
 import { isCharacterPackName } from "../../../../../../../shared/character-pack/character.ts"
+import type { GeneratedCharacter } from "../../../../../../../shared/character-pack/generated-character.ts"
 import { readAccentColor } from "../../../../../../domain/appearance-color.ts"
 import { selectPack } from "../../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../../stores/session.ts"
 import { readDataUrl } from "../../../../../../utils/data-url.ts"
+import { promptReadyDataUrl } from "../../../../../../utils/raster-image.ts"
 import type { AccentSwatchModel } from "../../../domain/accent-swatch-model.ts"
 
 const NAME_HINT = "画面や吹き出しに出る名前"
@@ -26,6 +31,11 @@ const ID_HINT =
 const INVALID_ID_NOTE = "id に使えるのは半角の英数字と . _ - だけ（. では始められない）"
 const TAKEN_ID_NOTE = "その id はもう使われている"
 const FAILED_NOTE = "作れなかった。もう一度押すか、id を変えてみてください"
+const GENERATE_LABEL = "立ち絵から生成"
+const GENERATING_LABEL = "生成中…"
+const GENERATION_HINT = "置いた立ち絵から名前・id・差し色・人格を書きます。書いたあとで直せます"
+const GENERATION_FAILED_NOTE = "生成できなかった。もう一度押すか、手で入れてください"
+const PERSONA_HINT = "口調や性格を書く。空なら人格なしで作る"
 
 /** 必須の立ち絵（`default`）を選ぶ大きな枠。 */
 export type PortraitDropModel = {
@@ -40,6 +50,20 @@ export type CreateIdNoteModel =
   | { readonly kind: "hint"; readonly text: string }
   | { readonly kind: "invalid" | "taken" | "failed"; readonly text: string }
 
+/** 「立ち絵から生成」のボタンと、その下の一言。 */
+export type CharacterGenerationModel = {
+  readonly label: string
+  readonly canGenerate: boolean
+  readonly onGenerate: () => void
+  readonly note: { readonly kind: "hint" | "failed"; readonly text: string }
+}
+
+export type CreatePersonaModel = {
+  readonly hint: string
+  readonly value: string
+  readonly onChange: (persona: string) => void
+}
+
 export type CharacterCreateModel = {
   readonly open: boolean
   readonly form: {
@@ -50,8 +74,10 @@ export type CharacterCreateModel = {
     readonly onIdChange: (id: string) => void
     readonly idNote: CreateIdNoteModel
     readonly portrait: PortraitDropModel
+    readonly generation: CharacterGenerationModel
     readonly workAccent: AccentSwatchModel
     readonly chatAccent: AccentSwatchModel
+    readonly persona: CreatePersonaModel
     readonly canSubmit: boolean
     readonly onSubmit: () => void
   }
@@ -68,8 +94,11 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   // 差し色の初期値は `--accent`（JS 側に既定の16進を持たない。`readAccentColor`）。
   const [accent, setAccent] = useState(readAccentColor)
   const [chatAccent, setChatAccent] = useState(readAccentColor)
+  const [persona, setPersona] = useState("")
   const [sending, setSending] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [generationFailed, setGenerationFailed] = useState(false)
 
   async function holdPortraitFile(file: File): Promise<void> {
     const image = await readDataUrl(file)
@@ -80,7 +109,42 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
 
   const taken = id !== "" && characterPacks.some((pack) => pack.name === id)
   const validFormat = isCharacterPackName(id)
-  const canSubmit = validFormat && !taken && portraitImage !== undefined && !sending
+  const canSubmit = validFormat && !taken && portraitImage !== undefined && !sending && !generating
+  const canGenerate = portraitImage !== undefined && !generating && !sending
+
+  async function generate(): Promise<void> {
+    if (!canGenerate || portraitImage === undefined) {
+      return
+    }
+
+    setGenerating(true)
+    setGenerationFailed(false)
+    const generated = await requestGenerated(portraitImage)
+    setGenerating(false)
+    if (generated === undefined) {
+      setGenerationFailed(true)
+      return
+    }
+    setId(generated.id)
+    setName(generated.name)
+    setAccent(generated.accent)
+    setChatAccent(generated.chatAccent)
+    setPersona(generated.persona)
+    setFailed(false)
+  }
+
+  /** 立ち絵を送って生成した欄の値を受け取る。直せない・断られた・切れたときは undefined。 */
+  async function requestGenerated(image: string): Promise<GeneratedCharacter | undefined> {
+    const portrait = await promptReadyDataUrl(image)
+    if (portrait === undefined) {
+      return undefined
+    }
+    try {
+      return await dispatchAwaited.characterPack.generateFromPortrait({ portrait })
+    } catch {
+      return undefined
+    }
+  }
 
   async function create(): Promise<void> {
     if (!canSubmit || portraitImage === undefined) {
@@ -96,6 +160,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
         portraits: { default: portraitImage },
         accent,
         chatAccent,
+        persona,
       })
     } catch {
       setFailed(true)
@@ -143,6 +208,16 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
           void holdPortraitFile(file)
         },
       },
+      generation: {
+        label: generating ? GENERATING_LABEL : GENERATE_LABEL,
+        canGenerate,
+        onGenerate: () => {
+          void generate()
+        },
+        note: generationFailed
+          ? { kind: "failed", text: GENERATION_FAILED_NOTE }
+          : { kind: "hint", text: GENERATION_HINT },
+      },
       workAccent: {
         inputId: "character-create-accent-work",
         label: "仕事",
@@ -155,6 +230,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
         value: chatAccent,
         onChange: setChatAccent,
       },
+      persona: { hint: PERSONA_HINT, value: persona, onChange: setPersona },
       canSubmit,
       onSubmit: () => {
         void create()

@@ -1,9 +1,11 @@
 // キャラクターパックのコマンドの手続き。形は `characterPackContract`。
 // ここは表の行（`characterPackCommands`）へ委ね、受け付けなかったことを契約のエラーに訳すだけ。
+// 値を返す `generateFromPortrait` だけは表を通らず、口の戻り値をそのまま応答にする。
 
 import { implement } from "@orpc/server"
 
 import { characterPackContract } from "../../../shared/contract/character-pack.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { refusedUnlessAccepted } from "../../adapter/command-refusal.ts"
 import { type CommandEventSink, receiveFeatureCommand } from "../../core/command-receiver.ts"
 import {
@@ -74,5 +76,14 @@ export function characterPackProcedure(ports: CharacterPackCommandPorts) {
     delete: procedure.delete.handler(({ input, context, errors }) =>
       refusedUnlessAccepted(receiveFeatureCommand(table.delete, input, context.session), errors),
     ),
+    generateFromPortrait: procedure.generateFromPortrait.handler(async ({ input, errors }) => {
+      const generated = await ports.generateFromPortrait(input.portrait).catch(() => undefined)
+      if (generated === undefined) {
+        throw errors.REFUSED({
+          data: { reason: FRAME_ERROR_REASON.characterGenerationFailed },
+        })
+      }
+      return generated
+    }),
   })
 }

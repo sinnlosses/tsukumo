@@ -1,4 +1,4 @@
-// キャラクターパックのコマンドの契約。見た目と人格の編集10種と、作る・消すの2種。
+// キャラクターパックのコマンドの契約。見た目と人格の編集10種と、作る・消すの2種と、作る前に欄を埋める生成の1種。
 // どれも駆動には渡らない（書き込みと `character-changed` の流し直しで済むので、使用中のパックを変えたときもセッションは起こし直さない）。
 
 import { z } from "zod"
@@ -9,6 +9,7 @@ import {
 } from "../character-pack/character-background.ts"
 import {
   type AccentTarget,
+  isAccentColor,
   isAccentTarget,
   MAX_CHARACTER_NAME_LENGTH,
   MAX_CHARACTER_TAGLINE_LENGTH,
@@ -21,12 +22,17 @@ import {
   isRemovableExpression,
   type RemovableExpression,
 } from "../character-pack/expression.ts"
+import { generatedCharacterSchema } from "../character-pack/generated-character.ts"
 import { MAX_PERSONA_BODY_LENGTH } from "../character-pack/persona-section.ts"
 import {
   MAX_PORTRAIT_DATA_URL_LENGTH,
   parsePortraitImage,
 } from "../character-pack/portrait-image.ts"
 import { commandBase } from "../command.ts"
+import {
+  MAX_PROMPT_IMAGE_DATA_URL_LENGTH,
+  parsePromptImage,
+} from "../session-driver/prompt-image.ts"
 
 /**
  * 立ち絵1枚の data URL。大きさと種類はここで見る。
@@ -54,8 +60,17 @@ const faceDataUrlSchema = z
   .max(MAX_FACE_DATA_URL_LENGTH)
   .refine((value) => parseFaceImage(value) !== undefined)
 
+/**
+ * 生成に渡す立ち絵1枚の data URL。
+ * モデルへ渡すので、形式と上限は立ち絵ではなく依頼に添える画像と同じ {@link parsePromptImage} で見る（svg は画面が png に直してから送る）。
+ */
+const generationPortraitSchema = z
+  .string()
+  .max(MAX_PROMPT_IMAGE_DATA_URL_LENGTH)
+  .refine((value) => parsePromptImage(value) !== undefined)
+
 /** 差し色（`<input type="color">` が渡す形）。16進の値そのものはここに書かない。 */
-const accentColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i)
+const accentColorSchema = z.string().refine(isAccentColor)
 
 /**
  * 新しく作るパックの名前。
@@ -167,6 +182,8 @@ const characterCreateInput = z.object({
   // 画面の差し色（仕事・雑談の2つ）。どちらも必須（作ったあとに片方だけ消したくなったら `clearChatAccent` で外せる）。
   accent: accentColorSchema,
   chatAccent: accentColorSchema,
+  // 人格の本文。空（空白だけも）なら `persona.md` を書かない。
+  persona: characterPersonaSchema,
 })
 
 export type CharacterCreate = z.infer<typeof characterCreateInput>
@@ -195,4 +212,11 @@ export const characterPackContract = {
   create: commandBase.input(characterCreateInput),
   /** ターン中も受け付ける（使用中のパックは消せないので、いまの会話には触らない）。 */
   delete: commandBase.input(characterDeleteInput),
+  /**
+   * 立ち絵1枚から、作るダイアログの欄の値を生成して返す。何も書き込まない。
+   * 値を返すので応答を待って受け取る（立ち絵の data URL は `/rpc` の本文の上限に入らないので `/ws` に載せる）。
+   */
+  generateFromPortrait: commandBase
+    .input(z.object({ portrait: generationPortraitSchema }))
+    .output(generatedCharacterSchema),
 }

@@ -1,11 +1,12 @@
 // 新しいキャラクターパックを作るダイアログの器。
-// 見出し・立ち絵の口・名前と id と画面の差し色2つ・「やめる」「作る」を置く。
+// 見出し・立ち絵の口と「立ち絵から生成」・名前と id と画面の差し色2つ・人格・「やめる」「作る」を置く。
 //
 // `<dialog>` は top layer に出るので、キャラクター画面の `overflow` には切り取られない。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { MAX_PERSONA_BODY_LENGTH } from "../../../../../../shared/character-pack/persona-section.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
@@ -55,7 +56,32 @@ export function PresentationalCharacterCreate({
           新しいキャラクター
         </Heading>
         <div className={styles["character-create-grid"]}>
-          <PortraitDrop drop={form.portrait} />
+          <div className={styles["character-create-portrait"]}>
+            <PortraitDrop drop={form.portrait} />
+            <Button
+              variant="outline"
+              size="secondary"
+              pressed="none"
+              disabled={!form.generation.canGenerate}
+              ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
+              ariaHasPopup={undefined}
+              title={undefined}
+              className={characterStyles["character-button-outline"]}
+              onClick={form.generation.onGenerate}
+            >
+              {form.generation.label}
+            </Button>
+            <Text
+              element="p"
+              size="label"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["character-create-generation-note"]}
+            >
+              {form.generation.note.text}
+            </Text>
+          </div>
           <div className={styles["character-create-fields"]}>
             <div className={characterStyles["character-create-field"]}>
               <label
@@ -116,6 +142,24 @@ export function PresentationalCharacterCreate({
               </div>
             </div>
           </div>
+        </div>
+        <div className={characterStyles["character-create-field"]}>
+          <label
+            className={characterStyles["character-create-label"]}
+            htmlFor="character-create-persona"
+          >
+            人格
+          </label>
+          <textarea
+            id="character-create-persona"
+            className={characterStyles["character-persona-input"]}
+            maxLength={MAX_PERSONA_BODY_LENGTH}
+            value={form.persona.value}
+            onChange={(event) => form.persona.onChange(event.target.value)}
+          />
+          <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+            {form.persona.hint}
+          </Text>
         </div>
         <div className={characterStyles["character-create-footer"]}>
           <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">

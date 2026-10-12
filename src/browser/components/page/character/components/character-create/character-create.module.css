@@ -3,6 +3,15 @@
   grid-template-columns: 15rem minmax(0, 1fr);
   gap: 1.5rem;
 }
+.character-create-portrait {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.character-create-generation-note {
+  margin: 0;
+}
 .character-create-fields {
   display: flex;
   flex-direction: column;

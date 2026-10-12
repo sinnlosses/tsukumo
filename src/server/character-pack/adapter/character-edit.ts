@@ -124,7 +124,7 @@ export function editCharacterPack(
  * - ディスクに書けない（書きかけのディレクトリは消すので、欠けたパックは残らない）
  *
  * `default` の1枚があることは境界で済んでいる（`CharacterCreate` の `portraits` が required）。
- * ここは書く順だけを守る。素材 → 定義の順に書くので、途中で失敗したディレクトリは `character.json` を持たず、パックとして一覧に出ない。
+ * ここは書く順だけを守る。素材 → `persona.md`（本文が空でなければ）→ 定義の順に書くので、途中で失敗したディレクトリは `character.json` を持たず、パックとして一覧に出ない。
  */
 export function createCharacterPack(
   create: CharacterCreate,
@@ -144,6 +144,9 @@ export function createCharacterPack(
       return undefined
     }
 
+    if (create.persona.trim() !== "") {
+      writeFileAtomic(join(dir, PERSONA_FILE_NAME), personaWithBody("", create.persona))
+    }
     writeFileAtomic(join(dir, CHARACTER_DEFINITION_FILE_NAME), newDefinitionJson(create, fileNames))
     return readCharacterPack(dir)
   } catch {

@@ -123,6 +123,11 @@ export function isAccentTarget(value: string): value is AccentTarget {
   return ACCENT_TARGETS.some((target) => target === value)
 }
 
+/** 差し色として受け付ける形（`<input type="color">` が渡す `#rrggbb`。大文字も通す）か。 */
+export function isAccentColor(value: string): boolean {
+  return /^#[0-9a-f]{6}$/i.test(value)
+}
+
 /** 画面の差し色（`accent` / `chatAccent`）1件を差し替えた JSON を返す。ほかのキーはそのまま残す。 */
 export function definitionWithAccent(
   content: string | undefined,

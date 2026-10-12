@@ -152,7 +152,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `report/`            | レポートの記法・`report` ツール・検査と差し戻し・塊の使われ方の記録                                       |
 | `system-prompt/`     | `systemPrompt` の append の組み立てと、セリフの間合いの規約                                               |
 | `chat/`              | 雑談モード。作法・記憶・話しかけ・アーカイブ・要約・覚えたこと・定着                                      |
-| `character-pack/`    | キャラクターパックの選択・読み込み・画面からの編集                                                        |
+| `character-pack/`    | キャラクターパックの選択・読み込み・画面からの編集・立ち絵からの生成（使い捨ての `query()`）              |
 | `diary/`             | 日記。`diary` ツールと保存                                                                                |
 | `achievement/`       | 成果。終えたタスクを Beads の閉じた課題から数える                                                         |
 | `usage-review/`      | 見直し。見直しと提案の実行の走り（使い捨ての `query()`）・2つのツール・前回の結果・見送り                 |
@@ -255,6 +255,10 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   写し、接続が切れたら購読を外す。購読には照合（`rpcGuard`）だけを掛け、断る条件は見ない
 - ブラウザは型付きの client（`src/browser/stores/session.ts` の `dispatch`）で呼ぶ。**送りっぱなしで、
   断られても画面には出さない**（画面は同じ条件で先に操作子を塞いでいる）
+- **`/ws` の上で値を返す手続きは `characterPack.generateFromPortrait` の1つだけ。** 入力の画像が
+  `/rpc` の本文の上限（64 KiB）に入らず、生成した値を返す必要があるので、コマンドの契約に `output` を
+  持たせ、ブラウザは `dispatchAwaited` で応答を待って受け取る。受け手の行（`write` / `call` / `session`）は
+  値を返さないので、機能の表には載せず（表の型から `Omit` で外す）、`<機能>-procedure.ts` に受け手を直に書く
 
 `/prompt-image/<id>`・`/report-image/<toolUseId>/<path>`（どちらも `<img src>` で読む）と静的な配信は HTTP の経路のまま。
 

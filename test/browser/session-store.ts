@@ -32,7 +32,7 @@ export function putSession(state: SessionState, spy: CommandSpy = () => {}): voi
         call: (path, input) => {
           return Promise.resolve(
             spy({ procedure: path.join("."), ...(isPlainObject(input) ? input : {}) }),
-          ).then(() => undefined)
+          )
         },
       },
     })

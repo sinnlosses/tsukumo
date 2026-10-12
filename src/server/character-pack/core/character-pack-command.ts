@@ -1,6 +1,7 @@
-// `character-pack` が受けるコマンドの表。見た目の編集10種と、作る・消すの2種。
+// `character-pack` が受けるコマンドの表と口。見た目の編集10種と、作る・消すの2種と、作る前に欄を埋める生成。
 // どれも駆動には渡らず、セッションも起こし直さない（書いて、`character-changed` を流し直すだけ）。
 
+import type { GeneratedCharacter } from "../../../shared/character-pack/generated-character.ts"
 import type {
   CharacterCreate,
   CharacterDelete,
@@ -29,12 +30,20 @@ export type CharacterPackCommandPorts = {
    * ターン中も受け付ける（使用中のパックは消せないので、いまの会話には触らない）。
    */
   readonly deleteCharacter: (remove: CharacterDelete) => Promise<SessionEvent | undefined>
+  /**
+   * 立ち絵1枚の data URL から作るダイアログの欄の値を生成して返す。何も書き込まない。
+   * 生成できなかったときは undefined。
+   */
+  readonly generateFromPortrait: (portrait: string) => Promise<GeneratedCharacter | undefined>
 }
 
-/** `character-pack` が受けるコマンドの表。 */
+/**
+ * `character-pack` が受けるコマンドの表。
+ * 値を返す `generateFromPortrait` は表の行の種類に無いので、表には載せず手続きが直に受ける。
+ */
 export function characterPackCommands(
   ports: CharacterPackCommandPorts,
-): FeatureCommandTable<typeof characterPackContract> {
+): FeatureCommandTable<Omit<typeof characterPackContract, "generateFromPortrait">> {
   // 見た目の編集10種は同じ口へ渡す（どれを変えるかは書き込む側が `kind` で分ける）。
   const edit = <C>(kindOf: (input: C) => CharacterEdit): WriteReceiver<C> => ({
     kind: "write",

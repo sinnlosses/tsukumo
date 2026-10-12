@@ -101,6 +101,7 @@ async function start(openFileResult = true): Promise<Started> {
         editCharacter: unexpected,
         createCharacter: unexpected,
         deleteCharacter: unexpected,
+        generateFromPortrait: unexpected,
       },
       chat: { forgetRememberedLine: unexpected },
       usageReview: {

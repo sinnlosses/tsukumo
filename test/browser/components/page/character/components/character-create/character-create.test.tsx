@@ -7,7 +7,7 @@ import type { CharacterPackEntry } from "../../../../../../../src/shared/charact
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
 import { characterPackEntry } from "../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
-import { type CommandSpy, putSession } from "../../../../../session-store.ts"
+import { type CommandSpy, putSession, type SentCommand } from "../../../../../session-store.ts"
 
 const FIXTURE_PACKS: readonly CharacterPackEntry[] = [characterPackEntry("fictional", "架空の精霊")]
 
@@ -54,6 +54,40 @@ async function pickPortrait(): Promise<void> {
   await screen.findByLabelText("いつもの顔の立ち絵を差し替える")
 }
 
+/** モデルへそのまま渡せる png の立ち絵を選ぶ（svg は canvas で直す経路を通り、happy-dom では描けない）。 */
+async function pickPngPortrait(): Promise<void> {
+  fireEvent.change(screen.getByLabelText("いつもの顔の立ち絵を選ぶ"), {
+    target: { files: [new File(["png"], "picked.png", { type: "image/png" })] },
+  })
+  await screen.findByLabelText("いつもの顔の立ち絵を差し替える")
+}
+
+const PICKED_PNG_DATA_URL = `data:image/png;base64,${Buffer.from("png").toString("base64")}`
+
+/** 生成の手続きが返す欄の値（手で書いた架空のキャラクター）。 */
+const GENERATED = {
+  id: "fictional-3",
+  name: "架空の3号",
+  accent: "#123456",
+  chatAccent: "#abcdef",
+  persona: "# 架空の3号\n\n架空の人格。",
+}
+
+function generateButton(): HTMLButtonElement {
+  return typedElement(
+    screen.getByRole("button", { name: /立ち絵から生成|生成中/u }),
+    HTMLButtonElement,
+    "生成のボタン",
+  )
+}
+
+function inputValue(label: string): string {
+  const element = screen.getByLabelText(label)
+  return element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement
+    ? element.value
+    : ""
+}
+
 describe("CharacterCreate", () => {
   it("open が true になると、見出し・立ち絵の口・名前・id・画面の差し色2つを出す", () => {
     render(characterCreate(true, () => {}))
@@ -65,6 +99,8 @@ describe("CharacterCreate", () => {
     expect(screen.getByLabelText("id")).toBeDefined()
     expect(screen.getByLabelText("仕事")).toBeDefined()
     expect(screen.getByLabelText("雑談")).toBeDefined()
+    expect(screen.getByLabelText("人格")).toBeDefined()
+    expect(screen.getByRole("button", { name: "立ち絵から生成" })).toBeDefined()
   })
 
   it("id・必須の立ち絵がそろうまで「作る」を押せない", async () => {
@@ -128,6 +164,7 @@ describe("CharacterCreate", () => {
         },
         accent: "#22ff88",
         chatAccent: "#ff8822",
+        persona: "",
       },
     ])
   })
@@ -194,6 +231,110 @@ describe("CharacterCreate", () => {
     fireEvent.click(submitButton())
 
     expect(calls).toHaveLength(1)
+  })
+
+  it("立ち絵を置くまで「立ち絵から生成」を押せず、置いただけでは生成しない", async () => {
+    const calls: unknown[] = []
+    render(
+      characterCreate(
+        true,
+        () => {},
+        (command) => calls.push(command),
+      ),
+    )
+    expect(generateButton().getAttribute("aria-disabled")).toBe("true")
+
+    await pickPngPortrait()
+
+    expect(generateButton().getAttribute("aria-disabled")).toBe("false")
+    expect(calls).toEqual([])
+  })
+
+  it("押すと立ち絵を送って欄を埋め、直したあと「作る」で人格を載せて送る", async () => {
+    const calls: SentCommand[] = []
+    render(
+      characterCreate(
+        true,
+        () => {},
+        (command) => {
+          calls.push(command)
+          return command.procedure === "characterPack.generateFromPortrait" ? GENERATED : undefined
+        },
+      ),
+    )
+    await pickPngPortrait()
+
+    fireEvent.click(generateButton())
+
+    await waitFor(() => {
+      expect(inputValue("id")).toBe("fictional-3")
+    })
+    expect(inputValue("名前")).toBe("架空の3号")
+    expect(inputValue("仕事")).toBe("#123456")
+    expect(inputValue("雑談")).toBe("#abcdef")
+    expect(inputValue("人格")).toBe("# 架空の3号\n\n架空の人格。")
+
+    fireEvent.change(screen.getByLabelText("名前"), { target: { value: "直した名前" } })
+    fireEvent.click(submitButton())
+
+    expect(calls).toEqual([
+      { procedure: "characterPack.generateFromPortrait", portrait: PICKED_PNG_DATA_URL },
+      {
+        procedure: "characterPack.create",
+        id: "fictional-3",
+        name: "直した名前",
+        portraits: { default: PICKED_PNG_DATA_URL },
+        accent: "#123456",
+        chatAccent: "#abcdef",
+        persona: "# 架空の3号\n\n架空の人格。",
+      },
+    ])
+  })
+
+  it("生成中は「生成中…」になり、「作る」も押せない", async () => {
+    const calls: unknown[] = []
+    render(
+      characterCreate(
+        true,
+        () => {},
+        (command) => {
+          calls.push(command)
+          return new Promise(() => {})
+        },
+      ),
+    )
+    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    await pickPngPortrait()
+
+    fireEvent.click(generateButton())
+    fireEvent.click(generateButton())
+
+    await screen.findByRole("button", { name: "生成中…" })
+    expect(generateButton().getAttribute("aria-disabled")).toBe("true")
+    expect(submitButton().getAttribute("aria-disabled")).toBe("true")
+    expect(calls).toHaveLength(1)
+  })
+
+  it("生成を断られたら知らせを出し、打ってあった欄と立ち絵は残る", async () => {
+    render(
+      characterCreate(
+        true,
+        () => {},
+        () => Promise.reject(new Error("断り")),
+      ),
+    )
+    fireEvent.change(screen.getByLabelText("名前"), { target: { value: "架空の2号" } })
+    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+    await pickPngPortrait()
+
+    fireEvent.click(generateButton())
+
+    await screen.findByText(/生成できなかった/u)
+    expect(inputValue("名前")).toBe("架空の2号")
+    expect(inputValue("id")).toBe("fictional-2")
+    expect(screen.getByLabelText("いつもの顔の立ち絵を差し替える")).toBeDefined()
+    expect(generateButton().getAttribute("aria-disabled")).toBe("false")
+    expect(submitButton().getAttribute("aria-disabled")).toBe("false")
   })
 
   it("「やめる」で閉じる", () => {

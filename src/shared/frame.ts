@@ -18,7 +18,7 @@ import type { SessionState } from "./session/session-state.ts"
  * コマンドの形を変えたときも上げる。
  * 同じ `/ws` に乗るので、形の違うタブとプロセスの組はコマンドが1件も通らなくなる（知らせで読み込み直してもらう）。
  */
-export const PROTOCOL_VERSION = 49
+export const PROTOCOL_VERSION = 50
 
 /**
  * 配っているものを取り直す先。
@@ -54,6 +54,7 @@ export const FRAME_ERROR_REASON = {
   characterEditFailed: "キャラクターの見た目を変えられなかった",
   characterCreateFailed: "キャラクターを作れなかった",
   characterDeleteFailed: "キャラクターを消せなかった",
+  characterGenerationFailed: "立ち絵から生成できなかった",
   sessionDefaultFailed: "新しいセッションの既定を覚えられなかった",
   switchDuringTurn: "ターン進行中はキャラクターを切り替えられない（中断すると切り替えられる）",
   sessionSwitchDuringTurn: "ターン進行中はセッションを切り替えられない（中断すると切り替えられる）",

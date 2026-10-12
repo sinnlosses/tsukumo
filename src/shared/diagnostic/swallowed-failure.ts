@@ -35,6 +35,7 @@ const SWALLOWED_FAILURE_PLACES = {
     "welcome-greeting-timed-out",
   ],
   repository: ["task-summary-poll"],
+  "character-pack": ["generation-failed"],
   process: ["unhandled-rejection", "uncaught-exception"],
 } as const satisfies Record<string, readonly string[]>
 

@@ -5,6 +5,7 @@ import {
   MAX_CHARACTER_TAGLINE_LENGTH,
 } from "../../../src/shared/character-pack/character-definition.ts"
 import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../../../src/shared/character-pack/character.ts"
+import { MAX_PERSONA_BODY_LENGTH } from "../../../src/shared/character-pack/persona-section.ts"
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../src/shared/chat/persona-memory.ts"
 import { MAX_PROMPT_TEXT_LENGTH } from "../../../src/shared/contract/session.ts"
 import { commandContract } from "../../../src/shared/rpc.ts"
@@ -54,6 +55,7 @@ function createCharacter(id: string): unknown {
     portraits: { default: TINY_PNG_DATA_URL },
     accent: "#b8c7ff",
     chatAccent: "#eaa77a",
+    persona: "",
   }
 }
 
@@ -268,7 +270,7 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     ).toBeUndefined()
   })
 
-  it("characterPack.create を受け付ける（id・名前・必須の1枚・仕事と雑談の差し色が揃った形）", () => {
+  it("characterPack.create を受け付ける（id・名前・必須の1枚・仕事と雑談の差し色・人格が揃った形）", () => {
     expect(
       parseInput("characterPack.create", {
         id: "fictional-2",
@@ -276,6 +278,7 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
         portraits: { default: TINY_PNG_DATA_URL },
         accent: "#b8c7ff",
         chatAccent: "#eaa77a",
+        persona: "# 架空の2号\n",
       }),
     ).toEqual({
       id: "fictional-2",
@@ -283,10 +286,11 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
       portraits: { default: TINY_PNG_DATA_URL },
       accent: "#b8c7ff",
       chatAccent: "#eaa77a",
+      persona: "# 架空の2号\n",
     })
   })
 
-  it("characterPack.create の名前は空文字でも受け付ける（空なら書き込む側が id へ落とす）", () => {
+  it("characterPack.create の名前と人格は空文字でも受け付ける（空なら書き込む側が id へ落とす・人格を書かない）", () => {
     expect(
       parseInput("characterPack.create", {
         id: "fictional-2",
@@ -294,8 +298,22 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
         portraits: { default: TINY_PNG_DATA_URL },
         accent: "#b8c7ff",
         chatAccent: "#eaa77a",
+        persona: "",
       }),
-    ).toMatchObject({ name: "" })
+    ).toMatchObject({ name: "", persona: "" })
+  })
+
+  it("characterPack.create は人格の本文の上限を超えると受け付けない", () => {
+    expect(
+      parseInput("characterPack.create", {
+        id: "fictional-2",
+        name: "",
+        portraits: { default: TINY_PNG_DATA_URL },
+        accent: "#b8c7ff",
+        chatAccent: "#eaa77a",
+        persona: "あ".repeat(MAX_PERSONA_BODY_LENGTH + 1),
+      }),
+    ).toBeUndefined()
   })
 
   it("characterPack.setProfile を受け付ける（対象のパック名・名前・ひとことプロフィール）", () => {
@@ -430,6 +448,20 @@ describe("コマンドの契約の入力（落とす形）", () => {
     }
     // 半角の英数字と `.` `_` `-` だけなら通る（`.` で始まらないこと）。
     expect(parseInput("characterPack.create", createCharacter("my_pack-2.0"))).toBeDefined()
+  })
+
+  it("characterPack.generateFromPortrait はモデルへ渡せる画像（png など）を受け付け、svg・壊れた data URL を拒む", () => {
+    expect(
+      parseInput("characterPack.generateFromPortrait", { portrait: TINY_PNG_DATA_URL }),
+    ).toEqual({ portrait: TINY_PNG_DATA_URL })
+
+    for (const portrait of [
+      `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
+      "data:image/png,AAAA",
+      "",
+    ]) {
+      expect(parseInput("characterPack.generateFromPortrait", { portrait })).toBeUndefined()
+    }
   })
 
   it("characterPack.delete はパックの名前だけを受け付け、パスになる名前は通さない", () => {
