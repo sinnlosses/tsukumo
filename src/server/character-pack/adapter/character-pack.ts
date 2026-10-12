@@ -9,8 +9,7 @@ import { basename, join } from "node:path"
 
 import {
   type CharacterAssetLocation,
-  classifyPortraitFile,
-  rasterMimeType,
+  portraitImageMimeType,
 } from "../../../shared/character-pack/character-asset.ts"
 import {
   type CharacterDefinition,
@@ -308,15 +307,8 @@ function toCharacterPackEntry(
 }
 
 function characterAssetContentType(fileName: string): string | undefined {
-  const kind = classifyPortraitFile(fileName)
-  if (kind === "svg") {
-    return "image/svg+xml; charset=utf-8"
-  }
-  if (kind === "raster") {
-    return rasterMimeType(fileName)
-  }
   // 立ち絵・背景の拡張子でなければ、日記の書体（woff2 / woff / ttf / otf）かどうかを見る。
-  return diaryFontMimeType(fileName)
+  return portraitImageMimeType(fileName) ?? diaryFontMimeType(fileName)
 }
 
 function isDefined<T>(value: T | undefined): value is T {

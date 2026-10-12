@@ -31,7 +31,11 @@
           },
           "children": [
             {
-              "tag": "svg"
+              "tag": "img",
+              "attributes": {
+                "alt": "つくもの精霊（通常）",
+                "src": "/character/tsukumo-spirit/default.svg"
+              }
             }
           ]
         },

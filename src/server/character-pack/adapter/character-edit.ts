@@ -18,7 +18,7 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 
-import { classifyPortraitFile } from "../../../shared/character-pack/character-asset.ts"
+import { portraitImageMimeType } from "../../../shared/character-pack/character-asset.ts"
 import {
   type BackgroundImage,
   backgroundFileName,
@@ -436,7 +436,7 @@ function referencedImageFileNames(definition: CharacterDefinition | undefined): 
  * 定義ファイルに書かれた名前も外部由来なので、ディレクトリを跨ぐ名前（`../foo`）はここで落とす（写す・消すのがホームの1階層に閉じる）。
  */
 function isCharacterImageFileName(name: string | undefined): name is string {
-  return name !== undefined && basename(name) === name && classifyPortraitFile(name) !== undefined
+  return name !== undefined && basename(name) === name && portraitImageMimeType(name) !== undefined
 }
 
 /**

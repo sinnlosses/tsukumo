@@ -226,7 +226,11 @@
                       },
                       "children": [
                         {
-                          "tag": "svg"
+                          "tag": "img",
+                          "attributes": {
+                            "alt": "つくもの精霊（どや顔）",
+                            "src": "/character/tsukumo-spirit/proud.svg"
+                          }
                         }
                       ]
                     },

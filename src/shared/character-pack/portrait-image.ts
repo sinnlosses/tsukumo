@@ -2,7 +2,7 @@
 // 検証だけを持ち、バイト列には触らない（base64 を `Buffer` にするのは書き込む側）。
 //
 // 受け付ける種類は `.svg` / `.png` / `.gif` の3つだけ。
-// `classifyPortraitFile` はほかのラスタ形式も知っているが、書き込む経路では外から届いたものをそのままディスクに置くので、allowlist をこの3つに絞る。
+// `portraitImageMimeType` はほかのラスタ形式も知っているが、書き込む経路では外から届いたものをそのままディスクに置くので、allowlist をこの3つに絞る。
 
 import { maxImageDataUrlLength, parseImageDataUrl } from "../utils/image-data-url.ts"
 import type { Expression } from "./expression.ts"

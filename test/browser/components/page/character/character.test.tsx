@@ -12,8 +12,7 @@ import { typedElement } from "../../../../typed-element.ts"
 import { createTestQueryClient } from "../../../query-client.tsx"
 import { type CommandSpy, putState, putSession } from "../../../session-store.ts"
 
-// 使用中の `fictional` と、使用中ではない `other`。立ち絵はラスタにしてある（`<Portrait>` は
-// SVG のときだけ中身を `fetch` しに行くので、このテストの関心ではない非同期がまぎれる）。
+// 使用中の `fictional` と、使用中ではない `other`。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   tagline: "架空のひとこと",
   ...shownPortraits({ default: "/character/fictional/default.png?v=1" }),

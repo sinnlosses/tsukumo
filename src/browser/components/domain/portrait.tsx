@@ -1,6 +1,5 @@
 // 立ち絵1件（<Portrait>）。
-// SVG は `fetch` して `sanitizeSvg` で削ぎ落とした中身をインラインにし、ラスタは `<img>` で出す。
-// 素材は `/character/<pack>/<file>` から取りに行くだけ。
+// SVG もラスタも `<img>` で出す。素材は `/character/<pack>/<file>` から取りに行くだけ。
 //
 // `expression` は表情の差し替えにだけ使う。
 // `motion` は立ち絵の動きを `data-motion` 属性で `portrait.module.css` に渡す。
@@ -9,13 +8,11 @@
 // どこに・どれだけの大きさで置くかは呼び出し側（`className`）で、領域ごとに違う。
 // ここが持つのは中身の収め方と動きだけ。
 
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import clsx from "clsx"
 import { useEffect, type ReactElement } from "react"
 
-import { classifyPortraitFile } from "../../../shared/character-pack/character-asset.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { PortraitMotion } from "../../../shared/session/portrait-motion.ts"
-import { sanitizeSvg } from "../../utils/sanitize-svg.ts"
 import styles from "./portrait.module.css"
 
 export type PortraitProps = {
@@ -38,98 +35,38 @@ export type PortraitProps = {
  * 仕事 / 雑談を切り替えると立ち絵は別の領域で新しくマウントされ、表情も切り替え前と違うことがある。
  * 読んでいない絵だと、読み終わるまで立ち絵の場所が空いたまま移り変わりが終わり、そのあとで絵がいきなり現れる（実測: 初めての表情で約250ms）。
  *
- * SVG は {@link useSvgMarkup} と同じキャッシュ行へ入れ、ラスタは `Image` に読ませてキャラクターが変わるまで参照を持ち続ける。
+ * `Image` に読ませ、キャラクターが変わるまで参照を持ち続ける。
  * `/character/<pack>/<file>` は `no-store` で配るので、参照が切れた絵はブラウザが読み直すことがある。
  */
 export function usePortraitPreload(portraits: Readonly<Record<string, string>> | undefined): void {
-  const queryClient = useQueryClient()
-
   useEffect(() => {
     if (portraits === undefined) {
       return undefined
     }
-    const urls = [...new Set(Object.values(portraits))]
-    const images = urls
-      .filter((url) => classifyPortraitFile(url) === "raster")
-      .map((url) => {
-        const image = new Image()
-        image.src = url
-        return image
-      })
-    for (const url of urls.filter((candidate) => classifyPortraitFile(candidate) === "svg")) {
-      void queryClient.prefetchQuery({
-        queryKey: [url] as const,
-        queryFn: () => fetchSvgMarkup(url),
-        staleTime: Infinity,
-        gcTime: Infinity,
-      })
-    }
+    const images = [...new Set(Object.values(portraits))].map((url) => {
+      const image = new Image()
+      image.src = url
+      return image
+    })
     // 前のキャラクターの絵は読みかけでも止めて手放す（`src` を空にすると読み込みが打ち切られる）。
     return () => {
       for (const image of images) {
         image.src = ""
       }
     }
-  }, [portraits, queryClient])
+  }, [portraits])
 }
 
 export function Portrait(props: PortraitProps): ReactElement {
-  const kind = classifyPortraitFile(props.url)
-  const svgMarkup = useSvgMarkup(kind === "svg" ? props.url : undefined)
-
-  const wrapperProps = {
-    className:
-      props.className === undefined
-        ? styles["portrait"]
-        : `${styles["portrait"]} ${props.className}`,
-    role: "img",
-    "aria-label": props.altText,
-    "data-expression": props.expression,
-    "data-motion": props.motion,
-  }
-
-  // SVG は削ぎ落とした中身をエスケープせずに差し込む（インライン埋め込みそのものが目的）。
-  // 読み込みが終わっていない・失敗した・SVG として読めなかったときは空のまま。
-  // `dangerouslySetInnerHTML` と `children` は同じ要素に同時に渡せない（React が警告する）ので、SVG のときは別の `return` にする。
-  if (kind === "svg") {
-    return (
-      <div
-        {...wrapperProps}
-        dangerouslySetInnerHTML={svgMarkup === undefined ? undefined : { __html: svgMarkup }}
-      />
-    )
-  }
-
   return (
-    <div {...wrapperProps}>
-      {kind === "raster" && (
-        <img className={styles["portrait-image"]} src={props.url} alt={props.altText} />
-      )}
+    <div
+      className={clsx(styles["portrait"], props.className)}
+      role="img"
+      aria-label={props.altText}
+      data-expression={props.expression}
+      data-motion={props.motion}
+    >
+      <img className={styles["portrait-image"]} src={props.url} alt={props.altText} />
     </div>
   )
-}
-
-/**
- * SVG の中身を `fetch` する（TanStack Query）。
- * `/character/<pack>/<file>` の URL はパックの名前を経路に、素材の版を問い合わせ文字列に含む（`characterAssetPath`）ので、立ち絵や差し色を変えると URL 自体が変わる。
- * だから `queryKey` は URL だけでよく、同じ URL の中身はセッション中変わらないので取り直さない（`staleTime` / `gcTime` を `Infinity` にする）。
- *
- * 読めなかったときは、読み込みが終わっていないときと同じ `undefined` を返す（立ち絵が出ないだけで、落ちない）。
- */
-function useSvgMarkup(url: string | undefined): string | undefined {
-  const { data } = useQuery({
-    queryKey: [url] as const,
-    queryFn: async ({ queryKey: [target] }) =>
-      target === undefined ? undefined : await fetchSvgMarkup(target),
-    enabled: url !== undefined,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
-
-  return data
-}
-
-async function fetchSvgMarkup(url: string): Promise<string | undefined> {
-  const response = await fetch(url)
-  return response.ok ? sanitizeSvg(await response.text()) : undefined
 }

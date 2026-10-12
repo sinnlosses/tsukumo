@@ -29,7 +29,6 @@
 /* 素材の縦横比を保つ（実測）。
    `height: 100%` と `max-width` を同時に掛けると、置換要素は幅だけ縮む（CSS 2.1 §10.4 の制約表。高さが auto でないまま max-width に当たると、max-height 側の再計算が起きない）。
    両方 auto ＋ max-width/max-height の組にすると、どちらの上限に当たっても縦横比を保ったまま縮む。 */
-.portrait svg,
 .portrait-image {
   display: block;
   width: auto;

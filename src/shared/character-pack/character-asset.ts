@@ -53,27 +53,16 @@ export function readCharacterAssetPath(rest: string): CharacterAssetLocation | u
 }
 
 /**
- * 立ち絵の種類を拡張子だけで分ける。
+ * 立ち絵・顔の画像の MIME タイプを拡張子だけで返す。拡張子の allowlist も兼ねる。
  * ファイル名でも {@link characterAssetPath} が返した URL でも受け取る（`?v=` が付いていても拡張子を見失わない）。
- * 利用者が `characters/local/` に置いた任意のファイルを無検証で流し込まないための最低限の仕分け。
- * SVG はインラインで埋め込む。
- * それ以外は `<img>` で出す。対応しないラスタ形式（拡張子が既知のものでない）は undefined を返し、立ち絵なし扱いにする。
+ * 利用者が `characters/local/` に置いた任意のファイルを無検証で流し込まないための最低限の仕分けで、対応しない拡張子は undefined（立ち絵なし扱い）。
  */
-export function classifyPortraitFile(fileName: string): "svg" | "raster" | undefined {
-  const extension = fileExtension(fileName)
-  if (extension === ".svg") {
-    return "svg"
-  }
-
-  return RASTER_MIME_BY_EXTENSION[extension] === undefined ? undefined : "raster"
+export function portraitImageMimeType(fileName: string): string | undefined {
+  return PORTRAIT_IMAGE_MIME_BY_EXTENSION[fileExtension(fileName)]
 }
 
-/** ラスタ画像の MIME タイプ。{@link classifyPortraitFile} が `"raster"` を返したときだけ意味を持つ。 */
-export function rasterMimeType(fileName: string): string | undefined {
-  return RASTER_MIME_BY_EXTENSION[fileExtension(fileName)]
-}
-
-const RASTER_MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
+const PORTRAIT_IMAGE_MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
+  ".svg": "image/svg+xml; charset=utf-8",
   ".png": "image/png",
   ".gif": "image/gif",
   ".jpg": "image/jpeg",

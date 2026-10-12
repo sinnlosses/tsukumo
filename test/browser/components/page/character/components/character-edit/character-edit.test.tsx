@@ -27,8 +27,6 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
     { name: "thinking", label: "作業中" },
     { name: "proud", label: "どや顔" },
   ],
-  // ラスタにしてある（`<Portrait>` は SVG のときだけ中身を `fetch` しに行くので、この
-  // テストの関心ではない非同期がまぎれる）。SVG の読み込みは別のテストが見る。
   ...shownPortraits({
     default: "/character/default.png?v=fictional@1",
     thinking: "/character/thinking.png?v=fictional@1",

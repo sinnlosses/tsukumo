@@ -73,7 +73,7 @@ export type ViewUi =
 
 /**
  * ページの `script-src` 以外の CSP。
- * `style-src` の `'unsafe-inline'` は、mermaid が `innerHTML` で差す図の `<style>` 要素と、立ち絵の SVG の `style` 属性が要る。
+ * `style-src` の `'unsafe-inline'` は、mermaid が `innerHTML` で差す図の `<style>` 要素が要る。
  * `connect-src 'self'` は `/rpc` と、同じホスト・ポートの `ws:`（`/ws` と開発時の `/vite-hmr`）を覆う。
  */
 const PAGE_POLICY_DIRECTIVES: readonly string[] = [

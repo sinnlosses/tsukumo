@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   characterAssetPath,
-  classifyPortraitFile,
-  rasterMimeType,
+  portraitImageMimeType,
   readCharacterAssetPath,
 } from "../../../src/shared/character-pack/character-asset.ts"
 
@@ -49,44 +48,26 @@ describe("readCharacterAssetPath", () => {
   })
 })
 
-describe("classifyPortraitFile", () => {
-  it("拡張子 .svg は svg として分類する", () => {
-    expect(classifyPortraitFile("default.svg")).toBe("svg")
-    expect(classifyPortraitFile("DEFAULT.SVG")).toBe("svg")
-  })
-
-  it("既知のラスタ拡張子は raster として分類する", () => {
-    expect(classifyPortraitFile("default.png")).toBe("raster")
-    expect(classifyPortraitFile("default.gif")).toBe("raster")
-    expect(classifyPortraitFile("default.jpg")).toBe("raster")
-    expect(classifyPortraitFile("default.jpeg")).toBe("raster")
-    expect(classifyPortraitFile("default.webp")).toBe("raster")
+describe("portraitImageMimeType", () => {
+  it("拡張子ごとの MIME タイプを返す（SVG は charset つき・大文字の拡張子も同じ）", () => {
+    expect(portraitImageMimeType("default.svg")).toBe("image/svg+xml; charset=utf-8")
+    expect(portraitImageMimeType("DEFAULT.SVG")).toBe("image/svg+xml; charset=utf-8")
+    expect(portraitImageMimeType("a.png")).toBe("image/png")
+    expect(portraitImageMimeType("a.jpg")).toBe("image/jpeg")
+    expect(portraitImageMimeType("a.jpeg")).toBe("image/jpeg")
+    expect(portraitImageMimeType("a.gif")).toBe("image/gif")
+    expect(portraitImageMimeType("a.webp")).toBe("image/webp")
   })
 
   it("characterAssetPath が返した URL（?v= 付き）でも拡張子を見失わない", () => {
-    expect(classifyPortraitFile(characterAssetPath("tsukumo-spirit", "default.svg", "1"))).toBe(
-      "svg",
+    expect(portraitImageMimeType(characterAssetPath("tsukumo-spirit", "default.svg", "1"))).toBe(
+      "image/svg+xml; charset=utf-8",
     )
-    expect(classifyPortraitFile(characterAssetPath("local", "default.png", "1"))).toBe("raster")
+    expect(portraitImageMimeType(characterAssetPath("local", "default.png", "1"))).toBe("image/png")
   })
 
   it("知らない拡張子・拡張子が無いときは undefined（立ち絵なしにフォールバック）", () => {
-    expect(classifyPortraitFile("default.bmp")).toBeUndefined()
-    expect(classifyPortraitFile("default")).toBeUndefined()
-  })
-})
-
-describe("rasterMimeType", () => {
-  it("拡張子ごとの MIME タイプを返す", () => {
-    expect(rasterMimeType("a.png")).toBe("image/png")
-    expect(rasterMimeType("a.jpg")).toBe("image/jpeg")
-    expect(rasterMimeType("a.jpeg")).toBe("image/jpeg")
-    expect(rasterMimeType("a.gif")).toBe("image/gif")
-    expect(rasterMimeType("a.webp")).toBe("image/webp")
-  })
-
-  it("svg・未知の拡張子は undefined", () => {
-    expect(rasterMimeType("a.svg")).toBeUndefined()
-    expect(rasterMimeType("a.bmp")).toBeUndefined()
+    expect(portraitImageMimeType("default.bmp")).toBeUndefined()
+    expect(portraitImageMimeType("default")).toBeUndefined()
   })
 })

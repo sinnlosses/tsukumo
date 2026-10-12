@@ -25,7 +25,7 @@ type Story = StoryObj<typeof meta>
 
 export const Svg = {} satisfies Story
 
-/** ラスタは `<img>` で出す。 */
+/** SVG もラスタも `<img>` で出す。 */
 export const Raster = {
   args: {
     url: characterAssetPath("tsukumo", "proud.png", undefined),
