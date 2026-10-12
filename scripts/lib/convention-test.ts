@@ -3,7 +3,7 @@
 import { DOCUMENT_CHECK_TEST_FILES } from "./check-stage.ts"
 
 export const CONVENTION_TEST_FILES = [
-  "test/architecture.test.ts",
+  "test/architecture/",
   "test/function-order.test.ts",
   ...DOCUMENT_CHECK_TEST_FILES,
 ] as const

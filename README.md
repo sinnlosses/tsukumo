@@ -343,7 +343,7 @@ node scripts/diagnostic.ts     # 診断ログ（~/.tsukumo/diagnostic/）を時�
 
 `main` への push では GitHub Actions（`.github/workflows/ci.yml`）が typecheck・lint・format:check・
 単体テストを走らせます。Node と pnpm の版は `mise.toml` から入れます。E2E と目視は手元にだけ残します。
-Beads の読み手の単体テストが使う `bd` は CI が版を固定して別に入れ、`test/architecture.test.ts` が
+Beads の読み手の単体テストが使う `bd` は CI が版を固定して別に入れ、`test/architecture/test-suite.test.ts` が
 CI に無い外部コマンドを起こすテストを検査で落とします。
 
 **ブラウザに出た絵は自動テストで守りません。** 配信（バインド先・経路・push）まではテストし、
@@ -374,7 +374,7 @@ CI に無い外部コマンドを起こすテストを検査で落とします�
 │   ├── session-start.ts    # セッションを1つ起こす（機能ごとの組み立てを結ぶ）
 │   └── wiring/             # 機能ごとの組み立て
 │                           #   ※ src/ 直下と wiring/ は配線層。全層を import してよい唯一の場所
-├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ architecture.test.ts）
+├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ 層の検査の architecture/）
 ├── story/                  # Storybook の story（src/ と同じディレクトリ構成。設定は .storybook/）
 ├── characters/             # キャラクター定義と素材（tsukumo-spirit が既定、local/ は .gitignore）
 ├── plugin/                 # セッションに載せる同梱の Claude Code プラグイン（token-usage-diet）
@@ -387,7 +387,7 @@ CI に無い外部コマンドを起こすテストを検査で落とします�
 └── package.json
 ```
 
-**層はディレクトリで表し、許した依存の辺以外は `test/architecture.test.ts` が落とします。**
+**層はディレクトリで表し、許した依存の辺以外は `test/architecture/` が落とします。**
 各ファイルの責務はそのファイルの冒頭のコメントが正典です。機能の一覧と置き場所の基準は
 [`docs/architecture.md`](./docs/architecture.md)「サーバの機能と、機能どうしの辺」「ディレクトリ」にあります。
 

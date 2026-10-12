@@ -99,7 +99,7 @@ import するので、食い違うと入口を別のモジュールとして読�
   （タスクのモーダルの詳細・サイドバーののぞき窓）を使い、描画一式の `renderer/markdown-renderer.tsx`・`task-body.tsx` を直接
   import しない（すると一式が入口に戻る）。読み込みの状態の持ち方は2つとも `hooks/deferred-module.ts` の `deferredModule`。
   外から引く口の `markdown.tsx` が遅延読み込みの側で、描画一式は中の `renderer/` に入るので、描画一式を外から直に
-  import すると部品の境界の検査（`test/architecture.test.ts` の `componentBoundaryViolations`）が落とし、口から
+  import すると部品の境界の検査（`test/architecture/browser-box.test.ts` の `componentBoundaryViolations`）が落とし、口から
   `renderer/` を再エクスポートすると再エクスポートの検査が落とす
 - 読み込みは `main.tsx` が最初の描画の前に `loadMarkdown()`・`loadTaskBody()` で1回ずつ起こし、済んだことを zustand の
   store に持つ。読み終わっていれば同じ描画で本体を出し、まだなら高さを持たない空の器に `aria-busy="true"` を出す。
@@ -207,7 +207,7 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   呼び出し側は同じ property を書かない。呼び出し側に譲る既定（`margin: 0` など）は `:where()` の中に書く
   （詳細度0なので読み込み順に関係なく呼び出し側が勝つ。`theme.css` が要素の選択子で書く property は
   入れない）。呼び出し側が渡すのは**置き方**と**語彙に無い見た目**だけ。**`className` に渡すのは
-  `styles["…"]`（2枚読むときは `<箱の名前>Styles["…"]`）の字面だけ**で、重なりは `test/architecture.test.ts`「components/ui/ の部品の className」が見る
+  `styles["…"]`（2枚読むときは `<箱の名前>Styles["…"]`）の字面だけ**で、重なりは `test/architecture/style.test.ts`「components/ui/ の部品の className」が見る
 - **画面固有の値を持つもの（`--usage-*`・`--diary-gold-*`）は部品を使わず、機能の CSS のまま残す**
   （部品の語彙と画面の語彙が1つの要素の上で競る）。**段に乗らない値も丸めない**——部品に置き換えても
   画面の見た目は変えないのが既定で、丸めると決めたら変わる画面を目視で確かめる

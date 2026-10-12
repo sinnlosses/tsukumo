@@ -26,7 +26,7 @@ describe("withConventionTests", () => {
   test("渡したファイルが規約のテストなら重ねない", () => {
     const result = withConventionTests(["test/task-id.test.ts"])
     expect(result.filter((arg) => arg === "test/task-id.test.ts")).toHaveLength(1)
-    expect(result).toContain("test/architecture.test.ts")
+    expect(result).toContain("test/architecture/")
   })
 
   test("フラグの値（-t パターン）は絞り込みに数えない", () => {

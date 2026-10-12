@@ -2,7 +2,7 @@
 
 **このファイルには、毎回の手の動き（コードを書く・テストを走らせる・コミットする）に付いてくる
 規則だけを1行ずつ置く。** 理由・例外・手順は正典にあり、末尾の「索引」から引く。
-機械が検査している規則（lint・`test/architecture.test.ts`・hook）は索引にだけ載せる。
+機械が検査している規則（lint・`test/architecture/`・hook）は索引にだけ載せる。
 
 ## 対話言語
 
@@ -63,7 +63,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 - **原則1**: **Claude Code の TUI を使わない**（上の IMPORTANT）
 - **原則2**: `shared` / `server` / `browser` の3層。サーバは機能ごとに
   `src/server/<機能>/{core,adapter}/` で、**`core → adapter` は禁止**（`docs/architecture.md`
-  「サーバの機能と、機能どうしの辺」。許した辺以外は `test/architecture.test.ts` が落とす）
+  「サーバの機能と、機能どうしの辺」。許した辺以外は `test/architecture/` が落とす）
 - **原則3**: ホスト・外部コマンド・OS に触るものは **`adapter/` の1ファイルに閉じ込める**。
   Agent SDK だけは機能の `adapter/` の `sdk-` で始まるファイル群に閉じ込める
 - **原則4**: **キャラクターの中身をコードに書かない**（素材と表情の対応は定義ファイル側）

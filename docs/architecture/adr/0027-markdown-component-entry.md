@@ -48,7 +48,7 @@
       report-notation.module.css sanitize-schema.ts task-check.ts theme-color.ts vendor-script.ts
   ```
 
-  `test/architecture.test.ts` の `PAGE_CONCEPT_DIRECTORIES` は `markdown` を `renderer` に替える。
+  `test/architecture/browser-box.test.ts` の `PAGE_CONCEPT_DIRECTORIES` は `markdown` を `renderer` に替える。
   `vite.config.ts` の `chunkFileNames` は `[name].js` なので、描画一式のチャンクの名前は `markdown.js` から
   `markdown-renderer.js` に変わる
 
@@ -60,7 +60,7 @@
     外の4つの読み手が使う class は `.detail-block` だけ。入口の `markdown.tsx` がその class 名を名前を付けて
     公開し、外の読み手は CSS を import しない。ファイルは `renderer/` に入れる
 - **描画一式を直接 import しない決まりは、部品の境界の検査が守る。** `componentBoundaryViolations`
-  （`test/architecture.test.ts`）は `from "…"` を辺に数え、`import()` は数えないので、入口が `import()` で
+  （`test/architecture/browser-box.test.ts`）は `from "…"` を辺に数え、`import()` は数えないので、入口が `import()` で
   `renderer/` を読むのは通り、部品の外から `renderer/` を直に引くと落ちる
 - `features/task-board/` の `deferred-task-body.tsx` はページの形の外（入口の決まりが無い）なので変えない
 

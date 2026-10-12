@@ -69,11 +69,11 @@
   揺れが毎回落ちるようになり、移行の差分ごと戻すことになる
 - **新しい部品・フック・`domain/` を足すタスクの計画では、置き場を `docs/architecture.md`「ページの形」の
   表と入れ子の段数で確かめてから `## やること` に書く。** 子部品の `components/` の下（孫部品）に置く
-  計画は、実装の途中で `test/architecture.test.ts`「components/page/ の形」の検査（入れ子は2段まで・
+  計画は、実装の途中で `test/architecture/browser-box.test.ts`「components/page/ の形」の検査（入れ子は2段まで・
   部品のディレクトリの外から引いてよいのは `<部品>.tsx` だけ）に落ち、置き場を作り直すことになる
 - **`components/page/` へ移すタスクは、移し先をページの形で書く。** 「6ファイルを
   `conversation-layout/` へ」のように置き場所だけ書くと、直下に置くか `components/` や
-  `hooks/`・`domain/` の下に置くかが不明で、`test/architecture.test.ts`「components/page/ の形」の検査に
+  `hooks/`・`domain/` の下に置くかが不明で、`test/architecture/browser-box.test.ts`「components/page/ の形」の検査に
   落ちる。対象ファイルを `components/<部品>/`・`domain/`・`hooks/` の層ごとに分けて書き、タスク本文で
   各層の対応を明示する（ページの形は `docs/architecture.md`「ページの形」）。置き場所だけの指示では
   直下に置かれ、この検査に落とされて同じファイルを何度も直すことになった

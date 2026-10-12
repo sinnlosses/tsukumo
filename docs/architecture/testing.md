@@ -24,7 +24,7 @@
 | コマンドの受け手（`createCommandRouter`） | 偽の `CommandSession`（姿は本物の reducer で畳む）を渡し、断る条件（契約の `meta`）・受け手が口へ渡す入力・失敗の定型文の理由・流すイベント・頼む起こし直しの中身                   | `test/router.test.ts`                                    |
 | `server`（ws）                            | 購読 → `hello` が先に届き、押した順に取りこぼさず流れる、切断で購読が外れる、トークン無しは 403、Origin 違いは 403、コマンド → 受け手が呼ばれる                                     | `test/server/view-server/adapter/session-socket.test.ts` |
 | browser の部品                            | Vitest + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                                                                                | `test/browser/**`                                        |
-| 層の検査                                  | 層の辺・機能どうしの辺・browser の箱と領域の辺（`docs/architecture.md`「全体構成」）。外部ツールは増やさない                                                                        | `test/architecture.test.ts`                              |
+| 層の検査                                  | 層の辺・機能どうしの辺・browser の箱と領域の辺（`docs/architecture.md`「全体構成」）。外部ツールは増やさない                                                                        | `test/architecture/`                                     |
 | 関数の並びの検査                          | `export` する関数が `export` しない関数より前に並ぶ（`docs/coding-standards.md`「関数の並び順」）                                                                                   | `test/function-order.test.ts`                            |
 | 画面の見た目                              | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目                                                      | `scripts/`（本体から呼ばれない）                         |
 | 状態のカタログ                            | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                                                                        | `scripts/capture-catalog.ts`                             |
@@ -35,7 +35,10 @@
   確かめられないのは**ブラウザに出た絵**の側
 - **`pnpm run test <ファイル>` は、渡したファイルに加えて規約のテスト（`CONVENTION_TEST_FILES`）も走らせる。**
   リポジトリ全体を読むので、変えたファイルとは別のテストが落ちうる。文書だけの変更で `pnpm run check` が打つ
-  文書の検査は `pnpm run test:document` で、この一覧のうち `test/architecture.test.ts` を除いたもの
+  文書の検査は `pnpm run test:document` で、この一覧のうち層の検査（`test/architecture/`）と関数の並びの検査を除いたもの。
+  層の検査は塊ごとのファイルに分かれているので、一覧はファイルを並べずにディレクトリ `test/architecture/` を1つ指す。
+  vitest は渡した文字列をパスの部分一致の絞り込みとして読むので、ディレクトリの中のファイルがすべて走り、
+  そのうちの1つを別に渡しても二重には走らない（ファイルを足しても一覧を直さずに済む）
 - **`orca-host.ts` は自動テストの対象外。** 実際に Orca が動いていないと結果を確かめられない。
   ここに判断を書きたくなったら、それは「決める」側に置くべきものが漏れている合図
 
@@ -148,7 +151,7 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
 - **サーバの時計は `TSUKUMO_FIXED_CLOCK` で凍らせる**（進む時計だと `at` と「N 秒」が走らせるたびに
   ずれる。経過の計算は `shared` の単体テストが守る）
 - **`Temporal.Now` を読むのはサーバの `src/server/adapter/local-time.ts` と、ブラウザの
-  `src/browser/utils/clock.ts` の2つだけ**で、`test/architecture.test.ts` がそれを縛る（固定が黙って
+  `src/browser/utils/clock.ts` の2つだけ**で、`test/architecture/clock.test.ts`「Temporal.Now を読む箇所」がそれを縛る（固定が黙って
   効かなくならないように）
 - **ブラウザの時計は E2E の側だけで差し替える**（`page.clock` は `Temporal.Now` を差し替えないので、
   初期スクリプトで `Temporal.Now.instant()` を `Date.now()` に従わせる。本番のコードに試験用の口を作らない）。

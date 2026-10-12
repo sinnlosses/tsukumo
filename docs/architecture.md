@@ -114,7 +114,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 
 **層はパッケージ（pnpm workspace）には割らない。** `package.json` は1つのまま、層をディレクトリで表す。
 パッケージの境界が足す検査は「宣言していない依存を解決できない」ことだけで、辺の検査は割っても
-`test/architecture.test.ts` が要るため。比べた案と、割る目安は `docs/research/package-split.md`。
+`test/architecture/` が要るため。比べた案と、割る目安は `docs/research/package-split.md`。
 
 | 層               | 置くもの                                                                                                                                                                                                                                                                                        | import してよい先                                       | 実行場所         |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------------- |
@@ -134,7 +134,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   `server/host/core/host.ts`）
 - **`shared` は `node:` も `document` も触らない。** 好みではなく**物理的な制約**で、`shared` は
   サーバとブラウザの両方で読み込まれるので、片方にしか無い API に触れた時点でもう片方で動かなくなる
-- 許した辺以外は `test/architecture.test.ts` が落とす（層の辺は上の4本。サーバ側の機能どうしの辺は
+- 許した辺以外は `test/architecture/layer.test.ts` が落とす（層の辺は上の4本。サーバ側の機能どうしの辺は
   次の節の表）
 
 ### サーバの機能と、機能どうしの辺
@@ -200,7 +200,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）
 - **機能を足すときは、検査の機能の一覧と下の表に足す**（知らない機能のディレクトリと、
   `core/` `adapter/` の外に置いたファイルと、表と `SERVER_FEATURE_IMPORTS` のずれは
-  `test/architecture.test.ts` が落とす）
+  `test/architecture/layer.test.ts` が落とす）
 
 | 機能（import する側） | 読んでよい機能                                                                                                                                 |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -215,7 +215,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `achievement`         | `repository`                                                                                                                                   |
 | そのほか              | —（葉。`report` `token-usage` `plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation`） |
 
-表は `test/architecture.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
+表は `test/architecture/layer.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
 辺が `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。
 
 #### コマンドの受け手と手続きの置き方
@@ -262,7 +262,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 
 `/prompt-image/<id>`・`/report-image/<toolUseId>/<path>`（どちらも `<img src>` で読む）と静的な配信は HTTP の経路のまま。
 
-**許す依存の辺**（`test/architecture.test.ts` が見る）:
+**許す依存の辺**（`test/architecture/layer.test.ts` が見る）:
 
 | 辺                                    | 許す場所                                                                                                                |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
@@ -307,7 +307,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   直下の `frame.ts` `command.ts` は機能から読んでよい（断る理由 `FRAME_ERROR_REASON` と、権限・モデル・
   思考の段の語彙を持つため）
 - **機能を足すときは、サーバの機能の一覧に先にあること**。shared の機能の一覧・直下のファイルの一覧・
-  機能どうしの輪は `test/architecture.test.ts` が見る
+  機能どうしの輪は `test/architecture/layer.test.ts` が見る
 
 **ブラウザ側とは対応させない。** `src/browser/` は画面と領域（「`src/browser/` の箱と、置く基準」）で割り、
 shared の機能の名前には揃えない。ブラウザの部品は要る語彙を `shared/<機能>/<概念>.ts` から直に
@@ -376,7 +376,7 @@ kebab-case のファイル名・barrel file を作らない・`@/` を使わな�
 （テストと同じ写し方）。`src/browser/` は配る束の中身だけにしておき、上の箱と機能の辺の検査が
 story を読み手として数えないようにするため。story が import してよいのは `src/browser/` と
 `src/shared/` だけ（ブラウザで描くので browser の層と同じ）。置き場と辺は
-`test/architecture.test.ts`（`describe("story の置き場", …)`）が見る。ファイル名の接尾辞は
+`test/architecture/story.test.ts`（`describe("story の置き場", …)`）が見る。ファイル名の接尾辞は
 単数形の `.story.tsx`（原則5。Storybook は `.stories` と `.story` のどちらも読む）。
 
 **ページの形**（`components/page/<ページ>/`）:
@@ -422,7 +422,7 @@ components/page/<ページ>/
   `components/app/layout.tsx` がその `<部品>.tsx` を直に import する。**`<部品>.tsx` は自分の `components/` と
   概念のディレクトリの中を `export … from` で再エクスポートしない**（`hooks/` と `domain/` の型は可）
 - 会話の画面は**1ページ**で、4つの領域のうち、メインビュー・キャラビュー・入力欄（`dispatch/`）は `conversation/components/` の下、サイドバーは `domain/sidebar/` の部品。検査は
-  `test/architecture.test.ts`（`describe("components/page/ の形", …)`）
+  `test/architecture/browser-box.test.ts`（`describe("components/page/ の形", …)`）
 
 **`src/browser/` の箱と、置く基準**（判断に迷ったら「その機能しか読まないなら機能の中」が既定。
 領域も同じ）:
@@ -458,12 +458,12 @@ components/page/<ページ>/
   `lib/` へ上げる**。上げる引き金は「2つ目の読み手が出たとき」で、1つの領域しか読まないものは領域の中に残す
 - **引き金は逆にも引く。** 読み手が1つの領域だけに戻ったら、その中へ**下ろす**。`browser/lib/` と
   `browser/domain/`、`components/domain/` の直下に「1つの領域（機能）だけが読むファイル」が無いことは
-  `test/architecture.test.ts` が見る（どの領域・機能も読まないものは対象外）
+  `test/architecture/browser-box.test.ts` が見る（どの領域・機能も読まないものは対象外）
 - **`domain/` と `lib/` の線は、tsukumo の語彙を名乗るか、固有のライブラリ（`orpc` のような）を
   包むかで引く。** `domain/appearance-color.ts` は `localStorage` を包むが名前が指すのは**画面の色**
   なので `domain/`、`domain/tool-summary.ts` は純関数で `remeda`（用途を問わない汎用ライブラリ）しか
   使わず、`shared/` の型にも依存する（`utils/` の歯止め3を満たさない）ので、`lib/` ではなく `domain/`
-- 検査は `test/architecture.test.ts`（領域と置かれる機能の一覧が横の辺を、箱の一覧が縦の辺を落とす）
+- 検査は `test/architecture/browser-box.test.ts`（領域と置かれる機能の一覧が横の辺を、箱の一覧が縦の辺を落とす）
 
 ### 領域の機能と、置かれる機能
 
@@ -592,7 +592,7 @@ components/page/<ページ>/
   （「JSONL を1行ずつ読む」）で、読み手が1つの機能だけならその機能の `adapter/lib/`、2つ以上なら共有の
   `server/adapter/lib/`
 - `core/lib/` に入れてよいのは **`node:` を要求しない技術**だけ。`shared/lib/` は**両方の実行環境で動く技術**だけ
-- **`src/browser/utils/` の辺は `test/architecture.test.ts` が見る**（箱の辺と歯止め1）。他の層に `utils/` を
+- **`src/browser/utils/` の辺は `test/architecture/browser-box.test.ts` が見る**（箱の辺と歯止め1）。他の層に `utils/` を
   作るときも、同じ検査を足す。**ライブラリに依存しない小物は、`utils/` を作る前に remeda（`docs/architecture/build.md`）にあるかを見る**
 
 ## 新しいコードを置く場所
@@ -633,7 +633,7 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
   `core` と `adapter` に割り、機能どうしの辺は「全体構成」の表にある組だけにする。`shared` に置くのは両側の契約と、`SessionState` から純粋に導ける
   ものだけで、「受け取る／決める／描く」という役割の分割ではない。**サーバ側は判断（`core`）と
   外の世界に触る境界（`adapter`）に割れていて、`core → adapter` は禁止**（結ぶのは `src/` 直下と
-  `src/wiring/` の配線だけ）。**許した依存の辺以外は `test/architecture.test.ts` が落とす**
+  `src/wiring/` の配線だけ）。**許した依存の辺以外は `test/architecture/` が落とす**
 - **原則3**: ホスト（ターミナル環境）・外部コマンド・OSに依存するものは
   **`adapter/`（機能の中か共有の箱）の1ファイルに閉じ込める**（1ファイル = 1つの境界）。ホストが Orca から
   別のものに変わっても、差し替えがここだけで済むようにする
@@ -643,7 +643,7 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
   ファイル名で決める: 機能の `adapter/` 直下の `sdk-` で始まるファイルだけ**（いまは
   `session-driver/`・`chat/`・`diary/`・`recommendation/`）。一覧ではなく
   名前で決めるのは、ファイルを足しても検査を直さずに済み、名前で SDK の境界を名乗らずに import
-  すれば `test/architecture.test.ts` が落とすから。`adapter/sdk/` のようなディレクトリに切らない
+  すれば `test/architecture/outside-world.test.ts` が落とすから。`adapter/sdk/` のようなディレクトリに切らない
   のは、`adapter/` の直下が境界の並びで、その下の段は境界を名乗らない `lib/` だけと決めてある
   から（「`lib/` と `utils/` に置く基準」）。**SDK の境界を1つの機能にまとめない**
   のは、日記を書かせる使い捨ての `query()` が日記の判断とだけ組になっていて、駆動の側に

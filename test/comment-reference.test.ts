@@ -22,8 +22,8 @@ const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url)).replace(/\
 
 const SCANNED_ROOTS = ["src", "test", "scripts"] as const satisfies readonly string[]
 
-// 置き場所そのものを検査するテストで、コメントに出るパスは指し先ではなく検査の中身。
-const SOURCE_FILE_NAME_EXEMPT = new Set(["test/architecture.test.ts"])
+// 置き場所そのものを検査するテストの置き場で、コメントに出るパスは指し先ではなく検査の中身。
+const SOURCE_FILE_NAME_EXEMPT = "test/architecture/"
 
 // ディレクトリつき・相対パスつきのファイル名も1つとして拾う。
 const SOURCE_FILE_NAME = /[\w./@-]*[\w-]\.tsx?(?![\w.])/g
@@ -83,7 +83,7 @@ function hasViolation(path: string): boolean {
 /** ファイル1つの違反を `パス:行: 中身` の形で返す。 */
 function violationsOf(path: string): readonly string[] {
   const lines = readFileSync(`${REPOSITORY_ROOT}/${path}`, "utf8").split("\n")
-  const checksFileName = !SOURCE_FILE_NAME_EXEMPT.has(path)
+  const checksFileName = !path.startsWith(SOURCE_FILE_NAME_EXEMPT)
   return commentLineIndexes(lines).flatMap((index) => {
     const line = lines[index] ?? ""
     const found = [

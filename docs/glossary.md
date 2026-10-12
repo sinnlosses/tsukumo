@@ -1479,7 +1479,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   置き場所。**1ファイル = 1つの境界**。判断は持たず、`core` から呼ばれるか `cli.ts` が結ぶ
 - **注記**: インターフェースは**実装が2つあるもの（駆動・ホスト）にだけ** `core` に置く
   （`session-driver/core/session-driver.ts` / `host/core/host.ts`）。`core → adapter` の import は
-  `test/architecture.test.ts` が落とす
+  `test/architecture/layer.test.ts`「層と依存の向き」が落とす
 - **避ける言い方**: インフラ層、外界、helpers
 
 ### フレーム
