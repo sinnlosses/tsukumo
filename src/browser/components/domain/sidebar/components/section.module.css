@@ -30,7 +30,7 @@
 /* 区画の見出し。字は `Heading` が持ち、ここに残すのは置き方だけ（横並び・間隔）。 */
 .sidebar-block-heading {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.4rem;
   flex: 0 0 auto;
   margin: 0;
