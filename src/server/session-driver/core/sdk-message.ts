@@ -65,6 +65,8 @@ import {
  *   始まり・終わりの対を数えると、取りこぼしで「動いている」が居残る（SDK の型定義がそう勧めている）
  * - `task_notification` は顔ぶれには使わず、`tool_use_id` があるときだけ `background-tool-finished` にする（`tool_use_id` は Bash の `tool_use` の id と一致する。実測）。
  *   知らせのあとに claude が依頼なしで始める続きのターンは、ここではなく `withSelfStartedTurns` が `init` の届き方から起こす
+ * - メインの `assistant` の `message.model` と `init` の `model` / `permissionMode` は、`setting-confirmed`（見届けた合図）にも写す。
+ *   `<synthetic>` のような `<` で始まる値は本物のモデル名ではないので出さない
  * - `assistant` に乗る `local_command_run` が `{ command: "model", args }` の形のときだけ `model-changed` を出す。
  *   `command` が `model` 以外の局所コマンド（`/clear` など）や、形が崩れている・`args` が無いときは出さない。
  *   エイリアスとして知っているかどうかの検証はここでしない（`SessionState` の側で見る）
@@ -189,16 +191,38 @@ function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly
     return []
   }
 
+  const model = optionalString(message.model)
+  const permissionMode = optionalString(message.permissionMode)
   return [
     {
       kind: "session-info",
       sessionId: message.session_id,
-      model: optionalString(message.model),
-      permissionMode: optionalString(message.permissionMode),
+      model,
+      permissionMode,
       slashCommands: stringArray(message.slash_commands),
       terminalSlashCommands: stringArray(message.terminal_slash_commands),
     },
+    ...(model === undefined
+      ? []
+      : [{ kind: "setting-confirmed", setting: "model", value: model } as const]),
+    ...(permissionMode === undefined
+      ? []
+      : [{ kind: "setting-confirmed", setting: "permissionMode", value: permissionMode } as const]),
   ]
+}
+
+/** メインの `assistant` メッセージの `message.model`（応答したモデル）を、見届けたモデルにする。 */
+function modelConfirmedEvents(
+  message: unknown,
+  parentToolUseId: string | undefined,
+): readonly SessionEvent[] {
+  if (parentToolUseId !== undefined || !isPlainObject(message)) {
+    return []
+  }
+  const model = nonBlankString(message.model)
+  return model === undefined || model.startsWith("<")
+    ? []
+    : [{ kind: "setting-confirmed", setting: "model", value: model }]
 }
 
 /**
@@ -308,6 +332,7 @@ function assistantMessageEvents(
   return [
     ...assistantEvents(message.message, expressions, parentToolUseId),
     ...stepUsageEvents(message.message, parentToolUseId),
+    ...modelConfirmedEvents(message.message, parentToolUseId),
     ...modelChangeEvents(message.local_command_run),
     // `step-usage` より後ろに置く。
     // 畳み込みはステップの使用量を「モデルが応答した」合図にして API の不調を下ろすので、同じメッセージの `error` をその前に置くと消えてしまう。

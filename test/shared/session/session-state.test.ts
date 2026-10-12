@@ -502,6 +502,19 @@ describe("applySessionEvent", () => {
     expect(view.effort).toBe("high")
   })
 
+  it("permission-mode-changed と setting-confirmed はまだ状態を変えない", () => {
+    const before = apply({ kind: "effort-changed", effort: "low" })
+    const after = apply(
+      { kind: "effort-changed", effort: "low" },
+      { kind: "permission-mode-changed", mode: "plan" },
+      { kind: "setting-confirmed", setting: "effort", value: "high" },
+      { kind: "setting-confirmed", setting: "model", value: "opus" },
+      { kind: "setting-confirmed", setting: "permissionMode", value: "plan" },
+    )
+
+    expect(after).toEqual(before)
+  })
+
   it("plan が届くまでは undefined、届いたらそのまま持つ（docs/glossary.md「プラン」）", () => {
     expect(INITIAL_SESSION_STATE.plan).toBeUndefined()
 

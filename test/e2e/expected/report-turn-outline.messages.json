@@ -63,8 +63,9 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "effort-changed",
-      "effort": "medium"
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
     }
   },
   {
@@ -93,8 +94,9 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "effort-changed",
-      "effort": "medium"
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
     }
   },
   {
@@ -146,8 +148,9 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "effort-changed",
-      "effort": "medium"
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
     }
   },
   {
@@ -199,8 +202,9 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "effort-changed",
-      "effort": "medium"
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
     }
   },
   {
@@ -234,8 +238,9 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "effort-changed",
-      "effort": "medium"
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
     }
   }
 ]

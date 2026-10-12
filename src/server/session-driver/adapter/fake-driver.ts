@@ -283,11 +283,18 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
         passed.kind === "session-info" ? { ...passed, model, permissionMode } : passed,
       )
     }
-    // ターンが終わるたびに、そのとき効いている effort を読めたことにする（本物の `Stop` フック入力を疑似する）。
+    // ターンが終わるたびに、そのとき効いている effort を見届けたことにする（本物の `Stop` フック入力を疑似する）。
     // `callReview.pass` は通さない（差し戻しとは無関係）。
     if (event.kind === "turn-finished") {
-      options.onEvent({ kind: "effort-changed", effort })
+      options.onEvent({ kind: "setting-confirmed", setting: "effort", value: effort })
     }
+  }
+
+  // 次のターンの頭で、いま効いているモデル・effort・許可モードを見届けたことにする（本物の `init` とフック入力を疑似する）。
+  const confirmSettings = (): void => {
+    options.onEvent({ kind: "setting-confirmed", setting: "model", value: model })
+    options.onEvent({ kind: "setting-confirmed", setting: "effort", value: effort })
+    options.onEvent({ kind: "setting-confirmed", setting: "permissionMode", value: permissionMode })
   }
 
   // `waitForAnswer` の手の続きを、答え待ちが尽きるまで預かる。
@@ -383,6 +390,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     const turns = options.session.turns
     const scene = turns.length === 0 ? undefined : turns[playedTurns % turns.length]
     playedTurns += 1
+    confirmSettings()
     if (scene !== undefined) {
       play(scene.steps, 0)
     }
@@ -431,6 +439,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     setPermissionMode: (mode) => {
       permissionMode = mode
       emit({ kind: "session-info", ...sessionInfo() })
+      options.onEvent({ kind: "permission-mode-changed", mode })
       return Promise.resolve()
     },
     ended: () => ended,

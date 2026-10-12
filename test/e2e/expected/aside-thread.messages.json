@@ -147,8 +147,9 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "effort-changed",
-      "effort": "medium"
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
     }
   },
   {
@@ -179,6 +180,33 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
+      "kind": "setting-confirmed",
+      "setting": "model",
+      "value": "opus"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "setting-confirmed",
+      "setting": "permissionMode",
+      "value": "auto"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
       "kind": "speech",
       "text": "いまは委譲先が段2を進めているところ。落ちたものはまだ無いよ。",
       "expression": "default"
@@ -198,8 +226,9 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "effort-changed",
-      "effort": "medium"
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
     }
   }
 ]

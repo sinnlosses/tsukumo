@@ -66,9 +66,10 @@ export const sessionContract = {
   answer: commandBase.input(z.object({ id: z.string().min(1), answer: answerSchema })),
   setModel: commandBase.input(z.object({ model: z.enum(MODEL_ALIASES) })),
   /**
-   * effort を切り替える。セッション限りで、サーバは `applyFlagSettings({ effortLevel })` で SDK へ渡し、受け付けられたら `effort-changed` を流す。
+   * effort を切り替える。セッション限りで、サーバは `applyFlagSettings({ effortLevel })` で SDK へ渡し、受け付けられたら `effort-changed` を流す（効いたのを見届けた合図は別の `setting-confirmed`）。
    */
   setEffort: commandBase.input(z.object({ effort: z.enum(EFFORT_LEVELS) })),
+  /** 許可モードを切り替える。SDK が受け付けたら `permission-mode-changed` を流す。 */
   setPermissionMode: commandBase.input(z.object({ mode: z.enum(PERMISSION_MODES) })),
   /**
    * キャラクターから話しかけてもらう。文面はここを通らず、押した事実だけが届く。

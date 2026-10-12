@@ -7,7 +7,7 @@ import { z } from "zod"
 
 import type { CharacterInfo, CharacterPackEntry } from "../character-pack/character.ts"
 import type { Expression } from "../character-pack/expression.ts"
-import type { EffortLevel } from "../command.ts"
+import type { EffortLevel, PermissionMode } from "../command.ts"
 import type { DiaryEvent } from "../diary/diary.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
@@ -48,6 +48,12 @@ export type ModelEffortSupport = {
   readonly model: string
   readonly supportsEffort: boolean
   readonly effortLevels: readonly EffortLevel[]
+}
+
+/** `setting-confirmed` が運ぶ、どの設定をどの値で見届けたか。 */
+export type SettingConfirmation = {
+  readonly setting: "model" | "effort" | "permissionMode"
+  readonly value: string
 }
 
 /**
@@ -320,10 +326,19 @@ export type SessionEvent =
    */
   | { readonly kind: "model-effort-support"; readonly models: readonly ModelEffortSupport[] }
   /**
-   * いま効いている effort が分かった。
-   * 起こした直後（起こした値）・切り替えを受け付けたとき・ターンが終わるたび（`Stop` フック入力の `effort.level`）に届く。
+   * effort の値が決まった。起こした直後（起こした値）と、切り替えを受け付けたとき（`session.applyFlagSettings` が通ったとき）に届く。
+   * 「効いたのを見届けた」合図ではなく、そちらは {@link SettingConfirmation} を運ぶ `setting-confirmed`。
    */
   | { readonly kind: "effort-changed"; readonly effort: EffortLevel }
+  /** 許可モードの切り替えを受け付けた（`session.setPermissionMode` が通った）。`model-changed` / `effort-changed` と同じ受け付けの合図。 */
+  | { readonly kind: "permission-mode-changed"; readonly mode: PermissionMode }
+  /**
+   * モデル・effort・許可モードのどれかが効いているのを、SDK から届いた値で見届けた。値を運ぶだけで、受け付けた値と合うかは読む側が決める。
+   * 出どころは `assistant` の `message.model`（メインのみ）・`init` の `model` / `permissionMode`・
+   * フック入力（`PreToolUse` と `Stop`）の `effort.level` / `permission_mode`。
+   * effort に対応しないモデルでは `effort.level` が来ないので、effort のこの合図は出ない。
+   */
+  | ({ readonly kind: "setting-confirmed" } & SettingConfirmation)
   /**
    * タスクの一覧が変わった（Beads の課題を見て起こす）。
    * 起こしてから最初の見回りで必ず1回届く。読めない・消えたときは `tasks: { kind: "unknown" }`（{@link TaskSummaryResult}。サイドバーの「不明」表示に対応する）。

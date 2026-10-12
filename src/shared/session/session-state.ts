@@ -595,6 +595,10 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, modelEffortSupport: event.models }
     case "effort-changed":
       return { ...state, effort: event.effort }
+    case "permission-mode-changed":
+    case "setting-confirmed":
+      // 受け付けた・見届けた合図の畳み込みはまだ無い（画面の点を描くときに足す）。
+      return state
     case "request":
       return {
         ...beginTurn(state, at),

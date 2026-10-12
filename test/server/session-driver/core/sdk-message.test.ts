@@ -399,7 +399,26 @@ describe("toSessionEvents", () => {
         slashCommands: ["clear", "model"],
         terminalSlashCommands: ["doctor"],
       },
+      { kind: "setting-confirmed", setting: "model", value: "claude-opus-5" },
+      { kind: "setting-confirmed", setting: "permissionMode", value: "auto" },
     ])
+  })
+
+  it("メインの assistant の message.model を見届けたモデルにし、サブエージェントのものは出さない", () => {
+    const main = {
+      type: "assistant",
+      message: { model: "claude-opus-5", content: [] },
+    }
+    const sub = { ...main, parent_tool_use_id: "toolu_1" }
+
+    expect(toSessionEvents(main, EXPRESSIONS)).toContainEqual({
+      kind: "setting-confirmed",
+      setting: "model",
+      value: "claude-opus-5",
+    })
+    expect(
+      toSessionEvents(sub, EXPRESSIONS).filter((event) => event.kind === "setting-confirmed"),
+    ).toEqual([])
   })
 
   it("terminal_slash_commands が無いときは空配列にする", () => {

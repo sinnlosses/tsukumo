@@ -5,12 +5,18 @@ import { join } from "node:path"
 import { setImmediate } from "node:timers/promises"
 
 import type {
+  BaseHookInput,
   HookCallbackMatcher,
   HookEvent,
   SdkPluginConfig,
 } from "@anthropic-ai/claude-agent-sdk"
 
-import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../../shared/command.ts"
+import {
+  type EffortLevel,
+  isEffortLevel,
+  isPermissionMode,
+  type PermissionMode,
+} from "../../../shared/command.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
@@ -100,6 +106,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 export function preToolUseHooks(
   gateRaised: () => boolean,
   bandPosition: () => string,
+  onEvent: (event: SessionEvent) => void,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     PreToolUse: [
@@ -110,6 +117,9 @@ export function preToolUseHooks(
               return {}
             }
             const inSubagent = input.agent_id !== undefined
+            if (!inSubagent) {
+              confirmedSettingEvents(input).forEach(onEvent)
+            }
             if (judgeToolAgainstGate(input.tool_name, inSubagent, "").kind === "deny") {
               await setImmediate()
               const gated = judgeToolAgainstGate(input.tool_name, inSubagent, bandPosition())
@@ -181,9 +191,8 @@ const HANDBACK_PROMPT_HEAD = "<agent-message"
  * モードによらず常に登録する。effort を読む口は仕事でも雑談でも要るが、`report` の関所（`createReportGate`）で止めるのは仕事のときだけ。
  * `SubagentStop` には載せない（サブエージェントの `report` は捨てるので、渡し直させても画面に出ない。effort もメインの手元の値だけを読めばよい）。
  *
- * effort はブロック判定より先に読む。
- * `input.effort?.level` が {@link isEffortLevel} を通れば `effort-changed` を流す。
- * 帯に表示する値の源はここだけ（実測は `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」）。
+ * 見届けた設定（{@link confirmedSettingEvents}）はブロック判定より先に読む。
+ * 実測は `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」。
  *
  * 関所の判定の前に1回だけ macrotask を待つ。
  * SDK はフックの呼び出し（制御リクエスト）を読んだその場で処理し、それより前に届いたメッセージは列に積んで `relayMessages` の反復へ渡す。
@@ -203,10 +212,7 @@ export function stopHooks(
             if (input.hook_event_name !== "Stop") {
               return {}
             }
-            const level = input.effort?.level
-            if (level !== undefined && isEffortLevel(level)) {
-              onEvent({ kind: "effort-changed", effort: level })
-            }
+            confirmedSettingEvents(input).forEach(onEvent)
             if (mode.kind !== "work") {
               return {}
             }
@@ -218,4 +224,21 @@ export function stopHooks(
       },
     ],
   }
+}
+
+/**
+ * フック入力の `effort.level` と `permission_mode` を、見届けた設定（`setting-confirmed`）にする。
+ * 知らない値と、無いもの（effort に対応しないモデルでは `effort` ごと来ない）は出さない。
+ */
+function confirmedSettingEvents(input: BaseHookInput): readonly SessionEvent[] {
+  const level = input.effort?.level
+  const mode = input.permission_mode
+  return [
+    ...(level !== undefined && isEffortLevel(level)
+      ? [{ kind: "setting-confirmed", setting: "effort", value: level } as const]
+      : []),
+    ...(mode !== undefined && isPermissionMode(mode)
+      ? [{ kind: "setting-confirmed", setting: "permissionMode", value: mode } as const]
+      : []),
+  ]
 }

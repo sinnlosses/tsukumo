@@ -37,6 +37,8 @@ const SESSION_EVENT_KINDS = {
   "model-changed": true,
   "model-effort-support": true,
   "effort-changed": true,
+  "permission-mode-changed": true,
+  "setting-confirmed": true,
   "tasks-changed": true,
   "recommendation-changed": true,
   "welcome-greeting-changed": true,

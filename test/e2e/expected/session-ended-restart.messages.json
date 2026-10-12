@@ -60,6 +60,33 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
+      "kind": "setting-confirmed",
+      "setting": "model",
+      "value": "opus"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "setting-confirmed",
+      "setting": "permissionMode",
+      "value": "auto"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
       "kind": "request",
       "text": "終わる会話への依頼（架空の依頼）",
       "images": []

@@ -73,6 +73,19 @@ function collect(): {
   return { events, onEvent: (event) => events.push(event) }
 }
 
+/** 既定のまま起こしたセッションが、ターンの頭で見届ける3つ。 */
+function confirmedAtTurnStart(): readonly SessionEvent[] {
+  return [
+    { kind: "setting-confirmed", setting: "model", value: BUILTIN_SESSION_DEFAULT.model },
+    { kind: "setting-confirmed", setting: "effort", value: FAKE_DEFAULT_EFFORT },
+    {
+      kind: "setting-confirmed",
+      setting: "permissionMode",
+      value: BUILTIN_SESSION_DEFAULT.permissionMode,
+    },
+  ]
+}
+
 function tick(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 10))
 }
@@ -137,10 +150,11 @@ describe("startFakeSession", () => {
     // 先頭4件は起こした直後の分（プラン・effort の対応・既定の effort・opening の場面）。
     expect(sink.events.slice(4)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
+      ...confirmedAtTurnStart(),
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      // ターンが終わったので、いま効いている effort が読めたことになる（13.9「動き方の操作子」）。
-      { kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT },
+      // ターンが終わったので、いま効いている effort を見届けたことになる（13.9「動き方の操作子」）。
+      { kind: "setting-confirmed", setting: "effort", value: FAKE_DEFAULT_EFFORT },
     ])
   })
 
@@ -164,10 +178,44 @@ describe("startFakeSession", () => {
     // （プラン・effort の対応・既定の effort・opening の場面）。
     expect(sink.events.slice(4)).toEqual([
       { kind: "turn-started" },
+      ...confirmedAtTurnStart(),
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
-      { kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT },
+      { kind: "setting-confirmed", setting: "effort", value: FAKE_DEFAULT_EFFORT },
     ])
+  })
+
+  it("切り替えを受け付けたあと、次のターンの頭で切り替えた値を見届ける", async () => {
+    const sink = collect()
+    const driver = startFakeSession({
+      session: FAKE_SESSION,
+      scene: undefined,
+      sceneUntil: undefined,
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
+      expressions: [],
+      onEvent: sink.onEvent,
+    })
+    await tick()
+    await driver.setPermissionMode("plan")
+    await driver.setEffort("xhigh")
+    expect(sink.events).toContainEqual({ kind: "permission-mode-changed", mode: "plan" })
+    expect(sink.events.some((event) => event.kind === "setting-confirmed")).toBe(false)
+
+    driver.prompt("架空の依頼", [], "request")
+    await tick()
+    driver.close()
+
+    expect(sink.events).toContainEqual({
+      kind: "setting-confirmed",
+      setting: "permissionMode",
+      value: "plan",
+    })
+    expect(sink.events).toContainEqual({
+      kind: "setting-confirmed",
+      setting: "effort",
+      value: "xhigh",
+    })
   })
 
   it("session-ended の手を流したあとは ended が真になる", async () => {

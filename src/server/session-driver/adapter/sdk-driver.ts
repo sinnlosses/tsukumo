@@ -120,7 +120,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       hooks: withAskGuard(
         {
           ...stopHooks(options.mode, reportGate, options.onEvent),
-          ...preToolUseHooks(callReview.gateRaised, callReview.bandPosition),
+          ...preToolUseHooks(callReview.gateRaised, callReview.bandPosition, options.onEvent),
           ...handbackNoteHooks(callReview.takeHandbackNote),
         },
         options.mountWorkflowPlugin,
@@ -202,12 +202,14 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       }
     },
     // SDK が受け付けたら、その値を確認の合図として流す（`setModel` と同じ）。
-    // 次のターンの `Stop` フック入力から読んだ値が届けば、そちらで上書きされる。
     setEffort: async (effort) => {
       await session.applyFlagSettings({ effortLevel: effort })
       options.onEvent({ kind: "effort-changed", effort })
     },
-    setPermissionMode: (mode) => session.setPermissionMode(mode),
+    setPermissionMode: async (mode) => {
+      await session.setPermissionMode(mode)
+      options.onEvent({ kind: "permission-mode-changed", mode })
+    },
     ended: ending.ended,
     close: () => {
       delayWatch.discard()

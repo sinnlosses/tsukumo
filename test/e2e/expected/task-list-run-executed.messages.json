@@ -95,6 +95,33 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
+      "kind": "setting-confirmed",
+      "setting": "model",
+      "value": "opus"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "setting-confirmed",
+      "setting": "permissionMode",
+      "value": "auto"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
       "kind": "partial-utterance",
       "text": "## 疑似セッションのレポート\n\nこれは架空の本文で、実物の会話ではない。\n"
     }
@@ -174,8 +201,9 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "effort-changed",
-      "effort": "medium"
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
     }
   }
 ]

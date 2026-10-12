@@ -1,6 +1,11 @@
 import { join } from "node:path"
 
-import type { HookCallbackMatcher, HookEvent, StopHookInput } from "@anthropic-ai/claude-agent-sdk"
+import type {
+  BaseHookInput,
+  HookCallbackMatcher,
+  HookEvent,
+  StopHookInput,
+} from "@anthropic-ai/claude-agent-sdk"
 import { describe, expect, it } from "vitest"
 
 import { tsukumoHomeDir } from "../../../../src/server/adapter/tsukumo-home.ts"
@@ -175,8 +180,10 @@ async function runPreToolUse(
   agentId?: string,
   gateRaised: () => boolean = () => false,
   bandPosition: () => string = () => "",
+  onEvent: (event: SessionEvent) => void = () => {},
+  settings: Pick<BaseHookInput, "effort" | "permission_mode"> = {},
 ): Promise<unknown> {
-  const callback = preToolUseHooks(gateRaised, bandPosition).PreToolUse?.[0]?.hooks[0]
+  const callback = preToolUseHooks(gateRaised, bandPosition, onEvent).PreToolUse?.[0]?.hooks[0]
   expect(callback).toBeDefined()
   return callback?.(
     {
@@ -188,11 +195,59 @@ async function runPreToolUse(
       tool_input: toolInput,
       tool_use_id: "t-1",
       ...(agentId === undefined ? {} : { agent_id: agentId }),
+      ...settings,
     },
     "t-1",
     { signal: new AbortController().signal },
   )
 }
+
+describe("preToolUseHooks が見届けた設定を流す", () => {
+  it("メインの呼び出しでは effort.level と permission_mode を setting-confirmed にする", async () => {
+    const events: SessionEvent[] = []
+    await runPreToolUse(
+      "Read",
+      {},
+      undefined,
+      () => false,
+      () => "",
+      (event) => events.push(event),
+      { effort: { level: "high" }, permission_mode: "plan" },
+    )
+    expect(events).toEqual([
+      { kind: "setting-confirmed", setting: "effort", value: "high" },
+      { kind: "setting-confirmed", setting: "permissionMode", value: "plan" },
+    ])
+  })
+
+  it("effort が無い入力では effort を出さず、サブエージェントの中の呼び出しは何も出さない", async () => {
+    const mainEvents: SessionEvent[] = []
+    await runPreToolUse(
+      "Read",
+      {},
+      undefined,
+      () => false,
+      () => "",
+      (event) => mainEvents.push(event),
+      { permission_mode: "default" },
+    )
+    expect(mainEvents).toEqual([
+      { kind: "setting-confirmed", setting: "permissionMode", value: "default" },
+    ])
+
+    const subEvents: SessionEvent[] = []
+    await runPreToolUse(
+      "Read",
+      {},
+      "sub-1",
+      () => false,
+      () => "",
+      (event) => subEvents.push(event),
+      { effort: { level: "high" }, permission_mode: "plan" },
+    )
+    expect(subEvents).toEqual([])
+  })
+})
 
 describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツールを拒む）", () => {
   const DENIED = {
@@ -398,7 +453,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
     ).toEqual({})
   })
 
-  it("effort.level が読めたら effort-changed を流す（仕事でも雑談でも）", async () => {
+  it("effort.level が読めたら setting-confirmed（effort）を流す（仕事でも雑談でも）", async () => {
     const workEvents: SessionEvent[] = []
     await runStop(
       stopHooks(
@@ -409,7 +464,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
       false,
       "high",
     )
-    expect(workEvents).toEqual([{ kind: "effort-changed", effort: "high" }])
+    expect(workEvents).toEqual([{ kind: "setting-confirmed", setting: "effort", value: "high" }])
 
     const chatEvents: SessionEvent[] = []
     await runStop(
@@ -421,10 +476,10 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
       false,
       "low",
     )
-    expect(chatEvents).toEqual([{ kind: "effort-changed", effort: "low" }])
+    expect(chatEvents).toEqual([{ kind: "setting-confirmed", setting: "effort", value: "low" }])
   })
 
-  it("effort が無い・知らない段のときは effort-changed を流さない", async () => {
+  it("effort が無い・知らない段のときは setting-confirmed を流さない", async () => {
     const withoutEffort: SessionEvent[] = []
     await runStop(
       stopHooks(
