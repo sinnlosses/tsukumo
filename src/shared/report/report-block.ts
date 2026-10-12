@@ -25,7 +25,7 @@ const listBlockSchema = z.object({
     .enum(["bullet", "ordered", "check", "flow"])
     .describe(
       "bullet は発見の一覧（候補の採否は options、ファイルは files。項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び / " +
-        "flow は一本道で3段以上辿る流れ（A → B → C と書かず項目を段にする。分岐・合流・戻りがあるなら graph）",
+        "flow は段ごとに文が要る一本道（A → B → C と書かず項目を段にする。段の名前が短い一本道・分岐・合流・戻りがあるなら graph）",
     ),
   items: z
     .array(
@@ -201,8 +201,8 @@ const beforeAfterBlockSchema = z
     fold,
   })
   .describe(
-    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・設定や文言・構造の前後）。側ごとに image / code / points / graph / mermaid / svg のどれか（左右で違ってよい）。構造・呼び出しの前後は graph の側、時間の順の前後は mermaid の側。" +
-      "向きの無い2つは compare、1つの値の前後は table のセルの from / to か stats の before、行ごとの差分は code の diff、寸法の前後は dimension の before",
+    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・構造の前後）。1行の設定や文言の変更には使わない（1つの値の前後は table のセルの from / to）。ファイル名の箇条書きで変更を説明しない。側ごとに image / code / points / graph / mermaid / svg のどれか（左右で違ってよい）。構造・呼び出しの前後は graph の側、時間の順の前後は mermaid の側。" +
+      "向きの無い2つは compare、数の前後は stats の before、行ごとの差分は code の diff、寸法の前後は dimension の before",
   )
 
 const dimensionBefore = z.string().default("").describe("変わる前の値（前後を見せるときだけ）")
@@ -262,7 +262,9 @@ const statsBlockSchema = z
       .max(4),
     fold,
   })
-  .describe("結論に効く数（件数・前後の差）。数が2〜4個並び、その数自体が結論のとき")
+  .describe(
+    "結論に効く数（件数・前後の差）。数が2〜4個並び、その数自体が結論のとき。数を地の文に埋めない",
+  )
 
 const REPORT_OPTION_VERDICTS = ["adopt", "consider", "reject"] as const
 
@@ -368,7 +370,9 @@ const mermaidBlockSchema = z
       ),
     fold,
   })
-  .describe("時間の順（sequenceDiagram）・状態・クラス・ER など、flowchart 以外の図")
+  .describe(
+    "時間の順（sequenceDiagram）・状態・クラス・ER など、flowchart 以外の図。「まず…次に…」の地の文で書かない",
+  )
 
 const graphBlockSchema = z
   .object({
@@ -379,7 +383,7 @@ const graphBlockSchema = z
   })
   .superRefine(checkGraphReferences)
   .describe(
-    "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道なら list の flow）。flowchart はこれで書く",
+    "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道でも段の名前が短ければ graph）。flowchart はこれで書く",
   )
 
 export const REPORT_CHART_KINDS = ["bar", "line", "pie"] as const

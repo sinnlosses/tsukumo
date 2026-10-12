@@ -199,15 +199,11 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(beforeSend).toContain("`checks` へ移す")
   })
 
-  it("経路・構造・画面が変わった作業は、前後を beforeAfter で見せさせる", () => {
-    expect(article8).toContain("`beforeAfter`")
-    expect(article8).toContain("経路")
-    expect(article8).toContain("構造")
-    expect(article8).toContain("画面")
-    expect(article8).toContain("`beforeAfter` は、1行の設定や文言の変更には使わない")
+  it("前と後があるときは、選んだ塊を beforeAfter の側に入れさせる", () => {
+    expect(article8).toContain("選んだ塊を `beforeAfter` の側に入れる")
   })
 
-  it("条8の表の第一候補は、report ツールの塊の種類に実在する", () => {
+  it("条8の梯子の表の塊は、report ツールの塊の種類に実在する", () => {
     const rows = article8
       .split("\n")
       .map((line) => line.trim())
@@ -216,29 +212,17 @@ describe("REPORT_NOTATION_PROMPT", () => {
     const names = rows.flatMap((row) =>
       [...(row.split("|").at(2) ?? "").matchAll(/`([^`]+)`/g)].flatMap(([, name]) => name ?? []),
     )
-    // 塊の種類ではなく、塊の欄の名前
-    const fieldNames = ["notes", "before", "from", "to"]
-    const known: readonly string[] = [...REPORT_BLOCK_KINDS, ...REPORT_MERMAID_KINDS, ...fieldNames]
+    const known: readonly string[] = REPORT_BLOCK_KINDS
 
     expect(rows).toHaveLength(5)
-    for (const kind of [
-      "beforeAfter",
-      "image",
-      "mermaid",
-      "stats",
-      "table",
-      "chart",
-      "options",
-      "compare",
-    ]) {
+    for (const kind of ["image", "mermaid", "graph", "svg", "chart", "table", "list", "text"]) {
       expect(names).toContain(kind)
     }
     for (const name of names) {
       expect(known).toContain(name)
     }
-    expect(article8.replace(/^\s*\|.*$/gm, "")).not.toContain(
-      "呼び出しの経路・層やモジュールの構造・画面の見た目が変わった作業は",
-    )
+    expect(article8).toContain("迷ったら上の段で描く")
+    expect(article8).not.toContain("第一候補")
   })
 
   it("画像は、撮った画像があるときだけ優先させる", () => {
