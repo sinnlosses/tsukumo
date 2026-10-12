@@ -17,30 +17,35 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import process from "node:process"
 
 import type { Router } from "@orpc/server"
-import { BodyLimitPlugin, RPCHandler } from "@orpc/server/fetch"
+import type { RPCHandler } from "@orpc/server/fetch"
 import { isPlainObject } from "remeda"
 
 import {
   CHARACTER_ASSET_PATH_PREFIX,
   type CharacterAssetLocation,
-  readCharacterAssetPath,
 } from "../../../shared/character-pack/character-asset.ts"
-import {
-  readReportImageRoute,
-  REPORT_IMAGE_PATH_PREFIX,
-} from "../../../shared/report/report-image.ts"
+import { REPORT_IMAGE_PATH_PREFIX } from "../../../shared/report/report-image.ts"
 import { RPC_PATH, type rpcContract } from "../../../shared/rpc.ts"
-import {
-  parsePromptImage,
-  PROMPT_IMAGE_PATH_PREFIX,
-  promptImageIdSchema,
-} from "../../../shared/session-driver/prompt-image.ts"
+import { PROMPT_IMAGE_PATH_PREFIX } from "../../../shared/session-driver/prompt-image.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/view-server/session-socket.ts"
-import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../../shared/view-server/vendor-asset.ts"
+import { VENDOR_PATH_PREFIX } from "../../../shared/view-server/vendor-asset.ts"
 import type { UiBundle } from "./bundle.ts"
-import { type RpcContext, rpcContextOf } from "./rpc-guard.ts"
+import { createRpcHandler, serveRpc } from "./rpc-bridge.ts"
+import type { RpcContext } from "./rpc-guard.ts"
 import type { UiDevServer } from "./ui-dev-server.ts"
 import { createVendorAssetReader, type VendorAssetFile } from "./vendor-asset.ts"
+import {
+  ASSET_PATH_PREFIX,
+  styleSheetPath,
+  uiScriptPath,
+  writeBundledAsset,
+  writeCharacterAsset,
+  writeLayoutPage,
+  writeNotFound,
+  writePromptImage,
+  writeReportImage,
+  writeVendorAsset,
+} from "./view-response.ts"
 
 /**
  * 起動トークンを1つ作る。起動ごとに変わり、メモリにしか置かない（ディスクに書かない）。
@@ -55,47 +60,12 @@ export function createStartupToken(): string {
 export const LAYOUT_PATH = "/"
 
 /**
- * 自前のブラウザ側スクリプト（`src/browser/` を `vite build` でまとめたもの）と CSS を配る経路。
- * 成果物は `dist/browser/` にあり、起動のときに読んでメモリに持つ。
- * 入口から `import()` で分けたチャンクは、入口の隣（`/assets/<チャンクの名前>`）で配る。
- */
-const ASSET_PATH_PREFIX = "/assets/"
-const UI_SCRIPT_NAME = "ui.js"
-const STYLE_SHEET_NAME = "style.css"
-
-/**
  * ブラウザ側をどこから配るか。`bundle` は組み立て済みのスクリプトと CSS の対を `/assets/` から、
  * `dev` は Vite の開発サーバが入口から辿るモジュールを、ここの経路に無い要求として配る。
  */
 export type ViewUi =
   | { readonly kind: "bundle"; readonly bundle: UiBundle }
   | { readonly kind: "dev"; readonly devServer: UiDevServer }
-
-/**
- * ページの `script-src` 以外の CSP。
- * `style-src` の `'unsafe-inline'` は、mermaid が `innerHTML` で差す図の `<style>` 要素が要る。
- * `connect-src 'self'` は `/rpc` と、同じホスト・ポートの `ws:`（`/ws` と開発時の `/vite-hmr`）を覆う。
- */
-const PAGE_POLICY_DIRECTIVES: readonly string[] = [
-  "default-src 'self'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
-  "font-src 'self' data:",
-  "connect-src 'self'",
-  "object-src 'none'",
-  "base-uri 'none'",
-  "form-action 'self'",
-]
-
-/** 開発サーバは Vite が HMR の前置きを `<script>` の中身で差し込むので、そのときだけ `'unsafe-inline'` を許す。 */
-const PAGE_CONTENT_SECURITY_POLICY = {
-  bundle: [...PAGE_POLICY_DIRECTIVES, "script-src 'self'"].join("; "),
-  dev: [...PAGE_POLICY_DIRECTIVES, "script-src 'self' 'unsafe-inline'"].join("; "),
-} satisfies Record<ViewUi["kind"], string>
-
-/** `/character/` の SVG がページの外で直接開かれたときに、スクリプトを動かさず同じオリジンにも置かない。 */
-const CHARACTER_ASSET_CONTENT_SECURITY_POLICY =
-  "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
 
 /** `/character/<pack>/<file>` を1件配るために要るもの。中身はキャラクターパックを読むアダプタが決める。 */
 export type CharacterAssetFile = {
@@ -133,12 +103,6 @@ export type FindReportImage = (
 /** `/rpc` に載せるルータ（全機能の手続きを束ね、照合のミドルウェアを掛けたもの）。ここはどの手続きがあるかを知らない。 */
 export type RpcRouter = Router<typeof rpcContract, RpcContext>
 
-/**
- * `/rpc` の要求の本文の上限。手続きの入力は小さい JSON だけ（画像は `/ws` で運ぶ）なので、
- * 照合の前に大きな本文を読み込まされないように低く抑える。
- */
-const RPC_MAX_BODY_BYTES = 64 * 1024
-
 // 外から届かないようにループバックにだけバインドする。ここを 0.0.0.0 に変えない。
 const BIND_HOST = "127.0.0.1"
 
@@ -173,9 +137,7 @@ export type ViewServer = {
  * ポートが塞がっているときは reject する（起動時の前提不足なので、呼び出し側は即時終了する）。
  */
 export function startViewServer(port: number, options: ViewServerOptions): Promise<ViewServer> {
-  const rpcHandler = new RPCHandler(options.rpcRouter, {
-    plugins: [new BodyLimitPlugin({ maxBodySize: RPC_MAX_BODY_BYTES })],
-  })
+  const rpcHandler = createRpcHandler(options.rpcRouter)
   const readVendorAsset = createVendorAssetReader()
   const server = createServer((request, response) => {
     const path = (request.url ?? "/").split("?")[0] ?? "/"
@@ -253,7 +215,7 @@ const ROUTES = [
     method: "ANY",
     requiresToken: false,
     handle: (request, response, _path, { options }) =>
-      writeLayoutPage(request, response, options.ui()),
+      writeLayoutPage(request.url ?? LAYOUT_PATH, response, options.ui()),
   },
   {
     match: { kind: "exact", path: uiScriptPath() },
@@ -291,9 +253,9 @@ const ROUTES = [
     requiresToken: false,
     handle: (request, response, path, { options }) =>
       writeCharacterAsset(
-        request,
         response,
         path.slice(CHARACTER_ASSET_PATH_PREFIX.length),
+        queryValue(request, "v"),
         options.serveCharacterAsset,
       ),
   },
@@ -302,29 +264,31 @@ const ROUTES = [
     method: "GET",
     requiresToken: true,
     handle: (_request, response, path, { options }) =>
-      writePromptImage(response, path.slice(PROMPT_IMAGE_PATH_PREFIX.length), options),
+      writePromptImage(
+        response,
+        path.slice(PROMPT_IMAGE_PATH_PREFIX.length),
+        options.findPromptImage,
+      ),
   },
   {
     match: { kind: "prefix", prefix: REPORT_IMAGE_PATH_PREFIX },
     method: "GET",
     requiresToken: true,
     handle: (_request, response, path, { options }) =>
-      writeReportImage(response, path.slice(REPORT_IMAGE_PATH_PREFIX.length), options),
+      writeReportImage(
+        response,
+        path.slice(REPORT_IMAGE_PATH_PREFIX.length),
+        options.findReportImage,
+      ),
   },
   {
     match: { kind: "prefix", prefix: `${RPC_PATH}/` },
     method: "POST",
     requiresToken: false,
-    handle: (request, response, _path, runtime) => serveRpc(request, response, runtime),
+    handle: (request, response, _path, { options, rpcHandler, serverOrigin }) =>
+      serveRpc(request, response, { rpcHandler, startupToken: options.token, serverOrigin }),
   },
 ] as const satisfies readonly ViewRoute[]
-
-function uiScriptPath(): string {
-  return `${ASSET_PATH_PREFIX}${UI_SCRIPT_NAME}`
-}
-function styleSheetPath(): string {
-  return `${ASSET_PATH_PREFIX}${STYLE_SHEET_NAME}`
-}
 
 function matchesRoute(match: RouteMatch, path: string): boolean {
   return match.kind === "exact" ? path === match.path : path.startsWith(match.prefix)
@@ -363,257 +327,6 @@ function respond(
   route.handle(request, response, path, runtime)
 }
 
-/**
- * ページを配る。`dev` のときは開発サーバが HMR の client を差し込んだものを配り、
- * 差し込めなかったら 500 にする。
- */
-function writeLayoutPage(request: IncomingMessage, response: ServerResponse, ui: ViewUi): void {
-  if (ui.kind === "bundle") {
-    writeHtml(
-      response,
-      buildLayoutPage([styleSheetPath()], uiScriptPath()),
-      PAGE_CONTENT_SECURITY_POLICY.bundle,
-    )
-    return
-  }
-
-  ui.devServer
-    .transformPage(request.url ?? LAYOUT_PATH, buildLayoutPage([], ui.devServer.entryScriptPath))
-    .then(
-      (html) => writeHtml(response, html, PAGE_CONTENT_SECURITY_POLICY.dev),
-      () => {
-        response.writeHead(500, { "content-type": "text/plain; charset=utf-8" })
-        response.end("internal server error\n")
-      },
-    )
-}
-
-/**
- * 組み立て済みの束から1本を配る。ディスクには無いので、vendor と違ってファイルを読みに行かない。
- * `dev` のときは束を持っていないので 404。`pick` が `undefined` を返したとき（束に無い名前）も 404。
- */
-function writeBundledAsset(
-  response: ServerResponse,
-  ui: ViewUi,
-  contentType: string,
-  pick: (bundle: UiBundle) => string | undefined,
-): void {
-  const content = ui.kind === "bundle" ? pick(ui.bundle) : undefined
-  if (content === undefined) {
-    writeNotFound(response)
-    return
-  }
-
-  response.writeHead(200, {
-    "content-type": `${contentType}; charset=utf-8`,
-    "cache-control": "no-store",
-  })
-  response.end(content)
-}
-
-function writeNotFound(response: ServerResponse): void {
-  response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
-  response.end("not found\n")
-}
-
-/**
- * ページ本体。中身は `<div id="app">` だけ。
- * メインビュー・キャラビュー・サイドバー・入力欄のすべてが React の部品で、ブラウザ側の入口が1つの root として mount する。
- */
-function buildLayoutPage(ownStyleSheets: readonly string[], script: string): string {
-  const styleSheetLinks = [vendorAssetPath("highlight-theme.min.css"), ...ownStyleSheets]
-    .map((href) => `<link rel="stylesheet" href="${href}">`)
-    .join("\n")
-
-  return `<!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
-<title>tsukumo</title>
-${styleSheetLinks}
-</head>
-<body>
-<div id="app"></div>
-<script type="module" src="${script}"></script>
-</body>
-</html>
-`
-}
-
-/**
- * 外部ライブラリ（`createVendorAssetReader` の読み手が `node_modules` から読む）を配る。
- * 名前が指す中身の判断はそちらに任せ、ここは結果をそのまま配るか404にするだけ。
- * 依存が入っていなくても配信は続ける（表示物が1つ欠けても起動失敗にしない）。
- */
-function writeVendorAsset(
-  response: ServerResponse,
-  name: string,
-  readVendorAsset: ViewServerRuntime["readVendorAsset"],
-): void {
-  const asset = readVendorAsset(name)
-  if (asset === undefined) {
-    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
-    response.end("not found\n")
-    return
-  }
-
-  response.writeHead(200, { "content-type": asset.contentType, "cache-control": "max-age=3600" })
-  response.end(asset.content)
-}
-
-/**
- * `/character/<pack>/<file>` を配る。
- * 経路をパック名とファイル名に読み分けるのは `readCharacterAssetPath`（形が崩れていれば404）、名前が指す中身の判断（一覧・allowlist・ファイルの読み取り）は `serveCharacterAsset` に任せる。
- * ここは結果をそのまま配るか404にするだけ。
- */
-function writeCharacterAsset(
-  request: IncomingMessage,
-  response: ServerResponse,
-  rest: string,
-  serveCharacterAsset: ServeCharacterAsset,
-): void {
-  const location = readCharacterAssetPath(rest)
-  const asset =
-    location === undefined ? undefined : serveCharacterAsset(location, queryValue(request, "v"))
-  if (asset === undefined) {
-    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
-    response.end("not found\n")
-    return
-  }
-
-  response.writeHead(200, {
-    "content-type": asset.contentType,
-    "cache-control": asset.versioned ? "max-age=31536000, immutable" : "no-store",
-    "content-security-policy": CHARACTER_ASSET_CONTENT_SECURITY_POLICY,
-  })
-  response.end(asset.content)
-}
-
-/**
- * 依頼に添えた画像の原寸を1枚配る。起動トークンの照合は `respond` が済ませている（配るのは会話の内容）。
- * id の形が違う・棚に無い（記録の窓から落ちた・棚の上限で押し出された）ときは 404 で、どちらかは区別しない（ブラウザは 404 を受けてから控えに倒す）。
- *
- * data URL はここでデコードする（棚は受け取った data URL のまま持つ）。
- * `Content-Type` は受け取ったときのメディアタイプ（`PROMPT_IMAGE_MEDIA_TYPES` の4つ）。
- * ブラウザのディスクのキャッシュにも残さない（`no-store`）。
- */
-function writePromptImage(
-  response: ServerResponse,
-  rawId: string,
-  options: ViewServerOptions,
-): void {
-  const id = promptImageIdSchema.safeParse(rawId)
-  const dataUrl = id.success ? options.findPromptImage(id.data) : undefined
-  const image = dataUrl === undefined ? undefined : parsePromptImage(dataUrl)
-  if (image === undefined) {
-    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
-    response.end("not found\n")
-    return
-  }
-
-  response.writeHead(200, { "content-type": image.mediaType, "cache-control": "no-store" })
-  response.end(Buffer.from(image.base64, "base64"))
-}
-
-/**
- * レポートの `image` の塊の画像を1枚配る。起動トークンの照合は `respond` が済ませている（画面に会話の中身が写る）。
- * 経路は棚を引く鍵で、ここではファイルに触らない。形が崩れている・棚に無いときは 404。
- */
-function writeReportImage(
-  response: ServerResponse,
-  rest: string,
-  options: ViewServerOptions,
-): void {
-  const route = readReportImageRoute(rest)
-  const image =
-    route === undefined ? undefined : options.findReportImage(route.toolUseId, route.path)
-  if (image === undefined) {
-    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
-    response.end("not found\n")
-    return
-  }
-
-  response.writeHead(200, { "content-type": image.mediaType, "cache-control": "no-store" })
-  response.end(image.content)
-}
-
-/**
- * `/rpc` の要求を手続きへ渡す。
- * 照合（起動トークン・`Origin`）は手続きの前のミドルウェア（`rpcGuard`）が見るので、ここは要求を写して渡し、応答を書き戻すだけ。
- * どの手続きにも当たらなければ 404。
- *
- * `@orpc/server/node` ではなく `@orpc/server/fetch` の受け口を使い、`node:http` との橋渡しをここで書く。
- * node の受け口の型宣言が壊れた型宣言（`@orpc/interop` の compression が公開物の中から CI の絶対パスを指す）を辿り、`tsc` が型宣言の中で落ちるため（`docs/research/external-dependency.md` の表1の oRPC の行）。
- */
-function serveRpc(
-  request: IncomingMessage,
-  response: ServerResponse,
-  runtime: ViewServerRuntime,
-): void {
-  const context = rpcContextOf(request, {
-    startupToken: runtime.options.token,
-    serverOrigin: runtime.serverOrigin,
-  })
-  runtime.rpcHandler
-    .handle(toFetchRequest(request, runtime.serverOrigin), { prefix: RPC_PATH, context })
-    .then(async (result) => {
-      if (!result.matched) {
-        response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
-        response.end("not found\n")
-        return
-      }
-      const body = Buffer.from(await result.response.arrayBuffer())
-      response.writeHead(result.response.status, {
-        ...Object.fromEntries(result.response.headers),
-        "cache-control": "no-store",
-      })
-      response.end(body)
-    })
-    .catch(() => {
-      // 動作中の失敗で常駐プロセスを落とさない（その回だけ 500 で諦める）。
-      if (!response.headersSent) {
-        response.writeHead(500, { "content-type": "text/plain; charset=utf-8" })
-      }
-      response.end()
-    })
-}
-
-/** `node:http` の要求を fetch の `Request` に写す（本文は読み込まずに流れのまま渡す）。 */
-function toFetchRequest(request: IncomingMessage, serverOrigin: string): Request {
-  const headers = new Headers()
-  for (const [name, value] of Object.entries(request.headers)) {
-    for (const each of typeof value === "string" ? [value] : (value ?? [])) {
-      headers.append(name, each)
-    }
-  }
-  const hasBody = request.method !== "GET" && request.method !== "HEAD"
-  // 流れの本文には `duplex: "half"` が要る（Node の fetch）が、DOM の `RequestInit` の型には無いので、
-  // 型を広げた入れ物に入れてから渡す。
-  const init: RequestInit & { readonly duplex: "half" } = {
-    method: request.method,
-    headers,
-    body: hasBody ? bodyStreamOf(request) : undefined,
-    duplex: "half",
-  }
-  return new Request(new URL(request.url ?? "/", serverOrigin), init)
-}
-
-/**
- * 要求の本文を fetch の流れにする。
- * 溜めずに流すので、上限（{@link RPC_MAX_BODY_BYTES}）を超えた本文は `BodyLimitPlugin` が読みながら断る。
- * `Readable.toWeb` を使わないのは、戻り値の型が `node:stream/web` の `ReadableStream` で、fetch の `BodyInit` に型の上で渡せないため。
- */
-function bodyStreamOf(request: IncomingMessage): ReadableStream<Uint8Array> {
-  return new ReadableStream<Uint8Array>({
-    start: (controller) => {
-      request.on("data", (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)))
-      request.on("end", () => controller.close())
-      request.on("error", (error) => controller.error(error))
-    },
-  })
-}
-
 /** 起動トークン（`?t=<token>`）が合うか。経路の照合は呼び出し側が済ませている。 */
 function hasStartupToken(request: IncomingMessage, token: string): boolean {
   return queryValue(request, SESSION_TOKEN_QUERY_NAME) === token
@@ -623,15 +336,6 @@ function hasStartupToken(request: IncomingMessage, token: string): boolean {
 function queryValue(request: IncomingMessage, name: string): string | undefined {
   const url = new URL(request.url ?? "/", `http://${BIND_HOST}`)
   return url.searchParams.get(name) ?? undefined
-}
-
-function writeHtml(response: ServerResponse, html: string, contentSecurityPolicy: string): void {
-  response.writeHead(200, {
-    "content-type": "text/html; charset=utf-8",
-    "cache-control": "no-store",
-    "content-security-policy": contentSecurityPolicy,
-  })
-  response.end(html)
 }
 
 function originOf(port: number): string {
