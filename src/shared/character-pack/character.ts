@@ -48,7 +48,7 @@ export type CharacterInfo = {
    * 定義に `face` が無いパックでは undefined で、`portraits.default` へのフォールバックはしない（帯に何も出さない）。
    */
   readonly face: string | undefined
-  /** {@link CharacterDefinition.tagline}（ひとことプロフィール）をそのまま持つ。無いパックでは undefined（名前だけ）。 */
+  /** {@link CharacterDefinition.tagline}（自己紹介文）をそのまま持つ。無いパックでは undefined（名前だけ）。 */
   readonly tagline: string | undefined
   /** {@link CharacterDefinition.userCall}（利用者の呼び名）をそのまま持つ。無いパックでは undefined。 */
   readonly userCall: string | undefined

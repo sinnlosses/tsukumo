@@ -23,9 +23,9 @@ export type CharacterProfileModel = {
         readonly title: string | undefined
         readonly onSwitch: () => void
       }
-  /** 「名前とプロフィールを変える」（鉛筆のボタン）。変えられないパックでは出さない。 */
+  /** 「名前と自己紹介文を設定する」（鉛筆のボタン）。変えられないパックでは出さない。 */
   readonly editProfile: CharacterProfileEditModel
-  /** 「人格を変える」（鉛筆のボタン）。変えられないパックでは出さない。 */
+  /** 「プロフィールを設定する」（鉛筆のボタン）。変えられないパックでは出さない。 */
   readonly editPersona: CharacterPersonaEditModel
 }
 
@@ -43,7 +43,7 @@ export type CharacterPersonaEditModel =
     }
 
 /**
- * 名前とひとことプロフィールを変えるダイアログの下書きの種。
+ * 名前と自己紹介文を設定するダイアログの下書きの種。
  * 空文字も渡す。空なら書き込む側（`characterPack.setProfile`）が畳む（名前は id へ、ひとことは「無い」へ）。
  */
 export type CharacterProfileEditModel =

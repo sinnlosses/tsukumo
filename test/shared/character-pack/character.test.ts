@@ -138,7 +138,7 @@ describe("toCharacterInfo", () => {
     expect(infoOf(FULL_DEFINITION_JSON)?.background).toBeUndefined()
   })
 
-  it("tagline（ひとことプロフィール）があればそのまま持つ", () => {
+  it("tagline（自己紹介文）があればそのまま持つ", () => {
     expect(infoOf(JSON.stringify({ tagline: "架空のひとこと" }))?.tagline).toBe("架空のひとこと")
   })
 

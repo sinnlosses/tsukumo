@@ -1,4 +1,4 @@
-// 名前とひとことプロフィールを変えるダイアログ本体。
+// 名前と自己紹介文を設定するダイアログ本体。
 // 開いている間だけ組み立てる。閉じたら呼び出し側がこの部品ごと外すので、次に開いたときは渡された初期値から下書きが始まる。
 //
 // id は作ったあと変えない欄なので出さない。
@@ -16,8 +16,8 @@ import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../../../character.module.css"
 
-/** ひとことプロフィールの説明（雑談のサイドバーの札にも出ることを添える）。 */
-const TAGLINE_HINT = "画面や雑談のサイドバーのプロフィールの札に出るひとこと"
+/** 自己紹介文の説明（雑談のサイドバーの札にも出ることを添える）。 */
+const TAGLINE_HINT = "画面や雑談のサイドバーのプロフィールの札に出る一言"
 const NAME_HINT = "画面や吹き出しに出る名前。空にすると id をそのまま使います"
 
 export type CharacterProfileEditDialogProps = {
@@ -42,7 +42,7 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
   return (
     <Dialog
       open={true}
-      ariaLabel="名前とプロフィールを変える"
+      ariaLabel="名前と自己紹介文を設定する"
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}
@@ -56,7 +56,7 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
           weight="bold"
           className={styles["character-create-heading"]}
         >
-          名前とプロフィール
+          名前と自己紹介文を設定する
         </Heading>
         <div className={styles["character-create-field"]}>
           <label className={styles["character-create-label"]} htmlFor="character-profile-edit-name">
@@ -81,7 +81,7 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
             className={styles["character-create-label"]}
             htmlFor="character-profile-edit-tagline"
           >
-            ひとことプロフィール
+            自己紹介文
           </label>
           <input
             id="character-profile-edit-tagline"

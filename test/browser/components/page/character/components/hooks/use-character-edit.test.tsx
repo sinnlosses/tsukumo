@@ -191,7 +191,7 @@ describe("useCharacterEdit", () => {
     })
   })
 
-  // 名前とプロフィールを変えるダイアログの種（`CharacterProfileEdit`）。
+  // 名前と自己紹介文を設定するダイアログの種（`CharacterProfileEdit`）。
   it("名前・ひとこと無しのパックでは editProfile の種が空文字になる", () => {
     const { result } = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperFor({ ...FIXTURE_CHARACTER, name: undefined, tagline: undefined }, () => {}),

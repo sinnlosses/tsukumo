@@ -48,7 +48,7 @@ export type CharacterDefinition = {
    */
   readonly face: string | undefined
   /**
-   * ひとことプロフィール。雑談中のサイドバーのプロフィールの札で、名前の下に1行添える。
+   * 自己紹介文。雑談中のサイドバーのプロフィールの札で、名前の下に1行添える。
    * 任意で、無いパックは名前だけになる。空白だけの値は無いのと同じに畳む（札に空の行が出ないように）。
    */
   readonly tagline: string | undefined
@@ -145,7 +145,7 @@ export function definitionWithoutChatAccent(content: string | undefined): string
  */
 export const MAX_CHARACTER_NAME_LENGTH = 100
 
-/** ひとことプロフィールとして受け付ける長さの上限。「1行」の性質は覚えたこと1行の上限（`MAX_REMEMBERED_LINE_LENGTH`）と同じ値に揃える。 */
+/** 自己紹介文として受け付ける長さの上限。「1行」の性質は覚えたこと1行の上限（`MAX_REMEMBERED_LINE_LENGTH`）と同じ値に揃える。 */
 export const MAX_CHARACTER_TAGLINE_LENGTH = 120
 
 /**
@@ -158,7 +158,7 @@ export function definitionWithName(content: string | undefined, name: string): s
 }
 
 /**
- * ひとことプロフィール（`tagline`）を差し替えた JSON を返す。
+ * 自己紹介文（`tagline`）を差し替えた JSON を返す。
  * 空文字は消すのと同じ（{@link toCharacterDefinition} の読み取りが空白だけの値を無いものへ畳むのに揃える）。
  */
 export function definitionWithTagline(content: string | undefined, tagline: string): string {

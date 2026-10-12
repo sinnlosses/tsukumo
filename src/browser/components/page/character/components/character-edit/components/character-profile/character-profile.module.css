@@ -48,7 +48,7 @@
   font-size: var(--font-label);
   font-weight: bold;
 }
-/* 「名前とプロフィールを変える」と「このキャラクターに切り替える」の並び（右端に寄せる）。 */
+/* 「名前と自己紹介文を設定する」と「このキャラクターに切り替える」の並び（右端に寄せる）。 */
 .character-profile-actions {
   margin-left: auto;
 }

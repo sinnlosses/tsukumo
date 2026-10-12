@@ -310,8 +310,8 @@ describe("editCharacterPack（画面の差し色）", () => {
   })
 })
 
-describe("editCharacterPack（名前とプロフィール）", () => {
-  it("名前とひとことプロフィールを差し替える（characterPack.setProfile。ほかのキーは残る）", () => {
+describe("editCharacterPack（名前と自己紹介文）", () => {
+  it("名前と自己紹介文を差し替える（characterPack.setProfile。ほかのキーは残る）", () => {
     const bundled = writeBundledPack("tsukumo")
 
     const edited = editCharacterPack(
@@ -321,14 +321,14 @@ describe("editCharacterPack（名前とプロフィール）", () => {
         kind: "setProfile",
         pack: "tsukumo",
         name: "新しい表示名",
-        tagline: "ひとことプロフィール",
+        tagline: "自己紹介文",
       },
       join(dir(), "cwd"),
       home(),
     )
 
     expect(edited?.definition?.name).toBe("新しい表示名")
-    expect(edited?.definition?.tagline).toBe("ひとことプロフィール")
+    expect(edited?.definition?.tagline).toBe("自己紹介文")
     // characterPack.setPortrait / characterPack.setAccent と同じく、触っていないキーは残る。
     expect(edited?.definition?.portraits.default).toBe("default.svg")
 
@@ -339,9 +339,7 @@ describe("editCharacterPack（名前とプロフィール）", () => {
       home: home(),
     })
     expect(packs.find((pack) => pack.name === "tsukumo")?.definition?.name).toBe("新しい表示名")
-    expect(packs.find((pack) => pack.name === "tsukumo")?.definition?.tagline).toBe(
-      "ひとことプロフィール",
-    )
+    expect(packs.find((pack) => pack.name === "tsukumo")?.definition?.tagline).toBe("自己紹介文")
   })
 
   it("名前を空にすると character.json から name が消え、id（パック名）へ落ちる", () => {

@@ -77,11 +77,11 @@ function deleteConfirmDialog(): Element | null {
 }
 
 /**
- * 名前とプロフィールを変えるダイアログ（`CharacterProfileEditDialog`）。開いていなければ
+ * 名前と自己紹介文を設定するダイアログ（`CharacterProfileEditDialog`）。開いていなければ
  * `null`。作るダイアログと同じ `.character-create-dialog` を流用しているので `aria-label` で見分ける。
  */
 function profileEditDialog(): Element | null {
-  return document.querySelector('dialog[aria-label="名前とプロフィールを変える"]')
+  return document.querySelector('dialog[aria-label="名前と自己紹介文を設定する"]')
 }
 
 describe("CharacterEdit", () => {
@@ -523,23 +523,20 @@ describe("CharacterEdit", () => {
     expect(document.querySelectorAll(".character-gallery")).toHaveLength(0)
   })
 
-  // 名前とプロフィールを変えるダイアログ（docs/architecture/screen-design.md「名乗り」）。
-  describe("名前とプロフィールを変える", () => {
+  // 名前と自己紹介文を設定するダイアログ（docs/architecture/screen-design.md「名乗り」）。
+  describe("名前と自己紹介文を設定する", () => {
     it("押すと、いまの名前とひとことを入れたダイアログを開く", () => {
       renderCharacterEdit({ ...FIXTURE_CHARACTER, name: "架空の精霊", tagline: "気ままな相棒" })
 
-      fireEvent.click(screen.getByRole("button", { name: "名前とプロフィールを変える" }))
+      fireEvent.click(screen.getByRole("button", { name: "名前と自己紹介文を設定する" }))
 
       expect(profileEditDialog()?.hasAttribute("open")).toBe(true)
       expect(
         typedElement(screen.getByLabelText("名前"), HTMLInputElement, "名前の入力欄").value,
       ).toBe("架空の精霊")
       expect(
-        typedElement(
-          screen.getByLabelText("ひとことプロフィール"),
-          HTMLInputElement,
-          "ひとことプロフィールの入力欄",
-        ).value,
+        typedElement(screen.getByLabelText("自己紹介文"), HTMLInputElement, "自己紹介文の入力欄")
+          .value,
       ).toBe("気ままな相棒")
     })
 
@@ -550,9 +547,9 @@ describe("CharacterEdit", () => {
         (command) => calls.push(command),
       )
 
-      fireEvent.click(screen.getByRole("button", { name: "名前とプロフィールを変える" }))
+      fireEvent.click(screen.getByRole("button", { name: "名前と自己紹介文を設定する" }))
       fireEvent.change(screen.getByLabelText("名前"), { target: { value: "新しい名前" } })
-      fireEvent.change(screen.getByLabelText("ひとことプロフィール"), {
+      fireEvent.change(screen.getByLabelText("自己紹介文"), {
         target: { value: "新しいひとこと" },
       })
       fireEvent.click(screen.getByRole("button", { name: "保存する" }))
@@ -572,7 +569,7 @@ describe("CharacterEdit", () => {
       const calls: unknown[] = []
       renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
 
-      fireEvent.click(screen.getByRole("button", { name: "名前とプロフィールを変える" }))
+      fireEvent.click(screen.getByRole("button", { name: "名前と自己紹介文を設定する" }))
       fireEvent.change(screen.getByLabelText("名前"), { target: { value: "触らない名前" } })
       fireEvent.click(screen.getByRole("button", { name: "やめる" }))
 
@@ -583,23 +580,23 @@ describe("CharacterEdit", () => {
     it("画面から変えられないパックでは口を出さない", () => {
       renderCharacterEdit({ ...FIXTURE_CHARACTER, editable: false })
 
-      expect(screen.queryByRole("button", { name: "名前とプロフィールを変える" })).toBeNull()
+      expect(screen.queryByRole("button", { name: "名前と自己紹介文を設定する" })).toBeNull()
     })
   })
 
-  describe("人格を変える", () => {
+  describe("プロフィールを設定する", () => {
     const PACKS = [
       characterPackEntry("fictional", "架空の精霊", { inUse: true, personaBody: "# 人格\n\n本文" }),
     ]
 
     function personaDialog(): Element | null {
-      return document.querySelector('dialog[aria-label="人格を変える"]')
+      return document.querySelector('dialog[aria-label="プロフィールを設定する"]')
     }
 
     it("押すと、いまの本文を入れたダイアログを開く", () => {
       renderCharacterEdit(FIXTURE_CHARACTER, () => {}, PACKS)
 
-      fireEvent.click(screen.getByRole("button", { name: "人格を変える" }))
+      fireEvent.click(screen.getByRole("button", { name: "プロフィールを設定する" }))
 
       expect(personaDialog()?.hasAttribute("open")).toBe(true)
       expect(
@@ -621,7 +618,7 @@ describe("CharacterEdit", () => {
         PACKS,
       )
 
-      fireEvent.click(screen.getByRole("button", { name: "人格を変える" }))
+      fireEvent.click(screen.getByRole("button", { name: "プロフィールを設定する" }))
       fireEvent.change(screen.getByLabelText("本文"), { target: { value: "新しい人格" } })
       fireEvent.click(screen.getByRole("button", { name: "保存する" }))
 
@@ -648,7 +645,7 @@ describe("CharacterEdit", () => {
         PACKS,
       )
 
-      fireEvent.click(screen.getByRole("button", { name: "人格を変える" }))
+      fireEvent.click(screen.getByRole("button", { name: "プロフィールを設定する" }))
       fireEvent.click(screen.getByRole("button", { name: "保存する" }))
 
       await waitFor(() => {
@@ -661,7 +658,7 @@ describe("CharacterEdit", () => {
       const calls: unknown[] = []
       renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command), PACKS)
 
-      fireEvent.click(screen.getByRole("button", { name: "人格を変える" }))
+      fireEvent.click(screen.getByRole("button", { name: "プロフィールを設定する" }))
       fireEvent.change(screen.getByLabelText("本文"), { target: { value: "触らない" } })
       fireEvent.click(screen.getByRole("button", { name: "やめる" }))
 
@@ -672,7 +669,7 @@ describe("CharacterEdit", () => {
     it("画面から変えられないパックでは口を出さない", () => {
       renderCharacterEdit({ ...FIXTURE_CHARACTER, editable: false }, () => {}, PACKS)
 
-      expect(screen.queryByRole("button", { name: "人格を変える" })).toBeNull()
+      expect(screen.queryByRole("button", { name: "プロフィールを設定する" })).toBeNull()
     })
   })
 

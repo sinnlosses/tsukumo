@@ -37,7 +37,7 @@ export function CharacterPersonaEditDialog(props: CharacterPersonaEditDialogProp
   return (
     <Dialog
       open={true}
-      ariaLabel="人格を変える"
+      ariaLabel="プロフィールを設定する"
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}
@@ -51,7 +51,7 @@ export function CharacterPersonaEditDialog(props: CharacterPersonaEditDialogProp
           weight="bold"
           className={styles["character-create-heading"]}
         >
-          人格
+          プロフィールを設定する
         </Heading>
         <div className={styles["character-create-field"]}>
           <label className={styles["character-create-label"]} htmlFor="character-persona-edit-body">

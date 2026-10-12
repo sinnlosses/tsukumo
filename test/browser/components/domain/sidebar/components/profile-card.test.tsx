@@ -1,5 +1,5 @@
 // 雑談中のサイドバーの最上段、プロフィールの札（docs/architecture/screen-design.md「雑談のときのサイドバー」）。
-// ここで見るのは、ひとことプロフィールが無いパックで空の行を置かないことだけ。
+// ここで見るのは、自己紹介文が無いパックで空の行を置かないことだけ。
 
 import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
@@ -30,7 +30,7 @@ function renderProfileCard(
 }
 
 describe("ProfileCard", () => {
-  it("ひとことプロフィールが無いパックは名前だけ（空の行を置かない）", () => {
+  it("自己紹介文が無いパックは名前だけ（空の行を置かない）", () => {
     renderProfileCard({
       characterPacks: TWO_PACKS,
       character: characterInfo({ name: "架空の精霊", tagline: undefined }),

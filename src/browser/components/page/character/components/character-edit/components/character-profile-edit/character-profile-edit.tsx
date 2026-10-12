@@ -1,4 +1,4 @@
-// 名乗りの右に置く「名前とプロフィールを変える」（鉛筆のボタン）。
+// 名乗りの右に置く「名前と自己紹介文を設定する」（鉛筆のボタン）。
 // 押しても即座には送らない。
 // 押すとダイアログ（`CharacterProfileEditDialog`）を開き、そこで保存して初めて `edit.onSubmit` を呼ぶ。
 
@@ -37,7 +37,7 @@ export function CharacterProfileEdit(props: {
         }}
       >
         <PencilIcon />
-        名前とプロフィールを変える
+        名前と自己紹介文を設定する
       </Button>
       {open && (
         <CharacterProfileEditDialog

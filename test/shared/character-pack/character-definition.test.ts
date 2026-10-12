@@ -65,7 +65,7 @@ describe("parseCharacterDefinition", () => {
     expect(parseCharacterDefinition(JSON.stringify({ face: 3 }))?.face).toBeUndefined()
   })
 
-  it("任意の tagline（ひとことプロフィール）を読む。無い・壊れた値・空白だけは undefined", () => {
+  it("任意の tagline（自己紹介文）を読む。無い・壊れた値・空白だけは undefined", () => {
     expect(
       parseCharacterDefinition(JSON.stringify({ tagline: "窓辺に棲む架空の精霊" }))?.tagline,
     ).toBe("窓辺に棲む架空の精霊")

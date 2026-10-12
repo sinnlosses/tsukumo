@@ -316,7 +316,7 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     ).toBeUndefined()
   })
 
-  it("characterPack.setProfile を受け付ける（対象のパック名・名前・ひとことプロフィール）", () => {
+  it("characterPack.setProfile を受け付ける（対象のパック名・名前・自己紹介文）", () => {
     expect(
       parseInput("characterPack.setProfile", {
         pack: "fictional",

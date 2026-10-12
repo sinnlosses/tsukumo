@@ -1,4 +1,4 @@
-// 名乗りの右に置く「人格を変える」（鉛筆のボタン）。
+// 名乗りの右に置く「プロフィールを設定する」（鉛筆のボタン）。
 // 押すとダイアログ（`CharacterPersonaEditDialog`）を開き、そこで保存して初めて `edit.onSubmit` を呼ぶ。
 
 import { useState, type ReactElement } from "react"
@@ -36,7 +36,7 @@ export function CharacterPersonaEdit(props: {
         }}
       >
         <PencilIcon />
-        人格を変える
+        プロフィールを設定する
       </Button>
       {open && (
         <CharacterPersonaEditDialog

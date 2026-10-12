@@ -91,7 +91,7 @@ const editedCharacterPackNameSchema = z.string().refine(isCharacterPackName)
  */
 const characterNameSchema = z.string().max(MAX_CHARACTER_NAME_LENGTH)
 
-/** ひとことプロフィール（`character.json` の `tagline`）。空文字も通す（空なら消したのと同じに畳む）。 */
+/** 自己紹介文（`character.json` の `tagline`）。空文字も通す（空なら消したのと同じに畳む）。 */
 const characterTaglineSchema = z.string().max(MAX_CHARACTER_TAGLINE_LENGTH)
 
 /** 人格の本文（`persona.md` の `## 覚えたこと` より前）。空文字も通す（本文を空にする）。 */
@@ -134,7 +134,7 @@ const characterEditInput = {
   /** 雑談の差し色（`chatAccent`）を消し、雑談中も仕事の差し色（`accent`）と同じに戻す。`accent` を消す口は無い。 */
   clearChatAccent: z.object({ pack: editedCharacterPackNameSchema }),
   /**
-   * 名前とひとことプロフィールを変える。1つの画面のボタンから2つの欄をまとめて送るので、コマンドも1つにする。
+   * 名前と自己紹介文を設定する。1つの画面のボタンから2つの欄をまとめて送るので、コマンドも1つにする。
    * どちらも空文字を通す（名前は id へ、ひとことは「無い」へ畳む）。
    */
   setProfile: z.object({
