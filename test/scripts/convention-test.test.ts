@@ -3,7 +3,7 @@
 import { describe, expect, test } from "vitest"
 
 import { DOCUMENT_CHECK_TEST_FILES } from "../../scripts/lib/check-stage.ts"
-import { CONVENTION_TEST_FILES, withConventionTests } from "../../scripts/lib/convention-test.ts"
+import { CONVENTION_TEST_PATHS, withConventionTests } from "../../scripts/lib/convention-test.ts"
 
 describe("withConventionTests", () => {
   test("引数なしはそのまま（全件）", () => {
@@ -19,7 +19,7 @@ describe("withConventionTests", () => {
     expect(withConventionTests(["test/a.test.ts", "--reporter=json"])).toEqual([
       "test/a.test.ts",
       "--reporter=json",
-      ...CONVENTION_TEST_FILES,
+      ...CONVENTION_TEST_PATHS,
     ])
   })
 
@@ -38,20 +38,20 @@ describe("withConventionTests", () => {
     expect(withConventionTests(["--", "test/a.test.ts"])).toEqual([
       "--",
       "test/a.test.ts",
-      ...CONVENTION_TEST_FILES,
+      ...CONVENTION_TEST_PATHS,
     ])
     expect(withConventionTests(["--coverage", "test/a.test.ts"])).toEqual([
       "--coverage",
       "test/a.test.ts",
-      ...CONVENTION_TEST_FILES,
+      ...CONVENTION_TEST_PATHS,
     ])
   })
 })
 
-describe("CONVENTION_TEST_FILES", () => {
+describe("CONVENTION_TEST_PATHS", () => {
   test("文書の検査の一覧を全て含む", () => {
     for (const file of DOCUMENT_CHECK_TEST_FILES) {
-      expect(CONVENTION_TEST_FILES).toContain(file)
+      expect(CONVENTION_TEST_PATHS).toContain(file)
     }
   })
 })

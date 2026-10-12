@@ -2,7 +2,7 @@
 
 import { DOCUMENT_CHECK_TEST_FILES } from "./check-stage.ts"
 
-export const CONVENTION_TEST_FILES = [
+export const CONVENTION_TEST_PATHS = [
   "test/architecture/",
   "test/function-order.test.ts",
   ...DOCUMENT_CHECK_TEST_FILES,
@@ -19,5 +19,5 @@ export function withConventionTests(args: readonly string[]): readonly string[] 
   if (!hasFilter) {
     return args
   }
-  return [...args, ...CONVENTION_TEST_FILES.filter((file) => !args.includes(file))]
+  return [...args, ...CONVENTION_TEST_PATHS.filter((file) => !args.includes(file))]
 }

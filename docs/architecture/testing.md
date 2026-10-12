@@ -33,7 +33,7 @@
 - **`server.ts` / `session-socket.ts` はテストする。** 「描く」側の入り口だが、配った結果は HTTP と WebSocket の
   両方で外から観測できるので、バインド先・経路・フレームの往復は自動で守れる。目視でしか
   確かめられないのは**ブラウザに出た絵**の側
-- **`pnpm run test <ファイル>` は、渡したファイルに加えて規約のテスト（`CONVENTION_TEST_FILES`）も走らせる。**
+- **`pnpm run test <ファイル>` は、渡したファイルに加えて規約のテスト（`CONVENTION_TEST_PATHS`）も走らせる。**
   リポジトリ全体を読むので、変えたファイルとは別のテストが落ちうる。文書だけの変更で `pnpm run check` が打つ
   文書の検査は `pnpm run test:document` で、この一覧のうち層の検査（`test/architecture/`）と関数の並びの検査を除いたもの。
   層の検査は塊ごとのファイルに分かれているので、一覧はファイルを並べずにディレクトリ `test/architecture/` を1つ指す。

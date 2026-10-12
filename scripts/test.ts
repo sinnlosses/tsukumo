@@ -1,4 +1,4 @@
-// `pnpm run test` の入口。ファイルで絞ったときも規約のテスト（`CONVENTION_TEST_FILES`）を一緒に走らせる。
+// `pnpm run test` の入口。ファイルで絞ったときも規約のテスト（`CONVENTION_TEST_PATHS`）を一緒に走らせる。
 
 import { spawnSync } from "node:child_process"
 import process from "node:process"
