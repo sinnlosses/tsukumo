@@ -106,6 +106,43 @@ describe("PhoneHead", () => {
     expect(head.querySelector(".phone-head-position")?.textContent).toBe("5/5")
   })
 
+  it("範囲があって全部終えていれば、題は全部の段で「n段すべて済み」、位置は範囲の段の数で「N/N」", () => {
+    const head = renderHead({
+      turn: { kind: "running", startedAt: 0 },
+      records: [
+        requestRecord(),
+        workPlanRecord({
+          phases: PHASES,
+          current: 5,
+          delegatedRange: { kind: "range", first: 1, count: 3 },
+        }),
+      ],
+    })
+
+    expect(title()).toBe("5段すべて済み")
+    expect(head.querySelector(".phone-head-position")?.textContent).toBe("3/3")
+  })
+
+  it("範囲の中が今なら位置は範囲の先頭からの番号、範囲の外が今なら位置を出さない", () => {
+    const inRange = {
+      delegatedRange: { kind: "range", first: 1, count: 3 },
+    } as const
+    const head = renderHead({
+      turn: { kind: "running", startedAt: 0 },
+      records: [requestRecord(), workPlanRecord({ phases: PHASES, current: 2, ...inRange })],
+    })
+    expect(head.querySelector(".phone-head-position")?.textContent).toBe("2/3")
+    expect(title()).toBe("架空の段C")
+
+    cleanup()
+    const outside = renderHead({
+      turn: { kind: "running", startedAt: 0 },
+      records: [requestRecord(), workPlanRecord({ phases: PHASES, current: 0, ...inRange })],
+    })
+    expect(outside.querySelector(".phone-head-position")?.textContent).toBe("")
+    expect(title()).toBe("架空の段A")
+  })
+
   it("段取りの無いターンは2行目に「手順 n」だけを出し、題は依頼の1行目", () => {
     const head = renderHead({
       turn: { kind: "running", startedAt: 0 },

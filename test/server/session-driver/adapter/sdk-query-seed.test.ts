@@ -276,7 +276,12 @@ describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツ�
 
   it("返却を受けた CallReview の印に従い、受け付けた work_plan のあとは通す", async () => {
     const review = createCallReview()
-    const plan = { phases: ["架空の段A", "架空の段B"], current: 0, phaseSummary: "" }
+    const plan = {
+      phases: ["架空の段A", "架空の段B"],
+      current: 0,
+      phaseSummary: "",
+      delegatedRange: { first: 0, count: 2 },
+    }
     review.pass({ kind: "request", text: "架空の依頼", images: [] })
     review.judgeWorkPlan(plan)
     review.pass({
@@ -290,7 +295,7 @@ describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツ�
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
         permissionDecision: "deny",
-        permissionDecisionReason: expect.stringContaining("帯の今の段は 1/2 架空の段A。"),
+        permissionDecisionReason: expect.stringContaining("帯の今の段は 2/2 架空の段B。"),
       },
     })
     review.judgeWorkPlan({ ...plan, current: 1, phaseSummary: "架空のまとめ。" })
@@ -360,8 +365,8 @@ describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", ()
       hookSpecificOutput: {
         hookEventName: "UserPromptSubmit",
         additionalContext:
-          "tsukumo の注記（委譲先の返却の本文ではない）:返却 `段 1/2` で帯の 2/4 架空の実装A が済んだ。" +
-          "帯の今の段は 3/4 架空の実装B。委譲先の段 1〜2 は帯の 2〜3 番目（委譲先の段 n は帯の 1 + n 番目）。",
+          "tsukumo の注記（委譲先の返却の本文ではない）:返却 `段 1/2` で帯の 1/2 架空の実装A が済んだ。" +
+          "帯の今の段は 2/2 架空の実装B。帯の段の番号は委譲先の段の番号と同じで、範囲の外の段（計画・受け入れ）は番号を持たず名前で言う。",
       },
     })
     expect(await runUserPromptSubmit(review.takeHandbackNote, HANDBACK_PROMPT)).toEqual({})

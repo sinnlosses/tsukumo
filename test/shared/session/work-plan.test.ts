@@ -8,14 +8,20 @@ import {
 } from "../../../src/shared/session/session-state.ts"
 import {
   currentPhaseOf,
+  completionText,
   currentWorkPlan,
   type LatestWorkPlan,
   nextWorkPlan,
   parseWorkPlan,
   parseWorkPlanClosing,
   phaseFinishedByReturn,
+  phaseLabel,
+  phaseNumberOf,
   phaseShiftOf,
+  plannedPhaseTitle,
   plannedPhasesOf,
+  workPositionText,
+  type WorkPhase,
   type WorkPlan,
   type WorkPlanEntry,
   type WorkPlanEvent,
@@ -190,9 +196,76 @@ describe("まとまりの段を済ませる順", () => {
       indexes: [1, 2],
       count: 4,
       name: "架空の段B・架空の段C",
+      range: { kind: "none" },
     })
   })
 })
+
+describe("phaseNumberOf", () => {
+  const none = { kind: "none" } as const
+  // GROUPED を平らにすると A=0, B=1, C=2, D=3。範囲は B・C・D（先頭 1、3 段）
+  const range = { kind: "range", first: 1, count: 3 } as const
+
+  it("範囲が無ければ通し番号と全体の段の数で数える", () => {
+    expect(phaseNumberOf(none, [1], 4)).toEqual({ kind: "numbered", ordinals: "2", text: "2/4" })
+  })
+
+  it("並列の段は番号をつなぐ", () => {
+    expect(phaseNumberOf(none, [1, 2], 4)).toMatchObject({ ordinals: "2·3", text: "2·3/4" })
+    expect(phaseNumberOf(range, [1, 2], 4)).toMatchObject({ ordinals: "1·2", text: "1·2/3" })
+  })
+
+  it("範囲の中の段は範囲の先頭からの番号と範囲の段の数で数える", () => {
+    expect(phaseNumberOf(range, [1], 4)).toMatchObject({ text: "1/3" })
+    expect(phaseNumberOf(range, [3], 4)).toMatchObject({ text: "3/3" })
+  })
+
+  it("段の呼び名・いまの位置・済んだ数は、範囲の外の段を数えない", () => {
+    const at = (current: number, delegatedRange: WorkPlan["delegatedRange"] = range): WorkPlan => ({
+      ...next(GROUPED, current),
+      delegatedRange,
+    })
+    const plan = at(1)
+    expect(plannedPhaseTitle(plan, { index: 0, name: "架空の段A" })).toBe("架空の段A")
+    expect(plannedPhaseTitle(plan, { index: 2, name: "架空の段C" })).toBe("2. 架空の段C")
+    expect(workPositionText({ kind: "planned", ...plan })).toBe("1·2/3")
+    expect(workPositionText({ kind: "planned", ...at(0) })).toBe("")
+    expect(workPositionText({ kind: "planned", ...at(3) })).toBe("3/3")
+    expect(workPositionText({ kind: "planned", ...at(1, none) })).toBe("2·3/4")
+    expect(workPositionText({ kind: "planned", ...at(3, none) })).toBe("4/4")
+  })
+
+  it("済み具合は範囲の外を含む全部の段で言う（範囲なし・範囲の中だけ済み・全部済み）", () => {
+    const at = (current: number, delegatedRange: WorkPlan["delegatedRange"]): WorkPlan => ({
+      ...next(GROUPED, current),
+      delegatedRange,
+    })
+
+    expect(completionText(at(2, none))).toBe("4段のうち3段済み")
+    expect(completionText(at(2, range))).toBe("4段のうち3段済み")
+    expect(completionText(at(3, range))).toBe("4段すべて済み")
+    expect(completionText(at(3, none))).toBe("4段すべて済み")
+  })
+
+  it("範囲の前後の段は番号を持たない", () => {
+    expect(phaseNumberOf(range, [0], 5)).toEqual({ kind: "named" })
+    expect(phaseNumberOf({ kind: "range", first: 1, count: 2 }, [3], 4)).toEqual({ kind: "named" })
+  })
+
+  it("見出しは範囲の中なら番号と名前、範囲の外なら名前だけ", () => {
+    const withRange: WorkPlan = { ...next(GROUPED, 0), delegatedRange: range }
+    expect(phaseLabel(phaseOf(withRange))).toBe("架空の段A")
+    expect(phaseLabel(phaseOf({ ...withRange, current: 1 }))).toBe("1·2/3 架空の段B・架空の段C")
+  })
+})
+
+function phaseOf(plan: WorkPlan): Extract<WorkPhase, { readonly kind: "phase" }> {
+  const phase = currentPhaseOf({ kind: "planned", ...plan })
+  if (phase.kind !== "phase") {
+    throw new Error("今の段がある段取りを渡す")
+  }
+  return phase
+}
 
 describe("phaseShiftOf", () => {
   it("段を進めると、終えた段のまとめを出す", () => {

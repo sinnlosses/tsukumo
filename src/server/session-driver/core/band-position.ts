@@ -24,8 +24,7 @@ export function bandPositionText(plan: LatestWorkPlan): string {
   if (plan.delegatedRange.kind === "none") {
     return position
   }
-  const { first, count } = plan.delegatedRange
-  return `${position}委譲先の段 1〜${String(count)} は帯の ${String(first + 1)}〜${String(first + count)} 番目（委譲先の段 n は帯の ${String(first)} + n 番目）。`
+  return `${position}帯の段の番号は委譲先の段の番号と同じで、範囲の外の段（計画・受け入れ）は番号を持たず名前で言う。`
 }
 
 /**
@@ -58,6 +57,7 @@ export function handbackLineText(previous: WorkPlan, handback: DelegateReturn): 
     indexes: [returned.phase.index],
     count: plannedPhasesOf(previous).length,
     name: returned.phase.name,
+    range: previous.delegatedRange,
   })
   return `${head} で帯の ${label} が済んだ。`
 }

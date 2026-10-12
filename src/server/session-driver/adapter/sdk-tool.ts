@@ -63,6 +63,7 @@ import {
 } from "../../usage-review/core/usage-review-tool.ts"
 import type { CallReview } from "../core/call-review.ts"
 import { CLEAR_AND_SEND_TOOL_DESCRIPTION } from "../core/clear-and-send.ts"
+import { stringsIn } from "../core/phase-mention.ts"
 import {
   answerQuestionBriefCall,
   mermaidSourcesOf,
@@ -194,12 +195,19 @@ function speakTool(
   mode: SessionMode,
   review: CallReview,
 ) {
-  return tool(SPEAK_TOOL_NAME, SPEAK_TOOL_DESCRIPTION, speechShape(expressions), async () => {
-    const verdict = mode.kind === "work" ? review.judgeSpeak() : ACCEPTED_SPEECH
-    return verdict.kind === "rejected"
-      ? { content: [{ type: "text" as const, text: verdict.text }], isError: true }
-      : { content: [{ type: "text" as const, text: "ok" }] }
-  })
+  return tool(
+    SPEAK_TOOL_NAME,
+    SPEAK_TOOL_DESCRIPTION,
+    speechShape(expressions),
+    async ({ text }) => {
+      const mention = mode.kind === "work" ? review.judgePhaseMention([text]) : ACCEPTED_SPEECH
+      const verdict = mode.kind === "work" ? review.judgeSpeak() : ACCEPTED_SPEECH
+      const rejection = mention.kind === "rejected" ? mention : verdict
+      return rejection.kind === "rejected"
+        ? { content: [{ type: "text" as const, text: rejection.text }], isError: true }
+        : { content: [{ type: "text" as const, text: "ok" }] }
+    },
+  )
 }
 
 const ACCEPTED_SPEECH = { kind: "accepted" } as const satisfies SpeechVerdict
@@ -256,7 +264,13 @@ function reportTool(
       closing: z.object(speechShape(expressions)).describe(REPORT_CLOSING_DESCRIPTION),
       waitingLine: z.object(speechShape(expressions)).describe(REPORT_WAITING_LINE_DESCRIPTION),
     },
-    async ({ task, workPlanClosing, conclusion, sections, favor, checks, title }) => {
+    async ({ task, workPlanClosing, conclusion, sections, favor, checks, title, closing }) => {
+      const mention = review.judgePhaseMention(
+        stringsIn([conclusion, sections, favor, checks, closing.text]),
+      )
+      if (mention.kind === "rejected") {
+        return { content: [{ type: "text" as const, text: mention.text }], isError: true }
+      }
       const fileContents = await readReportBlockFiles(cwd, sections ?? [])
       const mermaidFaults = await checkMermaidSyntax(mermaidSourcesInSections(sections ?? []))
       const verdict = review.judgeReport({

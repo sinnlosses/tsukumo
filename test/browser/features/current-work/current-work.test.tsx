@@ -507,6 +507,29 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       ).toEqual(["2/3 架空の段B", "… Bash: echo b", "1/3 架空の段A", "✓ Read: /tmp/a.txt（0秒）"])
     })
 
+    it("委譲先の段の範囲があれば、範囲の中は範囲の先頭からの番号で、範囲の外の未着手の段は「・」で並ぶ", () => {
+      const phases = ["架空の計画", "架空の段A", "架空の段B", "架空の受け入れ"]
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        records: [
+          requestRecord(),
+          workPlanRecord({
+            phases,
+            current: 1,
+            delegatedRange: { kind: "range", first: 1, count: 2 },
+          }),
+          toolRecord({ toolUseId: "toolu_b", name: "Bash", input: { command: "echo b" } }),
+        ],
+      })
+
+      fireEvent.click(workToggle())
+
+      expect(document.querySelector(".current-work-phase")?.textContent).toBe("1/2 架空の段A")
+      expect(
+        [...workList().querySelectorAll(".current-work-plan li")].map((phase) => phase.textContent),
+      ).toEqual(["済架空の計画", "今架空の段A", "2架空の段B", "・架空の受け入れ"])
+    })
+
     it("同じ段の手順は隣どうしで1まとまりになり、段が戻れば別のまとまりになる", () => {
       const bash = (id: string) =>
         toolRecord({ toolUseId: id, name: "Bash", input: { command: `echo ${id}` } })

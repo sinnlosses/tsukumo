@@ -16,9 +16,11 @@ import type { ReportDrafting } from "../../../../shared/session/session-state.ts
 import type { TurnStep, TurnStepList } from "../../../../shared/session/turn-step.ts"
 import {
   currentPhaseOf,
-  phaseCount,
   phaseLabel,
+  type PlannedPhase,
+  plannedPhaseNumber,
   plannedPhasesOf,
+  workPositionText,
 } from "../../../../shared/session/work-plan.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
 import { toolInputText } from "../../../domain/tool-summary.ts"
@@ -311,10 +313,7 @@ function toPhaseView(turnStepList: TurnStepList, state: CurrentWorkState): Curre
   const phase = currentPhaseOf(plan)
   return {
     kind: "shown",
-    label:
-      phase.kind === "phase"
-        ? phaseLabel(phase)
-        : `${String(phaseCount(plan.phases))}/${String(phaseCount(plan.phases))} 済`,
+    label: phase.kind === "phase" ? phaseLabel(phase) : `${workPositionText(plan)} 済`,
   }
 }
 
@@ -322,16 +321,28 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Curren
   if (turnStepList.kind !== "turn" || turnStepList.plan.kind === "none") {
     return { kind: "none" }
   }
+  const { plan } = turnStepList
   return {
     kind: "planned",
     headingLabel: turnInProgress ? "この依頼の段取り" : "前の依頼の段取り",
-    phases: plannedPhasesOf(turnStepList.plan).map(({ index, name, state }) => ({
+    phases: plannedPhasesOf(plan).map(({ index, name, state }) => ({
       key: String(index),
-      mark: state === "done" ? "済" : state === "current" ? "今" : String(index + 1),
+      mark: planMarkOf(plan, { index, state }),
       name,
       state,
     })),
   }
+}
+
+function planMarkOf(
+  plan: Parameters<typeof plannedPhaseNumber>[0],
+  phase: Pick<PlannedPhase, "index" | "state">,
+): string {
+  if (phase.state !== "upcoming") {
+    return phase.state === "done" ? "済" : "今"
+  }
+  const number = plannedPhaseNumber(plan, phase)
+  return number.kind === "numbered" ? number.ordinals : "・"
 }
 
 /**

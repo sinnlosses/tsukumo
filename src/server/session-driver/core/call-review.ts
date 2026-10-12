@@ -12,6 +12,7 @@ import type { BackgroundTask } from "../../../shared/session-driver/background-t
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { createReportReview, type ReportVerdict } from "../../report/core/report-review.ts"
 import type { ReportDraft } from "../../report/core/report-violation.ts"
+import { judgePhaseMention, type PhaseMentionVerdict } from "./phase-mention.ts"
 import { createSpeechReview, type SpeechVerdict } from "./speech-review.ts"
 import { createWorkPlanReview, type WorkPlanVerdict } from "./work-plan-review.ts"
 
@@ -20,6 +21,8 @@ export type CallReview = {
   readonly judgeSpeak: () => SpeechVerdict
   /** `report` の handler から。 */
   readonly judgeReport: (report: ReportDraft) => ReportVerdict
+  /** `speak`・`report` の handler から、本文の文字列を渡す。範囲があるあいだ、範囲の外の段の番号を言っていれば差し戻す。 */
+  readonly judgePhaseMention: (texts: readonly string[]) => PhaseMentionVerdict
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
   readonly judgeWorkPlan: (input: unknown) => WorkPlanVerdict
   /**
@@ -69,6 +72,7 @@ export function createCallReview(): CallReview {
   return {
     judgeSpeak: speechReview.judge,
     judgeReport: reportReview.judge,
+    judgePhaseMention: (texts) => judgePhaseMention(workPlanReview.delegatedRange(), texts),
     judgeWorkPlan: workPlanReview.judge,
     pass: (event) => {
       ledger.observe(event)

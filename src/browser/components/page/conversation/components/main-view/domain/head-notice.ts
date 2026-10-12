@@ -51,5 +51,9 @@ function pastNotice(moment: ConversationMoment, phase: WorkPhase): HeadNotice {
 }
 
 function workingText(phase: WorkPhase): string {
-  return phase.kind === "phase" ? `作業中 ${phasePosition(phase)}` : "作業中"
+  if (phase.kind !== "phase") {
+    return "作業中"
+  }
+  const position = phasePosition(phase)
+  return position.kind === "numbered" ? `作業中 ${position.text}` : "作業中"
 }

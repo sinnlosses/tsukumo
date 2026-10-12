@@ -7,10 +7,12 @@
 import type { SessionRecord } from "../../../../../shared/session/session-state.ts"
 import type { TurnStepList } from "../../../../../shared/session/turn-step.ts"
 import {
+  completionText,
   currentPhaseOf,
-  phasePosition,
+  plannedPhaseTitle,
   plannedPhasesOf,
   type PlannedPhaseState,
+  workPositionText,
 } from "../../../../../shared/session/work-plan.ts"
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { isTurnCounting, turnElapsedClock } from "../../../../domain/turn-elapsed.ts"
@@ -150,9 +152,7 @@ function titleOf(
     (state === "running" || state === "pending")
   ) {
     const phase = currentPhaseOf(turnStepList.plan)
-    return phase.kind === "phase"
-      ? phase.name
-      : `${String(plannedPhasesOf(turnStepList.plan).length)}段すべて済み`
+    return phase.kind === "phase" ? phase.name : completionText(turnStepList.plan)
   }
   const request = records.findLast((record) => record.kind === "request")?.text ?? ""
   const firstLine = request.split("\n").find((line) => line.trim() !== "")
@@ -169,16 +169,14 @@ function progressOf(turnStepList: TurnStepList): PhoneHeadProgress {
     return { kind: "steps", stepCount }
   }
   const phases = plannedPhasesOf(plan)
-  const phase = currentPhaseOf(plan)
-  const count = String(phases.length)
   return {
     kind: "planned",
     dots: phases.map((entry) => ({
       key: entry.key,
       state: entry.state,
-      label: `${String(entry.index + 1)}. ${entry.name}${DOT_STATE_SUFFIX[entry.state]}`,
+      label: `${plannedPhaseTitle(plan, entry)}${DOT_STATE_SUFFIX[entry.state]}`,
     })),
-    positionLabel: phase.kind === "phase" ? phasePosition(phase) : `${count}/${count}`,
+    positionLabel: workPositionText(plan),
     stepCount,
   }
 }

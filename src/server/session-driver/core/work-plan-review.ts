@@ -1,4 +1,4 @@
-// `work_plan` の差し戻し（形の崩れ・段の一足飛び・委譲先の段の範囲と返却の `N` の食い違い）と、いまの段取りの立ち位置。
+// `work_plan` の差し戻し（形の崩れ・段の一足飛び・委譲先の段の範囲と返却の `N` の食い違い・返却を受けたのに範囲が無い）と、いまの段取りの立ち位置。
 // 返却で進んだ位置のままメインが同じ位置を渡す呼び出しは、段のまとめが無くても通す。
 // 一足飛びは、同じ依頼の中で同じ段の並びのまま、済んだ段（並びを平らにして数える）を1回で2つ以上増やした呼び出し。
 // 飛ばした段には段のまとめが無く、メインビューの中間レポートがその段だけ抜けるため。
@@ -17,9 +17,11 @@ import { isDeepEqual } from "remeda"
 import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
+  type DelegatedRange,
   finishedPhaseCount,
   isMidWay,
   type LatestWorkPlan,
+  NO_DELEGATED_RANGE,
   nextWorkPlan,
   parseWorkPlan,
   phaseCount,
@@ -27,6 +29,7 @@ import {
   type WorkPlanStanding,
 } from "../../../shared/session/work-plan.ts"
 import { bandPositionText, handbackLineText, handbackNoteText } from "./band-position.ts"
+import { judgePhaseMention } from "./phase-mention.ts"
 
 export type WorkPlanVerdict =
   | { readonly kind: "accepted"; readonly plan: WorkPlan }
@@ -34,6 +37,8 @@ export type WorkPlanVerdict =
   | { readonly kind: "skipped-phase" }
   | { readonly kind: "empty-summary" }
   | { readonly kind: "range-mismatch" }
+  | { readonly kind: "range-missing" }
+  | { readonly kind: "phase-number" }
 
 export type WorkPlanReview = {
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
@@ -42,6 +47,8 @@ export type WorkPlanReview = {
   readonly standing: () => WorkPlanStanding
   /** 返却が届いてから、メインの `work_plan` が受け付けられるまでのあいだ真。 */
   readonly gateRaised: () => boolean
+  /** 受け付け済みの段取りの委譲先の段の範囲。段取りが無ければ `none`。 */
+  readonly delegatedRange: () => DelegatedRange
   /** 受け付け済みの段取りの帯の位置の文（返却で進めた位置を含む）。段取りが無ければ空。 */
   readonly bandPosition: () => string
   /**
@@ -74,12 +81,18 @@ export function createWorkPlanReview(): WorkPlanReview {
     positionFromReturn && accepted.kind === "planned" && isSamePosition(accepted, plan)
 
   const judgeWellFormed = (plan: WorkPlan): WorkPlanVerdict => {
+    if (plan.delegatedRange.kind === "none" && returnedCount !== undefined) {
+      return { kind: "range-missing" }
+    }
     if (
       plan.delegatedRange.kind === "range" &&
       returnedCount !== undefined &&
       plan.delegatedRange.count !== returnedCount
     ) {
       return { kind: "range-mismatch" }
+    }
+    if (judgePhaseMention(plan.delegatedRange, [plan.phaseSummary]).kind === "rejected") {
+      return { kind: "phase-number" }
     }
     if (isMidWay(plan) && plan.phaseSummary === "" && !isReturnedPosition(plan)) {
       return { kind: "malformed" }
@@ -119,6 +132,8 @@ export function createWorkPlanReview(): WorkPlanReview {
           }
     },
     gateRaised: () => gateRaised,
+    delegatedRange: () =>
+      accepted.kind === "planned" ? accepted.delegatedRange : NO_DELEGATED_RANGE,
     bandPosition: () => bandPositionText(accepted),
     takeHandbackNote: () => {
       const note = handbackNoteText(handbackLines, accepted)

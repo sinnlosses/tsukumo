@@ -2,6 +2,7 @@
 
 import {
   currentPhaseOf,
+  phasePosition,
   type WorkPhase,
 } from "../../../../../../../../../shared/session/work-plan.ts"
 import { isTurnCounting } from "../../../../../../../../domain/turn-elapsed.ts"
@@ -52,7 +53,11 @@ export function useCurrentStep(): CurrentStepModel {
 }
 
 function headingOf(phase: WorkPhase): string {
-  return phase.kind === "phase"
-    ? `${HEADING} · ${phase.indexes.map((index) => String(index + 1)).join("·")} ${phase.name}`
-    : HEADING
+  if (phase.kind !== "phase") {
+    return HEADING
+  }
+  const number = phasePosition(phase)
+  return number.kind === "numbered"
+    ? `${HEADING} · ${number.ordinals} ${phase.name}`
+    : `${HEADING} · ${phase.name}`
 }

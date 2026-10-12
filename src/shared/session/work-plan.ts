@@ -56,7 +56,7 @@ type PlannedWorkPlan = { readonly kind: "planned" } & WorkPlan
 export type PlannedPhaseState = "done" | "current" | "upcoming"
 
 /**
- * 並びを平らにした段1つ。`index` は平らにした並びでの0始まりの位置（段の番号は `index + 1`）。
+ * 並びを平らにした段1つ。`index` は平らにした並びでの0始まりの位置（段の番号は {@link phaseNumberOf} が導く）。
  * `entry` はその段のある要素の位置で、まとまりの中の段どうしは同じ値を持つ。
  * `key` は名前と同じ名前の段の中で何番目かの組で、組み替えた並びどうしで同じ段を引き当てるのに使う。
  */
@@ -72,7 +72,7 @@ export type PlannedPhase = {
  * 手順1件が始まったときの段。
  * 段取りがまだ無い・全部の段が済んだあとなら `none`。
  * `indexes` は今の段（まとまりの中なら済んでいない段のすべて）の平らにした並びでの0始まりの位置、`count` は段の数、
- * `name` は今の段の名前を「・」でつないだもの。
+ * `name` は今の段の名前を「・」でつないだもの、`range` は段取りの委譲先の段の範囲（番号の数え方を決める）。
  */
 export type WorkPhase =
   | { readonly kind: "none" }
@@ -81,6 +81,7 @@ export type WorkPhase =
       readonly indexes: readonly number[]
       readonly count: number
       readonly name: string
+      readonly range: DelegatedRange
     }
 
 /**
@@ -306,6 +307,7 @@ export function currentPhaseOf(plan: LatestWorkPlan): WorkPhase {
         indexes: current.map((phase) => phase.index),
         count: phases.length,
         name: current.map((phase) => phase.name).join(PHASE_NAME_SEPARATOR),
+        range: plan.delegatedRange,
       }
 }
 
@@ -338,20 +340,91 @@ export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShi
         indexes: [finished.index],
         count: nextPhases.length,
         name: finished.name,
+        range: next.delegatedRange,
       }),
       summary: next.phaseSummary,
     },
   }
 }
 
-/** 段の見出し「2/4 段の名前」（今の段が2つ以上なら「2·3/4 段B・段C」）。 */
-export function phaseLabel(phase: Extract<WorkPhase, { readonly kind: "phase" }>): string {
-  return `${phasePosition(phase)} ${phase.name}`
+/**
+ * 段の番号。`numbered` は `ordinals`「2」（段が2つ以上なら「2·3」）と `text`「2/4」（「2·3/4」）、
+ * `named` は番号を持たず名前だけで呼ぶ段。
+ */
+export type PhaseNumber =
+  | { readonly kind: "numbered"; readonly ordinals: string; readonly text: string }
+  | { readonly kind: "named" }
+
+export function plannedPhaseNumber(
+  plan: Pick<WorkPlan, "phases" | "delegatedRange">,
+  phase: Pick<PlannedPhase, "index">,
+): PhaseNumber {
+  return phaseNumberOf(plan.delegatedRange, [phase.index], phaseCount(plan.phases))
 }
 
-/** 段の位置「2/4」（今の段が2つ以上なら「2·3/4」）。 */
-export function phasePosition(phase: Extract<WorkPhase, { readonly kind: "phase" }>): string {
-  return `${phase.indexes.map((index) => String(index + 1)).join("·")}/${String(phase.count)}`
+/**
+ * いまの位置「2/4」。全部の段が済んでいれば番号を持つ段の数で「4/4」。
+ * 段取りが無い・今の段が番号を持たないときは空の文字列。
+ */
+export function workPositionText(plan: LatestWorkPlan): string {
+  if (plan.kind === "none") {
+    return ""
+  }
+  const phase = currentPhaseOf(plan)
+  if (phase.kind === "none") {
+    const count = numberedPhaseCount(plan)
+    return `${String(count)}/${String(count)}`
+  }
+  const position = phasePosition(phase)
+  return position.kind === "numbered" ? position.text : ""
+}
+
+/** 全部の段（範囲の外を含む）で言う済み具合「5段すべて済み」「5段のうち4段済み」。 */
+export function completionText(
+  plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup">,
+): string {
+  const total = phaseCount(plan.phases)
+  const finished = finishedPhaseCount(plan)
+  return finished >= total
+    ? `${String(total)}段すべて済み`
+    : `${String(total)}段のうち${String(finished)}段済み`
+}
+
+/** 段の呼び名「2. 段の名前」（範囲の外の段は名前だけ）。 */
+export function plannedPhaseTitle(
+  plan: Pick<WorkPlan, "phases" | "delegatedRange">,
+  phase: Pick<PlannedPhase, "index" | "name">,
+): string {
+  const number = plannedPhaseNumber(plan, phase)
+  return number.kind === "numbered" ? `${number.ordinals}. ${phase.name}` : phase.name
+}
+
+/**
+ * 平らにした並びでの位置 `indexes`（全部で `total` 段）の段の番号。段の番号を組む唯一の場所。
+ * 範囲が無ければ通し番号、範囲があれば範囲の中の段だけを範囲の先頭からの番号と範囲の段の数で数え、範囲の外の段は `named`。
+ */
+export function phaseNumberOf(
+  range: DelegatedRange,
+  indexes: readonly number[],
+  total: number,
+): PhaseNumber {
+  const [lead = 0] = indexes
+  if (range.kind === "none") {
+    return numbered(indexes, 0, total)
+  }
+  return lead >= range.first && lead < range.first + range.count
+    ? numbered(indexes, range.first, range.count)
+    : { kind: "named" }
+}
+
+/** 段の見出し「2/4 段の名前」（今の段が2つ以上なら「2·3/4 段B・段C」、範囲の外の段は名前だけ）。 */
+export function phaseLabel(phase: Extract<WorkPhase, { readonly kind: "phase" }>): string {
+  const position = phasePosition(phase)
+  return position.kind === "numbered" ? `${position.text} ${phase.name}` : phase.name
+}
+
+export function phasePosition(phase: Extract<WorkPhase, { readonly kind: "phase" }>): PhaseNumber {
+  return phaseNumberOf(phase.range, phase.indexes, phase.count)
 }
 
 /**
@@ -368,6 +441,17 @@ export type ReturnedPhase =
   | { readonly kind: "finished"; readonly phase: PlannedPhase }
 
 const UNMOVED = { kind: "unmoved" } as const satisfies ReturnedPhase
+
+/** 番号を持つ段の数（範囲があれば範囲の中、無ければ全部の段）。 */
+function numberedPhaseCount(plan: Pick<WorkPlan, "phases" | "delegatedRange">): number {
+  const total = phaseCount(plan.phases)
+  return plan.delegatedRange.kind === "range" ? plan.delegatedRange.count : total
+}
+
+function numbered(indexes: readonly number[], origin: number, count: number): PhaseNumber {
+  const ordinals = indexes.map((index) => String(index - origin + 1)).join("·")
+  return { kind: "numbered", ordinals, text: `${ordinals}/${String(count)}` }
+}
 
 const PHASE_NAME_SEPARATOR = "・"
 

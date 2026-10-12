@@ -5,7 +5,14 @@ import { groupBy } from "remeda"
 import type { PhaseDuration, PhaseTimeRow } from "../report/report-phase-time.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
 import { type RecordTime, recordTimeAt, type SessionRecord } from "./session-state.ts"
-import { finishedPhaseCount, phaseLabel, type PlannedPhase, plannedPhasesOf } from "./work-plan.ts"
+import {
+  finishedPhaseCount,
+  phaseLabel,
+  type PhaseNumber,
+  phaseNumberOf,
+  type PlannedPhase,
+  plannedPhasesOf,
+} from "./work-plan.ts"
 
 type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
 
@@ -58,6 +65,7 @@ export function phaseDurations(
       indexes: [phase.index],
       count: phases.length,
       name: phase.name,
+      range: last.delegatedRange,
     }),
     duration: phaseDuration(phase.key),
   })
@@ -69,7 +77,13 @@ export function phaseDurations(
     return [
       {
         kind: "parallel",
-        label: `並列 ${members.map((phase) => String(phase.index + 1)).join("·")}`,
+        label: parallelLabel(
+          phaseNumberOf(
+            last.delegatedRange,
+            members.map((phase) => phase.index),
+            phases.length,
+          ),
+        ),
         wall: groupDuration(groupKeyOf(entry)),
         phases: members.map(rowOf),
       },
@@ -133,4 +147,8 @@ function totalOf(durations: readonly MeasuredTime[]): MeasuredTime {
         : UNKNOWN,
     { kind: "known", milliseconds: 0 },
   )
+}
+
+function parallelLabel(number: PhaseNumber): string {
+  return number.kind === "numbered" ? `並列 ${number.ordinals}` : "並列"
 }

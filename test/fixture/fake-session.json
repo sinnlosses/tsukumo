@@ -4738,6 +4738,7 @@
           "afterMs": 50,
           "event": {
             "kind": "work-plan",
+            "delegatedRange": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 1,
             "finishedInGroup": [],
@@ -4748,6 +4749,7 @@
           "afterMs": 100,
           "event": {
             "kind": "work-plan",
+            "delegatedRange": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 2,
             "finishedInGroup": [],
@@ -4758,6 +4760,7 @@
           "afterMs": 150,
           "event": {
             "kind": "work-plan",
+            "delegatedRange": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 3,
             "finishedInGroup": [],
@@ -4768,6 +4771,7 @@
           "afterMs": 200,
           "event": {
             "kind": "work-plan",
+            "delegatedRange": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 4,
             "finishedInGroup": [],
@@ -4778,6 +4782,7 @@
           "afterMs": 250,
           "event": {
             "kind": "work-plan",
+            "delegatedRange": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 5,
             "finishedInGroup": [],
@@ -4788,6 +4793,7 @@
           "afterMs": 300,
           "event": {
             "kind": "work-plan",
+            "delegatedRange": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 6,
             "finishedInGroup": [],
@@ -6063,6 +6069,72 @@
         {
           "afterMs": 800,
           "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
+    },
+    {
+      "name": "delegated-range",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "架空のタスクを委譲先に任せて進めたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "delegatedRange": { "kind": "range", "first": 1, "count": 3 },
+            "phases": ["計画を確かめる", "調べる", "直す", "確かめる", "受け入れる"],
+            "current": 2,
+            "finishedInGroup": [],
+            "phaseSummary": "架空の調べは済んで、直す範囲が決まった。"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-delegated-range-1",
+            "name": "Bash",
+            "input": { "command": "ls" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "delegated-range-outside",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "架空のタスクを委譲先に任せて進めたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "delegatedRange": { "kind": "range", "first": 1, "count": 3 },
+            "phases": ["計画を確かめる", "調べる", "直す", "確かめる", "受け入れる"],
+            "current": 0,
+            "finishedInGroup": [],
+            "phaseSummary": ""
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-delegated-range-outside-1",
+            "name": "Bash",
+            "input": { "command": "ls" }
+          }
         }
       ]
     }

@@ -639,6 +639,26 @@ const CATALOG: readonly CatalogEntry[] = [
     },
   },
   {
+    name: "delegated-range",
+    scene: "delegated-range",
+    label: "委譲中の帯（範囲の中の段が今）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: false,
+    settle: TAIL_SETTLE,
+  },
+  {
+    name: "delegated-range-outside",
+    scene: "delegated-range-outside",
+    label: "委譲中の帯（範囲の外の段が今）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: false,
+    settle: TAIL_SETTLE,
+  },
+  {
     name: "diary-book",
     // `diary-written` 場面の「日記帳で開く」で見開きを開く。中身（本文・しおり）は
     // `homeSetup` が件専用のホームへ書く架空の日記から来る。

@@ -128,7 +128,7 @@ describe("WorkPlanReview の判定", () => {
     expect(review.judge({ current: 1, phaseSummary: SUMMARY }).kind).toBe("malformed")
   })
 
-  it("範囲の無い段取りでは、返却が届いても位置は動かず、返却のイベントはそのまま流れる", () => {
+  it("範囲の無い段取りでは、返却が届いても位置は動かず、返却のイベントはそのまま流れ、範囲の無い呼び出しは差し戻す", () => {
     const review = createWorkPlanReview()
     review.pass(REQUEST)
     review.judge(inputOf(0))
@@ -144,8 +144,8 @@ describe("WorkPlanReview の判定", () => {
       "delegate-returned",
     ])
     expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
-    expect(review.judge(inputOf(2)).kind).toBe("skipped-phase")
-    expect(review.judge(inputOf(1)).kind).toBe("accepted")
+    expect(review.judge(inputOf(2)).kind).toBe("range-missing")
+    expect(review.judge(inputOf(1)).kind).toBe("range-missing")
   })
 })
 
@@ -225,7 +225,7 @@ describe("WorkPlanReview の委譲の返却", () => {
     ).toBe("accepted")
   })
 
-  it("最後に受けた返却の N と count が違う範囲は差し戻し、揃えるか範囲を省けば通る", () => {
+  it("最後に受けた返却の N と count が違う範囲は差し戻し、揃えれば通る", () => {
     const review = createWorkPlanReview()
     review.pass(REQUEST)
     review.judge(ranged(0))
@@ -233,6 +233,41 @@ describe("WorkPlanReview の委譲の返却", () => {
 
     expect(review.judge(ranged(1, SUMMARY)).kind).toBe("range-mismatch")
     expect(review.judge(ranged(1, SUMMARY, { first: 1, count: 3 })).kind).toBe("accepted")
+  })
+
+  it("形の読める返却を受けたあとの範囲の無い work_plan は差し戻し、範囲を宣言すれば通る", () => {
+    const review = createWorkPlanReview()
+    review.pass(REQUEST)
+    review.judge(ranged(0))
+    review.pass(handback("計画 0/2 | 架空の計画。"))
+
+    expect(review.judge({ ...ranged(1, SUMMARY), delegatedRange: undefined }).kind).toBe(
+      "range-missing",
+    )
+    expect(review.judge(ranged(1, SUMMARY)).kind).toBe("accepted")
+  })
+
+  it("段のまとめが範囲の外の番号を言う work_plan は差し戻し、範囲が無ければ検査しない", () => {
+    const review = createWorkPlanReview()
+    review.pass(REQUEST)
+    review.judge(ranged(0))
+
+    expect(review.judge(ranged(1, "段3が済んだ。")).kind).toBe("phase-number")
+    expect(review.judge(ranged(1, "段1が済んだ。")).kind).toBe("accepted")
+    expect(review.delegatedRange()).toEqual({ kind: "range", first: 1, count: 2 })
+    review.pass(REQUEST)
+    expect(review.delegatedRange()).toEqual({ kind: "none" })
+    review.judge({ phases: FOUR, current: 0 })
+    expect(review.judge({ phases: FOUR, current: 1, phaseSummary: "段9が済んだ。" }).kind).toBe(
+      "accepted",
+    )
+  })
+
+  it("返却を受けていない依頼・形の読めない返却だけの依頼では、範囲が無くても通る", () => {
+    const review = createWorkPlanReview()
+    review.pass(REQUEST)
+    expect(review.judge({ ...ranged(0), delegatedRange: undefined }).kind).toBe("accepted")
+    review.pass(handback("了解しました"))
     expect(review.judge({ ...ranged(1, SUMMARY), delegatedRange: undefined }).kind).toBe("accepted")
   })
 
@@ -281,8 +316,8 @@ describe("WorkPlanReview の返却の注記", () => {
     review.pass(handback("段 1/2 | 架空の返却。"))
 
     expect(review.takeHandbackNote()).toBe(
-      "tsukumo の注記（委譲先の返却の本文ではない）:返却 `段 1/2` で帯の 2/4 架空の実装A が済んだ。" +
-        "帯の今の段は 3/4 架空の実装B。委譲先の段 1〜2 は帯の 2〜3 番目（委譲先の段 n は帯の 1 + n 番目）。",
+      "tsukumo の注記（委譲先の返却の本文ではない）:返却 `段 1/2` で帯の 1/2 架空の実装A が済んだ。" +
+        "帯の今の段は 2/2 架空の実装B。帯の段の番号は委譲先の段の番号と同じで、範囲の外の段（計画・受け入れ）は番号を持たず名前で言う。",
     )
     expect(review.takeHandbackNote()).toBe("")
   })
@@ -302,10 +337,10 @@ describe("WorkPlanReview の返却の注記", () => {
     review.pass(handback("段 1/2 | 架空の返却A。"))
 
     const note = review.takeHandbackNote()
-    expect(note).toContain("返却 `段 2/2` で帯の 3/4 架空の実装B が済んだ。")
-    expect(note).toContain("返却 `段 1/2` で帯の 2/4 架空の実装A が済んだ。")
+    expect(note).toContain("返却 `段 2/2` で帯の 2/2 架空の実装B が済んだ。")
+    expect(note).toContain("返却 `段 1/2` で帯の 1/2 架空の実装A が済んだ。")
     expect(note.match(/帯の今の段は/gu)).toHaveLength(1)
-    expect(note).toMatch(/帯の今の段は 4\/4 架空の受け入れ。/u)
+    expect(note).toMatch(/帯の今の段は 架空の受け入れ。/u)
   })
 
   it("受け付けた work_plan・依頼・利用者の送ったターンの始まりのあとは、溜めた注記を捨てる", () => {

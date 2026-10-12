@@ -8,13 +8,18 @@ import {
   type TurnResult,
 } from "../../../../../../../../../shared/session/turn-result.ts"
 import {
+  completionText,
   currentPhaseOf,
   finishedPhaseCount,
   type LatestWorkPlan,
   phaseCount,
-  phasePosition,
+  type PhaseNumber,
+  phaseNumberOf,
   type PlannedPhase,
+  plannedPhaseNumber,
+  plannedPhaseTitle,
   plannedPhasesOf,
+  workPositionText,
 } from "../../../../../../../../../shared/session/work-plan.ts"
 import {
   FINISHED_LABEL,
@@ -101,6 +106,8 @@ export type WorkStripModel =
 
 const NO_PLAN = { kind: "none" } as const satisfies LatestWorkPlan
 
+const NAMED = { kind: "named" } as const satisfies PhaseNumber
+
 const PHASE_STATE_SUFFIX = {
   done: "（済）",
   current: "（今の段）",
@@ -136,7 +143,8 @@ export function useWorkStrip(): WorkStripModel {
 
   const planned = plan.kind === "planned" ? plannedPhasesOf(plan) : []
   const nowPhase = currentPhaseOf(plan)
-  const count = String(planned.length)
+  const completion = plan.kind === "planned" ? completionText(plan) : ""
+  const positionText = workPositionText(plan)
   const { exchange } = content
   const firstPending = pending[0]
   const list: WorkStripSteps["list"] =
@@ -152,20 +160,14 @@ export function useWorkStrip(): WorkStripModel {
     onToggle: () => toggle(exchange),
     groups: currentWorkStepGroups(turnStepList.steps),
   }
-  const stripPhases = slotsOf(planned, working && firstPending !== undefined)
+  const stripPhases = slotsOf(plan, planned, working && firstPending !== undefined)
 
   if (!working) {
-    const finishedCount = plan.kind === "planned" ? finishedPhaseCount(plan) : 0
     return {
       kind: "finished",
       result,
       phases: stripPhases,
-      headLabel:
-        planned.length === 0
-          ? ""
-          : finishedCount >= planned.length
-            ? `${count}段すべて済み`
-            : `${count}段のうち${String(finishedCount)}段済み`,
+      headLabel: completion,
       sideLabel: elapsedLabel,
       steps,
     }
@@ -175,16 +177,8 @@ export function useWorkStrip(): WorkStripModel {
     kind: "working",
     phases: stripPhases,
     result,
-    headLabel:
-      planned.length === 0
-        ? ""
-        : nowPhase.kind === "phase"
-          ? nowPhase.name
-          : `${count}段すべて済み`,
-    sideLabel:
-      planned.length === 0
-        ? elapsedLabel
-        : `${nowPhase.kind === "phase" ? phasePosition(nowPhase) : `${count}/${count}`} · ${elapsedLabel}`,
+    headLabel: planned.length === 0 ? "" : nowPhase.kind === "phase" ? nowPhase.name : completion,
+    sideLabel: positionText === "" ? elapsedLabel : `${positionText} · ${elapsedLabel}`,
     activity: workActivityOf({
       turnStepList,
       firstPending,
@@ -224,31 +218,50 @@ function stripResultOf(
   return finishedPhaseCount(plan) < phaseCount(plan.phases) ? "stopped" : "done"
 }
 
-function slotsOf(planned: readonly PlannedPhase[], asking: boolean): readonly WorkStripSlot[] {
+function slotsOf(
+  plan: LatestWorkPlan,
+  planned: readonly PlannedPhase[],
+  asking: boolean,
+): readonly WorkStripSlot[] {
   const entries = Object.values(groupBy(planned, (phase) => phase.entry))
   return entries.map((members): WorkStripSlot => {
-    const phases = members.map((phase) => toPhase(phase, asking))
+    const phases = members.map((phase) => toPhase(plan, phase, asking))
     const [first] = phases
     if (phases.length === 1 && first !== undefined) {
       return { kind: "phase", phase: first }
     }
-    const numbers = members.map((phase) => String(phase.index + 1)).join("·")
+    const number =
+      plan.kind === "planned"
+        ? phaseNumberOf(
+            plan.delegatedRange,
+            members.map((phase) => phase.index),
+            phaseCount(plan.phases),
+          )
+        : NAMED
     return {
       kind: "parallel",
       key: `group-${String(members[0]?.entry ?? 0)}`,
-      label: `並列 ${numbers}`,
+      label: number.kind === "numbered" ? `並列 ${number.ordinals}` : "並列",
       state: phases.every((phase) => phase.state === "done") ? "done" : "upcoming",
       phases,
     }
   })
 }
 
-function toPhase({ index, name, state: planned }: PlannedPhase, asking: boolean): WorkStripPhase {
-  const state: WorkStripPhaseState = planned === "current" && asking ? "asking" : planned
+function toPhase(plan: LatestWorkPlan, phase: PlannedPhase, asking: boolean): WorkStripPhase {
+  const state: WorkStripPhaseState = phase.state === "current" && asking ? "asking" : phase.state
+  const number = plan.kind === "planned" ? plannedPhaseNumber(plan, phase) : NAMED
   return {
-    key: String(index),
-    mark: state === "done" ? "✓" : state === "asking" ? "?" : String(index + 1),
-    label: `${String(index + 1)}. ${name}${PHASE_STATE_SUFFIX[state]}`,
+    key: String(phase.index),
+    mark:
+      state === "done"
+        ? "✓"
+        : state === "asking"
+          ? "?"
+          : number.kind === "numbered"
+            ? number.ordinals
+            : "・",
+    label: `${plan.kind === "planned" ? plannedPhaseTitle(plan, phase) : phase.name}${PHASE_STATE_SUFFIX[state]}`,
     state,
   }
 }

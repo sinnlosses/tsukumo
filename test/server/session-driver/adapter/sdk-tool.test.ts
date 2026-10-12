@@ -7,6 +7,7 @@ import {
   type CallReview,
   createCallReview,
 } from "../../../../src/server/session-driver/core/call-review.ts"
+import { PHASE_MENTION_REJECTION_TEXT } from "../../../../src/server/session-driver/core/phase-mention.ts"
 import { toSessionEvents } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import type {
   ChatRecall,
@@ -441,6 +442,56 @@ function spokenReview(): CallReview {
   return review
 }
 
+function rangedReview(): CallReview {
+  const review = createCallReview()
+  review.pass({ kind: "request", text: "架空の依頼", images: [] })
+  review.judgeWorkPlan({
+    phases: ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"],
+    current: 0,
+    delegatedRange: { first: 1, count: 2 },
+  })
+  return review
+}
+
+describe("範囲の外の段の番号の差し戻し", () => {
+  const rejected = { text: PHASE_MENTION_REJECTION_TEXT, isError: true, endsTurn: false }
+
+  it("範囲があるあいだ、範囲の外の番号を言う speak と report を差し戻し、範囲の中の番号は通す", async () => {
+    const report = (closingText: string) => ({
+      conclusion: "架空の結論",
+      workPlanClosing: "stopped",
+      closing: { text: closingText, expression: "default" },
+      sessionSummary: SUMMARY,
+      waitingLine: WAITING_LINE,
+    })
+
+    expect(
+      await callTool(workServer([], [], [], rangedReview()), "speak", {
+        text: "段3が返った",
+        expression: "default",
+      }),
+    ).toEqual(rejected)
+    expect(
+      await callTool(workServer([], [], [], rangedReview()), "report", report("段3まで済んだ")),
+    ).toEqual(rejected)
+    expect(
+      await callTool(workServer([], [], [], rangedReview()), "speak", {
+        text: "段2が返った",
+        expression: "default",
+      }),
+    ).toMatchObject({ isError: false })
+    expect(
+      await callTool(workServer([], [], [], rangedReview()), "report", report("段2まで済んだ")),
+    ).toMatchObject({ isError: false, endsTurn: true })
+  })
+
+  it("範囲が無ければ検査しない", async () => {
+    expect(
+      await callTool(workServer(), "speak", { text: "段9が返った", expression: "default" }),
+    ).toMatchObject({ isError: false })
+  })
+})
+
 describe("work_plan（段取り）", () => {
   it("段の並びと位置を渡すと ok が返り、ターンは閉じない", async () => {
     const reply = await callTool(workServer(), "work_plan", {
@@ -455,7 +506,7 @@ describe("work_plan（段取り）", () => {
     })
   })
 
-  it("受け付けた戻り値は帯の今の段の位置と名前を言い、範囲があれば委譲先の段の帯での位置を言う", async () => {
+  it("受け付けた戻り値は帯の今の段の位置と名前を言い、範囲があれば範囲の先頭からの番号で言う", async () => {
     const reply = await callTool(workServer(), "work_plan", {
       phases: ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"],
       current: 1,
@@ -464,7 +515,7 @@ describe("work_plan（段取り）", () => {
     })
 
     expect(reply.text).toBe(
-      "ok\n帯の今の段は 2/4 架空の実装A。委譲先の段 1〜2 は帯の 2〜3 番目（委譲先の段 n は帯の 1 + n 番目）。",
+      "ok\n帯の今の段は 1/2 架空の実装A。帯の段の番号は委譲先の段の番号と同じで、範囲の外の段（計画・受け入れ）は番号を持たず名前で言う。",
     )
   })
 
@@ -481,10 +532,8 @@ describe("work_plan（段取り）", () => {
       delegatedRange: { first: 2, count: 2 },
     })
 
-    expect(before.text).toContain("帯の今の段は 1/3 架空の計画。")
-    expect(before.text).toContain("帯の 2〜2 番目")
-    expect(after.text).toContain("帯の今の段は 1/5 架空の計画。")
-    expect(after.text).toContain("帯の 3〜4 番目")
+    expect(before.text).toContain("帯の今の段は 架空の計画。")
+    expect(after.text).toContain("帯の今の段は 架空の計画。")
   })
 
   it("途中の位置の呼び出しは、段のまとめがあれば通し、無ければ差し戻す", async () => {

@@ -145,6 +145,26 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     })
   })
 
+  it("範囲の中が全部済んで外の段が残ったまま閉じたら、結果の見出しは全部の段で数える", () => {
+    const ranged: SessionEvent = {
+      ...plan,
+      delegatedRange: { kind: "range", first: 1, count: 2 },
+      phases: ["架空の計画", "架空の段A", "架空の段B", "架空の受け入れ"],
+    }
+    const closed = (current: number) =>
+      stripAt(
+        foldTimed([
+          [request, START],
+          [{ ...ranged, current }, START + 1_000],
+          [{ kind: "turn-finished", outcome: { kind: "completed" } }, START + 5_000],
+        ]),
+        START + 6_000,
+      )
+
+    expect(closed(3)).toMatchObject({ kind: "finished", headLabel: "4段のうち3段済み" })
+    expect(closed(4)).toMatchObject({ kind: "finished", headLabel: "4段すべて済み" })
+  })
+
   it("委譲中に送った脇の話のあいだも、親の段取り・今の段・依頼からの経過を出し続ける", () => {
     const state = foldTimed([
       [request, START],

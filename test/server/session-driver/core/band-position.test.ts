@@ -31,13 +31,21 @@ describe("bandPositionText", () => {
     expect(bandPositionText(planned({ current: 5 }))).toBe("帯の段は全部済んでいる。")
   })
 
-  it("範囲の前にメインの段があれば、委譲先の段と帯の番号の違いを言う", () => {
+  it("範囲があれば、範囲の先頭からの番号で言い、番号が委譲先の段と同じことを添える", () => {
     const text = bandPositionText(
       planned({ delegatedRange: { kind: "range", first: 1, count: 3 } }),
     )
     expect(text).toBe(
-      "帯の今の段は 3/5 実装B。委譲先の段 1〜3 は帯の 2〜4 番目（委譲先の段 n は帯の 1 + n 番目）。",
+      "帯の今の段は 2/3 実装B。帯の段の番号は委譲先の段の番号と同じで、範囲の外の段（計画・受け入れ）は番号を持たず名前で言う。",
     )
+  })
+
+  it("今の段が範囲の外なら、番号を付けず名前で言う", () => {
+    expect(
+      bandPositionText(
+        planned({ current: 0, delegatedRange: { kind: "range", first: 1, count: 3 } }),
+      ),
+    ).toContain("帯の今の段は 計画。")
   })
 })
 
@@ -46,7 +54,7 @@ describe("handbackLineText", () => {
 
   it("今の段に当たる段 n/N の返却は、済んだ帯の段の位置と名前を言う", () => {
     expect(handbackLineText(RANGED, parseDelegateReturn("段 2/3 | 架空の返却。"))).toBe(
-      "返却 `段 2/3` で帯の 3/5 実装B が済んだ。",
+      "返却 `段 2/3` で帯の 2/3 実装B が済んだ。",
     )
   })
 

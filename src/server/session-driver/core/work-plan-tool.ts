@@ -3,6 +3,7 @@
 
 import { bandPositionText } from "./band-position.ts"
 import type { CallReview } from "./call-review.ts"
+import { PHASE_MENTION_REJECTION_TEXT } from "./phase-mention.ts"
 import type { WorkPlanVerdict } from "./work-plan-review.ts"
 
 /** モデルに見せる `work_plan` ツールの説明。呼ぶ条件は「段取り（tsukumo）」の節が持つ。 */
@@ -35,7 +36,7 @@ export const WORK_PLAN_PHASE_SUMMARY_DESCRIPTION =
 
 export const WORK_PLAN_DELEGATED_RANGE_DESCRIPTION =
   "作業を委譲するときだけ、委譲先の段の範囲。first は委譲先の段1に当たる位置（phases を平らにした並びで0始まり）、" +
-  "count は委譲先の段の数。委譲先の段 n は first + n - 1 番目の段に当たる。" +
+  "count は委譲先の段の数。範囲の中の段は、帯でも委譲先の段と同じ番号（範囲の先頭が 1）で数える。" +
   "範囲の端は同時に走らせる段の配列の途中に置かない。委譲しないときは省く"
 
 /** `CallReview` が差し戻した呼び出しに返す直し方。差し戻しの種類ごとに1つ。 */
@@ -60,8 +61,13 @@ export const WORK_PLAN_REJECTIONS = {
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
   "range-mismatch":
     "delegatedRange の count が、委譲先の返却で知らされた段の数と違う。" +
-    "帯の段を委譲先の段に1つずつ合わせ（委譲先の段 n は first + n - 1 番目の段）、" +
+    "範囲の中の段を委譲先の段に1つずつ合わせ、" +
     "count を返却の段の数にそろえて呼び直すこと。" +
+    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
+  "phase-number": PHASE_MENTION_REJECTION_TEXT,
+  "range-missing":
+    "委譲先の返却を受けたのに delegatedRange が無い。" +
+    "委譲先の段の範囲を宣言して呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
 } as const satisfies Record<Exclude<WorkPlanVerdict["kind"], "accepted">, string>
 
@@ -103,7 +109,7 @@ export const WORK_PLAN_PROMPT = `## 段取り（tsukumo）
   自分の \`work_plan\` は、並びと委譲先の段の範囲を渡す口
   - 並びはいつも \`phases\` で渡す。計画や受け入れを段にするかも自分で決める
   - **計画の返却（\`計画 0/N\`）で委譲先の段の数 \`N\` が分かったら、\`delegatedRange\` で範囲を宣言して並びを組み直す。**
-    \`first\` は委譲先の段1に当たる帯の段の位置（0始まり）、\`count\` は \`N\`。委譲先の段 \`n\` は範囲の先頭から \`n\` 個目の帯の段に当たる。
+    \`first\` は委譲先の段1に当たる帯の段の位置（0始まり）、\`count\` は \`N\`。返却を1件でも受けたあとは、範囲の無い \`work_plan\` は差し戻される。
     範囲の前後に自分の段（計画・受け入れなど）を置いてよい。範囲の端を同時に走らせる段の配列の途中に置かない
   - **返却を受けたら、帯が進んだ位置を確かめ、その位置のまま \`work_plan\` を渡す**（段のまとめは省ける）。
     位置を組み替えるときは、自分で終えた段のまとめを書く
@@ -113,9 +119,9 @@ export const WORK_PLAN_PROMPT = `## 段取り（tsukumo）
   - **同時に走らせる段は、\`phases\` の中で名前の配列にして1つの要素で渡す**（どれを同時に走らせるかは自分で決める）。
     委譲先がどの順で返っても、段 \`n\` に当たる帯の段が返却で済む
   - 受け入れを済ませたら \`finished\` の \`report\` を渡す
-- **セリフ・\`phaseSummary\`・レポートで段の番号や数を言うときは、帯の段で数える**。
-  返却に添えられる tsukumo の注記・\`work_plan\` の戻り値・関門の拒否文が、済んだ帯の段と帯の今の位置と委譲先の段の帯での番号を返すので、それを使って言い、
-  委譲先の返却やタスクの手順に書かれた番号をそのまま言わない
+- **段の番号は委譲先の段と同じ1系統。** 範囲の中の段は、帯でも委譲先の段 \`n\` を \`n\` 番目として数える。
+  範囲の外の段（計画・受け入れ）は番号を持たないので、名前で言う。
+  返却に添えられる tsukumo の注記・\`work_plan\` の戻り値・関門の拒否文が、済んだ帯の段と今の位置を返すので、それを使って言う
 - **\`<tsukumo-aside>\` で包まれた言葉は、委譲中に利用者が送った脇の話。** 新しい依頼ではなく、いまの作業の続きの中の一言
   - 答えは \`speak\` の1〜2文で返す。\`report\` は呼ばず、本文も書かない
   - 段取りは今のまま続く。止める・方針を変えるよう頼まれたら、今の段取りを \`work_plan\` で組み替えるか、

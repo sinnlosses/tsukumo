@@ -20,6 +20,8 @@ import {
   workPlanRecord,
 } from "../../fixture/session-record.ts"
 
+const NO_RANGE = { kind: "none" } as const
+
 /** `{ kind: "turn" }` の前提で `steps` を取り出す（前提が崩れたら分かるように投げる）。 */
 function turnSteps(list: ReturnType<typeof currentTurnSteps>): readonly TurnStep[] {
   if (list.kind !== "turn") {
@@ -250,8 +252,8 @@ describe("currentTurnSteps（段取り）", () => {
 
     expect(turnSteps(list).map((step) => step.phase)).toEqual([
       { kind: "none" },
-      { kind: "phase", indexes: [0], count: 2, name: "架空の段A" },
-      { kind: "phase", indexes: [1], count: 2, name: "架空の段B" },
+      { kind: "phase", indexes: [0], count: 2, name: "架空の段A", range: { kind: "none" } },
+      { kind: "phase", indexes: [1], count: 2, name: "架空の段B", range: { kind: "none" } },
       { kind: "none" },
     ])
     expect(list).toMatchObject({
@@ -275,9 +277,9 @@ describe("currentTurnSteps（段取り）", () => {
     )
 
     expect(turnSteps(list).map((step) => [step.toolUseId, step.phase])).toEqual([
-      ["toolu_1", { kind: "phase", indexes: [1], count: 2, name: "架空の段B" }],
-      ["toolu_2", { kind: "phase", indexes: [0], count: 2, name: "架空の段A" }],
-      ["toolu_3", { kind: "phase", indexes: [2], count: 3, name: "架空の段Z" }],
+      ["toolu_1", { kind: "phase", indexes: [1], count: 2, name: "架空の段B", range: NO_RANGE }],
+      ["toolu_2", { kind: "phase", indexes: [0], count: 2, name: "架空の段A", range: NO_RANGE }],
+      ["toolu_3", { kind: "phase", indexes: [2], count: 3, name: "架空の段Z", range: NO_RANGE }],
     ])
     expect(list).toMatchObject({ plan: { phases: ["架空の段X", "架空の段Y", "架空の段Z"] } })
   })
