@@ -37,6 +37,7 @@ export const WORK_PLAN_PHASE_SUMMARY_DESCRIPTION =
 export const WORK_PLAN_DELEGATED_RANGE_DESCRIPTION =
   "作業を委譲するときだけ、委譲先の段の範囲。first は委譲先の段1に当たる位置（phases を平らにした並びで0始まり）、" +
   "count は委譲先の段の数。範囲の中の段は、帯でも委譲先の段と同じ番号（範囲の先頭が 1）で数える。" +
+  "計画を委譲先に頼む最初の呼び出しは { first } だけを渡す（count は計画の返却で分かってから）。" +
   "範囲の端は同時に走らせる段の配列の途中に置かない。委譲しないときは省く"
 
 /** `CallReview` が差し戻した呼び出しに返す直し方。差し戻しの種類ごとに1つ。 */
@@ -66,8 +67,8 @@ export const WORK_PLAN_REJECTIONS = {
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
   "phase-number": PHASE_MENTION_REJECTION_TEXT,
   "range-missing":
-    "委譲先の返却を受けたのに delegatedRange が無い。" +
-    "委譲先の段の範囲を宣言して呼び直すこと。" +
+    "委譲先の返却を受けたのに delegatedRange が無いか、count が無い。" +
+    "first と count（返却の段の数）を付けた委譲先の段の範囲を宣言して呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
 } as const satisfies Record<Exclude<WorkPlanVerdict["kind"], "accepted">, string>
 
@@ -108,6 +109,8 @@ export const WORK_PLAN_PROMPT = `## 段取り（tsukumo）
   （\`計画 0/N\`・\`段 n/N\`・\`止めた n/N\`）を読み、\`段 n/N\` で \`n\` に当たる帯の段を済ませる。
   自分の \`work_plan\` は、並びと委譲先の段の範囲を渡す口
   - 並びはいつも \`phases\` で渡す。計画や受け入れを段にするかも自分で決める
+  - **計画を委譲先に頼む最初の \`work_plan\` は、\`delegatedRange\` に \`{ first }\` だけを渡す**（\`count\` は計画の返却で分かってから）。
+    そのあいだ帯の段は番号を持たず、委譲先の返却では動かない
   - **計画の返却（\`計画 0/N\`）で委譲先の段の数 \`N\` が分かったら、\`delegatedRange\` で範囲を宣言して並びを組み直す。**
     \`first\` は委譲先の段1に当たる帯の段の位置（0始まり）、\`count\` は \`N\`。返却を1件でも受けたあとは、範囲の無い \`work_plan\` は差し戻される。
     範囲の前後に自分の段（計画・受け入れなど）を置いてよい。範囲の端を同時に走らせる段の配列の途中に置かない。

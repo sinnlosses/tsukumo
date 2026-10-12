@@ -24,6 +24,7 @@ const SERIAL: readonly WorkPlanEntry[] = [
 ]
 const RANGE = { kind: "range", first: 1, count: 2 } as const
 const TAIL_RANGE = { kind: "range", first: 2, count: 2 } as const
+const PENDING = { kind: "pending", first: 1 } as const
 const NO_RANGE = { kind: "none" } as const
 const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
 const TURN_STARTED: SessionEvent = { kind: "turn-started" }
@@ -54,6 +55,11 @@ export const WORK_PLAN_SCENES: readonly WorkPlanScene[] = [
     name: "一足飛びの返却は動かさない",
     events: [REQUEST, called(planAt(1)), returned(2)],
     plan: plannedAt(1),
+  },
+  {
+    name: "pending の段取りは返却で動かさない",
+    events: [REQUEST, called(planAt(0, PENDING)), returned(1)],
+    plan: plannedAt(0, PENDING),
   },
   {
     name: "N の食い違う返却は動かさない",

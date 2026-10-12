@@ -40,6 +40,12 @@ describe("bandPositionText", () => {
     )
   })
 
+  it("pending なら番号を付けず、番号を持たないことを添える", () => {
+    expect(
+      bandPositionText(planned({ current: 0, delegatedRange: { kind: "pending", first: 1 } })),
+    ).toBe("帯の今の段は 計画。帯の段は番号を持たない（委譲先の段の数が決まるまで）。")
+  })
+
   it("今の段が範囲の外なら、番号を付けず名前で言う", () => {
     expect(
       bandPositionText(

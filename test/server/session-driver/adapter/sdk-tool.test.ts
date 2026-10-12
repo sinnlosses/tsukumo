@@ -519,6 +519,18 @@ describe("work_plan（段取り）", () => {
     )
   })
 
+  it("count を省いた delegatedRange（pending）を受け付け、番号を持たないと言う", async () => {
+    const reply = await callTool(workServer(), "work_plan", {
+      phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
+      current: 0,
+      delegatedRange: { first: 1 },
+    })
+
+    expect(reply.text).toBe(
+      "ok\n帯の今の段は 架空の計画。帯の段は番号を持たない（委譲先の段の数が決まるまで）。",
+    )
+  })
+
   it("計画を練り直して first と総数が変わると、戻り値は新しい番号を言う", async () => {
     const review = createCallReview()
     const before = await callTool(workServer([], [], [], review), "work_plan", {

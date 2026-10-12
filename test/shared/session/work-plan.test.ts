@@ -247,6 +247,20 @@ describe("phaseNumberOf", () => {
     expect(completionText(at(3, none))).toBe("4段すべて済み")
   })
 
+  it("pending は全部の段が番号を持たず、いまの位置も空", () => {
+    const pending = { kind: "pending", first: 1 } as const
+    const at = (current: number): LatestWorkPlan => ({
+      kind: "planned",
+      ...next(GROUPED, current),
+      delegatedRange: pending,
+    })
+    expect(phaseNumberOf(pending, [0], 4)).toEqual({ kind: "named" })
+    expect(phaseNumberOf(pending, [1, 2], 4)).toEqual({ kind: "named" })
+    expect(workPositionText(at(0))).toBe("")
+    expect(workPositionText(at(3))).toBe("")
+    expect(workPositionText(at(4))).toBe("")
+  })
+
   it("範囲の前後の段は番号を持たない", () => {
     expect(phaseNumberOf(range, [0], 5)).toEqual({ kind: "named" })
     expect(phaseNumberOf({ kind: "range", first: 1, count: 2 }, [3], 4)).toEqual({ kind: "named" })
@@ -378,6 +392,10 @@ describe("parseWorkPlan の委譲先の段の範囲", () => {
     expect(read({ first: 1, count: 2 })).toEqual({ kind: "range", first: 1, count: 2 })
   })
 
+  it("count が無ければ pending に読む", () => {
+    expect(read({ first: 1 })).toEqual({ kind: "pending", first: 1 })
+  })
+
   it("範囲の端が段のまとまりの端に揃っていれば、範囲の中にまとまりを含んでよい", () => {
     expect(read({ first: 0, count: 4 })).toEqual({ kind: "range", first: 0, count: 4 })
     expect(read({ first: 1, count: 3 })).toEqual({ kind: "range", first: 1, count: 3 })
@@ -391,7 +409,8 @@ describe("parseWorkPlan の委譲先の段の範囲", () => {
     { first: -1, count: 2 },
     { first: 0, count: 0 },
     { first: 0.5, count: 2 },
-    { first: 0 },
+    { first: 2 },
+    { first: 5 },
     "range",
   ])("まとまりをまたぐ・並びをはみ出す・整数でない範囲は受け付けない: %j", (range) => {
     expect(parseWorkPlan({ phases: GROUPED, current: 0, delegatedRange: range })).toBeUndefined()
@@ -533,6 +552,22 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
     delegatedRange: range,
   })
   const event = (plan: WorkPlan): WorkPlanEvent => ({ kind: "work-plan", ...plan })
+
+  it("pending のあいだは位置を動かさず、返却でも動かない。count 付きで宣言した最初の呼び出しで範囲の前の段を済ませる", () => {
+    const pending = { kind: "pending", first: 1 } as const
+    const plan = nextWorkPlan(
+      planned(SERIAL, 0),
+      event({ ...declared(0), delegatedRange: pending }),
+    )
+    expect(plan).toMatchObject({ current: 0, delegatedRange: pending })
+    expect(
+      nextWorkPlan(plan, {
+        kind: "delegate-returned",
+        handback: { kind: "phase-done", phase: 1, count: 2, summary: "架空" },
+      }),
+    ).toEqual(plan)
+    expect(nextWorkPlan(plan, event(declared(0)))).toMatchObject({ current: 1 })
+  })
 
   it("範囲の前の段を済ませ、範囲の先頭の段を今の段にする", () => {
     const plan = nextWorkPlan(planned(SERIAL, 0), event(declared(0)))

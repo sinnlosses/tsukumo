@@ -247,6 +247,17 @@ describe("WorkPlanReview の委譲の返却", () => {
     expect(review.judge(ranged(1, SUMMARY)).kind).toBe("accepted")
   })
 
+  it("pending は返却を受ける前は通り、返却を受けたあとは range-missing で、count 付きへは通る", () => {
+    const review = createWorkPlanReview()
+    review.pass(REQUEST)
+    expect(review.judge(ranged(0, "", { first: 1 })).kind).toBe("accepted")
+    expect(review.delegatedRange()).toEqual({ kind: "pending", first: 1 })
+    review.pass(handback("計画 0/2 | 架空の計画。"))
+
+    expect(review.judge(ranged(0, "", { first: 1 })).kind).toBe("range-missing")
+    expect(review.judge(ranged(0)).kind).toBe("accepted")
+  })
+
   it("段のまとめが範囲の外の番号を言う work_plan は差し戻し、範囲が無ければ検査しない", () => {
     const review = createWorkPlanReview()
     review.pass(REQUEST)

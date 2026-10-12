@@ -311,9 +311,10 @@ function toPhaseView(turnStepList: TurnStepList, state: CurrentWorkState): Curre
     return { kind: "none" }
   }
   const phase = currentPhaseOf(plan)
+  const position = workPositionText(plan)
   return {
     kind: "shown",
-    label: phase.kind === "phase" ? phaseLabel(phase) : `${workPositionText(plan)} 済`,
+    label: phase.kind === "phase" ? phaseLabel(phase) : position === "" ? "済" : `${position} 済`,
   }
 }
 

@@ -145,6 +145,27 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     })
   })
 
+  it("範囲が pending のあいだは、範囲の段の丸を「…」・ほかを「・」にし、右端は経過だけを出す", () => {
+    const pending: SessionEvent = {
+      ...plan,
+      delegatedRange: { kind: "pending", first: 1 },
+      phases: ["架空の計画", "架空の段", "架空の受け入れ"],
+    }
+    const strip = stripAt(
+      foldTimed([
+        [request, START],
+        [pending, START + 1_000],
+      ]),
+      START + 5_000,
+    )
+
+    expect(strip).toMatchObject({ kind: "working", headLabel: "架空の計画", sideLabel: "経過 5秒" })
+    expect(
+      strip.kind === "working" &&
+        strip.phases.map((slot) => slot.kind === "phase" && slot.phase.mark),
+    ).toEqual(["・", "…", "・"])
+  })
+
   it("範囲の中が全部済んで外の段が残ったまま閉じたら、結果の見出しは全部の段で数える", () => {
     const ranged: SessionEvent = {
       ...plan,

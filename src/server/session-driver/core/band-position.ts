@@ -24,6 +24,9 @@ export function bandPositionText(plan: LatestWorkPlan): string {
   if (plan.delegatedRange.kind === "none") {
     return position
   }
+  if (plan.delegatedRange.kind === "pending") {
+    return `${position}帯の段は番号を持たない（委譲先の段の数が決まるまで）。`
+  }
   return `${position}帯の段の番号は委譲先の段の番号と同じで、範囲の外の段（計画・受け入れ）は番号を持たず名前で言う。`
 }
 

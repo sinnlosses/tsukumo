@@ -251,6 +251,10 @@ function slotsOf(
 function toPhase(plan: LatestWorkPlan, phase: PlannedPhase, asking: boolean): WorkStripPhase {
   const state: WorkStripPhaseState = phase.state === "current" && asking ? "asking" : phase.state
   const number = plan.kind === "planned" ? plannedPhaseNumber(plan, phase) : NAMED
+  const awaitsRange =
+    plan.kind === "planned" &&
+    plan.delegatedRange.kind === "pending" &&
+    plan.delegatedRange.first === phase.index
   return {
     key: String(phase.index),
     mark:
@@ -260,7 +264,9 @@ function toPhase(plan: LatestWorkPlan, phase: PlannedPhase, asking: boolean): Wo
           ? "?"
           : number.kind === "numbered"
             ? number.ordinals
-            : "・",
+            : awaitsRange
+              ? "…"
+              : "・",
     label: `${plan.kind === "planned" ? plannedPhaseTitle(plan, phase) : phase.name}${PHASE_STATE_SUFFIX[state]}`,
     state,
   }

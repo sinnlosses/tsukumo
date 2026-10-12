@@ -17,7 +17,7 @@ export function judgePhaseMention(
   range: DelegatedRange,
   texts: readonly string[],
 ): PhaseMentionVerdict {
-  if (range.kind === "none") {
+  if (range.kind !== "range") {
     return ACCEPTED
   }
   const outside = texts.some((text) =>

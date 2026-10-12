@@ -32,9 +32,11 @@ export type WorkPlan = {
 /**
  * 委譲先の段の範囲。`first` は委譲先の段1に当たる位置（平らにした並びで0始まり）、`count` は委譲先の段の数。
  * 委譲先の段 `n` は平らにした並びの `first + n - 1` の段に当たる。
+ * `pending` は `first` だけが決まり、`count` が未定の間（計画の返却を待つ間）で、どの段にも番号を付けない。
  */
 export type DelegatedRange =
   | { readonly kind: "none" }
+  | { readonly kind: "pending"; readonly first: number }
   | { readonly kind: "range"; readonly first: number; readonly count: number }
 
 export const NO_DELEGATED_RANGE = { kind: "none" } as const satisfies DelegatedRange
@@ -108,7 +110,7 @@ export const workPlanShape = {
   finishedInGroup: z.array(z.string()).optional(),
   phaseSummary: z.string().optional(),
   delegatedRange: z
-    .object({ first: z.number().int().min(0), count: z.number().int().min(1) })
+    .object({ first: z.number().int().min(0), count: z.number().int().min(1).optional() })
     .optional(),
 }
 
@@ -151,11 +153,8 @@ export const workPlanSchema = z.object(workPlanShape).superRefine((value, contex
   if (delegatedRange !== undefined) {
     const { first, count } = delegatedRange
     const boundaries = entryBoundaries(phases)
-    if (
-      first + count > phaseCount(phases) ||
-      !boundaries.has(first) ||
-      !boundaries.has(first + count)
-    ) {
+    const end = first + (count ?? 0)
+    if (end > phaseCount(phases) || !boundaries.has(first) || !boundaries.has(end)) {
       reject("delegatedRange")
     }
   }
@@ -176,8 +175,7 @@ export function parseWorkPlan(value: unknown): WorkPlan | undefined {
     current,
     finishedInGroup,
     phaseSummary: isBlankText(phaseSummary) ? "" : phaseSummary,
-    delegatedRange:
-      delegatedRange === undefined ? NO_DELEGATED_RANGE : { kind: "range", ...delegatedRange },
+    delegatedRange: delegatedRangeOf(delegatedRange),
   }
 }
 
@@ -367,7 +365,7 @@ export function plannedPhaseNumber(
  * 段取りが無い・今の段が番号を持たないときは空の文字列。
  */
 export function workPositionText(plan: LatestWorkPlan): string {
-  if (plan.kind === "none") {
+  if (plan.kind === "none" || plan.delegatedRange.kind === "pending") {
     return ""
   }
   const phase = currentPhaseOf(plan)
@@ -411,6 +409,9 @@ export function phaseNumberOf(
   const [lead = 0] = indexes
   if (range.kind === "none") {
     return numbered(indexes, 0, total)
+  }
+  if (range.kind === "pending") {
+    return { kind: "named" }
   }
   return lead >= range.first && lead < range.first + range.count
     ? numbered(indexes, range.first, range.count)
@@ -537,6 +538,15 @@ function closedByReport(plan: PlannedWorkPlan): PlannedWorkPlan {
         delegatedRange: plan.delegatedRange,
       }
     : plan
+}
+
+function delegatedRangeOf(value: z.infer<typeof workPlanShape.delegatedRange>): DelegatedRange {
+  if (value === undefined) {
+    return NO_DELEGATED_RANGE
+  }
+  return value.count === undefined
+    ? { kind: "pending", first: value.first }
+    : { kind: "range", first: value.first, count: value.count }
 }
 
 function entryNames(entry: WorkPlanEntry): readonly string[] {

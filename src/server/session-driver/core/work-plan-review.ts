@@ -81,7 +81,7 @@ export function createWorkPlanReview(): WorkPlanReview {
     positionFromReturn && accepted.kind === "planned" && isSamePosition(accepted, plan)
 
   const judgeWellFormed = (plan: WorkPlan): WorkPlanVerdict => {
-    if (plan.delegatedRange.kind === "none" && returnedCount !== undefined) {
+    if (plan.delegatedRange.kind !== "range" && returnedCount !== undefined) {
       return { kind: "range-missing" }
     }
     if (

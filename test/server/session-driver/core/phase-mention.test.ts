@@ -16,6 +16,12 @@ describe("judgePhaseMention", () => {
     expect(judgePhaseMention({ kind: "none" }, ["段9が返った", "9段目", "9/3"])).toEqual(ACCEPTED)
   })
 
+  it("pending でも、どんな番号を言っても検査しない", () => {
+    expect(judgePhaseMention({ kind: "pending", first: 1 }, ["段9が返った", "9/3"])).toEqual(
+      ACCEPTED,
+    )
+  })
+
   it.each(["段4が返った", "段 0 です", "5段目に入る", "0段目", "いま 4/3 まで進んだ"])(
     "範囲の外の番号「%s」は差し戻す",
     (text) => {
