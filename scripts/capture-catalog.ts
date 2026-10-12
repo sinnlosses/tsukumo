@@ -106,13 +106,12 @@ const TAIL_SETTLE = { kind: "tail" } satisfies Settle
  * 場面の名前では足りない）。
  *
  * `skipReveal` は、撮る前に「書き上げていくように見せる演出」
- * （`useReportReveal`）を着地させておくか。レポートが長い場面
- * （`notation`）は演出が終わるまで約15秒かかり、そのあいだ演出自身の自動送りが筆先を追い続けて
- * 器を送るので、こちらが `scroll` で送った位置をフレームごとに引き戻される（図・グラフは
- * 演出のいちばん最後に出る塊で、演出中はまだ見えていない）。演出はクリックとキー入力で
- * 打ち切れる（`SKIP_EVENT_NAMES`）ので、`prepare` を当てる前に
- * キーを1つ打って演出を終わらせてから送る。当てない件は待ち時間が変わらないので既定は
- * `false`。
+ * （`useReportReveal`）を着地させておくか。長いレポートの場合、演出が終わるまで約15秒かかり、
+ * そのあいだ演出自身の自動送りが筆先を追い続けて器を送るので、こちらが `scroll` で送った位置を
+ * フレームごとに引き戻される（図・グラフは演出のいちばん最後に出る塊で、演出中はまだ見えていない）。
+ * 演出はクリックとキー入力で打ち切れる（`SKIP_EVENT_NAMES`）。`true` の件は、`prepare` を当てる前に
+ * スクリプトがキーを1つ打って演出を終わらせてから送る。既定は `false`（打ち切らなくても待ち時間が
+ * 変わらない件）。
  *
  * 演出中の要素は `clip-path` で隠すだけで DOM に残るので、`settle` の `selector` は
  * 書き上がったことまでは確かめない（書き上げるのは `skipReveal`）。
@@ -372,7 +371,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],
-    skipReveal: false,
+    skipReveal: true,
     settle: TAIL_SETTLE,
   },
   // 記法の見本は領域に1枚ぶんが入らない（1400x900 で 1358px のうち 855px が領域の外）。
