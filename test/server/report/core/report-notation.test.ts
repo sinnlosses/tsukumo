@@ -315,4 +315,14 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("地の文の段落は3文まで")
     expect(REPORT_NOTATION_PROMPT).toContain("4文目が要るなら、表・箇条書きへ移すか `fold` で畳む")
   })
+
+  it("文面の字数は上限以下に収まり、条を足すと落ちる", () => {
+    const limit = 3700
+    const length = REPORT_NOTATION_PROMPT.length
+
+    expect(
+      length,
+      `REPORT_NOTATION_PROMPT は今 ${length} 字で、上限 ${limit} 字を超えた。条を足したら他の条を削るか、上限を意図して上げる`,
+    ).toBeLessThanOrEqual(limit)
+  })
 })
