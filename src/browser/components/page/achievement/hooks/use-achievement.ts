@@ -8,7 +8,8 @@
 // 「<パックの名前>と振り返る」ボタンのロジックもここに持つ。
 // 押しても画面は移らない。`session.reflectAchievement { date }` を送るだけで、進みは `SessionState.diaryWriting` から同じ画面の中に出す。
 
-import { useQuery, type Query } from "@tanstack/react-query"
+import { useQuery, useQueryClient, type Query } from "@tanstack/react-query"
+import { useEffect } from "react"
 
 import {
   isEmptyAchievementDay,
@@ -171,6 +172,7 @@ export function useAchievement(): UseAchievementResult {
   })
 
   const daySwitch = daySwitchOf(query.data)
+  usePrefetchNeighborDays(daySwitch)
   const view = viewOf(query.data, query.isPending, query.isError)
   const writing = writingViewOf(diaryWriting, daySwitch)
 
@@ -328,6 +330,28 @@ function writingViewOf(
     return { kind: "failed" }
   }
   return { kind: "none" }
+}
+
+/**
+ * 見ている日の前後の日を背後で取っておく。「‹」「›」で隣へ行ったとき、取れた分をすぐ見せられる。
+ * 鍵は `onPreviousDay`・`onNextDay` が選ぶ入力と同じ（今日の次は「今日」ではなく日付で選ぶ）。
+ */
+function usePrefetchNeighborDays(daySwitch: AchievementDaySwitch): void {
+  const queryClient = useQueryClient()
+  const viewed = daySwitch.kind === "known" ? daySwitch.date : ""
+  const today = daySwitch.kind === "known" ? daySwitch.today : ""
+
+  useEffect(() => {
+    if (viewed === "") {
+      return
+    }
+    const neighbors = viewed === today ? [] : [nextDateKey(viewed)]
+    for (const date of [previousDateKey(viewed), ...neighbors]) {
+      void queryClient.prefetchQuery(
+        rpc.achievement.day.queryOptions({ input: { kind: "chosen", date } }),
+      )
+    }
+  }, [queryClient, viewed, today])
 }
 
 /** 今日を見ているかどうか（`refetchInterval` の判定。まだ分からなければ今日でないとみなす）。 */
