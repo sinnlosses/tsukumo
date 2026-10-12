@@ -14,7 +14,9 @@ const LABEL = "最新化"
 export function TaskRefreshButton(props: { readonly place: "sidebar" | "modal" }): ReactElement {
   const { refreshing, refresh } = useRefreshTasks()
   const icon = (
-    <span className={clsx(styles["task-refresh-icon"], refreshing && styles["task-refresh-spinning"])}>
+    <span
+      className={clsx(styles["task-refresh-icon"], refreshing && styles["task-refresh-spinning"])}
+    >
       <RefreshIcon />
     </span>
   )
