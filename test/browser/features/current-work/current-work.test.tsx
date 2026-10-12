@@ -427,7 +427,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     expect(document.querySelector(".current-work-full-text")?.textContent).toBe(longCommand)
   })
 
-  it("一覧に済み・実行中が古い→新しいの順で並ぶ", () => {
+  it("一覧に済み・実行中が新しい→古いの順で並ぶ", () => {
     renderScreenNav({
       turn: { kind: "running", startedAt: 0 },
       records: [
@@ -451,8 +451,8 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     const rows = document.querySelectorAll(".current-work-steps li")
     // 済んだ手順には所要時間（tool-started / tool-finished の at から機械で測った値）が付く。
     expect([...rows].map((row) => row.textContent)).toEqual([
-      "✓ Read: /tmp/old.txt（12秒）",
       "… Bash: echo new",
+      "✓ Read: /tmp/old.txt（12秒）",
     ])
   })
 
@@ -504,7 +504,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
         [...list.querySelectorAll(".current-work-phase-heading, .current-work-steps li")].map(
           (node) => node.textContent,
         ),
-      ).toEqual(["1/3 架空の段A", "✓ Read: /tmp/a.txt（0秒）", "2/3 架空の段B", "… Bash: echo b"])
+      ).toEqual(["2/3 架空の段B", "… Bash: echo b", "1/3 架空の段A", "✓ Read: /tmp/a.txt（0秒）"])
     })
 
     it("同じ段の手順は隣どうしで1まとまりになり、段が戻れば別のまとまりになる", () => {
@@ -533,14 +533,14 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
           (node) => node.textContent,
         ),
       ).toEqual([
-        "… Bash: echo t0",
         "1/2 架空の段A",
-        "… Bash: echo t1",
-        "… Bash: echo t2",
+        "… Bash: echo t4",
         "2/2 架空の段B",
         "… Bash: echo t3",
         "1/2 架空の段A",
-        "… Bash: echo t4",
+        "… Bash: echo t2",
+        "… Bash: echo t1",
+        "… Bash: echo t0",
       ])
     })
 
@@ -627,6 +627,32 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
     expect(document.querySelectorAll(".current-work-steps li")).toHaveLength(6)
     expect(screen.getByRole("button", { name: "新しい5件だけにする" })).toBeDefined()
+  })
+
+  it("10件以上あっても、閉じていても広げても先頭が最新の手順になる", () => {
+    const records = [
+      requestRecord(),
+      ...Array.from({ length: 12 }, (_unused, index) =>
+        toolRecord({
+          toolUseId: `toolu_${String(index)}`,
+          name: "Bash",
+          input: { command: `echo ${String(index)}` },
+        }),
+      ),
+    ]
+    renderScreenNav({ turn: { kind: "running", startedAt: 0 }, records })
+
+    fireEvent.click(workToggle())
+
+    const rowTexts = () =>
+      [...document.querySelectorAll(".current-work-steps li")].map((row) => row.textContent)
+    expect(rowTexts()[0]).toBe("… Bash: echo 11")
+    expect(rowTexts().at(-1)).toBe("… Bash: echo 7")
+
+    fireEvent.click(screen.getByRole("button", { name: "手順をすべて見る（全 12 件）" }))
+
+    expect(rowTexts()[0]).toBe("… Bash: echo 11")
+    expect(rowTexts().at(-1)).toBe("… Bash: echo 0")
   })
 
   it("5件の外に失敗があれば「すべて見る」の口に失敗の数を添える", () => {

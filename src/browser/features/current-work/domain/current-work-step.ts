@@ -43,25 +43,33 @@ export const BACKGROUND_TASK_KIND_LABEL = {
   other: "その他",
 } satisfies Record<BackgroundTaskKind, string>
 
-/** 並びの隣どうしで段が同じ手順を1まとまりにする（段を戻る段取りの変更があっても、並びの順は崩さない）。 */
+/**
+ * 並びの隣どうしで段が同じ手順を1まとまりにし、群も群の中の手順も新しい順で返す。
+ * 段を戻る段取りの変更があっても、まとまりは並びの順で切る。
+ */
 export function currentWorkStepGroups(steps: readonly TurnStep[]): readonly CurrentWorkStepGroup[] {
   const headings = steps.map((step) => stepGroupHeading(step.phase))
   const starts = headings.flatMap((heading, index) =>
     index === 0 || !sameHeading(headings[index - 1] ?? heading, heading) ? [index] : [],
   )
-  return starts.flatMap((start, position) => {
-    const first = steps[start]
-    const heading = headings[start]
-    return first === undefined || heading === undefined
-      ? []
-      : [
-          {
-            key: first.toolUseId,
-            heading,
-            steps: steps.slice(start, starts[position + 1] ?? steps.length).map(toStepView),
-          },
-        ]
-  })
+  return starts
+    .flatMap((start, position) => {
+      const first = steps[start]
+      const heading = headings[start]
+      return first === undefined || heading === undefined
+        ? []
+        : [
+            {
+              key: first.toolUseId,
+              heading,
+              steps: steps
+                .slice(start, starts[position + 1] ?? steps.length)
+                .map(toStepView)
+                .toReversed(),
+            },
+          ]
+    })
+    .toReversed()
 }
 
 /**
