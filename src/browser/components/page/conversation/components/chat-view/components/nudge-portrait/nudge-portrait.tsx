@@ -17,10 +17,7 @@
 
 import { useId, type ReactElement } from "react"
 
-import type {
-  Expression,
-  Outfit,
-} from "../../../../../../../../shared/character-pack/expression.ts"
+import type { Expression } from "../../../../../../../../shared/character-pack/expression.ts"
 import { Portrait } from "../../../../../../domain/portrait.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "./nudge-portrait.module.css"
@@ -34,10 +31,8 @@ const NUDGE_HINT = "話しかけてもらう"
 
 export function NudgePortrait(props: {
   readonly url: string
-  readonly accent: string | undefined
   readonly altText: string
   readonly expression: Expression
-  readonly outfit: Outfit
   readonly turnInProgress: boolean
   readonly onNudge: () => void
 }): ReactElement {
@@ -55,10 +50,8 @@ export function NudgePortrait(props: {
     >
       <Portrait
         url={props.url}
-        accent={props.accent}
         altText={props.altText}
         expression={props.expression}
-        outfit={props.outfit}
         motion={props.turnInProgress ? "waiting" : "reading"}
         className={styles["chat-portrait"]}
       />

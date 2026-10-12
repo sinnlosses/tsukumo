@@ -1,4 +1,4 @@
-// キャラクターパックのコマンドの契約。見た目の編集10種と、作る・消すの2種。
+// キャラクターパックのコマンドの契約。見た目の編集9種と、作る・消すの2種。
 // どれも駆動には渡らない（書き込みと `character-changed` の流し直しで済むので、使用中のパックを変えたときもセッションは起こし直さない）。
 
 import { z } from "zod"
@@ -18,9 +18,7 @@ import { isCharacterPackName } from "../character-pack/character.ts"
 import {
   type Expression,
   isExpression,
-  isOutfit,
   isRemovableExpression,
-  type Outfit,
   type RemovableExpression,
 } from "../character-pack/expression.ts"
 import {
@@ -89,15 +87,13 @@ const removableExpressionSchema = z.custom<RemovableExpression>(
   (value) => typeof value === "string" && isRemovableExpression(value),
 )
 
-const outfitSchema = z.custom<Outfit>((value) => typeof value === "string" && isOutfit(value))
-
 /** 画面の差し色（`accent` / `chatAccent`）のうちどちらを差すか。 */
 const accentTargetSchema = z.custom<AccentTarget>(
   (value) => typeof value === "string" && isAccentTarget(value),
 )
 
 /**
- * 見た目の編集10種の入力。書き込む先は `pack` で指す（使用中のパックに限らない）。
+ * 見た目の編集9種の入力。書き込む先は `pack` で指す（使用中のパックに限らない）。
  * 手続きの名前がそのまま {@link CharacterEdit} の `kind` になる。
  */
 const characterEditInput = {
@@ -109,11 +105,6 @@ const characterEditInput = {
   clearPortrait: z.object({
     pack: editedCharacterPackNameSchema,
     expression: removableExpressionSchema,
-  }),
-  setOutfitAccent: z.object({
-    pack: editedCharacterPackNameSchema,
-    outfit: outfitSchema,
-    color: accentColorSchema,
   }),
   /** 画面の差し色（`accent` / `chatAccent`）を差す。どちらを差すかは `target` で分ける。 */
   setAccent: z.object({
@@ -184,7 +175,6 @@ export type CharacterDelete = z.infer<typeof characterDeleteInput>
 export const characterPackContract = {
   setPortrait: commandBase.input(characterEditInput.setPortrait),
   clearPortrait: commandBase.input(characterEditInput.clearPortrait),
-  setOutfitAccent: commandBase.input(characterEditInput.setOutfitAccent),
   setAccent: commandBase.input(characterEditInput.setAccent),
   clearChatAccent: commandBase.input(characterEditInput.clearChatAccent),
   setProfile: commandBase.input(characterEditInput.setProfile),

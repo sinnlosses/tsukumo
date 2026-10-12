@@ -3,11 +3,7 @@
 
 import { useState, type RefObject } from "react"
 
-import {
-  resolveOutfit,
-  type Expression,
-  type Outfit,
-} from "../../../../../../../shared/character-pack/expression.ts"
+import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import {
   chatLogEntries,
   chatLogRows,
@@ -66,11 +62,9 @@ export type ChatRow =
 export type ChatViewModel = {
   /** 立ち絵の素材 URL。character が届いていなければ `undefined`（立ち絵を出さない）。 */
   readonly portraitUrl: string | undefined
-  readonly accent: string | undefined
   /** 出ている絵をそのまま説明する（行を押して遡れば、その行の表情の名前になる）。 */
   readonly altText: string
   readonly expression: Expression
-  readonly outfit: Outfit
   readonly turnInProgress: boolean
   /** 立ち絵をつついたとき。ターン進行中は何も送らない（サーバ側も同じ条件で断る）。 */
   readonly onNudge: () => void
@@ -96,13 +90,11 @@ type ViewedSpeech =
 export function useChatView(): ChatViewModel {
   const records = useSession((session) => session.state.records)
   const speechExpression = useSession((session) => session.state.speechExpression)
-  const model = useSession((session) => session.state.model)
   const character = useSession((session) => session.state.character)
   const turnInProgress = useTurnRunning()
   const speechCalledInTurn = useSession((session) => session.state.speechCalledInTurn)
   const dispatch = useSession((session) => session.dispatch)
   const entries = chatLogEntries(records)
-  const outfit = resolveOutfit(model)
   // ログに並べるのは、出してよいと決まった前置きだけ。
   // 以下の遡り・自動スクロール・表情はすべてこの `shown` を見る（出していない行を先に選べたり、自動スクロールが先取りしたりしないように）。
   const { entries: shown, pending } = useRevealedChatLog(entries)
@@ -147,9 +139,8 @@ export function useChatView(): ChatViewModel {
   }
 
   return {
-    ...portraitAppearance(character, expression, outfit),
+    ...portraitAppearance(character, expression),
     expression,
-    outfit,
     turnInProgress,
     onNudge: () => {
       if (turnInProgress) {

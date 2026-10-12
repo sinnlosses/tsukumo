@@ -41,10 +41,8 @@ function stubFetch(body: string): void {
 
 const DEFAULT_PORTRAIT: PortraitProps = {
   url: "/character/default.png",
-  accent: undefined,
   altText: "架空の精霊（通常）",
   expression: "default",
-  outfit: "default",
   motion: "reading",
   className: undefined,
 }
@@ -120,18 +118,6 @@ describe("Portrait", () => {
     expect(image?.getAttribute("src")).toBe("/character/default.png")
     expect(image?.getAttribute("alt")).toBe("架空の精霊（通常）")
     expect(fetchCalls).toEqual([])
-  })
-
-  it("差し色を CSS 変数 --outfit-accent として当てる", () => {
-    renderPortrait({ accent: "#b8c7ff", outfit: "normal" })
-
-    expect(portraitWrapper().style.getPropertyValue("--outfit-accent")).toBe("#b8c7ff")
-  })
-
-  it("差し色が無いときは style 属性ごと省略する", () => {
-    renderPortrait({})
-
-    expect(portraitWrapper().getAttribute("style")).toBeNull()
   })
 
   it("motion をそのまま data-motion 属性へ渡す（CSS 側が動きを選ぶ手がかり）", () => {

@@ -11,12 +11,7 @@ import {
   readCharacterAsset,
   readCharacterPack,
 } from "../../../../src/server/character-pack/adapter/character-pack.ts"
-import {
-  characterInfo,
-  characterPackEntry,
-  shownOutfitAccents,
-  shownPortraits,
-} from "../../../fixture/character.ts"
+import { characterInfo, characterPackEntry, shownPortraits } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // フィクスチャは characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
@@ -29,10 +24,6 @@ const DEFINITION_JSON = JSON.stringify({
   portraits: {
     default: "default.svg",
     thinking: "thinking.svg",
-  },
-  outfitAccents: {
-    default: "#b8c7ff",
-    normal: "#b8c7ff",
   },
 })
 
@@ -81,7 +72,6 @@ describe("characterChangedEvent", () => {
       }),
       // 定義に mini が無いパックなので、ミニ立ち絵は portraits.default に落ちる。
       mini: `${base}/default.svg${version}`,
-      outfitAccents: shownOutfitAccents({ default: "#b8c7ff", normal: "#b8c7ff" }),
     })
 
     expect(event).toEqual({

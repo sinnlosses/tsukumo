@@ -1,20 +1,20 @@
 // テストが使う、手で書いた架空のキャラクター1体分の組み立て（docs/coding-standards.md
 // 「消すかどうか」の「同じモックの準備が複数ファイルに重複している → 準備を共通の
-// フィクスチャに寄せる」）。表情・衣装は全キーが必須の対応表（`?:` を使わない規約のため）
+// フィクスチャに寄せる」）。表情は全キーが必須の対応表（`?:` を使わない規約のため）
 // なので、テストが手で書き下すと `EXPRESSIONS` に1つ足すたび各ファイルに1行ずつ増える。
 // ここに既定を1つ置き、テストは違うところだけを渡す。
 //
-// 既定は「立ち絵も差し色も1枚も無い」（`toCharacterInfo` が定義の無いパックに返す形と同じ）。
+// 既定は「立ち絵が1枚も無い」（`toCharacterInfo` が定義の無いパックに返す形と同じ）。
 // 立ち絵の有無はテストの主題になりうる（どの枠が埋まっているか・何枚出るか）ので、
 // 「ある」ほうを呼ぶ側に書かせる。
 //
-// 入れ子は深い合成をしない。 `portraits` / `outfitAccents` を同じ形の組み立て関数として
+// 入れ子は深い合成をしない。 `portraits` を組み立て関数として
 // 別に出し、呼ぶ側が `portraits: portraits({ default: "…" })` と重ねる。どのキーを埋めたのかが
 // 呼ぶ側の1行に出るのと、定義ファイルの形だけが要る場面（`expressionChoices` のテスト）でも
 // そのまま使えるのが理由。
 //
 // 画面に渡る姿（`CharacterInfo`）の表は `default` に畳み済みなので、定義ファイル側の
-// `portraits` / `outfitAccents` とは別に `shownPortraits` / `shownOutfitAccents` を置く
+// `portraits` とは別に `shownPortraits` を置く
 // （`toCharacterInfo` と同じ畳み方で、呼ぶ側は「ある」ものだけを書く）。
 //
 // `character-changed` イベントは `{ kind } & CharacterInfo & { packs }`
@@ -26,11 +26,7 @@ import type {
   CharacterInfo,
   CharacterPackEntry,
 } from "../../src/shared/character-pack/character.ts"
-import {
-  type Expression,
-  EXPRESSIONS,
-  type Outfit,
-} from "../../src/shared/character-pack/expression.ts"
+import { type Expression, EXPRESSIONS } from "../../src/shared/character-pack/expression.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 
 /** 画面に渡る姿（`SessionState.character` と `character-changed` の中身）。 */
@@ -48,7 +44,6 @@ export function characterInfo(overrides: Partial<CharacterInfo> = {}): Character
     tagline: undefined,
     userCall: undefined,
     miniCall: undefined,
-    outfitAccents: shownOutfitAccents(),
     background: undefined,
     diaryFont: undefined,
     editable: true,
@@ -104,7 +99,6 @@ export function characterDefinition(
     tagline: undefined,
     userCall: undefined,
     miniCall: undefined,
-    outfitAccents: outfitAccents(),
     background: undefined,
     diaryFont: undefined,
     ...overrides,
@@ -128,12 +122,6 @@ export const FULL_DEFINITION_JSON = JSON.stringify({
     proud: "proud.svg",
     flustered: "flustered.svg",
   },
-  outfitAccents: {
-    default: "#b8c7ff",
-    light: "#a8e6c0",
-    normal: "#b8c7ff",
-    heavy: "#ffb3a7",
-  },
 })
 
 /** 表情 → 立ち絵（`CharacterInfo` では URL、`CharacterDefinition` ではファイル名）。 */
@@ -141,13 +129,6 @@ export function portraits(
   overrides: Partial<Record<Expression, string>> = {},
 ): Readonly<Record<Expression, string | undefined>> {
   return { ...NO_EXPRESSION_VALUES, ...overrides }
-}
-
-/** 衣装 → 差し色。 */
-export function outfitAccents(
-  overrides: Partial<Record<Outfit, string>> = {},
-): Readonly<Record<Outfit, string | undefined>> {
-  return { ...NO_OUTFIT_ACCENTS, ...overrides }
 }
 
 /**
@@ -174,19 +155,6 @@ export function shownPortraits(
   }
 }
 
-/** 画面に渡る差し色。渡さなかった衣装は `default` に畳む（`toCharacterInfo` と同じ）。 */
-export function shownOutfitAccents(
-  overrides: Partial<Record<Outfit, string>> = {},
-): Readonly<Record<Outfit, string | undefined>> {
-  const fallback = overrides.default
-  return {
-    default: fallback,
-    light: overrides.light ?? fallback,
-    normal: overrides.normal ?? fallback,
-    heavy: overrides.heavy ?? fallback,
-  }
-}
-
 /** 表情ごとの対応表の「1つも無い」。立ち絵（URL・ファイル名）とラベルの両方に使う。 */
 const NO_EXPRESSION_VALUES = {
   default: undefined,
@@ -199,10 +167,3 @@ const NO_EXPRESSION_VALUES = {
   excited: undefined,
   bored: undefined,
 } satisfies Readonly<Record<Expression, string | undefined>>
-
-const NO_OUTFIT_ACCENTS = {
-  default: undefined,
-  light: undefined,
-  normal: undefined,
-  heavy: undefined,
-} satisfies Readonly<Record<Outfit, string | undefined>>

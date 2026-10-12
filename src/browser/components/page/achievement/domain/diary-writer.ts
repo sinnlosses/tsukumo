@@ -42,7 +42,7 @@ export function currentWriterPortraitOf(
   }
   return {
     name: character?.name ?? DEFAULT_CHARACTER_NAME,
-    portrait: portraitAppearance(character, "default", "default"),
+    portrait: portraitAppearance(character, "default"),
   }
 }
 
@@ -61,9 +61,9 @@ function diaryWriterPortraitOf(
     name: paragraph.writer.name,
     portrait:
       pack === undefined
-        ? { portraitUrl: undefined, accent: undefined, altText: paragraph.writer.name }
+        ? { portraitUrl: undefined, altText: paragraph.writer.name }
         : {
-            ...portraitAppearance(pack.character, expression, "default"),
+            ...portraitAppearance(pack.character, expression),
             altText: `${paragraph.writer.name}（${resolveExpressionLabel(pack.character.expressions, expression)}）`,
           },
   }

@@ -21,7 +21,6 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { resolveOutfit } from "../../../../../../../../shared/character-pack/expression.ts"
 import {
   subscribeBrushTip,
   useBrushStance,
@@ -50,7 +49,6 @@ export type MiniPortraitProps = {
 export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
   const stance = useBrushStance()
   const character = useSession((session) => session.state.character)
-  const model = useSession((session) => session.state.model)
   const url = character?.mini
 
   if (
@@ -62,8 +60,6 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
     return null
   }
 
-  const outfit = resolveOutfit(model)
-
   return (
     // 本文の末尾に敷く床。書き終わって本文の下へ降りた立ち絵の立つ場所。
     // これが無いと足元が器の下端をはみ出して、転がさないと見えない（立ち絵は `position: absolute` なので、場所を空けられるのは流れの中にいるこちらだけ）。
@@ -73,10 +69,8 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
       <div className={followClassName(stance)} ref={followBrushTip}>
         <Portrait
           url={url}
-          accent={character.outfitAccents[outfit]}
           altText={miniAltText(character.name, character.miniCall)}
           expression={MINI_EXPRESSION}
-          outfit={outfit}
           motion={undefined}
           className={styles["mini-portrait-body"]}
         />

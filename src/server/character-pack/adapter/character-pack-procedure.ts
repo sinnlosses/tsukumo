@@ -33,12 +33,6 @@ export function characterPackProcedure(ports: CharacterPackCommandPorts) {
         errors,
       ),
     ),
-    setOutfitAccent: procedure.setOutfitAccent.handler(({ input, context, errors }) =>
-      refusedUnlessAccepted(
-        receiveFeatureCommand(table.setOutfitAccent, input, context.session),
-        errors,
-      ),
-    ),
     setAccent: procedure.setAccent.handler(({ input, context, errors }) =>
       refusedUnlessAccepted(receiveFeatureCommand(table.setAccent, input, context.session), errors),
     ),

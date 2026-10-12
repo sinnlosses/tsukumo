@@ -30,7 +30,6 @@ import {
   definitionWithBackground,
   definitionWithFace,
   definitionWithName,
-  definitionWithOutfitAccent,
   definitionWithoutBackground,
   definitionWithoutChatAccent,
   definitionWithoutFace,
@@ -215,9 +214,6 @@ function applyEdit(dir: string, edit: CharacterEdit): boolean {
   const content = readOptionalFile(definitionPath)
 
   switch (edit.kind) {
-    case "setOutfitAccent":
-      writeFileAtomic(definitionPath, definitionWithOutfitAccent(content, edit.outfit, edit.color))
-      return true
     case "setAccent":
       writeFileAtomic(definitionPath, definitionWithAccent(content, edit.target, edit.color))
       return true

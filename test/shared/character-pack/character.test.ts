@@ -60,18 +60,6 @@ describe("toCharacterInfo の畳み方", () => {
       "proud",
     ])
   })
-
-  it("差し色の無い衣装は default に畳む", () => {
-    expect(
-      infoOf(JSON.stringify({ outfitAccents: { default: "#b8c7ff" } }))?.outfitAccents.light,
-    ).toBe("#b8c7ff")
-  })
-
-  it("default の差し色が無くても、指定のある衣装の差し色は残す", () => {
-    const accents = infoOf(JSON.stringify({ outfitAccents: { heavy: "#ffb3a7" } }))?.outfitAccents
-    expect(accents?.heavy).toBe("#ffb3a7")
-    expect(accents?.light).toBeUndefined()
-  })
 })
 
 describe("toCharacterInfo", () => {
@@ -91,7 +79,6 @@ describe("toCharacterInfo", () => {
       "flustered",
     ])
     expect(info?.portraits?.thinking).toBe("/character/fictional/thinking.svg")
-    expect(info?.outfitAccents.heavy).toBe("#ffb3a7")
   })
 
   it("素材の版が違えば、同じパック・同じファイル名でも URL が変わる（差し替えたら取り直す）", () => {
@@ -178,7 +165,6 @@ describe("toCharacterInfo", () => {
     expect(info.mini).toBeUndefined()
     expect(info.face).toBeUndefined()
     expect(info.tagline).toBeUndefined()
-    expect(info.outfitAccents.default).toBeUndefined()
     expect(info.background).toBeUndefined()
     expect(info.diaryFont).toBeUndefined()
     expect(info.editable).toBe(false)

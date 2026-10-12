@@ -8,7 +8,7 @@ import {
   isRemovableExpression,
   type RemovableExpression,
 } from "../../../../../shared/character-pack/expression.ts"
-import { DEFAULT_EXPRESSION_BADGE, GALLERY_OUTFIT } from "./character-edit-copy.ts"
+import { DEFAULT_EXPRESSION_BADGE } from "./character-edit-copy.ts"
 import type { PortraitCardModel } from "./character-edit-model.ts"
 import { readFile, readPicked } from "./picked-image.ts"
 
@@ -21,7 +21,6 @@ export type PortraitSenders = {
 /** 表情のカードを `EXPRESSIONS` の順に畳む。 */
 export function portraitCards(
   character: CharacterInfo,
-  galleryAccent: string,
   send: PortraitSenders,
 ): readonly PortraitCardModel[] {
   // `default` は消せないので1回だけ解けばよい（消す前の確かめの本文がどのカードでも同じ値を読む）。
@@ -42,10 +41,7 @@ export function portraitCards(
         expression === "default"
           ? { kind: "shown", text: DEFAULT_EXPRESSION_BADGE }
           : { kind: "none" },
-      image:
-        url === undefined
-          ? { kind: "blank" }
-          : { kind: "shown", url, accent: galleryAccent, outfit: GALLERY_OUTFIT },
+      image: url === undefined ? { kind: "blank" } : { kind: "shown", url },
       pickAriaLabel: `${label}を${url === undefined ? "選ぶ" : "差し替える"}`,
       onPick: (input) => {
         void readPicked(input, sendImage)

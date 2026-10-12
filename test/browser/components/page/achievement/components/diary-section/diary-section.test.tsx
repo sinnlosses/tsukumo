@@ -21,7 +21,7 @@ const NOOP = (): void => {}
 
 const NO_PORTRAIT: DiaryWriterPortrait = {
   name: "架空の名前",
-  portrait: { portraitUrl: undefined, accent: undefined, altText: "架空の名前" },
+  portrait: { portraitUrl: undefined, altText: "架空の名前" },
 }
 
 const AVAILABLE_REVIEW: AchievementReviewButton = {

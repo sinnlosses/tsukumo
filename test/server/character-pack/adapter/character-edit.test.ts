@@ -27,7 +27,6 @@ const DEFINITION_JSON = JSON.stringify({
   name: "架空の精霊",
   license: "テスト用に手で書いたもの",
   portraits: { default: "default.svg", thinking: "thinking.svg", proud: "proud.svg" },
-  outfitAccents: { default: "#b8c7ff" },
 })
 const PLAUSIBLE_SVG = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'
 const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。"
@@ -253,28 +252,6 @@ describe("editCharacterPack（立ち絵）", () => {
   })
 })
 
-describe("editCharacterPack（差し色）", () => {
-  it("衣装ごとの差し色を差し替え、ほかの衣装はそのまま", () => {
-    const bundled = writeBundledPack("tsukumo")
-
-    const edited = editCharacterPack(
-      readCharacterPack(bundled),
-      [],
-      {
-        kind: "setOutfitAccent",
-        pack: "tsukumo",
-        outfit: "heavy",
-        color: "#ffb3a7",
-      },
-      join(dir(), "cwd"),
-      home(),
-    )
-
-    expect(edited?.definition?.outfitAccents.heavy).toBe("#ffb3a7")
-    expect(edited?.definition?.outfitAccents.default).toBe("#b8c7ff")
-  })
-})
-
 describe("editCharacterPack（画面の差し色）", () => {
   it("仕事の差し色（accent）を差し替える", () => {
     const bundled = writeBundledPack("tsukumo")
@@ -351,7 +328,7 @@ describe("editCharacterPack（名前とプロフィール）", () => {
     expect(edited?.definition?.name).toBe("新しい表示名")
     expect(edited?.definition?.tagline).toBe("ひとことプロフィール")
     // characterPack.setPortrait / characterPack.setAccent と同じく、触っていないキーは残る。
-    expect(edited?.definition?.outfitAccents.default).toBe("#b8c7ff")
+    expect(edited?.definition?.portraits.default).toBe("default.svg")
 
     // 一覧に読み直しても書き変わった定義が出る（サーバは書いたあと `event()` で一覧を読み直す。
     // `applyEdit`）。
@@ -664,7 +641,7 @@ describe("createCharacterPack", () => {
     expect(created?.definition?.name).toBeUndefined()
     // 立ち絵のファイル名は表情と形式から組み立てる（届いた文字列がパスの一部にならない）。
     expect(created?.definition?.portraits.default).toBe("default.svg")
-    // 画面の差し色は仕事・雑談の両方が書かれる（衣装ごとの outfitAccents はここでは書かない）。
+    // 画面の差し色は仕事・雑談の両方が書かれる。
     expect(created?.definition?.accent).toBe("#b8c7ff")
     expect(created?.definition?.chatAccent).toBe("#eaa77a")
     expect(readFileSync(join(home(), "fictional-2", "default.svg"), "utf8")).toBe(PLAUSIBLE_SVG)

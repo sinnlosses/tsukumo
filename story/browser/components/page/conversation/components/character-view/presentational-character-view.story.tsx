@@ -23,10 +23,8 @@ const meta = {
   decorators: [withRegion],
   args: {
     portraitUrl: characterAssetPath("tsukumo-spirit", "default.svg", undefined),
-    accent: "#b8c7ff",
     altText: "つくもの精霊",
     expression: "default",
-    outfit: "default",
     motion: "reading",
     speeches: [speech("読み終わったよ。"), speech("次はテストを走らせてみるね（架空）。")],
     reaction: { kind: "none" },

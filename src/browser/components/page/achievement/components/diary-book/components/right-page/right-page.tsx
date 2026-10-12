@@ -77,10 +77,8 @@ export function RightPage(props: {
           {page.portrait.portraitUrl !== undefined && (
             <Portrait
               url={page.portrait.portraitUrl}
-              accent={page.portrait.accent}
               altText={page.portrait.altText}
               expression="default"
-              outfit="default"
               motion={undefined}
               className={styles["diary-book-signature-image"]}
             />

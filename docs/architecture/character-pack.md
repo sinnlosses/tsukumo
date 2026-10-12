@@ -17,7 +17,7 @@
 
 ```
 characters/<name>/
-  character.json     name / portraits（表情 → ファイル名）/ outfitAccents / expressions（名前 → 日本語ラベル）/ diaryFont（日記の書体のファイル名）
+  character.json     name / portraits（表情 → ファイル名）/ expressions（名前 → 日本語ラベル）/ diaryFont（日記の書体のファイル名）
   persona.md         人格。tsukumo が systemPrompt.append で足す（口調・セリフと詳細の書き分け。セリフの間合いとレポートの記法は core 側）
   *.svg / *.png      素材
   *.woff2 / *.woff / *.ttf / *.otf   日記の書体（任意。`diaryFont` が指す）

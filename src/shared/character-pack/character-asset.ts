@@ -56,8 +56,7 @@ export function readCharacterAssetPath(rest: string): CharacterAssetLocation | u
  * 立ち絵の種類を拡張子だけで分ける。
  * ファイル名でも {@link characterAssetPath} が返した URL でも受け取る（`?v=` が付いていても拡張子を見失わない）。
  * 利用者が `characters/local/` に置いた任意のファイルを無検証で流し込まないための最低限の仕分け。
- * SVG はインラインで埋め込む（ページの CSS 変数 `--outfit-accent` を効かせるため。
- * `<img>` で読み込むと独立した文書扱いになり届かない。実測は `characters/README.md`）。
+ * SVG はインラインで埋め込む。
  * それ以外は `<img>` で出す。対応しないラスタ形式（拡張子が既知のものでない）は undefined を返し、立ち絵なし扱いにする。
  */
 export function classifyPortraitFile(fileName: string): "svg" | "raster" | undefined {

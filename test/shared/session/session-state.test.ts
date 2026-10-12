@@ -25,12 +25,7 @@ import {
   type WorkPlan,
   type WorkPlanClosing,
 } from "../../../src/shared/session/work-plan.ts"
-import {
-  characterChangedEvent,
-  characterInfo,
-  shownOutfitAccents,
-  shownPortraits,
-} from "../../fixture/character.ts"
+import { characterChangedEvent, characterInfo, shownPortraits } from "../../fixture/character.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 
 // 時刻に依らないテストでは `now` を固定の 0 で流す（時刻を見る畳み込みは
@@ -1002,7 +997,6 @@ describe("applySessionEvent", () => {
         default: "/character/default.svg",
         thinking: "/character/thinking.svg",
       }),
-      outfitAccents: shownOutfitAccents({ default: "#b8c7ff" }),
     })
 
     const view = apply(characterChangedEvent(character))

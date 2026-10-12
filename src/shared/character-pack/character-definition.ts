@@ -10,17 +10,12 @@ import { fromKeys, isPlainObject } from "remeda"
 import { optionalString } from "../utils/optional-string.ts"
 import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
 import { isDiaryFontFileName } from "./character-diary-font.ts"
-import {
-  EXPRESSIONS,
-  type Expression,
-  OUTFITS,
-  type Outfit,
-  type RemovableExpression,
-} from "./expression.ts"
+import { EXPRESSIONS, type Expression, type RemovableExpression } from "./expression.ts"
 
 /**
- * character.json の中身。`portraits` / `outfitAccents` は「あるものだけでよい」。
- * 無い表情・衣装はキーごと消すのではなく値を undefined にして持つ。
+ * character.json の中身。`portraits` は「あるものだけでよい」。
+ * 無い表情はキーごと消すのではなく値を undefined にして持つ。
+ * 読まないキー（古い版が書いたものなど）は無視する。
  */
 export type CharacterDefinition = {
   readonly name: string | undefined
@@ -30,7 +25,7 @@ export type CharacterDefinition = {
    */
   readonly expressions: Readonly<Record<Expression, string | undefined>>
   /**
-   * キャラクターの色。衣装ごとの差し色（`outfitAccents`）とは別物で、立ち絵の中だけでなく画面全体（吹き出し・選ばれたタブ・フォーカスの輪など）に効く。
+   * キャラクターの色。画面全体（吹き出し・選ばれたタブ・フォーカスの輪など）に効く。
    * 無ければ画面側の既定値に落ちる。
    */
   readonly accent: string | undefined
@@ -66,7 +61,6 @@ export type CharacterDefinition = {
    * 任意で、無いパックは画面側の中立な呼び名に落ちる。空白だけの値は無いのと同じに畳む。
    */
   readonly miniCall: string | undefined
-  readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
    * キャラビューに敷く背景。素材のファイル名と覆いの不透明度の組で、無ければ背景そのものが出ない（既定の絵には落ちない）。
    * 読めない値は {@link toCharacterBackground} が undefined か帯の中の値に畳む。
@@ -117,15 +111,6 @@ export function definitionWithoutPortrait(
   expression: RemovableExpression,
 ): string {
   return editedDefinitionJson(content, "portraits", expression, undefined)
-}
-
-/** 差し色1件を差し替えた JSON を返す。ほかのキーはそのまま残す。 */
-export function definitionWithOutfitAccent(
-  content: string | undefined,
-  outfit: Outfit,
-  color: string,
-): string {
-  return editedDefinitionJson(content, "outfitAccents", outfit, color)
 }
 
 /** 画面の差し色のうちどちらを差すか。`work` は仕事中（`accent`）、`chat` は雑談中だけ（`chatAccent`）に対応する。 */
@@ -227,7 +212,6 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     tagline: nonBlankString(value.tagline),
     userCall: nonBlankString(value.userCall),
     miniCall: nonBlankString(value.miniCall),
-    outfitAccents: toOutfitAccents(value.outfitAccents),
     background: toCharacterBackground(value.background),
     diaryFont: toDiaryFont(value.diaryFont),
   }
@@ -248,11 +232,6 @@ function toPortraits(source: unknown): Readonly<Record<Expression, string | unde
   return fromKeys(EXPRESSIONS, (expression) => stringField(record, expression))
 }
 
-function toOutfitAccents(source: unknown): Readonly<Record<Outfit, string | undefined>> {
-  const record = isPlainObject(source) ? source : {}
-  return fromKeys(OUTFITS, (outfit) => stringField(record, outfit))
-}
-
 function nonBlankString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() !== "" ? value : undefined
 }
@@ -268,7 +247,7 @@ function stringField(record: Readonly<Record<string, unknown>>, key: string): st
  */
 function editedDefinitionJson(
   content: string | undefined,
-  group: "portraits" | "outfitAccents" | "background",
+  group: "portraits" | "background",
   key: string,
   value: string | undefined,
 ): string {

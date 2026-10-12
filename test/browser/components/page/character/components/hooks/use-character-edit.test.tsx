@@ -12,7 +12,6 @@ import {
 import {
   characterInfo,
   characterPackEntry,
-  shownOutfitAccents,
   shownPortraits,
 } from "../../../../../../fixture/character.ts"
 import { type CommandSpy, putSession } from "../../../../../session-store.ts"
@@ -31,13 +30,12 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
     default: "/character/default.png?v=fictional@1",
     proud: "/character/proud.png?v=fictional@1",
   }),
-  outfitAccents: shownOutfitAccents({ default: "#b8c7ff" }),
 })
 
 let themeStyleElement: HTMLStyleElement | undefined
 
 beforeEach(() => {
-  // `--accent` は差し色が定義に無い衣装の初期値として読まれる（theme.css の代役）。
+  // `--accent` は差し色が定義に無いパックの初期値として読まれる（theme.css の代役）。
   themeStyleElement = document.createElement("style")
   themeStyleElement.textContent = ":root { --accent: #f2b0a0; }"
   document.head.appendChild(themeStyleElement)
@@ -88,34 +86,23 @@ describe("useCharacterEdit", () => {
     const { result } = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperFor(FIXTURE_CHARACTER, (command) => calls.push(command)),
     })
-    const heavy = () => {
-      const field = ready(result.current).outfitAccents.find((each) => each.outfit === "heavy")
-      if (field === undefined) {
-        throw new Error("heavy の欄が無い")
-      }
-      return field
-    }
-    expect(heavy().label).toBe("戦闘配置")
-    expect(heavy().sublabel).toEqual({ kind: "shown", text: "opus" })
-    expect(heavy().ariaLabel).toBe("戦闘配置（opus）")
-    // 定義は default に畳んである（heavy は default の色）。
-    expect(heavy().value).toBe("#b8c7ff")
+    const work = () => ready(result.current).workAccent
 
     act(() => {
-      heavy().onChange("#111111")
+      work().onChange("#111111")
     })
     act(() => {
-      heavy().onChange("#123456")
+      work().onChange("#123456")
     })
-    expect(heavy().value).toBe("#123456")
+    expect(work().value).toBe("#123456")
     expect(calls).toEqual([])
 
     await vi.waitFor(() => {
       expect(calls).toEqual([
         {
-          procedure: "characterPack.setOutfitAccent",
+          procedure: "characterPack.setAccent",
           pack: "fictional",
-          outfit: "heavy",
+          target: "work",
           color: "#123456",
         },
       ])

@@ -73,7 +73,7 @@ const DEFAULT_PROPS: PresentationalAchievementProps = {
   writing: { kind: "none" },
   diaryPortrait: {
     name: "架空の名前",
-    portrait: { portraitUrl: undefined, accent: undefined, altText: "" },
+    portrait: { portraitUrl: undefined, altText: "" },
   },
   diaryReveal: false,
   onDiaryRevealed: NOOP,

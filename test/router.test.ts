@@ -769,18 +769,18 @@ describe("createCommandRouter（characterPack）", () => {
 
   // どの種類が見た目の編集の行に当たるかは `CharacterEdit` の表と型が持ち主。
   // ここで見るのは、その手続きが editCharacter 経由の書き込みへ実際に届くこと。
-  it("setOutfitAccent も同じ経路を通る", async () => {
+  it("setAccent も同じ経路を通る", async () => {
     const { commands, edits } = startRouter()
 
     expect(
-      await commands.characterPack.setOutfitAccent({
+      await commands.characterPack.setAccent({
         pack: "fictional",
-        outfit: "heavy",
+        target: "work",
         color: "#ffb3a7",
       }),
     ).toEqual({ ok: true })
 
-    expect(edits.map((edit) => edit.kind)).toEqual(["setOutfitAccent"])
+    expect(edits.map((edit) => edit.kind)).toEqual(["setAccent"])
   })
 
   it("setProfile も同じ経路を通る", async () => {

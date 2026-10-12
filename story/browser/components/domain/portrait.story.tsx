@@ -12,10 +12,8 @@ const meta = {
   decorators: [withFrame],
   args: {
     url: characterAssetPath("tsukumo-spirit", "default.svg", undefined),
-    accent: "#b8c7ff",
     altText: "つくもの精霊",
     expression: "default",
-    outfit: "default",
     motion: undefined,
     className: undefined,
   },
@@ -25,23 +23,12 @@ export default meta
 
 type Story = StoryObj<typeof meta>
 
-/** インラインの SVG。差し色（`--outfit-accent`）が効く。 */
 export const Svg = {} satisfies Story
-
-export const SvgHeavyOutfit = {
-  args: {
-    url: characterAssetPath("tsukumo-spirit", "flustered.svg", undefined),
-    accent: "#ffb3a7",
-    expression: "flustered",
-    outfit: "heavy",
-  },
-} satisfies Story
 
 /** ラスタは `<img>` で出す。 */
 export const Raster = {
   args: {
     url: characterAssetPath("tsukumo", "proud.png", undefined),
-    accent: undefined,
     altText: "つくも",
     expression: "proud",
   },

@@ -22,11 +22,5 @@
     "thinking": "thinking.svg",
     "proud": "proud.svg",
     "flustered": "flustered.svg"
-  },
-  "outfitAccents": {
-    "default": "#b8c7ff",
-    "light": "#a8e6c0",
-    "normal": "#b8c7ff",
-    "heavy": "#ffb3a7"
   }
 }

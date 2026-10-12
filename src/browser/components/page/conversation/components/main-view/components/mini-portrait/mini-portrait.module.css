@@ -73,19 +73,19 @@
 /* 立ち絵は入れ物の高さいっぱい（幅は画の縦横比なり）。
 
    不透明でも小ささは変えず、姿を地・文字の両方から際立たせる（`--mini-portrait-opacity` を 1 にしたあとも縁取りは残す）。
-   地の暗い面や衣装の暗い部分は色が近く輪郭が沈むし、本文の文字に重なったときも境目が要るので、地との境目を作る側で解く:
+   地の暗い面や立ち絵の暗い部分は色が近く輪郭が沈むし、本文の文字に重なったときも境目が要るので、地との境目を作る側で解く:
 
    --mini-portrait-rim: 地の色の縁。
    本文の文字の上に来たときに輪郭が埋もれない。
    --mini-portrait-glow: 差し色の暈。
    地（暗い面）の上で姿が浮かぶ。
-   差し色はキャラクター定義の `accent`（`--outfit-accent` は `<Portrait>` がこの要素に置く）で、無いパックでは画面の差し色に落ちる。
+   差し色は画面の差し色（`--accent`）。
 
    `drop-shadow` は素材の alpha をなぞるので、矩形ではなく姿の形に付く（素材の中身には触らないまま輪郭だけを立てられる）。
    同じ影を重ねるのは、`color-mix` で作った縁取り・暈自体が半透明で、1回では存在感が出ないため。重ねた回数だけ濃くなる（drop-shadow は前の結果にさらに掛かる）。 */
 .mini-portrait-body {
   --mini-portrait-rim: color-mix(in srgb, var(--surface) 85%, transparent);
-  --mini-portrait-glow: color-mix(in srgb, var(--outfit-accent, var(--accent)) 80%, transparent);
+  --mini-portrait-glow: color-mix(in srgb, var(--accent) 80%, transparent);
 
   height: 100%;
   filter: drop-shadow(0 0 4px var(--mini-portrait-glow))

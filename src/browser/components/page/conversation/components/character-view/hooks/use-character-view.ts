@@ -1,7 +1,7 @@
 // `<CharacterView>` のロジック。
-// 表情・衣装・立ち絵の URL・動き・吹き出しに出すセリフを、直近の `speak` とセッションの記録から組み立てて返す。
+// 表情・立ち絵の URL・動き・吹き出しに出すセリフを、直近の `speak` とセッションの記録から組み立てて返す。
 //
-// 表情は `state.speechExpression`（直近の `speak` の引数）か、反応を出しているあいだはその行の表情。衣装は `resolveOutfit(state.model)` で決める。
+// 表情は `state.speechExpression`（直近の `speak` の引数）か、反応を出しているあいだはその行の表情。
 // 時間経過で顔が変わるのは、依頼を待つ間に待ちの一言（反応）を出し始めたときだけ。
 //
 // 過去のターンのタブを選んでいる間は、そのターンの吹き出しと表情に戻す（`useTurnSelection`）。
@@ -12,11 +12,7 @@
 
 import { useEffect, useState } from "react"
 
-import {
-  resolveOutfit,
-  type Expression,
-  type Outfit,
-} from "../../../../../../../shared/character-pack/expression.ts"
+import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
 import type { ReactionKind } from "../../../../../../../shared/recommendation/welcome-greeting.ts"
 import {
   nextPortraitMotionTransitionDelayMs,
@@ -75,10 +71,8 @@ export type BalloonReaction =
 export type CharacterViewModel = {
   /** 立ち絵の素材 URL。character が届いていなければ `undefined`（吹き出しだけで成立させる）。 */
   readonly portraitUrl: string | undefined
-  readonly accent: string | undefined
   readonly altText: string
   readonly expression: Expression
-  readonly outfit: Outfit
   readonly motion: PortraitMotion
   /** 吹き出しに出すセリフ（古い→新しい）。過去のターンを見ていればそのターンぶんに差し替わる。 */
   readonly speeches: readonly CharacterViewSpeech[]
@@ -114,7 +108,6 @@ export function useCharacterView(): CharacterViewModel {
   const records = useSession((session) => session.state.records)
   const speeches = useSession((session) => session.state.speeches)
   const speechExpression = useSession((session) => session.state.speechExpression)
-  const model = useSession((session) => session.state.model)
   const character = useSession((session) => session.state.character)
   const turn = useSession((session) => session.state.turn)
   const lastToolFailureAt = useSession((session) => session.state.lastToolFailureAt)
@@ -157,17 +150,14 @@ export function useCharacterView(): CharacterViewModel {
     const current = pinnedSpeech === undefined ? LATEST_VIEWED_SPEECH : viewed
     setViewed(toggledViewedSpeech(current, turnId, index, speechesOfTurn(turnId)?.length ?? 0))
   }
-  const outfit = resolveOutfit(model)
   const motion = resolvePortraitMotion({ turn, lastToolFailureAt, draftingReport }, now)
 
-  const { portraitUrl, accent, altText } = portraitAppearance(character, expression, outfit)
+  const { portraitUrl, altText } = portraitAppearance(character, expression)
 
   return {
     portraitUrl,
-    accent,
     altText,
     expression,
-    outfit,
     motion,
     speeches: balloonSpeeches(
       activeSpeeches,

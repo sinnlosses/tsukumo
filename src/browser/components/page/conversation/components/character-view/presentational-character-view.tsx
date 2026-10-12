@@ -21,10 +21,8 @@ export type PresentationalCharacterViewProps = CharacterViewModel
 
 export function PresentationalCharacterView({
   portraitUrl,
-  accent,
   altText,
   expression,
-  outfit,
   motion,
   speeches,
   reaction,
@@ -40,10 +38,8 @@ export function PresentationalCharacterView({
   const portrait = portraitUrl !== undefined && (
     <Portrait
       url={portraitUrl}
-      accent={accent}
       altText={altText}
       expression={expression}
-      outfit={outfit}
       motion={motion}
       className={styles["portrait"]}
     />

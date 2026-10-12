@@ -1,6 +1,6 @@
 // 新しく作るダイアログのロジック。
 // 名前・id・立ち絵1枚・画面の差し色2つ（仕事・雑談）の作りかけの値を持ち、押せるか・id の欄の下に出す一言・作る先を畳んで返す。
-// 表情を足す・衣装ごとに差し色を分ける・背景を敷くのは、作ったあと `<CharacterEdit>` の側で行う。
+// 表情を足す・背景を敷くのは、作ったあと `<CharacterEdit>` の側で行う。
 //
 // 作れたら一覧で作ったパックを選んだ状態にして、呼び出し元へ閉じたことを知らせる。
 // `session.switchCharacter` は送らない（切り替えは `<CharacterEdit>` の「このキャラクターに切り替える」の仕事）。
@@ -146,16 +146,12 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       workAccent: {
         inputId: "character-create-accent-work",
         label: "仕事",
-        sublabel: { kind: "none" },
-        ariaLabel: "仕事",
         value: accent,
         onChange: setAccent,
       },
       chatAccent: {
         inputId: "character-create-accent-chat",
         label: "雑談",
-        sublabel: { kind: "none" },
-        ariaLabel: "雑談",
         value: chatAccent,
         onChange: setChatAccent,
       },

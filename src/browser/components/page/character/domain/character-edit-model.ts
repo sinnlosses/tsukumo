@@ -1,6 +1,6 @@
 // `<CharacterEdit>` が画面に出す形。フックが畳み、presenter と部品が `kind` で出し分けて置く。
 
-import type { Expression, Outfit } from "../../../../../shared/character-pack/expression.ts"
+import type { Expression } from "../../../../../shared/character-pack/expression.ts"
 import type { AccentSwatchModel } from "./accent-swatch-model.ts"
 
 /** 名乗り（大きな顔・名前・id・使用中の札・ひとこと）と、その右の口。 */
@@ -49,14 +49,7 @@ export type PortraitCardModel = {
   readonly label: string
   /** `default` にだけ添える札（「いつもの顔」）。 */
   readonly badge: { readonly kind: "none" } | { readonly kind: "shown"; readonly text: string }
-  readonly image:
-    | { readonly kind: "blank" }
-    | {
-        readonly kind: "shown"
-        readonly url: string
-        readonly accent: string
-        readonly outfit: Outfit
-      }
+  readonly image: { readonly kind: "blank" } | { readonly kind: "shown"; readonly url: string }
   /** 選ぶ口の読み上げ（どの表情のことか。口はアイコンか空欄の枠なので見える字には入れない）。 */
   readonly pickAriaLabel: string
   readonly onPick: (input: HTMLInputElement) => void
@@ -73,9 +66,6 @@ export type PortraitCardModel = {
         readonly onClear: () => void
       }
 }
-
-/** 衣装ごとの差し色の欄1つ。 */
-export type OutfitAccentFieldModel = AccentSwatchModel & { readonly outfit: Outfit }
 
 /**
  * 雑談の差し色を「仕事と同じ」へ戻す口。
@@ -150,7 +140,6 @@ export type CharacterEditModel =
       /** 画面の差し色（雑談）。`chatAccent` を持たなければ、仕事の差し色をそのまま見本に出す。 */
       readonly chatAccent: AccentSwatchModel
       readonly resetChatAccent: ChatAccentResetModel
-      readonly outfitAccents: readonly OutfitAccentFieldModel[]
       readonly face: ImageFieldModel
       readonly background: ImageFieldModel
       readonly deleteBand: CharacterDeleteBandModel

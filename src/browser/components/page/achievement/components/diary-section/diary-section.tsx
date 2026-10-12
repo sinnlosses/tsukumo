@@ -58,10 +58,8 @@ export function DiarySection(props: DiarySectionProps): ReactElement {
       {props.portrait.portrait.portraitUrl !== undefined && (
         <Portrait
           url={props.portrait.portrait.portraitUrl}
-          accent={props.portrait.portrait.accent}
           altText={props.portrait.portrait.altText}
           expression="default"
-          outfit="default"
           motion={undefined}
           className={styles["achievement-diary-portrait"]}
         />

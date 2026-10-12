@@ -1,6 +1,6 @@
-// 差し色1系統（衣装ごと・画面の仕事 / 雑談のどちらか）の「引きずっている間は見た目だけ先に進め、送信は止めてから1回にまとめる」。
+// 差し色1系統（画面の仕事 / 雑談のどちらか）の「引きずっている間は見た目だけ先に進め、送信は止めてから1回にまとめる」。
 //
-// 見た目（立ち絵の `accent` と `<input>` の表示）はその場で更新し、送信は `useDebouncedCallback` で `ACCENT_DEBOUNCE_MS` まとめる。
+// 見た目（`<input>` の表示）はその場で更新し、送信は `useDebouncedCallback` で `ACCENT_DEBOUNCE_MS` まとめる。
 // サーバが送信のたびに `character.json` を書き直すため。
 
 import { useState } from "react"

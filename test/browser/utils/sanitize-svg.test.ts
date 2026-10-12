@@ -51,15 +51,15 @@ describe("sanitizeSvg", () => {
     expect(sanitized).not.toMatch(/svg\+xml|example\.invalid/)
   })
 
-  it("url( が外を指す値の属性は落ち、文書の中を指す url(#…) と var(--outfit-accent) は残る", () => {
+  it("url( が外を指す値の属性は落ち、文書の中を指す url(#…) と var(--accent) は残る", () => {
     const sanitized = sanitizedBody(
-      '<rect fill="url(https://example.invalid/a.svg#g)"/><rect style="fill: url( \'https://example.invalid\')"/><rect style="background: image-set(\'https://example.invalid\' 1x)"/><rect fill="url(#g)" style="stroke: url( \'#g\'); opacity: 0.5"/><stop stop-color="var(--outfit-accent, #b8c7ff)"/>',
+      '<rect fill="url(https://example.invalid/a.svg#g)"/><rect style="fill: url( \'https://example.invalid\')"/><rect style="background: image-set(\'https://example.invalid\' 1x)"/><rect fill="url(#g)" style="stroke: url( \'#g\'); opacity: 0.5"/><stop stop-color="var(--accent, #b8c7ff)"/>',
     )
 
     expect(sanitized).not.toContain("example.invalid")
     expect(sanitized).toContain('fill="url(#g)"')
     expect(sanitized).toContain("stroke: url( '#g'); opacity: 0.5")
-    expect(sanitized).toContain('stop-color="var(--outfit-accent, #b8c7ff)"')
+    expect(sanitized).toContain('stop-color="var(--accent, #b8c7ff)"')
   })
 
   it("animate は残るが、リンクやイベントハンドラを書き換える animate は要素ごと落ちる", () => {

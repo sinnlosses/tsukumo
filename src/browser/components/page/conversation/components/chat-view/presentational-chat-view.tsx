@@ -21,10 +21,8 @@ export type PresentationalChatViewProps = ChatViewModel
  */
 export function PresentationalChatView({
   portraitUrl,
-  accent,
   altText,
   expression,
-  outfit,
   turnInProgress,
   onNudge,
   logRef,
@@ -48,10 +46,8 @@ export function PresentationalChatView({
         {portraitUrl !== undefined && (
           <NudgePortrait
             url={portraitUrl}
-            accent={accent}
             altText={altText}
             expression={expression}
-            outfit={outfit}
             turnInProgress={turnInProgress}
             onNudge={onNudge}
           />

@@ -124,25 +124,6 @@ export function PresentationalCharacterEdit(
             <AccentSwatch swatch={props.chatAccent} disabled={props.disabled} />
           </div>
         </VStack>
-        <VStack
-          element="section"
-          name={{ kind: "labelledby", id: "character-outfit-accent" }}
-          ref={undefined}
-          gap="md"
-          align="stretch"
-          justify="start"
-          wrap="nowrap"
-          className={styles["character-section"]}
-        >
-          <Heading level={2} size="body" tone="inherit" weight="bold" className="">
-            <span id="character-outfit-accent">立ち絵の差し色</span>
-          </Heading>
-          <div className={styles["character-swatches-outfit"]}>
-            {props.outfitAccents.map((field) => (
-              <AccentSwatch key={field.outfit} swatch={field} disabled={props.disabled} />
-            ))}
-          </div>
-        </VStack>
       </div>
       <VStack
         element="section"

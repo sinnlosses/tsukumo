@@ -76,11 +76,7 @@ import {
   type PreviousUsageReview,
   usageProposalKey,
 } from "../../../../src/shared/usage-review/usage-review.ts"
-import {
-  characterChangedEvent,
-  shownOutfitAccents,
-  shownPortraits,
-} from "../../../fixture/character.ts"
+import { characterChangedEvent, shownPortraits } from "../../../fixture/character.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 import { createCommandClient } from "../../../fixture/command-client.ts"
 import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.ts"
@@ -134,7 +130,6 @@ const NO_DIARY_WRITER: DiaryWriterSource = { kind: "dont-write" }
  */
 const CHARACTER_EVENT: SessionEvent = characterChangedEvent({
   ...shownPortraits({ default: "/character/default.png?v=fictional@2" }),
-  outfitAccents: shownOutfitAccents({ default: "#b8c7ff" }),
 })
 
 /** コマンドの受け手の口（機能ごとの `ports` を平らに並べたもの。棚は `SessionManagerOptions` と共有する）。 */

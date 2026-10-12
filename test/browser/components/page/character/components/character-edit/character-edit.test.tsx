@@ -12,7 +12,6 @@ import {
 import {
   characterInfo,
   characterPackEntry,
-  shownOutfitAccents,
   shownPortraits,
 } from "../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
@@ -35,13 +34,12 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
     thinking: "/character/thinking.png?v=fictional@1",
     proud: "/character/proud.png?v=fictional@1",
   }),
-  outfitAccents: shownOutfitAccents({ default: "#b8c7ff", heavy: "#ffb3a7" }),
 })
 
 let themeStyleElement: HTMLStyleElement | undefined
 
 beforeEach(() => {
-  // `--accent` は差し色が定義に無い衣装の初期値として読まれる（theme.css の代役）。
+  // `--accent` は差し色が定義に無いパックの初期値として読まれる（theme.css の代役）。
   themeStyleElement = document.createElement("style")
   themeStyleElement.textContent = ":root { --accent: #f2b0a0; }"
   document.head.appendChild(themeStyleElement)
@@ -279,15 +277,15 @@ describe("CharacterEdit", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
 
-    fireEvent.change(screen.getByLabelText("戦闘配置（opus）"), { target: { value: "#123456" } })
+    fireEvent.change(screen.getByLabelText("仕事"), { target: { value: "#123456" } })
     expect(calls).toEqual([])
     cleanup()
 
     expect(calls).toEqual([
       {
-        procedure: "characterPack.setOutfitAccent",
+        procedure: "characterPack.setAccent",
         pack: "fictional",
-        outfit: "heavy",
+        target: "work",
         color: "#123456",
       },
     ])
@@ -363,35 +361,11 @@ describe("CharacterEdit", () => {
     ).toBe("true")
   })
 
-  it("差し色の初期値は、その衣装の値 → default → --accent の順で決まる", () => {
-    renderCharacterEdit(FIXTURE_CHARACTER)
-
-    // 定義にある衣装はその値。
-    expect(
-      typedElement(
-        screen.getByLabelText("戦闘配置（opus）"),
-        HTMLInputElement,
-        "戦闘配置（opus）の入力欄",
-      ).value,
-    ).toBe("#ffb3a7")
-    // 定義に無い衣装は default に落ちる（立ち絵に効くのと同じ解き方）。
-    expect(
-      typedElement(
-        screen.getByLabelText("軽装（haiku）"),
-        HTMLInputElement,
-        "軽装（haiku）の入力欄",
-      ).value,
-    ).toBe("#b8c7ff")
-  })
-
   it("差し色がまったく無いパックでは、--accent の値を初期値にする（JS 側に既定の色を持たない）", () => {
-    renderCharacterEdit({
-      ...FIXTURE_CHARACTER,
-      outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
-    })
+    renderCharacterEdit({ ...FIXTURE_CHARACTER, accent: undefined })
 
     expect(
-      typedElement(screen.getByLabelText("既定"), HTMLInputElement, "既定の入力欄").value,
+      typedElement(screen.getByLabelText("仕事"), HTMLInputElement, "仕事の入力欄").value,
     ).toBe("#f2b0a0")
   })
 
@@ -406,7 +380,7 @@ describe("CharacterEdit", () => {
       ).disabled,
     ).toBe(true)
     expect(
-      typedElement(screen.getByLabelText("既定"), HTMLInputElement, "既定の入力欄").disabled,
+      typedElement(screen.getByLabelText("仕事"), HTMLInputElement, "仕事の入力欄").disabled,
     ).toBe(true)
     expect(document.querySelector(".character-screen-note")?.textContent).toContain(
       "characters/local",

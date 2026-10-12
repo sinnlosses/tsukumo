@@ -101,10 +101,8 @@ export function PortraitCard(props: {
         <div className={styles["character-card-stage"]}>
           <Portrait
             url={card.image.url}
-            accent={card.image.accent}
             altText={card.label}
             expression={card.expression}
-            outfit={card.image.outfit}
             motion={undefined}
             className={styles["character-card-portrait"]}
           />

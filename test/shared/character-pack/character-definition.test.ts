@@ -4,7 +4,6 @@ import {
   definitionWithAccent,
   definitionWithBackground,
   definitionWithFace,
-  definitionWithOutfitAccent,
   definitionWithoutBackground,
   definitionWithoutChatAccent,
   definitionWithoutFace,
@@ -12,25 +11,46 @@ import {
   definitionWithPortrait,
   parseCharacterDefinition,
 } from "../../../src/shared/character-pack/character-definition.ts"
+import { toCharacterInfo } from "../../../src/shared/character-pack/character.ts"
 import { FULL_DEFINITION_JSON } from "../../fixture/character.ts"
 
 describe("parseCharacterDefinition", () => {
-  it("あるものだけの portraits / outfitAccents をそのまま持つ", () => {
+  it("あるものだけの portraits をそのまま持つ", () => {
     const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
 
     expect(definition?.name).toBe("架空の精霊")
     expect(definition?.portraits.thinking).toBe("thinking.svg")
-    expect(definition?.outfitAccents.heavy).toBe("#ffb3a7")
   })
 
-  it("見つからない表情・衣装は undefined になる（キー自体は消えない）", () => {
+  it("見つからない表情は undefined になる（キー自体は消えない）", () => {
     const definition = parseCharacterDefinition(
-      JSON.stringify({ portraits: { default: "default.svg" }, outfitAccents: {} }),
+      JSON.stringify({ portraits: { default: "default.svg" } }),
     )
 
     expect(definition?.portraits.default).toBe("default.svg")
     expect(definition?.portraits.thinking).toBeUndefined()
-    expect(definition?.outfitAccents.default).toBeUndefined()
+  })
+
+  it("古い版の outfitAccents が残っていても読めて、結果には現れない", () => {
+    const json = JSON.stringify({
+      name: "架空の精霊",
+      portraits: { default: "default.svg" },
+      outfitAccents: { default: "#b8c7ff", heavy: "#ffb3a7" },
+    })
+
+    const definition = parseCharacterDefinition(json)
+    expect(definition?.name).toBe("架空の精霊")
+    expect(definition).not.toHaveProperty("outfitAccents")
+    if (definition === undefined) {
+      throw new Error("定義が読めなかった")
+    }
+    const info = toCharacterInfo({
+      definition,
+      pack: "fictional",
+      revision: undefined,
+      editable: true,
+    })
+    expect(info).not.toHaveProperty("outfitAccents")
   })
 
   it("任意の mini（ミニ立ち絵の素材）を読む。無ければ undefined", () => {
@@ -80,9 +100,7 @@ describe("parseCharacterDefinition", () => {
   })
 
   it("name が無くても壊れない", () => {
-    const definition = parseCharacterDefinition(
-      JSON.stringify({ portraits: {}, outfitAccents: {} }),
-    )
+    const definition = parseCharacterDefinition(JSON.stringify({ portraits: {} }))
 
     expect(definition?.name).toBeUndefined()
   })
@@ -123,15 +141,14 @@ describe("parseCharacterDefinition", () => {
     ).toBeUndefined()
   })
 
-  it("portraits / outfitAccents が無い・型が違っても、キーはすべて undefined として持つ", () => {
+  it("portraits が無い・型が違っても、キーはすべて undefined として持つ", () => {
     const definition = parseCharacterDefinition(JSON.stringify({ portraits: "not an object" }))
 
     expect(definition?.portraits.default).toBeUndefined()
-    expect(definition?.outfitAccents.default).toBeUndefined()
   })
 })
 
-describe("definitionWithPortrait / definitionWithoutPortrait / definitionWithOutfitAccent", () => {
+describe("definitionWithPortrait / definitionWithoutPortrait", () => {
   it("立ち絵1件を差し替え、ほかのキーは残す", () => {
     const edited = definitionWithPortrait(FULL_DEFINITION_JSON, "proud", "proud.png")
     const definition = parseCharacterDefinition(edited)
@@ -154,30 +171,22 @@ describe("definitionWithPortrait / definitionWithoutPortrait / definitionWithOut
     expect(definition?.expressions.flustered).toBe("あわあわ")
   })
 
-  it("差し色1件を差し替える", () => {
-    const edited = definitionWithOutfitAccent(FULL_DEFINITION_JSON, "heavy", "#123456")
-    const definition = parseCharacterDefinition(edited)
-
-    expect(definition?.outfitAccents.heavy).toBe("#123456")
-    expect(definition?.outfitAccents.default).toBe("#b8c7ff")
-  })
-
   it("定義が無い・壊れているときは、その1件だけを持つ定義を作る", () => {
     expect(
       parseCharacterDefinition(definitionWithPortrait(undefined, "default", "default.png"))
         ?.portraits.default,
     ).toBe("default.png")
     expect(
-      parseCharacterDefinition(definitionWithOutfitAccent("{壊れた", "light", "#a8e6c0"))
-        ?.outfitAccents.light,
-    ).toBe("#a8e6c0")
+      parseCharacterDefinition(definitionWithPortrait("{壊れた", "thinking", "thinking.png"))
+        ?.portraits.thinking,
+    ).toBe("thinking.png")
   })
 
   it("書き出す JSON は2スペース整形で、末尾に改行を付ける（手で編集できる形）", () => {
-    const edited = definitionWithOutfitAccent(FULL_DEFINITION_JSON, "light", "#a8e6c0")
+    const edited = definitionWithPortrait(FULL_DEFINITION_JSON, "proud", "proud.png")
 
     expect(edited.endsWith("\n")).toBe(true)
-    expect(edited).toContain('\n  "outfitAccents": {')
+    expect(edited).toContain('\n  "portraits": {')
   })
 })
 

@@ -44,7 +44,6 @@ export function characterPackCommands(
   return {
     setPortrait: edit((input) => ({ kind: "setPortrait", ...input })),
     clearPortrait: edit((input) => ({ kind: "clearPortrait", ...input })),
-    setOutfitAccent: edit((input) => ({ kind: "setOutfitAccent", ...input })),
     setAccent: edit((input) => ({ kind: "setAccent", ...input })),
     clearChatAccent: edit((input) => ({ kind: "clearChatAccent", ...input })),
     setProfile: edit((input) => ({ kind: "setProfile", ...input })),

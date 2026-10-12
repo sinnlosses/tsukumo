@@ -39,7 +39,7 @@ const FIXTURE_PACKS = [
 
 let themeStyleElement: HTMLStyleElement | undefined
 
-// 差し色の `<input type="color">` は定義に無い衣装の初期値を `--accent` から読む
+// 差し色の `<input type="color">` は差し色が定義に無いパックの初期値を `--accent` から読む
 // （`readAccentColor`）ので、`:root` を疑似的に用意する。
 beforeEach(() => {
   themeStyleElement = document.createElement("style")
@@ -247,7 +247,6 @@ describe("Character", () => {
 
     const headings = [...document.querySelectorAll("h2")].map((node) => node.textContent)
     expect(headings).toContain("画面の差し色")
-    expect(headings.some((text) => text?.startsWith("立ち絵の差し色"))).toBe(true)
     expect(headings).not.toContain("画面の色")
   })
 

@@ -98,7 +98,7 @@ export function readCurrentColor(key: AppearanceColorKey): string {
 }
 
 /**
- * 今のキャラクターの色（`--accent`）。差し色（`outfitAccents`）が定義に無い衣装の `<input type="color">` の初期値に使う。
+ * 今のキャラクターの色（`--accent`）。差し色が定義に無いパックの `<input type="color">` の初期値に使う。
  * パックが差した値、無ければ `theme.css` の `:root` の既定値が返る。
  */
 export function readAccentColor(): string {

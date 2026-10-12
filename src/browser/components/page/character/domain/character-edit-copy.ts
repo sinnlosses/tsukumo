@@ -2,10 +2,8 @@
 
 import { MAX_BACKGROUND_BYTES } from "../../../../../shared/character-pack/character-background.ts"
 import type { CharacterPackRemoval } from "../../../../../shared/character-pack/character.ts"
-import type { Outfit } from "../../../../../shared/character-pack/expression.ts"
 import { MAX_PORTRAIT_BYTES } from "../../../../../shared/character-pack/portrait-image.ts"
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
-import type { AccentSwatchModel } from "./accent-swatch-model.ts"
 
 /** 背景の行の、いまの状態を表す字（印だけにしない）。 */
 export const BACKGROUND_LABEL = { present: "いまの背景", absent: "背景なし" } as const
@@ -29,20 +27,6 @@ export const IMAGE_REJECTED_NOTE = {
   portrait: (label: string): string =>
     `${label}を差し替えられなかった。立ち絵は SVG・PNG・GIF の ${mebibytes(MAX_PORTRAIT_BYTES)} までの画像にしてほしい`,
 } as const
-
-/**
- * 衣装のラベル。モデルの重さ（装備の重さ）の言い方はどのキャラクターでも同じなので画面側が持つ。
- * 見える字は装備の名前とモデルの2段に分け、読み上げには1つにつないで渡す。
- */
-export const OUTFIT_LABELS = {
-  default: { label: "既定", sublabel: { kind: "none" } },
-  light: { label: "軽装", sublabel: { kind: "shown", text: "haiku" } },
-  normal: { label: "通常装備", sublabel: { kind: "shown", text: "sonnet" } },
-  heavy: { label: "戦闘配置", sublabel: { kind: "shown", text: "opus" } },
-} as const satisfies Readonly<Record<Outfit, Pick<AccentSwatchModel, "label" | "sublabel">>>
-
-/** カードの立ち絵に当てる衣装。並びでは衣装の違いを出さない（差し色の行がその役目）。 */
-export const GALLERY_OUTFIT: Outfit = "default"
 
 /** 必須の1つ（`default`）のカードに添える札。どの表情が「いつもの顔」かを字で出す。 */
 export const DEFAULT_EXPRESSION_BADGE = "いつもの顔"

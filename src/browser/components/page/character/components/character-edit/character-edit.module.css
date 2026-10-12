@@ -41,27 +41,9 @@
   }
 }
 
-/* 差し色。画面の差し色（2つ）と立ち絵の差し色（4つ）を横に並べる（見本の 2 : 4）。 */
+/* 画面の差し色（仕事・雑談の2つ）。広い画面で見本が間延びしないよう幅を絞る。 */
 .character-accents {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 4fr);
-  gap: 1rem;
-}
-.character-swatches-outfit {
-  display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-@container (max-width: 52rem) {
-  .character-accents {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-/* ごく狭いときは1列（2列だと装備の名前と16進が折れる）。 */
-@container (max-width: 30rem) {
-  .character-swatches-outfit {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  max-width: 24rem;
 }
 @media (max-width: 760px) {
   .character-detail {

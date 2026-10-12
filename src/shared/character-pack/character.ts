@@ -8,7 +8,7 @@ import { characterAssetPath } from "./character-asset.ts"
 import type { CharacterBackground } from "./character-background.ts"
 import type { CharacterDefinition } from "./character-definition.ts"
 import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
-import { type Expression, EXPRESSIONS, type Outfit, OUTFITS } from "./expression.ts"
+import { type Expression, EXPRESSIONS } from "./expression.ts"
 
 /**
  * キャラビューに渡す、キャラクター定義の姿（`character-changed` イベント・`SessionState.character` の中身）。
@@ -54,11 +54,6 @@ export type CharacterInfo = {
   readonly userCall: string | undefined
   /** {@link CharacterDefinition.miniCall}（ミニ立ち絵の呼び名）をそのまま持つ。無いパックでは undefined。 */
   readonly miniCall: string | undefined
-  /**
-   * 衣装 → 差し色。衣装ごとに `default` へ畳み済み（読む側は表を引くだけでよい）。
-   * `default` も無ければその衣装は undefined。
-   */
-  readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
    * キャラビューに敷く背景。`image` は `/character/<pack>/<file>` の URL（立ち絵と同じ経路・同じ取り直しの印）。
    * 無ければ背景は出ない（`ground` の上に立ち絵が直接立つ）。
@@ -146,7 +141,7 @@ export type CharacterInfoSource = {
 /**
  * キャラクター定義を {@link CharacterInfo}（キャラビューに渡す形）にする。ファイル名を {@link characterAssetPath} で URL に変える。
  * 定義が無い・壊れているときも、欠けた形（立ち絵なし・`default` だけの表情）で返す。
- * 「この表情・衣装だけ無い」はここで `default` に畳み、読む側へ運ばない。
+ * 「この表情だけ無い」はここで `default` に畳み、読む側へ運ばない。
  */
 export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
   const definition = source.definition
@@ -168,7 +163,6 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     tagline: definition?.tagline,
     userCall: definition?.userCall,
     miniCall: definition?.miniCall,
-    outfitAccents: foldedOutfitAccents(definition),
     background: backgroundWithUrl(definition?.background, assetUrl),
     diaryFont: definition?.diaryFont === undefined ? undefined : assetUrl(definition.diaryFont),
     editable: source.editable,
@@ -213,17 +207,4 @@ function portraitUrls(
   }
   const fallback = files.default
   return fromKeys(EXPRESSIONS, (expression) => assetUrl(files[expression] ?? fallback))
-}
-
-/**
- * 差し色の表を、衣装ごとに `default` へ畳んだ形にする。全域にはならない。
- * `default` の差し色を持たないパックにも、画面から1つの衣装にだけ差し色を入れられるので、その衣装の値は残す。
- * 値の無い衣装は、読む側が素材の既定の色（`--outfit-accent` を渡さない）か `--accent` に落とす。
- */
-function foldedOutfitAccents(
-  definition: CharacterDefinition | undefined,
-): Readonly<Record<Outfit, string | undefined>> {
-  const accents = definition?.outfitAccents
-  const fallback = accents?.default
-  return fromKeys(OUTFITS, (outfit) => accents?.[outfit] ?? fallback)
 }

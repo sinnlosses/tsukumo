@@ -9,7 +9,7 @@ import { PresentationalSpeechLog } from "./presentational-speech-log.tsx"
 
 export type SpeechLogProps = {
   /**
-   * キャラビューに立っている立ち絵。キャラビューが渡す（表情・衣装・動きがキャラビューと
+   * キャラビューに立っている立ち絵。キャラビューが渡す（表情・動きがキャラビューと
    * 同じものになる）。素材が無いときは何も描かない値。
    */
   readonly portrait: ReactNode

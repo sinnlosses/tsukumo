@@ -143,20 +143,6 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     })
   })
 
-  it("characterPack.setOutfitAccent は衣装と16進の色を受け付ける", () => {
-    expect(
-      parseInput("characterPack.setOutfitAccent", {
-        pack: "fictional",
-        outfit: "heavy",
-        color: "#ffb3a7",
-      }),
-    ).toEqual({
-      pack: "fictional",
-      outfit: "heavy",
-      color: "#ffb3a7",
-    })
-  })
-
   it("characterPack.setAccent は target（work / chat）と16進の色を受け付ける", () => {
     expect(
       parseInput("characterPack.setAccent", {
@@ -258,7 +244,7 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     ).toBeUndefined()
   })
 
-  it("知らない表情・衣装、16進でない色、data URL でない画像は undefined", () => {
+  it("知らない表情、16進でない色、data URL でない画像は undefined", () => {
     expect(
       parseInput("characterPack.setPortrait", {
         pack: "fictional",
@@ -274,16 +260,9 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
       }),
     ).toBeUndefined()
     expect(
-      parseInput("characterPack.setOutfitAccent", {
+      parseInput("characterPack.setAccent", {
         pack: "fictional",
-        outfit: "battle",
-        color: "#ffb3a7",
-      }),
-    ).toBeUndefined()
-    expect(
-      parseInput("characterPack.setOutfitAccent", {
-        pack: "fictional",
-        outfit: "heavy",
+        target: "work",
         color: "rebeccapurple",
       }),
     ).toBeUndefined()

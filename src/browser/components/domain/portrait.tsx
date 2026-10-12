@@ -1,9 +1,8 @@
 // 立ち絵1件（<Portrait>）。
 // SVG は `fetch` して `sanitizeSvg` で削ぎ落とした中身をインラインにし、ラスタは `<img>` で出す。
-// SVG を `<img>` で読み込むと独立した文書扱いになり、差し色の CSS 変数 `--outfit-accent` が届かない（`characters/README.md` の実測）。
 // 素材は `/character/<pack>/<file>` から取りに行くだけ。
 //
-// `expression` / `outfit` は表情・衣装の差し替えにだけ使う。
+// `expression` は表情の差し替えにだけ使う。
 // `motion` は立ち絵の動きを `data-motion` 属性で `portrait.module.css` に渡す。
 // 動きを決めるのは呼び出し側で、ここは受け取った値を属性に渡すだけで、動き自体は作らない。
 //
@@ -11,10 +10,10 @@
 // ここが持つのは中身の収め方と動きだけ。
 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useEffect, type CSSProperties, type ReactElement } from "react"
+import { useEffect, type ReactElement } from "react"
 
 import { classifyPortraitFile } from "../../../shared/character-pack/character-asset.ts"
-import type { Expression, Outfit } from "../../../shared/character-pack/expression.ts"
+import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { PortraitMotion } from "../../../shared/session/portrait-motion.ts"
 import { sanitizeSvg } from "../../utils/sanitize-svg.ts"
 import styles from "./portrait.module.css"
@@ -22,11 +21,8 @@ import styles from "./portrait.module.css"
 export type PortraitProps = {
   /** `/character/<pack>/<file>` の URL。 */
   readonly url: string
-  /** CSS 変数 `--outfit-accent` に渡す差し色。インライン SVG のときだけ見た目に効く。 */
-  readonly accent: string | undefined
   readonly altText: string
   readonly expression: Expression
-  readonly outfit: Outfit
   /**
    * いまの動き（`resolvePortraitMotion`）。
    * 動かさない置き方もあるので `undefined` を許す。
@@ -77,25 +73,18 @@ export function usePortraitPreload(portraits: Readonly<Record<string, string>> |
   }, [portraits, queryClient])
 }
 
-/** React の `CSSProperties` は CSS カスタムプロパティの索引シグネチャを持たないので、足した型で受ける。 */
-type PortraitStyle = CSSProperties & { readonly "--outfit-accent": string }
-
 export function Portrait(props: PortraitProps): ReactElement {
   const kind = classifyPortraitFile(props.url)
   const svgMarkup = useSvgMarkup(kind === "svg" ? props.url : undefined)
-  const style: PortraitStyle | undefined =
-    props.accent === undefined ? undefined : { "--outfit-accent": props.accent }
 
   const wrapperProps = {
     className:
       props.className === undefined
         ? styles["portrait"]
         : `${styles["portrait"]} ${props.className}`,
-    style,
     role: "img",
     "aria-label": props.altText,
     "data-expression": props.expression,
-    "data-outfit": props.outfit,
     "data-motion": props.motion,
   }
 
