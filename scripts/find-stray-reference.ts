@@ -1,20 +1,28 @@
 // 正典の節を「ファイル名＋番号＋「句」」で引いている参照のうち、句が参照先に見つからないもの
-// （迷子の参照）と、無いファイルを指す `docs/` 以下の `.md` のパスを一覧する。`docs/` の節を削る・移したあとに打つ。1件でもあれば終了コード1。
+// （迷子の参照）と、無いファイルを指す `docs/` 以下の `.md` のパスと、
+// 文書が指しているソースのシンボルの置き場所が無いものを一覧する。
+// `docs/` の節を削る・移したあと、関数や定数を別のファイルへ移したあとに打つ。1件でもあれば終了コード1。
 //
-// 拾う形・照合の強さは `findSectionReferences` に書いてある。同じものを0件に保つ検査は
-// `pnpm run check` にあるので、ここは一覧を見るための入口。
+// 拾う形・照合の強さは `findSectionReferences` と `findSymbolReferences` に書いてある。
+// 同じものを0件に保つ検査は `pnpm run check` にあるので、ここは一覧を見るための入口。
 
 import process from "node:process"
 import { fileURLToPath } from "node:url"
 
-import { collectMissingFileReferences, collectStrayReferences } from "./lib/repository-reference.ts"
+import {
+  collectMissingFileReferences,
+  collectStrayReferences,
+  collectStraySymbolReferences,
+} from "./lib/repository-reference.ts"
 import { formatMissingFileReference, formatStrayReference } from "./section-reference.ts"
+import { formatStraySymbolReference } from "./symbol-reference.ts"
 
 const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
 
 const strays = [
   ...collectStrayReferences(REPOSITORY_ROOT).map(formatStrayReference),
   ...collectMissingFileReferences(REPOSITORY_ROOT).map(formatMissingFileReference),
+  ...collectStraySymbolReferences(REPOSITORY_ROOT).map(formatStraySymbolReference),
 ]
 for (const stray of strays) {
   process.stdout.write(`${stray}\n`)

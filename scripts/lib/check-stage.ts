@@ -22,6 +22,7 @@ export const DOCUMENT_CHECK_TEST_FILES = [
   "test/conflict-marker.test.ts",
   "test/task-id.test.ts",
   "test/section-reference.test.ts",
+  "test/symbol-reference.test.ts",
   "test/comment-reference.test.ts",
   "test/e2e-reference.test.ts",
   "test/document-index.test.ts",
