@@ -27,8 +27,6 @@ import { useSession } from "./session.ts"
 export type SettingDot = "none" | "accepted" | "confirmed"
 
 const CONFIRMED_DOT_MS = 3000
-/** 見届けられないまま空洞の点が消えるまで（effort に対応しないモデルでは見届けが来ない）。 */
-const ACCEPTED_DOT_MS = 8000
 
 export type ModelPermissionControl = {
   readonly model: ModelAlias
@@ -98,7 +96,10 @@ export function useModelPermission(): ModelPermissionControl {
   }
 }
 
-/** 印を点にし、印ごとのタイマーで消す。同じ値の付け直しは `at` が違うので別の印として数え直す。 */
+/**
+ * 印を点にし、見届けた点だけ印ごとのタイマーで消す（空洞の点は見届けるか戻すまで残る）。
+ * 同じ値の付け直しは `at` が違うので別の印として数え直す。
+ */
 function useSettingDot(mark: SettingMark): SettingDot {
   // 画面を開いた時点でもう寿命を過ぎている印（配り直された古い切り替え）は、最初から消えたことにする。
   const [expired, setExpired] = useState<string | undefined>(() =>
@@ -107,7 +108,7 @@ function useSettingDot(mark: SettingMark): SettingDot {
   const key = dotKey(mark)
 
   useEffect(() => {
-    if (mark.kind === "none") {
+    if (mark.kind !== "confirmed") {
       return
     }
     const timer = setTimeout(
@@ -128,11 +129,14 @@ function dotKey(mark: SettingMark): string {
   return mark.kind === "none" ? "none" : `${mark.kind}:${String(mark.at)}`
 }
 
-/** 印を付けた時刻（サーバが打った `at`）から `now` までに使った分を引いた、点の残り寿命。 */
+/** 見届けた印を付けた時刻（サーバが打った `at`）から `now` までに使った分を引いた、点の残り寿命。空洞の点は寿命を持たない。 */
 function remainingDotMs(mark: SettingMark, now: number): number {
-  if (mark.kind === "none") {
-    return 0
+  switch (mark.kind) {
+    case "none":
+      return 0
+    case "accepted":
+      return Number.POSITIVE_INFINITY
+    case "confirmed":
+      return CONFIRMED_DOT_MS - (now - mark.at)
   }
-  const life = mark.kind === "confirmed" ? CONFIRMED_DOT_MS : ACCEPTED_DOT_MS
-  return life - (now - mark.at)
 }

@@ -1955,10 +1955,57 @@ describe("設定の口の点の元（settingMarks）", () => {
     )
 
     expect(state.settingMarks).toEqual({
-      model: { kind: "accepted", value: "sonnet", at: 0 },
-      effort: { kind: "accepted", value: "low", at: 0 },
-      permissionMode: { kind: "accepted", value: "plan", at: 0 },
+      model: {
+        kind: "accepted",
+        value: "sonnet",
+        at: 0,
+        from: { kind: "known", value: "claude-opus-5" },
+      },
+      effort: { kind: "accepted", value: "low", at: 0, from: { kind: "unknown" } },
+      permissionMode: {
+        kind: "accepted",
+        value: "plan",
+        at: 0,
+        from: { kind: "known", value: "default" },
+      },
     })
+  })
+
+  it("見届ける前に切り替える前の値へ戻すと、印が消える（別の値への付け直しでは最初の値を覚えている）", () => {
+    const reverted = apply(
+      RUNNING,
+      { kind: "permission-mode-changed", mode: "plan" },
+      { kind: "permission-mode-changed", mode: "default" },
+    )
+    const viaOther = apply(
+      RUNNING,
+      { kind: "model-changed", model: "sonnet" },
+      { kind: "model-changed", model: "haiku" },
+      { kind: "model-changed", model: "opus" },
+    )
+    const stillAway = apply(
+      RUNNING,
+      { kind: "permission-mode-changed", mode: "plan" },
+      { kind: "permission-mode-changed", mode: "auto" },
+    )
+
+    expect(reverted.settingMarks.permissionMode.kind).toBe("none")
+    expect(viaOther.settingMarks.model.kind).toBe("none")
+    expect(stillAway.settingMarks.permissionMode).toMatchObject({
+      kind: "accepted",
+      value: "auto",
+      from: { kind: "known", value: "default" },
+    })
+  })
+
+  it("切り替える前の値が分からないときは、戻しても印を消さない", () => {
+    const state = apply(
+      RUNNING,
+      { kind: "effort-changed", effort: "low" },
+      { kind: "effort-changed", effort: "high" },
+    )
+
+    expect(state.settingMarks.effort).toMatchObject({ kind: "accepted", value: "high" })
   })
 
   it("running になる前の受け付けは印を付けず、値だけ従来どおり更新する", () => {

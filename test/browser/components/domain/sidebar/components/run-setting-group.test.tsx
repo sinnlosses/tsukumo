@@ -73,6 +73,7 @@ describe("RunSettingGroup（吊り札の行）", () => {
 })
 
 const NO_MARK = { kind: "none" } satisfies SettingMark
+const NO_ORIGIN = { kind: "unknown" } as const
 
 function marksWith(patch: Partial<SettingMarks>): SettingMarks {
   return { model: NO_MARK, effort: NO_MARK, permissionMode: NO_MARK, ...patch }
@@ -103,7 +104,11 @@ describe("RunSettingGroup（口の右肩の点）", () => {
     const at = nowEpochMilliseconds()
     for (const setting of ["model", "effort", "permissionMode"] as const) {
       cleanup()
-      putSession(stateWithMarks(marksWith({ [setting]: { kind: "accepted", value: "x", at } })))
+      putSession(
+        stateWithMarks(
+          marksWith({ [setting]: { kind: "accepted", value: "x", at, from: NO_ORIGIN } }),
+        ),
+      )
       render(<RunSettingGroup placement="sidebar-footer" />)
 
       const dots = {
@@ -136,14 +141,14 @@ describe("RunSettingGroup（口の右肩の点）", () => {
     expect(screen.getByRole("combobox", { name: /^モデル / }).title).toMatch(/・ 効いた$/)
   })
 
-  it("見届けた点は3秒、空洞の点は8秒で消える", () => {
+  it("見届けた点は3秒で消え、空洞の点は見届けるまで残る", () => {
     vi.useFakeTimers()
     const at = nowEpochMilliseconds()
     putSession(
       stateWithMarks(
         marksWith({
           model: { kind: "confirmed", value: "opus", at },
-          effort: { kind: "accepted", value: "high", at },
+          effort: { kind: "accepted", value: "high", at, from: NO_ORIGIN },
         }),
       ),
     )
@@ -155,35 +160,47 @@ describe("RunSettingGroup（口の右肩の点）", () => {
     expect([dotOf(/^モデル /), dotOf(/^effort /)]).toEqual([undefined, "accepted"])
 
     act(() => {
-      vi.advanceTimersByTime(5000)
+      vi.advanceTimersByTime(60_000)
     })
-    expect(dotOf(/^effort /)).toBeUndefined()
-    expect(screen.getByRole("combobox", { name: /^effort / }).title).not.toMatch(/受け付けた/)
+    expect(dotOf(/^effort /)).toBe("accepted")
   })
 
-  it("消えたあとに別の時刻で付け直された印は、また点を出す", () => {
+  it("空洞の点が見届けられて塗りになり、消えたあとに別の時刻で付け直された印は、また点を出す", () => {
     vi.useFakeTimers()
     const at = nowEpochMilliseconds()
-    putSession(stateWithMarks(marksWith({ model: { kind: "accepted", value: "opus", at } })))
+    putSession(
+      stateWithMarks(
+        marksWith({ model: { kind: "accepted", value: "opus", at, from: NO_ORIGIN } }),
+      ),
+    )
     render(<RunSettingGroup placement="sidebar-footer" />)
+
     act(() => {
-      vi.advanceTimersByTime(8100)
+      putState(stateWithMarks(marksWith({ model: { kind: "confirmed", value: "opus", at } })))
+    })
+    expect(dotOf(/^モデル /)).toBe("confirmed")
+    act(() => {
+      vi.advanceTimersByTime(3100)
     })
     expect(dotOf(/^モデル /)).toBeUndefined()
 
     act(() => {
       putState(
-        stateWithMarks(marksWith({ model: { kind: "accepted", value: "sonnet", at: at + 8100 } })),
+        stateWithMarks(
+          marksWith({
+            model: { kind: "accepted", value: "sonnet", at: at + 3100, from: NO_ORIGIN },
+          }),
+        ),
       )
     })
 
     expect(dotOf(/^モデル /)).toBe("accepted")
   })
 
-  it("開いた時点で寿命を過ぎている印は点を出さない", () => {
+  it("開いた時点で寿命を過ぎている見届けた印は点を出さない", () => {
     const old = nowEpochMilliseconds() - 60_000
     putSession(
-      stateWithMarks(marksWith({ permissionMode: { kind: "accepted", value: "plan", at: old } })),
+      stateWithMarks(marksWith({ permissionMode: { kind: "confirmed", value: "plan", at: old } })),
     )
     render(<RunSettingGroup placement="sidebar-footer" />)
 

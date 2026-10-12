@@ -238,13 +238,23 @@ type SettingName = SettingConfirmation["setting"]
 /**
  * 設定の口の右肩の点の元。`at` は印を付けた時刻で、同じ値の付け直しを別の印として区別する。
  * - `none`: 点なし
- * - `accepted`: 切り替えを受け付けた（空洞の点）
+ * - `accepted`: 切り替えを受け付けた（空洞の点）。見届けるまで残る。`from` は切り替える前に効いていた値
  * - `confirmed`: 受け付けた値で効いているのを見届けた（塗りの点）
  */
 export type SettingMark =
   | { readonly kind: "none" }
-  | { readonly kind: "accepted"; readonly value: string; readonly at: number }
+  | {
+      readonly kind: "accepted"
+      readonly value: string
+      readonly at: number
+      readonly from: SettingOrigin
+    }
   | { readonly kind: "confirmed"; readonly value: string; readonly at: number }
+
+/** 切り替える前に効いていた値。まだ分かっていなければ `unknown`。 */
+export type SettingOrigin =
+  | { readonly kind: "known"; readonly value: string }
+  | { readonly kind: "unknown" }
 
 export type SettingMarks = Readonly<Record<SettingName, SettingMark>>
 
@@ -619,14 +629,28 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         isModelAlias(event.model) ? { ...state, model: event.model } : state,
         "model",
         event.model,
+        originOf(state.model),
         at,
       )
     case "model-effort-support":
       return { ...state, modelEffortSupport: event.models }
     case "effort-changed":
-      return withAcceptedMark({ ...state, effort: event.effort }, "effort", event.effort, at)
+      return withAcceptedMark(
+        { ...state, effort: event.effort },
+        "effort",
+        event.effort,
+        originOf(state.effort),
+        at,
+      )
     case "permission-mode-changed":
-      return withAcceptedMark(state, "permissionMode", event.mode, at)
+      // 許可モードは次の `init` まで `session` の値が変わらないので、切り替える前に効いていた値が残っている。
+      return withAcceptedMark(
+        state,
+        "permissionMode",
+        event.mode,
+        originOf(state.session.kind === "running" ? state.session.permissionMode : undefined),
+        at,
+      )
     case "setting-confirmed":
       return withConfirmedMark(
         event.setting === "effort" && isEffortLevel(event.value)
@@ -917,21 +941,34 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
 }
 
 /**
- * 切り替えを受け付けた印を付ける（見届ける前の印は新しい値と時刻で付け直す）。
+ * 切り替えを受け付けた印を付ける（見届ける前の印は新しい値と時刻で付け直し、`from` は最初の切り替えの前の値を引き継ぐ）。
+ * 見届ける前に `from` へ戻したときは印を消す（戻したことが点の有無で分かる）。
  * `running` になる前は付けない（起こした直後の `effort-changed` で、起動のたびに点が出てしまう）。
  */
 function withAcceptedMark(
   state: SessionState,
   setting: SettingName,
   value: string,
+  origin: SettingOrigin,
   at: number,
 ): SessionState {
-  return state.session.kind === "running"
-    ? {
-        ...state,
-        settingMarks: { ...state.settingMarks, [setting]: { kind: "accepted", value, at } },
-      }
-    : state
+  if (state.session.kind !== "running") {
+    return state
+  }
+  const current = state.settingMarks[setting]
+  const from = current.kind === "accepted" ? current.from : origin
+  const reverted = from.kind === "known" && sameSettingValue(setting, from.value, value)
+  return {
+    ...state,
+    settingMarks: {
+      ...state.settingMarks,
+      [setting]: reverted ? NO_SETTING_MARK : { kind: "accepted", value, at, from },
+    },
+  }
+}
+
+function originOf(value: string | undefined): SettingOrigin {
+  return value === undefined ? { kind: "unknown" } : { kind: "known", value }
 }
 
 function withConfirmedMark(
@@ -951,12 +988,13 @@ function withConfirmedMark(
     : state
 }
 
-/** モデルだけ、受け付けた値（`sonnet` のような別名）がフルネームに含まれていれば合う。 */
 function settingValueMatches(confirmation: SettingConfirmation, accepted: string): boolean {
-  return (
-    confirmation.value === accepted ||
-    (confirmation.setting === "model" && confirmation.value.includes(accepted))
-  )
+  return sameSettingValue(confirmation.setting, confirmation.value, accepted)
+}
+
+/** モデルだけ、`sonnet` のような別名がフルネームに含まれていれば同じ値とみなす。 */
+function sameSettingValue(setting: SettingName, left: string, right: string): boolean {
+  return left === right || (setting === "model" && (left.includes(right) || right.includes(left)))
 }
 
 /**
