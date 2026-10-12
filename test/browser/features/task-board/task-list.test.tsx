@@ -197,7 +197,7 @@ describe("taskList", () => {
     expect(text).not.toContain("loopable:Y")
   })
 
-  it("行に難しさは出さず、loopable は N のものだけ loop:N と出す", () => {
+  it("行に難しさも loopable も出さない", () => {
     const items: readonly TaskSummaryItem[] = [
       { ...taskOf("X-011", "todo"), difficulty: "sonnet", loopable: "Y" },
       { ...taskOf("X-012", "todo"), difficulty: "opus", loopable: "N" },
@@ -207,7 +207,7 @@ describe("taskList", () => {
     expect(row("X-011").textContent).not.toContain("sonnet")
     expect(row("X-011").textContent).not.toContain("loopable")
     expect(row("X-012").textContent).not.toContain("opus")
-    expect(row("X-012").textContent).toContain("loop:N")
+    expect(row("X-012").textContent).not.toContain("loop:N")
   })
 
   it("属性の無い行には属性の札を出さない", () => {

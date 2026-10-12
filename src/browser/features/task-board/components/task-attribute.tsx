@@ -27,19 +27,6 @@ export function TaskRowAttributes(props: {
   )
 }
 
-/** サイドバーの行の属性。幅が狭いので難しさは出さず、`loopable` が `N` のときだけの札。 */
-export function TaskRowLoopable(props: {
-  readonly loopable: TaskLoopable | undefined
-}): ReactElement {
-  return (
-    <span className={styles["task-attribute-group"]}>
-      {props.loopable === "N" && (
-        <TaskAttribute attribute={{ kind: "loopable", value: props.loopable }} scope="row" />
-      )}
-    </span>
-  )
-}
-
 export function TaskAttribute(props: {
   readonly attribute: TaskAttributeValue
   readonly scope: "row" | "detail"

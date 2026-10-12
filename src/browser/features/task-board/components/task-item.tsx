@@ -1,5 +1,5 @@
 // 区画の一覧1件分（進行中を除いた「残り」）。行全体が1つのボタンで、押すとのぞき窓が開く。
-// 印・ID・題（1行で末尾「…」）・`›` の4列の grid。開いているときは、窓をボタンの後ろ（同じ `<li>` の中）に置く。
+// 印・ID・題（1行で末尾「…」）・`›` の4列の grid。属性（難しさ・`loopable`）は幅が狭いので出さない。開いているときは、窓をボタンの後ろ（同じ `<li>` の中）に置く。
 
 import clsx from "clsx"
 import { ChevronRight } from "lucide-react"
@@ -8,7 +8,6 @@ import type { ReactElement, ReactNode } from "react"
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import taskBoardStyles from "../task-board.module.css"
-import { TaskRowLoopable } from "./task-attribute.tsx"
 import styles from "./task-item.module.css"
 import { TaskMark } from "./task-mark.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
@@ -43,7 +42,6 @@ export function TaskItem(props: {
         <span className={styles["task-item-summary"]}>
           <TaskSummaryText parts={codeSpanParts(props.task.summary)} />
         </span>
-        <TaskRowLoopable loopable={props.task.loopable} />
         <ChevronRight
           className={taskBoardStyles["task-row-chevron"]}
           size={14}
