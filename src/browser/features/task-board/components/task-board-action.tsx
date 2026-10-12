@@ -1,4 +1,4 @@
-// タスクのモーダルの下の操作の帯。ID をコピー・置き場所を開く口・「tsukumo に頼む」。
+// タスクのモーダルの下の操作の帯。ID をコピー・置き場所を開く口・「tsukumo に頼む」（ドラフトでは「却下する」「計画する」）。
 // 「tsukumo に頼む」を押せないときは薄くし、横に理由を添える。
 
 import { Copy, ExternalLink, MessageCircle } from "lucide-react"
@@ -42,21 +42,55 @@ export function TaskBoardAction(props: {
           Issue を開く
         </a>
       )}
-      <Button
-        variant="solid-accent"
-        size="subheading"
-        pressed="none"
-        disabled={run.kind === "unavailable"}
-        ariaLabel={undefined}
-        ariaHasPopup="dialog"
-        disclosure={{ kind: "none" }}
-        title={run.kind === "unavailable" ? run.reason : undefined}
-        className={styles["task-board-run"]}
-        onClick={run.kind === "available" ? run.onRun : ignoreClick}
-      >
-        <MessageCircle size={16} strokeWidth={2} aria-hidden="true" />
-        tsukumo に頼む
-      </Button>
+      {run.kind === "draft" ? (
+        <>
+          <Button
+            variant="outline"
+            size="secondary"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup="dialog"
+            disclosure={{ kind: "none" }}
+            title={undefined}
+            className={styles["task-board-drop"]}
+            onClick={run.onDrop}
+          >
+            却下する
+          </Button>
+          <Button
+            variant="solid-accent"
+            size="subheading"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup="dialog"
+            disclosure={{ kind: "none" }}
+            title={undefined}
+            className={styles["task-board-run-plan"]}
+            onClick={run.onPlan}
+          >
+            <MessageCircle size={16} strokeWidth={2} aria-hidden="true" />
+            計画する
+          </Button>
+        </>
+      ) : (
+        <Button
+          variant="solid-accent"
+          size="subheading"
+          pressed="none"
+          disabled={run.kind === "unavailable"}
+          ariaLabel={undefined}
+          ariaHasPopup="dialog"
+          disclosure={{ kind: "none" }}
+          title={run.kind === "unavailable" ? run.reason : undefined}
+          className={styles["task-board-run"]}
+          onClick={run.kind === "available" ? run.onRun : ignoreClick}
+        >
+          <MessageCircle size={16} strokeWidth={2} aria-hidden="true" />
+          tsukumo に頼む
+        </Button>
+      )}
       {run.kind === "unavailable" && (
         <span className={styles["task-board-run-reason"]}>{run.reason}</span>
       )}

@@ -6,6 +6,7 @@
 
 import { useReducer, useState } from "react"
 
+import type { TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
 import type { TaskSummaryResult } from "../../../../shared/repository/task-summary.ts"
 import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import { boardContent, boardEntries, type BoardEntry } from "../domain/task-board-content.ts"
@@ -32,7 +33,9 @@ export function useTaskBoard(
     setRequestShown(request)
     send({ kind: "open", request })
   }
-  const [confirmingId, setConfirmingId] = useState<string | undefined>(undefined)
+  const [confirming, setConfirming] = useState<
+    { readonly taskId: string; readonly request: TaskRequest } | undefined
+  >(undefined)
 
   const { query, filter, chosen } = state
   const items = tasks.kind === "known" ? tasks.items : []
@@ -56,7 +59,7 @@ export function useTaskBoard(
 
   const close = (): void => {
     send({ kind: "close" })
-    setConfirmingId(undefined)
+    setConfirming(undefined)
     onClose()
   }
 
@@ -81,7 +84,9 @@ export function useTaskBoard(
   const content = boardContent(tasks, entries, byId, rows, selected, isVisible, knownIds, {
     query,
     filter,
-    run: setConfirmingId,
+    run: (taskId, request) => {
+      setConfirming({ taskId, request })
+    },
     onJump: jumpTo,
     breadcrumb:
       chosen.kind === "jumped"
@@ -93,14 +98,7 @@ export function useTaskBoard(
     open,
     countsText: tasks.kind === "known" ? countsTextOf(taskListCounts(tasks.items)) : "",
     content,
-    confirm:
-      confirmingId === undefined
-        ? { kind: "closed" }
-        : {
-            kind: "open",
-            taskId: confirmingId,
-            request: { kind: "start", held: byId.get(confirmingId)?.state.kind === "hold" },
-          },
+    confirm: confirming === undefined ? { kind: "closed" } : { kind: "open", ...confirming },
     onClose: close,
     onQueryChange: (nextQuery) => {
       send({ kind: "query", query: nextQuery, shown })
@@ -126,7 +124,7 @@ export function useTaskBoard(
       }
     },
     onConfirmClose: (outcome) => {
-      setConfirmingId(undefined)
+      setConfirming(undefined)
       if (outcome === "sent") {
         close()
       }

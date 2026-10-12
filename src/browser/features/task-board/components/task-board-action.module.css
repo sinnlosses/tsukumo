@@ -47,6 +47,24 @@
   padding: 0 18px;
   border-radius: 10px;
 }
+/* ドラフトの「却下する」は右寄せの組の左端（箱は「ID をコピー」と同じ）、「計画する」は「tsukumo に頼む」と同じ箱で右端。 */
+.task-board-drop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  margin-left: auto;
+  padding: 0 12px;
+  border-radius: 9px;
+}
+.task-board-run-plan {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+}
 .task-board-run-reason {
   color: var(--ink-quiet);
   font-size: var(--font-label);

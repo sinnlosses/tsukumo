@@ -282,6 +282,59 @@ describe("タスクの実行を頼む", () => {
     ])
   })
 
+  it("モーダルのドラフトには「計画する」「却下する」が出て、「tsukumo に頼む」は出ない", () => {
+    renderBoard(() => {}, [], [...TASKS, draftTask("X-004")])
+
+    fireEvent.click(screen.getByRole("option", { name: /X-004/ }))
+
+    expect(screen.getByRole("button", { name: "計画する" })).toBeDefined()
+    expect(screen.getByRole("button", { name: "却下する" })).toBeDefined()
+    expect(screen.queryByRole("button", { name: "tsukumo に頼む" })).toBeNull()
+  })
+
+  it("モーダルのドラフトの「計画する」は確認の「頼む」で計画の文面を送り、モーダルを閉じる", () => {
+    const sent: unknown[] = []
+    const closed: string[] = []
+    renderBoard(collectInto(sent), closed, [...TASKS, draftTask("X-004")])
+
+    fireEvent.click(screen.getByRole("option", { name: /X-004/ }))
+    fireEvent.click(screen.getByRole("button", { name: "計画する" }))
+    expect(confirmDialog()?.textContent).toContain("X-004 の計画を頼みますか")
+    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
+
+    expect(sent).toEqual([
+      {
+        procedure: "session.prompt",
+        text: "ドラフト X-004 を計画して（bd show X-004 で読める）。## 完了条件 と ## やること を書いて、着手できる todo にする。",
+        images: [],
+      },
+    ])
+    expect(closed).toEqual(["モーダル"])
+  })
+
+  it("モーダルのドラフトの「却下する」は、キャンセルでは送らずモーダルが残り、頼むと却下の文面を送る", () => {
+    const sent: unknown[] = []
+    const closed: string[] = []
+    renderBoard(collectInto(sent), closed, [...TASKS, draftTask("X-004")])
+
+    fireEvent.click(screen.getByRole("option", { name: /X-004/ }))
+    fireEvent.click(screen.getByRole("button", { name: "却下する" }))
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }))
+    expect(sent).toEqual([])
+    expect(closed).toEqual([])
+    expect(confirmDialog()).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "却下する" }))
+    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
+    expect(sent).toEqual([
+      {
+        procedure: "session.prompt",
+        text: "ドラフト X-004 を却下して（bd show X-004 で読める）。理由を ## 結果 に書いて、dropped で閉じる。",
+        images: [],
+      },
+    ])
+  })
+
   it("モーダルからは依存の済んだ保留も頼め、判断を聞かれることを確認に添える", () => {
     const sent: unknown[] = []
     renderBoard(collectInto(sent), [], [...TASKS, holdTask("X-003", ["X-001"], [])])

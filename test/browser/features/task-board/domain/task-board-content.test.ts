@@ -171,16 +171,13 @@ describe("boardContent", () => {
     expect(run).toEqual({ kind: "unavailable", reason: "待ちが終わると頼めます" })
   })
 
-  it("ドラフトの詳細では「tsukumo に頼む」を押せず、のぞき窓へ誘う理由を添える", () => {
+  it("ドラフトの詳細では「計画する」「却下する」の口を返す", () => {
     const content = contentOf(known([taskOf("X-001", { status: "draft" })]), "X-001")
     if (content.kind !== "known" || content.selection.kind !== "some") {
       throw new Error("選択があるはず")
     }
 
-    expect(content.selection.run).toEqual({
-      kind: "unavailable",
-      reason: "ドラフトは、サイドバーののぞき窓から計画か却下を頼めます",
-    })
+    expect(content.selection.run.kind).toBe("draft")
   })
 
   it("詳細に属性が写る", () => {

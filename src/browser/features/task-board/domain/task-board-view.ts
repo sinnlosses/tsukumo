@@ -76,9 +76,14 @@ export type TaskBoardOpener =
   | { readonly kind: "issue"; readonly url: string }
   | { readonly kind: "none" }
 
-/** 「tsukumo に頼む」。押せるのは着手できるタスクと、依存が済んだ保留のタスクだけで、それ以外は理由を添えて押せなくする。 */
+/**
+ * 操作の帯の頼みの口。
+ * `available` は「tsukumo に頼む」で、押せるのは着手できるタスクと、依存が済んだ保留のタスクだけ。
+ * `draft` はドラフトの「計画する」「却下する」。それ以外は理由を添えて押せなくする。
+ */
 export type TaskBoardRun =
   | { readonly kind: "available"; readonly onRun: () => void }
+  | { readonly kind: "draft"; readonly onPlan: () => void; readonly onDrop: () => void }
   | { readonly kind: "unavailable"; readonly reason: string }
 
 export type TaskBoardSelection =

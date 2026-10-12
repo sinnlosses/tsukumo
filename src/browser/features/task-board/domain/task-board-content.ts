@@ -1,6 +1,9 @@
 // 一覧のタスクを、行・絞り込みの札・選んだタスクの詳細・操作の帯へ畳む。
 
-import { isTaskRequestable } from "../../../../shared/repository/task-run-prompt.ts"
+import {
+  isTaskRequestable,
+  type TaskRequest,
+} from "../../../../shared/repository/task-run-prompt.ts"
 import {
   taskReadiness,
   type TaskLocation,
@@ -30,7 +33,7 @@ export type BoardEntry = {
 export type BoardContentInput = {
   readonly query: string
   readonly filter: TaskBoardFilter
-  readonly run: (taskId: string) => void
+  readonly run: (taskId: string, request: TaskRequest) => void
   readonly onJump: (id: string) => void
   readonly breadcrumb: TaskBoardBreadcrumb
 }
@@ -39,11 +42,10 @@ export type BoardContentInput = {
 const RUN_UNAVAILABLE_REASON = {
   blocked: "待ちが終わると頼めます",
   hold: "待ちが終わると頼めます",
-  draft: "ドラフトは、サイドバーののぞき窓から計画か却下を頼めます",
   doing: "着手済みです",
   done: "終わったタスクです",
   other: "状態が読めないので頼めません",
-} satisfies Record<Exclude<TaskStateKind, "ready">, string>
+} satisfies Record<Exclude<TaskStateKind, "ready" | "draft">, string>
 
 const TASK_BOARD_LIST_ID = "task-board-list"
 
@@ -135,8 +137,25 @@ function selectionOf(
 
 function runOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRun {
   const kind = entry.state.kind
+  const taskId = entry.task.id
+  if (kind === "draft") {
+    return {
+      kind: "draft",
+      onPlan: () => {
+        input.run(taskId, { kind: "plan" })
+      },
+      onDrop: () => {
+        input.run(taskId, { kind: "drop" })
+      },
+    }
+  }
   if (kind === "ready" || isTaskRequestable(entry.task)) {
-    return { kind: "available", onRun: () => input.run(entry.task.id) }
+    return {
+      kind: "available",
+      onRun: () => {
+        input.run(taskId, { kind: "start", held: kind === "hold" })
+      },
+    }
   }
   return { kind: "unavailable", reason: RUN_UNAVAILABLE_REASON[kind] }
 }
