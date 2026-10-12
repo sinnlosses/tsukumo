@@ -1,7 +1,7 @@
 import { act, cleanup, render, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { MermaidBlock } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/mermaid-block.tsx"
+import type { MermaidBlock as MermaidBlockComponent } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/mermaid-block.tsx"
 
 // jsdom には canvas が無く、色のトークンも解けない。
 vi.mock(
@@ -17,7 +17,12 @@ const scripts: Node[] = []
 const initialize = vi.fn()
 const renderDiagram = vi.fn()
 
-beforeEach(() => {
+let MermaidBlock: typeof MermaidBlockComponent
+
+beforeEach(async () => {
+  vi.resetModules()
+  ;({ MermaidBlock } =
+    await import("../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/mermaid-block.tsx"))
   scripts.length = 0
   initialize.mockClear()
   renderDiagram.mockReset()
@@ -53,7 +58,6 @@ async function finishLoading(): Promise<void> {
   }
 }
 
-// 覚えはモジュールの中でテストをまたぐので、テストごとに別のソースを使う。
 describe("MermaidBlock の描いた SVG の使い回し", () => {
   it("同じソースを開き直しても、描き直さず初期化もやり直さない", async () => {
     const first = render(<MermaidBlock code="graph A1" />)
@@ -128,7 +132,6 @@ describe("MermaidBlock の描いた SVG の使い回し", () => {
   })
 })
 
-// 初期化はモジュールの中でテストをまたぐので、初期化の回数を数えるテストより後ろに置く。
 describe("MermaidBlock のソースの色のトークン", () => {
   it("var(--…) を hex に置き換えてから描く", async () => {
     render(<MermaidBlock code={"graph T1\n  classDef a stroke:var(--state-ok),fill:var(--ink)"} />)
