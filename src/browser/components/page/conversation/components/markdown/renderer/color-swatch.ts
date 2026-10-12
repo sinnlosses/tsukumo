@@ -1,5 +1,7 @@
 // レポートの inline code に書かれた色（`#bca0ec` のようなカラーコードと、`ink-quiet` / `--state-memo` のような色のトークン名）を、その色を地にして見せるための判定。
 
+import { relativeLuminance } from "../../../../../../domain/relative-luminance.ts"
+
 /** 地の色と、その上に載せる文字の側（明るい地には暗い字、暗い地には明るい字）。 */
 export type ColorSwatch = {
   readonly background: string
@@ -156,10 +158,4 @@ function inkOver(color: ResolvedColor, surface: ResolvedColor | undefined): "dar
     mix(color.b, under.b),
   )
   return luminance > LIGHT_BACKGROUND_LUMINANCE ? "dark" : "light"
-}
-
-function relativeLuminance(r: number, g: number, b: number): number {
-  const linear = (value: number): number =>
-    value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
-  return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b)
 }

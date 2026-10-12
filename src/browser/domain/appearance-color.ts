@@ -10,6 +10,7 @@ import {
   MAX_BACKGROUND_VEIL,
   MIN_BACKGROUND_VEIL,
 } from "../../shared/character-pack/character-background.ts"
+import { relativeLuminance } from "./relative-luminance.ts"
 
 export type AppearanceColorKey = "ground" | "surface" | "ink"
 
@@ -150,7 +151,7 @@ export function changeAppearanceColor(
  * `ground` と `ink` の組は境界が 4.5 以上に保っているので、覆いが不透明になる端（`MAX_BACKGROUND_VEIL`）まで上げれば必ず満たせる（引き上げが行き止まらない）。
  */
 function backgroundVeilFloor(ground: string, ink: string): number {
-  const inkLuminance = relativeLuminance(ink)
+  const inkLuminance = hexLuminance(ink)
   for (let step = MIN_BACKGROUND_VEIL * VEIL_STEPS; step < VEIL_STEPS; step += 1) {
     const veil = step / VEIL_STEPS
     const readable = WORST_IMAGE_CHANNELS.every(
@@ -186,7 +187,7 @@ function setOrRemoveToken(key: AppearanceColorKey, value: string | undefined): v
 
 /** WCAG 2.1 のコントラスト比（1〜21）。 */
 function contrastRatio(hexA: string, hexB: string): number {
-  return contrastOfLuminance(relativeLuminance(hexA), relativeLuminance(hexB))
+  return contrastOfLuminance(hexLuminance(hexA), hexLuminance(hexB))
 }
 
 function contrastOfLuminance(luminanceA: number, luminanceB: number): number {
@@ -195,11 +196,11 @@ function contrastOfLuminance(luminanceA: number, luminanceB: number): number {
   return (lighter + 0.05) / (darker + 0.05)
 }
 
-function relativeLuminance(hex: string): number {
-  return luminanceOfChannels(
-    channelByte(hex, RED_AT),
-    channelByte(hex, GREEN_AT),
-    channelByte(hex, BLUE_AT),
+function hexLuminance(hex: string): number {
+  return relativeLuminance(
+    channelByte(hex, RED_AT) / 255,
+    channelByte(hex, GREEN_AT) / 255,
+    channelByte(hex, BLUE_AT) / 255,
   )
 }
 
@@ -209,17 +210,7 @@ function relativeLuminance(hex: string): number {
  */
 function veiledLuminance(ground: string, channel: number, veil: number): number {
   const mixed = (at: number): number => channelByte(ground, at) * veil + channel * (1 - veil)
-  return luminanceOfChannels(mixed(RED_AT), mixed(GREEN_AT), mixed(BLUE_AT))
-}
-
-function luminanceOfChannels(red: number, green: number, blue: number): number {
-  return 0.2126 * srgbChannel(red) + 0.7152 * srgbChannel(green) + 0.0722 * srgbChannel(blue)
-}
-
-/** 0〜255 のチャンネル値を、WCAG の式が使う線形の値にする。 */
-function srgbChannel(value: number): number {
-  const channel = value / 255
-  return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+  return relativeLuminance(mixed(RED_AT) / 255, mixed(GREEN_AT) / 255, mixed(BLUE_AT) / 255)
 }
 
 function channelByte(hex: string, start: number): number {
