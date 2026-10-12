@@ -14,10 +14,6 @@
 .achievement-day-switch-label {
   min-width: 9rem;
 }
-/* 字の段・色は `Text` が持つ。字間だけここに置く。 */
-.achievement-day-switch-relative {
-  letter-spacing: 0.05em;
-}
 /* 顔は `<Button variant="outline">` が持つ。箱だけここに置く。 */
 .achievement-day-switch-today {
   height: 2.25rem;

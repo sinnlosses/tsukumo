@@ -4,7 +4,6 @@
 
 import type { ReactElement } from "react"
 
-import { previousDateKey } from "../../../../../../shared/achievement/achievement.ts"
 import { dayLabel } from "../../../../../utils/day-label.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
@@ -68,20 +67,9 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           className={styles["achievement-day-switch-label"]}
         >
           {known ? (
-            <>
-              <Text
-                element="span"
-                size="label"
-                tone="accent"
-                weight="bold"
-                className={styles["achievement-day-switch-relative"]}
-              >
-                {relativeLabel(daySwitch.date, daySwitch.today)}
-              </Text>
-              <Text element="span" size="subheading" tone="ink" weight="inherit" className="">
-                {dateLabel(daySwitch)}
-              </Text>
-            </>
+            <Text element="span" size="subheading" tone="ink" weight="inherit" className="">
+              {dateLabel(daySwitch)}
+            </Text>
           ) : (
             LOADING_VALUE
           )}
@@ -119,14 +107,6 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
       </div>
     </HStack>
   )
-}
-
-/** 日付の上に小さく添える「今日」「昨日」。それ以外の日は空文字（添えない）。 */
-function relativeLabel(date: string, today: string): string {
-  if (date === today) {
-    return "今日"
-  }
-  return date === previousDateKey(today) ? "昨日" : ""
 }
 
 /** 「9月24日（木）」の形。今年でなければ年も添える。 */

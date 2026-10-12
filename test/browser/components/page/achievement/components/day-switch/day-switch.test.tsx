@@ -50,16 +50,16 @@ describe("DaySwitch", () => {
     expect(screen.getByRole("button", { name: "今日へ" })).toBeDefined()
   })
 
-  it("見出しは今日・昨日を上に添える", () => {
+  it("見出しは今日・昨日を添えず日付だけを出す", () => {
     const { container } = renderSwitch(KNOWN_TODAY)
     expect(container.querySelector(".achievement-day-switch-label")?.textContent).toBe(
-      "今日9月24日（木）",
+      "9月24日（木）",
     )
 
     cleanup()
     renderSwitch(KNOWN_YESTERDAY)
     expect(document.querySelector(".achievement-day-switch-label")?.textContent).toBe(
-      "昨日9月23日（水）",
+      "9月23日（水）",
     )
   })
 
