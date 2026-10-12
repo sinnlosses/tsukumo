@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 
 import { uniqueBy } from "remeda"
 import { describe, expect, it } from "vitest"
@@ -392,7 +392,7 @@ describe("components/ui/ の部品の className", () => {
 
 describe("CSS Modules の class", () => {
   it("CSS Modules のセレクタに書いた class は、tsx から styles で参照されているか、許可リストにある", () => {
-    const cssFiles = listFiles(SRC_ROOT).filter((relPath) => relPath.endsWith(".module.css"))
+    const cssFiles = listSourceFiles(SRC_ROOT, SRC_ROOT, [".module.css"])
     expect(cssFiles.length).toBeGreaterThan(0)
 
     const readersByCss = new Map<string, readonly string[]>()
@@ -449,14 +449,4 @@ function cssClassNames(content: string): readonly string[] {
       ),
     ),
   ]
-}
-
-/** `src/` の下のファイルすべて（拡張子を問わない）。 */
-function listFiles(root: string, dir = root): readonly string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const fullPath = `${dir}/${name}`
-    return statSync(fullPath).isDirectory()
-      ? listFiles(root, fullPath)
-      : [fullPath.slice(root.length + 1)]
-  })
 }
