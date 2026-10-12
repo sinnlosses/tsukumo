@@ -12,3 +12,8 @@ export function clipText(text: string, maxLength: number): ClippedText {
     omittedLength: codePoints.length - maxLength,
   }
 }
+
+export function clipWithEllipsis(text: string, maxLength: number): string {
+  const { head, omittedLength } = clipText(text, maxLength)
+  return omittedLength === 0 ? head : `${head}…`
+}

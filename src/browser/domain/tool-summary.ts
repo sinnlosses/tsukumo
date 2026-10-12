@@ -2,7 +2,7 @@
 
 import { isPlainObject } from "remeda"
 
-import { clipText } from "../../shared/utils/clip-text.ts"
+import { clipWithEllipsis } from "../../shared/utils/clip-text.ts"
 import { optionalString } from "../../shared/utils/optional-string.ts"
 
 /** ツール入力の要約に出す1行の長さの上限（目安）。 */
@@ -25,7 +25,10 @@ const TOOL_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
  * 要約は空白を保って組まれることもあるので、改行を残すと1行に収まらない。
  */
 export function summarizeToolInput(toolName: string, input: unknown): string {
-  return truncateToolSummary(toolInputText(toolName, input).replaceAll(/\s*[\r\n]+\s*/g, " "))
+  return clipWithEllipsis(
+    toolInputText(toolName, input).replaceAll(/\s*[\r\n]+\s*/g, " "),
+    MAX_TOOL_SUMMARY_LENGTH,
+  )
 }
 
 /**
@@ -53,9 +56,4 @@ function firstStringValue(input: Readonly<Record<string, unknown>>): string | un
 
 function stringField(input: Readonly<Record<string, unknown>>, field: string): string | undefined {
   return optionalString(input[field])
-}
-
-function truncateToolSummary(text: string): string {
-  const { head, omittedLength } = clipText(text, MAX_TOOL_SUMMARY_LENGTH)
-  return omittedLength > 0 ? `${head}…` : head
 }

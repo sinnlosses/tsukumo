@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vitest"
 
-import { clipText } from "../../../src/shared/utils/clip-text.ts"
+import { clipText, clipWithEllipsis } from "../../../src/shared/utils/clip-text.ts"
+
+describe("clipWithEllipsis", () => {
+  it("上限ちょうどは切らず、「…」も付けない", () => {
+    expect(clipWithEllipsis("あいう", 3)).toBe("あいう")
+  })
+
+  it("上限を1字超えたら先頭に「…」を付けて切る", () => {
+    expect(clipWithEllipsis("あいうえ", 3)).toBe("あいう…")
+  })
+
+  it("上限の境目のサロゲートペア（絵文字）を割らない", () => {
+    expect(clipWithEllipsis("あ😀い", 2)).toBe("あ😀…")
+    expect(clipWithEllipsis("あ😀い", 1)).toBe("あ…")
+  })
+})
 
 describe("clipText", () => {
   it("上限ちょうどは切らない", () => {

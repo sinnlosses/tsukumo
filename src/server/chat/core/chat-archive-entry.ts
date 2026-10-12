@@ -8,7 +8,7 @@
 
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { clipText } from "../../../shared/utils/clip-text.ts"
+import { clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
 import type { ChatArchive } from "./chat-archive-port.ts"
 
 /**
@@ -30,7 +30,10 @@ export function appendChatArchiveEntry(
     return
   }
   if (event.kind === "request") {
-    const text = mode === "work" ? excerptOf(event.text) : event.text
+    const text =
+      mode === "work"
+        ? clipWithEllipsis(event.text, CHAT_MEMORY_BUDGET.workExcerptChars)
+        : event.text
     const images = event.images.length > 0 ? event.images.length : undefined
     chatArchive.append(
       packName,
@@ -69,13 +72,7 @@ export function appendChatArchiveConclusion(
     mode: "work",
     kind: "conclusion",
     at,
-    text: excerptOf(conclusion),
+    text: clipWithEllipsis(conclusion, CHAT_MEMORY_BUDGET.workExcerptChars),
     project,
   })
-}
-
-/** 先頭 {@link CHAT_MEMORY_BUDGET.workExcerptChars} 文字（コードポイント）で切り、切ったら「…」を付ける。 */
-function excerptOf(text: string): string {
-  const { head, omittedLength } = clipText(text, CHAT_MEMORY_BUDGET.workExcerptChars)
-  return omittedLength > 0 ? `${head}…` : head
 }

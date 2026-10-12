@@ -11,7 +11,7 @@ import type {
   MainViewRequest,
   MainViewTurn,
 } from "../../../../../../../shared/session/main-view.ts"
-import { clipText } from "../../../../../../../shared/utils/clip-text.ts"
+import { clipWithEllipsis } from "../../../../../../../shared/utils/clip-text.ts"
 
 /** 依頼もレポートも題にならないターン（依頼より前の記録で、本文もまだ無い）の題。 */
 const TURN_TITLE_FALLBACK = "（依頼なし）"
@@ -30,7 +30,8 @@ export function turnTitle(turn: MainViewTurn): string {
  * 画像だけの依頼では空の配列。
  */
 export function turnRequestLines(request: MainViewRequest): readonly string[] {
-  const lines = withoutQuoteMarkers(truncateRequestText(request.text)).split("\n")
+  const clipped = clipWithEllipsis(request.text, MAX_REQUEST_TEXT_LENGTH)
+  const lines = withoutQuoteMarkers(clipped).split("\n")
   const first = lines.findIndex((line) => line.trim() !== "")
   const last = lines.findLastIndex((line) => line.trim() !== "")
   return first === -1 ? [] : lines.slice(first, last + 1)
@@ -38,11 +39,6 @@ export function turnRequestLines(request: MainViewRequest): readonly string[] {
 
 // 依頼の塊に出す全文の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。
 const MAX_REQUEST_TEXT_LENGTH = 2000
-
-function truncateRequestText(request: string): string {
-  const { head, omittedLength } = clipText(request, MAX_REQUEST_TEXT_LENGTH)
-  return omittedLength > 0 ? `${head}…` : head
-}
 
 /** 各行の頭の引用の記号（`>` のあとが空白か行末のもの）を、重ねてあっても全部落とす。 */
 function withoutQuoteMarkers(text: string): string {

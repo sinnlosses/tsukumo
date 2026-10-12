@@ -16,7 +16,7 @@ import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import { isBlankText } from "../utils/blank-text.ts"
-import { clipText } from "../utils/clip-text.ts"
+import { clipWithEllipsis } from "../utils/clip-text.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
 import { finishedPhaseDuration, phaseDurations } from "./phase-duration.ts"
 import {
@@ -730,8 +730,7 @@ function extractFirstLine(markdown: string): string {
 
   const heading = /^#{1,6}\s+(.*)$/.exec(line)
   const text = heading?.[1] === undefined ? line : heading[1].trim()
-  const { head, omittedLength } = clipText(text, MAX_STEP_SUMMARY_LENGTH)
-  return omittedLength > 0 ? `${head}…` : head
+  return clipWithEllipsis(text, MAX_STEP_SUMMARY_LENGTH)
 }
 
 /**

@@ -11,7 +11,7 @@ import {
   UNAVAILABLE_SESSION_DIGEST,
 } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { clipText } from "../../../shared/utils/clip-text.ts"
+import { clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
 import { restoredMessageEvents } from "./session-restore.ts"
 
 /** transcript のメッセージ列を、セッション1件の中身にする。列でなければ読めなかったものとして扱う。 */
@@ -31,7 +31,10 @@ export function toSessionDigest(
   return {
     kind: "known",
     requestCount: folded.requestCount,
-    summary: summary === undefined ? undefined : truncateSummary(summary.trim()),
+    summary:
+      summary === undefined
+        ? undefined
+        : clipWithEllipsis(summary.trim(), MAX_SESSION_SUMMARY_LENGTH),
     lastLine,
   }
 }
@@ -101,9 +104,4 @@ function adoptCall(fold: DigestFold, call: HeldCall): DigestFold {
     summary: call.sessionSummary ?? fold.summary,
     lastLine: call.closing.kind === "speech" ? call.closing.text : fold.lastLine,
   }
-}
-
-function truncateSummary(summary: string): string {
-  const { head, omittedLength } = clipText(summary, MAX_SESSION_SUMMARY_LENGTH)
-  return omittedLength > 0 ? `${head}…` : head
 }
