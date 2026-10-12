@@ -34,7 +34,7 @@ export function PresentationalCharacterCreate({
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={onClose}
-      className={characterStyles["character-create-dialog"]}
+      className={styles["character-create-dialog"]}
     >
       <VStack
         element="div"
@@ -44,7 +44,7 @@ export function PresentationalCharacterCreate({
         align="stretch"
         justify="start"
         wrap="nowrap"
-        className=""
+        className={styles["character-create-body"]}
       >
         <Heading
           level={2}
@@ -161,43 +161,43 @@ export function PresentationalCharacterCreate({
             {form.persona.hint}
           </Text>
         </div>
-        <div className={characterStyles["character-create-footer"]}>
-          <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-            背景と立ち絵の差し色は、作ったあとに設定できます
-          </Text>
-          <div className={characterStyles["character-create-footer-spacer"]} />
-          <Button
-            variant="outline"
-            size="secondary"
-            pressed="none"
-            disabled={false}
-            ariaLabel={undefined}
-            disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
-            className={characterStyles["character-button-outline"]}
-            onClick={onClose}
-          >
-            やめる
-          </Button>
-          <Button
-            variant="solid-accent"
-            size="secondary"
-            pressed="none"
-            disabled={!form.canSubmit}
-            ariaLabel={undefined}
-            disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={undefined}
-            className={characterStyles["character-create-submit"]}
-            onClick={form.onSubmit}
-          >
-            <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
-              作る
-            </Text>
-          </Button>
-        </div>
       </VStack>
+      <div className={characterStyles["character-create-footer"]}>
+        <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+          背景と立ち絵の差し色は、作ったあとに設定できます
+        </Text>
+        <div className={characterStyles["character-create-footer-spacer"]} />
+        <Button
+          variant="outline"
+          size="secondary"
+          pressed="none"
+          disabled={false}
+          ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={characterStyles["character-button-outline"]}
+          onClick={onClose}
+        >
+          やめる
+        </Button>
+        <Button
+          variant="solid-accent"
+          size="secondary"
+          pressed="none"
+          disabled={!form.canSubmit}
+          ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={characterStyles["character-create-submit"]}
+          onClick={form.onSubmit}
+        >
+          <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+            作る
+          </Text>
+        </Button>
+      </div>
     </Dialog>
   )
 }

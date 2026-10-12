@@ -47,6 +47,7 @@ export function PortraitDrop(props: { readonly drop: PortraitDropModel }): React
         className={clsx(
           characterStyles["character-card"],
           characterStyles["character-create-portrait"],
+          styles["character-create-portrait-picked"],
         )}
         onDragOver={onDragOver}
         onDrop={onDrop}

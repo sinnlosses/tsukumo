@@ -21,6 +21,21 @@
 .character-create-input-mono {
   font-family: var(--font-mono);
 }
+/* 作るダイアログだけ、スクロールを本体から中身の領域へ移し、操作ボタンの帯をダイアログの下に残す。 */
+.character-create-dialog {
+  composes: character-create-dialog from "../../character.module.css";
+}
+.character-create-dialog[open] {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.character-create-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
 @media (max-width: 640px) {
   .character-create-grid {
     grid-template-columns: minmax(0, 1fr);
