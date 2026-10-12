@@ -111,10 +111,13 @@ export function createCurrentCharacter(
   }
   let packs = findPacks()
 
-  // TSUKUMO_CHARACTER があるときはすでに defaultPack に反映されている。
+  // defaultPack をそのまま渡すと、withCurrentPack が一覧にあるホームの写しを同梱の版で置き換えて配ってしまう。
+  const fallbackPack = (): CharacterPack =>
+    packs.find((pack) => pack.name === defaultPack.name) ?? defaultPack
+
   const initialPack = selectInitialCharacterPack({
     packs,
-    fallback: defaultPack,
+    fallback: fallbackPack(),
     specified: config.character,
     readRemembered: readRememberedCharacter,
   })
@@ -134,7 +137,7 @@ export function createCurrentCharacter(
       case "initial":
         return initialPack
       case "name":
-        return selectCharacterPack(packs, defaultPack, selection.name)
+        return selectCharacterPack(packs, fallbackPack(), selection.name)
       case "current":
         return current
     }

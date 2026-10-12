@@ -21,11 +21,11 @@ export type CharacterSelection =
 export type InitialCharacterPackOptions<Pack extends NamedCharacterPack> = {
   /** いま選べるパックの一覧。 */
   readonly packs: readonly Pack[]
-  /** どれにも当たらなかったときのパック（同梱の既定、または指定から読んだもの）。 */
+  /** どれにも当たらなかったときのパック（呼ぶ側が既定の名前から決めたもの）。 */
   readonly fallback: Pack
   /**
    * その回の指定（`TSUKUMO_CHARACTER`）。値そのものは使わない。
-   * 指定があるときはすでに `fallback` がそこから読まれているので、「あるか無いか」だけを見る。
+   * 指定があるときは呼ぶ側が指定から `fallback` を決めているので、「あるか無いか」だけを見る。
    */
   readonly specified: string | undefined
   /** 前回に画面から選んで覚えたパックの名前を読む。 */
