@@ -1052,3 +1052,4 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 | `docs/architecture/adr/0025-no-project-settings.md`           | プロジェクトの設定を無くし、Beads を前提にする（2026-10-08）                           |
 | `docs/architecture/adr/0026-session-claim-file.md`            | 使用中のセッションは名乗りのファイルとプロセスの生存で知る（2026-10-10）               |
 | `docs/architecture/adr/0027-markdown-component-entry.md`      | 会話の画面の Markdown を部品に上げるときは、遅延読み込みの口を入口にする（2026-10-10） |
+| `docs/architecture/adr/0028-report-block-priority.md`         | レポートの塊は、内容の形で並べた1本の梯子を上から試して選ぶ（2026-10-12）              |
