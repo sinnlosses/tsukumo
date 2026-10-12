@@ -351,8 +351,7 @@ describe("reportUsageEntryOf", () => {
           kind: "graph",
           title: "",
           direction: "TD",
-          nodes: [{ id: "a", label: "架空", shape: "box" }],
-          edges: [],
+          source: "架空",
           fold: "",
         }),
       ).toBe(true)

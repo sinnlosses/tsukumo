@@ -10,8 +10,10 @@
 
 import { keys } from "remeda"
 
+import { readGraphSource } from "../../../shared/report/graph-source.ts"
 import {
   type ReportBlock,
+  type ReportGraph,
   REPORT_MERMAID_KINDS,
   type ReportSection,
 } from "../../../shared/report/report-block.ts"
@@ -116,6 +118,12 @@ export type ReportViolation =
       readonly count: number
       readonly faults: readonly SvgFault[]
     }
+  /** `graph` の塊の `source` に読めない行がある。`faults` は位置だけで、書き手の行は持たない。 */
+  | {
+      readonly kind: "broken-graph"
+      readonly count: number
+      readonly faults: readonly GraphFault[]
+    }
   /** `conclusion` の1文目が全角50字を超える。`count` は1か0、`length` は1文目の字数。 */
   | { readonly kind: "long-first-sentence"; readonly count: number; readonly length: number }
   /** 節の `heading` が30字を超える、または疑問文（末尾が `?`・`？`）。`count` は該当の節の数。 */
@@ -194,6 +202,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   ].length
 
   const svgFaults = svgFaultsInSections(report.sections)
+  const graphFaults = graphFaultsInSections(report.sections)
 
   const counted = [
     { kind: "long-conclusion", count: sentenceCount(report.conclusion) },
@@ -247,6 +256,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       faults: report.mermaidFaults,
     },
     { kind: "broken-svg", count: svgFaults.length, faults: svgFaults },
+    { kind: "broken-graph", count: graphFaults.length, faults: graphFaults },
     {
       kind: "code-mismatch",
       count: mismatchedCodeBlocks.length,
@@ -315,6 +325,7 @@ const VIOLATION_THRESHOLDS = {
   "markdown-notation": 0,
   "broken-mermaid": 0,
   "broken-svg": 0,
+  "broken-graph": 0,
   "code-mismatch": 0,
   "long-first-sentence": 0,
   "bad-heading": 0,
@@ -403,6 +414,33 @@ function svgFaultPositions(faults: readonly SvgFault[]): string {
     .join("、")
 }
 
+/** `block` は `graph` の塊（`beforeAfter` の側を含む）の出現順の1始まり、`line` は `source` の1始まりの行。 */
+export type GraphFault = { readonly block: number; readonly line: number }
+
+function graphFaultsInSections(sections: readonly ReportSection[]): readonly GraphFault[] {
+  return sections
+    .flatMap((section) => section.blocks)
+    .flatMap((block): readonly ReportGraph[] => {
+      switch (block.kind) {
+        case "graph":
+          return [block]
+        case "beforeAfter":
+          return [block.before, block.after].flatMap((side) =>
+            side.kind === "graph" ? [side] : [],
+          )
+        default:
+          return []
+      }
+    })
+    .flatMap((graph, graphIndex) =>
+      readGraphSource(graph.source).brokenLines.map((line) => ({ block: graphIndex + 1, line })),
+    )
+}
+
+function graphFaultPositions(faults: readonly GraphFault[]): string {
+  return faults.map((fault) => `${String(fault.block)}個目の ${String(fault.line)} 行目`).join("、")
+}
+
 function markdownNotationsAt(
   sections: readonly ReportSection[],
   inContainer: boolean,
@@ -456,6 +494,8 @@ function violationLine(violation: ReportViolation): string {
       return `mermaid の図の構文が割れている（${mermaidFaultPositions(violation.faults)}）。その行の書き方を直す`
     case "broken-svg":
       return `\`svg\` の図形が \`width\` × \`height\` の外に出ている（${svgFaultPositions(violation.faults)}）。座標か大きさを直す`
+    case "broken-graph":
+      return `\`graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）`
     case "long-first-sentence":
       return `\`conclusion\` の1文目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1文目を短くし、補足は2文目か \`sections\` へ移す`
     case "bad-heading":

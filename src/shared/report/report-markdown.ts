@@ -6,6 +6,7 @@
 
 import { countBy } from "remeda"
 
+import { readGraphSource } from "./graph-source.ts"
 import {
   REPORT_CELL_STATUSES,
   REPORT_MATRIX_STATUSES,
@@ -961,17 +962,17 @@ function fencedMarkdown(info: string, source: string): string {
 }
 
 /**
- * 書き手の `id` は辺を結ぶためだけに使い、ソースの ID は `n0`, `n1` … を振る（`end` などの予約語を避ける）。
+ * 書き手の名前は辺を結ぶためだけに使い、ソースの ID は `n0`, `n1` … を振る（`end` などの予約語を避ける）。
  * ラベルは節点も辺も必ず引用符で包む（`@`・`(`・`|` などを構文と読ませない）。
+ * 読めない行は呼び出し側が先に差し戻す前提で、ここでは飛ばす。
  */
 function graphSource(block: ReportGraph): string {
+  const { nodes, edges } = readGraphSource(block.source)
   const mermaidId = (index: number): string => `n${String(index)}`
-  const mermaidIdOf = (writerId: string): string =>
-    mermaidId(block.nodes.findIndex((node) => node.id === writerId))
   const quoted = (label: string): string =>
     `"${label.replaceAll('"', "#quot;").replaceAll("`", "#96;")}"`
-  const nodeLines = block.nodes.map((node, index) => {
-    const label = quoted(node.label)
+  const nodeLines = nodes.map((node, index) => {
+    const label = quoted(node.name)
     const id = mermaidId(index)
     switch (node.shape) {
       case "box":
@@ -982,9 +983,9 @@ function graphSource(block: ReportGraph): string {
         return `  ${id}{${label}}`
     }
   })
-  const edgeLines = block.edges.map((edge) => {
-    const arrow = edge.label.trim() === "" ? "-->" : `-->|${quoted(edge.label)}|`
-    return `  ${mermaidIdOf(edge.from)} ${arrow} ${mermaidIdOf(edge.to)}`
+  const edgeLines = edges.map((edge) => {
+    const arrow = edge.label === "" ? "-->" : `-->|${quoted(edge.label)}|`
+    return `  ${mermaidId(edge.from)} ${arrow} ${mermaidId(edge.to)}`
   })
   return [`flowchart ${block.direction}`, ...nodeLines, ...edgeLines].join("\n")
 }

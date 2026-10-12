@@ -158,13 +158,18 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   この塊に一本化し、記法の表から外した。表の数の列に付く横棒（下の「表の描き方は型から決め、
   書き手は何も選ばない」）と役割が重なるので、数が3つ以上並ぶ表を `chart` へ差し戻す検査は
   足さない（正確な値を読ませたい場面は表のままでよい）
-- **flowchart は `graph` の塊で見せる**（2026-10-09 利用者決定）。書き手は `direction`・`nodes`
-  〔`id`・`label`・`shape`: `box` / `round` / `decision`〕・`edges`〔`from`・`to`・`label`〕を構造で渡し、
-  tsukumo が ID を `n0`, `n1` … と振り、ラベルを必ず引用符で包んだ mermaid のソースに組み立てる
-  （mermaid 12.1.0 は引用符の無いラベルの `@`・`(`・`end` などを構文と読んで図が割れるため。書き手の
-  `id` はソースに出ない）。描くのは `mermaid` の塊と同じ経路で、図の番号と題も同じ。辺の行き先が `nodes`
-  に無い・`id` の重複・空のラベルは入口で落とす。`mermaid` の塊に flowchart を書くと `unknown-mermaid`
-  で差し戻し、`graph` の塊へ寄せる
+- **flowchart は `graph` の塊で見せる**（2026-10-09 利用者決定。受け口は 2026-10-12 利用者決定で
+  節点と辺を構造で渡す形から `source` の文字の記法に替えた。形が1つのほうがモデルが迷わず、
+  スキーマも短い）。書き手は `direction` と `source` を渡す。`source` は1行1項目で、`A -> B` が辺、
+  `A -> B: 語` が辺のラベル、`->` の無い行は節点だけの宣言（空行と行頭・行末の空白は無視）。
+  節点の形は名前の包みで決め、`(名前)` は始点・終点（round）、`{名前}` は分岐（decision）、
+  包みが無ければ処理（box）。名前が同じなら同じ節点で、形は最初に包みで出た行のものを採る。
+  名前の中の `->`・`:` は使えない。tsukumo が `source` を読み、ID を `n0`, `n1` … と振り、
+  ラベルを必ず引用符で包んだ mermaid のソースに組み立てる（mermaid 12.1.0 は引用符の無いラベルの
+  `@`・`(`・`end` などを構文と読んで図が割れるため。書き手の名前はソースの ID に出ない）。
+  描くのは `mermaid` の塊と同じ経路で、図の番号と題も同じ。節点が1つも無い `source` は入口で落とし、
+  読めない行は `broken-graph` で差し戻す（何個目の塊の何行目かと正しい例の1行だけを返し、書き手の行は
+  写さない）。`mermaid` の塊に flowchart を書くと `unknown-mermaid` で差し戻し、`graph` の塊へ寄せる
 - **座標で見せる図は `svg` の塊で書く**（`docs/architecture/adr/0028-report-block-priority.md`「SVG（論点3）」）。
   `title`・`width`・`height`〔viewBox の大きさ〕・`shapes`〔`rect`・`line`・`text` の判別可能な合併〕・`fold` を受け、
   SVG の文字列は書き手が書かず、描く側が図形から組む。色は書けず、`chart` と同じくテーマの色を当てる。
@@ -257,8 +262,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   取り違えは差し戻さず、使われ方の記録の「塊の種類 × レポート数」で見る
 - **変更の前と後は `beforeAfter`（前後）の塊で左右に並べる**（2026-10-05。`title`・`before`・`after` を受け、
   側はちょうど2つ。3つ以上の並びは `table`）。側は `kind` で判別する合併型で、`image`〔`path`〕/ `code`〔`language`・
-  `source`。`diff` にせずその側の中身をそのまま書く〕/ `points`〔短い1行の並び。5つまで〕/ `graph`〔`graph` の塊と同じ `direction`・`nodes`・`edges`。`title`・`fold` は持たず、
-  `id` の重複と行き先の無い辺の検査も塊と共通〕/ `mermaid`〔`source` だけ。flowchart 以外の9種で、時間の順の前後に使う。
+  `source`。`diff` にせずその側の中身をそのまま書く〕/ `points`〔短い1行の並び。5つまで〕/ `graph`〔`graph` の塊と同じ `direction`・`source`。`title`・`fold` は持たず、
+  節点の無い `source` の検査と `broken-graph` も塊と共通〕/ `mermaid`〔`source` だけ。flowchart 以外の9種で、時間の順の前後に使う。
   構文が割れれば `broken-mermaid`、9種の外は `unknown-mermaid` で差し戻し、位置は `mermaid` のソースの出現順で言う〕/ `svg`〔`svg` の塊の `width`・`height`・`shapes`〕のどれか。**左右で種類が
   違ってよい**（設定の文言 → 画面のような前後を書ける）。左に前・右に後の札を同じ幅で並べ、間に `aria-hidden` の
   「→」を置く。札の頭の見出しは tsukumo が「前」「後」の文字で付け（書き手は書かない。前は `ink-quiet`・後は `ink`

@@ -547,11 +547,7 @@ describe("reportSectionsMarkdown", () => {
       before: {
         kind: "graph",
         direction: "LR",
-        nodes: [
-          { id: "a", label: "架空の始点", shape: "round" },
-          { id: "b", label: "架空の処理", shape: "box" },
-        ],
-        edges: [{ from: "a", to: "b", label: "" }],
+        source: "(架空の始点) -> 架空の処理",
       },
       after: { kind: "mermaid", source: "sequenceDiagram\n  A->>B: 架空\n" },
       fold: "",
@@ -694,21 +690,12 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it("graph は ID を n0 から振り直し、ラベルを引用符で包んだ flowchart にして図の番号と題を付ける", () => {
-    const nodes = [
-      { id: "end", label: '@a (b) "c" `d`', shape: "box" },
-      { id: "x", label: "架空の丸", shape: "round" },
-      { id: "y", label: "架空の分岐", shape: "decision" },
-    ] as const
     expect(
       markdownOf({
         kind: "graph",
         title: "架空の図",
         direction: "LR",
-        nodes,
-        edges: [
-          { from: "end", to: "x", label: "" },
-          { from: "x", to: "y", label: "a|b" },
-        ],
+        source: '@a (b) "c" `d` -> (架空の丸)\n架空の丸 -> {架空の分岐}: a|b',
         fold: "",
       }),
     ).toBe(

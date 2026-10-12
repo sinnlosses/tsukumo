@@ -1019,10 +1019,10 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 塊
 
 - **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `graph`（節点と辺で受ける flowchart）/ `chart` / `svg`（座標つきの図形で書く図）/ `progress` / `options` / `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/
+  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart）/ `chart` / `svg`（座標つきの図形で書く図）/ `progress` / `options` / `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/
   欄の `from` / `to`（表のセルの前後）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`sides`（`compare` の2つの側。`heading` と `points`）・
-  `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`〕/ `code`〔`language`・`source`〕/ `points` / `graph`〔`direction`・`nodes`・`edges`〕/ `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
+  `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`〕/ `code`〔`language`・`source`〕/ `points` / `graph`〔`direction`・`source`〕/ `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
   `width` / `height`（`svg` の viewBox の大きさ）・`shapes`（`svg` の図形の並び。`kind` が `rect`〔`x`・`y`・`width`・`height`・`label`・`emphasis`〕/ `line`〔`x1`・`y1`・`x2`・`y2`・`arrow`・`label`〕/ `text`〔`x`・`y`・`text`〕の合併型）・`emphasis`（`rect` の枠を強調する真偽値）・`arrow`（`line` の終点に矢じりを付ける真偽値）・
   `parts`（`dimension` の上から積む並び。領域の `name` / `size` / `before` と余白の `gap` / `before`）・`verdict`（`options` の候補の判定）・`change`（`files` の変更の種別）・
   `path`（`image` の画像のファイル）・`caption`（`image` の何が見えるかの1行）・`notes`（`image` の番号つきの説明の並び）・
@@ -1041,7 +1041,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   **`options` は候補の比較**（候補ごとの判定〔採る / 検討 / 採らない〕と理由のカード。書き手の順のまま描く）、
   **`files` は触ったファイルの一覧**（1行に1ファイルで、変更の種別〔追加 / 変更 / 削除 / 読んだ〕とパス）。
   **欄**は事実か判定を言うものだけで（前後の値・名前・流れ・判定・変更の種別）、描き方は tsukumo がその意味から決める。
-  段ごとに文が要る一本道は `list` の `flow`、一本道でも段の名前が短ければ・分岐・合流があれば `graph`（`nodes` と `edges` で渡し、ID とラベルの引用符は tsukumo が組む。flowchart 以外の図が `mermaid`）
+  段ごとに文が要る一本道は `list` の `flow`、一本道でも段の名前が短ければ・分岐・合流があれば `graph`（`source` の1行1辺の記法〔`A -> B: 語`〕で渡し、ID とラベルの引用符は tsukumo が組む。2026-10-12 利用者決定。flowchart 以外の図が `mermaid`）
 - **避ける言い方**: ブロック（Markdown の block と紛れる）、要素（HTML の要素と紛れる）、`options` を
   「選択肢の比較」と呼ぶこと（質問の `preview` を並べた面の名前と紛れる。`options` は「候補の比較」）
 

@@ -67,15 +67,11 @@ describe("parseReportSections", () => {
     }
   })
 
-  it("beforeAfter の側に graph と mermaid を置け、graph の側は id の重複と行き先の無い辺を落とす", () => {
+  it("beforeAfter の側に graph と mermaid を置け、graph の側は節点の無い source を落とす", () => {
     const graph = {
       kind: "graph",
       direction: "LR",
-      nodes: [
-        { id: "a", label: "架空の始点", shape: "round" },
-        { id: "b", label: "架空の処理", shape: "box" },
-      ],
-      edges: [{ from: "a", to: "b" }],
+      source: "(架空の始点) -> 架空の処理",
     }
     const parse = (block: object): unknown =>
       parseReportSections([{ heading: "", blocks: [block] }])
@@ -93,7 +89,7 @@ describe("parseReportSections", () => {
         {
           blocks: [
             {
-              before: { kind: "graph", edges: [{ from: "a", to: "b", label: "" }] },
+              before: graph,
               after: mermaid,
             },
           ],
@@ -101,13 +97,10 @@ describe("parseReportSections", () => {
       ],
       unknownBlockCount: 0,
     })
-    const [first, second] = graph.nodes
-    for (const broken of [
-      { ...graph, edges: [{ from: "a", to: "x" }] },
-      { ...graph, nodes: [first, { ...second, id: "a" }] },
-    ]) {
-      expect(parse(beforeAfter(broken, mermaid))).toEqual({ sections: [], unknownBlockCount: 0 })
-    }
+    expect(parse(beforeAfter({ ...graph, source: " \n " }, mermaid))).toEqual({
+      sections: [],
+      unknownBlockCount: 0,
+    })
   })
 
   it("compare の塊は側がちょうど2つで箇条があるときだけ受ける", () => {
@@ -276,30 +269,28 @@ describe("parseReportSections", () => {
     const graph = {
       kind: "graph",
       direction: "TD",
-      nodes: [
-        { id: "a", label: "架空の始点", shape: "round" },
-        { id: "b", label: "架空の処理", shape: "box" },
-      ],
-      edges: [{ from: "a", to: "b" }],
+      source: "(架空の始点) -> 架空の処理",
     }
     const blocksOf = (block: unknown) =>
       parseReportSections([{ heading: "", blocks: [block] }]).sections.flatMap(
         (section) => section.blocks,
       )
 
-    it("通り、title・fold・辺の label は空文字で補う", () => {
-      expect(blocksOf(graph)).toEqual([
-        { ...graph, title: "", fold: "", edges: [{ from: "a", to: "b", label: "" }] },
-      ])
+    it("通り、title・fold は空文字で補う", () => {
+      expect(blocksOf(graph)).toEqual([{ ...graph, title: "", fold: "" }])
       expect(figureBlockSchema.safeParse(graph).success).toBe(true)
     })
 
-    it("辺の行き先が無い・id の重複・空のラベルは落ちる", () => {
-      const [first, second] = graph.nodes
+    it("nodes・edges の旧い形と、節点が1つも無い source は落ちる", () => {
       const broken = [
-        { ...graph, edges: [{ from: "a", to: "x" }] },
-        { ...graph, nodes: [first, { ...second, id: "a" }] },
-        { ...graph, nodes: [first, { ...second, label: "  " }] },
+        {
+          kind: "graph",
+          direction: "TD",
+          nodes: [{ id: "a", label: "架空", shape: "box" }],
+          edges: [],
+        },
+        { ...graph, source: "" },
+        { ...graph, source: "\n  \n" },
       ]
       for (const block of broken) {
         expect(blocksOf(block)).toEqual([])

@@ -339,8 +339,7 @@ describe("reportViolations", () => {
         kind: "graph",
         title: "",
         direction: "TD",
-        nodes: [{ id: "a", label: "架空", shape: "box" }],
-        edges: [],
+        source: "架空",
         fold: "",
       }
       expect(kinds(draft([graph]))).toEqual([])
@@ -358,8 +357,7 @@ describe("reportViolations", () => {
       const graphSide: Side = {
         kind: "graph",
         direction: "LR",
-        nodes: [{ id: "a", label: "架空", shape: "box" }],
-        edges: [],
+        source: "架空",
       }
       expect(kinds(draft([beforeAfter(side("sequenceDiagram"), side("stateDiagram-v2"))]))).toEqual(
         [],
@@ -368,6 +366,44 @@ describe("reportViolations", () => {
         reportViolations(draft([beforeAfter(side("flowchart LR\n  a --> b"), graphSide)])),
       ).toEqual([{ kind: "unknown-mermaid", count: 1 }])
       expect(kinds(draft([beforeAfter(graphSide, graphSide)]))).toEqual([])
+    })
+
+    it("graph の source に読めない行があれば broken-graph にし、位置だけで書き手の行は持たない", () => {
+      const graph = (source: string): ReportBlock => ({
+        kind: "graph",
+        title: "",
+        direction: "TD",
+        source,
+        fold: "",
+      })
+      const side: Side = { kind: "graph", direction: "LR", source: "秘密の一行 - 秘密の二行" }
+      const violations = reportViolations(
+        draft([
+          graph("A -> B: 語"),
+          graph("A -> B\n\nA - B"),
+          {
+            kind: "beforeAfter",
+            title: "",
+            before: side,
+            after: { kind: "graph", direction: "LR", source: "A -> B" },
+            fold: "",
+          },
+        ]),
+      )
+      expect(violations).toEqual([
+        {
+          kind: "broken-graph",
+          count: 2,
+          faults: [
+            { block: 2, line: 3 },
+            { block: 3, line: 1 },
+          ],
+        },
+      ])
+      const text = reportRejectionText(violations)
+      expect(text).toContain("2個目の 3 行目、3個目の 1 行目")
+      expect(text).toContain("A -> B: 語")
+      expect(text).not.toContain("秘密")
     })
 
     it("検査に渡すソースは、単独の塊と側を出現順（前が先）に集める", () => {

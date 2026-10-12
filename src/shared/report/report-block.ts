@@ -3,6 +3,7 @@
 
 import { z } from "zod"
 
+import { readGraphSource } from "./graph-source.ts"
 import { MAX_CANDIDATES, MAX_HEADING, MAX_ITEM_LABEL } from "./report-limit.ts"
 
 const inlineText = z.string()
@@ -113,27 +114,14 @@ const compareBlockSchema = z
     "2つを同時に見比べる（案A と案B。変更の前と後は beforeAfter）。側ごとに見出しと短い箇条。採否は options、値を揃えるなら table（3つ以上も table）",
   )
 
-export const REPORT_GRAPH_SHAPES = ["box", "round", "decision"] as const
-
-const graphNodeSchema = z.object({
-  id: z.string().min(1).describe("辺で結ぶための名前。この塊の中で重ならない（図には出ない）"),
-  label: z
-    .string()
-    .refine((value) => value.trim() !== "", "ラベルは1字以上")
-    .describe("図に出す名前"),
-  shape: z.enum(REPORT_GRAPH_SHAPES).describe("box は処理 / round は始点・終点 / decision は分岐"),
-})
-
-const graphEdgeSchema = z.object({
-  from: z.string().describe("節点の id"),
-  to: z.string().describe("節点の id"),
-  label: inlineText.default("").describe("辺に添える語。無ければ空"),
-})
-
 const graphFields = {
   direction: z.enum(["TD", "LR"]).describe("TD は上から下 / LR は左から右"),
-  nodes: z.array(graphNodeSchema).min(1),
-  edges: z.array(graphEdgeSchema),
+  source: z
+    .string()
+    .refine((value) => readGraphSource(value).nodes.length > 0, "source に節点が1つも無い")
+    .describe(
+      "1行1辺。`A -> B: 語`（`: 語` は辺のラベル。省ける）。`(始点)` は始点・終点、`{分岐?}` は分岐、包みが無ければ処理。同じ名前は同じ節点（包みは最初の1回だけでよい）。`->` の無い行は節点だけの宣言",
+    ),
 }
 
 const svgShapeSchema = z.discriminatedUnion("kind", [
@@ -169,7 +157,7 @@ const svgFields = {
 
 const beforeAfterSideSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("svg"), ...svgFields }),
-  z.object({ kind: z.literal("graph"), ...graphFields }).superRefine(checkGraphReferences),
+  z.object({ kind: z.literal("graph"), ...graphFields }),
   z.object({
     kind: z.literal("mermaid"),
     source: z.string().describe("flowchart 以外の図のソース"),
@@ -381,7 +369,6 @@ const graphBlockSchema = z
     ...graphFields,
     fold,
   })
-  .superRefine(checkGraphReferences)
   .describe(
     "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道でも段の名前が短ければ graph）。flowchart はこれで書く",
   )
@@ -569,21 +556,4 @@ const blockKindSchema = z.object({ kind: z.string() })
 function isUnknownKindBlock(block: unknown): boolean {
   const kind = blockKindSchema.safeParse(block)
   return kind.success && !REPORT_BLOCK_KINDS.some((known) => known === kind.data.kind)
-}
-
-function checkGraphReferences(graph: ReportGraph, context: z.RefinementCtx): void {
-  const ids = graph.nodes.map((node) => node.id)
-  if (new Set(ids).size !== ids.length) {
-    context.addIssue({ code: "custom", message: "nodes の id が重複している", path: ["nodes"] })
-  }
-  const known = new Set(ids)
-  graph.edges.forEach((edge, index) => {
-    if (!known.has(edge.from) || !known.has(edge.to)) {
-      context.addIssue({
-        code: "custom",
-        message: "edges の from / to が nodes の id に無い",
-        path: ["edges", index],
-      })
-    }
-  })
 }
