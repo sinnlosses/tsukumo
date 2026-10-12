@@ -1,4 +1,4 @@
-// 画面から届いたキャラクターの変更（新しいパックを作る・立ち絵と差し色と背景を差し替える・パックを消す）をキャラクターパックに書き込む。
+// 画面から届いたキャラクターの変更（新しいパックを作る・立ち絵と差し色と背景と人格の本文を差し替える・パックを消す）をキャラクターパックに書き込む。
 // 書き込んでよい・消してよいのは `~/.tsukumo/characters/<name>/` の下だけ。
 //
 // ディレクトリ名になる名前だけは外から受け取る（新しいパックを作るときの `<name>`）ので、形は境界（`isCharacterPackName`）で見てある。
@@ -50,6 +50,7 @@ import {
   type RemovableExpression,
   type RequiredExpression,
 } from "../../../shared/character-pack/expression.ts"
+import { personaWithBody } from "../../../shared/character-pack/persona-section.ts"
 import {
   type PortraitImage,
   parsePortraitImage,
@@ -226,6 +227,14 @@ function applyEdit(dir: string, edit: CharacterEdit): boolean {
         definitionWithTagline(definitionWithName(content, edit.name), edit.tagline),
       )
       return true
+    case "setPersona": {
+      const personaPath = join(dir, PERSONA_FILE_NAME)
+      writeFileAtomic(
+        personaPath,
+        personaWithBody(readOptionalFile(personaPath) ?? "", edit.persona),
+      )
+      return true
+    }
     case "clearPortrait":
       return applyImageEdit(dir, definitionPath, content, portraitClearEdit(edit.expression))
     case "setPortrait":

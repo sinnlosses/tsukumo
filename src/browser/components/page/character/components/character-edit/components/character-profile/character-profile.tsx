@@ -1,6 +1,6 @@
 // 詳しい設定の最上段、選んでいるパックの名乗り。
 // 大きな丸い顔・名前・`id: <パックの名前>`・「使用中」の札・ひとこと、変えられないパックならその理由の一言。
-// 右端には変えられるパックにだけ「名前とプロフィールを変える」、使用中以外のパックにはさらに「このキャラクターに切り替える」を置く。
+// 右端には変えられるパックにだけ「名前とプロフィールを変える」と「人格を変える」、使用中以外のパックにはさらに「このキャラクターに切り替える」を置く。
 
 import type { ReactElement } from "react"
 
@@ -12,6 +12,7 @@ import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import characterStyles from "../../../../character.module.css"
 import type { CharacterProfileModel } from "../../../../domain/character-edit-model.ts"
+import { CharacterPersonaEdit } from "../character-persona-edit/character-persona-edit.tsx"
 import { CharacterProfileEdit } from "../character-profile-edit/character-profile-edit.tsx"
 import styles from "./character-profile.module.css"
 
@@ -73,7 +74,9 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
           </Text>
         )}
       </VStack>
-      {(profile.editProfile.kind === "shown" || profile.switchTo.kind === "shown") && (
+      {(profile.editProfile.kind === "shown" ||
+        profile.editPersona.kind === "shown" ||
+        profile.switchTo.kind === "shown") && (
         <HStack
           element="div"
           name={{ kind: "none" }}
@@ -85,6 +88,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
           className={styles["character-profile-actions"]}
         >
           <CharacterProfileEdit edit={profile.editProfile} />
+          <CharacterPersonaEdit edit={profile.editPersona} />
           {profile.switchTo.kind === "shown" && (
             <Button
               variant="outline"

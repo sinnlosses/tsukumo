@@ -26,6 +26,8 @@ export type SelectedPack =
       readonly inUse: boolean
       /** 画面から消すと何が起きるか（一覧の同じ名前の1件から引く）。 */
       readonly removal: CharacterPackRemoval
+      /** 人格の本文（一覧の同じ名前の1件から引く。無ければ空）。 */
+      readonly personaBody: string
     }
 
 export function useSelectedPack(): SelectedPack {
@@ -42,8 +44,20 @@ export function useSelectedPack(): SelectedPack {
       ? packs.find((entry) => entry.name === selection.name && !entry.inUse)
       : undefined
   if (chosen !== undefined) {
-    return { kind: "ready", character: chosen.character, inUse: false, removal: chosen.removal }
+    return {
+      kind: "ready",
+      character: chosen.character,
+      inUse: false,
+      removal: chosen.removal,
+      personaBody: chosen.personaBody,
+    }
   }
   const inUseEntry = packs.find((entry) => entry.name === character.pack)
-  return { kind: "ready", character, inUse: true, removal: inUseEntry?.removal ?? "none" }
+  return {
+    kind: "ready",
+    character,
+    inUse: true,
+    removal: inUseEntry?.removal ?? "none",
+    personaBody: inUseEntry?.personaBody ?? "",
+  }
 }

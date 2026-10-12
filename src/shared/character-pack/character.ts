@@ -94,6 +94,8 @@ export type CharacterPackEntry = CharacterPackChoice & {
    * 使用中かどうかは混ぜない。押せなくするのは画面が {@link inUse} を見て行う（サーバも使用中は断る）。
    */
   readonly removal: CharacterPackRemoval
+  /** 人格（`persona.md`）の `## 覚えたこと` より前の本文。無いパックは空文字。 */
+  readonly personaBody: string
 }
 
 /**

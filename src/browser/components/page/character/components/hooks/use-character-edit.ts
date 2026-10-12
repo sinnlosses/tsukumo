@@ -197,6 +197,13 @@ export function useCharacterEdit(): CharacterEditModel {
             dispatch.characterPack.setProfile({ pack, name, tagline })
           },
         },
+    editPersona: disabled
+      ? { kind: "hidden" }
+      : {
+          kind: "shown",
+          persona: selected.personaBody,
+          onSubmit: (persona) => dispatchAwaited.characterPack.setPersona({ pack, persona }),
+        },
   }
 
   return {

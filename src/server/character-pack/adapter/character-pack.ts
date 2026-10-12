@@ -21,6 +21,7 @@ import {
   type CharacterPackRemoval,
   toCharacterInfo,
 } from "../../../shared/character-pack/character.ts"
+import { personaBody } from "../../../shared/character-pack/persona-section.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { readOptionalBinaryFile, readOptionalFile } from "../../adapter/lib/optional-file.ts"
@@ -303,6 +304,7 @@ function toCharacterPackEntry(
     }),
     inUse,
     removal: characterPackRemoval(pack, roots),
+    personaBody: personaBody(pack.persona ?? ""),
   }
 }
 

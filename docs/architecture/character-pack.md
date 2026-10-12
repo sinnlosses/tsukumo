@@ -92,6 +92,11 @@ characters/<name>/
   （素材を配るのと同じ `findCharacterPack` の規則。使用中のパックで置き換えた一覧）。名前から
   ディレクトリを組み立てない。無いパック・起動先の `characters/local` と同じ名前のパック
   （`isEditableCharacterPack` が false）は書かず、理由を分けない定型文の `REFUSED` を返す
+- **画面から書けるもの**は、見た目と人格の編集10種（表情ごとの立ち絵・画面の差し色・名前と
+  ひとことプロフィール・背景・顔・人格の本文〔`setPersona`〕）と、作る・消す。**人格は `persona.md` の
+  `## 覚えたこと` の節より前だけ**で、節は受け取らず、書く瞬間のファイルの節をそのまま末尾へ付け直す
+  （編集中に雑談が覚えた行を消さない。節の見出しと分け方は `src/shared/character-pack/persona-section.ts` の1か所）。
+  `persona.md` が無いパックでも、書けば作る。上限は 8000 文字。効くのは次に起こすセッションから
 - **初めて変えるときに、書き込む先のパックをホームへ丸ごと写す**（`copyPackOnce`。定義・
   `persona.md`・素材。人格ごと写さないと次の起動で人格が消える）。ホームに同じ名前があれば写さない
 - **参照が外れた素材は消す**（消すのはホームのそのパックの中の、どの定義からも参照されていない
@@ -116,7 +121,8 @@ characters/<name>/
 
 **1件の形は `CharacterPackEntry`**（`src/shared/character-pack/character.ts`。姿は `CharacterInfo` をそのまま入れ子で
 持つ）。**変えられるか（`editable`）・消すと何が起きるか（`removal`）はサーバが決めて持たせ**、画面は
-理由を推し量らない。
+理由を推し量らない。**人格の本文（`personaBody`。`## 覚えたこと` の節より前）も1件に載せて配り**、
+保存後は `event()` の流し直しで画面の本文が変わる。
 
 **一覧を配り直す契機は `character-changed` を組むたび**（`src/current-character.ts` の `event`）。
 パックの集まりを変える口はどれも「書いたら `event()` を返す」だけで一覧が配り直される（口ごとに

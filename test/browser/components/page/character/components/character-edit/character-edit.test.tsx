@@ -587,6 +587,95 @@ describe("CharacterEdit", () => {
     })
   })
 
+  describe("人格を変える", () => {
+    const PACKS = [
+      characterPackEntry("fictional", "架空の精霊", { inUse: true, personaBody: "# 人格\n\n本文" }),
+    ]
+
+    function personaDialog(): Element | null {
+      return document.querySelector('dialog[aria-label="人格を変える"]')
+    }
+
+    it("押すと、いまの本文を入れたダイアログを開く", () => {
+      renderCharacterEdit(FIXTURE_CHARACTER, () => {}, PACKS)
+
+      fireEvent.click(screen.getByRole("button", { name: "人格を変える" }))
+
+      expect(personaDialog()?.hasAttribute("open")).toBe(true)
+      expect(
+        typedElement(screen.getByLabelText("本文"), HTMLTextAreaElement, "本文の入力欄").value,
+      ).toBe("# 人格\n\n本文")
+    })
+
+    it("書き換えて保存すると、characterPack.setPersona を1回送り、返りを待って閉じる", async () => {
+      const calls: unknown[] = []
+      let reply: () => void = () => {}
+      renderCharacterEdit(
+        FIXTURE_CHARACTER,
+        (command) => {
+          calls.push(command)
+          return new Promise<void>((resolve) => {
+            reply = resolve
+          })
+        },
+        PACKS,
+      )
+
+      fireEvent.click(screen.getByRole("button", { name: "人格を変える" }))
+      fireEvent.change(screen.getByLabelText("本文"), { target: { value: "新しい人格" } })
+      fireEvent.click(screen.getByRole("button", { name: "保存する" }))
+
+      expect(calls).toEqual([
+        { procedure: "characterPack.setPersona", pack: "fictional", persona: "新しい人格" },
+      ])
+      // 返る前に閉じると、流し直し前の古い本文で開き直せてしまう。
+      expect(personaDialog()).not.toBeNull()
+
+      reply()
+      await waitFor(() => {
+        expect(personaDialog()).toBeNull()
+      })
+    })
+
+    it("保存が断られたら閉じない", async () => {
+      const calls: unknown[] = []
+      renderCharacterEdit(
+        FIXTURE_CHARACTER,
+        (command) => {
+          calls.push(command)
+          return Promise.reject(new Error("断られた"))
+        },
+        PACKS,
+      )
+
+      fireEvent.click(screen.getByRole("button", { name: "人格を変える" }))
+      fireEvent.click(screen.getByRole("button", { name: "保存する" }))
+
+      await waitFor(() => {
+        expect(calls).toHaveLength(1)
+      })
+      expect(personaDialog()).not.toBeNull()
+    })
+
+    it("「やめる」で閉じ、何も送らない", () => {
+      const calls: unknown[] = []
+      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command), PACKS)
+
+      fireEvent.click(screen.getByRole("button", { name: "人格を変える" }))
+      fireEvent.change(screen.getByLabelText("本文"), { target: { value: "触らない" } })
+      fireEvent.click(screen.getByRole("button", { name: "やめる" }))
+
+      expect(calls).toEqual([])
+      expect(personaDialog()).toBeNull()
+    })
+
+    it("画面から変えられないパックでは口を出さない", () => {
+      renderCharacterEdit({ ...FIXTURE_CHARACTER, editable: false }, () => {}, PACKS)
+
+      expect(screen.queryByRole("button", { name: "人格を変える" })).toBeNull()
+    })
+  })
+
   // このキャラクターを消す帯とその確かめ（docs/architecture/screen-design.md「このキャラクターを消す」）。
   describe("このキャラクターを消す", () => {
     it("removal が none なら帯を出さない", () => {

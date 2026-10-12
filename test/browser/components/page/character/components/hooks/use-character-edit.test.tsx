@@ -205,6 +205,20 @@ describe("useCharacterEdit", () => {
     expect(edit.tagline).toBe("")
   })
 
+  it("editPersona の種は一覧の personaBody で、変えられないパックでは出ない", () => {
+    const packs = [characterPackEntry("fictional", "架空の精霊", { personaBody: "本文" })]
+    const editable = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperWithPacks(FIXTURE_CHARACTER, packs, () => {}),
+    })
+    const shown = ready(editable.result.current).profile.editPersona
+    expect(shown.kind === "shown" && shown.persona).toBe("本文")
+
+    const locked = renderHook(() => useCharacterEdit(), {
+      wrapper: wrapperWithPacks({ ...FIXTURE_CHARACTER, editable: false }, packs, () => {}),
+    })
+    expect(ready(locked.result.current).profile.editPersona.kind).toBe("hidden")
+  })
+
   // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
   // 選ぶ（`docs/architecture/screen-design.md`「選んでいるパックは hash に持つ」）。
   it("同梱を直したパックは「同梱に戻す」の文言になる", () => {

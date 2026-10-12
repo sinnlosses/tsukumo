@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
@@ -15,6 +15,7 @@ import {
 } from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import { DEFAULT_BACKGROUND_VEIL } from "../../../../src/shared/character-pack/character-background.ts"
 import { EXPRESSIONS } from "../../../../src/shared/character-pack/expression.ts"
+import { REMEMBERED_SECTION_HEADING } from "../../../../src/shared/character-pack/persona-section.ts"
 import type {
   CharacterCreate,
   CharacterDelete,
@@ -370,6 +371,76 @@ describe("editCharacterPack（名前とプロフィール）", () => {
 
     expect(edited?.definition?.name).toBe("残る名前")
     expect(edited?.definition?.tagline).toBeUndefined()
+  })
+})
+
+describe("editCharacterPack（人格の本文）", () => {
+  const SECTION = `${REMEMBERED_SECTION_HEADING}\n\n- 覚えた一行\n`
+
+  function setPersona(persona: string): CharacterEdit {
+    return { kind: "setPersona", pack: "tsukumo", persona }
+  }
+
+  function homePersona(): string {
+    return readFileSync(join(home(), "tsukumo", "persona.md"), "utf8")
+  }
+
+  it("本文を差し替え、同梱のパックはホームへ写してから書く（同梱は変わらない）", () => {
+    const bundled = writeBundledPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      setPersona("新しい人格"),
+      join(dir(), "cwd"),
+      home(),
+    )
+
+    expect(homePersona()).toBe("新しい人格\n")
+    expect(readFileSync(join(bundled, "persona.md"), "utf8")).toBe(PERSONA)
+    expect(edited?.persona).toBe("新しい人格\n")
+  })
+
+  it("覚えたことの節は書く瞬間のファイルのまま残る（読んでから書くまでの間に1行足されても）", () => {
+    const bundled = writeBundledPack("tsukumo")
+    const pack = readCharacterPack(bundled)
+    // 画面が本文を読んだあと、保存の前に雑談が節へ1行足した状態。
+    mkdirSync(join(home(), "tsukumo"), { recursive: true })
+    writeFileSync(join(home(), "tsukumo", "character.json"), DEFINITION_JSON)
+    writeFileSync(join(home(), "tsukumo", "persona.md"), `${PERSONA}\n\n${SECTION}`)
+
+    editCharacterPack(pack, [], setPersona("新しい人格"), join(dir(), "cwd"), home())
+
+    expect(homePersona()).toBe(`新しい人格\n\n${SECTION}`)
+  })
+
+  it("節が無いファイルには本文だけを書く", () => {
+    const bundled = writeBundledPack("tsukumo")
+
+    editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      setPersona("本文だけ"),
+      join(dir(), "cwd"),
+      home(),
+    )
+
+    expect(homePersona()).toBe("本文だけ\n")
+  })
+
+  it("persona.md が無いパックでも、本文を書けば作る", () => {
+    const bundled = writeBundledPack("tsukumo")
+    rmSync(join(bundled, "persona.md"))
+
+    editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      setPersona("作る人格"),
+      join(dir(), "cwd"),
+      home(),
+    )
+
+    expect(homePersona()).toBe("作る人格\n")
   })
 })
 

@@ -79,6 +79,7 @@ export function characterPackEntry(
     character: characterInfo({ pack: name, name: label }),
     inUse: false,
     removal: "none",
+    personaBody: "",
     ...overrides,
   }
 }

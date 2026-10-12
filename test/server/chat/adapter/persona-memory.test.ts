@@ -9,8 +9,8 @@ import {
   forgetRememberedLineFromScreen,
   MAX_REMEMBERED_LINES,
   readRememberedLines,
-  REMEMBERED_SECTION_HEADING,
 } from "../../../../src/server/chat/adapter/persona-memory.ts"
+import { REMEMBERED_SECTION_HEADING } from "../../../../src/shared/character-pack/persona-section.ts"
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../../src/shared/chat/persona-memory.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 

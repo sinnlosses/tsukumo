@@ -44,6 +44,12 @@ export function characterPackProcedure(ports: CharacterPackCommandPorts) {
         errors,
       ),
     ),
+    setPersona: procedure.setPersona.handler(({ input, context, errors }) =>
+      refusedUnlessAccepted(
+        receiveFeatureCommand(table.setPersona, input, context.session),
+        errors,
+      ),
+    ),
     setBackground: procedure.setBackground.handler(({ input, context, errors }) =>
       refusedUnlessAccepted(
         receiveFeatureCommand(table.setBackground, input, context.session),

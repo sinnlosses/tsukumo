@@ -25,7 +25,22 @@ export type CharacterProfileModel = {
       }
   /** 「名前とプロフィールを変える」（鉛筆のボタン）。変えられないパックでは出さない。 */
   readonly editProfile: CharacterProfileEditModel
+  /** 「人格を変える」（鉛筆のボタン）。変えられないパックでは出さない。 */
+  readonly editPersona: CharacterPersonaEditModel
 }
+
+/**
+ * 人格の本文を変えるダイアログの下書きの種。
+ * 空文字も渡す（本文を空にする）。`## 覚えたこと` の節は画面に出さず、書く側が残す。
+ */
+export type CharacterPersonaEditModel =
+  | { readonly kind: "hidden" }
+  | {
+      readonly kind: "shown"
+      readonly persona: string
+      /** サーバが書き終えて一覧を流し直すまで解決しない。断られたら reject する。 */
+      readonly onSubmit: (persona: string) => Promise<unknown>
+    }
 
 /**
  * 名前とひとことプロフィールを変えるダイアログの下書きの種。

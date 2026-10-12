@@ -1,4 +1,4 @@
-// キャラクターパックのコマンドの契約。見た目の編集9種と、作る・消すの2種。
+// キャラクターパックのコマンドの契約。見た目と人格の編集10種と、作る・消すの2種。
 // どれも駆動には渡らない（書き込みと `character-changed` の流し直しで済むので、使用中のパックを変えたときもセッションは起こし直さない）。
 
 import { z } from "zod"
@@ -21,6 +21,7 @@ import {
   isRemovableExpression,
   type RemovableExpression,
 } from "../character-pack/expression.ts"
+import { MAX_PERSONA_BODY_LENGTH } from "../character-pack/persona-section.ts"
 import {
   MAX_PORTRAIT_DATA_URL_LENGTH,
   parsePortraitImage,
@@ -78,6 +79,9 @@ const characterNameSchema = z.string().max(MAX_CHARACTER_NAME_LENGTH)
 /** ひとことプロフィール（`character.json` の `tagline`）。空文字も通す（空なら消したのと同じに畳む）。 */
 const characterTaglineSchema = z.string().max(MAX_CHARACTER_TAGLINE_LENGTH)
 
+/** 人格の本文（`persona.md` の `## 覚えたこと` より前）。空文字も通す（本文を空にする）。 */
+const characterPersonaSchema = z.string().max(MAX_PERSONA_BODY_LENGTH)
+
 const expressionSchema = z.custom<Expression>(
   (value) => typeof value === "string" && isExpression(value),
 )
@@ -93,7 +97,7 @@ const accentTargetSchema = z.custom<AccentTarget>(
 )
 
 /**
- * 見た目の編集9種の入力。書き込む先は `pack` で指す（使用中のパックに限らない）。
+ * 見た目と人格の編集10種の入力。書き込む先は `pack` で指す（使用中のパックに限らない）。
  * 手続きの名前がそのまま {@link CharacterEdit} の `kind` になる。
  */
 const characterEditInput = {
@@ -123,6 +127,11 @@ const characterEditInput = {
     name: characterNameSchema,
     tagline: characterTaglineSchema,
   }),
+  /**
+   * 人格の本文を差し替える。`## 覚えたこと` の節は受け取らず、書く瞬間のファイルのものをそのまま残す。
+   * `persona.md` が無いパックでも、書けば作る。
+   */
+  setPersona: z.object({ pack: editedCharacterPackNameSchema, persona: characterPersonaSchema }),
   /**
    * キャラビューに敷く背景を差し替える／消す。
    * 覆いの濃さは画面から変えないので、受け取るのは素材だけ（濃さは定義ファイルを手で直す）。
@@ -178,6 +187,7 @@ export const characterPackContract = {
   setAccent: commandBase.input(characterEditInput.setAccent),
   clearChatAccent: commandBase.input(characterEditInput.clearChatAccent),
   setProfile: commandBase.input(characterEditInput.setProfile),
+  setPersona: commandBase.input(characterEditInput.setPersona),
   setBackground: commandBase.input(characterEditInput.setBackground),
   clearBackground: commandBase.input(characterEditInput.clearBackground),
   setFace: commandBase.input(characterEditInput.setFace),

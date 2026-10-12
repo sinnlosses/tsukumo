@@ -14,6 +14,10 @@
 import { writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import {
+  REMEMBERED_SECTION_HEADING,
+  rememberedSectionStart,
+} from "../../../shared/character-pack/persona-section.ts"
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../shared/chat/persona-memory.ts"
 import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { copyPackOnce } from "../../character-pack/adapter/character-edit.ts"
@@ -24,9 +28,6 @@ import {
   PERSONA_FILE_NAME,
 } from "../../character-pack/adapter/character-pack.ts"
 import type { PersonaMemory } from "../../session-driver/core/session-driver.ts"
-
-/** 書き足す節の見出し。`persona.md` のいちばん最後に置く。 */
-export const REMEMBERED_SECTION_HEADING = "## 覚えたこと"
 
 /** 節が持てる行数（超えたらいちばん古い行を落とす）。 */
 export const MAX_REMEMBERED_LINES = 20
@@ -250,31 +251,6 @@ function personaWithoutRememberedLine(content: string, target: string): string |
   return kept.length === 0
     ? before
     : `${before}${REMEMBERED_SECTION_HEADING}\n\n${kept.join("\n")}\n`
-}
-
-/**
- * 節の見出しが始まる位置（無ければ undefined）。
- * 見出しは最後のものを見る。節はいちばん最後に置くので、そこから末尾までが機械の書いた領域になる。
- */
-function rememberedSectionStart(content: string): number | undefined {
-  const marker = `\n${REMEMBERED_SECTION_HEADING}`
-  for (let at = content.lastIndexOf(marker); at >= 0; at = content.lastIndexOf(marker, at - 1)) {
-    if (isHeadingLine(content, at + 1)) {
-      return at + 1
-    }
-  }
-
-  return isHeadingLine(content, 0) ? 0 : undefined
-}
-
-/** その位置から見出しの1行がちょうど始まっているか（`## 覚えたことメモ` のような行は別物）。 */
-function isHeadingLine(content: string, at: number): boolean {
-  if (!content.startsWith(REMEMBERED_SECTION_HEADING, at)) {
-    return false
-  }
-
-  const next = content.charAt(at + REMEMBERED_SECTION_HEADING.length)
-  return next === "" || next === "\n" || next === "\r"
 }
 
 /** 節の中の箇条書きの行（見出しと空行、人が書いた地の文は持ち越さない）。 */

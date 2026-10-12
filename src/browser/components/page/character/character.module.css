@@ -199,6 +199,21 @@
   border-radius: 0.5rem;
   font-size: var(--font-secondary);
 }
+.character-persona-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 16rem;
+  max-height: 60vh;
+  padding: 0.5rem 0.75rem;
+  background: var(--ground);
+  color: inherit;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  font: inherit;
+  font-size: var(--font-secondary);
+  line-height: 1.6;
+  resize: vertical;
+}
 .character-create-footer {
   display: flex;
   flex-wrap: wrap;
