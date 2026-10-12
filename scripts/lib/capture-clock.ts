@@ -3,3 +3,12 @@
 
 export const TEMPORAL_FOLLOWS_DATE_SCRIPT =
   "Temporal.Now.instant = () => Temporal.Instant.fromEpochMilliseconds(Date.now())"
+
+/** `--clock` の値（オフセット付きの ISO 時刻）をエポックミリ秒に読む。読めなければ undefined。 */
+export function readClockInstant(value: string): number | undefined {
+  try {
+    return Temporal.Instant.from(value).epochMilliseconds
+  } catch {
+    return undefined
+  }
+}

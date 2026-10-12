@@ -41,7 +41,7 @@ import { fileURLToPath } from "node:url"
 import { chromium, type Page } from "playwright-core"
 
 import { readFakeSession } from "../src/server/session-driver/adapter/fake-driver.ts"
-import { TEMPORAL_FOLLOWS_DATE_SCRIPT } from "./lib/capture-clock.ts"
+import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "./lib/capture-clock.ts"
 import {
   applyPreparation,
   describePreparation,
@@ -107,6 +107,7 @@ const USAGE = `使い方:
   --hover <selector>    触れてから撮る
   --hash <hash>         location.hash を書いてから撮る
   --advance <ms>        偽の時計をミリ秒だけ進めてから撮る（待ち時間で出る画。Temporal.Now も従う）
+  --clock <ISO 時刻>    ブラウザの時計をその時刻に決めて撮る（日付で表示が変わる画。オフセット付き、例 2026-01-15T12:00:00+09:00。Temporal.Now も従う）
   --wait-after <selector> その位置で要素が出るのを待つ（--hash で開いた画面の読み込みなど。出なければ失敗して終わる）
                         （6つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
@@ -124,6 +125,7 @@ type Options =
       readonly waitFor: string | undefined
       readonly scrollTo: string | undefined
       readonly preparations: readonly Preparation[]
+      readonly clock: number | undefined
       readonly fullPage: boolean
     }
 
@@ -221,9 +223,12 @@ async function capture(
     })
     if (
       options.waitFor !== undefined ||
+      options.clock !== undefined ||
       options.preparations.some((step) => step.kind === "advance")
     ) {
-      await page.clock.install()
+      await (options.clock === undefined
+        ? page.clock.install()
+        : page.clock.install({ time: options.clock }))
       await page.addInitScript(TEMPORAL_FOLLOWS_DATE_SCRIPT)
     }
     await page.goto(url, { waitUntil: "domcontentloaded" })
@@ -371,6 +376,7 @@ function parseOptions(argv: readonly string[]): Options | undefined {
   let waitFor: string | undefined
   let scrollTo: string | undefined
   const preparations: Preparation[] = []
+  let clock: number | undefined
   let fullPage = false
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -421,6 +427,11 @@ function parseOptions(argv: readonly string[]): Options | undefined {
         return undefined
       }
       untilStep = step
+    } else if (flag === "--clock") {
+      clock = readClockInstant(value)
+      if (clock === undefined) {
+        return undefined
+      }
     } else if (flag === "--size") {
       const size = parseSize(value)
       if (size === undefined) {
@@ -450,6 +461,7 @@ function parseOptions(argv: readonly string[]): Options | undefined {
         waitFor,
         scrollTo,
         preparations,
+        clock,
         fullPage,
       }
 }
