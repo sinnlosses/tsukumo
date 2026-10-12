@@ -192,6 +192,9 @@ class 名を手で組むと、条件で落とす class を空文字に畳む三�
 - 条件付きの class は `cond && styles["x"]` の形で渡す。オブジェクト記法
   （`{ [styles["x"]]: cond }`）は使わず、書き方を1つにそろえる
 - class 名が1つだけのとき（`className={styles["x"]}`）は包まない
+- `components/ui/` の部品へ渡す `className` には clsx を使わず、`styles["…"]` の字面だけを渡す。
+  2つ以上要るときは CSS Modules の `composes` で1クラスに畳む（前例は `character-create.module.css`）。
+  理由と検査は `docs/architecture/browser.md` の「上書きは `className` の1つ」
 
 ## 型注釈より `satisfies`
 
