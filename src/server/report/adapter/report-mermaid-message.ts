@@ -2,7 +2,7 @@
 
 import { z } from "zod"
 
-import type { MermaidFault } from "../core/report-violation.ts"
+import type { MermaidFault } from "../core/report-figure-fault.ts"
 
 const faultSchema = z.union([
   z.object({

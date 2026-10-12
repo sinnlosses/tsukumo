@@ -8,7 +8,7 @@ import {
   type Question,
   withoutRecommendedMark,
 } from "../../../shared/session-driver/question.ts"
-import { type MermaidFault, mermaidFaultPositions } from "../../report/core/report-violation.ts"
+import { type MermaidFault, mermaidFaultPositions } from "../../report/core/report-figure-fault.ts"
 
 /** `AskUserQuestion` が1回に持てる質問の数と同じ。 */
 const MAX_BRIEF_QUESTIONS = 4

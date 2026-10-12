@@ -34,6 +34,7 @@ import {
 import { chatRecallEpisodeText, chatRecallListText } from "../../chat/core/chat-memory-prompt.ts"
 import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
 import { checkMermaidSyntax } from "../../report/adapter/report-mermaid-syntax.ts"
+import { mermaidSourcesInSections } from "../../report/core/report-figure-fault.ts"
 import {
   REPORT_CHECKS_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
@@ -45,7 +46,6 @@ import {
   REPORT_WAITING_LINE_DESCRIPTION,
   REPORT_WORK_PLAN_CLOSING_DESCRIPTION,
 } from "../../report/core/report-tool.ts"
-import { mermaidSourcesInSections } from "../../report/core/report-violation.ts"
 import type { CallReview } from "../core/call-review.ts"
 import { CLEAR_AND_SEND_TOOL_DESCRIPTION } from "../core/clear-and-send.ts"
 import { stringsIn } from "../core/phase-mention.ts"

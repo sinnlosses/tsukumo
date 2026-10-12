@@ -5,7 +5,7 @@ import { parentPort } from "node:worker_threads"
 
 import { Window } from "happy-dom"
 
-import type { MermaidFault } from "../core/report-violation.ts"
+import type { MermaidFault } from "../core/report-figure-fault.ts"
 import { checkRequestSchema } from "./report-mermaid-message.ts"
 
 const LINE_PATTERN = /Parse error on line (\d+)/

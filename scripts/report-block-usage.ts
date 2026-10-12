@@ -13,13 +13,13 @@ import { z } from "zod"
 
 import { dateFileNames, readJsonLines } from "../src/server/adapter/lib/jsonl.ts"
 import { reportUsageDir } from "../src/server/report/adapter/report-usage-log.ts"
-import { REPORT_PROCEDURE_REJECTIONS } from "../src/server/report/core/report-review.ts"
-import { REPORT_BLOCK_FIELDS } from "../src/server/report/core/report-usage.ts"
 import {
   ESCAPE_NOTATIONS,
   MARKDOWN_NOTATIONS,
-  REPORT_VIOLATION_KINDS,
-} from "../src/server/report/core/report-violation.ts"
+} from "../src/server/report/core/report-markdown-notation.ts"
+import { REPORT_PROCEDURE_REJECTIONS } from "../src/server/report/core/report-review.ts"
+import { REPORT_BLOCK_FIELDS } from "../src/server/report/core/report-usage.ts"
+import { REPORT_VIOLATION_KINDS } from "../src/server/report/core/report-violation.ts"
 import { REPORT_BLOCK_KINDS } from "../src/shared/report/report-block.ts"
 import { REPORT_USAGE_FORMAT_VERSION } from "../src/shared/report/report-usage-record.ts"
 

@@ -5,20 +5,11 @@
 // 誤って差し戻すと、直しようのない指摘でモデルを1往復させることになる。
 //
 // 本文は節と塊の並びで届くので、塊の種類ごとに数える。
-// 逃げ道（`markdown` の塊）の中だけは Markdown として構文解析せず、行で見る（フェンスの中だけは飛ばす）。
-// 描く側のパーサはブラウザの層にあって使えず、判定に要るのは行頭の形と数えられる印だけなので。
 
 import { keys } from "remeda"
 
-import { readGraphSource } from "../../../shared/report/graph-source.ts"
-import {
-  type ReportBlock,
-  type ReportGraph,
-  REPORT_MERMAID_KINDS,
-  type ReportSection,
-} from "../../../shared/report/report-block.ts"
+import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
-import { closesFence, openingFence } from "../../../shared/report/report-fence.ts"
 import {
   MAX_CANDIDATES,
   MAX_CONCLUSION_SENTENCES,
@@ -30,20 +21,25 @@ import type { ReportTask } from "../../../shared/report/report-task.ts"
 import { leadingSentences, sentenceCount } from "../../../shared/report/sentence-count.ts"
 import type { WorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
-
-/**
- * 構文が割れた `mermaid` の塊の位置。`block` は `mermaid` の塊の通し番号（1始まり）。
- * `located` は構文エラーの行が取れたもの。`line` は図の中の行、`token` は mermaid の字句の名前（無いときは空）。
- * `unlocated` は行が取れないもの（未知の図種など）。どちらも書き手のソースの文字は持たない。
- */
-export type MermaidFault =
-  | {
-      readonly kind: "located"
-      readonly block: number
-      readonly line: number
-      readonly token: string
-    }
-  | { readonly kind: "unlocated"; readonly block: number }
+import {
+  type GraphFault,
+  graphFaultPositions,
+  graphFaultsInSections,
+  type MermaidFault,
+  mermaidFaultPositions,
+  type SvgFault,
+  svgFaultPositions,
+  svgFaultsInSections,
+  unknownMermaidCount,
+} from "./report-figure-fault.ts"
+import {
+  hasNestedFold,
+  type MarkdownNotation,
+  MARKDOWN_NOTATION_NAMES,
+  notationsInSections,
+  paragraphs,
+  splitFences,
+} from "./report-markdown-notation.ts"
 
 /** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
 export type ReportDraft = {
@@ -60,9 +56,6 @@ export type ReportDraft = {
   /** 段の閉じ方。記法の検査には使わず、段の閉じ方の差し戻し（`ReportReview`）が読む。 */
   readonly workPlanClosing: WorkPlanClosing
 }
-
-/** 逃げ道の中に書くと差し戻す記法（塊の種類か節の見出しで書けるもの）。 */
-export type MarkdownNotation = keyof typeof MARKDOWN_NOTATION_NAMES
 
 /**
  * 規約違反1つ。`count` は違反の数（文の数・塊の数）で、モデルが書いた文面は持たない
@@ -139,49 +132,6 @@ export type ReportViolation =
   /** `text` の塊か節の見出しが、仮名も漢字も無く英語の語が並ぶ地の文になっている。`count` は該当の数。 */
   | { readonly kind: "non-japanese"; readonly count: number }
 
-/** 逃げ道の外側（HTML の容れ物の中でないところ）に出た記法の種類（重複無し）。 */
-export function notationsInSections(
-  sections: readonly ReportSection[],
-): readonly MarkdownNotation[] {
-  return markdownNotationsAt(sections, false)
-}
-
-/**
- * 逃げ道の HTML の容れ物（`<details>` / `<div>`）の中に出た記法の種類（重複無し）。
- * 複数の塊を畳む・`cols` に並べるのは逃げ道の役目なので、ここに出ても差し戻さない。
- */
-export function containedNotationsInSections(
-  sections: readonly ReportSection[],
-): readonly MarkdownNotation[] {
-  return markdownNotationsAt(sections, true)
-}
-
-/**
- * 塊の無い記法（塊に当てはまらない記法）。
- * `colsCard` は表から外したあとも、書かれ続けるかを見るために数える。
- * `dl` は表から外して `list` の `label` で書かせるが、逃げ道に残る数を見るために数え続ける。
- */
-export type EscapeNotation = (typeof ESCAPE_NOTATIONS)[number]
-
-export const ESCAPE_NOTATIONS = [
-  "colsCard",
-  "svg",
-  "dl",
-  "quote",
-  "hr",
-  "details",
-] as const satisfies readonly string[]
-
-/** 逃げ道に出た、塊の無い記法の種類（重複無し）。 */
-export function escapeNotationsInSections(
-  sections: readonly ReportSection[],
-): readonly EscapeNotation[] {
-  const markdowns = markdownsOf(sections)
-  return ESCAPE_NOTATIONS.filter((notation) =>
-    markdowns.some((markdown) => hasEscapeNotation(markdown, notation)),
-  )
-}
-
 /** レポートの規約違反を並べる。空なら違反は無い。 */
 export function reportViolations(report: ReportDraft): readonly ReportViolation[] {
   const blocks = report.sections.flatMap((section) => section.blocks)
@@ -217,12 +167,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
           .flatMap(({ outside }) => paragraphs(outside))
           .filter((paragraph) => sentenceCount(paragraph) > 3).length,
     },
-    {
-      kind: "unknown-mermaid",
-      count: mermaidSourcesInSections(report.sections).filter(
-        (source) => !MERMAID_KINDS.has(mermaidKind(source)),
-      ).length,
-    },
+    { kind: "unknown-mermaid", count: unknownMermaidCount(report.sections) },
     { kind: "too-many-notes", count: blocks.filter((block) => block.kind === "note").length },
     { kind: "crowded-notes", count: crowdedNoteCount(report.sections) },
     {
@@ -337,115 +282,6 @@ const VIOLATION_THRESHOLDS = {
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)
-
-/**
- * `MermaidFault.block` はこの並びの通し番号。
- * 塊の出現順に並び、`beforeAfter` は前の側が先。並びを変えると位置がずれる。
- */
-export function mermaidSourcesInSections(sections: readonly ReportSection[]): readonly string[] {
-  return sections
-    .flatMap((section) => section.blocks)
-    .flatMap((block) => {
-      switch (block.kind) {
-        case "mermaid":
-          return [block.source]
-        case "beforeAfter":
-          return [block.before, block.after].flatMap((side) =>
-            side.kind === "mermaid" ? [side.source] : [],
-          )
-        default:
-          return []
-      }
-    })
-}
-
-/** 割れた図の位置（何個目の何行目・字句の名前）の並び。書き手のソースの文字は入れない。 */
-export function mermaidFaultPositions(faults: readonly MermaidFault[]): string {
-  return faults
-    .map((fault) =>
-      fault.kind === "unlocated"
-        ? `${String(fault.block)}個目`
-        : `${String(fault.block)}個目の ${String(fault.line)} 行目${fault.token === "" ? "" : `・字句 ${fault.token}`}`,
-    )
-    .join("、")
-}
-
-/** `block` は `svg` の塊（`beforeAfter` の側を含む）の出現順の1始まり、`shape` は `shapes` の中の1始まり。 */
-export type SvgFault = { readonly block: number; readonly shape: number }
-
-type SvgFigure = Pick<Extract<ReportBlock, { readonly kind: "svg" }>, "width" | "height" | "shapes">
-
-function svgFaultsInSections(sections: readonly ReportSection[]): readonly SvgFault[] {
-  const figures = sections
-    .flatMap((section) => section.blocks)
-    .flatMap((block): readonly SvgFigure[] => {
-      switch (block.kind) {
-        case "svg":
-          return [block]
-        case "beforeAfter":
-          return [block.before, block.after].flatMap((side) => (side.kind === "svg" ? [side] : []))
-        default:
-          return []
-      }
-    })
-  return figures.flatMap((figure, figureIndex) =>
-    figure.shapes.flatMap((shape, shapeIndex) =>
-      isInsideSvg(shape, figure) ? [] : [{ block: figureIndex + 1, shape: shapeIndex + 1 }],
-    ),
-  )
-}
-
-function isInsideSvg(shape: SvgFigure["shapes"][number], { width, height }: SvgFigure): boolean {
-  const inside = (x: number, y: number): boolean => x >= 0 && x <= width && y >= 0 && y <= height
-  switch (shape.kind) {
-    case "rect":
-      return inside(shape.x, shape.y) && inside(shape.x + shape.width, shape.y + shape.height)
-    case "line":
-      return inside(shape.x1, shape.y1) && inside(shape.x2, shape.y2)
-    case "text":
-      return inside(shape.x, shape.y)
-  }
-}
-
-/** はみ出した図形の位置（何個目の塊の何番目の図形か）の並び。 */
-function svgFaultPositions(faults: readonly SvgFault[]): string {
-  return faults
-    .map((fault) => `${String(fault.block)}個目の ${String(fault.shape)} 番目`)
-    .join("、")
-}
-
-/** `block` は `graph` の塊の出現順の1始まり、`line` は `source` の1始まりの行。 */
-export type GraphFault = { readonly block: number; readonly line: number }
-
-function graphFaultsInSections(sections: readonly ReportSection[]): readonly GraphFault[] {
-  return sections
-    .flatMap((section) => section.blocks)
-    .flatMap((block): readonly ReportGraph[] => (block.kind === "graph" ? [block] : []))
-    .flatMap((graph, graphIndex) =>
-      readGraphSource(graph.source).brokenLines.map((line) => ({ block: graphIndex + 1, line })),
-    )
-}
-
-function graphFaultPositions(faults: readonly GraphFault[]): string {
-  return faults.map((fault) => `${String(fault.block)}個目の ${String(fault.line)} 行目`).join("、")
-}
-
-function markdownNotationsAt(
-  sections: readonly ReportSection[],
-  inContainer: boolean,
-): readonly MarkdownNotation[] {
-  const markdowns = markdownsOf(sections)
-  return MARKDOWN_NOTATIONS.filter((notation) =>
-    markdowns.some((markdown) => hasNotation(markdown, notation, inContainer)),
-  )
-}
-
-/** 逃げ道（`markdown` の塊）の中身を、塊ごとにフェンスの外の行とフェンスの並びに分けたもの。 */
-function markdownsOf(sections: readonly ReportSection[]): readonly SplitMarkdown[] {
-  return sections
-    .flatMap((section) => section.blocks)
-    .flatMap((block) => (block.kind === "markdown" ? [splitFences(block.markdown)] : []))
-}
 
 function violationLine(violation: ReportViolation): string {
   switch (violation.kind) {
@@ -601,20 +437,6 @@ function crowdedNoteCount(sections: readonly ReportSection[]): number {
   )
 }
 
-function hasNestedFold(fold: string, { outside }: SplitMarkdown): boolean {
-  const opens = outside.reduce(
-    (state, line) => {
-      const opened = countMatches(line, /<details\b/g)
-      return {
-        depth: Math.max(state.depth + opened - countMatches(line, /<\/details>/g), 0),
-        nested: state.nested || state.depth + opened >= 2,
-      }
-    },
-    { depth: 0, nested: false },
-  )
-  return opens.nested || (fold.trim() !== "" && outside.some((line) => DETAILS_TAG.test(line)))
-}
-
 function hasTooManyCandidates(block: ReportBlock): boolean {
   switch (block.kind) {
     case "options":
@@ -630,216 +452,6 @@ function hasTooManyCandidates(block: ReportBlock): boolean {
     default:
       return false
   }
-}
-
-/** 逃げ道の中の記法 → 差し戻しの文面での呼び名と、代わりに使うもの。 */
-const MARKDOWN_NOTATION_NAMES = {
-  heading: { written: "`#` / `##` の見出し", replacement: "節の `heading`" },
-  table: { written: "表", replacement: "`table` の塊" },
-  list: { written: "箇条書き", replacement: "`list` の塊" },
-  note: { written: "`note` の塊", replacement: "`note` の塊（種別は `tone`）" },
-  stats: { written: "`stats` の塊", replacement: "`stats` の塊" },
-  progress: { written: "`progress` の塊", replacement: "`progress` の塊" },
-  code: { written: "フェンス", replacement: "`code` の塊" },
-  mermaid: { written: "mermaid のフェンス", replacement: "`mermaid` の塊" },
-  chart: { written: "`chart` のフェンス", replacement: "`chart` の塊" },
-  image: { written: "画像（`![]()` / `<img>`）", replacement: "`image` の塊" },
-} as const satisfies Record<string, { readonly written: string; readonly replacement: string }>
-
-export const MARKDOWN_NOTATIONS = Object.keys(MARKDOWN_NOTATION_NAMES).filter(
-  (name): name is MarkdownNotation => name in MARKDOWN_NOTATION_NAMES,
-)
-
-const MERMAID_KINDS: ReadonlySet<string> = new Set(REPORT_MERMAID_KINDS)
-
-/** Markdown の画像（`![…](`）か `<img>` のタグ。 */
-const IMAGE_NOTATION = /!\[[^\]]*\]\(|<img\b/i
-
-/** `#` / `##` の見出し（CommonMark の ATX 見出し。行頭の空白は3つまで）。`###` は節の下の段で、塊の種類が無い。 */
-const SECTION_HEADING = /^ {0,3}#{1,2}(?:[ \t]|$)/
-
-/** 箇条書き・番号付きリスト・チェックリストの項目の頭。 */
-const LIST_ITEM = /^ {0,3}(?:[-*+]|\d{1,9}[.)])[ \t]/
-
-/** 表の区切りの行（`| --- | :---: |`）。`|` を1つ以上含み、セルは `-` と両端の `:` だけ。 */
-const TABLE_DELIMITER = /^ *\|?(?: *:?-+:? *\|)+(?: *:?-+:? *)?$|^ *:?-+:? *\|(?: *:?-+:? *\|?)*$/
-
-/** 地の文の段落にしない行の頭（見出し・表・引用・箇条書き・番号・HTML・区切り線）。 */
-const NON_PROSE_LINE = /^ *(?:#|\||>|[-*+] |\d+[.)] |<|---|\*\*\*|___)/
-
-/** HTML の塊の開き・閉じ（入れ子の深さを数える要素）。 */
-const HTML_BLOCK_OPEN = /<(?:details|div)\b/g
-const HTML_BLOCK_CLOSE = /<\/(?:details|div)>/g
-
-/** 塊の無い記法の印。 */
-const SVG_TAG = /<svg\b/
-const DL_TAG = /<dl\b/
-const DETAILS_TAG = /<details\b/
-const QUOTE_LINE = /^ {0,3}>/
-/** 水平線（CommonMark の thematic break。`-` / `*` / `_` のどれかを3つ以上、空白を挟んでもよい）。 */
-const HR_LINE = /^ {0,3}(?:-[ \t]*){3,}$|^ {0,3}(?:\*[ \t]*){3,}$|^ {0,3}(?:_[ \t]*){3,}$/
-
-/**
- * フェンス1つ。`info` は開きの info 文字列の最初の語（無ければ空）、`line` は開きの行の位置。
- */
-type Fence = { readonly info: string; readonly content: readonly string[]; readonly line: number }
-
-/** 逃げ道の中身を、フェンスの外の行とフェンスの並びに分けたもの。 */
-type SplitMarkdown = { readonly outside: readonly string[]; readonly fences: readonly Fence[] }
-
-/**
- * 逃げ道の中身を、フェンスの外の行とフェンスの並びに分ける。
- * `outside` は行の並びを保つため、フェンスの行（開き・中身・閉じ）を空行に置き換えて残す。閉じの無いフェンスは末尾まで続く。
- */
-function splitFences(markdown: string): SplitMarkdown {
-  type Open = Fence & { readonly marker: string }
-  const initial: {
-    readonly outside: readonly string[]
-    readonly fences: readonly Fence[]
-    readonly open: Open | undefined
-  } = { outside: [], fences: [], open: undefined }
-
-  const final = markdown.split("\n").reduce((state, line) => {
-    const open = state.open
-    if (open !== undefined) {
-      return closesFence(line, open.marker)
-        ? {
-            outside: [...state.outside, ""],
-            fences: [...state.fences, fenceOf(open)],
-            open: undefined,
-          }
-        : {
-            ...state,
-            outside: [...state.outside, ""],
-            open: { ...open, content: [...open.content, line] },
-          }
-    }
-    const opening = openingFence(line)
-    if (opening === undefined) {
-      return { ...state, outside: [...state.outside, line] }
-    }
-    return {
-      ...state,
-      outside: [...state.outside, ""],
-      open: {
-        marker: opening.marker,
-        info: opening.info,
-        content: [],
-        line: state.outside.length,
-      },
-    }
-  }, initial)
-
-  return {
-    outside: final.outside,
-    fences: final.open === undefined ? final.fences : [...final.fences, fenceOf(final.open)],
-  }
-}
-
-function fenceOf({ info, content, line }: Fence): Fence {
-  return { info, content, line }
-}
-
-/**
- * その記法が、逃げ道の HTML の容れ物（`<details>` / `<div>`）の中と外のどちらにあるか。
- * `inContainer` が `false` なら外側だけ（差し戻しの判定はここ）、`true` なら中だけを見る。
- * 複数の塊を1つに畳む・`cols` に並べるのは逃げ道の役目なので、中は差し戻さない。
- */
-function hasNotation(
-  { outside, fences }: SplitMarkdown,
-  notation: MarkdownNotation,
-  inContainer: boolean,
-): boolean {
-  const topLevel = topLevelFlags(outside)
-  const atLevel = (index: number): boolean => topLevel[index] === !inContainer
-  const lines = outside.filter((_, index) => atLevel(index))
-  const levelFences = fences.filter((fence) => atLevel(fence.line))
-  switch (notation) {
-    case "heading":
-      return lines.some((line) => SECTION_HEADING.test(line))
-    case "table":
-      return outside.some(
-        (line, index) =>
-          atLevel(index) && line.includes("|") && TABLE_DELIMITER.test(outside[index + 1] ?? ""),
-      )
-    case "list":
-      return lines.some((line) => LIST_ITEM.test(line))
-    case "note":
-    case "stats":
-    case "progress":
-      return lines.some((line) => classLists(line).some((classes) => classes.includes(notation)))
-    case "code":
-      return levelFences.some((fence) => fence.info !== "mermaid" && fence.info !== "chart")
-    case "mermaid":
-      return levelFences.some((fence) => fence.info === "mermaid")
-    case "chart":
-      return levelFences.some((fence) => fence.info === "chart")
-    case "image":
-      return lines.some((line) => IMAGE_NOTATION.test(line))
-  }
-}
-
-/** 塊の無い記法があるか。フェンスの中は見ない。 */
-function hasEscapeNotation({ outside }: SplitMarkdown, notation: EscapeNotation): boolean {
-  switch (notation) {
-    case "colsCard":
-      return outside.some((line) =>
-        classLists(line).some((classes) => classes.includes("cols") || classes.includes("card")),
-      )
-    case "svg":
-      return outside.some((line) => SVG_TAG.test(line))
-    case "dl":
-      return outside.some((line) => DL_TAG.test(line))
-    case "quote":
-      return outside.some((line) => QUOTE_LINE.test(line))
-    case "hr":
-      return outside.some((line) => HR_LINE.test(line))
-    case "details":
-      return outside.some((line) => DETAILS_TAG.test(line))
-  }
-}
-
-/** 行ごとに、その行の頭が HTML の塊の外にあるか。 */
-function topLevelFlags(lines: readonly string[]): readonly boolean[] {
-  return lines.reduce<{ readonly flags: readonly boolean[]; readonly depth: number }>(
-    (state, line) => ({
-      flags: [...state.flags, state.depth === 0],
-      depth: Math.max(
-        state.depth + countMatches(line, HTML_BLOCK_OPEN) - countMatches(line, HTML_BLOCK_CLOSE),
-        0,
-      ),
-    }),
-    { flags: [], depth: 0 },
-  ).flags
-}
-
-/**
- * 地の文の段落。HTML の塊（`<details>` / `<div>`）の中は数えない（4文以上の段落の逃げ先が `<details>` なので）。
- * 段落は空行か、地の文でない行で切れる。
- */
-function paragraphs(lines: readonly string[]): readonly string[] {
-  const initial: {
-    readonly done: readonly string[]
-    readonly current: readonly string[]
-    readonly depth: number
-  } = { done: [], current: [], depth: 0 }
-
-  const flushed = (state: typeof initial): readonly string[] =>
-    state.current.length === 0 ? state.done : [...state.done, state.current.join("")]
-
-  const final = lines.reduce((state, line) => {
-    const depth = Math.max(
-      state.depth + countMatches(line, HTML_BLOCK_OPEN) - countMatches(line, HTML_BLOCK_CLOSE),
-      0,
-    )
-    const prose =
-      state.depth === 0 && depth === 0 && line.trim() !== "" && !NON_PROSE_LINE.test(line)
-    return prose
-      ? { ...state, current: [...state.current, line.trim()], depth }
-      : { done: flushed(state), current: [], depth }
-  }, initial)
-
-  return flushed(final)
 }
 
 /** 行のセルの数が列の数と揃わない表か。 */
@@ -865,27 +477,4 @@ function isRaggedChart(block: ReportBlock): boolean {
     block.kind === "chart" &&
     block.series.some((series) => series.values.length !== block.labels.length)
   )
-}
-
-/**
- * mermaid の図の種類（ソースの最初の語）。空行・`%%` の行（コメントと init の指定）と、先頭の `---` で囲んだ設定は飛ばす。
- * 中身が空なら空文字（規約の種類に無いので違反になる）。
- */
-function mermaidKind(source: string): string {
-  const lines = source.split("\n").map((line) => line.trim())
-  const afterFrontmatter =
-    lines.find((line) => line !== "") === "---"
-      ? lines.slice(lines.indexOf("---", lines.indexOf("---") + 1) + 1)
-      : lines
-  const first = afterFrontmatter.find((line) => line !== "" && !line.startsWith("%%"))
-  return first?.split(/\s/)[0] ?? ""
-}
-
-/** 行に書かれた class の並びごとの名前（`class="note note-warn"` なら `["note", "note-warn"]`）。 */
-function classLists(line: string): readonly (readonly string[])[] {
-  return [...line.matchAll(/class=["']([^"']*)["']/g)].map((match) => (match[1] ?? "").split(/\s+/))
-}
-
-function countMatches(text: string, pattern: RegExp): number {
-  return [...text.matchAll(pattern)].length
 }

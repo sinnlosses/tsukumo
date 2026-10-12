@@ -971,7 +971,8 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 （サブエージェントの `Read` は数えない）も足す。数えるだけで差し戻しにはしない。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
 `src/server/report/adapter/report-usage-log.ts`、何を1行にするかは
-`src/server/report/core/report-usage.ts` と `src/server/report/core/report-violation.ts` が持つ。
+`src/server/report/core/report-usage.ts` が持つ。逃げ道の記法の検出は `src/server/report/core/report-markdown-notation.ts`、
+差し戻しの判定は `src/server/report/core/report-violation.ts`、図の不具合の検出は `src/server/report/core/report-figure-fault.ts` にある。
 
 **集計するスクリプトは `scripts/report-block-usage.ts`**（`node scripts/report-block-usage.ts
 --days <日数>`、既定28日）。「塊の種類 × レポート数」「塊の欄 × レポート数」「modified のファイルがあるのに前後図も画像も無いレポート」

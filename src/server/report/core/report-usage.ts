@@ -12,7 +12,7 @@ import {
   type EscapeNotation,
   type MarkdownNotation,
   notationsInSections,
-} from "./report-violation.ts"
+} from "./report-markdown-notation.ts"
 
 export type ReportUsageEntry = {
   readonly at: number

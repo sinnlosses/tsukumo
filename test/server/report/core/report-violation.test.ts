@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { mermaidSourcesInSections } from "../../../../src/server/report/core/report-figure-fault.ts"
 import {
-  mermaidSourcesInSections,
   type ReportDraft,
   reportRejectionText,
   reportViolations,

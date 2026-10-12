@@ -4,7 +4,7 @@
 
 import { Worker } from "node:worker_threads"
 
-import type { MermaidFault } from "../core/report-violation.ts"
+import type { MermaidFault } from "../core/report-figure-fault.ts"
 import { checkReplySchema } from "./report-mermaid-message.ts"
 
 /** 1回の検査を待つ上限（初回の mermaid の読み込みを含む）。 */
