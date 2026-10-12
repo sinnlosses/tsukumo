@@ -3,10 +3,10 @@ import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
+import { withoutComments } from "../comment-line.ts"
 import {
   importSpecifiers,
   listSourceFiles,
-  nonCommentContent,
   relativeImportSpecifiers,
   resolveRelativeImport,
   SRC_ROOT,
@@ -66,7 +66,7 @@ describe("層と依存の向き", () => {
         return layer === "shared" || layer === "core"
       })
       .filter((relPath) => {
-        const code = nonCommentContent(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
+        const code = withoutComments(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
         return (
           OUTSIDE_WORLD_IMPORT.test(code) ||
           (layerOf(relPath) === "shared" && /\b(document|window|localStorage)\b/.test(code))

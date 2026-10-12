@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import { listSourceFiles, nonCommentContent, SRC_ROOT } from "./source-file.ts"
+import { withoutComments } from "../comment-line.ts"
+import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
 
 // ここから、層の辺だけでは表せない限定の検査（`adapter` の中のどのファイルか、まで絞る）。
 
@@ -71,7 +72,7 @@ describe("process.env を読む箇所", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => !allowed.has(relPath))
       .filter((relPath) =>
-        /\bprocess\.env\b/.test(nonCommentContent(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
+        /\bprocess\.env\b/.test(withoutComments(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
       )
 
     expect(offenders).toEqual([])
@@ -84,7 +85,7 @@ describe("process.cwd() を読む箇所", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => relPath !== "cli.ts")
       .filter((relPath) =>
-        /\bprocess\.cwd\b/.test(nonCommentContent(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
+        /\bprocess\.cwd\b/.test(withoutComments(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
       )
 
     expect(offenders).toEqual([])

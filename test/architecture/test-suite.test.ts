@@ -3,7 +3,8 @@ import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
-import { listSourceFiles, nonCommentContent } from "./source-file.ts"
+import { withoutComments } from "../comment-line.ts"
+import { listSourceFiles } from "./source-file.ts"
 
 // CI（`.github/workflows/ci.yml`）が用意する外部コマンド。`git` は `actions/checkout`、
 // `node`・`pnpm` は `jdx/mise-action`、`bd` は版を固定して入れる段が用意する。
@@ -15,7 +16,7 @@ const TEST_ROOT = fileURLToPath(new URL("../../test", import.meta.url)).replace(
 describe("テストが起こす外部コマンド", () => {
   it("test/ が子プロセスで起こすコマンドは、CI が用意する一覧に入っている", () => {
     const offenders = listSourceFiles(TEST_ROOT).flatMap((relPath) =>
-      subprocessCommandsOf(nonCommentContent(readFileSync(`${TEST_ROOT}/${relPath}`, "utf8")))
+      subprocessCommandsOf(withoutComments(readFileSync(`${TEST_ROOT}/${relPath}`, "utf8")))
         .filter((command) => !CI_AVAILABLE_COMMANDS.has(command))
         .map((command) => `test/${relPath}（${command}）`),
     )
@@ -37,7 +38,7 @@ describe("テストの report イベント", () => {
       .filter((relPath) => !REPORT_EVENT_LITERAL_FILES.has(relPath))
       .filter((relPath) =>
         /kind:\s*"report",\s*toolUseId/.test(
-          nonCommentContent(readFileSync(`${TEST_ROOT}/${relPath}`, "utf8")),
+          withoutComments(readFileSync(`${TEST_ROOT}/${relPath}`, "utf8")),
         ),
       )
       .map((relPath) => `test/${relPath}`)

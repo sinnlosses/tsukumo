@@ -52,16 +52,3 @@ export function resolveRelativeImport(fromRelPath: string, specifier: string): s
   }
   return resolved.join("/")
 }
-
-/**
- * 単行コメント（`// ...`）だけの行を落とした中身を返す。`process.env` や `document` の説明を
- * バッククォートで書いたコメント（例: `` // `process.env` を読むのはここ1箇所 ``）を実コードの
- * 出現と取り違えないための下ごしらえ（このリポジトリの `.ts`/`.tsx` にブロックコメントは
- * 出てこない前提。JSDoc の `* ` 始まりの行にこの語が出てこないことは書いた時点で確認した）。
- */
-export function nonCommentContent(content: string): string {
-  return content
-    .split("\n")
-    .filter((line) => !line.trim().startsWith("//"))
-    .join("\n")
-}

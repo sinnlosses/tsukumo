@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs"
 import { parseSync } from "vite"
 import { describe, expect, it } from "vitest"
 
-import { listSourceFiles, nonCommentContent, SRC_ROOT } from "./source-file.ts"
+import { withoutComments } from "../comment-line.ts"
+import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
 
 // 「いま」を読む場所を2つに保つ。E2E は時計をこの2箇所で凍らせる（サーバは
 // `TSUKUMO_FIXED_CLOCK`、ブラウザは E2E の側で `clock.ts` が呼ぶ関数を差し替える）ので、ほかで
@@ -14,7 +15,7 @@ describe("Temporal.Now を読む箇所", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => !allowed.has(relPath))
       .filter((relPath) =>
-        /\bTemporal\.Now\b/.test(nonCommentContent(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
+        /\bTemporal\.Now\b/.test(withoutComments(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
       )
 
     expect(offenders).toEqual([])

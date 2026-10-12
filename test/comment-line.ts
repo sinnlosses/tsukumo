@@ -1,3 +1,11 @@
+// コメントの行を見分ける規約のテストの共有部品。
+
+export function withoutComments(content: string): string {
+  const lines = content.split("\n")
+  const comments = new Set(commentLineIndexes(lines))
+  return lines.filter((_, index) => !comments.has(index)).join("\n")
+}
+
 /**
  * 行頭が `//` の行と、行頭が `/*` の行から `*\/` を含む行までの行番号を返す。
  * 行の途中で開くブロックコメントは拾わない（取りこぼしても検査が緩むだけで、誤検出はしない）。
