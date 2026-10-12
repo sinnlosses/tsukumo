@@ -8,7 +8,7 @@ export type TaskDifficulty = (typeof TASK_DIFFICULTIES)[number]
 export const TASK_LOOPABLES = ["Y", "N"] as const
 export type TaskLoopable = (typeof TASK_LOOPABLES)[number]
 
-/** タスク一覧1件分。一覧は読み元が並べた順（作った時刻の順）のまま持つ（status ごとにまとめない）。 */
+/** タスク一覧1件分。一覧は読み元が並べた順（ID の番号の昇順）のまま持つ（status ごとにまとめない）。 */
 export type TaskSummaryItem = {
   readonly id: string
   readonly summary: string

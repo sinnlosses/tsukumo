@@ -117,7 +117,7 @@ function plainTodo(id: string, summary: string): Record<string, unknown> {
 
 describe("watchTaskSummary", () => {
   it(
-    "bd の課題を ID のまま作った時刻の順に出し、状態を読み替え、ラベルは字のまま写す",
+    "bd の課題を ID の番号の昇順に出し、状態を読み替え、ラベルは字のまま写す",
     { timeout: 60_000 },
     async () => {
       const repository = await initBeadsIssues(root(), [
@@ -138,7 +138,6 @@ describe("watchTaskSummary", () => {
 
       expect(changes).toEqual([
         known(
-          { ...plainTodo("t-010", "未着手"), labels: ["任意のタグ"] },
           { ...plainTodo("t-001", "済み"), status: "done" },
           { ...plainTodo("t-002", "保留"), status: "hold" },
           {
@@ -147,6 +146,7 @@ describe("watchTaskSummary", () => {
             dependencies: ["t-010"],
             waitingFor: ["t-010"],
           },
+          { ...plainTodo("t-010", "未着手"), labels: ["任意のタグ"] },
         ),
       ])
     },

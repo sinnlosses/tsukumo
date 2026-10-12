@@ -14,7 +14,7 @@ import type { BeadsIssue } from "./beads.ts"
 /**
  * タスクの一覧に出す要約。閉じていない課題はすべて出し、閉じた課題は `closedAtEpochMilliseconds`
  * の新しいものから {@link CLOSED_TASK_DISPLAY_LIMIT} 件だけ出す。
- * 並びは作った時刻の順で、同じ時刻なら ID の順。
+ * 並びは ID の番号の昇順で、番号の取れない ID は末尾に作った時刻の順（同じ時刻なら ID の順）。
  */
 export function taskSummaryItemsOfBeadsIssues(
   issues: readonly BeadsIssue[],
@@ -28,6 +28,8 @@ export function taskSummaryItemsOfBeadsIssues(
 
   return sortBy(
     [...unfinishedIssues, ...closed],
+    [(issue) => numberOfTaskId(issue.id) === undefined, "asc"],
+    [(issue) => numberOfTaskId(issue.id) ?? 0, "asc"],
     [(issue) => issue.createdAtEpochMilliseconds, "asc"],
     [(issue) => issue.id, "asc"],
   ).map((issue) => taskSummaryItemOfBeadsIssue(issue, unfinished))
@@ -48,6 +50,12 @@ export function doneTasksOfBeadsIssues(issues: readonly BeadsIssue[]): readonly 
       : [],
   )
   return sortBy(done, [(task) => task.closedAtEpochMilliseconds, "asc"], [(task) => task.id, "asc"])
+}
+
+/** ID の末尾の番号。採番前の ID（`gh-new-…` など）のように番号で終わらない ID は `undefined`。 */
+function numberOfTaskId(id: string): number | undefined {
+  const matched = /^[A-Za-z]+-(\d+)$/.exec(id)
+  return matched?.[1] === undefined ? undefined : Number(matched[1])
 }
 
 /** 依存のうち `unfinished`（閉じていない課題の ID）に無いもの（閉じた課題・課題に無い ID）は着手を止めない。 */

@@ -50,6 +50,25 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
     ])
   })
 
+  it("ID の番号の昇順に並べ、番号 99 を 100 より前に置く", () => {
+    const items = taskSummaryItemsOfBeadsIssues([
+      issue({ id: "x-100", status: "open", createdAtEpochMilliseconds: 1 }),
+      issue({ id: "x-99", status: "open", createdAtEpochMilliseconds: 2 }),
+    ])
+
+    expect(items.map((item) => item.id)).toEqual(["x-99", "x-100"])
+  })
+
+  it("番号の取れない ID は末尾に、作った時刻の順で置く", () => {
+    const items = taskSummaryItemsOfBeadsIssues([
+      issue({ id: "gh-new-y", status: "open", createdAtEpochMilliseconds: 2 }),
+      issue({ id: "gh-new-x", status: "open", createdAtEpochMilliseconds: 1 }),
+      issue({ id: "x-5", status: "open", createdAtEpochMilliseconds: 3 }),
+    ])
+
+    expect(items.map((item) => item.id)).toEqual(["x-5", "gh-new-x", "gh-new-y"])
+  })
+
   it("ドラフトの印は着手前（open・deferred）だけ draft にし、ほかは印があっても状態のまま", () => {
     const items = taskSummaryItemsOfBeadsIssues([
       issue({ id: "t-1", status: "deferred", draft: true, createdAtEpochMilliseconds: 1 }),
@@ -113,7 +132,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
     })
   })
 
-  it("作った時刻の順に並べ、同じ時刻なら ID の順にする", () => {
+  it("番号の取れない ID だけなら、作った時刻の順に並べ、同じ時刻なら ID の順にする", () => {
     const items = taskSummaryItemsOfBeadsIssues([
       issue({ id: "t-b", status: "open", createdAtEpochMilliseconds: 20 }),
       issue({ id: "t-c", status: "open", createdAtEpochMilliseconds: 10 }),
