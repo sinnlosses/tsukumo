@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>キャラクター画面の編集ボタン — 3案</title>
+<style>
+  :root {
+    --ground: #191720;
+    --surface: #221f2b;
+    --ink: #e8e3ea;
+    --accent: #f2b0a0;
+    --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+    --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+    --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+    --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+    --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
+    --font-label: 0.75rem;
+    --font-secondary: 0.8125rem;
+    --font-subheading: 0.875rem;
+    --font-heading: 1.125rem;
+    --font-sans: system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 16px; background: var(--ground); color: var(--ink); font-family: var(--font-sans); font-size: var(--font-subheading); }
+  h1 { margin: 0 0 4px; font-size: var(--font-heading); }
+  h2 { margin: 32px 0 4px; font-size: var(--font-subheading); }
+  p.lead { margin: 0 0 16px; color: var(--ink-soft); font-size: var(--font-secondary); }
+  .frames { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; }
+  .frame-label { margin: 0 0 6px; color: var(--ink-quiet); font-size: var(--font-label); }
+  .frame { width: 100%; max-width: 100%; }
+  .frame.wide { flex: 1 1 100%; max-width: 1000px; }
+  .frame.narrow { flex: 0 1 460px; }
+
+  .card { padding: 20px 22px; background: var(--surface); border: 1px solid var(--rule-quiet); border-radius: 14px; }
+
+  /* 名乗り */
+  .profile { display: flex; flex-wrap: wrap; align-items: center; gap: 1.1rem; }
+  .face { flex-shrink: 0; width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, #3a3446, #2a2633); box-shadow: 0 0 0 2px var(--accent); }
+  .text { flex: 1 1 14rem; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+  .headline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 0.75rem; }
+  .name { margin: 0; font-size: var(--font-heading); letter-spacing: 0.06em; font-weight: bold; }
+  .id { color: var(--ink-quiet); font-family: var(--font-mono); font-size: var(--font-label); }
+  .in-use { padding: 0.1rem 0.55rem; background: var(--accent); color: var(--ground); border-radius: 999px; font-size: var(--font-label); font-weight: bold; }
+  .tagline { color: var(--ink-quiet); font-size: var(--font-secondary); }
+  .actions { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+
+  /* 枠線ボタン */
+  .btn { display: inline-flex; align-items: center; gap: 0.4rem; height: 34px; padding: 0 0.75rem; border-radius: 0.5rem; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: inherit; font-size: var(--font-secondary); white-space: nowrap; cursor: pointer; }
+  .btn:hover { background: var(--surface-raised); }
+  .btn:focus-visible, .icon-btn:focus-visible, .inline-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  svg { flex-shrink: 0; }
+
+  /* 案A: 説明文の行に置く */
+  .inline-link { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: var(--font-secondary); cursor: pointer; }
+  .inline-link:hover { text-decoration: underline; }
+  .tagline-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.6rem; }
+  .tagline-edit { display: inline; padding: 0; border: 0; background: none; font: inherit; font-size: var(--font-secondary); color: var(--ink-quiet); cursor: text; text-align: left; border-bottom: 1px dashed var(--rule); }
+  .tagline-edit:hover { color: var(--ink); border-bottom-color: var(--accent); }
+
+  /* 案B: 鉛筆アイコンだけ */
+  .icon-btn { display: inline-grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ink-quiet); cursor: pointer; }
+  .icon-btn:hover { background: var(--surface-raised); color: var(--ink); }
+  .name-line { display: inline-flex; align-items: center; gap: 0.1rem; }
+
+  /* 案C: メニュー */
+  .menu-wrap { position: relative; }
+  .menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 1; min-width: 15rem; padding: 4px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .menu button { display: flex; align-items: center; gap: 0.5rem; width: 100%; height: 34px; padding: 0 0.6rem; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font: inherit; font-size: var(--font-secondary); text-align: left; cursor: pointer; }
+  .menu button:hover { background: var(--surface-raised); }
+  .menu-gap { height: 72px; }
+</style>
+</head>
+<body>
+
+<h1>キャラクター画面の編集ボタン — 3案</h1>
+<p class="lead">名乗りの右端にあった「名前と自己紹介文を設定する」「プロフィールを設定する」と、使用中以外の「このキャラクターに切り替える」の置き方を変えた3案。広い窓と狭い窓(720px 相当の窓で名乗りの欄が持つ幅)を案ごとに並べる。人物は架空。</p>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="switch" viewBox="0 0 24 24"><path d="M7 7h12l-3-3M17 17H5l3 3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<h2>案A 説明文の行に置く</h2>
+<p class="lead">ひとことそのものが押せる(点線の下線)。その末尾に「名前と自己紹介文」「プロフィール」の字リンク。切り替えだけが右端の枠線ボタン。</p>
+<div class="frames">
+  <div class="frame wide">
+    <p class="frame-label">広い窓</p>
+    <div class="card"><div class="profile">
+      <span class="face"></span>
+      <div class="text">
+        <div class="headline"><h3 class="name">みおり</h3><span class="id">id: miori</span></div>
+        <div class="tagline-row">
+          <button type="button" class="tagline-edit" title="名前と自己紹介文を設定する">朝いちばんにお茶を淹れる係です</button>
+          <button type="button" class="inline-link"><svg width="13" height="13"><use href="#pencil"/></svg>名前と自己紹介文</button>
+          <button type="button" class="inline-link"><svg width="13" height="13"><use href="#pencil"/></svg>プロフィール</button>
+        </div>
+      </div>
+      <div class="actions"><button type="button" class="btn"><svg width="15" height="15"><use href="#switch"/></svg>このキャラクターに切り替える</button></div>
+    </div></div>
+  </div>
+  <div class="frame narrow">
+    <p class="frame-label">狭い窓</p>
+    <div class="card"><div class="profile">
+      <span class="face"></span>
+      <div class="text">
+        <div class="headline"><h3 class="name">みおり</h3><span class="id">id: miori</span></div>
+        <div class="tagline-row">
+          <button type="button" class="tagline-edit" title="名前と自己紹介文を設定する">朝いちばんにお茶を淹れる係です</button>
+          <button type="button" class="inline-link"><svg width="13" height="13"><use href="#pencil"/></svg>名前と自己紹介文</button>
+          <button type="button" class="inline-link"><svg width="13" height="13"><use href="#pencil"/></svg>プロフィール</button>
+        </div>
+      </div>
+      <div class="actions"><button type="button" class="btn"><svg width="15" height="15"><use href="#switch"/></svg>このキャラクターに切り替える</button></div>
+    </div></div>
+  </div>
+</div>
+
+<h2>案B 名前のそばに鉛筆アイコンだけ</h2>
+<p class="lead">名前の右に小さな丸い鉛筆を2つ(名前と自己紹介文用・プロフィール用。名前は <code>aria-label</code> と <code>title</code> で持つ)。切り替えだけが右端の枠線ボタン。</p>
+<div class="frames">
+  <div class="frame wide">
+    <p class="frame-label">広い窓</p>
+    <div class="card"><div class="profile">
+      <span class="face"></span>
+      <div class="text">
+        <div class="headline">
+          <span class="name-line"><h3 class="name">みおり</h3>
+            <button type="button" class="icon-btn" aria-label="名前と自己紹介文を設定する" title="名前と自己紹介文を設定する"><svg width="15" height="15"><use href="#pencil"/></svg></button>
+          </span>
+          <span class="id">id: miori</span>
+        </div>
+        <div class="tagline-row"><span class="tagline">朝いちばんにお茶を淹れる係です</span>
+          <button type="button" class="icon-btn" aria-label="プロフィールを設定する" title="プロフィールを設定する"><svg width="15" height="15"><use href="#pencil"/></svg></button>
+        </div>
+      </div>
+      <div class="actions"><button type="button" class="btn"><svg width="15" height="15"><use href="#switch"/></svg>このキャラクターに切り替える</button></div>
+    </div></div>
+  </div>
+  <div class="frame narrow">
+    <p class="frame-label">狭い窓</p>
+    <div class="card"><div class="profile">
+      <span class="face"></span>
+      <div class="text">
+        <div class="headline">
+          <span class="name-line"><h3 class="name">みおり</h3>
+            <button type="button" class="icon-btn" aria-label="名前と自己紹介文を設定する" title="名前と自己紹介文を設定する"><svg width="15" height="15"><use href="#pencil"/></svg></button>
+          </span>
+          <span class="id">id: miori</span>
+        </div>
+        <div class="tagline-row"><span class="tagline">朝いちばんにお茶を淹れる係です</span>
+          <button type="button" class="icon-btn" aria-label="プロフィールを設定する" title="プロフィールを設定する"><svg width="15" height="15"><use href="#pencil"/></svg></button>
+        </div>
+      </div>
+      <div class="actions"><button type="button" class="btn"><svg width="15" height="15"><use href="#switch"/></svg>このキャラクターに切り替える</button></div>
+    </div></div>
+  </div>
+</div>
+
+<h2>案C 右端のメニュー</h2>
+<p class="lead">2つの編集を「編集 ⌄」1つにまとめる。メニューを開いた状態で見せる。切り替えは隣の枠線ボタン。</p>
+<div class="frames">
+  <div class="frame wide">
+    <p class="frame-label">広い窓</p>
+    <div class="card"><div class="profile">
+      <span class="face"></span>
+      <div class="text">
+        <div class="headline"><h3 class="name">みおり</h3><span class="id">id: miori</span></div>
+        <span class="tagline">朝いちばんにお茶を淹れる係です</span>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn"><svg width="15" height="15"><use href="#switch"/></svg>このキャラクターに切り替える</button>
+        <div class="menu-wrap">
+          <button type="button" class="btn" aria-haspopup="menu" aria-expanded="true"><svg width="15" height="15"><use href="#pencil"/></svg>編集<svg width="14" height="14"><use href="#chev"/></svg></button>
+          <div class="menu" role="menu">
+            <button type="button" role="menuitem"><svg width="15" height="15"><use href="#pencil"/></svg>名前と自己紹介文を設定する</button>
+            <button type="button" role="menuitem"><svg width="15" height="15"><use href="#pencil"/></svg>プロフィールを設定する</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="menu-gap"></div></div>
+  </div>
+  <div class="frame narrow">
+    <p class="frame-label">狭い窓</p>
+    <div class="card"><div class="profile">
+      <span class="face"></span>
+      <div class="text">
+        <div class="headline"><h3 class="name">みおり</h3><span class="id">id: miori</span></div>
+        <span class="tagline">朝いちばんにお茶を淹れる係です</span>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn"><svg width="15" height="15"><use href="#switch"/></svg>このキャラクターに切り替える</button>
+        <div class="menu-wrap">
+          <button type="button" class="btn" aria-haspopup="menu" aria-expanded="true"><svg width="15" height="15"><use href="#pencil"/></svg>編集<svg width="14" height="14"><use href="#chev"/></svg></button>
+          <div class="menu" role="menu">
+            <button type="button" role="menuitem"><svg width="15" height="15"><use href="#pencil"/></svg>名前と自己紹介文を設定する</button>
+            <button type="button" role="menuitem"><svg width="15" height="15"><use href="#pencil"/></svg>プロフィールを設定する</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="menu-gap"></div></div>
+  </div>
+</div>
+
+</body>
+</html>
