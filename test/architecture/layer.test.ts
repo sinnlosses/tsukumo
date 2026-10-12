@@ -312,20 +312,6 @@ describe("server/ の共有の箱", () => {
 // （ブラウザも読むので、`@orpc/server` と `node:` は読まない）。
 const ORPC_SERVER_FILE = /^(?:server\/[^/]+\/adapter\/.+|[^/]+)\.ts$/
 
-// `shared` が読んでよい外部パッケージ（相対でない specifier）。`remeda` は手続きより前から読んでいる。
-const SHARED_EXTERNAL_PACKAGES: ReadonlySet<string> = new Set(["zod", "@orpc/contract", "remeda"])
-
-// `shared` の下に置いてよいディレクトリ（直下のファイルのほかに）。`contract/` は機能ごとの契約の
-// 置き場、`lib/` と `utils/` は docs/architecture.md「`lib/` と `utils/` に置く基準」、残りは
-// shared の機能の一覧（`SHARED_FEATURES`。サーバの機能の一覧の部分集合であることは `satisfies` で
-// 検査してある）。
-const SHARED_DIRECTORIES: ReadonlySet<string> = new Set([
-  "contract",
-  "lib",
-  "utils",
-  ...SHARED_FEATURES,
-])
-
 // shared/ の直下に置いてよいファイル（docs/architecture.md「shared の機能」の「shared の直下」）。
 // どの機能にも属さないプロトコルの3つだけ。
 const SHARED_ROOT_FILES: ReadonlySet<string> = new Set(["frame.ts", "command.ts", "rpc.ts"])
@@ -342,28 +328,21 @@ describe("手続き（oRPC）を import する箇所", () => {
 
     expect(offenders).toEqual([])
   })
-
-  it("shared が読む外部パッケージは zod・@orpc/contract・remeda だけ", () => {
-    const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => layerOf(relPath) === "shared")
-      .flatMap((relPath) =>
-        importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
-          .filter((specifier) => !specifier.startsWith("."))
-          .filter((specifier) => !SHARED_EXTERNAL_PACKAGES.has(specifier))
-          .map((specifier) => `src/${relPath} → ${specifier}`),
-      )
-
-    expect(offenders).toEqual([])
-  })
-
-  it("shared の下のディレクトリは contract/・lib/・utils/ と shared の機能の一覧だけ", () => {
-    const directories = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => relPath.startsWith("shared/") && relPath.split("/").length > 2)
-      .map((relPath) => relPath.split("/")[1] ?? "")
-
-    expect([...new Set(directories)].filter((name) => !SHARED_DIRECTORIES.has(name))).toEqual([])
-  })
 })
+
+// `shared` が読んでよい外部パッケージ（相対でない specifier）。`remeda` は手続きより前から読んでいる。
+const SHARED_EXTERNAL_PACKAGES: ReadonlySet<string> = new Set(["zod", "@orpc/contract", "remeda"])
+
+// `shared` の下に置いてよいディレクトリ（直下のファイルのほかに）。`contract/` は機能ごとの契約の
+// 置き場、`lib/` と `utils/` は docs/architecture.md「`lib/` と `utils/` に置く基準」、残りは
+// shared の機能の一覧（`SHARED_FEATURES`。サーバの機能の一覧の部分集合であることは `satisfies` で
+// 検査してある）。
+const SHARED_DIRECTORIES: ReadonlySet<string> = new Set([
+  "contract",
+  "lib",
+  "utils",
+  ...SHARED_FEATURES,
+])
 
 describe("shared/ の機能どうしの import", () => {
   it("shared/ の直下のファイルは frame.ts・command.ts・rpc.ts だけ", () => {
@@ -375,6 +354,14 @@ describe("shared/ の機能どうしの import", () => {
     )
 
     expect(offenders).toEqual([])
+  })
+
+  it("shared の下のディレクトリは contract/・lib/・utils/ と shared の機能の一覧だけ", () => {
+    const directories = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => relPath.startsWith("shared/") && relPath.split("/").length > 2)
+      .map((relPath) => relPath.split("/")[1] ?? "")
+
+    expect([...new Set(directories)].filter((name) => !SHARED_DIRECTORIES.has(name))).toEqual([])
   })
 
   it("shared/<機能>/ の下にサブディレクトリが無い", () => {
@@ -409,6 +396,19 @@ describe("shared/ の機能どうしの import", () => {
       )
 
     expect(offenders.join("\n")).toBe("")
+  })
+
+  it("shared が読む外部パッケージは zod・@orpc/contract・remeda だけ", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => layerOf(relPath) === "shared")
+      .flatMap((relPath) =>
+        importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
+          .filter((specifier) => !specifier.startsWith("."))
+          .filter((specifier) => !SHARED_EXTERNAL_PACKAGES.has(specifier))
+          .map((specifier) => `src/${relPath} → ${specifier}`),
+      )
+
+    expect(offenders).toEqual([])
   })
 
   it("shared/utils/ のファイルは shared/utils/ の中と汎用のライブラリしか import しない", () => {
