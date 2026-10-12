@@ -5,7 +5,7 @@
 //
 // ここが持つのは「状態そのもの」と「イベント1件でどう変わるか」だけで、姿から導くだけのもの（メインビューに出す形・`/` 補完の候補など）は置かない。
 
-import { isDeepEqual, isPlainObject } from "remeda"
+import { isDeepEqual } from "remeda"
 
 import type { CharacterInfo, CharacterPackEntry } from "../character-pack/character.ts"
 import type { Expression } from "../character-pack/expression.ts"
@@ -23,12 +23,7 @@ import type { PendingAsk, StampedPendingAsk } from "../session-driver/pending-as
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { RateLimit } from "../session-driver/rate-limit.ts"
-import type {
-  TurnEnding,
-  TurnFailure,
-  TurnFailureCause,
-  TurnOutcome,
-} from "../session-driver/turn-failure.ts"
+import type { TurnEnding, TurnFailure } from "../session-driver/turn-failure.ts"
 import {
   applyUsageReviewEvent,
   type PreviousUsageReview,
@@ -48,6 +43,19 @@ import type {
   SessionEvent,
   SettingConfirmation,
 } from "./session-event.ts"
+import { NO_SETTING_MARK, originOf, withAcceptedMark, withConfirmedMark } from "./setting-mark.ts"
+import { finishTool, notifyBackgroundEnd, runsInBackground } from "./tool-record.ts"
+import {
+  beginAside,
+  beginTurn,
+  finishedTurnCountOf,
+  finishTurn,
+  INITIAL_SPEECH_EXPRESSION,
+  NO_TURN_BODIES,
+  recordTurnFailure,
+  resumeTurn,
+  turnEnding,
+} from "./turn-progress.ts"
 import { splitIntoTurns } from "./turn.ts"
 import { currentWorkPlan, nextWorkPlan, type WorkPlan, type WorkPlanEvent } from "./work-plan.ts"
 
@@ -253,14 +261,12 @@ export type SettingOrigin =
 
 export type SettingMarks = Readonly<Record<SettingName, SettingMark>>
 
-const NO_SETTING_MARK = { kind: "none" } satisfies SettingMark
-
 /**
  * ターンの進み具合。`request` で `running` になり、`turn-finished` / `session-ended` で `finished` になる（入力欄が送信と中断を切り替える判断材料）。
  *
  * - `idle`: まだ一度も依頼が無い
  * - `running`: 依頼を送って、まだ終わっていない。
- *   委譲した続きを claude が自分で始めたとき（`turn-resumed`）も `startedAt` は付け直さず、依頼を送った時刻のまま引き継ぐ（{@link resumeTurn}）
+ *   委譲した続きを claude が自分で始めたとき（`turn-resumed`）も `startedAt` は付け直さず、依頼を送った時刻のまま引き継ぐ（`resumeTurn`）
  * - `finished`: 終わった。`startedAt` は次の `request` まで持ち続ける（入力欄の経過時間表示が「所要」として出し続ける）。
  *   `ending` は失敗で終わったか（{@link TurnEnding}。入力欄の「失敗」の字と、立ち絵の「失敗でびくっ」の材料。`session-ended` で終わったときは `ended`）。
  *   ここが `finished` でも {@link SessionState.backgroundTasks} が残っていれば、入力欄は「経過」のまま数え続ける
@@ -280,8 +286,6 @@ export type TurnProgress =
  * `report` ツールの呼び出し、`utterance` はツールの外に書いた本文（空白だけのものは数えない）。
  */
 export type TurnBodies = { readonly report: boolean; readonly utterance: boolean }
-
-const NO_TURN_BODIES = { report: false, utterance: false } as const satisfies TurnBodies
 
 /** メインが `report` の引数を書いている途中か（{@link SessionState.reportDrafting}）。 */
 export type ReportDrafting =
@@ -494,7 +498,7 @@ export type SessionState = {
 
 export const INITIAL_SESSION_STATE: SessionState = {
   speeches: [],
-  speechExpression: "default",
+  speechExpression: INITIAL_SPEECH_EXPRESSION,
   speechCalledInTurn: false,
   bodiesInTurn: NO_TURN_BODIES,
   answeringAside: false,
@@ -802,8 +806,9 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return finishTool(
         settleReportDrafting(state, event.toolUseId),
         event.toolUseId,
-        event.content,
-        event.isError,
+        event.isError
+          ? { kind: "failed", output: clipText(event.content, MAX_TOOL_TEXT_LENGTH) }
+          : { kind: "succeeded" },
         at,
       )
     case "pending-changed":
@@ -860,7 +865,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return {
         ...state,
         speeches: [],
-        speechExpression: INITIAL_SESSION_STATE.speechExpression,
+        speechExpression: INITIAL_SPEECH_EXPRESSION,
         speechCalledInTurn: false,
         bodiesInTurn: NO_TURN_BODIES,
         answeringAside: false,
@@ -941,63 +946,6 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
 }
 
 /**
- * 切り替えを受け付けた印を付ける（見届ける前の印は新しい値と時刻で付け直し、`from` は最初の切り替えの前の値を引き継ぐ）。
- * 見届ける前に `from` へ戻したときは印を消す（戻したことが点の有無で分かる）。
- * `running` になる前は付けない（起こした直後の `effort-changed` で、起動のたびに点が出てしまう）。
- */
-function withAcceptedMark(
-  state: SessionState,
-  setting: SettingName,
-  value: string,
-  origin: SettingOrigin,
-  at: number,
-): SessionState {
-  if (state.session.kind !== "running") {
-    return state
-  }
-  const current = state.settingMarks[setting]
-  const from = current.kind === "accepted" ? current.from : origin
-  const reverted = from.kind === "known" && sameSettingValue(setting, from.value, value)
-  return {
-    ...state,
-    settingMarks: {
-      ...state.settingMarks,
-      [setting]: reverted ? NO_SETTING_MARK : { kind: "accepted", value, at, from },
-    },
-  }
-}
-
-function originOf(value: string | undefined): SettingOrigin {
-  return value === undefined ? { kind: "unknown" } : { kind: "known", value }
-}
-
-function withConfirmedMark(
-  state: SessionState,
-  confirmation: SettingConfirmation,
-  at: number,
-): SessionState {
-  const mark = state.settingMarks[confirmation.setting]
-  return mark.kind === "accepted" && settingValueMatches(confirmation, mark.value)
-    ? {
-        ...state,
-        settingMarks: {
-          ...state.settingMarks,
-          [confirmation.setting]: { kind: "confirmed", value: mark.value, at },
-        },
-      }
-    : state
-}
-
-function settingValueMatches(confirmation: SettingConfirmation, accepted: string): boolean {
-  return sameSettingValue(confirmation.setting, confirmation.value, accepted)
-}
-
-/** モデルだけ、`sonnet` のような別名がフルネームに含まれていれば同じ値とみなす。 */
-function sameSettingValue(setting: SettingName, left: string, right: string): boolean {
-  return left === right || (setting === "model" && (left.includes(right) || right.includes(left)))
-}
-
-/**
  * 委譲の返却か `report` 1件で積む記録。記録から畳んだ今の段取りを {@link nextWorkPlan} で畳み、変わったときだけその段取りを届いた時刻で1件積む。
  */
 function workPlanRecords(
@@ -1046,110 +994,6 @@ function mapRecordTimes(
   return record
 }
 
-/**
- * ターンの始まりを畳む（記録は動かさない）。`request` と「記録を持たないターンの始まり」
- * （`turn-started`）で共通の部分で、積むものがあるかどうかだけが違う。
- */
-function beginTurn(state: SessionState, at: number): SessionState {
-  return {
-    ...state,
-    // 送信した時点で吹き出しを空にする。
-    // 前のターンの一言が残ったままだと、次のターンに移ったことが画面から分からない。
-    speeches: [],
-    // 表情も既定へ戻す。次の `speak` が来るまではこのままで、ツールの実行状況では動かない。
-    speechExpression: INITIAL_SESSION_STATE.speechExpression,
-    partialUtterance: "",
-    reportDrafting: { kind: "idle" },
-    turn: { kind: "running", startedAt: at },
-    nextTurnId: state.nextTurnId + 1,
-    speechCalledInTurn: false,
-    bodiesInTurn: NO_TURN_BODIES,
-    answeringAside: false,
-    apiTrouble: { kind: "none" },
-  }
-}
-
-/**
- * 脇の話（`aside`）で始まる SDK ターン。
- * 吹き出し・表情・書きかけは空へ戻す（答えを吹き出しに出すため）。
- * 親のやり取りの続きなので、ターンの通し番号は進めず、始まった時刻は前のターンのものを引き継ぐ。
- */
-function beginAside(state: SessionState, at: number): SessionState {
-  return {
-    ...beginTurn(state, at),
-    turn: { kind: "running", startedAt: runningStartedAt(state.turn, at) },
-    nextTurnId: state.nextTurnId,
-    answeringAside: true,
-  }
-}
-
-/** 続きのターンが引き継ぐ始まりの時刻。まだ一度もターンが無ければ `at`。 */
-function runningStartedAt(turn: TurnProgress, at: number): number {
-  return turn.kind === "idle" ? at : turn.startedAt
-}
-
-/**
- * ターンの終わり方を、失敗だったかどうかに畳む（中断は失敗にしない）。
- * 失敗の理由が API のエラーなら、そのターンで届いた種類を足す
- * （`assistant` の `error`（`errored`）、無ければ最後の呼び直しの知らせ（`retrying`。呼び直しを使い切って止まったとき）、どちらも無ければ `unknown`）。
- */
-function turnEnding(outcome: TurnOutcome, trouble: ApiTrouble): TurnEnding {
-  return outcome.kind === "failed"
-    ? { kind: "failed", failure: toTurnFailure(outcome.cause, trouble) }
-    : { kind: "ended" }
-}
-
-function toTurnFailure(cause: TurnFailureCause, trouble: ApiTrouble): TurnFailure {
-  if (cause.kind !== "api-error") {
-    return cause
-  }
-  return { kind: "api-error", error: trouble.kind === "none" ? "unknown" : trouble.error }
-}
-
-/** 失敗で終わったなら、理由を記録の末尾に積む（{@link SessionRecord} の `turn-failure`）。 */
-function recordTurnFailure(state: SessionState, ending: TurnEnding): SessionState {
-  return ending.kind === "failed"
-    ? { ...state, records: [...state.records, { kind: "turn-failure", failure: ending.failure }] }
-    : state
-}
-
-/**
- * ターンの終わりを畳む（`turn-finished` と `session-ended` で共通）。
- * 始まっていないターンは終われないので、まだ一度も依頼が無ければ `idle` のまま返す（依頼より先に `session-ended` が届く経路がある。そこでは立ち絵の「完了の反応」も出さない）。
- * 終わったあとにもう一度届いたときは、起点を動かさずに終わった時刻だけ進める。
- */
-function finishTurn(turn: TurnProgress, at: number, ending: TurnEnding): TurnProgress {
-  if (turn.kind === "idle") {
-    return turn
-  }
-  return { kind: "finished", startedAt: turn.startedAt, finishedAt: at, ending }
-}
-
-/**
- * {@link SessionState.finishedTurnCount} を進める。
- * 進んでいるターンが終わったときだけ1つ増やす（始まっていないターンと、終わったあとにもう一度届いた終わりでは増やさない）。
- */
-function finishedTurnCountOf(state: SessionState): number {
-  return state.turn.kind === "running" ? state.finishedTurnCount + 1 : state.finishedTurnCount
-}
-
-/**
- * claude が自分で始めた続きのターン（`turn-resumed`）。
- * 進行中の印と SDK ターンごとの持ち物は {@link beginTurn} と同じに戻すが、吹き出しのセリフと表情は持ち越し、ターンの通し番号も進めない（同じやり取りの続き）。
- * 始まった時刻も付け直さない（入力欄の経過時間が、背景のタスクを挟んだ続きのターンでも依頼を送った時刻から数える）。
- */
-function resumeTurn(state: SessionState, at: number): SessionState {
-  return {
-    ...state,
-    partialUtterance: "",
-    reportDrafting: { kind: "idle" },
-    turn: { kind: "running", startedAt: runningStartedAt(state.turn, at) },
-    bodiesInTurn: NO_TURN_BODIES,
-    answeringAside: false,
-    apiTrouble: { kind: "none" },
-  }
-}
-
 /** 書きかけの本文を確定した記録に移す。空のときは何もしない（空の本文を積まない）。 */
 function settleUtterance(state: SessionState): SessionState {
   if (isBlankText(state.partialUtterance)) {
@@ -1180,71 +1024,6 @@ function stampPending(
     ...ask,
     askedAt: previous.find((waiting) => waiting.id === ask.id)?.askedAt ?? at,
   }))
-}
-
-/**
- * ツール1件の結果を記録に合わせる。対応する `tool_use` が見つからないときは何もしない（対応が取れない結果を作らない）。
- * `isError` が true のときは `lastToolFailureAt` に `at` を打つ。
- * 記録の `status` に入れるのは、失敗した出力を {@link MAX_TOOL_TEXT_LENGTH} 字で切ったものだけ（成功した本文は捨てる）。
- */
-function finishTool(
-  state: SessionState,
-  toolUseId: string,
-  content: string,
-  isError: boolean,
-  at: number,
-): SessionState {
-  const index = state.records.findIndex(
-    (record) => record.kind === "tool" && record.toolUseId === toolUseId,
-  )
-  const record = index === -1 ? undefined : state.records[index]
-  if (record === undefined || record.kind !== "tool") {
-    return state
-  }
-
-  return {
-    ...state,
-    records: [
-      ...state.records.slice(0, index),
-      {
-        ...record,
-        status: {
-          kind: "finished",
-          finishedAt: { kind: "stamped", at },
-          result: isError
-            ? { kind: "failed", output: clipText(content, MAX_TOOL_TEXT_LENGTH) }
-            : { kind: "succeeded" },
-        },
-      },
-      ...state.records.slice(index + 1),
-    ],
-    lastToolFailureAt: isError ? at : state.lastToolFailureAt,
-  }
-}
-
-/** `run_in_background` が true の Bash か（`input` は外来の値）。 */
-function runsInBackground(name: string, input: unknown): boolean {
-  return name === "Bash" && isPlainObject(input) && input["run_in_background"] === true
-}
-
-/** 同じ `toolUseId` の記録が完了の知らせを待っていれば `notified` にする。前景の記録・知らない id・2回目の知らせでは姿を変えない。 */
-function notifyBackgroundEnd(state: SessionState, toolUseId: string, at: number): SessionState {
-  const index = state.records.findIndex(
-    (record) => record.kind === "tool" && record.toolUseId === toolUseId,
-  )
-  const record = index === -1 ? undefined : state.records[index]
-  if (record === undefined || record.kind !== "tool" || record.backgroundEnd.kind !== "awaiting") {
-    return state
-  }
-
-  return {
-    ...state,
-    records: [
-      ...state.records.slice(0, index),
-      { ...record, backgroundEnd: { kind: "notified", at: { kind: "stamped", at } } },
-      ...state.records.slice(index + 1),
-    ],
-  }
 }
 
 /**
