@@ -8,6 +8,7 @@
 import { fromKeys, isPlainObject } from "remeda"
 
 import { optionalString } from "../utils/optional-string.ts"
+import { parseJson } from "../utils/parse-json.ts"
 import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
 import { isDiaryFontFileName } from "./character-diary-font.ts"
 import { EXPRESSIONS, type Expression, type RemovableExpression } from "./expression.ts"
@@ -80,14 +81,7 @@ export type CharacterDefinition = {
  * JSON として不正、またはトップレベルがオブジェクトでないときは undefined を返す（定義ファイルが無いのと同じ「立ち絵なし」扱いにするため）。
  */
 export function parseCharacterDefinition(content: string): CharacterDefinition | undefined {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(content)
-  } catch {
-    return undefined
-  }
-
-  return toCharacterDefinition(parsed)
+  return toCharacterDefinition(parseJson(content))
 }
 
 /**
@@ -273,14 +267,6 @@ function editedTopLevelDefinitionJson(
 
 function parsedDefinitionRecord(content: string | undefined): Readonly<Record<string, unknown>> {
   return asRecord(content === undefined ? undefined : parseJson(content))
-}
-
-function parseJson(content: string): unknown {
-  try {
-    return JSON.parse(content)
-  } catch {
-    return undefined
-  }
 }
 
 function asRecord(value: unknown): Readonly<Record<string, unknown>> {

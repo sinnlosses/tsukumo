@@ -19,6 +19,7 @@ import { execFile } from "node:child_process"
 
 import { isObjectType } from "remeda"
 
+import { parseJson } from "../../../shared/utils/parse-json.ts"
 import type { Host, HostResult, ShowViewResult } from "../core/host.ts"
 import { type OrcaTab, parseOrcaCreatedPageId, parseOrcaTabList } from "./orca-tab.ts"
 
@@ -140,15 +141,6 @@ async function findViewPageId(url: string): Promise<string | undefined> {
   const wanted = viewLocation(url)
   return parseOrcaTabList(parseJson(listed.stdout)).find((tab) => viewLocation(tab.url) === wanted)
     ?.pageId
-}
-
-/** JSON として読めなければ undefined にする。 */
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text) as unknown
-  } catch {
-    return undefined
-  }
 }
 
 /**

@@ -9,6 +9,8 @@
 import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
+import { parseJson } from "../../../shared/utils/parse-json.ts"
+
 /** 日付だけで積むファイルの名前（`YYYY-MM-DD.jsonl`）。これ以外のファイルは対象にしない。 */
 const DATE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
 
@@ -79,14 +81,5 @@ function readRawLines(path: string): readonly string[] {
       .filter((line) => line !== "")
   } catch {
     return []
-  }
-}
-
-/** JSON として読む（壊れていれば undefined）。 */
-function parseJson(line: string): unknown {
-  try {
-    return JSON.parse(line)
-  } catch {
-    return undefined
   }
 }

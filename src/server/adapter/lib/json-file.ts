@@ -7,6 +7,7 @@
 import { mkdirSync } from "node:fs"
 import { dirname } from "node:path"
 
+import { parseJson } from "../../../shared/utils/parse-json.ts"
 import { writeFileAtomic } from "./atomic-file.ts"
 import { readOptionalFile } from "./optional-file.ts"
 
@@ -17,11 +18,7 @@ export function readJsonFile(path: string): unknown {
     return undefined
   }
 
-  try {
-    return JSON.parse(content)
-  } catch {
-    return undefined
-  }
+  return parseJson(content)
 }
 
 /** JSON として丸ごと書く。ディレクトリが無ければ作る。失敗したその回は諦めて次へ進む。 */
