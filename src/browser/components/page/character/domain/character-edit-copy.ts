@@ -28,6 +28,9 @@ export const IMAGE_REJECTED_NOTE = {
     `${label}を差し替えられなかった。立ち絵は SVG・PNG・GIF の ${mebibytes(MAX_PORTRAIT_BYTES)} までの画像にしてほしい`,
 } as const
 
+/** 作るダイアログの立ち絵が上限を超えていたとき、選んだ時点で枠の下に出す一言。 */
+export const CREATE_PORTRAIT_TOO_LARGE_NOTE = `置けなかった。立ち絵は SVG・PNG・GIF の ${mebibytes(MAX_PORTRAIT_BYTES)} までの画像にしてほしい`
+
 /** 必須の1つ（`default`）のカードに添える札。どの表情が「いつもの顔」かを字で出す。 */
 export const DEFAULT_EXPRESSION_BADGE = "いつもの顔"
 

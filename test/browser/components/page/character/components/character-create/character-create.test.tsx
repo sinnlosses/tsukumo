@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { CharacterCreate } from "../../../../../../../src/browser/components/page/character/components/character-create/character-create.tsx"
 import type { CharacterPackEntry } from "../../../../../../../src/shared/character-pack/character.ts"
+import { MAX_PORTRAIT_BYTES } from "../../../../../../../src/shared/character-pack/portrait-image.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session/session-state.ts"
 import { characterPackEntry } from "../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
@@ -114,6 +115,26 @@ describe("CharacterCreate", () => {
 
     await pickPortrait()
     expect(submitButton().getAttribute("aria-disabled")).toBe("false")
+  })
+
+  it("2 MiB を超える立ち絵は置かず、上限を言う一言を枠の下に出す。選び直すと消える", async () => {
+    render(characterCreate(true, () => {}))
+    fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
+
+    fireEvent.change(screen.getByLabelText("いつもの顔の立ち絵を選ぶ"), {
+      target: {
+        files: [
+          new File([new Uint8Array(MAX_PORTRAIT_BYTES + 1)], "big.png", { type: "image/png" }),
+        ],
+      },
+    })
+
+    expect(await screen.findByText(/2 MiB までの画像/u)).toBeDefined()
+    expect(screen.getByLabelText("いつもの顔の立ち絵を選ぶ")).toBeDefined()
+    expect(submitButton().getAttribute("aria-disabled")).toBe("true")
+
+    await pickPortrait()
+    expect(screen.queryByText(/2 MiB までの画像/u)).toBeNull()
   })
 
   // id はディレクトリ名になるので、送る前に画面で止める（docs/architecture/character-pack.md「画面から作るときの置き場と受け取り方」）。

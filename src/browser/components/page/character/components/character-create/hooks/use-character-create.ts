@@ -18,12 +18,14 @@ import { useState } from "react"
 
 import { isCharacterPackName } from "../../../../../../../shared/character-pack/character.ts"
 import type { GeneratedCharacter } from "../../../../../../../shared/character-pack/generated-character.ts"
+import { MAX_PORTRAIT_BYTES } from "../../../../../../../shared/character-pack/portrait-image.ts"
 import { readAccentColor } from "../../../../../../domain/appearance-color.ts"
 import { selectPack } from "../../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../../stores/session.ts"
 import { readDataUrl } from "../../../../../../utils/data-url.ts"
 import { promptReadyDataUrl } from "../../../../../../utils/raster-image.ts"
 import type { AccentSwatchModel } from "../../../domain/accent-swatch-model.ts"
+import { CREATE_PORTRAIT_TOO_LARGE_NOTE } from "../../../domain/character-edit-copy.ts"
 
 const NAME_HINT = "画面や吹き出しに出る名前"
 const ID_HINT =
@@ -41,6 +43,7 @@ const PERSONA_HINT = "口調や性格を書く。空なら人格なしで作る"
 export type PortraitDropModel = {
   readonly image: { readonly kind: "blank" } | { readonly kind: "picked"; readonly url: string }
   readonly pickAriaLabel: string
+  readonly note: { readonly kind: "none" } | { readonly kind: "shown"; readonly text: string }
   readonly onPick: (input: HTMLInputElement) => void
   readonly onDropFile: (file: File) => void
 }
@@ -95,12 +98,18 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   const [accent, setAccent] = useState(readAccentColor)
   const [chatAccent, setChatAccent] = useState(readAccentColor)
   const [persona, setPersona] = useState("")
+  const [portraitTooLarge, setPortraitTooLarge] = useState(false)
   const [sending, setSending] = useState(false)
   const [failed, setFailed] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [generationFailed, setGenerationFailed] = useState(false)
 
   async function holdPortraitFile(file: File): Promise<void> {
+    if (file.size > MAX_PORTRAIT_BYTES) {
+      setPortraitTooLarge(true)
+      return
+    }
+    setPortraitTooLarge(false)
     const image = await readDataUrl(file)
     if (image !== undefined) {
       setPortraitImage(image)
@@ -198,6 +207,9 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
           portraitImage === undefined
             ? "いつもの顔の立ち絵を選ぶ"
             : "いつもの顔の立ち絵を差し替える",
+        note: portraitTooLarge
+          ? { kind: "shown", text: CREATE_PORTRAIT_TOO_LARGE_NOTE }
+          : { kind: "none" },
         onPick: (input) => {
           const file = input.files?.[0]
           if (file !== undefined) {

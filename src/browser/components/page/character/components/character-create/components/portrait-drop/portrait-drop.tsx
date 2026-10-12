@@ -18,6 +18,21 @@ const PORTRAIT_FILE_ACCEPT = ".svg,.png,.gif"
 export function PortraitDrop(props: { readonly drop: PortraitDropModel }): ReactElement {
   const { drop } = props
 
+  return (
+    <>
+      <PortraitCard drop={drop} />
+      {drop.note.kind === "shown" && (
+        <Text element="span" size="secondary" tone="state-ng" weight="inherit" className="">
+          {drop.note.text}
+        </Text>
+      )}
+    </>
+  )
+}
+
+function PortraitCard(props: { readonly drop: PortraitDropModel }): ReactElement {
+  const { drop } = props
+
   const onDragOver = (event: DragEvent): void => {
     event.preventDefault()
   }

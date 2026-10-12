@@ -516,6 +516,28 @@ describe("CharacterEdit", () => {
     expect(input.value).toBe("")
   })
 
+  it("顔の書き込みが断られたら、欄の下に受け付ける種類と 2 MiB の上限を言う一言を出す", async () => {
+    renderCharacterEdit(FIXTURE_CHARACTER, () => Promise.reject(new Error("断り")))
+
+    fireEvent.change(screen.getByLabelText("顔を差し替える"), {
+      target: { files: [new File(["png"], "face.png", { type: "image/png" })] },
+    })
+
+    expect(await screen.findByText(/顔は SVG・PNG・GIF の 2 MiB までの画像/u)).toBeDefined()
+  })
+
+  it("立ち絵の書き込みが断られたら、その表情のカードの下に上限を言う一言を出す", async () => {
+    renderCharacterEdit(FIXTURE_CHARACTER, () => Promise.reject(new Error("断り")))
+
+    fireEvent.change(screen.getByLabelText("作業中を差し替える"), {
+      target: { files: [new File(["png"], "thinking.png", { type: "image/png" })] },
+    })
+
+    expect(
+      await screen.findByText(/作業中を差し替えられなかった。.*2 MiB までの画像/u),
+    ).toBeDefined()
+  })
+
   it("キャラクターが届く前は何も出さない", () => {
     renderCharacterEdit(undefined)
 
