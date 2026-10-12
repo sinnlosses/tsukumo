@@ -20,7 +20,11 @@ import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
 } from "../../../../src/shared/session/session-state.ts"
-import { currentWorkPlan } from "../../../../src/shared/session/work-plan.ts"
+import {
+  currentWorkPlan,
+  type DelegatedRange,
+  parseWorkPlan,
+} from "../../../../src/shared/session/work-plan.ts"
 import { bundledFakeSession } from "../../../fixture/bundled-fake-session.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 
@@ -693,3 +697,38 @@ describe("同梱の疑似セッションの委譲の返却", () => {
     expect(currentWorkPlan(state.records)).toMatchObject({ current: 3 })
   })
 })
+
+describe("同梱の疑似セッションの段取り", () => {
+  it("全ての work-plan の件が、段取りの全欄を持ち workPlanSchema を通る", () => {
+    const session = bundledFakeSession()
+    const plans = [...session.opening, ...session.turns.flatMap((scene) => scene.steps)].flatMap(
+      ({ event }) => (event.kind === "work-plan" ? [event] : []),
+    )
+
+    expect(plans.length).toBeGreaterThan(0)
+    for (const { phases, current, finishedInGroup, phaseSummary, delegatedRange } of plans) {
+      const parsed = parseWorkPlan({
+        phases,
+        current,
+        finishedInGroup,
+        phaseSummary,
+        delegatedRange: toToolRange(delegatedRange),
+      })
+
+      expect(parsed).toEqual({ phases, current, finishedInGroup, phaseSummary, delegatedRange })
+    }
+  })
+})
+
+function toToolRange(range: DelegatedRange) {
+  switch (range.kind) {
+    case "none":
+      return undefined
+    case "pending":
+      return { first: range.first }
+    case "range":
+      return { first: range.first, count: range.count }
+    default:
+      throw new Error("delegatedRange が none・pending・range のどれでもない")
+  }
+}
