@@ -7,9 +7,9 @@ import process from "node:process"
 import type { CurrentCharacter } from "./current-character.ts"
 import { createRpcRouter } from "./router.ts"
 import {
-  createAchievementCache,
   readAchievement,
   readAchievementCalendar,
+  type AchievementCache,
 } from "./server/achievement/adapter/closed-issue.ts"
 import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import type { DiagnosticLog } from "./server/diagnostic/core/diagnostic.ts"
@@ -62,6 +62,8 @@ export type ViewDeliveryOptions = {
    * ここで読むのは要求が来たときだけで、配信を始める時点ではファイルに触らない。
    */
   readonly tokenUsageLog: TokenUsageLog
+  /** 成果の画面（1日ぶん・暦）が Beads の読みを覚える入れ物。セッションの側と同じ1つを渡す。 */
+  readonly achievementCache: AchievementCache
   /**
    * 依頼に添えた画像の原寸の棚（`/prompt-image/<id>` に配る原寸の出どころ）。
    * ここは引くだけで、置くのと捨てるのはセッションの側。
@@ -113,8 +115,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   let refreshTasks: () => Promise<void> = () => Promise.resolve()
   let readSessionDigest: (sessionId: string) => Promise<SessionDigest> = () =>
     Promise.resolve(UNAVAILABLE_SESSION_DIGEST)
-  // 成果の画面（1日ぶん・暦）が Beads の読みを覚える入れ物。両方の口が同じ1つを見る。
-  const achievementCache = createAchievementCache(options.cwd)
+  const { achievementCache } = options
 
   const rpcRouter = createRpcRouter({
     listRepositoryFiles: () => listRepositoryFiles(options.cwd),

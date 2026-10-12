@@ -5,7 +5,7 @@ import { basename, dirname } from "node:path"
 
 import type { CurrentCharacter } from "./current-character.ts"
 import { createSocketRouter } from "./router.ts"
-import { createAchievementCache } from "./server/achievement/adapter/closed-issue.ts"
+import type { AchievementCache } from "./server/achievement/adapter/closed-issue.ts"
 import { createServerClock } from "./server/adapter/local-time.ts"
 import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
@@ -42,6 +42,8 @@ export type SessionStartOptions = {
   /** fake driver の疑似セッション（`TSUKUMO_DRIVER=fake` のときだけ）。あるときは claude を起こさない。 */
   readonly fakeSession: FakeSession | undefined
   readonly tokenUsageLog: TokenUsageLog
+  /** 成果の画面が Beads の読みを覚える入れ物。ビューの配信が引くものと同じ1つを渡す。 */
+  readonly achievementCache: AchievementCache
   readonly diagnosticLog: DiagnosticLog
   /** 依頼に添えた画像の原寸の棚。ビューの配信が引く棚と同じ1つを渡す。 */
   readonly promptImageShelf: PromptImageShelf
@@ -74,9 +76,10 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     inheritedEnv: config.inheritedEnv,
     fakeSession: options.fakeSession,
     chatArchive: createChatArchive(),
-    achievementCache: createAchievementCache(options.cwd),
+    achievementCache: options.achievementCache,
   }
   // 成果の画面を初めて開く前に `bd list` を済ませておく（読みは覚えられ、同時の読みは束ねられる）。
+  // 待たない。起動の流れはこの読みを待たずに進む。
   void context.achievementCache.readBeads()
   // 最初のタブが繋がったら解ける約束。
   const firstViewer = Promise.withResolvers<void>()

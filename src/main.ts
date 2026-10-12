@@ -6,6 +6,7 @@
 import process from "node:process"
 
 import { createCurrentCharacter } from "./current-character.ts"
+import { createAchievementCache } from "./server/achievement/adapter/closed-issue.ts"
 import { createServerClock, todayLocalDateKey } from "./server/adapter/local-time.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import {
@@ -111,9 +112,13 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   const promptImageShelf = createPromptImageShelf()
   const reportImageShelf = createReportImageShelf()
   const host = createHost(config.host)
+  // 成果の画面が Beads の読みを覚える入れ物も1つで、ビューとセッションの両側が同じものを見る。
+  // 温めはセッション側が起こす（ビューが別の入れ物を持つと、温めた読みが画面に届かない）。
+  const achievementCache = createAchievementCache(launch.cwd)
 
   const view = await startViewDelivery({
     portResolution,
+    achievementCache,
     bundle: built.bundle,
     character,
     tokenUsageLog,
@@ -137,6 +142,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     character,
     fakeSession,
     tokenUsageLog,
+    achievementCache,
     diagnosticLog,
     promptImageShelf,
     reportImageShelf,

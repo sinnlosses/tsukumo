@@ -56,20 +56,12 @@ export type BeadsOutcome =
  * `cwd` はどの作業ツリーでもよい（`bd` が本体の作業ツリーの `.beads` を見つける）。
  */
 export function readBeadsIssues(cwd: string): Promise<BeadsOutcome> {
-  return new Promise((resolve) => {
-    execFile(
-      "bd",
-      ["list", "--json", "--all", "-n", "0", "--flat"],
-      { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
-      (error, stdout) => {
-        if (error === null) {
-          resolve(beadsOutcomeOf(stdout))
-        } else {
-          resolve({ kind: error.killed === true ? "timed-out" : "failed" })
-        }
-      },
-    )
-  })
+  return listBeadsIssues(cwd, ["--all"])
+}
+
+/** 閉じた課題だけを読む（成果は閉じた課題しか数えない）。打ち切りは {@link readBeadsIssues} と同じ。 */
+export function readClosedBeadsIssues(cwd: string): Promise<BeadsOutcome> {
+  return listBeadsIssues(cwd, ["--status", "closed"])
 }
 
 /** `.beads` が見つからなければ `missing`。あれば課題の変化の印（取れないときは `undefined`）。 */
@@ -185,6 +177,23 @@ export function beadsOutcomeOf(stdout: string): BeadsOutcome {
     return issue.success ? [beadsIssueOf(issue.data)] : []
   })
   return { kind: "issues", issues }
+}
+
+function listBeadsIssues(cwd: string, scope: readonly string[]): Promise<BeadsOutcome> {
+  return new Promise((resolve) => {
+    execFile(
+      "bd",
+      ["list", "--json", ...scope, "-n", "0", "--flat"],
+      { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
+      (error, stdout) => {
+        if (error === null) {
+          resolve(beadsOutcomeOf(stdout))
+        } else {
+          resolve({ kind: error.killed === true ? "timed-out" : "failed" })
+        }
+      },
+    )
+  })
 }
 
 const metadataSchema = z.record(z.string(), z.unknown())

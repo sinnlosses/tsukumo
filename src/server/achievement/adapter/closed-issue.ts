@@ -15,9 +15,9 @@ import type { DoneTask } from "../../../shared/repository/task-summary.ts"
 import { localDateEpochRange, localDateKey } from "../../adapter/local-time.ts"
 import { doneTasksOfBeadsIssues } from "../../repository/adapter/beads-task.ts"
 import {
-  readBeadsIssues,
   readBeadsStampOf,
   readBeadsWorkspace,
+  readClosedBeadsIssues,
 } from "../../repository/adapter/beads.ts"
 import { dailyAchievementOf } from "../core/daily-achievement.ts"
 
@@ -57,7 +57,7 @@ export function createAchievementCache(cwd: string): AchievementCache {
       if (stamp !== undefined && lastBeadsRead?.stamp === stamp) {
         return lastBeadsRead.read
       }
-      const read = readAllBeadsIssues(cwd)
+      const read = readClosedBeadsIssuesAsDone(cwd)
       // 読み始めた時点で覚え、同時に来た読みにも同じ `bd list` を渡す。
       const remembered = stamp === undefined ? undefined : { stamp, read }
       lastBeadsRead = remembered
@@ -136,9 +136,9 @@ export function readAchievementCalendar(
   )
 }
 
-/** `.beads` が見つかったあとに `bd list` で全件を読む。落ちても時間切れでも `unavailable`。 */
-async function readAllBeadsIssues(cwd: string): Promise<AchievementBeadsRead> {
-  const beads = await readBeadsIssues(cwd)
+/** `.beads` が見つかったあとに `bd list` で閉じた課題を読む。落ちても時間切れでも `unavailable`。 */
+async function readClosedBeadsIssuesAsDone(cwd: string): Promise<AchievementBeadsRead> {
+  const beads = await readClosedBeadsIssues(cwd)
   return beads.kind === "issues" ? doneTasksOfBeadsIssues(beads.issues) : "unavailable"
 }
 
