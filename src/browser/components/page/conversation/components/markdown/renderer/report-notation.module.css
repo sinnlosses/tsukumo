@@ -1316,6 +1316,36 @@
   background: var(--cell-status-bg, transparent);
   border: 1px solid color-mix(in srgb, currentcolor 35%, transparent);
 }
+/* 印つきの `graph` の下の凡例。色は図に当てるテーマの状態の色と同じ。 */
+.detail-block .report-graph-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 1rem;
+  margin-top: 0.25rem;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+.detail-block .report-graph-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.detail-block .report-graph-legend-swatch {
+  width: 1.25rem;
+  height: 0;
+  border-top: 3px solid var(--graph-legend-color);
+}
+.detail-block .report-graph-legend-added {
+  --graph-legend-color: var(--state-ok);
+}
+.detail-block .report-graph-legend-removed {
+  --graph-legend-color: var(--state-ng);
+  border-top-style: dashed;
+}
+.detail-block .report-graph-legend-changed {
+  --graph-legend-color: var(--state-warn);
+}
 /* 対応表（`report` の `matrix` の塊から tsukumo が組む）。交点は印だけで、状態は記号と色の両方で言う。 */
 .detail-block .report-matrix {
   margin: var(--report-block-gap) 0;

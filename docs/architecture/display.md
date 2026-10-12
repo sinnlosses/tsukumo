@@ -169,7 +169,14 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   `@`・`(`・`end` などを構文と読んで図が割れるため。書き手の名前はソースの ID に出ない）。
   描くのは `mermaid` の塊と同じ経路で、図の番号と題も同じ。節点が1つも無い `source` は入口で落とし、
   読めない行は `broken-graph` で差し戻す（何個目の塊の何行目かと正しい例の1行だけを返し、書き手の行は
-  写さない）。`mermaid` の塊に flowchart を書くと `unknown-mermaid` で差し戻し、`graph` の塊へ寄せる
+  写さない）。`mermaid` の塊に flowchart を書くと `unknown-mermaid` で差し戻し、`graph` の塊へ寄せる。
+  **構造の前後は `graph` の1枚に印を付けて見せる**（2026-10-12 利用者決定。`beforeAfter` の側から `graph` を外し、
+  図を2枚書く手間を無くした）。行頭の `+ `（足した）・`- `（消した）・`~ `（変えた）が印で、辺の行に付ければその辺に、
+  節点だけの行に付ければその節点に掛かる（辺の印は端の節点に掛けない）。印の無い行は変わらないもの。
+  色は書き手が指定せず、足した＝`--state-ok`・消した＝`--state-ng`（辺と枠は破線）・変えた＝`--state-warn` を
+  `classDef` / `linkStyle` に `var(--…)` で書き、`MermaidBlock` が描く前に hex へ解く。印が1つでもある図にだけ、
+  図の下に「足した / 消した / 変えた」の凡例を出す。前だけ・後だけに切り替える部品は付けない。
+  同じ節点に違う印を節点だけの行で付けると `broken-graph` で差し戻す（文面に何個目の塊の何行目かを添える）
 - **座標で見せる図は `svg` の塊で書く**（`docs/architecture/adr/0028-report-block-priority.md`「SVG（論点3）」）。
   `title`・`width`・`height`〔viewBox の大きさ〕・`shapes`〔`rect`・`line`・`text` の判別可能な合併〕・`fold` を受け、
   SVG の文字列は書き手が書かず、描く側が図形から組む。色は書けず、`chart` と同じくテーマの色を当てる。
@@ -262,8 +269,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   取り違えは差し戻さず、使われ方の記録の「塊の種類 × レポート数」で見る
 - **変更の前と後は `beforeAfter`（前後）の塊で左右に並べる**（2026-10-05。`title`・`before`・`after` を受け、
   側はちょうど2つ。3つ以上の並びは `table`）。側は `kind` で判別する合併型で、`image`〔`path`〕/ `code`〔`language`・
-  `source`。`diff` にせずその側の中身をそのまま書く〕/ `points`〔短い1行の並び。5つまで〕/ `graph`〔`graph` の塊と同じ `direction`・`source`。`title`・`fold` は持たず、
-  節点の無い `source` の検査と `broken-graph` も塊と共通〕/ `mermaid`〔`source` だけ。flowchart 以外の9種で、時間の順の前後に使う。
+  `source`。`diff` にせずその側の中身をそのまま書く〕/ `points`〔短い1行の並び。5つまで〕/ `mermaid`〔`source` だけ。flowchart 以外の9種で、時間の順の前後に使う。
   構文が割れれば `broken-mermaid`、9種の外は `unknown-mermaid` で差し戻し、位置は `mermaid` のソースの出現順で言う〕/ `svg`〔`svg` の塊の `width`・`height`・`shapes`〕のどれか。**左右で種類が
   違ってよい**（設定の文言 → 画面のような前後を書ける）。左に前・右に後の札を同じ幅で並べ、間に `aria-hidden` の
   「→」を置く。札の頭の見出しは tsukumo が「前」「後」の文字で付け（書き手は書かない。前は `ink-quiet`・後は `ink`

@@ -540,22 +540,16 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("beforeAfter の graph と mermaid の側は mermaid のフェンスにする", () => {
+  it("beforeAfter の mermaid の側は mermaid のフェンスにする", () => {
     const markdown = markdownOf({
       kind: "beforeAfter",
       title: "",
-      before: {
-        kind: "graph",
-        direction: "LR",
-        source: "(架空の始点) -> 架空の処理",
-      },
+      before: { kind: "mermaid", source: "stateDiagram-v2\n  [*] --> A\n" },
       after: { kind: "mermaid", source: "sequenceDiagram\n  A->>B: 架空\n" },
       fold: "",
     })
 
-    expect(markdown).toContain(
-      '```mermaid\nflowchart LR\n  n0("架空の始点")\n  n1["架空の処理"]\n  n0 --> n1\n```',
-    )
+    expect(markdown).toContain("```mermaid\nstateDiagram-v2\n  [*] --> A\n```")
     expect(markdown).toContain("```mermaid\nsequenceDiagram\n  A->>B: 架空\n```")
   })
 
@@ -713,6 +707,44 @@ describe("reportSectionsMarkdown", () => {
         "架空の図",
       ),
     )
+  })
+
+  it("graph の印を classDef / class / linkStyle にし、凡例は印のある図にだけ付ける", () => {
+    const marked = markdownOf({
+      kind: "graph",
+      title: "",
+      direction: "LR",
+      source: "+ A -> B\n- B -> C: 語\n~ D\n- E\nB -> D",
+      fold: "",
+    })
+
+    expect(marked).toContain(
+      [
+        "  classDef added stroke:var(--state-ok),stroke-width:3px",
+        "  classDef removed stroke:var(--state-ng),stroke-width:3px,stroke-dasharray:5 4",
+        "  classDef changed stroke:var(--state-warn),stroke-width:3px",
+        "  class n3 changed",
+        "  class n4 removed",
+        "  linkStyle 0 stroke:var(--state-ok),stroke-width:2px",
+        "  linkStyle 1 stroke:var(--state-ng),stroke-width:2px,stroke-dasharray:5 4",
+        "```",
+      ].join("\n"),
+    )
+    expect(marked).toContain('<div class="graph-legend">')
+    expect(marked).toContain("足した")
+    expect(marked).toContain("消した")
+    expect(marked).toContain("変えた")
+
+    const plain = markdownOf({
+      kind: "graph",
+      title: "",
+      direction: "LR",
+      source: "A -> B",
+      fold: "",
+    })
+    expect(plain).not.toContain("classDef")
+    expect(plain).not.toContain("linkStyle")
+    expect(plain).not.toContain("graph-legend")
   })
 
   it("svg は図形から viewBox つきの1行の SVG を組み、強調の枠・矢じり・ラベルの逃がしを含めて図の番号と題を付ける", () => {

@@ -10,15 +10,15 @@ describe("readGraphSource", () => {
       ),
     ).toEqual({
       nodes: [
-        { name: "架空の始点", shape: "round" },
-        { name: "架空の処理", shape: "box" },
-        { name: "架空の分岐?", shape: "decision" },
-        { name: "架空の終点", shape: "round" },
+        { name: "架空の始点", shape: "round", change: "unchanged" },
+        { name: "架空の処理", shape: "box", change: "unchanged" },
+        { name: "架空の分岐?", shape: "decision", change: "unchanged" },
+        { name: "架空の終点", shape: "round", change: "unchanged" },
       ],
       edges: [
-        { from: 0, to: 1, label: "渡す" },
-        { from: 1, to: 2, label: "" },
-        { from: 2, to: 3, label: "yes" },
+        { from: 0, to: 1, label: "渡す", change: "unchanged" },
+        { from: 1, to: 2, label: "", change: "unchanged" },
+        { from: 2, to: 3, label: "yes", change: "unchanged" },
       ],
       brokenLines: [],
     })
@@ -28,9 +28,9 @@ describe("readGraphSource", () => {
     const { nodes, edges } = readGraphSource("A -> {B}\nB -> C\n(C) -> A\nC -> {A}")
 
     expect(nodes).toEqual([
-      { name: "A", shape: "decision" },
-      { name: "B", shape: "decision" },
-      { name: "C", shape: "round" },
+      { name: "A", shape: "decision", change: "unchanged" },
+      { name: "B", shape: "decision", change: "unchanged" },
+      { name: "C", shape: "round", change: "unchanged" },
     ])
     expect(edges.map(({ from, to }) => [from, to])).toEqual([
       [0, 1],
@@ -44,7 +44,7 @@ describe("readGraphSource", () => {
     const { nodes, edges, brokenLines } = readGraphSource("\n  (孤立)  \n\n   \n  A  ->  B  ")
 
     expect(nodes.map(({ name }) => name)).toEqual(["孤立", "A", "B"])
-    expect(edges).toEqual([{ from: 1, to: 2, label: "" }])
+    expect(edges).toEqual([{ from: 1, to: 2, label: "", change: "unchanged" }])
     expect(brokenLines).toEqual([])
   })
 
@@ -55,7 +55,29 @@ describe("readGraphSource", () => {
 
     expect(reading.brokenLines).toEqual([3, 4, 5, 6, 7, 8])
     expect(reading.nodes.map(({ name }) => name)).toEqual(["A", "B"])
-    expect(reading.edges).toEqual([{ from: 0, to: 1, label: "" }])
+    expect(reading.edges).toEqual([{ from: 0, to: 1, label: "", change: "unchanged" }])
+  })
+
+  it("行頭の + / - / ~ を辺と節点だけの行の印として読み、辺の印は端の節点に掛けない", () => {
+    const { nodes, edges, brokenLines } = readGraphSource(
+      "+ A -> B\n- B -> C: 語\n~ D\n+ D\n+ E\nF -> G",
+    )
+
+    expect(edges.map(({ change }) => change)).toEqual(["added", "removed", "unchanged"])
+    expect(nodes.map(({ name, change }) => [name, change])).toEqual([
+      ["A", "unchanged"],
+      ["B", "unchanged"],
+      ["C", "unchanged"],
+      ["D", "changed"],
+      ["E", "added"],
+      ["F", "unchanged"],
+      ["G", "unchanged"],
+    ])
+    expect(brokenLines).toEqual([4])
+  })
+
+  it("同じ節点に違う印を付けた行と、印だけの行は読めない行にする", () => {
+    expect(readGraphSource("+ A\nB\n- A\n- \n+ B").brokenLines).toEqual([3, 4])
   })
 
   it("節点が1つも無い source は節点を持たない", () => {

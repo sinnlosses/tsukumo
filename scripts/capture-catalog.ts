@@ -157,6 +157,9 @@ const IMAGE_NOTES_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-image-note
 const BEFORE_AFTER_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-before-after_"]`
 const BEFORE_AFTER_CODE_SELECTOR = `${BEFORE_AFTER_SELECTOR} pre`
 const BEFORE_AFTER_POINTS_SELECTOR = `${BEFORE_AFTER_SELECTOR} ul`
+
+/** 印つきの `graph` を包む図（`report-before-after` 場面の構造の変更の節。凡例を持つ包み）。 */
+const GRAPH_LEGEND_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-captioned"]:has([class*="report-graph-legend_"])`
 /** 質問の選択肢の preview に書いた画像（`question-preview-image` 場面の横長の画像と、描かない画像の札）。 */
 const PREVIEW_IMAGE_SELECTOR = `${MAIN_REGION_SELECTOR} img[alt="架空の横長の画面"]`
 const PREVIEW_IMAGE_MISSING_SELECTOR = `${MAIN_REGION_SELECTOR} [role="img"][aria-label="架空の外部の画像"]`
@@ -498,6 +501,16 @@ const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "scroll", selector: BEFORE_AFTER_POINTS_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: BEFORE_AFTER_POINTS_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-graph-change",
+    scene: "report-before-after",
+    label: "印つきの graph（足した・消した・変えたの色と凡例）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [{ kind: "scroll", selector: GRAPH_LEGEND_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: GRAPH_LEGEND_SELECTOR, phase: "before-prepare" },
   },
   {
     name: "report-image-missing",

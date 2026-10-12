@@ -414,24 +414,13 @@ function svgFaultPositions(faults: readonly SvgFault[]): string {
     .join("、")
 }
 
-/** `block` は `graph` の塊（`beforeAfter` の側を含む）の出現順の1始まり、`line` は `source` の1始まりの行。 */
+/** `block` は `graph` の塊の出現順の1始まり、`line` は `source` の1始まりの行。 */
 export type GraphFault = { readonly block: number; readonly line: number }
 
 function graphFaultsInSections(sections: readonly ReportSection[]): readonly GraphFault[] {
   return sections
     .flatMap((section) => section.blocks)
-    .flatMap((block): readonly ReportGraph[] => {
-      switch (block.kind) {
-        case "graph":
-          return [block]
-        case "beforeAfter":
-          return [block.before, block.after].flatMap((side) =>
-            side.kind === "graph" ? [side] : [],
-          )
-        default:
-          return []
-      }
-    })
+    .flatMap((block): readonly ReportGraph[] => (block.kind === "graph" ? [block] : []))
     .flatMap((graph, graphIndex) =>
       readGraphSource(graph.source).brokenLines.map((line) => ({ block: graphIndex + 1, line })),
     )

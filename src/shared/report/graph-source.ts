@@ -2,9 +2,19 @@
 
 export type GraphNodeShape = "box" | "round" | "decision"
 
+export type GraphChange = "unchanged" | "added" | "removed" | "changed"
+
+const CHANGE_MARKS = [
+  ["+ ", "added"],
+  ["- ", "removed"],
+  ["~ ", "changed"],
+] as const satisfies readonly (readonly [string, GraphChange])[]
+
 export type GraphSourceNode = {
   readonly name: string
   readonly shape: GraphNodeShape
+  /** 節点だけの行に付いた印。辺の行の印は端の節点に掛けない。 */
+  readonly change: GraphChange
 }
 
 /** `from` と `to` は `nodes` の添字。 */
@@ -12,6 +22,7 @@ export type GraphSourceEdge = {
   readonly from: number
   readonly to: number
   readonly label: string
+  readonly change: GraphChange
 }
 
 export type GraphSourceReading = {
@@ -40,6 +51,7 @@ type ParsedLine =
       readonly kind: "item"
       readonly names: readonly ParsedName[]
       readonly label: string
+      readonly change: GraphChange
     }
 
 export function readGraphSource(source: string): GraphSourceReading {
@@ -50,9 +62,13 @@ export function readGraphSource(source: string): GraphSourceReading {
   const indexOf = (parsed: ParsedName): number => {
     const found = nodes.findIndex((node) => node.name === parsed.name)
     if (found < 0) {
-      nodes.push({ name: parsed.name, shape: parsed.shape })
+      nodes.push({ name: parsed.name, shape: parsed.shape, change: "unchanged" })
     } else if (parsed.wrapped && !wrappedNames.has(parsed.name)) {
-      nodes[found] = { name: parsed.name, shape: parsed.shape }
+      nodes[found] = {
+        name: parsed.name,
+        shape: parsed.shape,
+        change: nodes[found]?.change ?? "unchanged",
+      }
     }
     if (parsed.wrapped) {
       wrappedNames.add(parsed.name)
@@ -68,9 +84,23 @@ export function readGraphSource(source: string): GraphSourceReading {
         brokenLines.push(index + 1)
         return
       case "item": {
+        const [only] = line.names
+        if (line.names.length === 1 && only !== undefined && line.change !== "unchanged") {
+          const earlier = nodes.find((node) => node.name === only.name)?.change ?? "unchanged"
+          if (earlier !== "unchanged" && earlier !== line.change) {
+            brokenLines.push(index + 1)
+            return
+          }
+          const at = indexOf(only)
+          const node = nodes[at]
+          if (node !== undefined && node.change === "unchanged") {
+            nodes[at] = { ...node, change: line.change }
+          }
+          return
+        }
         const [from, to] = line.names.map(indexOf)
         if (from !== undefined && to !== undefined) {
-          edges.push({ from, to, label: line.label })
+          edges.push({ from, to, label: line.label, change: line.change })
         }
       }
     }
@@ -79,14 +109,19 @@ export function readGraphSource(source: string): GraphSourceReading {
 }
 
 function parseLine(text: string): ParsedLine {
-  const line = text.trim()
-  if (line === "") {
+  const trimmed = text.trim()
+  if (trimmed === "") {
     return { kind: "blank" }
   }
+  const mark = CHANGE_MARKS.find(([prefix]) => trimmed.startsWith(prefix))
+  const change = mark?.[1] ?? "unchanged"
+  const line = mark === undefined ? trimmed : trimmed.slice(mark[0].length).trim()
   const parts = line.split(ARROW)
   if (parts.length === 1) {
     const name = parseName(line)
-    return name === undefined ? { kind: "broken" } : { kind: "item", names: [name], label: "" }
+    return name === undefined
+      ? { kind: "broken" }
+      : { kind: "item", names: [name], label: "", change }
   }
   const [left, right] = parts
   if (parts.length !== 2 || left === undefined || right === undefined) {
@@ -100,7 +135,7 @@ function parseLine(text: string): ParsedLine {
   if (from === undefined || to === undefined || label.includes(":")) {
     return { kind: "broken" }
   }
-  return { kind: "item", names: [from, to], label }
+  return { kind: "item", names: [from, to], label, change }
 }
 
 function parseName(text: string): ParsedName | undefined {

@@ -74,7 +74,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
         }
         initializeFor(themeVariables)
         const id = newDiagramId()
-        const { svg, bindFunctions } = await mermaid.render(id, code)
+        const { svg, bindFunctions } = await mermaid.render(id, resolveTokens(code, themeNode))
         const diagram = { svg, id } satisfies DrawnDiagram
         drawn.set(code, diagram)
         const node = nodeRef.current
@@ -148,6 +148,13 @@ function resolveThemeVariables(node: HTMLElement): Readonly<Record<string, strin
     noteTextColor: hex("--ink"),
     fontFamily: getComputedStyle(node).fontFamily,
   }
+}
+
+/**
+ * ソースの中の `var(--…)` を hex にする。mermaid の `classDef` / `linkStyle` は色の値を hex でしか受け取れない。
+ */
+function resolveTokens(code: string, node: HTMLElement): string {
+  return code.replace(/var\((--[\w-]+)\)/g, (_, property: string) => resolveHex(node, property))
 }
 
 function syncTheme(themeVariables: Readonly<Record<string, string | boolean>>): void {

@@ -120,7 +120,7 @@ const graphFields = {
     .string()
     .refine((value) => readGraphSource(value).nodes.length > 0, "source に節点が1つも無い")
     .describe(
-      "1行1辺。`A -> B: 語`（`: 語` は辺のラベル。省ける）。`(始点)` は始点・終点、`{分岐?}` は分岐、包みが無ければ処理。同じ名前は同じ節点（包みは最初の1回だけでよい）。`->` の無い行は節点だけの宣言",
+      "1行1辺。`A -> B: 語`（`: 語` は辺のラベル。省ける）。`(始点)` は始点・終点、`{分岐?}` は分岐、包みが無ければ処理。同じ名前は同じ節点（包みは最初の1回だけでよい）。`->` の無い行は節点だけの宣言。変更の前後は行頭に `+ `（足した）・`- `（消した）・`~ `（変えた）を付ける（辺の行は辺に、節点だけの行は節点に掛かる。同じ節点に違う印は付けない）",
     ),
 }
 
@@ -157,7 +157,6 @@ const svgFields = {
 
 const beforeAfterSideSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("svg"), ...svgFields }),
-  z.object({ kind: z.literal("graph"), ...graphFields }),
   z.object({
     kind: z.literal("mermaid"),
     source: z.string().describe("flowchart 以外の図のソース"),
@@ -189,7 +188,7 @@ const beforeAfterBlockSchema = z
     fold,
   })
   .describe(
-    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・構造の前後）。1行の設定や文言の変更には使わない（1つの値の前後は table のセルの from / to）。ファイル名の箇条書きで変更を説明しない。側ごとに image / code / points / graph / mermaid / svg のどれか（左右で違ってよい）。構造・呼び出しの前後は graph の側、時間の順の前後は mermaid の側。" +
+    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・構造の前後）。1行の設定や文言の変更には使わない（1つの値の前後は table のセルの from / to）。ファイル名の箇条書きで変更を説明しない。側ごとに image / code / points / mermaid / svg のどれか（左右で違ってよい）。構造の前後は graph の `+` / `-` / `~` の印、時間の順の前後は mermaid の側。" +
       "向きの無い2つは compare、数の前後は stats の before、行ごとの差分は code の diff、寸法の前後は dimension の before",
   )
 

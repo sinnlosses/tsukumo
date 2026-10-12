@@ -127,3 +127,18 @@ describe("MermaidBlock の描いた SVG の使い回し", () => {
     expect(renderDiagram).toHaveBeenCalledTimes(2)
   })
 })
+
+// 初期化はモジュールの中でテストをまたぐので、初期化の回数を数えるテストより後ろに置く。
+describe("MermaidBlock のソースの色のトークン", () => {
+  it("var(--…) を hex に置き換えてから描く", async () => {
+    render(<MermaidBlock code={"graph T1\n  classDef a stroke:var(--state-ok),fill:var(--ink)"} />)
+    await finishLoading()
+    await waitFor(() => {
+      expect(renderDiagram).toHaveBeenCalledTimes(1)
+    })
+
+    expect(renderDiagram.mock.calls[0]?.[1]).toBe(
+      "graph T1\n  classDef a stroke:#000000,fill:#000000",
+    )
+  })
+})

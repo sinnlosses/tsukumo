@@ -67,7 +67,7 @@ describe("parseReportSections", () => {
     }
   })
 
-  it("beforeAfter の側に graph と mermaid を置け、graph の側は節点の無い source を落とす", () => {
+  it("beforeAfter の側に mermaid を置け、graph の側は受けない", () => {
     const graph = {
       kind: "graph",
       direction: "LR",
@@ -84,20 +84,11 @@ describe("parseReportSections", () => {
     })
     const mermaid = { kind: "mermaid", source: "sequenceDiagram\n  A->>B: 架空" }
 
-    expect(parse(beforeAfter(graph, mermaid))).toMatchObject({
-      sections: [
-        {
-          blocks: [
-            {
-              before: graph,
-              after: mermaid,
-            },
-          ],
-        },
-      ],
+    expect(parse(beforeAfter(mermaid, mermaid))).toMatchObject({
+      sections: [{ blocks: [{ before: mermaid, after: mermaid }] }],
       unknownBlockCount: 0,
     })
-    expect(parse(beforeAfter({ ...graph, source: " \n " }, mermaid))).toEqual({
+    expect(parse(beforeAfter(graph, mermaid))).toEqual({
       sections: [],
       unknownBlockCount: 0,
     })

@@ -6,7 +6,7 @@
 
 import { countBy } from "remeda"
 
-import { readGraphSource } from "./graph-source.ts"
+import { readGraphSource, type GraphChange } from "./graph-source.ts"
 import {
   REPORT_CELL_STATUSES,
   REPORT_MATRIX_STATUSES,
@@ -237,7 +237,10 @@ function blockMarkdown(
         kind: "figure",
         ordinal,
         title: block.title,
-        body: fencedMarkdown("mermaid", graphSource(block)),
+        body: joinParts([
+          fencedMarkdown("mermaid", graphSource(block)),
+          graphLegendMarkdown(block),
+        ]),
         bodyFormat: "markdown",
         fit: false,
       })
@@ -481,8 +484,6 @@ function beforeAfterContentMarkdown(
       return fencedMarkdown(content.language, content.source)
     case "points":
       return `<ul>${content.points.map((point) => `<li>${htmlInlineWithCode(point)}</li>`).join("")}</ul>`
-    case "graph":
-      return fencedMarkdown("mermaid", graphSource(content))
     case "mermaid":
       return fencedMarkdown("mermaid", content.source)
     case "svg":
@@ -987,7 +988,56 @@ function graphSource(block: ReportGraph): string {
     const arrow = edge.label === "" ? "-->" : `-->|${quoted(edge.label)}|`
     return `  ${mermaidId(edge.from)} ${arrow} ${mermaidId(edge.to)}`
   })
-  return [`flowchart ${block.direction}`, ...nodeLines, ...edgeLines].join("\n")
+  const changes = new Set([...nodes, ...edges].map(({ change }) => change))
+  const classDefLines = GRAPH_CHANGES.filter(({ change }) => changes.has(change)).map(
+    ({ change, color, dashed }) => `  classDef ${change} ${graphStroke(color, dashed, 3)}`,
+  )
+  const classLines = nodes.flatMap((node, index) =>
+    node.change === "unchanged" ? [] : [`  class ${mermaidId(index)} ${node.change}`],
+  )
+  const linkStyleLines = edges.flatMap((edge, index) => {
+    const style = GRAPH_CHANGES.find(({ change }) => change === edge.change)
+    return style === undefined
+      ? []
+      : [`  linkStyle ${String(index)} ${graphStroke(style.color, style.dashed, 2)}`]
+  })
+  return [
+    `flowchart ${block.direction}`,
+    ...nodeLines,
+    ...edgeLines,
+    ...classDefLines,
+    ...classLines,
+    ...linkStyleLines,
+  ].join("\n")
+}
+
+/** 印の色はテーマのトークンで書き、`var(--…)` のまま渡す（hex への解決は `MermaidBlock`）。 */
+const GRAPH_CHANGES = [
+  { change: "added", color: "--state-ok", label: "足した", dashed: false },
+  { change: "removed", color: "--state-ng", label: "消した", dashed: true },
+  { change: "changed", color: "--state-warn", label: "変えた", dashed: false },
+] as const satisfies readonly {
+  readonly change: GraphChange
+  readonly color: string
+  readonly label: string
+  readonly dashed: boolean
+}[]
+
+function graphStroke(color: string, dashed: boolean, width: number): string {
+  const dash = dashed ? ",stroke-dasharray:5 4" : ""
+  return `stroke:var(${color}),stroke-width:${String(width)}px${dash}`
+}
+
+function graphLegendMarkdown(block: ReportGraph): string {
+  const { nodes, edges } = readGraphSource(block.source)
+  if ([...nodes, ...edges].every(({ change }) => change === "unchanged")) {
+    return ""
+  }
+  const items = GRAPH_CHANGES.map(
+    ({ change, label }) =>
+      `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-${change}" aria-hidden="true"></span>${label}</span>`,
+  ).join("")
+  return `<div class="graph-legend">${items}</div>`
 }
 
 /**

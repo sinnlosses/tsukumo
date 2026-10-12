@@ -345,7 +345,7 @@ describe("reportViolations", () => {
       expect(kinds(draft([graph]))).toEqual([])
     })
 
-    it("beforeAfter の mermaid の側も数え、graph の側は違反にしない", () => {
+    it("beforeAfter の mermaid の側も数える", () => {
       const side = (source: string): Side => ({ kind: "mermaid", source })
       const beforeAfter = (before: Side, after: Side): ReportBlock => ({
         kind: "beforeAfter",
@@ -354,18 +354,14 @@ describe("reportViolations", () => {
         after,
         fold: "",
       })
-      const graphSide: Side = {
-        kind: "graph",
-        direction: "LR",
-        source: "架空",
-      }
       expect(kinds(draft([beforeAfter(side("sequenceDiagram"), side("stateDiagram-v2"))]))).toEqual(
         [],
       )
       expect(
-        reportViolations(draft([beforeAfter(side("flowchart LR\n  a --> b"), graphSide)])),
+        reportViolations(
+          draft([beforeAfter(side("flowchart LR\n  a --> b"), side("sequenceDiagram"))]),
+        ),
       ).toEqual([{ kind: "unknown-mermaid", count: 1 }])
-      expect(kinds(draft([beforeAfter(graphSide, graphSide)]))).toEqual([])
     })
 
     it("graph の source に読めない行があれば broken-graph にし、位置だけで書き手の行は持たない", () => {
@@ -376,32 +372,27 @@ describe("reportViolations", () => {
         source,
         fold: "",
       })
-      const side: Side = { kind: "graph", direction: "LR", source: "秘密の一行 - 秘密の二行" }
       const violations = reportViolations(
         draft([
           graph("A -> B: 語"),
           graph("A -> B\n\nA - B"),
-          {
-            kind: "beforeAfter",
-            title: "",
-            before: side,
-            after: { kind: "graph", direction: "LR", source: "A -> B" },
-            fold: "",
-          },
+          graph("秘密の一行 - 秘密の二行"),
+          graph("+ A\n- A"),
         ]),
       )
       expect(violations).toEqual([
         {
           kind: "broken-graph",
-          count: 2,
+          count: 3,
           faults: [
             { block: 2, line: 3 },
             { block: 3, line: 1 },
+            { block: 4, line: 2 },
           ],
         },
       ])
       const text = reportRejectionText(violations)
-      expect(text).toContain("2個目の 3 行目、3個目の 1 行目")
+      expect(text).toContain("2個目の 3 行目、3個目の 1 行目、4個目の 2 行目")
       expect(text).toContain("A -> B: 語")
       expect(text).not.toContain("秘密")
     })
