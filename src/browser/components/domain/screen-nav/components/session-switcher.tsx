@@ -181,60 +181,66 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
                         onDoubleClick={() => switcher.onSwitch(row.sessionId)}
                       >
                         <span className={styles["session-switcher-row-id"]}>{row.shortId}</span>
-                        <Text
-                          element="span"
-                          size="secondary"
-                          tone="inherit"
-                          weight="inherit"
-                          className={styles["session-switcher-row-heading"]}
-                        >
-                          {row.heading}
-                        </Text>
-                        <span
-                          className={styles["session-switcher-row-worktree-title"]}
-                          title={row.worktree}
-                        >
-                          <Text
-                            element="span"
-                            size="label"
-                            tone="ink-quiet"
-                            weight="inherit"
-                            className={styles["session-switcher-row-worktree"]}
-                          >
-                            {row.worktree}
-                          </Text>
+                        <span className={styles["session-switcher-row-body"]}>
+                          <span className={styles["session-switcher-row-line"]}>
+                            <Text
+                              element="span"
+                              size="secondary"
+                              tone="inherit"
+                              weight="inherit"
+                              className={styles["session-switcher-row-heading"]}
+                            >
+                              {row.heading}
+                            </Text>
+                            {row.current && (
+                              <Text
+                                element="span"
+                                size="label"
+                                tone="accent"
+                                weight="bold"
+                                className={styles["session-switcher-row-current"]}
+                              >
+                                {CURRENT_MARK}
+                              </Text>
+                            )}
+                            {row.occupiedElsewhere && (
+                              <Text
+                                element="span"
+                                size="label"
+                                tone="ink-quiet"
+                                weight="inherit"
+                                className={styles["session-switcher-row-current"]}
+                              >
+                                {OCCUPIED_MARK}
+                              </Text>
+                            )}
+                          </span>
+                          <span className={styles["session-switcher-row-line"]}>
+                            <span
+                              className={styles["session-switcher-row-worktree-title"]}
+                              title={row.worktree}
+                            >
+                              <Text
+                                element="span"
+                                size="label"
+                                tone="ink-quiet"
+                                weight="inherit"
+                                className={styles["session-switcher-row-worktree"]}
+                              >
+                                {row.worktree}
+                              </Text>
+                            </span>
+                            <Text
+                              element="span"
+                              size="label"
+                              tone="ink-quiet"
+                              weight="inherit"
+                              className={styles["session-switcher-row-time"]}
+                            >
+                              {row.timeLabel}
+                            </Text>
+                          </span>
                         </span>
-                        {row.current && (
-                          <Text
-                            element="span"
-                            size="label"
-                            tone="accent"
-                            weight="bold"
-                            className={styles["session-switcher-row-current"]}
-                          >
-                            {CURRENT_MARK}
-                          </Text>
-                        )}
-                        {row.occupiedElsewhere && (
-                          <Text
-                            element="span"
-                            size="label"
-                            tone="ink-quiet"
-                            weight="inherit"
-                            className={styles["session-switcher-row-current"]}
-                          >
-                            {OCCUPIED_MARK}
-                          </Text>
-                        )}
-                        <Text
-                          element="span"
-                          size="label"
-                          tone="ink-quiet"
-                          weight="inherit"
-                          className={styles["session-switcher-row-time"]}
-                        >
-                          {row.timeLabel}
-                        </Text>
                       </div>
                     ))}
                   </div>
