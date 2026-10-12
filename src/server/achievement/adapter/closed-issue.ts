@@ -32,13 +32,26 @@ export type AchievementCache = {
   readonly readBeads: () => Promise<AchievementBeadsRead>
 }
 
-/** `cwd` の {@link AchievementCache} を1つ作る。 */
+/**
+ * `cwd` の {@link AchievementCache} を1つ作る。
+ * 印が変わっても、前に読めた結果があればそれを先に返し、`bd list`（1秒ほどかかる）は裏で読み直す。
+ * 裏の読みが終われば次の読みから新しい結果が出る。最初の1回だけは読み終わるまで待つ。
+ */
 export function createAchievementCache(cwd: string): AchievementCache {
   let lastBeadsRead:
     | { readonly stamp: string; readonly read: Promise<AchievementBeadsRead> }
     | undefined = undefined
+  let lastDone: readonly DoneTask[] | undefined = undefined
   // `.beads` の場所は見つかった1回だけ `bd where` で調べて覚える（呼ぶたびに調べると1秒ほどかかる）。
   let beadsDir: string | undefined = undefined
+
+  async function readAndRemember(): Promise<AchievementBeadsRead> {
+    const result = await readClosedBeadsIssuesAsDone(cwd)
+    if (typeof result !== "string") {
+      lastDone = result
+    }
+    return result
+  }
 
   return {
     readBeads: async () => {
@@ -55,17 +68,23 @@ export function createAchievementCache(cwd: string): AchievementCache {
       // 印は `bd list` の前に読む（読んでいるあいだの更新を次の読みで拾うため）。
       const stamp = await readBeadsStampOf(beadsDir)
       if (stamp !== undefined && lastBeadsRead?.stamp === stamp) {
-        return lastBeadsRead.read
+        return lastDone ?? lastBeadsRead.read
       }
-      const read = readClosedBeadsIssuesAsDone(cwd)
+      const read = readAndRemember()
       // 読み始めた時点で覚え、同時に来た読みにも同じ `bd list` を渡す。
       const remembered = stamp === undefined ? undefined : { stamp, read }
       lastBeadsRead = remembered
-      const result = await read
-      if (typeof result === "string" && lastBeadsRead === remembered) {
-        lastBeadsRead = undefined
+      const forget = (): void => {
+        if (lastBeadsRead === remembered) {
+          lastBeadsRead = undefined
+        }
       }
-      return result
+      void read.then((result) => {
+        if (typeof result === "string") {
+          forget()
+        }
+      })
+      return stamp === undefined ? read : (lastDone ?? read)
     },
   }
 }

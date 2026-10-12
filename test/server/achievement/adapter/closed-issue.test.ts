@@ -13,7 +13,11 @@ import {
 import type * as GitAdapter from "../../../../src/server/repository/adapter/git.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
-import { initBeadsWithIssuesOutsideGit, useBeadsHome } from "../../../fixture/beads-repository.ts"
+import {
+  bd,
+  initBeadsWithIssuesOutsideGit,
+  useBeadsHome,
+} from "../../../fixture/beads-repository.ts"
 import { initBeadsIssues, initRepository } from "../../../fixture/task-summary-repository.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -98,6 +102,24 @@ describe("readAchievement", { timeout: 60_000 }, () => {
       graduations: [{ id: "t-002", registeredOn: "2026-09-01", days: 22 }],
       milestones: [],
     })
+  })
+
+  it("課題が変わったあとの読みは前の結果を先に返し、裏で読み直した結果が次の読みから出る", async () => {
+    const repository = await initBeadsIssues(root(), [
+      issue("t-001", "先に済んだ", ["2026-09-20", "10:00"], ["2026-09-23", "10:00"]),
+      issue("t-002", "あとで閉じる", ["2026-09-20", "10:00"], "open"),
+    ])
+    const cache = createAchievementCache(repository)
+    // `bd close` は閉じた時刻を今にするので、数える日も今日にする。
+    const today = Temporal.Now.plainDateISO().toString()
+    const doneCount = async (): Promise<number> =>
+      known(await readAchievement(today, today, cache)).doneTasks.length
+    expect(await doneCount()).toBe(0)
+
+    await bd(repository, join(root(), "home"), "close", "t-002")
+
+    expect(await doneCount()).toBe(0)
+    await vi.waitFor(async () => expect(await doneCount()).toBe(1), { timeout: 30_000 })
   })
 
   it("タスクの節目: 通算250件目（仮の刻み）に届いたタスクを返す", async () => {
