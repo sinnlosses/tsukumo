@@ -7,8 +7,7 @@ import { formatStrayTaskMention } from "../scripts/task-mention.ts"
 
 const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
 
-// CLAUDE.md「コード・ドキュメントにタスク番号（`T-` + 3桁、または GitHub の Issue 番号 `GH-<n>`）を
-// 書かない」を、`src/` / `test/` /
+// `.claude/rules/comments.md`「コード・ドキュメントにタスク番号」の規則を、`src/` / `test/` /
 // `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のコメント・テスト名・本文で保つ
 // （拾う形・許す範囲は `findTaskMentions` のコメント）。
 describe("タスク番号の書き込み", () => {

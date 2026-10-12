@@ -84,7 +84,8 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 
 ## コーディング規約・レビュー方針
 
-**ルールの一覧はここが正典。** 理由・例外は `docs/coding-standards.md`（通読せず、冒頭の
+**コードの書き方の規則は `.claude/rules/` が正典**（`typescript.md`・`comments.md`・`react.md`。
+触るファイルに合うものが自動で届く）。理由・例外は `docs/coding-standards.md`（通読せず、冒頭の
 「節の索引」で節を1つ特定して読む）。
 
 **IMPORTANT**: **SDK のイベントと transcript には利用者と Claude の生の会話が入っている。**
@@ -92,37 +93,8 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 （`docs/coding-standards.md`「会話内容の扱い」）。この規約は他のどの規約よりも優先する。
 
 - 作業ツリーのファイルは Edit / Write で書く。Bash の `sed -i`・`perl -i`・リダイレクト・`tee`・Python / node のコードでの書き込みは hook が拒む（`docs/workflow.md`）
-- 関数はファイル内で「外から使うもの → その内部で使うもの」の順。テストのためだけに公開しない
-- 変数・コレクションはイミュータブル。**引数の入れ物が呼び出し先で書き変わる契約にしない**
-- 型を迂回するキャストを書かない。外部由来の値は境界で検証し、変換を1箇所に封じ込める
-- 定数・テーブル・設定の定義は型注釈ではなく **`satisfies`** で検査する
-- **常駐プロセスは描画1回の失敗で落ちない。** 即時終了は起動時の前提不足だけ。描画ループに
-  `try`/`catch` を散らさない
-- 環境変数・パスの読み取りは1モジュールに集約し、モジュールのトップレベルで触らない
-- コメントは**無いと明らかに不都合を招くことだけ**（ファイルの責務・書き直すと壊れる制約・外部との対応）。
-  「〜の方針でこうした」・正典の要約・規約への参照は書かない。経緯・採らなかった案は正典へ
-- コメントから別の場所は**シンボルの名前と正典の「句」で指し**、呼ぶ側・使う側を並べない
-  （`docs/coding-standards.md`「別の場所を指すとき」）
-- コメントに Markdown の記法（`**強調**` など）を使わず、意味の切れ目で行を改める（決まった幅で文を割らない）
-- **`| undefined` は5つの場所でだけ**書き、`?:` は使わない。2つ以上の `| undefined` が1つの状態なら
-  判別可能な合併型。「無い」は入口で畳む（`docs/coding-standards.md`「「無いかもしれない」値」）
-- **`null` を自前の型・戻り値・`shared` に出さない**（外来の `null` は境界で `undefined` に畳む）
-- **`ReactElement` を返す関数は `function` で書く**（`const` は `memo` で包むときだけ）。
-  `memo` / `useCallback` / `useMemo` は手で書かず、メモ化は React Compiler に任せる
-  （残してよい理由は `docs/coding-standards.md`「React」節「手でメモ化しない」の2つだけ）
-- **条件付きの描画は `{条件 && <部品 />}` で書き、`? … : null` にしない。** 左辺は `boolean` に限る
-- **`useEffect` は「React の外と同期する」4類型だけ。** 依存配列を手で間引かない
-  （代替は `docs/coding-standards.md`「React」節）
-- 可読性が良くなる場合は **remeda** を優先する
-- **2つ以上の class 名をつなぐときは clsx を使う**（`docs/coding-standards.md`「class 名は clsx で組む」）
-- コード・ドキュメントにタスク番号（`T-` + 3桁、または GitHub の Issue 番号 `GH-<n>`）を書かない
-  （例外は `docs/requirements.md`「7. 未決事項」の対応タスク列）
-- **案が2つ以上あるときは、書いたあとのコードを読む人が把握しやすいほうを選ぶ**（工数と行数は
-  指標にしない）。**機械的な仕組みをヒューリスティックより優先する**
-- 識別子は `docs/glossary.md` の「英語識別子（予定）」に合わせる（変えるなら用語集が先）
-
-レビュー観点は `/code-review` の Standards 軸（この節＋`docs/coding-standards.md`＋
-`docs/architecture.md`）と Spec 軸（`docs/requirements.md`）。
+  レビュー観点は `/code-review` の Standards 軸（`.claude/rules/`＋`docs/coding-standards.md`＋
+  `docs/architecture.md`）と Spec 軸（`docs/requirements.md`）。
 
 ## Git運用
 
