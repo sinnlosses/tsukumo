@@ -189,7 +189,7 @@ function FileNameLabel(props: { readonly fileName: string }): ReactElement {
     return <>{props.fileName}</>
   }
   return (
-    <RepositoryFileLinkTarget path={path} className={styles["report-file-link"]}>
+    <RepositoryFileLinkTarget path={path} title={undefined} className={styles["report-file-link"]}>
       {props.fileName}
     </RepositoryFileLinkTarget>
   )
@@ -287,7 +287,7 @@ function Code(props: CodeProps): ReactElement {
     </code>
   )
   return (
-    <RepositoryFileLinkTarget path={path} className={styles["report-file-link"]}>
+    <RepositoryFileLinkTarget path={path} title={undefined} className={styles["report-file-link"]}>
       {code}
     </RepositoryFileLinkTarget>
   )

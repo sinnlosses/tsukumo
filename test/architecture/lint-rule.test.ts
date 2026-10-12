@@ -94,6 +94,52 @@ describe("定数の Record の型注釈", () => {
   })
 })
 
+const OPTIONAL_PROPERTY = /(?:^[ \t]*|[{;][ \t]*)(?:readonly[ \t]+)?(\w+)\?:/gm
+
+const ALLOWED_OPTIONAL_PROPERTIES = {
+  // 引数ごと `= {}` で省略できる中身で、既定値がある（例外5）
+  "src/browser/components/page/achievement/components/bell/bell.tsx": ["size"],
+  // Chart.js のデータセットの形の再掲（外来の型）
+  "src/browser/components/page/conversation/components/markdown/renderer/chart-palette.ts": [
+    "type",
+    "data",
+    "backgroundColor",
+    "borderColor",
+  ],
+} satisfies Readonly<Record<string, readonly string[]>>
+
+describe("オプショナルプロパティ", () => {
+  it("src の *.ts / *.tsx（*.d.ts を除く）で、型のプロパティを `名前?: 型` と書くのは許可の一覧にある箇所だけ（docs/coding-standards.md「「無いかもしれない」値」）", () => {
+    const allowed = new Set(allowedOptionalProperties())
+    const offenders = optionalProperties().filter((found) => !allowed.has(found))
+
+    expect(offenders.join("\n")).toBe("")
+  })
+
+  it("許可の一覧の項目が、実物にまだ `名前?: 型` として残っている", () => {
+    const found = new Set(optionalProperties())
+    const stale = allowedOptionalProperties().filter((entry) => !found.has(entry))
+
+    expect(stale.join("\n")).toBe("")
+  })
+})
+
+function allowedOptionalProperties(): readonly string[] {
+  return Object.entries<readonly string[]>(ALLOWED_OPTIONAL_PROPERTIES).flatMap(([path, names]) =>
+    names.map((name) => `${path}:${name}`),
+  )
+}
+
+function optionalProperties(): readonly string[] {
+  return lintedFiles(TYPESCRIPT_EXTENSIONS)
+    .filter(({ path }) => path.startsWith("src/") && !path.endsWith(".d.ts"))
+    .flatMap(({ path, lines }) => {
+      const commentLines = new Set(commentLineIndexes(lines))
+      const code = lines.map((line, index) => (commentLines.has(index) ? "" : line)).join("\n")
+      return [...code.matchAll(OPTIONAL_PROPERTY)].map((match) => `${path}:${match[1]}`)
+    })
+}
+
 function offendingCommentLines(
   extensions: readonly string[],
   isOffending: (line: string) => boolean,

@@ -7,7 +7,7 @@ export function NavButton(props: {
   readonly label: string | undefined
   readonly fallback: string
   readonly onClick: () => void
-  readonly reverse?: boolean
+  readonly reverse: boolean
 }): ReactElement {
   const disabled = props.label === undefined
   const text = props.label ?? props.fallback

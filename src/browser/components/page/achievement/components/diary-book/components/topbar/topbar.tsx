@@ -50,6 +50,7 @@ export function Topbar(props: {
         label={props.previous?.label}
         fallback={PREVIOUS_LABEL}
         onClick={props.onPrevious}
+        reverse={false}
       />
       <NavButton label={props.next?.label} fallback={NEXT_LABEL} onClick={props.onNext} reverse />
       <Button

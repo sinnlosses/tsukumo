@@ -58,7 +58,7 @@ export function useRepositoryFileLink(): RepositoryFileLink {
 export type RepositoryFileLinkTargetProps = {
   /** 開く裸のパス（{@link repositoryFilePath} の戻り値）。 */
   readonly path: string
-  readonly title?: string | undefined
+  readonly title: string | undefined
   readonly className: string
   readonly children: ReactNode
 }
