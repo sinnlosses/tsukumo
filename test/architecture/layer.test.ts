@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 
 import { withoutComments } from "../comment-line.ts"
 import {
+  featureReadersOf,
   importSpecifiers,
   listSourceFiles,
   relativeImportSpecifiers,
@@ -296,7 +297,7 @@ describe("server/ の共有の箱", () => {
     expect(files.length).toBeGreaterThan(0)
 
     const offenders = files.flatMap((relPath) => {
-      const readers = serverSharedBoxReadersOf(relPath)
+      const readers = featureReadersOf(relPath, "", serverFeatureOf)
       return readers.features.length === 1 && readers.outsideFeatureCount === 0
         ? [`src/${relPath}（読むのは ${readers.features.join("")} だけ）`]
         : []
@@ -517,34 +518,12 @@ function serverPlaceOf(relPath: string): ServerPlace {
   throw new Error(`src/${relPath} は機能 ${feature} の core/ か adapter/ の下に置く`)
 }
 
-/**
- * `server/` の共有の箱のファイル1件を import している機能の名前（重複を畳んだもの）と、機能の外
- * （配線層・別の共有の箱のファイルなど）からの読み手の数。`browserReadersOf` と同じ作り
- * （検索する範囲は `src/` 全体——配線層（`src/` 直下）も共有の箱を読むため）。
- */
-function serverSharedBoxReadersOf(targetRelPath: string): {
-  readonly features: readonly string[]
-  readonly outsideFeatureCount: number
-} {
-  const readers = listSourceFiles(SRC_ROOT)
-    .filter((relPath) => relPath !== targetRelPath)
-    .filter((relPath) =>
-      relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).some(
-        (specifier) => resolveRelativeImport(relPath, specifier) === targetRelPath,
-      ),
-    )
-  const featureOf = (relPath: string): ServerFeature | undefined => {
-    if (!relPath.startsWith("server/")) {
-      return undefined
-    }
-    const place = serverPlaceOf(relPath)
-    return place.kind === "feature" ? place.feature : undefined
+function serverFeatureOf(relPath: string): ServerFeature | undefined {
+  if (!relPath.startsWith("server/")) {
+    return undefined
   }
-
-  return {
-    features: [...new Set(readers.flatMap((relPath) => featureOf(relPath) ?? []))],
-    outsideFeatureCount: readers.filter((relPath) => featureOf(relPath) === undefined).length,
-  }
+  const place = serverPlaceOf(relPath)
+  return place.kind === "feature" ? place.feature : undefined
 }
 
 /** docs/architecture.md の機能どうしの辺の表から、機能 → 読んでよい機能を取り出す（`そのほか` 行の葉は空）。 */

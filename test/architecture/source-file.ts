@@ -1,6 +1,6 @@
 // 規約のテストが共有する、ソースファイルの列挙と import の specifier の読み取り。
 
-import { readdirSync, statSync } from "node:fs"
+import { readdirSync, readFileSync, statSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 export const SRC_ROOT = fileURLToPath(new URL("../../src", import.meta.url)).replace(/\/$/, "")
@@ -32,6 +32,29 @@ export function relativeImportSpecifiers(content: string): readonly string[] {
 export function importSpecifiers(content: string): readonly string[] {
   const matches = content.matchAll(/(?:from|import)\s+["']([^"']+)["']/g)
   return [...matches].flatMap(([, specifier]) => specifier ?? [])
+}
+
+/**
+ * `searchPrefix` で始まるファイルのうち `targetRelPath` を import している読み手の機能の名前（重複を畳んだもの）と、
+ * 機能の外（`featureOf` が `undefined` を返すファイル）からの読み手の数。
+ */
+export function featureReadersOf(
+  targetRelPath: string,
+  searchPrefix: string,
+  featureOf: (relPath: string) => string | undefined,
+): { readonly features: readonly string[]; readonly outsideFeatureCount: number } {
+  const readers = listSourceFiles(SRC_ROOT)
+    .filter((relPath) => relPath.startsWith(searchPrefix) && relPath !== targetRelPath)
+    .filter((relPath) =>
+      relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).some(
+        (specifier) => resolveRelativeImport(relPath, specifier) === targetRelPath,
+      ),
+    )
+
+  return {
+    features: [...new Set(readers.flatMap((relPath) => featureOf(relPath) ?? []))],
+    outsideFeatureCount: readers.filter((relPath) => featureOf(relPath) === undefined).length,
+  }
 }
 
 /** import 元の相対パスと specifier から、import 先の `src/` 相対パスを解く。 */

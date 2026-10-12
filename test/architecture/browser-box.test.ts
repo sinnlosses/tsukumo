@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 import {
+  featureReadersOf,
   importSpecifiers,
   listSourceFiles,
   relativeImportSpecifiers,
@@ -237,7 +238,7 @@ describe("browser/ の機能をまたぐ箱", () => {
     expect(files.length).toBeGreaterThan(0)
 
     const offenders = files.flatMap((relPath) => {
-      const readers = browserReadersOf(relPath)
+      const readers = featureReadersOf(relPath, "browser/", (path) => browserFeatureOf(path)?.name)
       return readers.features.length === 1 && readers.outsideFeatureCount === 0
         ? [`src/${relPath}（読むのは ${readers.features.join("")} だけ）`]
         : []
@@ -488,29 +489,6 @@ function isDirectBrowserComponentsDomainFile(relPath: string): boolean {
     segments[1] === "components" &&
     segments[2] === "domain"
   )
-}
-
-/**
- * `browser/` のファイル1件を import している機能の名前（重複を畳んだもの）と、機能の外
- * （`main.tsx` / `stores/` / `lib/` など）からの読み手の数。
- */
-function browserReadersOf(targetRelPath: string): {
-  readonly features: readonly string[]
-  readonly outsideFeatureCount: number
-} {
-  const readers = listSourceFiles(SRC_ROOT)
-    .filter((relPath) => relPath.startsWith("browser/") && relPath !== targetRelPath)
-    .filter((relPath) =>
-      relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).some(
-        (specifier) => resolveRelativeImport(relPath, specifier) === targetRelPath,
-      ),
-    )
-
-  return {
-    features: [...new Set(readers.flatMap((relPath) => browserFeatureOf(relPath)?.name ?? []))],
-    outsideFeatureCount: readers.filter((relPath) => browserFeatureOf(relPath) === undefined)
-      .length,
-  }
 }
 
 /** ファイル1件の相対 import から、許した箱の辺に無いものだけを違反として返す。 */
