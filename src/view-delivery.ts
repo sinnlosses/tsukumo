@@ -110,6 +110,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   let readContextUsage: () => Promise<ContextUsageReport> = () =>
     Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
   let readPlanUsage: () => Promise<PlanUsageReport> = () => Promise.resolve(UNAVAILABLE_PLAN_USAGE)
+  let refreshTasks: () => Promise<void> = () => Promise.resolve()
   let readSessionDigest: (sessionId: string) => Promise<SessionDigest> = () =>
     Promise.resolve(UNAVAILABLE_SESSION_DIGEST)
   // 成果の画面（1日ぶん・暦）が Beads の読みを覚える入れ物。両方の口が同じ1つを見る。
@@ -118,6 +119,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   const rpcRouter = createRpcRouter({
     listRepositoryFiles: () => listRepositoryFiles(options.cwd),
     projectName: () => projectNameOf(options.cwd),
+    refreshTasks: () => refreshTasks(),
     // 「今日」はここで決めて渡す（OS のタイムゾーンに依るので、core は今日が何日かを知らない）。
     readTokenUsageSummary: (days) =>
       summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
@@ -194,6 +196,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     connect: ({ manager, socketRouter }) => {
       readContextUsage = manager.readContextUsage
       readPlanUsage = manager.readPlanUsage
+      refreshTasks = manager.refreshTasks
       readSessionDigest = manager.readSessionDigest
       attachSessionSocket({
         httpServer: server.httpServer,

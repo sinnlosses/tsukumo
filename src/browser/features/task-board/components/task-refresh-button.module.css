@@ -1,0 +1,40 @@
+/* 箱だけ。顔は `<Button>` が持つ。 */
+.task-refresh-sidebar,
+.task-refresh-modal {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+/* 見出しは baseline 揃えなので、箱だけ中央に置く。 */
+.task-refresh-sidebar {
+  align-self: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 6px;
+}
+/* 閉じるボタン（`task-board-head.module.css`）と同じ 34px。 */
+.task-refresh-modal {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+}
+/* キーの案内（右寄せの元）を畳む狭い画面では、こちらが右へ寄せる。 */
+@media (max-width: 760px) {
+  .task-refresh-modal {
+    margin-left: auto;
+  }
+}
+.task-refresh-spinning {
+  display: inline-flex;
+}
+.task-refresh-spinning svg {
+  color: var(--accent);
+  animation: task-refresh-spin 1s linear infinite;
+}
+@keyframes task-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

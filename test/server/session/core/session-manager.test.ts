@@ -119,6 +119,7 @@ const NOOP_QUESTION_USAGE_LOG: QuestionUsageLog = { append: () => {} }
 const NO_TASK_WATCH: SessionManagerOptions["watchTasks"] = () => ({
   close: () => {},
   setWatching: () => {},
+  refresh: () => Promise.resolve(),
 })
 
 /** 定着を気にしないテストに渡す出どころ（起こさない）。 */
@@ -2212,6 +2213,7 @@ describe("タスク一覧の見張り", () => {
     const watch = {
       started: 0,
       closed: 0,
+      refreshed: 0,
       watching: watchingCalls,
       emit: (_event: SessionEvent): void => {},
     }
@@ -2225,6 +2227,10 @@ describe("タスク一覧の見張り", () => {
           },
           setWatching: (watching) => {
             watch.watching.push(watching)
+          },
+          refresh: () => {
+            watch.refreshed += 1
+            return Promise.resolve()
           },
         }
       },
@@ -2242,6 +2248,14 @@ describe("タスク一覧の見張り", () => {
 
     manager.close()
     expect(watch).toMatchObject({ started: 1, closed: 1 })
+  })
+
+  it("refreshTasks は見張りの今すぐ読む口を呼ぶ", async () => {
+    const { manager, watch } = startManagerWithTaskWatch()
+
+    await manager.refreshTasks()
+
+    expect(watch.refreshed).toBe(1)
   })
 
   it("画面の購読が0から1になったときに見張りを動かし、最後の1人が抜けたときに止める", () => {

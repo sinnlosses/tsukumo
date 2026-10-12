@@ -71,6 +71,14 @@ describe("Sidebar のタスクの節", () => {
     expect(section.querySelector('button[aria-label="設定"]')).toBeNull()
   })
 
+  it("見出しに「最新化」と「一覧を見る」が並ぶ", () => {
+    renderSidebar({})
+
+    const section = screen.getByRole("region", { name: "タスク" })
+    expect(section.querySelector('button[aria-label="最新化"]')).not.toBeNull()
+    expect(section.textContent).toContain("一覧を見る")
+  })
+
   it("チップは1つだけ選べ、押し直しても変わらず、「すべて」で外れ、別のチップで切り替わる", () => {
     renderSidebar({
       tasks: {

@@ -15,6 +15,19 @@
         },
         "すべて 5 · 未完了 4 · ドラフト 0 · 完了 1",
         {
+          "tag": "button",
+          "attributes": {
+            "aria-disabled": "false",
+            "aria-label": "最新化",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "svg"
+            }
+          ]
+        },
+        {
           "tag": "kbd",
           "children": [
             "↑↓"

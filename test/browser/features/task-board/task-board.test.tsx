@@ -7,6 +7,7 @@ import { TaskBoard } from "../../../../src/browser/features/task-board/task-boar
 import type { TaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
+import { queryClientWrapper } from "../../query-client.tsx"
 import { putSession } from "../../session-store.ts"
 
 // タスクのモーダルの出し分けと、選んでいる行の移り方・つながりのたどり方。
@@ -45,8 +46,18 @@ function renderBoard(task: TaskSummaryItem): void {
       request={{ kind: "open", focus: { kind: "first" } }}
       onClose={() => {}}
     />,
+    { wrapper: queryClientWrapper() },
   )
 }
+
+describe("タスクのモーダルの頭", () => {
+  it("閉じるボタンのほかに「最新化」のボタンがある", () => {
+    renderBoard(beadsTask({ kind: "none" }))
+
+    expect(screen.getByRole("button", { name: "最新化" })).toBeDefined()
+    expect(screen.getByRole("button", { name: "閉じる" })).toBeDefined()
+  })
+})
 
 describe("タスクのモーダルの置き場所（Beads 方式）", () => {
   it("external_ref の URL を情報の表の Issue の行に出し、操作の帯の「Issue を開く」で新しいタブに開く", () => {
@@ -117,6 +128,7 @@ describe("タスクのモーダルの一覧の行の属性", () => {
         request={{ kind: "open", focus: { kind: "first" } }}
         onClose={() => {}}
       />,
+      { wrapper: queryClientWrapper() },
     )
 
     const option = (id: string): HTMLElement => screen.getByRole("option", { name: new RegExp(id) })
@@ -375,7 +387,7 @@ function renderSelectionBoard(
       onClose={() => {}}
     />
   )
-  const { rerender } = render(boardOf(items, request))
+  const { rerender } = render(boardOf(items, request), { wrapper: queryClientWrapper() })
   return {
     rerenderWith: (nextItems, nextRequest) => {
       rerender(boardOf(nextItems, nextRequest))

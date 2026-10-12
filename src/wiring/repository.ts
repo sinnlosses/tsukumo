@@ -46,6 +46,7 @@ export function wireRepository(
         )
         return {
           setWatching: watcher.setWatching,
+          refresh: watcher.refresh,
           close: () => {
             recommender.close()
             return watcher.close()

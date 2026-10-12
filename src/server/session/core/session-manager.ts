@@ -164,6 +164,8 @@ type SessionWatcher = {
   readonly close: () => void
   /** 画面が1つでも購読しているあいだだけ真にする（動かすのは見張りが要るあいだだけ）。 */
   readonly setWatching: (watching: boolean) => void
+  /** 次の見回りを待たず今すぐ1回読み、読み終えてから解決する。 */
+  readonly refresh: () => Promise<void>
 }
 
 /**
@@ -183,6 +185,8 @@ export type SessionManager = {
    * 押すのではなく引くので、状態にもフレームにも乗らない。取れなかったときは「取れない」。
    */
   readonly readPlanUsage: () => Promise<PlanUsageReport>
+  /** タスク一覧を今すぐ1回読み直し、読み終えてから解決する。 */
+  readonly refreshTasks: () => Promise<void>
   /**
    * セッション1件の中身を駆動から取る。
    * 読んでよいのは、いま配っている一覧（`sessions-changed`）に載ったものと、いま出しているセッションだけ。
@@ -618,6 +622,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         return UNAVAILABLE_CONTEXT_USAGE
       }
     },
+    refreshTasks: () => taskWatcher.refresh(),
     readPlanUsage: async () => {
       // 起こし直しの最中・起こせなかったときは駆動そのものが無い。
       try {

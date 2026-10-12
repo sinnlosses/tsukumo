@@ -45,6 +45,7 @@ export function PersonaMemorySection(): ReactElement {
               },
             }
       }
+      headerExtra={undefined}
       filters={undefined}
     >
       {lines.length === 0 ? (

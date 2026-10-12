@@ -11,6 +11,8 @@ export type RepositoryProcedurePorts = {
   readonly listRepositoryFiles: () => Promise<readonly string[]>
   /** 作業ディレクトリの名前。 */
   readonly projectName: () => string
+  /** タスク一覧を今すぐ1回読み直し、読み終えてから解決する。 */
+  readonly refreshTasks: () => Promise<void>
 }
 
 export function repositoryProcedure(ports: RepositoryProcedurePorts) {
@@ -19,5 +21,7 @@ export function repositoryProcedure(ports: RepositoryProcedurePorts) {
     // 一覧を作れなかった回は空の並びを配る（候補が出ない・パスが押せないだけで、画面は続く）。
     listFiles: procedure.listFiles.handler(() => ports.listRepositoryFiles().catch(() => [])),
     projectName: procedure.projectName.handler(() => ports.projectName()),
+    // 読めない回は一覧の「不明」が伝えるので、手続きは落とさない。
+    refreshTasks: procedure.refreshTasks.handler(() => ports.refreshTasks().catch(() => {})),
   })
 }

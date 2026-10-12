@@ -12,6 +12,7 @@
 import { useState, type ReactElement } from "react"
 
 import { TaskCountChipList } from "../../../../features/task-board/components/task-count-chip-list.tsx"
+import { TaskRefreshButton } from "../../../../features/task-board/components/task-refresh-button.tsx"
 import {
   taskListCounts,
   type TaskListFilterStatus,
@@ -32,6 +33,7 @@ export function TaskSection(): ReactElement {
       title="タスク"
       extraClass={styles["sidebar-block-tasks"]}
       action={{ label: "一覧を見る", onAction: openList }}
+      headerExtra={<TaskRefreshButton place="sidebar" />}
       filters={
         tasks.kind === "known" && (
           <TaskCountChipList

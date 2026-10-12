@@ -5,6 +5,7 @@ import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
 import styles from "./task-board-head.module.css"
+import { TaskRefreshButton } from "./task-refresh-button.tsx"
 
 export function TaskBoardHead(props: {
   /** 空文字列なら件数を出さない（一覧が読めないとき）。 */
@@ -17,6 +18,7 @@ export function TaskBoardHead(props: {
       {props.countsText !== "" && (
         <span className={styles["task-board-counts"]}>{props.countsText}</span>
       )}
+      <TaskRefreshButton place="modal" />
       <span className={styles["task-board-hints"]}>
         <kbd>↑↓</kbd> 選ぶ <kbd>Esc</kbd> 閉じる
       </span>

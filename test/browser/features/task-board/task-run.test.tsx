@@ -12,6 +12,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
+import { queryClientWrapper } from "../../query-client.tsx"
 import { type CommandSpy, putSession } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物のタスクファイルは使わない）。
@@ -84,7 +85,7 @@ function renderWithStore(
   overrides: Partial<SessionState> = {},
 ): void {
   putSession({ ...INITIAL_SESSION_STATE, ...overrides }, spy)
-  render(<>{node}</>)
+  render(<>{node}</>, { wrapper: queryClientWrapper() })
 }
 
 /** 送られたコマンドを配列に溜める受け取り口。 */

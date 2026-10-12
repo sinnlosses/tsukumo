@@ -20,6 +20,19 @@
                   "tag": "button",
                   "attributes": {
                     "aria-disabled": "false",
+                    "aria-label": "最新化",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    }
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
                     "aria-haspopup": "dialog",
                     "type": "button"
                   },

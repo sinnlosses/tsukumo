@@ -35,6 +35,7 @@ const emptyViewServerOptions: ViewServerOptions = {
   findReportImage: () => undefined,
   rpcRouter: createRpcRouter({
     listRepositoryFiles: () => Promise.resolve([]),
+    refreshTasks: () => Promise.resolve(),
     projectName: () => "架空のプロジェクト",
     readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
     readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),

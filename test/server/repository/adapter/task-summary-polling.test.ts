@@ -141,6 +141,53 @@ describe("watchTaskSummary（偽の口と時計）", () => {
     expect(changes).toMatchObject([{ kind: "known" }])
   })
 
+  describe("refresh", () => {
+    it("見回りの周期を待たず、今すぐ1回読む", async () => {
+      const { fake, setStamp, count } = startFake()
+      fake.setWatching(true)
+      await settle()
+      setStamp("stamp-2")
+
+      await fake.refresh()
+
+      expect(count("bd list")).toBe(2)
+    })
+
+    it("続けて呼んでも読みは1回に畳まれる", async () => {
+      const { fake, setStamp, count } = startFake()
+      fake.setWatching(true)
+      await settle()
+      setStamp("stamp-2")
+
+      await Promise.all([fake.refresh(), fake.refresh()])
+
+      expect(count("bd list")).toBe(2)
+    })
+
+    it("見回りを止めていても1回読み、次の見回りは予約しない", async () => {
+      const { fake, manual, setStamp, count } = startFake()
+      await settle()
+      setStamp("stamp-2")
+
+      await fake.refresh()
+      manual.advance(FAKE_INTERVAL_MS)
+      await settle()
+
+      expect(count("bd list")).toBe(2)
+    })
+
+    it("close のあとは何も読まずに解決する", async () => {
+      const { fake, setStamp, count } = startFake()
+      await settle()
+      await fake.close()
+      setStamp("stamp-2")
+
+      await fake.refresh()
+
+      expect(count("bd list")).toBe(1)
+    })
+  })
+
   describe("覚えた一覧", () => {
     const remembered = taskSummaryItemsOfBeadsIssues([FICTIONAL_BEADS_ISSUE])
     const readNothing: BeadsOutcome = { kind: "issues", issues: [] }

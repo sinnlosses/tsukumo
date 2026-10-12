@@ -34,6 +34,11 @@ export type TaskSummaryWatcher = {
    * `close` のあとは何もしない。
    */
   readonly setWatching: (watching: boolean) => void
+  /**
+   * 見回りの次の周期を待たず今すぐ1回読み、読み終えてから解決する。
+   * 実行中なら今の読みに乗る。見回りを回していなくても1回は読む。`close` のあとは何もしない。
+   */
+  readonly refresh: () => Promise<void>
 }
 
 /** 時計の口。`delayMs` 後に `wake` を1回呼び、返した関数で取り消す。 */
@@ -197,6 +202,16 @@ export function watchTaskSummary(
     close: () => {
       closed = true
       cancelTimer?.()
+      return runningPoll
+    },
+    refresh: () => {
+      if (closed) {
+        return Promise.resolve()
+      }
+      if (!polling) {
+        cancelTimer?.()
+        loop()
+      }
       return runningPoll
     },
     setWatching: (next) => {
