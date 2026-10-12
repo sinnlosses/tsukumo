@@ -1424,7 +1424,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 |    3 | 5つの門（仕事・雑談・キャラ・トークン・成果） | その画面へ移る（`<a href>`）。違うモードの仕事・雑談は起こし直す（`session.setChatMode`） | `location.hash`・`state.chatMode`                                     | 下の「帯に何を置くか」・「動き方の操作子」               |
 |    4 | いまの作業                                    | 依頼の手順の一覧が開く                                                                    | `state.turn` / `state.pending` / `records` / `backgroundTasks`        | 下の「いまの作業」・「背景のタスク」                     |
 |    5 | モデル                                        | 選ぶ（`session.setModel`）                                                                | `state.model`                                                         | 下の「動き方の操作子」                                   |
-|    6 | effort                                        | 選ぶ（`session.setEffort`）                                                               | hook 入力の `effort.level`                                            | 下の「動き方の操作子」                                   |
+|    6 | effort                                        | 選ぶ（`session.setEffort`）                                                               | `state.effort`（`effort-changed`・`setting-confirmed`）               | 下の「動き方の操作子」                                   |
 |    7 | 許可モード                                    | 選ぶ（`session.setPermissionMode`）                                                       | `state.session` の `permissionMode`                                   | 下の「動き方の操作子」                                   |
 |    8 | 設定の歯車                                    | 設定のポップオーバーが開く                                                                | `localStorage`（13.6 の表）                                           | 下の「設定の歯車」                                       |
 
@@ -1557,9 +1557,26 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 **effort のドロップダウンの値の源**は3つ: 起こしたときに `query()` へ渡した値（起動直後）、
 `applyFlagSettings` が受け付けた値（押した直後。`setModel` の `model-changed` と同じ扱い）、
 hook 入力の `effort.level`（ターンの終わり。実測は `docs/history/decision.md`「effort の途中変更と
-読み取りが成り立った実測」）。どれも `effort-changed` で届き、後に届いた値が勝つ。
+読み取りが成り立った実測」）。前の2つは `effort-changed`、hook 入力は `setting-confirmed`
+（設定が `effort`）で届き、どちらも `state.effort` を更新して、後に届いた値が勝つ。
 2026-09-25 の「押した値へ先に倒さない」（読み取った値だけを出す）は、押しても表示が変わらず
 不具合に見えたため 2026-10-02 にユーザーの依頼で改めた。
+
+**口の右肩の点**（モデル・effort・許可モードのそれぞれ。2026-10-12 決定）: 切り替えを受け付けたことと、
+効いたのを見届けたことを言い分ける。モデル・effort・許可モードの3つとも、待機中は次ターンから、ターン進行中は
+同ターンの次の API 呼び出しから効く（実測）ので、押せなくはしない。
+
+- **点は口の右肩に1つ**（7px の丸。口の寸法と並びは変えない）。受け付けた直後は**空洞**（`--state-warn` の縁）、
+  見届けたら**塗り**（`--state-ok`）。新しい色は足さない
+- **字は出さない。** ポインタを載せたときの `title` だけが言う（口の `title` の末尾に「 ・ 受け付けた」「 ・ 効いた」）
+- 受け付けた合図は `model-changed` / `effort-changed` / `permission-mode-changed`、見届けた合図は
+  `setting-confirmed`（`SessionState.settingMarks`）。**見届けた値が受け付けた値と合うときだけ塗り**にする
+  （モデルは `sonnet` のような別名がフルネームに含まれれば合い、effort・許可モードは完全一致）。合わないときは
+  空洞のまま次の見届けを待つ。見届けられないまま次の切り替えが来たら、空洞を新しい値で付け直す
+- **見届けた点は3秒、空洞の点は見届けないまま8秒で消える**（寿命は印を付けた時刻から数えるので、画面を
+  開き直したときに過ぎた印は出ない）。消えたあとは元の姿で、見届けた印は残さない。effort に対応しない
+  モデルでは見届けが来ないので、空洞は8秒で消える
+- **`running` になる前の受け付けは印にしない**（起こした直後の `effort-changed` で、起動のたびに点が出ないように）
 
 #### いまの作業
 

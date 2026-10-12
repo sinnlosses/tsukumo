@@ -1,3 +1,26 @@
+/* 口と、右肩の点を重ねる枠。口の寸法は変えない。 */
+.run-setting-select-wrap {
+  position: relative;
+  display: flex;
+  flex: none;
+}
+/* 受け付けた（空洞）と見届けた（塗り）の点。口のクリックを奪わない。 */
+.run-setting-dot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.run-setting-dot[data-dot="accepted"] {
+  border: 1.5px solid var(--state-warn);
+}
+.run-setting-dot[data-dot="confirmed"] {
+  background: var(--state-ok);
+}
 /* 絵1つぶんの口。`appearance: base-select` で `<select>` 自身がそのまま押せる的になる。 */
 .run-setting-select {
   appearance: base-select;

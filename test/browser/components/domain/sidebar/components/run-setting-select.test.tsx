@@ -32,6 +32,7 @@ describe("RunSettingSelect", () => {
         rail={false}
         layout="list"
         title={undefined}
+        dot="none"
         onChange={() => {}}
       />,
     )
@@ -60,6 +61,7 @@ describe("RunSettingSelect", () => {
         rail={false}
         layout="list"
         title={undefined}
+        dot="none"
         onChange={(value) => calls.push(value)}
       />,
     )
@@ -85,6 +87,7 @@ describe("RunSettingSelect", () => {
         rail={false}
         layout="list"
         title={undefined}
+        dot="none"
         onChange={() => {}}
       />,
     )
@@ -107,6 +110,7 @@ describe("RunSettingSelect", () => {
         rail={false}
         layout="list"
         title="架空の理由"
+        dot="none"
         onChange={() => {}}
       />,
     )

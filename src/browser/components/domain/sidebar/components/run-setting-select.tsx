@@ -11,6 +11,7 @@ import clsx from "clsx"
 import { Check } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
+import type { SettingDot } from "../../../../stores/model-permission.ts"
 import styles from "./run-setting-select.module.css"
 
 export type RunSettingSelectOption = {
@@ -37,10 +38,23 @@ export type RunSettingSelectProps = {
   /** `row` は選択肢を横に並べる（effort の5本の棒）。閉じた口の絵（`icon`）は列の形では出さない。 */
   readonly layout: "list" | "row"
   readonly title: string | undefined
+  /** 口の右肩の点。字は持たず、意味は `title` が言う。 */
+  readonly dot: SettingDot
   readonly onChange: (value: string) => void
 }
 
 export function RunSettingSelect(props: RunSettingSelectProps): ReactElement {
+  return (
+    <span className={styles["run-setting-select-wrap"]}>
+      <RunSettingSelectBody {...props} />
+      {props.dot !== "none" && (
+        <span className={styles["run-setting-dot"]} data-dot={props.dot} aria-hidden="true" />
+      )}
+    </span>
+  )
+}
+
+function RunSettingSelectBody(props: RunSettingSelectProps): ReactElement {
   return (
     <select
       id={props.id}

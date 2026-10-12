@@ -1,12 +1,18 @@
-import { cleanup, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { act, cleanup, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { RunSettingGroup } from "../../../../../../src/browser/components/domain/sidebar/components/run-setting-group.tsx"
-import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session/session-state.ts"
-import { putSession } from "../../../../session-store.ts"
+import { nowEpochMilliseconds } from "../../../../../../src/browser/utils/clock.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SettingMark,
+  type SettingMarks,
+} from "../../../../../../src/shared/session/session-state.ts"
+import { putSession, putState } from "../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
+  vi.useRealTimers()
 })
 
 const OPUS_SUPPORT = {
@@ -63,5 +69,124 @@ describe("RunSettingGroup（吊り札の行）", () => {
       ["plan", "dashed"],
       ["bypassPermissions", "filled"],
     ])
+  })
+})
+
+const NO_MARK = { kind: "none" } satisfies SettingMark
+
+function marksWith(patch: Partial<SettingMarks>): SettingMarks {
+  return { model: NO_MARK, effort: NO_MARK, permissionMode: NO_MARK, ...patch }
+}
+
+function stateWithMarks(settingMarks: SettingMarks): typeof INITIAL_SESSION_STATE {
+  return { ...INITIAL_SESSION_STATE, model: "claude-opus-5", effort: "high", settingMarks }
+}
+
+function dotOf(label: RegExp): string | undefined {
+  const select = screen.getByRole("combobox", { name: label })
+  return select.parentElement?.querySelector("[data-dot]")?.getAttribute("data-dot") ?? undefined
+}
+
+describe("RunSettingGroup（口の右肩の点）", () => {
+  it("印が無ければ点を出さない", () => {
+    putSession(stateWithMarks(marksWith({})))
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    expect([dotOf(/^モデル /), dotOf(/^effort /), dotOf(/^許可モード /)]).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ])
+  })
+
+  it("受け付けた印はその口にだけ空洞の点を出し、title が「受け付けた」と言う（モデル・effort・許可モードとも）", () => {
+    const at = nowEpochMilliseconds()
+    for (const setting of ["model", "effort", "permissionMode"] as const) {
+      cleanup()
+      putSession(stateWithMarks(marksWith({ [setting]: { kind: "accepted", value: "x", at } })))
+      render(<RunSettingGroup placement="sidebar-footer" />)
+
+      const dots = {
+        model: dotOf(/^モデル /),
+        effort: dotOf(/^effort /),
+        permissionMode: dotOf(/^許可モード /),
+      }
+      expect(dots).toEqual({
+        model: undefined,
+        effort: undefined,
+        permissionMode: undefined,
+        [setting]: "accepted",
+      })
+      const label = { model: /^モデル /, effort: /^effort /, permissionMode: /^許可モード / }[
+        setting
+      ]
+      expect(screen.getByRole("combobox", { name: label }).title).toMatch(/・ 受け付けた$/)
+    }
+  })
+
+  it("見届けた印は塗りの点を出し、title が「効いた」と言う", () => {
+    putSession(
+      stateWithMarks(
+        marksWith({ model: { kind: "confirmed", value: "opus", at: nowEpochMilliseconds() } }),
+      ),
+    )
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    expect(dotOf(/^モデル /)).toBe("confirmed")
+    expect(screen.getByRole("combobox", { name: /^モデル / }).title).toMatch(/・ 効いた$/)
+  })
+
+  it("見届けた点は3秒、空洞の点は8秒で消える", () => {
+    vi.useFakeTimers()
+    const at = nowEpochMilliseconds()
+    putSession(
+      stateWithMarks(
+        marksWith({
+          model: { kind: "confirmed", value: "opus", at },
+          effort: { kind: "accepted", value: "high", at },
+        }),
+      ),
+    )
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    act(() => {
+      vi.advanceTimersByTime(3100)
+    })
+    expect([dotOf(/^モデル /), dotOf(/^effort /)]).toEqual([undefined, "accepted"])
+
+    act(() => {
+      vi.advanceTimersByTime(5000)
+    })
+    expect(dotOf(/^effort /)).toBeUndefined()
+    expect(screen.getByRole("combobox", { name: /^effort / }).title).not.toMatch(/受け付けた/)
+  })
+
+  it("消えたあとに別の時刻で付け直された印は、また点を出す", () => {
+    vi.useFakeTimers()
+    const at = nowEpochMilliseconds()
+    putSession(stateWithMarks(marksWith({ model: { kind: "accepted", value: "opus", at } })))
+    render(<RunSettingGroup placement="sidebar-footer" />)
+    act(() => {
+      vi.advanceTimersByTime(8100)
+    })
+    expect(dotOf(/^モデル /)).toBeUndefined()
+
+    act(() => {
+      putState(
+        stateWithMarks(marksWith({ model: { kind: "accepted", value: "sonnet", at: at + 8100 } })),
+      )
+    })
+
+    expect(dotOf(/^モデル /)).toBe("accepted")
+  })
+
+  it("開いた時点で寿命を過ぎている印は点を出さない", () => {
+    const old = nowEpochMilliseconds() - 60_000
+    putSession(
+      stateWithMarks(marksWith({ permissionMode: { kind: "accepted", value: "plan", at: old } })),
+    )
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    expect(dotOf(/^許可モード /)).toBeUndefined()
   })
 })

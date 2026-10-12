@@ -29,7 +29,7 @@ import {
   PERMISSION_MODE_LABELS,
   permissionModeShieldFill,
 } from "../../../../domain/permission-mode-label.ts"
-import { useModelPermission } from "../../../../stores/model-permission.ts"
+import { type SettingDot, useModelPermission } from "../../../../stores/model-permission.ts"
 import styles from "./run-setting-group.module.css"
 import selectStyles from "./run-setting-select.module.css"
 import { RunSettingSelect, type RunSettingSelectOption } from "./run-setting-select.tsx"
@@ -156,7 +156,8 @@ export function RunSettingGroup(props: { readonly placement: RunSettingPlacement
         danger={false}
         rail={rail}
         layout="list"
-        title={`モデル ${modelLabel}`}
+        title={dotTitle(`モデル ${modelLabel}`, control.modelDot)}
+        dot={control.modelDot}
         onChange={control.onSetModel}
       />
       <span className={styles["run-setting-divider"]} aria-hidden="true" />
@@ -170,7 +171,8 @@ export function RunSettingGroup(props: { readonly placement: RunSettingPlacement
         danger={false}
         rail={rail}
         layout="row"
-        title={`effort ${effortName}`}
+        title={dotTitle(`effort ${effortName}`, control.effortDot)}
+        dot={control.effortDot}
         onChange={control.onSetEffort}
       />
       <span className={styles["run-setting-divider"]} aria-hidden="true" />
@@ -184,7 +186,8 @@ export function RunSettingGroup(props: { readonly placement: RunSettingPlacement
         danger={control.permissionModeDangerous}
         rail={rail}
         layout="list"
-        title={`許可モード ${permissionModeLabel}`}
+        title={dotTitle(`許可モード ${permissionModeLabel}`, control.permissionModeDot)}
+        dot={control.permissionModeDot}
         onChange={control.onSetPermissionMode}
       />
     </div>
@@ -242,6 +245,17 @@ function EffortBar(props: { readonly litCount: number; readonly atIndex: number 
 /** effort の段の位置（1始まり）。段の名前が一致する棒まで灯す。 */
 function effortLitCount(value: EffortLevel): number {
   return EFFORT_LABELS.findIndex(([level]) => level === value) + 1
+}
+
+function dotTitle(title: string, dot: SettingDot): string {
+  switch (dot) {
+    case "accepted":
+      return `${title} ・ 受け付けた`
+    case "confirmed":
+      return `${title} ・ 効いた`
+    case "none":
+      return title
+  }
 }
 
 /** ラベルの表から値の字を引く。無ければ値をそのまま返す。 */

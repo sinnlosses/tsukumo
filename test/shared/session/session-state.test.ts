@@ -502,19 +502,6 @@ describe("applySessionEvent", () => {
     expect(view.effort).toBe("high")
   })
 
-  it("permission-mode-changed と setting-confirmed はまだ状態を変えない", () => {
-    const before = apply({ kind: "effort-changed", effort: "low" })
-    const after = apply(
-      { kind: "effort-changed", effort: "low" },
-      { kind: "permission-mode-changed", mode: "plan" },
-      { kind: "setting-confirmed", setting: "effort", value: "high" },
-      { kind: "setting-confirmed", setting: "model", value: "opus" },
-      { kind: "setting-confirmed", setting: "permissionMode", value: "plan" },
-    )
-
-    expect(after).toEqual(before)
-  })
-
   it("plan が届くまでは undefined、届いたらそのまま持つ（docs/glossary.md「プラン」）", () => {
     expect(INITIAL_SESSION_STATE.plan).toBeUndefined()
 
@@ -1946,5 +1933,124 @@ describe("applyRestoredEvents（transcript の時刻）", () => {
       startedAt: { kind: "recovered", at: 2_000 },
       status: { kind: "finished", finishedAt: { kind: "restored" } },
     })
+  })
+})
+
+describe("設定の口の点の元（settingMarks）", () => {
+  const RUNNING: SessionEvent = {
+    kind: "session-info",
+    sessionId: "s1",
+    model: "claude-opus-5",
+    permissionMode: "default",
+    slashCommands: [],
+    terminalSlashCommands: [],
+  }
+
+  it("running なら、3つの受け付けがそれぞれの印を accepted にする", () => {
+    const state = apply(
+      RUNNING,
+      { kind: "model-changed", model: "sonnet" },
+      { kind: "effort-changed", effort: "low" },
+      { kind: "permission-mode-changed", mode: "plan" },
+    )
+
+    expect(state.settingMarks).toEqual({
+      model: { kind: "accepted", value: "sonnet", at: 0 },
+      effort: { kind: "accepted", value: "low", at: 0 },
+      permissionMode: { kind: "accepted", value: "plan", at: 0 },
+    })
+  })
+
+  it("running になる前の受け付けは印を付けず、値だけ従来どおり更新する", () => {
+    const state = apply(
+      { kind: "model-changed", model: "sonnet" },
+      { kind: "effort-changed", effort: "low" },
+    )
+
+    expect(state.settingMarks.model.kind).toBe("none")
+    expect(state.settingMarks.effort.kind).toBe("none")
+    expect(state.model).toBe("sonnet")
+    expect(state.effort).toBe("low")
+  })
+
+  it("受け付けたモデルの別名がフルネームに含まれる見届けで confirmed になる", () => {
+    const state = apply(
+      RUNNING,
+      { kind: "model-changed", model: "sonnet" },
+      { kind: "setting-confirmed", setting: "model", value: "claude-sonnet-5-5" },
+    )
+
+    expect(state.settingMarks.model).toEqual({ kind: "confirmed", value: "sonnet", at: 0 })
+  })
+
+  it("違うモデルの見届けでは accepted のまま", () => {
+    const state = apply(
+      RUNNING,
+      { kind: "model-changed", model: "sonnet" },
+      { kind: "setting-confirmed", setting: "model", value: "claude-opus-5" },
+    )
+
+    expect(state.settingMarks.model.kind).toBe("accepted")
+  })
+
+  it("effort の見届けは、合わなくても state.effort を更新し、合えば confirmed にする", () => {
+    const accepted = apply(
+      RUNNING,
+      { kind: "effort-changed", effort: "low" },
+      { kind: "setting-confirmed", setting: "effort", value: "high" },
+    )
+    const confirmed = apply(
+      RUNNING,
+      { kind: "effort-changed", effort: "low" },
+      { kind: "setting-confirmed", setting: "effort", value: "low" },
+    )
+
+    expect(accepted.settingMarks.effort.kind).toBe("accepted")
+    expect(accepted.effort).toBe("high")
+    expect(confirmed.settingMarks.effort.kind).toBe("confirmed")
+    expect(confirmed.effort).toBe("low")
+  })
+
+  it("受け付けが無いときの見届け（init 由来など）は印を作らない", () => {
+    const state = apply(RUNNING, {
+      kind: "setting-confirmed",
+      setting: "permissionMode",
+      value: "default",
+    })
+
+    expect(state.settingMarks.permissionMode.kind).toBe("none")
+  })
+
+  it("見届ける前の次の受け付けは新しい値で付け直し、confirmed のあとの受け付けも accepted になる", () => {
+    const reaccepted = apply(
+      RUNNING,
+      { kind: "permission-mode-changed", mode: "plan" },
+      { kind: "permission-mode-changed", mode: "acceptEdits" },
+    )
+    const afterConfirmed = apply(
+      RUNNING,
+      { kind: "permission-mode-changed", mode: "plan" },
+      { kind: "setting-confirmed", setting: "permissionMode", value: "plan" },
+      { kind: "permission-mode-changed", mode: "auto" },
+    )
+
+    expect(reaccepted.settingMarks.permissionMode).toMatchObject({
+      kind: "accepted",
+      value: "acceptEdits",
+    })
+    expect(afterConfirmed.settingMarks.permissionMode).toMatchObject({
+      kind: "accepted",
+      value: "auto",
+    })
+  })
+
+  it("許可モードの見届けは完全一致のときだけ confirmed にする", () => {
+    const state = apply(
+      RUNNING,
+      { kind: "permission-mode-changed", mode: "auto" },
+      { kind: "setting-confirmed", setting: "permissionMode", value: "plan" },
+    )
+
+    expect(state.settingMarks.permissionMode.kind).toBe("accepted")
   })
 })

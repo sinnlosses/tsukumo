@@ -9,7 +9,7 @@ import { isDeepEqual, isPlainObject } from "remeda"
 
 import type { CharacterInfo, CharacterPackEntry } from "../character-pack/character.ts"
 import type { Expression } from "../character-pack/expression.ts"
-import { type EffortLevel, isModelAlias } from "../command.ts"
+import { type EffortLevel, isEffortLevel, isModelAlias } from "../command.ts"
 import { applyDiaryEvent, type DiaryWriting } from "../diary/diary.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
@@ -46,6 +46,7 @@ import type {
   ReportWaitingLine,
   RestoredEvent,
   SessionEvent,
+  SettingConfirmation,
 } from "./session-event.ts"
 import { splitIntoTurns } from "./turn.ts"
 import { currentWorkPlan, nextWorkPlan, type WorkPlan, type WorkPlanEvent } from "./work-plan.ts"
@@ -232,6 +233,23 @@ export type SessionInfo =
   | { readonly kind: "identified"; readonly sessionId: string }
   | { readonly kind: "running"; readonly sessionId: string; readonly permissionMode: string }
 
+type SettingName = SettingConfirmation["setting"]
+
+/**
+ * 設定の口の右肩の点の元。`at` は印を付けた時刻で、同じ値の付け直しを別の印として区別する。
+ * - `none`: 点なし
+ * - `accepted`: 切り替えを受け付けた（空洞の点）
+ * - `confirmed`: 受け付けた値で効いているのを見届けた（塗りの点）
+ */
+export type SettingMark =
+  | { readonly kind: "none" }
+  | { readonly kind: "accepted"; readonly value: string; readonly at: number }
+  | { readonly kind: "confirmed"; readonly value: string; readonly at: number }
+
+export type SettingMarks = Readonly<Record<SettingName, SettingMark>>
+
+const NO_SETTING_MARK = { kind: "none" } satisfies SettingMark
+
 /**
  * ターンの進み具合。`request` で `running` になり、`turn-finished` / `session-ended` で `finished` になる（入力欄が送信と中断を切り替える判断材料）。
  *
@@ -325,6 +343,8 @@ export type SessionState = {
    * まだ届いていなければ undefined（見た目上の既定へは畳まない）。
    */
   readonly effort: EffortLevel | undefined
+  /** モデル・effort・許可モードの口の右肩に出す点の元（{@link SettingMarks}）。 */
+  readonly settingMarks: SettingMarks
   /**
    * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。端末専用（`terminal_slash_commands`）は除いてある。
    * `init` は最初の依頼を送るまで届かない（実測。SDK の `system`/`init` はターンのたびに届く仕組みで、セッション開始直後には来ない）ので、それまでは空配列のまま。
@@ -474,6 +494,11 @@ export const INITIAL_SESSION_STATE: SessionState = {
   model: undefined,
   modelEffortSupport: [],
   effort: undefined,
+  settingMarks: {
+    model: NO_SETTING_MARK,
+    effort: NO_SETTING_MARK,
+    permissionMode: NO_SETTING_MARK,
+  },
   slashCommands: [],
   commandDescriptions: [],
   endedReason: undefined,
@@ -590,15 +615,26 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "model-changed":
       // `MODEL_ALIASES` に完全一致するときだけ先回りで更新する（`/model best` のような tsukumo が知らない値では状態を変えず、次の `init` を待つ）。
       // `session.kind` は見ない（`running` に絞ると、切り替えても数秒で古い値に戻って見える。`SessionInfo` の doc コメント）。
-      return isModelAlias(event.model) ? { ...state, model: event.model } : state
+      return withAcceptedMark(
+        isModelAlias(event.model) ? { ...state, model: event.model } : state,
+        "model",
+        event.model,
+        at,
+      )
     case "model-effort-support":
       return { ...state, modelEffortSupport: event.models }
     case "effort-changed":
-      return { ...state, effort: event.effort }
+      return withAcceptedMark({ ...state, effort: event.effort }, "effort", event.effort, at)
     case "permission-mode-changed":
+      return withAcceptedMark(state, "permissionMode", event.mode, at)
     case "setting-confirmed":
-      // 受け付けた・見届けた合図の畳み込みはまだ無い（画面の点を描くときに足す）。
-      return state
+      return withConfirmedMark(
+        event.setting === "effort" && isEffortLevel(event.value)
+          ? { ...state, effort: event.value }
+          : state,
+        event,
+        at,
+      )
     case "request":
       return {
         ...beginTurn(state, at),
@@ -878,6 +914,49 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "diary-failed":
       return { ...state, diaryWriting: applyDiaryEvent(state.diaryWriting, event, at) }
   }
+}
+
+/**
+ * 切り替えを受け付けた印を付ける（見届ける前の印は新しい値と時刻で付け直す）。
+ * `running` になる前は付けない（起こした直後の `effort-changed` で、起動のたびに点が出てしまう）。
+ */
+function withAcceptedMark(
+  state: SessionState,
+  setting: SettingName,
+  value: string,
+  at: number,
+): SessionState {
+  return state.session.kind === "running"
+    ? {
+        ...state,
+        settingMarks: { ...state.settingMarks, [setting]: { kind: "accepted", value, at } },
+      }
+    : state
+}
+
+function withConfirmedMark(
+  state: SessionState,
+  confirmation: SettingConfirmation,
+  at: number,
+): SessionState {
+  const mark = state.settingMarks[confirmation.setting]
+  return mark.kind === "accepted" && settingValueMatches(confirmation, mark.value)
+    ? {
+        ...state,
+        settingMarks: {
+          ...state.settingMarks,
+          [confirmation.setting]: { kind: "confirmed", value: mark.value, at },
+        },
+      }
+    : state
+}
+
+/** モデルだけ、受け付けた値（`sonnet` のような別名）がフルネームに含まれていれば合う。 */
+function settingValueMatches(confirmation: SettingConfirmation, accepted: string): boolean {
+  return (
+    confirmation.value === accepted ||
+    (confirmation.setting === "model" && confirmation.value.includes(accepted))
+  )
 }
 
 /**

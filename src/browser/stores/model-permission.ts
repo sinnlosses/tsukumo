@@ -3,6 +3,8 @@
 // 表示はサーバから届いた値だけに従い、押した側へ先に倒さない。
 // ターン進行中も変えられる（起こし直さない）ので、押せない状態は持たない（effort の選べない理由は `EffortSelect` が持つ）。
 
+import { useEffect, useState } from "react"
+
 import {
   isEffortLevel,
   isModelAlias,
@@ -11,16 +13,28 @@ import {
   type PermissionMode,
 } from "../../shared/command.ts"
 import type { ModelEffortSupport } from "../../shared/session/session-event.ts"
+import type { SettingMark } from "../../shared/session/session-state.ts"
 import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
 import { resolveModelAlias } from "../domain/model-label.ts"
 import {
   isDangerousPermissionMode,
   resolvePermissionMode,
 } from "../domain/permission-mode-label.ts"
+import { nowEpochMilliseconds } from "../utils/clock.ts"
 import { useSession } from "./session.ts"
+
+/** 口の右肩の点。`accepted` は空洞（受け付けた）、`confirmed` は塗り（効いたのを見届けた）、`none` は点なし。 */
+export type SettingDot = "none" | "accepted" | "confirmed"
+
+const CONFIRMED_DOT_MS = 3000
+/** 見届けられないまま空洞の点が消えるまで（effort に対応しないモデルでは見届けが来ない）。 */
+const ACCEPTED_DOT_MS = 8000
 
 export type ModelPermissionControl = {
   readonly model: ModelAlias
+  readonly modelDot: SettingDot
+  readonly effortDot: SettingDot
+  readonly permissionModeDot: SettingDot
   readonly onSetModel: (value: string) => void
   /** 押した値へ先に倒さない。選べる段・いまの値はサーバから届いた値（`model-effort-support` / `effort-changed`）だけに従う。 */
   readonly effort: EffortSelect
@@ -52,8 +66,16 @@ export function useModelPermission(): ModelPermissionControl {
   // effort の選べる段は「いま出しているモデル」で決まるので、model の畳み込みと同じ値を使う。
   const shownModel = model === undefined ? sessionDefault.model : resolveModelAlias(model)
 
+  const settingMarks = useSession((session) => session.state.settingMarks)
+  const modelDot = useSettingDot(settingMarks.model)
+  const effortDot = useSettingDot(settingMarks.effort)
+  const permissionModeDot = useSettingDot(settingMarks.permissionMode)
+
   return {
     model: shownModel,
+    modelDot,
+    effortDot,
+    permissionModeDot,
     onSetModel: (value) => {
       if (isModelAlias(value)) {
         dispatch.session.setModel({ model: value })
@@ -74,4 +96,43 @@ export function useModelPermission(): ModelPermissionControl {
       }
     },
   }
+}
+
+/** 印を点にし、印ごとのタイマーで消す。同じ値の付け直しは `at` が違うので別の印として数え直す。 */
+function useSettingDot(mark: SettingMark): SettingDot {
+  // 画面を開いた時点でもう寿命を過ぎている印（配り直された古い切り替え）は、最初から消えたことにする。
+  const [expired, setExpired] = useState<string | undefined>(() =>
+    remainingDotMs(mark, nowEpochMilliseconds()) <= 0 ? dotKey(mark) : undefined,
+  )
+  const key = dotKey(mark)
+
+  useEffect(() => {
+    if (mark.kind === "none") {
+      return
+    }
+    const timer = setTimeout(
+      () => {
+        setExpired(key)
+      },
+      Math.max(remainingDotMs(mark, nowEpochMilliseconds()), 0),
+    )
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [key, mark])
+
+  return key === expired ? "none" : mark.kind
+}
+
+function dotKey(mark: SettingMark): string {
+  return mark.kind === "none" ? "none" : `${mark.kind}:${String(mark.at)}`
+}
+
+/** 印を付けた時刻（サーバが打った `at`）から `now` までに使った分を引いた、点の残り寿命。 */
+function remainingDotMs(mark: SettingMark, now: number): number {
+  if (mark.kind === "none") {
+    return 0
+  }
+  const life = mark.kind === "confirmed" ? CONFIRMED_DOT_MS : ACCEPTED_DOT_MS
+  return life - (now - mark.at)
 }
