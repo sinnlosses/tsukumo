@@ -13,7 +13,7 @@
 import { useEffect, useState } from "react"
 
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
-import type { ReactionKind } from "../../../../../../../shared/recommendation/welcome-greeting.ts"
+import type { ReactionKind } from "../../../../../../../shared/recommendation/reaction.ts"
 import {
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,

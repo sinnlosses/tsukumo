@@ -26,7 +26,7 @@ characters/<name>/
 - **キャラクターの中身は定義が持つ**（原則4）。`speak` の enum と説明は `expressions` から作る。
   `diaryFont` はパックに同梱した書体ファイルだけを指せ、素材と同じ経路（「パックの一覧と素材の URL」）で配る
 - **パックは機械の出来事への反応の行（定型文）を持たない**（2026-10-05 利用者決定）。再試行・失敗・
-  利用上限・待ちの行は、迎えの挨拶と同じ問い合わせが `persona.md` の口調でセッションごとに書く
+  利用上限・待ちの行は、迎えの挨拶とは別の問い合わせが `persona.md` の口調で代（起こした1回）ごとに書く
   （`docs/architecture/display.md` 4.2「出力の分離（セリフと詳細）」）。前の版の `character.json` に残った
   `reactions` の節は読まずに無視する
 - **二重適用を避ける**: `applyFlagSettings({ outputStyle: "default" })`（セッション限り）で

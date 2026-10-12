@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 
+import type { WrittenReactions } from "../../../src/shared/recommendation/reaction.ts"
 import {
   NO_WELCOME_HEAD,
   type WelcomeHead,
-  type WrittenReactions,
 } from "../../../src/shared/recommendation/welcome-greeting.ts"
 import type { ReportWaitingLine, SessionEvent } from "../../../src/shared/session/session-event.ts"
 import {
@@ -67,9 +67,13 @@ const GREETED = {
       withCard: "架空の挨拶、{札} からどう？",
       withoutCard: "架空の挨拶だけ",
       expression: "curious",
-      reactions: WRITTEN_REACTIONS,
     },
   },
+} as const satisfies SessionEvent
+
+const REACTED = {
+  kind: "reactions-written",
+  reactions: WRITTEN_REACTIONS,
 } as const satisfies SessionEvent
 
 /** パックを決めてから、`events` を順に畳んだ姿。 */
@@ -120,23 +124,23 @@ describe("shownReaction", () => {
     ["やり取りの前にセリフがある", [SPEECH], "none"],
     ["送った直後", [REQUEST], "writing"],
     ["送ったあと speak が届いた", [REQUEST, SPEECH], "none"],
-    ["呼び直しを待っている", [GREETED, REQUEST, RETRY], "retrying:架空の再試行"],
+    ["呼び直しを待っている", [REACTED, REQUEST, RETRY], "retrying:架空の再試行"],
     [
       "セリフのあとに呼び直しを待っている",
-      [GREETED, REQUEST, SPEECH, RETRY],
+      [REACTED, REQUEST, SPEECH, RETRY],
       "retrying:架空の再試行",
     ],
-    ["呼び直しのあと speak が届いた", [GREETED, REQUEST, RETRY, SPEECH], "none"],
-    ["API のエラーで閉じた", [GREETED, REQUEST, RETRY, API_FAILED], "failed:架空の失敗"],
+    ["呼び直しのあと speak が届いた", [REACTED, REQUEST, RETRY, SPEECH], "none"],
+    ["API のエラーで閉じた", [REACTED, REQUEST, RETRY, API_FAILED], "failed:架空の失敗"],
     [
       "rate_limit のエラーで閉じた",
-      [GREETED, REQUEST, { kind: "api-error", error: "rate_limit" }, API_FAILED],
+      [REACTED, REQUEST, { kind: "api-error", error: "rate_limit" }, API_FAILED],
       "limited:架空の上限",
     ],
     [
       "利用上限に達して閉じた",
       [
-        GREETED,
+        REACTED,
         REQUEST,
         SPEECH,
         {
@@ -154,10 +158,9 @@ describe("shownReaction", () => {
   })
 
   it.each<[string, readonly SessionEvent[]]>([
-    ["書き始める前", []],
-    ["書いている途中", [{ kind: "welcome-greeting-changed", state: { kind: "writing" } }]],
-    ["書けなかった", [{ kind: "welcome-greeting-changed", state: { kind: "unwritten" } }]],
-  ])("挨拶が%sなら、再試行・失敗・利用上限では出さない", (_, greeting) => {
+    ["挨拶も書き始める前", []],
+    ["挨拶は書けた", [GREETED]],
+  ])("反応の行が書けていなければ（%s）、再試行・失敗・利用上限では出さない", (_, greeting) => {
     expect(shown(stateAfter([...greeting, REQUEST, RETRY]))).toBe("none")
     expect(shown(stateAfter([...greeting, REQUEST, RETRY, API_FAILED]))).toBe("none")
     expect(
@@ -167,8 +170,44 @@ describe("shownReaction", () => {
     ).toBe("none")
   })
 
+  it("挨拶が書けなくても、反応の行が書けていれば再試行・失敗・利用上限で出す", () => {
+    const unwritten = { kind: "welcome-greeting-changed", state: { kind: "unwritten" } } as const
+
+    expect(shown(stateAfter([unwritten, REACTED, REQUEST, RETRY]))).toBe("retrying:架空の再試行")
+    expect(shown(stateAfter([unwritten, REACTED, REQUEST, RETRY, API_FAILED]))).toBe(
+      "failed:架空の失敗",
+    )
+    expect(
+      shown(
+        stateAfter([
+          unwritten,
+          REACTED,
+          REQUEST,
+          { kind: "api-error", error: "rate_limit" },
+          API_FAILED,
+        ]),
+      ),
+    ).toBe("limited:架空の上限")
+  })
+
+  it("/clear のあとも、反応の行は書き直さずに出す", () => {
+    expect(
+      shown(
+        stateAfter([
+          GREETED,
+          REACTED,
+          REQUEST,
+          COMPLETED,
+          { kind: "conversation-cleared" },
+          REQUEST,
+          RETRY,
+        ]),
+      ),
+    ).toBe("retrying:架空の再試行")
+  })
+
   it("反応の行の表情を返す", () => {
-    const reaction = shownReaction(stateAfter([GREETED, REQUEST, RETRY]), NO_WELCOME_HEAD, 0)
+    const reaction = shownReaction(stateAfter([REACTED, REQUEST, RETRY]), NO_WELCOME_HEAD, 0)
 
     expect(reaction.kind === "shown" && reaction.line.expression).toBe("flustered")
   })
@@ -191,45 +230,36 @@ describe("shownReaction", () => {
       expect(shown(state, NO_WELCOME_HEAD, dueAt ?? 0)).toBe("idle:架空の待ちの一言")
     })
 
-    it("本体が書いていなければ、挨拶と同じ答えで書かせた待ちの行を出す", () => {
+    it("本体が書いていなければ、反応の行の問い合わせが書いた待ちの行を出す", () => {
       expect(
         shown(
-          stateAfter([GREETED, REQUEST, SPEECH, report({ kind: "none" }), COMPLETED]),
+          stateAfter([REACTED, REQUEST, SPEECH, report({ kind: "none" }), COMPLETED]),
           NO_WELCOME_HEAD,
           LATER,
         ),
       ).toBe("idle:架空の待ち")
-      expect(shown(stateAfter([GREETED, REQUEST, SPEECH, COMPLETED]), NO_WELCOME_HEAD, LATER)).toBe(
+      expect(shown(stateAfter([REACTED, REQUEST, SPEECH, COMPLETED]), NO_WELCOME_HEAD, LATER)).toBe(
         "idle:架空の待ち",
       )
     })
 
     it("本体が書いた待ちの一言は、書かせた待ちの行より勝つ", () => {
       expect(
-        shown(stateAfter([GREETED, REQUEST, SPEECH, WRITTEN, COMPLETED]), NO_WELCOME_HEAD, LATER),
+        shown(stateAfter([REACTED, REQUEST, SPEECH, WRITTEN, COMPLETED]), NO_WELCOME_HEAD, LATER),
       ).toBe("idle:架空の待ちの一言")
     })
 
-    it("本体が書いておらず挨拶も書けていなければ、何も出さない", () => {
+    it("本体が書いておらず反応の行も書けていなければ、挨拶が書けていても何も出さない", () => {
       expect(shown(stateAfter([REQUEST, SPEECH, COMPLETED]), NO_WELCOME_HEAD, LATER)).toBe("none")
-      expect(
-        shown(
-          stateAfter([
-            { kind: "welcome-greeting-changed", state: { kind: "unwritten" } },
-            REQUEST,
-            SPEECH,
-            COMPLETED,
-          ]),
-          NO_WELCOME_HEAD,
-          LATER,
-        ),
-      ).toBe("none")
+      expect(shown(stateAfter([GREETED, REQUEST, SPEECH, COMPLETED]), NO_WELCOME_HEAD, LATER)).toBe(
+        "none",
+      )
     })
 
     it("前のやり取りの待ちの一言は使わない", () => {
       expect(
         shown(
-          stateAfter([GREETED, REQUEST, WRITTEN, COMPLETED, REQUEST, SPEECH, COMPLETED]),
+          stateAfter([REACTED, REQUEST, WRITTEN, COMPLETED, REQUEST, SPEECH, COMPLETED]),
           NO_WELCOME_HEAD,
           LATER,
         ),
@@ -252,7 +282,7 @@ describe("shownReaction", () => {
     it("答え待ち・失敗で閉じた・雑談・背景のタスクを待つ間では出さない", () => {
       const cases = [
         stateAfter([REQUEST, SPEECH, ASKED]),
-        stateAfter([GREETED, REQUEST, SPEECH, API_FAILED]),
+        stateAfter([REACTED, REQUEST, SPEECH, API_FAILED]),
         stateAfter([{ kind: "chat-mode-changed", chat: true }, REQUEST, SPEECH, COMPLETED]),
         stateAfter([
           REQUEST,
@@ -418,7 +448,6 @@ describe("shownReaction", () => {
             withCard: "架空の2回目の挨拶 {札}",
             withoutCard: "架空の2回目の挨拶",
             expression: "excited",
-            reactions: WRITTEN_REACTIONS,
           },
         },
       } as const satisfies SessionEvent

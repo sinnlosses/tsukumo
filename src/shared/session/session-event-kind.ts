@@ -42,6 +42,7 @@ const SESSION_EVENT_KINDS = {
   "tasks-changed": true,
   "recommendation-changed": true,
   "welcome-greeting-changed": true,
+  "reactions-written": true,
   "sessions-changed": true,
   "chat-mode-changed": true,
   "chat-topics-changed": true,

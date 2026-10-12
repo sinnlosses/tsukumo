@@ -5,17 +5,15 @@
 // いちばん新しいやり取りについての反応で、過去のターンを見ているかどうかは見ない。
 // 迎えるときは、挨拶を書いている途中は「…」、書けていればその文を出し、書けなかったら出さない。
 // 依頼を受けてから最初の `speak` までは「…」を出す。
-// 再試行・失敗・利用上限は、迎えの挨拶と同じ答えで書かせた行を出し、書けていなければ出さない。
+// 再試行・失敗・利用上限は、反応の行の問い合わせが書いた行を出し、書けていなければ出さない（挨拶が書けたかは見ない）。
 // 依頼を待つ間が続いたら、本体が `report` に書いた待ちの一言、無ければ書かせた待ちの行を出す。
 // 続きから起こしてまだ依頼が無い間は、前回の待ちの一言、無ければ迎えの挨拶の札の無い文をおかえりとして出す。
 
+import type { ReactionKind, ReactionLine, WrittenReactionKind } from "../recommendation/reaction.ts"
 import {
   NO_WELCOME_HEAD,
-  type ReactionKind,
-  type ReactionLine,
   type WelcomeHead,
   welcomeGreetingLine,
-  type WrittenReactionKind,
 } from "../recommendation/welcome-greeting.ts"
 import { conversationMoment } from "./conversation-moment.ts"
 import type { ReportWaitingLine } from "./session-event.ts"
@@ -55,7 +53,7 @@ export function shownReaction(state: SessionState, head: WelcomeHead, now: numbe
     case "none":
       return NO_SHOWN_REACTION
     default:
-      return shownWrittenLine(state.welcomeGreeting, reaction)
+      return shownWrittenLine(state.writtenReactions, reaction)
   }
 }
 
@@ -117,16 +115,16 @@ function shownWaitingLine(state: SessionState): ShownReaction {
   const waitingLine = lastWaitingLine(state.records)
   return waitingLine.kind === "speech"
     ? { kind: "shown", reaction: "idle", line: reactionLineOf(waitingLine) }
-    : shownWrittenLine(state.welcomeGreeting, "idle")
+    : shownWrittenLine(state.writtenReactions, "idle")
 }
 
-/** 迎えの挨拶と同じ答えで書かせた行。挨拶が書けていなければ出さない。 */
+/** 反応の行の問い合わせが書いた行。書けていなければ出さない。 */
 function shownWrittenLine(
-  welcomeGreeting: SessionState["welcomeGreeting"],
+  writtenReactions: SessionState["writtenReactions"],
   reaction: WrittenReactionKind,
 ): ShownReaction {
-  return welcomeGreeting.kind === "written"
-    ? { kind: "shown", reaction, line: welcomeGreeting.greeting.reactions[reaction] }
+  return writtenReactions.kind === "written"
+    ? { kind: "shown", reaction, line: writtenReactions.reactions[reaction] }
     : NO_SHOWN_REACTION
 }
 

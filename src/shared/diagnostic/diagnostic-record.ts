@@ -15,6 +15,7 @@ import { z } from "zod"
 import { isSessionEventKind } from "../session/session-event-kind.ts"
 import type { SessionEvent } from "../session/session-event.ts"
 import type { SwallowedFailureFootprint } from "./swallowed-failure.ts"
+import type { WelcomeWritingFootprint } from "./welcome-writing.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
 export const DIAGNOSTIC_FORMAT_VERSION = 1 satisfies number
@@ -112,6 +113,7 @@ export type DiagnosticEntry =
   | BrowserErrorFootprint
   | SwallowedFailureFootprint
   | PromptDelayFootprint
+  | WelcomeWritingFootprint
 
 /** JSONL に書く1行の形。 */
 export type DiagnosticRecord = DiagnosticEntry & {

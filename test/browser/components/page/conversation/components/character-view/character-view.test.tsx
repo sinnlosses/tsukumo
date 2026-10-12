@@ -8,6 +8,7 @@ import {
   type ViewedTurn,
 } from "../../../../../../../src/browser/stores/location-hash.ts"
 import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
+import type { WrittenReactions } from "../../../../../../../src/shared/recommendation/reaction.ts"
 import type {
   ReportWaitingLine,
   SessionEvent,
@@ -43,20 +44,27 @@ const CHARACTER_WITH_THINKING: NonNullable<SessionState["character"]> = {
   ...shownPortraits({ default: "/character/default.png", thinking: "/character/thinking.png" }),
 }
 
-/** 迎えの挨拶と同じ答えで、反応の行も書けた姿。 */
+/** 迎えの挨拶が書けた姿。 */
 const WRITTEN_GREETING: SessionState["welcomeGreeting"] = {
   kind: "written",
   greeting: {
     withCard: "架空の挨拶 {札}",
     withoutCard: "架空の挨拶",
     expression: "default",
-    reactions: {
-      retrying: { text: "架空の再試行反応", expression: "thinking" },
-      failed: { text: "架空の失敗の反応", expression: "sad" },
-      limited: { text: "架空の上限の反応", expression: "default" },
-      idle: { text: "架空の待ちの反応", expression: "default" },
-    },
   },
+}
+
+const REACTIONS = {
+  retrying: { text: "架空の再試行反応", expression: "thinking" },
+  failed: { text: "架空の失敗の反応", expression: "sad" },
+  limited: { text: "架空の上限の反応", expression: "default" },
+  idle: { text: "架空の待ちの反応", expression: "default" },
+} as const satisfies WrittenReactions
+
+/** 反応の行が書けた姿。 */
+const WRITTEN_REACTIONS: SessionState["writtenReactions"] = {
+  kind: "written",
+  reactions: REACTIONS,
 }
 
 afterEach(() => {
@@ -177,7 +185,7 @@ describe("CharacterView", () => {
       },
       nextTurnId: 1,
       character: CHARACTER_WITH_THINKING,
-      welcomeGreeting: WRITTEN_GREETING,
+      writtenReactions: WRITTEN_REACTIONS,
     })
 
     const balloon = document.querySelector(".balloon")
@@ -233,6 +241,10 @@ describe("CharacterView（反応の吹き出し）", () => {
     kind: "welcome-greeting-changed",
     state: WRITTEN_GREETING,
   } as const satisfies SessionEvent
+  const REACTED = {
+    kind: "reactions-written",
+    reactions: REACTIONS,
+  } as const satisfies SessionEvent
 
   function report(waitingLine: ReportWaitingLine): SessionEvent {
     return reportEvent({ waitingLine })
@@ -267,6 +279,7 @@ describe("CharacterView（反応の吹き出し）", () => {
       "利用上限で閉じると、前のセリフの下に利用上限の反応が最新として出る",
       [
         GREETED,
+        REACTED,
         REQUEST,
         SPEECH,
         {
@@ -371,7 +384,7 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
         ending: { kind: "failed", failure: { kind: "execution-error" } },
       },
       character: CHARACTER_WITH_PROUD,
-      welcomeGreeting: WRITTEN_GREETING,
+      writtenReactions: WRITTEN_REACTIONS,
     })
     expect(document.querySelector("[data-reaction='failed']")).not.toBeNull()
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("sad")
@@ -419,7 +432,7 @@ describe("CharacterView（狭い画面の顔と最新の1件）", () => {
         ending: { kind: "failed", failure: { kind: "execution-error" } },
       },
       character: FIXTURE_CHARACTER,
-      welcomeGreeting: WRITTEN_GREETING,
+      writtenReactions: WRITTEN_REACTIONS,
     })
 
     expect(phoneText()).toBe("架空の失敗の反応")

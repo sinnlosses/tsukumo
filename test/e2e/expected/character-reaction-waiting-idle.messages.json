@@ -42,25 +42,32 @@
         "greeting": {
           "withCard": "架空の挨拶、{札} からどう？",
           "withoutCard": "架空の挨拶。",
-          "expression": "excited",
-          "reactions": {
-            "retrying": {
-              "text": "架空の再試行の一言。",
-              "expression": "flustered"
-            },
-            "failed": {
-              "text": "架空の失敗の一言。",
-              "expression": "sad"
-            },
-            "limited": {
-              "text": "架空の利用上限の一言。",
-              "expression": "bored"
-            },
-            "idle": {
-              "text": "架空の待ちの一言（書かせた行）。",
-              "expression": "default"
-            }
-          }
+          "expression": "excited"
+        }
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "reactions-written",
+      "reactions": {
+        "retrying": {
+          "text": "架空の再試行の一言。",
+          "expression": "flustered"
+        },
+        "failed": {
+          "text": "架空の失敗の一言。",
+          "expression": "sad"
+        },
+        "limited": {
+          "text": "架空の利用上限の一言。",
+          "expression": "bored"
+        },
+        "idle": {
+          "text": "架空の待ちの一言（書かせた行）。",
+          "expression": "default"
         }
       }
     }

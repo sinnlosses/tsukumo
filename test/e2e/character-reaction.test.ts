@@ -4,7 +4,7 @@ import { WAITING_LINE_DELAY_MS } from "../../src/shared/session/shown-reaction.t
 import { useScenarioRun } from "./scenario-run.ts"
 
 // 機械の出来事 → キャラビューの反応の吹き出し（docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// 場面が流す迎えの挨拶（`welcome-greeting-changed`）に書かせた架空の行が、`data-reaction` の付いた吹き出しとして最新の位置に出る。
+// 場面が流す反応の行（`reactions-written`）の架空の行が、`data-reaction` の付いた吹き出しとして最新の位置に出る。
 
 const run = useScenarioRun()
 
@@ -32,7 +32,7 @@ describe("機械の出来事 → キャラビューの反応", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("本体が待ちの一言を書いていなければ、迎えの挨拶と同じ答えで書かせた待ちの行が出る", async () => {
+  it("本体が待ちの一言を書いていなければ、反応の行の問い合わせが書いた待ちの行が出る", async () => {
     const room = await run.open({
       scenario: "character-reaction-waiting-idle",
       scene: "waiting-idle",

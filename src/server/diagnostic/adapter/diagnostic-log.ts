@@ -19,6 +19,7 @@ import {
   sessionEventFootprintSchema,
 } from "../../../shared/diagnostic/diagnostic-record.ts"
 import { swallowedFailureFootprintSchema } from "../../../shared/diagnostic/swallowed-failure.ts"
+import { welcomeWritingFootprintSchema } from "../../../shared/diagnostic/welcome-writing.ts"
 import {
   appendJsonLines,
   dateFileNames,
@@ -43,6 +44,7 @@ const diagnosticRecordSchema = z.discriminatedUnion("flow", [
   browserErrorFootprintSchema.extend(VERSION),
   swallowedFailureFootprintSchema.extend(VERSION),
   promptDelayFootprintSchema.extend(VERSION),
+  welcomeWritingFootprintSchema.extend(VERSION),
 ])
 
 /** 書き込んでよいのはこの下だけ。 */

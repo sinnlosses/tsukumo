@@ -120,6 +120,25 @@ describe("createDiagnosticLog", () => {
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([delay])
   })
 
+  it("迎えの挨拶の書き込み（welcome-writing）も各回の結果と所要で往復する", () => {
+    const log = createDiagnosticLog(root())
+    const writing: DiagnosticEntry = {
+      flow: "welcome-writing",
+      at: at(10, 0),
+      target: "greeting",
+      outcome: "written",
+      durationMs: 9000,
+      attempts: [
+        { result: "rejected", reason: "too-long", ms: 6000 },
+        { result: "written", ms: 3000 },
+      ],
+    }
+
+    log.append([writing])
+
+    expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([writing])
+  })
+
   it("壊れた行・版が違う行・知らない種類の行は読み飛ばす", () => {
     const path = join(root(), "2026-09-22.jsonl")
     mkdirSync(root(), { recursive: true })

@@ -1,6 +1,6 @@
-// 迎えの挨拶（と同じ答えで書かせる反応の行）の配線。代を起こすたびに、起こす代のパックで背景で書かせ
+// 迎えの挨拶と反応の行の配線。代を起こすたびに、起こす代のパックで両方を背景で書かせ
 // （続きから起こした代は組み直した履歴から決めた迎え方で）、
-// その代の受け取り口に `/clear` が流れるたびに書き直す。
+// その代の受け取り口に `/clear` が流れるたびに挨拶だけを書き直す。
 
 import { localCalendarAt } from "../server/adapter/local-time.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
@@ -51,11 +51,18 @@ export function wireWelcomeGreeting(
           writeRecentWelcomeGreetings(seed.pack.name, recent)
         },
         query: (request, signal) => queryStructured(request, { cwd, env: inheritedEnv }, signal),
+        now: context.now,
         emit: (state) => {
           onEvent({ kind: "welcome-greeting-changed", state })
         },
+        emitReactions: (reactions) => {
+          onEvent({ kind: "reactions-written", reactions })
+        },
         onUnwritten: (place, error) => {
           reportFailure({ feature: "recommendation", place }, error)
+        },
+        report: (footprint) => {
+          diagnosticLog.append([footprint])
         },
       })
       const material = (visit: WelcomeVisit): Omit<WelcomeGreetingMaterial, "recent"> => ({
@@ -66,17 +73,17 @@ export function wireWelcomeGreeting(
       })
       switch (seed.start.kind) {
         case "new":
-          greeter.write(material(START_VISIT))
+          greeter.start(material(START_VISIT))
           break
         case "resume":
           void restored.then((events) => {
-            greeter.write(material(resumedWelcome(events, context.now())))
+            greeter.start(material(resumedWelcome(events, context.now())))
           })
           break
       }
       return (event) => {
         if (event.kind === "conversation-cleared") {
-          greeter.write(material(START_VISIT))
+          greeter.rewriteGreeting(material(START_VISIT))
         }
       }
     },

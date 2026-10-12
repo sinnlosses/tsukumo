@@ -1,10 +1,13 @@
-// 迎えの挨拶と、同じ答えで反応の行を書く。誰もこの問い合わせを待たない。
+// 迎えの挨拶と反応の行を、別々の問い合わせで書く。誰もこの問い合わせを待たない。
+// 反応の行は代（起こした1回）につき1回だけ書き、`/clear` では挨拶だけを書き直す。
 
 import type {
-  WelcomeGreeting,
-  WelcomeGreetingState,
-} from "../../../shared/recommendation/welcome-greeting.ts"
-import type { StructuredQuery } from "./structured-query.ts"
+  WelcomeWritingFootprint,
+  WelcomeWritingResult,
+} from "../../../shared/diagnostic/welcome-writing.ts"
+import type { WrittenReactions } from "../../../shared/recommendation/reaction.ts"
+import type { WelcomeGreetingState } from "../../../shared/recommendation/welcome-greeting.ts"
+import { type RetriedQueryPorts, type RetriedQueryTrace, runRetriedQuery } from "./retried-query.ts"
 import {
   parseWelcomeGreeting,
   WELCOME_GREETING_RECENT_LIMIT,
@@ -13,49 +16,66 @@ import {
   type WelcomeGreetingMaterial,
   type WelcomeGreetingText,
 } from "./welcome-greeting.ts"
+import {
+  parseWrittenReactions,
+  writtenReactionsQuery,
+  type WrittenReactionsMaterial,
+} from "./written-reaction.ts"
 
-export type WelcomeGreeterPorts = {
+export type WelcomeGreeterPorts = RetriedQueryPorts & {
   /** 直近の挨拶を新しい順に読む（無い・読めないときは空）。 */
   readonly readRecent: () => readonly WelcomeGreetingText[]
   /** 直近の挨拶を丸ごと書く。失敗しても例外を投げない。 */
   readonly writeRecent: (recent: readonly WelcomeGreetingText[]) => void
-  /** 問い合わせを1回走らせ、`structured_output` をそのまま返す。失敗・中断では reject する。 */
-  readonly query: (request: StructuredQuery, signal: AbortSignal) => Promise<unknown>
   readonly emit: (state: WelcomeGreetingState) => void
-  /** `unwritten` を配る理由の知らせ口（中断では呼ばない）。`error` は問い合わせの失敗のときだけ実物が入る。 */
+  /** 反応の行が書けたときだけ呼ぶ。 */
+  readonly emitReactions: (reactions: WrittenReactions) => void
+  /** 書けなかった理由の知らせ口（中断では呼ばない）。`error` は問い合わせの失敗のときだけ実物が入る。 */
   readonly onUnwritten: (place: UnwrittenPlace, error: unknown) => void
+  /** 書き込みを1回終えた足跡の知らせ口（書けても書けなくても1回。中断では呼ばない）。 */
+  readonly report: (footprint: WelcomeWritingFootprint) => void
 }
 
 export type UnwrittenPlace =
-  | "welcome-greeting-failed"
-  | "welcome-greeting-rejected"
-  | "welcome-greeting-timed-out"
+  | (typeof greetingUnwrittenPlace)[UnwrittenResult]
+  | (typeof reactionsUnwrittenPlace)[UnwrittenResult]
 
-type Attempt =
-  | { readonly kind: "written"; readonly greeting: WelcomeGreeting }
-  | { readonly kind: "failed"; readonly error: unknown }
-  | { readonly kind: "rejected" }
+type UnwrittenResult = Exclude<WelcomeWritingResult, "written">
 
-const unwrittenPlace = {
+const greetingUnwrittenPlace = {
   failed: "welcome-greeting-failed",
   rejected: "welcome-greeting-rejected",
-} as const satisfies Record<"failed" | "rejected", UnwrittenPlace>
+  "timed-out": "welcome-greeting-timed-out",
+} as const satisfies Record<UnwrittenResult, string>
 
-/** 代ごとに1つ持ち、書き直す契機のたびに `write` を呼ぶ。 */
+const reactionsUnwrittenPlace = {
+  failed: "welcome-reactions-failed",
+  rejected: "welcome-reactions-rejected",
+  "timed-out": "welcome-reactions-timed-out",
+} as const satisfies Record<UnwrittenResult, string>
+
+/** 代ごとに1つ持つ。 */
 export type WelcomeGreeter = {
-  /** 前に走っている書き手があれば中断してから、新しい材料で書き始める。 */
-  readonly write: (material: Omit<WelcomeGreetingMaterial, "recent">) => void
+  /** 代を起こしたときに1回だけ呼ぶ。挨拶と反応の行を同時に書き始める。 */
+  readonly start: (material: Omit<WelcomeGreetingMaterial, "recent">) => void
+  /** `/clear` のたびに呼ぶ。走っている挨拶の書き手を中断してから、挨拶だけを書き直す。 */
+  readonly rewriteGreeting: (material: Omit<WelcomeGreetingMaterial, "recent">) => void
 }
 
 export function createWelcomeGreeter(ports: WelcomeGreeterPorts): WelcomeGreeter {
   let running: AbortController | undefined = undefined
+  const writeGreeting = (material: Omit<WelcomeGreetingMaterial, "recent">): void => {
+    running?.abort()
+    const controller = new AbortController()
+    running = controller
+    void greetWelcome(ports, material, controller.signal, WELCOME_GREETING_TIMEOUT_MS)
+  }
   return {
-    write: (material) => {
-      running?.abort()
-      const controller = new AbortController()
-      running = controller
-      void greetWelcome(ports, material, controller.signal, WELCOME_GREETING_TIMEOUT_MS)
+    start: (material) => {
+      writeGreeting(material)
+      void writeReactions(ports, material, WELCOME_GREETING_TIMEOUT_MS)
     },
+    rewriteGreeting: writeGreeting,
   }
 }
 
@@ -73,36 +93,29 @@ export async function greetWelcome(
   timeoutMs: number,
 ): Promise<void> {
   ports.emit({ kind: "writing" })
-  const bounded = AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)])
   const recent = ports.readRecent()
   const full = { ...material, recent }
 
-  const attempt = async (): Promise<Attempt> => {
-    let answer: unknown = undefined
-    try {
-      answer = await ports.query(welcomeGreetingQuery(full), bounded)
-    } catch (error) {
-      return { kind: "failed", error }
-    }
-    const greeting = parseWelcomeGreeting(answer, full)
-    return greeting === undefined ? { kind: "rejected" } : { kind: "written", greeting }
-  }
-
-  const first = await attempt()
-  const last = first.kind !== "written" && !bounded.aborted ? await attempt() : first
-
-  if (signal.aborted) {
+  const outcome = await runRetriedQuery(
+    ports,
+    welcomeGreetingQuery(full),
+    (answer) => parseWelcomeGreeting(answer, full),
+    signal,
+    timeoutMs,
+  )
+  if (outcome.kind === "aborted") {
     return
   }
-  if (last.kind !== "written") {
+  ports.report(footprintOf(ports.now(), "greeting", outcome.kind, outcome.trace))
+  if (outcome.kind !== "written") {
     ports.onUnwritten(
-      bounded.aborted ? "welcome-greeting-timed-out" : unwrittenPlace[last.kind],
-      last.kind === "failed" ? last.error : undefined,
+      greetingUnwrittenPlace[outcome.kind],
+      outcome.kind === "failed" ? outcome.error : undefined,
     )
     ports.emit({ kind: "unwritten" })
     return
   }
-  const greeting = last.greeting
+  const greeting = outcome.value
   ports.writeRecent(
     [{ withCard: greeting.withCard, withoutCard: greeting.withoutCard }, ...recent].slice(
       0,
@@ -110,4 +123,40 @@ export async function greetWelcome(
     ),
   )
   ports.emit({ kind: "written", greeting })
+}
+
+/** 反応の行を問い合わせ、書ければ配る。書けなければ何も配らない。 */
+async function writeReactions(
+  ports: WelcomeGreeterPorts,
+  material: WrittenReactionsMaterial,
+  timeoutMs: number,
+): Promise<void> {
+  const outcome = await runRetriedQuery(
+    ports,
+    writtenReactionsQuery(material),
+    (answer) => parseWrittenReactions(answer, material.expressions),
+    new AbortController().signal,
+    timeoutMs,
+  )
+  if (outcome.kind === "aborted") {
+    return
+  }
+  ports.report(footprintOf(ports.now(), "reactions", outcome.kind, outcome.trace))
+  if (outcome.kind !== "written") {
+    ports.onUnwritten(
+      reactionsUnwrittenPlace[outcome.kind],
+      outcome.kind === "failed" ? outcome.error : undefined,
+    )
+    return
+  }
+  ports.emitReactions(outcome.value)
+}
+
+function footprintOf(
+  at: number,
+  target: WelcomeWritingFootprint["target"],
+  outcome: WelcomeWritingResult,
+  trace: RetriedQueryTrace,
+): WelcomeWritingFootprint {
+  return { flow: "welcome-writing", at, target, outcome, ...trace }
 }

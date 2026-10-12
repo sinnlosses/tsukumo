@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import type { WrittenReactions } from "../../../src/shared/recommendation/reaction.ts"
 import type { TaskSummaryItem } from "../../../src/shared/repository/task-summary.ts"
 import {
   MAX_MAIN_VIEW_TURNS,
@@ -18,6 +19,13 @@ import { apply, runningSession, sessionIdOf } from "../../fixture/session-state.
 
 /** 架空のキャラクターパックが決まったところ。 */
 const CHARACTER_FIXTURE: SessionEvent = characterChangedEvent()
+
+const WRITTEN_REACTIONS = {
+  retrying: { text: "架空の再試行", expression: "default" },
+  failed: { text: "架空の失敗", expression: "default" },
+  limited: { text: "架空の上限", expression: "default" },
+  idle: { text: "架空の待ち", expression: "default" },
+} as const satisfies WrittenReactions
 
 describe("applySessionEvent", () => {
   it("書きかけの本文をつなぎ、完成した本文が来たら置き換える（二重に積まない）", () => {
@@ -772,15 +780,10 @@ describe("applySessionEvent", () => {
             withCard: "架空の挨拶 {札}",
             withoutCard: "架空の挨拶",
             expression: "proud",
-            reactions: {
-              retrying: { text: "架空の再試行", expression: "default" },
-              failed: { text: "架空の失敗", expression: "default" },
-              limited: { text: "架空の上限", expression: "default" },
-              idle: { text: "架空の待ち", expression: "default" },
-            },
           },
         },
       },
+      { kind: "reactions-written", reactions: WRITTEN_REACTIONS },
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "speech", text: "架空のセリフ", expression: "proud" },
       { kind: "utterance", text: "架空のレポート" },
@@ -800,6 +803,8 @@ describe("applySessionEvent", () => {
     expect(cleared.partialUtterance).toBe("")
     // 古い挨拶を出さない（すぐ後にサーバから新しい代の `writing` が届く）。
     expect(cleared.welcomeGreeting).toEqual({ kind: "none" })
+    // 反応の行は代につき1回だけ書くので、`/clear` では消さない。
+    expect(cleared.writtenReactions).toEqual({ kind: "written", reactions: WRITTEN_REACTIONS })
     // 画面が壊れないように、キャラクターとセッション情報は残す。
     expect(cleared.character).toEqual(before.character)
     expect(cleared.characterPacks).toEqual(before.characterPacks)

@@ -11,6 +11,7 @@ import type { CharacterInfo, CharacterPackEntry } from "../character-pack/charac
 import type { Expression } from "../character-pack/expression.ts"
 import { type EffortLevel, isEffortLevel, isModelAlias } from "../command.ts"
 import { applyDiaryEvent, type DiaryWriting } from "../diary/diary.ts"
+import type { WrittenReactionsState } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
 import type { ReportSection } from "../report/report-block.ts"
@@ -395,10 +396,15 @@ export type SessionState = {
    */
   readonly recommendation: readonly RecommendationCard[]
   /**
-   * 迎えの挨拶。源は `welcome-greeting-changed` だけ。
+   * 迎えの挨拶（反応の行は持たない）。源は `welcome-greeting-changed` だけ。
    * `/clear` と起こし直しのどちらでも、いったん初期の `none` へ戻してから新しい代の挨拶が書き直される。
    */
   readonly welcomeGreeting: WelcomeGreetingState
+  /**
+   * 反応の行。源は `reactions-written` だけ。
+   * `/clear` では戻さない（書き直さない）。起こし直すと初期の `none` へ戻り、新しい代が書き直す。
+   */
+  readonly writtenReactions: WrittenReactionsState
   /**
    * キャラビューが立ち絵を取りに行く先（`character-changed` が届くまでは undefined）。
    * 素材そのものは持たない（`portraits` の値は `/character/<pack>/<file>` の URL）。
@@ -523,6 +529,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   tasks: { kind: "loading" },
   recommendation: [],
   welcomeGreeting: { kind: "none" },
+  writtenReactions: { kind: "none" },
   character: undefined,
   characterPacks: [],
   sessions: [],
@@ -880,6 +887,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, recommendation: event.cards }
     case "welcome-greeting-changed":
       return { ...state, welcomeGreeting: event.state }
+    case "reactions-written":
+      return { ...state, writtenReactions: { kind: "written", reactions: event.reactions } }
     case "sessions-changed":
       // `sessionId` もここで決まる（`session-info` は最初の依頼まで届かないので、それまで「いまどのセッションに居るか」を言えるのはこの経路だけ）。
       // 新規に起こしたときは `current` が undefined で、そのときは今の `session` を動かさない。

@@ -9,6 +9,7 @@ import type { CharacterInfo, CharacterPackEntry } from "../character-pack/charac
 import type { Expression } from "../character-pack/expression.ts"
 import type { EffortLevel, PermissionMode } from "../command.ts"
 import type { DiaryEvent } from "../diary/diary.ts"
+import type { WrittenReactions } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
 import type { ReportSection } from "../report/report-block.ts"
@@ -354,6 +355,10 @@ export type SessionEvent =
    * `writing` → `written` または `unwritten` の順に流れる。
    */
   | { readonly kind: "welcome-greeting-changed"; readonly state: WelcomeGreetingState }
+  /**
+   * 反応の行が書けた（代を起こすたびに1回、書けたときだけ。`/clear` では流れない。出し手はサーバの迎えの書き手 `createWelcomeGreeter`）。
+   */
+  | { readonly kind: "reactions-written"; readonly reactions: WrittenReactions }
   /**
    * キャラクターパックが決まった・一覧が変わった（起こしたとき・起こし直したときの1回ずつと、画面からパックを変えた・作ったとき）。
    * キャラビューが立ち絵を取りに行く先で、中身は URL だけ（素材そのものは乗らない）。

@@ -5,10 +5,14 @@ import {
   awayBandOf,
   parseWelcomeGreeting,
   timeBandOf,
-  WELCOME_GREETING_CHARS,
   welcomeGreetingQuery,
   type WelcomeGreetingMaterial,
 } from "../../../../src/server/recommendation/core/welcome-greeting.ts"
+import {
+  WELCOME_LINE_CHARS,
+  WELCOME_LINE_REQUESTED_CHARS,
+} from "../../../../src/server/recommendation/core/welcome-line.ts"
+import type { WelcomeRejection } from "../../../../src/shared/diagnostic/welcome-writing.ts"
 
 // すべて手で書いた架空の材料と出力。
 
@@ -23,18 +27,10 @@ const MATERIAL: WelcomeGreetingMaterial = {
   recent: [{ withCard: "架空の前の挨拶、{札} だ", withoutCard: "架空の前の挨拶" }],
 }
 
-const REACTIONS = {
-  retrying: { text: "架空の再試行", expression: "default" },
-  failed: { text: "架空の失敗", expression: "default" },
-  limited: { text: "架空の上限", expression: "excited" },
-  idle: { text: "架空の待ち", expression: "default" },
-}
-
 const OUTPUT = {
   withCard: "架空の挨拶、{札} からいこう",
   withoutCard: "架空の挨拶だけ",
   expression: "excited",
-  reactions: REACTIONS,
 }
 
 describe("welcomeGreetingQuery", () => {
@@ -70,82 +66,60 @@ describe("welcomeGreetingQuery", () => {
     expect(query.systemPrompt.startsWith("あなたはいま")).toBe(true)
   })
 
-  it("出力の表情を選択肢の名前に限る", () => {
-    expect(welcomeGreetingQuery(MATERIAL).schema).toMatchObject({
-      properties: { expression: { enum: ["default", "excited"] } },
-    })
+  it("指示文は検査の上限より短い字数を頼む", () => {
+    const { systemPrompt } = welcomeGreetingQuery(MATERIAL)
+
+    expect(systemPrompt).toContain(`${String(WELCOME_LINE_REQUESTED_CHARS)}字まで`)
+    expect(systemPrompt).not.toContain(`${String(WELCOME_LINE_CHARS)}字まで`)
   })
 
-  it("出力の形に、4つの出来事の行を欠かせない反応の節があり、行の表情も選択肢の名前に限る", () => {
-    const line = {
-      properties: { text: { type: "string" }, expression: { enum: ["default", "excited"] } },
-      required: ["text", "expression"],
-    }
+  it("出力の形は挨拶の2文と表情だけで、表情を選択肢の名前に限る", () => {
     expect(welcomeGreetingQuery(MATERIAL).schema).toMatchObject({
-      properties: {
-        reactions: {
-          properties: { retrying: line, failed: line, limited: line, idle: line },
-          required: ["retrying", "failed", "limited", "idle"],
-          additionalProperties: false,
-        },
-      },
-      required: ["withCard", "withoutCard", "expression", "reactions"],
+      properties: { expression: { enum: ["default", "excited"] } },
+      required: ["withCard", "withoutCard", "expression"],
+      additionalProperties: false,
     })
   })
 })
 
 describe("parseWelcomeGreeting", () => {
-  it("検査を通れば、前後の空白を落とした挨拶と反応の行にする", () => {
+  it("検査を通れば、前後の空白を落とした挨拶にする", () => {
     expect(
-      parseWelcomeGreeting(
-        {
-          ...OUTPUT,
-          withoutCard: " 架空の挨拶だけ \n",
-          reactions: { ...REACTIONS, idle: { text: " 架空の待ち ", expression: "default" } },
-        },
-        MATERIAL,
-      ),
-    ).toEqual(OUTPUT)
+      parseWelcomeGreeting({ ...OUTPUT, withoutCard: " 架空の挨拶だけ \n" }, MATERIAL),
+    ).toEqual({ kind: "accepted", value: OUTPUT })
   })
 
-  it.each<[string, unknown]>([
-    ["反応の節が無い", undefined],
-    ["出来事が欠けている", { retrying: REACTIONS.retrying, failed: REACTIONS.failed }],
-    ["行が空", { ...REACTIONS, failed: { text: " ", expression: "default" } }],
-    ["行が改行入り", { ...REACTIONS, failed: { text: "架空の\n失敗", expression: "default" } }],
-    [
-      "行が上限を超える",
-      {
-        ...REACTIONS,
-        limited: { text: "あ".repeat(WELCOME_GREETING_CHARS + 1), expression: "default" },
-      },
-    ],
-    [
-      "行に差し込み口がある",
-      { ...REACTIONS, idle: { text: "{札} を待つ", expression: "default" } },
-    ],
-    ["行が知らない表情", { ...REACTIONS, retrying: { text: "架空", expression: "架空の表情" } }],
-  ])("%s なら落とす", (_, reactions) => {
-    expect(parseWelcomeGreeting({ ...OUTPUT, reactions }, MATERIAL)).toBeUndefined()
+  it.each<[string, Record<string, unknown>, WelcomeRejection]>([
+    ["札ありの文に差し込み口が無い", { withCard: "架空の挨拶" }, "mark-count"],
+    ["札ありの文に差し込み口が2つある", { withCard: "{札} と {札}" }, "mark-count"],
+    ["札なしの文に差し込み口がある", { withoutCard: "{札} だけ" }, "mark-count"],
+    ["空", { withoutCard: "  " }, "empty"],
+    ["改行入り", { withoutCard: "架空の\n挨拶" }, "newline"],
+    ["上限を超える", { withoutCard: "あ".repeat(WELCOME_LINE_CHARS + 1) }, "too-long"],
+    ["知らない表情", { expression: "架空の表情" }, "unknown-expression"],
+    ["表情が無い", { expression: undefined }, "missing"],
+    ["直近と同じ札ありの文", { withCard: "架空の前の挨拶、{札} だ" }, "repeated"],
+    ["直近と同じ札なしの文", { withoutCard: "架空の前の挨拶" }, "repeated"],
+    ["文字列でない", { withCard: 1 }, "missing"],
+  ])("%s なら落とす", (_, patch, reason) => {
+    expect(parseWelcomeGreeting({ ...OUTPUT, ...patch }, MATERIAL)).toEqual({
+      kind: "rejected",
+      reason,
+    })
   })
 
-  it.each<[string, Record<string, unknown>]>([
-    ["札ありの文に差し込み口が無い", { withCard: "架空の挨拶" }],
-    ["札ありの文に差し込み口が2つある", { withCard: "{札} と {札}" }],
-    ["札なしの文に差し込み口がある", { withoutCard: "{札} だけ" }],
-    ["空", { withoutCard: "  " }],
-    ["改行入り", { withoutCard: "架空の\n挨拶" }],
-    ["上限を超える", { withoutCard: "あ".repeat(WELCOME_GREETING_CHARS + 1) }],
-    ["知らない表情", { expression: "架空の表情" }],
-    ["直近と同じ札ありの文", { withCard: "架空の前の挨拶、{札} だ" }],
-    ["直近と同じ札なしの文", { withoutCard: "架空の前の挨拶" }],
-    ["文字列でない", { withCard: 1 }],
-  ])("%s なら落とす", (_, patch) => {
-    expect(parseWelcomeGreeting({ ...OUTPUT, ...patch }, MATERIAL)).toBeUndefined()
+  it("頼んだ字数を超えても、検査の上限ちょうどまでの文は通す", () => {
+    const longest = "あ".repeat(WELCOME_LINE_CHARS)
+    expect(WELCOME_LINE_REQUESTED_CHARS).toBeLessThan(WELCOME_LINE_CHARS)
+
+    expect(parseWelcomeGreeting({ ...OUTPUT, withoutCard: longest }, MATERIAL)).toMatchObject({
+      kind: "accepted",
+      value: { withoutCard: longest },
+    })
   })
 
   it("オブジェクトでなければ落とす", () => {
-    expect(parseWelcomeGreeting("架空", MATERIAL)).toBeUndefined()
+    expect(parseWelcomeGreeting("架空", MATERIAL)).toEqual({ kind: "rejected", reason: "missing" })
   })
 })
 
