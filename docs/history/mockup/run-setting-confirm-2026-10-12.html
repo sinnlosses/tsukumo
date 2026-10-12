@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>モデル・effort・許可モードの「効いた」の見せ方 — 2026-10-12 のラフ</title>
+<style>
+  :root { --ground: #191720; --surface: #221f2b; --ink: #e8e3ea; --accent: #f2b0a0; --quiet: #a09ba8; --rule: #4a4655; --ok: #7ee081; --warn: #e3c766; }
+  * { box-sizing: border-box; }
+  body { background: var(--ground); color: var(--ink); font-family: sans-serif; margin: 24px 32px; font-size: 14px; }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  p.lead { color: var(--quiet); font-size: 13px; margin: 0 0 20px; }
+  h2 { font-size: 14px; margin: 28px 0 4px; }
+  h2 small { color: var(--quiet); font-weight: normal; font-size: 12px; margin-left: 8px; }
+  .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 10px; }
+  .cell { background: var(--surface); border: 1px solid #332f3d; border-radius: 8px; padding: 12px 14px; }
+  .cell h3 { font-size: 12px; font-weight: normal; color: var(--quiet); margin: 0 0 10px; }
+  .foot { display: flex; align-items: center; gap: 4px; background: #1c1a24; border: 1px solid var(--rule); border-radius: 10px; padding: 6px 8px; width: max-content; }
+  .mouth { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; font-size: 13px; }
+  .mouth .ic { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--ink); display: inline-grid; place-items: center; font-size: 12px; }
+  .bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; }
+  .bars i { width: 3px; background: var(--rule); display: block; }
+  .bars i.on { background: var(--ink); }
+  .shield { font-size: 15px; }
+  .div { width: 1px; height: 18px; background: var(--rule); margin: 0 4px; }
+  .note { color: var(--quiet); font-size: 12px; margin-top: 8px; line-height: 1.5; }
+  /* 案1: 反映した口の下に細い線が一瞬だけ灯る */
+  .m1 .flash::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px; background: var(--ok); border-radius: 2px; }
+  .tag { display: inline-block; font-size: 12px; padding: 1px 6px; border-radius: 8px; border: 1px solid var(--rule); color: var(--quiet); }
+  .tag.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); }
+  .tag.wait { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
+  /* 案2: 口の右肩の点。空洞=受け付けた、塗り=効いたのを見届けた */
+  .dot { position: absolute; top: 0; right: 0; width: 7px; height: 7px; border-radius: 50%; }
+  .dot.hollow { border: 1.5px solid var(--warn); }
+  .dot.solid { background: var(--ok); }
+  .toast { background: #2a2733; border: 1px solid var(--rule); border-radius: 6px; padding: 4px 10px; font-size: 12px; margin-top: 8px; width: max-content; }
+  .toast b { color: var(--ok); font-weight: normal; }
+  table { border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  td, th { border: 1px solid #332f3d; padding: 5px 10px; text-align: left; }
+  th { color: var(--quiet); font-weight: normal; }
+</style>
+</head>
+<body>
+<h1>設定を切り替えたあと「効いた」と分かる見せ方（ラフ）</h1>
+<p class="lead">実測（2026-10-12、SDK 0.3.288）で、3つとも待機中・ターン進行中のどちらで切り替えても次の API 呼び出しから効くと分かった。disabled にする案は要らなくなり、残る課題は「受け付けた」と「効いた」の言い分けだけ。</p>
+
+<h2>0. 現状 <small>確認の合図が届いたら値が変わるだけ。変わったことの印は無い</small></h2>
+<div class="row">
+  <div class="cell"><h3>押す前（モデル Opus）</h3>
+    <div class="foot"><span class="mouth"><span class="ic">O</span>Opus</span><span class="div"></span><span class="mouth"><span class="bars"><i class="on" style="height:5px"></i><i class="on" style="height:8px"></i><i class="on" style="height:10px"></i><i style="height:13px"></i><i style="height:16px"></i></span></span><span class="div"></span><span class="mouth"><span class="shield">◇</span></span></div>
+  </div>
+  <div class="cell"><h3>Sonnet を選んだ直後</h3>
+    <div class="foot"><span class="mouth"><span class="ic">S</span>Sonnet</span><span class="div"></span><span class="mouth"><span class="bars"><i class="on" style="height:5px"></i><i class="on" style="height:8px"></i><i class="on" style="height:10px"></i><i style="height:13px"></i><i style="height:16px"></i></span></span><span class="div"></span><span class="mouth"><span class="shield">◇</span></span></div>
+    <p class="note">字が変わるだけ。これが「受け付けた」なのか「効いた」なのか画面から分からない。</p>
+  </div>
+  <div class="cell"><h3>次のターン</h3>
+    <div class="foot"><span class="mouth"><span class="ic">S</span>Sonnet</span><span class="div"></span><span class="mouth"><span class="bars"><i class="on" style="height:5px"></i><i class="on" style="height:8px"></i><i class="on" style="height:10px"></i><i style="height:13px"></i><i style="height:16px"></i></span></span><span class="div"></span><span class="mouth"><span class="shield">◇</span></span></div>
+    <p class="note">変化なし。見届けたことは何も出ない。</p>
+  </div>
+</div>
+
+<h2>案1 一瞬だけ灯る線 <small>派手にしない。受け付けた口の下に細い線が 1.5 秒だけ灯って消える</small></h2>
+<div class="row m1">
+  <div class="cell"><h3>Sonnet を選んだ直後（1.5 秒間）</h3>
+    <div class="foot"><span class="mouth flash"><span class="ic">S</span>Sonnet</span><span class="div"></span><span class="mouth"><span class="bars"><i class="on" style="height:5px"></i><i class="on" style="height:8px"></i><i class="on" style="height:10px"></i><i style="height:13px"></i><i style="height:16px"></i></span></span><span class="div"></span><span class="mouth"><span class="shield">◇</span></span></div>
+    <p class="note">サーバが受け付けた合図（<code>model-changed</code> など）が届いたときだけ灯る。</p>
+  </div>
+  <div class="cell"><h3>1.5 秒後</h3>
+    <div class="foot"><span class="mouth"><span class="ic">S</span>Sonnet</span><span class="div"></span><span class="mouth"><span class="bars"><i class="on" style="height:5px"></i><i class="on" style="height:8px"></i><i class="on" style="height:10px"></i><i style="height:13px"></i><i style="height:16px"></i></span></span><span class="div"></span><span class="mouth"><span class="shield">◇</span></span></div>
+    <p class="note">現状と同じ姿に戻る。</p>
+  </div>
+  <div class="cell"><h3>得られるもの・失うもの</h3>
+    <p class="note">得: 押したことが静かに伝わる。実装が小さい（口ごとの一時的な表示だけ）。<br>失: 「受け付けた」と「効いた」は言い分けない。次のターンで実際に効いたかは分からないまま。</p>
+  </div>
+</div>
+
+<h2>案2 受付と見届けの 2 段の点 <small>口の右肩に小さな点。空洞=受け付けた、塗り=その後のメッセージで効いたのを見届けた</small></h2>
+<div class="row">
+  <div class="cell"><h3>Sonnet を選んだ直後（受け付けた）</h3>
+    <div class="foot"><span class="mouth"><span class="ic">S</span>Sonnet<span class="dot hollow"></span></span><span class="div"></span><span class="mouth"><span class="bars"><i class="on" style="height:5px"></i><i class="on" style="height:8px"></i><i class="on" style="height:10px"></i><i style="height:13px"></i><i style="height:16px"></i></span></span><span class="div"></span><span class="mouth"><span class="shield">◇</span></span></div>
+    <div class="toast">受け付けた · 次の呼び出しから</div>
+    <p class="note">空洞の点は <code>title</code> でも「受け付けた。次の呼び出しから効く」と言う。</p>
+  </div>
+  <div class="cell"><h3>次の応答が届いたあと（見届けた）</h3>
+    <div class="foot"><span class="mouth"><span class="ic">S</span>Sonnet<span class="dot solid"></span></span><span class="div"></span><span class="mouth"><span class="bars"><i class="on" style="height:5px"></i><i class="on" style="height:8px"></i><i class="on" style="height:10px"></i><i style="height:13px"></i><i style="height:16px"></i></span></span><span class="div"></span><span class="mouth"><span class="shield">◇</span></span></div>
+    <div class="toast"><b>効いた</b> · claude-sonnet-5-5 の応答を確認</div>
+    <p class="note">点は次のメッセージが届くまで残り、次の切り替えか数秒で消える。</p>
+  </div>
+  <div class="cell"><h3>何で「見届けた」と判断するか（実測）</h3>
+    <table>
+      <tr><th>設定</th><th>見届ける口</th></tr>
+      <tr><td>モデル</td><td>assistant メッセージの <code>model</code>、次ターンの <code>init</code></td></tr>
+      <tr><td>effort</td><td>hook 入力の <code>effort.level</code>（haiku では来ない）</td></tr>
+      <tr><td>許可モード</td><td>hook 入力の <code>permission_mode</code>、<code>init</code></td></tr>
+    </table>
+  </div>
+</div>
+
+<h2>案3 disabled にする <small>見送り。実測で押せなくする理由が無いと分かった</small></h2>
+<div class="row">
+  <div class="cell"><h3>いまの設定の口を、ターン進行中だけ押せなくする場合</h3>
+    <div class="foot"><span class="mouth" style="opacity:.45"><span class="ic">S</span>Sonnet</span><span class="div"></span><span class="mouth" style="opacity:.45"><span class="bars"><i class="on" style="height:5px"></i><i class="on" style="height:8px"></i><i class="on" style="height:10px"></i><i style="height:13px"></i><i style="height:16px"></i></span></span><span class="div"></span><span class="mouth" style="opacity:.45"><span class="shield">◇</span></span></div>
+    <p class="note">理由は <code>title</code> に「次のターンから切り替えられます」。ただし実測では進行中の切り替えも次の API 呼び出しから効くので、嘘の理由になる。</p>
+  </div>
+</div>
+</body>
+</html>
