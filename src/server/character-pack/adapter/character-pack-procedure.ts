@@ -1,15 +1,11 @@
 // キャラクターパックのコマンドの手続き。形は `characterPackContract`。
 // ここは表の行（`characterPackCommands`）へ委ね、受け付けなかったことを契約のエラーに訳すだけ。
 
-import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
+import { implement } from "@orpc/server"
 
-import type { COMMAND_ERRORS } from "../../../shared/command.ts"
 import { characterPackContract } from "../../../shared/contract/character-pack.ts"
-import {
-  type CommandEventSink,
-  type DispatchResult,
-  receiveFeatureCommand,
-} from "../../core/command-receiver.ts"
+import { refusedUnlessAccepted } from "../../adapter/command-refusal.ts"
+import { type CommandEventSink, receiveFeatureCommand } from "../../core/command-receiver.ts"
 import {
   type CharacterPackCommandPorts,
   characterPackCommands,
@@ -73,15 +69,4 @@ export function characterPackProcedure(ports: CharacterPackCommandPorts) {
       refusedUnlessAccepted(receiveFeatureCommand(table.delete, input, context.session), errors),
     ),
   })
-}
-
-/** 受け付けなかったことを契約のエラー（`REFUSED`。理由は定型文だけ）に訳す。 */
-async function refusedUnlessAccepted(
-  pending: Promise<DispatchResult>,
-  errors: ORPCErrorConstructorMap<typeof COMMAND_ERRORS>,
-): Promise<void> {
-  const result = await pending
-  if (!result.ok) {
-    throw errors.REFUSED({ data: { reason: result.reason } })
-  }
 }

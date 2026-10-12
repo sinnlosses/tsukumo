@@ -2,11 +2,10 @@
 // 照合と断る条件は束ねる側のミドルウェア（`rpcGuard`）が済ませているので、ここは表の行（`sessionCommands`）へ委ね、受け付けなかったことを契約のエラーに訳すだけ。
 // セッションの口（`CommandSession`）は手続きの context で受ける。
 
-import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
+import { implement } from "@orpc/server"
 
-import type { COMMAND_ERRORS } from "../../../shared/command.ts"
 import { sessionContract } from "../../../shared/contract/session.ts"
-import type { DispatchResult } from "../../core/command-receiver.ts"
+import { refusedUnlessAccepted } from "../../adapter/command-refusal.ts"
 import { type CommandSession, receiveSessionCommand } from "../core/command-session.ts"
 import { type SessionCommandPorts, sessionCommands } from "../core/session-command.ts"
 
@@ -75,15 +74,4 @@ export function sessionProcedure(ports: SessionCommandPorts) {
       ),
     ),
   })
-}
-
-/** 受け付けなかったことを契約のエラー（`REFUSED`。理由は定型文だけ）に訳す。 */
-async function refusedUnlessAccepted(
-  pending: Promise<DispatchResult>,
-  errors: ORPCErrorConstructorMap<typeof COMMAND_ERRORS>,
-): Promise<void> {
-  const result = await pending
-  if (!result.ok) {
-    throw errors.REFUSED({ data: { reason: result.reason } })
-  }
 }

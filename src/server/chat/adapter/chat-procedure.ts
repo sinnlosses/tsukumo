@@ -1,15 +1,11 @@
 // 雑談のコマンドの手続き。形と断る条件は `chatContract`。
 // 照合と断る条件は束ねる側のミドルウェア（`rpcGuard`）が済ませているので、ここは表の行（`chatCommands`）へ委ね、受け付けなかったことを契約のエラーに訳すだけ。
 
-import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
+import { implement } from "@orpc/server"
 
-import type { COMMAND_ERRORS } from "../../../shared/command.ts"
 import { chatContract } from "../../../shared/contract/chat.ts"
-import {
-  type CommandEventSink,
-  type DispatchResult,
-  receiveFeatureCommand,
-} from "../../core/command-receiver.ts"
+import { refusedUnlessAccepted } from "../../adapter/command-refusal.ts"
+import { type CommandEventSink, receiveFeatureCommand } from "../../core/command-receiver.ts"
 import { type ChatCommandPorts, chatCommands } from "../core/chat-command.ts"
 
 export function chatProcedure(ports: ChatCommandPorts) {
@@ -23,15 +19,4 @@ export function chatProcedure(ports: ChatCommandPorts) {
       ),
     ),
   })
-}
-
-/** 受け付けなかったことを契約のエラー（`REFUSED`。理由は定型文だけ）に訳す。 */
-async function refusedUnlessAccepted(
-  pending: Promise<DispatchResult>,
-  errors: ORPCErrorConstructorMap<typeof COMMAND_ERRORS>,
-): Promise<void> {
-  const result = await pending
-  if (!result.ok) {
-    throw errors.REFUSED({ data: { reason: result.reason } })
-  }
 }

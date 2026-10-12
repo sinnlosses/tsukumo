@@ -1,15 +1,11 @@
 // ホストへ頼むコマンドの手続き。形は `hostContract`。
 // ここは表の行（`hostCommands`）へ委ね、受け付けなかったことを契約のエラーに訳すだけ。
 
-import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
+import { implement } from "@orpc/server"
 
-import type { COMMAND_ERRORS } from "../../../shared/command.ts"
 import { hostContract } from "../../../shared/contract/host.ts"
-import {
-  type CommandEventSink,
-  type DispatchResult,
-  receiveFeatureCommand,
-} from "../../core/command-receiver.ts"
+import { refusedUnlessAccepted } from "../../adapter/command-refusal.ts"
+import { type CommandEventSink, receiveFeatureCommand } from "../../core/command-receiver.ts"
 import { type HostCommandPorts, hostCommands } from "../core/host-command.ts"
 
 export function hostProcedure(ports: HostCommandPorts) {
@@ -20,15 +16,4 @@ export function hostProcedure(ports: HostCommandPorts) {
       refusedUnlessAccepted(receiveFeatureCommand(table.openFile, input, context.session), errors),
     ),
   })
-}
-
-/** 受け付けなかったことを契約のエラー（`REFUSED`。理由は定型文だけ）に訳す。 */
-async function refusedUnlessAccepted(
-  pending: Promise<DispatchResult>,
-  errors: ORPCErrorConstructorMap<typeof COMMAND_ERRORS>,
-): Promise<void> {
-  const result = await pending
-  if (!result.ok) {
-    throw errors.REFUSED({ data: { reason: result.reason } })
-  }
 }
