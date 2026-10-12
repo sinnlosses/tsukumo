@@ -47,6 +47,10 @@ pnpm run check                 # typecheck + lint + format:check + test + test:e
 pnpm run format                # 整形（oxfmt。prettier は入っていない）
 pnpm run test                  # 単体テスト（Vitest）。ファイルを渡すと規約のテストも一緒に走る
 pnpm run build                 # src/browser/ を直したら打つ（起動時には組み立てない）
+pnpm run test:e2e:update       # DOM の構造や shared の手続き応答の型を変えたら、pnpm run check より先に打つ
+                              #   check の E2E は --bail=3 で、落ちを3本までしか出さないため、打ち直しを繰り返す
+                              #   打ったあと git diff test/e2e/expected/ で意図した変化だけかを読んでから、
+                              #   直した変更と同じコミットに入れる
 node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> でそれ1つだけ止める）
 ```
 
