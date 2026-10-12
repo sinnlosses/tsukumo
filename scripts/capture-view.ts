@@ -99,7 +99,7 @@ const USAGE = `使い方:
   --list-scenes         場面ごとに report に出る塊の kind を一覧して終わる（撮らない）
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
   --size <幅>x<高さ>    窓の大きさ（既定 ${String(DEFAULT_WIDTH)}x${String(DEFAULT_HEIGHT)}）
-  --measure <selector>  位置と大きさを数値で出す要素（何度でも指定できる）
+  --measure <selector>  位置と大きさ（と scrollHeight・clientHeight）を数値で出す要素（何度でも指定できる）
   --wait-for <selector> 要素が出て、演出が終わるまで待ってから撮る（出なければ失敗して終わる）
   --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる）
   --type <selector> <文字>  入力欄に打ってから撮る
@@ -312,7 +312,7 @@ async function scrollIntoView(page: Page, selector: string): Promise<boolean> {
 }
 
 /**
- * 要素1つの位置と大きさを1行にする。見つからないときは "無し" を返して続ける
+ * 要素1つの位置と大きさ、内容の高さ（scrollHeight）と見えている高さ（clientHeight）を1行にする。見つからないときは "無し" を返して続ける
  * （道具なので、1つ測れなくても残りを出す）。同じセレクタに複数当たったら件数も添える。
  */
 async function describeElement(
@@ -330,14 +330,23 @@ async function describeElement(
     return `${String(count)}件（描画されていない）`
   }
 
-  const rect = `top ${round(box.y)} / bottom ${round(box.y + box.height)} / left ${round(box.x)} / 幅 ${round(box.width)} / 高さ ${round(box.height)}`
+  const scroll = await locator.first().evaluate((element) => ({
+    scrollHeight: element.scrollHeight,
+    clientHeight: element.clientHeight,
+  }))
+  const rect = `top ${round(box.y)} / bottom ${round(box.y + box.height)} / left ${round(box.x)} / 幅 ${round(box.width)} / 高さ ${round(box.height)} / scrollHeight ${String(scroll.scrollHeight)} / clientHeight ${String(scroll.clientHeight)}`
   return count === 1 ? rect : `${String(count)}件、先頭: ${rect}`
 }
+
+type ScrollExtent = { readonly scrollHeight: number; readonly clientHeight: number }
 
 /** Playwright の `Locator` のうち、この道具が使う分だけ。 */
 type Locator = {
   readonly count: () => Promise<number>
   readonly first: () => {
+    readonly evaluate: (
+      pageFunction: (element: HTMLElement) => ScrollExtent,
+    ) => Promise<ScrollExtent>
     readonly boundingBox: () => Promise<{
       readonly x: number
       readonly y: number
