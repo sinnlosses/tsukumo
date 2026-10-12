@@ -59,5 +59,7 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     hasModifiedFiles: entry.hasModifiedFiles,
     hasBeforeAfterOrImage: entry.hasBeforeAfterOrImage,
     forTask: entry.forTask,
+    hasFigure: entry.hasFigure,
+    readImageWithoutImageBlock: entry.readImageWithoutImageBlock,
   }
 }

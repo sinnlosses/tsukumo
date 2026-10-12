@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { reportUsageEntryOf } from "../../../../src/server/report/core/report-usage.ts"
+import {
+  isMainImageFileRead,
+  reportUsageEntryOf,
+} from "../../../../src/server/report/core/report-usage.ts"
 import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
@@ -28,7 +31,7 @@ describe("reportUsageEntryOf", () => {
       },
     ])
 
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
 
     expect(entry.blockKinds).toEqual(["text", "table"])
   })
@@ -48,11 +51,13 @@ describe("reportUsageEntryOf", () => {
       reportOfSections([{ heading: "", blocks: [dimension("")] }]),
       "claude-session-1",
       1_000,
+      false,
     )
     const changed = reportUsageEntryOf(
       reportOfSections([{ heading: "", blocks: [dimension("12px")] }]),
       "claude-session-1",
       1_000,
+      false,
     )
 
     expect(plain.blockKinds).toEqual(["dimension"])
@@ -99,7 +104,7 @@ describe("reportUsageEntryOf", () => {
         sections: [{ heading: "", blocks: row.blocks }],
         task: row.task ? task : { kind: "none" },
       })
-      const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+      const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
 
       expect([entry.hasModifiedFiles, entry.hasBeforeAfterOrImage, entry.forTask]).toEqual(
         row.expected,
@@ -118,7 +123,7 @@ describe("reportUsageEntryOf", () => {
       },
     ])
 
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
 
     expect(entry.blockKinds).toEqual(["image", "markdown"])
     expect(entry.notations).toEqual(["image"])
@@ -141,7 +146,9 @@ describe("reportUsageEntryOf", () => {
       },
     ])
 
-    expect(reportUsageEntryOf(event, "claude-session-1", 1_000).blockFields).toEqual(["imageNotes"])
+    expect(reportUsageEntryOf(event, "claude-session-1", 1_000, false).blockFields).toEqual([
+      "imageNotes",
+    ])
   })
 
   it("既定の値でない塊の欄を、節をまたいで重複を畳んだ集合にする", () => {
@@ -186,7 +193,7 @@ describe("reportUsageEntryOf", () => {
       },
     ])
 
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
 
     expect(entry.blockFields).toEqual(["tableChange", "listLabel", "listFlow"])
   })
@@ -208,7 +215,9 @@ describe("reportUsageEntryOf", () => {
       },
     ])
 
-    expect(reportUsageEntryOf(event, "claude-session-1", 1_000).blockFields).toEqual(["statsTotal"])
+    expect(reportUsageEntryOf(event, "claude-session-1", 1_000, false).blockFields).toEqual([
+      "statsTotal",
+    ])
   })
 
   it("逃げ道（markdown の塊）の外側に出た記法の種類を数える", () => {
@@ -219,7 +228,7 @@ describe("reportUsageEntryOf", () => {
       },
     ])
 
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
 
     expect(entry.blockKinds).toEqual(["markdown"])
     expect(entry.notations).toEqual(["list"])
@@ -240,7 +249,7 @@ describe("reportUsageEntryOf", () => {
       },
     ])
 
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
 
     expect(entry.notations).toEqual([])
     expect(entry.containedNotations).toEqual(["list"])
@@ -272,7 +281,7 @@ describe("reportUsageEntryOf", () => {
       },
     ])
 
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
 
     expect(entry.escapeNotations).toEqual(["colsCard", "svg", "dl", "quote", "hr", "details"])
   })
@@ -285,7 +294,7 @@ describe("reportUsageEntryOf", () => {
       },
     ])
 
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
 
     expect(entry.notations).toEqual(["chart"])
     expect(entry.escapeNotations).toEqual([])
@@ -294,7 +303,7 @@ describe("reportUsageEntryOf", () => {
   it("知らない種類で境界で落とした塊の数と、渡した時刻・セッションIDをそのまま運ぶ", () => {
     const event = reportOfSections([], 2)
 
-    const entry = reportUsageEntryOf(event, "claude-session-9", 12_345)
+    const entry = reportUsageEntryOf(event, "claude-session-9", 12_345, false)
 
     expect(entry).toEqual({
       at: 12_345,
@@ -308,6 +317,116 @@ describe("reportUsageEntryOf", () => {
       hasModifiedFiles: false,
       hasBeforeAfterOrImage: false,
       forTask: false,
+      hasFigure: false,
+      readImageWithoutImageBlock: false,
     })
+  })
+
+  describe("hasFigure", () => {
+    const figureOf = (block: ReportBlock): boolean =>
+      reportUsageEntryOf(
+        reportOfSections([{ heading: "", blocks: [block] }]),
+        "claude-session-1",
+        1_000,
+        false,
+      ).hasFigure
+    const svgShape = { kind: "text", x: 1, y: 1, text: "架空" } as const
+    const codeSide = { kind: "code", language: "ts", source: "x" } as const
+    const pointsSide = { kind: "points", points: ["架空の点"] } as const
+    const beforeAfterOf = (
+      before: Extract<ReportBlock, { kind: "beforeAfter" }>["before"],
+      after: Extract<ReportBlock, { kind: "beforeAfter" }>["after"],
+    ): ReportBlock => ({ kind: "beforeAfter", title: "", before, after, fold: "" })
+
+    it("image・mermaid・svg の塊と、beforeAfter の図の側を図として数える", () => {
+      expect(figureOf({ kind: "text", text: "架空の根拠。", fold: "" })).toBe(false)
+      expect(figureOf({ kind: "mermaid", title: "", source: "sequenceDiagram", fold: "" })).toBe(
+        true,
+      )
+      expect(
+        figureOf({ kind: "image", path: "/tmp/a.png", caption: "架空", notes: [], fold: "" }),
+      ).toBe(true)
+      expect(
+        figureOf({
+          kind: "graph",
+          title: "",
+          direction: "TD",
+          nodes: [{ id: "a", label: "架空", shape: "box" }],
+          edges: [],
+          fold: "",
+        }),
+      ).toBe(true)
+      expect(
+        figureOf({ kind: "svg", title: "", width: 10, height: 10, shapes: [svgShape], fold: "" }),
+      ).toBe(true)
+      expect(
+        figureOf(
+          beforeAfterOf({ kind: "svg", width: 10, height: 10, shapes: [svgShape] }, codeSide),
+        ),
+      ).toBe(true)
+      expect(figureOf(beforeAfterOf(codeSide, pointsSide))).toBe(false)
+    })
+  })
+
+  describe("readImageWithoutImageBlock", () => {
+    const entryOf = (blocks: readonly ReportBlock[], mainReadImageFile: boolean) =>
+      reportUsageEntryOf(
+        reportOfSections([{ heading: "", blocks }]),
+        "claude-session-1",
+        1_000,
+        mainReadImageFile,
+      )
+    const text: ReportBlock = { kind: "text", text: "架空の根拠。", fold: "" }
+    const image: ReportBlock = {
+      kind: "image",
+      path: "/tmp/a.png",
+      caption: "架空",
+      notes: [],
+      fold: "",
+    }
+    const beforeAfterImage: ReportBlock = {
+      kind: "beforeAfter",
+      title: "",
+      before: { kind: "image", path: "/tmp/a.png" },
+      after: { kind: "image", path: "/tmp/b.png" },
+      fold: "",
+    }
+
+    it("読んだのに image が無ければ真、image か beforeAfter の image の側があるか読んでいなければ偽", () => {
+      expect(entryOf([text], true).readImageWithoutImageBlock).toBe(true)
+      expect(entryOf([text, image], true).readImageWithoutImageBlock).toBe(false)
+      expect(entryOf([beforeAfterImage], true).readImageWithoutImageBlock).toBe(false)
+      expect(entryOf([text], false).readImageWithoutImageBlock).toBe(false)
+    })
+  })
+})
+
+describe("isMainImageFileRead", () => {
+  const started = (
+    name: string,
+    input: unknown,
+    parentToolUseId: string | undefined = undefined,
+  ): Extract<SessionEvent, { readonly kind: "tool-started" }> => ({
+    kind: "tool-started",
+    toolUseId: "toolu_1",
+    name,
+    input,
+    parentToolUseId,
+  })
+
+  it("メインの Read で、拡張子が画像4形式のどれかなら真（大文字小文字は問わない）", () => {
+    expect(isMainImageFileRead(started("Read", { file_path: "/tmp/a.png" }))).toBe(true)
+    expect(isMainImageFileRead(started("Read", { file_path: "/tmp/A.JPG" }))).toBe(true)
+    expect(isMainImageFileRead(started("Read", { file_path: "/tmp/a.webp" }))).toBe(true)
+  })
+
+  it("画像でない拡張子・サブエージェントの呼び出し・Read でないツール・file_path の無い入力は偽", () => {
+    expect(isMainImageFileRead(started("Read", { file_path: "/tmp/a.ts" }))).toBe(false)
+    expect(isMainImageFileRead(started("Read", { file_path: "/tmp/a.png" }, "toolu_parent"))).toBe(
+      false,
+    )
+    expect(isMainImageFileRead(started("Write", { file_path: "/tmp/a.png" }))).toBe(false)
+    expect(isMainImageFileRead(started("Read", {}))).toBe(false)
+    expect(isMainImageFileRead(started("Read", undefined))).toBe(false)
   })
 })

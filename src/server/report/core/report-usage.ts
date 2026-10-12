@@ -1,8 +1,11 @@
 // `report` の塊の使われ方の記録1行ぶんの中身。
 // 持つのはそのレポートに出た名前の集合と数だけで、塊の中身・逃げ道の文字は入れない。
 
+import { isPlainObject } from "remeda"
+
 import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { reportImagePaths } from "./report-image-shelf.ts"
 import {
   containedNotationsInSections,
   escapeNotationsInSections,
@@ -31,7 +34,15 @@ export type ReportUsageEntry = {
   readonly hasBeforeAfterOrImage: boolean
   /** `task` を渡した最終レポートか。 */
   readonly forTask: boolean
+  /** 段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）が1つでもあるか。 */
+  readonly hasFigure: boolean
+  /** このターンにメインが画像のファイルを `Read` したのに `image` の塊（`beforeAfter` の側を含む）が無いか。 */
+  readonly readImageWithoutImageBlock: boolean
 }
+
+const FIGURE_KINDS: readonly string[] = ["image", "mermaid", "graph", "svg"]
+
+const IMAGE_FILE_EXTENSIONS: readonly string[] = [".png", ".jpg", ".jpeg", ".gif", ".webp"]
 
 /**
  * 数える塊の欄。外す基準（直近4週間で0回）を塊の種類と同じく当てるため、既定の値でない欄が出たかを持つ。
@@ -62,11 +73,12 @@ export type ReportUsageLog = {
   readonly appendRejection: (entry: ReportRejectionEntry) => void
 }
 
-/** 描いた（差し戻されなかった）`report` から、記録1行ぶんの中身を作る。 */
+/** 描いた（差し戻されなかった）`report` から、記録1行ぶんの中身を作る。`mainReadImageFile` は、このターンにメインが画像のファイルを `Read` したか。 */
 export function reportUsageEntryOf(
   event: Extract<SessionEvent, { readonly kind: "report" }>,
   sessionId: string,
   at: number,
+  mainReadImageFile: boolean,
 ): ReportUsageEntry {
   return {
     at,
@@ -84,7 +96,28 @@ export function reportUsageEntryOf(
       (block) => block.kind === "beforeAfter" || block.kind === "image",
     ),
     forTask: event.task.kind === "task",
+    hasFigure: blocksOf(event.sections).some(
+      (block) =>
+        FIGURE_KINDS.includes(block.kind) ||
+        (block.kind === "beforeAfter" &&
+          [block.before, block.after].some((side) => FIGURE_KINDS.includes(side.kind))),
+    ),
+    readImageWithoutImageBlock: mainReadImageFile && reportImagePaths(event.sections).length === 0,
   }
+}
+
+/** メインが画像のファイルを `Read` した呼び出しか。パスは返さない。 */
+export function isMainImageFileRead(
+  event: Extract<SessionEvent, { readonly kind: "tool-started" }>,
+): boolean {
+  if (event.name !== "Read" || event.parentToolUseId !== undefined) {
+    return false
+  }
+  if (!isPlainObject(event.input) || typeof event.input.file_path !== "string") {
+    return false
+  }
+  const path = event.input.file_path.toLowerCase()
+  return IMAGE_FILE_EXTENSIONS.some((extension) => path.endsWith(extension))
 }
 
 function blocksOf(sections: readonly ReportSection[]): readonly ReportBlock[] {

@@ -61,7 +61,11 @@ import {
   type ReportImageShelf,
   reportImagePaths,
 } from "../../report/core/report-image-shelf.ts"
-import { type ReportUsageLog, reportUsageEntryOf } from "../../report/core/report-usage.ts"
+import {
+  isMainImageFileRead,
+  type ReportUsageLog,
+  reportUsageEntryOf,
+} from "../../report/core/report-usage.ts"
 import {
   type PromptImageShelf,
   releasedPromptImageIds,
@@ -221,6 +225,14 @@ type GenerationTally = {
   readonly diarySignal: AbortSignal
   /** そのターンで最後に届いた `report` の結論を預かる入れ物（仕事のときだけ使う）。 */
   readonly pendingConclusion: PendingConclusion
+  /** いまのターンにメインが画像のファイルを `Read` したか（`turn-finished` で空に戻す）。 */
+  readonly turnImageRead: TurnImageRead
+}
+
+type TurnImageRead = {
+  readonly mark: () => void
+  readonly peek: () => boolean
+  readonly clear: () => void
 }
 
 /**
@@ -366,7 +378,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
     // セッションIDが決まる前の行は、どのセッションのものか分からなくなるので書かない。
     if (event.kind === "report" && state.session.kind !== "starting") {
-      options.reportUsageLog.append(reportUsageEntryOf(event, state.session.sessionId, at))
+      options.reportUsageLog.append(
+        reportUsageEntryOf(event, state.session.sessionId, at, tally.turnImageRead.peek()),
+      )
+    }
+    if (event.kind === "tool-started" && isMainImageFileRead(event)) {
+      tally.turnImageRead.mark()
     }
     if (event.kind === "report-rejected" && state.session.kind !== "starting") {
       options.reportUsageLog.appendRejection({
@@ -381,6 +398,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       }
     }
     if (event.kind === "turn-finished") {
+      tally.turnImageRead.clear()
       tally.tokenUsage.finishTurn()
       // コンテキストの内訳はセッションに1行なので、まだ書いていなければ問い合わせる。
       // 待たずに次へ進む（ターンの終わりを遅らせない）。駆動がまだ無い回は次のターンで揃う。
@@ -475,6 +493,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       liveDriver: () => live,
       diarySignal: diaryAbort.signal,
       pendingConclusion: createPendingConclusion(),
+      turnImageRead: createTurnImageRead(),
     }
     const receiveIfCurrent = (event: SessionEvent): void => {
       if (born !== bornCount) {
@@ -714,6 +733,19 @@ function isReadableSession(state: SessionState, sessionId: string): boolean {
 function publish(frame: ServerFrame, subscribers: ReadonlySet<(frame: ServerFrame) => void>): void {
   for (const send of subscribers) {
     send(frame)
+  }
+}
+
+function createTurnImageRead(): TurnImageRead {
+  let read = false
+  return {
+    mark: () => {
+      read = true
+    },
+    peek: () => read,
+    clear: () => {
+      read = false
+    },
   }
 }
 

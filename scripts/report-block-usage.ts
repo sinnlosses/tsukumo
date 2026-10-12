@@ -1,5 +1,6 @@
 // `report` の塊の使われ方（`~/.tsukumo/report-usage/<YYYY-MM-DD>.jsonl`）を集計し、
-// 「塊の種類 × レポート数」「塊の欄 × レポート数」と「逃げ道の中の記法 × レポート数」を割合つきで出す。
+// 「塊の種類 × レポート数」「塊の欄 × レポート数」「modified のファイルがあるのに前後図も画像も無いレポート」
+// 「段1の図を含むレポート」「画像を読んだのに image が無いレポート」「逃げ道の中の記法 × レポート数」「差し戻しの種類 × 回数」を割合つきで出す。
 // 欄を記録する前の版（2）の行も読み、欄の表だけはそれを記録した版の行を分母にする（欄を足す前後で逃げ道を見比べるため）。
 //
 // 使い方:
@@ -40,6 +41,17 @@ const commonRecordShape = {
 /** 欄を記録し、前後図・画像の有無を記録する前の版。 */
 const VISUALLESS_FORMAT_VERSION = 3
 
+/** modified の表の分母になる最初の版（前後図・画像の有無を記録した）。 */
+const MODIFIED_FORMAT_VERSION = 4
+
+const visualRecordShape = {
+  blockFields: z.array(z.string()),
+  hasModifiedFiles: z.boolean(),
+  hasBeforeAfterOrImage: z.boolean(),
+  forTask: z.boolean(),
+  ...commonRecordShape,
+}
+
 const recordSchema = z.discriminatedUnion("v", [
   z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
   z.object({
@@ -47,22 +59,26 @@ const recordSchema = z.discriminatedUnion("v", [
     blockFields: z.array(z.string()),
     ...commonRecordShape,
   }),
+  z.object({ v: z.literal(MODIFIED_FORMAT_VERSION), ...visualRecordShape }),
   z.object({
     v: z.literal(REPORT_USAGE_FORMAT_VERSION),
-    blockFields: z.array(z.string()),
-    hasModifiedFiles: z.boolean(),
-    hasBeforeAfterOrImage: z.boolean(),
-    forTask: z.boolean(),
-    ...commonRecordShape,
+    hasFigure: z.boolean(),
+    readImageWithoutImageBlock: z.boolean(),
+    ...visualRecordShape,
   }),
 ])
 type UsageRecord = z.infer<typeof recordSchema>
 type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[] }>
-type VisualRecord = Extract<UsageRecord, { readonly v: typeof REPORT_USAGE_FORMAT_VERSION }>
+type VisualRecord = Extract<UsageRecord, { readonly hasModifiedFiles: boolean }>
+type FigureRecord = Extract<UsageRecord, { readonly v: typeof REPORT_USAGE_FORMAT_VERSION }>
 
 /** 差し戻した呼び出しの行（`kind: "rejected"`）。受け付けの行には `kind` が無い。 */
 const rejectionSchema = z.object({
-  v: z.union([z.literal(VISUALLESS_FORMAT_VERSION), z.literal(REPORT_USAGE_FORMAT_VERSION)]),
+  v: z.union([
+    z.literal(VISUALLESS_FORMAT_VERSION),
+    z.literal(MODIFIED_FORMAT_VERSION),
+    z.literal(REPORT_USAGE_FORMAT_VERSION),
+  ]),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),
 })
@@ -89,7 +105,10 @@ const fieldRecords = records.filter(
   (record): record is FieldRecord => record.v !== FIELDLESS_FORMAT_VERSION,
 )
 const visualRecords = records.filter(
-  (record): record is VisualRecord => record.v === REPORT_USAGE_FORMAT_VERSION,
+  (record): record is VisualRecord => record.v >= MODIFIED_FORMAT_VERSION,
+)
+const figureRecords = records.filter(
+  (record): record is FigureRecord => record.v === REPORT_USAGE_FORMAT_VERSION,
 )
 process.stdout.write(
   fieldRecords.length === 0
@@ -103,6 +122,10 @@ process.stdout.write(
 )
 process.stdout.write("\n\n")
 process.stdout.write(modifiedWithoutVisualSection(visualRecords))
+process.stdout.write("\n\n")
+process.stdout.write(figureSection(figureRecords))
+process.stdout.write("\n\n")
+process.stdout.write(imageOversightSection(figureRecords))
 process.stdout.write("\n\n")
 process.stdout.write(
   table("逃げ道の外の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
@@ -191,6 +214,51 @@ function modifiedWithoutVisualSection(visualRecords: readonly VisualRecord[]): s
       visualRecords.filter((record) => record.forTask),
     ),
   ].join("\n")
+}
+
+/** 段1の図（image・mermaid・graph・svg。beforeAfter の側を含む）を含むレポートの割合。 */
+function figureSection(rows: readonly FigureRecord[]): string {
+  if (rows.length === 0) {
+    return "段1の図を含むレポート: 記録した行が無い"
+  }
+  return [
+    `段1の図（image・mermaid・graph・svg。beforeAfter の側を含む）を含むレポート（図の有無を記録した${String(rows.length)}件のうち。外す基準の対象ではない）:`,
+    shareLine("全レポート", "図あり", rows, (record) => record.hasFigure),
+    shareLine(
+      "task の最終レポート",
+      "図あり",
+      rows.filter((record) => record.forTask),
+      (record) => record.hasFigure,
+    ),
+  ].join("\n")
+}
+
+/** メインが画像のファイルを Read したのに image の塊が無かったレポートの割合。 */
+function imageOversightSection(rows: readonly FigureRecord[]): string {
+  if (rows.length === 0) {
+    return "画像を読んだのに image が無いレポート: 記録した行が無い"
+  }
+  return [
+    `画像のファイルを読んだのに image の塊が無いレポート（読んだかを記録した${String(rows.length)}件のうち。外す基準の対象ではない）:`,
+    shareLine("全レポート", "見落とし", rows, (record) => record.readImageWithoutImageBlock),
+    shareLine(
+      "task の最終レポート",
+      "見落とし",
+      rows.filter((record) => record.forTask),
+      (record) => record.readImageWithoutImageBlock,
+    ),
+  ].join("\n")
+}
+
+function shareLine<Row>(
+  label: string,
+  what: string,
+  rows: readonly Row[],
+  matches: (row: Row) => boolean,
+): string {
+  const count = rows.filter(matches).length
+  const percent = (rows.length === 0 ? 0 : (count / rows.length) * 100).toFixed(1)
+  return `  ${label.padEnd(16)} ${what} ${String(count).padStart(5)}  ${String(rows.length).padStart(5)}件のうち ${percent.padStart(5)}%`
 }
 
 /** 名前ごとに「出た行の数」を数えた表。`knownNames` は0件でも出す（外す基準は0回を見る）。`total` は割合の分母で、既定は行の数。 */

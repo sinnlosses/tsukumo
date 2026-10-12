@@ -2,7 +2,7 @@
 // 書いてよいのは時刻・セッションID・塊と記法の名前・数だけで、塊の中身・逃げ道の文字は入れない。
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 4 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 5 satisfies number
 
 export type ReportUsageRecord = {
   readonly v: typeof REPORT_USAGE_FORMAT_VERSION
@@ -28,6 +28,10 @@ export type ReportUsageRecord = {
   readonly hasBeforeAfterOrImage: boolean
   /** `task` を渡した最終レポートか（版4から）。 */
   readonly forTask: boolean
+  /** 段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）が1つでもあるか（版5から）。 */
+  readonly hasFigure: boolean
+  /** このターンにメインが画像のファイルを `Read` したのに `image` の塊が無いか（版5から）。 */
+  readonly readImageWithoutImageBlock: boolean
 }
 
 /**

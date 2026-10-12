@@ -42,6 +42,8 @@ function entry(when: number, sessionId = "claude-session-1"): ReportUsageEntry {
     hasModifiedFiles: true,
     hasBeforeAfterOrImage: false,
     forTask: true,
+    hasFigure: true,
+    readImageWithoutImageBlock: false,
   }
 }
 
@@ -81,6 +83,8 @@ describe("createReportUsageLog", () => {
       "hasModifiedFiles",
       "hasBeforeAfterOrImage",
       "forTask",
+      "hasFigure",
+      "readImageWithoutImageBlock",
     ])
     expect(record).toMatchObject({
       v: REPORT_USAGE_FORMAT_VERSION,
@@ -94,6 +98,8 @@ describe("createReportUsageLog", () => {
       hasModifiedFiles: true,
       hasBeforeAfterOrImage: false,
       forTask: true,
+      hasFigure: true,
+      readImageWithoutImageBlock: false,
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)

@@ -1479,9 +1479,51 @@ describe("createSessionManager", () => {
           hasModifiedFiles: false,
           hasBeforeAfterOrImage: false,
           forTask: false,
+          hasFigure: false,
+          readImageWithoutImageBlock: false,
           sessionSummary: undefined,
         },
       ])
+    })
+
+    describe("画像を読んだのに image が無い回", () => {
+      const textOnly = (): SessionEvent =>
+        reportWithSections([
+          { heading: "", blocks: [{ kind: "text", text: "架空の根拠。", fold: "" }] },
+        ])
+      const readStarted = (parentToolUseId: string | undefined): SessionEvent => ({
+        kind: "tool-started",
+        toolUseId: "toolu_read",
+        name: "Read",
+        input: { file_path: "/tmp/fictional.png" },
+        parentToolUseId,
+      })
+
+      it("メインが画像を Read したターンの report は真で、turn-finished のあとのターンは偽に戻る", async () => {
+        const { stub, entries } = startReportUsageManagerWithStub()
+        await waitForBatch()
+
+        stub.emit(sessionInfo("claude-session-1"))
+        stub.emit(readStarted(undefined))
+        stub.emit(textOnly())
+        stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
+        stub.emit(textOnly())
+        await waitForBatch()
+
+        expect(entries.map((entry) => entry.readImageWithoutImageBlock)).toEqual([true, false])
+      })
+
+      it("サブエージェントの Read は数えない", async () => {
+        const { stub, entries } = startReportUsageManagerWithStub()
+        await waitForBatch()
+
+        stub.emit(sessionInfo("claude-session-1"))
+        stub.emit(readStarted("toolu_parent"))
+        stub.emit(textOnly())
+        await waitForBatch()
+
+        expect(entries.map((entry) => entry.readImageWithoutImageBlock)).toEqual([false])
+      })
     })
 
     it("claude 側のセッションIDが分からないうちは書かない", async () => {
