@@ -5,8 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   useChatView,
   type ChatRow,
-  type ChatTimeStamp,
 } from "../../../../../../../../src/browser/components/page/conversation/components/chat-view/hooks/use-chat-view.ts"
+import type { ClockStamp } from "../../../../../../../../src/browser/components/page/conversation/domain/clock-stamp.ts"
 import {
   INITIAL_SESSION_STATE,
   type RecordTime,
@@ -112,7 +112,7 @@ describe("useChatView の行への畳み方", () => {
     expect(secondDay?.kind === "day" && secondDay.label).toBe("9月23日（水）")
     expect(secondDay?.kind === "day" && secondDay.dateTime).toBe("2026-09-23")
     // 秒は出さない（`dateTime` は分までの壁時計にオフセットが付く）。
-    const time: ChatTimeStamp = speech?.kind === "speech" ? speech.time : { kind: "unknown" }
+    const time: ClockStamp = speech?.kind === "speech" ? speech.time : { kind: "unknown" }
     expect(time.kind === "known" && time.text).toBe("23:59")
     expect(time.kind === "known" && time.dateTime.startsWith("2026-09-22T23:59")).toBe(true)
     expect(time.kind === "known" && time.dateTime.includes("23:59:")).toBe(false)

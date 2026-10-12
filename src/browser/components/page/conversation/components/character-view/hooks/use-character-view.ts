@@ -39,6 +39,7 @@ import { portraitAppearance } from "../../../../../../domain/portrait-appearance
 import { useSession } from "../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
+import { recordClockStampWithDay, type ClockStamp } from "../../../domain/clock-stamp.ts"
 import { welcomeHeadOf } from "../../../domain/welcome-entries.ts"
 import { useWelcomeCards } from "../../hooks/use-welcome-cards.ts"
 import {
@@ -57,6 +58,8 @@ const DEFAULT_PAST_TURN_EXPRESSION = "default"
 /** 吹き出しに出す1件。押すとそのセリフの表情へ立ち絵が遡る。 */
 export type CharacterViewSpeech = {
   readonly text: string
+  /** 最新の吹き出しの名前の隣に出す時刻。今日でない日のものは日付つき。 */
+  readonly time: ClockStamp
   /** 印を付ける行（= 立ち絵が従っている行）か。 */
   readonly selected: boolean
   readonly onToggle: () => void
@@ -166,7 +169,14 @@ export function useCharacterView(): CharacterViewModel {
     expression,
     outfit,
     motion,
-    speeches: balloonSpeeches(activeSpeeches, defaultTurnId, pinned, defaultIndex, toggleSpeech),
+    speeches: balloonSpeeches(
+      activeSpeeches,
+      defaultTurnId,
+      pinned,
+      defaultIndex,
+      toggleSpeech,
+      now,
+    ),
     reaction: balloonReactionOf(reaction),
     speakerName: character?.name,
     pinnedSpeech: pinned,
@@ -212,9 +222,11 @@ function balloonSpeeches(
   pinned: PinnedSpeech | undefined,
   defaultIndex: number | undefined,
   onToggle: (turnId: number, index: number) => void,
+  now: number,
 ): readonly CharacterViewSpeech[] {
   return speeches.map((speech, index) => ({
     text: speech.text,
+    time: recordClockStampWithDay(speech.time, now),
     selected: turnId !== undefined && isSpeechSelected(pinned, turnId, index, turnId, defaultIndex),
     onToggle: () => {
       if (turnId !== undefined) {

@@ -10,7 +10,12 @@ import { characterAssetPath } from "../../../../../../../src/shared/character-pa
 
 /** 見本では押しても何も変わらない（押す挙動そのものは別のテストが見る）。 */
 function speech(text: string): CharacterViewSpeech {
-  return { text, selected: false, onToggle: () => {} }
+  return {
+    text,
+    time: { kind: "known", dateTime: "2026-09-23T09:07", text: "09:07" },
+    selected: false,
+    onToggle: () => {},
+  }
 }
 
 const meta = {

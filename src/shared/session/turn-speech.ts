@@ -35,6 +35,7 @@ export function turnSpeeches(records: readonly SessionRecord[]): readonly TurnSp
           speeches: speeches.map((speech) => ({
             text: speech.text,
             expression: speech.expression,
+            time: speech.time,
           })),
           expression: speeches.at(-1)?.expression,
         }

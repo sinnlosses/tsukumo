@@ -31,7 +31,7 @@ function speech(
   text: string,
   expression: Expression = "default",
 ): SessionState["speeches"][number] {
-  return { text, expression }
+  return { text, expression, time: { kind: "stamped", at: 0 } }
 }
 
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({

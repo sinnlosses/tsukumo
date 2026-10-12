@@ -108,6 +108,27 @@
   padding: 0;
   list-style: none;
 }
+/* 日の区切り。雑談の `.chat-day` と同じ見た目: 日付の字を中央に置くだけで、線は引かない。 */
+.speech-log-day {
+  align-self: center;
+  padding: 0.1rem 0.8rem;
+  border-radius: 0.8rem;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  line-height: var(--line-height-body);
+}
+/* セリフ1行ごとの時刻（`HH:MM`）。雑談の `.chat-time` と同じ見た目で、吹き出しの脇の下端に置く。
+   吹き出しに押されて縮まない。 */
+.speech-log-speech-time {
+  flex-shrink: 0;
+  align-self: flex-end;
+  padding: 0 0.35rem;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  line-height: var(--line-height-body);
+}
 /* 依頼の区切り: 左右の横罫で挟んだ1行。利用者の言葉なので本文より弱く、1行に切る。 */
 .speech-log-request {
   display: flex;

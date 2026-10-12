@@ -101,7 +101,7 @@ export function chatLogRows(
  * 発言が属する日。先頭（まだ発言が無い）・時刻の分からない発言・日付の3つで、先頭では
  * 区切らず、時刻の分からない発言からは区切る（{@link chatLogRows}）。
  */
-type EntryDay =
+export type EntryDay =
   | { readonly kind: "none" }
   | { readonly kind: "restored" }
   | { readonly kind: "date"; readonly date: Temporal.PlainDate }
@@ -112,7 +112,7 @@ type RowsInProgress = {
   readonly previous: EntryDay
 }
 
-function entryDay(time: RecordTime, timeZone: string): EntryDay {
+export function entryDay(time: RecordTime, timeZone: string): EntryDay {
   const at = recordTimeAt(time)
   if (at === undefined) {
     return { kind: "restored" }
@@ -124,7 +124,7 @@ function entryDay(time: RecordTime, timeZone: string): EntryDay {
 }
 
 /** 1つ前の発言の日から見て、`date` の発言の手前で区切るか。 */
-function startsNewDay(previous: EntryDay, date: Temporal.PlainDate): boolean {
+export function startsNewDay(previous: EntryDay, date: Temporal.PlainDate): boolean {
   switch (previous.kind) {
     case "none":
       return false

@@ -9,11 +9,52 @@ afterEach(() => {
 })
 
 /** 押しても遡らない、印の付いていないセリフ。 */
-function speech(text: string): CharacterViewSpeech {
-  return { text, selected: false, onToggle: () => {} }
+function speech(
+  text: string,
+  time: CharacterViewSpeech["time"] = { kind: "unknown" },
+): CharacterViewSpeech {
+  return { text, time, selected: false, onToggle: () => {} }
 }
 
 describe("BalloonTrack", () => {
+  it("時刻は名前を添える最新の吹き出しにだけ、名前の隣に出る（過去のものには出ない）", () => {
+    const known = { kind: "known", dateTime: "2026-09-23T09:07", text: "09:07" } as const
+    render(
+      <BalloonTrack
+        speeches={[speech("古いセリフ", known), speech("新しいセリフ", known)]}
+        reaction={{ kind: "none" }}
+        speakerName="架空の名前"
+      />,
+    )
+
+    const times = [...document.querySelectorAll(".balloon time")]
+    expect(times.map((time) => time.textContent)).toEqual(["09:07"])
+    expect(times[0]?.closest(".balloon")?.getAttribute("data-latest")).toBe("true")
+    expect(times[0]?.previousElementSibling?.textContent).toBe("架空の名前")
+  })
+
+  it("最新でも、名前が無いときと時刻が分からないときは時刻を出さない", () => {
+    const known = { kind: "known", dateTime: "2026-09-23T09:07", text: "09:07" } as const
+    render(
+      <BalloonTrack
+        speeches={[speech("名前なし", known)]}
+        reaction={{ kind: "none" }}
+        speakerName={undefined}
+      />,
+    )
+    expect(document.querySelectorAll(".balloon time")).toHaveLength(0)
+
+    cleanup()
+    render(
+      <BalloonTrack
+        speeches={[speech("組み直した")]}
+        reaction={{ kind: "none" }}
+        speakerName="架空の名前"
+      />,
+    )
+    expect(document.querySelectorAll(".balloon time")).toHaveLength(0)
+  })
+
   it("(2) セリフも反応も無いときは吹き出しを出さず、並びの器だけを残す", () => {
     render(<BalloonTrack speeches={[]} reaction={{ kind: "none" }} speakerName="架空の名前" />)
 

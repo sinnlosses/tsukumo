@@ -7,9 +7,12 @@
 
 import type { ReactElement } from "react"
 
+import type { ClockStamp } from "../../../../domain/clock-stamp.ts"
 import styles from "../../character-view.module.css"
 import type { BalloonReaction, CharacterViewSpeech } from "../../hooks/use-character-view.ts"
 import { Balloon } from "../balloon/balloon.tsx"
+
+const NO_TIME = { kind: "unknown" } satisfies ClockStamp
 
 export type BalloonTrackProps = {
   /** 古い→新しいの順（`SessionState.speeches` と同じ並び）。 */
@@ -42,6 +45,7 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
           text={reaction.text}
           latest={true}
           speaker={props.speakerName}
+          time={NO_TIME}
           interaction={{ kind: "reaction", reaction: reaction.reaction }}
         />
       )}
@@ -51,6 +55,7 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
           text=""
           latest={true}
           speaker={props.speakerName}
+          time={NO_TIME}
           interaction={{ kind: "writing" }}
         />
       )}
@@ -62,6 +67,7 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
             text={speech.text}
             latest={latest}
             speaker={latest ? props.speakerName : undefined}
+            time={latest ? speech.time : NO_TIME}
             interaction={{
               kind: "toggleable",
               selected: speech.selected,

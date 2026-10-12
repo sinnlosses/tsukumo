@@ -157,6 +157,45 @@ describe("SpeechLog", () => {
     ])
   })
 
+  it("セリフ1件ごとに HH:MM を出し、時刻の分からない（組み直した）セリフには出さない", () => {
+    renderSpeechLog([
+      requestRecord({ text: "架空の依頼", turnId: 0, time: stampedAt("2026-09-23T09:05") }),
+      speechRecord({ text: "組み直したセリフ", time: { kind: "restored" } }),
+      speechRecord({ text: "いまのセリフ", time: stampedAt("2026-09-23T09:07") }),
+    ])
+    openLog()
+
+    const times = [...document.querySelectorAll(".speech-log-entries > li")]
+      .filter((row) => row.hasAttribute("data-age"))
+      .map((row) => row.querySelector("time")?.textContent ?? null)
+    expect(times).toEqual([null, "09:07"])
+  })
+
+  it("日が変わるところのセリフの手前に日の区切りを入れ、先頭と同じ日の間には入れない", () => {
+    renderSpeechLog([
+      requestRecord({ text: "昨日の依頼", turnId: 0, time: stampedAt("2026-09-23T23:50") }),
+      speechRecord({ text: "昨日のセリフA", time: stampedAt("2026-09-23T23:51") }),
+      speechRecord({ text: "昨日のセリフB", time: stampedAt("2026-09-23T23:59") }),
+      requestRecord({ text: "今日の依頼", turnId: 1, time: stampedAt("2026-09-24T00:10") }),
+      speechRecord({ text: "今日のセリフ", time: stampedAt("2026-09-24T00:11") }),
+    ])
+    openLog()
+
+    const rows = [...document.querySelectorAll(".speech-log-entries > li")].map((row) =>
+      row.classList.contains("speech-log-day")
+        ? `day:${row.textContent ?? ""}`
+        : (row.querySelector(".balloon-text")?.textContent ?? "request"),
+    )
+    expect(rows).toEqual([
+      "request",
+      "昨日のセリフA",
+      "昨日のセリフB",
+      "request",
+      "day:9月24日（木）",
+      "今日のセリフ",
+    ])
+  })
+
   it("依頼の区切りの頭はパックの利用者の呼び名で、呼び名の無いパックでは「」だけになる", () => {
     const records = [
       requestRecord({ text: "架空の依頼", time: { kind: "restored" } }),

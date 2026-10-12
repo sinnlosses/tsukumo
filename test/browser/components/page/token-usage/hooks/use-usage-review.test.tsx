@@ -196,8 +196,8 @@ describe("useUsageReview（見直し中）", () => {
       stateWith({
         usageReview: running,
         speeches: [
-          { text: "ひとつめ", expression: "default" },
-          { text: "ふたつめ", expression: "default" },
+          { text: "ひとつめ", expression: "default", time: { kind: "stamped", at: 0 } },
+          { text: "ふたつめ", expression: "default", time: { kind: "stamped", at: 0 } },
         ],
       }),
     )

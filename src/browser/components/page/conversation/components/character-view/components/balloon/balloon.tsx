@@ -14,6 +14,7 @@ import type { ReactElement } from "react"
 import type { ReactionKind } from "../../../../../../../../shared/recommendation/welcome-greeting.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { TypingDots } from "../../../../../../ui/typing-dots/typing-dots.tsx"
+import type { ClockStamp } from "../../../../domain/clock-stamp.ts"
 import { useSpeechPress } from "../../../hooks/use-speech-press.ts"
 import characterViewStyles from "../../character-view.module.css"
 import styles from "./balloon.module.css"
@@ -35,6 +36,8 @@ export type BalloonProps = {
   readonly latest: boolean
   /** 本文の上に添える話し手の名前。添えないなら undefined。 */
   readonly speaker: string | undefined
+  /** 話し手の名前の隣に添える時刻。名前を添えないときは出さない。 */
+  readonly time: ClockStamp
   readonly interaction: BalloonInteraction
 }
 
@@ -42,15 +45,22 @@ export function Balloon(props: BalloonProps): ReactElement {
   const { interaction } = props
   const press = useSpeechPress(interaction.kind === "toggleable" ? interaction.onToggle : NOOP)
   const speakerLabel = props.speaker !== undefined && (
-    <Text
-      element="span"
-      size="label"
-      tone="accent"
-      weight="bold"
-      className={styles["balloon-speaker"]}
-    >
-      {props.speaker}
-    </Text>
+    <span className={styles["balloon-head"]}>
+      <Text
+        element="span"
+        size="label"
+        tone="accent"
+        weight="bold"
+        className={styles["balloon-speaker"]}
+      >
+        {props.speaker}
+      </Text>
+      {props.time.kind === "known" && (
+        <time className={styles["balloon-time"]} dateTime={props.time.dateTime}>
+          {props.time.text}
+        </time>
+      )}
+    </span>
   )
   const body = (
     <>

@@ -53,6 +53,19 @@ describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
     expect(turns[1]?.expression).toBeUndefined()
   })
 
+  it("セリフごとの時刻をそのまま運ぶ（組み直した分の restored も変えない）", () => {
+    const turns = turnSpeeches([
+      requestRecord({ text: "1つ目の依頼", turnId: 0 }),
+      speechRecord({ text: "セリフA", time: { kind: "stamped", at: 1000 } }),
+      speechRecord({ text: "セリフB", time: { kind: "restored" } }),
+    ])
+
+    expect(turns[0]?.speeches.map((speech) => speech.time)).toEqual([
+      { kind: "stamped", at: 1000 },
+      { kind: "restored" },
+    ])
+  })
+
   it("表情はそのターンの最後のセリフのもの", () => {
     const turns = turnSpeeches([
       requestRecord({ text: "1つ目の依頼", turnId: 0 }),
@@ -120,7 +133,9 @@ describe("turnSpeeches（通し番号）", () => {
     expect(speechTurns[0]).toEqual({
       id: PRE_REQUEST_TURN_ID,
       request: undefined,
-      speeches: [{ text: "依頼より前のセリフ", expression: "default" }],
+      speeches: [
+        { text: "依頼より前のセリフ", expression: "default", time: { kind: "stamped", at: 0 } },
+      ],
       expression: "default",
     })
   })
@@ -144,7 +159,9 @@ describe("turnSpeeches（通し番号）", () => {
       {
         id: 0,
         request: "1つ目の依頼",
-        speeches: [{ text: "1つ目のセリフ", expression: "default" }],
+        speeches: [
+          { text: "1つ目のセリフ", expression: "default", time: { kind: "stamped", at: 0 } },
+        ],
         expression: "default",
       },
     ])

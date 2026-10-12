@@ -14,30 +14,17 @@ import {
   type ChatLogEntry,
 } from "../../../../../../../shared/chat/chat-log.ts"
 import type { RecordedPromptImage } from "../../../../../../../shared/session-driver/prompt-image.ts"
-import { type RecordTime, recordTimeAt } from "../../../../../../../shared/session/session-state.ts"
 import {
   characterFaceInfo,
   type CharacterFaceInfo,
 } from "../../../../../../domain/character-face.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import { useSession, useTurnRunning } from "../../../../../../stores/session.ts"
-import {
-  clockDateTime,
-  clockTime,
-  localTimeZoneId,
-  zonedDateTime,
-} from "../../../../../../utils/clock.ts"
+import { localTimeZoneId } from "../../../../../../utils/clock.ts"
 import { dayLabel } from "../../../../../../utils/day-label.ts"
+import { recordClockStamp, type ClockStamp } from "../../../domain/clock-stamp.ts"
 import { useRevealedChatLog } from "./use-speech-reveal.ts"
 import { useStickToBottom } from "./use-stick-to-bottom.ts"
-
-/**
- * 発言の脇に添える時刻。前のセッションを組み直した発言は `unknown` で、何も出さない。
- * 流し直した時刻を代わりに出すと昨日の一言が「いま」に見える。
- */
-export type ChatTimeStamp =
-  | { readonly kind: "unknown" }
-  | { readonly kind: "known"; readonly dateTime: string; readonly text: string }
 
 /**
  * ログの1行を、部品がそのまま置ける形に畳んだもの。
@@ -64,7 +51,7 @@ export type ChatRow =
       readonly selected: boolean
       /** 現れるとき短く弾む行か。 */
       readonly pop: boolean
-      readonly time: ChatTimeStamp
+      readonly time: ClockStamp
       readonly onToggle: () => void
     }
   | {
@@ -72,7 +59,7 @@ export type ChatRow =
       readonly key: string
       readonly text: string
       readonly images: readonly RecordedPromptImage[]
-      readonly time: ChatTimeStamp
+      readonly time: ClockStamp
     }
 
 /** `<ChatView>` が画面に出す形。presenter はこれをそのまま部品へ渡すだけ。 */
@@ -213,7 +200,7 @@ function chatRows(
           text: entry.text,
           selected: index === selectedIndex,
           pop: index >= initialCount,
-          time: timeStamp(entry.time, timeZone),
+          time: recordClockStamp(entry.time, timeZone),
           onToggle: () => {
             onToggle(index)
           },
@@ -224,24 +211,10 @@ function chatRows(
           key,
           text: entry.text,
           images: entry.images,
-          time: timeStamp(entry.time, timeZone),
+          time: recordClockStamp(entry.time, timeZone),
         }
     }
   })
-}
-
-/** 発言の脇の時刻（`HH:MM`。秒は出さない）。組み直した発言は時刻が分からない。 */
-function timeStamp(time: RecordTime, timeZone: string): ChatTimeStamp {
-  const at = recordTimeAt(time)
-  if (at === undefined) {
-    return { kind: "unknown" }
-  }
-  const zoned = zonedDateTime(at, timeZone)
-  return {
-    kind: "known",
-    dateTime: clockDateTime(zoned),
-    text: clockTime(zoned),
-  }
 }
 
 /**

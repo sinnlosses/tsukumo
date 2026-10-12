@@ -166,6 +166,13 @@ function SpeechLogRow(props: {
       </li>
     )
   }
+  if (entry.kind === "day") {
+    return (
+      <li className={styles["speech-log-day"]} data-day={entry.dateTime}>
+        <time dateTime={entry.dateTime}>{entry.label}</time>
+      </li>
+    )
+  }
   const latest = entry.age === "latest"
   return (
     <li className={characterViewStyles["speech-log-speech"]} data-age={entry.age}>
@@ -173,8 +180,14 @@ function SpeechLogRow(props: {
         text={entry.text}
         latest={latest}
         speaker={latest ? props.speakerName : undefined}
+        time={{ kind: "unknown" }}
         interaction={{ kind: "toggleable", selected: entry.selected, onToggle: entry.onToggle }}
       />
+      {entry.time.kind === "known" && (
+        <time className={styles["speech-log-speech-time"]} dateTime={entry.time.dateTime}>
+          {entry.time.text}
+        </time>
+      )}
     </li>
   )
 }

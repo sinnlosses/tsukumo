@@ -339,7 +339,13 @@ describe("createSessionManager", () => {
     const [hello] = frames
     expect(hello?.type).toBe("hello")
     if (hello?.type === "hello") {
-      expect(hello.state.speeches).toEqual([{ text: "先に流れたセリフ", expression: "proud" }])
+      expect(hello.state.speeches).toEqual([
+        {
+          text: "先に流れたセリフ",
+          expression: "proud",
+          time: { kind: "stamped", at: 1000 },
+        },
+      ])
       expect(hello.state.speechExpression).toBe("proud")
     }
   })

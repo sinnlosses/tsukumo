@@ -14,10 +14,10 @@
 import { useEffect, useRef, type RefObject } from "react"
 import { sumBy } from "remeda"
 
-import {
-  type RecordTime,
-  recordTimeAt,
-  type SessionRecord,
+import { entryDay, startsNewDay } from "../../../../../../../../../shared/chat/chat-log.ts"
+import type {
+  RecordTime,
+  SessionRecord,
 } from "../../../../../../../../../shared/session/session-state.ts"
 import {
   turnSpeeches,
@@ -25,12 +25,9 @@ import {
 } from "../../../../../../../../../shared/session/turn-speech.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../../../stores/turn-selection.ts"
-import {
-  clockDateTime,
-  clockTime,
-  localTimeZoneId,
-  zonedDateTime,
-} from "../../../../../../../../utils/clock.ts"
+import { localTimeZoneId } from "../../../../../../../../utils/clock.ts"
+import { dayLabel } from "../../../../../../../../utils/day-label.ts"
+import { recordClockStamp, type ClockStamp } from "../../../../../domain/clock-stamp.ts"
 import { isSpeechSelected, type PinnedSpeech } from "../../../domain/pinned-speech.ts"
 
 /**
@@ -38,11 +35,6 @@ import { isSpeechSelected, type PinnedSpeech } from "../../../domain/pinned-spee
  * `recent`（1つ前）→ `older`（2つ前）→ `oldest`（3つ前から先は全部）の順に薄くなる。薄さの値は `character-view.module.css` が持つ。
  */
 export type SpeechAge = "latest" | "recent" | "older" | "oldest"
-
-/** 依頼の区切りに添える時刻。記録に時刻が無い（組み直した）依頼には付けない。 */
-export type SpeechLogTime =
-  | { readonly kind: "known"; readonly dateTime: string; readonly text: string }
-  | { readonly kind: "unknown" }
 
 /** ログに並べる1行（依頼の区切り、またはセリフ1件）。 */
 export type SpeechLogEntry =
@@ -52,14 +44,22 @@ export type SpeechLogEntry =
       /** 依頼の1行目（区切りには1行だけ出す。全文は `requestText` を `title` で読める）。 */
       readonly heading: string
       readonly requestText: string
-      readonly time: SpeechLogTime
+      readonly time: ClockStamp
       /** 最新のセリフを含むターンの区切りか（そうでない区切りは薄くする）。 */
       readonly current: boolean
+    }
+  | {
+      /** 日が変わるところの区切り。その下に続くセリフの日を出す。 */
+      readonly kind: "day"
+      readonly key: string
+      readonly dateTime: string
+      readonly label: string
     }
   | {
       readonly kind: "speech"
       readonly key: string
       readonly text: string
+      readonly time: ClockStamp
       readonly age: SpeechAge
       /** 印を付ける行（= 立ち絵が従っている行）か。 */
       readonly selected: boolean
@@ -119,6 +119,10 @@ function logEntries(
   const requestTimes = requestTimesByTurn(records)
   const speechCount = sumBy(turns, (turn) => turn.speeches.length)
   const lastTurnId = turns.at(-1)?.id
+  // セリフを古い側から数えた順に並べた、それぞれの日。日の区切りは隣り合うセリフの日で決める。
+  const speechDays = turns.flatMap((turn) =>
+    turn.speeches.map((speech) => entryDay(speech.time, timeZone)),
+  )
   // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の行。
   const activeSpeechCount = turns.find((turn) => turn.id === activeTurnId)?.speeches.length
   const defaultIndex = activeSpeechCount === undefined ? undefined : activeSpeechCount - 1
@@ -127,19 +131,39 @@ function logEntries(
     // このターンの先頭のセリフが、全体の古い側から数えて何件目か。
     const offset = sumBy(turns.slice(0, turnIndex), (earlier) => earlier.speeches.length)
     const requestTime = requestTimes.get(turn.id)
-    const time: SpeechLogTime =
-      requestTime === undefined ? { kind: "unknown" } : logTime(requestTime, timeZone)
-    const speeches = turn.speeches.map((speech, index): SpeechLogEntry => ({
-      kind: "speech",
+    const time: ClockStamp =
+      requestTime === undefined ? { kind: "unknown" } : recordClockStamp(requestTime, timeZone)
+    const speeches = turn.speeches.flatMap((speech, index): readonly SpeechLogEntry[] => {
       // セリフはターンの中で末尾へ積むだけなので、ターンの番号と位置がそのまま同一性になる。
-      key: `speech-${String(turn.id)}-${String(index)}`,
-      text: speech.text,
-      age: speechAge(speechCount - 1 - (offset + index)),
-      selected: isSpeechSelected(pinnedSpeech, turn.id, index, activeTurnId, defaultIndex),
-      onToggle: () => {
-        onToggleSpeech(turn.id, index)
-      },
-    }))
+      const key = `${String(turn.id)}-${String(index)}`
+      const day = speechDays[offset + index] ?? { kind: "none" }
+      const previousDay = speechDays[offset + index - 1] ?? { kind: "none" }
+      const divider: readonly SpeechLogEntry[] =
+        day.kind === "date" && startsNewDay(previousDay, day.date)
+          ? [
+              {
+                kind: "day",
+                key: `day-${key}`,
+                dateTime: day.date.toString(),
+                label: dayLabel(day.date),
+              },
+            ]
+          : []
+      return [
+        ...divider,
+        {
+          kind: "speech",
+          key: `speech-${key}`,
+          text: speech.text,
+          time: recordClockStamp(speech.time, timeZone),
+          age: speechAge(speechCount - 1 - (offset + index)),
+          selected: isSpeechSelected(pinnedSpeech, turn.id, index, activeTurnId, defaultIndex),
+          onToggle: () => {
+            onToggleSpeech(turn.id, index)
+          },
+        },
+      ]
+    })
     return [...requestEntries(turn, time, turn.id === lastTurnId), ...speeches]
   })
 }
@@ -147,7 +171,7 @@ function logEntries(
 /** 依頼の区切り。依頼より前に届いたセリフのまとまり（起動直後の挨拶など）には区切りを置かない。 */
 function requestEntries(
   turn: TurnSpeech,
-  time: SpeechLogTime,
+  time: ClockStamp,
   current: boolean,
 ): readonly SpeechLogEntry[] {
   if (turn.request === undefined) {
@@ -183,16 +207,6 @@ function speechAge(newerCount: number): SpeechAge {
     return "recent"
   }
   return newerCount === 2 ? "older" : "oldest"
-}
-
-/** 区切りの時刻（`HH:MM`。秒は出さない）。組み直した依頼は時刻が分からない。 */
-function logTime(time: RecordTime, timeZone: string): SpeechLogTime {
-  const at = recordTimeAt(time)
-  if (at === undefined) {
-    return { kind: "unknown" }
-  }
-  const zoned = zonedDateTime(at, timeZone)
-  return { kind: "known", dateTime: clockDateTime(zoned), text: clockTime(zoned) }
 }
 
 /** 依頼の1行目（区切りは1行に切る）。空行だけの依頼は空文字。 */

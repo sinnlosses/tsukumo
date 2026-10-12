@@ -128,6 +128,18 @@ describe("applySessionEvent", () => {
     ])
   })
 
+  it("speech イベントの時刻（at）が state.speeches の要素にも載る", () => {
+    const state = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "speech", text: "いくよ！", expression: "proud" },
+      1234,
+    )
+
+    expect(state.speeches).toEqual([
+      { text: "いくよ！", expression: "proud", time: { kind: "stamped", at: 1234 } },
+    ])
+  })
+
   it("セリフは記録にも積むが、レポート（mainViewEntries）には出さない", () => {
     const view = apply(
       { kind: "request", text: "ダミーの依頼", images: [] },
@@ -240,7 +252,9 @@ describe("applySessionEvent", () => {
       0,
     )
     // 次の speak が来た時点で、そのターンのものだけになる。
-    expect(secondTurnSpoken.speeches).toEqual([{ text: "2つめのセリフ", expression: "default" }])
+    expect(secondTurnSpoken.speeches).toEqual([
+      { text: "2つめのセリフ", expression: "default", time: { kind: "stamped", at: 0 } },
+    ])
   })
 
   it("ツールが動いていても表情は直前の speak のまま変わらない（自動の上書きは 2026-09-17 に撤去）", () => {
@@ -1933,6 +1947,43 @@ describe("applyRestoredEvents（transcript の時刻）", () => {
       startedAt: { kind: "recovered", at: 2_000 },
       status: { kind: "finished", finishedAt: { kind: "restored" } },
     })
+  })
+})
+
+describe("applyRestoredEvents（state.speeches の時刻）", () => {
+  const speak = (text: string): SessionEvent => ({ kind: "speech", text, expression: "default" })
+
+  it("時刻の読めるセリフは recovered、読めないセリフは restored で、記録のセリフと同じ時刻になる", () => {
+    const state = applyRestoredEvents(
+      INITIAL_SESSION_STATE,
+      [
+        { event: speak("読めた"), time: { kind: "known", at: 1_000 } },
+        { event: speak("読めない"), time: { kind: "unknown" } },
+      ],
+      99_999,
+    )
+
+    expect(state.speeches.map((speech) => speech.time)).toEqual([
+      { kind: "recovered", at: 1_000 },
+      { kind: "restored" },
+    ])
+    expect(
+      state.records.flatMap((record) => (record.kind === "speech" ? [record.time] : [])),
+    ).toEqual(state.speeches.map((speech) => speech.time))
+  })
+
+  it("組み直す前から積んであったセリフの時刻は書き換えない（stamped のまま）", () => {
+    const live = applySessionEvent(INITIAL_SESSION_STATE, speak("いまのセリフ"), 5_000)
+    const state = applyRestoredEvents(
+      live,
+      [{ event: speak("前のセリフ"), time: { kind: "unknown" } }],
+      99_999,
+    )
+
+    expect(state.speeches.map((speech) => speech.time)).toEqual([
+      { kind: "stamped", at: 5_000 },
+      { kind: "restored" },
+    ])
   })
 })
 
