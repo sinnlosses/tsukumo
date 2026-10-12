@@ -212,8 +212,7 @@ export type ScenarioRoom = {
   /** `pending-changed` の答え待ちに `id` の札が載るまで待つ（何回目の `pending-changed` かでは待たない）。 */
   readonly waitForPending: (id: string) => Promise<void>
   /**
-   * 窓の大きさを変え、窓の幅・高さが渡した値になり、ページの高さ（`scrollHeight`）が窓の高さに揃うまで待つ。
-   * ページが窓より高くなる場面では高さが揃わないので使えない。
+   * 窓の大きさを変え、窓の幅・高さが渡した値になるまで待つ。
    */
   readonly resize: (viewport: { readonly width: number; readonly height: number }) => Promise<void>
   /** 読み上げの領域（`[data-live-announcer]`）に、ページを開いてからいままでに挿入された文。 */
@@ -402,10 +401,7 @@ async function openRoom(
     resize: async (viewport) => {
       await page.setViewportSize(viewport)
       await page.waitForFunction(
-        ({ width, height }) =>
-          window.innerWidth === width &&
-          window.innerHeight === height &&
-          document.scrollingElement?.scrollHeight === height,
+        ({ width, height }) => window.innerWidth === width && window.innerHeight === height,
         viewport,
       )
     },

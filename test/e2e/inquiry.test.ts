@@ -135,8 +135,7 @@ describe("お伺い", () => {
     await inquiry.getByRole("radio", { name: /C に移す/ }).click()
     await expect.poll(() => detail.getAttribute("aria-label")).toBe("C に移す の詳細")
 
-    // 札が窓より高くなりページが転がるので、`resize` の「ページが窓に収まる」待ちは使えない。
-    await room.page.setViewportSize(VIEWPORTS.compact)
+    await room.resize(VIEWPORTS.compact)
     await expect.poll(() => detail.count()).toBe(1)
     const [last, stackedPanel] = await Promise.all([
       inquiry.getByRole("radio", { name: /C に移す/ }).boundingBox(),
