@@ -1,7 +1,7 @@
 // 雑談中のサイドバーの3段目「覚えていること」。
 // 中身は `persona.md` の `## 覚えたこと`（`SessionState.rememberedLines`）で、1行＝チップ1つ。
 //
-// チップは先頭を短く切って出し、押すとその場で全文に開く（もう一度押すと閉じる）。
+// チップは幅に収まる分だけを出し（切るのは CSS）、押すとその場で全文に開く（もう一度押すと閉じる）。
 // `title` の hover では出さない（キーボードでもタッチでも開けるように）。
 //
 // 「編集」は消せる行があるときだけ置く（空のときに押せても何もできない）。
@@ -10,7 +10,6 @@
 
 import { useState, type ReactElement } from "react"
 
-import { clipWithEllipsis } from "../../../../../shared/utils/clip-text.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
@@ -19,9 +18,6 @@ import { Text } from "../../../ui/text/text.tsx"
 import sidebarStyles from "../sidebar.module.css"
 import styles from "./persona-memory-section.module.css"
 import { SidebarSection } from "./section.tsx"
-
-/** チップに出す先頭の長さ（文字数）。超えた分は `…` に畳む。 */
-const REMEMBERED_LINE_CHIP_LENGTH = 20
 
 export function PersonaMemorySection(): ReactElement {
   const lines = useSession((session) => session.state.rememberedLines)
@@ -65,7 +61,7 @@ export function PersonaMemorySection(): ReactElement {
                   setOpenLine((current) => (current === line ? undefined : line))
                 }}
               >
-                {openLine === line ? line : clipWithEllipsis(line, REMEMBERED_LINE_CHIP_LENGTH)}
+                {line}
               </button>
               {editing && (
                 <Button

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // 雑談のサイドバー2段目「最近の話題」と3段目「覚えていること」（docs/architecture/screen-design.md「雑談のときのサイドバー」）。
-// 場面 `chat-remembered-lines` は、3段目に短い1行とチップの表示幅（20字）を超える長い1行を、
+// 場面 `chat-remembered-lines` は、3段目に短い1行とチップの表示幅を超える長い1行を、
 // 2段目に短い話題と、空白を含まない長い語（日本語・英字）の話題を載せる。
 //
 // 「消す」で送る文面はどの同梱パックの `persona.md` にも無いので、受け口は一致を見つけず
