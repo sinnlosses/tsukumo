@@ -137,7 +137,11 @@ describe("PhoneHead", () => {
     cleanup()
     const outside = renderHead({
       turn: { kind: "running", startedAt: 0 },
-      records: [requestRecord(), workPlanRecord({ phases: PHASES, current: 0, ...inRange })],
+      records: [
+        requestRecord(),
+        workPlanRecord({ phases: PHASES, current: 1, ...inRange }),
+        workPlanRecord({ phases: PHASES, current: 0, ...inRange }),
+      ],
     })
     expect(outside.querySelector(".phone-head-position")?.textContent).toBe("")
     expect(title()).toBe("架空の段A")

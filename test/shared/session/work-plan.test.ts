@@ -517,6 +517,40 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
   })
 })
 
+describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
+  const SERIAL: readonly WorkPlanEntry[] = [
+    "架空の計画",
+    "架空の実装A",
+    "架空の実装B",
+    "架空の受け入れ",
+  ]
+  const range = { kind: "range", first: 1, count: 2 } as const
+  const declared = (current: number): WorkPlan => ({
+    phases: SERIAL,
+    current,
+    finishedInGroup: [],
+    phaseSummary: "架空の計画を書いた。",
+    delegatedRange: range,
+  })
+  const event = (plan: WorkPlan): WorkPlanEvent => ({ kind: "work-plan", ...plan })
+
+  it("範囲の前の段を済ませ、範囲の先頭の段を今の段にする", () => {
+    const plan = nextWorkPlan(planned(SERIAL, 0), event(declared(0)))
+    expect(plan).toMatchObject({ current: 1 })
+    expect(
+      nextWorkPlan(plan, {
+        kind: "delegate-returned",
+        handback: { kind: "phase-done", phase: 1, count: 2, summary: "架空" },
+      }),
+    ).toMatchObject({ current: 2 })
+  })
+
+  it("範囲を宣言済みなら位置を動かさない", () => {
+    const before = nextWorkPlan(planned(SERIAL, 0), event(declared(0)))
+    expect(nextWorkPlan(before, event(declared(0)))).toMatchObject({ current: 0 })
+  })
+})
+
 describe("イベントの並びから畳んだ今の段取り", () => {
   const isWorkPlanEvent = (event: SessionEvent): event is WorkPlanEvent =>
     event.kind === "request" ||

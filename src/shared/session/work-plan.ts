@@ -254,7 +254,7 @@ export function nextWorkPlan(plan: LatestWorkPlan, event: WorkPlanEvent): Latest
     case "request":
       return NO_WORK_PLAN
     case "work-plan":
-      return workPlanOf(event)
+      return withLeadPhasesFinished(plan, workPlanOf(event))
     case "delegate-returned":
       return plan.kind === "none" ? plan : advancedByReturn(plan, event.handback)
     case "report":
@@ -441,6 +441,20 @@ export type ReturnedPhase =
   | { readonly kind: "finished"; readonly phase: PlannedPhase }
 
 const UNMOVED = { kind: "unmoved" } as const satisfies ReturnedPhase
+
+/**
+ * 範囲を初めて宣言した `work-plan` は、範囲の前の段（計画）を済ませた位置に直す。
+ * 計画の返却は段に数えず、範囲の先頭の段は今の段のときにしか返却で済まないので、手で `current` を進め忘れると帯が動かなくなる。
+ */
+function withLeadPhasesFinished(previous: LatestWorkPlan, next: PlannedWorkPlan): PlannedWorkPlan {
+  const hadRange = previous.kind === "planned" && previous.delegatedRange.kind === "range"
+  if (hadRange || next.delegatedRange.kind !== "range" || next.finishedInGroup.length > 0) {
+    return next
+  }
+  const { first } = next.delegatedRange
+  const lead = plannedPhasesOf(next).find((phase) => phase.index === first)
+  return lead === undefined || lead.entry <= next.current ? next : { ...next, current: lead.entry }
+}
 
 /** 番号を持つ段の数（範囲があれば範囲の中、無ければ全部の段）。 */
 function numberedPhaseCount(plan: Pick<WorkPlan, "phases" | "delegatedRange">): number {
