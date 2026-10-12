@@ -49,7 +49,16 @@ function wrapper(
   return queryClientWrapper(client)
 }
 
-const KNOWN_TODAY: AchievementDaySwitch = { kind: "known", date: "2026-09-24", today: "2026-09-24" }
+const KNOWN_WRITTEN_DAY: AchievementDaySwitch = {
+  kind: "known",
+  date: "2026-09-16",
+  today: "2026-09-24",
+}
+const KNOWN_BLANK_DAY: AchievementDaySwitch = {
+  kind: "known",
+  date: "2026-09-23",
+  today: "2026-09-24",
+}
 const UNKNOWN_DAY_SWITCH: AchievementDaySwitch = { kind: "unknown" }
 
 const CALENDAR: AchievementCalendarView = {
@@ -106,14 +115,14 @@ const BLANK_DAY: DailyAchievement = {
 const EMPTY_BLANK_DAY: DailyAchievement = { ...BLANK_DAY, doneTasks: [] }
 
 describe("useDiaryBook（開閉）", () => {
-  it("既定は閉じていて、灯りの暦から開くと見ている日も切り替わる", async () => {
+  it("既定は閉じていて、「日記帳で読む」からはいま見ている日で開く（見ている日を切り替えない）", async () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const selected: string[] = []
     const { result } = renderHook(
       () =>
         useDiaryBook({
           calendar: CALENDAR,
-          daySwitch: KNOWN_TODAY,
+          daySwitch: KNOWN_WRITTEN_DAY,
           onDateSelected: (date) => selected.push(date),
         }),
       { wrapper: wrapper(createTestQueryClient()) },
@@ -123,37 +132,15 @@ describe("useDiaryBook（開閉）", () => {
     expect(result.current.dialogLabel).toBe("つくもの日記帳")
 
     act(() => {
-      result.current.onOpenFromCalendar("2026-09-16")
-    })
-
-    expect(result.current.open).toBe(true)
-    expect(result.current.openNote).toBe("灯りの暦から開きました")
-    expect(selected).toEqual(["2026-09-16"])
-    await waitFor(() => {
-      expect(result.current.page.kind).toBe("ready")
-    })
-  })
-
-  it("「日記帳で読む」からは、いま見ている日で開く（見ている日を切り替えない）", async () => {
-    stubFetch(() => rpcOutput(WRITTEN_DAY))
-    const selected: string[] = []
-    const { result } = renderHook(
-      () =>
-        useDiaryBook({
-          calendar: CALENDAR,
-          daySwitch: { kind: "known", date: "2026-09-16", today: "2026-09-24" },
-          onDateSelected: (date) => selected.push(date),
-        }),
-      { wrapper: wrapper(createTestQueryClient()) },
-    )
-
-    act(() => {
       result.current.onOpenFromDiarySection()
     })
 
     expect(result.current.open).toBe(true)
     expect(result.current.openNote).toBe("この日の日記から開きました")
     expect(selected).toEqual([])
+    await waitFor(() => {
+      expect(result.current.page).toMatchObject({ kind: "ready", date: "2026-09-16" })
+    })
   })
 
   it("見ている日が分からないときは「日記帳で読む」を押しても開かない", () => {
@@ -178,12 +165,17 @@ describe("useDiaryBook（開閉）", () => {
   it("開いたあとに閉じると open が false に戻る", async () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
-      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      () =>
+        useDiaryBook({
+          calendar: CALENDAR,
+          daySwitch: KNOWN_WRITTEN_DAY,
+          onDateSelected: () => {},
+        }),
       { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
-      result.current.onOpenFromCalendar("2026-09-16")
+      result.current.onOpenFromDiarySection()
     })
     await waitFor(() => {
       expect(result.current.page.kind).toBe("ready")
@@ -200,12 +192,17 @@ describe("useDiaryBook（書かれた日）", () => {
   it("段落は書いた順に並び、2つ目以降だけ時刻を持つ", async () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
-      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      () =>
+        useDiaryBook({
+          calendar: CALENDAR,
+          daySwitch: KNOWN_WRITTEN_DAY,
+          onDateSelected: () => {},
+        }),
       { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
-      result.current.onOpenFromCalendar("2026-09-16")
+      result.current.onOpenFromDiarySection()
     })
     await waitFor(() => {
       expect(result.current.page.kind).toBe("ready")
@@ -246,12 +243,17 @@ describe("useDiaryBook（書かれた日）", () => {
     }
     stubFetch(() => rpcOutput(noBookmark))
     const { result } = renderHook(
-      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      () =>
+        useDiaryBook({
+          calendar: CALENDAR,
+          daySwitch: KNOWN_WRITTEN_DAY,
+          onDateSelected: () => {},
+        }),
       { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
-      result.current.onOpenFromCalendar("2026-09-16")
+      result.current.onOpenFromDiarySection()
     })
     await waitFor(() => {
       expect(result.current.page.kind).toBe("ready")
@@ -268,12 +270,17 @@ describe("useDiaryBook（書かれた日）", () => {
     }))
     stubFetch(() => rpcOutput({ ...WRITTEN_DAY, doneTasks }))
     const { result } = renderHook(
-      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      () =>
+        useDiaryBook({
+          calendar: CALENDAR,
+          daySwitch: KNOWN_WRITTEN_DAY,
+          onDateSelected: () => {},
+        }),
       { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
-      result.current.onOpenFromCalendar("2026-09-16")
+      result.current.onOpenFromDiarySection()
     })
     await waitFor(() => {
       expect(result.current.page.kind).toBe("ready")
@@ -302,14 +309,14 @@ describe("useDiaryBook（白紙の日）", () => {
       () =>
         useDiaryBook({
           calendar: CALENDAR,
-          daySwitch: KNOWN_TODAY,
+          daySwitch: KNOWN_BLANK_DAY,
           onDateSelected: (date) => selected.push(date),
         }),
       { wrapper: wrapper(createTestQueryClient(), stateWith({}), spy) },
     )
 
     act(() => {
-      result.current.onOpenFromCalendar("2026-09-23")
+      result.current.onOpenFromDiarySection()
     })
     await waitFor(() => {
       expect(result.current.page.kind).toBe("ready")
@@ -330,7 +337,7 @@ describe("useDiaryBook（白紙の日）", () => {
     })
 
     expect(sent).toEqual([{ procedure: "session.reflectAchievement", date: "2026-09-23" }])
-    expect(selected).toEqual(["2026-09-23", "2026-09-23"])
+    expect(selected).toEqual(["2026-09-23"])
     expect(result.current.open).toBe(false)
   })
 
@@ -342,14 +349,14 @@ describe("useDiaryBook（白紙の日）", () => {
       () =>
         useDiaryBook({
           calendar: CALENDAR,
-          daySwitch: KNOWN_TODAY,
+          daySwitch: KNOWN_BLANK_DAY,
           onDateSelected: () => {},
         }),
       { wrapper: wrapper(createTestQueryClient(), stateWith({}), spy) },
     )
 
     act(() => {
-      result.current.onOpenFromCalendar("2026-09-23")
+      result.current.onOpenFromDiarySection()
     })
     await waitFor(() => {
       expect(result.current.page.kind).toBe("ready")
@@ -373,12 +380,17 @@ describe("useDiaryBook（前後の送りと目次）", () => {
   it("前後は日記のある日だけへ飛び、無ければ undefined", () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
-      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      () =>
+        useDiaryBook({
+          calendar: CALENDAR,
+          daySwitch: KNOWN_WRITTEN_DAY,
+          onDateSelected: () => {},
+        }),
       { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
-      result.current.onOpenFromCalendar("2026-09-16")
+      result.current.onOpenFromDiarySection()
     })
 
     expect(result.current.previous).toEqual({ date: "2026-08-30", label: "8月30日" })
@@ -393,12 +405,17 @@ describe("useDiaryBook（前後の送りと目次）", () => {
   it("目次は月ごとに畳み、選ぶとその日へ移って閉じる", () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
-      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      () =>
+        useDiaryBook({
+          calendar: CALENDAR,
+          daySwitch: KNOWN_WRITTEN_DAY,
+          onDateSelected: () => {},
+        }),
       { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
-      result.current.onOpenFromCalendar("2026-09-16")
+      result.current.onOpenFromDiarySection()
     })
     act(() => {
       result.current.onToggleToc()
@@ -426,14 +443,14 @@ describe("useDiaryBook（前後の送りと目次）", () => {
       () =>
         useDiaryBook({
           calendar: EMPTY_CALENDAR,
-          daySwitch: KNOWN_TODAY,
+          daySwitch: KNOWN_WRITTEN_DAY,
           onDateSelected: () => {},
         }),
       { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
-      result.current.onOpenFromCalendar("2026-09-16")
+      result.current.onOpenFromDiarySection()
     })
 
     expect(result.current.previous).toBeUndefined()
@@ -450,7 +467,12 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
   it("マウント中に来た新しい合図も拾って開き直す", async () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
-      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      () =>
+        useDiaryBook({
+          calendar: CALENDAR,
+          daySwitch: KNOWN_WRITTEN_DAY,
+          onDateSelected: () => {},
+        }),
       { wrapper: wrapper(createTestQueryClient()) },
     )
     expect(result.current.open).toBe(false)
@@ -470,7 +492,12 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
     })
 
     const { result } = renderHook(
-      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      () =>
+        useDiaryBook({
+          calendar: CALENDAR,
+          daySwitch: KNOWN_WRITTEN_DAY,
+          onDateSelected: () => {},
+        }),
       { wrapper: wrapper(createTestQueryClient()) },
     )
 
@@ -487,14 +514,24 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
       requestDiaryBookOpen("2026-09-16")
     })
     const first = renderHook(
-      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      () =>
+        useDiaryBook({
+          calendar: CALENDAR,
+          daySwitch: KNOWN_WRITTEN_DAY,
+          onDateSelected: () => {},
+        }),
       { wrapper: wrapper(createTestQueryClient()) },
     )
     expect(first.result.current.open).toBe(true)
     first.unmount()
 
     const second = renderHook(
-      () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
+      () =>
+        useDiaryBook({
+          calendar: CALENDAR,
+          daySwitch: KNOWN_WRITTEN_DAY,
+          onDateSelected: () => {},
+        }),
       { wrapper: wrapper(createTestQueryClient()) },
     )
     expect(second.result.current.open).toBe(false)

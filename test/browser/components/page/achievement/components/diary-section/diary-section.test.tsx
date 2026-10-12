@@ -34,7 +34,6 @@ const NOT_WRITING: AchievementWriting = { kind: "none" }
 
 const LOADING = {
   kind: "shown",
-  ready: false,
   reviewedLabel: { kind: "none" },
   canOpenBook: false,
   bubble: { kind: "blank" },
@@ -43,7 +42,6 @@ const LOADING = {
 
 const READY_WITH_DIARY = {
   kind: "shown",
-  ready: true,
   reviewedLabel: { kind: "shown", label: "振り返り [21:40]" },
   canOpenBook: true,
   bubble: {
@@ -57,7 +55,6 @@ const READY_WITH_DIARY = {
 
 const READY_NO_DIARY = {
   kind: "shown",
-  ready: true,
   reviewedLabel: { kind: "none" },
   canOpenBook: false,
   bubble: { kind: "notes", notes: ["まだこの日の日記は無い。"] },
@@ -104,14 +101,22 @@ describe("DiarySection", () => {
     expect(document.querySelector(".achievement-card")).toBeNull()
   })
 
-  it("読み込み中は札が「…」で、ボタンは出ない", () => {
-    renderSection({ diary: LOADING })
+  it("読み込み中は札が「…」で、振り返りのボタンは押せない状態で出る", () => {
+    renderSection({
+      diary: LOADING,
+      review: {
+        label: "架空の名前と振り返る",
+        availability: { kind: "blocked", reason: "" },
+        onReview: NOOP,
+      },
+    })
 
     const values = [...document.querySelectorAll(".achievement-card-value")].map(
       (node) => node.textContent,
     )
     expect(values).toEqual(["…"])
-    expect(screen.queryByRole("button", { name: /振り返る/ })).toBeNull()
+    const button = screen.getByRole("button", { name: "架空の名前と振り返る" })
+    expect(button.getAttribute("aria-disabled")).toBe("true")
   })
 
   it("日記が無い日は、点線の枠に「まだこの日の日記は無い。」", () => {
@@ -193,8 +198,13 @@ describe("DiarySection", () => {
     expect(calls).toBe(1)
   })
 
-  it("日記が無い日は「日記帳で読む」を出さない", () => {
-    renderSection({ diary: READY_NO_DIARY })
-    expect(screen.queryByRole("button", { name: "日記帳で読む" })).toBeNull()
+  it("日記が無い日は「日記帳で読む」が出るが押せない", () => {
+    let calls = 0
+    renderSection({ diary: READY_NO_DIARY, onOpenDiaryBook: () => (calls += 1) })
+
+    const button = screen.getByRole("button", { name: "日記帳で読む" })
+    expect(button.getAttribute("aria-disabled") ?? button.getAttribute("disabled")).not.toBeNull()
+    button.click()
+    expect(calls).toBe(0)
   })
 })

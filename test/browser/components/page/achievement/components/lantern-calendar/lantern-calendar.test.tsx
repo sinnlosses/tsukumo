@@ -43,7 +43,7 @@ const KNOWN: AchievementCalendarView = {
 }
 
 describe("LanternCalendar", () => {
-  it("読み込み中は「…」だけ", () => {
+  it("読み込み中は空のマスが35個出て、押せるマスは出ない", () => {
     render(
       <LanternCalendar
         calendar={{ kind: "loading" }}
@@ -51,8 +51,10 @@ describe("LanternCalendar", () => {
         onSelectDate={() => {}}
       />,
     )
-    expect(screen.getByText("…")).toBeDefined()
+    expect(screen.queryByText("…")).toBeNull()
+    expect(document.querySelectorAll(".achievement-calendar-future")).toHaveLength(35)
     expect(document.querySelectorAll(".achievement-calendar-day")).toHaveLength(0)
+    expect(screen.queryAllByRole("button")).toHaveLength(0)
   })
 
   it("取れなかったときは1行だけ", () => {

@@ -21,7 +21,6 @@ export function Achievement(): ReactElement {
     <PresentationalAchievement
       {...achievement}
       calendar={calendar}
-      onSelectDate={diaryBook.onOpenFromCalendar}
       onOpenDiaryBook={diaryBook.onOpenFromDiarySection}
       diaryBook={diaryBook}
     />

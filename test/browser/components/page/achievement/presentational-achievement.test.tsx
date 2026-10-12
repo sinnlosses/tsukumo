@@ -40,7 +40,6 @@ const CLOSED_DIARY_BOOK: DiaryBookModel = {
   previous: undefined,
   next: undefined,
   toc: { open: false, months: [] },
-  onOpenFromCalendar: NOOP_DATE,
   onOpenFromDiarySection: NOOP,
   onPrevious: NOOP,
   onNext: NOOP,
@@ -60,7 +59,6 @@ const DEFAULT_PROPS: PresentationalAchievementProps = {
   daySwitch: KNOWN_TODAY,
   diarySection: {
     kind: "shown",
-    ready: true,
     reviewedLabel: { kind: "none" },
     canOpenBook: false,
     bubble: { kind: "notes", notes: ["まだこの日の日記は無い。"] },
@@ -105,16 +103,16 @@ describe("PresentationalAchievement", () => {
     expect(document.querySelector(".achievement-calendar")).toBeNull()
   })
 
-  it("日の切り替え → 日記の区画 → 灯りの暦の順で並ぶ（しおり・小さな驚きは無ければ挟まらない）", () => {
+  it("日の切り替え → 灯りの暦 → 日記の区画の順で並ぶ（しおり・小さな驚きは無ければ挟まらない）", () => {
     renderScreen()
 
     const root = document.querySelector(".achievement")
     const children = [...(root?.children ?? [])]
-    // 灯りの暦は achievement-calendar のクラスを持つ区画として最後に来る。
-    expect(children.at(-1)?.className).toBe("achievement-calendar")
     // 日の切り替えの外枠は `HStack` に置き換わって固有の class を持たないので、中身
     // （`.achievement-day-switch-nav`）で見分ける。
     expect(children[0]?.querySelector(".achievement-day-switch-nav")).not.toBeNull()
+    expect(children[1]?.className).toBe("achievement-calendar")
+    expect(children[2]?.className).toContain("achievement-diary")
   })
 
   it("しおりがあれば日記の区画のあとに出る", () => {
@@ -152,7 +150,7 @@ describe("PresentationalAchievement", () => {
     const diary = document.querySelector(".achievement-diary")
     const calendar = document.querySelector(".achievement-calendar")
     expect(diary?.compareDocumentPosition(bookmark)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
-    expect(calendar?.compareDocumentPosition(bookmark)).toBe(Node.DOCUMENT_POSITION_PRECEDING)
+    expect(calendar?.compareDocumentPosition(bookmark)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
   it("灯りの暦は main が読める限り、1日ぶんが取れていなくても出る", () => {

@@ -107,8 +107,6 @@ export type DiarySectionModel =
   | { readonly kind: "failed" }
   | {
       readonly kind: "shown"
-      /** 取れていて、振り返りのボタンを出してよいか。 */
-      readonly ready: boolean
       /** 見出しの「振り返り [21:40]」。最後の段落が無ければ `none`。 */
       readonly reviewedLabel:
         | { readonly kind: "none" }
@@ -238,7 +236,6 @@ function diarySectionOf(view: AchievementView, writing: AchievementWriting): Dia
 
   return {
     kind: "shown",
-    ready: view.kind === "ready",
     reviewedLabel:
       latest === undefined
         ? { kind: "none" }

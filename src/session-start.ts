@@ -76,6 +76,8 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     chatArchive: createChatArchive(),
     achievementCache: createAchievementCache(options.cwd),
   }
+  // 成果の画面を初めて開く前に `bd list` を済ませておく（読みは覚えられ、同時の読みは束ねられる）。
+  void context.achievementCache.readBeads()
   // 最初のタブが繋がったら解ける約束。
   const firstViewer = Promise.withResolvers<void>()
 

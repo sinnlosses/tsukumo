@@ -14,6 +14,14 @@ import styles from "./lantern-calendar.module.css"
 
 const WEEKDAY_HEADS = ["月", "火", "水", "木", "金", "土", "日"] satisfies readonly string[]
 
+// 届くまでのあいだ、届いたあとのマスと同じ大きさの空のマスを置く（届いても下の区画が動かない）。
+const PLACEHOLDER_CELLS = Array.from({ length: 35 }, (_, index): CalendarCell => ({
+  kind: "future",
+  key: String(index),
+  dateLabel: "",
+}))
+const PLACEHOLDER_RANGE_LABEL = " "
+
 export type LanternCalendarProps = {
   readonly calendar: AchievementCalendarView
   /** 見ている日（枠を `--accent` にする。まだ分からなければ `undefined`）。 */
@@ -45,15 +53,18 @@ export function LanternCalendar(props: LanternCalendarProps): ReactElement {
             weight="normal"
             className={styles["achievement-calendar-note"]}
           >
-            成果のあった日に狐火がともります · 押すとその日へ
+            成果のあった日に狐火がともります · 押すとその日を選びます
           </Text>
         </Heading>
         <Legend />
       </HStack>
       {calendar.kind === "loading" ? (
-        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
-          …
-        </Text>
+        <Grid
+          cells={PLACEHOLDER_CELLS}
+          rangeLabel={PLACEHOLDER_RANGE_LABEL}
+          viewedDate={undefined}
+          onSelectDate={props.onSelectDate}
+        />
       ) : calendar.kind === "unknown" ? (
         <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
           灯りの暦を取れなかった。

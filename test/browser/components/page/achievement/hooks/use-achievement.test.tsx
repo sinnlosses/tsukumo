@@ -365,7 +365,6 @@ describe("useAchievement（日記の区画）", () => {
 
     expect(result.current.diarySection).toEqual({
       kind: "shown",
-      ready: true,
       reviewedLabel: { kind: "shown", label: "振り返り [21:40]" },
       canOpenBook: true,
       bubble: {
@@ -413,7 +412,6 @@ describe("useAchievement（日記の区画）", () => {
     })
 
     expect(result.current.diarySection).toMatchObject({
-      ready: false,
       bubble: { kind: "blank" },
       doneTaskCount: "…",
     })

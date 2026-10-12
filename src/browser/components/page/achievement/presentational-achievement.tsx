@@ -52,6 +52,11 @@ export function PresentationalAchievement(props: PresentationalAchievementProps)
           onNextDay={props.onNextDay}
           onToday={props.onToday}
         />
+        <LanternCalendar
+          calendar={props.calendar}
+          viewedDate={viewedDate}
+          onSelectDate={props.onSelectDate}
+        />
         <DiarySection
           diary={props.diarySection}
           isFetching={props.isFetching}
@@ -76,11 +81,6 @@ export function PresentationalAchievement(props: PresentationalAchievementProps)
             milestones={props.view.milestones}
           />
         )}
-        <LanternCalendar
-          calendar={props.calendar}
-          viewedDate={viewedDate}
-          onSelectDate={props.onSelectDate}
-        />
       </div>
       <DiaryBook {...props.diaryBook} />
     </>

@@ -76,7 +76,7 @@ export function DiarySection(props: DiarySectionProps): ReactElement {
         <Bubble bubble={diary.bubble} reveal={props.reveal} onRevealed={props.onRevealed} />
         {props.writing.kind === "writing" && <Progress stage={props.writing.stage} />}
         <DoneTaskCard value={diary.doneTaskCount} />
-        {diary.ready && <Controls writing={props.writing} review={props.review} />}
+        <Controls writing={props.writing} review={props.review} />
       </div>
     </section>
   )
@@ -112,22 +112,20 @@ function Header(props: {
           </Text>
         )
       )}
-      {diary.canOpenBook && (
-        <Button
-          variant="link"
-          size="label"
-          pressed="none"
-          disabled={false}
-          ariaLabel={undefined}
-          disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
-          className={styles["achievement-diary-open-book"]}
-          onClick={props.onOpenDiaryBook}
-        >
-          日記帳で読む
-        </Button>
-      )}
+      <Button
+        variant="link"
+        size="label"
+        pressed="none"
+        disabled={!diary.canOpenBook}
+        ariaLabel={undefined}
+        disclosure={{ kind: "none" }}
+        ariaHasPopup={undefined}
+        title={undefined}
+        className={styles["achievement-diary-open-book"]}
+        onClick={props.onOpenDiaryBook}
+      >
+        日記帳で読む
+      </Button>
     </div>
   )
 }

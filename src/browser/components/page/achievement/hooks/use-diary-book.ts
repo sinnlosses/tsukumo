@@ -42,10 +42,9 @@ import { takeDiaryBookOpenRequest, useDiaryBookOpenRequest } from "./use-diary-b
 const BLANK_REVIEW_LABEL = "この日を振り返る"
 
 /** 見開きを開いた口（頭の行の添え書きに出す）。`notice` は書き終わりの知らせの「日記帳で開く」。 */
-export type DiaryBookOpenSource = "calendar" | "diary-section" | "notice"
+export type DiaryBookOpenSource = "diary-section" | "notice"
 
 const OPEN_NOTE = {
-  calendar: "灯りの暦から開きました",
   "diary-section": "この日の日記から開きました",
   notice: "書き終わりの知らせから開きました",
 } as const satisfies Record<DiaryBookOpenSource, string>
@@ -128,8 +127,6 @@ export type DiaryBookModel = {
   readonly previous: { readonly date: string; readonly label: string } | undefined
   readonly next: { readonly date: string; readonly label: string } | undefined
   readonly toc: { readonly open: boolean; readonly months: readonly DiaryBookTocMonth[] }
-  /** 灯りの暦のマスから開く（見ている日も一緒に切り替える）。 */
-  readonly onOpenFromCalendar: (date: string) => void
   /** 日記の区画の「日記帳で読む」から、いま見ている日で開く。日が分からなければ何もしない。 */
   readonly onOpenFromDiarySection: () => void
   readonly onPrevious: () => void
@@ -174,10 +171,6 @@ export function useDiaryBook(params: {
   const onClose = (): void => {
     setState({ kind: "closed" })
   }
-  const onOpenFromCalendar = (date: string): void => {
-    params.onDateSelected(date)
-    setState({ kind: "open", source: "calendar", date, tocOpen: false })
-  }
   const onOpenFromDiarySection = (): void => {
     if (viewedDate === undefined) {
       return
@@ -194,7 +187,6 @@ export function useDiaryBook(params: {
       previous: undefined,
       next: undefined,
       toc: { open: false, months: [] },
-      onOpenFromCalendar,
       onOpenFromDiarySection,
       onPrevious: () => {},
       onNext: () => {},
@@ -233,7 +225,6 @@ export function useDiaryBook(params: {
         ? undefined
         : { date: nextDate, label: monthDayLabel(Temporal.PlainDate.from(nextDate)) },
     toc: { open: state.tocOpen, months: tocMonthsOf(diaryDates) },
-    onOpenFromCalendar,
     onOpenFromDiarySection,
     onPrevious: () => {
       if (previousDate !== undefined) {

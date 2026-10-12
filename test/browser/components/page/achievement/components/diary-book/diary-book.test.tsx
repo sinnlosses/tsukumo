@@ -79,7 +79,6 @@ function openModel(overrides: Partial<DiaryBookModel> = {}): DiaryBookModel {
     previous: { date: "2026-08-30", label: "8月30日" },
     next: { date: "2026-09-24", label: "9月24日" },
     toc: { open: false, months: [] },
-    onOpenFromCalendar: NOOP_DATE,
     onOpenFromDiarySection: NOOP,
     onPrevious: NOOP,
     onNext: NOOP,
