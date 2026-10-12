@@ -13,9 +13,9 @@ tsukumo は使用量を2種類の記録に残している。**ターンごと**�
 数を並べるだけでは利用者は動けないし、根拠なしの提案は削ってはいけないものを削らせる。
 
 **返し方は呼ばれた場で変わる。** ツール一覧に `mcp__tsukumo__usage_review_stage` /
-`mcp__tsukumo__usage_review_result` があれば（tsukumo の仕事の会話でこのスキルが呼ばれたとき）
-**7章の手順**でこの2つのツールに結果を渡す。無ければ（tsukumo の雑談モードなど）、
-**3章の形で本文のレポートに書く**。
+`mcp__tsukumo__usage_review_result` があれば（tsukumo のトークン消費の画面から頼まれた、
+見直しだけの問い合わせのとき）**7章の手順**でこの2つのツールに結果を渡す。無ければ
+（tsukumo の仕事の会話や雑談で頼まれたとき・tsukumo の外）、**3章の形で本文のレポートに書く**。
 
 ## 1. まず集計を走らせる
 
@@ -246,7 +246,7 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/summarize_usage.py" --top 20  # 各一覧�
 
 ツール一覧に `mcp__tsukumo__usage_review_stage` と `mcp__tsukumo__usage_review_result` が
 あるとき（冒頭で確かめた場合分けのとおり）は、本文のレポートではなくこの2つの
-ツールで結果を返す。**tsukumo が結果を札に描く**ので、本文を長く書かない（7.3）。
+ツールで結果を返す。**tsukumo が結果を札に描く**ので、本文を長く書かない。
 
 ### 7.1 段ごとに `usage_review_stage` を呼ぶ
 
@@ -290,7 +290,7 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/summarize_usage.py" --top 20  # 各一覧�
 | 見積もりの `session-length`（4章に無いが「6. 見積もり」に出る） | `session-length`   | 空                               |
 | モデルを移す提案（見積もらない。出すなら測った数だけで言う）    | `model-choice`     | 移す先のモデル（決めないなら空） |
 
-`followUp` は、**この会話の中でそのまま tsukumo に頼めば完結する**もの（設定ファイルを1行削る・
+`followUp` は、**提案の見出し・やること・根拠だけを渡して tsukumo に頼めば完結する**もの（設定ファイルを1行削る・
 メモリの行を削る、など）なら `delegate`、**調査や実装が要る・その場では決め切れない**もの
 （しきい値を決める・コードを変える・モデルを移す判断そのもの）なら `task` にする。迷ったら
 `task`（生煮えの依頼を `delegate` で送らない）。**ただし `usage_review_stage` の戻り値に
@@ -305,12 +305,7 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/summarize_usage.py" --top 20  # 各一覧�
 見送り済みの混入・タスク運用なしでの `task` のどれか）が返る。理由に従って直し、`usage_review_stage` は
 やり直さずに `usage_review_result` だけ呼び直す。
 
-### 7.3 report ゲートとの折り合い
+### 7.3 report は呼ばない
 
-仕事の会話は**ターンの最後に必ず `report` ツールを呼ぶ決まり**（`Stop` の関所）。この決まりは
-`usage_review_result` を呼んでも免除されない——関所が数えるのは `report` の呼び出しの有無だけで、
-見直しの2つのツールは対象外。
-
-だから、`usage_review_result` が受け付けられたら**そのあとに `report` を1回呼ぶ**。
-`conclusion` は「見直し完了。提案◯件を渡した。」程度の1〜2文でよい。提案の中身は札に描かれるので
-`sections` で繰り返さない（`favor` も無ければ省く）。締めの一言は `report` の `closing` に入れる。
+見直しの問い合わせには `report` ツールが無く、`Stop` の関所も無い。`usage_review_result` が
+受け付けられたら、そこで終える。
