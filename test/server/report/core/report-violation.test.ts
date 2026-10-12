@@ -669,6 +669,60 @@ describe("reportRejectionText", () => {
     expect(rejection).toContain("src/fixture-f.ts")
   })
 
+  describe("broken-svg", () => {
+    const svg = (shapes: Extract<ReportBlock, { kind: "svg" }>["shapes"]): ReportBlock => ({
+      kind: "svg",
+      title: "",
+      width: 100,
+      height: 50,
+      shapes,
+      fold: "",
+    })
+    const rect = (x: number, y: number, width: number, height: number) =>
+      ({ kind: "rect", x, y, width, height, label: "", emphasis: false }) as const
+
+    it("枠内に収まる図形は違反にならない（端に接するのは収まり）", () => {
+      expect(kinds(draft([svg([rect(0, 0, 100, 50)])]))).not.toContain("broken-svg")
+    })
+
+    it("はみ出した図形を、何個目の塊の何番目の図形かだけで言う", () => {
+      const report = draft([
+        svg([rect(0, 0, 10, 10)]),
+        svg([
+          { kind: "text", x: 5, y: 5, text: "架空の秘密" },
+          rect(90, 0, 20, 10),
+          { kind: "line", x1: 0, y1: 0, x2: 10, y2: -1, arrow: false, label: "" },
+        ]),
+      ])
+      expect(reportViolations(report)).toEqual([
+        {
+          kind: "broken-svg",
+          count: 2,
+          faults: [
+            { block: 2, shape: 2 },
+            { block: 2, shape: 3 },
+          ],
+        },
+      ])
+      const rejection = reportRejectionText(reportViolations(report))
+      expect(rejection).toContain("2個目の 2 番目、2個目の 3 番目")
+      expect(rejection).not.toContain("架空の秘密")
+    })
+
+    it("beforeAfter の svg の側も数える", () => {
+      const side = {
+        kind: "svg",
+        width: 10,
+        height: 10,
+        shapes: [{ kind: "text", x: 11, y: 0, text: "架空" }],
+      } as const
+      const report = draft([
+        { kind: "beforeAfter", title: "", before: side, after: side, fold: "" },
+      ])
+      expect(kinds(report)).toContain("broken-svg")
+    })
+  })
+
   describe("broken-mermaid", () => {
     const withFaults = (mermaidFaults: ReportDraft["mermaidFaults"]): ReportDraft => ({
       ...draft([mermaid("sequenceDiagram\n  A->>B: 架空の秘密; there")]),

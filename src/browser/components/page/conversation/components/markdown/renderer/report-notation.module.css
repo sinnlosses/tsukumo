@@ -382,6 +382,28 @@
   column-gap: 0.75rem;
   margin: var(--report-block-gap) 0;
 }
+/* `svg` の塊。色は書き手が持たないので、要素の種類で当てる（svg の中の要素には class の解決が届かない）。
+   強調した枠は `stroke-width` の属性が目印。 */
+.detail-block .report-svg-figure svg rect {
+  fill: var(--surface-raised);
+  stroke: var(--ink-quiet);
+  stroke-width: 1.5px;
+}
+.detail-block .report-svg-figure svg rect[stroke-width] {
+  fill: var(--surface-accent);
+  stroke: var(--accent);
+  stroke-width: 3px;
+}
+.detail-block .report-svg-figure svg line {
+  stroke: var(--ink-quiet);
+  stroke-width: 2px;
+}
+.detail-block .report-svg-figure svg marker path {
+  fill: var(--ink-quiet);
+}
+.detail-block .report-svg-figure svg text {
+  fill: var(--ink);
+}
 .detail-block .report-dimension-part,
 .detail-block .report-dimension-gap {
   display: grid;

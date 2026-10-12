@@ -118,7 +118,6 @@ export const REPORT_NOTATION_PROMPT = `## レポートの記法（tsukumo）
 
 | 内容 | 使う印 | 使う目安 |
 | --- | --- | --- |
-| 座標のある図 | <svg viewBox="0 0 240 80"> の中に rect / line / path / text | 位置・重なりそのものを見せるとき（縦に積む寸法は \`dimension\`） |
 | よそからの引用 | Markdown の引用 \`> \` | 自分の言葉を目立たせるために使わない |
 | 話題の区切り | 水平線 \`---\` | 見出しを立てるほどでない切れ目にだけ |
 | 2つ以上の塊をまとめて畳む | <details><summary>見出し</summary>…</details> | 塊1つなら \`fold\` を使う |

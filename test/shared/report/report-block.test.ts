@@ -222,6 +222,56 @@ describe("parseReportSections", () => {
     ])
   })
 
+  describe("svg の塊", () => {
+    const rect = { kind: "rect", x: 10, y: 10, width: 100, height: 40 }
+    const line = { kind: "line", x1: 0, y1: 0, x2: 50, y2: 50 }
+    const text = { kind: "text", x: 5, y: 5, text: "架空の字" }
+    const svg = { kind: "svg", width: 200, height: 100, shapes: [rect, line, text] }
+
+    it("rect・line・text の3種を読み、省いた label・emphasis・arrow・title・fold を補う", () => {
+      expect(parseReportSections([{ heading: "", blocks: [svg] }]).sections).toEqual([
+        {
+          heading: "",
+          blocks: [
+            {
+              ...svg,
+              title: "",
+              fold: "",
+              shapes: [
+                { ...rect, label: "", emphasis: false },
+                { ...line, arrow: false, label: "" },
+                text,
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    it("beforeAfter の側に置ける", () => {
+      const side = { kind: "svg", width: 200, height: 100, shapes: [text] }
+      const { sections } = parseReportSections([
+        { heading: "", blocks: [{ kind: "beforeAfter", title: "t", before: side, after: side }] },
+      ])
+
+      expect(sections).toHaveLength(1)
+    })
+
+    it("図形が無い・大きさが正でない・知らない図形の塊は落とす", () => {
+      const broken = [
+        { ...svg, shapes: [] },
+        { ...svg, width: 0 },
+        { ...svg, shapes: [{ kind: "circle", x: 1, y: 1 }] },
+        { ...svg, shapes: [{ ...rect, width: -1 }] },
+      ]
+
+      expect(parseReportSections([{ heading: "", blocks: broken }])).toEqual({
+        sections: [],
+        unknownBlockCount: 0,
+      })
+    })
+  })
+
   describe("graph の塊", () => {
     const graph = {
       kind: "graph",

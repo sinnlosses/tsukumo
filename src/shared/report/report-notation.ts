@@ -92,6 +92,7 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "dimension-band",
   "dimension-value",
   "dimension-before",
+  "svg-figure",
   "image-notes",
   "image-note-list",
   "image-note-number",

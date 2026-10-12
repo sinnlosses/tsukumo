@@ -145,9 +145,9 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 **本文は `report` の `sections`（節と塊の並び）で受け取る**（2026-09-27。形の案は
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
-- 塊は `text` / `list` / `table` / `matrix` / `compare` / `beforeAfter` / `dimension` / `note` / `stats` / `code` / `mermaid` / `graph` / `chart` / `progress` / `options` / `image` / `files` と、逃げ道の
-  `markdown` の18種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
-  `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（`svg`・引用・
+- 塊は `text` / `list` / `table` / `matrix` / `compare` / `beforeAfter` / `dimension` / `note` / `stats` / `code` / `mermaid` / `graph` / `chart` / `svg` / `progress` / `options` / `image` / `files` と、逃げ道の
+  `markdown` の19種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
+  `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（引用・
   区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。同じことを両方に書くと毎ターンの文脈に2回載る。
   **種類の数に上限は置かない**（2026-09-30 改訂。足すかは下の「読む時間を減らす物差しと線引き」、
   外すかは「塊を足す・外す基準」の外す基準〔28日0回〕で決める）
@@ -165,6 +165,11 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   `id` はソースに出ない）。描くのは `mermaid` の塊と同じ経路で、図の番号と題も同じ。辺の行き先が `nodes`
   に無い・`id` の重複・空のラベルは入口で落とす。`mermaid` の塊に flowchart を書くと `unknown-mermaid`
   で差し戻し、`graph` の塊へ寄せる
+- **座標で見せる図は `svg` の塊で書く**（`docs/architecture/adr/0028-report-block-priority.md`「SVG（論点3）」）。
+  `title`・`width`・`height`〔viewBox の大きさ〕・`shapes`〔`rect`・`line`・`text` の判別可能な合併〕・`fold` を受け、
+  SVG の文字列は書き手が書かず、描く側が図形から組む。色は書けず、`chart` と同じくテーマの色を当てる。
+  図形が `width` × `height` の外に出れば `broken-svg` で差し戻し、文面は何個目の塊の何番目の図形かだけを返す。
+  `beforeAfter` の側にも置ける。段の条件は位置・重なりそのもので、つながりだけなら `graph`・`mermaid`
 - **`mermaid` の塊の構文は、受け付ける前にサーバが同梱の mermaid で検査する**（2026-10-10 利用者決定）。
   割れる図があれば `broken-mermaid` で差し戻し、文面は何個目の塊の何行目か・字句の名前だけを返す
   （書き手のソースと mermaid のエラー文の引用は写さない）。検査は `happy-dom` を被せた `worker_threads` の
@@ -254,7 +259,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   側はちょうど2つ。3つ以上の並びは `table`）。側は `kind` で判別する合併型で、`image`〔`path`〕/ `code`〔`language`・
   `source`。`diff` にせずその側の中身をそのまま書く〕/ `points`〔短い1行の並び。5つまで〕/ `graph`〔`graph` の塊と同じ `direction`・`nodes`・`edges`。`title`・`fold` は持たず、
   `id` の重複と行き先の無い辺の検査も塊と共通〕/ `mermaid`〔`source` だけ。flowchart 以外の9種で、時間の順の前後に使う。
-  構文が割れれば `broken-mermaid`、9種の外は `unknown-mermaid` で差し戻し、位置は `mermaid` のソースの出現順で言う〕のどれか。**左右で種類が
+  構文が割れれば `broken-mermaid`、9種の外は `unknown-mermaid` で差し戻し、位置は `mermaid` のソースの出現順で言う〕/ `svg`〔`svg` の塊の `width`・`height`・`shapes`〕のどれか。**左右で種類が
   違ってよい**（設定の文言 → 画面のような前後を書ける）。左に前・右に後の札を同じ幅で並べ、間に `aria-hidden` の
   「→」を置く。札の頭の見出しは tsukumo が「前」「後」の文字で付け（書き手は書かない。前は `ink-quiet`・後は `ink`
   で、色は補助）、狭い幅（760px 以下）では前を上・後を下に積んで矢印を下向きに回す。画像の側は `image` の塊と同じ
@@ -269,11 +274,10 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 - **縦に積む領域の寸法は `dimension`（寸法図）の塊で見せる**（2026-10-01。`title`・`parts`〔上から順に、領域
   `{ name, size, before }` と余白 `{ gap, before }` を混ぜた並び。先頭・末尾の `gap` は外側の余白〕を受ける）。
   左の列に領域の箱と余白の斜線の帯を積み、右の列に値を置き、余白の値には両端に目盛りのある縦の寸法線を引く。
-  **1列だけ**で、横並び・入れ子・重なりは逃げ道の `svg` に残す（記法の表の「座標のある図」の行は残し、使う目安を
-  位置・重なりに絞った）。**前後は1枚に重ねる**（値ごとの `before` を前の値と矢印にして `ink-quiet` で添える。
+  **1列だけ**で、横並び・入れ子・重なりは `svg` の塊で書く。**前後は1枚に重ねる**（値ごとの `before` を前の値と矢印にして `ink-quiet` で添える。
   `compare` でも `beforeAfter` でも2枚並べない）。**図は模式**で、箱と帯の高さは値に比例させず、数が寸法を言う。描き方は `div` / `span`
   と CSS で、許可リストに足す物は無く、書き上げる演出では文字の塊として出る。取り違えは差し戻さず、使われ方の
-  記録の「塊の種類 × レポート数」と逃げ道の `svg` の数で見る
+  記録の「塊の種類 × レポート数」で見る
 - **手で確かめた画面は `image` の塊で画像として見せる**（2026-10-02。`path`〔撮ったファイル。絶対か cwd からの
   相対〕・`caption`〔何が見えるかの1行〕を受け、1つの塊に1枚）。**前後は `beforeAfter` の塊で左右に並べる**（2026-10-05。
   それまでは `image` を2つ縦に積んでいた）。**`checks` の行とは結ばない**（何を確かめた画像かは `caption` に書く）。
@@ -293,13 +297,13 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   幅を取るので包みを縮めない（`notes` が空なら今までどおり `captioned-fit`）。画像が読めないときも、並びは
   「画像を出せない」の札の横に残る。6つ以上は `options`・`compare` と同じ違反（`too-many-candidates`）で差し戻す
 - **図と表には番号つきの題を付ける**（2026-10-03。利用者決定は 2026-10-02。図〔`image`・`dimension`・
-  `compare`・`beforeAfter`・`mermaid`・`graph`・`chart`〕は題を本体の**下**に「図 n」、表〔`table`・`matrix`〕は題を本体の**上**に
+  `compare`・`beforeAfter`・`mermaid`・`graph`・`chart`・`svg`〕は題を本体の**下**に「図 n」、表〔`table`・`matrix`〕は題を本体の**上**に
   「表 n」。番号は図と表を別々に、`reportSectionsMarkdown` が節をまたいで塊の並びの順に1から数える。
   `options` は候補の採否の札なので数えない）。**題が空でも番号は出し**〔`image` の `caption` が空でも
   「図 n」が付いていた数え方に揃える。題の有無で番号の振り方が変わらない〕、**`fold` で畳んだ中も数える**
-  〔畳んでも番号が飛ばない〕。引数は `title`〔`image` だけ従来どおり `caption`〕で、`mermaid`・`graph`・`chart` は
+  〔畳んでも番号が飛ばない〕。引数は `title`〔`image` だけ従来どおり `caption`〕で、`mermaid`・`graph`・`chart`・`svg` は
   `title` を省いてよい〔空文字〕。**題は本体の幅を超えない**: 包み（`div.captioned`）が本体の幅に縮み
-  〔`captioned-fit`。`image`・`table`・`matrix`・`dimension`。20rem を下限にして、短い表の題が何行にも
+  〔`captioned-fit`。`image`・`table`・`matrix`・`dimension`・`svg`。20rem を下限にして、短い表の題が何行にも
   折れないようにする〕、題の行は `contain: inline-size` で幅の計算から外れて包みの幅で折り返す。親の幅を
   取る `chart`・`compare`・`beforeAfter` と、全幅の `pre` に描く `mermaid`・`graph` は縮めない。題の文字は inline code だけを解く
   〔太字・リンクは効かない〕

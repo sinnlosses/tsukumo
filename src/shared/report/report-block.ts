@@ -136,7 +136,39 @@ const graphFields = {
   edges: z.array(graphEdgeSchema),
 }
 
+const svgShapeSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("rect"),
+    x: z.number(),
+    y: z.number(),
+    width: z.number().positive(),
+    height: z.number().positive(),
+    label: inlineText.default("").describe("枠の中に出す名前。無ければ空"),
+    emphasis: z.boolean().default(false).describe("true で枠を強調する"),
+  }),
+  z.object({
+    kind: z.literal("line"),
+    x1: z.number(),
+    y1: z.number(),
+    x2: z.number(),
+    y2: z.number(),
+    arrow: z.boolean().default(false).describe("true で終点（x2, y2）に矢じりを付ける"),
+    label: inlineText.default("").describe("線に添える語。無ければ空"),
+  }),
+  z.object({ kind: z.literal("text"), x: z.number(), y: z.number(), text: inlineText }),
+])
+
+const svgFields = {
+  width: z.number().positive().describe("viewBox の幅。図形はこの内側に収める"),
+  height: z.number().positive().describe("viewBox の高さ。図形はこの内側に収める"),
+  shapes: z
+    .array(svgShapeSchema)
+    .min(1)
+    .describe("座標つきの図形の並び。色は書けない（rect の emphasis だけで強調する）"),
+}
+
 const beforeAfterSideSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("svg"), ...svgFields }),
   z.object({ kind: z.literal("graph"), ...graphFields }).superRefine(checkGraphReferences),
   z.object({
     kind: z.literal("mermaid"),
@@ -169,7 +201,7 @@ const beforeAfterBlockSchema = z
     fold,
   })
   .describe(
-    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・設定や文言・構造の前後）。側ごとに image / code / points / graph / mermaid のどれか（左右で違ってよい）。構造・呼び出しの前後は graph の側、時間の順の前後は mermaid の側。" +
+    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・設定や文言・構造の前後）。側ごとに image / code / points / graph / mermaid / svg のどれか（左右で違ってよい）。構造・呼び出しの前後は graph の側、時間の順の前後は mermaid の側。" +
       "向きの無い2つは compare、1つの値の前後は table のセルの from / to か stats の before、行ごとの差分は code の diff、寸法の前後は dimension の before",
   )
 
@@ -195,7 +227,7 @@ const dimensionBlockSchema = z
     fold,
   })
   .describe(
-    "上から積む領域と、その間の余白・字の大きさの寸法（余白を直した前後）。横並び・重なりは markdown の svg",
+    "上から積む領域と、その間の余白・字の大きさの寸法（余白を直した前後）。横並び・重なりは svg",
   )
 
 const REPORT_NOTE_TONES = ["info", "warn", "ng", "ask", "memo"] as const
@@ -376,6 +408,17 @@ const chartBlockSchema = z
     "数の推移・割合。数が3つ以上で大小や傾きそのものを見せるとき（正確な値を読ませたいなら表）。色は書けない",
   )
 
+const svgBlockSchema = z
+  .object({
+    kind: z.literal("svg"),
+    title: inlineText.default(""),
+    ...svgFields,
+    fold,
+  })
+  .describe(
+    "位置・重なりそのもの（画面の領域の配置・重なり方）を座標で描く。つながりだけなら graph・mermaid。色は書けない",
+  )
+
 const progressBlockSchema = z
   .object({
     kind: z.literal("progress"),
@@ -414,6 +457,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   mermaidBlockSchema,
   graphBlockSchema,
   chartBlockSchema,
+  svgBlockSchema,
   progressBlockSchema,
   optionsBlockSchema,
   imageBlockSchema,

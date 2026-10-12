@@ -110,6 +110,12 @@ export type ReportViolation =
       readonly count: number
       readonly faults: readonly MermaidFault[]
     }
+  /** `svg` の塊の図形が `width` × `height` の外に出る。`faults` は位置だけで、図形の中身は持たない。 */
+  | {
+      readonly kind: "broken-svg"
+      readonly count: number
+      readonly faults: readonly SvgFault[]
+    }
   /** `conclusion` の1文目が全角50字を超える。`count` は1か0、`length` は1文目の字数。 */
   | { readonly kind: "long-first-sentence"; readonly count: number; readonly length: number }
   /** 節の `heading` が30字を超える、または疑問文（末尾が `?`・`？`）。`count` は該当の節の数。 */
@@ -187,6 +193,8 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       .replace(/[。！？]+$/, ""),
   ].length
 
+  const svgFaults = svgFaultsInSections(report.sections)
+
   const counted = [
     { kind: "long-conclusion", count: sentenceCount(report.conclusion) },
     {
@@ -238,6 +246,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       count: report.mermaidFaults.length,
       faults: report.mermaidFaults,
     },
+    { kind: "broken-svg", count: svgFaults.length, faults: svgFaults },
     {
       kind: "code-mismatch",
       count: mismatchedCodeBlocks.length,
@@ -305,6 +314,7 @@ const VIOLATION_THRESHOLDS = {
   "untitled-section": 0,
   "markdown-notation": 0,
   "broken-mermaid": 0,
+  "broken-svg": 0,
   "code-mismatch": 0,
   "long-first-sentence": 0,
   "bad-heading": 0,
@@ -346,6 +356,50 @@ export function mermaidFaultPositions(faults: readonly MermaidFault[]): string {
         ? `${String(fault.block)}個目`
         : `${String(fault.block)}個目の ${String(fault.line)} 行目${fault.token === "" ? "" : `・字句 ${fault.token}`}`,
     )
+    .join("、")
+}
+
+/** `block` は `svg` の塊（`beforeAfter` の側を含む）の出現順の1始まり、`shape` は `shapes` の中の1始まり。 */
+export type SvgFault = { readonly block: number; readonly shape: number }
+
+type SvgFigure = Pick<Extract<ReportBlock, { readonly kind: "svg" }>, "width" | "height" | "shapes">
+
+function svgFaultsInSections(sections: readonly ReportSection[]): readonly SvgFault[] {
+  const figures = sections
+    .flatMap((section) => section.blocks)
+    .flatMap((block): readonly SvgFigure[] => {
+      switch (block.kind) {
+        case "svg":
+          return [block]
+        case "beforeAfter":
+          return [block.before, block.after].flatMap((side) => (side.kind === "svg" ? [side] : []))
+        default:
+          return []
+      }
+    })
+  return figures.flatMap((figure, figureIndex) =>
+    figure.shapes.flatMap((shape, shapeIndex) =>
+      isInsideSvg(shape, figure) ? [] : [{ block: figureIndex + 1, shape: shapeIndex + 1 }],
+    ),
+  )
+}
+
+function isInsideSvg(shape: SvgFigure["shapes"][number], { width, height }: SvgFigure): boolean {
+  const inside = (x: number, y: number): boolean => x >= 0 && x <= width && y >= 0 && y <= height
+  switch (shape.kind) {
+    case "rect":
+      return inside(shape.x, shape.y) && inside(shape.x + shape.width, shape.y + shape.height)
+    case "line":
+      return inside(shape.x1, shape.y1) && inside(shape.x2, shape.y2)
+    case "text":
+      return inside(shape.x, shape.y)
+  }
+}
+
+/** はみ出した図形の位置（何個目の塊の何番目の図形か）の並び。 */
+function svgFaultPositions(faults: readonly SvgFault[]): string {
+  return faults
+    .map((fault) => `${String(fault.block)}個目の ${String(fault.shape)} 番目`)
     .join("、")
 }
 
@@ -400,6 +454,8 @@ function violationLine(violation: ReportViolation): string {
       return `\`path\` 付きの \`code\` の塊が${violation.count}個、ファイルの中身と一致しない（${violation.paths.join("・")}）。実物を読み直して直すか \`path\` を外す`
     case "broken-mermaid":
       return `mermaid の図の構文が割れている（${mermaidFaultPositions(violation.faults)}）。その行の書き方を直す`
+    case "broken-svg":
+      return `\`svg\` の図形が \`width\` × \`height\` の外に出ている（${svgFaultPositions(violation.faults)}）。座標か大きさを直す`
     case "long-first-sentence":
       return `\`conclusion\` の1文目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1文目を短くし、補足は2文目か \`sections\` へ移す`
     case "bad-heading":

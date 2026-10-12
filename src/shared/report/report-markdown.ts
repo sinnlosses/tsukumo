@@ -249,6 +249,15 @@ function blockMarkdown(
         bodyFormat: "markdown",
         fit: false,
       })
+    case "svg":
+      return captionedMarkdown({
+        kind: "figure",
+        ordinal,
+        title: block.title,
+        body: svgHtml(block),
+        bodyFormat: "html",
+        fit: true,
+      })
     case "progress":
       return progressMarkdown(block)
     case "options":
@@ -271,6 +280,7 @@ function captionKindOf(block: ReportBlock): CaptionKind | undefined {
     case "mermaid":
     case "graph":
     case "chart":
+    case "svg":
       return "figure"
     case "table":
     case "matrix":
@@ -474,7 +484,72 @@ function beforeAfterContentMarkdown(
       return fencedMarkdown("mermaid", graphSource(content))
     case "mermaid":
       return fencedMarkdown("mermaid", content.source)
+    case "svg":
+      return svgHtml(content)
   }
+}
+
+type SvgFigure = {
+  readonly width: number
+  readonly height: number
+  readonly shapes: readonly SvgShape[]
+}
+
+type SvgShape = Extract<ReportBlock, { readonly kind: "svg" }>["shapes"][number]
+
+const SVG_ARROW_MARKER_ID = "report-svg-arrow"
+
+const SVG_LABEL_FONT_SIZE = 14
+
+/**
+ * 図形を `<svg viewBox="0 0 W H">` の1行に組む（空行を挟むと Markdown の HTML の塊が切れる）。
+ * 色は書かない。`report-svg-figure` の下の要素に CSS が当てる（強調の枠だけ `stroke-width` の属性が目印）。
+ */
+function svgHtml({ width, height, shapes }: SvgFigure): string {
+  const w = String(width)
+  const h = String(height)
+  const marker =
+    `<defs><marker id="${SVG_ARROW_MARKER_ID}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">` +
+    `<path d="M0,0 L10,5 L0,10 z"></path></marker></defs>`
+  const body = shapes.map(svgShapeHtml).join("")
+  return `<div class="svg-figure"><svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${marker}${body}</svg></div>`
+}
+
+function svgShapeHtml(shape: SvgShape): string {
+  switch (shape.kind) {
+    case "rect": {
+      const strokeWidth = shape.emphasis ? ' stroke-width="3"' : ""
+      const rect = `<rect x="${String(shape.x)}" y="${String(shape.y)}" width="${String(shape.width)}" height="${String(shape.height)}" rx="4"${strokeWidth}></rect>`
+      return shape.label.trim() === ""
+        ? rect
+        : rect +
+            svgTextHtml(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.label, {
+              centered: true,
+            })
+    }
+    case "line": {
+      const markerEnd = shape.arrow ? ` marker-end="url(#${SVG_ARROW_MARKER_ID})"` : ""
+      const line = `<line x1="${String(shape.x1)}" y1="${String(shape.y1)}" x2="${String(shape.x2)}" y2="${String(shape.y2)}"${markerEnd}></line>`
+      return shape.label.trim() === ""
+        ? line
+        : line +
+            svgTextHtml((shape.x1 + shape.x2) / 2, (shape.y1 + shape.y2) / 2 - 6, shape.label, {
+              centered: true,
+            })
+    }
+    case "text":
+      return svgTextHtml(shape.x, shape.y, shape.text, { centered: false })
+  }
+}
+
+function svgTextHtml(
+  x: number,
+  y: number,
+  text: string,
+  { centered }: { readonly centered: boolean },
+): string {
+  const anchor = centered ? ' text-anchor="middle" dominant-baseline="middle"' : ""
+  return `<text x="${String(x)}" y="${String(y)}" font-size="${String(SVG_LABEL_FONT_SIZE)}"${anchor}>${htmlInline(text)}</text>`
 }
 
 /**

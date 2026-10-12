@@ -1734,6 +1734,172 @@
       ]
     },
     {
+      "name": "report-svg",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "領域の配置の図の見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "座標で図を書くね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-svg-1",
+            "conclusion": "架空の結論: 座標つきの図の見え方を確かめた。",
+            "sections": [
+              {
+                "heading": "架空の領域の配置",
+                "blocks": [
+                  {
+                    "kind": "svg",
+                    "title": "架空の画面の領域",
+                    "width": 320,
+                    "height": 176,
+                    "shapes": [
+                      {
+                        "kind": "rect",
+                        "x": 10,
+                        "y": 10,
+                        "width": 300,
+                        "height": 36,
+                        "label": "架空の頭",
+                        "emphasis": false
+                      },
+                      {
+                        "kind": "rect",
+                        "x": 10,
+                        "y": 60,
+                        "width": 90,
+                        "height": 90,
+                        "label": "架空の柱",
+                        "emphasis": false
+                      },
+                      {
+                        "kind": "rect",
+                        "x": 120,
+                        "y": 60,
+                        "width": 190,
+                        "height": 90,
+                        "label": "架空の本文",
+                        "emphasis": true
+                      },
+                      {
+                        "kind": "line",
+                        "x1": 100,
+                        "y1": 105,
+                        "x2": 120,
+                        "y2": 105,
+                        "arrow": true,
+                        "label": ""
+                      },
+                      { "kind": "text", "x": 14, "y": 170, "text": "架空の注記" }
+                    ],
+                    "fold": ""
+                  },
+                  {
+                    "kind": "beforeAfter",
+                    "title": "架空の配置の前後",
+                    "before": {
+                      "kind": "svg",
+                      "width": 160,
+                      "height": 100,
+                      "shapes": [
+                        {
+                          "kind": "rect",
+                          "x": 10,
+                          "y": 10,
+                          "width": 60,
+                          "height": 80,
+                          "label": "架空の柱",
+                          "emphasis": false
+                        },
+                        {
+                          "kind": "rect",
+                          "x": 80,
+                          "y": 10,
+                          "width": 70,
+                          "height": 80,
+                          "label": "架空の本文",
+                          "emphasis": false
+                        }
+                      ]
+                    },
+                    "after": {
+                      "kind": "svg",
+                      "width": 160,
+                      "height": 100,
+                      "shapes": [
+                        {
+                          "kind": "rect",
+                          "x": 10,
+                          "y": 10,
+                          "width": 140,
+                          "height": 30,
+                          "label": "架空の柱",
+                          "emphasis": false
+                        },
+                        {
+                          "kind": "rect",
+                          "x": 10,
+                          "y": 50,
+                          "width": 140,
+                          "height": 40,
+                          "label": "架空の本文",
+                          "emphasis": true
+                        },
+                        {
+                          "kind": "line",
+                          "x1": 80,
+                          "y1": 40,
+                          "x2": 80,
+                          "y2": 50,
+                          "arrow": true,
+                          "label": ""
+                        }
+                      ]
+                    },
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-svg-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "report-matrix",
       "steps": [
         {

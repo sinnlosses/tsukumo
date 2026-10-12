@@ -728,6 +728,51 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("svg は図形から viewBox つきの1行の SVG を組み、強調の枠・矢じり・ラベルの逃がしを含めて図の番号と題を付ける", () => {
+    const markdown = markdownOf({
+      kind: "svg",
+      title: "架空の配置",
+      width: 200,
+      height: 100,
+      fold: "",
+      shapes: [
+        { kind: "rect", x: 10, y: 20, width: 80, height: 40, label: "A<b>", emphasis: true },
+        { kind: "rect", x: 100, y: 20, width: 80, height: 40, label: "", emphasis: false },
+        { kind: "line", x1: 90, y1: 40, x2: 100, y2: 40, arrow: true, label: "" },
+        { kind: "text", x: 5, y: 90, text: "架空の字" },
+      ],
+    })
+
+    expect(markdown).toContain('<svg viewBox="0 0 200 100" width="200" height="100">')
+    expect(markdown).toContain(
+      '<rect x="10" y="20" width="80" height="40" rx="4" stroke-width="3"></rect>',
+    )
+    expect(markdown).toContain('<rect x="100" y="20" width="80" height="40" rx="4"></rect>')
+    expect(markdown).toContain('marker-end="url(#report-svg-arrow)"')
+    expect(markdown).toContain("A&lt;b&gt;</text>")
+    expect(markdown).toContain('<text x="5" y="90" font-size="14">架空の字</text>')
+    expect(markdown).not.toContain("\n\n<svg")
+    expect(markdown).toContain(captionRow("図", 1, "架空の配置"))
+  })
+
+  it("beforeAfter の svg の側も SVG を組む", () => {
+    const side = {
+      kind: "svg",
+      width: 50,
+      height: 50,
+      shapes: [{ kind: "text", x: 1, y: 2, text: "架空" }],
+    } as const
+    const markdown = markdownOf({
+      kind: "beforeAfter",
+      title: "",
+      before: side,
+      after: side,
+      fold: "",
+    })
+
+    expect(markdown.match(/<svg viewBox="0 0 50 50"/g)).toHaveLength(2)
+  })
+
   it("chart は Chart.js の設定を組んで chart フェンスに JSON で書く。pie は先頭の系列だけを使う", () => {
     expect(
       chartFenceOf({
