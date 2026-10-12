@@ -1,10 +1,11 @@
 // 主ブランチを出している作業ツリーの解決と、作業ツリーが clean かどうかの判定を、
 // 使い捨てリポジトリの実物の git で検証する。
 
-import { mkdirSync, realpathSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { describe, expect, test, vi } from "vitest"
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest"
 
 import {
   isWorktreeClean,
@@ -20,20 +21,26 @@ const GIT_LOAD_TIMEOUT_MS = 20_000
 describe("main-worktree", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
   const tempDir = useTempDir("main-worktree")
 
-  async function git(root: string, ...args: string[]): Promise<void> {
-    await runSubprocessOrThrow("git", args, { cwd: root })
+  const GIT_IDENTITY_ENV = {
+    ...process.env,
+    GIT_AUTHOR_NAME: "test",
+    GIT_AUTHOR_EMAIL: "test@example.com",
+    GIT_COMMITTER_NAME: "test",
+    GIT_COMMITTER_EMAIL: "test@example.com",
   }
 
-  async function createRepositoryWithMainWorktree(): Promise<{
+  async function git(root: string, ...args: string[]): Promise<void> {
+    await runSubprocessOrThrow("git", args, { cwd: root, env: GIT_IDENTITY_ENV })
+  }
+
+  async function createRepositoryWithMainWorktree(parent: string): Promise<{
     readonly root: string
     readonly mainWorktree: string
   }> {
-    const root = join(tempDir(), "repo")
-    const mainWorktree = join(tempDir(), "main-wt")
+    const root = join(parent, "repo")
+    const mainWorktree = join(parent, "main-wt")
     mkdirSync(root, { recursive: true })
     await git(root, "init", "--quiet", "--initial-branch=main")
-    await git(root, "config", "user.email", "test@example.com")
-    await git(root, "config", "user.name", "test")
     writeFileSync(join(root, "README.md"), "readme\n")
     await git(root, "add", ".")
     await git(root, "commit", "--quiet", "-m", "base")
@@ -42,15 +49,25 @@ describe("main-worktree", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
     return { root, mainWorktree }
   }
 
+  // 読むだけのテストと、ファイルを足してその場で戻すだけのテストが共有する。
+  // git を書き換えるテストは共有せず、自分の一時ディレクトリに作る。
+  let shared: { readonly root: string; readonly mainWorktree: string }
+  let sharedParent: string
+  beforeAll(async () => {
+    sharedParent = mkdtempSync(join(tmpdir(), "tsukumo-main-worktree-shared-"))
+    shared = await createRepositoryWithMainWorktree(sharedParent)
+  })
+  afterAll(() => {
+    rmSync(sharedParent, { recursive: true, force: true })
+  })
+
   describe("resolveMainWorktreePath", () => {
-    test("main ブランチを出している作業ツリーのパスを返す", async () => {
-      const { root, mainWorktree } = await createRepositoryWithMainWorktree()
-      expect(resolveMainWorktreePath(root, "main")).toBe(realpathSync(mainWorktree))
+    test("main ブランチを出している作業ツリーのパスを返す", () => {
+      expect(resolveMainWorktreePath(shared.root, "main")).toBe(realpathSync(shared.mainWorktree))
     })
 
-    test("そのブランチを出している作業ツリーが無ければ例外を投げる", async () => {
-      const { root } = await createRepositoryWithMainWorktree()
-      expect(() => resolveMainWorktreePath(root, "trunk")).toThrow()
+    test("そのブランチを出している作業ツリーが無ければ例外を投げる", () => {
+      expect(() => resolveMainWorktreePath(shared.root, "trunk")).toThrow()
     })
   })
 
@@ -59,8 +76,6 @@ describe("main-worktree", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
       const upstream = join(tempDir(), "upstream")
       mkdirSync(upstream, { recursive: true })
       await git(upstream, "init", "--quiet", "--initial-branch=main")
-      await git(upstream, "config", "user.email", "test@example.com")
-      await git(upstream, "config", "user.name", "test")
       writeFileSync(join(upstream, "a.txt"), "1\n")
       await git(upstream, "add", ".")
       await git(upstream, "commit", "--quiet", "-m", "first")
@@ -79,11 +94,9 @@ describe("main-worktree", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
     }
 
     test("ポインタを進めて中身が古いまま残った本体を、記録した版へ揃える", async () => {
-      const { mainWorktree } = await createRepositoryWithMainWorktree()
+      const { mainWorktree } = await createRepositoryWithMainWorktree(tempDir())
       await commitSubmodule(mainWorktree)
       const sub = join(mainWorktree, "sub")
-      await git(sub, "config", "user.email", "test@example.com")
-      await git(sub, "config", "user.name", "test")
       writeFileSync(join(sub, "a.txt"), "2\n")
       await git(sub, "commit", "--quiet", "-am", "second")
       await git(mainWorktree, "commit", "--quiet", "-am", "advance sub")
@@ -95,17 +108,16 @@ describe("main-worktree", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
       expect(isWorktreeClean(mainWorktree)).toBe(true)
     })
 
-    test(".gitmodules が無ければ何もしない", async () => {
-      const { mainWorktree } = await createRepositoryWithMainWorktree()
+    test(".gitmodules が無ければ何もしない", () => {
       const write = vi.spyOn(process.stderr, "write")
-      syncSubmodules(mainWorktree)
+      syncSubmodules(shared.mainWorktree)
       expect(write).not.toHaveBeenCalled()
-      expect(isWorktreeClean(mainWorktree)).toBe(true)
+      expect(isWorktreeClean(shared.mainWorktree)).toBe(true)
       write.mockRestore()
     })
 
     test("揃えられなければ例外にせず、標準エラーに1行だけ書く", async () => {
-      const { mainWorktree } = await createRepositoryWithMainWorktree()
+      const { mainWorktree } = await createRepositoryWithMainWorktree(tempDir())
       writeFileSync(
         join(mainWorktree, ".gitmodules"),
         `[submodule "sub"]\n\tpath = sub\n\turl = ${join(tempDir(), "missing")}\n`,
@@ -132,21 +144,28 @@ describe("main-worktree", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
   })
 
   describe("isWorktreeClean", () => {
-    test("何も変えていなければ true", async () => {
-      const { mainWorktree } = await createRepositoryWithMainWorktree()
-      expect(isWorktreeClean(mainWorktree)).toBe(true)
+    test("何も変えていなければ true", () => {
+      expect(isWorktreeClean(shared.mainWorktree)).toBe(true)
     })
 
-    test("未コミットの変更があれば false", async () => {
-      const { mainWorktree } = await createRepositoryWithMainWorktree()
-      writeFileSync(join(mainWorktree, "README.md"), "changed\n")
-      expect(isWorktreeClean(mainWorktree)).toBe(false)
+    test("未コミットの変更があれば false", () => {
+      const readme = join(shared.mainWorktree, "README.md")
+      writeFileSync(readme, "changed\n")
+      try {
+        expect(isWorktreeClean(shared.mainWorktree)).toBe(false)
+      } finally {
+        writeFileSync(readme, "readme\n")
+      }
     })
 
-    test("未追跡のファイルがあれば false", async () => {
-      const { mainWorktree } = await createRepositoryWithMainWorktree()
-      writeFileSync(join(mainWorktree, "untracked.txt"), "x\n")
-      expect(isWorktreeClean(mainWorktree)).toBe(false)
+    test("未追跡のファイルがあれば false", () => {
+      const untracked = join(shared.mainWorktree, "untracked.txt")
+      writeFileSync(untracked, "x\n")
+      try {
+        expect(isWorktreeClean(shared.mainWorktree)).toBe(false)
+      } finally {
+        rmSync(untracked, { force: true })
+      }
     })
   })
 })
