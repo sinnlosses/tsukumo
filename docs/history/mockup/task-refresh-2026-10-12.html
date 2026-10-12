@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>タスク一覧の「最新化」ボタン — 2026-10-12 のラフ</title>
+<style>
+  :root { --ground: #191720; --surface: #221f2b; --ink: #e8e3ea; --accent: #8fd6c8; --quiet: #a09ba8; --rule: #4a4655; }
+  * { box-sizing: border-box; }
+  body { background: var(--ground); color: var(--ink); font-family: sans-serif; margin: 24px 32px; font-size: 14px; }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  p.lead { color: var(--quiet); font-size: 13px; margin: 0 0 8px; }
+  h2 { font-size: 14px; margin: 26px 0 4px; }
+  h2 small { color: var(--quiet); font-weight: normal; font-size: 12px; margin-left: 8px; }
+  .row { display: grid; grid-template-columns: 250px 1fr; gap: 16px; margin-top: 10px; align-items: start; }
+  .cell { background: var(--surface); border: 1px solid #332f3d; border-radius: 8px; padding: 12px 14px; }
+  .cell h3 { font-size: 12px; font-weight: normal; color: var(--quiet); margin: 0 0 10px; }
+  .note { color: var(--quiet); font-size: 12px; margin-top: 8px; line-height: 1.5; }
+  /* サイドバーの見出し */
+  .sb-head { display: flex; align-items: baseline; gap: 6px; font-weight: 700; font-size: 14px; }
+  .sb-head .spacer { flex: 1; }
+  .link { color: var(--accent); font-weight: normal; font-size: 12px; padding: 2px 4px; border-radius: 4px; }
+  .chips { display: flex; gap: 4px; margin-top: 8px; font-size: 11px; color: var(--quiet); }
+  .chips span { border: 1px solid var(--rule); border-radius: 10px; padding: 1px 7px; }
+  .chips span.on { color: var(--ink); border-color: var(--ink); }
+  .rows { margin-top: 8px; font-size: 12px; color: var(--quiet); line-height: 1.8; }
+  /* モーダルの頭 */
+  .md-head { display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #332f3d; padding-bottom: 12px; }
+  .md-head h4 { margin: 0; font-size: 17px; }
+  .md-head .counts { color: var(--quiet); font-size: 12px; }
+  .md-head .hints { margin-left: auto; color: var(--quiet); font-size: 12px; }
+  .md-head kbd { border: 1px solid var(--rule); border-radius: 4px; padding: 0 5px; font-family: monospace; }
+  .x { width: 34px; height: 34px; border: 1px solid var(--rule); border-radius: 9px; display: grid; place-items: center; }
+  /* 最新化の口 */
+  .ic { width: 24px; height: 24px; display: inline-grid; place-items: center; color: var(--quiet); font-size: 15px; border-radius: 6px; line-height: 1; }
+  .ic.spin { color: var(--accent); animation: spin 1s linear infinite; }
+  .ic.btn34 { width: 34px; height: 34px; border: 1px solid var(--rule); border-radius: 9px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .pill { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink); border: 1px solid var(--rule); border-radius: 6px; padding: 2px 8px; font-weight: normal; }
+  .pill .ic { width: 14px; height: 14px; font-size: 12px; color: inherit; }
+  .pill.busy { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+  .pill.busy .ic { color: var(--accent); animation: spin 1s linear infinite; }
+  .tag { display: inline-block; font-size: 11px; color: var(--quiet); border: 1px solid var(--rule); border-radius: 8px; padding: 0 6px; margin-left: 6px; }
+  .rec { color: var(--accent); font-size: 12px; margin-left: 8px; }
+</style>
+</head>
+<body>
+<h1>タスク一覧に「最新化」を置く見せ方（ラフ）</h1>
+<p class="lead">置き場は2か所（サイドバーの見出し・「一覧を見る」のモーダルの頭）で、同じ部品を置く。↻ と回る印は、使用量の行の ↻ と同じ作りにする。違いは「どれだけ字を出すか」。</p>
+
+<h2>案1. ↻ だけ <small>使用量の行とそっくり。字は title と aria-label に持たせる</small><span class="rec">おすすめ</span></h2>
+<div class="row">
+  <div class="cell"><h3>サイドバー（押す前）</h3>
+    <div class="sb-head">タスク<span class="spacer"></span><span class="ic">↻</span><span class="link">一覧を見る</span></div>
+    <div class="chips"><span class="on">すべて 12</span><span>着手中 2</span><span>todo 9</span></div>
+    <div class="rows">GH-659 最新化ボタン<br>GH-668 案2の実装</div>
+  </div>
+  <div class="cell"><h3>モーダルの頭（押す前 / 読んでいる間）</h3>
+    <div class="md-head"><h4>タスク</h4><span class="counts">12 件</span><span class="ic btn34">↻</span><span class="hints"><kbd>↑↓</kbd> 選ぶ <kbd>Esc</kbd> 閉じる</span><span class="x">×</span></div>
+    <div class="md-head" style="margin-top:10px"><h4>タスク</h4><span class="counts">12 件</span><span class="ic btn34 spin">↻</span><span class="hints"><kbd>↑↓</kbd> 選ぶ <kbd>Esc</kbd> 閉じる</span><span class="x">×</span></div>
+    <p class="note">読んでいる間は ↻ が青緑になって回り、押せなくなる（二重に押しても1回）。</p>
+  </div>
+</div>
+
+<h2>案2. 「最新化」の文字リンク <small>「一覧を見る」と同じ作りで並べる</small></h2>
+<div class="row">
+  <div class="cell"><h3>サイドバー（押す前）</h3>
+    <div class="sb-head">タスク<span class="spacer"></span><span class="link">最新化</span><span class="link">一覧を見る</span></div>
+    <div class="chips"><span class="on">すべて 12</span><span>着手中 2</span><span>todo 9</span></div>
+    <p class="note">狭いサイドバーに文字リンクが2つ並ぶ。「一覧を見る」と混ざって見分けにくい。</p>
+  </div>
+  <div class="cell"><h3>サイドバー（読んでいる間）/ モーダルの頭</h3>
+    <div class="sb-head">タスク<span class="spacer"></span><span class="link" style="opacity:.6">更新中…</span><span class="link">一覧を見る</span></div>
+    <div class="md-head" style="margin-top:12px"><h4>タスク</h4><span class="counts">12 件</span><span class="link">最新化</span><span class="hints"><kbd>↑↓</kbd> 選ぶ <kbd>Esc</kbd> 閉じる</span><span class="x">×</span></div>
+    <p class="note">回る印が無く、字が「更新中…」に替わる。使用量の ↻ とは見た目も動きも別物になる。</p>
+  </div>
+</div>
+
+<h2>案3. ↻ + 「最新化」の小さな札 <small>字で何の ↻ か分かる</small></h2>
+<div class="row">
+  <div class="cell"><h3>サイドバー（押す前 / 読んでいる間）</h3>
+    <div class="sb-head">タスク<span class="spacer"></span><span class="pill"><span class="ic">↻</span>最新化</span></div>
+    <div class="sb-head" style="margin-top:6px">タスク<span class="spacer"></span><span class="pill busy"><span class="ic">↻</span>最新化</span></div>
+    <div class="sb-head" style="margin-top:6px"><span class="link" style="margin-left:auto">一覧を見る</span></div>
+    <p class="note">見出しに「最新化」の札と「一覧を見る」が並び、サイドバーの幅だと窮屈（幅 250px で2つ入るのがぎりぎり）。</p>
+  </div>
+  <div class="cell"><h3>モーダルの頭</h3>
+    <div class="md-head"><h4>タスク</h4><span class="counts">12 件</span><span class="pill"><span class="ic">↻</span>最新化</span><span class="hints"><kbd>↑↓</kbd> 選ぶ <kbd>Esc</kbd> 閉じる</span><span class="x">×</span></div>
+    <p class="note">モーダルは幅に余裕があるので入る。ただしサイドバーと同じ札を置くと、狭い画面（760px 以下）の頭が詰まる。</p>
+  </div>
+</div>
+</body>
+</html>
