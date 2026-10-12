@@ -9,9 +9,9 @@ import { z } from "zod"
 
 import {
   type ExpressionChoice,
-  expressionNames as toExpressionNames,
+  expressionEnumForSpeak,
+  expressionGuideForSpeak,
 } from "../../../shared/character-pack/expression-choice.ts"
-import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportSectionSchema } from "../../../shared/report/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report/report-check.ts"
 import {
@@ -406,31 +406,8 @@ function recallEpisodeTool(chatRecall: ChatRecall) {
 function speechShape(expressions: readonly ExpressionChoice[]) {
   return {
     text: z.string().describe("セリフ。1〜2文の短い一言"),
-    expression: z.enum(speakExpressionEnum(expressions)).describe(expressionGuide(expressions)),
+    expression: z
+      .enum(expressionEnumForSpeak(expressions))
+      .describe(expressionGuideForSpeak(expressions)),
   }
-}
-
-/**
- * zod の `enum` に渡す表情名。
- * 空にならないことが型の要求なので、`default` を必ず先頭に置く（`expressionChoices` も `default` を必ず含むが、ここで型としても保証しておく）。
- */
-function speakExpressionEnum(
-  expressions: readonly ExpressionChoice[],
-): [Expression, ...Expression[]] {
-  return ["default", ...toExpressionNames(expressions).filter((name) => name !== "default")]
-}
-
-/**
- * 表情名とラベルの対応。モデルが名前だけで意味を取れるように説明へ入れる。
- * ラベルはキャラクターパックの定義から来る。
- */
-function expressionGuide(expressions: readonly ExpressionChoice[]): string {
-  const guide = speakExpressionEnum(expressions)
-    .map((name) => `${name}（${labelOf(expressions, name)}）`)
-    .join(" / ")
-  return `表情。${guide}`
-}
-
-function labelOf(expressions: readonly ExpressionChoice[], name: Expression): string {
-  return expressions.find((choice) => choice.name === name)?.label ?? name
 }

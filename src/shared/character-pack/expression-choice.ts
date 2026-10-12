@@ -47,3 +47,24 @@ export function resolveExpressionLabel(
 ): string {
   return choices.find((choice) => choice.name === expression)?.label ?? expression
 }
+
+/**
+ * `speak` ツールの zod enum に渡す表情名。
+ * 空にならないことが型の要求なので、`default` を必ず先頭に置く。
+ */
+export function expressionEnumForSpeak(
+  choices: readonly ExpressionChoice[],
+): [Expression, ...Expression[]] {
+  return ["default", ...expressionNames(choices).filter((name) => name !== "default")]
+}
+
+/**
+ * `speak` ツールの説明へ入れる表情のガイド。
+ * 表情名とラベルの対応をモデルに見せて、名前だけで意味を取れるようにする。
+ */
+export function expressionGuideForSpeak(choices: readonly ExpressionChoice[]): string {
+  const guide = expressionEnumForSpeak(choices)
+    .map((name) => `${name}（${resolveExpressionLabel(choices, name)}）`)
+    .join(" / ")
+  return `表情。${guide}`
+}
