@@ -33,7 +33,7 @@ import type { TokenUsageEntry, TokenUsageLog, TokenUsagePeriod } from "../core/t
 /** 置き場のディレクトリ名（`~/.tsukumo/token-usage/`）。 */
 const TOKEN_USAGE_DIR_NAME = "token-usage"
 
-/** モデル1件ぶんの数（{@link ModelTokenUsage} と同じ鍵）。 */
+/** モデル1件ぶんの数（`ModelTokenUsage` と同じ鍵）。 */
 const modelTokenUsageSchema = z.object({
   model: z.string(),
   inputTokens: z.number(),
@@ -44,7 +44,7 @@ const modelTokenUsageSchema = z.object({
   costUsd: z.number(),
 })
 
-/** assistant のステップの使用量（{@link StepTokenUsage} と同じ鍵）。 */
+/** assistant のステップの使用量（`StepTokenUsage` と同じ鍵）。 */
 const stepTokenUsageSchema = z.object({
   inputTokens: z.number(),
   outputTokens: z.number(),
@@ -52,14 +52,14 @@ const stepTokenUsageSchema = z.object({
   cacheCreationInputTokens: z.number(),
 })
 
-/** ツール1種類ぶんの内訳（{@link ToolUsageCount} と同じ鍵）。 */
+/** ツール1種類ぶんの内訳（`ToolUsageCount` と同じ鍵）。 */
 const toolUsageCountSchema = z.object({
   name: z.string(),
   calls: z.number(),
   resultBytes: z.number(),
 })
 
-/** 持ち場1つぶんの内訳（{@link ScopeUsage} と同じ鍵）。 */
+/** 持ち場1つぶんの内訳（`ScopeUsage` と同じ鍵）。 */
 const scopeUsageSchema = z.object({
   steps: z.number(),
   tokens: stepTokenUsageSchema,

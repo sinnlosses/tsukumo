@@ -125,7 +125,7 @@ export type ViewServerOptions = {
 }
 
 export type ViewServer = {
-  /** 待ち受けている HTTP サーバそのもの。{@link attachSessionSocket} を足すためだけに外へ出している。 */
+  /** 待ち受けている HTTP サーバそのもの。`attachSessionSocket` を足すためだけに外へ出している。 */
   readonly httpServer: Server
   /** ページの URL。利用者が実際に開くのもこれ1つでよい。 */
   readonly layoutUrl: string
