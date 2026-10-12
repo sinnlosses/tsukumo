@@ -2,11 +2,14 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
+import { z } from "zod"
 
 import {
   appendJsonLine,
   dateFileNames,
+  dateFilePath,
   readJsonLines,
+  readValidLines,
 } from "../../../../src/server/adapter/lib/jsonl.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -64,6 +67,26 @@ describe("readJsonLines", () => {
 
   it("読めないファイルは空の並びを返す（例外にならない）", () => {
     expect(readJsonLines(join(dir(), "no-such-file.jsonl"))).toEqual([])
+  })
+})
+
+describe("dateFilePath", () => {
+  it("日付キーから dateFileNames が拾う形のファイル名のパスを作る", () => {
+    const path = dateFilePath(dir(), "2026-01-02")
+    writeFileSync(path, "")
+
+    expect(path).toBe(join(dir(), "2026-01-02.jsonl"))
+    expect(dateFileNames(dir())).toEqual(["2026-01-02.jsonl"])
+  })
+})
+
+describe("readValidLines", () => {
+  it("壊れた行とスキーマに通らない行を落とし、通った行の data だけを返す", () => {
+    const path = join(dir(), "2026-01-01.jsonl")
+    writeFileSync(path, '{"seq":1}\nこれはJSONではない\n{"seq":"x"}\n{"seq":3}\n')
+    const schema = z.object({ seq: z.number() })
+
+    expect(readValidLines(path, schema)).toEqual([{ seq: 1 }, { seq: 3 }])
   })
 })
 

@@ -16,7 +16,7 @@ import {
   CONTEXT_USAGE_FORMAT_VERSION,
   type ContextUsageRecord,
 } from "../../../shared/context-usage/context-usage-record.ts"
-import { appendJsonLine } from "../../adapter/lib/jsonl.ts"
+import { appendJsonLine, dateFilePath } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { ContextUsageEntry, ContextUsageLog } from "../core/context-usage.ts"
@@ -36,7 +36,7 @@ export function contextUsageDir(): string {
 export function createContextUsageLog(root: string = contextUsageDir()): ContextUsageLog {
   return {
     append: (entry) => {
-      appendJsonLine(join(root, `${localDateKey(entry.at)}.jsonl`), toRecord(entry))
+      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry))
     },
   }
 }

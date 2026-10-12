@@ -12,7 +12,12 @@ import {
   EXPERIENCE_METRIC_FORMAT_VERSION,
   type ExperienceMetricRecord,
 } from "../../../shared/experience-metric/experience-metric-record.ts"
-import { appendJsonLine, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
+import {
+  appendJsonLine,
+  dateFileNames,
+  dateFilePath,
+  readValidLines,
+} from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type {
@@ -60,7 +65,7 @@ export function createExperienceMetricLog(
 ): ExperienceMetricLog {
   return {
     append: (entry) => {
-      appendJsonLine(join(root, `${localDateKey(entry.at)}.jsonl`), toRecord(entry))
+      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry))
     },
     readRange: (period) => readEntriesInRange(root, period),
   }
@@ -106,10 +111,7 @@ function readEntriesInRange(
 
 /** 1ファイルの行を検証して件に戻す（通らない行は1行ずつ落とす）。 */
 function readValidEntries(path: string): readonly ExperienceMetricEntry[] {
-  return readJsonLines(path).flatMap((raw) => {
-    const parsed = experienceMetricRecordSchema.safeParse(raw)
-    return parsed.success ? [fromRecord(parsed.data)] : []
-  })
+  return readValidLines(path, experienceMetricRecordSchema).map(fromRecord)
 }
 
 /** 読み戻した1行を件に戻す（{@link toRecord} の逆）。 */

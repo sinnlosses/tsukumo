@@ -25,7 +25,12 @@ import { z } from "zod"
 import { isCharacterPackName } from "../../../shared/character-pack/character.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
-import { appendJsonLine, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
+import {
+  appendJsonLine,
+  dateFileNames,
+  dateFilePath,
+  readJsonLines,
+} from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type {
@@ -160,7 +165,7 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
         return
       }
       appendJsonLine(
-        join(root, packName, `${localDateKey(entry.at)}.jsonl`),
+        dateFilePath(join(root, packName), localDateKey(entry.at)),
         toArchiveRecord(packName, entry),
       )
     },

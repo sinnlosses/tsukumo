@@ -7,7 +7,7 @@
 // 書けなくても・読めなくても例外を投げない。壊れた行は1行ずつ読み飛ばす。
 
 import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
-import { dirname } from "node:path"
+import { dirname, join } from "node:path"
 
 /** 日付だけで積むファイルの名前（`YYYY-MM-DD.jsonl`）。これ以外のファイルは対象にしない。 */
 const DATE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
@@ -53,6 +53,22 @@ export function dateFileNames(dir: string): readonly string[] {
   } catch {
     return []
   }
+}
+
+/** 日付キー（`YYYY-MM-DD`）の日のファイルのパス。名前の形は {@link dateFileNames} が拾う形と同じ。 */
+export function dateFilePath(root: string, dateKey: string): string {
+  return join(root, `${dateKey}.jsonl`)
+}
+
+/** 1ファイルの行のうち、スキーマを通った行の `data` だけを書いた順に返す。 */
+export function readValidLines<T>(
+  path: string,
+  schema: { safeParse(raw: unknown): { success: true; data: T } | { success: false } },
+): readonly T[] {
+  return readJsonLines(path).flatMap((raw) => {
+    const parsed = schema.safeParse(raw)
+    return parsed.success ? [parsed.data] : []
+  })
 }
 
 /** 1ファイルの生の行（読めないファイルは空。空行は落とす）。 */

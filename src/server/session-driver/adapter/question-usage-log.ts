@@ -6,7 +6,7 @@ import {
   QUESTION_USAGE_FORMAT_VERSION,
   type QuestionUsageRecord,
 } from "../../../shared/session-driver/question-usage-record.ts"
-import { appendJsonLine } from "../../adapter/lib/jsonl.ts"
+import { appendJsonLine, dateFilePath } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { QuestionUsageEntry, QuestionUsageLog } from "../core/question-usage.ts"
@@ -21,7 +21,7 @@ export function questionUsageDir(): string {
 export function createQuestionUsageLog(root: string = questionUsageDir()): QuestionUsageLog {
   return {
     append: (entry) => {
-      appendJsonLine(join(root, `${localDateKey(entry.at)}.jsonl`), toRecord(entry))
+      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry))
     },
   }
 }

@@ -20,7 +20,12 @@ import {
   TOKEN_USAGE_FORMAT_VERSION,
   type TokenUsageRecord,
 } from "../../../shared/token-usage/token-usage.ts"
-import { appendJsonLine, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
+import {
+  appendJsonLine,
+  dateFileNames,
+  dateFilePath,
+  readValidLines,
+} from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { TokenUsageEntry, TokenUsageLog, TokenUsagePeriod } from "../core/token-usage.ts"
@@ -86,7 +91,7 @@ export function tokenUsageDir(): string {
 export function createTokenUsageLog(root: string = tokenUsageDir()): TokenUsageLog {
   return {
     append: (entry) => {
-      appendJsonLine(join(root, `${localDateKey(entry.at)}.jsonl`), toRecord(entry))
+      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry))
     },
     readRange: (period) => readRecordsInRange(root, period),
   }
@@ -124,8 +129,5 @@ function fileNamesInRange(root: string, period: TokenUsagePeriod): readonly stri
 
 /** 1ファイルの行を検証して返す（{@link tokenUsageRecordSchema} を通らない行は1行ずつ落とす）。 */
 function readValidRecords(path: string): readonly TokenUsageRecord[] {
-  return readJsonLines(path).flatMap((raw) => {
-    const record = tokenUsageRecordSchema.safeParse(raw)
-    return record.success ? [record.data] : []
-  })
+  return readValidLines(path, tokenUsageRecordSchema)
 }

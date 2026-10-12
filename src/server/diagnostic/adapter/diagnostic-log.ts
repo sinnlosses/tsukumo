@@ -19,7 +19,12 @@ import {
   sessionEventFootprintSchema,
 } from "../../../shared/diagnostic/diagnostic-record.ts"
 import { swallowedFailureFootprintSchema } from "../../../shared/diagnostic/swallowed-failure.ts"
-import { appendJsonLines, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
+import {
+  appendJsonLines,
+  dateFileNames,
+  dateFilePath,
+  readValidLines,
+} from "../../adapter/lib/jsonl.ts"
 import { localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { DiagnosticLog, DiagnosticRange } from "../core/diagnostic.ts"
@@ -54,7 +59,7 @@ export function createDiagnosticLog(root: string = diagnosticDir()): DiagnosticL
     append: (entries) => {
       const byDate = groupBy(entries, (entry) => localDateKey(entry.at))
       for (const [date, dated] of Object.entries(byDate)) {
-        appendJsonLines(join(root, `${date}.jsonl`), dated.map(toRecord))
+        appendJsonLines(dateFilePath(root, date), dated.map(toRecord))
       }
     },
     readRange: (range) => readEntriesInRange(root, range),
@@ -96,14 +101,7 @@ function readEntriesInRange(root: string, range: DiagnosticRange): readonly Diag
 
 /** 1ファイルの行を検証して件に戻す（通らない行は1行ずつ落とす）。 */
 function readValidEntries(path: string): readonly DiagnosticEntry[] {
-  return readJsonLines(path).flatMap((raw) => {
-    const parsed = diagnosticRecordSchema.safeParse(raw)
-    if (!parsed.success) {
-      return []
-    }
-    const { v: _version, ...entry } = parsed.data
-    return [entry]
-  })
+  return readValidLines(path, diagnosticRecordSchema).map(({ v: _version, ...entry }) => entry)
 }
 
 function removeQuietly(path: string): void {
