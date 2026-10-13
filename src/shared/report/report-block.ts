@@ -124,27 +124,29 @@ const graphFields = {
     ),
 }
 
-const svgShapeSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("rect"),
-    x: z.number(),
-    y: z.number(),
-    width: z.number().positive(),
-    height: z.number().positive(),
-    label: inlineText.default("").describe("枠の中に出す名前。無ければ空"),
-    emphasis: z.boolean().default(false).describe("true で枠を強調する"),
-  }),
-  z.object({
-    kind: z.literal("line"),
-    x1: z.number(),
-    y1: z.number(),
-    x2: z.number(),
-    y2: z.number(),
-    arrow: z.boolean().default(false).describe("true で終点（x2, y2）に矢じりを付ける"),
-    label: inlineText.default("").describe("線に添える語。無ければ空"),
-  }),
-  z.object({ kind: z.literal("text"), x: z.number(), y: z.number(), text: inlineText }),
-])
+const svgShapeSchema = z
+  .discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("rect"),
+      x: z.number(),
+      y: z.number(),
+      width: z.number().positive(),
+      height: z.number().positive(),
+      label: inlineText.default("").describe("枠の中に出す名前。無ければ空"),
+      emphasis: z.boolean().default(false).describe("true で枠を強調する"),
+    }),
+    z.object({
+      kind: z.literal("line"),
+      x1: z.number(),
+      y1: z.number(),
+      x2: z.number(),
+      y2: z.number(),
+      arrow: z.boolean().default(false).describe("true で終点（x2, y2）に矢じりを付ける"),
+      label: inlineText.default("").describe("線に添える語。無ければ空"),
+    }),
+    z.object({ kind: z.literal("text"), x: z.number(), y: z.number(), text: inlineText }),
+  ])
+  .meta({ id: "SvgShape" })
 
 const svgFields = {
   width: z.number().positive().describe("viewBox の幅。図形はこの内側に収める"),

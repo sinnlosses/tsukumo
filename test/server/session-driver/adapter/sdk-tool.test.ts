@@ -741,6 +741,7 @@ describe("report の本文（sections）", () => {
 
   it("figure と sections が共有する塊は definitions に1回だけ置いて参照し、report の引数の schema が字数の上限を超えない", async () => {
     const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_WHOLE_SCHEMA_REPLY)
+    const inputSchema = reply.result.tools.find((tool) => tool.name === "report")?.inputSchema
     const schema = z
       .object({
         properties: z.object({
@@ -748,18 +749,18 @@ describe("report の本文（sections）", () => {
         }),
         definitions: z.record(z.string(), z.unknown()),
       })
-      .parse(reply.result.tools.find((tool) => tool.name === "report")?.inputSchema)
+      .parse(inputSchema)
     const figureRefs = schema.properties.figure.oneOf.flatMap((branch) =>
       typeof branch["$ref"] === "string" ? [branch["$ref"]] : [],
     )
 
     expect(Object.keys(schema.definitions).toSorted()).toEqual(SHARED_BLOCK_DEFINITIONS)
     expect(figureRefs.toSorted()).toEqual(
-      SHARED_BLOCK_DEFINITIONS.filter((name) => name !== "BeforeAfterSide").map(
-        (name) => `#/definitions/${name}`,
-      ),
+      SHARED_BLOCK_DEFINITIONS.filter(
+        (name) => name !== "BeforeAfterSide" && name !== "SvgShape",
+      ).map((name) => `#/definitions/${name}`),
     )
-    expect(JSON.stringify(schema).length).toBeLessThan(REPORT_INPUT_SCHEMA_MAX_CHARS)
+    expect(JSON.stringify(inputSchema).length).toBeLessThan(REPORT_INPUT_SCHEMA_MAX_CHARS)
   })
 
   it("conclusion の説明に、目安の字数・読点の数・悪い例と良い例がある", async () => {
@@ -908,7 +909,7 @@ function workServer(
   )
 }
 
-/** `figure` と `sections` の両方に置ける塊と、`beforeAfter` の前後の側。`report` の schema の `definitions` に1回ずつ出る。 */
+/** `figure` と `sections` の両方に置ける塊と、`beforeAfter` の前後の側、svg の図形。`report` の schema の `definitions` に1回ずつ出る。 */
 const SHARED_BLOCK_DEFINITIONS = [
   "BeforeAfterBlock",
   "BeforeAfterSide",
@@ -919,10 +920,11 @@ const SHARED_BLOCK_DEFINITIONS = [
   "MermaidBlock",
   "StatsBlock",
   "SvgBlock",
+  "SvgShape",
 ]
 
-/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（約1.9万字）には余白を持たせた上限。 */
-const REPORT_INPUT_SCHEMA_MAX_CHARS = 22_000
+/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（約1.8万字）には余白を持たせた上限。 */
+const REPORT_INPUT_SCHEMA_MAX_CHARS = 19_000
 
 /** `tools/list` の応答のうち、引数の schema を丸ごと読む形。 */
 const TOOLS_WHOLE_SCHEMA_REPLY = z.object({
