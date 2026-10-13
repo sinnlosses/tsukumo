@@ -29,6 +29,8 @@ const figureCaptioned = (body: string, title = "", ordinal = 1, fit = true): str
 /** 図の包み（本体が Markdown のフェンスで、空行で区切る）。 */
 const fencedFigureCaptioned = (body: string, title = "", ordinal = 1): string =>
   `<div class="captioned">\n\n${body}\n\n${captionRow("図", ordinal, title)}\n\n</div>`
+const statsCaptioned = (body: string, ordinal = 1): string =>
+  figureCaptioned(body, "", ordinal, false)
 /** 図の包みから、本体のフェンスだけを取り出す。 */
 const chartFenceOf = (block: ReportBlock): string =>
   markdownOf(block)
@@ -287,8 +289,10 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(stats)).toBe(
-      '<div class="stats"><div class="stat"><span class="stat-before">12 →</span><b>8</b>架空の件数</div>' +
-        '<div class="stat"><b>0</b>架空の失敗</div></div>',
+      statsCaptioned(
+        '<div class="stats"><div class="stat"><span class="stat-before">12 →</span><b>8</b>架空の件数</div>' +
+          '<div class="stat"><b>0</b>架空の失敗</div></div>',
+      ),
     )
   })
 
@@ -354,8 +358,10 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(stats)).toBe(
-      '<div class="stats"><div class="stat"><b>312</b>架空の&lt;件数&gt;</div>' +
-        '<div class="stat"><b>0</b>架空の失敗</div></div>',
+      statsCaptioned(
+        '<div class="stats"><div class="stat"><b>312</b>架空の&lt;件数&gt;</div>' +
+          '<div class="stat"><b>0</b>架空の失敗</div></div>',
+      ),
     )
   })
 
@@ -370,8 +376,10 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(stats)).toBe(
-      '<div class="stats"><div class="stat"><b><code>3</code></b>架空の <code>a&lt;b</code> 件</div>' +
-        '<div class="stat"><b>0</b>架空の <code>`x`</code> 件</div></div>',
+      statsCaptioned(
+        '<div class="stats"><div class="stat"><b><code>3</code></b>架空の <code>a&lt;b</code> 件</div>' +
+          '<div class="stat"><b>0</b>架空の <code>`x`</code> 件</div></div>',
+      ),
     )
   })
 
@@ -382,7 +390,9 @@ describe("reportSectionsMarkdown", () => {
       `<span class="stat-meter" aria-hidden="true"><span class="stat-meter-fill" style="width: ${String(width)}%"></span></span>`
 
     expect(stat("25", "28")).toBe(
-      `<div class="stats"><div class="stat"><b>25<span class="stat-total"> / 28</span></b>${meter(89)}架空</div></div>`,
+      statsCaptioned(
+        `<div class="stats"><div class="stat"><b>25<span class="stat-total"> / 28</span></b>${meter(89)}架空</div></div>`,
+      ),
     )
     expect(stat("0", "56")).toContain(meter(0))
     expect(stat("1,000", "1,000")).toContain(meter(100))
@@ -393,7 +403,9 @@ describe("reportSectionsMarkdown", () => {
       markdownOf({ kind: "stats", items: [{ before: "", value, total, label: "架空" }], fold: "" })
 
     expect(stat("25件", "28件")).toBe(
-      '<div class="stats"><div class="stat"><b>25件<span class="stat-total"> / 28件</span></b>架空</div></div>',
+      statsCaptioned(
+        '<div class="stats"><div class="stat"><b>25件<span class="stat-total"> / 28件</span></b>架空</div></div>',
+      ),
     )
     expect(stat("30", "28")).not.toContain("stat-meter")
     expect(stat("1", "0")).not.toContain("stat-meter")
@@ -974,6 +986,33 @@ describe("reportSectionsMarkdown", () => {
     expect(
       [...markdown.matchAll(/class="caption-number">([^<]+)</g)].map(([, label]) => label),
     ).toEqual(["図 1", "表 1", "図 2", "図 3", "表 2"])
+  })
+
+  it("stats は図として数え、image・chart と通しの番号になり、fold の中でも数える", () => {
+    const stats = (fold: string): ReportBlock => ({
+      kind: "stats",
+      items: [{ before: "", value: "1", total: "", label: "架空" }],
+      fold,
+    })
+    const image: ReportBlock = { kind: "image", path: "架空.png", caption: "", notes: [], fold: "" }
+    const chart: ReportBlock = {
+      kind: "chart",
+      title: "",
+      chartKind: "bar",
+      labels: ["a"],
+      series: [{ name: "系列", values: [1] }],
+      horizontal: false,
+      fold: "",
+    }
+
+    const markdown = reportSectionsMarkdown(
+      [section([image, stats(""), chart]), section([stats("架空の畳み")])],
+      NO_IMAGES,
+    )
+
+    expect(
+      [...markdown.matchAll(/class="caption-number">([^<]+)</g)].map(([, label]) => label),
+    ).toEqual(["図 1", "図 2", "図 3", "図 4"])
   })
 
   it("fold のある塊は details に畳む", () => {

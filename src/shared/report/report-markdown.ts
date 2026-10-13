@@ -220,7 +220,14 @@ function blockMarkdown(
         ? ""
         : `<div class="${NOTE_CLASSES[block.tone]}">\n\n${markdownInline(block.text)}\n\n</div>`
     case "stats":
-      return `<div class="stats">${block.items.map(statMarkdown).join("")}</div>`
+      return captionedMarkdown({
+        kind: "figure",
+        ordinal,
+        title: "",
+        body: `<div class="stats">${block.items.map(statMarkdown).join("")}</div>`,
+        bodyFormat: "html",
+        fit: false,
+      })
     case "code":
       return fencedMarkdown([block.language, block.path].join(" ").trim(), block.source)
     case "mermaid":
@@ -285,6 +292,7 @@ function captionKindOf(block: ReportBlock): CaptionKind | undefined {
     case "graph":
     case "chart":
     case "svg":
+    case "stats":
       return "figure"
     case "table":
     case "matrix":

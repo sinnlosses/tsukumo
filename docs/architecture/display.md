@@ -317,15 +317,15 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   幅を取るので包みを縮めない（`notes` が空なら今までどおり `captioned-fit`）。画像が読めないときも、並びは
   「画像を出せない」の札の横に残る。6つ以上は `options`・`compare` と同じ違反（`too-many-candidates`）で差し戻す
 - **図と表には番号つきの題を付ける**（2026-10-03。利用者決定は 2026-10-02。図〔`image`・`dimension`・
-  `compare`・`beforeAfter`・`mermaid`・`graph`・`chart`・`svg`〕は題を本体の**下**に「図 n」、表〔`table`・`matrix`〕は題を本体の**上**に
+  `compare`・`beforeAfter`・`mermaid`・`graph`・`chart`・`svg`・`stats`〕は題を本体の**下**に「図 n」、表〔`table`・`matrix`〕は題を本体の**上**に
   「表 n」。番号は図と表を別々に、`reportSectionsMarkdown` が節をまたいで塊の並びの順に1から数える。
   `options` は候補の採否の札なので数えない）。**題が空でも番号は出し**〔`image` の `caption` が空でも
   「図 n」が付いていた数え方に揃える。題の有無で番号の振り方が変わらない〕、**`fold` で畳んだ中も数える**
   〔畳んでも番号が飛ばない〕。引数は `title`〔`image` だけ従来どおり `caption`〕で、`mermaid`・`graph`・`chart`・`svg` は
-  `title` を省いてよい〔空文字〕。**題は本体の幅を超えない**: 包み（`div.captioned`）が本体の幅に縮み
+  `title` を省いてよい〔空文字〕。`stats` は `title` を持たないので、番号だけの題の行になる。**題は本体の幅を超えない**: 包み（`div.captioned`）が本体の幅に縮み
   〔`captioned-fit`。`image`・`table`・`matrix`・`dimension`・`svg`。20rem を下限にして、短い表の題が何行にも
   折れないようにする〕、題の行は `contain: inline-size` で幅の計算から外れて包みの幅で折り返す。親の幅を
-  取る `chart`・`compare`・`beforeAfter` と、全幅の `pre` に描く `mermaid`・`graph` は縮めない。題の文字は inline code だけを解く
+  取る `chart`・`stats`・`compare`・`beforeAfter` と、全幅の `pre` に描く `mermaid`・`graph` は縮めない。題の文字は inline code だけを解く
   〔太字・リンクは効かない〕
 - **節を書き上げる演出の塊（トピック）の単位にする**（2026-09-27。`docs/research/report-block-richness.md`
   2章）。見出しのタグや水平線を DOM から探して境目を当てるのはやめ（見出しのレベルは節の中の
