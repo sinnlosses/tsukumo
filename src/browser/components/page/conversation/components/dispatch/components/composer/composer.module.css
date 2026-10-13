@@ -53,6 +53,41 @@
   padding: 0;
   border-radius: 0.5rem;
 }
+/* 道具の行の右のかたまり。区切り線・「＋ 新規」・<TurnStatus> を右端へ寄せる。 */
+.dispatch-toolbar-end {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: 0;
+  margin-left: auto;
+}
+.dispatch-toolbar-divider {
+  align-self: stretch;
+  width: 1px;
+  margin: 0.375rem 0.25rem;
+  background: var(--rule);
+}
+.dispatch-new-session {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+}
+/* 窓が狭いと入力欄の幅が道具の列・区切り・札・送信を1段に並べるには足りないので、「新規」の字を隠して絵だけにする（`title` と `aria-label` は残る）。 */
+@media (max-width: 1000px) {
+  .dispatch-new-session-label {
+    display: none;
+  }
+  .dispatch-new-session {
+    padding: 0 0.5rem;
+  }
+}
 /* 狭い画面（760px 以下）。左に ＋、まん中に丸い欄、右に丸ボタン（<PhoneTurnAction>）。
    道具の行は API の知らせだけを残して欄の上に置く。 */
 @media (max-width: 760px) {
@@ -70,7 +105,9 @@
     order: -1;
     padding-top: 0;
   }
-  .dispatch-tool {
+  .dispatch-tool,
+  .dispatch-toolbar-divider,
+  .dispatch-new-session {
     display: none;
   }
   .phone-attach {

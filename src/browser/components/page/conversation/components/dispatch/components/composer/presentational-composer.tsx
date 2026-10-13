@@ -2,7 +2,7 @@
 // 入力欄の面（`<textarea>` かマークダウンエディタ）と補完の候補一覧を内包し、その下に道具の行（画像・`/`・`@`・面の切り替えのボタン、経過時間と送信⇄中断の <TurnStatus>）を置いた `<form>` を置く。
 
 import clsx from "clsx"
-import { AtSign, Heading, ImageIcon, Slash } from "lucide-react"
+import { AtSign, Heading, ImageIcon, Plus, Slash } from "lucide-react"
 import { useState, type ReactElement, type ReactNode } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../../../shared/session-driver/prompt-image.ts"
@@ -19,7 +19,7 @@ import { MarkdownEditorSurface } from "../markdown-editor-surface/markdown-edito
 import { TextAreaSurface } from "../text-area-surface/text-area-surface.tsx"
 import { PhoneTurnAction, TurnStatus } from "../turn-status/turn-status.tsx"
 import styles from "./composer.module.css"
-import type { ComposerModel } from "./hooks/use-composer.ts"
+import { NEW_SESSION_LABEL, type ComposerModel } from "./hooks/use-composer.ts"
 import type { CompletionTrigger } from "./hooks/use-suggestion.ts"
 
 export type PresentationalComposerProps = ComposerModel
@@ -52,6 +52,7 @@ export function PresentationalComposer({
   onPickImages,
   onImagesChosen,
   onInsertTrigger,
+  newSession,
 }: PresentationalComposerProps): ReactElement {
   const phone = usePhoneWidth()
   return (
@@ -262,7 +263,25 @@ export function PresentationalComposer({
           hidden
           onChange={onImagesChosen}
         />
-        <TurnStatus />
+        <div className={styles["dispatch-toolbar-end"]}>
+          <span className={styles["dispatch-toolbar-divider"]} aria-hidden="true" />
+          <Button
+            variant="outline-accent"
+            size="secondary"
+            pressed="none"
+            disabled={newSession.disabled}
+            ariaLabel={NEW_SESSION_LABEL}
+            disclosure={{ kind: "none" }}
+            ariaHasPopup={undefined}
+            title={newSession.title}
+            className={styles["dispatch-new-session"]}
+            onClick={newSession.onStart}
+          >
+            <Plus size={14} strokeWidth={2} aria-hidden="true" />
+            <span className={styles["dispatch-new-session-label"]}>新規</span>
+          </Button>
+          <TurnStatus />
+        </div>
       </div>
     </form>
   )

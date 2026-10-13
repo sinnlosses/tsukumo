@@ -16,6 +16,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react"
 
 import type { PromptRouting } from "../../../../../../../../../shared/contract/session.ts"
+import { FRAME_ERROR_REASON } from "../../../../../../../../../shared/frame.ts"
 import { usePhoneWidth } from "../../../../../../../../hooks/use-phone-width.ts"
 import {
   EMPTY_DRAFT,
@@ -24,7 +25,11 @@ import {
 } from "../../../../../../../../stores/composer-draft.ts"
 import { useInquiryAnswer } from "../../../../../../../../stores/inquiry-answer.ts"
 import { useInquiryJump } from "../../../../../../../../stores/inquiry-jump.ts"
-import { useSession, useTurnRunning } from "../../../../../../../../stores/session.ts"
+import {
+  useRestartRefused,
+  useSession,
+  useTurnRunning,
+} from "../../../../../../../../stores/session.ts"
 import { isClearWithArgs } from "../../../../../domain/clear-request.ts"
 import type { ComposerKey, ComposerSurface } from "../../../domain/composer-surface.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
@@ -77,6 +82,12 @@ export type ComposerModel = Omit<PromptImageModel, "reset"> & {
   readonly onSubmit: (event: { readonly preventDefault: () => void }) => void
   /** `/` / `@` のボタン。キャレットの位置にその文字を打ち、入力欄へフォーカスを戻す。 */
   readonly onInsertTrigger: (trigger: CompletionTrigger) => void
+  /** 道具の行の「＋ 新規」。ターンの最中は塞ぎ、理由を `title` に持たせる。 */
+  readonly newSession: {
+    readonly disabled: boolean
+    readonly title: string
+    readonly onStart: () => void
+  }
 }
 
 export function useComposer(): ComposerModel {
@@ -84,6 +95,7 @@ export function useComposer(): ComposerModel {
   const characterName = useSession((session) => session.state.character?.name)
   const pendingActive = useSession((session) => session.state.pending.length > 0)
   const turnInProgress = useTurnRunning()
+  const restartRefused = useRestartRefused()
   const connected = useSession((session) => session.connection === "open")
   const linkLost = useSession((session) => session.linkLost)
   const endedReason = useSession((session) => session.state.endedReason)
@@ -230,8 +242,15 @@ export function useComposer(): ComposerModel {
       submit("aside-when-background")
     },
     onInsertTrigger: insertTrigger,
+    newSession: {
+      disabled: restartRefused,
+      title: restartRefused ? FRAME_ERROR_REASON.sessionSwitchDuringTurn : NEW_SESSION_LABEL,
+      onStart: () => dispatch.session.startNewSession(),
+    },
   }
 }
+
+export const NEW_SESSION_LABEL = "新しいセッションを始める"
 
 const ANSWER_PLACEHOLDER = "選択肢以外の答えを書く…"
 const PHONE_ANSWER_PLACEHOLDER = "答えを書くか、上で選ぶ"

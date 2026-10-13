@@ -1,10 +1,9 @@
 /* 経過時間と送信⇄中断（<TurnStatus>）。
-   道具の口との間に伸び縮みする要素が無いので、ここで右端へ寄せる。
+   右端へ寄せるのは道具の行の右のかたまり（composer の .dispatch-toolbar-end）が持つ。
    縮めてよいのは API の知らせだけなので、行ごと縮められるようにしておき（`min-width: 0`）、縮む役は .dispatch-notice に持たせる。 */
 .dispatch-row {
   flex: 0 1 auto;
   min-width: 0;
-  margin-left: auto;
 }
 /* API の知らせ（再試行中・利用上限・失敗の理由）。
    色は枠と字だけで地は塗らない（入力欄で塗ってよいのは送るボタンだけ）。

@@ -7,6 +7,7 @@ import { useComposerDraft } from "../../../../../../../../../src/browser/stores/
 import { useInquiryDraft } from "../../../../../../../../../src/browser/stores/inquiry-answer.ts"
 import { useInquiryJump } from "../../../../../../../../../src/browser/stores/inquiry-jump.ts"
 import type { CharacterInfo } from "../../../../../../../../../src/shared/character-pack/character.ts"
+import { FRAME_ERROR_REASON } from "../../../../../../../../../src/shared/frame.ts"
 import type { StampedPendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -377,6 +378,29 @@ describe("Composer", () => {
       { procedure: "session.prompt", text: "/clear", images: [], routing: "aside-when-background" },
     ])
     expect(screen.queryByText(/捨てられるので、送っていません/)).toBeNull()
+  })
+
+  it("道具の行の「新規」を押すと新しいセッションを始める", () => {
+    const calls: unknown[] = []
+    renderComposer({}, (command) => calls.push(command))
+
+    const button = screen.getByRole("button", { name: "新しいセッションを始める" })
+    expect(button.getAttribute("title")).toBe("新しいセッションを始める")
+    fireEvent.click(button)
+
+    expect(calls).toEqual([{ procedure: "session.startNewSession" }])
+  })
+
+  it("ターンの最中は「新規」を押せず、理由が title に付く", () => {
+    const calls: unknown[] = []
+    renderComposer({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
+
+    const button = screen.getByRole("button", { name: "新しいセッションを始める" })
+    expect(button.getAttribute("aria-disabled")).toBe("true")
+    expect(button.getAttribute("title")).toBe(FRAME_ERROR_REASON.sessionSwitchDuringTurn)
+    fireEvent.click(button)
+
+    expect(calls).toEqual([])
   })
 
   it("質問に答えている間の Command+Enter は、依頼ではなく自由入力の答えとして届く", () => {

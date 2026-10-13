@@ -260,6 +260,26 @@
               ]
             },
             {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              }
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "新しいセッションを始める",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                },
+                "新規"
+              ]
+            },
+            {
               "tag": "button",
               "attributes": {
                 "data-shortcut": "⌘⏎",
