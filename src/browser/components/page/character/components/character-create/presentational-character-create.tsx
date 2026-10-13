@@ -72,15 +72,29 @@ export function PresentationalCharacterCreate({
             >
               {form.generation.label}
             </Button>
-            <Text
-              element="p"
-              size="label"
-              tone="ink-quiet"
-              weight="inherit"
-              className={styles["character-create-generation-note"]}
-            >
-              {form.generation.note.text}
-            </Text>
+            {form.generation.progress.kind === "running" ? (
+              <ol className={styles["character-create-progress"]} aria-label="生成の進み">
+                {form.generation.progress.steps.map((step) => (
+                  <li
+                    key={step.label}
+                    className={styles["character-create-progress-item"]}
+                    data-state={step.state}
+                  >
+                    {step.label}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <Text
+                element="p"
+                size="label"
+                tone="ink-quiet"
+                weight="inherit"
+                className={styles["character-create-generation-note"]}
+              >
+                {form.generation.note.text}
+              </Text>
+            )}
           </div>
           <div className={styles["character-create-fields"]}>
             <div className={characterStyles["character-create-field"]}>

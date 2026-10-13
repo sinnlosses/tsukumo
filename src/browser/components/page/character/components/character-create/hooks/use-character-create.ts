@@ -36,6 +36,10 @@ const FAILED_NOTE = "作れなかった。もう一度押すか、id を変え�
 const GENERATE_LABEL = "立ち絵から生成"
 const GENERATING_LABEL = "生成中…"
 const GENERATION_HINT = "置いた立ち絵から名前・id・差し色・人格を書きます。書いたあとで直せます"
+const GENERATION_STAGES = [
+  { stage: "prepare", label: "立ち絵を整える" },
+  { stage: "write", label: "設定を書く" },
+] as const
 const GENERATION_FAILED_NOTE = "生成できなかった。もう一度押すか、手で入れてください"
 const PERSONA_HINT = "口調や性格を書く。空なら人格なしで作る"
 
@@ -53,9 +57,23 @@ export type CreateIdNoteModel =
   | { readonly kind: "hint"; readonly text: string }
   | { readonly kind: "invalid" | "taken" | "failed"; readonly text: string }
 
-/** 「立ち絵から生成」のボタンと、その下の一言。 */
+type GenerationStage = (typeof GENERATION_STAGES)[number]["stage"]
+
+/** 生成中の段の並び。済んだ段・いまの段・まだの段を `state` で言う。 */
+export type GenerationProgressModel =
+  | { readonly kind: "idle" }
+  | {
+      readonly kind: "running"
+      readonly steps: readonly {
+        readonly label: string
+        readonly state: "done" | "current" | "pending"
+      }[]
+    }
+
+/** 「立ち絵から生成」のボタンと、その下の一言・進み。 */
 export type CharacterGenerationModel = {
   readonly label: string
+  readonly progress: GenerationProgressModel
   readonly canGenerate: boolean
   readonly onGenerate: () => void
   readonly note: { readonly kind: "hint" | "failed"; readonly text: string }
@@ -101,7 +119,8 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   const [portraitTooLarge, setPortraitTooLarge] = useState(false)
   const [sending, setSending] = useState(false)
   const [failed, setFailed] = useState(false)
-  const [generating, setGenerating] = useState(false)
+  const [generationStage, setGenerationStage] = useState<GenerationStage | undefined>(undefined)
+  const generating = generationStage !== undefined
   const [generationFailed, setGenerationFailed] = useState(false)
 
   async function holdPortraitFile(file: File): Promise<void> {
@@ -126,10 +145,10 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       return
     }
 
-    setGenerating(true)
+    setGenerationStage("prepare")
     setGenerationFailed(false)
     const generated = await requestGenerated(portraitImage)
-    setGenerating(false)
+    setGenerationStage(undefined)
     if (generated === undefined) {
       setGenerationFailed(true)
       return
@@ -148,6 +167,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
     if (portrait === undefined) {
       return undefined
     }
+    setGenerationStage("write")
     try {
       return await dispatchAwaited.characterPack.generateFromPortrait({ portrait })
     } catch {
@@ -222,6 +242,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       },
       generation: {
         label: generating ? GENERATING_LABEL : GENERATE_LABEL,
+        progress: toGenerationProgress(generationStage),
         canGenerate,
         onGenerate: () => {
           void generate()
@@ -248,5 +269,19 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
         void create()
       },
     },
+  }
+}
+
+function toGenerationProgress(current: GenerationStage | undefined): GenerationProgressModel {
+  if (current === undefined) {
+    return { kind: "idle" }
+  }
+  const currentIndex = GENERATION_STAGES.findIndex(({ stage }) => stage === current)
+  return {
+    kind: "running",
+    steps: GENERATION_STAGES.map(({ label }, index) => ({
+      label,
+      state: index < currentIndex ? "done" : index === currentIndex ? "current" : "pending",
+    })),
   }
 }

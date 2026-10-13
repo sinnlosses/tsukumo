@@ -12,6 +12,50 @@
 .character-create-generation-note {
   margin: 0;
 }
+/* 生成中の進み。成果ページの日記の3段と同じ見た目で、縦に並べる。 */
+.character-create-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.character-create-progress-item {
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.character-create-progress-item::before {
+  content: "";
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-quiet);
+}
+.character-create-progress-item[data-state="done"] {
+  color: var(--ink);
+}
+.character-create-progress-item[data-state="done"]::before {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.character-create-progress-item[data-state="current"] {
+  color: var(--ink);
+}
+.character-create-progress-item[data-state="current"]::before {
+  border-color: var(--accent);
+  border-top-color: transparent;
+  animation: character-create-progress-spin 1s linear infinite;
+}
+@keyframes character-create-progress-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .character-create-fields {
   display: flex;
   flex-direction: column;
