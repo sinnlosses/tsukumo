@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import {
   createWelcomeGreeter,
@@ -276,6 +276,66 @@ describe("greetWelcome の足跡", () => {
 
     expect(reported.map((footprint) => footprint.outcome)).toEqual(["failed"])
     expect(reported[0]?.attempts.map((attempt) => attempt.result)).toEqual(["failed", "failed"])
+  })
+
+  it("1回目が5秒経っても返らなければ2回目を並べ、2回目が先に書けたら1回目を中断して使う", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
+    try {
+      const { ports, emitted, queries, reported, advance } = harness()
+
+      const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
+      expect(queries).toHaveLength(1)
+      advance(5000)
+      await vi.advanceTimersByTimeAsync(5000)
+      expect(queries).toHaveLength(2)
+      advance(3000)
+      queries[1]?.settle(OUTPUT)
+      await promise
+
+      expect(emitted).toEqual([{ kind: "writing" }, { kind: "written", greeting: OUTPUT }])
+      expect(reported[0]?.outcome).toBe("written")
+      expect(reported[0]?.attempts).toEqual([
+        { result: "superseded", ms: 8000 },
+        { result: "written", ms: 3000 },
+      ])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("2回目を並べたあとでも、1回目が先に書ければ1回目を使う", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
+    try {
+      const { ports, emitted, queries, reported } = harness()
+
+      const promise = greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
+      await vi.advanceTimersByTimeAsync(5000)
+      queries[0]?.settle(OUTPUT)
+      await promise
+
+      expect(emitted).toEqual([{ kind: "writing" }, { kind: "written", greeting: OUTPUT }])
+      expect(reported[0]?.attempts.map((attempt) => attempt.result)).toEqual([
+        "written",
+        "superseded",
+      ])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("1回目が5秒より前に書けなければ、待たずにすぐ2回目を起こす", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
+    try {
+      const { ports, queries } = harness()
+
+      void greetWelcome(ports, MATERIAL, new AbortController().signal, NO_TIMEOUT)
+      queries[0]?.fail()
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(queries).toHaveLength(2)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it("締め切りで中断した問い合わせは timed-out で、問い合わせ直さない", async () => {

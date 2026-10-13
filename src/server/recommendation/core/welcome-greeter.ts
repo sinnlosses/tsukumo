@@ -10,6 +10,7 @@ import type { WelcomeGreetingState } from "../../../shared/recommendation/welcom
 import { type RetriedQueryPorts, type RetriedQueryTrace, runRetriedQuery } from "./retried-query.ts"
 import {
   parseWelcomeGreeting,
+  WELCOME_GREETING_HEDGE_MS,
   WELCOME_GREETING_RECENT_LIMIT,
   WELCOME_GREETING_TIMEOUT_MS,
   welcomeGreetingQuery,
@@ -102,6 +103,7 @@ export async function greetWelcome(
     (answer) => parseWelcomeGreeting(answer, full),
     signal,
     timeoutMs,
+    WELCOME_GREETING_HEDGE_MS,
   )
   if (outcome.kind === "aborted") {
     return
@@ -137,6 +139,7 @@ async function writeReactions(
     (answer) => parseWrittenReactions(answer, material.expressions),
     new AbortController().signal,
     timeoutMs,
+    WELCOME_GREETING_HEDGE_MS,
   )
   if (outcome.kind === "aborted") {
     return

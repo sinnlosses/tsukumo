@@ -41,12 +41,12 @@ const welcomeAttemptTraceSchema = z.union([
     ms: z.number(),
   }),
   z.object({
-    result: z.enum(["written", "failed", "timed-out"]),
+    result: z.enum(["written", "failed", "timed-out", "superseded"]),
     ms: z.number(),
   }),
 ])
 
-/** 問い合わせ1回の結果と所要。検査に落ちた回だけ理由を持つ。 */
+/** 問い合わせ1回の結果と所要。検査に落ちた回だけ理由を持つ。`superseded` は先に書けた別の回に負けて中断した回。 */
 export type WelcomeAttemptTrace = Readonly<z.infer<typeof welcomeAttemptTraceSchema>>
 
 export const welcomeWritingFootprintSchema = z.object({
