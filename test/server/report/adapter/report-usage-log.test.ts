@@ -29,10 +29,15 @@ function at(hour: number, minute: number, day = 22): number {
   }).epochMilliseconds
 }
 
-function entry(when: number, sessionId = "claude-session-1"): ReportUsageEntry {
+function entry(
+  when: number,
+  sessionId = "claude-session-1",
+  figure: ReportUsageEntry["figure"] = { figureKind: "none", noneReason: "short-answer" },
+): ReportUsageEntry {
   return {
     at: when,
     sessionId,
+    figure,
     blockKinds: ["text", "table"],
     blockFields: ["tableChange"],
     notations: ["list"],
@@ -64,7 +69,7 @@ describe("createReportUsageLog", () => {
     expect(readLines("2026-09-23.jsonl").length).toBe(1)
   })
 
-  it("1行の鍵は版・日時・セッションID・塊の種類と欄・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", () => {
+  it("1行の鍵は版・日時・セッションID・figure の種類と理由・塊の種類と欄・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", () => {
     const log = createReportUsageLog(root())
 
     log.append(entry(at(9, 0)))
@@ -74,6 +79,8 @@ describe("createReportUsageLog", () => {
       "v",
       "at",
       "sessionId",
+      "figureKind",
+      "noneReason",
       "blockKinds",
       "blockFields",
       "notations",
@@ -89,6 +96,8 @@ describe("createReportUsageLog", () => {
     expect(record).toMatchObject({
       v: REPORT_USAGE_FORMAT_VERSION,
       sessionId: "claude-session-1",
+      figureKind: "none",
+      noneReason: "short-answer",
       blockKinds: ["text", "table"],
       blockFields: ["tableChange"],
       notations: ["list"],
@@ -103,6 +112,16 @@ describe("createReportUsageLog", () => {
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)
+  })
+
+  it("figure に図を置いた行は figureKind だけを持ち、noneReason を持たない", () => {
+    const log = createReportUsageLog(root())
+
+    log.append(entry(at(9, 0), "claude-session-1", { figureKind: "graph" }))
+
+    const [record] = readLines("2026-09-22.jsonl")
+    expect(record).toMatchObject({ figureKind: "graph" })
+    expect(keysOf(record)).not.toContain("noneReason")
   })
 
   it("差し戻しの行は同じ日付ファイルに入り、鍵は版・種類・日時・セッションID・差し戻しの名前だけ", () => {

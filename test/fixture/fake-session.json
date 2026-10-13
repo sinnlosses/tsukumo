@@ -2586,6 +2586,144 @@
       ]
     },
     {
+      "name": "report-figure",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "レポートの図の欄の見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "図を先に置いたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-figure-1",
+            "conclusion": "架空の結論: 図の欄の図が検証結果の下に図 1 として出る。",
+            "checks": [
+              {
+                "status": "ok",
+                "label": "架空の単体テスト",
+                "figure": "12 件",
+                "command": "",
+                "detail": ""
+              }
+            ],
+            "figure": {
+              "kind": "graph",
+              "title": "架空の欄の図",
+              "direction": "LR",
+              "source": "(架空の入口) -> 架空の検査\n架空の検査 -> 架空の描画\n+ 架空の描画 -> (架空の画面)",
+              "fold": ""
+            },
+            "sections": [
+              {
+                "heading": "架空の節",
+                "blocks": [
+                  { "kind": "text", "text": "架空の根拠の一文。", "fold": "" },
+                  {
+                    "kind": "mermaid",
+                    "title": "架空の節の図",
+                    "source": "sequenceDiagram\n  A->>B: 架空の呼び出し",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": ""
+          }
+        },
+        {
+          "afterMs": 1550,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-figure-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "report-figure-none",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "図を置かない回の見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": {
+              "kind": "speech",
+              "text": "図は置かなかったよ。",
+              "expression": "default"
+            },
+            "toolUseId": "fake-report-figure-none-1",
+            "conclusion": "架空の結論: 図を置かない回は検証結果のすぐ下に節が続く。",
+            "checks": [
+              {
+                "status": "ok",
+                "label": "架空の単体テスト",
+                "figure": "12 件",
+                "command": "",
+                "detail": ""
+              }
+            ],
+            "figure": { "kind": "none", "reason": "single-value" },
+            "sections": [
+              {
+                "heading": "架空の節",
+                "blocks": [
+                  { "kind": "text", "text": "架空の根拠の一文。", "fold": "" },
+                  {
+                    "kind": "mermaid",
+                    "title": "架空の節の図",
+                    "source": "sequenceDiagram\n  A->>B: 架空の呼び出し",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": ""
+          }
+        },
+        {
+          "afterMs": 1550,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-figure-none-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "report-mermaid-rejected",
       "steps": [
         {

@@ -48,6 +48,10 @@
       "kind": "report",
       "toolUseId": "fake-report-task-finished",
       "conclusion": "次に起こす架空の画面から、段が1つでも札に `1/1` と位置が出ます。",
+      "figure": {
+        "kind": "none",
+        "reason": "unrecorded"
+      },
       "sections": [
         {
           "heading": "変えたところ（架空）",

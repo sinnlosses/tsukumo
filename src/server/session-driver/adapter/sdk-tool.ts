@@ -12,7 +12,11 @@ import {
   expressionEnumForSpeak,
   expressionGuideForSpeak,
 } from "../../../shared/character-pack/expression-choice.ts"
-import { reportSectionSchema } from "../../../shared/report/report-block.ts"
+import {
+  reportFigureSchema,
+  reportSectionSchema,
+  sectionsWithFigure,
+} from "../../../shared/report/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report/report-check.ts"
 import {
   FIRST_SENTENCE_TARGET,
@@ -38,6 +42,7 @@ import { mermaidSourcesInSections } from "../../report/core/report-figure-fault.
 import {
   REPORT_CHECKS_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
+  REPORT_FIGURE_DESCRIPTION,
   REPORT_SECTIONS_DESCRIPTION,
   REPORT_SESSION_SUMMARY_DESCRIPTION,
   REPORT_TASK_DESCRIPTION,
@@ -227,6 +232,7 @@ function reportTool(
         .describe(
           `結論。レポートの冒頭の1〜${String(MAX_CONCLUSION_SENTENCES)}文。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）。悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）`,
         ),
+      figure: reportFigureSchema.describe(REPORT_FIGURE_DESCRIPTION),
       sections: z
         .array(reportSectionSchema)
         .min(1)
@@ -244,17 +250,30 @@ function reportTool(
       closing: z.object(speechShape(expressions)).describe(REPORT_CLOSING_DESCRIPTION),
       waitingLine: z.object(speechShape(expressions)).describe(REPORT_WAITING_LINE_DESCRIPTION),
     },
-    async ({ task, workPlanClosing, conclusion, sections, favor, checks, title, closing }) => {
+    async ({
+      task,
+      workPlanClosing,
+      conclusion,
+      figure,
+      sections,
+      favor,
+      checks,
+      title,
+      closing,
+    }) => {
       const mention = review.judgePhaseMention(
-        stringsIn([conclusion, sections, favor, checks, closing.text]),
+        stringsIn([conclusion, figure, sections, favor, checks, closing.text]),
       )
       if (mention.kind === "rejected") {
         return { content: [{ type: "text" as const, text: mention.text }], isError: true }
       }
       const fileContents = await readReportBlockFiles(cwd, sections ?? [])
-      const mermaidFaults = await checkMermaidSyntax(mermaidSourcesInSections(sections ?? []))
+      const mermaidFaults = await checkMermaidSyntax(
+        mermaidSourcesInSections(sectionsWithFigure(figure, sections ?? [])),
+      )
       const verdict = review.judgeReport({
         conclusion,
+        figure,
         sections: sections ?? [],
         favor: favor ?? "",
         checks: checks ?? [],

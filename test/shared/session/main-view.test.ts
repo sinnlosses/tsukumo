@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { reportSectionsOfBody } from "../../../src/shared/report/report-block.ts"
+import {
+  type RecordedReportFigure,
+  type ReportSection,
+  reportSectionsOfBody,
+} from "../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../src/shared/report/report-check.ts"
 import { SECTIONS_START_MARKDOWN as SECTIONS_START } from "../../../src/shared/report/report-markdown.ts"
 import type { ReportTask } from "../../../src/shared/report/report-task.ts"
@@ -604,6 +608,68 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const turn = turnOf([ask, text("架空の答え。\n\n以上です。"), finished], SETTLED, true)
 
     expect(shownReports(turn)).toEqual(["架空の答え。\n\n以上です。"])
+  })
+
+  describe("figure", () => {
+    const checks: readonly ReportCheck[] = [
+      { status: "ok", label: "架空の検査", figure: "", command: "", detail: "" },
+    ]
+    const sections: readonly ReportSection[] = [
+      {
+        heading: "",
+        blocks: [
+          { kind: "text", text: "架空の根拠。", fold: "" },
+          { kind: "graph", title: "架空の節の図", direction: "TD", source: "A -> B", fold: "" },
+        ],
+      },
+    ]
+    const shownWith = (figure: RecordedReportFigure): string =>
+      shownReports(
+        turnOf(
+          [
+            ask,
+            reportEvent({
+              toolUseId: "toolu_r1",
+              conclusion: "架空の結論。",
+              figure,
+              sections,
+              checks,
+            }),
+            finished,
+          ],
+          SETTLED,
+          true,
+        ),
+      )[0] ?? ""
+
+    it("figure の図は checks の下・sections の上に「図 1」で描き、sections の図の番号はそのあとに続く", () => {
+      const shown = shownWith({
+        kind: "graph",
+        title: "架空の欄の図",
+        direction: "LR",
+        source: "X -> Y",
+        fold: "",
+      })
+
+      const order = [
+        shown.indexOf('aria-label="検証結果"'),
+        shown.indexOf(SECTIONS_START),
+        shown.indexOf('図 1</span><span class="caption-text">架空の欄の図'),
+        shown.indexOf("架空の根拠。"),
+        shown.indexOf('図 2</span><span class="caption-text">架空の節の図'),
+      ]
+      expect(order.every((index) => index >= 0)).toBe(true)
+      expect(order).toEqual(order.toSorted((a, b) => a - b))
+    })
+
+    it("none は何も描かず、sections の図が「図 1」になる", () => {
+      const withNone = shownWith({ kind: "none", reason: "no-shape" })
+
+      expect(withNone).toBe(shownWith({ kind: "none", reason: "unrecorded" }))
+      expect(withNone).toContain('図 1</span><span class="caption-text">架空の節の図')
+      expect(withNone).not.toContain("図 2")
+      expect(withNone).not.toContain("no-shape")
+    })
   })
 
   it("checks は結論のすぐ下の合図の行に組み、口は出ない。お願いの本文は末尾のまま（body より前）", () => {

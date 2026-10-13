@@ -9,7 +9,11 @@
 import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
-import { parseReportSections, reportSectionsOfBody } from "../../../shared/report/report-block.ts"
+import {
+  parseReportFigure,
+  parseReportSections,
+  reportSectionsOfBody,
+} from "../../../shared/report/report-block.ts"
 import { parseReportChecks } from "../../../shared/report/report-check.ts"
 import { parseReportTask } from "../../../shared/report/report-task.ts"
 import { API_ERROR_KINDS, type ApiErrorKind } from "../../../shared/session-driver/api-trouble.ts"
@@ -145,6 +149,7 @@ export function isSubagentMessage(message: unknown): boolean {
  * `report` の引数を取り出す。
  * `sections` は塊ごとに検証して崩れた塊・知らない種類の塊を落とす（{@link parseReportSections}）。
  * `sections` の無い呼び出し（引数が文字列の `body` だったころの transcript）は、`body` を逃げ道の塊1つの節に畳む（{@link reportSectionsOfBody}）。
+ * `figure` の「無い」（引数に `figure` が無かったころの transcript）と形の崩れは、理由が `unrecorded` の `none` に畳む（{@link parseReportFigure}）。
  * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。
  * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。`workPlanClosing` も同じ。
  * `closing` の「無い」（引数に `closing` が無かったころの transcript）は `none` に畳む。
@@ -171,6 +176,7 @@ export function reportEvents(
       kind: "report",
       toolUseId,
       conclusion: input.conclusion,
+      figure: parseReportFigure(input.figure),
       sections: parsed.sections,
       favor: optionalString(input.favor) ?? "",
       checks: parseReportChecks(input.checks),

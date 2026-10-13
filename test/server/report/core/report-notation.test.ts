@@ -8,10 +8,12 @@ import { afterEach, describe, expect, it } from "vitest"
 import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
+import { REPORT_FIGURE_DESCRIPTION } from "../../../../src/server/report/core/report-tool.ts"
 import { readGraphSource } from "../../../../src/shared/report/graph-source.ts"
 import {
   parseReportSections,
   REPORT_BLOCK_KINDS,
+  REPORT_FIGURE_NONE_REASONS,
   REPORT_MERMAID_KINDS,
 } from "../../../../src/shared/report/report-block.ts"
 import {
@@ -50,7 +52,7 @@ const DRAWN_MERMAID_KINDS = [
  */
 const KINDS_NOT_TO_OFFER = ["sankey", "architecture", "requirementDiagram", "journey", "xychart"]
 
-const article8 = REPORT_NOTATION_PROMPT.split("8. **").at(1)?.split("9. **").at(0) ?? ""
+const article8 = REPORT_NOTATION_PROMPT.split("\n8. ").at(1)?.split("\n9. ").at(0) ?? ""
 
 function backticked(cell: string): string[] {
   return [...cell.matchAll(/`([^`]+)`/g)].flatMap(([, text]) => text ?? [])
@@ -210,7 +212,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
     // 結論の括弧に検証の結果が混ざって読みにくかった（docs/architecture/display.md「表示」）。
     expect(REPORT_NOTATION_PROMPT).toContain("検証の結果を `conclusion` と `sections` に書かない")
     expect(REPORT_NOTATION_PROMPT).toContain("読み手から見た変化")
-    expect(REPORT_NOTATION_PROMPT).toContain("8. **残ったものは、文字より視覚情報で見せる。**")
+    expect(article8).toContain("**残ったものは、文字より視覚情報で見せる。**")
     const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
     expect(beforeSend).toContain("`checks` へ移す")
   })
@@ -221,6 +223,21 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(article8).toContain("|構造の変更|`graph`|")
     expect(article8).toContain("|撮った画面|`image`|`beforeAfter`|")
     expect(article8).toContain("|1つの値の前後|`table`|`from` / `to`|")
+  })
+
+  it("条8の頭は figure の欄を指す1行で、図を置く条件と理由の意味は figure の describe だけにある", () => {
+    const firing =
+      "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある"
+
+    expect(
+      article8.startsWith("図は `figure` の欄に置く。置かない理由は欄の enum で言う。\n"),
+    ).toBe(true)
+    expect(REPORT_FIGURE_DESCRIPTION).toContain(firing)
+    expect(REPORT_NOTATION_PROMPT).not.toContain(firing)
+    expect(REPORT_NOTATION_PROMPT).not.toContain("none にしない")
+    for (const reason of REPORT_FIGURE_NONE_REASONS) {
+      expect(REPORT_NOTATION_PROMPT).not.toContain(reason)
+    }
   })
 
   it("条8の情報の形の表の塊は、report ツールの塊の種類に実在する", () => {

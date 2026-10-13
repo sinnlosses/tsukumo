@@ -14,7 +14,7 @@ import { applyDiaryEvent, type DiaryWriting } from "../diary/diary.ts"
 import type { WrittenReactionsState } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
-import type { ReportSection } from "../report/report-block.ts"
+import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { TaskSummaryResult } from "../repository/task-summary.ts"
@@ -161,6 +161,7 @@ export type SessionRecord =
       readonly kind: "report"
       readonly toolUseId: string
       readonly conclusion: string
+      readonly figure: RecordedReportFigure
       readonly sections: readonly ReportSection[]
       readonly favor: string
       readonly checks: readonly ReportCheck[]
@@ -766,6 +767,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             kind: "report",
             toolUseId: event.toolUseId,
             conclusion: event.conclusion,
+            figure: event.figure,
             sections: event.sections,
             favor: event.favor,
             checks: event.checks,

@@ -19,6 +19,7 @@ import {
   type PlanUsageReport,
   UNAVAILABLE_PLAN_USAGE,
 } from "../../../shared/plan-usage/plan-usage.ts"
+import { sectionsWithFigure } from "../../../shared/report/report-block.ts"
 import { conclusionWithTaskName } from "../../../shared/report/report-task.ts"
 import {
   type SessionDigest,
@@ -328,7 +329,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     if (event.kind === "report") {
       options.reportImageShelf.shelve(
         event.toolUseId,
-        reportImagePaths(event.sections),
+        reportImagePaths(sectionsWithFigure(event.figure, event.sections)),
         options.readReportImage,
       )
     }

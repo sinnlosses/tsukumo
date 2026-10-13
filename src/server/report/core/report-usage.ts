@@ -3,7 +3,12 @@
 
 import { isPlainObject } from "remeda"
 
-import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
+import {
+  type ReportBlock,
+  type ReportSection,
+  sectionsWithFigure,
+} from "../../../shared/report/report-block.ts"
+import type { ReportFigureUsage } from "../../../shared/report/report-usage-record.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { reportImagePaths } from "./report-image-shelf.ts"
 import {
@@ -17,9 +22,11 @@ import {
 export type ReportUsageEntry = {
   readonly at: number
   readonly sessionId: string
-  /** その回に出た塊の種類（重複無し）。 */
+  /** `figure` の欄の種類と、`none` の理由。 */
+  readonly figure: ReportFigureUsage
+  /** その回に出た塊の種類（`figure` の図を含む。重複無し）。 */
   readonly blockKinds: readonly string[]
-  /** その回に出た塊の欄（重複無し）。 */
+  /** その回に出た塊の欄（`figure` の図を含む。重複無し）。 */
   readonly blockFields: readonly ReportBlockField[]
   /** その回に逃げ道（`markdown` の塊）の外側に出た記法の種類（重複無し）。 */
   readonly notations: readonly MarkdownNotation[]
@@ -30,13 +37,13 @@ export type ReportUsageEntry = {
   readonly unknownBlockCount: number
   /** `files` の塊に `modified` の項目があるか。 */
   readonly hasModifiedFiles: boolean
-  /** `beforeAfter` か `image` の塊が1つでもあるか。 */
+  /** `beforeAfter` か `image` の塊が1つでもあるか（`figure` を含む）。 */
   readonly hasBeforeAfterOrImage: boolean
   /** `task` を渡した最終レポートか。 */
   readonly forTask: boolean
-  /** 段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）が1つでもあるか。 */
+  /** 段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側と `figure` を含む）が1つでもあるか。 */
   readonly hasFigure: boolean
-  /** このターンにメインが画像のファイルを `Read` したのに `image` の塊（`beforeAfter` の側を含む）が無いか。 */
+  /** このターンにメインが画像のファイルを `Read` したのに `image` の塊（`beforeAfter` の側と `figure` を含む）が無いか。 */
   readonly readImageWithoutImageBlock: boolean
 }
 
@@ -80,11 +87,16 @@ export function reportUsageEntryOf(
   at: number,
   mainReadImageFile: boolean,
 ): ReportUsageEntry {
+  const drawnSections = sectionsWithFigure(event.figure, event.sections)
   return {
     at,
     sessionId,
-    blockKinds: blockKindsOf(event.sections),
-    blockFields: blockFieldsOf(event.sections),
+    figure:
+      event.figure.kind === "none"
+        ? { figureKind: "none", noneReason: event.figure.reason }
+        : { figureKind: event.figure.kind },
+    blockKinds: blockKindsOf(drawnSections),
+    blockFields: blockFieldsOf(drawnSections),
     notations: notationsInSections(event.sections),
     containedNotations: containedNotationsInSections(event.sections),
     escapeNotations: escapeNotationsInSections(event.sections),
@@ -92,17 +104,17 @@ export function reportUsageEntryOf(
     hasModifiedFiles: blocksOf(event.sections).some(
       (block) => block.kind === "files" && block.items.some((item) => item.change === "modified"),
     ),
-    hasBeforeAfterOrImage: blocksOf(event.sections).some(
+    hasBeforeAfterOrImage: blocksOf(drawnSections).some(
       (block) => block.kind === "beforeAfter" || block.kind === "image",
     ),
     forTask: event.task.kind === "task",
-    hasFigure: blocksOf(event.sections).some(
+    hasFigure: blocksOf(drawnSections).some(
       (block) =>
         FIGURE_KINDS.includes(block.kind) ||
         (block.kind === "beforeAfter" &&
           [block.before, block.after].some((side) => FIGURE_KINDS.includes(side.kind))),
     ),
-    readImageWithoutImageBlock: mainReadImageFile && reportImagePaths(event.sections).length === 0,
+    readImageWithoutImageBlock: mainReadImageFile && reportImagePaths(drawnSections).length === 0,
   }
 }
 

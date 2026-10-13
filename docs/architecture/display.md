@@ -117,8 +117,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   Claude Code 本体は `speak` を利用者に見える出力に数えず、`speak` だけのステップが続くと
   "The user hasn't heard from you in a while" をターンの途中に差し込んで言い直しを誘うので、子プロセスに
   `CLAUDE_CODE_SILENT_TURN_REMINDER=0` を渡して切る（`src/server/session-driver/core/visible-output-nudge.ts`。仕事・雑談の両方）
-- **レポートは MCP ツール `report(task, conclusion, checks, sections, favor, closing, waitingLine)` で受け取る**（2026-09-24 決定。
-  `checks` は 2026-09-26 に、`closing` は 2026-09-27 に、`task` は 2026-09-30 に、`waitingLine` は 2026-10-05 に足し、本文は 2026-09-27 に文字列の `body` から
+- **レポートは MCP ツール `report(task, conclusion, checks, figure, sections, favor, closing, waitingLine)` で受け取る**（2026-09-24 決定。
+  `checks` は 2026-09-26 に、`closing` は 2026-09-27 に、`task` は 2026-09-30 に、`waitingLine` は 2026-10-05 に、`figure` は 2026-10-13 に足し、本文は 2026-09-27 に文字列の `body` から
   `sections` に替えた。
   仕事のセッションでは常に載り、雑談では載らない）。**検査を通った `report` はそこでターンを閉じる**
   （2026-09-27 決定。handler が結果に `_meta["claude/endTurn"]` を付け、本体は assistant を挟まずに
@@ -136,7 +136,16 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   **必須の引数 `waitingLine`（待ちの一言。`closing` と同じ `text` と `expression`）には、依頼を待つ間に
   1回だけ吹き出しに出す一言を毎回書かせる**（2026-10-05 利用者決定。2026-10-06 に schema で必須にした。出す条件は下の「機械の出来事への反応」の6）。
   記録を読み戻す側は、必須にする前の記録のために欄が無いものも読める。
-  `report` の記録に写り、transcript から組み直しても同じ値が戻る
+  `report` の記録に写り、transcript から組み直しても同じ値が戻る。
+  **必須の引数 `figure` にはレポートの図を1つ置くか、置かない理由を書かせる**（2026-10-13 決定。ADR 0028 の追記）。
+  形は図の塊1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`stats`・`dimension`。`sections` の同じ塊と同じ形）か
+  `{ kind: "none", reason }` で、`reason` は `short-answer`・`no-shape`・`single-value`・`no-material` の4つ。
+  図を置く条件と理由の意味は引数の説明（`REPORT_FIGURE_DESCRIPTION`）だけが持ち、`REPORT_NOTATION_PROMPT` の条8は欄を指す1行だけにする。
+  図は `checks` の下・`sections` の上に、見出しの無い先頭の節として描き、図の番号は `sections` の図と通しで振る（`figure` の図が「図 1」）。
+  `none` は何も描かない（空の枠や札も置かない）。図の塊の検査（構文・はみ出し・種類）と画像の棚も、`figure` を先頭に含めて見る（`sectionsWithFigure`）。
+  `reason` が本文と合わない回は `figure-contradiction` で差し戻す（規約違反の1ターン1回の枠。`no-shape` なのに `sections` に
+  `list` の `flow`・`beforeAfter`・`graph`・`mermaid`・`svg` がある回と、`short-answer` なのに節が2つ以上か4文以上の地の文がある回）。
+  欄の無い古い transcript の `report` は、理由が `unrecorded` の `none` に畳んで読む（`unrecorded` は書き手には出さない）
   ターンの途中の経過は `speak` で言う。雑談には使わない（`report` が無く、1ターンに `speak` を
   何度か呼ぶのが普通の形なので、閉じるツールを置くと切れる）。`report` の外に書いたターンの本文
   （`assistant` のテキスト）は、`report` が1つでも呼ばれたターンでは画面に出さない。呼ばれなかった
@@ -978,7 +987,8 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 3つの真偽値も足す（modified があるのに前後図も画像も無い回を数えるためのもので、塊の欄とは別。外す基準の対象にしない）。
 版5からは、段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるかの `hasFigure` と、
 このターンにメインが画像のファイルを `Read` したのに `image` の塊が無かったかの `readImageWithoutImageBlock`
-（サブエージェントの `Read` は数えない）も足す。数えるだけで差し戻しにはしない。中身は一切持たない
+（サブエージェントの `Read` は数えない）も足す。版6からは、`figure` の欄の種類（図の塊の `kind` か `none`）の `figureKind` と、
+`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。数えるだけで差し戻しにはしない。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
 `src/server/report/adapter/report-usage-log.ts`、何を1行にするかは
 `src/server/report/core/report-usage.ts` が持つ。逃げ道の記法の検出は `src/server/report/core/report-markdown-notation.ts`、
@@ -986,11 +996,13 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 
 **集計するスクリプトは `scripts/report-block-usage.ts`**（`node scripts/report-block-usage.ts
 --days <日数>`、既定28日）。「塊の種類 × レポート数」「塊の欄 × レポート数」「modified のファイルがあるのに前後図も画像も無いレポート」
-「逃げ道の外の記法 × レポート数」「逃げ道の容れ物の中の記法 × レポート数」「塊の無い記法 × レポート数」に、「段1の図を含むレポート」と「画像を読んだのに image が無いレポート」（全レポートと task の最終レポートの2行ずつ）を足した8つの表を出す。
-欄を記録する前の行（版2）も読み、欄の表だけは欄を記録した行を、modified の表は版4以降の行を、図と画像の2つの表は版5の行を分母にする（欄を足す前後で使われ方を見比べるため）。
+「逃げ道の外の記法 × レポート数」「逃げ道の容れ物の中の記法 × レポート数」「塊の無い記法 × レポート数」に、「段1の図を含むレポート」と「画像を読んだのに image が無いレポート」（全レポートと task の最終レポートの2行ずつ）、
+「`figure` の種類 × レポート数」と「`none` の理由 × レポート数」（それぞれ全レポートと task の最終レポートの表を1つずつ、計4つ）を足した12の表を出す。
+欄を記録する前の行（版2）も読み、欄の表だけは欄を記録した行を、modified の表は版4以降の行を、図と画像の2つの表は版5以降の行を分母にする（欄を足す前後で使われ方を見比べるため）。
+`figure` の4つの表では、版5以前の行を理由が `unrecorded` の `none` に数える。
 `report` が差し戻されたときも同じファイルに1行書く（`kind: "rejected"`・時刻・セッションID・差し戻しの種類の名前だけで、
 手続きの7種〔送り直し・新しい事実が無い・段取りへの応え・段の閉じ方の3種・背景のシェル〕と記法の違反の `kind`。本文も文面も持たない）。
-集計は9つめの表「差し戻しの種類 × 回数」で、割合は `report` の呼び出し（受け付け＋差し戻し）の数に対して出す。
+集計は13番めの表「差し戻しの種類 × 回数」で、割合は `report` の呼び出し（受け付け＋差し戻し）の数に対して出す。
 よく当たる規則は欄の形や説明で防ぎ、当たらない規則は削る判断に使う。
 
 - **足すきっかけ**: 塊の無い記法の同じ種類が、直近2週間（14日）のレポートの3%以上に出たら、

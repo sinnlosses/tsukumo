@@ -50,6 +50,7 @@ const reportOfDraft = (
   reportEvent({
     toolUseId,
     conclusion: draft.conclusion,
+    figure: draft.figure,
     sections: draft.sections,
     favor: draft.favor,
     checks: draft.checks,
@@ -122,6 +123,24 @@ describe("createReportReview の judge", () => {
     expect(review.judge(INVALID).kind).toBe("rejected")
     expect(review.judge(INVALID)).toEqual({ kind: "accepted" })
     expect(review.judge(INVALID)).toEqual({ kind: "accepted" })
+  })
+
+  it("figure の理由と本文の矛盾は規約違反の枠で1ターンに1回だけ差し戻し、文面に本文を写さない", () => {
+    const review = createReportReview(noPlan)
+    const contradicting = reportDraft({
+      conclusion: "架空の結論。",
+      figure: { kind: "none", reason: "short-answer" },
+      sections: [
+        { heading: "架空の秘密の節1", blocks: [{ kind: "text", text: "架空の根拠。", fold: "" }] },
+        { heading: "架空の秘密の節2", blocks: [{ kind: "text", text: "架空の根拠。", fold: "" }] },
+      ],
+    })
+
+    const first = review.judge(contradicting)
+
+    expect(first).toMatchObject({ kind: "rejected", reasons: ["figure-contradiction"] })
+    expect(first.kind === "rejected" ? first.text : "").not.toContain("架空の秘密")
+    expect(review.judge(contradicting)).toEqual({ kind: "accepted" })
   })
 
   it("ターンの区切り（session-info / turn-finished）で回数が戻る", () => {

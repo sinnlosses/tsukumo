@@ -115,6 +115,10 @@
       "kind": "report",
       "toolUseId": "fake-turn-outline-report-1",
       "conclusion": "どちらに置くかの判断を待っている（架空）。",
+      "figure": {
+        "kind": "none",
+        "reason": "unrecorded"
+      },
       "sections": [],
       "favor": "",
       "checks": [],
@@ -169,6 +173,10 @@
       "kind": "report",
       "toolUseId": "fake-turn-outline-report-2",
       "conclusion": "前提が崩れていたので止めた（架空）。",
+      "figure": {
+        "kind": "none",
+        "reason": "unrecorded"
+      },
       "sections": [],
       "favor": "",
       "checks": [],

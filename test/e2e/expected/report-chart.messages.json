@@ -57,6 +57,10 @@
       "kind": "report",
       "toolUseId": "fake-report-chart-1",
       "conclusion": "架空の結論: 3種のグラフの見え方を確かめた。",
+      "figure": {
+        "kind": "none",
+        "reason": "unrecorded"
+      },
       "sections": [
         {
           "heading": "架空の件数の推移",

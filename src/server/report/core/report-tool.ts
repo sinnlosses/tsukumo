@@ -14,7 +14,7 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
  * MCP ツールの説明文は既定で 2048 字までしか渡らず、規約の全文は入らない。
  */
 export const REPORT_TOOL_DESCRIPTION =
-  "ターンのレポートをメインビューに出す。task（目録の1行と見出し）→ conclusion → checks（検証結果の表）→ sections → favor の順に描かれ、" +
+  "ターンのレポートをメインビューに出す。task（目録の1行と見出し）→ conclusion → checks（検証結果の表）→ figure → sections → favor の順に描かれ、" +
   "そのあと closing のセリフが吹き出しに出る。受け付けられるとそこでターンが終わる（あとに何も書けない）。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。" +
   "本文は日本語で書く（識別子・パス・コマンド・コードは英語のままでよい）。"
@@ -43,6 +43,20 @@ export const REPORT_WORK_PLAN_CLOSING_DESCRIPTION =
   "段の閉じ方。同じ依頼で work_plan を渡したときは必ず入れる。" +
   "finished（全部の段を終えた。最後の段にいるときに渡すと tsukumo が帯を全部済みにする）/ " +
   "stopped（途中で止めた。帯は今の段のまま残る）。段取りの無い依頼では省く。"
+
+/**
+ * `report` の `figure` 引数（レポートの図1つか、置かない理由）の説明。
+ * 図を置く条件と作業のレポートの最小形はここだけが持つ。図の塊ごとの使いどころは各塊の `describe` が持つ。
+ */
+export const REPORT_FIGURE_DESCRIPTION =
+  "レポートの図1つ。checks の下・sections の上に「図 1」として描かれ、sections の図の番号はそのあとに続く。" +
+  "次のどれかがあれば図の塊（image / mermaid / graph / svg / beforeAfter / chart / stats / dimension）を置き、none にしない: " +
+  "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある。" +
+  "作業のレポートの最小の形は、ここに図1つと、sections に表か箇条書き。" +
+  "図を置かないときは kind を none にして reason で理由を言う: " +
+  "short-answer（2〜3文で終わる答え）/ no-shape（つながり・時間の順・位置・3つ以上の数のどれも無い）/ " +
+  "single-value（前後が値1つで、table のセルの from / to か stats の before で足りる）/ " +
+  "no-material（委譲先の返却に構造の材料が無く、差分も読んでいない）。none は何も描かれない。"
 
 /**
  * `report` の任意の `sections` 引数（本文。節と塊の並び）の説明。

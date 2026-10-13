@@ -95,6 +95,10 @@
       "kind": "report",
       "toolUseId": "fake-report-call-1",
       "conclusion": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
+      "figure": {
+        "kind": "none",
+        "reason": "unrecorded"
+      },
       "sections": [
         {
           "heading": "",
@@ -210,6 +214,10 @@
       "kind": "report",
       "toolUseId": "fake-report-call-2",
       "conclusion": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
+      "figure": {
+        "kind": "none",
+        "reason": "unrecorded"
+      },
       "sections": [
         {
           "heading": "",

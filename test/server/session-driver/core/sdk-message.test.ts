@@ -1103,6 +1103,51 @@ describe("toSessionEvents（report ツール）", () => {
     expect(waitingLines).toEqual([{ kind: "none" }, { kind: "none" }])
   })
 
+  it("report の figure は図の塊と none の理由を運び、無い（古い transcript）・崩れたものは unrecorded に畳む", () => {
+    const figures = [
+      {
+        kind: "stats",
+        items: [
+          { value: "1", label: "架空の数" },
+          { value: "2", label: "架空の数" },
+        ],
+      },
+      { kind: "none", reason: "single-value" },
+      undefined,
+      { kind: "none", reason: "架空の理由" },
+      { kind: "table", title: "架空の表", columns: ["a", "b"], rows: [["1", "2"]] },
+    ].map((figure) => {
+      const [event] = toSessionEvents(
+        assistantMessage([
+          {
+            type: "tool_use",
+            id: "toolu_r1",
+            name: REPORT_TOOL_FULL_NAME,
+            input: { conclusion: "架空の結論。", ...(figure === undefined ? {} : { figure }) },
+          },
+        ]),
+        EXPRESSIONS,
+      )
+      return event?.kind === "report" ? event.figure : undefined
+    })
+
+    const unrecorded = { kind: "none", reason: "unrecorded" }
+    expect(figures).toEqual([
+      {
+        kind: "stats",
+        items: [
+          { before: "", value: "1", total: "", label: "架空の数" },
+          { before: "", value: "2", total: "", label: "架空の数" },
+        ],
+        fold: "",
+      },
+      { kind: "none", reason: "single-value" },
+      unrecorded,
+      unrecorded,
+      unrecorded,
+    ])
+  })
+
   it("report の sessionSummary が文字列でない・空白だけなら無いものとして畳む", () => {
     const summaries = [42, "   "].map((sessionSummary) => {
       const [event] = toSessionEvents(

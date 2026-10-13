@@ -1,7 +1,9 @@
 // `report` の塊の使われ方（`~/.tsukumo/report-usage/<YYYY-MM-DD>.jsonl`）を集計し、
 // 「塊の種類 × レポート数」「塊の欄 × レポート数」「modified のファイルがあるのに前後図も画像も無いレポート」
-// 「段1の図を含むレポート」「画像を読んだのに image が無いレポート」「逃げ道の中の記法 × レポート数」「差し戻しの種類 × 回数」を割合つきで出す。
+// 「段1の図を含むレポート」「画像を読んだのに image が無いレポート」「`figure` の種類 × レポート数」「`none` の理由 × レポート数」
+// 「逃げ道の中の記法 × レポート数」「差し戻しの種類 × 回数」を割合つきで出す。
 // 欄を記録する前の版（2）の行も読み、欄の表だけはそれを記録した版の行を分母にする（欄を足す前後で逃げ道を見比べるため）。
+// `figure` を記録する前の版（5以前）の行は、`figure` の表では理由が `unrecorded` の `none` に数える。
 //
 // 使い方:
 //   node scripts/report-block-usage.ts             # 直近28日
@@ -20,7 +22,11 @@ import {
 import { REPORT_PROCEDURE_REJECTIONS } from "../src/server/report/core/report-review.ts"
 import { REPORT_BLOCK_FIELDS } from "../src/server/report/core/report-usage.ts"
 import { REPORT_VIOLATION_KINDS } from "../src/server/report/core/report-violation.ts"
-import { REPORT_BLOCK_KINDS } from "../src/shared/report/report-block.ts"
+import {
+  REPORT_BLOCK_KINDS,
+  REPORT_FIGURE_NONE_REASONS,
+  reportFigureSchema,
+} from "../src/shared/report/report-block.ts"
 import { REPORT_USAGE_FORMAT_VERSION } from "../src/shared/report/report-usage-record.ts"
 
 const USAGE = `使い方:
@@ -52,7 +58,21 @@ const visualRecordShape = {
   ...commonRecordShape,
 }
 
-const recordSchema = z.discriminatedUnion("v", [
+/** 段1の図の有無を記録し、`figure` を記録する前の版。 */
+const FIGURE_FIELDLESS_FORMAT_VERSION = 5
+
+const figureRecordShape = {
+  hasFigure: z.boolean(),
+  readImageWithoutImageBlock: z.boolean(),
+  ...visualRecordShape,
+}
+
+const figureFieldSchema = z.union([
+  z.object({ figureKind: z.literal("none"), noneReason: z.string() }),
+  z.object({ figureKind: z.string() }),
+])
+
+const recordSchema = z.union([
   z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
   z.object({
     v: z.literal(VISUALLESS_FORMAT_VERSION),
@@ -60,23 +80,30 @@ const recordSchema = z.discriminatedUnion("v", [
     ...commonRecordShape,
   }),
   z.object({ v: z.literal(MODIFIED_FORMAT_VERSION), ...visualRecordShape }),
-  z.object({
-    v: z.literal(REPORT_USAGE_FORMAT_VERSION),
-    hasFigure: z.boolean(),
-    readImageWithoutImageBlock: z.boolean(),
-    ...visualRecordShape,
-  }),
+  z.object({ v: z.literal(FIGURE_FIELDLESS_FORMAT_VERSION), ...figureRecordShape }),
+  z
+    .object({ v: z.literal(REPORT_USAGE_FORMAT_VERSION), ...figureRecordShape })
+    .and(figureFieldSchema),
 ])
 type UsageRecord = z.infer<typeof recordSchema>
 type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[] }>
 type VisualRecord = Extract<UsageRecord, { readonly hasModifiedFiles: boolean }>
-type FigureRecord = Extract<UsageRecord, { readonly v: typeof REPORT_USAGE_FORMAT_VERSION }>
+type FigureRecord = Extract<UsageRecord, { readonly hasFigure: boolean }>
+
+/** `figure` の表に出す種類。0件でも出す。 */
+const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
+  (option) => option.shape.kind.value,
+)
+
+/** `figure` を記録する前の行の理由。 */
+const UNRECORDED_REASON = "unrecorded"
 
 /** 差し戻した呼び出しの行（`kind: "rejected"`）。受け付けの行には `kind` が無い。 */
 const rejectionSchema = z.object({
   v: z.union([
     z.literal(VISUALLESS_FORMAT_VERSION),
     z.literal(MODIFIED_FORMAT_VERSION),
+    z.literal(FIGURE_FIELDLESS_FORMAT_VERSION),
     z.literal(REPORT_USAGE_FORMAT_VERSION),
   ]),
   kind: z.literal("rejected"),
@@ -108,7 +135,7 @@ const visualRecords = records.filter(
   (record): record is VisualRecord => record.v >= MODIFIED_FORMAT_VERSION,
 )
 const figureRecords = records.filter(
-  (record): record is FigureRecord => record.v === REPORT_USAGE_FORMAT_VERSION,
+  (record): record is FigureRecord => record.v >= FIGURE_FIELDLESS_FORMAT_VERSION,
 )
 process.stdout.write(
   fieldRecords.length === 0
@@ -126,6 +153,8 @@ process.stdout.write("\n\n")
 process.stdout.write(figureSection(figureRecords))
 process.stdout.write("\n\n")
 process.stdout.write(imageOversightSection(figureRecords))
+process.stdout.write("\n\n")
+process.stdout.write(figureFieldSection(records))
 process.stdout.write("\n\n")
 process.stdout.write(
   table("逃げ道の外の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
@@ -248,6 +277,36 @@ function imageOversightSection(rows: readonly FigureRecord[]): string {
       (record) => record.readImageWithoutImageBlock,
     ),
   ].join("\n")
+}
+
+/** `figure` の種類と `none` の理由を、全レポートと task の最終レポートで1つずつ数えた表。 */
+function figureFieldSection(rows: readonly UsageRecord[]): string {
+  const taskRows = rows.filter((record) => "forTask" in record && record.forTask)
+  const reasons = [...REPORT_FIGURE_NONE_REASONS, UNRECORDED_REASON]
+  return [
+    table("`figure` の種類 × レポート数（全レポート）", FIGURE_KINDS, rows, figureKindsOf),
+    table(
+      "`figure` の種類 × レポート数（task の最終レポート）",
+      FIGURE_KINDS,
+      taskRows,
+      figureKindsOf,
+    ),
+    table("`none` の理由 × レポート数（全レポート）", reasons, rows, noneReasonsOf),
+    table("`none` の理由 × レポート数（task の最終レポート）", reasons, taskRows, noneReasonsOf),
+  ].join("\n\n")
+}
+
+/** `figure` の種類。記録する前の版の行は `none`。 */
+function figureKindsOf(record: UsageRecord): readonly string[] {
+  return ["figureKind" in record ? record.figureKind : "none"]
+}
+
+/** `none` の理由。図を置いた行は無く、記録する前の版の行は `unrecorded`。 */
+function noneReasonsOf(record: UsageRecord): readonly string[] {
+  if (!("figureKind" in record)) {
+    return [UNRECORDED_REASON]
+  }
+  return "noneReason" in record ? [record.noneReason] : []
 }
 
 function shareLine<Row>(

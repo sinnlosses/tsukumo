@@ -97,6 +97,10 @@
       "kind": "report",
       "toolUseId": "fake-report-waiting-idle",
       "conclusion": "架空の結論で、実物の会話ではない。",
+      "figure": {
+        "kind": "none",
+        "reason": "unrecorded"
+      },
       "sections": [],
       "favor": "",
       "checks": [],

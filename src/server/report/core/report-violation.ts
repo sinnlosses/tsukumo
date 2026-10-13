@@ -8,7 +8,12 @@
 
 import { keys } from "remeda"
 
-import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
+import {
+  type RecordedReportFigure,
+  type ReportBlock,
+  type ReportSection,
+  sectionsWithFigure,
+} from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import {
   MAX_CANDIDATES,
@@ -44,12 +49,13 @@ import {
 /** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
 export type ReportDraft = {
   readonly conclusion: string
+  readonly figure: RecordedReportFigure
   readonly sections: readonly ReportSection[]
   readonly favor: string
   readonly checks: readonly ReportCheck[]
   /** `code` の塊の `path` → 読めたファイルの中身。読めなかった `path` は入らない。 */
   readonly fileContents: ReadonlyMap<string, string>
-  /** 構文が割れた `mermaid` の塊。検査できなかったときも、割れた塊が無いときも空。 */
+  /** 構文が割れた `mermaid` の塊（`figure` を含む）。検査できなかったときも、割れた塊が無いときも空。 */
   readonly mermaidFaults: readonly MermaidFault[]
   /** 載せたタスク。記法の検査には使わず、段の残りの差し戻し（`ReportReview`）が終わり方を読む。 */
   readonly task: ReportTask
@@ -131,13 +137,20 @@ export type ReportViolation =
   | { readonly kind: "labeled-ordered"; readonly count: number }
   /** `text` の塊か節の見出しが、仮名も漢字も無く英語の語が並ぶ地の文になっている。`count` は該当の数。 */
   | { readonly kind: "non-japanese"; readonly count: number }
+  /**
+   * `figure` の `none` の理由が本文と合わない。
+   * `no-shape` なのに `sections` に流れ・つながり・構造を描く塊（`list` の `flow`・`beforeAfter`・`graph`・`mermaid`・`svg`）がある（`count` はその塊の数）か、
+   * `short-answer` なのに節が2つ以上か4文以上の地の文の塊がある（`count` はその節の数と塊の数の和）。
+   */
+  | {
+      readonly kind: "figure-contradiction"
+      readonly count: number
+      readonly reason: "no-shape" | "short-answer"
+    }
 
 /** レポートの規約違反を並べる。空なら違反は無い。 */
 export function reportViolations(report: ReportDraft): readonly ReportViolation[] {
   const blocks = report.sections.flatMap((section) => section.blocks)
-  const markdowns = blocks.flatMap((block) =>
-    block.kind === "markdown" ? [splitFences(block.markdown)] : [],
-  )
   const notations = notationsInSections(report.sections)
   const mismatchedCodeBlocks = blocks
     .filter(
@@ -151,8 +164,10 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       .replace(/[。！？]+$/, ""),
   ].length
 
-  const svgFaults = svgFaultsInSections(report.sections)
-  const graphFaults = graphFaultsInSections(report.sections)
+  const drawnSections = sectionsWithFigure(report.figure, report.sections)
+  const drawnBlocks = drawnSections.flatMap((section) => section.blocks)
+  const svgFaults = svgFaultsInSections(drawnSections)
+  const graphFaults = graphFaultsInSections(drawnSections)
 
   const counted = [
     { kind: "long-conclusion", count: sentenceCount(report.conclusion) },
@@ -160,14 +175,10 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       kind: "long-paragraph",
       count:
         blocks.filter(
-          (block) =>
-            block.kind === "text" && block.fold.trim() === "" && sentenceCount(block.text) > 3,
-        ).length +
-        markdowns
-          .flatMap(({ outside }) => paragraphs(outside))
-          .filter((paragraph) => sentenceCount(paragraph) > 3).length,
+          (block) => block.kind === "text" && block.fold.trim() === "" && isLongProse(block.text),
+        ).length + longMarkdownParagraphCount(blocks),
     },
-    { kind: "unknown-mermaid", count: unknownMermaidCount(report.sections) },
+    { kind: "unknown-mermaid", count: unknownMermaidCount(drawnSections) },
     { kind: "too-many-notes", count: blocks.filter((block) => block.kind === "note").length },
     { kind: "crowded-notes", count: crowdedNoteCount(report.sections) },
     {
@@ -179,14 +190,14 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     {
       kind: "too-many-candidates",
-      count: blocks.filter((block) => hasTooManyCandidates(block)).length,
+      count: drawnBlocks.filter((block) => hasTooManyCandidates(block)).length,
     },
     {
       kind: "unordered-options",
       count: blocks.filter((block) => block.kind === "options" && !isVerdictOrdered(block)).length,
     },
     { kind: "ragged-table", count: blocks.filter((block) => isRaggedTable(block)).length },
-    { kind: "ragged-chart", count: blocks.filter((block) => isRaggedChart(block)).length },
+    { kind: "ragged-chart", count: drawnBlocks.filter((block) => isRaggedChart(block)).length },
     {
       kind: "untitled-section",
       count:
@@ -238,6 +249,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
         report.sections.filter(({ heading }) => isNonJapanese(heading)).length +
         blocks.filter((block) => block.kind === "text" && isNonJapanese(block.text)).length,
     },
+    figureContradiction(report.figure, report.sections),
   ] as const satisfies readonly ReportViolation[]
 
   return counted.filter((violation) => violation.count > VIOLATION_THRESHOLDS[violation.kind])
@@ -279,6 +291,7 @@ const VIOLATION_THRESHOLDS = {
   "label-in-item": 0,
   "labeled-ordered": 0,
   "non-japanese": 0,
+  "figure-contradiction": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 export const REPORT_VIOLATION_KINDS = keys(VIOLATION_THRESHOLDS)
@@ -335,6 +348,66 @@ function violationLine(violation: ReportViolation): string {
       return `全部の項目に \`label\` がある3段以上の \`ordered\` の \`list\` が${violation.count}個ある。名前の付いた段を辿る流れは \`flow\` にする`
     case "non-japanese":
       return `仮名も漢字も無い英語の地の文・見出しが${violation.count}個ある。日本語で書き直す（識別子・パス・コマンド・コードは \`\` で囲めば英語のままでよい）`
+    case "figure-contradiction":
+      return violation.reason === "no-shape"
+        ? `\`figure\` の reason が \`no-shape\` なのに、\`sections\` に流れ・つながり・構造を描く塊（\`list\` の \`flow\`・\`beforeAfter\`・\`graph\`・\`mermaid\`・\`svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`
+        : `\`figure\` の reason が \`short-answer\` なのに、節が2つ以上あるか4文以上の地の文がある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
+  }
+}
+
+function figureContradiction(
+  figure: RecordedReportFigure,
+  sections: readonly ReportSection[],
+): Extract<ReportViolation, { readonly kind: "figure-contradiction" }> {
+  const blocks = sections.flatMap((section) => section.blocks)
+  if (figure.kind === "none" && figure.reason === "no-shape") {
+    return {
+      kind: "figure-contradiction",
+      count: blocks.filter((block) => drawsShape(block)).length,
+      reason: "no-shape",
+    }
+  }
+  if (figure.kind === "none" && figure.reason === "short-answer") {
+    const longProse =
+      blocks.filter((block) => block.kind === "text" && isLongProse(block.text)).length +
+      longMarkdownParagraphCount(blocks)
+    return {
+      kind: "figure-contradiction",
+      count: (sections.length >= 2 ? sections.length : 0) + longProse,
+      reason: "short-answer",
+    }
+  }
+  return { kind: "figure-contradiction", count: 0, reason: "no-shape" }
+}
+
+/** 地の文の段落の文の上限（条「地の文の段落は3文まで」）。 */
+const MAX_PARAGRAPH_SENTENCES = 3
+
+function isLongProse(text: string): boolean {
+  return sentenceCount(text) > MAX_PARAGRAPH_SENTENCES
+}
+
+/** 逃げ道の外側の段落のうち、文の上限を超えるものの数。 */
+function longMarkdownParagraphCount(blocks: readonly ReportBlock[]): number {
+  return blocks
+    .flatMap((block) =>
+      block.kind === "markdown" ? paragraphs(splitFences(block.markdown).outside) : [],
+    )
+    .filter(isLongProse).length
+}
+
+/** 流れ・つながり・構造を描く塊か（`no-shape` と合わない塊）。 */
+function drawsShape(block: ReportBlock): boolean {
+  switch (block.kind) {
+    case "list":
+      return block.style === "flow"
+    case "beforeAfter":
+    case "graph":
+    case "mermaid":
+    case "svg":
+      return true
+    default:
+      return false
   }
 }
 

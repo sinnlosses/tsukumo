@@ -6,7 +6,7 @@
 // `Stop` の関所（`ReportGate`）に止められたモデルが、止められた本文を入れずに前の `report` を送り直して関所を抜ける形を塞ぐ。
 // 関所は2回目の止まりを止めないので、送り直しを通すと止めた本文が画面に出ないまま終わる（`docs/research/report-tool-trial.md`「残った穴の形」）。
 // 枠は規約違反の1回とは別に1ターンに1回まで（規約違反で差し戻して直した `report` を送り直す形もある）。
-// 比べるのは `conclusion` / `favor` の前後の空白を除いたものと、`sections` と `checks` の中身。
+// 比べるのは `conclusion` / `favor` の前後の空白を除いたものと、`figure` と `sections` と `checks` の中身。
 // 覚えるのは `ReportReview.pass` が出した（描いた）`report` だけなので、サブエージェントの `report`（変換で捨てる）とは比べない。
 //
 // 新しい事実の無い `report` も差し戻す（枠は別に1ターンに1回まで）。
@@ -321,10 +321,11 @@ function closingSpeech(report: ReportEvent): readonly SessionEvent[] {
   return report.closing.kind === "speech" ? [report.closing] : []
 }
 
-/** 描いたレポートと同じ引数か。文字列の2つの欄は前後の空白を除いて、`sections` と `checks` は中身で比べる。 */
+/** 描いたレポートと同じ引数か。文字列の2つの欄は前後の空白を除いて、`figure` と `sections` と `checks` は中身で比べる。 */
 function isSameReport(drawn: ReportEvent, draft: ReportDraft): boolean {
   return (
     drawn.conclusion.trim() === draft.conclusion.trim() &&
+    isDeepEqual(drawn.figure, draft.figure) &&
     isDeepEqual(drawn.sections, draft.sections) &&
     drawn.favor.trim() === draft.favor.trim() &&
     isDeepEqual(drawn.checks, draft.checks)

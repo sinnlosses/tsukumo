@@ -219,6 +219,9 @@ const CLOSING = { text: "架空の締めの一言", expression: "default" }
 const WAITING_LINE = { text: "架空の待ちの一言", expression: "default" }
 const SUMMARY = "架空の要約"
 
+/** `report` に渡す図の欄（必須）。図を置かない理由を言う形。 */
+const FIGURE = { kind: "none", reason: "short-answer" }
+
 describe("question_brief", () => {
   const BRIEF_ARGS = {
     questions: [
@@ -297,6 +300,7 @@ describe("report でターンを閉じる", () => {
     const reply = await callTool(workServer(), "report", {
       conclusion: "架空の結論",
       closing: CLOSING,
+      figure: FIGURE,
       sessionSummary: SUMMARY,
       waitingLine: WAITING_LINE,
     })
@@ -309,6 +313,7 @@ describe("report でターンを閉じる", () => {
     const reply = await callTool(workServer(), "report", {
       conclusion: "架空の一文目。架空の二文目。架空の三文目。",
       closing: CLOSING,
+      figure: FIGURE,
       sessionSummary: SUMMARY,
       waitingLine: WAITING_LINE,
     })
@@ -322,6 +327,7 @@ describe("report でターンを閉じる", () => {
       conclusion: "架空の結論",
       sections: [{ blocks: [{ kind: "mermaid", source }] }],
       closing: CLOSING,
+      figure: FIGURE,
       sessionSummary: SUMMARY,
       waitingLine: WAITING_LINE,
     })
@@ -343,6 +349,21 @@ describe("report でターンを閉じる", () => {
     expect(fixed).toEqual({ text: "ok", isError: false, endsTurn: true })
   })
 
+  it("figure に置いた mermaid の構文も検査し、描く順の1個目として差し戻す", async () => {
+    const reply = await callTool(workServer(), "report", {
+      conclusion: "架空の結論",
+      figure: { kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi; there" },
+      sections: [{ blocks: [{ kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi" }] }],
+      closing: CLOSING,
+      sessionSummary: SUMMARY,
+      waitingLine: WAITING_LINE,
+    })
+
+    expect(reply.isError).toBe(true)
+    expect(reply.text).toContain("1個目の 2 行目")
+    expect(reply.text).not.toContain("there")
+  })
+
   it("closing の無い report は形の検査で落ち、ターンを閉じない", async () => {
     const reply = await callTool(workServer(), "report", { conclusion: "架空の結論" })
 
@@ -354,6 +375,7 @@ describe("report でターンを閉じる", () => {
     const reply = await callTool(workServer(), "report", {
       conclusion: "架空の結論",
       closing: CLOSING,
+      figure: FIGURE,
       sessionSummary: SUMMARY,
       waitingLine: { text: "架空の待ちの一言", expression: "架空の表情" },
     })
@@ -366,16 +388,42 @@ describe("report でターンを閉じる", () => {
     const noWaitingLine = await callTool(workServer(), "report", {
       conclusion: "架空の結論",
       closing: CLOSING,
+      figure: FIGURE,
       sessionSummary: SUMMARY,
     })
     const noSummary = await callTool(workServer(), "report", {
       conclusion: "架空の結論",
+      figure: FIGURE,
       closing: CLOSING,
       waitingLine: WAITING_LINE,
     })
 
     expect(noWaitingLine).toMatchObject({ isError: true, endsTurn: false })
     expect(noSummary).toMatchObject({ isError: true, endsTurn: false })
+  })
+
+  it("figure の無い report・理由の無い none は形の検査で落ち、図の塊1つか none と理由で通る", async () => {
+    const withFigure = (figure: unknown) => ({
+      conclusion: "架空の結論",
+      ...(figure === undefined ? {} : { figure }),
+      closing: CLOSING,
+      sessionSummary: SUMMARY,
+      waitingLine: WAITING_LINE,
+    })
+
+    const replies = await Promise.all(
+      [
+        undefined,
+        { kind: "none" },
+        { kind: "none", reason: "unrecorded" },
+        { kind: "table", title: "架空の表", columns: ["a", "b"], rows: [["1", "2"]] },
+        { kind: "graph", direction: "LR", source: "架空のA -> 架空のB" },
+        { kind: "none", reason: "no-shape" },
+      ].map((figure) => callTool(workServer(), "report", withFigure(figure))),
+    )
+
+    expect(replies.map((reply) => reply.isError)).toEqual([true, true, true, true, false, false])
+    expect(replies[5]).toEqual({ text: "ok", isError: false, endsTurn: true })
   })
 
   it("speak はターンを閉じない", async () => {
@@ -447,6 +495,7 @@ describe("範囲の外の段の番号の差し戻し", () => {
       conclusion: "架空の結論",
       workPlanClosing: "stopped",
       closing: { text: closingText, expression: "default" },
+      figure: FIGURE,
       sessionSummary: SUMMARY,
       waitingLine: WAITING_LINE,
     })
@@ -719,6 +768,7 @@ describe("report の本文（sections）", () => {
         },
       ],
       closing: CLOSING,
+      figure: FIGURE,
       sessionSummary: SUMMARY,
       waitingLine: WAITING_LINE,
     })
@@ -726,6 +776,7 @@ describe("report の本文（sections）", () => {
       conclusion: "架空の結論",
       sections: [{ blocks: [{ kind: "markdown", markdown: "- 架空の項目" }] }],
       closing: CLOSING,
+      figure: FIGURE,
       sessionSummary: SUMMARY,
       waitingLine: WAITING_LINE,
     })
@@ -740,6 +791,7 @@ describe("report の差し戻しの記録", () => {
   const draft = {
     conclusion: "架空の結論",
     closing: CLOSING,
+    figure: FIGURE,
     sessionSummary: SUMMARY,
     waitingLine: WAITING_LINE,
   }
@@ -763,6 +815,7 @@ describe("report の title", () => {
     const reply = await callTool(workServer([], titles), "report", {
       conclusion: "架空の結論",
       closing: CLOSING,
+      figure: FIGURE,
       sessionSummary: SUMMARY,
       waitingLine: WAITING_LINE,
       title: "架空の題",
@@ -778,6 +831,7 @@ describe("report の title", () => {
     const reply = await callTool(workServer([], titles), "report", {
       conclusion: "架空の結論",
       closing: CLOSING,
+      figure: FIGURE,
       sessionSummary: SUMMARY,
       waitingLine: WAITING_LINE,
     })
@@ -792,6 +846,7 @@ describe("report の title", () => {
     const reply = await callTool(workServer([], titles), "report", {
       conclusion: "架空の一文目。架空の二文目。架空の三文目。",
       closing: CLOSING,
+      figure: FIGURE,
       sessionSummary: SUMMARY,
       waitingLine: WAITING_LINE,
       title: "架空の題",

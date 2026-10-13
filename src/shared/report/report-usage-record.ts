@@ -1,10 +1,20 @@
 // `report` の塊の使われ方の記録の行の形。1行 = 描いた `report` 1回。
 // 書いてよいのは時刻・セッションID・塊と記法の名前・数だけで、塊の中身・逃げ道の文字は入れない。
 
-/** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 5 satisfies number
+import type { RecordedFigureNoneReason, RecordedReportFigure } from "./report-block.ts"
 
-export type ReportUsageRecord = {
+/** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
+export const REPORT_USAGE_FORMAT_VERSION = 6 satisfies number
+
+/**
+ * `figure` の欄の記録（版6から）。`figureKind` は図の塊の `kind` か `none`、`noneReason` は `none` のときだけ。
+ * 中身は持たない。
+ */
+export type ReportFigureUsage =
+  | { readonly figureKind: Exclude<RecordedReportFigure["kind"], "none"> }
+  | { readonly figureKind: "none"; readonly noneReason: RecordedFigureNoneReason }
+
+export type ReportUsageRecord = ReportFigureUsage & {
   readonly v: typeof REPORT_USAGE_FORMAT_VERSION
   /** ISO 8601（オフセット付き）。行だけで時刻が決まる。 */
   readonly at: string

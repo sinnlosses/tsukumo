@@ -163,6 +163,21 @@ describe("レポートの画像の棚", () => {
     expect(shelf.find("toolu_restored", "fictional/after.png")).toBeUndefined()
   })
 
+  it("report の figure に置いた画像も棚に置く", async () => {
+    const { stub, shelf } = startManagerWithReportImageShelf()
+    await waitForBatch()
+
+    stub.emit(
+      reportEvent({
+        toolUseId: "toolu_figure",
+        figure: { kind: "image", path: "fictional/figure.png", caption: "", notes: [], fold: "" },
+      }),
+    )
+    await waitForBatch()
+
+    expect(shelf.find("toolu_figure", "fictional/figure.png")).toEqual(FICTIONAL_IMAGE)
+  })
+
   it("起こし直して記録からレポートが消えたら、その画像を棚から捨てる", async () => {
     const { manager, stub, shelf } = startManagerWithReportImageShelf()
     await waitForBatch()

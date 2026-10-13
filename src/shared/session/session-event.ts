@@ -12,7 +12,7 @@ import type { DiaryEvent } from "../diary/diary.ts"
 import type { WrittenReactions } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
-import type { ReportSection } from "../report/report-block.ts"
+import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { TaskSummaryResult } from "../repository/task-summary.ts"
@@ -168,6 +168,7 @@ export type SessionEvent =
   /**
    * `report` ツールの呼び出し。メインが呼んだものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
    * `sections`（本文の節）と `checks`（検証結果）は無ければ空の配列、`favor` は無ければ空の文字列、`task` と `workPlanClosing`（段の閉じ方）は無ければ `none`。
+   * `figure`（レポートの図1つか、置かない理由）は無ければ理由が `unrecorded` の `none`。
    * `toolUseId` は呼び出しの id で、差し戻しが同じ呼び出しの `tool-finished` と突き合わせるのに使う。
    * `closing`（締めのセリフ）は描いたあとに差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
    * `waitingLine`（待ちの一言）は記録に写り、依頼を待つ間に `shownReaction` が出す。
@@ -178,6 +179,7 @@ export type SessionEvent =
       readonly kind: "report"
       readonly toolUseId: string
       readonly conclusion: string
+      readonly figure: RecordedReportFigure
       readonly sections: readonly ReportSection[]
       readonly favor: string
       readonly checks: readonly ReportCheck[]

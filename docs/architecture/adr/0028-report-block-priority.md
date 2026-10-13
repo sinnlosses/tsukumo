@@ -162,3 +162,14 @@
 | `src/browser/components/page/conversation/components/markdown/renderer/`  | `svg` の塊を図形から SVG に組んで描く（テーマの色）                                                                                                     |
 | `src/server/report/core/report-usage.ts`・`scripts/report-block-usage.ts` | 記録を版5にし、段1の図を含む割合と、画像を `Read` したのに `image` が無い回を足す                                                                       |
 | `docs/architecture/display.md`                                            | 「規則と置き場の対応」の条8の行と、各表示物の塊の一覧に `svg` を足し、「塊を足す・外す基準」の記録の版5を書く                                           |
+
+## 追記: 図を欄で必須にした（2026-10-13）
+
+梯子の条8は選び方を言うだけで、図を使わない判断を書き手が黙って済ませられた（直近28日の `report` 1805件で、
+段1の図を含むのは10.2%、`task` の最終レポートで20件中1件）。**`report` に必須の欄 `figure` を足し、図を1つ置くか、
+置かない理由を enum（`short-answer`・`no-shape`・`single-value`・`no-material`）で言わせる。** 図を置く条件と最小の形は
+欄の説明（`REPORT_FIGURE_DESCRIPTION`）に置き、条8の頭は欄を指す1行だけにする。
+
+順位の違反は数えてから差し戻しを決める線は変えない。差し戻すのは理由と本文が食い違う回（`figure-contradiction`）だけで、
+理由の分布は記録の版6（`figureKind`・`noneReason`）で数える。`modified` があるのに図の無い最終レポートを差し戻すかは、
+その数を見てから決める。欄・描き方・記録の詳細は `docs/architecture/display.md`「出力の分離（セリフと詳細）」と「塊を足す・外す基準」が持つ。

@@ -472,6 +472,53 @@ export const figureBlockSchema = z.discriminatedUnion("kind", [
 
 export type FigureBlock = DeepReadonly<z.infer<typeof figureBlockSchema>>
 
+/** `report` の `figure` に図を置かない理由。 */
+export const REPORT_FIGURE_NONE_REASONS = [
+  "short-answer",
+  "no-shape",
+  "single-value",
+  "no-material",
+] as const
+
+/** `report` の `figure`（レポートの図1つか、置かない理由）。図の塊は `sections` の同じ種類の塊と同じ形。 */
+export const reportFigureSchema = z.discriminatedUnion("kind", [
+  imageBlockSchema,
+  mermaidBlockSchema,
+  graphBlockSchema,
+  svgBlockSchema,
+  beforeAfterBlockSchema,
+  chartBlockSchema,
+  statsBlockSchema,
+  dimensionBlockSchema,
+  z.object({ kind: z.literal("none"), reason: z.enum(REPORT_FIGURE_NONE_REASONS) }),
+])
+
+export type ReportFigure = DeepReadonly<z.infer<typeof reportFigureSchema>>
+
+/**
+ * 読み戻した `figure`。`unrecorded` は `figure` の欄が無かったころの呼び出しと形の崩れで、
+ * 書き手には出さない（{@link reportFigureSchema} の理由には入れない）。
+ */
+export type RecordedReportFigure =
+  | ReportFigure
+  | { readonly kind: "none"; readonly reason: "unrecorded" }
+
+export type RecordedFigureNoneReason = Extract<
+  RecordedReportFigure,
+  { readonly kind: "none" }
+>["reason"]
+
+/**
+ * `figure` の図を見出しの無い先頭の節にした、描く順（figure → sections）の並び。`none` なら `sections` のまま。
+ * 図の番号と、図の不具合の位置（何個目か）はこの並びで数える。
+ */
+export function sectionsWithFigure(
+  figure: RecordedReportFigure,
+  sections: readonly ReportSection[],
+): readonly ReportSection[] {
+  return figure.kind === "none" ? sections : [{ heading: "", blocks: [figure] }, ...sections]
+}
+
 export const reportSectionSchema = z.object({
   heading: z
     .string()
@@ -542,6 +589,12 @@ export function parseReportSections(value: unknown): ParsedReportSections {
     }),
     unknownBlockCount: parsed.flatMap(({ blocks }) => blocks).filter(isUnknownKindBlock).length,
   }
+}
+
+/** `report` の引数の `figure` を取り出す。無い・崩れたものは `unrecorded` に畳む。 */
+export function parseReportFigure(value: unknown): RecordedReportFigure {
+  const figure = reportFigureSchema.safeParse(value)
+  return figure.success ? figure.data : { kind: "none", reason: "unrecorded" }
 }
 
 /** 塊を1つずつ検証するために、節の見出しだけを先に読む形。 */

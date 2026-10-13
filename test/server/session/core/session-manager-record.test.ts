@@ -446,6 +446,7 @@ describe("createSessionManager", () => {
         {
           at: 1_000,
           sessionId: "claude-session-1",
+          figure: { figureKind: "none", noneReason: "unrecorded" },
           blockKinds: ["text"],
           blockFields: [],
           notations: [],

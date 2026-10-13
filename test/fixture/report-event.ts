@@ -12,6 +12,7 @@ export function reportEvent(
     kind: "report",
     toolUseId: "fictional-report",
     conclusion: "架空の結論",
+    figure: { kind: "none", reason: "unrecorded" },
     sections: [],
     favor: "",
     checks: [],
@@ -29,6 +30,7 @@ export function reportEvent(
 export function reportDraft(overrides: Partial<ReportDraft> = {}): ReportDraft {
   return {
     conclusion: "架空の結論",
+    figure: { kind: "none", reason: "unrecorded" },
     sections: [],
     favor: "",
     checks: [],

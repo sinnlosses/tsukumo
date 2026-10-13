@@ -308,6 +308,7 @@ describe("reportUsageEntryOf", () => {
     expect(entry).toEqual({
       at: 12_345,
       sessionId: "claude-session-9",
+      figure: { figureKind: "none", noneReason: "unrecorded" },
       blockKinds: [],
       blockFields: [],
       notations: [],
@@ -396,6 +397,48 @@ describe("reportUsageEntryOf", () => {
       expect(entryOf([text, image], true).readImageWithoutImageBlock).toBe(false)
       expect(entryOf([beforeAfterImage], true).readImageWithoutImageBlock).toBe(false)
       expect(entryOf([text], false).readImageWithoutImageBlock).toBe(false)
+    })
+  })
+
+  describe("figure", () => {
+    const image = {
+      kind: "image",
+      path: "/tmp/a.png",
+      caption: "架空",
+      notes: [],
+      fold: "",
+    } as const
+
+    it("図を置いた回は種類だけを持ち、none の回は理由を持つ（中身は持たない）", () => {
+      const placed = reportUsageEntryOf(
+        reportEvent({ figure: image }),
+        "claude-session-1",
+        1_000,
+        false,
+      )
+      const none = reportUsageEntryOf(
+        reportEvent({ figure: { kind: "none", reason: "no-material" } }),
+        "claude-session-1",
+        1_000,
+        false,
+      )
+
+      expect(placed.figure).toEqual({ figureKind: "image" })
+      expect(none.figure).toEqual({ figureKind: "none", noneReason: "no-material" })
+    })
+
+    it("figure の図も塊の種類・段1の図・画像の有無に数える", () => {
+      const entry = reportUsageEntryOf(
+        reportEvent({ figure: image }),
+        "claude-session-1",
+        1_000,
+        true,
+      )
+
+      expect(entry.blockKinds).toEqual(["image"])
+      expect(entry.hasFigure).toBe(true)
+      expect(entry.hasBeforeAfterOrImage).toBe(true)
+      expect(entry.readImageWithoutImageBlock).toBe(false)
     })
   })
 })
