@@ -1,4 +1,4 @@
-import { describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
@@ -28,5 +28,23 @@ describe("入力欄から送る", () => {
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("入力欄に打っている最中に Esc を押すと、フォーカスが入力欄から外れる", async () => {
+    const room = await run.open({
+      scenario: "input-dispatch",
+      scene: "none",
+      viewport: "wide",
+      domRoots: [],
+    })
+
+    const textArea = room.page.locator("textarea")
+    await textArea.fill("Esc で外す場面を見たい（架空の依頼）")
+    await textArea.focus()
+    await room.page.keyboard.press("Escape")
+
+    await expect
+      .poll(() => room.page.evaluate(() => document.activeElement?.tagName === "TEXTAREA"))
+      .toBe(false)
   })
 })

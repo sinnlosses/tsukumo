@@ -1,4 +1,4 @@
-// 入力欄へフォーカスを入れる時機。
+// 入力欄へフォーカスを入れる時機と、Esc で外す条件。
 // やり取りが閉じているときにマウントされたとき・閉じたとき（会話の画面へ戻ったときも同じ）と、スキップリンクが押されたとき。
 // 狭い画面（760px 以下）は、開いただけでキーボードと吹き出しの畳みを起こさないよう、前の2つでは入れない。
 
@@ -10,7 +10,7 @@ import { isPhoneWidth } from "../../../../../../../../hooks/use-phone-width.ts"
 import { useComposerFocus } from "../../../../../../../../stores/composer-focus.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { isFocusWithinMainView } from "../../../../../domain/main-view-focus.ts"
-import type { ComposerSurface } from "../../../domain/composer-surface.ts"
+import type { ComposerKey, ComposerSurface } from "../../../domain/composer-surface.ts"
 
 export function useComposerFocusTiming(surfaceRef: RefObject<ComposerSurface | null>): void {
   const closed = useSession((session) => isExchangeClosed(session.state))
@@ -27,6 +27,21 @@ export function useComposerFocusTiming(surfaceRef: RefObject<ComposerSurface | n
       surfaceRef.current?.focus()
     }
   }, [signal, surfaceRef])
+}
+
+/** 修飾キーなしの Esc で入力欄のフォーカスを外す。重なる面が開いている間は、その面を閉じる Esc に譲る。外したら true。 */
+export function blurOnEscape(event: ComposerKey, surface: ComposerSurface | null): boolean {
+  if (
+    event.key !== "Escape" ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.shiftKey ||
+    isOverlayOpen()
+  ) {
+    return false
+  }
+  surface?.blur()
+  return true
 }
 
 /** メインビューを読んでいる・重なる面が開いている・別の入力欄に打っているあいだは、フォーカスを奪わない。 */

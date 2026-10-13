@@ -32,6 +32,9 @@ export function TextAreaSurface({
       focus: () => {
         textAreaRef.current?.focus()
       },
+      blur: () => {
+        textAreaRef.current?.blur()
+      },
       caret: () => textAreaRef.current?.selectionStart ?? 0,
       placeCaret: (caret) => {
         textAreaRef.current?.setSelectionRange(caret, caret)

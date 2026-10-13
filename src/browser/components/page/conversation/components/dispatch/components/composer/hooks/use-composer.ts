@@ -33,7 +33,7 @@ import {
 import { isClearWithArgs } from "../../../../../domain/clear-request.ts"
 import type { ComposerKey, ComposerSurface } from "../../../domain/composer-surface.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
-import { useComposerFocusTiming } from "./use-composer-focus.ts"
+import { blurOnEscape, useComposerFocusTiming } from "./use-composer-focus.ts"
 import { usePromptImage, type PromptImageModel } from "./use-prompt-image.ts"
 import {
   insertedTrigger,
@@ -221,6 +221,10 @@ export function useComposer(): ComposerModel {
       const composing = isComposingEvent(event)
 
       if (!composing && suggestion.onKeyDown(event)) {
+        return true
+      }
+
+      if (!composing && blurOnEscape(event, surfaceRef.current)) {
         return true
       }
 

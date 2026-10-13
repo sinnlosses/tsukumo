@@ -104,6 +104,9 @@ export function MarkdownEditorSurface({
       focus: () => {
         viewRef.current?.focus()
       },
+      blur: () => {
+        viewRef.current?.contentDOM.blur()
+      },
       caret: () => viewRef.current?.state.selection.main.head ?? 0,
       placeCaret: (caret) => {
         const view = viewRef.current

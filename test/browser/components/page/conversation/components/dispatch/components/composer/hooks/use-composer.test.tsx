@@ -134,6 +134,58 @@ describe("useComposer の `/` 補完", () => {
   })
 })
 
+describe("useComposer の Escape（フォーカスを外す）", () => {
+  function attachSurface(result: {
+    readonly current: ReturnType<typeof useComposer>
+  }): () => number {
+    let blurred = 0
+    result.current.surfaceRef.current = {
+      focus: () => {},
+      blur: () => {
+        blurred += 1
+      },
+      caret: () => 0,
+      placeCaret: () => {},
+    }
+    return () => blurred
+  }
+
+  it("補完が開いていなければ、フォーカスを外して処理済みにする", () => {
+    const { result } = renderUseComposer()
+    const blurredCount = attachSurface(result)
+    type(result, "架空の依頼")
+
+    act(() => {
+      expect(result.current.onKeyDown(key("Escape"))).toBe(true)
+    })
+
+    expect(blurredCount()).toBe(1)
+  })
+
+  it("補完が開いている間は候補を閉じるだけで外さず、次の Escape で外す", () => {
+    const { result } = renderUseComposer(FIXTURE_COMMANDS)
+    const blurredCount = attachSurface(result)
+    type(result, "/cl")
+
+    press(result, key("Escape"))
+    expect(blurredCount()).toBe(0)
+
+    press(result, key("Escape"))
+    expect(blurredCount()).toBe(1)
+  })
+
+  it("変換中と修飾キー付きでは外さない", () => {
+    const { result } = renderUseComposer()
+    const blurredCount = attachSurface(result)
+
+    press(result, { ...key("Escape"), isComposing: true })
+    press(result, { ...key("Escape"), keyCode: 229 })
+    press(result, key("Escape", { shift: true }))
+
+    expect(blurredCount()).toBe(0)
+  })
+})
+
 describe("useComposer の送信", () => {
   it("Command+Enter で前後の空白を落として送り、下書きを空にする", () => {
     const calls: unknown[] = []

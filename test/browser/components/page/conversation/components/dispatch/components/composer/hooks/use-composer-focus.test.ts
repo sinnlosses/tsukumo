@@ -38,6 +38,7 @@ function renderWhileRunning(): () => number {
     },
     caret: () => 0,
     placeCaret: () => {},
+    blur: () => {},
   }
   putSession({ ...INITIAL_SESSION_STATE, turn: RUNNING })
   renderHook(() => {
