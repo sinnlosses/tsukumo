@@ -565,6 +565,11 @@ const MODEL_OUTPUT_EVENT_KINDS: ReadonlySet<SessionEvent["kind"]> = new Set([
   "step-usage",
 ] satisfies SessionEvent["kind"][])
 
+/** 駆動を起こし直すコマンドを断るべきか。ターンが進行中か、委譲先（`backgroundTasks`）が動いている間は断る。 */
+export function restartRefused(state: SessionState): boolean {
+  return state.turn.kind === "running" || state.backgroundTasks.length > 0
+}
+
 /**
  * イベント1件を畳み込んで次の姿を返す。知らない状況でも必ず姿を返す（落ちない）。
  * `at` はイベントが起きた時刻（`StampedEvent.at`）。時計をここで読まない（サーバとブラウザで同じ結果になるようにするため）。

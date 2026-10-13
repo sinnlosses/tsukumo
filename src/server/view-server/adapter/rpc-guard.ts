@@ -10,7 +10,7 @@ import type { IncomingMessage } from "node:http"
 import { ORPCError, os } from "@orpc/server"
 
 import { COMMAND_ERRORS, type CommandMeta, NO_COMMAND_REFUSAL } from "../../../shared/command.ts"
-import type { SessionState } from "../../../shared/session/session-state.ts"
+import { restartRefused, type SessionState } from "../../../shared/session/session-state.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/view-server/session-socket.ts"
 import type { CommandSession } from "../../session/core/command-session.ts"
 import { isConnectionGranted } from "../core/connection-grant.ts"
@@ -86,7 +86,8 @@ function refusalOf(meta: CommandMeta, state: SessionState): string | undefined {
   if (!state.chatMode && meta.chatOnly !== false) {
     return meta.chatOnly
   }
-  if (state.turn.kind === "running" && meta.idleTurn !== false) {
+  const busy = meta.restarts ? restartRefused(state) : state.turn.kind === "running"
+  if (busy && meta.idleTurn !== false) {
     return meta.idleTurn
   }
   return undefined

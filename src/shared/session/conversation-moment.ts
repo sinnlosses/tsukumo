@@ -1,7 +1,7 @@
 // 仕事のセッションの会話の画面がいまどの局面にあるか（`ConversationMoment`）。セッションの姿から導くだけで、状態は持たない。
 
 import { mainViewEntries } from "./main-view.ts"
-import type { SessionState } from "./session-state.ts"
+import { restartRefused, type SessionState } from "./session-state.ts"
 
 /**
  * 局面。中身は迎える口（`greet`）・働くあいだの札（`work` / `ask`）・レポート（`deliver` / `stumble`）の3つ。
@@ -26,7 +26,7 @@ export function conversationMoment(state: SessionState): ConversationMoment {
  * どちらかが残っているあいだは、次の合図で続きのターンが始まり、いま最後の `report` が中間レポートへ回るかもしれない。
  */
 export function isExchangeClosed(state: SessionState): boolean {
-  return state.turn.kind !== "running" && state.backgroundTasks.length === 0
+  return !restartRefused(state)
 }
 
 /**

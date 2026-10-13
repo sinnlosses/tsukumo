@@ -580,6 +580,48 @@ describe("createCommandRouter（session）", () => {
     expect(restarts).toEqual([])
   })
 
+  describe("ターンが終わっていても委譲先が動いている間", () => {
+    const BACKGROUND_TASKS_EVENT = {
+      kind: "background-tasks-changed",
+      tasks: [{ taskId: "t1", kind: "shell", description: "架空の背景" }],
+    } satisfies SessionEvent
+
+    it("駆動を起こし直す4つのコマンドは定型文の理由で受け付けず、駆動を閉じない", async () => {
+      const { commands, restarts, observe } = startRouter()
+      observe(REQUEST_EVENT)
+      observe(TURN_FINISHED_EVENT)
+      observe(BACKGROUND_TASKS_EVENT)
+
+      expect(await commands.session.switchCharacter({ name: "fictional" })).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.switchDuringTurn,
+      })
+      expect(await commands.session.setChatMode({ chat: true })).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.chatModeSwitchDuringTurn,
+      })
+      expect(await commands.session.switchSession({ sessionId: "架空の別セッション" })).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.sessionSwitchDuringTurn,
+      })
+      expect(await commands.session.startNewSession()).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.sessionSwitchDuringTurn,
+      })
+      expect(restarts).toEqual([])
+    })
+
+    it("nudge は断られない（起こし直さないので、ターン中かどうかだけを見る）", async () => {
+      const { commands, observe } = startRouter()
+      observe(CHAT_MODE_EVENT)
+      observe(REQUEST_EVENT)
+      observe(TURN_FINISHED_EVENT)
+      observe(BACKGROUND_TASKS_EVENT)
+
+      expect(await commands.session.nudge()).toEqual({ ok: true })
+    })
+  })
+
   it("session.setSessionDefault を覚えさせ、姿に載せて配る", async () => {
     const { commands, remembered, emitted } = startRouter()
 

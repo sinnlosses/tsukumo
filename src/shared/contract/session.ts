@@ -79,17 +79,22 @@ export const sessionContract = {
   nudge: commandBase.meta({
     chatOnly: FRAME_ERROR_REASON.nudgeOutsideChat,
     idleTurn: FRAME_ERROR_REASON.nudgeDuringTurn,
+    restarts: false,
   }),
   /** キャラクターパックを切り替える（駆動の起こし直し）。 */
   switchCharacter: commandBase
-    .meta({ chatOnly: false, idleTurn: FRAME_ERROR_REASON.switchDuringTurn })
+    .meta({ chatOnly: false, idleTurn: FRAME_ERROR_REASON.switchDuringTurn, restarts: true })
     .input(z.object({ name: z.string().min(1).max(MAX_CHARACTER_PACK_NAME_LENGTH) })),
   /**
    * 雑談モードへ入る／出る。駆動の起こし直しになる
    * （`systemPrompt` はセッションを起こすときに固定されるので、レポートの記法を外すには起こし直すしかない）。
    */
   setChatMode: commandBase
-    .meta({ chatOnly: false, idleTurn: FRAME_ERROR_REASON.chatModeSwitchDuringTurn })
+    .meta({
+      chatOnly: false,
+      idleTurn: FRAME_ERROR_REASON.chatModeSwitchDuringTurn,
+      restarts: true,
+    })
     .input(z.object({ chat: z.boolean() })),
   /**
    * 続きから始めるセッションを画面から選び直す。
@@ -97,7 +102,11 @@ export const sessionContract = {
    * ここで見るのは長さだけで、知らないIDは起こす側が新規に倒す。
    */
   switchSession: commandBase
-    .meta({ chatOnly: false, idleTurn: FRAME_ERROR_REASON.sessionSwitchDuringTurn })
+    .meta({
+      chatOnly: false,
+      idleTurn: FRAME_ERROR_REASON.sessionSwitchDuringTurn,
+      restarts: true,
+    })
     .input(z.object({ sessionId: z.string().min(1).max(MAX_SESSION_ID_LENGTH) })),
   /**
    * 新しいセッションを起こす（切り替え画面の「＋ 新しいセッション」）。
@@ -106,6 +115,7 @@ export const sessionContract = {
   startNewSession: commandBase.meta({
     chatOnly: false,
     idleTurn: FRAME_ERROR_REASON.sessionSwitchDuringTurn,
+    restarts: true,
   }),
   /**
    * 成果の画面から送る、成果の振り返り。

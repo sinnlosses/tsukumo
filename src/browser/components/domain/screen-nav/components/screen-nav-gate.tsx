@@ -1,5 +1,5 @@
 // 帯に並ぶ口1つ。ただのリンクなので、リロードで同じ画面に戻り、ブラウザの「戻る」も効く。
-// 押せない口（ターン進行中の、いまと違うモードの口）は移動も送信もしない。
+// 押せない口（`restartRefused` の間の、いまと違うモードの口）は移動も送信もしない。
 
 import clsx from "clsx"
 import type { MouseEvent, ReactElement } from "react"

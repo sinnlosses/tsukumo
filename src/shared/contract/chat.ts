@@ -14,6 +14,10 @@ export const chatContract = {
    * サイドバーの「覚えていること」自体が雑談中にしか出ないので、雑談の外なら断る。
    */
   forgetRememberedLine: commandBase
-    .meta({ chatOnly: FRAME_ERROR_REASON.forgetRememberedLineOutsideChat, idleTurn: false })
+    .meta({
+      chatOnly: FRAME_ERROR_REASON.forgetRememberedLineOutsideChat,
+      idleTurn: false,
+      restarts: false,
+    })
     .input(z.object({ line: z.string().min(1).max(MAX_REMEMBERED_LINE_LENGTH) })),
 }

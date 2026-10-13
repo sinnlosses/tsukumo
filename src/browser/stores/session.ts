@@ -12,6 +12,7 @@ import type { CommandClient } from "../../shared/rpc.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
+  restartRefused,
   type SessionState,
 } from "../../shared/session/session-state.ts"
 import { SESSION_SOCKET_PATH } from "../../shared/view-server/session-socket.ts"
@@ -139,6 +140,11 @@ export const useSession = create<SessionStoreState>()((set, get) => {
 /** ターンが進行中かどうか。 */
 export function useTurnRunning(): boolean {
   return useSession((session) => session.state.turn.kind === "running")
+}
+
+/** 駆動を起こし直すコマンドを断る間かどうか（ターン進行中か、委譲先が動いている間）。 */
+export function useRestartRefused(): boolean {
+  return useSession((session) => restartRefused(session.state))
 }
 
 /** サーバと繋ぎ、届いたフレームを store へ流す。画面の根で1回だけ呼ぶ。 */

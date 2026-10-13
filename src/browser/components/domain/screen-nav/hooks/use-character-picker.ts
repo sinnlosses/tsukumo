@@ -10,7 +10,7 @@ import { doNothing } from "remeda"
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { usePopover } from "../../../../hooks/use-popover.ts"
-import { useSession, useTurnRunning } from "../../../../stores/session.ts"
+import { useRestartRefused, useSession } from "../../../../stores/session.ts"
 
 export type CharacterPickerOption = {
   readonly name: string
@@ -26,7 +26,7 @@ export type ScreenNavCharacterPicker = {
   readonly label: string
   readonly open: boolean
   readonly options: readonly CharacterPickerOption[]
-  /** ターン進行中は選べない（起こし直しなので）。 */
+  /** `restartRefused` の間は選べない（起こし直しなので）。 */
   readonly blocked: boolean
   readonly blockedTitle: string | undefined
   readonly onToggle: () => void
@@ -45,7 +45,7 @@ export function useCharacterPicker(
   const dispatch = useSession((session) => session.dispatch)
   const character = useSession((session) => session.state.character)
   const packs = useSession((session) => session.state.characterPacks)
-  const turnInProgress = useTurnRunning()
+  const restartRefused = useRestartRefused()
   const { open, onToggle, close, toggleRef } = usePopover({ rootRef: navRef, onReset: doNothing })
 
   const face = characterFaceInfo(character)
@@ -59,14 +59,14 @@ export function useCharacterPicker(
       face: characterFaceInfo(pack.character),
       inUse: pack.inUse,
     })),
-    blocked: turnInProgress,
-    blockedTitle: turnInProgress ? FRAME_ERROR_REASON.switchDuringTurn : undefined,
+    blocked: restartRefused,
+    blockedTitle: restartRefused ? FRAME_ERROR_REASON.switchDuringTurn : undefined,
     onToggle,
     close,
     onPick: (name) => {
       close()
       const picked = packs.find((pack) => pack.name === name)
-      if (!turnInProgress && picked !== undefined && !picked.inUse) {
+      if (!restartRefused && picked !== undefined && !picked.inUse) {
         dispatch.session.switchCharacter({ name })
       }
     },

@@ -8,10 +8,10 @@ import type { ReactElement } from "react"
 
 import type { CharacterPackChoice } from "../../../../../shared/character-pack/character.ts"
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
-import { useSession, useTurnRunning } from "../../../../stores/session.ts"
+import { useRestartRefused, useSession } from "../../../../stores/session.ts"
 import { Select } from "../../../ui/select/select.tsx"
 
-// 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。
+// 切り替えは起こし直し（会話が消える）なので、`restartRefused` の間は塞ぐ。
 // 理由の文面はサーバが断るときと同じ `shared` の定型文を使う。
 const CHARACTER_SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.switchDuringTurn
 
@@ -26,7 +26,7 @@ export function CharacterSwitch(props: CharacterSwitchProps): ReactElement | nul
   const dispatch = useSession((session) => session.dispatch)
   const characterPacks = useSession((session) => session.state.characterPacks)
   const currentPackName = useSession((session) => session.state.character?.pack)
-  const turnInProgress = useTurnRunning()
+  const restartRefused = useRestartRefused()
 
   if (characterPacks.length === 0) {
     return null
@@ -39,8 +39,8 @@ export function CharacterSwitch(props: CharacterSwitchProps): ReactElement | nul
       frameClassName={props.frameClassName}
       className={props.className}
       value={resolveCharacterPack(characterPacks, currentPackName)}
-      disabled={turnInProgress}
-      title={turnInProgress ? CHARACTER_SWITCH_BLOCKED_TITLE : undefined}
+      disabled={restartRefused}
+      title={restartRefused ? CHARACTER_SWITCH_BLOCKED_TITLE : undefined}
       options={characterPacks.map(({ name, label }) => ({ value: name, label }))}
       onChange={(value) => {
         dispatch.session.switchCharacter({ name: value })

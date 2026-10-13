@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest"
 import {
   type ConversationMoment,
   conversationMoment,
+  isExchangeClosed,
 } from "../../../src/shared/session/conversation-moment.ts"
 import {
   INITIAL_SESSION_STATE,
+  restartRefused,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 import { detailRecord, requestRecord, speechRecord } from "../../fixture/session-record.ts"
@@ -66,5 +68,27 @@ describe("conversationMoment", () => {
     ],
   ])("%s", (_label, state, expected) => {
     expect(conversationMoment(state)).toBe(expected)
+  })
+})
+
+describe("isExchangeClosed と restartRefused は同じ状況を逆に言う", () => {
+  const TASK = { taskId: "t1", kind: "shell", description: "架空の背景" } as const
+
+  it.each([
+    ["走っている", { ...REQUESTED, turn: RUNNING }, false],
+    ["終わって、委譲先も無い", { ...REQUESTED, turn: ENDED }, true],
+    [
+      "終わったが、委譲先が動いている",
+      { ...REQUESTED, turn: ENDED, backgroundTasks: [TASK] },
+      false,
+    ],
+    [
+      "走っていて、委譲先も動いている",
+      { ...REQUESTED, turn: RUNNING, backgroundTasks: [TASK] },
+      false,
+    ],
+  ] as const)("%s", (_label, state, closed) => {
+    expect(isExchangeClosed(state)).toBe(closed)
+    expect(restartRefused(state)).toBe(!closed)
   })
 })

@@ -93,4 +93,16 @@ describe("CharacterSwitch", () => {
     expect(select().disabled).toBe(true)
     expect(select().title).toBe(FRAME_ERROR_REASON.switchDuringTurn)
   })
+
+  it("ターンが終わっていても委譲先が動いているあいだは塞がる", () => {
+    renderSwitch({
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1, ending: { kind: "ended" } },
+      backgroundTasks: [{ taskId: "t1", kind: "shell", description: "架空の背景" }],
+      characterPacks: TWO_PACKS,
+      character: characterInfo(),
+    })
+
+    expect(select().disabled).toBe(true)
+    expect(select().title).toBe(FRAME_ERROR_REASON.switchDuringTurn)
+  })
 })

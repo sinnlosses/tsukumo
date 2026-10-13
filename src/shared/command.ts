@@ -52,14 +52,20 @@ export type CommandRefusalReason = (typeof FRAME_ERROR_REASON)[keyof typeof FRAM
 /**
  * 断る条件（契約の `meta`）。値は `false`（断らない）か、断るときの理由。
  * 見る順は `chatOnly`（雑談の外なら断る）→ `idleTurn`（ターン中なら断る）で、見るのは `commandGuard` の1箇所。
+ * `restarts` が真のコマンドは駆動を起こし直すので、`idleTurn` の条件が「ターン中」でなく `restartRefused`（委譲先が動いている間も含む）になる。
  */
 export type CommandMeta = {
   readonly chatOnly: false | CommandRefusalReason
   readonly idleTurn: false | CommandRefusalReason
+  readonly restarts: boolean
 }
 
 /** 断らない `meta`（ほとんどのコマンドはこれ）。 */
-export const NO_COMMAND_REFUSAL = { chatOnly: false, idleTurn: false } satisfies CommandMeta
+export const NO_COMMAND_REFUSAL = {
+  chatOnly: false,
+  idleTurn: false,
+  restarts: false,
+} satisfies CommandMeta
 
 /**
  * コマンドを受け付けなかったときのエラー（`REFUSED`）。理由は定型文だけで、届いた値を混ぜない。

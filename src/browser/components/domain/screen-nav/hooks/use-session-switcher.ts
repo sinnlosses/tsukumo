@@ -6,7 +6,7 @@
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
 import { useSessionSwitcherRequest } from "../../../../stores/session-switcher-request.ts"
-import { isRefusedFor, useSession, useTurnRunning } from "../../../../stores/session.ts"
+import { isRefusedFor, useRestartRefused, useSession } from "../../../../stores/session.ts"
 import {
   clockTime,
   localTimeZoneId,
@@ -69,7 +69,7 @@ export type ScreenNavSessionSwitcher = {
   readonly open: boolean
   readonly onClose: () => void
   readonly rows: readonly SessionSwitcherRow[]
-  /** ターン進行中は切り替えも新しいセッションも送らない（起こし直しなので）。 */
+  /** `restartRefused` の間は切り替えも新しいセッションも送らない（起こし直しなので）。 */
   readonly blocked: boolean
   /** `blocked` のときだけ理由を持つ。 */
   readonly blockedTitle: string | undefined
@@ -92,7 +92,7 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
   const currentSessionId = useSession((session) =>
     session.state.session.kind === "starting" ? undefined : session.state.session.sessionId,
   )
-  const turnInProgress = useTurnRunning()
+  const restartRefused = useRestartRefused()
   const open = useSessionSwitcherRequest((state) => state.open)
   const openSwitcher = useSessionSwitcherRequest((state) => state.openSwitcher)
   const openedAt = useSessionSwitcherRequest((state) => state.openedAt)
@@ -139,11 +139,11 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
       open,
       onClose,
       rows,
-      blocked: turnInProgress,
-      blockedTitle: turnInProgress ? FRAME_ERROR_REASON.sessionSwitchDuringTurn : undefined,
+      blocked: restartRefused,
+      blockedTitle: restartRefused ? FRAME_ERROR_REASON.sessionSwitchDuringTurn : undefined,
       onSwitch: (sessionId) => {
         if (
-          turnInProgress ||
+          restartRefused ||
           rows.some((row) => row.sessionId === sessionId && row.occupiedElsewhere)
         ) {
           return
@@ -162,7 +162,7 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
         })
       },
       onStartNew: () => {
-        if (turnInProgress) {
+        if (restartRefused) {
           return
         }
         onClose()

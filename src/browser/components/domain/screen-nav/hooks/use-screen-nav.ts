@@ -26,7 +26,7 @@ import {
   type NavDrawerTab,
 } from "../../../../stores/nav-drawer.ts"
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
-import { useSession, useTurnRunning } from "../../../../stores/session.ts"
+import { useRestartRefused, useSession } from "../../../../stores/session.ts"
 import { useCharacterPicker, type ScreenNavCharacterPicker } from "./use-character-picker.ts"
 import { usePhoneHead, type PhoneHead } from "./use-phone-head.ts"
 import { useProjectName } from "./use-project-name.ts"
@@ -52,7 +52,7 @@ export type ScreenNavGate = {
   readonly active: boolean
   /** 会話の画面にいないあいだ、裏で生きているセッションのモードの口に付く戻り先の印。 */
   readonly returnMark: boolean
-  /** ターン進行中の、いまと違うモードの口。 */
+  /** `restartRefused` の間の、いまと違うモードの口。 */
   readonly disabled: boolean
   /**
    * `disabled` のときだけ理由を持つ。
@@ -88,7 +88,7 @@ export type NavDrawerTabView = {
 
 /**
  * 引き出しの下端の「＋ 新しいやり取り」。
- * ターン進行中は何も送らないことは `onStart` の中で決めていて、部品は「送るかどうか」を持たない。
+ * `restartRefused` の間は何も送らないことは `onStart` の中で決めていて、部品は「送るかどうか」を持たない。
  */
 export type NavDrawerNewSession = {
   readonly disabled: boolean
@@ -175,7 +175,7 @@ export function useScreenNav(): ScreenNavView {
   const current = useScreen()
   const screenHref = useScreenHref()
   const chatMode = useSession((session) => session.state.chatMode)
-  const turnInProgress = useTurnRunning()
+  const restartRefused = useRestartRefused()
   const drawerOpen = useNavDrawer((state) => state.open)
   const drawerTab = useNavDrawer((state) => state.tab)
   const openDrawer = useNavDrawer((state) => state.openDrawer)
@@ -203,7 +203,7 @@ export function useScreenNav(): ScreenNavView {
   const gates = GATE_LIST.map((entry): ScreenNavGate => {
     const isConversation = entry.screen === "conversation"
     const modeDiffers = isConversation && entry.chat !== chatMode
-    const blocked = modeDiffers && turnInProgress
+    const blocked = modeDiffers && restartRefused
     return {
       screen: entry.screen,
       label: entry.label,
@@ -214,7 +214,7 @@ export function useScreenNav(): ScreenNavView {
       disabled: blocked,
       title: blocked ? FRAME_ERROR_REASON.chatModeSwitchDuringTurn : undefined,
       onGo: () => {
-        if (modeDiffers && !turnInProgress) {
+        if (modeDiffers && !restartRefused) {
           dispatch.session.setChatMode({ chat: entry.chat })
         }
       },
@@ -254,10 +254,10 @@ export function useScreenNav(): ScreenNavView {
       tab: drawerTab,
       onSelectTab: selectTab,
       newSession: {
-        disabled: turnInProgress,
-        title: turnInProgress ? FRAME_ERROR_REASON.sessionSwitchDuringTurn : undefined,
+        disabled: restartRefused,
+        title: restartRefused ? FRAME_ERROR_REASON.sessionSwitchDuringTurn : undefined,
         onStart: () => {
-          if (turnInProgress) {
+          if (restartRefused) {
             return
           }
           closeDrawer()

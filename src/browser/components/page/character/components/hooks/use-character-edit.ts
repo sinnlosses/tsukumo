@@ -19,7 +19,7 @@ import type { AccentTarget } from "../../../../../../shared/character-pack/chara
 import { resolveExpressionLabel } from "../../../../../../shared/character-pack/expression-choice.ts"
 import type { Expression } from "../../../../../../shared/character-pack/expression.ts"
 import { readAccentColor } from "../../../../../domain/appearance-color.ts"
-import { useSession, useTurnRunning } from "../../../../../stores/session.ts"
+import { useRestartRefused, useSession } from "../../../../../stores/session.ts"
 import type { AccentSwatchModel } from "../../domain/accent-swatch-model.ts"
 import {
   BACKGROUND_FILE_ACCEPT,
@@ -48,7 +48,7 @@ export function useCharacterEdit(): CharacterEditModel {
   const dispatchAwaited = useSession((session) => session.dispatchAwaited)
   const [rejected, setRejected] = useState<RejectedImage>({ kind: "none" })
   const selected = useSelectedPack()
-  const turnInProgress = useTurnRunning()
+  const restartRefused = useRestartRefused()
   const screenAccent = useHeldAccent<AccentTarget>(({ pack, target, color }) => {
     dispatch.characterPack.setAccent({ pack, target, color })
   })
@@ -181,8 +181,8 @@ export function useCharacterEdit(): CharacterEditModel {
       ? { kind: "hidden" }
       : {
           kind: "shown",
-          disabled: turnInProgress,
-          title: turnInProgress ? SWITCH_BLOCKED_TITLE : undefined,
+          disabled: restartRefused,
+          title: restartRefused ? SWITCH_BLOCKED_TITLE : undefined,
           onSwitch: () => {
             dispatch.session.switchCharacter({ name: pack })
           },

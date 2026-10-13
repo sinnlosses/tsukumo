@@ -30,7 +30,7 @@
   display: inline-flex;
   flex: none;
 }
-/* ターン進行中の、いまと違うモードの口。押せないことを字の薄さと禁止のカーソルで示す。 */
+/* `restartRefused` の間の、いまと違うモードの口。押せないことを字の薄さと禁止のカーソルで示す。 */
 .screen-nav-gate.is-disabled {
   cursor: not-allowed;
   opacity: 0.5;

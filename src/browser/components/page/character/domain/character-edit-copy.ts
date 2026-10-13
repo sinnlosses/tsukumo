@@ -37,7 +37,7 @@ export const DEFAULT_EXPRESSION_BADGE = "いつもの顔"
 /** 画面から変えられないパックのときに出す一言。 */
 export const NOT_EDITABLE_NOTE = "起動先の characters/local のパックは、画面からは変えられない"
 
-// 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。
+// 切り替えは起こし直し（会話が消える）なので、`restartRefused` の間は塞ぐ。
 // 理由の文面はサーバが断るときと同じ定型文を使う。
 export const SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.switchDuringTurn
 
