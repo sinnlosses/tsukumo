@@ -7,6 +7,7 @@
 // - Command+Enter と送信ボタンは背景のタスクが残っていれば脇の話になる送り方で、Command+Shift+Enter はいつも新しい依頼として送る
 //   （脇の話にするかを決めるのはサーバ。`docs/architecture/display.md`「脇の話」）
 // - 送信後は入力欄を空にしてフォーカスを残す
+// - 打ちかけは入力が止まったら `localStorage` に保ち（セッションごと・直近10件）、再読み込み後に入力欄が空なら戻す。送信すると消す
 // - `/` 補完は前方一致→部分一致、Tab / Enter は確定だけ（送信しない）。選択の上下移動は
 //   矢印キーに加えて Ctrl+P（前へ）/ Ctrl+N（次へ）でも行える（Meta 併用は無視）
 // - `@` 補完（git 管理下のファイルのパス）は同じキー操作で、確定すると `@<パス> ` が入る
@@ -30,8 +31,14 @@ import {
   useSession,
   useTurnRunning,
 } from "../../../../../../../../stores/session.ts"
+import { useDebouncedCallback } from "../../../../../../../../utils/debounce.ts"
 import { isClearWithArgs } from "../../../../../domain/clear-request.ts"
 import type { ComposerKey, ComposerSurface } from "../../../domain/composer-surface.ts"
+import {
+  clearSessionDraft,
+  draftOnSessionChange,
+  saveSessionDraft,
+} from "../domain/composer-draft-storage.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
 import { blurOnEscape, useComposerFocusTiming } from "./use-composer-focus.ts"
 import { usePromptImage, type PromptImageModel } from "./use-prompt-image.ts"
@@ -113,6 +120,26 @@ export function useComposer(): ComposerModel {
   const [mode, setMode] = useState<ComposerMode>(loadComposerMode)
   useComposerFocusTiming(surfaceRef)
 
+  const sessionId = useSession((session) =>
+    session.state.session.kind === "starting" ? undefined : session.state.session.sessionId,
+  )
+  const saveDraftLater = useDebouncedCallback((id: string, stopped: Draft) => {
+    saveSessionDraft(id, stopped)
+  }, DRAFT_SAVE_DELAY_MS)
+
+  const shownSessionId = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    const previous = shownSessionId.current
+    if (sessionId === previous) {
+      return
+    }
+    shownSessionId.current = sessionId
+    const shown = draftOnSessionChange(previous, sessionId, useComposerDraft.getState().draft)
+    if (shown !== undefined) {
+      setDraft(shown)
+    }
+  }, [sessionId, setDraft])
+
   const suggestion = useSuggestion({
     draft,
     pendingActive,
@@ -156,6 +183,10 @@ export function useComposer(): ComposerModel {
       dispatch.session.prompt({ text: trimmed, images: promptImage.images, routing })
     }
     setDraft(EMPTY_DRAFT)
+    if (sessionId !== undefined) {
+      saveDraftLater(sessionId, EMPTY_DRAFT)
+      clearSessionDraft(sessionId)
+    }
     resetPromptImage()
     suggestion.reset()
     surfaceRef.current?.focus()
@@ -215,6 +246,9 @@ export function useComposer(): ComposerModel {
     onSelectSuggestion: suggestion.onSelect,
     onChange: (changed) => {
       setDraft(changed)
+      if (sessionId !== undefined) {
+        saveDraftLater(sessionId, changed)
+      }
       suggestion.reset()
     },
     onKeyDown: (event) => {
@@ -253,6 +287,8 @@ export function useComposer(): ComposerModel {
     },
   }
 }
+
+const DRAFT_SAVE_DELAY_MS = 1000
 
 export const NEW_SESSION_LABEL = "新しいセッションを始める"
 

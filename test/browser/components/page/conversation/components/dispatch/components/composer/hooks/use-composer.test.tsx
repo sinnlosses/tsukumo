@@ -1,6 +1,10 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
+import {
+  loadSessionDraft,
+  saveSessionDraft,
+} from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/domain/composer-draft-storage.ts"
 import { useComposer } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/hooks/use-composer.ts"
 import type { ComposerKey } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-surface.ts"
 import { useComposerDraft } from "../../../../../../../../../../src/browser/stores/composer-draft.ts"
@@ -12,7 +16,12 @@ import {
 } from "../../../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../../../../../../fixture/character.ts"
 import { queryClientWrapper } from "../../../../../../../../query-client.tsx"
-import { type CommandSpy, putSession } from "../../../../../../../../session-store.ts"
+import {
+  type CommandSpy,
+  putSession,
+  putState,
+  stateWith,
+} from "../../../../../../../../session-store.ts"
 
 /**
  * `<Composer>` を描かずに、下書き・候補の出し分けと選択位置・キーの読み替え・送り先だけを測る
@@ -22,6 +31,7 @@ import { type CommandSpy, putSession } from "../../../../../../../../session-sto
 
 afterEach(() => {
   cleanup()
+  localStorage.clear()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
   useComposerDraft.setState(useComposerDraft.getInitialState(), true)
@@ -336,5 +346,110 @@ describe("useComposer の送信", () => {
       useSession.getState().setConnection("open")
     })
     expect(result.current.band.kind).toBe("none")
+  })
+})
+
+describe("useComposer の打ちかけの保存", () => {
+  const identified = (sessionId: string): SessionState =>
+    stateWith({ session: { kind: "identified", sessionId } })
+  const startingState = stateWith({ session: { kind: "starting" } })
+
+  it("A から B へ変わると A の打ちかけを A に保ち、入力欄を B の下書き（無ければ空）にする", () => {
+    const { result } = renderUseComposer(identified("a"))
+    type(result, "Aの打ちかけ")
+
+    act(() => {
+      putState(identified("b"))
+    })
+    expect(result.current.draft.text).toBe("")
+
+    act(() => {
+      putState(identified("a"))
+    })
+    expect(result.current.draft.text).toBe("Aの打ちかけ")
+  })
+
+  it("新しいセッション（A から未確定を経て B）でも A の打ちかけは B に残らない", () => {
+    const { result } = renderUseComposer(identified("a"))
+    type(result, "Aの打ちかけ")
+
+    act(() => {
+      putState(startingState)
+    })
+    act(() => {
+      putState(identified("b"))
+    })
+    expect(result.current.draft.text).toBe("")
+
+    act(() => {
+      putState(identified("a"))
+    })
+    expect(result.current.draft.text).toBe("Aの打ちかけ")
+  })
+
+  it("A から未確定に変わると入力欄を空にして A の打ちかけを A に保ち、A に戻ると戻る", () => {
+    const { result } = renderUseComposer(identified("a"))
+    type(result, "Aの打ちかけ")
+
+    act(() => {
+      putState(startingState)
+    })
+    expect(result.current.draft.text).toBe("")
+    expect(loadSessionDraft("a")?.text).toBe("Aの打ちかけ")
+
+    act(() => {
+      putState(identified("a"))
+    })
+    expect(result.current.draft.text).toBe("Aの打ちかけ")
+  })
+
+  it("未確定のあいだに打った字は A に保たれず、決まった B のものになる", () => {
+    const { result } = renderUseComposer(identified("a"))
+    type(result, "Aの打ちかけ")
+    act(() => {
+      putState(startingState)
+    })
+    type(result, "Bのための字")
+
+    act(() => {
+      putState(identified("b"))
+    })
+    expect(result.current.draft.text).toBe("Bのための字")
+    expect(loadSessionDraft("a")?.text).toBe("Aの打ちかけ")
+  })
+
+  it("未確定のあいだに送って空のまま B が決まっても、A の保存済みは消えない", () => {
+    const { result } = renderUseComposer(identified("a"))
+    type(result, "Aの打ちかけ")
+    act(() => {
+      putState(startingState)
+    })
+    type(result, "送る字")
+    press(result, key("Enter", { meta: true }))
+    act(() => {
+      putState(identified("b"))
+    })
+
+    expect(result.current.draft.text).toBe("")
+    expect(loadSessionDraft("a")?.text).toBe("Aの打ちかけ")
+  })
+
+  it("最初にセッションが決まったとき、入力欄が空なら保存済みを戻す", () => {
+    saveSessionDraft("a", { text: "保存済み", caret: 2 })
+    const { result } = renderUseComposer(startingState)
+    act(() => {
+      putState(identified("a"))
+    })
+    expect(result.current.draft).toEqual({ text: "保存済み", caret: 2 })
+  })
+
+  it("最初にセッションが決まったとき、入力欄に字があれば触らない", () => {
+    saveSessionDraft("a", { text: "保存済み", caret: 2 })
+    const { result } = renderUseComposer(startingState)
+    type(result, "いま打った字")
+    act(() => {
+      putState(identified("a"))
+    })
+    expect(result.current.draft.text).toBe("いま打った字")
   })
 })
