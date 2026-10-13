@@ -28,10 +28,8 @@ export function headNoticeOf(input: HeadNoticeInput): HeadNotice {
     return pastNotice(input.moment, input.phase)
   }
   const { content, moment } = input
-  if (content.kind === "report" && (moment === "work" || moment === "ask")) {
-    return moment === "ask"
-      ? { kind: "notice", text: "お伺いが届いた", action: "to-inquiry" }
-      : { kind: "notice", text: "続きを作業中", action: "to-newest" }
+  if (content.kind === "report" && moment === "ask") {
+    return { kind: "notice", text: "お伺いが届いた", action: "to-inquiry" }
   }
   return NO_NOTICE
 }

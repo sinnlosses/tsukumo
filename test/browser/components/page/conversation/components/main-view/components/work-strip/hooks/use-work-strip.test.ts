@@ -5,6 +5,7 @@ import {
   useWorkStrip,
   type WorkStripModel,
 } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/work-strip/hooks/use-work-strip.ts"
+import { useMainViewContent } from "../../../../../../../../../../src/browser/stores/main-view-content.ts"
 import type { SessionEvent } from "../../../../../../../../../../src/shared/session/session-event.ts"
 import {
   applySessionEvent,
@@ -184,6 +185,26 @@ describe("useWorkStrip（時刻に依るもの）", () => {
 
     expect(closed(3)).toMatchObject({ kind: "finished", headLabel: "4段のうち3段済み" })
     expect(closed(4)).toMatchObject({ kind: "finished", headLabel: "4段すべて済み" })
+  })
+
+  it("閉じたあとの続きのターンが走っているあいだは、済み具合でなく今の段の名前を出す", () => {
+    vi.spyOn(Temporal.Now, "instant").mockReturnValue(
+      Temporal.Instant.fromEpochMilliseconds(START + 7_000),
+    )
+    putSession(
+      foldTimed([
+        [request, START],
+        [{ ...plan, current: 1 }, START + 1_000],
+        [{ kind: "turn-finished", outcome: { kind: "completed" } }, START + 5_000],
+        [{ kind: "turn-resumed" }, START + 6_000],
+      ]),
+    )
+    act(() => {
+      useMainViewContent.setState({ content: { kind: "report", exchange: 1, arrived: true } })
+    })
+    const strip = renderHook(() => useWorkStrip()).result.current
+
+    expect(strip).toMatchObject({ kind: "finished", result: "working", headLabel: "架空の段B" })
   })
 
   it("委譲中に送った脇の話のあいだも、親の段取り・今の段・依頼からの経過を出し続ける", () => {

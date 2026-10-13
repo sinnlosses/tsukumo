@@ -167,7 +167,7 @@ export function useWorkStrip(): WorkStripModel {
       kind: "finished",
       result,
       phases: stripPhases,
-      headLabel: completion,
+      headLabel: result === "working" && nowPhase.kind === "phase" ? nowPhase.name : completion,
       sideLabel: elapsedLabel,
       steps,
     }

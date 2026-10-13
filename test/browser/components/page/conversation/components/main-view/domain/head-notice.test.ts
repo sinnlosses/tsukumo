@@ -17,9 +17,9 @@ const NO_PHASE = { kind: "none" } as const
 describe("headNoticeOf", () => {
   it.each<[string, HeadNoticeInput, HeadNotice]>([
     [
-      "レポートを出したあと続きのターンが始まった",
+      "最新のレポートを出したあと続きのターンが始まった",
       { content: REPORT, moment: "work", viewingPast: false, phase: NO_PHASE },
-      { kind: "notice", text: "続きを作業中", action: "to-newest" },
+      { kind: "none" },
     ],
     [
       "レポートを出しているあいだに答え待ちが来た",
