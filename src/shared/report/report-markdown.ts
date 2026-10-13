@@ -758,19 +758,19 @@ function tableMarkdown(
     ordinal,
     title: table.title,
     body: joinParts([
+      tableStatusLegendMarkdown(table),
       [
         row(table.columns.map((column) => cellMarkdown(column, NO_BAR))),
         row(aligns.map(alignMarker)),
         ...table.rows.map((cells) => row(cells.map(bodyCellMarkdown))),
       ].join("\n"),
-      tableStatusLegendMarkdown(table),
     ]),
     bodyFormat: "markdown",
     fit: true,
   })
 }
 
-/** 表に出た状態のセルの状態だけを、表の下の凡例に並べる（`matrix` の凡例と同じ考え方）。 */
+/** 表に出た状態のセルの状態だけを、題と表のあいだの凡例に並べる（`matrix` の凡例と同じ考え方）。 */
 function tableStatusLegendMarkdown(
   table: Extract<ReportBlock, { readonly kind: "table" }>,
 ): string {

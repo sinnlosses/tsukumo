@@ -1295,12 +1295,13 @@
 .detail-block .report-cell-status-text {
   color: var(--ink);
 }
-/* 表の下の凡例。表の左端に揃えて、すぐ下に置く。 */
-.detail-block .report-table-status-legend {
+/* 表の凡例。題の直下に中央揃えで置く。 */
+.detail-block .report-captioned > .report-table-status-legend {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.25rem 1rem;
-  margin-top: 0.25rem;
+  margin-bottom: 0.3rem;
   font-size: var(--font-label);
   color: var(--ink-quiet);
 }
