@@ -155,29 +155,31 @@ const svgFields = {
     .describe("座標つきの図形の並び。色は書けない（rect の emphasis だけで強調する）"),
 }
 
-const beforeAfterSideSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("svg"), ...svgFields }),
-  z.object({
-    kind: z.literal("mermaid"),
-    source: z.string().describe("flowchart 以外の図のソース"),
-  }),
-  z.object({
-    kind: z.literal("image"),
-    path: z.string().describe("撮った画像のファイル（絶対か cwd から。png・jpeg・gif・webp）"),
-  }),
-  z.object({
-    kind: z.literal("code"),
-    language: z.string().describe("言語名（diff にせず、その側の中身をそのまま書く）"),
-    source: z.string(),
-  }),
-  z.object({
-    kind: z.literal("points"),
-    points: z
-      .array(inlineText)
-      .min(1)
-      .describe(`短い1行の並び。${String(MAX_CANDIDATES)}つまで`),
-  }),
-])
+const beforeAfterSideSchema = z
+  .discriminatedUnion("kind", [
+    z.object({ kind: z.literal("svg"), ...svgFields }),
+    z.object({
+      kind: z.literal("mermaid"),
+      source: z.string().describe("flowchart 以外の図のソース"),
+    }),
+    z.object({
+      kind: z.literal("image"),
+      path: z.string().describe("撮った画像のファイル（絶対か cwd から。png・jpeg・gif・webp）"),
+    }),
+    z.object({
+      kind: z.literal("code"),
+      language: z.string().describe("言語名（diff にせず、その側の中身をそのまま書く）"),
+      source: z.string(),
+    }),
+    z.object({
+      kind: z.literal("points"),
+      points: z
+        .array(inlineText)
+        .min(1)
+        .describe(`短い1行の並び。${String(MAX_CANDIDATES)}つまで`),
+    }),
+  ])
+  .meta({ id: "BeforeAfterSide" })
 
 const beforeAfterBlockSchema = z
   .object({
@@ -433,24 +435,34 @@ const markdownBlockSchema = z.object({
   fold,
 })
 
+// `report` の schema で `figure` と `sections` が共有する塊。名前を外すと両方に複製され、ツール定義が約1万字増える
+const namedBeforeAfter = beforeAfterBlockSchema.meta({ id: "BeforeAfterBlock" })
+const namedDimension = dimensionBlockSchema.meta({ id: "DimensionBlock" })
+const namedStats = statsBlockSchema.meta({ id: "StatsBlock" })
+const namedMermaid = mermaidBlockSchema.meta({ id: "MermaidBlock" })
+const namedGraph = graphBlockSchema.meta({ id: "GraphBlock" })
+const namedChart = chartBlockSchema.meta({ id: "ChartBlock" })
+const namedSvg = svgBlockSchema.meta({ id: "SvgBlock" })
+const namedImage = imageBlockSchema.meta({ id: "ImageBlock" })
+
 export const reportBlockSchema = z.discriminatedUnion("kind", [
   textBlockSchema,
   listBlockSchema,
   tableBlockSchema,
   matrixBlockSchema,
   compareBlockSchema,
-  beforeAfterBlockSchema,
-  dimensionBlockSchema,
+  namedBeforeAfter,
+  namedDimension,
   noteBlockSchema,
-  statsBlockSchema,
+  namedStats,
   codeBlockSchema,
-  mermaidBlockSchema,
-  graphBlockSchema,
-  chartBlockSchema,
-  svgBlockSchema,
+  namedMermaid,
+  namedGraph,
+  namedChart,
+  namedSvg,
   progressBlockSchema,
   optionsBlockSchema,
-  imageBlockSchema,
+  namedImage,
   filesBlockSchema,
   markdownBlockSchema,
 ])
@@ -482,14 +494,14 @@ export const REPORT_FIGURE_NONE_REASONS = [
 
 /** `report` の `figure`（レポートの図1つか、置かない理由）。図の塊は `sections` の同じ種類の塊と同じ形。 */
 export const reportFigureSchema = z.discriminatedUnion("kind", [
-  imageBlockSchema,
-  mermaidBlockSchema,
-  graphBlockSchema,
-  svgBlockSchema,
-  beforeAfterBlockSchema,
-  chartBlockSchema,
-  statsBlockSchema,
-  dimensionBlockSchema,
+  namedImage,
+  namedMermaid,
+  namedGraph,
+  namedSvg,
+  namedBeforeAfter,
+  namedChart,
+  namedStats,
+  namedDimension,
   z.object({ kind: z.literal("none"), reason: z.enum(REPORT_FIGURE_NONE_REASONS) }),
 ])
 
