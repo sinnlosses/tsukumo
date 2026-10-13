@@ -36,7 +36,7 @@
 `tasks.ts` → `task-summary.ts`、`bundled-files.ts` → `bundled-path.ts`（中身は同梱物の
 **置き場所を解く**関数2つで、ファイルそのものは扱っていない）。
 
-**検査は `test/architecture/layer.test.ts` 1本**。`src/` の import を読んで、上の表に無い辺があれば
+**層の検査は `test/architecture/layer.test.ts`**（機能どうしの辺は `server-feature.test.ts` と `shared-feature.test.ts`）。`src/` の import を読んで、上の表に無い辺があれば
 落とす。外部ツールは増やさない（`node:fs` と正規表現で足りる）。
 
 **段階**（大きすぎる作り直しにしないための順番）:

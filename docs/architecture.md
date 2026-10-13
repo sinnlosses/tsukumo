@@ -200,7 +200,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）
 - **機能を足すときは、検査の機能の一覧と下の表に足す**（知らない機能のディレクトリと、
   `core/` `adapter/` の外に置いたファイルと、表と `SERVER_FEATURE_IMPORTS` のずれは
-  `test/architecture/layer.test.ts` が落とす）
+  `test/architecture/server-feature.test.ts` が落とす）
 
 | 機能（import する側） | 読んでよい機能                                                                                                                                 |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -215,7 +215,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `achievement`         | `repository`                                                                                                                                   |
 | そのほか              | —（葉。`report` `token-usage` `plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation`） |
 
-表は `test/architecture/layer.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
+表は `test/architecture/server-feature.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
 辺が `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。
 
 #### コマンドの受け手と手続きの置き方
@@ -307,7 +307,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   直下の `frame.ts` `command.ts` は機能から読んでよい（断る理由 `FRAME_ERROR_REASON` と、権限・モデル・
   思考の段の語彙を持つため）
 - **機能を足すときは、サーバの機能の一覧に先にあること**。shared の機能の一覧・直下のファイルの一覧・
-  機能どうしの輪は `test/architecture/layer.test.ts` が見る
+  機能どうしの輪は `test/architecture/shared-feature.test.ts` が見る
 
 **ブラウザ側とは対応させない。** `src/browser/` は画面と領域（「`src/browser/` の箱と、置く基準」）で割り、
 shared の機能の名前には揃えない。ブラウザの部品は要る語彙を `shared/<機能>/<概念>.ts` から直に

@@ -141,7 +141,7 @@ DOM 要素の instanceof に絞れない、性質の違う `as` が `test/` の�
   `(line): unknown => JSON.parse(line)`、`readonly` なタプルを `readonly string[]` として
   扱いたいだけなら `const xs: readonly string[] = TUPLE` のように、代入先に注釈を置けば
   キャストなしで済む（`test/server/chat/adapter/chat-archive.test.ts` の `readLines` を
-  ジェネリックにした例、`test/architecture/layer.test.ts` の `flatMap` のコールバックに戻り値の
+  ジェネリックにした例、`test/architecture/server-feature.test.ts` の `flatMap` のコールバックに戻り値の
   注釈を付けた例など）
 - **構造が合わないだけなら、実際に合う値を作る。** `test/browser/domain/reveal/
 brush-scroll.test.ts` は `getBoundingClientRect` の戻り値を `{ top, bottom } as unknown as
