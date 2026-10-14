@@ -117,6 +117,7 @@ export function ImageField(props: {
         <ImageZoom
           src={field.image.url}
           alt={field.label}
+          size="modest"
           fallback={{ kind: "none" }}
           onClose={() => setZoomed(false)}
         />

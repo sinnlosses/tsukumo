@@ -4,6 +4,7 @@
 // 絵が読めなかったとき（`<img>` の `error`）に何を出すかは呼び出し側が渡す（`ImageZoomFallback`）。
 // この部品は代わりの絵と1行を出し分けるだけで、なぜ読めないかは知らない。
 
+import clsx from "clsx"
 import { type ReactElement, useState } from "react"
 
 import { Button } from "../button/button.tsx"
@@ -27,6 +28,8 @@ export type ImageZoomProps = {
   /** 拡大して見せる原寸（data URL か、原寸を配る経路の URL）。 */
   readonly src: string
   readonly alt: string
+  /** `original` は画面に収まる限り原寸。`modest` は原寸が大きすぎる絵を控えめな大きさで見せる。 */
+  readonly size: "original" | "modest"
   /** {@link src} が読めなかったときに代わりに出すもの。 */
   readonly fallback: ImageZoomFallback
   /** `×`・背景のクリック・Esc のいずれでも呼ばれる（開いているかどうかは呼び出し側が持つ）。 */
@@ -49,7 +52,10 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
       className={styles["image-zoom"]}
     >
       <img
-        className={styles["image-zoom-image"]}
+        className={clsx(
+          styles["image-zoom-image"],
+          props.size === "modest" && styles["image-zoom-image-modest"],
+        )}
         src={substitute?.src ?? props.src}
         alt={props.alt}
         onError={() => setFailed(true)}

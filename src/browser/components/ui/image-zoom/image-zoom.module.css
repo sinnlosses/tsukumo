@@ -26,6 +26,11 @@
   object-fit: contain;
   border-radius: 0.4rem;
 }
+/* 立ち絵のように原寸が大きすぎる絵を、控えめに見せる。画面の内側に収める上限はそのまま効く。 */
+.image-zoom-image-modest {
+  max-width: min(100%, 28rem);
+  max-height: min(calc(100vh - 7rem), 26rem);
+}
 /* 絵の代わりに控えを出しているときの1行（なぜ小さいのか）。絵の下・閉じるボタンの上に置く。 */
 .image-zoom-note {
   margin: 0;

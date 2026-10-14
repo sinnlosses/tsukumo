@@ -164,6 +164,7 @@ export function PortraitCard(props: {
         <ImageZoom
           src={card.image.url}
           alt={card.label}
+          size="modest"
           fallback={{ kind: "none" }}
           onClose={() => setZoomed(false)}
         />

@@ -96,6 +96,7 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
         <ImageZoom
           src={zoomedImage.full}
           alt={IMAGE_ALT}
+          size="original"
           fallback={NO_FALLBACK}
           onClose={() => setZoomedIndex(undefined)}
         />
@@ -165,6 +166,7 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
           key={zoomedImage.id}
           src={shelvedImageUrl(zoomedImage.id)}
           alt={IMAGE_ALT}
+          size="original"
           fallback={{ kind: "substitute", src: zoomedImage.thumbnail, note: RELEASED_NOTE }}
           onClose={() => setZoomedIndex(undefined)}
         />
