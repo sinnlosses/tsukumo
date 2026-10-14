@@ -189,11 +189,11 @@
   background: none;
   box-shadow: none;
 }
-.run-setting-select.is-row .run-setting-select-name {
+.run-setting-select.is-row [data-part="name"] {
   color: var(--ink-quiet);
   font-weight: 500;
 }
-.run-setting-select.is-row .run-setting-select-option:checked .run-setting-select-name {
+.run-setting-select.is-row .run-setting-select-option:checked [data-part="name"] {
   color: var(--ink);
   font-weight: 700;
 }
