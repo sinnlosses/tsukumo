@@ -18,26 +18,16 @@ import {
   isOverLimitAfterRecording,
   RUN_LIMIT,
 } from "./lib/e2e-run-limit.ts"
-import { recordHookDenial } from "./lib/hook-denial-record.ts"
+import { denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
 
-/** Bash ツールの PreToolUse hook の入力のうち、この hook が見るところ。 */
-type PreToolUseHookInput = {
-  readonly tool_name?: unknown
-  readonly tool_input?: { readonly command?: unknown }
-  readonly agent_id?: unknown
-}
-
-const raw = await readStdin()
-const command = readSubagentBashCommand(raw)
-if (command !== undefined) {
-  const counts = countE2eRuns(command, readTwVerifyCommandOfProject())
+const call = await readBashHookCall()
+if (call?.fromSubagent === true) {
+  const counts = countE2eRuns(call.command, readTwVerifyCommandOfProject())
   const changeRunsE2e = counts.byChange > 0 && (await readChangeRunsE2e())
   const runs = countFullE2eRuns(counts, changeRunsE2e)
   const gitDir = runs > 0 ? readGitDir() : undefined
   if (gitDir !== undefined && isOverLimitAfterRecording(gitDir, runs)) {
-    recordHookDenial({ hook: "deny-e2e-run-limit", rule: "run-limit", actor: "subagent" })
-    process.stderr.write(refusal())
-    process.exit(2)
+    denyBashCall(call, { hook: "deny-e2e-run-limit", rule: "run-limit", refusal: refusal() })
   }
 }
 
@@ -47,22 +37,7 @@ function refusal(): string {
 
 E2E のファイル単位の実行は数えないので打ってよい:
 
-  pnpm run test:e2e test/e2e/<ファイル>.test.ts
-`
-}
-
-/** 委譲先の Bash の呼び出しなら、そのコマンド文字列。それ以外・形が違えば `undefined`。 */
-function readSubagentBashCommand(rawInput: string): string | undefined {
-  const parsed: unknown = safeParse(rawInput)
-  if (typeof parsed !== "object" || parsed === null) {
-    return undefined
-  }
-  const input = parsed as PreToolUseHookInput
-  if (input.tool_name !== "Bash" || typeof input.agent_id !== "string") {
-    return undefined
-  }
-  const command = input.tool_input?.command
-  return typeof command === "string" ? command : undefined
+  pnpm run test:e2e test/e2e/<ファイル>.test.ts`
 }
 
 /** `tw verify` が打つコマンド。作業ツリーの根が引けなければ空文字。 */
@@ -100,21 +75,4 @@ function readGit(args: readonly string[]): string | undefined {
   } catch {
     return undefined
   }
-}
-
-function safeParse(rawInput: string): unknown {
-  try {
-    return JSON.parse(rawInput)
-  } catch {
-    return undefined
-  }
-}
-
-async function readStdin(): Promise<string> {
-  const chunks: string[] = []
-  process.stdin.setEncoding("utf8")
-  for await (const chunk of process.stdin) {
-    chunks.push(chunk as string)
-  }
-  return chunks.join("")
 }

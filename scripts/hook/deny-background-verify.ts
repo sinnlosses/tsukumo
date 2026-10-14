@@ -6,9 +6,7 @@
 // hook の約束: 終了コード 2 で Bash の実行を止め、stderr の中身がモデルへ返る。
 // それ以外の終了コードでは実行を止めない（判定に失敗したときは通す）。
 
-import process from "node:process"
-
-import { recordHookDenial } from "./lib/hook-denial-record.ts"
+import { type BashHookCall, denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
 import { findQuotedSpans, withSpansBlanked } from "./lib/quoted-span.ts"
 
 /** `tw verify` をコマンドの位置に持つ形。`verify-check`・`verify-plan` 等の別サブコマンドは拾わない。 */
@@ -21,73 +19,20 @@ const REFUSAL = `\`tw verify\`（検査の全段。3〜4分）は背景で打た
 
   tw verify   # timeout: 600000`
 
-/** Bash ツールの PreToolUse hook の入力のうち、この hook が見るところ。 */
-type PreToolUseHookInput = {
-  readonly tool_name?: unknown
-  readonly tool_input?: { readonly command?: unknown; readonly run_in_background?: unknown }
-  readonly agent_id?: unknown
-}
-
-type BashCall = {
-  readonly command: string
-  readonly runsInBackground: boolean
-  readonly fromSubagent: boolean
-}
-
-const raw = await readStdin()
-const call = readBashCall(raw)
+const call = await readBashHookCall()
 if (call !== undefined && isDeniedBackgroundVerify(call)) {
-  recordHookDenial({ hook: "deny-background-verify", rule: "background-verify", actor: "subagent" })
-  process.stderr.write(`${REFUSAL}\n`)
-  process.exit(2)
+  denyBashCall(call, {
+    hook: "deny-background-verify",
+    rule: "background-verify",
+    refusal: REFUSAL,
+  })
 }
 
 /** 委譲先が `tw verify` を背景で打つ呼び出しか。 */
-function isDeniedBackgroundVerify(bashCall: BashCall): boolean {
+function isDeniedBackgroundVerify(bashCall: BashHookCall): boolean {
   if (!bashCall.fromSubagent || !bashCall.runsInBackground) {
     return false
   }
   const skeleton = withSpansBlanked(bashCall.command, findQuotedSpans(bashCall.command))
   return TW_VERIFY_COMMAND.test(skeleton)
-}
-
-/** hook が stdin へ流す JSON から Bash の呼び出しを取り出す。形が違えば `undefined`。 */
-function readBashCall(rawInput: string): BashCall | undefined {
-  const parsed: unknown = safeParse(rawInput)
-  if (typeof parsed !== "object" || parsed === null) {
-    return undefined
-  }
-
-  const input = parsed as PreToolUseHookInput
-  if (input.tool_name !== "Bash") {
-    return undefined
-  }
-
-  const command = input.tool_input?.command
-  if (typeof command !== "string") {
-    return undefined
-  }
-
-  return {
-    command,
-    runsInBackground: input.tool_input?.run_in_background === true,
-    fromSubagent: typeof input.agent_id === "string",
-  }
-}
-
-function safeParse(rawInput: string): unknown {
-  try {
-    return JSON.parse(rawInput)
-  } catch {
-    return undefined
-  }
-}
-
-async function readStdin(): Promise<string> {
-  const chunks: string[] = []
-  process.stdin.setEncoding("utf8")
-  for await (const chunk of process.stdin) {
-    chunks.push(chunk as string)
-  }
-  return chunks.join("")
 }

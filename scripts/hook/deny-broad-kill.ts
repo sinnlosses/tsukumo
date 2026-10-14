@@ -15,9 +15,7 @@
 // それ以外の終了コードでは実行を止めない（判定に失敗したときは通す。開発の手を
 // 止めないほうを既定にする）。
 
-import process from "node:process"
-
-import { recordHookDenial } from "./lib/hook-denial-record.ts"
+import { denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
 import { findQuotedSpans, withSpansBlanked } from "./lib/quoted-span.ts"
 
 /** 名前やパターンでまとめて薙ぎ払うコマンド。コマンドの位置に現れたときだけ拾う。 */
@@ -45,24 +43,10 @@ const REFUSAL = `この作業ツリーでは複数の tsukumo が同時に動い
 pid が分かっているなら kill <pid> はそのまま使える。
 分からなければ ps で PID を確かめてから kill <PID> で止める。`
 
-/** Bash ツールの入力のうち、この hook が見るところ。 */
-type BashHookInput = {
-  readonly tool_name?: unknown
-  readonly tool_input?: { readonly command?: unknown }
-  readonly agent_id?: unknown
-}
-
-const raw = await readStdin()
-const call = readBashCall(raw)
+const call = await readBashHookCall()
 const rule = call === undefined ? undefined : findBroadKillRule(call.command)
 if (call !== undefined && rule !== undefined) {
-  recordHookDenial({
-    hook: "deny-broad-kill",
-    rule,
-    actor: call.fromSubagent ? "subagent" : "main",
-  })
-  process.stderr.write(`${REFUSAL}\n`)
-  process.exit(2)
+  denyBashCall(call, { hook: "deny-broad-kill", rule, refusal: REFUSAL })
 }
 
 /**
@@ -79,44 +63,4 @@ function findBroadKillRule(bashCommand: string): string | undefined {
     return "pkill-killall"
   }
   return PGREP_PIPED_TO_KILL.test(skeleton) ? "pgrep-piped-kill" : undefined
-}
-
-type BashCall = {
-  readonly command: string
-  readonly fromSubagent: boolean
-}
-
-/** hook が stdin へ流す JSON から Bash の呼び出しを取り出す。形が違えば `undefined`。 */
-function readBashCall(rawInput: string): BashCall | undefined {
-  const parsed: unknown = safeParse(rawInput)
-  if (typeof parsed !== "object" || parsed === null) {
-    return undefined
-  }
-
-  const input = parsed as BashHookInput
-  if (input.tool_name !== "Bash") {
-    return undefined
-  }
-
-  const bashCommand = input.tool_input?.command
-  return typeof bashCommand === "string"
-    ? { command: bashCommand, fromSubagent: typeof input.agent_id === "string" }
-    : undefined
-}
-
-function safeParse(rawInput: string): unknown {
-  try {
-    return JSON.parse(rawInput)
-  } catch {
-    return undefined
-  }
-}
-
-async function readStdin(): Promise<string> {
-  const chunks: string[] = []
-  process.stdin.setEncoding("utf8")
-  for await (const chunk of process.stdin) {
-    chunks.push(chunk as string)
-  }
-  return chunks.join("")
 }
