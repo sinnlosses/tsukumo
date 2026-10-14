@@ -367,7 +367,7 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 `/tmp/tsukumo-catalog/index.html` に並べる（`--out` で置き場を変えられる）。**依頼を手で送らなくても狙った状態が出る**ので、
 お伺いの札・レポートの記法を直したら前後で撮り比べる。1枚だけ撮って要素の位置と大きさを
 数値で読むのは `capture-view.ts`（class セレクタで測るときは `[class*="…"]` — CSS Modules が
-`名前_ハッシュ` に焼くため）。**`capture-catalog.ts` の件が待つ `[class*="名前_"]` の名前が CSS Modules に
+`名前_ハッシュ` に焼くため）。**`scripts/capture/lib/catalog-entry.ts`（`capture-catalog.ts` の件の定義）が待つ `[class*="名前_"]` の名前が CSS Modules に
 定義されているかは `test/scripts/capture/capture-catalog-selector.test.ts` が確かめる**（件そのものは
 `pnpm run check` で走らない）。**撮った画像はリポジトリに置かない。** 疑似セッションの会話は架空でも、
 **タスク一覧のモーダルを撮る件には実データのタスク一覧（Beads の課題）が写る**ので、
@@ -417,7 +417,7 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 止めて流すので、止めた先の状態が残る（`opening` の手は数えない）。止めた先の要素は `--wait-for` で待つ。
 撮影は読み込みの1〜2秒後なので、遅い手で止めるときは `--wait-for` でその手が出す目印まで待つ
 （`--advance` はページの時計だけでサーバの手は進めない）。
-最終レポートまで流し切って待つときは `--wait-for '[class*="is-final_"]'`（`scripts/capture/capture-catalog.ts`
+最終レポートまで流し切って待つときは `--wait-for '[class*="is-final_"]'`（`scripts/capture/lib/catalog-entry.ts`
 の `WORK_PLAN_FINAL_SELECTOR` と同じ。`report-head` や `--advance` で待つと中間レポートや作業中の画を撮る）。
 **割れた `report` の差し戻しと直した `report` の描画は、場面 `report-mermaid-rejected`**（疑似セッションは判定せず、場面の `tool-finished` の `isError` に従う）。
 差し戻しの画は `--until-step 5 --wait-for 'text=流れを図にして出すね'`（本文に図が無く、吹き出しに直して出し直す一言が出る）、

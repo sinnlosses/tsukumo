@@ -41,15 +41,15 @@ import { chromium, type Page } from "playwright-core"
 
 import { readFakeSession } from "../../src/server/session-driver/adapter/fake-driver.ts"
 import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../shared/capture-clock.ts"
-import { spawnFakeTsukumo, waitForViewUrl } from "../shared/fake-tsukumo-process.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
+import { applyPreparations, openPage } from "./lib/capture-page.ts"
 import {
-  applyPreparation,
   describePreparation,
   type Preparation,
   readPreparationFlag,
 } from "./lib/capture-preparation.ts"
 import { type Source, sourceOf } from "./lib/capture-source.ts"
+import { launchFakeScene } from "./lib/fake-scene-launch.ts"
 import { sceneBlockKinds } from "./lib/scene-catalog.ts"
 
 /** 既定の窓の大きさ。実機の目視で使ってきた値に揃えてある。 */
@@ -59,30 +59,14 @@ const DEFAULT_HEIGHT = 900
 /** 既定の出力先。リポジトリの外に置く（会話の内容が写るため）。 */
 const DEFAULT_OUT = "/tmp/tsukumo-view.png"
 
-/** ページの中身が落ち着くまで待つ上限（ミリ秒）。SSE が繋ぎっぱなしなので networkidle は待たない。 */
-const SETTLE_TIMEOUT_MS = 10_000
-
 /** `--wait-for` が要素の出現と、演出の終わりをそれぞれ待つ上限（ミリ秒）。 */
 const WAIT_FOR_TIMEOUT_MS = 15_000
-
-/** 操作を1つ当てるのに待つ上限と、当て終えてから描き直しを待つ余裕（ミリ秒）。 */
-const PREPARE_TIMEOUT_MS = 2_000
-const PREPARE_SETTLE_MS = 800
 
 /** 演出の終わりを待つあいだ、ブラウザの時計を1回に進める量（ミリ秒）。 */
 const REVEAL_ADVANCE_MS = 1_000
 
 /** 時計を進めるたびに実時間で空ける間隔（ミリ秒）。待った実時間の数え上げにも使う。 */
 const REVEAL_POLL_MS = 50
-
-/** `--scene` で起こした tsukumo が配信 URL を出すまで待つ上限（ミリ秒）。 */
-const LAUNCH_TIMEOUT_MS = 30_000
-
-/**
- * 本文が入る領域（メインビュー）。class 名は組み立てのたびにハッシュ化される（CSS Modules）
- * ので、領域を指すときは `<Layout>` が付ける `data-region` を使う。
- */
-const MAIN_REGION_SELECTOR = '[data-region="main"]'
 
 /** 書き上げていくように見せる演出が進行中の印（`useReportReveal` の `data-revealing`）。 */
 const REVEALING_SELECTOR = "[data-revealing]"
@@ -192,21 +176,15 @@ async function openSource(source: Source): Promise<OpenedSource | undefined> {
     return undefined
   }
 
-  const child = spawnFakeTsukumo({
-    entry: path.join(REPOSITORY_ROOT, "src", "cli.ts"),
-    cwd: source.cwd,
-    scene: source.scene,
-    port: 0,
-    home: undefined,
-    extraEnv: source.until === undefined ? {} : { TSUKUMO_FAKE_SCENE_UNTIL: String(source.until) },
-    dropInheritedTsukumoEnv: false,
-    stderr: "inherit",
-  })
   try {
-    const url = await waitForViewUrl(child, LAUNCH_TIMEOUT_MS)
-    return { url, close: () => child.kill("SIGTERM") }
+    return await launchFakeScene({
+      cwd: source.cwd,
+      scene: source.scene,
+      home: undefined,
+      extraEnv:
+        source.until === undefined ? {} : { TSUKUMO_FAKE_SCENE_UNTIL: String(source.until) },
+    })
   } catch (error) {
-    child.kill("SIGTERM")
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
     return undefined
   }
@@ -231,12 +209,7 @@ async function capture(
         : page.clock.install({ time: options.clock }))
       await page.addInitScript(TEMPORAL_FOLLOWS_DATE_SCRIPT)
     }
-    await page.goto(url, { waitUntil: "domcontentloaded" })
-    // SSE / WebSocket を繋ぎっぱなしにするページなので `networkidle` は永遠に来ない。
-    // 最初の描画が落ち着くのを、本文が入る領域が現れるまでで待つ。
-    await page
-      .waitForSelector(MAIN_REGION_SELECTOR, { timeout: SETTLE_TIMEOUT_MS })
-      .catch(() => undefined)
+    await openPage(page, url)
     await page.waitForTimeout(500)
 
     if (options.waitFor !== undefined && !(await waitForRevealSettled(page, options.waitFor))) {
@@ -244,14 +217,10 @@ async function capture(
       return 1
     }
 
-    for (const step of options.preparations) {
-      if (!(await applyPreparation(page, step, PREPARE_TIMEOUT_MS))) {
-        process.stderr.write(`当てられなかった: ${describePreparation(step)}\n`)
-        return 1
-      }
-    }
-    if (options.preparations.length > 0) {
-      await page.waitForTimeout(PREPARE_SETTLE_MS)
+    const [missed] = await applyPreparations(page, options.preparations, "stop")
+    if (missed !== undefined) {
+      process.stderr.write(`当てられなかった: ${describePreparation(missed)}\n`)
+      return 1
     }
 
     if (options.scrollTo !== undefined && !(await scrollIntoView(page, options.scrollTo))) {
