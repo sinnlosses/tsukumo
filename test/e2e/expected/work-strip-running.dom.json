@@ -130,7 +130,8 @@
                                   "tag": "li",
                                   "attributes": {
                                     "data-phase-state": "current",
-                                    "aria-label": "2. 集計の関数とスクリプト（今の段）"
+                                    "aria-label": "2. 集計の関数とスクリプト（今の段）",
+                                    "data-spinning": "true"
                                   },
                                   "children": [
                                     {
@@ -183,7 +184,7 @@
                               ]
                             },
                             "集計の関数とスクリプト",
-                            "2/4 · 経過 1分00秒",
+                            "経過 1分00秒",
                             {
                               "tag": "button",
                               "attributes": {

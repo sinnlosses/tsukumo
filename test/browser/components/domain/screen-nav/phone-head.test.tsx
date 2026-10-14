@@ -61,7 +61,7 @@ function stepsToggle(head: HTMLElement): HTMLElement {
 }
 
 describe("PhoneHead", () => {
-  it("作業中は回る輪と「作業中」・経過・今の段の題を出し、2行目に段の点と n/N と「手順 n」を出す", () => {
+  it("作業中は回る輪と「作業中」・経過・今の段の題を出し、2行目に段の点と「手順 n」を出す（位置の文字は出さない）", () => {
     const head = renderHead({
       turn: { kind: "running", startedAt: 0 },
       records: [
@@ -92,21 +92,21 @@ describe("PhoneHead", () => {
       false,
       false,
     ])
-    expect(head.querySelector(".phone-head-position")?.textContent).toBe("3/5")
+    expect(head.querySelector(".phone-head-position")).toBeNull()
     expect(stepsToggle(head).textContent).toBe("手順 2")
   })
 
-  it("段を全部終えていれば題は「n段すべて済み」、位置は「N/N」", () => {
+  it("段を全部終えていれば題は「n段すべて済み」で、位置の文字は出さない", () => {
     const head = renderHead({
       turn: { kind: "running", startedAt: 0 },
       records: [requestRecord(), workPlanRecord({ phases: PHASES, current: 5 })],
     })
 
     expect(title()).toBe("5段すべて済み")
-    expect(head.querySelector(".phone-head-position")?.textContent).toBe("5/5")
+    expect(head.querySelector(".phone-head-position")).toBeNull()
   })
 
-  it("範囲があって全部終えていれば、題は全部の段で「n段すべて済み」、位置は範囲の段の数で「N/N」", () => {
+  it("範囲があって全部終えていれば、題は全部の段で「n段すべて済み」", () => {
     const head = renderHead({
       turn: { kind: "running", startedAt: 0 },
       records: [
@@ -120,10 +120,10 @@ describe("PhoneHead", () => {
     })
 
     expect(title()).toBe("5段すべて済み")
-    expect(head.querySelector(".phone-head-position")?.textContent).toBe("3/3")
+    expect(head.querySelector(".phone-head-position")).toBeNull()
   })
 
-  it("範囲の中が今なら位置は範囲の先頭からの番号、範囲の外が今なら位置を出さない", () => {
+  it("範囲の中が今でも外が今でも、位置の文字は出さず題は今の段の名前", () => {
     const inRange = {
       delegatedRange: { kind: "range", first: 1, count: 3 },
     } as const
@@ -131,7 +131,7 @@ describe("PhoneHead", () => {
       turn: { kind: "running", startedAt: 0 },
       records: [requestRecord(), workPlanRecord({ phases: PHASES, current: 2, ...inRange })],
     })
-    expect(head.querySelector(".phone-head-position")?.textContent).toBe("2/3")
+    expect(head.querySelector(".phone-head-position")).toBeNull()
     expect(title()).toBe("架空の段C")
 
     cleanup()
@@ -143,7 +143,7 @@ describe("PhoneHead", () => {
         workPlanRecord({ phases: PHASES, current: 0, ...inRange }),
       ],
     })
-    expect(outside.querySelector(".phone-head-position")?.textContent).toBe("")
+    expect(outside.querySelector(".phone-head-position")).toBeNull()
     expect(title()).toBe("架空の段A")
   })
 

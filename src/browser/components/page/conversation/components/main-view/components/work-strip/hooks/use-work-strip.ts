@@ -19,7 +19,6 @@ import {
   plannedPhaseNumber,
   plannedPhaseTitle,
   plannedPhasesOf,
-  workPositionText,
 } from "../../../../../../../../../shared/session/work-plan.ts"
 import {
   FINISHED_LABEL,
@@ -50,7 +49,11 @@ export type WorkStripPhase = {
   /** 読み上げと `title` に出す「4. 段の名前（今の段）」。 */
   readonly label: string
   readonly state: WorkStripPhaseState
+  /** 丸の外周に回る弧を付けるか。作業中の帯の今の段だけ。 */
+  readonly spinning: boolean
 }
+
+type PhaseFlags = { readonly asking: boolean; readonly spinning: boolean }
 
 /** まとまりの `state` は囲みの次の線の色だけに使い、中の段が全部済めば `done`、ほかは `upcoming`。 */
 export type WorkStripSlot =
@@ -79,7 +82,7 @@ export type WorkStripSteps = {
  * 帯に出す形。`headLabel` は丸の右の字、`sideLabel` は右端の等幅の字。
  *
  * - `none`: 帯ごと出さない（本文が1つも無いまま閉じた依頼と、段取りも働きも無いとき）
- * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「4/7 · 経過 6分12秒」・2行目（段取りが届く前は段の丸が無く字は空。チップが「作業中」を言うので重ねない）
+ * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「経過 6分12秒」・2行目（段取りが届く前は段の丸が無く字は空。チップが「作業中」を言うので重ねない）
  * - `finished`: 中身がレポートに入れ替わったあと。済んだ姿の字・「所要 21分49秒」の1行（段取りが無ければ字は空）
  *
  * `result` は状態のチップの状態。`working` は作業中・答え待ち・背景で作業中（ターンが終わって背景のタスクだけ残る）、`finished` は完了・答え待ち・止めた・失敗。
@@ -144,7 +147,6 @@ export function useWorkStrip(): WorkStripModel {
   const planned = plan.kind === "planned" ? plannedPhasesOf(plan) : []
   const nowPhase = currentPhaseOf(plan)
   const completion = plan.kind === "planned" ? completionText(plan) : ""
-  const positionText = workPositionText(plan)
   const { exchange } = content
   const firstPending = pending[0]
   const list: WorkStripSteps["list"] =
@@ -160,7 +162,10 @@ export function useWorkStrip(): WorkStripModel {
     onToggle: () => toggle(exchange),
     groups: currentWorkStepGroups(turnStepList.steps),
   }
-  const stripPhases = slotsOf(plan, planned, working && firstPending !== undefined)
+  const stripPhases = slotsOf(plan, planned, {
+    asking: working && firstPending !== undefined,
+    spinning: working && result === "working",
+  })
 
   if (!working) {
     return {
@@ -178,7 +183,7 @@ export function useWorkStrip(): WorkStripModel {
     phases: stripPhases,
     result,
     headLabel: planned.length === 0 ? "" : nowPhase.kind === "phase" ? nowPhase.name : completion,
-    sideLabel: positionText === "" ? elapsedLabel : `${positionText} · ${elapsedLabel}`,
+    sideLabel: elapsedLabel,
     activity: workActivityOf({
       turnStepList,
       firstPending,
@@ -221,11 +226,11 @@ function stripResultOf(
 function slotsOf(
   plan: LatestWorkPlan,
   planned: readonly PlannedPhase[],
-  asking: boolean,
+  flags: PhaseFlags,
 ): readonly WorkStripSlot[] {
   const entries = Object.values(groupBy(planned, (phase) => phase.entry))
   return entries.map((members): WorkStripSlot => {
-    const phases = members.map((phase) => toPhase(plan, phase, asking))
+    const phases = members.map((phase) => toPhase(plan, phase, flags))
     const [first] = phases
     if (phases.length === 1 && first !== undefined) {
       return { kind: "phase", phase: first }
@@ -248,8 +253,9 @@ function slotsOf(
   })
 }
 
-function toPhase(plan: LatestWorkPlan, phase: PlannedPhase, asking: boolean): WorkStripPhase {
-  const state: WorkStripPhaseState = phase.state === "current" && asking ? "asking" : phase.state
+function toPhase(plan: LatestWorkPlan, phase: PlannedPhase, flags: PhaseFlags): WorkStripPhase {
+  const state: WorkStripPhaseState =
+    phase.state === "current" && flags.asking ? "asking" : phase.state
   const number = plan.kind === "planned" ? plannedPhaseNumber(plan, phase) : NAMED
   const awaitsRange =
     plan.kind === "planned" &&
@@ -269,5 +275,6 @@ function toPhase(plan: LatestWorkPlan, phase: PlannedPhase, asking: boolean): Wo
               : "・",
     label: `${plan.kind === "planned" ? plannedPhaseTitle(plan, phase) : phase.name}${PHASE_STATE_SUFFIX[state]}`,
     state,
+    spinning: flags.spinning && state === "current",
   }
 }

@@ -49,15 +49,18 @@
   border-radius: 50%;
   background: var(--work-strip-dot);
 }
-/* 作業中のチップの印。差し色の弧が1つだけ欠けた輪
+/* 作業中の今の段の丸の外周を回る弧。番号は回さず、丸の寸法も動かさない
    （`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
-.work-strip-spinner {
-  flex: none;
-  box-sizing: border-box;
-  width: 0.75rem;
-  height: 0.75rem;
-  border: 2px solid var(--rule);
+.work-strip-phase[data-spinning="true"] > span {
+  position: relative;
+}
+.work-strip-phase[data-spinning="true"] > span::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 2px solid transparent;
   border-top-color: var(--accent);
+  border-right-color: color-mix(in srgb, var(--accent) 35%, transparent);
   border-radius: 50%;
   animation: work-strip-spin 0.9s linear infinite;
 }

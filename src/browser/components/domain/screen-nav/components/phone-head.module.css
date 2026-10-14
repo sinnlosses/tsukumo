@@ -160,11 +160,6 @@
     border: 2px solid var(--accent);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
   }
-  .phone-head-position {
-    color: var(--ink-quiet);
-    font-family: var(--font-mono);
-    font-size: 11px;
-  }
   .phone-head-steps-toggle {
     display: inline-flex;
     align-items: center;

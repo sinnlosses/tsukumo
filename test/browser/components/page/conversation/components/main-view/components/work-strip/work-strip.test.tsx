@@ -128,6 +128,20 @@ describe("WorkStrip", () => {
     expect(chip?.textContent).toBe("背景で作業中")
     expect(chip?.querySelector("[class*='work-strip-spinner']")).toBeNull()
     expect(chip?.querySelector("[class*='work-strip-dot']")).not.toBeNull()
+    expect(strip().querySelector("[data-spinning]")).toBeNull()
+  })
+
+  it("作業中のチップは回らない点だけで、弧は今の段の丸にだけ付く", () => {
+    putSession(stateAfter([REQUEST, plan(1)]))
+    render(<WorkStrip />)
+
+    const chip = strip().querySelector("[data-result]")
+    expect(chip?.getAttribute("data-result")).toBe("working")
+    expect(chip?.querySelector("[class*='work-strip-spinner']")).toBeNull()
+    expect(chip?.querySelector("[class*='work-strip-dot']")).not.toBeNull()
+    const spinning = strip().querySelectorAll("[data-spinning]")
+    expect(spinning).toHaveLength(1)
+    expect(spinning[0]?.getAttribute("data-phase-state")).toBe("current")
   })
 
   it("ターンが閉じると帯は済んだ姿の1行で残り、段の数だけ済んだと言う", () => {

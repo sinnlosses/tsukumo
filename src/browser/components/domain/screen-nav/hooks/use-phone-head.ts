@@ -12,7 +12,6 @@ import {
   plannedPhaseTitle,
   plannedPhasesOf,
   type PlannedPhaseState,
-  workPositionText,
 } from "../../../../../shared/session/work-plan.ts"
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { isTurnCounting, turnElapsedClock } from "../../../../domain/turn-elapsed.ts"
@@ -59,7 +58,7 @@ export type PhoneHeadDot = {
  *
  * - `none`: 出さない（依頼待ち・雑談中・会話の画面でないとき）
  * - `steps`: 段取りの無いターン。「手順 n」だけ
- * - `planned`: 段の点・「n/N」・「手順 n」
+ * - `planned`: 段の点・「手順 n」
  */
 export type PhoneHeadProgress =
   | { readonly kind: "none" }
@@ -67,7 +66,6 @@ export type PhoneHeadProgress =
   | {
       readonly kind: "planned"
       readonly dots: readonly PhoneHeadDot[]
-      readonly positionLabel: string
       readonly stepCount: number
     }
 
@@ -176,7 +174,6 @@ function progressOf(turnStepList: TurnStepList): PhoneHeadProgress {
       state: entry.state,
       label: `${plannedPhaseTitle(plan, entry)}${DOT_STATE_SUFFIX[entry.state]}`,
     })),
-    positionLabel: workPositionText(plan),
     stepCount,
   }
 }

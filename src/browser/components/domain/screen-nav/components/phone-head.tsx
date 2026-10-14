@@ -98,24 +98,21 @@ function PhoneHeadProgressLine(props: {
   return (
     <div className={styles["phone-head-line"]}>
       {progress.kind === "planned" && (
-        <>
-          <ol className={styles["phone-head-dots"]} aria-label="段取り">
-            {progress.dots.map((dot) => (
-              <li
-                key={dot.key}
-                className={clsx(
-                  styles["phone-head-dot"],
-                  dot.state === "done" && styles["is-done"],
-                  dot.state === "current" && styles["is-current"],
-                )}
-                aria-label={dot.label}
-              >
-                {dot.state === "done" && "✓"}
-              </li>
-            ))}
-          </ol>
-          <span className={styles["phone-head-position"]}>{progress.positionLabel}</span>
-        </>
+        <ol className={styles["phone-head-dots"]} aria-label="段取り">
+          {progress.dots.map((dot) => (
+            <li
+              key={dot.key}
+              className={clsx(
+                styles["phone-head-dot"],
+                dot.state === "done" && styles["is-done"],
+                dot.state === "current" && styles["is-current"],
+              )}
+              aria-label={dot.label}
+            >
+              {dot.state === "done" && "✓"}
+            </li>
+          ))}
+        </ol>
       )}
       <button
         type="button"

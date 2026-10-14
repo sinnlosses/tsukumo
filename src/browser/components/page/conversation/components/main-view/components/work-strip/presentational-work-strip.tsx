@@ -1,4 +1,4 @@
-// 進み具合の帯の器。状態のチップ・段の丸の並び・今の段・位置と経過・手順の口の1行目と、走っている手順の2行目、押すと開く依頼の手順の一覧。
+// 進み具合の帯の器。状態のチップ・段の丸の並び・今の段・経過・手順の口の1行目と、走っている手順の2行目、押すと開く依頼の手順の一覧。
 //
 // `aria-live` は付けない。
 
@@ -61,16 +61,12 @@ export function PresentationalWorkStrip(props: {
   )
 }
 
-/** 状態のチップ。印は色の点で、作業中だけ回る輪にする。 */
+/** 状態のチップ。印は色の点。 */
 function StateChip(props: { readonly result: WorkStripResult }): ReactElement {
   const { label } = WORK_STRIP_MARKS[props.result]
   return (
     <span className={styles["work-strip-chip"]} data-result={props.result}>
-      {props.result === "working" ? (
-        <span className={styles["work-strip-spinner"]} aria-hidden="true" />
-      ) : (
-        <span className={styles["work-strip-dot"]} aria-hidden="true" />
-      )}
+      <span className={styles["work-strip-dot"]} aria-hidden="true" />
       <span>{label}</span>
     </span>
   )
@@ -133,6 +129,7 @@ function PhaseDot(props: {
     <li
       className={props.className}
       data-phase-state={phase.state}
+      data-spinning={phase.spinning ? "true" : undefined}
       aria-label={phase.label}
       title={phase.label}
     >

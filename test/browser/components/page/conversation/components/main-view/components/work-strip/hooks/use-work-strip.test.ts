@@ -67,7 +67,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
 
     expect(strip.kind).toBe("working")
     expect(strip.kind === "working" && strip.activity.text).toBe("Bash  架空のコマンド · 12秒")
-    expect(strip.kind === "working" && strip.sideLabel).toBe("1/2 · 経過 1分12秒")
+    expect(strip.kind === "working" && strip.sideLabel).toBe("経過 1分12秒")
   })
 
   it("答え待ちの秒は、答え待ちが届いた時刻から数える", () => {
@@ -229,7 +229,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(strip).toMatchObject({
       kind: "working",
       headLabel: "架空の段B",
-      sideLabel: "2/2 · 経過 1分12秒",
+      sideLabel: "経過 1分12秒",
     })
     expect(strip.kind === "working" && strip.phases.map((slot) => slot.kind)).toEqual([
       "phase",
@@ -259,7 +259,7 @@ describe("useWorkStrip（段のまとまり）", () => {
     expect(strip).toMatchObject({
       kind: "working",
       headLabel: "架空の段B・架空の段C",
-      sideLabel: "2·3/3 · 経過 5秒",
+      sideLabel: "経過 5秒",
     })
     expect(strip.kind === "working" && strip.phases).toMatchObject([
       { kind: "phase", phase: { mark: "✓", state: "done" } },
@@ -283,7 +283,7 @@ describe("useWorkStrip（段のまとまり）", () => {
 
     const strip = stripAt(state, START + 5_000)
 
-    expect(strip).toMatchObject({ headLabel: "架空の段B", sideLabel: "2/3 · 経過 5秒" })
+    expect(strip).toMatchObject({ headLabel: "架空の段B", sideLabel: "経過 5秒" })
     expect(strip.kind === "working" && strip.phases[1]).toMatchObject({
       phases: [
         { mark: "2", state: "current" },
@@ -464,5 +464,129 @@ describe("useWorkStrip（状態）", () => {
       headLabel: "",
       sideLabel: "所要 5秒",
     })
+  })
+})
+
+describe("useWorkStrip（回る弧）", () => {
+  function spinningOf(strip: WorkStripModel): boolean[] {
+    return strip.kind === "none"
+      ? []
+      : strip.phases.flatMap((slot) =>
+          slot.kind === "phase"
+            ? [slot.phase.spinning]
+            : slot.phases.map((phase) => phase.spinning),
+        )
+  }
+
+  it("作業中は今の段の丸だけが回る", () => {
+    const strip = stripAt(
+      foldTimed([
+        [request, START],
+        [plan, START + 1_000],
+      ]),
+      START + 5_000,
+    )
+
+    expect(strip.kind).toBe("working")
+    expect(spinningOf(strip)).toEqual([true, false])
+  })
+
+  it("済んだ段とまだの段は回らない", () => {
+    const strip = stripAt(
+      foldTimed([
+        [request, START],
+        [{ ...plan, phases: ["架空の段A", "架空の段B", "架空の段C"], current: 1 }, START + 1_000],
+      ]),
+      START + 5_000,
+    )
+
+    expect(spinningOf(strip)).toEqual([false, true, false])
+  })
+
+  it("答え待ちのあいだは今の段の丸も回らない", () => {
+    const strip = stripAt(
+      foldTimed([
+        [request, START],
+        [plan, START + 1_000],
+        [
+          {
+            kind: "pending-changed",
+            pending: [
+              {
+                kind: "permission",
+                id: "toolu_ask",
+                toolName: "Bash",
+                input: { command: "架空のコマンド" },
+              },
+            ],
+          },
+          START + 2_000,
+        ],
+      ]),
+      START + 5_000,
+    )
+
+    expect(spinningOf(strip)).toEqual([false, false])
+  })
+
+  it("レポートに入れ替わった済んだ姿では回らない", () => {
+    const strip = stripAt(
+      foldTimed([
+        [request, START],
+        [plan, START + 1_000],
+        [reportEvent(), START + 2_000],
+        [completed, START + 3_000],
+      ]),
+      START + 5_000,
+    )
+
+    expect(strip.kind).toBe("finished")
+    expect(spinningOf(strip)).toEqual([false, false])
+  })
+
+  it("背景で作業中のあいだは回らない", () => {
+    const strip = stripAt(
+      foldTimed([
+        [request, START],
+        [plan, START + 1_000],
+        [
+          {
+            kind: "background-tasks-changed",
+            tasks: [{ taskId: "fictional-task", kind: "shell", description: "架空の待ち" }],
+          },
+          START + 2_000,
+        ],
+        [completed, START + 3_000],
+      ]),
+      START + 5_000,
+    )
+
+    expect(strip).toMatchObject({ kind: "working", result: "background" })
+    expect(spinningOf(strip)).toEqual([false, false])
+  })
+
+  it("段取りが届く前は丸が無い", () => {
+    expect(spinningOf(stripAt(foldTimed([[request, START]]), START + 5_000))).toEqual([])
+  })
+
+  it("まとまりで今の段が複数なら、今の段の丸がすべて回る", () => {
+    const grouped: SessionEvent = {
+      kind: "work-plan",
+      delegatedRange: { kind: "none" },
+      phases: ["架空の段A", ["架空の段B", "架空の段C"]],
+      current: 1,
+      finishedInGroup: [],
+      phaseSummary: "架空のまとめ。",
+    }
+
+    const strip = stripAt(
+      foldTimed([
+        [request, START],
+        [grouped, START + 1_000],
+      ]),
+      START + 5_000,
+    )
+
+    expect(spinningOf(strip)).toEqual([false, true, true])
   })
 })
