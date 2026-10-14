@@ -1,0 +1,31 @@
+{
+  "name": "白鈴",
+  "expressions": {
+    "default": "にっと",
+    "thinking": "ふむ",
+    "proud": "えへん",
+    "flustered": "あわわ",
+    "serious": "きりっ",
+    "curious": "きょとん",
+    "sad": "しょんぼり",
+    "excited": "わくわく",
+    "bored": "たいくつ"
+  },
+  "portraits": {
+    "default": "default.png",
+    "thinking": "thinking.png",
+    "proud": "proud.png",
+    "flustered": "flustered.png",
+    "serious": "serious.png",
+    "curious": "curious.png",
+    "sad": "sad.png",
+    "excited": "excited.png",
+    "bored": "bored.png"
+  },
+  "accent": "#f9c3cd",
+  "chatAccent": "#7cc8f0",
+  "face": "face.png",
+  "background": {
+    "image": "background.png"
+  }
+}
