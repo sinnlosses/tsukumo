@@ -671,7 +671,7 @@ function filesMarkdown(block: Extract<ReportBlock, { readonly kind: "files" }>):
     const codeHtml = `<code data-file-path="${htmlAttribute(path)}">${nameHtml}</code>`
     return `<div class="file">${badgeHtml}<span class="file-entry">${fileGuideHtml(row.guide)}${codeHtml}</span>${noteHtml}</div>`
   })
-  return `<div class="files">${summaryHtml}${rows.join("")}</div>`
+  return `<div class="files">${rows.join("")}${summaryHtml}</div>`
 }
 
 function fileGuideHtml(guide: string): string {

@@ -644,12 +644,6 @@ describe("reportSectionsMarkdown", () => {
     // 追加で説明が無い行だけ「新しく作った」を補足で入れ、ほかの種別で説明が無い行は列を空にする。
     expect(markdownOf(files)).toBe(
       '<div class="files">' +
-        '<div class="files-summary">' +
-        `${badge("+", "file-change-added", "追加 1")}` +
-        `${badge("~", "file-change-modified", "変更 1")}` +
-        `${badge("-", "file-change-deleted", "削除 1")}` +
-        `${badge("·", "file-change-read", "読んだ 1")}` +
-        "</div>" +
         `${folder("├── ", "src")}` +
         `<div class="file">${badge("~", "file-change-modified", "変更")}` +
         `${entry("│   ├── ", "src/架空&lt;a&gt;.ts", "架空&lt;a&gt;.ts")}` +
@@ -662,6 +656,12 @@ describe("reportSectionsMarkdown", () => {
         `${folder("└── ", "docs")}` +
         `<div class="file">${badge("·", "file-change-read", "読んだ")}` +
         `${entry("    └── ", "docs/架空d.md", "架空d.md")}</div>` +
+        '<div class="files-summary">' +
+        `${badge("+", "file-change-added", "追加 1")}` +
+        `${badge("~", "file-change-modified", "変更 1")}` +
+        `${badge("-", "file-change-deleted", "削除 1")}` +
+        `${badge("·", "file-change-read", "読んだ 1")}` +
+        "</div>" +
         "</div>",
     )
   })
