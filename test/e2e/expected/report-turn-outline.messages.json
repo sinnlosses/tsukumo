@@ -94,15 +94,6 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "setting-confirmed",
-      "setting": "effort",
-      "value": "medium"
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
       "kind": "request",
       "text": "状態の置き場所を決めたい。札の頭と目次の列のどちらに持たせるかを比べて（架空の依頼）",
       "images": []
@@ -146,15 +137,6 @@
       "outcome": {
         "kind": "completed"
       }
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "setting-confirmed",
-      "setting": "effort",
-      "value": "medium"
     }
   },
   {
@@ -210,15 +192,6 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "setting-confirmed",
-      "setting": "effort",
-      "value": "medium"
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
       "kind": "request",
       "text": "目次の列を2段にする（架空の依頼）",
       "images": []
@@ -240,15 +213,6 @@
       "outcome": {
         "kind": "completed"
       }
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "setting-confirmed",
-      "setting": "effort",
-      "value": "medium"
     }
   }
 ]

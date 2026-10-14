@@ -117,6 +117,79 @@ describe("createSessionManager", () => {
     }
   })
 
+  describe("見届けた設定の合図", () => {
+    const confirmed = (value: string): SessionEvent => ({
+      kind: "setting-confirmed",
+      setting: "model",
+      value,
+    })
+    const eventsOf = (frames: readonly ServerFrame[]) =>
+      frames.flatMap((frame) => (frame.type === "events" ? frame.events.map((e) => e.event) : []))
+
+    it("同じ値が続くときは最初の1回だけ流し、値が変わればまた流す", async () => {
+      const { manager, stub } = startManagerWithStub()
+      const frames: ServerFrame[] = []
+      manager.subscribe((frame) => frames.push(frame))
+
+      stub.emit(confirmed("fake-model-a"))
+      stub.emit(confirmed("fake-model-a"))
+      stub.emit(confirmed("fake-model-b"))
+      stub.emit(confirmed("fake-model-b"))
+      await waitForBatch()
+
+      expect(eventsOf(frames)).toEqual([confirmed("fake-model-a"), confirmed("fake-model-b")])
+    })
+
+    it("起こし直した代の最初の1回は、前の代と同じ値でも流す", async () => {
+      const { manager, stub } = startManagerWithStub()
+      const frames: ServerFrame[] = []
+      manager.subscribe((frame) => frames.push(frame))
+      stub.emit(confirmed("fake-model-a"))
+      await waitForBatch()
+
+      await manager.commands.session.setChatMode({ chat: true })
+      stub.emit(confirmed("fake-model-a"))
+      await waitForBatch()
+
+      expect(eventsOf(frames).filter((e) => e.kind === "setting-confirmed")).toHaveLength(2)
+    })
+
+    it("同じ値を落とす経路でも、受け付けた値は見届けられて confirmed になる", async () => {
+      const { manager, stub } = startManagerWithStub()
+      const frames: ServerFrame[] = []
+      manager.subscribe((frame) => frames.push(frame))
+      stub.emit({
+        kind: "session-info",
+        sessionId: "fake-session",
+        model: "fake-model-a",
+        permissionMode: "default",
+        slashCommands: [],
+        terminalSlashCommands: [],
+      })
+      stub.emit(confirmed("fake-model-a"))
+      stub.emit({ kind: "model-changed", model: "fake-model-b" })
+      stub.emit(confirmed("fake-model-a"))
+      stub.emit(confirmed("fake-model-b"))
+      stub.emit(confirmed("fake-model-b"))
+      await waitForBatch()
+
+      const hello = (() => {
+        const late: ServerFrame[] = []
+        manager.subscribe((frame) => late.push(frame))
+        return late[0]
+      })()
+      expect(hello?.type === "hello" && hello.state.settingMarks.model).toMatchObject({
+        kind: "confirmed",
+        value: "fake-model-b",
+      })
+      expect(eventsOf(frames).filter((e) => e.kind === "setting-confirmed")).toEqual([
+        confirmed("fake-model-a"),
+        confirmed("fake-model-a"),
+        confirmed("fake-model-b"),
+      ])
+    })
+  })
+
   it("組み直した再生は events で配らず、1件ずつ畳んだのと同じ姿の hello で配る", async () => {
     const { manager, stub } = startManagerWithStub()
     const frames: ServerFrame[] = []

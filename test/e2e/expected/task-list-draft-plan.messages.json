@@ -208,14 +208,5 @@
         "kind": "completed"
       }
     }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "setting-confirmed",
-      "setting": "effort",
-      "value": "medium"
-    }
   }
 ]

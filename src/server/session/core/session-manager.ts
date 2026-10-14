@@ -221,6 +221,14 @@ type GenerationTally = {
   readonly pendingConclusion: PendingConclusion
   /** いまのターンにメインが画像のファイルを `Read` したか（`turn-finished` で空に戻す）。 */
   readonly turnImageRead: TurnImageRead
+  /** この代で流した `setting-confirmed` の設定ごとの最後の値。 */
+  readonly confirmedSettings: ConfirmedSettings
+}
+
+type ConfirmedSettings = {
+  /** 同じ値の繰り返しで、畳んでも状態が動かないものなら `true`。 */
+  readonly isRepeat: (event: SessionEvent, state: SessionState) => boolean
+  readonly note: (event: SessionEvent) => void
 }
 
 type TurnImageRead = {
@@ -321,9 +329,10 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
    * 見た目の編集で起こした `character-changed` もここを通る（サーバ側の状態とブラウザへ配る内容を1本にする）。
    */
   const receive = (tally: GenerationTally, event: SessionEvent): void => {
-    if (closed) {
+    if (closed || tally.confirmedSettings.isRepeat(event, state)) {
       return
     }
+    tally.confirmedSettings.note(event)
     const at = options.now()
     // 画像はブラウザがこのレポートや質問を描く前に棚に無いといけないので、束に積む前に置く。
     if (event.kind === "report") {
@@ -484,6 +493,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       diarySignal: diaryAbort.signal,
       pendingConclusion: createPendingConclusion(),
       turnImageRead: createTurnImageRead(),
+      confirmedSettings: createConfirmedSettings(),
     }
     const receiveIfCurrent = (event: SessionEvent): boolean => {
       if (born !== bornCount) {
@@ -749,6 +759,22 @@ function createPendingConclusion(): PendingConclusion {
       const conclusion = current
       current = undefined
       return conclusion
+    },
+  }
+}
+
+function createConfirmedSettings(): ConfirmedSettings {
+  const last = new Map<string, string>()
+  return {
+    isRepeat: (event, state) =>
+      event.kind === "setting-confirmed" &&
+      last.get(event.setting) === event.value &&
+      state.settingMarks[event.setting].kind !== "accepted" &&
+      (event.setting !== "effort" || state.effort === event.value),
+    note: (event) => {
+      if (event.kind === "setting-confirmed") {
+        last.set(event.setting, event.value)
+      }
     },
   }
 }

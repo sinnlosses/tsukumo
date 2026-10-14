@@ -106,15 +106,6 @@
     }
   },
   {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "setting-confirmed",
-      "setting": "effort",
-      "value": "medium"
-    }
-  },
-  {
     "sent": "session.switchSession",
     "order": 1,
     "input": {
@@ -211,15 +202,6 @@
       "outcome": {
         "kind": "completed"
       }
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "setting-confirmed",
-      "setting": "effort",
-      "value": "medium"
     }
   }
 ]
