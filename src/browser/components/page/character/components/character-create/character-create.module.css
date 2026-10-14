@@ -82,6 +82,9 @@
   /* スクロールバーが入力欄に被らないよう、右に余白を取って置き場を確保する。 */
   scrollbar-gutter: stable;
   padding-right: 0.75rem;
+  /* 入力欄のフォーカスの輪が左で切れないよう、左にも余白を取り、負の margin で字の位置は動かさない。 */
+  padding-left: 0.5rem;
+  margin-left: -0.5rem;
 }
 @media (max-width: 640px) {
   .character-create-grid {
