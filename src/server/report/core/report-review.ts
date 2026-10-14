@@ -26,6 +26,9 @@
 // 止めるか待つかをモデルに決めさせる。背景のサブエージェントとその他の種類、脇の話のターンでは見ない。
 // 差し戻しの文面には ID と `description` を載せるが、記録に残すのは種類の名前だけ。
 //
+// 画面のファイル（`src/browser/` の下）がターンの頭の HEAD から変わっているのに画像の塊（`image`・`beforeAfter`）が無い `report` も差し戻す（枠は別に1ターンに1回まで）。
+// 変更ファイルは `ReportChanges` の口から読み、読めなければ変更なしとして通す。脇の話のターンでは見ない。
+//
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`）。
 // `assistant` メッセージの変換は `report` イベントを作るだけで判定しない。
 // `ReportReview.pass` がそのイベントを同じ呼び出しの `tool-finished` まで預かり、handler が返した `isError`（差し戻したら true）に従って描くか捨てるかを決める。
@@ -39,6 +42,7 @@
 
 import { isDeepEqual } from "remeda"
 
+import { sectionsWithFigure } from "../../../shared/report/report-block.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -49,6 +53,7 @@ import {
   type ReportViolation,
   reportViolations,
 } from "./report-violation.ts"
+import { hasScreenFile } from "./screen-file.ts"
 
 export const REPORT_PROCEDURE_REJECTIONS = [
   "resend",
@@ -58,6 +63,7 @@ export const REPORT_PROCEDURE_REJECTIONS = [
   "unfinished-phases",
   "finished-but-stopped",
   "background-running",
+  "no-screenshot",
 ] as const satisfies readonly string[]
 
 export type ReportRejectionReason =
@@ -82,7 +88,12 @@ export type ReportReview = {
    * このターンで描いた `report` の送り直し、直前に描いた `report` のあとに新しい事実の届いていない呼び出し、
    * 応えていない `work_plan` の差し戻し、合わない段の閉じ方、規約違反のどれかなら、この順に見て差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
    */
-  readonly judge: (report: ReportDraft) => ReportVerdict
+  readonly judge: (report: ReportDraft, changedFiles?: readonly string[]) => ReportVerdict
+  /**
+   * ターンの頭の HEAD から今までに変わったファイル（リポジトリの根からの相対パス）。
+   * 読めないときは空。`judge` に渡す前に handler が待つ。
+   */
+  readonly changedFiles: () => Promise<readonly string[]>
   /** このターンで「新しい事実が無い」差し戻しをしたか。ターンの頭（`session-info`）で戻る。 */
   readonly nothingNewRejected: () => boolean
   /**
@@ -101,6 +112,20 @@ export type ReportNews = {
   readonly backgroundTasks: () => readonly BackgroundTask[]
 }
 
+/**
+ * 変更ファイルを読む口。どちらも読めないときは `undefined`（例外を投げない）。
+ * `readChangedFiles` はコミット済みの差分と、作業ツリーの未コミット・未追跡のファイルを返す。
+ */
+export type ReportChanges = {
+  readonly readHead: () => Promise<string | undefined>
+  readonly readChangedFiles: (head: string) => Promise<readonly string[] | undefined>
+}
+
+const NO_CHANGES = {
+  readHead: () => Promise.resolve(undefined),
+  readChangedFiles: () => Promise.resolve(undefined),
+} as const satisfies ReportChanges
+
 type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 
 /**
@@ -111,6 +136,7 @@ type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 export function createReportReview(
   workPlanStanding: () => WorkPlanStanding,
   news: ReportNews,
+  changes: ReportChanges = NO_CHANGES,
 ): ReportReview {
   let rejectedInTurn = false
   let resendRejectedInTurn = false
@@ -118,6 +144,9 @@ export function createReportReview(
   let unansweredPlanRejectedInTurn = false
   let closingRejectedInTurn = false
   let backgroundRejectedInTurn = false
+  let screenshotRejectedInTurn = false
+  // ターンの頭の HEAD（読み終わるまでは Promise）。
+  let turnHead: Promise<string | undefined> = Promise.resolve(undefined)
   let held: readonly ReportEvent[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportEvent[] = []
@@ -131,11 +160,17 @@ export function createReportReview(
     unansweredPlanRejectedInTurn = false
     closingRejectedInTurn = false
     backgroundRejectedInTurn = false
+    screenshotRejectedInTurn = false
+    turnHead = changes.readHead()
     drawn = []
   }
 
   return {
-    judge: (report) => {
+    changedFiles: async () => {
+      const head = await turnHead
+      return head === undefined ? [] : ((await changes.readChangedFiles(head)) ?? [])
+    },
+    judge: (report, changedFiles = []) => {
       if (!resendRejectedInTurn && drawn.some((previous) => isSameReport(previous, report))) {
         resendRejectedInTurn = true
         return { kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT, reasons: ["resend"] }
@@ -172,6 +207,19 @@ export function createReportReview(
           kind: "rejected",
           text: reportBackgroundRunningRejectionText(shells),
           reasons: ["background-running"],
+        }
+      }
+      if (
+        !asideTurn &&
+        !screenshotRejectedInTurn &&
+        hasScreenFile(changedFiles) &&
+        !hasImageBlock(report)
+      ) {
+        screenshotRejectedInTurn = true
+        return {
+          kind: "rejected",
+          text: REPORT_NO_SCREENSHOT_REJECTION_TEXT,
+          reasons: ["no-screenshot"],
         }
       }
       const violations = reportViolations(report)
@@ -271,6 +319,12 @@ export const REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT =
   "全部の段を終えたなら最後の段まで進めて `finished` にし、途中で止めたなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
+/** 画面のファイルを変えたターンの `report` に画像の塊が無いときの戻り値。固定の文面だけで、モデルが書いた本文も変更ファイルのパスも写さない。 */
+export const REPORT_NO_SCREENSHOT_REJECTION_TEXT =
+  "画面のファイルを変えたのに、`report` に画像が無い。" +
+  "撮った画像を `image` の塊で載せて呼び直すこと。" +
+  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
 /** 背景のシェルが残っている `report` を差し戻すときの戻り値。残りのシェルの ID と `description` だけを載せ、モデルが書いた本文は写さない。 */
 export function reportBackgroundRunningRejectionText(shells: readonly BackgroundTask[]): string {
   const listing = shells
@@ -283,6 +337,13 @@ export function reportBackgroundRunningRejectionText(shells: readonly Background
     `背景で動いているコマンドが残っている: ${listing}。` +
     "`TaskStop` で止めるか、待つなら待つと決めてから `report` を呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+  )
+}
+
+/** `figure` と `sections` のどこかに `image` か `beforeAfter` の塊があるか。 */
+function hasImageBlock(report: ReportDraft): boolean {
+  return sectionsWithFigure(report.figure, report.sections).some((section) =>
+    section.blocks.some((block) => block.kind === "image" || block.kind === "beforeAfter"),
   )
 }
 

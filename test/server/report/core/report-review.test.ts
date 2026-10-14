@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   createReportReview as createReviewWithNews,
   REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
+  REPORT_NO_SCREENSHOT_REJECTION_TEXT,
   REPORT_NOTHING_NEW_REJECTION_TEXT,
   REPORT_RESEND_REJECTION_TEXT,
   REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT,
@@ -546,5 +547,92 @@ describe("createReportReview の judge（背景のシェルが残っている re
     expect(review.judge(OTHER)).toMatchObject({ reasons: ["nothing-new"] })
     review.raiseNews()
     expect(review.judge(OTHER)).toMatchObject({ reasons: ["background-running"] })
+  })
+})
+
+describe("createReportReview の judge（画面のファイルを変えたのに画像が無い report）", () => {
+  const SCREEN_CHANGED = ["src/server/架空.ts", "src/browser/架空/部品.module.css"]
+  const imageBlock = {
+    kind: "image",
+    path: "架空/after.png",
+    caption: "",
+    notes: [],
+    fold: "",
+  } as const
+  const rejectedText = (verdict: ReportVerdict): string =>
+    verdict.kind === "rejected" ? verdict.text : ""
+  const idleNews = { hasNews: () => true, markDrawn: () => undefined, backgroundTasks: () => [] }
+
+  it("画面のファイルがあって画像の塊が無ければ、固定の文面で差し戻す", () => {
+    const review = createReportReview(noPlan)
+    review.pass(SESSION_INFO)
+    const verdict = review.judge(VALID, SCREEN_CHANGED)
+
+    expect(verdict).toMatchObject({ kind: "rejected", reasons: ["no-screenshot"] })
+    expect(rejectedText(verdict)).toBe(REPORT_NO_SCREENSHOT_REJECTION_TEXT)
+    expect(rejectedText(verdict)).not.toContain("src/browser")
+    expect(rejectedText(verdict)).not.toContain(VALID.conclusion)
+  })
+
+  it("figure の image でも sections の beforeAfter でも通す", () => {
+    const withFigure = reportDraft({ conclusion: "架空の結論。", figure: imageBlock })
+    const withBeforeAfter = reportDraft({
+      conclusion: "架空の結論。",
+      sections: [
+        {
+          heading: "",
+          blocks: [
+            {
+              kind: "beforeAfter",
+              title: "",
+              before: { kind: "image", path: "架空/before.png" },
+              after: { kind: "image", path: "架空/after.png" },
+              fold: "",
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(createReportReview(noPlan).judge(withFigure, SCREEN_CHANGED)).toEqual({
+      kind: "accepted",
+    })
+    expect(createReportReview(noPlan).judge(withBeforeAfter, SCREEN_CHANGED)).toEqual({
+      kind: "accepted",
+    })
+  })
+
+  it("画面のファイルが無ければ通す", () => {
+    expect(
+      createReportReview(noPlan).judge(VALID, ["src/server/架空.ts", "test/架空.test.ts"]),
+    ).toEqual({ kind: "accepted" })
+  })
+
+  it("同じターンの2回目は通し、次のターンで枠が戻る", () => {
+    const review = createReportReview(noPlan)
+
+    expect(review.judge(VALID, SCREEN_CHANGED).kind).toBe("rejected")
+    expect(review.judge(VALID, SCREEN_CHANGED)).toEqual({ kind: "accepted" })
+    review.pass(SESSION_INFO)
+    expect(review.judge(VALID, SCREEN_CHANGED).kind).toBe("rejected")
+  })
+
+  it("changedFiles は、ターンの頭の HEAD から読み、読めなければ空", async () => {
+    const heads: string[] = []
+    const reading = createReviewWithNews(noPlan, idleNews, {
+      readHead: () => Promise.resolve("架空のSHA"),
+      readChangedFiles: (head) => {
+        heads.push(head)
+        return Promise.resolve(SCREEN_CHANGED)
+      },
+    })
+    reading.pass(SESSION_INFO)
+
+    expect(await reading.changedFiles()).toEqual(SCREEN_CHANGED)
+    expect(heads).toEqual(["架空のSHA"])
+
+    const unreadable = createReviewWithNews(noPlan, idleNews)
+    unreadable.pass(SESSION_INFO)
+    expect(await unreadable.changedFiles()).toEqual([])
   })
 })

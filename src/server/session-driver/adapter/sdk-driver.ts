@@ -12,6 +12,7 @@ import { type PermissionResult, query, type SDKUserMessage } from "@anthropic-ai
 import { expressionNames as toExpressionNames } from "../../../shared/character-pack/expression-choice.ts"
 import { parsePromptImage, type PromptImage } from "../../../shared/session-driver/prompt-image.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { createReportChanges } from "../../report/adapter/turn-change.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
 import { asidePromptText } from "../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../core/call-review.ts"
@@ -101,7 +102,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     },
   })
 
-  const callReview = createCallReview()
+  const callReview = createCallReview(createReportChanges(options.cwd))
   const reportGate = createReportGate(callReview.nothingNewRejected)
   const readSessionDigest = createSessionDigestReader(options.expressions)
   const titleIntake = createSessionTitleIntake()
