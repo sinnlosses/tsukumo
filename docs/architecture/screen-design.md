@@ -3224,7 +3224,7 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
 - **置き場と形**: `~/.tsukumo/experience-metric/<日付>.jsonl` に、閉じた依頼1つにつき `conclusion` の行、
   立ち直りのたびに `recovery` の行を1行ずつ積む。行の形と、書いてよいもの（数・時刻・セッションID・局面の名前）の
   線は `src/shared/experience-metric/experience-metric-record.ts` の `ExperienceMetricRecord`
-- **集計は `scripts/experience-metric.ts` で見る**（`--days <日数>`、既定28日。`--split <YYYY-MM-DD>` でその日の
+- **集計は `scripts/runtime/experience-metric.ts` で見る**（`--days <日数>`、既定28日。`--split <YYYY-MM-DD>` でその日の
   前と後に分ける）。中央値と90パーセンタイルで出す。画面には出さない
 
 #### 失敗の塊

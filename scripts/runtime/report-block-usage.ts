@@ -6,32 +6,32 @@
 // `figure` を記録する前の版（5以前）の行は、`figure` の表では理由が `unrecorded` の `none` に数える。
 //
 // 使い方:
-//   node scripts/report-block-usage.ts             # 直近28日
-//   node scripts/report-block-usage.ts --days 14   # 直近14日
+//   node scripts/runtime/report-block-usage.ts             # 直近28日
+//   node scripts/runtime/report-block-usage.ts --days 14   # 直近14日
 
 import process from "node:process"
 
 import { z } from "zod"
 
-import { dateFileNames, readJsonLines } from "../src/server/adapter/lib/jsonl.ts"
-import { reportUsageDir } from "../src/server/report/adapter/report-usage-log.ts"
+import { dateFileNames, readJsonLines } from "../../src/server/adapter/lib/jsonl.ts"
+import { reportUsageDir } from "../../src/server/report/adapter/report-usage-log.ts"
 import {
   ESCAPE_NOTATIONS,
   MARKDOWN_NOTATIONS,
-} from "../src/server/report/core/report-markdown-notation.ts"
-import { REPORT_PROCEDURE_REJECTIONS } from "../src/server/report/core/report-review.ts"
-import { REPORT_BLOCK_FIELDS } from "../src/server/report/core/report-usage.ts"
-import { REPORT_VIOLATION_KINDS } from "../src/server/report/core/report-violation.ts"
+} from "../../src/server/report/core/report-markdown-notation.ts"
+import { REPORT_PROCEDURE_REJECTIONS } from "../../src/server/report/core/report-review.ts"
+import { REPORT_BLOCK_FIELDS } from "../../src/server/report/core/report-usage.ts"
+import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/report-violation.ts"
 import {
   REPORT_BLOCK_KINDS,
   REPORT_FIGURE_NONE_REASONS,
   reportFigureSchema,
-} from "../src/shared/report/report-block.ts"
-import { REPORT_USAGE_FORMAT_VERSION } from "../src/shared/report/report-usage-record.ts"
+} from "../../src/shared/report/report-block.ts"
+import { REPORT_USAGE_FORMAT_VERSION } from "../../src/shared/report/report-usage-record.ts"
 
 const USAGE = `使い方:
-  node scripts/report-block-usage.ts             # 直近28日
-  node scripts/report-block-usage.ts --days <日数>`
+  node scripts/runtime/report-block-usage.ts             # 直近28日
+  node scripts/runtime/report-block-usage.ts --days <日数>`
 
 /** 欄（`blockFields`）を記録する前の版。 */
 const FIELDLESS_FORMAT_VERSION = 2

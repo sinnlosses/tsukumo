@@ -4,7 +4,7 @@ import { join } from "node:path"
 import type { Locator, Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
-import { fictionalPng } from "../../scripts/capture/lib/fictional-png.ts"
+import { fictionalPng } from "../../scripts/shared/fictional-png.ts"
 import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 
 // お伺い（許可要求と質問。docs/architecture/testing.md「E2E のシナリオの一覧」）。

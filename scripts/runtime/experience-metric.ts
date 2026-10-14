@@ -3,26 +3,26 @@
 // `--split` を付けると、その日の始まりを境目に前後を並べる。
 //
 // 使い方:
-//   node scripts/experience-metric.ts                          # 直近28日
-//   node scripts/experience-metric.ts --days 14                # 直近14日
-//   node scripts/experience-metric.ts --split <YYYY-MM-DD>     # 直近28日を、その日の前と後に分ける
+//   node scripts/runtime/experience-metric.ts                          # 直近28日
+//   node scripts/runtime/experience-metric.ts --days 14                # 直近14日
+//   node scripts/runtime/experience-metric.ts --split <YYYY-MM-DD>     # 直近28日を、その日の前と後に分ける
 
 import process from "node:process"
 
-import { localDateEpochRange, todayLocalDateKey } from "../src/server/adapter/local-time.ts"
+import { localDateEpochRange, todayLocalDateKey } from "../../src/server/adapter/local-time.ts"
 import {
   createExperienceMetricLog,
   experienceMetricDir,
-} from "../src/server/experience-metric/adapter/experience-metric-log.ts"
+} from "../../src/server/experience-metric/adapter/experience-metric-log.ts"
 import {
   type ExperienceSplit,
   type ExperienceSummary,
   type Spread,
   summarizeExperienceMetric,
-} from "../src/server/experience-metric/core/experience-metric-summary.ts"
+} from "../../src/server/experience-metric/core/experience-metric-summary.ts"
 
 const USAGE = `使い方:
-  node scripts/experience-metric.ts [--days <日数>] [--split <YYYY-MM-DD>]`
+  node scripts/runtime/experience-metric.ts [--days <日数>] [--split <YYYY-MM-DD>]`
 
 const DEFAULT_DAYS = 28
 

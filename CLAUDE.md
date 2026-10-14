@@ -52,7 +52,7 @@ pnpm run test:e2e:update       # DOM の構造や shared の手続き応答の�
                               #   check の E2E は --bail=3 で、落ちを3本までしか出さないため、打ち直しを繰り返す
                               #   打ったあと git diff test/e2e/expected/ で意図した変化だけかを読んでから、
                               #   直した変更と同じコミットに入れる
-node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> でそれ1つだけ止める）
+node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> でそれ1つだけ止める）
 ```
 
 ## アーキテクチャ概要

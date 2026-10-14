@@ -126,7 +126,7 @@ tsukumo: ビューを配信中
 ```
 
 止めるときは、起動したターミナルで Ctrl-C を押します。複数動かしているときは、リポジトリの直下で
-`node scripts/stop.ts` を打つと一覧が出て、`--port <n>` で1つだけ止められます。
+`node scripts/runtime/stop.ts` を打つと一覧が出て、`--port <n>` で1つだけ止められます。
 
 ### 3. 更新する
 
@@ -332,10 +332,10 @@ pnpm run storybook             # 部品を props ごとに並べる Storybook �
 node scripts/capture/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
 pnpm run grid                  # 待ち受けていてタブもある部屋を iframe の格子に並べて Orca に開く。格子のタブが
                               #   あるあいだ常駐し、再読み込みのたびに並べ直す。タブを閉じると終わる
-node scripts/stop.ts           # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。pkill / killall は
+node scripts/runtime/stop.ts   # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。pkill / killall は
                               #   hook が拒否する。並べて動かすとどれも `node src/cli.ts` に見えて区別できないため）
 node scripts/capture/mockup-font-floor.ts <見本の HTML かディレクトリ>  # 見本の font-size のうち 12px 未満を一覧する（あれば終了コード1）
-node scripts/experience-metric.ts  # 体験の数（依頼から結論まで・答え待ち・立ち直るまでの手数）を集計する
+node scripts/runtime/experience-metric.ts  # 体験の数（依頼から結論まで・答え待ち・立ち直るまでの手数）を集計する
                               #   （--days <n> で期間、--split <YYYY-MM-DD> でその日の前後に分ける）
 node scripts/runtime/diagnostic.ts     # 診断ログ（~/.tsukumo/diagnostic/）を時系列に並べる（既定は今日。--from / --to
                               #   <YYYY-MM-DD[THH:MM[:SS]]> で時刻の範囲、--generation <n> で駆動の代を絞る）

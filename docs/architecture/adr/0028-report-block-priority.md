@@ -13,7 +13,7 @@
 描けないとき・どの型にも当たらないときの落ち先を決めていない。** 当たらない内容（文書・手順の変更、
 閾値のような設定の値の変更、複数の観点からの調べもの）は、暗黙の既定の `list`・`text` に落ちる。
 
-2026-10-12 に測った直近28日（`node scripts/report-block-usage.ts --days 28`、受け付けた `report` 1663件）の
+2026-10-12 に測った直近28日（`node scripts/runtime/report-block-usage.ts --days 28`、受け付けた `report` 1663件）の
 使用率と、各塊の `describe`（`src/shared/report/report-block.ts`）が言う「描ける条件」:
 
 | 塊                      | 使用率 | 描ける条件（`describe` と条8）                                   |
@@ -154,14 +154,14 @@
 
 ## 実装で直す箇所（後段の実装タスクの下書き）
 
-| 箇所                                                                      | 直すこと                                                                                                                                                |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/server/report/core/report-notation.ts` の条8                         | 第一候補の表を梯子の表（段の名前と塊の名前だけ）に替え、「迷ったら上の段で描く」と役割の塊を1行ずつ書く。本文の塊の節の記法の表から `svg` の行を外す    |
-| `src/shared/report/report-block.ts`                                       | `svg` の塊を足す（`beforeAfter` の側にも）。`graph` の `describe` の「一本道なら list の flow」を言い直し、`beforeAfter` の但し書きを `describe` へ移す |
-| `src/server/report/core/report-violation.ts`                              | `svg` のはみ出しの差し戻しを足す                                                                                                                        |
-| `src/browser/components/page/conversation/components/markdown/renderer/`  | `svg` の塊を図形から SVG に組んで描く（テーマの色）                                                                                                     |
-| `src/server/report/core/report-usage.ts`・`scripts/report-block-usage.ts` | 記録を版5にし、段1の図を含む割合と、画像を `Read` したのに `image` が無い回を足す                                                                       |
-| `docs/architecture/display.md`                                            | 「規則と置き場の対応」の条8の行と、各表示物の塊の一覧に `svg` を足し、「塊を足す・外す基準」の記録の版5を書く                                           |
+| 箇所                                                                              | 直すこと                                                                                                                                                |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/server/report/core/report-notation.ts` の条8                                 | 第一候補の表を梯子の表（段の名前と塊の名前だけ）に替え、「迷ったら上の段で描く」と役割の塊を1行ずつ書く。本文の塊の節の記法の表から `svg` の行を外す    |
+| `src/shared/report/report-block.ts`                                               | `svg` の塊を足す（`beforeAfter` の側にも）。`graph` の `describe` の「一本道なら list の flow」を言い直し、`beforeAfter` の但し書きを `describe` へ移す |
+| `src/server/report/core/report-violation.ts`                                      | `svg` のはみ出しの差し戻しを足す                                                                                                                        |
+| `src/browser/components/page/conversation/components/markdown/renderer/`          | `svg` の塊を図形から SVG に組んで描く（テーマの色）                                                                                                     |
+| `src/server/report/core/report-usage.ts`・`scripts/runtime/report-block-usage.ts` | 記録を版5にし、段1の図を含む割合と、画像を `Read` したのに `image` が無い回を足す                                                                       |
+| `docs/architecture/display.md`                                                    | 「規則と置き場の対応」の条8の行と、各表示物の塊の一覧に `svg` を足し、「塊を足す・外す基準」の記録の版5を書く                                           |
 
 ## 追記: 図を欄で必須にした（2026-10-13）
 

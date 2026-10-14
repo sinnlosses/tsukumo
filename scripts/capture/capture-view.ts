@@ -40,9 +40,9 @@ import process from "node:process"
 import { chromium, type Page } from "playwright-core"
 
 import { readFakeSession } from "../../src/server/session-driver/adapter/fake-driver.ts"
+import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../shared/capture-clock.ts"
 import { spawnFakeTsukumo, waitForViewUrl } from "../shared/fake-tsukumo-process.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
-import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "./lib/capture-clock.ts"
 import {
   applyPreparation,
   describePreparation,

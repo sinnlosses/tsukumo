@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url"
 
 import { chromium } from "playwright-core"
 
-import { MIN_FONT_SIZE } from "./lib/minimum-font-size.ts"
+import { MIN_FONT_SIZE } from "../shared/minimum-font-size.ts"
 
 type SmallFont = {
   readonly size: number

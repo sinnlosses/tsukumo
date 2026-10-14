@@ -1028,7 +1028,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 `src/server/report/core/report-usage.ts` が持つ。逃げ道の記法の検出は `src/server/report/core/report-markdown-notation.ts`、
 差し戻しの判定は `src/server/report/core/report-violation.ts`、図の不具合の検出は `src/server/report/core/report-figure-fault.ts` にある。
 
-**集計するスクリプトは `scripts/report-block-usage.ts`**（`node scripts/report-block-usage.ts
+**集計するスクリプトは `scripts/runtime/report-block-usage.ts`**（`node scripts/runtime/report-block-usage.ts
 --days <日数>`、既定28日）。「塊の種類 × レポート数」「塊の欄 × レポート数」「modified のファイルがあるのに前後図も画像も無いレポート」
 「逃げ道の外の記法 × レポート数」「逃げ道の容れ物の中の記法 × レポート数」「塊の無い記法 × レポート数」に、「段1の図を含むレポート」と「画像を読んだのに image が無いレポート」（全レポートと task の最終レポートの2行ずつ）、
 「`figure` の種類 × レポート数」と「`none` の理由 × レポート数」（それぞれ全レポートと task の最終レポートの表を1つずつ、計4つ）を足した12の表を出す。

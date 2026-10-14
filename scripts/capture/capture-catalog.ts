@@ -44,13 +44,13 @@ import { type Browser, chromium, type Page } from "playwright-core"
 
 import { appendDiaryParagraph } from "../../src/server/diary/adapter/diary.ts"
 import { spawnFakeTsukumo, waitForViewUrl } from "../shared/fake-tsukumo-process.ts"
+import { fictionalPng } from "../shared/fictional-png.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import {
   applyPreparation,
   describePreparation,
   type Preparation,
 } from "./lib/capture-preparation.ts"
-import { fictionalPng } from "./lib/fictional-png.ts"
 import { escapeHtml } from "./lib/html-escape.ts"
 
 /**

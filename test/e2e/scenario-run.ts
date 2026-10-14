@@ -39,7 +39,7 @@ import {
 import { countBy } from "remeda"
 import { afterAll, afterEach, beforeAll, expect } from "vitest"
 
-import { TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../../scripts/capture/lib/capture-clock.ts"
+import { TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../../scripts/shared/capture-clock.ts"
 import { spawnFakeTsukumo, waitForViewUrl } from "../../scripts/shared/fake-tsukumo-process.ts"
 import {
   type FakeSessionStep,

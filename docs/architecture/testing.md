@@ -410,7 +410,7 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 
 **URL を手で拾わずに1件だけ撮るときは `capture-view.ts --scene <場面>`。** fake driver の
 tsukumo を空きポートで自分で起こし、配信 URL を待って撮り、終わったら（失敗しても）自分で
-止める（`node scripts/stop.ts` を別に打たなくてよい）。URL を直に渡す使い方とは併用できない。
+止める（`node scripts/runtime/stop.ts` を別に打たなくてよい）。URL を直に渡す使い方とは併用できない。
 知らない場面名のとき・URL も `--scene` も無いときは、何も起こさずに理由を出して非0で終わる。
 **場面の途中の画は `--until-step <n>`（`--scene` と一緒にだけ使える）。** 場面の手を先頭から n 個で
 止めて流すので、止めた先の状態が残る（`opening` の手は数えない）。止めた先の要素は `--wait-for` で待つ。
@@ -444,7 +444,7 @@ Storybook の story を撮る形に寄せることはしない（寄せると疑
 （`docs/architecture/build.md`）ので、`[class*="…"]` の probe は Storybook の iframe
 （`/iframe.html?id=<story の id>`）でもそのまま使える。**起こした Storybook は撮り終えたら止める。**
 
-**変更前と撮り比べるときは `node scripts/serve-revision.ts <コミット>`。** 名指ししたコミットを
+**変更前と撮り比べるときは `node scripts/runtime/serve-revision.ts <コミット>`。** 名指ししたコミットを
 `/tmp/tsukumo-revision/<sha>/` へ取り出し、そこで組み立てて、空けたポート（既定 7338）と一時ホームで
 tsukumo を1つ起こし、URL を出す（`--scene` で疑似セッションの場面も流せる）。その URL を
 `capture-view.ts` / `capture-catalog.ts` に渡して撮り、いま居る作業ツリーで起こしたほうと並べる。
@@ -454,7 +454,7 @@ tsukumo を1つ起こし、URL を出す（`--scene` で疑似セッションの
 呼んだ側と同じポートでは起こせないので同名にはならない。名乗りの幅は**色名の字数が同じなら揃う**
 （色名は全角）ので、呼んだ側の部屋と同じ字数の色のポートを `--port` で選ぶ。既定の 7338 は1字の
 色。字数は `roomName` の語彙で数える。語彙の外のポートは番号を名乗り、半角なので幅が合わない。
-**撮り終えたら `node scripts/stop.ts --port 7338`（`--port` で変えたらそのポート）で必ず止める** — 起こしたものは自分では
+**撮り終えたら `node scripts/runtime/stop.ts --port 7338`（`--port` で変えたらそのポート）で必ず止める** — 起こしたものは自分では
 止まらない（`stop.ts` が中の tsukumo を止めると、外側の `serve-revision.ts` も続いて終わるので、
 打つのは1回でよい）。**利用者の tsukumo が 7327〜7330 あたりで動いていることがあるので、
 そこは止めない・触らない。**
@@ -468,7 +468,7 @@ tsukumo を1つ起こし、URL を出す（`--scene` で疑似セッションの
 （**`package.json` をまたいで比べるときだけ**この前提が崩れる。そのときは取り出し先で手で打つ）。
 **`.git` も同じく symlink で借りる**ので、取り出し先で起こした tsukumo でも成果の画面が `main`
 の履歴を表示する（`.git` を書き換える呼び出しはここを通らない——読むだけの `git` しか打たない。
-`scripts/serve-revision.ts` の `lendGitDirectory`）。
+`scripts/runtime/serve-revision.ts` の `lendGitDirectory`）。
 手順の前後で `git status --short` が変わっていないことを確かめてから `evidence` を書く。
 
 **配信側が疑わしいときは、ブラウザを開く前に `curl` で切り分ける。** 起動時にビューの URL が
@@ -477,7 +477,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 配信はシロで、原因はページの側かホストの側にある。
 
 **目視のために起こす tsukumo は `TSUKUMO_VIEW_PORT` を 39000 番台に固定し**、ふだん使いの既定
-（7327 から始まる帯）と重ねない。`node scripts/stop.ts --port` は自分で起こしたポートにだけ打つ。
+（7327 から始まる帯）と重ねない。`node scripts/runtime/stop.ts --port` は自分で起こしたポートにだけ打つ。
 **起こしたままの tsukumo は `pnpm run build` を打ち直しても古い組み立てを配り続ける。** 直しながら
 目視するなら `--dev` で起こす（`pnpm run dev`。HMR で差し替わる）か、組み立てのたびに上げ直す。
 

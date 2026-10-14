@@ -38,8 +38,8 @@ const REFUSAL = `この作業ツリーでは複数の tsukumo が同時に動い
 
 代わりに、止める相手を1つに絞ること:
 
-  node scripts/stop.ts                 # いま動いている tsukumo を一覧する（止めない）
-  node scripts/stop.ts --port 7398     # そのポートで待っているものだけ止める
+  node scripts/runtime/stop.ts                 # いま動いている tsukumo を一覧する（止めない）
+  node scripts/runtime/stop.ts --port 7398     # そのポートで待っているものだけ止める
 
 背景シェルで起こしたなら、そのシェルごと止める（KillShell）のがいちばん確実。
 pid が分かっているなら kill <pid> はそのまま使える。

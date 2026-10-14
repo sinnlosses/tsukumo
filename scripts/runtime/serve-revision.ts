@@ -8,13 +8,13 @@
 // 使うので、本物の index も作業ツリーも読むだけで済む。
 //
 // 使い方:
-//   node scripts/serve-revision.ts HEAD~1                      # 1つ前のコミットを起こす
-//   node scripts/serve-revision.ts HEAD~1 --port 7336 --scene notation-figure
-//   node scripts/stop.ts --port 7338                           # 止める（必ず打つ）
+//   node scripts/runtime/serve-revision.ts HEAD~1                      # 1つ前のコミットを起こす
+//   node scripts/runtime/serve-revision.ts HEAD~1 --port 7336 --scene notation-figure
+//   node scripts/runtime/stop.ts --port 7338                           # 止める（必ず打つ）
 //
-// 起こしたものは自分では止まらない。撮り終えたら `node scripts/stop.ts --port` で止める
+// 起こしたものは自分では止まらない。撮り終えたら `node scripts/runtime/stop.ts --port` で止める
 // （`pkill` / `killall` は広く狙う形を拒否する hook に止められる）。この道具は子が死ぬと一緒に
-// 終わるので、止めるのは `node scripts/stop.ts` の1回で足りる。
+// 終わるので、止めるのは `node scripts/runtime/stop.ts` の1回で足りる。
 //
 // 駆動は fake 固定（`TSUKUMO_DRIVER=fake`）。変更前を見るために本物の claude を /tmp の複製で
 // 起こす理由が無く、API も使わない。ホームも /tmp に切るので、利用者の `~/.tsukumo/`
@@ -33,9 +33,9 @@ import { type ChildProcess, execFileSync } from "node:child_process"
 import { existsSync, mkdirSync, symlinkSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
-import { fileURLToPath } from "node:url"
 
-import { spawnFakeTsukumo, waitForViewUrl } from "./shared/fake-tsukumo-process.ts"
+import { spawnFakeTsukumo, waitForViewUrl } from "../shared/fake-tsukumo-process.ts"
+import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 
 /**
  * 取り出し先の親（リポジトリの外）。コミットごとに下に掘るので、同じコミットを何度起こしても
@@ -45,7 +45,7 @@ const SCRATCH_ROOT = "/tmp/tsukumo-revision"
 
 /**
  * 既定のポート。部屋の名前が色名になる範囲（`roomName`）の末尾で、利用者の tsukumo
- * （7327〜7330 あたり）から離れている。かつ `node scripts/stop.ts` を
+ * （7327〜7330 あたり）から離れている。かつ `node scripts/runtime/stop.ts` を
  * 引数なしで打ったときに一覧する範囲（既定ポートから `VIEW_PORT_FALLBACK_ATTEMPTS` 個ぶん）の
  * 中に収める — 止め忘れたときに一覧から見つかるようにする。
  */
@@ -54,13 +54,13 @@ const DEFAULT_PORT = 7338
 /** 起こした tsukumo が URL を出すまで待つ上限（ミリ秒）。 */
 const LAUNCH_TIMEOUT_MS = 30_000
 
-const USAGE = `使い方: node scripts/serve-revision.ts <コミット> [オプション]
+const USAGE = `使い方: node scripts/runtime/serve-revision.ts <コミット> [オプション]
 
   --port <n>      待ち受けるポート（既定 ${String(DEFAULT_PORT)}。明示指定なのでずらさない）
   --scene <name>  起こした直後に流す疑似セッションの場面（既定は流さない）
 
-  例: node scripts/serve-revision.ts HEAD~1 --scene notation-figure
-      撮り終えたら node scripts/stop.ts --port ${String(DEFAULT_PORT)}
+  例: node scripts/runtime/serve-revision.ts HEAD~1 --scene notation-figure
+      撮り終えたら node scripts/runtime/stop.ts --port ${String(DEFAULT_PORT)}
 `
 
 type Options = {
@@ -115,7 +115,7 @@ async function main(argv: readonly string[]): Promise<number> {
 
   process.stdout.write(
     `${revision.sha} を配信中\n  ${url}\n` +
-      `止める: node scripts/stop.ts --port ${String(options.port)}\n`,
+      `止める: node scripts/runtime/stop.ts --port ${String(options.port)}\n`,
   )
   return waitForExit(session)
 }
@@ -131,7 +131,7 @@ function extractRevision(commit: string): Revision | undefined {
     return undefined
   }
 
-  const treeName = path.basename(repositoryRoot())
+  const treeName = path.basename(REPOSITORY_ROOT)
   const scratchDir = path.join(SCRATCH_ROOT, sha, treeName)
   const treeDir = path.join(scratchDir, treeName)
   const homeDir = path.join(scratchDir, "home")
@@ -160,7 +160,7 @@ function lendNodeModules(treeDir: string): void {
   if (existsSync(link)) {
     return
   }
-  symlinkSync(path.join(repositoryRoot(), "node_modules"), link, "dir")
+  symlinkSync(path.join(REPOSITORY_ROOT, "node_modules"), link, "dir")
 }
 
 /**
@@ -180,7 +180,7 @@ function lendGitDirectory(treeDir: string): void {
   if (existsSync(link)) {
     return
   }
-  symlinkSync(path.join(repositoryRoot(), ".git"), link)
+  symlinkSync(path.join(REPOSITORY_ROOT, ".git"), link)
 }
 
 /**
@@ -189,7 +189,7 @@ function lendGitDirectory(treeDir: string): void {
  */
 function buildUi(revision: Revision): boolean {
   try {
-    execFileSync("node", [path.join(revision.treeDir, "scripts", "build-ui.ts")], {
+    execFileSync("node", [path.join(revision.treeDir, "scripts", "dev", "build-ui.ts")], {
       cwd: revision.treeDir,
       stdio: ["ignore", "ignore", "inherit"],
     })
@@ -201,7 +201,7 @@ function buildUi(revision: Revision): boolean {
 }
 
 /**
- * 起こしたものが終わるまで居座る。この道具は自分では止めない — `node scripts/stop.ts --port` が
+ * 起こしたものが終わるまで居座る。この道具は自分では止めない — `node scripts/runtime/stop.ts --port` が
  * 子へ SIGTERM を送ると、それに続いてここも終わる（止め口を1つに保つ）。この道具自身が
  * SIGINT / SIGTERM を受けたときだけは、子を道連れにしてから終わる。
  */
@@ -226,7 +226,7 @@ function waitForExit(session: ChildProcess): Promise<number> {
 function git(args: readonly string[], indexFile?: string): string | undefined {
   try {
     return execFileSync("git", [...args], {
-      cwd: repositoryRoot(),
+      cwd: REPOSITORY_ROOT,
       encoding: "utf8",
       env: indexFile === undefined ? process.env : { ...process.env, GIT_INDEX_FILE: indexFile },
     })
@@ -234,11 +234,6 @@ function git(args: readonly string[], indexFile?: string): string | undefined {
     process.stderr.write(`git ${args.join(" ")}: ${String(error)}\n`)
     return undefined
   }
-}
-
-/** いま居る作業ツリーの直下（この道具が置いてある `scripts/` の親）。 */
-function repositoryRoot(): string {
-  return fileURLToPath(new URL("..", import.meta.url))
 }
 
 /** 引数を読む。コミットが無い・`--port` が読めないときは undefined（呼び出し側が使い方を出す）。 */

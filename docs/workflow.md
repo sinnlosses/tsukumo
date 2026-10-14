@@ -122,7 +122,7 @@
 ならない**（この節が否定した形）。書くなら「**どの判断を人に委ねるのか**」を書く。
 
 **起こすときの作法**: `TSUKUMO_VIEW_PORT` を既定（7327）以外に変え、**止めるのは
-`node scripts/stop.ts --port <ポート>`** にする（一覧は引数なし。名指しした1つにだけ
+`node scripts/runtime/stop.ts --port <ポート>`** にする（一覧は引数なし。名指しした1つにだけ
 SIGTERM が行く）。`pkill` / `killall` で名前やパターンから止めようとすると、
 **PreToolUse hook（`.claude/settings.json` → `scripts/hook/deny-broad-kill.ts`）が実行される前に
 拒否する**——並べて動かした tsukumo はどれも `node src/cli.ts` に見えるので、
