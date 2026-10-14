@@ -17,6 +17,8 @@ import type { TurnStep, TurnStepList } from "../../../../shared/session/turn-ste
 import {
   currentPhaseOf,
   phaseLabel,
+  type PhaseNumber,
+  PHASE_SPAN_NAMES,
   type PlannedPhase,
   plannedPhaseNumber,
   plannedPhasesOf,
@@ -68,12 +70,23 @@ export type CurrentWorkPhase =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly label: string }
 
-/** 一覧の頭の段の並び1つ。印は済んだ段が「済」、今の段が「今」、残りは番号。 */
+/** 一覧の頭の段の並び1つ。印は済んだ段が「✓」、ほかは群の中の番号（段の数が決まる前の段は「…」）。 */
 export type CurrentWorkPlanPhase = {
   readonly key: string
   readonly mark: string
   readonly name: string
   readonly state: "done" | "current" | "upcoming"
+}
+
+/**
+ * 一覧の頭の段の群1つ（前・本・後）。`name` は「前」「本」「後」で、範囲が無い依頼の並び全体の群は空の文字列。
+ * `current` は今の段がその群にあるか。
+ */
+export type CurrentWorkPlanSpan = {
+  readonly key: string
+  readonly name: string
+  readonly current: boolean
+  readonly phases: readonly CurrentWorkPlanPhase[]
 }
 
 /** 一覧の頭の段取り。その依頼に段取りがあれば、状態の語に関わらず出す。 */
@@ -83,7 +96,7 @@ export type CurrentWorkPlan =
       readonly kind: "planned"
       /** 「この依頼の段取り」（ターンが走っていなければ「前の依頼の段取り」）。 */
       readonly headingLabel: string
-      readonly phases: readonly CurrentWorkPlanPhase[]
+      readonly spans: readonly CurrentWorkPlanSpan[]
     }
 
 /**
@@ -323,27 +336,41 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Curren
     return { kind: "none" }
   }
   const { plan } = turnStepList
+  const phases = plannedPhasesOf(plan).map((phase) => {
+    const number = plannedPhaseNumber(plan, phase)
+    const view: CurrentWorkPlanPhase = {
+      key: String(phase.index),
+      mark: planMarkOf(number, phase),
+      name: phase.name,
+      state: phase.state,
+    }
+    return { number, view }
+  })
+  // 段の数が決まる前の段（番号を持たない）は、前の群に続けて並べる
+  const spans = phases.reduce<readonly CurrentWorkPlanSpan[]>((built, { number, view }) => {
+    const last = built.at(-1)
+    const name = number.kind === "numbered" ? PHASE_SPAN_NAMES[number.span] : (last?.name ?? "")
+    const current = view.state === "current"
+    if (last !== undefined && last.name === name) {
+      return [
+        ...built.slice(0, -1),
+        { ...last, current: last.current || current, phases: [...last.phases, view] },
+      ]
+    }
+    return [...built, { key: view.key, name, current, phases: [view] }]
+  }, [])
   return {
     kind: "planned",
     headingLabel: turnInProgress ? "この依頼の段取り" : "前の依頼の段取り",
-    phases: plannedPhasesOf(plan).map(({ index, name, state }) => ({
-      key: String(index),
-      mark: planMarkOf(plan, { index, state }),
-      name,
-      state,
-    })),
+    spans,
   }
 }
 
-function planMarkOf(
-  plan: Parameters<typeof plannedPhaseNumber>[0],
-  phase: Pick<PlannedPhase, "index" | "state">,
-): string {
-  if (phase.state !== "upcoming") {
-    return phase.state === "done" ? "済" : "今"
+function planMarkOf(number: PhaseNumber, phase: Pick<PlannedPhase, "state">): string {
+  if (phase.state === "done") {
+    return "✓"
   }
-  const number = plannedPhaseNumber(plan, phase)
-  return number.kind === "numbered" ? number.ordinals : "・"
+  return number.kind === "numbered" ? number.ordinals : "…"
 }
 
 /**

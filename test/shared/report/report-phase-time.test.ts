@@ -83,7 +83,7 @@ describe("phaseTimesMarkdown", () => {
       known("1/3 架空の段A", 5_000),
       {
         kind: "parallel",
-        label: "並列 2·3",
+        label: "並列 2–3",
         wall: { kind: "known", milliseconds: 20_000 },
         phases: [
           { label: "2/3 架空の段B", duration: { kind: "known", milliseconds: 10_000 } },
@@ -94,7 +94,7 @@ describe("phaseTimesMarkdown", () => {
 
     expect(html.match(/phase-band-segment/g)).toHaveLength(2)
     expect(html).toContain(
-      '<div class="phase-time-group" role="rowgroup"><div class="phase-time phase-time-longest" role="row"><span class="phase-time-mark"></span><span class="phase-time-label">並列 2·3</span><span class="phase-time-value">20秒</span><span class="phase-time-ratio">80%</span></div>',
+      '<div class="phase-time-group" role="rowgroup"><div class="phase-time phase-time-longest" role="row"><span class="phase-time-mark"></span><span class="phase-time-label">並列 2–3</span><span class="phase-time-value">20秒</span><span class="phase-time-ratio">80%</span></div>',
     )
     expect(html).toContain(
       '<div class="phase-time phase-time-inner" role="row"><span class="phase-time-label"><span class="phase-time-num">2/3</span>架空の段B</span><span class="phase-time-value">10秒</span><span class="phase-time-ratio"></span></div>',

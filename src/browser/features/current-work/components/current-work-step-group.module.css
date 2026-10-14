@@ -4,6 +4,15 @@
 .current-work-phase-heading {
   margin: 0.4rem 0 0.15rem;
 }
+/* 群の名「前」「本」「後」の小さなタグ。 */
+.current-work-phase-span {
+  padding: 0 0.3em;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: 400;
+}
 .current-work-steps {
   display: flex;
   flex-direction: column;

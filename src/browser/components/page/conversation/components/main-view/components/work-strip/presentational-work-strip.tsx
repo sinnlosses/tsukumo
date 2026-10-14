@@ -17,6 +17,7 @@ import type {
   WorkStripPhase,
   WorkStripPhasePopover,
   WorkStripSlot,
+  WorkStripSpanHead,
   WorkStripSteps,
 } from "./hooks/use-work-strip.ts"
 import styles from "./work-strip.module.css"
@@ -44,6 +45,17 @@ export function PresentationalWorkStrip(props: {
         >
           {strip.headLabel}
         </Text>
+        {strip.kind === "working" && strip.positionLabel !== "" && (
+          <Text
+            element="span"
+            size="secondary"
+            tone="ink"
+            weight="bold"
+            className={styles["work-strip-position"]}
+          >
+            {strip.positionLabel}
+          </Text>
+        )}
         <Text
           element="span"
           size="secondary"
@@ -92,6 +104,7 @@ function StepsList(props: {
 /**
  * 段の丸を1本の線でつないだ並び。名前は `title` と読み上げで持ち、見えている名前は今の段の字だけ。
  * 段のまとまりは中の段の丸を1つの囲みに並べ、囲みの中の丸どうしは線でつながない。
+ * 群（前・本・後）の先頭の丸の前には群の名を置き、前の群の丸とは線でつながず間を空ける。
  */
 function PhaseTrack(props: {
   readonly phases: readonly WorkStripSlot[]
@@ -105,6 +118,7 @@ function PhaseTrack(props: {
           <PhaseDot
             key={slot.phase.key}
             phase={slot.phase}
+            spanHead={slot.spanHead}
             className={clsx(styles["work-strip-slot"], styles["work-strip-phase"])}
           />
         ) : (
@@ -112,11 +126,18 @@ function PhaseTrack(props: {
             key={slot.key}
             className={styles["work-strip-slot"]}
             data-phase-state={slot.state}
+            data-span-head={slot.spanHead.kind === "head" ? "true" : undefined}
             aria-label={slot.label}
           >
+            <SpanName spanHead={slot.spanHead} />
             <ol className={styles["work-strip-group"]}>
               {slot.phases.map((phase) => (
-                <PhaseDot key={phase.key} phase={phase} className={styles["work-strip-phase"]} />
+                <PhaseDot
+                  key={phase.key}
+                  phase={phase}
+                  spanHead={NO_SPAN_HEAD}
+                  className={styles["work-strip-phase"]}
+                />
               ))}
             </ol>
           </li>
@@ -126,8 +147,28 @@ function PhaseTrack(props: {
   )
 }
 
+const NO_SPAN_HEAD = { kind: "none" } as const satisfies WorkStripSpanHead
+
+/** 群の名。読み上げは丸の `aria-label`（「後1. 受け入れ」）が群を言うので隠す。 */
+function SpanName(props: { readonly spanHead: WorkStripSpanHead }): ReactElement | null {
+  const { spanHead } = props
+  if (spanHead.kind === "none") {
+    return null
+  }
+  return (
+    <span
+      aria-hidden="true"
+      className={styles["work-strip-span"]}
+      data-current={spanHead.current ? "true" : undefined}
+    >
+      {spanHead.name}
+    </span>
+  )
+}
+
 function PhaseDot(props: {
   readonly phase: WorkStripPhase
+  readonly spanHead: WorkStripSpanHead
   readonly className: string
 }): ReactElement {
   const { phase } = props
@@ -137,7 +178,9 @@ function PhaseDot(props: {
       className={props.className}
       data-phase-state={phase.state}
       data-spinning={phase.spinning ? "true" : undefined}
+      data-span-head={props.spanHead.kind === "head" ? "true" : undefined}
     >
+      <SpanName spanHead={props.spanHead} />
       <button
         type="button"
         className={styles["work-strip-phase-dot"]}

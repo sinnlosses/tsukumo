@@ -2,6 +2,7 @@
 
 import {
   currentPhaseOf,
+  phaseOrdinalText,
   phasePosition,
   type WorkPhase,
 } from "../../../../../../../../../shared/session/work-plan.ts"
@@ -56,8 +57,6 @@ function headingOf(phase: WorkPhase): string {
   if (phase.kind !== "phase") {
     return HEADING
   }
-  const number = phasePosition(phase)
-  return number.kind === "numbered"
-    ? `${HEADING} · ${number.ordinals} ${phase.name}`
-    : `${HEADING} · ${phase.name}`
+  const ordinal = phaseOrdinalText(phasePosition(phase))
+  return ordinal === "" ? `${HEADING} · ${phase.name}` : `${HEADING} · ${ordinal} ${phase.name}`
 }

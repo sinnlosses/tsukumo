@@ -541,7 +541,7 @@ describe("work_plan（段取り）", () => {
     })
   })
 
-  it("受け付けた戻り値は帯の今の段の位置と名前を言い、範囲があれば範囲の先頭からの番号で言う", async () => {
+  it("受け付けた戻り値は帯の今の段の位置と名前を言い、範囲があれば群の名と群の中の番号で言う", async () => {
     const reply = await callTool(workServer(), "work_plan", {
       phases: ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"],
       current: 1,
@@ -550,11 +550,11 @@ describe("work_plan（段取り）", () => {
     })
 
     expect(reply.text).toBe(
-      "ok\n帯の今の段は 1/2 架空の実装A。帯の段の番号は委譲先の段の番号と同じで、範囲の外の段（計画・受け入れ）は番号を持たず名前で言う。",
+      "ok\n帯の今の段は 本 1/2 架空の実装A。帯は範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先の段の番号と同じ。セリフで番号を言うのは本の段だけで、前・後の段は名前で言う。",
     )
   })
 
-  it("count を省いた delegatedRange（pending）を受け付け、番号を持たないと言う", async () => {
+  it("count を省いた delegatedRange（pending）を受け付け、範囲の先頭から後ろは番号を持たないと言う", async () => {
     const reply = await callTool(workServer(), "work_plan", {
       phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
       current: 0,
@@ -562,7 +562,7 @@ describe("work_plan（段取り）", () => {
     })
 
     expect(reply.text).toBe(
-      "ok\n帯の今の段は 架空の計画。帯の段は番号を持たない（委譲先の段の数が決まるまで）。",
+      "ok\n帯の今の段は 前 1/1 架空の計画。範囲の先頭から後ろの段は番号を持たない（委譲先の段の数が決まるまで）。",
     )
   })
 
@@ -579,8 +579,8 @@ describe("work_plan（段取り）", () => {
       delegatedRange: { first: 2, count: 2 },
     })
 
-    expect(before.text).toContain("帯の今の段は 架空の計画。")
-    expect(after.text).toContain("帯の今の段は 架空の計画。")
+    expect(before.text).toContain("帯の今の段は 前 1/1 架空の計画。")
+    expect(after.text).toContain("帯の今の段は 前 1/2 架空の計画。")
   })
 
   it("途中の位置の呼び出しは、段のまとめがあれば通し、無ければ差し戻す", async () => {

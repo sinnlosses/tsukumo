@@ -159,7 +159,7 @@ describe("phaseDurations（段のまとまり）", () => {
       row("1/4 架空の調べ", known(10)),
       {
         kind: "parallel",
-        label: "並列 2·3",
+        label: "並列 2–3",
         wall: known(10),
         phases: [
           { label: "2/4 架空のサーバ", duration: known(10) },
@@ -181,7 +181,7 @@ describe("phaseDurations（段のまとまり）", () => {
       row("1/4 架空の調べ", UNKNOWN),
       {
         kind: "parallel",
-        label: "並列 2·3",
+        label: "並列 2–3",
         wall: UNKNOWN,
         phases: [
           { label: "2/4 架空のサーバ", duration: UNKNOWN },

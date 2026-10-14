@@ -20,10 +20,14 @@ import {
   phaseCount,
   type PhaseNumber,
   phaseNumberOf,
+  phaseOrdinalText,
+  PHASE_SPAN_NAMES,
+  type PhaseSpan,
   type PlannedPhase,
   plannedPhaseNumber,
   plannedPhaseTitle,
   plannedPhasesOf,
+  workPositionText,
 } from "../../../../../../../../../shared/session/work-plan.ts"
 import { formatMeasured } from "../../../../../../../../../shared/utils/elapsed-time.ts"
 import {
@@ -93,11 +97,24 @@ type PopoverContext = {
   readonly onGo: (phase: PlannedPhase) => void
 }
 
+/**
+ * 段の群の先頭の丸（とまとまり）に付ける群の名。`name` は「前」「本」「後」、`current` は今の段がその群にあるか。
+ * 群の先頭でない・並び全体の群（範囲が無い）なら `none` で、前の丸と線でつなぐ。
+ */
+export type WorkStripSpanHead =
+  | { readonly kind: "none" }
+  | { readonly kind: "head"; readonly name: string; readonly current: boolean }
+
 /** まとまりの `state` は囲みの次の線の色だけに使い、中の段が全部済めば `done`、ほかは `upcoming`。 */
 export type WorkStripSlot =
-  | { readonly kind: "phase"; readonly phase: WorkStripPhase }
+  | {
+      readonly kind: "phase"
+      readonly spanHead: WorkStripSpanHead
+      readonly phase: WorkStripPhase
+    }
   | {
       readonly kind: "parallel"
+      readonly spanHead: WorkStripSpanHead
       readonly key: string
       readonly label: string
       readonly state: WorkStripPhaseState
@@ -120,7 +137,7 @@ export type WorkStripSteps = {
  * 帯に出す形。`headLabel` は丸の右の字、`sideLabel` は右端の等幅の字。
  *
  * - `none`: 帯ごと出さない（本文が1つも無いまま閉じた依頼と、段取りも働きも無いとき）
- * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「経過 6分12秒」・2行目（段取りが届く前は段の丸が無く字は空。チップが「作業中」を言うので重ねない）
+ * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・今の位置（`positionLabel`「後 1/3」。番号を持たない段では空）・「経過 6分12秒」・2行目（段取りが届く前は段の丸が無く字は空。チップが「作業中」を言うので重ねない）
  * - `finished`: 中身がレポートに入れ替わったあと。済んだ姿の字・「所要 21分49秒」の1行（段取りが無ければ字は空）
  *
  * `result` は状態のチップの状態。`working` は作業中・答え待ち・背景で作業中（ターンが終わって背景のタスクだけ残る）、`finished` は完了・答え待ち・止めた・失敗。
@@ -134,6 +151,7 @@ export type WorkStripModel =
       /** 丸の並び（`ol`）に付ける。吹き出しを閉じる「外を押した」の基準。 */
       readonly trackRef: RefObject<HTMLOListElement | null>
       readonly headLabel: string
+      readonly positionLabel: string
       readonly sideLabel: string
       readonly activity: WorkActivity
       readonly steps: WorkStripSteps
@@ -266,6 +284,7 @@ export function useWorkStrip(): WorkStripModel {
     trackRef,
     result,
     headLabel: planned.length === 0 ? "" : nowPhase.kind === "phase" ? nowPhase.name : completion,
+    positionLabel: nowPhase.kind === "phase" ? workPositionText(plan) : "",
     sideLabel: elapsedLabel,
     activity: workActivityOf({
       turnStepList,
@@ -313,11 +332,25 @@ function slotsOf(
   context: PopoverContext,
 ): readonly WorkStripSlot[] {
   const entries = Object.values(groupBy(planned, (phase) => phase.entry))
-  return entries.map((members): WorkStripSlot => {
+  const spanOf = (members: readonly PlannedPhase[]): PhaseSpan | undefined => {
+    const number =
+      plan.kind === "planned" && members[0] !== undefined
+        ? plannedPhaseNumber(plan, members[0])
+        : NAMED
+    return number.kind === "numbered" && number.span !== "whole" ? number.span : undefined
+  }
+  const currentSpan = spanOf(planned.filter((phase) => phase.state === "current"))
+  return entries.map((members, position): WorkStripSlot => {
     const phases = members.map((phase) => toPhase(plan, phase, flags, context))
+    const span = spanOf(members)
+    const previous = entries[position - 1]
+    const spanHead: WorkStripSpanHead =
+      span !== undefined && (previous === undefined || spanOf(previous) !== span)
+        ? { kind: "head", name: PHASE_SPAN_NAMES[span], current: span === currentSpan }
+        : NO_SPAN_HEAD
     const [first] = phases
     if (phases.length === 1 && first !== undefined) {
-      return { kind: "phase", phase: first }
+      return { kind: "phase", spanHead, phase: first }
     }
     const number =
       plan.kind === "planned"
@@ -327,15 +360,19 @@ function slotsOf(
             phaseCount(plan.phases),
           )
         : NAMED
+    const ordinal = phaseOrdinalText(number)
     return {
       kind: "parallel",
+      spanHead,
       key: `group-${String(members[0]?.entry ?? 0)}`,
-      label: number.kind === "numbered" ? `並列 ${number.ordinals}` : "並列",
+      label: ordinal === "" ? "並列" : `並列 ${ordinal}`,
       state: phases.every((phase) => phase.state === "done") ? "done" : "upcoming",
       phases,
     }
   })
 }
+
+const NO_SPAN_HEAD = { kind: "none" } as const satisfies WorkStripSpanHead
 
 function toPhase(
   plan: LatestWorkPlan,

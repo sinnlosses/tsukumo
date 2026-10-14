@@ -10,6 +10,7 @@ import {
   phaseLabel,
   type PhaseNumber,
   phaseNumberOf,
+  phaseOrdinalText,
   type PlannedPhase,
   plannedPhasesOf,
 } from "./work-plan.ts"
@@ -167,5 +168,6 @@ function totalOf(durations: readonly MeasuredTime[]): MeasuredTime {
 }
 
 function parallelLabel(number: PhaseNumber): string {
-  return number.kind === "numbered" ? `並列 ${number.ordinals}` : "並列"
+  const ordinal = phaseOrdinalText(number)
+  return ordinal === "" ? "並列" : `並列 ${ordinal}`
 }

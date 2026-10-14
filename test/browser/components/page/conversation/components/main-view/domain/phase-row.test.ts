@@ -62,7 +62,7 @@ describe("phaseRowsOf", () => {
       step(2, { interim: false, firstLine: "最終", finishedPhase: NO_PHASE }),
       step(3, {
         interim: true,
-        firstLine: "2·3/4 並べて進める",
+        firstLine: "2–3/4 並べて進める",
         finishedPhase: { kind: "phase", label: "", duration: { kind: "unknown" } },
       }),
     ]),
@@ -79,6 +79,23 @@ describe("phaseRowsOf", () => {
   it("段のまとめは題の先頭の位置を外し、所要を「m:ss」で持つ。report の途中の本文は題をそのまま使い所要は空", () => {
     expect(rows.map((row) => row.title)).toEqual(["計画を立てる", "途中の結論", "並べて進める"])
     expect(rows.map((row) => row.duration)).toEqual(["2:16", "", ""])
+  })
+
+  it("題の先頭の群の名と位置も外す（範囲の前・本・後の「後 1/3」と、古い記録の「2·3/4」）", () => {
+    const titles = phaseRowsOf(
+      turn(
+        [
+          "後 1/3 受け入れる",
+          "本 2–3/4 並べて進める",
+          "2·3/4 古い記録",
+          "2·3·4/5 古い記録の3つ並び",
+        ].map((firstLine, id) =>
+          step(id, { interim: true, firstLine, finishedPhase: phase("", 1_000) }),
+        ),
+      ),
+    ).map((row) => row.title)
+
+    expect(titles).toEqual(["受け入れる", "並べて進める", "古い記録", "古い記録の3つ並び"])
   })
 
   it("板の N は段取りの段の数と一覧の数の大きいほう", () => {

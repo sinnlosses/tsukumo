@@ -28,6 +28,13 @@ export function CurrentWorkStepGroup(props: {
             weight="semibold"
             className={styles["current-work-phase-heading"]}
           >
+            {group.heading.spanName !== "" && (
+              <>
+                <span className={styles["current-work-phase-span"]}>
+                  {group.heading.spanName}
+                </span>{" "}
+              </>
+            )}
             {group.heading.label}
           </Text>
         </div>

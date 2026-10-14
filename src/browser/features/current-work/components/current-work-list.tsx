@@ -11,6 +11,7 @@ import type {
   CurrentWork,
   CurrentWorkBackgroundTask,
   CurrentWorkPlanPhase,
+  CurrentWorkPlanSpan,
 } from "../hooks/use-current-work.ts"
 import styles from "./current-work-list.module.css"
 import { CurrentWorkStepGroup } from "./current-work-step-group.tsx"
@@ -66,11 +67,11 @@ export function CurrentWorkList(props: CurrentWorkListProps): ReactElement {
           >
             {work.plan.headingLabel}
           </Text>
-          <ol className={styles["current-work-plan"]}>
-            {work.plan.phases.map((phase) => (
-              <CurrentWorkPlanPhase key={phase.key} phase={phase} />
+          <div className={styles["current-work-plan-spans"]}>
+            {work.plan.spans.map((span) => (
+              <CurrentWorkPlanSpan key={span.key} span={span} />
             ))}
-          </ol>
+          </div>
         </>
       )}
       {work.runningStep.kind !== "none" && (
@@ -149,7 +150,31 @@ export function CurrentWorkList(props: CurrentWorkListProps): ReactElement {
   )
 }
 
-/** 段取りの段1つ。済んだ・今・残りの見分けは頭の字（済 / 今 / 番号）が持ち、枠と地は補助。 */
+/** 段取りの群1行（前・本・後）。範囲が無い依頼は群の名を持たず、行の頭の名を出さない。 */
+function CurrentWorkPlanSpan(props: { readonly span: CurrentWorkPlanSpan }): ReactElement {
+  const { span } = props
+  return (
+    <div className={styles["current-work-plan-span"]}>
+      {span.name !== "" && (
+        <span
+          className={clsx(
+            styles["current-work-plan-span-name"],
+            span.current && styles["current-work-plan-span-current"],
+          )}
+        >
+          {span.name}
+        </span>
+      )}
+      <ol className={styles["current-work-plan"]}>
+        {span.phases.map((phase) => (
+          <CurrentWorkPlanPhase key={phase.key} phase={phase} />
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+/** 段取りの段1つ。済んだ・今・残りの見分けは頭の丸（✓ / 差し色の番号 / 番号）が持ち、枠と地は補助。 */
 function CurrentWorkPlanPhase(props: { readonly phase: CurrentWorkPlanPhase }): ReactElement {
   const { phase } = props
   return (

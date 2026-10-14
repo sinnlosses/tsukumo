@@ -490,7 +490,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       )
     })
 
-    it("一覧の頭に全部の段が済・今・番号で並び、手順は始まったときの段ごとに区切られる", () => {
+    it("一覧の頭に全部の段が ✓・番号で並び、手順は始まったときの段ごとに区切られる", () => {
       renderScreenNav({ turn: { kind: "running", startedAt: 0 }, records: PLANNED_RECORDS })
 
       fireEvent.click(workToggle())
@@ -499,7 +499,8 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       expect(within(list).getByText("この依頼の段取り")).not.toBeNull()
       expect(
         [...list.querySelectorAll(".current-work-plan li")].map((phase) => phase.textContent),
-      ).toEqual(["済架空の段A", "今架空の段B", "3架空の段C"])
+      ).toEqual(["✓架空の段A", "2架空の段B", "3架空の段C"])
+      expect(list.querySelector(".current-work-plan-span-name")).toBeNull()
       expect(
         [...list.querySelectorAll(".current-work-phase-heading, .current-work-steps li")].map(
           (node) => node.textContent,
@@ -507,7 +508,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       ).toEqual(["2/3 架空の段B", "… Bash: echo b", "1/3 架空の段A", "✓ Read: /tmp/a.txt（0秒）"])
     })
 
-    it("委譲先の段の範囲があれば、範囲の中は範囲の先頭からの番号で、範囲の外の未着手の段は「・」で並ぶ", () => {
+    it("委譲先の段の範囲があれば、前・本・後の群ごとの行に群の中の番号で並ぶ", () => {
       const phases = ["架空の計画", "架空の段A", "架空の段B", "架空の受け入れ"]
       renderScreenNav({
         turn: { kind: "running", startedAt: 0 },
@@ -524,10 +525,18 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
       fireEvent.click(workToggle())
 
-      expect(document.querySelector(".current-work-phase")?.textContent).toBe("1/2 架空の段A")
+      expect(document.querySelector(".current-work-phase")?.textContent).toBe("本 1/2 架空の段A")
       expect(
-        [...workList().querySelectorAll(".current-work-plan li")].map((phase) => phase.textContent),
-      ).toEqual(["済架空の計画", "今架空の段A", "2架空の段B", "・架空の受け入れ"])
+        [...workList().querySelectorAll(".current-work-plan-span")].map((span) => [
+          span.querySelector(".current-work-plan-span-name")?.textContent,
+          [...span.querySelectorAll("li")].map((phase) => phase.textContent),
+        ]),
+      ).toEqual([
+        ["前", ["✓架空の計画"]],
+        ["本", ["1架空の段A", "2架空の段B"]],
+        ["後", ["1架空の受け入れ"]],
+      ])
+      expect(workList().querySelector(".current-work-plan-span-current")?.textContent).toBe("本")
     })
 
     it("同じ段の手順は隣どうしで1まとまりになり、段が戻れば別のまとまりになる", () => {

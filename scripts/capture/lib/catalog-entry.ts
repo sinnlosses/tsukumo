@@ -597,6 +597,21 @@ export const CATALOG: readonly CatalogEntry[] = [
     settle: TAIL_SETTLE,
   },
   {
+    name: "work-plan-delegated-trail",
+    // 範囲の後ろの段が今の場面で、一覧の頭の段取りが前・本・後の群ごとの行になるのを撮る。
+    // 「いまの作業」の札は会話の画面には出ないので、キャラの画面へ移ってから押す。
+    scene: "delegated-range-trail",
+    label: "いまの作業の段取り（前・本・後の群）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [
+      { kind: "hash", hash: "#character" },
+      { kind: "click", selector: WORK_TOGGLE_SELECTOR },
+    ],
+    skipReveal: false,
+    settle: TAIL_SETTLE,
+  },
+  {
     name: "work-plan-main-view",
     // 最終 `report` は約10秒後に届き、中間レポートの並びの最後に最終レポートが出る。
     scene: "work-plan",
@@ -625,6 +640,16 @@ export const CATALOG: readonly CatalogEntry[] = [
     name: "delegated-range-outside",
     scene: "delegated-range-outside",
     label: "委譲中の帯（範囲の外の段が今）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: false,
+    settle: TAIL_SETTLE,
+  },
+  {
+    name: "delegated-range-trail",
+    scene: "delegated-range-trail",
+    label: "委譲中の帯（範囲の後ろの段が今）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],

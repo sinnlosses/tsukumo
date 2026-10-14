@@ -26,8 +26,8 @@ export type PhaseNeighbor =
   | { readonly kind: "none" }
   | { readonly kind: "row"; readonly row: PhaseRow }
 
-/** 段のまとめの見出し「2/4 段の名前」「2·3/4 …」の頭の位置。題からは外す。 */
-const POSITION_PREFIX = /^\d+(?:·\d+)*\/\d+\s+/u
+/** 段のまとめの見出し「2/4 段の名前」「後 1/3 …」「2–3/4 …」の頭の群の名と位置。題からは外す（古い記録の「2·3/4」も外す）。 */
+const POSITION_PREFIX = /^(?:[前本後]\s)?\d+(?:–\d+|(?:·\d+)*)\/\d+\s+/u
 
 export function phaseRowsOf(turn: MainViewTurn): readonly PhaseRow[] {
   return turn.steps.filter(isInterimText).map((step, index) => ({

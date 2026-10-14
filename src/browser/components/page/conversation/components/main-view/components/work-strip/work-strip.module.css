@@ -90,6 +90,22 @@
 .work-strip-slot[data-phase-state="done"] + .work-strip-slot::before {
   background: var(--accent);
 }
+/* 群（前・本・後）の先頭は前の群と線でつながず、間を空けて群の名を置く。今いる群の名だけ差し色。 */
+.work-strip-slot + .work-strip-slot[data-span-head="true"]::before {
+  width: 1rem;
+  background: none;
+}
+.work-strip-span {
+  flex: none;
+  margin-right: 0.3125rem;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  line-height: 1;
+}
+.work-strip-span[data-current="true"] {
+  color: var(--accent);
+  font-weight: 700;
+}
 .work-strip-group {
   display: flex;
   align-items: center;
@@ -224,6 +240,11 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.work-strip-position {
+  flex: none;
+  font-family: var(--font-mono);
   white-space: nowrap;
 }
 .work-strip-side {

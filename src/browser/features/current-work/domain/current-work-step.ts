@@ -10,7 +10,11 @@ import {
   type TurnStep,
   type TurnStepStatus,
 } from "../../../../shared/session/turn-step.ts"
-import { phaseLabel, type WorkPhase } from "../../../../shared/session/work-plan.ts"
+import {
+  PHASE_SPAN_NAMES,
+  phasePosition,
+  type WorkPhase,
+} from "../../../../shared/session/work-plan.ts"
 import { clipText, type ClippedText } from "../../../../shared/utils/clip-text.ts"
 import { formatElapsed } from "../../../../shared/utils/elapsed-time.ts"
 import { summarizeToolInput } from "../../../domain/tool-summary.ts"
@@ -29,14 +33,20 @@ export type CurrentWorkStepFailure =
 
 /**
  * 手順を始まったときの段で区切った1まとまり。
- * 小見出しは「2/4 段の名前」で、段取りより前・全部の段を終えたあとの手順は小見出しを持たない。
+ * 小見出しは群の名のタグと「2/4 段の名前」で、段取りより前・全部の段を終えたあとの手順は小見出しを持たない。
+ * `spanName` は群の名「前」「本」「後」（範囲が無い・番号を持たない段では空）、`label` は群の名を除いた見出し、
  * `phaseIndexes` は小見出しの段の平らにした並びでの位置（{@link WorkPhase} の `indexes`）。
  */
 export type CurrentWorkStepGroup = {
   readonly key: string
   readonly heading:
     | { readonly kind: "none" }
-    | { readonly kind: "phase"; readonly label: string; readonly phaseIndexes: readonly number[] }
+    | {
+        readonly kind: "phase"
+        readonly spanName: string
+        readonly label: string
+        readonly phaseIndexes: readonly number[]
+      }
   readonly steps: readonly CurrentWorkStep[]
 }
 
@@ -111,16 +121,27 @@ function backgroundTaskLabel(task: BackgroundTask): string {
 }
 
 function stepGroupHeading(phase: WorkPhase): CurrentWorkStepGroup["heading"] {
-  return phase.kind === "phase"
-    ? { kind: "phase", label: phaseLabel(phase), phaseIndexes: phase.indexes }
-    : { kind: "none" }
+  if (phase.kind !== "phase") {
+    return { kind: "none" }
+  }
+  const number = phasePosition(phase)
+  return number.kind === "numbered"
+    ? {
+        kind: "phase",
+        spanName: PHASE_SPAN_NAMES[number.span],
+        label: `${number.text} ${phase.name}`,
+        phaseIndexes: phase.indexes,
+      }
+    : { kind: "phase", spanName: "", label: phase.name, phaseIndexes: phase.indexes }
 }
 
 function sameHeading(
   a: CurrentWorkStepGroup["heading"],
   b: CurrentWorkStepGroup["heading"],
 ): boolean {
-  return a.kind === "phase" && b.kind === "phase" ? a.label === b.label : a.kind === b.kind
+  return a.kind === "phase" && b.kind === "phase"
+    ? a.spanName === b.spanName && a.label === b.label
+    : a.kind === b.kind
 }
 
 function toStepView(step: TurnStep): CurrentWorkStep {

@@ -293,7 +293,7 @@ describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツ�
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
         permissionDecision: "deny",
-        permissionDecisionReason: expect.stringContaining("帯の今の段は 2/2 架空の段B。"),
+        permissionDecisionReason: expect.stringContaining("帯の今の段は 本 2/2 架空の段B。"),
       },
     })
     review.judgeWorkPlan({ ...plan, current: 1, phaseSummary: "架空のまとめ。" })
@@ -363,8 +363,8 @@ describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", ()
       hookSpecificOutput: {
         hookEventName: "UserPromptSubmit",
         additionalContext:
-          "tsukumo の注記（委譲先の返却の本文ではない）:返却 `段 1/2` で帯の 1/2 架空の実装A が済んだ。" +
-          "帯の今の段は 2/2 架空の実装B。帯の段の番号は委譲先の段の番号と同じで、範囲の外の段（計画・受け入れ）は番号を持たず名前で言う。",
+          "tsukumo の注記（委譲先の返却の本文ではない）:返却 `段 1/2` で帯の 本 1/2 架空の実装A が済んだ。" +
+          "帯の今の段は 本 2/2 架空の実装B。帯は範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先の段の番号と同じ。セリフで番号を言うのは本の段だけで、前・後の段は名前で言う。",
       },
     })
     expect(await runUserPromptSubmit(review.takeHandbackNote, HANDBACK_PROMPT)).toEqual({})

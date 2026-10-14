@@ -148,7 +148,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     })
   })
 
-  it("範囲が pending のあいだは、範囲の段の丸を「…」・ほかを「・」にし、右端は経過だけを出す", () => {
+  it("範囲が pending のあいだは、前の段だけを数え、範囲の先頭の丸を「…」・その後ろを「・」にする", () => {
     const pending: SessionEvent = {
       ...plan,
       delegatedRange: { kind: "pending", first: 1 },
@@ -162,11 +162,46 @@ describe("useWorkStrip（時刻に依るもの）", () => {
       START + 5_000,
     )
 
-    expect(strip).toMatchObject({ kind: "working", headLabel: "架空の計画", sideLabel: "経過 5秒" })
+    expect(strip).toMatchObject({
+      kind: "working",
+      headLabel: "架空の計画",
+      positionLabel: "前 1/1",
+      sideLabel: "経過 5秒",
+    })
     expect(
       strip.kind === "working" &&
         strip.phases.map((slot) => slot.kind === "phase" && slot.phase.mark),
-    ).toEqual(["・", "…", "・"])
+    ).toEqual(["1", "…", "・"])
+  })
+
+  it("範囲があれば、群の先頭の丸に群の名を付け、今の群の名を目立たせ、右端に群の中の位置を出す", () => {
+    const ranged: SessionEvent = {
+      ...plan,
+      delegatedRange: { kind: "range", first: 1, count: 2 },
+      phases: ["架空の計画", "架空の段A", "架空の段B", "架空の受け入れ", "架空の送り出し"],
+      current: 3,
+      phaseSummary: "架空のまとめ。",
+    }
+    const strip = stripAt(
+      foldTimed([
+        [request, START],
+        [ranged, START + 1_000],
+      ]),
+      START + 5_000,
+    )
+
+    expect(strip).toMatchObject({ kind: "working", positionLabel: "後 1/2" })
+    expect(strip.kind === "working" && strip.phases.map((slot) => slot.spanHead)).toEqual([
+      { kind: "head", name: "前", current: false },
+      { kind: "head", name: "本", current: false },
+      { kind: "none" },
+      { kind: "head", name: "後", current: true },
+      { kind: "none" },
+    ])
+    expect(
+      strip.kind === "working" &&
+        strip.phases.map((slot) => slot.kind === "phase" && slot.phase.mark),
+    ).toEqual(["✓", "✓", "✓", "1", "2"])
   })
 
   it("範囲の中が全部済んで外の段が残ったまま閉じたら、結果の見出しは全部の段で数える", () => {
@@ -267,7 +302,7 @@ describe("useWorkStrip（段のまとまり）", () => {
       { kind: "phase", phase: { mark: "✓", state: "done" } },
       {
         kind: "parallel",
-        label: "並列 2·3",
+        label: "並列 2–3",
         phases: [
           { mark: "2", state: "current" },
           { mark: "3", state: "current" },

@@ -546,15 +546,13 @@ describe("CallReview の関門の印", () => {
     }
   })
 
-  it("返却で進んだあとの帯の位置を、範囲の先頭からの番号で言う", () => {
+  it("返却で進んだあとの帯の位置を、本の群の番号で言う", () => {
     const review = started()
-    expect(review.bandPosition()).toContain("帯の今の段は 1/2 架空の実装A。")
+    expect(review.bandPosition()).toContain("帯の今の段は 本 1/2 架空の実装A。")
 
     review.pass(handback("段 1/2 | 架空の返却。"))
 
-    expect(review.bandPosition()).toBe(
-      "帯の今の段は 2/2 架空の実装B。帯の段の番号は委譲先の段の番号と同じで、範囲の外の段（計画・受け入れ）は番号を持たず名前で言う。",
-    )
+    expect(review.bandPosition()).toContain("帯の今の段は 本 2/2 架空の実装B。")
   })
 
   it("段取りが無ければ帯の位置は空", () => {

@@ -327,8 +327,8 @@ describe("WorkPlanReview の返却の注記", () => {
     review.pass(handback("段 1/2 | 架空の返却。"))
 
     expect(review.takeHandbackNote()).toBe(
-      "tsukumo の注記（委譲先の返却の本文ではない）:返却 `段 1/2` で帯の 1/2 架空の実装A が済んだ。" +
-        "帯の今の段は 2/2 架空の実装B。帯の段の番号は委譲先の段の番号と同じで、範囲の外の段（計画・受け入れ）は番号を持たず名前で言う。",
+      "tsukumo の注記（委譲先の返却の本文ではない）:返却 `段 1/2` で帯の 本 1/2 架空の実装A が済んだ。" +
+        "帯の今の段は 本 2/2 架空の実装B。帯は範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先の段の番号と同じ。セリフで番号を言うのは本の段だけで、前・後の段は名前で言う。",
     )
     expect(review.takeHandbackNote()).toBe("")
   })
@@ -348,10 +348,10 @@ describe("WorkPlanReview の返却の注記", () => {
     review.pass(handback("段 1/2 | 架空の返却A。"))
 
     const note = review.takeHandbackNote()
-    expect(note).toContain("返却 `段 2/2` で帯の 2/2 架空の実装B が済んだ。")
-    expect(note).toContain("返却 `段 1/2` で帯の 1/2 架空の実装A が済んだ。")
+    expect(note).toContain("返却 `段 2/2` で帯の 本 2/2 架空の実装B が済んだ。")
+    expect(note).toContain("返却 `段 1/2` で帯の 本 1/2 架空の実装A が済んだ。")
     expect(note.match(/帯の今の段は/gu)).toHaveLength(1)
-    expect(note).toMatch(/帯の今の段は 架空の受け入れ。/u)
+    expect(note).toMatch(/帯の今の段は 後 1\/1 架空の受け入れ。/u)
   })
 
   it("受け付けた work_plan・依頼・利用者の送ったターンの始まりのあとは、溜めた注記を捨てる", () => {
