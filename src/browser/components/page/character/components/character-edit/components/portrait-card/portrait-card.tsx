@@ -15,6 +15,7 @@ import { Portrait } from "../../../../../../domain/portrait.tsx"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { PlusIcon, TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
+import { ImageZoom } from "../../../../../../ui/image-zoom/image-zoom.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import characterStyles from "../../../../character.module.css"
 import type { PortraitCardModel } from "../../../../domain/character-edit-model.ts"
@@ -34,6 +35,7 @@ export function PortraitCard(props: {
   const { card, disabled } = props
   // 消す前の確かめの吹き出し。開いているかと、開いた瞬間に測った位置を一緒に持つ。
   const cardRef = useRef<HTMLElement>(null)
+  const [zoomed, setZoomed] = useState(false)
   const [confirmClear, setConfirmClear] = useState<{ readonly anchor: DOMRect } | undefined>(
     undefined,
   )
@@ -98,7 +100,15 @@ export function PortraitCard(props: {
         onDragOver={onDragOver}
         onDrop={onDrop}
       >
-        <div className={styles["character-card-stage"]}>
+        <button
+          type="button"
+          className={clsx(
+            characterStyles["character-zoom-trigger"],
+            styles["character-card-stage"],
+          )}
+          aria-label={`${card.label}を拡大`}
+          onClick={() => setZoomed(true)}
+        >
           <Portrait
             url={card.image.url}
             altText={card.label}
@@ -106,7 +116,7 @@ export function PortraitCard(props: {
             motion={undefined}
             className={styles["character-card-portrait"]}
           />
-        </div>
+        </button>
         <figcaption className={styles["character-card-label"]}>{card.label}</figcaption>
         {card.badge.kind === "shown" && (
           <span className={styles["character-card-badge"]}>{card.badge.text}</span>
@@ -150,6 +160,14 @@ export function PortraitCard(props: {
           )}
         </HStack>
       </figure>
+      {zoomed && (
+        <ImageZoom
+          src={card.image.url}
+          alt={card.label}
+          fallback={{ kind: "none" }}
+          onClose={() => setZoomed(false)}
+        />
+      )}
       {confirmClear !== undefined && clear.kind === "shown" && (
         <PortraitClearConfirm
           anchor={confirmClear.anchor}

@@ -1,11 +1,12 @@
 // キャラクター画面の画像1枚の行（顔・背景）。
 // 縮図（または空の枠）と、口は「差し替える」と「消す」の2つだけ。
 
-import type { ReactElement } from "react"
+import { type ReactElement, useState } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
+import { ImageZoom } from "../../../../../../ui/image-zoom/image-zoom.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import characterStyles from "../../../../character.module.css"
@@ -26,6 +27,7 @@ export function ImageField(props: {
 }): ReactElement {
   const { field, disabled } = props
   const thumbnail = THUMBNAIL_CLASS[field.kind]
+  const [zoomed, setZoomed] = useState(false)
 
   return (
     <HStack
@@ -41,7 +43,14 @@ export function ImageField(props: {
       {field.image.kind === "absent" ? (
         <span className={styles[thumbnail.blank]} />
       ) : (
-        <img className={styles[thumbnail.preview]} src={field.image.url} alt={field.label} />
+        <button
+          type="button"
+          className={characterStyles["character-zoom-trigger"]}
+          aria-label={`${field.subject}を拡大`}
+          onClick={() => setZoomed(true)}
+        >
+          <img className={styles[thumbnail.preview]} src={field.image.url} alt={field.label} />
+        </button>
       )}
       <VStack
         element="div"
@@ -104,6 +113,14 @@ export function ImageField(props: {
           )}
         </HStack>
       </VStack>
+      {zoomed && field.image.kind === "present" && (
+        <ImageZoom
+          src={field.image.url}
+          alt={field.label}
+          fallback={{ kind: "none" }}
+          onClose={() => setZoomed(false)}
+        />
+      )}
     </HStack>
   )
 }
