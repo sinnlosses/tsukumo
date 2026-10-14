@@ -139,7 +139,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **注記**: 属性は metadata の2つに限り、label からは読まない。タスク一般の形は属性を `difficulty`・`loopable` の2欄で持つ（おすすめの選びには使わない）。
   ラベルは字のまま並べるだけで解釈せず、担当（`assignee`）は読まない。特定のスキルが課題に足した独自の状態・本文の節の書式・ID の書き換えは読まない
   （`docs/architecture/adr/0024-no-skill-dependency.md`）。一覧・成果・おすすめは写したあとのタスク一般の形だけを読む
-- **避ける言い方**: task-workflow 方式（スキルの名前で、tsukumo はスキルの規則を写さない）、Beads の形
+- **避ける言い方**: task-model 方式（スキルの名前で、tsukumo はスキルの規則を写さない）、Beads の形
 
 ## 会話の駆動
 

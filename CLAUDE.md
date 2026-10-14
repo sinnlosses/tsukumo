@@ -115,7 +115,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 タスクを持つ。
 
 状態はチャットではなく Beads（`task show GH-<n>` で読み、`task edit` で直す。`.beads` は本体の作業ツリーの根で git の外。エージェントのドラフトも `draft` の課題としてここに置く）に残す。手順は
-`~/.claude/skills/task-workflow/WORKFLOW.md` が正典で、このリポジトリの上乗せは
+`~/.claude/skills/task-model/WORKFLOW.md` が正典で、このリポジトリの上乗せは
 `docs/workflow.md`。**タスクは `difficulty` と同じモデルのサブエージェントに委譲し**、判断が
 想定より要ると分かったら押し切らず `difficulty` を上げて再開する。完了は検証できる証拠で判定する。
 新しい作業ツリーの立ち上げ（`pnpm install`。組み立てまで `prepare` が済ませる）は人がやる。

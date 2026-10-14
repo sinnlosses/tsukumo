@@ -348,8 +348,8 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 「決める」と配信そのもの（バインド先・経路・push）と出し分け・DOM の細部、**E2E で守るのは利用者に見える流れと実ブラウザでしか確かめられないもの**
 （上の「E2E の走らせ方」。`pnpm run check` の最後の段の `pnpm run test:e2e`）
 まで。E2E のスクリーンショットは `/tmp/tsukumo-e2e/` に出るが判定には使わないので、表示に関わる変更をしたら、
-次を確認してその結果を `evidence` に書く（`~/.claude/skills/task-workflow/WORKFLOW.md`
-「良いevidenceの書き方」と `docs/workflow.md`「タスクを書くとき・受け入れるとき」）。
+次を確認してその結果を `evidence` に書く（`~/.claude/skills/task-model/WORKFLOW.md`
+「結果の書き方と知見の置き場」と `docs/workflow.md`「タスクを書くとき・受け入れるとき」）。
 
 **fake driver（`TSUKUMO_DRIVER=fake`）で起こせる**ので、claude を起こさず（API を使わず）に
 下の手順を回せる（上の「テスト」）。

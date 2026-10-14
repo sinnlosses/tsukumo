@@ -1,8 +1,8 @@
 # タスク運用：このリポジトリでの上乗せ
 
-**運用の正典は `~/.claude/skills/task-workflow/` の `WORKFLOW.md`**（複数のプロジェクトで
-共通。フィールド定義・`summary` の書き方・`difficulty` の基準・evidence の粒度・
-コミットメッセージ・指示メモ・アーカイブのトリガーと手順は、すべてそちらにある）。
+**運用の正典は `~/.claude/skills/task-model/` の `WORKFLOW.md`**（複数のプロジェクトで
+共通。フィールド定義・`summary` の書き方・`difficulty` の基準・結果の書き方・
+コミットメッセージ・ドラフトの課題は、すべてそちらにある）。
 プロジェクト固有の値は `.tw/config.toml` が持つ（このリポジトリでは
 検証コマンド = `pnpm run check`、整形コマンド = `pnpm run format`、タスクの置き場 = Beads、
 トラッカー = GitHub の `sinnlosses/tsukumo` と Project 1）。
@@ -10,7 +10,7 @@
 **2026-09-12 に、共通版と重複していた節をこの文書から落とした**（正典が二重になり、片方だけ
 直して気づかない事故を避けるため）。ここに残すのは、**共通版が知らないこのリポジトリの事情**だけ。
 
-責務: タスク運用の共通版（`task-workflow` スキルの `WORKFLOW.md`）に対する、このリポジトリ
+責務: タスク運用の共通版（`task-model` スキルの `WORKFLOW.md`）に対する、このリポジトリ
 固有の上乗せを持つ。
 読む時: タスクを書く・受け入れる、作業ツリーを並行させる、tsukumo を起こすとき。
 直す時: このリポジトリ固有の運用（`loopable` の判定・`summary` の長さなど）を変えたとき。
@@ -211,13 +211,13 @@ hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`�
 
 ## 関連
 
-- 手順そのもの: 共通版の `WORKFLOW.md`「1サイクル」（`task claim` / `task done` / `task ship`）。
+- 手順そのもの: `task-workflow` スキルの `SKILL.md`「手順」（`task claim` / `task done` / `task ship`）。
   **tsukumo 独自の上乗せは無い**——2026-09-23 に「`doing` をコミットする」「アーカイブも `main` へ
   単独で送る」という覆しを入れていたが、理由（作業ツリーを分けるのが orca になり、作業ツリーの
   中だけの着手の印が別の作業ツリーから見えない）は、2026-09-24 の切り替えで共通版が
   「着手の印は全作業ツリーが共有する `.git` の台帳に置く」形になったことで共通版の側が解消した。
   当時の記述は `docs/history/decision.md`「workflow.md「`doing` をコミットする」「アーカイブも
   `main` へ単独で送る」」に残してある
-- 運用の正典: `~/.claude/skills/task-workflow/WORKFLOW.md`
+- 運用の正典: `~/.claude/skills/task-model/WORKFLOW.md`
 - 完了タスク・過去セッションの記録: `docs/history/tasks.md` /
   `docs/history/progress.md`
