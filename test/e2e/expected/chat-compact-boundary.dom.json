@@ -178,7 +178,7 @@
         {
           "tag": "button",
           "attributes": {
-            "aria-expanded": "false",
+            "aria-haspopup": "dialog",
             "aria-label": "設定",
             "type": "button"
           },

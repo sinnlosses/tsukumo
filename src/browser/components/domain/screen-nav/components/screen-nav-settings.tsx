@@ -1,11 +1,6 @@
-// 帯の右端の歯車と、押すと開く設定のポップオーバー。
-//
-// 歯車を置くのは広い画面の帯だけ（狭い画面では CSS の `@media` が帯から消す）。
-// 中身（`ScreenNavSettingsBody`）は、狭い画面では引き出しの設定の面にも置く。
-// id は `useId()` でこの器ごとに振る（`aria-controls` と `<label for>` が指す先が重ならないようにする）。
+// 設定の3つの面（色・セッションの既定・演出）と、3つを見出し付きで並べた中身（`ScreenNavSettingsBody`、狭い画面の引き出しの設定の面が置く）。
+// id は `useId()` でこの器ごとに振る（`<label for>` が指す先が重ならないようにする）。
 
-import clsx from "clsx"
-import { Settings } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
 import { isSessionDefaultPermissionMode } from "../../../../../shared/session/session-default.ts"
@@ -18,15 +13,11 @@ import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Select } from "../../../ui/select/select.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import type { ScreenNavSettings } from "../hooks/use-settings.ts"
-import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-settings.module.css"
 
 export type ScreenNavSettingsProps = {
   readonly settings: ScreenNavSettings
 }
-
-/** 読み上げに渡す名前（歯車は絵だけなので、名前は `aria-label` と `title` で渡す）。 */
-const SETTINGS_LABEL = "設定"
 
 /** 既定の `<select>` に出すモデル（帯のドロップダウンと同じ順）。 */
 const MODEL_OPTIONS = MODEL_LABELS.map(([value, label]) => ({ value, label }))
@@ -41,46 +32,9 @@ const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]) => ({
   label,
 }))
 
-export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactElement {
-  const { settings } = props
-  // 預け先はここで分解して受ける。
-  // `settings.toggleRef` の形のまま `ref` に渡すと、`react(refs)` が `settings` への参照ごとレンダー中の ref の読み書きとみなして落ちる。
-  const { toggleRef } = settings
-  const panelId = useId()
-
-  // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
-  return (
-    <div className={clsx(styles["screen-nav-settings"], shellStyles["screen-nav-settings"])}>
-      <button
-        type="button"
-        ref={toggleRef}
-        className={styles["screen-nav-settings-toggle"]}
-        aria-expanded={settings.open}
-        aria-controls={panelId}
-        aria-label={SETTINGS_LABEL}
-        title={SETTINGS_LABEL}
-        onClick={settings.onToggle}
-      >
-        <Settings size={18} strokeWidth={1.8} />
-      </button>
-      {settings.open && (
-        <div
-          id={panelId}
-          className={styles["screen-nav-settings-panel"]}
-          role="region"
-          aria-label={SETTINGS_LABEL}
-        >
-          <ScreenNavSettingsBody settings={settings} />
-        </div>
-      )}
-    </div>
-  )
-}
-
-/** 設定の中身（画面の色〜既定に戻す）。帯の歯車のポップオーバーと、狭い画面の引き出しの設定の面が同じものを置く。 */
+/** 設定の中身（3つの面を見出し付きで並べ、末尾に既定に戻す）。狭い画面の引き出しの設定の面が置く。 */
 export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
-  const fieldId = useId()
 
   return (
     <>
@@ -93,6 +47,63 @@ export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactEleme
       >
         画面の色
       </Text>
+      <ScreenNavSettingsColorFace settings={settings} />
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["screen-nav-settings-heading"]}
+      >
+        新しいセッションの既定
+      </Text>
+      <ScreenNavSettingsSessionDefaultFace settings={settings} />
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["screen-nav-settings-heading"]}
+      >
+        書き上げる演出の速さ
+      </Text>
+      <ScreenNavSettingsRevealFace settings={settings} label="速さ" />
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={styles["screen-nav-settings-row"]}
+      >
+        <Button
+          variant="link"
+          size="label"
+          pressed="none"
+          disabled={settings.resetDisabled}
+          ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["screen-nav-settings-reset"]}
+          onClick={settings.onReset}
+        >
+          既定に戻す
+        </Button>
+      </HStack>
+    </>
+  )
+}
+
+/** 画面の色の面（見出しなし）。 */
+export function ScreenNavSettingsColorFace(props: ScreenNavSettingsProps): ReactElement {
+  const { settings } = props
+  const fieldId = useId()
+
+  return (
+    <>
       {settings.colors.map((color) => (
         <HStack
           element="div"
@@ -127,15 +138,17 @@ export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactEleme
           {settings.colorNotice.text}
         </Text>
       )}
-      <Text
-        element="p"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["screen-nav-settings-heading"]}
-      >
-        新しいセッションの既定
-      </Text>
+    </>
+  )
+}
+
+/** セッションの既定の面（見出しなし）。 */
+export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProps): ReactElement {
+  const { settings } = props
+  const fieldId = useId()
+
+  return (
+    <>
       <HStack
         element="div"
         name={{ kind: "none" }}
@@ -222,15 +235,19 @@ export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactEleme
           onChange={settings.sessionDefault.onChangePermissionMode}
         />
       </HStack>
-      <Text
-        element="p"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["screen-nav-settings-heading"]}
-      >
-        書き上げる演出の速さ
-      </Text>
+    </>
+  )
+}
+
+/** 演出の面（見出しなし）。`label` は行の名前。 */
+export function ScreenNavSettingsRevealFace(
+  props: ScreenNavSettingsProps & { readonly label: string },
+): ReactElement {
+  const { settings, label } = props
+  const fieldId = useId()
+
+  return (
+    <>
       <HStack
         element="div"
         name={{ kind: "none" }}
@@ -241,7 +258,7 @@ export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactEleme
         wrap="nowrap"
         className={styles["screen-nav-settings-row"]}
       >
-        <label htmlFor={`${fieldId}-reveal-speed`}>速さ</label>
+        <label htmlFor={`${fieldId}-reveal-speed`}>{label}</label>
         <Select
           id={`${fieldId}-reveal-speed`}
           ariaLabel="書き上げる演出の速さ"
@@ -253,31 +270,6 @@ export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactEleme
           options={REVEAL_SPEED_OPTIONS}
           onChange={settings.revealSpeed.onChange}
         />
-      </HStack>
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        ref={undefined}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={styles["screen-nav-settings-row"]}
-      >
-        <Button
-          variant="link"
-          size="label"
-          pressed="none"
-          disabled={settings.resetDisabled}
-          ariaLabel={undefined}
-          disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
-          className={styles["screen-nav-settings-reset"]}
-          onClick={settings.onReset}
-        >
-          既定に戻す
-        </Button>
       </HStack>
     </>
   )

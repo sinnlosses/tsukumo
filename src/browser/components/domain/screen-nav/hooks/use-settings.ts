@@ -5,9 +5,9 @@
 //
 // 既定は次に起こすときから効くので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンはセッション限りの別物）。
 //
-// 開閉は `usePopover` に任せ、開閉のたびに色の注意書きを消す。
+// 開閉はダイアログ（`ui/dialog`）に合わせて持ち、開閉のたびに色の注意書きを消す。
 
-import type { RefCallback, RefObject } from "react"
+import { useRef, useState, type RefObject } from "react"
 
 import { isEffortLevel, isModelAlias, type ModelAlias } from "../../../../../shared/command.ts"
 import {
@@ -16,7 +16,6 @@ import {
   type SessionDefaultPermissionMode,
 } from "../../../../../shared/session/session-default.ts"
 import { resolveEffortSelect, type EffortSelect } from "../../../../domain/effort-label.ts"
-import { usePopover } from "../../../../hooks/use-popover.ts"
 import { useSession } from "../../../../stores/session.ts"
 import {
   useAppearanceColor,
@@ -44,7 +43,9 @@ export type ScreenNavSettingsSessionDefault = {
 
 export type ScreenNavSettings = {
   readonly open: boolean
-  readonly onToggle: () => void
+  readonly onOpen: () => void
+  /** Esc・×・背景のどれで閉じたときも歯車へフォーカスを戻す。 */
+  readonly onClose: () => void
   readonly colors: readonly ScreenNavSettingsColor[]
   readonly colorNotice: ScreenNavSettingsColorNotice
   readonly sessionDefault: ScreenNavSettingsSessionDefault
@@ -52,21 +53,30 @@ export type ScreenNavSettings = {
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
   readonly onReset: () => void
-  /** 帯の歯車の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。 */
-  readonly toggleRef: RefCallback<HTMLButtonElement>
+  /** 帯の歯車の `<button>` を預ける口（閉じたときのフォーカスの戻り先）。 */
+  readonly toggleRef: RefObject<HTMLButtonElement | null>
 }
 
-/** `navRef` は帯全体（`<nav>`）。外側を押したかの判定に使う。 */
-export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSettings {
+export function useSettings(): ScreenNavSettings {
   const dispatch = useSession((session) => session.dispatch)
   const sessionDefault = useSession((session) => session.state.sessionDefault)
   const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
   const color = useAppearanceColor()
   const revealSpeed = useRevealSpeedSetting()
-  const { open, onToggle, toggleRef } = usePopover({
-    rootRef: navRef,
-    onReset: color.clearNotice,
-  })
+  const [open, setOpen] = useState(false)
+  const toggleRef = useRef<HTMLButtonElement>(null)
+
+  function onOpen(): void {
+    setOpen(true)
+    color.clearNotice()
+  }
+
+  // `<dialog>` の `close` はどの閉じ方（Esc・×・背景）でも届くので、歯車へ戻すのはここ1箇所。
+  function onClose(): void {
+    setOpen(false)
+    color.clearNotice()
+    toggleRef.current?.focus()
+  }
 
   /** 3つで1組なので、変えた1つに、ほかの2つはいまの値を写して送る。 */
   function sendSessionDefault(change: Partial<SessionDefault>): void {
@@ -80,7 +90,8 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
 
   return {
     open,
-    onToggle,
+    onOpen,
+    onClose,
     colors: color.colors,
     colorNotice: color.colorNotice,
     resetDisabled: color.resetDisabled,

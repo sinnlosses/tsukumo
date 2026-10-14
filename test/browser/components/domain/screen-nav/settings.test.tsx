@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
@@ -66,32 +66,51 @@ function gear(): HTMLElement {
   )
 }
 
-function panel(): HTMLElement | null {
-  return document.querySelector(".screen-nav-settings-panel")
+function settingsDialog(): HTMLElement | null {
+  return screen.queryByRole("dialog", { name: "設定" })
 }
 
-/** ポップオーバーの中の色の操作子（ラベルは `<label for>` で結んである）。 */
-function colorInput(label: string): HTMLInputElement {
+function openedSettingsDialog(): HTMLElement {
+  return screen.getByRole("dialog", { name: "設定" })
+}
+
+function showFace(name: string): void {
+  fireEvent.click(within(openedSettingsDialog()).getByRole("button", { name }))
+}
+
+function openFace(name: string): void {
+  fireEvent.click(gear())
+  if (name !== "見た目") {
+    showFace(name)
+  }
+}
+
+function faceLabels(): (string | null)[] {
+  return [...openedSettingsDialog().querySelectorAll("label")].map((node) => node.textContent)
+}
+
+/** 面の中の操作子（ラベルは `<label for>` で結んである）。 */
+function controlOf<T extends HTMLElement>(
+  label: string,
+  ctor: new () => T,
+  description: string,
+): T {
   const labelNode = typedElement(
-    [...document.querySelectorAll(".screen-nav-settings-panel label")].find(
+    [...openedSettingsDialog().querySelectorAll("label")].find(
       (node) => node.textContent === label,
     ),
     HTMLLabelElement,
     `ラベル「${label}」`,
   )
-  return typedElement(
-    document.getElementById(labelNode.htmlFor),
-    HTMLInputElement,
-    `ラベル「${label}」が結ぶ入力欄`,
-  )
+  return typedElement(document.getElementById(labelNode.htmlFor), ctor, description)
 }
 
-function resetButton(): HTMLButtonElement {
-  return typedElement(
-    document.querySelector(".screen-nav-settings-reset"),
-    HTMLButtonElement,
-    "既定に戻すボタン",
-  )
+function colorInput(label: string): HTMLInputElement {
+  return controlOf(label, HTMLInputElement, `ラベル「${label}」が結ぶ入力欄`)
+}
+
+function resetButton(): HTMLElement {
+  return within(openedSettingsDialog()).getByRole("button", { name: "既定に戻す" })
 }
 
 function readToken(name: string): string {
@@ -99,61 +118,106 @@ function readToken(name: string): string {
 }
 
 describe("設定の歯車（帯の右端）", () => {
-  it("歯車を押すとポップオーバーが開き、もう一度押すと閉じる", () => {
+  it("歯車を押すとダイアログが開き、×で閉じて歯車へフォーカスが戻る", () => {
     renderScreenNav()
 
-    expect(panel()).toBeNull()
-    expect(gear().getAttribute("aria-expanded")).toBe("false")
+    expect(settingsDialog()).toBeNull()
 
     fireEvent.click(gear())
 
-    expect(panel()).not.toBeNull()
-    expect(gear().getAttribute("aria-expanded")).toBe("true")
+    expect(settingsDialog()).not.toBeNull()
 
-    fireEvent.click(gear())
+    fireEvent.click(within(openedSettingsDialog()).getByRole("button", { name: "閉じる（Esc）" }))
 
-    expect(panel()).toBeNull()
-  })
-
-  // 閉じ方は「≡」・「いまの作業」と同じ（`useDismissSignal`）。
-  it("帯の外側を押すか Esc で閉じる", () => {
-    renderScreenNav()
-
-    fireEvent.click(gear())
-    fireEvent.pointerDown(document.body)
-    expect(panel()).toBeNull()
-
-    fireEvent.click(gear())
-    fireEvent.keyDown(document, { key: "Escape" })
-    expect(panel()).toBeNull()
-  })
-
-  // Esc のときだけ、押した歯車へフォーカスを戻す（「いまの作業」の札と同じ）。
-  it("Esc で閉じるとフォーカスが歯車へ戻る", () => {
-    renderScreenNav()
-
-    fireEvent.click(gear())
-    fireEvent.keyDown(document, { key: "Escape" })
-
+    expect(settingsDialog()).toBeNull()
     expect(document.activeElement).toBe(gear())
   })
 
-  it("地・領域・字の色の3つ、新しいセッションの既定の3つ、演出の速さの1つを出す", () => {
+  it("背景（`<dialog>` 自身）を押すと閉じ、歯車へフォーカスが戻る", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
-    expect(
-      [...document.querySelectorAll(".screen-nav-settings-panel label")].map(
-        (node) => node.textContent,
-      ),
-    ).toEqual(["画面の地", "領域の地", "字の色", "モデル", "effort", "許可モード", "速さ"])
+    fireEvent.click(openedSettingsDialog())
+
+    expect(settingsDialog()).toBeNull()
+    expect(document.activeElement).toBe(gear())
+  })
+
+  // Esc で `<dialog>` を閉じるのはブラウザなので、閉じたあとに届く `close` から先を見る。
+  it("`<dialog>` が閉じると（Esc）歯車へフォーカスが戻る", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+    const dialog = openedSettingsDialog()
+
+    act(() => {
+      if (dialog instanceof window.HTMLDialogElement) {
+        dialog.close()
+      }
+    })
+
+    expect(settingsDialog()).toBeNull()
+    expect(document.activeElement).toBe(gear())
+  })
+
+  it("初めは「見た目」の面で、地・領域・字の色の3つを出す", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    expect(faceLabels()).toEqual(["地の色", "領域の色", "字の色"])
+  })
+
+  it("ナビは3項目で、選んだ項目が aria-current になり面が替わる。「すぐ効く」の印は無い", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+    const dialog = openedSettingsDialog()
+    const names = ["見た目", "セッションの既定", "演出"]
+
+    const current = (): (string | null)[] =>
+      names.map((name) => within(dialog).getByRole("button", { name }).getAttribute("aria-current"))
+
+    expect(current()).toEqual(["page", null, null])
+
+    showFace("セッションの既定")
+
+    expect(current()).toEqual([null, "page", null])
+    expect(faceLabels()).toEqual(["モデル", "effort", "許可モード"])
+
+    showFace("演出")
+
+    expect(faceLabels()).toEqual(["書き上げる速さ"])
+    expect(dialog.textContent).not.toContain("すぐ効")
+  })
+
+  it("開き直すと「見た目」から始まる", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+    showFace("演出")
+    fireEvent.click(within(openedSettingsDialog()).getByRole("button", { name: "閉じる（Esc）" }))
+
+    fireEvent.click(gear())
+
+    expect(faceLabels()).toEqual(["地の色", "領域の色", "字の色"])
+  })
+
+  it("見た目の面の見本の帯が、選んだ色を映す", () => {
+    renderScreenNav()
+    fireEvent.click(gear())
+
+    fireEvent.change(colorInput("地の色"), { target: { value: "#101010" } })
+
+    const band = typedElement(
+      openedSettingsDialog().querySelector('[class*="band"]'),
+      HTMLElement,
+      "見本の帯",
+    )
+    expect(band.style.backgroundColor).toBe("#101010")
   })
 
   it("色を変えると documentElement へすぐ反映し、少し待つと localStorage に残る", async () => {
     renderScreenNav()
     fireEvent.click(gear())
 
-    fireEvent.change(colorInput("画面の地"), { target: { value: "#101010" } })
+    fireEvent.change(colorInput("地の色"), { target: { value: "#101010" } })
 
     expect(readToken("--ground")).toBe("#101010")
     expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
@@ -170,7 +234,7 @@ describe("設定の歯車（帯の右端）", () => {
   it("連続して色を変えても、書き込みは最後の値の1回にまとまる", async () => {
     renderScreenNav()
     fireEvent.click(gear())
-    const input = colorInput("領域の地")
+    const input = colorInput("領域の色")
 
     fireEvent.change(input, { target: { value: "#111111" } })
     fireEvent.change(input, { target: { value: "#222222" } })
@@ -193,7 +257,7 @@ describe("設定の歯車（帯の右端）", () => {
       fireEvent.click(gear())
 
       // 疑似 :root の --ink は #e8e3ea。同じ値にしようとする。
-      fireEvent.change(colorInput("画面の地"), { target: { value: "#e8e3ea" } })
+      fireEvent.change(colorInput("地の色"), { target: { value: "#e8e3ea" } })
 
       expect(readToken("--ground")).toBe("#191720")
       await vi.advanceTimersByTimeAsync(250)
@@ -231,7 +295,7 @@ describe("設定の歯車（帯の右端）", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
-    expect(colorInput("画面の地").value).toBe("#0a0a0a")
+    expect(colorInput("地の色").value).toBe("#0a0a0a")
   })
 
   it("上書きが無ければ「既定に戻す」は押せない", () => {
@@ -245,13 +309,13 @@ describe("設定の歯車（帯の右端）", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
-    fireEvent.change(colorInput("画面の地"), { target: { value: "#101010" } })
+    fireEvent.change(colorInput("地の色"), { target: { value: "#101010" } })
     expect(resetButton().getAttribute("aria-disabled")).toBe("false")
 
     fireEvent.click(resetButton())
 
     expect(readToken("--ground")).toBe("#191720")
-    expect(colorInput("画面の地").value).toBe("#191720")
+    expect(colorInput("地の色").value).toBe("#191720")
 
     await vi.waitFor(() => {
       expect(localStorage.getItem(COLOR_STORAGE_KEY)).not.toBeNull()
@@ -269,7 +333,7 @@ describe("設定の歯車（帯の右端）", () => {
 describe("設定の歯車（新しいセッションの既定）", () => {
   it("届いた既定をそのまま出す", () => {
     renderScreenNav({ sessionDefault: { model: "sonnet", effort: "high", permissionMode: "plan" } })
-    fireEvent.click(gear())
+    openFace("セッションの既定")
 
     expect(defaultSelect("モデル").value).toBe("sonnet")
     expect(defaultSelect("許可モード").value).toBe("plan")
@@ -277,7 +341,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
 
   it("許可モードの選択肢に「全部許す」は並ばない", () => {
     renderScreenNav()
-    fireEvent.click(gear())
+    openFace("セッションの既定")
 
     expect([...defaultSelect("許可モード").options].map((option) => option.value)).toEqual([
       "default",
@@ -293,7 +357,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
       { sessionDefault: { model: "opus", effort: "high", permissionMode: "plan" } },
       (command) => sent.push(command),
     )
-    fireEvent.click(gear())
+    openFace("セッションの既定")
 
     fireEvent.change(defaultSelect("モデル"), { target: { value: "sonnet" } })
 
@@ -338,7 +402,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
       { sessionDefault: { model: "haiku", effort: "medium", permissionMode: "auto" } },
       (command) => sent.push(command),
     )
-    fireEvent.click(gear())
+    openFace("セッションの既定")
 
     fireEvent.change(defaultSelect("許可モード"), { target: { value: "acceptEdits" } })
 
@@ -372,7 +436,7 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
       sessionDefault: { model: "haiku", effort: "medium", permissionMode: "auto" },
       modelEffortSupport: [OPUS_SUPPORT, HAIKU_SUPPORT],
     })
-    fireEvent.click(gear())
+    openFace("セッションの既定")
 
     expect(defaultSelect("effort").disabled).toBe(true)
   })
@@ -386,7 +450,7 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
       },
       (command) => sent.push(command),
     )
-    fireEvent.click(gear())
+    openFace("セッションの既定")
 
     fireEvent.change(defaultSelect("effort"), { target: { value: "xhigh" } })
 
@@ -401,20 +465,9 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
   })
 })
 
-/** ポップオーバーの中の既定の `<select>`（ラベルは `<label for>` で結んである）。 */
+/** 開いている面の `<select>`（ラベルは `<label for>` で結んである）。 */
 function defaultSelect(label: string): HTMLSelectElement {
-  const labelNode = typedElement(
-    [...document.querySelectorAll(".screen-nav-settings-panel label")].find(
-      (node) => node.textContent === label,
-    ),
-    HTMLLabelElement,
-    `ラベル「${label}」`,
-  )
-  return typedElement(
-    document.getElementById(labelNode.htmlFor),
-    HTMLSelectElement,
-    `ラベル「${label}」が結ぶ <select>`,
-  )
+  return controlOf(label, HTMLSelectElement, `ラベル「${label}」が結ぶ <select>`)
 }
 
 // 書き上げる演出の速さ（docs/architecture/screen-design.md「設定の置き場所」。`saveRevealSpeed`）。利用者の設定
@@ -422,9 +475,9 @@ function defaultSelect(label: string): HTMLSelectElement {
 describe("設定の歯車（書き上げる演出の速さ）", () => {
   it("選ぶとすぐ localStorage に保存される（色と違いデバウンスしない）", () => {
     renderScreenNav()
-    fireEvent.click(gear())
+    openFace("演出")
 
-    fireEvent.change(defaultSelect("速さ"), { target: { value: "fast" } })
+    fireEvent.change(defaultSelect("書き上げる速さ"), { target: { value: "fast" } })
 
     expect(localStorage.getItem(REVEAL_SPEED_STORAGE_KEY)).toBe("fast")
   })
@@ -434,8 +487,8 @@ describe("設定の歯車（書き上げる演出の速さ）", () => {
     localStorage.setItem(REVEAL_SPEED_STORAGE_KEY, "fast")
 
     renderScreenNav()
-    fireEvent.click(gear())
+    openFace("演出")
 
-    expect(defaultSelect("速さ").value).toBe("fast")
+    expect(defaultSelect("書き上げる速さ").value).toBe("fast")
   })
 })

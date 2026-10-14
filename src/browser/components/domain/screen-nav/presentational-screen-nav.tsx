@@ -18,7 +18,7 @@ import { ScreenNavCharacterPicker } from "./components/screen-nav-character-pick
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
 import { ScreenNavModelPermissionSelect } from "./components/screen-nav-model-permission.tsx"
 import { ScreenNavSessionTag } from "./components/screen-nav-session-tag.tsx"
-import { ScreenNavSettingsGear } from "./components/screen-nav-settings.tsx"
+import { ScreenNavSettingsGear } from "./components/screen-nav-settings-dialog.tsx"
 import { SessionSwitcher } from "./components/session-switcher.tsx"
 import type { ScreenNavView } from "./hooks/use-screen-nav.ts"
 import styles from "./screen-nav.module.css"

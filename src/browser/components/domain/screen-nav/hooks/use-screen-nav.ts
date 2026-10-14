@@ -188,7 +188,7 @@ export function useScreenNav(): ScreenNavView {
   const drawerToggleRef = useRef<HTMLButtonElement>(null)
   const work = useCurrentWork(ref)
   const modelPermission = useModelPermission()
-  const settings = useSettings(ref)
+  const settings = useSettings()
   const character = useCharacterPicker(ref)
   const roomName = currentRoomName()
   const { tag: sessionTag, switcher } = useSessionSwitcher(roomName, useProjectName())

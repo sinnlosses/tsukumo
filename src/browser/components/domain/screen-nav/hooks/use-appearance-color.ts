@@ -49,8 +49,8 @@ export type AppearanceColor = {
 }
 
 const COLOR_FIELDS = [
-  { key: "ground", label: "画面の地" },
-  { key: "surface", label: "領域の地" },
+  { key: "ground", label: "地の色" },
+  { key: "surface", label: "領域の色" },
   { key: "ink", label: "字の色" },
 ] as const satisfies readonly { readonly key: AppearanceColorKey; readonly label: string }[]
 
@@ -60,7 +60,7 @@ const COLOR_FIELDS = [
  */
 const LOW_CONTRAST_NOTICE = {
   ground: "字の色との差が足りず本文が読めなくなるため、この地の色は使えません。",
-  ink: "画面の地との差が足りず本文が読めなくなるため、この字の色は使えません。",
+  ink: "地の色との差が足りず本文が読めなくなるため、この字の色は使えません。",
 } as const satisfies Record<"ground" | "ink", string>
 
 const NO_COLOR_NOTICE = { kind: "none" } as const satisfies ScreenNavSettingsColorNotice

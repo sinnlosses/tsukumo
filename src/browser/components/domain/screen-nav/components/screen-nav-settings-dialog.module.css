@@ -1,0 +1,132 @@
+/* 設定のダイアログ。880×600（高さは画面の 86% まで）の箱に、頭・ナビ・面・下の帯を置く。 */
+
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 880px;
+  max-width: calc(100vw - 2rem);
+  height: min(600px, 86dvh);
+  max-height: none;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--font-secondary);
+}
+
+.head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.6rem;
+  height: 54px;
+  padding: 0 1.1rem;
+  border-bottom: 1px solid var(--rule-quiet);
+}
+.head-icon {
+  color: var(--ink-quiet);
+}
+.head-title {
+  margin: 0;
+}
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-quiet);
+  cursor: pointer;
+}
+.close:hover {
+  color: var(--ink);
+}
+.main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.nav {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 232px;
+  padding: 18px 12px;
+  border-right: 1px solid var(--rule-quiet);
+  background: color-mix(in srgb, var(--ground) 40%, transparent);
+}
+.nav-group {
+  margin: 0 0 0.4rem 0.6rem;
+}
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 36px;
+  padding: 0 0.7rem;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.nav-item:hover {
+  color: var(--ink);
+}
+.nav-item-selected {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--ink);
+  font-weight: 700;
+}
+.nav-item-selected svg {
+  color: var(--accent);
+}
+.nav-item-selected::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.face {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.face-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px 28px;
+}
+.face-title {
+  margin: 0 0 1rem;
+}
+.foot {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  padding: 0.9rem 28px;
+}
+.reset {
+  flex: none;
+  border-radius: 8px;
+}

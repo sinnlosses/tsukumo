@@ -240,8 +240,8 @@ describe("Character", () => {
   it("地・領域・字の色の操作子は持たず、差し色は残る", () => {
     renderCharacter()
 
-    expect(screen.queryByLabelText("画面の地")).toBeNull()
-    expect(screen.queryByLabelText("領域の地")).toBeNull()
+    expect(screen.queryByLabelText("地の色")).toBeNull()
+    expect(screen.queryByLabelText("領域の色")).toBeNull()
     expect(screen.queryByLabelText("字の色")).toBeNull()
 
     const headings = [...document.querySelectorAll("h2")].map((node) => node.textContent)

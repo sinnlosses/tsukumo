@@ -1,11 +1,9 @@
-/* 帯の右端の歯車と、押すと開く設定のポップオーバー。
+/* 帯の右端の歯車と、設定の面に並ぶ行。
    狭い画面で帯から消す規則は `screen-nav.module.css` の @media が持つ。 */
 
 /* 設定の歯車。帯のいちばん右端で、モデル・許可モードの右に付く。
-   会話の画面では左隣のいまの作業の札もモデル・許可モードも帯に無いので、自分で右端へ寄る（`margin-left: auto`）。
-   `position: relative` はポップオーバー（.screen-nav-settings-panel）を歯車の真下に重ねるための基準。 */
+   会話の画面では左隣のいまの作業の札もモデル・許可モードも帯に無いので、自分で右端へ寄る（`margin-left: auto`）。 */
 .screen-nav-settings {
-  position: relative;
   display: flex;
   flex: none;
   margin-left: auto;
@@ -27,27 +25,6 @@
 .screen-nav-settings-toggle:hover {
   color: var(--ink);
 }
-.screen-nav-settings-toggle[aria-expanded="true"] {
-  background: var(--surface-raised);
-  color: var(--ink);
-}
-/* ポップオーバー。歯車の真下に、右端を揃えて重ねる（下の領域を押し下げない）。 */
-.screen-nav-settings-panel {
-  position: absolute;
-  top: calc(100% + 0.3rem);
-  right: 0;
-  z-index: 21;
-  width: max-content;
-  min-width: 15rem;
-  max-width: 24rem;
-  max-height: 70dvh;
-  overflow-y: auto;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.6rem;
-  background: var(--surface);
-  font-size: var(--font-secondary);
-}
 /* 群の区切りの見出し。2つ目からは上に余白を置く。字の大きさ・色は `Text` が持つ。 */
 .screen-nav-settings-heading {
   margin: 0 0 0.4rem;
@@ -58,6 +35,25 @@
 /* ラベルと操作子の2列。並べ・間隔・揃えは `HStack` が持つ。 */
 .screen-nav-settings-row {
   min-height: 1.9rem;
+}
+/* ダイアログの面の行。「名前 132 ＋ 操作 1fr」の2列で、行の間に細い罫線を引く。引き出しは外側にこの class を置かないので変わらない。 */
+.screen-nav-settings-table {
+  font-size: 13px;
+}
+.screen-nav-settings-table .screen-nav-settings-row {
+  min-height: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule-quiet);
+}
+/* 操作は名前の隣から左へ詰める（行の余白を右の自動マージンが吸う）。 */
+.screen-nav-settings-table .screen-nav-settings-row > :last-child {
+  margin-right: auto;
+}
+/* 名前の列は 132。`HStack` の間隔は 16 なので、列の間の 20 に 4 足りない分を右の余白で補う。 */
+.screen-nav-settings-table .screen-nav-settings-row > label {
+  flex: none;
+  width: 132px;
+  margin-right: 4px;
 }
 /* 色を受け取らなかった理由の1行。面の幅を押し広げないように、幅は行の並びに任せて折り返す。 */
 .screen-nav-settings-notice {

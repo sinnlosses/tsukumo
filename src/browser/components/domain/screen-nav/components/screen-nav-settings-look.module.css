@@ -1,0 +1,61 @@
+/* 設定のダイアログの「見た目」の面。帯の地・領域・字の色は利用者が選んだ値を inline で受ける。 */
+
+.band {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  box-sizing: border-box;
+  height: 54px;
+  margin-bottom: 4px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+.band-surface {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 6px;
+}
+/* 差し色の輪。色は `accent`（パックの持ち物）で、ここでは選べない。 */
+.band-ring {
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+}
+.control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.swatch {
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
+  padding: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+}
+.swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.swatch::-webkit-color-swatch {
+  border: none;
+  border-radius: 5px;
+}
+.hex {
+  padding: 5px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
