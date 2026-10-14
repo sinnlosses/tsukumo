@@ -80,7 +80,7 @@ macOS の zsh を前提に書いています（bash なら `~/.zshrc` を `~/.ba
 
 | 用意するもの                                        | 何に使うか                                                                                                       | 確かめ方                     |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| [mise](https://mise.jdx.dev/getting-started.html)   | Node 26 と pnpm 12 を、リポジトリの `mise.toml` が固定した版で入れる                                             | `mise --version`             |
+| [mise](https://mise.jdx.dev/getting-started.html)   | Node 26 と pnpm 12 と D2 を、リポジトリの `mise.toml` が固定した版で入れる（D2 は書き手が図を撮るときだけ使う）  | `mise --version`             |
 | Claude Code へのログイン                            | tsukumo は Claude Code を子プロセスとして起こす。実行ファイルは `pnpm install` で入る Agent SDK に同梱されている | 普段どおり `claude` が使える |
 | [Orca](https://www.onorca.dev/)（無くても起動する） | 画面を出す箱。`orca` コマンドがあれば、起動時にタブが自動で開く                                                  | `which orca`                 |
 
