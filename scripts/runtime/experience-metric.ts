@@ -8,6 +8,9 @@
 //   node scripts/runtime/experience-metric.ts --split <YYYY-MM-DD>     # 直近28日を、その日の前と後に分ける
 
 import process from "node:process"
+import { parseArgs } from "node:util"
+
+import { z } from "zod"
 
 import { localDateEpochRange, todayLocalDateKey } from "../../src/server/adapter/local-time.ts"
 import {
@@ -20,11 +23,20 @@ import {
   type Spread,
   summarizeExperienceMetric,
 } from "../../src/server/experience-metric/core/experience-metric-summary.ts"
+import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 
 const USAGE = `使い方:
   node scripts/runtime/experience-metric.ts [--days <日数>] [--split <YYYY-MM-DD>]`
 
 const DEFAULT_DAYS = 28
+
+const optionsSchema = z.object({
+  days: positiveIntegerArgument.default(DEFAULT_DAYS),
+  split: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+})
 
 const RANGE_LABEL = {
   whole: "全体",
@@ -32,14 +44,13 @@ const RANGE_LABEL = {
   after: "境目から後",
 } satisfies Record<ExperienceSummary["range"], string>
 
-const argv = process.argv.slice(2)
-const days = parseDaysOption(argv)
-const split = parseSplitOption(argv)
-if (days === "invalid" || split === "invalid") {
+const options = parseOptions(process.argv.slice(2))
+if (options === "invalid") {
   process.stderr.write(`${USAGE}\n`)
   process.exit(2)
 }
 
+const { days, split } = options
 const endDate = todayLocalDateKey()
 const startDate = Temporal.PlainDate.from(endDate)
   .subtract({ days: days - 1 })
@@ -53,27 +64,31 @@ if (entries.length === 0) {
 process.stdout.write(`直近${String(days)}日（${startDate}〜${endDate}）の体験の数\n\n`)
 process.stdout.write(table(summarizeExperienceMetric(entries, split)))
 
-/** コマンドラインから `--days <n>` を読む。無ければ既定、崩れていれば `"invalid"`。 */
-function parseDaysOption(args: readonly string[]): number | "invalid" {
-  const index = args.indexOf("--days")
-  if (index === -1) {
-    return DEFAULT_DAYS
-  }
-  const parsed = Number(args[index + 1] ?? Number.NaN)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : "invalid"
-}
-
-/** コマンドラインから `--split <YYYY-MM-DD>` を読み、その日の始まりを境目にする。 */
-function parseSplitOption(args: readonly string[]): ExperienceSplit | "invalid" {
-  const index = args.indexOf("--split")
-  if (index === -1) {
-    return { kind: "whole" }
-  }
-  const raw = args[index + 1] ?? ""
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+/** コマンドラインから `--days <n>` と `--split <YYYY-MM-DD>`（その日の始まりが境目）を読む。崩れていれば `"invalid"`。 */
+function parseOptions(
+  args: readonly string[],
+): { readonly days: number; readonly split: ExperienceSplit } | "invalid" {
+  try {
+    const { values } = parseArgs({
+      args: [...args],
+      strict: true,
+      options: { days: { type: "string" }, split: { type: "string" } },
+    })
+    const parsed = optionsSchema.safeParse(values)
+    if (!parsed.success) {
+      return "invalid"
+    }
+    const { days: dayCount, split: boundaryDate } = parsed.data
+    return {
+      days: dayCount,
+      split:
+        boundaryDate === undefined
+          ? { kind: "whole" }
+          : { kind: "around", boundary: localDateEpochRange(boundaryDate).startEpochMilliseconds },
+    }
+  } catch {
     return "invalid"
   }
-  return { kind: "around", boundary: localDateEpochRange(raw).startEpochMilliseconds }
 }
 
 /** 期間ごとの列を並べた表（Markdown）。 */

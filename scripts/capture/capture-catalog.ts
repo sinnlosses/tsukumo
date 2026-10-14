@@ -25,8 +25,8 @@
 // オプション無しで実行するとカタログ全部（広い窓・狭い窓の2枚ずつ）を撮る。 60秒では
 // 終わらないので、一覧が欲しいだけなら `--help` を使う。
 //
-// `--help` は専用のフラグとして実装していない。`parseOptions` が「値を取らない・値を持たない
-// フラグ」を一律で使い方の表示に落とすので、他のどの未知の引数を渡しても同じ表示になる
+// `--help` は専用のフラグとして実装していない。`parseOptions` が知らない引数・値の無い
+// フラグを一律で使い方の表示に落とすので、他のどの未知の引数を渡しても同じ表示になる
 // （`--only` の名前一覧はそこに含めている）。
 //
 // 撮った画像はリポジトリに置かない（既定の出力先は /tmp。他の撮る道具と同じ決定を
@@ -39,6 +39,7 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
+import { parseArgs } from "node:util"
 
 import { type Browser, chromium, type Page } from "playwright-core"
 
@@ -210,26 +211,16 @@ async function settleScene(
 
 /** 引数を読む。読めない指定は undefined（呼び出し側が使い方を出す）。 */
 function parseOptions(argv: readonly string[]): Options | undefined {
-  let outDir = DEFAULT_OUT_DIR
-  let only: string | undefined
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const flag = argv[index]
-    const value = argv[index + 1]
-    if (value === undefined) {
-      return undefined
-    }
-    if (flag === "--out") {
-      outDir = value
-    } else if (flag === "--only") {
-      only = value
-    } else {
-      return undefined
-    }
-    index += 1
+  try {
+    const { values } = parseArgs({
+      args: [...argv],
+      strict: true,
+      options: { out: { type: "string" }, only: { type: "string" } },
+    })
+    return { outDir: values.out ?? DEFAULT_OUT_DIR, only: values.only }
+  } catch {
+    return undefined
   }
-
-  return { outDir, only }
 }
 
 const exitCode = await main(process.argv.slice(2))

@@ -5,9 +5,11 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
+import { parseArgs } from "node:util"
 
 import { countBy, groupBy } from "remeda"
 
+import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { readHookDenials, type HookDenial } from "./lib/hook-denial-record.ts"
 
 const DEFAULT_DAYS = 30
@@ -48,13 +50,17 @@ function listRegisteredHooks(directory: string): readonly string[] {
 }
 
 function readDays(args: readonly string[]): number {
-  const at = args.indexOf("--days")
-  const value = at < 0 ? DEFAULT_DAYS : Number(args[at + 1])
-  if (!Number.isInteger(value) || value <= 0) {
+  try {
+    const { values } = parseArgs({
+      args: [...args],
+      strict: true,
+      options: { days: { type: "string" } },
+    })
+    return positiveIntegerArgument.default(DEFAULT_DAYS).parse(values.days)
+  } catch {
     process.stderr.write("--days には正の整数を渡す\n")
-    process.exit(1)
+    return process.exit(1)
   }
-  return value
 }
 
 function readTextOrEmpty(path: string): string {

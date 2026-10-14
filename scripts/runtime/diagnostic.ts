@@ -10,6 +10,7 @@
 // 既定は `--from` が今日の始まり、`--to` が今日の終わり。
 
 import process from "node:process"
+import { parseArgs } from "node:util"
 
 import { countBy, groupBy, sortBy } from "remeda"
 
@@ -28,6 +29,7 @@ import type {
   WelcomeAttemptTrace,
   WelcomeWritingFootprint,
 } from "../../src/shared/diagnostic/welcome-writing.ts"
+import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 
 const USAGE = `使い方:
   node scripts/runtime/diagnostic.ts [--from <時刻>] [--to <時刻>] [--generation <代>]
@@ -37,12 +39,18 @@ type GenerationFilter =
   | { readonly kind: "all" }
   | { readonly kind: "one"; readonly generation: number }
 
-const argv = process.argv.slice(2)
+const argv = readArguments(process.argv.slice(2))
 const today = localDateEpochRange(todayLocalDateKey())
-const startAt = parseTimeOption(argv, "--from", today.startEpochMilliseconds)
-const endAt = parseTimeOption(argv, "--to", today.endEpochMilliseconds)
-const generation = parseGenerationOption(argv)
-if (startAt === "invalid" || endAt === "invalid" || generation === "invalid" || startAt >= endAt) {
+const startAt = parseTimeOption(argv?.from, today.startEpochMilliseconds)
+const endAt = parseTimeOption(argv?.to, today.endEpochMilliseconds)
+const generation = parseGenerationOption(argv?.generation)
+if (
+  argv === undefined ||
+  startAt === "invalid" ||
+  endAt === "invalid" ||
+  generation === "invalid" ||
+  startAt >= endAt
+) {
   process.stderr.write(`${USAGE}\n`)
   process.exit(2)
 }
@@ -71,27 +79,37 @@ if (welcomeWritings.length > 0) {
   }
 }
 
-/** コマンドラインから時刻のオプションを読む。無ければ既定、崩れていれば `"invalid"`。 */
-function parseTimeOption(
+/** コマンドラインの `--from`・`--to`・`--generation` の生の値。知らないフラグ・位置引数があれば undefined。 */
+function readArguments(
   args: readonly string[],
-  name: string,
-  fallback: number,
-): number | "invalid" {
-  const index = args.indexOf(name)
-  if (index === -1) {
-    return fallback
+): { readonly from?: string; readonly to?: string; readonly generation?: string } | undefined {
+  try {
+    return parseArgs({
+      args: [...args],
+      strict: true,
+      options: {
+        from: { type: "string" },
+        to: { type: "string" },
+        generation: { type: "string" },
+      },
+    }).values
+  } catch {
+    return undefined
   }
-  return localDateTimeEpochMilliseconds(args[index + 1] ?? "") ?? "invalid"
 }
 
-/** コマンドラインから `--generation <n>` を読む。無ければ絞らない、崩れていれば `"invalid"`。 */
-function parseGenerationOption(args: readonly string[]): GenerationFilter | "invalid" {
-  const index = args.indexOf("--generation")
-  if (index === -1) {
+/** 時刻のオプションの値を読む。無ければ既定、崩れていれば `"invalid"`。 */
+function parseTimeOption(raw: string | undefined, fallback: number): number | "invalid" {
+  return raw === undefined ? fallback : (localDateTimeEpochMilliseconds(raw) ?? "invalid")
+}
+
+/** `--generation <n>` の値を読む。無ければ絞らない、崩れていれば `"invalid"`。 */
+function parseGenerationOption(raw: string | undefined): GenerationFilter | "invalid" {
+  if (raw === undefined) {
     return { kind: "all" }
   }
-  const parsed = Number(args[index + 1] ?? Number.NaN)
-  return Number.isInteger(parsed) && parsed > 0 ? { kind: "one", generation: parsed } : "invalid"
+  const parsed = positiveIntegerArgument.safeParse(raw)
+  return parsed.success ? { kind: "one", generation: parsed.data } : "invalid"
 }
 
 function range(from: number, to: number): string {

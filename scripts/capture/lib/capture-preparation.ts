@@ -2,6 +2,8 @@
 
 import type { Page } from "playwright-core"
 
+import { positiveIntegerArgument } from "../../shared/positive-integer-argument.ts"
+
 /**
  * 撮る前に当てる操作。ここに並べたものだけにする。
  *
@@ -86,38 +88,71 @@ export function describePreparation(step: Preparation): string {
   }
 }
 
-/** 引数の `index` の位置の旗が操作を表すなら、その操作と、旗と値で使った個数を返す。 */
-export function readPreparationFlag(
-  argv: readonly string[],
-  index: number,
-): { readonly step: Preparation; readonly consumed: number } | undefined {
-  const flag = argv[index]
-  const first = argv[index + 1]
-  if (first === undefined) {
-    return undefined
-  }
-  switch (flag) {
-    case "--click":
-      return { step: { kind: "click", selector: first }, consumed: 2 }
-    case "--hover":
-      return { step: { kind: "hover", selector: first }, consumed: 2 }
-    case "--wait-after":
-      return { step: { kind: "wait", selector: first }, consumed: 2 }
-    case "--hash":
-      return { step: { kind: "hash", hash: first }, consumed: 2 }
-    case "--advance": {
-      const ms = Number(first)
-      return Number.isInteger(ms) && ms > 0
-        ? { step: { kind: "advance", ms }, consumed: 2 }
-        : undefined
+/** 準備を表す旗。`parseArgs` の `options` に混ぜて使う。 */
+export const PREPARATION_OPTIONS = {
+  click: { type: "string" },
+  hover: { type: "string" },
+  "wait-after": { type: "string" },
+  hash: { type: "string" },
+  advance: { type: "string" },
+  type: { type: "string" },
+} as const
+
+/** `parseArgs` の `tokens` のうち、準備の読みが見る形。 */
+export type ArgumentToken =
+  | { readonly kind: "option"; readonly name: string; readonly value: string | undefined }
+  | { readonly kind: "positional"; readonly value: string }
+  | { readonly kind: "option-terminator" }
+
+/**
+ * 準備の旗を、現れた順に操作へ読む。`--type <selector> <text>` は、`--type` の直後の
+ * 位置引数を2つ目の値として使い、その token の位置を `textTokenIndexes` に返す。
+ * 2つ目の値が無い・`--advance` が正の整数でないときは undefined。
+ */
+export function readPreparations(tokens: readonly ArgumentToken[]):
+  | {
+      readonly preparations: readonly Preparation[]
+      readonly textTokenIndexes: ReadonlySet<number>
     }
-    case "--type": {
-      const text = argv[index + 2]
-      return text === undefined
-        ? undefined
-        : { step: { kind: "type", selector: first, text }, consumed: 3 }
+  | undefined {
+  const preparations: Preparation[] = []
+  const textTokenIndexes = new Set<number>()
+  for (const [index, token] of tokens.entries()) {
+    if (token.kind !== "option" || token.value === undefined) {
+      continue
     }
-    default:
-      return undefined
+    const value = token.value
+    switch (token.name) {
+      case "click":
+        preparations.push({ kind: "click", selector: value })
+        break
+      case "hover":
+        preparations.push({ kind: "hover", selector: value })
+        break
+      case "wait-after":
+        preparations.push({ kind: "wait", selector: value })
+        break
+      case "hash":
+        preparations.push({ kind: "hash", hash: value })
+        break
+      case "advance": {
+        const ms = positiveIntegerArgument.safeParse(value)
+        if (!ms.success) {
+          return undefined
+        }
+        preparations.push({ kind: "advance", ms: ms.data })
+        break
+      }
+      case "type": {
+        const text = tokens[index + 1]
+        if (text?.kind !== "positional") {
+          return undefined
+        }
+        textTokenIndexes.add(index + 1)
+        preparations.push({ kind: "type", selector: value, text: text.value })
+        break
+      }
+    }
   }
+  return { preparations, textTokenIndexes }
 }

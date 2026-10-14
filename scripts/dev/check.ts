@@ -18,6 +18,7 @@ import { readFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import process from "node:process"
+import { parseArgs } from "node:util"
 
 import { collectChangedPaths, PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
 import { planE2eRun } from "../shared/e2e-selection-repository.ts"
@@ -38,7 +39,12 @@ import {
 } from "./lib/e2e-full-lock.ts"
 import { alignSubmodules } from "./lib/submodule-drift.ts"
 
-const forceFull = process.argv.includes("--full")
+const CHECK_USAGE = `使い方:
+  node scripts/dev/check.ts         # 変えたファイルから選んだ E2E だけ
+  node scripts/dev/check.ts --full  # 5段すべて、E2E は全件
+`
+
+const forceFull = readForceFull(process.argv.slice(2))
 
 alignSubmodulesOrExit()
 
@@ -166,6 +172,21 @@ function alignSubmodulesOrExit(): void {
   } else if (alignment.kind === "blocked") {
     process.stderr.write(`${alignment.reason}\n直し方: git submodule update --init\n`)
     process.exit(1)
+  }
+}
+
+/** `--full` の有無を読む。知らない引数は使い方を出して終了コード 2 で止まる（`--` は区切りなので捨てる）。 */
+function readForceFull(args: readonly string[]): boolean {
+  try {
+    const { values } = parseArgs({
+      args: args.filter((arg) => arg !== "--"),
+      strict: true,
+      options: { full: { type: "boolean" } },
+    })
+    return values.full === true
+  } catch {
+    process.stderr.write(CHECK_USAGE)
+    return process.exit(2)
   }
 }
 

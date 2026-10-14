@@ -33,8 +33,12 @@ import { type ChildProcess, execFileSync } from "node:child_process"
 import { existsSync, mkdirSync, symlinkSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
+import { parseArgs } from "node:util"
+
+import { z } from "zod"
 
 import { spawnFakeTsukumo, waitForViewUrl } from "../shared/fake-tsukumo-process.ts"
+import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 
 /**
@@ -50,6 +54,8 @@ const SCRATCH_ROOT = "/tmp/tsukumo-revision"
  * 中に収める — 止め忘れたときに一覧から見つかるようにする。
  */
 const DEFAULT_PORT = 7338
+
+const portSchema = positiveIntegerArgument.pipe(z.number().max(65535)).default(DEFAULT_PORT)
 
 /** 起こした tsukumo が URL を出すまで待つ上限（ミリ秒）。 */
 const LAUNCH_TIMEOUT_MS = 30_000
@@ -238,35 +244,22 @@ function git(args: readonly string[], indexFile?: string): string | undefined {
 
 /** 引数を読む。コミットが無い・`--port` が読めないときは undefined（呼び出し側が使い方を出す）。 */
 function parseOptions(argv: readonly string[]): Options | undefined {
-  const commit = argv[0]
-  if (commit === undefined || commit.startsWith("-")) {
+  try {
+    const { values, positionals } = parseArgs({
+      args: [...argv],
+      strict: true,
+      allowPositionals: true,
+      options: { port: { type: "string" }, scene: { type: "string" } },
+    })
+    const [commit, ...rest] = positionals
+    const port = portSchema.safeParse(values.port)
+    if (commit === undefined || rest.length > 0 || !port.success) {
+      return undefined
+    }
+    return { commit, port: port.data, scene: values.scene }
+  } catch {
     return undefined
   }
-
-  let port = DEFAULT_PORT
-  let scene: string | undefined
-
-  for (let index = 1; index < argv.length; index += 1) {
-    const flag = argv[index]
-    const value = argv[index + 1]
-    if (value === undefined) {
-      return undefined
-    }
-    if (flag === "--port") {
-      const parsed = Number(value)
-      if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
-        return undefined
-      }
-      port = parsed
-    } else if (flag === "--scene") {
-      scene = value
-    } else {
-      return undefined
-    }
-    index += 1
-  }
-
-  return { commit, port, scene }
 }
 
 const exitCode = await main(process.argv.slice(2))

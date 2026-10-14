@@ -36,17 +36,20 @@
 import { statSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
+import { parseArgs } from "node:util"
 
 import { chromium, type Page } from "playwright-core"
 
 import { readFakeSession } from "../../src/server/session-driver/adapter/fake-driver.ts"
 import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../shared/capture-clock.ts"
+import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import { applyPreparations, openPage } from "./lib/capture-page.ts"
 import {
   describePreparation,
+  PREPARATION_OPTIONS,
   type Preparation,
-  readPreparationFlag,
+  readPreparations,
 } from "./lib/capture-preparation.ts"
 import { type Source, sourceOf } from "./lib/capture-source.ts"
 import { launchFakeScene } from "./lib/fake-scene-launch.ts"
@@ -334,108 +337,82 @@ function round(value: number): number {
 
 /**
  * 引数を読む。URL と `--scene` のどちらも無い・両方ある・`--size` が読めないときは undefined
- * （呼び出し側が使い方を出す）。先頭が `-` で始まらないトークンは1つだけ URL として読む。
+ * （呼び出し側が使い方を出す）。`--type` の2つ目の値でない位置引数は1つだけ URL として読む。
  */
 function parseOptions(argv: readonly string[]): Options | undefined {
-  let url: string | undefined
-  let scene: string | undefined
-  let untilStep: number | undefined
-  let cwd: string | undefined
-  let listScenes = false
-  const measures: string[] = []
-  let out = DEFAULT_OUT
-  let width = DEFAULT_WIDTH
-  let height = DEFAULT_HEIGHT
-  let waitFor: string | undefined
-  let scrollTo: string | undefined
-  const preparations: Preparation[] = []
-  let clock: number | undefined
-  let fullPage = false
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const flag = argv[index]
-    if (flag === undefined) {
-      return undefined
-    }
-    const preparation = readPreparationFlag(argv, index)
-    if (preparation !== undefined) {
-      preparations.push(preparation.step)
-      index += preparation.consumed - 1
-      continue
-    }
-    if (!flag.startsWith("-")) {
-      if (url !== undefined) {
-        return undefined
-      }
-      url = flag
-      continue
-    }
-    if (flag === "--full") {
-      fullPage = true
-      continue
-    }
-    if (flag === "--list-scenes") {
-      listScenes = true
-      continue
-    }
-    const value = argv[index + 1]
-    if (value === undefined) {
-      return undefined
-    }
-    if (flag === "--out") {
-      out = value
-    } else if (flag === "--measure") {
-      measures.push(value)
-    } else if (flag === "--wait-for") {
-      waitFor = value
-    } else if (flag === "--scroll-to") {
-      scrollTo = value
-    } else if (flag === "--scene") {
-      scene = value
-    } else if (flag === "--cwd") {
-      cwd = path.resolve(value)
-    } else if (flag === "--until-step") {
-      const step = Number(value)
-      if (!Number.isInteger(step) || step <= 0) {
-        return undefined
-      }
-      untilStep = step
-    } else if (flag === "--clock") {
-      clock = readClockInstant(value)
-      if (clock === undefined) {
-        return undefined
-      }
-    } else if (flag === "--size") {
-      const size = parseSize(value)
-      if (size === undefined) {
-        return undefined
-      }
-      width = size.width
-      height = size.height
-    } else {
-      return undefined
-    }
-    index += 1
+  try {
+    return readOptions(argv)
+  } catch {
+    return undefined
   }
+}
 
-  if (listScenes) {
+function readOptions(argv: readonly string[]): Options | undefined {
+  const { values, tokens } = parseArgs({
+    args: [...argv],
+    strict: true,
+    allowPositionals: true,
+    tokens: true,
+    options: {
+      ...PREPARATION_OPTIONS,
+      out: { type: "string" },
+      measure: { type: "string", multiple: true },
+      "wait-for": { type: "string" },
+      "scroll-to": { type: "string" },
+      scene: { type: "string" },
+      cwd: { type: "string" },
+      "until-step": { type: "string" },
+      clock: { type: "string" },
+      size: { type: "string" },
+      full: { type: "boolean" },
+      "list-scenes": { type: "boolean" },
+    },
+  })
+  if (values["list-scenes"] === true) {
     return { kind: "list-scenes" }
   }
-  const source = sourceOf(url, scene, untilStep, cwd, REPOSITORY_ROOT)
+
+  const prepared = readPreparations(tokens)
+  const untilStep =
+    values["until-step"] === undefined
+      ? undefined
+      : positiveIntegerArgument.safeParse(values["until-step"])
+  const clock = values.clock === undefined ? undefined : readClockInstant(values.clock)
+  const size = values.size === undefined ? undefined : parseSize(values.size)
+  const urls = tokens.flatMap((token, index) =>
+    token.kind === "positional" && !prepared?.textTokenIndexes.has(index) ? [token.value] : [],
+  )
+  if (
+    prepared === undefined ||
+    urls.length > 1 ||
+    (untilStep !== undefined && !untilStep.success) ||
+    (values.clock !== undefined && clock === undefined) ||
+    (values.size !== undefined && size === undefined)
+  ) {
+    return undefined
+  }
+
+  const source = sourceOf(
+    urls[0],
+    values.scene,
+    untilStep?.data,
+    values.cwd === undefined ? undefined : path.resolve(values.cwd),
+    REPOSITORY_ROOT,
+  )
   return source === undefined
     ? undefined
     : {
         kind: "capture",
         source,
-        out,
-        width,
-        height,
-        measures,
-        waitFor,
-        scrollTo,
-        preparations,
+        out: values.out ?? DEFAULT_OUT,
+        width: size?.width ?? DEFAULT_WIDTH,
+        height: size?.height ?? DEFAULT_HEIGHT,
+        measures: values.measure ?? [],
+        waitFor: values["wait-for"],
+        scrollTo: values["scroll-to"],
+        preparations: prepared.preparations,
         clock,
-        fullPage,
+        fullPage: values.full === true,
       }
 }
 

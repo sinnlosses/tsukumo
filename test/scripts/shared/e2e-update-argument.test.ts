@@ -13,6 +13,17 @@ describe("readE2eUpdateArgument", () => {
     ["--help と --full", ["--full", "--help"], { kind: "help" }],
     ["知らないフラグ", ["--foo"], { kind: "unknown", flags: ["--foo"] }],
     ["--full と知らないフラグ", ["--full", "--foo"], { kind: "unknown", flags: ["--foo"] }],
+    ["知らない短いフラグ", ["-x"], { kind: "unknown", flags: ["-x"] }],
+    [
+      "知らないフラグとファイル",
+      ["--foo", "test/e2e/x.test.ts"],
+      { kind: "unknown", flags: ["--foo"] },
+    ],
+    [
+      "区切りの後ろのファイル",
+      ["--", "test/e2e/x.test.ts"],
+      { kind: "files", files: ["test/e2e/x.test.ts"] },
+    ],
     ["区切りの -- は数えない", ["--"], { kind: "changed" }],
   ])("%s", (_name, args, expected) => {
     expect(readE2eUpdateArgument(args)).toEqual(expected)

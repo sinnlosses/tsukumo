@@ -10,6 +10,7 @@
 //   node scripts/runtime/report-block-usage.ts --days 14   # 直近14日
 
 import process from "node:process"
+import { parseArgs } from "node:util"
 
 import { z } from "zod"
 
@@ -28,6 +29,7 @@ import {
   reportFigureSchema,
 } from "../../src/shared/report/report-block.ts"
 import { REPORT_USAGE_FORMAT_VERSION } from "../../src/shared/report/report-usage-record.ts"
+import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 
 const USAGE = `使い方:
   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -188,13 +190,17 @@ process.stdout.write("\n")
 
 /** コマンドラインから `--days <n>` を読む。無ければ既定の28日、崩れていれば `"invalid"`。 */
 function parseDaysOption(argv: readonly string[]): number | "invalid" {
-  const index = argv.indexOf("--days")
-  if (index === -1) {
-    return 28
+  try {
+    const { values } = parseArgs({
+      args: [...argv],
+      strict: true,
+      options: { days: { type: "string" } },
+    })
+    const parsed = positiveIntegerArgument.default(28).safeParse(values.days)
+    return parsed.success ? parsed.data : "invalid"
+  } catch {
+    return "invalid"
   }
-  const raw = argv[index + 1]
-  const parsed = raw === undefined ? Number.NaN : Number(raw)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : "invalid"
 }
 
 /** 今日を含む直近 `dayCount` 日の記録を、日付でファイルを絞って読む（壊れた行は読み飛ばす）。 */

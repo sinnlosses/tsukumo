@@ -11,12 +11,18 @@
 //   node scripts/runtime/stop.ts --port 7398    # そのポートで待っているものだけ止める
 
 import process from "node:process"
+import { parseArgs } from "node:util"
+
+import { z } from "zod"
 
 import {
   DEFAULT_VIEW_PORT,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../src/server/view-server/core/port-resolution.ts"
 import { candidatePorts, findListener } from "../shared/port-listener.ts"
+import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
+
+const portSchema = positiveIntegerArgument.pipe(z.number().max(65535))
 
 const USAGE = `使い方:
   node scripts/runtime/stop.ts                # 動いている tsukumo を一覧する（止めない）
@@ -85,18 +91,20 @@ async function stopOne(target: number): Promise<void> {
 
 /** `--port` の指定を読む。無指定は `"none"`、数として読めないものは `"invalid"`。 */
 function parsePortOption(args: readonly string[]): number | "none" | "invalid" {
-  if (args.length === 0) {
-    return "none"
-  }
-  if (args.length !== 2 || args[0] !== "--port") {
+  try {
+    const { values } = parseArgs({
+      args: [...args],
+      strict: true,
+      options: { port: { type: "string" } },
+    })
+    if (values.port === undefined) {
+      return "none"
+    }
+    const parsed = portSchema.safeParse(values.port)
+    return parsed.success ? parsed.data : "invalid"
+  } catch {
     return "invalid"
   }
-
-  const parsed = Number(args[1])
-  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 65535) {
-    return "invalid"
-  }
-  return parsed
 }
 
 /** シグナル 0 は「送らずに届くかどうかだけ確かめる」（プロセスの生死を見る常套手段）。 */
