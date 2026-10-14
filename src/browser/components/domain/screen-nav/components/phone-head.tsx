@@ -4,6 +4,7 @@
 // 「手順 n」は「いまの作業」の開閉をそのまま使い、開いたら依頼の手順の一覧を下から上がる板で開く。
 
 import clsx from "clsx"
+import { ChevronDown, ChevronUp } from "lucide-react"
 import { useId, useRef, type ReactElement, type ReactNode } from "react"
 
 import { CurrentWorkList } from "../../../../features/current-work/components/current-work-list.tsx"
@@ -95,6 +96,7 @@ function PhoneHeadProgressLine(props: {
   const { progress, work } = props
   // 預け先はここで分解して受ける（`work.toggleRef` の形のまま `ref` に渡すと `react(refs)` が落ちる）。
   const { toggleRef } = work
+  const Chevron = work.open ? ChevronUp : ChevronDown
   return (
     <div className={styles["phone-head-line"]}>
       {progress.kind === "planned" && (
@@ -123,19 +125,7 @@ function PhoneHeadProgressLine(props: {
         onClick={work.onToggle}
       >
         手順 <span className={styles["phone-head-step-count"]}>{progress.stepCount}</span>
-        <svg
-          width="13"
-          height="13"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d={work.open ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"} />
-        </svg>
+        <Chevron size={13} strokeWidth={2} aria-hidden="true" />
       </button>
     </div>
   )

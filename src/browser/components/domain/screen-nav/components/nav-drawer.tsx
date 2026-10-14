@@ -7,7 +7,7 @@
 // 動き方の段のモデル・effort・許可モードとタブの中身はサイドバーと会話の画面の部品で、この枠からは引けないので差し込み口で受ける。
 
 import clsx from "clsx"
-import { Settings } from "lucide-react"
+import { Menu, Settings } from "lucide-react"
 import { useId, useRef, type ReactElement, type ReactNode } from "react"
 
 import { useCloseWhenWide } from "../../../../hooks/use-close-when-wide.ts"
@@ -50,19 +50,7 @@ export function NavDrawerToggle(props: { readonly drawer: NavDrawerView }): Reac
       aria-haspopup="dialog"
       onClick={onOpen}
     >
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M4 6h16M4 12h16M4 18h10" />
-      </svg>
+      <Menu size={18} strokeWidth={1.9} aria-hidden="true" />
     </button>
   )
 }
