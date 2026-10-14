@@ -49,7 +49,7 @@ import {
   type CatalogSize,
   CATALOG,
   type Settle,
-  SIZES,
+  sizesOf,
 } from "./lib/catalog-entry.ts"
 import { indexHtml, type Shot } from "./lib/catalog-index.ts"
 import { applyHomeSetup, workspaceOf } from "./lib/catalog-setup.ts"
@@ -148,7 +148,7 @@ async function captureEntry(
   })
   try {
     const shots: Shot[] = []
-    for (const size of SIZES) {
+    for (const size of sizesOf(entry)) {
       const file = path.join(outDir, `${entry.name}-${size.name}.png`)
       await captureShot(browser, session.url, entry, size, file)
       process.stdout.write(`撮った: ${file}\n`)

@@ -231,9 +231,13 @@ export const CATALOG: readonly CatalogEntry[] = [
       "質問（preview に書いた手元の画像が札の幅に収まって出る。縦長の画像は高さの上限で止まる）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "report-image" },
-    prepare: [{ kind: "scroll", selector: PREVIEW_IMAGE_SELECTOR }],
+    prepare: [
+      { kind: "wait", selector: `${MAIN_REGION_SELECTOR} label:has-text("横長の案")` },
+      { kind: "click", selector: `${MAIN_REGION_SELECTOR} label:has-text("横長の案")` },
+      { kind: "scroll", selector: PREVIEW_IMAGE_SELECTOR },
+    ],
     skipReveal: false,
-    settle: { kind: "selector", selector: PREVIEW_IMAGE_SELECTOR, phase: "before-prepare" },
+    settle: { kind: "selector", selector: PREVIEW_IMAGE_SELECTOR, phase: "after-prepare" },
   },
   {
     name: "question-preview-image-missing",
@@ -241,9 +245,13 @@ export const CATALOG: readonly CatalogEntry[] = [
     label: "質問（preview の外部の URL・data:・置いていない画像は「画像を出せない」の札になる）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "report-image" },
-    prepare: [{ kind: "scroll", selector: PREVIEW_IMAGE_MISSING_SELECTOR }],
+    prepare: [
+      { kind: "wait", selector: `${MAIN_REGION_SELECTOR} label:has-text("外の画像の案")` },
+      { kind: "click", selector: `${MAIN_REGION_SELECTOR} label:has-text("外の画像の案")` },
+      { kind: "scroll", selector: PREVIEW_IMAGE_MISSING_SELECTOR },
+    ],
     skipReveal: false,
-    settle: { kind: "selector", selector: PREVIEW_IMAGE_MISSING_SELECTOR, phase: "before-prepare" },
+    settle: { kind: "selector", selector: PREVIEW_IMAGE_MISSING_SELECTOR, phase: "after-prepare" },
   },
   {
     name: "permission",
@@ -713,3 +721,13 @@ export const SIZES = [
 ] as const
 
 export type CatalogSize = (typeof SIZES)[number]
+
+/** 狭い窓は選択肢が角丸のボタンの縦並びで、選んだ選択肢の preview の面が出ないので、広い窓だけで撮る件。 */
+const WIDE_ONLY_NAMES: ReadonlySet<string> = new Set([
+  "question-preview-image",
+  "question-preview-image-missing",
+])
+
+export function sizesOf(entry: CatalogEntry): readonly CatalogSize[] {
+  return WIDE_ONLY_NAMES.has(entry.name) ? SIZES.filter((size) => size.name === "wide") : SIZES
+}
