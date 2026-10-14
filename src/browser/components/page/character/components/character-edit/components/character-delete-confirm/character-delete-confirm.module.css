@@ -37,15 +37,6 @@
   line-height: 1.8;
   white-space: pre-line;
 }
-.character-delete-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-.character-delete-label {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
 .character-delete-input {
   height: 2.5rem;
   padding: 0 0.75rem;

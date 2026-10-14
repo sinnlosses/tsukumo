@@ -9,6 +9,7 @@ import { useState, type ReactElement } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
+import { Field } from "../../../../../../ui/field/field.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { TextField } from "../../../../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -68,10 +69,12 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
         >
           {band.dialogNote}
         </Text>
-        <div className={styles["character-delete-field"]}>
-          <label className={styles["character-delete-label"]} htmlFor="character-delete-id">
-            確かめのため、id を入力してください
-          </label>
+        <Field
+          variant="confirm"
+          id="character-delete-id"
+          label="確かめのため、id を入力してください"
+          hint={undefined}
+        >
           <TextField
             element="input"
             id="character-delete-id"
@@ -81,7 +84,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             value={typedId}
             onChange={setTypedId}
           />
-        </div>
+        </Field>
         <div className={styles["character-delete-actions"]}>
           <Button
             variant="outline"

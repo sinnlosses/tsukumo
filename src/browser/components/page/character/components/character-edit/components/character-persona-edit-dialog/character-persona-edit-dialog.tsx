@@ -1,13 +1,14 @@
 // 人格の本文（`persona.md` の `## 覚えたこと` より前）を変えるダイアログ本体。
 // 開いている間だけ組み立てる。閉じたら呼び出し側がこの部品ごと外すので、次に開いたときは渡された初期値から下書きが始まる。
 //
-// 枠・見出し・欄・footer の CSS は作るダイアログのクラス（`.character-create-*`）をそのまま流用する。
+// 枠・見出し・footer の CSS は作るダイアログのクラス（`.character-create-*`）をそのまま流用する。
 
 import { useState, type ReactElement } from "react"
 
 import { MAX_PERSONA_BODY_LENGTH } from "../../../../../../../../shared/character-pack/persona-section.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
+import { Field } from "../../../../../../ui/field/field.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { TextField } from "../../../../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -54,10 +55,16 @@ export function CharacterPersonaEditDialog(props: CharacterPersonaEditDialogProp
         >
           プロフィールを設定する
         </Heading>
-        <div className={styles["character-create-field"]}>
-          <label className={styles["character-create-label"]} htmlFor="character-persona-edit-body">
-            本文
-          </label>
+        <Field
+          variant="form"
+          id="character-persona-edit-body"
+          label="本文"
+          hint={
+            <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+              {PERSONA_HINT}
+            </Text>
+          }
+        >
           <TextField
             element="textarea"
             id="character-persona-edit-body"
@@ -67,10 +74,7 @@ export function CharacterPersonaEditDialog(props: CharacterPersonaEditDialogProp
             value={persona}
             onChange={setPersona}
           />
-          <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-            {PERSONA_HINT}
-          </Text>
-        </div>
+        </Field>
         <div className={styles["character-create-footer"]}>
           <div className={styles["character-create-footer-spacer"]} />
           <Button

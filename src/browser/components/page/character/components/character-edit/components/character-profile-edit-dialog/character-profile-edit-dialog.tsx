@@ -2,7 +2,7 @@
 // 開いている間だけ組み立てる。閉じたら呼び出し側がこの部品ごと外すので、次に開いたときは渡された初期値から下書きが始まる。
 //
 // id は作ったあと変えない欄なので出さない。
-// 枠・見出し・欄・footer の CSS は作るダイアログのクラス（`.character-create-*`）をそのまま流用する。
+// 枠・見出し・footer の CSS は作るダイアログのクラス（`.character-create-*`）をそのまま流用する。
 
 import { useState, type ReactElement } from "react"
 
@@ -12,6 +12,7 @@ import {
 } from "../../../../../../../../shared/character-pack/character-definition.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
+import { Field } from "../../../../../../ui/field/field.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { TextField } from "../../../../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -59,10 +60,16 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
         >
           名前と自己紹介文を設定する
         </Heading>
-        <div className={styles["character-create-field"]}>
-          <label className={styles["character-create-label"]} htmlFor="character-profile-edit-name">
-            名前
-          </label>
+        <Field
+          variant="form"
+          id="character-profile-edit-name"
+          label="名前"
+          hint={
+            <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+              {NAME_HINT}
+            </Text>
+          }
+        >
           <TextField
             element="input"
             id="character-profile-edit-name"
@@ -72,17 +79,17 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
             value={name}
             onChange={setName}
           />
-          <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-            {NAME_HINT}
-          </Text>
-        </div>
-        <div className={styles["character-create-field"]}>
-          <label
-            className={styles["character-create-label"]}
-            htmlFor="character-profile-edit-tagline"
-          >
-            自己紹介文
-          </label>
+        </Field>
+        <Field
+          variant="form"
+          id="character-profile-edit-tagline"
+          label="自己紹介文"
+          hint={
+            <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+              {TAGLINE_HINT}
+            </Text>
+          }
+        >
           <TextField
             element="input"
             id="character-profile-edit-tagline"
@@ -92,10 +99,7 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
             value={tagline}
             onChange={setTagline}
           />
-          <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-            {TAGLINE_HINT}
-          </Text>
-        </div>
+        </Field>
         <div className={styles["character-create-footer"]}>
           <div className={styles["character-create-footer-spacer"]} />
           <Button

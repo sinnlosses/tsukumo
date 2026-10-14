@@ -8,6 +8,7 @@ import type { ReactElement } from "react"
 import { MAX_PERSONA_BODY_LENGTH } from "../../../../../../shared/character-pack/persona-section.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { Field } from "../../../../ui/field/field.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { TextField } from "../../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
@@ -97,13 +98,16 @@ export function PresentationalCharacterCreate({
             )}
           </div>
           <div className={styles["character-create-fields"]}>
-            <div className={characterStyles["character-create-field"]}>
-              <label
-                className={characterStyles["character-create-label"]}
-                htmlFor="character-create-name"
-              >
-                名前
-              </label>
+            <Field
+              variant="form"
+              id="character-create-name"
+              label="名前"
+              hint={
+                <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+                  {form.nameHint}
+                </Text>
+              }
+            >
               <TextField
                 element="input"
                 id="character-create-name"
@@ -113,17 +117,29 @@ export function PresentationalCharacterCreate({
                 placeholder={undefined}
                 onChange={form.onNameChange}
               />
-              <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-                {form.nameHint}
-              </Text>
-            </div>
-            <div className={characterStyles["character-create-field"]}>
-              <label
-                className={characterStyles["character-create-label"]}
-                htmlFor="character-create-id"
-              >
-                id
-              </label>
+            </Field>
+            <Field
+              variant="form"
+              id="character-create-id"
+              label="id"
+              hint={
+                form.idNote.kind === "hint" ? (
+                  <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+                    {form.idNote.text}
+                  </Text>
+                ) : (
+                  <Text
+                    element="p"
+                    size="label"
+                    tone="ink-quiet"
+                    weight="inherit"
+                    className={characterStyles["character-screen-note"]}
+                  >
+                    {form.idNote.text}
+                  </Text>
+                )
+              }
+            >
               <TextField
                 element="input"
                 id="character-create-id"
@@ -133,22 +149,7 @@ export function PresentationalCharacterCreate({
                 placeholder={undefined}
                 onChange={form.onIdChange}
               />
-              {form.idNote.kind === "hint" ? (
-                <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-                  {form.idNote.text}
-                </Text>
-              ) : (
-                <Text
-                  element="p"
-                  size="label"
-                  tone="ink-quiet"
-                  weight="inherit"
-                  className={characterStyles["character-screen-note"]}
-                >
-                  {form.idNote.text}
-                </Text>
-              )}
-            </div>
+            </Field>
             <div className={characterStyles["character-create-field"]}>
               <span className={characterStyles["character-create-label"]}>画面の差し色</span>
               <div className={characterStyles["character-swatches-screen"]}>
@@ -158,13 +159,16 @@ export function PresentationalCharacterCreate({
             </div>
           </div>
         </div>
-        <div className={characterStyles["character-create-field"]}>
-          <label
-            className={characterStyles["character-create-label"]}
-            htmlFor="character-create-persona"
-          >
-            人格
-          </label>
+        <Field
+          variant="form"
+          id="character-create-persona"
+          label="人格"
+          hint={
+            <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+              {form.persona.hint}
+            </Text>
+          }
+        >
           <TextField
             element="textarea"
             id="character-create-persona"
@@ -174,10 +178,7 @@ export function PresentationalCharacterCreate({
             value={form.persona.value}
             onChange={form.persona.onChange}
           />
-          <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-            {form.persona.hint}
-          </Text>
-        </div>
+        </Field>
       </VStack>
       <div className={characterStyles["character-create-footer"]}>
         <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
