@@ -35,10 +35,10 @@ export type WorkPlanVerdict =
   | { readonly kind: "accepted"; readonly plan: WorkPlan }
   | { readonly kind: "malformed" }
   | { readonly kind: "skipped-phase" }
-  | { readonly kind: "empty-summary" }
   | { readonly kind: "range-mismatch" }
   | { readonly kind: "range-missing" }
   | { readonly kind: "phase-number" }
+  | { readonly kind: "closed-by-plan" }
 
 export type WorkPlanReview = {
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
@@ -81,6 +81,9 @@ export function createWorkPlanReview(): WorkPlanReview {
     positionFromReturn && accepted.kind === "planned" && isSamePosition(accepted, plan)
 
   const judgeWellFormed = (plan: WorkPlan): WorkPlanVerdict => {
+    if (plan.current === plan.phases.length) {
+      return { kind: "closed-by-plan" }
+    }
     if (plan.delegatedRange.kind !== "range" && returnedCount !== undefined) {
       return { kind: "range-missing" }
     }
@@ -99,9 +102,6 @@ export function createWorkPlanReview(): WorkPlanReview {
     }
     if (accepted.kind === "planned" && skipsPhase(accepted, plan)) {
       return { kind: "skipped-phase" }
-    }
-    if (accepted.kind === "planned" && advancesWithoutSummary(accepted, plan)) {
-      return { kind: "empty-summary" }
     }
     accepted = nextWorkPlan(accepted, { kind: "work-plan", ...plan })
     positionFromReturn = false
@@ -209,10 +209,6 @@ function isSamePosition(previous: WorkPlan, next: WorkPlan): boolean {
     previous.current === next.current &&
     isDeepEqual(previous.finishedInGroup, next.finishedInGroup)
   )
-}
-
-function advancesWithoutSummary(previous: WorkPlan, next: WorkPlan): boolean {
-  return gainedPhases(previous, next) > 0 && next.phaseSummary === ""
 }
 
 function skipsPhase(previous: WorkPlan, next: WorkPlan): boolean {

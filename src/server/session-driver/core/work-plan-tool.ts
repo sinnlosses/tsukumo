@@ -43,22 +43,22 @@ export const WORK_PLAN_DELEGATED_RANGE_DESCRIPTION =
 /** `CallReview` が差し戻した呼び出しに返す直し方。差し戻しの種類ごとに1つ。 */
 export const WORK_PLAN_REJECTIONS = {
   malformed:
-    "current は 0 から phases の要素の数までの整数にする。" +
+    "current は 0 から phases の要素の数 − 1 までの整数にする。" +
     "delegatedRange は phases の並びの中に収め、端を同時に走らせる段の配列の途中に置かない。" +
     "同時に走らせる段の配列は、重ならない2つ以上の名前にする。" +
     "finishedInGroup には current が指す配列の中の名前だけを、全部にならないように入れる（配列を指していなければ省く）。" +
     "済んだ段が1つ以上あり全部は済んでいないときは、phaseSummary に終えた段のまとめを入れる。" +
     "phaseSummary は2文以内にする。直して呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
+  "closed-by-plan":
+    "current が phases の要素の数に等しい（全部済みの位置）。" +
+    "最後の段にいるあいだは最後の段の位置のままにし、全部の段を終えたら work_plan ではなく " +
+    "report の workPlanClosing に finished を渡して閉じる。同時に走らせる段の配列は1つの要素として数える。" +
+    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
   "skipped-phase":
     "同じ段の並びのまま、1回の呼び出しで2つ以上の段を済ませている。" +
     "飛ばした段の中間レポートが出なくなるので、段は1つずつ済ませ（同時に走らせる段も finishedInGroup に1つずつ足す）、呼び出しごとに終えた段のまとめを " +
     "phaseSummary に入れて呼び直すこと。" +
-    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
-  "empty-summary":
-    "段を進めているのに phaseSummary が空。" +
-    "中間レポートには終えた段でしたことが必ず出るので、phaseSummary に終えた段でしたことを1〜2文で入れて呼び直すこと。" +
-    "最後の段を終えるときは work_plan で閉じず、report の workPlanClosing に finished を渡す。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
   "range-mismatch":
     "delegatedRange の count が、委譲先の返却で知らされた段の数と違う。" +

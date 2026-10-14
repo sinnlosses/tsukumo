@@ -531,11 +531,12 @@ describe("work_plan（段取り）", () => {
   it("段の並びと位置を渡すと ok が返り、ターンは閉じない", async () => {
     const reply = await callTool(workServer(), "work_plan", {
       phases: ["架空の段A", "架空の段B"],
-      current: 2,
+      current: 1,
+      phaseSummary: "架空のまとめ。",
     })
 
     expect(reply).toEqual({
-      text: "ok\n帯の段は全部済んでいる。",
+      text: "ok\n帯の今の段は 2/2 架空の段B。",
       isError: false,
       endsTurn: false,
     })

@@ -55,7 +55,32 @@ describe("WorkPlanReview の判定", () => {
     expect(review.judge(inputOf(2)).kind).toBe("skipped-phase")
     expect(review.judge(inputOf(1)).kind).toBe("accepted")
     expect(review.judge(inputOf(2)).kind).toBe("accepted")
-    expect(review.judge(inputOf(3)).kind).toBe("accepted")
+  })
+
+  it("current が要素の数に等しい呼び出しは closed-by-plan で差し戻し、まとまりは1要素に数える", () => {
+    const review = createWorkPlanReview()
+    const group = ["架空の計画", ["架空の実装A", "架空の実装B"], "架空の受け入れ"]
+    review.judge({ phases: group, current: 0 })
+
+    expect(review.judge({ phases: group, current: 3, phaseSummary: SUMMARY }).kind).toBe(
+      "closed-by-plan",
+    )
+    expect(review.judge({ phases: group, current: 2, phaseSummary: SUMMARY }).kind).toBe(
+      "skipped-phase",
+    )
+    expect(review.judge({ phases: group, current: 1, phaseSummary: SUMMARY }).kind).toBe("accepted")
+    expect(
+      review.judge({
+        phases: group,
+        current: 1,
+        finishedInGroup: ["架空の実装A"],
+        phaseSummary: SUMMARY,
+      }).kind,
+    ).toBe("accepted")
+    expect(review.judge({ phases: group, current: 2, phaseSummary: SUMMARY }).kind).toBe("accepted")
+    expect(review.judge({ phases: PHASES, current: 3, phaseSummary: SUMMARY }).kind).toBe(
+      "closed-by-plan",
+    )
   })
 
   it("まとまりの段は後ろの番号から1つずつ済ませても通り、残りの数が減っていく", () => {
@@ -72,7 +97,7 @@ describe("WorkPlanReview の判定", () => {
     expect(review.standing()).toEqual({ kind: "planned", remaining: 1 })
   })
 
-  it("まとまりの段を1回で2つ済ませる呼び出しは差し戻し、まとめが空なら empty-summary で差し戻す", () => {
+  it("まとまりの段を1回で2つ済ませる呼び出しは差し戻し、途中でまとめが空なら malformed で差し戻す", () => {
     const grouped = ["架空の段A", ["架空の段B", "架空の段C"], "架空の段D"]
     const review = createWorkPlanReview()
     review.judge({ phases: grouped, current: 1, phaseSummary: SUMMARY })
@@ -83,13 +108,6 @@ describe("WorkPlanReview の判定", () => {
     expect(review.judge({ phases: grouped, current: 1, finishedInGroup: ["架空の段B"] }).kind).toBe(
       "malformed",
     )
-    review.judge({
-      phases: grouped,
-      current: 1,
-      finishedInGroup: ["架空の段B"],
-      phaseSummary: SUMMARY,
-    })
-    expect(review.judge({ phases: grouped, current: 3 }).kind).toBe("skipped-phase")
   })
 
   it("段の並びを組み替えた呼び出しは、位置がどこでも通す", () => {
@@ -97,19 +115,17 @@ describe("WorkPlanReview の判定", () => {
     review.judge(inputOf(0))
 
     expect(
-      review.judge({ phases: ["架空の段X", "架空の段Y"], current: 2, phaseSummary: "" }).kind,
+      review.judge({ phases: ["架空の段X", "架空の段Y"], current: 1, phaseSummary: SUMMARY }).kind,
     ).toBe("accepted")
   })
 
-  it("同じ段の並びのまま位置を進めてまとめが空なら empty-summary で差し戻し、戻る・組み替えは通す", () => {
+  it("位置を戻す呼び出しと段の並びの組み替えは、まとめが空でも通す", () => {
     const review = createWorkPlanReview()
     review.judge(inputOf(0))
     review.judge(inputOf(1))
-    review.judge(inputOf(2))
 
-    expect(review.judge({ phases: PHASES, current: 3 }).kind).toBe("empty-summary")
     expect(review.judge({ phases: PHASES, current: 0 }).kind).toBe("accepted")
-    expect(review.judge({ phases: ["架空の段X", "架空の段Y"], current: 2 }).kind).toBe("accepted")
+    expect(review.judge({ phases: ["架空の段X", "架空の段Y"], current: 0 }).kind).toBe("accepted")
   })
 
   it("依頼のあとは、前の位置を忘れる", () => {
@@ -394,8 +410,7 @@ describe("WorkPlanReview の立ち位置", () => {
     review.judge(inputOf(1))
     expect(review.standing()).toEqual({ kind: "planned", remaining: 2 })
     review.judge(inputOf(2))
-    review.judge(inputOf(3))
-    expect(review.standing()).toEqual({ kind: "planned", remaining: 0 })
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 1 })
   })
 
   it("差し戻したあとは rejected になり、受け付けた呼び出しで応えると消える", () => {
