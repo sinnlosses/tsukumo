@@ -889,7 +889,7 @@
   font-weight: 700;
   color: var(--state-ok);
 }
-/* 段ごとの所要時間（検証結果の下に tsukumo が組む）。段の名前の下に、棒の台と時間の字を並べる。 */
+/* 段ごとの所要時間（検証結果の下に tsukumo が組む）。見出しの行・1本の帯・段の一覧の順に並べる。 */
 .detail-block .report-phase-times {
   min-width: 0;
   padding: 0 20px;
@@ -897,56 +897,116 @@
 .detail-block .report-verdict + .report-phase-times {
   margin-top: 12px;
 }
+.detail-block .report-phase-times-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
 .detail-block .report-phase-times-heading {
-  margin-bottom: 4px;
   font-size: 12px;
   letter-spacing: 0.08em;
   color: var(--ink-quiet);
 }
-.detail-block .report-phase-time {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content;
-  align-items: center;
-  column-gap: 12px;
-  padding: 4px 0;
-  font-size: 13px;
-}
-.detail-block .report-phase-time-label {
-  grid-column: 1 / -1;
-  min-width: 0;
-  overflow-wrap: anywhere;
-  color: var(--ink-quiet);
-}
-.detail-block .report-phase-time-track {
-  display: block;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--rule);
-  overflow: hidden;
-}
-.detail-block .report-phase-time-bar {
-  display: block;
-  height: 100%;
-  min-width: 4px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--rule), var(--accent) 60%);
-}
-.detail-block .report-phase-time-value {
+.detail-block .report-phase-times-total {
   font-family: var(--font-mono);
   font-size: 12px;
+  color: var(--ink-soft);
+}
+.detail-block .report-phase-band {
+  display: flex;
+  gap: 3px;
+}
+.detail-block .report-phase-band-segment {
+  min-width: 2px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--phase-band);
+}
+.detail-block .report-phase-band-longest {
+  background: var(--phase-band-longest);
+}
+.detail-block .report-phase-band-unknown {
+  flex: 0 0 18px;
+  background: repeating-linear-gradient(
+    135deg,
+    var(--phase-band-unknown) 0 4px,
+    transparent 4px 8px
+  );
+}
+.detail-block .report-phase-time {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto 3.5em;
+  align-items: center;
+  column-gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid var(--rule-quiet);
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+.detail-block .report-phase-band + [role="table"] {
+  margin-top: 14px;
+}
+.detail-block .report-phase-time-longest {
+  font-weight: 600;
+  color: var(--ink);
+}
+.detail-block .report-phase-time-mark {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--phase-band);
+}
+.detail-block .report-phase-time-longest .report-phase-time-mark {
+  background: var(--phase-band-longest);
+}
+.detail-block .report-phase-time-unknown .report-phase-time-mark {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--phase-band-unknown) 0 4px,
+    transparent 4px 8px
+  );
+}
+.detail-block .report-phase-time-label {
+  grid-column: 2;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.detail-block .report-phase-time-num {
+  margin-right: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-quiet);
+}
+.detail-block .report-phase-time-value {
+  grid-column: 3;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   color: var(--ink-quiet);
 }
-.detail-block .report-phase-time-unknown {
-  grid-column: 1 / -1;
+.detail-block .report-phase-time-unknown .report-phase-time-value {
   font-family: inherit;
 }
-/* 段のまとまりの中の段は名前だけを字下げする。棒の台は見出しの行と同じ左端から描く。 */
-.detail-block
-  .report-phase-time-group
-  .report-phase-time:not(.report-phase-time-group-head)
-  .report-phase-time-label {
+.detail-block .report-phase-time-longest .report-phase-time-value {
+  color: var(--ink);
+}
+.detail-block .report-phase-time-ratio {
+  grid-column: 4;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  text-align: right;
+  color: var(--ink-quiet);
+}
+.detail-block .report-phase-time-group {
+  min-width: 0;
+}
+/* 段のまとまりの中の段は、一覧にだけ名前を字下げして並べる（帯には出さない）。 */
+.detail-block .report-phase-time-inner .report-phase-time-label {
   padding-left: 12px;
 }
 /* `task` のあるレポートの結論の一文。見出し（`report-head.module.css`）のすぐ下に描く。 */

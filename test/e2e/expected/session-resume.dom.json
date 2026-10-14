@@ -302,6 +302,13 @@
                               ]
                             },
                             "段ごとの時間",
+                            "計 3分28秒",
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            },
                             {
                               "tag": "div",
                               "attributes": {
@@ -315,14 +322,10 @@
                                     "role": "row"
                                   },
                                   "children": [
-                                    "1/2 架空の調べ",
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "aria-hidden": "true"
-                                      }
-                                    },
-                                    "1分58秒"
+                                    "1/2",
+                                    "架空の調べ",
+                                    "1分58秒",
+                                    "57%"
                                   ]
                                 },
                                 {
@@ -331,14 +334,10 @@
                                     "role": "row"
                                   },
                                   "children": [
-                                    "2/2 架空の直し",
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "aria-hidden": "true"
-                                      }
-                                    },
-                                    "1分30秒"
+                                    "2/2",
+                                    "架空の直し",
+                                    "1分30秒",
+                                    "43%"
                                   ]
                                 }
                               ]

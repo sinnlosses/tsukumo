@@ -797,7 +797,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
   })
 
-  it("段取りを渡したやり取りでは、中間レポートはまとめだけで、最終レポートは結論の下に段ごとの所要時間の横棒グラフを置く", () => {
+  it("段取りを渡したやり取りでは、中間レポートはまとめだけで、最終レポートは結論の下に段ごとの所要時間の帯と一覧を置く", () => {
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",
       delegatedRange: { kind: "none" },
@@ -826,11 +826,13 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         `${lead("架空の結論。")}\n\n<div class="status">\n\n<div class="phase-times">`,
       ),
     ).toBe(true)
-    expect(final).toContain('<span class="phase-time-label">2/2 架空の段B</span>')
+    expect(final).toContain(
+      '<span class="phase-time-label"><span class="phase-time-num">2/2</span>架空の段B</span>',
+    )
     expect(final?.endsWith(`</div>\n\n${SECTIONS_START}\n\n架空の根拠。`)).toBe(true)
   })
 
-  it("やり取りが閉じていないあいだの report には、段ごとの所要時間の横棒グラフを出さない", () => {
+  it("やり取りが閉じていないあいだの report には、段ごとの所要時間の帯と一覧を出さない", () => {
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",
       delegatedRange: { kind: "none" },
@@ -1258,7 +1260,7 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     expect(reportMarkdowns(entriesAfter)[1]).toContain('<span class="check-time">5秒</span>')
   })
 
-  it("段取りのある依頼の report の最終レポートの本文には、検証の表の下に段ごとの所要時間の横棒グラフが出る", () => {
+  it("段取りのある依頼の report の最終レポートの本文には、検証の表の下に段ごとの所要時間の帯と一覧が出る", () => {
     const markdown = finalMarkdowns(
       mainViewEntries(
         foldTimed([
@@ -1272,18 +1274,19 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
       ),
     )[0]
 
+    expect(markdown).toContain("計 14秒")
     expect(markdown).toMatch(
-      /1\/2 架空の段A<\/span>.*?width: 100%.*?<span class="phase-time-value">10秒<\/span>/,
+      /1\/2<\/span>架空の段A<\/span>.*?<span class="phase-time-value">10秒<\/span><span class="phase-time-ratio">71%<\/span>/,
     )
     expect(markdown).toMatch(
-      /2\/2 架空の段B<\/span>.*?width: 40%.*?<span class="phase-time-value">4秒<\/span>/,
+      /2\/2<\/span>架空の段B<\/span>.*?<span class="phase-time-value">4秒<\/span><span class="phase-time-ratio">29%<\/span>/,
     )
     expect(markdown?.indexOf('class="phase-times"')).toBeGreaterThan(
       markdown?.indexOf('class="verdict"') ?? Infinity,
     )
   })
 
-  it("段取りの無い依頼の report には、段ごとの所要時間の横棒グラフを出さない", () => {
+  it("段取りの無い依頼の report には、段ごとの所要時間の帯と一覧を出さない", () => {
     const markdown = finalMarkdowns(
       mainViewEntries(
         foldTimed([

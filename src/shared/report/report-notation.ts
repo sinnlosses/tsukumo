@@ -144,8 +144,7 @@ export const REPORT_NOTATION_NAMES = [
  * `checks-heading` は小見出し「検証」、`checks-verdict-word` がその右の判定の一言。
  * `checks-body` の中は、全部 ok なら一覧（`check` がその1行）、
  * ng / unverified があれば問題の項目（`checks-problem`）と通った項目の小さな札（`checks-passed-chip`）。
- * `phase-times` は検証結果の下の段ごとの所要時間の横棒グラフで、`phase-time` がその1行
- * （`phase-time-track` が棒の台、`phase-time-bar` が棒）。`phase-time-group` は段のまとまりの包みで、`phase-time-group-head` がその壁時計の行。
+ * `phase-times` は検証結果の下の段ごとの所要時間（見出しの行・帯 `phase-band`・一覧）で、`phase-time` が一覧の1行。`phase-time-group` は段のまとまりの包み。
  * `conclusion` は `task` のあるレポートの結論の一文、`conclusion-lead` は `task` の無いレポートの結論。
  * 見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
  */
@@ -177,15 +176,23 @@ export const REPORT_DRAWN_MARK_NAMES = [
   "checks-passed-chip",
   "checks-passed-chip-mark",
   "phase-times",
+  "phase-times-head",
   "phase-times-heading",
+  "phase-times-total",
+  "phase-band",
+  "phase-band-segment",
+  "phase-band-longest",
+  "phase-band-unknown",
   "phase-time",
+  "phase-time-mark",
+  "phase-time-num",
   "phase-time-label",
-  "phase-time-track",
-  "phase-time-bar",
   "phase-time-value",
+  "phase-time-ratio",
+  "phase-time-longest",
   "phase-time-unknown",
+  "phase-time-inner",
   "phase-time-group",
-  "phase-time-group-head",
   "conclusion",
   "conclusion-lead",
 ] as const satisfies readonly string[]

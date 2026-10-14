@@ -374,7 +374,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 段取り
 
 - **英語識別子**: `workPlan`（型は `WorkPlan`。段と段のまとまりの並びは `phases`、今の要素の位置は `current`。
-  イベントと記録は `work-plan`。段ごとの所要時間は `phaseDurations` で、横棒グラフの行の型は `PhaseTimeRow`（段の行と、段のまとまりの行）・段1つの所要は `PhaseDuration`。
+  イベントと記録は `work-plan`。段ごとの所要時間は `phaseDurations` で、帯と一覧の行の型は `PhaseTimeRow`（段の行と、段のまとまりの行）・段1つの所要は `PhaseDuration`。
   `report` の段の閉じ方の欄は `workPlanClosing`・型は `WorkPlanClosing`（`none` / `finished` / `stopped`）、
   イベントを受けて今の段取りを畳む決まり〔依頼で忘れる・返却で進める・`finished` で最後の段を閉じる〕は `nextWorkPlan`、
   記録から畳んだ今の段取りは `currentWorkPlan`）
