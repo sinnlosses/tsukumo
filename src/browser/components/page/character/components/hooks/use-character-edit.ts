@@ -1,5 +1,5 @@
 // `<CharacterEdit>` のロジック。
-// 一覧で選んでいるパック（使用中とは限らない）の姿を、名乗り・表情のカード・差し色・背景・顔へ畳み、選んだ画像を data URL にして送る呼び先と一緒に返す。
+// 一覧で選んでいるパック（使用中とは限らない）の姿を、名乗り・表情のカード・差し色・背景・顔・ミニ立ち絵へ畳み、選んだ画像を data URL にして送る呼び先と一緒に返す。
 //
 // `characterPack.*` の手続きはどれも書き込む先のパックの名前（`pack`）を持ち、選んでいるパックの名前を入れる。
 // 使用中以外を直しても使用中の姿は変わらない。
@@ -27,6 +27,8 @@ import {
   FACE_FILE_ACCEPT,
   FACE_LABEL,
   IMAGE_REJECTED_NOTE,
+  MINI_FILE_ACCEPT,
+  MINI_LABEL,
   NOT_EDITABLE_NOTE,
   SWITCH_BLOCKED_TITLE,
 } from "../../domain/character-edit-copy.ts"
@@ -136,6 +138,30 @@ export function useCharacterEdit(): CharacterEditModel {
     },
   }
 
+  // 縮図は定義に `mini` を持つときだけ。持たないときの `character.mini` は `portraits.default` の URL なので、縮図にしない。
+  const mini: ImageFieldModel = {
+    kind: "mini",
+    subject: "ミニ立ち絵",
+    accept: MINI_FILE_ACCEPT,
+    image:
+      character.hasOwnMini && character.mini !== undefined
+        ? { kind: "present", url: character.mini }
+        : { kind: "absent" },
+    label: character.hasOwnMini ? MINI_LABEL.present : MINI_LABEL.absent,
+    rejection:
+      rejectedTarget.kind === "mini"
+        ? { kind: "shown", text: IMAGE_REJECTED_NOTE.mini }
+        : { kind: "none" },
+    onPick: (input) => {
+      void readPicked(input, (image) => {
+        sendImage({ kind: "mini" }, () => dispatchAwaited.characterPack.setMini({ pack, image }))
+      })
+    },
+    onClear: () => {
+      dispatch.characterPack.clearMini({ pack })
+    },
+  }
+
   const background: ImageFieldModel = {
     kind: "background",
     subject: "背景",
@@ -224,6 +250,7 @@ export function useCharacterEdit(): CharacterEditModel {
     chatAccent,
     resetChatAccent,
     face,
+    mini,
     background,
     deleteBand,
   }
@@ -232,6 +259,7 @@ export function useCharacterEdit(): CharacterEditModel {
 /** 書き込みを断られた画像の欄。 */
 type ImageTarget =
   | { readonly kind: "face" }
+  | { readonly kind: "mini" }
   | { readonly kind: "background" }
   | { readonly kind: "portrait"; readonly expression: Expression }
 

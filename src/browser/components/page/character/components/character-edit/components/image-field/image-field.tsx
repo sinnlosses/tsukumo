@@ -1,4 +1,4 @@
-// キャラクター画面の画像1枚の行（顔・背景）。
+// キャラクター画面の画像1枚の行（顔・ミニ立ち絵・背景）。
 // 縮図（または空の枠）と、口は「差し替える」と「消す」の2つだけ。
 
 import { type ReactElement, useState } from "react"
@@ -15,6 +15,7 @@ import styles from "./image-field.module.css"
 
 const THUMBNAIL_CLASS = {
   face: { preview: "character-face-field-preview", blank: "character-face-field-blank" },
+  mini: { preview: "character-mini-field-preview", blank: "character-mini-field-blank" },
   background: { preview: "character-background-preview", blank: "character-background-blank" },
 } as const satisfies Record<
   ImageFieldModel["kind"],

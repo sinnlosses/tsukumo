@@ -1,4 +1,4 @@
-// `character-pack` が受けるコマンドの表と口。見た目の編集10種と、作る・消すの2種と、作る前に欄を埋める生成。
+// `character-pack` が受けるコマンドの表と口。見た目の編集12種と、作る・消すの2種と、作る前に欄を埋める生成。
 // どれも駆動には渡らず、セッションも起こし直さない（書いて、`character-changed` を流し直すだけ）。
 
 import type { GeneratedCharacter } from "../../../shared/character-pack/generated-character.ts"
@@ -44,7 +44,7 @@ export type CharacterPackCommandPorts = {
 export function characterPackCommands(
   ports: CharacterPackCommandPorts,
 ): FeatureCommandTable<Omit<typeof characterPackContract, "generateFromPortrait">> {
-  // 見た目の編集10種は同じ口へ渡す（どれを変えるかは書き込む側が `kind` で分ける）。
+  // 見た目の編集12種は同じ口へ渡す（どれを変えるかは書き込む側が `kind` で分ける）。
   const edit = <C>(kindOf: (input: C) => CharacterEdit): WriteReceiver<C> => ({
     kind: "write",
     receive: (input) => ports.editCharacter(kindOf(input)),
@@ -61,6 +61,8 @@ export function characterPackCommands(
     clearBackground: edit((input) => ({ kind: "clearBackground", ...input })),
     setFace: edit((input) => ({ kind: "setFace", ...input })),
     clearFace: edit((input) => ({ kind: "clearFace", ...input })),
+    setMini: edit((input) => ({ kind: "setMini", ...input })),
+    clearMini: edit((input) => ({ kind: "clearMini", ...input })),
     create: {
       kind: "write",
       receive: ports.createCharacter,

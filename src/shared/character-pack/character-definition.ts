@@ -179,6 +179,16 @@ export function definitionWithoutFace(content: string | undefined): string {
   return editedTopLevelDefinitionJson(content, "face", undefined)
 }
 
+/** ミニ立ち絵（`character.json` の `mini`）を差し替えた JSON を返す。 */
+export function definitionWithMini(content: string | undefined, fileName: string): string {
+  return editedTopLevelDefinitionJson(content, "mini", fileName)
+}
+
+/** ミニ立ち絵を外した JSON を返す（外すと表示は `portraits.default` の縮小に落ちる）。 */
+export function definitionWithoutMini(content: string | undefined): string {
+  return editedTopLevelDefinitionJson(content, "mini", undefined)
+}
+
 /**
  * 背景の素材を差し替えた JSON を返す。
  * 覆いの不透明度（`veil`）はそのまま残す（画面から変えられるのは素材だけで、濃さは定義ファイルを手で直す）。
@@ -255,10 +265,10 @@ function editedDefinitionJson(
   return `${JSON.stringify({ ...source, [group]: edited }, undefined, 2)}\n`
 }
 
-/** 最上位のキー1つ（`accent` / `chatAccent` / `name` / `tagline`）を差し替えた JSON 文字列を作る。 */
+/** 最上位のキー1つ（`accent` / `chatAccent` / `name` / `tagline` / `face` / `mini`）を差し替えた JSON 文字列を作る。 */
 function editedTopLevelDefinitionJson(
   content: string | undefined,
-  key: "accent" | "chatAccent" | "name" | "tagline" | "face",
+  key: "accent" | "chatAccent" | "name" | "tagline" | "face" | "mini",
   value: string | undefined,
 ): string {
   const source = parsedDefinitionRecord(content)

@@ -1,4 +1,4 @@
-// `<CharacterEdit>` の文言と、顔・背景に選べる種類の表。
+// `<CharacterEdit>` の文言と、顔・ミニ立ち絵・背景に選べる種類の表。
 
 import { MAX_BACKGROUND_BYTES } from "../../../../../shared/character-pack/character-background.ts"
 import type { CharacterPackRemoval } from "../../../../../shared/character-pack/character.ts"
@@ -10,6 +10,15 @@ export const BACKGROUND_LABEL = { present: "いまの背景", absent: "背景な
 
 /** 顔の行の、いまの状態を表す字（印だけにしない）。 */
 export const FACE_LABEL = { present: "いまの顔", absent: "顔なし" } as const
+
+/** ミニ立ち絵の行の、いまの状態を表す字。持たないときは、いつもの立ち絵を縮めて使うことを言う。 */
+export const MINI_LABEL = {
+  present: "いまのミニ立ち絵",
+  absent: "いつもの立ち絵を縮めて使う",
+} as const
+
+/** ミニ立ち絵に選べる種類。立ち絵と同じ。 */
+export const MINI_FILE_ACCEPT = ".svg,.png,.gif"
 
 /** 顔に選べる種類。中身の検証はサーバ側で、ここは選ぶときの絞り込みだけ。 */
 export const FACE_FILE_ACCEPT = ".svg,.png,.gif"
@@ -23,6 +32,7 @@ export const BACKGROUND_FILE_ACCEPT = ".png,.jpg,.jpeg,.webp"
  */
 export const IMAGE_REJECTED_NOTE = {
   face: `差し替えられなかった。顔は SVG・PNG・GIF の ${mebibytes(MAX_PORTRAIT_BYTES)} までの画像にしてほしい`,
+  mini: `差し替えられなかった。ミニ立ち絵は SVG・PNG・GIF の ${mebibytes(MAX_PORTRAIT_BYTES)} までの画像にしてほしい`,
   background: `差し替えられなかった。背景は PNG・JPEG・WebP の ${mebibytes(MAX_BACKGROUND_BYTES)} までの画像にしてほしい`,
   portrait: (label: string): string =>
     `${label}を差し替えられなかった。立ち絵は SVG・PNG・GIF の ${mebibytes(MAX_PORTRAIT_BYTES)} までの画像にしてほしい`,

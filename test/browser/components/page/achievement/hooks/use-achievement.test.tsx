@@ -89,6 +89,7 @@ const FIXTURE_CHARACTER: CharacterInfo = {
   portraits: undefined,
   expressionsWithPortrait: [],
   mini: undefined,
+  hasOwnMini: false,
   face: undefined,
   tagline: undefined,
   userCall: undefined,

@@ -102,6 +102,15 @@ describe("toCharacterInfo", () => {
     expect(infoOf(withoutMini, "2")?.mini).toBe("/character/fictional/default.svg?v=2")
   })
 
+  it("hasOwnMini は定義に mini があるかだけで決まる（無くて default に落ちても false）", () => {
+    const withMini = JSON.stringify({ mini: "mini.png", portraits: { default: "default.svg" } })
+    const withoutMini = JSON.stringify({ portraits: { default: "default.svg" } })
+
+    expect(infoOf(withMini, "2")?.hasOwnMini).toBe(true)
+    expect(infoOf(withoutMini, "2")?.hasOwnMini).toBe(false)
+    expect(infoOf(withoutMini, "2")?.mini).toBeDefined()
+  })
+
   it("face があればその URL（mini と違い、default の立ち絵には畳まない）", () => {
     const json = JSON.stringify({ face: "face.png", portraits: { default: "default.svg" } })
 

@@ -16,6 +16,24 @@
   border: 1.5px dashed var(--rule);
 }
 
+/* ミニ立ち絵の行。立ち絵に近い縦長の縮図（全身が収まるよう contain）と、字と2つの口。 */
+.character-mini-field-preview,
+.character-mini-field-blank {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 84px;
+  height: 112px;
+  border-radius: 0.625rem;
+}
+.character-mini-field-preview {
+  border: 1px solid var(--rule-quiet);
+  object-fit: contain;
+}
+/* ミニ立ち絵を持たないときは、背景と同じ点線の枠。フォールバックの絵は縮図に出さない。 */
+.character-mini-field-blank {
+  border: 1.5px dashed var(--rule);
+}
+
 /* 背景の行。敷いたときと同じ切り取り方（cover・下端合わせ）の縮図と、字と2つの口。 */
 .character-background-preview,
 .character-background-blank {

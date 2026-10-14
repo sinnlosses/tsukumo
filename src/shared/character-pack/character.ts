@@ -44,6 +44,11 @@ export type CharacterInfo = {
    */
   readonly mini: string | undefined
   /**
+   * 定義に `mini` を自分で持つか。
+   * `mini` は `portraits.default` に落ちた後の URL で「持つか」が読めないので、それが要るキャラクター画面（縮図を出すか空の枠か）のためにここで持つ。
+   */
+  readonly hasOwnMini: boolean
+  /**
    * 帯の左端に出す顔の URL（`/character/<pack>/<file>`）。表情では変わらない1枚。
    * 定義に `face` が無いパックでは undefined で、`portraits.default` へのフォールバックはしない（帯に何も出さない）。
    */
@@ -161,6 +166,7 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
       (expression) => definition?.portraits[expression] !== undefined,
     ),
     mini: definition?.mini === undefined ? portraits?.default : assetUrl(definition.mini),
+    hasOwnMini: definition?.mini !== undefined,
     face: definition?.face === undefined ? undefined : assetUrl(definition.face),
     tagline: definition?.tagline,
     userCall: definition?.userCall,

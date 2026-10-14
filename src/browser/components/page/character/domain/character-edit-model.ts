@@ -91,11 +91,11 @@ export type ChatAccentResetModel =
   | { readonly kind: "shown"; readonly onClick: () => void }
 
 /**
- * 画像1枚の行（顔・背景）。字（`label`）は有無どちらでも出す。
+ * 画像1枚の行（顔・ミニ立ち絵・背景）。字（`label`）は有無どちらでも出す。
  * `kind` は縮図と空の枠の見た目を選び、`subject` は読み上げの名前の頭になる。
  */
 export type ImageFieldModel = {
-  readonly kind: "face" | "background"
+  readonly kind: "face" | "mini" | "background"
   readonly subject: string
   readonly accept: string
   readonly image: { readonly kind: "absent" } | { readonly kind: "present"; readonly url: string }
@@ -156,6 +156,7 @@ export type CharacterEditModel =
       readonly chatAccent: AccentSwatchModel
       readonly resetChatAccent: ChatAccentResetModel
       readonly face: ImageFieldModel
+      readonly mini: ImageFieldModel
       readonly background: ImageFieldModel
       readonly deleteBand: CharacterDeleteBandModel
     }

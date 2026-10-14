@@ -607,6 +607,104 @@ describe("editCharacterPack（顔）", () => {
   })
 })
 
+describe("editCharacterPack（ミニ立ち絵）", () => {
+  /** ミニ立ち絵のほかに、顔・背景（veil）・差し色・呼び名も持つパックを置く。 */
+  function writeMiniPack(name: string): string {
+    const packDir = join(dir(), "bundled", name)
+    mkdirSync(packDir, { recursive: true })
+    for (const fileName of ["default.svg", "mini.png", "face.png", "background.png"]) {
+      writeFileSync(join(packDir, fileName), "x")
+    }
+    writeFileSync(
+      join(packDir, "character.json"),
+      JSON.stringify({
+        name,
+        accent: "#b8c7ff",
+        portraits: { default: "default.svg" },
+        mini: "mini.png",
+        miniCall: "架空の使い魔",
+        face: "face.png",
+        background: { image: "background.png", veil: 0.8 },
+      }),
+    )
+    return packDir
+  }
+
+  it("ミニ立ち絵を差すと、形式から組み立てた名前で書かれ、定義がそれを指す", () => {
+    const bundled = writeBundledPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      { kind: "setMini", pack: "tsukumo", image: PNG_DATA_URL },
+      join(dir(), "cwd"),
+      home(),
+    )
+
+    expect(edited?.definition?.mini).toBe("mini.png")
+    expect(existsSync(join(home(), "tsukumo", "mini.png"))).toBe(true)
+    // 同梱側は触っていない。
+    expect(readCharacterPack(bundled).definition?.mini).toBeUndefined()
+  })
+
+  it("形式を変えて差し替えると、参照が外れた古いミニ立ち絵は残らず、ほかの欄は落ちない", () => {
+    const bundled = writeMiniPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      { kind: "setMini", pack: "tsukumo", image: SVG_DATA_URL },
+      join(dir(), "cwd"),
+      home(),
+    )
+
+    expect(edited?.definition?.mini).toBe("mini.svg")
+    expect(existsSync(join(home(), "tsukumo", "mini.png"))).toBe(false)
+    expect(existsSync(join(home(), "tsukumo", "mini.svg"))).toBe(true)
+    expect(edited?.definition?.face).toBe("face.png")
+    expect(edited?.definition?.miniCall).toBe("架空の使い魔")
+    expect(edited?.definition?.accent).toBe("#b8c7ff")
+    expect(edited?.definition?.background).toEqual({ image: "background.png", veil: 0.8 })
+    expect(edited?.definition?.portraits.default).toBe("default.svg")
+  })
+
+  it("ミニ立ち絵を消すと定義から外れ、ファイルも残らず、ほかの欄は落ちない", () => {
+    const bundled = writeMiniPack("tsukumo")
+
+    const cleared = editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      { kind: "clearMini", pack: "tsukumo" },
+      join(dir(), "cwd"),
+      home(),
+    )
+
+    expect(cleared?.definition?.mini).toBeUndefined()
+    expect(existsSync(join(home(), "tsukumo", "mini.png"))).toBe(false)
+    expect(cleared?.definition?.face).toBe("face.png")
+    expect(cleared?.definition?.miniCall).toBe("架空の使い魔")
+    expect(cleared?.definition?.accent).toBe("#b8c7ff")
+    expect(cleared?.definition?.background).toEqual({ image: "background.png", veil: 0.8 })
+    expect(cleared?.definition?.portraits.default).toBe("default.svg")
+    expect(existsSync(join(home(), "tsukumo", "default.svg"))).toBe(true)
+  })
+
+  it("受け付けない種類の画像は書かない", () => {
+    const bundled = writeBundledPack("tsukumo")
+
+    const edited = editCharacterPack(
+      readCharacterPack(bundled),
+      [],
+      { kind: "setMini", pack: "tsukumo", image: WEBP_DATA_URL },
+      join(dir(), "cwd"),
+      home(),
+    )
+
+    expect(edited).toBeUndefined()
+    expect(existsSync(join(home(), "tsukumo", "mini.webp"))).toBe(false)
+  })
+})
+
 describe("editCharacterPack（受け付けないもの）", () => {
   it("起動先の characters/local のパックは書かない（ホームに書いても次の起動で負けるため）", () => {
     const cwd = join(dir(), "cwd")

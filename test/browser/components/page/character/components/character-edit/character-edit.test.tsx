@@ -526,6 +526,117 @@ describe("CharacterEdit", () => {
     expect(await screen.findByText(/顔は SVG・PNG・GIF の 2 MiB までの画像/u)).toBeDefined()
   })
 
+  // ミニ立ち絵。縮図は定義に `mini` を持つときだけ。
+  it("ミニ立ち絵を持たないパックでは、mini の URL が default に落ちていても点線の枠と一言を出し、消す口は出さない", () => {
+    renderCharacterEdit({
+      ...FIXTURE_CHARACTER,
+      mini: "/character/default.svg?v=1",
+      hasOwnMini: false,
+    })
+
+    expect(document.querySelectorAll(".character-mini-field-blank")).toHaveLength(1)
+    expect(document.querySelectorAll(".character-mini-field-preview")).toHaveLength(0)
+    expect(screen.getByText("いつもの立ち絵を縮めて使う")).toBeDefined()
+    expect(screen.getByLabelText("ミニ立ち絵を差し替える")).toBeDefined()
+    expect(screen.queryByRole("button", { name: "ミニ立ち絵を消す" })).toBeNull()
+  })
+
+  it("ミニ立ち絵を持つパックでは、縮図を出して消す口も出す", () => {
+    renderCharacterEdit({
+      ...FIXTURE_CHARACTER,
+      mini: "/character/mini.png?v=fictional@1",
+      hasOwnMini: true,
+    })
+
+    expect(
+      typedElement(
+        screen.getByAltText("いまのミニ立ち絵"),
+        HTMLImageElement,
+        "いまのミニ立ち絵の画像",
+      ).getAttribute("src"),
+    ).toBe("/character/mini.png?v=fictional@1")
+    expect(screen.getByRole("button", { name: "ミニ立ち絵を消す" })).toBeDefined()
+  })
+
+  it("縮図を押すと拡大して見られる", () => {
+    renderCharacterEdit({
+      ...FIXTURE_CHARACTER,
+      mini: "/character/mini.png?v=fictional@1",
+      hasOwnMini: true,
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "ミニ立ち絵を拡大" }))
+
+    expect(screen.getAllByAltText("いまのミニ立ち絵")).toHaveLength(2)
+  })
+
+  it("ミニ立ち絵を消す口を押すと characterPack.clearMini を dispatch する", () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(
+      { ...FIXTURE_CHARACTER, mini: "/character/mini.png?v=fictional@1", hasOwnMini: true },
+      (command) => calls.push(command),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "ミニ立ち絵を消す" }))
+
+    expect(calls).toEqual([{ procedure: "characterPack.clearMini", pack: "fictional" }])
+  })
+
+  it("ミニ立ち絵を選ぶと data URL を載せた characterPack.setMini を dispatch し、入力欄を空に戻す", async () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+    const input = typedElement(
+      screen.getByLabelText("ミニ立ち絵を差し替える"),
+      HTMLInputElement,
+      "ミニ立ち絵を差し替えるの入力欄",
+    )
+
+    fireEvent.change(input, {
+      target: { files: [new File(["png"], "mini.png", { type: "image/png" })] },
+    })
+
+    await waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setMini",
+          pack: "fictional",
+          image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+        },
+      ])
+    })
+    expect(input.value).toBe("")
+  })
+
+  it("ミニ立ち絵の書き込みが断られたら、欄の下に受け付ける種類と 2 MiB の上限を言う一言を出す", async () => {
+    renderCharacterEdit(FIXTURE_CHARACTER, () => Promise.reject(new Error("断り")))
+
+    fireEvent.change(screen.getByLabelText("ミニ立ち絵を差し替える"), {
+      target: { files: [new File(["png"], "mini.png", { type: "image/png" })] },
+    })
+
+    expect(await screen.findByText(/ミニ立ち絵は SVG・PNG・GIF の 2 MiB までの画像/u)).toBeDefined()
+  })
+
+  it("画面から変えられないパックでは、ミニ立ち絵の差し替える・消すが押せない", () => {
+    renderCharacterEdit({
+      ...FIXTURE_CHARACTER,
+      mini: "/character/mini.png?v=fictional@1",
+      hasOwnMini: true,
+      editable: false,
+    })
+
+    expect(
+      typedElement(
+        screen.getByLabelText("ミニ立ち絵を差し替える"),
+        HTMLInputElement,
+        "ミニ立ち絵を差し替えるの入力欄",
+      ).disabled,
+    ).toBe(true)
+    expect(
+      screen.getByRole("button", { name: "ミニ立ち絵を消す" }).getAttribute("aria-disabled"),
+    ).toBe("true")
+  })
+
   it("立ち絵の書き込みが断られたら、その表情のカードの下に上限を言う一言を出す", async () => {
     renderCharacterEdit(FIXTURE_CHARACTER, () => Promise.reject(new Error("断り")))
 

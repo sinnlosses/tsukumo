@@ -4,9 +4,11 @@ import {
   definitionWithAccent,
   definitionWithBackground,
   definitionWithFace,
+  definitionWithMini,
   definitionWithoutBackground,
   definitionWithoutChatAccent,
   definitionWithoutFace,
+  definitionWithoutMini,
   definitionWithoutPortrait,
   definitionWithPortrait,
   parseCharacterDefinition,
@@ -252,6 +254,26 @@ describe("definitionWithBackground / definitionWithoutBackground", () => {
 
     expect(parseCharacterDefinition(edited)?.background).toBeUndefined()
     expect(JSON.parse(edited)["background"]).toEqual({ veil: 0.9 })
+  })
+})
+
+describe("definitionWithMini / definitionWithoutMini", () => {
+  it("ミニ立ち絵の素材を差し替え、ほかのキーは残す", () => {
+    const edited = definitionWithMini(FULL_DEFINITION_JSON, "mini.png")
+    const definition = parseCharacterDefinition(edited)
+
+    expect(definition?.mini).toBe("mini.png")
+    expect(definition?.name).toBe("架空の精霊")
+    expect(definition?.portraits.default).toBe("default.svg")
+  })
+
+  it("外すとミニ立ち絵なしになり、ほかのキーは残す", () => {
+    const withMini = JSON.stringify({ mini: "old.png", miniCall: "使い魔", face: "face.png" })
+    const definition = parseCharacterDefinition(definitionWithoutMini(withMini))
+
+    expect(definition?.mini).toBeUndefined()
+    expect(definition?.miniCall).toBe("使い魔")
+    expect(definition?.face).toBe("face.png")
   })
 })
 

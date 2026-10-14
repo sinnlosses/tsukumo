@@ -5,7 +5,7 @@
 // ここは既にある名前とぶつかったら書かないことだけを見る（後勝ちで既存のパックが黙って隠れないため）。
 //
 // ファイル名を外から受け取らない。
-// 立ち絵の名前は表情と形式から、背景の名前は形式だけから組み立てるので、届いた文字列がパスの一部になる経路がそもそも無い。
+// 立ち絵の名前は表情と形式から、ミニ立ち絵・背景・顔の名前は形式だけから組み立てるので、届いた文字列がパスの一部になる経路がそもそも無い。
 //
 // 書き込む先のパックはコマンドの `pack` で指す（使用中のパックに限らない）。
 // 名前は一覧と突き合わせて引くだけで、パスには使わない（書く先はホームの下の、引けたパックの名前）。
@@ -29,10 +29,12 @@ import {
   definitionWithAccent,
   definitionWithBackground,
   definitionWithFace,
+  definitionWithMini,
   definitionWithName,
   definitionWithoutBackground,
   definitionWithoutChatAccent,
   definitionWithoutFace,
+  definitionWithoutMini,
   definitionWithoutPortrait,
   definitionWithPortrait,
   definitionWithTagline,
@@ -43,6 +45,11 @@ import {
   faceFileName,
   parseFaceImage,
 } from "../../../shared/character-pack/character-face.ts"
+import {
+  type MiniImage,
+  miniFileName,
+  parseMiniImage,
+} from "../../../shared/character-pack/character-mini.ts"
 import type { CharacterPackRemoval } from "../../../shared/character-pack/character.ts"
 import {
   type Expression,
@@ -257,11 +264,15 @@ function applyEdit(dir: string, edit: CharacterEdit): boolean {
       return applyImageEdit(dir, definitionPath, content, faceClearEdit())
     case "setFace":
       return applyImageEdit(dir, definitionPath, content, faceSetEdit(edit.image))
+    case "clearMini":
+      return applyImageEdit(dir, definitionPath, content, miniClearEdit())
+    case "setMini":
+      return applyImageEdit(dir, definitionPath, content, miniSetEdit(edit.image))
   }
 }
 
 /**
- * 立ち絵・背景・顔で違う部分だけをまとめた操作。
+ * 立ち絵・ミニ立ち絵・背景・顔で違う部分だけをまとめた操作。
  * `set` と `clear` を1つの型に同居させないのは、立ち絵で受け取れる表情が違うから（消去は `default` を除いた {@link RemovableExpression}、差し替えは {@link Expression}）。
  */
 type ImageEdit<Image extends { readonly base64: string; readonly format: string }> =
@@ -383,6 +394,27 @@ function faceClearEdit(): ImageEdit<FaceImage> {
   }
 }
 
+/** ミニ立ち絵の差し替え（パックに1つだけなので表情を受け取らない）。 */
+function miniSetEdit(image: string): ImageEdit<MiniImage> {
+  return {
+    kind: "set",
+    image,
+    parseImage: parseMiniImage,
+    fileName: (mini) => miniFileName(mini.format),
+    previousFileName: miniFileNameOf,
+    withImage: definitionWithMini,
+  }
+}
+
+/** ミニ立ち絵の消去。 */
+function miniClearEdit(): ImageEdit<MiniImage> {
+  return {
+    kind: "clear",
+    previousFileName: miniFileNameOf,
+    withoutImage: definitionWithoutMini,
+  }
+}
+
 /** 書き換える前の、その表情の立ち絵のファイル名（定義が無い・読めないときは undefined）。 */
 function portraitFileNameOf(
   content: string | undefined,
@@ -401,6 +433,11 @@ function backgroundFileNameOf(content: string | undefined): string | undefined {
 /** 書き換える前の顔のファイル名（定義が無い・顔が無いときは undefined）。 */
 function faceFileNameOf(content: string | undefined): string | undefined {
   return content === undefined ? undefined : parseCharacterDefinition(content)?.face
+}
+
+/** 書き換える前のミニ立ち絵のファイル名（定義が無い・`mini` が無いときは undefined）。 */
+function miniFileNameOf(content: string | undefined): string | undefined {
+  return content === undefined ? undefined : parseCharacterDefinition(content)?.mini
 }
 
 /**

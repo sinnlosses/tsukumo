@@ -1,5 +1,5 @@
 // キャラクター画面の右側、選んでいるパックの詳しい設定の器。
-// 上から 名乗り → 顔 → 表情の格子 → 差し色（画面の差し色と立ち絵の差し色を横に並べる） → 背景。
+// 上から 名乗り → 顔 → ミニ立ち絵 → 表情の格子 → 差し色（画面の差し色と立ち絵の差し色を横に並べる） → 背景。
 
 import type { ReactElement } from "react"
 
@@ -43,6 +43,21 @@ export function PresentationalCharacterEdit(
           <span id="character-face">顔</span>
         </Heading>
         <ImageField field={props.face} disabled={props.disabled} />
+      </VStack>
+      <VStack
+        element="section"
+        name={{ kind: "labelledby", id: "character-mini" }}
+        ref={undefined}
+        gap="md"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className={styles["character-section"]}
+      >
+        <Heading level={2} size="body" tone="inherit" weight="bold" className="">
+          <span id="character-mini">ミニ立ち絵</span>
+        </Heading>
+        <ImageField field={props.mini} disabled={props.disabled} />
       </VStack>
       <VStack
         element="section"

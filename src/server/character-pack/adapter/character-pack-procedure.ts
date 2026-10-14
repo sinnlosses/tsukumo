@@ -70,6 +70,12 @@ export function characterPackProcedure(ports: CharacterPackCommandPorts) {
     clearFace: procedure.clearFace.handler(({ input, context, errors }) =>
       refusedUnlessAccepted(receiveFeatureCommand(table.clearFace, input, context.session), errors),
     ),
+    setMini: procedure.setMini.handler(({ input, context, errors }) =>
+      refusedUnlessAccepted(receiveFeatureCommand(table.setMini, input, context.session), errors),
+    ),
+    clearMini: procedure.clearMini.handler(({ input, context, errors }) =>
+      refusedUnlessAccepted(receiveFeatureCommand(table.clearMini, input, context.session), errors),
+    ),
     create: procedure.create.handler(({ input, context, errors }) =>
       refusedUnlessAccepted(receiveFeatureCommand(table.create, input, context.session), errors),
     ),

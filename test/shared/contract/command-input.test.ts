@@ -224,6 +224,24 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     ).toBeUndefined()
   })
 
+  it("characterPack.setMini / characterPack.clearMini は書き込む先のパックと data URL を受け付ける", () => {
+    expect(
+      parseInput("characterPack.setMini", { pack: "fictional", image: TINY_PNG_DATA_URL }),
+    ).toEqual({
+      pack: "fictional",
+      image: TINY_PNG_DATA_URL,
+    })
+    expect(parseInput("characterPack.clearMini", { pack: "fictional" })).toEqual({
+      pack: "fictional",
+    })
+    expect(
+      parseInput("characterPack.setMini", {
+        pack: "fictional",
+        image: "https://example.com/mini.png",
+      }),
+    ).toBeUndefined()
+  })
+
   it("characterPack.clearPortrait は必須でない表情（thinking / proud / flustered）だけを受け付ける", () => {
     expect(
       parseInput("characterPack.clearPortrait", { pack: "fictional", expression: "thinking" }),

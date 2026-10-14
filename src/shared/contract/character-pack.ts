@@ -1,4 +1,4 @@
-// キャラクターパックのコマンドの契約。見た目と人格の編集10種と、作る・消すの2種と、作る前に欄を埋める生成の1種。
+// キャラクターパックのコマンドの契約。見た目と人格の編集12種と、作る・消すの2種と、作る前に欄を埋める生成の1種。
 // どれも駆動には渡らない（書き込みと `character-changed` の流し直しで済むので、使用中のパックを変えたときもセッションは起こし直さない）。
 
 import { z } from "zod"
@@ -15,6 +15,7 @@ import {
   MAX_CHARACTER_TAGLINE_LENGTH,
 } from "../character-pack/character-definition.ts"
 import { MAX_FACE_DATA_URL_LENGTH, parseFaceImage } from "../character-pack/character-face.ts"
+import { MAX_MINI_DATA_URL_LENGTH, parseMiniImage } from "../character-pack/character-mini.ts"
 import { isCharacterPackName } from "../character-pack/character.ts"
 import {
   type Expression,
@@ -59,6 +60,12 @@ const faceDataUrlSchema = z
   .string()
   .max(MAX_FACE_DATA_URL_LENGTH)
   .refine((value) => parseFaceImage(value) !== undefined)
+
+/** レポートの筆先に添うミニ立ち絵1枚の data URL。受け取るのは立ち絵と同じ `.svg` / `.png` / `.gif` の3つだけ。 */
+const miniDataUrlSchema = z
+  .string()
+  .max(MAX_MINI_DATA_URL_LENGTH)
+  .refine((value) => parseMiniImage(value) !== undefined)
 
 /**
  * 生成に渡す立ち絵1枚の data URL。
@@ -112,7 +119,7 @@ const accentTargetSchema = z.custom<AccentTarget>(
 )
 
 /**
- * 見た目と人格の編集10種の入力。書き込む先は `pack` で指す（使用中のパックに限らない）。
+ * 見た目と人格の編集12種の入力。書き込む先は `pack` で指す（使用中のパックに限らない）。
  * 手続きの名前がそのまま {@link CharacterEdit} の `kind` になる。
  */
 const characterEditInput = {
@@ -156,6 +163,9 @@ const characterEditInput = {
   /** 帯の左端・一覧の丸・名乗りの大きな丸に出す顔を差し替える／外す。 */
   setFace: z.object({ pack: editedCharacterPackNameSchema, image: faceDataUrlSchema }),
   clearFace: z.object({ pack: editedCharacterPackNameSchema }),
+  /** レポートの筆先に添うミニ立ち絵を差し替える／外す。外すと表示は `portraits.default` の縮小に落ちる。 */
+  setMini: z.object({ pack: editedCharacterPackNameSchema, image: miniDataUrlSchema }),
+  clearMini: z.object({ pack: editedCharacterPackNameSchema }),
 }
 
 type CharacterEditInput = typeof characterEditInput
@@ -209,6 +219,8 @@ export const characterPackContract = {
   clearBackground: commandBase.input(characterEditInput.clearBackground),
   setFace: commandBase.input(characterEditInput.setFace),
   clearFace: commandBase.input(characterEditInput.clearFace),
+  setMini: commandBase.input(characterEditInput.setMini),
+  clearMini: commandBase.input(characterEditInput.clearMini),
   create: commandBase.input(characterCreateInput),
   /** ターン中も受け付ける（使用中のパックは消せないので、いまの会話には触らない）。 */
   delete: commandBase.input(characterDeleteInput),
