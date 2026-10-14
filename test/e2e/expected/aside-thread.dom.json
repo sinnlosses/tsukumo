@@ -147,7 +147,8 @@
                                 {
                                   "tag": "li",
                                   "attributes": {
-                                    "data-phase-state": "current"
+                                    "data-phase-state": "current",
+                                    "data-spinning": "true"
                                   },
                                   "children": [
                                     {

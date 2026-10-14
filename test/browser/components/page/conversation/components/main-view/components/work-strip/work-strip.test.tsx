@@ -117,7 +117,7 @@ describe("WorkStrip", () => {
     expect(strip().querySelector("p")?.textContent).toContain("再試行中 2/10")
   })
 
-  it("ターンが終わって背景のタスクだけ残るあいだは、チップが「背景で作業中」を回さない点で言う", () => {
+  it("ターンが終わって背景のタスクだけ残るあいだは、チップが「背景で作業中」の点で言い、弧は今の段の丸にだけ付く", () => {
     putSession(
       stateAfter([
         REQUEST,
@@ -137,7 +137,9 @@ describe("WorkStrip", () => {
     expect(chip?.textContent).toBe("背景で作業中")
     expect(chip?.querySelector("[class*='work-strip-spinner']")).toBeNull()
     expect(chip?.querySelector("[class*='work-strip-dot']")).not.toBeNull()
-    expect(strip().querySelector("[data-spinning]")).toBeNull()
+    const spinning = strip().querySelectorAll("[data-spinning]")
+    expect(spinning).toHaveLength(1)
+    expect(spinning[0]?.getAttribute("data-phase-state")).toBe("current")
   })
 
   it("作業中のチップは回らない点だけで、弧は今の段の丸にだけ付く", () => {

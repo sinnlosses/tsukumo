@@ -546,7 +546,7 @@ describe("useWorkStrip（回る弧）", () => {
     expect(spinningOf(strip)).toEqual([false, false])
   })
 
-  it("背景で作業中のあいだは回らない", () => {
+  it("背景で作業中のあいだも今の段の丸だけが回る", () => {
     const strip = stripAt(
       foldTimed([
         [request, START],
@@ -564,7 +564,7 @@ describe("useWorkStrip（回る弧）", () => {
     )
 
     expect(strip).toMatchObject({ kind: "working", result: "background" })
-    expect(spinningOf(strip)).toEqual([false, false])
+    expect(spinningOf(strip)).toEqual([true, false])
   })
 
   it("段取りが届く前は丸が無い", () => {

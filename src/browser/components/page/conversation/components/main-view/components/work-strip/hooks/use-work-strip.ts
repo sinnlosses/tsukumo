@@ -229,7 +229,7 @@ export function useWorkStrip(): WorkStripModel {
     planned,
     {
       asking: working && firstPending !== undefined,
-      spinning: working && result === "working",
+      spinning: working && (result === "working" || result === "background"),
     },
     {
       popover,
