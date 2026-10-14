@@ -310,6 +310,9 @@ const filesBlockSchema = z
         }),
       )
       .min(1),
+    title: inlineText
+      .default("")
+      .describe("何のファイルの一覧か（パスは写さない）。空なら題も番号も出ない"),
     fold,
   })
   .describe("触った・読んだファイルの一覧")

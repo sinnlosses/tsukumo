@@ -277,7 +277,16 @@ function blockMarkdown(
     case "image":
       return imageMarkdown(block, imageSource, ordinal)
     case "files":
-      return filesMarkdown(block)
+      return ordinal === 0
+        ? filesMarkdown(block)
+        : captionedMarkdown({
+            kind: "figure",
+            ordinal,
+            title: block.title,
+            body: filesMarkdown(block),
+            bodyFormat: "html",
+            fit: false,
+          })
     case "markdown":
       return block.markdown
   }
@@ -298,6 +307,8 @@ function captionKindOf(block: ReportBlock): CaptionKind | undefined {
     case "table":
     case "matrix":
       return "table"
+    case "files":
+      return block.title.trim() === "" ? undefined : "figure"
     default:
       return undefined
   }

@@ -711,6 +711,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
               { path: "src/foo.ts", change: "modified", note: "架空の注記" },
               { path: "src/gone.ts", change: "deleted", note: "" },
             ],
+            title: "",
             fold: "",
           },
         ],

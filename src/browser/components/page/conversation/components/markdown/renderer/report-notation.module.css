@@ -610,7 +610,7 @@
   color: color-mix(in srgb, var(--ink-quiet), transparent 20%);
 }
 /* 触ったファイルの一覧（`report` の `files` の塊から tsukumo が組む）。
-   頭に種別ごとの合計の札を右寄せで並べ、1行に1ファイルで種別・パス・注記を列に揃える（行を subgrid にする）。
+   頭に種別ごとの合計の札を左寄せで並べ、1行に1ファイルで種別・パス・注記を列に揃える（行を subgrid にする）。
    狭い画面では注記をパスの下へ回す（末尾の @media）。 */
 .detail-block .report-files {
   display: grid;
@@ -621,7 +621,7 @@
 .detail-block .report-files-summary {
   grid-column: 1 / -1;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 6px;
 }
 .detail-block .report-file {

@@ -69,6 +69,7 @@ describe("reportUsageEntryOf", () => {
     const files = (change: "modified" | "read"): ReportBlock => ({
       kind: "files",
       items: [{ path: "架空/a.ts", change, note: "" }],
+      title: "",
       fold: "",
     })
     const beforeAfter: ReportBlock = {

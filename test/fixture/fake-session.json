@@ -1616,6 +1616,15 @@
                       }
                     ],
                     "fold": ""
+                  },
+                  {
+                    "kind": "files",
+                    "items": [
+                      { "path": "out/dummy/a.txt", "change": "added", "note": "架空の説明" },
+                      { "path": "out/dummy/b.png", "change": "added", "note": "" }
+                    ],
+                    "title": "架空の構成図のファイル",
+                    "fold": ""
                   }
                 ]
               }

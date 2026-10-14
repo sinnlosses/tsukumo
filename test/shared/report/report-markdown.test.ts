@@ -628,6 +628,7 @@ describe("reportSectionsMarkdown", () => {
         { path: "src/架空c.ts", change: "deleted", note: "" },
         { path: "docs/架空d.md", change: "read", note: "" },
       ],
+      title: "",
       fold: "",
     }
     const badge = (symbol: string, className: string, label: string): string =>
@@ -665,10 +666,37 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("files に title があれば、塊の下に「図 n」の題を付けて番号を既存の図と通しで数える。title が空なら番号を数えない", () => {
+    const files = (title: string): ReportBlock => ({
+      kind: "files",
+      items: [{ path: "a.md", change: "read", note: "" }],
+      title,
+      fold: "",
+    })
+    const stats: ReportBlock = {
+      kind: "stats",
+      items: [{ before: "", value: "1", total: "", label: "架空" }],
+      fold: "",
+    }
+    const bare = markdownOf(files(""))
+
+    expect(bare.startsWith('<div class="files">')).toBe(true)
+    expect(bare).not.toContain("caption")
+
+    const markdown = reportSectionsMarkdown(
+      [section([stats, files(""), files("架空の一覧"), stats])],
+      NO_IMAGES,
+    )
+    expect(markdown).toContain(`${bare}\n\n<div class="captioned"><div class="files">`)
+    expect(markdown).toContain(`${captionRow("図", 2, "架空の一覧")}</div>`)
+    expect(markdown).toContain(captionRow("図", 3))
+  })
+
   it("files のフォルダの無いパスだけの塊は、罫もフォルダの行も出さず平らな行にする", () => {
     const files: ReportBlock = {
       kind: "files",
       items: [{ path: "a.md", change: "read", note: "" }],
+      title: "",
       fold: "",
     }
 
