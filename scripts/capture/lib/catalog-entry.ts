@@ -569,7 +569,10 @@ export const CATALOG: readonly CatalogEntry[] = [
     label: "キャラクターを作る画面",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
-    prepare: [{ kind: "hash", hash: "#character/new" }],
+    prepare: [
+      { kind: "hash", hash: "#character" },
+      { kind: "click", selector: `[class*="character-list-new_"]` },
+    ],
     skipReveal: false,
     settle: TAIL_SETTLE,
   },
