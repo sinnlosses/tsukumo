@@ -380,22 +380,6 @@
                       "children": [
                         "ターミナルという道具に宿った小さな精霊"
                       ]
-                    },
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      },
-                      "children": [
-                        "変える"
-                      ]
-                    },
-                    {
-                      "tag": "select",
-                      "attributes": {
-                        "aria-label": "キャラクターを変える",
-                        "value": "tsukumo-spirit"
-                      }
                     }
                   ]
                 },
@@ -724,6 +708,8 @@
                         "aria-hidden": "true"
                       }
                     },
+                    "所要",
+                    "0秒",
                     {
                       "tag": "button",
                       "attributes": {
@@ -738,8 +724,6 @@
                         "新規"
                       ]
                     },
-                    "所要",
-                    "0秒",
                     {
                       "tag": "button",
                       "attributes": {

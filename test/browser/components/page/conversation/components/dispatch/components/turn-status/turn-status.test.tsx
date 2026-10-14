@@ -40,7 +40,7 @@ function renderTurnStatus(
   dispatch: CommandSpy = () => {},
 ): void {
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
-  render(<TurnStatus />)
+  render(<TurnStatus betweenElapsedAndAction={undefined} />)
 }
 
 describe("TurnStatus", () => {

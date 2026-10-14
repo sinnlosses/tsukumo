@@ -265,22 +265,25 @@ export function PresentationalComposer({
         />
         <div className={styles["dispatch-toolbar-end"]}>
           <span className={styles["dispatch-toolbar-divider"]} aria-hidden="true" />
-          <Button
-            variant="outline-accent"
-            size="secondary"
-            pressed="none"
-            disabled={newSession.disabled}
-            ariaLabel={NEW_SESSION_LABEL}
-            disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title={newSession.title}
-            className={styles["dispatch-new-session"]}
-            onClick={newSession.onStart}
-          >
-            <Plus size={14} strokeWidth={2} aria-hidden="true" />
-            <span className={styles["dispatch-new-session-label"]}>新規</span>
-          </Button>
-          <TurnStatus />
+          <TurnStatus
+            betweenElapsedAndAction={
+              <Button
+                variant="outline-accent"
+                size="secondary"
+                pressed="none"
+                disabled={newSession.disabled}
+                ariaLabel={NEW_SESSION_LABEL}
+                disclosure={{ kind: "none" }}
+                ariaHasPopup={undefined}
+                title={newSession.title}
+                className={styles["dispatch-new-session"]}
+                onClick={newSession.onStart}
+              >
+                <Plus size={14} strokeWidth={2} aria-hidden="true" />
+                <span className={styles["dispatch-new-session-label"]}>新規</span>
+              </Button>
+            }
+          />
         </div>
       </div>
     </form>

@@ -4,7 +4,7 @@
 // 送るほう（`action.kind === "send"`）は `type="submit"` で、押すと Composer の `onSubmit` がそのまま依頼を送る。
 
 import clsx from "clsx"
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
@@ -88,7 +88,10 @@ export function PresentationalPhoneTurnAction(props: PhoneTurnActionModel): Reac
 /** Command+Enter で送信できることを示す記号（`dispatch.module.css` が `::after` で描く）。 */
 const SEND_SHORTCUT_HINT = "⌘⏎"
 
-export type PresentationalTurnStatusProps = TurnStatusModel
+export type PresentationalTurnStatusProps = TurnStatusModel & {
+  /** 経過の右、送信⇄中断の左に挟むもの（道具の行の「新規」）。 */
+  readonly betweenElapsedAndAction: ReactNode
+}
 
 export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): ReactElement {
   return (
@@ -139,6 +142,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           </Text>
         </Text>
       )}
+      {props.betweenElapsedAndAction}
       {props.action.kind === "interrupt" ? (
         <Button
           variant="outline-hover-danger"
