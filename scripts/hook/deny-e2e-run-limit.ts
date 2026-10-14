@@ -6,11 +6,11 @@
 // hook の約束: 終了コード 2 で Bash の実行を止め、stderr の中身がモデルへ返る。
 // それ以外の終了コードでは実行を止めない（判定に失敗したときは通す）。
 
-import { execFileSync } from "node:child_process"
 import process from "node:process"
 
 import { collectChangedPaths, PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
 import { planE2eRun } from "../shared/e2e-selection-repository.ts"
+import { queryGit } from "../shared/git-query.ts"
 import { readTwVerifyCommand } from "../shared/verify-command-repository.ts"
 import {
   countE2eRuns,
@@ -66,13 +66,5 @@ async function readChangeRunsE2e(): Promise<boolean> {
 }
 
 function readGit(args: readonly string[]): string | undefined {
-  try {
-    return execFileSync("git", [...args], {
-      cwd: process.env["CLAUDE_PROJECT_DIR"] ?? process.cwd(),
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim()
-  } catch {
-    return undefined
-  }
+  return queryGit(process.env["CLAUDE_PROJECT_DIR"] ?? process.cwd(), args)?.trim()
 }

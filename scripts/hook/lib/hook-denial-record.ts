@@ -4,10 +4,11 @@
 // 置き場は共有の git dir の `hook-denials/<年-月>.jsonl`（作業ツリーをまたいで1つ。コミットしない）。
 // 書き込みの失敗は黙って握りつぶす。hook の終了コードと stderr を変えないため。
 
-import { execFileSync } from "node:child_process"
 import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
+
+import { readGitCommonDirectory } from "../../shared/git-common-directory.ts"
 
 const DIRECTORY_NAME = "hook-denials"
 
@@ -76,14 +77,6 @@ function parseDenial(line: string): readonly HookDenial[] {
 }
 
 function denialDirectory(): string {
-  const commonDir = execFileSync(
-    "git",
-    ["rev-parse", "--path-format=absolute", "--git-common-dir"],
-    {
-      cwd: process.env["CLAUDE_PROJECT_DIR"] ?? process.cwd(),
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    },
-  ).trim()
+  const commonDir = readGitCommonDirectory(process.env["CLAUDE_PROJECT_DIR"] ?? process.cwd())
   return join(commonDir, DIRECTORY_NAME)
 }

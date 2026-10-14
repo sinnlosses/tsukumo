@@ -2,10 +2,11 @@
 // 錠は共有の git dir のファイル1つで、中身は持ち主の pid。持ち主が死んでいれば奪う。
 // 奪うときの読み直しと消去の間は排他でないので、同時に奪う2者のうち遅い側が相手の新しい錠を消すことがある。
 
-import { execFileSync } from "node:child_process"
 import { readFileSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
+
+import { readGitCommonDirectory } from "../../shared/git-common-directory.ts"
 
 const LOCK_FILE_NAME = "e2e-full-lock"
 
@@ -34,12 +35,7 @@ export const REAL_LOCK_ENVIRONMENT = {
 
 /** 作業ツリーをまたいで共有される錠のパス（git の共通 dir の中）。 */
 export function sharedLockPath(root: string): string {
-  const commonDir = execFileSync(
-    "git",
-    ["rev-parse", "--path-format=absolute", "--git-common-dir"],
-    { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
-  ).trim()
-  return join(commonDir, LOCK_FILE_NAME)
+  return join(readGitCommonDirectory(root), LOCK_FILE_NAME)
 }
 
 /**
