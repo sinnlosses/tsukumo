@@ -30,10 +30,13 @@ export type CurrentWorkStepFailure =
 /**
  * 手順を始まったときの段で区切った1まとまり。
  * 小見出しは「2/4 段の名前」で、段取りより前・全部の段を終えたあとの手順は小見出しを持たない。
+ * `phaseIndexes` は小見出しの段の平らにした並びでの位置（{@link WorkPhase} の `indexes`）。
  */
 export type CurrentWorkStepGroup = {
   readonly key: string
-  readonly heading: { readonly kind: "none" } | { readonly kind: "phase"; readonly label: string }
+  readonly heading:
+    | { readonly kind: "none" }
+    | { readonly kind: "phase"; readonly label: string; readonly phaseIndexes: readonly number[] }
   readonly steps: readonly CurrentWorkStep[]
 }
 
@@ -108,7 +111,9 @@ function backgroundTaskLabel(task: BackgroundTask): string {
 }
 
 function stepGroupHeading(phase: WorkPhase): CurrentWorkStepGroup["heading"] {
-  return phase.kind === "phase" ? { kind: "phase", label: phaseLabel(phase) } : { kind: "none" }
+  return phase.kind === "phase"
+    ? { kind: "phase", label: phaseLabel(phase), phaseIndexes: phase.indexes }
+    : { kind: "none" }
 }
 
 function sameHeading(

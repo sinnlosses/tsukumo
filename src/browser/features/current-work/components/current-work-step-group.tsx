@@ -20,15 +20,17 @@ export function CurrentWorkStepGroup(props: {
   return (
     <>
       {group.heading.kind === "phase" && (
-        <Text
-          element="p"
-          size="inherit"
-          tone="inherit"
-          weight="semibold"
-          className={styles["current-work-phase-heading"]}
-        >
-          {group.heading.label}
-        </Text>
+        <div data-phase-indexes={group.heading.phaseIndexes.join(" ")}>
+          <Text
+            element="p"
+            size="inherit"
+            tone="inherit"
+            weight="semibold"
+            className={styles["current-work-phase-heading"]}
+          >
+            {group.heading.label}
+          </Text>
+        </div>
       )}
       <ul className={styles["current-work-steps"]}>
         {group.steps.map((step) => (

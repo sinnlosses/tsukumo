@@ -111,17 +111,26 @@
                                 {
                                   "tag": "li",
                                   "attributes": {
-                                    "data-phase-state": "done",
-                                    "aria-label": "1. 今の形を調べる（済）"
+                                    "data-phase-state": "done"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "button",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "aria-label": "1. 今の形を調べる（済）",
+                                        "aria-expanded": "false",
+                                        "type": "button"
                                       },
                                       "children": [
-                                        "✓"
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "✓"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
@@ -130,17 +139,26 @@
                                   "tag": "li",
                                   "attributes": {
                                     "data-phase-state": "current",
-                                    "aria-label": "2. 集計の関数とスクリプト（今の段）",
                                     "data-spinning": "true"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "button",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "aria-label": "2. 集計の関数とスクリプト（今の段）",
+                                        "aria-expanded": "false",
+                                        "type": "button"
                                       },
                                       "children": [
-                                        "2"
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "2"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
@@ -148,17 +166,26 @@
                                 {
                                   "tag": "li",
                                   "attributes": {
-                                    "data-phase-state": "upcoming",
-                                    "aria-label": "3. 画面につなぐ"
+                                    "data-phase-state": "upcoming"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "button",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "aria-label": "3. 画面につなぐ",
+                                        "aria-expanded": "false",
+                                        "type": "button"
                                       },
                                       "children": [
-                                        "3"
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "3"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
@@ -166,17 +193,26 @@
                                 {
                                   "tag": "li",
                                   "attributes": {
-                                    "data-phase-state": "upcoming",
-                                    "aria-label": "4. 文書と検証を揃える"
+                                    "data-phase-state": "upcoming"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "button",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "aria-label": "4. 文書と検証を揃える",
+                                        "aria-expanded": "false",
+                                        "type": "button"
                                       },
                                       "children": [
-                                        "4"
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "4"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]

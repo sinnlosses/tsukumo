@@ -41,6 +41,7 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
       kind: "turn",
       steps: [],
       plan: { kind: "none" },
+      plans: [],
     })
   })
 
@@ -230,6 +231,7 @@ describe("currentTurnSteps（report ツール）", () => {
       kind: "turn",
       steps: [],
       plan: { kind: "none" },
+      plans: [],
     })
   })
 })
@@ -295,8 +297,26 @@ describe("currentTurnSteps（段取り）", () => {
       false,
     )
 
-    expect(list).toMatchObject({ plan: { kind: "none" } })
+    expect(list).toMatchObject({ plan: { kind: "none" }, plans: [] })
     expect(turnSteps(list)[0]?.phase).toEqual({ kind: "none" })
+  })
+
+  it("plans はその依頼の work-plan の記録を積まれた順に持つ", () => {
+    const first = workPlanRecord({ current: 0 })
+    const second = workPlanRecord({ current: 1, phaseSummary: "まとめ" })
+    const list = currentTurnSteps(
+      [
+        requestRecord({ turnId: 0 }),
+        workPlanRecord({ current: 1 }),
+        requestRecord({ turnId: 1 }),
+        first,
+        toolRecord({ toolUseId: "toolu_a" }),
+        second,
+      ],
+      false,
+    )
+
+    expect(list).toMatchObject({ plans: [first, second] })
   })
 
   it("脇の話を挟んでも、段取りと手順は親の依頼のまま続く", () => {

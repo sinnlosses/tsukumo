@@ -120,17 +120,26 @@
                                 {
                                   "tag": "li",
                                   "attributes": {
-                                    "data-phase-state": "done",
-                                    "aria-label": "1. 計画を確かめる（済）"
+                                    "data-phase-state": "done"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "button",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "aria-label": "1. 計画を確かめる（済）",
+                                        "aria-expanded": "false",
+                                        "type": "button"
                                       },
                                       "children": [
-                                        "✓"
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "✓"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
@@ -138,17 +147,26 @@
                                 {
                                   "tag": "li",
                                   "attributes": {
-                                    "data-phase-state": "current",
-                                    "aria-label": "2. 委譲先に任せる（今の段）"
+                                    "data-phase-state": "current"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "button",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "aria-label": "2. 委譲先に任せる（今の段）",
+                                        "aria-expanded": "false",
+                                        "type": "button"
                                       },
                                       "children": [
-                                        "2"
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "2"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
@@ -156,17 +174,26 @@
                                 {
                                   "tag": "li",
                                   "attributes": {
-                                    "data-phase-state": "upcoming",
-                                    "aria-label": "3. 受け入れる"
+                                    "data-phase-state": "upcoming"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "button",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "aria-label": "3. 受け入れる",
+                                        "aria-expanded": "false",
+                                        "type": "button"
                                       },
                                       "children": [
-                                        "3"
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "3"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]

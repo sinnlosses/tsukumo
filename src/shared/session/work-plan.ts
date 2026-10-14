@@ -319,15 +319,8 @@ export function currentPhaseOf(plan: LatestWorkPlan): WorkPhase {
  *   戻った・組み替えただけで前の今の段が済んでいない（今の段以降にある・並びから消えた）ときは出さない
  */
 export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShift {
-  if (previous.kind === "none" || currentPhaseOf({ kind: "planned", ...next }).kind === "none") {
-    return NO_PHASE_SHIFT
-  }
-  const nextPhases = plannedPhasesOf(next)
-  const finished = plannedPhasesOf(previous)
-    .filter((phase) => phase.state === "current")
-    .map((phase) => nextPhases.find((candidate) => candidate.key === phase.key))
-    .find((found) => found?.state === "done")
-  if (finished === undefined || isBlankText(next.phaseSummary)) {
+  const shifted = shiftedPhaseOf(previous, next)
+  if (shifted.kind === "none") {
     return NO_PHASE_SHIFT
   }
   return {
@@ -335,14 +328,38 @@ export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShi
       kind: "finished",
       label: phaseLabel({
         kind: "phase",
-        indexes: [finished.index],
-        count: nextPhases.length,
-        name: finished.name,
+        indexes: [shifted.phase.index],
+        count: phaseCount(next.phases),
+        name: shifted.phase.name,
         range: next.delegatedRange,
       }),
-      summary: next.phaseSummary,
+      summary: shifted.summary,
     },
   }
+}
+
+/**
+ * `previous` から `next` へ移ったときに済んだ段（`next` の並びの段）とそのまとめ。
+ * 出す・出さないの条件は {@link phaseShiftOf} と同じで、出さないときは `none`。
+ */
+export function shiftedPhaseOf(
+  previous: LatestWorkPlan,
+  next: WorkPlan,
+):
+  | { readonly kind: "none" }
+  | { readonly kind: "finished"; readonly phase: PlannedPhase; readonly summary: string } {
+  if (previous.kind === "none" || currentPhaseOf({ kind: "planned", ...next }).kind === "none") {
+    return NO_SHIFTED_PHASE
+  }
+  const nextPhases = plannedPhasesOf(next)
+  const finished = plannedPhasesOf(previous)
+    .filter((phase) => phase.state === "current")
+    .map((phase) => nextPhases.find((candidate) => candidate.key === phase.key))
+    .find((found) => found?.state === "done")
+  if (finished === undefined || isBlankText(next.phaseSummary)) {
+    return NO_SHIFTED_PHASE
+  }
+  return { kind: "finished", phase: finished, summary: next.phaseSummary }
 }
 
 /**
@@ -473,6 +490,8 @@ const PHASE_NAME_SEPARATOR = "・"
 const NO_PHASE_SHIFT = {
   finished: { kind: "none" },
 } as const satisfies PhaseShift
+
+const NO_SHIFTED_PHASE = { kind: "none" } as const
 
 /**
  * 委譲の返却 `段 n/N` で進めた段取り。

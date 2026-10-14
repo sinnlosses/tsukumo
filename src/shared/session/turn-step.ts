@@ -74,7 +74,7 @@ export function toolRecordDuration(
 
 /**
  * {@link currentTurnSteps} の戻り値。「依頼が一度も無い」と「依頼はあるが手順が0件」を
- * 分ける（帯の一覧では出す文面が違う）。`plan` はその依頼で最後に渡された段取り。
+ * 分ける（帯の一覧では出す文面が違う）。`plan` はその依頼で最後に渡された段取り、`plans` はその依頼の `work-plan` の記録（積まれた順）。
  */
 export type TurnStepList =
   | { readonly kind: "no-request" }
@@ -82,6 +82,7 @@ export type TurnStepList =
       readonly kind: "turn"
       readonly steps: readonly TurnStep[]
       readonly plan: LatestWorkPlan
+      readonly plans: readonly Extract<SessionRecord, { readonly kind: "work-plan" }>[]
     }
 
 /**
@@ -103,15 +104,17 @@ export function currentTurnSteps(
   }
 
   const steps: TurnStep[] = []
+  const plans: Extract<SessionRecord, { readonly kind: "work-plan" }>[] = []
   let plan: LatestWorkPlan = { kind: "none" }
   for (const record of records.slice(requestIndex + 1)) {
     if (isWorkPlanRecord(record)) {
       plan = nextWorkPlan(plan, record)
+      plans.push(record)
     } else if (isToolRecord(record) && !(sessionEnded && record.status.kind === "running")) {
       steps.push(toTurnStep(record, currentPhaseOf(plan)))
     }
   }
-  return { kind: "turn", steps, plan }
+  return { kind: "turn", steps, plan, plans }
 }
 
 /** Bash の入力（外来の値）から、打ったコマンドの文字列を取り出す。読めなければ空文字。 */

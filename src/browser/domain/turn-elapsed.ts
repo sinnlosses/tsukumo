@@ -58,12 +58,21 @@ export function turnElapsedClock(
     : `${String(minutes)}:${secondsText}`
 }
 
+/** 経過を数え終える時刻（エポックミリ秒）。{@link isTurnCounting} の間は `now`、数え終わったターンは終わった時刻。 */
+export function turnCountedUntil(
+  turn: TurnProgress,
+  backgroundTaskCount: number,
+  now: number,
+): number {
+  return turn.kind === "finished" && backgroundTaskCount === 0 ? turn.finishedAt : now
+}
+
 /** 依頼を送ってからの秒。数え終わったターンは終わった時刻で固定される。 */
 function turnElapsedSeconds(
   turn: Exclude<TurnProgress, { readonly kind: "idle" }>,
   backgroundTaskCount: number,
   now: number,
 ): number {
-  const until = turn.kind === "finished" && backgroundTaskCount === 0 ? turn.finishedAt : now
+  const until = turnCountedUntil(turn, backgroundTaskCount, now)
   return Math.max(0, Math.floor((until - turn.startedAt) / 1000))
 }

@@ -37,27 +37,8 @@ export function phaseDurations(
   if (last === undefined) {
     return []
   }
-  const opensMidway = plans[0] !== undefined && finishedPhaseCount(plans[0]) > 0
-  const durationsOf = (keysOf: (record: WorkPlanRecord) => ReadonlySet<string>) => {
-    const keys = plans.map(keysOf)
-    const stints = keys.flatMap((current, index) =>
-      [...current]
-        .filter((key) => keys[index - 1]?.has(key) !== true)
-        .map((key) => {
-          const leftAt = keys.findIndex((later, at) => at > index && !later.has(key))
-          const end = leftAt < 0 ? closedAt : (plans[leftAt]?.time ?? closedAt)
-          const start = plans[index]?.time ?? closedAt
-          return {
-            key,
-            duration: index === 0 && opensMidway ? UNKNOWN : spanOf(start, end),
-          }
-        }),
-    )
-    const byKey = groupBy(stints, (stint) => stint.key)
-    return (key: string) => totalOf((byKey[key] ?? []).map((stint) => stint.duration))
-  }
-  const phaseDuration = durationsOf(currentPhaseKeysOf)
-  const groupDuration = durationsOf(currentGroupKeysOf)
+  const phaseDuration = phaseDurationOf(plans, closedAt)
+  const groupDuration = durationsOf(plans, closedAt, currentGroupKeysOf)
   const phases = plannedPhasesOf(last)
   const rowOf = (phase: PlannedPhase): PhaseDuration => ({
     label: phaseLabel({
@@ -107,7 +88,43 @@ export function finishedPhaseDuration(
   )
 }
 
+/**
+ * 段の `key`（{@link PlannedPhase}）から、その段の所要を引く関数（{@link phaseDurations} と同じ求め方）。
+ * 今の段は `closedAt` までの経過になる。
+ */
+export function phaseDurationOf(
+  plans: readonly WorkPlanRecord[],
+  closedAt: RecordTime,
+): (key: string) => MeasuredTime {
+  return durationsOf(plans, closedAt, currentPhaseKeysOf)
+}
+
 const UNKNOWN = { kind: "unknown" } as const satisfies MeasuredTime
+
+/** `keysOf` が記録ごとに返す今の鍵の集合から、鍵ごとの区間を足した所要を引く関数。 */
+function durationsOf(
+  plans: readonly WorkPlanRecord[],
+  closedAt: RecordTime,
+  keysOf: (record: WorkPlanRecord) => ReadonlySet<string>,
+): (key: string) => MeasuredTime {
+  const opensMidway = plans[0] !== undefined && finishedPhaseCount(plans[0]) > 0
+  const keys = plans.map(keysOf)
+  const stints = keys.flatMap((current, index) =>
+    [...current]
+      .filter((key) => keys[index - 1]?.has(key) !== true)
+      .map((key) => {
+        const leftAt = keys.findIndex((later, at) => at > index && !later.has(key))
+        const end = leftAt < 0 ? closedAt : (plans[leftAt]?.time ?? closedAt)
+        const start = plans[index]?.time ?? closedAt
+        return {
+          key,
+          duration: index === 0 && opensMidway ? UNKNOWN : spanOf(start, end),
+        }
+      }),
+  )
+  const byKey = groupBy(stints, (stint) => stint.key)
+  return (key) => totalOf((byKey[key] ?? []).map((stint) => stint.duration))
+}
 
 function currentPhaseKeysOf(record: WorkPlanRecord): ReadonlySet<string> {
   return new Set(

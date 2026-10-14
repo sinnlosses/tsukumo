@@ -111,17 +111,26 @@
                                 {
                                   "tag": "li",
                                   "attributes": {
-                                    "data-phase-state": "done",
-                                    "aria-label": "1. 片付ける場所を調べる（済）"
+                                    "data-phase-state": "done"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "button",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "aria-label": "1. 片付ける場所を調べる（済）",
+                                        "aria-expanded": "false",
+                                        "type": "button"
                                       },
                                       "children": [
-                                        "✓"
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "✓"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
@@ -129,17 +138,26 @@
                                 {
                                   "tag": "li",
                                   "attributes": {
-                                    "data-phase-state": "asking",
-                                    "aria-label": "2. 片付ける（答え待ち）"
+                                    "data-phase-state": "asking"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "button",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "aria-label": "2. 片付ける（答え待ち）",
+                                        "aria-expanded": "false",
+                                        "type": "button"
                                       },
                                       "children": [
-                                        "?"
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "?"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]

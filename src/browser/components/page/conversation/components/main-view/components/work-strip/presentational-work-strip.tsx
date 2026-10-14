@@ -3,17 +3,19 @@
 // `aria-live` は付けない。
 
 import clsx from "clsx"
-import type { ReactElement } from "react"
+import type { ReactElement, RefObject } from "react"
 
 import { CurrentWorkStepGroup } from "../../../../../../../features/current-work/components/current-work-step-group.tsx"
+import type { StepsLanding } from "../../../../../../../stores/work-strip-steps.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { WORK_STRIP_MARKS, type WorkStripResult } from "../../../../domain/turn-result-mark.ts"
 import type { WorkActivity } from "../../domain/work-activity.ts"
-import { useFailedStepFocus } from "./hooks/use-failed-step-focus.ts"
+import { useStepsLanding } from "./hooks/use-steps-landing.ts"
 import type {
   WorkStripModel,
   WorkStripPhase,
+  WorkStripPhasePopover,
   WorkStripSlot,
   WorkStripSteps,
 } from "./hooks/use-work-strip.ts"
@@ -32,7 +34,7 @@ export function PresentationalWorkStrip(props: {
     <section aria-label="進み具合" className={styles["work-strip"]} data-work-strip={strip.kind}>
       <div className={styles["work-strip-line"]}>
         <StateChip result={strip.result} />
-        {strip.phases.length > 0 && <PhaseTrack phases={strip.phases} />}
+        {strip.phases.length > 0 && <PhaseTrack phases={strip.phases} trackRef={strip.trackRef} />}
         <Text
           element="span"
           size="body"
@@ -55,7 +57,7 @@ export function PresentationalWorkStrip(props: {
       </div>
       {strip.kind === "working" && <ActivityLine activity={strip.activity} />}
       {strip.steps.list.kind === "open" && (
-        <StepsList groups={strip.steps.groups} failureSignal={strip.steps.list.failureSignal} />
+        <StepsList groups={strip.steps.groups} landing={strip.steps.list.landing} />
       )}
     </section>
   )
@@ -72,12 +74,12 @@ function StateChip(props: { readonly result: WorkStripResult }): ReactElement {
   )
 }
 
-/** 押すと開く依頼の手順の一覧。失敗した手順を指して開いたときは、最初の失敗の行へ連れてくる。 */
+/** 押すと開く依頼の手順の一覧。失敗した手順・段を指して開いたときは、その行・区切りへ連れてくる。 */
 function StepsList(props: {
   readonly groups: WorkStripSteps["groups"]
-  readonly failureSignal: number
+  readonly landing: StepsLanding
 }): ReactElement {
-  const listRef = useFailedStepFocus(props.failureSignal)
+  const listRef = useStepsLanding(props.landing)
   return (
     <div ref={listRef} role="region" aria-label="依頼の手順" className={styles["work-strip-steps"]}>
       {props.groups.map((group) => (
@@ -91,9 +93,13 @@ function StepsList(props: {
  * 段の丸を1本の線でつないだ並び。名前は `title` と読み上げで持ち、見えている名前は今の段の字だけ。
  * 段のまとまりは中の段の丸を1つの囲みに並べ、囲みの中の丸どうしは線でつながない。
  */
-function PhaseTrack(props: { readonly phases: readonly WorkStripSlot[] }): ReactElement {
+function PhaseTrack(props: {
+  readonly phases: readonly WorkStripSlot[]
+  readonly trackRef: RefObject<HTMLOListElement | null>
+}): ReactElement {
+  const { trackRef } = props
   return (
-    <ol className={styles["work-strip-track"]}>
+    <ol ref={trackRef} className={styles["work-strip-track"]}>
       {props.phases.map((slot) =>
         slot.kind === "phase" ? (
           <PhaseDot
@@ -125,16 +131,82 @@ function PhaseDot(props: {
   readonly className: string
 }): ReactElement {
   const { phase } = props
+  const { popover } = phase
   return (
     <li
       className={props.className}
       data-phase-state={phase.state}
       data-spinning={phase.spinning ? "true" : undefined}
-      aria-label={phase.label}
-      title={phase.label}
     >
-      <span aria-hidden="true">{phase.mark}</span>
+      <button
+        type="button"
+        className={styles["work-strip-phase-dot"]}
+        aria-label={phase.label}
+        title={phase.label}
+        aria-expanded={popover.kind === "open"}
+        aria-controls={phase.popoverId}
+        onClick={phase.onToggle}
+      >
+        <span aria-hidden="true">{phase.mark}</span>
+      </button>
+      {popover.kind === "open" && <PhasePopover id={phase.popoverId} popover={popover} />}
     </li>
+  )
+}
+
+function PhasePopover(props: {
+  readonly id: string
+  readonly popover: Extract<WorkStripPhasePopover, { readonly kind: "open" }>
+}): ReactElement {
+  const { popover } = props
+  const { placeRef } = popover
+  return (
+    <div
+      ref={placeRef}
+      id={props.id}
+      role="dialog"
+      aria-label={popover.title}
+      className={styles["work-strip-pop"]}
+    >
+      <Text
+        element="p"
+        size="body"
+        tone="ink"
+        weight="bold"
+        className={styles["work-strip-pop-title"]}
+      >
+        {popover.title}
+      </Text>
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["work-strip-pop-meta"]}
+      >
+        {popover.meta}
+      </Text>
+      {popover.summary !== "" && (
+        <Text
+          element="p"
+          size="secondary"
+          tone="inherit"
+          weight="inherit"
+          className={styles["work-strip-pop-summary"]}
+        >
+          {popover.summary}
+        </Text>
+      )}
+      {popover.toSteps.kind === "shown" && (
+        <button
+          type="button"
+          className={styles["work-strip-pop-go"]}
+          onClick={popover.toSteps.onGo}
+        >
+          この段の手順へ
+        </button>
+      )}
+    </div>
   )
 }
 

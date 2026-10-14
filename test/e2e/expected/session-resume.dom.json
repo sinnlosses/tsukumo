@@ -153,17 +153,26 @@
                                 {
                                   "tag": "li",
                                   "attributes": {
-                                    "data-phase-state": "done",
-                                    "aria-label": "1. 架空の調べ（済）"
+                                    "data-phase-state": "done"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "button",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "aria-label": "1. 架空の調べ（済）",
+                                        "aria-expanded": "false",
+                                        "type": "button"
                                       },
                                       "children": [
-                                        "✓"
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "✓"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
@@ -171,17 +180,26 @@
                                 {
                                   "tag": "li",
                                   "attributes": {
-                                    "data-phase-state": "done",
-                                    "aria-label": "2. 架空の直し（済）"
+                                    "data-phase-state": "done"
                                   },
                                   "children": [
                                     {
-                                      "tag": "span",
+                                      "tag": "button",
                                       "attributes": {
-                                        "aria-hidden": "true"
+                                        "aria-label": "2. 架空の直し（済）",
+                                        "aria-expanded": "false",
+                                        "type": "button"
                                       },
                                       "children": [
-                                        "✓"
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          },
+                                          "children": [
+                                            "✓"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
