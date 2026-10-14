@@ -31,6 +31,21 @@
   max-width: min(100%, 28rem);
   max-height: min(calc(100vh - 7rem), 26rem);
 }
+/* 縦に長い図を、字が読める幅で見せる。絵は原寸を上限に面の幅に合わせ、高さに上限を置かず、面のほうが縦に流れる。
+   面の中で縮めない（flex-shrink: 0）。閉じるボタンは流れても下端に残す。 */
+.image-zoom:has(> .image-zoom-image-width) {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.image-zoom-image-width {
+  flex-shrink: 0;
+  max-height: none;
+}
+.image-zoom-image-width ~ .image-zoom-close {
+  position: sticky;
+  bottom: 0;
+  flex-shrink: 0;
+}
 /* 絵の代わりに控えを出しているときの1行（なぜ小さいのか）。絵の下・閉じるボタンの上に置く。 */
 .image-zoom-note {
   margin: 0;

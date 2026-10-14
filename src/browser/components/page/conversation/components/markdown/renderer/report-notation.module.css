@@ -489,6 +489,12 @@
   border: 1px solid var(--rule);
   border-radius: 0.375rem;
 }
+/* 画像を押すと拡大するボタン。箱は画像そのもの（画像の幅・枠を変えない）。 */
+.detail-block .report-image-zoom {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+}
 /* 質問の選択肢の preview に Markdown で書いた画像（`shelvedPreviewMarkdown`）。`image` の塊の画像は `figure` の中なので当たらない。
    札の幅に収め、縦に長い画像で札が伸びきらないよう高さに上限を置く（幅と高さを auto のままにして縦横比を保つ）。 */
 .detail-block :is(p, li, td, th) > img {

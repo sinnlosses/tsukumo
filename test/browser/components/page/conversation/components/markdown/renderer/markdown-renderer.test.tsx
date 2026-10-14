@@ -876,7 +876,7 @@ describe("Markdown（image の塊の画像）", () => {
       const { container } = render(<Markdown text={text} />)
 
       const image = typedElement(
-        container.querySelector("div.report-captioned > img"),
+        container.querySelector("div.report-captioned > button > img"),
         HTMLImageElement,
         "画像",
       )
@@ -956,5 +956,61 @@ describe("Markdown（image の塊の画像）", () => {
     expect(missing?.getAttribute("aria-label")).toBe("架空")
     expect(missing?.textContent).toContain("画像を出せない")
     expect(missing?.textContent).toContain("読めなかったか、tsukumo を起こし直して手放した")
+  })
+
+  describe("拡大", () => {
+    const ZOOM_NAME = "この画像を拡大"
+
+    function renderImage(): HTMLElement {
+      const text = reportSectionsMarkdown([
+        {
+          heading: "",
+          blocks: [{ kind: "image", path: "架空.png", caption: "架空", notes: [], fold: "" }],
+        },
+      ])
+      return render(<Markdown text={text} />).container
+    }
+
+    function zoomButton(container: HTMLElement): HTMLElement {
+      return typedElement(
+        container.querySelector(`button[aria-label="${ZOOM_NAME}"]`),
+        HTMLButtonElement,
+        "拡大のボタン",
+      )
+    }
+
+    it("押すと拡大の面が開き、拡大の絵は小さい方と同じ URL を読む", () => {
+      const container = renderImage()
+      const small = typedElement(container.querySelector("img"), HTMLImageElement, "画像")
+
+      fireEvent.click(zoomButton(container))
+
+      const dialog = document.querySelector("dialog.image-zoom")
+      expect(dialog?.hasAttribute("open")).toBe(true)
+      expect(dialog?.querySelector("img")?.getAttribute("src")).toBe(small.getAttribute("src"))
+    })
+
+    it("「閉じる」で拡大の面が閉じる", () => {
+      const container = renderImage()
+      fireEvent.click(zoomButton(container))
+
+      const close = typedElement(
+        document.querySelector("dialog.image-zoom button:last-of-type"),
+        HTMLButtonElement,
+        "閉じるボタン",
+      )
+      expect(close.textContent).toBe("閉じる")
+      fireEvent.click(close)
+
+      expect(document.querySelector("dialog.image-zoom")).toBeNull()
+    })
+
+    it("読めなかった画像には拡大の入口が出ない", () => {
+      const container = renderImage()
+
+      fireEvent.error(typedElement(container.querySelector("img"), HTMLImageElement, "画像"))
+
+      expect(container.querySelector(`button[aria-label="${ZOOM_NAME}"]`)).toBeNull()
+    })
   })
 })

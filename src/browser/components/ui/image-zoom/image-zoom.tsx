@@ -28,8 +28,11 @@ export type ImageZoomProps = {
   /** 拡大して見せる原寸（data URL か、原寸を配る経路の URL）。 */
   readonly src: string
   readonly alt: string
-  /** `original` は画面に収まる限り原寸。`modest` は原寸が大きすぎる絵を控えめな大きさで見せる。 */
-  readonly size: "original" | "modest"
+  /**
+   * `original` は画面に収まる限り原寸。`modest` は原寸が大きすぎる絵を控えめな大きさで見せる。
+   * `width` は原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる（図の字を読む用）。
+   */
+  readonly size: "original" | "modest" | "width"
   /** {@link src} が読めなかったときに代わりに出すもの。 */
   readonly fallback: ImageZoomFallback
   /** `×`・背景のクリック・Esc のいずれでも呼ばれる（開いているかどうかは呼び出し側が持つ）。 */
@@ -55,6 +58,7 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
         className={clsx(
           styles["image-zoom-image"],
           props.size === "modest" && styles["image-zoom-image-modest"],
+          props.size === "width" && styles["image-zoom-image-width"],
         )}
         src={substitute?.src ?? props.src}
         alt={props.alt}
@@ -62,7 +66,7 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
       />
       {substitute !== undefined && <p className={styles["image-zoom-note"]}>{substitute.note}</p>}
       <Button
-        variant="outline"
+        variant="outline-surface"
         size="secondary"
         pressed="none"
         disabled={false}

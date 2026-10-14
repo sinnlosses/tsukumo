@@ -7,7 +7,13 @@ import type { ExtraProps } from "react-markdown"
 
 import { REPORT_IMAGE_PATH_PREFIX } from "../../../../../../../shared/report/report-image.ts"
 import { sessionTokenUrl } from "../../../../../../domain/session-token-url.ts"
+import { Button } from "../../../../../ui/button/button.tsx"
+import { ImageZoom, type ImageZoomFallback } from "../../../../../ui/image-zoom/image-zoom.tsx"
 import styles from "./report-notation.module.css"
+
+const ZOOM_LABEL = "この画像を拡大"
+
+const NO_FALLBACK = { kind: "none" } as const satisfies ImageZoomFallback
 
 const MISSING_LABEL = "画像を出せない"
 const MISSING_REASON = "読めなかったか、tsukumo を起こし直して手放した"
@@ -17,6 +23,7 @@ type ReportImageProps = JSX.IntrinsicElements["img"] & ExtraProps
 
 export function ReportImage(props: ReportImageProps): ReactElement {
   const [failed, setFailed] = useState(false)
+  const [zoomed, setZoomed] = useState(false)
   const alt = props.alt ?? ""
 
   if (failed || typeof props.src !== "string" || !props.src.startsWith(REPORT_IMAGE_PATH_PREFIX)) {
@@ -30,7 +37,34 @@ export function ReportImage(props: ReportImageProps): ReactElement {
       </span>
     )
   }
-  return <img src={sessionTokenUrl(props.src)} alt={alt} onError={() => setFailed(true)} />
+  const src = sessionTokenUrl(props.src)
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="label"
+        pressed="none"
+        disabled={false}
+        ariaLabel={ZOOM_LABEL}
+        disclosure={{ kind: "none" }}
+        ariaHasPopup={undefined}
+        title={undefined}
+        className={styles["report-image-zoom"]}
+        onClick={() => setZoomed(true)}
+      >
+        <img src={src} alt={alt} onError={() => setFailed(true)} />
+      </Button>
+      {zoomed && (
+        <ImageZoom
+          src={src}
+          alt={alt}
+          size="width"
+          fallback={NO_FALLBACK}
+          onClose={() => setZoomed(false)}
+        />
+      )}
+    </>
+  )
 }
 
 function MissingImageIcon(): ReactElement {
