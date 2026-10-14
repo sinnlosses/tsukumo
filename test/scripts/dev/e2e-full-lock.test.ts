@@ -7,8 +7,8 @@ import {
   acquireLock,
   LockWaitTimeoutError,
   type LockEnvironment,
-} from "../../scripts/lib/e2e-full-lock.ts"
-import { useTempDir } from "../fixture/temp-dir.ts"
+} from "../../../scripts/dev/lib/e2e-full-lock.ts"
+import { useTempDir } from "../../fixture/temp-dir.ts"
 
 const tempDir = useTempDir("e2e-full-lock")
 

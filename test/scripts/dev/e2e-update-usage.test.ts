@@ -4,10 +4,10 @@ import { resolve } from "node:path"
 
 import { describe, expect, test } from "vitest"
 
-import { runSubprocess } from "../fixture/subprocess.ts"
+import { runSubprocess } from "../../fixture/subprocess.ts"
 
 const ROOT = resolve(".")
-const SCRIPT = "scripts/e2e-update.ts"
+const SCRIPT = "scripts/dev/e2e-update.ts"
 
 describe("撮り直しの入口の使い方の出し方", () => {
   test.each([
@@ -18,6 +18,6 @@ describe("撮り直しの入口の使い方の出し方", () => {
     const result = await runSubprocess("node", [SCRIPT, ...args], { cwd: ROOT })
     expect(result.exitCode).toBe(2)
     expect(result.stdout).toBe("")
-    expect(result.stderr).toContain("node scripts/e2e-update.ts --full")
+    expect(result.stderr).toContain("node scripts/dev/e2e-update.ts --full")
   })
 })

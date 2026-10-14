@@ -3,11 +3,10 @@
 
 import { spawnSync } from "node:child_process"
 import process from "node:process"
-import { fileURLToPath } from "node:url"
 
+import { REPOSITORY_ROOT as ROOT } from "../shared/repository-root.ts"
 import { E2E_FULL_VARIABLE, judgeE2eFull } from "./lib/e2e-full-guard.ts"
 
-const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const args = process.argv.slice(2)
 
 const judgement = judgeE2eFull(args, process.env[E2E_FULL_VARIABLE])

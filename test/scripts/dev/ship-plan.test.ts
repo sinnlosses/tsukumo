@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { runShipPlan, type ShipPlanHooks } from "../../scripts/lib/ship-plan.ts"
+import { runShipPlan, type ShipPlanHooks } from "../../../scripts/dev/lib/ship-plan.ts"
 
 function fakeHooks(overrides: Partial<ShipPlanHooks> = {}): {
   readonly hooks: ShipPlanHooks

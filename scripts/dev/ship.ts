@@ -2,18 +2,18 @@
 // clean か → `git rebase main` → `pnpm run check --full` → `git merge --ff-only` の順に動く。
 //
 // 使い方:
-//   node scripts/ship.ts
+//   node scripts/dev/ship.ts
 
 import { execFileSync, spawnSync } from "node:child_process"
 import path from "node:path"
 import process from "node:process"
-import { fileURLToPath } from "node:url"
 
-import { PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
+import { PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
+import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import { isWorktreeClean, resolveMainWorktreePath, syncSubmodules } from "./lib/main-worktree.ts"
 import { runShipPlan, type ShipPlanResult } from "./lib/ship-plan.ts"
 
-const ROOT = path.resolve(fileURLToPath(new URL("..", import.meta.url)))
+const ROOT = path.resolve(REPOSITORY_ROOT)
 
 const primaryBranch = PRIMARY_BRANCH
 const branch = execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {

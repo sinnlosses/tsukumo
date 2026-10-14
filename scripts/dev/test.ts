@@ -2,11 +2,9 @@
 
 import { spawnSync } from "node:child_process"
 import process from "node:process"
-import { fileURLToPath } from "node:url"
 
+import { REPOSITORY_ROOT as ROOT } from "../shared/repository-root.ts"
 import { withConventionTests } from "./lib/convention-test.ts"
-
-const ROOT = fileURLToPath(new URL("..", import.meta.url))
 
 const result = spawnSync(
   "pnpm",

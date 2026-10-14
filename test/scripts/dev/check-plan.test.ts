@@ -7,10 +7,14 @@ import { dirname, join } from "node:path"
 
 import { describe, expect, test } from "vitest"
 
-import { collectChangedPaths } from "../../scripts/lib/changed-path-repository.ts"
-import { DOCUMENT_CHECK_TEST_FILES, e2eStage, planStages } from "../../scripts/lib/check-stage.ts"
-import { isDocumentOnlyChange, isDocumentPath } from "../../scripts/lib/document-change.ts"
-import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
+import {
+  DOCUMENT_CHECK_TEST_FILES,
+  e2eStage,
+  planStages,
+} from "../../../scripts/dev/lib/check-stage.ts"
+import { collectChangedPaths } from "../../../scripts/shared/changed-path-repository.ts"
+import { isDocumentOnlyChange, isDocumentPath } from "../../../scripts/shared/document-change.ts"
+import { runSubprocessOrThrow } from "../../fixture/subprocess.ts"
 
 describe("isDocumentPath", () => {
   test("docs/ 配下の .md は文書", () => {
@@ -61,7 +65,7 @@ describe("E2E の bail", () => {
   })
 
   test("撮り直し（e2e-update）と E2E の設定は bail を持たない", () => {
-    for (const file of ["scripts/e2e-update.ts", "vitest.e2e.config.ts"]) {
+    for (const file of ["scripts/dev/e2e-update.ts", "vitest.e2e.config.ts"]) {
       expect(readFileSync(file, "utf8")).not.toContain("bail")
     }
   })

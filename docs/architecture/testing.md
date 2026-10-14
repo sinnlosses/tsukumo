@@ -67,7 +67,7 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
   `pnpm run test:e2e` が E2E 専用の設定で走らせる）。時間切れの既定を E2E の段だけ延ばし、単体テストを
   1ファイル走らせるときに Chrome を要らないままにするため。`pnpm run check` は軽い段のあとに重い段（単体と E2E）を
   並べて走らせる。**`--full` の E2E の段だけ、作業ツリーをまたぐ錠を取ってから走らせる**
-  （`scripts/lib/e2e-full-lock.ts`。共有の git dir の `e2e-full-lock` に持ち主の pid を書き、
+  （`scripts/dev/lib/e2e-full-lock.ts`。共有の git dir の `e2e-full-lock` に持ち主の pid を書き、
   持ち主が死んでいれば奪う。待っている間は1分ごとに1行出し、15 分を超えたら理由と錠のパスを出して落とす。単体や lint は待たせない）。
   全件が2つ重なると、単独や単体と並べたときには通る `chat-restored-history` が 6 回中 6 回落ちたため
   （2026-10-11 の測定。最大プロセスは 6〜8 から 12 に増え、1分の平均負荷は 11 から 13〜23 に上がった）。
@@ -78,7 +78,7 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
   落ちると分かっている段の待ちを延ばさないため。最後の行に「落ちた段」と「止めた段」を分けて出す）。
   **E2E の段には `--bail=3` を付ける**（揺れる E2E が整理されるまでの値）。撮り直し（`test:e2e:update`）には付けない。
   **ファイルを渡さない `pnpm run test:e2e` は全件なので、環境変数 `TSUKUMO_E2E_FULL=1` が無ければ終了コード 2 で止める**
-  （入口は `scripts/e2e.ts`。`check` と `test:e2e:update` が立てて通す。1本だけ流すときは
+  （入口は `scripts/dev/e2e.ts`。`check` と `test:e2e:update` が立てて通す。1本だけ流すときは
   `pnpm run test:e2e test/e2e/<ファイル>.test.ts` と書き、`--` を前に置かない。置くと絞り込みが効かず全件になる）。
   ひとつの実行の負荷は
   `maxWorkers` で抑える。E2E の1本は vitest のワーカーに加えて
@@ -89,15 +89,15 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
   `vitest.config.ts` の `DOM_TEST_FILES` に無いファイルが DOM を要するようになったら、そこへ足す
 - **引数なしの `pnpm run check` は、変えたファイルから選んだ E2E のファイルだけを流し**、選んだもの
   （または全件に倒した理由のパス）を1行で出す。**全件は `pnpm run check --full` で、main へ送る直前
-  （`tw ship` の送る前の検証コマンドと `scripts/ship.ts`）に1回だけ流す**。選び方（`scripts/lib/e2e-selection.ts`）は
+  （`tw ship` の送る前の検証コマンドと `scripts/dev/ship.ts`）に1回だけ流す**。選び方（`scripts/shared/e2e-selection.ts`）は
   変えたファイル1件ごとに次の順で決め、1件でも全件なら全件にする（取りこぼすより遅いほうを選ぶ）
   - 文書・単体テスト・E2E から届かない `scripts/` などは選ばない。E2E ファイルはそれ自身、期待値は場面の
     名前を持つ E2E を選ぶ
-  - E2E の足場の根（`package.json`・`vitest.e2e.config.ts`・`scripts/build-ui.ts` など）から import で
+  - E2E の足場の根（`package.json`・`vitest.e2e.config.ts`・`scripts/dev/build-ui.ts` など）から import で
     届くファイルは全件。E2E ファイルから import で届くファイル（`test/e2e/scenario-run.ts`・
     `test/e2e/task-room.ts`・`test/fixture/` など）は、届く元の E2E を選ぶ
   - `src/` は、サーバの入口 `src/cli.ts` から届けば全件（どの E2E もサーバ全体を起こす）。ブラウザだけが
-    読むファイルは、見張りの表（`scripts/lib/e2e-watch.ts`）の領域の根から届くかで領域を決め、その領域を
+    読むファイルは、見張りの表（`scripts/shared/e2e-watch.ts`）の領域の根から届くかで領域を決め、その領域を
     見ている E2E を選ぶ。どの根からも届かない（アプリや会話の画面の枠）なら全件
   - どれにも当たらないパスは全件。見張りの表に載せる E2E の領域が足りないと取りこぼすが、送る直前の全件で拾う。
     **E2E のファイルを足したら表に足す**（載っていないと単体テストが落ちる）

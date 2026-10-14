@@ -179,7 +179,7 @@
 - `/next-task` が1件を選び、着手の印を立て、`difficulty` と同じモデルのサブエージェントに委譲する
   （「一致していても委譲する——理由はモデルではなく文脈の隔離」）。`## やること` を作業より先に書いたかを
   機械が確かめる。受け入れはメインが差分を読み、検証コマンドの結果で決める
-- 枝は作業ツリー（orca）ごとに1本で自分では切らない。PR は使わず、`tw ship` / `scripts/ship.ts` が
+- 枝は作業ツリー（orca）ごとに1本で自分では切らない。PR は使わず、`tw ship` / `scripts/dev/ship.ts` が
   `git rebase main` → `pnpm run check` → `merge --ff-only` で `main` へ入れる。merge commit は作らない
 - 検証は `pnpm run check`（typecheck・lint・format:check・単体テスト・E2E。文書だけなら軽い段だけ）
 - `.github/` は無く、CI は無い。push は頼まれたときだけで、調べた時点で `origin/main` は手元の `main` より7コミット遅れていた

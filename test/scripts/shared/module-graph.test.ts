@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 
-import { importedPaths, reachableFrom } from "../../scripts/lib/module-graph.ts"
+import { importedPaths, reachableFrom } from "../../../scripts/shared/module-graph.ts"
 
 const KNOWN = new Set([
   "src/browser/main-view.tsx",

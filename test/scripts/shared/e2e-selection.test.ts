@@ -7,8 +7,8 @@ import {
   describeE2eSelection,
   type E2eSelectionSource,
   selectE2eFiles,
-} from "../../scripts/lib/e2e-selection.ts"
-import { E2E_REGION_ROOTS, E2E_WATCHED_REGIONS } from "../../scripts/lib/e2e-watch.ts"
+} from "../../../scripts/shared/e2e-selection.ts"
+import { E2E_REGION_ROOTS, E2E_WATCHED_REGIONS } from "../../../scripts/shared/e2e-watch.ts"
 
 const CHAT = "test/e2e/chat.test.ts"
 const PAGE = "test/e2e/page.test.ts"
@@ -71,7 +71,12 @@ describe("selectE2eFiles が選ぶファイル", () => {
 
   test("文書・単体テスト・E2E から届かない scripts は選ばない", () => {
     expect(
-      select("README.md", ".tw/task/sample.md", "test/scripts/sample.test.ts", "scripts/check.ts"),
+      select(
+        "README.md",
+        ".tw/task/sample.md",
+        "test/scripts/sample.test.ts",
+        "scripts/dev/check.ts",
+      ),
     ).toEqual({ kind: "files", files: [] })
   })
 
@@ -84,6 +89,7 @@ describe("selectE2eFiles が全件に倒す変更", () => {
   test.each([
     ["package.json", "E2E の足場"],
     ["vitest.e2e.config.ts", "E2E の足場"],
+    ["scripts/dev/build-ui.ts", "E2E の足場"],
     ["src/shared/frame.ts", "サーバが読むファイル"],
     ["src/browser/app.tsx", "どの領域の根からも届かないファイル"],
     ["test/e2e/expected/unknown.dom.json", "持ち主の E2E が見つからない期待値"],
@@ -120,7 +126,7 @@ describe("describeE2eSelection", () => {
 })
 
 describe("見張りの表", () => {
-  const root = fileURLToPath(new URL("../..", import.meta.url))
+  const root = fileURLToPath(new URL("../../..", import.meta.url))
 
   test("test/e2e/*.test.ts がどれも見ている領域を持つ", () => {
     const e2eFiles = readdirSync(`${root}test/e2e`)

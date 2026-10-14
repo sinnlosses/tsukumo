@@ -1,6 +1,6 @@
 // 組み立て済みのブラウザ側（`dist/browser/`）が、読める状態で、ソースより古くないことを確かめる。
 
-import { readUiBundle } from "../../src/server/view-server/adapter/bundle.ts"
+import { readUiBundle } from "../../../src/server/view-server/adapter/bundle.ts"
 
 /** 読めない・古いときは、打つコマンドを添えた `Error` を投げる。黙って組み立て直さない。 */
 export async function assertBuiltUiFresh(builtDir: string): Promise<void> {

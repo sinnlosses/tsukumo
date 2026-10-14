@@ -11,9 +11,9 @@ import {
   isWorktreeClean,
   resolveMainWorktreePath,
   syncSubmodules,
-} from "../../scripts/lib/main-worktree.ts"
-import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
-import { useTempDir } from "../fixture/temp-dir.ts"
+} from "../../../scripts/dev/lib/main-worktree.ts"
+import { runSubprocessOrThrow } from "../../fixture/subprocess.ts"
+import { useTempDir } from "../../fixture/temp-dir.ts"
 
 // 一時リポジトリで git と worktree を何度も走らせるので、既定の 5000ms を超えることがある。
 const GIT_LOAD_TIMEOUT_MS = 20_000

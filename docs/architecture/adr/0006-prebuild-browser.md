@@ -1,7 +1,7 @@
 # ブラウザ側は事前に組み立てて置く（2026-09-21）
 
 **`bun build` を起動のたびに起こすのをやめ、`dist/browser/` に置いた成果物を読むだけにした。**
-作る口は `pnpm run build`（`scripts/build-ui.ts`）だけで、`dist/browser/` へ出す。
+作る口は `pnpm run build`（`scripts/dev/build-ui.ts`）だけで、`dist/browser/` へ出す。
 起動（`src/main.ts`）から子プロセスは1つも出なくなった。
 
 **`.gitignore` して、コミットはしない。** `tsukumo` は `pnpm link --global` でこのリポジトリを指している

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 
-import { readE2eUpdateArgument } from "../../scripts/lib/e2e-update-argument.ts"
+import { readE2eUpdateArgument } from "../../../scripts/shared/e2e-update-argument.ts"
 
 describe("readE2eUpdateArgument", () => {
   test.each([

@@ -146,10 +146,10 @@ PreToolUse hook（`scripts/hook/deny-sed-in-place.ts`）が拒否する。ファ
 PreToolUse hook（`scripts/hook/deny-e2e-run-limit.ts`）が拒否する（検証は通常1〜3回で、残りは揺らぎの
 確認と hook 登録後の自分の検証の余裕）。数はその作業ツリー固有の git dir の `e2e-full-runs` に置き、
 着手の印（`task-open-claims/<id>`）が無ければ数えない（作業ツリーをまたいで混ざらない）。
-数えるのは `--full` 付きの `pnpm run check`・`node scripts/check.ts`、`pnpm run test:e2e`、
+数えるのは `--full` 付きの `pnpm run check`・`node scripts/dev/check.ts`、`pnpm run test:e2e`、
 ファイルを指さない `vitest run --config vitest.e2e.config.ts` と、`--full` の無い `pnpm run check`・
-`node scripts/check.ts` のうち、変えたファイルから `check` が E2E を1件以上流すと
-選ぶとき（`scripts/lib/e2e-selection-repository.ts` の `planE2eRun`。`check` と同じ関数）。
+`node scripts/dev/check.ts` のうち、変えたファイルから `check` が E2E を1件以上流すと
+選ぶとき（`scripts/shared/e2e-selection-repository.ts` の `planE2eRun`。`check` と同じ関数）。
 `tw verify` は名前では分類せず、`.tw/config.toml` から tw と同じ規則で打つコマンド
 （`verify_before_ship`、無ければ `verify`）を読み、そのコマンドを上の数え方にかける。
 `--full` 付きの `tw verify` は常に数える。行が読めないときは `tw verify` の引数だけで分類する。
@@ -198,7 +198,7 @@ hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`�
 止まらない**——未コミットのまま待つと、作業ツリーを後から使うセッションが `git restore` で
 捨てうる（2026-09-23 に実際に9ファイルぶんが痕跡なく消えた）。
 
-`node scripts/ship.ts`（`pnpm run ship`）を打つ。作業ツリーが clean か → `main` を出している
+`node scripts/dev/ship.ts`（`pnpm run ship`）を打つ。作業ツリーが clean か → `main` を出している
 作業ツリーが clean か → `git rebase main` → `pnpm run check --full` → `git -C <本体> merge --ff-only`
 の順に動き、`--ff-only` が `main` の先回りで落ちたら取り込み（`rebase`）と検証をやり直す
 （上限2回。超えたら止まる）。落ちた段によって次を行う。

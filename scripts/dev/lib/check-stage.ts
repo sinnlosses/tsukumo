@@ -1,6 +1,6 @@
 // `pnpm run check` が打つ段の並びを、`--full` の有無と変えたファイルから決める、という概念1つを持つ。
 
-import { isDocumentOnlyChange } from "./document-change.ts"
+import { isDocumentOnlyChange } from "../../shared/document-change.ts"
 
 export type Stage = {
   readonly name: string

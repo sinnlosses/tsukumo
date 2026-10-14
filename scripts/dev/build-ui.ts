@@ -9,7 +9,7 @@
 
 import process from "node:process"
 
-import { buildUiBundle, builtUiDir } from "../src/server/view-server/adapter/bundle.ts"
+import { buildUiBundle, builtUiDir } from "../../src/server/view-server/adapter/bundle.ts"
 
 const result = await buildUiBundle(builtUiDir())
 if (!result.ok) {

@@ -2,8 +2,11 @@
 
 import { describe, expect, test } from "vitest"
 
-import { DOCUMENT_CHECK_TEST_FILES } from "../../scripts/lib/check-stage.ts"
-import { CONVENTION_TEST_PATHS, withConventionTests } from "../../scripts/lib/convention-test.ts"
+import { DOCUMENT_CHECK_TEST_FILES } from "../../../scripts/dev/lib/check-stage.ts"
+import {
+  CONVENTION_TEST_PATHS,
+  withConventionTests,
+} from "../../../scripts/dev/lib/convention-test.ts"
 
 describe("withConventionTests", () => {
   test("引数なしはそのまま（全件）", () => {

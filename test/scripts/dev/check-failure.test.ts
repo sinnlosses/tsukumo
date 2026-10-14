@@ -7,7 +7,7 @@ import {
   parseFailedTests,
   shouldStopRunningStages,
   type StageOutcome,
-} from "../../scripts/lib/check-failure.ts"
+} from "../../../scripts/dev/lib/check-failure.ts"
 
 function outcome(
   name: string,

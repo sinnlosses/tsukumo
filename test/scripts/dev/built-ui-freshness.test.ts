@@ -3,8 +3,8 @@ import { join } from "node:path"
 
 import { describe, expect, test } from "vitest"
 
-import { assertBuiltUiFresh } from "../../scripts/lib/built-ui-freshness.ts"
-import { useTempDir } from "../fixture/temp-dir.ts"
+import { assertBuiltUiFresh } from "../../../scripts/dev/lib/built-ui-freshness.ts"
+import { useTempDir } from "../../fixture/temp-dir.ts"
 
 const FAR_FUTURE_SECONDS = 4_000_000_000
 

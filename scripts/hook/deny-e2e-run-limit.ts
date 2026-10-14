@@ -9,9 +9,9 @@
 import { execFileSync } from "node:child_process"
 import process from "node:process"
 
-import { collectChangedPaths, PRIMARY_BRANCH } from "../lib/changed-path-repository.ts"
-import { planE2eRun } from "../lib/e2e-selection-repository.ts"
-import { readTwVerifyCommand } from "../lib/verify-command-repository.ts"
+import { collectChangedPaths, PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
+import { planE2eRun } from "../shared/e2e-selection-repository.ts"
+import { readTwVerifyCommand } from "../shared/verify-command-repository.ts"
 import {
   countE2eRuns,
   countFullE2eRuns,

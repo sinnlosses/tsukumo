@@ -13,7 +13,7 @@ import {
   isOverLimitAfterRecording,
   RUN_LIMIT,
 } from "../../../scripts/hook/lib/e2e-run-limit.ts"
-import { readTwVerifyCommand } from "../../../scripts/lib/verify-command-repository.ts"
+import { readTwVerifyCommand } from "../../../scripts/shared/verify-command-repository.ts"
 import { runSubprocess, runSubprocessOrThrow } from "../../fixture/subprocess.ts"
 import { useTempDir } from "../../fixture/temp-dir.ts"
 
@@ -28,23 +28,23 @@ describe("E2E を全部流すコマンドの数え方", () => {
   test.each([
     ["tw verify --full", "tw verify --full"],
     ["pnpm run check --full", "pnpm run check --full"],
-    ["node scripts/check.ts --full", "node scripts/check.ts --full"],
+    ["node scripts/dev/check.ts --full", "node scripts/dev/check.ts --full"],
     ["pnpm run test:e2e", "pnpm run test:e2e"],
     ["nice を前置きした check --full", "nice pnpm run check --full"],
-    ["ファイルを渡さない期待値の撮り直し", "node scripts/e2e-update.ts --full"],
+    ["ファイルを渡さない期待値の撮り直し", "node scripts/dev/e2e-update.ts --full"],
     ["E2E の設定でファイルを指さない vitest", "vitest run --config vitest.e2e.config.ts"],
     [
       "--full にファイルが続く期待値の撮り直し",
-      "node scripts/e2e-update.ts --full test/e2e/example.test.ts",
+      "node scripts/dev/e2e-update.ts --full test/e2e/example.test.ts",
     ],
   ])("%s は変えたファイルに関わらず1回と数える", (_name, command) => {
     expect(countOf(command, false)).toBe(1)
   })
 
   test.each([
-    ["--help の期待値の撮り直し", "node scripts/e2e-update.ts --help"],
-    ["知らないフラグの期待値の撮り直し", "node scripts/e2e-update.ts --foo"],
-    ["ファイルを渡す期待値の撮り直し", "node scripts/e2e-update.ts test/e2e/example.test.ts"],
+    ["--help の期待値の撮り直し", "node scripts/dev/e2e-update.ts --help"],
+    ["知らないフラグの期待値の撮り直し", "node scripts/dev/e2e-update.ts --foo"],
+    ["ファイルを渡す期待値の撮り直し", "node scripts/dev/e2e-update.ts test/e2e/example.test.ts"],
   ])("%s は E2E を全部流さないので数えない", (_name, command) => {
     expect(countOf(command, true)).toBe(0)
   })
@@ -52,7 +52,7 @@ describe("E2E を全部流すコマンドの数え方", () => {
   test.each([
     ["tw verify", "tw verify"],
     ["pnpm run check", "pnpm run check"],
-    ["node scripts/check.ts", "node scripts/check.ts"],
+    ["node scripts/dev/check.ts", "node scripts/dev/check.ts"],
   ])("%s は E2E が選ばれる変更のときだけ1回と数える", (_name, command) => {
     expect(countOf(command, true)).toBe(1)
     expect(countOf(command, false)).toBe(0)

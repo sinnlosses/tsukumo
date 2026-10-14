@@ -3,13 +3,13 @@
 
 import { spawnSync } from "node:child_process"
 import process from "node:process"
-import { fileURLToPath } from "node:url"
 
-import { collectChangedPaths, PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
+import { collectChangedPaths, PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
+import { readE2eSelection } from "../shared/e2e-selection-repository.ts"
+import { describeE2eSelection } from "../shared/e2e-selection.ts"
+import { type E2eUpdateArgument, readE2eUpdateArgument } from "../shared/e2e-update-argument.ts"
+import { REPOSITORY_ROOT as ROOT } from "../shared/repository-root.ts"
 import { E2E_FULL_ENVIRONMENT } from "./lib/e2e-full-guard.ts"
-import { readE2eSelection } from "./lib/e2e-selection-repository.ts"
-import { describeE2eSelection } from "./lib/e2e-selection.ts"
-import { type E2eUpdateArgument, readE2eUpdateArgument } from "./lib/e2e-update-argument.ts"
 
 /** 撮り直す E2E のファイル。`all` は全件、`none` は撮り直すものが無い。 */
 type UpdateTarget =
@@ -18,12 +18,11 @@ type UpdateTarget =
   | { readonly kind: "files"; readonly files: readonly string[] }
 
 const E2E_UPDATE_USAGE = `使い方:
-  node scripts/e2e-update.ts                              # 変えたファイルから選んだ E2E だけ
-  node scripts/e2e-update.ts --full                       # 全件
-  node scripts/e2e-update.ts test/e2e/<シナリオ>.test.ts  # 渡したファイルだけ
+  node scripts/dev/e2e-update.ts                              # 変えたファイルから選んだ E2E だけ
+  node scripts/dev/e2e-update.ts --full                       # 全件
+  node scripts/dev/e2e-update.ts test/e2e/<シナリオ>.test.ts  # 渡したファイルだけ
 `
 
-const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const argument = readE2eUpdateArgument(process.argv.slice(2))
 
 if (argument.kind === "help") {

@@ -7,8 +7,8 @@
 // `--full` の有無に関わらず `format:check` と文書の検査（`DOCUMENT_CHECK_TEST_FILES`）だけを打つ。
 //
 // 使い方:
-//   node scripts/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら文書の検査だけにする
-//   node scripts/check.ts --full  # 文書だけの変更でなければ、5段すべてを、E2E は全件で走らせる
+//   node scripts/dev/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら文書の検査だけにする
+//   node scripts/dev/check.ts --full  # 文書だけの変更でなければ、5段すべてを、E2E は全件で走らせる
 //                                 # （変えたファイルを集められないときも5段すべて）
 
 import { type ChildProcess, spawn, spawnSync } from "node:child_process"
@@ -16,9 +16,10 @@ import { readFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import process from "node:process"
-import { fileURLToPath } from "node:url"
 
-import { collectChangedPaths, PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
+import { collectChangedPaths, PRIMARY_BRANCH } from "../shared/changed-path-repository.ts"
+import { planE2eRun } from "../shared/e2e-selection-repository.ts"
+import { REPOSITORY_ROOT as ROOT } from "../shared/repository-root.ts"
 import {
   describeFailedStages,
   parseFailedTests,
@@ -33,9 +34,7 @@ import {
   REAL_LOCK_ENVIRONMENT,
   sharedLockPath,
 } from "./lib/e2e-full-lock.ts"
-import { planE2eRun } from "./lib/e2e-selection-repository.ts"
 
-const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const forceFull = process.argv.includes("--full")
 
 const changedPaths = await collectPathsForPlan()

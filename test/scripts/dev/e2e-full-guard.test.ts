@@ -2,7 +2,7 @@
 
 import { describe, expect, test } from "vitest"
 
-import { E2E_FULL_ENVIRONMENT, judgeE2eFull } from "../../scripts/lib/e2e-full-guard.ts"
+import { E2E_FULL_ENVIRONMENT, judgeE2eFull } from "../../../scripts/dev/lib/e2e-full-guard.ts"
 
 describe("judgeE2eFull", () => {
   test("引数なしで環境変数も無ければ止めて、案内を返す", () => {
