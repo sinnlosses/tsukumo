@@ -28,6 +28,7 @@
 //
 // 画面のファイル（`src/browser/` の下）がターンの頭の HEAD から変わっているのに画像の塊（`image`・`beforeAfter`）が無い `report` も差し戻す（枠は別に1ターンに1回まで）。
 // 変更ファイルは `ReportChanges` の口から読み、読めなければ変更なしとして通す。脇の話のターンでは見ない。
+// `checks` に `unverified` で `detail` が空白だけでない行があれば、画像が無くても通し、この枠は使わない。
 //
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`）。
 // `assistant` メッセージの変換は `report` イベントを作るだけで判定しない。
@@ -213,7 +214,8 @@ export function createReportReview(
         !asideTurn &&
         !screenshotRejectedInTurn &&
         hasScreenFile(changedFiles) &&
-        !hasImageBlock(report)
+        !hasImageBlock(report) &&
+        !hasUnverifiedReason(report)
       ) {
         screenshotRejectedInTurn = true
         return {
@@ -323,6 +325,7 @@ export const REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT =
 export const REPORT_NO_SCREENSHOT_REJECTION_TEXT =
   "画面のファイルを変えたのに、`report` に画像が無い。" +
   "撮った画像を `image` の塊で載せて呼び直すこと。" +
+  "画面に出ない変更・撮れない事情のときは、`checks` に `unverified` の行を足し、`detail` に撮っていない理由を書くこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** 背景のシェルが残っている `report` を差し戻すときの戻り値。残りのシェルの ID と `description` だけを載せ、モデルが書いた本文は写さない。 */
@@ -345,6 +348,11 @@ function hasImageBlock(report: ReportDraft): boolean {
   return sectionsWithFigure(report.figure, report.sections).some((section) =>
     section.blocks.some((block) => block.kind === "image" || block.kind === "beforeAfter"),
   )
+}
+
+/** `checks` に、`unverified` で `detail` が空白だけでない行があるか。行の中身は見ない。 */
+function hasUnverifiedReason(report: ReportDraft): boolean {
+  return report.checks.some((check) => check.status === "unverified" && check.detail.trim() !== "")
 }
 
 /** 同じ依頼に段取りがあるときの、段の閉じ方だけで見た判定。`remaining` は済んでいない段の数（全部済みなら 0）。 */

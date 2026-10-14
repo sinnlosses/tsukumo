@@ -604,6 +604,41 @@ describe("createReportReview の judge（画面のファイルを変えたのに
     })
   })
 
+  const withChecks = (checks: ReportDraft["checks"]): ReportDraft =>
+    reportDraft({ conclusion: "架空の結論。", checks })
+  const check = (status: "ok" | "ng" | "unverified", detail: string) => ({
+    status,
+    label: "架空の確認",
+    figure: "",
+    command: "",
+    detail,
+  })
+
+  it("理由のある unverified の行があれば、画像が無くても通し、枠を使わない", () => {
+    const review = createReportReview(noPlan)
+    const declared = withChecks([check("unverified", "環境の都合で撮れなかった")])
+
+    expect(review.judge(declared, SCREEN_CHANGED)).toEqual({ kind: "accepted" })
+    expect(review.judge(VALID, SCREEN_CHANGED)).toMatchObject({ reasons: ["no-screenshot"] })
+  })
+
+  it("理由が空・空白だけの unverified や、ok・ng だけの checks は差し戻す", () => {
+    for (const checks of [
+      [check("unverified", "")],
+      [check("unverified", "  \n")],
+      [check("ok", ""), check("ng", "落ちた理由")],
+    ]) {
+      expect(createReportReview(noPlan).judge(withChecks(checks), SCREEN_CHANGED)).toMatchObject({
+        kind: "rejected",
+        reasons: ["no-screenshot"],
+      })
+    }
+  })
+
+  it("差し戻しの文面は unverified の逃げ道を言う", () => {
+    expect(REPORT_NO_SCREENSHOT_REJECTION_TEXT).toContain("unverified")
+  })
+
   it("画面のファイルが無ければ通す", () => {
     expect(
       createReportReview(noPlan).judge(VALID, ["src/server/架空.ts", "test/架空.test.ts"]),

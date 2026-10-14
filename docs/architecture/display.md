@@ -78,7 +78,9 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   （`background-running`）だけを残す。ターンの頭の HEAD から `src/browser/` の下のファイルが変わっている
   （コミット済みの差分・未コミット・未追跡）のに、`figure` にも `sections` にも `image`・`beforeAfter` の塊が無い
   `report` も、撮った画像を `image` の塊で載せる旨の固定の一文（`no-screenshot`。変更ファイルのパスも本文も写さない）で
-  別に1ターンに1回まで差し戻す。git が読めないときと脇の話のターンは通す。`src/server/report/core/report-review.ts`）。
+  別に1ターンに1回まで差し戻す。`checks` に `status` が `unverified` で `detail` が空白だけでない行が1つでもあれば、
+  画像が無くても通し、この枠は使わない（行の中身は機械では見ない。差し戻しの文面もこの逃げ道を言う）。
+  git が読めないときと脇の話のターンは通す。`src/server/report/core/report-review.ts`）。
   **2026-10-06 に、文字の並びで判定できる条を検査に足した**: `conclusion` の1文目が全角50字超
   （`long-first-sentence`）・見出しが30字超か疑問文（`bad-heading`）・`checks` の `figure` の分数
   （`fraction-figure`）・地の文と表のセルの `A → B`（`arrow-in-prose`。インラインコードの中・`from` / `to`・
