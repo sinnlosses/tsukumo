@@ -176,7 +176,7 @@ class 名は用語集の語（`balloon` / `portrait` / `work-strip` など）を
 実際の名前と同じハッシュ付きの名前を生成するので、これが無いと部品テストが綴りで引けない。
 CSS に無い名前は `undefined` のままなので、**綴りを間違えるとテストで落ちる**。
 
-**customizable select（`appearance: base-select`）の落とし穴**（先例は `run-setting-select.module.css`）：
+**customizable select（`appearance: base-select`）の落とし穴**（先例は `features/run-setting/components/run-setting-select.module.css`）：
 
 - `::picker(select)` に `display` を無条件に書くと、閉じたときのブラウザ既定の `display: none` が
   上書きされ、閉じた口の上に一覧が残って隣の口のクリックを塞ぐ。**`display` は `:popover-open` の中だけに書く**

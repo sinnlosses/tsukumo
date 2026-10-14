@@ -61,22 +61,6 @@
   min-width: 100%;
   margin: 0.2rem 0 0;
 }
-/* 設定パネルの `<select>`。帯のドロップダウンと同じ見た目にして、同じ値を選ぶ操作だと分かるようにする。
-   字が一段小さいぶん、矢印も小さくして内側へ寄せる（枠と矢印は `select.module.css`）。 */
-.screen-nav-settings-select-frame {
-  --select-chevron-inset: 0.3rem;
-  --select-chevron-size: 10px;
-  flex: none;
-  color: var(--ink-quiet);
-}
-.screen-nav-settings-select {
-  padding: 0.15rem 1.1rem 0.15rem 0.3rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
-  background: var(--surface);
-  color: inherit;
-  font-size: var(--font-label);
-}
 /* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ。 */
 .screen-nav-settings-reset {
   margin-left: auto;

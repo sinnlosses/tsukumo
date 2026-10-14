@@ -41,7 +41,11 @@ const BROWSER_SCREENS = [
   "components/page/token-usage",
   "components/page/achievement",
 ] as const
-const BROWSER_PLACED_FEATURES = ["features/task-board", "features/current-work"] as const
+const BROWSER_PLACED_FEATURES = [
+  "features/task-board",
+  "features/current-work",
+  "features/run-setting",
+] as const
 
 type BrowserFeatureKind = "frame" | "screen" | "placed"
 

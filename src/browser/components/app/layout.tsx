@@ -5,11 +5,11 @@
 
 import { Activity, type ReactElement } from "react"
 
+import { RunSettingGroup } from "../../features/run-setting/components/run-setting-group.tsx"
 import type { Screen } from "../../stores/location-hash.ts"
 import { useScreen } from "../../stores/screen.tsx"
 import type { NavDrawerSlots } from "../domain/screen-nav/components/nav-drawer.tsx"
 import { ScreenNav } from "../domain/screen-nav/screen-nav.tsx"
-import { RunSettingGroup } from "../domain/sidebar/components/run-setting-group.tsx"
 import { SidebarTaskPane } from "../domain/sidebar/components/sidebar-task-pane.tsx"
 import { UsagePane } from "../domain/sidebar/components/usage-pane.tsx"
 import { SkipLink } from "../domain/skip-link.tsx"

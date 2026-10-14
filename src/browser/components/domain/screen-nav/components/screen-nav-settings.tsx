@@ -4,13 +4,21 @@
 import { useId, type ReactElement } from "react"
 
 import { isSessionDefaultPermissionMode } from "../../../../../shared/session/session-default.ts"
-import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../../../../domain/effort-label.ts"
-import { MODEL_LABELS } from "../../../../domain/model-label.ts"
+import { EFFORT_PLACEHOLDER_VALUE } from "../../../../domain/effort-label.ts"
 import { PERMISSION_MODE_LABELS } from "../../../../domain/permission-mode-label.ts"
 import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
+import {
+  RunSettingName,
+  effortSelectOptions,
+  modelSelectOptions,
+  permissionModeSelectOptions,
+} from "../../../../features/run-setting/components/run-setting-option.tsx"
+import {
+  RunSettingSelect,
+  type RunSettingSelectOption,
+} from "../../../../features/run-setting/components/run-setting-select.tsx"
 import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
-import { Select } from "../../../ui/select/select.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import type { ScreenNavSettings } from "../hooks/use-settings.ts"
 import styles from "./screen-nav-settings.module.css"
@@ -19,17 +27,16 @@ export type ScreenNavSettingsProps = {
   readonly settings: ScreenNavSettings
 }
 
-/** 既定の `<select>` に出すモデル（帯のドロップダウンと同じ順）。 */
-const MODEL_OPTIONS = MODEL_LABELS.map(([value, label]) => ({ value, label }))
+/** 既定の吊り札に出す許可モード。「全部許す」は既定には選べないので落とす（帯の吊り札からはその都度選べる）。 */
+const SESSION_DEFAULT_PERMISSION_MODES = PERMISSION_MODE_LABELS.map(([value]) => value).filter(
+  isSessionDefaultPermissionMode,
+)
 
-/** 既定の `<select>` に出す許可モード。「全部許す」は既定には選べないので落とす（帯のドロップダウンからはその都度選べる）。 */
-const PERMISSION_MODE_OPTIONS = PERMISSION_MODE_LABELS.filter(([value]) =>
-  isSessionDefaultPermissionMode(value),
-).map(([value, label]) => ({ value, label }))
-
-const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]) => ({
+const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]): RunSettingSelectOption => ({
   value,
-  label,
+  disabled: false,
+  icon: undefined,
+  row: <RunSettingName danger={false}>{label}</RunSettingName>,
 }))
 
 /** 設定の中身（3つの面を見出し付きで並べ、末尾に既定に戻す）。狭い画面の引き出しの設定の面が置く。 */
@@ -160,15 +167,19 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
         className={styles["screen-nav-settings-row"]}
       >
         <label htmlFor={`${fieldId}-default-model`}>モデル</label>
-        <Select
+        <RunSettingSelect
           id={`${fieldId}-default-model`}
           ariaLabel="新しいセッションの既定のモデル"
-          frameClassName={styles["screen-nav-settings-select-frame"]}
-          className={styles["screen-nav-settings-select"]}
+          heading="モデル"
           value={settings.sessionDefault.model}
+          options={modelSelectOptions(settings.sessionDefault.modelEffortSupport)}
           disabled={false}
+          danger={false}
+          rail={false}
+          layout="list"
+          mouth="field"
           title={undefined}
-          options={MODEL_OPTIONS}
+          dot="none"
           onChange={settings.sessionDefault.onChangeModel}
         />
       </HStack>
@@ -183,34 +194,29 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
         className={styles["screen-nav-settings-row"]}
       >
         <label htmlFor={`${fieldId}-default-effort`}>effort</label>
-        {settings.sessionDefault.effort.kind === "known" ? (
-          <Select
-            id={`${fieldId}-default-effort`}
-            ariaLabel="新しいセッションの既定の effort"
-            frameClassName={styles["screen-nav-settings-select-frame"]}
-            className={styles["screen-nav-settings-select"]}
-            value={settings.sessionDefault.effort.value}
-            disabled={false}
-            title={undefined}
-            options={settings.sessionDefault.effort.options.map((value) => ({
-              value,
-              label: effortLabel(value),
-            }))}
-            onChange={settings.sessionDefault.onChangeEffort}
-          />
-        ) : (
-          <Select
-            id={`${fieldId}-default-effort`}
-            ariaLabel="新しいセッションの既定の effort"
-            frameClassName={styles["screen-nav-settings-select-frame"]}
-            className={styles["screen-nav-settings-select"]}
-            value={EFFORT_PLACEHOLDER_VALUE}
-            disabled={true}
-            title={settings.sessionDefault.effort.reason}
-            options={[{ value: EFFORT_PLACEHOLDER_VALUE, label: "—" }]}
-            onChange={() => {}}
-          />
-        )}
+        <RunSettingSelect
+          id={`${fieldId}-default-effort`}
+          ariaLabel="新しいセッションの既定の effort"
+          heading="effort"
+          value={
+            settings.sessionDefault.effort.kind === "known"
+              ? settings.sessionDefault.effort.value
+              : EFFORT_PLACEHOLDER_VALUE
+          }
+          options={effortSelectOptions(settings.sessionDefault.effort)}
+          disabled={settings.sessionDefault.effort.kind !== "known"}
+          danger={false}
+          rail={false}
+          layout="row"
+          mouth="field"
+          title={
+            settings.sessionDefault.effort.kind === "known"
+              ? undefined
+              : settings.sessionDefault.effort.reason
+          }
+          dot="none"
+          onChange={settings.sessionDefault.onChangeEffort}
+        />
       </HStack>
       <HStack
         element="div"
@@ -223,15 +229,19 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
         className={styles["screen-nav-settings-row"]}
       >
         <label htmlFor={`${fieldId}-default-permission-mode`}>許可モード</label>
-        <Select
+        <RunSettingSelect
           id={`${fieldId}-default-permission-mode`}
           ariaLabel="新しいセッションの既定の許可モード"
-          frameClassName={styles["screen-nav-settings-select-frame"]}
-          className={styles["screen-nav-settings-select"]}
+          heading="許可モード"
           value={settings.sessionDefault.permissionMode}
+          options={permissionModeSelectOptions(SESSION_DEFAULT_PERMISSION_MODES)}
           disabled={false}
+          danger={false}
+          rail={false}
+          layout="list"
+          mouth="field"
           title={undefined}
-          options={PERMISSION_MODE_OPTIONS}
+          dot="none"
           onChange={settings.sessionDefault.onChangePermissionMode}
         />
       </HStack>
@@ -259,15 +269,19 @@ export function ScreenNavSettingsRevealFace(
         className={styles["screen-nav-settings-row"]}
       >
         <label htmlFor={`${fieldId}-reveal-speed`}>{label}</label>
-        <Select
+        <RunSettingSelect
           id={`${fieldId}-reveal-speed`}
           ariaLabel="書き上げる演出の速さ"
-          frameClassName={styles["screen-nav-settings-select-frame"]}
-          className={styles["screen-nav-settings-select"]}
+          heading="書き上げる速さ"
           value={settings.revealSpeed.value}
-          disabled={false}
-          title={undefined}
           options={REVEAL_SPEED_OPTIONS}
+          disabled={false}
+          danger={false}
+          rail={false}
+          layout="list"
+          mouth="field"
+          title={undefined}
+          dot="none"
           onChange={settings.revealSpeed.onChange}
         />
       </HStack>

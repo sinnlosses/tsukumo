@@ -210,3 +210,53 @@
   outline: 1.5px solid var(--ink);
   outline-offset: 1px;
 }
+
+/* 設定の欄の口（`mouth="field"`）。絵・いまの名前・開閉の矢印を並べる。
+   閉じた口に写る `.run-setting-select-row` は、名前（`data-part="name"`）だけを残す。 */
+.run-setting-select.is-field {
+  justify-content: flex-start;
+  min-width: 200px;
+  height: 34px;
+  border: 1px solid var(--rule-quiet);
+  background: var(--ground);
+}
+.run-setting-select.is-field:hover {
+  background: var(--surface-raised);
+}
+/* 狭い画面の引き出し（幅 330）の中に収める。長い用途は省略記号で縮む。 */
+.run-setting-select.is-field::picker(select) {
+  max-width: 19rem;
+}
+.run-setting-select.is-field .run-setting-select-button {
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 10px;
+}
+.run-setting-select.is-field .run-setting-select-closed .run-setting-select-row {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  align-items: center;
+  overflow: hidden;
+}
+.run-setting-select.is-field
+  .run-setting-select-closed
+  .run-setting-select-row
+  > :not([data-part="name"]) {
+  display: none;
+}
+.run-setting-select.is-field .run-setting-select-closed [data-part="name"] {
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.run-setting-select.is-field .run-setting-select-closed .run-setting-select-icon:empty {
+  display: none;
+}
+.run-setting-select-chevron {
+  flex: none;
+  margin-left: auto;
+  color: var(--ink-quiet);
+}

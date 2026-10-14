@@ -1,0 +1,35 @@
+/* モデル・effort・許可モードの操作子の組。3つの絵の口を1つの枠に並べ、細い仕切りで分ける。 */
+.run-setting-group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 0 2px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--ground);
+}
+.run-setting-divider {
+  flex: none;
+  width: 1px;
+  height: 18px;
+  background: var(--rule);
+}
+/* 中くらいの窓幅の柱では縦に並べる。 */
+.run-setting-group-rail {
+  flex-direction: column;
+  padding: 2px 0;
+}
+.run-setting-group-rail .run-setting-divider {
+  width: 18px;
+  height: 1px;
+}
+/* 狭い画面の引き出しでは、仕事・雑談の門の右に並べる。 */
+.run-setting-group-drawer {
+  padding: 4px 2px;
+}
+/* 中くらいの窓幅では柱が持つので、開いたサイドバーの下端には出さない。 */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .run-setting-group-footer {
+    display: none;
+  }
+}

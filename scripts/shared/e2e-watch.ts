@@ -11,7 +11,7 @@ export const E2E_REGION_ROOTS = {
   dispatch: ["src/browser/components/page/conversation/components/dispatch/dispatch.tsx"],
   sidebar: [
     "src/browser/components/domain/sidebar/sidebar.tsx",
-    "src/browser/components/domain/sidebar/components/run-setting-group.tsx",
+    "src/browser/features/run-setting/components/run-setting-group.tsx",
     "src/browser/components/domain/sidebar/components/task-doing-count.tsx",
   ],
   "task-board": [

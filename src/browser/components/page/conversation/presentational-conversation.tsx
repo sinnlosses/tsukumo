@@ -6,7 +6,7 @@
 
 import type { ReactElement } from "react"
 
-import { RunSettingGroup } from "../../domain/sidebar/components/run-setting-group.tsx"
+import { RunSettingGroup } from "../../../features/run-setting/components/run-setting-group.tsx"
 import { TaskDoingCount } from "../../domain/sidebar/components/task-doing-count.tsx"
 import { Sidebar } from "../../domain/sidebar/sidebar.tsx"
 import { CharacterView } from "./components/character-view/character-view.tsx"

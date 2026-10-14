@@ -4,8 +4,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { RunSettingSelect } from "../../../../../../src/browser/components/domain/sidebar/components/run-setting-select.tsx"
-import { typedElement } from "../../../../../typed-element.ts"
+import { RunSettingSelect } from "../../../../src/browser/features/run-setting/components/run-setting-select.tsx"
+import { typedElement } from "../../../typed-element.ts"
 
 afterEach(() => {
   cleanup()
@@ -31,6 +31,7 @@ describe("RunSettingSelect", () => {
         danger={false}
         rail={false}
         layout="list"
+        mouth="icon"
         title={undefined}
         dot="none"
         onChange={() => {}}
@@ -60,6 +61,7 @@ describe("RunSettingSelect", () => {
         danger={false}
         rail={false}
         layout="list"
+        mouth="icon"
         title={undefined}
         dot="none"
         onChange={(value) => calls.push(value)}
@@ -86,6 +88,7 @@ describe("RunSettingSelect", () => {
         danger={false}
         rail={false}
         layout="list"
+        mouth="icon"
         title={undefined}
         dot="none"
         onChange={() => {}}
@@ -109,6 +112,7 @@ describe("RunSettingSelect", () => {
         danger={false}
         rail={false}
         layout="list"
+        mouth="icon"
         title="架空の理由"
         dot="none"
         onChange={() => {}}
@@ -117,5 +121,32 @@ describe("RunSettingSelect", () => {
 
     expect(select().disabled).toBe(true)
     expect(select().title).toBe("架空の理由")
+  })
+
+  it("field の口だけ、閉じた口に開閉の矢印を置く", () => {
+    const rendered = (mouth: "icon" | "field"): number => {
+      cleanup()
+      render(
+        <RunSettingSelect
+          id="run-setting-select-fixture"
+          ariaLabel="架空のラベル"
+          heading="架空の見出し"
+          value="a"
+          options={[{ value: "a", disabled: false, icon: "A", row: "A の行" }]}
+          disabled={false}
+          danger={false}
+          rail={false}
+          layout="list"
+          mouth={mouth}
+          title={undefined}
+          dot="none"
+          onChange={() => {}}
+        />,
+      )
+      return select().querySelectorAll("button > svg").length
+    }
+
+    expect(rendered("icon")).toBe(0)
+    expect(rendered("field")).toBe(1)
   })
 })

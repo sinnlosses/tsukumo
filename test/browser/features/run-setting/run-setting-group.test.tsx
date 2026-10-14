@@ -1,14 +1,14 @@
 import { act, cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { RunSettingGroup } from "../../../../../../src/browser/components/domain/sidebar/components/run-setting-group.tsx"
-import { nowEpochMilliseconds } from "../../../../../../src/browser/utils/clock.ts"
+import { RunSettingGroup } from "../../../../src/browser/features/run-setting/components/run-setting-group.tsx"
+import { nowEpochMilliseconds } from "../../../../src/browser/utils/clock.ts"
 import {
   INITIAL_SESSION_STATE,
   type SettingMark,
   type SettingMarks,
-} from "../../../../../../src/shared/session/session-state.ts"
-import { putSession, putState } from "../../../../session-store.ts"
+} from "../../../../src/shared/session/session-state.ts"
+import { putSession, putState } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
