@@ -1,4 +1,4 @@
-// 取り込んだ tsukumo-plugins の `task.py ask-guard`（python3）を子として走らせ、
+// 取り込んだ tsukumo-plugins の入口 `bin/tw ask-guard` を子として走らせ、
 // 主のセッションの `AskUserQuestion` の PreToolUse に当てる。
 // 子が起動できない・失敗・出力が読めないときは何も拒まない（質問を通す側）。
 
@@ -25,8 +25,8 @@ const denyOutputSchema = z.object({
 export function runAskGuard(stdin: string): Promise<string> {
   return new Promise((resolve) => {
     const child = execFile(
-      "python3",
-      [join(workflowPluginDir(), "skills", "task-workflow", "scripts", "task.py"), "ask-guard"],
+      join(workflowPluginDir(), "bin", "tw"),
+      ["ask-guard"],
       { timeout: ASK_GUARD_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
       (error, stdout) => {
         resolve(error === null ? stdout : "")

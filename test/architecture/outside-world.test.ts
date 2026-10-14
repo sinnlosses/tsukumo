@@ -32,7 +32,7 @@ describe("Agent SDK を import する箇所", () => {
 // `node:child_process` を起こすのはホスト（orca）・ビルド（vite build）・`git` を起こす1つの口
 // （`main` の上のタスク一覧・成果の集計・git 管理下のファイルの列挙のどれもがここを使う）・
 // `bd` を起こす1つの口（Beads 方式のタスク一覧と成果の集計）・別のチェックアウトの
-// `bin/tsukumo` へ委ねる口・取り込んだワークフローの `ask-guard`（python3）を起こす口の6つの境界に閉じ込める（docs/architecture.md「1ファイル = 1つの境界」）。
+// `bin/tsukumo` へ委ねる口・取り込んだワークフローの `bin/tw ask-guard` を起こす口の6つの境界に閉じ込める（docs/architecture.md「1ファイル = 1つの境界」）。
 // そのうち `orca` コマンドを起こすのは orca-host.ts だけ。
 // `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、その字面で探す。
 // ファイル名やバッククォートで囲んだ日本語の説明文はクォートされた文字列リテラルではないので拾わない。

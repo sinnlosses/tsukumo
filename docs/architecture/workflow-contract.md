@@ -155,5 +155,5 @@ tsukumo が読まないもの: 委譲の返却の2行目より後ろ、委譲先
 素の Claude Code では利用者の手元のワークフローを使い、tsukumo の中では取り込んだものを使う。
 
 取り込んだワークフローを載せるとき（`mount`・`partial`）は、plugin の `hooks/hooks.json` が `AskUserQuestion` に `tw ask-guard` を当てる。
-利用者がスキルとエージェントをリンクで入れていて載せないとき（`user-installed`）は、本体が `PreToolUse` の `AskUserQuestion` に取り込みの `task.py ask-guard`（`python3`）を当てる。
+利用者がスキルとエージェントをリンクで入れていて載せないとき（`user-installed`）は、本体が `PreToolUse` の `AskUserQuestion` に取り込みの `bin/tw ask-guard` を当てる。
 どちらか一方だけが効き、二重に拒まない。子が失敗・無出力・読めない出力のときは質問を通す。`report` の `favor` は扱わない。
