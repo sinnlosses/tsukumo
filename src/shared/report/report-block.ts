@@ -293,7 +293,7 @@ const imageBlockSchema = z
     fold,
   })
   .describe(
-    "手で確かめた画面の画像1枚（何が見えたかを文で言い直さない。見る場所が2つ以上なら notes に並べる）。前後は beforeAfter",
+    "手で確かめた画面の画像1枚（何が見えたかを文で言い直さない。見る場所が2つ以上なら notes に並べる）。前後は beforeAfter。入れ子が主役の構成図は d2 で撮った PNG をこの塊で渡してよい（崩れたら graph に戻す）",
   )
 
 const REPORT_FILE_CHANGES = ["added", "modified", "deleted", "read"] as const
