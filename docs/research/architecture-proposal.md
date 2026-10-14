@@ -296,7 +296,7 @@ characters/ vendor/ scripts/ bin/   変更なし
   変える理由が性質に無い
 - **言語・ランタイム・フレームワークの変更**: `docs/research/architecture-rethink.md`「採らない案」。
   Bun → Node の寄せ替えは箱の方針の判断に従属する
-- **`scripts/open-views.ts` が `core` / `adapter` を import するのを禁じる**: `scripts/` は本体から呼ばれない道具。
+- **`scripts/capture/open-views.ts` が `core` / `adapter` を import するのを禁じる**: `scripts/` は本体から呼ばれない道具。
   辺の検査の対象外のまま
 
 ## 7. 未決事項

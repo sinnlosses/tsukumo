@@ -1,7 +1,7 @@
 // 手元で並べて動いている部屋（tsukumo のビュー）を、iframe で格子に並べた1枚の HTML にして
 // Orca に開く。並べるのは「ポートで待ち受けていて、かつ Orca のタブがある」部屋だけ。
 //
-// 使い方: node scripts/open-room-grid.ts
+// 使い方: node scripts/capture/open-room-grid.ts
 //
 // 格子のタブを開いているあいだ常駐する。127.0.0.1 の空きポート（OS に選ばせるので、tsukumo の
 // 探索範囲には入らない）で格子を配る小さな HTTP サーバになり、格子のページを読み込むたびに
@@ -17,10 +17,15 @@ import { createServer, type IncomingMessage, type ServerResponse, type Server } 
 import { basename } from "node:path"
 import process from "node:process"
 
-import { closeTab, listTabs, openTab, type OrcaTab } from "../src/server/host/adapter/orca-host.ts"
-import { createStartupToken } from "../src/server/view-server/adapter/server.ts"
-import { roomName } from "../src/shared/view-server/room.ts"
-import { candidatePorts, findListener, run, type Listener } from "./lib/port-listener.ts"
+import {
+  closeTab,
+  listTabs,
+  openTab,
+  type OrcaTab,
+} from "../../src/server/host/adapter/orca-host.ts"
+import { createStartupToken } from "../../src/server/view-server/adapter/server.ts"
+import { roomName } from "../../src/shared/view-server/room.ts"
+import { candidatePorts, findListener, run, type Listener } from "../shared/port-listener.ts"
 import {
   buildRoomGridHtml,
   type GridTabObservation,

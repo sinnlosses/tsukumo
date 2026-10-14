@@ -16,7 +16,7 @@ import {
   DEFAULT_VIEW_PORT,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../src/server/view-server/core/port-resolution.ts"
-import { candidatePorts, findListener } from "./lib/port-listener.ts"
+import { candidatePorts, findListener } from "./shared/port-listener.ts"
 
 const USAGE = `使い方:
   node scripts/stop.ts                # 動いている tsukumo を一覧する（止めない）

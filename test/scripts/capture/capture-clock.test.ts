@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 
-import { readClockInstant } from "../../scripts/lib/capture-clock.ts"
+import { readClockInstant } from "../../../scripts/capture/lib/capture-clock.ts"
 
 describe("readClockInstant", () => {
   test("オフセット付きの ISO 時刻をエポックミリ秒に読む", () => {

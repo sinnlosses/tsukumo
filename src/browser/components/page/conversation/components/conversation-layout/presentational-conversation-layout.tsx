@@ -1,7 +1,7 @@
 // `<ConversationLayout>` の器。
 //
 // 4領域は `data-region` でも名乗る。
-// class 名は組み立てのたびにハッシュ化される（CSS Modules）ので、外から領域を指す口（画面を撮って位置と大きさを測る `node scripts/capture-view.ts` や、開発者ツール）はこちらを使う。
+// class 名は組み立てのたびにハッシュ化される（CSS Modules）ので、外から領域を指す口（画面を撮って位置と大きさを測る `node scripts/capture/capture-view.ts` や、開発者ツール）はこちらを使う。
 //
 // 枠を持たない領域（`.layout-ground`）は、キャラビューと雑談中のメインビューで同じ class を共有する（覆いの式を1箇所にしか書かないため）。
 //

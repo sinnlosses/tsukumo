@@ -13,7 +13,7 @@
     "dev": "pnpm run build && node src/cli.ts --dev",
     "build": "pnpm run css-types && node scripts/dev/build-ui.ts",
     "css-types": "hcm 'src/**/*.module.css' --outDir dist/css-module-type --logLevel silent",
-    "grid": "node scripts/open-room-grid.ts",
+    "grid": "node scripts/capture/open-room-grid.ts",
     "typecheck": "pnpm run css-types && tsc --noEmit && tsc --noEmit -p tsconfig.storybook.json",
     "lint": "oxlint src test scripts story .storybook vite.config.ts",
     "lint:fix": "oxlint src test scripts story .storybook vite.config.ts --fix",

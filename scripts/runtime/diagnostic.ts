@@ -2,9 +2,9 @@
 // 迎えの書き込み（`welcome-writing`）があれば、並べたあとに書いたものごとの失敗率と所要も出す。
 //
 // 使い方:
-//   node scripts/diagnostic.ts                                   # 今日のぶん
-//   node scripts/diagnostic.ts --from <YYYY-MM-DD>T09:00 --to <YYYY-MM-DD>T10:30
-//   node scripts/diagnostic.ts --from <YYYY-MM-DD> --generation 2  # その日の始まりから今日の終わりまでの、2代目だけ
+//   node scripts/runtime/diagnostic.ts                                   # 今日のぶん
+//   node scripts/runtime/diagnostic.ts --from <YYYY-MM-DD>T09:00 --to <YYYY-MM-DD>T10:30
+//   node scripts/runtime/diagnostic.ts --from <YYYY-MM-DD> --generation 2  # その日の始まりから今日の終わりまでの、2代目だけ
 //
 // `--from` は含み、`--to` は含まない。どちらもローカル時刻の `YYYY-MM-DD` か `YYYY-MM-DDTHH:MM[:SS]`。
 // 既定は `--from` が今日の始まり、`--to` が今日の終わり。
@@ -18,19 +18,19 @@ import {
   localDateEpochRange,
   localDateTimeEpochMilliseconds,
   todayLocalDateKey,
-} from "../src/server/adapter/local-time.ts"
+} from "../../src/server/adapter/local-time.ts"
 import {
   createDiagnosticLog,
   diagnosticDir,
-} from "../src/server/diagnostic/adapter/diagnostic-log.ts"
-import type { DiagnosticEntry } from "../src/shared/diagnostic/diagnostic-record.ts"
+} from "../../src/server/diagnostic/adapter/diagnostic-log.ts"
+import type { DiagnosticEntry } from "../../src/shared/diagnostic/diagnostic-record.ts"
 import type {
   WelcomeAttemptTrace,
   WelcomeWritingFootprint,
-} from "../src/shared/diagnostic/welcome-writing.ts"
+} from "../../src/shared/diagnostic/welcome-writing.ts"
 
 const USAGE = `使い方:
-  node scripts/diagnostic.ts [--from <時刻>] [--to <時刻>] [--generation <代>]
+  node scripts/runtime/diagnostic.ts [--from <時刻>] [--to <時刻>] [--generation <代>]
   時刻はローカルの YYYY-MM-DD か YYYY-MM-DDTHH:MM[:SS]`
 
 type GenerationFilter =

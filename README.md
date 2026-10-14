@@ -140,15 +140,15 @@ mise run setup
 
 ### つまずいたとき
 
-| 出たもの                                                              | 原因                                                         | 対処                                                              |
-| --------------------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
-| `zsh: command not found: tsukumo`                                     | `$PNPM_HOME/bin` が `PATH` に通っていない                    | 新しいシェルを開いて `mise run setup` を打ち直す（手順1）         |
-| `tsukumo: ブラウザ側の成果物を読めない`                               | `dist/browser/` が無い                                       | リポジトリの直下で `mise run setup`（手順1）                      |
-| `tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい` | 更新したあと組み立て直していない                             | `mise run setup`（手順3）。止まりはせず、古い画面のまま動く       |
-| `tsukumo: TSUKUMO_VIEW_PORT がポート番号として読めない`               | 環境変数に数でない値が入っている                             | `TSUKUMO_VIEW_PORT` を外すか数にする                              |
-| `tsukumo: node <版> が古い`                                           | `PATH` の node が 26 未満（mise の node が選ばれていない）   | リポジトリの直下で `mise install`、そのあと `mise run setup`      |
-| タブが開かない                                                        | `orca` が無い、`TSUKUMO_OPEN_VIEW=0`、か `TSUKUMO_HOST=none` | 表示された URL を手でブラウザに開く                               |
-| タブだけ閉じてしまった                                                | プロセスは動いたまま                                         | `node scripts/open-views.ts http://127.0.0.1:<ポート>` で開き直す |
+| 出たもの                                                              | 原因                                                         | 対処                                                                      |
+| --------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `zsh: command not found: tsukumo`                                     | `$PNPM_HOME/bin` が `PATH` に通っていない                    | 新しいシェルを開いて `mise run setup` を打ち直す（手順1）                 |
+| `tsukumo: ブラウザ側の成果物を読めない`                               | `dist/browser/` が無い                                       | リポジトリの直下で `mise run setup`（手順1）                              |
+| `tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい` | 更新したあと組み立て直していない                             | `mise run setup`（手順3）。止まりはせず、古い画面のまま動く               |
+| `tsukumo: TSUKUMO_VIEW_PORT がポート番号として読めない`               | 環境変数に数でない値が入っている                             | `TSUKUMO_VIEW_PORT` を外すか数にする                                      |
+| `tsukumo: node <版> が古い`                                           | `PATH` の node が 26 未満（mise の node が選ばれていない）   | リポジトリの直下で `mise install`、そのあと `mise run setup`              |
+| タブが開かない                                                        | `orca` が無い、`TSUKUMO_OPEN_VIEW=0`、か `TSUKUMO_HOST=none` | 表示された URL を手でブラウザに開く                                       |
+| タブだけ閉じてしまった                                                | プロセスは動いたまま                                         | `node scripts/capture/open-views.ts http://127.0.0.1:<ポート>` で開き直す |
 
 ### 開発しながら動かす
 
@@ -213,7 +213,7 @@ tsukumo は**1つのプロセス**で、Agent SDK で Claude Code を子プロ�
 プロセスは動かしたままタブだけ閉じてしまったときは、開き直す道具があります。
 
 ```bash
-node scripts/open-views.ts http://127.0.0.1:7327
+node scripts/capture/open-views.ts http://127.0.0.1:7327
 ```
 
 ## 使い方
@@ -329,15 +329,15 @@ pnpm run dev                   # pnpm run build のあと、start と同じ経�
                               #   （src/server/ と src/shared/ を直したときは上げ直しが要る。docs/architecture/build.md）
 pnpm run storybook             # 部品を props ごとに並べる Storybook を http://localhost:6006/ に起こす
                               #   （story は story/ の下。本体と同じ vite.config.ts で組み立てる）
-node scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
+node scripts/capture/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
 pnpm run grid                  # 待ち受けていてタブもある部屋を iframe の格子に並べて Orca に開く。格子のタブが
                               #   あるあいだ常駐し、再読み込みのたびに並べ直す。タブを閉じると終わる
 node scripts/stop.ts           # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。pkill / killall は
                               #   hook が拒否する。並べて動かすとどれも `node src/cli.ts` に見えて区別できないため）
-node scripts/mockup-font-floor.ts <見本の HTML かディレクトリ>  # 見本の font-size のうち 12px 未満を一覧する（あれば終了コード1）
+node scripts/capture/mockup-font-floor.ts <見本の HTML かディレクトリ>  # 見本の font-size のうち 12px 未満を一覧する（あれば終了コード1）
 node scripts/experience-metric.ts  # 体験の数（依頼から結論まで・答え待ち・立ち直るまでの手数）を集計する
                               #   （--days <n> で期間、--split <YYYY-MM-DD> でその日の前後に分ける）
-node scripts/diagnostic.ts     # 診断ログ（~/.tsukumo/diagnostic/）を時系列に並べる（既定は今日。--from / --to
+node scripts/runtime/diagnostic.ts     # 診断ログ（~/.tsukumo/diagnostic/）を時系列に並べる（既定は今日。--from / --to
                               #   <YYYY-MM-DD[THH:MM[:SS]]> で時刻の範囲、--generation <n> で駆動の代を絞る）
 ```
 

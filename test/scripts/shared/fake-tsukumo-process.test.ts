@@ -4,7 +4,7 @@ import { type ChildProcess, spawn } from "node:child_process"
 
 import { afterEach, describe, expect, test } from "vitest"
 
-import { waitForViewUrl } from "../../scripts/lib/fake-tsukumo-process.ts"
+import { waitForViewUrl } from "../../../scripts/shared/fake-tsukumo-process.ts"
 
 const children: ChildProcess[] = []
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 
-import { sourceOf } from "../../scripts/lib/capture-source.ts"
+import { sourceOf } from "../../../scripts/capture/lib/capture-source.ts"
 
 const DEFAULT_CWD = "/work/tree"
 

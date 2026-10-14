@@ -35,7 +35,7 @@ import path from "node:path"
 import process from "node:process"
 import { fileURLToPath } from "node:url"
 
-import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
+import { spawnFakeTsukumo, waitForViewUrl } from "./shared/fake-tsukumo-process.ts"
 
 /**
  * 取り出し先の親（リポジトリの外）。コミットごとに下に掘るので、同じコミットを何度起こしても

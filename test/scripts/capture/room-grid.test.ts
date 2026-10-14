@@ -3,7 +3,6 @@
 
 import { describe, expect, test } from "vitest"
 
-import type { Listener } from "../../scripts/lib/port-listener.ts"
 import {
   buildRoomGridHtml,
   type GridTabWatch,
@@ -16,7 +15,8 @@ import {
   roomGridPath,
   routeRoomGridRequest,
   scanPorts,
-} from "../../scripts/room-grid.ts"
+} from "../../../scripts/capture/room-grid.ts"
+import type { Listener } from "../../../scripts/shared/port-listener.ts"
 
 const FAKE_TOKEN_A = "fake0000aaaa1111bbbb2222cccc3333"
 const FAKE_TOKEN_B = "fake4444dddd5555eeee6666ffff7777"

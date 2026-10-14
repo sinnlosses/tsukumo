@@ -24,7 +24,7 @@ const SOURCE = {
     [REPORT, ["test/e2e/scenario-run.ts", "test/e2e/task-room.ts"]],
     [CHAT, ["test/e2e/scenario-run.ts"]],
     [PAGE, ["test/e2e/scenario-run.ts"]],
-    ["test/e2e/scenario-run.ts", ["scripts/lib/fake-process.ts"]],
+    ["test/e2e/scenario-run.ts", ["scripts/shared/fake-process.ts"]],
   ]),
   sources: new Map([
     [REPORT, 'run.open({ scenario: "report-blocks" })'],
@@ -63,7 +63,7 @@ describe("selectE2eFiles が選ぶファイル", () => {
 
   test("E2E の足場の側のファイルは、import で届く元の E2E を選ぶ", () => {
     expect(select("test/e2e/task-room.ts")).toEqual({ kind: "files", files: [REPORT] })
-    expect(select("scripts/lib/fake-process.ts")).toEqual({
+    expect(select("scripts/shared/fake-process.ts")).toEqual({
       kind: "files",
       files: [CHAT, PAGE, REPORT],
     })

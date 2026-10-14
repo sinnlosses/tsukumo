@@ -31,7 +31,9 @@ function listHtmlFiles(target: string): string[] {
 
 const target = process.argv[2]
 if (target === undefined) {
-  process.stderr.write("使い方: node scripts/mockup-font-floor.ts <見本の HTML かディレクトリ>\n")
+  process.stderr.write(
+    "使い方: node scripts/capture/mockup-font-floor.ts <見本の HTML かディレクトリ>\n",
+  )
   process.exit(2)
 }
 

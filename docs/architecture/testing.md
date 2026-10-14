@@ -27,7 +27,7 @@
 | 層の検査                                  | 層の辺・機能どうしの辺・browser の箱と領域の辺（`docs/architecture.md`「全体構成」）。外部ツールは増やさない                                                                        | `test/architecture/`                                     |
 | 関数の並びの検査                          | `export` する関数が `export` しない関数より前に並ぶ（`docs/coding-standards.md`「関数の並び順」）                                                                                   | `test/function-order.test.ts`                            |
 | 画面の見た目                              | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目                                                      | `scripts/`（本体から呼ばれない）                         |
-| 状態のカタログ                            | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                                                                        | `scripts/capture-catalog.ts`                             |
+| 状態のカタログ                            | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                                                                        | `scripts/capture/capture-catalog.ts`                     |
 | E2E                                       | **fake driver で起こした tsukumo を手元の Chrome で開き、利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないもの（寸法・入力・サーバとの往復）を確かめる**（下の「E2E」） | `test/e2e/`                                              |
 
 - **`server.ts` / `session-socket.ts` はテストする。** 「描く」側の入り口だが、配った結果は HTTP と WebSocket の
@@ -354,7 +354,7 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 **fake driver（`TSUKUMO_DRIVER=fake`）で起こせる**ので、claude を起こさず（API を使わず）に
 下の手順を回せる（上の「テスト」）。
 
-**状態ごとの画面を並べて見るときは `node scripts/capture-catalog.ts`。** 疑似セッションの場面
+**状態ごとの画面を並べて見るときは `node scripts/capture/capture-catalog.ts`。** 疑似セッションの場面
 （`test/fixture/fake-session.json` の `turns[].name`）ごとに tsukumo を1件ずつ空きポートで起こし、
 広い窓（1400x900）と狭い窓（720x900・縦に積み替わるのでページ全体）で撮る。**同じ場面を別の
 操作で何枚も撮る件があるので、名指しは場面の名前ではなく件の名前**（`--only notation-figure`
@@ -367,7 +367,7 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 お伺いの札・レポートの記法を直したら前後で撮り比べる。1枚だけ撮って要素の位置と大きさを
 数値で読むのは `capture-view.ts`（class セレクタで測るときは `[class*="…"]` — CSS Modules が
 `名前_ハッシュ` に焼くため）。**`capture-catalog.ts` の件が待つ `[class*="名前_"]` の名前が CSS Modules に
-定義されているかは `test/scripts/capture-catalog-selector.test.ts` が確かめる**（件そのものは
+定義されているかは `test/scripts/capture/capture-catalog-selector.test.ts` が確かめる**（件そのものは
 `pnpm run check` で走らない）。**撮った画像はリポジトリに置かない。** 疑似セッションの会話は架空でも、
 **タスク一覧のモーダルを撮る件には実データのタスク一覧（Beads の課題）が写る**ので、
 画像そのものを他所へ共有・複製しない。
@@ -396,7 +396,7 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 `--type <selector> <文字>`・`--click <selector>`・`--hover <selector>`・`--hash <hash>`・`--wait-after <selector>` を並べる。**
 書いた順に、`--wait-for` の待ちのあと・`--scroll-to` の前に当てる。1つでも当たらなければ
 撮らずに失敗で終わる（撮影のカタログの `prepare` は当たらない手を飛ばして撮る）。
-語彙と当て方は `scripts/lib/capture-preparation.ts` で共有している。
+語彙と当て方は `scripts/capture/lib/capture-preparation.ts` で共有している。
 **`--hash` で開いた画面は読み込みを待たずに撮ると「…」の画になるので、読み終わってからだけ現れる要素を
 `--wait-after` で待つ**（成果の画面は `--hash '#achievement' --wait-after 'section[aria-label="小さな驚き"]'`。
 `bd` の読みで15秒ほどかかる）。`--wait-for` は先頭の1回だけで、準備の手のあとの待ちは `--wait-after`。
@@ -416,7 +416,7 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 止めて流すので、止めた先の状態が残る（`opening` の手は数えない）。止めた先の要素は `--wait-for` で待つ。
 撮影は読み込みの1〜2秒後なので、遅い手で止めるときは `--wait-for` でその手が出す目印まで待つ
 （`--advance` はページの時計だけでサーバの手は進めない）。
-最終レポートまで流し切って待つときは `--wait-for '[class*="is-final_"]'`（`scripts/capture-catalog.ts`
+最終レポートまで流し切って待つときは `--wait-for '[class*="is-final_"]'`（`scripts/capture/capture-catalog.ts`
 の `WORK_PLAN_FINAL_SELECTOR` と同じ。`report-head` や `--advance` で待つと中間レポートや作業中の画を撮る）。
 **割れた `report` の差し戻しと直した `report` の描画は、場面 `report-mermaid-rejected`**（疑似セッションは判定せず、場面の `tool-finished` の `isError` に従う）。
 差し戻しの画は `--until-step 5 --wait-for 'text=流れを図にして出すね'`（本文に図が無く、吹き出しに直して出し直す一言が出る）、
@@ -486,7 +486,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
    ほうが新しいと「古い画面が出る」1行が出る
 2. **tsukumo 自身がレイアウトページのタブを開く**ので、それが**Orca 内のブラウザタブ**に
    出ること（外部ブラウザに出ないこと）を見る。タブだけ閉じてしまったときは
-   `node scripts/open-views.ts <URL>` で開き直せる
+   `node scripts/capture/open-views.ts <URL>` で開き直せる
 3. **画面の入力欄から依頼を打つ**。送信できること、実行中に中断できること
 4. **再読み込みなしに**吹き出しにセリフが出て、メインビューにレポートが流れること
 5. ツールを使う依頼で、**帯の「いまの作業」の札に進行が出て、押すと依頼の手順の一覧が開く**こと
@@ -541,7 +541,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 `tool-started` があっても帯の一覧に出ない。`current-work-background` は既存の `background-task`
 場面をそのまま使う。`portrait-clear-confirm` / `character-delete-confirm` /
 `diary-book` は**件専用の隔離ホーム**（`--out` の下の `home/`）を使う——`HomeSetup`
-（`scripts/capture-catalog.ts`）が、消せるキャラクターパック（同梱の `chou` を別名でコピー）や
+（`scripts/capture/capture-catalog.ts`）が、消せるキャラクターパック（同梱の `chou` を別名でコピー）や
 架空の日記を、撮る前にそこへ書く。**既定のホーム（利用者の `~/.tsukumo/`）には触らない。**
 
 **fake driver の質問の場面を Playwright で自動操作すると、`turnInProgress` が解けないまま残る

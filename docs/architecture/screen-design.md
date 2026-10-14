@@ -498,7 +498,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
     窓が 1000px 以下では字「新規」を隠して絵だけにする（761px で字ありだと送信の段が2段に折れた）。760px 以下は札も区切りも出さない（ナビの引き出しに「新しいセッション」がある）
   - **境目は 1100px**（2026-10-02 実測: 1101px の窓でサイドバーは幅 261px になり、バッジ・ID・件数のチップ・
     カードは割れない。1024px では 242px で割れていた）
-  - 内幅（2026-10-10 実測。`scripts/capture-view.ts` の `--size 761x900`・`--scene turn-outline`）:
+  - 内幅（2026-10-10 実測。`scripts/capture/capture-view.ts` の `--size 761x900`・`--scene turn-outline`）:
     - 窓 761px・メインビュー（`[data-region="main"]`）: 673px。やり取りの列を畳んだときの本文に使える幅は 633px（列の幅 40px を引く）、開いたときは 513px（列の幅 160px を引く）
     - 狭い窓の配置を決めるときは、この幅の中で固定幅の合計を見積もる
   - 採らなかった案: サイドバーに最小幅を持たせる（800px 台でメインビューが約 430px まで詰まる）。上段を
@@ -2147,7 +2147,7 @@ style と `<helmet><style>`、値は末尾の「寸法」「色」「ふるま�
 
 帯を 30px（body の padding の内側・gap 0.4rem）から、画面の端から端まで出る帯（上端の線 3px と
 下の罫線 1px を加えた外寸・gap 1rem）に広げる前後を、同じ疑似セッション・同じ窓の大きさ
-（高さ 900px）で `scripts/capture-view.ts` と同じ手順（Playwright で DOM の矩形を読む）で直接
+（高さ 900px）で `scripts/capture/capture-view.ts` と同じ手順（Playwright で DOM の矩形を読む）で直接
 測った値（fake driver。`docs/architecture/testing.md`「手で確かめること」。2026-09-23）。帯の地はいちど
 見本どおりの 60px（外寸 64px）にし、そのあと 52px（外寸 56px）に下げた:
 
@@ -2213,7 +2213,7 @@ style と `<helmet><style>`、値は末尾の「寸法」「色」「ふるま�
 入力欄は縮まない）。仕切りのドラッグと「比率を既定に戻す」は出さない（動かせる比率が無い）。
 上端と下端は見本の 44px・26px の空きの代わりに、頭の上は `max(8px, env(safe-area-inset-top))`、下は `env(safe-area-inset-bottom)` を足す
 （上は安全域が 0 の窓でも顔の輪が画面の縁に接しないように 8px を下限にする。2026-10-09 決定）。
-内幅（2026-10-10 実測。`scripts/capture-view.ts` の `--size` と `--scene` で測った値）:
+内幅（2026-10-10 実測。`scripts/capture/capture-view.ts` の `--size` と `--scene` で測った値）:
 
 - 窓 390px・場面 `phone-layout`・頭（`phone-head`）: 362px
 - 窓 390px・場面 `phone-layout`・本文（`[data-main-view-content]`）: 358px

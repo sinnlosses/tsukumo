@@ -1,7 +1,7 @@
 import type { Page } from "playwright-core"
 import { expect } from "vitest"
 
-import { MIN_FONT_SIZE } from "../../scripts/lib/minimum-font-size.ts"
+import { MIN_FONT_SIZE } from "../../scripts/capture/lib/minimum-font-size.ts"
 
 // 会話の画面の押せるもの・字を走査して、寸法・名前・字の大きさ・コントラストの下限を割るものを返す。
 // キャラクターの領域は背景画像の上の字なので走査しない。

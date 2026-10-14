@@ -18,9 +18,9 @@
 // 起動に失敗する。
 //
 // 使い方:
-//   node scripts/capture-catalog.ts --help                # --only に使える名前の一覧（撮らない）
-//   node scripts/capture-catalog.ts --only question-multi  # 1つだけ
-//   node scripts/capture-catalog.ts --out /tmp/別の置き場
+//   node scripts/capture/capture-catalog.ts --help                # --only に使える名前の一覧（撮らない）
+//   node scripts/capture/capture-catalog.ts --only question-multi  # 1つだけ
+//   node scripts/capture/capture-catalog.ts --out /tmp/別の置き場
 //
 // オプション無しで実行するとカタログ全部（広い窓・狭い窓の2枚ずつ）を撮る。 60秒では
 // 終わらないので、一覧が欲しいだけなら `--help` を使う。
@@ -39,24 +39,19 @@
 import { cpSync, mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
-import { fileURLToPath } from "node:url"
 
 import { type Browser, chromium, type Page } from "playwright-core"
 
-import { appendDiaryParagraph } from "../src/server/diary/adapter/diary.ts"
+import { appendDiaryParagraph } from "../../src/server/diary/adapter/diary.ts"
+import { spawnFakeTsukumo, waitForViewUrl } from "../shared/fake-tsukumo-process.ts"
+import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import {
   applyPreparation,
   describePreparation,
   type Preparation,
 } from "./lib/capture-preparation.ts"
-import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
 import { fictionalPng } from "./lib/fictional-png.ts"
 import { escapeHtml } from "./lib/html-escape.ts"
-
-/**
- * tsukumo 自身の場所（このスクリプトの1つ上）。spawn の cwd にも、架空の日記・パックを
- * 置く先を組み立てるのにも使う。 */
-const REPO_DIR = fileURLToPath(new URL("..", import.meta.url))
 
 /**
  * 撮る前に、その件専用の `TSUKUMO_HOME` へ置いておくもの。既定のホーム（利用者の
@@ -783,7 +778,7 @@ const PREPARE_SETTLE_MS = 800
  */
 const SKIP_REVEAL_KEY = "Escape"
 
-const USAGE = `使い方: node scripts/capture-catalog.ts [オプション]
+const USAGE = `使い方: node scripts/capture/capture-catalog.ts [オプション]
 
   --out <dir>     画像と索引の出力先（既定 ${DEFAULT_OUT_DIR}）
   --only <name>   カタログのうち1件だけ撮る（${CATALOG.map((entry) => entry.name).join(" / ")}）
@@ -852,7 +847,7 @@ async function captureEntry(
     await applyHomeSetup(entry.homeSetup, home)
   }
   const session = spawnFakeTsukumo({
-    entry: path.join(REPO_DIR, "src", "cli.ts"),
+    entry: path.join(REPOSITORY_ROOT, "src", "cli.ts"),
     cwd: workspaceOf(entry, outDir),
     scene: entry.scene,
     port: 0,
@@ -943,7 +938,7 @@ async function applyPreparationOrSkip(page: Page, step: Preparation): Promise<vo
 /** `entry.workspaceSetup` に合わせて作業場所を用意し、その場所を返す。 */
 function workspaceOf(entry: CatalogEntry, outDir: string): string {
   if (entry.workspaceSetup.kind === "repository") {
-    return REPO_DIR
+    return REPOSITORY_ROOT
   }
   const workspace = path.join(outDir, "workspace", entry.name)
   mkdirSync(path.join(workspace, "report-image-fixture"), { recursive: true })
@@ -962,7 +957,7 @@ async function applyHomeSetup(setup: HomeSetup, homeDir: string): Promise<void> 
     return
   }
   if (setup.kind === "character") {
-    const source = path.join(REPO_DIR, "characters", "chou")
+    const source = path.join(REPOSITORY_ROOT, "characters", "chou")
     const dest = path.join(homeDir, "characters", setup.pack)
     mkdirSync(path.dirname(dest), { recursive: true })
     cpSync(source, dest, { recursive: true })
@@ -970,7 +965,7 @@ async function applyHomeSetup(setup: HomeSetup, homeDir: string): Promise<void> 
   }
 
   const written = await appendDiaryParagraph(
-    REPO_DIR,
+    REPOSITORY_ROOT,
     {
       date: setup.date,
       writtenAtEpochMilliseconds: diaryEpochMilliseconds(setup.date),

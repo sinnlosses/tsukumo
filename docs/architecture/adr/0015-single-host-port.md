@@ -32,7 +32,7 @@ VS Code 用・Electron 用・OS 既定のブラウザで開く実装は**まだ�
 **どのアダプタを使うかは環境変数 `TSUKUMO_HOST` で選ぶ**（`orca` / `none`。既定は `orca`）。
 どのホストで開くかは起動のしかたに属するので環境変数に置く（`docs/architecture/adr/0022-three-setting-homes.md`）。
 値から実装を作るのは `src/wiring/host.ts` の `createHost` で、`src/main.ts` がそれで1つ作って
-起動時のタブとレポートのパスの両方に渡す。タブだけを開き直す `scripts/open-views.ts` は Orca 用の
+起動時のタブとレポートのパスの両方に渡す。タブだけを開き直す `scripts/capture/open-views.ts` は Orca 用の
 道具なので `createOrcaHost()` を直接呼ぶ。
 
 2026-09-21 から 2026-10-03 までは、アダプタが Orca の1つだけなのにポートを置いていた。これは

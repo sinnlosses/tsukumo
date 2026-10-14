@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 
-import { readPreparationFlag } from "../../scripts/lib/capture-preparation.ts"
+import { readPreparationFlag } from "../../../scripts/capture/lib/capture-preparation.ts"
 
 describe("readPreparationFlag", () => {
   test("--click・--hover・--hash は値1つを使う", () => {

@@ -7,10 +7,10 @@ import { fileURLToPath } from "node:url"
 
 import { describe, expect, test } from "vitest"
 
-import { cssClassNames } from "../css-module-loader.ts"
+import { cssClassNames } from "../../css-module-loader.ts"
 
-const SRC_DIR = fileURLToPath(new URL("../../src/", import.meta.url))
-const CAPTURE_SOURCES = [new URL("../../scripts/capture-catalog.ts", import.meta.url)]
+const SRC_DIR = fileURLToPath(new URL("../../../src/", import.meta.url))
+const CAPTURE_SOURCES = [new URL("../../../scripts/capture/capture-catalog.ts", import.meta.url)]
 
 const SELECTOR_CLASS_PATTERN = /\[class\*="([^"]+)_"\]/g
 
@@ -38,7 +38,7 @@ describe("撮影の件のセレクタの class", () => {
 
 const SELECTOR_ARIA_LABEL_PATTERN = /\[aria-label\^?="([^"]+)"\]/g
 const FAKE_SESSION_TEXT = readFileSync(
-  new URL("../fixture/fake-session.json", import.meta.url),
+  new URL("../../fixture/fake-session.json", import.meta.url),
   "utf8",
 )
 const SRC_SOURCES = readdirSync(SRC_DIR, { recursive: true, encoding: "utf8" })

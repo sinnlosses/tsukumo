@@ -156,7 +156,7 @@ import する。
 class 名は用語集の語（`balloon` / `portrait` / `work-strip` など）を**そのまま**保ち、部品からは
 `styles["balloon-track"]` と引く（キャメルケースへ変換しない）。実際に DOM へ付く名前は
 **組み立てのたびにハッシュ化される**ので、外から要素を指す口が要るところは `data-*` を持つ
-（4領域の `data-region`。`scripts/capture-view.ts` が使う）。
+（4領域の `data-region`。`scripts/capture/capture-view.ts` が使う）。
 
 **`styles["..."]` の型は、CSS に書いた class 名ごとに生成した型宣言から来る**（`happy-css-modules` が
 `dist/css-module-type/` に書き、`tsconfig.json` の `rootDirs` で隣にあるものとして解決させる。部品の隣に

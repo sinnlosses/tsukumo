@@ -2,8 +2,8 @@
 
 import { describe, expect, test } from "vitest"
 
-import { sceneBlockKinds } from "../../scripts/lib/scene-catalog.ts"
-import { bundledFakeSession } from "../fixture/bundled-fake-session.ts"
+import { sceneBlockKinds } from "../../../scripts/capture/lib/scene-catalog.ts"
+import { bundledFakeSession } from "../../fixture/bundled-fake-session.ts"
 
 const kinds = sceneBlockKinds(bundledFakeSession())
 

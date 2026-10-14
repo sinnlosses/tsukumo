@@ -320,7 +320,7 @@ tsukumo を起こしたディレクトリ（`process.cwd()`）も同じで、読
 ```ts
 // 避ける: パスで指し、節を番号で指し、使い手を並べ、行コメントに {@link} を書いている
 // 環境変数の解釈は src/server/core/config.ts（docs/architecture.md「起動」）。
-// `scripts/open-room-grid.ts` と {@link startSession} が使う。
+// `scripts/capture/open-room-grid.ts` と {@link startSession} が使う。
 
 // こうする
 /** 環境変数の解釈は {@link readConfig} だけが持つ。ここで `process.env` を読まない。 */

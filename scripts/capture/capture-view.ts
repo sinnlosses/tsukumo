@@ -10,14 +10,14 @@
 //
 // 使い方:
 //   TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=7398 pnpm run start &
-//   node scripts/capture-view.ts 'http://127.0.0.1:7398/?t=<起動時に出るトークン>'
-//   node scripts/capture-view.ts <URL> --out /tmp/view.png --size 1400x900 \
+//   node scripts/capture/capture-view.ts 'http://127.0.0.1:7398/?t=<起動時に出るトークン>'
+//   node scripts/capture/capture-view.ts <URL> --out /tmp/view.png --size 1400x900 \
 //     --measure '[data-region="character"]' --measure '[data-region="sidebar"]'
-//   node scripts/capture-view.ts <URL> --wait-for '[role="table"][aria-label="検証結果"]'
-//   node scripts/capture-view.ts --scene report-blocks --size 600x900 \
+//   node scripts/capture/capture-view.ts <URL> --wait-for '[role="table"][aria-label="検証結果"]'
+//   node scripts/capture/capture-view.ts --scene report-blocks --size 600x900 \
 //     --wait-for '[class*="report-files"]' --scroll-to '[class*="report-files"]'
-//   node scripts/capture-view.ts --scene <場面> --type textarea '/' --click '[role="option"]'
-//   node scripts/capture-view.ts --scene <場面> --cwd <dir> --hash '#achievement' --wait-after <selector>
+//   node scripts/capture/capture-view.ts --scene <場面> --type textarea '/' --click '[role="option"]'
+//   node scripts/capture/capture-view.ts --scene <場面> --cwd <dir> --hash '#achievement' --wait-after <selector>
 //
 // `--measure` / `--wait-for` に class セレクタを書くときは `[class*="…"]`。 CSS Modules が
 // `名前_ハッシュ`（`report-note_nkMPPQ`）に焼くので、素の `.report-note` は必ず「無し」になる。
@@ -36,11 +36,12 @@
 import { statSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
-import { fileURLToPath } from "node:url"
 
 import { chromium, type Page } from "playwright-core"
 
-import { readFakeSession } from "../src/server/session-driver/adapter/fake-driver.ts"
+import { readFakeSession } from "../../src/server/session-driver/adapter/fake-driver.ts"
+import { spawnFakeTsukumo, waitForViewUrl } from "../shared/fake-tsukumo-process.ts"
+import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "./lib/capture-clock.ts"
 import {
   applyPreparation,
@@ -49,7 +50,6 @@ import {
   readPreparationFlag,
 } from "./lib/capture-preparation.ts"
 import { type Source, sourceOf } from "./lib/capture-source.ts"
-import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
 import { sceneBlockKinds } from "./lib/scene-catalog.ts"
 
 /** 既定の窓の大きさ。実機の目視で使ってきた値に揃えてある。 */
@@ -88,9 +88,9 @@ const MAIN_REGION_SELECTOR = '[data-region="main"]'
 const REVEALING_SELECTOR = "[data-revealing]"
 
 const USAGE = `使い方:
-  node scripts/capture-view.ts <URL> [オプション]
-  node scripts/capture-view.ts --scene <場面> [オプション]
-  node scripts/capture-view.ts --list-scenes
+  node scripts/capture/capture-view.ts <URL> [オプション]
+  node scripts/capture/capture-view.ts --scene <場面> [オプション]
+  node scripts/capture/capture-view.ts --list-scenes
 
   --scene <場面>        fake driver の tsukumo を自分で起こして撮り、終わったら自分で止める
                         （場面は test/fixture/fake-session.json の turns[].name。URL とは併用しない）
@@ -193,7 +193,7 @@ async function openSource(source: Source): Promise<OpenedSource | undefined> {
   }
 
   const child = spawnFakeTsukumo({
-    entry: path.join(repositoryRoot(), "src", "cli.ts"),
+    entry: path.join(REPOSITORY_ROOT, "src", "cli.ts"),
     cwd: source.cwd,
     scene: source.scene,
     port: 0,
@@ -276,11 +276,6 @@ async function capture(
   } finally {
     await browser.close()
   }
-}
-
-/** いま居る作業ツリーの直下（この道具が置いてある `scripts/` の親）。 */
-function repositoryRoot(): string {
-  return fileURLToPath(new URL("..", import.meta.url))
 }
 
 async function waitForRevealSettled(page: Page, selector: string): Promise<boolean> {
@@ -457,7 +452,7 @@ function parseOptions(argv: readonly string[]): Options | undefined {
   if (listScenes) {
     return { kind: "list-scenes" }
   }
-  const source = sourceOf(url, scene, untilStep, cwd, repositoryRoot())
+  const source = sourceOf(url, scene, untilStep, cwd, REPOSITORY_ROOT)
   return source === undefined
     ? undefined
     : {

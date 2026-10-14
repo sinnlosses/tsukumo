@@ -5,7 +5,7 @@
 // 再起動せずに開き直したいときだけ。サイドカー本体からは呼ばれない一度きりの道具なので
 // scripts/ に置く。
 //
-// 使い方: node scripts/open-views.ts http://127.0.0.1:7327
+// 使い方: node scripts/capture/open-views.ts http://127.0.0.1:7327
 //   （URL は `pnpm run start` が起動時に表示するもの）
 //
 // 開くのはまとめたページ（LAYOUT_PATH、`/`）1つだけ。 3つのビューは1枚の HTML に
@@ -14,12 +14,12 @@
 
 import process from "node:process"
 
-import { createOrcaHost } from "../src/server/host/adapter/orca-host.ts"
-import { LAYOUT_PATH } from "../src/server/view-server/adapter/server.ts"
+import { createOrcaHost } from "../../src/server/host/adapter/orca-host.ts"
+import { LAYOUT_PATH } from "../../src/server/view-server/adapter/server.ts"
 
 const baseUrl = process.argv[2]
 if (baseUrl === undefined) {
-  process.stderr.write("使い方: node scripts/open-views.ts <サイドカーが表示したURL>\n")
+  process.stderr.write("使い方: node scripts/capture/open-views.ts <サイドカーが表示したURL>\n")
   process.exit(2)
 }
 
