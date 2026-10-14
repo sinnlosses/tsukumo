@@ -28,7 +28,9 @@
   指しているので、**「配布」の実体はこのリポジトリそのもの**）
 - **tsukumo-plugins（タスク運用のスキル・agent・hook）は git submodule で `vendor/tsukumo-plugins` に取り込み、コミットで固定する。**
   `package.json` を持たず pnpm の git 依存にできないので submodule にし、取り込みは `prepare` の
-  `git submodule update --init`（`pnpm run build` の前）が済ませる。`vendor/tsukumo-plugins/.claude-plugin/plugin.json` が無ければ
+  `git submodule update --init`（`pnpm run build` の前）が済ませる。
+  依存が変わらないと `prepare` は走らないので、`pnpm run check` も段を組む前に記録の版とのずれを同じコマンドで揃える。
+  `vendor/tsukumo-plugins/.claude-plugin/plugin.json` が無ければ
   起動は前提不足で止まる（直し方は `git submodule update --init`。`TSUKUMO_DRIVER=fake` は見ない）。
   取り込んだ `skills/` の各ディレクトリと `agents/` の各定義が全部、利用者の設定ディレクトリ（`CLAUDE_CONFIG_DIR`、無ければ `~/.claude`）にあれば、
   セッションには載せず（二重に並ぶのを避ける）、起動時に stderr へ1行出す。一部だけなら欠けを作らないよう載せ、欠けた名前を1行で知らせる。`vendor/` は文書の参照検査

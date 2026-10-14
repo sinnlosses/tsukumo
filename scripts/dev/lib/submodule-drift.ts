@@ -1,0 +1,114 @@
+// submodule が記録の版とずれていないかを `git submodule status` から読み、ずれていれば揃える概念を持つ。
+// `git` だけを呼ぶ。
+
+import { execFileSync } from "node:child_process"
+import { existsSync } from "node:fs"
+import path from "node:path"
+
+/** `git submodule status` の1行。`sha` は行に出た版（`+` は作業ツリーにある版、`-` は未取り込み）。 */
+export type SubmoduleEntry = {
+  readonly path: string
+  readonly sha: string
+}
+
+export type SubmoduleClassification = {
+  /** 行頭 `+`（記録と違う版）・`-`（未取り込み）。揃える対象。 */
+  readonly drifted: readonly SubmoduleEntry[]
+  /** 行頭 `U`（衝突）。揃えずに止める対象。 */
+  readonly conflicted: readonly SubmoduleEntry[]
+  /** 行頭が空白（揃っている）。 */
+  readonly aligned: readonly SubmoduleEntry[]
+}
+
+export type SubmoduleAlignment =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "aligned"
+      readonly moves: readonly {
+        readonly path: string
+        readonly from: string
+        readonly to: string
+      }[]
+    }
+  | { readonly kind: "blocked"; readonly reason: string }
+
+const SHORT_SHA_LENGTH = 7
+
+/** `git submodule status` の出力を、行頭の印で揃える対象・止める対象・揃っているものに分ける。 */
+export function classifySubmoduleStatus(output: string): SubmoduleClassification {
+  const drifted: SubmoduleEntry[] = []
+  const conflicted: SubmoduleEntry[] = []
+  const aligned: SubmoduleEntry[] = []
+  for (const line of output.split("\n")) {
+    if (line.trim() === "") {
+      continue
+    }
+    const [sha = "", submodulePath = ""] = line.slice(1).split(/\s+/, 2)
+    const entry = { path: submodulePath, sha }
+    const marker = line[0]
+    if (marker === "+" || marker === "-") {
+      drifted.push(entry)
+    } else if (marker === "U") {
+      conflicted.push(entry)
+    } else {
+      aligned.push(entry)
+    }
+  }
+  return { drifted, conflicted, aligned }
+}
+
+/**
+ * `root` の submodule がずれていれば `git submodule update --init` で記録した版へ揃える。
+ * `.gitmodules` が無ければ何もしない。衝突・揃えられなかったときは `blocked` を返す。 */
+export function alignSubmodules(root: string): SubmoduleAlignment {
+  if (!existsSync(path.join(root, ".gitmodules"))) {
+    return { kind: "none" }
+  }
+  try {
+    const before = classifySubmoduleStatus(readStatus(root))
+    if (before.conflicted.length > 0) {
+      const paths = before.conflicted.map((entry) => entry.path).join(", ")
+      return { kind: "blocked", reason: `submodule が衝突している: ${paths}` }
+    }
+    if (before.drifted.length === 0) {
+      return { kind: "none" }
+    }
+    execFileSync("git", ["-C", root, "submodule", "update", "--init"], {
+      encoding: "utf8",
+      stdio: ["ignore", "ignore", "pipe"],
+    })
+    const after = classifySubmoduleStatus(readStatus(root))
+    const stillDrifted = [...after.drifted, ...after.conflicted]
+    if (stillDrifted.length > 0) {
+      const paths = stillDrifted.map((entry) => entry.path).join(", ")
+      return { kind: "blocked", reason: `submodule を記録の版へ揃えられなかった: ${paths}` }
+    }
+    const moves = before.drifted.map((entry) => ({
+      path: entry.path,
+      from: entry.sha.slice(0, SHORT_SHA_LENGTH),
+      to: (after.aligned.find((moved) => moved.path === entry.path)?.sha ?? "").slice(
+        0,
+        SHORT_SHA_LENGTH,
+      ),
+    }))
+    return { kind: "aligned", moves }
+  } catch (error) {
+    return { kind: "blocked", reason: `submodule を揃えられなかった（${describeFailure(error)}）` }
+  }
+}
+
+/** git の stderr の `fatal:`・`error:` の行（無ければ空でない最初の行）。stderr が無ければ例外のメッセージの1行目。 */
+function describeFailure(error: unknown): string {
+  if (error instanceof Error && "stderr" in error && typeof error.stderr === "string") {
+    const lines = error.stderr.split("\n").filter((candidate) => candidate.trim() !== "")
+    const line = lines.find((candidate) => /^(fatal|error):/.test(candidate)) ?? lines[0]
+    if (line !== undefined) {
+      return line.trim()
+    }
+  }
+  return error instanceof Error ? (error.message.trim().split("\n")[0] ?? "") : String(error)
+}
+
+function readStatus(root: string): string {
+  return execFileSync("git", ["-C", root, "submodule", "status"], { encoding: "utf8" })
+}

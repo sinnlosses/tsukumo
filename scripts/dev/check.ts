@@ -6,6 +6,8 @@
 // 変えたファイルが `docs/`・`.tw/` の Markdown と直下の `README.md`・`CLAUDE.md` だけのときは、
 // `--full` の有無に関わらず `format:check` と文書の検査（`DOCUMENT_CHECK_TEST_FILES`）だけを打つ。
 //
+// 段を組む前に、submodule が記録の版とずれていれば `git submodule update --init` で揃える。
+//
 // 使い方:
 //   node scripts/dev/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら文書の検査だけにする
 //   node scripts/dev/check.ts --full  # 文書だけの変更でなければ、5段すべてを、E2E は全件で走らせる
@@ -34,8 +36,11 @@ import {
   REAL_LOCK_ENVIRONMENT,
   sharedLockPath,
 } from "./lib/e2e-full-lock.ts"
+import { alignSubmodules } from "./lib/submodule-drift.ts"
 
 const forceFull = process.argv.includes("--full")
+
+alignSubmodulesOrExit()
 
 const changedPaths = await collectPathsForPlan()
 const stagePlan = planStages(changedPaths, chooseE2eStages)
@@ -148,6 +153,19 @@ async function runLockedIfFullE2e(stage: Stage, control: StopControl): Promise<B
     return await runBuffered(stage, control)
   } finally {
     release()
+  }
+}
+
+/** submodule のずれを記録の版へ揃えて1行出す。揃えられなければ理由と直し方を出して止める。 */
+function alignSubmodulesOrExit(): void {
+  const alignment = alignSubmodules(ROOT)
+  if (alignment.kind === "aligned") {
+    for (const move of alignment.moves) {
+      process.stdout.write(`submodule のずれを揃えた: ${move.path} ${move.from} → ${move.to}\n`)
+    }
+  } else if (alignment.kind === "blocked") {
+    process.stderr.write(`${alignment.reason}\n直し方: git submodule update --init\n`)
+    process.exit(1)
   }
 }
 
