@@ -1,6 +1,6 @@
 // 登録された hook ごとの拒否の回数を、期間を決めて数えて出す。
-// 使い方: node scripts/hook-denial-tally.ts [--days N]（既定 30）
-// 登録された hook は `.claude/settings.json` の hooks から呼ばれる `scripts/deny-*.ts`。
+// 使い方: node scripts/hook/hook-denial-tally.ts [--days N]（既定 30）
+// 登録された hook は `.claude/settings.json` の hooks から呼ばれる `scripts/hook/deny-*.ts`。
 
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
@@ -12,7 +12,7 @@ import { readHookDenials, type HookDenial } from "./lib/hook-denial-record.ts"
 
 const DEFAULT_DAYS = 30
 
-const HOOK_SCRIPT = /scripts\/(deny-[\w-]+)\.ts/g
+const HOOK_SCRIPT = /scripts\/hook\/(deny-[\w-]+)\.ts/g
 
 const days = readDays(process.argv.slice(2))
 const projectDir = process.env["CLAUDE_PROJECT_DIR"] ?? process.cwd()

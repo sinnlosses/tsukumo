@@ -7,9 +7,9 @@ import process from "node:process"
 
 import { beforeEach, describe, expect, test } from "vitest"
 
-import { RUN_LIMIT } from "../../scripts/lib/e2e-run-limit.ts"
-import { runSubprocess } from "../fixture/subprocess.ts"
-import { useTempDir } from "../fixture/temp-dir.ts"
+import { RUN_LIMIT } from "../../../scripts/hook/lib/e2e-run-limit.ts"
+import { runSubprocess } from "../../fixture/subprocess.ts"
+import { useTempDir } from "../../fixture/temp-dir.ts"
 
 const tempDir = useTempDir("hook-denial")
 let repoDir = ""
@@ -77,7 +77,7 @@ describe("集計", () => {
     writeRegistration()
     await runBashHook("deny-broad-kill", { command: "pkill -f vitest" })
 
-    const result = await runHook(["scripts/hook-denial-tally.ts"], "")
+    const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
     expect(result.exitCode).toBe(0)
     expect(result.stdout).toContain("deny-broad-kill: 1\n  pkill-killall: 1")
     expect(result.stdout).toContain("deny-sed-in-place: 0")
@@ -85,7 +85,7 @@ describe("集計", () => {
 
   test("記録が無ければ全部0で出す", async () => {
     writeRegistration()
-    const result = await runHook(["scripts/hook-denial-tally.ts"], "")
+    const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
     expect(result.stdout).toContain("deny-broad-kill: 0")
     expect(result.stdout).toContain("deny-sed-in-place: 0")
   })
@@ -98,7 +98,7 @@ describe("集計", () => {
       join(directory, "2020-01.jsonl"),
       `${JSON.stringify({ at: "2020-01-01T00:00:00Z", hook: "deny-broad-kill", rule: "pkill-killall", actor: "main" })}\n`,
     )
-    const result = await runHook(["scripts/hook-denial-tally.ts", "--days", "7"], "")
+    const result = await runHook(["scripts/hook/hook-denial-tally.ts", "--days", "7"], "")
     expect(result.stdout).toContain("deny-broad-kill: 0")
   })
 })
@@ -112,8 +112,8 @@ function writeRegistration(): void {
         PreToolUse: [
           {
             hooks: [
-              { command: 'node "$CLAUDE_PROJECT_DIR/scripts/deny-broad-kill.ts"' },
-              { command: 'node "$CLAUDE_PROJECT_DIR/scripts/deny-sed-in-place.ts"' },
+              { command: 'node "$CLAUDE_PROJECT_DIR/scripts/hook/deny-broad-kill.ts"' },
+              { command: 'node "$CLAUDE_PROJECT_DIR/scripts/hook/deny-sed-in-place.ts"' },
             ],
           },
         ],
@@ -135,7 +135,7 @@ function runBashHook(hook: string, call: Call) {
     cwd: repoDir,
     ...(call.agent === true ? { agent_id: "subagent-1" } : {}),
   })
-  return runHook([`scripts/${hook}.ts`], input)
+  return runHook([`scripts/hook/${hook}.ts`], input)
 }
 
 function runHook(args: readonly string[], input: string) {

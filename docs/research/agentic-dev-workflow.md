@@ -275,7 +275,7 @@
   （<https://github.com/steveyegge/beads>）で、GitHub は写しにとどめているので GitHub に届かなくても
   手が止まらない
 - **要件・ADR・指示メモ → タスクの流れ。** すでに spec 駆動開発の形になっている
-- **規則を hook に寄せていること**（`scripts/deny-*.ts`）。公式の「例外なく毎回起きてほしいことは hook」に合う
+- **規則を hook に寄せていること**（`scripts/hook/deny-*.ts`）。公式の「例外なく毎回起きてほしいことは hook」に合う
 
 ## 確かめられなかったこと
 

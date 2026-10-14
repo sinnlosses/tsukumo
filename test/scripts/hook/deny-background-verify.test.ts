@@ -8,9 +8,9 @@ import process from "node:process"
 
 import { describe, expect, test } from "vitest"
 
-import { runSubprocess } from "../fixture/subprocess.ts"
+import { runSubprocess } from "../../fixture/subprocess.ts"
 
-const HOOK_PATH = "scripts/deny-background-verify.ts"
+const HOOK_PATH = "scripts/hook/deny-background-verify.ts"
 const SUBAGENT_ID = "subagent-1"
 
 describe("委譲先の背景の tw verify を拒否する hook", () => {

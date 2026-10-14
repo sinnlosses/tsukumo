@@ -7,11 +7,11 @@ import process from "node:process"
 
 import { describe, expect, test } from "vitest"
 
-import { findDeniedBashRule } from "../../scripts/lib/bash-write-denial.ts"
-import { runSubprocess } from "../fixture/subprocess.ts"
-import { useTempDir } from "../fixture/temp-dir.ts"
+import { findDeniedBashRule } from "../../../scripts/hook/lib/bash-write-denial.ts"
+import { runSubprocess } from "../../fixture/subprocess.ts"
+import { useTempDir } from "../../fixture/temp-dir.ts"
 
-const HOOK_PATH = "scripts/deny-sed-in-place.ts"
+const HOOK_PATH = "scripts/hook/deny-sed-in-place.ts"
 const WORK_ROOT = "/work/tree"
 const NO_PROJECT_DIR = Symbol("no CLAUDE_PROJECT_DIR")
 

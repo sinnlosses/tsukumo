@@ -12,12 +12,12 @@ import {
   countFullE2eRuns,
   isOverLimitAfterRecording,
   RUN_LIMIT,
-} from "../../scripts/lib/e2e-run-limit.ts"
-import { readTwVerifyCommand } from "../../scripts/lib/verify-command-repository.ts"
-import { runSubprocess, runSubprocessOrThrow } from "../fixture/subprocess.ts"
-import { useTempDir } from "../fixture/temp-dir.ts"
+} from "../../../scripts/hook/lib/e2e-run-limit.ts"
+import { readTwVerifyCommand } from "../../../scripts/lib/verify-command-repository.ts"
+import { runSubprocess, runSubprocessOrThrow } from "../../fixture/subprocess.ts"
+import { useTempDir } from "../../fixture/temp-dir.ts"
 
-const HOOK_PATH = resolve("scripts/deny-e2e-run-limit.ts")
+const HOOK_PATH = resolve("scripts/hook/deny-e2e-run-limit.ts")
 const FILE_UNIT_E2E = "pnpm run test:e2e test/e2e/example.test.ts"
 
 function countOf(command: string, changeRunsE2e: boolean, twVerifyCommand = ""): number {

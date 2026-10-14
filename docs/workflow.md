@@ -124,7 +124,7 @@
 **起こすときの作法**: `TSUKUMO_VIEW_PORT` を既定（7327）以外に変え、**止めるのは
 `node scripts/stop.ts --port <ポート>`** にする（一覧は引数なし。名指しした1つにだけ
 SIGTERM が行く）。`pkill` / `killall` で名前やパターンから止めようとすると、
-**PreToolUse hook（`.claude/settings.json` → `scripts/deny-broad-kill.ts`）が実行される前に
+**PreToolUse hook（`.claude/settings.json` → `scripts/hook/deny-broad-kill.ts`）が実行される前に
 拒否する**——並べて動かした tsukumo はどれも `node src/cli.ts` に見えるので、
 パターンでは利用者が使っている本体と区別できない。`HOME` を一時ディレクトリに差し替えれば、
 `~/.tsukumo/` に触るタスクでも利用者の設定を汚さない。**起動時に作られるもの（`speak` の
@@ -133,17 +133,17 @@ enum・キャラクターパックの読み込み）は起こし直さないと�
 
 同じ形で、作業ツリーの中のファイルへ書き込む Bash のコマンド（`sed -i`・`perl -i`、
 リダイレクトと `tee`、作業ツリーの外からの `cp` / `mv`、Python・node のコードでの書き込み）も
-PreToolUse hook（`scripts/deny-sed-in-place.ts`）が拒否する。ファイルの書き換えは Edit / Write で行う。
+PreToolUse hook（`scripts/hook/deny-sed-in-place.ts`）が拒否する。ファイルの書き換えは Edit / Write で行う。
 `tw edit --body-file` に渡す下書きは、作業ツリーの外のパス（`/tmp/<名前>/plan.md`）に Write で書いて
 `--body-file` でそのパスを渡すか、`--body-file -` へ heredoc を渡す。作業ツリーの中のパスには書かない。
 `pnpm`・`git`・作業ツリーの中のスクリプトのように、ツールの中で書くものは止めない。
 
 委譲先（サブエージェント）が `tw verify`（検査の全段。3〜4分）を `run_in_background: true` で
-打つと PreToolUse hook（`scripts/deny-background-verify.ts`）が拒否し、前景で `timeout` 引数
+打つと PreToolUse hook（`scripts/hook/deny-background-verify.ts`）が拒否し、前景で `timeout` 引数
 （最大 600000）を付けて打つよう案内する。メインの呼び出し（`agent_id` が無い）は対象にしない。
 
 委譲先が E2E を流す呼び出しは、着手中の1件につき **6回まで**で、7回目を
-PreToolUse hook（`scripts/deny-e2e-run-limit.ts`）が拒否する（検証は通常1〜3回で、残りは揺らぎの
+PreToolUse hook（`scripts/hook/deny-e2e-run-limit.ts`）が拒否する（検証は通常1〜3回で、残りは揺らぎの
 確認と hook 登録後の自分の検証の余裕）。数はその作業ツリー固有の git dir の `e2e-full-runs` に置き、
 着手の印（`task-open-claims/<id>`）が無ければ数えない（作業ツリーをまたいで混ざらない）。
 数えるのは `--full` 付きの `pnpm run check`・`node scripts/check.ts`、`pnpm run test:e2e`、
@@ -161,7 +161,7 @@ PreToolUse hook（`scripts/deny-e2e-run-limit.ts`）が拒否する（検証は�
 hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`）の `hook-denials/<年-月>.jsonl` へ
 時刻・hook の名前・規則のキー・呼び出し元（`main` / `subagent`）の1行を足す。
 コマンドの全文・パスは入れない。書き込みに失敗しても hook の判定は変わらない。
-`node scripts/hook-denial-tally.ts [--days N]`（既定30）が、`.claude/settings.json` に
+`node scripts/hook/hook-denial-tally.ts [--days N]`（既定30）が、`.claude/settings.json` に
 登録された hook を全部（0件も）規則のキーごとの回数で出す。
 
 **自分が直したコードを画面で確かめるときは、直した作業ツリーで起こす**（tsukumo は起こした

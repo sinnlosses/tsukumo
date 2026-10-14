@@ -6,23 +6,23 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/deny-broad-kill.ts\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-broad-kill.ts\""
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/deny-sed-in-place.ts\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-sed-in-place.ts\""
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/deny-background-verify.ts\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-background-verify.ts\""
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/deny-e2e-run-limit.ts\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-e2e-run-limit.ts\""
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/deny-stdin-wait-cat.ts\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-stdin-wait-cat.ts\""
           }
         ]
       }

@@ -9,16 +9,16 @@
 import { execFileSync } from "node:child_process"
 import process from "node:process"
 
-import { collectChangedPaths, PRIMARY_BRANCH } from "./lib/changed-path-repository.ts"
+import { collectChangedPaths, PRIMARY_BRANCH } from "../lib/changed-path-repository.ts"
+import { planE2eRun } from "../lib/e2e-selection-repository.ts"
+import { readTwVerifyCommand } from "../lib/verify-command-repository.ts"
 import {
   countE2eRuns,
   countFullE2eRuns,
   isOverLimitAfterRecording,
   RUN_LIMIT,
 } from "./lib/e2e-run-limit.ts"
-import { planE2eRun } from "./lib/e2e-selection-repository.ts"
 import { recordHookDenial } from "./lib/hook-denial-record.ts"
-import { readTwVerifyCommand } from "./lib/verify-command-repository.ts"
 
 /** Bash ツールの PreToolUse hook の入力のうち、この hook が見るところ。 */
 type PreToolUseHookInput = {

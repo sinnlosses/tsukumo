@@ -5,7 +5,7 @@
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { readE2eUpdateArgument } from "./e2e-update-argument.ts"
+import { readE2eUpdateArgument } from "../../lib/e2e-update-argument.ts"
 import { parseShellCommand, type SimpleCommand } from "./shell-command.ts"
 
 /** 着手中の1件につき、E2E を全部流してよい回数。 */
