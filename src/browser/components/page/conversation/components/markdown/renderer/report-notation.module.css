@@ -1329,7 +1329,10 @@
 .detail-block table:has(.report-cell-status) {
   border-collapse: separate;
   border-spacing: 4px;
-  margin: var(--report-block-gap) -4px;
+  margin: var(--report-block-gap) 0;
+  /* border-spacing の外周ぶんだけ見た目を左へ戻す。負の margin にすると fit-content の包みが表の最大幅より狭く測られる。 */
+  position: relative;
+  inset-inline-start: -4px;
 }
 .detail-block table:has(.report-cell-status) th,
 .detail-block table:has(.report-cell-status) td {
