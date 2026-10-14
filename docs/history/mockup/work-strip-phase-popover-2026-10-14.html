@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>進み具合の帯: 今の段に輪・段を押すと吹き出し — 2026-10-14 のラフ</title>
+<style>
+  :root { --ground:#222229; --rule:#3a3a44; --ink:#ececf0; --ink-soft:#c4c4d0; --ink-quiet:#9a9aab; --accent:#4fb3a3; --accent-soft:#2f5f58; --warn:#e0a84f; }
+  body { background:#111114; color:var(--ink); font-family:sans-serif; margin:24px; }
+  h1 { font-size:16px; }
+  h2 { font-size:14px; color:var(--ink-quiet); font-weight:normal; margin:32px 0 10px; }
+  .strip { position:relative; background:var(--ground); border:1px solid #33333c; border-radius:6px; max-width:1040px; padding:12px 16px 10px; }
+  .line { display:flex; align-items:center; gap:14px; }
+  .chip { display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); }
+  .ring-old { width:12px; height:12px; border-radius:50%; border:2px solid var(--rule); border-top-color:var(--accent); animation:spin .9s linear infinite; box-sizing:border-box; }
+  .track { display:flex; align-items:center; list-style:none; margin:0; padding:0; }
+  .slot { display:flex; align-items:center; }
+  .slot + .slot::before { content:""; width:14px; height:2px; background:var(--rule); }
+  .slot.done + .slot::before { background:var(--accent); }
+  .ph { position:relative; width:22px; height:22px; border-radius:50%; box-sizing:border-box; display:grid; place-items:center;
+        font-size:11px; color:var(--ink-quiet); background:#1b1b20; border:1.5px solid #4a4a55; padding:0; font-family:inherit; }
+  .ph.done { background:var(--accent-soft); border-color:var(--accent-soft); color:#8fe3d4; }
+  .ph.current { border:2px solid var(--accent); color:#8fe3d4; font-size:13px; }
+  button.ph { cursor:pointer; }
+  button.ph:hover { border-color:var(--accent); }
+  button.ph:focus-visible { outline:2px solid #8fe3d4; outline-offset:2px; }
+  button.ph[aria-expanded="true"] { box-shadow:0 0 0 3px rgba(79,179,163,.25); }
+  /* 案: 今の段の丸の外周に弧を回す。番号は回さない */
+  .ph.current.spin::after { content:""; position:absolute; inset:-5px; border-radius:50%; border:2px solid transparent; border-top-color:var(--accent); border-right-color:rgba(79,179,163,.35); animation:spin .9s linear infinite; }
+  @media (prefers-reduced-motion: reduce) { .ring-old, .ph.current.spin::after { animation:none; } }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .head { font-size:15px; font-weight:bold; margin-left:8px; white-space:nowrap; }
+  .side { margin-left:auto; font-size:13px; color:var(--ink-quiet); font-family:monospace; white-space:nowrap; }
+  .toggle { font-size:13px; color:var(--ink); background:#2a2a32; border:1px solid var(--rule); border-radius:14px; padding:4px 14px; }
+  .activity { margin:6px 0 0 0; padding-left:158px; font-size:13px; color:var(--ink-quiet); font-family:monospace; }
+  .pop { position:absolute; z-index:2; top:48px; width:300px; background:#2a2a32; border:1px solid #4a4a55; border-radius:8px; padding:12px 14px; box-shadow:0 8px 24px rgba(0,0,0,.5); display:none; }
+  .pop.open { display:block; }
+  .pop::before { content:""; position:absolute; top:-6px; left:var(--arrow,40px); width:10px; height:10px; background:#2a2a32; border-left:1px solid #4a4a55; border-top:1px solid #4a4a55; transform:rotate(45deg); }
+  .pop .name { font-size:14px; font-weight:bold; }
+  .pop .meta { margin-top:2px; font-size:12px; color:var(--ink-quiet); font-family:monospace; }
+  .pop .sum { margin-top:8px; font-size:13px; color:var(--ink-soft); line-height:1.6; }
+  .pop .go { margin-top:10px; font-size:12px; color:#8fe3d4; background:none; border:0; padding:0; cursor:pointer; text-decoration:underline; }
+  .note { max-width:1040px; font-size:12px; color:var(--ink-quiet); line-height:1.7; margin-top:8px; }
+</style>
+</head>
+<body>
+<h1>進み具合の帯 — 今の段に輪・段を押すと吹き出し（ラフ。丸は押せます）</h1>
+
+<h2>現状: 輪は左端のチップ。段の丸は押しても何も起きない（名前は title のホバーだけ）</h2>
+<div class="strip">
+  <div class="line">
+    <span class="chip"><span class="ring-old"></span>作業中</span>
+    <ol class="track">
+      <li class="slot done"><span class="ph done">✓</span></li>
+      <li class="slot done"><span class="ph done">✓</span></li>
+      <li class="slot done"><span class="ph done">✓</span></li>
+      <li class="slot"><span class="ph current">4</span></li>
+      <li class="slot"><span class="ph">5</span></li>
+      <li class="slot"><span class="ph">6</span></li>
+      <li class="slot"><span class="ph">7</span></li>
+    </ol>
+    <span class="head">集計の関数とスクリプト</span>
+    <span class="side">4/7 · 経過 6分12秒</span>
+    <span class="toggle">手順 12 ▾</span>
+  </div>
+  <p class="activity">Bash  pnpm exec vitest run test/server/experience-metric  · 12秒</p>
+</div>
+
+<h2>案: チップは色の点だけ。輪は今の段の丸の外周を回る。丸はボタンで、押すと吹き出し</h2>
+<div class="strip" id="proposal">
+  <div class="line">
+    <span class="chip"><span class="dot"></span>作業中</span>
+    <ol class="track" id="track"></ol>
+    <span class="head">集計の関数とスクリプト</span>
+    <span class="side">経過 6分12秒</span>
+    <span class="toggle">手順 12 ▾</span>
+  </div>
+  <p class="activity">Bash  pnpm exec vitest run test/server/experience-metric  · 12秒</p>
+  <div class="pop" id="pop" role="dialog" aria-live="off">
+    <div class="name" id="pop-name"></div>
+    <div class="meta" id="pop-meta"></div>
+    <div class="sum" id="pop-sum"></div>
+    <button class="go" id="pop-go" type="button">この段の手順へ</button>
+  </div>
+</div>
+
+<p class="note">
+  済んだ段: 名前・所要・段のまとめ・「この段の手順へ」（手順の一覧を開いてその段の区切りへ転がす）。<br>
+  今の段: 名前とこの段の経過だけ（走っている手順は今までどおり帯の2行目）。位置の「4/7」は出さない（丸が言う）。まだの段: 名前だけ（押せるが、中身は無い）。<br>
+  Esc・もう一度押す・外を押す、のどれでも閉じる。丸は button なので Tab で届く。
+</p>
+
+<script>
+  const phases = [
+    { name: "計画を書き直す", state: "done", meta: "済み · 所要 1分40秒", sum: "登録のあとに動いた文書を読み直し、計画を3段に組み直した。" },
+    { name: "共有とサーバを通す", state: "done", meta: "済み · 所要 2分05秒", sum: "setMini を共有の型とサーバの口に通し、単体テストが通った。" },
+    { name: "画面の区画を作る", state: "done", meta: "済み · 所要 2分31秒", sum: "ミニ立ち絵の区画と縮図を足し、空の枠と拡大も崩れなかった。" },
+    { name: "集計の関数とスクリプト", state: "current", meta: "いま · この段 1分56秒", sum: "" },
+    { name: "文書を直す", state: "upcoming", meta: "これから", sum: "" },
+    { name: "検証", state: "upcoming", meta: "これから", sum: "" },
+    { name: "受け入れ", state: "upcoming", meta: "これから", sum: "" },
+  ]
+  const track = document.getElementById("track")
+  const pop = document.getElementById("pop")
+  const strip = document.getElementById("proposal")
+  let openIndex = -1
+
+  phases.forEach((p, i) => {
+    const li = document.createElement("li")
+    li.className = "slot" + (p.state === "done" ? " done" : "")
+    const b = document.createElement("button")
+    b.type = "button"
+    b.className = "ph " + p.state + (p.state === "current" ? " spin" : "")
+    b.textContent = p.state === "done" ? "✓" : String(i + 1)
+    b.title = p.name
+    b.setAttribute("aria-label", p.name)
+    b.setAttribute("aria-expanded", "false")
+    b.addEventListener("click", (e) => { e.stopPropagation(); toggle(i, b) })
+    li.appendChild(b)
+    track.appendChild(li)
+  })
+
+  function closeAll() {
+    openIndex = -1
+    pop.classList.remove("open")
+    track.querySelectorAll("button").forEach((b) => b.setAttribute("aria-expanded", "false"))
+  }
+  function toggle(i, b) {
+    if (openIndex === i) { closeAll(); return }
+    closeAll()
+    openIndex = i
+    const p = phases[i]
+    document.getElementById("pop-name").textContent = (p.state === "done" ? "✓ " : (i + 1) + ". ") + p.name
+    document.getElementById("pop-meta").textContent = p.meta
+    document.getElementById("pop-sum").textContent = p.sum
+    document.getElementById("pop-sum").style.display = p.sum ? "block" : "none"
+    document.getElementById("pop-go").style.display = p.state === "upcoming" ? "none" : "inline"
+    const sr = strip.getBoundingClientRect()
+    const br = b.getBoundingClientRect()
+    const center = br.left - sr.left + br.width / 2
+    const left = Math.max(8, center - 40)
+    pop.style.left = left + "px"
+    pop.style.setProperty("--arrow", (center - left - 5) + "px")
+    pop.classList.add("open")
+    b.setAttribute("aria-expanded", "true")
+  }
+  document.addEventListener("click", (e) => { if (!pop.contains(e.target)) closeAll() })
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAll() })
+</script>
+</body>
+</html>
