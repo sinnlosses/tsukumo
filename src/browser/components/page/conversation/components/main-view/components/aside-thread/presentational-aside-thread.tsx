@@ -20,7 +20,7 @@ export function PresentationalAsideThread(props: PresentationalAsideThreadProps)
       </Text>
       <ul className={styles["aside-rows"]}>
         {props.rows.map((row) => (
-          <li className={styles["aside-row"]} title={`${row.text} → ${row.answer}`} key={row.key}>
+          <li className={styles["aside-row"]} key={row.key}>
             <Text element="span" size="inherit" tone="ink-quiet" weight="inherit" className="">
               きみ:
             </Text>{" "}

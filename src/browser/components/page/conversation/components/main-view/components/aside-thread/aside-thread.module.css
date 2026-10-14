@@ -23,14 +23,8 @@
   display: grid;
   gap: 0.3rem;
 }
-/* 長い言葉は2行で切る（全文は行の `title`）。 */
 .aside-row {
   font-size: var(--font-secondary);
   color: var(--ink);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
   overflow-wrap: anywhere;
 }
