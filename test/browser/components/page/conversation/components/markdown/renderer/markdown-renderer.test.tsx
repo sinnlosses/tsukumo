@@ -726,13 +726,18 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
       "SPAN",
       "SPAN",
     ])
-    fireEvent.click(
-      typedElement(rows[0]?.querySelector('[role="button"]'), HTMLElement, "押せるパス"),
+    // 表示はファイル名だけで、押すとフルパス（`data-file-path`）で開く。
+    const button = typedElement(
+      rows[0]?.querySelector('[role="button"]'),
+      HTMLElement,
+      "押せるパス",
     )
+    expect(button.textContent).toBe("foo.ts")
+    fireEvent.click(button)
     expect(opened).toEqual(["src/foo.ts"])
     // 一覧に無いパス（消したファイル）は素の code のまま。
     expect(rows[1]?.querySelector('[role="button"]')).toBeNull()
-    expect(rows[1]?.querySelector("code")?.textContent).toBe("src/gone.ts")
+    expect(rows[1]?.querySelector("code")?.textContent).toBe("gone.ts")
   })
 
   it("一覧に無い inline code はボタンにならない（素の <code> のまま）", () => {

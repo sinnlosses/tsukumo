@@ -632,9 +632,12 @@ describe("reportSectionsMarkdown", () => {
     }
     const badge = (symbol: string, className: string, label: string): string =>
       `<span class="file-change ${className}"><span class="file-change-symbol">${symbol}</span>${label}</span>`
-    const path = (folder: string, name: string): string =>
-      `<code><span class="file-path-folder">${folder}/<wbr></span>` +
-      `<span class="file-path-name">${name}</span></code>`
+    const entry = (guide: string, fullPath: string, name: string): string =>
+      `<span class="file-entry"><span class="file-branch" aria-hidden="true">${guide}</span>` +
+      `<code data-file-path="${fullPath}"><span class="file-path-name">${name}</span></code></span>`
+    const folder = (guide: string, name: string): string =>
+      `<div class="file-folder"><span class="file-branch" aria-hidden="true">${guide}</span>` +
+      `<span class="file-path-folder">${name}/<wbr></span></div>`
 
     // パスは inline code の記法として解かず、そのまま文字にする（バッククォートを含むパスも崩さない）。
     // 追加で説明が無い行だけ「新しく作った」を補足で入れ、ほかの種別で説明が無い行は列を空にする。
@@ -646,30 +649,35 @@ describe("reportSectionsMarkdown", () => {
         `${badge("-", "file-change-deleted", "削除 1")}` +
         `${badge("·", "file-change-read", "読んだ 1")}` +
         "</div>" +
+        `${folder("├── ", "src")}` +
         `<div class="file">${badge("~", "file-change-modified", "変更")}` +
-        `${path("src", "架空&lt;a&gt;.ts")}` +
+        `${entry("│   ├── ", "src/架空&lt;a&gt;.ts", "架空&lt;a&gt;.ts")}` +
         '<span class="file-note">架空の <code>注記</code></span></div>' +
         `<div class="file">${badge("+", "file-change-added", "追加")}` +
-        `${path("src", "架空`b`.ts")}` +
+        `${entry("│   ├── ", "src/架空`b`.ts", "架空`b`.ts")}` +
         '<span class="file-note file-note-empty">新しく作った</span></div>' +
         `<div class="file">${badge("-", "file-change-deleted", "削除")}` +
-        `${path("src", "架空c.ts")}</div>` +
+        `${entry("│   └── ", "src/架空c.ts", "架空c.ts")}</div>` +
+        `${folder("└── ", "docs")}` +
         `<div class="file">${badge("·", "file-change-read", "読んだ")}` +
-        `${path("docs", "架空d.md")}</div>` +
+        `${entry("    └── ", "docs/架空d.md", "架空d.md")}</div>` +
         "</div>",
     )
   })
 
-  it("files のパスは頭の「/」も含めてフォルダに残し、どの「/」の後でも折り返せる", () => {
+  it("files のフォルダの無いパスだけの塊は、罫もフォルダの行も出さず平らな行にする", () => {
     const files: ReportBlock = {
       kind: "files",
-      items: [{ path: "/架空/a.md", change: "read", note: "" }],
+      items: [{ path: "a.md", change: "read", note: "" }],
       fold: "",
     }
 
     expect(markdownOf(files)).toContain(
-      '<code><span class="file-path-folder">/<wbr>架空/<wbr></span><span class="file-path-name">a.md</span></code>',
+      '<div class="file"><span class="file-change file-change-read">' +
+        '<span class="file-change-symbol">·</span>読んだ</span>' +
+        '<code><span class="file-path-name">a.md</span></code></div>',
     )
+    expect(markdownOf(files)).not.toContain("file-branch")
   })
 
   it("コードと mermaid はフェンスで囲み、中のバッククォートより長いフェンスにする", () => {

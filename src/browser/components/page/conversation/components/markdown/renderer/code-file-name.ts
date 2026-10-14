@@ -15,6 +15,12 @@ import type { Element, ElementContent, Properties, Root } from "hast"
  */
 export const CODE_FILE_NAME_PROPERTY = "dataFilename"
 
+/**
+ * `files` の塊の `code` が、表示するファイル名とは別に運ぶフルパスのプロパティ名（DOM の属性名は `data-file-path`）。
+ * 押せるボタンにするかの判定は、中身の文字ではなくこのフルパスで行う。
+ */
+export const CODE_FILE_PATH_PROPERTY = "dataFilePath"
+
 /** `code` 要素の `data.meta` を {@link CODE_FILE_NAME_PROPERTY} の属性へ写す。 */
 export function rehypeCodeFileName(): (tree: Root) => Root {
   return (tree) => ({

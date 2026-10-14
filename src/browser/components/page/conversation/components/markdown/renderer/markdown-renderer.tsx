@@ -40,7 +40,11 @@ import {
   useRepositoryFileLink,
 } from "../../repository-link/repository-link.tsx"
 import { ChartBlock } from "./chart-block.tsx"
-import { CODE_FILE_NAME_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts"
+import {
+  CODE_FILE_NAME_PROPERTY,
+  CODE_FILE_PATH_PROPERTY,
+  rehypeCodeFileName,
+} from "./code-file-name.ts"
 import { colorSwatch, readColorToken } from "./color-swatch.ts"
 import { CopyButton } from "./copy-button.tsx"
 import { MermaidBlock } from "./mermaid-block.tsx"
@@ -259,7 +263,9 @@ function Code(props: CodeProps): ReactElement {
   const { node, children, className, ...rest } = props
   const link = useRepositoryFileLink()
   const text = node === undefined ? "" : hastText(node)
-  const path = node === undefined ? undefined : repositoryFilePath(text, link.files)
+  const carriedPath =
+    node === undefined ? undefined : optionalString(node.properties[CODE_FILE_PATH_PROPERTY])
+  const path = node === undefined ? undefined : repositoryFilePath(carriedPath ?? text, link.files)
 
   if (path === undefined) {
     const swatch = node === undefined ? undefined : colorSwatch(text, readColorToken)

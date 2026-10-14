@@ -14,6 +14,7 @@ import {
   type ReportGraph,
   type ReportSection,
 } from "./report-block.ts"
+import { fileTreeRows } from "./report-file-tree.ts"
 import { reportImagePath } from "./report-image.ts"
 
 /** 節と節の境目に置く、見た目を持たない印。書き上げる演出（`planReveal`）がこれで節を1トピックに割る。 */
@@ -637,17 +638,33 @@ function dimensionValueMarkdown(value: string, before: string): string {
 }
 
 /**
- * 塊の頭に、種別ごとの合計の札を右寄せで並べ、1行に1ファイルの並びを続ける。
- * パスは `code` 要素にし、git 管理下のパスなら描く側の `Code` が押せるボタンにする
- * （パスの中の inline code の記法は解かない）。
+ * 塊の頭に、種別ごとの合計の札を右寄せで並べ、パスから組んだ樹形図の行（フォルダの行・ファイルの行）を続ける。
+ * ファイル名は `code` 要素にし、フルパスを `data-file-path` に持たせる。git 管理下のパスなら描く側の `Code` が
+ * その属性で判定して押せるボタンにする（パスの中の inline code の記法は解かない）。
+ * 枝の罫は読み上げに出さない。フォルダの無いパスだけのときは罫もフォルダの行も出さない。
  */
 function filesMarkdown(block: Extract<ReportBlock, { readonly kind: "files" }>): string {
   const summaryHtml = filesSummaryHtml(block.items)
-  const rows = block.items.map(({ path, change, note }) => {
+  const rows = fileTreeRows(block.items, (item) => item.path).map((row) => {
+    if (row.kind === "folder") {
+      const nameHtml = htmlInline(row.name).replaceAll("/", "/<wbr>")
+      return `<div class="file-folder">${fileGuideHtml(row.guide)}<span class="file-path-folder">${nameHtml}</span></div>`
+    }
+    const { path, change, note } = row.item
+    const nameHtml = `<span class="file-path-name">${htmlInline(row.name)}</span>`
     const noteHtml = fileNoteHtml(change, note)
-    return `<div class="file">${fileChangeBadgeHtml(change, "")}<code>${filePathHtml(path)}</code>${noteHtml}</div>`
+    const badgeHtml = fileChangeBadgeHtml(change, "")
+    if (row.guide === "" && !path.includes("/")) {
+      return `<div class="file">${badgeHtml}<code>${nameHtml}</code>${noteHtml}</div>`
+    }
+    const codeHtml = `<code data-file-path="${htmlAttribute(path)}">${nameHtml}</code>`
+    return `<div class="file">${badgeHtml}<span class="file-entry">${fileGuideHtml(row.guide)}${codeHtml}</span>${noteHtml}</div>`
   })
   return `<div class="files">${summaryHtml}${rows.join("")}</div>`
+}
+
+function fileGuideHtml(guide: string): string {
+  return guide === "" ? "" : `<span class="file-branch" aria-hidden="true">${guide}</span>`
 }
 
 /** 種別ごとの件数が1つでもある札だけを、`FILE_CHANGE_ORDER` の順で並べる。 */
@@ -675,20 +692,6 @@ function fileNoteHtml(change: keyof typeof FILE_CHANGE_BADGES, note: string): st
     return `<span class="file-note">${htmlInlineWithCode(note)}</span>`
   }
   return change === "added" ? '<span class="file-note file-note-empty">新しく作った</span>' : ""
-}
-
-/**
- * パスをフォルダ（暗い字）とファイル名（明るい字）の2つの `span` に分け、フォルダの「/」の後にだけ
- * `<wbr>` を置く（ファイル名は途中で割らない）。
- */
-function filePathHtml(path: string): string {
-  const lastSlash = path.lastIndexOf("/")
-  if (lastSlash === -1) {
-    return `<span class="file-path-name">${htmlInline(path)}</span>`
-  }
-  const folderHtml = htmlInline(path.slice(0, lastSlash + 1)).replaceAll("/", "/<wbr>")
-  const nameHtml = htmlInline(path.slice(lastSlash + 1))
-  return `<span class="file-path-folder">${folderHtml}</span><span class="file-path-name">${nameHtml}</span>`
 }
 
 type ListBlock = Extract<ReportBlock, { readonly kind: "list" }>

@@ -635,7 +635,36 @@
 .detail-block .report-file + .report-file {
   border-top: 1px solid var(--rule-quiet);
 }
-/* フォルダの「/」の後には `filePathHtml` が `<wbr>` を置く。 */
+/* 樹形図の行。フォルダの行はパスの列から右へ広げ、ファイルの行は罫とファイル名を1つの `file-entry` に並べる。
+   木の行は罫線で区切らず、行の高さを詰める。 */
+.detail-block .report-file-folder {
+  grid-column: 2 / -1;
+  display: flex;
+  align-items: baseline;
+  padding: 4px 2px;
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.detail-block .report-file:has(> .report-file-entry) {
+  padding-block: 4px;
+  border-top: 0;
+}
+.detail-block .report-file-entry {
+  display: flex;
+  align-items: baseline;
+  max-width: 100%;
+  min-width: 0;
+}
+.detail-block .report-file-branch {
+  flex: none;
+  white-space: pre;
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ink-quiet), transparent 45%);
+}
+/* フォルダの「/」の後には `filesMarkdown` が `<wbr>` を置く。 */
 .detail-block .report-file code {
   background: none;
   padding: 0;
