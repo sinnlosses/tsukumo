@@ -39,12 +39,14 @@ export function beginTurn(state: SessionState, at: number): SessionState {
 
 /**
  * 脇の話（`aside`）で始まる SDK ターン。
- * 吹き出し・表情・書きかけは空へ戻す（答えを吹き出しに出すため）。
+ * 書きかけは空へ戻すが、吹き出しと表情は持ち越し、答えのセリフを後ろに足す。
  * 親のやり取りの続きなので、ターンの通し番号は進めず、始まった時刻は前のターンのものを引き継ぐ。
  */
 export function beginAside(state: SessionState, at: number): SessionState {
   return {
     ...beginTurn(state, at),
+    speeches: state.speeches,
+    speechExpression: state.speechExpression,
     turn: { kind: "running", startedAt: runningStartedAt(state.turn, at) },
     nextTurnId: state.nextTurnId,
     answeringAside: true,

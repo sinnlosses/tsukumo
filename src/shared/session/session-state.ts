@@ -736,7 +736,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         ],
         // 前のターンのセリフが残っているなら、ここで捨てて今のターンだけの並びにする。
         speeches: [
-          ...(state.speechCalledInTurn ? state.speeches : []),
+          ...(state.speechCalledInTurn || state.answeringAside ? state.speeches : []),
           { text: event.text, expression: event.expression, time: { kind: "stamped", at } },
         ],
         speechExpression: event.expression,

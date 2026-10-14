@@ -22,6 +22,10 @@ import { reportEvent } from "../../fixture/report-event.ts"
 
 const REQUEST = { kind: "request", text: "架空の依頼", images: [] } as const satisfies SessionEvent
 
+const ASIDE = { kind: "aside", text: "架空の問い", images: [] } as const satisfies SessionEvent
+
+const RESUMED = { kind: "turn-resumed" } as const satisfies SessionEvent
+
 const SPEECH = {
   kind: "speech",
   text: "架空のセリフ",
@@ -124,6 +128,9 @@ describe("shownReaction", () => {
     ["やり取りの前にセリフがある", [SPEECH], "none"],
     ["送った直後", [REQUEST], "writing"],
     ["送ったあと speak が届いた", [REQUEST, SPEECH], "none"],
+    ["セリフのあとに脇の話を送った直後", [REQUEST, SPEECH, ASIDE], "writing"],
+    ["脇の話の答えの speak が届いた", [REQUEST, SPEECH, ASIDE, SPEECH], "none"],
+    ["claude が自分で始めた続きのターン", [REQUEST, SPEECH, COMPLETED, RESUMED], "none"],
     ["呼び直しを待っている", [REACTED, REQUEST, RETRY], "retrying:架空の再試行"],
     [
       "セリフのあとに呼び直しを待っている",

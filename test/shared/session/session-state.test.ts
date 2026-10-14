@@ -609,7 +609,7 @@ describe("applySessionEvent", () => {
     })
   })
 
-  it("aside はターンの通し番号も始まった時刻も進めず、吹き出しを空にして、そのターンのセリフに答えの印を付ける", () => {
+  it("aside はターンの通し番号も始まった時刻も進めず、吹き出しを残して答えを後ろに足し、そのターンのセリフに答えの印を付ける", () => {
     const delegated = [
       [{ kind: "request", text: "架空の依頼", images: [] }, 100],
       [{ kind: "speech", text: "架空の着手のセリフ", expression: "default" }, 150],
@@ -627,7 +627,9 @@ describe("applySessionEvent", () => {
 
     expect(aside.nextTurnId).toBe(finished.nextTurnId)
     expect(aside.turn).toEqual({ kind: "running", startedAt: 100 })
-    expect(aside.speeches).toEqual([])
+    expect(aside.speeches).toEqual(finished.speeches)
+    expect(aside.speeches).toHaveLength(1)
+    expect(aside.speechCalledInTurn).toBe(false)
     expect(aside.answeringAside).toBe(true)
     expect(aside.records.at(-1)).toEqual({
       kind: "aside",
@@ -641,6 +643,10 @@ describe("applySessionEvent", () => {
       { kind: "speech", text: "架空の答え", expression: "default" },
       600,
     )
+    expect(answered.speeches.map((speech) => speech.text)).toEqual([
+      "架空の着手のセリフ",
+      "架空の答え",
+    ])
     const resumed = [
       { kind: "turn-finished", outcome: { kind: "completed" } },
       { kind: "turn-resumed" },
