@@ -33,6 +33,7 @@ import type { SwallowedFailurePlace } from "./shared/diagnostic/swallowed-failur
 import { startViewDelivery } from "./view-delivery.ts"
 import { failureDiagnostic } from "./wiring/failure-diagnostic.ts"
 import { createHost } from "./wiring/host.ts"
+import { wireWorkflowSetting } from "./wiring/workflow-setting.ts"
 
 /** 環境変数ではなく起動の引数で選ぶもの。 */
 export type LaunchOptions = {
@@ -115,6 +116,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // 成果の画面が Beads の読みを覚える入れ物も1つで、ビューとセッションの両側が同じものを見る。
   // 温めはセッション側が起こす（ビューが別の入れ物を持つと、温めた読みが画面に届かない）。
   const achievementCache = createAchievementCache(launch.cwd)
+  const workflowSetting = wireWorkflowSetting(launch.cwd, mountWorkflowPlugin)
 
   const view = await startViewDelivery({
     portResolution,
@@ -128,6 +130,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     now: clock,
     devServer: launch.devServer,
     cwd: launch.cwd,
+    readWorkflowSetting: workflowSetting.readWorkflowSetting,
   })
   if (!view.ok) {
     process.stderr.write(`tsukumo: ビューを配れない: ${view.reason}\n`)
@@ -150,6 +153,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     cwd: launch.cwd,
     host,
     mountWorkflowPlugin,
+    workflowSetting,
   })
   view.connect(session)
 

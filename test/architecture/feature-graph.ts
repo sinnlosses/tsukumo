@@ -19,6 +19,7 @@ export const SERVER_FEATURES = [
   "repository",
   "recommendation",
   "checkout",
+  "workflow-setting",
   "achievement",
   "character-pack",
   "diary",

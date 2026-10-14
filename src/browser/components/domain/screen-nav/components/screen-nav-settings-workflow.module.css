@@ -1,0 +1,25 @@
+/* 設定のダイアログの「ワークフロー」の面。行の2列と罫線は `screen-nav-settings.module.css` の表の規則が持つ。 */
+
+/* どのリポジトリの設定か。面の名前のすぐ下に置き、行の並びとは罫線で分ける。 */
+.repository {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule-quiet);
+}
+.repository-name {
+  margin: 0;
+}
+/* 絶対パスは長いので、面の幅を押し広げずにどこでも折り返す。 */
+.repository-path {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+}
+.field {
+  min-width: 0;
+}
+/* 値を断った理由の1行。その欄の行の罫線のすぐ下に置く。 */
+.notice {
+  margin: 0.3rem 0 0.6rem;
+}
+.message {
+  margin: 12px 0 0;
+}

@@ -8,7 +8,9 @@
         "model": "opus",
         "permissionMode": "auto",
         "slashCommands": ["clear", "compact", "doctor", "next-task"],
-        "terminalSlashCommands": ["doctor"]
+        "terminalSlashCommands": ["doctor"],
+        "skillNames": ["tsukumo-workflow:next-task", "fable-review"],
+        "agentNames": ["tsukumo-workflow:acceptor", "fable-acceptor"]
       }
     },
     {

@@ -37,6 +37,7 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   repository: new Set([]),
   recommendation: new Set([]),
   checkout: new Set([]),
+  "workflow-setting": new Set([]),
   achievement: new Set(["repository"]),
   "character-pack": new Set([]),
   diary: new Set(["repository", "session-driver"]),

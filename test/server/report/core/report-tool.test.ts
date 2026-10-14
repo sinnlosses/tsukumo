@@ -39,6 +39,8 @@ const INIT: SessionEvent = {
   permissionMode: "auto",
   slashCommands: [],
   terminalSlashCommands: [],
+  skillNames: [],
+  agentNames: [],
 }
 const REPORT: SessionEvent = reportEvent({
   toolUseId: "toolu_r1",

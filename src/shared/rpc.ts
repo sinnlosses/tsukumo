@@ -24,6 +24,10 @@ import { sessionDigestContract } from "./contract/session-digest.ts"
 import { sessionContract } from "./contract/session.ts"
 import { tokenUsageContract } from "./contract/token-usage.ts"
 import { usageReviewContract } from "./contract/usage-review.ts"
+import {
+  workflowSettingCommandContract,
+  workflowSettingContract,
+} from "./contract/workflow-setting.ts"
 
 /** 手続きの口の経路（`POST /rpc/<機能>/<手続き>?t=<起動トークン>`）。 */
 export const RPC_PATH = "/rpc"
@@ -37,6 +41,7 @@ export const rpcContract = {
   sessionDigest: sessionDigestContract,
   sessionClaim: sessionClaimContract,
   diagnostic: diagnosticContract,
+  workflowSetting: workflowSettingContract,
 }
 
 /** ブラウザが手続きを呼ぶ client の型（契約から導く）。 */
@@ -49,6 +54,7 @@ export const commandContract = {
   chat: chatContract,
   usageReview: usageReviewContract,
   host: hostContract,
+  workflowSetting: workflowSettingCommandContract,
 }
 
 /** ブラウザがコマンドを送る client の型（契約から導く）。 */

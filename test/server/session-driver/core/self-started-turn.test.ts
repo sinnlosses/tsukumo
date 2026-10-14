@@ -10,6 +10,8 @@ const INIT: SessionEvent = {
   permissionMode: "auto",
   slashCommands: [],
   terminalSlashCommands: [],
+  skillNames: [],
+  agentNames: [],
 }
 const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
 const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }

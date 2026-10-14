@@ -126,6 +126,8 @@ const STARTED_STATE = applySessionEvent(
     permissionMode: undefined,
     slashCommands: [],
     terminalSlashCommands: [],
+    skillNames: [],
+    agentNames: [],
   },
   0,
 )

@@ -26,6 +26,8 @@ describe("commandSuggestions", () => {
     permissionMode: undefined,
     slashCommands: ["clear", "model", "doctor"],
     terminalSlashCommands: ["doctor"],
+    skillNames: [],
+    agentNames: [],
   }
 
   it("説明が届く前は名前だけ（description は undefined）を返す", () => {

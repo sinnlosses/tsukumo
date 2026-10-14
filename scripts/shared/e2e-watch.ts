@@ -61,4 +61,5 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/usage-review-own-session.test.ts": ["main", "other-screens"],
   "test/e2e/welcome.test.ts": ["main"],
   "test/e2e/work-strip.test.ts": ["main", "dispatch"],
+  "test/e2e/workflow-setting.test.ts": ["screen-nav"],
 } as const satisfies Record<string, readonly E2eRegion[] | "every">

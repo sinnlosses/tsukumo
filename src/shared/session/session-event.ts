@@ -78,7 +78,7 @@ export type ReportWaitingLine =
 export type SessionEvent =
   /**
    * `system` の `init`。プロンプトを送るたびに届くので「新しいセッション」の合図にしない（実測）。
-   * `slashCommands` / `terminalSlashCommands` は毎回上書きでよい。
+   * `slashCommands` / `terminalSlashCommands` / `skillNames` / `agentNames` は毎回上書きでよい。
    */
   | {
       readonly kind: "session-info"
@@ -91,6 +91,10 @@ export type SessionEvent =
        * SDK 側でフィールド自体が無いことがあるので、そのときは空配列。
        */
       readonly terminalSlashCommands: readonly string[]
+      /** `init` の `skills`（スキルの名前）。無ければ空配列。 */
+      readonly skillNames: readonly string[]
+      /** `init` の `agents`（サブエージェントの名前）。SDK 側でフィールド自体が無いことがあるので、そのときは空配列。 */
+      readonly agentNames: readonly string[]
     }
   /**
    * コマンドの説明が届いた（{@link CommandDescription}）。名前の一覧（`session-info`）とは別の経路で来るので、別のイベントにしてある。

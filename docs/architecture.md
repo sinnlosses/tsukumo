@@ -166,6 +166,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `repository/`        | 作業ディレクトリの git リポジトリを読む。`git` を起こす口・管理下のファイル・タスク一覧                   |
 | `recommendation/`    | おすすめの札。候補・使い捨ての `query()`・出力の検査・キャッシュ                                          |
 | `checkout/`          | 打った場所のチェックアウトと自分の根を比べ、違えば打った側の `bin/tsukumo` へ委ねる                       |
+| `workflow-setting/`  | ワークフローの設定。`tw` の設定の口を起こす口と読み書きの手続き                                           |
 
 **どの機能にも属さない共有のもの**は、`server/core/` と `server/adapter/` の**直下**に置く
 （いまあるものは `ls src/server/core/ src/server/adapter/`）。置いてよいのは**どの機能の語彙も名乗らず、読み手が
@@ -202,19 +203,19 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   `core/` `adapter/` の外に置いたファイルと、表と `SERVER_FEATURE_IMPORTS` のずれは
   `test/architecture/server-feature.test.ts` が落とす）
 
-| 機能（import する側） | 読んでよい機能                                                                                                                        |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `report`              | `repository`                                                                                                                          |
-| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`              |
-| `system-prompt`       | `session-driver` `chat` `report`                                                                                                      |
-| `view-server`         | `session`                                                                                                                             |
-| `chat`                | `session-driver` `character-pack`                                                                                                     |
-| `context-usage`       | `session-driver`                                                                                                                      |
-| `session-driver`      | `chat` `report` `view-server`                                                                                                         |
-| `diary`               | `repository` `session-driver`                                                                                                         |
-| `usage-review`        | `session-driver`                                                                                                                      |
-| `achievement`         | `repository`                                                                                                                          |
-| そのほか              | —（葉。`token-usage` `plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation`） |
+| 機能（import する側） | 読んでよい機能                                                                                                                                           |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `report`              | `repository`                                                                                                                                             |
+| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                                 |
+| `system-prompt`       | `session-driver` `chat` `report`                                                                                                                         |
+| `view-server`         | `session`                                                                                                                                                |
+| `chat`                | `session-driver` `character-pack`                                                                                                                        |
+| `context-usage`       | `session-driver`                                                                                                                                         |
+| `session-driver`      | `chat` `report` `view-server`                                                                                                                            |
+| `diary`               | `repository` `session-driver`                                                                                                                            |
+| `usage-review`        | `session-driver`                                                                                                                                         |
+| `achievement`         | `repository`                                                                                                                                             |
+| そのほか              | —（葉。`token-usage` `plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation` `workflow-setting`） |
 
 表は `test/architecture/server-feature.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
 辺が `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。
@@ -256,10 +257,11 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   写し、接続が切れたら購読を外す。購読には照合（`rpcGuard`）だけを掛け、断る条件は見ない
 - ブラウザは型付きの client（`src/browser/stores/session.ts` の `dispatch`）で呼ぶ。**送りっぱなしで、
   断られても画面には出さない**（画面は同じ条件で先に操作子を塞いでいる）
-- **`/ws` の上で値を返す手続きは `characterPack.generateFromPortrait` の1つだけ。** 入力の画像が
-  `/rpc` の本文の上限（64 KiB）に入らず、生成した値を返す必要があるので、コマンドの契約に `output` を
+- **`/ws` の上で値を返す手続きは `characterPack.generateFromPortrait` と `workflowSetting.set` の2つだけ。**
+  前者は入力の画像が `/rpc` の本文の上限（64 KiB）に入らず、生成した値を返す必要があるため、後者は
+  画面からの書き込みで、書いたあとに読み直した欄（か、ワークフローが断った理由）を返す必要があるため。コマンドの契約に `output` を
   持たせ、ブラウザは `dispatchAwaited` で応答を待って受け取る。受け手の行（`write` / `call` / `session`）は
-  値を返さないので、機能の表には載せず（表の型から `Omit` で外す）、`<機能>-procedure.ts` に受け手を直に書く
+  値を返さないので、機能の表には載せず（表の型から `Omit` で外すか、表を持たない）、`<機能>-procedure.ts` に受け手を直に書く
 
 `/prompt-image/<id>`・`/report-image/<toolUseId>/<path>`（どちらも `<img src>` で読む）と静的な配信は HTTP の経路のまま。
 
@@ -337,7 +339,9 @@ vendor/tsukumo-plugins/       取り込んだ tsukumo-plugins（git submodule。
 ```
 
 **設定の置き場は環境変数と歯車の設定の2つ**（`docs/architecture/adr/0025-no-project-settings.md`。リポジトリに属する値の
-置き場は無い）。タスクの節と使い方の見直しの「タスクにする」は、起動先の `.beads` が読めるかだけで出し分ける。
+置き場は無い）。ワークフローの設定（流れとパーツ）は tsukumo が持たず、ワークフローの `.tw/config.toml` に置いたまま、
+歯車の「ワークフロー」の面が設定の口（`tw config --schema`・`tw config set`。`server/workflow-setting/`）を通して見せて書く
+（同じ ADR の「2026-10-14 の改訂」）。タスクの節と使い方の見直しの「タスクにする」は、起動先の `.beads` が読めるかだけで出し分ける。
 「tsukumo に頼む」の文面は固定で、`shared/repository/task-run-prompt.ts` の `runPromptOf` が作る。
 
 **タスク一覧の読み元は Beads だけ**（`server/repository/adapter/task-beads-source.ts`。`bd` の課題）。

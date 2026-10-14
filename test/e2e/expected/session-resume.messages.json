@@ -12,7 +12,15 @@
       "model": "opus",
       "permissionMode": "auto",
       "slashCommands": "<コマンド一覧>",
-      "terminalSlashCommands": "<コマンド一覧>"
+      "terminalSlashCommands": "<コマンド一覧>",
+      "skillNames": [
+        "tsukumo-workflow:next-task",
+        "fable-review"
+      ],
+      "agentNames": [
+        "tsukumo-workflow:acceptor",
+        "fable-acceptor"
+      ]
     }
   },
   {

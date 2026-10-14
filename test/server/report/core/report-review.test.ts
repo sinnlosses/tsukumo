@@ -40,6 +40,8 @@ const SESSION_INFO: SessionEvent = {
   permissionMode: undefined,
   slashCommands: [],
   terminalSlashCommands: [],
+  skillNames: [],
+  agentNames: [],
 }
 const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 

@@ -391,6 +391,8 @@ describe("設定の口の点の元（settingMarks）", () => {
     permissionMode: "default",
     slashCommands: [],
     terminalSlashCommands: [],
+    skillNames: [],
+    agentNames: [],
   }
 
   it("running なら、3つの受け付けがそれぞれの印を accepted にする", () => {

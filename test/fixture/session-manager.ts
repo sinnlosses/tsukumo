@@ -159,6 +159,9 @@ export function createSessionManager(
       chat: { forgetRememberedLine },
       usageReview: { dismissUsageProposal, runner },
       host: { openFile },
+      workflowSetting: {
+        changeWorkflowSetting: () => Promise.reject(new Error("ワークフローの設定は使わない")),
+      },
     },
     manager.commandSession,
   )

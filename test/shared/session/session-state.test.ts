@@ -392,6 +392,8 @@ describe("applySessionEvent", () => {
         permissionMode: "auto",
         slashCommands: ["clear"],
         terminalSlashCommands: [],
+        skillNames: [],
+        agentNames: [],
       },
       {
         kind: "session-info",
@@ -400,11 +402,41 @@ describe("applySessionEvent", () => {
         permissionMode: "default",
         slashCommands: ["clear", "model", "doctor"],
         terminalSlashCommands: ["doctor"],
+        skillNames: [],
+        agentNames: [],
       },
     )
 
     expect(runningSession(view).permissionMode).toBe("default")
     expect(view.slashCommands).toEqual(["clear", "model"])
+  })
+
+  it("init のたびにスキルとエージェントの名前を上書きする", () => {
+    const view = apply(
+      {
+        kind: "session-info",
+        sessionId: "s-1",
+        model: undefined,
+        permissionMode: undefined,
+        slashCommands: [],
+        terminalSlashCommands: [],
+        skillNames: ["fable-review", "tsukumo-workflow:next-task"],
+        agentNames: ["fable-acceptor"],
+      },
+      {
+        kind: "session-info",
+        sessionId: "s-1",
+        model: undefined,
+        permissionMode: undefined,
+        slashCommands: [],
+        terminalSlashCommands: [],
+        skillNames: ["tsukumo-workflow:next-task"],
+        agentNames: ["tsukumo-workflow:acceptor"],
+      },
+    )
+
+    expect(view.skillNames).toEqual(["tsukumo-workflow:next-task"])
+    expect(view.agentNames).toEqual(["tsukumo-workflow:acceptor"])
   })
 
   it("model-changed は知っている別名（MODEL_ALIASES）のときだけ先回りでモデルを更新する", () => {
@@ -416,6 +448,8 @@ describe("applySessionEvent", () => {
         permissionMode: "auto",
         slashCommands: [],
         terminalSlashCommands: [],
+        skillNames: [],
+        agentNames: [],
       },
       { kind: "model-changed", model: "haiku" },
     )
@@ -432,6 +466,8 @@ describe("applySessionEvent", () => {
         permissionMode: "auto",
         slashCommands: [],
         terminalSlashCommands: [],
+        skillNames: [],
+        agentNames: [],
       },
       { kind: "model-changed", model: "best" },
     )
@@ -777,6 +813,8 @@ describe("applySessionEvent", () => {
         permissionMode: "auto",
         slashCommands: ["clear"],
         terminalSlashCommands: [],
+        skillNames: [],
+        agentNames: [],
       },
       {
         kind: "welcome-greeting-changed",
@@ -888,6 +926,8 @@ describe("applySessionEvent", () => {
       permissionMode: "auto",
       slashCommands: [],
       terminalSlashCommands: [],
+      skillNames: [],
+      agentNames: [],
     })
 
     const listed = applySessionEvent(
@@ -924,6 +964,8 @@ describe("applySessionEvent", () => {
       permissionMode: undefined,
       slashCommands: [],
       terminalSlashCommands: [],
+      skillNames: [],
+      agentNames: [],
     })
     expect(withId.session.kind).toBe("identified")
 
@@ -946,6 +988,8 @@ describe("applySessionEvent", () => {
       permissionMode: undefined,
       slashCommands: [],
       terminalSlashCommands: [],
+      skillNames: [],
+      agentNames: [],
     })
     expect(identified.session.kind).toBe("identified")
 

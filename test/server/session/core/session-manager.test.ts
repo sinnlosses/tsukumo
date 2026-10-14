@@ -165,6 +165,8 @@ describe("createSessionManager", () => {
         permissionMode: "default",
         slashCommands: [],
         terminalSlashCommands: [],
+        skillNames: [],
+        agentNames: [],
       })
       stub.emit(confirmed("fake-model-a"))
       stub.emit({ kind: "model-changed", model: "fake-model-b" })
@@ -309,6 +311,8 @@ describe("createSessionManager", () => {
           permissionMode: undefined,
           slashCommands: [],
           terminalSlashCommands: [],
+          skillNames: [],
+          agentNames: [],
         })
       }
       return { manager, launches, identify }

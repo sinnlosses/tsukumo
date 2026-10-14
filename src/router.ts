@@ -56,6 +56,11 @@ import {
   rpcGuard,
   type SocketRpcContext,
 } from "./server/view-server/adapter/rpc-guard.ts"
+import {
+  workflowSettingCommandProcedure,
+  type WorkflowSettingProcedurePorts,
+  workflowSettingProcedure,
+} from "./server/workflow-setting/adapter/workflow-setting-procedure.ts"
 import { frameContract } from "./shared/contract/frame.ts"
 import { commandContract, rpcContract } from "./shared/rpc.ts"
 
@@ -66,7 +71,8 @@ export type RpcRouterPorts = RepositoryProcedurePorts &
   AchievementProcedurePorts &
   SessionDigestProcedurePorts &
   SessionClaimProcedurePorts &
-  DiagnosticProcedurePorts
+  DiagnosticProcedurePorts &
+  Pick<WorkflowSettingProcedurePorts, "readWorkflowSetting">
 
 /** 読み取りの手続きを束ね、照合のミドルウェアを全部の前に掛ける（`/rpc` に載る）。 */
 export function createRpcRouter(ports: RpcRouterPorts) {
@@ -82,6 +88,7 @@ export function createRpcRouter(ports: RpcRouterPorts) {
       sessionDigest: sessionDigestProcedure(ports),
       sessionClaim: sessionClaimProcedure(ports),
       diagnostic: diagnosticProcedure(ports),
+      workflowSetting: workflowSettingProcedure(ports),
     })
 }
 
@@ -91,6 +98,7 @@ export type CommandRouterPorts = {
   readonly chat: ChatCommandPorts
   readonly usageReview: UsageReviewCommandPorts
   readonly host: HostCommandPorts
+  readonly workflowSetting: Pick<WorkflowSettingProcedurePorts, "changeWorkflowSetting">
 }
 
 /** コマンドの手続きを束ね、照合と断る条件のミドルウェアを全部の前に掛ける（`/ws` に載る）。 */
@@ -105,6 +113,7 @@ export function createCommandRouter(ports: CommandRouterPorts) {
       chat: chatProcedure(ports.chat),
       usageReview: usageReviewProcedure(ports.usageReview),
       host: hostProcedure(ports.host),
+      workflowSetting: workflowSettingCommandProcedure(ports.workflowSetting),
     })
 }
 

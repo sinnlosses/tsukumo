@@ -207,6 +207,8 @@ function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly
       permissionMode,
       slashCommands: stringArray(message.slash_commands),
       terminalSlashCommands: stringArray(message.terminal_slash_commands),
+      skillNames: stringArray(message.skills),
+      agentNames: stringArray(message.agents),
     },
     ...(model === undefined
       ? []

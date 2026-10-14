@@ -3,7 +3,7 @@
 // 選んでいる面はこの部品の `useState` が持つ。ダイアログを閉じると部品ごと消えるので、開くたび先頭の面から始まる。
 
 import clsx from "clsx"
-import { Palette, Settings, SlidersHorizontal, Sparkles, X } from "lucide-react"
+import { Palette, Settings, SlidersHorizontal, Sparkles, Workflow, X } from "lucide-react"
 import { useState, type ComponentType, type ReactElement } from "react"
 
 import { Button } from "../../../ui/button/button.tsx"
@@ -12,6 +12,7 @@ import { Text } from "../../../ui/text/text.tsx"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-settings-dialog.module.css"
 import { ScreenNavSettingsLookFace } from "./screen-nav-settings-look.tsx"
+import { ScreenNavSettingsWorkflowFace } from "./screen-nav-settings-workflow.tsx"
 import gearStyles from "./screen-nav-settings.module.css"
 import {
   ScreenNavSettingsRevealFace,
@@ -24,17 +25,28 @@ type Face = {
   readonly label: string
   readonly icon: ComponentType<{ readonly size: number; readonly strokeWidth: number }>
   readonly Body: (props: ScreenNavSettingsProps) => ReactElement
+  /** 下の帯（画面の色の「既定に戻す」）を出すか。色と関わらない値を書く面には出さない。 */
+  readonly foot: "reset" | "none"
 }
 
 const FACES = [
-  { key: "look", label: "見た目", icon: Palette, Body: ScreenNavSettingsLookFace },
+  { key: "look", label: "見た目", icon: Palette, Body: ScreenNavSettingsLookFace, foot: "reset" },
   {
     key: "session-default",
     label: "セッションの既定",
     icon: SlidersHorizontal,
     Body: ScreenNavSettingsSessionDefaultFace,
+    foot: "reset",
   },
-  { key: "reveal", label: "演出", icon: Sparkles, Body: DialogRevealFace },
+  { key: "reveal", label: "演出", icon: Sparkles, Body: DialogRevealFace, foot: "reset" },
+  // ワークフローの値は歯車の設定（`settings`）に無く、面が自分で読み書きする。
+  {
+    key: "workflow",
+    label: "ワークフロー",
+    icon: Workflow,
+    Body: ScreenNavSettingsWorkflowFace,
+    foot: "none",
+  },
 ] satisfies readonly [Face, ...Face[]]
 
 const NAV_GROUP_LABEL = "あなたの好み"
@@ -150,22 +162,24 @@ function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElemen
               <SelectedBody settings={settings} />
             </div>
           </div>
-          <footer className={styles["foot"]}>
-            <Button
-              variant="outline"
-              size="label"
-              pressed="none"
-              disabled={settings.resetDisabled}
-              ariaLabel={undefined}
-              disclosure={{ kind: "none" }}
-              ariaHasPopup={undefined}
-              title={undefined}
-              className={styles["reset"]}
-              onClick={settings.onReset}
-            >
-              既定に戻す
-            </Button>
-          </footer>
+          {selected.foot === "reset" && (
+            <footer className={styles["foot"]}>
+              <Button
+                variant="outline"
+                size="label"
+                pressed="none"
+                disabled={settings.resetDisabled}
+                ariaLabel={undefined}
+                disclosure={{ kind: "none" }}
+                ariaHasPopup={undefined}
+                title={undefined}
+                className={styles["reset"]}
+                onClick={settings.onReset}
+              >
+                既定に戻す
+              </Button>
+            </footer>
+          )}
         </section>
       </div>
     </>

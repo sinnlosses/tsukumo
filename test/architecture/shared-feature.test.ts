@@ -31,6 +31,7 @@ const SHARED_FEATURES = [
   "token-usage",
   "usage-review",
   "view-server",
+  "workflow-setting",
 ] as const satisfies readonly ServerFeature[]
 type SharedFeature = (typeof SHARED_FEATURES)[number]
 

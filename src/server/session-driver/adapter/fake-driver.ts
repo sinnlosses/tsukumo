@@ -284,10 +284,16 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // 差し戻しの預かり（本物の駆動と同じ `CallReview`）。
   // handler が無いので判定はしない。疑似セッションが書いた `tool-finished` の `isError` に従って、描くか捨てるかだけが決まる。
   const callReview = createCallReview()
+  // 最後に流した `session-info` のスキルとエージェントの名前。
+  // `setModel` / `setPermissionMode` が流す `session-info` にも載せる（本物の `init` は毎回全部を送るので、空で上書きすると疑似だけ候補が消える）。
+  let names: SessionInfoNames = { skillNames: [], agentNames: [] }
 
   const emit = (event: SessionEvent): void => {
     if (event.kind === "pending-changed") {
       pending = event.pending
+    }
+    if (event.kind === "session-info") {
+      names = { skillNames: event.skillNames, agentNames: event.agentNames }
     }
     if (event.kind === "session-ended") {
       ended = true
@@ -445,7 +451,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       if (next !== undefined) {
         model = next
       }
-      emit({ kind: "session-info", ...sessionInfo() })
+      emit({ kind: "session-info", ...sessionInfo(), ...names })
       return Promise.resolve()
     },
     // 本物の `setEffort` と同じく、受け付けた値をすぐ流す。
@@ -456,7 +462,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     },
     setPermissionMode: (mode) => {
       permissionMode = mode
-      emit({ kind: "session-info", ...sessionInfo() })
+      emit({ kind: "session-info", ...sessionInfo(), ...names })
       options.onEvent({ kind: "permission-mode-changed", mode })
       return Promise.resolve()
     },
@@ -526,5 +532,12 @@ function sessionInfo(): Omit<Extract<SessionEvent, { kind: "session-info" }>, "k
     permissionMode: undefined,
     slashCommands: [],
     terminalSlashCommands: [],
+    skillNames: [],
+    agentNames: [],
   }
 }
+
+type SessionInfoNames = Pick<
+  Extract<SessionEvent, { kind: "session-info" }>,
+  "skillNames" | "agentNames"
+>

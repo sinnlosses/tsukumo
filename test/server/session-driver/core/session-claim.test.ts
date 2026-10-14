@@ -34,6 +34,8 @@ function sessionInfo(sessionId: string): SessionEvent {
     permissionMode: undefined,
     slashCommands: [],
     terminalSlashCommands: [],
+    skillNames: [],
+    agentNames: [],
   }
 }
 

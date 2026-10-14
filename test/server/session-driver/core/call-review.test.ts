@@ -27,6 +27,8 @@ const SESSION_INFO: SessionEvent = {
   permissionMode: undefined,
   slashCommands: [],
   terminalSlashCommands: [],
+  skillNames: [],
+  agentNames: [],
 }
 const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }

@@ -45,6 +45,13 @@ const emptyViewServerOptions: ViewServerOptions = {
     readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
     readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
     reportBrowserError: () => {},
+    readWorkflowSetting: () =>
+      Promise.resolve({
+        kind: "unavailable",
+        repository: { worktreeName: "架空のプロジェクト", configPath: "/架空/.tw/config.toml" },
+        reason: "tw-missing",
+        detail: "PATH の tw",
+      }),
   }),
   token: "架空の起動トークン",
   onRuntimeError: () => {},

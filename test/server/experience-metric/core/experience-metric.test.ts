@@ -22,6 +22,8 @@ const SESSION_INFO: SessionEvent = {
   permissionMode: undefined,
   slashCommands: [],
   terminalSlashCommands: [],
+  skillNames: [],
+  agentNames: [],
 }
 
 const REQUEST: SessionEvent = { kind: "request", text: REQUEST_MARK, images: [] }

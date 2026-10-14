@@ -45,6 +45,8 @@ describe("createSessionManager", () => {
       permissionMode: "auto",
       slashCommands: [],
       terminalSlashCommands: [],
+      skillNames: [],
+      agentNames: [],
     }
 
     /** 架空のステップ1つぶんの使用量。 */
@@ -268,6 +270,8 @@ describe("createSessionManager", () => {
         permissionMode: "auto",
         slashCommands: [],
         terminalSlashCommands: [],
+        skillNames: [],
+        agentNames: [],
       }
     }
 
@@ -392,6 +396,8 @@ describe("createSessionManager", () => {
         permissionMode: "auto",
         slashCommands: [],
         terminalSlashCommands: [],
+        skillNames: [],
+        agentNames: [],
       }
     }
 
@@ -541,6 +547,8 @@ describe("createSessionManager", () => {
         permissionMode: "auto",
         slashCommands: [],
         terminalSlashCommands: [],
+        skillNames: [],
+        agentNames: [],
       }
     }
 
@@ -838,6 +846,8 @@ describe("createSessionManager", () => {
       permissionMode: "auto",
       slashCommands: [],
       terminalSlashCommands: [],
+      skillNames: [],
+      agentNames: [],
     })
     await waitForBatch()
     const before = written.length

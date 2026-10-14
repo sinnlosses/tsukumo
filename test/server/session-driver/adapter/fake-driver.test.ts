@@ -223,6 +223,50 @@ describe("startFakeSession", () => {
     })
   })
 
+  it("切り替えで流す session-info は、場面が流したスキルとエージェントの名前を保つ", async () => {
+    const sink = collect()
+    const driver = startFakeSession({
+      session: {
+        ...FAKE_SESSION,
+        opening: [
+          {
+            afterMs: 0,
+            waitForAnswer: false,
+            event: {
+              kind: "session-info",
+              sessionId: "fake-session",
+              model: undefined,
+              permissionMode: undefined,
+              slashCommands: [],
+              terminalSlashCommands: [],
+              skillNames: ["架空のスキル"],
+              agentNames: ["架空のプラグイン:架空の役"],
+            },
+          },
+        ],
+      },
+      scene: undefined,
+      sceneUntil: undefined,
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
+      expressions: [],
+      onEvent: sink.onEvent,
+    })
+    await tick()
+    await driver.setModel("sonnet")
+    await driver.setPermissionMode("plan")
+    driver.close()
+
+    const infos = sink.events.filter((event) => event.kind === "session-info")
+    expect(infos).toHaveLength(3)
+    for (const info of infos) {
+      expect(info).toMatchObject({
+        skillNames: ["架空のスキル"],
+        agentNames: ["架空のプラグイン:架空の役"],
+      })
+    }
+  })
+
   it("session-ended の手を流したあとは ended が真になる", async () => {
     const sink = collect()
     const driver = startFakeSession({

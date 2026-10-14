@@ -24,6 +24,7 @@ import { EVENT_BATCH_INTERVAL_MS } from "./server/session/core/event-batch.ts"
 import { createSessionManager, type SessionManager } from "./server/session/core/session-manager.ts"
 import type { TokenUsageLog } from "./server/token-usage/core/token-usage.ts"
 import type { SocketRouter } from "./server/view-server/adapter/session-socket.ts"
+import type { WorkflowSettingProcedurePorts } from "./server/workflow-setting/adapter/workflow-setting-procedure.ts"
 import { wireAchievement } from "./wiring/achievement.ts"
 import { wireCharacterPack } from "./wiring/character-pack.ts"
 import { wireChat } from "./wiring/chat.ts"
@@ -57,6 +58,8 @@ export type SessionStartOptions = {
   readonly host: Host
   /** 取り込んだ tsukumo-plugins をセッションに載せるか。利用者が同じものを入れていれば載せない。 */
   readonly mountWorkflowPlugin: boolean
+  /** ワークフローの設定を読み書きする口。ビューの配信が読む口と同じ1つを渡す（`wireWorkflowSetting`）。 */
+  readonly workflowSetting: WorkflowSettingProcedurePorts
 }
 
 /** 起こしたセッションと、開いたタブがそれを触るコマンドの手続き。 */
@@ -140,6 +143,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     chat: chat.commands,
     usageReview: usageReview.commands,
     host: host.commands,
+    workflowSetting: options.workflowSetting,
   })
   return {
     manager: {

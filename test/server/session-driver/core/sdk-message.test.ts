@@ -387,6 +387,8 @@ describe("toSessionEvents", () => {
       permissionMode: "auto",
       slash_commands: ["clear", "model", 7],
       terminal_slash_commands: ["doctor", 7],
+      skills: ["tsukumo-workflow:next-task", 7],
+      agents: ["tsukumo-workflow:acceptor", "fable-acceptor"],
       output_style: "Asuna",
     }
 
@@ -398,6 +400,8 @@ describe("toSessionEvents", () => {
         permissionMode: "auto",
         slashCommands: ["clear", "model"],
         terminalSlashCommands: ["doctor"],
+        skillNames: ["tsukumo-workflow:next-task"],
+        agentNames: ["tsukumo-workflow:acceptor", "fable-acceptor"],
       },
       { kind: "setting-confirmed", setting: "model", value: "claude-opus-5" },
       { kind: "setting-confirmed", setting: "permissionMode", value: "auto" },
@@ -437,8 +441,27 @@ describe("toSessionEvents", () => {
         permissionMode: undefined,
         slashCommands: ["clear"],
         terminalSlashCommands: [],
+        skillNames: [],
+        agentNames: [],
       },
     ])
+  })
+
+  it("init に agents が無いときはエージェントの名前を空配列にする", () => {
+    const message = {
+      type: "system",
+      subtype: "init",
+      session_id: "session-dummy",
+      skills: ["fable-review"],
+    }
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toContainEqual(
+      expect.objectContaining({
+        kind: "session-info",
+        skillNames: ["fable-review"],
+        agentNames: [],
+      }),
+    )
   })
 
   it("conversation_reset を conversation-cleared にする（/clear の合図。2026-09-15 実測）", () => {

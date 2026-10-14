@@ -217,6 +217,9 @@ function createRecordingPorts(
         return Promise.resolve(writeResult === "written")
       },
     },
+    workflowSetting: {
+      changeWorkflowSetting: () => Promise.reject(new Error("ワークフローの設定は使わない")),
+    },
   }
   return {
     ports,

@@ -363,6 +363,10 @@ export type SessionState = {
    * `init` は最初の依頼を送るまで届かない（実測。SDK の `system`/`init` はターンのたびに届く仕組みで、セッション開始直後には来ない）ので、それまでは空配列のまま。
    */
   readonly slashCommands: readonly string[]
+  /** SDK の `init` で届いたスキルの名前（`init` のたびに上書きされる）。`init` が届く前は空配列。 */
+  readonly skillNames: readonly string[]
+  /** SDK の `init` で届いたサブエージェントの名前（`init` のたびに上書きされる）。`init` が届く前は空配列。 */
+  readonly agentNames: readonly string[]
   /**
    * SDK から届いたコマンドの説明（名前と説明の組）。端末専用のものも混ざったままの生の一覧。
    * `supportedCommands()` はセッション開始後すぐに届く（実測。`init` を待たない）。説明がまだ届いていなければ空配列。
@@ -522,6 +526,8 @@ export const INITIAL_SESSION_STATE: SessionState = {
     permissionMode: NO_SETTING_MARK,
   },
   slashCommands: [],
+  skillNames: [],
+  agentNames: [],
   commandDescriptions: [],
   endedReason: undefined,
   turn: { kind: "idle" },
@@ -638,6 +644,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         // `model` は `session` とは独立に更新する（`SessionInfo` の doc コメント）。
         model: event.model,
         slashCommands: commandCandidates(event.slashCommands, event.terminalSlashCommands),
+        skillNames: event.skillNames,
+        agentNames: event.agentNames,
       }
     case "command-descriptions":
       return { ...state, commandDescriptions: event.descriptions }

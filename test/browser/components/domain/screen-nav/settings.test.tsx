@@ -166,20 +166,20 @@ describe("設定の歯車（帯の右端）", () => {
     expect(faceLabels()).toEqual(["地の色", "領域の色", "字の色"])
   })
 
-  it("ナビは3項目で、選んだ項目が aria-current になり面が替わる。「すぐ効く」の印は無い", () => {
+  it("ナビは4項目で、選んだ項目が aria-current になり面が替わる。「すぐ効く」の印は無い", () => {
     renderScreenNav()
     fireEvent.click(gear())
     const dialog = openedSettingsDialog()
-    const names = ["見た目", "セッションの既定", "演出"]
+    const names = ["見た目", "セッションの既定", "演出", "ワークフロー"]
 
     const current = (): (string | null)[] =>
       names.map((name) => within(dialog).getByRole("button", { name }).getAttribute("aria-current"))
 
-    expect(current()).toEqual(["page", null, null])
+    expect(current()).toEqual(["page", null, null, null])
 
     showFace("セッションの既定")
 
-    expect(current()).toEqual([null, "page", null])
+    expect(current()).toEqual([null, "page", null, null])
     expect(faceLabels()).toEqual(["モデル", "effort", "許可モード"])
 
     showFace("演出")
