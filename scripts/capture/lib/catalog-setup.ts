@@ -4,9 +4,22 @@ import { cpSync, mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 
 import { appendDiaryParagraph } from "../../../src/server/diary/adapter/diary.ts"
+import { FAKE_BEADS_ISSUES_PATH } from "../../../src/server/repository/adapter/fake-beads.ts"
 import { fictionalPng } from "../../shared/fictional-png.ts"
 import { REPOSITORY_ROOT } from "../../shared/repository-root.ts"
 import type { CatalogEntry, HomeSetup } from "./catalog-entry.ts"
+
+/** `bd list --json` の1件の形の架空の課題（`report-task-finished` 場面の `task.id`）。 */
+const FICTIONAL_ISSUE = {
+  id: "t-002",
+  title: "架空のタスク",
+  status: "open",
+  created_at: "2026-01-14T00:00:00Z",
+  dependencies: [],
+  description: "## 目的・背景\n\n架空の本文で、実物のタスクではない。",
+  acceptance_criteria: "",
+  notes: "",
+} satisfies Readonly<Record<string, unknown>>
 
 /** `entry.workspaceSetup` に合わせて作業場所を用意し、その場所を返す。 */
 export function workspaceOf(entry: CatalogEntry, outDir: string): string {
@@ -14,6 +27,11 @@ export function workspaceOf(entry: CatalogEntry, outDir: string): string {
     return REPOSITORY_ROOT
   }
   const workspace = path.join(outDir, "workspace", entry.name)
+  if (entry.workspaceSetup.kind === "task-list") {
+    mkdirSync(path.join(workspace, path.dirname(FAKE_BEADS_ISSUES_PATH)), { recursive: true })
+    writeFileSync(path.join(workspace, FAKE_BEADS_ISSUES_PATH), JSON.stringify([FICTIONAL_ISSUE]))
+    return workspace
+  }
   mkdirSync(path.join(workspace, "report-image-fixture"), { recursive: true })
   writeFileSync(path.join(workspace, "report-image-fixture", "before.png"), fictionalPng(240, 180))
   writeFileSync(path.join(workspace, "report-image-fixture", "after.png"), fictionalPng(320, 180))

@@ -28,8 +28,13 @@ export type HomeSetup =
  * - `repository`: リポジトリの根で起こす（ほとんどの件はこれ。何も置かない）
  * - `report-image`: `--out` の下に件専用の場所を立て、`report-image`・`report-before-after`・`question-preview-image` の場面が指す画像
  *   （架空の PNG）を置いてから、そこで起こす
+ * - `task-list`: `--out` の下に件専用の場所を立て、`.tsukumo/fake-beads-issues.json` に架空の課題を置いてから、
+ *   そこで起こす（最終レポートのタスクIDがリンクになるのは、タスクの一覧にその ID があるとき）
  */
-type WorkspaceSetup = { readonly kind: "repository" } | { readonly kind: "report-image" }
+type WorkspaceSetup =
+  | { readonly kind: "repository" }
+  | { readonly kind: "report-image" }
+  | { readonly kind: "task-list" }
 
 /**
  * 場面が撮れる状態まで落ち着くのを待つやり方。`tail` は固定の余裕、`selector` は要素が現れるまで。
@@ -283,6 +288,20 @@ export const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "scroll", selector: CHECKS_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: CHECKS_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-task-finished",
+    scene: "report-task-finished",
+    label: "最終レポートの目録の1行（タスクIDのリンクの点線の下線・「完了」の札）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "task-list" },
+    prepare: [],
+    skipReveal: true,
+    settle: {
+      kind: "selector",
+      selector: `${MAIN_REGION_SELECTOR} [class*="report-task-id-link"]`,
+      phase: "before-prepare",
+    },
   },
   {
     name: "report-verdict",
