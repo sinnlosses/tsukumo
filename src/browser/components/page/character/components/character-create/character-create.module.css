@@ -79,6 +79,9 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+  /* スクロールバーが入力欄に被らないよう、右に余白を取って置き場を確保する。 */
+  scrollbar-gutter: stable;
+  padding-right: 0.75rem;
 }
 @media (max-width: 640px) {
   .character-create-grid {
