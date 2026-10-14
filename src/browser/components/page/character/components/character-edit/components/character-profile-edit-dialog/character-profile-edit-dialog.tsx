@@ -13,6 +13,7 @@ import {
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
+import { TextField } from "../../../../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../../../character.module.css"
 
@@ -62,15 +63,14 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
           <label className={styles["character-create-label"]} htmlFor="character-profile-edit-name">
             名前
           </label>
-          <input
+          <TextField
+            element="input"
             id="character-profile-edit-name"
-            type="text"
             className={styles["character-create-input"]}
             maxLength={MAX_CHARACTER_NAME_LENGTH}
+            placeholder={undefined}
             value={name}
-            onChange={(event) => {
-              setName(event.target.value)
-            }}
+            onChange={setName}
           />
           <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
             {NAME_HINT}
@@ -83,15 +83,14 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
           >
             自己紹介文
           </label>
-          <input
+          <TextField
+            element="input"
             id="character-profile-edit-tagline"
-            type="text"
             className={styles["character-create-input"]}
             maxLength={MAX_CHARACTER_TAGLINE_LENGTH}
+            placeholder={undefined}
             value={tagline}
-            onChange={(event) => {
-              setTagline(event.target.value)
-            }}
+            onChange={setTagline}
           />
           <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
             {TAGLINE_HINT}

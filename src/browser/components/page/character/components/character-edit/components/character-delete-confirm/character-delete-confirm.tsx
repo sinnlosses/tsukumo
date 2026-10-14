@@ -10,6 +10,7 @@ import { useState, type ReactElement } from "react"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
+import { TextField } from "../../../../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import characterStyles from "../../../../character.module.css"
@@ -71,15 +72,14 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
           <label className={styles["character-delete-label"]} htmlFor="character-delete-id">
             確かめのため、id を入力してください
           </label>
-          <input
+          <TextField
+            element="input"
             id="character-delete-id"
-            type="text"
             className={styles["character-delete-input"]}
+            maxLength={undefined}
             placeholder="id"
             value={typedId}
-            onChange={(event) => {
-              setTypedId(event.target.value)
-            }}
+            onChange={setTypedId}
           />
         </div>
         <div className={styles["character-delete-actions"]}>

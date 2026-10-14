@@ -49,12 +49,8 @@
 .character-delete-input {
   height: 2.5rem;
   padding: 0 0.75rem;
-  background: var(--ground);
-  color: inherit;
-  border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
-  border-radius: 0.5rem;
+  border-color: color-mix(in srgb, var(--surface), var(--state-ng) 45%);
   font-family: var(--font-mono);
-  font-size: var(--font-secondary);
 }
 .character-delete-actions {
   display: flex;

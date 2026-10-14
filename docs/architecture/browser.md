@@ -195,7 +195,9 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
 
 - **variant 部品**（`Text` / `Heading` / `Stack`（と `VStack` / `HStack`）/ `Button` / `Dialog`）は見た目を
   部品が持つ。**形だけの部品**（`Select`）は寸法・枠・地・字の段を呼び出し側が `className` で渡し、
-  **variant を持たない**（プルダウンは置き場所ごとに寸法がまるで違う）。**差し込み口の部品**
+  **variant を持たない**（プルダウンは置き場所ごとに寸法がまるで違う）。`TextField`（1行の `input` と
+  複数行の `textarea`）は variant を持たない部品で、地・色・枠の線・角丸・字の段を部品が持ち、寸法・余白・
+  枠の色は呼び出し側が `className` で渡す。**差し込み口の部品**
   （`BottomSheet`。狭い画面の板）は面の形と閉じ方を部品が持ち、頭・中・下端は props の `ReactNode` で受ける
 - **1つの prop が1つの軸**。1つの property に写る軸は**値の名前をトークン名そのままにする**
   （`size: "secondary"` → `--font-secondary`）。**複数の property の束（ボタンの顔）は、使っている

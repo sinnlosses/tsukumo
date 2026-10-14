@@ -1,0 +1,11 @@
+.text-field {
+  background: var(--ground);
+  color: inherit;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 0.5rem;
+  font-size: var(--font-secondary);
+}
+:where(.text-field) {
+  border-color: var(--rule);
+}

@@ -63,6 +63,7 @@
   min-width: 0;
 }
 .character-create-input-mono {
+  composes: character-create-input from "../../character.module.css";
   font-family: var(--font-mono);
 }
 /* 作るダイアログだけ、スクロールを本体から中身の領域へ移し、操作ボタンの帯をダイアログの下に残す。 */

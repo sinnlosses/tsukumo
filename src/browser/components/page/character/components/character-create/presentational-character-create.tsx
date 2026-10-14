@@ -3,13 +3,13 @@
 //
 // `<dialog>` は top layer に出るので、キャラクター画面の `overflow` には切り取られない。
 
-import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import { MAX_PERSONA_BODY_LENGTH } from "../../../../../../shared/character-pack/persona-section.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
+import { TextField } from "../../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import characterStyles from "../../character.module.css"
@@ -104,12 +104,14 @@ export function PresentationalCharacterCreate({
               >
                 名前
               </label>
-              <input
+              <TextField
+                element="input"
                 id="character-create-name"
-                type="text"
                 className={characterStyles["character-create-input"]}
                 value={form.name}
-                onChange={(event) => form.onNameChange(event.target.value)}
+                maxLength={undefined}
+                placeholder={undefined}
+                onChange={form.onNameChange}
               />
               <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
                 {form.nameHint}
@@ -122,15 +124,14 @@ export function PresentationalCharacterCreate({
               >
                 id
               </label>
-              <input
+              <TextField
+                element="input"
                 id="character-create-id"
-                type="text"
-                className={clsx(
-                  characterStyles["character-create-input"],
-                  styles["character-create-input-mono"],
-                )}
+                className={styles["character-create-input-mono"]}
                 value={form.id}
-                onChange={(event) => form.onIdChange(event.target.value)}
+                maxLength={undefined}
+                placeholder={undefined}
+                onChange={form.onIdChange}
               />
               {form.idNote.kind === "hint" ? (
                 <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
@@ -164,12 +165,14 @@ export function PresentationalCharacterCreate({
           >
             人格
           </label>
-          <textarea
+          <TextField
+            element="textarea"
             id="character-create-persona"
             className={characterStyles["character-persona-input"]}
             maxLength={MAX_PERSONA_BODY_LENGTH}
+            placeholder={undefined}
             value={form.persona.value}
-            onChange={(event) => form.persona.onChange(event.target.value)}
+            onChange={form.persona.onChange}
           />
           <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
             {form.persona.hint}

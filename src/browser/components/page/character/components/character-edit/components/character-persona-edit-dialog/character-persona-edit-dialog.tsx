@@ -9,6 +9,7 @@ import { MAX_PERSONA_BODY_LENGTH } from "../../../../../../../../shared/characte
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
+import { TextField } from "../../../../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../../../character.module.css"
 
@@ -57,14 +58,14 @@ export function CharacterPersonaEditDialog(props: CharacterPersonaEditDialogProp
           <label className={styles["character-create-label"]} htmlFor="character-persona-edit-body">
             本文
           </label>
-          <textarea
+          <TextField
+            element="textarea"
             id="character-persona-edit-body"
             className={styles["character-persona-input"]}
             maxLength={MAX_PERSONA_BODY_LENGTH}
+            placeholder={undefined}
             value={persona}
-            onChange={(event) => {
-              setPersona(event.target.value)
-            }}
+            onChange={setPersona}
           />
           <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
             {PERSONA_HINT}
