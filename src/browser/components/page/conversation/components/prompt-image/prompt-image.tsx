@@ -11,7 +11,7 @@
 // 1枚も無いときは何も描かないので、常設の枠にならない。
 
 import { clsx } from "clsx"
-import { Search } from "lucide-react"
+import { Search, X } from "lucide-react"
 import { useState, type ReactElement } from "react"
 
 import {
@@ -87,7 +87,7 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
                 props.onRemove(index)
               }}
             >
-              ×
+              <X size={12} strokeWidth={2.5} aria-hidden="true" />
             </Button>
           </li>
         ))}
