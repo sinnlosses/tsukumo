@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>段ごとの時間 案A — 1本の帯と一覧</title>
+<style>
+body { margin: 0; font-family: "Zen Kaku Gothic New", sans-serif; background: #17161e; color: #e4e2ea; }
+.wrap { display: flex; flex-direction: column; gap: 28px; padding: 36px 40px 40px; }
+h1 { margin: 0; font-family: "Shippori Mincho", serif; font-size: 22px; color: #e4e2ea; }
+.card { width: 1100px; box-sizing: border-box; padding: 22px 26px 24px; border-radius: 12px; border: 1px solid #34333f; background: #1d1c26; }
+.head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.head .title { font-size: 12px; color: #9a98a6; letter-spacing: 0.08em; }
+.head .total { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: #c9c7d1; }
+.band { display: flex; gap: 3px; }
+.band span { height: 14px; background: #3c6b63; border-radius: 3px; }
+.band .longest { background: #66d1be; }
+.band .unknown { flex: 0 0 18px; background: repeating-linear-gradient(135deg, #3a3946 0 4px, transparent 4px 8px); }
+ul { list-style: none; margin: 14px 0 0; padding: 0; }
+li { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto 3.5em; column-gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid #25242e; font-size: 13.5px; color: #c9c7d1; font-weight: 400; }
+li.longest { color: #f0eef5; font-weight: 600; }
+.mark { width: 10px; height: 10px; border-radius: 2px; background: #3c6b63; flex-shrink: 0; }
+li.longest .mark { background: #66d1be; }
+li.unknown .mark { background: repeating-linear-gradient(135deg, #3a3946 0 4px, transparent 4px 8px); }
+.num { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: #6f6d7a; margin-right: 6px; }
+.time { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: #9a98a6; }
+li.longest .time { color: #f0eef5; }
+.ratio { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: #6f6d7a; text-align: right; }
+.notes { border: 1px solid #2e2d38; border-radius: 14px; background: #1d1c26; padding: 20px 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; font-size: 13px; line-height: 1.75; color: #b5b3c0; }
+.notes b { display: block; color: #e4e2ea; font-size: 14px; margin-bottom: 8px; }
+.notes ul { margin: 0; padding-left: 18px; list-style: disc; }
+.notes li { display: list-item; padding: 0; border: 0; font-size: 13px; color: #b5b3c0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>段ごとの時間 案A — 1本の帯と一覧</h1>
+<div class="card">
+<div class="head"><span class="title">段ごとの時間</span><span class="total">計 13分52秒</span></div>
+<div class="band">
+<span title="計画を書き直す 3分24秒" style="flex: 204 0 0"></span>
+<span class="unknown" title="移動 不明"></span>
+<span title="パス・設定・テスト・文書を直す 2分04秒" style="flex: 124 0 0"></span>
+<span title="確認 3分34秒" style="flex: 214 0 0"></span>
+<span class="longest" title="受け入れ 4分22秒" style="flex: 262 0 0"></span>
+<span title="送り出し 28秒" style="flex: 28 0 0"></span>
+</div>
+<ul>
+<li><span class="mark"></span><span>計画を書き直す</span><span class="time">3分24秒</span><span class="ratio">25%</span></li>
+<li class="unknown"><span class="mark"></span><span><span class="num">1/3</span>移動</span><span class="time">不明</span><span class="ratio"></span></li>
+<li><span class="mark"></span><span><span class="num">2/3</span>パス・設定・テスト・文書を直す</span><span class="time">2分04秒</span><span class="ratio">15%</span></li>
+<li><span class="mark"></span><span><span class="num">3/3</span>確認</span><span class="time">3分34秒</span><span class="ratio">26%</span></li>
+<li class="longest"><span class="mark"></span><span>受け入れ</span><span class="time">4分22秒</span><span class="ratio">31%</span></li>
+<li><span class="mark"></span><span>送り出し</span><span class="time">28秒</span><span class="ratio">3%</span></li>
+</ul>
+</div>
+<section class="notes">
+<div><b>ねらい</b><ul><li>1回の作業を1本の帯にして、段が占める割合を長さで見せる。どこに時間がかかったかが1目で分かる</li><li>下に段の一覧（色の印・名前・時間・割合）</li><li>いちばん長い段だけ浅葱、ほかは静かな深い浅葱</li></ul></div>
+<div><b>寸法</b><ul><li>帯 高さ 14・段の間 3・角丸 3</li><li>一覧 13.5px・行 上下 6・時間は等幅</li><li>見出しの横に「計 13分52秒」</li></ul></div>
+<div><b>不明の段</b><ul><li>時間が無い段は細い斜線の欠片（幅 18）で、帯の中の位置だけ示す</li><li>一覧では「不明」、割合は空欄</li></ul></div>
+</section>
+</div>
+</body>
+</html>
