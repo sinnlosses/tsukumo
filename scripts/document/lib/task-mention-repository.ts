@@ -1,8 +1,8 @@
 // `src/` / `test/` / `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のファイルを読み、
 // `findTaskMentions` に渡して迷子のタスク番号を集める、という概念1つを持つ。
 
-import { readdirSync, readFileSync } from "node:fs"
-import { extname, join, relative } from "node:path"
+import { type Dirent, globSync, readFileSync } from "node:fs"
+import { join, relative, sep } from "node:path"
 
 import {
   findStrayTaskMentions,
@@ -20,22 +20,16 @@ const SCANNED_DIRECTORIES = [
   "story",
 ] as const satisfies readonly string[]
 
-// 検査するファイルの拡張子（コード・スタイル・ドキュメント）。
-const SCANNED_EXTENSIONS = new Set([".ts", ".tsx", ".css", ".md"])
+// 親が何であっても（ドットで始まる親の下も含めて）、この名前のディレクトリの中は読まない。
+const SKIPPED_DIRECTORY_NAMES = new Set(["node_modules", "dist", ".git"])
 
-// 降りないディレクトリ（依存物・成果物・git の中身）。ディレクトリ名だけで判定するので、
-// 場所を問わずこの名前のディレクトリを丸ごと飛ばす。
-const SKIPPED_DIRECTORIES = new Set(["node_modules", "dist", ".git"])
-
-// 降りないパス（`root` からの相対パス）。`docs/history/` はここでだけ許された過去の記録の置き場
-// なので、名前ではなく場所で除く（`history` という名前だけで判定すると、他所にできた同名の
-// ディレクトリまで巻き込む）。
-const SKIPPED_PATHS = new Set(["docs/history"])
+// `docs/history/` は名前ではなく場所で除く（同じ名前のディレクトリを巻き込まないため）。
+const SKIPPED_PATH = "docs/history"
 
 /** `root` 以下の `src/` / `test/` / `scripts/` / `docs/` を読み、迷子のタスク番号をすべて返す。 */
 export function collectStrayTaskMentions(root: string): TaskMention[] {
   const mentions = SCANNED_DIRECTORIES.flatMap((directory) =>
-    listSourcePaths(root, join(root, directory)).flatMap((path) =>
+    listSourcePaths(root, directory).flatMap((path) =>
       findTaskMentions(
         path,
         maskAllowedRequirementsPendingTaskColumn(path, readFileSync(join(root, path), "utf8")),
@@ -45,18 +39,24 @@ export function collectStrayTaskMentions(root: string): TaskMention[] {
   return findStrayTaskMentions(mentions)
 }
 
-/** `directory` 以下の読む対象のファイルを、`root` からの相対パスで返す（シンボリックリンクは辿らない）。 */
+/**
+ * `directory` 以下の読む対象のファイルを、`root` からの相対パスで返す（シンボリックリンクは辿らない）。
+ * `**` は `.` で始まるディレクトリに降りないので、その下を別のパターンで足す。
+ */
 function listSourcePaths(root: string, directory: string): string[] {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(directory, entry.name)
-    if (entry.isDirectory()) {
-      if (SKIPPED_DIRECTORIES.has(entry.name) || SKIPPED_PATHS.has(relative(root, path))) {
-        return []
-      }
-      return listSourcePaths(root, path)
-    }
-    return entry.isFile() && SCANNED_EXTENSIONS.has(extname(entry.name))
-      ? [relative(root, path)]
-      : []
-  })
+  const skipped = (entry: Dirent): boolean => {
+    const path = relative(root, join(entry.parentPath, entry.name))
+    return (
+      path.split(sep).some((segment) => SKIPPED_DIRECTORY_NAMES.has(segment)) ||
+      path === SKIPPED_PATH ||
+      path.startsWith(`${SKIPPED_PATH}${sep}`)
+    )
+  }
+  return [`${directory}/**/{*,.*}.{ts,tsx,css,md}`, `${directory}/**/.*/**/{*,.*}.{ts,tsx,css,md}`]
+    .flatMap((pattern) =>
+      globSync(pattern, { cwd: root, exclude: skipped, withFileTypes: true })
+        .filter((entry) => entry.isFile())
+        .map((entry) => relative(root, join(entry.parentPath, entry.name))),
+    )
+    .toSorted()
 }

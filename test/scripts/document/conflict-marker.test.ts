@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs"
+import { mkdirSync, symlinkSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
@@ -30,5 +30,18 @@ describe(".tw の衝突の印", () => {
 
   it(".tw/ が無くても落ちない", () => {
     expect(collectConflictMarkers(tempDir())).toEqual([])
+  })
+
+  it("ドットで始まるファイルとディレクトリの中は読み、シンボリックリンクは辿らない", () => {
+    mkdirSync(join(tempDir(), ".tw/.hidden/deep"), { recursive: true })
+    writeFileSync(join(tempDir(), ".tw/.hidden/deep/x.toml"), MARKER_TEXT)
+    writeFileSync(join(tempDir(), ".tw/.dotfile"), MARKER_TEXT)
+    mkdirSync(join(tempDir(), "outside"), { recursive: true })
+    writeFileSync(join(tempDir(), "outside/y.toml"), MARKER_TEXT)
+    symlinkSync(join(tempDir(), "outside/y.toml"), join(tempDir(), ".tw/linkfile.toml"))
+    symlinkSync(join(tempDir(), "outside"), join(tempDir(), ".tw/linkdir"))
+    expect(
+      [...new Set(collectConflictMarkers(tempDir()).map(({ path }) => path))].toSorted(),
+    ).toEqual([".tw/.dotfile", ".tw/.hidden/deep/x.toml"])
   })
 })

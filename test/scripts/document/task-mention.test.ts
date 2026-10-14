@@ -4,7 +4,7 @@
 // このファイル自身も拾われる側なので、タスク番号の形の文字列は数値を変数に分けて組み立てる
 // （ソースに `T-` + 3桁以上・`GH-` + 数字の並びがそのまま現れないようにする）。
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -252,6 +252,49 @@ describe("collectStrayTaskMentions", () => {
       expect(
         collectStrayTaskMentions(dir).map(({ sourcePath, id }) => ({ sourcePath, id })),
       ).toEqual([{ sourcePath: "docs/requirements.md", id: OTHER_SAMPLE_ID }])
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  test("依存物の中・シンボリックリンクは拾わず、ドットで始まるファイルとディレクトリの中は拾う", () => {
+    const dir = mkdtempSync(join(tmpdir(), "tsukumo-task-mention-"))
+    try {
+      const files = [
+        "src/a.ts",
+        "src/.hidden.ts",
+        "src/deep/.x/b.ts",
+        "src/.x/ok.ts",
+        "src/n/.m/ok.md",
+        "src/node_modules/c.ts",
+        "src/dist/d.ts",
+        "src/.git/e.ts",
+        "src/deep/dist/d2.ts",
+        "src/.x/node_modules/c2.ts",
+        "src/.x/dist/d3.ts",
+        "src/.x/.git/e2.ts",
+        "src/n/.m/node_modules/c3.ts",
+        "src/n/.m/dist/d4.ts",
+        "src/external/f.ts",
+      ]
+      for (const file of files) {
+        mkdirSync(join(dir, file, ".."), { recursive: true })
+        writeFileSync(join(dir, file), `// ${SAMPLE_ID} を書いた\n`)
+      }
+      symlinkSync(join(dir, "src/external/f.ts"), join(dir, "src/linkfile.ts"))
+      symlinkSync(join(dir, "src/external"), join(dir, "src/linkdir"))
+      expect(
+        collectStrayTaskMentions(dir)
+          .map(({ sourcePath }) => sourcePath)
+          .toSorted(),
+      ).toEqual([
+        "src/.hidden.ts",
+        "src/.x/ok.ts",
+        "src/a.ts",
+        "src/deep/.x/b.ts",
+        "src/external/f.ts",
+        "src/n/.m/ok.md",
+      ])
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
