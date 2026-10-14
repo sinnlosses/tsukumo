@@ -12,10 +12,10 @@ import {
 } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
 import type { ServerFrame } from "../../../../src/shared/frame.ts"
 import type { PromptImage } from "../../../../src/shared/session-driver/prompt-image.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import type { RestoredEvent, SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { MAX_SESSION_STATE_TURNS } from "../../../../src/shared/session/session-state.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
-import { knownRestored } from "../../../fixture/restored-event.ts"
+import { knownRestored, unknownRestored } from "../../../fixture/restored-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
 import { createSessionManager, waitForBatch } from "../../../fixture/session-manager.ts"
 
@@ -131,15 +131,20 @@ describe("レポートの画像の棚", () => {
     })
   }
 
-  function startManagerWithReportImageShelf() {
+  const NOW = 100 * 60 * 60 * 1000
+  const DAY = 24 * 60 * 60 * 1000
+
+  /** `modifiedAt` は読む先のファイルの更新時刻（ミリ秒）。上限より新しければ読めない扱いにする。 */
+  function startManagerWithReportImageShelf(modifiedAt = 0) {
     const stub = createStubDriver()
     const shelf = createReportImageShelf()
     const readPaths: string[] = []
     const manager = createSessionManager({
+      now: () => NOW,
       reportImageShelf: shelf,
-      readReportImage: (path) => {
+      readReportImage: (path, notModifiedAfter) => {
         readPaths.push(path)
-        return FICTIONAL_IMAGE
+        return modifiedAt > notModifiedAfter ? undefined : FICTIONAL_IMAGE
       },
       launchSession: (onEvent, onRestoredEvents) => {
         stub.attach(onEvent)
@@ -150,17 +155,82 @@ describe("レポートの画像の棚", () => {
     return { manager, stub, shelf, readPaths }
   }
 
-  it("駆動から届いた report の画像を棚に置き、復元の再生では読まない", async () => {
+  it("駆動から届いた report の画像を棚に置く", async () => {
     const { stub, shelf, readPaths } = startManagerWithReportImageShelf()
     await waitForBatch()
 
-    stub.emitRestored(knownRestored([imageReportEvent("toolu_restored")]))
     stub.emit(imageReportEvent("toolu_live"))
     await waitForBatch()
 
     expect(readPaths).toEqual(["fictional/after.png"])
     expect(shelf.find("toolu_live", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
-    expect(shelf.find("toolu_restored", "fictional/after.png")).toBeUndefined()
+  })
+
+  it("復元した report のうち、時刻が分かり24時間以内のものは画像を棚に置く", async () => {
+    const { stub, shelf } = startManagerWithReportImageShelf()
+    await waitForBatch()
+
+    stub.emitRestored(knownRestored([imageReportEvent("toolu_recent")], NOW - DAY))
+    await waitForBatch()
+
+    expect(shelf.find("toolu_recent", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
+  })
+
+  it("復元した report のうち、24時間より古いもの・時刻が分からないものは画像を棚に置かない", async () => {
+    const { stub, shelf, readPaths } = startManagerWithReportImageShelf()
+    await waitForBatch()
+
+    stub.emitRestored([
+      ...knownRestored([imageReportEvent("toolu_old")], NOW - DAY - 1),
+      ...unknownRestored([imageReportEvent("toolu_unknown")]),
+    ])
+    await waitForBatch()
+
+    expect(readPaths).toEqual([])
+    expect(shelf.find("toolu_old", "fictional/after.png")).toBeUndefined()
+    expect(shelf.find("toolu_unknown", "fictional/after.png")).toBeUndefined()
+  })
+
+  it("復元した report のうち、棚に残るのは記録の窓に残る24時間以内のものだけ", async () => {
+    const { stub, shelf } = startManagerWithReportImageShelf()
+    await waitForBatch()
+    const recent = NOW - DAY
+    const turn = (text: string): RestoredEvent => ({
+      event: { kind: "request", text, images: [] },
+      time: { kind: "known", at: recent },
+    })
+    const report = (id: string, time: RestoredEvent["time"]): RestoredEvent => ({
+      event: imageReportEvent(id),
+      time,
+    })
+
+    stub.emitRestored([
+      turn("架空の依頼"),
+      report("toolu_dropped", { kind: "known", at: recent }),
+      ...Array.from({ length: MAX_SESSION_STATE_TURNS.work - 2 }, () => turn("架空の依頼")),
+      turn("架空の依頼"),
+      report("toolu_old", { kind: "known", at: NOW - DAY - 1 }),
+      turn("架空の依頼"),
+      report("toolu_unknown", { kind: "unknown" }),
+      turn("架空の依頼"),
+      report("toolu_kept", { kind: "known", at: recent }),
+    ])
+    await waitForBatch()
+
+    const placed = ["toolu_dropped", "toolu_old", "toolu_unknown", "toolu_kept"].filter(
+      (id) => shelf.find(id, "fictional/after.png") !== undefined,
+    )
+    expect(placed).toEqual(["toolu_kept"])
+  })
+
+  it("復元した report より後に更新されたファイルの画像は棚に置かない", async () => {
+    const { stub, shelf } = startManagerWithReportImageShelf(NOW - 1)
+    await waitForBatch()
+
+    stub.emitRestored(knownRestored([imageReportEvent("toolu_rewritten")], NOW - 2))
+    await waitForBatch()
+
+    expect(shelf.find("toolu_rewritten", "fictional/after.png")).toBeUndefined()
   })
 
   it("report の figure に置いた画像も棚に置く", async () => {

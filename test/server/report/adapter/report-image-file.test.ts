@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, utimesSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -46,6 +46,17 @@ describe("readReportImageFile", () => {
     writeBytes(cwd, "架空/after.png", PNG_BYTES)
 
     expect(readReportImageFile(cwd, "架空/after.png")?.mediaType).toBe("image/png")
+  })
+
+  it("更新時刻が上限より後のファイルは読まず、上限以前なら読む", () => {
+    const cwd = tempCwd()
+    const path = writeBytes(cwd, "a.png", PNG_BYTES)
+    const modifiedAt = 1_767_225_600_000
+    utimesSync(path, modifiedAt / 1000, modifiedAt / 1000)
+
+    expect(readReportImageFile(cwd, "a.png", modifiedAt - 1)).toBeUndefined()
+    expect(readReportImageFile(cwd, "a.png", modifiedAt)?.mediaType).toBe("image/png")
+    expect(readReportImageFile(cwd, "a.png")?.mediaType).toBe("image/png")
   })
 
   it("拡張子の外・印の不一致・上限超え・ディレクトリ・無いファイルは読まない", () => {

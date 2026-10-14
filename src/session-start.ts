@@ -126,7 +126,8 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     questionUsageLog: createQuestionUsageLog(),
     promptImageShelf,
     reportImageShelf: options.reportImageShelf,
-    readReportImage: (path) => readReportImageFile(context.cwd, path),
+    readReportImage: (path, notModifiedAfter) =>
+      readReportImageFile(context.cwd, path, notModifiedAfter),
     ...launch.manager,
     ...chat.manager,
     ...usageReview.manager,

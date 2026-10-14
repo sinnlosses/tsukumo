@@ -1,5 +1,6 @@
 // `image` の塊と、質問の選択肢の `preview` に書いた画像の棚。
 // 描いた `report` と積まれた質問を受けた時点で書き手のファイルを1回読み、プロセスのメモリにだけ持つ。
+// 続きから復元した再生では、記録の窓に残った `report` のうち時刻が分かり24時間以内のものだけ、更新時刻がその時刻以前のファイルを読み直して置く。
 // 画像には会話の中身が写るので、tsukumo はどこにも書き出さない。
 //
 // 鍵は `report` の呼び出しか質問の tool use id と、書かれたままのパスの組（`reportImagePath` と同じ組）。
@@ -26,14 +27,20 @@ export type ReportImage = {
 }
 
 /** 書かれたパスを読む。読めない・画像でない・大きすぎるときは undefined。 */
-export type ReadReportImage = (path: string) => ReportImage | undefined
+export type ReadReportImagePath = (path: string) => ReportImage | undefined
+
+/**
+ * 書かれたパスを読む。読めない・画像でない・大きすぎる・`notModifiedAfter`（ミリ秒）より後に
+ * 更新されたファイルのときは undefined。時刻で絞らないなら `Number.POSITIVE_INFINITY` を渡す。
+ */
+export type ReadReportImage = (path: string, notModifiedAfter: number) => ReportImage | undefined
 
 export type ReportImageShelf = {
   /**
    * 1つの tool use id が指す画像を読んで置く（同じパスは1回だけ読む）。
    * 合計が上限を超えるあいだ、いま置いた id を除いて古く置いたものから捨てる。
    */
-  readonly shelve: (toolUseId: string, paths: readonly string[], read: ReadReportImage) => void
+  readonly shelve: (toolUseId: string, paths: readonly string[], read: ReadReportImagePath) => void
   /** 鍵が指す画像。棚に無ければ undefined（配る側が 404 にする）。 */
   readonly find: (toolUseId: string, path: string) => ReportImage | undefined
   /** id ごとの画像をまとめて捨てる（棚に無い id は黙って無視する）。 */

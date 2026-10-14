@@ -54,8 +54,15 @@ const IMAGE_FORMATS: ReadonlyMap<string, ImageFormat> = new Map<string, ImageFor
   [".webp", WEBP],
 ])
 
-/** `path` を cwd から解いて画像1枚として読む。読めなければ undefined。 */
-export function readReportImageFile(cwd: string, path: string): ReportImage | undefined {
+/**
+ * `path` を cwd から解いて画像1枚として読む。読めなければ undefined。
+ * `notModifiedAfter`（ミリ秒）を渡すと、それより後に更新されたファイルは読まない。
+ */
+export function readReportImageFile(
+  cwd: string,
+  path: string,
+  notModifiedAfter = Number.POSITIVE_INFINITY,
+): ReportImage | undefined {
   const format = IMAGE_FORMATS.get(extname(path).toLowerCase())
   if (format === undefined) {
     return undefined
@@ -64,6 +71,9 @@ export function readReportImageFile(cwd: string, path: string): ReportImage | un
   try {
     const info = statSync(resolved)
     if (!info.isFile() || info.size > MAX_REPORT_IMAGE_BYTES) {
+      return undefined
+    }
+    if (info.mtimeMs > notModifiedAfter) {
       return undefined
     }
     const content = new Uint8Array(readFileSync(resolved))

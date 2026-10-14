@@ -55,6 +55,7 @@ import {
 import { questionImagePaths } from "../../report/core/question-image-path.ts"
 import {
   type ReadReportImage,
+  type ReadReportImagePath,
   releasedImageToolUseIds,
   type ReportImageShelf,
   reportImagePaths,
@@ -125,7 +126,7 @@ export type SessionManagerOptions = {
   readonly promptImageShelf: PromptImageShelf
   /**
    * `image` の塊と質問の preview の画像の棚。`/report-image/` で配る側と同じ棚を渡すこと。
-   * 駆動から届いた `report` と新しく積まれた質問を受けたときに置き（続きから復元した再生では置かない）、記録にも答え待ちにも無くなったときに捨てる。
+   * 駆動から届いた `report` と新しく積まれた質問を受けたときに置き（続きから復元した再生では、記録の窓に残った時刻が分かり24時間以内の `report` の画像を、更新時刻がその時刻以前のものだけ読み直して置く）、記録にも答え待ちにも無くなったときに捨てる。
    */
   readonly reportImageShelf: ReportImageShelf
   /** `image` の塊と質問の preview の画像のパスを読む口（cwd から解く）。 */
@@ -265,6 +266,9 @@ type SessionGeneration = GenerationTally & {
   readonly emit: (event: SessionEvent) => void
 }
 
+/** 続きから復元した report の画像を読み直す、復元した時点からの遡り幅。 */
+const RESTORED_REPORT_IMAGE_WINDOW_MS = 24 * 60 * 60 * 1000
+
 const CONSOLIDATION_FAILURE_PLACES = {
   aborted: "consolidation-aborted",
   threw: "consolidation-threw",
@@ -324,6 +328,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     state = next
   }
 
+  const readReportImageAnyAge: ReadReportImagePath = (path) =>
+    options.readReportImage(path, Number.POSITIVE_INFINITY)
+
   /**
    * 駆動から届いたイベント1件を畳んで、それを生んだ代の勘定に積む。
    * 見た目の編集で起こした `character-changed` もここを通る（サーバ側の状態とブラウザへ配る内容を1本にする）。
@@ -339,14 +346,14 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       options.reportImageShelf.shelve(
         event.toolUseId,
         reportImagePaths(sectionsWithFigure(event.figure, event.sections)),
-        options.readReportImage,
+        readReportImageAnyAge,
       )
     }
     if (event.kind === "pending-changed") {
       const known = new Set(state.pending.map((ask) => ask.id))
       for (const ask of event.pending) {
         if (ask.kind === "question" && !known.has(ask.id)) {
-          options.reportImageShelf.shelve(ask.id, questionImagePaths(ask), options.readReportImage)
+          options.reportImageShelf.shelve(ask.id, questionImagePaths(ask), readReportImageAnyAge)
         }
       }
     }
@@ -514,7 +521,25 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       if (closed || born !== bornCount || events.length === 0) {
         return
       }
-      replaceState(applyRestoredEvents(state, events, options.now()))
+      const restoredAt = options.now()
+      replaceState(applyRestoredEvents(state, events, restoredAt))
+      const kept = new Set(
+        state.records.flatMap((record) => (record.kind === "report" ? [record.toolUseId] : [])),
+      )
+      for (const { event, time } of events) {
+        if (
+          event.kind === "report" &&
+          kept.has(event.toolUseId) &&
+          time.kind === "known" &&
+          restoredAt - time.at <= RESTORED_REPORT_IMAGE_WINDOW_MS
+        ) {
+          options.reportImageShelf.shelve(
+            event.toolUseId,
+            reportImagePaths(sectionsWithFigure(event.figure, event.sections)),
+            (path) => options.readReportImage(path, time.at),
+          )
+        }
+      }
       if (!held) {
         tally.batch.discard()
         publish(helloFrame(), subscribers)
