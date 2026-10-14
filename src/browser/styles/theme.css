@@ -48,10 +48,10 @@
   --chart-series-6: #d3b460;
   --chart-series-other: #a6a2b0;
 
-  /* 最終レポートの段ごとの時間の帯。一番長い区間だけ浅葱、ほかは深い浅葱で、欠片と色の印も同じ値を読む。
+  /* 最終レポートの段ごとの時間の帯。一番長い区間だけ `--accent` をわずかに沈めた色、ほかは `--surface` に混ぜて沈めた色で、欠片と色の印も同じ値を読む。
      区間の長さと一覧の割合・時間が必ず添うので、色だけで意味を伝えることにはならない。 */
-  --phase-band: #3c6b63;
-  --phase-band-longest: #66d1be;
+  --phase-band: color-mix(in srgb, var(--accent) 38%, var(--surface));
+  --phase-band-longest: color-mix(in srgb, var(--accent) 92%, var(--ground));
   --phase-band-unknown: #3a3946;
 
   /* コンテキストの内訳の分類の色。誰が来ても変わらない固定の色で、横棒の区間と凡例の四角が同じ1つを読む。
@@ -104,17 +104,30 @@
   --diary-gold-surface: #221f19; /* しおり・節目・卒業の札の地 */
   --diary-gold-border: #5a4b25; /* しおり・節目・卒業の札の枠 */
 
-  /* レポートの結論部（目録の1行・見出し・一文）の字と地。見本（`docs/history/mockup/report-conclusion-2026-09-30.html`）の値をそのまま写した固定の色で、パックからは差せない。 */
+  /* レポートの結論部（目録の1行・見出し・一文）の字と地。見本（`docs/history/mockup/report-conclusion-2026-09-30.html`）の値を写した固定の色で、パックからは差せない。
+     差し色の役のもの（タスクID・完了・流れ）だけは `--accent` から導く。 */
   --report-catalog-ink: #9a98a6; /* 目録の1行のラベル */
   --report-catalog-separator: #4a4955; /* 目録の区切りの `·` */
-  --report-task-id: #bfeee4; /* 目録のタスクID */
-  --report-task-id-rule: #4a6a65; /* タスクIDの点線の下線 */
-  --report-outcome-finished: #66d1be; /* 完了 */
+  --report-task-id: color-mix(
+    in srgb,
+    var(--accent) 40%,
+    var(--ink)
+  ); /* 目録のタスクID。`--accent` を `--ink` へ寄せて明るくした色 */
+  --report-task-id-rule: color-mix(
+    in srgb,
+    var(--accent) 40%,
+    var(--surface)
+  ); /* タスクIDの点線の下線。`--surface` へ沈めた色 */
+  --report-outcome-finished: color-mix(in srgb, var(--accent) 92%, var(--ground)); /* 完了 */
   --report-outcome-awaiting-answer: #e3b95c; /* 答え待ち */
   --report-headline-ink: #e4e2ea; /* 見出し */
   --report-conclusion-ink: #d4d2dc; /* 一文と、見出しと一文の中のコードの字 */
   --report-code-surface: #26252f; /* 見出しと一文の中のコードの地 */
-  --report-sequence-ink: #66d1be; /* 流れ（flow）の丸・線、画像の塊の「図 n」の番号 */
+  --report-sequence-ink: color-mix(
+    in srgb,
+    var(--accent) 92%,
+    var(--ground)
+  ); /* 流れ（flow）の丸・線、画像の塊の「図 n」の番号 */
 
   /* タイプスケール。字の下限は 12px。 */
   --font-label: 0.75rem;
