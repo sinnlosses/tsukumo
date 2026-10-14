@@ -37,6 +37,12 @@ describe("SPEECH_CADENCE_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).not.toContain("間を空けない")
   })
 
+  it("無言が続いたときと長いコマンドの前に話すが、直前の speak から間もなければ足さない", () => {
+    expect(SPEECH_CADENCE_PROMPT).toContain("5回以上続いても話していなければ")
+    expect(SPEECH_CADENCE_PROMPT).toContain("数十秒以上かかるコマンド")
+    expect(SPEECH_CADENCE_PROMPT).toContain("もう1回話さない")
+  })
+
   it("締めの1回は speak ではなく report の closing で言う", () => {
     // 通った `report` はそこでターンを閉じるので、あとから `speak` は呼べない
     // （`REPORT_NOTATION_PROMPT` の終わり方の条と揃える）。
