@@ -192,7 +192,7 @@ describe("ファイルを書き換えるコマンドの判定", () => {
     ["作業ツリーの中どうしの cp", "cp src/a.ts src/b.ts"],
     ["作業ツリーの中どうしの mv", "mv src/a.ts src/b.ts"],
     ["プロジェクトのスクリプトを走らせる node", "node scripts/stop.ts --port 7398"],
-    ["生成物を書くプロジェクトのスクリプト", "node scripts/write-document-index.ts"],
+    ["生成物を書くプロジェクトのスクリプト", "node scripts/document/write-document-index.ts"],
     ["書き込まない node -e", "node -e \"console.log(require('fs').readFileSync('a', 'utf8'))\""],
     ["書き込まない node -p", "node -p '1 + 1'"],
     ["[[ ]] の比較", "[[ a > b ]] && echo yes"],

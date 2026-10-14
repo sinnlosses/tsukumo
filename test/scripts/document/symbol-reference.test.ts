@@ -1,21 +1,18 @@
-import { fileURLToPath } from "node:url"
-
 import { describe, expect, it } from "vitest"
 
-import { collectStraySymbolReferences } from "../scripts/lib/repository-reference.ts"
+import { collectStraySymbolReferences } from "../../../scripts/document/lib/repository-reference.ts"
 import {
   findStraySymbolReferences,
   findSymbolReferences,
   formatStraySymbolReference,
   isSymbolCheckedDocument,
-} from "../scripts/symbol-reference.ts"
+} from "../../../scripts/document/symbol-reference.ts"
+import { REPOSITORY_ROOT } from "../../../scripts/shared/repository-root.ts"
 
 // 文書が「`パス` の `シンボル`」で指している置き場所が、そのファイルに残っているかを0件に保つ。
 // 関数や定数を別のファイルへ移したときに、文書に残った旧い置き場所をここで知る。
 // 拾う形と照合の強さは `findSymbolReferences` の冒頭に書いてある。
-// 一覧を見るだけなら `node scripts/find-stray-reference.ts`。
-
-const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
+// 一覧を見るだけなら `node scripts/document/find-stray-reference.ts`。
 
 describe("文書が指すシンボルの置き場所", () => {
   it("`パス` の `シンボル` を行番号つきで拾う", () => {

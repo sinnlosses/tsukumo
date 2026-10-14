@@ -1,17 +1,16 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
-import { formatConflictMarker } from "../scripts/conflict-marker.ts"
-import { collectConflictMarkers } from "../scripts/lib/repository-conflict-marker.ts"
-import { useTempDir } from "./fixture/temp-dir.ts"
+import { formatConflictMarker } from "../../../scripts/document/conflict-marker.ts"
+import { collectConflictMarkers } from "../../../scripts/document/lib/repository-conflict-marker.ts"
+import { REPOSITORY_ROOT } from "../../../scripts/shared/repository-root.ts"
+import { useTempDir } from "../../fixture/temp-dir.ts"
 
 // 手で解いた衝突の印が main に紛れ込んだままにしない。
 // 手で rebase したときに印が残りうる。
 
-const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
 const MARKER_TEXT = "<<<<<<< HEAD\na\n=======\nb\n>>>>>>> other\n"
 
 describe(".tw の衝突の印", () => {

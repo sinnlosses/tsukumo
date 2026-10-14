@@ -5,7 +5,7 @@ import {
   glossaryIndexRows,
   readTableRows,
   replaceTableRows,
-} from "../../scripts/document-index.ts"
+} from "../../../scripts/document/document-index.ts"
 
 describe("decisionRows", () => {
   it("ADR をファイル名の昇順に、パスと題の行にする", () => {

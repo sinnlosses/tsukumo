@@ -10,13 +10,13 @@ import { join } from "node:path"
 
 import { describe, expect, test } from "vitest"
 
-import { collectStrayTaskMentions } from "../../scripts/lib/task-mention-repository.ts"
+import { collectStrayTaskMentions } from "../../../scripts/document/lib/task-mention-repository.ts"
 import {
   findStrayTaskMentions,
   findTaskMentions,
   formatStrayTaskMention,
   maskAllowedRequirementsPendingTaskColumn,
-} from "../../scripts/task-mention.ts"
+} from "../../../scripts/document/task-mention.ts"
 
 const SAMPLE_NUMBER = 999
 const SAMPLE_ID = `T-${SAMPLE_NUMBER}`
@@ -101,14 +101,19 @@ describe("findStrayTaskMentions", () => {
   test("タスクファイルの形を確かめるテストのデータ（`data`）は除く", () => {
     expect(
       findStrayTaskMentions([
-        { sourcePath: "test/task-id.test.ts", line: 1, id: SAMPLE_ID, context: "data" },
+        {
+          sourcePath: "test/scripts/document/task-id.test.ts",
+          line: 1,
+          id: SAMPLE_ID,
+          context: "data",
+        },
       ]),
     ).toEqual([])
   })
 
   test("同じ許したファイルでも、コメントに書いた番号は迷子にする", () => {
     const mention = {
-      sourcePath: "test/task-id.test.ts",
+      sourcePath: "test/scripts/document/task-id.test.ts",
       line: 1,
       id: SAMPLE_ID,
       context: "comment",
@@ -118,7 +123,7 @@ describe("findStrayTaskMentions", () => {
 
   test("同じ許したファイルでも、テスト名に書いた番号は迷子にする", () => {
     const mention = {
-      sourcePath: "test/task-id.test.ts",
+      sourcePath: "test/scripts/document/task-id.test.ts",
       line: 1,
       id: SAMPLE_ID,
       context: "testName",

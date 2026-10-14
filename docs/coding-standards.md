@@ -307,9 +307,9 @@ tsukumo を起こしたディレクトリ（`process.cwd()`）も同じで、読
   コメントに残っていたことがある）。シンボルの名前は移設では変わらず、`{@link}` は改名にも追随する
 - `{@link}` をエディタが解決するのは JSDoc の中だけ。`//` の中に書くと、追随するように見えて追随しない
 - 自分のファイルは名前で呼ばず「ここ」「このファイル」と書く
-- 節番号は節を足すと繰り上がる。節の参照の検査（`test/section-reference.test.ts`）は句しか照らさない
+- 節番号は節を足すと繰り上がる。節の参照の検査（`test/scripts/document/section-reference-repository.test.ts`）は句しか照らさない
   ので、番号は黙って古くなる。句は検査が守るので、節を改名したときに直す箇所は
-  `node scripts/find-stray-reference.ts` が一覧で出す
+  `node scripts/document/find-stray-reference.ts` が一覧で出す
 - 節への参照を置くのは、上の表の「規約の例外」と、残すと決めたコメント（制約・外部との対応）の理由が長くて正典にあり、
   それを読まないと直してよいかを決められないときだけ。コメントは制約そのものを自分の言葉で書き、
   参照は理由の置き場として添える。参照だけで制約を言っていないコメントは書かない。
@@ -1015,7 +1015,7 @@ Standards 軸はこの節から入るので、レビューで見ることをこ�
 「現在どうなっているか」と「なぜそうなっているか」だけを書く。
 
 タスク番号はアーカイブされると意味を失う一方、コード側の記述は残り続けるため、参照先が消えた
-死んだ識別子になる。この規約は `scripts/task-mention.ts` が `.tw/` / `docs/history/` 以外で
+死んだ識別子になる。この規約は `scripts/document/task-mention.ts` が `.tw/` / `docs/history/` 以外で
 0件になることを機械的に確かめる。
 
 **例外は `docs/requirements.md`「7. 未決事項」の対応タスク列だけ。** 未決事項は「どのタスクで
@@ -1061,7 +1061,7 @@ Standards 軸はこの節から入るので、レビューで見ることをこ�
 - `src/server/report/core/report-tool.ts` の `Stop` フックの関所: ターンの最後に `report` を
   通さない本文で止まろうとしたら差し戻す
 - `.oxlintrc.json` の `no-restricted-globals`: `Date` の使用を lint で落とす
-- `test/section-reference.test.ts`: 正典の節への参照が切れていないかを検査する
+- `test/scripts/document/section-reference-repository.test.ts`: 正典の節への参照が切れていないかを検査する
 
 **ヒューリスティックを採るしかないとき**は、その理由（機械で判定できない点）を提案に1行添える。
 

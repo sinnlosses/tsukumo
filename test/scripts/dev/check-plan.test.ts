@@ -105,11 +105,13 @@ describe("planStages", () => {
     ])
   })
 
-  test("文書の検査のファイルが実在し、参照切れを見る test/section-reference.test.ts を含む", () => {
+  test("文書の検査のファイルが実在し、参照切れを見る test/scripts/document/section-reference-repository.test.ts を含む", () => {
     for (const file of DOCUMENT_CHECK_TEST_FILES) {
       expect(existsSync(file)).toBe(true)
     }
-    expect(DOCUMENT_CHECK_TEST_FILES).toContain("test/section-reference.test.ts")
+    expect(DOCUMENT_CHECK_TEST_FILES).toContain(
+      "test/scripts/document/section-reference-repository.test.ts",
+    )
   })
 })
 

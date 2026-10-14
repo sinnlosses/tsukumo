@@ -7,8 +7,8 @@
 // 同じものを0件に保つ検査は `pnpm run check` にあるので、ここは一覧を見るための入口。
 
 import process from "node:process"
-import { fileURLToPath } from "node:url"
 
+import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import {
   collectMissingFileReferences,
   collectStrayReferences,
@@ -16,8 +16,6 @@ import {
 } from "./lib/repository-reference.ts"
 import { formatMissingFileReference, formatStrayReference } from "./section-reference.ts"
 import { formatStraySymbolReference } from "./symbol-reference.ts"
-
-const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
 
 const strays = [
   ...collectStrayReferences(REPOSITORY_ROOT).map(formatStrayReference),

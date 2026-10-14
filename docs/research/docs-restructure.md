@@ -263,7 +263,7 @@ terminal から乗り換えた）」「追従先は自前でスラッグ化せ�
    （句は中身ごと移るので残る）。番号だけの参照は上の「章番号の扱い」の対応で句を足す
 2. 置換を `docs/history/`・`docs/research/`・`develop/` の外に掛ける（`develop/task/` の未完了の本文は
    下の節で別に扱う）
-3. `node scripts/find-stray-reference.ts` で迷子を見て、残りを手で直す（句が移した先で変わったもの・
+3. `node scripts/document/find-stray-reference.ts` で迷子を見て、残りを手で直す（句が移した先で変わったもの・
    ファイル名を添えない番号）
 4. 消したパスを `git grep` して、`docs/history/`・`docs/research/`・`develop/` の外で0件を確かめる
 

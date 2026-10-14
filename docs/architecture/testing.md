@@ -54,8 +54,8 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
 ### フィクスチャ
 
 **フィクスチャの文字列もリポジトリの検査に掛かる。** 架空のパスは `docs/` で始めず、架空の ID は
-タスク番号の形（`T-` と3桁以上の数字、または `GH-` と数字）にしない。`test/section-reference.test.ts`
-（実在しない docs のパス）と `test/task-id.test.ts`（タスク番号）は、フィクスチャと本物を区別しない。
+タスク番号の形（`T-` と3桁以上の数字、または `GH-` と数字）にしない。`test/scripts/document/section-reference-repository.test.ts`
+（実在しない docs のパス）と `test/scripts/document/task-id.test.ts`（タスク番号）は、フィクスチャと本物を区別しない。
 
 ### E2E の走らせ方
 

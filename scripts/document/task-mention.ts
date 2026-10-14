@@ -49,7 +49,7 @@ const TABLE_SEPARATOR_ROW_PATTERN = /^\|[\s|:-]+\|$/u
 
 // タスクファイルの形を確かめるテストが、タスクIDをデータとして使うファイル。
 const ALLOWED_DATA_FILES = [
-  "test/task-id.test.ts",
+  "test/scripts/document/task-id.test.ts",
   "test/server/achievement/core/done-task.test.ts",
   "test/server/achievement/core/graduation.test.ts",
   "test/server/achievement/core/daily-achievement.test.ts",

@@ -15,7 +15,7 @@ import {
   formatMissingFileReference,
   formatStrayReference,
   isScannedSource,
-} from "../../scripts/section-reference.ts"
+} from "../../../scripts/document/section-reference.ts"
 
 const DISPLAY = "docs/architecture/display.md"
 const RESEARCH = "docs/research/topic.md"

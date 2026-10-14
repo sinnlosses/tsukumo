@@ -27,8 +27,8 @@ describe("withConventionTests", () => {
   })
 
   test("渡したファイルが規約のテストなら重ねない", () => {
-    const result = withConventionTests(["test/task-id.test.ts"])
-    expect(result.filter((arg) => arg === "test/task-id.test.ts")).toHaveLength(1)
+    const result = withConventionTests(["test/scripts/document/task-id.test.ts"])
+    expect(result.filter((arg) => arg === "test/scripts/document/task-id.test.ts")).toHaveLength(1)
     expect(result).toContain("test/architecture/")
   })
 

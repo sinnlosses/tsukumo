@@ -1,11 +1,8 @@
-import { fileURLToPath } from "node:url"
-
 import { describe, expect, it } from "vitest"
 
-import { collectStrayTaskMentions } from "../scripts/lib/task-mention-repository.ts"
-import { formatStrayTaskMention } from "../scripts/task-mention.ts"
-
-const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
+import { collectStrayTaskMentions } from "../../../scripts/document/lib/task-mention-repository.ts"
+import { formatStrayTaskMention } from "../../../scripts/document/task-mention.ts"
+import { REPOSITORY_ROOT } from "../../../scripts/shared/repository-root.ts"
 
 // `.claude/rules/comments.md`「コード・ドキュメントにタスク番号」の規則を、`src/` / `test/` /
 // `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のコメント・テスト名・本文で保つ

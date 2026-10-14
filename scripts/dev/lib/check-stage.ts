@@ -19,13 +19,13 @@ export function e2eStage(files: readonly string[]): Stage {
 
 /** 文書だけの変更で打つ文書の検査。 */
 export const DOCUMENT_CHECK_TEST_FILES = [
-  "test/conflict-marker.test.ts",
-  "test/task-id.test.ts",
-  "test/section-reference.test.ts",
-  "test/symbol-reference.test.ts",
+  "test/scripts/document/conflict-marker.test.ts",
+  "test/scripts/document/task-id.test.ts",
+  "test/scripts/document/section-reference-repository.test.ts",
+  "test/scripts/document/symbol-reference.test.ts",
   "test/comment-reference.test.ts",
   "test/e2e-reference.test.ts",
-  "test/document-index.test.ts",
+  "test/scripts/document/document-index-repository.test.ts",
   "test/achievement-scene-reference.test.ts",
 ] as const
 

@@ -5959,7 +5959,7 @@
             "kind": "tool-started",
             "toolUseId": "fake-verdict-stray",
             "name": "Bash",
-            "input": { "command": "node scripts/find-stray-reference.ts" }
+            "input": { "command": "node scripts/document/find-stray-reference.ts" }
           }
         },
         {
@@ -6089,9 +6089,9 @@
               },
               {
                 "status": "ok",
-                "label": "node scripts/find-stray-reference.ts",
+                "label": "node scripts/document/find-stray-reference.ts",
                 "figure": "迷子 0 件",
-                "command": "node scripts/find-stray-reference.ts",
+                "command": "node scripts/document/find-stray-reference.ts",
                 "detail": ""
               }
             ]
