@@ -3,6 +3,7 @@ import { parseArgs } from "node:util"
 import { describe, expect, test } from "vitest"
 
 import {
+  describeCatalogMiss,
   PREPARATION_OPTIONS,
   readPreparations,
 } from "../../../scripts/capture/lib/capture-preparation.ts"
@@ -71,5 +72,16 @@ describe("readPreparations", () => {
     expect(() => readArguments(["--foo", "x"])).toThrow()
     expect(() => readArguments(["--click"])).toThrow()
     expect(() => readArguments(["--advance", "-5"])).toThrow()
+  })
+})
+
+describe("describeCatalogMiss", () => {
+  test("件の名前と窓の名前を手の説明の前に置く", () => {
+    expect(
+      describeCatalogMiss("question-multi", "wide", { kind: "click", selector: "button" }),
+    ).toBe("当てられなかった: question-multi（wide）: button を押す")
+    expect(
+      describeCatalogMiss("question-preview-image", "narrow", { kind: "hover", selector: "a" }),
+    ).toBe("当てられなかった: question-preview-image（narrow）: a に触れる")
   })
 })

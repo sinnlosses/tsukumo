@@ -44,7 +44,7 @@ import { parseArgs } from "node:util"
 import { type Browser, chromium, type Page } from "playwright-core"
 
 import { applyPreparations, openPage } from "./lib/capture-page.ts"
-import { describePreparation } from "./lib/capture-preparation.ts"
+import { describeCatalogMiss } from "./lib/capture-preparation.ts"
 import {
   type CatalogEntry,
   type CatalogSize,
@@ -181,7 +181,7 @@ async function captureShot(
     // 当てられなくても撮る。窓の大きさによっては出ていない口がある（狭い窓でしか出ないタブ）ので、
     // 当たらなかったことだけを出す。撮れた画像を見れば何が出ていないか分かる。
     for (const missed of await applyPreparations(page, entry.prepare, "continue")) {
-      process.stdout.write(`当てられなかった: ${describePreparation(missed)}\n`)
+      process.stdout.write(`${describeCatalogMiss(entry.name, size.name, missed)}\n`)
     }
     await settleScene(page, entry.settle, "after-prepare")
     await page.screenshot({ path: file, fullPage: size.fullPage })

@@ -88,6 +88,14 @@ export function describePreparation(step: Preparation): string {
   }
 }
 
+export function describeCatalogMiss(
+  entryName: string,
+  sizeName: string,
+  step: Preparation,
+): string {
+  return `当てられなかった: ${entryName}（${sizeName}）: ${describePreparation(step)}`
+}
+
 /** 準備を表す旗。`parseArgs` の `options` に混ぜて使う。 */
 export const PREPARATION_OPTIONS = {
   click: { type: "string" },
