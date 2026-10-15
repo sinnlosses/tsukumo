@@ -366,6 +366,11 @@ export type SessionEvent =
    */
   | { readonly kind: "reactions-written"; readonly reactions: WrittenReactions }
   /**
+   * 待ちの一言を出す時刻（`waitingLineDueAt`）が来た。出し手はサーバの時計で、その時刻に1回流す。
+   * 時刻が来た瞬間には他のイベントが来ないので、待ちの一言を記録に積む合図にする。
+   */
+  | { readonly kind: "waiting-line-due" }
+  /**
    * キャラクターパックが決まった・一覧が変わった（起こしたとき・起こし直したときの1回ずつと、画面からパックを変えた・作ったとき）。
    * キャラビューが立ち絵を取りに行く先で、中身は URL だけ（素材そのものは乗らない）。
    *

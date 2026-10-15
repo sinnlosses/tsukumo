@@ -13,16 +13,20 @@ import type {
   ReportWaitingLine,
   SessionEvent,
 } from "../../../../../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../../../../../src/shared/session/session-fold.ts"
 import {
   applyRestoredEvents,
-  applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionRecord,
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
 import { reportEvent } from "../../../../../../fixture/report-event.ts"
-import { requestRecord, speechRecord } from "../../../../../../fixture/session-record.ts"
+import {
+  reactionRecord,
+  requestRecord,
+  speechRecord,
+} from "../../../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { putSession } from "../../../../../session-store.ts"
@@ -395,6 +399,98 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
     fireEvent.click(olderBalloon!)
 
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
+  })
+
+  it("今のターンの記録に反応が挟まっていても、ログの行と吹き出しは同じセリフを留める", () => {
+    renderCharacterView({
+      records: [
+        requestRecord({ text: "架空の依頼", turnId: 0 }),
+        reactionRecord({ reaction: "retrying", text: "架空の再試行反応", expression: "proud" }),
+        speechRecord({ text: "1つ目のセリフ", expression: "default" }),
+        speechRecord({ text: "2つ目のセリフ", expression: "proud" }),
+      ],
+      speeches: [speech("1つ目のセリフ", "default"), speech("2つ目のセリフ", "proud")],
+      speechExpression: "proud",
+      speechCalledInTurn: true,
+      character: CHARACTER_WITH_PROUD,
+    })
+    fireEvent.click(screen.getByRole("button", { name: /^ログ$/ }))
+    const log = screen.getByRole("dialog", { name: "セリフのログ", hidden: true })
+
+    fireEvent.click(within(log).getByRole("button", { name: "1つ目のセリフ", hidden: true }))
+
+    const track = typedElement(
+      document.querySelector(".balloon-track"),
+      HTMLElement,
+      "吹き出しの並び",
+    )
+    expect(
+      within(track).getByRole("button", { name: "1つ目のセリフ" }).getAttribute("aria-pressed"),
+    ).toBe("true")
+    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
+
+    fireEvent.click(within(track).getByRole("button", { name: /2つ目のセリフ$/ }))
+
+    expect(
+      within(log)
+        .getByRole("button", { name: /2つ目のセリフ$/, hidden: true })
+        .getAttribute("aria-pressed"),
+    ).toBe("true")
+    expect(
+      within(log)
+        .getByRole("button", { name: "架空の再試行反応", hidden: true })
+        .getAttribute("aria-pressed"),
+    ).toBe("false")
+  })
+})
+
+describe("CharacterView（記録に積んだ反応と時刻）", () => {
+  const CHARACTER_WITH_SAD: NonNullable<SessionState["character"]> = {
+    ...FIXTURE_CHARACTER,
+    expressions: [
+      { name: "default", label: "通常" },
+      { name: "sad", label: "しょんぼり" },
+    ],
+    ...shownPortraits({ default: "/character/default.png", sad: "/character/sad.png" }),
+  }
+
+  it("過去のターンでは、積んだ反応も吹き出しに並び、反応で終わったターンはその表情になる", () => {
+    renderCharacterView(
+      {
+        records: [
+          requestRecord({ text: "1つ目の依頼" }),
+          speechRecord({ text: "1つ目のセリフ", expression: "default" }),
+          reactionRecord({ reaction: "failed", text: "架空の失敗の反応", expression: "sad" }),
+          requestRecord({ turnId: 1, text: "2つ目の依頼" }),
+          speechRecord({ text: "2つ目のセリフ" }),
+        ],
+        speeches: [speech("2つ目のセリフ")],
+        character: CHARACTER_WITH_SAD,
+      },
+      0,
+    )
+
+    expect(
+      [...document.querySelectorAll(".balloon-track .balloon-text")].map(
+        (balloon) => balloon.textContent,
+      ),
+    ).toEqual(["架空の失敗の反応", "1つ目のセリフ"])
+    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("sad")
+  })
+
+  it("狭い画面の吹き出しの脇に、最新の1件の時刻を出す（分からなければ出さない）", () => {
+    renderCharacterView({
+      speeches: [{ text: "架空のセリフ", expression: "default", time: { kind: "stamped", at: 0 } }],
+      character: FIXTURE_CHARACTER,
+    })
+    expect(document.querySelector(".phone-balloon-time")).not.toBeNull()
+
+    cleanup()
+    renderCharacterView({
+      speeches: [{ text: "架空のセリフ", expression: "default", time: { kind: "restored" } }],
+      character: FIXTURE_CHARACTER,
+    })
+    expect(document.querySelector(".phone-balloon-time")).toBeNull()
   })
 })
 

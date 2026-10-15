@@ -853,7 +853,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 - **`SessionState` の形は平らなまま変えない。** 部分の reducer は自分の欄だけを受けて返し、`SessionState` を
   受け取らない（別の部分の状態が要るときは入口が値にして渡す）
 - **またがるイベント**（`turn-finished`・`session-ended`・`conversation-cleared`）は
-  `applySessionEvent` の1つの `case` で畳み、各部分は名前の付いた関数で反応を出す
+  `advanceSessionState` の1つの `case` で畳み、各部分は名前の付いた関数で反応を出す（入口の `applySessionEvent` は
+  それを呼んでから、吹き出しが出し始めた反応を記録に積む）
 - **テスト**は部分の reducer を直に呼ぶものを `test/shared/<機能>/` に置き、`session-state.test.ts` には芯と、
   委ねていること・またがるイベントの効き方だけを残す
 

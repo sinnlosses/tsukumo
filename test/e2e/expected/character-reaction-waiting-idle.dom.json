@@ -47,6 +47,15 @@
           },
           "children": [
             "つくもの精霊",
+            {
+              "tag": "time",
+              "attributes": {
+                "dateTime": "2026-01-15T10:02+09:00"
+              },
+              "children": [
+                "10:02"
+              ]
+            },
             "架空の待ちの一言（書かせた行）。"
           ]
         },
@@ -64,6 +73,15 @@
           ]
         },
         {
+          "tag": "time",
+          "attributes": {
+            "dateTime": "2026-01-15T10:00+09:00"
+          },
+          "children": [
+            "10:00"
+          ]
+        },
+        {
           "tag": "div",
           "attributes": {
             "data-latest": "false",
@@ -74,6 +92,15 @@
           },
           "children": [
             "ちょっと見てくるね。"
+          ]
+        },
+        {
+          "tag": "time",
+          "attributes": {
+            "dateTime": "2026-01-15T10:00+09:00"
+          },
+          "children": [
+            "10:00"
           ]
         }
       ]

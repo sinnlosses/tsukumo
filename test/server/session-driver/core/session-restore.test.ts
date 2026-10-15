@@ -9,9 +9,9 @@ import {
   turnAsides,
 } from "../../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
 import {
   applyRestoredEvents,
-  applySessionEvent,
   INITIAL_SESSION_STATE,
 } from "../../../../src/shared/session/session-state.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"

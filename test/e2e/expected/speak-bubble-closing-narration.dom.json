@@ -74,6 +74,15 @@
           "children": [
             "見てくるぞ。"
           ]
+        },
+        {
+          "tag": "time",
+          "attributes": {
+            "dateTime": "2026-01-15T10:00+09:00"
+          },
+          "children": [
+            "10:00"
+          ]
         }
       ]
     }

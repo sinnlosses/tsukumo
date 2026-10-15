@@ -1,19 +1,25 @@
 // ターンごとのセリフ。確定した記録（`SessionRecord`）から、そのターンの吹き出しと表情を引き直す。
-// 今のターンには使わない。
-// 今のターンは `SessionState.speeches` / `speechExpression` が持ち、`request` の時点で「前のターンの最後の1件だけ残す」規則が乗っていて、記録から素直には導けない。
+// セリフのログと、留めた行（ターンの番号と位置）を引く先はどのターンもこれ。
+// 今のターンの吹き出しは `SessionState.speeches` / `speechExpression` が持つ（`request` で空に戻るなどの規則が乗っていて、記録から素直には導けない）。
 
 import type { Expression } from "../character-pack/expression.ts"
 import type { SessionRecord, Speech } from "./session-state.ts"
 import { splitIntoTurns, turnIdOf } from "./turn.ts"
+
+/** ターンの吹き出しに出した1件。`source` は `speak` のセリフ（`speak`）か、出し始めた反応（`reaction`）か。 */
+export type TurnLine = Speech & { readonly source: "speak" | "reaction" }
 
 /** 1ターン分のセリフ。`id` は `mainViewTurns` が振る通し番号と同じ（タブの選択からそのまま引ける）。 */
 export type TurnSpeech = {
   readonly id: number
   /** そのターンの依頼の文面。依頼より前に届いたセリフのまとまりは依頼を持たないので undefined。 */
   readonly request: string | undefined
-  /** そのターンのセリフ（古い→新しいの順）。1件も無いターンは空配列。表情ごと持つのは、セリフを押して立ち絵を遡らせるため。 */
-  readonly speeches: readonly Speech[]
-  /** そのターンの最後のセリフに添えられた表情。セリフが1件も無ければ undefined。 */
+  /**
+   * そのターンのセリフと、吹き出しに出し始めた反応（古い→新しいの順）。1件も無いターンは空配列。
+   * 表情ごと持つのは、セリフを押して立ち絵を遡らせるため。
+   */
+  readonly speeches: readonly TurnLine[]
+  /** `speeches` の最後の1件の表情（そのターンで最後に出していた顔）。1件も無ければ undefined。 */
   readonly expression: Expression | undefined
 }
 
@@ -26,9 +32,9 @@ export function turnSpeeches(records: readonly SessionRecord[]): readonly TurnSp
   return (
     splitIntoTurns(records)
       // 依頼より前に届いた記録のまとまりは、セリフが1件も無ければ落とすので、引く先の無い空のまとまりは残らない。
-      .filter((turn) => turn.kind !== "pre-request" || turn.records.some(isSpeechRecord))
+      .filter((turn) => turn.kind !== "pre-request" || turn.records.some(isSpokenRecord))
       .map((turn): TurnSpeech => {
-        const speeches = turn.records.filter(isSpeechRecord)
+        const speeches = turn.records.filter(isSpokenRecord)
         return {
           id: turnIdOf(turn),
           request: turn.kind === "pre-request" ? undefined : turn.request.text,
@@ -36,6 +42,7 @@ export function turnSpeeches(records: readonly SessionRecord[]): readonly TurnSp
             text: speech.text,
             expression: speech.expression,
             time: speech.time,
+            source: speech.kind === "speech" ? "speak" : "reaction",
           })),
           expression: speeches.at(-1)?.expression,
         }
@@ -43,8 +50,9 @@ export function turnSpeeches(records: readonly SessionRecord[]): readonly TurnSp
   )
 }
 
-function isSpeechRecord(
+/** 吹き出しに出した記録（`speak` のセリフと、出し始めた反応）。 */
+function isSpokenRecord(
   record: SessionRecord,
-): record is Extract<SessionRecord, { readonly kind: "speech" }> {
-  return record.kind === "speech"
+): record is Extract<SessionRecord, { readonly kind: "speech" | "reaction" }> {
+  return record.kind === "speech" || record.kind === "reaction"
 }

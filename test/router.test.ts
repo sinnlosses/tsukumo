@@ -25,11 +25,8 @@ import {
   type SessionDefault,
 } from "../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../src/shared/session/session-event.ts"
-import {
-  applySessionEvent,
-  INITIAL_SESSION_STATE,
-  type SessionState,
-} from "../src/shared/session/session-state.ts"
+import { applySessionEvent } from "../src/shared/session/session-fold.ts"
+import { INITIAL_SESSION_STATE, type SessionState } from "../src/shared/session/session-state.ts"
 import { type UsageProposal, usageProposalKey } from "../src/shared/usage-review/usage-review.ts"
 import { characterChangedEvent, shownPortraits } from "./fixture/character.ts"
 import { createCommandClient } from "./fixture/command-client.ts"

@@ -1,11 +1,8 @@
 // session-state のテストが共有する、畳み込みの道具。
 
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
-import {
-  applySessionEvent,
-  INITIAL_SESSION_STATE,
-  type SessionState,
-} from "../../src/shared/session/session-state.ts"
+import { applySessionEvent } from "../../src/shared/session/session-fold.ts"
+import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
 
 // 時刻に依らないテストでは `now` を固定の 0 で流す（時刻を見る畳み込みは
 // applySessionEvent を直接呼び、進める時刻を明示する）。

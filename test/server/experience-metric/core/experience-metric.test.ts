@@ -6,8 +6,8 @@ import {
 } from "../../../../src/server/experience-metric/core/experience-metric.ts"
 import type { PendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
 import {
-  applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"

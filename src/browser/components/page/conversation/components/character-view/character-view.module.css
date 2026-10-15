@@ -101,6 +101,25 @@
   max-height: max(6rem, calc(100% - var(--balloon-bottom-gap) - var(--speech-log-open-space)));
   overflow-y: auto;
 }
+/* 吹き出しの並びの1件。吹き出しと、その脇の下端に置く時刻（`.balloon-side-time`）を横に並べる。
+   時刻は吹き出しの外に置き、行を足さないので吹き出しの高さは増えない。
+   幅は並びいっぱいに取り、吹き出しの max-width の基準を並びの幅のままにする。 */
+.balloon-row {
+  display: flex;
+  align-self: stretch;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+/* 吹き出しの脇の時刻。最新の吹き出しの名前の隣の時刻（`balloon.module.css` の `.balloon-time`）と同じ字で、吹き出しに押されて縮まない。 */
+.balloon-side-time {
+  flex-shrink: 0;
+  padding-bottom: 4px;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  line-height: 1;
+}
 /* 吹き出しは中身なりの幅にする（短いセリフが横いっぱいに伸びると、視線の移動だけ長くなる）。
    ここは過去の吹き出しの見た目（モック値）。
    地は不透明な `surface` のままにする（モックは半透明だが、背景画像が入ると文字の裏へ透ける）。
@@ -140,7 +159,6 @@
    枠は accent の 1.5px だけで、にじむ輪は付けない（線をくっきりさせる）。
    影（box-shadow）は地から浮いていることを示すためのもので、色は黒系の生値ではなく `--ground` から作る。 */
 .balloon[data-latest="true"] {
-  animation: balloon-appear 0.3s ease-out;
   max-width: 96%;
   /* padding はモック値（14px 18px 16px）を --balloon-latest-scale（既定 15px＝--font-body）に対する比で持つ（14÷15・18÷15・16÷15）。
      既定では計算結果が丸ごとモック値に戻り、領域が低いときだけ一緒に縮む。 */
@@ -168,8 +186,8 @@
    立ち絵は左にいるので、尻尾は吹き出しの左辺から真横（左）へ出し、先端を左に向ける（下辺から出すと、下に伸びる分の場所を空ける必要があり、最新の位置を固定できない）。
    border-right を色付きに、border-top と border-bottom を透明にした二等辺三角形で、right: 100% で吹き出しの左外側に置く。
    縦の位置は下端から --balloon-tail-bottom（吹き出しの下寄りを指す）。 */
-.portrait + .balloon-track > .balloon[data-latest="true"]::before,
-.portrait + .balloon-track > .balloon[data-latest="true"]::after,
+.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::before,
+.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::after,
 .speech-log-stage:has(.portrait) .balloon[data-latest="true"]::before,
 .speech-log-stage:has(.portrait) .balloon[data-latest="true"]::after {
   content: "";
@@ -186,7 +204,7 @@
    ずらすだけだと斜辺に沿って滑るだけで枠の色が出ないので、斜辺に 1px 残すには大きさも変える必要がある。
    小さくしたぶん bottom も 2px 上げ、2つの三角の頂点の高さを揃える。
    揃えないと枠線が上の斜辺だけに寄り、下の斜辺から消える。 */
-.portrait + .balloon-track > .balloon[data-latest="true"]::after,
+.portrait + .balloon-track > .balloon-row > .balloon[data-latest="true"]::after,
 .speech-log-stage:has(.portrait) .balloon[data-latest="true"]::after {
   bottom: calc(var(--balloon-tail-bottom) + 2px);
   right: calc(100% - 1px);
@@ -202,11 +220,18 @@
   font-size: var(--balloon-past-scale);
   line-height: 1.6;
   color: color-mix(in srgb, var(--ink) 55%, var(--surface));
+}
+/* 出現と押し上げは吹き出しではなく行（`.balloon-row`）に掛け、脇の時刻を吹き出しと一緒に動かす。
+   ログの吹き出しは行に入らないので動かない（開いた瞬間に全部が押し上がって見えない）。 */
+.balloon-row:has(> .balloon[data-latest="true"]) {
+  animation: balloon-appear 0.3s ease-out;
+}
+.balloon-row:has(> .balloon[data-latest="false"]) {
   animation: balloon-push-up 0.3s ease-out;
 }
 /* 差し替えは React の再描画。
    key はセリフの古い側から数えた通し番号（`BalloonTrack`）なので、増えても既存のセリフの番号は変わらない。
-   そのため既存の吹き出しは中身の差し替えで使い回されず、最新から1つ落ちて `data-latest` が `false` に変わった瞬間に `animation-name` が `balloon-appear` → `balloon-push-up` へ変わり、押し上げが毎回そこで再生される（CSS アニメーションは `animation-name` の値が変わったときに生成し直されるため）。
+   そのため既存の行は中身の差し替えで使い回されず、吹き出しが最新から1つ落ちて `data-latest` が `false` に変わった瞬間に行の `animation-name` が `balloon-appear` → `balloon-push-up` へ変わり、押し上げが毎回そこで再生される（CSS アニメーションは `animation-name` の値が変わったときに生成し直されるため）。
    ただし2つ以上前へ落ちる吹き出し（既に `data-latest="false"` だったものがさらに上へ押し出される場合）は `animation-name` の値そのものは変わらないので再生されない（実機の `getAnimations`/`animationstart` の実測で確認）。
    最終位置は React の再配置で正しく動くので見た目は破綻しないが、揺れて見えるのは「直前まで最新だった1件」だけ。
    押し上げる量（`balloon-push-up` の `from`）は最新の吹き出し1つぶんの当て推量で、セリフが長いと少しずれるが、動きの向きが伝わればよい。 */
@@ -293,10 +318,6 @@
 }
 .speech-log-speech {
   display: flex;
-}
-/* ログの中の吹き出しは動かさない（開いた瞬間に全部が押し上がって見えるのを避ける）。 */
-.speech-log-speech > .balloon {
-  animation: none;
 }
 /* 過去の吹き出しは見本の 14px。
    古いほど薄いが、地ごと薄めず字の色だけを surface へ混ぜる（地ごと薄めると背景の絵が文字の裏へ透ける）。

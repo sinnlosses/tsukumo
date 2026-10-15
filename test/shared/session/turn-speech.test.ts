@@ -134,7 +134,12 @@ describe("turnSpeeches（通し番号）", () => {
       id: PRE_REQUEST_TURN_ID,
       request: undefined,
       speeches: [
-        { text: "依頼より前のセリフ", expression: "default", time: { kind: "stamped", at: 0 } },
+        {
+          text: "依頼より前のセリフ",
+          expression: "default",
+          time: { kind: "stamped", at: 0 },
+          source: "speak",
+        },
       ],
       expression: "default",
     })
@@ -160,7 +165,12 @@ describe("turnSpeeches（通し番号）", () => {
         id: 0,
         request: "1つ目の依頼",
         speeches: [
-          { text: "1つ目のセリフ", expression: "default", time: { kind: "stamped", at: 0 } },
+          {
+            text: "1つ目のセリフ",
+            expression: "default",
+            time: { kind: "stamped", at: 0 },
+            source: "speak",
+          },
         ],
         expression: "default",
       },

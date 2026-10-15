@@ -26,12 +26,13 @@ import {
   UNAVAILABLE_SESSION_DIGEST,
 } from "../../../shared/session/session-digest.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
+import { applySessionEvent } from "../../../shared/session/session-fold.ts"
 import {
   applyRestoredEvents,
-  applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../shared/session/session-state.ts"
+import { waitingLineDueAt } from "../../../shared/session/shown-reaction.ts"
 import type { PreviousUsageReview } from "../../../shared/usage-review/usage-review.ts"
 import {
   appendChatArchiveConclusion,
@@ -82,6 +83,7 @@ import {
 import type { CommandSession, ModeSessions } from "./command-session.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
 import type { SessionLaunchRequest } from "./session-launch.ts"
+import { createWaitingLineAlarm, type WaitingLineAlarm } from "./waiting-line-alarm.ts"
 
 export type SessionManagerOptions = {
   /** 現在時刻（エポックミリ秒）を返す関数（呼び出し側が時計を渡す。テストは偽の時計を渡す）。 */
@@ -224,6 +226,8 @@ type GenerationTally = {
   readonly turnImageRead: TurnImageRead
   /** この代で流した `setting-confirmed` の設定ごとの最後の値。 */
   readonly confirmedSettings: ConfirmedSettings
+  /** 待ちの一言を出す時刻に `waiting-line-due` を流す目覚まし。代を閉じたら止める。 */
+  readonly waitingLineAlarm: WaitingLineAlarm
 }
 
 type ConfirmedSettings = {
@@ -358,6 +362,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       }
     }
     replaceState(applySessionEvent(state, event, at))
+    tally.waitingLineAlarm.set(waitingLineDueAt(state))
     tally.batch.add({ at, event })
     diagnostic.add({ flow: "session-event", at, generation: tally.generation, kind: event.kind })
     experienceMetric.observe(event, state, at)
@@ -501,6 +506,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       pendingConclusion: createPendingConclusion(),
       turnImageRead: createTurnImageRead(),
       confirmedSettings: createConfirmedSettings(),
+      waitingLineAlarm: createWaitingLineAlarm({
+        now: options.now,
+        ring: () => {
+          receiveIfCurrent({ kind: "waiting-line-due" })
+        },
+      }),
     }
     const receiveIfCurrent = (event: SessionEvent): boolean => {
       if (born !== bornCount) {
@@ -523,6 +534,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       }
       const restoredAt = options.now()
       replaceState(applyRestoredEvents(state, events, restoredAt))
+      tally.waitingLineAlarm.set(waitingLineDueAt(state))
       const kept = new Set(
         state.records.flatMap((record) => (record.kind === "report" ? [record.toolUseId] : [])),
       )
@@ -573,6 +585,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       close: () => {
         live?.close()
         tally.batch.discard()
+        tally.waitingLineAlarm.cancel()
         diaryAbort.abort()
       },
       announce: () => {

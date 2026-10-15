@@ -8,11 +8,13 @@ import type { CharacterViewSpeech } from "../../../../../../../src/browser/compo
 import { PresentationalCharacterView } from "../../../../../../../src/browser/components/page/conversation/components/character-view/presentational-character-view.tsx"
 import { characterAssetPath } from "../../../../../../../src/shared/character-pack/character-asset.ts"
 
+const SAMPLE_TIME = { kind: "known", dateTime: "2026-09-23T09:07", text: "09:07" } as const
+
 /** 見本では押しても何も変わらない（押す挙動そのものは別のテストが見る）。 */
 function speech(text: string): CharacterViewSpeech {
   return {
     text,
-    time: { kind: "known", dateTime: "2026-09-23T09:07", text: "09:07" },
+    time: SAMPLE_TIME,
     selected: false,
     onToggle: () => {},
   }
@@ -35,7 +37,7 @@ const meta = {
     onOpenSpeechLog: () => {},
     onCloseSpeechLog: () => {},
     face: { url: undefined, alt: "つくもの精霊" },
-    phoneLine: { kind: "text", text: "次はテストを走らせてみるね（架空）。" },
+    phoneLine: { kind: "text", text: "次はテストを走らせてみるね（架空）。", time: SAMPLE_TIME },
   },
 } satisfies Meta<typeof PresentationalCharacterView>
 
@@ -62,7 +64,12 @@ export const Reacting = {
     expression: "thinking",
     portraitUrl: characterAssetPath("tsukumo-spirit", "thinking.svg", undefined),
     speeches: [],
-    reaction: { kind: "shown", reaction: "retrying", text: "もう一回やってみるね（架空）。" },
+    reaction: {
+      kind: "shown",
+      reaction: "retrying",
+      text: "もう一回やってみるね（架空）。",
+      time: SAMPLE_TIME,
+    },
   },
 } satisfies Story
 
@@ -71,7 +78,12 @@ export const ReactingAfterSpeech = {
   args: {
     expression: "sad",
     speeches: [speech("手早くいくね（架空）。")],
-    reaction: { kind: "shown", reaction: "failed", text: "途中で止まっちゃった（架空）。" },
+    reaction: {
+      kind: "shown",
+      reaction: "failed",
+      text: "途中で止まっちゃった（架空）。",
+      time: SAMPLE_TIME,
+    },
   },
 } satisfies Story
 

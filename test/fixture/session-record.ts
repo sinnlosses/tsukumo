@@ -40,6 +40,20 @@ export function speechRecord(
   }
 }
 
+/** 吹き出しに出し始めた反応1件。 */
+export function reactionRecord(
+  overrides: Partial<Omit<Extract<SessionRecord, { readonly kind: "reaction" }>, "kind">> = {},
+): SessionRecord {
+  return {
+    kind: "reaction",
+    reaction: "failed",
+    text: "架空の反応",
+    expression: "default",
+    time: STAMPED,
+    ...overrides,
+  }
+}
+
 /** 背景のタスクが残っているあいだに送った言葉（脇の話）1件。 */
 export function asideRecord(
   overrides: Partial<Omit<Extract<SessionRecord, { readonly kind: "aside" }>, "kind">> = {},

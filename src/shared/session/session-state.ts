@@ -11,7 +11,7 @@ import type { CharacterInfo, CharacterPackEntry } from "../character-pack/charac
 import type { Expression } from "../character-pack/expression.ts"
 import { type EffortLevel, isEffortLevel, isModelAlias } from "../command.ts"
 import { applyDiaryEvent, type DiaryWriting } from "../diary/diary.ts"
-import type { WrittenReactionsState } from "../recommendation/reaction.ts"
+import type { ReactionKind, WrittenReactionsState } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
@@ -196,6 +196,17 @@ export type SessionRecord =
       readonly time: RecordTime
       /** 脇の話のターン（{@link SessionState.answeringAside}）で呼ばれた、脇の話への答えか。 */
       readonly answersAside: boolean
+    }
+  /**
+   * 吹き出しに出し始めた反応（`ShownReaction`）の1行。`time` は出し始めた時刻。
+   * セリフのログだけが拾い、メインビュー・雑談のログ・会話のアーカイブは拾わない。
+   */
+  | {
+      readonly kind: "reaction"
+      readonly reaction: ReactionKind
+      readonly text: string
+      readonly expression: Expression
+      readonly time: RecordTime
     }
   | {
       readonly kind: "tool"
@@ -580,8 +591,9 @@ export function restartRefused(state: SessionState): boolean {
 /**
  * イベント1件を畳み込んで次の姿を返す。知らない状況でも必ず姿を返す（落ちない）。
  * `at` はイベントが起きた時刻（`StampedEvent.at`）。時計をここで読まない（サーバとブラウザで同じ結果になるようにするため）。
+ * 反応の記録（`reaction`）は積まない。積むのは `applySessionEvent`。
  */
-export function applySessionEvent(
+export function advanceSessionState(
   state: SessionState,
   event: SessionEvent,
   at: number,
@@ -596,6 +608,7 @@ export function applySessionEvent(
 /**
  * 組み直した出来事を順に畳む。出来事に transcript の時刻があればその時刻で、無ければ直前に読めた時刻（まだ無ければ `now`）で畳む。
  * 畳んで新しく積まれた・書き換わった記録と、新しく積まれたセリフ（`speeches`）の `stamped` は、読めた出来事なら `recovered`、読めなかった出来事なら `restored` に写し替える。
+ * 反応の記録（`reaction`）は積まない（組み直した記録に、流し直した時刻の反応を残さない）。
  */
 export function applyRestoredEvents(
   state: SessionState,
@@ -607,7 +620,7 @@ export function applyRestoredEvents(
       const at = restored.time.kind === "known" ? restored.time.at : fold.at
       const before = new Set(fold.state.records)
       const speechesBefore = new Set(fold.state.speeches)
-      const next = applySessionEvent(fold.state, restored.event, at)
+      const next = advanceSessionState(fold.state, restored.event, at)
       const restoreTime = (time: RecordTime): RecordTime =>
         time.kind !== "stamped"
           ? time
@@ -631,7 +644,7 @@ export function applyRestoredEvents(
   ).state
 }
 
-/** {@link applySessionEvent} の本体（API の不調を下ろしたあとの姿に、イベント1件を畳む）。 */
+/** {@link advanceSessionState} の本体（API の不調を下ろしたあとの姿に、イベント1件を畳む）。 */
 function foldSessionEvent(state: SessionState, event: SessionEvent, at: number): SessionState {
   switch (event.kind) {
     case "session-info":
@@ -904,6 +917,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, welcomeGreeting: event.state }
     case "reactions-written":
       return { ...state, writtenReactions: { kind: "written", reactions: event.reactions } }
+    case "waiting-line-due":
+      return state
     case "sessions-changed":
       // `sessionId` もここで決まる（`session-info` は最初の依頼まで届かないので、それまで「いまどのセッションに居るか」を言えるのはこの経路だけ）。
       // 新規に起こしたときは `current` が undefined で、そのときは今の `session` を動かさない。
@@ -996,6 +1011,7 @@ function mapRecordTimes(
     record.kind === "request" ||
     record.kind === "aside" ||
     record.kind === "speech" ||
+    record.kind === "reaction" ||
     record.kind === "work-plan" ||
     record.kind === "report"
   ) {

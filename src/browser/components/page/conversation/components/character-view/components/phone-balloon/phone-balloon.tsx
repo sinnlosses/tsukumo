@@ -2,6 +2,7 @@
 // 広い画面では CSS で消える（`phone-balloon.module.css`）ので、ここは幅を測らない。
 //
 // 吹き出しを押すとセリフのログが開く。1件も無ければ顔だけを出す。
+// 時刻は名前の行を足さず、吹き出しの脇に出す（分からなければ出さない）。
 
 import type { ReactElement } from "react"
 
@@ -41,6 +42,11 @@ export function PhoneBalloon(props: PhoneBalloonProps): ReactElement {
             {line.kind === "text" ? line.text : WRITING_TEXT}
           </span>
         </button>
+      )}
+      {line.kind === "text" && line.time.kind === "known" && (
+        <time className={styles["phone-balloon-time"]} dateTime={line.time.dateTime}>
+          {line.time.text}
+        </time>
       )}
     </div>
   )

@@ -9,8 +9,8 @@ import { create } from "zustand"
 
 import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
 import type { CommandClient } from "../../shared/rpc.ts"
+import { applySessionEvent } from "../../shared/session/session-fold.ts"
 import {
-  applySessionEvent,
   INITIAL_SESSION_STATE,
   restartRefused,
   type SessionState,

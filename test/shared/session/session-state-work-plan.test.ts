@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest"
 
 import type { DelegateReturn } from "../../../src/shared/session/delegate-return.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {
   applyRestoredEvents,
-  applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"

@@ -30,8 +30,18 @@
     text-align: left;
     cursor: pointer;
   }
+  /* 吹き出しの脇の下端の時刻。吹き出しに押されて縮まない。 */
+  .phone-balloon-time {
+    flex: none;
+    padding-bottom: 4px;
+    color: var(--ink-quiet);
+    font-family: var(--font-mono);
+    font-size: var(--font-label);
+    line-height: 1;
+  }
   /* 入力欄の欄にフォーカスがあるあいだは顔だけにする。 */
-  body:has([data-region="dispatch"] textarea:focus) .phone-balloon-bubble {
+  body:has([data-region="dispatch"] textarea:focus) .phone-balloon-bubble,
+  body:has([data-region="dispatch"] textarea:focus) .phone-balloon-time {
     display: none;
   }
   .phone-balloon-text {

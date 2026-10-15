@@ -6,9 +6,9 @@ import {
   type WelcomeHead,
 } from "../../../src/shared/recommendation/welcome-greeting.ts"
 import type { ReportWaitingLine, SessionEvent } from "../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {
   applyRestoredEvents,
-  applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
@@ -327,7 +327,7 @@ describe("shownReaction", () => {
   describe("おかえり（続きから起こしてまだ依頼が無い間）", () => {
     const HEAD: WelcomeHead = { kind: "card", name: "T-1" }
 
-    it("前回の最後のターンの待ちの一言があれば、それを迎えるの反応として表情ごと出す", () => {
+    it("前回の最後のターンの待ちの一言があれば、それを迎えるの反応として表情ごと出し、出し始めた時刻は分からないとする", () => {
       const reaction = shownReaction(
         stateAfter([REQUEST, SPEECH, WRITTEN, COMPLETED, RESTORED, GREETED]),
         HEAD,
@@ -338,6 +338,7 @@ describe("shownReaction", () => {
         kind: "shown",
         reaction: "welcome",
         line: { text: "架空の待ちの一言", expression: "curious" },
+        time: { kind: "restored" },
       })
     })
 
@@ -415,13 +416,14 @@ describe("shownReaction", () => {
       expect(shown(stateAfter([WRITING]), HEAD)).toBe("writing")
     })
 
-    it("書けていて札があれば、先頭の札の名前を差し込んだ文と挨拶の表情を出す", () => {
-      const reaction = shownReaction(stateAfter([GREETED]), HEAD, 0)
+    it("書けていて札があれば、先頭の札の名前を差し込んだ文と挨拶の表情を、積んだ迎えの記録の時刻で出す", () => {
+      const reaction = shownReaction(stateAfter([WRITING, GREETED]), HEAD, 0)
 
       expect(reaction).toEqual({
         kind: "shown",
         reaction: "welcome",
         line: { text: "架空の挨拶、T-1 からどう？", expression: "curious" },
+        time: { kind: "stamped", at: 1 },
       })
     })
 
@@ -472,6 +474,32 @@ describe("shownReaction", () => {
           HEAD,
         ),
       ).toBe("welcome:架空の2回目の挨拶 T-1")
+    })
+  })
+
+  describe("出し始めた時刻", () => {
+    /** 出している反応の時刻（出していなければ undefined）。 */
+    function shownTime(state: SessionState, now = 0): unknown {
+      const reaction = shownReaction(state, NO_WELCOME_HEAD, now)
+      return reaction.kind === "shown" ? reaction.time : undefined
+    }
+
+    it("再試行は呼び直しが届いた時刻、失敗はターンが閉じた時刻", () => {
+      // `stateAfter` はパックを決めたあとの出来事を 0, 1, 2… の時刻で畳む。
+      expect(shownTime(stateAfter([REACTED, REQUEST, RETRY]))).toEqual({ kind: "stamped", at: 2 })
+      expect(shownTime(stateAfter([REACTED, REQUEST, RETRY, API_FAILED]))).toEqual({
+        kind: "stamped",
+        at: 3,
+      })
+    })
+
+    it("待ちの一言は、出し始める時刻", () => {
+      const state = stateAfter([REACTED, REQUEST, COMPLETED])
+
+      expect(shownTime(state, 2 + WAITING_LINE_DELAY_MS)).toEqual({
+        kind: "stamped",
+        at: 2 + WAITING_LINE_DELAY_MS,
+      })
     })
   })
 })

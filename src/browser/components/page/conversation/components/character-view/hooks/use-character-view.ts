@@ -20,7 +20,7 @@ import {
   type PortraitMotion,
   type PortraitMotionInput,
 } from "../../../../../../../shared/session/portrait-motion.ts"
-import type { SessionRecord, Speech } from "../../../../../../../shared/session/session-state.ts"
+import type { Speech } from "../../../../../../../shared/session/session-state.ts"
 import {
   shownReaction,
   type ShownReaction,
@@ -39,6 +39,7 @@ import { recordClockStampWithDay, type ClockStamp } from "../../../domain/clock-
 import { welcomeHeadOf } from "../../../domain/welcome-entries.ts"
 import { useWelcomeCards } from "../../hooks/use-welcome-cards.ts"
 import {
+  balloonLineIndices,
   isSpeechSelected,
   LATEST_VIEWED_SPEECH,
   pinnedSpeechOf,
@@ -54,7 +55,7 @@ const DEFAULT_PAST_TURN_EXPRESSION = "default"
 /** 吹き出しに出す1件。押すとそのセリフの表情へ立ち絵が遡る。 */
 export type CharacterViewSpeech = {
   readonly text: string
-  /** 最新の吹き出しの名前の隣に出す時刻。今日でない日のものは日付つき。 */
+  /** 吹き出しに添える時刻（名前を添える最新の1件は名前の隣、ほかは吹き出しの脇）。今日でない日のものは日付つき。 */
   readonly time: ClockStamp
   /** 印を付ける行（= 立ち絵が従っている行）か。 */
   readonly selected: boolean
@@ -65,7 +66,13 @@ export type CharacterViewSpeech = {
 export type BalloonReaction =
   | { readonly kind: "none" }
   | { readonly kind: "writing" }
-  | { readonly kind: "shown"; readonly reaction: ReactionKind; readonly text: string }
+  | {
+      readonly kind: "shown"
+      readonly reaction: ReactionKind
+      readonly text: string
+      /** 出し始めた時刻。分からなければ `unknown`。 */
+      readonly time: ClockStamp
+    }
 
 /** `<CharacterView>` が画面に出す形。presenter はこれをそのまま部品へ渡すだけ。 */
 export type CharacterViewModel = {
@@ -101,7 +108,7 @@ export type CharacterViewModel = {
 export type PhoneBalloonLine =
   | { readonly kind: "none" }
   | { readonly kind: "writing" }
-  | { readonly kind: "text"; readonly text: string }
+  | { readonly kind: "text"; readonly text: string; readonly time: ClockStamp }
 
 export function useCharacterView(): CharacterViewModel {
   const { activeTurnId, newestTurnId } = useTurnSelection()
@@ -115,27 +122,33 @@ export function useCharacterView(): CharacterViewModel {
   const state = useSession((session) => session.state)
   const { cards: welcomeCards } = useWelcomeCards()
 
-  // いまも伸びているターン（今回）のセリフだけ `state.speeches` から引く。過去のターンは `turnSpeeches(records)` から引く。
+  // 留めた行（ターンの番号と位置）は、どのターンも `turnSpeeches(records)` の並びで引く（セリフのログと同じ並び）。
+  const turns = turnSpeeches(records)
   const speechesOfTurn = (turnId: number): readonly Speech[] | undefined =>
-    turnId === newestTurnId
-      ? speeches
-      : turnSpeeches(records).find((t) => t.id === turnId)?.speeches
+    turns.find((t) => t.id === turnId)?.speeches
 
   const [viewed, setViewed] = useState<ViewedSpeech>(LATEST_VIEWED_SPEECH)
   const [speechLogOpen, setSpeechLogOpen] = useState(false)
 
   const now = useCharacterClock(turn, lastToolFailureAt, waitingLineDueAt(state))
-  const pastTurn = pastTurnSpeech(records, activeTurnId, newestTurnId)
+  const pastTurn = pastTurnSpeech(turns, activeTurnId, newestTurnId)
   const activeSpeeches = pastTurn === undefined ? speeches : pastTurn.speeches
+  // 吹き出しの各件が、留めた行の並びの何番目か。今のターンの吹き出しは反応を含まないので、並びの位置へ写す。
+  const lineIndices =
+    pastTurn === undefined
+      ? balloonLineIndices(
+          turns.find((t) => t.id === activeTurnId)?.speeches ?? [],
+          speeches.length,
+        )
+      : pastTurn.speeches.map((_, index) => index)
   const reaction: ShownReaction =
     pastTurn === undefined
       ? shownReaction(state, welcomeHeadOf(welcomeCards), now)
       : { kind: "none" }
-  // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の行。
+  // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の吹き出し。
   // 反応を出しているあいだは立ち絵が反応に従うので、どの行にも付けない。
   const defaultTurnId = activeTurnId
-  const defaultIndex =
-    activeSpeeches.length > 0 && reaction.kind === "none" ? activeSpeeches.length - 1 : undefined
+  const defaultIndex = reaction.kind === "none" ? lineIndices?.at(-1) : undefined
   // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。
   const currentExpression = reaction.kind === "shown" ? reaction.line.expression : speechExpression
   const fallbackExpression =
@@ -161,13 +174,14 @@ export function useCharacterView(): CharacterViewModel {
     motion,
     speeches: balloonSpeeches(
       activeSpeeches,
+      lineIndices,
       defaultTurnId,
       pinned,
       defaultIndex,
       toggleSpeech,
       now,
     ),
-    reaction: balloonReactionOf(reaction),
+    reaction: balloonReactionOf(reaction, now),
     speakerName: character?.name,
     pinnedSpeech: pinned,
     onToggleSpeech: toggleSpeech,
@@ -175,26 +189,41 @@ export function useCharacterView(): CharacterViewModel {
     onOpenSpeechLog: () => setSpeechLogOpen(true),
     onCloseSpeechLog: () => setSpeechLogOpen(false),
     face: characterFaceInfo(character),
-    phoneLine: phoneLineOf(reaction, activeSpeeches),
+    phoneLine: phoneLineOf(reaction, activeSpeeches, now),
   }
 }
 
-function phoneLineOf(reaction: ShownReaction, speeches: readonly Speech[]): PhoneBalloonLine {
+function phoneLineOf(
+  reaction: ShownReaction,
+  speeches: readonly Speech[],
+  now: number,
+): PhoneBalloonLine {
   if (reaction.kind === "shown") {
-    return { kind: "text", text: reaction.line.text }
+    return {
+      kind: "text",
+      text: reaction.line.text,
+      time: recordClockStampWithDay(reaction.time, now),
+    }
   }
   if (reaction.kind === "writing") {
     return { kind: "writing" }
   }
   const latest = speeches.at(-1)
-  return latest === undefined ? { kind: "none" } : { kind: "text", text: latest.text }
+  return latest === undefined
+    ? { kind: "none" }
+    : { kind: "text", text: latest.text, time: recordClockStampWithDay(latest.time, now) }
 }
 
-/** `ShownReaction` を `BalloonReaction` の形へ畳む（持ち物をそのまま運ぶだけ）。 */
-function balloonReactionOf(reaction: ShownReaction): BalloonReaction {
+/** `ShownReaction` を `BalloonReaction` の形へ畳む（時刻を字にするほかは、持ち物をそのまま運ぶだけ）。 */
+function balloonReactionOf(reaction: ShownReaction, now: number): BalloonReaction {
   switch (reaction.kind) {
     case "shown":
-      return { kind: "shown", reaction: reaction.reaction, text: reaction.line.text }
+      return {
+        kind: "shown",
+        reaction: reaction.reaction,
+        text: reaction.line.text,
+        time: recordClockStampWithDay(reaction.time, now),
+      }
     case "writing":
       return { kind: "writing" }
     case "none":
@@ -204,41 +233,49 @@ function balloonReactionOf(reaction: ShownReaction): BalloonReaction {
 
 /**
  * `<BalloonTrack>` がそのまま置ける形に畳む。
- * `turnId` が undefined（記録にまだ乗っていないセリフを直に渡された、など）なら遡る先を特定できないので、文面だけ出して押しても何もしない。
+ * `lineIndices` は各件が留めた行の並びの何番目か（{@link balloonLineIndices}）。
+ * `turnId` か `lineIndices` が undefined なら遡る先を特定できないので、文面だけ出して押しても何もしない。
  */
 function balloonSpeeches(
   speeches: readonly Speech[],
+  lineIndices: readonly number[] | undefined,
   turnId: number | undefined,
   pinned: PinnedSpeech | undefined,
   defaultIndex: number | undefined,
   onToggle: (turnId: number, index: number) => void,
   now: number,
 ): readonly CharacterViewSpeech[] {
-  return speeches.map((speech, index) => ({
-    text: speech.text,
-    time: recordClockStampWithDay(speech.time, now),
-    selected: turnId !== undefined && isSpeechSelected(pinned, turnId, index, turnId, defaultIndex),
-    onToggle: () => {
-      if (turnId !== undefined) {
-        onToggle(turnId, index)
-      }
-    },
-  }))
+  return speeches.map((speech, position) => {
+    const index = lineIndices?.[position]
+    return {
+      text: speech.text,
+      time: recordClockStampWithDay(speech.time, now),
+      selected:
+        turnId !== undefined &&
+        index !== undefined &&
+        isSpeechSelected(pinned, turnId, index, turnId, defaultIndex),
+      onToggle: () => {
+        if (turnId !== undefined && index !== undefined) {
+          onToggle(turnId, index)
+        }
+      },
+    }
+  })
 }
 
 /**
- * 過去のターンを見ているときだけ、そのターンのセリフと表情を返す（今回を見ていれば undefined）。
- * 今のターンを記録から導き直さないのは、`request` の時点で「前のターンの最後の1件だけ残す」規則が `SessionState.speeches` 側にしか無いため。
+ * 過去のターンを見ているときだけ、そのターンのセリフ（出し始めた反応を含む）と表情を返す（今回を見ていれば undefined）。
+ * 今のターンを記録から導き直さないのは、`request` で空に戻るなどの規則が `SessionState.speeches` 側にしか無いため。
  */
 function pastTurnSpeech(
-  records: readonly SessionRecord[],
+  turns: readonly TurnSpeech[],
   activeTurnId: number | undefined,
   newestTurnId: number | undefined,
 ): TurnSpeech | undefined {
   if (activeTurnId === undefined || activeTurnId === newestTurnId) {
     return undefined
   }
-  return turnSpeeches(records).find((turn) => turn.id === activeTurnId)
+  return turns.find((turn) => turn.id === activeTurnId)
 }
 
 /**

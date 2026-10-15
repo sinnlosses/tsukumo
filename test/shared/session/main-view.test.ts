@@ -17,8 +17,8 @@ import {
   turnAsides,
 } from "../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {
-  applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
   type TurnBodies,

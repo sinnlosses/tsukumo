@@ -9,8 +9,8 @@ import {
 } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/work-strip/hooks/use-work-strip.ts"
 import { useMainViewContent } from "../../../../../../../../../../src/browser/stores/main-view-content.ts"
 import type { SessionEvent } from "../../../../../../../../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../../../../../../../../src/shared/session/session-fold.ts"
 import {
-  applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../../../../src/shared/session/session-state.ts"

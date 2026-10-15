@@ -8,8 +8,8 @@ import {
   mainViewTurns,
 } from "../../../src/shared/session/main-view.ts"
 import type { SessionEvent, StampedEvent } from "../../../src/shared/session/session-event.ts"
+import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {
-  applySessionEvent,
   INITIAL_SESSION_STATE,
   MAX_TOOL_TEXT_LENGTH,
 } from "../../../src/shared/session/session-state.ts"

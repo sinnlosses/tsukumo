@@ -16,10 +16,8 @@ import {
   type SessionEvent,
   sessionEventSchema,
 } from "../../../../src/shared/session/session-event.ts"
-import {
-  applySessionEvent,
-  INITIAL_SESSION_STATE,
-} from "../../../../src/shared/session/session-state.ts"
+import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import {
   currentWorkPlan,
   type DelegatedRange,

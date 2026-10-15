@@ -17,23 +17,27 @@ function speech(
 }
 
 describe("BalloonTrack", () => {
-  it("時刻は名前を添える最新の吹き出しにだけ、名前の隣に出る（過去のものには出ない）", () => {
+  it("名前を添える最新の吹き出しは名前の隣に、過去の吹き出しは脇に時刻を出す", () => {
+    const old = { kind: "known", dateTime: "2026-09-22T08:00", text: "9/22 08:00" } as const
     const known = { kind: "known", dateTime: "2026-09-23T09:07", text: "09:07" } as const
     render(
       <BalloonTrack
-        speeches={[speech("古いセリフ", known), speech("新しいセリフ", known)]}
+        speeches={[speech("古いセリフ", old), speech("新しいセリフ", known)]}
         reaction={{ kind: "none" }}
         speakerName="架空の名前"
       />,
     )
 
-    const times = [...document.querySelectorAll(".balloon time")]
-    expect(times.map((time) => time.textContent)).toEqual(["09:07"])
-    expect(times[0]?.closest(".balloon")?.getAttribute("data-latest")).toBe("true")
-    expect(times[0]?.previousElementSibling?.textContent).toBe("架空の名前")
+    const headTimes = [...document.querySelectorAll(".balloon time")]
+    expect(headTimes.map((time) => time.textContent)).toEqual(["09:07"])
+    expect(headTimes[0]?.closest(".balloon")?.getAttribute("data-latest")).toBe("true")
+    expect(headTimes[0]?.previousElementSibling?.textContent).toBe("架空の名前")
+    const sideTimes = [...document.querySelectorAll(".balloon-side-time")]
+    expect(sideTimes.map((time) => time.textContent)).toEqual(["9/22 08:00"])
+    expect(sideTimes[0]?.previousElementSibling?.textContent).toBe("古いセリフ")
   })
 
-  it("最新でも、名前が無いときと時刻が分からないときは時刻を出さない", () => {
+  it("名前が無いときは最新でも脇に出し、時刻が分からなければどこにも出さない", () => {
     const known = { kind: "known", dateTime: "2026-09-23T09:07", text: "09:07" } as const
     render(
       <BalloonTrack
@@ -43,16 +47,30 @@ describe("BalloonTrack", () => {
       />,
     )
     expect(document.querySelectorAll(".balloon time")).toHaveLength(0)
+    expect(document.querySelector(".balloon-side-time")?.textContent).toBe("09:07")
 
     cleanup()
     render(
       <BalloonTrack
-        speeches={[speech("組み直した")]}
+        speeches={[speech("組み直した"), speech("組み直した2")]}
         reaction={{ kind: "none" }}
         speakerName="架空の名前"
       />,
     )
-    expect(document.querySelectorAll(".balloon time")).toHaveLength(0)
+    expect(document.querySelectorAll("time")).toHaveLength(0)
+  })
+
+  it("反応の吹き出しにも、出し始めた時刻を名前の隣に出す", () => {
+    const known = { kind: "known", dateTime: "2026-09-23T09:07", text: "09:07" } as const
+    render(
+      <BalloonTrack
+        speeches={[]}
+        reaction={{ kind: "shown", reaction: "idle", text: "架空の待ちの一言", time: known }}
+        speakerName="架空の名前"
+      />,
+    )
+
+    expect(document.querySelector("[data-reaction='idle'] time")?.textContent).toBe("09:07")
   })
 
   it("(2) セリフも反応も無いときは吹き出しを出さず、並びの器だけを残す", () => {

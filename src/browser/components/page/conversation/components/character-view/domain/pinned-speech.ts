@@ -8,6 +8,7 @@
 // 新しいセリフが来たら失効するのは「いまも伸びているターン」を留めていたときだけ（過去の閉じたターンは件数が動かないので、実質いつまでも留められる）。
 
 import type { Speech } from "../../../../../../../shared/session/session-state.ts"
+import type { TurnLine } from "../../../../../../../shared/session/turn-speech.ts"
 
 /** 留めている行（吹き出し・セリフのログの両方へ、いまの印の位置として渡す）。 */
 export type PinnedSpeech = { readonly turnId: number; readonly index: number }
@@ -78,4 +79,16 @@ export function isSpeechSelected(
     return pinned.turnId === turnId && pinned.index === index
   }
   return defaultTurnId !== undefined && turnId === defaultTurnId && index === defaultIndex
+}
+
+/**
+ * 今のターンの吹き出し（`SessionState.speeches`。`speak` のセリフだけ）の各件が、そのターンの並び（`TurnSpeech.speeches`。反応を含む）の何番目か。
+ * 吹き出しは並びの `speak` のセリフの末尾 `balloonCount` 件にあたる。足りなければ undefined（位置を決められないので押しても留めない）。
+ */
+export function balloonLineIndices(
+  lines: readonly TurnLine[],
+  balloonCount: number,
+): readonly number[] | undefined {
+  const spoken = lines.flatMap((line, index) => (line.source === "speak" ? [index] : []))
+  return spoken.length < balloonCount ? undefined : spoken.slice(spoken.length - balloonCount)
 }
