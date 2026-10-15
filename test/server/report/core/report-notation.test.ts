@@ -330,6 +330,25 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("4文目が要るなら、表・箇条書きへ移すか `fold` で畳む")
   })
 
+  it("段落ごとの太字は1か所までで、文面が書き手に求める「1段落に1か所まで」を文面自身が守る", () => {
+    // 数える範囲は文面の「地が付く」範囲（地の文だけ。表・箇条書き・塊の中は除く）と同じ。
+    const paragraphs = REPORT_NOTATION_PROMPT.replace(/```[\s\S]*?```/g, "")
+      .replace(/`[^`\n]*`/g, "")
+      .replace(/^( *)(?:\d+\.|[-*]) .*(?:\n\1 +\S.*)*/gm, "")
+      .split("\n")
+      .filter((line) => !line.trimStart().startsWith("|"))
+      .join("\n")
+      .split(/\n\s*\n/)
+
+    for (const paragraph of paragraphs) {
+      const bolds = paragraph.match(/\*\*[^*]+\*\*/g) ?? []
+      expect(
+        bolds.length,
+        `太字が ${bolds.length} か所ある段落がある（1か所まで）: ${paragraph.slice(0, 40)}…`,
+      ).toBeLessThanOrEqual(1)
+    }
+  })
+
   it("文面の字数は上限以下に収まり、条を足すと落ちる", () => {
     const limit = 3700
     const length = REPORT_NOTATION_PROMPT.length
