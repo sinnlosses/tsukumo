@@ -119,6 +119,110 @@ function optionValues(label: string): string[] {
   return [...select(label).options].map((option) => option.value)
 }
 
+function stepsView(current: readonly string[]): WorkflowSettingView {
+  return {
+    kind: "available",
+    repository: REPOSITORY,
+    defaultWord: "",
+    noneWord: "",
+    fields: [
+      {
+        kind: "steps",
+        key: "steps",
+        label: "スキルの並び",
+        description: "架空の並びの説明",
+        values: [
+          { value: "架空:甲", label: "甲", description: "" },
+          { value: "架空:乙", label: "乙", description: "" },
+          { value: "架空:丙", label: "丙", description: "" },
+        ],
+        current,
+      },
+    ],
+  }
+}
+
+function stepButton(name: string): HTMLElement {
+  return within(dialog()).getByRole("button", { name })
+}
+
+describe("設定のダイアログの「ワークフロー」の面（スキルの並び）", () => {
+  it("並びを番号付きの行で出し、候補に無い名前も残して印を付け、足せる候補だけをプルダウンに出す", async () => {
+    renderWorkflowFace(() => rpcOutput(stepsView(["架空:乙", "架空:消えた"])))
+
+    const list = await within(dialog()).findByRole("list", { name: "スキルの並び" })
+
+    expect(
+      within(list)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["乙上へ下へ外す", "架空:消えた候補に無い上へ下へ外す"])
+    expect(optionValues("スキルの並びに足す")).toEqual(["", "架空:甲", "架空:丙"])
+  })
+
+  it("先頭の上へ・末尾の下へは押せず、押しても書かない", async () => {
+    const sent = renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲", "架空:乙"])))
+    await within(dialog()).findByRole("list", { name: "スキルの並び" })
+
+    expect(stepButton("甲 を上へ").getAttribute("aria-disabled")).toBe("true")
+    expect(stepButton("乙 を下へ").getAttribute("aria-disabled")).toBe("true")
+    fireEvent.click(stepButton("甲 を上へ"))
+
+    expect(sent).toEqual([])
+  })
+
+  it.each([
+    ["下へ", "甲 を下へ", ["架空:乙", "架空:甲", "架空:丙"]],
+    ["上へ", "丙 を上へ", ["架空:甲", "架空:丙", "架空:乙"]],
+    ["外す", "乙 を外す", ["架空:甲", "架空:丙"]],
+  ])("%s を押すと並び全体を1行の JSON で書く", async (_operation, name, expected) => {
+    const sent = renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲", "架空:乙", "架空:丙"])))
+    await within(dialog()).findByRole("list", { name: "スキルの並び" })
+
+    fireEvent.click(stepButton(name))
+
+    await waitFor(() => {
+      expect(sent).toContainEqual({
+        procedure: "workflowSetting.set",
+        key: "steps",
+        value: JSON.stringify(expected),
+      })
+    })
+  })
+
+  it("プルダウンから足すと並びの末尾に加えて書く", async () => {
+    const sent = renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲"])))
+    await within(dialog()).findByRole("list", { name: "スキルの並び" })
+
+    fireEvent.change(select("スキルの並びに足す"), { target: { value: "架空:丙" } })
+
+    await waitFor(() => {
+      expect(sent).toContainEqual({
+        procedure: "workflowSetting.set",
+        key: "steps",
+        value: JSON.stringify(["架空:甲", "架空:丙"]),
+      })
+    })
+  })
+
+  it("最後の1つは外せない", async () => {
+    const sent = renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲"])))
+    await within(dialog()).findByRole("list", { name: "スキルの並び" })
+
+    expect(stepButton("甲 を外す").getAttribute("aria-disabled")).toBe("true")
+    fireEvent.click(stepButton("甲 を外す"))
+
+    expect(sent).toEqual([])
+  })
+
+  it("候補が尽きたら足すプルダウンを出さない", async () => {
+    renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲", "架空:乙", "架空:丙"])))
+    await within(dialog()).findByRole("list", { name: "スキルの並び" })
+
+    expect(within(dialog()).queryByRole("combobox", { name: "スキルの並びに足す" })).toBeNull()
+  })
+})
+
 describe("設定のダイアログの「ワークフロー」の面", () => {
   it("見出しの下にリポジトリを出し、欄ごとにプルダウンを並べる。候補は SDK の名前から作る", async () => {
     renderWorkflowFace(() => rpcOutput(availableView("既定")))

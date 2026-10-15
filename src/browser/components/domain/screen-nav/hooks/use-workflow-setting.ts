@@ -7,10 +7,12 @@ import { useState } from "react"
 
 import {
   workflowSettingOptions,
+  workflowSettingSteps,
   type WorkflowSettingOption,
 } from "../../../../../shared/workflow-setting/workflow-setting-option.ts"
 import type {
   WorkflowSettingRepository,
+  WorkflowSettingStepsField,
   WorkflowSettingView,
 } from "../../../../../shared/workflow-setting/workflow-setting.ts"
 import { rpc } from "../../../../domain/rpc.ts"
@@ -26,15 +28,39 @@ export type ScreenNavWorkflowSettingNotice =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly text: string }
 
-export type ScreenNavWorkflowSettingRow = {
+type ScreenNavWorkflowSettingRowBase = {
   readonly key: string
   readonly label: string
   readonly description: string
-  readonly value: string
-  readonly options: readonly WorkflowSettingOption[]
   /** ワークフローが値を断った・書けなかったときの理由。次に書けたときに消える。 */
   readonly notice: ScreenNavWorkflowSettingNotice
 }
+
+export type ScreenNavWorkflowSettingStep = {
+  readonly value: string
+  readonly label: string
+  /** 候補に無い名前（過去に入れたスキルが消えた）。消さずに残す。 */
+  readonly known: boolean
+  readonly canMoveUp: boolean
+  readonly canMoveDown: boolean
+  /** 並びは1つ以上なので、最後の1つは外せない。 */
+  readonly canRemove: boolean
+}
+
+export type ScreenNavWorkflowSettingRow =
+  | (ScreenNavWorkflowSettingRowBase & {
+      readonly kind: "select"
+      readonly value: string
+      readonly options: readonly WorkflowSettingOption[]
+    })
+  | (ScreenNavWorkflowSettingRowBase & {
+      readonly kind: "steps"
+      readonly steps: readonly ScreenNavWorkflowSettingStep[]
+      readonly addable: readonly WorkflowSettingOption[]
+      readonly onMove: (index: number, delta: -1 | 1) => void
+      readonly onRemove: (index: number) => void
+      readonly onAdd: (value: string) => void
+    })
 
 export type ScreenNavWorkflowSetting =
   | { readonly kind: "loading" }
@@ -103,24 +129,80 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
   return {
     kind: "available",
     repository: repositoryLine(view.repository),
-    rows: view.fields.map((field) => ({
-      key: field.key,
-      label: field.label,
-      description: field.description,
-      value: field.current,
-      options: workflowSettingOptions(field, words, { skillNames, agentNames }),
-      notice:
-        failure.kind === "shown" && failure.key === field.key
-          ? { kind: "shown", text: failure.message }
-          : { kind: "none" },
-    })),
+    rows: view.fields.map((field): ScreenNavWorkflowSettingRow => {
+      const base = {
+        key: field.key,
+        label: field.label,
+        description: field.description,
+        notice:
+          failure.kind === "shown" && failure.key === field.key
+            ? ({ kind: "shown", text: failure.message } as const)
+            : ({ kind: "none" } as const),
+      }
+      if (field.kind === "steps") {
+        return stepsRow(base, field, (value) => {
+          mutation.mutate({ key: field.key, value })
+        })
+      }
+      return {
+        ...base,
+        kind: "select",
+        value: field.current,
+        options: workflowSettingOptions(field, words, { skillNames, agentNames }),
+      }
+    }),
     busy: mutation.isPending,
     onChange: (key, value) => {
       const field = view.fields.find((candidate) => candidate.key === key)
-      if (field === undefined || field.current === value) {
+      if (field === undefined || field.kind === "steps" || field.current === value) {
         return
       }
       mutation.mutate({ key, value })
+    },
+  }
+}
+
+function stepsRow(
+  base: ScreenNavWorkflowSettingRowBase,
+  field: WorkflowSettingStepsField,
+  write: (value: string) => void,
+): ScreenNavWorkflowSettingRow {
+  const { items, addable } = workflowSettingSteps(field)
+  const writeSteps = (next: readonly string[]): void => {
+    write(JSON.stringify(next))
+  }
+  return {
+    ...base,
+    kind: "steps",
+    steps: items.map((item, index) => ({
+      ...item,
+      canMoveUp: index > 0,
+      canMoveDown: index < items.length - 1,
+      canRemove: items.length > 1,
+    })),
+    addable,
+    onMove: (index, delta) => {
+      const target = index + delta
+      const moving = field.current[index]
+      const swapped = field.current[target]
+      if (moving === undefined || swapped === undefined) {
+        return
+      }
+      writeSteps(
+        field.current.map((value, position) =>
+          position === index ? swapped : position === target ? moving : value,
+        ),
+      )
+    },
+    onRemove: (index) => {
+      if (field.current.length > 1) {
+        writeSteps(field.current.filter((_value, position) => position !== index))
+      }
+    },
+    onAdd: (value) => {
+      if (!field.current.includes(value)) {
+        writeSteps([...field.current, value])
+      }
     },
   }
 }
@@ -134,7 +216,7 @@ function unavailableMessage(view: Extract<WorkflowSettingView, { kind: "unavaila
     case "tw-missing":
       return `tw コマンドが見つからない（${view.detail}）。ワークフローを取り込むかリンクで入れると、ここで流れとパーツを選べる。`
     case "schema-unsupported":
-      return "tw が設定の口（tw config --schema の schema: 1）を持たない。取り込んだワークフローかリンクで入れたワークフローを新しくする。"
+      return "tw が設定の口（tw config --schema）を持たない。取り込んだワークフローかリンクで入れたワークフローを新しくする。"
     case "config-missing":
       return "このリポジトリに .tw/config.toml が無い。"
     case "config-unreadable":

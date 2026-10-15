@@ -20,6 +20,60 @@
 .notice {
   margin: 0.3rem 0 0.6rem;
 }
+/* スキルの並び。見出しと説明のあとに番号付きの行を縦に並べ、行の間に細い罫線を引く。 */
+.steps-label,
+.steps-description {
+  margin: 0;
+}
+.steps-description {
+  margin-top: 0.2rem;
+}
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.step {
+  position: relative;
+  counter-increment: step;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 8px 0 8px 1.6rem;
+  border-bottom: 1px solid var(--rule-quiet);
+}
+/* 番号は等幅（機械の側の順番）。行の頭の空きに置く。 */
+.step::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+.step-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.step-unknown {
+  margin-left: 0.5rem;
+}
+.step-buttons {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+.step-button {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+}
+.steps-add {
+  margin-top: 10px;
+}
 .message {
   margin: 12px 0 0;
 }

@@ -203,8 +203,8 @@ tsukumo は `--version 2` の打ち分けと schema 1 の描画を外して、�
 | `candidates`（`part`） | 候補の出どころ。`agent`（エージェントの一覧）か `skill`（スキルの一覧）。候補そのものは返さない |
 | `allow_none`（`part`） | `none_word` を選べるか                                                                          |
 
-`schema` は欄を消す・意味を変えるときだけ上がる。いまの tsukumo は引数なしの `--schema` だけを打って `schema` が 1 の形だけを描き、
-`--version 2` の打ち分けと schema 2 の描画は並びを描く面が入ってから足す。
+`schema` は欄を消す・意味を変えるときだけ上がる。tsukumo は先に `--version 2` を打って `schema` が 2 の形（`choice`・`steps`）を描き、
+失敗したら引数なしの `--schema` に落として `schema` が 1 の形（`choice`・`part`）を描く。
 
 tsukumo がすること:
 

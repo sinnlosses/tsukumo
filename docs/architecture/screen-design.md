@@ -1850,7 +1850,9 @@ hook 入力の `effort.level`（ターンの終わり。実測は `docs/history/
 - **ワークフローの面**は、面の名前の下に「<作業ツリー名> のリポジトリ」の太字と `.tw/config.toml` の絶対パス（どこでも折り返す）を置き、
   罫線で区切って欄の行を並べる。欄は `tw config --schema` が返した順で、行の名前は欄の `label`（`description` は `title`）、操作はほかの面と同じ吊り札（`RunSettingSelect` の `field` の口）。
   `choice` は `values` の表示名、`part` は既定の語・（`allow_none` なら）なしの語・SDK の `init` のエージェントかスキルの名前の順で、
-  今の値が一覧に無ければ末尾に足す（`src/shared/workflow-setting/workflow-setting-option.ts`）。面を開くたびに読み直し、
+  今の値が一覧に無ければ末尾に足す（`src/shared/workflow-setting/workflow-setting-option.ts`）。
+  `steps`（スキルの並び）は番号付きの行の並びで、各行に「上へ」「下へ」「外す」のボタン（キーボードで押せる。先頭の上へ・末尾の下へ・最後の1つの外すは無効）、
+  末尾に並びに無い候補（`values`）から選んで足す口を置き、候補に無い今の値は行に残して「候補に無い」の印を付ける。操作のたびに並び全体を1回の `tw config set` で書く。面を開くたびに読み直し、
   選ぶとすぐ `tw config set` で書いて、返った値で行を描き直す（押した側へ先に倒さない。書いているあいだは選び直せない）。
   ワークフローが値を断ったら、その行の下に理由を1行出す。`tw` が無い・設定の口を持たない・`.tw/config.toml` が無い・読めないときは
   欄を出さず、リポジトリの行の下に何が無いかを1文で言い、ナビの項目は残す（`docs/architecture/workflow-contract.md`「設定の口」）

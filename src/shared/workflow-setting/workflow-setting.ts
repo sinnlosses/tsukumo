@@ -40,6 +40,20 @@ export type WorkflowSettingField =
       readonly allowNone: boolean
       readonly current: string
     }
+  /** スキルの並び（schema 2）。`current` は実行の順の全名で、`values` に無い名前を含みうる。 */
+  | {
+      readonly kind: "steps"
+      readonly key: string
+      readonly label: string
+      readonly description: string
+      readonly values: readonly WorkflowSettingChoice[]
+      readonly current: readonly string[]
+    }
+
+/** 値が1つの欄（`choice`・`part`）。選択肢を `workflowSettingOptions` で作る。 */
+export type WorkflowSettingSingleField = Exclude<WorkflowSettingField, { kind: "steps" }>
+
+export type WorkflowSettingStepsField = Extract<WorkflowSettingField, { kind: "steps" }>
 
 /** 欄を出せないわけ。 */
 export type WorkflowSettingUnavailableReason =
@@ -97,6 +111,16 @@ const fieldSchema = z.discriminatedUnion("kind", [
     candidates: z.enum(["agent", "skill"]),
     allowNone: z.boolean(),
     current: z.string(),
+  }),
+  z.object({
+    kind: z.literal("steps"),
+    key: z.string(),
+    label: z.string(),
+    description: z.string(),
+    values: z
+      .array(z.object({ value: z.string(), label: z.string(), description: z.string() }))
+      .readonly(),
+    current: z.array(z.string()).readonly(),
   }),
 ])
 

@@ -11,7 +11,14 @@ const MAX_OUTPUT_BYTES = 1024 * 1024
 /** `tw`（パスか、PATH から引く名前）を作業先 `cwd` で打つ口。 */
 export function twConfigPort(tw: string, cwd: string): TwConfigPort {
   return {
-    schema: () => runTw(tw, cwd, ["config", "--schema"]),
+    schema: (version) =>
+      runTw(
+        tw,
+        cwd,
+        version === undefined
+          ? ["config", "--schema"]
+          : ["config", "--schema", "--version", String(version)],
+      ),
     config: () => runTw(tw, cwd, ["config"]),
     set: (key, value) => runTw(tw, cwd, ["config", "set", key, value]),
   }

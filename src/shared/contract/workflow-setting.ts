@@ -8,7 +8,7 @@ import {
   workflowSettingViewSchema,
 } from "../workflow-setting/workflow-setting.ts"
 
-const MAX_SETTING_VALUE_LENGTH = 200
+const MAX_SETTING_VALUE_LENGTH = 2000
 
 /**
  * `tw config set` の引数に渡すので、`-` で始まる語（引数の解釈でオプションに取られる）と改行は受けない。

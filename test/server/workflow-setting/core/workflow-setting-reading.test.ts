@@ -58,13 +58,36 @@ function ran(exitCode: number, stdout: string, stderr = ""): TwOutcome {
   return { kind: "ran", exitCode, stdout, stderr }
 }
 
+const SCHEMA_2 = {
+  schema: 2,
+  keys: [
+    {
+      key: "steps",
+      label: "並び",
+      description: "並びの説明",
+      kind: "steps",
+      default: ["架空:一つ目"],
+      values: [
+        { value: "架空:一つ目", label: "一つ目", description: "" },
+        { value: "架空:二つ目", label: "二つ目", description: "" },
+      ],
+    },
+  ],
+}
+
+/** `schema2` を渡さなければ `--version` を知らない古い `tw`（終了コード2）として振る舞う。 */
 function portOf(
-  outcomes: Partial<Record<"schema" | "config" | "set", TwOutcome>>,
+  outcomes: Partial<Record<"schema" | "schema2" | "config" | "set", TwOutcome>>,
 ): TwConfigPort & { readonly sets: (readonly [string, string])[] } {
   const sets: (readonly [string, string])[] = []
   return {
     sets,
-    schema: () => Promise.resolve(outcomes.schema ?? ran(0, JSON.stringify(SCHEMA))),
+    schema: (version) =>
+      Promise.resolve(
+        version === 2
+          ? (outcomes.schema2 ?? ran(2, "", "unrecognized arguments: --version"))
+          : (outcomes.schema ?? ran(0, JSON.stringify(SCHEMA))),
+      ),
     config: () => Promise.resolve(outcomes.config ?? ran(0, CONFIG_LINES)),
     set: (key, value) => {
       sets.push([key, value])
@@ -85,11 +108,11 @@ describe("readWorkflowSetting", () => {
     })
   })
 
-  it("--schema が失敗する・JSON でない・schema が 1 でなければ schema-unsupported", async () => {
+  it("--schema が失敗する・JSON でない・schema が描ける版でなければ schema-unsupported", async () => {
     const outcomes = [
       ran(2, "", "unrecognized arguments: --schema"),
       ran(0, "JSON でない"),
-      ran(0, JSON.stringify({ ...SCHEMA, schema: 2 })),
+      ran(0, JSON.stringify({ ...SCHEMA, schema: 3 })),
     ]
 
     const reasons = await Promise.all(
@@ -153,6 +176,65 @@ describe("readWorkflowSetting", () => {
         },
       ],
     })
+  })
+})
+
+describe("readWorkflowSetting（schema 2）", () => {
+  const withSchema2 = { schema2: ran(0, JSON.stringify(SCHEMA_2)) }
+
+  it("--version 2 が通れば steps の欄を、config の値の列の JSON の配列で描く", async () => {
+    const view = await readWorkflowSetting(
+      portOf({
+        ...withSchema2,
+        config: ran(0, 'CONFIG\t.tw/config.toml\nsteps\t["架空:二つ目","架空:消えた"]\tconfig'),
+      }),
+      PLACE,
+    )
+
+    expect(view).toMatchObject({
+      kind: "available",
+      fields: [
+        {
+          kind: "steps",
+          key: "steps",
+          values: SCHEMA_2.keys[0]?.values,
+          current: ["架空:二つ目", "架空:消えた"],
+        },
+      ],
+    })
+  })
+
+  it("steps の値が config に無い・JSON として読めなければ default を使う", async () => {
+    const lines = ["CONFIG\t.tw/config.toml", "CONFIG\t.tw/config.toml\nsteps\t壊れた\tconfig"]
+
+    const currents = await Promise.all(
+      lines.map(async (config) => {
+        const view = await readWorkflowSetting(
+          portOf({ ...withSchema2, config: ran(0, config) }),
+          PLACE,
+        )
+        const field = view.kind === "available" ? view.fields[0] : undefined
+        return field?.kind === "steps" ? field.current : undefined
+      }),
+    )
+
+    expect(currents).toEqual([["架空:一つ目"], ["架空:一つ目"]])
+  })
+
+  it("--version 2 が失敗すれば引数なしの schema 1 に落ちて choice と part を描く", async () => {
+    const view = await readWorkflowSetting(portOf({}), PLACE)
+
+    expect(view).toMatchObject({
+      kind: "available",
+      defaultWord: "既定の語",
+      fields: [{ kind: "choice" }, { kind: "part" }],
+    })
+  })
+
+  it("--version 2 で tw が起動できなければ tw-missing", async () => {
+    const view = await readWorkflowSetting(portOf({ schema2: { kind: "missing" } }), PLACE)
+
+    expect(view).toMatchObject({ kind: "unavailable", reason: "tw-missing" })
   })
 })
 

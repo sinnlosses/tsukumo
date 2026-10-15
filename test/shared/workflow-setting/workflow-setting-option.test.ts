@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import { workflowSettingOptions } from "../../../src/shared/workflow-setting/workflow-setting-option.ts"
-import type { WorkflowSettingField } from "../../../src/shared/workflow-setting/workflow-setting.ts"
+import {
+  workflowSettingOptions,
+  workflowSettingSteps,
+} from "../../../src/shared/workflow-setting/workflow-setting-option.ts"
+import type {
+  WorkflowSettingSingleField,
+  WorkflowSettingStepsField,
+} from "../../../src/shared/workflow-setting/workflow-setting.ts"
 
 const WORDS = { defaultWord: "既定", noneWord: "なし" }
 const NAMES = {
@@ -10,8 +16,8 @@ const NAMES = {
 }
 
 function part(
-  overrides: Partial<Extract<WorkflowSettingField, { kind: "part" }>>,
-): WorkflowSettingField {
+  overrides: Partial<Extract<WorkflowSettingSingleField, { kind: "part" }>>,
+): WorkflowSettingSingleField {
   return {
     kind: "part",
     key: "parts.acceptor",
@@ -26,7 +32,7 @@ function part(
 
 describe("workflowSettingOptions", () => {
   it("choice は values の並びのまま、表示名を label にする", () => {
-    const field: WorkflowSettingField = {
+    const field: WorkflowSettingSingleField = {
       kind: "choice",
       key: "flow",
       label: "流れ",
@@ -68,5 +74,30 @@ describe("workflowSettingOptions", () => {
         (option) => option.value,
       ),
     ).toEqual(["既定", "架空の別の役"])
+  })
+})
+
+describe("workflowSettingSteps", () => {
+  const field: WorkflowSettingStepsField = {
+    kind: "steps",
+    key: "steps",
+    label: "並び",
+    description: "",
+    values: [
+      { value: "架空:一つ目", label: "一つ目", description: "" },
+      { value: "架空:二つ目", label: "二つ目", description: "" },
+    ],
+    current: ["架空:二つ目", "架空:消えた"],
+  }
+
+  it("並びは今の値の順で、候補に無い名前も残して known を偽にする", () => {
+    expect(workflowSettingSteps(field).items).toEqual([
+      { value: "架空:二つ目", label: "二つ目", known: true },
+      { value: "架空:消えた", label: "架空:消えた", known: false },
+    ])
+  })
+
+  it("足せるのは並びに無い候補だけ", () => {
+    expect(workflowSettingSteps(field).addable).toEqual([{ value: "架空:一つ目", label: "一つ目" }])
   })
 })
