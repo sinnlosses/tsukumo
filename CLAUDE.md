@@ -16,7 +16,7 @@
 
 tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を子プロセスとして動かし、
 表示はすべて HTML（Orca 内のブラウザタブの1枚のページ。入力欄も含む）。セリフは MCP ツール
-`speak`、ターンの本文は `report` で受け取る。**箱（Orca のタブ）と中身（Web アプリ）は分ける。**
+`speak`、ターンの本文は `report` で受け取る。**ホスト（Orca のタブ）と中身（Web アプリ）は分ける。**
 
 **IMPORTANT**: Claude Code の TUI に描画を混ぜる方式（パイプ・hook の stdout・本体へのパッチ）は
 技術的に不可能なので、**TUI を使わず SDK で動かす側に回っている。** 設計を変えようとする前に

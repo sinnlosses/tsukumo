@@ -82,7 +82,7 @@ macOS の zsh を前提に書いています（bash なら `~/.zshrc` を `~/.ba
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------- |
 | [mise](https://mise.jdx.dev/getting-started.html)   | Node 26 と pnpm 12 と D2 を、リポジトリの `mise.toml` が固定した版で入れる（D2 は書き手が図を撮るときだけ使う）  | `mise --version`             |
 | Claude Code へのログイン                            | tsukumo は Claude Code を子プロセスとして起こす。実行ファイルは `pnpm install` で入る Agent SDK に同梱されている | 普段どおり `claude` が使える |
-| [Orca](https://www.onorca.dev/)（無くても起動する） | 画面を出す箱。`orca` コマンドがあれば、起動時にタブが自動で開く                                                  | `which orca`                 |
+| [Orca](https://www.onorca.dev/)（無くても起動する） | 画面を出すホスト。`orca` コマンドがあれば、起動時にタブが自動で開く                                              | `which orca`                 |
 
 Orca が無いときはタブが自動で開かないだけで、配信は続きます。起動時に表示される URL を手で
 ブラウザに開いてください。`tsukumo` コマンド自身は mise の `node`（手順1で入れた版）を自分で
@@ -161,7 +161,7 @@ mise run setup
 ## 仕組み
 
 tsukumo は**1つのプロセス**で、Agent SDK で Claude Code を子プロセスとして起こし、
-受け取ったイベントを HTML のビューに変えて、ローカルのサーバから WebSocket 1本で箱（Orca のタブ）の中の
+受け取ったイベントを HTML のビューに変えて、ローカルのサーバから WebSocket 1本でホスト（Orca のタブ）の中の
 ブラウザへ配ります（通信の形は [`docs/architecture.md`](./docs/architecture.md)「全体構成」）。
 
 ```
