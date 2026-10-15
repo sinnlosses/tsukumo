@@ -1075,3 +1075,4 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 | `docs/architecture/adr/0027-markdown-component-entry.md`      | 会話の画面の Markdown を部品に上げるときは、遅延読み込みの口を入口にする（2026-10-10） |
 | `docs/architecture/adr/0028-report-block-priority.md`         | レポートの塊は、内容の形で並べた1本の梯子を上から試して選ぶ（2026-10-12）              |
 | `docs/architecture/adr/0029-usage-review-own-query.md`        | トークン消費の見直しは、会話とは別の使い捨ての `query()` で走らせる（2026-10-12）      |
+| `docs/architecture/adr/0030-workflow-as-skill-sequence.md`    | ワークフローを、契約を満たすスキルの並びにする（2026-10-15）                           |

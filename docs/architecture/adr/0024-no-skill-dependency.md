@@ -221,6 +221,8 @@ tsukumo のゴールは、レポートを分かりやすく表示し、キャラ
 **ワークフローが持つ設定の口（`tw config --schema`・`tw config set`）を契約に入れる。** ワークフローは流れ（`flow`）と各段のパーツ（`parts.<枠>`）の欄を
 `tw config --schema`（`schema: 1`）で返し、`tw config set` で書かせる。tsukumo は口の形だけを知り、欄の名前・語彙・既定・パーツの名前を持たない
 （2026-10-14 利用者決定。形と tsukumo の使い方は `docs/architecture/workflow-contract.md`「設定の口」）。
+流れと4つの枠の固定の欄（`schema: 1`）と、下の採らなかった案「段を自由に並べ替える編集画面を作る」は、スキルの並びの話として
+`docs/architecture/adr/0030-workflow-as-skill-sequence.md` が引き取る（`schema: 1` は移行中の形になる）。
 
 - **何が困ったか**: 同梱の `tsukumo-plugins` が、流れとパーツの選びを `.tw/config.toml` の `flow`・`[parts]` で持つようになった（2026-10-14）。
   作者はこれを歯車の設定から選びたい。だが tsukumo が「受け入れ役」「振り返り」のような枠の名前や、既定のパーツの名前を持つと、
