@@ -77,9 +77,15 @@ export function restoredMessageEvents(
   message: unknown,
   expressions: readonly Expression[],
 ): readonly SessionEvent[] {
-  const handback = handbackBodyOf(message)
+  const handback = handbackOf(message)
   if (handback !== undefined) {
-    return [{ kind: "delegate-returned", handback: parseDelegateReturn(handback) }]
+    return [
+      {
+        kind: "delegate-returned",
+        delegate: handback.from,
+        handback: parseDelegateReturn(handback.body),
+      },
+    ]
   }
   if (isTaskNotificationOnly(message)) {
     return [{ kind: "turn-resumed" }]
@@ -97,10 +103,12 @@ export function restoredMessageEvents(
 }
 
 /**
- * 委譲先の返却の本文。`origin.handback` が真の `user` メッセージの `origin.body` のうち、字下げ付きの行だけが返却の本文。
- * 返却だが本文が読めないときは空の文字列。返却でなければ undefined。
+ * 委譲先の返却の本文と返した委譲先。`origin.handback` が真の `user` メッセージの `origin.body` のうち、字下げ付きの行だけが返却の本文。
+ * 返却だが本文が読めないときは本文が空の文字列、`origin.from` が読めなければ委譲先が空の文字列。返却でなければ undefined。
  */
-function handbackBodyOf(message: unknown): string | undefined {
+function handbackOf(
+  message: unknown,
+): { readonly body: string; readonly from: string } | undefined {
   if (!isPlainObject(message) || message.type !== "user" || !isPlainObject(message.origin)) {
     return undefined
   }
@@ -108,12 +116,14 @@ function handbackBodyOf(message: unknown): string | undefined {
   if (origin.handback !== true) {
     return undefined
   }
-  return typeof origin.body === "string"
-    ? origin.body
-        .split(/\r?\n/u)
-        .filter((line) => /^\s/u.test(line))
-        .join("\n")
-    : ""
+  const body =
+    typeof origin.body === "string"
+      ? origin.body
+          .split(/\r?\n/u)
+          .filter((line) => /^\s/u.test(line))
+          .join("\n")
+      : ""
+  return { body, from: typeof origin.from === "string" ? origin.from : "" }
 }
 
 /** 差し戻しの1段を通す。通ったあとの出来事は、元の出来事の時刻を引き継ぐ。 */

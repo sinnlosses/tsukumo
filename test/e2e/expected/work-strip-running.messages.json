@@ -57,6 +57,10 @@
       "delegatedRange": {
         "kind": "none"
       },
+      "skippedPhases": [],
+      "awaitingSummary": {
+        "kind": "none"
+      },
       "phases": [
         "今の形を調べる",
         "集計の関数とスクリプト",
@@ -96,6 +100,10 @@
     "event": {
       "kind": "work-plan",
       "delegatedRange": {
+        "kind": "none"
+      },
+      "skippedPhases": [],
+      "awaitingSummary": {
         "kind": "none"
       },
       "phases": [

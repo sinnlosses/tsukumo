@@ -31,6 +31,8 @@ function plan(
     finishedInGroup,
     phaseSummary: "",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     time,
   }
 }

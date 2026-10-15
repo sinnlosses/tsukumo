@@ -284,6 +284,7 @@ describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツ�
     review.judgeWorkPlan(plan)
     review.pass({
       kind: "delegate-returned",
+      delegate: "toolu_delegate",
       handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
     })
 
@@ -312,6 +313,26 @@ describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツ�
   it("サブエージェント内の呼び出しと、すでに背景の呼び出しは何も返さない", async () => {
     expect(await runPreToolUse("Agent", { prompt: "手順" }, "sub-1")).toEqual({})
     expect(await runPreToolUse("Agent", { run_in_background: true })).toEqual({})
+  })
+})
+
+describe("preToolUseHooks（メインの phase_result を拒む）", () => {
+  const input = { phase: 1, count: 2, outcome: "finished" }
+
+  it("メインの phase_result は、関門の印が下りていても拒む", async () => {
+    expect(await runPreToolUse("mcp__tsukumo__phase_result", input)).toEqual({
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "deny",
+        permissionDecisionReason: expect.stringContaining("メインは呼ばない"),
+      },
+    })
+  })
+
+  it("委譲先の phase_result は通す", async () => {
+    expect(await runPreToolUse("mcp__tsukumo__phase_result", input, "sub-1", () => true)).toEqual(
+      {},
+    )
   })
 })
 
@@ -351,6 +372,7 @@ describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", ()
     })
     review.pass({
       kind: "delegate-returned",
+      delegate: "toolu_delegate",
       handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
     })
     return review

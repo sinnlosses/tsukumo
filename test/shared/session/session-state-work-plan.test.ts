@@ -22,6 +22,8 @@ describe("applySessionEvent（委譲と段取り）", () => {
   const mainPlan = (current: number, phaseSummary = ""): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     phases: PHASES,
     current,
     finishedInGroup: [],
@@ -68,10 +70,13 @@ describe("applySessionEvent（委譲の返却で進む段取り）", () => {
     finishedInGroup: [],
     phaseSummary: current > 0 ? "架空のまとめ。" : "",
     delegatedRange,
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
   })
   const RANGE = { kind: "range", first: 1, count: 2 } as const
   const returned = (handback: DelegateReturn): SessionEvent => ({
     kind: "delegate-returned",
+    delegate: "toolu_delegate",
     handback,
   })
   const done = (phase: number, summary = "架空の要約。"): DelegateReturn => ({
@@ -143,6 +148,8 @@ describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
   const mainPlan = (current: number): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     phases: PHASES,
     current,
     finishedInGroup: [],
@@ -162,6 +169,8 @@ describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
       finishedInGroup: [],
       phaseSummary: "",
       delegatedRange: { kind: "none" },
+      skippedPhases: [],
+      awaitingSummary: { kind: "none" },
     })
     expect(state.records.at(-1)?.kind).toBe("report")
   })
@@ -192,6 +201,8 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
   const mainPlan = (current: number): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
     current,
     finishedInGroup: [],

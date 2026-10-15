@@ -22,6 +22,7 @@ import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
 import { pinToBackground } from "../core/background-delegation.ts"
+import { judgePhaseResultCaller } from "../core/phase-result-tool.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
 import { judgeToolAgainstGate } from "../core/work-plan-gate.ts"
@@ -96,7 +97,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 
 /**
  * `PreToolUse` フックを1つ登録する。
- * 関門（`judgeToolAgainstGate`）で拒むときは `permissionDecision: "deny"` を返す。
+ * メインの `phase_result`（`judgePhaseResultCaller`）と、関門（`judgeToolAgainstGate`）で拒むときは `permissionDecision: "deny"` を返す。
  * 通したメインの `Agent` 呼び出しは背景に固定する（`updatedInput` だけを返し、許可の判定には触らない）。
  * `agent_id` はサブエージェント内の呼び出しにだけ付くので、ここで真偽に畳んでから渡す。
  *
@@ -119,6 +120,16 @@ export function preToolUseHooks(
             const inSubagent = input.agent_id !== undefined
             if (!inSubagent) {
               confirmedSettingEvents(input).forEach(onEvent)
+            }
+            const caller = judgePhaseResultCaller(input.tool_name, inSubagent)
+            if (caller.kind === "deny") {
+              return {
+                hookSpecificOutput: {
+                  hookEventName: "PreToolUse",
+                  permissionDecision: "deny",
+                  permissionDecisionReason: caller.reason,
+                },
+              }
             }
             if (judgeToolAgainstGate(input.tool_name, inSubagent, "").kind === "deny") {
               await setImmediate()

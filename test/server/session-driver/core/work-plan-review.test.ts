@@ -23,11 +23,13 @@ const planOf = (current: number): Extract<SessionEvent, { kind: "work-plan" }> =
   current,
   finishedInGroup: [],
   phaseSummary: current > 0 ? SUMMARY : "",
+  skippedPhases: [],
+  awaitingSummary: { kind: "none" },
 })
 
 /** `work_plan` ツールの引数の形（範囲を渡さない）。 */
 const inputOf = (current: number) => {
-  const { kind: _, delegatedRange: __, ...input } = planOf(current)
+  const { kind: _, delegatedRange: __, awaitingSummary: ___, ...input } = planOf(current)
   return input
 }
 
@@ -39,8 +41,9 @@ const DELEGATED: SessionEvent = {
   input: { prompt: "架空の委譲。", run_in_background: true },
   parentToolUseId: undefined,
 }
-const handback = (message: string): SessionEvent => ({
+const handback = (message: string, delegate = "toolu_delegate"): SessionEvent => ({
   kind: "delegate-returned",
+  delegate,
   handback: parseDelegateReturn(message),
 })
 
@@ -401,6 +404,167 @@ describe("WorkPlanReview の返却の注記", () => {
     review.pass(handback("段 1/2 | 架空の返却。"))
 
     expect(review.takeHandbackNote()).toBe("")
+  })
+})
+
+describe("WorkPlanReview の phase_result", () => {
+  const FOUR = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
+  const ranged = (current: number, phaseSummary = "", extra: Record<string, unknown> = {}) => ({
+    phases: FOUR,
+    current,
+    phaseSummary,
+    delegatedRange: { first: 1, count: 2 },
+    ...extra,
+  })
+  const started = () => {
+    const review = createWorkPlanReview()
+    review.pass(REQUEST)
+    review.judge(ranged(0))
+    review.judge(ranged(1, SUMMARY))
+    return review
+  }
+  const result = (phase: number, outcome: string, count = 2) =>
+    outcome === "stopped"
+      ? { phase, count, outcome, reason: "架空の理由。" }
+      : { phase, count, outcome }
+  const plannedOf = (plan: LatestWorkPlan) => {
+    if (plan.kind !== "planned") {
+      throw new Error("段取りのある判定を渡す")
+    }
+    return plan
+  }
+  const movedPlan = (review: ReturnType<typeof createWorkPlanReview>, input: unknown) => {
+    const verdict = review.judgeResult(input)
+    if (verdict.kind !== "accepted") {
+      throw new Error("受け付けられる引数を渡す")
+    }
+    return { moved: verdict.moved, plan: plannedOf(verdict.plan) }
+  }
+  /** メインの呼び出しを、結果の届いた `work-plan` のイベントまで流す。 */
+  const emitted = (review: ReturnType<typeof createWorkPlanReview>, input: unknown) => {
+    const verdict = review.judge(input)
+    if (verdict.kind !== "accepted") {
+      return verdict.kind
+    }
+    review.pass({ kind: "work-plan-called", toolUseId: "toolu_w", plan: verdict.plan })
+    const [event] = review.pass({
+      kind: "tool-finished",
+      toolUseId: "toolu_w",
+      content: "ok",
+      isError: false,
+    })
+    return event?.kind === "work-plan" ? event.skippedPhases : event?.kind
+  }
+
+  it("finished と skipped は段を済ませ、skipped は飛ばした段の印を付け、stopped は動かさない", () => {
+    expect(movedPlan(started(), result(1, "finished"))).toMatchObject({
+      moved: true,
+      plan: { current: 2, skippedPhases: [], awaitingSummary: { kind: "awaiting" } },
+    })
+    expect(movedPlan(started(), result(1, "skipped"))).toMatchObject({
+      moved: true,
+      plan: { current: 2, skippedPhases: ["架空の実装A"] },
+    })
+    expect(movedPlan(started(), result(1, "stopped"))).toMatchObject({
+      moved: false,
+      plan: { current: 1 },
+    })
+  })
+
+  it("範囲の外・済んだ段・count の違い・範囲が無い依頼では、帯を動かさず印も付けない", () => {
+    const pending = createWorkPlanReview()
+    pending.pass(REQUEST)
+    pending.judge({ phases: FOUR, current: 0, delegatedRange: { first: 1 } })
+    const done = started()
+    done.judgeResult(result(1, "finished"))
+
+    for (const [review, input] of [
+      [started(), result(2, "skipped")],
+      [started(), result(1, "skipped", 3)],
+      [done, result(1, "skipped")],
+      [pending, result(1, "skipped")],
+    ] as const) {
+      const { moved, plan } = movedPlan(review, input)
+      expect(moved).toBe(false)
+      expect(plan.skippedPhases).toEqual([])
+    }
+  })
+
+  it("形の誤りは malformed で、段取りを動かさない", () => {
+    const review = started()
+
+    expect(review.judgeResult({ phase: 3, count: 2, outcome: "finished" }).kind).toBe("malformed")
+    expect(review.judgeResult({ phase: 1, count: 2, outcome: "stopped" }).kind).toBe("malformed")
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
+  })
+
+  it("phase_result で済んだ段では、同じ位置の work_plan に段のまとめが要り、関門は立たない", () => {
+    const review = started()
+    review.judgeResult(result(1, "finished"))
+
+    expect(review.gateRaised()).toBe(false)
+    expect(review.judge(ranged(2)).kind).toBe("malformed")
+    expect(review.judge(ranged(2, SUMMARY)).kind).toBe("accepted")
+  })
+
+  it("phase_result を呼んだ委譲先の次の返却は1行目を読まず、関門と注記だけを立てて捨て、ほかの委譲先の返却は読む", () => {
+    const review = started()
+    review.pass({ kind: "phase-result-called", delegate: "toolu_a" })
+
+    expect(review.pass(handback("段 1/2 | 架空の返却。", "toolu_a"))).toEqual([])
+    expect(review.gateRaised()).toBe(true)
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
+    expect(review.takeHandbackNote()).toContain("返却の1行目は読んでいない。")
+
+    review.pass(handback("段 1/2 | 架空の返却。", "toolu_b"))
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 2 })
+  })
+
+  it("印を外すのは同じ委譲先の次の返却1件だけで、その次の返却は読む", () => {
+    const review = started()
+    review.pass({ kind: "phase-result-called", delegate: "toolu_a" })
+    review.pass(handback("了解", "toolu_a"))
+
+    review.pass(handback("段 1/2 | 架空の返却。", "toolu_a"))
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 2 })
+  })
+
+  it("文字の1行目の返却は phase_result が無ければ従来どおり帯を進める", () => {
+    const review = started()
+    review.pass(handback("段 1/2 | 架空の返却。"))
+
+    expect(review.standing()).toEqual({ kind: "planned", remaining: 2 })
+    expect(review.judge(ranged(2)).kind).toBe("accepted")
+  })
+
+  it("skippedPhases に、前に印なしに済んでいた段を新しく入れる呼び出しは skip-mark-late", () => {
+    const review = started()
+
+    expect(review.judge(ranged(2, SUMMARY, { skippedPhases: ["架空の計画"] })).kind).toBe(
+      "skip-mark-late",
+    )
+    expect(review.judge(ranged(2, SUMMARY, { skippedPhases: ["架空の実装A"] })).kind).toBe(
+      "accepted",
+    )
+  })
+
+  it("メインが入れた印をまだ済んでいる段から外す呼び出しは skip-mark-dropped で、済んでいなくなれば印が消える", () => {
+    const review = started()
+    review.judge(ranged(2, SUMMARY, { skippedPhases: ["架空の実装A"] }))
+
+    expect(review.judge(ranged(3, SUMMARY)).kind).toBe("skip-mark-dropped")
+    expect(emitted(review, ranged(3, SUMMARY, { skippedPhases: ["架空の実装A"] }))).toEqual([
+      "架空の実装A",
+    ])
+    expect(emitted(review, ranged(1, SUMMARY))).toEqual([])
+  })
+
+  it("phase_result で付いた印は、skippedPhases を省いた呼び出しでも残る", () => {
+    const review = started()
+    review.judgeResult(result(1, "skipped"))
+
+    expect(emitted(review, ranged(2, SUMMARY))).toEqual(["架空の実装A"])
+    expect(emitted(review, ranged(3, SUMMARY))).toEqual(["架空の実装A"])
   })
 })
 

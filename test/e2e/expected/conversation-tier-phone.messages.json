@@ -57,6 +57,10 @@
       "delegatedRange": {
         "kind": "none"
       },
+      "skippedPhases": [],
+      "awaitingSummary": {
+        "kind": "none"
+      },
       "phases": [
         "計画を立て直す",
         "取り込んで渡す",

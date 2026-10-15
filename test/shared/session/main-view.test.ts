@@ -801,6 +801,8 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",
       delegatedRange: { kind: "none" },
+      skippedPhases: [],
+      awaitingSummary: { kind: "none" },
       phases: ["架空の段A", "架空の段B"],
       current,
       finishedInGroup: [],
@@ -836,6 +838,8 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",
       delegatedRange: { kind: "none" },
+      skippedPhases: [],
+      awaitingSummary: { kind: "none" },
       phases: ["架空の段A", "架空の段B"],
       current,
       finishedInGroup: [],
@@ -874,6 +878,8 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const plan: SessionEvent = {
       kind: "work-plan",
       delegatedRange: { kind: "none" },
+      skippedPhases: [],
+      awaitingSummary: { kind: "none" },
       phases: ["架空の段A", "架空の段B"],
       current: 0,
       finishedInGroup: [],
@@ -1033,6 +1039,8 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
   const plan = (current: number, phaseSummary = "", names = phases): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     phases: names,
     current,
     finishedInGroup: [],
@@ -1177,6 +1185,8 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
   const plan = (current: number, phaseSummary = ""): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     phases: ["架空の段A", "架空の段B"],
     current,
     finishedInGroup: [],
@@ -1326,6 +1336,8 @@ describe("mainViewTurns（脇の話）", () => {
   const plan = (current: number, phaseSummary: string): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     phases: ["架空の段A", "架空の段B", "架空の段C"],
     current,
     finishedInGroup: [],

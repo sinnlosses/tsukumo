@@ -15,6 +15,8 @@ const planned = (overrides: Partial<Parameters<typeof workPlanOf>[0]>) =>
     finishedInGroup: [],
     phaseSummary: "",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     ...overrides,
   })
 
@@ -65,6 +67,12 @@ describe("handbackLineText", () => {
   it("今の段に当たる段 n/N の返却は、済んだ帯の段の位置と名前を言う", () => {
     expect(handbackLineText(RANGED, parseDelegateReturn("段 2/3 | 架空の返却。"))).toBe(
       "返却 `段 2/3` で帯の 本 2/3 実装B が済んだ。",
+    )
+  })
+
+  it("飛ばした段の返却は、飛ばした段の番号で言う", () => {
+    expect(handbackLineText(RANGED, { kind: "phase-skipped", phase: 2, count: 3 })).toBe(
+      "返却 `飛ばした 2/3` で帯の 本 2/3 実装B が済んだ。",
     )
   })
 

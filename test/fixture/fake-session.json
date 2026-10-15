@@ -3072,6 +3072,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["計画を確かめる", "委譲先に任せる", "受け入れる"],
             "current": 0,
             "finishedInGroup": [],
@@ -3083,6 +3085,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["計画を確かめる", "委譲先に任せる", "受け入れる"],
             "current": 1,
             "finishedInGroup": [],
@@ -3909,6 +3913,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
             "current": 0,
             "finishedInGroup": [],
@@ -3960,6 +3966,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
             "current": 1,
             "finishedInGroup": [],
@@ -4019,6 +4027,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
             "current": 2,
             "finishedInGroup": [],
@@ -4137,6 +4147,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
             "current": 0,
             "finishedInGroup": [],
@@ -4148,6 +4160,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
             "current": 1,
             "finishedInGroup": [],
@@ -4220,6 +4234,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
             "current": 0,
             "finishedInGroup": [],
@@ -4231,6 +4247,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
             "current": 2,
             "finishedInGroup": [],
@@ -4306,6 +4324,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
             "current": 0,
             "finishedInGroup": [],
@@ -4357,6 +4377,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
             "current": 1,
             "finishedInGroup": [],
@@ -4416,6 +4438,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
             "current": 2,
             "finishedInGroup": [],
@@ -4534,6 +4558,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": [
               "今の形を調べる",
               "集計の関数とスクリプト",
@@ -4568,6 +4594,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": [
               "今の形を調べる",
               "集計の関数とスクリプト",
@@ -4756,6 +4784,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": [
               "計画を立て直す",
               "取り込んで渡す",
@@ -4810,6 +4840,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": [
               "計画を立て直す",
               "取り込んで渡す",
@@ -4827,6 +4859,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": [
               "計画を立て直す",
               "取り込んで渡す",
@@ -4844,6 +4878,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": [
               "計画を立て直す",
               "取り込んで渡す",
@@ -4861,6 +4897,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": [
               "計画を立て直す",
               "取り込んで渡す",
@@ -4878,6 +4916,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": [
               "計画を立て直す",
               "取り込んで渡す",
@@ -4977,6 +5017,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["片付ける場所を調べる", "片付ける"],
             "current": 1,
             "finishedInGroup": [],
@@ -5031,6 +5073,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 1,
             "finishedInGroup": [],
@@ -5042,6 +5086,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 2,
             "finishedInGroup": [],
@@ -5053,6 +5099,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 3,
             "finishedInGroup": [],
@@ -5064,6 +5112,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 4,
             "finishedInGroup": [],
@@ -5075,6 +5125,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 5,
             "finishedInGroup": [],
@@ -5086,6 +5138,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["一つ目", "二つ目", "三つ目", "四つ目", "五つ目", "六つ目", "最後の段"],
             "current": 6,
             "finishedInGroup": [],
@@ -5140,6 +5194,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", ["サーバの口を直す", "画面を直す"], "文書と検証を揃える"],
             "current": 1,
             "finishedInGroup": [],
@@ -5180,6 +5236,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", ["サーバの口を直す", "画面を直す"], "文書と検証を揃える"],
             "current": 1,
             "finishedInGroup": [],
@@ -5234,6 +5292,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", ["サーバの口を直す", "画面を直す"], "文書と検証を揃える"],
             "current": 0,
             "finishedInGroup": [],
@@ -5245,6 +5305,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", ["サーバの口を直す", "画面を直す"], "文書と検証を揃える"],
             "current": 1,
             "finishedInGroup": [],
@@ -5256,6 +5318,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", ["サーバの口を直す", "画面を直す"], "文書と検証を揃える"],
             "current": 1,
             "finishedInGroup": ["画面を直す"],
@@ -5267,6 +5331,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", ["サーバの口を直す", "画面を直す"], "文書と検証を揃える"],
             "current": 2,
             "finishedInGroup": [],
@@ -5365,6 +5431,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["今の形を調べる", "形を揃える", "文書と検証を揃える"],
             "current": 1,
             "finishedInGroup": [],
@@ -5448,6 +5516,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["調べる", "書く"],
             "current": 0,
             "finishedInGroup": [],
@@ -5459,6 +5529,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["調べる", "書く"],
             "current": 1,
             "finishedInGroup": [],
@@ -5470,6 +5542,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["調べる", "書く"],
             "current": 2,
             "finishedInGroup": [],
@@ -6230,13 +6304,16 @@
             "current": 1,
             "finishedInGroup": [],
             "phaseSummary": "架空の計画は2段で、委譲先にそのまま渡せる形だった。",
-            "delegatedRange": { "kind": "range", "first": 1, "count": 2 }
+            "delegatedRange": { "kind": "range", "first": 1, "count": 2 },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" }
           }
         },
         {
           "afterMs": 200,
           "event": {
             "kind": "delegate-returned",
+            "delegate": "toolu_fake_delegate",
             "handback": {
               "kind": "phase-done",
               "phase": 1,
@@ -6249,6 +6326,7 @@
           "afterMs": 300,
           "event": {
             "kind": "delegate-returned",
+            "delegate": "toolu_fake_delegate",
             "handback": {
               "kind": "phase-done",
               "phase": 2,
@@ -6282,7 +6360,9 @@
             "current": 0,
             "finishedInGroup": [],
             "phaseSummary": "",
-            "delegatedRange": { "kind": "pending", "first": 1 }
+            "delegatedRange": { "kind": "pending", "first": 1 },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" }
           }
         },
         {
@@ -6312,6 +6392,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "range", "first": 1, "count": 3 },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["計画を確かめる", "調べる", "直す", "確かめる", "受け入れる"],
             "current": 2,
             "finishedInGroup": [],
@@ -6345,6 +6427,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "range", "first": 1, "count": 3 },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": ["計画を確かめる", "調べる", "直す", "確かめる", "受け入れる"],
             "current": 0,
             "finishedInGroup": [],
@@ -6378,6 +6462,8 @@
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "range", "first": 1, "count": 3 },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
             "phases": [
               "計画を確かめる",
               "調べる",

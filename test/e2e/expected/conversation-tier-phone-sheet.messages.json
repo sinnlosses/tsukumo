@@ -57,6 +57,10 @@
       "delegatedRange": {
         "kind": "none"
       },
+      "skippedPhases": [],
+      "awaitingSummary": {
+        "kind": "none"
+      },
       "phases": [
         "計画を立て直す",
         "取り込んで渡す",
@@ -75,6 +79,10 @@
     "event": {
       "kind": "work-plan",
       "delegatedRange": {
+        "kind": "none"
+      },
+      "skippedPhases": [],
+      "awaitingSummary": {
         "kind": "none"
       },
       "phases": [
@@ -97,6 +105,10 @@
       "delegatedRange": {
         "kind": "none"
       },
+      "skippedPhases": [],
+      "awaitingSummary": {
+        "kind": "none"
+      },
       "phases": [
         "計画を立て直す",
         "取り込んで渡す",
@@ -117,6 +129,10 @@
       "delegatedRange": {
         "kind": "none"
       },
+      "skippedPhases": [],
+      "awaitingSummary": {
+        "kind": "none"
+      },
       "phases": [
         "計画を立て直す",
         "取り込んで渡す",
@@ -135,6 +151,10 @@
     "event": {
       "kind": "work-plan",
       "delegatedRange": {
+        "kind": "none"
+      },
+      "skippedPhases": [],
+      "awaitingSummary": {
         "kind": "none"
       },
       "phases": [

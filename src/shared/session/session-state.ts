@@ -769,6 +769,9 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     // サーバの中で `work-plan` に変わってから届く（`CallReview`）。
     case "work-plan-called":
       return state
+    // サーバの中で `CallReview` が受けて捨てる。
+    case "phase-result-called":
+      return state
     case "delegate-returned":
       return { ...state, records: [...state.records, ...workPlanRecords(state.records, event, at)] }
     case "report-rejected":
@@ -810,6 +813,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             finishedInGroup: event.finishedInGroup,
             phaseSummary: event.phaseSummary,
             delegatedRange: event.delegatedRange,
+            skippedPhases: event.skippedPhases,
+            awaitingSummary: event.awaitingSummary,
             time: { kind: "stamped", at },
           },
         ],

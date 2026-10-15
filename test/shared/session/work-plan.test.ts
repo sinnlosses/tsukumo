@@ -45,6 +45,8 @@ function planned(
     finishedInGroup,
     phaseSummary: "",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
   }
 }
 
@@ -54,7 +56,15 @@ function next(
   phaseSummary = "",
   finishedInGroup: readonly string[] = [],
 ): WorkPlan {
-  return { phases, current, finishedInGroup, phaseSummary, delegatedRange: { kind: "none" } }
+  return {
+    phases,
+    current,
+    finishedInGroup,
+    phaseSummary,
+    delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
+  }
 }
 
 describe("parseWorkPlan の段のまとめ", () => {
@@ -65,6 +75,8 @@ describe("parseWorkPlan の段のまとめ", () => {
       finishedInGroup: [],
       phaseSummary: "",
       delegatedRange: { kind: "none" },
+      skippedPhases: [],
+      awaitingSummary: { kind: "none" },
     })
   })
 
@@ -145,6 +157,31 @@ describe("parseWorkPlan の段のまとまり", () => {
         finishedInGroup: ["架空の段B"],
       })?.finishedInGroup,
     ).toEqual(["架空の段B"])
+  })
+})
+
+describe("parseWorkPlan の飛ばした段", () => {
+  it("この呼び出しで済んでいる段の名前を読み、省けば空にする", () => {
+    expect(
+      parseWorkPlan({
+        phases: GROUPED,
+        current: 1,
+        finishedInGroup: ["架空の段C"],
+        phaseSummary: "架空のまとめ。",
+        skippedPhases: ["架空の段A", "架空の段C"],
+      })?.skippedPhases,
+    ).toEqual(["架空の段A", "架空の段C"])
+    expect(parseWorkPlan({ phases: PHASES, current: 0 })?.skippedPhases).toEqual([])
+  })
+
+  it.each([
+    ["phases に無い名前", ["架空の段Z"]],
+    ["済んでいない段", ["架空の段B"]],
+    ["重なる名前", ["架空の段A", "架空の段A"]],
+  ])("%s は受け付けない", (_, skippedPhases) => {
+    expect(
+      parseWorkPlan({ phases: GROUPED, current: 1, phaseSummary: "架空のまとめ。", skippedPhases }),
+    ).toBeUndefined()
   })
 })
 
@@ -358,6 +395,25 @@ describe("phaseShiftOf", () => {
     expect(phaseShiftOf(planned(PHASES, 1), next(appended, 1, "架空のまとめ。"))).toEqual(nothing)
   })
 
+  it("まとめ待ちの段が済んだままなら、位置の同じ呼び出しのまとめをその段の中間レポートにする", () => {
+    const awaiting: LatestWorkPlan = {
+      kind: "planned",
+      ...next(PHASES, 1),
+      awaitingSummary: { kind: "awaiting", key: "架空の段A\u00000" },
+    }
+
+    expect(phaseShiftOf(awaiting, next(PHASES, 1, "架空のまとめ。"))).toEqual({
+      finished: { kind: "finished", label: "1/3 架空の段A", summary: "架空のまとめ。" },
+    })
+    expect(phaseShiftOf(awaiting, next(PHASES, 1)).finished).toEqual({ kind: "none" })
+    expect(phaseShiftOf(awaiting, next(PHASES, 0, "架空のまとめ。")).finished).toEqual({
+      kind: "none",
+    })
+    expect(phaseShiftOf(planned(PHASES, 1), next(PHASES, 1, "架空のまとめ。")).finished).toEqual({
+      kind: "none",
+    })
+  })
+
   it("依頼で最初の段取りと、全部の段を終えた段取りでは何も出さない", () => {
     const nothing = { finished: { kind: "none" } }
 
@@ -466,6 +522,8 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     finishedInGroup,
     phaseSummary: "",
     delegatedRange,
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
   })
   const phaseDone = (phase: number, count = 2, summary = "架空の要約。"): DelegateReturn => ({
     kind: "phase-done",
@@ -474,7 +532,7 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     summary,
   })
   const returned = (plan: LatestWorkPlan, handback: DelegateReturn): LatestWorkPlan =>
-    nextWorkPlan(plan, { kind: "delegate-returned", handback })
+    nextWorkPlan(plan, { kind: "delegate-returned", delegate: "toolu_delegate", handback })
 
   it("段 n/N で、段 n に当たる今の段を済ませ、要約を段のまとめにする", () => {
     expect(returned(planAt(1), phaseDone(1))).toEqual({
@@ -539,6 +597,38 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     expect(returned(lastPhase, phaseDone(2))).toEqual(lastPhase)
   })
 
+  it("phase-skipped は段を済ませて飛ばした段に名前を足し、まとめ待ちにする", () => {
+    const skipped = { kind: "phase-skipped", phase: 1, count: 2 } as const
+
+    expect(returned(planAt(1), skipped)).toEqual({
+      ...planAt(2),
+      skippedPhases: ["架空の実装A"],
+      awaitingSummary: { kind: "awaiting", key: "架空の実装A\u00000" },
+    })
+  })
+
+  it("要約の空の段 n/N はまとめ待ちにし、要約があればまとめ待ちにしない", () => {
+    expect(returned(planAt(1), phaseDone(1, 2, ""))).toMatchObject({
+      current: 2,
+      phaseSummary: "",
+      skippedPhases: [],
+      awaitingSummary: { kind: "awaiting", key: "架空の実装A\u00000" },
+    })
+    expect(returned(planAt(1), phaseDone(1))).toMatchObject({ awaitingSummary: { kind: "none" } })
+  })
+
+  it("phase-skipped も一足飛び・済んだ段・N の食い違い・範囲の無い段取りでは動かさず、印も付けない", () => {
+    const skipped = (phase: number, count = 2) => ({ kind: "phase-skipped", phase, count }) as const
+    const noRange = planAt(1, SERIAL, [], { kind: "none" })
+    const pending = planAt(1, SERIAL, [], { kind: "pending", first: 1 })
+
+    expect(returned(planAt(1), skipped(2))).toEqual(planAt(1))
+    expect(returned(planAt(2), skipped(1))).toEqual(planAt(2))
+    expect(returned(planAt(1), skipped(1, 3))).toEqual(planAt(1))
+    expect(returned(noRange, skipped(1))).toEqual(noRange)
+    expect(returned(pending, skipped(1))).toEqual(pending)
+  })
+
   it("phaseFinishedByReturn は返却で済む帯の段を返し、帯を動かさない返却では unmoved", () => {
     const serial = next(SERIAL, 1)
     const ranged: WorkPlan = { ...serial, delegatedRange: RANGE }
@@ -579,6 +669,8 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
     finishedInGroup: [],
     phaseSummary: "架空の計画を書いた。",
     delegatedRange: range,
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
   })
   const event = (plan: WorkPlan): WorkPlanEvent => ({ kind: "work-plan", ...plan })
 
@@ -592,6 +684,7 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
     expect(
       nextWorkPlan(plan, {
         kind: "delegate-returned",
+        delegate: "toolu_delegate",
         handback: { kind: "phase-done", phase: 1, count: 2, summary: "架空" },
       }),
     ).toEqual(plan)
@@ -604,6 +697,7 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
     expect(
       nextWorkPlan(plan, {
         kind: "delegate-returned",
+        delegate: "toolu_delegate",
         handback: { kind: "phase-done", phase: 1, count: 2, summary: "架空" },
       }),
     ).toMatchObject({ current: 2 })

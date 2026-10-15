@@ -29,6 +29,7 @@ import {
   type QuestionBrief,
   questionBriefSchema,
 } from "../../../shared/session-driver/question-brief.ts"
+import { phaseResultShape } from "../../../shared/session/phase-result.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
   parseWorkPlanClosing,
@@ -55,6 +56,14 @@ import type { CallReview } from "../core/call-review.ts"
 import { CLEAR_AND_SEND_TOOL_DESCRIPTION } from "../core/clear-and-send.ts"
 import { stringsIn } from "../core/phase-mention.ts"
 import {
+  answerPhaseResultCall,
+  PHASE_RESULT_COUNT_DESCRIPTION,
+  PHASE_RESULT_OUTCOME_DESCRIPTION,
+  PHASE_RESULT_PHASE_DESCRIPTION,
+  PHASE_RESULT_REASON_DESCRIPTION,
+  PHASE_RESULT_TOOL_DESCRIPTION,
+} from "../core/phase-result-tool.ts"
+import {
   answerQuestionBriefCall,
   mermaidSourcesOf,
   QUESTION_BRIEF_TOOL_DESCRIPTION,
@@ -64,6 +73,7 @@ import type { SpeechVerdict } from "../core/speech-review.ts"
 import {
   CLEAR_AND_SEND_TOOL_NAME,
   FORGET_TOOL_NAME,
+  PHASE_RESULT_TOOL_NAME,
   QUESTION_BRIEF_TOOL_NAME,
   RECALL_EPISODE_TOOL_NAME,
   RECALL_TOOL_NAME,
@@ -80,6 +90,7 @@ import {
   WORK_PLAN_FINISHED_IN_GROUP_DESCRIPTION,
   WORK_PLAN_PHASE_SUMMARY_DESCRIPTION,
   WORK_PLAN_PHASES_DESCRIPTION,
+  WORK_PLAN_SKIPPED_PHASES_DESCRIPTION,
   WORK_PLAN_TOOL_DESCRIPTION,
 } from "../core/work-plan-tool.ts"
 
@@ -124,7 +135,8 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
 /**
  * プロセス内の MCP サーバ。
  * 戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情がモデルへ戻る経路を作らない（`docs/architecture/adr/0009-speech-via-tool.md`）。
- * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と `question_brief`。
+ * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と `phase_result` と `question_brief`。
+ * `phase_result` が返すのは、帯の今の段（帯を動かさなかったらそのこと）か、形の崩れの直し方だけ。
  * `speak` が返すのは、新しい事実の無い呼び出しを差し戻す固定の文面だけ。
  * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の会話の目次と1件の逐語）だけ。
  * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `CallReview` が受け付けなかったときの直し方だけ。
@@ -134,6 +146,8 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  *
  * `report` は仕事のときだけ載る（仕事ではレポートを常にこれで受け取る。雑談は本文を書かない決まりなので載せない）。
  * `work_plan` も仕事のときだけ。
+ * `phase_result` も仕事のときだけで、帯を動かす口は変換ではなく handler（帯を動かしたら `delegate-returned` を流す）。
+ * 変換は委譲先の呼び出しから、次の返却の1行目を読まない印だけを作る。
  * `question_brief` も仕事のときだけで、返すのは崩れた添え書きの直し方だけ。受け付けた添え書きは `holdBrief` に預ける。
  * `clear_and_send` も仕事のときだけで、返すのは "ok" だけ。渡された文面は `holdClearAndSend` に預ける。
  *
@@ -163,6 +177,7 @@ export function tsukumoServer(
         ? [
             reportTool(expressions, callReview, onReportTitle, cwd, onEvent),
             workPlanTool(callReview),
+            phaseResultTool(callReview, onEvent),
             questionBriefTool(holdBrief),
             clearAndSendTool(holdClearAndSend),
           ]
@@ -317,9 +332,35 @@ function workPlanTool(review: CallReview) {
       ),
       phaseSummary: workPlanShape.phaseSummary.describe(WORK_PLAN_PHASE_SUMMARY_DESCRIPTION),
       delegatedRange: workPlanShape.delegatedRange.describe(WORK_PLAN_DELEGATED_RANGE_DESCRIPTION),
+      skippedPhases: workPlanShape.skippedPhases.describe(WORK_PLAN_SKIPPED_PHASES_DESCRIPTION),
     },
     async (input) => {
       const answer = answerWorkPlanCall(review, input)
+      return {
+        content: [{ type: "text" as const, text: answer.text }],
+        isError: answer.isError,
+      }
+    },
+  )
+}
+
+/**
+ * 委譲先が段の結果を返すツール。引数の形は shared の `phaseResultShape` に説明文を足したもの。
+ * 欄をまたぐ検査は `phaseResultSchema` にあり、`answerPhaseResultCall` の判定が同じ `parsePhaseResult` で行って差し戻す。
+ * メインの呼び出しは `PreToolUse` のフックが拒むので、ここでは見分けない。
+ */
+function phaseResultTool(review: CallReview, onEvent: (event: SessionEvent) => void) {
+  return tool(
+    PHASE_RESULT_TOOL_NAME,
+    PHASE_RESULT_TOOL_DESCRIPTION,
+    {
+      phase: phaseResultShape.phase.describe(PHASE_RESULT_PHASE_DESCRIPTION),
+      count: phaseResultShape.count.describe(PHASE_RESULT_COUNT_DESCRIPTION),
+      outcome: phaseResultShape.outcome.describe(PHASE_RESULT_OUTCOME_DESCRIPTION),
+      reason: phaseResultShape.reason.describe(PHASE_RESULT_REASON_DESCRIPTION),
+    },
+    async (input) => {
+      const answer = answerPhaseResultCall(review, input, onEvent)
       return {
         content: [{ type: "text" as const, text: answer.text }],
         isError: answer.isError,

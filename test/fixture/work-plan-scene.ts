@@ -109,7 +109,15 @@ function planAt(
   delegatedRange: WorkPlan["delegatedRange"] = RANGE,
   phaseSummary = current > 0 && current < SERIAL.length ? "架空のまとめ。" : "",
 ): WorkPlan {
-  return { phases: SERIAL, current, finishedInGroup: [], phaseSummary, delegatedRange }
+  return {
+    phases: SERIAL,
+    current,
+    finishedInGroup: [],
+    phaseSummary,
+    delegatedRange,
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
+  }
 }
 
 function plannedAt(...args: Parameters<typeof planAt>): LatestWorkPlan {
@@ -123,6 +131,7 @@ function called(plan: WorkPlan): SessionEvent {
 function returned(phase: number, count = 2): SessionEvent {
   return {
     kind: "delegate-returned",
+    delegate: "toolu_delegate",
     handback: { kind: "phase-done", phase, count, summary: "架空の要約。" },
   }
 }
