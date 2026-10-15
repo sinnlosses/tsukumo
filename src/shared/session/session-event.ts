@@ -214,8 +214,20 @@ export type SessionEvent =
     }
   /**
    * 委譲先の返却（`SubagentHandback`）が届いた。1行目を読んだ形を運ぶ。形の読めない返却も `unreadable` で届く。
+   * `phase_result` で帯を動かしたときも、その結果を読んだ形で届く（`CallReview.pass` は通らない）。
+   * `delegate` は返した委譲先を見分ける鍵で、同じ委譲先の `phase-result-called` と対にする。
+   * 生きた流れの返却では委譲先のメッセージの `parent_tool_use_id`、組み直しでは `origin.from`（無ければ空）、`phase_result` では空。
    */
-  | { readonly kind: "delegate-returned"; readonly handback: DelegateReturn }
+  | {
+      readonly kind: "delegate-returned"
+      readonly delegate: string
+      readonly handback: DelegateReturn
+    }
+  /**
+   * 委譲先が形の合う `phase_result` を呼んだ。サーバの中だけで流れる。
+   * `CallReview.pass` が受け、同じ `delegate` の次の返却の1行目を読まない印にする（畳み込み・ブラウザには届かない）。
+   */
+  | { readonly kind: "phase-result-called"; readonly delegate: string }
   | {
       readonly kind: "tool-started"
       readonly toolUseId: string

@@ -20,6 +20,8 @@ export type WorkPlanEntry = string | PhaseGroup
  * `finishedInGroup` は `current` が指すまとまりの中で済んだ段の名前で、まとまりを指していなければ空。
  * `phaseSummary` は終えた段のまとめ（段のまとめ）で、無ければ空の文字列。
  * `delegatedRange` は委譲先の段の範囲で、委譲しなければ `none`。
+ * `skippedPhases` は済んだ段のうち飛ばした段の名前（同じ名前の段は見分けない）。
+ * `awaitingSummary` はまとめ待ちの段（{@link AwaitingSummary}）。
  */
 export type WorkPlan = {
   readonly phases: readonly WorkPlanEntry[]
@@ -27,7 +29,19 @@ export type WorkPlan = {
   readonly finishedInGroup: readonly string[]
   readonly phaseSummary: string
   readonly delegatedRange: DelegatedRange
+  readonly skippedPhases: readonly string[]
+  readonly awaitingSummary: AwaitingSummary
 }
+
+/**
+ * 委譲の返却で済んだが段のまとめが空の段。`key` は {@link PlannedPhase} の `key`。
+ * 返却で進めた段取りだけが `awaiting` を持ち、`work_plan` の呼び出しから読んだ段取りはいつも `none`。
+ */
+export type AwaitingSummary =
+  | { readonly kind: "none" }
+  | { readonly kind: "awaiting"; readonly key: string }
+
+export const NO_AWAITING_SUMMARY = { kind: "none" } as const satisfies AwaitingSummary
 
 /**
  * 委譲先の段の範囲。`first` は委譲先の段1に当たる位置（平らにした並びで0始まり）、`count` は委譲先の段の数。
@@ -112,6 +126,7 @@ export const workPlanShape = {
   delegatedRange: z
     .object({ first: z.number().int().min(0), count: z.number().int().min(1).optional() })
     .optional(),
+  skippedPhases: z.array(phaseNameSchema).optional(),
 }
 
 /**
@@ -121,11 +136,19 @@ export const workPlanShape = {
  * まとまりの段が {@link MIN_PHASE_GROUP_SIZE} 個より少ないか名前が重なる・位置が0から要素の数までの整数でない・
  * `finishedInGroup` が今のまとまりの重ならない名前の一部でない・
  * 段のまとめが {@link MAX_PHASE_SUMMARY_SENTENCES} 文を超える・
- * 委譲先の段の範囲が整数でない・並びをはみ出す・段のまとまりの端をまたぐ。
+ * 委譲先の段の範囲が整数でない・並びをはみ出す・段のまとまりの端をまたぐ・
+ * 飛ばした段の名前が重なるか、この呼び出しで済んでいる段の名前でない。
  * 途中なのに段のまとめが無いことは、返却で進んだ位置を同じまま渡す呼び出しがあるので、ここでは見ない（`WorkPlanReview` が見る）。
  */
 export const workPlanSchema = z.object(workPlanShape).superRefine((value, context) => {
-  const { phases, current, finishedInGroup = [], phaseSummary = "", delegatedRange } = value
+  const {
+    phases,
+    current,
+    finishedInGroup = [],
+    phaseSummary = "",
+    delegatedRange,
+    skippedPhases = [],
+  } = value
   const reject = (path: string): void => {
     context.addIssue({ code: "custom", message: "invalid work plan", path: [path] })
   }
@@ -158,6 +181,15 @@ export const workPlanSchema = z.object(workPlanShape).superRefine((value, contex
       reject("delegatedRange")
     }
   }
+  if (skippedPhases.length > 0) {
+    const finishedNames = finishedPhaseNames({ phases, current, finishedInGroup })
+    if (
+      new Set(skippedPhases).size !== skippedPhases.length ||
+      !skippedPhases.every((name) => finishedNames.has(name))
+    ) {
+      reject("skippedPhases")
+    }
+  }
 })
 
 /**
@@ -169,13 +201,22 @@ export function parseWorkPlan(value: unknown): WorkPlan | undefined {
   if (!parsed.success) {
     return undefined
   }
-  const { phases, current, finishedInGroup = [], phaseSummary = "", delegatedRange } = parsed.data
+  const {
+    phases,
+    current,
+    finishedInGroup = [],
+    phaseSummary = "",
+    delegatedRange,
+    skippedPhases = [],
+  } = parsed.data
   return {
     phases,
     current,
     finishedInGroup,
     phaseSummary: isBlankText(phaseSummary) ? "" : phaseSummary,
     delegatedRange: delegatedRangeOf(delegatedRange),
+    skippedPhases,
+    awaitingSummary: NO_AWAITING_SUMMARY,
   }
 }
 
@@ -214,6 +255,17 @@ export function finishedPhaseCount(
   plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup">,
 ): number {
   return phaseCount(plan.phases.slice(0, plan.current)) + plan.finishedInGroup.length
+}
+
+/** 済んだ段の名前。 */
+export function finishedPhaseNames(
+  plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup">,
+): ReadonlySet<string> {
+  return new Set(
+    plannedPhasesOf(plan)
+      .filter((phase) => phase.state === "done")
+      .map((phase) => phase.name),
+  )
 }
 
 /**
@@ -282,6 +334,8 @@ export function workPlanOf(plan: WorkPlan): PlannedWorkPlan {
     finishedInGroup: plan.finishedInGroup,
     phaseSummary: plan.phaseSummary,
     delegatedRange: plan.delegatedRange,
+    skippedPhases: plan.skippedPhases,
+    awaitingSummary: plan.awaitingSummary,
   }
 }
 
@@ -317,6 +371,7 @@ export function currentPhaseOf(plan: LatestWorkPlan): WorkPhase {
  *   段は名前と同じ名前の段の中で何番目かで探すので、段を進めながら後ろの段を組み替えても終えた段を見失わず、
  *   同じ名前の済んだ段を今の段と取り違えない。
  *   戻った・組み替えただけで前の今の段が済んでいない（今の段以降にある・並びから消えた）ときは出さない
+ * - そのほか、前の段取りのまとめ待ちの段が新しい並びで済んでいれば、新しいまとめをその段の中間レポートにする
  */
 export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShift {
   const shifted = shiftedPhaseOf(previous, next)
@@ -352,10 +407,18 @@ export function shiftedPhaseOf(
     return NO_SHIFTED_PHASE
   }
   const nextPhases = plannedPhasesOf(next)
-  const finished = plannedPhasesOf(previous)
+  const finishedNow = plannedPhasesOf(previous)
     .filter((phase) => phase.state === "current")
     .map((phase) => nextPhases.find((candidate) => candidate.key === phase.key))
     .find((found) => found?.state === "done")
+  const { awaitingSummary } = previous
+  const finished =
+    finishedNow ??
+    (awaitingSummary.kind === "awaiting"
+      ? nextPhases.find(
+          (candidate) => candidate.key === awaitingSummary.key && candidate.state === "done",
+        )
+      : undefined)
   if (finished === undefined || isBlankText(next.phaseSummary)) {
     return NO_SHIFTED_PHASE
   }
@@ -540,10 +603,11 @@ const NO_PHASE_SHIFT = {
 const NO_SHIFTED_PHASE = { kind: "none" } as const
 
 /**
- * 委譲の返却 `段 n/N` で進めた段取り。
+ * 委譲の返却 `段 n/N`（と `phase-skipped`）で進めた段取り。
  * 範囲があり `N` が範囲の段の数と同じで、段 `n` に当たる段が今の段の集合に入っているときだけ、その段を済ませる。
  * 一足飛び・済んだ段・範囲の無い段取り・`計画`・`止めた`・形の読めない返却・並びの最後の段（返却では全部済みにしない）では `plan` をそのまま返す。
- * 段のまとめは返却の要約を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもの。
+ * 段のまとめは返却の要約を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもの。まとめが空なら済ませた段をまとめ待ちにする。
+ * `phase-skipped` は済ませた段の名前を飛ばした段に足す。
  */
 function advancedByReturn(plan: PlannedWorkPlan, handback: DelegateReturn): PlannedWorkPlan {
   const returned = returnedByReturn(plan, handback)
@@ -561,7 +625,7 @@ function returnedByReturn(
       readonly advanced: PlannedWorkPlan
     } {
   if (
-    handback.kind !== "phase-done" ||
+    (handback.kind !== "phase-done" && handback.kind !== "phase-skipped") ||
     plan.delegatedRange.kind !== "range" ||
     plan.delegatedRange.count !== handback.count
   ) {
@@ -576,11 +640,20 @@ function returnedByReturn(
   const finishedInGroup = typeof entry === "string" ? [] : [...plan.finishedInGroup, phase.name]
   const entryDone =
     entry === undefined || typeof entry === "string" || finishedInGroup.length === entry.length
+  const phaseSummary =
+    handback.kind === "phase-done"
+      ? leadingSentences(handback.summary, MAX_PHASE_SUMMARY_SENTENCES)
+      : ""
+  const skipped = handback.kind === "phase-skipped" && !plan.skippedPhases.includes(phase.name)
   const advanced: PlannedWorkPlan = {
     ...plan,
     current: entryDone ? plan.current + 1 : plan.current,
     finishedInGroup: entryDone ? [] : finishedInGroup,
-    phaseSummary: leadingSentences(handback.summary, MAX_PHASE_SUMMARY_SENTENCES),
+    phaseSummary,
+    skippedPhases: skipped ? [...plan.skippedPhases, phase.name] : plan.skippedPhases,
+    awaitingSummary: isBlankText(phaseSummary)
+      ? { kind: "awaiting", key: phase.key }
+      : NO_AWAITING_SUMMARY,
   }
   return finishedPhaseCount(advanced) >= phaseCount(advanced.phases)
     ? UNMOVED
@@ -601,6 +674,8 @@ function closedByReport(plan: PlannedWorkPlan): PlannedWorkPlan {
         finishedInGroup: [],
         phaseSummary: "",
         delegatedRange: plan.delegatedRange,
+        skippedPhases: plan.skippedPhases,
+        awaitingSummary: NO_AWAITING_SUMMARY,
       }
     : plan
 }

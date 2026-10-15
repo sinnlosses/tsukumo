@@ -28,6 +28,8 @@ function plan(
     finishedInGroup,
     phaseSummary,
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     time,
   }
 }
@@ -126,6 +128,20 @@ describe("phaseRecapsOf", () => {
     const recaps = phaseRecapsOf([ranged(0, at(0)), last], at(30))
 
     expect(recaps.get(keyOf(last, "架空の調べ"))?.summary).toBe("返却の要約の1文。")
+  })
+
+  it("まとめの空の返却で済んだ段は、同じ位置の次の記録のまとめを段のまとめにする", () => {
+    const returned: WorkPlanRecord = {
+      ...plan(1, at(10)),
+      awaitingSummary: { kind: "awaiting", key: "架空の調べ\u00000" },
+    }
+    const last = plan(1, at(12), "架空の調べのまとめ")
+    const recaps = phaseRecapsOf([plan(0, at(0)), returned, last], at(30))
+
+    expect(recaps.get(keyOf(last, "架空の調べ"))).toEqual({
+      duration: known(10),
+      summary: "架空の調べのまとめ",
+    })
   })
 
   it("段取りが無ければ空", () => {

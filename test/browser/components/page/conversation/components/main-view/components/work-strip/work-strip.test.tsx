@@ -31,6 +31,8 @@ function plan(
   return {
     kind: "work-plan",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     phases,
     current,
     finishedInGroup: [],

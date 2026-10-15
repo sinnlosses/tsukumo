@@ -332,6 +332,8 @@ describe("toSessionEvents", () => {
           finishedInGroup: [],
           phaseSummary: "架空のまとめ。",
           delegatedRange: { kind: "none" },
+          skippedPhases: [],
+          awaitingSummary: { kind: "none" },
         },
       },
     ])
@@ -1371,15 +1373,40 @@ describe("toSessionEvents（委譲の返却）", () => {
       [
         {
           kind: "delegate-returned",
+          delegate: "toolu_sub_1",
           handback: { kind: "phase-done", phase: 1, count: 3, summary: "架空の進み。" },
         },
       ],
     )
   })
 
+  it("委譲先の形の合う phase_result は、委譲先を見分ける鍵の phase-result-called だけを出す", () => {
+    const name = "mcp__tsukumo__phase_result"
+
+    expect(
+      toSessionEvents(
+        toolUse(name, { phase: 1, count: 2, outcome: "finished" }, "toolu_sub_1"),
+        EXPRESSIONS,
+      ),
+    ).toEqual([{ kind: "phase-result-called", delegate: "toolu_sub_1" }])
+    expect(
+      toSessionEvents(
+        toolUse(name, { phase: 3, count: 2, outcome: "finished" }, "toolu_sub_1"),
+        EXPRESSIONS,
+      ),
+    ).toEqual([])
+    expect(
+      toSessionEvents(toolUse(name, { phase: 1, count: 2, outcome: "finished" }), EXPRESSIONS),
+    ).toEqual([])
+  })
+
   describe("委譲先の返却", () => {
     it("形の読めない返却と message が文字でない返却も unreadable で届く", () => {
-      const unreadable = { kind: "delegate-returned", handback: { kind: "unreadable" } }
+      const unreadable = {
+        kind: "delegate-returned",
+        delegate: "toolu_agent",
+        handback: { kind: "unreadable" },
+      }
       const odd = assistantMessage(
         [
           { type: "tool_use", id: "t1", name: "SubagentHandback", input: { message: "了解" } },

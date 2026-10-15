@@ -18,7 +18,11 @@ import {
 import type { ReportDraft } from "../../report/core/report-violation.ts"
 import { judgePhaseMention, type PhaseMentionVerdict } from "./phase-mention.ts"
 import { createSpeechReview, type SpeechVerdict } from "./speech-review.ts"
-import { createWorkPlanReview, type WorkPlanVerdict } from "./work-plan-review.ts"
+import {
+  createWorkPlanReview,
+  type PhaseResultVerdict,
+  type WorkPlanVerdict,
+} from "./work-plan-review.ts"
 
 export type CallReview = {
   /** `speak` の handler から。直前に描いたセリフのあとに新しい事実が届いていなければ差し戻す。 */
@@ -31,6 +35,8 @@ export type CallReview = {
   readonly judgePhaseMention: (texts: readonly string[]) => PhaseMentionVerdict
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
   readonly judgeWorkPlan: (input: unknown) => WorkPlanVerdict
+  /** `phase_result` の handler から、届いた引数のままで呼ぶ（`WorkPlanReview.judgeResult`）。 */
+  readonly judgePhaseResult: (input: unknown) => PhaseResultVerdict
   /**
    * 届いたイベントを、差し戻しを済ませた並びに変える（メインのイベントだけを渡す）。
    * 呼び出しは同じ `toolUseId` の `tool-finished` まで預かり、差し戻されなかったものだけを出す。
@@ -85,6 +91,7 @@ export function createCallReview(changes?: ReportChanges): CallReview {
     changedFiles: reportReview.changedFiles,
     judgePhaseMention: (texts) => judgePhaseMention(workPlanReview.delegatedRange(), texts),
     judgeWorkPlan: workPlanReview.judge,
+    judgePhaseResult: workPlanReview.judgeResult,
     pass: (event) => {
       ledger.observe(event)
       return speechReview.pass(event).flatMap(reportReview.pass).flatMap(workPlanReview.pass)
@@ -98,8 +105,8 @@ export function createCallReview(changes?: ReportChanges): CallReview {
 
 /**
  * SDK のメッセージ1件から変換したイベントのうち、差し戻しに通すものを通す。
- * メインのメッセージのイベントはすべて、委譲先のメッセージのイベントは返却（`delegate-returned`）だけを通す。
- * 返却は委譲先の `SubagentHandback` の呼び出しから作るので、委譲先のメッセージにしか載らない。
+ * メインのメッセージのイベントはすべて、委譲先のメッセージのイベントは返却（`delegate-returned`）と `phase-result-called` だけを通す。
+ * どちらも委譲先のツールの呼び出しから作るので、委譲先のメッセージにしか載らない。
  */
 export function passRelayedEvents(
   review: Pick<CallReview, "pass">,
@@ -107,7 +114,9 @@ export function passRelayedEvents(
   fromMain: boolean,
 ): readonly SessionEvent[] {
   return events.flatMap((event) =>
-    fromMain || event.kind === "delegate-returned" ? review.pass(event) : [event],
+    fromMain || event.kind === "delegate-returned" || event.kind === "phase-result-called"
+      ? review.pass(event)
+      : [event],
   )
 }
 

@@ -43,7 +43,7 @@ const CHAT_MODE: SessionMode = {
 }
 
 describe("tsukumoServer", () => {
-  it("仕事のときは report と work_plan と question_brief と recall / recall_episode が載り、remember / forget と見直しの2つは載らない", async () => {
+  it("仕事のときは report と work_plan と phase_result と question_brief と recall / recall_episode が載り、remember / forget と見直しの2つは載らない", async () => {
     const names = await listedToolNames(workServer())
 
     expect(names).toEqual([
@@ -52,6 +52,7 @@ describe("tsukumoServer", () => {
       "recall_episode",
       "report",
       "work_plan",
+      "phase_result",
       "question_brief",
       "clear_and_send",
     ])
@@ -73,6 +74,7 @@ describe("tsukumoServer", () => {
 
     expect(names).not.toContain("report")
     expect(names).not.toContain("work_plan")
+    expect(names).not.toContain("phase_result")
     expect(names).not.toContain("clear_and_send")
     expect(names).not.toContain("usage_review_result")
     expect(names).not.toContain("diary")
@@ -524,6 +526,67 @@ describe("範囲の外の段の番号の差し戻し", () => {
     expect(
       await callTool(workServer(), "speak", { text: "段9が返った", expression: "default" }),
     ).toMatchObject({ isError: false })
+  })
+})
+
+describe("phase_result（委譲先の段の結果）", () => {
+  const planned = async (review: CallReview) => {
+    await callTool(workServer([], [], review), "work_plan", {
+      phases: ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"],
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+      delegatedRange: { first: 1, count: 2 },
+    })
+  }
+
+  it("帯を動かした呼び出しは ok と帯の今の段を返し、結果を読んだ返却を1件流す", async () => {
+    const review = createCallReview()
+    await planned(review)
+    const events: SessionEvent[] = []
+
+    const reply = await callTool(workServer(events, [], review), "phase_result", {
+      phase: 1,
+      count: 2,
+      outcome: "skipped",
+    })
+
+    expect(reply.isError).toBe(false)
+    expect(reply.text).toMatch(/^ok\n帯の今の段は 本 2\/2 架空の実装B。/u)
+    expect(events).toEqual([
+      {
+        kind: "delegate-returned",
+        delegate: "",
+        handback: { kind: "phase-skipped", phase: 1, count: 2 },
+      },
+    ])
+  })
+
+  it("帯を動かさない呼び出しは、動いていないことを言い、何も流さない", async () => {
+    const review = createCallReview()
+    await planned(review)
+    const events: SessionEvent[] = []
+
+    const reply = await callTool(workServer(events, [], review), "phase_result", {
+      phase: 1,
+      count: 2,
+      outcome: "stopped",
+      reason: "架空の理由。",
+    })
+
+    expect(reply.text).toMatch(/^ok\n帯は動いていない。帯の今の段は 本 1\/2 架空の実装A。/u)
+    expect(events).toEqual([])
+  })
+
+  it("形の誤りは差し戻し、直し方を返す", async () => {
+    const reply = await callTool(workServer(), "phase_result", {
+      phase: 1,
+      count: 2,
+      outcome: "finished",
+      reason: "架空",
+    })
+
+    expect(reply.isError).toBe(true)
+    expect(reply.text).toContain("reason は outcome が stopped のときだけ")
   })
 })
 

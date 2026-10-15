@@ -20,6 +20,8 @@ function plan(current: number): SessionEvent {
   return {
     kind: "work-plan",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     phases: ["架空の段A", "架空の段B", "架空の段C"],
     current,
     finishedInGroup: [],

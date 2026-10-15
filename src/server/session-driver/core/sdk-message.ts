@@ -24,6 +24,7 @@ import type {
 import type { RateLimit, RateLimitBucket } from "../../../shared/session-driver/rate-limit.ts"
 import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
 import { parseDelegateReturn } from "../../../shared/session/delegate-return.ts"
+import { parsePhaseResult } from "../../../shared/session/phase-result.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { parseWorkPlan, parseWorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import type { ModelTokenUsage } from "../../../shared/token-usage/token-usage.ts"
@@ -31,6 +32,7 @@ import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
 import { toCommandDescriptions } from "./sdk-query-reply.ts"
 import {
+  PHASE_RESULT_TOOL_NAME,
   REPORT_TOOL_NAME,
   SPEAK_TOOL_NAME,
   tsukumoToolFullName,
@@ -52,6 +54,8 @@ import {
  *   段の一足飛びで差し戻した呼び出しは `CallReview` が結果を見て捨てる
  * - 委譲先（`parent_tool_use_id` 付き）の `SubagentHandback` の呼び出しは、`message` の1行目を読んで `delegate-returned` にする（形の読めない返却も `unreadable` で届く）。
  *   `tool-started` にはしない
+ * - 委譲先の `phase_result` の呼び出しは、`parsePhaseResult` を通れば `phase-result-called` にする。帯を動かすのは handler で、ここは次の返却の1行目を読まない印だけを作る。
+ *   通らない引数とメインの呼び出しからは何も作らず、`tool-started` にもしない
  * - `includePartialMessages` の断片で `report` の呼び出しの塊が開いたら `report-drafting` を出す（立ち絵の「書いている」の材料。メインのものだけ）。
  *   引数の断片（`input_json_delta`）は運ばない。
  *   描くのは確定した `report` だけで、書きかけの引数は JSON としても読めない
@@ -513,6 +517,12 @@ function assistantBlockEvents(
       : []
   }
 
+  if (block.name === tsukumoToolFullName(PHASE_RESULT_TOOL_NAME)) {
+    return parentToolUseId !== undefined && parsePhaseResult(block.input) !== undefined
+      ? [{ kind: "phase-result-called", delegate: parentToolUseId }]
+      : []
+  }
+
   if (
     block.name === SUBAGENT_HANDBACK_TOOL_NAME &&
     parentToolUseId !== undefined &&
@@ -521,6 +531,7 @@ function assistantBlockEvents(
     return [
       {
         kind: "delegate-returned",
+        delegate: parentToolUseId,
         handback: parseDelegateReturn(
           typeof block.input.message === "string" ? block.input.message : "",
         ),

@@ -28,6 +28,8 @@ const request: SessionEvent = { kind: "request", text: "架空の依頼", images
 const plan: SessionEvent = {
   kind: "work-plan",
   delegatedRange: { kind: "none" },
+  skippedPhases: [],
+  awaitingSummary: { kind: "none" },
   phases: ["架空の段A", "架空の段B"],
   current: 0,
   finishedInGroup: [],
@@ -279,6 +281,8 @@ describe("useWorkStrip（段のまとまり）", () => {
   const groupedPlan = (current: number, finishedInGroup: readonly string[]): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
     phases: ["架空の段A", ["架空の段B", "架空の段C"]],
     current,
     finishedInGroup,
@@ -610,6 +614,8 @@ describe("useWorkStrip（回る弧）", () => {
     const grouped: SessionEvent = {
       kind: "work-plan",
       delegatedRange: { kind: "none" },
+      skippedPhases: [],
+      awaitingSummary: { kind: "none" },
       phases: ["架空の段A", ["架空の段B", "架空の段C"]],
       current: 1,
       finishedInGroup: [],
@@ -639,6 +645,8 @@ describe("useWorkStrip（段の吹き出し）", () => {
     return {
       kind: "work-plan",
       delegatedRange: { kind: "none" },
+      skippedPhases: [],
+      awaitingSummary: { kind: "none" },
       phases,
       current,
       finishedInGroup: [],

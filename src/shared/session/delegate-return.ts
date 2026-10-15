@@ -1,9 +1,10 @@
-// 委譲先の返却（`SubagentHandback` の報告）の1行目を読んだ形。書式の正典は `docs/architecture/workflow-contract.md`「委譲の返却」。
+// 委譲先の返却（`SubagentHandback` の報告の1行目と、`phase_result` の結果）を読んだ形。書式の正典は `docs/architecture/workflow-contract.md`「委譲の返却」「スキルの契約」。
 // 読むのは1行目だけで、2行目より後ろは読まない。会話の内容が通るのでログに出さない。
 
 /**
  * 返却の1行目。
  * `plan` は `計画 0/N`（段に数えない）、`phase-done` は `段 n/N`、`stopped` は `止めた n/N`、`unreadable` は契約の形でない1行目。
+ * `phase-skipped` は `phase_result` の `skipped` だけから作り、1行目の読みからは作らない。
  */
 export type DelegateReturn =
   | { readonly kind: "plan"; readonly count: number; readonly summary: string }
@@ -13,6 +14,7 @@ export type DelegateReturn =
       readonly count: number
       readonly summary: string
     }
+  | { readonly kind: "phase-skipped"; readonly phase: number; readonly count: number }
   | {
       readonly kind: "stopped"
       readonly phase: number

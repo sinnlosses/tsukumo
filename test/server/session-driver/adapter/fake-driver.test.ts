@@ -754,16 +754,26 @@ describe("同梱の疑似セッションの段取り", () => {
     )
 
     expect(plans.length).toBeGreaterThan(0)
-    for (const { phases, current, finishedInGroup, phaseSummary, delegatedRange } of plans) {
+    for (const plan of plans) {
+      const { phases, current, finishedInGroup, phaseSummary, delegatedRange, skippedPhases } = plan
       const parsed = parseWorkPlan({
         phases,
         current,
         finishedInGroup,
         phaseSummary,
         delegatedRange: toToolRange(delegatedRange),
+        skippedPhases,
       })
 
-      expect(parsed).toEqual({ phases, current, finishedInGroup, phaseSummary, delegatedRange })
+      expect(parsed).toEqual({
+        phases,
+        current,
+        finishedInGroup,
+        phaseSummary,
+        delegatedRange,
+        skippedPhases,
+        awaitingSummary: plan.awaitingSummary,
+      })
     }
   })
 })

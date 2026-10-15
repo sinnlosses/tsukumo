@@ -185,6 +185,8 @@ describe("toRestoredEvents", () => {
         finishedInGroup: [],
         phaseSummary: "",
         delegatedRange: { kind: "none" },
+        skippedPhases: [],
+        awaitingSummary: { kind: "none" },
       },
       {
         kind: "work-plan",
@@ -193,6 +195,8 @@ describe("toRestoredEvents", () => {
         finishedInGroup: [],
         phaseSummary: "架空のまとめ。",
         delegatedRange: { kind: "none" },
+        skippedPhases: [],
+        awaitingSummary: { kind: "none" },
       },
     ])
   })
@@ -531,16 +535,22 @@ describe("toRestoredEvents（委譲の返却）", () => {
 
     expect(eventsOf(messages).map((event) => event)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
-      { kind: "delegate-returned", handback: { kind: "plan", count: 2, summary: "架空の計画。" } },
       {
         kind: "delegate-returned",
+        delegate: "架空のID",
+        handback: { kind: "plan", count: 2, summary: "架空の計画。" },
+      },
+      {
+        kind: "delegate-returned",
+        delegate: "架空のID",
         handback: { kind: "phase-done", phase: 1, count: 2, summary: "架空の要約。" },
       },
       {
         kind: "delegate-returned",
+        delegate: "架空のID",
         handback: { kind: "stopped", phase: 2, count: 2, summary: "架空の理由" },
       },
-      { kind: "delegate-returned", handback: { kind: "unreadable" } },
+      { kind: "delegate-returned", delegate: "架空のID", handback: { kind: "unreadable" } },
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })

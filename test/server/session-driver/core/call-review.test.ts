@@ -100,6 +100,8 @@ const planCalled = (toolUseId: string, current: number): SessionEvent => ({
     current,
     finishedInGroup: [],
     phaseSummary: current > 0 ? "架空のまとめ。" : "",
+    skippedPhases: [],
+    awaitingSummary: { kind: "none" },
   },
 })
 const planOf = (current: number): SessionEvent => {
@@ -486,6 +488,7 @@ describe("CallReview の新しい事実の数え方の差", () => {
 describe("passRelayedEvents", () => {
   const RETURNED: SessionEvent = {
     kind: "delegate-returned",
+    delegate: "toolu_delegate",
     handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
   }
 
@@ -503,6 +506,22 @@ describe("passRelayedEvents", () => {
     expect(passRelayedEvents(review, [report, RETURNED], false)).toEqual([report, RETURNED])
     expect(review.gateRaised()).toBe(true)
     expect(review.takeHandbackNote()).toContain("返却 `段 1/2`")
+  })
+
+  it("委譲先の phase-result-called も差し戻しに通して捨て、同じ委譲先の次の返却は1行目を読まずに捨てる", () => {
+    const review = createCallReview()
+    review.pass(REQUEST)
+    review.judgeWorkPlan({
+      phases: ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"],
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+      delegatedRange: { first: 1, count: 2 },
+    })
+    const called: SessionEvent = { kind: "phase-result-called", delegate: "toolu_delegate" }
+
+    expect(passRelayedEvents(review, [called, RETURNED], false)).toEqual([])
+    expect(review.gateRaised()).toBe(true)
+    expect(review.bandPosition()).toContain("本 1/2")
   })
 
   it("メインのメッセージのイベントはすべて差し戻しに通す（report は結果まで預かる）", () => {
@@ -523,6 +542,7 @@ describe("CallReview の関門の印", () => {
   })
   const handback = (message: string): SessionEvent => ({
     kind: "delegate-returned",
+    delegate: "toolu_delegate",
     handback: parseDelegateReturn(message),
   })
   const started = (): CallReview => {

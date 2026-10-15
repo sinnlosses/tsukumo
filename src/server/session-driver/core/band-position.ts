@@ -65,12 +65,18 @@ export function handbackLineText(previous: WorkPlan, handback: DelegateReturn): 
   return `${head} で帯の ${label} が済んだ。`
 }
 
+/** `phase_result` を呼んだ委譲先の返却に添える1文。帯はその `phase_result` で動いている。 */
+export const RESULT_CALLED_HANDBACK_LINE =
+  "委譲先は `phase_result` で結果を返したので、返却の1行目は読んでいない。"
+
 function handbackHead(handback: Exclude<DelegateReturn, { readonly kind: "unreadable" }>): string {
   switch (handback.kind) {
     case "plan":
       return `計画 0/${String(handback.count)}`
     case "phase-done":
       return `段 ${String(handback.phase)}/${String(handback.count)}`
+    case "phase-skipped":
+      return `飛ばした ${String(handback.phase)}/${String(handback.count)}`
     case "stopped":
       return `止めた ${String(handback.phase)}/${String(handback.count)}`
   }
