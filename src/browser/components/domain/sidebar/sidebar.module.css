@@ -4,7 +4,7 @@
    寸法の出どころは `docs/history/mockup/sidebar-tasks-2026-09-23.html`。
    見本の inline style の px を、`theme.css` のトークンに写した値で持つ（px をそのまま書かない）。 */
 
-/* コンテキストの目盛りと利用枠の円の口。枠も地も無く、hover で地だけ敷く。 */
+/* コンテキストの目盛りとプラン使用量の円の口。枠も地も無く、hover で地だけ敷く。 */
 .usage-gauge {
   display: flex;
   flex: none;

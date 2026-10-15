@@ -19,7 +19,7 @@ export type RateLimitBucket =
  * - `clear`: 上限に余裕がある（`allowed`）・まだ知らせが届いていない・近い（`allowed_warning`）
  * - `rejected`: 上限に達して、戻るまで使えない
  *
- * 「近い」（`allowed_warning`）は `clear` に畳む（枠の残り具合はサイドバーの利用枠が出す）。
+ * 「近い」（`allowed_warning`）は `clear` に畳む（枠の残り具合はサイドバーのプラン使用量が出す）。
  *
  * `resetsAt` は戻る時刻（エポックミリ秒。SDK は秒で送ってくるので境界で直す）。知らせに無ければ undefined（画面は時刻を添えずに出す）。
  * 使用率（`utilization`）は運ばない（単位が 0〜1 か 0〜100 かが型定義に書かれておらず、読み違えた数を出すより出さないほうを採る）。

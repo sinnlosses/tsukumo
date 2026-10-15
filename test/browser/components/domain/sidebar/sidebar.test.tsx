@@ -51,7 +51,9 @@ describe("Sidebar の下端の帯", () => {
     expect(gauge.getAttribute("aria-expanded")).toBe("false")
     fireEvent.click(gauge)
     expect(gauge.getAttribute("aria-expanded")).toBe("true")
-    expect(screen.getByRole("region", { name: "使用量の詳しい面" }).textContent).toContain("利用枠")
+    expect(screen.getByRole("region", { name: "使用量の詳しい面" }).textContent).toContain(
+      "プラン使用量",
+    )
     fireEvent.click(gauge)
     expect(screen.queryByRole("region", { name: "使用量の詳しい面" })).toBeNull()
   })
@@ -201,12 +203,12 @@ describe("引き出しへ渡す中身", () => {
     expect(screen.queryByRole("region", { name: "タスク" })).toBeNull()
   })
 
-  it("「使用量」はコンテキストと利用枠の札を、押して開く面にせずそのまま並べる", () => {
+  it("「使用量」はコンテキストとプラン使用量の札を、押して開く面にせずそのまま並べる", () => {
     renderSidebar({}, <UsagePane />)
 
     const text = document.body.textContent ?? ""
     expect(text).toContain("コンテキスト")
-    expect(text).toContain("利用枠")
+    expect(text).toContain("プラン使用量")
     expect(screen.queryByRole("region", { name: "使用量の詳しい面" })).toBeNull()
   })
 })

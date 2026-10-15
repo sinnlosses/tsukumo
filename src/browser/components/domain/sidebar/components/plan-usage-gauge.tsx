@@ -27,7 +27,7 @@ export function PlanUsageGauge(props: {
       data-finished-turn-count={
         gauge.source.kind === "after" ? String(gauge.source.finishedTurnCount) : undefined
       }
-      title="利用枠"
+      title="プラン使用量"
       onClick={props.onToggle}
     >
       <PlanWindowPie pie={gauge.fiveHour} />

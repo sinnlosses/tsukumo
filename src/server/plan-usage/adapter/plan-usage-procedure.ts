@@ -1,4 +1,4 @@
-// 利用枠の手続き。形は `planUsageContract`。照合は束ねる側のミドルウェアが済ませている。
+// プラン使用量の手続き。形は `planUsageContract`。照合は束ねる側のミドルウェアが済ませている。
 
 import { implement } from "@orpc/server"
 
@@ -10,7 +10,7 @@ import {
 
 /** この機能の手続きが使う口（中身は配線が渡す）。 */
 export type PlanUsageProcedurePorts = {
-  /** いまのセッションの利用枠。セッションが繋がるまでは「取れない」を返す。 */
+  /** いまのセッションのプラン使用量。セッションが繋がるまでは「取れない」を返す。 */
   readonly readPlanUsage: () => Promise<PlanUsageReport>
 }
 

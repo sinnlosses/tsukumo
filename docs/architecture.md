@@ -158,7 +158,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `usage-review/`      | 見直し。見直しと提案の実行の走り（使い捨ての `query()`）・2つのツール・前回の結果・見送り                 |
 | `token-usage/`       | トークン消費の記録と集計                                                                                  |
 | `context-usage/`     | コンテキストの内訳の記録                                                                                  |
-| `plan-usage/`        | 利用枠（`/usage` と同じ上限）の手続き                                                                     |
+| `plan-usage/`        | プラン使用量（`/usage` と同じ上限）の手続き                                                               |
 | `experience-metric/` | 体験の数の記録と集計                                                                                      |
 | `diagnostic/`        | 診断ログ（不具合の経緯を追う足跡）の書き口・束ね・置き場と掃除                                            |
 | `host/`              | ホストのポートと Orca・`none` の実装、ホストへ渡す前の門番                                                |

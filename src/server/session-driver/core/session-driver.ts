@@ -238,7 +238,7 @@ export type SessionDriver = {
   /** いまのコンテキストの内訳を取る。取れなかったときは「取れない」を返し、例外を投げない。 */
   readonly readContextUsage: () => Promise<ContextUsageReport>
   /**
-   * いまの利用枠を、知らせを待たずに取りに行く（SDK の実験中の口）。
+   * いまのプラン使用量を、知らせを待たずに取りに行く（SDK の実験中の口）。
    * 取れなかった・claude.ai の契約でないときは例外を投げず、それぞれの結果を返す。
    */
   readonly readPlanUsage: () => Promise<PlanUsageReport>

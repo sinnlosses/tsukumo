@@ -1,4 +1,4 @@
-// 利用枠の手続きの契約。
+// プラン使用量の手続きの契約。
 
 import { oc } from "@orpc/contract"
 

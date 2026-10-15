@@ -30,11 +30,11 @@ import {
 import type { UsePlanUsageResult } from "../hooks/use-plan-usage.ts"
 import styles from "./plan-usage-row.module.css"
 
-const ROW_LABEL = "利用枠"
+const ROW_LABEL = "プラン使用量"
 const FETCHING_TEXT = "取得中…"
 const TIME_PLACEHOLDER = "—"
-const NOT_APPLICABLE_TEXT = "API キーで使っているため、利用枠はありません"
-const UNAVAILABLE_TEXT = "利用枠を取れませんでした。↻ で取り直せます"
+const NOT_APPLICABLE_TEXT = "API キーで使っているため、プラン使用量はありません"
+const UNAVAILABLE_TEXT = "プラン使用量を取れませんでした。↻ で取り直せます"
 export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }): ReactElement {
   const { state, fetching, retry } = props.planUsage
   const windows = windowsOf(state)
@@ -58,7 +58,7 @@ export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }):
             size="action"
             pressed="none"
             disabled={fetching}
-            ariaLabel="利用枠を取り直す"
+            ariaLabel="プラン使用量を取り直す"
             disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title="取り直す"

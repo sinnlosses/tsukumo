@@ -1,4 +1,4 @@
-// 利用枠の語彙。取れた状態（`PlanUsageState`）から描く2つの枠（`WindowDisplay`）を起こし、警告にするかを決める。
+// プラン使用量の語彙。取れた状態（`PlanUsageState`）から描く2つの枠（`WindowDisplay`）を起こし、警告にするかを決める。
 
 import type { PlanUsage } from "../../../../../shared/plan-usage/plan-usage.ts"
 

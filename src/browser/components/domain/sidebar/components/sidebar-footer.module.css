@@ -1,5 +1,5 @@
 /* サイドバーの下端に敷く帯。区画ではないので `.sidebar-block` の枠も内側スクロールも借りない。
-   1行に、左の操作子の組（`.run-setting-group`）と、右寄せのコンテキストの目盛り・利用枠の円を並べる。
+   1行に、左の操作子の組（`.run-setting-group`）と、右寄せのコンテキストの目盛り・プラン使用量の円を並べる。
    地は帯（`screen-nav.module.css`）と同じ、`--ground` と `--surface` を半々に混ぜた色。
 
    左右と下の負のマージンは `.layout-region` の内側の余白（`--region-padding`）を消し切るちょうどの値で、帯の縁は領域の枠の内側にぴたりと着く（角の丸めは領域の `overflow` が切る）。
@@ -33,7 +33,7 @@
   background: var(--rule-quiet);
 }
 /* 目盛りか円を押すと、帯の真上に重ねて開く詳しい面。タスクの区画を押し下げない。
-   利用枠の札が280px未満で棒を畳むための基準（`@container`）もここ。 */
+   プラン使用量の札が280px未満で棒を畳むための基準（`@container`）もここ。 */
 .sidebar-footer-detail {
   position: absolute;
   right: 0.75rem;

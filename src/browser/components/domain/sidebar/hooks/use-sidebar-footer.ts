@@ -1,5 +1,5 @@
 // サイドバーの下端の帯のロジック。
-// コンテキストの使用量と利用枠はここで1回だけ取って、目盛りと詳しい面の両方へ配る（取り直しを2重にしない）。
+// コンテキストの使用量とプラン使用量はここで1回だけ取って、目盛りと詳しい面の両方へ配る（取り直しを2重にしない）。
 // コンテキストはトークン消費の画面の札と同じ `refetchKey` を渡すので、`useQuery` の cache 1本に相乗りする。
 //
 // 取り直しのあいだは目盛りの口に `aria-busy` を立てる（面を閉じていても立つ）。
@@ -163,9 +163,9 @@ function planGaugeLabel(
   windows: { readonly fiveHour: WindowDisplay; readonly sevenDay: WindowDisplay } | undefined,
 ): string {
   if (windows === undefined) {
-    return "利用枠 取れていない"
+    return "プラン使用量 取れていない"
   }
-  return `利用枠 5時間 ${windowPercentage(windows.fiveHour)}・7日間 ${windowPercentage(windows.sevenDay)}`
+  return `プラン使用量 5時間 ${windowPercentage(windows.fiveHour)}・7日間 ${windowPercentage(windows.sevenDay)}`
 }
 
 function windowPercentage(window: WindowDisplay): string {

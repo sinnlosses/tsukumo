@@ -25,7 +25,7 @@ afterEach(() => {
 const ATTRIBUTE = "data-finished-turn-count"
 
 describe("SidebarFooter", () => {
-  it("目盛りの口は、出している値を取ったときの終わったターンの数を出す。取り直しの間、コンテキストは出さず、利用枠は前の数のまま", async () => {
+  it("目盛りの口は、出している値を取ったときの終わったターンの数を出す。取り直しの間、コンテキストは出さず、プラン使用量は前の数のまま", async () => {
     const replies = { answering: true }
     fetchStub = stubRpcFetch((call): RpcStubReply => {
       if (!replies.answering) {
@@ -46,7 +46,7 @@ describe("SidebarFooter", () => {
       </QueryClientProvider>,
     )
     const context = screen.getByTitle("コンテキスト")
-    const plan = screen.getByTitle("利用枠")
+    const plan = screen.getByTitle("プラン使用量")
 
     await waitFor(() => {
       expect(context.getAttribute(ATTRIBUTE)).toBe("0")

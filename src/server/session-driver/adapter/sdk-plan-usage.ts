@@ -1,4 +1,4 @@
-// 利用枠を SDK の実験中の口に問い合わせ、画面が要る形（`PlanUsageReport`）へ写す。
+// プラン使用量を SDK の実験中の口に問い合わせ、画面が要る形（`PlanUsageReport`）へ写す。
 // 実験中の名前（`usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET`）を呼ぶのはここ1本に閉じる（`docs/research/plan-usage.md`「論点1」）。
 
 import { z } from "zod"
@@ -38,11 +38,11 @@ const sdkPlanUsageSchema = z.object({
 })
 
 /**
- * 利用枠を SDK に問い合わせる。取れなかった回・読めない形は「取れない」を返すだけで、例外は外へ出さない。
+ * プラン使用量を SDK に問い合わせる。取れなかった回・読めない形は「取れない」を返すだけで、例外は外へ出さない。
  *
  * `skipBehaviors: true` を必ず渡す。
  * 渡さないと本体が手元の transcript を7日ぶん走査して `behaviors` を作る。
- * 利用枠を読むだけの都合で、会話の中身に触る処理を tsukumo の側から起こさない（`docs/coding-standards.md`「会話内容の扱い」）。
+ * プラン使用量を読むだけの都合で、会話の中身に触る処理を tsukumo の側から起こさない（`docs/coding-standards.md`「会話内容の扱い」）。
  */
 export async function readPlanUsage(
   session: PlanUsageSource,

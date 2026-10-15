@@ -95,7 +95,7 @@ const FAKE_CONTEXT_USAGE = {
 } satisfies Omit<ContextUsage, "model">
 
 /**
- * fake driver が返す利用枠。会話の内容ではないので疑似セッションの JSON には持たせず、ここに直接書く。
+ * fake driver が返すプラン使用量。会話の内容ではないので疑似セッションの JSON には持たせず、ここに直接書く。
  * 架空の値だが、5時間枠・7日間枠の使用率は見本（`QUOTA-Sidebar.dc.html`「1 ふだん」）と同じにしてある。
  * 戻る時刻は固定のエポックミリ秒。
  * 「いま」を読む場所を2つに絞ってある検査に、fake driver がここで触れて増やさないようにする。
@@ -441,7 +441,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     // fake driver は claude を起こさないので、いま動いているモデルだけを載せた固定の内訳を返す（画面の札を疑似セッションでも確かめられるように）。
     readContextUsage: () =>
       Promise.resolve({ kind: "ready", usage: { model, ...FAKE_CONTEXT_USAGE } }),
-    // 本物は SDK の実験中の口に問い合わせる。fake driver は claude を起こさないので、固定の利用枠を返す。
+    // 本物は SDK の実験中の口に問い合わせる。fake driver は claude を起こさないので、固定のプラン使用量を返す。
     readPlanUsage: () => Promise.resolve({ kind: "ready", usage: FAKE_PLAN_USAGE }),
     // 本物は transcript を読む。fake driver は疑似セッションに書いた架空の中身を返す。
     readSessionDigest: (sessionId) =>

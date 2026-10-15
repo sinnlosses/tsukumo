@@ -1,5 +1,5 @@
 /* 狭い画面の引き出しの「使用量」のタブの中身。
-   利用枠の札が幅で棒を畳むための基準（`@container`）もここ。 */
+   プラン使用量の札が幅で棒を畳むための基準（`@container`）もここ。 */
 .usage-pane {
   display: flex;
   flex-direction: column;

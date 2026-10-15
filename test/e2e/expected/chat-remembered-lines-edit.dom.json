@@ -310,7 +310,7 @@
         {
           "tag": "button",
           "attributes": {
-            "aria-label": "利用枠 5時間 34%・7日間 61%",
+            "aria-label": "プラン使用量 5時間 34%・7日間 61%",
             "aria-expanded": "false",
             "data-finished-turn-count": "0",
             "type": "button"

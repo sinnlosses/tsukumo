@@ -182,7 +182,7 @@ export type SessionManager = {
    */
   readonly readContextUsage: () => Promise<ContextUsageReport>
   /**
-   * いまの利用枠を駆動から取る。
+   * いまのプラン使用量を駆動から取る。
    * 押すのではなく引くので、状態にもフレームにも乗らない。取れなかったときは「取れない」。
    */
   readonly readPlanUsage: () => Promise<PlanUsageReport>
