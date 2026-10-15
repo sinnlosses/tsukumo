@@ -282,8 +282,16 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(readGraphSource(graphSource).brokenLines).toEqual([])
   })
 
-  it("画像は、撮った画像があるときだけ優先させる", () => {
-    expect(REPORT_NOTATION_PROMPT).toContain("この作業で撮った画像があるときだけ優先する")
+  it("画面を変えた作業には撮った画像を載せさせ、同じ場面の2枚は beforeAfter で並べさせる", () => {
+    expect(REPORT_NOTATION_PROMPT).toContain(
+      "画面（見た目）を変えた作業では、撮った画像を `image` の塊で載せる",
+    )
+    expect(REPORT_NOTATION_PROMPT).toContain("`image` を2つ並べず `beforeAfter` で左右に並べる")
+    expect(REPORT_NOTATION_PROMPT).toContain("`unverified` の行を足し")
+  })
+
+  it("画像の条は、tsukumo 固有のパスを書かない", () => {
+    expect(REPORT_NOTATION_PROMPT).not.toContain("src/browser/")
   })
 
   it("勧める mermaid の種類は、描けることを確かめたものだけ", () => {
