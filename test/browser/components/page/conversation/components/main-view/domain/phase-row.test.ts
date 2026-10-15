@@ -10,6 +10,15 @@ import type {
   MainViewStep,
   MainViewTurn,
 } from "../../../../../../../../src/shared/session/main-view.ts"
+import {
+  NO_DELEGATED_RANGE,
+  phaseLabel,
+  phasePosition,
+  type DelegatedRange,
+  type PhaseNumber,
+  type PhaseSpan,
+  type WorkPhase,
+} from "../../../../../../../../src/shared/session/work-plan.ts"
 
 function step(
   id: number,
@@ -54,6 +63,33 @@ function phase(label: string, milliseconds: number): MainViewPhaseLabel {
   return { kind: "phase", label, duration: { kind: "known", milliseconds } }
 }
 
+const PHASE_NAME = "架空の段の名前"
+
+type LabeledPhase = Extract<WorkPhase, { readonly kind: "phase" }>
+
+function labeled(indexes: readonly number[], count: number, range: DelegatedRange): LabeledPhase {
+  return { kind: "phase", indexes, count, name: PHASE_NAME, range }
+}
+
+const RANGE: DelegatedRange = { kind: "range", first: 2, count: 3 }
+
+/** `phaseLabel` が返す形。`PhaseNumber` の種類（群の4つと番号なし）ごとに見本を持ち、足すと型が落ちる。 */
+const LABELED_PHASES = {
+  whole: [
+    labeled([1], 4, NO_DELEGATED_RANGE),
+    labeled([1, 2], 4, NO_DELEGATED_RANGE),
+    labeled([9], 12, NO_DELEGATED_RANGE),
+  ],
+  lead: [labeled([0], 6, RANGE)],
+  delegated: [labeled([3], 6, RANGE), labeled([2, 3], 6, RANGE)],
+  trail: [labeled([5], 6, RANGE)],
+  named: [labeled([3], 6, { kind: "pending", first: 2 })],
+} as const satisfies Record<PhaseSpan | "named", readonly LabeledPhase[]>
+
+function spanKeyOf(number: PhaseNumber): PhaseSpan | "named" {
+  return number.kind === "named" ? "named" : number.span
+}
+
 describe("phaseRowsOf", () => {
   const rows = phaseRowsOf(
     turn([
@@ -96,6 +132,26 @@ describe("phaseRowsOf", () => {
     ).map((row) => row.title)
 
     expect(titles).toEqual(["受け入れる", "並べて進める", "古い記録", "古い記録の3つ並び"])
+  })
+
+  it("組む側 phaseLabel が返す形の全部で、位置が残らず段の名前だけが題に残る", () => {
+    const rows = Object.entries(LABELED_PHASES).flatMap(([key, phases]) =>
+      phases.map((workPhase) => {
+        expect(spanKeyOf(phasePosition(workPhase))).toBe(key)
+        return phaseRowsOf(
+          turn([
+            step(0, {
+              interim: true,
+              firstLine: phaseLabel(workPhase),
+              finishedPhase: phase("", 1_000),
+            }),
+          ]),
+        )[0]?.title
+      }),
+    )
+
+    expect(rows).toHaveLength(Object.values(LABELED_PHASES).flat().length)
+    expect(new Set(rows)).toEqual(new Set([PHASE_NAME]))
   })
 
   it("板の N は段取りの段の数と一覧の数の大きいほう", () => {
