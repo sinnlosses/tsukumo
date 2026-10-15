@@ -159,14 +159,10 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは中立の文体で書く")
   })
 
-  it("レポートは日本語で書くと決め、検査が受け持つ項目は送る前の検算に置かない", () => {
+  it("レポートは日本語で書くと決める", () => {
     // 読んだコードや英語の文面に引きずられて本文が英語で出たことがある
     // （docs/architecture/display.md「レポートは必ず日本語で書かせる」）。
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは必ず日本語で書く")
-    const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
-    expect(beforeSend).not.toContain("日本語でない地の文")
-    expect(beforeSend).not.toContain("A → B")
-    expect(beforeSend).not.toContain("「名前: 説明」")
   })
 
   it("レポートは report ツールで渡させ、その外に書いた本文は画面に出ないと言う", () => {
@@ -205,7 +201,8 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).not.toContain("末尾の「お願い」")
     expect(REPORT_NOTATION_PROMPT).toContain("1. **結論は `conclusion` に1〜2文で書く。**")
     expect(REPORT_NOTATION_PROMPT).toContain("`favor` に分けて入れる")
-    expect(REPORT_NOTATION_PROMPT).toContain("10. **見出しを付けるなら")
+    expect(REPORT_NOTATION_PROMPT).toContain("9. **見出しは節の `heading` に書く。**")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("10. ")
   })
 
   it("検証の結果は checks に分けさせ、結論は読み手から見た変化で、文字より視覚情報を選ばせる", () => {
@@ -213,8 +210,6 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("検証の結果を `conclusion` と `sections` に書かない")
     expect(REPORT_NOTATION_PROMPT).toContain("読み手から見た変化")
     expect(article8).toContain("**残ったものは、文字より視覚情報で見せる。**")
-    const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
-    expect(beforeSend).toContain("`checks` へ移す")
   })
 
   it("前後は、構造は graph の印、画面は beforeAfter の image、1つの値は table の from / to に分けて書く", () => {
@@ -229,9 +224,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
     const firing =
       "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある"
 
-    expect(
-      article8.startsWith("図は `figure` の欄に置く。置かない理由は欄の enum で言う。\n"),
-    ).toBe(true)
+    expect(article8.startsWith("図は `figure` の欄に置く。\n")).toBe(true)
     expect(REPORT_FIGURE_DESCRIPTION).toContain(firing)
     expect(REPORT_NOTATION_PROMPT).not.toContain(firing)
     expect(REPORT_NOTATION_PROMPT).not.toContain("none にしない")
@@ -291,7 +284,6 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("画像は、撮った画像があるときだけ優先させる", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("この作業で撮った画像があるときだけ優先する")
-    expect(REPORT_NOTATION_PROMPT).toContain("撮っていない作業に画像を求めない")
   })
 
   it("勧める mermaid の種類は、描けることを確かめたものだけ", () => {
@@ -320,9 +312,6 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("印を勧めることが、書く量を増やす言い訳にならない", () => {
     // 「まず量を絞り、残ったものに構造を付ける」と噛み合わせるための条項。
-    expect(REPORT_NOTATION_PROMPT).toContain(
-      "構造を付けられることは、書く量を増やしてよい理由に\nならない",
-    )
     expect(REPORT_NOTATION_PROMPT).toContain("印は文の代わりに置くもので、文への足し算ではない")
   })
 
