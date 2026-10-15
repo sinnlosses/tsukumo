@@ -1,4 +1,7 @@
 {
+  "env": {
+    "TASK_WORKFLOW_TRACKER_TIMEOUT": "60"
+  },
   "hooks": {
     "PreToolUse": [
       {
