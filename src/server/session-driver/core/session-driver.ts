@@ -182,7 +182,7 @@ export type SessionDriverOptions = {
   readonly mode: SessionMode
   /**
    * 子プロセス（claude）へ引き継ぐ環境変数（`Config.inheritedEnv`）。駆動はこれに
-   * 本体の催促を止める変数を足して渡す（`childProcessEnv`）。
+   * Claude Code の催促を止める変数を足して渡す（`childProcessEnv`）。
    */
   readonly inheritedEnv: Readonly<Record<string, string | undefined>>
   /** Claude Code の設定ディレクトリ（`Config.claudeConfigDir`）。契約の控えを読む場所で、無ければ `~`。 */
@@ -195,7 +195,7 @@ export type SessionDriverOptions = {
   readonly reportFailure: (error: unknown) => void
   /** 現在時刻（エポックミリ秒）を返す時計。 */
   readonly now: () => number
-  /** 依頼が本体へ届くまでの遅れを診断ログへ書く口。ここで例外を投げないこと。 */
+  /** 依頼が Claude Code へ届くまでの遅れを診断ログへ書く口。ここで例外を投げないこと。 */
   readonly reportPromptDelay: (footprint: PromptDelayFootprint) => void
   /** 文脈・プラン使用量を「取れない」に畳んだ理由を診断ログへ書く口。ここで例外を投げないこと。 */
   readonly reportUsageFailure: (place: UsageFailurePlace, error: unknown) => void

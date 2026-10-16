@@ -36,7 +36,7 @@
 何も呼ばずに終える」と返し、両方の理由に「差し戻しにはセリフでもレポートでも触れない」を足した。
 
 **2026-09-27 に、通った `report` でターンを閉じるようにした**（`docs/research/report-block.md` 13章）。
-handler は検査を通した呼び出しの結果にだけ `_meta["claude/endTurn"]` を付け、本体はそのあと
+handler は検査を通した呼び出しの結果にだけ `_meta["claude/endTurn"]` を付け、Claude Code はそのあと
 assistant を挟まずにターンを終える。`report` のあとに本文を書き足す形そのものが起きないので、
 締めのセリフは `report` の必須の引数 `closing` で受け取って描いたあとに吹き出しへ出し、関所は
 `report` を呼ばなかったターンの本文だけを差し戻す（済んだターン向けの理由は外した）。`report` は
@@ -61,7 +61,7 @@ assistant を挟まずにターンを終える。`report` のあとに本文を�
 状態は載せない（tsukumo からモデルへの逆流路を広げない。上の「セリフはテキストの規約ではなく、
 ツール呼び出しで受け取る」の「戻り値は `"ok"` だけにする」と同じ理由）。
 
-**ターンが `speak` で終わると本体が催促を差し込む**（`[Your previous response had no visible
+**ターンが `speak` で終わると Claude Code が催促を差し込む**（`[Your previous response had no visible
 output. ...]` を利用者の発言として足し、1往復増える）。塞ぐのは子プロセスに
 `CLAUDE_CODE_TERMINAL_MCP_TOOLS=mcp__tsukumo__speak` を渡すこと（`src/server/session-driver/core/visible-output-nudge.ts`。
 2026-09-25 実装。公式の文書に無い変数なので、催促が届いたら stderr に固定の1行を出す見張りを

@@ -13,7 +13,7 @@ export type SessionTitleState = {
   readonly lastWritten: string | undefined
   /**
    * `/clear` の合図を受けてから、まだ {@link decideSessionTitle} を呼んでいない。
-   * 本体は `/clear` のたびに前のセッションの題を新しいセッションへ書き写すので、次の判断だけは現在値を tsukumo が最後に書いたものとみなす。
+   * Claude Code は `/clear` のたびに前のセッションの題を新しいセッションへ書き写すので、次の判断だけは現在値を tsukumo が最後に書いたものとみなす。
    */
   readonly adoptCurrentTitleNext: boolean
 }

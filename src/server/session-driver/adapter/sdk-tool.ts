@@ -219,7 +219,7 @@ const ACCEPTED_SPEECH = { kind: "accepted" } as const satisfies SpeechVerdict
  * レポートにする引数（締めのセリフの `closing` も）は、ここではなく `assistant` メッセージの変換が取り出す（`toSessionEvents`）。
  *
  * 通したときだけ結果に `_meta["claude/endTurn"]` を付け、そこでターンを閉じる。
- * 本体はこの結果のあとに assistant を挟まず `result` を返す。この印は transcript には残らない。
+ * Claude Code はこの結果のあとに assistant を挟まず `result` を返す。この印は transcript には残らない。
  * 差し戻し（`isError`）では閉じず、モデルが直して呼び直す。
  *
  * `title` は差し戻されなかったときだけ `onReportTitle` へ渡す。
@@ -402,7 +402,7 @@ function clearAndSendTool(hold: (text: string) => void) {
   )
 }
 
-/** ツールの結果の `_meta` に true で載せると、本体がそこでターンを閉じるキー。 */
+/** ツールの結果の `_meta` に true で載せると、Claude Code がそこでターンを閉じるキー。 */
 const END_TURN_META_KEY = "claude/endTurn"
 
 /** 覚えたことを書き足すツール。上限に当たった回も "ok" を返す（受け付けたかどうかをモデルへ戻さない）。 */

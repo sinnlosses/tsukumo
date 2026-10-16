@@ -5,7 +5,7 @@ import {
   isVisibleOutputNudge,
 } from "../../../../src/server/session-driver/core/visible-output-nudge.ts"
 
-// 催促の文面は本体の固定文をそのまま使う（利用者の発言ではなく本体が差し込むもの。
+// 催促の文面は Claude Code の固定文をそのまま使う（利用者の発言ではなく Claude Code が差し込むもの。
 // docs/coding-standards.md「会話内容の扱い」の対象ではない）。
 const NUDGE =
   "[Your previous response had no visible output. Please continue and produce a user-visible response.]"

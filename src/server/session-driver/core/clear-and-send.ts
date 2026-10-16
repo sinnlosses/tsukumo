@@ -3,7 +3,7 @@
 
 import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
 
-/** 文脈を空にする組み込みのコマンド。依頼の文面のまま本体へ渡る。 */
+/** 文脈を空にする組み込みのコマンド。依頼の文面のまま Claude Code へ渡る。 */
 const CLEAR_COMMAND = "/clear"
 
 /** モデルに見せる `clear_and_send` ツールの説明。 */

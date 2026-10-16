@@ -53,13 +53,13 @@ export type QuerySeedOptions = {
    */
   readonly resume: string | undefined
   /**
-   * ターンの最後の応答が空だと本体が差し込む催促（`[Your previous response had no visible output. ...]`）への返事が、指定なしだと日本語の依頼でも英語に滑るための保険。
+   * ターンの最後の応答が空だと Claude Code が差し込む催促（`[Your previous response had no visible output. ...]`）への返事が、指定なしだと日本語の依頼でも英語に滑るための保険。
    * 値は固定で、キャラクターパックや利用者から変える口は作らない。
    */
   readonly settings: { readonly language: "japanese" }
   /**
    * 子プロセスの環境変数。
-   * 渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ環境に本体の催促を止める変数を足したもの（`childProcessEnv`）を渡す。
+   * 渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ環境に Claude Code の催促を止める変数を足したもの（`childProcessEnv`）を渡す。
    */
   readonly env: Readonly<Record<string, string | undefined>>
   /** セッションに載せるプラグイン。同梱の `plugin/`（`tsukumo:token-usage-diet`）と、取り込んだ tsukumo-plugins（`mountWorkflowPlugin` のときだけ）。 */
@@ -194,7 +194,7 @@ export function handbackNoteHooks(
   }
 }
 
-/** 委譲先の返却を運ぶメインの入力の頭（本体が返却を包む塊）。 */
+/** 委譲先の返却を運ぶメインの入力の頭（Claude Code が返却を包む塊）。 */
 const HANDBACK_PROMPT_HEAD = "<agent-message"
 
 /**

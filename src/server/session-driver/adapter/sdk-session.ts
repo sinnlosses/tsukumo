@@ -34,7 +34,7 @@ import {
 
 /**
  * ターンが終わってから印（`tagSession`）や題（`renameSession`）を書くまでの待ち。
- * 本体もターンの終わりにセッションの要約を自分で書き、そこに印が含まれないので、書き込みと重なると印が消える。
+ * Claude Code もターンの終わりにセッションの要約を自分で書き、そこに印が含まれないので、書き込みと重なると印が消える。
  * 実測: `init` の直後・`result` の直後に付けた印はどちらも消え、ターンの3秒後に付けた印は入力を閉じたあとまで残った。
  * ターンが終わるたびに付け直すので、途中の1回が消えても次のターンで戻る。
  */
@@ -115,7 +115,7 @@ export function createSessionDigestReader(
 
 /**
  * ターンの終わりに tsukumo の印を付け直す予約をする（次に起こしたときに自分のセッションを見分けるため）。
- * 本体側の書き込みと重ならないように {@link SESSION_TAG_DELAY_MS} だけ待つ。
+ * Claude Code 側の書き込みと重ならないように {@link SESSION_TAG_DELAY_MS} だけ待つ。
  * 待っている間に tsukumo が終わるなら印はどのみち要らないので、タイマーでプロセスを引き延ばさない（`unref`）。
  */
 export function scheduleMarkSession(sessionId: string, options: SessionDriverOptions): void {
@@ -133,7 +133,7 @@ export type SessionTitleWriter = {
   readonly schedule: (sessionId: string, candidate: string, options: SessionDriverOptions) => void
   /**
    * `/clear` の合図を受けたことを伝える。
-   * 本体が前のセッションの題を新しいセッションへ書き写すため、次に書くときだけ現在値を tsukumo が最後に書いたものとみなす（{@link noteConversationCleared}）。
+   * Claude Code が前のセッションの題を新しいセッションへ書き写すため、次に書くときだけ現在値を tsukumo が最後に書いたものとみなす（{@link noteConversationCleared}）。
    */
   readonly noteConversationCleared: () => void
 }

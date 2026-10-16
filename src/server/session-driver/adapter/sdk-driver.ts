@@ -5,7 +5,7 @@
 // セッションは1プロセスに1つ。起こし直したときは新規から始める。画面で選ばれたときだけ前の続きから始める（`resume`）。
 //
 // 会話の内容（本文・ツールの入出力・セリフ）がここを通るが、ログにもファイルにも書かない。
-// stderr に出すのは SDK 自身のエラー文と、本体の催促が届いたという事実の1行（`isVisibleOutputNudge`。中身は写さない）だけ。
+// stderr に出すのは SDK 自身のエラー文と、Claude Code の催促が届いたという事実の1行（`isVisibleOutputNudge`。中身は写さない）だけ。
 
 import { type PermissionResult, query, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk"
 
@@ -48,11 +48,11 @@ import {
 import { tsukumoServer } from "./sdk-tool.ts"
 
 /**
- * 本体の催促が届いたときに stderr へ出す1行。固定の文面だけ（届いたメッセージの中身は写さない）。
- * 出たら `CLAUDE_CODE_TERMINAL_MCP_TOOLS` が本体の更新で効かなくなっている（`isVisibleOutputNudge`）。
+ * Claude Code の催促が届いたときに stderr へ出す1行。固定の文面だけ（届いたメッセージの中身は写さない）。
+ * 出たら `CLAUDE_CODE_TERMINAL_MCP_TOOLS` が Claude Code の更新で効かなくなっている（`isVisibleOutputNudge`）。
  */
 export const VISIBLE_OUTPUT_NUDGE_NOTICE =
-  "tsukumo: 本体が「本文の無い応答」の催促を差し込んだ（CLAUDE_CODE_TERMINAL_MCP_TOOLS が効いていない）\n"
+  "tsukumo: Claude Code が「本文の無い応答」の催促を差し込んだ（CLAUDE_CODE_TERMINAL_MCP_TOOLS が効いていない）\n"
 
 /**
  * Agent SDK の駆動を1つ起こす。

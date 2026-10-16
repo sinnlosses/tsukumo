@@ -190,7 +190,7 @@ function startDriver(options: {
   readonly onEvent: (event: SessionEvent) => void
   /** 握りつぶした失敗を診断ログへ書く口。 */
   readonly reportFailure: (place: SwallowedFailurePlace, error: unknown) => void
-  /** 依頼が本体へ届くまでの遅れを診断ログへ書く口。 */
+  /** 依頼が Claude Code へ届くまでの遅れを診断ログへ書く口。 */
   readonly reportPromptDelay: (footprint: PromptDelayFootprint) => void
 }): SessionDriver {
   const { seed, context, onEvent } = options

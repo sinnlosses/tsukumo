@@ -19,7 +19,7 @@ export const PERMISSION_MODES = [
 export type PermissionMode = (typeof PERMISSION_MODES)[number]
 
 /**
- * `setModel` に渡すモデルのエイリアス。Claude Code 本体はこの4語を受け付ける（実測）。
+ * `setModel` に渡すモデルのエイリアス。Claude Code はこの4語を受け付ける（実測）。
  * フルネーム（`claude-opus-4-1` のような値）は渡さない。
  */
 export const MODEL_ALIASES = ["opus", "sonnet", "haiku", "fable"] as const

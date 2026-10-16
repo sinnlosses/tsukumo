@@ -44,7 +44,7 @@ export type ApiRetry = {
  * - `none`: 不調の知らせは無い（あっても、そのあとモデルが応答した）
  * - `retrying`: 呼び直しを待っている。`at` は知らせが届いた時刻（`StampedEvent.at`）
  * - `errored`: API がエラーを返した（`assistant` の `error`）。まだ失敗とは限らない。
- *   出力の上限（`max_output_tokens`）のように、本体が立て直して続けることがある。
+ *   出力の上限（`max_output_tokens`）のように、Claude Code が立て直して続けることがある。
  *   失敗で終わるかは `turn-finished` が決め、そのときの理由の材料になる
  */
 export type ApiTrouble =

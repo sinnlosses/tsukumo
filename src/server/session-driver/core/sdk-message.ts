@@ -1,7 +1,7 @@
 // SDK から届いたメッセージを、tsukumo 内部のイベント（`SessionEvent`）に変換する。
 //
 // 届くメッセージは外部由来の値なので、構造を信用せず unknown で受けて検証する。
-// 知らない種別・壊れた形は空の並びにして無視する。種別は本体の更新で増える。
+// 知らない種別・壊れた形は空の並びにして無視する。種別は Claude Code の更新で増える。
 //
 // 会話の内容がここを通る。
 // 持ち出す先は呼び出し側のイベントの流れだけで、ログにもファイルにも書かない。
@@ -64,7 +64,7 @@ import {
  *   同じ assistant メッセージに含まれる `tool_use` はすべて同じ値を持つ
  * - `assistant` の `message.usage` は `step-usage` にする（ターンの中を持ち場ごとに割るため）
  * - `conversation_reset` は `/clear` の合図。
- *   tsukumo は `/clear` という文字列を見ず、本体が会話を捨てたことをこのメッセージで知る
+ *   tsukumo は `/clear` という文字列を見ず、Claude Code が会話を捨てたことをこのメッセージで知る
  * - `system` / `compact_boundary` は `compact-boundary` にする。
  *   `compact_metadata`（`trigger` / `pre_tokens` / `post_tokens` / `duration_ms`）は画面に出さないので運ばない
  * - `system` / `background_tasks_changed` は `background-tasks-changed` にする。`ambient` が true のもの（活動でないもの）は落とす
@@ -81,7 +81,7 @@ import {
  * - `system` / `api_retry` は `api-retry`、`rate_limit_event` は `rate-limit-changed`、メインの `assistant` の `error` は `api-error` にする。
  *   運ぶのは型の決まった値（エラーの列挙値・HTTP の状態コード・回数・待ち時間・枠・戻る時刻）だけ。
  *   `result` の `errors` は運ばない（自由文で、会話の断片が混ざりうる）。
- *   `error` の付いた `assistant` の本文は本文として流す（出力の上限で切れた本物の本文のこともあり、本体が作った API エラーの文面と見分ける印が型に無い）
+ *   `error` の付いた `assistant` の本文は本文として流す（出力の上限で切れた本物の本文のこともあり、Claude Code が作った API エラーの文面と見分ける印が型に無い）
  * - `result` の終わり方は `outcome` に畳む（{@link turnOutcome}。中断は失敗にしない）
  * - 知らない `type`・壊れた形は空の並びを返す（落ちない）
  */
@@ -128,7 +128,7 @@ export function toSessionEvents(
       return toolResultEvents(message.message)
     case "result":
       // サブエージェント（Task ツール）の中の `result` が `parent_tool_use_id` 付きで届いたら無視する。
-      // ターンの終わりとして扱うと、本体のターンが終わっていないのに `turn-finished` が挟まり、ターンが `finished` に落ちる。
+      // ターンの終わりとして扱うと、Claude Code のターンが終わっていないのに `turn-finished` が挟まり、ターンが `finished` に落ちる。
       // SDK が実際にこの形で流すかは未確認（`assistant` の `tool_use` と同じ形のはずという保険）。
       return optionalString(message.parent_tool_use_id) === undefined
         ? [
@@ -137,7 +137,7 @@ export function toSessionEvents(
           ]
         : []
     case "conversation_reset":
-      // `/clear` で本体が会話を捨てたとき。`/compact` では届かない。
+      // `/clear` で Claude Code が会話を捨てたとき。`/compact` では届かない。
       return [{ kind: "conversation-cleared" }]
     default:
       return []
@@ -159,7 +159,7 @@ export function isSubagentMessage(message: unknown): boolean {
  * `closing` の「無い」（引数に `closing` が無かったころの transcript）は `none` に畳む。
  * `waitingLine` の「無い」（省いた・文が空白だけ・形の崩れ）も `none` に畳む。
  * `sessionSummary` の「無い」（空白だけも）は undefined。
- * `conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、モデルには本体がエラーを返す）。
+ * `conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、モデルには Claude Code がエラーを返す）。
  */
 export function reportEvents(
   toolUseId: string,
@@ -354,7 +354,7 @@ function assistantMessageEvents(
 
 /**
  * `assistant` の `error` を `api-error` にする。
- * メインのものだけ（サブエージェントの中のエラーは本体のターンの終わり方に効かない）。
+ * メインのものだけ（サブエージェントの中のエラーは Claude Code のターンの終わり方に効かない）。
  * 知らない綴りは `unknown` に畳む。
  */
 function apiErrorEvents(
@@ -399,7 +399,7 @@ function toApiErrorKind(value: unknown): ApiErrorKind {
 /**
  * `rate_limit_event` の `rate_limit_info` を `rate-limit-changed` にする。
  * `status` が3つのどれでもなければ出さない。
- * `resetsAt` は秒で届くのでミリ秒に直す（Claude Code 本体が `resetsAt*1000` で扱っているのを 0.3.280 の同梱の本体で確かめた）。
+ * `resetsAt` は秒で届くのでミリ秒に直す（Claude Code が `resetsAt*1000` で扱っているのを 0.3.280 の同梱の Claude Code で確かめた）。
  * 超過利用（`overage*`）と使用率は運ばない（`RateLimit`）。
  * 「近い」（`allowed_warning`）は読み手が居ないので、状態として持ち回らず `clear` に畳む（`docs/research/plan-usage.md`「論点3」）。
  */
@@ -729,7 +729,7 @@ function finiteNumber(value: unknown): number {
  * - `success` は完了。ただし `is_error` が true なら API のエラーで止まった失敗（SDK の型定義: 「with is_error true, the error text when the turn ended on an API error」）
  * - `error_max_turns` / `error_max_budget_usd` はそれぞれの上限に当たった失敗
  * - `error_during_execution` は中断のことが多い（中断されたターンはこれで終わる。実測）。
- *   `terminal_reason` が中断（`aborted_streaming` / `aborted_tools`）か、無い（古い本体）ときは中断に倒す。
+ *   `terminal_reason` が中断（`aborted_streaming` / `aborted_tools`）か、無い（古い Claude Code）ときは中断に倒す。
  *   それ以外の理由が付いているときだけ実行中のエラーの失敗にする
  * - 知らない subtype は実行中のエラーの失敗（成功と言い切れないものを黙って成功にしない）
  */
@@ -754,7 +754,7 @@ function turnOutcome(message: Readonly<Record<string, unknown>>): TurnOutcome {
 
 /**
  * `error_during_execution` を中断とみなす `terminal_reason`。無い（undefined）も含める。
- * `terminal_reason` を載せない古い本体でも、中断を失敗と出さないため。
+ * `terminal_reason` を載せない古い Claude Code でも、中断を失敗と出さないため。
  */
 const INTERRUPTED_TERMINAL_REASONS: ReadonlySet<unknown> = new Set([
   "aborted_streaming",

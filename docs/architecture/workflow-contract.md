@@ -4,7 +4,7 @@
 
 責務: tsukumo がワークフロー（タスクを段に分けて送り出す手順）に対して定める契約 — 受ける口の名前と引数の意味、
 委譲の返却の書式と関門、読む Beads の欄、ワークフローが持つ設定の口、並びに置くスキルの契約、ワークフローがしてよいことと tsukumo が読まないもの — を1か所に持つ。
-読む時: 独自のワークフローを tsukumo に当てるとき、`tsukumo-plugins` のワークフローを直すとき、口の引数や Beads の読み口・設定の口を変えるとき、並びに置くスキルを書くとき。
+読む時: 独自のワークフローを tsukumo に当てるとき、`tsukumo-plugins` のワークフローを直すとき、口の引数や Beads アダプタ・設定の口を変えるとき、並びに置くスキルを書くとき。
 直す時: 口の引数・委譲の返却の書式と帯の進め方・関門・Beads の読み取る欄・設定の口の形・スキルの契約・読まないものを変えたとき。判断の経緯は
 `docs/architecture/adr/0024-no-skill-dependency.md`（並びの話は `docs/architecture/adr/0030-workflow-as-skill-sequence.md`）、帯・中間レポートの描き方と差し戻しは `docs/architecture/display.md`「段取り」が持つ。
 
@@ -138,7 +138,7 @@ tsukumo は推し量らない。
 
 ## Beads の欄
 
-**タスクは Beads の組み込みの欄と、metadata の2つの属性（`difficulty`・`loopable`）だけから作る。** 写すのは Beads の読み口（`server/**/adapter/`）の1か所で、shared・画面・各機能の core は
+**タスクは Beads の組み込みの欄と、metadata の2つの属性（`difficulty`・`loopable`）だけから作る。** 写すのは Beads アダプタ（`server/**/adapter/`）の1か所で、shared・画面・各機能の core は
 一般の形（`TaskSummaryItem`・`DoneTask`）だけを扱う。
 
 - ID（そのまま）・題（`title`）・依存（`blocks` の依存先）
@@ -315,5 +315,5 @@ tsukumo が読まないもの: 委譲の返却の2行目より後ろ、委譲先
 並びに置くスキルを書くときは、上の「スキルの契約」の印を付け、受け取るもの・返すものを合わせる。
 
 取り込んだワークフローを載せるとき（`mount`・`partial`）は、plugin の `hooks/hooks.json` が `AskUserQuestion` に `tw ask-guard` を当てる。
-利用者がスキルとエージェントをリンクで入れていて載せないとき（`user-installed`）は、本体が `PreToolUse` の `AskUserQuestion` に取り込みの `bin/tw ask-guard` を当てる。
+利用者がスキルとエージェントをリンクで入れていて載せないとき（`user-installed`）は、Claude Code が `PreToolUse` の `AskUserQuestion` に取り込みの `bin/tw ask-guard` を当てる。
 どちらか一方だけが効き、二重に拒まない。子が失敗・無出力・読めない出力のときは質問を通す。`report` の `favor` は扱わない。

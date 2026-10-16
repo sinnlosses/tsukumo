@@ -682,7 +682,7 @@ describe("toSessionEvents", () => {
     ])
   })
 
-  // 中断されたターンはこの subtype で終わる（実測）。`terminal_reason` を載せない古い本体でも
+  // 中断されたターンはこの subtype で終わる（実測）。`terminal_reason` を載せない古い Claude Code でも
   // 中断を失敗と出さない。
   it("result の error_during_execution は、中断の terminal_reason か無いときは中断にする", () => {
     const messages = [
@@ -1019,7 +1019,7 @@ describe("toSessionEvents", () => {
     }
   })
 
-  it("parent_tool_use_id のある result はターンの終わりにせず、使用量も出さない（案4-c。サブエージェントぶんは本体の累計に含まれる）", () => {
+  it("parent_tool_use_id のある result はターンの終わりにせず、使用量も出さない（案4-c。サブエージェントぶんは Claude Code の累計に含まれる）", () => {
     const message = {
       type: "result",
       subtype: "success",
@@ -1032,7 +1032,7 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
-  it("知らない種別は無視する（種別は本体の更新で増える）", () => {
+  it("知らない種別は無視する（種別は Claude Code の更新で増える）", () => {
     expect(toSessionEvents({ type: "some_future_message", payload: {} }, EXPRESSIONS)).toEqual([])
   })
 

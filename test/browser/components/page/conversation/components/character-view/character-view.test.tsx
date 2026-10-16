@@ -296,7 +296,7 @@ describe("CharacterView（反応の吹き出し）", () => {
       "架空の上限の反応",
     ],
     [
-      "依頼を待つ間が続くと、本体が report に書いた待ちの一言が最新として出る",
+      "依頼を待つ間が続くと、Claude Code が report に書いた待ちの一言が最新として出る",
       [GREETED, REQUEST, SPEECH, WAITING_LINE, COMPLETED],
       "idle",
       "架空の待ちの一言",

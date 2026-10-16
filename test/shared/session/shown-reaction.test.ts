@@ -237,7 +237,7 @@ describe("shownReaction", () => {
       expect(shown(state, NO_WELCOME_HEAD, dueAt ?? 0)).toBe("idle:架空の待ちの一言")
     })
 
-    it("本体が書いていなければ、反応の行の問い合わせが書いた待ちの行を出す", () => {
+    it("Claude Code が書いていなければ、反応の行の問い合わせが書いた待ちの行を出す", () => {
       expect(
         shown(
           stateAfter([REACTED, REQUEST, SPEECH, report({ kind: "none" }), COMPLETED]),
@@ -250,13 +250,13 @@ describe("shownReaction", () => {
       )
     })
 
-    it("本体が書いた待ちの一言は、書かせた待ちの行より勝つ", () => {
+    it("Claude Code が書いた待ちの一言は、書かせた待ちの行より勝つ", () => {
       expect(
         shown(stateAfter([REACTED, REQUEST, SPEECH, WRITTEN, COMPLETED]), NO_WELCOME_HEAD, LATER),
       ).toBe("idle:架空の待ちの一言")
     })
 
-    it("本体が書いておらず反応の行も書けていなければ、挨拶が書けていても何も出さない", () => {
+    it("Claude Code が書いておらず反応の行も書けていなければ、挨拶が書けていても何も出さない", () => {
       expect(shown(stateAfter([REQUEST, SPEECH, COMPLETED]), NO_WELCOME_HEAD, LATER)).toBe("none")
       expect(shown(stateAfter([GREETED, REQUEST, SPEECH, COMPLETED]), NO_WELCOME_HEAD, LATER)).toBe(
         "none",

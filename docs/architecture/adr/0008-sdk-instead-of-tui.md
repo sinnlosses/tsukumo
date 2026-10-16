@@ -20,6 +20,6 @@
   スキル・`.claude/commands`・hook・MCP もそのまま使える（一次情報で確認済み。
   `docs/requirements.md` 3章）
 
-**代償**: 「本体のログを読んでいるだけなので Codex / Gemini CLI にも流用できる」という副次的な
+**代償**: 「Claude Code のログを読んでいるだけなので Codex / Gemini CLI にも流用できる」という副次的な
 利点は消えた。汎用のログ tailer ではなく、Claude Code に固有の駆動役になる。目的は
 「キャラクターと一緒に楽しく仕事をする」ことであって汎用性ではないので、これは払ってよい。

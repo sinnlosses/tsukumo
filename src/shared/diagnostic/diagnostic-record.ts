@@ -94,17 +94,17 @@ export type SessionEventFootprint = Readonly<z.infer<typeof sessionEventFootprin
 
 export const promptDelayFootprintSchema = z.object({
   flow: z.literal("prompt-delay"),
-  /** 本体から最初のメッセージを受けた時刻（エポックミリ秒）。 */
+  /** Claude Code から最初のメッセージを受けた時刻（エポックミリ秒）。 */
   at: z.number(),
   /** 依頼を SDK へ渡した時刻（エポックミリ秒）。 */
   pushedAt: z.number(),
   /** 渡してから SDK が書き終えるまで。 */
   writeMs: z.number(),
-  /** 書き終えてから本体の最初のメッセージが届くまで。 */
+  /** 書き終えてから Claude Code の最初のメッセージが届くまで。 */
   replyMs: z.number(),
 })
 
-/** 依頼を SDK へ渡してから本体が受け取るまでが遅れたこと。区間のミリ秒だけを持つ。 */
+/** 依頼を SDK へ渡してから Claude Code が受け取るまでが遅れたこと。区間のミリ秒だけを持つ。 */
 export type PromptDelayFootprint = Readonly<z.infer<typeof promptDelayFootprintSchema>>
 
 /** 足跡の1件（書き出す前。版を持たない）。`flow` が流れの判別子。 */

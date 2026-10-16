@@ -65,7 +65,7 @@ export type ReportClosing =
   | Extract<SessionEvent, { readonly kind: "speech" }>
   | { readonly kind: "none" }
 
-/** `report` の待ちの一言（`report` ツールの `waitingLine` 引数）。`none` は本体が書かなかった。 */
+/** `report` の待ちの一言（`report` ツールの `waitingLine` 引数）。`none` は Claude Code が書かなかった。 */
 export type ReportWaitingLine =
   | Extract<SessionEvent, { readonly kind: "speech" }>
   | { readonly kind: "none" }
@@ -284,7 +284,7 @@ export type SessionEvent =
   | { readonly kind: "api-retry"; readonly retry: ApiRetry }
   /**
    * API がエラーを返した（`assistant` の `error`。メインのものだけ）。
-   * これだけではターンの失敗にしない（本体が立て直して続けることがある。出力の上限など）。
+   * これだけではターンの失敗にしない（Claude Code が立て直して続けることがある。出力の上限など）。
    * 失敗で終わったかは続く `turn-finished` の `outcome` が決め、この種類がその理由になる。
    */
   | { readonly kind: "api-error"; readonly error: ApiErrorKind }
@@ -319,7 +319,7 @@ export type SessionEvent =
     }
   /**
    * `/clear` で会話が消された（SDK の `conversation_reset`。実測）。
-   * tsukumo は `/clear` という文字列を見ていない。`/` コマンドは依頼の文面としてそのまま本体へ渡り、本体が会話を捨てたときにこのメッセージを流してくる
+   * tsukumo は `/clear` という文字列を見ていない。`/` コマンドは依頼の文面としてそのまま Claude Code へ渡り、Claude Code が会話を捨てたときにこのメッセージを流してくる
    * （`new_conversation_id` 付き。直後に新しい `session_id` の `system/init` が届く）。
    *
    * `/compact` では流れない（同じ実測で `system/status` + 同じ `session_id` の `init` だけだった）。要約は会話を消さないので、ここで拾う必要も無い。

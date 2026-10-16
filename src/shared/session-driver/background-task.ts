@@ -3,7 +3,7 @@
 
 /**
  * バックグラウンドタスクの種類。SDK の `task_type` を3つに畳む（`local_bash` → `shell`、`local_agent` → `agent`、それ以外 → `other`）。
- * 種類は本体の更新で増えるので、知らない値は落とさず `other` に倒す。
+ * 種類は Claude Code の更新で増えるので、知らない値は落とさず `other` に倒す。
  */
 export type BackgroundTaskKind = "shell" | "agent" | "other"
 

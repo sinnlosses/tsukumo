@@ -1,4 +1,4 @@
-// 依頼を SDK へ渡してから本体の最初のメッセージが届くまでの遅れを見張る。
+// 依頼を SDK へ渡してから Claude Code の最初のメッセージが届くまでの遅れを見張る。
 // 時刻と区間のミリ秒しか持たず、依頼の文面もメッセージも見ない。
 
 import type { PromptDelayFootprint } from "../../../shared/diagnostic/diagnostic-record.ts"
@@ -13,7 +13,7 @@ export type PromptDelayWatch = {
   readonly discard: () => void
   /** SDK が依頼を書き終えた（入力の生成器が再開した）。 */
   readonly written: (at: number) => void
-  /** 本体からメッセージが届いた。書き終える前の分は数えない。 */
+  /** Claude Code からメッセージが届いた。書き終える前の分は数えない。 */
   readonly received: (at: number) => void
 }
 

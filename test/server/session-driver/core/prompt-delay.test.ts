@@ -35,7 +35,7 @@ describe("createPromptDelayWatch", () => {
     ])
   })
 
-  it("書き終えてから本体の最初のメッセージまでが超えたときも書く", () => {
+  it("書き終えてから Claude Code の最初のメッセージまでが超えたときも書く", () => {
     const { reported, watch } = watchWith()
 
     watch.pushed(START)

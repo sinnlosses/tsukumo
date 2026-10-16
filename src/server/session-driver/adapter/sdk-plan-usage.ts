@@ -41,7 +41,7 @@ const sdkPlanUsageSchema = z.object({
  * プラン使用量を SDK に問い合わせる。取れなかった回・読めない形は「取れない」を返すだけで、例外は外へ出さない。
  *
  * `skipBehaviors: true` を必ず渡す。
- * 渡さないと本体が手元の transcript を7日ぶん走査して `behaviors` を作る。
+ * 渡さないと Claude Code が手元の transcript を7日ぶん走査して `behaviors` を作る。
  * プラン使用量を読むだけの都合で、会話の中身に触る処理を tsukumo の側から起こさない（`docs/coding-standards.md`「会話内容の扱い」）。
  */
 export async function readPlanUsage(

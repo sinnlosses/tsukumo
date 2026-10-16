@@ -107,7 +107,7 @@ describe("buildQuerySeedOptions", () => {
     expect(buildQuerySeedOptions(BASE_OPTIONS).settings).toEqual({ language: "japanese" })
   })
 
-  it("引き継いだ環境変数に本体の催促を止める2つの変数を足して子プロセスへ渡す", () => {
+  it("引き継いだ環境変数に Claude Code の催促を止める2つの変数を足して子プロセスへ渡す", () => {
     // SDK の `env` は `process.env` と混ぜずに丸ごと置き換えるので、引き継ぎが落ちていないことも見る
     // （`childProcessEnv`）。
     expect(buildQuerySeedOptions(BASE_OPTIONS).env).toEqual({

@@ -9,7 +9,7 @@ import type { Expression } from "../character-pack/expression.ts"
  * - `retrying`: API の呼び出しを待ってから呼び直している
  * - `failed`: 失敗で閉じた
  * - `limited`: 利用上限で閉じた
- * - `idle`: 依頼を待つ間が続いた（本体が待ちの一言を書かなかったときの控え）
+ * - `idle`: 依頼を待つ間が続いた（Claude Code が待ちの一言を書かなかったときの控え）
  */
 export type ReactionKind = "welcome" | WrittenReactionKind
 

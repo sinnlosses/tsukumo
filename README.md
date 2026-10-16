@@ -196,7 +196,7 @@ tsukumo は**1つのプロセス**で、Agent SDK で Claude Code を子プロ�
 | 3   | `canUseTool` → 答え待ち → 回答 | 許可プロンプトと `AskUserQuestion` はどちらも `canUseTool` に届く。メインビューのお伺いの札に選択肢を出し、選ばれた答えを戻り値として SDK へ返す                                     |
 
 > **なぜ TUI を使わないのか**: Claude Code の TUI には割り込めないため、パイプ・hook の stdout・
-> 本体へのパッチのいずれも描画の経路にできません。だから TUI を捨て、SDK で動かす側に回りました
+> Claude Code へのパッチのいずれも描画の経路にできません。だから TUI を捨て、SDK で動かす側に回りました
 > （採らなかった案も含め、経緯は [`docs/architecture.md`](./docs/architecture.md) が正典）。
 
 ## 画面レイアウト

@@ -32,7 +32,7 @@ describe("機械の出来事 → キャラビューの反応", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("本体が待ちの一言を書いていなければ、反応の行の問い合わせが書いた待ちの行が出る", async () => {
+  it("Claude Code が待ちの一言を書いていなければ、反応の行の問い合わせが書いた待ちの行が出る", async () => {
     const room = await run.open({
       scenario: "character-reaction-waiting-idle",
       scene: "waiting-idle",
