@@ -70,7 +70,8 @@ function renderNav(
     return rpcOutput({
       kind: "known",
       requestCount: 4,
-      summary: "架空の要約の一段落目。\n\n残り：架空の残り。",
+      summary: "架空の要約の一段落目。",
+      remaining: "架空の残り。",
       lastLine: "架空の締めのセリフ",
     })
   })
@@ -127,11 +128,16 @@ describe("セッションの札と切り替え画面", () => {
     expect(screen.getByRole("tooltip").textContent).toContain("セッション FA")
   })
 
-  it("札で開くと、選んでいるセッションの要約と最後のひとことが右の欄に出る", async () => {
+  it("札で開くと、選んでいるセッションの要約・残り・最後のひとことが右の欄に出る", async () => {
     renderNav({})
     openByTag()
 
-    expect(await screen.findByText(/架空の要約の一段落目。/u)).toBeDefined()
+    expect(
+      (await screen.findByText("架空の要約の一段落目。")).getAttribute("data-remaining"),
+    ).toBeNull()
+    expect((await screen.findByText("残り：架空の残り。")).getAttribute("data-remaining")).toBe(
+      "true",
+    )
     expect(await screen.findByText(/架空の締めのセリフ/u)).toBeDefined()
   })
 

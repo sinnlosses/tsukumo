@@ -31,6 +31,7 @@ export const FAKE_SESSION_DIGEST: SessionDigest = {
   kind: "known",
   requestCount: 3,
   summary: "架空の要約",
+  remaining: undefined,
   lastLine: "架空のセリフ",
 }
 

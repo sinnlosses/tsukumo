@@ -277,20 +277,13 @@ describe("WorkPlanReview の委譲の返却", () => {
     expect(review.judge(ranged(0)).kind).toBe("accepted")
   })
 
-  it("段のまとめが範囲の外の番号を言う work_plan は差し戻し、範囲が無ければ検査しない", () => {
+  it("段のまとめの本文は読まず、範囲の外の番号を書いても差し戻さない", () => {
     const review = createWorkPlanReview()
     review.pass(REQUEST)
     review.judge(ranged(0))
 
-    expect(review.judge(ranged(1, "段3が済んだ。")).kind).toBe("phase-number")
-    expect(review.judge(ranged(1, "段1が済んだ。")).kind).toBe("accepted")
+    expect(review.judge(ranged(1, "段3が済んだ。階段3の図も直した。")).kind).toBe("accepted")
     expect(review.delegatedRange()).toEqual({ kind: "range", first: 1, count: 2 })
-    review.pass(REQUEST)
-    expect(review.delegatedRange()).toEqual({ kind: "none" })
-    review.judge({ phases: FOUR, current: 0 })
-    expect(review.judge({ phases: FOUR, current: 1, phaseSummary: "段9が済んだ。" }).kind).toBe(
-      "accepted",
-    )
   })
 
   it("返却を受けていない依頼・形の読めない返却だけの依頼では、範囲が無くても通る", () => {

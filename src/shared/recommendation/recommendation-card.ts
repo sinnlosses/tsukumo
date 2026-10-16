@@ -6,7 +6,7 @@ export const MAX_RECOMMENDATION_CARDS = 3
 
 /**
  * おすすめの札1枚。並びの順がおすすめの順。
- * `resume` は前回の続きで、「残り：」の中身は持たない（画面が前のセッションの要約から読む）。
+ * `resume` は前回の続きで、残りの中身は持たない（画面が前のセッションの `SessionDigest` の `remaining` から読む）。
  */
 export type RecommendationCard =
   | { readonly kind: "resume"; readonly reason: string }

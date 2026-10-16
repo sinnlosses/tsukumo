@@ -50,7 +50,8 @@ describe("toSessionDigest", () => {
       toolResult("t-1", false),
       reportCall("r-2", {
         conclusion: "架空の二",
-        sessionSummary: "架空の新しい要約。\n\n残り：架空の残り。",
+        sessionSummary: "架空の新しい要約。",
+        sessionRemaining: "架空の残り。",
         closing: { text: "架空の締めその2", expression: "proud" },
       }),
       toolResult("r-2", false),
@@ -59,8 +60,69 @@ describe("toSessionDigest", () => {
     expect(toSessionDigest(messages, EXPRESSIONS)).toEqual({
       kind: "known",
       requestCount: 2,
-      summary: "架空の新しい要約。\n\n残り：架空の残り。",
+      summary: "架空の新しい要約。",
+      remaining: "架空の残り。",
       lastLine: "架空の締めその2",
+    })
+  })
+
+  describe("残り", () => {
+    const digestOf = (input: Readonly<Record<string, unknown>>) =>
+      toSessionDigest(
+        [userMessage("架空の依頼"), reportCall("r-1", input), toolResult("r-1", false)],
+        EXPRESSIONS,
+      )
+
+    it("sessionRemaining の欄があれば、要約は読まずにそのまま残す", () => {
+      expect(
+        digestOf({
+          conclusion: "架空の結論",
+          sessionSummary: "架空の要約。\n\n残り：架空の要約の中の残り。",
+          sessionRemaining: "架空の欄の残り。",
+        }),
+      ).toMatchObject({
+        summary: "架空の要約。\n\n残り：架空の要約の中の残り。",
+        remaining: "架空の欄の残り。",
+      })
+    })
+
+    it("sessionRemaining が空白だけなら残りは無く、要約の「残り：」の段落も読まない", () => {
+      expect(
+        digestOf({
+          conclusion: "架空の結論",
+          sessionSummary: "架空の要約。\n\n残り：架空の要約の中の残り。",
+          sessionRemaining: "  ",
+        }),
+      ).toMatchObject({
+        summary: "架空の要約。\n\n残り：架空の要約の中の残り。",
+        remaining: undefined,
+      })
+    })
+
+    it("sessionRemaining の無かった頃の report は、段落の頭の「残り」の段落を残りへ移して要約から外す", () => {
+      expect(
+        digestOf({
+          conclusion: "架空の結論",
+          sessionSummary: "架空の一段落目。\n\n架空の二段落目。\n\n残り：架空の古い残り。",
+        }),
+      ).toMatchObject({
+        summary: "架空の一段落目。\n\n架空の二段落目。",
+        remaining: "架空の古い残り。",
+      })
+    })
+
+    it("sessionRemaining の無かった頃の report でも、段落の途中の「残り：」は拾わない", () => {
+      const summary = "架空の要約。残り：架空の途中の残り。"
+      expect(digestOf({ conclusion: "架空の結論", sessionSummary: summary })).toMatchObject({
+        summary,
+        remaining: undefined,
+      })
+    })
+
+    it("書き出しだけの「残り：」の段落は要約から外し、残りは無い", () => {
+      expect(
+        digestOf({ conclusion: "架空の結論", sessionSummary: "架空の要約。\n\n残り：" }),
+      ).toMatchObject({ summary: "架空の要約。", remaining: undefined })
     })
   })
 
@@ -111,6 +173,7 @@ describe("toSessionDigest", () => {
       kind: "known",
       requestCount: 1,
       summary: undefined,
+      remaining: undefined,
       lastLine: undefined,
     })
   })
@@ -128,9 +191,13 @@ function digestViaRestoredEvents(messages: readonly unknown[]): unknown {
       event.kind === "report" && event.sessionSummary !== undefined ? [event.sessionSummary] : [],
     )
     .at(-1)
+  const remaining = events
+    .flatMap((event) => (event.kind === "report" ? [event.sessionRemaining] : []))
+    .at(-1)
   return {
     kind: "known",
     requestCount: events.filter((event) => event.kind === "request").length,
+    remaining: remaining?.kind === "remaining" ? remaining.text : undefined,
     summary:
       summary === undefined
         ? undefined
@@ -180,6 +247,13 @@ describe("toSessionDigest と toRestoredEvents の一致", () => {
       toolResult("r-1", false),
       reportCall("r-2", { conclusion: "架空の結論2" }),
       toolResult("r-2", false),
+    ],
+    "残りを書いた report と、そのあと差し戻された report": [
+      userMessage("架空の依頼"),
+      reportCall("r-1", { ...withClosing("1"), sessionRemaining: "架空の残り1" }),
+      toolResult("r-1", false),
+      reportCall("r-2", { ...withClosing("2"), sessionRemaining: "架空の残り2" }),
+      toolResult("r-2", true),
     ],
     "speak だけ": [userMessage("架空の依頼"), speakCall("s-1", "架空のセリフ")],
     "通った speak と差し戻された speak が混ざる": [

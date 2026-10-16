@@ -31,8 +31,8 @@ export type CallReview = {
   readonly judgeReport: (report: ReportDraft, changedFiles?: readonly string[]) => ReportVerdict
   /** `report` の handler から、`judgeReport` に渡す前に待つ。ターンの頭の HEAD から変わったファイル（読めなければ空）。 */
   readonly changedFiles: () => Promise<readonly string[]>
-  /** `speak`・`report` の handler から、本文の文字列を渡す。範囲があるあいだ、範囲の外の段の番号を言っていれば差し戻す。 */
-  readonly judgePhaseMention: (texts: readonly string[]) => PhaseMentionVerdict
+  /** `speak` の handler から、`phase` を渡したときだけ呼ぶ。範囲があるあいだ、範囲の外の段の番号なら差し戻す。 */
+  readonly judgePhaseMention: (phase: number) => PhaseMentionVerdict
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
   readonly judgeWorkPlan: (input: unknown) => WorkPlanVerdict
   /** `phase_result` の handler から、届いた引数のままで呼ぶ（`WorkPlanReview.judgeResult`）。 */
@@ -89,7 +89,7 @@ export function createCallReview(changes?: ReportChanges): CallReview {
     judgeSpeak: speechReview.judge,
     judgeReport: reportReview.judge,
     changedFiles: reportReview.changedFiles,
-    judgePhaseMention: (texts) => judgePhaseMention(workPlanReview.delegatedRange(), texts),
+    judgePhaseMention: (phase) => judgePhaseMention(workPlanReview.delegatedRange(), phase),
     judgeWorkPlan: workPlanReview.judge,
     judgePhaseResult: workPlanReview.judgeResult,
     pass: (event) => {

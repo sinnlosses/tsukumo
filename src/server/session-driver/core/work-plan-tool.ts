@@ -3,7 +3,6 @@
 
 import { bandPositionText } from "./band-position.ts"
 import type { CallReview } from "./call-review.ts"
-import { PHASE_MENTION_REJECTION_TEXT } from "./phase-mention.ts"
 import type { WorkPlanVerdict } from "./work-plan-review.ts"
 
 /** モデルに見せる `work_plan` ツールの説明。呼ぶ条件は「段取り（tsukumo）」の節が持つ。 */
@@ -79,7 +78,6 @@ export const WORK_PLAN_REJECTIONS = {
     "範囲の中の段を委譲先の段に1つずつ合わせ、" +
     "count を返却の段の数にそろえて呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
-  "phase-number": PHASE_MENTION_REJECTION_TEXT,
   "range-missing":
     "委譲先の返却を受けたのに delegatedRange が無いか、count が無い。" +
     "first と count（返却の段の数）を付けた委譲先の段の範囲を宣言して呼び直すこと。" +

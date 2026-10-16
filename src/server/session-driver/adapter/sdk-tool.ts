@@ -45,6 +45,7 @@ import {
   REPORT_CLOSING_DESCRIPTION,
   REPORT_FIGURE_DESCRIPTION,
   REPORT_SECTIONS_DESCRIPTION,
+  REPORT_SESSION_REMAINING_DESCRIPTION,
   REPORT_SESSION_SUMMARY_DESCRIPTION,
   REPORT_TASK_DESCRIPTION,
   REPORT_TITLE_DESCRIPTION,
@@ -54,7 +55,6 @@ import {
 } from "../../report/core/report-tool.ts"
 import type { CallReview } from "../core/call-review.ts"
 import { CLEAR_AND_SEND_TOOL_DESCRIPTION } from "../core/clear-and-send.ts"
-import { stringsIn } from "../core/phase-mention.ts"
 import {
   answerPhaseResultCall,
   PHASE_RESULT_COUNT_DESCRIPTION,
@@ -98,7 +98,14 @@ import {
 const SPEAK_TOOL_DESCRIPTION =
   "キャラクターがユーザーに向けて話す。掛け声・呼びかけ・リアクション・感想はこのツールで言う。" +
   "`report` を呼ぶターンの締めの一言はここではなく `report` の closing に入れる。" +
-  "手順・コード・表・判断とその理由は本文に書き、ここには入れない。"
+  "手順・コード・表・判断とその理由は本文に書き、ここには入れない。" +
+  "委譲先の段を番号で言うセリフでは、その番号を `phase` で申告する。"
+
+/** モデルに見せる `speak` の `phase` 引数の説明。 */
+const SPEAK_PHASE_DESCRIPTION =
+  "セリフが委譲先の段を番号で言うとき（「段2が返った」など）、その段の番号（1から委譲先の段の数まで。`phase_result` の `phase` と同じ数え方）。" +
+  "委譲の範囲があるあいだ、範囲の外の番号は差し戻される。" +
+  "段を番号で言わないセリフと、計画・受け入れのような範囲の外の段（名前で言う）では省く"
 
 /**
  * モデルに見せる `remember` ツールの説明。
@@ -137,7 +144,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  * 戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情がモデルへ戻る経路を作らない（`docs/architecture/adr/0009-speech-via-tool.md`）。
  * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と `phase_result` と `question_brief`。
  * `phase_result` が返すのは、帯の今の段（帯を動かさなかったらそのこと）か、形の崩れの直し方だけ。
- * `speak` が返すのは、新しい事実の無い呼び出しを差し戻す固定の文面だけ。
+ * `speak` が返すのは、新しい事実の無い呼び出しと範囲の外の `phase` を差し戻す固定の文面だけ。
  * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の会話の目次と1件の逐語）だけ。
  * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `CallReview` が受け付けなかったときの直し方だけ。
  *
@@ -198,9 +205,16 @@ function speakTool(
   return tool(
     SPEAK_TOOL_NAME,
     SPEAK_TOOL_DESCRIPTION,
-    speechShape(expressions),
-    async ({ text }) => {
-      const mention = mode.kind === "work" ? review.judgePhaseMention([text]) : ACCEPTED_SPEECH
+    {
+      ...speechShape(expressions),
+      // 0 や負の数も形では通し、範囲の検査の差し戻しで直し方を返す。
+      phase: z.number().int().optional().describe(SPEAK_PHASE_DESCRIPTION),
+    },
+    async ({ phase }) => {
+      const mention =
+        mode.kind === "work" && phase !== undefined
+          ? review.judgePhaseMention(phase)
+          : ACCEPTED_SPEECH
       const verdict = mode.kind === "work" ? review.judgeSpeak() : ACCEPTED_SPEECH
       const rejection = mention.kind === "rejected" ? mention : verdict
       return rejection.kind === "rejected"
@@ -262,26 +276,11 @@ function reportTool(
       checks: z.array(reportCheckSchema).optional().describe(REPORT_CHECKS_DESCRIPTION),
       title: z.string().optional().describe(REPORT_TITLE_DESCRIPTION),
       sessionSummary: z.string().describe(REPORT_SESSION_SUMMARY_DESCRIPTION),
+      sessionRemaining: z.string().describe(REPORT_SESSION_REMAINING_DESCRIPTION),
       closing: z.object(speechShape(expressions)).describe(REPORT_CLOSING_DESCRIPTION),
       waitingLine: z.object(speechShape(expressions)).describe(REPORT_WAITING_LINE_DESCRIPTION),
     },
-    async ({
-      task,
-      workPlanClosing,
-      conclusion,
-      figure,
-      sections,
-      favor,
-      checks,
-      title,
-      closing,
-    }) => {
-      const mention = review.judgePhaseMention(
-        stringsIn([conclusion, figure, sections, favor, checks, closing.text]),
-      )
-      if (mention.kind === "rejected") {
-        return { content: [{ type: "text" as const, text: mention.text }], isError: true }
-      }
+    async ({ task, workPlanClosing, conclusion, figure, sections, favor, checks, title }) => {
       const fileContents = await readReportBlockFiles(cwd, sections ?? [])
       const mermaidFaults = await checkMermaidSyntax(
         mermaidSourcesInSections(sectionsWithFigure(figure, sections ?? [])),

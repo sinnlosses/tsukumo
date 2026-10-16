@@ -25,6 +25,7 @@ import type { RateLimit, RateLimitBucket } from "../../../shared/session-driver/
 import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
 import { parseDelegateReturn } from "../../../shared/session/delegate-return.ts"
 import { parsePhaseResult } from "../../../shared/session/phase-result.ts"
+import type { SessionRemaining } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { parseWorkPlan, parseWorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import type { ModelTokenUsage } from "../../../shared/token-usage/token-usage.ts"
@@ -159,6 +160,7 @@ export function isSubagentMessage(message: unknown): boolean {
  * `closing` の「無い」（引数に `closing` が無かったころの transcript）は `none` に畳む。
  * `waitingLine` の「無い」（省いた・文が空白だけ・形の崩れ）も `none` に畳む。
  * `sessionSummary` の「無い」（空白だけも）は undefined。
+ * `sessionRemaining` は空白だけなら `none`、文字列なら `remaining`、欄が無い（欄の無かった頃の transcript）・文字列でないなら `unrecorded` に畳む。
  * `conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、モデルには Claude Code がエラーを返す）。
  */
 export function reportEvents(
@@ -192,8 +194,16 @@ export function reportEvents(
       ) ?? { kind: "none" },
       unknownBlockCount: parsed.unknownBlockCount,
       sessionSummary: nonBlankString(input.sessionSummary),
+      sessionRemaining: sessionRemainingOf(input.sessionRemaining),
     },
   ]
+}
+
+function sessionRemainingOf(value: unknown): SessionRemaining {
+  if (typeof value !== "string") {
+    return { kind: "unrecorded" }
+  }
+  return value.trim() === "" ? { kind: "none" } : { kind: "remaining", text: value }
 }
 
 function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly SessionEvent[] {

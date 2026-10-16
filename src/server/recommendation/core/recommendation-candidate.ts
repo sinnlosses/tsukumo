@@ -1,6 +1,6 @@
 // おすすめの札の候補と、候補の並びの印。
 // 候補はタスク一覧（進捗管理のデータ）と、中身を持たない「前回の続き」だけで、会話を含まない。
-// 前のセッションの要約（「残り：」）も、前のセッションが有るかも候補に入れない（`docs/coding-standards.md`「会話内容の扱い」）。
+// 前のセッションの要約と残りも、前のセッションが有るかも候補に入れない（`docs/coding-standards.md`「会話内容の扱い」）。
 
 import { taskReadiness, type TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 

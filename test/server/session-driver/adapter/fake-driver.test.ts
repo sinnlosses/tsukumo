@@ -62,6 +62,7 @@ const FAKE_SESSION = {
       kind: "known",
       requestCount: 2,
       summary: "架空の要約",
+      remaining: undefined,
       lastLine: "架空のセリフ",
     },
   },

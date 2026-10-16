@@ -28,6 +28,7 @@ import type { UsageReviewEvent } from "../usage-review/usage-review.ts"
 import type { DelegateReturn } from "./delegate-return.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import type { SessionDefault } from "./session-default.ts"
+import type { SessionRemaining } from "./session-digest.ts"
 import type { WorkPlan, WorkPlanClosing } from "./work-plan.ts"
 
 /**
@@ -178,6 +179,7 @@ export type SessionEvent =
    * `waitingLine`（待ちの一言）は記録に写り、依頼を待つ間に `shownReaction` が出す。
    * `unknownBlockCount` は知らない種類で境界で落とした塊の数で、画面の状態は読まない。
    * `sessionSummary` はセッション全体の要約で、書かれていなければ undefined。レポートには描かず、切り替え画面が transcript から読み戻す。
+   * `sessionRemaining`（残っていること）も同じく描かず、切り替え画面と迎える口の「前回の続き」が transcript から読み戻す。
    */
   | {
       readonly kind: "report"
@@ -193,6 +195,7 @@ export type SessionEvent =
       readonly waitingLine: ReportWaitingLine
       readonly unknownBlockCount: number
       readonly sessionSummary: string | undefined
+      readonly sessionRemaining: SessionRemaining
     }
   /**
    * `report` の handler が差し戻したときに流す。`reasons` は差し戻しの種類の名前だけで、本文も文面も持たない。

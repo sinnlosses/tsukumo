@@ -1,4 +1,4 @@
-// セッション1件の中身（依頼の数・要約・最後のセリフ）を transcript のメッセージ列から組む。SDK を呼ばない純粋な部分。
+// セッション1件の中身（依頼の数・要約・残り・最後のセリフ）を transcript のメッセージ列から組む。SDK を呼ばない純粋な部分。
 //
 // 復元（`toRestoredEvents`）が組む履歴を数えた結果と同じになるよう、メッセージ列を1回なめて畳む。
 // 差し戻された `speak` のセリフと、差し戻された `report` の要約・締めのセリフは拾わない。
@@ -8,6 +8,8 @@ import type { Expression } from "../../../shared/character-pack/expression.ts"
 import {
   MAX_SESSION_SUMMARY_LENGTH,
   type SessionDigest,
+  type SessionRemaining,
+  summaryParagraphs,
   UNAVAILABLE_SESSION_DIGEST,
 } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -27,16 +29,51 @@ export function toSessionDigest(
     (fold, message) => restoredMessageEvents(message, expressions).reduce(foldEvent, fold),
     INITIAL_FOLD,
   )
-  const { summary, lastLine } = folded.turnOpen ? adoptHeld(folded) : folded
+  const { summary, remaining, lastLine } = folded.turnOpen ? adoptHeld(folded) : folded
+  const split =
+    remaining.kind === "unrecorded" && summary !== undefined
+      ? splitLegacyRemaining(summary)
+      : { summary, remaining: remaining.kind === "remaining" ? remaining.text : undefined }
   return {
     kind: "known",
     requestCount: folded.requestCount,
-    summary:
-      summary === undefined
-        ? undefined
-        : clipWithEllipsis(summary.trim(), MAX_SESSION_SUMMARY_LENGTH),
+    summary: clipped(split.summary),
+    remaining: clipped(split.remaining),
     lastLine,
   }
+}
+
+/** `sessionRemaining` の無かった頃の要約で、残りの段落の書き出し。 */
+const LEGACY_REMAINING_PREFIX = "残り"
+
+/**
+ * `sessionRemaining` の無かった頃の要約から、段落の頭が「残り」の段落を残りとして取り出し、要約から外す。
+ * 段落の途中の「残り：」は拾わない。書き出しを外して中身が空なら、残りは undefined（段落は外す）。
+ */
+function splitLegacyRemaining(summary: string): {
+  readonly summary: string
+  readonly remaining: string | undefined
+} {
+  const paragraphs = summaryParagraphs(summary)
+  const found = paragraphs.find((line) => line.startsWith(LEGACY_REMAINING_PREFIX))
+  if (found === undefined) {
+    return { summary, remaining: undefined }
+  }
+  const rest = found
+    .slice(LEGACY_REMAINING_PREFIX.length)
+    .replace(/^[:：]\s*/, "")
+    .trim()
+  return {
+    summary: paragraphs.filter((line) => line !== found).join("\n\n"),
+    remaining: rest === "" ? undefined : rest,
+  }
+}
+
+function clipped(text: string | undefined): string | undefined {
+  const trimmed = text?.trim()
+  return trimmed === undefined || trimmed === ""
+    ? undefined
+    : clipWithEllipsis(trimmed, MAX_SESSION_SUMMARY_LENGTH)
 }
 
 type HeldCall = Extract<SessionEvent, { readonly kind: "report" | "speak-called" }>
@@ -45,6 +82,8 @@ type HeldCall = Extract<SessionEvent, { readonly kind: "report" | "speak-called"
 type DigestFold = {
   readonly requestCount: number
   readonly summary: string | undefined
+  /** 最後に取り込んだ `report` の残り。`report` がまだ無ければ `none`。 */
+  readonly remaining: SessionRemaining
   readonly lastLine: string | undefined
   readonly held: readonly HeldCall[]
   readonly turnOpen: boolean
@@ -53,6 +92,7 @@ type DigestFold = {
 const INITIAL_FOLD: DigestFold = {
   requestCount: 0,
   summary: undefined,
+  remaining: { kind: "none" },
   lastLine: undefined,
   held: [],
   turnOpen: false,
@@ -102,6 +142,7 @@ function adoptCall(fold: DigestFold, call: HeldCall): DigestFold {
   return {
     ...fold,
     summary: call.sessionSummary ?? fold.summary,
+    remaining: call.sessionRemaining,
     lastLine: call.closing.kind === "speech" ? call.closing.text : fold.lastLine,
   }
 }

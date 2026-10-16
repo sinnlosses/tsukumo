@@ -168,14 +168,17 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### セッションの要約
 
-- **英語識別子**: `sessionSummary`（`report` の引数）/ `SessionDigest`（切り替え画面に配る1件の中身）
-- **定義**: そのセッションでここまでにしたことを claude が書いた数段落。`report` の任意の引数
+- **英語識別子**: `sessionSummary`（`report` の引数）/ `sessionRemaining`（`report` の引数。残っていること）/
+  `SessionRemaining`（`report` のイベントに写した残り。`none`・`remaining`・`unrecorded`）/
+  `SessionDigest`（切り替え画面に配る1件の中身。残りは欄 `remaining`）
+- **定義**: そのセッションでここまでにしたことを claude が書いた数段落。`report` の引数
   `sessionSummary` で毎ターン書き直させ、切り替え画面が transcript の最後に通った `report` から
-  読み戻す
+  読み戻す。残っていることは要約に書かず、同じ `report` の必須の引数 `sessionRemaining`（無ければ空の文字列）に書く
 - **注記**: **tsukumo は要約を別の場所に書き出さない**（transcript のツールの入力に残るだけ）。
-  切り替え画面に配る1件の中身（`SessionDigest`）は要約・依頼の数・最後のセリフの3つで、選んだ
+  切り替え画面に配る1件の中身（`SessionDigest`）は要約・残り・依頼の数・最後のセリフの4つで、選んだ
   1件ぶんだけ手続き `sessionDigest.read` で取りに来る。一覧に載ったセッションといま出している
-  セッション以外のIDは読まない。要約が無い古いセッションは「要約はまだ無い」になる
+  セッション以外のIDは読まない。要約が無い古いセッションは「要約はまだ無い」になる。
+  `sessionRemaining` の無かった頃の `report`（`unrecorded`）だけ、要約の段落の頭が「残り」の段落を残りとして読み、要約から外す
 - **避ける言い方**: あらすじ（雑談の記憶のほう）、見出し（SDK の `summary`。1行の題）
 
 ### セッションドライバ
@@ -288,10 +291,13 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### speak ツール
 
-- **英語識別子**: `speak`（ツール名そのもの）
+- **英語識別子**: `speak`（ツール名そのもの）/ `phase`（セリフが番号で言う委譲先の段。任意）
 - **定義**: tsukumo がプロセス内の MCP サーバとして提供するツール。引数は `text`（セリフ）と
-  `expression`（表情）で、**戻り値は `"ok"` か、仕事のときに新しい事実の無い呼び出しを差し戻す
-  固定の一文**（差し戻した呼び出しは吹き出しに出さない。`src/server/session-driver/core/speech-review.ts`）
+  `expression`（表情）と任意の `phase`（委譲先の段を番号で言うときの、その番号。`phase_result` の `phase` と同じ数え方）で、
+  **戻り値は `"ok"` か、仕事のときに新しい事実の無い呼び出しを差し戻す固定の一文か、
+  委譲先の段の範囲があるあいだ範囲の外の `phase` を差し戻す固定の一文**
+  （差し戻した呼び出しは吹き出しに出さない。`src/server/session-driver/core/speech-review.ts`・`phase-mention.ts`）。
+  `phase` は差し戻しの検査だけが読み、画面へは運ばない。セリフの本文の段の番号は読まない
 - **注記**: **セリフの唯一の主経路**（`docs/architecture/adr/0009-speech-via-tool.md`）。
   **セリフが届く経路はこれだけ**（行頭マーカーの補助は
   2026-09-21 に撤去した）

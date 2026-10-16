@@ -133,7 +133,10 @@
       "waitingLine": {
         "kind": "none"
       },
-      "unknownBlockCount": 0
+      "unknownBlockCount": 0,
+      "sessionRemaining": {
+        "kind": "unrecorded"
+      }
     }
   },
   {
@@ -332,7 +335,10 @@
       "waitingLine": {
         "kind": "none"
       },
-      "unknownBlockCount": 0
+      "unknownBlockCount": 0,
+      "sessionRemaining": {
+        "kind": "unrecorded"
+      }
     }
   },
   {

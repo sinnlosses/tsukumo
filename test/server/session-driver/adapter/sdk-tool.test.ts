@@ -220,6 +220,7 @@ const CLOSING = { text: "架空の締めの一言", expression: "default" }
 /** `report` に渡す待ちの一言とセッションの要約（架空）。どちらも必須。 */
 const WAITING_LINE = { text: "架空の待ちの一言", expression: "default" }
 const SUMMARY = "架空の要約"
+const REMAINING = "架空の残り"
 
 /** `report` に渡す図の欄（必須）。図を置かない理由を言う形。 */
 const FIGURE = { kind: "none", reason: "short-answer" }
@@ -304,6 +305,7 @@ describe("report でターンを閉じる", () => {
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
 
@@ -317,6 +319,7 @@ describe("report でターンを閉じる", () => {
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
 
@@ -331,6 +334,7 @@ describe("report でターンを閉じる", () => {
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
 
@@ -358,6 +362,7 @@ describe("report でターンを閉じる", () => {
       sections: [{ blocks: [{ kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi" }] }],
       closing: CLOSING,
       sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
 
@@ -379,6 +384,7 @@ describe("report でターンを閉じる", () => {
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
       waitingLine: { text: "架空の待ちの一言", expression: "架空の表情" },
     })
 
@@ -386,22 +392,29 @@ describe("report でターンを閉じる", () => {
     expect(reply.endsTurn).toBe(false)
   })
 
-  it("waitingLine か sessionSummary の無い report は形の検査で落ち、ターンを閉じない", async () => {
-    const noWaitingLine = await callTool(workServer(), "report", {
-      conclusion: "架空の結論",
-      closing: CLOSING,
-      figure: FIGURE,
-      sessionSummary: SUMMARY,
-    })
-    const noSummary = await callTool(workServer(), "report", {
+  it("waitingLine・sessionSummary・sessionRemaining のどれかの無い report は形の検査で落ち、ターンを閉じない", async () => {
+    const complete = {
       conclusion: "架空の結論",
       figure: FIGURE,
       closing: CLOSING,
       waitingLine: WAITING_LINE,
-    })
+      sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
+    }
+    const { waitingLine: _waitingLine, ...noWaitingLine } = complete
+    const { sessionSummary: _sessionSummary, ...noSummary } = complete
+    const { sessionRemaining: _sessionRemaining, ...noRemaining } = complete
 
-    expect(noWaitingLine).toMatchObject({ isError: true, endsTurn: false })
-    expect(noSummary).toMatchObject({ isError: true, endsTurn: false })
+    for (const input of [noWaitingLine, noSummary, noRemaining]) {
+      expect(await callTool(workServer(), "report", input)).toMatchObject({
+        isError: true,
+        endsTurn: false,
+      })
+    }
+    expect(await callTool(workServer(), "report", complete)).toMatchObject({
+      isError: false,
+      endsTurn: true,
+    })
   })
 
   it("figure の無い report・理由の無い none は形の検査で落ち、図の塊1つか none と理由で通る", async () => {
@@ -410,6 +423,7 @@ describe("report でターンを閉じる", () => {
       ...(figure === undefined ? {} : { figure }),
       closing: CLOSING,
       sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
 
@@ -489,42 +503,53 @@ function rangedReview(): CallReview {
   return review
 }
 
-describe("範囲の外の段の番号の差し戻し", () => {
+describe("speak の phase の差し戻し", () => {
   const rejected = { text: PHASE_MENTION_REJECTION_TEXT, isError: true, endsTurn: false }
 
-  it("範囲があるあいだ、範囲の外の番号を言う speak と report を差し戻し、範囲の中の番号は通す", async () => {
-    const report = (closingText: string) => ({
-      conclusion: "架空の結論",
-      workPlanClosing: "stopped",
-      closing: { text: closingText, expression: "default" },
-      figure: FIGURE,
-      sessionSummary: SUMMARY,
-      waitingLine: WAITING_LINE,
-    })
-
+  it("範囲があるあいだ、範囲の外の phase の speak を差し戻し、範囲の中の phase は通す", async () => {
     expect(
       await callTool(workServer([], [], rangedReview()), "speak", {
-        text: "段3が返った",
+        text: "架空のセリフ",
         expression: "default",
+        phase: 3,
       }),
     ).toEqual(rejected)
     expect(
-      await callTool(workServer([], [], rangedReview()), "report", report("段3まで済んだ")),
-    ).toEqual(rejected)
+      await callTool(workServer([], [], rangedReview()), "speak", {
+        text: "架空のセリフ",
+        expression: "default",
+        phase: 2,
+      }),
+    ).toMatchObject({ isError: false })
+  })
+
+  it("本文の段の番号は読まず、phase を省いた speak と report は範囲の外の番号を書いても通る", async () => {
     expect(
       await callTool(workServer([], [], rangedReview()), "speak", {
-        text: "段2が返った",
+        text: "段9が返った。階段3も見た",
         expression: "default",
       }),
     ).toMatchObject({ isError: false })
     expect(
-      await callTool(workServer([], [], rangedReview()), "report", report("段2まで済んだ")),
+      await callTool(workServer([], [], rangedReview()), "report", {
+        conclusion: "段9まで済んだ",
+        workPlanClosing: "stopped",
+        closing: { text: "段9まで済んだ", expression: "default" },
+        figure: FIGURE,
+        sessionSummary: SUMMARY,
+        sessionRemaining: REMAINING,
+        waitingLine: WAITING_LINE,
+      }),
     ).toMatchObject({ isError: false, endsTurn: true })
   })
 
-  it("範囲が無ければ検査しない", async () => {
+  it("範囲が無ければ phase を検査しない", async () => {
     expect(
-      await callTool(workServer(), "speak", { text: "段9が返った", expression: "default" }),
+      await callTool(workServer(), "speak", {
+        text: "架空のセリフ",
+        expression: "default",
+        phase: 9,
+      }),
     ).toMatchObject({ isError: false })
   })
 })
@@ -858,6 +883,7 @@ describe("report の本文（sections）", () => {
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
     const rejected = await callTool(workServer(), "report", {
@@ -866,6 +892,7 @@ describe("report の本文（sections）", () => {
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
 
@@ -881,6 +908,7 @@ describe("report の差し戻しの記録", () => {
     closing: CLOSING,
     figure: FIGURE,
     sessionSummary: SUMMARY,
+    sessionRemaining: REMAINING,
     waitingLine: WAITING_LINE,
   }
 
@@ -905,6 +933,7 @@ describe("report の title", () => {
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
       title: "架空の題",
     })
@@ -921,6 +950,7 @@ describe("report の title", () => {
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
     })
 
@@ -936,6 +966,7 @@ describe("report の title", () => {
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
       waitingLine: WAITING_LINE,
       title: "架空の題",
     })

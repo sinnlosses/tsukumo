@@ -7,8 +7,8 @@
 import { Search } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
+import { summaryParagraphs } from "../../../../../shared/session/session-digest.ts"
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
-import { REMAINING_PREFIX, summaryParagraphs } from "../../../../domain/session-summary.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../ui/heading/heading.tsx"
@@ -36,6 +36,7 @@ const NEW_SESSION_LABEL = "＋ 新しいセッション"
 const SUMMARY_HEADING = "このセッションの要約"
 const LAST_LINE_HEADING = "最後のひとこと"
 const NO_SUMMARY = "要約はまだ無い（このセッションの report に要約が書かれていない）"
+const REMAINING_LABEL = "残り："
 const NO_MATCH = "当たるセッションが無い"
 const NO_SESSIONS = "切り替えられるセッションはまだ無い"
 const LOADING = "読み込み中…"
@@ -380,14 +381,16 @@ function DigestBody(props: DigestBodyProps): ReactElement {
         </Text>
       ) : (
         summaryParagraphs(digest.summary).map((paragraph, index) => (
-          <p
-            key={`${String(index)}-${paragraph}`}
-            className={styles["session-switcher-paragraph"]}
-            data-remaining={paragraph.startsWith(REMAINING_PREFIX)}
-          >
+          <p key={`${String(index)}-${paragraph}`} className={styles["session-switcher-paragraph"]}>
             {paragraph}
           </p>
         ))
+      )}
+      {digest.remaining !== undefined && (
+        <p className={styles["session-switcher-paragraph"]} data-remaining="true">
+          {REMAINING_LABEL}
+          {digest.remaining}
+        </p>
       )}
       {digest.lastLine !== undefined && (
         <div className={styles["session-switcher-last-line"]}>

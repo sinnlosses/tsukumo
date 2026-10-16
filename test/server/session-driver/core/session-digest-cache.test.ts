@@ -10,6 +10,7 @@ const DIGEST: SessionDigest = {
   kind: "known",
   requestCount: 2,
   summary: "架空の要約",
+  remaining: undefined,
   lastLine: "架空のセリフ",
 }
 const STAMP = { lastModified: 1000, fileSize: 200 }

@@ -1,4 +1,4 @@
-// 迎える口に並べる札を、状態・前回のセッションの要約・タスク一覧から用意する。
+// 迎える口に並べる札を、状態・前回のセッションの残り・タスク一覧から用意する。
 
 import { useSession } from "../../../../../stores/session.ts"
 import { useSessionDigest } from "../../../../domain/screen-nav/hooks/use-session-digest.ts"
@@ -25,9 +25,9 @@ export function useWelcomeCards(): WelcomeCards {
 
   const previous = previousSessionOf(sessions, currentSessionId)
   const digest = useSessionDigest(previous?.sessionId)
-  const summary = digest.kind === "known" ? digest.summary : undefined
+  const remaining = digest.kind === "known" ? digest.remaining : undefined
   return {
-    cards: welcomeCardsOf(recommendation, previous, summary, tasks),
+    cards: welcomeCardsOf(recommendation, previous, remaining, tasks),
     hasOtherSessions: hasOtherSession(sessions, currentSessionId),
   }
 }

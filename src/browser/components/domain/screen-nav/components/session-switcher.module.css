@@ -226,7 +226,7 @@
   font-size: var(--font-subheading);
   line-height: 1.9;
 }
-/* 「残り：」で始まる段落は一段控えめに（見本の最後の段落）。 */
+/* 要約のあとの残りの段落は一段控えめに（見本の最後の段落）。 */
 .session-switcher-paragraph[data-remaining="true"] {
   color: var(--ink-quiet);
 }

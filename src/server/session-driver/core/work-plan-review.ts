@@ -39,7 +39,6 @@ import {
   handbackNoteText,
   RESULT_CALLED_HANDBACK_LINE,
 } from "./band-position.ts"
-import { judgePhaseMention } from "./phase-mention.ts"
 
 export type WorkPlanVerdict =
   | { readonly kind: "accepted"; readonly plan: WorkPlan }
@@ -47,7 +46,6 @@ export type WorkPlanVerdict =
   | { readonly kind: "skipped-phase" }
   | { readonly kind: "range-mismatch" }
   | { readonly kind: "range-missing" }
-  | { readonly kind: "phase-number" }
   | { readonly kind: "closed-by-plan" }
   | { readonly kind: "skip-mark-late" }
   | { readonly kind: "skip-mark-dropped" }
@@ -156,9 +154,6 @@ export function createWorkPlanReview(): WorkPlanReview {
       plan.delegatedRange.count !== returnedCount
     ) {
       return { kind: "range-mismatch" }
-    }
-    if (judgePhaseMention(plan.delegatedRange, [plan.phaseSummary]).kind === "rejected") {
-      return { kind: "phase-number" }
     }
     if (isMidWay(plan) && plan.phaseSummary === "" && !isReturnedPosition(plan)) {
       return { kind: "malformed" }

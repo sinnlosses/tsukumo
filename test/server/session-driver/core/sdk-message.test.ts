@@ -1192,6 +1192,33 @@ describe("toSessionEvents（report ツール）", () => {
     expect(summaries).toEqual([undefined, undefined])
   })
 
+  it("report の sessionRemaining は文字列なら残り、空白だけなら none、無い（古い transcript）・文字列でないなら unrecorded に畳む", () => {
+    const remainings = ["架空の残り", "   ", undefined, 42].map((sessionRemaining) => {
+      const [event] = toSessionEvents(
+        assistantMessage([
+          {
+            type: "tool_use",
+            id: "toolu_r1",
+            name: REPORT_TOOL_FULL_NAME,
+            input: {
+              conclusion: "架空の結論。",
+              ...(sessionRemaining === undefined ? {} : { sessionRemaining }),
+            },
+          },
+        ]),
+        EXPRESSIONS,
+      )
+      return event?.kind === "report" ? event.sessionRemaining : "report でない"
+    })
+
+    expect(remainings).toEqual([
+      { kind: "remaining", text: "架空の残り" },
+      { kind: "none" },
+      { kind: "unrecorded" },
+      { kind: "unrecorded" },
+    ])
+  })
+
   it("sections は塊ごとに検証し、崩れた塊・知らない種類の塊と、塊の残らない節を落とす（省いた欄は既定で埋める）", () => {
     const message = assistantMessage([
       {

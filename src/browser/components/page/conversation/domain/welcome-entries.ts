@@ -1,4 +1,4 @@
-// 迎える口に並べる札を、おすすめの並び・セッションの一覧・前回の要約・タスク一覧から導く。
+// 迎える口に並べる札を、おすすめの並び・セッションの一覧・前回の残り・タスク一覧から導く。
 
 import {
   MAX_RECOMMENDATION_CARDS,
@@ -13,7 +13,6 @@ import {
   type TaskSummaryResult,
 } from "../../../../../shared/repository/task-summary.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
-import { remainingOf } from "../../../../domain/session-summary.ts"
 
 /** 見出しが無いセッションの代わりに出す字。 */
 const NO_HEADING_LABEL = "（題なし）"
@@ -60,10 +59,10 @@ export function hasOtherSession(
 export function welcomeCardsOf(
   recommendation: readonly RecommendationCard[],
   previous: SessionChoice | undefined,
-  previousSummary: string | undefined,
+  previousRemaining: string | undefined,
   tasks: TaskSummaryResult,
 ): readonly WelcomeCard[] {
-  const available = [...resumeCards(previous, previousSummary), ...readyTaskCards(tasks)]
+  const available = [...resumeCards(previous, previousRemaining), ...readyTaskCards(tasks)]
   const recommended = uniqueByKey(
     recommendation.flatMap((card) => {
       const found = available.find((entry) => entry.key === keyOf(card))
@@ -89,9 +88,8 @@ function keyOf(card: RecommendationCard): string {
 
 function resumeCards(
   previous: SessionChoice | undefined,
-  previousSummary: string | undefined,
+  remaining: string | undefined,
 ): readonly WelcomeCard[] {
-  const remaining = previousSummary === undefined ? undefined : remainingOf(previousSummary)
   if (previous === undefined || remaining === undefined) {
     return []
   }

@@ -22,6 +22,7 @@ export function reportEvent(
     waitingLine: { kind: "none" },
     unknownBlockCount: 0,
     sessionSummary: undefined,
+    sessionRemaining: { kind: "unrecorded" },
     ...overrides,
   }
 }
