@@ -46,7 +46,7 @@ export type PersonaRememberResult =
 export type PersonaForgetResult = "erased" | "turn-used" | "no-match" | "not-editable" | "failed"
 
 /**
- * 雑談の要約の写しの読み書き口。
+ * あらすじの写しの読み書き口。
  * 中身を読んで判定する口は持たない。
  * `systemPrompt` へ載せるかどうかの判断は `takeChatMemoryPromptParts` が持つ。
  */

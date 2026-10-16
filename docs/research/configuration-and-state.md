@@ -46,7 +46,7 @@
 | 8   | 状態     | 覚えたキャラクターパックの名前                             | `~/.tsukumo/state.json`                                 | `adapter/remembered-character.ts`（切り替え時） | **消えない**（上書きのみ。手で消す）                             | 23 B                  |
 | 9   | 状態     | 画面から作った・変えたパック（定義・人格・立ち絵・背景）   | `~/.tsukumo/characters/<pack>/`                         | `adapter/character-edit.ts`                     | **消えない**（捨てる口が画面にも CLI にも無い。手で `rm`）       | 11.6 MB / 10 ファイル |
 | 10  | 状態     | 雑談で覚えた1行（`## 覚えたこと` の節）                    | `~/.tsukumo/characters/<pack>/persona.md`               | `adapter/persona-memory.ts`                     | 20行を超えると最古から落ちる／`forget` で1行ずつ／節を消せば全部 | 11 KB                 |
-| 11  | 状態     | 雑談の要約の写し＋「渡し済み」の印（1行目）                | `~/.tsukumo/chat-summary/<pack>.md`                     | `adapter/chat-summary.ts`                       | **次の要約で上書き**（常に最新1つ。8 KiB 上限）                  | 12 B                  |
+| 11  | 状態     | あらすじの写し＋「渡し済み」の印（1行目）                  | `~/.tsukumo/chat-summary/<pack>.md`                     | `adapter/chat-summary.ts`                       | **次の要約で上書き**（常に最新1つ。8 KiB 上限）                  | 12 B                  |
 | 12  | 状態     | 雑談の依頼とセリフ（1行1件の JSONL）                       | `~/.tsukumo/chat-archive/<pack>/<YYYY-MM-DD>.jsonl`     | `adapter/chat-archive.ts`（`receive` の中）     | **消えない**（日ごとに1ファイル増える。消すのは人）              | 63 KB / 1日ぶん       |
 | 13  | 状態     | 領域の比率（仕切り3本＋畳んだときの上下比）                | ブラウザの `localStorage` `tsukumo-layout-split:v1`     | `browser/components/domain/layout/split.ts`     | **オリジン（`127.0.0.1:<port>`）が変わると消えたように見える**   | —                     |
 | 14  | 状態     | 画面の3色の上書き（`ground` / `surface` / `ink`）          | ブラウザの `localStorage` `tsukumo-appearance-color:v1` | `browser/domain/appearance-color.ts`            | 同上                                                             | —                     |
@@ -267,7 +267,7 @@ tsukumo が「画面で選ぶ」方向に積み上げてきた口（キャラク
 
 次のどれかが来たら、この結論を読み直す。
 
-- **雑談のアーカイブを画面から横断して検索する**と決めたとき（「あの話いつだっけ」）。
+- **会話のアーカイブを画面から横断して検索する**と決めたとき（「あの話いつだっけ」）。
   ただしその前に `grep` / `rg` で足りるかを試す ——JSONL を選んだ理由の1つがそれ
 - **同じパックへ複数の tsukumo プロセスが同時に追記して行が壊れる**のを実際に観測したとき
   （いまは追記オープンで、1行が小さいうちは混ざらない）

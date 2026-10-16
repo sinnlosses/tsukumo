@@ -74,7 +74,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   /** いま出しているパックを画面へ流す形（立ち絵の URL・選択肢・画面から変えられるか）。 */
   readonly characterEvent: (pack: Pack) => SessionEvent
   /**
-   * そのパックの雑談の要約の写しから、最近の話題の見出しを読む（写しがまだ無い・取り出せないときは空）。
+   * そのパックのあらすじの写しから、最近の話題の見出しを読む（写しがまだ無い・取り出せないときは空）。
    * 雑談で起こすときだけ呼ばれる。
    */
   readonly readChatTopics: (pack: Pack) => readonly string[]

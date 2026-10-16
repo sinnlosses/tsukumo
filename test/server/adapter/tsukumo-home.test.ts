@@ -50,7 +50,7 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
     expect(tokenUsageDir()).toBe(join(dir(), "token-usage"))
   })
 
-  it("雑談の要約は移った先の chat-summary の下へ書かれる", () => {
+  it("あらすじは移った先の chat-summary の下へ書かれる", () => {
     process.env[HOME_ENV_NAME] = dir()
 
     createChatSummary("moved-pack").write("架空の要約", [])
