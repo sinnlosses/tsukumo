@@ -106,6 +106,10 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
   - どれにも当たらないパスは全件。見張りの表に載せる E2E の領域が足りないと取りこぼすが、送る直前の全件で拾う。
     **E2E のファイルを足したら表に足す**（載っていないと単体テストが落ちる）
   - 期待値を撮り直す `pnpm run test:e2e:update` も既定は同じ選び方で、`--full` で全件、ファイルを渡せばそのファイルだけ
+- **ファイル単位の `pnpm run test:e2e <ファイル>` は、組み立てのあとに `tsc --noEmit` を通す**
+  （E2E の本体は実ブラウザの中で動くので、型の誤りは実行時に現れず、`tw verify` の型検査まで見つからない。
+  実測 3 秒前後〔2026-10-17〕）。全件の印を立てて入る `check` と `test:e2e:update` は、型検査の段が別にある
+  （`check`）ので省く
 - **`dist/browser/` は E2E の段が自分で組み立てる**（起動は古い成果物でも止まらずに配る〔`docs/architecture/build.md`〕ので、
   組み立てを前提にすると古い画面を確かめて通ってしまう）。`vitest` を直に流したときは E2E の設定の
   `globalSetup`（`test/built-ui-setup.ts`）が、組み立てたときの指紋が `src/browser/`・`src/shared/` の

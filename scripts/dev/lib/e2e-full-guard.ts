@@ -15,6 +15,14 @@ const DENY_MESSAGE = `E2E を全件で起こす打ち方は止めた。
   1本:  pnpm run test:e2e test/e2e/<ファイル>.test.ts  （-- を前に置かない。置くと絞り込みが効かず全件になる）
 `
 
+/**
+ * 入口が組み立てのあとに型検査を打つか。`check` と `test:e2e:update`（ファイルなし）は
+ * 全件の印を立てて入るので、型検査の段が別にある呼び出しとして省く。
+ */
+export function shouldTypecheckBeforeE2e(fullValue: string | undefined): boolean {
+  return fullValue !== "1"
+}
+
 /** `args` は `test:e2e` に渡された引数、`fullValue` は `TSUKUMO_E2E_FULL` の値。 */
 export function judgeE2eFull(
   args: readonly string[],

@@ -2,7 +2,11 @@
 
 import { describe, expect, test } from "vitest"
 
-import { E2E_FULL_ENVIRONMENT, judgeE2eFull } from "../../../scripts/dev/lib/e2e-full-guard.ts"
+import {
+  E2E_FULL_ENVIRONMENT,
+  judgeE2eFull,
+  shouldTypecheckBeforeE2e,
+} from "../../../scripts/dev/lib/e2e-full-guard.ts"
 
 describe("judgeE2eFull", () => {
   test("引数なしで環境変数も無ければ止めて、案内を返す", () => {
@@ -31,6 +35,11 @@ describe("judgeE2eFull", () => {
     expect(judgeE2eFull([], "1").kind).toBe("pass")
     expect(judgeE2eFull([], "0").kind).toBe("deny")
     expect(judgeE2eFull([], "").kind).toBe("deny")
+  })
+
+  test("型検査は、全件の印を立てない（ファイル単位の）呼び出しだけが打つ", () => {
+    expect(shouldTypecheckBeforeE2e(undefined)).toBe(true)
+    expect(shouldTypecheckBeforeE2e("1")).toBe(false)
   })
 
   test("子に渡す環境変数は TSUKUMO_E2E_FULL=1", () => {
