@@ -43,7 +43,7 @@ import {
 import {
   createSessionTitleWriter,
   createSessionDigestReader,
-  scheduleMarkSession,
+  markSession,
   type SessionTitleWriter,
 } from "./sdk-session.ts"
 import { tsukumoServer } from "./sdk-tool.ts"
@@ -233,7 +233,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
  * メインのイベントと、委譲先のメッセージから出た返却は `CallReview` を通す（`passRelayedEvents`）。
  * 呼び出しは同じ呼び出しの結果まで預かり、差し戻した呼び出しを描かない。
  *
- * `titleIntake` が覚えている題（`report` の `title` 引数）もターンの終わりに取り出し、`titleWriter` に書く予約をする。
+ * `titleIntake` が覚えている題（`report` の `title` 引数）もターンの終わりに取り出し、`titleWriter` で書く。
  */
 async function relayMessages(
   session: AsyncIterable<unknown>,
@@ -244,7 +244,7 @@ async function relayMessages(
   titleWriter: SessionTitleWriter,
   delayWatch: PromptDelayWatch,
 ): Promise<void> {
-  // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに印を付け直す（`scheduleMarkSession`）。
+  // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに印を付け直す（`markSession`）。
   let sessionId: string | undefined = undefined
   try {
     for await (const message of session) {
@@ -273,10 +273,10 @@ async function relayMessages(
             options.mode.personaMemory.finishTurn()
           }
           if (sessionId !== undefined) {
-            scheduleMarkSession(sessionId, options)
+            void markSession(sessionId, options)
             const title = titleIntake.take()
             if (title !== undefined) {
-              titleWriter.schedule(sessionId, title, options)
+              void titleWriter.write(sessionId, title, options)
             }
           }
         }

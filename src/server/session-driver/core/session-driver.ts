@@ -195,7 +195,7 @@ export type SessionDriverOptions = {
   /**
    * このセッションに付ける印（組み立ては `sessionTag`。キャラクターパックごと・雑談かどうかで違う）。
    * 次に起こしたときに、これでそのパックのセッションだけを見分ける。
-   * ターンが終わるたびに付け直す（理由は `SESSION_TAG_DELAY_MS`）。
+   * ターンが終わるたびに付け直す（理由は `markSession`）。
    */
   readonly tag: string
   /** {@link SessionDriverOptions.tag} の印が付いたセッションのID を受け取る口。ここで例外を投げないこと。 */

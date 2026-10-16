@@ -33,14 +33,6 @@ import {
 } from "../core/session-title.ts"
 
 /**
- * ターンが終わってから印（`tagSession`）や題（`renameSession`）を書くまでの待ち。
- * Claude Code もターンの終わりにセッションの要約を自分で書き、そこに印が含まれないので、書き込みと重なると印が消える。
- * 実測: `init` の直後・`result` の直後に付けた印はどちらも消え、ターンの3秒後に付けた印は入力を閉じたあとまで残った。
- * ターンが終わるたびに付け直すので、途中の1回が消えても次のターンで戻る。
- */
-const SESSION_TAG_DELAY_MS = 3_000
-
-/**
  * 同じリポジトリのセッションの一覧を SDK から読む（印で絞るのと、続きを選ぶのは core 側）。
  * 読めなかったときは投げる。
  *
@@ -114,14 +106,19 @@ export function createSessionDigestReader(
 }
 
 /**
- * ターンの終わりに tsukumo の印を付け直す予約をする（次に起こしたときに自分のセッションを見分けるため）。
- * Claude Code 側の書き込みと重ならないように {@link SESSION_TAG_DELAY_MS} だけ待つ。
- * 待っている間に tsukumo が終わるなら印はどのみち要らないので、タイマーでプロセスを引き延ばさない（`unref`）。
+ * セッションに tsukumo の印を付け、付いたら `onSessionMarked` で知らせる。失敗しても続行する。
+ * 付かなかったときに起きるのは「次回は新規から始まる」ことだけで、いま動いているセッションには影響しない。
+ *
+ * ターンが終わるたびに（`result` の直後に）呼ぶ。`init` の直後はまだ transcript が無く、SDK が投げる。
+ * 印は末尾 64 KiB の外へ押し出されると消えるので、1回付ければ済むものではない（`docs/requirements.md`「4.8 セッションの復元」）。
  */
-export function scheduleMarkSession(sessionId: string, options: SessionDriverOptions): void {
-  setTimeout(() => {
-    void markSession(sessionId, options)
-  }, SESSION_TAG_DELAY_MS).unref()
+export async function markSession(sessionId: string, options: SessionDriverOptions): Promise<void> {
+  try {
+    await tagSession(sessionId, options.tag, { dir: options.cwd })
+    options.onSessionMarked(sessionId)
+  } catch {
+    // 印が付かないだけなので、何も流さずに諦める。
+  }
 }
 
 /**
@@ -129,8 +126,12 @@ export function scheduleMarkSession(sessionId: string, options: SessionDriverOpt
  * 書くかどうかの判断は {@link decideSessionTitle}（core）が持ち、ここは SDK を呼ぶだけ。
  */
 export type SessionTitleWriter = {
-  /** ターンの終わりに、書けそうなら書く予約をする。{@link SESSION_TAG_DELAY_MS} だけ遅らせる。 */
-  readonly schedule: (sessionId: string, candidate: string, options: SessionDriverOptions) => void
+  /** ターンの終わり（`result` の直後）に、書けそうなら書く。 */
+  readonly write: (
+    sessionId: string,
+    candidate: string,
+    options: SessionDriverOptions,
+  ) => Promise<void>
   /**
    * `/clear` の合図を受けたことを伝える。
    * Claude Code が前のセッションの題を新しいセッションへ書き写すため、次に書くときだけ現在値を tsukumo が最後に書いたものとみなす（{@link noteConversationCleared}）。
@@ -166,11 +167,7 @@ export function createSessionTitleWriter(): SessionTitleWriter {
   }
 
   return {
-    schedule(sessionId, candidate, options) {
-      setTimeout(() => {
-        void writeTitle(sessionId, candidate, options)
-      }, SESSION_TAG_DELAY_MS).unref()
-    },
+    write: writeTitle,
     noteConversationCleared() {
       state = noteConversationCleared(state)
     },
@@ -186,18 +183,5 @@ async function readTranscriptStamp(sessionId: string): Promise<TranscriptStamp |
       : { lastModified: info.lastModified, fileSize: info.fileSize }
   } catch {
     return undefined
-  }
-}
-
-/**
- * セッションに tsukumo の印を付け、付いたら `onSessionMarked` で知らせる。失敗しても続行する。
- * 付かなかったときに起きるのは「次回は新規から始まる」ことだけで、いま動いているセッションには影響しない。
- */
-async function markSession(sessionId: string, options: SessionDriverOptions): Promise<void> {
-  try {
-    await tagSession(sessionId, options.tag, { dir: options.cwd })
-    options.onSessionMarked(sessionId)
-  } catch {
-    // 印が付かないだけなので、何も流さずに諦める。
   }
 }
