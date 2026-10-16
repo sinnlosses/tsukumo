@@ -587,7 +587,7 @@ describe("CallReview の委譲ゲートの印", () => {
     const review = started()
     review.pass(handback())
 
-    expect(review.judgeWorkPlan(ranged(3)).kind).toBe("malformed")
+    expect(review.judgeWorkPlan(ranged(3)).kind).toBe("summary-missing")
     expect(review.gateRaised()).toBe(true)
     expect(review.judgeWorkPlan(ranged(2, SUMMARY)).kind).toBe("accepted")
     expect(review.gateRaised()).toBe(false)

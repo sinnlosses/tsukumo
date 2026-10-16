@@ -103,7 +103,7 @@ describe("WorkPlanReview の判定", () => {
     expect(review.standing()).toEqual({ kind: "planned", remaining: 1 })
   })
 
-  it("まとまりの段を1回で2つ済ませる呼び出しは差し戻し、途中でまとめが空なら malformed で差し戻す", () => {
+  it("まとまりの段を1回で2つ済ませる呼び出しは差し戻し、途中でまとめが空なら summary-missing で差し戻す", () => {
     const grouped = ["架空の段A", ["架空の段B", "架空の段C"], "架空の段D"]
     const review = createWorkPlanReview()
     review.judge({ phases: grouped, current: 1, phaseSummary: SUMMARY })
@@ -112,7 +112,7 @@ describe("WorkPlanReview の判定", () => {
       "skipped-phase",
     )
     expect(review.judge({ phases: grouped, current: 1, finishedInGroup: ["架空の段B"] }).kind).toBe(
-      "malformed",
+      "summary-missing",
     )
   })
 
@@ -146,8 +146,24 @@ describe("WorkPlanReview の判定", () => {
     const review = createWorkPlanReview()
 
     expect(review.judge({ phases: PHASES, current: 9 }).kind).toBe("malformed")
-    expect(review.judge({ phases: PHASES, current: 1 }).kind).toBe("malformed")
     expect(review.judge({ current: 1, phaseSummary: SUMMARY }).kind).toBe("malformed")
+  })
+
+  it("途中でまとめが空・まとめが3文以上・その他の崩れは別の種類で差し戻す", () => {
+    const review = createWorkPlanReview()
+    const threeSentences = "一つ目。二つ目。三つ目。"
+
+    expect(review.judge({ phases: PHASES, current: 1 }).kind).toBe("summary-missing")
+    expect(review.judge({ phases: PHASES, current: 1, phaseSummary: " \n" }).kind).toBe(
+      "summary-missing",
+    )
+    expect(review.judge({ phases: PHASES, current: 1, phaseSummary: threeSentences }).kind).toBe(
+      "summary-too-long",
+    )
+    expect(review.judge({ phases: PHASES, current: 9, phaseSummary: threeSentences }).kind).toBe(
+      "malformed",
+    )
+    expect(review.judge({ phases: PHASES, current: 9 }).kind).toBe("malformed")
   })
 
   it("範囲の無い段取りでは、phase_result を受けても位置は動かず、範囲の無い呼び出しは差し戻す", () => {
@@ -187,7 +203,7 @@ describe("WorkPlanReview の委譲の返却", () => {
     expect(review.pass(handedBack())).toEqual([])
 
     expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
-    expect(review.judge(ranged(2)).kind).toBe("malformed")
+    expect(review.judge(ranged(2)).kind).toBe("summary-missing")
     expect(review.judge(ranged(2, SUMMARY)).kind).toBe("accepted")
   })
 
@@ -477,7 +493,7 @@ describe("WorkPlanReview の phase_result", () => {
     review.judgeResult(result(1, "finished"))
 
     expect(review.gateRaised()).toBe(false)
-    expect(review.judge(ranged(2)).kind).toBe("malformed")
+    expect(review.judge(ranged(2)).kind).toBe("summary-missing")
     expect(review.judge(ranged(2, SUMMARY)).kind).toBe("accepted")
   })
 

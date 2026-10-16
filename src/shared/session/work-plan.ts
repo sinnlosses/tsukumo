@@ -145,7 +145,7 @@ export const workPlanShape = {
  * 段のまとめが {@link MAX_PHASE_SUMMARY_SENTENCES} 文を超える・
  * 委譲先の段の範囲が整数でない・並びをはみ出す・段のまとまりの端をまたぐ・
  * 飛ばした段の名前が重なるか、この呼び出しで済んでいる段の名前でない。
- * 途中なのに段のまとめが無いことは、ここでは見ず `WorkPlanReview` が `malformed` で差し戻す。
+ * 途中なのに段のまとめが無いことは、ここでは見ず `WorkPlanReview` が `summary-missing` で差し戻す。
  */
 export const workPlanSchema = z.object(workPlanShape).superRefine((value, context) => {
   const {
