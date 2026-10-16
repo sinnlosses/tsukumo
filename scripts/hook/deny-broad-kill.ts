@@ -3,9 +3,8 @@
 //
 // 止める理由は、プロセスのコマンドラインで見分けが付かないこと。 手元で複数の tsukumo を
 // 並べて動かすと、どれも同じ `node` の起動コマンドとして見える（`pnpm run dev` 経由でも同じ）。
-// そのため `pkill -f 'pnpm run'` はもちろん、起動コマンドの一部を狙う `pkill` でも、
-// 自分が起こした検証用のインスタンスではなく利用者が使っている本体まで落ちる。
-// リポジトリの台本（`.ts` で終わる名前）と `tw` も、どの作業ツリーでも同じ名前で見えるので同じ扱いにする。
+// そのため名前やパターンで止める `pkill` / `killall` は、狙う語によらず、
+// 自分が起こした検証用のインスタンスではなく利用者が使っている本体まで落としうる。
 // `docs/workflow.md`「起こすときの作法」が文章で禁じていた事故を、ここで機構として塞ぐ。
 //
 // 拒否するのは「名前やパターンで薙ぎ払う形」だけで、pid を名指しする `kill` は通す
@@ -15,21 +14,8 @@
 // それ以外の終了コードでは実行を止めない（判定に失敗したときは通す。開発の手を
 // 止めないほうを既定にする）。
 
+import { findBroadKillRule } from "./lib/broad-kill.ts"
 import { denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
-import { findQuotedSpans, withSpansBlanked } from "./lib/quoted-span.ts"
-
-/** 名前やパターンでまとめて薙ぎ払うコマンド。コマンドの位置に現れたときだけ拾う。 */
-const BROAD_KILL_COMMAND = /(?:^|[;&|(]\s*|\n)\s*(?:sudo\s+)?(?:pkill|killall)\b/
-
-/** `pgrep` で引いた pid をそのまま `kill` へ流し込む形（`pkill` と実質同じ）。 */
-const PGREP_PIPED_TO_KILL = /(?:^|[;&|(]\s*|\n)\s*(?:sudo\s+)?pgrep\b[^\n]*\|[^\n]*\bkill\b/
-
-/**
- * 他のセッションと取り合う対象。この語のどれかを狙っているときだけ拒否するので、
- * 無関係なプロセス（自分で起こした python など）を名前で止めるのは妨げない。
- */
-const SHARED_PROCESS =
-  /\b(?:pnpm|node|tsukumo|claude|vite|vitest|playwright|chrome)\b|\.ts\b|(?<![\w-])tw(?![\w-])/i
 
 const REFUSAL = `この作業ツリーでは複数の tsukumo が同時に動いている。どれも \`node src/cli.ts\` として見えるので、
 名前やパターンで止めると利用者が使っている本体まで落ちる（docs/workflow.md「起こすときの作法」）。
@@ -47,20 +33,4 @@ const call = await readBashHookCall()
 const rule = call === undefined ? undefined : findBroadKillRule(call.command)
 if (call !== undefined && rule !== undefined) {
   denyBashCall(call, { hook: "deny-broad-kill", rule, refusal: REFUSAL })
-}
-
-/**
- * 他のセッションを巻き込む形の `kill` の規則のキー。コマンドの位置に `pkill` / `killall` が
- * 現れ、かつ取り合う対象を狙っているときだけ返す。
- * コマンドの位置は引用符・heredoc を除いて探し、狙う対象は引用符の中（`-f "vitest run"`）も含めて探す。
- */
-function findBroadKillRule(bashCommand: string): string | undefined {
-  if (!SHARED_PROCESS.test(bashCommand)) {
-    return undefined
-  }
-  const skeleton = withSpansBlanked(bashCommand, findQuotedSpans(bashCommand))
-  if (BROAD_KILL_COMMAND.test(skeleton)) {
-    return "pkill-killall"
-  }
-  return PGREP_PIPED_TO_KILL.test(skeleton) ? "pgrep-piped-kill" : undefined
 }

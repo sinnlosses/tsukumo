@@ -9,7 +9,7 @@ export type ShellWord = {
 
 /** 区切り（`;` `&` `|` `(` `)` 改行）で分けた1つのコマンド。 */
 export type SimpleCommand = {
-  /** コマンド名とその引数。前置きの代入・`sudo`・`env`・`time`・予約語は外してある。 */
+  /** コマンド名とその引数。前置きの代入・`sudo`・`env`・`nice`・`timeout`・`pnpm exec`・`time`・予約語は外してある。 */
   readonly argv: readonly ShellWord[]
   /** 書き込みのリダイレクト（`>` `>>` `>|` `&>` `<>` など）の書き先。 */
   readonly writes: readonly ShellWord[]
@@ -19,6 +19,8 @@ export type SimpleCommand = {
   readonly stdinTexts: readonly string[]
   /** 直前の区切りが `|` か `|&` で、前のコマンドの出力を標準入力に受けるか。 */
   readonly pipedIn: boolean
+  /** `$(...)` やプロセス置換の中のコマンドか。持ち主のコマンドのすぐ前に差し込まれる。 */
+  readonly substituted: boolean
 }
 
 /**
@@ -33,12 +35,100 @@ export function parseShellCommand(command: string): readonly SimpleCommand[] {
   })
 }
 
+/** 本来のコマンドの前にある代入・予約語・`sudo` / `env` / `nice` / `timeout` / `pnpm exec` とその引数を外す。 */
+export function stripPrefixes(words: readonly ShellWord[]): readonly ShellWord[] {
+  const [first, ...rest] = words
+  if (first === undefined) {
+    return words
+  }
+  if (PREFIX_WORDS.has(first.text) || ASSIGNMENT.test(first.text)) {
+    return stripPrefixes(rest)
+  }
+  if (first.text === "sudo" || first.text === "env") {
+    const valueOptions = first.text === "sudo" ? SUDO_VALUE_OPTIONS : ENV_VALUE_OPTIONS
+    const afterOptions = skipOptions(rest, valueOptions, true)
+    return afterOptions.length === 0 ? [] : stripPrefixes(afterOptions)
+  }
+  if (first.text === "nice") {
+    return stripPrefixes(skipOptions(rest, NICE_VALUE_OPTIONS))
+  }
+  if (first.text === "timeout") {
+    return stripPrefixes(skipOptions(rest, TIMEOUT_VALUE_OPTIONS).slice(1))
+  }
+  if (first.text === "pnpm" && rest[0]?.text === "exec") {
+    const afterExec = rest.slice(1)
+    return stripPrefixes(afterExec[0]?.text === "--" ? afterExec.slice(1) : afterExec)
+  }
+  return words
+}
+
+export function baseName(path: string): string {
+  return path.slice(path.lastIndexOf("/") + 1)
+}
+
+const NICE_VALUE_OPTIONS: ReadonlySet<string> = new Set(["-n", "--adjustment"])
+
+const TIMEOUT_VALUE_OPTIONS: ReadonlySet<string> = new Set(["-k", "--kill-after", "-s", "--signal"])
+
+const SUDO_VALUE_OPTIONS: ReadonlySet<string> = new Set([
+  "-u",
+  "-g",
+  "-C",
+  "-h",
+  "-p",
+  "-r",
+  "-t",
+  "-U",
+  "-D",
+  "-R",
+  "-T",
+  "--user",
+  "--group",
+  "--host",
+  "--prompt",
+  "--role",
+  "--type",
+  "--chdir",
+  "--chroot",
+  "--other-user",
+  "--close-from",
+])
+
+const ENV_VALUE_OPTIONS: ReadonlySet<string> = new Set([
+  "-u",
+  "-C",
+  "-S",
+  "--unset",
+  "--chdir",
+  "--split-string",
+])
+
+/** 先頭のオプション（値を取る単独の形は次の語も。`skipsAssignments` なら `NAME=値` も）を読み飛ばす。 */
+function skipOptions(
+  words: readonly ShellWord[],
+  valueOptions: ReadonlySet<string>,
+  skipsAssignments = false,
+): readonly ShellWord[] {
+  let index = 0
+  for (;;) {
+    const text = words[index]?.text ?? ""
+    if (text.startsWith("-")) {
+      index += valueOptions.has(text) ? 2 : 1
+    } else if (skipsAssignments && ASSIGNMENT.test(text)) {
+      index += 1
+    } else {
+      return words.slice(index)
+    }
+  }
+}
+
 type CommandBuilder = {
   readonly words: ShellWord[]
   readonly writes: ShellWord[]
   readonly inputs: ShellWord[]
   readonly stdinTexts: string[]
   readonly pipedIn: boolean
+  readonly substituted: boolean
 }
 
 type PendingHeredoc = {
@@ -185,7 +275,11 @@ function onlyPrefixWords(words: readonly ShellWord[]): boolean {
 }
 
 function newBuilder(pipedIn = false): CommandBuilder {
-  return { words: [], writes: [], inputs: [], stdinTexts: [], pipedIn }
+  return { words: [], writes: [], inputs: [], stdinTexts: [], pipedIn, substituted: false }
+}
+
+function parseSubstitution(code: string): readonly CommandBuilder[] {
+  return parseCommands(code).map((parsed) => ({ ...parsed, substituted: true }))
 }
 
 /** 改行の直後から、待っている heredoc の本文を順に読み、持ち主のコマンドへ付ける。読み終えた位置を返す。 */
@@ -227,7 +321,7 @@ function readWord(command: string, start: number): ReadWord {
 
     if ((character === "<" || character === ">") && next === "(") {
       const close = findClosingParen(command, index + 1)
-      nested.push(...parseCommands(command.slice(index + 2, close)))
+      nested.push(...parseSubstitution(command.slice(index + 2, close)))
       text += command.slice(index, close + 1)
       expanded = true
       index = close + 1
@@ -258,7 +352,7 @@ function readWord(command: string, start: number): ReadWord {
     if (character === "$" && next === "(") {
       const close = findClosingParen(command, index + 1)
       if (command[index + 2] !== "(") {
-        nested.push(...parseCommands(command.slice(index + 2, close)))
+        nested.push(...parseSubstitution(command.slice(index + 2, close)))
       }
       text += command.slice(index, close + 1)
       expanded = true
@@ -362,25 +456,8 @@ function toSimpleCommand(parsed: CommandBuilder): SimpleCommand {
     inputs: [...parsed.inputs],
     stdinTexts: [...parsed.stdinTexts],
     pipedIn: parsed.pipedIn,
+    substituted: parsed.substituted,
   }
-}
-
-/** 本来のコマンドの前にある代入・予約語・`sudo` / `env` とその引数を外す。 */
-function stripPrefixes(words: readonly ShellWord[]): readonly ShellWord[] {
-  const [first, ...rest] = words
-  if (first === undefined) {
-    return words
-  }
-  if (PREFIX_WORDS.has(first.text) || ASSIGNMENT.test(first.text)) {
-    return stripPrefixes(rest)
-  }
-  if (first.text === "sudo" || first.text === "env") {
-    const commandAt = rest.findIndex(
-      (word) => !word.text.startsWith("-") && !ASSIGNMENT.test(word.text),
-    )
-    return commandAt === -1 ? [] : stripPrefixes(rest.slice(commandAt))
-  }
-  return words
 }
 
 /** `sh` / `bash` / `zsh` の `-c` に渡したコード。 */
@@ -391,8 +468,4 @@ function shellDashCCode(argv: readonly ShellWord[]): string | undefined {
   }
   const flagAt = args.findIndex((word) => /^-[a-z]*c[a-z]*$/.test(word.text))
   return flagAt === -1 ? undefined : args[flagAt + 1]?.text
-}
-
-function baseName(path: string): string {
-  return path.slice(path.lastIndexOf("/") + 1)
 }

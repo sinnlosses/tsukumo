@@ -126,7 +126,10 @@
 SIGTERM が行く）。`pkill` / `killall` で名前やパターンから止めようとすると、
 **PreToolUse hook（`.claude/settings.json` → `scripts/hook/deny-broad-kill.ts`）が実行される前に
 拒否する**——並べて動かした tsukumo はどれも `node src/cli.ts` に見えるので、
-パターンでは利用者が使っている本体と区別できない。`HOME` を一時ディレクトリに差し替えれば、
+パターンでは利用者が使っている本体と区別できない。狙う語によらず、`bash -c`・`env`・`xargs`・`nice`・
+`timeout`・`pnpm exec`・パス付き（`/usr/bin/pkill`）越しの `pkill` / `killall` と、
+`kill $(pgrep …)`・`ps … | xargs kill` のように名前から引いた pid を渡す `kill`、全プロセスやプロセスグループを指す負の pid（`kill -9 -1`）も拒否する
+（待受ポートで引いた `kill $(lsof -ti tcp:7398 -sTCP:LISTEN)` と pid の名指しは通す）。`HOME` を一時ディレクトリに差し替えれば、
 `~/.tsukumo/` に触るタスクでも利用者の設定を汚さない。**起動時に作られるもの（`speak` の
 enum・キャラクターパックの読み込み）は起こし直さないと変わらない。** 起動とキャラクターの切り替えで起こすセッションは常に新規で、
 前のセッションは切り替え画面から選んだとき（とモードを戻したとき）だけ戻る。
@@ -140,7 +143,8 @@ PreToolUse hook（`scripts/hook/deny-sed-in-place.ts`）が拒否する。ファ
 
 委譲先（サブエージェント）が `tw verify`（検査の全段。3〜4分）を `run_in_background: true` で
 打つと PreToolUse hook（`scripts/hook/deny-background-verify.ts`）が拒否し、前景で `timeout` 引数
-（最大 600000）を付けて打つよう案内する。メインの呼び出し（`agent_id` が無い）は対象にしない。
+（最大 600000）を付けて打つよう案内する。`nice`・`timeout`・`env`・`pnpm exec`・`bash -c`・パス付きの
+`tw` 越しの `tw verify` も同じ。メインの呼び出し（`agent_id` が無い）は対象にしない。
 
 委譲先は段を返す前に `pnpm run typecheck` と `pnpm run lint` を打つ。絞った `vitest` は story の型（`tsconfig.storybook.json`）と lint の規則（Date を使わない など）を拾わない。
 

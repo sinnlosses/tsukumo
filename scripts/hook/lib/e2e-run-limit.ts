@@ -71,7 +71,7 @@ function classifyCommandText(commandText: string): TwVerifyKind {
 }
 
 function classifyE2eRun(simple: SimpleCommand, twVerifyKind: TwVerifyKind): E2eRunKind {
-  const words = withoutNice(simple.argv.map((word) => word.text))
+  const words = simple.argv.map((word) => word.text)
   const [head = "", ...rest] = words
   if (head === "tw") {
     if (rest[0] !== "verify") {
@@ -99,19 +99,6 @@ function classifyE2eRun(simple: SimpleCommand, twVerifyKind: TwVerifyKind): E2eR
 /** `check` の系統の呼び出し。`--full` なら必ず流し、無ければ変えたファイル次第。 */
 function checkKind(args: readonly string[]): "always" | "by-change" {
   return args.includes("--full") ? "always" : "by-change"
-}
-
-function withoutNice(words: readonly string[]): readonly string[] {
-  if (words[0] !== "nice") {
-    return words
-  }
-  const rest = words.slice(1)
-  const commandAt = rest.findIndex((word) => !isNiceOption(word))
-  return commandAt < 0 ? [] : rest.slice(commandAt)
-}
-
-function isNiceOption(word: string): boolean {
-  return word.startsWith("-") || /^\d+$/.test(word)
 }
 
 /** `pnpm [run] <script> ...` が `check` か、ファイルを渡していない `test:e2e` か。 */

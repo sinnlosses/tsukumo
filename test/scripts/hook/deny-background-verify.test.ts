@@ -17,6 +17,11 @@ describe("委譲先の背景の tw verify を拒否する hook", () => {
   test.each([
     ["ふつうの呼び出し", "tw verify"],
     ["前段のコマンドに続く形", "cd foo && tw verify"],
+    ["nice 越し", "nice -n5 tw verify"],
+    ["timeout 越し", "timeout 600 tw verify"],
+    ["パス付きの tw", "./bin/tw verify"],
+    ["pnpm exec 越し", "pnpm exec tw verify"],
+    ["bash -c の中", "bash -c 'tw verify'"],
   ])("%s は止める", async (_name, command) => {
     expect(await runHook(command, { fromSubagent: true, runInBackground: true })).toBe(2)
   })

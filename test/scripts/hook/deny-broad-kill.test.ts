@@ -24,6 +24,20 @@ describe("広い kill を拒否する hook", () => {
     ["台本の名前と引数を狙う pkill", 'pkill -f "check.ts --full"'],
     ["台本の名前だけを狙う pkill", "pkill -f check.ts"],
     ["tw のサブコマンドを狙う pkill", 'pkill -f "tw ship"'],
+    ["取り合う語を含まない相手を狙う pkill", "pkill -f my-python-worker"],
+    ["bash -c の中の pkill", 'bash -c "pkill -f node"'],
+    ["パスを付けた pkill", "/usr/bin/pkill -f node"],
+    ["sudo -u 越しの pkill", "sudo -u x pkill node"],
+    ["env -u 越しの pkill", "env -u FOO pkill node"],
+    ["全プロセスを指す kill", "kill -9 -1"],
+    [
+      "引数の置換の中の lsof を持つ xargs kill",
+      "pgrep node | xargs kill $(lsof -ti tcp:7398 -sTCP:LISTEN)",
+    ],
+    ["置換文字列を使う xargs kill", "pgrep node | xargs -I{} kill {}"],
+    ["別の文の lsof を持つ xargs kill", "lsof -ti tcp:7398 -sTCP:LISTEN; pgrep node | xargs kill"],
+    ["pgrep の結果を渡す kill", "kill $(pgrep -f node)"],
+    ["ps から xargs kill へ流す形", "ps aux | grep node | xargs kill"],
   ])("%s は止める", async (_name, command) => {
     expect(await runHook(command)).toBe(2)
   })
@@ -32,9 +46,6 @@ describe("広い kill を拒否する hook", () => {
     ["pid を名指しする kill", "kill 34390"],
     ["ポートから引いた pid を渡す kill", "kill $(lsof -ti tcp:7398 -sTCP:LISTEN)"],
     ["語として書いただけの grep", 'grep -rn "pkill" docs/workflow.md'],
-    ["取り合わない相手を狙う pkill", "pkill -f my-python-worker"],
-    ["自分で起こした python の台本を狙う pkill", "pkill -f my-own-python-script.py"],
-    ["tw を含むだけの別の語を狙う pkill", "pkill -f twitter-bot"],
     ["引用符の中に語を書いた grep", "grep -rn 'pkill\\|killall' .claude/"],
     ["コミットメッセージに語を書いた git commit", 'git commit -m "node の pkill を止める hook"'],
     [

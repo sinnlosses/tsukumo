@@ -35,6 +35,8 @@ describe("ファイルを書き換えるコマンドの判定", () => {
       "cd /tmp/x && cd /work/tree && sed -i 's/a/b/' a",
     ],
     ["xargs の sed -i", "git ls-files | xargs sed -i 's/a/b/'"],
+    ["timeout 越しの sed -i", "timeout 5 sed -i 's/a/b/' file.ts"],
+    ["pnpm exec 越しの sed -i", "pnpm exec sed -i 's/a/b/' file.ts"],
     ["作業ツリーの中への画像でない cp", "cp /tmp/x/a.svg src/a.svg"],
     ["画像を画像でないファイルへ書く cp", "cp /tmp/x/a.png src/run.ts"],
     ["画像を拡張子の無いファイルへ書く cp", "cp /tmp/x/a.png Makefile"],

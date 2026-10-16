@@ -6,11 +6,8 @@
 // hook の約束: 終了コード 2 で Bash の実行を止め、stderr の中身がモデルへ返る。
 // それ以外の終了コードでは実行を止めない（判定に失敗したときは通す）。
 
+import { runsTwVerify } from "./lib/background-verify.ts"
 import { type BashHookCall, denyBashCall, readBashHookCall } from "./lib/hook-input.ts"
-import { findQuotedSpans, withSpansBlanked } from "./lib/quoted-span.ts"
-
-/** `tw verify` をコマンドの位置に持つ形。`verify-check`・`verify-plan` 等の別サブコマンドは拾わない。 */
-const TW_VERIFY_COMMAND = /(?:^|[;&|(]\s*|\n)\s*(?:\S+=\S+\s+)*tw\s+verify\b(?!-)/
 
 const REFUSAL = `\`tw verify\`（検査の全段。3〜4分）は背景で打たない。背景で打つと完了通知で手番が
 終わり、検査が走っていないのに待ちで止まる。
@@ -33,6 +30,5 @@ function isDeniedBackgroundVerify(bashCall: BashHookCall): boolean {
   if (!bashCall.fromSubagent || !bashCall.runsInBackground) {
     return false
   }
-  const skeleton = withSpansBlanked(bashCall.command, findQuotedSpans(bashCall.command))
-  return TW_VERIFY_COMMAND.test(skeleton)
+  return runsTwVerify(bashCall.command)
 }
