@@ -1,15 +1,17 @@
-// PreToolUse hook の入口が共通で使う、標準入力から Bash の呼び出しを読む処理と、拒否して止める処理。
+// Bash ツールの hook の入口が共通で使う、標準入力から Bash の呼び出しを読む処理と、拒否して止める処理。
 
 import process from "node:process"
 
 import { recordHookDenial } from "./hook-denial-record.ts"
 
-/** Bash ツールの PreToolUse hook の入力のうち、入口が見るところ。 */
+/** Bash ツールの hook の入力のうち、入口が見るところ。`event` は `hook_event_name`（`PreToolUse` など）。 */
 export type BashHookCall = {
   readonly command: string
   readonly cwd: string | undefined
   readonly runsInBackground: boolean
   readonly fromSubagent: boolean
+  readonly toolUseId: string | undefined
+  readonly event: string | undefined
 }
 
 /** hook が stdin へ流す JSON から Bash の呼び出しを取り出す。壊れた JSON・Bash 以外・形が違えば `undefined`。 */
@@ -25,12 +27,13 @@ export function parseBashHookCall(rawInput: string): BashHookCall | undefined {
     return undefined
   }
 
-  const cwd = readField(input, "cwd")
   return {
     command,
-    cwd: typeof cwd === "string" ? cwd : undefined,
+    cwd: readString(input, "cwd"),
     runsInBackground: readField(toolInput, "run_in_background") === true,
     fromSubagent: typeof readField(input, "agent_id") === "string",
+    toolUseId: readString(input, "tool_use_id"),
+    event: readString(input, "hook_event_name"),
   }
 }
 
@@ -54,6 +57,11 @@ export function denyBashCall(
 
 function readField(value: unknown, key: string): unknown {
   return typeof value === "object" && value !== null ? Reflect.get(value, key) : undefined
+}
+
+function readString(value: unknown, key: string): string | undefined {
+  const field = readField(value, key)
+  return typeof field === "string" ? field : undefined
 }
 
 function safeParse(rawInput: string): unknown {

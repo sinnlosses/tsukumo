@@ -1,6 +1,7 @@
 // 登録された hook ごとの拒否の回数を、期間を決めて数えて出す。
 // 使い方: node scripts/hook/hook-denial-tally.ts [--days N]（既定 30）
-// 登録された hook は `.claude/settings.json` の hooks から呼ばれる `scripts/hook/deny-*.ts`。
+// 登録された hook は `.claude/settings.json` の hooks から呼ばれる `scripts/hook/deny-*.ts` と、
+// hook ではなく実行する側が拒んで同じ置き場に記録する門（`RUN_SIDE_GATES`）。
 
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
@@ -15,6 +16,9 @@ import { readHookDenials, type HookDenial } from "./lib/hook-denial-record.ts"
 const DEFAULT_DAYS = 30
 
 const HOOK_SCRIPT = /scripts\/hook\/(deny-[\w-]+)\.ts/g
+
+/** E2E の入口が上限で拒んだときの記録の名前。 */
+const RUN_SIDE_GATES = ["e2e-run-limit"] as const
 
 const days = readDays(process.argv.slice(2))
 const projectDir = process.env["CLAUDE_PROJECT_DIR"] ?? process.cwd()
@@ -41,12 +45,13 @@ function formatTally(
   return `直近 ${periodDays} 日の拒否の回数\n${lines.join("\n")}\n`
 }
 
-/** `.claude/settings.json` から呼ばれる拒否の hook の名前。 */
+/** `.claude/settings.json` から呼ばれる拒否の hook の名前と、実行する側の門の名前。 */
 function listRegisteredHooks(directory: string): readonly string[] {
   const text = readTextOrEmpty(join(directory, ".claude", "settings.json"))
-  return [...new Set([...text.matchAll(HOOK_SCRIPT)].map((match) => match[1]))].filter(
+  const hooks = [...new Set([...text.matchAll(HOOK_SCRIPT)].map((match) => match[1]))].filter(
     (name) => name !== undefined,
   )
+  return [...hooks, ...RUN_SIDE_GATES]
 }
 
 function readDays(args: readonly string[]): number {

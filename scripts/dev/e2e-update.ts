@@ -37,7 +37,11 @@ if (argument.kind === "help") {
     const files = target.kind === "files" ? target.files : []
     const result = spawnSync("pnpm", ["run", "test:e2e", ...files], {
       cwd: ROOT,
-      env: { ...process.env, ...E2E_FULL_ENVIRONMENT, E2E_UPDATE: "1" },
+      env: {
+        ...process.env,
+        ...(namesTestFiles(argument) ? {} : E2E_FULL_ENVIRONMENT),
+        E2E_UPDATE: "1",
+      },
       stdio: "inherit",
     })
     process.exitCode = result.status ?? 1
@@ -60,4 +64,9 @@ async function chooseTarget(
     return { kind: "all" }
   }
   return selection.files.length === 0 ? { kind: "none" } : { kind: "files", files: selection.files }
+}
+
+/** 撮り直すテストのファイルを名指した呼び出しか。名指しは全件の門を通らず、E2E の回数にも数えない。 */
+function namesTestFiles(read: E2eUpdateArgument): boolean {
+  return read.kind === "files" && read.files.every((file) => file.endsWith(".test.ts"))
 }

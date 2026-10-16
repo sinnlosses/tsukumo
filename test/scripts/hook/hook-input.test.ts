@@ -27,7 +27,15 @@ describe("parseBashHookCall", () => {
       cwd: undefined,
       runsInBackground: false,
       fromSubagent: false,
+      toolUseId: undefined,
+      event: undefined,
     })
+  })
+
+  test("tool_use_id と hook_event_name を読む", () => {
+    expect(
+      parseBashHookCall(bashInput({ tool_use_id: "toolu_1", hook_event_name: "PostToolUse" })),
+    ).toMatchObject({ toolUseId: "toolu_1", event: "PostToolUse" })
   })
 
   test("agent_id が文字列なら委譲先の呼び出し", () => {

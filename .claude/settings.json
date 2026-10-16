@@ -21,11 +21,33 @@
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-e2e-run-limit.ts\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/mark-subagent-bash.ts\""
           },
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/deny-stdin-wait-cat.ts\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/mark-subagent-bash.ts\""
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook/mark-subagent-bash.ts\""
           }
         ]
       }

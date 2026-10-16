@@ -7,7 +7,6 @@ import process from "node:process"
 
 import { beforeEach, describe, expect, test } from "vitest"
 
-import { RUN_LIMIT } from "../../../scripts/hook/lib/e2e-run-limit.ts"
 import { runSubprocess } from "../../fixture/subprocess.ts"
 import { useTempDir } from "../../fixture/temp-dir.ts"
 
@@ -42,17 +41,6 @@ describe("拒否の記録", () => {
     })
   })
 
-  test("E2E の上限を超えた呼び出しの拒否を記録する", async () => {
-    mkdirSync(join(repoDir, ".git", "task-open-claims"))
-    writeFileSync(join(repoDir, ".git", "task-open-claims", "TASK-A"), "")
-    for (let count = 0; count <= RUN_LIMIT; count++) {
-      await runBashHook("deny-e2e-run-limit", { command: "tw verify --full", agent: true })
-    }
-    expect(readDenialLines().map((line) => JSON.parse(line))).toMatchObject([
-      { hook: "deny-e2e-run-limit", rule: "run-limit", actor: "subagent" },
-    ])
-  })
-
   test("拒まない呼び出しでは増えない", async () => {
     expect((await runBashHook("deny-broad-kill", { command: "kill 123" })).exitCode).toBe(0)
     expect(
@@ -83,11 +71,26 @@ describe("集計", () => {
     expect(result.stdout).toContain("deny-sed-in-place: 0")
   })
 
+  test("hook ではなく E2E の入口が拒んだ記録も、未登録とせずに数える", async () => {
+    writeRegistration()
+    const directory = join(repoDir, ".git", "hook-denials")
+    mkdirSync(directory)
+    const at = Temporal.Now.instant().toString()
+    writeFileSync(
+      join(directory, `${at.slice(0, 7)}.jsonl`),
+      `${JSON.stringify({ at, hook: "e2e-run-limit", rule: "run-limit", actor: "subagent" })}\n`,
+    )
+    const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
+    expect(result.stdout).toContain("e2e-run-limit: 1\n  run-limit: 1")
+    expect(result.stdout).not.toContain("（未登録）")
+  })
+
   test("記録が無ければ全部0で出す", async () => {
     writeRegistration()
     const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
     expect(result.stdout).toContain("deny-broad-kill: 0")
     expect(result.stdout).toContain("deny-sed-in-place: 0")
+    expect(result.stdout).toContain("e2e-run-limit: 0")
   })
 
   test("期間の外の記録は数えない", async () => {

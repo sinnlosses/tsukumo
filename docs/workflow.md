@@ -140,6 +140,8 @@ PreToolUse hook（`scripts/hook/deny-sed-in-place.ts`）が拒否する。ファ
 `tw edit --body-file` に渡す下書きは、作業ツリーの外のパス（`/tmp/<名前>/plan.md`）に Write で書いて
 `--body-file` でそのパスを渡すか、`--body-file -` へ heredoc を渡す。作業ツリーの中のパスには書かない。
 `pnpm`・`git`・作業ツリーの中のスクリプトのように、ツールの中で書くものは止めない。
+hook は書き込みの形を事前に列挙して拒む。Bash の前後の作業ツリーの差を見る事後の検査は、
+同じ作業ツリーで並行する書き手（並列の段・背景のコマンド）の変更と区別できないので置かない。
 
 委譲先（サブエージェント）が `tw verify`（検査の全段。3〜4分）を `run_in_background: true` で
 打つと PreToolUse hook（`scripts/hook/deny-background-verify.ts`）が拒否し、前景で `timeout` 引数
@@ -148,21 +150,27 @@ PreToolUse hook（`scripts/hook/deny-sed-in-place.ts`）が拒否する。ファ
 
 委譲先は段を返す前に `pnpm run typecheck` と `pnpm run lint` を打つ。絞った `vitest` は story の型（`tsconfig.storybook.json`）と lint の規則（Date を使わない など）を拾わない。
 
-委譲先が E2E を流す呼び出しは、着手中の1件につき **6回まで**で、7回目を
-PreToolUse hook（`scripts/hook/deny-e2e-run-limit.ts`）が拒否する（検証は通常1〜3回で、残りは揺らぎの
-確認と hook 登録後の自分の検証の余裕）。数はその作業ツリー固有の git dir の `e2e-full-runs` に置き、
-着手の印（`task-open-claims/<id>`）が無ければ数えない（作業ツリーをまたいで混ざらない）。
-数えるのは `--full` 付きの `pnpm run check`・`node scripts/dev/check.ts`、`pnpm run test:e2e`、
-ファイルを指さない `vitest run --config vitest.e2e.config.ts` と、`--full` の無い `pnpm run check`・
-`node scripts/dev/check.ts` のうち、変えたファイルから `check` が E2E を1件以上流すと
-選ぶとき（`scripts/shared/e2e-selection-repository.ts` の `planE2eRun`。`check` と同じ関数）。
-`tw verify` は名前では分類せず、`.tw/config.toml` から tw と同じ規則で打つコマンド
-（`verify_before_ship`、無ければ `verify`）を読み、そのコマンドを上の数え方にかける。
-`--full` 付きの `tw verify` は常に数える。行が読めないときは `tw verify` の引数だけで分類する。
-文書だけの変更は `--full` でも E2E を
-流さない（付け替えで入った他人のコードはその人の送り出しで検証済み）が、hook は `--full` の付いた呼び出しを数える（多めに数える側）。変えたファイルを集められないときも数えない。
-**着手し直す（印が消えて作り直される）と0に戻る。** E2E のファイル単位の実行
-（`pnpm run test:e2e test/e2e/<ファイル>.test.ts`）は数えず、メインの呼び出しも対象にしない。
+委譲先が E2E を流す呼び出しは、着手中の1件につき **6回まで**で、7回目は
+E2E の入口（`scripts/dev/e2e.ts`）が vitest を起こさずに終了コード 2 で止める（検証は通常1〜3回で、残りは揺らぎの
+確認と自分の検証の余裕）。コマンドの書き方では分類せず、実際に走る側で数える。
+数えるのは `TSUKUMO_E2E_FULL=1` の付いた `pnpm run test:e2e` で、`pnpm run check` の E2E の段
+（`--full` も、変えたファイルから選んだ分も。`tw verify` 越しを含む）と、ファイルを名指さない
+`pnpm run test:e2e:update` がこれに当たる。組み立てが通ってから1回と数えるので、
+起動に失敗した呼び出しと E2E を流さない `check`（文書だけの変更など）は数えない。
+E2E のファイル単位の実行（`pnpm run test:e2e test/e2e/<ファイル>.test.ts`）は数えない。
+`e2e.ts` を経ずにテストのファイルを名指さずに起こした vitest（`pnpm exec vitest run --config vitest.e2e.config.ts` など）は、
+委譲先の Bash の中では E2E の設定の globalSetup（`test/e2e-entry-setup.ts`）が止める。
+ファイルを名指した直の起動（`npx vitest run --config vitest.e2e.config.ts test/e2e/<シナリオ>.test.ts -t '<it>'`）は数えず、止めない。
+
+数はその作業ツリー固有の git dir の `e2e-full-runs` に、開いている着手の印の `id:birthtimeMs` を鍵にして置く
+（作業ツリーをまたいで混ざらない）。着手の印は tw と同じ順（`.tw/local/task-open-claims/` →
+`.tw/` 直下 → git dir）で探し、無ければ数えない。**着手し直す（印が消えて作り直される）と0に戻る。**
+委譲先の呼び出しかどうかは hook（`scripts/hook/mark-subagent-bash.ts`）が渡す。
+入力に `agent_id` がある Bash の PreToolUse で git dir の `subagent-bash/<tool_use_id>` に印を置き、
+PostToolUse・PostToolUseFailure で消す（背景の呼び出しは消さない）。10分より古い印は無いものとみなし、
+印が1つも無ければ数えない（メインの呼び出しは対象にしない）。この印には2つの限界がある。
+印は呼び出し元を区別しないので、委譲先の Bash と同時に走るメインの実行も数える。
+PreToolUse を別の hook が拒んだときや許可が下りなかったときは Post が来ず、印が10分残る。
 
 hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`）の `hook-denials/<年-月>.jsonl` へ
 時刻・hook の名前・規則のキー・呼び出し元（`main` / `subagent`）の1行を足す。
