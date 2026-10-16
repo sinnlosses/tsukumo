@@ -56,6 +56,11 @@ import {
 import type { CallReview } from "../core/call-review.ts"
 import { CLEAR_AND_SEND_TOOL_DESCRIPTION } from "../core/clear-and-send.ts"
 import {
+  forgetReply,
+  type PersonaMemoryReply,
+  rememberReply,
+} from "../core/persona-memory-reply.ts"
+import {
   answerPhaseResultCall,
   PHASE_RESULT_COUNT_DESCRIPTION,
   PHASE_RESULT_OUTCOME_DESCRIPTION,
@@ -113,7 +118,8 @@ const SPEAK_PHASE_DESCRIPTION =
  */
 const REMEMBER_TOOL_DESCRIPTION =
   "キャラクター自身について決まったことを1行だけ覚える（好み・口調・呼び方・来歴）。" +
-  "ユーザーについて知ったことは覚えない。呼ぶ条件は雑談モードの規約に従う。"
+  "ユーザーについて知ったことは覚えない。呼ぶ条件は雑談モードの規約に従う。" +
+  "この依頼のあいだに tsukumo の外のツール（Read・Bash・Web・他の MCP など）を使ったときと、同じ文面をもう覚えているときは書かれず、エラーが返る。"
 
 /**
  * モデルに見せる `forget` ツールの説明。
@@ -121,7 +127,8 @@ const REMEMBER_TOOL_DESCRIPTION =
  */
 const FORGET_TOOL_DESCRIPTION =
   "「覚えたこと」に並んでいる1行を忘れる。消したい行の文面をそのまま渡す（完全一致。番号では指せない）。" +
-  "消せるのは自分で覚えた行だけで、それ以外の人格の文面は消せない。呼ぶ条件は雑談モードの規約に従う。"
+  "消せるのは自分で覚えた行だけで、それ以外の人格の文面は消せない。呼ぶ条件は雑談モードの規約に従う。" +
+  "一致する行が無ければ何も消えず、エラーが返る。"
 
 /**
  * モデルに見せる `recall` ツールの説明。
@@ -142,7 +149,9 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
 /**
  * プロセス内の MCP サーバ。
  * 戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情がモデルへ戻る経路を作らない（`docs/architecture/adr/0009-speech-via-tool.md`）。
- * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と `phase_result` と `question_brief`。
+ * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と `phase_result` と `question_brief` と `remember` / `forget`。
+ * `remember` / `forget` が返すのは、書けなかった・消せなかった理由の固定の文面だけ（`rememberReply` / `forgetReply`）。
+ * `remember` は `allowsRemember` が偽のあいだ口を呼ばずに断る（外部由来の印）。
  * `phase_result` が返すのは、帯の今の段（帯を動かさなかったらそのこと）か、形の崩れの直し方だけ。
  * `speak` が返すのは、新しい事実の無い呼び出しと範囲の外の `phase` を差し戻す固定の文面だけ。
  * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の会話の目次と1件の逐語）だけ。
@@ -172,6 +181,7 @@ export function tsukumoServer(
   onEvent: (event: SessionEvent) => void,
   holdBrief: (briefs: readonly QuestionBrief[]) => void,
   holdClearAndSend: (text: string) => void,
+  allowsRemember: () => boolean,
 ) {
   return createSdkMcpServer({
     name: TSUKUMO_MCP_SERVER_NAME,
@@ -190,7 +200,7 @@ export function tsukumoServer(
           ]
         : []),
       ...(mode.kind === "chat"
-        ? [rememberTool(mode.personaMemory), forgetTool(mode.personaMemory)]
+        ? [rememberTool(mode.personaMemory, allowsRemember), forgetTool(mode.personaMemory)]
         : []),
     ],
   })
@@ -404,30 +414,31 @@ function clearAndSendTool(hold: (text: string) => void) {
 /** ツールの結果の `_meta` に true で載せると、Claude Code がそこでターンを閉じるキー。 */
 const END_TURN_META_KEY = "claude/endTurn"
 
-/** 覚えたことを書き足すツール。上限に当たった回も "ok" を返す（受け付けたかどうかをモデルへ戻さない）。 */
-function rememberTool(memory: PersonaMemory) {
+/** 覚えたことを書き足すツール。書けたら "ok"、書けなかったら理由の固定文を `isError` で返す。 */
+function rememberTool(memory: PersonaMemory, allowsRemember: () => boolean) {
   return tool(
     REMEMBER_TOOL_NAME,
     REMEMBER_TOOL_DESCRIPTION,
     { line: z.string().describe("覚えること。キャラクター自身についての1行（120文字まで）") },
-    async ({ line }) => {
-      memory.remember(line)
-      return { content: [{ type: "text" as const, text: "ok" }] }
-    },
+    async ({ line }) =>
+      personaMemoryToolResult(
+        rememberReply(allowsRemember() ? memory.remember(line) : "external-tool"),
+      ),
   )
 }
 
-/** 覚えた1行を忘れるツール。一致する行が無かった回も "ok" を返す（消せたかどうかをモデルへ戻さない）。 */
+/** 覚えた1行を忘れるツール。消せたら "ok"、消せなかったら理由の固定文を `isError` で返す。 */
 function forgetTool(memory: PersonaMemory) {
   return tool(
     FORGET_TOOL_NAME,
     FORGET_TOOL_DESCRIPTION,
     { line: z.string().describe("忘れること。「覚えたこと」に並んでいる1行の文面そのまま") },
-    async ({ line }) => {
-      memory.forget(line)
-      return { content: [{ type: "text" as const, text: "ok" }] }
-    },
+    async ({ line }) => personaMemoryToolResult(forgetReply(memory.forget(line))),
   )
+}
+
+function personaMemoryToolResult(reply: PersonaMemoryReply) {
+  return { content: [{ type: "text" as const, text: reply.text }], isError: reply.isError }
 }
 
 /**

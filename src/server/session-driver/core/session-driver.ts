@@ -16,20 +16,34 @@ import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
 /**
  * 覚えたことを人格に書き足す口と、覚えた1行を忘れる口。
- * 上限に当たった回も、消す行が見つからなかった回も何も返さない。
- * 受け付けたかどうかをモデルへ戻さないため（ツールの戻り値は `"ok"` だけ）。
+ * どちらも結果の種類だけを返す。モデルへ返す固定文は `rememberReply` / `forgetReply` が決める。
  */
 export type PersonaMemory = {
-  /** 覚えた1行を書き足す（受け付けられない行は黙って捨てる）。 */
-  readonly remember: (line: string) => void
+  readonly remember: (line: string) => PersonaRememberResult
   /**
-   * 覚えた1行を忘れる（文面の完全一致で指す。一致する行が無いときは黙って何もしない）。
+   * 覚えた1行を忘れる（文面の完全一致で指す）。
    * 書き足しとは別に数えるので、同じターンで覚え直せる。
    */
-  readonly forget: (line: string) => void
+  readonly forget: (line: string) => PersonaForgetResult
   /** ターンが終わった合図（次のターンでまた1行ずつ受け付ける）。 */
   readonly finishTurn: () => void
 }
+
+/**
+ * `remember` の結果。
+ * `turn-used` はそのターンで既に1行書いた、`unwritable-line` は空・改行入り・長すぎる行、
+ * `duplicate` は節に同じ文面の行がある、`not-editable` は書けないパック、`failed` はディスクに書けなかった。
+ */
+export type PersonaRememberResult =
+  | "written"
+  | "turn-used"
+  | "unwritable-line"
+  | "duplicate"
+  | "not-editable"
+  | "failed"
+
+/** `forget` の結果。`turn-used` はそのターンで既に1行消した、`no-match` は節に一致する行が無い。 */
+export type PersonaForgetResult = "erased" | "turn-used" | "no-match" | "not-editable" | "failed"
 
 /**
  * 雑談の要約の写しの読み書き口。

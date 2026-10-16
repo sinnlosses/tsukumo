@@ -20,6 +20,10 @@ import {
   stopHooks,
 } from "../../../../src/server/session-driver/adapter/sdk-query-seed.ts"
 import { createCallReview } from "../../../../src/server/session-driver/core/call-review.ts"
+import {
+  createExternalToolMark,
+  type ExternalToolMark,
+} from "../../../../src/server/session-driver/core/external-tool-mark.ts"
 import type {
   ChatSummary,
   SessionDriverOptions,
@@ -137,7 +141,7 @@ describe("buildQuerySeedOptions", () => {
 function chatMode(chatSummary: ChatSummary): SessionMode {
   return {
     kind: "chat",
-    personaMemory: { remember: () => {}, forget: () => {}, finishTurn: () => {} },
+    personaMemory: { remember: () => "written", forget: () => "erased", finishTurn: () => {} },
     chatSummary,
     chatRecall: {
       recallList: () => ({ kind: "not-found" }),
@@ -180,8 +184,10 @@ async function runPreToolUse(
   bandPosition: () => string = () => "",
   onEvent: (event: SessionEvent) => void = () => {},
   settings: Pick<BaseHookInput, "effort" | "permission_mode"> = {},
+  externalToolMark: ExternalToolMark = createExternalToolMark(),
 ): Promise<unknown> {
-  const callback = preToolUseHooks(gateRaised, bandPosition, onEvent).PreToolUse?.[0]?.hooks[0]
+  const callback = preToolUseHooks(gateRaised, bandPosition, onEvent, externalToolMark)
+    .PreToolUse?.[0]?.hooks[0]
   expect(callback).toBeDefined()
   return callback?.(
     {
@@ -313,6 +319,36 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
   it("サブエージェント内の呼び出しと、すでに背景の呼び出しは何も返さない", async () => {
     expect(await runPreToolUse("Agent", { prompt: "手順" }, "sub-1")).toEqual({})
     expect(await runPreToolUse("Agent", { run_in_background: true })).toEqual({})
+  })
+})
+
+describe("preToolUseHooks（外部由来の印を立てる）", () => {
+  async function markAfter(toolName: string, agentId?: string, gateRaised = false) {
+    const mark = createExternalToolMark()
+    await runPreToolUse(
+      toolName,
+      {},
+      agentId,
+      () => gateRaised,
+      () => "",
+      () => {},
+      {},
+      mark,
+    )
+    return mark.allowsRemember()
+  }
+
+  it("メインでもサブエージェントの中でも、tsukumo のツール以外を見たら印を立てる", async () => {
+    expect(await markAfter("WebFetch")).toBe(false)
+    expect(await markAfter("Read", "sub-1")).toBe(false)
+  })
+
+  it("委譲ゲートで拒むツールでも印を立てる", async () => {
+    expect(await markAfter("Bash", undefined, true)).toBe(false)
+  })
+
+  it("tsukumo のツールでは印を立てない", async () => {
+    expect(await markAfter("mcp__tsukumo__speak")).toBe(true)
   })
 })
 

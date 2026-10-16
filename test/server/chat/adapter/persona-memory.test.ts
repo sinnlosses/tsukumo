@@ -260,16 +260,19 @@ describe("forget", () => {
     expect(readFileSync(join(pack.dir, "persona.md"), "utf8")).toBe(PERSONA_WITH_BULLET)
   })
 
-  it("同じ文面が2行あるときは、いちばん古い1つだけを消す", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
+  it("同じ文面が2行あるとき（手で書き足した節）は、いちばん古い1つだけを消す", () => {
+    const memory = createPersonaMemory(
+      readCharacterPack(
+        writeBundledPack(
+          "架空",
+          `${PERSONA}\n${REMEMBERED_SECTION_HEADING}\n\n- ${LINE}\n- 星を見るのが好き\n- ${LINE}\n`,
+        ),
+      ),
+      dir(),
+      home(),
+    )
 
-    memory.remember(LINE)
-    memory.finishTurn()
-    memory.remember("星を見るのが好き")
-    memory.finishTurn()
-    memory.remember(LINE)
-    memory.finishTurn()
-    memory.forget(LINE)
+    expect(memory.forget(LINE)).toBe("erased")
 
     expect(rememberedLines(homePersona("架空") ?? "")).toEqual(["- 星を見るのが好き", `- ${LINE}`])
   })
@@ -286,6 +289,67 @@ describe("forget", () => {
     expect(written).not.toContain(REMEMBERED_SECTION_HEADING)
     // 節を作るときに入れた見出しの前の改行だけが残る（節より前を足しも引きもしないため）。
     expect(written).toBe(`${PERSONA}\n`)
+  })
+})
+
+describe("重複", () => {
+  it("節に同じ文面の行があれば書かず duplicate を返し、ターンの1行は使わない", () => {
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
+
+    expect(memory.remember(LINE)).toBe("written")
+    memory.finishTurn()
+
+    expect(memory.remember(`  ${LINE} `)).toBe("duplicate")
+    expect(memory.remember("星を見るのが好き")).toBe("written")
+    expect(rememberedLines(homePersona("架空") ?? "")).toEqual([`- ${LINE}`, "- 星を見るのが好き"])
+  })
+
+  it("同梱のパックの節にある行も重複に数える（ホームへ写しを作らない）", () => {
+    const pack = readCharacterPack(
+      writeBundledPack("架空", `${PERSONA}\n${REMEMBERED_SECTION_HEADING}\n\n- ${LINE}\n`),
+    )
+
+    expect(createPersonaMemory(pack, dir(), home()).remember(LINE)).toBe("duplicate")
+    expect(homePersona("架空")).toBeUndefined()
+  })
+})
+
+describe("結果の種類", () => {
+  it("remember は書けた・1ターン2回目・受け取れない行・書けないパックを見分けて返す", () => {
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
+
+    expect(memory.remember("")).toBe("unwritable-line")
+    expect(memory.remember("改行を\n含む")).toBe("unwritable-line")
+    expect(memory.remember(LINE)).toBe("written")
+    expect(memory.remember("同じターンの2行目")).toBe("turn-used")
+
+    const cwd = join(dir(), "cwd")
+    const localDir = join(cwd, "characters", "local")
+    mkdirSync(localDir, { recursive: true })
+    writeFileSync(join(localDir, "character.json"), DEFINITION_JSON)
+    expect(createPersonaMemory(readCharacterPack(localDir), cwd, home()).remember(LINE)).toBe(
+      "not-editable",
+    )
+  })
+
+  it("forget は消せた・一致なし・1ターン2回目を見分けて返し、一致なしはターンの1行を使わない", () => {
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
+    memory.remember(LINE)
+    memory.finishTurn()
+    memory.remember("星を見るのが好き")
+    memory.finishTurn()
+
+    expect(memory.forget("覚えていないこと")).toBe("no-match")
+    expect(memory.forget("")).toBe("no-match")
+    expect(memory.forget(LINE)).toBe("erased")
+    expect(memory.forget("星を見るのが好き")).toBe("turn-used")
+  })
+
+  it("ディスクに書けなければ failed を返す", () => {
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
+    writeFileSync(home(), "")
+
+    expect(memory.remember(LINE)).toBe("failed")
   })
 })
 

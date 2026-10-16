@@ -22,6 +22,7 @@ import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
 import { pinToBackground } from "../core/background-delegation.ts"
+import type { ExternalToolMark } from "../core/external-tool-mark.ts"
 import { judgePhaseResultCaller } from "../core/phase-result-tool.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
 import { childProcessEnv } from "../core/visible-output-nudge.ts"
@@ -103,11 +104,14 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  *
  * 印を読む前に、拒む側に当たったときだけ1回 macrotask を待つ。
  * 返却を運ぶメッセージは `relayMessages` の反復へ渡るまで列に積まれ、フックの呼び出しはそれより先に処理されうる。
+ *
+ * 外部由来の印（`ExternalToolMark`）へのツール名は、拒むかどうかを決める前に、サブエージェントの中の呼び出しも含めて渡す。
  */
 export function preToolUseHooks(
   gateRaised: () => boolean,
   bandPosition: () => string,
   onEvent: (event: SessionEvent) => void,
+  externalToolMark: Pick<ExternalToolMark, "observeTool">,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     PreToolUse: [
@@ -117,6 +121,7 @@ export function preToolUseHooks(
             if (input.hook_event_name !== "PreToolUse") {
               return {}
             }
+            externalToolMark.observeTool(input.tool_name)
             const inSubagent = input.agent_id !== undefined
             if (!inSubagent) {
               confirmedSettingEvents(input).forEach(onEvent)

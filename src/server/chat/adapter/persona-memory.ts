@@ -9,7 +9,7 @@
 // 人が書いた見出しと表、機械が書いた領域の境目が、ファイルの中で1本に決まる。
 // 節を消せば書き足す前の人格に戻り、消せるのは自分で書き足した行だけという線もこの境目がそのまま担う。
 //
-// 上限に当たった回も、消す行が見つからなかった回も何も知らせない。失敗しても例外を投げない。
+// 書けなかった回・消せなかった回は結果の種類（`PersonaRememberResult` / `PersonaForgetResult`）で返し、例外は投げない。
 
 import { writeFileSync } from "node:fs"
 import { join } from "node:path"
@@ -52,20 +52,21 @@ type PersonaEraseResult =
 /**
  * 覚えたことの書き足し・忘れる口を1つ作る（`remember` と `forget` のツールの裏に立つ）。
  *
- * 書かずに黙って捨てるのは次の4つ（どれも呼び出し側には伝えない）:
+ * 書かずに返すのは次の5つ:
  *
  * - そのターンで既に1行書いている（{@link PersonaMemory.finishTurn} まで受け付けない）
  * - 空の行・改行を含む行・{@link MAX_REMEMBERED_LINE_LENGTH} を超える行
  * - 起動先の `characters/local` と同じ名前のパック（`isEditableCharacterPack`。書いても探索の順で負ける）
- * - ディスクに書けない（`onFailure` へだけ知らせる）
+ * - 節に同じ文面の行がある（ターンの1行は使わない）
+ * - ディスクに書けない（`onFailure` へも知らせる）
  *
- * 消さずに黙って何もしないのは、そのターンで既に1行消しているとき・節に一致する行が無いとき・上の3つ目と4つ目。
+ * 消さずに返すのは、そのターンで既に1行消しているとき・節に一致する行が無いとき・上の3つ目と5つ目。
  * 書いた数と消した数は別に数えるので、同じターンで覚え直せる。
  *
  * `root` は書き込み先の親（既定は `~/.tsukumo/characters`）。
  *
  * `onChange` は書けた・消せたときだけ、更新後の一覧（{@link readRememberedLines}）を渡して呼ぶ。
- * 一覧は画面へだけ流し、モデルへは戻さない（ツールの戻り値は `"ok"` のまま）。
+ * 一覧は画面へだけ流し、モデルへは戻さない。
  */
 export function createPersonaMemory(
   pack: CharacterPack,
@@ -82,33 +83,51 @@ export function createPersonaMemory(
   return {
     remember: (line) => {
       const trimmed = line.trim()
-      if (written || !isWritableLine(trimmed) || !isEditableCharacterPack(pack, cwd)) {
-        return
+      if (written) {
+        return "turn-used"
+      }
+      if (!isWritableLine(trimmed)) {
+        return "unwritable-line"
+      }
+      if (!isEditableCharacterPack(pack, cwd)) {
+        return "not-editable"
+      }
+      if (readRememberedLines(pack, root).some((remembered) => remembered.trim() === trimmed)) {
+        return "duplicate"
       }
 
       const result = writeRememberedLine(pack, join(root, pack.name), trimmed)
-      written = result.kind === "written"
       if (result.kind === "failed") {
         onFailure("persona-remember", result.error)
+        return "failed"
       }
-      if (written) {
-        onChange(readRememberedLines(pack, root))
-      }
+      written = true
+      onChange(readRememberedLines(pack, root))
+      return "written"
     },
     forget: (line) => {
       const target = forgetTarget(line)
-      if (forgotten || target === "" || !isEditableCharacterPack(pack, cwd)) {
-        return
+      if (forgotten) {
+        return "turn-used"
+      }
+      if (!isEditableCharacterPack(pack, cwd)) {
+        return "not-editable"
+      }
+      if (target === "") {
+        return "no-match"
       }
 
       const result = eraseRememberedLine(pack, join(root, pack.name), target)
-      forgotten = result.kind === "erased"
       if (result.kind === "failed") {
         onFailure("persona-forget", result.error)
+        return "failed"
       }
-      if (forgotten) {
-        onChange(readRememberedLines(pack, root))
+      if (result.kind === "no-match") {
+        return "no-match"
       }
+      forgotten = true
+      onChange(readRememberedLines(pack, root))
+      return "erased"
     },
     finishTurn: () => {
       written = false

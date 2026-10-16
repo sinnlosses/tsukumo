@@ -25,3 +25,10 @@ export const RECALL_EPISODE_TOOL_NAME = "recall_episode"
 export function tsukumoToolFullName(toolName: string): string {
   return `mcp__${TSUKUMO_MCP_SERVER_NAME}__${toolName}`
 }
+
+/** モデルから見えるツール名が、tsukumo の MCP サーバのツールか。 */
+export function isTsukumoTool(fullName: string): boolean {
+  return fullName.startsWith(TSUKUMO_TOOL_PREFIX)
+}
+
+const TSUKUMO_TOOL_PREFIX = tsukumoToolFullName("")

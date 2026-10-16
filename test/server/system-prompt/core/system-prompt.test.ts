@@ -154,7 +154,7 @@ describe("toSystemPromptMode", () => {
     const chatArchive = RECENT_CHAT_ARCHIVE
     const sessionMode: SessionMode = {
       kind: "chat",
-      personaMemory: { remember: () => {}, forget: () => {}, finishTurn: () => {} },
+      personaMemory: { remember: () => "written", forget: () => "erased", finishTurn: () => {} },
       chatSummary,
       chatRecall: {
         recallList: () => ({ kind: "not-found" }),

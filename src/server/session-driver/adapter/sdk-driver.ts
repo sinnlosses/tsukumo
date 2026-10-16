@@ -17,6 +17,7 @@ import { createReportGate, type ReportGate } from "../../report/core/report-tool
 import { asidePromptText } from "../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../core/call-review.ts"
 import { createClearAndSend } from "../core/clear-and-send.ts"
+import { createExternalToolMark } from "../core/external-tool-mark.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { createPromptDelayWatch, type PromptDelayWatch } from "../core/prompt-delay.ts"
@@ -103,6 +104,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   })
 
   const callReview = createCallReview(createReportChanges(options.cwd))
+  const externalToolMark = createExternalToolMark()
   const reportGate = createReportGate(callReview.nothingNewRejected)
   const readSessionDigest = createSessionDigestReader(options.expressions)
   const titleIntake = createSessionTitleIntake()
@@ -115,7 +117,12 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       hooks: withAskGuard(
         {
           ...stopHooks(options.mode, reportGate, options.onEvent),
-          ...preToolUseHooks(callReview.gateRaised, callReview.bandPosition, options.onEvent),
+          ...preToolUseHooks(
+            callReview.gateRaised,
+            callReview.bandPosition,
+            options.onEvent,
+            externalToolMark,
+          ),
           ...handbackNoteHooks(callReview.takeHandbackNote),
         },
         options.mountWorkflowPlugin,
@@ -131,6 +138,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           options.onEvent,
           queue.holdBrief,
           clearAndSend.hold,
+          externalToolMark.allowsRemember,
         ),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>
@@ -140,6 +148,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
 
   // 依頼も差し戻しに見せる（新しい事実の届いた印。`CallReview`）。
   const emitTurnOpening = (event: SessionEvent): void => {
+    externalToolMark.observe(event)
     for (const passed of callReview.pass(event)) {
       options.onEvent(passed)
     }

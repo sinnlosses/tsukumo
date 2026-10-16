@@ -1,10 +1,8 @@
 // 委譲の返却が届いてからメインが `work_plan` を呼ぶまでのあいだ、メインの作業のツールを拒む判定。
 
-import { tsukumoToolFullName } from "./tsukumo-tool-name.ts"
+import { isTsukumoTool } from "./tsukumo-tool-name.ts"
 
 const READ_ONLY_TOOL_NAMES = ["Read", "Grep", "Glob", "ToolSearch"] as const satisfies string[]
-
-const TSUKUMO_TOOL_PREFIX = tsukumoToolFullName("")
 
 export type GateVerdict =
   | { readonly kind: "allow" }
@@ -22,7 +20,7 @@ export function judgeToolAgainstGate(
   if (
     inSubagent ||
     READ_ONLY_TOOL_NAMES.some((name) => name === toolName) ||
-    toolName.startsWith(TSUKUMO_TOOL_PREFIX)
+    isTsukumoTool(toolName)
   ) {
     return { kind: "allow" }
   }
