@@ -58,6 +58,7 @@ tsukumo は推し量らない。
 | `figure`          | 必須。レポートの図1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`stats`・`dimension` の塊）か、`{ kind: "none", reason }`（`short-answer`／`no-shape`／`single-value`／`no-material`）。理由が本文と合わないと差し戻す（`docs/architecture/display.md`「出力の分離（セリフと詳細）」） |
 
 `task.outcome` は目録の1行の終わり方で、帯は閉じない。どこへ送ったかは tsukumo の関心にしない。
+`checks` に `ng` の行がある `report` の `finished` は差し戻す（`docs/architecture/display.md`「出力の分離（セリフと詳細）」）。
 
 `clear_and_send`（文脈を空にして次の依頼を送る。仕事のときだけ載る）:
 

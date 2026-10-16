@@ -19,7 +19,9 @@ export const reportTaskSchema = z.object({
     ),
   outcome: z
     .enum(REPORT_TASK_OUTCOMES)
-    .describe("finished（作業を終えた）/ stopped（止めた）/ awaiting-answer（利用者の答え待ち）"),
+    .describe(
+      "finished（作業を終えた）/ stopped（止めた）/ awaiting-answer（利用者の答え待ち）。checks に ng の行がある間は finished にしない",
+    ),
 })
 
 /** レポートが載せるタスク。タスクに紐付かないレポートと、`task` を持たなかったころの記録は `none`。 */

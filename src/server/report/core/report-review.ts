@@ -22,6 +22,9 @@
 // 脇の話のターン（`aside` から次の依頼・続きのターン・ターンの終わりまで）では段の閉じ方を見ない。
 // 枠は応えていない `work_plan` と段の閉じ方でそれぞれ1ターンに1回までで、規約違反の枠とは分ける。
 //
+// `task.outcome` が `finished` なのに `checks` に `ng` の行がある `report` も差し戻す（枠は別に1ターンに1回まで）。
+// 脇の話のターンでも見る。
+//
 // 背景のシェル（`kind` が `shell`）が生きたままの `report` も差し戻す（枠は別に1ターンに1回まで）。
 // 止めるか待つかをモデルに決めさせる。背景のサブエージェントとその他の種類、脇の話のターンでは見ない。
 // 差し戻しの文面には ID と `description` を載せるが、記録に残すのは種類の名前だけ。
@@ -63,6 +66,7 @@ export const REPORT_PROCEDURE_REJECTIONS = [
   "missing-work-plan-closing",
   "unfinished-phases",
   "finished-but-stopped",
+  "finished-with-ng",
   "background-running",
   "no-screenshot",
 ] as const satisfies readonly string[]
@@ -87,7 +91,8 @@ export type ReportReview = {
   /**
    * `report` の handler から。
    * このターンで描いた `report` の送り直し、直前に描いた `report` のあとに新しい事実の届いていない呼び出し、
-   * 応えていない `work_plan` の差し戻し、合わない段の閉じ方、規約違反のどれかなら、この順に見て差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
+   * 応えていない `work_plan` の差し戻し、合わない段の閉じ方、`ng` のある `finished`、背景のシェル、画像の無い画面の変更、規約違反のどれかなら、
+   * この順に見て差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
    */
   readonly judge: (report: ReportDraft, changedFiles?: readonly string[]) => ReportVerdict
   /**
@@ -144,6 +149,7 @@ export function createReportReview(
   let nothingNewRejectedInTurn = false
   let unansweredPlanRejectedInTurn = false
   let closingRejectedInTurn = false
+  let finishedWithNgRejectedInTurn = false
   let backgroundRejectedInTurn = false
   let screenshotRejectedInTurn = false
   // ターンの頭の HEAD（読み終わるまでは Promise）。
@@ -160,6 +166,7 @@ export function createReportReview(
     nothingNewRejectedInTurn = false
     unansweredPlanRejectedInTurn = false
     closingRejectedInTurn = false
+    finishedWithNgRejectedInTurn = false
     backgroundRejectedInTurn = false
     screenshotRejectedInTurn = false
     turnHead = changes.readHead()
@@ -200,6 +207,14 @@ export function createReportReview(
       if (closingVerdict.kind === "rejected" && !closingRejectedInTurn) {
         closingRejectedInTurn = true
         return closingVerdict
+      }
+      if (!finishedWithNgRejectedInTurn && isFinished(report.task) && hasNgCheck(report)) {
+        finishedWithNgRejectedInTurn = true
+        return {
+          kind: "rejected",
+          text: REPORT_FINISHED_WITH_NG_REJECTION_TEXT,
+          reasons: ["finished-with-ng"],
+        }
       }
       const shells = news.backgroundTasks().filter((task) => task.kind === "shell")
       if (shells.length > 0 && !asideTurn && !backgroundRejectedInTurn) {
@@ -321,6 +336,12 @@ export const REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT =
   "全部の段を終えたなら最後の段まで進めて `finished` にし、途中で止めたなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
+/** `task.outcome` が `finished` なのに `checks` に `ng` の行がある `report` を差し戻すときの戻り値。固定の文面だけで、モデルが書いた本文も `checks` の中身も写さない。 */
+export const REPORT_FINISHED_WITH_NG_REJECTION_TEXT =
+  "`task.outcome` が `finished` なのに、`checks` に `ng` の行がある。" +
+  "落ちた確認を直して `ok` にしてから `finished` で呼び直すか、直せないなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
+  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
 /** 画面のファイルを変えたターンの `report` に画像の塊が無いときの戻り値。固定の文面だけで、モデルが書いた本文も変更ファイルのパスも写さない。 */
 export const REPORT_NO_SCREENSHOT_REJECTION_TEXT =
   "画面のファイルを変えたのに、`report` に画像が無い。" +
@@ -353,6 +374,10 @@ function hasImageBlock(report: ReportDraft): boolean {
 /** `checks` に、`unverified` で `detail` が空白だけでない行があるか。行の中身は見ない。 */
 function hasUnverifiedReason(report: ReportDraft): boolean {
   return report.checks.some((check) => check.status === "unverified" && check.detail.trim() !== "")
+}
+
+function hasNgCheck(report: ReportDraft): boolean {
+  return report.checks.some((check) => check.status === "ng")
 }
 
 /** 同じ依頼に段取りがあるときの、段の閉じ方だけで見た判定。`remaining` は済んでいない段の数（全部済みなら 0）。 */
