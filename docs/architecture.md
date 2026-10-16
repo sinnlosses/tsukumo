@@ -342,7 +342,7 @@ vendor/tsukumo-plugins/       取り込んだ tsukumo-plugins（git submodule。
 ```
 
 **設定の置き場は環境変数と歯車の設定の2つ**（`docs/architecture/adr/0025-no-project-settings.md`。リポジトリに属する値の
-置き場は無い）。ワークフローの設定（流れとパーツ）は tsukumo が持たず、ワークフローの `.tw/config.toml` に置いたまま、
+置き場は無い）。ワークフローの設定（スキルの並び）は tsukumo が持たず、ワークフローの `.tw/config.toml` に置いたまま、
 歯車の「ワークフロー」の面が設定コマンド（`tw config --schema`・`tw config set`。`server/workflow-setting/`）を通して見せて書く
 （同じ ADR の「2026-10-14 の改訂」）。タスクの節と使い方の見直しの「タスクにする」は、起動先の `.beads` が読めるかだけで出し分ける。
 「tsukumo に頼む」の文面は固定で、`shared/repository/task-run-prompt.ts` の `runPromptOf` が作る。

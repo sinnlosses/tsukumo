@@ -730,7 +730,7 @@ describe("readFakeSession", () => {
 })
 
 describe("同梱の疑似セッションの委譲の返却", () => {
-  it("場面 delegated-handback は、契約の形の返却だけで帯を最後の1段の手前まで進める", () => {
+  it("場面 delegated-handback は、phase_result の結果だけで帯を最後の1段の手前まで進める", () => {
     const scene = bundledFakeSession().turns.find((turn) => turn.name === "delegated-handback")
     if (scene === undefined) {
       throw new Error("場面 delegated-handback が無い")

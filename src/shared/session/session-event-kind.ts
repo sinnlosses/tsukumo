@@ -22,6 +22,7 @@ const SESSION_EVENT_KINDS = {
   "work-plan-called": true,
   "delegate-returned": true,
   "phase-result-called": true,
+  "delegate-handed-back": true,
   "tool-started": true,
   "tool-finished": true,
   "background-tool-finished": true,

@@ -590,38 +590,17 @@ describe("toRestoredEvents（委譲の返却）", () => {
     return timestamp === undefined ? message : stamped(message, timestamp)
   }
 
-  it("3形と形の読めない返却を delegate-returned にし、依頼としては起こさない", () => {
+  it("返却は本文が何であっても、依頼にもイベントにもしない", () => {
     const messages = [
       userMessage("架空の依頼"),
       handbackMessage(["計画 0/2 | 架空の計画。"]),
-      handbackMessage([
-        "",
-        "[harness: 架空の注記]",
-        "段 1/2 | 架空の要約。",
-        "段 2/2 | 読まない行",
-      ]),
+      handbackMessage(["段 1/2 | 架空の要約。"]),
       handbackMessage(["止めた 2/2 | 架空の理由"]),
       handbackMessage(["了解しました"]),
     ]
 
-    expect(eventsOf(messages).map((event) => event)).toEqual([
+    expect(eventsOf(messages)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
-      {
-        kind: "delegate-returned",
-        delegate: "架空のID",
-        handback: { kind: "plan", count: 2, summary: "架空の計画。" },
-      },
-      {
-        kind: "delegate-returned",
-        delegate: "架空のID",
-        handback: { kind: "phase-done", phase: 1, count: 2, summary: "架空の要約。" },
-      },
-      {
-        kind: "delegate-returned",
-        delegate: "架空のID",
-        handback: { kind: "stopped", phase: 2, count: 2, summary: "架空の理由" },
-      },
-      { kind: "delegate-returned", delegate: "架空のID", handback: { kind: "unreadable" } },
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
   })
@@ -641,7 +620,7 @@ describe("toRestoredEvents（委譲の返却）", () => {
       eventsOf([userMessage("架空の依頼"), handbackMessage(["段 1/2 | 架空の要約。"]), note]).map(
         ({ kind }) => kind,
       ),
-    ).toEqual(["request", "delegate-returned", "turn-finished"])
+    ).toEqual(["request", "turn-finished"])
   })
 
   it("handback の印の無い伝言と、本文の読めない返却の扱い", () => {
@@ -654,10 +633,10 @@ describe("toRestoredEvents（委譲の返却）", () => {
 
     expect(
       eventsOf([userMessage("架空の依頼"), notHandback, noBody]).map(({ kind }) => kind),
-    ).toEqual(["request", "delegate-returned", "turn-finished"])
+    ).toEqual(["request", "turn-finished"])
   })
 
-  it("返却の timestamp で段が済み、生きたセッションと同じ位置の帯が戻る", () => {
+  it("返却は帯を動かさず、組み直した帯はメインの work_plan が決めた位置になる", () => {
     const phases = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
     const workPlan = (id: string, input: unknown, timestamp: string) => [
       stamped(
@@ -690,13 +669,6 @@ describe("toRestoredEvents（委譲の返却）", () => {
     )
     const plans = state.records.filter((record) => record.kind === "work-plan")
 
-    expect(plans.map((record) => record.current)).toEqual([0, 1, 2, 3])
-    expect(plans.at(-1)).toMatchObject({
-      phaseSummary: "架空の2つ目。",
-      time: {
-        kind: "recovered",
-        at: Temporal.Instant.from("2026-01-02T03:20:00.000Z").epochMilliseconds,
-      },
-    })
+    expect(plans.map((record) => record.current)).toEqual([0, 1])
   })
 })

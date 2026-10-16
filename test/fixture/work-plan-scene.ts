@@ -131,7 +131,6 @@ function called(plan: WorkPlan): SessionEvent {
 function returned(phase: number, count = 2): SessionEvent {
   return {
     kind: "delegate-returned",
-    delegate: "toolu_delegate",
     handback: { kind: "phase-done", phase, count, summary: "架空の要約。" },
   }
 }

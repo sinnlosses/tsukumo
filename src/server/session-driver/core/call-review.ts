@@ -105,7 +105,7 @@ export function createCallReview(changes?: ReportChanges): CallReview {
 
 /**
  * SDK のメッセージ1件から変換したイベントのうち、差し戻しに通すものを通す。
- * メインのメッセージのイベントはすべて、委譲先のメッセージのイベントは返却（`delegate-returned`）と `phase-result-called` だけを通す。
+ * メインのメッセージのイベントはすべて、委譲先のメッセージのイベントは `delegate-handed-back` と `phase-result-called` だけを通す。
  * どちらも委譲先のツールの呼び出しから作るので、委譲先のメッセージにしか載らない。
  */
 export function passRelayedEvents(
@@ -114,7 +114,7 @@ export function passRelayedEvents(
   fromMain: boolean,
 ): readonly SessionEvent[] {
   return events.flatMap((event) =>
-    fromMain || event.kind === "delegate-returned" || event.kind === "phase-result-called"
+    fromMain || event.kind === "delegate-handed-back" || event.kind === "phase-result-called"
       ? review.pass(event)
       : [event],
   )

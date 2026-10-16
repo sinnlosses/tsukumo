@@ -231,7 +231,6 @@ describe("plannedPhasesOf の飛ばした段", () => {
     }
     const viaReturn = nextWorkPlan(before, {
       kind: "delegate-returned",
-      delegate: "toolu_delegate",
       handback: { kind: "phase-skipped", phase: 1, count: 2 },
     })
 
@@ -616,9 +615,9 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     summary,
   })
   const returned = (plan: LatestWorkPlan, handback: DelegateReturn): LatestWorkPlan =>
-    nextWorkPlan(plan, { kind: "delegate-returned", delegate: "toolu_delegate", handback })
+    nextWorkPlan(plan, { kind: "delegate-returned", handback })
 
-  it("段 n/N で、段 n に当たる今の段を済ませ、要約を段のまとめにする", () => {
+  it("phase-done で、phase に当たる今の段を済ませ、要約を段のまとめにする", () => {
     expect(returned(planAt(1), phaseDone(1))).toEqual({
       ...planAt(2),
       phaseSummary: "架空の要約。",
@@ -658,17 +657,13 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     expect(returned(planAt(1), phaseDone(1, 3))).toEqual(planAt(1))
   })
 
-  it("範囲の無い段取りと、計画・止めた・形の読めない返却は動かさない", () => {
+  it("範囲の無い段取りと、止めた返却は動かさない", () => {
     const noRange = planAt(1, SERIAL, [], { kind: "none" })
 
     expect(returned(noRange, phaseDone(1))).toEqual(noRange)
-    for (const handback of [
-      { kind: "plan", count: 2, summary: "架空" },
-      { kind: "stopped", phase: 1, count: 2, summary: "架空" },
-      { kind: "unreadable" },
-    ] as const) {
-      expect(returned(planAt(1), handback)).toEqual(planAt(1))
-    }
+    expect(returned(planAt(1), { kind: "stopped", phase: 1, count: 2, summary: "架空" })).toEqual(
+      planAt(1),
+    )
   })
 
   it("並びの最後の段は返却では済ませない（閉じるのは report）", () => {
@@ -691,7 +686,7 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     })
   })
 
-  it("要約の空の段 n/N はまとめ待ちにし、要約があればまとめ待ちにしない", () => {
+  it("要約の空の phase-done はまとめ待ちにし、要約があればまとめ待ちにしない", () => {
     expect(returned(planAt(1), phaseDone(1, 2, ""))).toMatchObject({
       current: 2,
       phaseSummary: "",
@@ -768,7 +763,6 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
     expect(
       nextWorkPlan(plan, {
         kind: "delegate-returned",
-        delegate: "toolu_delegate",
         handback: { kind: "phase-done", phase: 1, count: 2, summary: "架空" },
       }),
     ).toEqual(plan)
@@ -781,7 +775,6 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
     expect(
       nextWorkPlan(plan, {
         kind: "delegate-returned",
-        delegate: "toolu_delegate",
         handback: { kind: "phase-done", phase: 1, count: 2, summary: "架空" },
       }),
     ).toMatchObject({ current: 2 })

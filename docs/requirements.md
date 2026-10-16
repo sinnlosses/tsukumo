@@ -226,7 +226,7 @@ sed -n '/^### 4.1 Claude Code の駆動/,/^#\{2,4\} /p' docs/requirements.md
 （`docs/architecture/workflow-contract.md`。判断は `docs/architecture/adr/0024-no-skill-dependency.md`）。
 前提が無いときは、その前提に頼る機能を出さないか、何が無いかを画面で言う。「不明」へ倒して
 空の欄を見せるだけにしない。値を変えられるようにするときの置き場は
-`docs/architecture/adr/0025-no-project-settings.md`（環境変数・歯車の設定の2つ）。ワークフローが持つ値（流れとパーツ）は
+`docs/architecture/adr/0025-no-project-settings.md`（環境変数・歯車の設定の2つ）。ワークフローが持つ値（スキルの並び）は
 `.tw/config.toml` に置いたまま、ワークフローの設定コマンド（`docs/architecture/workflow-contract.md`「設定コマンド」）で歯車から見せて書き、
 `tw` が無い・口を持たないときは欄を出さずに何が無いかを言う。
 

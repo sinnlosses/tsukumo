@@ -20,45 +20,6 @@ const REPOSITORY = {
 }
 
 const SCHEMA = {
-  schema: 1,
-  default_word: "既定の語",
-  none_word: "なしの語",
-  keys: [
-    {
-      key: "flow",
-      label: "流れの名",
-      description: "流れの説明",
-      kind: "choice",
-      default: "first",
-      values: [
-        { value: "first", label: "一つ目", description: "一つ目の説明" },
-        { value: "second", label: "二つ目", description: "二つ目の説明" },
-      ],
-    },
-    {
-      key: "parts.reviewer",
-      label: "見る役",
-      description: "見る役の説明",
-      kind: "part",
-      default: "既定の語",
-      candidates: "agent",
-      allow_none: true,
-    },
-  ],
-}
-
-const CONFIG_LINES = [
-  "CONFIG\t.tw/config.toml",
-  "verify\t架空の検証\tconfig",
-  "flow\tsecond\tconfig",
-  "parts.reviewer\t既定の語\tdefault",
-].join("\n")
-
-function ran(exitCode: number, stdout: string, stderr = ""): TwOutcome {
-  return { kind: "ran", exitCode, stdout, stderr }
-}
-
-const SCHEMA_2 = {
   schema: 2,
   keys: [
     {
@@ -75,19 +36,39 @@ const SCHEMA_2 = {
   ],
 }
 
-/** `schema2` を渡さなければ `--version` を知らない古い `tw`（終了コード2）として振る舞う。 */
+const SCHEMA_1 = {
+  schema: 1,
+  default_word: "既定の語",
+  none_word: "なしの語",
+  keys: [
+    {
+      key: "flow",
+      label: "流れの名",
+      description: "流れの説明",
+      kind: "choice",
+      default: "first",
+      values: [{ value: "first", label: "一つ目", description: "一つ目の説明" }],
+    },
+  ],
+}
+
+const CONFIG_LINES = [
+  "CONFIG\t.tw/config.toml",
+  "verify\t架空の検証\tconfig",
+  'steps\t["架空:二つ目"]\tconfig',
+].join("\n")
+
+function ran(exitCode: number, stdout: string, stderr = ""): TwOutcome {
+  return { kind: "ran", exitCode, stdout, stderr }
+}
+
 function portOf(
-  outcomes: Partial<Record<"schema" | "schema2" | "config" | "set", TwOutcome>>,
+  outcomes: Partial<Record<"schema" | "config" | "set", TwOutcome>>,
 ): TwConfigPort & { readonly sets: (readonly [string, string])[] } {
   const sets: (readonly [string, string])[] = []
   return {
     sets,
-    schema: (version) =>
-      Promise.resolve(
-        version === 2
-          ? (outcomes.schema2 ?? ran(2, "", "unrecognized arguments: --version"))
-          : (outcomes.schema ?? ran(0, JSON.stringify(SCHEMA))),
-      ),
+    schema: () => Promise.resolve(outcomes.schema ?? ran(0, JSON.stringify(SCHEMA))),
     config: () => Promise.resolve(outcomes.config ?? ran(0, CONFIG_LINES)),
     set: (key, value) => {
       sets.push([key, value])
@@ -108,10 +89,11 @@ describe("readWorkflowSetting", () => {
     })
   })
 
-  it("--schema が失敗する・JSON でない・schema が描ける版でなければ schema-unsupported", async () => {
+  it("--schema が失敗する・JSON でない・schema 1・schema が描ける版でなければ schema-unsupported", async () => {
     const outcomes = [
       ran(2, "", "unrecognized arguments: --schema"),
       ran(0, "JSON でない"),
+      ran(0, JSON.stringify(SCHEMA_1)),
       ran(0, JSON.stringify({ ...SCHEMA, schema: 3 })),
     ]
 
@@ -122,7 +104,12 @@ describe("readWorkflowSetting", () => {
       }),
     )
 
-    expect(reasons).toEqual(["schema-unsupported", "schema-unsupported", "schema-unsupported"])
+    expect(reasons).toEqual([
+      "schema-unsupported",
+      "schema-unsupported",
+      "schema-unsupported",
+      "schema-unsupported",
+    ])
   })
 
   it("tw config が MISSING（終了コード6）なら config-missing", async () => {
@@ -136,7 +123,7 @@ describe("readWorkflowSetting", () => {
 
   it("tw config がほかの理由で失敗すれば config-unreadable で、stderr の1行目を添える", async () => {
     const view = await readWorkflowSetting(
-      portOf({ config: ran(3, "", "\n.tw/config.toml の flow が語彙の外\n2行目\n") }),
+      portOf({ config: ran(3, "", "\n.tw/config.toml に flow が残っている\n2行目\n") }),
       PLACE,
     )
 
@@ -144,60 +131,28 @@ describe("readWorkflowSetting", () => {
       kind: "unavailable",
       repository: REPOSITORY,
       reason: "config-unreadable",
-      detail: ".tw/config.toml の flow が語彙の外",
+      detail: ".tw/config.toml に flow が残っている",
     })
   })
 
-  it("読めれば、schema の欄ごとに今の値を添えて available", async () => {
-    const view = await readWorkflowSetting(portOf({}), PLACE)
-
-    expect(view).toEqual({
-      kind: "available",
-      repository: REPOSITORY,
-      defaultWord: "既定の語",
-      noneWord: "なしの語",
-      fields: [
-        {
-          kind: "choice",
-          key: "flow",
-          label: "流れの名",
-          description: "流れの説明",
-          values: SCHEMA.keys[0]?.values,
-          current: "second",
-        },
-        {
-          kind: "part",
-          key: "parts.reviewer",
-          label: "見る役",
-          description: "見る役の説明",
-          candidates: "agent",
-          allowNone: true,
-          current: "既定の語",
-        },
-      ],
-    })
-  })
-})
-
-describe("readWorkflowSetting（schema 2）", () => {
-  const withSchema2 = { schema2: ran(0, JSON.stringify(SCHEMA_2)) }
-
-  it("--version 2 が通れば steps の欄を、config の値の列の JSON の配列で描く", async () => {
+  it("読めれば、steps の欄を config の値の列の JSON の配列で描く", async () => {
     const view = await readWorkflowSetting(
       portOf({
-        ...withSchema2,
         config: ran(0, 'CONFIG\t.tw/config.toml\nsteps\t["架空:二つ目","架空:消えた"]\tconfig'),
       }),
       PLACE,
     )
 
-    expect(view).toMatchObject({
+    expect(view).toEqual({
       kind: "available",
+      repository: REPOSITORY,
       fields: [
         {
           kind: "steps",
           key: "steps",
-          values: SCHEMA_2.keys[0]?.values,
+          label: "並び",
+          description: "並びの説明",
+          values: SCHEMA.keys[0]?.values,
           current: ["架空:二つ目", "架空:消えた"],
         },
       ],
@@ -209,32 +164,12 @@ describe("readWorkflowSetting（schema 2）", () => {
 
     const currents = await Promise.all(
       lines.map(async (config) => {
-        const view = await readWorkflowSetting(
-          portOf({ ...withSchema2, config: ran(0, config) }),
-          PLACE,
-        )
-        const field = view.kind === "available" ? view.fields[0] : undefined
-        return field?.kind === "steps" ? field.current : undefined
+        const view = await readWorkflowSetting(portOf({ config: ran(0, config) }), PLACE)
+        return view.kind === "available" ? view.fields[0]?.current : undefined
       }),
     )
 
     expect(currents).toEqual([["架空:一つ目"], ["架空:一つ目"]])
-  })
-
-  it("--version 2 が失敗すれば引数なしの schema 1 に落ちて choice と part を描く", async () => {
-    const view = await readWorkflowSetting(portOf({}), PLACE)
-
-    expect(view).toMatchObject({
-      kind: "available",
-      defaultWord: "既定の語",
-      fields: [{ kind: "choice" }, { kind: "part" }],
-    })
-  })
-
-  it("--version 2 で tw が起動できなければ tw-missing", async () => {
-    const view = await readWorkflowSetting(portOf({ schema2: { kind: "missing" } }), PLACE)
-
-    expect(view).toMatchObject({ kind: "unavailable", reason: "tw-missing" })
   })
 })
 
@@ -242,9 +177,9 @@ describe("changeWorkflowSetting", () => {
   it("SET なら読み直した面を返す", async () => {
     const port = portOf({})
 
-    const change = await changeWorkflowSetting(port, PLACE, "flow", "second")
+    const change = await changeWorkflowSetting(port, PLACE, "steps", '["架空:二つ目"]')
 
-    expect(port.sets).toEqual([["flow", "second"]])
+    expect(port.sets).toEqual([["steps", '["架空:二つ目"]']])
     expect(change).toMatchObject({ kind: "view", view: { kind: "available" } })
   })
 
@@ -252,13 +187,13 @@ describe("changeWorkflowSetting", () => {
     const change = await changeWorkflowSetting(
       portOf({ set: ran(2, "", "tw config set: 架空の値 は語彙の外\n") }),
       PLACE,
-      "flow",
+      "steps",
       "架空の値",
     )
 
     expect(change).toEqual({
       kind: "failed",
-      key: "flow",
+      key: "steps",
       message: "tw config set: 架空の値 は語彙の外",
     })
   })
@@ -267,8 +202,8 @@ describe("changeWorkflowSetting", () => {
     const change = await changeWorkflowSetting(
       portOf({ set: ran(6, "MISSING\t.tw/config.toml") }),
       PLACE,
-      "flow",
-      "second",
+      "steps",
+      "[]",
     )
 
     expect(change).toMatchObject({
@@ -281,8 +216,8 @@ describe("changeWorkflowSetting", () => {
     const change = await changeWorkflowSetting(
       portOf({ set: { kind: "missing" } }),
       PLACE,
-      "flow",
-      "second",
+      "steps",
+      "[]",
     )
 
     expect(change).toMatchObject({

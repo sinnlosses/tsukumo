@@ -6,7 +6,6 @@
 import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
-import { parseDelegateReturn } from "../../../shared/session/delegate-return.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import { asideTextOf } from "./aside-prompt.ts"
 import { createCallReview } from "./call-review.ts"
@@ -23,9 +22,9 @@ const RESTORED_TURN_FINISHED: SessionEvent = {
 
 /**
  * transcript のメッセージ列を内部イベントに変える（メインビューのやり取りと吹き出しのセリフを組み直すため）。
- * メッセージ1件の形は SDK のイベントとほぼ同じなので、変換の本体は {@link toSessionEvents} に任せ、ここが足すのは transcript には残らない2つだけ:
+ * メッセージ1件の形は SDK のイベントとほぼ同じなので、変換の本体は {@link toSessionEvents} に任せ、ここが足すのは transcript には残らないものだけ:
  *
- * - 委譲先の返却（`delegate-returned`）: `origin.handback` が真の `user` メッセージから、`origin.body` の字下げした行の1行目を読む（依頼にはしない）
+ * - 委譲先の返却（`origin.handback` が真の `user` メッセージ）: 依頼にもイベントにもしない（`phase_result` で進んだ帯は戻さない）
  * - 利用者の依頼（`request`）と脇の話（`aside`）: 欄で利用者の入力と分かる `user` のテキストブロックから起こす（{@link requestText}）。脇の話は `asideTextOf` の包みで見分ける
  * - 続きのターンの始まり（`turn-resumed`）: バックグラウンドタスクの知らせの `user` メッセージから起こす
  * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼・脇の話・続きのターンの手前と並びの末尾で区切る。時刻は直前の出来事のものを引き継ぐ
@@ -77,15 +76,8 @@ export function restoredMessageEvents(
   message: unknown,
   expressions: readonly Expression[],
 ): readonly SessionEvent[] {
-  const handback = handbackOf(message)
-  if (handback !== undefined) {
-    return [
-      {
-        kind: "delegate-returned",
-        delegate: handback.from,
-        handback: parseDelegateReturn(handback.body),
-      },
-    ]
+  if (isHandback(message)) {
+    return []
   }
   if (isTaskNotification(message)) {
     return [{ kind: "turn-resumed" }]
@@ -102,28 +94,14 @@ export function restoredMessageEvents(
     : [{ kind: "aside", text: aside, images: [] }]
 }
 
-/**
- * 委譲先の返却の本文と返した委譲先。`origin.handback` が真の `user` メッセージの `origin.body` のうち、字下げ付きの行だけが返却の本文。
- * 返却だが本文が読めないときは本文が空の文字列、`origin.from` が読めなければ委譲先が空の文字列。返却でなければ undefined。
- */
-function handbackOf(
-  message: unknown,
-): { readonly body: string; readonly from: string } | undefined {
-  if (!isPlainObject(message) || message.type !== "user" || !isPlainObject(message.origin)) {
-    return undefined
-  }
-  const { origin } = message
-  if (origin.handback !== true) {
-    return undefined
-  }
-  const body =
-    typeof origin.body === "string"
-      ? origin.body
-          .split(/\r?\n/u)
-          .filter((line) => /^\s/u.test(line))
-          .join("\n")
-      : ""
-  return { body, from: typeof origin.from === "string" ? origin.from : "" }
+/** 委譲先の返却か。`origin.handback` が真の `user` メッセージ。 */
+function isHandback(message: unknown): boolean {
+  return (
+    isPlainObject(message) &&
+    message.type === "user" &&
+    isPlainObject(message.origin) &&
+    message.origin.handback === true
+  )
 }
 
 /** 差し戻しの1段を通す。通ったあとの出来事は、元の出来事の時刻を引き継ぐ。 */

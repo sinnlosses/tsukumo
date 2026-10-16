@@ -23,8 +23,7 @@ export type TwOutcome =
 
 /** 設定コマンドを打つ口（中身は配線が渡す）。 */
 export type TwConfigPort = {
-  /** `version` が 2 のときは `--schema --version 2`、省くと引数なしの `--schema`。 */
-  readonly schema: (version?: 2) => Promise<TwOutcome>
+  readonly schema: () => Promise<TwOutcome>
   readonly config: () => Promise<TwOutcome>
   readonly set: (key: string, value: string) => Promise<TwOutcome>
 }
@@ -43,15 +42,6 @@ const DEFAULT_CONFIG_PATH = ".tw/config.toml"
 
 const EXIT_CONFIG_MISSING = 6
 
-const choiceEntrySchema = z.object({
-  key: z.string(),
-  label: z.string(),
-  description: z.string(),
-  kind: z.literal("choice"),
-  default: z.string(),
-  values: z.array(z.object({ value: z.string(), label: z.string(), description: z.string() })),
-})
-
 const stepsEntrySchema = z.object({
   key: z.string(),
   label: z.string(),
@@ -61,63 +51,29 @@ const stepsEntrySchema = z.object({
   values: z.array(z.object({ value: z.string(), label: z.string(), description: z.string() })),
 })
 
-const configSchemaV2Schema = z.object({
-  schema: z.literal(2),
-  keys: z.array(z.discriminatedUnion("kind", [choiceEntrySchema, stepsEntrySchema])),
-})
-
 const configSchemaSchema = z.object({
-  schema: z.literal(1),
-  default_word: z.string(),
-  none_word: z.string(),
-  keys: z.array(
-    z.discriminatedUnion("kind", [
-      choiceEntrySchema,
-      z.object({
-        key: z.string(),
-        label: z.string(),
-        description: z.string(),
-        kind: z.literal("part"),
-        default: z.string(),
-        candidates: z.enum(["agent", "skill"]),
-        allow_none: z.boolean(),
-      }),
-    ]),
-  ),
+  schema: z.literal(2),
+  keys: z.array(stepsEntrySchema),
 })
 
-type ConfigSchemaV1 = z.infer<typeof configSchemaSchema>
-type ConfigSchemaV2 = z.infer<typeof configSchemaV2Schema>
+type ConfigSchema = z.infer<typeof configSchemaSchema>
 
-/** 読めた版の schema。schema 2 には既定の語・なしの語が無い。 */
-type ConfigSchema =
-  | { readonly version: 1; readonly body: ConfigSchemaV1 }
-  | { readonly version: 2; readonly body: ConfigSchemaV2 }
-
-type SchemaEntry = ConfigSchemaV1["keys"][number] | ConfigSchemaV2["keys"][number]
+type SchemaEntry = ConfigSchema["keys"][number]
 
 /** 欄の形と今の値を読み、面に出すものを返す。例外を投げない。 */
 export async function readWorkflowSetting(
   port: TwConfigPort,
   place: WorkflowSettingPlace,
 ): Promise<WorkflowSettingView> {
-  const versioned = await port.schema(2)
-  if (versioned.kind === "missing") {
+  const outcome = await port.schema()
+  if (outcome.kind === "missing") {
     return unavailable(place, "tw-missing", place.twLocation)
   }
-  const schema = parseConfigSchema(versioned)
-  if (schema !== undefined) {
-    return foldConfig(await port.config(), schema, place)
-  }
-  const plain = await port.schema()
-  if (plain.kind === "missing") {
-    return unavailable(place, "tw-missing", place.twLocation)
-  }
-  const fallback = parseConfigSchema(plain)
-  if (fallback === undefined) {
+  const schema = parseConfigSchema(outcome)
+  if (schema === undefined) {
     return unavailable(place, "schema-unsupported", "")
   }
-  return foldConfig(await port.config(), fallback, place)
+  return foldConfig(await port.config(), schema, place)
 }
 
 /** 欄1つを書き、読み直した面か、ワークフローが断った理由を返す。例外を投げない。 */
@@ -152,12 +108,8 @@ function parseConfigSchema(
   } catch {
     return undefined
   }
-  const v2 = configSchemaV2Schema.safeParse(json)
-  if (v2.success) {
-    return { version: 2, body: v2.data }
-  }
-  const v1 = configSchemaSchema.safeParse(json)
-  return v1.success ? { version: 1, body: v1.data } : undefined
+  const parsed = configSchemaSchema.safeParse(json)
+  return parsed.success ? parsed.data : undefined
 }
 
 /** `steps` の今の値は1行の JSON の文字列の配列。読めなければ既定。 */
@@ -197,46 +149,21 @@ function foldConfig(
       key === undefined || value === undefined ? [] : [[key, value] as const],
     ),
   )
-  const entries: readonly SchemaEntry[] = schema.body.keys
   return {
     kind: "available",
     repository: repositoryOf(place, configPath),
-    defaultWord: schema.version === 1 ? schema.body.default_word : "",
-    noneWord: schema.version === 1 ? schema.body.none_word : "",
-    fields: entries.map((entry) => fieldOf(entry, values.get(entry.key))),
+    fields: schema.keys.map((entry) => fieldOf(entry, values.get(entry.key))),
   }
 }
 
 function fieldOf(entry: SchemaEntry, raw: string | undefined): WorkflowSettingField {
-  switch (entry.kind) {
-    case "choice":
-      return {
-        kind: "choice",
-        key: entry.key,
-        label: entry.label,
-        description: entry.description,
-        values: entry.values,
-        current: raw ?? entry.default,
-      }
-    case "steps":
-      return {
-        kind: "steps",
-        key: entry.key,
-        label: entry.label,
-        description: entry.description,
-        values: entry.values,
-        current: stepsOf(raw, entry.default),
-      }
-    case "part":
-      return {
-        kind: "part",
-        key: entry.key,
-        label: entry.label,
-        description: entry.description,
-        candidates: entry.candidates,
-        allowNone: entry.allow_none,
-        current: raw ?? entry.default,
-      }
+  return {
+    kind: "steps",
+    key: entry.key,
+    label: entry.label,
+    description: entry.description,
+    values: entry.values,
+    current: stepsOf(raw, entry.default),
   }
 }
 

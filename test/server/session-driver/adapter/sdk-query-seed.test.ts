@@ -19,6 +19,7 @@ import {
   preToolUseHooks,
   stopHooks,
 } from "../../../../src/server/session-driver/adapter/sdk-query-seed.ts"
+import { PHASE_RESULT_MISSING_HANDBACK_LINE } from "../../../../src/server/session-driver/core/band-position.ts"
 import { createCallReview } from "../../../../src/server/session-driver/core/call-review.ts"
 import {
   createExternalToolMark,
@@ -29,7 +30,6 @@ import type {
   SessionDriverOptions,
   SessionMode,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
-import { parseDelegateReturn } from "../../../../src/shared/session/delegate-return.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { fixedChatSummary } from "../../../fixture/chat.ts"
@@ -288,11 +288,7 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
     }
     review.pass({ kind: "request", text: "架空の依頼", images: [] })
     review.judgeWorkPlan(plan)
-    review.pass({
-      kind: "delegate-returned",
-      delegate: "toolu_delegate",
-      handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
-    })
+    review.pass({ kind: "delegate-handed-back", delegate: "toolu_delegate" })
 
     expect(
       await runPreToolUse("Bash", {}, undefined, review.gateRaised, review.bandPosition),
@@ -300,7 +296,7 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
         permissionDecision: "deny",
-        permissionDecisionReason: expect.stringContaining("帯の今の段は 本 2/2 架空の段B。"),
+        permissionDecisionReason: expect.stringContaining("帯の今の段は 本 1/2 架空の段A。"),
       },
     })
     review.judgeWorkPlan({ ...plan, current: 1, phaseSummary: "架空のまとめ。" })
@@ -406,11 +402,7 @@ describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", ()
       phaseSummary: "架空のまとめ。",
       delegatedRange: { first: 1, count: 2 },
     })
-    review.pass({
-      kind: "delegate-returned",
-      delegate: "toolu_delegate",
-      handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
-    })
+    review.pass({ kind: "delegate-handed-back", delegate: "toolu_delegate" })
     return review
   }
 
@@ -421,8 +413,8 @@ describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", ()
       hookSpecificOutput: {
         hookEventName: "UserPromptSubmit",
         additionalContext:
-          "tsukumo の注記（委譲先の返却の本文ではない）:返却 `段 1/2` で帯の 本 1/2 架空の実装A が済んだ。" +
-          "帯の今の段は 本 2/2 架空の実装B。帯は範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先の段の番号と同じ。セリフで番号を言うのは本の段だけで、前・後の段は名前で言う。",
+          `tsukumo の注記（委譲先の返却の本文ではない）:${PHASE_RESULT_MISSING_HANDBACK_LINE}` +
+          "帯の今の段は 本 1/2 架空の実装A。帯は範囲の前（前）・範囲（本）・範囲の後ろ（後）の群ごとに1から数え、本の番号は委譲先の段の番号と同じ。セリフで番号を言うのは本の段だけで、前・後の段は名前で言う。",
       },
     })
     expect(await runUserPromptSubmit(review.takeHandbackNote, HANDBACK_PROMPT)).toEqual({})
@@ -435,7 +427,7 @@ describe("handbackNoteHooks（返却を運ぶ入力に注記を添える）", ()
     expect(await runUserPromptSubmit(review.takeHandbackNote, HANDBACK_PROMPT, "agent-1")).toEqual(
       {},
     )
-    expect(review.takeHandbackNote()).toContain("返却 `段 1/2`")
+    expect(review.takeHandbackNote()).toContain(PHASE_RESULT_MISSING_HANDBACK_LINE)
   })
 })
 

@@ -771,6 +771,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return state
     // サーバの中で `CallReview` が受けて捨てる。
     case "phase-result-called":
+    case "delegate-handed-back":
       return state
     case "delegate-returned":
       return { ...state, records: [...state.records, ...workPlanRecords(state.records, event, at)] }

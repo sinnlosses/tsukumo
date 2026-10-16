@@ -64,7 +64,7 @@ describe("SPEECH_CADENCE_PROMPT", () => {
     expect(SPEECH_CADENCE_PROMPT).toContain("状況 | 何をした・何が分かった")
     expect(SPEECH_CADENCE_PROMPT).not.toContain("n/N |")
     expect(append).toContain("背景に固定する")
-    expect(append).toContain("委譲先の返却で進む")
+    expect(append).toContain("委譲先の `phase_result` で進む")
     expect(append).toContain("delegatedRange")
   })
 

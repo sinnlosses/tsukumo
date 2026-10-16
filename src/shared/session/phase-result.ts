@@ -67,7 +67,7 @@ export function parsePhaseResult(value: unknown): PhaseResult | undefined {
   return outcome === "stopped" ? { phase, count, outcome, reason } : { phase, count, outcome }
 }
 
-/** 段の結果を、返却の1行目と同じ形にする。`finished` は要約の空の `phase-done`。 */
+/** 段の結果を、委譲の返却の形にする。`finished` は要約の空の `phase-done`。 */
 export function delegateReturnOf(result: PhaseResult): DelegateReturn {
   switch (result.outcome) {
     case "finished":

@@ -1,4 +1,4 @@
-// ワークフローの設定（`flow` と `parts.<枠>`）を画面に見せる形と、画面から書いた結果の形。
+// ワークフローの設定（スキルの並び `steps`）を画面に見せる形と、画面から書いた結果の形。
 // 欄の名前・値の語彙・既定はどれもワークフローの設定コマンド（`tw config --schema`）から来て、ここには書かない。
 
 import { z } from "zod"
@@ -11,7 +11,7 @@ export type WorkflowSettingRepository = {
   readonly configPath: string
 }
 
-/** `choice` の欄が取れる値1つ。 */
+/** 並びに置ける候補1つ。 */
 export type WorkflowSettingChoice = {
   readonly value: string
   readonly label: string
@@ -19,41 +19,17 @@ export type WorkflowSettingChoice = {
 }
 
 /**
- * 画面に描く欄1つ。`current` は `.tw/config.toml` に書いてある値か、書いていなければワークフローが決めた既定。
- * `part` の値は既定の語・なしの語・パーツの全名のどれかで、候補の一覧は SDK のスキルとエージェントから画面が作る。
+ * 画面に描く欄1つ（スキルの並び）。
+ * `current` は実行の順の全名で、`.tw/config.toml` に書いてある値か、書いていなければワークフローが決めた既定。`values` に無い名前を含みうる。
  */
-export type WorkflowSettingField =
-  | {
-      readonly kind: "choice"
-      readonly key: string
-      readonly label: string
-      readonly description: string
-      readonly values: readonly WorkflowSettingChoice[]
-      readonly current: string
-    }
-  | {
-      readonly kind: "part"
-      readonly key: string
-      readonly label: string
-      readonly description: string
-      readonly candidates: "agent" | "skill"
-      readonly allowNone: boolean
-      readonly current: string
-    }
-  /** スキルの並び（schema 2）。`current` は実行の順の全名で、`values` に無い名前を含みうる。 */
-  | {
-      readonly kind: "steps"
-      readonly key: string
-      readonly label: string
-      readonly description: string
-      readonly values: readonly WorkflowSettingChoice[]
-      readonly current: readonly string[]
-    }
-
-/** 値が1つの欄（`choice`・`part`）。選択肢を `workflowSettingOptions` で作る。 */
-export type WorkflowSettingSingleField = Exclude<WorkflowSettingField, { kind: "steps" }>
-
-export type WorkflowSettingStepsField = Extract<WorkflowSettingField, { kind: "steps" }>
+export type WorkflowSettingField = {
+  readonly kind: "steps"
+  readonly key: string
+  readonly label: string
+  readonly description: string
+  readonly values: readonly WorkflowSettingChoice[]
+  readonly current: readonly string[]
+}
 
 /** 欄を出せないわけ。 */
 export type WorkflowSettingUnavailableReason =
@@ -70,8 +46,6 @@ export type WorkflowSettingView =
   | {
       readonly kind: "available"
       readonly repository: WorkflowSettingRepository
-      readonly defaultWord: string
-      readonly noneWord: string
       readonly fields: readonly WorkflowSettingField[]
     }
   | {
@@ -92,45 +66,22 @@ export type WorkflowSettingChange =
 
 const repositorySchema = z.object({ worktreeName: z.string(), configPath: z.string() })
 
-const fieldSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("choice"),
-    key: z.string(),
-    label: z.string(),
-    description: z.string(),
-    values: z
-      .array(z.object({ value: z.string(), label: z.string(), description: z.string() }))
-      .readonly(),
-    current: z.string(),
-  }),
-  z.object({
-    kind: z.literal("part"),
-    key: z.string(),
-    label: z.string(),
-    description: z.string(),
-    candidates: z.enum(["agent", "skill"]),
-    allowNone: z.boolean(),
-    current: z.string(),
-  }),
-  z.object({
-    kind: z.literal("steps"),
-    key: z.string(),
-    label: z.string(),
-    description: z.string(),
-    values: z
-      .array(z.object({ value: z.string(), label: z.string(), description: z.string() }))
-      .readonly(),
-    current: z.array(z.string()).readonly(),
-  }),
-])
+const fieldSchema = z.object({
+  kind: z.literal("steps"),
+  key: z.string(),
+  label: z.string(),
+  description: z.string(),
+  values: z
+    .array(z.object({ value: z.string(), label: z.string(), description: z.string() }))
+    .readonly(),
+  current: z.array(z.string()).readonly(),
+})
 
 /** 配る形そのもの（{@link WorkflowSettingView} と同じ鍵）。 */
 export const workflowSettingViewSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("available"),
     repository: repositorySchema,
-    defaultWord: z.string(),
-    noneWord: z.string(),
     fields: z.array(fieldSchema).readonly(),
   }),
   z.object({

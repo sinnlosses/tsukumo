@@ -1,18 +1,17 @@
 // 設定のダイアログの「ワークフロー」の面のロジック。
-// 面を開くたびにワークフローの設定を読み直し（`workflowSetting.read`）、選んだ値を `workflowSetting.set` で書く。
+// 面を開くたびにワークフローの設定を読み直し（`workflowSetting.read`）、並びの操作の結果を `workflowSetting.set` で書く。
 // 表示はサーバから返った値だけに従い、押した側へ先に倒さない。
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 
 import {
-  workflowSettingOptions,
   workflowSettingSteps,
   type WorkflowSettingOption,
 } from "../../../../../shared/workflow-setting/workflow-setting-option.ts"
 import type {
+  WorkflowSettingField,
   WorkflowSettingRepository,
-  WorkflowSettingStepsField,
   WorkflowSettingView,
 } from "../../../../../shared/workflow-setting/workflow-setting.ts"
 import { rpc } from "../../../../domain/rpc.ts"
@@ -47,20 +46,13 @@ export type ScreenNavWorkflowSettingStep = {
   readonly canRemove: boolean
 }
 
-export type ScreenNavWorkflowSettingRow =
-  | (ScreenNavWorkflowSettingRowBase & {
-      readonly kind: "select"
-      readonly value: string
-      readonly options: readonly WorkflowSettingOption[]
-    })
-  | (ScreenNavWorkflowSettingRowBase & {
-      readonly kind: "steps"
-      readonly steps: readonly ScreenNavWorkflowSettingStep[]
-      readonly addable: readonly WorkflowSettingOption[]
-      readonly onMove: (index: number, delta: -1 | 1) => void
-      readonly onRemove: (index: number) => void
-      readonly onAdd: (value: string) => void
-    })
+export type ScreenNavWorkflowSettingRow = ScreenNavWorkflowSettingRowBase & {
+  readonly steps: readonly ScreenNavWorkflowSettingStep[]
+  readonly addable: readonly WorkflowSettingOption[]
+  readonly onMove: (index: number, delta: -1 | 1) => void
+  readonly onRemove: (index: number) => void
+  readonly onAdd: (value: string) => void
+}
 
 export type ScreenNavWorkflowSetting =
   | { readonly kind: "loading" }
@@ -78,7 +70,6 @@ export type ScreenNavWorkflowSetting =
       readonly rows: readonly ScreenNavWorkflowSettingRow[]
       /** 書いている最中は選び直させない。 */
       readonly busy: boolean
-      readonly onChange: (key: string, value: string) => void
     }
 
 type SetFailure =
@@ -90,8 +81,6 @@ const SEND_FAILED_MESSAGE = "書けなかった（サーバに届かない）。
 
 export function useWorkflowSetting(): ScreenNavWorkflowSetting {
   const dispatchAwaited = useSession((session) => session.dispatchAwaited)
-  const skillNames = useSession((session) => session.state.skillNames)
-  const agentNames = useSession((session) => session.state.agentNames)
   const queryClient = useQueryClient()
   // 面は選んだときだけマウントされるので、開くたびに `tw` を打ち直して `.tw/config.toml` の今を読む。
   const query = useQuery(rpc.workflowSetting.read.queryOptions({ retry: false, staleTime: 0 }))
@@ -125,7 +114,6 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
       message: unavailableMessage(view),
     }
   }
-  const words = { defaultWord: view.defaultWord, noneWord: view.noneWord }
   return {
     kind: "available",
     repository: repositoryLine(view.repository),
@@ -139,32 +127,17 @@ export function useWorkflowSetting(): ScreenNavWorkflowSetting {
             ? ({ kind: "shown", text: failure.message } as const)
             : ({ kind: "none" } as const),
       }
-      if (field.kind === "steps") {
-        return stepsRow(base, field, (value) => {
-          mutation.mutate({ key: field.key, value })
-        })
-      }
-      return {
-        ...base,
-        kind: "select",
-        value: field.current,
-        options: workflowSettingOptions(field, words, { skillNames, agentNames }),
-      }
+      return stepsRow(base, field, (value) => {
+        mutation.mutate({ key: field.key, value })
+      })
     }),
     busy: mutation.isPending,
-    onChange: (key, value) => {
-      const field = view.fields.find((candidate) => candidate.key === key)
-      if (field === undefined || field.kind === "steps" || field.current === value) {
-        return
-      }
-      mutation.mutate({ key, value })
-    },
   }
 }
 
 function stepsRow(
   base: ScreenNavWorkflowSettingRowBase,
-  field: WorkflowSettingStepsField,
+  field: WorkflowSettingField,
   write: (value: string) => void,
 ): ScreenNavWorkflowSettingRow {
   const { items, addable } = workflowSettingSteps(field)
@@ -173,7 +146,6 @@ function stepsRow(
   }
   return {
     ...base,
-    kind: "steps",
     steps: items.map((item, index) => ({
       ...item,
       canMoveUp: index > 0,
@@ -214,9 +186,9 @@ function repositoryLine(repository: WorkflowSettingRepository): ScreenNavWorkflo
 function unavailableMessage(view: Extract<WorkflowSettingView, { kind: "unavailable" }>): string {
   switch (view.reason) {
     case "tw-missing":
-      return `tw コマンドが見つからない（${view.detail}）。ワークフローを取り込むかリンクで入れると、ここで流れとパーツを選べる。`
+      return `tw コマンドが見つからない（${view.detail}）。ワークフローを取り込むかリンクで入れると、ここでスキルの並びを選べる。`
     case "schema-unsupported":
-      return "tw が設定コマンド（tw config --schema）を持たない。取り込んだワークフローかリンクで入れたワークフローを新しくする。"
+      return "tw が並び（schema 2）の設定コマンドを返さない。取り込んだワークフローかリンクで入れたワークフローを新しくする。"
     case "config-missing":
       return "このリポジトリに .tw/config.toml が無い。"
     case "config-unreadable":

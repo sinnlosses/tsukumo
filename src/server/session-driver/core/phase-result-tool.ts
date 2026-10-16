@@ -55,7 +55,7 @@ export function answerPhaseResultCall(
     return { text: PHASE_RESULT_REJECTIONS.malformed, isError: true }
   }
   if (verdict.moved) {
-    onEvent({ kind: "delegate-returned", delegate: "", handback: verdict.handback })
+    onEvent({ kind: "delegate-returned", handback: verdict.handback })
   }
   const position = bandPositionText(verdict.plan)
   return {

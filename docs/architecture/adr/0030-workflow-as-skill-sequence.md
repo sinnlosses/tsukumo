@@ -35,6 +35,7 @@
 - **移行**: schema 1 と schema 2 を並存させ、文字の1行目と `phase_result` も両方読む。ワークフローが移り終えたら schema 1 と文字の1行目を消す
   - 1回の `tw config --schema` が返す版は1つのまま、並存は版を選ぶ引数で表す。移行中は引数なしが schema 1、`--version 2` が schema 2 を返し、
     tsukumo は `--version 2` を先に打って失敗したら引数なしに落とす。移り終えたら引数なしが schema 2 を返し、`--version` を外す
+  - 2026-10-17: tsukumo は文字の1行目と schema 1 の描画、`--version 2` の打ち分けを外した（plugins の `tw config --schema` が引数なしで schema 2 だけを返し、`--version 2` は終了コード2。委譲先は返却の1行目を書かず、止めたことは `phase_result` の `stopped` と本文の先頭の語で読む）
 - **実装は2つのリポジトリにまたがる**（このリポジトリと `tsukumo-plugins`）。別々のタスクで進める
 - 同梱のスキルの名前を既定の並びとして tsukumo が知ってもよい（ADR 0024 の 2026-10-10・10-11 の改訂）。ただし既定はワークフローが返すので、tsukumo のコードに並びは書かない
 

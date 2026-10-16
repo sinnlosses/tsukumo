@@ -1393,17 +1393,17 @@ describe("toSessionEvents（委譲の返却）", () => {
     return assistantMessage([{ type: "tool_use", id: "toolu_back", name, input }], parentToolUseId)
   }
 
-  it("委譲先の SubagentHandback は、段の番号の形の1行目を読んだ delegate-returned だけを出す", () => {
-    const input = { message: "段 1/3 | 架空の進み。\n架空の続き" }
+  it("委譲先の SubagentHandback は、本文が何であっても委譲先を見分ける鍵の delegate-handed-back だけを出す", () => {
+    const events = [
+      { message: "段 1/3 | 架空の進み。\n架空の続き" },
+      { message: "了解" },
+      { message: 1 },
+    ].map((input) =>
+      toSessionEvents(toolUse("SubagentHandback", input, "toolu_sub_1"), EXPRESSIONS),
+    )
 
-    expect(toSessionEvents(toolUse("SubagentHandback", input, "toolu_sub_1"), EXPRESSIONS)).toEqual(
-      [
-        {
-          kind: "delegate-returned",
-          delegate: "toolu_sub_1",
-          handback: { kind: "phase-done", phase: 1, count: 3, summary: "架空の進み。" },
-        },
-      ],
+    expect(events).toEqual(
+      Array.from({ length: 3 }, () => [{ kind: "delegate-handed-back", delegate: "toolu_sub_1" }]),
     )
   })
 
@@ -1428,23 +1428,6 @@ describe("toSessionEvents（委譲の返却）", () => {
   })
 
   describe("委譲先の返却", () => {
-    it("形の読めない返却と message が文字でない返却も unreadable で届く", () => {
-      const unreadable = {
-        kind: "delegate-returned",
-        delegate: "toolu_agent",
-        handback: { kind: "unreadable" },
-      }
-      const odd = assistantMessage(
-        [
-          { type: "tool_use", id: "t1", name: "SubagentHandback", input: { message: "了解" } },
-          { type: "tool_use", id: "t2", name: "SubagentHandback", input: { message: 1 } },
-        ],
-        "toolu_agent",
-      )
-
-      expect(toSessionEvents(odd, EXPRESSIONS)).toEqual([unreadable, unreadable])
-    })
-
     it("メイン自身の SubagentHandback は返却にしない", () => {
       const message = assistantMessage([
         { type: "tool_use", id: "t3", name: "SubagentHandback", input: { message: "段 1/2 | x" } },

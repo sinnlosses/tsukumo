@@ -10,17 +10,14 @@ import type { WorkflowSettingView } from "../../../../src/shared/workflow-settin
 const VIEW: WorkflowSettingView = {
   kind: "available",
   repository: { worktreeName: "架空の作業ツリー", configPath: "/架空/根/.tw/config.toml" },
-  defaultWord: "既定の語",
-  noneWord: "なしの語",
   fields: [
     {
-      kind: "part",
-      key: "parts.reviewer",
-      label: "見る役",
-      description: "見る役の説明",
-      candidates: "agent",
-      allowNone: false,
-      current: "架空の役",
+      kind: "steps",
+      key: "steps",
+      label: "並び",
+      description: "並びの説明",
+      values: [{ value: "架空:一つ目", label: "一つ目", description: "" }],
+      current: ["架空:一つ目"],
     },
   ],
 }
@@ -45,9 +42,9 @@ describe("workflowSetting の手続き", () => {
       }),
     )
 
-    const change = await client.set({ key: "parts.reviewer", value: "架空の役" })
+    const change = await client.set({ key: "steps", value: '["架空:一つ目"]' })
 
-    expect(calls).toEqual([["parts.reviewer", "架空の役"]])
+    expect(calls).toEqual([["steps", '["架空:一つ目"]']])
     expect(change).toEqual({ kind: "view", view: VIEW })
   })
 })

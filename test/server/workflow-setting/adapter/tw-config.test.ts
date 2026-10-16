@@ -23,14 +23,14 @@ describe("twConfigPort", () => {
     expect(outcome).toEqual({ kind: "missing" })
   })
 
-  it("schema は版を渡したときだけ --version を付ける", async () => {
+  it("schema は config --schema だけを打つ", async () => {
     const script = join(dir, "tw")
     await writeFile(script, ["#!/bin/sh", 'printf "%s|" "$@"', ""].join("\n"))
     await chmod(script, 0o755)
-    const port = twConfigPort(script, dir)
 
-    expect(await port.schema(2)).toMatchObject({ stdout: "config|--schema|--version|2|" })
-    expect(await port.schema()).toMatchObject({ stdout: "config|--schema|" })
+    expect(await twConfigPort(script, dir).schema()).toMatchObject({
+      stdout: "config|--schema|",
+    })
   })
 
   it("引数をそのまま渡し、終了コード・stdout・stderr を受け取る", async () => {

@@ -2,10 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
-import {
-  INITIAL_SESSION_STATE,
-  type SessionState,
-} from "../../../../../src/shared/session/session-state.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import type {
   WorkflowSettingChange,
   WorkflowSettingView,
@@ -25,51 +22,6 @@ const REPOSITORY = {
   configPath: "/架空/作業ツリー/.tw/config.toml",
 }
 
-function availableView(acceptor: string): WorkflowSettingView {
-  return {
-    kind: "available",
-    repository: REPOSITORY,
-    defaultWord: "既定",
-    noneWord: "なし",
-    fields: [
-      {
-        kind: "choice",
-        key: "flow",
-        label: "流れ",
-        description: "架空の流れの説明",
-        values: [
-          { value: "delegate", label: "委譲する", description: "" },
-          { value: "main", label: "メインで行う", description: "" },
-        ],
-        current: "delegate",
-      },
-      {
-        kind: "part",
-        key: "parts.acceptor",
-        label: "受け入れ役",
-        description: "架空の受け入れ役の説明",
-        candidates: "agent",
-        allowNone: false,
-        current: acceptor,
-      },
-      {
-        kind: "part",
-        key: "parts.retrospect",
-        label: "振り返り",
-        description: "架空の振り返りの説明",
-        candidates: "skill",
-        allowNone: true,
-        current: "既定",
-      },
-    ],
-  }
-}
-
-const NAMES: Partial<SessionState> = {
-  skillNames: ["架空のスキル"],
-  agentNames: ["架空のプラグイン:架空の役"],
-}
-
 let rpcStub: RpcFetchStub | undefined
 
 afterEach(() => {
@@ -87,7 +39,7 @@ function renderWorkflowFace(
   rpcStub = stubRpcFetch((call) =>
     call.procedure === "workflowSetting/read" ? read() : { kind: "pending" },
   )
-  putSession({ ...INITIAL_SESSION_STATE, ...NAMES }, (command) => {
+  putSession(INITIAL_SESSION_STATE, (command) => {
     sent.push(command)
     return onSet(command)
   })
@@ -123,8 +75,6 @@ function stepsView(current: readonly string[]): WorkflowSettingView {
   return {
     kind: "available",
     repository: REPOSITORY,
-    defaultWord: "",
-    noneWord: "",
     fields: [
       {
         kind: "steps",
@@ -223,63 +173,50 @@ describe("設定のダイアログの「ワークフロー」の面（スキル�
   })
 })
 
-describe("設定のダイアログの「ワークフロー」の面", () => {
-  it("見出しの下にリポジトリを出し、欄ごとにプルダウンを並べる。候補は SDK の名前から作る", async () => {
-    renderWorkflowFace(() => rpcOutput(availableView("既定")))
+describe("設定のダイアログの「ワークフロー」の面（リポジトリと書き込みの結果）", () => {
+  it("見出しの下にリポジトリを出す", async () => {
+    renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲"])))
 
-    await within(dialog()).findByRole("combobox", { name: "受け入れ役" })
+    await within(dialog()).findByRole("list", { name: "スキルの並び" })
 
     expect(dialog().textContent).toContain("架空の作業ツリー のリポジトリ")
     expect(dialog().textContent).toContain("/架空/作業ツリー/.tw/config.toml")
-    expect(optionValues("流れ")).toEqual(["delegate", "main"])
-    expect(optionValues("受け入れ役")).toEqual(["既定", "架空のプラグイン:架空の役"])
-    expect(optionValues("振り返り")).toEqual(["既定", "なし", "架空のスキル"])
-    expect(select("受け入れ役").value).toBe("既定")
-    expect(within(dialog()).queryByRole("button", { name: "既定に戻す" })).toBeNull()
   })
 
-  it("選ぶと workflowSetting.set を送り、返った面の値を出す", async () => {
-    const sent = renderWorkflowFace(
-      () => rpcOutput(availableView("既定")),
-      (): WorkflowSettingChange => ({
-        kind: "view",
-        view: availableView("架空のプラグイン:架空の役"),
-      }),
+  it("足すと workflowSetting.set を送り、返った面の並びを出す", async () => {
+    renderWorkflowFace(
+      () => rpcOutput(stepsView(["架空:甲"])),
+      (): WorkflowSettingChange => ({ kind: "view", view: stepsView(["架空:甲", "架空:丙"]) }),
     )
-    await within(dialog()).findByRole("combobox", { name: "受け入れ役" })
+    const list = await within(dialog()).findByRole("list", { name: "スキルの並び" })
 
-    fireEvent.change(select("受け入れ役"), { target: { value: "架空のプラグイン:架空の役" } })
+    fireEvent.change(select("スキルの並びに足す"), { target: { value: "架空:丙" } })
 
     await waitFor(() => {
-      expect(select("受け入れ役").value).toBe("架空のプラグイン:架空の役")
-    })
-    expect(sent).toContainEqual({
-      procedure: "workflowSetting.set",
-      key: "parts.acceptor",
-      value: "架空のプラグイン:架空の役",
+      expect(within(list).getAllByRole("listitem")).toHaveLength(2)
     })
   })
 
-  it("ワークフローが値を断ったら、その欄の下に理由を出して値は変えない", async () => {
+  it("ワークフローが値を断ったら、その欄の下に理由を出して並びは変えない", async () => {
     renderWorkflowFace(
-      () => rpcOutput(availableView("既定")),
+      () => rpcOutput(stepsView(["架空:甲"])),
       (): WorkflowSettingChange => ({
         kind: "failed",
-        key: "parts.acceptor",
+        key: "steps",
         message: "架空の断りの理由",
       }),
     )
-    await within(dialog()).findByRole("combobox", { name: "受け入れ役" })
+    const list = await within(dialog()).findByRole("list", { name: "スキルの並び" })
 
-    fireEvent.change(select("受け入れ役"), { target: { value: "架空のプラグイン:架空の役" } })
+    fireEvent.change(select("スキルの並びに足す"), { target: { value: "架空:丙" } })
 
     expect(await within(dialog()).findByText("架空の断りの理由")).toBeTruthy()
-    expect(select("受け入れ役").value).toBe("既定")
+    expect(within(list).getAllByRole("listitem")).toHaveLength(1)
   })
 
   it.each([
     ["tw-missing", "/架空/bin/tw", "tw コマンドが見つからない（/架空/bin/tw）"],
-    ["schema-unsupported", "", "tw が設定コマンド"],
+    ["schema-unsupported", "", "tw が並び（schema 2）の設定コマンドを返さない"],
     ["config-missing", "", "このリポジトリに .tw/config.toml が無い"],
     ["config-unreadable", "架空の読めない理由", ".tw/config.toml を読めない: 架空の読めない理由"],
   ] as const)("%s のときは欄を出さず、何が無いかを言う", async (reason, detail, text) => {

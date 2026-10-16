@@ -145,7 +145,7 @@ export const workPlanShape = {
  * 段のまとめが {@link MAX_PHASE_SUMMARY_SENTENCES} 文を超える・
  * 委譲先の段の範囲が整数でない・並びをはみ出す・段のまとまりの端をまたぐ・
  * 飛ばした段の名前が重なるか、この呼び出しで済んでいる段の名前でない。
- * 途中なのに段のまとめが無いことは、返却で進んだ位置を同じまま渡す呼び出しがあるので、ここでは見ない（`WorkPlanReview` が見る）。
+ * 途中なのに段のまとめが無いことは、ここでは見ず `WorkPlanReview` が `malformed` で差し戻す。
  */
 export const workPlanSchema = z.object(workPlanShape).superRefine((value, context) => {
   const {
@@ -574,7 +574,7 @@ const UNMOVED = { kind: "unmoved" } as const satisfies ReturnedPhase
 
 /**
  * 範囲を初めて宣言した `work-plan` は、範囲の前の段（計画）を済ませた位置に直す。
- * 計画の返却は段に数えず、範囲の先頭の段は今の段のときにしか返却で済まないので、手で `current` を進め忘れると帯が動かなくなる。
+ * 範囲の前の段は返却で済まず、範囲の先頭の段は今の段のときにしか返却で済まないので、手で `current` を進め忘れると帯が動かなくなる。
  */
 function withLeadPhasesFinished(previous: LatestWorkPlan, next: PlannedWorkPlan): PlannedWorkPlan {
   const hadRange = previous.kind === "planned" && previous.delegatedRange.kind === "range"
@@ -614,9 +614,9 @@ const NO_PHASE_SHIFT = {
 const NO_SHIFTED_PHASE = { kind: "none" } as const
 
 /**
- * 委譲の返却 `段 n/N`（と `phase-skipped`）で進めた段取り。
- * 範囲があり `N` が範囲の段の数と同じで、段 `n` に当たる段が今の段の集合に入っているときだけ、その段を済ませる。
- * 一足飛び・済んだ段・範囲の無い段取り・`計画`・`止めた`・形の読めない返却・並びの最後の段（返却では全部済みにしない）では `plan` をそのまま返す。
+ * `phase_result` の `finished`（`phase-done`）と `skipped`（`phase-skipped`）で進めた段取り。
+ * 範囲があり `count` が範囲の段の数と同じで、`phase` に当たる段が今の段の集合に入っているときだけ、その段を済ませる。
+ * 一足飛び・済んだ段・範囲の無い段取り・`stopped`・並びの最後の段（返却では全部済みにしない）では `plan` をそのまま返す。
  * 段のまとめは返却の要約を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもの。まとめが空なら済ませた段をまとめ待ちにする。
  * `phase-skipped` は済ませた段の名前を飛ばした段に足す。
  */

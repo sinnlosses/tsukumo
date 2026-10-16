@@ -163,7 +163,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  * `report` は仕事のときだけ載る（仕事ではレポートを常にこれで受け取る。雑談は本文を書かない決まりなので載せない）。
  * `work_plan` も仕事のときだけ。
  * `phase_result` も仕事のときだけで、帯を動かす口は変換ではなく handler（帯を動かしたら `delegate-returned` を流す）。
- * 変換は委譲先の呼び出しから、次の返却の1行目を読まない印だけを作る。
+ * 変換は委譲先の呼び出しから、次の返却に `phase_result` が伴った印だけを作る。
  * `question_brief` も仕事のときだけで、返すのは崩れた添え書きの直し方だけ。受け付けた添え書きは `holdBrief` に預ける。
  * `clear_and_send` も仕事のときだけで、返すのは "ok" だけ。渡された文面は `holdClearAndSend` に預ける。
  *

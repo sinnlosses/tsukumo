@@ -7,13 +7,16 @@ import {
 } from "../../../../src/server/report/core/report-review.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import {
+  PHASE_RESULT_MISSING_HANDBACK_LINE,
+  RESULT_CALLED_HANDBACK_LINE,
+} from "../../../../src/server/session-driver/core/band-position.ts"
+import {
   type CallReview,
   createCallReview,
   passRelayedEvents,
 } from "../../../../src/server/session-driver/core/call-review.ts"
 import { SPEECH_NOTHING_NEW_REJECTION_TEXT } from "../../../../src/server/session-driver/core/speech-review.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
-import { parseDelegateReturn } from "../../../../src/shared/session/delegate-return.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportDraft, reportEvent } from "../../../fixture/report-event.ts"
 
@@ -486,11 +489,7 @@ describe("CallReview の新しい事実の数え方の差", () => {
 })
 
 describe("passRelayedEvents", () => {
-  const RETURNED: SessionEvent = {
-    kind: "delegate-returned",
-    delegate: "toolu_delegate",
-    handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
-  }
+  const RETURNED: SessionEvent = { kind: "delegate-handed-back", delegate: "toolu_delegate" }
 
   it("委譲先のメッセージからは返却だけを差し戻しに通し、委譲ゲートの印と注記がそれで立つ", () => {
     const review = createCallReview()
@@ -503,12 +502,12 @@ describe("passRelayedEvents", () => {
     })
     const report = reportEvent({})
 
-    expect(passRelayedEvents(review, [report, RETURNED], false)).toEqual([report, RETURNED])
+    expect(passRelayedEvents(review, [report, RETURNED], false)).toEqual([report])
     expect(review.gateRaised()).toBe(true)
-    expect(review.takeHandbackNote()).toContain("返却 `段 1/2`")
+    expect(review.takeHandbackNote()).toContain(PHASE_RESULT_MISSING_HANDBACK_LINE)
   })
 
-  it("委譲先の phase-result-called も差し戻しに通して捨て、同じ委譲先の次の返却は1行目を読まずに捨てる", () => {
+  it("委譲先の phase-result-called も差し戻しに通して捨て、同じ委譲先の次の返却には phase_result が伴ったと注記する", () => {
     const review = createCallReview()
     review.pass(REQUEST)
     review.judgeWorkPlan({
@@ -522,6 +521,7 @@ describe("passRelayedEvents", () => {
     expect(passRelayedEvents(review, [called, RETURNED], false)).toEqual([])
     expect(review.gateRaised()).toBe(true)
     expect(review.bandPosition()).toContain("本 1/2")
+    expect(review.takeHandbackNote()).toContain(RESULT_CALLED_HANDBACK_LINE)
   })
 
   it("メインのメッセージのイベントはすべて差し戻しに通す（report は結果まで預かる）", () => {
@@ -540,10 +540,9 @@ describe("CallReview の委譲ゲートの印", () => {
     phaseSummary,
     delegatedRange: { first: 1, count: 2 },
   })
-  const handback = (message: string): SessionEvent => ({
-    kind: "delegate-returned",
+  const handback = (): SessionEvent => ({
+    kind: "delegate-handed-back",
     delegate: "toolu_delegate",
-    handback: parseDelegateReturn(message),
   })
   const started = (): CallReview => {
     const review = createCallReview()
@@ -553,26 +552,19 @@ describe("CallReview の委譲ゲートの印", () => {
     return review
   }
 
-  it("段取りを受け付けた依頼で返却が届くと立ち、形の読めない返却・止めた・一足飛びでも立つ", () => {
-    for (const message of [
-      "段 1/2 | 架空の返却。",
-      "了解しました",
-      "止めた 1/2 | 架空の理由。",
-      "段 2/2 | 架空の一足飛び。",
-    ]) {
-      const review = started()
-      review.pass(handback(message))
-      expect(review.gateRaised()).toBe(true)
-    }
+  it("段取りを受け付けた依頼で返却が届くと立つ", () => {
+    const review = started()
+    review.pass(handback())
+    expect(review.gateRaised()).toBe(true)
   })
 
-  it("返却で進んだあとの帯の位置を、本の群の番号で言う", () => {
+  it("返却は帯の位置を動かさない", () => {
     const review = started()
     expect(review.bandPosition()).toContain("帯の今の段は 本 1/2 架空の実装A。")
 
-    review.pass(handback("段 1/2 | 架空の返却。"))
+    review.pass(handback())
 
-    expect(review.bandPosition()).toContain("帯の今の段は 本 2/2 架空の実装B。")
+    expect(review.bandPosition()).toContain("帯の今の段は 本 1/2 架空の実装A。")
   })
 
   it("段取りが無ければ帯の位置は空", () => {
@@ -586,41 +578,33 @@ describe("CallReview の委譲ゲートの印", () => {
     const review = createCallReview()
     review.pass(REQUEST)
 
-    review.pass(handback("段 1/2 | 架空の返却。"))
+    review.pass(handback())
 
     expect(review.gateRaised()).toBe(false)
   })
 
   it("受け付けた work_plan で下り、差し戻された work_plan では下りない", () => {
     const review = started()
-    review.pass(handback("段 1/2 | 架空の返却。"))
+    review.pass(handback())
 
     expect(review.judgeWorkPlan(ranged(3)).kind).toBe("malformed")
     expect(review.gateRaised()).toBe(true)
-    expect(review.judgeWorkPlan(ranged(2)).kind).toBe("accepted")
+    expect(review.judgeWorkPlan(ranged(2, SUMMARY)).kind).toBe("accepted")
     expect(review.gateRaised()).toBe(false)
   })
 
   it("続けて届いた返却も、1回の work_plan で下りる", () => {
     const review = started()
-    review.pass(handback("段 1/2 | 架空の返却。"))
-    review.pass(handback("段 2/2 | 架空の返却。"))
+    review.pass(handback())
+    review.pass(handback())
 
-    expect(review.judgeWorkPlan(ranged(3, SUMMARY)).kind).toBe("accepted")
-    expect(review.gateRaised()).toBe(false)
-  })
-
-  it("止めた返却は、同じ位置のまま work_plan を呼べば下りる", () => {
-    const review = started()
-    review.pass(handback("止めた 1/2 | 架空の理由。"))
-
-    expect(review.judgeWorkPlan(ranged(1, SUMMARY)).kind).toBe("accepted")
+    expect(review.judgeWorkPlan(ranged(2, SUMMARY)).kind).toBe("accepted")
     expect(review.gateRaised()).toBe(false)
   })
 
   it("次の依頼で下りる", () => {
     const review = started()
-    review.pass(handback("段 1/2 | 架空の返却。"))
+    review.pass(handback())
 
     review.pass(REQUEST)
 

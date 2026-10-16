@@ -1,4 +1,4 @@
-// 設定のダイアログの「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、欄ごとに行（名前＋プルダウン）を置く。
+// 設定のダイアログの「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、並びの欄ごとに、名前・説明・番号付きの行・足すプルダウンを置く。
 // 欄はワークフローの設定コマンドから来たものだけで、出せないときは欄を出さずに何が無いかを1文で言う。
 
 import { useId, type ReactElement } from "react"
@@ -6,7 +6,6 @@ import { useId, type ReactElement } from "react"
 import { RunSettingName } from "../../../../features/run-setting/components/run-setting-option.tsx"
 import { RunSettingSelect } from "../../../../features/run-setting/components/run-setting-select.tsx"
 import { Button } from "../../../ui/button/button.tsx"
-import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import {
   useWorkflowSetting,
@@ -36,66 +35,14 @@ export function ScreenNavSettingsWorkflowFace(): ReactElement {
       return (
         <>
           <WorkflowRepository repository={setting.repository} />
-          {setting.rows.map((row) =>
-            row.kind === "steps" ? (
-              <WorkflowStepsRow
-                key={row.key}
-                row={row}
-                busy={setting.busy}
-                selectId={`${fieldId}-${row.key}`}
-              />
-            ) : (
-              <div key={row.key} className={styles["field"]}>
-                <HStack
-                  element="div"
-                  name={{ kind: "none" }}
-                  ref={undefined}
-                  gap="lg"
-                  align="center"
-                  justify="between"
-                  wrap="nowrap"
-                  className={rowStyles["screen-nav-settings-row"]}
-                >
-                  <label htmlFor={`${fieldId}-${row.key}`} title={row.description}>
-                    {row.label}
-                  </label>
-                  <RunSettingSelect
-                    id={`${fieldId}-${row.key}`}
-                    ariaLabel={row.label}
-                    heading={row.label}
-                    value={row.value}
-                    options={row.options.map((option) => ({
-                      value: option.value,
-                      disabled: false,
-                      icon: undefined,
-                      row: <RunSettingName danger={false}>{option.label}</RunSettingName>,
-                    }))}
-                    disabled={setting.busy}
-                    danger={false}
-                    rail={false}
-                    layout="list"
-                    mouth="field"
-                    title={row.description}
-                    dot="none"
-                    onChange={(value) => {
-                      setting.onChange(row.key, value)
-                    }}
-                  />
-                </HStack>
-                {row.notice.kind === "shown" && (
-                  <Text
-                    element="p"
-                    size="label"
-                    tone="state-warn"
-                    weight="inherit"
-                    className={styles["notice"]}
-                  >
-                    {row.notice.text}
-                  </Text>
-                )}
-              </div>
-            ),
-          )}
+          {setting.rows.map((row) => (
+            <WorkflowStepsRow
+              key={row.key}
+              row={row}
+              busy={setting.busy}
+              selectId={`${fieldId}-${row.key}`}
+            />
+          ))}
         </>
       )
   }
@@ -104,7 +51,7 @@ export function ScreenNavSettingsWorkflowFace(): ReactElement {
 const ADD_PLACEHOLDER_LABEL = "スキルを足す…"
 
 function WorkflowStepsRow(props: {
-  readonly row: Extract<ScreenNavWorkflowSettingRow, { kind: "steps" }>
+  readonly row: ScreenNavWorkflowSettingRow
   readonly busy: boolean
   readonly selectId: string
 }): ReactElement {

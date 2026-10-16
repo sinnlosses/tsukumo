@@ -43,7 +43,6 @@ describe("answerPhaseResultCall", () => {
     expect(events).toEqual([
       {
         kind: "delegate-returned",
-        delegate: "",
         handback: { kind: "phase-done", phase: 1, count: 2, summary: "" },
       },
     ])

@@ -76,7 +76,6 @@ describe("applySessionEvent（委譲の返却で進む段取り）", () => {
   const RANGE = { kind: "range", first: 1, count: 2 } as const
   const returned = (handback: DelegateReturn): SessionEvent => ({
     kind: "delegate-returned",
-    delegate: "toolu_delegate",
     handback,
   })
   const done = (phase: number, summary = "架空の要約。"): DelegateReturn => ({
@@ -116,9 +115,7 @@ describe("applySessionEvent（委譲の返却で進む段取り）", () => {
 
   it.each([
     ["一足飛び", done(2)],
-    ["計画", { kind: "plan", count: 2, summary: "架空" } as const],
     ["止めた", { kind: "stopped", phase: 1, count: 2, summary: "架空" } as const],
-    ["形の読めない返却", { kind: "unreadable" } as const],
   ])("%s は帯を動かさない", (_, handback) => {
     const planned = [request, plan(1, RANGE)].reduce(
       (view, event) => applySessionEvent(view, event, 0),

@@ -23,7 +23,6 @@ import type {
 } from "../../../shared/session-driver/background-task.ts"
 import type { RateLimit, RateLimitBucket } from "../../../shared/session-driver/rate-limit.ts"
 import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
-import { parseDelegateReturn } from "../../../shared/session/delegate-return.ts"
 import { parsePhaseResult } from "../../../shared/session/phase-result.ts"
 import type { SessionRemaining } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -53,9 +52,9 @@ import {
  *   ターンのレポートはメインが書くもので、委譲先の報告はメインの手元に届くだけにする
  * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを呼び出しの id を付けた `work-plan-called` にし、`parseWorkPlan`（引数の形の正典 `workPlanSchema`）を通らない引数は捨てる。handler も同じ `parseWorkPlan` で差し戻す。
  *   段の一足飛びで差し戻した呼び出しは `CallReview` が結果を見て捨てる
- * - 委譲先（`parent_tool_use_id` 付き）の `SubagentHandback` の呼び出しは、`message` の1行目を読んで `delegate-returned` にする（形の読めない返却も `unreadable` で届く）。
+ * - 委譲先（`parent_tool_use_id` 付き）の `SubagentHandback` の呼び出しは、返却が届いた事実を `delegate-handed-back` にする（本文は読まない）。
  *   `tool-started` にはしない
- * - 委譲先の `phase_result` の呼び出しは、`parsePhaseResult` を通れば `phase-result-called` にする。帯を動かすのは handler で、ここは次の返却の1行目を読まない印だけを作る。
+ * - 委譲先の `phase_result` の呼び出しは、`parsePhaseResult` を通れば `phase-result-called` にする。帯を動かすのは handler で、ここは次の返却に `phase_result` が伴った印だけを作る。
  *   通らない引数とメインの呼び出しからは何も作らず、`tool-started` にもしない
  * - `includePartialMessages` の断片で `report` の呼び出しの塊が開いたら `report-drafting` を出す（立ち絵の「書いている」の材料。メインのものだけ）。
  *   引数の断片（`input_json_delta`）は運ばない。
@@ -538,15 +537,7 @@ function assistantBlockEvents(
     parentToolUseId !== undefined &&
     isPlainObject(block.input)
   ) {
-    return [
-      {
-        kind: "delegate-returned",
-        delegate: parentToolUseId,
-        handback: parseDelegateReturn(
-          typeof block.input.message === "string" ? block.input.message : "",
-        ),
-      },
-    ]
+    return [{ kind: "delegate-handed-back", delegate: parentToolUseId }]
   }
 
   return typeof block.id === "string"
