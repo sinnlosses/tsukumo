@@ -230,7 +230,7 @@ tsukumo がすること:
 並びは線形で、近道・`loopable`・メインで行うのような分岐は並びで表さず、各スキルが「飛ばした」と返す。並びの中の並列は持たない（段の中の並列はスキルの中で行う）。
 並びを読んで順に呼ぶのはワークフローのオーケストレーターで、tsukumo は並びを読まない。帯は今までどおりメインの `work_plan` で受ける。
 tsukumo が並びに課す縛りは「1つ以上」だけで、送り出しのスキルも並びの1つとして外せる。
-この節は schema 2 の契約で、`phase_result` と `work_plan` の `skippedPhases` は入っており、schema 2 を描く面と飛ばした段の帯での描き方はまだ入っていない。経緯と採らなかった案は `docs/architecture/adr/0030-workflow-as-skill-sequence.md`。
+この節は schema 2 の契約で、`phase_result` と `work_plan` の `skippedPhases` は入っており、飛ばした段の帯での描き方は `docs/architecture/display.md`「段取り」に入っている（schema 2 を描く面はまだ入っていない）。経緯と採らなかった案は `docs/architecture/adr/0030-workflow-as-skill-sequence.md`。
 
 **印（候補になる宣言）**: 並びに置けるスキルは、SKILL.md の frontmatter の `metadata` に `workflow-step: "true"` を持つものだけ。
 `metadata` は Agent Skills の書式で、書式に無い属性を文字から文字への対応で置く欄。印を拾うのは `tw config --schema`（移行中は `--version 2`）で、tsukumo は frontmatter を読まない。

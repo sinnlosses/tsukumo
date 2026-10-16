@@ -17,6 +17,7 @@ import styles from "./phase-list.module.css"
 const HEADING = "済んだ段 · 中間レポート"
 const SHEET_LABEL = "中間レポート"
 const CHECK_MARK = "✓"
+const SKIPPED_MARK = "/"
 const PREVIOUS_MARK = "‹"
 const NEXT_MARK = "›"
 
@@ -48,9 +49,7 @@ export function PresentationalPhaseList(props: {
         header={
           sheet.kind === "open" && (
             <>
-              <span className={styles["phase-list-check"]} aria-hidden="true">
-                {CHECK_MARK}
-              </span>
+              <PhaseMark skipped={sheet.row.skipped} />
               <span className={styles["phase-list-sheet-position"]}>
                 {sheet.row.duration === ""
                   ? sheet.position
@@ -95,6 +94,17 @@ export function PresentationalPhaseList(props: {
   )
 }
 
+function PhaseMark(props: { readonly skipped: boolean }): ReactElement {
+  return (
+    <span
+      className={clsx(styles["phase-list-check"], props.skipped && styles["is-skipped"])}
+      aria-hidden="true"
+    >
+      {props.skipped ? SKIPPED_MARK : CHECK_MARK}
+    </span>
+  )
+}
+
 function PhaseRowButton(props: {
   readonly row: PhaseRow
   readonly onOpen: (row: PhaseRow) => void
@@ -109,9 +119,7 @@ function PhaseRowButton(props: {
         props.onOpen(row)
       }}
     >
-      <span className={styles["phase-list-check"]} aria-hidden="true">
-        {CHECK_MARK}
-      </span>
+      <PhaseMark skipped={row.skipped} />
       <span className={styles["phase-list-number"]}>{row.number}</span>
       <span className={styles["phase-list-title"]}>{row.title}</span>
       <span className={styles["phase-list-duration"]}>{row.duration}</span>

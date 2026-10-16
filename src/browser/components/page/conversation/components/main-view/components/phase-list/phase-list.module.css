@@ -45,6 +45,9 @@
     font-size: 11px;
     font-weight: 700;
   }
+  .phase-list-check.is-skipped {
+    color: var(--ink-quiet);
+  }
   .phase-list-number,
   .phase-list-duration {
     font-family: var(--font-mono);

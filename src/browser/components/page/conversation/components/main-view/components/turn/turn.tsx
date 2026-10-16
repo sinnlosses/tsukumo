@@ -235,7 +235,7 @@ function interimSummary(body: MainViewStepBody): string {
   }
   const time =
     body.finishedPhase.kind === "phase"
-      ? ` · 所要 ${formatMeasured(body.finishedPhase.duration)}`
+      ? `${body.finishedPhase.skipped ? " · 飛ばした" : ""} · 所要 ${formatMeasured(body.finishedPhase.duration)}`
       : ""
   return `中間レポート: ${body.firstLine}${time}`
 }

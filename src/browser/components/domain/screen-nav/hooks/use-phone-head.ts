@@ -49,6 +49,8 @@ export type PhoneHeadStatus =
 export type PhoneHeadDot = {
   readonly key: string
   readonly state: PlannedPhaseState
+  /** 済んだ段のうち飛ばした段。`state` は `done` のまま。 */
+  readonly skipped: boolean
   /** 読み上げに渡す「2. 段の名前（今の段）」。 */
   readonly label: string
 }
@@ -93,6 +95,8 @@ const DOT_STATE_SUFFIX = {
   current: "（今の段）",
   upcoming: "",
 } satisfies Record<PlannedPhaseState, string>
+
+const SKIPPED_DOT_SUFFIX = "（飛ばした）"
 
 export function usePhoneHead(source: PhoneHeadSource): PhoneHead {
   const turnStepList = useCurrentTurnSteps()
@@ -172,7 +176,8 @@ function progressOf(turnStepList: TurnStepList): PhoneHeadProgress {
     dots: phases.map((entry) => ({
       key: entry.key,
       state: entry.state,
-      label: `${plannedPhaseTitle(plan, entry)}${DOT_STATE_SUFFIX[entry.state]}`,
+      skipped: entry.skipped,
+      label: `${plannedPhaseTitle(plan, entry)}${entry.skipped ? SKIPPED_DOT_SUFFIX : DOT_STATE_SUFFIX[entry.state]}`,
     })),
     stepCount,
   }

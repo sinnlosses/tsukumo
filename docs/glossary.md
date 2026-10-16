@@ -450,7 +450,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 飛ばした段
 
 - **英語識別子**: `skippedPhases`（`work_plan` の引数と `work-plan` の記録の欄。飛ばした段の名前の配列）、`phase-skipped`（`skipped` の **`phase_result` ツール**の結果を読んだ `DelegateReturn`）
-- **定義**: 近道・`loopable` などで要らなかった段。帯では済んだ段に数え、飛ばした印を持つ。
+- **定義**: 近道・`loopable` などで要らなかった段。帯では済んだ段に数え、飛ばした印を持ち、済んだ段と見分けて描く。
   メインで走る段は `work_plan` の `skippedPhases`、委譲先で走る段は `phase_result` の `skipped` で印が付く
 - **注記**: 印の付け方と差し戻しの正典は `docs/architecture/workflow-contract.md`「スキルの契約」の「飛ばした段の印の決まり」。
   描き方は `docs/architecture/display.md`「段取り」

@@ -25,7 +25,7 @@ afterEach(() => {
   cleanup()
 })
 
-function interim(id: number, title: string, seconds: number): MainViewStep {
+function interim(id: number, title: string, seconds: number, skipped = false): MainViewStep {
   return {
     id,
     body: {
@@ -38,6 +38,7 @@ function interim(id: number, title: string, seconds: number): MainViewStep {
         kind: "phase",
         label: title,
         duration: { kind: "known", milliseconds: seconds * 1000 },
+        skipped,
       },
     },
     interim: true,
@@ -80,6 +81,27 @@ describe("PhaseList", () => {
     expect(rows[0]?.textContent).toContain("段A")
     expect(rows[0]?.textContent).toContain("2:16")
     expect(rows[1]?.textContent).toContain("2:40")
+  })
+
+  it("飛ばした段の行と板の頭は「/」と is-skipped、済んだ段は ✓ のまま", () => {
+    const skippedTurn = {
+      ...TURN,
+      steps: [interim(0, "段A", 1), interim(1, "段B", 0, true)],
+    }
+    renderList(skippedTurn)
+    const marks = (root: ParentNode) =>
+      [...root.querySelectorAll("span[aria-hidden]")]
+        .filter((node) => node.textContent === "✓" || node.textContent === "/")
+        .map((node) => [node.textContent, node.className.includes("is-skipped")])
+
+    expect(marks(screen.getByRole("button", { name: /段A/u }))).toEqual([["✓", false]])
+    expect(marks(screen.getByRole("button", { name: /段B/u }))).toEqual([["/", true]])
+
+    fireEvent.click(screen.getByRole("button", { name: /段B/u }))
+    expect(marks(sheet())).toEqual([["/", true]])
+
+    fireEvent.click(within(sheet()).getByRole("button", { name: /^前の段/u }))
+    expect(marks(sheet())).toEqual([["✓", false]])
   })
 
   it("中間レポートが無いときは何も描かない", () => {

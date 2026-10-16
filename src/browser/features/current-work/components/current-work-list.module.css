@@ -92,6 +92,17 @@
   background: color-mix(in srgb, var(--surface), var(--accent) 30%);
   color: var(--accent);
 }
+.current-work-plan-phase-skipped {
+  color: var(--ink-quiet);
+  text-decoration: line-through;
+}
+.current-work-plan-phase-skipped b {
+  border-style: dashed;
+  border-color: var(--rule);
+  background: none;
+  color: var(--ink-quiet);
+  text-decoration: none;
+}
 .current-work-plan-phase-current {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--surface), var(--accent) 10%);

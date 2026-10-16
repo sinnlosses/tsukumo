@@ -60,7 +60,7 @@ function turn(steps: readonly MainViewStep[]): MainViewTurn {
 const NO_PHASE = { kind: "none" } as const satisfies MainViewPhaseLabel
 
 function phase(label: string, milliseconds: number): MainViewPhaseLabel {
-  return { kind: "phase", label, duration: { kind: "known", milliseconds } }
+  return { kind: "phase", label, duration: { kind: "known", milliseconds }, skipped: false }
 }
 
 const PHASE_NAME = "架空の段の名前"
@@ -99,10 +99,30 @@ describe("phaseRowsOf", () => {
       step(3, {
         interim: true,
         firstLine: "2–3/4 並べて進める",
-        finishedPhase: { kind: "phase", label: "", duration: { kind: "unknown" } },
+        finishedPhase: { kind: "phase", label: "", duration: { kind: "unknown" }, skipped: false },
       }),
     ]),
   )
+
+  it("飛ばした段の行だけ skipped が立つ", () => {
+    const skippedRows = phaseRowsOf(
+      turn([
+        step(0, { interim: true, firstLine: "1/2 架空の段A", finishedPhase: phase("", 0) }),
+        step(1, {
+          interim: true,
+          firstLine: "2/2 架空の段B",
+          finishedPhase: {
+            kind: "phase",
+            label: "",
+            duration: { kind: "known", milliseconds: 0 },
+            skipped: true,
+          },
+        }),
+      ]),
+    )
+
+    expect(skippedRows.map((row) => row.skipped)).toEqual([false, true])
+  })
 
   it("中間レポートだけを古い順に1から数え、最終レポートは含めない", () => {
     expect(rows.map((row) => [row.number, row.stepId])).toEqual([

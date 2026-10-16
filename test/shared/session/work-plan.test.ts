@@ -185,6 +185,70 @@ describe("parseWorkPlan の飛ばした段", () => {
   })
 })
 
+describe("plannedPhasesOf の飛ばした段", () => {
+  const skippedPlan = (skippedPhases: readonly string[]) => ({
+    phases: PHASES,
+    current: 2,
+    finishedInGroup: [],
+    skippedPhases,
+  })
+
+  it("済んだ段のうち名前が skippedPhases にある段だけが skipped で、state は済んだ段のまま", () => {
+    const phases = plannedPhasesOf(skippedPlan(["架空の段A"]))
+
+    expect(phases.map((phase) => [phase.state, phase.skipped])).toEqual([
+      ["done", true],
+      ["done", false],
+      ["current", false],
+    ])
+  })
+
+  it("済んでいない段は名前が skippedPhases にあっても skipped にしない", () => {
+    expect(plannedPhasesOf(skippedPlan(["架空の段C"])).map((phase) => phase.skipped)).toEqual([
+      false,
+      false,
+      false,
+    ])
+  })
+
+  it("飛ばしても済み具合・番号・段の数え方は済んだ段と同じ", () => {
+    const plain = skippedPlan([])
+    const skipped = skippedPlan(["架空の段B"])
+
+    expect(plannedPhasesOf(skipped).map(({ index, key, state }) => [index, key, state])).toEqual(
+      plannedPhasesOf(plain).map(({ index, key, state }) => [index, key, state]),
+    )
+  })
+
+  it("飛ばした段を済ませた中間レポートは skipped を持ち、work_plan 経由と phase_result 経由で同じになる", () => {
+    const range = { kind: "range", first: 1, count: 2 } as const
+    const phases = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
+    const before: LatestWorkPlan = { kind: "planned", ...next(phases, 1), delegatedRange: range }
+    const viaPlan = {
+      ...next(phases, 2, "飛ばしたわけ。"),
+      delegatedRange: range,
+      skippedPhases: ["架空の実装A"],
+    }
+    const viaReturn = nextWorkPlan(before, {
+      kind: "delegate-returned",
+      delegate: "toolu_delegate",
+      handback: { kind: "phase-skipped", phase: 1, count: 2 },
+    })
+
+    expect(viaReturn.kind === "none" ? [] : plannedPhasesOf(viaReturn)).toEqual(
+      plannedPhasesOf(viaPlan),
+    )
+    expect(phaseShiftOf(before, viaPlan).finished).toMatchObject({
+      kind: "finished",
+      skipped: true,
+    })
+    expect(phaseShiftOf(before, next(phases, 2, "架空のまとめ。")).finished).toMatchObject({
+      kind: "finished",
+      skipped: false,
+    })
+  })
+})
+
 describe("まとまりの段を済ませる順", () => {
   const stateOf = (plan: LatestWorkPlan) =>
     plan.kind === "planned" ? plannedPhasesOf(plan).map((phase) => phase.state) : []
@@ -216,12 +280,12 @@ describe("まとまりの段を済ませる順", () => {
     ]
 
     expect(backward.map((shift) => shift.finished)).toEqual([
-      { kind: "finished", label: "3/4 架空の段C", summary: "Cのまとめ。" },
-      { kind: "finished", label: "2/4 架空の段B", summary: "Bのまとめ。" },
+      { kind: "finished", label: "3/4 架空の段C", summary: "Cのまとめ。", skipped: false },
+      { kind: "finished", label: "2/4 架空の段B", summary: "Bのまとめ。", skipped: false },
     ])
     expect(forward.map((shift) => shift.finished)).toEqual([
-      { kind: "finished", label: "2/4 架空の段B", summary: "Bのまとめ。" },
-      { kind: "finished", label: "3/4 架空の段C", summary: "Cのまとめ。" },
+      { kind: "finished", label: "2/4 架空の段B", summary: "Bのまとめ。", skipped: false },
+      { kind: "finished", label: "3/4 架空の段C", summary: "Cのまとめ。", skipped: false },
     ])
   })
 
@@ -350,7 +414,12 @@ function phaseOf(plan: WorkPlan): Extract<WorkPhase, { readonly kind: "phase" }>
 describe("phaseShiftOf", () => {
   it("段を進めると、終えた段のまとめを出す", () => {
     expect(phaseShiftOf(planned(PHASES, 0), next(PHASES, 1, "架空のまとめ。"))).toEqual({
-      finished: { kind: "finished", label: "1/3 架空の段A", summary: "架空のまとめ。" },
+      finished: {
+        kind: "finished",
+        label: "1/3 架空の段A",
+        summary: "架空のまとめ。",
+        skipped: false,
+      },
     })
   })
 
@@ -358,7 +427,12 @@ describe("phaseShiftOf", () => {
     const reordered = ["架空の段A", "架空の段D", "架空の段C"]
 
     expect(phaseShiftOf(planned(PHASES, 0), next(reordered, 1, "架空のまとめ。"))).toEqual({
-      finished: { kind: "finished", label: "1/3 架空の段A", summary: "架空のまとめ。" },
+      finished: {
+        kind: "finished",
+        label: "1/3 架空の段A",
+        summary: "架空のまとめ。",
+        skipped: false,
+      },
     })
   })
 
@@ -369,7 +443,12 @@ describe("phaseShiftOf", () => {
       finished: { kind: "none" },
     })
     expect(phaseShiftOf(planned(repeated, 0), next(repeated, 1, "架空のまとめ。"))).toEqual({
-      finished: { kind: "finished", label: "1/3 架空の検証", summary: "架空のまとめ。" },
+      finished: {
+        kind: "finished",
+        label: "1/3 架空の検証",
+        summary: "架空のまとめ。",
+        skipped: false,
+      },
     })
   })
 
@@ -403,7 +482,12 @@ describe("phaseShiftOf", () => {
     }
 
     expect(phaseShiftOf(awaiting, next(PHASES, 1, "架空のまとめ。"))).toEqual({
-      finished: { kind: "finished", label: "1/3 架空の段A", summary: "架空のまとめ。" },
+      finished: {
+        kind: "finished",
+        label: "1/3 架空の段A",
+        summary: "架空のまとめ。",
+        skipped: false,
+      },
     })
     expect(phaseShiftOf(awaiting, next(PHASES, 1)).finished).toEqual({ kind: "none" })
     expect(phaseShiftOf(awaiting, next(PHASES, 0, "架空のまとめ。")).finished).toEqual({

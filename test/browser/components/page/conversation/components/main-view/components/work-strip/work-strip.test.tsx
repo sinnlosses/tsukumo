@@ -27,7 +27,7 @@ function plan(
     "架空の段B",
     "架空の段C",
   ],
-): SessionEvent {
+): Extract<SessionEvent, { readonly kind: "work-plan" }> {
   return {
     kind: "work-plan",
     delegatedRange: { kind: "none" },
@@ -234,6 +234,39 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
 
     click(dot(/架空の段C/))
     expect(screen.getByRole("dialog").textContent).toBe("3. 架空の段Cこれから")
+  })
+
+  it("飛ばした段の丸は「/」と「（飛ばした）」で、吹き出しは「飛ばした · 所要」とわけを出し、「この段の手順へ」は出さない", () => {
+    putSession(
+      stateAfter([
+        REQUEST,
+        plan(0),
+        { ...plan(1, "飛ばしたわけ。"), skippedPhases: ["架空の段A"] },
+        bashStarted("toolu_2"),
+      ]),
+    )
+    render(<WorkStrip />)
+    const skipped = dot(/架空の段A（飛ばした）/)
+
+    expect(skipped.textContent).toBe("/")
+    expect(skipped.closest("li")?.getAttribute("data-phase-state")).toBe("done")
+    expect(skipped.closest("li")?.getAttribute("data-phase-skipped")).toBe("true")
+
+    click(skipped)
+
+    const popover = screen.getByRole("dialog")
+    expect(popover.textContent).toContain("/ 架空の段A")
+    expect(popover.textContent).toContain("飛ばした · 所要")
+    expect(popover.textContent).toContain("飛ばしたわけ。")
+    expect(screen.queryByRole("button", { name: "この段の手順へ" })).toBeNull()
+  })
+
+  it("済んだ段の丸は飛ばした印を持たず「✓」のまま", () => {
+    renderProgressed()
+    const done = dot(/架空の段A（済）/)
+
+    expect(done.textContent).toBe("✓")
+    expect(done.closest("li")?.hasAttribute("data-phase-skipped")).toBe(false)
   })
 
   it("答え待ちの今の段の丸も押せて、状態の行が「答え待ち」になる", () => {

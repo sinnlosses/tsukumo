@@ -160,6 +160,14 @@
   background: color-mix(in srgb, var(--surface), var(--accent) 30%);
   color: var(--accent);
 }
+.work-strip-phase[data-phase-state="done"][data-phase-skipped="true"]
+  > .work-strip-phase-dot
+  > span {
+  border-color: var(--rule);
+  border-style: dashed;
+  background: none;
+  color: var(--ink-quiet);
+}
 .work-strip-phase[data-phase-state="current"] > .work-strip-phase-dot > span {
   width: 1.375rem;
   height: 1.375rem;

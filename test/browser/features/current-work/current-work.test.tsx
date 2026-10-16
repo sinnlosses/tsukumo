@@ -477,6 +477,33 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       expect(document.querySelector(".current-work-summary")?.textContent).toBe("Bash: echo b")
     })
 
+    it("一覧の頭では飛ばした段が「/」と取り消し線の class を持ち、済んだ段は「✓」のまま", () => {
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        records: [
+          requestRecord(),
+          workPlanRecord({
+            phases: ["架空の段A", "架空の段B", "架空の段C"],
+            current: 2,
+            phaseSummary: "架空のまとめ。",
+            skippedPhases: ["架空の段A"],
+          }),
+        ],
+      })
+
+      fireEvent.click(workToggle())
+
+      const phases = [...workList().querySelectorAll(".current-work-plan li")]
+      expect(phases.map((phase) => phase.textContent)).toEqual([
+        "/架空の段A",
+        "✓架空の段B",
+        "3架空の段C",
+      ])
+      expect(
+        phases.map((phase) => phase.className.includes("current-work-plan-phase-skipped")),
+      ).toEqual([true, false, false])
+    })
+
     it("レポートを書いている途中も段は残り、要約だけが差し替わる", () => {
       renderScreenNav({
         turn: { kind: "running", startedAt: 0 },

@@ -1065,6 +1065,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
         kind: "phase",
         label: "1/2 架空の段A",
         duration: { kind: "known", milliseconds: 0 },
+        skipped: false,
       },
     })
   })
@@ -1087,6 +1088,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
       kind: "phase",
       label: "1/2 架空の段A",
       duration: { kind: "known", milliseconds: 7000 },
+      skipped: false,
     })
     expect(
       finishedPhaseOf([ask, plan(1, "架空のまとめ。", three), plan(2, "架空のまとめ。", three)]),
@@ -1094,6 +1096,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
       kind: "phase",
       label: "2/3 架空の段B",
       duration: { kind: "unknown" },
+      skipped: false,
     })
   })
 
@@ -1142,6 +1145,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
         kind: "phase",
         label: "1/2 架空の段A",
         duration: { kind: "known", milliseconds: 0 },
+        skipped: false,
       },
     })
   })

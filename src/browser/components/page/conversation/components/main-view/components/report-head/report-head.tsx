@@ -40,6 +40,7 @@ export function ReportHead(props: ReportHeadProps): ReactElement | null {
       ? []
       : [
           <span key="phase">{phase.label}</span>,
+          ...(phase.skipped ? [<span key="phase-skipped">飛ばした</span>] : []),
           <span key="phase-time">所要 {formatMeasured(phase.duration)}</span>,
         ]),
     ...(task.kind === "none"

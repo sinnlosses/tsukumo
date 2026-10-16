@@ -18,6 +18,7 @@ export type PhaseRow = {
   readonly title: string
   /** 「2:16」の形の所要。測れていなければ空。 */
   readonly duration: string
+  readonly skipped: boolean
   readonly body: TextBody
 }
 
@@ -35,6 +36,7 @@ export function phaseRowsOf(turn: MainViewTurn): readonly PhaseRow[] {
     number: index + 1,
     title: titleOf(step.body),
     duration: durationOf(step.body.finishedPhase),
+    skipped: step.body.finishedPhase.kind === "phase" && step.body.finishedPhase.skipped,
     body: step.body,
   }))
 }

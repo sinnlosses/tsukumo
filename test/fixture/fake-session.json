@@ -4132,6 +4132,129 @@
       ]
     },
     {
+      "name": "work-plan-skipped",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "ID の変換を両方の形に対応させたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
+            "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
+            "current": 0,
+            "finishedInGroup": [],
+            "phaseSummary": ""
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-work-plan-skipped-1",
+            "name": "Read",
+            "input": { "file_path": "/tmp/dummy/id.ts" }
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-work-plan-skipped-1",
+            "content": "ダミーの読み取り結果（3行）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "work-plan",
+            "delegatedRange": { "kind": "none" },
+            "skippedPhases": [],
+            "awaitingSummary": { "kind": "none" },
+            "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
+            "current": 1,
+            "finishedInGroup": [],
+            "phaseSummary": "架空の ID は `toId` がすでに両方の形を受け付けていた。"
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "work-plan",
+            "delegatedRange": { "kind": "none" },
+            "skippedPhases": ["ID の変換を両方の形に対応させる"],
+            "awaitingSummary": { "kind": "none" },
+            "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
+            "current": 2,
+            "finishedInGroup": [],
+            "phaseSummary": "すでに両方の形に対応済みだったので、変換の書き換えは飛ばした。"
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-work-plan-skipped-2",
+            "name": "Edit",
+            "input": { "file_path": "/tmp/dummy/notes.md" }
+          }
+        },
+        {
+          "afterMs": 6000,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-work-plan-skipped-2",
+            "content": "ダミーの書き換え結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 6100,
+          "event": { "kind": "report-drafting", "toolUseId": "fake-work-plan-skipped-report" }
+        },
+        {
+          "afterMs": 6300,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "workPlanClosing": "finished",
+            "closing": {
+              "kind": "speech",
+              "text": "変換は飛ばして、文書だけ揃えたよ。",
+              "expression": "default"
+            },
+            "toolUseId": "fake-work-plan-skipped-report",
+            "conclusion": "架空の結論: 変換はすでに対応済みで、メモだけ直した。",
+            "sections": [],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 6350,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-work-plan-skipped-report",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 6500,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
+    },
+    {
       "name": "work-plan-stopped",
       "steps": [
         {

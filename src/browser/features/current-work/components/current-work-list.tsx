@@ -182,6 +182,7 @@ function CurrentWorkPlanPhase(props: { readonly phase: CurrentWorkPlanPhase }): 
       className={clsx(
         styles["current-work-plan-phase"],
         phase.state === "done" && styles["current-work-plan-phase-done"],
+        phase.skipped && styles["current-work-plan-phase-skipped"],
         phase.state === "current" && styles["current-work-plan-phase-current"],
       )}
     >

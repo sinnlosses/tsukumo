@@ -339,6 +339,45 @@ describe("Turn（目録の1行と見出し）", () => {
   })
 })
 
+describe("Turn（畳んだ中間レポートの見出し）", () => {
+  function phaseStep(id: number, skipped: boolean): MainViewStep {
+    return step({
+      id,
+      interim: true,
+      superseded: true,
+      body: {
+        kind: "text",
+        report: "架空のまとめ",
+        finalReport: "架空のまとめ",
+        firstLine: `${String(id + 1)}/2 架空の段`,
+        task: { kind: "none" },
+        finishedPhase: {
+          kind: "phase",
+          label: `${String(id + 1)}/2 架空の段`,
+          duration: { kind: "known", milliseconds: 0 },
+          skipped,
+        },
+      },
+    })
+  }
+
+  it("飛ばした段の <summary> は所要の前に「飛ばした」を出し、済んだ段は出さない", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const { container } = render(
+      <Turn
+        turn={turn([phaseStep(0, false), phaseStep(1, true), step({ id: 2, final: true })])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    expect([...container.querySelectorAll("summary")].map((node) => node.textContent)).toEqual([
+      "中間レポート: 1/2 架空の段 · 所要 0秒",
+      "中間レポート: 2/2 架空の段 · 飛ばした · 所要 0秒",
+    ])
+  })
+})
+
 describe("Turn（脇の話の欄の位置）", () => {
   it("脇の話の欄は、持ち主のステップの後ろ・次のレポートの前に並ぶ", () => {
     putSession(INITIAL_SESSION_STATE)

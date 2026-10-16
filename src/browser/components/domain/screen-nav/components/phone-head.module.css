@@ -156,6 +156,14 @@
     border: none;
     background: var(--surface-accent);
   }
+  .phone-head-dot.is-done.is-skipped {
+    border: 1.5px dashed var(--rule);
+    background: none;
+    color: var(--ink-quiet);
+  }
+  .phone-head-dot.is-done.is-skipped::before {
+    right: calc(100% + 1.5px);
+  }
   .phone-head-dot.is-current {
     border: 2px solid var(--accent);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);

@@ -96,6 +96,40 @@ describe("PhoneHead", () => {
     expect(stepsToggle(head).textContent).toBe("手順 2")
   })
 
+  it("飛ばした段の点は済んだ段のまま「/」と「（飛ばした）」で、済んだ段は「✓」", () => {
+    const head = renderHead({
+      turn: { kind: "running", startedAt: 0 },
+      records: [
+        requestRecord(),
+        workPlanRecord({ phases: PHASES, current: 2, skippedPhases: ["架空の段A"] }),
+      ],
+    })
+
+    const dots = [...head.querySelectorAll(".phone-head-dot")]
+    expect(dots.map((dot) => dot.textContent)).toEqual(["/", "✓", "", "", ""])
+    expect(dots.map((dot) => dot.className.includes("is-done"))).toEqual([
+      true,
+      true,
+      false,
+      false,
+      false,
+    ])
+    expect(dots.map((dot) => dot.className.includes("is-skipped"))).toEqual([
+      true,
+      false,
+      false,
+      false,
+      false,
+    ])
+    expect(dots.map((dot) => dot.getAttribute("aria-label"))).toEqual([
+      "1. 架空の段A（飛ばした）",
+      "2. 架空の段B（済）",
+      "3. 架空の段C（今の段）",
+      "4. 架空の段D",
+      "5. 架空の段E",
+    ])
+  })
+
   it("段を全部終えていれば題は「n段すべて済み」で、位置の文字は出さない", () => {
     const head = renderHead({
       turn: { kind: "running", startedAt: 0 },

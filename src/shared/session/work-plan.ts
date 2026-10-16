@@ -82,6 +82,8 @@ export type PlannedPhase = {
   readonly key: string
   readonly entry: number
   readonly state: PlannedPhaseState
+  /** 済んだ段のうち飛ばした段（名前が `skippedPhases` にある）。済んでいない段はいつも false。 */
+  readonly skipped: boolean
 }
 
 /**
@@ -107,7 +109,12 @@ export type WorkPhase =
 export type PhaseShift = {
   readonly finished:
     | { readonly kind: "none" }
-    | { readonly kind: "finished"; readonly label: string; readonly summary: string }
+    | {
+        readonly kind: "finished"
+        readonly label: string
+        readonly summary: string
+        readonly skipped: boolean
+      }
 }
 
 const phaseNameSchema = z.string().refine((name) => !isBlankText(name))
@@ -228,19 +235,22 @@ export function isMidWay(plan: Pick<WorkPlan, "phases" | "current" | "finishedIn
 
 /** 並びを平らにした段（{@link PlannedPhase}）。読み順に並ぶ。 */
 export function plannedPhasesOf(
-  plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup">,
+  plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup" | "skippedPhases">,
 ): readonly PlannedPhase[] {
+  const { skippedPhases } = plan
   const flattened = plan.phases.flatMap((entry, position) =>
     entryNames(entry).map((name) => ({ position, name })),
   )
   return flattened.map(({ position, name }, index): PlannedPhase => {
     const occurrence = flattened.slice(0, index).filter((other) => other.name === name).length
+    const state = entryPhaseState(plan, position, name)
     return {
       index,
       name,
       key: `${name}\u0000${String(occurrence)}`,
       entry: position,
-      state: entryPhaseState(plan, position, name),
+      state,
+      skipped: state === "done" && skippedPhases.includes(name),
     }
   })
 }
@@ -262,7 +272,7 @@ export function finishedPhaseNames(
   plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup">,
 ): ReadonlySet<string> {
   return new Set(
-    plannedPhasesOf(plan)
+    plannedPhasesOf({ ...plan, skippedPhases: [] })
       .filter((phase) => phase.state === "done")
       .map((phase) => phase.name),
   )
@@ -389,6 +399,7 @@ export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShi
         range: next.delegatedRange,
       }),
       summary: shifted.summary,
+      skipped: shifted.phase.skipped,
     },
   }
 }

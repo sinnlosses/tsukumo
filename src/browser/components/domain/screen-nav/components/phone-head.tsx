@@ -107,11 +107,12 @@ function PhoneHeadProgressLine(props: {
               className={clsx(
                 styles["phone-head-dot"],
                 dot.state === "done" && styles["is-done"],
+                dot.skipped && styles["is-skipped"],
                 dot.state === "current" && styles["is-current"],
               )}
               aria-label={dot.label}
             >
-              {dot.state === "done" && "✓"}
+              {dot.state === "done" && (dot.skipped ? "/" : "✓")}
             </li>
           ))}
         </ol>

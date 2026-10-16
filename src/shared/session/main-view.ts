@@ -168,7 +168,12 @@ export type MainViewStep = {
 /** 段の見出しの字（「2/4 段の名前」）。無ければ `none`。 */
 export type MainViewPhaseLabel =
   | { readonly kind: "none" }
-  | { readonly kind: "phase"; readonly label: string; readonly duration: MeasuredTime }
+  | {
+      readonly kind: "phase"
+      readonly label: string
+      readonly duration: MeasuredTime
+      readonly skipped: boolean
+    }
 
 const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
 
@@ -607,7 +612,12 @@ function phaseShiftStep(id: number, shift: PhaseShift, duration: MeasuredTime): 
           finalReport: shift.finished.summary,
           firstLine: extractFirstLine(shift.finished.label),
           task: NO_REPORT_TASK,
-          finishedPhase: { kind: "phase", label: shift.finished.label, duration },
+          finishedPhase: {
+            kind: "phase",
+            label: shift.finished.label,
+            duration,
+            skipped: shift.finished.skipped,
+          },
         },
     [],
   )

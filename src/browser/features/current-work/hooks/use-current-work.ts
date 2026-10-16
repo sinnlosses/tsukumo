@@ -76,6 +76,8 @@ export type CurrentWorkPlanPhase = {
   readonly mark: string
   readonly name: string
   readonly state: "done" | "current" | "upcoming"
+  /** 済んだ段のうち飛ばした段。`state` は `done` のまま。 */
+  readonly skipped: boolean
 }
 
 /**
@@ -343,6 +345,7 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Curren
       mark: planMarkOf(number, phase),
       name: phase.name,
       state: phase.state,
+      skipped: phase.skipped,
     }
     return { number, view }
   })
@@ -366,9 +369,9 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Curren
   }
 }
 
-function planMarkOf(number: PhaseNumber, phase: Pick<PlannedPhase, "state">): string {
+function planMarkOf(number: PhaseNumber, phase: Pick<PlannedPhase, "state" | "skipped">): string {
   if (phase.state === "done") {
-    return "✓"
+    return phase.skipped ? "/" : "✓"
   }
   return number.kind === "numbered" ? number.ordinals : "…"
 }

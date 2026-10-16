@@ -64,6 +64,8 @@ export type WorkStripPhase = {
   /** 読み上げと `title` に出す「4. 段の名前（今の段）」。 */
   readonly label: string
   readonly state: WorkStripPhaseState
+  /** 済んだ段のうち飛ばした段。`state` は `done` のまま。 */
+  readonly skipped: boolean
   /** 丸の外周に回る弧を付けるか。作業中の帯の今の段だけ。 */
   readonly spinning: boolean
   readonly popoverId: string
@@ -176,6 +178,12 @@ const PHASE_STATE_SUFFIX = {
   asking: "（答え待ち）",
   upcoming: "",
 } satisfies Record<WorkStripPhaseState, string>
+
+const SKIPPED_PHASE_SUFFIX = "（飛ばした）"
+
+const SKIPPED_PHASE_MARK = "/"
+
+const SKIPPED_STATE_WORD = "飛ばした · 所要"
 
 /** 吹き出しの状態の行の頭。まだの段のほかは、あとに所要か経過を続ける。 */
 const POPOVER_STATE_WORD = {
@@ -392,7 +400,9 @@ function toPhase(
     key,
     mark:
       state === "done"
-        ? "✓"
+        ? phase.skipped
+          ? SKIPPED_PHASE_MARK
+          : "✓"
         : state === "asking"
           ? "?"
           : number.kind === "numbered"
@@ -400,8 +410,9 @@ function toPhase(
             : awaitsRange
               ? "…"
               : "・",
-    label: `${plan.kind === "planned" ? plannedPhaseTitle(plan, phase) : phase.name}${PHASE_STATE_SUFFIX[state]}`,
+    label: `${plan.kind === "planned" ? plannedPhaseTitle(plan, phase) : phase.name}${phase.skipped ? SKIPPED_PHASE_SUFFIX : PHASE_STATE_SUFFIX[state]}`,
     state,
+    skipped: phase.skipped,
     spinning: flags.spinning && state === "current",
     popoverId: `work-strip-pop-${key}`,
     popover:
@@ -417,19 +428,21 @@ function popoverOf(
   context: PopoverContext,
 ): WorkStripPhasePopover {
   const recap = context.recaps.get(phase.key) ?? UNKNOWN_RECAP
-  const word = POPOVER_STATE_WORD[state]
+  const word = phase.skipped ? SKIPPED_STATE_WORD : POPOVER_STATE_WORD[state]
   return {
     kind: "open",
     title:
       state === "done"
-        ? `✓ ${phase.name}`
+        ? `${phase.skipped ? SKIPPED_PHASE_MARK : "✓"} ${phase.name}`
         : plan.kind === "planned"
           ? plannedPhaseTitle(plan, phase)
           : phase.name,
     meta: state === "upcoming" ? word : `${word} ${formatMeasured(recap.duration)}`,
     summary: state === "done" ? recap.summary : "",
     toSteps:
-      state === "done" ? { kind: "shown", onGo: () => context.onGo(phase) } : { kind: "none" },
+      state === "done" && !phase.skipped
+        ? { kind: "shown", onGo: () => context.onGo(phase) }
+        : { kind: "none" },
     placeRef: context.popover.placeRef,
   }
 }

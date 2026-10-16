@@ -657,6 +657,20 @@ export const CATALOG: readonly CatalogEntry[] = [
     },
   },
   {
+    name: "work-plan-skipped",
+    scene: "work-plan-skipped",
+    label: "段取りで飛ばした段（帯・中間レポート）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: true,
+    settle: {
+      kind: "selector",
+      selector: WORK_PLAN_FINAL_SELECTOR,
+      phase: "before-prepare",
+    },
+  },
+  {
     name: "delegated-range",
     scene: "delegated-range",
     label: "委譲中の帯（範囲の中の段が今）",

@@ -177,6 +177,7 @@ function PhaseDot(props: {
     <li
       className={props.className}
       data-phase-state={phase.state}
+      data-phase-skipped={phase.skipped ? "true" : undefined}
       data-spinning={phase.spinning ? "true" : undefined}
       data-span-head={props.spanHead.kind === "head" ? "true" : undefined}
     >
