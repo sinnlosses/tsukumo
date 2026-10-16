@@ -517,7 +517,7 @@ transcript と同じ扱いにする。**
 | **会話**（雑談: 利用者の依頼とセリフ。仕事: **依頼の冒頭**・**そのターンの最後の `report` の `conclusion`**・セリフ。セリフはどちらも表情つき） | `~/.tsukumo/chat-archive/<パック名>/<日付>.jsonl`                                            | あとで活用するため・設計が変わっても残すため・雑談と仕事で同じ記憶を引くため。**画面の 100 ターンは画面の上限であって、残す量の上限ではない** | 1行1件の JSONL。日ごとに1ファイル。仕事の依頼の冒頭と `conclusion` は 300 文字まで |
 | 定着の `query()` が書いた**エピソードの見出し・要旨・手がかり語**                                                                               | `~/.tsukumo/chat-archive/<パック名>/episode.jsonl`                                           | 古い雑談を探しに行くため。中身は会話そのものではなく、claude が自分の言葉で書いた**目次**と、アーカイブの行の範囲                             | 1件1行の JSONL（追記）。見出し 20 字・要旨 120 字・手がかり語 10 個まで            |
 
-範囲・理由・形・上限の正典は `docs/architecture/chat-mode.md` 4.9、置き場は `docs/architecture/character-pack.md`「雑談の記憶の置き場」。
+範囲・理由・形・上限の正典は `docs/architecture/chat-mode.md` 4.9、置き場は `docs/architecture/character-pack.md`「会話の記録の置き場」。
 **ここに4つ目を足すにはユーザーの決定が要る。** この節を根拠に、「似ているから」で別の複製を
 足さない。
 

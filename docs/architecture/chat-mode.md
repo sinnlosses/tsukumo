@@ -29,7 +29,7 @@ sed -n '/^#### 記憶の圧縮と忘却/,/^#\{2,4\} /p' docs/architecture/chat-m
 **ここには決定と、いまも効いている理由だけを置く。** 採らなかった案・ユーザーの発言の引用・
 実測の数字と測り方は `docs/history/decision.md` の「chat-mode.md 4.9 …」の節にある。
 **ファイルの形・上限・書く順・読み戻し方もここが持つ。** `~/.tsukumo/` のどこに置き、どの機能の
-`core/` / `adapter/` が書くかは `docs/architecture/character-pack.md`「雑談の記憶の置き場」、
+`core/` / `adapter/` が書くかは `docs/architecture/character-pack.md`「会話の記録の置き場」、
 規約の例外の範囲は `docs/coding-standards.md`「会話内容の扱い」の表が持つ。
 
 ### 節の索引
@@ -674,7 +674,7 @@ Claude Code の都合で古いものから消えていく（確かめた内容�
 あとの記録から拾うと、窓から溢れたターンが永久に落ちる。書く材料は届いたイベントそのもの）、
 **復元で流し直されたぶんは、どちらのモードでも書かない**（書くと起こし直すたびに同じ会話がもう一度積まれる。
 `conclusion` を預けるのも駆動から届いた `report` だけ）。
-**書けなくても例外を投げない** — 落ちるのはその1行だけ。経路は `docs/architecture/character-pack.md`「雑談の記憶の
+**書けなくても例外を投げない** — 落ちるのはその1行だけ。経路は `docs/architecture/character-pack.md`「会話の記録の
 置き場」。
 
 **ファイルはパックごと・日ごとに割る**（`<パック名>/<YYYY-MM-DD>.jsonl`）。日の境目は**その

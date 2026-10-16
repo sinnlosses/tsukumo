@@ -397,7 +397,7 @@ CI に無い外部コマンドを起こすテストを検査で落とします�
 - [`docs/requirements.md`](./docs/requirements.md) — 要件定義（やること・**やらないこと**・技術制約・未決事項）
 - [`docs/architecture.md`](./docs/architecture.md) — アーキテクチャ詳細（全体図、`shared` / `server`（`core`・`adapter`）/ `browser` の層・プロトコル・置き場所、設計判断）
 - [`docs/architecture/browser.md`](./docs/architecture/browser.md) — ブラウザ側（状態の持ち方・Markdown・重いライブラリ・立ち絵の動き・CSS・`components/ui/` の部品）
-- [`docs/architecture/character-pack.md`](./docs/architecture/character-pack.md) — キャラクターパック（形・探索順・画面から書くときの境界・雑談の記憶の置き場）
+- [`docs/architecture/character-pack.md`](./docs/architecture/character-pack.md) — キャラクターパック（形・探索順・画面から書くときの境界・会話の記録の置き場）
 - [`docs/architecture/testing.md`](./docs/architecture/testing.md) — テスト（対象ごとの方法・E2E・目視確認の手順）
 - [`docs/architecture/build.md`](./docs/architecture/build.md) — ビルドと依存（事前の組み立て・HMR・足す依存の一覧）
 - [`docs/architecture/screen-design.md`](./docs/architecture/screen-design.md) — 画面のデザイン（色・書体・レイアウトの計画とトークン、雑談モードの画面、背景、画面のナビの帯）
