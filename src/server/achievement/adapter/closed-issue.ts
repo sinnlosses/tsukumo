@@ -15,9 +15,9 @@ import type { DoneTask } from "../../../shared/repository/task-summary.ts"
 import { localDateEpochRange, localDateKey } from "../../adapter/local-time.ts"
 import { doneTasksOfBeadsIssues } from "../../repository/adapter/beads-task.ts"
 import {
+  readBeadsIssues,
   readBeadsStampOf,
   readBeadsWorkspace,
-  readClosedBeadsIssues,
 } from "../../repository/adapter/beads.ts"
 import { dailyAchievementOf } from "../core/daily-achievement.ts"
 
@@ -45,8 +45,8 @@ export function createAchievementCache(cwd: string): AchievementCache {
   // `.beads` の場所は見つかった1回だけ `bd where` で調べて覚える（呼ぶたびに調べると1秒ほどかかる）。
   let beadsDir: string | undefined = undefined
 
-  async function readAndRemember(): Promise<AchievementBeadsRead> {
-    const result = await readClosedBeadsIssuesAsDone(cwd)
+  async function readAndRemember(stamp: string | undefined): Promise<AchievementBeadsRead> {
+    const result = await readDoneTasks(cwd, stamp)
     if (typeof result !== "string") {
       lastDone = result
     }
@@ -70,7 +70,7 @@ export function createAchievementCache(cwd: string): AchievementCache {
       if (stamp !== undefined && lastBeadsRead?.stamp === stamp) {
         return lastDone ?? lastBeadsRead.read
       }
-      const read = readAndRemember()
+      const read = readAndRemember(stamp)
       // 読み始めた時点で覚え、同時に来た読みにも同じ `bd list` を渡す。
       const remembered = stamp === undefined ? undefined : { stamp, read }
       lastBeadsRead = remembered
@@ -155,9 +155,12 @@ export function readAchievementCalendar(
   )
 }
 
-/** `.beads` が見つかったあとに `bd list` で閉じた課題を読む。落ちても時間切れでも `unavailable`。 */
-async function readClosedBeadsIssuesAsDone(cwd: string): Promise<AchievementBeadsRead> {
-  const beads = await readClosedBeadsIssues(cwd)
+/** `.beads` が見つかったあとに全件の読み（一覧と共有）から閉じた課題を取り出す。落ちても時間切れでも `unavailable`。 */
+async function readDoneTasks(
+  cwd: string,
+  stamp: string | undefined,
+): Promise<AchievementBeadsRead> {
+  const beads = await readBeadsIssues(cwd, stamp)
   return beads.kind === "issues" ? doneTasksOfBeadsIssues(beads.issues) : "unavailable"
 }
 

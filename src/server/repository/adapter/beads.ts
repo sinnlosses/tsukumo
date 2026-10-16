@@ -51,18 +51,45 @@ export type BeadsOutcome =
   | { readonly kind: "failed" }
   | { readonly kind: "timed-out" }
 
+/** `cwd` の課題を読む。`stamp` は呼ぶ側が先に読んだ課題の変化の印で、取れないときは `undefined`。 */
+export type BeadsIssuesReader = (cwd: string, stamp: string | undefined) => Promise<BeadsOutcome>
+
 /**
- * 閉じたものも含めて全件を読む。`bd list` は `-n 0` を付けないと50件で打ち切る。
- * `cwd` はどの作業ツリーでもよい（`bd` が本体の作業ツリーの `.beads` を見つける）。
+ * `read` を、同じ `cwd` に同じ `stamp` が続く間は読み直さない形にする。
+ * 同時に来た読みにも同じ結果を渡す。`stamp` が `undefined` のときと、読めなかった（`issues` でない）ときは覚えない。
  */
-export function readBeadsIssues(cwd: string): Promise<BeadsOutcome> {
-  return listBeadsIssues(cwd, ["--all"])
+export function memoizeByStamp(read: (cwd: string) => Promise<BeadsOutcome>): BeadsIssuesReader {
+  const remembered = new Map<
+    string,
+    { readonly stamp: string; readonly outcome: Promise<BeadsOutcome> }
+  >()
+
+  return (cwd, stamp) => {
+    if (stamp === undefined) {
+      remembered.delete(cwd)
+      return read(cwd)
+    }
+    const previous = remembered.get(cwd)
+    if (previous?.stamp === stamp) {
+      return previous.outcome
+    }
+    const entry = { stamp, outcome: read(cwd) }
+    remembered.set(cwd, entry)
+    void entry.outcome.then((outcome) => {
+      if (outcome.kind !== "issues" && remembered.get(cwd) === entry) {
+        remembered.delete(cwd)
+      }
+    })
+    return entry.outcome
+  }
 }
 
-/** 閉じた課題だけを読む（成果は閉じた課題しか数えない）。打ち切りは {@link readBeadsIssues} と同じ。 */
-export function readClosedBeadsIssues(cwd: string): Promise<BeadsOutcome> {
-  return listBeadsIssues(cwd, ["--status", "closed"])
-}
+/**
+ * 閉じたものも含めて全件を読む。`bd list` は `-n 0` を付けないと50件で打ち切る。
+ * 一覧と成果が同じ印で続けて読むときは、`bd list` を1回で済ませる。
+ * `cwd` はどの作業ツリーでもよい（`bd` が本体の作業ツリーの `.beads` を見つける）。
+ */
+export const readBeadsIssues: BeadsIssuesReader = memoizeByStamp(listAllBeadsIssues)
 
 /** `.beads` が見つからなければ `missing`。あれば課題の変化の印（取れないときは `undefined`）。 */
 export type BeadsStamp =
@@ -179,11 +206,11 @@ export function beadsOutcomeOf(stdout: string): BeadsOutcome {
   return { kind: "issues", issues }
 }
 
-function listBeadsIssues(cwd: string, scope: readonly string[]): Promise<BeadsOutcome> {
+function listAllBeadsIssues(cwd: string): Promise<BeadsOutcome> {
   return new Promise((resolve) => {
     execFile(
       "bd",
-      ["list", "--json", ...scope, "-n", "0", "--flat"],
+      ["list", "--json", "--all", "-n", "0", "--flat"],
       { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
       (error, stdout) => {
         if (error === null) {

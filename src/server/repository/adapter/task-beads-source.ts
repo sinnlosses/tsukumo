@@ -6,11 +6,11 @@
 // タイムアウトしたときはその回を諦める。
 
 import { knownTaskSummaryOfBeadsIssues } from "./beads-task.ts"
-import type { BeadsStamp, readBeadsIssues } from "./beads.ts"
+import type { BeadsIssuesReader, BeadsStamp } from "./beads.ts"
 import type { TaskSource } from "./task-source.ts"
 
 export type TaskBeadsSourcePorts = {
-  readonly readBeadsIssues: typeof readBeadsIssues
+  readonly readBeadsIssues: BeadsIssuesReader
   /** `.beads` の有無と課題の変化の印。 */
   readonly readBeadsStamp: () => Promise<BeadsStamp>
 }
@@ -31,7 +31,7 @@ export function createTaskBeadsSource(cwd: string, ports: TaskBeadsSourcePorts):
         return { kind: "unchanged" }
       }
 
-      const beads = await ports.readBeadsIssues(cwd)
+      const beads = await ports.readBeadsIssues(cwd, stamp)
       if (beads.kind === "timed-out") {
         return { kind: "unchanged" }
       }

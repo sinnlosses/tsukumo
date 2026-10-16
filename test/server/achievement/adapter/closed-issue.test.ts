@@ -1,7 +1,7 @@
 import { mkdirSync, rmSync } from "node:fs"
 import { join } from "node:path"
 
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   createAchievementCache,
@@ -10,7 +10,11 @@ import {
   type ReadAchievementCalendarResult,
   type ReadAchievementResult,
 } from "../../../../src/server/achievement/adapter/closed-issue.ts"
+import type * as BeadsAdapter from "../../../../src/server/repository/adapter/beads.ts"
+import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads.ts"
+import { readBeadsIssues } from "../../../../src/server/repository/adapter/beads.ts"
 import type * as GitAdapter from "../../../../src/server/repository/adapter/git.ts"
+import { createTaskBeadsSource } from "../../../../src/server/repository/adapter/task-beads-source.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
 import {
@@ -28,6 +32,35 @@ vi.mock("../../../../src/server/repository/adapter/git.ts", async (importOrigina
   ...(await importOriginal<typeof GitAdapter>()),
   GIT_TIMEOUT_MS: 60_000,
 }))
+
+// 取り込み口（`bd list`・`bd where`・印）のフェイク。`fakeIntake.active` の間だけ本物の代わりに使う。
+const fakeIntake = vi.hoisted(
+  (): {
+    active: boolean
+    stamp: string | undefined
+    listCalls: number
+    issues: readonly unknown[]
+  } => ({ active: false, stamp: undefined, listCalls: 0, issues: [] }),
+)
+
+vi.mock("../../../../src/server/repository/adapter/beads.ts", async (importOriginal) => {
+  const actual = await importOriginal<typeof BeadsAdapter>()
+  const fakeRead = actual.memoizeByStamp((): Promise<BeadsOutcome> => {
+    fakeIntake.listCalls += 1
+    return Promise.resolve(actual.beadsOutcomeOf(JSON.stringify(fakeIntake.issues)))
+  })
+  return {
+    ...actual,
+    readBeadsIssues: (cwd: string, stamp: string | undefined) =>
+      fakeIntake.active ? fakeRead(cwd, stamp) : actual.readBeadsIssues(cwd, stamp),
+    readBeadsWorkspace: (cwd: string) =>
+      fakeIntake.active
+        ? Promise.resolve({ kind: "found", dir: "/fake/.beads" })
+        : actual.readBeadsWorkspace(cwd),
+    readBeadsStampOf: (dir: string) =>
+      fakeIntake.active ? Promise.resolve(fakeIntake.stamp) : actual.readBeadsStampOf(dir),
+  }
+})
 
 const root = useTempDir("closed-issue")
 useBeadsHome(() => join(root(), "home"))
@@ -200,6 +233,61 @@ describe("readAchievementCalendar", { timeout: 60_000 }, () => {
       count: 2,
     })
     expect(calendar.days.reduce((sum, day) => sum + day.count, 0)).toBe(3)
+  })
+
+  describe("一覧と同じ読みの共有（取り込み口のフェイク）", () => {
+    beforeEach(() => {
+      fakeIntake.active = true
+      fakeIntake.stamp = "s1"
+      fakeIntake.listCalls = 0
+      fakeIntake.issues = [
+        issue("t-001", "済んだ", ["2026-09-20", "10:00"], ["2026-09-23", "10:00"]),
+      ]
+    })
+    afterEach(() => {
+      fakeIntake.active = false
+    })
+
+    const doneCount = async (cache: ReturnType<typeof createAchievementCache>): Promise<number> =>
+      known(await readAchievement("2026-09-23", TODAY, cache)).doneTasks.length
+
+    it("同じ印で一覧と成果を続けて読んでも、bd list は1回", async () => {
+      const source = createTaskBeadsSource("/repo-shared", {
+        readBeadsIssues,
+        readBeadsStamp: () => Promise.resolve({ kind: "present", stamp: "s1" }),
+      })
+      const cache = createAchievementCache("/repo-shared")
+
+      await source.read()
+      expect(await doneCount(cache)).toBe(1)
+
+      expect(fakeIntake.listCalls).toBe(1)
+    })
+
+    it("印が変わると読み直し、前の結果を先に返して裏で新しい結果に替わる", async () => {
+      const cache = createAchievementCache("/repo-changed")
+      expect(await doneCount(cache)).toBe(1)
+
+      fakeIntake.stamp = "s2"
+      fakeIntake.issues = [
+        ...fakeIntake.issues,
+        issue("t-002", "あとで済んだ", ["2026-09-20", "10:00"], ["2026-09-23", "11:00"]),
+      ]
+
+      expect(await doneCount(cache)).toBe(1)
+      await vi.waitFor(async () => expect(await doneCount(cache)).toBe(2))
+      expect(fakeIntake.listCalls).toBe(2)
+    })
+
+    it("印が取れないときは毎回読む", async () => {
+      fakeIntake.stamp = undefined
+      const cache = createAchievementCache("/repo-unstamped")
+
+      await doneCount(cache)
+      await doneCount(cache)
+
+      expect(fakeIntake.listCalls).toBe(2)
+    })
   })
 
   it(".beads が無ければ「不明」", async () => {

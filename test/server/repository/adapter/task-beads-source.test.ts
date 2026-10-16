@@ -18,6 +18,21 @@ describe("createTaskBeadsSource", () => {
     expect(calls).toBe(2)
   })
 
+  it("読む前に取った印を bd の読みへ渡す", async () => {
+    const stamps: (string | undefined)[] = []
+    const source = createTaskBeadsSource("/repo", {
+      readBeadsIssues: (_cwd, stamp) => {
+        stamps.push(stamp)
+        return Promise.resolve({ kind: "issues", issues: [] })
+      },
+      readBeadsStamp: () => Promise.resolve({ kind: "present", stamp: "s1" }),
+    })
+
+    await source.read()
+
+    expect(stamps).toEqual(["s1"])
+  })
+
   it(".beads が無いと bd を打たずに「Beads なし」を返し、現れたら読み直す", async () => {
     let beadsStamp: BeadsStamp = { kind: "missing" }
     let calls = 0
