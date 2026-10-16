@@ -1,4 +1,4 @@
-// レポート（発話の詳細）の Markdown を HTML に描く、unified（react-markdown 一式）の構成。
+// レポート（ターンの本文の詳細）の Markdown を HTML に描く、unified（react-markdown 一式）の構成。
 //
 // - `remark-gfm` で表・取り消し線・自動リンク・チェックボックス・列揃え（`:---:` / `---:`）を読む
 // - `remark-cjk-friendly` で、CommonMark の delimiter run 規則（強調記号の直前・直後が約物だと強調と認識されない）を日本語向けに補う。

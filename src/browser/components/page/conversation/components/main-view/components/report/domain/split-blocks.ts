@@ -45,7 +45,7 @@ const CODE_SPAN_PATTERN = /`[^`]*`/g
 
 /**
  * フェンス付きコードブロックと HTML ブロックの中の空行では割らない。
- * 閉じていないもの（発話が途中で切れた等）は最後の塊の中に閉じるので、続きの行が表や見出しに化けたり、`<details>` の中身が外へこぼれたりしない。
+ * 閉じていないもの（ターンの本文が途中で切れた等）は最後の塊の中に閉じるので、続きの行が表や見出しに化けたり、`<details>` の中身が外へこぼれたりしない。
  */
 export function splitReportBlocks(markdown: string): readonly string[] {
   const lines = markdown.replaceAll("\r\n", "\n").split("\n")
