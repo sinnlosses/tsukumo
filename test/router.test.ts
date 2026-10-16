@@ -134,7 +134,7 @@ function createRecordingPorts(
   const remembered: SessionDefault[] = []
   const forgottenLines: string[] = []
   const openedFiles: string[] = []
-  /** 別の窓が名乗っていることにするセッションのID。 */
+  /** 別の窓が占有ファイルに書いていることにするセッションのID。 */
   const occupiedElsewhere = new Set<string>()
   const reserved: string[] = []
   let withdrawCount = 0
@@ -428,7 +428,7 @@ describe("createCommandRouter（session）", () => {
     ])
   })
 
-  it("別の窓が名乗っているセッションへの session.switchSession は定型文の理由で断り、起こし直さない", async () => {
+  it("別の窓が占有ファイルに書いているセッションへの session.switchSession は定型文の理由で断り、起こし直さない", async () => {
     const { commands, restarts, occupiedElsewhere, reserved, stub } = startRouter()
     occupiedElsewhere.add("架空の別の窓のセッション")
 
@@ -440,7 +440,7 @@ describe("createCommandRouter（session）", () => {
     expect(stub.calls).toEqual([])
   })
 
-  it("session.switchSession の起こし直しに失敗したら、名乗りを消す", async () => {
+  it("session.switchSession の起こし直しに失敗したら、占有ファイルを消す", async () => {
     const fake = createFakeSession(undefined, {
       ok: false,
       reason: FRAME_ERROR_REASON.driverFailed,
@@ -547,7 +547,7 @@ describe("createCommandRouter（session）", () => {
       ])
     })
 
-    it("起こし直しに失敗したら名乗りを消す", async () => {
+    it("起こし直しに失敗したら占有ファイルを消す", async () => {
       const fake = createFakeSession(undefined, {
         ok: false,
         reason: FRAME_ERROR_REASON.driverFailed,

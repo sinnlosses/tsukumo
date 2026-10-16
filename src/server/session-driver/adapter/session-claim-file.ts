@@ -1,5 +1,5 @@
-// セッションの名乗りを `$TSUKUMO_HOME/session-claim/<pid>.json` に書き置き、ほかの tsukumo の名乗りを読む。
-// 名乗りが生きているかは、そのプロセスが生きているか（`process.kill(pid, 0)`）だけで決める。
+// セッションの占有ファイルを `$TSUKUMO_HOME/session-claim/<pid>.json` に書き置き、ほかの tsukumo の占有ファイルを読む。
+// 占有ファイルが生きているかは、そのプロセスが生きているか（`process.kill(pid, 0)`）だけで決める。
 
 import { mkdirSync, rmSync } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
@@ -14,19 +14,19 @@ import {
   type SessionClaimStore,
 } from "../core/session-claim.ts"
 
-/** ホームの下の名乗りの置き場の名前。 */
+/** ホームの下の占有ファイルの置き場の名前。 */
 export const SESSION_CLAIM_DIR_NAME = "session-claim"
 
-/** 名乗りのファイルの名前（`<pid>.json`）。 */
+/** 占有ファイルの名前（`<pid>.json`）。 */
 const CLAIM_FILE_NAME = /^\d+\.json$/u
 
-/** 名乗りの置き場と、自分として扱う pid。 */
+/** 占有ファイルの置き場と、自分として扱う pid。 */
 export type SessionClaimPlace = {
   readonly dir: string
   readonly ownPid: number
 }
 
-/** このプロセスの名乗りの書き置き。書けなかった失敗は投げずに `reportFailure` へ渡す。 */
+/** このプロセスの占有ファイルの書き置き。書けなかった失敗は投げずに `reportFailure` へ渡す。 */
 export function createSessionClaimFile(options: {
   readonly place: SessionClaimPlace
   readonly reportFailure: (error: unknown) => void
@@ -57,8 +57,8 @@ export function defaultSessionClaimPlace(): SessionClaimPlace {
 }
 
 /**
- * 生きているほかのプロセスが名乗ったセッションのID。
- * もういないプロセスの名乗りは消して捨て、別の利用者のプロセス（`EPERM`）の名乗りも捨てる。
+ * 生きているほかのプロセスが占有ファイルに書いたセッションのID。
+ * もういないプロセスの占有ファイルは消して捨て、別の利用者のプロセス（`EPERM`）の占有ファイルも捨てる。
  * 置き場が無い・読めないときは空。
  */
 export async function readOccupiedSessionIds(place: SessionClaimPlace): Promise<readonly string[]> {
@@ -89,7 +89,7 @@ async function readClaimFile(path: string): Promise<ClaimFile | undefined> {
   }
 }
 
-/** そのプロセスが生きているか。もういなければ名乗りのファイルを消す。 */
+/** そのプロセスが生きているか。もういなければ占有ファイルを消す。 */
 function isAlive(claim: ClaimFile): boolean {
   try {
     process.kill(claim.record.pid, 0)
@@ -107,7 +107,7 @@ function removeStaleClaim(path: string): void {
   try {
     rmSync(path, { force: true })
   } catch {
-    // 消せなかった名乗りも、生きていないので数えない。
+    // 消せなかった占有ファイルも、生きていないので数えない。
   }
 }
 

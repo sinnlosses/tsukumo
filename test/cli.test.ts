@@ -19,7 +19,7 @@ import { closeNetServer, listenOnEphemeralPort, portOf } from "./fixture/net-ser
 import { runSubprocess, type SubprocessResult } from "./fixture/subprocess.ts"
 
 // このファイルは CLI を起動しきらないものだけを扱う。
-// 起動経路が transcript の追従から SDK のセッション駆動へ変わり、CLI を最後まで
+// 起動経路が transcript の追従から SDK のセッションドライバへ変わり、CLI を最後まで
 // 起動すると Claude Code の子プロセスが立ち上がるようになった。テストから実際のセッションを
 // 起こすわけにはいかないので、起動の前提チェックで終わるところまでをここで守る。
 //

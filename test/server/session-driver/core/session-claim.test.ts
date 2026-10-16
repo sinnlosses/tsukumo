@@ -7,7 +7,7 @@ import {
 } from "../../../../src/server/session-driver/core/session-claim.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 
-/** 書いた名乗りを順に覚え、ほかの名乗りは渡した並びを返す偽の書き置き。 */
+/** 書いた占有ファイルの中身を順に覚え、ほかの占有ファイルは渡した並びを返す偽の書き置き。 */
 function fakeStore(others: readonly string[] = []): {
   readonly store: SessionClaimStore
   readonly written: (readonly string[])[]
@@ -40,7 +40,7 @@ function sessionInfo(sessionId: string): SessionEvent {
 }
 
 describe("createSessionClaim", () => {
-  it("続きから起こすとそのIDを名乗り、新規なら名乗らない", () => {
+  it("続きから起こすとそのIDを書き、新規なら書かない", () => {
     const { store, written } = fakeStore()
     const claim = createSessionClaim(store)
 
@@ -50,7 +50,7 @@ describe("createSessionClaim", () => {
     expect(written).toEqual([["架空のセッションA"], []])
   })
 
-  it("session-info のIDへ名乗り替え（/clear の新しいIDも）、session-ended で消す。同じ中身は書き直さない", () => {
+  it("session-info のIDへ書き替え（/clear の新しいIDも）、session-ended で消す。同じ中身は書き直さない", () => {
     const { store, written } = fakeStore()
     const claim = createSessionClaim(store)
     const observe = claim.noteLaunched({ kind: "new" })
@@ -64,7 +64,7 @@ describe("createSessionClaim", () => {
     expect(written).toEqual([["架空のセッションA"], ["架空のセッションB"], []])
   })
 
-  it("あとの代を起こしたあとは、前の代の session-ended・session-info が届いても名乗りを変えない", () => {
+  it("あとの代を起こしたあとは、前の代の session-ended・session-info が届いても占有ファイルを変えない", () => {
     const { store, written } = fakeStore()
     const claim = createSessionClaim(store)
     const observeOld = claim.noteLaunched({ kind: "new" })
@@ -102,7 +102,7 @@ describe("createSessionClaim", () => {
     expect(written).toEqual([])
   })
 
-  it("ほかに名乗りが無ければ、いまのIDと並べて選んだIDを名乗る", async () => {
+  it("ほかに占有ファイルが無ければ、いまのIDと並べて選んだIDを書く", async () => {
     const { store, written } = fakeStore(["架空の別のセッション"])
     const claim = createSessionClaim(store)
     claim.noteLaunched({ kind: "resume", sessionId: "架空のセッションA" })
@@ -111,7 +111,7 @@ describe("createSessionClaim", () => {
     expect(written.at(-1)).toEqual(["架空のセッションA", "架空のセッションB"])
   })
 
-  it("ほかの名乗りに同じIDがあれば occupied で、足したIDを外して書き直す", async () => {
+  it("ほかの占有ファイルに同じIDがあれば occupied で、足したIDを外して書き直す", async () => {
     const { store, written } = fakeStore(["架空のセッションB"])
     const claim = createSessionClaim(store)
     claim.noteLaunched({ kind: "resume", sessionId: "架空のセッションA" })
@@ -124,7 +124,7 @@ describe("createSessionClaim", () => {
     ])
   })
 
-  it("withdraw で名乗りを消す", () => {
+  it("withdraw で占有ファイルを消す", () => {
     const { store, written } = fakeStore()
     const claim = createSessionClaim(store)
     claim.noteLaunched({ kind: "resume", sessionId: "架空のセッションA" })

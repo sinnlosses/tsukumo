@@ -7,7 +7,7 @@ import { sessionClaimContract } from "../../../shared/contract/session-claim.ts"
 
 /** この機能の手続きが使う口（中身は配線が渡す）。 */
 export type SessionClaimProcedurePorts = {
-  /** 生きているほかの tsukumo が名乗ったセッションのID。読めないときは空で、投げない。 */
+  /** 生きているほかの tsukumo が占有ファイルに書いたセッションのID。読めないときは空で、投げない。 */
   readonly readOccupiedSessionIds: () => Promise<readonly string[]>
 }
 

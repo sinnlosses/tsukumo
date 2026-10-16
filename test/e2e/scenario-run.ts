@@ -176,7 +176,7 @@ export type ScenarioRoom = {
   readonly cwd: string
   /**
    * 起こした tsukumo の `TSUKUMO_HOME`（`realpath` を通した絶対パス。テストが終わると消える）。
-   * 別の窓の tsukumo の名乗りのように、ホームの中身そのものが元になるシナリオだけがここへ書き足す。
+   * 別の窓の tsukumo の占有ファイルのように、ホームの中身そのものが元になるシナリオだけがここへ書き足す。
    * 書き足すのは `open` が部屋を渡したあとにする。
    */
   readonly home: string

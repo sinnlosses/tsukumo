@@ -42,8 +42,8 @@ describe("セッションの切り替え", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  // 別の窓の tsukumo の名乗りは、このテストのプロセス（生きている）が書いたことにする。
-  it("別の窓が名乗っているセッションの行は選べず、開いた直後の選びも ↑↓ も飛ばす", async () => {
+  // 別の窓の tsukumo の占有ファイルは、このテストのプロセス（生きている）が書いたことにする。
+  it("別の窓が占有ファイルに書いているセッションの行は選べず、開いた直後の選びも ↑↓ も飛ばす", async () => {
     const room = await run.open({
       scenario: "session-switch-occupied",
       scene: "session-list",

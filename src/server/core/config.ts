@@ -24,7 +24,7 @@ export const VIEW_PORT_FALLBACK_BASE_ENV_NAME = "TSUKUMO_VIEW_PORT_FALLBACK_BASE
 export const CHARACTER_ENV_NAME = "TSUKUMO_CHARACTER"
 /** 起動時にタブを自動で開くか（`0` のときだけ開かない）。 */
 export const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
-/** セッションの駆動（`sdk` / `fake`。既定は `sdk`）。 */
+/** セッションドライバ（`sdk` / `fake`。既定は `sdk`）。 */
 export const DRIVER_ENV_NAME = "TSUKUMO_DRIVER"
 /** ビューとファイルを開くホスト（`orca` / `none`。既定は `orca`）。 */
 const HOST_ENV_NAME = "TSUKUMO_HOST"
@@ -50,7 +50,7 @@ export const HOME_ENV_NAME = "TSUKUMO_HOME"
 const CLAUDE_CONFIG_DIR_ENV_NAME = "CLAUDE_CONFIG_DIR"
 
 /**
- * セッションの駆動の種類。
+ * セッションドライバの種類。
  * `fake` は本物の claude を起こさず、疑似セッションどおりにイベントを流す（`readFakeSession`）。
  */
 export type DriverKind = "sdk" | "fake"

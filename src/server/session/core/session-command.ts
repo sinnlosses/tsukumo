@@ -41,9 +41,9 @@ export type SessionCommandPorts = {
   readonly readAchievementDay: (date: string) => Promise<DailyAchievement | undefined>
   /** 成果の振り返りの書き手の出どころ（`DiaryWriterSource`）。疑似セッションでは `dont-write`。 */
   readonly diary: DiaryWriterSource
-  /** 選んだセッションのIDを名乗ってから、別の窓が使っていないかを確かめる（`SessionClaim.reserve`）。 */
+  /** 選んだセッションのIDを占有ファイルに書いてから、別の窓が使っていないかを確かめる（`SessionClaim.reserve`）。 */
   readonly reserveSession: (sessionId: string) => Promise<SessionReservation>
-  /** 名乗りを消す（起こし直しに失敗したとき）。 */
+  /** 占有ファイルを消す（起こし直しに失敗したとき）。 */
   readonly withdrawSessionClaim: () => void
 }
 

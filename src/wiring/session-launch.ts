@@ -85,7 +85,7 @@ export function wireSessionLaunch(options: {
     SessionCommandPorts,
     "rememberSessionDefault" | "reserveSession" | "withdrawSessionClaim"
   >
-  /** このプロセスの名乗りを消す（プロセスを閉じるとき）。 */
+  /** このプロセスの占有ファイルを消す（プロセスを閉じるとき）。 */
   readonly releaseSessionClaim: () => void
 } {
   const { context, config, character, viewPort } = options
@@ -172,7 +172,7 @@ function chooseSessionCatalog(context: WiringContext, config: Config): SessionCa
 }
 
 /**
- * セッション駆動を1つ起こす。
+ * セッションドライバを1つ起こす。
  * 疑似セッションがあれば fake driver（claude を起こさない）、無ければ Agent SDK の駆動。
  * `scene` は fake driver のときだけ効く（名指しした場面を最初のタブが繋がったら流す。`TSUKUMO_FAKE_SCENE`）。
  */

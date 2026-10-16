@@ -25,7 +25,7 @@ function place(): SessionClaimPlace {
   return { dir: join(dir(), "session-claim"), ownPid }
 }
 
-/** ほかのプロセスの名乗りを手で置く。 */
+/** ほかのプロセスの占有ファイルを手で置く。 */
 function putClaim(pid: number, content: unknown, name = `${String(pid)}.json`): string {
   mkdirSync(place().dir, { recursive: true })
   const path = join(place().dir, name)
@@ -44,7 +44,7 @@ async function endedPid(): Promise<number> {
 }
 
 describe("createSessionClaimFile", () => {
-  it("名乗りを書き、空にすると消す。自分の名乗りは使用中に数えない", async () => {
+  it("占有ファイルを書き、空にすると消す。自分の占有ファイルは使用中に数えない", async () => {
     const failures: unknown[] = []
     const store = createSessionClaimFile({ place: place(), reportFailure: (e) => failures.push(e) })
     const path = join(place().dir, `${String(ownPid)}.json`)
@@ -71,13 +71,13 @@ describe("createSessionClaimFile", () => {
 })
 
 describe("readOccupiedSessionIds", () => {
-  it("生きているほかのプロセスの名乗りを使用中にする", async () => {
+  it("生きているほかのプロセスの占有ファイルを使用中にする", async () => {
     putClaim(process.pid, { pid: process.pid, sessionIds: ["架空のセッションA"] })
 
     expect(await readOccupiedSessionIds(place())).toEqual(["架空のセッションA"])
   })
 
-  it("もういないプロセスの名乗りは使用中にせず、ファイルを消す", async () => {
+  it("もういないプロセスの占有ファイルは使用中にせず、ファイルを消す", async () => {
     const pid = await endedPid()
     const path = putClaim(pid, { pid, sessionIds: ["架空のセッションA"] })
 
@@ -85,14 +85,14 @@ describe("readOccupiedSessionIds", () => {
     expect(existsSync(path)).toBe(false)
   })
 
-  it("別の利用者のプロセス（pid 1）の名乗りは使用中にせず、ファイルも消さない", async () => {
+  it("別の利用者のプロセス（pid 1）の占有ファイルは使用中にせず、ファイルも消さない", async () => {
     const path = putClaim(1, { pid: 1, sessionIds: ["架空のセッションA"] })
 
     expect(await readOccupiedSessionIds(place())).toEqual([])
     expect(existsSync(path)).toBe(true)
   })
 
-  it("壊れた中身・名乗りの形でない名前は読まない", async () => {
+  it("壊れた中身・占有ファイルの形でない名前は読まない", async () => {
     putClaim(process.pid, { pid: process.pid, sessionIds: "架空のセッションA" })
     putClaim(process.pid, { pid: process.pid, sessionIds: ["架空のセッションB"] }, "memo.json")
     writeFileSync(join(place().dir, "1.json"), "{")
