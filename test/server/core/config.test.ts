@@ -13,6 +13,7 @@ describe("readConfig", () => {
       host: "orca",
       fakeScene: undefined,
       fakeSceneUntil: undefined,
+      twCommand: undefined,
       claudeConfigDir: undefined,
       fixedClock: undefined,
       inheritedEnv: {},
@@ -29,6 +30,7 @@ describe("readConfig", () => {
       TSUKUMO_HOST: " none ",
       TSUKUMO_FAKE_SCENE: " question-multi ",
       TSUKUMO_FAKE_SCENE_UNTIL: " 3 ",
+      TSUKUMO_TW: " /somewhere/fake-tw ",
       CLAUDE_CONFIG_DIR: " /somewhere/claude ",
     }
 
@@ -41,6 +43,7 @@ describe("readConfig", () => {
       host: "none",
       fakeScene: "question-multi",
       fakeSceneUntil: 3,
+      twCommand: "/somewhere/fake-tw",
       claudeConfigDir: "/somewhere/claude",
       fixedClock: undefined,
       // 子プロセスへ引き継ぐ分は、読んだ環境をそのまま持つ
@@ -50,6 +53,10 @@ describe("readConfig", () => {
 
   it("CLAUDE_CONFIG_DIR が空文字なら未設定と同じに倒す", () => {
     expect(readConfig({ CLAUDE_CONFIG_DIR: "  " }).claudeConfigDir).toBeUndefined()
+  })
+
+  it("TSUKUMO_TW が空白だけなら未設定と同じに倒す", () => {
+    expect(readConfig({ TSUKUMO_TW: "  " }).twCommand).toBeUndefined()
   })
 
   it("凍らせる瞬間は ISO 8601 の瞬間として読み、読めない値は本物の時計に倒す", () => {

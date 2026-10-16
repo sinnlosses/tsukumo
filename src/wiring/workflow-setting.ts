@@ -1,5 +1,6 @@
 // ワークフローの設定の配線。呼ぶ `tw` と、どのリポジトリの設定かを決める。
-// 取り込んだワークフローを載せるとき（疑似セッションを含む）は取り込みの `bin/tw`、利用者がリンクで入れていて載せないときは PATH の `tw`。
+// 差し替え（`TSUKUMO_TW`）があればそれ、なければ取り込んだワークフローを載せるとき（疑似セッションを含む）は取り込みの `bin/tw`、
+// 利用者がリンクで入れていて載せないときは PATH の `tw`。
 
 import { join } from "node:path"
 
@@ -18,8 +19,9 @@ const PATH_TW = "tw"
 export function wireWorkflowSetting(
   cwd: string,
   mountWorkflowPlugin: boolean,
+  twOverride: string | undefined,
 ): WorkflowSettingProcedurePorts {
-  const tw = mountWorkflowPlugin ? join(workflowPluginDir(), "bin", "tw") : PATH_TW
+  const tw = chooseTw(twOverride, mountWorkflowPlugin)
   const port = twConfigPort(tw, cwd)
   const place: WorkflowSettingPlace = {
     worktreeName: projectNameOf(cwd),
@@ -30,4 +32,11 @@ export function wireWorkflowSetting(
     readWorkflowSetting: () => readWorkflowSetting(port, place),
     changeWorkflowSetting: (key, value) => changeWorkflowSetting(port, place, key, value),
   }
+}
+
+export function chooseTw(twOverride: string | undefined, mountWorkflowPlugin: boolean): string {
+  if (twOverride !== undefined) {
+    return twOverride
+  }
+  return mountWorkflowPlugin ? join(workflowPluginDir(), "bin", "tw") : PATH_TW
 }

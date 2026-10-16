@@ -418,6 +418,9 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 **起動先（`.beads` の有無・課題ファイル）で出し分ける画は `--scene <場面> --cwd <dir>` で、スクラッチに作った
 ディレクトリを起動先にして撮る**（既定はこの作業ツリー。`--cwd` は `--scene` と一緒にだけ使う）。
 タスクの一覧・詳細を撮るときは、作業ツリーの根の `.tsukumo/fake-beads-issues.json` に架空の課題を `bd list --json` の形の配列で置く（撮ったら消す。実データを写さないため）。一覧を開いて行を押すには `capture-view.ts --scene report --click 'button:has-text("一覧を見る")' --click '[role="option"]:has-text("架空の文字")'` の形で当たる（`li:has-text(…)` は当たらない）。狭い窓（720px）では、先に引き出しを開いて（`button[aria-label="やり取りとタスクを開く"]`）タスクのタブ（`[role="tab"]:has-text("タスク")`。話題モードでは「話題」）を押す。
+**ワークフローの設定の面（歯車の `tw config` を読み書きする画）を、`tw` の出力を変えて撮るには `TSUKUMO_TW=<偽の tw の絶対パス>` を付ける**（schema 2 の面など、取り込みの `tw` が出さない形を撮るとき）。
+偽の `tw` はスクラッチ（作業ツリーの外）に Write で書いて実行権を付ける。`vendor/tsukumo-plugins/bin/tw` は書き換えない（戻し忘れが main に混ざる）。PATH に偽の `tw` を置いても効かない（取り込みの `bin/tw` が先に選ばれる）。
+`--scene` の `capture-view.ts` は起こす tsukumo に自分の環境変数を引き継ぐので、`TSUKUMO_TW=… node scripts/capture/capture-view.ts --scene <場面> --hash …` の形で効く。`--scene` を付けずに起こし済みの tsukumo へ撮りに行くときは、その tsukumo を起こすときに付ける。
 狭い窓（720px）でセッションの切り替え画面を開くには、引き出しを開いたあとに `--click '[aria-label="引き出し"] button[aria-haspopup="dialog"]'` を足す（`--click 'button[aria-label="やり取りとタスクを開く"]'` のあと）。
 **続きから復元した画面（`session-resume` の過去のやり取り）を撮るには、切り替え画面を開いて要求を選び、「切り替える」を押してから、復元された依頼の文を `--wait-after` で待つ。** 広い窓（900px 以上）では次の形で当たる（撮った画で、続きの最終レポートまで出ることを確かめた）。
 

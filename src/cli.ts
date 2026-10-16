@@ -51,6 +51,9 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       scripts/capture/capture-catalog.ts が使う）
   TSUKUMO_FAKE_SCENE_UNTIL  名指しした場面の手を先頭から何個まで流すか（正の整数。既定は全部。
                       場面の途中の画を撮る scripts/capture/capture-view.ts の --until-step が使う）
+  TSUKUMO_TW          ワークフローの設定を読み書きするときに呼ぶ tw のパス（既定は取り込みの
+                      bin/tw。取り込みを載せないときは PATH の tw）。疑似セッションの撮影や
+                      自動テストで、取り込みを書き換えずに偽の tw へ差し替えるための口
   TSUKUMO_HOME        tsukumo が自分の持ち物を置くホーム（既定 ~/.tsukumo。覚えたキャラクター・
                       雑談の要約とアーカイブ・トークンの記録・画面から作ったパックがこの下に並ぶ）。
                       **2つを並行して動かすときだけ**、TSUKUMO_VIEW_PORT と一緒に分けて渡す。
