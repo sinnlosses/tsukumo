@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 import { describe, expect, test } from "vitest"
 
 import {
+  arrayField,
   descendants,
   objectField,
   parseProgram,
@@ -138,29 +139,62 @@ describe("scenarioOwners", () => {
 describe("場面を開く入口", () => {
   const e2eRoot = fileURLToPath(new URL("../../e2e", import.meta.url))
 
-  test("E2E の足場が export する `run.open` を包む関数は、どれも ROOM_OPENER の名前に合う", () => {
+  test("E2E の足場が export する `run.open` を包む関数は、どれも ROOM_OPENER の名前に合い、task-room.ts にある", () => {
     const wrappers = readdirSync(e2eRoot)
       .filter(
         (name) => name.endsWith(".ts") && !name.endsWith(".test.ts") && name !== "scenario-run.ts",
       )
-      .flatMap((name) => {
-        const program = parseProgram(name, readFileSync(`${e2eRoot}/${name}`, "utf8"))
-        return descendants(program ?? {})
-          .filter((node) => stringField(node, "type") === "ExportNamedDeclaration")
-          .map((node) => objectField(node, "declaration"))
-          .filter((declaration) => stringField(declaration, "type") === "FunctionDeclaration")
-          .filter((declaration) =>
-            descendants(declaration ?? {}).some(
-              (node) =>
-                stringField(node, "type") === "CallExpression" &&
-                stringField(objectField(objectField(node, "callee"), "property"), "name") ===
-                  "open",
-            ),
-          )
-          .map((declaration) => stringField(objectField(declaration, "id"), "name") ?? "")
-      })
+      .flatMap((file) =>
+        exportedOpeners(readFileSync(`${e2eRoot}/${file}`, "utf8")).map((name) => ({ file, name })),
+      )
 
     expect(wrappers.length).toBeGreaterThan(0)
-    expect(wrappers.filter((name) => !ROOM_OPENER.test(name))).toEqual([])
+    expect(wrappers.filter(({ name }) => !ROOM_OPENER.test(name))).toEqual([])
+    expect(wrappers.filter(({ file }) => file !== "task-room.ts")).toEqual([])
+  })
+
+  test("export する関数宣言・関数式・アロー関数のうち `.open(` を呼ぶものを拾う", () => {
+    const source = [
+      "export async function openAlphaRoom(run) { return run.open({}) }",
+      "export const openBetaRoom = async (run) => run.open({})",
+      "export const openGammaRoom = async function (run) { return run.open({}) }",
+      "export const notAnOpener = async () => 1",
+      "export const READY = 'open'",
+      "async function localRoom(run) { return run.open({}) }",
+    ].join("\n")
+
+    expect(exportedOpeners(source).toSorted()).toEqual([
+      "openAlphaRoom",
+      "openBetaRoom",
+      "openGammaRoom",
+    ])
   })
 })
+
+function exportedOpeners(source: string): readonly string[] {
+  const exported = descendants(parseProgram("source.ts", source) ?? {})
+    .filter((node) => stringField(node, "type") === "ExportNamedDeclaration")
+    .map((node) => objectField(node, "declaration"))
+  const functions = exported.flatMap((declaration) =>
+    stringField(declaration, "type") === "VariableDeclaration"
+      ? arrayField(declaration ?? {}, "declarations").map((declarator) => ({
+          name: stringField(objectField(declarator, "id"), "name") ?? "",
+          body: objectField(declarator, "init"),
+        }))
+      : [{ name: stringField(objectField(declaration, "id"), "name") ?? "", body: declaration }],
+  )
+  return functions
+    .filter(({ body }) =>
+      ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"].includes(
+        stringField(body, "type") ?? "",
+      ),
+    )
+    .filter(({ body }) =>
+      descendants(body ?? {}).some(
+        (node) =>
+          stringField(node, "type") === "CallExpression" &&
+          stringField(objectField(objectField(node, "callee"), "property"), "name") === "open",
+      ),
+    )
+    .map(({ name }) => name)
+}
