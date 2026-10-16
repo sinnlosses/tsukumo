@@ -44,6 +44,16 @@ describe("readPreparations", () => {
     ])
   })
 
+  test("--press は値1つのキー名を、ほかの手と書いた順に並べる", () => {
+    expect(
+      readArguments(["--click", "a", "--press", "Escape", "--wait-after", "b"])?.preparations,
+    ).toEqual([
+      { kind: "click", selector: "a" },
+      { kind: "press", key: "Escape" },
+      { kind: "wait", selector: "b" },
+    ])
+  })
+
   test("--type は直後の位置引数を2つ目の値にし、その token を使ったと返す", () => {
     const result = readArguments(["--click", "a", "--type", "textarea", "/", "--hover", "b"])
     expect(result?.preparations).toEqual([
@@ -83,5 +93,11 @@ describe("describeCatalogMiss", () => {
     expect(
       describeCatalogMiss("question-preview-image", "narrow", { kind: "hover", selector: "a" }),
     ).toBe("当てられなかった: question-preview-image（narrow）: a に触れる")
+  })
+
+  test("press はキー名を言う", () => {
+    expect(describeCatalogMiss("session-resume", "narrow", { kind: "press", key: "Escape" })).toBe(
+      "当てられなかった: session-resume（narrow）: Escape キーを押す",
+    )
   })
 })

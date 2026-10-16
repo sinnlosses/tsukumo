@@ -12,6 +12,7 @@ import { positiveIntegerArgument } from "../../shared/positive-integer-argument.
  * - `hover`: 触れる（押すと状態が進んでしまう場所）
  * - `type`: 入力欄に打つ（`/` と `@` の補完）
  * - `hash`: `location.hash` を書いて画面を移す（キャラクター画面・作る画面）
+ * - `press`: キーを押す（モーダルの Esc での閉じ）
  * - `advance`: 偽の時計をミリ秒だけ進める（時間が経つと出る画）
  * - `wait`: 要素が出るのを待つ（`hash` で開いた画面の読み込みなど）
  */
@@ -21,6 +22,7 @@ export type Preparation =
   | { readonly kind: "hover"; readonly selector: string }
   | { readonly kind: "type"; readonly selector: string; readonly text: string }
   | { readonly kind: "hash"; readonly hash: string }
+  | { readonly kind: "press"; readonly key: string }
   | { readonly kind: "advance"; readonly ms: number }
   | { readonly kind: "wait"; readonly selector: string }
 
@@ -49,6 +51,9 @@ export async function applyPreparation(
           .locator(step.selector)
           .first()
           .pressSequentially(step.text, { timeout: timeoutMs })
+        break
+      case "press":
+        await page.keyboard.press(step.key)
         break
       case "advance":
         await page.clock.runFor(step.ms)
@@ -81,6 +86,8 @@ export function describePreparation(step: Preparation): string {
       return `${step.selector} に ${step.text} と打つ`
     case "hash":
       return `location.hash に ${step.hash} を書く`
+    case "press":
+      return `${step.key} キーを押す`
     case "advance":
       return `時計を ${String(step.ms)}ms 進める`
     case "wait":
@@ -102,6 +109,7 @@ export const PREPARATION_OPTIONS = {
   hover: { type: "string" },
   "wait-after": { type: "string" },
   hash: { type: "string" },
+  press: { type: "string" },
   advance: { type: "string" },
   type: { type: "string" },
 } as const
@@ -142,6 +150,9 @@ export function readPreparations(tokens: readonly ArgumentToken[]):
         break
       case "hash":
         preparations.push({ kind: "hash", hash: value })
+        break
+      case "press":
+        preparations.push({ kind: "press", key: value })
         break
       case "advance": {
         const ms = positiveIntegerArgument.safeParse(value)

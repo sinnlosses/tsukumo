@@ -18,6 +18,7 @@ describe("capture の入口の崩れた引数", () => {
     ["capture-view.ts", "--scene", "x", "--type", "textarea"],
     ["capture-view.ts", "--scene", "x", "--type", "textarea", "--click", "b"],
     ["capture-view.ts", "--scene", "x", "--advance", "0"],
+    ["capture-view.ts", "--scene", "x", "--press"],
     ["capture-view.ts", "--scene", "x", "--size", "10"],
     ["capture-view.ts", "--scene", "x", "--until-step", "0"],
     ["capture-view.ts", "http://localhost:1/", "http://localhost:2/"],

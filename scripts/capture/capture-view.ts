@@ -99,10 +99,11 @@ const USAGE = `使い方:
   --click <selector>    押してから撮る
   --hover <selector>    触れてから撮る
   --hash <hash>         location.hash を書いてから撮る
+  --press <キー名>      キーを押してから撮る（Escape など。狭い窓の引き出しを閉じる）
   --advance <ms>        偽の時計をミリ秒だけ進めてから撮る（待ち時間で出る画。Temporal.Now も従う）
   --clock <ISO 時刻>    ブラウザの時計をその時刻に決めて撮る（日付で表示が変わる画。オフセット付き、例 2026-01-15T12:00:00+09:00。Temporal.Now も従う）
   --wait-after <selector> その位置で要素が出るのを待つ（--hash で開いた画面の読み込みなど。出なければ失敗して終わる）
-                        （6つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
+                        （7つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
 `
 

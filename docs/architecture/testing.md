@@ -408,7 +408,7 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 メインビューのスクロールの容れ物の上端へ送ってから撮る。要素が無ければ撮らずに失敗で終わる。
 
 **入力欄に打つ・押すなど、手を動かさないと出ない状態を撮るときは、`capture-view.ts` に
-`--type <selector> <文字>`・`--click <selector>`・`--hover <selector>`・`--hash <hash>`・`--wait-after <selector>` を並べる。**
+`--type <selector> <文字>`・`--click <selector>`・`--hover <selector>`・`--hash <hash>`・`--press <キー名>`・`--wait-after <selector>` を並べる。**
 書いた順に、`--wait-for` の待ちのあと・`--scroll-to` の前に当てる。1つでも当たらなければ
 撮らずに失敗で終わる（撮影のカタログの `prepare` は当たらない手を飛ばして撮る）。
 語彙と当て方は `scripts/capture/lib/capture-preparation.ts` で共有している。
@@ -432,7 +432,19 @@ node scripts/capture/capture-view.ts --scene session-resume --size 900x900 \
   --wait-after 'text=前のセッションの架空の依頼その1'
 ```
 
-`[role="option"]` は要求の一覧の行（最初の1件）。押すのは行で選ぶだけで、切り替わるのは「切り替える」を押したあと。`--wait-for` は先頭で当たるので、切り替え画面の前には使えない（`--wait-after` を使う）。**狭い窓（760px 以下）では、切り替えたあとも引き出しが開いたままで、覆いを押して閉じる手が `capture-view.ts` の語彙に無い。** 引き出しの中の一覧にも依頼の文は出るので、`--wait-after` が引き出しの中で当たって偽の成功になる。この手順では、狭い窓（760px 以下）の続きの画は撮れない。`--size 761x900` の同じ手順は依頼の文を待って当たらなかった（幅の境目での切り替え先は未確認）。
+`[role="option"]` は要求の一覧の行（最初の1件）。押すのは行で選ぶだけで、切り替わるのは「切り替える」を押したあと。`--wait-for` は先頭で当たるので、切り替え画面の前には使えない（`--wait-after` を使う）。**狭い窓（760px 以下）では、切り替えたあとも引き出しが開いたままなので、`--press Escape` で閉じてから `--wait-after` で待つ。** 閉じる前に待つと、引き出しの中の一覧の依頼の文に当たって偽の成功になる。閉じたあとの本文に出るのは続きの最後の依頼（その3）なので、待つ文もそれにする。720px で撮った画で、引き出しが閉じて続きの最終レポートまで出ることを確かめた。
+
+```bash
+node scripts/capture/capture-view.ts --scene session-resume --size 720x900 \
+  --click 'button[aria-label="やり取りとタスクを開く"]' \
+  --click '[aria-label="引き出し"] button[aria-haspopup="dialog"]' \
+  --click '[role="option"]' \
+  --click 'button:has-text("切り替える")' \
+  --press Escape \
+  --wait-after 'text=前のセッションの架空の結論その3'
+```
+
+この手順を `--size 761x900` で走らせると、761px 以上では引き出しの口（≡）が無いので、最初の `--click` で「当てられなかった」と出て失敗する。広い窓の手順の 761px での当たりは未確認。
 **待ち時間が経たないと出ない画（待ちの一言など）は `--advance <ms>` で偽の時計を進めて撮る。**
 `Temporal.Now` も進んだ時刻に従うので、経過の秒数のような時刻の表示も進んだ値で描かれる。
 **日付で表示が変わる部品（セッション切り替えの「今日/昨日」・プラン使用量の「…に戻る」）は `--clock <ISO 時刻>`（オフセット付き。例 `2026-01-15T12:00:00+09:00`）でブラウザの時計を決めて撮る。** 疑似セッションの日付と別の日を指せば区切りが変わる。
