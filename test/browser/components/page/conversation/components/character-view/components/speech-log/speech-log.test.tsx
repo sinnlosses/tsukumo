@@ -215,7 +215,7 @@ describe("SpeechLog", () => {
     renderSpeechLog([requestRecord({ text: "架空の依頼", turnId: 0 })])
     openLog()
 
-    expect(screen.getByText("（まだ発話がありません）")).toBeDefined()
+    expect(screen.getByText("（まだセリフがありません）")).toBeDefined()
   })
 
   it("何も留めていなければ最新の行に印が付き、行を押すと onToggleSpeech がその番号で呼ばれる", () => {

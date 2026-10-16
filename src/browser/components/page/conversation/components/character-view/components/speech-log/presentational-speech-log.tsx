@@ -23,7 +23,7 @@ const OPEN_LABEL = "ログ"
 const CLOSE_LABEL = "ログを閉じる"
 const DIALOG_LABEL = "セリフのログ"
 const MORE_LABEL = "もっと前を読む ↑"
-const EMPTY_MESSAGE = "（まだ発話がありません）"
+const EMPTY_MESSAGE = "（まだセリフがありません）"
 
 export type PresentationalSpeechLogProps = SpeechLogModel & {
   readonly open: boolean
