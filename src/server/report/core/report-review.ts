@@ -5,33 +5,20 @@
 // 同じターンで画面に出した `report` と同じ引数の呼び出しも差し戻す（送り直し）。
 // `Stop` の関所（`ReportGate`）に止められたモデルが、止められた本文を入れずに前の `report` を送り直して関所を抜ける形を塞ぐ。
 // 関所は2回目の止まりを止めないので、送り直しを通すと止めた本文が画面に出ないまま終わる（`docs/research/report-tool-trial.md`「残った穴の形」）。
-// 枠は規約違反の1回とは別に1ターンに1回まで（規約違反で差し戻して直した `report` を送り直す形もある）。
 // 比べるのは `conclusion` / `favor` の前後の空白を除いたものと、`figure` と `sections` と `checks` の中身。
 // 覚えるのは `ReportReview.pass` が出した（描いた）`report` だけなので、サブエージェントの `report`（変換で捨てる）とは比べない。
 //
-// 新しい事実の無い `report` も差し戻す（枠は別に1ターンに1回まで）。
 // 「新しい事実」は文面ではなく、直前に描いた `report` のあとに届いたもので決める:
 // 利用者の依頼（`request` / `turn-started`）と脇の話（`aside`）、メインが呼んだ `speak` / `report` 以外のツールの結果、バックグラウンドタスクの終わり（顔ぶれから消えた）。
 // バックグラウンドタスクの終わりはターンの外で届くので、これだけはターンの区切りで戻さない。
 // サブエージェントの `SendMessage` の合図は流れに見えないので数えない。
 //
-// 段取りの閉じていない `report` も差し戻す（段取りの立ち位置は `WorkPlanReview.standing` から受け取る）:
-// 同じターンで差し戻した `work_plan` にまだ応えていないものと、段の閉じ方（`workPlanClosing`）が合わないもの。
-// 段の閉じ方は同じ依頼に段取りがあるときだけ見て、欄が無い・`finished` なのに段が2つ以上残っている・
-// `task.outcome` が `finished` なのに `stopped` で段が残っている、のどれかなら差し戻す。
-// 脇の話のターン（`aside` から次の依頼・続きのターン・ターンの終わりまで）では段の閉じ方を見ない。
-// 枠は応えていない `work_plan` と段の閉じ方でそれぞれ1ターンに1回までで、規約違反の枠とは分ける。
-//
-// `task.outcome` が `finished` なのに `checks` に `ng` の行がある `report` も差し戻す（枠は別に1ターンに1回まで）。
-// 脇の話のターンでも見る。
-//
-// 背景のシェル（`kind` が `shell`）が生きたままの `report` も差し戻す（枠は別に1ターンに1回まで）。
-// 止めるか待つかをモデルに決めさせる。背景のサブエージェントとその他の種類、脇の話のターンでは見ない。
-// 差し戻しの文面には ID と `description` を載せるが、記録に残すのは種類の名前だけ。
-//
-// 画面のファイル（`src/browser/` の下）がターンの頭の HEAD から変わっているのに画像の塊（`image`・`beforeAfter`）が無い `report` も差し戻す（枠は別に1ターンに1回まで）。
-// 変更ファイルは `ReportChanges` の口から読み、読めなければ変更なしとして通す。脇の話のターンでは見ない。
-// `checks` に `unverified` で `detail` が空白だけでない行があれば、画像が無くても通し、この枠は使わない。
+// 差し戻しの枠の一覧と見る順、脇の話のターン（`aside` から次の依頼・続きのターン・ターンの終わりまで）で見る枠は `ReportReview.judge` が正典。
+// 枠は規約違反の枠とは別に数える（規約違反で差し戻して直した `report` を送り直す形もある）。
+// 段取りの立ち位置は `WorkPlanReview.standing` から受け取る。段の閉じ方は同じ依頼に段取りがあるときだけ見る。
+// 背景のシェルの差し戻しの文面には ID と `description` を載せるが、記録に残すのは種類の名前だけ。
+// 変更ファイルは `ReportChanges` の口から読み、読めなければ変更なしとして通す。
+// `checks` に `unverified` で `detail` が空白だけでない行があれば、画像が無くても通し、画像の枠は使わない。
 //
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`）。
 // `assistant` メッセージの変換は `report` イベントを作るだけで判定しない。
@@ -59,6 +46,7 @@ import {
 } from "./report-violation.ts"
 import { hasScreenFile } from "./screen-file.ts"
 
+// 判定の順と脇の話の扱いは `ReportReview.judge` が正典。
 export const REPORT_PROCEDURE_REJECTIONS = [
   "resend",
   "nothing-new",
@@ -93,6 +81,8 @@ export type ReportReview = {
    * このターンで描いた `report` の送り直し、直前に描いた `report` のあとに新しい事実の届いていない呼び出し、
    * 応えていない `work_plan` の差し戻し、合わない段の閉じ方、`ng` のある `finished`、背景のシェル、画像の無い画面の変更、規約違反のどれかなら、
    * この順に見て差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
+   * 脇の話のターンでは、合わない段の閉じ方・背景のシェル・画像の無い画面の変更を見ない（ほかは見る）。
+   * 記録に残す種類の名前は {@link REPORT_PROCEDURE_REJECTIONS}（段の閉じ方は3つの名前が1つの枠を共有する）。
    */
   readonly judge: (report: ReportDraft, changedFiles?: readonly string[]) => ReportVerdict
   /**
