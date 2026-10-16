@@ -37,7 +37,7 @@
 **置き場所を解く**関数2つで、ファイルそのものは扱っていない）。
 
 **層の検査は `test/architecture/layer.test.ts`**（機能どうしの辺は `server-feature.test.ts` と `shared-feature.test.ts`）。`src/` の import を読んで、上の表に無い辺があれば
-落とす。外部ツールは増やさない（`node:fs` と正規表現で足りる）。
+落とす。外部ツールは増やさない（`node:fs` と、`vite` が持つ `parseSync` の構文木で足りる）。
 
 **段階**（大きすぎる作り直しにしないための順番）:
 

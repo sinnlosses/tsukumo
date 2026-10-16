@@ -135,7 +135,10 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 - **`shared` は `node:` も `document` も触らない。** 好みではなく**物理的な制約**で、`shared` は
   サーバとブラウザの両方で読み込まれるので、片方にしか無い API に触れた時点でもう片方で動かなくなる
 - 許した辺以外は `test/architecture/layer.test.ts` が落とす（層の辺は上の4本。サーバ側の機能どうしの辺は
-  次の節の表）
+  次の節の表）。import の拾い方は構文木で、静的 import・`export … from`・動的 `import()`・`require()` の
+  specifier を引用符の違いに関係なく拾う。`shared` と `core` が外の世界（`node:` と `node:` なしの組み込み・`ws`・
+  `@anthropic-ai/*`）を読む道も同じ拾い方で塞ぐ。`process.env`・`process.cwd` を読む形（分割代入・別名の import を含む）も
+  `test/architecture/outside-world.test.ts` が構文木で見る
 
 ### サーバの機能と、機能どうしの辺
 

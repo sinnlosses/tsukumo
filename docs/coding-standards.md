@@ -1056,7 +1056,7 @@ Standards 軸はこの節から入るので、レビューで見ることをこ�
 **優先の順**: 機械的な仕組み ＞ 仕組みで塞げない部分だけを文面の条で補う。このリポジトリにある
 「仕組み」の実例:
 
-- `test/architecture/layer.test.ts`: 層をまたぐ `import` を正規表現で検査し、許した辺以外を落とす
+- `test/architecture/layer.test.ts`: 層をまたぐ `import` を構文木（`vite` の `parseSync`）で検査し、許した辺以外を落とす。静的 import・`export … from`・動的 `import()`・`require()` を拾う
 - `src/server/report/core/report-review.ts`: 規約違反のある `report` 呼び出しを handler が差し戻す
 - `src/server/report/core/report-tool.ts` の `Stop` フックの関所: ターンの最後に `report` を
   通さない本文で止まろうとしたら差し戻す

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs"
+import { builtinModules } from "node:module"
 
 import { describe, expect, it } from "vitest"
 
@@ -12,8 +13,8 @@ import {
   SRC_ROOT,
 } from "./source-file.ts"
 
-// 層をディレクトリで表す（docs/architecture.md「層と依存の向き」）。ここは正規表現と node:fs だけで、
-// 許した辺以外の import を落とす。外部ツールは増やさない。
+// 層をディレクトリで表す（docs/architecture.md「層と依存の向き」）。ここは `vite` の `parseSync` の構文木と
+// node:fs だけで、許した辺以外の import を落とす。外部ツールは増やさない。
 //
 // 3層（shared / server / browser）で、サーバ側は機能ごとに判断（`server/<機能>/core/`）と
 // 境界（`server/<機能>/adapter/`）の2段、どの機能にも属さない共有の箱は `server/core/`
@@ -37,7 +38,16 @@ const ALLOWED_IMPORTS: Readonly<Record<Layer, ReadonlySet<Layer>>> = {
 // `core` を「純粋な判断」に保つための禁止（3章「許す依存の辺」）。外の世界に触るものは
 // すべて `adapter/` にあり、`core` はそれを import できないので、ここを塞ぐと
 // `core` から外の世界へ出る道が閉じる。
-const OUTSIDE_WORLD_IMPORT = /from\s+["'](node:|@anthropic-ai\/|ws")/
+const NODE_BUILTIN_MODULES: ReadonlySet<string> = new Set(builtinModules)
+
+function isOutsideWorldSpecifier(specifier: string): boolean {
+  return (
+    specifier.startsWith("node:") ||
+    NODE_BUILTIN_MODULES.has(specifier.split("/")[0] ?? "") ||
+    specifier.startsWith("@anthropic-ai/") ||
+    specifier === "ws"
+  )
+}
 
 type Violation = {
   readonly fromPath: string
@@ -63,14 +73,51 @@ describe("層と依存の向き", () => {
         return layer === "shared" || layer === "core"
       })
       .filter((relPath) => {
-        const code = withoutComments(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
+        const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
+        const code = withoutComments(content)
         return (
-          OUTSIDE_WORLD_IMPORT.test(code) ||
+          importSpecifiers(content).some(isOutsideWorldSpecifier) ||
           (layerOf(relPath) === "shared" && /\b(document|window|localStorage)\b/.test(code))
         )
       })
 
     expect(offenders).toEqual([])
+  })
+})
+
+describe("import の拾い方", () => {
+  const isOutsideWorld = (code: string): boolean =>
+    importSpecifiers(code).some(isOutsideWorldSpecifier)
+
+  it('単引用符の \'ws\'・動的 import("node:fs")・require("fs") を外の世界への import として拾う', () => {
+    expect(isOutsideWorld("import ws from 'ws'")).toBe(true)
+    expect(isOutsideWorld('const fs = await import("node:fs")')).toBe(true)
+    expect(isOutsideWorld('const fs = require("fs")')).toBe(true)
+    expect(isOutsideWorld('export * from "node:os"')).toBe(true)
+    expect(isOutsideWorld('import { query } from "@anthropic-ai/claude-agent-sdk"')).toBe(true)
+  })
+
+  it("外の世界でない specifier とコメントの中の import は拾わない", () => {
+    expect(isOutsideWorld('import { z } from "zod"')).toBe(false)
+    expect(isOutsideWorld('import "./wsx.ts"')).toBe(false)
+    expect(isOutsideWorld('// import ws from "ws"\nconst a = 1')).toBe(false)
+  })
+
+  it("構文エラーのある本文は throw する", () => {
+    expect(() => importSpecifiers("const = (")).toThrow()
+  })
+
+  it("動的 import・re-export の層またぎを違反として拾い、許した辺は拾わない", () => {
+    const crossing = (code: string): readonly string[] =>
+      findViolations("shared/a/b.ts", code).map((v) => v.toPath)
+
+    expect(crossing('const m = () => import("../../server/host/core/host.ts")')).toEqual([
+      "server/host/core/host.ts",
+    ])
+    expect(crossing('export * from "../../browser/utils/clock.ts"')).toEqual([
+      "browser/utils/clock.ts",
+    ])
+    expect(crossing('const m = () => import("./c.ts")')).toEqual([])
   })
 })
 
@@ -111,9 +158,11 @@ describe("経路名のリテラル", () => {
 })
 
 /** ファイル1件の相対 import をすべて調べ、許した辺に無いものを違反として返す。 */
-function findViolations(relPath: string): readonly Violation[] {
+function findViolations(
+  relPath: string,
+  content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"),
+): readonly Violation[] {
   const fromLayer = layerOf(relPath)
-  const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
   const allowed = ALLOWED_IMPORTS[fromLayer]
 
   return relativeImportSpecifiers(content).flatMap((specifier) => {

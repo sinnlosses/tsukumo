@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, it } from "vitest"
 
-import { withoutComments } from "../comment-line.ts"
-import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
+import { astChildren, astDescendants, astObject, astString, type AstNode } from "./ast-node.ts"
+import { importSpecifiers, listSourceFiles, parseSourceProgram, SRC_ROOT } from "./source-file.ts"
 
 // ここから、層の辺だけでは表せない限定の検査（`adapter` の中のどのファイルか、まで絞る）。
 
@@ -20,8 +20,8 @@ describe("Agent SDK を import する箇所", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => !SDK_BOUNDARY_FILE.test(relPath))
       .filter((relPath) =>
-        /from\s+["']@anthropic-ai\/claude-agent-sdk["']/.test(
-          readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"),
+        importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).includes(
+          "@anthropic-ai/claude-agent-sdk",
         ),
       )
 
@@ -49,7 +49,9 @@ describe("子プロセスを起こす箇所", () => {
       "server/workflow-setting/adapter/tw-config.ts",
     ])
     const spawning = listSourceFiles(SRC_ROOT).filter((relPath) =>
-      /from\s+["']node:child_process["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+      importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).some(
+        (specifier) => specifier === "node:child_process" || specifier === "child_process",
+      ),
     )
 
     expect(spawning.filter((relPath) => !allowed.has(relPath))).toEqual([])
@@ -74,7 +76,7 @@ describe("process.env を読む箇所", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => !allowed.has(relPath))
       .filter((relPath) =>
-        /\bprocess\.env\b/.test(withoutComments(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
+        readsProcessMember(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"), "env"),
       )
 
     expect(offenders).toEqual([])
@@ -87,9 +89,85 @@ describe("process.cwd() を読む箇所", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => relPath !== "cli.ts")
       .filter((relPath) =>
-        /\bprocess\.cwd\b/.test(withoutComments(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
+        readsProcessMember(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"), "cwd"),
       )
 
     expect(offenders).toEqual([])
   })
 })
+
+describe("process の env / cwd を読む形の検出", () => {
+  it("分割代入・別名・名前付き import・添字の読み取りを拾い、コメントと文字列は拾わない", () => {
+    expect(readsProcessMember("const a = process.env.X", "env")).toBe(true)
+    expect(readsProcessMember('const a = process["env"]', "env")).toBe(true)
+    expect(readsProcessMember("const { env } = process", "env")).toBe(true)
+    expect(readsProcessMember("const { env: e } = process", "env")).toBe(true)
+    expect(readsProcessMember('import { env } from "node:process"', "env")).toBe(true)
+    expect(readsProcessMember('import p from "node:process"\np.cwd()', "cwd")).toBe(true)
+    expect(readsProcessMember("process?.env", "env")).toBe(true)
+
+    expect(readsProcessMember("// process.env\nconst a = 1", "env")).toBe(false)
+    expect(readsProcessMember('const a = "process.env"', "env")).toBe(false)
+    expect(readsProcessMember("const a = process.cwd()", "env")).toBe(false)
+    expect(readsProcessMember("const { cwd } = other", "cwd")).toBe(false)
+  })
+
+  it("構文エラーのある本文は throw する", () => {
+    expect(() => readsProcessMember("const = (", "env")).toThrow()
+  })
+})
+
+/**
+ * `process` の `member`（`env` / `cwd`）を読む形を構文木で探す。
+ * `process.env`・`process["env"]`・`const { env } = process`・`import { env } from "node:process"`、
+ * `import p from "node:process"` で束ねた別名の `p.env` を拾い、コメントと文字列の中の言及は拾わない。
+ */
+function readsProcessMember(content: string, member: string): boolean {
+  const nodes = astDescendants(parseSourceProgram(content))
+  const processNames = new Set(["process"])
+  let found = false
+
+  for (const node of nodes) {
+    if (astString(node, "type") !== "ImportDeclaration") {
+      continue
+    }
+    const source = astString(astObject(node, "source"), "value")
+    if (source !== "node:process" && source !== "process") {
+      continue
+    }
+    for (const specifier of astChildren(node, "specifiers")) {
+      const local = astString(astObject(specifier, "local"), "name")
+      if (astString(specifier, "type") === "ImportSpecifier") {
+        found ||= keyName(astObject(specifier, "imported")) === member
+      } else if (local !== undefined) {
+        processNames.add(local)
+      }
+    }
+  }
+
+  const isProcess = (node: AstNode | undefined): boolean =>
+    astString(node, "type") === "Identifier" && processNames.has(astString(node, "name") ?? "")
+
+  for (const node of nodes) {
+    const type = astString(node, "type")
+    if (type === "MemberExpression" && isProcess(astObject(node, "object"))) {
+      const property = astObject(node, "property")
+      const computed = Reflect.get(node, "computed") === true
+      found ||= computed ? astString(property, "value") === member : keyName(property) === member
+    }
+    if (
+      type === "VariableDeclarator" &&
+      isProcess(astObject(node, "init")) &&
+      astString(astObject(node, "id"), "type") === "ObjectPattern"
+    ) {
+      found ||= astChildren(astObject(node, "id"), "properties").some(
+        (property) => keyName(astObject(property, "key")) === member,
+      )
+    }
+  }
+  return found
+}
+
+function keyName(node: AstNode | undefined): string | undefined {
+  return astString(node, "name") ?? astString(node, "value")
+}

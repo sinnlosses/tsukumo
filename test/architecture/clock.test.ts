@@ -1,9 +1,17 @@
 import { readFileSync } from "node:fs"
 
-import { parseSync } from "vite"
 import { describe, expect, it } from "vitest"
 
 import { withoutComments } from "../comment-line.ts"
+import {
+  astAllChildren,
+  astChildren,
+  astNumber,
+  astObject,
+  astString,
+  parseProgram,
+  type AstNode,
+} from "./ast-node.ts"
 import { listSourceFiles, SRC_ROOT } from "./source-file.ts"
 
 // 「いま」を読む場所を2つに保つ。E2E は時計をこの2箇所で凍らせる（サーバは
@@ -95,13 +103,8 @@ const DEFERRED_CALL_ARGUMENT_INDEX: ReadonlyMap<string, number> = new Map([
   ["addEventListener", 1],
 ])
 
-type AstNode = object
-
 function renderTimeClockReads(fileName: string, source: string): readonly number[] {
-  const parsed = parseSync(fileName, source)
-  if (parsed.errors.length > 0) {
-    throw new Error(`${fileName} を読めない: ${parsed.errors.map((e) => e.message).join(", ")}`)
-  }
+  const program = parseProgram(fileName, source)
   const reads: number[] = []
   const lineOf = (node: AstNode): number => {
     const start = astNumber(node, "start") ?? 0
@@ -109,7 +112,7 @@ function renderTimeClockReads(fileName: string, source: string): readonly number
   }
   const localNames = new Set<string>()
 
-  for (const statement of astChildren(parsed.program, "body")) {
+  for (const statement of astChildren(program, "body")) {
     if (astString(statement, "type") !== "ImportDeclaration") {
       continue
     }
@@ -149,7 +152,7 @@ function renderTimeClockReads(fileName: string, source: string): readonly number
       visit(child, [...ancestors, node])
     }
   }
-  visit(parsed.program, [])
+  visit(program, [])
   return reads
 }
 
@@ -208,43 +211,4 @@ function isDeferredArgument(argument: AstNode, call: AstNode): boolean {
     DEFERRED_CALL_ARGUMENT_INDEX.get(calleeName) ===
       astChildren(call, "arguments").indexOf(argument)
   )
-}
-
-function astObject(node: AstNode | undefined, key: string): AstNode | undefined {
-  if (node === undefined) {
-    return undefined
-  }
-  const value: unknown = Reflect.get(node, key)
-  return typeof value === "object" && value !== null ? value : undefined
-}
-
-function astString(node: AstNode | undefined, key: string): string | undefined {
-  const value: unknown = node === undefined ? undefined : Reflect.get(node, key)
-  return typeof value === "string" ? value : undefined
-}
-
-function astNumber(node: AstNode, key: string): number | undefined {
-  const value: unknown = Reflect.get(node, key)
-  return typeof value === "number" ? value : undefined
-}
-
-function astChildren(node: AstNode | undefined, key: string): readonly AstNode[] {
-  if (node === undefined) {
-    return []
-  }
-  const value: unknown = Reflect.get(node, key)
-  return Array.isArray(value)
-    ? value.filter((item): item is AstNode => typeof item === "object" && item !== null)
-    : []
-}
-
-function astAllChildren(node: AstNode): readonly AstNode[] {
-  return Object.values(node).flatMap((value: unknown) => {
-    if (Array.isArray(value)) {
-      return value.filter(
-        (item): item is AstNode => typeof item === "object" && item !== null && "type" in item,
-      )
-    }
-    return typeof value === "object" && value !== null && "type" in value ? [value] : []
-  })
 }
