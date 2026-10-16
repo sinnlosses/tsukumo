@@ -41,6 +41,13 @@
   そのうちの1つを別に渡しても二重には走らない（ファイルを足しても一覧を直さずに済む）
 - **`orca-host.ts` は自動テストの対象外。** 実際に Orca が動いていないと結果を確かめられない。
   ここに判断を書きたくなったら、それは「決める」側に置くべきものが漏れている合図
+- **サニタイザ・属性の許可を検査するテストは、DOM でなく木（hast）の段階で、本番と同じ rehype の段（`rehypeSanitize` など）を通して行う。**
+  テスト環境の DOM は不正な CSS・属性値を CSSOM に入れる段で捨てるので、サニタイザが素通ししても
+  DOM 上の `style` は null になり、抜け道の入力を足しても緑のまま空振りする。
+  手本は `test/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.test.ts`
+- **サニタイザの許可を変えたときの目視には、疑似セッションの `report-meter` 場面（`test/fixture/fake-session.json`）で
+  割合の帯（`stat-meter`）と数の棒（`cell-bar`）を撮る。** 例: `node scripts/capture/capture-view.ts --scene report-meter --size 1200x1400 --wait-for '[class*="stat-meter"]' --measure '[class*="cell-bar"]'`。
+  場面は名前を指して起こすので、足しても名前を指さない既存の E2E の期待値は変わらない
 
 **利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないもの（寸法・入力・サーバとの往復）は E2E で守り、
 出し分けと DOM の細部は部品・フックの単体で守り、見た目（色・崩れ・間合い）は目視で確かめる。**
