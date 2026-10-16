@@ -278,6 +278,11 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
 9. **ブラウザの起動には `hookTimeout` より短い上限を持たせ、起こしかけのものも `afterAll` で止める。**
    負荷の高いときは起動だけで hook の上限に当たりうる。打ち切られた起動を放置すると、親を失った
    ヘッドレス Chrome が残る（`test/e2e/scenario-run.ts` の `BROWSER_LAUNCH_TIMEOUT_MS`）
+10. **`expect.poll` の上限は `vitest.e2e.config.ts` の `expect.poll.timeout`（15 秒）で一括に決め、
+    個別に `timeout` を渡すのは待つ内容がそれより長いときだけにする。** Vitest の既定は 1 秒で、
+    負荷の高いときに足りない。待つ値は `expect.poll` に渡し、素の `expect(await …)` で1回だけ見ない。
+    確かめる状態は、場面の手で数秒おきに書き換わる窓ではなく、負荷で遅れても残る長さ（場面の手の
+    間隔を 5 秒以上）にする
 
 ### E2E のシナリオの一覧
 

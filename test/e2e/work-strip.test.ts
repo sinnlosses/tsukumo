@@ -5,7 +5,7 @@ import { expectReadable } from "./readability-scan.ts"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // 進み具合の帯（docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// 場面 `work-strip-running` は1つ目の手順のあと間を空け、4つ目の手順（長い Bash）が 20 秒走るので、そこで撮る。
+// 場面 `work-strip-running` は1つ目の手順のあと間を空け、4つ目の手順（長い Bash）が十数秒走るので、そこで撮る。
 // `work-strip-ask`・`work-strip-question` は答え待ちが届いたまま 20 秒止まる。
 // `work-strip-long-report-quick` は `turn-finished` まで流す。
 
@@ -31,12 +31,12 @@ describe("進み具合の帯", () => {
     await expect
       .poll(() => phaseStates(strip))
       .toEqual(["current", "upcoming", "upcoming", "upcoming"])
-    expect(await strip.textContent()).toContain("今の形を調べる")
-    expect(await activityText(strip)).toContain("Read")
+    await expect.poll(() => strip.textContent()).toContain("今の形を調べる")
+    await expect.poll(() => activityText(strip)).toContain("Read")
 
     await room.waitForEvent("tool-started", LONG_TOOL_OCCURRENCE)
     await expect.poll(() => phaseStates(strip)).toEqual(["done", "current", "upcoming", "upcoming"])
-    expect(await strip.textContent()).toContain("集計の関数とスクリプト")
+    await expect.poll(() => strip.textContent()).toContain("集計の関数とスクリプト")
     await expect.poll(() => activityText(strip)).toContain("pnpm exec vitest run /tmp/dummy/metric")
 
     const topBefore = await topOf(strip)
@@ -80,9 +80,9 @@ describe("進み具合の帯", () => {
     const strip = stripOf(room.page)
 
     await expect.poll(() => phaseStates(strip)).toEqual(["done", "asking"])
-    expect(await activityText(strip)).toContain(
-      "お伺いが届いた · 許可: Bash  rm -rf /tmp/dummy/fake-home",
-    )
+    await expect
+      .poll(() => activityText(strip))
+      .toContain("お伺いが届いた · 許可: Bash  rm -rf /tmp/dummy/fake-home")
     const inquiry = room.page.getByRole("region", { name: "お伺い" })
     for (const name of ["許可", "拒否"]) {
       await expectUncovered(inquiry.getByRole("radio", { name }))

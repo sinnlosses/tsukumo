@@ -4704,7 +4704,7 @@
           }
         },
         {
-          "afterMs": 2500,
+          "afterMs": 8500,
           "event": {
             "kind": "tool-finished",
             "toolUseId": "fake-strip-1",
@@ -4713,7 +4713,7 @@
           }
         },
         {
-          "afterMs": 2600,
+          "afterMs": 8600,
           "event": {
             "kind": "work-plan",
             "delegatedRange": { "kind": "none" },
@@ -4731,7 +4731,7 @@
           }
         },
         {
-          "afterMs": 2700,
+          "afterMs": 8700,
           "event": {
             "kind": "tool-started",
             "toolUseId": "fake-strip-2",
@@ -4740,7 +4740,7 @@
           }
         },
         {
-          "afterMs": 2900,
+          "afterMs": 8900,
           "event": {
             "kind": "tool-finished",
             "toolUseId": "fake-strip-2",
@@ -4749,7 +4749,7 @@
           }
         },
         {
-          "afterMs": 3000,
+          "afterMs": 9000,
           "event": {
             "kind": "tool-started",
             "toolUseId": "fake-strip-3",
@@ -4758,7 +4758,7 @@
           }
         },
         {
-          "afterMs": 3200,
+          "afterMs": 9200,
           "event": {
             "kind": "tool-finished",
             "toolUseId": "fake-strip-3",
@@ -4767,7 +4767,7 @@
           }
         },
         {
-          "afterMs": 3300,
+          "afterMs": 9300,
           "event": {
             "kind": "tool-started",
             "toolUseId": "fake-strip-4",

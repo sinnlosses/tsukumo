@@ -15,6 +15,8 @@ const ELAPSED_MS = 60_000
 /** `phone-layout` の場面のターンが走っているあいだの経過（ターンは 60 秒で閉じる）。 */
 const PHONE_ELAPSED_MS = 5_000
 
+const RESIZE_SETTLE_TIMEOUT_MS = 15_000
+
 function railToggle(page: Page): Locator {
   return page.getByRole("button", { name: "サイドバー", exact: true })
 }
@@ -296,9 +298,12 @@ describe("会話の画面の段", () => {
     await room.resize(VIEWPORTS.large)
     await sidebar(page).waitFor()
     await page.waitForFunction(() => document.querySelector("dialog:modal") === null, undefined, {
-      timeout: 3_000,
+      timeout: RESIZE_SETTLE_TIMEOUT_MS,
     })
-    await page.getByRole("button", { name: "手順", exact: false }).first().click({ timeout: 3_000 })
+    await page
+      .getByRole("button", { name: "手順", exact: false })
+      .first()
+      .click({ timeout: RESIZE_SETTLE_TIMEOUT_MS })
   })
 
   async function expectDrawerSurvivesWiden(room: ScenarioRoom): Promise<void> {
@@ -311,8 +316,11 @@ describe("会話の画面の段", () => {
     await room.resize(VIEWPORTS.large)
     await sidebar(page).waitFor()
     await page.waitForFunction(() => document.querySelector("dialog:modal") === null, undefined, {
-      timeout: 3_000,
+      timeout: RESIZE_SETTLE_TIMEOUT_MS,
     })
-    await page.getByRole("button", { name: "手順", exact: false }).first().click({ timeout: 3_000 })
+    await page
+      .getByRole("button", { name: "手順", exact: false })
+      .first()
+      .click({ timeout: RESIZE_SETTLE_TIMEOUT_MS })
   }
 })
