@@ -71,6 +71,22 @@ describe("findBroadKillRule", () => {
     expect(findBroadKillRule(command)).toBe("pkill-killall")
   })
 
+  // 構文解析に置き換える前の正規表現が実際に拒んでいた形。これが通るようになったら弱めた実装である。
+  test.each([
+    ["pkill を単独で", "pkill -f vitest", "pkill-killall"],
+    ["括弧の中", "(pkill -f node)", "pkill-killall"],
+    ["改行のあと", "echo a\npkill -f vitest", "pkill-killall"],
+    ["; のあと", "echo a; pkill -f vitest", "pkill-killall"],
+    ["|| のあと", "true || pkill node", "pkill-killall"],
+    ["パイプの受け側", "echo a | pkill node", "pkill-killall"],
+    ["sudo 越しの pkill", "sudo pkill -f node", "pkill-killall"],
+    ["pgrep を xargs kill -9 へ", "pgrep node | xargs kill -9", "pgrep-piped-kill"],
+    ["sudo 越しの pgrep", "sudo pgrep node | xargs kill", "pgrep-piped-kill"],
+    ["pgrep のあとに grep を挟む", "pgrep -f node | grep -v 1 | xargs kill", "pgrep-piped-kill"],
+  ])("旧実装が拒んでいた形: %s", (_name, command, rule) => {
+    expect(findBroadKillRule(command)).toBe(rule)
+  })
+
   test.each([
     ["pid を名指しする kill", "kill 34390"],
     ["シグナル付きの pid", "kill -9 34390"],

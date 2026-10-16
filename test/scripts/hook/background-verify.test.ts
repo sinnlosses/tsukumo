@@ -25,6 +25,17 @@ describe("runsTwVerify", () => {
     expect(runsTwVerify(command)).toBe(true)
   })
 
+  // 構文解析に置き換える前の正規表現が実際に拒んでいた形。これが通らなくなったら弱めた実装である。
+  test.each([
+    ["; のあと", "a; tw verify"],
+    ["改行のあと", "a\ntw verify"],
+    ["括弧の中", "(tw verify)"],
+    ["パイプの受け側", "a | tw verify"],
+    ["引数付き", "tw verify --full"],
+  ])("旧実装が拒んでいた形: %s", (_name, command) => {
+    expect(runsTwVerify(command)).toBe(true)
+  })
+
   test.each([
     ["別のサブコマンド", "tw verify-check"],
     ["別のコマンド", "pnpm run check"],

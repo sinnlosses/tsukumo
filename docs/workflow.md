@@ -151,7 +151,7 @@ SIGTERM が行く）。`pkill` / `killall` で名前やパターンから止め�
 パターンでは利用者が使っている本体と区別できない。狙う語によらず、`bash -c`・`env`・`xargs`・`nice`・
 `timeout`・`pnpm exec`・パス付き（`/usr/bin/pkill`）越しの `pkill` / `killall` と、
 `kill $(pgrep …)`・`ps … | xargs kill` のように名前から引いた pid を渡す `kill`、全プロセスやプロセスグループを指す負の pid（`kill -9 -1`）も拒否する
-（待受ポートで引いた `kill $(lsof -ti tcp:7398 -sTCP:LISTEN)` と pid の名指しは通す）。`HOME` を一時ディレクトリに差し替えれば、
+（待受ポートで引いた `kill $(lsof -ti tcp:7398 -sTCP:LISTEN)` と pid の名指しは通す）。まれな形は直していない: 入れ子の `kill $(echo $(pgrep node))` と `xargs kill $(pgrep node)` は見落とし、`{ lsof …; } | xargs kill`・`cat <(lsof …) | xargs kill`・`echo $(lsof …) | xargs kill` は拒みすぎ、`env -S x pkill` は意味の上で誤って拒む。どれもまれな書き方で、直す費用が見合わない。判定を置き換えるときは、同じ入力を旧の実装に通した表（`test/scripts/hook/broad-kill.test.ts`・`background-verify.test.ts` の「旧実装が拒んでいた形」）を残す。`HOME` を一時ディレクトリに差し替えれば、
 `~/.tsukumo/` に触るタスクでも利用者の設定を汚さない。**起動時に作られるもの（`speak` の
 enum・キャラクターパックの読み込み）は起こし直さないと変わらない。** 起動とキャラクターの切り替えで起こすセッションは常に新規で、
 前のセッションは切り替え画面から選んだとき（とモードを戻したとき）だけ戻る。
