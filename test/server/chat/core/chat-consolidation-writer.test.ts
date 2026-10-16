@@ -217,7 +217,12 @@ describe("createChatConsolidationWriter", () => {
 
     const outcome = await ports.write("fictional", NEVER_ABORTED)
 
-    expect(outcome).toEqual({ kind: "written", topics: ["架空の話題1"], droppedLines: 0 })
+    expect(outcome).toEqual({
+      kind: "written",
+      topics: ["架空の話題1"],
+      droppedLines: 0,
+      shrinkWaived: false,
+    })
     expect(ports.queries).toHaveLength(1)
   })
 
@@ -239,6 +244,7 @@ describe("createChatConsolidationWriter", () => {
       kind: "written",
       topics: ["架空の話題1", "架空の話題2"],
       droppedLines: 0,
+      shrinkWaived: false,
     })
     const prompt = ports.queries[0]?.prompt ?? ""
     expect(prompt).toContain("架空の前のあらすじ")
@@ -265,28 +271,81 @@ describe("createChatConsolidationWriter", () => {
     expect(ports.summaryPacks).toEqual(["fictional"])
   })
 
-  it("出力の形が崩れているときは unreadable-result で、索引にもあらすじにも書かない", async () => {
+  it("出力の形が崩れているときは unreadable-result（shape）で、索引にもあらすじにも書かない", async () => {
     const ports = createPorts(DUE_BATCH, () => Promise.resolve({ ...VALID_OUTPUT, episodes: [] }))
 
     expect(await ports.write("fictional", NEVER_ABORTED)).toEqual({
       kind: "failed",
       reason: "unreadable-result",
+      rejection: "shape",
     })
     expect(ports.order).toEqual([])
     expect(ports.summary()).toBe(PREVIOUS_SUMMARY)
   })
 
-  it("あらすじが空・予約タグ入り・前のあらすじから極端に縮んだときは unreadable-result で、何も書かない", async () => {
-    for (const synopsis of ["", "架空<tsukumo-aside>架空", "あ"]) {
+  it.each([
+    ["空", "", "synopsis-empty"],
+    ["予約タグ入り", "架空<tsukumo-aside>架空", "synopsis-reserved-tag"],
+    ["長さ超過", "a".repeat(CHAT_MEMORY_BUDGET.synopsisBytes + 1), "synopsis-too-long"],
+    ["前のあらすじから極端に縮んだ", "あ", "synopsis-shrunk"],
+  ] as const)(
+    "あらすじが%sときは unreadable-result で理由を返し、何も書かない",
+    async (_name, synopsis, rejection) => {
       const ports = createPorts(DUE_BATCH, () => Promise.resolve({ ...VALID_OUTPUT, synopsis }))
       ports.setSummary("あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars))
 
       expect(await ports.write("fictional", NEVER_ABORTED)).toEqual({
         kind: "failed",
         reason: "unreadable-result",
+        rejection,
       })
       expect(ports.order).toEqual([])
+    },
+  )
+
+  it("縮みの検査に続けて落ちると、synopsisShrinkWaiveAt 回目は縮んだまま書き、書けたら数え直す", async () => {
+    let synopsis = "あ"
+    const ports = createPorts(DUE_BATCH, () => Promise.resolve({ ...VALID_OUTPUT, synopsis }))
+    const longPrevious = "あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars)
+    const shrunkFailure = {
+      kind: "failed",
+      reason: "unreadable-result",
+      rejection: "synopsis-shrunk",
     }
+    const writeOnce = async () => {
+      ports.setSummary(longPrevious)
+      return ports.write("fictional", NEVER_ABORTED)
+    }
+
+    for (let count = 1; count < CHAT_CONSOLIDATION_LIMITS.synopsisShrinkWaiveAt; count += 1) {
+      expect(await writeOnce()).toEqual(shrunkFailure)
+    }
+    expect(ports.order).toEqual([])
+    expect(await writeOnce()).toMatchObject({ kind: "written", shrinkWaived: true })
+    expect(ports.summary()).toBe("あ")
+
+    synopsis = longPrevious
+    expect(await writeOnce()).toMatchObject({ kind: "written", shrinkWaived: false })
+
+    synopsis = "あ"
+    expect(await writeOnce()).toEqual(shrunkFailure)
+  })
+
+  it("縮みで落ちた回数はパックごとに数える", async () => {
+    const ports = createPorts(DUE_BATCH, () => Promise.resolve({ ...VALID_OUTPUT, synopsis: "あ" }))
+    const writeOnce = async (packName: string) => {
+      ports.setSummary("あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars))
+      return ports.write(packName, NEVER_ABORTED)
+    }
+
+    for (let count = 1; count < CHAT_CONSOLIDATION_LIMITS.synopsisShrinkWaiveAt; count += 1) {
+      expect((await writeOnce("fictional")).kind).toBe("failed")
+    }
+    expect(await writeOnce("another-fictional")).toEqual({
+      kind: "failed",
+      reason: "unreadable-result",
+      rejection: "synopsis-shrunk",
+    })
   })
 
   it("query() が reject したときは threw で例外を運び、索引にもあらすじにも書かない", async () => {

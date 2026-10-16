@@ -8,6 +8,7 @@ import {
   CHAT_TOPIC_LIMIT,
   chatConsolidationQuery,
   chatEpisodeDrafts,
+  chatSynopsisShrunk,
   CHAT_SYNOPSIS_RESERVED_TAGS,
   parseChatConsolidationResult as parseResult,
   readChatTopics,
@@ -16,13 +17,13 @@ import { asidePromptText } from "../../../../src/server/session-driver/core/asid
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { fixedChatSummary, inMemoryChatSummary } from "../../../fixture/chat.ts"
 
-/** 前のあらすじが無い回として検査する。前のあらすじとの比べを見るテストだけが第3引数を渡す。 */
+/** 通れば検査を通った出力、落ちれば undefined。落ちた理由を見るテストは `parseResult` を直に呼ぶ。 */
 function parseChatConsolidationResult(
   value: unknown,
   lineCount: number,
-  previousSynopsis = "",
-): ReturnType<typeof parseResult> {
-  return parseResult(value, lineCount, previousSynopsis)
+): ChatConsolidationResult | undefined {
+  const check = parseResult(value, lineCount)
+  return check.kind === "accepted" ? check.result : undefined
 }
 
 // `queryChatConsolidation` 自体（本物の `query()` を起こす部分）は
@@ -282,25 +283,48 @@ describe("parseChatConsolidationResult", () => {
     const asideClose = asideRest.join("").trim()
     expect(tags).toContain(asideOpen.trim())
     expect(tags).toContain(asideClose)
-    // 引き継ぎの頭は adapter の非公開の定数で、公開の振る舞いから取れない。リテラルで照らすので、向こうの変更は検知できない。
-    expect(tags).toContain("<agent-message")
-    expect(tags).toContain("<topics>")
-    expect(tags).toContain("</topics>")
+    // 引き継ぎの頭・スラッシュコマンドの展開は非公開の定数、Claude Code の印はコードに定数が無い。
+    // リテラルで照らすので、向こうの変更は検知できない。
+    for (const tag of [
+      "<agent-message",
+      "<topics>",
+      "</topics>",
+      "<command-name>",
+      "<command-message>",
+      "<command-args>",
+      "<system-reminder>",
+      "<task-notification>",
+      "<local-command-stdout>",
+    ]) {
+      expect(tags).toContain(tag)
+    }
   })
 
-  it("synopsis が前のあらすじの半分未満に縮むと undefined。前のあらすじが短いときは比べない", () => {
+  it("落ちた理由を種類で返す", () => {
+    const rejectionOf = (value: unknown): string | undefined => {
+      const check = parseResult(value, ENTRIES.length)
+      return check.kind === "rejected" ? check.rejection : undefined
+    }
+    expect(rejectionOf({ ...VALID_OUTPUT, episodes: [] })).toBe("shape")
+    expect(rejectionOf({ ...VALID_OUTPUT, synopsis: " " })).toBe("synopsis-empty")
+    expect(
+      rejectionOf({
+        ...VALID_OUTPUT,
+        synopsis: "a".repeat(CHAT_MEMORY_BUDGET.synopsisBytes + 1),
+      }),
+    ).toBe("synopsis-too-long")
+    expect(rejectionOf({ ...VALID_OUTPUT, synopsis: "架空<system-reminder>架空" })).toBe(
+      "synopsis-reserved-tag",
+    )
+  })
+
+  it("縮みはここでは見ず、chatSynopsisShrunk が前のあらすじの半分未満のバイト数を縮みすぎとする。前のあらすじが短いときは比べない", () => {
     const previous = "あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars)
     const half = "あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars / 2)
-    expect(
-      parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: half }, 4, previous),
-    ).toBeDefined()
-    expect(
-      parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: half.slice(1) }, 4, previous),
-    ).toBeUndefined()
+    expect(chatSynopsisShrunk(half, previous)).toBe(false)
+    expect(chatSynopsisShrunk(half.slice(1), previous)).toBe(true)
     const short = "あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars - 1)
-    expect(
-      parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: "あ" }, 4, short),
-    ).toBeDefined()
+    expect(chatSynopsisShrunk("あ", short)).toBe(false)
   })
 
   it("topics は上限件数・上限文字数を超えると undefined。0件は許す", () => {

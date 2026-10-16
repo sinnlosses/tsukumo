@@ -44,11 +44,14 @@ export const CHAT_CONSOLIDATION_LIMITS = {
    * 書き直しは「前のあらすじ＋新しい会話」の再要約なので、半分を切るのは一部が丸ごと落ちた形とみなす。
    */
   synopsisKeepRatio: 0.5,
+  /** 前に書けてから縮みで落ちた回が、これに届く回は縮みの検査を外して書く。 */
+  synopsisShrinkWaiveAt: 3,
 } satisfies Readonly<Record<string, number>>
 
 /**
  * 注入文の包みの印。あらすじに含まれていたら拒む。
- * `<topics>` は話題を本文に埋め込んでいた古い形、`<tsukumo-aside>` は脇の話の包み、`<agent-message` は委譲の引き継ぎの頭。
+ * `<topics>` は話題を本文に埋め込んでいた古い形、`<tsukumo-aside>` は脇の話の包み、`<agent-message` は委譲の引き継ぎの頭、
+ * `<command-name>` などの3つは SDK が展開したスラッシュコマンド、`<system-reminder>`・`<task-notification>`・`<local-command-stdout>` は Claude Code が差し込む印。
  */
 export const CHAT_SYNOPSIS_RESERVED_TAGS = [
   "<topics>",
@@ -56,7 +59,32 @@ export const CHAT_SYNOPSIS_RESERVED_TAGS = [
   "<tsukumo-aside>",
   "</tsukumo-aside>",
   "<agent-message",
+  "<command-name>",
+  "<command-message>",
+  "<command-args>",
+  "<system-reminder>",
+  "</system-reminder>",
+  "<task-notification>",
+  "</task-notification>",
+  "<local-command-stdout>",
 ] as const
+
+/**
+ * 検査に落ちた理由。
+ *
+ * - `shape`: 構造化出力の形・エピソード・区切り・`topics` の崩れ
+ * - `synopsis-empty`: あらすじが空
+ * - `synopsis-too-long`: あらすじが `synopsisBytes` を超える
+ * - `synopsis-reserved-tag`: あらすじが {@link CHAT_SYNOPSIS_RESERVED_TAGS} を含む
+ */
+export const CHAT_CONSOLIDATION_REJECTIONS = [
+  "shape",
+  "synopsis-empty",
+  "synopsis-too-long",
+  "synopsis-reserved-tag",
+] as const
+
+export type ChatConsolidationRejection = (typeof CHAT_CONSOLIDATION_REJECTIONS)[number]
 
 /** 前のあらすじ・直前のエピソードの見出しが無い（空文字の）ときに置く文面。 */
 const NONE = "（なし）"
@@ -158,39 +186,44 @@ export function chatConsolidationQuery(
   }
 }
 
+export type ChatConsolidationCheck =
+  | { readonly kind: "accepted"; readonly result: ChatConsolidationResult }
+  | { readonly kind: "rejected"; readonly rejection: ChatConsolidationRejection }
+
 /**
  * 受け取った `structured_output` を丸ごと検査する。
- * 1か所でも崩れていたら `undefined` で、行は未定着のまま残る側に倒す。
+ * 1か所でも崩れていたら `rejected` で、行は未定着のまま残る側に倒す。
+ * 前のあらすじからの縮みはここでは見ない（{@link chatSynopsisShrunk}）。
  *
  * - 形: `episodes` が1件以上の配列で、各要素の `title` / `gist` / `cues` / `weight` が {@link CHAT_CONSOLIDATION_LIMITS} に収まる
  * - 区切り: `end` が前のエピソードより大きく、最後のエピソードの `end` が `lineCount` と一致（渡した行をすべて、切れ目なくどれかのエピソードに含めている）
- * - `synopsis` は空でなく、{@link CHAT_MEMORY_BUDGET.synopsisBytes} バイト以下で、{@link CHAT_SYNOPSIS_RESERVED_TAGS} を含まず、前のあらすじ（{@link CHAT_CONSOLIDATION_LIMITS.gistChars} 字以上のとき）の {@link CHAT_CONSOLIDATION_LIMITS.synopsisKeepRatio} 倍未満に縮んでいない。`topics` は0〜{@link CHAT_CONSOLIDATION_LIMITS.topicsMax}件、各{@link CHAT_CONSOLIDATION_LIMITS.topicChars}字まで
+ * - `synopsis` は空でなく、{@link CHAT_SYNOPSIS_RESERVED_TAGS} を含まず、{@link CHAT_MEMORY_BUDGET.synopsisBytes} バイト以下。`topics` は0〜{@link CHAT_CONSOLIDATION_LIMITS.topicsMax}件、各{@link CHAT_CONSOLIDATION_LIMITS.topicChars}字まで
  */
 export function parseChatConsolidationResult(
   value: unknown,
   lineCount: number,
-  previousSynopsis: string,
-): ChatConsolidationResult | undefined {
+): ChatConsolidationCheck {
   if (
     !isPlainObject(value) ||
     !Array.isArray(value.episodes) ||
     typeof value.synopsis !== "string" ||
     !Array.isArray(value.topics)
   ) {
-    return undefined
+    return SHAPE_REJECTED
   }
 
   const synopsis = value.synopsis.trim()
-  if (!isAcceptableSynopsis(synopsis, previousSynopsis)) {
-    return undefined
+  const synopsisRejection = synopsisRejectionOf(synopsis)
+  if (synopsisRejection !== undefined) {
+    return { kind: "rejected", rejection: synopsisRejection }
   }
 
   const episodes = value.episodes.map(toEpisode)
   if (!episodes.every((episode): episode is ChatConsolidationEpisode => episode !== undefined)) {
-    return undefined
+    return SHAPE_REJECTED
   }
   if (!coversLinesContiguously(episodes, lineCount)) {
-    return undefined
+    return SHAPE_REJECTED
   }
 
   const topics = value.topics.map(toTopic)
@@ -198,10 +231,23 @@ export function parseChatConsolidationResult(
     topics.length > CHAT_CONSOLIDATION_LIMITS.topicsMax ||
     !topics.every((topic): topic is string => topic !== undefined)
   ) {
-    return undefined
+    return SHAPE_REJECTED
   }
 
-  return { episodes, synopsis, topics }
+  return { kind: "accepted", result: { episodes, synopsis, topics } }
+}
+
+/**
+ * 書き直したあらすじが、前のあらすじから縮みすぎているか。
+ * 前のあらすじ（前後の空白を落とす）が {@link CHAT_CONSOLIDATION_LIMITS.gistChars} 字未満なら比べない。
+ * 比べるときは、バイト数が前の {@link CHAT_CONSOLIDATION_LIMITS.synopsisKeepRatio} 倍未満なら縮みすぎ。
+ */
+export function chatSynopsisShrunk(synopsis: string, previousSynopsis: string): boolean {
+  const previous = previousSynopsis.trim()
+  if ([...previous].length < CHAT_CONSOLIDATION_LIMITS.gistChars) {
+    return false
+  }
+  return byteLength(synopsis) < byteLength(previous) * CHAT_CONSOLIDATION_LIMITS.synopsisKeepRatio
 }
 
 /**
@@ -319,23 +365,26 @@ function cappedWeight(weight: 1 | 2 | 3, range: readonly ChatUnconsolidatedEntry
   return weight === 3 && !range.some((entry) => entry.origin.mode === "chat") ? 2 : weight
 }
 
+const SHAPE_REJECTED = {
+  kind: "rejected",
+  rejection: "shape",
+} as const satisfies ChatConsolidationCheck
+
 /**
- * 前後の空白を落としたあらすじが、形の検査を通るか。
- * 中身の意味は見ない（空・長さ・決まった印の含有・前のあらすじからの縮みだけ）。
+ * 前後の空白を落としたあらすじが形の検査に落ちる理由（通れば `undefined`）。
+ * 中身の意味は見ない（空・決まった印の含有・長さだけ）。
  */
-function isAcceptableSynopsis(synopsis: string, previousSynopsis: string): boolean {
-  if (synopsis === "" || CHAT_SYNOPSIS_RESERVED_TAGS.some((tag) => synopsis.includes(tag))) {
-    return false
+function synopsisRejectionOf(synopsis: string): ChatConsolidationRejection | undefined {
+  if (synopsis === "") {
+    return "synopsis-empty"
   }
-  const bytes = byteLength(synopsis)
-  if (bytes > CHAT_MEMORY_BUDGET.synopsisBytes) {
-    return false
+  if (CHAT_SYNOPSIS_RESERVED_TAGS.some((tag) => synopsis.includes(tag))) {
+    return "synopsis-reserved-tag"
   }
-  const previous = previousSynopsis.trim()
-  return (
-    [...previous].length < CHAT_CONSOLIDATION_LIMITS.gistChars ||
-    bytes >= byteLength(previous) * CHAT_CONSOLIDATION_LIMITS.synopsisKeepRatio
-  )
+  if (byteLength(synopsis) > CHAT_MEMORY_BUDGET.synopsisBytes) {
+    return "synopsis-too-long"
+  }
+  return undefined
 }
 
 /** `episodes` の1件を検査して畳む（崩れていたら `undefined`）。 */

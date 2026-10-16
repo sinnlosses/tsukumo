@@ -632,7 +632,12 @@ describe("createSessionManager", () => {
       stub.emit(TURN_FINISHED)
       expect(consolidation.calls).toHaveLength(1)
 
-      consolidation.finish({ kind: "written", topics: ["架空の話題"], droppedLines: 0 })
+      consolidation.finish({
+        kind: "written",
+        topics: ["架空の話題"],
+        droppedLines: 0,
+        shrinkWaived: false,
+      })
       await waitForBatch()
       // 書けたら、書いたファイルから取った見出しを流す。
       expect(topicEvents(frames)).toEqual([{ kind: "chat-topics-changed", topics: ["架空の話題"] }])
@@ -714,15 +719,63 @@ describe("createSessionManager", () => {
       stub.emit(CHARACTER_EVENT)
 
       stub.emit(TURN_FINISHED)
-      consolidation.finish({ kind: "written", topics: [], droppedLines: 0 })
+      consolidation.finish({ kind: "written", topics: [], droppedLines: 0, shrinkWaived: false })
       await waitForBatch()
       stub.emit(TURN_FINISHED)
-      consolidation.finish({ kind: "written", topics: [], droppedLines: 3 })
+      consolidation.finish({ kind: "written", topics: [], droppedLines: 3, shrinkWaived: false })
       await waitForBatch()
 
       expect(entries.filter((entry) => entry.flow === "synopsis-trim")).toEqual([
         { flow: "synopsis-trim", at: 1_000, droppedLines: 3 },
       ])
+    })
+
+    it("検査に落ちた理由と、縮みの検査を外して書いたことを、場所の語で診断ログへ書く（本文は入らない）", async () => {
+      const entries: DiagnosticEntry[] = []
+      const consolidation = createManualConsolidation()
+      const { stub } = startChatManagerWithStub({
+        chatConsolidation: consolidation.source,
+        diagnosticLog: {
+          append: (appended) => entries.push(...appended),
+          readRange: () => [],
+        },
+      })
+      stub.emit(CHARACTER_EVENT)
+
+      const rejections = [
+        "shape",
+        "synopsis-empty",
+        "synopsis-too-long",
+        "synopsis-reserved-tag",
+        "synopsis-shrunk",
+      ] as const
+      for (const rejection of rejections) {
+        stub.emit(TURN_FINISHED)
+        consolidation.finish({ kind: "failed", reason: "unreadable-result", rejection })
+        await waitForBatch()
+      }
+      stub.emit(TURN_FINISHED)
+      consolidation.finish({
+        kind: "written",
+        topics: ["架空の話題"],
+        droppedLines: 0,
+        shrinkWaived: true,
+      })
+      await waitForBatch()
+
+      expect(
+        entries
+          .filter((entry) => entry.flow === "swallowed-failure")
+          .map((entry) => entry.place.place),
+      ).toEqual([
+        "consolidation-unreadable-result",
+        "consolidation-synopsis-empty",
+        "consolidation-synopsis-too-long",
+        "consolidation-synopsis-reserved-tag",
+        "consolidation-synopsis-shrunk",
+        "consolidation-synopsis-shrink-waived",
+      ])
+      expect(JSON.stringify(entries)).not.toContain("架空の話題")
     })
 
     it("定着の口が拒否しても、失敗として記録して次のターンの終わりでまた起こす", async () => {
@@ -762,7 +815,12 @@ describe("createSessionManager", () => {
 
       stub.emit(TURN_FINISHED)
       stub.emit(characterChangedEvent({ pack: "another-fictional" }))
-      consolidation.finish({ kind: "written", topics: ["架空の話題"], droppedLines: 0 })
+      consolidation.finish({
+        kind: "written",
+        topics: ["架空の話題"],
+        droppedLines: 0,
+        shrinkWaived: false,
+      })
       await waitForBatch()
 
       expect(topicEvents(frames)).toEqual([])
@@ -781,7 +839,12 @@ describe("createSessionManager", () => {
 
       expect(consolidation.calls.map((call) => call.packName)).toEqual(["fictional"])
 
-      consolidation.finish({ kind: "written", topics: ["架空の話題"], droppedLines: 0 })
+      consolidation.finish({
+        kind: "written",
+        topics: ["架空の話題"],
+        droppedLines: 0,
+        shrinkWaived: false,
+      })
       await waitForBatch()
 
       expect(topicEvents(frames)).toEqual([])

@@ -43,6 +43,7 @@ import type {
   ChatConsolidationOutcome,
   ChatConsolidationSource,
 } from "../../chat/core/chat-consolidation-writer.ts"
+import type { ChatConsolidationRejection } from "../../chat/core/chat-consolidation.ts"
 import {
   type ContextUsageLog,
   createContextUsageRecorder,
@@ -276,9 +277,16 @@ const RESTORED_REPORT_IMAGE_WINDOW_MS = 24 * 60 * 60 * 1000
 const CONSOLIDATION_FAILURE_PLACES = {
   aborted: "consolidation-aborted",
   threw: "consolidation-threw",
-  "unreadable-result": "consolidation-unreadable-result",
   "summary-write": "consolidation-summary-write",
 } as const satisfies Record<string, string>
+
+const CONSOLIDATION_REJECTION_PLACES = {
+  shape: "consolidation-unreadable-result",
+  "synopsis-empty": "consolidation-synopsis-empty",
+  "synopsis-too-long": "consolidation-synopsis-too-long",
+  "synopsis-reserved-tag": "consolidation-synopsis-reserved-tag",
+  "synopsis-shrunk": "consolidation-synopsis-shrunk",
+} as const satisfies Record<ChatConsolidationRejection | "synopsis-shrunk", string>
 
 const NO_MODE_SESSIONS: ModeSessions = { work: { kind: "none" }, chat: { kind: "none" } }
 
@@ -460,8 +468,23 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
           diagnostic.add(
             swallowedFailureFootprint(
               options.now(),
-              { feature: "chat", place: CONSOLIDATION_FAILURE_PLACES[outcome.reason] },
+              {
+                feature: "chat",
+                place:
+                  outcome.reason === "unreadable-result"
+                    ? CONSOLIDATION_REJECTION_PLACES[outcome.rejection]
+                    : CONSOLIDATION_FAILURE_PLACES[outcome.reason],
+              },
               outcome.reason === "threw" ? outcome.error : undefined,
+            ),
+          )
+        }
+        if (outcome.kind === "written" && outcome.shrinkWaived) {
+          diagnostic.add(
+            swallowedFailureFootprint(
+              options.now(),
+              { feature: "chat", place: "consolidation-synopsis-shrink-waived" },
+              undefined,
             ),
           )
         }

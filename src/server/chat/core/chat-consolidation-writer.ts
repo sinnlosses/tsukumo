@@ -14,10 +14,13 @@ import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import type { ChatSummary } from "../../session-driver/core/session-driver.ts"
 import type { ChatArchive } from "./chat-archive-port.ts"
 import {
+  CHAT_CONSOLIDATION_LIMITS,
   CHAT_CONSOLIDATION_TIMEOUT_MS,
+  type ChatConsolidationRejection,
   chatConsolidationQuery,
   chatEpisodeDrafts,
   type ChatConsolidationQuery,
+  chatSynopsisShrunk,
   parseChatConsolidationResult,
   readChatTopics,
 } from "./chat-consolidation.ts"
@@ -27,10 +30,11 @@ import {
  *
  * - `not-due`: 未定着の行が契機（`consolidateEveryBytes`）に届いていないので起こさなかった
  * - `locked`: ほかのプロセスが錠を持っているので起こさなかった（その契機は捨てる）
- * - `written`: 書けた。`topics` は書いたあとのファイルから読み直した最近の話題の見出し、`droppedLines` は上限に収めるために落としたあらすじの行数
+ * - `written`: 書けた。`topics` は書いたあとのファイルから読み直した最近の話題の見出し、`droppedLines` は上限に収めるために落としたあらすじの行数、
+ *   `shrinkWaived` は縮みの検査に落ちる続きが {@link CHAT_CONSOLIDATION_LIMITS.synopsisShrinkWaiveAt} 回目に届き、縮んだまま書いたこと
  * - `failed`: 書けなかった。次の契機で拾い直す。`reason` で見分ける
  *   - `aborted`: 中断・時間切れ
- *   - `unreadable-result`: 結果が検査を通らない
+ *   - `unreadable-result`: 結果が検査を通らない。`rejection` が落ちた理由（`synopsis-shrunk` は前のあらすじから縮みすぎ）
  *   - `summary-write`: あらすじの写しが書けなかった
  *   - `threw`: 上以外の例外（起こせない・API の失敗など）。`error` は受け取った側が `error.name` と code だけを写す
  */
@@ -41,8 +45,14 @@ export type ChatConsolidationOutcome =
       readonly kind: "written"
       readonly topics: readonly string[]
       readonly droppedLines: number
+      readonly shrinkWaived: boolean
     }
-  | { readonly kind: "failed"; readonly reason: "aborted" | "unreadable-result" | "summary-write" }
+  | { readonly kind: "failed"; readonly reason: "aborted" | "summary-write" }
+  | {
+      readonly kind: "failed"
+      readonly reason: "unreadable-result"
+      readonly rejection: ChatConsolidationRejection | "synopsis-shrunk"
+    }
   | { readonly kind: "failed"; readonly reason: "threw"; readonly error: unknown }
 
 /** そのパックの定着を1回走らせる。`signal` が中断されたら、待たずに `failed` で返り、何も書かない。 */
@@ -96,17 +106,34 @@ const LOCKED = { kind: "locked" } as const satisfies ChatConsolidationOutcome
 /** 書いてからこれを過ぎた錠は、落ちたプロセスの残りとして取り直す。 */
 const CHAT_CONSOLIDATION_LOCK_STALE_MS = CHAT_CONSOLIDATION_TIMEOUT_MS * 2
 
+/**
+ * パックごとの、前に書けてから縮みの検査で落ちた回数。
+ * プロセスのメモリにだけ持つ（起こし直すと 0 から数え直す）。
+ */
+type ShrinkTally = {
+  readonly read: (packName: string) => number
+  readonly put: (packName: string, count: number) => void
+}
+
 export function createChatConsolidationWriter(
   ports: ChatConsolidationWriterPorts,
 ): ChatConsolidationWriter {
+  const counts = new Map<string, number>()
+  const shrinkTally: ShrinkTally = {
+    read: (packName) => counts.get(packName) ?? 0,
+    put: (packName, count) => {
+      counts.set(packName, count)
+    },
+  }
   return (packName, signal) => {
     const bounded = AbortSignal.any([signal, AbortSignal.timeout(CHAT_CONSOLIDATION_TIMEOUT_MS)])
-    return Promise.race([consolidate(ports, packName, bounded), abortion(bounded)])
+    return Promise.race([consolidate(ports, shrinkTally, packName, bounded), abortion(bounded)])
   }
 }
 
 async function consolidate(
   ports: ChatConsolidationWriterPorts,
+  shrinkTally: ShrinkTally,
   packName: string,
   signal: AbortSignal,
 ): Promise<ChatConsolidationOutcome> {
@@ -119,7 +146,7 @@ async function consolidate(
     return LOCKED
   }
   try {
-    return await consolidateLocked(ports, packName, signal)
+    return await consolidateLocked(ports, shrinkTally, packName, signal)
   } finally {
     lock.release()
   }
@@ -127,6 +154,7 @@ async function consolidate(
 
 async function consolidateLocked(
   ports: ChatConsolidationWriterPorts,
+  shrinkTally: ShrinkTally,
   packName: string,
   signal: AbortSignal,
 ): Promise<ChatConsolidationOutcome> {
@@ -149,17 +177,25 @@ async function consolidateLocked(
       previousSynopsis,
       previousEpisodeTitle: batch.previousEpisodeTitle,
     })
-    const result = parseChatConsolidationResult(
+    const check = parseChatConsolidationResult(
       await ports.query(request, signal),
       batch.entries.length,
-      previousSynopsis,
     )
     // 中断・時間切れのあとに届いた結果は書かない（呼び出し側はもう次の1本を起こしうる）。
     if (signal.aborted) {
       return ABORTED
     }
-    if (result === undefined) {
-      return { kind: "failed", reason: "unreadable-result" }
+    if (check.kind === "rejected") {
+      return { kind: "failed", reason: "unreadable-result", rejection: check.rejection }
+    }
+    const { result } = check
+    const shrunk = chatSynopsisShrunk(result.synopsis, previousSynopsis)
+    if (shrunk) {
+      const rejected = shrinkTally.read(packName) + 1
+      if (rejected < CHAT_CONSOLIDATION_LIMITS.synopsisShrinkWaiveAt) {
+        shrinkTally.put(packName, rejected)
+        return { kind: "failed", reason: "unreadable-result", rejection: "synopsis-shrunk" }
+      }
     }
 
     ports.archive.appendEpisodes(packName, chatEpisodeDrafts(batch.entries, result.episodes))
@@ -167,10 +203,12 @@ async function consolidateLocked(
     if (written.kind === "failed") {
       return { kind: "failed", reason: "summary-write" }
     }
+    shrinkTally.put(packName, 0)
     return {
       kind: "written",
       topics: readChatTopics(chatSummary),
       droppedLines: written.droppedLines,
+      shrinkWaived: shrunk,
     }
   } catch (error) {
     return signal.aborted ? ABORTED : { kind: "failed", reason: "threw", error }
