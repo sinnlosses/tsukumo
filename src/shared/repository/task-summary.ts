@@ -39,13 +39,25 @@ export type TaskLocation =
  * - `no-beads`: 起動先に `.beads` が無い（タスク運用なし）。Beads は読まない
  * - `loading`: 最初の見回りの結果がまだ届いていない（状態の初期値。見張りは1回目に必ず `loading` 以外を知らせる）
  * - `unknown`: 読めない（`.beads` はあるが `bd` が読めない）
- * - `known`: 読めた
+ * - `known`: 読めた。閉じた課題を件数の上限で切ったときだけ、落とした件数 `omittedClosedCount` を持つ
  */
 export type TaskSummaryResult =
   | { readonly kind: "no-beads" }
   | { readonly kind: "loading" }
   | { readonly kind: "unknown" }
   | { readonly kind: "known"; readonly items: readonly TaskSummaryItem[] }
+  | {
+      readonly kind: "known"
+      readonly items: readonly TaskSummaryItem[]
+      readonly omittedClosedCount: number
+    }
+
+/** 読めた一覧のうち、上限で落とした閉じた課題の件数。切っていなければ 0。 */
+export function omittedClosedCountOf(
+  tasks: Extract<TaskSummaryResult, { readonly kind: "known" }>,
+): number {
+  return "omittedClosedCount" in tasks ? tasks.omittedClosedCount : 0
+}
 
 /** 終えたタスク1件。時刻はエポックミリ秒。 */
 export type DoneTask = {

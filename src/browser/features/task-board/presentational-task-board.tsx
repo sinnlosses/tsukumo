@@ -99,6 +99,7 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
                   <TaskBoardList
                     listId={content.listId}
                     rows={content.rows}
+                    omittedClosedCount={content.omittedClosedCount}
                     onSelect={props.onSelect}
                   />
                 </>

@@ -6,11 +6,15 @@
 // git リポジトリでない・`git` が無い・時間がかかりすぎたときは空を返す（例外を投げない）。
 // git リポジトリでないのは異常ではないので、ターミナルにも何も出さない。
 
+import {
+  EMPTY_REPOSITORY_FILE_LIST,
+  type RepositoryFileList,
+} from "../../../shared/repository/repository-file-list.ts"
 import { runGit } from "./git.ts"
 
 /**
  * 返す件数の上限。巨大なリポジトリでも応答の大きさを見切れる形にしておく（ブラウザ側は一覧を1回取ってから絞り込む）。
- * 超えた分は黙って落ちる。
+ * 超えた分は `git ls-files` の並び（パスの辞書順）の後ろから落とし、落とした件数を返す。
  */
 export const MAX_REPOSITORY_FILES = 20000
 
@@ -18,15 +22,19 @@ export const MAX_REPOSITORY_FILES = 20000
  * git 管理下のファイルのパスを、`cwd` からの相対で返す。失敗したときは空。
  * `-z` で NUL 区切りにする（`git` は既定だと変わった名前を引用符で包んで書き換えるので、そのままではパスとして使えない）。
  */
-export async function listRepositoryFiles(cwd: string): Promise<readonly string[]> {
+export async function listRepositoryFiles(
+  cwd: string,
+  limit: number = MAX_REPOSITORY_FILES,
+): Promise<RepositoryFileList> {
   const outcome = await runGit(cwd, ["ls-files", "-z"])
-  return outcome.kind === "output" ? splitNulSeparated(outcome.stdout) : []
+  if (outcome.kind !== "output") {
+    return EMPTY_REPOSITORY_FILE_LIST
+  }
+  const paths = splitNulSeparated(outcome.stdout)
+  return { paths: paths.slice(0, limit), omittedCount: Math.max(0, paths.length - limit) }
 }
 
 /** NUL 区切りの出力をパスの並びにする（末尾の NUL が作る空文字は落とす）。 */
 function splitNulSeparated(output: string): readonly string[] {
-  return output
-    .split("\0")
-    .filter((path) => path !== "")
-    .slice(0, MAX_REPOSITORY_FILES)
+  return output.split("\0").filter((path) => path !== "")
 }

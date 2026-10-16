@@ -18,33 +18,44 @@ export type RecommendationCandidate =
       readonly waitedBy: readonly string[]
     }
 
+/** 問い合わせに渡す候補と、上限で渡せなかった着手できるタスクの件数。 */
+export type RecommendationCandidates = {
+  readonly candidates: readonly RecommendationCandidate[]
+  readonly omittedCount: number
+}
+
 /**
  * 候補の並び。先頭が「前回の続き」で、続けて着手できる未着手のタスクを一覧の順に {@link RECOMMENDATION_TASK_CANDIDATE_LIMIT} 件まで。
  * 並びの順は、問い合わせの結果が届くまでの既定の並びと同じ。
  */
 export function recommendationCandidates(
   tasks: Exclude<TaskSummaryResult, { readonly kind: "unknown" | "no-beads" | "loading" }>,
-): readonly RecommendationCandidate[] {
-  return [{ kind: "resume" }, ...(tasks.kind === "known" ? readyTaskCandidates(tasks.items) : [])]
+): RecommendationCandidates {
+  const items = tasks.kind === "known" ? tasks.items : []
+  const ready = items.filter((task) => taskReadiness(task)?.kind === "ready")
+  const kept = ready.slice(0, RECOMMENDATION_TASK_CANDIDATE_LIMIT)
+  return {
+    candidates: [
+      { kind: "resume" },
+      ...kept.map((task): RecommendationCandidate => ({
+        kind: "task",
+        id: task.id,
+        summary: task.summary,
+        waitedBy: items
+          .filter((other) => other.waitingFor.includes(task.id))
+          .map((other) => other.id),
+      })),
+    ],
+    omittedCount: ready.length - kept.length,
+  }
 }
 
-/** 候補の並びの印。問い合わせに渡すものが同じなら同じ印になる。 */
-export function recommendationKey(candidates: readonly RecommendationCandidate[]): string {
-  return JSON.stringify(candidates)
-}
-
-function readyTaskCandidates(
-  items: Extract<TaskSummaryResult, { readonly kind: "known" }>["items"],
-): readonly RecommendationCandidate[] {
-  return items
-    .filter((task) => taskReadiness(task)?.kind === "ready")
-    .slice(0, RECOMMENDATION_TASK_CANDIDATE_LIMIT)
-    .map((task) => ({
-      kind: "task",
-      id: task.id,
-      summary: task.summary,
-      waitedBy: items
-        .filter((other) => other.waitingFor.includes(task.id))
-        .map((other) => other.id),
-    }))
+/**
+ * 候補の印。問い合わせに渡すものが同じなら同じ印になる。
+ * 渡せなかった件数は、落としたときだけ印に入る（落としていない候補の印は件数を持たない）。
+ */
+export function recommendationKey(selection: RecommendationCandidates): string {
+  return selection.omittedCount === 0
+    ? JSON.stringify(selection.candidates)
+    : JSON.stringify(selection)
 }

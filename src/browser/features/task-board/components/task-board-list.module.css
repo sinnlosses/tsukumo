@@ -8,6 +8,11 @@
   padding: 0;
   list-style: none;
 }
+/* 閉じたタスクを上限で落としたときだけ、一覧の末尾に添える一言。 */
+.task-board-list-omitted {
+  margin: 0;
+  padding: 10px 14px 10px 16px;
+}
 .task-board-option {
   display: flex;
   flex-direction: column;

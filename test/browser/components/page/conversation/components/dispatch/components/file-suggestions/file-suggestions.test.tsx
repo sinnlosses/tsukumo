@@ -43,9 +43,55 @@ describe("filePathQuery", () => {
 
 describe("FileSuggestions", () => {
   it("候補が無いときは何も描かない", () => {
-    render(<FileSuggestions matches={[]} selectedIndex={0} onSelect={() => {}} />)
+    render(<FileSuggestions matches={[]} omittedCount={0} selectedIndex={0} onSelect={() => {}} />)
 
     expect(screen.queryAllByRole("listitem")).toHaveLength(0)
+  })
+
+  it("一覧が一部だけのときは、候補の末尾に件数つきの一言を添え、候補が無くても出す", () => {
+    const { rerender } = render(
+      <FileSuggestions
+        matches={["src/cli.ts"]}
+        omittedCount={12}
+        selectedIndex={0}
+        onSelect={() => {}}
+      />,
+    )
+
+    expect(screen.getByText("一部のみ（ほか 12 件は候補に出ません）")).toBeTruthy()
+
+    rerender(
+      <FileSuggestions matches={[]} omittedCount={12} selectedIndex={0} onSelect={() => {}} />,
+    )
+    expect(screen.getByText("一部のみ（ほか 12 件は候補に出ません）")).toBeTruthy()
+  })
+
+  it("一覧が全件のときは一言を出さない", () => {
+    render(
+      <FileSuggestions
+        matches={["src/cli.ts"]}
+        omittedCount={0}
+        selectedIndex={0}
+        onSelect={() => {}}
+      />,
+    )
+
+    expect(screen.queryByText(/一部のみ/)).toBeNull()
+  })
+
+  it("一言の行は選べる候補に数えず、押しても選ばない", () => {
+    const selected: number[] = []
+    render(
+      <FileSuggestions
+        matches={["src/cli.ts"]}
+        omittedCount={5}
+        selectedIndex={0}
+        onSelect={(index) => selected.push(index)}
+      />,
+    )
+
+    fireEvent.mouseDown(screen.getByText(/一部のみ/))
+    expect(selected).toEqual([])
   })
 
   it("選んでいる1件に印が付き、押すと位置を返す", () => {
@@ -53,6 +99,7 @@ describe("FileSuggestions", () => {
     render(
       <FileSuggestions
         matches={["src/cli.ts", "README.md"]}
+        omittedCount={0}
         selectedIndex={1}
         onSelect={(index) => selected.push(index)}
       />,

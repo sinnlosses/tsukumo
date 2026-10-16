@@ -18,13 +18,22 @@ const CANDIDATES: readonly RecommendationCandidate[] = [
 
 describe("recommendationQuery", () => {
   it("出力のキーを候補のキーに限る", () => {
-    const { schema } = recommendationQuery(CANDIDATES)
+    const { schema } = recommendationQuery({ candidates: CANDIDATES, omittedCount: 0 })
 
     expect(schema).toMatchObject({
       properties: {
         cards: { items: { properties: { key: { enum: ["resume", "X-002", "X-005", "X-007"] } } } },
       },
     })
+  })
+
+  it("渡せなかったタスクがあるときだけ、その件数を依頼の文面の末尾に添える", () => {
+    const whole = recommendationQuery({ candidates: CANDIDATES, omittedCount: 0 })
+    const cut = recommendationQuery({ candidates: CANDIDATES, omittedCount: 4 })
+
+    expect(whole.prompt).not.toContain("ほかに")
+    expect(cut.prompt).toContain("着手できるタスクがほかに 4 件ある")
+    expect(cut.prompt.startsWith(whole.prompt)).toBe(true)
   })
 })
 

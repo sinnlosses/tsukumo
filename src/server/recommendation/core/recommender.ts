@@ -4,7 +4,7 @@
 import type { RecommendationCard } from "../../../shared/recommendation/recommendation-card.ts"
 import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 import {
-  type RecommendationCandidate,
+  type RecommendationCandidates,
   recommendationCandidates,
   recommendationKey,
 } from "./recommendation-candidate.ts"
@@ -96,7 +96,7 @@ export function createRecommender(ports: RecommenderPorts): Recommender {
 
 async function recommend(
   ports: RecommenderPorts,
-  candidates: readonly RecommendationCandidate[],
+  candidates: RecommendationCandidates,
   key: string,
   signal: AbortSignal,
 ): Promise<void> {
@@ -104,7 +104,7 @@ async function recommend(
   try {
     const cards = parseRecommendationResult(
       await ports.query(recommendationQuery(candidates), bounded),
-      candidates,
+      candidates.candidates,
     )
     if (cards === undefined || bounded.aborted) {
       return

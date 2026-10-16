@@ -77,7 +77,7 @@ function noReportImage(): undefined {
  * 個々のテストが必要な分だけ上書きする。
  */
 const EMPTY_RPC_PORTS = {
-  listRepositoryFiles: () => Promise.resolve([]),
+  listRepositoryFiles: () => Promise.resolve({ paths: [], omittedCount: 0 }),
   refreshTasks: () => Promise.resolve(),
   projectName: () => "架空のプロジェクト",
   readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
@@ -406,18 +406,22 @@ describe("startViewServer", () => {
   describe("/rpc（読み取りの手続き）", () => {
     it("repository.listFiles は、候補のパスを並びで返す。一覧を作れなかった回は空", async () => {
       const found = await startViewWithRpc({
-        listRepositoryFiles: () => Promise.resolve(["src/cli.ts", "docs/architecture.md"]),
+        listRepositoryFiles: () =>
+          Promise.resolve({ paths: ["src/cli.ts", "docs/architecture.md"], omittedCount: 3 }),
       })
-      expect(await rpcClientOf(found, TOKEN).repository.listFiles()).toEqual([
-        "src/cli.ts",
-        "docs/architecture.md",
-      ])
+      expect(await rpcClientOf(found, TOKEN).repository.listFiles()).toEqual({
+        paths: ["src/cli.ts", "docs/architecture.md"],
+        omittedCount: 3,
+      })
       await found.close()
 
       const failed = await startViewWithRpc({
         listRepositoryFiles: () => Promise.reject(new Error("架空の失敗")),
       })
-      expect(await rpcClientOf(failed, TOKEN).repository.listFiles()).toEqual([])
+      expect(await rpcClientOf(failed, TOKEN).repository.listFiles()).toEqual({
+        paths: [],
+        omittedCount: 0,
+      })
     })
 
     it("repository.projectName は、渡された名前を返す", async () => {
@@ -554,7 +558,7 @@ describe("startViewServer", () => {
         return value
       }
       const server = await startViewWithRpc({
-        listRepositoryFiles: () => count(Promise.resolve([])),
+        listRepositoryFiles: () => count(Promise.resolve({ paths: [], omittedCount: 0 })),
         readTokenUsageSummary: () => count(EMPTY_TOKEN_USAGE_SUMMARY),
         readContextUsage: () => count(Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)),
         readAchievementDay: () =>
@@ -581,7 +585,7 @@ describe("startViewServer", () => {
       const server = await startViewWithRpc({
         listRepositoryFiles: () => {
           asked += 1
-          return Promise.resolve([])
+          return Promise.resolve({ paths: [], omittedCount: 0 })
         },
       })
 

@@ -14,6 +14,7 @@ import { TaskSummaryText } from "./task-summary-text.tsx"
 export function TaskBoardList(props: {
   readonly listId: string
   readonly rows: readonly TaskBoardRow[]
+  readonly omittedClosedCount: number
   readonly onSelect: (id: string) => void
 }): ReactElement {
   return (
@@ -37,6 +38,18 @@ export function TaskBoardList(props: {
           className={taskBoardStyles["task-board-message"]}
         >
           当てはまるタスクが無い
+        </Text>
+      )}
+      {props.omittedClosedCount > 0 && (
+        <Text
+          element="p"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["task-board-list-omitted"]}
+        >
+          一部のみ（閉じたタスクは新しいものだけで、ほか {props.omittedClosedCount}{" "}
+          件は載っていません）
         </Text>
       )}
     </div>

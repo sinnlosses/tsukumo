@@ -111,6 +111,8 @@ export type TaskBoardContent =
       readonly query: string
       readonly chips: readonly TaskBoardFilterChip[]
       readonly rows: readonly TaskBoardRow[]
+      /** 一覧に載せきれず落とした閉じたタスクの件数。0 でなければ一覧の末尾に一言を出す。 */
+      readonly omittedClosedCount: number
       /** 選んでいる行の `optionId`。行が無ければ `undefined`（`aria-activedescendant` を付けない）。 */
       readonly activeOptionId: string | undefined
       readonly selection: TaskBoardSelection

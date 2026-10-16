@@ -5,6 +5,7 @@ import {
   type TaskRequest,
 } from "../../../../shared/repository/task-run-prompt.ts"
 import {
+  omittedClosedCountOf,
   taskReadiness,
   type TaskLocation,
   type TaskSummaryItem,
@@ -95,6 +96,7 @@ export function boardContent(
       selected: entry === selected,
       outOfFilter: !isVisible(entry),
     })),
+    omittedClosedCount: omittedClosedCountOf(tasks),
     activeOptionId: selected === undefined ? undefined : optionIdOf(selected.task.id),
     selection:
       selected === undefined ? { kind: "none" } : selectionOf(selected, entries, byId, input),

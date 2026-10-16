@@ -192,6 +192,7 @@ export function PresentationalComposer({
           {suggestions.kind === "file" && (
             <FileSuggestions
               matches={suggestions.matches}
+              omittedCount={suggestions.omittedCount}
               selectedIndex={selectedIndex}
               onSelect={onSelectSuggestion}
             />

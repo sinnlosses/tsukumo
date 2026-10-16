@@ -40,21 +40,33 @@ describe("recommendationCandidates", () => {
       task("X-006", "done", [], ["X-005"]),
     ]
 
-    expect(recommendationCandidates({ kind: "known", items })).toEqual([
-      { kind: "resume" },
-      { kind: "task", id: "X-002", summary: "架空のX-002", waitedBy: ["X-003", "X-004"] },
-      { kind: "task", id: "X-005", summary: "架空のX-005", waitedBy: [] },
-    ])
+    expect(recommendationCandidates({ kind: "known", items })).toEqual({
+      candidates: [
+        { kind: "resume" },
+        { kind: "task", id: "X-002", summary: "架空のX-002", waitedBy: ["X-003", "X-004"] },
+        { kind: "task", id: "X-005", summary: "架空のX-005", waitedBy: [] },
+      ],
+      omittedCount: 0,
+    })
   })
 
-  it("タスクの候補は上限で切る", () => {
-    const items = Array.from({ length: RECOMMENDATION_TASK_CANDIDATE_LIMIT + 1 }, (_, index) =>
+  it("タスクの候補は上限で切り、切った件数を返す", () => {
+    const items = Array.from({ length: RECOMMENDATION_TASK_CANDIDATE_LIMIT + 3 }, (_, index) =>
       task(`X-${String(index + 100)}`, "todo", []),
     )
 
-    expect(recommendationCandidates({ kind: "known", items })).toHaveLength(
-      RECOMMENDATION_TASK_CANDIDATE_LIMIT + 1,
+    const selection = recommendationCandidates({ kind: "known", items })
+
+    expect(selection.candidates).toHaveLength(RECOMMENDATION_TASK_CANDIDATE_LIMIT + 1)
+    expect(selection.omittedCount).toBe(3)
+  })
+
+  it("上限ちょうどでは切らない", () => {
+    const items = Array.from({ length: RECOMMENDATION_TASK_CANDIDATE_LIMIT }, (_, index) =>
+      task(`X-${String(index + 100)}`, "todo", []),
     )
+
+    expect(recommendationCandidates({ kind: "known", items }).omittedCount).toBe(0)
   })
 })
 
@@ -69,7 +81,18 @@ describe("recommendationKey", () => {
       items: [{ ...task("X-002", "todo", []), summary: "直した架空の要約" }],
     })
 
-    expect(recommendationKey(before)).toBe(recommendationKey([...before]))
     expect(recommendationKey(before)).not.toBe(recommendationKey(after))
+  })
+
+  it("切っていなければ印は候補の並びだけで決まり、切ったときだけ件数が印に入る", () => {
+    const { candidates } = recommendationCandidates({
+      kind: "known",
+      items: [task("X-002", "todo", [])],
+    })
+
+    expect(recommendationKey({ candidates, omittedCount: 0 })).toBe(JSON.stringify(candidates))
+    expect(recommendationKey({ candidates, omittedCount: 2 })).not.toBe(
+      recommendationKey({ candidates, omittedCount: 3 }),
+    )
   })
 })

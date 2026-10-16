@@ -48,14 +48,19 @@ export function filePathQuery(text: string, caret: number): FilePathQuery | unde
 
 export type FileSuggestionsProps = {
   readonly matches: readonly string[]
+  /** 候補の元の一覧から、件数の上限で落とされた件数。0 でなければ一覧は一部だけで、一言添える。 */
+  readonly omittedCount: number
   readonly selectedIndex: number
   /** マウスで押した（`mousedown`）。既定動作（フォーカス移動）は呼び出し側で止める。 */
   readonly onSelect: (index: number) => void
 }
 
-/** `@` 補完の候補一覧。`matches` が空のときは何も出さない。 */
+/**
+ * `@` 補完の候補一覧。`matches` が空で一覧も全件のときは何も出さない。
+ * 一覧が一部だけのときは、候補が無くても一言を出す（無いファイルと見分けられるように）。
+ */
 export function FileSuggestions(props: FileSuggestionsProps): ReactElement | null {
-  if (props.matches.length === 0) {
+  if (props.matches.length === 0 && props.omittedCount === 0) {
     return null
   }
 
@@ -85,6 +90,19 @@ export function FileSuggestions(props: FileSuggestionsProps): ReactElement | nul
           </Text>
         </li>
       ))}
+      {props.omittedCount > 0 && (
+        <li className={styles["dispatch-suggestion-omitted"]}>
+          <Text
+            element="span"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["dispatch-suggestion-omitted-text"]}
+          >
+            一部のみ（ほか {props.omittedCount} 件は候補に出ません）
+          </Text>
+        </li>
+      )}
     </ul>
   )
 }

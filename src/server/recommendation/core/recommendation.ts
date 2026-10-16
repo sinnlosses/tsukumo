@@ -7,7 +7,10 @@ import {
   MAX_RECOMMENDATION_CARDS,
   type RecommendationCard,
 } from "../../../shared/recommendation/recommendation-card.ts"
-import type { RecommendationCandidate } from "./recommendation-candidate.ts"
+import type {
+  RecommendationCandidate,
+  RecommendationCandidates,
+} from "./recommendation-candidate.ts"
 import type { StructuredQuery } from "./structured-query.ts"
 
 /** 問い合わせを起こすモデル（軽いもの）。 */
@@ -48,15 +51,23 @@ export const RECOMMENDATION_INSTRUCTION = `あなたは、これから作業を�
 - \`cards\` に、おすすめの順で \`key\`（候補の key をそのまま）と \`reason\` を並べる
 - 同じ key を2回書かない`
 
-/** 候補の並びから `query()` に渡すものを組む。 */
-export function recommendationQuery(
-  candidates: readonly RecommendationCandidate[],
-): StructuredQuery {
+/**
+ * 候補の並びから `query()` に渡すものを組む。
+ * 上限で候補に入れなかったタスクがあるときだけ、その件数を依頼の文面の末尾に添える。
+ */
+export function recommendationQuery(selection: RecommendationCandidates): StructuredQuery {
+  const omitted =
+    selection.omittedCount === 0
+      ? []
+      : [
+          "",
+          `着手できるタスクがほかに ${String(selection.omittedCount)} 件あるが、候補には渡していない`,
+        ]
   return {
     model: RECOMMENDATION_MODEL,
     systemPrompt: RECOMMENDATION_INSTRUCTION,
-    prompt: ["## 候補", ...candidates.map(candidateLine)].join("\n"),
-    schema: recommendationSchema(candidates),
+    prompt: ["## 候補", ...selection.candidates.map(candidateLine), ...omitted].join("\n"),
+    schema: recommendationSchema(selection.candidates),
   }
 }
 

@@ -28,7 +28,7 @@ export function wireHost(
       openFile: (path) =>
         openTrackedFile(
           path,
-          () => listRepositoryFiles(context.cwd),
+          async () => (await listRepositoryFiles(context.cwd)).paths,
           (tracked) => host.openFile(tracked),
         ),
     },

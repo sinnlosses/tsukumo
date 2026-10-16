@@ -5,7 +5,7 @@
 // `.beads` があって `bd` が読めないとき（`bd` が無い含む）は「不明」にし、印は覚えず次の見回りで打ち直す。
 // タイムアウトしたときはその回を諦める。
 
-import { taskSummaryItemsOfBeadsIssues } from "./beads-task.ts"
+import { knownTaskSummaryOfBeadsIssues } from "./beads-task.ts"
 import type { BeadsStamp, readBeadsIssues } from "./beads.ts"
 import type { TaskSource } from "./task-source.ts"
 
@@ -41,7 +41,7 @@ export function createTaskBeadsSource(cwd: string, ports: TaskBeadsSourcePorts):
       readStamp = stamp
       return {
         kind: "read",
-        result: { kind: "known", items: taskSummaryItemsOfBeadsIssues(beads.issues) },
+        result: knownTaskSummaryOfBeadsIssues(beads.issues),
       }
     },
   }

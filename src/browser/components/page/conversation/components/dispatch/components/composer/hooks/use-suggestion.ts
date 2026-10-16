@@ -31,6 +31,8 @@ export type ActiveSuggestions =
       readonly kind: "file"
       readonly matches: readonly string[]
       readonly query: FilePathQuery
+      /** サーバが上限で落とした件数。0 でなければ候補の元の一覧は一部だけ。 */
+      readonly omittedCount: number
     }
 
 export type UseSuggestionArgs = {
@@ -69,7 +71,7 @@ export function useSuggestion(args: UseSuggestionArgs): SuggestionModel {
     dismissed || args.pendingActive || commandActive
       ? undefined
       : filePathQuery(args.draft.text, args.draft.caret)
-  const fileIndex = useRepositoryFileIndex(fileQuery !== undefined)
+  const files = useRepositoryFileIndex(fileQuery !== undefined)
 
   const suggestions: ActiveSuggestions = commandActive
     ? {
@@ -81,7 +83,12 @@ export function useSuggestion(args: UseSuggestionArgs): SuggestionModel {
       }
     : fileQuery === undefined
       ? { kind: "none" }
-      : { kind: "file", matches: matchingFilePaths(fileIndex, fileQuery.term), query: fileQuery }
+      : {
+          kind: "file",
+          matches: matchingFilePaths(files.index, fileQuery.term),
+          query: fileQuery,
+          omittedCount: files.omittedCount,
+        }
   const matchCount = suggestionCount(suggestions)
   const clampedSelectedIndex = matchCount === 0 ? 0 : Math.min(selectedIndex, matchCount - 1)
 

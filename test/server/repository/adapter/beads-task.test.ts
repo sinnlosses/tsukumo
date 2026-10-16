@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   doneTasksOfBeadsIssues,
+  knownTaskSummaryOfBeadsIssues,
   taskSummaryItemsOfBeadsIssues,
 } from "../../../../src/server/repository/adapter/beads-task.ts"
 import type { BeadsIssue } from "../../../../src/server/repository/adapter/beads.ts"
@@ -165,6 +166,26 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
       "t-110",
       "t-111",
     ])
+  })
+
+  it("閉じた課題を10件を超えて落としたときだけ、落とした件数を結果に載せる", () => {
+    const closedIssues = (count: number): BeadsIssue[] =>
+      Array.from({ length: count }, (_, index) =>
+        issue({
+          id: `t-${100 + index}`,
+          status: "closed",
+          createdAtEpochMilliseconds: index,
+          closedAtEpochMilliseconds: index,
+        }),
+      )
+
+    expect(knownTaskSummaryOfBeadsIssues(closedIssues(12))).toMatchObject({
+      kind: "known",
+      omittedClosedCount: 2,
+    })
+    const whole = knownTaskSummaryOfBeadsIssues(closedIssues(10))
+    expect(whole.items).toHaveLength(10)
+    expect("omittedClosedCount" in whole).toBe(false)
   })
 
   it("external_ref が https:// の URL のときだけ置き場所にする", () => {

@@ -5,8 +5,16 @@ import { oc } from "@orpc/contract"
 import { z } from "zod"
 
 export const repositoryContract = {
-  /** git 管理下のファイルのパス。git 管理下でない・`git` が無いときは空（候補が出ないだけ）。 */
-  listFiles: oc.output(z.array(z.string()).readonly()),
+  /**
+   * git 管理下のファイルのパスと、件数の上限で落とした件数（`RepositoryFileList`）。
+   * git 管理下でない・`git` が無いときはパスが空（候補が出ないだけ）。
+   */
+  listFiles: oc.output(
+    z.object({
+      paths: z.array(z.string()).readonly(),
+      omittedCount: z.number(),
+    }),
+  ),
   /** 作業ディレクトリの名前（末尾のディレクトリ名）。 */
   projectName: oc.output(z.string()),
   /** タスク一覧を今すぐ1回読み直し、読み終えてから返る。一覧そのものは `tasks-changed` で届く。 */

@@ -8,6 +8,7 @@ import type {
   DoneTask,
   TaskLocation,
   TaskSummaryItem,
+  TaskSummaryResult,
 } from "../../../shared/repository/task-summary.ts"
 import type { BeadsIssue } from "./beads.ts"
 
@@ -33,6 +34,21 @@ export function taskSummaryItemsOfBeadsIssues(
     [(issue) => issue.createdAtEpochMilliseconds, "asc"],
     [(issue) => issue.id, "asc"],
   ).map((issue) => taskSummaryItemOfBeadsIssue(issue, unfinished))
+}
+
+/**
+ * 読めた一覧の結果。{@link taskSummaryItemsOfBeadsIssues} の一覧に、閉じた課題を上限で落としたときだけ落とした件数を添える
+ * （落としていなければ `omittedClosedCount` は付けない）。
+ */
+export function knownTaskSummaryOfBeadsIssues(
+  issues: readonly BeadsIssue[],
+): Extract<TaskSummaryResult, { readonly kind: "known" }> {
+  const items = taskSummaryItemsOfBeadsIssues(issues)
+  const closedCount = issues.filter((issue) => issue.status === CLOSED_STATUS).length
+  const omittedClosedCount = Math.max(0, closedCount - CLOSED_TASK_DISPLAY_LIMIT)
+  return omittedClosedCount === 0
+    ? { kind: "known", items }
+    : { kind: "known", items, omittedClosedCount }
 }
 
 /** 閉じた課題のうち閉じた時刻のあるものを、閉じた時刻の順に（同じ時刻なら ID の順に）並べる。 */

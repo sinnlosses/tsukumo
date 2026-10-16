@@ -33,23 +33,31 @@ export function useRepositoryFilePaths(enabled: boolean): readonly string[] {
     }),
   )
 
-  return data ?? []
+  return data?.paths ?? []
 }
+
+/** `@` 補完の索引と、サーバが上限で落とした件数。 */
+export type RepositoryFileIndex = {
+  readonly index: FileSuggestionIndex
+  readonly omittedCount: number
+}
+
+const EMPTY_FILE_INDEX = { index: [], omittedCount: 0 } as const satisfies RepositoryFileIndex
 
 /**
  * {@link useRepositoryFilePaths} と同じ一覧を、`@` 補完の索引にして返す。
  * 索引は一覧を取ったとき（`select`）に1回だけ作る。
  */
-export function useRepositoryFileIndex(enabled: boolean): FileSuggestionIndex {
+export function useRepositoryFileIndex(enabled: boolean): RepositoryFileIndex {
   const { data } = useQuery(
     rpc.repository.listFiles.queryOptions({
       enabled,
       retry: false,
       staleTime: FILE_LIST_STALE_TIME_MS,
       gcTime: FILE_LIST_GC_TIME_MS,
-      select: indexFilePaths,
+      select: (list) => ({ index: indexFilePaths(list.paths), omittedCount: list.omittedCount }),
     }),
   )
 
-  return data ?? []
+  return data ?? EMPTY_FILE_INDEX
 }

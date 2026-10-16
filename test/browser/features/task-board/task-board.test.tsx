@@ -5,7 +5,10 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 import { loadTaskBody } from "../../../../src/browser/features/task-board/components/deferred-task-body.tsx"
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import type { TaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
-import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
+import type {
+  TaskSummaryItem,
+  TaskSummaryResult,
+} from "../../../../src/shared/repository/task-summary.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { queryClientWrapper } from "../../query-client.tsx"
 import { putSession } from "../../session-store.ts"
@@ -56,6 +59,38 @@ describe("タスクのモーダルの頭", () => {
 
     expect(screen.getByRole("button", { name: "最新化" })).toBeDefined()
     expect(screen.getByRole("button", { name: "閉じる" })).toBeDefined()
+  })
+})
+
+describe("タスクのモーダルの閉じたタスクの一言", () => {
+  function renderWith(tasks: TaskSummaryResult): void {
+    putSession(INITIAL_SESSION_STATE)
+    render(
+      <TaskBoard
+        tasks={tasks}
+        request={{ kind: "open", focus: { kind: "first" } }}
+        onClose={() => {}}
+      />,
+      { wrapper: queryClientWrapper() },
+    )
+  }
+
+  it("閉じたタスクを落としたときだけ、一覧の末尾に落とした件数つきの一言を出す", () => {
+    renderWith({
+      kind: "known",
+      items: [beadsTask({ kind: "none" })],
+      omittedClosedCount: 4,
+    })
+
+    expect(
+      screen.getByText("一部のみ（閉じたタスクは新しいものだけで、ほか 4 件は載っていません）"),
+    ).toBeDefined()
+  })
+
+  it("落としていないときは一言を出さない", () => {
+    renderWith({ kind: "known", items: [beadsTask({ kind: "none" })] })
+
+    expect(screen.queryByText(/一部のみ/)).toBeNull()
   })
 })
 

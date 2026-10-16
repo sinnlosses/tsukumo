@@ -92,8 +92,11 @@ afterEach(() => {
 })
 
 /** ファイル一覧の手続きを、架空の一覧を返す代役に差し替える（呼ばれた手続きは代役が記録する）。 */
-function stubFileListFetch(paths: readonly string[] = FIXTURE_FILE_PATHS): void {
-  fetchStub = stubRpcFetch(() => rpcOutput(paths))
+function stubFileListFetch(
+  paths: readonly string[] = FIXTURE_FILE_PATHS,
+  omittedCount: number = 0,
+): void {
+  fetchStub = stubRpcFetch(() => rpcOutput({ paths, omittedCount }))
 }
 
 /** 呼ばれた手続きの名前（古い順）。 */
@@ -257,6 +260,31 @@ describe("Composer", () => {
 
     expect(textArea().value).toBe("@src/browser/features/festival/composer.tsx ")
     expect(calls).toEqual([])
+  })
+
+  it("一覧が一部だけ（サーバが件数で落とした）なら候補の末尾に一言が出る。一言は選べる候補に数えない", async () => {
+    stubFileListFetch(FIXTURE_FILE_PATHS, 7)
+    renderComposer()
+
+    fireEvent.change(textArea(), { target: { value: "@src/cli" } })
+
+    expect(await screen.findByText("一部のみ（ほか 7 件は候補に出ません）")).toBeTruthy()
+    fireEvent.keyDown(textArea(), { key: "ArrowDown" })
+    fireEvent.keyDown(textArea(), { key: "Tab" })
+
+    expect(textArea().value).toBe("@src/cli.ts ")
+  })
+
+  it("一覧が全件なら一言は出ない", async () => {
+    stubFileListFetch()
+    renderComposer()
+
+    fireEvent.change(textArea(), { target: { value: "@src/cli" } })
+    await waitFor(() => {
+      expect(screen.getAllByRole("listitem")).toHaveLength(1)
+    })
+
+    expect(screen.queryByText(/一部のみ/)).toBeNull()
   })
 
   it("一覧は1回だけ取りに行く（打鍵ごとに取り直さない）", async () => {

@@ -9,3 +9,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* 一覧が一部だけのときに末尾へ添える一言。選べる候補ではないので、押せる見た目にしない。 */
+.dispatch-suggestion-omitted {
+  padding: 0.35rem 0.5rem;
+}
+.dispatch-suggestion-omitted-text {
+  display: block;
+}
