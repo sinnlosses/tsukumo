@@ -142,6 +142,8 @@ PreToolUse hook（`scripts/hook/deny-sed-in-place.ts`）が拒否する。ファ
 打つと PreToolUse hook（`scripts/hook/deny-background-verify.ts`）が拒否し、前景で `timeout` 引数
 （最大 600000）を付けて打つよう案内する。メインの呼び出し（`agent_id` が無い）は対象にしない。
 
+委譲先は段を返す前に `pnpm run typecheck` と `pnpm run lint` を打つ。絞った `vitest` は story の型（`tsconfig.storybook.json`）と lint の規則（Date を使わない など）を拾わない。
+
 委譲先が E2E を流す呼び出しは、着手中の1件につき **6回まで**で、7回目を
 PreToolUse hook（`scripts/hook/deny-e2e-run-limit.ts`）が拒否する（検証は通常1〜3回で、残りは揺らぎの
 確認と hook 登録後の自分の検証の余裕）。数はその作業ツリー固有の git dir の `e2e-full-runs` に置き、
