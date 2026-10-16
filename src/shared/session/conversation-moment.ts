@@ -22,7 +22,7 @@ export function conversationMoment(state: SessionState): ConversationMoment {
 
 /**
  * いちばん新しいやり取りが閉じているか。
- * ターンが `running` でなく、背景のタスクも残っていないときだけ true。
+ * ターンが `running` でなく、バックグラウンドタスクも残っていないときだけ true。
  * どちらかが残っているあいだは、次の合図で続きのターンが始まり、いま最後の `report` が中間レポートへ回るかもしれない。
  */
 export function isExchangeClosed(state: SessionState): boolean {

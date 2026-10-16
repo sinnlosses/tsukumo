@@ -76,7 +76,7 @@ describe("mainViewTurnsOf", () => {
   })
 })
 
-// サブエージェントの `SendMessage` や背景のタスクの通知で、claude は同じやり取りの続きを自分で
+// サブエージェントの `SendMessage` やバックグラウンドタスクの通知で、claude は同じやり取りの続きを自分で
 // 始める（`turn-resumed`）。そのたびに前の SDK ターンで出た `report` まで伏せていたので、
 // 合図が届くたびに中間レポートが消え、ターンが終わると同じものが出直していた。
 describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", () => {
@@ -130,7 +130,7 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
     expect(shownBodies(state)).toEqual([])
   })
 
-  it("report の無いやり取りの本文は、背景のタスクが残っているあいだ出さない", () => {
+  it("report の無いやり取りの本文は、バックグラウンドタスクが残っているあいだ出さない", () => {
     const waiting = fold([
       ask,
       { kind: "utterance", text: "架空の一言" },
@@ -148,16 +148,16 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
     ).toEqual(["架空の一言"])
   })
 
-  it("report の無いやり取りは、ターンが止まり背景のタスクも無ければ最後の本文を出す", () => {
+  it("report の無いやり取りは、ターンが止まりバックグラウンドタスクも無ければ最後の本文を出す", () => {
     const state = fold([ask, { kind: "utterance", text: "架空の答え" }, finished])
 
     expect(shownBodies(state)).toEqual(["架空の答え"])
   })
 })
 
-// 背景のタスクを待つあいだに `turn-finished` が届くと、前の SDK ターンの `report` は本文として
+// バックグラウンドタスクを待つあいだに `turn-finished` が届くと、前の SDK ターンの `report` は本文として
 // 出したまま——それは変えない（決まっていること）。変えたのは、その本文に最終レポートの札
-// （`final`）を立ててよいタイミングだけ。背景のタスクが残っている・続きのターンが動いている
+// （`final`）を立ててよいタイミングだけ。バックグラウンドタスクが残っている・続きのターンが動いている
 // あいだは、次の `report` でいま最後の本文が中間レポートへ回るかもしれないので札を立てない。
 describe("mainViewTurnsOf（最終レポートの札は、やり取りが閉じてから）", () => {
   const fold = (events: readonly SessionEvent[]) =>

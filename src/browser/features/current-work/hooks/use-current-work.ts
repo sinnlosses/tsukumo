@@ -47,7 +47,7 @@ const MAX_COLLAPSED_STEPS = 5
 
 /**
  * 状態の語（上ほど強い）。
- * `background` はターンは終わっているが背景のタスクが動いているとき。
+ * `background` はターンは終わっているがバックグラウンドタスクが動いているとき。
  * `diary` は成果の振り返りで日記を書いているとき（`state.diaryWriting.kind === "writing"`）。
  * 会話のターンと並んで書いているので作業中より弱い（作業中が動いていれば作業中を出す）。
  */
@@ -376,7 +376,7 @@ function planMarkOf(number: PhaseNumber, phase: Pick<PlannedPhase, "state">): st
 /**
  * {@link CurrentWorkSummary} を組み立てる。
  * 答え待ちの先頭が質問なら、実行中の手順の要約より質問の要約を優先する。
- * 背景で作業中なら背景のタスクの要約、振り返り中は「<日付>の日記を書いています」を出す。
+ * 背景で作業中ならバックグラウンドタスクの要約、振り返り中は「<日付>の日記を書いています」を出す。
  * メインが `report` の引数を書いている途中（{@link ReportDrafting}）は、実行中の手順の要約より優先する。
  */
 function toSummaryView(

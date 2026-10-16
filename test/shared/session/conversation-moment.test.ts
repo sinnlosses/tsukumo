@@ -43,11 +43,11 @@ describe("conversationMoment", () => {
       },
       "ask",
     ],
-    ["終わって背景のタスクも無い", { ...REQUESTED, turn: ENDED }, "deliver"],
+    ["終わってバックグラウンドタスクも無い", { ...REQUESTED, turn: ENDED }, "deliver"],
     ["失敗で終わった", { ...REQUESTED, turn: FAILED }, "stumble"],
     ["セッションが終わった", { ...REQUESTED, turn: ENDED, endedReason: "架空の理由" }, "stumble"],
     [
-      "ターンは終わったが背景のタスクが残っている",
+      "ターンは終わったがバックグラウンドタスクが残っている",
       {
         ...REQUESTED,
         turn: ENDED,

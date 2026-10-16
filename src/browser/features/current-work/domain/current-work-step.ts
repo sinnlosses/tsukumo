@@ -1,4 +1,4 @@
-// 依頼の手順と背景のタスクを、一覧に出す形と1行の要約へ畳む。
+// 依頼の手順とバックグラウンドタスクを、一覧に出す形と1行の要約へ畳む。
 
 import type {
   BackgroundTask,
@@ -99,7 +99,7 @@ export function currentWorkStepLabel(step: TurnStep): string {
 }
 
 /**
- * 背景のタスクの要約。いちばん新しく始まったもの（並びの末尾）の説明を出し、2件以上あれば「ほか n件」を添える。
+ * バックグラウンドタスクの要約。いちばん新しく始まったもの（並びの末尾）の説明を出し、2件以上あれば「ほか n件」を添える。
  * 説明が無ければ種類の語で代える。
  */
 export function backgroundSummaryLabel(tasks: readonly BackgroundTask[]): string | undefined {

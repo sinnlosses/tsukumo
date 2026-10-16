@@ -99,7 +99,7 @@ describe("TurnStatus", () => {
     expect(screen.getByText("2分05秒")).toBeDefined()
   })
 
-  it("finished でも背景のタスクが残っていれば「所要」にならず「経過」のまま now まで数え続ける", () => {
+  it("finished でもバックグラウンドタスクが残っていれば「所要」にならず「経過」のまま now まで数え続ける", () => {
     const now = 1_700_000_010_000
     const clock = vi
       .spyOn(Temporal.Now, "instant")

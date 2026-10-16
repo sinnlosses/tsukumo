@@ -474,7 +474,7 @@ describe("toRestoredEvents", () => {
     ])
   })
 
-  it("is_meta の要約が背景のタスクの知らせを含んでも、続きのターンにはしない", () => {
+  it("is_meta の要約がバックグラウンドタスクの知らせを含んでも、続きのターンにはしない", () => {
     const messages = [
       userMessage("架空の依頼"),
       Object.assign(

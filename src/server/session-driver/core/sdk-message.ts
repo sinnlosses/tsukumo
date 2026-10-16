@@ -69,7 +69,7 @@ import {
  *   `compact_metadata`（`trigger` / `pre_tokens` / `post_tokens` / `duration_ms`）は画面に出さないので運ばない
  * - `system` / `background_tasks_changed` は `background-tasks-changed` にする。`ambient` が true のもの（活動でないもの）は落とす
  * - `task_started` / `task_progress` / `task_updated` は変換しない。
- *   背景のタスクが動いているかは `background_tasks_changed`（顔ぶれ全体を毎回運ぶ水準の知らせ）だけで分かる。
+ *   バックグラウンドタスクが動いているかは `background_tasks_changed`（顔ぶれ全体を毎回運ぶ水準の知らせ）だけで分かる。
  *   始まり・終わりの対を数えると、取りこぼしで「動いている」が居残る（SDK の型定義がそう勧めている）
  * - `task_notification` は顔ぶれには使わず、`tool_use_id` があるときだけ `background-tool-finished` にする（`tool_use_id` は Bash の `tool_use` の id と一致する。実測）。
  *   知らせのあとに claude が依頼なしで始める続きのターンは、ここではなく `withSelfStartedTurns` が `init` の届き方から起こす

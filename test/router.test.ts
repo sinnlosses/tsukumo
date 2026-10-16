@@ -268,7 +268,7 @@ describe("createCommandRouter（session）", () => {
     expect(remembered).toEqual([])
   })
 
-  it("背景のタスクが残っていて送り方が許すときだけ、仕事の言葉を脇の話として駆動へ渡す", async () => {
+  it("バックグラウンドタスクが残っていて送り方が許すときだけ、仕事の言葉を脇の話として駆動へ渡す", async () => {
     const { commands, stub, observe } = startRouter()
     const prompt = (text: string, routing: PromptRouting) =>
       commands.session.prompt({ text, images: [], routing })

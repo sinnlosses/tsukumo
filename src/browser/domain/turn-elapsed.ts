@@ -10,7 +10,7 @@ export const FINISHED_LABEL = "所要"
 /** 失敗で終わったターンの経過時間に添える字（「所要」の代わり）。 */
 const FAILED_LABEL = "失敗"
 
-/** 依頼を送ってから、まだ数え続けているか。ターンが終わっていても背景のタスクが残っている間は数える。 */
+/** 依頼を送ってから、まだ数え続けているか。ターンが終わっていてもバックグラウンドタスクが残っている間は数える。 */
 export function isTurnCounting(turn: TurnProgress, backgroundTaskCount: number): boolean {
   return turn.kind === "running" || (turn.kind === "finished" && backgroundTaskCount > 0)
 }

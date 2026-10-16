@@ -19,7 +19,7 @@ import { SESSION_DEFAULT_PERMISSION_MODES } from "../session/session-default.ts"
 
 /**
  * 送った言葉をどう扱うか。
- * `aside-when-background` は背景のタスクが残っていれば脇の話に、`new-request` はいつも新しい依頼にする。
+ * `aside-when-background` はバックグラウンドタスクが残っていれば脇の話に、`new-request` はいつも新しい依頼にする。
  */
 const PROMPT_ROUTINGS = [
   "aside-when-background",

@@ -56,7 +56,7 @@ export function beginAside(state: SessionState, at: number): SessionState {
 /**
  * claude が自分で始めた続きのターン（`turn-resumed`）。
  * 進行中の印と SDK ターンごとの持ち物は {@link beginTurn} と同じに戻すが、吹き出しのセリフと表情は持ち越し、ターンの通し番号も進めない（同じやり取りの続き）。
- * 始まった時刻も付け直さない（入力欄の経過時間が、背景のタスクを挟んだ続きのターンでも依頼を送った時刻から数える）。
+ * 始まった時刻も付け直さない（入力欄の経過時間が、バックグラウンドタスクを挟んだ続きのターンでも依頼を送った時刻から数える）。
  */
 export function resumeTurn(state: SessionState, at: number): SessionState {
   return {

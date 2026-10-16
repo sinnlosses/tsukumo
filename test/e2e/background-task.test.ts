@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 背景のタスク（docs/architecture/testing.md「E2E のシナリオの一覧」）。疑似セッションの場面
+// バックグラウンドタスク（docs/architecture/testing.md「E2E のシナリオの一覧」）。疑似セッションの場面
 // `background-task-short` は、もとの `background-task`（再開まで12秒超）を再開まで数秒に
 // 縮めた版——20秒級の場面を毎回待たずに、開始と再開の両方を1本の E2E の中で確かめられる
 // ようにしてある。
@@ -15,8 +15,8 @@ const ELAPSED_MS = 60_000
 /** `background-task-short` が再開後に2回目の `turn-finished` を流す回数（開始 + 再開）。 */
 const RESUMED_TURN_FINISHED_OCCURRENCE = 2
 
-describe("背景のタスク", () => {
-  it("ターンが終わっても背景のタスクが帯に残り、背景の待ちが終わると turn-resumed で続きのターンが流れて消える", async () => {
+describe("バックグラウンドタスク", () => {
+  it("ターンが終わってもバックグラウンドタスクが帯に残り、背景の待ちが終わると turn-resumed で続きのターンが流れて消える", async () => {
     const room = await run.open({
       scenario: "background-task-resumed",
       scene: "background-task-short",

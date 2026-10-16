@@ -1,7 +1,7 @@
 // `speak` の差し戻し。
 // 直前に描いたセリフのあとに新しい事実が届いていない `speak` を、画面に出さずに差し戻す（新しい事実が届くまで毎回）。
 // 「新しい事実」は文面ではなく、届いたもので決める:
-// 利用者の依頼（`request` / `turn-started`）、ターンの頭（`session-info`）、メインが呼んだ `speak` / `report` / `work_plan` 以外のツールの結果、背景のタスクの終わり（顔ぶれから消えた）。
+// 利用者の依頼（`request` / `turn-started`）、ターンの頭（`session-info`）、メインが呼んだ `speak` / `report` / `work_plan` 以外のツールの結果、バックグラウンドタスクの終わり（顔ぶれから消えた）。
 //
 // 判定の窓口は `speak` の handler だけ（`SpeechReview.judge`）。
 // `SpeechReview.pass` が `speak-called` を同じ呼び出しの `tool-finished` まで預かり、`isError`（差し戻したら true）に従って描くか捨てるかを決める。
@@ -76,7 +76,7 @@ export function createSpeechReview(news: SpeechNews): SpeechReview {
 
 /** 新しい事実の無い `speak` を差し戻すときの戻り値。固定の文面だけで、モデルが書いたセリフも画面の状態も写さない。 */
 export const SPEECH_NOTHING_NEW_REJECTION_TEXT =
-  "直前のセリフのあと、新しい依頼もツールの結果も背景のタスクの終わりも届いていないので、" +
+  "直前のセリフのあと、新しい依頼もツールの結果もバックグラウンドタスクの終わりも届いていないので、" +
   "このセリフは画面に出していない。委譲の合図を待つあいだは `speak` も `report` も呼ばず、" +
   "何も書かずにターンを終えること。言い回しを変えて呼び直さないこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"

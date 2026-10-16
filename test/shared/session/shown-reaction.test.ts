@@ -286,7 +286,7 @@ describe("shownReaction", () => {
       )
     })
 
-    it("答え待ち・失敗で閉じた・雑談・背景のタスクを待つ間では出さない", () => {
+    it("答え待ち・失敗で閉じた・雑談・バックグラウンドタスクを待つ間では出さない", () => {
       const cases = [
         stateAfter([REQUEST, SPEECH, ASKED]),
         stateAfter([REACTED, REQUEST, SPEECH, API_FAILED]),
@@ -296,7 +296,9 @@ describe("shownReaction", () => {
           SPEECH,
           {
             kind: "background-tasks-changed",
-            tasks: [{ taskId: "架空の背景", kind: "shell", description: "架空の背景のタスク" }],
+            tasks: [
+              { taskId: "架空の背景", kind: "shell", description: "架空のバックグラウンドタスク" },
+            ],
           },
           COMPLETED,
         ]),

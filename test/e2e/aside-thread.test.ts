@@ -16,7 +16,7 @@ const ELAPSED_MS = 60_000
 const ASIDE_TURN_FINISHED_OCCURRENCE = 2
 
 describe("委譲中の脇の話", () => {
-  it("背景のタスクが残っているあいだに送っても札は増えず、帯は親の段取りのまま、欄に答えが対で出る", async () => {
+  it("バックグラウンドタスクが残っているあいだに送っても札は増えず、帯は親の段取りのまま、欄に答えが対で出る", async () => {
     const room = await run.open({
       scenario: "aside-thread",
       scene: "aside-delegating",

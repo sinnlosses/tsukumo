@@ -10,7 +10,7 @@ import {
 } from "../../../src/shared/session/session-state.ts"
 import { apply } from "../../fixture/session-state.ts"
 
-describe("applySessionEvent（背景のタスク）", () => {
+describe("applySessionEvent（バックグラウンドタスク）", () => {
   const SHELL_TASK = {
     taskId: "bash-1",
     kind: "shell",

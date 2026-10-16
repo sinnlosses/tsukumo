@@ -588,7 +588,7 @@ describe("applySessionEvent", () => {
     expect(restarted.turn).toEqual({ kind: "running", startedAt: 400 })
   })
 
-  it("turn-resumed は始まった時刻を付け直さない（背景のタスクを挟んだ続きのターンでも、入力欄の経過時間が依頼を送った時刻から数え続ける）", () => {
+  it("turn-resumed は始まった時刻を付け直さない（バックグラウンドタスクを挟んだ続きのターンでも、入力欄の経過時間が依頼を送った時刻から数え続ける）", () => {
     const started = applySessionEvent(
       INITIAL_SESSION_STATE,
       { kind: "request", text: "背景へ委譲する依頼", images: [] },
@@ -596,7 +596,7 @@ describe("applySessionEvent", () => {
     )
     expect(started.turn).toEqual({ kind: "running", startedAt: 100 })
 
-    // メインが背景のタスクへ委譲してターンを終えても、背景のタスクは残ったまま
+    // メインがバックグラウンドタスクへ委譲してターンを終えても、バックグラウンドタスクは残ったまま
     // （`turn-finished` は `backgroundTasks` を空にしない）。
     const delegated = applySessionEvent(
       started,
@@ -621,7 +621,7 @@ describe("applySessionEvent", () => {
       { taskId: "task-1", kind: "agent", description: "架空の委譲" },
     ])
 
-    // 背景のタスクが終わり、claude が自分で始めた続きのターン（`turn-resumed`）が届く。
+    // バックグラウンドタスクが終わり、claude が自分で始めた続きのターン（`turn-resumed`）が届く。
     // 起点はここで付け直さず、最初の依頼を送った時刻（100）のまま。
     const clearedBackground = applySessionEvent(
       finished,

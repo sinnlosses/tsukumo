@@ -141,7 +141,7 @@ export type SessionRecord =
       readonly time: RecordTime
     }
   /**
-   * 背景のタスクが残っているあいだに送った言葉（脇の話）。`request` ではないのでターンの境目にならず、親のやり取りの中に積まれる。
+   * バックグラウンドタスクが残っているあいだに送った言葉（脇の話）。`request` ではないのでターンの境目にならず、親のやり取りの中に積まれる。
    * 答えは、後ろに続く `answersAside` の `speech` の記録。
    */
   | {
@@ -478,7 +478,7 @@ export type SessionState = {
   /**
    * いま背景で動いているタスク。ターンの進み具合（{@link turn}）とは独立で、ターンが終わっても動いている間はここに残る。
    * 源は `background-tasks-changed` だけで、届くたびに丸ごと置き換える。
-   * `session-ended` で空にする（claude のプロセスが終われば背景のタスクも一緒に終わる。SDK は起動時に何も流さないので、起こし直しで初期値の空へ戻るのもそのまま正しい）。
+   * `session-ended` で空にする（claude のプロセスが終わればバックグラウンドタスクも一緒に終わる。SDK は起動時に何も流さないので、起こし直しで初期値の空へ戻るのもそのまま正しい）。
    */
   readonly backgroundTasks: readonly BackgroundTask[]
   /**

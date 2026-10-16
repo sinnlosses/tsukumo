@@ -66,7 +66,7 @@ describe("PhoneTurnAction", () => {
     expect(send.disabled).toBe(false)
   })
 
-  it("背景のタスクだけが残っているときは ↑ のまま", () => {
+  it("バックグラウンドタスクだけが残っているときは ↑ のまま", () => {
     renderAction({
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       backgroundTasks: [{ taskId: "task-1", kind: "agent", description: "架空の委譲" }],

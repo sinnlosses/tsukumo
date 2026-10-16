@@ -119,7 +119,7 @@ describe("WorkStrip", () => {
     expect(strip().querySelector("p")?.textContent).toContain("再試行中 2/10")
   })
 
-  it("ターンが終わって背景のタスクだけ残るあいだは、チップが「背景で作業中」の点で言い、弧は今の段の丸にだけ付く", () => {
+  it("ターンが終わってバックグラウンドタスクだけ残るあいだは、チップが「背景で作業中」の点で言い、弧は今の段の丸にだけ付く", () => {
     putSession(
       stateAfter([
         REQUEST,

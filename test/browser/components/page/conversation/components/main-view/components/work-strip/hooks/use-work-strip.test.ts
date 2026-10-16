@@ -423,7 +423,7 @@ describe("useWorkStrip（状態）", () => {
     expect(resultAfter([request, plan, askedPending()])).toBe("awaiting-answer")
   })
 
-  it("ターンが終わって背景のタスクだけ残るあいだは背景で作業中、答え待ちがあれば答え待ち、背景が無ければ今までどおり", () => {
+  it("ターンが終わってバックグラウンドタスクだけ残るあいだは背景で作業中、答え待ちがあれば答え待ち、背景が無ければ今までどおり", () => {
     const left: SessionEvent = {
       kind: "background-tasks-changed",
       tasks: [{ taskId: "fake-bg-1", kind: "shell", description: "架空の待ち" }],

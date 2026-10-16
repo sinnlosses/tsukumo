@@ -128,7 +128,7 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
 
 /**
  * やり取りが失敗で終わったか（`MainViewTurn.failure`）。`failed` のときだけ、描く側がやり取りの末尾に「失敗で終わった」と理由を出す。
- * 1つのやり取りに失敗が2つ以上あれば（背景のタスクのあとの続きのターンも失敗したときなど）、いちばん新しいものを出す。
+ * 1つのやり取りに失敗が2つ以上あれば（バックグラウンドタスクのあとの続きのターンも失敗したときなど）、いちばん新しいものを出す。
  */
 export type MainViewTurnFailure =
   | { readonly kind: "none" }
@@ -252,13 +252,13 @@ export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
  *
  * `unsettled` はいちばん新しいやり取りで、まだ伸びうる本文の種類で、確定していない本文を出さないために要る（`report` を {@link selectToolReports} が、ツールの外の本文を {@link selectLastText} が見る）。
  * `SessionState.turn` が `running` かどうかそのものではない。
- * いま走っている SDK ターンで届いた本文だけが伸びうるもので、前の SDK ターンで届いた本文は、背景のタスクの通知などで claude が同じやり取りの続きを始めても確定したまま
+ * いま走っている SDK ターンで届いた本文だけが伸びうるもので、前の SDK ターンで届いた本文は、バックグラウンドタスクの通知などで claude が同じやり取りの続きを始めても確定したまま
  * （`report` の外の本文は例外で、続きが来うるあいだは伸びうる側に数える）。
  *
- * `closed` はセッション全体が閉じているか（ターンが `running` でなく、背景のタスクも残っていない）。
+ * `closed` はセッション全体が閉じているか（ターンが `running` でなく、バックグラウンドタスクも残っていない）。
  * いちばん新しいやり取りにだけ渡す（それより前のやり取りは、次の依頼が始まった時点で既に閉じている）。
  * `unsettled` は「まだ伸びる本文をそもそも出すか」、`closed` は「出した本文に最終レポートの札を立ててよいか」で、独立に false になりうる
- * （背景の仕事を待って `turn-finished` が届くと `unsettled.report` は確定扱いに変わるが、背景のタスクが残っているあいだは `closed` は false のまま）。
+ * （背景の仕事を待って `turn-finished` が届くと `unsettled.report` は確定扱いに変わるが、バックグラウンドタスクが残っているあいだは `closed` は false のまま）。
  */
 export function mainViewTurns(
   entries: readonly MainViewEntry[],

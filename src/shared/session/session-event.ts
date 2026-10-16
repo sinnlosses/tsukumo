@@ -126,7 +126,7 @@ export type SessionEvent =
       readonly images: readonly RecordedPromptImage[]
     }
   /**
-   * 背景のタスクが残っているあいだに利用者が送った言葉（脇の話）。
+   * バックグラウンドタスクが残っているあいだに利用者が送った言葉（脇の話）。
    * `request` と違ってターンの境目にならず、親のやり取りに吊るす（ターンの通し番号も進めない）。
    * 脇の話かどうかはサーバが送った瞬間に決める（`docs/architecture/display.md`「脇の話」）。
    */
@@ -142,7 +142,7 @@ export type SessionEvent =
    */
   | { readonly kind: "turn-started" }
   /**
-   * claude が自分で始めた続きのターン（背景のタスクが終わった知らせや、サブエージェントの `SendMessage` を受けて、依頼なしで続きを報告するターン）。
+   * claude が自分で始めた続きのターン（バックグラウンドタスクが終わった知らせや、サブエージェントの `SendMessage` を受けて、依頼なしで続きを報告するターン）。
    * 実測: `task_notification` のあと、依頼を送らなくても `init` → `assistant` → `result` が届く。
    *
    * 記録を持たない。新しいターンではなく同じやり取りの続きなので、吹き出しのセリフと表情は持ち越す
@@ -442,7 +442,7 @@ export type SessionEvent =
    */
   | { readonly kind: "compact-boundary" }
   /**
-   * 背景のタスクの顔ぶれが変わった（SDK の `system` / `background_tasks_changed`。実測: 背景の Bash・サブエージェントが始まったときと終わったときに1回ずつ届く）。
+   * バックグラウンドタスクの顔ぶれが変わった（SDK の `system` / `background_tasks_changed`。実測: 背景の Bash・サブエージェントが始まったときと終わったときに1回ずつ届く）。
    * 運ぶのは変わったあとの全員で、受け取る側は丸ごと置き換える
    * （SDK の型定義が「REPLACE semantics」と言う水準の知らせ。始まり・終わりの対を数えないので、片方を取りこぼしても「動いている」が居残らない）。
    * 活動でないもの（SDK の `ambient`。見張り役など）は変換で落としてある。

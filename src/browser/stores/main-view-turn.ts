@@ -47,7 +47,7 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
  * いちばん新しいやり取りでまだ伸びうる本文の種類（`mainViewTurns` の2つめの引数）。
  *
  * 伸びうるのは、いま走っている SDK ターンで届いた本文だけ（`SessionState.bodiesInTurn`）。
- * サブエージェントの `SendMessage` や背景のタスクの通知で claude が自分で続きのターンを始めると `running` に戻る。
+ * サブエージェントの `SendMessage` やバックグラウンドタスクの通知で claude が自分で続きのターンを始めると `running` に戻る。
  * そこで前の SDK ターンで確定した `report` まで伏せると、合図が届くたびに出ていた中間レポートが消えて、ターンが終わると同じものが出直す（画面で出た）。
  *
  * ターンが `running` かどうかだけでは足りない。
@@ -58,7 +58,7 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
  * 書きかけがあるあいだ（`partialUtterance` が空でない）は伸びる途中とみなす。
  *
  * `report` の外の本文だけは、前の SDK ターンのものも伏せる。
- * ターンが動いているあいだと、背景のタスクが残っているあいだ（続きのターンが来うる）は出さない。
+ * ターンが動いているあいだと、バックグラウンドタスクが残っているあいだ（続きのターンが来うる）は出さない。
  * `report` の無いやり取りで出るのは `report` を呼ぶまでのつなぎの一言が多く、`report` が来た時点でどのみち消える（`selectToolReports`）ので、出したものが消える往復も起きない。
  */
 function unsettledBodies(state: SessionState): TurnBodies {

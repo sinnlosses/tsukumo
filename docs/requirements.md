@@ -275,7 +275,7 @@ Orca は「ページを表示するホスト」として第一級であり、VS 
 | `tool_use` / `tool_result`             | 作業の進行。帯の「いまの作業」へ（4.2）                                                                 |
 | `canUseTool`                           | 許可プロンプトと、キャラクターからの質問。答え待ちにする（4.2）                                         |
 | `system` の `init`                     | 使えるスラッシュコマンド（`slash_commands`）・モデル・許可モード                                        |
-| `system` の `background_tasks_changed` | **背景のタスク**（ターンのあとも動くもの）。帯の「いまの作業」へ（4.2）                                 |
+| `system` の `background_tasks_changed` | **バックグラウンドタスク**（ターンのあとも動くもの）。帯の「いまの作業」へ（4.2）                       |
 | `system` の `task_notification`        | 背景で走らせた Bash の**終わりの時刻**（`tool_use_id` で結ぶ）。検証の行と依頼の手順の所要時間へ（4.2） |
 | `system` の `api_retry`                | **再試行中**（何回目か・待ち時間・理由）。入力欄の経過時間の行へ（4.2）                                 |
 | `rate_limit_event`                     | **利用上限**（上限に達した、枠と戻る時刻）。同じ行へ（4.2）                                             |
@@ -301,10 +301,10 @@ Orca は「ページを表示するホスト」として第一級であり、VS 
 - **出力スタイル（`~/.claude/output-styles/asuna.md`）は SDK でもそのまま効く**（実測は
   `docs/history/decision.md`）。`init` はプロンプトを送るたびに届くので、「新しいセッション」の
   合図にしない
-- **背景のタスクが終わると、claude は依頼なしで続きのターンを始める**（実測は
+- **バックグラウンドタスクが終わると、claude は依頼なしで続きのターンを始める**（実測は
   `docs/history/decision.md`）。依頼に当たるメッセージは流れないので、**ターンの外で届いた
   `init` を合図に、記録を持たない続きのターンの始まり（`turn-resumed`）を補う**（`src/server/session-driver/core/self-started-turn.ts`。
-  見え方は `docs/architecture/screen-design.md` 13.9「背景のタスク」）
+  見え方は `docs/architecture/screen-design.md` 13.9「バックグラウンドタスク」）
 - **中断は SDK の `interrupt()` で効く。** 中断されたターンの `result` は `error_during_execution`
   で終わり、同じセッションに続けて入力を送れる（中断前の文脈を保っている）
 - **API がうまくいかなかったことを黙って捨てない**（2026-09-24 決定）。再試行中（まだ続く）・

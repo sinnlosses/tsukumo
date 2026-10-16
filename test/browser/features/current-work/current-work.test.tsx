@@ -120,7 +120,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     expect(document.querySelector(".current-work-word")?.textContent).toBe("作業中")
   })
 
-  describe("背景のタスク（docs/architecture/screen-design.md 13.9「背景のタスク」）", () => {
+  describe("バックグラウンドタスク（docs/architecture/screen-design.md 13.9「バックグラウンドタスク」）", () => {
     const FINISHED_TURN = {
       kind: "finished",
       startedAt: 0,
@@ -138,7 +138,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       description: "",
     } satisfies BackgroundTask
 
-    it("ターンが終わっても背景のタスクが動いていれば「背景で作業中」で、要約はその説明", () => {
+    it("ターンが終わってもバックグラウンドタスクが動いていれば「背景で作業中」で、要約はその説明", () => {
       renderScreenNav({
         turn: FINISHED_TURN,
         records: [requestRecord()],
@@ -176,7 +176,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       ])
     })
 
-    it("ターンが走っている間は「作業中」のままで、一覧には背景のタスクも出る", () => {
+    it("ターンが走っている間は「作業中」のままで、一覧にはバックグラウンドタスクも出る", () => {
       renderScreenNav({
         turn: { kind: "running", startedAt: 0 },
         records: [requestRecord()],
@@ -190,7 +190,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       expect(document.querySelector(".current-work-background-heading")).not.toBeNull()
     })
 
-    it("背景のタスクが終わると「依頼待ち」に戻り、一覧からも消える", () => {
+    it("バックグラウンドタスクが終わると「依頼待ち」に戻り、一覧からも消える", () => {
       renderScreenNav({
         turn: FINISHED_TURN,
         records: [requestRecord()],

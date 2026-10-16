@@ -34,7 +34,7 @@ describe("applySessionEvent（委譲と段取り）", () => {
     return plan.kind === "planned" ? plan.current : undefined
   }
 
-  it("委譲先の途中の合図（SendMessage）・返却（SubagentHandback）と背景のタスクの顔ぶれの変化では、帯は動かない", () => {
+  it("委譲先の途中の合図（SendMessage）・返却（SubagentHandback）とバックグラウンドタスクの顔ぶれの変化では、帯は動かない", () => {
     const before = apply(request, mainPlan(1, "架空のまとめ。"))
     const after = apply(
       request,

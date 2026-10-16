@@ -10,7 +10,7 @@ describe("turnElapsedClock", () => {
     expect(turnElapsedClock(turn, 0, 3_723_000)).toBe("1:02:03")
   })
 
-  it("終わったターンは終わった時刻で止まり、背景のタスクが残る間は数え続ける（広い画面の字と同じ秒）", () => {
+  it("終わったターンは終わった時刻で止まり、バックグラウンドタスクが残る間は数え続ける（広い画面の字と同じ秒）", () => {
     const turn = {
       kind: "finished",
       startedAt: 0,

@@ -498,7 +498,7 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([{ kind: "compact-boundary" }])
   })
 
-  describe("背景のタスク（実測で届いた順: background_tasks_changed → task_started → … → background_tasks_changed → task_updated → task_notification）", () => {
+  describe("バックグラウンドタスク（実測で届いた順: background_tasks_changed → task_started → … → background_tasks_changed → task_updated → task_notification）", () => {
     it("background_tasks_changed を background-tasks-changed にする（種類を3つに畳む）", () => {
       const message = {
         type: "system",

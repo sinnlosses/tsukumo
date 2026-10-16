@@ -296,7 +296,7 @@ describe("CallReview の新しい事実（speak）", () => {
     expect(speak(review, "toolu_s2", "架空のセリフ2")).toContainEqual(speechOf("架空のセリフ2"))
   })
 
-  it("依頼・ターンの始まり・ターンの頭・背景のタスクの終わりのあとも通る", () => {
+  it("依頼・ターンの始まり・ターンの頭・バックグラウンドタスクの終わりのあとも通る", () => {
     const openings: readonly SessionEvent[] = [REQUEST, TURN_STARTED, SESSION_INFO, tasksChanged()]
 
     for (const opening of openings) {
@@ -309,7 +309,7 @@ describe("CallReview の新しい事実（speak）", () => {
     }
   })
 
-  it("サブエージェントのツールの完了・呼んだだけのツール・背景のタスクが増えただけは数えない", () => {
+  it("サブエージェントのツールの完了・呼んだだけのツール・バックグラウンドタスクが増えただけは数えない", () => {
     const review = createCallReview()
     speak(review, "toolu_s1", "架空のセリフ1")
 
@@ -386,7 +386,7 @@ describe("CallReview の新しい事実（report）", () => {
     }
   })
 
-  it("背景のタスクが終わった（顔ぶれから消えた）あとの report は、ターンの外で届いても通す", () => {
+  it("バックグラウンドタスクが終わった（顔ぶれから消えた）あとの report は、ターンの外で届いても通す", () => {
     const review = createCallReview()
     review.pass(tasksChanged(backgroundTask("task_a", "agent")))
     drawReport(review, "toolu_r1", VALID)
@@ -395,7 +395,7 @@ describe("CallReview の新しい事実（report）", () => {
     expect(review.judgeReport(OTHER)).toEqual({ kind: "accepted" })
   })
 
-  it("背景のタスクが増えただけでは新しい事実に数えない", () => {
+  it("バックグラウンドタスクが増えただけでは新しい事実に数えない", () => {
     const review = createCallReview()
     drawReport(review, "toolu_r1", VALID)
     ;[FINISHED, tasksChanged(backgroundTask("task_a", "agent")), SESSION_INFO].forEach((event) =>
@@ -455,7 +455,7 @@ describe("CallReview の新しい事実の数え方の差", () => {
     expect(review.judgeReport(OTHER)).toEqual({ kind: "accepted" })
   })
 
-  it("request・メインのツールの完了・背景のタスクの終わりは両方が数える", () => {
+  it("request・メインのツールの完了・バックグラウンドタスクの終わりは両方が数える", () => {
     const events: readonly (readonly SessionEvent[])[] = [
       [REQUEST],
       [toolStarted("toolu_t1"), finished("toolu_t1", false)],

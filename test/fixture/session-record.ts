@@ -54,7 +54,7 @@ export function reactionRecord(
   }
 }
 
-/** 背景のタスクが残っているあいだに送った言葉（脇の話）1件。 */
+/** バックグラウンドタスクが残っているあいだに送った言葉（脇の話）1件。 */
 export function asideRecord(
   overrides: Partial<Omit<Extract<SessionRecord, { readonly kind: "aside" }>, "kind">> = {},
 ): SessionRecord {

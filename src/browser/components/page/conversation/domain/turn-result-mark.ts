@@ -6,7 +6,7 @@ import type { TurnResult } from "../../../../../shared/session/turn-result.ts"
 
 /**
  * 帯のチップが言える状態。レポートの無いやり取りは帯が段の進みから決めるか、出さないので入らない。
- * `background` はターンが終わって背景のタスクだけが残るときで、やり取りの列の印には無い。
+ * `background` はターンが終わってバックグラウンドタスクだけが残るときで、やり取りの列の印には無い。
  */
 export type WorkStripResult = Exclude<TurnResult, "no-report"> | "background"
 

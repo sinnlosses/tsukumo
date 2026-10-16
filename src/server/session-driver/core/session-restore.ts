@@ -27,7 +27,7 @@ const RESTORED_TURN_FINISHED: SessionEvent = {
  *
  * - 委譲先の返却（`delegate-returned`）: `origin.handback` が真の `user` メッセージから、`origin.body` の字下げした行の1行目を読む（依頼にはしない）
  * - 利用者の依頼（`request`）と脇の話（`aside`）: `user` のテキストブロックから起こす（ツールの結果は除く）。脇の話は `asideTextOf` の包みで見分ける
- * - 続きのターンの始まり（`turn-resumed`）: 背景のタスクの知らせだけの `user` メッセージから起こす
+ * - 続きのターンの始まり（`turn-resumed`）: バックグラウンドタスクの知らせだけの `user` メッセージから起こす
  * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼・脇の話・続きのターンの手前と並びの末尾で区切る。時刻は直前の出来事のものを引き継ぐ
  *
  * 出来事ごとの時刻は、元のメッセージの `timestamp`（読めなければ `unknown`）。
@@ -139,7 +139,7 @@ function isTurnOpening(event: SessionEvent): boolean {
 }
 
 /**
- * 背景のタスクの知らせ（`<task-notification>`）だけの `user` メッセージか。
+ * バックグラウンドタスクの知らせ（`<task-notification>`）だけの `user` メッセージか。
  * claude はこれを受けて依頼なしで続きのターンを始めるので、組み直しではここで続きのターン（`turn-resumed`）を区切る。
  */
 function isTaskNotificationOnly(message: unknown): boolean {
@@ -248,7 +248,7 @@ function foldSlashCommand(text: string): string {
  *
  * 生きているセッションでは `request` は入力欄からの送信でだけ起き、これらは一度も画面に出ない。
  * transcript から組み直すときだけ `user` の役として同じ場所に並んでしまうので、ここで揃える。
- * 実測で出たのは背景のタスクの知らせ（`<task-notification>`）・ローカルコマンドの断り書き（`<local-command-caveat>`）・別のエージェントからの伝言（`<agent-message>`）の3つだが、同じ性質のものを合わせて落とす。
+ * 実測で出たのはバックグラウンドタスクの知らせ（`<task-notification>`）・ローカルコマンドの断り書き（`<local-command-caveat>`）・別のエージェントからの伝言（`<agent-message>`）の3つだが、同じ性質のものを合わせて落とす。
  *
  * 塊の丸ごとだけを落とす（開きと閉じが揃っているもの）ので、利用者の文面に混じっていてもその前後は残る。
  */

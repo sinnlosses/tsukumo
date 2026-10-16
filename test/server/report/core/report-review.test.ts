@@ -68,7 +68,7 @@ const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
 
 /**
  * 新しい事実の帳面は `CallReview` が持つので、ここでは手で動かせる帳面を渡す。
- * `raiseNews` は新しい事実が届いたこと、`setTasks` は生きている背景のタスクの顔ぶれを表す。
+ * `raiseNews` は新しい事実が届いたこと、`setTasks` は生きているバックグラウンドタスクの顔ぶれを表す。
  */
 type TestReview = ReportReview & {
   readonly raiseNews: () => void
@@ -497,7 +497,7 @@ describe("createReportReview の judge（背景のシェルが残っている re
   const rejectedText = (verdict: ReportVerdict): string =>
     verdict.kind === "rejected" ? verdict.text : ""
 
-  it("kind が shell の背景のタスクが残っていて初めての report は、ID と description を載せて差し戻す", () => {
+  it("kind が shell のバックグラウンドタスクが残っていて初めての report は、ID と description を載せて差し戻す", () => {
     const verdict = withTasks(backgroundTask("task_a", "shell", "架空の書き出し")).judge(VALID)
 
     expect(verdict).toMatchObject({ kind: "rejected", reasons: ["background-running"] })

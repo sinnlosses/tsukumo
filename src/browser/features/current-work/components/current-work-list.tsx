@@ -192,7 +192,7 @@ function CurrentWorkPlanPhase(props: { readonly phase: CurrentWorkPlanPhase }): 
 }
 
 /**
- * 背景のタスク1件。印は実行中の手順と同じ回る「…」（動いているものの印を2種類にしない）。
+ * バックグラウンドタスク1件。印は実行中の手順と同じ回る「…」（動いているものの印を2種類にしない）。
  * 種類の語は手順のツール名と同じ等幅の列に置く。
  */
 function CurrentWorkBackgroundRow(props: {

@@ -608,7 +608,7 @@ export const CATALOG: readonly CatalogEntry[] = [
   {
     name: "current-work-background",
     scene: "background-task",
-    label: "帯の「いまの作業」（背景のタスク）",
+    label: "帯の「いまの作業」（バックグラウンドタスク）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "click", selector: WORK_TOGGLE_SELECTOR }],

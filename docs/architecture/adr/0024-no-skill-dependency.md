@@ -120,7 +120,7 @@ tsukumo のゴールは、レポートを分かりやすく表示し、キャラ
   組み直し（`session-restore.ts`）はいま `<agent-message>` の塊を依頼の文面から落としているだけで、返却としては読んでいない
 - **返却の時刻**: 生きたセッションでは委譲先の `SubagentHandback` の `assistant` メッセージが届いた時刻、組み直しではメインの transcript の
   返却の `user` メッセージの `timestamp`。後者は前者より数秒遅い（実測で6秒）
-- **疑似セッションには委譲の返却が無い。** `test/fixture/fake-session.json` の脇の話の場面（`aside`）は `Agent` の呼び出しと背景のタスクの顔ぶれまでで、
+- **疑似セッションには委譲の返却が無い。** `test/fixture/fake-session.json` の脇の話の場面（`aside`）は `Agent` の呼び出しとバックグラウンドタスクの顔ぶれまでで、
   `SubagentHandback` も返却の `user` メッセージも無い。返却で帯を進める実装はここに場面を足す
 
 返却は生きたセッションでも組み直しでも tsukumo に届くので、返却を契約にして tsukumo が読む形は成り立つ。

@@ -57,7 +57,7 @@ type NewsSubject = "speak" | "report"
 const NEWS_SUBJECTS: readonly NewsSubject[] = ["speak", "report"]
 
 /**
- * メインのツールの完了と背景のタスクの終わりのほかに、イベントの種類ごとに新しい事実として数える主題。
+ * メインのツールの完了とバックグラウンドタスクの終わりのほかに、イベントの種類ごとに新しい事実として数える主題。
  * `session-info` は `speak` だけ、`aside` は `report` だけが数える。
  */
 const NEWS_SUBJECTS_BY_EVENT = {
