@@ -3,6 +3,7 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
+import { TW_TIMEOUT_MS } from "../../src/server/workflow-setting/adapter/tw-config.ts"
 import { runSubprocess } from "../fixture/subprocess.ts"
 import { useScenarioRun } from "./scenario-run.ts"
 
@@ -12,6 +13,9 @@ import { useScenarioRun } from "./scenario-run.ts"
 // 期待値は撮らず、`<select>` の value とファイルの中身で判定する。
 
 const run = useScenarioRun()
+
+/** 書き込み1回のサーバの最悪: `tw config set` と、読み直しの `tw` 最大3回（schema 2・schema・config）が各々上限まで掛かる。 */
+const WRITE_ROUND_TRIP_TIMEOUT_MS = TW_TIMEOUT_MS * 4
 
 /** 疑似セッションの `opening` の `session-info` が流すエージェントの全名。 */
 const ACCEPTOR = "tsukumo-workflow:acceptor"
@@ -44,20 +48,21 @@ describe("ワークフローの設定", () => {
 
     await acceptor.selectOption(ACCEPTOR)
 
-    // 書き込みはサーバが `tw config set` で済ませるので、ファイルは実時間で待つ。
+    // 画面はサーバが書いて読み直した返りの面だけに従うので、value が変わるのが書き込みの完了の合図。
+    // 返りを配るタイマーは止まった時計の上にあるので、少しずつ進めて待つ。
     await expect
-      .poll(() => readFileSync(configPath, "utf8"), { timeout: 10_000 })
-      .toContain(`acceptor = "${ACCEPTOR}"`)
+      .poll(
+        async () => {
+          await room.page.clock.runFor(50)
+          return acceptor.inputValue()
+        },
+        { timeout: WRITE_ROUND_TRIP_TIMEOUT_MS },
+      )
+      .toBe(ACCEPTOR)
     const written = readFileSync(configPath, "utf8")
+    expect(written).toContain(`acceptor = "${ACCEPTOR}"`)
     expect(written).toContain("[parts]")
     expect(written).toContain('verify = "なし"')
-    // 画面は返った面で描き直す。返りを配るタイマーは止まった時計の上にあるので、少しずつ進めて待つ。
-    await expect
-      .poll(async () => {
-        await room.page.clock.runFor(50)
-        return acceptor.inputValue()
-      })
-      .toBe(ACCEPTOR)
   })
 
   // 実機の `tw` は schema 2 を返さない（取り込みの `tw` が `--version` を知らない）ので、読み取りの応答だけを schema 2 の面に差し替える。
@@ -119,7 +124,7 @@ describe("ワークフローの設定", () => {
           await room.page.clock.runFor(50)
           return dialog.getByText("'steps'", { exact: false }).count()
         },
-        { timeout: 10_000 },
+        { timeout: WRITE_ROUND_TRIP_TIMEOUT_MS },
       )
       .toBe(1)
   })

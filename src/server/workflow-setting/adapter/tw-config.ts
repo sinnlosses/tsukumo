@@ -5,7 +5,7 @@ import { execFile } from "node:child_process"
 
 import type { TwConfigPort, TwOutcome } from "../core/workflow-setting-reading.ts"
 
-const TW_TIMEOUT_MS = 5000
+export const TW_TIMEOUT_MS = 5000
 const MAX_OUTPUT_BYTES = 1024 * 1024
 
 /** `tw`（パスか、PATH から引く名前）を作業先 `cwd` で打つ口。 */
