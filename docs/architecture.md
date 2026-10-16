@@ -183,7 +183,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   `view-server` → `session` → `session-driver` → `view-server`）が、どちらも1本が
   `adapter → 別の機能の core` で層の辺と同じ向きなので、ファイルの単位では輪にならない
 - **束ねる機能は `session/` の1つ。** `session-manager.ts` は外の世界に触らないので `core` だが、
-  各機能の判断（日記・トークン消費・雑談のアーカイブ）を読んで1つのセッションに
+  各機能の判断（日記・トークン消費・会話のアーカイブ）を読んで1つのセッションに
   まとめる。**外の世界の実装を選んで渡すのは配線（`src/` 直下の `session-start.ts` と `src/wiring/`）**、
   渡されたものを使って順序と状態を持つのが `session/`、という境目
 - **セッションの配線は機能ごとに組み立てる。** `src/wiring/<機能>.ts` の `wire<機能>` が、その機能の
