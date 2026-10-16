@@ -167,6 +167,8 @@ hook は書き込みの形を事前に列挙して拒む。Bash の前後の作�
 
 委譲先は段を返す前に `pnpm run typecheck` と `pnpm run lint` を打つ。絞った `vitest` は story の型（`tsconfig.storybook.json`）と lint の規則（Date を使わない など）を拾わない。
 
+段の確かめの単体は `pnpm run test <ファイル or ディレクトリ>` で流す（`pnpm exec vitest` を直に打たない。規約のテストが一緒に走る）。`src/` のファイルを消す・移す・読み手を減らす段では `test/architecture` を必ず流す。
+
 委譲先が E2E を流す呼び出しは、着手中の1件につき **6回まで**で、7回目は
 E2E の入口（`scripts/dev/e2e.ts`）が vitest を起こさずに終了コード 2 で止める（検証は通常1〜3回で、残りは揺らぎの
 確認と自分の検証の余裕）。コマンドの書き方では分類せず、実際に走る側で数える。
