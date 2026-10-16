@@ -2,12 +2,21 @@
 // `advanceSessionState` で姿を進め、その出来事で吹き出しが文の反応を新しく出し始めたなら、その行を記録（`reaction`）に積む。
 //
 // 前と後の姿を `shownReaction` で比べるので、比べるのは反応を出し始めうる出来事だけにする。
-// 迎えの挨拶の札は画面が決めるので、記録には札の無い文を積む。
+// 迎えの挨拶は札の名前を画面が差し込むので、ここでは積まず、画面が表示した文（`welcome-greeting-shown`）で積む。
+// 挨拶の記録は挨拶1つにつき1件で、文が札で変わったら文と表情だけを差し替える（時刻は最初に積んだときのまま）。
+// 挨拶を出している間の記録には依頼が無く、`/clear` と起こし直しで空になるので、そこにある `welcome` の反応の記録はいまの挨拶のものだけ
+// （続きから起こした直後のおかえりは、組み直した依頼のあとにしか積まれない）。
 
-import { NO_WELCOME_HEAD } from "../recommendation/welcome-greeting.ts"
+import type { ReactionLine } from "../recommendation/reaction.ts"
+import { isWelcomeGreetingLine, NO_WELCOME_HEAD } from "../recommendation/welcome-greeting.ts"
 import type { SessionEvent } from "./session-event.ts"
-import { advanceSessionState, type RecordTime, type SessionState } from "./session-state.ts"
-import { shownReaction, type ShownReaction } from "./shown-reaction.ts"
+import {
+  advanceSessionState,
+  type RecordTime,
+  type SessionRecord,
+  type SessionState,
+} from "./session-state.ts"
+import { greetingOnShow, shownReaction, type ShownReaction } from "./shown-reaction.ts"
 
 /** 吹き出しが文の反応を出し始めうる出来事。 */
 const REACTION_START_EVENT_KINDS: ReadonlySet<SessionEvent["kind"]> = new Set([
@@ -32,11 +41,18 @@ export function applySessionEvent(
   at: number,
 ): SessionState {
   const next = advanceSessionState(state, event, at)
+  if (event.kind === "welcome-greeting-shown") {
+    return recordWelcomeGreeting(next, event.line, at)
+  }
   if (!REACTION_START_EVENT_KINDS.has(event.kind)) {
     return next
   }
   const shown = shownReaction(next, NO_WELCOME_HEAD, at)
-  if (shown.kind !== "shown" || isAlreadyShown(state, next, shown, at)) {
+  if (
+    shown.kind !== "shown" ||
+    greetingOnShow(next).kind === "shown" ||
+    isAlreadyShown(state, next, shown, at)
+  ) {
     return next
   }
   return {
@@ -52,6 +68,62 @@ export function applySessionEvent(
       },
     ],
   }
+}
+
+/**
+ * 画面が表示した迎えの挨拶の1行が、もう記録の文と同じか。
+ * 同じなら `welcome-greeting-shown` を流しても記録は変わらない。
+ */
+export function isWelcomeGreetingRecorded(state: SessionState, line: ReactionLine): boolean {
+  const recorded = state.records.find(isWelcomeReactionRecord)
+  return (
+    recorded !== undefined && recorded.text === line.text && recorded.expression === line.expression
+  )
+}
+
+/**
+ * 表示した迎えの挨拶の1行を記録に積む。挨拶の記録が無ければ `at` の時刻で1件積み、あれば文と表情だけを差し替える。
+ * 迎えの挨拶を出していない姿（依頼のあとに遅れて届いた等）と、いまの挨拶から組めない文では何もしない。
+ */
+function recordWelcomeGreeting(state: SessionState, line: ReactionLine, at: number): SessionState {
+  const onShow = greetingOnShow(state)
+  if (
+    onShow.kind !== "shown" ||
+    !isWelcomeGreetingLine(onShow.greeting, line) ||
+    isWelcomeGreetingRecorded(state, line)
+  ) {
+    return state
+  }
+  const index = state.records.findIndex(isWelcomeReactionRecord)
+  if (index < 0) {
+    return {
+      ...state,
+      records: [
+        ...state.records,
+        {
+          kind: "reaction",
+          reaction: "welcome",
+          text: line.text,
+          expression: line.expression,
+          time: { kind: "stamped", at },
+        },
+      ],
+    }
+  }
+  return {
+    ...state,
+    records: state.records.map((record, position) =>
+      position === index && record.kind === "reaction"
+        ? { ...record, text: line.text, expression: line.expression }
+        : record,
+    ),
+  }
+}
+
+function isWelcomeReactionRecord(
+  record: SessionRecord,
+): record is Extract<SessionRecord, { readonly kind: "reaction" }> {
+  return record.kind === "reaction" && record.reaction === "welcome"
 }
 
 /**

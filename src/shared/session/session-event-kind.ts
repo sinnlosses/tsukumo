@@ -43,6 +43,7 @@ const SESSION_EVENT_KINDS = {
   "tasks-changed": true,
   "recommendation-changed": true,
   "welcome-greeting-changed": true,
+  "welcome-greeting-shown": true,
   "reactions-written": true,
   "waiting-line-due": true,
   "sessions-changed": true,

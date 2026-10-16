@@ -48,6 +48,7 @@ import {
   type PinnedSpeech,
   type ViewedSpeech,
 } from "../domain/pinned-speech.ts"
+import { useWelcomeGreetingRecord } from "./use-welcome-greeting-record.ts"
 
 /** そのターンにセリフが1件も無かったときに当てる表情（`INITIAL_SESSION_STATE` と同じ既定）。 */
 const DEFAULT_PAST_TURN_EXPRESSION = "default"
@@ -121,6 +122,8 @@ export function useCharacterView(): CharacterViewModel {
   const draftingReport = useSession((session) => session.state.reportDrafting.kind === "drafting")
   const state = useSession((session) => session.state)
   const { cards: welcomeCards } = useWelcomeCards()
+  const welcomeHead = welcomeHeadOf(welcomeCards)
+  useWelcomeGreetingRecord(state, welcomeHead)
 
   // 留めた行（ターンの番号と位置）は、どのターンも `turnSpeeches(records)` の並びで引く（セリフのログと同じ並び）。
   const turns = turnSpeeches(records)
@@ -142,9 +145,7 @@ export function useCharacterView(): CharacterViewModel {
         )
       : pastTurn.speeches.map((_, index) => index)
   const reaction: ShownReaction =
-    pastTurn === undefined
-      ? shownReaction(state, welcomeHeadOf(welcomeCards), now)
-      : { kind: "none" }
+    pastTurn === undefined ? shownReaction(state, welcomeHead, now) : { kind: "none" }
   // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の吹き出し。
   // 反応を出しているあいだは立ち絵が反応に従うので、どの行にも付けない。
   const defaultTurnId = activeTurnId

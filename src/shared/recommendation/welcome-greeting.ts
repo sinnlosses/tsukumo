@@ -38,6 +38,9 @@ export type WelcomeHead =
 
 export const NO_WELCOME_HEAD = { kind: "none" } as const satisfies WelcomeHead
 
+/** 画面が表示した挨拶の1行として受け取る文の上限（文字）。運ぶための素朴な上限で、形は {@link isWelcomeGreetingLine} が見る。 */
+export const MAX_SHOWN_WELCOME_GREETING_LENGTH = 200
+
 /** 先頭の札があればその名前を差し込んだ文、無ければ札なしの文。 */
 export function welcomeGreetingLine(greeting: WelcomeGreeting, head: WelcomeHead): ReactionLine {
   return {
@@ -47,4 +50,28 @@ export function welcomeGreetingLine(greeting: WelcomeGreeting, head: WelcomeHead
         : greeting.withoutCard,
     expression: greeting.expression,
   }
+}
+
+/**
+ * その1行が、この挨拶から {@link welcomeGreetingLine} で組める文か。
+ * 札なしの文そのものか、札ありの文の差し込み口に空でない名前を差し込んだ文で、表情も挨拶のものに限る。
+ */
+export function isWelcomeGreetingLine(greeting: WelcomeGreeting, line: ReactionLine): boolean {
+  if (line.expression !== greeting.expression) {
+    return false
+  }
+  if (line.text === greeting.withoutCard) {
+    return true
+  }
+  const mark = greeting.withCard.indexOf(WELCOME_GREETING_CARD_MARK)
+  if (mark < 0) {
+    return false
+  }
+  const before = greeting.withCard.slice(0, mark)
+  const after = greeting.withCard.slice(mark + WELCOME_GREETING_CARD_MARK.length)
+  return (
+    line.text.length > before.length + after.length &&
+    line.text.startsWith(before) &&
+    line.text.endsWith(after)
+  )
 }

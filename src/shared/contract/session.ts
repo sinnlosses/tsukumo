@@ -4,8 +4,10 @@
 import { z } from "zod"
 
 import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../character-pack/character.ts"
+import { EXPRESSIONS } from "../character-pack/expression.ts"
 import { commandBase, EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../command.ts"
 import { FRAME_ERROR_REASON } from "../frame.ts"
+import { MAX_SHOWN_WELCOME_GREETING_LENGTH } from "../recommendation/welcome-greeting.ts"
 import { answerSchema } from "../session-driver/pending-ask.ts"
 import {
   MAX_PROMPT_IMAGE_DATA_URL_LENGTH,
@@ -81,6 +83,17 @@ export const sessionContract = {
     idleTurn: FRAME_ERROR_REASON.nudgeDuringTurn,
     restarts: false,
   }),
+  /**
+   * 画面が表示した迎えの挨拶の1行を、記録に積むよう渡す。
+   * 挨拶の文は札の名前を差し込んで画面が組むので、記録の文も画面から受け取る。
+   * いまの挨拶から組めない文・挨拶を出していない間に届いた文は断る（`welcomeGreetingNotShown`）。
+   */
+  recordWelcomeGreeting: commandBase.input(
+    z.object({
+      text: z.string().min(1).max(MAX_SHOWN_WELCOME_GREETING_LENGTH),
+      expression: z.enum(EXPRESSIONS),
+    }),
+  ),
   /** キャラクターパックを切り替える（駆動の起こし直し）。 */
   switchCharacter: commandBase
     .meta({ chatOnly: false, idleTurn: FRAME_ERROR_REASON.switchDuringTurn, restarts: true })

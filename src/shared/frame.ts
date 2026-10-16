@@ -18,7 +18,7 @@ import type { SessionState } from "./session/session-state.ts"
  * コマンドの形を変えたときも上げる。
  * 同じ `/ws` に乗るので、形の違うタブとプロセスの組はコマンドが1件も通らなくなる（知らせで読み込み直してもらう）。
  */
-export const PROTOCOL_VERSION = 51
+export const PROTOCOL_VERSION = 52
 
 /**
  * 配っているものを取り直す先。
@@ -76,6 +76,7 @@ export const FRAME_ERROR_REASON = {
   achievementReflectionWriting:
     "いま日記を書いている最中は、ほかの日を振り返れない（書き終わると頼める）",
   achievementReflectionUnavailable: "その日の成果が読めない、または振り返る成果が無い",
+  welcomeGreetingNotShown: "いま出している迎えの挨拶から組める文ではない",
 } as const
 
 /** 受け取ったフレームの封筒だけを確かめるスキーマ。`state` と `events[].event` は「オブジェクトであること」までしか見ない。 */

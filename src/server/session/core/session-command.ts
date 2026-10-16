@@ -9,12 +9,16 @@ import {
 import type { CommandInputs } from "../../../shared/command.ts"
 import type { PromptRouting, sessionContract } from "../../../shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
+import type { ReactionLine } from "../../../shared/recommendation/reaction.ts"
+import { isWelcomeGreetingLine } from "../../../shared/recommendation/welcome-greeting.ts"
 import {
   BUILTIN_SESSION_DEFAULT,
   type SessionDefault,
 } from "../../../shared/session/session-default.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { isWelcomeGreetingRecorded } from "../../../shared/session/session-fold.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
+import { greetingOnShow } from "../../../shared/session/shown-reaction.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
 import type { DiaryDayTask } from "../../diary/core/diary-tool.ts"
 import type { DiaryWriteRequest, DiaryWriterSource } from "../../diary/core/diary-writer.ts"
@@ -100,6 +104,10 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
     nudge: {
       kind: "session",
       receive: (_input, session) => nudge(session.driver()),
+    },
+    recordWelcomeGreeting: {
+      kind: "session",
+      receive: (input, session) => recordWelcomeGreeting(input, session),
     },
     // 雑談かどうかは切り替えをまたいで保つ（パックを変えただけで仕事へ戻らない）。
     // 画面から名前が届いた唯一の口なので、ここで選んだパックだけが次の起動の初期値になる。
@@ -194,6 +202,26 @@ function promptOpening(routing: PromptRouting, state: SessionState): PromptOpeni
   return routing === "aside-when-background" && !state.chatMode && state.backgroundTasks.length > 0
     ? "aside"
     : "request"
+}
+
+/** 表示した迎えの挨拶を、いまの挨拶から組める文で、記録の文と違うときだけ `welcome-greeting-shown` で流す。 */
+function recordWelcomeGreeting(
+  line: ReactionLine,
+  session: CommandSession,
+): Promise<DispatchResult> {
+  const state = session.state()
+  const onShow = greetingOnShow(state)
+  if (onShow.kind !== "shown" || !isWelcomeGreetingLine(onShow.greeting, line)) {
+    return declined(FRAME_ERROR_REASON.welcomeGreetingNotShown)
+  }
+  if (isWelcomeGreetingRecorded(state, line)) {
+    return Promise.resolve(ACCEPTED)
+  }
+  session.generation().emit({
+    kind: "welcome-greeting-shown",
+    line: { text: line.text, expression: line.expression },
+  })
+  return Promise.resolve(ACCEPTED)
 }
 
 /** 駆動へ1件頼む行（駆動が起き上がるのを待ってから `ask` を呼ぶ）。 */

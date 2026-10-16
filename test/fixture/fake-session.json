@@ -6611,6 +6611,54 @@
           }
         }
       ]
+    },
+    {
+      "name": "welcome-greeting",
+      "steps": [
+        { "afterMs": 0, "event": { "kind": "conversation-cleared" } },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "welcome-greeting-changed",
+            "state": {
+              "kind": "written",
+              "greeting": {
+                "withCard": "架空の挨拶、{札} からどう？",
+                "withoutCard": "架空の挨拶。",
+                "expression": "excited"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "welcome-greeting-cleared",
+      "steps": [
+        {
+          "afterMs": 100,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        },
+        { "afterMs": 100, "event": { "kind": "conversation-cleared" } },
+        {
+          "afterMs": 100,
+          "event": { "kind": "welcome-greeting-changed", "state": { "kind": "writing" } }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "welcome-greeting-changed",
+            "state": {
+              "kind": "written",
+              "greeting": {
+                "withCard": "架空の書き直した挨拶、{札} はどう？",
+                "withoutCard": "架空の書き直した挨拶。",
+                "expression": "curious"
+              }
+            }
+          }
+        }
+      ]
     }
   ],
   "pastSessions": [

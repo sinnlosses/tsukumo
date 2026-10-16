@@ -9,7 +9,7 @@ import type { CharacterInfo, CharacterPackEntry } from "../character-pack/charac
 import type { Expression } from "../character-pack/expression.ts"
 import type { EffortLevel, PermissionMode } from "../command.ts"
 import type { DiaryEvent } from "../diary/diary.ts"
-import type { WrittenReactions } from "../recommendation/reaction.ts"
+import type { ReactionLine, WrittenReactions } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
@@ -373,6 +373,11 @@ export type SessionEvent =
    * `writing` → `written` または `unwritten` の順に流れる。
    */
   | { readonly kind: "welcome-greeting-changed"; readonly state: WelcomeGreetingState }
+  /**
+   * 画面が迎えの挨拶を表示した、またはその文が札で変わった（出し手はコマンド `recordWelcomeGreeting`）。
+   * `line` はいまの挨拶から組める文であることを、受けた側が確かめてから流す（`isWelcomeGreetingLine`）。
+   */
+  | { readonly kind: "welcome-greeting-shown"; readonly line: ReactionLine }
   /**
    * 反応の行が書けた（代を起こすたびに1回、書けたときだけ。`/clear` では流れない。出し手はサーバの迎えの書き手 `createWelcomeGreeter`）。
    */

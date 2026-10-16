@@ -418,14 +418,25 @@ describe("shownReaction", () => {
       expect(shown(stateAfter([WRITING]), HEAD)).toBe("writing")
     })
 
-    it("書けていて札があれば、先頭の札の名前を差し込んだ文と挨拶の表情を、積んだ迎えの記録の時刻で出す", () => {
-      const reaction = shownReaction(stateAfter([WRITING, GREETED]), HEAD, 0)
+    it("書けていて札があれば、先頭の札の名前を差し込んだ文と挨拶の表情を、表示して積んだ迎えの記録の時刻で出す", () => {
+      const reaction = shownReaction(
+        stateAfter([
+          WRITING,
+          GREETED,
+          {
+            kind: "welcome-greeting-shown",
+            line: { text: "架空の挨拶、T-1 からどう？", expression: "curious" },
+          },
+        ]),
+        HEAD,
+        0,
+      )
 
       expect(reaction).toEqual({
         kind: "shown",
         reaction: "welcome",
         line: { text: "架空の挨拶、T-1 からどう？", expression: "curious" },
-        time: { kind: "stamped", at: 1 },
+        time: { kind: "stamped", at: 2 },
       })
     })
 

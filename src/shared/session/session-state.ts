@@ -923,6 +923,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "reactions-written":
       return { ...state, writtenReactions: { kind: "written", reactions: event.reactions } }
     case "waiting-line-due":
+    case "welcome-greeting-shown":
       return state
     case "sessions-changed":
       // `sessionId` もここで決まる（`session-info` は最初の依頼まで届かないので、それまで「いまどのセッションに居るか」を言えるのはこの経路だけ）。

@@ -13,6 +13,7 @@
 import type { ReactionKind, ReactionLine, WrittenReactionKind } from "../recommendation/reaction.ts"
 import {
   NO_WELCOME_HEAD,
+  type WelcomeGreeting,
   type WelcomeHead,
   welcomeGreetingLine,
 } from "../recommendation/welcome-greeting.ts"
@@ -32,6 +33,11 @@ export type ShownReaction =
       readonly time: RecordTime
     }
 
+/** 迎える局面で吹き出しに出している迎えの挨拶。続きから起こした直後のおかえりは含めない。 */
+export type GreetingOnShow =
+  | { readonly kind: "none" }
+  | { readonly kind: "shown"; readonly greeting: WelcomeGreeting }
+
 type UntimedReaction =
   | Exclude<ShownReaction, { readonly kind: "shown" }>
   | { readonly kind: "shown"; readonly reaction: ReactionKind; readonly line: ReactionLine }
@@ -43,6 +49,7 @@ const NO_SHOWN_REACTION = { kind: "none" } as const satisfies ShownReaction
 const WRITING_REACTION = { kind: "writing" } as const satisfies ShownReaction
 const NO_WAITING_LINE = { kind: "none" } as const satisfies ReportWaitingLine
 const UNKNOWN_TIME = { kind: "restored" } as const satisfies RecordTime
+const NO_GREETING_ON_SHOW = { kind: "none" } as const satisfies GreetingOnShow
 
 /**
  * `head` は迎える口の先頭の札で、迎えの挨拶の名指しに使う。
@@ -53,6 +60,14 @@ export function shownReaction(state: SessionState, head: WelcomeHead, now: numbe
   return reaction.kind === "shown"
     ? { ...reaction, time: reactionTime(state, reaction.reaction) }
     : reaction
+}
+
+/** いま吹き出しが迎えの挨拶（札で文が変わるもの）を出しているなら、その挨拶。 */
+export function greetingOnShow(state: SessionState): GreetingOnShow {
+  const { welcomeGreeting } = state
+  return welcomeGreeting.kind === "written" && isGreeting(state)
+    ? { kind: "shown", greeting: welcomeGreeting.greeting }
+    : NO_GREETING_ON_SHOW
 }
 
 /**
@@ -222,7 +237,7 @@ function reactionKindOf(
   }
   switch (conversationMoment(state)) {
     case "greet":
-      return state.speeches.length === 0 ? "welcome" : "none"
+      return isGreeting(state) ? "welcome" : "none"
     case "work":
     case "ask":
       return state.turn.kind === "running" && !state.speechCalledInTurn ? "accepted" : "none"
@@ -236,6 +251,17 @@ function reactionKindOf(
       return dueAt !== undefined && now >= dueAt ? "idle" : "none"
     }
   }
+}
+
+/** 迎える局面で、吹き出しが迎えの挨拶を出す姿か（ほかの反応にも `speak` にも譲っていない）。 */
+function isGreeting(state: SessionState): boolean {
+  return (
+    !state.chatMode &&
+    state.character !== undefined &&
+    state.apiTrouble.kind !== "retrying" &&
+    conversationMoment(state) === "greet" &&
+    state.speeches.length === 0
+  )
 }
 
 function isRequestRecord(

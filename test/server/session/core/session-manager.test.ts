@@ -431,6 +431,60 @@ describe("createSessionManager", () => {
     }
   })
 
+  it("起こし直したあとの迎えの挨拶は、前の代の挨拶の記録を残さず新しい1件で積む", async () => {
+    const stubs: StubDriver[] = []
+    const manager = createSessionManager({
+      launchSession: (onEvent) => {
+        const stub = createStubDriver()
+        stub.attach(onEvent)
+        stubs.push(stub)
+        return Promise.resolve(stub.driver)
+      },
+    })
+    const greeted = (withoutCard: string): SessionEvent => ({
+      kind: "welcome-greeting-changed",
+      state: {
+        kind: "written",
+        greeting: { withCard: "架空の挨拶、{札} からどう？", withoutCard, expression: "curious" },
+      },
+    })
+    const welcomeTexts = (): readonly string[] =>
+      manager.commandSession
+        .state()
+        .records.flatMap((record) =>
+          record.kind === "reaction" && record.reaction === "welcome" ? [record.text] : [],
+        )
+
+    stubs[0]?.emit(CHARACTER_EVENT)
+    stubs[0]?.emit(greeted("前の代の架空の挨拶"))
+    await waitForBatch()
+    await manager.commands.session.recordWelcomeGreeting({
+      text: "前の代の架空の挨拶",
+      expression: "curious",
+    })
+    await waitForBatch()
+    expect(welcomeTexts()).toEqual(["前の代の架空の挨拶"])
+
+    await manager.commands.session.switchCharacter({ name: "fictional" })
+    stubs[1]?.emit(CHARACTER_EVENT)
+    stubs[1]?.emit(greeted("次の代の架空の挨拶"))
+    await waitForBatch()
+
+    expect(
+      await manager.commands.session.recordWelcomeGreeting({
+        text: "前の代の架空の挨拶",
+        expression: "curious",
+      }),
+    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.welcomeGreetingNotShown })
+    await manager.commands.session.recordWelcomeGreeting({
+      text: "架空の挨拶、T-1 からどう？",
+      expression: "curious",
+    })
+    await waitForBatch()
+
+    expect(welcomeTexts()).toEqual(["架空の挨拶、T-1 からどう？"])
+  })
+
   it("起こし直しの間に新しい駆動が流したイベントは、新しい hello より先に配らない", async () => {
     // 起き上がりに時間がかかる駆動（本物の claude は起動に数秒かかる）。その間に
     // `chat-mode-changed` などが先に流れると、ブラウザは前のセッションの姿のまま雑談へ

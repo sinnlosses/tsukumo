@@ -8,6 +8,7 @@ import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../../../src/shared/character-pa
 import { MAX_PERSONA_BODY_LENGTH } from "../../../src/shared/character-pack/persona-section.ts"
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../src/shared/chat/persona-memory.ts"
 import { MAX_PROMPT_TEXT_LENGTH } from "../../../src/shared/contract/session.ts"
+import { MAX_SHOWN_WELCOME_GREETING_LENGTH } from "../../../src/shared/recommendation/welcome-greeting.ts"
 import { commandContract } from "../../../src/shared/rpc.ts"
 import {
   MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH,
@@ -127,6 +128,27 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
   it("session.reflectAchievement は YYYY-MM-DD の形でない日付を拒む", () => {
     expect(parseInput("session.reflectAchievement", { date: "9/23" })).toBeUndefined()
     expect(parseInput("session.reflectAchievement", { date: "" })).toBeUndefined()
+  })
+
+  it("session.recordWelcomeGreeting は上限までの文と知っている表情を受け付ける", () => {
+    const text = "あ".repeat(MAX_SHOWN_WELCOME_GREETING_LENGTH)
+    expect(parseInput("session.recordWelcomeGreeting", { text, expression: "curious" })).toEqual({
+      text,
+      expression: "curious",
+    })
+  })
+
+  it("session.recordWelcomeGreeting は空・上限超えの文と知らない表情を拒む", () => {
+    const tooLong = "あ".repeat(MAX_SHOWN_WELCOME_GREETING_LENGTH + 1)
+    expect(
+      parseInput("session.recordWelcomeGreeting", { text: "", expression: "curious" }),
+    ).toBeUndefined()
+    expect(
+      parseInput("session.recordWelcomeGreeting", { text: tooLong, expression: "curious" }),
+    ).toBeUndefined()
+    expect(
+      parseInput("session.recordWelcomeGreeting", { text: "架空の挨拶", expression: "架空の顔" }),
+    ).toBeUndefined()
   })
 })
 

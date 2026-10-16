@@ -810,6 +810,65 @@ describe("createCommandRouter（session）", () => {
       })
     })
   })
+
+  describe("表示した迎えの挨拶を記録に積ませる（session.recordWelcomeGreeting）", () => {
+    const GREETED = {
+      kind: "welcome-greeting-changed",
+      state: {
+        kind: "written",
+        greeting: {
+          withCard: "架空の挨拶、{札} からどう？",
+          withoutCard: "架空の挨拶だけ",
+          expression: "curious",
+        },
+      },
+    } as const satisfies SessionEvent
+
+    const WITH_CARD = { text: "架空の挨拶、T-1 からどう？", expression: "curious" } as const
+
+    function startGreeting() {
+      const router = startRouter()
+      router.observe(characterChangedEvent())
+      router.observe(GREETED)
+      return router
+    }
+
+    it("いまの挨拶から組める文なら welcome-greeting-shown を流す", async () => {
+      const { commands, emitted } = startGreeting()
+
+      expect(await commands.session.recordWelcomeGreeting(WITH_CARD)).toEqual({ ok: true })
+
+      expect(emitted).toEqual([{ kind: "welcome-greeting-shown", line: WITH_CARD }])
+    })
+
+    it("記録と同じ文なら、受け付けても流さない", async () => {
+      const { commands, emitted } = startGreeting()
+
+      await commands.session.recordWelcomeGreeting(WITH_CARD)
+      expect(await commands.session.recordWelcomeGreeting(WITH_CARD)).toEqual({ ok: true })
+
+      expect(emitted).toHaveLength(1)
+    })
+
+    it.each([
+      ["組めない文", { text: "架空の別の文", expression: "curious" }, []],
+      ["挨拶と違う表情", { text: "架空の挨拶だけ", expression: "sad" }, []],
+      ["依頼のあと（迎えの挨拶を出していない）", WITH_CARD, [REQUEST_EVENT]],
+    ] satisfies readonly (readonly [
+      string,
+      { readonly text: string; readonly expression: "curious" | "sad" },
+      readonly SessionEvent[],
+    ])[])("%sは断って流さない", async (_, line, before) => {
+      const { commands, emitted, observe } = startGreeting()
+      before.forEach(observe)
+
+      expect(await commands.session.recordWelcomeGreeting(line)).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.welcomeGreetingNotShown,
+      })
+      expect(emitted).toEqual([])
+    })
+  })
 })
 
 describe("createCommandRouter（characterPack）", () => {

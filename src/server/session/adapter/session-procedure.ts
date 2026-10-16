@@ -37,6 +37,12 @@ export function sessionProcedure(ports: SessionCommandPorts) {
     nudge: procedure.nudge.handler(({ input, context, errors }) =>
       refusedUnlessAccepted(receiveSessionCommand(table.nudge, input, context.session), errors),
     ),
+    recordWelcomeGreeting: procedure.recordWelcomeGreeting.handler(({ input, context, errors }) =>
+      refusedUnlessAccepted(
+        receiveSessionCommand(table.recordWelcomeGreeting, input, context.session),
+        errors,
+      ),
+    ),
     switchCharacter: procedure.switchCharacter.handler(({ input, context, errors }) =>
       refusedUnlessAccepted(
         receiveSessionCommand(table.switchCharacter, input, context.session),
