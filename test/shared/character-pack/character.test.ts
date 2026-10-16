@@ -180,7 +180,7 @@ describe("toCharacterInfo", () => {
   })
 })
 
-describe("effectiveAccent（雑談中に切り替える accent。docs/architecture/screen-design.md 13.2「雑談中は」）", () => {
+describe("effectiveAccent（雑談中に切り替える accent。docs/architecture/screen-design.md 13.2「雑談中の会話の画面では」）", () => {
   it("仕事中は accent のまま", () => {
     expect(
       effectiveAccent(characterInfo({ accent: "#6fe3cd", chatAccent: "#f2984a" }), false),

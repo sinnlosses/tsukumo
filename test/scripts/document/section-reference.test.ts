@@ -100,7 +100,7 @@ describe("findStrayReferences", () => {
 
   function straysOf(phrase: string, targetPath: string = DISPLAY): string[] {
     return findStrayReferences(
-      [{ sourcePath: "src/sample.ts", line: 1, targetPath, phrase }],
+      [{ sourcePath: "src/sample.ts", line: 1, targetPath, section: undefined, phrase }],
       targets,
     ).map(formatStrayReference)
   }
@@ -127,6 +127,55 @@ describe("findStrayReferences", () => {
 
   test("参照先のファイルが無ければ、そのことを添えて迷子にする", () => {
     expect(straysOf("何か", GONE)).toEqual([`src/sample.ts:1: ${GONE}「何か」（参照先が無い）`])
+  })
+
+  describe("節番号つき", () => {
+    const numbered = new Map([
+      [
+        DISPLAY,
+        [
+          "### 4.8 別の節",
+          "覚えたこと は別の節の本文にだけある",
+          "### 4.9 雑談モード",
+          "本文の語 はここ",
+          "#### プロフィールの書き戻し",
+          "```",
+          "### 4.10 コードブロックの中",
+          "```",
+          "### 4.10 次の節",
+        ].join("\n"),
+      ],
+    ])
+
+    function numberedStraysOf(section: string | undefined, phrase: string): string[] {
+      return findStrayReferences(
+        [{ sourcePath: "src/sample.ts", line: 1, targetPath: DISPLAY, section, phrase }],
+        numbered,
+      ).map((stray) => stray.phrase)
+    }
+
+    test("句が番号の節の見出しにあれば迷子にしない（下位の見出しも節に含む）", () => {
+      expect(numberedStraysOf("4.9", "雑談モード")).toEqual([])
+      expect(numberedStraysOf("4.9", "プロフィールの書き戻し")).toEqual([])
+    })
+
+    test("本文中の語を指す正当な言い方は迷子にしない", () => {
+      expect(numberedStraysOf("4.9", "本文の語")).toEqual([])
+    })
+
+    test("句がファイルにあっても、番号の節の外なら迷子にする", () => {
+      expect(numberedStraysOf("4.9", "覚えたこと")).toEqual(["覚えたこと"])
+    })
+
+    test("コードブロックの中の # 行は見出しにしない", () => {
+      expect(numberedStraysOf("4.9", "次の節")).toEqual(["次の節"])
+      expect(numberedStraysOf("4.10", "次の節")).toEqual([])
+    })
+
+    test("番号に当たる見出しが無い・番号が無い参照は、ファイル全体で照らす", () => {
+      expect(numberedStraysOf("9.9", "覚えたこと")).toEqual([])
+      expect(numberedStraysOf(undefined, "覚えたこと")).toEqual([])
+    })
   })
 })
 

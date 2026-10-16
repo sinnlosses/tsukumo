@@ -136,7 +136,7 @@ characters/
   表情名（`default` などの英語）がそのままラベルになる。**立ち絵が無くてもラベルがあれば
   `speak` で選べる**（絵は `default` に落ちる）
 - **`accent` はキャラクターの色**（吹き出し・選ばれたタブなど画面全体に効く）
-- **`chatAccent` は雑談中だけの `accent`**（`docs/architecture/screen-design.md` 13.2「雑談中は」/ 13.7）。
+- **`chatAccent` は雑談中だけの `accent`**（`docs/architecture/screen-design.md` 13.2「雑談中の会話の画面では」/ 13.7）。
   **書かなくてよい**——無ければ雑談中も `accent` のまま（仕事と同じ差し色）。仕事中は効かない。
   新しいつまみではなく、`accent` の枠がモードに応じて別の値を取るだけ
 - **`portraits` は「あるものだけ」でよい。** 見つからない表情は `default` に落ちる。

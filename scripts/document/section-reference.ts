@@ -13,7 +13,8 @@
 // 外だけ。句を探す相手からは `docs/history/` だけを外す（`docs/research/` は正典から引かれる）。
 //
 // 照合は「参照先のファイルに句が含まれるか」で、見出しに限らない（本文の句を引く正当な参照が
-// 多いため）。行の折り返し・空白・バッククォート・`` の有無の違いは両側から除いて比べる。
+// 多いため）。節番号が付いていて、参照先にその番号の見出しがあるときは、その節（下位の見出しと
+// 本文を含む）の中に句があるかで照らす。行の折り返し・空白・バッククォート・`` の有無の違いは両側から除いて比べる。
 //
 // 「」の無い素のパス（`docs/` 以下の `.md`）は、句を照らせないのでファイルの実在だけを照らす。
 // こちらは `docs/history/` を指すものも照らす。
@@ -26,6 +27,8 @@ export type SectionReference = {
   readonly line: number
   /** 引いている先（`docs/architecture/display.md` / `CLAUDE.md` の形）。 */
   readonly targetPath: string
+  /** 句の前に書かれた節番号（`4.9` / `7`）。番号の無い参照、`原則4` は `undefined`。 */
+  readonly section: string | undefined
   /** 「」の中身（行をまたいでいたら、継続行のコメント記号と字下げを除いて繋いだもの）。 */
   readonly phrase: string
 }
@@ -60,11 +63,11 @@ const UNSCANNED_PREFIXES = [
 // （`docs/research/`）も含む。`CLAUDE.md` は直前が `/` や英数字でないもの（別の場所の CLAUDE.md を
 // 指していない）だけ。
 const REFERENCE_HEAD =
-  /(?<![\w/.-])((?:docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|CLAUDE)\.md)`?[ \t]*(?:(?:\d+(?:\.\d+)*章?|原則\d+)[ \t]*)?の?[ \t]*「/gu
+  /(?<![\w/.-])((?:docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|CLAUDE)\.md)`?[ \t]*(?:(?:(\d+(?:\.\d+)*)章?|原則\d+)[ \t]*)?の?[ \t]*「/gu
 
 // 上と同じ頭だが、「 が無いまま行が終わる形。「 の開きそのものが次の行にある参照を拾うために使う。
 const REFERENCE_HEAD_WITHOUT_BRACKET =
-  /(?<![\w/.-])((?:docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|CLAUDE)\.md)`?[ \t]*(?:(?:\d+(?:\.\d+)*章?|原則\d+)[ \t]*)?の?[ \t]*$/u
+  /(?<![\w/.-])((?:docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|CLAUDE)\.md)`?[ \t]*(?:(?:(\d+(?:\.\d+)*)章?|原則\d+)[ \t]*)?の?[ \t]*$/u
 
 // `docs/` 以下の `.md` のパス。直前が `/` や英数字のもの（URL や別のリポジトリの中のパス）は拾わない。
 const FILE_PATH = /(?<![\w/.-])docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*\.md(?![\w-])/gu
@@ -96,6 +99,7 @@ export function findSectionReferences(sourcePath: string, text: string): Section
         sourcePath,
         index + 1,
         match[1],
+        match[2],
         lineText.slice(match.index + match[0].length),
         lines.slice(index + 1, index + 1 + MAX_CONTINUATION_LINES),
       ),
@@ -112,15 +116,17 @@ export function findStrayReferences(
   references: readonly SectionReference[],
   targets: ReadonlyMap<string, string>,
 ): StrayReference[] {
-  const normalizedTargets = new Map(
-    [...targets].map(([path, text]) => [path, normalizeForMatch(text)] as const),
-  )
   return references.flatMap((reference): StrayReference[] => {
-    const target = normalizedTargets.get(reference.targetPath)
-    if (target === undefined) {
+    const targetText = targets.get(reference.targetPath)
+    if (targetText === undefined) {
       return [{ ...reference, targetMissing: true }]
     }
-    return target.includes(normalizeForMatch(withoutTrailingEllipsis(reference.phrase)))
+    const phrase = normalizeForMatch(withoutTrailingEllipsis(reference.phrase))
+    const scope =
+      reference.section === undefined
+        ? undefined
+        : readNumberedSection(targetText, reference.section)
+    return normalizeForMatch(scope ?? targetText).includes(phrase)
       ? []
       : [{ ...reference, targetMissing: false }]
   })
@@ -187,6 +193,7 @@ function findReferenceAcrossLineBreak(
     sourcePath,
     index + 1,
     match[1],
+    match[2],
     strippedNextLine.slice("「".length),
     lines.slice(index + 2, index + 2 + MAX_CONTINUATION_LINES),
   )
@@ -197,6 +204,7 @@ function toReference(
   sourcePath: string,
   line: number,
   targetPath: string | undefined,
+  section: string | undefined,
   afterOpen: string,
   continuation: readonly string[],
 ): SectionReference[] {
@@ -207,7 +215,7 @@ function toReference(
   if (phrase === undefined || phrase.length === 0) {
     return []
   }
-  return [{ sourcePath, line, targetPath, phrase }]
+  return [{ sourcePath, line, targetPath, section, phrase }]
 }
 
 function isRecord(path: string): boolean {
@@ -250,6 +258,28 @@ function findClosingBracket(text: string): number | undefined {
     { depth: 1, offset: 0, at: undefined },
   )
   return found.at
+}
+
+/**
+ * 番号つきの見出し（`### 4.9 …`）から、同じ深さ以上の次の見出しの手前までの本文を返す
+ * （下位の見出しを含む）。その番号の見出しが無ければ `undefined`。コードブロック内の行は見出しにしない。
+ */
+function readNumberedSection(text: string, section: string): string | undefined {
+  const heading = new RegExp(`^(#{1,6}) ${section.replaceAll(".", "\\.")}[ .章]`, "u")
+  const lines = text.split("\n")
+  const outsideFences = text
+    .replace(/^```[\s\S]*?^```$/gmu, (block) => block.replace(/[^\n]/gu, ""))
+    .split("\n")
+  const start = outsideFences.findIndex((line) => heading.test(line))
+  if (start < 0) {
+    return undefined
+  }
+  const level = (outsideFences[start] ?? "").match(/^#+/u)?.[0].length ?? 1
+  const end = outsideFences.findIndex(
+    (line, index) =>
+      index > start && /^#{1,6} /u.test(line) && (line.match(/^#+/u)?.[0].length ?? 7) <= level,
+  )
+  return lines.slice(start, end < 0 ? undefined : end).join("\n")
 }
 
 /** 句の末尾の「…」（後ろを略した印）を外す。略した句は前半だけで照らす。 */
