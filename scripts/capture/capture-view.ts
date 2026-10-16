@@ -44,7 +44,7 @@ import { readFakeSession } from "../../src/server/session-driver/adapter/fake-dr
 import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../shared/capture-clock.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
-import { applyPreparations, openPage } from "./lib/capture-page.ts"
+import { applyPreparations, openPage, settlePage } from "./lib/capture-page.ts"
 import {
   describePreparation,
   PREPARATION_OPTIONS,
@@ -54,6 +54,12 @@ import {
 import { type Source, sourceOf } from "./lib/capture-source.ts"
 import { launchFakeScene } from "./lib/fake-scene-launch.ts"
 import { sceneBlockKinds } from "./lib/scene-catalog.ts"
+import {
+  type SceneEventWatch,
+  sceneEndTarget,
+  sceneEventTimeoutMs,
+  watchSceneEvents,
+} from "./lib/scene-end.ts"
 
 /** 既定の窓の大きさ。実機の目視で使ってきた値に揃えてある。 */
 const DEFAULT_WIDTH = 1400
@@ -212,8 +218,23 @@ async function capture(
         : page.clock.install({ time: options.clock }))
       await page.addInitScript(TEMPORAL_FOLLOWS_DATE_SCRIPT)
     }
+    // 接続は遷移の途中で開くので、フレームを数え始めるのは遷移より前。
+    const watch = watchSceneEvents(page)
     await openPage(page, url)
-    await page.waitForTimeout(500)
+
+    const sceneFailure = await waitForSceneEnd(watch, options.source)
+    if (sceneFailure !== undefined) {
+      process.stderr.write(`${sceneFailure}\n`)
+      return 1
+    }
+    const settleFailure = await settlePage(page).then(
+      () => undefined,
+      (error: unknown) => (error instanceof Error ? error.message : String(error)),
+    )
+    if (settleFailure !== undefined) {
+      process.stderr.write(`${settleFailure}\n`)
+      return 1
+    }
 
     if (options.waitFor !== undefined && !(await waitForRevealSettled(page, options.waitFor))) {
       process.stderr.write(`現れなかった: ${options.waitFor}（${String(WAIT_FOR_TIMEOUT_MS)}ms）\n`)
@@ -247,6 +268,37 @@ async function capture(
     return 0
   } finally {
     await browser.close()
+  }
+}
+
+/**
+ * `--scene` で起こした場面の最後の手（`--until-step` があればその手）が画面へ届くまで待つ。
+ * URL を渡された撮影は疑似セッションではないので待たない。待てなければ理由を返す。
+ */
+async function waitForSceneEnd(
+  watch: SceneEventWatch,
+  source: Source,
+): Promise<string | undefined> {
+  if (source.kind !== "scene") {
+    return undefined
+  }
+  const reading = readFakeSession()
+  if (reading.kind === "unreadable") {
+    return `test/fixture/fake-session.json が読めない: ${reading.reason}`
+  }
+  const target = sceneEndTarget(reading.session, source.scene, source.until)
+  const timeoutMs =
+    target === undefined
+      ? undefined
+      : sceneEventTimeoutMs(reading.session, source.scene, source.until, target)
+  if (target === undefined || timeoutMs === undefined) {
+    return `場面に待てる手が無い: ${source.scene}`
+  }
+  try {
+    await watch.waitFor(target, { scene: source.scene, timeoutMs })
+    return undefined
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error)
   }
 }
 

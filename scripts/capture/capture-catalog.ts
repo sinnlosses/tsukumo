@@ -43,28 +43,27 @@ import { parseArgs } from "node:util"
 
 import { type Browser, chromium, type Page } from "playwright-core"
 
-import { applyPreparations, openPage } from "./lib/capture-page.ts"
-import { describeCatalogMiss } from "./lib/capture-preparation.ts"
 import {
-  type CatalogEntry,
-  type CatalogSize,
-  CATALOG,
-  type Settle,
-  sizesOf,
-} from "./lib/catalog-entry.ts"
+  type FakeSession,
+  readFakeSession,
+} from "../../src/server/session-driver/adapter/fake-driver.ts"
+import { applyPreparations, openPage, settlePage } from "./lib/capture-page.ts"
+import { describeCatalogMiss } from "./lib/capture-preparation.ts"
+import { type CatalogEntry, type CatalogSize, CATALOG, sizesOf } from "./lib/catalog-entry.ts"
 import { indexHtml, type Shot } from "./lib/catalog-index.ts"
 import { applyHomeSetup, workspaceOf } from "./lib/catalog-setup.ts"
 import { launchFakeScene } from "./lib/fake-scene-launch.ts"
+import {
+  type SceneEventTarget,
+  type SceneEventWatch,
+  sceneEventTimeoutMs,
+  sceneWindowPlan,
+  settleSceneTarget,
+  watchSceneEvents,
+} from "./lib/scene-end.ts"
 
 /** 既定の出力先。リポジトリの外に置く（画面には会話が写るため）。 */
 const DEFAULT_OUT_DIR = "/tmp/tsukumo-catalog"
-
-/**
- * 最後の手が流れ終わるまでの余裕（ミリ秒）。場面はページが繋がってから流れ始める
- * （fake driver は最初のタブを待つ）ので、`opening`（0.2秒）とカタログの一番長い場面
- * （`turn-history` の約1.4秒）を足したものより後に撮る。
- */
-const SCENE_TAIL_MS = 2000
 
 /**
  * `settle.kind === "selector"` の件が、その要素が現れるまで待つ上限（ミリ秒）。
@@ -104,12 +103,18 @@ async function main(argv: readonly string[]): Promise<number> {
     return 2
   }
 
+  const reading = readFakeSession()
+  if (reading.kind === "unreadable") {
+    process.stderr.write(`test/fixture/fake-session.json が読めない: ${reading.reason}\n`)
+    return 1
+  }
+
   mkdirSync(options.outDir, { recursive: true })
   const browser = await chromium.launch({ channel: "chrome", headless: true })
   const shots: Shot[] = []
   try {
     for (const entry of entries) {
-      shots.push(...(await captureEntry(browser, entry, options.outDir)))
+      shots.push(...(await captureEntry(browser, entry, options.outDir, reading.session)))
     }
   } catch (error) {
     process.stderr.write(
@@ -134,6 +139,7 @@ async function captureEntry(
   browser: Browser,
   entry: CatalogEntry,
   outDir: string,
+  fakeSession: FakeSession,
 ): Promise<readonly Shot[]> {
   // `homeSetup.kind === "default"` の件は既定のホームのまま起こす（`home` は無い）。それ以外の
   // 件だけ、`--out` の下に立てた件専用のホームへ先に架空の中身を書いてから起こす。
@@ -141,17 +147,31 @@ async function captureEntry(
   if (home !== undefined) {
     await applyHomeSetup(entry.homeSetup, home)
   }
-  const session = await launchFakeScene({
-    cwd: workspaceOf(entry, outDir),
-    scene: entry.scene,
-    home,
-    extraEnv: {},
-  })
+  const launch = (): ReturnType<typeof launchFakeScene> =>
+    launchFakeScene({
+      cwd: workspaceOf(entry, outDir),
+      scene: entry.scene,
+      home,
+      extraEnv: {},
+    })
+  let session = await launch()
   try {
     const shots: Shot[] = []
     for (const size of sizesOf(entry)) {
       const file = path.join(outDir, `${entry.name}-${size.name}.png`)
-      await captureShot(browser, session.url, entry, size, file)
+      const plan = sceneWindowPlan(entry.settle, shots.length)
+      if (plan.relaunches) {
+        session.close()
+        session = await launch()
+      }
+      await captureShot(browser, session.url, entry, size, file, {
+        fakeSession,
+        waitsForScene: plan.waits,
+      }).catch((error: unknown) => {
+        throw new Error(
+          `${entry.name}（${size.name}）: ${error instanceof Error ? error.message : String(error)}`,
+        )
+      })
       process.stdout.write(`撮った: ${file}\n`)
       shots.push({ entry, size, file })
     }
@@ -167,35 +187,54 @@ async function captureShot(
   entry: CatalogEntry,
   size: CatalogSize,
   file: string,
+  scene: SceneWait,
 ): Promise<void> {
   const page = await browser.newPage({ viewport: { width: size.width, height: size.height } })
   try {
+    // 接続は遷移の途中で開くので、フレームを数え始めるのは遷移より前。
+    const watch = watchSceneEvents(page)
     await openPage(page, url)
     // 疑似セッションが流れ終わってから操作を当てる。 流れている途中で押すと、狙った状態の手前で
     // 画面が組み直されて操作が空振りする。
-    await settleScene(page, entry.settle, "before-prepare")
+    await settleScene(page, entry, size, watch, scene, "before-prepare")
     if (entry.skipReveal) {
       // `prepare` の前に演出を終わらせる（理由は `CatalogEntry` の `skipReveal` のコメント）。
       await page.keyboard.press(SKIP_REVEAL_KEY)
     }
+    // 描き直しの途中で押すと、あとから伸びる部品の分だけ狙った位置がずれる（scroll など）。
+    await settlePage(page)
     // 当てられなくても撮る。窓の大きさによっては出ていない口がある（狭い窓でしか出ないタブ）ので、
     // 当たらなかったことだけを出す。撮れた画像を見れば何が出ていないか分かる。
     for (const missed of await applyPreparations(page, entry.prepare, "continue")) {
       process.stdout.write(`${describeCatalogMiss(entry.name, size.name, missed)}\n`)
     }
-    await settleScene(page, entry.settle, "after-prepare")
+    await settleScene(page, entry, size, watch, scene, "after-prepare")
+    await settlePage(page)
     await page.screenshot({ path: file, fullPage: size.fullPage })
   } finally {
     await page.close()
   }
 }
 
-/** `selector` の要素が上限まで現れなければ throw する（撮らずに落とす）。 */
+type SceneWait = {
+  readonly fakeSession: FakeSession
+  /** この窓のページで場面が流れ終わるのを待つか（件の最初の窓だけ）。 */
+  readonly waitsForScene: boolean
+}
+
+/**
+ * `selector` の要素か、場面の終わりの手が上限まで現れなければ throw する（撮らずに落とす）。
+ * 操作の前（`before-prepare`）は、`selector` の件でなければ場面の終わりを待つ。
+ */
 async function settleScene(
   page: Page,
-  settle: Settle,
+  entry: CatalogEntry,
+  size: CatalogSize,
+  watch: SceneEventWatch,
+  scene: SceneWait,
   phase: "before-prepare" | "after-prepare",
 ): Promise<void> {
+  const { settle } = entry
   if (settle.kind === "selector" && settle.phase === phase) {
     await page
       .waitForSelector(settle.selector, { timeout: SETTLE_SELECTOR_TIMEOUT_MS })
@@ -204,9 +243,25 @@ async function settleScene(
       })
     return
   }
-  if (phase === "before-prepare") {
-    await page.waitForTimeout(SCENE_TAIL_MS)
+  if (phase === "before-prepare" && scene.waitsForScene) {
+    const target = settleTarget(entry, scene.fakeSession)
+    const timeoutMs = sceneEventTimeoutMs(scene.fakeSession, entry.scene, undefined, target)
+    if (timeoutMs === undefined) {
+      throw new Error(
+        `場面に無い手を待つ指定: ${entry.name}（${target.kind} の ${String(target.occurrence)} 件目）`,
+      )
+    }
+    await watch.waitFor(target, { scene: entry.scene, timeoutMs })
   }
+}
+
+/** 件が待つ場面の手。待てる手が場面に無ければ throw する。 */
+function settleTarget(entry: CatalogEntry, fakeSession: FakeSession): SceneEventTarget {
+  const target = settleSceneTarget(entry.settle, fakeSession, entry.scene)
+  if (target === undefined) {
+    throw new Error(`場面に待てる手が無い: ${entry.name}（場面 ${entry.scene}）`)
+  }
+  return target
 }
 
 /** 引数を読む。読めない指定は undefined（呼び出し側が使い方を出す）。 */

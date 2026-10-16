@@ -1,6 +1,7 @@
 // 状態のカタログが撮る場面の定義。ここに足すときは疑似セッションに場面を足して、
 // その名前と、撮る前に当てる操作を書く。
 
+import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { MAIN_REGION_SELECTOR } from "./capture-page.ts"
 import type { Preparation } from "./capture-preparation.ts"
 
@@ -37,19 +38,28 @@ type WorkspaceSetup =
   | { readonly kind: "task-list" }
 
 /**
- * 場面が撮れる状態まで落ち着くのを待つやり方。`tail` は固定の余裕、`selector` は要素が現れるまで。
- * `selector` は上限まで現れなければ撮らずに落とす。`phase` は `prepare` の前に待つか後に待つか
+ * 場面が撮れる状態まで落ち着くのを待つやり方。
+ * `scene-end` は、場面の最後の手が画面へ届くまで。
+ * `scene-event` は、場面の途中の状態を撮る件が、`eventKind` のイベントが `occurrence` 件目まで届くまで
+ * （数え方は `sceneEndTarget` と同じで、opening の手も数える）。
+ * `selector` は要素が現れるまで。`phase` は `prepare` の前に待つか後に待つか
  * （操作で初めて出る要素は `after-prepare`）。
+ * どれも上限まで届かなければ撮らずに落とす。
  */
 export type Settle =
-  | { readonly kind: "tail" }
+  | { readonly kind: "scene-end" }
+  | {
+      readonly kind: "scene-event"
+      readonly eventKind: SessionEvent["kind"]
+      readonly occurrence: number
+    }
   | {
       readonly kind: "selector"
       readonly selector: string
       readonly phase: "before-prepare" | "after-prepare"
     }
 
-const TAIL_SETTLE = { kind: "tail" } satisfies Settle
+const SCENE_END_SETTLE = { kind: "scene-end" } satisfies Settle
 
 /**
  * カタログの1件。`scene` は疑似セッション（test/fixture/fake-session.json）の場面の名前で、`name` は
@@ -187,7 +197,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "question-pair",
@@ -197,7 +207,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "question-long",
@@ -207,7 +217,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "question-preview",
@@ -217,7 +227,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "question-brief",
@@ -227,7 +237,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "question-preview-image",
@@ -266,7 +276,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "report",
@@ -276,7 +286,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "report-checks",
@@ -332,7 +342,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "notation",
@@ -342,7 +352,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: true,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   // 記法の見本は領域に1枚ぶんが入らない（1400x900 で 1358px のうち 855px が領域の外）。
   // 領域を伸ばして1枚にすると他の領域が重なって本番と別の姿になるので、送って複数枚に分ける。
@@ -354,7 +364,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: NOTE_KINDS_SELECTOR }],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "notation-memo",
@@ -364,7 +374,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: NOTE_MEMO_SELECTOR }],
     skipReveal: true,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "notation-favor",
@@ -375,7 +385,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "scroll", selector: NOTE_FAVOR_SELECTOR }],
     // お願いはレポートの末尾なので、図と同じく演出が終わるまで送り位置を戻され続ける。
     skipReveal: true,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "notation-figure",
@@ -387,7 +397,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     // 図はレポートの末尾に近く、演出が終わるまで自動送りに送り位置を戻され続ける（冒頭の
     // `skipReveal` の説明）。
     skipReveal: true,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "notation-chart",
@@ -397,7 +407,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: CHART_SELECTOR }],
     skipReveal: true,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "report-caption-table",
@@ -517,7 +527,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "scroll", selector: FLOW_SELECTOR }],
     skipReveal: true,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "task-board",
@@ -531,7 +541,7 @@ export const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: TASK_BOARD_SELECTOR },
     ],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "command-suggestions",
@@ -541,7 +551,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "type", selector: COMPOSER_SELECTOR, text: "/c" }],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "file-suggestions",
@@ -551,7 +561,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "type", selector: COMPOSER_SELECTOR, text: "@src/browser/" }],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "character-screen",
@@ -561,7 +571,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "hash", hash: "#character" }],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "character-create",
@@ -574,7 +584,7 @@ export const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: `[class*="character-list-new_"]` },
     ],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   // 帯の「いまの作業」の3状態（`docs/architecture/testing.md`「手で確かめること」）。どれも
   // `WORK_TOGGLE_SELECTOR` を押して一覧を開く。
@@ -588,7 +598,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "click", selector: WORK_TOGGLE_SELECTOR }],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: { kind: "scene-event", eventKind: "tool-started", occurrence: 1 },
   },
   {
     name: "current-work-failed",
@@ -603,7 +613,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "click", selector: WORK_TOGGLE_SELECTOR }],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "current-work-background",
@@ -613,7 +623,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "click", selector: WORK_TOGGLE_SELECTOR }],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: { kind: "scene-event", eventKind: "turn-finished", occurrence: 1 },
   },
   {
     name: "work-plan-running",
@@ -624,7 +634,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "click", selector: WORK_TOGGLE_SELECTOR }],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: { kind: "scene-event", eventKind: "tool-started", occurrence: 4 },
   },
   {
     name: "work-plan-delegated-trail",
@@ -639,7 +649,7 @@ export const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: WORK_TOGGLE_SELECTOR },
     ],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "work-plan-main-view",
@@ -678,7 +688,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "delegated-range-outside",
@@ -688,7 +698,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "delegated-range-trail",
@@ -698,7 +708,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "diary-book",
@@ -727,7 +737,7 @@ export const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: PORTRAIT_CLEAR_BUTTON_SELECTOR },
     ],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
   {
     name: "character-delete-confirm",
@@ -740,7 +750,7 @@ export const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: CHARACTER_DELETE_BAND_BUTTON_SELECTOR },
     ],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: SCENE_END_SETTLE,
   },
 ]
 

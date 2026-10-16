@@ -12,7 +12,7 @@ function entryOf(name: string, label: string): CatalogEntry {
     workspaceSetup: { kind: "repository" },
     prepare: [],
     skipReveal: false,
-    settle: { kind: "tail" },
+    settle: { kind: "scene-end" },
   }
 }
 

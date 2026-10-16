@@ -386,6 +386,15 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 `CatalogEntry` の `settle` がその出現まで個別に待つ。**`settle` の `selector` は上限まで
 現れなければ画像を書かず、非0で終わる**（読み込み中の画を黙って撮らない）。
 
+**撮る前の待ちは、時間ではなく印で決まる。** 場面の終わりは、画面の WebSocket が受けた `events`
+フレームに場面の最後の手の `kind` が届くまで待つ（`scripts/capture/lib/scene-end.ts`。上限は最後の手の
+`afterMs` に猶予を足して導く）。場面の途中を撮る件は、`settle` を `scene-event`（その `kind` の何件目まで）で
+指す。操作を当てる前と撮る前には、フォント・画像・終わりのある動きの完了を待ったあと、メインビュー
+（`[data-region="main"]`。立ち絵は含めない）の見た目が連続2回の撮影で一致するまで待つ
+（`settlePage`。比べる撮影は `animations: "disabled"` で、回る輪のような終わりのない動きだけを
+比べから外す）。途中の手を待つ件（`scene-event`）は、窓ごとに場面を起こし直して同じ手を待つ。印が上限まで立たなければ、
+件の名前と窓の名前を添えて失敗で終わる（途中の画を黙って撮らない）。
+
 **要素が出るまで待ってから1枚だけ撮るときは `capture-view.ts --wait-for <selector>`。**
 `capture-catalog.ts` と同じ理由（演出中の要素は現れているだけで書き上がっていない）で、
 指定した要素が出たあと `useReportReveal` の演出が終わる（`data-revealing` が消える）のも
@@ -431,8 +440,9 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 知らない場面名のとき・URL も `--scene` も無いときは、何も起こさずに理由を出して非0で終わる。
 **場面の途中の画は `--until-step <n>`（`--scene` と一緒にだけ使える）。** 場面の手を先頭から n 個で
 止めて流すので、止めた先の状態が残る（`opening` の手は数えない）。止めた先の要素は `--wait-for` で待つ。
-撮影は読み込みの1〜2秒後なので、遅い手で止めるときは `--wait-for` でその手が出す目印まで待つ
-（`--advance` はページの時計だけでサーバの手は進めない）。
+`--scene` の撮影は、止めた先（`--until-step` が無ければ場面の最後）の手が画面に届くまで待ってから、
+メインビューの静止を待って撮る。URL を渡す撮影は静止だけを待つので、遅い手で止めるときは
+`--wait-for` でその手が出す目印まで待つ（`--advance` はページの時計だけでサーバの手は進めない）。
 最終レポートまで流し切って待つときは `--wait-for '[class*="is-final_"]'`（`scripts/capture/lib/catalog-entry.ts`
 の `WORK_PLAN_FINAL_SELECTOR` と同じ。`report-head` や `--advance` で待つと中間レポートや作業中の画を撮る）。
 **割れた `report` の差し戻しと直した `report` の描画は、場面 `report-mermaid-rejected`**（疑似セッションは判定せず、場面の `tool-finished` の `isError` に従う）。
