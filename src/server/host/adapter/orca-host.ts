@@ -21,6 +21,7 @@ import { isObjectType } from "remeda"
 
 import { parseJson } from "../../../shared/utils/parse-json.ts"
 import type { Host, HostResult, ShowViewResult } from "../core/host.ts"
+import { readOrcaFailure } from "./orca-failure.ts"
 import { type OrcaTab, parseOrcaCreatedPageId, parseOrcaTabList } from "./orca-tab.ts"
 
 const ORCA_COMMAND = "orca"
@@ -176,40 +177,11 @@ function runOrca(args: readonly string[], label: string): Promise<CommandOutput>
           return
         }
 
-        resolve({ ok: false, reason: describeFailure(label, error, `${stdout}\n${stderr}`) })
+        resolve({ ok: false, reason: describeFailure(label, error, stdout, stderr) })
       },
     )
   })
 }
-
-/**
- * orca が返すエラーコードだけを取り出す。`terminal_handle_stale` のような小文字・数字・アンダースコアだけの短い1語という形に限る。
- *
- * 形で許可しているのは、会話の内容と形が違うから（日本語・空白・記号・改行を含むものは通らない）。
- * 出力を素通しにせずに、まだ表に無い失敗でも利用者が検索できる手掛かりを残すため。
- * 表（{@link KNOWN_ORCA_FAILURES}）に載ったものは日本語の説明が優先される。
- */
-function orcaErrorCode(output: string): string | undefined {
-  const trimmed = output.trim()
-  return /^[a-z][a-z0-9_]{2,40}$/.test(trimmed) ? trimmed : undefined
-}
-
-/**
- * `orca` が返す既知の失敗の印と、その日本語の説明。この表に載っているものだけを理由に出す。
- * 出力にも会話の内容が混ざりうるので、素通しにしない。
- */
-const KNOWN_ORCA_FAILURES: readonly { readonly marker: string; readonly reason: string }[] = [
-  {
-    marker: "terminal_handle_stale",
-    reason: "送信先のターミナルが見つからない（一覧が古くなっている）",
-  },
-  { marker: "Missing terminal send payload", reason: "送る中身が空" },
-  {
-    // 実測。claude が質問や確認を表示している間は、この経路では文字を入れられない。
-    marker: "agent_prompt_blocked",
-    reason: "claude が入力待ちの表示を出している間は送れない（ターミナル側で答える）",
-  },
-]
 
 /**
  * 失敗の理由を、呼び出し側が渡した固定の `label` と、失敗した事実だけで組み立てる。
@@ -218,24 +190,23 @@ const KNOWN_ORCA_FAILURES: readonly { readonly marker: string; readonly reason: 
  * これらには実行したコマンドライン全体が引数の値ごとそのまま入っており、引数に載せた値（URL の起動トークン・パス・文面）が失敗の理由に紛れ込む。
  * 安全に使えるのは終了コード（数値）だけなので、取れるときだけ添える。
  *
- * 例外は {@link KNOWN_ORCA_FAILURES} に載せた印だけで、これは orca 自身が返す固定の文言（会話の内容ではない）と分かっているものに限る。
+ * 例外は {@link readOrcaFailure} が読むエラーコードで、orca 自身が返す固定のコードの形の語だけを読む。
  * 利用者が自力で直せる失敗（一覧が古い等）を「終了コード 1」とだけ伝えても手の打ちようがないため。
+ * 表に載ったコードは日本語の説明になり、載っていないコードは検索の手掛かりとして語だけを添える。
  */
-function describeFailure(label: string, error: unknown, output: string): string {
+function describeFailure(label: string, error: unknown, stdout: string, stderr: string): string {
   // 捕まえた例外は Error の実体（`node:child_process` が投げる）なので、`isPlainObject` では弾かれる。
   // prototype を問わない `isObjectType` で見て、`code` があるときだけ読む。
   if (isObjectType(error) && "code" in error && error.code === "ENOENT") {
     return `${ORCA_COMMAND} コマンドが見つからない`
   }
 
-  const known = KNOWN_ORCA_FAILURES.find((failure) => output.includes(failure.marker))
-  if (known !== undefined) {
-    return known.reason
+  const failure = readOrcaFailure(stdout, stderr)
+  if (failure.kind === "known") {
+    return failure.reason
   }
-
-  const code = orcaErrorCode(output)
-  if (code !== undefined) {
-    return `${ORCA_COMMAND} ${label} が失敗した（${code}）`
+  if (failure.kind === "code") {
+    return `${ORCA_COMMAND} ${label} が失敗した（${failure.code}）`
   }
 
   const exitCode =
