@@ -8,10 +8,22 @@ import {
   CHAT_TOPIC_LIMIT,
   chatConsolidationQuery,
   chatEpisodeDrafts,
-  parseChatConsolidationResult,
+  CHAT_SYNOPSIS_RESERVED_TAGS,
+  parseChatConsolidationResult as parseResult,
   readChatTopics,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
+import { asidePromptText } from "../../../../src/server/session-driver/core/aside-prompt.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { fixedChatSummary, inMemoryChatSummary } from "../../../fixture/chat.ts"
+
+/** 前のあらすじが無い回として検査する。前のあらすじとの比べを見るテストだけが第3引数を渡す。 */
+function parseChatConsolidationResult(
+  value: unknown,
+  lineCount: number,
+  previousSynopsis = "",
+): ReturnType<typeof parseResult> {
+  return parseResult(value, lineCount, previousSynopsis)
+}
 
 // `queryChatConsolidation` 自体（本物の `query()` を起こす部分）は
 // claude を子プロセスで起こすので、ここではテストしない。
@@ -125,6 +137,7 @@ describe("chatConsolidationQuery", () => {
       required: ["episodes", "synopsis", "topics"],
       properties: {
         episodes: { type: "array", minItems: 1 },
+        synopsis: { type: "string", minLength: 1, maxLength: CHAT_MEMORY_BUDGET.synopsisBytes },
         topics: { type: "array", maxItems: CHAT_CONSOLIDATION_LIMITS.topicsMax },
       },
     })
@@ -230,6 +243,66 @@ describe("parseChatConsolidationResult", () => {
     ).toBeUndefined()
   })
 
+  it("synopsis は空・空白だけだと undefined。前後の空白は落とす", () => {
+    expect(parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: "" }, 4)).toBeUndefined()
+    expect(parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: " \n " }, 4)).toBeUndefined()
+    expect(
+      parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: "  架空の地の文\n" }, 4)?.synopsis,
+    ).toBe("架空の地の文")
+  })
+
+  it("synopsis は synopsisBytes（UTF-8）を超えると undefined。ちょうどは通る", () => {
+    const limit = CHAT_MEMORY_BUDGET.synopsisBytes
+    expect(
+      parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: "a".repeat(limit) }, 4),
+    ).toBeDefined()
+    expect(
+      parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: "a".repeat(limit + 1) }, 4),
+    ).toBeUndefined()
+    // 文字数は上限未満でも、3バイト文字でバイト数が超える。
+    expect(
+      parseChatConsolidationResult(
+        { ...VALID_OUTPUT, synopsis: "あ".repeat(Math.floor(limit / 3) + 1) },
+        4,
+      ),
+    ).toBeUndefined()
+  })
+
+  it("synopsis に予約タグが含まれると undefined", () => {
+    for (const tag of CHAT_SYNOPSIS_RESERVED_TAGS) {
+      expect(
+        parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: `架空の前${tag}架空の後` }, 4),
+      ).toBeUndefined()
+    }
+  })
+
+  it("予約タグは、脇の話の包み・委譲の引き継ぎの頭・古い話題の組を網羅する", () => {
+    const tags: readonly string[] = CHAT_SYNOPSIS_RESERVED_TAGS
+    const [asideOpen = "", ...asideRest] = asidePromptText("架空").split("架空")
+    const asideClose = asideRest.join("").trim()
+    expect(tags).toContain(asideOpen.trim())
+    expect(tags).toContain(asideClose)
+    // 引き継ぎの頭は adapter の非公開の定数で、公開の振る舞いから取れない。リテラルで照らすので、向こうの変更は検知できない。
+    expect(tags).toContain("<agent-message")
+    expect(tags).toContain("<topics>")
+    expect(tags).toContain("</topics>")
+  })
+
+  it("synopsis が前のあらすじの半分未満に縮むと undefined。前のあらすじが短いときは比べない", () => {
+    const previous = "あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars)
+    const half = "あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars / 2)
+    expect(
+      parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: half }, 4, previous),
+    ).toBeDefined()
+    expect(
+      parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: half.slice(1) }, 4, previous),
+    ).toBeUndefined()
+    const short = "あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars - 1)
+    expect(
+      parseChatConsolidationResult({ ...VALID_OUTPUT, synopsis: "あ" }, 4, short),
+    ).toBeDefined()
+  })
+
   it("topics は上限件数・上限文字数を超えると undefined。0件は許す", () => {
     expect(
       parseChatConsolidationResult(
@@ -273,6 +346,49 @@ describe("chatEpisodeDrafts", () => {
         weight: 1,
       },
     ])
+  })
+})
+
+describe("chatEpisodeDrafts の weight の上限", () => {
+  const at = (minute: number): string => `2026-09-20T10:0${String(minute)}:00+09:00`
+  const work: ChatUnconsolidatedEntry["origin"] = { mode: "work", project: "架空の案件" }
+  const chat: ChatUnconsolidatedEntry["origin"] = { mode: "chat" }
+  const line = (minute: number, origin: ChatUnconsolidatedEntry["origin"]) =>
+    ({ at: at(minute), kind: "request", origin, text: "架空" }) satisfies ChatUnconsolidatedEntry
+  const episode = (end: number, weight: 1 | 2 | 3) => ({
+    end,
+    title: "架空",
+    gist: "架空",
+    cues: ["架空"],
+    weight,
+  })
+  const weights = (
+    entries: readonly ChatUnconsolidatedEntry[],
+    episodes: readonly ReturnType<typeof episode>[],
+  ): readonly number[] => chatEpisodeDrafts(entries, episodes).map((draft) => draft.weight)
+
+  it("仕事の行だけの範囲の 3 は 2 に下げる。1 と 2 は変えない", () => {
+    const entries = [line(0, work), line(1, work)]
+    expect(weights(entries, [episode(2, 3)])).toEqual([2])
+    expect(weights(entries, [episode(2, 2)])).toEqual([2])
+    expect(weights(entries, [episode(2, 1)])).toEqual([1])
+  })
+
+  it("範囲の端が雑談の行なら 3 のまま。範囲が1行でも同じ", () => {
+    expect(weights([line(0, chat), line(1, work)], [episode(2, 3)])).toEqual([3])
+    expect(weights([line(0, work), line(1, chat)], [episode(2, 3)])).toEqual([3])
+    expect(weights([line(0, chat)], [episode(1, 3)])).toEqual([3])
+    expect(weights([line(0, work)], [episode(1, 3)])).toEqual([2])
+  })
+
+  it("エピソードごとに自分の範囲だけを見る（隣のエピソードの雑談の行は数えない）", () => {
+    const entries = [line(0, chat), line(1, work), line(2, work)]
+    expect(weights(entries, [episode(1, 3), episode(3, 3)])).toEqual([3, 2])
+  })
+
+  it("範囲が行の外・行が空なら、そのエピソードは飛ばす", () => {
+    expect(weights([line(0, work)], [episode(5, 3)])).toEqual([])
+    expect(weights([], [episode(1, 3)])).toEqual([])
   })
 })
 

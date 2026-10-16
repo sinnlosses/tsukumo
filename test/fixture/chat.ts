@@ -27,7 +27,7 @@ export function fixedChatSummary(record: ChatSummaryRecord | undefined): ChatSum
   return {
     read: () => record,
     readTopics: () => [],
-    write: () => true,
+    write: () => ({ kind: "written", droppedLines: 0 }),
     markUndelivered: () => {},
     markDelivered: () => {},
   }
@@ -43,7 +43,7 @@ export function inMemoryChatSummary(initial: ChatSummaryRecord | undefined): Cha
     write: (summary, nextTopics) => {
       record = { summary, delivered: record?.delivered ?? false }
       topics = nextTopics
-      return true
+      return { kind: "written", droppedLines: 0 }
     },
     markUndelivered: () => {
       record = { summary: record?.summary ?? "", delivered: false }

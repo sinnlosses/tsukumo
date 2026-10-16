@@ -578,7 +578,7 @@ describe("createSessionManager", () => {
       stub.emit(TURN_FINISHED)
       expect(consolidation.calls).toHaveLength(1)
 
-      consolidation.finish({ kind: "written", topics: ["架空の話題"] })
+      consolidation.finish({ kind: "written", topics: ["架空の話題"], droppedLines: 0 })
       await waitForBatch()
       // 書けたら、書いたファイルから取った見出しを流す。
       expect(topicEvents(frames)).toEqual([{ kind: "chat-topics-changed", topics: ["架空の話題"] }])
@@ -647,6 +647,30 @@ describe("createSessionManager", () => {
       expect(JSON.stringify(entries)).not.toContain("架空の失敗文")
     })
 
+    it("あらすじの古い行を落として書けたときだけ、落とした行数を診断ログへ書く", async () => {
+      const entries: DiagnosticEntry[] = []
+      const consolidation = createManualConsolidation()
+      const { stub } = startChatManagerWithStub({
+        chatConsolidation: consolidation.source,
+        diagnosticLog: {
+          append: (appended) => entries.push(...appended),
+          readRange: () => [],
+        },
+      })
+      stub.emit(CHARACTER_EVENT)
+
+      stub.emit(TURN_FINISHED)
+      consolidation.finish({ kind: "written", topics: [], droppedLines: 0 })
+      await waitForBatch()
+      stub.emit(TURN_FINISHED)
+      consolidation.finish({ kind: "written", topics: [], droppedLines: 3 })
+      await waitForBatch()
+
+      expect(entries.filter((entry) => entry.flow === "synopsis-trim")).toEqual([
+        { flow: "synopsis-trim", at: 1_000, droppedLines: 3 },
+      ])
+    })
+
     it("定着の口が拒否しても、失敗として記録して次のターンの終わりでまた起こす", async () => {
       const entries: DiagnosticEntry[] = []
       const calls: string[] = []
@@ -684,7 +708,7 @@ describe("createSessionManager", () => {
 
       stub.emit(TURN_FINISHED)
       stub.emit(characterChangedEvent({ pack: "another-fictional" }))
-      consolidation.finish({ kind: "written", topics: ["架空の話題"] })
+      consolidation.finish({ kind: "written", topics: ["架空の話題"], droppedLines: 0 })
       await waitForBatch()
 
       expect(topicEvents(frames)).toEqual([])
@@ -703,7 +727,7 @@ describe("createSessionManager", () => {
 
       expect(consolidation.calls.map((call) => call.packName)).toEqual(["fictional"])
 
-      consolidation.finish({ kind: "written", topics: ["架空の話題"] })
+      consolidation.finish({ kind: "written", topics: ["架空の話題"], droppedLines: 0 })
       await waitForBatch()
 
       expect(topicEvents(frames)).toEqual([])

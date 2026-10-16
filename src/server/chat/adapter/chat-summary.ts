@@ -47,7 +47,7 @@ export function createChatSummary(packName: string, root: string = chatSummaryDi
     return {
       read: () => undefined,
       readTopics: () => [],
-      write: () => false,
+      write: () => ({ kind: "failed" }),
       markUndelivered: () => {},
       markDelivered: () => {},
     }
@@ -58,11 +58,17 @@ export function createChatSummary(packName: string, root: string = chatSummaryDi
   return {
     read: () => readRecord(path, topicsPath),
     readTopics: () => readTopics(path, topicsPath),
-    write: (summary, topics) =>
-      writeRecord(path, {
-        summary: truncatedSummary(summary),
-        delivered: readRaw(path)?.delivered ?? false,
-      }) && writeTopics(topicsPath, topics),
+    write: (summary, topics) => {
+      const truncated = truncatedSummary(summary)
+      const written =
+        writeRecord(path, {
+          summary: truncated.text,
+          delivered: readRaw(path)?.delivered ?? false,
+        }) && writeTopics(topicsPath, topics)
+      return written
+        ? { kind: "written", droppedLines: truncated.droppedLines }
+        : { kind: "failed" }
+    },
     markUndelivered: () => {
       rewriteMark(path, false)
     },
@@ -217,18 +223,22 @@ function writeRecord(path: string, record: ChatSummaryRecord): boolean {
  * 1行だけで印を除いた残りの上限を超えるとき（改行が無い）は、その1行をそのまま残す。
  * 空にする（＝要約ごと消える）よりも、上限を少し超えるほうを選ぶ。
  */
-function truncatedSummary(summary: string): string {
+function truncatedSummary(summary: string): {
+  readonly text: string
+  readonly droppedLines: number
+} {
   // 印の行の分（マークの長さ + 改行1つ）を引いた残りが本文の予算。
   // 渡し済み・未渡しのどちらで書かれるかは呼び出し側が決めるので、長いほう（`UNDELIVERED_MARK`）で見積もっておけば、あとで印だけ書き換えても超えない。
   const markBudget = byteLength(UNDELIVERED_MARK) + 1
   const budget = CHAT_SUMMARY_LIMIT_BYTES - markBudget
+  const lines = summary.split("\n")
   if (budget <= 0) {
-    return ""
+    return { text: "", droppedLines: lines.length }
   }
 
   const kept: string[] = []
   let usedBytes = 0
-  for (const line of [...summary.split("\n")].reverse()) {
+  for (const line of [...lines].reverse()) {
     const separatorBytes = kept.length > 0 ? 1 : 0
     const lineBytes = byteLength(line) + separatorBytes
     if (kept.length > 0 && usedBytes + lineBytes > budget) {
@@ -238,5 +248,5 @@ function truncatedSummary(summary: string): string {
     usedBytes += lineBytes
   }
 
-  return kept.join("\n")
+  return { text: kept.join("\n"), droppedLines: lines.length - kept.length }
 }

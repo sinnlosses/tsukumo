@@ -6,7 +6,10 @@ import type {
   ChatUnconsolidatedLimits,
 } from "../../../../src/server/chat/core/chat-archive-port.ts"
 import { createChatConsolidationWriter } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
-import type { ChatConsolidationQuery } from "../../../../src/server/chat/core/chat-consolidation.ts"
+import {
+  CHAT_CONSOLIDATION_LIMITS,
+  type ChatConsolidationQuery,
+} from "../../../../src/server/chat/core/chat-consolidation.ts"
 import type { ChatSummary } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 
@@ -57,6 +60,7 @@ function createPorts(
   query: (request: ChatConsolidationQuery, signal: AbortSignal) => Promise<unknown>,
   lockAvailable: boolean = true,
   summaryWritable: boolean = true,
+  droppedLines: number = 0,
 ) {
   const order: string[] = []
   const lockEvents: string[] = []
@@ -73,7 +77,7 @@ function createPorts(
       order.push("write-summary")
       summary = next
       topics = nextTopics
-      return summaryWritable
+      return summaryWritable ? { kind: "written", droppedLines } : { kind: "failed" }
     },
     markUndelivered: () => {},
     markDelivered: () => {},
@@ -119,6 +123,9 @@ function createPorts(
     queries,
     summaryPacks,
     summary: () => summary,
+    setSummary: (next: string) => {
+      summary = next
+    },
     topics: () => topics,
   }
 }
@@ -210,8 +217,17 @@ describe("createChatConsolidationWriter", () => {
 
     const outcome = await ports.write("fictional", NEVER_ABORTED)
 
-    expect(outcome).toEqual({ kind: "written", topics: ["架空の話題1"] })
+    expect(outcome).toEqual({ kind: "written", topics: ["架空の話題1"], droppedLines: 0 })
     expect(ports.queries).toHaveLength(1)
+  })
+
+  it("写しが上限のために落とした行数を written に載せる", async () => {
+    const ports = createPorts(DUE_BATCH, () => Promise.resolve(VALID_OUTPUT), true, true, 7)
+
+    expect(await ports.write("fictional", NEVER_ABORTED)).toMatchObject({
+      kind: "written",
+      droppedLines: 7,
+    })
   })
 
   it("届いていれば、前のあらすじ（話題の見出しを除く）と直前の見出しを渡し、エピソード → あらすじの順に書いて、書いたファイルの話題を返す", async () => {
@@ -219,7 +235,11 @@ describe("createChatConsolidationWriter", () => {
 
     const outcome = await ports.write("fictional", NEVER_ABORTED)
 
-    expect(outcome).toEqual({ kind: "written", topics: ["架空の話題1", "架空の話題2"] })
+    expect(outcome).toEqual({
+      kind: "written",
+      topics: ["架空の話題1", "架空の話題2"],
+      droppedLines: 0,
+    })
     const prompt = ports.queries[0]?.prompt ?? ""
     expect(prompt).toContain("架空の前のあらすじ")
     expect(prompt).toContain("架空の直前の見出し")
@@ -254,6 +274,19 @@ describe("createChatConsolidationWriter", () => {
     })
     expect(ports.order).toEqual([])
     expect(ports.summary()).toBe(PREVIOUS_SUMMARY)
+  })
+
+  it("あらすじが空・予約タグ入り・前のあらすじから極端に縮んだときは unreadable-result で、何も書かない", async () => {
+    for (const synopsis of ["", "架空<tsukumo-aside>架空", "あ"]) {
+      const ports = createPorts(DUE_BATCH, () => Promise.resolve({ ...VALID_OUTPUT, synopsis }))
+      ports.setSummary("あ".repeat(CHAT_CONSOLIDATION_LIMITS.gistChars))
+
+      expect(await ports.write("fictional", NEVER_ABORTED)).toEqual({
+        kind: "failed",
+        reason: "unreadable-result",
+      })
+      expect(ports.order).toEqual([])
+    }
   })
 
   it("query() が reject したときは threw で例外を運び、索引にもあらすじにも書かない", async () => {

@@ -139,6 +139,15 @@ describe("createDiagnosticLog", () => {
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([writing])
   })
 
+  it("あらすじの古い行を落としたこと（synopsis-trim）も往復する", () => {
+    const log = createDiagnosticLog(root())
+    const trim: DiagnosticEntry = { flow: "synopsis-trim", at: at(10, 0), droppedLines: 4 }
+
+    log.append([trim])
+
+    expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([trim])
+  })
+
   it("壊れた行・版が違う行・知らない種類の行は読み飛ばす", () => {
     const path = join(root(), "2026-09-22.jsonl")
     mkdirSync(root(), { recursive: true })

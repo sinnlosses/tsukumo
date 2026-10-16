@@ -44,15 +44,20 @@ export type ChatSummary = {
   /**
    * 定着が書き直したあらすじの本文と、最近の話題の見出し（新しい順）を上書きする。
    * 印は変えない（ファイルが無ければ「未渡し」で書く）。
-   * 書けたら true、書けなかったら false（例外は投げない）。
+   * 書けたかどうかと、書くときに上限で落とした古い行の数を返す（例外は投げない）。
    * 定着はどのプロセスのどちらのモードのターンからも走り、畳んだ会話を文脈に持っているセッションが決まらないため。
    */
-  readonly write: (summary: string, topics: readonly string[]) => boolean
+  readonly write: (summary: string, topics: readonly string[]) => ChatSummaryWriteResult
   /** 印を「未渡し」に戻す（`/clear` を見たとき）。 */
   readonly markUndelivered: () => void
   /** 印を「渡し済み」にする（読んで `systemPrompt` へ載せたとき）。 */
   readonly markDelivered: () => void
 }
+
+/** {@link ChatSummary.write} の結果。`droppedLines` は上限に収めるために落とした本文の行数（収まれば 0）。 */
+export type ChatSummaryWriteResult =
+  | { readonly kind: "failed" }
+  | { readonly kind: "written"; readonly droppedLines: number }
 
 /** {@link ChatSummary.read} が返す1件。`delivered` が写しの1行目の印。 */
 export type ChatSummaryRecord = {

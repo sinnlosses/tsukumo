@@ -6,6 +6,8 @@
 //
 import { isPlainObject } from "remeda"
 
+import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
+import { byteLength } from "../../../shared/utils/byte-length.ts"
 import type { ChatSummary } from "../../session-driver/core/session-driver.ts"
 import type { ChatEpisodeDraft, ChatUnconsolidatedEntry } from "./chat-archive-port.ts"
 import { chatLineText } from "./chat-memory-prompt.ts"
@@ -37,7 +39,24 @@ export const CHAT_CONSOLIDATION_LIMITS = {
   topicsMax: 3,
   /** 話題の見出し1件の上限（文字）。 */
   topicChars: 40,
+  /**
+   * 前のあらすじに対して、書き直したあらすじが最低限残すバイト数の割合。
+   * 書き直しは「前のあらすじ＋新しい会話」の再要約なので、半分を切るのは一部が丸ごと落ちた形とみなす。
+   */
+  synopsisKeepRatio: 0.5,
 } satisfies Readonly<Record<string, number>>
+
+/**
+ * 注入文の包みの印。あらすじに含まれていたら拒む。
+ * `<topics>` は話題を本文に埋め込んでいた古い形、`<tsukumo-aside>` は脇の話の包み、`<agent-message` は委譲の引き継ぎの頭。
+ */
+export const CHAT_SYNOPSIS_RESERVED_TAGS = [
+  "<topics>",
+  "</topics>",
+  "<tsukumo-aside>",
+  "</tsukumo-aside>",
+  "<agent-message",
+] as const
 
 /** 前のあらすじ・直前のエピソードの見出しが無い（空文字の）ときに置く文面。 */
 const NONE = "（なし）"
@@ -77,14 +96,15 @@ export const CHAT_CONSOLIDATION_INSTRUCTION = `あなたは、窓から溢れた
 
 ## 大事さ（weight）の目安
 
-- **3**: 約束・頼まれた覚えごと・キャラクター自身に関わる決め事
+- **3**: 約束・頼まれた覚えごと・キャラクター自身に関わる決め事（仕事の行（\`[仕事: …]\`）だけのまとまりは 3 にならず、2 に下げられる）
 - **2**: 中身のある話題
 - **1**: 挨拶と相槌
 
 ## あらすじ（synopsis）
 
 渡された「前のあらすじ」（無ければ空から）と、いま区切ったエピソードを踏まえて、あらすじの本文を
-書き直す。空文字でもよい。**話題の見出しはここに書かない**（\`topics\` に書くので、ここには
+書き直す。空にしない。${String(CHAT_MEMORY_BUDGET.synopsisBytes)}バイト（UTF-8）までで、前のあらすじの半分より短くしない（古い話の筋を落としすぎない）。
+\`<\` で始まる印の類は書かない。**話題の見出しはここに書かない**（\`topics\` に書くので、ここには
 あらすじの地の文だけを書く）。ここでも発言を引用しない。
 
 ## 話題の見出し（topics）
@@ -144,11 +164,12 @@ export function chatConsolidationQuery(
  *
  * - 形: `episodes` が1件以上の配列で、各要素の `title` / `gist` / `cues` / `weight` が {@link CHAT_CONSOLIDATION_LIMITS} に収まる
  * - 区切り: `end` が前のエピソードより大きく、最後のエピソードの `end` が `lineCount` と一致（渡した行をすべて、切れ目なくどれかのエピソードに含めている）
- * - `synopsis` は文字列（空文字も許す）。`topics` は0〜{@link CHAT_CONSOLIDATION_LIMITS.topicsMax}件、各{@link CHAT_CONSOLIDATION_LIMITS.topicChars}字まで
+ * - `synopsis` は空でなく、{@link CHAT_MEMORY_BUDGET.synopsisBytes} バイト以下で、{@link CHAT_SYNOPSIS_RESERVED_TAGS} を含まず、前のあらすじ（{@link CHAT_CONSOLIDATION_LIMITS.gistChars} 字以上のとき）の {@link CHAT_CONSOLIDATION_LIMITS.synopsisKeepRatio} 倍未満に縮んでいない。`topics` は0〜{@link CHAT_CONSOLIDATION_LIMITS.topicsMax}件、各{@link CHAT_CONSOLIDATION_LIMITS.topicChars}字まで
  */
 export function parseChatConsolidationResult(
   value: unknown,
   lineCount: number,
+  previousSynopsis: string,
 ): ChatConsolidationResult | undefined {
   if (
     !isPlainObject(value) ||
@@ -156,6 +177,11 @@ export function parseChatConsolidationResult(
     typeof value.synopsis !== "string" ||
     !Array.isArray(value.topics)
   ) {
+    return undefined
+  }
+
+  const synopsis = value.synopsis.trim()
+  if (!isAcceptableSynopsis(synopsis, previousSynopsis)) {
     return undefined
   }
 
@@ -175,7 +201,7 @@ export function parseChatConsolidationResult(
     return undefined
   }
 
-  return { episodes, synopsis: value.synopsis, topics }
+  return { episodes, synopsis, topics }
 }
 
 /**
@@ -183,6 +209,7 @@ export function parseChatConsolidationResult(
  *
  * {@link parseChatConsolidationResult} が `entries.length` を `lineCount` として検査を通した `episodes` を渡す前提（区切りが切れ目なく `entries` を覆っている）。
  * 前提が崩れているときは、変換できないエピソードを飛ばす（例外を投げない）。
+ * 行範囲に雑談の行が無いエピソードの weight 3 は 2 に下げる（約束を機械で決められる欄は元の行に無く、仕事だけの範囲は雑談の覚えごとに当たらない）。
  */
 export function chatEpisodeDrafts(
   entries: readonly ChatUnconsolidatedEntry[],
@@ -201,7 +228,7 @@ export function chatEpisodeDrafts(
         title: episode.title,
         gist: episode.gist,
         cues: episode.cues,
-        weight: episode.weight,
+        weight: cappedWeight(episode.weight, entries.slice(start, endIndex + 1)),
       })
     }
     start = endIndex + 1
@@ -276,7 +303,7 @@ function chatConsolidationSchema(): Readonly<Record<string, unknown>> {
           additionalProperties: false,
         },
       },
-      synopsis: { type: "string" },
+      synopsis: { type: "string", minLength: 1, maxLength: CHAT_MEMORY_BUDGET.synopsisBytes },
       topics: {
         type: "array",
         maxItems: CHAT_CONSOLIDATION_LIMITS.topicsMax,
@@ -286,6 +313,29 @@ function chatConsolidationSchema(): Readonly<Record<string, unknown>> {
     required: ["episodes", "synopsis", "topics"],
     additionalProperties: false,
   }
+}
+
+function cappedWeight(weight: 1 | 2 | 3, range: readonly ChatUnconsolidatedEntry[]): 1 | 2 | 3 {
+  return weight === 3 && !range.some((entry) => entry.origin.mode === "chat") ? 2 : weight
+}
+
+/**
+ * 前後の空白を落としたあらすじが、形の検査を通るか。
+ * 中身の意味は見ない（空・長さ・決まった印の含有・前のあらすじからの縮みだけ）。
+ */
+function isAcceptableSynopsis(synopsis: string, previousSynopsis: string): boolean {
+  if (synopsis === "" || CHAT_SYNOPSIS_RESERVED_TAGS.some((tag) => synopsis.includes(tag))) {
+    return false
+  }
+  const bytes = byteLength(synopsis)
+  if (bytes > CHAT_MEMORY_BUDGET.synopsisBytes) {
+    return false
+  }
+  const previous = previousSynopsis.trim()
+  return (
+    [...previous].length < CHAT_CONSOLIDATION_LIMITS.gistChars ||
+    bytes >= byteLength(previous) * CHAT_CONSOLIDATION_LIMITS.synopsisKeepRatio
+  )
 }
 
 /** `episodes` の1件を検査して畳む（崩れていたら `undefined`）。 */

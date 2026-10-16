@@ -145,6 +145,9 @@ function line(entry: DiagnosticEntry): string {
   if (entry.flow === "welcome-writing") {
     return `${when}  ${entry.flow}  ${entry.target}  ${entry.outcome}  ${String(entry.durationMs)}ms  ${entry.attempts.map(attemptLabel).join(" ")}`
   }
+  if (entry.flow === "synopsis-trim") {
+    return `${when}  ${entry.flow}  ${String(entry.droppedLines)}行`
+  }
   if (entry.flow === "session-event") {
     return `${when}  ${entry.flow}  代${String(entry.generation)}  ${entry.kind}`
   }

@@ -27,7 +27,7 @@ import {
  *
  * - `not-due`: 未定着の行が契機（`consolidateEveryBytes`）に届いていないので起こさなかった
  * - `locked`: ほかのプロセスが錠を持っているので起こさなかった（その契機は捨てる）
- * - `written`: 書けた。`topics` は書いたあとのファイルから読み直した最近の話題の見出し
+ * - `written`: 書けた。`topics` は書いたあとのファイルから読み直した最近の話題の見出し、`droppedLines` は上限に収めるために落としたあらすじの行数
  * - `failed`: 書けなかった。次の契機で拾い直す。`reason` で見分ける
  *   - `aborted`: 中断・時間切れ
  *   - `unreadable-result`: 結果が検査を通らない
@@ -37,7 +37,11 @@ import {
 export type ChatConsolidationOutcome =
   | { readonly kind: "not-due" }
   | { readonly kind: "locked" }
-  | { readonly kind: "written"; readonly topics: readonly string[] }
+  | {
+      readonly kind: "written"
+      readonly topics: readonly string[]
+      readonly droppedLines: number
+    }
   | { readonly kind: "failed"; readonly reason: "aborted" | "unreadable-result" | "summary-write" }
   | { readonly kind: "failed"; readonly reason: "threw"; readonly error: unknown }
 
@@ -139,14 +143,16 @@ async function consolidateLocked(
     }
 
     const chatSummary = ports.chatSummary(packName)
+    const previousSynopsis = chatSummary.read()?.summary ?? ""
     const request = chatConsolidationQuery({
       entries: batch.entries,
-      previousSynopsis: chatSummary.read()?.summary ?? "",
+      previousSynopsis,
       previousEpisodeTitle: batch.previousEpisodeTitle,
     })
     const result = parseChatConsolidationResult(
       await ports.query(request, signal),
       batch.entries.length,
+      previousSynopsis,
     )
     // 中断・時間切れのあとに届いた結果は書かない（呼び出し側はもう次の1本を起こしうる）。
     if (signal.aborted) {
@@ -157,10 +163,15 @@ async function consolidateLocked(
     }
 
     ports.archive.appendEpisodes(packName, chatEpisodeDrafts(batch.entries, result.episodes))
-    if (!chatSummary.write(result.synopsis, result.topics)) {
+    const written = chatSummary.write(result.synopsis, result.topics)
+    if (written.kind === "failed") {
       return { kind: "failed", reason: "summary-write" }
     }
-    return { kind: "written", topics: readChatTopics(chatSummary) }
+    return {
+      kind: "written",
+      topics: readChatTopics(chatSummary),
+      droppedLines: written.droppedLines,
+    }
   } catch (error) {
     return signal.aborted ? ABORTED : { kind: "failed", reason: "threw", error }
   }

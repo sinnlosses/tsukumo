@@ -465,6 +465,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
             ),
           )
         }
+        if (outcome.kind === "written" && outcome.droppedLines > 0) {
+          diagnostic.add({
+            flow: "synopsis-trim",
+            at: options.now(),
+            droppedLines: outcome.droppedLines,
+          })
+        }
         if (
           outcome.kind === "written" &&
           !closed &&

@@ -35,12 +35,12 @@ describe("createChatSummary", () => {
 
   it("write は書けたかどうかを返す", () => {
     const chatSummary = createChatSummary("fictional-pack", root())
-    expect(chatSummary.write(SUMMARY, [])).toBe(true)
+    expect(chatSummary.write(SUMMARY, [])).toEqual({ kind: "written", droppedLines: 0 })
 
     writeFileSync(join(dir(), "blocked"), "")
-    expect(createChatSummary("fictional-pack", join(dir(), "blocked")).write(SUMMARY, [])).toBe(
-      false,
-    )
+    expect(createChatSummary("fictional-pack", join(dir(), "blocked")).write(SUMMARY, [])).toEqual({
+      kind: "failed",
+    })
   })
 
   it("write は印を変えない（「渡し済み」も「未渡し」もそのまま）", () => {
@@ -151,11 +151,11 @@ describe("createChatSummary", () => {
       expect(chatSummary.readTopics()).toEqual(["架空の見出し"])
     })
 
-    it("見出しのファイルだけ書けなかったときは false を返し、本文は書き直されている", () => {
+    it("見出しのファイルだけ書けなかったときは failed を返し、本文は書き直されている", () => {
       const chatSummary = createChatSummary("fictional-pack", root())
       mkdirSync(join(root(), "fictional-pack.topics.json"), { recursive: true })
 
-      expect(chatSummary.write(SUMMARY, ["架空の見出し"])).toBe(false)
+      expect(chatSummary.write(SUMMARY, ["架空の見出し"])).toEqual({ kind: "failed" })
 
       expect(chatSummary.read()?.summary).toBe(SUMMARY)
     })
@@ -280,7 +280,7 @@ describe("createChatSummary", () => {
       const summary = lines.join("\n")
       expect(byteLength(summary)).toBeGreaterThan(CHAT_SUMMARY_LIMIT_BYTES)
 
-      chatSummary.write(summary, [])
+      const result = chatSummary.write(summary, [])
       const record = chatSummary.read()
       expect(record).toBeDefined()
       const kept = record?.summary.split("\n") ?? []
@@ -288,6 +288,7 @@ describe("createChatSummary", () => {
       // 残ったのは末尾（新しいほう）の連続した行で、1件も途中で切られていない。
       expect(kept.length).toBeGreaterThan(0)
       expect(kept.length).toBeLessThan(lines.length)
+      expect(result).toEqual({ kind: "written", droppedLines: lines.length - kept.length })
       expect(lines.slice(lines.length - kept.length)).toEqual(kept)
 
       // ファイル全体（印の行を含む）が上限に収まっている。
@@ -299,9 +300,10 @@ describe("createChatSummary", () => {
       const chatSummary = createChatSummary("fictional-pack", root())
       const hugeSingleLine = "あ".repeat(6000) // 1文字3バイトなので 18,000 バイト超
 
-      chatSummary.write(hugeSingleLine, [])
+      const result = chatSummary.write(hugeSingleLine, [])
       const record = chatSummary.read()
 
+      expect(result).toEqual({ kind: "written", droppedLines: 0 })
       expect(record).toBeDefined()
       expect(record?.summary).not.toBe("")
       expect(record?.summary).toBe(hugeSingleLine)
