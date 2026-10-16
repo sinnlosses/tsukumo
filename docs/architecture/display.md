@@ -921,7 +921,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 - **claude へ送る文面は `<tsukumo-aside>` の包みに入れる**。claude は包みで脇の話と分かり、組み直し
   （`src/server/session-driver/core/session-restore.ts`）は transcript の `user` の包みを見て `aside` に戻す。
   判定を transcript に残る形にしたのは、組み直すときにはバックグラウンドタスクの顔ぶれが分からないため。組み直しでは、
-  `<task-notification>` だけの `user` メッセージで続きのターンを区切り、委譲の続きのセリフを脇の話の答えに混ぜない
+  バックグラウンドタスクの知らせ（`origin.kind` が `task-notification`）の `user` メッセージで続きのターンを区切り、委譲の続きのセリフを脇の話の答えに混ぜない
 - **答えは `speak` で受け、`report` は求めない**。脇の話のターン（`aside` から、次の依頼・続きのターン・ターンの終わりまで）の
   セリフには `answersAside` の印を付け、メインビューは脇の話とその後ろの印の付いたセリフを対にする。答えは吹き出しと、
   親の札の脇の話の欄（上の「各表示物」のメインビュー。届いた位置の、いちばん下に足す）に出る。条は `WORK_PLAN_PROMPT` の「脇の話」の項で、包まれた言葉には

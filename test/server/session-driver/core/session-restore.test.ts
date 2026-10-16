@@ -37,6 +37,11 @@ function stamped(message: unknown, timestamp: string): unknown {
   return Object.assign({}, message, { timestamp })
 }
 
+/** `getSessionMessages` がメッセージに載せる出自の欄（`is_meta`・`origin`・`isCompletedLocalCommand`）を足す。 */
+function withFields(message: unknown, fields: Readonly<Record<string, unknown>>): unknown {
+  return Object.assign({}, message, fields)
+}
+
 describe("toRestoredEvents", () => {
   it("組み直せたものが無ければ空", () => {
     expect(toRestoredEvents([null, { type: "user" }], EXPRESSIONS)).toEqual([])
@@ -370,17 +375,67 @@ describe("toRestoredEvents", () => {
     ])
   })
 
-  it("仕掛けが差し込んだ塊だけの user メッセージは依頼として起こさない", () => {
+  it("仕掛けが欄を付けて差し込んだ user メッセージは依頼として起こさない", () => {
     const messages = [
-      userMessage("<task-notification>\n<task-id>架空のID</task-id>\n</task-notification>"),
-      userMessage("<local-command-caveat>架空の断り書き</local-command-caveat>"),
-      userMessage('<agent-message from="架空のエージェント">架空の伝言</agent-message>'),
+      withFields(userMessage("<local-command-caveat>架空の断り書き</local-command-caveat>"), {
+        is_meta: true,
+      }),
+      withFields(
+        userMessage('<agent-message from="架空のエージェント">架空の伝言</agent-message>'),
+        {
+          is_meta: true,
+          origin: { kind: "peer", from: "架空のID" },
+        },
+      ),
       userMessage([{ type: "text", text: "架空の依頼" }]),
     ]
 
     expect(eventsOf(messages)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "turn-finished", outcome: { kind: "completed" } },
+    ])
+  })
+
+  it("is_meta が付いていれば、知らないタグの塊でも依頼として起こさない", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      withFields(userMessage("<架空の新しいタグ>架空の差し込み</架空の新しいタグ>"), {
+        is_meta: true,
+      }),
+    ]
+
+    expect(eventsOf(messages).map((event) => event.kind)).toEqual(["request", "turn-finished"])
+  })
+
+  it("origin の kind が human でない user メッセージは、地の文でも依頼として起こさない", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      withFields(userMessage("架空の地の文"), { origin: { kind: "架空の出どころ" } }),
+    ]
+
+    expect(eventsOf(messages).map((event) => event.kind)).toEqual(["request", "turn-finished"])
+  })
+
+  it("origin の kind が human の user メッセージは依頼にする", () => {
+    const messages = [withFields(userMessage("架空の依頼"), { origin: { kind: "human" } })]
+
+    expect(eventsOf(messages)).toEqual([
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+    ])
+  })
+
+  it("origin の kind が task-notification の user メッセージは、本文によらず続きのターンを始める", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      withFields(userMessage("架空の知らせ"), { origin: { kind: "task-notification" } }),
+    ]
+
+    expect(eventsOf(messages).map((event) => event.kind)).toEqual([
+      "request",
+      "turn-finished",
+      "turn-resumed",
+      "turn-finished",
     ])
   })
 
@@ -402,28 +457,41 @@ describe("toRestoredEvents", () => {
     ])
   })
 
-  it("利用者の文面に混じった塊は、その塊だけ落として前後を残す", () => {
-    const messages = [
-      userMessage(
-        "架空の依頼の前半\n<system-reminder>架空の差し込み</system-reminder>\n架空の依頼の後半",
-      ),
-    ]
+  it("欄の無い user メッセージは、仕掛けと同じ名前のタグを含んでもそのままの文面で依頼にする", () => {
+    const notification = "<task-notification>\n<task-id>架空のID</task-id>\n</task-notification>"
+    const reminder =
+      "架空の依頼の前半\n<system-reminder>架空の文面</system-reminder>\n架空の依頼の後半"
+    const stdout = "<local-command-stdout>架空の文面</local-command-stdout>"
+    const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 
-    expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "架空の依頼の前半\n\n架空の依頼の後半", images: [] },
-      { kind: "turn-finished", outcome: { kind: "completed" } },
+    expect(
+      eventsOf([userMessage(notification), userMessage(reminder), userMessage(stdout)]),
+    ).toEqual([
+      { kind: "request", text: notification, images: [] },
+      finished,
+      { kind: "request", text: reminder, images: [] },
+      finished,
+      { kind: "request", text: stdout, images: [] },
+      finished,
     ])
   })
 
-  it("`<local-command-stdout>` だけの user メッセージは依頼として起こさない", () => {
+  it("isCompletedLocalCommand のコマンドの行は依頼に畳み、同じ欄の出力は依頼として起こさない", () => {
     const messages = [
-      userMessage("<local-command-stdout>架空の出力</local-command-stdout>"),
-      userMessage([{ type: "text", text: "架空の依頼" }]),
+      withFields(
+        userMessage(
+          "<command-name>/架空コマンド</command-name>\n<command-message>架空コマンド</command-message>\n<command-args></command-args>",
+        ),
+        { isCompletedLocalCommand: true },
+      ),
+      withFields(userMessage("<local-command-stdout>架空の出力</local-command-stdout>"), {
+        isCompletedLocalCommand: true,
+      }),
       assistantMessage([{ type: "text", text: "架空の本文" }]),
     ]
 
     expect(eventsOf(messages)).toEqual([
-      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "request", text: "/架空コマンド", images: [] },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
     ])
@@ -444,7 +512,10 @@ describe("toRestoredEvents", () => {
       speak("t-1", "任せてくるね"),
       userMessage(asidePromptText("架空の問い")),
       speak("t-2", "架空の答え"),
-      userMessage("<task-notification>\n<task-id>架空のID</task-id>\n</task-notification>"),
+      withFields(
+        userMessage("<task-notification>\n<task-id>架空のID</task-id>\n</task-notification>"),
+        { origin: { kind: "task-notification" } },
+      ),
       speak("t-3", "架空の続き"),
     ]
 

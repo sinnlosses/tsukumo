@@ -26,8 +26,8 @@ const RESTORED_TURN_FINISHED: SessionEvent = {
  * メッセージ1件の形は SDK のイベントとほぼ同じなので、変換の本体は {@link toSessionEvents} に任せ、ここが足すのは transcript には残らない2つだけ:
  *
  * - 委譲先の返却（`delegate-returned`）: `origin.handback` が真の `user` メッセージから、`origin.body` の字下げした行の1行目を読む（依頼にはしない）
- * - 利用者の依頼（`request`）と脇の話（`aside`）: `user` のテキストブロックから起こす（ツールの結果は除く）。脇の話は `asideTextOf` の包みで見分ける
- * - 続きのターンの始まり（`turn-resumed`）: バックグラウンドタスクの知らせだけの `user` メッセージから起こす
+ * - 利用者の依頼（`request`）と脇の話（`aside`）: 欄で利用者の入力と分かる `user` のテキストブロックから起こす（{@link requestText}）。脇の話は `asideTextOf` の包みで見分ける
+ * - 続きのターンの始まり（`turn-resumed`）: バックグラウンドタスクの知らせの `user` メッセージから起こす
  * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼・脇の話・続きのターンの手前と並びの末尾で区切る。時刻は直前の出来事のものを引き継ぐ
  *
  * 出来事ごとの時刻は、元のメッセージの `timestamp`（読めなければ `unknown`）。
@@ -87,7 +87,7 @@ export function restoredMessageEvents(
       },
     ]
   }
-  if (isTaskNotificationOnly(message)) {
+  if (isTaskNotification(message)) {
     return [{ kind: "turn-resumed" }]
   }
   const text = requestText(message)
@@ -139,15 +139,16 @@ function isTurnOpening(event: SessionEvent): boolean {
 }
 
 /**
- * バックグラウンドタスクの知らせ（`<task-notification>`）だけの `user` メッセージか。
+ * バックグラウンドタスクの知らせの `user` メッセージか（`origin.kind` が `task-notification`）。本文は見ない。
  * claude はこれを受けて依頼なしで続きのターンを始めるので、組み直しではここで続きのターン（`turn-resumed`）を区切る。
+ * `origin` の無い古い形の知らせは続きのターンにならない（実測: 881 件の transcript の知らせはすべて `origin` を持つ）。
  */
-function isTaskNotificationOnly(message: unknown): boolean {
-  const raw = userRawText(message)
+function isTaskNotification(message: unknown): boolean {
   return (
-    raw !== undefined &&
-    raw.includes(`<${TASK_NOTIFICATION_TAG}`) &&
-    requestTextFromRawText(raw) === undefined
+    isPlainObject(message) &&
+    message.type === "user" &&
+    isPlainObject(message.origin) &&
+    message.origin.kind === "task-notification"
   )
 }
 
@@ -169,16 +170,35 @@ function messageTime(message: unknown): RestoredEvent["time"] {
 }
 
 /**
- * `user` のメッセージから利用者の依頼の文面を取り出す。
- * ツールの結果（`tool_result`）は依頼ではないので undefined を返し、呼び出し側が {@link toSessionEvents} 側の変換に回す。
- * `is_meta` が真のメッセージは仕掛けが差し込んだもので（実測: 別のエージェントからの伝言とその前後の断り書き、文脈を畳んだあとの要約）、タグの外にも定型の文面を持つので、丸ごと依頼にしない。
+ * `user` のメッセージから利用者の依頼の文面を取り出す。依頼でなければ undefined を返し、呼び出し側が {@link toSessionEvents} 側の変換に回す。
+ * 見分けるのはメッセージの欄で、本文のタグは削らない（利用者が同じ名前のタグを打っても文面が残る）。
+ *
+ * - ツールの結果（`tool_result`）は依頼ではない
+ * - `is_meta` が真のメッセージは仕掛けが差し込んだもの（実測: 別のエージェントからの伝言、文脈を畳んだあとの要約）
+ * - `origin` があり `kind` が `human` でないメッセージは利用者の入力ではない（実測: `task-notification`・`peer`）。
+ *   未知の `kind` も依頼にしないので、SDK が `human` の別名を足すとその依頼は組み直しから落ちる（仕掛けの文面が依頼に出るより害が小さい）
+ * - `isCompletedLocalCommand` は SDK がローカルコマンドの行とその出力の両方に付ける。
+ *   欄では2つを分けられないので、スラッシュコマンドの形に畳めるものだけを依頼にし、出力（`<local-command-stdout>` など）は依頼にしない
+ *
+ * tsukumo から送った依頼は `is_meta` も `origin` も持たない（実測）。
+ * 欄が無く見分けられずに依頼に出るのは、CLI の `!` で打った `<bash-input>`・`<bash-stdout>` だけ。
  */
 function requestText(message: unknown): string | undefined {
-  if (!isPlainObject(message) || message.is_meta === true) {
+  if (
+    !isPlainObject(message) ||
+    message.is_meta === true ||
+    (message.origin !== undefined &&
+      !(isPlainObject(message.origin) && message.origin.kind === "human"))
+  ) {
     return undefined
   }
-  const raw = userRawText(message)
-  return raw === undefined ? undefined : requestTextFromRawText(raw)
+  const raw = userRawText(message)?.trim()
+  if (raw === undefined) {
+    return undefined
+  }
+  return message.isCompletedLocalCommand === true
+    ? slashCommandLine(raw)
+    : nonEmpty(slashCommandLine(raw) ?? raw)
 }
 
 /** `user` のメッセージの生のテキスト。`user` でない・ツールの結果を含むメッセージは undefined。 */
@@ -206,54 +226,25 @@ function textBlock(block: unknown): string {
     : ""
 }
 
-/**
- * `user` の生のテキストから依頼の文面を組み立てる。
- * 仕掛けが `user` の役で差し込んだ塊は先に落とす（{@link withoutInjectedBlocks}）。
- * 残りを {@link foldSlashCommand} で入力欄から打ったときの見え方に畳み、何も残らなければ依頼ではないので undefined にする。
- */
-function requestTextFromRawText(text: string): string | undefined {
-  return nonEmpty(foldSlashCommand(withoutInjectedBlocks(text)))
-}
-
 const COMMAND_TAG = /<(command-name|command-message|command-args)>[\s\S]*?<\/\1>/g
 const COMMAND_NAME_TAG = /<command-name>([\s\S]*?)<\/command-name>/
 const COMMAND_ARGS_TAG = /<command-args>([\s\S]*?)<\/command-args>/
-const TASK_NOTIFICATION_TAG = "task-notification"
-/** {@link withoutInjectedBlocks} が落とす塊。開きと閉じが揃っているものだけに当てる。 */
-const INJECTED_BLOCK = new RegExp(
-  `<(system-reminder|${TASK_NOTIFICATION_TAG}|local-command-caveat|local-command-stdout|agent-message|cross-session-message)(\\s[^>]*)?>[\\s\\S]*?<\\/\\1>`,
-  "g",
-)
 
 /**
  * SDK が展開したスラッシュコマンド（`<command-name>` / `<command-message>` / `<command-args>` の3タグ。並びと `<command-message>` の有無は入り方によって違う）を、入力欄から打ったときと同じ `/<name> <args>` の1行に畳む。
  * `<command-message>` は `<command-name>` と同じ名前の重複なので落とす。
  *
- * メッセージ全体がこれらのタグだけで出来ているときだけ畳む（地の文の途中にたまたまタグが混じっている壊れた形は、素通しに倒して安全側に振る）。
- * `<command-name>` が無ければ何もしない。
+ * メッセージ全体がこれらのタグだけで出来ているときだけ畳む。
+ * `<command-name>` が無い・タグの外に字があるときは undefined。
  */
-function foldSlashCommand(text: string): string {
+function slashCommandLine(text: string): string | undefined {
   const name = text.match(COMMAND_NAME_TAG)?.[1]
   if (name === undefined || text.replace(COMMAND_TAG, "").trim() !== "") {
-    return text
+    return undefined
   }
 
   const args = text.match(COMMAND_ARGS_TAG)?.[1]?.trim()
   return args === undefined || args === "" ? name : `${name} ${args}`
-}
-
-/**
- * 仕掛け（Claude Code と tsukumo の外側）が `user` の役で差し込む塊を落とす。
- * 利用者が入力欄に打った文面ではないので、組み直した依頼には出さない。
- *
- * 生きているセッションでは `request` は入力欄からの送信でだけ起き、これらは一度も画面に出ない。
- * transcript から組み直すときだけ `user` の役として同じ場所に並んでしまうので、ここで揃える。
- * 実測で出たのはバックグラウンドタスクの知らせ（`<task-notification>`）・ローカルコマンドの断り書き（`<local-command-caveat>`）・別のエージェントからの伝言（`<agent-message>`）の3つだが、同じ性質のものを合わせて落とす。
- *
- * 塊の丸ごとだけを落とす（開きと閉じが揃っているもの）ので、利用者の文面に混じっていてもその前後は残る。
- */
-function withoutInjectedBlocks(text: string): string {
-  return text.replace(INJECTED_BLOCK, "").trim()
 }
 
 function nonEmpty(text: string): string | undefined {
