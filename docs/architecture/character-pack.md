@@ -122,7 +122,7 @@ characters/<name>/
 パックの場所が `<ホームの置き場>/<名前>` そのものであるときだけ消す**（同名は後ろが勝つので、起動先の
 `local`・一覧の外・同梱だけのパックはここで外れる。シンボリックリンクなら消えるのはリンクだけ）。
 消したあとに何が起きるかの判定は `characterPackRemoval` 1つが持ち、画面に配る値と消す側が断る判断の
-両方がそこを通る。パックの外にある雑談の記録（「雑談の記憶の置き場」）を一緒に消すのは配線層（`src/current-character.ts`）で、
+両方がそこを通る。パックの外にある会話の記録（「雑談の記憶の置き場」）を一緒に消すのは配線層（`src/current-character.ts`）で、
 記録が消せなくてもパックを消したことは取り消さない。
 
 ### パックの一覧と素材の URL
@@ -162,7 +162,7 @@ characters/<name>/
 | 何                             | 置き場                                                                                                   | ファイルに触る adapter                    |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | あらすじ（と渡し済みの印）     | `~/.tsukumo/chat-summary/<pack>.md`（話題の見出しは同じ場所の `<pack>.topics.json`）                     | `chat/adapter/chat-summary.ts`            |
-| 雑談の会話のアーカイブ         | `~/.tsukumo/chat-archive/<pack>/<YYYY-MM-DD>.jsonl`                                                      | `chat/adapter/chat-archive.ts`            |
+| 会話のアーカイブ               | `~/.tsukumo/chat-archive/<pack>/<YYYY-MM-DD>.jsonl`                                                      | `chat/adapter/chat-archive.ts`            |
 | エピソード索引・思い出した記録 | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` / `recalled.jsonl`                                        | `chat/adapter/chat-archive.ts`（同じ1つ） |
 | 定着の錠                       | `~/.tsukumo/chat-archive/<pack>/consolidation.lock`                                                      | `chat/adapter/chat-consolidation-lock.ts` |
 | 覚えたこと                     | `~/.tsukumo/characters/<pack>/persona.md` の末尾の節（「画面から作るときの置き場と受け取り方」の置き場） | `chat/adapter/persona-memory.ts`          |

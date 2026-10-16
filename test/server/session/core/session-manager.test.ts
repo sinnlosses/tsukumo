@@ -852,7 +852,7 @@ describe("createSessionManager", () => {
   describe("会話のアーカイブ", () => {
     // `chatArchive` の実装（ファイルI/O）は adapter のテストが持つ。ここで見るのは
     // 「いつ・何を渡すか」（`session-manager.receive` の分岐）だけ
-    // （docs/architecture/chat-mode.md「雑談の会話のアーカイブ」）。
+    // （docs/architecture/chat-mode.md「会話のアーカイブ」）。
 
     /** `report` の `SessionEvent`（結論だけ差し替えられる。中身はすべて手で書いた架空のもの）。 */
     function reportWithConclusion(conclusion: string): SessionEvent {

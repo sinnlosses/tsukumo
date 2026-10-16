@@ -15,7 +15,7 @@ import { HOME_ENV_NAME } from "../core/config.ts"
 const HOME_DIR_NAME = ".tsukumo"
 
 /**
- * ホームのディレクトリ。`TSUKUMO_HOME` を渡すとホームごとそこへ移る（`state.json`・雑談の要約とアーカイブ・トークンの記録・画面から作ったパックのすべて）。
+ * ホームのディレクトリ。`TSUKUMO_HOME` を渡すとホームごとそこへ移る（`state.json`・あらすじと会話のアーカイブ・トークンの記録・画面から作ったパックのすべて）。
  * セッション単位で自動には分けない。
  *
  * 未設定・空文字は既定の `~/.tsukumo`。相対パスは cwd 相対、絶対パスはそのまま。

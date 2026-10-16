@@ -107,9 +107,9 @@ export type CharacterPackEntry = CharacterPackChoice & {
  * パックを画面から消したときに起きること。
  * 消すのはいつもホーム（`~/.tsukumo/characters/<name>/`）の版だけで、違いは消したあとに一覧に何が残るか。
  *
- * - `"delete"`: ホームにしか無いパック。一覧から消え、雑談の要約とアーカイブも一緒に消える
+ * - `"delete"`: ホームにしか無いパック。一覧から消え、あらすじと会話のアーカイブも一緒に消える
  * - `"revert-to-bundled"`: 同梱のパックを画面で直したもの。ホームの版が消えて同梱の版が一覧に戻る
- *   （画面で直したことと、キャラクター自身が人格に書き足した「覚えたこと」が消える。雑談の要約とアーカイブは残る）
+ *   （画面で直したことと、キャラクター自身が人格に書き足した「覚えたこと」が消える。あらすじと会話のアーカイブは残る）
  * - `"none"`: 画面からは消せない（同梱だけ・起動先の `characters/local`・一覧の外を指した `TSUKUMO_CHARACTER`）
  */
 export type CharacterPackRemoval = "delete" | "revert-to-bundled" | "none"

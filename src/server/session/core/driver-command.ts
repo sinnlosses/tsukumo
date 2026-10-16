@@ -35,7 +35,7 @@ export const ACCEPTED = { ok: true } satisfies DispatchResult
 
 /**
  * キャラクターから話しかけてもらう。
- * 文面（{@link CHAT_NUDGE_PROMPT}）を記録に残さない口（`promptWithoutRecord`）で渡すので、利用者が打っていない一言はログにも記録にも雑談の会話のアーカイブにも並ばない。
+ * 文面（{@link CHAT_NUDGE_PROMPT}）を記録に残さない口（`promptWithoutRecord`）で渡すので、利用者が打っていない一言はログにも記録にも会話のアーカイブにも並ばない。
  */
 export function nudge(driver: Promise<SessionDriver>): Promise<DispatchResult> {
   return askDriver(driver, (started) => {

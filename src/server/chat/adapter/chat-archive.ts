@@ -180,7 +180,7 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
 }
 
 /**
- * JSONL の1行の形（正典は `docs/architecture/chat-mode.md`「雑談の会話のアーカイブ」の表）。tsukumo の内部の型をそのまま書き出さない。
+ * JSONL の1行の形（正典は `docs/architecture/chat-mode.md`「会話のアーカイブ」の表）。tsukumo の内部の型をそのまま書き出さない。
  * `speaker` は `kind` から決まる（`request` は利用者、`speech`・`conclusion` はキャラクター）。
  * `expression` / `images` / `project` のどれを持つかは `kind` と `mode` が決めるので、
  * 値を渡すたびに持たない鍵へ明示的に `undefined` を渡す。

@@ -73,7 +73,7 @@ export const DELETE_COPY = {
     verb: "同梱に戻す",
     dialogQuestion: "同梱に戻しますか？",
     dialogNote: (): string =>
-      "画面で直した見た目と、覚えたことが消えます。\n雑談の記録は残ります。",
+      "画面で直した見た目と、覚えたことが消えます。\n会話の記録は残ります。",
     blockedTitle: "使用中のキャラクターは、先に別のキャラクターに切り替えてから戻せます",
   },
 } as const satisfies Record<

@@ -42,7 +42,7 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
     expect(tsukumoHomeDir()).toBe(dir())
   })
 
-  it("ホームの下に並ぶ置き場（パック・雑談の要約・アーカイブ・トークンの記録）が揃って移る", () => {
+  it("ホームの下に並ぶ置き場（パック・あらすじ・会話のアーカイブ・トークンの記録）が揃って移る", () => {
     process.env[HOME_ENV_NAME] = dir()
 
     expect(homeCharacterDir()).toBe(join(dir(), "characters"))

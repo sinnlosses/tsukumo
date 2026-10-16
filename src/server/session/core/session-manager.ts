@@ -93,7 +93,7 @@ export type SessionManagerOptions = {
   /** 会話のアーカイブの書き込み口（雑談と仕事の両方が書く）。 */
   readonly chatArchive: ChatArchive
   /**
-   * 仕事の行に付ける `project`（アーカイブの `docs/architecture/chat-mode.md`「雑談の会話のアーカイブ」）。
+   * 仕事の行に付ける `project`（アーカイブの `docs/architecture/chat-mode.md`「会話のアーカイブ」）。
    * リポジトリの名前だけで、パスは持たない。起動時に1回だけ配線層が取って渡す。
    */
   readonly project: string

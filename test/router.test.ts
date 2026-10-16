@@ -649,7 +649,7 @@ describe("createCommandRouter（session）", () => {
       expect(await commands.session.nudge()).toEqual({ ok: true })
 
       // 渡るのは `promptWithoutRecord`（記録に残さない口）だけで、`prompt` は呼ばれない
-      // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/architecture/screen-design.md「雑談モードの画面」）。
+      // ——ログにも記録にも会話のアーカイブにも残らない（docs/architecture/screen-design.md「雑談モードの画面」）。
       expect(stub.calls).toEqual([`promptWithoutRecord:${CHAT_NUDGE_PROMPT}`])
     })
 
