@@ -179,11 +179,22 @@
                 {
                   "tag": "span",
                   "attributes": {
-                    "data-attribute": "difficulty"
+                    "role": "img",
+                    "aria-label": "ループで回せる"
                   },
                   "children": [
-                    "sonnet"
+                    {
+                      "tag": "svg"
+                    }
                   ]
+                },
+                {
+                  "tag": "span",
+                  "attributes": {
+                    "data-attribute": "difficulty",
+                    "role": "img",
+                    "aria-label": "難しさ sonnet"
+                  }
                 },
                 "架空のタスク（",
                 {
@@ -249,20 +260,10 @@
                 {
                   "tag": "span",
                   "attributes": {
-                    "data-attribute": "difficulty"
-                  },
-                  "children": [
-                    "opus"
-                  ]
-                },
-                {
-                  "tag": "span",
-                  "attributes": {
-                    "data-attribute": "loopable"
-                  },
-                  "children": [
-                    "loop:N"
-                  ]
+                    "data-attribute": "difficulty",
+                    "role": "img",
+                    "aria-label": "難しさ opus"
+                  }
                 },
                 "架空のタスク（待ち）"
               ]

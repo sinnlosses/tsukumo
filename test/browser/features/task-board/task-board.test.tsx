@@ -147,7 +147,7 @@ describe("タスクのモーダルの属性", () => {
 })
 
 describe("タスクのモーダルの一覧の行の属性", () => {
-  it("行に難しさを出し、loopable は N のときだけ loop:N と出す。属性の無い行には出さない", () => {
+  it("行に難しさを点で、loopable は Y のときだけループのアイコンで出し、字は出さない。属性の無い行には出さない", () => {
     putSession(INITIAL_SESSION_STATE)
     const base = beadsTask({ kind: "none" })
     render(
@@ -167,11 +167,15 @@ describe("タスクのモーダルの一覧の行の属性", () => {
     )
 
     const option = (id: string): HTMLElement => screen.getByRole("option", { name: new RegExp(id) })
-    expect(option("X-021").textContent).toContain("sonnet")
-    expect(option("X-021").textContent).not.toContain("loop:")
-    expect(option("X-022").textContent).toContain("opus")
-    expect(option("X-022").textContent).toContain("loop:N")
-    expect(option("X-023").querySelector("[data-attribute]")).toBeNull()
+    const attributeLabels = (id: string): readonly (string | null)[] =>
+      [...option(id).querySelectorAll("[role='img']")].map((icon) =>
+        icon.getAttribute("aria-label"),
+      )
+    expect(attributeLabels("X-021")).toEqual(["ループで回せる", "難しさ sonnet"])
+    expect(attributeLabels("X-022")).toEqual(["難しさ opus"])
+    expect(attributeLabels("X-023")).toEqual([])
+    expect(option("X-021").textContent).not.toContain("sonnet")
+    expect(option("X-022").textContent).not.toContain("loop:")
     const placed = option("X-022").querySelector("[data-attribute]")?.parentElement?.parentElement
     expect(placed?.className).toContain("task-board-option-attributes")
   })

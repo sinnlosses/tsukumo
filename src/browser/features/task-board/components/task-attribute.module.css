@@ -3,6 +3,25 @@
   align-items: center;
   gap: 6px;
 }
+.task-attribute-icon {
+  display: flex;
+  flex: none;
+  color: var(--ink-quiet);
+}
+.task-attribute-dots {
+  display: inline-flex;
+  flex: none;
+  gap: 2px;
+}
+.task-attribute-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rule);
+}
+.task-attribute-dot-filled {
+  background: color-mix(in srgb, var(--ink) 80%, transparent);
+}
 .task-attribute {
   flex: none;
   color: var(--ink-quiet);

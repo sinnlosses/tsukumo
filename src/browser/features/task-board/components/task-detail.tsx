@@ -50,10 +50,7 @@ export function TaskDetail(props: {
           <>
             <dt>難しさ</dt>
             <dd>
-              <TaskAttribute
-                attribute={{ kind: "difficulty", value: detail.difficulty }}
-                scope="detail"
-              />
+              <TaskAttribute attribute={{ kind: "difficulty", value: detail.difficulty }} />
             </dd>
           </>
         )}
@@ -61,10 +58,7 @@ export function TaskDetail(props: {
           <>
             <dt>ループ</dt>
             <dd>
-              <TaskAttribute
-                attribute={{ kind: "loopable", value: detail.loopable }}
-                scope="detail"
-              />
+              <TaskAttribute attribute={{ kind: "loopable", value: detail.loopable }} />
             </dd>
           </>
         )}
