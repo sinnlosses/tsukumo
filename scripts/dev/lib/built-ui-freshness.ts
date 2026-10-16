@@ -10,7 +10,7 @@ export async function assertBuiltUiFresh(builtDir: string): Promise<void> {
   }
   if (built.outdated) {
     throw new Error(
-      `${builtDir} が src/browser/・src/shared/ より古い。pnpm run build を打ってから流す`,
+      `${builtDir} は src/browser/・src/shared/ を組み立てたときから変わっている（または指紋が無い）。pnpm run build を打ってから流す`,
     )
   }
 }

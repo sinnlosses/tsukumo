@@ -681,7 +681,7 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
    （`bin/tsukumo` が無ければ食い違いを出して止まる。外か同じ根なら下へ進む）
 1. `cli.ts` が `config.ts` で環境変数を読み、`main.ts` の `run(config, launch)` を呼ぶ（`launch` は引数の `--dev`）
 2. `main.ts` が**即時終了する前提**を3つ確かめる — ポート番号として読めるか（`port-resolution.ts`）、
-   組み立て済みの成果物（`dist/browser/`。`docs/architecture/build.md`）を読めるか（ソースのほうが新しければ、止めずに1行
+   組み立て済みの成果物（`dist/browser/`。`docs/architecture/build.md`）を読めるか（ソースの指紋が組み立て時と違えば、止めずに1行
    知らせる）、fake driver なら疑似セッションを読めるか
 3. `current-character.ts` が初期パック（指定されたもの・覚えていたもの・既定）を決める。
    **以降このパックの持ち回りはここに閉じる**

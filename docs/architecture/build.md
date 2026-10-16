@@ -53,9 +53,11 @@
   辿って根を求め、`mise -C <根> which node` で得た node（mise が無い・失敗したときは `PATH` の
   `node`）で `<根>/src/cli.ts` を起こす。PATH の先頭の node が `mise.toml` の版と一致する保証が無い
   リポジトリの外からでも、`mise.toml` が固定した版で動く
-- **成果物が無ければ起動しない**（起動時の前提不足。理由に `pnpm run build` を添える）。**ソース
-  （`src/browser/` と `src/shared/`）のほうが新しければ、1行知らせてそのまま配る**（古くても画面は
-  動くので止めず、黙って配らないことで事故を防ぐ）。HMR と違い、ここは `src/shared/` も見る
+- **成果物が無ければ起動しない**（起動時の前提不足。理由に `pnpm run build` を添える）。**組み立てが成果物の隣
+  （`dist/browser/source-fingerprint.txt`）にソース（`src/browser/` と `src/shared/`）の中身の指紋を置き、
+  起動時にいまのソースの指紋と比べて違えば、または指紋が無ければ、1行知らせてそのまま配る**
+  （更新時刻は見ないので、`git checkout` で時刻だけ動いても知らせない。古くても画面は動くので止めず、
+  黙って配らないことで事故を防ぐ）。HMR と違い、ここは `src/shared/` も見る
 
 **作り直しを押す仕組み。** 開発中は HMR で差し替える。`pnpm run dev`（= `pnpm run build && node src/cli.ts --dev`）で起こすと、
 `src/server/view-server/adapter/ui-dev-server.ts` が Vite の開発サーバを **middleware mode** で起こし、

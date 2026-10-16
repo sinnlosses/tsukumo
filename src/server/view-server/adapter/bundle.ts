@@ -7,7 +7,7 @@
 // スクリプトは入口の1本と、入口から `import()` で分けたチャンクに分かれる（CSS は分けない）。
 //
 // 成果物は `dist/browser/` に置く（`.gitignore` してあるので、各自が `pnpm run build` で作る）。
-// 起動時に `src/browser/` と成果物の新しさを比べ、古ければ知らせる（`readUiBundle` の `outdated`）。
+// 組み立てるとき、ソースの指紋を成果物の隣に置く。起動時にいまのソースの指紋と比べ、違えば知らせる（`readUiBundle` の `outdated`）。
 // 古くても画面は動くので止めはしない。
 //
 // `vite` は JS API ではなく CLI を `node` の子プロセスで起こす。
@@ -18,12 +18,13 @@
 // 型検査はここではしない（`vite build` はトランスパイルだけで型を見ない）。型は `pnpm run check` の `tsc --noEmit` が見る。
 
 import { execFile } from "node:child_process"
-import { readdir, readFile, stat } from "node:fs/promises"
+import { readdir, readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { stripVTControlCharacters } from "node:util"
 
 import { clipText } from "../../../shared/utils/clip-text.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
+import { sourceFingerprint } from "./source-fingerprint.ts"
 
 /** Vite の設定ファイル。入口のファイル名と、出す2つのファイル名はここに書いてある。 */
 export const VITE_CONFIG_RELATIVE_PATH: readonly string[] = ["vite.config.ts"]
@@ -41,14 +42,16 @@ const UI_SCRIPT_FILE_NAME = "ui.js"
 const CHUNK_FILE_EXTENSION = ".js"
 const STYLE_SHEET_FILE_NAME = "main.css"
 
+/** 組み立てたときのソースの指紋を置くファイル（`.js` でないのでチャンクに数えない）。 */
+export const SOURCE_FINGERPRINT_FILE_NAME = "source-fingerprint.txt"
+
 /**
- * ブラウザ側のソースの置き場。組み立ての入口であり、新しさを比べる相手でもあるので
- * ここが持つ（開発サーバの root も同じ1つ）。
+ * ブラウザ側のソースの置き場。組み立ての入口であり、指紋に入る置き場の1つでもある。
  */
 export const UI_SOURCE_DIR_RELATIVE_PATH: readonly string[] = ["src", "browser"]
 
 /**
- * 成果物の新しさを比べる相手。束ねに入るソースの置き場で、`src/browser/` は `src/shared/` を
+ * 成果物の指紋に入るソースの置き場で、`src/browser/` は `src/shared/` を
  * import している。
  */
 const BUNDLED_SOURCE_DIR_RELATIVE_PATHS: readonly (readonly string[])[] = [
@@ -126,8 +129,14 @@ export async function readUiBundle(builtDir: string): Promise<StoredBundleResult
  * ブラウザ側（`src/browser/`）を組み立てて `outDir` に置き、置いたものを読んで返す。
  * JSX は `@vitejs/plugin-react` が変換し、CSS Modules は `vite build` が class 名をハッシュ化して JS 側の対応表に入れる。
  */
-export function buildUiBundle(outDir: string): Promise<BundleResult> {
-  return bundleWithVite(bundledFilePath(...UI_SOURCE_DIR_RELATIVE_PATH), outDir)
+export async function buildUiBundle(outDir: string): Promise<BundleResult> {
+  // 組み立てる前に取る。組み立て中にソースが変わっても、次の起動で古いと分かる。
+  const fingerprint = await bundledSourceFingerprint()
+  const result = await bundleWithVite(bundledFilePath(...UI_SOURCE_DIR_RELATIVE_PATH), outDir)
+  if (result.ok && fingerprint !== undefined) {
+    await writeFile(join(outDir, SOURCE_FINGERPRINT_FILE_NAME), fingerprint)
+  }
+  return result
 }
 
 /**
@@ -149,6 +158,38 @@ export async function bundleWithVite(sourceDir: string, outDir: string): Promise
   return bundle === undefined
     ? { ok: false, reason: "vite build がスクリプトと CSS の対を出さなかった" }
     : { ok: true, bundle }
+}
+
+/**
+ * 成果物が、いまのソースから組み立てたものでないか。時刻でなく中身の指紋で比べる
+ * （`git checkout` で時刻だけ動いても、中身が同じなら古いと言わない）。
+ *
+ * 成果物に指紋が無い（組み立てが指紋を埋める前の成果物・消えた・読めない）ときは古いとする。
+ * いまのソースを読めなかったときは比べられないので古いと言わない
+ * （「分からない」を「古い」に寄せると、出どころの怪しい警告が毎回出て読まれなくなる）。
+ */
+export function isBundleOutdated(
+  storedFingerprint: string | undefined,
+  currentFingerprint: string | undefined,
+): boolean {
+  if (storedFingerprint === undefined) {
+    return true
+  }
+  return currentFingerprint !== undefined && storedFingerprint !== currentFingerprint
+}
+
+/**
+ * {@link BUNDLED_SOURCE_DIR_RELATIVE_PATHS} の下の指紋。どれか1つでも読めなければ `undefined`。
+ * 見るのはそこだけで、依存（`node_modules`）や tsconfig の変化は拾わない。そこまで見るなら
+ * 組み立て直すほうが早いので、気づく口として割り切っている。
+ */
+export async function bundledSourceFingerprint(): Promise<string | undefined> {
+  const fingerprints = await Promise.all(
+    BUNDLED_SOURCE_DIR_RELATIVE_PATHS.map((segments) =>
+      sourceFingerprint(bundledFilePath(...segments), []),
+    ),
+  )
+  return fingerprints.includes(undefined) ? undefined : fingerprints.join(":")
 }
 
 /**
@@ -213,42 +254,14 @@ async function readChunks(dir: string): Promise<ReadonlyMap<string, string> | un
   return entries.length === chunkNames.length ? new Map(entries) : undefined
 }
 
-/**
- * ソースのほうが成果物より新しいか。どちらかの時刻を見られなかったときは古いと言わない。
- * 「分からない」を「古い」に寄せると、出どころの怪しい警告が毎回出て読まれなくなる。
- *
- * 見るのは {@link BUNDLED_SOURCE_DIR_RELATIVE_PATHS} の下だけで、依存（`node_modules`）や
- * tsconfig の変化は拾わない。そこまで見るなら組み立て直すほうが早いので、気づく口として
- * 割り切っている。
- */
 async function isOutdated(builtDir: string): Promise<boolean> {
-  const [builtAt, ...sourceTimes] = await Promise.all([
-    newestModifiedAt(builtDir),
-    ...BUNDLED_SOURCE_DIR_RELATIVE_PATHS.map((segments) =>
-      newestModifiedAt(bundledFilePath(...segments)),
-    ),
+  const [stored, current] = await Promise.all([
+    readFile(join(builtDir, SOURCE_FINGERPRINT_FILE_NAME), "utf8")
+      .then((text) => text.trim())
+      .catch(() => undefined),
+    bundledSourceFingerprint(),
   ])
-  const known = sourceTimes.filter((time) => time !== undefined)
-  return builtAt !== undefined && known.some((time) => time > builtAt)
-}
-
-/** `dir` の下（再帰）でいちばん新しい更新時刻。読めなければ `undefined`。 */
-async function newestModifiedAt(dir: string): Promise<number | undefined> {
-  const names = await readdir(dir, { recursive: true }).catch(() => undefined)
-  if (names === undefined) {
-    return undefined
-  }
-
-  const times = await Promise.all(names.map((name) => modifiedAt(join(dir, name))))
-  const known = times.filter((time) => time !== undefined)
-  return known.length === 0 ? undefined : Math.max(...known)
-}
-
-/** 1件の更新時刻。消えた直後などで読めなければ `undefined`（そこだけ飛ばす）。 */
-function modifiedAt(path: string): Promise<number | undefined> {
-  return stat(path)
-    .then((stats) => stats.mtimeMs)
-    .catch(() => undefined)
+  return isBundleOutdated(stored, current)
 }
 
 /**

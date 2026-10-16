@@ -140,15 +140,15 @@ mise run setup
 
 ### つまずいたとき
 
-| 出たもの                                                              | 原因                                                         | 対処                                                                      |
-| --------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| `zsh: command not found: tsukumo`                                     | `$PNPM_HOME/bin` が `PATH` に通っていない                    | 新しいシェルを開いて `mise run setup` を打ち直す（手順1）                 |
-| `tsukumo: ブラウザ側の成果物を読めない`                               | `dist/browser/` が無い                                       | リポジトリの直下で `mise run setup`（手順1）                              |
-| `tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい` | 更新したあと組み立て直していない                             | `mise run setup`（手順3）。止まりはせず、古い画面のまま動く               |
-| `tsukumo: TSUKUMO_VIEW_PORT がポート番号として読めない`               | 環境変数に数でない値が入っている                             | `TSUKUMO_VIEW_PORT` を外すか数にする                                      |
-| `tsukumo: node <版> が古い`                                           | `PATH` の node が 26 未満（mise の node が選ばれていない）   | リポジトリの直下で `mise install`、そのあと `mise run setup`              |
-| タブが開かない                                                        | `orca` が無い、`TSUKUMO_OPEN_VIEW=0`、か `TSUKUMO_HOST=none` | 表示された URL を手でブラウザに開く                                       |
-| タブだけ閉じてしまった                                                | プロセスは動いたまま                                         | `node scripts/capture/open-views.ts http://127.0.0.1:<ポート>` で開き直す |
+| 出たもの                                                                              | 原因                                                         | 対処                                                                      |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `zsh: command not found: tsukumo`                                                     | `$PNPM_HOME/bin` が `PATH` に通っていない                    | 新しいシェルを開いて `mise run setup` を打ち直す（手順1）                 |
+| `tsukumo: ブラウザ側の成果物を読めない`                                               | `dist/browser/` が無い                                       | リポジトリの直下で `mise run setup`（手順1）                              |
+| `tsukumo: ソース（src/browser/ src/shared/）が成果物を組み立てたときから変わっている` | 更新したあと組み立て直していない                             | `mise run setup`（手順3）。止まりはせず、古い画面のまま動く               |
+| `tsukumo: TSUKUMO_VIEW_PORT がポート番号として読めない`                               | 環境変数に数でない値が入っている                             | `TSUKUMO_VIEW_PORT` を外すか数にする                                      |
+| `tsukumo: node <版> が古い`                                                           | `PATH` の node が 26 未満（mise の node が選ばれていない）   | リポジトリの直下で `mise install`、そのあと `mise run setup`              |
+| タブが開かない                                                                        | `orca` が無い、`TSUKUMO_OPEN_VIEW=0`、か `TSUKUMO_HOST=none` | 表示された URL を手でブラウザに開く                                       |
+| タブだけ閉じてしまった                                                                | プロセスは動いたまま                                         | `node scripts/capture/open-views.ts http://127.0.0.1:<ポート>` で開き直す |
 
 ### 開発しながら動かす
 
@@ -324,7 +324,7 @@ pnpm run build                 # ブラウザ側（src/browser/）を dist/brows
                               #   ので、pnpm install のあとと src/browser/ を直したあとに打つ
 pnpm run start                 # セッションを起こし、ページのタブを Orca 内に開く（`tsukumo` コマンドと同じ。
                               #   TSUKUMO_OPEN_VIEW=0 で自動オープンを止める。本物の claude を子プロセスで起こす。
-                              #   成果物か vendor/tsukumo-plugins が無ければ前提不足で止まり、ソースのほうが新しければ1行知らせて古いまま配る）
+                              #   成果物か vendor/tsukumo-plugins が無ければ前提不足で止まり、ソースの指紋が組み立て時と違えば1行知らせて古いまま配る）
 pnpm run dev                   # pnpm run build のあと、start と同じ経路を Vite の開発サーバつき（--dev）で起こす
                               #   （src/server/ と src/shared/ を直したときは上げ直しが要る。docs/architecture/build.md）
 pnpm run storybook             # 部品を props ごとに並べる Storybook を http://localhost:6006/ に起こす

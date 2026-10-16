@@ -71,7 +71,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // 古くても画面は動くので止めはせず、1行だけ知らせて先へ進む。
   if (built.outdated) {
     process.stderr.write(
-      "tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい（pnpm run build まで古い画面が出る）\n",
+      "tsukumo: ソース（src/browser/ src/shared/）が成果物を組み立てたときから変わっている（pnpm run build まで古い画面が出る）\n",
     )
   }
 

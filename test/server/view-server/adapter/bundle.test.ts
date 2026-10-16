@@ -8,6 +8,7 @@ import {
   buildUiBundle,
   builtUiDir,
   bundleWithVite,
+  isBundleOutdated,
   readUiBundle,
 } from "../../../../src/server/view-server/adapter/bundle.ts"
 
@@ -78,6 +79,24 @@ describe("readUiBundle", () => {
     const read = await readUiBundle(builtDir)
 
     expect(read.ok ? read.outdated : true).toBe(false)
+  })
+})
+
+describe("isBundleOutdated", () => {
+  it("指紋が同じなら古くない（更新時刻だけ新しくなっても変わらない）", () => {
+    expect(isBundleOutdated("abc", "abc")).toBe(false)
+  })
+
+  it("指紋が違えば古い", () => {
+    expect(isBundleOutdated("abc", "abd")).toBe(true)
+  })
+
+  it("成果物に指紋が無ければ古い", () => {
+    expect(isBundleOutdated(undefined, "abc")).toBe(true)
+  })
+
+  it("いまのソースの指紋が取れなければ古いと言わない", () => {
+    expect(isBundleOutdated("abc", undefined)).toBe(false)
   })
 })
 

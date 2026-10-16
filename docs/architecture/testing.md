@@ -104,8 +104,8 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
   - 期待値を撮り直す `pnpm run test:e2e:update` も既定は同じ選び方で、`--full` で全件、ファイルを渡せばそのファイルだけ
 - **`dist/browser/` は E2E の段が自分で組み立てる**（起動は古い成果物でも止まらずに配る〔`docs/architecture/build.md`〕ので、
   組み立てを前提にすると古い画面を確かめて通ってしまう）。`vitest` を直に流したときは E2E の設定の
-  `globalSetup`（`test/built-ui-setup.ts`）が、組み立てが `src/browser/`・`src/shared/` より古い
-  （または無い）とテストの前に落とす。黙って組み立て直さず、`pnpm run build` を打つ。**Chrome が無ければ前提不足で落ちる**
+  `globalSetup`（`test/built-ui-setup.ts`）が、組み立てたときの指紋が `src/browser/`・`src/shared/` の
+  いまの指紋と違う（または指紋・組み立てが無い）とテストの前に落とす。黙って組み立て直さず、`pnpm run build` を打つ。**Chrome が無ければ前提不足で落ちる**
   （飛ばすと黙って守らなくなる）
 - **ブラウザは1ファイルに1つ、tsukumo は1件ごとに1つ起こす**。後始末は自分の pid だけに `SIGTERM` を
   送り、終わるのを待ってから一時のディレクトリを消す（広いパターンで止めない）。**ブラウザは
@@ -495,8 +495,8 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 目視するなら `--dev` で起こす（`pnpm run dev`。HMR で差し替わる）か、組み立てのたびに上げ直す。
 
 1. **`pnpm run build` を打ってから** Orca のターミナルで `pnpm run start` を1つ起動する
-   （Claude Code の TUI は開かない）。成果物か取り込んだプラグイン（`vendor/tsukumo-plugins`）が無いと起動は前提不足で止まり、`src/browser/` の
-   ほうが新しいと「古い画面が出る」1行が出る
+   （Claude Code の TUI は開かない）。成果物か取り込んだプラグイン（`vendor/tsukumo-plugins`）が無いと起動は前提不足で止まり、`src/browser/` が
+   組み立てたときから変わっていると「古い画面が出る」1行が出る
 2. **tsukumo 自身がレイアウトページのタブを開く**ので、それが**Orca 内のブラウザタブ**に
    出ること（外部ブラウザに出ないこと）を見る。タブだけ閉じてしまったときは
    `node scripts/capture/open-views.ts <URL>` で開き直せる
