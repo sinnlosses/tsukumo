@@ -492,7 +492,7 @@ describe("passRelayedEvents", () => {
     handback: parseDelegateReturn("段 1/2 | 架空の返却。"),
   }
 
-  it("委譲先のメッセージからは返却だけを差し戻しに通し、関門の印と注記がそれで立つ", () => {
+  it("委譲先のメッセージからは返却だけを差し戻しに通し、委譲ゲートの印と注記がそれで立つ", () => {
     const review = createCallReview()
     review.pass(REQUEST)
     review.judgeWorkPlan({
@@ -531,7 +531,7 @@ describe("passRelayedEvents", () => {
   })
 })
 
-describe("CallReview の関門の印", () => {
+describe("CallReview の委譲ゲートの印", () => {
   const FOUR = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
   const SUMMARY = "架空のまとめ。"
   const ranged = (current: number, phaseSummary = "") => ({

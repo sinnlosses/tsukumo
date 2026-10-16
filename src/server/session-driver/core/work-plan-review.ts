@@ -5,7 +5,7 @@
 // 飛ばした段（`skippedPhases`）は、前に印なしに済んでいた段を新しく入れる呼び出しと、メインが入れた印をまだ済んでいる段から外す呼び出しも差し戻す。
 //
 // 判定の窓口は handler だけ（`WorkPlanReview.judge`・`WorkPlanReview.judgeResult`）。
-// `phase-result-called` を受けた委譲先の次の返却は、1行目を読まずに関門と注記だけを立て、イベントは捨てる。
+// `phase-result-called` を受けた委譲先の次の返却は、1行目を読まずに委譲ゲートと注記だけを立て、イベントは捨てる。
 // 覚える段取りは `nextWorkPlan` で畳んだ結果だけで、忘れる区切りも返却と `report` での進め方もここでは決めない。
 //
 // 差し戻したあと同じターンで受け付けた呼び出しが無いことも覚え、`report` の差し戻し（`ReportReview`）が `standing` で読む。
@@ -70,7 +70,7 @@ export type WorkPlanReview = {
   readonly judge: (input: unknown) => WorkPlanVerdict
   /**
    * `phase_result` の handler から、届いた引数のままで呼ぶ。受け付けたら `段 n/N` と同じ条件で段取りを進める。
-   * 関門と注記は触らず、段のまとめを省ける位置にもしない。`skipped` で済ませた段の名前は、同じ依頼のあいだ飛ばした段として覚える。
+   * 委譲ゲートと注記は触らず、段のまとめを省ける位置にもしない。`skipped` で済ませた段の名前は、同じ依頼のあいだ飛ばした段として覚える。
    */
   readonly judgeResult: (input: unknown) => PhaseResultVerdict
   /** いまの段取りの立ち位置（{@link WorkPlanStanding}）。 */

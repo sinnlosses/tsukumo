@@ -498,7 +498,7 @@ describe("WorkPlanReview の phase_result", () => {
     expect(review.standing()).toEqual({ kind: "planned", remaining: 3 })
   })
 
-  it("phase_result で済んだ段では、同じ位置の work_plan に段のまとめが要り、関門は立たない", () => {
+  it("phase_result で済んだ段では、同じ位置の work_plan に段のまとめが要り、委譲ゲートは立たない", () => {
     const review = started()
     review.judgeResult(result(1, "finished"))
 
@@ -507,7 +507,7 @@ describe("WorkPlanReview の phase_result", () => {
     expect(review.judge(ranged(2, SUMMARY)).kind).toBe("accepted")
   })
 
-  it("phase_result を呼んだ委譲先の次の返却は1行目を読まず、関門と注記だけを立てて捨て、ほかの委譲先の返却は読む", () => {
+  it("phase_result を呼んだ委譲先の次の返却は1行目を読まず、委譲ゲートと注記だけを立てて捨て、ほかの委譲先の返却は読む", () => {
     const review = started()
     review.pass({ kind: "phase-result-called", delegate: "toolu_a" })
 

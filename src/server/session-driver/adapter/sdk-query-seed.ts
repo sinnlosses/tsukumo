@@ -97,7 +97,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 
 /**
  * `PreToolUse` フックを1つ登録する。
- * メインの `phase_result`（`judgePhaseResultCaller`）と、関門（`judgeToolAgainstGate`）で拒むときは `permissionDecision: "deny"` を返す。
+ * メインの `phase_result`（`judgePhaseResultCaller`）と、委譲ゲート（`judgeToolAgainstGate`）で拒むときは `permissionDecision: "deny"` を返す。
  * 通したメインの `Agent` 呼び出しは背景に固定する（`updatedInput` だけを返し、許可の判定には触らない）。
  * `agent_id` はサブエージェント内の呼び出しにだけ付くので、ここで真偽に畳んでから渡す。
  *

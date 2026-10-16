@@ -43,7 +43,7 @@ export type PhaseResultAnswer = { readonly text: string; readonly isError: boole
 
 /**
  * `phase_result` の呼び出し1つを判定して返す文を決める。
- * 帯を動かしたときだけ、結果を読んだ形の `delegate-returned` を `onEvent` で流す（`CallReview.pass` は通さず、関門は立てない）。
+ * 帯を動かしたときだけ、結果を読んだ形の `delegate-returned` を `onEvent` で流す（`CallReview.pass` は通さず、委譲ゲートは立てない）。
  */
 export function answerPhaseResultCall(
   review: Pick<CallReview, "judgePhaseResult">,

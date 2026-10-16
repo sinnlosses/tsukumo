@@ -247,7 +247,7 @@ describe("preToolUseHooks が見届けた設定を流す", () => {
   })
 })
 
-describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツールを拒む）", () => {
+describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作業のツールを拒む）", () => {
   const DENIED = {
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
@@ -319,7 +319,7 @@ describe("preToolUseHooks（Agent を背景に固定し、関門で作業のツ�
 describe("preToolUseHooks（メインの phase_result を拒む）", () => {
   const input = { phase: 1, count: 2, outcome: "finished" }
 
-  it("メインの phase_result は、関門の印が下りていても拒む", async () => {
+  it("メインの phase_result は、委譲ゲートの印が下りていても拒む", async () => {
     expect(await runPreToolUse("mcp__tsukumo__phase_result", input)).toEqual({
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
