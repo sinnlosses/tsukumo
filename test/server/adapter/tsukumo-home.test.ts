@@ -53,7 +53,7 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
   it("雑談の要約は移った先の chat-summary の下へ書かれる", () => {
     process.env[HOME_ENV_NAME] = dir()
 
-    createChatSummary("moved-pack").write("架空の要約")
+    createChatSummary("moved-pack").write("架空の要約", [])
 
     expect(existsSync(join(dir(), "chat-summary", "moved-pack.md"))).toBe(true)
   })

@@ -18,8 +18,6 @@ import {
   chatConsolidationQuery,
   chatEpisodeDrafts,
   type ChatConsolidationQuery,
-  chatSummaryWithTopics,
-  chatSynopsis,
   parseChatConsolidationResult,
   readChatTopics,
 } from "./chat-consolidation.ts"
@@ -143,7 +141,7 @@ async function consolidateLocked(
     const chatSummary = ports.chatSummary(packName)
     const request = chatConsolidationQuery({
       entries: batch.entries,
-      previousSynopsis: chatSynopsis(chatSummary.read()?.summary ?? ""),
+      previousSynopsis: chatSummary.read()?.summary ?? "",
       previousEpisodeTitle: batch.previousEpisodeTitle,
     })
     const result = parseChatConsolidationResult(
@@ -159,7 +157,7 @@ async function consolidateLocked(
     }
 
     ports.archive.appendEpisodes(packName, chatEpisodeDrafts(batch.entries, result.episodes))
-    if (!chatSummary.write(chatSummaryWithTopics(result.synopsis, result.topics))) {
+    if (!chatSummary.write(result.synopsis, result.topics)) {
       return { kind: "failed", reason: "summary-write" }
     }
     return { kind: "written", topics: readChatTopics(chatSummary) }

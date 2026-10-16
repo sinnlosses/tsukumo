@@ -26,6 +26,7 @@ export const NOOP_CHAT_ARCHIVE = {
 export function fixedChatSummary(record: ChatSummaryRecord | undefined): ChatSummary {
   return {
     read: () => record,
+    readTopics: () => [],
     write: () => true,
     markUndelivered: () => {},
     markDelivered: () => {},
@@ -35,10 +36,13 @@ export function fixedChatSummary(record: ChatSummaryRecord | undefined): ChatSum
 /** 書き込み（印は変えない）と届けた印をメモリ上の写しへ反映する `ChatSummary`。 */
 export function inMemoryChatSummary(initial: ChatSummaryRecord | undefined): ChatSummary {
   let record = initial
+  let topics: readonly string[] = []
   return {
     read: () => record,
-    write: (summary) => {
+    readTopics: () => topics,
+    write: (summary, nextTopics) => {
       record = { summary, delivered: record?.delivered ?? false }
+      topics = nextTopics
       return true
     },
     markUndelivered: () => {

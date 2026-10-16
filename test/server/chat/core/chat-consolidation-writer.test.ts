@@ -6,13 +6,9 @@ import type {
   ChatUnconsolidatedLimits,
 } from "../../../../src/server/chat/core/chat-archive-port.ts"
 import { createChatConsolidationWriter } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
-import {
-  type ChatConsolidationQuery,
-  readChatTopics,
-} from "../../../../src/server/chat/core/chat-consolidation.ts"
+import type { ChatConsolidationQuery } from "../../../../src/server/chat/core/chat-consolidation.ts"
 import type { ChatSummary } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
-import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 // `query()` は差し替え、本物の claude は起こさない。
 
@@ -52,8 +48,8 @@ const VALID_OUTPUT = {
   topics: ["架空の話題1", "架空の話題2"],
 }
 
-/** 前の写し（`/compact` の写しの形。本文のあとに話題の組がある）。 */
-const PREVIOUS_SUMMARY = "架空の前のあらすじ\n<topics>\n- 架空の古い話題\n</topics>"
+/** 前の写しの本文（話題の見出しは別の欄にある）。 */
+const PREVIOUS_SUMMARY = "架空の前のあらすじ"
 
 /** 呼ばれた順（索引の追記とあらすじの書き込み）と中身を覚える、メモリ上の口。 */
 function createPorts(
@@ -69,11 +65,14 @@ function createPorts(
   const queries: ChatConsolidationQuery[] = []
   const summaryPacks: string[] = []
   let summary = PREVIOUS_SUMMARY
+  let topics: readonly string[] = ["架空の古い話題"]
   const chatSummary: ChatSummary = {
     read: () => ({ summary, delivered: true }),
-    write: (next) => {
+    readTopics: () => topics,
+    write: (next, nextTopics) => {
       order.push("write-summary")
       summary = next
+      topics = nextTopics
       return summaryWritable
     },
     markUndelivered: () => {},
@@ -120,6 +119,7 @@ function createPorts(
     queries,
     summaryPacks,
     summary: () => summary,
+    topics: () => topics,
   }
 }
 
@@ -214,7 +214,7 @@ describe("createChatConsolidationWriter", () => {
     expect(ports.queries).toHaveLength(1)
   })
 
-  it("届いていれば、前のあらすじ（話題の組を除く）と直前の見出しを渡し、エピソード → あらすじの順に書いて、書いたファイルの話題を返す", async () => {
+  it("届いていれば、前のあらすじ（話題の見出しを除く）と直前の見出しを渡し、エピソード → あらすじの順に書いて、書いたファイルの話題を返す", async () => {
     const ports = createPorts(DUE_BATCH, () => Promise.resolve(VALID_OUTPUT))
 
     const outcome = await ports.write("fictional", NEVER_ABORTED)
@@ -239,12 +239,9 @@ describe("createChatConsolidationWriter", () => {
         title: "架空の見出し2",
       },
     ])
-    // 本文の最後に tsukumo が組を置き、同じ取り出し方で読める。
-    expect(ports.summary().startsWith("架空の書き直したあらすじ\n")).toBe(true)
-    expect(ports.summary().endsWith("</topics>")).toBe(true)
-    expect(readChatTopics(fixedChatSummary({ summary: ports.summary(), delivered: true }))).toEqual(
-      ["架空の話題1", "架空の話題2"],
-    )
+    // 本文には話題を埋め込まず、見出しは別の欄に書く。
+    expect(ports.summary()).toBe("架空の書き直したあらすじ")
+    expect(ports.topics()).toEqual(["架空の話題1", "架空の話題2"])
     expect(ports.summaryPacks).toEqual(["fictional"])
   })
 

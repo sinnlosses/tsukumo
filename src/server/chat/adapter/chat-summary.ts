@@ -8,6 +8,9 @@
 // 印は「次に起こすセッションへ渡す必要があるか」の1ビットで、`DELIVERED_MARK` の1行だけを「渡し済み」と読む。
 // それ以外（別の文字列・無い・読めない）はすべて「未渡し」として扱い、倒れる方向を「同じ要約が2度載る」側にする。
 //
+// 最近の話題の見出しは、本文と別の `<パック名>.topics.json`（文字列の配列）に持つ。
+// このファイルが無い・読めない写しは、本文の中に `<topics>` の組を埋め込んでいた形として読む（読みだけ。書くときは埋め込まない）。
+//
 // 書けなくても例外を投げない（`write` は書けたかどうかを返す）。
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs"
@@ -43,6 +46,7 @@ export function createChatSummary(packName: string, root: string = chatSummaryDi
   if (!isCharacterPackName(packName)) {
     return {
       read: () => undefined,
+      readTopics: () => [],
       write: () => false,
       markUndelivered: () => {},
       markDelivered: () => {},
@@ -50,13 +54,15 @@ export function createChatSummary(packName: string, root: string = chatSummaryDi
   }
 
   const path = join(root, `${packName}.md`)
+  const topicsPath = join(root, `${packName}.topics.json`)
   return {
-    read: () => readRecord(path),
-    write: (summary) =>
+    read: () => readRecord(path, topicsPath),
+    readTopics: () => readTopics(path, topicsPath),
+    write: (summary, topics) =>
       writeRecord(path, {
         summary: truncatedSummary(summary),
-        delivered: readRecord(path)?.delivered ?? false,
-      }),
+        delivered: readRaw(path)?.delivered ?? false,
+      }) && writeTopics(topicsPath, topics),
     markUndelivered: () => {
       rewriteMark(path, false)
     },
@@ -75,10 +81,12 @@ export function discardChatSummary(packName: string, root: string = chatSummaryD
     return
   }
 
-  try {
-    rmSync(join(root, `${packName}.md`), { force: true })
-  } catch {
-    // 消せないだけ。パックはもう一覧に無いので、写しは次に同じ名前で作るまで読まれない。
+  for (const name of [`${packName}.md`, `${packName}.topics.json`]) {
+    try {
+      rmSync(join(root, name), { force: true })
+    } catch {
+      // 消せないだけ。パックはもう一覧に無いので、写しは次に同じ名前で作るまで読まれない。
+    }
   }
 }
 
@@ -87,14 +95,95 @@ function chatSummaryDir(): string {
   return join(tsukumoHomeDir(), CHAT_SUMMARY_DIR_NAME)
 }
 
-/** 印だけを書き換える。本文は既にある写しをそのまま保つ（無ければ空のまま）。 */
-function rewriteMark(path: string, delivered: boolean): boolean {
-  const current = readRecord(path)
-  return writeRecord(path, { summary: current?.summary ?? "", delivered })
+/** 呼び出し側へ返す写し。話題を別のファイルに持たない古い形は、本文から話題の組を除いて返す。 */
+function readRecord(path: string, topicsPath: string): ChatSummaryRecord | undefined {
+  const raw = readRaw(path)
+  if (raw === undefined || readStoredTopics(topicsPath) !== undefined) {
+    return raw
+  }
+  return { summary: withoutEmbeddedTopics(raw.summary), delivered: raw.delivered }
 }
 
-/** 写しと印を読む。ファイルが無い・読めないときは undefined。 */
-function readRecord(path: string): ChatSummaryRecord | undefined {
+function readTopics(path: string, topicsPath: string): readonly string[] {
+  const stored = readStoredTopics(topicsPath)
+  if (stored !== undefined) {
+    return stored
+  }
+  return embeddedTopics(readRaw(path)?.summary ?? "")
+}
+
+/** 話題のファイルを読む。無い・JSON でない・文字列の配列でないときは undefined（古い形の写しとして読ませる）。 */
+function readStoredTopics(topicsPath: string): readonly string[] | undefined {
+  const content = readOptionalFile(topicsPath)
+  if (content === undefined) {
+    return undefined
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(content)
+    return Array.isArray(parsed) && parsed.every((topic) => typeof topic === "string")
+      ? parsed
+      : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** 話題の見出しを1回の書き込みで置き換える。書けたら true。失敗しても例外を投げない。 */
+function writeTopics(topicsPath: string, topics: readonly string[]): boolean {
+  try {
+    mkdirSync(dirname(topicsPath), { recursive: true })
+    writeFileSync(topicsPath, JSON.stringify(topics))
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** 話題を本文に埋め込んでいた古い形の組（`<topics>` から次の `</topics>` まで）。 */
+const EMBEDDED_TOPICS_BLOCK = /<topics>[\s\S]*?<\/topics>/gu
+
+const EMBEDDED_TOPICS_OPEN = "<topics>"
+const EMBEDDED_TOPICS_CLOSE = "</topics>"
+
+/** 見出しの行の頭に付いた箇条の印（`- ` `* ` `・` `1. `）。 */
+const LIST_MARKER = /^(?:[-*・•]|\d+[.)])\s*/u
+
+/** 古い形の本文から話題の組をすべて除いた、あらすじの地の文。閉じの無い組は組と見なさず残す。 */
+function withoutEmbeddedTopics(body: string): string {
+  return body.replaceAll(EMBEDDED_TOPICS_BLOCK, "").trim()
+}
+
+/**
+ * 古い形の本文から、最後の `<topics>` とその後ろの最初の `</topics>` の間の行を取り出す。
+ * 閉じが無い・印が無いときは空。箇条の印を落とし、空行を飛ばすだけで、中身の良し悪しは判定しない。
+ */
+function embeddedTopics(body: string): readonly string[] {
+  const open = body.lastIndexOf(EMBEDDED_TOPICS_OPEN)
+  if (open === -1) {
+    return []
+  }
+
+  const start = open + EMBEDDED_TOPICS_OPEN.length
+  const close = body.indexOf(EMBEDDED_TOPICS_CLOSE, start)
+  if (close === -1) {
+    return []
+  }
+
+  return body
+    .slice(start, close)
+    .split("\n")
+    .map((line) => line.trim().replace(LIST_MARKER, "").trim())
+    .filter((topic) => topic !== "")
+}
+
+/** 印だけを書き換える。ファイルの本文は既にある写しのまま保つ（無ければ空のまま）。 */
+function rewriteMark(path: string, delivered: boolean): boolean {
+  return writeRecord(path, { summary: readRaw(path)?.summary ?? "", delivered })
+}
+
+/** ファイルの1行目の印と、2行目からの中身をそのまま読む。ファイルが無い・読めないときは undefined。 */
+function readRaw(path: string): ChatSummaryRecord | undefined {
   const content = readOptionalFile(path)
   if (content === undefined) {
     return undefined

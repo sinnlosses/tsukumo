@@ -161,7 +161,7 @@ characters/<name>/
 
 | 何                             | 置き場                                                                                                   | ファイルに触る adapter                    |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| あらすじ（と渡し済みの印）     | `~/.tsukumo/chat-summary/<pack>.md`                                                                      | `chat/adapter/chat-summary.ts`            |
+| あらすじ（と渡し済みの印）     | `~/.tsukumo/chat-summary/<pack>.md`（話題の見出しは同じ場所の `<pack>.topics.json`）                     | `chat/adapter/chat-summary.ts`            |
 | 雑談の会話のアーカイブ         | `~/.tsukumo/chat-archive/<pack>/<YYYY-MM-DD>.jsonl`                                                      | `chat/adapter/chat-archive.ts`            |
 | エピソード索引・思い出した記録 | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` / `recalled.jsonl`                                        | `chat/adapter/chat-archive.ts`（同じ1つ） |
 | 定着の錠                       | `~/.tsukumo/chat-archive/<pack>/consolidation.lock`                                                      | `chat/adapter/chat-consolidation-lock.ts` |
