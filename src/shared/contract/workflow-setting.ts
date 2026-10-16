@@ -26,7 +26,7 @@ const settingValueSchema = z
   .refine((value) => !value.startsWith("-") && !/[\r\n]/.test(value))
 
 export const workflowSettingContract = {
-  /** いまの欄と値。`tw` が無い・設定の口が無い・`.tw/config.toml` が無い・読めないときは `unavailable`。 */
+  /** いまの欄と値。`tw` が無い・設定コマンドが無い・`.tw/config.toml` が無い・読めないときは `unavailable`。 */
   read: oc.output(workflowSettingViewSchema),
 }
 

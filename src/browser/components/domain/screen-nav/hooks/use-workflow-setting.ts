@@ -216,7 +216,7 @@ function unavailableMessage(view: Extract<WorkflowSettingView, { kind: "unavaila
     case "tw-missing":
       return `tw コマンドが見つからない（${view.detail}）。ワークフローを取り込むかリンクで入れると、ここで流れとパーツを選べる。`
     case "schema-unsupported":
-      return "tw が設定の口（tw config --schema）を持たない。取り込んだワークフローかリンクで入れたワークフローを新しくする。"
+      return "tw が設定コマンド（tw config --schema）を持たない。取り込んだワークフローかリンクで入れたワークフローを新しくする。"
     case "config-missing":
       return "このリポジトリに .tw/config.toml が無い。"
     case "config-unreadable":

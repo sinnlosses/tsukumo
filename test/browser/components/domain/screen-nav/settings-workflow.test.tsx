@@ -17,7 +17,7 @@ import { rpcError, rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../r
 import { putSession, type SentCommand } from "../../../session-store.ts"
 
 // 設定のダイアログの「ワークフロー」の面（docs/architecture/screen-design.md「設定の歯車」、
-// docs/architecture/workflow-contract.md「設定の口」）。
+// docs/architecture/workflow-contract.md「設定コマンド」）。
 // 欄は `workflowSetting.read` が返した形だけから描き、選ぶと `workflowSetting.set` を送って返った面に替える。
 
 const REPOSITORY = {
@@ -279,7 +279,7 @@ describe("設定のダイアログの「ワークフロー」の面", () => {
 
   it.each([
     ["tw-missing", "/架空/bin/tw", "tw コマンドが見つからない（/架空/bin/tw）"],
-    ["schema-unsupported", "", "tw が設定の口"],
+    ["schema-unsupported", "", "tw が設定コマンド"],
     ["config-missing", "", "このリポジトリに .tw/config.toml が無い"],
     ["config-unreadable", "架空の読めない理由", ".tw/config.toml を読めない: 架空の読めない理由"],
   ] as const)("%s のときは欄を出さず、何が無いかを言う", async (reason, detail, text) => {

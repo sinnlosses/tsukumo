@@ -1,4 +1,4 @@
-// ワークフローの設定の口（`tw config --schema`・`tw config`・`tw config set`）の出力を、画面に見せる形へ畳む。
+// ワークフローの設定コマンド（`tw config --schema`・`tw config`・`tw config set`）の出力を、画面に見せる形へ畳む。
 // 欄の名前・値の語彙・既定は schema が言うものだけを使い、ここには書かない。
 
 import { z } from "zod"
@@ -21,7 +21,7 @@ export type TwOutcome =
       readonly stderr: string
     }
 
-/** 設定の口を打つ口（中身は配線が渡す）。 */
+/** 設定コマンドを打つ口（中身は配線が渡す）。 */
 export type TwConfigPort = {
   /** `version` が 2 のときは `--schema --version 2`、省くと引数なしの `--schema`。 */
   readonly schema: (version?: 2) => Promise<TwOutcome>
@@ -38,7 +38,7 @@ export type WorkflowSettingPlace = {
   readonly twLocation: string
 }
 
-/** `tw` が設定のファイルを言わないうちに使う相対パス（設定の口の既定の置き場）。 */
+/** `tw` が設定のファイルを言わないうちに使う相対パス（設定コマンドの既定の置き場）。 */
 const DEFAULT_CONFIG_PATH = ".tw/config.toml"
 
 const EXIT_CONFIG_MISSING = 6

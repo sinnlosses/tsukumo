@@ -482,14 +482,14 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **定義**: ワークフローが自分の設定ファイル（`tsukumo-plugins` のものは `.tw/config.toml`）に持つ、流れ（`flow`）と
   各段のパーツ（`parts.<枠>`）の値。リポジトリに属し、tsukumo は値も欄の名前も持たない
 - **注記**: 歯車の設定の「ワークフロー」の面は、**設定コマンド**で欄の形をもらって描き、設定コマンドで書くだけ
-  （`docs/architecture/workflow-contract.md`「設定の口」、`docs/architecture/adr/0025-no-project-settings.md`「2026-10-14 の改訂」）
+  （`docs/architecture/workflow-contract.md`「設定コマンド」、`docs/architecture/adr/0025-no-project-settings.md`「2026-10-14 の改訂」）
 - **避ける言い方**: プロジェクトの設定（2026-10-08 に無くした `.tsukumo/project.json` と紛れる）、リポジトリの設定
 
 ### 並び
 
 - **英語識別子**: `steps`（**ワークフローの設定**の `schema: 2` の欄のキー）
 - **定義**: ワークフローを組む、契約を満たすと宣言したスキルの線形の並び。並びの順がそのまま実行の順で、1つ以上
-- **注記**: 欄の形と決まりは `docs/architecture/workflow-contract.md`「設定の口」、並びに置くスキルの契約は同じ文書の「スキルの契約」。
+- **注記**: 欄の形と決まりは `docs/architecture/workflow-contract.md`「設定コマンド」、並びに置くスキルの契約は同じ文書の「スキルの契約」。
   tsukumo は並びを読まず、帯はメインの `work_plan` で受ける
 - **避ける言い方**: 流れ（`schema: 1` の `flow` と紛れる）、パイプライン、ステップ（依頼の手順と紛れる）
 
@@ -498,9 +498,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **英語識別子（予定）**: なし（コマンドの名前 `tw config --schema`・`tw config set` で呼ぶ）
 - **定義**: **ワークフローの設定**を見せて書くために、ワークフローが持つ2つのコマンド。`tw config --schema` が欄の形
   （`schema: 1` の1行の JSON）を返し、`tw config set <キー> <値>` が検査してから書く
-- **注記**: 契約の一部で、任意の口ではない（`docs/architecture/workflow-contract.md`「設定の口」）。
-  tsukumo は `.tw/config.toml` を直に読み書きしない。旧称は「設定の口」で、`workflow-contract.md` の節名・
-  ほかの文書・コードのコメントの旧称は、このタスクの外で順に改める
+- **注記**: 契約の一部で、任意の口ではない（`docs/architecture/workflow-contract.md`「設定コマンド」）。
+  tsukumo は `.tw/config.toml` を直に読み書きしない。旧称は「設定の口」
 - **避ける言い方**: 設定の口（旧称。「work_plan・report の口」と並べた呼び方で、コマンドが2つであることが名前から読めなかった）、設定 API、設定のフック（hook と紛れる）
 
 ### 呼び出しの差し戻し

@@ -166,7 +166,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `repository/`        | 作業ディレクトリの git リポジトリを読む。`git` を起こす口・管理下のファイル・タスク一覧                                 |
 | `recommendation/`    | おすすめの札。候補・使い捨ての `query()`・出力の検査・キャッシュ                                                        |
 | `checkout/`          | 打った場所のチェックアウトと自分の根を比べ、違えば打った側の `bin/tsukumo` へ委ねる                                     |
-| `workflow-setting/`  | ワークフローの設定。`tw` の設定の口を起こす口と読み書きの手続き                                                         |
+| `workflow-setting/`  | ワークフローの設定。`tw` の設定コマンドを起こす口と読み書きの手続き                                                     |
 
 **どの機能にも属さない共有のもの**は、`server/core/` と `server/adapter/` の**直下**に置く
 （いまあるものは `ls src/server/core/ src/server/adapter/`）。置いてよいのは**どの機能の語彙も名乗らず、読み手が
@@ -340,7 +340,7 @@ vendor/tsukumo-plugins/       取り込んだ tsukumo-plugins（git submodule。
 
 **設定の置き場は環境変数と歯車の設定の2つ**（`docs/architecture/adr/0025-no-project-settings.md`。リポジトリに属する値の
 置き場は無い）。ワークフローの設定（流れとパーツ）は tsukumo が持たず、ワークフローの `.tw/config.toml` に置いたまま、
-歯車の「ワークフロー」の面が設定の口（`tw config --schema`・`tw config set`。`server/workflow-setting/`）を通して見せて書く
+歯車の「ワークフロー」の面が設定コマンド（`tw config --schema`・`tw config set`。`server/workflow-setting/`）を通して見せて書く
 （同じ ADR の「2026-10-14 の改訂」）。タスクの節と使い方の見直しの「タスクにする」は、起動先の `.beads` が読めるかだけで出し分ける。
 「tsukumo に頼む」の文面は固定で、`shared/repository/task-run-prompt.ts` の `runPromptOf` が作る。
 

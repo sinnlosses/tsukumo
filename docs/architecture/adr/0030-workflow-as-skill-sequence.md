@@ -1,12 +1,12 @@
 # ワークフローを、契約を満たすスキルの並びにする（2026-10-15）
 
 **ワークフローは、契約を満たすと宣言したスキルの線形の並びで、利用者が歯車の設定からスキルを足す・消す・並べ替える。**
-並びはワークフローの設定の口の `schema: 2` の1欄 `steps` で、委譲先の段の結果は文字の1行目ではなく MCP ツール `phase_result` で受ける。
-形とツールの引数は `docs/architecture/workflow-contract.md`「設定の口」「スキルの契約」が正典。
+並びはワークフローの設定コマンドの `schema: 2` の1欄 `steps` で、委譲先の段の結果は文字の1行目ではなく MCP ツール `phase_result` で受ける。
+形とツールの引数は `docs/architecture/workflow-contract.md`「設定コマンド」「スキルの契約」が正典。
 
 ## 何が困っていたか
 
-- 設定の口（`schema: 1`）は、流れ（`flow`）と4つのパーツの枠（`parts.implementer`・`parts.acceptor`・`parts.retrospect`・`parts.ship`）の固定の欄だった。
+- 設定コマンド（`schema: 1`）は、流れ（`flow`）と4つのパーツの枠（`parts.implementer`・`parts.acceptor`・`parts.retrospect`・`parts.ship`）の固定の欄だった。
   利用者は枠の中身を差し替えられても、段を増やす・減らす・並べ替えることはできない。振り返りを外す・確かめの段を足すといった組み替えは、ワークフローのコードを直すしかない
 - 委譲先の段の済み方は、返却の1行目（`段 n/N | …`）を文字で読んでいた（`parseDelegateReturn`）。書式の揺れを当て推量で受け、
   形の読めない1行目は黙って帯を進めない。委譲先は自分の返却が読まれたかを知る手段が無い
