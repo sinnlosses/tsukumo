@@ -58,6 +58,7 @@ import { remarkPreviewImage } from "./preview-image.ts"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
+import { rehypeStyleAllowlist } from "./style-allowlist.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
 
 /** hast の要素をどの部品で描くか。レンダーごとに作り直さない（同じ参照でないと react-markdown が木を作り直す）ので、モジュールの定数に置く。 */
@@ -126,6 +127,8 @@ function ReportMarkdown(props: {
         rehypeCodeFileName,
         rehypeRaw,
         rehypeTaskCheck,
+        // `style` の検査はサニタイザが値の関数を受けないので、ここで済ませる。
+        rehypeStyleAllowlist,
         [rehypeSanitize, REPORT_SANITIZE_SCHEMA],
         rehypeHighlight,
       ]}

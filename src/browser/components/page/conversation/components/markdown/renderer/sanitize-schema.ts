@@ -119,7 +119,7 @@ const STRIPPED_TAG_NAMES: readonly string[] = [
 
 /**
  * 要素を問わず通してよい属性（class・id・title・table のセル結合・details の open・datetime・aria・role・SVG の座標や描画の属性。43個）。
- * `href` は `<a>` だけ、`style` / `marker-end` / `marker-start` は値を検査するので別に定義する。
+ * `href` は `<a>` だけ、`marker-end` / `marker-start` は値を検査するので別に定義する（`style` の値の検査は schema の外）。
  *
  * 名前は hast のプロパティ名（DOM プロパティ名に合わせた camelCase。`property-information` の変換規則）で書く。
  * もとの HTML 属性名（kebab-case）はコメントで添える。
@@ -182,13 +182,6 @@ const GLOBAL_ATTRIBUTES: readonly string[] = [
  */
 const ALLOWED_LINK_SCHEMES: readonly string[] = ["http", "https", "mailto"]
 
-/**
- * `style` 属性で許してよい値の正規表現。
- * 外部を読みに行く記法（`url(` / `@import` / `expression(`）・`javascript:`・タグの混入（`<`）を含むものは丸ごと落とす（値が正規表現にマッチしなければ属性ごと落ちる）。
- * 大文字小文字を区別しない（`i` フラグ）。改行を含む値も1つの文字列として見る（`s` フラグ）。
- */
-const ALLOWED_STYLE_PATTERN = /^(?:(?!url\(|@import|expression\(|javascript:|<).)*$/is
-
 /** `marker-end` / `marker-start` は、ページ内の定義（`url(#id)`）だけを許す（外部を指す形は落とす）。 */
 const ALLOWED_MARKER_REFERENCE_PATTERN = /^url\(#[A-Za-z0-9_-]+\)$/
 
@@ -227,7 +220,8 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
     img: [["src", REPORT_IMAGE_SRC_PATTERN], "alt"],
     "*": [
       ...GLOBAL_ATTRIBUTES,
-      ["style", ALLOWED_STYLE_PATTERN],
+      // 値の検査は `rehypeStyleAllowlist`（サニタイザの直前）が済ませる。
+      "style",
       ["markerEnd", ALLOWED_MARKER_REFERENCE_PATTERN],
       ["markerStart", ALLOWED_MARKER_REFERENCE_PATTERN],
     ],

@@ -4,7 +4,7 @@
 // 受け持つのは記法が挙げている5系統（`note` / `badge` / `cols` / `card` / `stats` / `stat`）と、
 // tsukumo が組む `ol` / `li`（`progress` の段の並び）。
 // 知らない class 名と `style` 属性はそのまま残す（この層は足し算だけで、記法の表に無いモデルの即興を落とさない）。
-// class 名そのものは無害で、危ない経路（`script` の除去・`href` のスキーム・`style` の値）は `REPORT_SANITIZE_SCHEMA` が別に見る。
+// class 名そのものは無害で、危ない経路（`script` の除去・`href` のスキーム）は `REPORT_SANITIZE_SCHEMA` が、`style` の値は `rehypeStyleAllowlist` が別に見る。
 
 import type { JSX, ReactElement } from "react"
 import type { ExtraProps } from "react-markdown"

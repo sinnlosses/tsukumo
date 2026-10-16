@@ -1417,7 +1417,9 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   `script` / `style` / `iframe` は中身ごと、`on*` と `javascript:` は属性ごと落とす
   （`src/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.ts` の `REPORT_SANITIZE_SCHEMA` 1箇所に集約）。ただし**コードスパン
   （`` `code` ``）の中に書いた HTML はタグにせず、文字のまま出す**。
-  `style` 属性は通すが、**外部を読みに行く記法（`url(` / `@import`）を含むものは落とす**。
+  `style` 属性は、**許したプロパティと関数だけで書かれたものを通し、外部を読みに行く記法
+  （`url(` / `image-set(` / `src(` / `@import` / CSS のエスケープ）を含むものは属性ごと落とす**
+  （`style-allowlist.ts`）。
   段組みは、レンダラー側が**ステップをカードにして縦に1本で積み**（横に並べてZ字に読ませない。
   **番号も振らない**）、**1つのステップの中**を読みやすく組む。レポートの中身の段組みは
   書き手（モデル）が HTML で組む。**色だけで意味を伝えない**（文字でも読めるようにする）

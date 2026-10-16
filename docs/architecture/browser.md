@@ -58,7 +58,9 @@ react-markdown
   外の部品は CSS を import しない。`split-blocks.ts` は `report/domain/`、`repository-link.tsx` は
   `conversation/components/repository-link/` の部品
 - **`schema` は許可リスト**（要素・属性と `class` の語彙 `note` / `badge` / `compare` など）。`style` 属性は
-  `url(` / `@import` を含むものを落とす規則も `schema` の `attributes` の正規表現で表す。**規約
+  `schema` の外の `style-allowlist.ts`（`rehypeStyleAllowlist`。`rehypeSanitize` の直前に差す）が、
+  許したプロパティと関数（`calc` / `minmax` / `repeat` / `rgb(a)` / `hsl(a)` / `var`）だけで書かれたものを残し、
+  エスケープ・コメント・文字列・`url(` / `image-set(` / `src(` / `!important` を含む宣言が1つでもあれば属性ごと落とす。**規約
   （`report-notation.ts`）・schema・部品（`notation.tsx`）・CSS の4つは同じコミットで揃える**
 - **記法の class 名は部品に解決する**（`notation.tsx`）。モデルが書くのは骨格（`note` / `badge` など）で、
   **CSS が受ける class 名（`report-` 付き）は tsukumo が付ける**ので、モデルの書いた文字列とセレクタが
