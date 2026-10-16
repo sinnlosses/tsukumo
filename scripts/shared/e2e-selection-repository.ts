@@ -41,6 +41,8 @@ export function readE2eSelection(
   const e2eFiles = [...modules.paths].filter((file) => /^test\/e2e\/[^/]+\.test\.ts$/.test(file))
   const selection = selectE2eFiles(changedPaths, {
     graph: modules.graph,
+    openFiles: modules.openFiles,
+    allPaths: modules.paths,
     sources: modules.sources,
     e2eFiles: e2eFiles.toSorted(),
     regionRoots: E2E_REGION_ROOTS,

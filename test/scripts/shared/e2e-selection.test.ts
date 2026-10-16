@@ -26,6 +26,8 @@ const SOURCE = {
     [PAGE, ["test/e2e/scenario-run.ts"]],
     ["test/e2e/scenario-run.ts", ["scripts/shared/fake-process.ts"]],
   ]),
+  openFiles: new Set<string>(),
+  allPaths: new Set<string>(),
   sources: new Map([
     [REPORT, 'run.open({ scenario: "report-blocks" })'],
     [CHAT, 'run.open({ scenario: "chat-history" })'],
@@ -104,6 +106,57 @@ describe("selectE2eFiles が全件に倒す変更", () => {
       kind: "all",
       path: "package.json",
       reason: "E2E の足場",
+    })
+  })
+})
+
+describe("読み方を決められないファイルがあるとき", () => {
+  test("open のファイルに届く変更は、全 E2E に及ぶ", () => {
+    const open = {
+      ...SOURCE,
+      openFiles: new Set(["test/e2e/scenario-run.ts"]),
+      allPaths: new Set(["scripts/shared/unrelated.ts", "test/e2e/other.ts"]),
+    }
+
+    expect(select("scripts/shared/unrelated.ts")).toEqual({ kind: "files", files: [] })
+    expect(selectE2eFiles(["scripts/shared/unrelated.ts"], open)).toEqual({
+      kind: "files",
+      files: [CHAT, PAGE, REPORT],
+    })
+  })
+
+  test("期待値の持ち主は、場面を決められない書き方の E2E も含む", () => {
+    const source = {
+      ...SOURCE,
+      sources: new Map([...SOURCE.sources, [CHAT, "run.open({ scenario: name + suffix })"]]),
+    }
+
+    expect(selectE2eFiles(["test/e2e/expected/report-blocks.dom.json"], source)).toEqual({
+      kind: "files",
+      files: [CHAT, REPORT],
+    })
+  })
+
+  test("組み立てた名前を渡す E2E は、同じ文字列をたまたま持つ別の E2E があっても持ち主に残る", () => {
+    const source = {
+      ...SOURCE,
+      sources: new Map([
+        [CHAT, 'const s = "report-" + kind\nrun.open({ scenario: s })'],
+        [REPORT, 'run.open({ scenario: "report-blocks" })'],
+      ]),
+    }
+
+    expect(selectE2eFiles(["test/e2e/expected/report-blocks.dom.json"], source)).toEqual({
+      kind: "files",
+      files: [CHAT, REPORT],
+    })
+  })
+
+  test("どの E2E の場面にも当たらない期待値は全件", () => {
+    expect(select("test/e2e/expected/nobody.dom.json")).toEqual({
+      kind: "all",
+      path: "test/e2e/expected/nobody.dom.json",
+      reason: "持ち主の E2E が見つからない期待値",
     })
   })
 })

@@ -92,7 +92,11 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
   （`tw ship` の送る前の検証コマンドと `scripts/dev/ship.ts`）に1回だけ流す**。選び方（`scripts/shared/e2e-selection.ts`）は
   変えたファイル1件ごとに次の順で決め、1件でも全件なら全件にする（取りこぼすより遅いほうを選ぶ）
   - 文書・単体テスト・E2E から届かない `scripts/` などは選ばない。E2E ファイルはそれ自身、期待値は場面の
-    名前を持つ E2E を選ぶ
+    名前を持つ E2E を選ぶ（場面の名前は E2E ファイルの構文木の文字列リテラルとテンプレートの頭から集める。
+    `scenario:` に連結や呼び出しなど名前を決められない式を書いたファイルは、どの場面の持ち主にもなる）
+  - import は構文木で読む（静的 import・`export … from`・`import("…")`・`require("…")`・
+    `new URL("…", import.meta.url)`。`?raw` などのクエリは落として解決する）。式つきの `import()`・`require()`・
+    `import.meta.glob`、クエリを落としても解決できない指定、構文エラーのファイルは、そこへ届く根からすべてのファイルに届くとみなす（以下の規則で全件や広い選び方に倒れる）
   - E2E の足場の根（`package.json`・`vitest.e2e.config.ts`・`scripts/dev/build-ui.ts` など）から import で
     届くファイルは全件。E2E ファイルから import で届くファイル（`test/e2e/scenario-run.ts`・
     `test/e2e/task-room.ts`・`test/fixture/` など）は、届く元の E2E を選ぶ

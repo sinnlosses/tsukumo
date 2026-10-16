@@ -5,11 +5,13 @@ import { execFileSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 import path from "node:path"
 
-import { importedPaths, type ModuleGraph } from "./module-graph.ts"
+import { analyzeImports, type ModuleGraph } from "./module-graph.ts"
 
 export type WorktreeModules = {
   readonly paths: ReadonlySet<string>
   readonly graph: ModuleGraph
+  /** 読み方を静的に決められないファイル。届いたら全件扱い。 */
+  readonly openFiles: ReadonlySet<string>
   /** `.ts`/`.tsx` のパス → 本文。 */
   readonly sources: ReadonlyMap<string, string>
 }
@@ -31,8 +33,10 @@ export function readWorktreeModules(root: string): WorktreeModules {
       .filter((file) => file.endsWith(".ts") || file.endsWith(".tsx"))
       .map((file) => [file, readFileSync(path.join(root, file), "utf8")] as const),
   )
-  const graph = new Map(
-    [...sources].map(([file, source]) => [file, importedPaths(file, source, paths)] as const),
+  const imports = new Map(
+    [...sources].map(([file, source]) => [file, analyzeImports(file, source, paths)] as const),
   )
-  return { paths, graph, sources }
+  const graph = new Map([...imports].map(([file, read]) => [file, read.paths] as const))
+  const openFiles = new Set([...imports].filter(([, read]) => read.open).map(([file]) => file))
+  return { paths, graph, openFiles, sources }
 }

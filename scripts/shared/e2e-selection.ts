@@ -4,6 +4,7 @@
 import { entries } from "remeda"
 
 import { isDocumentPath } from "./document-change.ts"
+import { readScenarioNames, scenarioOwners } from "./e2e-scenario.ts"
 import { type ModuleGraph, reachableFrom } from "./module-graph.ts"
 
 export type E2eSelection =
@@ -12,6 +13,10 @@ export type E2eSelection =
 
 export type E2eSelectionSource = {
   readonly graph: ModuleGraph
+  /** 読み方を静的に決められないファイル。届いたら `allPaths` の全部に届くとみなす。 */
+  readonly openFiles: ReadonlySet<string>
+  /** 実在するファイルの全部。 */
+  readonly allPaths: ReadonlySet<string>
   /** E2E ファイルの本文（期待値の持ち主を場面の名前で探す）。 */
   readonly sources: ReadonlyMap<string, string>
   /** `test/e2e/*.test.ts` の全部。 */
@@ -95,17 +100,15 @@ type Reach = {
 }
 
 function buildReach(source: E2eSelectionSource): Reach {
+  const reach = (roots: readonly string[]) =>
+    reachableFrom(source.graph, roots, source.openFiles, source.allPaths)
   return {
-    harness: reachableFrom(source.graph, HARNESS_ROOTS),
-    server: reachableFrom(source.graph, [SERVER_ENTRY]),
+    harness: reach(HARNESS_ROOTS),
+    server: reach([SERVER_ENTRY]),
     regions: new Map(
-      entries(source.regionRoots).map(
-        ([name, roots]) => [name, reachableFrom(source.graph, roots)] as const,
-      ),
+      entries(source.regionRoots).map(([name, roots]) => [name, reach(roots)] as const),
     ),
-    e2eFiles: new Map(
-      source.e2eFiles.map((file) => [file, reachableFrom(source.graph, [file])] as const),
-    ),
+    e2eFiles: new Map(source.e2eFiles.map((file) => [file, reach([file])] as const)),
   }
 }
 
@@ -163,13 +166,10 @@ function decideSource(changed: string, source: E2eSelectionSource, reach: Reach)
 /** 期待値 `test/e2e/expected/<場面>.<種類>.json` を書く E2E。場面の名前か、その頭のテンプレートを本文に持つもの。 */
 function expectedOwners(changed: string, source: E2eSelectionSource): string[] {
   const scenario = changed.slice(EXPECTED_DIRECTORY.length).replace(/\.[^.]+\.[^.]+$/, "")
-  return source.e2eFiles.filter((file) => {
-    const body = source.sources.get(file) ?? ""
-    if (body.includes(`"${scenario}"`)) {
-      return true
-    }
-    return [...body.matchAll(/`([a-z0-9-]+)\$\{/g)].some((match) =>
-      scenario.startsWith(match[1] ?? "\0"),
-    )
-  })
+  const candidates = new Map(
+    source.e2eFiles.map(
+      (file) => [file, readScenarioNames(source.sources.get(file) ?? "")] as const,
+    ),
+  )
+  return scenarioOwners(scenario, candidates)
 }
