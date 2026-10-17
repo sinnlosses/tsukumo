@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>判断3・7 の見本 — 図の題の位置と note の地（2026-10-17）</title>
+<style>
+:root{
+  --ground:#191720; --surface:#221f2b; --ink:#e8e3ea; --accent:#f2b0a0;
+  --ink-bright:#f6f3f8;
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+  --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+  --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+  --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
+  --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+  --rule-accent: color-mix(in srgb, var(--rule), var(--accent) 60%);
+  --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
+  --state-ok:#7ee081; --state-warn:#e3c766; --state-ng:#f2a0a0; --state-ask:#c7aef0; --state-info:#9cc1ee; --state-memo:#e8e3ea;
+  --font-sans: system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-code: "IBM Plex Mono", var(--font-mono);
+}
+body{margin:0;padding:32px;background:#17161e;color:var(--ink);font-family:var(--font-sans);font-size:15px;line-height:26px;font-size-adjust: ex-height 0.545;
+  text-autospace:normal;line-break:strict;font-kerning:normal;overflow-wrap:anywhere}
+h1.mock-title{margin:0 0 4px;font-size:20px;font-weight:600;color:var(--ink-bright);line-height:1.4}
+.mock-caption{font-size:12.5px;color:var(--ink-quiet);margin:0 0 12px;line-height:1.6}
+.pane{box-sizing:border-box;width:1004px;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:22px 24px 26px;margin-bottom:40px}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:36px}
+.col .tag{display:inline-block;margin:0 0 16px;padding:2px 10px;border:1px solid var(--rule);border-radius:999px;font-size:12px;color:var(--ink-soft);line-height:20px}
+.col .tag b{color:var(--ink-bright);font-weight:600;margin-right:6px}
+p{margin:0 0 13px;font-size:14px;line-height:24px;text-wrap:pretty}
+code{font-family:var(--font-code);font-size:.88em;background:var(--surface-raised);padding:1px 5px;border-radius:4px}
+h2{margin:30px 0 10px;padding-bottom:5px;font-size:17px;line-height:1.4;font-weight:700;color:var(--ink-bright);border-bottom:1px solid var(--rule-accent)}
+
+/* ===== 題の位置 ===== */
+.fig{margin:0 0 13px}
+.fig svg{display:block;max-width:100%}
+.cap-now{margin:4px 0 0;text-align:center;font-size:12px;line-height:18px;color:var(--ink-quiet)}
+.cap-now .no{font-family:var(--font-mono);margin-right:8px}
+.cap-top{margin:0 0 8px;font-size:13px;line-height:20px;text-wrap:balance}
+.cap-top .no{font-family:var(--font-mono);font-size:12px;color:var(--ink-quiet);margin-right:8px}
+.cap-top .claim{color:var(--ink-bright);font-weight:600}
+.cap-top .sub{display:block;color:var(--ink-quiet)}
+.cap-bottom{margin:4px 0 0;font-size:12px;line-height:18px;color:var(--ink-quiet)}
+
+/* ===== note の地 ===== */
+.note{margin:0 0 13px;padding:8px 14px;border-left:3px solid var(--kind);border-radius:0 8px 8px 0;font-size:14px;line-height:22px}
+.note .kind{display:block;font-size:12px;font-weight:600;color:var(--kind);letter-spacing:.06em;margin-bottom:1px}
+.note.ask{--kind:var(--state-ask)} .note.warn{--kind:var(--state-warn)} .note.memo{--kind:var(--state-memo)} .note.info{--kind:var(--state-info)}
+/* A 今のまま: 全種類 10% */
+.v-now .note{background:color-mix(in srgb, var(--kind) 10%, var(--surface))}
+/* B 地なし: 罫と題の字だけ */
+.v-none .note{background:none;padding-top:2px;padding-bottom:2px;border-radius:0}
+/* C 段差: warn・ng 13%、ほか 6% */
+.v-step .note{background:color-mix(in srgb, var(--kind) 6%, var(--surface))}
+.v-step .note.warn,.v-step .note.ng{background:color-mix(in srgb, var(--kind) 13%, var(--surface))}
+</style>
+</head>
+<body>
+<h1 class="mock-title">判断3・7 の見本</h1>
+<p class="mock-caption">同じ架空の中身を3案で並べた。上: 図の題の位置（A 今＝下・中央の1段 / B 上に2段 / C 折衷＝主張を上・測り方を下）。下: note の地（A 今＝全種類 10% / B 地なし / C 段差＝warn 13%・ほか 6%）。</p>
+
+<!-- ===== 判断3: 図の題の位置 ===== -->
+<div class="pane" id="pane-caption">
+  <div class="cols">
+
+    <div class="col">
+      <span class="tag"><b>A</b>今: 題は下・中央・1段</span>
+      <p>札の頭を組む関数を <code>stripHead</code> に寄せ、段の数で分かれていた2つの経路を1つにした。</p>
+      <div class="fig">
+        <svg viewBox="0 0 300 150" width="300" height="150" font-family="system-ui" font-size="12">
+          <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a39fab"/></marker></defs>
+          <rect x="4" y="12" width="84" height="32" rx="16" fill="none" stroke="#6e6a78"/><text x="46" y="32" text-anchor="middle" fill="#e8e3ea">依頼が届く</text>
+          <path d="M88 28 L124 28" fill="none" stroke="#a39fab" marker-end="url(#a1)"/>
+          <path d="M170 4 L214 28 L170 52 L126 28 Z" fill="none" stroke="#6e6a78"/><text x="170" y="32" text-anchor="middle" fill="#e8e3ea">段取り?</text>
+          <path d="M170 52 L170 86" fill="none" stroke="#a39fab" marker-end="url(#a1)"/><text x="178" y="74" fill="#a39fab" font-size="11">ある（1段でも）</text>
+          <path d="M126 28 L60 28 L60 128 L90 128" fill="none" stroke="#a39fab" marker-end="url(#a1)"/><text x="30" y="84" fill="#a39fab" font-size="11">ない</text>
+          <rect x="100" y="88" width="140" height="30" rx="6" fill="none" stroke="#f2b0a0"/><text x="170" y="107" text-anchor="middle" fill="#f6f3f8">札の頭に「n/N」</text>
+          <rect x="92" y="118" width="148" height="20" rx="5" fill="none" stroke="#6e6a78" stroke-dasharray="4 3"/><text x="166" y="132" text-anchor="middle" fill="#a39fab" font-size="11">位置の字なし</text>
+        </svg>
+        <p class="cap-now"><span class="no">図 1</span>札の位置の決まり方（架空）</p>
+      </div>
+      <h2>位置の字の決まり（架空）</h2>
+      <p>段取りがあれば、段の数にかかわらず「n/N」を出す。</p>
+    </div>
+
+    <div class="col">
+      <span class="tag"><b>B</b>上に2段（主張＋測り方）</span>
+      <p>札の頭を組む関数を <code>stripHead</code> に寄せ、段の数で分かれていた2つの経路を1つにした。</p>
+      <p class="cap-top"><span class="no">図 1</span><span class="claim">札の位置は段の数ではなく、段取りの有無で決まる</span><span class="sub">疑似セッションの3場面（段 0・1・3）で札の頭を比べた</span></p>
+      <div class="fig">
+        <svg viewBox="0 0 300 150" width="300" height="150" font-family="system-ui" font-size="12">
+          <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a39fab"/></marker></defs>
+          <rect x="4" y="12" width="84" height="32" rx="16" fill="none" stroke="#6e6a78"/><text x="46" y="32" text-anchor="middle" fill="#e8e3ea">依頼が届く</text>
+          <path d="M88 28 L124 28" fill="none" stroke="#a39fab" marker-end="url(#a2)"/>
+          <path d="M170 4 L214 28 L170 52 L126 28 Z" fill="none" stroke="#6e6a78"/><text x="170" y="32" text-anchor="middle" fill="#e8e3ea">段取り?</text>
+          <path d="M170 52 L170 86" fill="none" stroke="#a39fab" marker-end="url(#a2)"/><text x="178" y="74" fill="#a39fab" font-size="11">ある（1段でも）</text>
+          <path d="M126 28 L60 28 L60 128 L90 128" fill="none" stroke="#a39fab" marker-end="url(#a2)"/><text x="30" y="84" fill="#a39fab" font-size="11">ない</text>
+          <rect x="100" y="88" width="140" height="30" rx="6" fill="none" stroke="#f2b0a0"/><text x="170" y="107" text-anchor="middle" fill="#f6f3f8">札の頭に「n/N」</text>
+          <rect x="92" y="118" width="148" height="20" rx="5" fill="none" stroke="#6e6a78" stroke-dasharray="4 3"/><text x="166" y="132" text-anchor="middle" fill="#a39fab" font-size="11">位置の字なし</text>
+        </svg>
+      </div>
+      <h2>位置の字の決まり（架空）</h2>
+      <p>段取りがあれば、段の数にかかわらず「n/N」を出す。</p>
+    </div>
+
+    <div class="col">
+      <span class="tag"><b>C</b>折衷: 主張を上、測り方を下</span>
+      <p>札の頭を組む関数を <code>stripHead</code> に寄せ、段の数で分かれていた2つの経路を1つにした。</p>
+      <p class="cap-top"><span class="no">図 1</span><span class="claim">札の位置は段の数ではなく、段取りの有無で決まる</span></p>
+      <div class="fig">
+        <svg viewBox="0 0 300 150" width="300" height="150" font-family="system-ui" font-size="12">
+          <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a39fab"/></marker></defs>
+          <rect x="4" y="12" width="84" height="32" rx="16" fill="none" stroke="#6e6a78"/><text x="46" y="32" text-anchor="middle" fill="#e8e3ea">依頼が届く</text>
+          <path d="M88 28 L124 28" fill="none" stroke="#a39fab" marker-end="url(#a3)"/>
+          <path d="M170 4 L214 28 L170 52 L126 28 Z" fill="none" stroke="#6e6a78"/><text x="170" y="32" text-anchor="middle" fill="#e8e3ea">段取り?</text>
+          <path d="M170 52 L170 86" fill="none" stroke="#a39fab" marker-end="url(#a3)"/><text x="178" y="74" fill="#a39fab" font-size="11">ある（1段でも）</text>
+          <path d="M126 28 L60 28 L60 128 L90 128" fill="none" stroke="#a39fab" marker-end="url(#a3)"/><text x="30" y="84" fill="#a39fab" font-size="11">ない</text>
+          <rect x="100" y="88" width="140" height="30" rx="6" fill="none" stroke="#f2b0a0"/><text x="170" y="107" text-anchor="middle" fill="#f6f3f8">札の頭に「n/N」</text>
+          <rect x="92" y="118" width="148" height="20" rx="5" fill="none" stroke="#6e6a78" stroke-dasharray="4 3"/><text x="166" y="132" text-anchor="middle" fill="#a39fab" font-size="11">位置の字なし</text>
+        </svg>
+        <p class="cap-bottom">疑似セッションの3場面（段 0・1・3）で札の頭を比べた</p>
+      </div>
+      <h2>位置の字の決まり（架空）</h2>
+      <p>段取りがあれば、段の数にかかわらず「n/N」を出す。</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== 判断7: note の地 ===== -->
+<div class="pane" id="pane-note">
+  <div class="cols">
+
+    <div class="col v-now">
+      <span class="tag"><b>A</b>今: 全種類 10% の地</span>
+      <p>段が1つの依頼は、これまで位置の字を持たない経路に落ちていた。</p>
+      <div class="note ask"><span class="kind">確かめていない</span>760px 以下の札で位置の字が折り返すかは見ていない。</div>
+      <p>直した場所は <code>stripHead</code> と <code>phaseLabel</code> の2つで、どちらも札の頭の中にある。</p>
+      <div class="note memo"><span class="kind">覚え書き</span>760px 以下の札は頭の2行に同じものを持つので、ここは触っていない。</div>
+      <p>E2E の期待値は4本を更新した。</p>
+      <div class="note warn"><span class="kind">注意</span>期待値の更新を同じコミットに入れないと、次の check が落ちる。</div>
+    </div>
+
+    <div class="col v-none">
+      <span class="tag"><b>B</b>地なし: 罫と題の字だけ</span>
+      <p>段が1つの依頼は、これまで位置の字を持たない経路に落ちていた。</p>
+      <div class="note ask"><span class="kind">確かめていない</span>760px 以下の札で位置の字が折り返すかは見ていない。</div>
+      <p>直した場所は <code>stripHead</code> と <code>phaseLabel</code> の2つで、どちらも札の頭の中にある。</p>
+      <div class="note memo"><span class="kind">覚え書き</span>760px 以下の札は頭の2行に同じものを持つので、ここは触っていない。</div>
+      <p>E2E の期待値は4本を更新した。</p>
+      <div class="note warn"><span class="kind">注意</span>期待値の更新を同じコミットに入れないと、次の check が落ちる。</div>
+    </div>
+
+    <div class="col v-step">
+      <span class="tag"><b>C</b>段差: warn 13%・ほか 6%</span>
+      <p>段が1つの依頼は、これまで位置の字を持たない経路に落ちていた。</p>
+      <div class="note ask"><span class="kind">確かめていない</span>760px 以下の札で位置の字が折り返すかは見ていない。</div>
+      <p>直した場所は <code>stripHead</code> と <code>phaseLabel</code> の2つで、どちらも札の頭の中にある。</p>
+      <div class="note memo"><span class="kind">覚え書き</span>760px 以下の札は頭の2行に同じものを持つので、ここは触っていない。</div>
+      <p>E2E の期待値は4本を更新した。</p>
+      <div class="note warn"><span class="kind">注意</span>期待値の更新を同じコミットに入れないと、次の check が落ちる。</div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
