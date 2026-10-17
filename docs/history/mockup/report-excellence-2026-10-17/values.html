@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>レポートの紙面 値の見本 — 3場面 × 2幅 × 3案（2026-10-17）</title>
+<style>
+/* 値の見本。地・字・差し色は theme.css の既定（差し色は白鈴パックの値）。架空の中身だけを使い、実物の会話は写さない。
+   振る値は3つの束（クラス .v-A / .v-B / .v-C）で切り替える:
+     A 静か   : 拾う字 14:1 ・ ## 19px ・ あきの格子 12 / 24（4px 系）
+     B 提案   : 拾う字 15:1 ・ ## 21px ・ あきの格子 13 / 26（半行系）
+     C はっきり: 拾う字 16:1 ・ ## 22px ・ あきの格子 13 / 26
+   地の文 42em・罫 1.3:1・表の左揃え・note の地の段差・図表の題（下・中央・1段）は振らない。 */
+:root{
+  --ground:#191720; --surface:#221f2b; --ink:#e8e3ea; --accent:#f2b0a0;
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+  --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+  --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+  --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
+  --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+  --rule-accent: color-mix(in srgb, var(--rule), var(--accent) 60%);
+  --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
+  --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
+  --state-ok:#7ee081; --state-warn:#e3c766; --state-ng:#f2a0a0; --state-ask:#c7aef0; --state-info:#9cc1ee;
+  --font-sans: system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-code: "IBM Plex Mono", var(--font-mono);
+  --fs-sub:17px; --fs-body:15px; --fs-dense:14px; --fs-caption:13px; --fs-label:12px;
+  --measure:42em;
+}
+.v-A{--ink-bright:#f1eef2; --fs-section:19px; --fs-headline:19px; --lh-body:24px; --gap:12px; --gap-2:24px; --gap-4:48px}
+.v-B{--ink-bright:#f7f6f8; --fs-section:21px; --fs-headline:21px; --lh-body:26px; --gap:13px; --gap-2:26px; --gap-4:52px}
+.v-C{--ink-bright:#fefefe; --fs-section:22px; --fs-headline:22px; --lh-body:26px; --gap:13px; --gap-2:26px; --gap-4:52px}
+
+body{margin:0;padding:32px;background:#17161e;color:var(--ink);font-family:var(--font-sans);font-size:15px;line-height:1.6}
+h1.mock-title{margin:0 0 4px;font-size:20px;font-weight:600;color:#f7f6f8}
+.mock-caption{font-size:12.5px;color:var(--ink-quiet);margin:0 0 12px;max-width:80em}
+.mock-group{margin:0 0 56px}
+.mock-group > h2{margin:0 0 4px;font-size:16px;color:#f7f6f8}
+.mock-row{display:flex;flex-direction:column;gap:32px;align-items:flex-start}
+.mock-label{font-size:12px;font-family:var(--font-mono);color:var(--ink-quiet);margin:0 0 6px}
+
+/* ===== 画面の器（メインビューの領域を実寸で切り出す） ===== */
+.pane{box-sizing:border-box;background:var(--surface);border:1px solid var(--rule);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.pane.w1400{width:1004px} .pane.w1920{width:1340px}
+.pane.first.w1400{height:512px} .pane.first.w1920{height:692px}
+.strip{flex:none;display:flex;align-items:center;gap:10px;height:52px;padding:0 20px 0 22px;border-bottom:1px solid var(--rule-quiet);font-size:13px;color:var(--ink-soft)}
+.strip .dot{width:8px;height:8px;border-radius:50%;background:var(--state-ok)}
+.strip .right{margin-left:auto;display:flex;gap:16px;align-items:center}
+.strip .mono{font-family:var(--font-mono);font-size:12px;color:var(--ink-quiet)}
+.strip .steps{padding:4px 12px;border:1px solid var(--rule);border-radius:999px;color:var(--ink);font-size:13px}
+.turn-body{flex:1;min-height:0;display:grid;grid-template-columns:232px minmax(0,1fr);overflow:hidden}
+.rail{border-right:1px solid var(--rule-quiet);padding:14px 10px;font-size:13px;color:var(--ink-quiet)}
+.rail .head{display:flex;justify-content:space-between;padding:0 10px 10px;font-size:12px}
+.rail .item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--surface-raised);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail .item::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.rail .sub{padding:6px 12px 6px 26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail .sub.cur{color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+.content{min-width:0;overflow:hidden;padding:18px 24px 24px 24px}
+
+/* ===== レポート本体 ===== */
+.report{display:grid;grid-template-columns:minmax(0,var(--measure)) minmax(0,1fr);column-gap:28px;font-size:var(--fs-body);line-height:var(--lh-body);color:var(--ink);
+  text-autospace:normal;text-spacing-trim:trim-start;line-break:strict;font-kerning:normal;font-synthesis:weight;overflow-wrap:anywhere}
+.report > *{grid-column:1}
+.report > .wide{grid-column:1 / -1}
+.report p{margin:0 0 var(--gap);text-wrap:pretty}
+.report code{font-family:var(--font-code);font-size:.88em;background:var(--surface-raised);padding:1px 5px;border-radius:4px;color:var(--ink);box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.report a.path{color:var(--ink);text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:3px}
+.report strong{color:var(--ink-bright);font-weight:600}
+
+/* 判決の頭 */
+.catalog{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px;margin:0 0 6px;font-size:var(--fs-label);color:var(--ink-quiet)}
+.catalog .sep{color:var(--rule)}
+.catalog .id{font-family:var(--font-mono);color:var(--accent)}
+.catalog .done{color:var(--accent);font-weight:600}
+.catalog .meta{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.catalog .meta .plus{color:var(--state-ok)} .catalog .meta .minus{color:var(--state-ng)}
+.headline{margin:0 0 var(--gap);font-size:var(--fs-headline);line-height:1.45;font-weight:700;color:var(--ink-bright);word-break:auto-phrase;text-wrap:balance;letter-spacing:.01em}
+.conclusion{margin:0 0 var(--gap-2)}
+.conclusion .why{color:var(--ink-soft)}
+.signals{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;margin:0 0 var(--gap);padding:9px 0;border-top:1px solid var(--rule-soft);border-bottom:1px solid var(--rule-soft);font-size:var(--fs-caption);line-height:20px;color:var(--ink-soft)}
+.signals .sig b{font-weight:600;color:var(--ink-bright)}
+.signals .ok{color:var(--state-ok);font-family:var(--font-mono);font-size:12px;font-weight:700}
+.signals .ask{color:var(--state-ask);font-family:var(--font-mono);font-size:12px;font-weight:700}
+.signals .n{font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+.signals .fav{margin-left:auto;display:inline-flex;gap:7px;align-items:center;color:var(--ink)}
+.signals .fav::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.checks{margin:0 0 var(--gap-2);font-size:var(--fs-caption);line-height:20px}
+.check{display:grid;grid-template-columns:7em minmax(0,1fr);column-gap:12px;padding:5px 0;border-bottom:1px solid var(--rule-soft)}
+.check:last-child{border-bottom:none}
+.check .mk{font-family:var(--font-mono);font-size:12px;white-space:nowrap}
+.check.ask .mk{color:var(--state-ask);font-weight:700}
+.check.ask .lb{color:var(--ink)}
+.check .how{color:var(--ink-soft)}
+.check .how b{font-weight:500;color:var(--ink-soft)}
+.check.rest .mk{color:var(--state-ok)}
+.check.rest .lb{color:var(--ink-quiet)}
+
+/* 節の見出し: 上は下の4倍。罫は ## だけ */
+.report h2{margin:var(--gap-4) 0 var(--gap);padding-bottom:6px;font-size:var(--fs-section);line-height:1.4;font-weight:700;color:var(--ink-bright);border-bottom:1px solid var(--rule-accent);word-break:auto-phrase;text-wrap:balance;letter-spacing:.01em;font-feature-settings:"palt"}
+.report h2.after-head{margin-top:var(--gap-2)}
+.report h3{margin:var(--gap-2) 0 var(--gap);font-size:var(--fs-sub);line-height:1.4;font-weight:700;color:var(--ink-bright)}
+
+/* 図と表の題: 今のまま（下・中央・12px・1段）。判断3 = A */
+.cap{margin:6px 0 var(--gap-2);text-align:center;font-size:var(--fs-label);line-height:18px;color:var(--ink-soft)}
+.cap .no{font-family:var(--font-mono);color:var(--ink-quiet);margin-right:8px}
+.figure{margin:0}
+.figure svg{display:block;max-width:100%;margin:0 auto}
+.figure .legend{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 18px;margin-top:8px;font-size:var(--fs-label);line-height:18px;color:var(--ink-quiet)}
+.figure .legend i{display:inline-block;vertical-align:-2px;margin-right:6px}
+
+/* 表: 左揃え・行罫は 1.3:1・見出し行だけ一段濃い */
+.report table{border-collapse:collapse;width:auto;max-width:100%;margin:0;font-size:var(--fs-dense);line-height:20px}
+.report th{text-align:left;font-weight:500;font-size:var(--fs-caption);color:var(--ink-soft);padding:0 20px 6px 0;border-bottom:1px solid var(--rule);white-space:nowrap}
+.report td{padding:6px 20px 6px 0;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+.report tr:last-child td{border-bottom:none}
+.report th:last-child,.report td:last-child{padding-right:0}
+.report td.num,.report th.num{text-align:right;font-variant-numeric:tabular-nums}
+.report tr.rest td{color:var(--ink-quiet);font-size:var(--fs-caption)}
+.from{color:var(--ink-quiet)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-caption)}
+.st::before{content:"✓";font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--state-ok)}
+.st.ask::before{content:"?";color:var(--state-ask)}
+
+.report ul.labeled{list-style:none;margin:0 0 var(--gap-2);padding:0}
+.report ul.labeled li{display:grid;grid-template-columns:9em minmax(0,1fr);column-gap:16px;padding:4px 0;border-bottom:1px solid var(--rule-soft)}
+.report ul.labeled li:last-child{border-bottom:none}
+.report ul.labeled .lb{color:var(--ink-bright);font-weight:600;font-size:var(--fs-dense)}
+
+/* note: info・ask・memo は地を染めず罫と題だけ（6%）、warn・ng は地を 13% 染める。判断7 = C */
+.note{margin:0 0 var(--gap-2);padding:6px 14px;border-left:3px solid var(--state-info);font-size:var(--fs-dense);line-height:22px;background:color-mix(in srgb, var(--state-info) 6%, transparent);border-radius:0 8px 8px 0}
+.note .kind{display:block;font-size:var(--fs-label);font-weight:600;color:var(--state-info);letter-spacing:.06em;margin-bottom:2px}
+.note.warn{border-left-color:var(--state-warn);background:color-mix(in srgb, var(--state-warn) 13%, transparent)}
+.note.warn .kind{color:var(--state-warn)}
+.note.ng{border-left-color:var(--state-ng);background:color-mix(in srgb, var(--state-ng) 13%, transparent)}
+.note.ng .kind{color:var(--state-ng)}
+.note.ask{border-left-color:var(--state-ask);background:color-mix(in srgb, var(--state-ask) 6%, transparent)}
+.note.ask .kind{color:var(--state-ask)}
+
+/* 余白の柱: 1400 でやり取りの列があるときは出さず、本文の中の1行に畳む */
+.aside{grid-column:2;align-self:start;font-size:var(--fs-label);line-height:18px;color:var(--ink-quiet);padding-left:14px;border-left:1px solid var(--rule-soft);margin-bottom:var(--gap)}
+.aside b{display:block;font-weight:600;color:var(--ink-soft);margin-bottom:2px}
+.aside code{font-size:11.5px;background:none;padding:0;color:var(--ink-soft)}
+.pane.w1400 .aside{display:none}
+.inline-aside{display:none;font-size:var(--fs-label);line-height:18px;color:var(--ink-quiet);margin:-6px 0 var(--gap)}
+.pane.w1400 .inline-aside{display:block}
+
+.favor{margin:var(--gap-2) 0 0;padding:10px 14px;border-left:3px solid var(--accent);background:var(--surface-accent);border-radius:0 8px 8px 0;font-size:var(--fs-dense);line-height:22px}
+.favor .lbl{display:block;font-size:var(--fs-label);letter-spacing:.08em;color:var(--ink-soft);margin-bottom:2px}
+
+.pane.centered .report{grid-template-columns:var(--measure) 220px;width:max-content;max-width:100%;margin:0 auto}
+
+/* ===== 塊の意匠（段3） ===== */
+/* stats: 数は拾う字・等幅、差は符号つきで良い向きの色、語の高さの sparkline */
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0}
+.stat{padding:2px 16px 2px 0;border-right:1px solid var(--rule-soft)}
+.stat + .stat{padding-left:16px}
+.stat:last-child{border-right:none}
+.stat .k{font-size:var(--fs-label);line-height:18px;color:var(--ink-quiet)}
+.stat .v{font-size:26px;line-height:32px;font-weight:600;color:var(--ink-bright);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v small{font-size:13px;font-weight:500;color:var(--ink-soft);margin-left:3px;letter-spacing:0}
+.stat .d{font-family:var(--font-mono);font-size:12px;line-height:18px;font-variant-numeric:tabular-nums}
+.stat .d.good{color:var(--state-ok)} .stat .d.bad{color:var(--state-ng)} .stat .d.flat{color:var(--ink-quiet)}
+.stat svg{display:block;margin-top:4px}
+.spark path{fill:none;stroke:var(--ink-soft);stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.spark .last{fill:var(--ink-bright)}
+.spark .band{stroke:var(--rule-soft);stroke-width:1}
+
+/* code: 強調する行は左に細い印と短いラベル、20 行超の無印の範囲は畳む、shell はコマンドと出力を分ける */
+.code{margin:0;border:1px solid var(--rule-soft);border-radius:8px;overflow:hidden;font-family:var(--font-code);font-size:13px;line-height:20px;background:color-mix(in srgb, var(--ink) 4%, transparent)}
+.code .head{display:flex;align-items:baseline;gap:10px;padding:6px 14px;border-bottom:1px solid var(--rule-soft);font-family:var(--font-sans);font-size:var(--fs-label);color:var(--ink-quiet)}
+.code .head b{font-family:var(--font-mono);font-weight:500;color:var(--ink-soft)}
+.code .ln{display:grid;grid-template-columns:3em minmax(0,1fr) auto;column-gap:10px;padding:0 14px 0 0;box-shadow:inset 3px 0 0 transparent;white-space:pre}
+.code .ln .no{text-align:right;color:var(--ink-quiet);font-variant-numeric:tabular-nums;user-select:none}
+.code .ln .tx{overflow:hidden;text-overflow:clip}
+.code .ln .tag{font-family:var(--font-sans);font-size:11.5px;color:var(--ink-soft);align-self:center;padding:0 6px;border-radius:999px;border:1px solid var(--rule-soft);line-height:16px}
+.code .ln.mark{background:color-mix(in srgb, var(--accent) 9%, transparent);box-shadow:inset 3px 0 0 var(--accent)}
+.code .ln.mark .tx{color:var(--ink-bright)}
+.code .ln.add{background:color-mix(in srgb, var(--state-ok) 9%, transparent)}
+.code .ln.del{background:color-mix(in srgb, var(--state-ng) 9%, transparent)}
+.code .ln.add .tx::before{content:"+ ";color:var(--state-ok)} .code .ln.del .tx::before{content:"− ";color:var(--state-ng)}
+.code .w-add{background:color-mix(in srgb, var(--state-ok) 28%, transparent);border-radius:3px}
+.code .w-del{background:color-mix(in srgb, var(--state-ng) 28%, transparent);border-radius:3px}
+.code .fold{display:flex;align-items:center;gap:10px;padding:2px 14px 2px 3.9em;border-top:1px dashed var(--rule-soft);border-bottom:1px dashed var(--rule-soft);font-family:var(--font-sans);font-size:var(--fs-label);color:var(--ink-quiet);background:color-mix(in srgb, var(--ink) 3%, transparent)}
+.code .fold::before{content:"▸";color:var(--ink-quiet)}
+.code .cmd{display:block;padding:4px 14px;color:var(--ink-bright)}
+.code .cmd::before{content:"$ ";color:var(--ink-quiet)}
+.code .out{display:block;padding:4px 14px 6px;color:var(--ink-soft);border-top:1px solid var(--rule-soft);white-space:pre}
+
+/* waterfall: 開始の位置をずらした横棒。並列と待ちのある回だけ */
+.wf{margin:0;font-size:var(--fs-caption);line-height:20px}
+.wf .row{display:grid;grid-template-columns:8.5em minmax(0,1fr) 3.4em;column-gap:12px;align-items:center;padding:3px 0}
+.wf .row .nm{color:var(--ink-soft);white-space:nowrap}
+.wf .row .tm{text-align:right;font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+.wf .track{position:relative;height:10px;border-radius:2px;background:linear-gradient(to right,var(--rule-quiet) 1px,transparent 1px) 0 0/31.25% 100%}
+.wf .bar{position:absolute;top:1px;height:8px;border-radius:2px;background:color-mix(in srgb, var(--ink) 38%, transparent)}
+.wf .bar.wait{background:repeating-linear-gradient(135deg,color-mix(in srgb, var(--ink) 20%, transparent) 0 3px,transparent 3px 6px)}
+.wf .bar.hot{background:var(--accent)}
+.wf .axis{display:grid;grid-template-columns:8.5em minmax(0,1fr) 3.4em;column-gap:12px;font-family:var(--font-mono);font-size:11.5px;color:var(--ink-quiet);margin-top:2px}
+.wf .axis .ticks{position:relative;height:16px}
+.wf .axis .ticks span{position:absolute;transform:translateX(-50%)}
+
+/* sources: 出典と path:line（押すと行で開く） */
+.src{margin:0;padding:0;list-style:none;font-size:var(--fs-dense);line-height:20px}
+.src li{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;padding:5px 0;border-bottom:1px solid var(--rule-soft)}
+.src li:last-child{border-bottom:none}
+.src .why{color:var(--ink-soft);font-size:var(--fs-caption)}
+.src a.path{font-family:var(--font-code);font-size:12.5px;white-space:nowrap}
+
+/* arrow chart: 項目ごとの前→後。凡例は直接ラベル、格子線なし */
+.arr{margin:0}
+</style>
+</head>
+<body>
+<h1 class="mock-title">レポートの紙面 値の見本 — 3場面 × 2幅 × 3案</h1>
+<p class="mock-caption">見本の中の文言・ID・数は架空。値の束は A 静か（拾う字 14:1・## 19px・格子 12/24）、B 提案（15:1・21px・13/26）、C はっきり（16:1・22px・13/26）。図表の題は下・中央・1段（判断3 = A）、note の地は段差（判断7 = C）で、どの案でも同じ。窓は 1400×900（やり取りの列あり。柱は本文の中の1行に畳む）と 1920×1080（柱が出る）。</p>
+<div id="stage"></div>
+
+<!-- ===================== 場面1: 短い最終レポート ===================== -->
+<template id="scene-short">
+  <div class="report">
+    <p class="catalog"><span>最終レポート</span><span class="sep">·</span><span class="id">T-002</span><span class="sep">·</span><span class="done">✓ 完了</span><span class="sep">·</span><span class="meta">変更 2 ファイル <span class="plus">+38</span> <span class="minus">−12</span></span></p>
+    <h3 class="headline">架空の札に段が1つでも 1/1 のように位置を出す</h3>
+    <p class="conclusion">次に起こす架空の画面から、段が1つでも札に <code>1/1</code> と位置が出ます。<span class="why">1段の依頼でも進みを同じ場所で追え、段の有無で札の形が変わらなくなります。</span></p>
+    <div class="signals">
+      <span class="sig"><span class="ok">✓</span> <b>検証</b> 3件 通った <span class="n">単体 3152 · E2E 111</span></span>
+      <span class="sig"><span class="ask">?</span> 1件 確かめていない</span>
+      <span class="fav">お願い 1 ↓</span>
+    </div>
+    <div class="checks">
+      <div class="check ask"><span class="mk">? 確かめていない</span><span class="lb">720×900 で同じ札を見る<br><span class="how"><b>確かめ方:</b> 窓を 720 幅にして、札の頭の <code>1/1</code> が折り返さずに出ることを見る</span></span></div>
+      <div class="check rest"><span class="mk">✓ 通った 3件</span><span class="lb">pnpm run check · 1400×900 で段が1つの札を見る · find-stray-reference</span></div>
+    </div>
+    <div class="figure">
+      <svg viewBox="0 0 600 120" width="600" height="120" font-family="system-ui" font-size="13">
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a39fab"/></marker></defs>
+        <rect x="4" y="40" width="88" height="40" rx="20" fill="none" stroke="#6e6a78"/><text x="48" y="65" text-anchor="middle" fill="#e8e3ea">依頼が届く</text>
+        <path d="M92 60 L150 60" stroke="#a39fab" marker-end="url(#ah)"/>
+        <path d="M210 28 L260 60 L210 92 L160 60 Z" fill="none" stroke="#6e6a78"/><text x="210" y="64" text-anchor="middle" fill="#e8e3ea">段取り?</text>
+        <path d="M260 60 L330 60" stroke="#a39fab" marker-end="url(#ah)"/><text x="295" y="52" text-anchor="middle" fill="#a39fab" font-size="12">ある（1段でも）</text>
+        <path d="M210 92 L210 110 L330 110" fill="none" stroke="#a39fab" marker-end="url(#ah)"/><text x="270" y="104" text-anchor="middle" fill="#a39fab" font-size="12">ない</text>
+        <rect x="332" y="40" width="176" height="40" rx="6" fill="none" stroke="#f2b0a0"/><text x="420" y="65" text-anchor="middle" fill="#f6f3f8">札の頭に「n/N」を出す</text>
+        <rect x="332" y="92" width="176" height="28" rx="6" fill="none" stroke="#6e6a78" stroke-dasharray="4 3"/><text x="420" y="111" text-anchor="middle" fill="#a39fab">位置の字なし（今まで通り）</text>
+      </svg>
+    </div>
+    <p class="cap"><span class="no">図 1</span>札の位置は、段の数でなく段取りの有無で決まる（疑似セッションの3場面）</p>
+    <h2 class="after-head">札の組み立てを1箇所にまとめた（架空）</h2>
+    <p>札の頭を組む関数を <a class="path" href="#"><code>work-strip.tsx:42</code></a> の <code>stripHead</code> に寄せ、段の数で分かれていた2つの経路を1つにした。段が1つの依頼は、これまで位置の字を持たない経路に落ちていた。</p>
+    <div class="aside"><b>どこを見るか</b><code>work-strip.tsx:42</code> は押すと Orca のエディタがその行で開く。残りの差分は札のテストだけ</div>
+    <p class="inline-aside">どこを見るか: <code>work-strip.tsx:42</code>（押すと行で開く）。残りの差分は札のテストだけ</p>
+    <div class="favor"><span class="lbl">お願い</span>720 幅の窓で札の頭を一度見て、折り返していたら知らせてください。</div>
+  </div>
+</template>
+
+<!-- ===================== 場面2: 長い最終レポート ===================== -->
+<template id="scene-long">
+  <div class="report">
+    <p class="catalog"><span>最終レポート</span><span class="sep">·</span><span class="id">T-014</span><span class="sep">·</span><span class="done">✓ 完了</span><span class="sep">·</span><span class="meta">変更 9 ファイル <span class="plus">+312</span> <span class="minus">−97</span></span></p>
+    <h3 class="headline">架空の検証を絞り込み、1ファイルの変更で単体が 132 秒から 5.5 秒になった</h3>
+    <p class="conclusion">次の変更から、<code>pnpm run check</code> の単体の段は、変えたファイルに関連するテストだけを流します。<span class="why">src の1ファイルを直した場合の待ちが、全件を流していた頃の 1/24 になり、E2E は据え置きです。</span></p>
+    <div class="signals">
+      <span class="sig"><span class="ok">✓</span> <b>検証</b> 4件 通った <span class="n">単体 5141 · E2E 63</span></span>
+      <span class="sig"><span class="ask">?</span> 1件 確かめていない</span>
+      <span class="fav">お願い 1 ↓</span>
+    </div>
+    <div class="checks">
+      <div class="check ask"><span class="mk">? 確かめていない</span><span class="lb">共有ファイル（theme.css など）を直したときの所要<br><span class="how"><b>確かめ方:</b> <code>theme.css</code> を1行変えて <code>pnpm run check</code> を打ち、単体の段が 30 秒を超えるかを見る</span></span></div>
+      <div class="check rest"><span class="mk">✓ 通った 4件</span><span class="lb">単体 · E2E · 型検査 · 整形</span></div>
+    </div>
+
+    <h2 class="after-head">数で見ると</h2>
+    <div class="stats wide-ish">
+      <div class="stat"><div class="k">単体の段（1ファイル変更）</div><div class="v">5.5<small>秒</small></div><div class="d good">−127 秒</div>
+        <svg class="spark" viewBox="0 0 120 22" width="120" height="22"><path class="band" d="M0 11H120"/><path d="M2 4 L22 5 L42 4 L62 5 L82 18 L102 17 L118 18"/><circle class="last" cx="118" cy="18" r="2.4"/></svg></div>
+      <div class="stat"><div class="k">全件の所要</div><div class="v">132<small>秒</small></div><div class="d flat">±0 秒</div>
+        <svg class="spark" viewBox="0 0 120 22" width="120" height="22"><path class="band" d="M0 11H120"/><path d="M2 11 L22 10 L42 12 L62 11 L82 11 L102 10 L118 11"/><circle class="last" cx="118" cy="11" r="2.4"/></svg></div>
+      <div class="stat"><div class="k">関連と判定したテスト</div><div class="v">31<small>/ 447 ファイル</small></div><div class="d good">−416 ファイル</div>
+        <svg class="spark" viewBox="0 0 120 22" width="120" height="22"><path class="band" d="M0 11H120"/><path d="M2 3 L22 3 L42 4 L62 3 L82 15 L102 18 L118 18"/><circle class="last" cx="118" cy="18" r="2.4"/></svg></div>
+    </div>
+    <p class="cap"><span class="no">表 1</span>直近 7 回の打ち直しの平均（秒・ファイル数）</p>
+    <div class="aside"><b>出どころ</b>直近 14 日の <code>task-verify.log</code> の所要。架空の数</div>
+    <p class="inline-aside">出どころ: 直近 14 日の <code>task-verify.log</code> の所要（架空の数）</p>
+
+    <h2>変更の要所</h2>
+    <p>関連の選び方は <a class="path" href="#"><code>select-tests.ts:57</code></a> の <code>relatedTests</code> に集めた。import を辿れるテストと、規約のテストを足した集合を返す。</p>
+    <table>
+      <thead><tr><th>場所</th><th>前</th><th>後</th><th class="num">行</th></tr></thead>
+      <tbody>
+        <tr><td><code>relatedTests</code></td><td><span class="from">全件</span></td><td>import で辿れる関連＋規約</td><td class="num">+84</td></tr>
+        <tr><td><code>check.ts</code></td><td><span class="from">単体は常に全件</span></td><td><code>--full</code> のときだけ全件</td><td class="num">+41 −9</td></tr>
+        <tr><td><code>coding-standards.md</code></td><td><span class="from">—</span></td><td>選び方の節を足した</td><td class="num">+22</td></tr>
+        <tr class="rest"><td colspan="4">ほか 6 件（テストの追加 5・設定 1）</td></tr>
+      </tbody>
+    </table>
+    <p class="cap"><span class="no">表 2</span>差分の大きい順（上位 3 件）</p>
+
+    <h2>判定の流れ</h2>
+    <div class="figure">
+      <svg viewBox="0 0 640 210" width="640" height="210" font-family="system-ui" font-size="13">
+        <defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a39fab"/></marker></defs>
+        <rect x="150" y="6" width="300" height="168" rx="10" fill="#ffffff" fill-opacity=".04" stroke="#6e6a78" stroke-dasharray="5 4"/>
+        <text x="162" y="24" fill="#a39fab" font-size="12">選び方（relatedTests）</text>
+        <rect x="4" y="68" width="100" height="40" rx="20" fill="none" stroke="#6e6a78"/><text x="54" y="93" text-anchor="middle" fill="#e8e3ea">変えた file</text>
+        <path d="M104 88 L168 88" stroke="#a39fab" marker-end="url(#ah3)"/>
+        <rect x="170" y="68" width="110" height="40" rx="6" fill="none" stroke="#6e6a78"/><text x="225" y="93" text-anchor="middle" fill="#e8e3ea">import を辿る</text>
+        <path d="M280 88 L318 88" stroke="#a39fab" marker-end="url(#ah3)"/>
+        <rect x="320" y="68" width="110" height="40" rx="6" fill="none" stroke="#6e6a78"/><text x="375" y="93" text-anchor="middle" fill="#e8e3ea">規約を足す</text>
+        <path d="M430 88 L488 88" stroke="#a39fab" marker-end="url(#ah3)"/>
+        <rect x="490" y="68" width="146" height="40" rx="6" fill="none" stroke="#f2b0a0"/><text x="563" y="93" text-anchor="middle" fill="#f6f3f8">関連だけを流す</text>
+        <path d="M225 108 L225 150" stroke="#a39fab" stroke-dasharray="4 3" marker-end="url(#ah3)"/>
+        <rect x="170" y="152" width="110" height="18" rx="4" fill="none" stroke="#6e6a78" stroke-dasharray="4 3"/><text x="225" y="165" text-anchor="middle" fill="#a39fab" font-size="11.5">辿れない → 全件</text>
+      </svg>
+      <div class="legend"><span><i><svg width="14" height="14"><rect x="1" y="3" width="12" height="8" rx="4" fill="none" stroke="#6e6a78"/></svg></i>入口・出口</span><span><i><svg width="14" height="14"><rect x="1" y="3" width="12" height="8" rx="2" fill="none" stroke="#6e6a78"/></svg></i>処理</span><span><i><svg width="14" height="14"><rect x="1" y="3" width="12" height="8" rx="2" fill="none" stroke="#f2b0a0"/></svg></i>結果</span><span><i><svg width="22" height="14"><path d="M1 7H21" stroke="#a39fab" stroke-dasharray="4 3"/></svg></i>例外の経路</span><span><i><svg width="14" height="14"><rect x="1" y="1" width="12" height="12" rx="3" fill="#fff" fill-opacity=".05" stroke="#6e6a78" stroke-dasharray="3 2"/></svg></i>囲み = 1つの関数</span></div>
+    </div>
+    <p class="cap"><span class="no">図 1</span>変えた file から、流す関連のテストを選ぶ流れ</p>
+
+    <h2>コードの変更</h2>
+    <div class="code">
+      <div class="head"><b>scripts/check/select-tests.ts</b>76 行中 抜粋</div>
+      <div class="ln"><span class="no">51</span><span class="tx">export function relatedTests(changed: readonly string[]): string[] {</span></div>
+      <div class="ln mark"><span class="no">52</span><span class="tx">  const reached = reachableTests(changed)</span><span class="tag">import を辿る</span></div>
+      <div class="ln mark"><span class="no">53</span><span class="tx">  if (reached.length === 0) return ALL_TESTS</span><span class="tag">辿れなければ全件</span></div>
+      <div class="ln"><span class="no">54</span><span class="tx">  return [...reached, ...ARCHITECTURE_TESTS]</span></div>
+      <div class="ln"><span class="no">55</span><span class="tx">}</span></div>
+      <div class="fold">無印の 24 行（57 → 80）</div>
+      <div class="ln del"><span class="no">81</span><span class="tx">const limit = <span class="w-del">4</span> * cores</span></div>
+      <div class="ln add"><span class="no">81</span><span class="tx">const limit = <span class="w-add">Math.ceil(cores / budget)</span></span></div>
+    </div>
+    <p class="cap"><span class="no">コード 1</span>関連の選び方（印は要の2行、差分は語単位）</p>
+    <div class="code">
+      <div class="head"><b>shell</b>コマンドと出力を分けて描く</div>
+      <span class="cmd">pnpm run check src/shared/report/report-check.ts</span>
+      <span class="out">typecheck  ok   6.1s
+lint       ok   2.3s
+test       ok   5.5s  (31 files)
+e2e        skipped (変更なし)</span>
+    </div>
+    <p class="cap"><span class="no">コード 2</span>1ファイルの変更で打った結果</p>
+
+    <h2>所要の内訳</h2>
+    <div class="wf">
+      <div class="row"><span class="nm">計画</span><span class="track"><span class="bar" style="left:0;width:1.6%"></span></span><span class="tm">15 秒</span></div>
+      <div class="row"><span class="nm">段 1（選び方）</span><span class="track"><span class="bar" style="left:1.6%;width:35%"></span></span><span class="tm">5.6 分</span></div>
+      <div class="row"><span class="nm">段 2（check.ts）</span><span class="track"><span class="bar" style="left:36.6%;width:23.1%"></span></span><span class="tm">3.7 分</span></div>
+      <div class="row"><span class="nm">段 3（文書）</span><span class="track"><span class="bar" style="left:36.6%;width:13.8%"></span></span><span class="tm">2.2 分</span></div>
+      <div class="row"><span class="nm">検証 待ち</span><span class="track"><span class="bar wait" style="left:59.7%;width:6.9%"></span></span><span class="tm">1.1 分</span></div>
+      <div class="row"><span class="nm">検証</span><span class="track"><span class="bar hot" style="left:66.6%;width:30%"></span></span><span class="tm">4.8 分</span></div>
+      <div class="axis"><span></span><span class="ticks"><span style="left:0">0</span><span style="left:31.25%">5 分</span><span style="left:62.5%">10</span><span style="left:93.75%">15</span></span><span></span></div>
+    </div>
+    <p class="cap"><span class="no">図 2</span>段ごとの所要（段 2・3 は並列、斜線は待ち）</p>
+
+    <div class="note"><span class="kind">補足</span>E2E は変えたファイルから選ぶ形にまだ寄せていない。落ちたときの打ち直しだけ、落ちたファイルに絞る。</div>
+    <div class="note warn"><span class="kind">注意</span>共有ファイルを直すと関連が 100 ファイルを超え、全件に近い待ちになる。</div>
+    <div class="aside"><b>覚え書き</b>選び方の根拠は <code>docs/architecture/testing.md</code> の「テスト」に書いた</div>
+    <p class="inline-aside">覚え書き: 選び方の根拠は <code>docs/architecture/testing.md</code> の「テスト」</p>
+    <div class="favor"><span class="lbl">お願い</span>共有ファイルを1行変えて <code>pnpm run check</code> を1回打ち、所要を知らせてください。</div>
+  </div>
+</template>
+
+<!-- ===================== 場面3: 調べものの報告 ===================== -->
+<template id="scene-research">
+  <div class="report">
+    <p class="catalog"><span>調べもの</span><span class="sep">·</span><span class="id">T-021</span><span class="sep">·</span><span class="done">✓ 完了</span></p>
+    <h3 class="headline">架空の起動の待ちは、読み込みでなく設定の検査に 4 割が使われている</h3>
+    <p class="conclusion">起動 2.1 秒のうち、設定の検査が 0.84 秒を占め、画面の組み立ては 0.31 秒でした。<span class="why">縮めるなら先に検査を非同期にする案が効き、画面側を直しても 15% しか変わりません。</span></p>
+    <div class="signals">
+      <span class="sig"><span class="ok">✓</span> <b>根拠</b> 3件 出典あり</span>
+      <span class="sig"><span class="ask">?</span> 2件 確かめていない</span>
+    </div>
+
+    <h2 class="after-head">分かったこと</h2>
+    <div class="figure">
+      <svg viewBox="0 0 560 190" width="560" height="190" font-family="system-ui" font-size="13">
+        <defs><marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#f2b0a0"/></marker></defs>
+        <text x="0" y="22" fill="#e8e3ea">設定の検査</text><text x="0" y="62" fill="#e8e3ea">依存の読み込み</text><text x="0" y="102" fill="#e8e3ea">画面の組み立て</text><text x="0" y="142" fill="#e8e3ea">その他</text>
+        <path d="M140 8 V160" stroke="#3a3744"/><path d="M330 8 V160" stroke="#3a3744" stroke-dasharray="2 3"/>
+        <circle cx="300" cy="18" r="4" fill="#a39fab"/><path d="M294 18 L170 18" stroke="#f2b0a0" stroke-width="1.5" marker-end="url(#ah4)"/>
+        <text x="350" y="22" fill="#f6f3f8" font-weight="600">0.84 → 0.12 秒</text>
+        <circle cx="258" cy="58" r="4" fill="#a39fab"/><path d="M252 58 L246 58" stroke="#f2b0a0" stroke-width="1.5" marker-end="url(#ah4)"/>
+        <text x="350" y="62" fill="#e8e3ea">0.62 → 0.55 秒</text>
+        <circle cx="199" cy="98" r="4" fill="#a39fab"/><path d="M193 98 L190 98" stroke="#f2b0a0" stroke-width="1.5" marker-end="url(#ah4)"/>
+        <text x="350" y="102" fill="#e8e3ea">0.31 → 0.27 秒</text>
+        <circle cx="203" cy="138" r="4" fill="#a39fab"/>
+        <text x="350" y="142" fill="#a39fab">0.33 → 0.33 秒</text>
+        <text x="140" y="178" text-anchor="middle" fill="#a39fab" font-size="11.5">0</text><text x="330" y="178" text-anchor="middle" fill="#a39fab" font-size="11.5">1 秒</text>
+      </svg>
+      <div class="legend"><span><i><svg width="14" height="14"><circle cx="7" cy="7" r="4" fill="#a39fab"/></svg></i>案を入れる前</span><span><i><svg width="22" height="14"><path d="M1 7H17" stroke="#f2b0a0" stroke-width="1.5"/><path d="M14 3 L20 7 L14 11z" fill="#f2b0a0"/></svg></i>入れたあと</span></div>
+    </div>
+    <p class="cap"><span class="no">図 1</span>項目ごとの前 → 後（架空の計測。秒・5 回の中央値）</p>
+    <div class="aside"><b>測り方</b>起動を 5 回測り中央値を取った。図の位置は左端を 0 秒に揃えている</div>
+    <p class="inline-aside">測り方: 起動を 5 回測り中央値。左端が 0 秒</p>
+
+    <h2>根拠</h2>
+    <ul class="src">
+      <li><span>検査の本体が起動の前に同期で呼ばれる<br><span class="why">呼び出しの順を読んだ</span></span><a class="path" href="#"><code>boot/config-check.ts:88</code></a></li>
+      <li><span>検査は設定ファイル 14 本を毎回読み直す<br><span class="why">キャッシュの無いことを確かめた</span></span><a class="path" href="#"><code>boot/config-load.ts:31</code></a></li>
+      <li><span>画面の組み立ては検査の完了を待たない<br><span class="why">待ちの無いことをログで確かめた</span></span><a class="path" href="#"><code>browser/app.tsx:12</code></a></li>
+    </ul>
+    <p class="cap"><span class="no">表 1</span>根拠となる3つの出典（押すとその行で開く）</p>
+    <table>
+      <thead><tr><th>設定の本数</th><th class="num">検査の所要</th><th class="num">起動の所要</th></tr></thead>
+      <tbody>
+        <tr><td>6 本</td><td class="num">0.36 秒</td><td class="num">1.6 秒</td></tr>
+        <tr><td>10 本</td><td class="num">0.58 秒</td><td class="num">1.8 秒</td></tr>
+        <tr><td>14 本（今）</td><td class="num">0.84 秒</td><td class="num">2.1 秒</td></tr>
+        <tr class="rest"><td colspan="3">ほか 2 件（18 本・22 本。同じ傾き）</td></tr>
+      </tbody>
+    </table>
+    <p class="cap"><span class="no">表 2</span>設定の本数と起動の所要（本数に比例）</p>
+
+    <h2>何を意味するか</h2>
+    <p>検査は設定の本数に比例して伸びるので、設定が増えるほど起動が遅くなる。非同期にすれば、画面は検査を待たずに出せる。</p>
+
+    <h2>確かめていないこと</h2>
+    <div class="note ask"><span class="kind">確かめていない</span>検査を非同期にしたとき、検査に落ちた設定で画面が先に出てしまう手順は見ていない。確かめ方: 壊れた設定を1本置いて起動し、画面と検査の出方の順を見る。</div>
+    <div class="note warn"><span class="kind">注意</span>計測は 1 台の手元の機械だけで、遅い機械では割合が変わる。</div>
+
+    <h2>次</h2>
+    <p>検査を非同期にする案を試すなら、先に壊れた設定の起動を確かめる。</p>
+    <div class="favor"><span class="lbl">お願い</span>手元の遅い機械で、同じ起動を 5 回測って知らせてください。</div>
+  </div>
+</template>
+
+<script>
+const VARIANTS = [
+  ["A", "静か", "拾う字 14:1 ・ ## 19px ・ あきの格子 12 / 24"],
+  ["B", "提案", "拾う字 15:1 ・ ## 21px ・ あきの格子 13 / 26"],
+  ["C", "はっきり", "拾う字 16:1 ・ ## 22px ・ あきの格子 13 / 26"],
+];
+const WIDTHS = [["w1400", "1400×900（やり取りの列あり・柱は畳む）"], ["w1920", "1920×1080（やり取りの列あり・柱が出る）"]];
+const SCENES = [
+  ["short", "場面1 短い最終レポート", "T-002", true],
+  ["long", "場面2 長い最終レポート", "T-014", false],
+  ["research", "場面3 調べものの報告", "T-021", false],
+];
+const stage = document.getElementById("stage");
+for (const [sid, stitle, , firstOnly] of SCENES) {
+  const group = document.createElement("section");
+  group.className = "mock-group";
+  group.innerHTML = `<h2>${stitle}</h2>`;
+  for (const [wid, wlabel] of WIDTHS) {
+    const row = document.createElement("div");
+    row.className = "mock-row";
+    row.style.marginBottom = "32px";
+    for (const [vid, vname, vdesc] of VARIANTS) {
+      const wrap = document.createElement("div");
+      wrap.innerHTML = `<p class="mock-label">${stitle} ／ ${wlabel} ／ 案 ${vid}（${vname}）: ${vdesc}</p>`;
+      const pane = document.createElement("div");
+      pane.id = `pane-${sid}-${vid}-${wid}`;
+      pane.className = `pane ${wid} v-${vid}${firstOnly ? " first" : ""}`;
+      pane.innerHTML = `
+        <div class="strip"><span class="dot"></span>完了<span class="right"><span class="mono">所要 2秒</span><span class="steps">手順 2 ▾</span></span></div>
+        <div class="turn-body">
+          <div class="rail"><div class="head"><span>やり取り</span><span>‹</span></div><div class="item">/next-task t-002（架空…</div><div class="sub cur">札の組み立てを1箇所にま…</div><div class="sub">位置の字の決まり（架空）</div></div>
+          <div class="content"></div>
+        </div>`;
+      pane.querySelector(".content").appendChild(document.getElementById(`scene-${sid}`).content.cloneNode(true));
+      wrap.appendChild(pane);
+      row.appendChild(wrap);
+    }
+    group.appendChild(row);
+  }
+  stage.appendChild(group);
+}
+/* 論点3: 1920 幅で柱を出すとき、本文の列と柱をまとめて中央に寄せた形（案B の長い最終レポート） */
+{
+  const group = document.createElement("section");
+  group.className = "mock-group";
+  group.innerHTML = `<h2>論点3 1920×1080 の本文の位置（案 B・長い最終レポート）</h2>`;
+  const wrap = document.createElement("div");
+  wrap.innerHTML = `<p class="mock-label">本文の列と柱をまとめて中央に寄せる（本文 630px + 柱 220px の 878px を、やり取りの列の右の空きの中央に置く）</p>`;
+  const pane = document.createElement("div");
+  pane.id = "pane-centered";
+  pane.className = "pane w1920 v-B centered";
+  pane.innerHTML = `
+    <div class="strip"><span class="dot"></span>完了<span class="right"><span class="mono">所要 2秒</span><span class="steps">手順 2 ▾</span></span></div>
+    <div class="turn-body">
+      <div class="rail"><div class="head"><span>やり取り</span><span>‹</span></div><div class="item">/next-task t-014（架空…</div></div>
+      <div class="content"></div>
+    </div>`;
+  pane.querySelector(".content").appendChild(document.getElementById("scene-long").content.cloneNode(true));
+  wrap.appendChild(pane);
+  group.appendChild(wrap);
+  stage.appendChild(group);
+}
+</script>
+</body>
+</html>
