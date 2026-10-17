@@ -21,8 +21,9 @@
   の1本で、入口の `ui.js` と `main.css` の対と、`import()` で分けたチャンク（`markdown-renderer.js`・`task-body.js` と、2つが共に読む `lib.js`）が置かれる
   （名前をハッシュ付きにせず固定する理由と、JS API ではなく CLI を起こす理由は
   `docs/architecture/adr/0007-vite-build-cli.md`。分け方は `docs/architecture/browser.md`「重いライブラリ」）
-- **`dist/` は `.gitignore` する。** `package.json` の `prepare` が `pnpm run build` を呼ぶので、
-  リポジトリを取り直して `pnpm install` を打てば組み立てまで済む。**依存が変わらない `pnpm install` は
+- **`dist/` は `.gitignore` する。** `package.json` の `prepare` が E2E と撮影に使う
+  Playwright の headless shell の導入（`~/Library/Caches/ms-playwright` の共有キャッシュ。入っていれば飛ばす）と
+  `pnpm run build` を呼ぶので、リポジトリを取り直して `pnpm install` を打てば組み立てまで済む。**依存が変わらない `pnpm install` は
   `prepare` を飛ばす**ので、`git pull` のあとの組み立ては `mise run setup`（`mise.toml` の `setup` タスク。
   `pnpm run build` を明示して打つ）に任せる（`tsukumo` はグローバルへのリンクでこのリポジトリを
   指しているので、**「配布」の実体はこのリポジトリそのもの**）
