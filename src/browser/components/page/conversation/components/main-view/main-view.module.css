@@ -100,9 +100,10 @@
   margin-bottom: 0;
 }
 /* 余白の柱を出すかを本文の幅で決める器（`report-notation.module.css` の `@container report-gutter`）。
-   お伺いの札の preview にも `.detail-block` があるので、名前を付けてメインビューの本文だけに効かせる。 */
+   お伺いの札の preview にも `.detail-block` があるので、名前を付けてメインビューの本文だけに効かせる。
+   `container` は名前を上書きするので、`.detail-block` 自身の `report-body` もここに並べる。 */
 .main-step > .detail-block {
-  container: report-gutter / inline-size;
+  container: report-gutter report-body / inline-size;
 }
 /* 本文の最初と最後の塊の margin は器の padding に足されるので落とす（padding がそのまま器の内側のあきになる）。 */
 .main-step > .detail-block > :first-child {

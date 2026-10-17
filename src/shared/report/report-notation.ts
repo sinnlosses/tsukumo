@@ -26,6 +26,11 @@ export const REPORT_NOTE_KINDS = [
  */
 export const REPORT_BLOCK_MARK_NAMES = [
   "cols",
+  "cols-of-2",
+  "cols-of-3",
+  "cols-of-4",
+  "stats-of-3",
+  "stats-of-4",
   "card",
   "badge",
   "badge-ok",

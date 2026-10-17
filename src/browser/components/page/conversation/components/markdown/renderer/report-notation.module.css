@@ -10,7 +10,7 @@
    色だけに頼らず、文字でも区別が付くようにして使う。 */
 .detail-block .report-cols {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
 }
 /* カードは「浮く」塊。
@@ -29,7 +29,7 @@
    数そのものは良し悪しを持たず、良し悪しを言いたいときは同じ塊の中に `.report-badge` を添えるほうが文字でも読める。 */
 .detail-block .report-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
   margin: var(--report-block-gap) 0;
 }
@@ -129,7 +129,7 @@
 /* 名前付きの並び（`list` の `label`）。
    ラベルと本文を2列に組み、項目の間を細い横線で区切る。
    1列目は `ordered` の番号と `check` のチェックの置き場で、印の無い `bullet` では幅0に縮む。
-   狭い画面では1列に戻す（末尾の @media）。 */
+   器が狭いときは1列に戻す（末尾の @container）。 */
 .detail-block .report-labeled-list > :is(ul, ol) {
   display: grid;
   grid-template-columns: auto 7.5em minmax(0, 1fr);
@@ -358,7 +358,7 @@
   }
 }
 /* 見比べ（`report` の `compare` の塊から tsukumo が組む）。
-   2つの側を同じ幅の札にして横に並べ、狭い画面では縦に積む（末尾の @media）。見分けは見出しの文字だけで、判定の色は持たない。 */
+   2つの側を同じ幅の札にして横に並べ、器が狭いときは縦に積む（末尾の @container）。見分けは見出しの文字だけで、判定の色は持たない。 */
 .detail-block .report-compare {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -381,7 +381,7 @@
   padding-left: 1.1rem;
 }
 /* 前後（`report` の `beforeAfter` の塊から tsukumo が組む）。
-   左に前・右に後の札を同じ幅で並べ、間に矢印を置く。狭い画面では前を上・後を下に積み、矢印を下向きにする（末尾の @media）。
+   左に前・右に後の札を同じ幅で並べ、間に矢印を置く。器が狭いときは前を上・後を下に積み、矢印を下向きにする（末尾の @container）。
    どちらが前かは見出しの文字が言い、矢印は飾り。 */
 .detail-block .report-before-after {
   display: grid;
@@ -603,7 +603,7 @@
   border-radius: 0.375rem;
 }
 /* 説明の並びを添えた画像（`report` の `image` の塊の `notes` から tsukumo が組む）。
-   左に画像（か「出せない」の札）、右に番号つきの説明を並べ、狭い画面では画像の下に積む（末尾の @media）。 */
+   左に画像（か「出せない」の札）、右に番号つきの説明を並べ、器が狭いときは画像の下に積む（末尾の @container）。 */
 .detail-block .report-image-notes {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(12rem, 2fr);
@@ -715,7 +715,7 @@
 }
 /* 触ったファイルの一覧（`report` の `files` の塊から tsukumo が組む）。
    1行に1ファイルで種別・パス・注記を列に揃え（行を subgrid にする）、末尾に種別ごとの合計の札を中央に並べる。
-   狭い画面では注記をパスの下へ回す（末尾の @media）。 */
+   器が狭いときは注記をパスの下へ回す（末尾の @container）。 */
 .detail-block .report-files {
   display: grid;
   grid-template-columns: 64px minmax(0, 340px) minmax(0, 1fr);
@@ -1525,6 +1525,7 @@
   font-synthesis: weight;
   /* SF Pro の小文字を Hiragino Sans の x-height に揃える。 */
   font-size-adjust: ex-height 0.545;
+  container: report-body / inline-size;
 }
 /* 地の文（段落・箇条書き・note・お願い）だけ全角42字で折り返す。表・コード・候補・ファイル・図は領域の内幅のまま。 */
 .detail-block :is(p, li, blockquote, .report-note, .report-note-favor) {
@@ -1840,7 +1841,7 @@
 /* 「用語 → 説明」の対。
    用語と説明を2列に組み、説明の左端を揃える（対応が一目で分かる）。
    1列目は max-content なので用語は折り返さない。
-   用語が長くて2列が入らない狭い画面では 1列へ戻す（このファイルの末尾の @media。境目は他の領域と同じ 760px）。
+   用語が長くて2列が入らない狭い器では 1列へ戻す（このファイルの末尾の @container）。
    1つの dt に dd が2つ以上ぶら下がっても崩れないよう、列は grid-column で固定する。 */
 .detail-block dl {
   display: grid;
@@ -1904,9 +1905,8 @@
   margin: var(--report-block-gap) 0;
 }
 
-/* 狭い画面（1列に畳む幅）。
-   main-view.module.css と同じ境目。 */
-@media (max-width: 760px) {
+/* 器（`.detail-block`）の幅が、2列の下限（1列 20em を2つとすき間 0.75rem）に足りないとき、横並びを1列に畳む。 */
+@container report-body (max-width: calc(40em + 0.75rem)) {
   /* レポートの「用語 → 説明」の対は、狭い画面では2列をやめて1列で積む（用語の列に幅を取られると説明が1文字ずつ折り返すため）。 */
   .detail-block dl {
     display: block;
@@ -1945,6 +1945,41 @@
   }
   .detail-block .report-file-note {
     grid-column: 2;
+  }
+}
+
+/* `stats` / `cols` の列数は、項目数（`stats-of-<n>` / `cols-of-<n>`。`NotationBlock` が足す）の全部か約数か1列にする（3＋1 のような半端な段を作らない）。
+   既定は1列で、器の幅が列の最小幅（stats は 10rem、cols は 14rem。stats の10rem は折れ線・値・分母の `36 / 48` が1行に収まる幅）とすき間 0.75rem を足した幅に届くたびに、次に大きい約数の列数へ広げる。
+   項目数の class が無いもの（stats の2個、5個以上）は1列のまま。 */
+@container report-body (min-width: calc(2 * 10rem + 0.75rem)) {
+  .detail-block .report-stats.report-stats-of-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container report-body (min-width: calc(3 * 10rem + 2 * 0.75rem)) {
+  .detail-block .report-stats.report-stats-of-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container report-body (min-width: calc(4 * 10rem + 3 * 0.75rem)) {
+  .detail-block .report-stats.report-stats-of-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@container report-body (min-width: calc(2 * 14rem + 0.75rem)) {
+  .detail-block .report-cols.report-cols-of-2,
+  .detail-block .report-cols.report-cols-of-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container report-body (min-width: calc(3 * 14rem + 2 * 0.75rem)) {
+  .detail-block .report-cols.report-cols-of-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container report-body (min-width: calc(4 * 14rem + 3 * 0.75rem)) {
+  .detail-block .report-cols.report-cols-of-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 

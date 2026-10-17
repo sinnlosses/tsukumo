@@ -1,4 +1,5 @@
 import { cleanup, render } from "@testing-library/react"
+import type { Element, ElementContent } from "hast"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
@@ -72,6 +73,47 @@ describe("NotationBlock（レポートの塊の記法）", () => {
       [...container.querySelectorAll("[data-reveal-gutter]")].map((element) => element.className),
     ).toEqual(["report-gutter"])
     expect(container.querySelector("aside")?.className).toBe("report-gutter-note")
+  })
+
+  describe("項目数の class（列数を全部か約数か1列にするための印）", () => {
+    // react-markdown が渡す hast の node のうち、数えるのは children の要素だけ。
+    const nodeOf = (elements: number, texts = 0): Element => ({
+      type: "element",
+      tagName: "div",
+      properties: {},
+      children: [
+        ...Array.from({ length: elements }, (): ElementContent => elementNode()),
+        ...Array.from({ length: texts }, (): ElementContent => ({ type: "text", value: "\n" })),
+      ],
+    })
+    const elementNode = (): Element => ({
+      type: "element",
+      tagName: "div",
+      properties: {},
+      children: [],
+    })
+    const classOf = (className: string, node: Element): string | undefined => {
+      const { container } = render(<NotationBlock className={className} node={node} />)
+      return container.querySelector("div")?.className
+    }
+
+    it("stats は 3 個と 4 個に stats-of-<n> を足し、2 個と 5 個には足さない", () => {
+      expect(classOf("stats", nodeOf(4))).toBe("report-stats report-stats-of-4")
+      expect(classOf("stats", nodeOf(3))).toBe("report-stats report-stats-of-3")
+      expect(classOf("stats", nodeOf(2))).toBe("report-stats")
+      expect(classOf("stats", nodeOf(5))).toBe("report-stats")
+    })
+
+    it("cols は 2〜4 個に cols-of-<n> を足し、数えるのは要素だけ（改行の文字は数えない）", () => {
+      expect(classOf("cols", nodeOf(2, 3))).toBe("report-cols report-cols-of-2")
+      expect(classOf("cols", nodeOf(3))).toBe("report-cols report-cols-of-3")
+      expect(classOf("cols", nodeOf(4))).toBe("report-cols report-cols-of-4")
+      expect(classOf("cols", nodeOf(5))).toBe("report-cols")
+    })
+
+    it("stats でも cols でもない塊には足さない", () => {
+      expect(classOf("note", nodeOf(3))).toBe("report-note")
+    })
   })
 })
 
