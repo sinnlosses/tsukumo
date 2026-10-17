@@ -16,7 +16,7 @@ const VIEW: WorkflowSettingView = {
       key: "steps",
       label: "並び",
       description: "並びの説明",
-      values: [{ value: "架空:一つ目", label: "一つ目", description: "" }],
+      values: [{ value: "架空:一つ目", label: "一つ目", title: "架空の一つ目", description: "" }],
       current: ["架空:一つ目"],
     },
   ],

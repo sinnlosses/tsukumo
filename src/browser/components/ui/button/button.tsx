@@ -30,6 +30,7 @@ export type ButtonVariant =
   | "solid-accent-static"
   | "solid-danger"
   | "solid-warn"
+  | "solid-ink"
   | "ghost"
   | "ghost-hover-accent"
   | "ghost-hover-outline"
@@ -60,7 +61,7 @@ export type ButtonProps = {
   /** 見える字がそのままアクセシブルネームになるときは `undefined`（`×` だけの札などで使う）。 */
   readonly ariaLabel: string | undefined
   /** 押すと開く面の種類（サイドバーの区画の見出しの「一覧を見る」など）。無ければ `undefined`。 */
-  readonly ariaHasPopup: "dialog" | undefined
+  readonly ariaHasPopup: "dialog" | "menu" | undefined
   readonly disclosure: ButtonDisclosure
   /** `disabled` の理由など、hover で読ませたい1行。無ければ `undefined`。 */
   readonly title: string | undefined
@@ -91,6 +92,7 @@ const BUTTON_VARIANT_CLASS = {
   "solid-accent-static": styles["button-variant-solid-accent-static"],
   "solid-danger": styles["button-variant-solid-danger"],
   "solid-warn": styles["button-variant-solid-warn"],
+  "solid-ink": styles["button-variant-solid-ink"],
   ghost: styles["button-variant-ghost"],
   "ghost-hover-accent": styles["button-variant-ghost-hover-accent"],
   "ghost-hover-outline": styles["button-variant-ghost-hover-outline"],

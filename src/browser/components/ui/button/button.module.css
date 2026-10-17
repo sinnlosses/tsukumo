@@ -211,6 +211,23 @@
   background: color-mix(in srgb, var(--accent) 85%, var(--ink));
 }
 
+/* 字の色の塗り（確定の押し口）。押せないときは地を沈めて字を薄くする。 */
+.button-variant-solid-ink {
+  border: none;
+  background: var(--ink);
+  color: var(--ground);
+  font-weight: 700;
+}
+.button-variant-solid-ink:hover {
+  background: var(--ink-soft);
+}
+.button-variant-solid-ink[aria-disabled="true"] {
+  background: var(--surface-raised);
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
 /* `--state-ng` の塗り。 */
 .button-variant-solid-danger {
   border: none;

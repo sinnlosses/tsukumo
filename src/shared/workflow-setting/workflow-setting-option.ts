@@ -1,16 +1,19 @@
 // スキルの並びの欄の見せ方。候補は欄の `values` だけから作る。
 
-import type { WorkflowSettingField } from "./workflow-setting.ts"
+import type { WorkflowSettingChoice, WorkflowSettingField } from "./workflow-setting.ts"
 
 export type WorkflowSettingOption = {
   readonly value: string
   readonly label: string
+  readonly title: string
 }
 
-/** `steps` の並びの1行。`known` が偽なら候補（`values`）に無い名前。 */
+/** `steps` の並びの1行。`known` が偽なら候補（`values`）に無い名前で、`label`・`title` は `value`、`description` は空。 */
 export type WorkflowSettingStepItem = {
   readonly value: string
   readonly label: string
+  readonly title: string
+  readonly description: string
   readonly known: boolean
 }
 
@@ -25,15 +28,24 @@ export type WorkflowSettingSteps = {
  * 足せるのは `values` のうち並びに無いものだけで、SDK の一覧は使わない。
  */
 export function workflowSettingSteps(field: WorkflowSettingField): WorkflowSettingSteps {
-  const labels = new Map(field.values.map((choice) => [choice.value, choice.label] as const))
+  const choices = new Map<string, WorkflowSettingChoice>(
+    field.values.map((choice) => [choice.value, choice] as const),
+  )
   return {
-    items: field.current.map((value) => ({
-      value,
-      label: labels.get(value) ?? value,
-      known: labels.has(value),
-    })),
+    items: field.current.map((value) => {
+      const choice = choices.get(value)
+      return choice === undefined
+        ? { value, label: value, title: value, description: "", known: false }
+        : {
+            value,
+            label: choice.label,
+            title: choice.title,
+            description: choice.description,
+            known: true,
+          }
+    }),
     addable: field.values
       .filter((choice) => !field.current.includes(choice.value))
-      .map((choice) => ({ value: choice.value, label: choice.label })),
+      .map((choice) => ({ value: choice.value, label: choice.label, title: choice.title })),
   }
 }

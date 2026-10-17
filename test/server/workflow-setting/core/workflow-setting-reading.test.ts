@@ -29,7 +29,8 @@ const SCHEMA = {
       kind: "steps",
       default: ["架空:一つ目"],
       values: [
-        { value: "架空:一つ目", label: "一つ目", description: "" },
+        { value: "架空:一つ目", label: "一つ目", title: "架空の一つ目", description: "" },
+        // 日本語の名前を返さない古い `tw` の候補。
         { value: "架空:二つ目", label: "二つ目", description: "" },
       ],
     },
@@ -160,7 +161,7 @@ describe("readWorkflowSetting", () => {
     expect(reasons).toEqual(["config-unreadable", "config-unreadable"])
   })
 
-  it("読めれば、steps の欄を config の値の配列で描く", async () => {
+  it("読めれば、steps の欄を config の値の配列で描き、title の無い候補は label で埋める", async () => {
     const view = await readWorkflowSetting(
       portOf({
         config: ran(0, configJson([{ key: "steps", value: ["架空:二つ目", "架空:消えた"] }])),
@@ -177,7 +178,10 @@ describe("readWorkflowSetting", () => {
           key: "steps",
           label: "並び",
           description: "並びの説明",
-          values: SCHEMA.keys[0]?.values,
+          values: [
+            { value: "架空:一つ目", label: "一つ目", title: "架空の一つ目", description: "" },
+            { value: "架空:二つ目", label: "二つ目", title: "二つ目", description: "" },
+          ],
           current: ["架空:二つ目", "架空:消えた"],
         },
       ],

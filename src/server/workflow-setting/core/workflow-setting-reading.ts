@@ -55,7 +55,15 @@ const stepsEntrySchema = z.object({
   description: z.string(),
   kind: z.literal("steps"),
   default: z.array(z.string()),
-  values: z.array(z.object({ value: z.string(), label: z.string(), description: z.string() })),
+  values: z.array(
+    z.object({
+      value: z.string(),
+      label: z.string(),
+      // 古い `tw` は返さない。`fieldOf` が `label` で埋める。
+      title: z.string().optional(),
+      description: z.string(),
+    }),
+  ),
 })
 
 const configSchemaSchema = z.object({
@@ -170,7 +178,12 @@ function fieldOf(entry: SchemaEntry, raw: unknown): WorkflowSettingField {
     key: entry.key,
     label: entry.label,
     description: entry.description,
-    values: entry.values,
+    values: entry.values.map((choice) => ({
+      value: choice.value,
+      label: choice.label,
+      title: choice.title ?? choice.label,
+      description: choice.description,
+    })),
     current: stepsOf(raw, entry.default),
   }
 }

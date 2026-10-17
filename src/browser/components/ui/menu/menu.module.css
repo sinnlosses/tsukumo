@@ -1,0 +1,70 @@
+/* 押す口と開いた面を結ぶ anchor の名前を、この箱の中だけに閉じる（同じ部品が並んでも面は自分の口に付く）。 */
+.menu {
+  display: inline-flex;
+  anchor-scope: --menu-trigger;
+}
+.menu-trigger {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 8px;
+  anchor-name: --menu-trigger;
+}
+/* `position: fixed` で、面を包むスクロールの箱に切られずに出る。下に入りきらないときは上へ開く。 */
+.menu-panel {
+  position: fixed;
+  position-anchor: --menu-trigger;
+  position-area: bottom span-left;
+  position-try-fallbacks: flip-block;
+  /* DOM で後ろに来る兄弟（ダイアログの下の帯のボタンなど）の上に描く。 */
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 13rem;
+  margin: 4px 0;
+  padding: 4px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+}
+.menu-panel:focus {
+  outline: none;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item:hover,
+.menu-item:focus {
+  background: var(--surface-raised);
+}
+.menu-item-tone-danger {
+  color: var(--state-ng);
+}
+.menu-item[aria-disabled="true"] {
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+}
+.menu-item[aria-disabled="true"]:hover {
+  background: none;
+}
+.menu-separator {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--rule-quiet);
+}

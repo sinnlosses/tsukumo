@@ -1,4 +1,4 @@
-// 設定のダイアログの中身。頭（歯車の線画・「設定」・×）、左のナビ、右の面、下の帯（既定に戻す）を組む。
+// 設定のダイアログの中身。頭（歯車の線画・「設定」・×）、左のナビ、右の面を組む。
 // 面は `FACES` に1行ずつ宣言し、足すときはここへ1行書けばナビと面の両方に出る。
 // 選んでいる面はこの部品の `useState` が持つ。ダイアログを閉じると部品ごと消えるので、開くたび先頭の面から始まる。
 
@@ -11,6 +11,7 @@ import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-settings-dialog.module.css"
+import { ScreenNavSettingsFaceFrame } from "./screen-nav-settings-face-frame.tsx"
 import { ScreenNavSettingsLookFace } from "./screen-nav-settings-look.tsx"
 import { ScreenNavSettingsWorkflowFace } from "./screen-nav-settings-workflow.tsx"
 import gearStyles from "./screen-nav-settings.module.css"
@@ -20,14 +21,24 @@ import {
   type ScreenNavSettingsProps,
 } from "./screen-nav-settings.tsx"
 
+/**
+ * `reset` の面はダイアログが枠を組み、下の帯に画面の色の「既定に戻す」を置く。
+ * `own` の面は色と関わらない値を書くので、自分で `ScreenNavSettingsFaceFrame` を組んで自分の下の帯を渡す。
+ */
 type Face = {
   readonly key: string
   readonly label: string
   readonly icon: ComponentType<{ readonly size: number; readonly strokeWidth: number }>
-  readonly Body: (props: ScreenNavSettingsProps) => ReactElement
-  /** 下の帯（画面の色の「既定に戻す」）を出すか。色と関わらない値を書く面には出さない。 */
-  readonly foot: "reset" | "none"
-}
+} & (
+  | {
+      readonly foot: "reset"
+      readonly Body: (props: ScreenNavSettingsProps) => ReactElement
+    }
+  | {
+      readonly foot: "own"
+      readonly Body: (props: { readonly title: string }) => ReactElement
+    }
+)
 
 const FACES = [
   { key: "look", label: "見た目", icon: Palette, Body: ScreenNavSettingsLookFace, foot: "reset" },
@@ -45,7 +56,7 @@ const FACES = [
     label: "ワークフロー",
     icon: Workflow,
     Body: ScreenNavSettingsWorkflowFace,
-    foot: "none",
+    foot: "own",
   },
 ] satisfies readonly [Face, ...Face[]]
 
@@ -92,8 +103,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
 function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
   const [selectedKey, setSelectedKey] = useState<string>(FACES[0].key)
-  const selected = FACES.find((face) => face.key === selectedKey) ?? FACES[0]
-  const SelectedBody = selected.Body
+  const selected: Face = FACES.find((face) => face.key === selectedKey) ?? FACES[0]
 
   return (
     <>
@@ -148,41 +158,43 @@ function ScreenNavSettingsDialogBody(props: ScreenNavSettingsProps): ReactElemen
           })}
         </nav>
         <section className={styles["face"]} aria-label={selected.label}>
-          <div className={styles["face-scroll"]}>
-            <Text
-              element="p"
-              size="heading"
-              tone="ink"
-              weight="bold"
-              className={styles["face-title"]}
-            >
-              {selected.label}
-            </Text>
-            <div className={gearStyles["screen-nav-settings-table"]}>
-              <SelectedBody settings={settings} />
-            </div>
-          </div>
-          {selected.foot === "reset" && (
-            <footer className={styles["foot"]}>
-              <Button
-                variant="outline"
-                size="label"
-                pressed="none"
-                disabled={settings.resetDisabled}
-                ariaLabel={undefined}
-                disclosure={{ kind: "none" }}
-                ariaHasPopup={undefined}
-                title={undefined}
-                className={styles["reset"]}
-                onClick={settings.onReset}
-              >
-                既定に戻す
-              </Button>
-            </footer>
-          )}
+          <SelectedFace face={selected} settings={settings} />
         </section>
       </div>
     </>
+  )
+}
+
+function SelectedFace(props: {
+  readonly face: Face
+  readonly settings: ScreenNavSettingsProps["settings"]
+}): ReactElement {
+  const { face, settings } = props
+  if (face.foot === "own") {
+    return <face.Body title={face.label} />
+  }
+  return (
+    <ScreenNavSettingsFaceFrame
+      title={face.label}
+      foot={
+        <Button
+          variant="outline"
+          size="label"
+          pressed="none"
+          disabled={settings.resetDisabled}
+          ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["reset"]}
+          onClick={settings.onReset}
+        >
+          既定に戻す
+        </Button>
+      }
+    >
+      <face.Body settings={settings} />
+    </ScreenNavSettingsFaceFrame>
   )
 }
 

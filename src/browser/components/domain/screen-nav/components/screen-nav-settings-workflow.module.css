@@ -1,6 +1,6 @@
-/* 設定のダイアログの「ワークフロー」の面。行の2列と罫線は `screen-nav-settings.module.css` の表の規則が持つ。 */
+/* 設定のダイアログの「ワークフロー」の面。 */
 
-/* どのリポジトリの設定か。面の名前のすぐ下に置き、行の並びとは罫線で分ける。 */
+/* どのリポジトリの設定か。面の名前のすぐ下に置き、欄とは罫線で分ける。 */
 .repository {
   padding-bottom: 12px;
   border-bottom: 1px solid var(--rule-quiet);
@@ -14,66 +14,199 @@
   overflow-wrap: anywhere;
 }
 .field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   min-width: 0;
+  padding-top: 14px;
 }
-/* 値を断った理由の1行。その欄の行の罫線のすぐ下に置く。 */
-.notice {
-  margin: 0.3rem 0 0.6rem;
+.field-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
 }
-/* スキルの並び。見出しと説明のあとに番号付きの行を縦に並べ、行の間に細い罫線を引く。 */
-.steps-label,
-.steps-description {
+.field-label,
+.field-description {
   margin: 0;
 }
-.steps-description {
-  margin-top: 0.2rem;
-}
-.steps {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: step;
-}
-.step {
-  position: relative;
-  counter-increment: step;
+
+/* 流れの帯。札を矢印でつなぎ、入りきらなければ折り返す。 */
+.flow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px 12px;
-  padding: 8px 0 8px 1.6rem;
-  border-bottom: 1px solid var(--rule-quiet);
+  gap: 6px 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--rule-quiet);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ground) 40%, transparent);
 }
-/* 番号は等幅（機械の側の順番）。行の頭の空きに置く。 */
-.step::before {
-  content: counter(step);
-  position: absolute;
-  left: 0;
-  font-family: var(--font-mono);
-  font-size: 12px;
+.flow-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px 0 10px;
+  border: 1px solid var(--rule-quiet);
+  border-radius: 14px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-size: var(--font-secondary);
+  font-weight: 700;
+}
+.flow-number {
   color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-weight: 400;
+}
+.flow-arrow {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+
+/* 行の札。札の間に番号の丸どうしをつなぐ細い縦線を引く。 */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px 12px 12px;
+  border: 1px solid var(--rule-quiet);
+  border-radius: 12px;
+}
+.step + .step::before {
+  content: "";
+  position: absolute;
+  top: -11px;
+  left: 24px;
+  width: 1px;
+  height: 10px;
+  background: var(--rule);
+}
+.step-number {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+.step-body {
+  flex: 1;
+  min-width: 0;
 }
 .step-name {
-  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin: 0;
+}
+.step-title {
+  color: var(--ink);
+  font-size: var(--font-subheading);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.step-id {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
   overflow-wrap: anywhere;
 }
 .step-unknown {
-  margin-left: 0.5rem;
-}
-.step-buttons {
-  display: flex;
   flex: none;
-  gap: 6px;
 }
-.step-button {
-  min-height: 28px;
-  padding: 0 10px;
+/* 保存前の並びと位置が違う行。枠の色に「● 並びを変えた」の字を添える。 */
+.step-moved {
+  border-color: var(--state-warn);
+}
+.step-moved-mark {
+  flex: none;
+}
+/* 説明は SKILL.md の説明の全文で長いので、1行で切って全文は `title` に渡す。 */
+.step-description {
+  display: -webkit-box;
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+.step-menu {
+  align-self: center;
+}
+
+/* 並びに入っていないスキル。点線の札を押すと並びの最後に足す。 */
+.parked {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.parked-head {
+  margin: 0;
+}
+.parked-hint {
+  margin-left: 10px;
+}
+.parked-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.parked-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px 0 10px;
   border-radius: 8px;
 }
-.steps-add {
-  margin-top: 10px;
+.parked-chip .step-title {
+  font-size: var(--font-secondary);
+}
+/* 足せる候補が無いことを、点線の行で言う（押せない）。 */
+.parked-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--rule-quiet);
+  border-radius: 12px;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 値を断った理由の1行。その欄の下に置く。 */
+.notice {
+  margin: 0;
 }
 .message {
   margin: 12px 0 0;
+}
+/* 下の帯。何を変えたかは左に寄せ、「やめる」「保存」を右に置く。 */
+.change {
+  margin: 0 auto 0 0;
+}
+.save-band-button {
+  flex: none;
+  border-radius: 8px;
 }

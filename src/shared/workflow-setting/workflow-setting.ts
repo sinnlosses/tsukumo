@@ -15,6 +15,8 @@ export type WorkflowSettingRepository = {
 export type WorkflowSettingChoice = {
   readonly value: string
   readonly label: string
+  /** 日本語の段の名前。 */
+  readonly title: string
   readonly description: string
 }
 
@@ -72,7 +74,14 @@ const fieldSchema = z.object({
   label: z.string(),
   description: z.string(),
   values: z
-    .array(z.object({ value: z.string(), label: z.string(), description: z.string() }))
+    .array(
+      z.object({
+        value: z.string(),
+        label: z.string(),
+        title: z.string(),
+        description: z.string(),
+      }),
+    )
     .readonly(),
   current: z.array(z.string()).readonly(),
 })

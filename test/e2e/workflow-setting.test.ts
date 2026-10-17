@@ -9,7 +9,8 @@ import { useScenarioRun } from "./scenario-run.ts"
 
 // 歯車の設定の「ワークフロー」の面（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 場面は名指しせず（`opening` のまま）。部屋を開いたあと cwd を git のリポジトリにして `.tw/config.toml` を置き、
-// 画面で並びに候補を足すと、並び全体の書き込みが取り込んだワークフローの `tw config set` まで届くことを確かめる。
+// 画面で「…」から外して札から足し、保存すると、並び全体の書き込みが取り込んだワークフローの `tw config set` まで届くことを確かめる。
+// 保存するまでは書かない（断りの理由が出ない）ことも見る。
 // 期待値は撮らず、断りの理由が欄の下に出るかで判定する。
 
 const run = useScenarioRun()
@@ -20,7 +21,7 @@ const WRITE_ROUND_TRIP_TIMEOUT_MS = TW_TIMEOUT_MS * 3
 describe("ワークフローの設定", () => {
   // 取り込みの `tw` が schema 1 のままのあいだは、読み取りの応答だけを schema 2 の面に差し替える。
   // 書き込みは本物の `tw config set` まで届き、知らないキーとして断られる理由が欄の下に出ることで、往復を確かめる。
-  it("並びの欄で候補を足すと、並び全体の書き込みが tw まで届く", async () => {
+  it("外して足して保存すると、並び全体の書き込みが tw まで届く", async () => {
     const room = await run.open({
       scenario: "workflow-setting-steps",
       scene: "none",
@@ -45,10 +46,11 @@ describe("ワークフローの設定", () => {
                 label: "スキルの並び",
                 description: "架空の説明",
                 values: [
-                  { value: "架空:甲", label: "甲", description: "" },
-                  { value: "架空:乙", label: "乙", description: "" },
+                  { value: "架空:甲", label: "甲", title: "架空の甲", description: "" },
+                  { value: "架空:乙", label: "乙", title: "架空の乙", description: "" },
+                  { value: "架空:丙", label: "丙", title: "架空の丙", description: "" },
                 ],
-                current: ["架空:甲"],
+                current: ["架空:甲", "架空:乙"],
               },
             ],
           },
@@ -58,8 +60,8 @@ describe("ワークフローの設定", () => {
 
     await room.page.locator('button[aria-label="設定"][aria-haspopup="dialog"]').click()
     const dialog = room.page.getByRole("dialog", { name: "設定" })
-    const adder = dialog.getByRole("combobox", { name: "スキルの並びに足す" })
-    await room.revealAfterResponse(adder, {
+    const menuTrigger = dialog.getByRole("button", { name: "架空の甲 の操作" })
+    await room.revealAfterResponse(menuTrigger, {
       response: "workflowSetting/read",
       baseline: {
         kind: "after-act",
@@ -67,7 +69,13 @@ describe("ワークフローの設定", () => {
       },
     })
 
-    await adder.selectOption("架空:乙")
+    await menuTrigger.click()
+    await dialog.getByRole("menuitem", { name: "並びから外す" }).click()
+    await dialog.getByRole("button", { name: "架空の丙 を並びの最後に足す" }).click()
+    await room.page.clock.runFor(50)
+    expect(await dialog.getByText("'steps'", { exact: false }).count()).toBe(0)
+
+    await dialog.getByRole("button", { name: "保存" }).click()
 
     await expect
       .poll(

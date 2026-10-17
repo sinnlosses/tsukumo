@@ -1,4 +1,4 @@
-/* 設定のダイアログ。880×600（高さは画面の 86% まで）の箱に、頭・ナビ・面・下の帯を置く。 */
+/* 設定のダイアログ。880×600（高さは画面の 86% まで）の箱に、頭・ナビ・面を置く。 */
 
 .dialog[open] {
   display: flex;
@@ -110,21 +110,6 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
-}
-.face-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 22px 28px;
-}
-.face-title {
-  margin: 0 0 1rem;
-}
-.foot {
-  display: flex;
-  flex: none;
-  justify-content: flex-end;
-  padding: 0.9rem 28px;
 }
 .reset {
   flex: none;

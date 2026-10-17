@@ -1,70 +1,84 @@
-// 設定のダイアログの「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、並びの欄ごとに、名前・説明・番号付きの行・足すプルダウンを置く。
+// 設定のダイアログの「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、並びの欄ごとに、
+// 頭の行・流れの帯・行の札（番号・名前・識別子・説明・「…」）・並びに入っていないスキルの札を置く。
+// 下の帯に「やめる」「保存」を置き、操作は保存するまで書かない。
 // 欄はワークフローの設定コマンドから来たものだけで、出せないときは欄を出さずに何が無いかを1文で言う。
 
-import { useId, type ReactElement } from "react"
+import clsx from "clsx"
+import { Plus } from "lucide-react"
+import { Fragment, type ReactElement } from "react"
 
-import { RunSettingName } from "../../../../features/run-setting/components/run-setting-option.tsx"
-import { RunSettingSelect } from "../../../../features/run-setting/components/run-setting-select.tsx"
 import { Button } from "../../../ui/button/button.tsx"
+import { Menu, type MenuItem } from "../../../ui/menu/menu.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import {
   useWorkflowSetting,
+  type ScreenNavWorkflowSettingDraftChange,
   type ScreenNavWorkflowSettingRepository,
   type ScreenNavWorkflowSettingRow,
+  type ScreenNavWorkflowSettingStep,
 } from "../hooks/use-workflow-setting.ts"
+import { ScreenNavSettingsFaceFrame } from "./screen-nav-settings-face-frame.tsx"
 import styles from "./screen-nav-settings-workflow.module.css"
-import rowStyles from "./screen-nav-settings.module.css"
 
-export function ScreenNavSettingsWorkflowFace(): ReactElement {
+export function ScreenNavSettingsWorkflowFace(props: { readonly title: string }): ReactElement {
   const setting = useWorkflowSetting()
-  const fieldId = useId()
 
   switch (setting.kind) {
     case "loading":
-      return <WorkflowMessage text="ワークフローの設定を読んでいる…" tone="ink-quiet" />
+      return (
+        <ScreenNavSettingsFaceFrame title={props.title} foot={undefined}>
+          <WorkflowMessage text="ワークフローの設定を読んでいる…" tone="ink-quiet" />
+        </ScreenNavSettingsFaceFrame>
+      )
     case "unreachable":
-      return <WorkflowMessage text={setting.message} tone="state-warn" />
+      return (
+        <ScreenNavSettingsFaceFrame title={props.title} foot={undefined}>
+          <WorkflowMessage text={setting.message} tone="state-warn" />
+        </ScreenNavSettingsFaceFrame>
+      )
     case "unavailable":
       return (
-        <>
+        <ScreenNavSettingsFaceFrame title={props.title} foot={undefined}>
           <WorkflowRepository repository={setting.repository} />
           <WorkflowMessage text={setting.message} tone="ink" />
-        </>
+        </ScreenNavSettingsFaceFrame>
       )
     case "available":
       return (
-        <>
+        <ScreenNavSettingsFaceFrame
+          title={props.title}
+          foot={
+            <WorkflowSaveBand
+              change={setting.change}
+              busy={setting.busy}
+              onSave={setting.onSave}
+              onCancel={setting.onCancel}
+            />
+          }
+        >
           <WorkflowRepository repository={setting.repository} />
           {setting.rows.map((row) => (
-            <WorkflowStepsRow
-              key={row.key}
-              row={row}
-              busy={setting.busy}
-              selectId={`${fieldId}-${row.key}`}
-            />
+            <WorkflowStepsField key={row.key} row={row} busy={setting.busy} />
           ))}
-        </>
+        </ScreenNavSettingsFaceFrame>
       )
   }
 }
 
-const ADD_PLACEHOLDER_LABEL = "スキルを足す…"
-
-function WorkflowStepsRow(props: {
+function WorkflowStepsField(props: {
   readonly row: ScreenNavWorkflowSettingRow
   readonly busy: boolean
-  readonly selectId: string
 }): ReactElement {
   const { row, busy } = props
   return (
     <div className={styles["field"]}>
-      <div className={rowStyles["screen-nav-settings-row"]}>
+      <div className={styles["field-head"]}>
         <Text
           element="p"
-          size="secondary"
+          size="subheading"
           tone="ink"
           weight="bold"
-          className={styles["steps-label"]}
+          className={styles["field-label"]}
         >
           {row.label}
         </Text>
@@ -73,95 +87,102 @@ function WorkflowStepsRow(props: {
           size="label"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["steps-description"]}
+          className={styles["field-description"]}
         >
           {row.description}
         </Text>
       </div>
+      <WorkflowFlow steps={row.steps} />
       <ol className={styles["steps"]} aria-label={row.label}>
         {row.steps.map((step, index) => (
-          <li key={step.value} className={styles["step"]}>
-            <span className={styles["step-name"]}>
-              {step.label}
-              {!step.known && (
-                <Text
-                  element="span"
-                  size="label"
-                  tone="state-warn"
-                  weight="inherit"
-                  className={styles["step-unknown"]}
-                >
-                  候補に無い
-                </Text>
+          <li key={step.value} className={clsx(styles["step"], step.moved && styles["step-moved"])}>
+            <span className={styles["step-number"]} aria-hidden="true">
+              {index + 1}
+            </span>
+            <div className={styles["step-body"]}>
+              <p className={styles["step-name"]}>
+                <span className={styles["step-title"]}>{step.title}</span>
+                {step.known && <span className={styles["step-id"]}>{step.label}</span>}
+                {!step.known && (
+                  <Text
+                    element="span"
+                    size="label"
+                    tone="state-warn"
+                    weight="inherit"
+                    className={styles["step-unknown"]}
+                  >
+                    候補に無い
+                  </Text>
+                )}
+                {step.moved && (
+                  <Text
+                    element="span"
+                    size="label"
+                    tone="state-warn"
+                    weight="inherit"
+                    className={styles["step-moved-mark"]}
+                  >
+                    <span aria-hidden="true">● </span>並びを変えた
+                  </Text>
+                )}
+              </p>
+              {step.description !== "" && (
+                <p className={styles["step-description"]} title={step.description}>
+                  {step.description}
+                </p>
               )}
-            </span>
-            <span className={styles["step-buttons"]}>
-              <StepButton
-                label="上へ"
-                name={`${step.label} を上へ`}
-                disabled={busy || !step.canMoveUp}
-                title={undefined}
-                onClick={() => {
-                  row.onMove(index, -1)
-                }}
-              />
-              <StepButton
-                label="下へ"
-                name={`${step.label} を下へ`}
-                disabled={busy || !step.canMoveDown}
-                title={undefined}
-                onClick={() => {
-                  row.onMove(index, 1)
-                }}
-              />
-              <StepButton
-                label="外す"
-                name={`${step.label} を外す`}
-                disabled={busy || !step.canRemove}
-                title={step.canRemove ? undefined : "並びは1つ以上いる"}
-                onClick={() => {
-                  row.onRemove(index)
-                }}
-              />
-            </span>
+            </div>
+            <Menu
+              triggerLabel={`${step.title} の操作`}
+              disabled={busy}
+              items={stepMenuItems(row, step, index)}
+              className={styles["step-menu"]}
+            />
           </li>
         ))}
       </ol>
       {row.addable.length > 0 && (
-        <div className={styles["steps-add"]}>
-          <RunSettingSelect
-            id={props.selectId}
-            ariaLabel={`${row.label}に足す`}
-            heading={row.label}
-            value=""
-            options={[
-              {
-                value: "",
-                disabled: true,
-                icon: undefined,
-                row: <RunSettingName danger={false}>{ADD_PLACEHOLDER_LABEL}</RunSettingName>,
-              },
-              ...row.addable.map((option) => ({
-                value: option.value,
-                disabled: false,
-                icon: undefined,
-                row: <RunSettingName danger={false}>{option.label}</RunSettingName>,
-              })),
-            ]}
-            disabled={busy}
-            danger={false}
-            rail={false}
-            layout="list"
-            mouth="field"
-            title={row.description}
-            dot="none"
-            onChange={(value) => {
-              if (value !== "") {
-                row.onAdd(value)
-              }
-            }}
-          />
+        <div className={styles["parked"]}>
+          <Text
+            element="p"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["parked-head"]}
+          >
+            並びに入っていないスキル<span className={styles["parked-hint"]}>押すと最後に足す</span>
+          </Text>
+          <div className={styles["parked-chips"]}>
+            {row.addable.map((option) => (
+              <Button
+                key={option.value}
+                variant="outline-dashed"
+                size="secondary"
+                pressed="none"
+                disabled={busy}
+                ariaLabel={`${option.title} を並びの最後に足す`}
+                ariaHasPopup={undefined}
+                disclosure={{ kind: "none" }}
+                title={undefined}
+                className={styles["parked-chip"]}
+                onClick={() => {
+                  row.onAdd(option.value)
+                }}
+              >
+                <Plus size={14} strokeWidth={2} aria-hidden="true" />
+                <span className={styles["step-title"]}>{option.title}</span>
+                <span className={styles["step-id"]}>{option.label}</span>
+              </Button>
+            ))}
+          </div>
         </div>
+      )}
+      {row.addable.length === 0 && (
+        <p className={styles["parked-empty"]}>
+          <Plus size={14} strokeWidth={2} aria-hidden="true" />
+          足せるスキルはない（{row.steps.filter((step) => step.known).length}
+          つとも並んでいる）
+        </p>
       )}
       {row.notice.kind === "shown" && (
         <Text
@@ -178,28 +199,134 @@ function WorkflowStepsRow(props: {
   )
 }
 
-function StepButton(props: {
-  readonly label: string
-  readonly name: string
-  readonly disabled: boolean
-  readonly title: string | undefined
-  readonly onClick: () => void
+/** 行と同じ中身を順の1本で見せる。読み上げは行の並びが持つ。 */
+function WorkflowFlow(props: {
+  readonly steps: readonly ScreenNavWorkflowSettingStep[]
 }): ReactElement {
   return (
-    <Button
-      variant="outline"
-      size="label"
-      pressed="none"
-      disabled={props.disabled}
-      ariaLabel={props.name}
-      ariaHasPopup={undefined}
-      disclosure={{ kind: "none" }}
-      title={props.title}
-      className={styles["step-button"]}
-      onClick={props.onClick}
-    >
-      {props.label}
-    </Button>
+    <div className={styles["flow"]} aria-hidden="true">
+      {props.steps.map((step, index) => (
+        <Fragment key={step.value}>
+          {index > 0 && <span className={styles["flow-arrow"]}>→</span>}
+          <span className={styles["flow-chip"]}>
+            <span className={styles["flow-number"]}>{index + 1}</span>
+            {step.title}
+          </span>
+        </Fragment>
+      ))}
+    </div>
+  )
+}
+
+function stepMenuItems(
+  row: ScreenNavWorkflowSettingRow,
+  step: ScreenNavWorkflowSettingStep,
+  index: number,
+): readonly MenuItem[] {
+  return [
+    {
+      key: "top",
+      label: "いちばん上へ",
+      tone: "default",
+      disabled: !step.canMoveUp,
+      separatorBefore: false,
+      onSelect: () => {
+        row.onMove(index, "top")
+      },
+    },
+    {
+      key: "up",
+      label: "ひとつ上へ",
+      tone: "default",
+      disabled: !step.canMoveUp,
+      separatorBefore: false,
+      onSelect: () => {
+        row.onMove(index, "up")
+      },
+    },
+    {
+      key: "down",
+      label: "ひとつ下へ",
+      tone: "default",
+      disabled: !step.canMoveDown,
+      separatorBefore: false,
+      onSelect: () => {
+        row.onMove(index, "down")
+      },
+    },
+    {
+      key: "bottom",
+      label: "いちばん下へ",
+      tone: "default",
+      disabled: !step.canMoveDown,
+      separatorBefore: false,
+      onSelect: () => {
+        row.onMove(index, "bottom")
+      },
+    },
+    {
+      key: "remove",
+      label: "並びから外す",
+      tone: "danger",
+      disabled: !step.canRemove,
+      separatorBefore: true,
+      onSelect: () => {
+        row.onRemove(index)
+      },
+    },
+  ]
+}
+
+function WorkflowSaveBand(props: {
+  readonly change: ScreenNavWorkflowSettingDraftChange
+  readonly busy: boolean
+  readonly onSave: () => void
+  readonly onCancel: () => void
+}): ReactElement {
+  const unchanged = props.change.kind === "none"
+  return (
+    <>
+      {props.change.kind === "changed" && (
+        <Text
+          element="p"
+          size="label"
+          tone="state-warn"
+          weight="inherit"
+          className={styles["change"]}
+        >
+          <span aria-hidden="true">● </span>
+          {props.change.text}
+        </Text>
+      )}
+      <Button
+        variant="outline"
+        size="label"
+        pressed="none"
+        disabled={unchanged || props.busy}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
+        disclosure={{ kind: "none" }}
+        title={undefined}
+        className={styles["save-band-button"]}
+        onClick={props.onCancel}
+      >
+        やめる
+      </Button>
+      <Button
+        variant="solid-ink"
+        size="label"
+        pressed="none"
+        disabled={unchanged || props.busy}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
+        disclosure={{ kind: "none" }}
+        title={undefined}
+        className={styles["save-band-button"]}
+        onClick={props.onSave}
+      >
+        保存
+      </Button>
+    </>
   )
 }
 
