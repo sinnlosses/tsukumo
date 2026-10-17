@@ -10,6 +10,7 @@ import type {
   MainViewTurn,
 } from "../../../../../../../../../src/shared/session/main-view.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../../../src/shared/session/session-state.ts"
+import { typedElement } from "../../../../../../../../typed-element.ts"
 import { putSession } from "../../../../../../../session-store.ts"
 
 // 本物の `Report`（react-markdown 一式と演出の配線を持つ）ではなく、どの本文に演出を掛けると
@@ -159,6 +160,50 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
     )
 
     expect(revealTargets()).toEqual(["2件目"])
+  })
+
+  it("閉じた瞬間に入れ替えた札では、中間レポートが経過の畳みに入っても最終レポートだけに掛ける", () => {
+    render(
+      <Turn
+        turn={turn([
+          step({ id: 0, body: text("中間0"), interim: true, superseded: true }),
+          step({ id: 1, body: text("中間1"), interim: true, superseded: true }),
+          step({ id: 2, body: text("最終"), final: true }),
+        ])}
+        newest
+        freshReport
+      />,
+    )
+
+    expect(revealTargets()).toEqual(["最終"])
+  })
+
+  it("続きのターンで最終レポートが替わると、前の最終は経過の畳みへ移り、新しい最終だけに掛ける", () => {
+    const { rerender } = render(
+      <Turn
+        turn={turn([
+          step({ id: 0, body: text("中間0"), interim: true, superseded: true }),
+          step({ id: 1, body: text("前の最終"), final: true }),
+        ])}
+        newest
+        freshReport={false}
+      />,
+    )
+    revealed = []
+
+    rerender(
+      <Turn
+        turn={turn([
+          step({ id: 0, body: text("中間0"), interim: true, superseded: true }),
+          step({ id: 1, body: text("前の最終"), interim: true, superseded: true }),
+          step({ id: 2, body: text("新しい最終"), final: true }),
+        ])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    expect(revealTargets()).toEqual(["新しい最終"])
   })
 
   it("中間レポートには掛けない（流れている最中に少しずつ出る本文なので）", () => {
@@ -405,7 +450,11 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
       />,
     )
 
-    expect([...container.querySelectorAll("summary")].map((node) => node.textContent)).toEqual([
+    expect(
+      [...container.querySelectorAll("details.is-interim > summary")].map(
+        (node) => node.textContent,
+      ),
+    ).toEqual([
       "中間レポート: 1/2 架空の段 · 所要 0秒",
       "中間レポート: 2/2 架空の段 · 飛ばした · 所要 0秒",
     ])
@@ -413,14 +462,14 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
 })
 
 describe("Turn（脇の話の欄の位置）", () => {
-  it("脇の話の欄は、持ち主のステップの後ろ・次のレポートの前に並ぶ", () => {
+  it("働くあいだ（最終レポートが無い）は、脇の話の欄が持ち主のステップの後ろ・次のレポートの前に並ぶ", () => {
     putSession(INITIAL_SESSION_STATE)
     const aside = { text: "架空の問い", answer: { kind: "waiting" } } as const
     const { container } = render(
       <Turn
         turn={turn([
           step({ id: 0, body: text("1つ目の本文"), interim: true, asides: [aside] }),
-          step({ id: 1, body: text("2つ目の本文"), final: true }),
+          step({ id: 1, body: text("2つ目の本文"), interim: true }),
         ])}
         newest
         freshReport={false}
@@ -436,6 +485,36 @@ describe("Turn（脇の話の欄の位置）", () => {
     expect(order[2]).toBe("2つ目の本文")
   })
 
+  it("最終レポートのある閉じたやり取りは、最終レポート → 脇の話の欄 → 経過の畳みの順に並ぶ", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const aside = { text: "架空の問い", answer: { kind: "waiting" } } as const
+    const { container } = render(
+      <Turn
+        turn={turn([
+          step({
+            id: 0,
+            body: text("中間の本文"),
+            interim: true,
+            superseded: true,
+            asides: [aside],
+          }),
+          step({ id: 1, body: text("最終の本文"), final: true }),
+        ])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    const top = [...container.querySelectorAll(":scope > div > div > *")].map(
+      (element) => element.textContent,
+    )
+    expect(top).toHaveLength(3)
+    expect(top[0]).toBe("最終の本文")
+    expect(top[1]).toContain("脇の話 1件")
+    expect(top[2]).toContain("経過 1 件")
+    expect(top[2]).toContain("中間の本文")
+  })
+
   it("本文も質問も無いステップの脇の話は、欄だけを描く", () => {
     putSession(INITIAL_SESSION_STATE)
     const aside = { text: "架空の問い", answer: { kind: "waiting" } } as const
@@ -445,5 +524,66 @@ describe("Turn（脇の話の欄の位置）", () => {
 
     expect(container.querySelectorAll("section")).toHaveLength(0)
     expect(container.querySelectorAll("details")).toHaveLength(1)
+  })
+})
+
+describe("Turn（経過の畳み）", () => {
+  const interims = [0, 1, 2].map((id) =>
+    step({ id, body: text(`中間${String(id)}`), interim: true, superseded: true }),
+  )
+
+  it("閉じたやり取りでは、最終レポートの下に経過の畳みが1つだけ出て、中は届いた順の1行の畳み", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const { container } = render(
+      <Turn
+        turn={turn([...interims, step({ id: 3, body: text("最終"), final: true })])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    const folds = container.querySelectorAll(".progress-fold")
+    expect(folds).toHaveLength(1)
+    const fold = typedElement(folds[0], HTMLDetailsElement, "経過の畳み")
+    expect(fold.open).toBe(false)
+    expect(fold.querySelector(":scope > summary")?.textContent).toBe("経過 3 件")
+    expect(
+      [...fold.querySelectorAll("details.is-interim > summary")].map(
+        (summary) => summary.textContent,
+      ),
+    ).toEqual(["中間レポート: 中間0", "中間レポート: 中間1", "中間レポート: 中間2"])
+
+    const stubs = [...container.querySelectorAll("[data-report-stub]")]
+    expect(stubs.map((stub) => stub.textContent)).toEqual(["最終", "中間0", "中間1", "中間2"])
+    expect(stubs.slice(1).every((stub) => fold.contains(stub))).toBe(true)
+  })
+
+  it("中間レポートが無い閉じたやり取りには、経過の畳みを出さない", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const { container } = render(
+      <Turn
+        turn={turn([step({ id: 0, body: text("最終"), final: true })])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    expect(container.querySelector(".progress-fold")).toBeNull()
+  })
+
+  it("働くあいだは経過の畳みを出さず、中間レポートを届いた順に並べたまま", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const { container } = render(
+      <Turn
+        turn={turn([...interims, step({ id: 3, body: text("まだ決まらない本文") })])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    expect(container.querySelector(".progress-fold")).toBeNull()
+    expect(
+      [...container.querySelectorAll("[data-report-stub]")].map((stub) => stub.textContent),
+    ).toEqual(["中間0", "中間1", "中間2", "まだ決まらない本文"])
   })
 })

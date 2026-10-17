@@ -213,3 +213,61 @@ describe("useReportOutline（筆が届いた節から並べる）", () => {
     })
   })
 })
+
+// 閉じたやり取りの札の並び（最終レポート → 経過の畳み。畳みの中に中間レポートの1行の畳み）を模す。
+function ProgressFoldProbe(): ReactElement {
+  const { rows, contentRef } = useReportOutline(ONE_TURN)
+  return (
+    <div>
+      <ul>
+        {rows.map((entry, index) => (
+          <li key={index} data-testid="outline-row">
+            {entry.text}
+          </li>
+        ))}
+      </ul>
+      <div ref={contentRef}>
+        <div className={detailBlockClassName}>
+          <h4>最終の節A</h4>
+          <h5>最終の小節</h5>
+          <h4>最終の節B</h4>
+        </div>
+        <details data-testid="progress-fold">
+          <summary>経過 1 件</summary>
+          <details data-testid="interim">
+            <summary>中間レポート: 架空の段</summary>
+            <div className={detailBlockClassName}>
+              <h4>中間の節</h4>
+            </div>
+          </details>
+        </details>
+      </div>
+    </div>
+  )
+}
+
+function outlineTexts(): readonly string[] {
+  return screen.queryAllByTestId("outline-row").map((node) => node.textContent)
+}
+
+describe("useReportOutline（経過の畳みのある札）", () => {
+  it("経過の畳みが閉じていれば、最終レポートの見出しだけを拾う", () => {
+    render(<ProgressFoldProbe />)
+
+    expect(outlineTexts()).toEqual(["最終の節A", "最終の小節", "最終の節B"])
+  })
+
+  it("経過の畳みと中の1行の畳みを両方開いたときだけ、中間レポートの見出しが並ぶ", async () => {
+    render(<ProgressFoldProbe />)
+
+    screen.getByTestId("interim").setAttribute("open", "")
+    await waitFor(() => {
+      expect(outlineTexts()).toHaveLength(3)
+    })
+    screen.getByTestId("progress-fold").setAttribute("open", "")
+
+    await waitFor(() => {
+      expect(outlineTexts()).toEqual(["最終の節A", "最終の小節", "最終の節B", "中間の節"])
+    })
+  })
+})

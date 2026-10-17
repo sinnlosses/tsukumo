@@ -339,17 +339,6 @@
                                   ]
                                 },
                                 {
-                                  "tag": "details",
-                                  "children": [
-                                    {
-                                      "tag": "summary",
-                                      "children": [
-                                        "中間レポート: 途中の結論: 目盛りを決めているのは `a.ts` だけだった。"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
                                   "tag": "section",
                                   "children": [
                                     {
@@ -820,6 +809,17 @@
                                             "のキャッシュを消してよいか決めてほしい（架空のお願い）。"
                                           ]
                                         }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "details",
+                                  "children": [
+                                    {
+                                      "tag": "summary",
+                                      "children": [
+                                        "経過 1 件"
                                       ]
                                     }
                                   ]

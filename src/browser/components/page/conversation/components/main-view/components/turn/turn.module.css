@@ -7,3 +7,18 @@
   margin: 0 0 0.5rem;
   letter-spacing: 0.08em;
 }
+/* 経過の畳み。最終レポートの終わりと罫で区切り、字は `Text` が持つ。 */
+.progress-fold {
+  margin: 1.5rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rule-soft);
+}
+/* 押す的の下限（24px）を保つ。 */
+.progress-fold > summary {
+  min-height: 1.5rem;
+  line-height: 1.5rem;
+  cursor: pointer;
+}
+.progress-fold-steps {
+  margin-top: 0.75rem;
+}

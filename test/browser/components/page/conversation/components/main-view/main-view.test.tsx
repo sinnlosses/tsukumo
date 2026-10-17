@@ -695,7 +695,7 @@ describe("MainView（答えた質問の記録）", () => {
     }
   }
 
-  it("中間レポートを挟んで2回答えた質問は、2件とも出た順に残り、畳まれた中間レポートの外に出る", () => {
+  it("中間レポートを挟んで2回答えた質問は、2件とも出た順に残り、経過の畳みの外に出る", () => {
     renderMainView([
       requestRecord({ text: "架空の依頼", turnId: 0 }),
       answered("fake-ask-1", "架空の質問1：どちらを先に見る？"),
@@ -709,10 +709,10 @@ describe("MainView（答えた質問の記録）", () => {
     const second = screen.getByRole("heading", { name: /架空の質問2/ })
     expect(first.closest("details")).toBeNull()
     expect(second.closest("details")).toBeNull()
-    const folded = document.querySelectorAll("details")
-    expect(folded).toHaveLength(1)
-    expect(folded[0]?.open).toBe(false)
-    expect(folded[0]?.textContent).toContain("架空の中間レポート")
+    const folds = document.querySelectorAll(".progress-fold")
+    expect(folds).toHaveLength(1)
+    expect(folds[0]?.textContent).toContain("架空の中間レポート")
+    expect([...document.querySelectorAll("details")].every((details) => !details.open)).toBe(true)
     expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

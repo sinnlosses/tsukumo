@@ -170,7 +170,7 @@ export function MainView(): ReactElement {
                     turn={cardTurn.turn}
                     planCount={viewingPast ? 0 : planCountOf(turnStepList)}
                     turnId={cardTurn.turn.id}
-                    key={cardTurn.turn.id}
+                    key={`phase-list:${String(cardTurn.turn.id)}`}
                   />
                   {!viewingPast && view.kind === "work" && <CurrentStep />}
                   {/* `key` にターンの番号を渡す。
