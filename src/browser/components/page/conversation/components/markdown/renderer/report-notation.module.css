@@ -1180,33 +1180,34 @@
 }
 /* 情報の塊（素の `note`。結論を言う役）。
    6種（情報・注意・異常・疑問・メモ・お願い）に共通の余白と縦罫もここが持つ。
-   情報・注意・異常・疑問・メモの5種は、意味を固定した色で縦罫を引き、地をその色で1割だけ染める。
-   1割なので地との比は 1.2 前後、上に乗る ink は 10:1 以上を保つ。
+   情報・注意・異常・疑問・メモの5種は、意味を固定した色で縦罫を引き、地をその色で染める。
+   染める割合は段差で、注意・異常は 13%、情報・疑問・メモは 6%（表の状態セルと同じ値）。
+   上に乗る ink は 10:1 以上を保つ。
    引用（blockquote）は目立たせないための印なので、灰の縦罫だけで地を染めない。 */
 .detail-block .report-note {
   margin: var(--report-block-gap) 0;
   padding: 0.5rem 0.75rem;
   border-left: 3px solid var(--state-info);
-  background: color-mix(in srgb, var(--surface), var(--state-info) 10%);
+  background: color-mix(in srgb, var(--surface), var(--state-info) 6%);
 }
 .detail-block .report-note-warn {
   border-left-color: var(--state-warn);
-  background: color-mix(in srgb, var(--surface), var(--state-warn) 10%);
+  background: color-mix(in srgb, var(--surface), var(--state-warn) 13%);
 }
 .detail-block .report-note-ng {
   border-left-color: var(--state-ng);
-  background: color-mix(in srgb, var(--surface), var(--state-ng) 10%);
+  background: color-mix(in srgb, var(--surface), var(--state-ng) 13%);
 }
 /* 疑問（まだ確かめていないこと・決めきれていないこと）。 */
 .detail-block .report-note-ask {
   border-left-color: var(--state-ask);
-  background: color-mix(in srgb, var(--surface), var(--state-ask) 10%);
+  background: color-mix(in srgb, var(--surface), var(--state-ask) 6%);
 }
 /* メモ（本筋から外れる覚え書き）。
    色は ink なので、地を染めないと引用（blockquote）と灰どうしで見分けにくい。 */
 .detail-block .report-note-memo {
   border-left-color: var(--state-memo);
-  background: color-mix(in srgb, var(--surface), var(--state-memo) 10%);
+  background: color-mix(in srgb, var(--surface), var(--state-memo) 6%);
 }
 /* お願い（レポートのいちばん最後に置く、利用者にしか決められない・できないこと）。
    縦罫の色・地・枠で他の5種と見分ける。
