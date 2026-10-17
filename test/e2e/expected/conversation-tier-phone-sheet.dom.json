@@ -145,15 +145,39 @@
                       },
                       "children": [
                         {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
+                          "tag": "section",
                           "children": [
-                            "“"
+                            {
+                              "tag": "h2",
+                              "children": [
+                                "依頼"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空のタスクを進めて、設定の置き場を張り替えたい（架空の依頼）。長い依頼の文面で、二行を超えたときに切れて、押すと全文を板で読めることを確かめるための、架空の文章をここに続けて書いておく。"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "全文"
+                              ]
+                            }
                           ]
                         },
-                        "架空のタスクを進めて、設定の置き場を張り替えたい（架空の依頼）。長い依頼の文面で、二行を超えたときに切れて、押すと全文を板で読めることを確かめるための、架空の文章をここに続けて書いておく。",
                         {
                           "tag": "section",
                           "attributes": {

@@ -53,7 +53,7 @@ describe("お伺い", () => {
     // 届くと札まで送られ、札は本文（最後の中間レポート）より下にある。
     await expect.poll(() => insideOf(inquiry, main)).toBe(true)
     const [lastReport, card] = await Promise.all([
-      main.getByText("六つ目の段で架空の仕上げを終えた").boundingBox(),
+      main.getByText("八つ目の段で架空の仕上げを終えた").boundingBox(),
       inquiry.boundingBox(),
     ])
     expect(lastReport !== null && card !== null && card.y > lastReport.y).toBe(true)

@@ -1,82 +1,39 @@
-/* 狭い画面（760px 以下）の依頼。値は見本 `docs/history/mockup/phone-layout-2026-10-09/PHONE-1.dc.html` の1枚目の inline style。
-   広い画面の塊は狭い画面で隠し、こちらは広い画面で隠す。 */
-.request-quote {
-  display: none;
-}
-@media (max-width: 760px) {
-  .request-quote {
-    display: block;
-  }
-  .request-quote-button {
-    display: grid;
-    grid-template-columns: 18px 1fr;
-    column-gap: 8px;
-    width: 100%;
-    padding: 2px 0;
-    border: none;
-    background: transparent;
-    color: var(--ink-soft);
-    font: inherit;
-    text-align: left;
-  }
-  button.request-quote-button {
-    cursor: pointer;
-  }
-  .request-quote-mark {
-    font-family: var(--font-serif);
-    font-size: 22px;
-    line-height: 1;
-    color: color-mix(in srgb, var(--accent) 60%, var(--ground));
-  }
-  .request-quote-text {
-    display: -webkit-box;
-    overflow: hidden;
-    overflow-wrap: anywhere;
-    font-size: 13.5px;
-    line-height: 1.7;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
-  .request-sheet-title {
-    font-size: 14px;
-    font-weight: 700;
-  }
-  .request-sheet-text {
-    margin: 0;
-    overflow-wrap: anywhere;
-    white-space: pre-wrap;
-  }
-}
-
-/* 依頼の全文。字の段は `Text`・`Heading` が持ち、行の字の色はこの入れ物から継ぐ。 */
+/* 依頼の1行。値は見本 `docs/history/mockup/report-reading-tool-2026-10-18/reading-tool.html` の `.request`。
+   地も枠も左罫も持たず、字の段は `Text`・`Heading` が持つ。 */
 .request-block {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.125rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--rule-quiet);
-  border-left: 3px solid var(--ink-quiet);
-  border-radius: 0.5rem;
-  background: var(--ground);
   color: var(--ink-soft);
 }
-.request-label {
-  line-height: 1.5;
+.request-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
-/* 開いたまま長いときは、行の側を内側で転がす。 */
+.request-label {
+  flex: none;
+  line-height: 20px;
+}
 .request-lines {
-  align-self: stretch;
+  flex: 0 1 auto;
+  min-width: 0;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 20px;
+}
+/* 開いたあとは全行を折り返して出し、長いときは窓の 40% で内側に転がす。 */
+.request-lines.is-expanded {
+  flex: 1 1 0;
   max-height: 40vh;
   overflow-y: auto;
   overflow-wrap: anywhere;
+  text-overflow: clip;
   white-space: pre-wrap;
 }
-/* 「続き n 行」と「畳む」。顔は `<Button variant="text-accent">` が持つ。 */
+/* 「全文」と「畳む」。顔は `<Button variant="text-accent">` が持つ。 */
 .request-more {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 0.2rem;
   padding: 0;
@@ -91,10 +48,4 @@
 }
 .request-chevron.is-expanded {
   transform: rotate(180deg);
-}
-/* 狭い画面では広い画面の塊を出さない(上の `.request-quote` が代わる)。 */
-@media (max-width: 760px) {
-  .request-block {
-    display: none;
-  }
 }

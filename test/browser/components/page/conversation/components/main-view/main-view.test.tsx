@@ -462,36 +462,36 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
 })
 
 describe("MainView（依頼の全文）", () => {
-  const MORE_BUTTON = /^続き \d+ 行$/
-
   function requestBlockText(): string | null | undefined {
     return screen.getByRole("heading", { level: 2, name: "依頼" }).closest("section")?.textContent
   }
 
-  it("2行の依頼は、塊に2行とも出て、開く口は出ない", () => {
+  it("2行の依頼は、塊に1行目だけ出て、開く口「全文」で全行が出る", () => {
     renderMainView([
       requestRecord({ text: "架空の依頼の1行目\n1. 起こす", turnId: 0 }),
       detailRecord("本文"),
     ])
 
     expect(requestBlockText()).toContain("架空の依頼の1行目")
+    expect(requestBlockText()).not.toContain("1. 起こす")
+
+    press("全文")
     expect(requestBlockText()).toContain("1. 起こす")
-    expect(screen.queryByRole("button", { name: MORE_BUTTON })).toBeNull()
   })
 
   it("別のターンへ移ると、開いた状態は持ち越されない", () => {
     renderMainView([
-      requestRecord({ text: "見出し\n続き1\n続き2\n続き3\n続き4", turnId: 0 }),
+      requestRecord({ text: "見出し\n続き1", turnId: 0 }),
       detailRecord("本文"),
-      requestRecord({ text: "2つ目\nA\nB\nC\nD", turnId: 1 }),
+      requestRecord({ text: "2つ目\nA", turnId: 1 }),
       detailRecord("2つ目の本文"),
     ])
 
-    press("続き 1 行")
+    press("全文")
     stepTurn("[")
     stepTurn("]")
 
-    expect(screen.queryByRole("button", { name: MORE_BUTTON })).not.toBeNull()
+    expect(screen.queryByRole("button", { name: "全文" })).not.toBeNull()
   })
 })
 

@@ -1405,7 +1405,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 - **英語識別子**: `RequestBlock`（`src/browser/components/page/conversation/components/main-view/components/request-block/`）
 - **定義**: メインビューの本文の頭に、見ているやり取りの依頼の全文と
-  添えた画像を出す塊。見出し「依頼」がページの `h2`。4行を超えたら畳み、「続き n 行」で開いて畳み直せる
+  添えた画像を出す塊。見出し「依頼」がページの `h2`。1行に畳み、「全文」で開いて畳み直せる
 - **注記**: 2026-10-08 に札の頭の題の行を無くしたときに置いた。列の行には依頼の1行目だけを出す。
   置き場と規則は `docs/architecture/display.md` 4.2「各表示物」のメインビューの項、形は `docs/architecture/screen-design.md` 13.3
 - **避ける言い方**: 依頼の塊（「塊」は report の本文の塊と紛れるため改めた旧称）、依頼の続き、題の行（無くした札の頭の部品）
