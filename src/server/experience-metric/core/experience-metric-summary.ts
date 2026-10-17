@@ -3,7 +3,8 @@
 
 import { sortBy, sumBy } from "remeda"
 
-import type { ExperienceMetricEntry } from "./experience-metric.ts"
+import type { SplitDivider } from "../../../shared/experience-metric/experience-metric-record.ts"
+import type { ExperienceMetricEntry, SplitEntry } from "./experience-metric.ts"
 
 /** 畳み方。境目（エポックミリ秒）の前後に分けるか、全体を1つにするか。 */
 export type ExperienceSplit =
@@ -32,7 +33,25 @@ export type ExperienceSummary = {
   readonly recoveries: number
   readonly hands: Spread
   readonly untilRecoveryMs: Spread
+  /** 仕切りごとの、離した回数と離した比率（%）。 */
+  readonly splits: Readonly<Record<SplitDivider, SplitSummary>>
 }
+
+/** 仕切り1本ぶん。 */
+export type SplitSummary = {
+  readonly count: number
+  readonly released: PercentRange
+}
+
+/** 離した比率の中央値と範囲。1件も無ければ `empty`。 */
+export type PercentRange =
+  | { readonly kind: "empty" }
+  | {
+      readonly kind: "measured"
+      readonly median: number
+      readonly min: number
+      readonly max: number
+    }
 
 export function summarizeExperienceMetric(
   entries: readonly ExperienceMetricEntry[],
@@ -59,6 +78,7 @@ function summarizeRange(
 ): ExperienceSummary {
   const conclusions = entries.flatMap((entry) => (entry.kind === "conclusion" ? [entry] : []))
   const recoveries = entries.flatMap((entry) => (entry.kind === "recovery" ? [entry] : []))
+  const splits = entries.flatMap((entry) => (entry.kind === "split" ? [entry] : []))
   const asked = conclusions.filter((entry) => entry.askCount > 0)
   return {
     range,
@@ -71,6 +91,30 @@ function summarizeRange(
     recoveries: recoveries.length,
     hands: spreadOf(recoveries.map((entry) => entry.hands)),
     untilRecoveryMs: spreadOf(recoveries.map((entry) => entry.untilRecoveryMs)),
+    splits: {
+      topLeft: summarizeSplits(splits, "topLeft"),
+      rowTop: summarizeSplits(splits, "rowTop"),
+      bottomLeft: summarizeSplits(splits, "bottomLeft"),
+    },
+  }
+}
+
+function summarizeSplits(splits: readonly SplitEntry[], divider: SplitDivider): SplitSummary {
+  const released = splits
+    .filter((entry) => entry.divider === divider)
+    .map((entry) => entry.releasedPercent)
+  const median = spreadOf(released)
+  return {
+    count: released.length,
+    released:
+      median.kind === "empty"
+        ? median
+        : {
+            kind: "measured",
+            median: median.median,
+            min: Math.min(...released),
+            max: Math.max(...released),
+          },
   }
 }
 

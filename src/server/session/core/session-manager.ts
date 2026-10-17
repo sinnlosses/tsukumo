@@ -54,6 +54,8 @@ import { createDiagnosticBuffer, type DiagnosticLog } from "../../diagnostic/cor
 import {
   createExperienceMetricRecorder,
   type ExperienceMetricLog,
+  type SplitRelease,
+  splitEntry,
 } from "../../experience-metric/core/experience-metric.ts"
 import { questionImagePaths } from "../../report/core/question-image-path.ts"
 import {
@@ -193,6 +195,8 @@ export type SessionManager = {
   readonly readPlanUsage: () => Promise<PlanUsageReport>
   /** タスク一覧を今すぐ1回読み直し、読み終えてから解決する。 */
   readonly refreshTasks: () => Promise<void>
+  /** 仕切りを離した1回を体験の記録へ書く。セッションIDがまだ無いときは書かない。 */
+  readonly recordSplit: (release: SplitRelease) => void
   /**
    * セッション1件の中身を駆動から取る。
    * 読んでよいのは、いま配っている一覧（`sessions-changed`）に載ったものと、いま出しているセッションだけ。
@@ -720,6 +724,14 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       }
     },
     refreshTasks: () => taskWatcher.refresh(),
+    recordSplit: (release) => {
+      if (state.session.kind === "starting") {
+        return
+      }
+      options.experienceMetricLog.append(
+        splitEntry(release, state.session.sessionId, options.now()),
+      )
+    },
     readPlanUsage: async () => {
       // 起こし直しの最中・起こせなかったときは駆動そのものが無い。
       try {

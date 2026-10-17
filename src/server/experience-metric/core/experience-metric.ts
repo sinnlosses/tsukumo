@@ -3,7 +3,10 @@
 // 見るのはイベントの種類と、畳んだあとの姿から導く局面（`conversationMoment`）だけ。
 // 依頼の文面もセリフもツールの引数も、`ExperienceMetricEntry` に口が無いので通らない。
 
-import type { ClosedMoment } from "../../../shared/experience-metric/experience-metric-record.ts"
+import type {
+  ClosedMoment,
+  SplitDivider,
+} from "../../../shared/experience-metric/experience-metric-record.ts"
 import {
   type ConversationMoment,
   conversationMoment,
@@ -28,7 +31,7 @@ export type ExperienceMetricPeriod = {
  * 記録の1件（書き出す行そのものではない）。
  * `at` はエポックミリ秒で、ISO 8601 への変換と日付ごとのファイルの選択は `adapter` 側の仕事。
  */
-export type ExperienceMetricEntry = ConclusionEntry | RecoveryEntry
+export type ExperienceMetricEntry = ConclusionEntry | RecoveryEntry | SplitEntry
 
 /** 依頼1つを送ってから、そのやり取りが閉じるまで。 */
 export type ConclusionEntry = {
@@ -48,6 +51,35 @@ export type RecoveryEntry = {
   readonly kind: "recovery"
   readonly hands: number
   readonly untilRecoveryMs: number
+}
+
+/** 仕切りを離した1回。 */
+export type SplitEntry = {
+  readonly at: number
+  readonly sessionId: string
+  readonly kind: "split"
+  readonly divider: SplitDivider
+  readonly releasedPercent: number
+  readonly previousPercent: number
+}
+
+/** 仕切りを離したときの入力（時刻とセッションIDは含まない）。 */
+export type SplitRelease = {
+  readonly divider: SplitDivider
+  readonly releasedPercent: number
+  readonly previousPercent: number
+}
+
+/** 仕切りを離した1回を、記録の1件に組む。 */
+export function splitEntry(release: SplitRelease, sessionId: string, at: number): SplitEntry {
+  return {
+    at,
+    sessionId,
+    kind: "split",
+    divider: release.divider,
+    releasedPercent: release.releasedPercent,
+    previousPercent: release.previousPercent,
+  }
 }
 
 /**

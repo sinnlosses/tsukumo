@@ -11,6 +11,7 @@ import { z } from "zod"
 import {
   EXPERIENCE_METRIC_FORMAT_VERSION,
   type ExperienceMetricRecord,
+  SPLIT_DIVIDERS,
 } from "../../../shared/experience-metric/experience-metric-record.ts"
 import {
   appendJsonLine,
@@ -29,10 +30,13 @@ import type {
 /** 置き場のディレクトリ名（`~/.tsukumo/experience-metric/`）。 */
 const EXPERIENCE_METRIC_DIR_NAME = "experience-metric"
 
+/** 版1の行も読む（`conclusion`・`recovery` の形は版2と同じ）。 */
+const readableVersionSchema = z.literal([1, EXPERIENCE_METRIC_FORMAT_VERSION])
+
 /** 記録の1行の形（{@link ExperienceMetricRecord} と同じ鍵）。 */
 const experienceMetricRecordSchema = z.discriminatedUnion("kind", [
   z.object({
-    v: z.literal(EXPERIENCE_METRIC_FORMAT_VERSION),
+    v: readableVersionSchema,
     at: z.iso.datetime({ offset: true }),
     sessionId: z.string(),
     kind: z.literal("conclusion"),
@@ -42,12 +46,21 @@ const experienceMetricRecordSchema = z.discriminatedUnion("kind", [
     askCount: z.number(),
   }),
   z.object({
-    v: z.literal(EXPERIENCE_METRIC_FORMAT_VERSION),
+    v: readableVersionSchema,
     at: z.iso.datetime({ offset: true }),
     sessionId: z.string(),
     kind: z.literal("recovery"),
     hands: z.number(),
     untilRecoveryMs: z.number(),
+  }),
+  z.object({
+    v: z.literal(EXPERIENCE_METRIC_FORMAT_VERSION),
+    at: z.iso.datetime({ offset: true }),
+    sessionId: z.string(),
+    kind: z.literal("split"),
+    divider: z.enum(SPLIT_DIVIDERS),
+    releasedPercent: z.number(),
+    previousPercent: z.number(),
   }),
 ])
 
@@ -75,8 +88,9 @@ export function createExperienceMetricLog(
 function toRecord(entry: ExperienceMetricEntry): ExperienceMetricRecord {
   const v = EXPERIENCE_METRIC_FORMAT_VERSION
   const at = isoWithOffset(entry.at)
-  return entry.kind === "conclusion"
-    ? {
+  switch (entry.kind) {
+    case "conclusion":
+      return {
         v,
         at,
         sessionId: entry.sessionId,
@@ -86,7 +100,8 @@ function toRecord(entry: ExperienceMetricEntry): ExperienceMetricRecord {
         askingMs: entry.askingMs,
         askCount: entry.askCount,
       }
-    : {
+    case "recovery":
+      return {
         v,
         at,
         sessionId: entry.sessionId,
@@ -94,6 +109,17 @@ function toRecord(entry: ExperienceMetricEntry): ExperienceMetricRecord {
         hands: entry.hands,
         untilRecoveryMs: entry.untilRecoveryMs,
       }
+    case "split":
+      return {
+        v,
+        at,
+        sessionId: entry.sessionId,
+        kind: "split",
+        divider: entry.divider,
+        releasedPercent: entry.releasedPercent,
+        previousPercent: entry.previousPercent,
+      }
+  }
 }
 
 /** 期間に入る日付のファイルだけを開き、古い→新しい順に件を集める。 */
@@ -117,8 +143,9 @@ function readValidEntries(path: string): readonly ExperienceMetricEntry[] {
 /** 読み戻した1行を件に戻す（{@link toRecord} の逆）。 */
 function fromRecord(record: ExperienceMetricRecord): ExperienceMetricEntry {
   const at = Temporal.Instant.from(record.at).epochMilliseconds
-  return record.kind === "conclusion"
-    ? {
+  switch (record.kind) {
+    case "conclusion":
+      return {
         at,
         sessionId: record.sessionId,
         kind: "conclusion",
@@ -127,11 +154,22 @@ function fromRecord(record: ExperienceMetricRecord): ExperienceMetricEntry {
         askingMs: record.askingMs,
         askCount: record.askCount,
       }
-    : {
+    case "recovery":
+      return {
         at,
         sessionId: record.sessionId,
         kind: "recovery",
         hands: record.hands,
         untilRecoveryMs: record.untilRecoveryMs,
       }
+    case "split":
+      return {
+        at,
+        sessionId: record.sessionId,
+        kind: "split",
+        divider: record.divider,
+        releasedPercent: record.releasedPercent,
+        previousPercent: record.previousPercent,
+      }
+  }
 }

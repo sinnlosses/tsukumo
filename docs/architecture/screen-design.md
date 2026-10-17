@@ -3287,11 +3287,14 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
 - **答え待ちは、お伺いが重なっても止まっていた時間を1回だけ数える**（局面が `ask` だったあいだ）
 - **手数は、立ち直るまでに依頼を送った回数と起こし直した回数の和**。中断で閉じた依頼も、表のとおり `deliver`
   として立ち直りに数える
+- **仕切りの行は3つの数とは別**: 読む面の広さを検討する材料として、どの仕切りを離したか・離した比率・動かす前の比率だけを残す。
+  送るのはブラウザで、離した瞬間だけ
 - **記録しないもの**: 雑談モードのあいだ、復元の再生、閉じたあとの続きのターン（入れ替えは1回きり）、
   起こし直しで閉じずに終わった依頼。セッションIDが分からないうちに閉じた依頼も書かない
 - **置き場と形**: `~/.tsukumo/experience-metric/<日付>.jsonl` に、閉じた依頼1つにつき `conclusion` の行、
-  立ち直りのたびに `recovery` の行を1行ずつ積む。行の形と、書いてよいもの（数・時刻・セッションID・局面の名前）の
-  線は `src/shared/experience-metric/experience-metric-record.ts` の `ExperienceMetricRecord`
+  立ち直りのたびに `recovery` の行を、会話の画面の3つの仕切り（上段の左右・上下・下段の左右）を離すたびに
+  `split` の行を1行ずつ積む（動かしている途中は積まない）。行の形と、書いてよいもの（数・時刻・セッションID・
+  局面の名前・仕切りの名前〔固定の3語〕と比率〔%〕）の線は `src/shared/experience-metric/experience-metric-record.ts` の `ExperienceMetricRecord`
 - **集計は `scripts/runtime/experience-metric.ts` で見る**（`--days <日数>`、既定28日。`--split <YYYY-MM-DD>` でその日の
   前と後に分ける）。中央値と90パーセンタイルで出す。画面には出さない
 

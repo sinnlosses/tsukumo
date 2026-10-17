@@ -4,6 +4,7 @@ import { summarizeExperienceMetric } from "../../../../src/server/experience-met
 import type {
   ConclusionEntry,
   RecoveryEntry,
+  SplitEntry,
 } from "../../../../src/server/experience-metric/core/experience-metric.ts"
 
 function conclusion(
@@ -25,6 +26,17 @@ function conclusion(
 
 function recovery(at: number, hands: number, untilRecoveryMs: number): RecoveryEntry {
   return { at, sessionId: "claude-session-1", kind: "recovery", hands, untilRecoveryMs }
+}
+
+function split(at: number, divider: SplitEntry["divider"], releasedPercent: number): SplitEntry {
+  return {
+    at,
+    sessionId: "claude-session-1",
+    kind: "split",
+    divider,
+    releasedPercent,
+    previousPercent: 50,
+  }
 }
 
 describe("summarizeExperienceMetric", () => {
@@ -60,6 +72,28 @@ describe("summarizeExperienceMetric", () => {
       recoveries: 1,
       hands: { kind: "measured", median: 2, p90: 2 },
       untilRecoveryMs: { kind: "measured", median: 120_000, p90: 120_000 },
+      splits: {
+        topLeft: { count: 0, released: { kind: "empty" } },
+        rowTop: { count: 0, released: { kind: "empty" } },
+        bottomLeft: { count: 0, released: { kind: "empty" } },
+      },
+    })
+  })
+
+  it("仕切りごとに、離した回数と比率の中央値・範囲を出す", () => {
+    const entries = [
+      split(1, "rowTop", 50),
+      split(2, "rowTop", 70),
+      split(3, "rowTop", 60),
+      split(4, "topLeft", 30),
+    ]
+
+    const [summary] = summarizeExperienceMetric(entries, { kind: "whole" })
+
+    expect(summary?.splits).toEqual({
+      topLeft: { count: 1, released: { kind: "measured", median: 30, min: 30, max: 30 } },
+      rowTop: { count: 3, released: { kind: "measured", median: 60, min: 50, max: 70 } },
+      bottomLeft: { count: 0, released: { kind: "empty" } },
     })
   })
 

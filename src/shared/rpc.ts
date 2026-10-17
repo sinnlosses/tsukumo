@@ -15,6 +15,7 @@ import { characterPackContract } from "./contract/character-pack.ts"
 import { chatContract } from "./contract/chat.ts"
 import { contextUsageContract } from "./contract/context-usage.ts"
 import { diagnosticContract } from "./contract/diagnostic.ts"
+import { experienceMetricContract } from "./contract/experience-metric.ts"
 import { frameContract } from "./contract/frame.ts"
 import { hostContract } from "./contract/host.ts"
 import { planUsageContract } from "./contract/plan-usage.ts"
@@ -41,6 +42,7 @@ export const rpcContract = {
   sessionDigest: sessionDigestContract,
   sessionClaim: sessionClaimContract,
   diagnostic: diagnosticContract,
+  experienceMetric: experienceMetricContract,
   workflowSetting: workflowSettingContract,
 }
 

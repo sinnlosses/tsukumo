@@ -3,7 +3,7 @@
 //
 // 仕切りの位置が state に入るのはドラッグを離した1回だけ。
 // 動かしている間の位置は過渡的な値で、効くのは CSS カスタムプロパティだけなので、pointermove の間は DOM へ直接書く（`on*Change`）。
-// 離した瞬間に呼ばれる `on*Commit` だけが state を更新し、`saveSplit` で保存する。
+// 離した瞬間に呼ばれる `on*Commit` だけが state を更新し、`saveSplit` で保存し、体験の記録へ離したことを送る。
 
 import {
   useEffect,
@@ -16,6 +16,7 @@ import {
 } from "react"
 
 import { usePopover } from "../../../../../../hooks/use-popover.ts"
+import { reportSplitRelease } from "../domain/split-release-report.ts"
 import { DEFAULT_SPLIT, isDefaultSplit, loadSplit, saveSplit, type Split } from "../domain/split.ts"
 
 // 柱を出す中くらいの窓幅の `@media` と同じ字にする。
@@ -102,12 +103,14 @@ export function useConversationLayout(collapseCharacter: boolean): UseConversati
       writeFraction(rowTopRef.current, "topLeft", percent)
     },
     onTopLeftCommit: (percent) => {
+      reportSplitRelease("topLeft", percent, split.topLeft)
       commitSplit((current) => ({ ...current, topLeft: percent }))
     },
     onRowTopChange: (percent) => {
       writeFraction(gridRef.current, rowTopKey, percent)
     },
     onRowTopCommit: (percent) => {
+      reportSplitRelease("rowTop", percent, rowTopPercent)
       commitSplit((current) =>
         collapseCharacter
           ? { ...current, collapsedRowTop: percent }
@@ -118,6 +121,7 @@ export function useConversationLayout(collapseCharacter: boolean): UseConversati
       writeFraction(rowBottomRef.current, "bottomLeft", percent)
     },
     onBottomLeftCommit: (percent) => {
+      reportSplitRelease("bottomLeft", percent, split.bottomLeft)
       commitSplit((current) => ({ ...current, bottomLeft: percent }))
     },
     onReset: () => {

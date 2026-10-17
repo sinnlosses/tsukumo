@@ -4,9 +4,10 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import { createExperienceMetricLog } from "../../../../src/server/experience-metric/adapter/experience-metric-log.ts"
-import type {
-  ConclusionEntry,
-  RecoveryEntry,
+import {
+  type ConclusionEntry,
+  type RecoveryEntry,
+  splitEntry,
 } from "../../../../src/server/experience-metric/core/experience-metric.ts"
 import { EXPERIENCE_METRIC_FORMAT_VERSION } from "../../../../src/shared/experience-metric/experience-metric-record.ts"
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
@@ -141,6 +142,59 @@ describe("readRange", () => {
       recovery(at(9, 0, 22)),
       conclusion(at(0, 0, 23)),
     ])
+  })
+
+  it("仕切りを離した1回を版2の行に書き、読み戻す", () => {
+    const log = createExperienceMetricLog(root())
+    const entry = splitEntry(
+      { divider: "rowTop", releasedPercent: 62, previousPercent: 55 },
+      "claude-session-1",
+      at(9, 0),
+    )
+
+    log.append(entry)
+
+    expect(readLines("2026-09-22.jsonl")).toMatchObject([
+      { v: 2, kind: "split", divider: "rowTop", releasedPercent: 62, previousPercent: 55 },
+    ])
+    expect(log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })).toEqual([entry])
+  })
+
+  it("知らない仕切りの名前の行は読まずに落とす", () => {
+    const log = createExperienceMetricLog(root())
+    log.append(conclusion(at(9, 0)))
+    const unknownDivider = {
+      v: 2,
+      at: "2026-09-22T10:00:00+09:00",
+      sessionId: "claude-session-1",
+      kind: "split",
+      divider: "任意の文字列",
+      releasedPercent: 50,
+      previousPercent: 40,
+    }
+    appendFileSync(join(root(), "2026-09-22.jsonl"), `${JSON.stringify(unknownDivider)}\n`)
+
+    expect(log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })).toEqual([
+      conclusion(at(9, 0)),
+    ])
+  })
+
+  it("版1の行も読む", () => {
+    const log = createExperienceMetricLog(root())
+    log.append(conclusion(at(9, 0)))
+    const versionOne = {
+      v: 1,
+      at: "2026-09-22T10:00:00+09:00",
+      sessionId: "claude-session-1",
+      kind: "recovery",
+      hands: 1,
+      untilRecoveryMs: 1000,
+    }
+    appendFileSync(join(root(), "2026-09-22.jsonl"), `${JSON.stringify(versionOne)}\n`)
+
+    expect(
+      log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" }).map((e) => e.kind),
+    ).toEqual(["conclusion", "recovery"])
   })
 
   it("置き場がまだ無いときは空の並びを返す", () => {

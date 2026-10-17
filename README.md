@@ -352,7 +352,7 @@ pnpm run grid                  # 待ち受けていてタブもある部屋を i
 node scripts/runtime/stop.ts   # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。pkill / killall は
                               #   hook が拒否する。並べて動かすとどれも `node src/cli.ts` に見えて区別できないため）
 node scripts/capture/mockup-font-floor.ts <見本の HTML かディレクトリ>  # 見本の font-size のうち 12px 未満を一覧する（あれば終了コード1）
-node scripts/runtime/experience-metric.ts  # 進行の計測値（依頼から結論まで・答え待ち・立ち直るまでの手数）を集計する
+node scripts/runtime/experience-metric.ts  # 進行の計測値（依頼から結論まで・答え待ち・立ち直るまでの手数・仕切りを離した比率）を集計する
                               #   （--days <n> で期間、--split <YYYY-MM-DD> でその日の前後に分ける）
 node scripts/runtime/diagnostic.ts     # 診断ログ（~/.tsukumo/diagnostic/）を時系列に並べる（既定は今日。--from / --to
                               #   <YYYY-MM-DD[THH:MM[:SS]]> で時刻の範囲、--generation <n> で駆動の代を絞る）

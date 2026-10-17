@@ -14,6 +14,7 @@ import {
 import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import type { DiagnosticLog } from "./server/diagnostic/core/diagnostic.ts"
 import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
+import type { SplitRelease } from "./server/experience-metric/core/experience-metric.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { projectNameOf } from "./server/repository/adapter/project-name.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
@@ -116,6 +117,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
   let readPlanUsage: () => Promise<PlanUsageReport> = () => Promise.resolve(UNAVAILABLE_PLAN_USAGE)
   let refreshTasks: () => Promise<void> = () => Promise.resolve()
+  let recordSplit: (release: SplitRelease) => void = () => {}
   let readSessionDigest: (sessionId: string) => Promise<SessionDigest> = () =>
     Promise.resolve(UNAVAILABLE_SESSION_DIGEST)
   const { achievementCache } = options
@@ -156,6 +158,9 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     },
     reportBrowserError: (report) => {
       options.diagnosticLog.append([{ flow: "browser-error", at: options.now(), ...report }])
+    },
+    recordSplit: (release) => {
+      recordSplit(release)
     },
     readWorkflowSetting: options.readWorkflowSetting,
   })
@@ -202,6 +207,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       readContextUsage = manager.readContextUsage
       readPlanUsage = manager.readPlanUsage
       refreshTasks = manager.refreshTasks
+      recordSplit = manager.recordSplit
       readSessionDigest = manager.readSessionDigest
       attachSessionSocket({
         httpServer: server.httpServer,

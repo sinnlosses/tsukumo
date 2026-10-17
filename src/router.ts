@@ -22,6 +22,10 @@ import {
   type DiagnosticProcedurePorts,
   diagnosticProcedure,
 } from "./server/diagnostic/adapter/diagnostic-procedure.ts"
+import {
+  type ExperienceMetricProcedurePorts,
+  experienceMetricProcedure,
+} from "./server/experience-metric/adapter/experience-metric-procedure.ts"
 import { hostProcedure } from "./server/host/adapter/host-procedure.ts"
 import type { HostCommandPorts } from "./server/host/core/host-command.ts"
 import {
@@ -72,6 +76,7 @@ export type RpcRouterPorts = RepositoryProcedurePorts &
   SessionDigestProcedurePorts &
   SessionClaimProcedurePorts &
   DiagnosticProcedurePorts &
+  ExperienceMetricProcedurePorts &
   Pick<WorkflowSettingProcedurePorts, "readWorkflowSetting">
 
 /** 読み取りの手続きを束ね、照合のミドルウェアを全部の前に掛ける（`/rpc` に載る）。 */
@@ -88,6 +93,7 @@ export function createRpcRouter(ports: RpcRouterPorts) {
       sessionDigest: sessionDigestProcedure(ports),
       sessionClaim: sessionClaimProcedure(ports),
       diagnostic: diagnosticProcedure(ports),
+      experienceMetric: experienceMetricProcedure(ports),
       workflowSetting: workflowSettingProcedure(ports),
     })
 }

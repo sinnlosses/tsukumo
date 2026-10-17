@@ -1,5 +1,6 @@
 // 進行の計測値（`~/.tsukumo/experience-metric/<YYYY-MM-DD>.jsonl`）を集計し、
 // 依頼から結論まで・答え待ち・つまずきから立ち直るまでを、中央値と90パーセンタイルで出す。
+// 会話の画面の仕切りは、離した回数と離した比率（中央値と範囲）を出す。
 // `--split` を付けると、その日の始まりを境目に前後を並べる。
 //
 // 使い方:
@@ -20,9 +21,14 @@ import {
 import {
   type ExperienceSplit,
   type ExperienceSummary,
+  type PercentRange,
   type Spread,
   summarizeExperienceMetric,
 } from "../../src/server/experience-metric/core/experience-metric-summary.ts"
+import {
+  SPLIT_DIVIDERS,
+  type SplitDivider,
+} from "../../src/shared/experience-metric/experience-metric-record.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 
 const USAGE = `使い方:
@@ -43,6 +49,12 @@ const RANGE_LABEL = {
   before: "境目より前",
   after: "境目から後",
 } satisfies Record<ExperienceSummary["range"], string>
+
+const SPLIT_LABEL = {
+  topLeft: "上段の左右",
+  rowTop: "上下",
+  bottomLeft: "下段の左右",
+} satisfies Record<SplitDivider, string>
 
 const options = parseOptions(process.argv.slice(2))
 if (options === "invalid") {
@@ -91,9 +103,11 @@ function parseOptions(
   }
 }
 
+type Row = readonly [string, (summary: ExperienceSummary) => string]
+
 /** 期間ごとの列を並べた表（Markdown）。 */
 function table(summaries: readonly ExperienceSummary[]): string {
-  const rows: readonly (readonly [string, (summary: ExperienceSummary) => string])[] = [
+  const rows: readonly Row[] = [
     ["閉じた依頼（deliver / stumble）", (s) => `${String(s.delivered)} / ${String(s.stumbled)}`],
     ["依頼から結論まで（中央値 / p90）", (s) => seconds(s.untilConclusionMs)],
     ["答え待ちのあった依頼", (s) => String(s.asked)],
@@ -102,6 +116,13 @@ function table(summaries: readonly ExperienceSummary[]): string {
     ["つまずきからの立ち直り", (s) => String(s.recoveries)],
     ["立ち直るまでの手数（中央値 / p90）", (s) => count(s.hands)],
     ["立ち直るまで（中央値 / p90）", (s) => seconds(s.untilRecoveryMs)],
+    ...SPLIT_DIVIDERS.flatMap((divider): readonly Row[] => [
+      [`仕切り ${SPLIT_LABEL[divider]}を離した回数`, (s) => String(s.splits[divider].count)],
+      [
+        `仕切り ${SPLIT_LABEL[divider]}の離した比率（中央値 / 範囲）`,
+        (s) => percentRange(s.splits[divider].released),
+      ],
+    ]),
   ]
   const header = `| 数 | ${summaries.map((s) => RANGE_LABEL[s.range]).join(" | ")} |`
   const rule = `| --- | ${summaries.map(() => "---").join(" | ")} |`
@@ -109,6 +130,12 @@ function table(summaries: readonly ExperienceSummary[]): string {
     ([label, cell]) => `| ${label} | ${summaries.map((s) => cell(s)).join(" | ")} |`,
   )
   return `${[header, rule, ...body].join("\n")}\n`
+}
+
+function percentRange(range: PercentRange): string {
+  return range.kind === "empty"
+    ? "—"
+    : `${String(range.median)}% / ${String(range.min)}〜${String(range.max)}%`
 }
 
 function seconds(spread: Spread): string {

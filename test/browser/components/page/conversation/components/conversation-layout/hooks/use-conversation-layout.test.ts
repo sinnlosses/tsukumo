@@ -1,4 +1,4 @@
-import { renderHook } from "@testing-library/react"
+import { act, renderHook } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
@@ -6,6 +6,7 @@ import {
   saveSplit,
 } from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/domain/split.ts"
 import { useConversationLayout } from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/hooks/use-conversation-layout.ts"
+import { rpcOutput, stubRpcFetch } from "../../../../../../rpc-fetch-stub.ts"
 
 /**
  * `<ConversationLayout>` を丸ごと描かずに、比率の state・ドラッグの読み替え・保存だけを測る
@@ -41,4 +42,51 @@ describe("useConversationLayout", () => {
     expect(result.current.gridStyle["--layout-row-top"]).toBe("35fr")
     expect(result.current.gridStyle["--layout-row-bottom"]).toBe("65fr")
   })
+
+  it("仕切りを離すたびに1回だけ、離した比率と動かす前の比率を体験の記録へ送る（動かしている途中は送らない）", async () => {
+    saveSplit({ ...DEFAULT_SPLIT, rowTop: 40, topLeft: 20, bottomLeft: 70 })
+    const stub = stubRpcFetch(() => rpcOutput(undefined))
+    try {
+      const { result } = renderHook(() => useConversationLayout(false))
+
+      act(() => {
+        result.current.onTopLeftChange(25)
+        result.current.onTopLeftChange(30)
+      })
+      await flush()
+      expect(stub.calls()).toEqual([])
+
+      act(() => {
+        result.current.onTopLeftCommit(30)
+      })
+      act(() => {
+        result.current.onRowTopCommit(50)
+      })
+      act(() => {
+        result.current.onBottomLeftCommit(60)
+      })
+      await flush()
+
+      expect(stub.calls()).toEqual([
+        {
+          procedure: "experienceMetric/recordSplit",
+          input: { divider: "topLeft", releasedPercent: 30, previousPercent: 20 },
+        },
+        {
+          procedure: "experienceMetric/recordSplit",
+          input: { divider: "rowTop", releasedPercent: 50, previousPercent: 40 },
+        },
+        {
+          procedure: "experienceMetric/recordSplit",
+          input: { divider: "bottomLeft", releasedPercent: 60, previousPercent: 70 },
+        },
+      ])
+    } finally {
+      stub.restore()
+    }
+  })
 })
+
+async function flush(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0))
+}

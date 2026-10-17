@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { ContextUsageEntry } from "../../../../src/server/context-usage/core/context-usage.ts"
+import type { ExperienceMetricEntry } from "../../../../src/server/experience-metric/core/experience-metric.ts"
 import type {
   ReportRejectionEntry,
   ReportUsageEntry,
@@ -35,6 +36,62 @@ import {
 } from "../../../fixture/session-manager.ts"
 
 describe("createSessionManager", () => {
+  describe("仕切りを離した記録", () => {
+    function startSplitManager() {
+      const stub = createStubDriver()
+      const entries: ExperienceMetricEntry[] = []
+      const manager = createSessionManager({
+        experienceMetricLog: {
+          append: (entry) => {
+            entries.push(entry)
+          },
+          readRange: () => [],
+        },
+        launchSession: (onEvent, onRestoredEvents) => {
+          stub.attach(onEvent)
+          stub.attachRestored(onRestoredEvents)
+          return Promise.resolve(stub.driver)
+        },
+      })
+      return { manager, stub, entries }
+    }
+
+    const RELEASE = { divider: "rowTop", releasedPercent: 62, previousPercent: 55 } as const
+
+    it("セッションIDが分かってから、離すたびに1行ずつ書く", async () => {
+      const { manager, stub, entries } = startSplitManager()
+      await waitForBatch()
+
+      manager.recordSplit(RELEASE)
+      expect(entries).toEqual([])
+
+      stub.emit({
+        kind: "session-info",
+        sessionId: "claude-session-1",
+        model: "opus",
+        permissionMode: "auto",
+        slashCommands: [],
+        terminalSlashCommands: [],
+        skillNames: [],
+        agentNames: [],
+      })
+      await waitForBatch()
+      manager.recordSplit(RELEASE)
+      manager.recordSplit({ ...RELEASE, divider: "topLeft" })
+
+      expect(entries).toEqual([
+        { at: 1_000, sessionId: "claude-session-1", kind: "split", ...RELEASE },
+        {
+          at: 1_000,
+          sessionId: "claude-session-1",
+          kind: "split",
+          ...RELEASE,
+          divider: "topLeft",
+        },
+      ])
+    })
+  })
+
   // トークン消費の記録。数と時刻とモデルの名前だけが
   // 記録へ渡ることを、ここで固定する。
   describe("トークン消費の記録", () => {
