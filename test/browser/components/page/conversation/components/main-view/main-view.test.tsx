@@ -144,7 +144,7 @@ function threeTurns(): readonly SessionRecord[] {
   ]
 }
 
-/** 見ているターンの依頼の1行目（依頼の塊の最初の行）。 */
+/** 見ているターンの依頼の1行目（依頼の全文の最初の行）。 */
 function title(): string | null | undefined {
   return screen
     .getByRole("heading", { level: 2, name: "依頼" })
@@ -461,7 +461,7 @@ describe("MainView（やり取りの列: やり取りと見出しの2段）", ()
   })
 })
 
-describe("MainView（依頼の塊）", () => {
+describe("MainView（依頼の全文）", () => {
   const MORE_BUTTON = /^続き \d+ 行$/
 
   function requestBlockText(): string | null | undefined {

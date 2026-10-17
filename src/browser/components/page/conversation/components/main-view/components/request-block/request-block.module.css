@@ -49,7 +49,7 @@
   }
 }
 
-/* 依頼の塊。字の段は `Text`・`Heading` が持ち、行の字の色は塊から継ぐ。 */
+/* 依頼の全文。字の段は `Text`・`Heading` が持ち、行の字の色はこの入れ物から継ぐ。 */
 .request-block {
   display: flex;
   flex-direction: column;

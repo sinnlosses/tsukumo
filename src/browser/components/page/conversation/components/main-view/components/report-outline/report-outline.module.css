@@ -16,7 +16,7 @@
 .outline-frame[data-outline="shown"][data-outline-collapsed="true"] {
   grid-template-columns: 2.5rem minmax(0, 1fr);
 }
-/* 右の側（進み具合の帯・依頼の塊・お伺い・本文）。列があってもなくても同じ幅の取り方にする。 */
+/* 右の側（進み具合の帯・依頼の全文・お伺い・本文）。列があってもなくても同じ幅の取り方にする。 */
 .outline-content {
   /* 仕切りは狭い画面で描かれないので、2列目（`auto`）へ落ちないよう最後の列に置く。 */
   grid-column: -2;

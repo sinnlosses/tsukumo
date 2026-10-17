@@ -92,7 +92,7 @@ describe("turnTitle（やり取りの題）", () => {
   })
 })
 
-describe("turnRequestLines（依頼の塊に出す行）", () => {
+describe("turnRequestLines（依頼の全文に出す行）", () => {
   function lines(text: string): readonly string[] {
     return turnRequestLines({ text, images: [] })
   }
