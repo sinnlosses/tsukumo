@@ -1018,7 +1018,7 @@ ADR 0025 の「2026-10-14 の改訂」）。値は `.tw/config.toml` にワー�
 報告「切り替えた瞬間、一瞬だけ切り替える前のモードの立ち絵が出てチカッとする」）。移り変わりの
 動き（位置と大きさを移す）は付けない — ユーザーが望んだのは「すぐに正しい姿」で、動きではない。
 前の姿が出ていたのは、駆動が起き上がるまでの数秒に新しい代のイベント（`chat-mode-changed` など）が
-`events` で先に配られ、ブラウザが**前のセッションの姿のままモードだけ**を切り替えていたため。そこで
+`events` で先に配られ、ブラウザが**前のセッションの状態のままモードだけ**を切り替えていたため。そこで
 **起こし直しの代は新しい `hello` を配るまで束を配らず**（`server/session/core/session-manager.ts`。その間の
 姿は `hello` に入る）、**`hello` は続きの履歴を流し終えてから配る**（`server/session/core/session-launch.ts`。
 表情が既定から続きの表情へもう一度飛ばない）。移った先の立ち絵が読み込み待ちで空かないよう、
@@ -2847,7 +2847,7 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
 
 #### 局面と判定
 
-**局面（`ConversationMoment`）はセッションの姿から導く**（状態の畳み込みとプロトコルは変えない。
+**局面（`ConversationMoment`）はセッションの状態から導く**（状態の畳み込みとプロトコルは変えない。
 導く関数は `src/shared/session/conversation-moment.ts` で、`turn-speech.ts` と同じ置き方）。
 「閉じている」は `src/shared/session/main-view.ts` の `closed` と同じ判定（ターンが `running` でなく、
 バックグラウンドタスクも残っていない）。

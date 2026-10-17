@@ -487,7 +487,7 @@ describe("createSessionManager", () => {
 
   it("起こし直しの間に新しい駆動が流したイベントは、新しい hello より先に配らない", async () => {
     // 起き上がりに時間がかかる駆動（本物の claude は起動に数秒かかる）。その間に
-    // `chat-mode-changed` などが先に流れると、ブラウザは前のセッションの姿のまま雑談へ
+    // `chat-mode-changed` などが先に流れると、ブラウザは前のセッションの状態のまま雑談へ
     // 切り替わり、前の立ち絵が一瞬出てから新しい hello で入れ替わる。
     const releases: (() => void)[] = []
     const manager = createSessionManager({

@@ -516,7 +516,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     // 起き上がった駆動を入れる可変の入れ物（起き上がるまでは空）。
     let live: SessionDriver | undefined = undefined
     // 起こし直しの代は、新しい `hello` を配るまで束を配らない。
-    // 駆動が起き上がるまでの数秒に流れたイベント（`chat-mode-changed` など）を先に配ると、ブラウザは前のセッションの姿のまま雑談 / 仕事へ切り替わり、前の立ち絵が一瞬出てから `hello` で入れ替わる。
+    // 駆動が起き上がるまでの数秒に流れたイベント（`chat-mode-changed` など）を先に配ると、ブラウザは前のセッションの状態のまま雑談 / 仕事へ切り替わり、前の立ち絵が一瞬出てから `hello` で入れ替わる。
     // その間の姿は `hello` に入るので、配らずに捨ててよい。
     let held = delivery === "after-hello"
     const diaryAbort = new AbortController()

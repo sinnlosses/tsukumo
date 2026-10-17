@@ -1,4 +1,4 @@
-// `<TurnFailureBlock>` のロジック。理由の語と次の手を、セッションの姿といちばん新しい依頼の手順から用意する。
+// `<TurnFailureBlock>` のロジック。理由の語と次の手を、セッションの状態といちばん新しい依頼の手順から用意する。
 
 import type { TurnFailure } from "../../../../../../../../../shared/session-driver/turn-failure.ts"
 import { useNowWhile } from "../../../../../../../../hooks/use-now-while.ts"

@@ -1,4 +1,4 @@
-// いま吹き出しに出す反応（`ShownReaction`）。セッションの姿と「今」から導くだけで、状態は持たない。
+// いま吹き出しに出す反応（`ShownReaction`）。セッションの状態と「今」から導くだけで、別の状態は持たない。
 //
 // 反応は `speechExpression`・`speeches` に書かない（姿が変われば消えるので、戻す処理が要らない）。
 // 出し始めた行を記録（`reaction`）に積むのは `applySessionEvent`。

@@ -1,4 +1,4 @@
-// 仕事のセッションの会話の画面がいまどの局面にあるか（`ConversationMoment`）。セッションの姿から導くだけで、状態は持たない。
+// 仕事のセッションの会話の画面がいまどの局面にあるか（`ConversationMoment`）。セッションの状態から導くだけで、別の状態は持たない。
 
 import { mainViewEntries } from "./main-view.ts"
 import { restartRefused, type SessionState } from "./session-state.ts"
