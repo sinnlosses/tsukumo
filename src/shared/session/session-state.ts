@@ -498,7 +498,7 @@ export type SessionState = {
    */
   readonly usageProposalRun: UsageProposalRun
   /**
-   * 成果の振り返りの進み。帯の「いまの作業」の「振り返り中」が読む。
+   * 成果の日記書きの進み。帯の「いまの作業」の「振り返り中」が読む。
    *
    * 源は `diary-requested` / `diary-drafting` / `diary-stage` / `diary-written` / `diary-failed` の5つ。
    * 振り返りは会話とは別の使い捨ての問い合わせで会話のターンと並んで進むので、会話の `turn-finished` / `session-ended` では動かさない。

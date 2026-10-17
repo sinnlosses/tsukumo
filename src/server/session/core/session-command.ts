@@ -38,12 +38,12 @@ export type SessionCommandPorts = {
    */
   readonly rememberSessionDefault: (sessionDefault: SessionDefault) => SessionEvent
   /**
-   * 成果の振り返りを受けたときに、その日の成果を数え直す口。
+   * 成果の日記書きを受けたときに、その日の成果を数え直す口。
    * 画面が出している手続き `achievement.day` と同じ数え方を使う。
    * `main` が読めない・`git` の呼び出しが失敗したときは undefined。
    */
   readonly readAchievementDay: (date: string) => Promise<DailyAchievement | undefined>
-  /** 成果の振り返りの書き手の出どころ（`DiaryWriterSource`）。疑似セッションでは `dont-write`。 */
+  /** 成果の日記書きの書き手の出どころ（`DiaryWriterSource`）。疑似セッションでは `dont-write`。 */
   readonly diary: DiaryWriterSource
   /** 選んだセッションのIDを占有ファイルに書いてから、別の窓が使っていないかを確かめる（`SessionClaim.reserve`）。 */
   readonly reserveSession: (sessionId: string) => Promise<SessionReservation>
@@ -235,7 +235,7 @@ function toDriver<C>(
 }
 
 /**
- * 成果の振り返り（`reflectAchievement`）。
+ * 成果の日記書き（`reflectAchievement`）。
  * 断るのは日記を書いている最中（`state.diaryWriting.kind === "writing"`）と、その日の成果が読めない・空の日のときだけ。
  * 通れば `diary-requested` を流し、代の持ち物の書き手に1回ぶんを渡す。
  * 会話の `SessionDriver` は通らない（書き手は会話とは別の使い捨ての問い合わせ）。

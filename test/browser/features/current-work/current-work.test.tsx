@@ -213,7 +213,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     })
   })
 
-  describe("振り返り中（成果の振り返り。docs/architecture/screen-design.md 13.9「いまの作業」）", () => {
+  describe("振り返り中（成果の日記書き。docs/architecture/screen-design.md 13.9「いまの作業」）", () => {
     it("diaryWriting が writing なら「振り返り中」で、要約は「<日付>の日記を書いています」", () => {
       renderScreenNav({
         diaryWriting: { kind: "writing", date: "2026-09-23", startedAt: 0, stage: "read" },

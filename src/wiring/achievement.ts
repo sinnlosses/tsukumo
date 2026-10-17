@@ -1,4 +1,4 @@
-// 成果の配線。成果の振り返りを受けたときに、その日の成果を数え直す口を選ぶ。
+// 成果の配線。成果の日記書きを受けたときに、その日の成果を数え直す口を選ぶ。
 
 import { readAchievement } from "../server/achievement/adapter/closed-issue.ts"
 import { todayLocalDateKey } from "../server/adapter/local-time.ts"

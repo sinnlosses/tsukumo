@@ -1,4 +1,4 @@
-// 日記（成果の振り返り）の配線。振り返りの書き手と、書き手が読む直近に起こした代のパック情報を持つ。
+// 日記（成果の日記書き）の配線。振り返りの書き手と、書き手が読む直近に起こした代のパック情報を持つ。
 
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
 import { appendDiaryParagraph } from "../server/diary/adapter/diary.ts"

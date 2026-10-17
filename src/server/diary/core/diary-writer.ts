@@ -20,7 +20,7 @@ const DIARY_WRITE_TIMEOUT_MS = 120_000
 
 /** 日記を書く役目の短い指示（人格のあとに続ける）。 */
 const DIARY_WRITER_INSTRUCTION =
-  "あなたはいま、成果の振り返りの日記を書く役目だけを持つ。diary ツールを1回呼んだら終わり。ほかの文は書かない。"
+  "あなたはいま、成果の日記書きの役目だけを持つ。diary ツールを1回呼んだら終わり。ほかの文は書かない。"
 
 /** 振り返り1回ぶんの材料。 */
 export type DiaryWriteRequest = {

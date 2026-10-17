@@ -688,7 +688,7 @@ describe("createCommandRouter（session）", () => {
     })
   })
 
-  describe("成果の振り返り（session.reflectAchievement。`docs/requirements.md`「日記」）", () => {
+  describe("成果の日記書き（session.reflectAchievement。`docs/requirements.md`「日記」）", () => {
     const KNOWN_DAY: DailyAchievement = {
       kind: "known",
       date: "2026-09-23",

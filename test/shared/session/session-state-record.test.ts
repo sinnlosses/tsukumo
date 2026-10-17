@@ -212,7 +212,7 @@ describe("applySessionEvent（見直し）", () => {
   })
 })
 
-describe("applySessionEvent（成果の振り返り）", () => {
+describe("applySessionEvent（成果の日記書き）", () => {
   it("振り返りのイベントは diaryWriting だけを動かし、会話のターンが終わっても動かさない", () => {
     const before = applySessionEvent(
       INITIAL_SESSION_STATE,

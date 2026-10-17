@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
-// 成果の振り返りで「数えられない・読めない」場面の名前は、要件定義の「数えられない・読めないとき」の表の
+// 成果で「数えられない・読めない」場面の名前は、要件定義の「数えられない・読めないとき」の表の
 // 1か所だけに書く。ほかの文書は節の名前で引く。場面の名前は表の「場面」列から読む。
 
 const DOCS_ROOT = fileURLToPath(new URL("../docs", import.meta.url))
