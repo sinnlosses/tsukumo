@@ -105,7 +105,7 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
   `git restore <file>` で戻してよい
 - **`git add -A` を使わず、触ったファイルを個別に足す**（`node_modules` などの symlink が入る）
 - **検証が済んだら、聞かずにコミットして `main` まで送る**（未コミットのまま待つと別のセッションに
-  消される）。タスクは `task ship`、タスクに紐付かない作業は `node scripts/dev/ship.ts`
+  消される）。タスクは `tw ship`、タスクに紐付かない作業は `node scripts/dev/ship.ts`
   （`pnpm run ship`。手順は `docs/workflow.md`「タスクに紐付かない作業を main へ送る」）
 - `main` へ送る以外で他の作業ツリーへ `reset` / `branch -d` を走らせない。push は頼まれたときだけ
 
@@ -115,13 +115,13 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 `.tw/config.toml`。ブランチは切らず、**枝の寿命は作業ツリーの寿命と同じ**で、1本の枝がいくつでも
 タスクを持つ。
 
-状態はチャットではなく Beads（`task show GH-<n>` で読み、`task edit` で直す。`.beads` は本体の作業ツリーの根で git の外。エージェントのドラフトも `draft` の課題としてここに置く）に残す。手順は
+状態はチャットではなく Beads（`tw show GH-<n>` で読み、`tw edit` で直す。`.beads` は本体の作業ツリーの根で git の外。エージェントのドラフトも `draft` の課題としてここに置く）に残す。手順は
 `~/.claude/skills/task-model/WORKFLOW.md` が正典で、このリポジトリの上乗せは
 `docs/workflow.md`。**タスクは `difficulty` と同じモデルのサブエージェントに委譲し**、判断が
 想定より要ると分かったら押し切らず `difficulty` を上げて再開する。完了は検証できる証拠で判定する。
 新しい作業ツリーの立ち上げ（`pnpm install`。組み立てまで `prepare` が済ませる）は人がやる。
 
-**IMPORTANT**: 次は必ず人間の承認を得てから行う — 外部への公開・送信（`task` が行う GitHub の
+**IMPORTANT**: 次は必ず人間の承認を得てから行う — 外部への公開・送信（`tw` が行う GitHub の
 `sinnlosses/tsukumo` の Issue・label と Project 1 への書き込みは除く）、破壊的な git 操作、
 認証情報や権限の変更、**`~/.claude/settings.json` などグローバル設定の書き換え**、
 **グローバルなツールの導入**。`~/.claude/settings.json` の hooks と statusLine は orca が専有して

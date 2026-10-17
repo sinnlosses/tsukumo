@@ -69,7 +69,7 @@
   なった描き方の語（表示名・関数名・印の名前・CSS の class）で `docs/` `src/` `test/` を引く。例は帯に
   waterfall の分岐を足した変更で、帯の斜線の箇条・2つの図・`src/shared/report/report-phase-time.ts` の
   `bandSegmentMarkdown` の不明の枝が古くなり、段が無かったので最後の受け入れの差し戻しで初めて出た。
-- **spec の出典**は `docs/requirements.md` と各タスクの本文（`task show GH-<n>`。GitHub の Issue は
+- **spec の出典**は `docs/requirements.md` と各タスクの本文（`tw show GH-<n>`。GitHub の Issue は
   その写しで、正は Beads）。2026-09-27 より前に閉じたタスクの本文は、git の履歴の `develop/task/` と
   `docs/history/tasks.md` にある。**standards の出典**は `CLAUDE.md` ＋
   `docs/coding-standards.md` ＋ `docs/architecture.md` の3つ。`code-review` スキルが
@@ -106,7 +106,7 @@
 - **わざと壊して落ちるか確かめるときは、このタスクで編集していないファイルか一時ファイルに
   壊しを入れる。** 退避したコピーから戻す——`git checkout --` で戻すと、同じファイルへの
   先行の編集ごと消える
-- **ランタイム・束ね・タイマーを変えるタスクは、`task status` の件名に「ときどき落ちる」とある
+- **ランタイム・束ね・タイマーを変えるタスクは、`tw status` の件名に「ときどき落ちる」とある
   未完了のタスクを `dependencies` に入れて登録する。** 実行環境やタイミングが変わると、ときどきだった
   揺れが毎回落ちるようになり、移行の差分ごと戻すことになる
 - **新しい部品・フック・`domain/` を足すタスクの計画では、置き場を `docs/architecture.md`「ページの形」の
@@ -212,8 +212,6 @@ hook は書き込みの形を事前に列挙して拒む。Bash の前後の作�
 （最大 600000）を付けて打つよう案内する。`nice`・`timeout`・`env`・`pnpm exec`・`bash -c`・パス付きの
 `tw` 越しの `tw verify` も同じ。メインの呼び出し（`agent_id` が無い）は対象にしない。
 
-委譲先は段を返す前に `pnpm run typecheck` と `pnpm run lint` を打つ。絞った `vitest` は story の型（`tsconfig.storybook.json`）と lint の規則（Date を使わない など）を拾わない。
-
 段の確かめの単体は `pnpm run test <ファイル or ディレクトリ>` で流す（`pnpm exec vitest` を直に打たない。規約のテストが一緒に走る）。`src/` のファイルを消す・移す・読み手を減らす段では `test/architecture` を必ず流す。
 
 委譲先が E2E を流す呼び出しは、着手中の1件につき **6回まで**で、7回目は
@@ -257,7 +255,7 @@ hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`�
 ## 作業ツリーを並行させるとき
 
 作業ツリーが分かれていれば、2つのタスクを並行して進めてよい（触る層が重なっていても選んでよい。
-相手の足元のファイルは動かない。取り合いを防ぐのは Beads の着手の印——`task claim` が本体の
+相手の足元のファイルは動かない。取り合いを防ぐのは Beads の着手の印——`tw claim` が本体の
 作業ツリーの `.beads` に `bd update --claim` を打つ）。**検証コマンドは並行して打ってよい**（自分の作業ツリーで走る
 ので、相手の作業中の変更を拾わない）が、次の2点は tsukumo 固有の落とし穴:
 
@@ -313,7 +311,7 @@ SDK の `query` は `maxTurns: 1` と `AbortController`（20秒）を付けて�
 
 ## 関連
 
-- 手順そのもの: `task-workflow` スキルの `SKILL.md`「手順」（`task claim` / `task done` / `task ship`）。
+- 手順そのもの: `next-task` スキルの手順（`tw claim`）と、`task-workflow` スキルの `SKILL.md`「手順」（`tw done` / `tw ship`）。
   **tsukumo 独自の上乗せは無い**——2026-09-23 に「`doing` をコミットする」「アーカイブも `main` へ
   単独で送る」という覆しを入れていたが、理由（作業ツリーを分けるのが orca になり、作業ツリーの
   中だけの着手の印が別の作業ツリーから見えない）は、2026-09-24 の切り替えで共通版が

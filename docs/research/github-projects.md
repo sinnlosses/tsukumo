@@ -27,7 +27,7 @@
   `last-id`。`claim` と `lock` の取り合いは `mkdir` の成否だけで決める（`scripts/ledger.py` の
   `claim_dir`）。コミットしない
 - タスクファイルの `status`（`todo`・`hold`・`done`・`dropped`）は git に載り、完了は作業と同じ
-  1コミットで `task ship` が `main` へ ff で送る
+  1コミットで `tw ship` が `main` へ ff で送る
 - 2026-09-20 以降の `main`（merge を除く）は 1214コミット。うち `develop/task/` を触ったのが 283件、
   タスクIDを件名に持たないものが 92件（「指示をタスクにする」51件・「振り返り済みのタスクファイルを
   消す」36件ほか）
@@ -75,7 +75,7 @@
 
 - **オフライン**: Claude も同じく止まるので、差は無い（ユーザーの判断）
 - **認証**: `gh auth login` と `project` スコープを人が一度通す。失効すると `/loop` が止まるので、
-  `task status` 相当の入口で認証の失敗を先頭語にして止める
+  `tw status` 相当の入口で認証の失敗を先頭語にして止める
 - **回数制限**: 1サイクルで読み数回・書き数回。6本の作業ツリーが並んでも 5,000回/時・書き 80回/分には
   届かない。書き込みは直列にし、二次制限に当たったときの再試行を持つ
 
@@ -232,12 +232,12 @@ flowchart LR
     HS["本文・履歴: description・acceptance・notes・comments"]
   end
   subgraph git["git"]
-    SH["task ship: 付け替え・検証・main へ送る"]
+    SH["tw ship: 付け替え・検証・main へ送る"]
   end
   tracker --> beads --> git
 ```
 
-`task` は薄い包みとして残し、Beads とトラッカーと git の間をつなぐ。自前で持つのは送り出し
+`tw` は薄い包みとして残し、Beads とトラッカーと git の間をつなぐ。自前で持つのは送り出し
 （`ship`）と、下の表で「橋渡し」と書いたものだけにする。
 
 ### 今あるものの行き先
@@ -261,7 +261,7 @@ flowchart LR
 | `## 結果`（`- 振り返り:` を含む）                                         | 閉じるときの comment                                                                     | ―                                                                                                   |
 | 登録から完了までの本文の差（`retrospect` の材料）                         | `bd history`                                                                             | `material.py` の読み元を差し替える                                                                  |
 | git に残る過去の `develop/task/` と `docs/history/`                       | 動かさない                                                                               | ―                                                                                                   |
-| 送り出し（付け替え・検証・`main` へ ff）                                  | ―                                                                                        | `task ship`（今のまま）                                                                             |
+| 送り出し（付け替え・検証・`main` へ ff）                                  | ―                                                                                        | `tw ship`（今のまま）                                                                               |
 | tsukumo のタスク板と成果                                                  | `bd list --json`・`bd export`                                                            | 読み元の差し替え（ネットワークに出ない）                                                            |
 
 <div class="note note-warn">`.beads` は git の外（`--stealth`）に置くので、今のように「タスクの記録が git の履歴に残る」ことはなくなる。消えないように、`bd backup`（または `bd export` の JSONL）を git の外の決まった場所へ定期的に取る。`bd export` の JSONL には作成者のメールアドレス（`owner`）が入るので、公開リポジトリにコミットしない。</div>
@@ -271,14 +271,14 @@ flowchart LR
 この節は `--push-only` だった最初の設計。ID を Issue 番号にして双方向に同期する今の運用は task-workflow の `WORKFLOW.md`「Beads 方式」。
 
 - 登録は `bd create`、GitHub へは `bd github sync --push-only`（Issue と label）
-- Project の Status 欄は `bd` が書かないので、`task` の橋渡しが `gh project item-edit` で書く
+- Project の Status 欄は `bd` が書かないので、`tw` の橋渡しが `gh project item-edit` で書く
   （`pending` → `Pending`、`open` → `Todo`、`in_progress` → `In progress`、閉じた → `Done`、label `cancelled` → `Cancel`）
 - Project の自動化「Item closed」はユーザーが無効にした。Status を書くのは橋渡しだけにする
 
 ### Jira の方式
 
-- `bd jira sync --pull` だけを打ち、Jira には書かない（`--push` と引数なしの `sync` は `task` が使わない）
-- 状態の変更は人が Jira で行う。ローカルで閉じたのに Jira が開いたままのものを、`task status` が
+- `bd jira sync --pull` だけを打ち、Jira には書かない（`--push` と引数なしの `sync` は `tw` が使わない）
+- 状態の変更は人が Jira で行う。ローカルで閉じたのに Jira が開いたままのものを、`tw status` が
   「Jira で閉じてほしいもの」として出す
 - Jira の本文は `## 完了条件` の形をしていないので、着手の前に `acceptance_criteria` と
   `difficulty`・`loopable` を書き起こす（人の確認つき）
