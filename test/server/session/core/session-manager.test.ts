@@ -927,7 +927,14 @@ describe("createSessionManager", () => {
         ],
         favor: "本文はここに出ない",
         checks: [
-          { status: "ok", label: "本文はここに出ない", figure: "", command: "", detail: "" },
+          {
+            status: "ok",
+            label: "本文はここに出ない",
+            figure: "",
+            command: "",
+            detail: "",
+            howToVerify: "",
+          },
         ],
       })
     }

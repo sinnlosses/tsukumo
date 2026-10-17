@@ -276,25 +276,18 @@
                                 "aria-label": "検証結果"
                               },
                               "children": [
-                                "検証",
-                                "1件すべて通過",
+                                "✓",
+                                "検証 1件",
+                                "通った",
+                                "架空 3 件",
                                 {
-                                  "tag": "div",
-                                  "attributes": {
-                                    "role": "table",
-                                    "aria-label": "検証結果"
-                                  },
+                                  "tag": "details",
                                   "children": [
                                     {
-                                      "tag": "div",
-                                      "attributes": {
-                                        "role": "row"
-                                      },
+                                      "tag": "summary",
                                       "children": [
-                                        "✓",
-                                        "架空の検査",
-                                        "架空 3 件",
-                                        "1分30秒"
+                                        "✓ 通った 1件",
+                                        "架空の検査"
                                       ]
                                     }
                                   ]

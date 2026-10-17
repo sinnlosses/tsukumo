@@ -5,6 +5,7 @@
 // 欄を記録する前の版（2）の行も読み、欄の表だけはそれを記録した版の行を分母にする（欄を足す前後で逃げ道を見比べるため）。
 // `figure` を記録する前の版（5以前）の行は、`figure` の表では理由が `unrecorded` の `none` に数える。
 // 強調の数・ラベルの無い辺の割合・節点数の分布は、それを記録した版7以降の行を分母にする。
+// unverified のあるレポートのうち確かめ方のある割合は、版8以降の unverified のある行を分母にする。
 //
 // 使い方:
 //   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -88,6 +89,14 @@ const countRecordShape = {
   graphNodeCount: z.number(),
 }
 
+/** 確かめ方の表の分母になる最初の版。 */
+const HOW_TO_VERIFY_FORMAT_VERSION = 8
+
+const howToVerifyRecordShape = {
+  hasUnverifiedCheck: z.boolean(),
+  hasHowToVerify: z.boolean(),
+}
+
 const recordSchema = z.union([
   z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
   z.object({
@@ -100,9 +109,17 @@ const recordSchema = z.union([
   z.object({ v: z.literal(COUNTLESS_FORMAT_VERSION), ...figureRecordShape }).and(figureFieldSchema),
   z
     .object({
+      v: z.literal(COUNT_FORMAT_VERSION),
+      ...figureRecordShape,
+      ...countRecordShape,
+    })
+    .and(figureFieldSchema),
+  z
+    .object({
       v: z.literal(REPORT_USAGE_FORMAT_VERSION),
       ...figureRecordShape,
       ...countRecordShape,
+      ...howToVerifyRecordShape,
     })
     .and(figureFieldSchema),
 ])
@@ -111,6 +128,7 @@ type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[
 type VisualRecord = Extract<UsageRecord, { readonly hasModifiedFiles: boolean }>
 type FigureRecord = Extract<UsageRecord, { readonly hasFigure: boolean }>
 type CountRecord = Extract<UsageRecord, { readonly emphasisCount: number }>
+type HowToVerifyRecord = Extract<UsageRecord, { readonly hasHowToVerify: boolean }>
 
 /** `figure` の表に出す種類。0件でも出す。 */
 const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
@@ -127,6 +145,7 @@ const rejectionSchema = z.object({
     z.literal(MODIFIED_FORMAT_VERSION),
     z.literal(FIGURE_FIELDLESS_FORMAT_VERSION),
     z.literal(COUNTLESS_FORMAT_VERSION),
+    z.literal(COUNT_FORMAT_VERSION),
     z.literal(REPORT_USAGE_FORMAT_VERSION),
   ]),
   kind: z.literal("rejected"),
@@ -163,6 +182,9 @@ const figureRecords = records.filter(
 const countRecords = records.filter(
   (record): record is CountRecord => record.v >= COUNT_FORMAT_VERSION,
 )
+const howToVerifyRecords = records.filter(
+  (record): record is HowToVerifyRecord => record.v >= HOW_TO_VERIFY_FORMAT_VERSION,
+)
 process.stdout.write(
   fieldRecords.length === 0
     ? "塊の欄 × レポート数: 欄を記録した行が無い"
@@ -183,6 +205,8 @@ process.stdout.write("\n\n")
 process.stdout.write(figureFieldSection(records))
 process.stdout.write("\n\n")
 process.stdout.write(countSection(countRecords))
+process.stdout.write("\n\n")
+process.stdout.write(howToVerifySection(howToVerifyRecords))
 process.stdout.write("\n\n")
 process.stdout.write(
   table("逃げ道の外の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
@@ -390,6 +414,24 @@ function countSection(rows: readonly CountRecord[]): string {
       ),
     ])
     .join("\n\n")
+}
+
+/** `checks` に unverified の行があるレポートのうち、その全部に確かめ方があった割合。 */
+function howToVerifySection(rows: readonly HowToVerifyRecord[]): string {
+  const unverified = rows.filter((record) => record.hasUnverifiedCheck)
+  if (unverified.length === 0) {
+    return "unverified のあるレポートのうち確かめ方のある割合: 記録した行が無い"
+  }
+  return [
+    `unverified のあるレポートのうち確かめ方のある割合（版8以降の${String(rows.length)}件のうち unverified のある${String(unverified.length)}件が分母。外す基準の対象ではない）:`,
+    shareLine("全レポート", "確かめ方あり", unverified, (record) => record.hasHowToVerify),
+    shareLine(
+      "task の最終レポート",
+      "確かめ方あり",
+      unverified.filter((record) => record.forTask),
+      (record) => record.hasHowToVerify,
+    ),
+  ].join("\n")
 }
 
 /** `figure` の種類。記録する前の版の行は `none`。 */

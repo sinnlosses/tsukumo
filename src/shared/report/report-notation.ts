@@ -141,10 +141,8 @@ export const REPORT_NOTATION_NAMES = [
 /**
  * tsukumo が `report` の欄から組む印（モデルには教えないので、文面に書き足す決まりの外）。
  * `verdict` は結論のすぐ下の合図の行（検証結果の判定だけを運ぶ）。
- * `checks` は検証結果の塊で、`checks-ok` / `checks-ng` / `checks-unverified` が状態（左の色罫）。
- * `checks-heading` は小見出し「検証」、`checks-verdict-word` がその右の判定の一言。
- * `checks-body` の中は、全部 ok なら一覧（`check` がその1行）、
- * ng / unverified があれば問題の項目（`checks-problem`）と通った項目の小さな札（`checks-passed-chip`）。
+ * `checks` は検証結果の塊で、上から総括行（`checks-summary`。部分は `checks-summary-part`、お願いの印は `checks-summary-favor`）、
+ * 問題の項目（`checks-problem`。確かめ方は `checks-problem-how`）、通った項目を畳んだ `<details>`（`checks-passed`。開くと `check` の行の一覧）。
  * `phase-times` は検証結果の下の段ごとの所要時間（見出しの行・帯 `phase-band`・一覧）で、`phase-time` が一覧の1行。`phase-time-group` は並列の段の包み。
  * `conclusion` は `task` のあるレポートの結論の一文、`conclusion-lead` は `task` の無いレポートの結論。
  * 見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
@@ -152,12 +150,17 @@ export const REPORT_NOTATION_NAMES = [
 export const REPORT_DRAWN_MARK_NAMES = [
   "verdict",
   "checks",
-  "checks-ok",
-  "checks-ng",
-  "checks-unverified",
-  "checks-body",
-  "checks-heading",
-  "checks-verdict-word",
+  "checks-summary",
+  "checks-summary-lead",
+  "checks-summary-part",
+  "checks-summary-ok",
+  "checks-summary-unverified",
+  "checks-summary-ng",
+  "checks-summary-mark",
+  "checks-summary-word",
+  "checks-summary-figures",
+  "checks-summary-favor",
+  "checks-summary-favor-mark",
   "check",
   "check-ok",
   "check-mark",
@@ -167,15 +170,19 @@ export const REPORT_DRAWN_MARK_NAMES = [
   "checks-problem",
   "checks-problem-ng",
   "checks-problem-unverified",
-  "checks-problem-head",
   "checks-problem-mark",
+  "checks-problem-word",
+  "checks-problem-body",
+  "checks-problem-head",
   "checks-problem-label",
   "checks-problem-figure",
   "checks-problem-time",
   "checks-problem-detail",
+  "checks-problem-how",
+  "checks-problem-how-label",
   "checks-passed",
-  "checks-passed-chip",
-  "checks-passed-chip-mark",
+  "checks-passed-mark",
+  "checks-passed-labels",
   "phase-times",
   "phase-times-head",
   "phase-times-heading",

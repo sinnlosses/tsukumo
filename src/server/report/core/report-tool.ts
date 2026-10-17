@@ -24,10 +24,11 @@ export const REPORT_TOOL_DESCRIPTION =
  * 結果を `conclusion` と `sections` に書かない条は `REPORT_NOTATION_PROMPT` の条1 が持つ。
  */
 export const REPORT_CHECKS_DESCRIPTION =
-  "検証の結果（テスト・型検査・手で確かめたこと）。tsukumo が結論の下に、全体の判定の札と、落ちた・確かめていない項目の行で描く。" +
+  "検証の結果（テスト・型検査・手で確かめたこと）。tsukumo が結論の下に、件数の総括行と、落ちた・確かめていない項目の行で描き、通った項目は畳む。" +
   "検証をしていないターンでは省く。" +
   "結果の数は figure に、打ったコマンドは command に分ける（所要時間は tsukumo が測って添えるので書かない）。" +
-  "label・figure・detail は素の文字で描かれるので、バッククォートなどの記法を使わない。"
+  "unverified の行には howToVerify に確かめ方を書く。" +
+  "label・figure・detail・howToVerify は素の文字で描かれるので、バッククォートなどの記法を使わない。"
 
 /**
  * `report` の任意の `task` 引数の説明。`conclusion` との書き分けはここだけが持つ。

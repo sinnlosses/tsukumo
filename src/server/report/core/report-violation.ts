@@ -129,6 +129,8 @@ export type ReportViolation =
   | { readonly kind: "bad-heading"; readonly count: number }
   /** `checks` の `figure` が `数 / 数` の分数に見える。`count` は該当の項目の数。 */
   | { readonly kind: "fraction-figure"; readonly count: number }
+  /** `checks` の `unverified` の行の `howToVerify` が空（空白だけを含む）。`count` は該当の行の数。 */
+  | { readonly kind: "unverified-without-how"; readonly count: number }
   /** `text` の塊か表のセルに ` → ` がある（インラインコードの中は除く）。`count` は該当の塊の数。 */
   | { readonly kind: "arrow-in-prose"; readonly count: number }
   /** `flow` でない `list` で、`label` の無い項目の `text` が「名前: 説明」で始まる。`count` は該当の項目の数。 */
@@ -232,6 +234,12 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       count: report.checks.filter((check) => FRACTION.test(check.figure)).length,
     },
     {
+      kind: "unverified-without-how",
+      count: report.checks.filter(
+        (check) => check.status === "unverified" && check.howToVerify.trim() === "",
+      ).length,
+    },
+    {
       kind: "arrow-in-prose",
       count: blocks.filter((block) => proseTexts(block).some(hasArrow)).length,
     },
@@ -287,6 +295,7 @@ const VIOLATION_THRESHOLDS = {
   "long-first-sentence": 0,
   "bad-heading": 0,
   "fraction-figure": 0,
+  "unverified-without-how": 0,
   "arrow-in-prose": 0,
   "label-in-item": 0,
   "labeled-ordered": 0,
@@ -340,6 +349,8 @@ function violationLine(violation: ReportViolation): string {
       return `見出しが${violation.count}個、${String(MAX_HEADING)}字を超えるか疑問文になっている。その節の結論を言う短い語にする`
     case "fraction-figure":
       return `\`checks\` の \`figure\` に分数（数 / 数）がある項目が${violation.count}個ある。「56 件中 1 件」のように言い換える`
+    case "unverified-without-how":
+      return `\`checks\` の \`unverified\` の行のうち \`howToVerify\` が空のものが${violation.count}個ある。知らない人が繰り返せる確かめ方を1〜2文で書く`
     case "arrow-in-prose":
       return `地の文・表のセルに \`A → B\` と書いた塊が${violation.count}個ある。セルは \`from\` / \`to\`、流れは \`list\` の \`flow\` にする`
     case "label-in-item":

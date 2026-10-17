@@ -543,7 +543,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 - **検証結果は `report` の `checks` で受け取り、tsukumo が結論のすぐ下に描く**（2026-09-26
   ユーザー決定。完了報告の結論に「（`./check.sh` は終了0。push はしていません）」と括弧で混ざって
   読みにくかったため。書き手の規約に任せる案は採らなかった）。1項目は `{ status, label, detail }`
-  （2026-09-28 に `figure` と `command` を足した。下の「カードで描く」）で、
+  （2026-09-28 に `figure` と `command` を、2026-10-17 に確かめ方の `howToVerify` を足した。下の「総括行と開く行で描く」）で、
   `status` は **`ok` / `ng` / `unverified` の3つ**（確かめなかった・飛ばした、を分けても読み手の
   次の手は同じ「自分で確かめるか判断する」なので `skipped` は置かず、理由を `detail` に書かせる）。
   状態はいまのバッジに寄せ、`ok` → `badge-ok`「OK」・`ng` → `badge-ng`「NG」・`unverified` →
@@ -639,39 +639,47 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
     `report` のイベントの形が変わったので `PROTOCOL_VERSION` を 24 に上げた
 - **検証結果はカードでなく、1項目1行の表で描く**（2026-09-28 ユーザー決定「案A」。毎回出る脇役なのに
   1項目1枚のカードは箱と段が多く、場所を取っていたため）。入力の形（`status` / `label` / `figure` /
-  `command` / `detail`）は変えない。**表の形は 2026-10-04 に下の「判定の札」へ置き換えた**（総括の文・
-  4列の grid・左の縦罫は使っていない）
+  `command` / `detail`）は変えない。**表の形は 2026-10-04 に判定の札へ、2026-10-17 に下の「総括行と開く行で描く」へ置き換えた**
+  （4列の grid・左の縦罫は使っていない）
   - `figure` の書式は「56 件中 1 件」のように何の数かを付けて描かせ、「2849 / 56」のような割り算・
     分数に見える書き方はさせない（`REPORT_CHECKS_DESCRIPTION` と `reportCheckSchema` の `figure` の
     `describe`）
 - **検証の総括とお願いの合図を、結論のすぐ下の1行（合図の行）に置き、通った検証は畳む**（2026-10-03。
   提案書 `docs/research/report-redesign.md` 3.1 の骨格の段。1400×900 の窓ではメインビューが 513px しか無く、
   検証の表を常に全行開いていたので、末尾のお願いが最初の1画面に入らなかった）。**合図の行の中身は
-  2026-10-04 に下の「判定の札」へ置き換え**、総括の文・`<details>` での畳み・「お願い 1 ↓」の口は無くなった
+  2026-10-04 に判定の札へ置き換えて**総括の文・`<details>` での畳み・「お願い 1 ↓」の口をいったん外し、
+  2026-10-17 に下の「総括行と開く行で描く」で総括行・畳み・お願いの印を戻した
   - 並びは「目録の1行 → 見出し（`task` があるとき）→ 結論 → 合図の行 → 本文の節 → お願い」。中間レポートを
     最終レポートの上に時系列で積むのは変えない
   - 合図の行は帯と同じく `main-view.ts` の `reportMarkdown` が本文の HTML に組み（検証の部分は
     `reportChecksMarkdown`）、節の始まりの印より前に置く。書き上げる演出は節にだけ掛かるので、結論と合図の行は
     最初から出る
   - **所要は合図の行に置かない**（経過と所要は進み具合の帯の1か所。`docs/architecture/screen-design.md` 13.13）
-- **検証結果は、左の色罫と小見出しの一言で描く**（2026-10-08 ユーザー決定「案A 静か」。状態の色が札の字・枠・地の
-  3重に乗って結論より目立っていたため、判定の札を外した。見本は
-  `docs/history/mockup/report-verdict-quiet-2026-10-08.html`（画は同じ名前の `.png`）。
-  2026-10-04 の決定は、左の判定の札〔`docs/history/mockup/report-checks-tile-2026-10-04.html`〕と右の欄の1枚だった）
+- **検証結果は、総括行と開く行で描く**（2026-10-17。提案書 `docs/research/report-excellence-strategy.md` 3.1「判決の頭」。
+  確かめていない行が検証の行の約4分の1あるのに「どう確かめればよいか」が無く、お願いは末尾にあって上端に印が
+  無かったため。見本は `docs/history/mockup/report-excellence-2026-10-17/after-first.png`（題の位置は採らない）。
+  それまでの形は、2026-10-04 の左の判定の札〔`docs/history/mockup/report-checks-tile-2026-10-04.html`〕と、
+  2026-10-08 の左の色罫と小見出しの一言のカード〔`docs/history/mockup/report-verdict-quiet-2026-10-08.html`〕）
   - **合図の行**（`role="group"`・`aria-label="検証結果"`）は検証結果だけを運ぶ。`checks` が空なら行ごと置かない
-  - **左の色罫**: 枠・地・角丸は残し、左の縁を状態の色の 3px の罫にする（角丸は左 4px・右 12px）。
-    状態は `ng` が1つでもあれば `ng`、無く `unverified` があれば `unverified`、どちらも無ければ `ok`
-  - **小見出しの一言**: 小見出し「検証」の右に 8px 空けて、状態の色の太字（12px）で言う。
-    全部 `ok` なら「n件すべて通過」、`ng` があれば「n件中 k件 落ちた」、`ng` が無く `unverified` があれば
-    「n件中 k件 未確認」（n は全件数、k はその状態の件数）。小見出しと一言は `ok` でも問題があっても欄の頭に置く
-  - **小見出しの下の欄**は、全部 `ok` なら全行の一覧（✓・`label`・`figure`・所要時間を詰めて1行。
-    畳まない）。`ng` / `unverified` があれば、問題の項目を `ng` → `unverified` の順（同じ状態の中は書いた順）に
-    1件ずつ、「状態の印＋ `label` ＋ `figure`・所要時間」の行とその下の `detail` の2段で縦に重ね、通った項目は
-    その下に `label` の頭（最初の全角の括弧「（」より前。無ければ全文）だけの小さな札（高さ 24 から・角丸 12・
-    文字は省かず、欄より長ければ札の中で折り返す・`title` に `label` の全文）で並べる。一覧と問題の並びは `role="table"`
-  - **「お願い」の口は合図の行に置かない**（未確認の項目は黄の記号と理由で目に留まる。手を動かして
-    ほしいことは末尾のお願いの塊に任せる）。お願いの塊は変わらず末尾に `id="favor-<toolUseId>"` で置く
-  - class（`verdict` / `checks-ok`・`checks-ng`・`checks-unverified` / `checks-verdict-word` / `checks-body` / `checks-problem` / `checks-passed` 系と
+  - **枠と地を持たない**。上下と行の間を `--rule-quiet` の 1px の罫で区切り、色が出るのは記号と状態の語
+    （✓ 通った・？ 確かめていない・✕ 落ちた）だけ
+  - **総括行**: 「✓ 検証 n件 通った <通った行の `figure` を `·` で連ねる>」「？ k件 確かめていない」「✕ m件 落ちた」を
+    この順に並べ、無い部分は出さない（通った行が無ければ頭は「検証」の語だけ）。幅が足りなければ折り返す
+  - **お願いの印**: `favor` があるときだけ総括行の右端に「● お願い 1 ↓」を置く。お願いの本体は末尾のままで、
+    印はページ内のリンク（`#favor-<toolUseId>`。お願いの塊がこの `id` を持つ）で飛ぶだけ。押しても `location.hash` は
+    書かずに転がす（`markdown-renderer.tsx` の `Anchor`）。演出の途中で押すと、押す操作が演出を打ち切って全部出してから転がる
+  - **開くのは `ng` と `unverified` の行だけ**（`ng` → `unverified` の順。同じ状態の中は書いた順）。左の列に記号と
+    状態の語、右の列に「`label` ＋ `figure`・所要時間」、その下に `detail`、`unverified` ならさらに「確かめ方: <`howToVerify`>」を置く。
+    問題の並びは `role="table"`・`aria-label="検証結果の問題"`
+  - **通った行は1行に畳む**: 「✓ 通った n件」と `label` の頭（最初の全角の括弧「（」より前。無ければ全文）を `·` で
+    連ねた `<summary>` の `<details>`。開くと ✓・`label`・`figure`・所要時間の一覧（`role="table"`・`aria-label="検証結果"`）。
+    全部通ったときも総括行とこの1行だけにする。開閉は保存しない
+  - **`howToVerify`**（確かめ方）は `unverified` の行で必須、`ok`・`ng` では空文字。空の `unverified` は記法の違反
+    `unverified-without-how` で差し戻す（規約違反の1ターン1回の枠）。欄の無い前の形の記録は空文字として読む
+    （`parseReportChecks`）。`report` のイベントの形が変わったので `PROTOCOL_VERSION` を 54 に上げた
+  - 部品が class を解決するのは `div`・`span`・`ol`・`li` だけなので、`<details>` とリンクは `checks-passed`・`checks-summary-favor` の
+    `span` / `div` で包む
+  - class（`verdict` / `checks-summary` 系 / `checks-problem` 系 / `checks-passed` 系 / `check` 系と
     `conclusion-lead`）は `REPORT_DRAWN_MARK_NAMES` に置く
 
 #### ワークプラン
@@ -1080,7 +1088,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 版5からは、段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるかの `hasFigure` と、
 このターンにメインが画像のファイルを `Read` したのに `image` の塊が無かったかの `readImageWithoutImageBlock`
 （サブエージェントの `Read` は数えない）も足す。版6からは、`figure` の欄の種類（図の塊の `kind` か `none`）の `figureKind` と、
-`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。数えるだけで差し戻しにはしない。中身は一切持たない
+`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。数えるだけで差し戻しにはしない。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
 `src/server/report/adapter/report-usage-log.ts`、何を1行にするかは
 `src/server/report/core/report-usage.ts` が持つ。逃げ道の記法の検出は `src/server/report/core/report-markdown-notation.ts`、
@@ -1094,6 +1102,8 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 `figure` の表では、版5以前の行を理由が `unrecorded` の `none` に数える。
 版7の欄の表は「強調の数の分布」（0・1・2・3以上 × レポート数）・「graph のあるレポートのラベルの無い辺の割合」（0%・1〜49%・50%以上）・「graph の節点数の分布」（〜5・6〜10・11以上）で、
 全レポートと task の最終レポートのそれぞれに出し、分母は版7以降の行（割合と節点数は graph のあるレポート）。外す基準の対象ではない。
+版8の欄の表は「unverified のあるレポートのうち確かめ方のある割合」で、全レポートと task の最終レポートの2行を出し、
+分母は版8以降の行のうち `hasUnverifiedCheck` の行。外す基準の対象ではない。
 `report` が差し戻されたときも同じファイルに1行書く（`kind: "rejected"`・時刻・セッションID・差し戻しの種類の名前だけで、
 手続きの種類〔`REPORT_PROCEDURE_REJECTIONS` の名前〕と記法の違反の `kind`。本文も文面も持たない）。
 集計は「差し戻しの種類 × 回数」の表で、割合は `report` の呼び出し（受け付け＋差し戻し）の数に対して出す。

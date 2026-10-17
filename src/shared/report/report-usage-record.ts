@@ -4,7 +4,7 @@
 import type { RecordedFigureNoneReason, RecordedReportFigure } from "./report-block.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 7 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 8 satisfies number
 
 /**
  * `figure` の欄の記録（版6から）。`figureKind` は図の塊の `kind` か `none`、`noneReason` は `none` のときだけ。
@@ -50,6 +50,10 @@ export type ReportUsageRecord = ReportFigureUsage & {
   readonly graphUnlabeledEdgeCount: number
   /** `graph` の節点数。複数あれば最大（版7から）。 */
   readonly graphNodeCount: number
+  /** `checks` に `unverified` の行が1つでもあるか（版8から）。 */
+  readonly hasUnverifiedCheck: boolean
+  /** `unverified` の行があり、その全部の `howToVerify` が空でないか（版8から）。 */
+  readonly hasHowToVerify: boolean
 }
 
 /**

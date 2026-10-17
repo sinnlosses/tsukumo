@@ -612,7 +612,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
   describe("figure", () => {
     const checks: readonly ReportCheck[] = [
-      { status: "ok", label: "架空の検査", figure: "", command: "", detail: "" },
+      { status: "ok", label: "架空の検査", figure: "", command: "", detail: "", howToVerify: "" },
     ]
     const sections: readonly ReportSection[] = [
       {
@@ -660,6 +660,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       ]
       expect(order.every((index) => index >= 0)).toBe(true)
       expect(order).toEqual(order.toSorted((a, b) => a - b))
+      expect(shown).not.toContain("checks-summary-favor")
     })
 
     it("none は何も描かず、sections の図が「図 1」になる", () => {
@@ -672,10 +673,24 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     })
   })
 
-  it("checks は結論のすぐ下の合図の行に組み、口は出ない。お願いの本文は末尾のまま（body より前）", () => {
+  it("checks は結論のすぐ下の合図の行に組み、総括行の印が末尾のお願いの塊を指す。お願いの本文は末尾のまま", () => {
     const checks: readonly ReportCheck[] = [
-      { status: "ok", label: "架空の検査", figure: "12 / 3", command: "", detail: "架空の件数" },
-      { status: "unverified", label: "架空の目視", figure: "", command: "", detail: "" },
+      {
+        status: "ok",
+        label: "架空の検査",
+        figure: "12 / 3",
+        command: "",
+        detail: "架空の件数",
+        howToVerify: "",
+      },
+      {
+        status: "unverified",
+        label: "架空の目視",
+        figure: "",
+        command: "",
+        detail: "",
+        howToVerify: "架空の窓を開いて見る",
+      },
     ]
     const turn = turnOf(
       [ask, report("架空の結論。", "架空の根拠。", "架空のお願い", checks), finished],
@@ -689,9 +704,13 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(
       shown.startsWith(
         `${lead("架空の結論。")}\n\n<div class="status">\n\n` +
-          '<div class="verdict" role="group" aria-label="検証結果"><div class="checks checks-unverified">',
+          '<div class="verdict" role="group" aria-label="検証結果"><div class="checks">',
       ),
     ).toBe(true)
+    expect(shown).toContain('<span class="checks-summary-favor"><a href="#favor-toolu_r1">')
+    expect(shown.indexOf('href="#favor-toolu_r1"')).toBeLessThan(
+      shown.indexOf('id="favor-toolu_r1"'),
+    )
     expect(
       shown.endsWith(
         `</div>\n\n</div>\n\n${SECTIONS_START}\n\n` +
@@ -726,8 +745,22 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       [bashFinished("toolu_b3"), 70_000],
       [
         report("架空の結論。", "", "", [
-          { status: "ok", label: "一致する", figure: "", command: "架空の検査", detail: "" },
-          { status: "ok", label: "一致しない", figure: "", command: "架空の検", detail: "" },
+          {
+            status: "ok",
+            label: "一致する",
+            figure: "",
+            command: "架空の検査",
+            detail: "",
+            howToVerify: "",
+          },
+          {
+            status: "ok",
+            label: "一致しない",
+            figure: "",
+            command: "架空の検",
+            detail: "",
+            howToVerify: "",
+          },
         ]),
         71_000,
       ],
@@ -770,13 +803,21 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       [{ kind: "background-tool-finished", toolUseId: "toolu_b1" }, 63_000],
       [
         report("架空の結論。", "", "", [
-          { status: "ok", label: "知らせが届いた", figure: "", command: "架空の検査", detail: "" },
+          {
+            status: "ok",
+            label: "知らせが届いた",
+            figure: "",
+            command: "架空の検査",
+            detail: "",
+            howToVerify: "",
+          },
           {
             status: "ok",
             label: "知らせが届かない",
             figure: "",
             command: "架空の別の検査",
             detail: "",
+            howToVerify: "",
           },
         ]),
         64_000,
@@ -1216,7 +1257,16 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
       checks:
         command === ""
           ? []
-          : [{ status: "ok", label: "架空の検査", figure: "", command, detail: "" }],
+          : [
+              {
+                status: "ok",
+                label: "架空の検査",
+                figure: "",
+                command,
+                detail: "",
+                howToVerify: "",
+              },
+            ],
     })
   const reportMarkdowns = (entries: readonly MainViewEntry[]) =>
     entries.flatMap((entry) => (entry.kind === "report" ? [entry.markdown] : []))

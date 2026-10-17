@@ -53,6 +53,8 @@ function entry(
     graphEdgeCount: 0,
     graphUnlabeledEdgeCount: 0,
     graphNodeCount: 0,
+    hasUnverifiedCheck: false,
+    hasHowToVerify: false,
   }
 }
 
@@ -100,6 +102,8 @@ describe("createReportUsageLog", () => {
       "graphEdgeCount",
       "graphUnlabeledEdgeCount",
       "graphNodeCount",
+      "hasUnverifiedCheck",
+      "hasHowToVerify",
     ])
     expect(record).toMatchObject({
       v: REPORT_USAGE_FORMAT_VERSION,

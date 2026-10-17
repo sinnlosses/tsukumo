@@ -9,6 +9,7 @@ import {
   type ReportSection,
   sectionsWithFigure,
 } from "../../../shared/report/report-block.ts"
+import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import type { ReportFigureUsage } from "../../../shared/report/report-usage-record.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { reportImagePaths } from "./report-image-shelf.ts"
@@ -54,6 +55,10 @@ export type ReportUsageEntry = {
   readonly graphUnlabeledEdgeCount: number
   /** `graph` の節点数。1レポートに複数あれば最大。 */
   readonly graphNodeCount: number
+  /** `checks` に `unverified` の行が1つでもあるか。 */
+  readonly hasUnverifiedCheck: boolean
+  /** `unverified` の行があり、その全部の `howToVerify` が空でないか。 */
+  readonly hasHowToVerify: boolean
 }
 
 const FIGURE_KINDS: readonly string[] = ["image", "mermaid", "graph", "svg"]
@@ -129,6 +134,7 @@ export function reportUsageEntryOf(
       0,
     ),
     ...graphCountsOf(blocksOf(drawnSections)),
+    ...howToVerifyUsageOf(event.checks),
   }
 }
 
@@ -192,6 +198,17 @@ function graphCountsOf(
     graphEdgeCount: edges.length,
     graphUnlabeledEdgeCount: edges.filter((edge) => edge.label.trim() === "").length,
     graphNodeCount: Math.max(0, ...readings.map((reading) => reading.nodes.length)),
+  }
+}
+
+function howToVerifyUsageOf(
+  checks: readonly ReportCheck[],
+): Pick<ReportUsageEntry, "hasUnverifiedCheck" | "hasHowToVerify"> {
+  const unverified = checks.filter((check) => check.status === "unverified")
+  return {
+    hasUnverifiedCheck: unverified.length > 0,
+    hasHowToVerify:
+      unverified.length > 0 && unverified.every((check) => check.howToVerify.trim() !== ""),
   }
 }
 

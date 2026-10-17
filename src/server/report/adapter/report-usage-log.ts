@@ -66,5 +66,7 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     graphEdgeCount: entry.graphEdgeCount,
     graphUnlabeledEdgeCount: entry.graphUnlabeledEdgeCount,
     graphNodeCount: entry.graphNodeCount,
+    hasUnverifiedCheck: entry.hasUnverifiedCheck,
+    hasHowToVerify: entry.hasHowToVerify,
   }
 }

@@ -1085,22 +1085,24 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 検証結果
 
 - **英語識別子**: `checks`（`report` ツールの引数の名前）/ `ReportCheck`（1項目。
-  `src/shared/report/report-check.ts`）/ `ReportCheckStatus`（`ok` / `ng` / `unverified`）
+  `src/shared/report/report-check.ts`）/ `ReportCheckStatus`（`ok` / `ng` / `unverified`）/
+  `howToVerify`（確かめ方。`unverified` の行で、知らない人が繰り返せる手順）
 - **定義**: **そのターンで何をどう確かめたか**（テスト・型検査・手で見たこと）。1項目は
-  状態（`status`）・何で確かめたか（`label`）・件数や差分（`detail`）で、`report` の `checks` に
-  並べて入れる。tsukumo が結論のすぐ下の合図の行に総括を出し、すべて通ったら行を畳み、落ちた・確かめていない
-  行だけを開いて先頭に並べる。状態は色と文字（OK / NG / 未確認）の両方で見せる
+  状態（`status`）・何で確かめたか（`label`）・結果の数（`figure`）・打ったコマンド（`command`）・
+  理由（`detail`）・確かめ方（`howToVerify`）で、`report` の `checks` に並べて入れる。tsukumo が結論のすぐ下の
+  合図の行に総括行を出し、落ちた・確かめていない行だけを開き、通った行は1行に畳む。状態は記号と語
+  （✓ 通った / ✕ 落ちた / ？ 確かめていない）の両方で見せる
 - **注記**: **検証をしていないターンでは渡さない**（総括も出ない）。確かめなかった・飛ばしたものは
-  `unverified` にまとめ、理由は `detail` に書く。`conclusion` と `sections` には書かない（規約は
+  `unverified` にまとめ、理由は `detail` に、確かめ方は `howToVerify` に書く。`conclusion` と `sections` には書かない（規約は
   `src/server/report/core/report-notation.ts` の条1）。規則は `docs/architecture/display.md` 4.2 が正典
 - **避ける言い方**: テスト結果（型検査や目視も入る）、確認結果
 
 ### 合図の行
 
 - **英語識別子**: `verdict`（描く印の名前。`src/shared/report/report-notation.ts` の `REPORT_DRAWN_MARK_NAMES`）
-- **定義**: レポートの結論のすぐ下に置く、検証結果の塊（左の色罫と、小見出しの一言と、欄）
-- **注記**: 検証の無いレポートでは出ない。2026-10-04 まではお願いへ飛ぶ「お願い 1 ↓」の口も並べていた。
-  規則は `docs/architecture/display.md` 4.2「検証結果は、左の色罫と小見出しの一言で描く」が正典
+- **定義**: レポートの結論のすぐ下に置く、検証結果の塊（総括行と、落ちた・確かめていない行と、通った行の畳み）
+- **注記**: 検証の無いレポートでは出ない。お願いがあれば総括行の右端に、末尾のお願いへ飛ぶ「お願い 1 ↓」の印を置く。
+  規則は `docs/architecture/display.md` 4.2「検証結果は、総括行と開く行で描く」が正典
 - **避ける言い方**: サマリー行（何の要約か分からない）、委譲の返却（別の語。委譲先からの知らせ）
 
 ### 節

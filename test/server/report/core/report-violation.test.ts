@@ -67,6 +67,7 @@ describe("reportViolations", () => {
       figure,
       command: "",
       detail: "",
+      howToVerify: "",
     })
     const withHeading = (heading: string): ReportDraft =>
       draft([], "架空の結論。", [{ heading, blocks: [text("架空の本文。")] }])
@@ -108,6 +109,18 @@ describe("reportViolations", () => {
       expect(kinds(withFigure("56 件中 1 件"))).toEqual([])
       expect(kinds(withFigure("ずれ 2px"))).toEqual([])
       expect(kinds(withFigure(""))).toEqual([])
+    })
+
+    it("unverified の行の確かめ方が空なら差し戻し、ok・ng の空は通す", () => {
+      const withCheck = (status: "ok" | "ng" | "unverified", howToVerify: string): ReportDraft => ({
+        ...draft([text("架空。")]),
+        checks: [{ ...check(""), status, howToVerify }],
+      })
+      expect(kinds(withCheck("unverified", ""))).toEqual(["unverified-without-how"])
+      expect(kinds(withCheck("unverified", "  "))).toEqual(["unverified-without-how"])
+      expect(kinds(withCheck("unverified", "架空の窓を開いて札を見る"))).toEqual([])
+      expect(kinds(withCheck("ok", ""))).toEqual([])
+      expect(kinds(withCheck("ng", ""))).toEqual([])
     })
   })
 

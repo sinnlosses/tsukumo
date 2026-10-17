@@ -123,11 +123,11 @@ const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
 /**
  * 検証結果の表（`report` の `checks`）。class 名でなく role・aria-label で指す
  * （`reportChecksMarkdown` が組む `<div role="table" aria-label="検証結果">`
- * の属性はハッシュ化されない）。すべて通ったときは「検証結果」、落ちた・未確認があるときは
- * 「検証結果の問題」の表で、どちらも畳まずに見える。
+ * の属性はハッシュ化されない）。落ちた・確かめていない項目は「検証結果の問題」の表で開いて見え、
+ * 通った項目は「検証結果」の表で `<details>` の中に畳まれる。
  */
 const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label^="検証結果"]`
-/** 結論のすぐ下の合図の行（`mainViewTurns` が組む。小見出し・一言・罫を含む検証結果の塊）。 */
+/** 結論のすぐ下の合図の行（`mainViewTurns` が組む。総括行・問題の項目・通った項目の畳みを含む検証結果の塊）。 */
 const VERDICT_SELECTOR = `${MAIN_REGION_SELECTOR} [role="group"][aria-label="検証結果"]`
 
 /** 最終レポートの器。最終 `report` が届くまで現れず、中間レポートの器（`is-interim`）とは別。 */
@@ -317,7 +317,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     name: "report-verdict",
     // 転がさずに撮り、最初の1画面に結論と合図の行が入っているかを見る。
     scene: "report-task-verdict",
-    label: "合図の行（検証がすべて通り、お願いがある）",
+    label: "合図の行（確かめていない項目が1つあり、お願いがある）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],
@@ -327,7 +327,7 @@ export const CATALOG: readonly CatalogEntry[] = [
   {
     name: "report-verdict-open",
     scene: "report-task-verdict",
-    label: "合図の行（畳んだ検証を開いた）",
+    label: "合図の行（畳んだ通った項目を開いた）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "click", selector: `${VERDICT_SELECTOR} summary` }],

@@ -5,6 +5,7 @@ import {
   reportUsageEntryOf,
 } from "../../../../src/server/report/core/report-usage.ts"
 import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
+import type { ReportCheck } from "../../../../src/shared/report/report-check.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 
@@ -325,6 +326,8 @@ describe("reportUsageEntryOf", () => {
       graphEdgeCount: 0,
       graphUnlabeledEdgeCount: 0,
       graphNodeCount: 0,
+      hasUnverifiedCheck: false,
+      hasHowToVerify: false,
     })
   })
 
@@ -466,6 +469,33 @@ describe("reportUsageEntryOf", () => {
         entry.graphUnlabeledEdgeCount,
         entry.graphNodeCount,
       ]).toEqual([0, 0, 0, 0])
+    })
+  })
+
+  describe("確かめ方の有無", () => {
+    const check = (status: ReportCheck["status"], howToVerify: string): ReportCheck => ({
+      status,
+      label: "架空の確認",
+      figure: "",
+      command: "",
+      detail: "",
+      howToVerify,
+    })
+    const flagsOf = (checks: readonly ReportCheck[]) => {
+      const entry = reportUsageEntryOf(reportEvent({ checks }), "claude-session-1", 1_000, false)
+      return [entry.hasUnverifiedCheck, entry.hasHowToVerify]
+    }
+
+    it("unverified が無ければ両方偽、全部に確かめ方があれば両方真、1つでも空なら確かめ方は偽", () => {
+      expect(flagsOf([])).toEqual([false, false])
+      expect(flagsOf([check("ok", ""), check("ng", "")])).toEqual([false, false])
+      expect(
+        flagsOf([check("unverified", "架空の窓を開く"), check("unverified", "架空の札を見る")]),
+      ).toEqual([true, true])
+      expect(flagsOf([check("unverified", "架空の窓を開く"), check("unverified", " ")])).toEqual([
+        true,
+        false,
+      ])
     })
   })
 

@@ -1510,7 +1510,8 @@
                 "label": "狭い窓での見た目",
                 "figure": "",
                 "command": "",
-                "detail": "手で確かめていない"
+                "detail": "手で確かめていない",
+                "howToVerify": "窓を 720 幅にして、目盛りの帯が欄からはみ出さないことを見る"
               }
             ]
           }
@@ -5917,7 +5918,8 @@
                 "label": "狭い窓での見た目",
                 "figure": "",
                 "command": "",
-                "detail": "手で確かめていない"
+                "detail": "手で確かめていない",
+                "howToVerify": "窓を 720 幅にして、目盛りの帯が欄からはみ出さないことを見る"
               }
             ]
           }
@@ -6302,11 +6304,12 @@
                 "detail": ""
               },
               {
-                "status": "ok",
+                "status": "unverified",
                 "label": "720×900 で同じ札を見る",
                 "figure": "",
                 "command": "",
-                "detail": ""
+                "detail": "架空の狭い窓を開いていない",
+                "howToVerify": "窓を 720 幅にして、札の頭の 1/1 が折り返さずに出ることを見る"
               },
               {
                 "status": "ok",

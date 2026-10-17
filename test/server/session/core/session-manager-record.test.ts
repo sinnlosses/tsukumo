@@ -468,6 +468,8 @@ describe("createSessionManager", () => {
           graphEdgeCount: 0,
           graphUnlabeledEdgeCount: 0,
           graphNodeCount: 0,
+          hasUnverifiedCheck: false,
+          hasHowToVerify: false,
           sessionSummary: undefined,
         },
       ])

@@ -790,49 +790,91 @@
 .detail-block .report-status:last-child {
   margin-bottom: 0;
 }
-/* 合図の行（検証結果の判定だけを運ぶ）。中身は `.report-checks` の札そのもの。 */
+/* 合図の行（検証結果の判定だけを運ぶ）。中身は `.report-checks` そのもの。 */
 .detail-block .report-verdict {
   display: block;
 }
-/* 検証結果（`report` の `checks` から tsukumo が組む）。左の縁だけが状態の色の罫になる1枚のカード。 */
+/* 検証結果（`report` の `checks` から tsukumo が組む）。枠と地を持たず、上下と行の間の罫で区切る。
+   色が出るのは記号と状態の語だけ。 */
 .detail-block .report-checks {
-  --report-checks-state: var(--state-ok);
+  --report-checks-rule: 1px solid var(--rule-quiet);
+  --report-checks-side: 136px;
 
   display: block;
   min-width: 0;
-  padding: 14px 20px;
-  border: 1px solid var(--rule);
-  border-left: 3px solid var(--report-checks-state);
-  border-radius: 4px 12px 12px 4px;
-  background: var(--surface-raised);
+  border-top: var(--report-checks-rule);
+  border-bottom: var(--report-checks-rule);
 }
-.detail-block .report-checks-ok {
-  --report-checks-state: var(--state-ok);
-}
-.detail-block .report-checks-ng {
-  --report-checks-state: var(--state-ng);
-}
-.detail-block .report-checks-unverified {
-  --report-checks-state: var(--state-warn);
-}
-/* 小見出しと、全部 ok なら一覧、ng / unverified があれば問題の項目と通った項目の札。 */
-.detail-block .report-checks-body {
-  min-width: 0;
+/* 総括行。部分どうしは空けて並べ、お願いの印だけ右端へ寄せる。幅が足りなければ折り返す。 */
+.detail-block .report-checks-summary {
   display: flex;
-  flex-direction: column;
-}
-.detail-block .report-checks-heading {
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 20px;
+  row-gap: 4px;
+  padding: 10px 0;
+  font-size: 13px;
   color: var(--ink-quiet);
 }
-.detail-block .report-checks-verdict-word {
-  margin-left: 8px;
+.detail-block .report-checks-summary-lead {
   font-weight: 700;
-  letter-spacing: 0;
-  color: var(--report-checks-state);
+  color: var(--ink);
 }
-/* 全部 ok の一覧の1行。記号・label・figure・所要時間を詰めて並べる。 */
+.detail-block .report-checks-summary-part {
+  white-space: nowrap;
+}
+.detail-block .report-checks-summary-mark {
+  margin-right: 6px;
+  font-weight: 700;
+}
+.detail-block .report-checks-summary-word {
+  font-weight: 700;
+}
+.detail-block
+  .report-checks-summary-ok
+  :is(.report-checks-summary-mark, .report-checks-summary-word) {
+  color: var(--state-ok);
+}
+.detail-block
+  .report-checks-summary-unverified
+  :is(.report-checks-summary-mark, .report-checks-summary-word) {
+  color: var(--state-warn);
+}
+.detail-block
+  .report-checks-summary-ng
+  :is(.report-checks-summary-mark, .report-checks-summary-word) {
+  color: var(--state-ng);
+}
+/* 通った件数のすぐ後ろに figure を連ねる（列の間の空きより詰める）。 */
+.detail-block .report-checks-summary-ok + .report-checks-summary-figures {
+  margin-left: -12px;
+}
+.detail-block .report-checks-summary-figures {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+/* お願いの印。押す的を 24px 以上にし、末尾のお願いの塊へ転がす（`Anchor`）。 */
+.detail-block .report-checks-summary-favor {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.detail-block .report-checks-summary-favor > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+.detail-block .report-checks-summary-favor-mark {
+  font-size: 12px;
+  color: var(--accent);
+}
+/* 通った項目の一覧の1行。記号・label・figure・所要時間を詰めて並べる。 */
 .detail-block .report-check {
   display: flex;
   flex-wrap: wrap;
@@ -862,9 +904,14 @@
   white-space: nowrap;
   color: var(--ink-quiet);
 }
-/* 問題の項目（ng → unverified の順に1件ずつ縦へ重ねる）。 */
-.detail-block .report-checks-problem + .report-checks-problem {
-  margin-top: 14px;
+/* 問題の項目（ng → unverified の順に1件ずつ縦へ重ねる）と通った項目の畳みは、
+   左の列に記号と状態の語、右の列に中身を置き、行の間を罫で区切る。 */
+.detail-block .report-checks-problem {
+  display: grid;
+  grid-template-columns: var(--report-checks-side) minmax(0, 1fr);
+  column-gap: 12px;
+  padding: 10px 0;
+  border-top: var(--report-checks-rule);
 }
 .detail-block .report-checks-problem-head {
   display: flex;
@@ -873,8 +920,9 @@
   gap: 10px;
 }
 .detail-block .report-checks-problem-mark {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
+  line-height: 1.75;
   white-space: nowrap;
 }
 .detail-block .report-checks-problem-ng .report-checks-problem-mark {
@@ -883,11 +931,18 @@
 .detail-block .report-checks-problem-unverified .report-checks-problem-mark {
   color: var(--state-warn);
 }
+.detail-block .report-checks-problem-word {
+  margin-left: 2px;
+}
+.detail-block .report-checks-problem-body {
+  min-width: 0;
+}
 .detail-block .report-checks-problem-label {
   min-width: 0;
   overflow-wrap: anywhere;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.75;
   color: var(--ink);
 }
 .detail-block .report-checks-problem-figure {
@@ -913,35 +968,57 @@
   line-height: 1.75;
   color: var(--ink-soft);
 }
-/* 通った項目の小さな札。高さ 24 から・角丸 12、文字は省かず欄より長ければ札の中で折り返す。札どうしも折り返して並ぶ。 */
-.detail-block .report-checks-passed {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-}
-.detail-block .report-checks-passed-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 24px;
-  max-width: 100%;
-  padding: 0 10px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--state-ok) 7%, transparent);
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--ink-quiet);
+.detail-block .report-checks-problem-how {
+  margin: 2px 0 0;
   overflow-wrap: anywhere;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--ink-soft);
 }
-.detail-block .report-checks-passed-chip-mark {
+.detail-block .report-checks-problem-how-label {
+  color: var(--ink-quiet);
+}
+/* 通った項目の畳み。レポートの中の <details> の地と枠は当てず、問題の行と同じ2列の1行にする。 */
+.detail-block .report-checks-passed {
+  border-top: var(--report-checks-rule);
+}
+.detail-block .report-checks-passed > details {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.detail-block .report-checks-passed > details > summary {
+  display: grid;
+  grid-template-columns: var(--report-checks-side) minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: baseline;
+  min-height: 24px;
+  margin: 0;
+  padding: 10px 0;
+  font-size: 13px;
+  list-style: none;
+}
+.detail-block .report-checks-passed > details > summary::-webkit-details-marker {
+  display: none;
+}
+.detail-block .report-checks-passed-mark {
   font-weight: 700;
+  white-space: nowrap;
   color: var(--state-ok);
+}
+.detail-block .report-checks-passed-labels {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink-quiet);
+}
+.detail-block .report-checks-passed > details > [role="table"] {
+  padding: 0 0 10px calc(var(--report-checks-side) + 12px);
 }
 /* 段ごとの所要時間（検証結果の下に tsukumo が組む）。見出しの行・1本の帯・段の一覧の順に並べる。 */
 .detail-block .report-phase-times {
   min-width: 0;
-  padding: 0 20px;
 }
 .detail-block .report-verdict + .report-phase-times {
   margin-top: 12px;

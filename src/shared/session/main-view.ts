@@ -382,6 +382,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
  * 空の `sections` / `favor` は塊ごと置かない。
+ * `favor` の塊は `favor-<toolUseId>` の `id` を持ち、合図の行の総括行にある印がそこへ飛ぶ。
  * `conclusion` は、`task` のあるレポートでは見出しの下の一文として `conclusion` の印で、無いレポートでは見出しの代わりとして `conclusion-lead` の印で包む（`task` そのものは本文に組まない）。
  *
  * 節の並びはここで整形する（{@link tidyReportSections}。記録は引数のまま持ち、描くたびに導く）。
@@ -397,7 +398,11 @@ function reportMarkdown(
       ? ""
       : `<div class="${report.task.kind === "task" ? "conclusion" : "conclusion-lead"}">\n\n${report.conclusion}\n\n</div>`,
     statusMarkdown(
-      reportChecksMarkdown(report.checks, (command) => bashCommandDuration(context, command)),
+      reportChecksMarkdown(
+        report.checks,
+        (command) => bashCommandDuration(context, command),
+        isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
+      ),
       withPhaseTimes ? phaseTimesMarkdown(phaseDurations(context.plans, report.time)) : "",
     ),
   ].filter((part) => !isBlankText(part))

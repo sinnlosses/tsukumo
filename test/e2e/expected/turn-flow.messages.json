@@ -306,21 +306,24 @@
           "label": "pnpm run check",
           "figure": "1234 件",
           "command": "pnpm run check",
-          "detail": "架空の単体テストがすべて通った"
+          "detail": "架空の単体テストがすべて通った",
+          "howToVerify": ""
         },
         {
           "status": "ng",
           "label": "目盛りの E2E",
           "figure": "1 / 56",
           "command": "",
-          "detail": "架空の 1 件が落ちた"
+          "detail": "架空の 1 件が落ちた",
+          "howToVerify": ""
         },
         {
           "status": "unverified",
           "label": "狭い窓での見た目",
           "figure": "",
           "command": "",
-          "detail": "手で確かめていない"
+          "detail": "手で確かめていない",
+          "howToVerify": "窓を 720 幅にして、目盛りの帯が欄からはみ出さないことを見る"
         }
       ],
       "task": {

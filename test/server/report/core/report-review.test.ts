@@ -197,7 +197,16 @@ describe("createReportReview の judge（送り直し）", () => {
     expect(
       review.judge({
         ...VALID,
-        checks: [{ status: "ng", label: "架空の検査", figure: "", command: "", detail: "" }],
+        checks: [
+          {
+            status: "ng",
+            label: "架空の検査",
+            figure: "",
+            command: "",
+            detail: "",
+            howToVerify: "",
+          },
+        ],
       }),
     ).toEqual({ kind: "accepted" })
   })
@@ -559,6 +568,7 @@ describe("createReportReview の judge（ng の確認がある finished の repo
     figure: "",
     command: "",
     detail: "",
+    howToVerify: status === "unverified" ? "架空の確かめ方を見る" : "",
   })
   const withTask = (
     outcome: ReportTaskOutcome,

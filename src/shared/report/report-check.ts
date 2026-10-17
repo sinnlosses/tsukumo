@@ -30,17 +30,23 @@ export const reportCheckSchema = z.object({
     .describe(
       "ng なら落ちた理由、unverified なら確かめなかった理由を1文で。ok の行には描かないので書かない。直した経緯や打ち直した回数は書かない。無ければ空文字",
     ),
+  howToVerify: z
+    .string()
+    .describe(
+      "unverified のとき必須。知らない人が繰り返せる確かめ方を1〜2文で（何を開いて・何をして・何が見えれば良いか）。ok・ng は空文字",
+    ),
 })
 
 export type ReportCheck = z.infer<typeof reportCheckSchema>
 
 /**
- * `figure` と `command` を足す前の記録（transcript からの復元）も読めるように、2つは欠けていたら空文字に畳む。
+ * `figure`・`command`・`howToVerify` を足す前の記録（transcript からの復元）も読めるように、3つは欠けていたら空文字に畳む。
  * 状態・ラベル・補足が崩れた呼び出しは handler に届く前に SDK が差し戻すので、ここで欠けるのは古い記録だけ。
  */
 const storedReportCheckSchema = reportCheckSchema.extend({
   figure: z.string().catch(""),
   command: z.string().catch(""),
+  howToVerify: z.string().catch(""),
 })
 
 /** `report` の引数の `checks` を取り出す。「無い」と形の崩れは空の配列に畳む。 */
@@ -49,73 +55,55 @@ export function parseReportChecks(value: unknown): readonly ReportCheck[] {
   return parsed.success ? parsed.data : []
 }
 
-/** 検証全体の判定。ng が1つでもあれば `ng`、無く unverified があれば `unverified`、どちらも無ければ `ok`。 */
-type ReportChecksVerdict = ReportCheckStatus
+/** お願いがあるときの、総括行の印が飛ぶ先（お願いの塊の `id`）。 */
+export type ReportFavorTarget =
+  | { readonly kind: "none" }
+  | { readonly kind: "favor"; readonly id: string }
 
 /**
  * 検証結果（1つの HTML の塊）。空なら空文字。
- * 頭に小見出し「検証」と判定の一言（n件すべて通過 / n件中 k件 落ちた / n件中 k件 未確認）を置く。
- * 全部 ok なら、その下は全行の一覧。
- * ng / unverified があれば、その下は問題の項目（ng → unverified の順）を label・detail つきで並べ、
- * その下に通った項目を label の頭だけの小さな札で並べる。
+ * 上から、総括行（通った件数と figure・確かめていない件数・落ちた件数・お願いの印）、
+ * 問題の項目（ng → unverified の順。unverified は2行目に確かめ方）、通った項目を畳んだ `<details>` の順。
+ * 総括行は無い部分を出さず、お願いの印は `favor` が `favor` のときだけ置く。
  * `commandDuration` は `command` から tsukumo が測った所要時間を引く口で、`command` が空の項目には呼ばない。
  * モデルの文字列は HTML として逃がし、改行は空白に畳む（HTML の塊が空行で切れないように）。
  */
 export function reportChecksMarkdown(
   rawChecks: readonly ReportCheck[],
   commandDuration: (command: string) => MeasuredTime,
+  favor: ReportFavorTarget,
 ): string {
   if (rawChecks.length === 0) {
     return ""
   }
   const checks = rawChecks.map(withoutBackticks)
-  const ngCount = checks.filter((check) => check.status === "ng").length
-  const unverifiedCount = checks.filter((check) => check.status === "unverified").length
-  const verdict: ReportChecksVerdict =
-    ngCount > 0 ? "ng" : unverifiedCount > 0 ? "unverified" : "ok"
-
-  const body =
-    verdict === "ok"
-      ? allOkBodyMarkdown(checks, commandDuration)
-      : problemsBodyMarkdown(checks, commandDuration)
-
-  const heading = checksHeadingMarkdown(verdict, checks.length, ngCount, unverifiedCount)
-  return `<div class="checks checks-${verdict}"><div class="checks-body">${heading}${body}</div></div>`
+  const passed = checks.filter((check) => check.status === "ok")
+  const problems = [
+    ...checks.filter(isReportCheckProblem).filter((check) => check.status === "ng"),
+    ...checks.filter(isReportCheckProblem).filter((check) => check.status === "unverified"),
+  ]
+  return (
+    `<div class="checks">` +
+    checksSummaryMarkdown(checks, favor) +
+    (problems.length === 0
+      ? ""
+      : `<div role="table" aria-label="検証結果の問題">${problems
+          .map((check) => checkProblemMarkdown(check, commandDuration))
+          .join("")}</div>`) +
+    (passed.length === 0 ? "" : passedFoldMarkdown(passed, commandDuration)) +
+    `</div>`
+  )
 }
 
-/** `label`・`figure`・`detail` の素の文字に記法は使えないので、バッククォートを落とす（`command` は打った文字列のまま）。 */
+/** `label`・`figure`・`detail`・`howToVerify` の素の文字に記法は使えないので、バッククォートを落とす（`command` は打った文字列のまま）。 */
 function withoutBackticks(check: ReportCheck): ReportCheck {
   return {
     ...check,
     label: check.label.replaceAll("`", ""),
     figure: check.figure.replaceAll("`", ""),
     detail: check.detail.replaceAll("`", ""),
+    howToVerify: check.howToVerify.replaceAll("`", ""),
   }
-}
-
-/** 小見出し「検証」と、その右に状態の色で言う判定の一言。 */
-function checksHeadingMarkdown(
-  verdict: ReportChecksVerdict,
-  total: number,
-  ngCount: number,
-  unverifiedCount: number,
-): string {
-  const word =
-    verdict === "ng"
-      ? `${String(total)}件中 ${String(ngCount)}件 落ちた`
-      : verdict === "unverified"
-        ? `${String(total)}件中 ${String(unverifiedCount)}件 未確認`
-        : `${String(total)}件すべて通過`
-  return `<div class="checks-heading">検証<span class="checks-verdict-word">${word}</span></div>`
-}
-
-/** 全部 ok のときの、小見出しの下の欄。全行の一覧。 */
-function allOkBodyMarkdown(
-  checks: readonly ReportCheck[],
-  commandDuration: (command: string) => MeasuredTime,
-): string {
-  const rows = checks.map((check) => checkRowMarkdown(check, commandDuration)).join("")
-  return `<div role="table" aria-label="検証結果">${rows}</div>`
 }
 
 /** 検証1項目のうち、問題として並べるもの（ng / unverified）。 */
@@ -125,25 +113,43 @@ function isReportCheckProblem(check: ReportCheck): check is ReportCheckProblem {
   return check.status !== "ok"
 }
 
-/** ng / unverified があるときの、小見出しの下の欄。問題の項目（ng → unverified の順）と、通った項目の小さな札。 */
-function problemsBodyMarkdown(
-  checks: readonly ReportCheck[],
-  commandDuration: (command: string) => MeasuredTime,
-): string {
-  const problems = [
-    ...checks.filter(isReportCheckProblem).filter((check) => check.status === "ng"),
-    ...checks.filter(isReportCheckProblem).filter((check) => check.status === "unverified"),
-  ]
+/**
+ * 総括行。「✓ 検証 n件 通った <figure · figure>」「？ k件 確かめていない」「✕ m件 落ちた」「● お願い 1 ↓」のうち、あるものだけを並べる。
+ * 通った項目が無いときは頭に「検証」の語だけを置く。色を付けるのは記号と状態の語（`checks-summary-mark`・`checks-summary-word`）だけ。
+ */
+function checksSummaryMarkdown(checks: readonly ReportCheck[], favor: ReportFavorTarget): string {
+  const countOf = (status: ReportCheckStatus): string =>
+    String(checks.filter((check) => check.status === status).length)
   const passed = checks.filter((check) => check.status === "ok")
-  const problemRows = problems.map((check) => checkProblemMarkdown(check, commandDuration)).join("")
-  const passedChips =
+  const figures = passed
+    .map((check) => check.figure.trim())
+    .filter((figure) => figure !== "")
+    .map(htmlInline)
+    .join(" · ")
+  const head =
     passed.length === 0
+      ? `<span class="checks-summary-lead">検証</span>`
+      : `<span class="checks-summary-part checks-summary-ok">` +
+        `<span class="checks-summary-mark">✓</span>検証 ${countOf("ok")}件 ` +
+        `<span class="checks-summary-word">通った</span></span>` +
+        (figures === "" ? "" : `<span class="checks-summary-figures">${figures}</span>`)
+  const problemParts = REPORT_CHECK_PROBLEM_STATUSES.filter((status) =>
+    checks.some((check) => check.status === status),
+  ).map(
+    (status) =>
+      `<span class="checks-summary-part checks-summary-${status}">` +
+      `<span class="checks-summary-mark">${REPORT_CHECK_PROBLEM_MARKS[status]}</span>${countOf(status)}件 ` +
+      `<span class="checks-summary-word">${REPORT_CHECK_PROBLEM_WORDS[status]}</span></span>`,
+  )
+  const favorLink =
+    favor.kind === "none"
       ? ""
-      : `<div class="checks-passed">${passed.map(checkPassedChipMarkdown).join("")}</div>`
-  return `<div role="table" aria-label="検証結果の問題">${problemRows}</div>${passedChips}`
+      : `<span class="checks-summary-favor"><a href="#${htmlAttribute(favor.id)}">` +
+        `<span class="checks-summary-favor-mark">●</span>お願い 1 ↓</a></span>`
+  return `<div class="checks-summary">${[head, ...problemParts].join("")}${favorLink}</div>`
 }
 
-/** 問題の1項目。状態の印・label の行と、detail の段。figure・所要時間も label の右に添える。 */
+/** 問題の1項目。状態の印・label・figure・所要時間の行と、detail の段、unverified なら確かめ方の段。 */
 function checkProblemMarkdown(
   check: ReportCheckProblem,
   commandDuration: (command: string) => MeasuredTime,
@@ -152,29 +158,47 @@ function checkProblemMarkdown(
   const detail =
     check.detail.trim() === ""
       ? ""
-      : `<p class="checks-problem-detail">${htmlInline(check.detail)}</p>`
+      : `<div class="checks-problem-detail">${htmlInline(check.detail)}</div>`
+  const howToVerify =
+    check.status !== "unverified" || check.howToVerify.trim() === ""
+      ? ""
+      : `<div class="checks-problem-how"><span class="checks-problem-how-label">確かめ方:</span> ${htmlInline(check.howToVerify)}</div>`
   return (
     `<div class="checks-problem checks-problem-${check.status}" role="row">` +
-    `<div class="checks-problem-head">` +
-    `<span class="checks-problem-mark">${REPORT_CHECK_PROBLEM_MARK_TEXTS[check.status]}</span>` +
+    `<span class="checks-problem-mark">${REPORT_CHECK_PROBLEM_MARKS[check.status]} ` +
+    `<span class="checks-problem-word">${REPORT_CHECK_PROBLEM_WORDS[check.status]}</span></span>` +
+    `<div class="checks-problem-body"><div class="checks-problem-head">` +
     `<span class="checks-problem-label">${htmlInline(check.label)}</span>` +
     `<span class="checks-problem-figure">${figure}</span>` +
     `<span class="checks-problem-time">${time}</span>` +
-    `</div>${detail}</div>`
+    `</div>${detail}${howToVerify}</div></div>`
   )
 }
 
-/** 通った1項目の小さな札。文字は label の頭（最初の全角の括弧「（」より前。無ければ全文）、`title` に全文。 */
-function checkPassedChipMarkdown(check: ReportCheck): string {
-  const headIndex = check.label.indexOf("（")
-  const head = headIndex === -1 ? check.label : check.label.slice(0, headIndex)
+/**
+ * 通った項目を畳んだ `<details>`。`<summary>` は「✓ 通った n件」と label の頭（最初の全角の括弧「（」より前。無ければ全文）を ` · ` で連ねたもの。
+ * 開くと figure・所要時間つきの一覧。
+ */
+function passedFoldMarkdown(
+  passed: readonly ReportCheck[],
+  commandDuration: (command: string) => MeasuredTime,
+): string {
+  const heads = passed
+    .map((check) => {
+      const headIndex = check.label.indexOf("（")
+      return htmlInline(headIndex === -1 ? check.label : check.label.slice(0, headIndex))
+    })
+    .join(" · ")
+  const rows = passed.map((check) => checkRowMarkdown(check, commandDuration)).join("")
   return (
-    `<span class="checks-passed-chip" title="${htmlAttribute(check.label)}">` +
-    `<span class="checks-passed-chip-mark">✓</span>${htmlInline(head)}</span>`
+    `<div class="checks-passed"><details><summary>` +
+    `<span class="checks-passed-mark">✓ 通った ${String(passed.length)}件</span>` +
+    `<span class="checks-passed-labels">${heads}</span></summary>` +
+    `<div role="table" aria-label="検証結果">${rows}</div></details></div>`
   )
 }
 
-/** 全部 ok のときの一覧の1行。記号・label・figure・所要時間を1行に並べる。 */
+/** 通った項目の一覧の1行。記号・label・figure・所要時間を1行に並べる。 */
 function checkRowMarkdown(
   check: ReportCheck,
   commandDuration: (command: string) => MeasuredTime,
@@ -202,8 +226,18 @@ function figureAndTimeOf(
   }
 }
 
-/** 問題の行に出す「記号＋状態語」。 */
-const REPORT_CHECK_PROBLEM_MARK_TEXTS = {
-  ng: "✕ 落ちた",
-  unverified: "？ 未確認",
+/** 総括行に並べる順。 */
+const REPORT_CHECK_PROBLEM_STATUSES = ["unverified", "ng"] as const satisfies readonly Exclude<
+  ReportCheckStatus,
+  "ok"
+>[]
+
+const REPORT_CHECK_PROBLEM_MARKS = {
+  ng: "✕",
+  unverified: "？",
+} as const satisfies Record<Exclude<ReportCheckStatus, "ok">, string>
+
+const REPORT_CHECK_PROBLEM_WORDS = {
+  ng: "落ちた",
+  unverified: "確かめていない",
 } as const satisfies Record<Exclude<ReportCheckStatus, "ok">, string>
