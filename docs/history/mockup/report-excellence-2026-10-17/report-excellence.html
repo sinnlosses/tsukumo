@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>レポートの紙面 案 — 読み手の問いに位置で答える（2026-10-17）</title>
+<style>
+/* 見本の中でだけ使うトークン。地・字・差し色は theme.css の既定（差し色は白鈴パックの値）。
+   新しく足すのは「拾う字」の段（--ink-bright）と、静かな罫（--rule-soft）の2つだけ。 */
+:root{
+  --ground:#191720; --surface:#221f2b; --ink:#e8e3ea; --accent:#f2b0a0;
+  --ink-bright:#f6f3f8;                                             /* 拾う字: 見出し・太字・数（surface 上 約15:1） */
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);      /* 読ませる補助の字 */
+  --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);     /* 読ませない印 */
+  --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);       /* 輪郭を担う罫（領域の境目・押せる縁） */
+  --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);  /* 表の行・柱の罫（約1.3:1） */
+  --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+  --rule-accent: color-mix(in srgb, var(--rule), var(--accent) 60%);
+  --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
+  --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
+  --state-ok:#7ee081; --state-warn:#e3c766; --state-ng:#f2a0a0; --state-ask:#c7aef0; --state-info:#9cc1ee;
+  --font-sans: system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-code: "IBM Plex Mono", var(--font-mono);
+  /* 字の段と行送り（15px の本文を 26px の格子に乗せ、あきは 13px の倍数） */
+  --fs-headline:21px; --fs-section:21px; --fs-sub:17px; --fs-body:15px; --fs-dense:14px; --fs-caption:13px; --fs-label:12px;
+  --lh-body:26px; --gap:13px; --gap-2:26px; --gap-4:52px;
+  --measure:42em;
+}
+body{margin:0;padding:32px;background:#17161e;color:var(--ink);font-family:var(--font-sans);font-size:15px;line-height:1.6;font-size-adjust: ex-height 0.545;}
+h1.mock-title{margin:0 0 4px;font-size:20px;font-weight:600;color:var(--ink-bright)}
+.mock-caption{font-size:12.5px;color:var(--ink-quiet);margin:0 0 12px}
+.mock-row{display:flex;flex-direction:column;gap:40px;align-items:flex-start}
+
+/* ===== 画面の器（メインビューの領域を実寸で切り出す。1400×900 の窓で 1004×512） ===== */
+.pane{box-sizing:border-box;width:1004px;background:var(--surface);border:1px solid var(--rule);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.pane.first{height:512px}
+.strip{flex:none;display:flex;align-items:center;gap:10px;height:52px;padding:0 20px 0 22px;border-bottom:1px solid var(--rule-quiet);font-size:13px;color:var(--ink-soft)}
+.strip .dot{width:8px;height:8px;border-radius:50%;background:var(--state-ok)}
+.strip .right{margin-left:auto;display:flex;gap:16px;align-items:center}
+.strip .mono{font-family:var(--font-mono);font-size:12px;color:var(--ink-quiet)}
+.strip .steps{padding:4px 12px;border:1px solid var(--rule);border-radius:999px;color:var(--ink);font-size:13px}
+.turn-body{flex:1;min-height:0;display:grid;grid-template-columns:232px minmax(0,1fr);overflow:hidden}
+.pane.norail .turn-body{grid-template-columns:minmax(0,1fr)}
+.rail{border-right:1px solid var(--rule-quiet);padding:14px 10px;font-size:13px;color:var(--ink-quiet)}
+.rail .head{display:flex;justify-content:space-between;padding:0 10px 10px;font-size:12px}
+.rail .item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--surface-raised);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail .item::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.rail .sub{padding:6px 12px 6px 26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail .sub.cur{color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+.content{min-width:0;overflow:hidden;padding:18px 24px 24px 24px}
+
+/* ===== レポート本体 ===== */
+.report{display:grid;grid-template-columns:minmax(0,var(--measure)) minmax(0,1fr);column-gap:28px;font-size:var(--fs-body);line-height:var(--lh-body);color:var(--ink);
+  text-autospace:normal;text-spacing-trim:trim-start;line-break:strict;font-kerning:normal;font-synthesis:weight;overflow-wrap:anywhere}
+.report > *{grid-column:1}
+.report > .wide{grid-column:1 / -1}
+.report p{margin:0 0 var(--gap);text-wrap:pretty}
+.report code{font-family:var(--font-code);font-size:.88em;background:var(--surface-raised);padding:1px 5px;border-radius:4px;color:var(--ink);box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.report a.path{color:var(--ink);text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:3px}
+.report strong{color:var(--ink-bright);font-weight:600}
+
+/* 判決の頭: 目録 → 見出し → 変化の1文＋なぜの1文 → 合図の行 */
+.catalog{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px;margin:0 0 6px;font-size:var(--fs-label);color:var(--ink-quiet)}
+.catalog .sep{color:var(--rule)}
+.catalog .id{font-family:var(--font-mono);color:var(--accent)}
+.catalog .done{color:var(--accent);font-weight:600}
+.catalog .meta{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.catalog .meta .plus{color:var(--state-ok)} .catalog .meta .minus{color:var(--state-ng)}
+.headline{margin:0 0 var(--gap);font-size:var(--fs-headline);line-height:1.45;font-weight:700;color:var(--ink-bright);word-break:auto-phrase;text-wrap:balance;letter-spacing:.01em}
+.conclusion{margin:0 0 var(--gap-2)}
+.conclusion .why{color:var(--ink-soft)}
+.signals{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;margin:0 0 var(--gap);padding:9px 0;border-top:1px solid var(--rule-soft);border-bottom:1px solid var(--rule-soft);font-size:var(--fs-caption);line-height:20px;color:var(--ink-soft)}
+.signals .sig b{font-weight:600;color:var(--ink-bright)}
+.signals .ok{color:var(--state-ok);font-family:var(--font-mono);font-size:12px;font-weight:700}
+.signals .ask{color:var(--state-ask);font-family:var(--font-mono);font-size:12px;font-weight:700}
+.signals .n{font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+.signals .fav{margin-left:auto;display:inline-flex;gap:7px;align-items:center;color:var(--ink)}
+.signals .fav::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+/* 検証: 確かめていない行だけ開き、確かめ方を添える。通った行は1行に畳む */
+.checks{margin:0 0 var(--gap-2);font-size:var(--fs-caption);line-height:20px}
+.check{display:grid;grid-template-columns:7em minmax(0,1fr);column-gap:12px;padding:5px 0;border-bottom:1px solid var(--rule-soft)}
+.check:last-child{border-bottom:none}
+.check .mk{font-family:var(--font-mono);font-size:12px;white-space:nowrap}
+.check.ask .mk{color:var(--state-ask);font-weight:700}
+.check.ask .lb{color:var(--ink)}
+.check .how{color:var(--ink-soft)}
+.check .how b{font-weight:500;color:var(--ink-soft)}
+.check.rest .mk{color:var(--state-ok)}
+.check.rest .lb{color:var(--ink-quiet)}
+
+/* 節の見出し: 上 52 / 下 13。罫は ## だけ。拾う字の段で明るく */
+.report h2{margin:var(--gap-4) 0 var(--gap);padding-bottom:6px;font-size:var(--fs-section);line-height:1.4;font-weight:700;color:var(--ink-bright);border-bottom:1px solid var(--rule-accent);word-break:auto-phrase;text-wrap:balance;letter-spacing:.01em;font-feature-settings:"palt"}
+.report h2.after-head{margin-top:var(--gap-2)}
+.report h3{margin:var(--gap-2) 0 var(--gap);font-size:var(--fs-sub);line-height:1.4;font-weight:700;color:var(--ink-bright)}
+
+/* 図と表の題: 左揃え・2段（主張は拾う字、補足は静かな字）。図は題を上に */
+.cap{margin:0 0 8px;font-size:var(--fs-caption);line-height:20px;text-wrap:balance}
+.cap .no{font-family:var(--font-mono);font-size:12px;color:var(--ink-quiet);margin-right:8px}
+.cap .claim{color:var(--ink-bright);font-weight:600}
+.cap .sub{display:block;color:var(--ink-quiet)}
+.figure{margin:0 0 var(--gap-2)}
+.figure svg{display:block;max-width:100%}
+.figure .legend{display:flex;gap:16px;margin-top:6px;font-size:var(--fs-label);color:var(--ink-quiet)}
+
+/* 表: 1列目は本文の左端に揃え、行罫は 1.3:1、見出し行だけ一段濃い。6行以上は5行ごとに隙間 */
+.report table{border-collapse:collapse;width:auto;max-width:100%;margin:0 0 var(--gap-2);font-size:var(--fs-dense);line-height:20px}
+.report th{text-align:left;font-weight:500;font-size:var(--fs-caption);color:var(--ink-soft);padding:0 20px 6px 0;border-bottom:1px solid var(--rule);white-space:nowrap}
+.report td{padding:6px 20px 6px 0;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+.report tr:last-child td{border-bottom:none}
+.report th:last-child,.report td:last-child{padding-right:0}
+.report td.num,.report th.num{text-align:right;font-variant-numeric:tabular-nums}
+.from{color:var(--ink-quiet)}
+.arrow{color:var(--ink-quiet);margin:0 4px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-caption)}
+.st::before{content:"✓";font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--state-ok)}
+.st.ask::before{content:"?";color:var(--state-ask)}
+
+/* 箇条書き（label 付き）: 点は静かな字、項目どうし 8px */
+.report ul.labeled{list-style:none;margin:0 0 var(--gap-2);padding:0}
+.report ul.labeled li{display:grid;grid-template-columns:9em minmax(0,1fr);column-gap:16px;padding:4px 0;border-bottom:1px solid var(--rule-soft)}
+.report ul.labeled li:last-child{border-bottom:none}
+.report ul.labeled .lb{color:var(--ink-bright);font-weight:600;font-size:var(--fs-dense)}
+
+/* 注意書き: 地を染めず、罫と題の字だけ（warn / ng のときだけ地を薄く染める） */
+.note{margin:0 0 var(--gap-2);padding:2px 0 2px 14px;border-left:3px solid var(--state-ask);font-size:var(--fs-dense);line-height:22px}
+.note .kind{display:block;font-size:var(--fs-label);font-weight:600;color:var(--state-ask);letter-spacing:.06em;margin-bottom:2px}
+
+/* 余白の柱: 本文の右に、出典・補足・押すと開くパスを 12px で置く。本文の流れを切らない */
+.aside{grid-column:2;align-self:start;font-size:var(--fs-label);line-height:18px;color:var(--ink-quiet);padding-left:14px;border-left:1px solid var(--rule-soft);margin-bottom:var(--gap)}
+.aside b{display:block;font-weight:600;color:var(--ink-soft);margin-bottom:2px}
+.aside code{font-size:11.5px;background:none;padding:0;color:var(--ink-soft)}
+.pane:not(.norail) .aside{display:none}  /* 目次の列が開いて本文の右が 150px を切るときは、柱を出さず本文の中に畳む（下の .inline-aside） */
+.inline-aside{display:none;font-size:var(--fs-label);line-height:18px;color:var(--ink-quiet);margin:-6px 0 var(--gap)}
+.pane:not(.norail) .inline-aside{display:block}
+
+/* お願い: 末尾に1つ。合図の行の「お願い 1 ↓」から飛ぶ */
+.favor{margin:var(--gap-2) 0 0;padding:10px 14px;border-left:3px solid var(--accent);background:var(--surface-accent);border-radius:0 8px 8px 0;font-size:var(--fs-dense);line-height:22px}
+.favor .lbl{display:block;font-size:var(--fs-label);letter-spacing:.08em;color:var(--ink-soft);margin-bottom:2px}
+</style>
+</head>
+<body>
+<h1 class="mock-title">レポートの紙面 案 — 読み手の問いに位置で答える</h1>
+<p class="mock-caption">見本の中の文言と ID は架空（疑似セッション report-task-verdict と同じ中身）。上: 1400×900・目次の列あり・最初の1画面。下: 目次の列を畳んだ幅で、右に余白の柱が出る。</p>
+
+<div class="mock-row">
+
+<!-- ===== A: 最初の1画面（目次の列あり） ===== -->
+<div class="pane first" id="pane-first">
+  <div class="strip"><span class="dot"></span>完了<span class="right"><span class="mono">所要 2秒</span><span class="steps">手順 2 ▾</span></span></div>
+  <div class="turn-body">
+    <div class="rail">
+      <div class="head"><span>やり取り</span><span>‹</span></div>
+      <div class="item">/next-task t-002（架空…</div>
+      <div class="sub cur">札の組み立てを1箇所にま…</div>
+      <div class="sub">位置の字の決まり（架空）</div>
+      <div class="sub">残したこと（架空）</div>
+    </div>
+    <div class="content">
+      <div class="report">
+        <p class="catalog"><span>最終レポート</span><span class="sep">·</span><span class="id">T-002</span><span class="sep">·</span><span class="done">✓ 完了</span><span class="sep">·</span><span class="meta">変更 2 ファイル <span class="plus">+38</span> <span class="minus">−12</span></span></p>
+        <h3 class="headline">架空の札に段が1つでも 1/1 のように位置を出す</h3>
+        <p class="conclusion">次に起こす架空の画面から、段が1つでも札に <code>1/1</code> と位置が出ます。<span class="why">1段の依頼でも進みを同じ場所で追え、段の有無で札の形が変わらなくなります。</span></p>
+        <div class="signals">
+          <span class="sig"><span class="ok">✓</span> <b>検証</b> 3件 通った <span class="n">単体 3152 · E2E 111</span></span>
+          <span class="sig"><span class="ask">?</span> 1件 確かめていない</span>
+          <span class="fav">お願い 1 ↓</span>
+        </div>
+        <div class="checks">
+          <div class="check ask"><span class="mk">? 確かめていない</span><span class="lb">720×900 で同じ札を見る<br><span class="how"><b>確かめ方:</b> 窓を 720 幅にして、札の頭の <code>1/1</code> が折り返さずに出ることを見る</span></span></div>
+          <div class="check rest"><span class="mk">✓ 通った 3件</span><span class="lb">pnpm run check · 1400×900 で段が1つの札を見る · find-stray-reference</span></div>
+        </div>
+        <p class="cap"><span class="no">図 1</span><span class="claim">札の位置は段の数ではなく、段取りの有無で決まる</span><span class="sub">疑似セッションの3場面（段 0・1・3）で札の頭を比べた</span></p>
+        <div class="figure">
+          <svg viewBox="0 0 600 120" width="600" height="120" font-family="system-ui" font-size="13">
+            <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a39fab"/></marker></defs>
+            <rect x="4" y="40" width="88" height="40" rx="20" fill="none" stroke="#6e6a78"/><text x="48" y="65" text-anchor="middle" fill="#e8e3ea">依頼が届く</text>
+            <path d="M92 60 L150 60" stroke="#a39fab" marker-end="url(#ah)"/>
+            <path d="M210 28 L260 60 L210 92 L160 60 Z" fill="none" stroke="#6e6a78"/><text x="210" y="64" text-anchor="middle" fill="#e8e3ea">段取り?</text>
+            <path d="M260 60 L330 60" stroke="#a39fab" marker-end="url(#ah)"/><text x="295" y="52" text-anchor="middle" fill="#a39fab" font-size="12">ある（1段でも）</text>
+            <path d="M210 92 L210 110 L330 110" fill="none" stroke="#a39fab" marker-end="url(#ah)"/><text x="270" y="104" text-anchor="middle" fill="#a39fab" font-size="12">ない</text>
+            <rect x="332" y="40" width="176" height="40" rx="6" fill="none" stroke="#f2b0a0"/><text x="420" y="65" text-anchor="middle" fill="#f6f3f8">札の頭に「n/N」を出す</text>
+            <rect x="332" y="92" width="176" height="28" rx="6" fill="none" stroke="#6e6a78" stroke-dasharray="4 3"/><text x="420" y="111" text-anchor="middle" fill="#a39fab">位置の字なし（今まで通り）</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== B: 目次の列を畳んだ幅。右に余白の柱 ===== -->
+<div class="pane norail" id="pane-wide">
+  <div class="strip"><span class="dot"></span>完了<span class="right"><span class="mono">所要 2秒</span><span class="steps">手順 2 ▾</span></span></div>
+  <div class="turn-body">
+    <div class="content">
+      <div class="report">
+        <p class="catalog"><span>最終レポート</span><span class="sep">·</span><span class="id">T-002</span><span class="sep">·</span><span class="done">✓ 完了</span><span class="sep">·</span><span class="meta">変更 2 ファイル <span class="plus">+38</span> <span class="minus">−12</span></span></p>
+        <h3 class="headline">架空の札に段が1つでも 1/1 のように位置を出す</h3>
+        <p class="conclusion">次に起こす架空の画面から、段が1つでも札に <code>1/1</code> と位置が出ます。<span class="why">1段の依頼でも進みを同じ場所で追え、段の有無で札の形が変わらなくなります。</span></p>
+        <div class="signals">
+          <span class="sig"><span class="ok">✓</span> <b>検証</b> 3件 通った <span class="n">単体 3152 · E2E 111</span></span>
+          <span class="sig"><span class="ask">?</span> 1件 確かめていない</span>
+          <span class="fav">お願い 1 ↓</span>
+        </div>
+        <div class="checks">
+          <div class="check ask"><span class="mk">? 確かめていない</span><span class="lb">720×900 で同じ札を見る<br><span class="how"><b>確かめ方:</b> 窓を 720 幅にして、札の頭の <code>1/1</code> が折り返さずに出ることを見る</span></span></div>
+          <div class="check rest"><span class="mk">✓ 通った 3件</span><span class="lb">pnpm run check · 1400×900 で段が1つの札を見る · find-stray-reference</span></div>
+        </div>
+
+        <p class="cap"><span class="no">図 1</span><span class="claim">札の位置は段の数ではなく、段取りの有無で決まる</span><span class="sub">疑似セッションの3場面（段 0・1・3）で札の頭を比べた</span></p>
+        <div class="figure">
+          <svg viewBox="0 0 600 120" width="600" height="120" font-family="system-ui" font-size="13">
+            <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a39fab"/></marker></defs>
+            <rect x="4" y="40" width="88" height="40" rx="20" fill="none" stroke="#6e6a78"/><text x="48" y="65" text-anchor="middle" fill="#e8e3ea">依頼が届く</text>
+            <path d="M92 60 L150 60" stroke="#a39fab" marker-end="url(#ah2)"/>
+            <path d="M210 28 L260 60 L210 92 L160 60 Z" fill="none" stroke="#6e6a78"/><text x="210" y="64" text-anchor="middle" fill="#e8e3ea">段取り?</text>
+            <path d="M260 60 L330 60" stroke="#a39fab" marker-end="url(#ah2)"/><text x="295" y="52" text-anchor="middle" fill="#a39fab" font-size="12">ある（1段でも）</text>
+            <path d="M210 92 L210 110 L330 110" fill="none" stroke="#a39fab" marker-end="url(#ah2)"/><text x="270" y="104" text-anchor="middle" fill="#a39fab" font-size="12">ない</text>
+            <rect x="332" y="40" width="176" height="40" rx="6" fill="none" stroke="#f2b0a0"/><text x="420" y="65" text-anchor="middle" fill="#f6f3f8">札の頭に「n/N」を出す</text>
+            <rect x="332" y="92" width="176" height="28" rx="6" fill="none" stroke="#6e6a78" stroke-dasharray="4 3"/><text x="420" y="111" text-anchor="middle" fill="#a39fab">位置の字なし（今まで通り）</text>
+          </svg>
+        </div>
+        <div class="aside"><b>出どころ</b>疑似セッション report-task-verdict・work-plan-quick・work-plan の3場面。撮った画は /tmp に置き、リポジトリには入れない</div>
+
+        <h2 class="after-head">札の組み立てを1箇所にまとめた（架空）</h2>
+        <p>札の頭を組む関数を <a class="path" href="#"><code>work-strip.tsx:42</code></a> の <code>stripHead</code> に寄せ、段の数で分かれていた2つの経路を1つにした。段が1つの依頼は、これまで位置の字を持たない経路に落ちていた。</p>
+        <div class="aside"><b>どこを見るか</b><code>work-strip.tsx:42</code> は押すと Orca のエディタがその行で開く。残りの差分は札のテストだけ</div>
+        <p class="cap"><span class="no">表 1</span><span class="claim">直した場所は2つで、どちらも札の頭の中</span><span class="sub">列は 場所・前・後。状態は E2E の期待値の更新で確かめた</span></p>
+        <table>
+          <thead><tr><th>場所</th><th>前</th><th>後</th><th>状態</th></tr></thead>
+          <tbody>
+            <tr><td><code>stripHead</code></td><td><span class="from">段が2つ以上のときだけ位置</span></td><td>段取りがあれば位置</td><td><span class="st">E2E 4本 更新</span></td></tr>
+            <tr><td><code>phaseLabel</code></td><td><span class="from">「1/1」を空に畳む</span></td><td>そのまま出す</td><td><span class="st">単体 3件 追加</span></td></tr>
+          </tbody>
+        </table>
+
+        <h2>位置の字の決まり（架空）</h2>
+        <ul class="labeled">
+          <li><span class="lb">段取りあり</span><span>段の数にかかわらず「n/N」。1段なら「1/1」</span></li>
+          <li><span class="lb">段取りなし</span><span>位置の字を出さない。帯も今までどおり</span></li>
+        </ul>
+        <div class="aside"><b>覚え書き</b>760px 以下の札は頭の2行に同じものを持つので、ここは触っていない</div>
+        <div class="note"><span class="kind">確かめていない</span>760px 以下の札で位置の字が折り返すかは見ていない。上の「確かめ方」の手順で見られる。</div>
+        <p class="inline-aside">出どころ: 疑似セッション report-task-verdict・work-plan-quick・work-plan の3場面 ／ どこを見るか: <code>work-strip.tsx:42</code>（押すと行で開く）</p>
+
+        <div class="favor"><span class="lbl">お願い</span>720 幅の窓で札の頭を一度見て、折り返していたら知らせてください。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
