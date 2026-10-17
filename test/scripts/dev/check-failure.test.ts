@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest"
 
 import {
   describeFailedStages,
+  parseFailedFiles,
   parseFailedTests,
   shouldStopRunningStages,
   type StageOutcome,
@@ -107,5 +108,32 @@ describe("parseFailedTests", () => {
     expect(parseFailedTests("{", "/repo")).toEqual([])
     expect(parseFailedTests("[]", "/repo")).toEqual([])
     expect(parseFailedTests('{"testResults":3}', "/repo")).toEqual([])
+  })
+})
+
+describe("parseFailedFiles", () => {
+  test("bail で打ち切られたファイル（passed で assertionResults が空）は落ちたファイルに数えない", () => {
+    const json = JSON.stringify({
+      numFailedTests: 1,
+      testResults: [
+        {
+          name: "/repo/test/e2e/a.test.ts",
+          status: "failed",
+          assertionResults: [
+            { fullName: "a1", status: "failed" },
+            { fullName: "a2", status: "pending" },
+          ],
+        },
+        { name: "/repo/test/e2e/b.test.ts", status: "passed", assertionResults: [] },
+      ],
+    })
+    expect(parseFailedFiles(json, "/repo")).toEqual({
+      files: ["test/e2e/a.test.ts"],
+      failedTestCount: 1,
+    })
+  })
+
+  test("読めない JSON は空の列と 0", () => {
+    expect(parseFailedFiles("{", "/repo")).toEqual({ files: [], failedTestCount: 0 })
   })
 })

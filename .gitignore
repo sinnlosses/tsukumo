@@ -17,3 +17,6 @@ characters/local/
 
 # vitest のアーティファクトディレクトリ
 .vitest/
+
+# pnpm run check が同じ木での打ち直しのために残す、通った段の控え（書きかけの一時ファイルも）
+/.check-record.json*

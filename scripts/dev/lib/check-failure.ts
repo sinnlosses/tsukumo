@@ -58,6 +58,32 @@ export function parseFailedTests(json: string, root: string): readonly string[] 
   })
 }
 
+export type FailedFiles = {
+  /** 落ちたファイルのルートからの相対パス。 */
+  readonly files: readonly string[]
+  /** レポートの `numFailedTests`。`--bail` が発火したかをこの数で見る。 */
+  readonly failedTestCount: number
+}
+
+/**
+ * vitest の JSON レポーターの出力から、落ちたファイルと落ちたテストの数を読む。
+ * bail で打ち切られたファイルは `passed` と書かれるので、落ちたファイルには入らない。
+ * 読めない・形が違う JSON は空の列と 0。
+ */
+export function parseFailedFiles(json: string, root: string): FailedFiles {
+  const report = parseJson(json)
+  if (!isRecord(report) || !Array.isArray(report.testResults)) {
+    return { files: [], failedTestCount: 0 }
+  }
+  const files = report.testResults.flatMap((file: unknown): readonly string[] =>
+    isRecord(file) && file.status === "failed" && typeof file.name === "string"
+      ? [relative(root, file.name)]
+      : [],
+  )
+  const failedTestCount = typeof report.numFailedTests === "number" ? report.numFailedTests : 0
+  return { files, failedTestCount }
+}
+
 function parseJson(text: string): unknown {
   try {
     return JSON.parse(text)

@@ -10,7 +10,7 @@ export type Stage = {
   readonly heavy: boolean
 }
 
-const E2E_BAIL_COUNT = 3
+export const E2E_BAIL_COUNT = 3
 
 /** `files` は流す E2E のファイル（空なら全件）。 */
 export function e2eStage(files: readonly string[]): Stage {

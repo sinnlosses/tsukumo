@@ -8,6 +8,9 @@
 //
 // 段を組む前に、submodule が記録の版とずれていれば `git submodule update --init` で揃える。
 //
+// 同じ木での打ち直しは、根の `.check-record.json` の控えから、前回通った段を1回だけ飛ばし、
+// E2E は前回落ちたファイルだけを流す（判定は `planRerun`）。
+//
 // 使い方:
 //   node scripts/dev/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら文書の検査だけにする
 //   node scripts/dev/check.ts --full  # 文書だけの変更でなければ、5段すべてを、E2E は全件で走らせる
@@ -25,10 +28,19 @@ import { planE2eRun } from "../shared/e2e-selection-repository.ts"
 import { REPOSITORY_ROOT as ROOT } from "../shared/repository-root.ts"
 import {
   describeFailedStages,
+  type FailedFiles,
+  parseFailedFiles,
   parseFailedTests,
   shouldStopRunningStages,
   type StageOutcome,
 } from "./lib/check-failure.ts"
+import {
+  readCheckRecord,
+  removeCheckRecord,
+  worktreeTree,
+  writeCheckRecord,
+} from "./lib/check-record-repository.ts"
+import { nextRecord, planRerun, type StageRunResult } from "./lib/check-record.ts"
 import { e2eStage, planStages, type Stage } from "./lib/check-stage.ts"
 import { E2E_FULL_ENVIRONMENT } from "./lib/e2e-full-guard.ts"
 import {
@@ -45,6 +57,8 @@ const CHECK_USAGE = `使い方:
   node scripts/dev/check.ts --full  # 5段すべて、E2E は全件
 `
 
+const NO_FAILED_FILES = { files: [], failedTestCount: 0 } as const satisfies FailedFiles
+
 const forceFull = readForceFull(process.argv.slice(2))
 const priorityTool = findPriorityTool(process.env.PATH ?? "")
 
@@ -55,22 +69,44 @@ const stagePlan = planStages(changedPaths, chooseE2eStages, forceFull)
 if (stagePlan.notice !== "") {
   process.stdout.write(`${stagePlan.notice}\n`)
 }
-const activeStages = stagePlan.stages
+const tree = worktreeTree(ROOT)
+const rerunPlan = planRerun(stagePlan.stages, readCheckRecord(ROOT), tree)
+for (const notice of rerunPlan.notices) {
+  process.stdout.write(`${notice}\n`)
+}
+const activeStages = rerunPlan.stages.flatMap((entry) =>
+  entry.kind === "skip" ? [] : [entry.kind === "narrowed" ? entry.run : entry.planned],
+)
 
+const lightResults: StageRunResult[] = []
 for (const stage of activeStages.filter((candidate) => !candidate.heavy)) {
   const { command, args } = stageCommand(stage.name, stage.args, priorityTool)
   const result = spawnSync(command, args, {
     cwd: ROOT,
     stdio: "inherit",
   })
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1)
+  const status = result.status ?? 1
+  lightResults.push({ name: stage.name, status, stopped: false, failed: NO_FAILED_FILES })
+  if (status !== 0) {
+    saveRecord(lightResults)
+    process.exit(status)
   }
 }
 
 const heavyStages = activeStages.filter((stage) => stage.heavy)
-if (heavyStages.length > 0) {
-  await runConcurrently(heavyStages)
+const heavyResults = heavyStages.length > 0 ? await runConcurrently(heavyStages) : []
+saveRecord([...lightResults, ...heavyResults])
+
+/** 走らせている間に木が変わっていたら、控えを書かずに古い控えを消す。 */
+function saveRecord(results: readonly StageRunResult[]): void {
+  if (tree === "") {
+    return
+  }
+  if (worktreeTree(ROOT) !== tree) {
+    removeCheckRecord(ROOT)
+    return
+  }
+  writeCheckRecord(ROOT, nextRecord(tree, rerunPlan.stages, results))
 }
 
 /** 走らせている段。`stop` は自分が起こした子の pid だけに `SIGTERM` を送る。 */
@@ -79,7 +115,7 @@ type RunningStage = {
   readonly stop: () => void
 }
 
-async function runConcurrently(stages: readonly Stage[]): Promise<void> {
+async function runConcurrently(stages: readonly Stage[]): Promise<readonly BufferedResult[]> {
   const running = stages.map((stage) => startStage(stage))
   const finished: BufferedResult[] = []
   const results = await Promise.all(
@@ -104,6 +140,7 @@ async function runConcurrently(stages: readonly Stage[]): Promise<void> {
   if (failed !== undefined) {
     process.exitCode = failed.status
   }
+  return results
 }
 
 function startStage(stage: Stage): RunningStage {
@@ -154,6 +191,7 @@ async function runLockedIfFullE2e(stage: Stage, control: StopControl): Promise<B
       name: stage.name,
       status: 1,
       failedTests: [],
+      failed: NO_FAILED_FILES,
       stopped: false,
       output: `${error.message}\n`,
     }
@@ -212,18 +250,21 @@ function chooseE2eStages(): readonly Stage[] {
   return plan.kind === "none" ? [] : [e2eStage(plan.args)]
 }
 
+type StageReport = Pick<BufferedResult, "failedTests" | "failed">
+
 /** 段が書いた JSON レポートを読んで消す。無ければ空。 */
-function readFailedTests(reportPath: string): readonly string[] {
+function readReport(reportPath: string): StageReport {
   try {
-    return parseFailedTests(readFileSync(reportPath, "utf8"), ROOT)
+    const json = readFileSync(reportPath, "utf8")
+    return { failedTests: parseFailedTests(json, ROOT), failed: parseFailedFiles(json, ROOT) }
   } catch {
-    return []
+    return { failedTests: [], failed: NO_FAILED_FILES }
   } finally {
     rmSync(reportPath, { force: true })
   }
 }
 
-type BufferedResult = StageOutcome & { readonly output: string }
+type BufferedResult = StageOutcome & StageRunResult & { readonly output: string }
 
 function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult> {
   if (control.isStopRequested()) {
@@ -231,6 +272,7 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
       name: stage.name,
       status: 1,
       failedTests: [],
+      failed: NO_FAILED_FILES,
       stopped: true,
       output: "",
     })
@@ -261,7 +303,7 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
         name: stage.name,
         status,
         stopped: status !== 0 && control.isStopRequested(),
-        failedTests: readFailedTests(reportPath),
+        ...readReport(reportPath),
         output: Buffer.concat(chunks).toString("utf8"),
       })
     })
