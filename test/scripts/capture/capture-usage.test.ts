@@ -30,6 +30,9 @@ describe("capture の入口の崩れた引数", () => {
     ["capture-view.ts", "--scene", "x", "--stub-rpc", "planUsage.report"],
     ["capture-view.ts", "--scene", "x", "--stub-rpc", "planUsage.report={kind"],
     ["capture-view.ts", "--scene", "x", "--stub-rpc", "planUsage.report@0={}"],
+    ["capture-view.ts", "--scene", "x", "--viewport", "10", "--paper-metric"],
+    ["capture-view.ts", "--scene", "x", "--viewport", "1000x800"],
+    ["capture-view.ts", "--scene", "x", "--paper-metric", "--reveal-at", "500"],
   ])("%s %s は使い方を出して終了コード 2 で止まる", async (script, ...args) => {
     const result = await runSubprocess("node", [`scripts/capture/${script}`, ...args], {
       cwd: ROOT,

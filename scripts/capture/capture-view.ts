@@ -48,6 +48,7 @@ import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import {
   applyPreparations,
+  MAIN_REGION_SELECTOR,
   openPage,
   revealPageAt,
   SKIP_REVEAL_KEY,
@@ -64,6 +65,7 @@ import { isStubbedCall, readRpcStub, type RpcStub, rpcPathOf } from "./lib/captu
 import { CATALOG } from "./lib/catalog-entry.ts"
 import { imageSceneEntry, launchPlaceOf, workspaceOf } from "./lib/catalog-setup.ts"
 import { launchFakeScene } from "./lib/fake-scene-launch.ts"
+import { formatPaperMetric, measurePaperMetric } from "./lib/paper-metric.ts"
 import {
   formatRevealSnapshot,
   readRevealSnapshot,
@@ -80,6 +82,14 @@ import {
 /** 既定の窓の大きさ。実機の目視で使ってきた値に揃えてある。 */
 const DEFAULT_WIDTH = 1400
 const DEFAULT_HEIGHT = 900
+
+type WindowSize = { readonly width: number; readonly height: number }
+
+/** `--paper-metric` が `--viewport` の指定なしで測る窓の並び。 */
+const DEFAULT_PAPER_METRIC_VIEWPORTS: readonly WindowSize[] = [
+  { width: 1440, height: 900 },
+  { width: 1920, height: 1080 },
+]
 
 /** 既定の出力先。リポジトリの外に置く（会話の内容が写るため）。 */
 const DEFAULT_OUT = "/tmp/tsukumo-view.png"
@@ -122,6 +132,8 @@ const USAGE = `使い方:
   --wait-after <selector> その位置で要素が出るのを待つ（--hash で開いた画面の読み込みなど。出なければ失敗して終わる）
                         （7つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
   --stub-rpc '<手続き>[@<範囲>]=<JSON>'  手続きの応答を差し替えて撮る（何度でも指定できる。例 'planUsage.report={"kind":"not-applicable"}'。範囲は呼び出しの何回目かを1から数えて 3 か 1-2、省くと全部。範囲の外はサーバへ通す）
+  --paper-metric        レポートの紙面の物差し（テンプレの手がかり・色相の族・判決の頭の高さ・読む面を超える図・横並びの縦落ち）を窓ごとに表で出す（既定は 1440x900 と 1920x1080。--reveal-at とは併用できない）
+  --viewport <幅>x<高さ> --paper-metric で測る窓（何度でも指定できる。--paper-metric と一緒にだけ使う）
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
 `
 
@@ -140,6 +152,8 @@ type Options =
       readonly clock: number | undefined
       readonly revealAt: number | undefined
       readonly stubs: readonly RpcStub[]
+      readonly paperMetric: boolean
+      readonly viewports: readonly WindowSize[]
       readonly fullPage: boolean
     }
 
@@ -320,10 +334,39 @@ async function capture(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     )
     process.stdout.write(`横のはみ出し: ${String(overflow)}px\n`)
+
+    if (options.paperMetric) {
+      return await printPaperMetrics(page, options.viewports)
+    }
     return 0
   } finally {
     await browser.close()
   }
+}
+
+/** 窓ごとに演出を打ち切って落ち着かせ、紙面の物差しを表で出す。測れなければ理由を出して 1。 */
+async function printPaperMetrics(page: Page, viewports: readonly WindowSize[]): Promise<number> {
+  for (const viewport of viewports) {
+    try {
+      await page.setViewportSize(viewport)
+      await page.keyboard.press(SKIP_REVEAL_KEY)
+      await settlePage(page)
+      await page
+        .locator(MAIN_REGION_SELECTOR)
+        .first()
+        .evaluate((element) => {
+          element.scrollTop = 0
+        })
+      const rows = formatPaperMetric(await measurePaperMetric(page))
+      process.stdout.write(
+        `紙面の物差し ${String(viewport.width)}x${String(viewport.height)}\n${rows.join("\n")}\n`,
+      )
+    } catch (error) {
+      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
+      return 1
+    }
+  }
+  return 0
 }
 
 /** 数え上げをブラウザ側に置くと再マウントで数えが狂うので、Node 側の `calls` で持つ。 */
@@ -490,6 +533,8 @@ function readOptions(argv: readonly string[]): Options | undefined {
       clock: { type: "string" },
       size: { type: "string" },
       "stub-rpc": { type: "string", multiple: true },
+      "paper-metric": { type: "boolean" },
+      viewport: { type: "string", multiple: true },
       full: { type: "boolean" },
       "list-scenes": { type: "boolean" },
     },
@@ -510,6 +555,8 @@ function readOptions(argv: readonly string[]): Options | undefined {
   const clock = values.clock === undefined ? undefined : readClockInstant(values.clock)
   const size = values.size === undefined ? undefined : parseSize(values.size)
   const stubs = (values["stub-rpc"] ?? []).map(readRpcStub)
+  const paperMetric = values["paper-metric"] === true
+  const viewports = (values.viewport ?? []).map(parseSize)
   const urls = tokens.flatMap((token, index) =>
     token.kind === "positional" && !prepared?.textTokenIndexes.has(index) ? [token.value] : [],
   )
@@ -524,6 +571,9 @@ function readOptions(argv: readonly string[]): Options | undefined {
         prepared.preparations.length > 0)) ||
     (values.clock !== undefined && clock === undefined) ||
     stubs.some((stub) => stub === undefined) ||
+    viewports.some((viewport) => viewport === undefined) ||
+    (viewports.length > 0 && !paperMetric) ||
+    (paperMetric && revealAt !== undefined) ||
     (values.size !== undefined && size === undefined)
   ) {
     return undefined
@@ -550,6 +600,11 @@ function readOptions(argv: readonly string[]): Options | undefined {
         clock,
         revealAt: revealAt?.data,
         stubs: stubs.filter((stub) => stub !== undefined),
+        paperMetric,
+        viewports:
+          viewports.length === 0
+            ? DEFAULT_PAPER_METRIC_VIEWPORTS
+            : viewports.filter((viewport) => viewport !== undefined),
         fullPage: values.full === true,
       }
 }

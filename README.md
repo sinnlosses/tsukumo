@@ -346,6 +346,7 @@ pnpm run dev                   # pnpm run build のあと、start と同じ経�
 pnpm run storybook             # 部品を props ごとに並べる Storybook を http://localhost:6006/ に起こす
                               #   （story は story/ の下。本体と同じ vite.config.ts で組み立てる）
 node scripts/capture/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
+node scripts/capture/capture-view.ts --scene <場面> --paper-metric  # 紙面の物差し（テンプレの手がかり・色相の族・判決の頭の高さ・読む面を超える図・横並びの縦落ち）を 1440x900 と 1920x1080 で数える
 pnpm run grid                  # 待ち受けていてタブもある部屋を iframe の格子に並べて Orca に開く。格子のタブが
                               #   あるあいだ常駐し、再読み込みのたびに並べ直す。タブを閉じると終わる
 node scripts/runtime/stop.ts   # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。pkill / killall は
