@@ -5,7 +5,7 @@ import type { RecordedFigureNoneReason, RecordedReportFigure } from "./report-bl
 import type { ReportGenre, ReportTaskOutcome } from "./report-task.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 11 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 12 satisfies number
 
 /**
  * `figure` の欄の記録（版6から）。`figureKind` は図の塊の `kind` か `none`、`noneReason` は `none` のときだけ。
@@ -23,7 +23,7 @@ export type ReportUsageRecord = ReportFigureUsage & {
   readonly sessionId: string
   /** その回に出た塊の種類（重複無し）。 */
   readonly blockKinds: readonly string[]
-  /** その回に出た塊の欄（重複無し。版3から）。 */
+  /** その回に出た塊の欄（重複無し。版3から。`blockAside` は版12から）。 */
   readonly blockFields: readonly string[]
   /** その回に逃げ道（`markdown` の塊）の外側に出た記法の種類（重複無し）。 */
   readonly notations: readonly string[]

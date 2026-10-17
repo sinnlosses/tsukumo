@@ -17,6 +17,7 @@ import {
 } from "./report-block.ts"
 import { fileTreeRows } from "./report-file-tree.ts"
 import { reportImagePath } from "./report-image.ts"
+import { REPORT_NOTE_KINDS } from "./report-notation.ts"
 
 /** 節と節の境目に置く、見た目を持たない印。書き上げる演出（`planReveal`）がこれで節を1トピックに割る。 */
 const SECTION_BREAK_MARKDOWN = '<div class="report-section-break"></div>'
@@ -47,10 +48,18 @@ type SectionsFold = {
   readonly counts: CaptionCounts
 }
 
+/** 本文の位置に描く塊1つと、その塊に添える傍注（余白の柱に置くもの）。`body` が空なら傍注だけ。 */
+type GutterGroup = {
+  readonly body: string
+  readonly notes: readonly string[]
+}
+
 /**
  * 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間に {@link SECTION_BREAK_MARKDOWN} を挟む。
  * 題を持つ塊（図 6種・表 2種）は、節をまたいで並びの順に数えた「図 n」「表 n」の番号を1回だけ受け取る（{@link foldedBlockMarkdown}）。
  * 番号は題が空でも、`fold` の中でも数える。
+ * 塊の `aside` と `memo` の `note` は傍注になり、直前の塊と一緒に包む（{@link gutterGroupMarkdown}）。
+ * `memo` の `note` は本文の位置に残さない。節の最初の `memo` は塊の無い包みになる。
  */
 export function reportSectionsMarkdown(
   sections: readonly ReportSection[],
@@ -59,7 +68,7 @@ export function reportSectionsMarkdown(
   const { parts } = sections.reduce<SectionsFold>(
     (acc, section) => {
       const blocks = section.blocks.reduce<{
-        readonly markdowns: readonly string[]
+        readonly groups: readonly GutterGroup[]
         readonly counts: CaptionCounts
       }>(
         (blockAcc, block) => {
@@ -69,16 +78,24 @@ export function reportSectionsMarkdown(
               ? blockAcc.counts
               : { ...blockAcc.counts, [kind]: blockAcc.counts[kind] + 1 }
           const ordinal = kind === undefined ? 0 : counts[kind]
+          const notes = gutterNotesOf(block)
+          const last = blockAcc.groups.at(-1)
           return {
-            markdowns: [...blockAcc.markdowns, foldedBlockMarkdown(block, imageSource, ordinal)],
+            groups:
+              isMemoNote(block) && last !== undefined
+                ? [...blockAcc.groups.slice(0, -1), { ...last, notes: [...last.notes, ...notes] }]
+                : [
+                    ...blockAcc.groups,
+                    { body: foldedBlockMarkdown(block, imageSource, ordinal), notes },
+                  ],
             counts,
           }
         },
-        { markdowns: [], counts: acc.counts },
+        { groups: [], counts: acc.counts },
       )
       const part = joinParts([
         section.heading.trim() === "" ? "" : `## ${markdownInline(section.heading)}`,
-        ...blocks.markdowns,
+        ...blocks.groups.map(gutterGroupMarkdown),
       ])
       return {
         parts: part.trim() === "" ? acc.parts : [...acc.parts, part],
@@ -167,14 +184,22 @@ const FILE_CHANGE_ORDER = [
   "read",
 ] as const satisfies readonly (keyof typeof FILE_CHANGE_BADGES)[]
 
-/** `note` の種別 → 記法の class。ラベルは描く側が class から引く（`REPORT_NOTE_KINDS`）。注意・異常は筆を留める対象。 */
+/**
+ * 本文の位置に描く `note` の種別 → 記法の class。ラベルは描く側が class から引く（`REPORT_NOTE_KINDS`）。注意・異常は筆を留める対象。
+ * `memo` は傍注になる（{@link gutterNotesOf}）。
+ */
 const NOTE_CLASSES = {
   info: "note",
   warn: `note note-warn ${PAUSE_POINT_CLASS_NAME}`,
   ng: `note note-ng ${PAUSE_POINT_CLASS_NAME}`,
   ask: "note note-ask",
-  memo: "note note-memo",
-} as const satisfies Record<Extract<ReportBlock, { readonly kind: "note" }>["tone"], string>
+} as const satisfies Record<
+  Exclude<Extract<ReportBlock, { readonly kind: "note" }>["tone"], "memo">,
+  string
+>
+
+/** 傍注にした `memo` の頭に付けるラベル。 */
+const MEMO_LABEL = new Map(REPORT_NOTE_KINDS).get("note-memo") ?? ""
 
 /** inline code（開きと同じ数のバッククォートで閉じる）。中の文字は逃がさない。 */
 const CODE_SPAN = /(?<!`)(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/g
@@ -184,6 +209,40 @@ const ORDERED_LIST_START = /^(\d{1,9})([.)])(?=\s|$)/
 
 function joinParts(parts: readonly string[]): string {
   return parts.filter((part) => part.trim() !== "").join("\n\n")
+}
+
+function isMemoNote(block: ReportBlock): boolean {
+  return block.kind === "note" && block.tone === "memo"
+}
+
+/** 塊の傍注。`memo` の `note` は本文を「メモ」のラベル付きで、塊の `aside` はそのあとに置く。 */
+function gutterNotesOf(block: ReportBlock): readonly string[] {
+  return [
+    ...(block.kind === "note" && block.tone === "memo"
+      ? [gutterNoteMarkdown(MEMO_LABEL, block.text)]
+      : []),
+    gutterNoteMarkdown("", block.aside),
+  ].filter((note) => note !== "")
+}
+
+function gutterNoteMarkdown(label: string, text: string): string {
+  if (text.trim() === "") {
+    return ""
+  }
+  const labelHtml = label === "" ? "" : `<span class="gutter-note-label">${label}</span>`
+  return `<aside class="gutter-note">\n\n${labelHtml}${markdownInline(text)}\n\n</aside>`
+}
+
+function gutterGroupMarkdown({ body, notes }: GutterGroup): string {
+  if (notes.length === 0) {
+    return body
+  }
+  return joinParts([
+    '<div class="with-gutter">',
+    body,
+    joinParts(['<div class="gutter">', ...notes, "</div>"]),
+    "</div>",
+  ])
 }
 
 function foldedBlockMarkdown(
@@ -218,7 +277,7 @@ function blockMarkdown(
     case "dimension":
       return dimensionMarkdown(block, ordinal)
     case "note":
-      return block.text.trim() === ""
+      return block.tone === "memo" || block.text.trim() === ""
         ? ""
         : `<div class="${NOTE_CLASSES[block.tone]}">\n\n${markdownInline(block.text)}\n\n</div>`
     case "stats":

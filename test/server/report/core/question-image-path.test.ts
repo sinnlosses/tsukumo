@@ -44,9 +44,15 @@ describe("questionImagePaths", () => {
           byAxis: ["架空"],
           irreversible: false,
           figures: [
-            { kind: "image", path: "shot/a.png", caption: "架空", notes: [], fold: "" },
-            { kind: "image", path: "shot/d.png", caption: "架空", notes: [], fold: "" },
-            { kind: "mermaid", title: "", source: "sequenceDiagram\n  A ->> B: x", fold: "" },
+            { kind: "image", path: "shot/a.png", caption: "架空", notes: [], fold: "", aside: "" },
+            { kind: "image", path: "shot/d.png", caption: "架空", notes: [], fold: "", aside: "" },
+            {
+              kind: "mermaid",
+              title: "",
+              source: "sequenceDiagram\n  A ->> B: x",
+              fold: "",
+              aside: "",
+            },
           ],
         },
       ],

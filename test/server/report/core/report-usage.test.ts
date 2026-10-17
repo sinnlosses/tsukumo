@@ -22,13 +22,21 @@ describe("reportUsageEntryOf", () => {
       {
         heading: "架空の節1",
         blocks: [
-          { kind: "text", text: "架空の根拠。", fold: "" },
-          { kind: "table", title: "", columns: ["a", "b"], rows: [["1", "2"]], rest: "", fold: "" },
+          { kind: "text", text: "架空の根拠。", fold: "", aside: "" },
+          {
+            kind: "table",
+            title: "",
+            columns: ["a", "b"],
+            rows: [["1", "2"]],
+            rest: "",
+            fold: "",
+            aside: "",
+          },
         ],
       },
       {
         heading: "架空の節2",
-        blocks: [{ kind: "text", text: "架空の根拠その2。", fold: "" }],
+        blocks: [{ kind: "text", text: "架空の根拠その2。", fold: "", aside: "" }],
       },
     ])
 
@@ -46,6 +54,7 @@ describe("reportUsageEntryOf", () => {
         { gap: "8px", before },
       ],
       fold: "",
+      aside: "",
     })
 
     const plain = reportUsageEntryOf(
@@ -72,6 +81,7 @@ describe("reportUsageEntryOf", () => {
       items: [{ path: "架空/a.ts", change, note: "" }],
       title: "",
       fold: "",
+      aside: "",
     })
     const beforeAfter: ReportBlock = {
       kind: "beforeAfter",
@@ -79,6 +89,7 @@ describe("reportUsageEntryOf", () => {
       before: { kind: "points", points: ["前"] },
       after: { kind: "points", points: ["後"] },
       fold: "",
+      aside: "",
     }
     const image: ReportBlock = {
       kind: "image",
@@ -86,6 +97,7 @@ describe("reportUsageEntryOf", () => {
       caption: "架空の画面",
       notes: [],
       fold: "",
+      aside: "",
     }
     const task = {
       kind: "task",
@@ -125,8 +137,15 @@ describe("reportUsageEntryOf", () => {
       {
         heading: "",
         blocks: [
-          { kind: "image", path: "架空/after.png", caption: "架空の画面", notes: [], fold: "" },
-          { kind: "markdown", markdown: "![架空](架空/before.png)", fold: "" },
+          {
+            kind: "image",
+            path: "架空/after.png",
+            caption: "架空の画面",
+            notes: [],
+            fold: "",
+            aside: "",
+          },
+          { kind: "markdown", markdown: "![架空](架空/before.png)", fold: "", aside: "" },
         ],
       },
     ])
@@ -149,6 +168,7 @@ describe("reportUsageEntryOf", () => {
             caption: "架空の画面",
             notes: ["左上の架空の帯"],
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -162,7 +182,9 @@ describe("reportUsageEntryOf", () => {
   it("code の塊に marks があれば codeMarks の欄を立て、無ければ立てない", () => {
     const code = (marks: readonly { lines: string; label: string }[]): ReportSection => ({
       heading: "",
-      blocks: [{ kind: "code", language: "ts", path: "", source: "架空", marks, fold: "" }],
+      blocks: [
+        { kind: "code", language: "ts", path: "", source: "架空", marks, fold: "", aside: "" },
+      ],
     })
 
     expect(
@@ -191,6 +213,7 @@ describe("reportUsageEntryOf", () => {
             rows: [["架空の", { from: "1", to: "2" }]],
             rest: "",
             fold: "",
+            aside: "",
           },
           {
             kind: "stats",
@@ -199,6 +222,7 @@ describe("reportUsageEntryOf", () => {
               { before: "", value: "2", total: "", label: "架空の二", series: [], better: "" },
             ],
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -210,6 +234,7 @@ describe("reportUsageEntryOf", () => {
             style: "flow",
             items: [{ label: "架空の名前", text: "架空の段", done: false }],
             fold: "",
+            aside: "",
           },
           {
             kind: "table",
@@ -218,6 +243,7 @@ describe("reportUsageEntryOf", () => {
             rows: [["架空の", { from: "3", to: "4" }]],
             rest: "",
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -235,7 +261,15 @@ describe("reportUsageEntryOf", () => {
           {
             heading: "",
             blocks: [
-              { kind: "table", title: "", columns: ["a", "b"], rows: [["1", "2"]], rest, fold: "" },
+              {
+                kind: "table",
+                title: "",
+                columns: ["a", "b"],
+                rows: [["1", "2"]],
+                rest,
+                fold: "",
+                aside: "",
+              },
             ],
           },
         ]),
@@ -245,6 +279,20 @@ describe("reportUsageEntryOf", () => {
       ).blockFields
 
     expect([fieldsOf("ほか 3 件"), fieldsOf(" ")]).toEqual([["tableRest"], []])
+  })
+
+  it("aside が空でない塊があれば blockAside を数え、空白だけなら数えない", () => {
+    const fieldsOf = (aside: string): readonly string[] =>
+      reportUsageEntryOf(
+        reportOfSections([
+          { heading: "", blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside }] },
+        ]),
+        "claude-session-1",
+        1_000,
+        false,
+      ).blockFields
+
+    expect([fieldsOf("架空の出典"), fieldsOf(" ")]).toEqual([["blockAside"], []])
   })
 
   it.each([
@@ -257,7 +305,9 @@ describe("reportUsageEntryOf", () => {
       reportOfSections([
         {
           heading: "",
-          blocks: [{ kind: "table", title: "", columns: ["a", "b"], rows, rest: "", fold: "" }],
+          blocks: [
+            { kind: "table", title: "", columns: ["a", "b"], rows, rest: "", fold: "", aside: "" },
+          ],
         },
       ]),
       "claude-session-1",
@@ -286,6 +336,7 @@ describe("reportUsageEntryOf", () => {
               { before: "", value: "2", total: "", label: "架空の二", series: [], better: "" },
             ],
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -312,6 +363,7 @@ describe("reportUsageEntryOf", () => {
               { before: "", value: "2", total: "", label: "架空の二", series: [], better: "" },
             ],
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -326,7 +378,9 @@ describe("reportUsageEntryOf", () => {
     const event = reportOfSections([
       {
         heading: "架空の節",
-        blocks: [{ kind: "markdown", markdown: "- 架空の1つ目\n- 架空の2つ目", fold: "" }],
+        blocks: [
+          { kind: "markdown", markdown: "- 架空の1つ目\n- 架空の2つ目", fold: "", aside: "" },
+        ],
       },
     ])
 
@@ -346,6 +400,7 @@ describe("reportUsageEntryOf", () => {
             kind: "markdown",
             markdown: "<details><summary>架空の見出し</summary>\n\n- 架空の1つ目\n\n</details>",
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -378,6 +433,7 @@ describe("reportUsageEntryOf", () => {
               "<details><summary>架空の見出し</summary>中身</details>",
             ].join("\n"),
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -392,7 +448,7 @@ describe("reportUsageEntryOf", () => {
     const event = reportOfSections([
       {
         heading: "架空の節",
-        blocks: [{ kind: "markdown", markdown: "```chart\n{}\n```", fold: "" }],
+        blocks: [{ kind: "markdown", markdown: "```chart\n{}\n```", fold: "", aside: "" }],
       },
     ])
 
@@ -450,15 +506,22 @@ describe("reportUsageEntryOf", () => {
     const beforeAfterOf = (
       before: Extract<ReportBlock, { kind: "beforeAfter" }>["before"],
       after: Extract<ReportBlock, { kind: "beforeAfter" }>["after"],
-    ): ReportBlock => ({ kind: "beforeAfter", title: "", before, after, fold: "" })
+    ): ReportBlock => ({ kind: "beforeAfter", title: "", before, after, fold: "", aside: "" })
 
     it("image・mermaid・svg の塊と、beforeAfter の図の側を図として数える", () => {
-      expect(figureOf({ kind: "text", text: "架空の根拠。", fold: "" })).toBe(false)
-      expect(figureOf({ kind: "mermaid", title: "", source: "sequenceDiagram", fold: "" })).toBe(
-        true,
-      )
+      expect(figureOf({ kind: "text", text: "架空の根拠。", fold: "", aside: "" })).toBe(false)
       expect(
-        figureOf({ kind: "image", path: "/tmp/a.png", caption: "架空", notes: [], fold: "" }),
+        figureOf({ kind: "mermaid", title: "", source: "sequenceDiagram", fold: "", aside: "" }),
+      ).toBe(true)
+      expect(
+        figureOf({
+          kind: "image",
+          path: "/tmp/a.png",
+          caption: "架空",
+          notes: [],
+          fold: "",
+          aside: "",
+        }),
       ).toBe(true)
       expect(
         figureOf({
@@ -467,10 +530,19 @@ describe("reportUsageEntryOf", () => {
           direction: "TD",
           source: "架空",
           fold: "",
+          aside: "",
         }),
       ).toBe(true)
       expect(
-        figureOf({ kind: "svg", title: "", width: 10, height: 10, shapes: [svgShape], fold: "" }),
+        figureOf({
+          kind: "svg",
+          title: "",
+          width: 10,
+          height: 10,
+          shapes: [svgShape],
+          fold: "",
+          aside: "",
+        }),
       ).toBe(true)
       expect(
         figureOf(
@@ -489,13 +561,14 @@ describe("reportUsageEntryOf", () => {
         1_000,
         mainReadImageFile,
       )
-    const text: ReportBlock = { kind: "text", text: "架空の根拠。", fold: "" }
+    const text: ReportBlock = { kind: "text", text: "架空の根拠。", fold: "", aside: "" }
     const image: ReportBlock = {
       kind: "image",
       path: "/tmp/a.png",
       caption: "架空",
       notes: [],
       fold: "",
+      aside: "",
     }
     const beforeAfterImage: ReportBlock = {
       kind: "beforeAfter",
@@ -503,6 +576,7 @@ describe("reportUsageEntryOf", () => {
       before: { kind: "image", path: "/tmp/a.png" },
       after: { kind: "image", path: "/tmp/b.png" },
       fold: "",
+      aside: "",
     }
 
     it("読んだのに image が無ければ真、image か beforeAfter の image の側があるか読んでいなければ偽", () => {
@@ -524,7 +598,7 @@ describe("reportUsageEntryOf", () => {
 
     it("強調の対を text・list・表のセルに散らして合計し、インラインコードの中の ** は数えない", () => {
       const entry = entryOf([
-        { kind: "text", text: "架空の**結論**と`**飾り**`。", fold: "" },
+        { kind: "text", text: "架空の**結論**と`**飾り**`。", fold: "", aside: "" },
         {
           kind: "list",
           style: "bullet",
@@ -533,6 +607,7 @@ describe("reportUsageEntryOf", () => {
             { label: "", text: "なし", done: false },
           ],
           fold: "",
+          aside: "",
         },
         {
           kind: "table",
@@ -541,6 +616,7 @@ describe("reportUsageEntryOf", () => {
           rows: [["**甲**", { status: "ok", text: "**乙**" }, { from: "**前**", to: "後" }]],
           rest: "",
           fold: "",
+          aside: "",
         },
       ])
 
@@ -554,6 +630,7 @@ describe("reportUsageEntryOf", () => {
         direction: "TD",
         source,
         fold: "",
+        aside: "",
       })
 
       const entry = entryOf([
@@ -567,7 +644,7 @@ describe("reportUsageEntryOf", () => {
     })
 
     it("graph も強調も無ければすべて 0", () => {
-      const entry = entryOf([{ kind: "text", text: "架空の根拠。", fold: "" }])
+      const entry = entryOf([{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }])
 
       expect([
         entry.emphasisCount,
@@ -632,7 +709,11 @@ describe("reportUsageEntryOf", () => {
     })
 
     it.each([
-      ["text の URL", { kind: "text", text: "架空の出典 https://example.com/a", fold: "" }, true],
+      [
+        "text の URL",
+        { kind: "text", text: "架空の出典 https://example.com/a", fold: "", aside: "" },
+        true,
+      ],
       [
         "list の path:line",
         {
@@ -640,6 +721,7 @@ describe("reportUsageEntryOf", () => {
           style: "bullet",
           items: [{ label: "", text: "src/a.ts:12 で読む", done: false }],
           fold: "",
+          aside: "",
         },
         true,
       ],
@@ -652,14 +734,31 @@ describe("reportUsageEntryOf", () => {
           rows: [["src/b.ts:3"]],
           rest: "",
           fold: "",
+          aside: "",
         },
         true,
       ],
-      ["note の URL", { kind: "note", tone: "info", text: "http://example.com", fold: "" }, true],
-      ["markdown の path:line", { kind: "markdown", markdown: "> a.ts:1", fold: "" }, true],
+      [
+        "note の URL",
+        { kind: "note", tone: "info", text: "http://example.com", fold: "", aside: "" },
+        true,
+      ],
+      [
+        "markdown の path:line",
+        { kind: "markdown", markdown: "> a.ts:1", fold: "", aside: "" },
+        true,
+      ],
       [
         "code の path",
-        { kind: "code", language: "ts", path: "src/a.ts", source: "架空", marks: [], fold: "" },
+        {
+          kind: "code",
+          language: "ts",
+          path: "src/a.ts",
+          source: "架空",
+          marks: [],
+          fold: "",
+          aside: "",
+        },
         true,
       ],
       [
@@ -671,10 +770,11 @@ describe("reportUsageEntryOf", () => {
           source: "https://example.com",
           marks: [],
           fold: "",
+          aside: "",
         },
         false,
       ],
-      ["行番号の無いパス", { kind: "text", text: "src/a.ts を読んだ", fold: "" }, false],
+      ["行番号の無いパス", { kind: "text", text: "src/a.ts を読んだ", fold: "", aside: "" }, false],
     ] as const)("%s なら出典の有無は %s", (_, block, expected) => {
       const event = reportOfSections([{ heading: "", blocks: [block] }])
 
@@ -691,6 +791,7 @@ describe("reportUsageEntryOf", () => {
       caption: "架空",
       notes: [],
       fold: "",
+      aside: "",
     } as const
 
     it("図を置いた回は種類だけを持ち、none の回は理由を持つ（中身は持たない）", () => {

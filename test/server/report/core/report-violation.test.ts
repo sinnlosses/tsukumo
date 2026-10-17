@@ -27,10 +27,32 @@ const draft = (
 
 type Side = Extract<ReportBlock, { readonly kind: "beforeAfter" }>["before"]
 
-const text = (value: string, fold = ""): ReportBlock => ({ kind: "text", text: value, fold })
-const markdown = (value: string): ReportBlock => ({ kind: "markdown", markdown: value, fold: "" })
-const mermaid = (source: string): ReportBlock => ({ kind: "mermaid", title: "", source, fold: "" })
-const note = (): ReportBlock => ({ kind: "note", tone: "warn", text: "架空の一文。", fold: "" })
+const text = (value: string, fold = ""): ReportBlock => ({
+  kind: "text",
+  text: value,
+  fold,
+  aside: "",
+})
+const markdown = (value: string): ReportBlock => ({
+  kind: "markdown",
+  markdown: value,
+  fold: "",
+  aside: "",
+})
+const mermaid = (source: string): ReportBlock => ({
+  kind: "mermaid",
+  title: "",
+  source,
+  fold: "",
+  aside: "",
+})
+const note = (): ReportBlock => ({
+  kind: "note",
+  tone: "warn",
+  text: "架空の一文。",
+  fold: "",
+  aside: "",
+})
 const code = (path: string, source: string, language = "text"): ReportBlock => ({
   kind: "code",
   language,
@@ -38,6 +60,7 @@ const code = (path: string, source: string, language = "text"): ReportBlock => (
   source,
   marks: [],
   fold: "",
+  aside: "",
 })
 
 const kinds = (report: ReportDraft) => reportViolations(report).map((violation) => violation.kind)
@@ -53,6 +76,7 @@ describe("reportViolations", () => {
         rows: [["a", { status: "ok", text: "OK" }]],
         rest: "",
         fold: "",
+        aside: "",
       },
       mermaid("sequenceDiagram\n  a ->> b: x"),
       note(),
@@ -135,6 +159,7 @@ describe("reportViolations", () => {
       style,
       items: items.map((item) => ({ label: item.label ?? "", text: item.text, done: false })),
       fold: "",
+      aside: "",
     })
     const table = (
       cell: Extract<ReportBlock, { readonly kind: "table" }>["rows"][number][number],
@@ -145,6 +170,7 @@ describe("reportViolations", () => {
       rows: [["a", cell]],
       rest: "",
       fold: "",
+      aside: "",
     })
 
     it("地の文と表のセルの A → B は差し戻す", () => {
@@ -273,6 +299,7 @@ describe("reportViolations", () => {
         rows: [["a", "1"], ["b"]],
         rest: "",
         fold: "",
+        aside: "",
       }
       expect(reportViolations(draft([table]))).toEqual([{ kind: "ragged-table", count: 1 }])
     })
@@ -284,6 +311,7 @@ describe("reportViolations", () => {
         columns: ["列A", "列B"],
         rows: [{ name: "行1", cells: ["ok"] }],
         fold: "",
+        aside: "",
       }
       expect(reportViolations(draft([matrix]))).toEqual([{ kind: "ragged-table", count: 1 }])
     })
@@ -299,6 +327,7 @@ describe("reportViolations", () => {
         series: [{ name: "架空系列", values: [1] }],
         horizontal: false,
         fold: "",
+        aside: "",
       }
       expect(reportViolations(draft([chart]))).toEqual([{ kind: "ragged-chart", count: 1 }])
     })
@@ -312,6 +341,7 @@ describe("reportViolations", () => {
         series: [{ name: "架空系列", values: [1, 2] }],
         horizontal: false,
         fold: "",
+        aside: "",
       }
       expect(kinds(draft([chart]))).toEqual([])
     })
@@ -330,6 +360,7 @@ describe("reportViolations", () => {
           })),
           horizontal: false,
           fold: "",
+          aside: "",
         })
         expect(kinds(draft([chartOf(1)]))).toEqual(["ragged-chart"])
         expect(kinds(draft([chartOf(3)]))).toEqual(["ragged-chart"])
@@ -346,6 +377,7 @@ describe("reportViolations", () => {
         { before: "", value: "2", total: "", label: "架空B", series: [], better: "" },
       ],
       fold: "",
+      aside: "",
     })
 
     it.each([
@@ -400,6 +432,7 @@ describe("reportViolations", () => {
         direction: "TD",
         source: "架空",
         fold: "",
+        aside: "",
       }
       expect(kinds(draft([graph]))).toEqual([])
     })
@@ -412,6 +445,7 @@ describe("reportViolations", () => {
         before,
         after,
         fold: "",
+        aside: "",
       })
       expect(kinds(draft([beforeAfter(side("sequenceDiagram"), side("stateDiagram-v2"))]))).toEqual(
         [],
@@ -432,6 +466,7 @@ describe("reportViolations", () => {
             direction: "TD",
             source: "[甲]\n[乙]\nA\n[]",
             fold: "",
+            aside: "",
           },
         ]),
       )
@@ -449,6 +484,7 @@ describe("reportViolations", () => {
         direction: "TD",
         source,
         fold: "",
+        aside: "",
       })
       const violations = reportViolations(
         draft([
@@ -483,6 +519,7 @@ describe("reportViolations", () => {
         before: side("B"),
         after: { kind: "points", points: ["架空"] },
         fold: "",
+        aside: "",
       }
       const both: ReportBlock = { ...pair, before: side("C"), after: side("D") }
       expect(
@@ -509,7 +546,13 @@ describe("reportViolations", () => {
   })
 
   describe("note は隣接させず、見出しの直後に置かない", () => {
-    const info = (): ReportBlock => ({ kind: "note", tone: "info", text: "架空の一文。", fold: "" })
+    const info = (): ReportBlock => ({
+      kind: "note",
+      tone: "info",
+      text: "架空の一文。",
+      fold: "",
+      aside: "",
+    })
 
     it("info が隣り合えば違反", () => {
       expect(reportViolations(draft([info(), info()]))).toEqual([
@@ -528,7 +571,13 @@ describe("reportViolations", () => {
     })
 
     it("warn / ng は隣接も見出しの直後も例外", () => {
-      const ng = (): ReportBlock => ({ kind: "note", tone: "ng", text: "架空の一文。", fold: "" })
+      const ng = (): ReportBlock => ({
+        kind: "note",
+        tone: "ng",
+        text: "架空の一文。",
+        fold: "",
+        aside: "",
+      })
       const titled: readonly ReportSection[] = [{ heading: "架空の見出し", blocks: [ng(), note()] }]
       expect(kinds(draft([], "架空の結論。", titled))).toEqual([])
     })
@@ -540,6 +589,7 @@ describe("reportViolations", () => {
         kind: "markdown",
         markdown: "<details><summary>架空</summary>\n\n架空の本文\n\n</details>",
         fold: "架空の畳み",
+        aside: "",
       }
       expect(reportViolations(draft([block]))).toEqual([{ kind: "nested-fold", count: 1 }])
     })
@@ -564,6 +614,7 @@ describe("reportViolations", () => {
         reason: "架空の理由。",
       })),
       fold: "",
+      aside: "",
     })
     const compare = (count: number): ReportBlock => ({
       kind: "compare",
@@ -573,6 +624,7 @@ describe("reportViolations", () => {
         { heading: "案B", points: ["架空"] },
       ],
       fold: "",
+      aside: "",
     })
     const image = (count: number): ReportBlock => ({
       kind: "image",
@@ -580,6 +632,7 @@ describe("reportViolations", () => {
       caption: "架空の画面",
       notes: Array.from({ length: count }, () => "架空の場所"),
       fold: "",
+      aside: "",
     })
 
     const beforeAfter = (count: number): ReportBlock => ({
@@ -588,6 +641,7 @@ describe("reportViolations", () => {
       before: { kind: "points", points: ["架空"] },
       after: { kind: "points", points: Array.from({ length: count }, () => "架空") },
       fold: "",
+      aside: "",
     })
 
     it("上限を1つ超えたら違反", () => {
@@ -615,6 +669,7 @@ describe("reportViolations", () => {
       title: "架空の比較",
       items: verdicts.map((verdict) => ({ name: "架空", verdict, reason: "架空の理由。" })),
       fold: "",
+      aside: "",
     })
 
     it("採る候補より前に別の判定があれば違反", () => {
@@ -745,6 +800,7 @@ describe("reportViolations", () => {
         source: SOURCE,
         marks: [{ lines, label: "架空の印" }],
         fold: "",
+        aside: "",
       })
 
       it.each(["1", "2-3", " 3 "])("行数以内の %s は通す", (lines) => {
@@ -812,6 +868,7 @@ describe("reportRejectionText", () => {
       height: 50,
       shapes,
       fold: "",
+      aside: "",
     })
     const rect = (x: number, y: number, width: number, height: number) =>
       ({ kind: "rect", x, y, width, height, label: "", emphasis: false }) as const
@@ -852,7 +909,7 @@ describe("reportRejectionText", () => {
         shapes: [{ kind: "text", x: 11, y: 0, text: "架空" }],
       } as const
       const report = draft([
-        { kind: "beforeAfter", title: "", before: side, after: side, fold: "" },
+        { kind: "beforeAfter", title: "", before: side, after: side, fold: "", aside: "" },
       ])
       expect(kinds(report)).toContain("broken-svg")
     })
@@ -891,8 +948,10 @@ describe("reportRejectionText", () => {
   describe("figure の図も図の塊の検査にかける", () => {
     it("figure の graph の読めない行は、描く順の1個目として違反になる", () => {
       const report: ReportDraft = {
-        ...draft([{ kind: "graph", title: "", direction: "TD", source: "A -> B", fold: "" }]),
-        figure: { kind: "graph", title: "", direction: "TD", source: "A ->", fold: "" },
+        ...draft([
+          { kind: "graph", title: "", direction: "TD", source: "A -> B", fold: "", aside: "" },
+        ]),
+        figure: { kind: "graph", title: "", direction: "TD", source: "A ->", fold: "", aside: "" },
       }
       expect(reportViolations(report)).toEqual([
         { kind: "broken-graph", count: 1, faults: [{ block: 1, line: 1 }] },
@@ -909,13 +968,14 @@ describe("reportRejectionText", () => {
           height: 10,
           shapes: [{ kind: "text", x: 11, y: 0, text: "架空" }],
           fold: "",
+          aside: "",
         },
       }
       expect(kinds(report)).toEqual(["broken-svg"])
       expect(
         kinds({
           ...draft([]),
-          figure: { kind: "mermaid", title: "", source: "flowchart TD", fold: "" },
+          figure: { kind: "mermaid", title: "", source: "flowchart TD", fold: "", aside: "" },
         }),
       ).toEqual(["unknown-mermaid"])
     })
@@ -934,6 +994,7 @@ describe("reportRejectionText", () => {
       style: "flow",
       items: [{ label: "", text: "架空の秘密の段", done: false }],
       fold: "",
+      aside: "",
     }
 
     it("no-shape なのに sections に流れ・つながりの塊があれば、その塊の数で違反になり、文面に本文を写さない", () => {
@@ -992,7 +1053,7 @@ describe("reportRejectionText", () => {
         { kind: "none", reason: "single-value" },
         { kind: "none", reason: "no-material" },
         { kind: "none", reason: "unrecorded" },
-        { kind: "graph", title: "", direction: "TD", source: "A -> B", fold: "" },
+        { kind: "graph", title: "", direction: "TD", source: "A -> B", fold: "", aside: "" },
       ] as const) {
         expect(kinds({ ...draft([], "架空の結論。", sections), figure })).toEqual([])
       }

@@ -104,6 +104,17 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     expect(tagsOf(root)).toEqual([["TABLE", "PRE"]])
   })
 
+  it("余白の柱の包みは対象にせず中の塊を対象にし、柱は最初から見える（包みの中の題つきの図表にも降りる）", () => {
+    const root = rootWith(
+      '<div class="with-gutter"><p>あ</p><div data-reveal-gutter=""><aside>出典</aside></div></div>' +
+        '<div class="with-gutter"><div class="captioned"><pre class="mermaid">flowchart TD</pre>' +
+        '<div data-reveal-caption="">図 1</div></div>' +
+        '<div data-reveal-gutter=""><aside>メモ</aside></div></div>',
+    )
+
+    expect(tagsOf(root)).toEqual([["P", "PRE"]])
+  })
+
   it("演出の全体は10秒を超えない。上限をまたぐ塊はそこで書き切り、後ろの塊は上限の時刻に一度に出す", () => {
     const section = `<h4>節</h4><p>${"あ".repeat(100)}</p>`
     const root = rootWith(Array.from({ length: 8 }, () => section).join(BREAK))

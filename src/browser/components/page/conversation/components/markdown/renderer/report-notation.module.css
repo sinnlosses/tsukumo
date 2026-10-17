@@ -1478,12 +1478,14 @@
   text-wrap: balance;
 }
 /* 段落と箇条書きは器を持たないので、ブラウザ既定の 1em をここで塊のあきに揃える。 */
-.detail-block > :is(p, ul, ol) {
+.detail-block > :is(p, ul, ol),
+.detail-block > .report-with-gutter > :is(p, ul, ol) {
   margin: var(--report-block-gap) 0;
 }
-/* 地付きの強調は地の文の段落の直下だけ。
+/* 地付きの強調は地の文の段落の直下だけ（余白の柱の包みの中の段落を含む）。
    表・箇条書き・`stats`・`note` の中の `strong` は `.detail-block` の直の子の `p` の下にならないので掛からない。 */
-.detail-block > p :is(strong, b) {
+.detail-block > p :is(strong, b),
+.detail-block > .report-with-gutter > p :is(strong, b) {
   padding: 0 0.25em;
   color: var(--ink-bright);
   font-weight: 600;
@@ -1872,5 +1874,59 @@
   }
   .detail-block .report-file-note {
     grid-column: 2;
+  }
+}
+
+/* 余白の柱（塊の `aside` と `memo` の `note` の傍注。値は docs/architecture/screen-design.md「余白の柱」）。
+   `with-gutter` が塊1つと傍注の並び `gutter` を包む。
+   既定は、傍注を塊の直後に 12px の1行ずつで畳む（上の負の margin は、塊の下のあきと相殺して塊に寄せる）。 */
+.detail-block .report-gutter {
+  margin: -6px 0 var(--report-block-gap);
+}
+.detail-block .report-gutter-note {
+  max-inline-size: 42em;
+  margin: 0;
+  font-size: var(--font-label);
+  line-height: 18px;
+  color: var(--ink-quiet);
+}
+.detail-block .report-gutter-note + .report-gutter-note {
+  margin-top: 4px;
+}
+.detail-block .report-gutter-note > p {
+  margin: 0;
+}
+.detail-block .report-gutter-note-label {
+  margin-right: 0.5em;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+/* 本文の列（42em）の右に 160px 以上空くときだけ、傍注を本文の列の右の余白の柱に出す（器はメインビューの本文）。
+   包みを2列の grid にし、余白の柱は塊と同じ行に置いて上端を揃える（行は高いほうに伸び、次の塊に重ならない）。
+   grid の中では margin が相殺しないので、塊の上下のあきは包みが持ち、中の塊と余白の柱の上下の margin は落とす。
+   余白の柱を持つ塊は、表と図でも本文の列に収まる。余白の柱は 1920 幅でも本文の列のすぐ右に置く。 */
+@container report-gutter (min-width: calc(42em + 160px)) {
+  .detail-block .report-with-gutter {
+    display: grid;
+    grid-template-columns: minmax(0, 42em) minmax(0, 1fr);
+    column-gap: 28px;
+    align-items: start;
+    margin: var(--report-block-gap) 0;
+  }
+  .detail-block .report-with-gutter:has(> .report-captioned) {
+    margin: var(--report-figure-gap) 0;
+  }
+  .detail-block .report-with-gutter > :is(*, p, ul, ol) {
+    grid-column: 1;
+    margin-block: 0;
+  }
+  .detail-block .report-with-gutter > .report-gutter {
+    grid-column: 2;
+    padding-left: 14px;
+    border-left: 1px solid var(--rule-soft);
+  }
+  .detail-block .report-gutter-note-label {
+    display: block;
+    margin: 0 0 2px;
   }
 }

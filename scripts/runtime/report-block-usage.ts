@@ -9,6 +9,7 @@
 // unverified のあるレポートのうち確かめ方のある割合は、版8以降の unverified のある行を分母にする。
 // 報告の種類と必須の塊が無い割合は、版9以降の task の行を分母にする。
 // 2行以下の表のあるレポートの割合は、版10以降の行を分母にする。
+// 欄の表の `blockAside`（塊の傍注）は版12から記録している（それより前の行には出ない）。
 //
 // 使い方:
 //   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -120,6 +121,9 @@ const shortTableRecordShape = {
 /** `stats` の `series` / `better` を欄で数える最初の版（行の形は版10と同じ）。 */
 const SERIES_FORMAT_VERSION = 11
 
+/** 欄 `blockAside` を記録し始めた版。行の形は版10と同じ。 */
+const BLOCK_ASIDE_FORMAT_VERSION = 12
+
 const recordSchema = z.union([
   z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
   z.object({
@@ -166,7 +170,7 @@ const recordSchema = z.union([
     .and(figureFieldSchema),
   z
     .object({
-      v: z.literal(SERIES_FORMAT_VERSION),
+      v: z.union([z.literal(SERIES_FORMAT_VERSION), z.literal(BLOCK_ASIDE_FORMAT_VERSION)]),
       ...figureRecordShape,
       ...countRecordShape,
       ...howToVerifyRecordShape,
@@ -204,6 +208,7 @@ const rejectionSchema = z.object({
     z.literal(GENRE_FORMAT_VERSION),
     z.literal(SHORT_TABLE_FORMAT_VERSION),
     z.literal(SERIES_FORMAT_VERSION),
+    z.literal(BLOCK_ASIDE_FORMAT_VERSION),
   ]),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),

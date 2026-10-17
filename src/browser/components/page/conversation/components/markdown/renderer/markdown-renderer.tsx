@@ -12,8 +12,8 @@
 // ```mermaid / ```chart のフェンスは「コード」ではなく図・グラフの入れ物にする（`MermaidBlock` / `ChartBlock`）。
 // `pre` を上書きし、中の `code` 要素の `className`（`language-mermaid` / `language-chart`）を見て振り分ける。
 //
-// レポートの記法の class 名は `div` / `span` / `ol` / `li` の上書きで部品に解決する
-// （`NotationBlock` / `NotationInline` / `NotationOrderedList` / `NotationListItem`）。
+// レポートの記法の class 名は `div` / `aside` / `span` / `ol` / `li` の上書きで部品に解決する
+// （`NotationBlock` / `NotationAside` / `NotationInline` / `NotationOrderedList` / `NotationListItem`）。
 //
 // `img` は `ReportImage` で、棚の画像を起動トークンを付けて読む（読めなければ「出せない」の札）。
 // 質問の preview（`QuestionPreviewMarkdown`）は、Markdown の画像を質問の棚の経路に替える段（`remarkPreviewImage`）を足して描く。
@@ -53,6 +53,7 @@ import { colorSwatch, readColorToken } from "./color-swatch.ts"
 import { CopyButton } from "./copy-button.tsx"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import {
+  NotationAside,
   NotationBlock,
   NotationInline,
   NotationListItem,
@@ -75,6 +76,7 @@ const REPORT_COMPONENTS = {
   h2: SectionHeading,
   h3: SubHeading,
   div: NotationBlock,
+  aside: NotationAside,
   span: NotationInline,
   ol: NotationOrderedList,
   li: NotationListItem,

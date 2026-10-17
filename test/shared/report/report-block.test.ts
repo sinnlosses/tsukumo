@@ -7,7 +7,7 @@ import {
   reportSectionsOfBody,
 } from "../../../src/shared/report/report-block.ts"
 
-const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "" })
+const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "", aside: "" })
 
 describe("reportSectionsOfBody", () => {
   it("空白だけの本文は節を持たない", () => {
@@ -19,7 +19,9 @@ describe("reportSectionsOfBody", () => {
     expect(reportSectionsOfBody("\n\n    架空の字下げ\n\n架空の本文。  \n")).toEqual([
       {
         heading: "",
-        blocks: [{ kind: "markdown", markdown: "    架空の字下げ\n\n架空の本文。", fold: "" }],
+        blocks: [
+          { kind: "markdown", markdown: "    架空の字下げ\n\n架空の本文。", fold: "", aside: "" },
+        ],
       },
     ])
   })
@@ -32,7 +34,7 @@ describe("parseReportSections", () => {
       parseReportSections([
         {
           heading: "",
-          blocks: [{ kind: "stats", items: [{ ...item, ...extra }, item], fold: "" }],
+          blocks: [{ kind: "stats", items: [{ ...item, ...extra }, item], fold: "", aside: "" }],
         },
       ]).sections[0]?.blocks[0]
 
@@ -87,6 +89,27 @@ describe("parseReportSections", () => {
     })
   })
 
+  it("どの種類の塊も aside は省くと空文字になり、渡せば残る", () => {
+    const blocks = parseReportSections([
+      {
+        heading: "",
+        blocks: [
+          { kind: "text", text: "架空の本文。" },
+          { kind: "note", tone: "memo", text: "架空の覚え書き。", aside: "架空の出典" },
+          {
+            kind: "table",
+            title: "",
+            columns: ["a", "b"],
+            rows: [["1", "2"]],
+            aside: "架空の表の出典",
+          },
+        ],
+      },
+    ]).sections[0]?.blocks
+
+    expect(blocks?.map((block) => block.aside)).toEqual(["", "架空の出典", "架空の表の出典"])
+  })
+
   it("beforeAfter の塊は前と後の側が画像・コード・箇条のどれかで、左右で種類が違っても受ける", () => {
     const beforeAfter = {
       kind: "beforeAfter",
@@ -94,6 +117,7 @@ describe("parseReportSections", () => {
       before: { kind: "points", points: ["架空の1行"] },
       after: { kind: "image", path: "架空/after.png" },
       fold: "",
+      aside: "",
     }
     const parse = (block: object): unknown =>
       parseReportSections([{ heading: "", blocks: [block] }])
@@ -128,6 +152,7 @@ describe("parseReportSections", () => {
       before,
       after,
       fold: "",
+      aside: "",
     })
     const mermaid = { kind: "mermaid", source: "sequenceDiagram\n  A->>B: 架空" }
 
@@ -143,7 +168,7 @@ describe("parseReportSections", () => {
 
   it("compare の塊は側がちょうど2つで箇条があるときだけ受ける", () => {
     const side = { heading: "案A", points: ["架空の1行"] }
-    const compare = { kind: "compare", title: "", sides: [side, side], fold: "" }
+    const compare = { kind: "compare", title: "", sides: [side, side], fold: "", aside: "" }
     const parse = (block: object): unknown =>
       parseReportSections([{ heading: "", blocks: [block] }])
 
@@ -163,7 +188,7 @@ describe("parseReportSections", () => {
   it("dimension の塊は領域と余白の混じった並びを受け、省いた size と before を空文字で補う", () => {
     const parse = (parts: readonly object[]): unknown =>
       parseReportSections([
-        { heading: "", blocks: [{ kind: "dimension", title: "", parts, fold: "" }] },
+        { heading: "", blocks: [{ kind: "dimension", title: "", parts, fold: "", aside: "" }] },
       ])
 
     expect(parse([{ name: "架空の見出し" }, { gap: "26px", before: "28px" }])).toEqual({
@@ -179,6 +204,7 @@ describe("parseReportSections", () => {
                 { gap: "26px", before: "28px" },
               ],
               fold: "",
+              aside: "",
             },
           ],
         },
@@ -200,6 +226,7 @@ describe("parseReportSections", () => {
       columns: ["列A", "列B"],
       rows: [{ name: "行1", cells: ["ok", "na"] }],
       fold: "",
+      aside: "",
     }
     const broken = { ...matrix, rows: [{ name: "行1", cells: ["ok", "good"] }] }
 
@@ -220,8 +247,8 @@ describe("parseReportSections", () => {
       {
         heading: "",
         blocks: [
-          { ...image, notes: [], fold: "" },
-          { ...annotated, fold: "" },
+          { ...image, notes: [], fold: "", aside: "" },
+          { ...annotated, fold: "", aside: "" },
         ],
       },
     ])
@@ -246,8 +273,8 @@ describe("parseReportSections", () => {
       {
         heading: "",
         blocks: [
-          { ...mermaid, title: "", fold: "" },
-          { ...chart, title: "", horizontal: false, fold: "" },
+          { ...mermaid, title: "", fold: "", aside: "" },
+          { ...chart, title: "", horizontal: false, fold: "", aside: "" },
         ],
       },
     ])
@@ -285,6 +312,7 @@ describe("parseReportSections", () => {
               ...svg,
               title: "",
               fold: "",
+              aside: "",
               shapes: [
                 { ...rect, label: "", emphasis: false },
                 { ...line, arrow: false, label: "" },
@@ -332,7 +360,7 @@ describe("parseReportSections", () => {
       )
 
     it("通り、title・fold は空文字で補う", () => {
-      expect(blocksOf(graph)).toEqual([{ ...graph, title: "", fold: "" }])
+      expect(blocksOf(graph)).toEqual([{ ...graph, title: "", fold: "", aside: "" }])
       expect(figureBlockSchema.safeParse(graph).success).toBe(true)
     })
 
@@ -360,6 +388,7 @@ describe("parseReportSections", () => {
       steps: ["架空の一", "架空の二"],
       current: 1,
       fold: "",
+      aside: "",
     }
 
     const parsed = parseReportSections([{ heading: "", blocks: [progress] }])

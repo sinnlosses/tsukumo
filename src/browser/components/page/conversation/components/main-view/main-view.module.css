@@ -99,6 +99,11 @@
 .main-step > .detail-block:last-child {
   margin-bottom: 0;
 }
+/* 余白の柱を出すかを本文の幅で決める器（`report-notation.module.css` の `@container report-gutter`）。
+   お伺いの札の preview にも `.detail-block` があるので、名前を付けてメインビューの本文だけに効かせる。 */
+.main-step > .detail-block {
+  container: report-gutter / inline-size;
+}
 /* 本文の最初と最後の塊の margin は器の padding に足されるので落とす（padding がそのまま器の内側のあきになる）。 */
 .main-step > .detail-block > :first-child {
   margin-top: 0;

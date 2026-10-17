@@ -77,6 +77,7 @@ export const AutoAlignedTable = {
               ],
               rest: "",
               fold: "",
+              aside: "",
             },
           ],
         },
@@ -93,7 +94,7 @@ export const Sections = {
       [
         {
           heading: "架空の一の節",
-          blocks: [{ kind: "text", text: "この節には見出しがある（架空）。", fold: "" }],
+          blocks: [{ kind: "text", text: "この節には見出しがある（架空）。", fold: "", aside: "" }],
         },
         {
           heading: "",
@@ -102,6 +103,7 @@ export const Sections = {
               kind: "text",
               text: "この節には見出しが無い。それでも境目の印は前後に入り、1つのトピックになる（架空）。",
               fold: "",
+              aside: "",
             },
           ],
         },
@@ -113,6 +115,7 @@ export const Sections = {
               markdown:
                 "### 節の中の副見出し\n\n---\n\n副見出しと水平線は節の境目にしない（架空）。",
               fold: "",
+              aside: "",
             },
           ],
         },

@@ -24,7 +24,7 @@ const noPlan = (): WorkPlanStanding => ({ kind: "none" })
 
 /** 逃げ道の塊1つの節（中身は架空）。 */
 const sectionsOf = (markdown: string): readonly ReportSection[] => [
-  { heading: "", blocks: [{ kind: "markdown", markdown, fold: "" }] },
+  { heading: "", blocks: [{ kind: "markdown", markdown, fold: "", aside: "" }] },
 ]
 
 const VALID: ReportDraft = reportDraft({ conclusion: "架空の結論。" })
@@ -134,8 +134,14 @@ describe("createReportReview の judge", () => {
       conclusion: "架空の結論。",
       figure: { kind: "none", reason: "short-answer" },
       sections: [
-        { heading: "架空の秘密の節1", blocks: [{ kind: "text", text: "架空の根拠。", fold: "" }] },
-        { heading: "架空の秘密の節2", blocks: [{ kind: "text", text: "架空の根拠。", fold: "" }] },
+        {
+          heading: "架空の秘密の節1",
+          blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }],
+        },
+        {
+          heading: "架空の秘密の節2",
+          blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }],
+        },
       ],
     })
 

@@ -21,7 +21,7 @@ export const REPORT_NOTE_KINDS = [
 
 /**
  * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態の印と変化・数の棒・`matrix` / `compare` / `beforeAfter` / `dimension` の塊・`image` の説明の並び・図と表の題の包みと題の行・`stats` の塊・
- * 名前付きの `list`・`list` の `flow`・`progress` / `options` / `files` の塊）と、
+ * 名前付きの `list`・`list` の `flow`・`progress` / `options` / `files` の塊・余白の柱の包みと傍注）と、
  * 塊にする前にモデルが逃げ道に書いていた `cols` / `card`。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  */
 export const REPORT_BLOCK_MARK_NAMES = [
@@ -137,6 +137,10 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "file-path-name",
   "file-note",
   "file-note-empty",
+  "with-gutter",
+  "gutter",
+  "gutter-note",
+  "gutter-note-label",
 ] as const satisfies readonly string[]
 
 /** 語彙が挙げる印の名前の全体（`note` の6種 + それ以外）。 */

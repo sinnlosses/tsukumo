@@ -72,7 +72,8 @@ export const REPORT_FIGURE_DESCRIPTION =
 export const REPORT_SECTIONS_DESCRIPTION =
   "結論のあとの根拠・比較・手順。節の並びで、節ごとに塊を並べる。" +
   "塊の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。" +
-  "塊の fold に見出しを書くと畳んで描く（畳んでも結論が通る塊だけ）。"
+  "塊の fold に見出しを書くと畳んで描く（畳んでも結論が通る塊だけ）。" +
+  "塊の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。"
 
 /**
  * `report` の `closing` 引数（締めのセリフ）の説明。

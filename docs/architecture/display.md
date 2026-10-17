@@ -170,6 +170,10 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。同じことを両方に書くと毎ターンの文脈に2回載る。
   **種類の数に上限は置かない**（2026-09-30 改訂。足すかは下の「読む時間を減らす物差しと線引き」、
   外すかは「塊を足す・外す基準」の外す基準〔28日0回〕で決める）
+- **どの塊も、`fold`（畳むときの見出し）と `aside`（塊の傍注。出典・どこを見るかの1行）を省略できる欄として持つ**
+  （`aside` は 2026-10-17 利用者決定）。`aside` と `memo` の `note` は本文の流れに入れず、余白の柱に出す
+  （下の「各表示物」のメインビュー。`memo` の `note` は本文の位置に残さない）。使いどころは `report` の `sections` の説明
+  （`REPORT_SECTIONS_DESCRIPTION`）だけが持ち、書き手の規約（`REPORT_NOTATION_PROMPT`）には書かない
 - **数の推移・割合は `chart` の塊で見せる**（2026-09-30。`chartKind`〔`bar` / `line` / `pie` / `arrow` / `slope`〕・`labels`・
   `series`〔`{ name, values }` の並び〕・`horizontal`〔`bar` の横棒〕を受け、Chart.js の設定は
   tsukumo が組む。色は書き手が指定しない（`loadChart` が配色のトークンから入れる）。`pie` は
@@ -1122,7 +1126,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 決める。外すかは使われ方の数で決める**（docs/research/report-block.md 6章、記録の語彙は
 `docs/research/report-architecture.md` 6章）。`report` を描く（差し戻されなかった）
 たびに、その回に出た塊の種類・既定の値でない塊の欄（表のセルの `from` / `to`・`stats` の `before` / `total` / `series` / `better`・
-`list` の `label`・`list` の `flow`・`dimension` の `before`・`image` の `notes`）と、逃げ道（`markdown` の塊）に出た記法の種類（重複無し。同じ種類が
+`list` の `label`・`list` の `flow`・`dimension` の `before`・`image` の `notes`・塊の `aside`）と、逃げ道（`markdown` の塊）に出た記法の種類（重複無し。同じ種類が
 同じレポートに何回出ても1回と数える）を `~/.tsukumo/report-usage/<YYYY-MM-DD>.jsonl` に1行記録する。
 逃げ道に出た記法は3つに分けて持つ: **塊のある記法**（表・箇条書き・`note` など、逃げ道の外側
 〔HTML の容れ物の中でないところ〕に出たもの）・**同じ塊のある記法が HTML の容れ物
@@ -1135,7 +1139,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 版5からは、段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるかの `hasFigure` と、
 このターンにメインが画像のファイルを `Read` したのに `image` の塊が無かったかの `readImageWithoutImageBlock`
 （サブエージェントの `Read` は数えない）も足す。版6からは、`figure` の欄の種類（図の塊の `kind` か `none`）の `figureKind` と、
-`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。版9からは、`task` の報告の種類 `taskGenre`（`task` の無いレポートは `none`）と終わり方 `taskOutcome`、`favor` が空でないかの `hasFavor`、本文（`text`・`note`・`list` の項目・表のセル・`markdown`）に URL か `path:line` があるか `code` の塊に `path` があるかの `hasSourceReference` を足す。版10からは、行が2つ以下の表が1つでもあるかの `shortTable` を足す（`rest` が空でない表は塊の欄の `tableRest` で数え、版は上げない）。版11からは `stats` の `series` / `better` を塊の欄の `statsSeries` / `statsBetter` で数える（行の形は版10と同じで、版だけ上げて古い行と見分ける）。`code` の `marks` が空でない塊は塊の欄の `codeMarks` で数え、版は上げない。数えるだけで差し戻しにはしない。中身は一切持たない
+`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。版9からは、`task` の報告の種類 `taskGenre`（`task` の無いレポートは `none`）と終わり方 `taskOutcome`、`favor` が空でないかの `hasFavor`、本文（`text`・`note`・`list` の項目・表のセル・`markdown`）に URL か `path:line` があるか `code` の塊に `path` があるかの `hasSourceReference` を足す。版10からは、行が2つ以下の表が1つでもあるかの `shortTable` を足す（`rest` が空でない表は塊の欄の `tableRest` で数え、版は上げない）。版11からは `stats` の `series` / `better` を塊の欄の `statsSeries` / `statsBetter` で数える（行の形は版10と同じで、版だけ上げて古い行と見分ける）。`code` の `marks` が空でない塊は塊の欄の `codeMarks` で数え、版は上げない。版12からは、`aside` が空でない塊があるかを塊の欄の `blockAside` で数える（行の形は版10と同じ）。数えるだけで差し戻しにはしない。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
 `src/server/report/adapter/report-usage-log.ts`、何を1行にするかは
 `src/server/report/core/report-usage.ts` が持つ。逃げ道の記法の検出は `src/server/report/core/report-markdown-notation.ts`、
@@ -1415,6 +1419,10 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   `docs/architecture/screen-design.md` 13章）。**最終レポートは箱（枠・内側の余白）を持たず**、領域の `surface` を
   紙にする（2026-10-03。札は枠を持たない、の決定を本文まで広げた）。中間レポートの破線の箱と
   箱のない最終レポートは形で見分ける。
+  **`memo` の `note` と塊の `aside` は、本文の列の右の余白の柱に出す**（2026-10-17 利用者決定。Distill の gutter・Tufte の傍注に倣い、
+  補足を走り読みの経路から外す）。余白の柱の傍注は直前の塊の上端に揃え、本文の列は1本のまま（2段組にしない。Z 字に読ませない決定とは別の形）。
+  本文の列の右に 160px 以上空かないときは、余白の柱に出すものを塊の直後の1行として本文の中に畳む。余白の柱は書き上げる演出の対象外で、
+  最初から出す。寸法は `docs/architecture/screen-design.md`「余白の柱」。
   **あとに別のレポートが出た中間レポートは畳む**（2026-09-16 決定。全部開いたまま積むと、
   ターンが長いほど画面が伸びるため）。**まだ追い越されていない最後の中間レポートは
   開いたまま**にする。畳んだ `<summary>` には「中間レポート」＋本文の先頭行（見出しなら記号を

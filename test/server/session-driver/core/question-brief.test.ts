@@ -114,12 +114,16 @@ describe("mermaidSourcesOf", () => {
       title: "",
       source,
       fold: "",
+      aside: "",
     })
     const sources = mermaidSourcesOf([
       brief({
         options: [
           option("A案", {
-            figures: [mermaid("架空の図1"), { kind: "list", style: "bullet", items: [], fold: "" }],
+            figures: [
+              mermaid("架空の図1"),
+              { kind: "list", style: "bullet", items: [], fold: "", aside: "" },
+            ],
           }),
           option("B案", { figures: [mermaid("架空の図2")] }),
         ],

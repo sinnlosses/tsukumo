@@ -510,7 +510,8 @@
                             "kind": "mermaid",
                             "title": "",
                             "source": "flowchart LR\n  W[架空の書き手] --> A[架空の置き場A]",
-                            "fold": ""
+                            "fold": "",
+                            "aside": ""
                           }
                         ]
                       },
@@ -529,7 +530,8 @@
                               ["A", "架空1"],
                               ["B", "架空2"]
                             ],
-                            "fold": ""
+                            "fold": "",
+                            "aside": ""
                           }
                         ]
                       },
@@ -1374,7 +1376,8 @@
                   {
                     "kind": "markdown",
                     "markdown": "- 読んだのは `/tmp/dummy/a.ts` と `/tmp/dummy/b.ts` の2つ\n- 目盛りを決めているのは `a.ts` のほう\n- `b.ts` は目盛りを読むだけ",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -1471,7 +1474,8 @@
                       ],
                       ["`c.ts`", "型の食い違いが残る", { "status": "ng", "text": "NG" }]
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "table",
@@ -1482,12 +1486,14 @@
                       ["札", "6", "12"]
                     ],
                     "rest": "ほか 3 件（一覧は省略）",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "markdown",
                     "markdown": "```diff src/a.ts\n-const TICKS = 12\n+const TICKS = 24\n```\n\n<div class=\"note note-warn\">\n\n`b.ts` のキャッシュは古い目盛りを持ったまま残る。\n\n</div>",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -1588,13 +1594,28 @@
                         "reason": "設定ファイルの上書きとしてなら足せる（架空）。"
                       }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "note",
                     "tone": "warn",
                     "text": "設定ファイルを増やすなら、読み込む順番を1箇所に決めておかないと事故る（架空）。",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "text",
+                    "text": "読み口は `ticks.ts` の1つに寄せ、起こし直すと新しい目盛りを読み直す（架空）。",
+                    "fold": "",
+                    "aside": "出どころ: 架空の計測ログ `notes/dummy/ticks.md:12` の3回ぶん"
+                  },
+                  {
+                    "kind": "note",
+                    "tone": "memo",
+                    "text": "環境変数での上書きは今回は入れていない。設定ファイルの読み口が落ち着いてから、同じ口に足す見込み（架空）。",
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -1621,7 +1642,8 @@
                         "note": "目盛りの決め方（架空）"
                       }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "files",
@@ -1630,7 +1652,8 @@
                       { "path": "out/dummy/b.png", "change": "added", "note": "" }
                     ],
                     "title": "架空の構成図のファイル",
-                    "fold": ""
+                    "fold": "",
+                    "aside": "どこを見るか: `out/dummy/b.png` が構成図の画（架空）"
                   }
                 ]
               },
@@ -1646,7 +1669,8 @@
                       { "lines": "3", "label": "刻みを決める" },
                       { "lines": "4", "label": "刻みの倍数だけ残す" }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "code",
@@ -1654,7 +1678,8 @@
                     "path": "",
                     "source": "$ pnpm run check src/dummy/ticks.ts\ntypecheck  ok   6.1s\nlint       ok   2.3s\ntest       ok   5.5s  (31 files)\ne2e        skipped (変更なし)\n",
                     "marks": [],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -1718,7 +1743,8 @@
                     "labels": ["架空1月", "架空2月", "架空3月"],
                     "series": [{ "name": "架空系列A", "values": [12, 18, 9] }],
                     "horizontal": false,
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "chart",
@@ -1726,7 +1752,8 @@
                     "labels": ["架空案A", "架空案B", "架空案C"],
                     "series": [{ "name": "架空の横棒", "values": [30, 55, 15] }],
                     "horizontal": true,
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "chart",
@@ -1737,7 +1764,8 @@
                       { "name": "架空系列B", "values": [2, 3, 6, 4] }
                     ],
                     "horizontal": false,
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "chart",
@@ -1745,7 +1773,8 @@
                     "labels": ["架空内訳A", "架空内訳B", "架空内訳C"],
                     "series": [{ "name": "架空系列A", "values": [50, 30, 20] }],
                     "horizontal": false,
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "chart",
@@ -1756,7 +1785,8 @@
                       { "name": "架空の後", "values": [30, 5, 26] }
                     ],
                     "horizontal": false,
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "chart",
@@ -1767,7 +1797,8 @@
                       { "name": "架空の後期", "values": [55, 41, 20, 18] }
                     ],
                     "horizontal": false,
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -1869,7 +1900,8 @@
                       },
                       { "kind": "text", "x": 14, "y": 170, "text": "架空の注記" }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "beforeAfter",
@@ -1933,7 +1965,8 @@
                         }
                       ]
                     },
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -2047,7 +2080,8 @@
                         "cells": ["ok", "ok", "ng", "ok", "ok", "ok", "ok", "ok", "ok"]
                       }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2063,7 +2097,8 @@
                       { "name": "架空の場面B", "cells": ["ok", "warn", "ok"] },
                       { "name": "架空の場面C", "cells": ["ok", "ok", "ok"] }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "table",
@@ -2089,7 +2124,8 @@
                         { "status": "ok", "text": "OK" }
                       ]
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -2152,7 +2188,8 @@
                     "title": "架空の札の見出しを 18px から 21px にした画面",
                     "before": { "kind": "image", "path": "report-image-fixture/before.png" },
                     "after": { "kind": "image", "path": "report-image-fixture/after.png" },
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2172,7 +2209,8 @@
                       "language": "json",
                       "source": "{\n  \"cache\": true,\n  \"retry\": 3,\n  \"架空の長めの鍵の名前で狭い幅では横に送られる\": \"架空の長めの値で狭い幅では横に送られる\"\n}\n"
                     },
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2191,7 +2229,8 @@
                       ]
                     },
                     "after": { "kind": "points", "points": ["素材を1回だけ読む"] },
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2203,7 +2242,8 @@
                     "title": "架空の文言から画面へ",
                     "before": { "kind": "points", "points": ["押す口の文言は「送る」だった"] },
                     "after": { "kind": "image", "path": "report-image-fixture/missing.png" },
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2215,7 +2255,8 @@
                     "title": "架空の呼び出しの変更",
                     "direction": "LR",
                     "source": "(架空の入口) -> 架空の長めの名前の処理\n[架空の呼び出しの群]\n+ 架空の長めの名前の処理 -> 架空の長めの名前の深いモジュール: 渡す\n- 架空の長めの名前の処理 -> 架空の長めの名前の古い処理: 呼ぶ\n[]\n~ 架空の長めの名前の深いモジュール -> (架空の出口)\n~ 架空の長めの名前の古い処理\n+ 架空の長めの名前の深いモジュール\n架空の長めの名前の深いモジュール -> {架空の確認?}: 確かめる",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2233,7 +2274,8 @@
                       "kind": "mermaid",
                       "source": "sequenceDiagram\n  participant A as 架空の画面\n  participant B as 架空のサーバ\n  A->>B: 要求\n  B-->>A: 応答"
                     },
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -2304,7 +2346,8 @@
                       { "gap": "44px", "before": "" },
                       { "name": "検証結果の表", "size": "", "before": "" }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2324,7 +2367,8 @@
                       { "name": "`report-note` の札", "size": "", "before": "" },
                       { "gap": "8px", "before": "" }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2344,7 +2388,8 @@
                       ["本文の字", "15px", "15px"],
                       ["本文と検証結果の表の間", "44px", "44px"]
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -2406,13 +2451,15 @@
                     "kind": "image",
                     "path": "report-image-fixture/after.png",
                     "caption": "架空の札の見出しが 21px になった画面",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "image",
                     "path": "report-image-fixture/missing.png",
                     "caption": "架空の置いていない画像",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2428,7 +2475,8 @@
                       "見出しと本文の間の余白は 28px から 26px に詰まった",
                       "右下の `保存` の押す口は位置も色も変わっていない"
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "image",
@@ -2438,7 +2486,8 @@
                       "上の帯の高さが 52px のまま揃っている",
                       "2行目の札の印が緑の ✓ に変わった"
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2448,7 +2497,8 @@
                   {
                     "kind": "markdown",
                     "markdown": "![外の画像](https://example.invalid/a.png)\n\n<img src=\"https://example.invalid/b.png\" alt=\"外\">",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2470,7 +2520,8 @@
                         "done": false
                       }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -2536,7 +2587,8 @@
                       ["架空の a", "12"],
                       ["架空の b", "8"]
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "matrix",
@@ -2546,14 +2598,16 @@
                       { "name": "架空の機能A", "cells": ["ok", "ng"] },
                       { "name": "架空の機能B", "cells": ["warn", "na"] }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "table",
                     "title": "架空の畳んだ中の表",
                     "columns": ["項目", "件数"],
                     "rows": [["架空の c", "3"]],
-                    "fold": "架空の畳んだ表"
+                    "fold": "架空の畳んだ表",
+                    "aside": ""
                   }
                 ]
               },
@@ -2565,13 +2619,15 @@
                     "title": "架空の流れ図で題がとても長く、図の幅を超えずに折り返して読めるかどうかを確かめるための文",
                     "direction": "LR",
                     "source": "(@架空の入口 (開始)) -> 架空の \"処理\" `end`\n架空の \"処理\" `end` -> {架空の分岐?}: a|b",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "mermaid",
                     "title": "",
                     "source": "sequenceDiagram\n  A->>B: 架空の呼び出し",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "chart",
@@ -2580,7 +2636,8 @@
                     "labels": ["架空1月", "架空2月", "架空3月"],
                     "series": [{ "name": "架空系列A", "values": [12, 18, 9] }],
                     "horizontal": false,
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "compare",
@@ -2589,7 +2646,8 @@
                       { "heading": "変更前", "points": ["架空の一行目"] },
                       { "heading": "変更後", "points": ["架空の一行目"] }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "dimension",
@@ -2599,13 +2657,15 @@
                       { "name": "見出し", "size": "字 21px", "before": "字 18px" },
                       { "gap": "26px", "before": "" }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "image",
                     "path": "report-image-fixture/after.png",
                     "caption": "架空の画面で題がとても長く、画像の幅を超えずに折り返して読めるかどうかを確かめるための文",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -2619,7 +2679,8 @@
                       { "name": "架空の案A", "verdict": "adopt", "reason": "架空の理由" },
                       { "name": "架空の案B", "verdict": "reject", "reason": "架空の理由" }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -2679,18 +2740,20 @@
               "title": "架空の欄の図",
               "direction": "LR",
               "source": "(架空の入口) -> 架空の検査\n架空の検査 -> 架空の描画\n+ 架空の描画 -> (架空の画面)",
-              "fold": ""
+              "fold": "",
+              "aside": ""
             },
             "sections": [
               {
                 "heading": "架空の節",
                 "blocks": [
-                  { "kind": "text", "text": "架空の根拠の一文。", "fold": "" },
+                  { "kind": "text", "text": "架空の根拠の一文。", "fold": "", "aside": "" },
                   {
                     "kind": "mermaid",
                     "title": "架空の節の図",
                     "source": "sequenceDiagram\n  A->>B: 架空の呼び出し",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -2753,12 +2816,13 @@
               {
                 "heading": "架空の節",
                 "blocks": [
-                  { "kind": "text", "text": "架空の根拠の一文。", "fold": "" },
+                  { "kind": "text", "text": "架空の根拠の一文。", "fold": "", "aside": "" },
                   {
                     "kind": "mermaid",
                     "title": "架空の節の図",
                     "source": "sequenceDiagram\n  A->>B: 架空の呼び出し",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -2819,7 +2883,8 @@
                     "kind": "mermaid",
                     "title": "",
                     "source": "sequenceDiagram\n  A->>B 架空の呼び出し\n  B-->>A: 架空の返事",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -2861,7 +2926,8 @@
                     "kind": "mermaid",
                     "title": "",
                     "source": "sequenceDiagram\n  A->>B: 架空の呼び出し\n  B-->>A: 架空の返事",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -3397,7 +3463,8 @@
                   {
                     "kind": "markdown",
                     "markdown": "- 下調べは終わった（架空の結果）\n- 続きは合図を待って進める",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -3500,7 +3567,8 @@
                   {
                     "kind": "markdown",
                     "markdown": "- 中間の報告は合図のあいだも出したまま\n- 吹き出しも前のセリフを保った\n- 最後にこの最終報告へ差し替わる",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -4144,7 +4212,8 @@
                         "done": false
                       }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -4679,7 +4748,8 @@
                         "done": false
                       }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -4909,7 +4979,8 @@
                               { "label": "tdd", "text": "" },
                               { "label": "research", "text": "" }
                             ],
-                            "fold": ""
+                            "fold": "",
+                            "aside": ""
                           }
                         ]
                       },
@@ -5149,7 +5220,8 @@
                     "items": [
                       { "label": "", "text": "架空の置き場 11 件を張り替えた", "done": false }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -5552,7 +5624,8 @@
                         "done": false
                       }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -5808,7 +5881,8 @@
                   {
                     "kind": "markdown",
                     "markdown": "- 読んだのは `/tmp/dummy/a.ts` と `/tmp/dummy/b.ts` の2つ\n- 目盛りを決めているのは `a.ts` のほう\n- `b.ts` は目盛りを読むだけ",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -5905,7 +5979,8 @@
                       ],
                       ["`c.ts`", "型の食い違いが残る", { "status": "ng", "text": "NG" }]
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "table",
@@ -5916,12 +5991,14 @@
                       ["札", "6", "12"]
                     ],
                     "rest": "ほか 3 件（一覧は省略）",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "markdown",
                     "markdown": "```diff src/a.ts\n-const TICKS = 12\n+const TICKS = 24\n```\n\n<div class=\"note note-warn\">\n\n`b.ts` のキャッシュは古い目盛りを持ったまま残る。\n\n</div>",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -6150,7 +6227,8 @@
                   {
                     "kind": "text",
                     "text": "架空の札の組み立てを1箇所にまとめた。",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -6282,7 +6360,8 @@
                         { "status": "ok", "text": "目視" }
                       ]
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -6292,7 +6371,8 @@
                   {
                     "kind": "text",
                     "text": "位置は「いまの段 / 段の数」の形で、段が1つでも同じ形にした。段が無いターンでは札ごと出さないので、位置の字も出ない。",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   },
                   {
                     "kind": "list",
@@ -6323,7 +6403,8 @@
                   {
                     "kind": "text",
                     "text": "過去の記録にある段の無い札は、作り直さずにそのまま出す。記録の形は変えていないので、読み込み直しても同じに出る。",
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }
@@ -6771,7 +6852,8 @@
                       },
                       { "before": "", "value": "3", "total": "", "label": "架空の帯の無い数" }
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               },
@@ -6787,7 +6869,8 @@
                       ["架空の配信", "16", "33%"],
                       ["架空の設定", "8", "17%"]
                     ],
-                    "fold": ""
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }

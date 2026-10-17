@@ -924,7 +924,10 @@ describe("createSessionManager", () => {
         toolUseId: "toolu_r1",
         conclusion,
         sections: [
-          { heading: "", blocks: [{ kind: "text", text: "本文はここに出ない", fold: "" }] },
+          {
+            heading: "",
+            blocks: [{ kind: "text", text: "本文はここに出ない", fold: "", aside: "" }],
+          },
         ],
         favor: "本文はここに出ない",
         checks: [

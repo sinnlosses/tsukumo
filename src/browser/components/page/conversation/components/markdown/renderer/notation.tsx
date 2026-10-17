@@ -40,6 +40,9 @@ const NOTE_LABELS = REPORT_NOTE_KINDS
 /** 書き上げる演出（`planReveal`）が題の行を見分ける印の属性。class はハッシュ名になり domain の層から選べない。 */
 const REVEAL_CAPTION_ATTRIBUTE = "data-reveal-caption"
 
+/** 書き上げる演出が余白の柱（傍注の並び）を見分ける印の属性。余白の柱は最初から出す。 */
+const REVEAL_GUTTER_ATTRIBUTE = "data-reveal-gutter"
+
 type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
 
 /**
@@ -60,11 +63,13 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
   }
 
   const isCaption = className !== undefined && classNameTokens(className).includes("caption")
+  const isGutter = className !== undefined && classNameTokens(className).includes("gutter")
 
   return (
     <div
       {...rest}
       {...(isCaption ? { [REVEAL_CAPTION_ATTRIBUTE]: "" } : {})}
+      {...(isGutter ? { [REVEAL_GUTTER_ATTRIBUTE]: "" } : {})}
       className={resolveNotationClassName(className)}
     >
       {label !== undefined && (
@@ -80,6 +85,19 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
       )}
       {children}
     </div>
+  )
+}
+
+type NotationAsideProps = JSX.IntrinsicElements["aside"] & ExtraProps
+
+/** レポートの `aside`（余白の柱の傍注1つ）。 */
+export function NotationAside(props: NotationAsideProps): ReactElement {
+  const { node: _node, className, children, ...rest } = props
+
+  return (
+    <aside {...rest} className={resolveNotationClassName(className)}>
+      {children}
+    </aside>
   )
 }
 

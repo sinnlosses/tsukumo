@@ -93,7 +93,8 @@
                 }
               ],
               "horizontal": false,
-              "fold": ""
+              "fold": "",
+              "aside": ""
             },
             {
               "kind": "chart",
@@ -115,7 +116,8 @@
                 }
               ],
               "horizontal": true,
-              "fold": ""
+              "fold": "",
+              "aside": ""
             },
             {
               "kind": "chart",
@@ -148,7 +150,8 @@
                 }
               ],
               "horizontal": false,
-              "fold": ""
+              "fold": "",
+              "aside": ""
             },
             {
               "kind": "chart",
@@ -170,7 +173,8 @@
                 }
               ],
               "horizontal": false,
-              "fold": ""
+              "fold": "",
+              "aside": ""
             },
             {
               "kind": "chart",
@@ -200,7 +204,8 @@
                 }
               ],
               "horizontal": false,
-              "fold": ""
+              "fold": "",
+              "aside": ""
             },
             {
               "kind": "chart",
@@ -233,7 +238,8 @@
                 }
               ],
               "horizontal": false,
-              "fold": ""
+              "fold": "",
+              "aside": ""
             }
           ]
         }

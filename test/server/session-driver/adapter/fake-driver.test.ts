@@ -611,7 +611,10 @@ describe("startFakeSession", () => {
                     "conclusion",
                   ]),
                   sections: [
-                    { heading: "", blocks: [{ kind: "markdown", markdown: "本文", fold: "" }] },
+                    {
+                      heading: "",
+                      blocks: [{ kind: "markdown", markdown: "本文", fold: "", aside: "" }],
+                    },
                     { heading: "", blocks: [{ kind: "no-such-block" }] },
                   ],
                   closing: { kind: "speech", text: "書けたよ", expression: "知らない表情" },
@@ -651,7 +654,9 @@ describe("startFakeSession", () => {
     expect(sink.events.filter((event) => event.kind === "report")).toEqual([
       reportEvent({
         toolUseId: "fake-r1",
-        sections: [{ heading: "", blocks: [{ kind: "markdown", markdown: "本文", fold: "" }] }],
+        sections: [
+          { heading: "", blocks: [{ kind: "markdown", markdown: "本文", fold: "", aside: "" }] },
+        ],
         closing: { kind: "speech", text: "書けたよ", expression: "default" },
         unknownBlockCount: 1,
       }),

@@ -434,7 +434,13 @@ describe("question_brief", () => {
               byAxis: ["速い"],
               irreversible: false,
               figures: [
-                { kind: "mermaid", title: "", source: "sequenceDiagram\n  A ->> B: x", fold: "" },
+                {
+                  kind: "mermaid",
+                  title: "",
+                  source: "sequenceDiagram\n  A ->> B: x",
+                  fold: "",
+                  aside: "",
+                },
               ],
             },
             {
@@ -1029,6 +1035,16 @@ describe("report の本文（sections）", () => {
     expect(schema).toContain("切った残りを1行で")
   })
 
+  it("塊の aside の欄と、sections の説明にその使いどころがある", async () => {
+    const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_WHOLE_SCHEMA_REPLY)
+    const schema = JSON.stringify(
+      reply.result.tools.find((tool) => tool.name === "report")?.inputSchema,
+    )
+
+    expect(schema).toContain('"aside"')
+    expect(schema).toContain("塊の aside に出典・どこを見るかを1行で書く")
+  })
+
   it("conclusion の説明に、目安の字数・読点の数・悪い例と良い例がある", async () => {
     const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_SCHEMA_REPLY)
     const conclusion = z
@@ -1196,8 +1212,8 @@ const SHARED_BLOCK_DEFINITIONS = [
   "SvgShape",
 ]
 
-/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（約1.93万字）には余白を持たせた上限。 */
-const REPORT_INPUT_SCHEMA_MAX_CHARS = 20_000
+/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（約2.08万字）には余白を持たせた上限。 */
+const REPORT_INPUT_SCHEMA_MAX_CHARS = 21_000
 
 /** `tools/list` の応答のうち、引数の schema を丸ごと読む形。 */
 const TOOLS_WHOLE_SCHEMA_REPLY = z.object({

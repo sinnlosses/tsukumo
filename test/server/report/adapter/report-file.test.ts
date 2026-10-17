@@ -20,6 +20,7 @@ const sectionsOf = (paths: readonly string[]): readonly ReportSection[] => [
       source: "",
       marks: [],
       fold: "",
+      aside: "",
     })),
   },
 ]

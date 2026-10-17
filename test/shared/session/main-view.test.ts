@@ -676,8 +676,15 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       {
         heading: "",
         blocks: [
-          { kind: "text", text: "架空の根拠。", fold: "" },
-          { kind: "graph", title: "架空の節の図", direction: "TD", source: "A -> B", fold: "" },
+          { kind: "text", text: "架空の根拠。", fold: "", aside: "" },
+          {
+            kind: "graph",
+            title: "架空の節の図",
+            direction: "TD",
+            source: "A -> B",
+            fold: "",
+            aside: "",
+          },
         ],
       },
     ]
@@ -707,6 +714,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         direction: "LR",
         source: "X -> Y",
         fold: "",
+        aside: "",
       })
 
       const order = [
@@ -968,8 +976,14 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         {
           heading: "架空の節",
           blocks: [
-            { kind: "progress", steps: ["架空の道A", "架空の道B"], current: 0, fold: "" },
-            { kind: "text", text: "架空の根拠。", fold: "" },
+            {
+              kind: "progress",
+              steps: ["架空の道A", "架空の道B"],
+              current: 0,
+              fold: "",
+              aside: "",
+            },
+            { kind: "text", text: "架空の根拠。", fold: "", aside: "" },
           ],
         },
       ],

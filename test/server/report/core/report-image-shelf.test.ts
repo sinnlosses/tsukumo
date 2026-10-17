@@ -28,8 +28,9 @@ function imageSections(...paths: readonly string[]): readonly ReportSection[] {
           caption: "",
           notes: [],
           fold: "",
+          aside: "",
         })),
-        { kind: "text", text: "架空の本文。", fold: "" },
+        { kind: "text", text: "架空の本文。", fold: "", aside: "" },
       ],
     },
   ]
@@ -109,6 +110,7 @@ describe("reportImagePaths", () => {
             before: { kind: "image", path: "架空/before.png" },
             after: { kind: "image", path: "架空/after.png" },
             fold: "",
+            aside: "",
           },
           {
             kind: "beforeAfter",
@@ -116,6 +118,7 @@ describe("reportImagePaths", () => {
             before: { kind: "points", points: ["架空の1行"] },
             after: { kind: "image", path: "" },
             fold: "",
+            aside: "",
           },
         ],
       },

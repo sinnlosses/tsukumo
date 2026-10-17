@@ -124,7 +124,14 @@ describe("レポートの画像の棚", () => {
         {
           heading: "",
           blocks: [
-            { kind: "image", path: "fictional/after.png", caption: "", notes: [], fold: "" },
+            {
+              kind: "image",
+              path: "fictional/after.png",
+              caption: "",
+              notes: [],
+              fold: "",
+              aside: "",
+            },
           ],
         },
       ],
@@ -240,7 +247,14 @@ describe("レポートの画像の棚", () => {
     stub.emit(
       reportEvent({
         toolUseId: "toolu_figure",
-        figure: { kind: "image", path: "fictional/figure.png", caption: "", notes: [], fold: "" },
+        figure: {
+          kind: "image",
+          path: "fictional/figure.png",
+          caption: "",
+          notes: [],
+          fold: "",
+          aside: "",
+        },
       }),
     )
     await waitForBatch()

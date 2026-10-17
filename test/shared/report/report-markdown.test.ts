@@ -20,7 +20,7 @@ const section = (blocks: readonly ReportBlock[], heading = ""): ReportSection =>
 })
 const markdownOf = (block: ReportBlock): string =>
   reportSectionsMarkdown([section([block])], NO_IMAGES)
-const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "" })
+const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "", aside: "" })
 const captionRow = (label: "図" | "表", ordinal: number, title = ""): string =>
   `<div class="caption"><span class="caption-number">${label} ${String(ordinal)}</span>` +
   `${title === "" ? "" : `<span class="caption-text">${title}</span>`}</div>`
@@ -67,7 +67,7 @@ describe("reportSectionsMarkdown", () => {
   it("節の見出しは ## で出し、塊と節は空行で区切る。空の見出し・空の塊は置かない", () => {
     const sections = [
       section([text("架空の一。"), text(" ")], "架空の節"),
-      section([{ kind: "markdown", markdown: "", fold: "" }], ""),
+      section([{ kind: "markdown", markdown: "", fold: "", aside: "" }], ""),
       section([text("架空の二。")], "架空の次の節"),
     ]
 
@@ -91,13 +91,13 @@ describe("reportSectionsMarkdown", () => {
       { label: "", text: "架空の二", done: false },
     ]
 
-    expect(markdownOf({ kind: "list", style: "bullet", items, fold: "" })).toBe(
+    expect(markdownOf({ kind: "list", style: "bullet", items, fold: "", aside: "" })).toBe(
       "- 架空の一\n- 架空の二",
     )
-    expect(markdownOf({ kind: "list", style: "ordered", items, fold: "" })).toBe(
+    expect(markdownOf({ kind: "list", style: "ordered", items, fold: "", aside: "" })).toBe(
       "1. 架空の一\n2. 架空の二",
     )
-    expect(markdownOf({ kind: "list", style: "check", items, fold: "" })).toBe(
+    expect(markdownOf({ kind: "list", style: "check", items, fold: "", aside: "" })).toBe(
       "- [x] 架空の一\n- [ ] 架空の二",
     )
   })
@@ -114,6 +114,7 @@ describe("reportSectionsMarkdown", () => {
       ],
       rest: "",
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(table)).toBe(
@@ -140,6 +141,7 @@ describe("reportSectionsMarkdown", () => {
       rows: [["架空の a", "架空の備考"]],
       rest: "ほか 12 件（0.5% 未満）",
       fold: "",
+      aside: "",
     }
     const withStatus: ReportBlock = {
       ...plain,
@@ -173,6 +175,7 @@ describe("reportSectionsMarkdown", () => {
       ],
       rest: "",
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(table)).toBe(
@@ -198,6 +201,7 @@ describe("reportSectionsMarkdown", () => {
       ],
       rest: "",
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(table)).toBe(
@@ -223,6 +227,7 @@ describe("reportSectionsMarkdown", () => {
       ],
       rest: "",
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(table)).toContain("| --- | --- |")
@@ -239,6 +244,7 @@ describe("reportSectionsMarkdown", () => {
       ],
       rest: "",
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(table)).toBe(
@@ -261,6 +267,7 @@ describe("reportSectionsMarkdown", () => {
       rows: [["架空の a", "40"]],
       rest: "",
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(table)).toBe(
@@ -279,6 +286,7 @@ describe("reportSectionsMarkdown", () => {
       ],
       rest: "",
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(table)).toBe(
@@ -299,6 +307,7 @@ describe("reportSectionsMarkdown", () => {
       ],
       rest: "",
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(table)).toBe(
@@ -319,6 +328,7 @@ describe("reportSectionsMarkdown", () => {
       ],
       rest: "",
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(table)).toBe(
@@ -341,6 +351,7 @@ describe("reportSectionsMarkdown", () => {
         { ...statItem, value: "0", label: "架空の失敗" },
       ],
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(stats)).toBe(
@@ -357,7 +368,7 @@ describe("reportSectionsMarkdown", () => {
       { label: "", text: "架空の説明だけ", done: false },
     ]
 
-    expect(markdownOf({ kind: "list", style: "check", items, fold: "" })).toBe(
+    expect(markdownOf({ kind: "list", style: "check", items, fold: "", aside: "" })).toBe(
       [
         '<div class="labeled-list">',
         "",
@@ -376,7 +387,7 @@ describe("reportSectionsMarkdown", () => {
       { label: "", text: "架空の出口", done: false },
     ]
 
-    expect(markdownOf({ kind: "list", style: "flow", items, fold: "" })).toBe(
+    expect(markdownOf({ kind: "list", style: "flow", items, fold: "", aside: "" })).toBe(
       '<ol class="flow" aria-label="流れ">' +
         '<li class="flow-step"><span class="flow-number" aria-hidden="true">1</span>' +
         '<span class="flow-rail" aria-hidden="true"></span><span>架空の <code>入口</code></span></li>' +
@@ -388,16 +399,16 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it("note は種別の class の塊で、中に Markdown を入れるので内側の前後に空行を空ける", () => {
-    expect(markdownOf({ kind: "note", tone: "info", text: "架空の情報", fold: "" })).toBe(
-      '<div class="note">\n\n架空の情報\n\n</div>',
-    )
+    expect(
+      markdownOf({ kind: "note", tone: "info", text: "架空の情報", fold: "", aside: "" }),
+    ).toBe('<div class="note">\n\n架空の情報\n\n</div>')
   })
 
   it("note の注意・異常は、書き上げる演出が筆を留める印（report-pause-point）を併せ持つ", () => {
-    expect(markdownOf({ kind: "note", tone: "warn", text: "架空の注意", fold: "" })).toBe(
-      '<div class="note note-warn report-pause-point">\n\n架空の注意\n\n</div>',
-    )
-    expect(markdownOf({ kind: "note", tone: "ng", text: "架空の異常", fold: "" })).toBe(
+    expect(
+      markdownOf({ kind: "note", tone: "warn", text: "架空の注意", fold: "", aside: "" }),
+    ).toBe('<div class="note note-warn report-pause-point">\n\n架空の注意\n\n</div>')
+    expect(markdownOf({ kind: "note", tone: "ng", text: "架空の異常", fold: "", aside: "" })).toBe(
       '<div class="note note-ng report-pause-point">\n\n架空の異常\n\n</div>',
     )
   })
@@ -411,6 +422,7 @@ describe("reportSectionsMarkdown", () => {
           { ...statItem, value: "1" },
         ],
         fold: "",
+        aside: "",
       })
 
     it("series が3つ以上なら value の左に折れ線と最新の円を描く", () => {
@@ -456,6 +468,7 @@ describe("reportSectionsMarkdown", () => {
         { ...statItem, value: "0", label: "架空の失敗" },
       ],
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(stats)).toBe(
@@ -474,6 +487,7 @@ describe("reportSectionsMarkdown", () => {
         { ...statItem, value: "0", label: "架空の `` `x` `` 件" },
       ],
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(stats)).toBe(
@@ -486,7 +500,12 @@ describe("reportSectionsMarkdown", () => {
 
   it("stats の total は数の後ろに文字で添え、数が全体に収まる数字なら割合の帯も出す", () => {
     const stat = (value: string, total: string): string =>
-      markdownOf({ kind: "stats", items: [{ ...statItem, value, total, label: "架空" }], fold: "" })
+      markdownOf({
+        kind: "stats",
+        items: [{ ...statItem, value, total, label: "架空" }],
+        fold: "",
+        aside: "",
+      })
     const meter = (width: number): string =>
       `<span class="stat-meter" aria-hidden="true"><span class="stat-meter-fill" style="width: ${String(width)}%"></span></span>`
 
@@ -501,7 +520,12 @@ describe("reportSectionsMarkdown", () => {
 
   it("stats の total が数として読めない・数が全体を超えるときは、帯を出さず total の文字だけを出す", () => {
     const stat = (value: string, total: string): string =>
-      markdownOf({ kind: "stats", items: [{ ...statItem, value, total, label: "架空" }], fold: "" })
+      markdownOf({
+        kind: "stats",
+        items: [{ ...statItem, value, total, label: "架空" }],
+        fold: "",
+        aside: "",
+      })
 
     expect(stat("25件", "28件")).toBe(
       statsCaptioned(
@@ -519,6 +543,7 @@ describe("reportSectionsMarkdown", () => {
       steps: ["架空の一", "架空の二", "架空の三"],
       current: 1,
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(progress)).toBe(
@@ -544,6 +569,7 @@ describe("reportSectionsMarkdown", () => {
       steps: ["", ""],
       current: 1,
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(progress)).toBe(
@@ -574,6 +600,7 @@ describe("reportSectionsMarkdown", () => {
         { name: "架空の案C", verdict: "consider", reason: "" },
       ],
       fold: "",
+      aside: "",
     }
 
     // 判定の順が崩れていても並べ替えない（並べ替えは再構成で、順は検査が差し戻す）。「採る」は演出が筆を留める印（report-pause-point）を併せ持つ。
@@ -596,6 +623,7 @@ describe("reportSectionsMarkdown", () => {
         { heading: "変更後", points: ["架空の1行"] },
       ],
       fold: "",
+      aside: "",
     }
     const sides =
       '<div class="compare-side"><div class="compare-heading">変更前</div><ul><li><code>a</code> を呼ぶ</li><li>架空の&lt;行&gt;</li></ul></div>' +
@@ -614,6 +642,7 @@ describe("reportSectionsMarkdown", () => {
       before: { kind: "image", path: "架空/before.png" },
       after: { kind: "code", language: "ts", source: "const a = 1\n" },
       fold: "",
+      aside: "",
     }
     const side = (label: string, labelClass: string, content: string): string =>
       `<div class="before-after-side">\n\n<div class="${labelClass}">${label}</div>\n\n${content}\n\n</div>`
@@ -660,6 +689,7 @@ describe("reportSectionsMarkdown", () => {
       before: { kind: "mermaid", source: "stateDiagram-v2\n  [*] --> A\n" },
       after: { kind: "mermaid", source: "sequenceDiagram\n  A->>B: 架空\n" },
       fold: "",
+      aside: "",
     })
 
     expect(markdown).toContain("```mermaid\nstateDiagram-v2\n  [*] --> A\n```")
@@ -677,6 +707,7 @@ describe("reportSectionsMarkdown", () => {
         { name: "架空の<本文>", size: "", before: "字 14px" },
       ],
       fold: "",
+      aside: "",
     }
     const rows =
       '<div class="dimension-gap"><span class="dimension-band" aria-hidden="true"></span><span class="dimension-value">24px</span></div>' +
@@ -700,6 +731,7 @@ describe("reportSectionsMarkdown", () => {
         { name: "行2", cells: ["na", "ok"] },
       ],
       fold: "",
+      aside: "",
     }
 
     const mark = (className: string, label: string, symbol: string): string =>
@@ -731,6 +763,7 @@ describe("reportSectionsMarkdown", () => {
       ],
       title: "",
       fold: "",
+      aside: "",
     }
     const badge = (symbol: string, className: string, label: string): string =>
       `<span class="file-change ${className}"><span class="file-change-symbol">${symbol}</span>${label}</span>`
@@ -773,11 +806,13 @@ describe("reportSectionsMarkdown", () => {
       items: [{ path: "a.md", change: "read", note: "" }],
       title,
       fold: "",
+      aside: "",
     })
     const stats: ReportBlock = {
       kind: "stats",
       items: [{ ...statItem, value: "1", label: "架空" }],
       fold: "",
+      aside: "",
     }
     const bare = markdownOf(files(""))
 
@@ -799,6 +834,7 @@ describe("reportSectionsMarkdown", () => {
       items: [{ path: "a.md", change: "read", note: "" }],
       title: "",
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(files)).toContain(
@@ -818,6 +854,7 @@ describe("reportSectionsMarkdown", () => {
       source: "a\nb\n",
       marks,
       fold: "",
+      aside: "",
     })
     const info = markdown.split("\n")[0]?.slice(3) ?? ""
     expect(info).toBe(`ts ${encodeMarks(marks)}`)
@@ -830,6 +867,7 @@ describe("reportSectionsMarkdown", () => {
         source: "a\n",
         marks,
         fold: "",
+        aside: "",
       }).split("\n")[0],
     ).toBe(`\`\`\`ts src/a.ts ${encodeMarks(marks)}`)
   })
@@ -844,6 +882,7 @@ describe("reportSectionsMarkdown", () => {
         source: "a\n",
         marks: withMarks ? marks : [],
         fold: "",
+        aside: "",
       }).split("\n")[0]
 
     expect(infoOf("src/a.ts", false)).toBe("```text src/a.ts")
@@ -861,6 +900,7 @@ describe("reportSectionsMarkdown", () => {
         source: "-a\n+b\n",
         marks: [],
         fold: "",
+        aside: "",
       }),
     ).toBe("```diff src/dummy.ts\n-a\n+b\n```")
     expect(
@@ -871,6 +911,7 @@ describe("reportSectionsMarkdown", () => {
         source: "```ts\nx\n```",
         marks: [],
         fold: "",
+        aside: "",
       }),
     ).toBe("````md\n```ts\nx\n```\n````")
     expect(
@@ -879,6 +920,7 @@ describe("reportSectionsMarkdown", () => {
         title: "架空の図",
         source: "sequenceDiagram\n  A ->> B: x",
         fold: "",
+        aside: "",
       }),
     ).toBe(
       fencedFigureCaptioned(
@@ -890,7 +932,7 @@ describe("reportSectionsMarkdown", () => {
 
   it("sequenceDiagram の mermaid には autonumber を1つだけ足し、既にあるものと別の種類は変えない", () => {
     const mermaidOf = (source: string): string =>
-      markdownOf({ kind: "mermaid", title: "", source, fold: "" })
+      markdownOf({ kind: "mermaid", title: "", source, fold: "", aside: "" })
 
     const numbered = fencedFigureCaptioned(
       "```mermaid\nsequenceDiagram\n  autonumber\n  A ->> B: x\n```",
@@ -911,6 +953,7 @@ describe("reportSectionsMarkdown", () => {
         direction: "LR",
         source: '@a (b) "c" `d` -> (架空の丸)\n架空の丸 -> {架空の分岐}: a|b',
         fold: "",
+        aside: "",
       }),
     ).toBe(
       fencedFigureCaptioned(
@@ -938,6 +981,7 @@ describe("reportSectionsMarkdown", () => {
       direction: "LR",
       source: "A -> B\n[架空の群]\nB -> C\n[]\nD",
       fold: "",
+      aside: "",
     })
 
     expect(markdown).toContain(
@@ -966,7 +1010,14 @@ describe("reportSectionsMarkdown", () => {
   ])(
     "graph の形の凡例は形が2種以上のときだけ、出た形を出す順で並べる（%s）",
     (_, source, shapes) => {
-      const markdown = markdownOf({ kind: "graph", title: "", direction: "LR", source, fold: "" })
+      const markdown = markdownOf({
+        kind: "graph",
+        title: "",
+        direction: "LR",
+        source,
+        fold: "",
+        aside: "",
+      })
 
       expect([...markdown.matchAll(/graph-legend-shape-(\w+)"/g)].map((match) => match[1])).toEqual(
         shapes,
@@ -981,6 +1032,7 @@ describe("reportSectionsMarkdown", () => {
       direction: "LR",
       source: "(A) -> B\n+ B -> C",
       fold: "",
+      aside: "",
     })
 
     expect(markdown.match(/<div class="graph-legend">/g)).toHaveLength(1)
@@ -996,6 +1048,7 @@ describe("reportSectionsMarkdown", () => {
       direction: "LR",
       source: "+ A -> B\n- B -> C: 語\n~ D\n- E\nB -> D",
       fold: "",
+      aside: "",
     })
 
     expect(marked).toContain(
@@ -1021,6 +1074,7 @@ describe("reportSectionsMarkdown", () => {
       direction: "LR",
       source: "A -> B",
       fold: "",
+      aside: "",
     })
     expect(plain).not.toContain("classDef")
     expect(plain).not.toContain("linkStyle")
@@ -1034,6 +1088,7 @@ describe("reportSectionsMarkdown", () => {
       width: 200,
       height: 100,
       fold: "",
+      aside: "",
       shapes: [
         { kind: "rect", x: 10, y: 20, width: 80, height: 40, label: "A<b>", emphasis: true },
         { kind: "rect", x: 100, y: 20, width: 80, height: 40, label: "", emphasis: false },
@@ -1067,6 +1122,7 @@ describe("reportSectionsMarkdown", () => {
       before: side,
       after: side,
       fold: "",
+      aside: "",
     })
 
     expect(markdown.match(/<svg viewBox="0 0 50 50"/g)).toHaveLength(2)
@@ -1082,6 +1138,7 @@ describe("reportSectionsMarkdown", () => {
         series: [{ name: "架空系列", values: [1, 2] }],
         horizontal: false,
         fold: "",
+        aside: "",
       }),
     ).toBe(
       "```chart\n" +
@@ -1101,6 +1158,7 @@ describe("reportSectionsMarkdown", () => {
         series: [{ name: "架空系列", values: [1, 2] }],
         horizontal: true,
         fold: "",
+        aside: "",
       }),
     ).toBe(
       "```chart\n" +
@@ -1123,6 +1181,7 @@ describe("reportSectionsMarkdown", () => {
         ],
         horizontal: false,
         fold: "",
+        aside: "",
       }),
     ).toBe(
       "```chart\n" +
@@ -1151,6 +1210,7 @@ describe("reportSectionsMarkdown", () => {
         ],
         horizontal: false,
         fold: "",
+        aside: "",
       }),
     ).toBe(
       "```chart\n" +
@@ -1181,6 +1241,7 @@ describe("reportSectionsMarkdown", () => {
         series,
         horizontal: false,
         fold: "",
+        aside: "",
       })
 
     expect(fenceOf("arrow")).toBe(
@@ -1238,6 +1299,7 @@ describe("reportSectionsMarkdown", () => {
       caption: "架空の<画面>",
       notes: [],
       fold: "",
+      aside: "",
     }
 
     expect(
@@ -1251,9 +1313,9 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it("image の説明が空なら alt は既定の語で説明の文字は置かず、図の番号だけ付く。棚に置いていない本文では src を付けない", () => {
-    expect(markdownOf({ kind: "image", path: "架空.png", caption: " ", notes: [], fold: "" })).toBe(
-      figureCaptioned('<img alt="画面の画像">'),
-    )
+    expect(
+      markdownOf({ kind: "image", path: "架空.png", caption: " ", notes: [], fold: "", aside: "" }),
+    ).toBe(figureCaptioned('<img alt="画面の画像">'))
   })
 
   it("image の notes は画像の横に1から番号を振った並びになり、< は逃がし、包みは縮めない", () => {
@@ -1263,6 +1325,7 @@ describe("reportSectionsMarkdown", () => {
       caption: "架空の画面",
       notes: ["左上の <帯> が伸びた", "右の `札` が消えた"],
       fold: "",
+      aside: "",
     }
 
     expect(markdownOf(image)).toBe(
@@ -1285,6 +1348,7 @@ describe("reportSectionsMarkdown", () => {
       caption: "",
       notes: [],
       fold,
+      aside: "",
     })
     const table: ReportBlock = {
       kind: "table",
@@ -1293,6 +1357,7 @@ describe("reportSectionsMarkdown", () => {
       rows: [["架空の a", "1"]],
       rest: "",
       fold: "",
+      aside: "",
     }
     const options: ReportBlock = {
       kind: "options",
@@ -1302,14 +1367,22 @@ describe("reportSectionsMarkdown", () => {
         { name: "架空の案B", verdict: "reject", reason: "架空の理由" },
       ],
       fold: "",
+      aside: "",
     }
-    const mermaid: ReportBlock = { kind: "mermaid", title: "", source: "sequenceDiagram", fold: "" }
+    const mermaid: ReportBlock = {
+      kind: "mermaid",
+      title: "",
+      source: "sequenceDiagram",
+      fold: "",
+      aside: "",
+    }
     const matrix: ReportBlock = {
       kind: "matrix",
       title: "",
       columns: ["列A"],
       rows: [{ name: "行1", cells: ["ok"] }],
       fold: "",
+      aside: "",
     }
 
     const markdown = reportSectionsMarkdown(
@@ -1327,8 +1400,16 @@ describe("reportSectionsMarkdown", () => {
       kind: "stats",
       items: [{ ...statItem, value: "1", label: "架空" }],
       fold,
+      aside: "",
     })
-    const image: ReportBlock = { kind: "image", path: "架空.png", caption: "", notes: [], fold: "" }
+    const image: ReportBlock = {
+      kind: "image",
+      path: "架空.png",
+      caption: "",
+      notes: [],
+      fold: "",
+      aside: "",
+    }
     const chart: ReportBlock = {
       kind: "chart",
       title: "",
@@ -1337,6 +1418,7 @@ describe("reportSectionsMarkdown", () => {
       series: [{ name: "系列", values: [1] }],
       horizontal: false,
       fold: "",
+      aside: "",
     }
 
     const markdown = reportSectionsMarkdown(
@@ -1350,9 +1432,95 @@ describe("reportSectionsMarkdown", () => {
   })
 
   it("fold のある塊は details に畳む", () => {
-    expect(markdownOf({ kind: "text", text: "架空の脇道。", fold: "架空の<見出し>" })).toBe(
-      "<details><summary>架空の&lt;見出し&gt;</summary>\n\n架空の脇道。\n\n</details>",
-    )
+    expect(
+      markdownOf({ kind: "text", text: "架空の脇道。", fold: "架空の<見出し>", aside: "" }),
+    ).toBe("<details><summary>架空の&lt;見出し&gt;</summary>\n\n架空の脇道。\n\n</details>")
+  })
+
+  describe("傍注（塊の aside と memo の note）", () => {
+    const memo = (value: string): ReportBlock => ({
+      kind: "note",
+      tone: "memo",
+      text: value,
+      fold: "",
+      aside: "",
+    })
+    const asideNote = (value: string): string =>
+      `<aside class="gutter-note">\n\n${value}\n\n</aside>`
+    const memoNote = (value: string): string =>
+      asideNote(`<span class="gutter-note-label">メモ</span>${value}`)
+    const withGutter = (body: string, notes: readonly string[]): string =>
+      [
+        '<div class="with-gutter">',
+        ...(body === "" ? [] : [body]),
+        ['<div class="gutter">', ...notes, "</div>"].join("\n\n"),
+        "</div>",
+      ].join("\n\n")
+
+    it("aside のある塊は包みの中で、塊のあとに傍注が出る", () => {
+      expect(markdownOf({ ...text("架空の本文。"), aside: "出どころ: 架空の `a.ts:3`" })).toBe(
+        withGutter("架空の本文。", [asideNote("出どころ: 架空の `a.ts:3`")]),
+      )
+    })
+
+    it("memo の note は直前の塊の傍注になり、本文の位置に note-memo が残らない", () => {
+      const markdown = reportSectionsMarkdown(
+        [section([text("架空の本文。"), memo("架空の覚え書き。"), text("架空の次の段落。")])],
+        NO_IMAGES,
+      )
+
+      expect(markdown).toBe(
+        [withGutter("架空の本文。", [memoNote("架空の覚え書き。")]), "架空の次の段落。"].join(
+          "\n\n",
+        ),
+      )
+      expect(markdown).not.toContain("note-memo")
+    })
+
+    it("塊の aside と続く memo は1つの傍注の並びに、書いた順で並ぶ", () => {
+      expect(
+        reportSectionsMarkdown(
+          [section([{ ...text("架空の本文。"), aside: "架空の出典" }, memo("架空の覚え書き。")])],
+          NO_IMAGES,
+        ),
+      ).toBe(withGutter("架空の本文。", [asideNote("架空の出典"), memoNote("架空の覚え書き。")]))
+    })
+
+    it("節の最初の memo は塊の無い包みになり、前の節の塊には付かない", () => {
+      expect(
+        reportSectionsMarkdown(
+          [section([text("架空の前の節。")]), section([memo("架空の覚え書き。")], "架空の見出し")],
+          NO_IMAGES,
+        ),
+      ).toBe(
+        [
+          "架空の前の節。",
+          '<div class="report-section-break"></div>',
+          "## 架空の見出し",
+          withGutter("", [memoNote("架空の覚え書き。")]),
+        ].join("\n\n"),
+      )
+    })
+
+    it("fold のある塊は details ごと包み、傍注は details の外に置く", () => {
+      expect(markdownOf({ ...text("架空の脇道。"), fold: "架空の畳み", aside: "架空の出典" })).toBe(
+        withGutter("<details><summary>架空の畳み</summary>\n\n架空の脇道。\n\n</details>", [
+          asideNote("架空の出典"),
+        ]),
+      )
+    })
+
+    it("傍注の文字は逃がし、空白だけの aside と空の memo は傍注にしない", () => {
+      expect(markdownOf({ ...text("架空の本文。"), aside: "架空の<b>出典</b>" })).toBe(
+        withGutter("架空の本文。", [asideNote("架空の&lt;b>出典&lt;/b>")]),
+      )
+      expect(
+        reportSectionsMarkdown(
+          [section([{ ...text("架空の本文。"), aside: "  " }, memo(" ")])],
+          NO_IMAGES,
+        ),
+      ).toBe("架空の本文。")
+    })
   })
 
   describe("塊の文字の逃がし方", () => {
@@ -1391,6 +1559,7 @@ describe("reportSectionsMarkdown", () => {
           style: "bullet",
           items: [{ label: "", text: "## 架空", done: false }],
           fold: "",
+          aside: "",
         }),
       ).toBe("- \\## 架空")
     })

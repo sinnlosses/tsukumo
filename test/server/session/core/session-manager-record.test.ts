@@ -443,7 +443,7 @@ describe("createSessionManager", () => {
       stub.emit(sessionInfo("claude-session-1"))
       stub.emit(
         reportWithSections([
-          { heading: "", blocks: [{ kind: "text", text: "架空の根拠。", fold: "" }] },
+          { heading: "", blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }] },
         ]),
       )
       await waitForBatch()
@@ -483,7 +483,7 @@ describe("createSessionManager", () => {
     describe("画像を読んだのに image が無い回", () => {
       const textOnly = (): SessionEvent =>
         reportWithSections([
-          { heading: "", blocks: [{ kind: "text", text: "架空の根拠。", fold: "" }] },
+          { heading: "", blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }] },
         ])
       const readStarted = (parentToolUseId: string | undefined): SessionEvent => ({
         kind: "tool-started",

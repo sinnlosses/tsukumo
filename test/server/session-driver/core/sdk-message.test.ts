@@ -1074,7 +1074,7 @@ describe("toSessionEvents（report ツール）", () => {
         sections: [
           {
             heading: "",
-            blocks: [{ kind: "markdown", markdown: "## 架空の見出し", fold: "" }],
+            blocks: [{ kind: "markdown", markdown: "## 架空の見出し", fold: "", aside: "" }],
           },
         ],
         favor: "架空のお願い",
@@ -1172,6 +1172,7 @@ describe("toSessionEvents（report ツール）", () => {
           { before: "", value: "2", total: "", label: "架空の数", series: [], better: "" },
         ],
         fold: "",
+        aside: "",
       },
       { kind: "none", reason: "single-value" },
       unrecorded,
@@ -1259,8 +1260,8 @@ describe("toSessionEvents（report ツール）", () => {
           {
             heading: "架空の節",
             blocks: [
-              { kind: "text", text: "架空の根拠。", fold: "" },
-              { kind: "code", language: "diff", path: "", source: "-a", fold: "" },
+              { kind: "text", text: "架空の根拠。", fold: "", aside: "" },
+              { kind: "code", language: "diff", path: "", source: "-a", fold: "", aside: "" },
             ],
           },
         ],

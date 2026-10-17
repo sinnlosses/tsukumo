@@ -431,6 +431,7 @@ function InquiryCompare(props: {
             ]),
             rest: "",
             fold: "",
+            aside: "",
           },
         ],
       },

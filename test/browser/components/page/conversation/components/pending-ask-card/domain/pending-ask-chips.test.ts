@@ -63,6 +63,7 @@ function list(count: number): Parameters<typeof row>[0] {
         done: false,
       })),
       fold: "",
+      aside: "",
     },
   ]
 }

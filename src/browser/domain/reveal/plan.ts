@@ -65,14 +65,14 @@ const SECTIONS_START_SELECTOR = ".report-sections-start"
  */
 const SHORT_REPORT_WEIGHT = 200
 
-/** 最初から出す要素。節の見出し（`SectionHeading` の `h4`・`SubHeading` の `h5`）と図表の題。 */
-const UNWRITTEN_SELECTOR = "h4, h5, [data-reveal-caption]"
+/** 最初から出す要素。節の見出し（`SectionHeading` の `h4`・`SubHeading` の `h5`）と図表の題と余白の柱。 */
+const UNWRITTEN_SELECTOR = "h4, h5, [data-reveal-caption], [data-reveal-gutter]"
 
 /**
- * 題つきの図表の包み。包みごと隠すと題も隠れるので、包みは対象にせず中の本体を対象にする。
- * 題の行の印は `NotationBlock` が足す（語彙の class 名はハッシュ名に置き換わるため）。
+ * 題つきの図表の包みと、塊と余白の柱の包み。包みごと隠すと題・余白の柱も隠れるので、包みは対象にせず中の本体を対象にする。
+ * 題の行と余白の柱の印は `NotationBlock` が足す（語彙の class 名はハッシュ名に置き換わるため）。
  */
-const CAPTIONED_SELECTOR = ":has(> [data-reveal-caption])"
+const WRAPPER_SELECTOR = ":has(> [data-reveal-caption]), :has(> [data-reveal-gutter])"
 
 /** 演出の全体の上限（ms）。書く速さの設定に関わらず、超えた分は上限の時刻に一度に出す。 */
 const TOTAL_LIMIT_MS = 10_000
@@ -171,13 +171,14 @@ function writtenElementsOf(root: Element): readonly RevealElement[] {
   const elements = [...root.children].filter(isRevealElement)
   const start = elements.findIndex((element) => element.matches(SECTIONS_START_SELECTOR))
   const after = start === -1 ? elements : elements.slice(start + 1)
-  return after
-    .flatMap((element) =>
-      element.matches(CAPTIONED_SELECTOR)
-        ? [...element.children].filter(isRevealElement)
-        : [element],
-    )
-    .filter((element) => !element.matches(UNWRITTEN_SELECTOR))
+  return after.flatMap(unwrapped).filter((element) => !element.matches(UNWRITTEN_SELECTOR))
+}
+
+/** 包み（{@link WRAPPER_SELECTOR}）なら中の要素に降りる。余白の柱の包みの中の題つきの包みにも降りる。 */
+function unwrapped(element: RevealElement): readonly RevealElement[] {
+  return element.matches(WRAPPER_SELECTOR)
+    ? [...element.children].filter(isRevealElement).flatMap(unwrapped)
+    : [element]
 }
 
 /** 節の境目の印で切って、続く要素をひとまとめにする。印そのものはトピックに入れない。 */

@@ -12,12 +12,16 @@ const inlineText = z.string()
 // （ここに `.describe` を足すと塊の数だけ繰り返されて JSON Schema が膨らむ）。
 const fold = z.string().default("")
 
+// 塊の傍注（余白の柱に置く1行）。説明は `fold` と同じく `REPORT_SECTIONS_DESCRIPTION` に1回だけ書く。
+const aside = z.string().default("")
+
 const textBlockSchema = z.object({
   kind: z.literal("text"),
   text: inlineText.describe(
     "地の文。3文まで（4文目が要るなら表・箇条書きへ移すか fold で畳む）。結論に効く数が2つ以上並ぶなら stats",
   ),
   fold,
+  aside,
 })
 
 const listBlockSchema = z.object({
@@ -42,6 +46,7 @@ const listBlockSchema = z.object({
     )
     .min(1),
   fold,
+  aside,
 })
 
 export const REPORT_CELL_STATUSES = ["ok", "warn", "ng"] as const
@@ -71,6 +76,7 @@ const tableBlockSchema = z
       .default("")
       .describe("切った残りを1行で（「ほか 12 件（0.5% 未満）」）。長い表は上位だけを rows に置く"),
     fold,
+    aside,
   })
   .describe(
     "比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options、交点が状態だけなら matrix）。行は大きさか重要度の順（1列目のあいうえお順にしない）。単位は見出しに1回だけ書きセルに書かない。2行以下なら表にせず stats か label 付きの list",
@@ -94,6 +100,7 @@ const matrixBlockSchema = z
       )
       .min(1),
     fold,
+    aside,
   })
   .describe("行×列の交点が状態だけの対応表（機能×条件）。交点に文や数が要るなら table")
 
@@ -114,6 +121,7 @@ const compareBlockSchema = z
       .min(2)
       .max(2),
     fold,
+    aside,
   })
   .describe(
     "2つを同時に見比べる（案A と案B。変更の前と後は beforeAfter）。側ごとに見出しと短い箇条。採否は options、値を揃えるなら table（3つ以上も table）",
@@ -195,6 +203,7 @@ const beforeAfterBlockSchema = z
     before: beforeAfterSideSchema,
     after: beforeAfterSideSchema,
     fold,
+    aside,
   })
   .describe(
     "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・構造の前後）。1行の設定や文言の変更には使わない（1つの値の前後は table のセルの from / to）。ファイル名の箇条書きで変更を説明しない。側ごとに image / code / points / mermaid / svg のどれか（左右で違ってよい）。構造の前後は graph の `+` / `-` / `~` の印、時間の順の前後は mermaid の側。" +
@@ -221,6 +230,7 @@ const dimensionBlockSchema = z
       .min(2)
       .describe("上から順の並び。先頭・末尾の gap は外側の余白"),
     fold,
+    aside,
   })
   .describe(
     "上から積む領域と、その間の余白・字の大きさの寸法（余白を直した前後）。横並び・重なりは svg",
@@ -237,6 +247,7 @@ const noteBlockSchema = z.object({
     "読み飛ばされると困る一文。種別を言う語（「注意:」など）は書かない。1つのレポートに2個まで・隣接させない・見出しの直後に置かない（戻せない操作の warn / ng は隣接と見出しの直後が例外）",
   ),
   fold,
+  aside,
 })
 
 const statsBlockSchema = z
@@ -265,6 +276,7 @@ const statsBlockSchema = z
       .min(2)
       .max(4),
     fold,
+    aside,
   })
   .describe(
     "結論に効く数（件数・前後の差）。数が2〜4個並び、その数自体が結論のとき。数を地の文に埋めない。推移の形が要る数には series、増減の良い向きが要る数には better",
@@ -287,6 +299,7 @@ const optionsBlockSchema = z
       .min(2)
       .describe(`候補は${String(MAX_CANDIDATES)}つまで`),
     fold,
+    aside,
   })
   .describe(
     "候補を比べて採る・検討・採らないを言うとき。採る → 検討 → 採らないの順に書く（崩れると差し戻す）。書いた順に1始まりの番号を振って描く",
@@ -304,6 +317,7 @@ const imageBlockSchema = z
         `画像のどこを見るか・何が変わったか。1項目1文で、場所の言葉（左上の帯・2行目の札）から書く。番号は書かない（並びの順に振って描く）。${String(MAX_CANDIDATES)}つまで`,
       ),
     fold,
+    aside,
   })
   .describe(
     "手で確かめた画面の画像1枚（何が見えたかを文で言い直さない。見る場所が2つ以上なら notes に並べる）。前後は beforeAfter。入れ子が主役の構成図は d2 で撮った PNG をこの塊で渡してよい（崩れたら graph に戻す）",
@@ -327,6 +341,7 @@ const filesBlockSchema = z
       .default("")
       .describe("何のファイルの一覧か（パスは写さない）。空なら題も番号も出ない"),
     fold,
+    aside,
   })
   .describe("触った・読んだファイルの一覧")
 
@@ -352,6 +367,7 @@ const codeBlockSchema = z
       .default([])
       .describe("強調する行（行は `4-8`・`12`）"),
     fold,
+    aside,
   })
   .describe(
     "コード・コマンド・エラー文・そのまま渡す前提の文章（デザインの依頼文・コミットメッセージの案など）。" +
@@ -385,6 +401,7 @@ const mermaidBlockSchema = z
           "ラベルの引用符・バッククォートは #quot; / #96; と書く",
       ),
     fold,
+    aside,
   })
   .describe(
     "時間の順（sequenceDiagram）・状態・クラス・ER など、flowchart 以外の図。「まず…次に…」の地の文で書かない。1枚に1つの話を同じ抽象度で。辺は向きと動詞のラベル付き。交差は並びか分割で解く",
@@ -396,6 +413,7 @@ const graphBlockSchema = z
     title: inlineText.default("").describe("数と向きで主張を言う1文。評価語なし"),
     ...graphFields,
     fold,
+    aside,
   })
   .describe(
     "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道でも段の名前が短ければ graph）。flowchart はこれで書く。1枚に1つの話を同じ抽象度で。どの辺にも向きと動詞のラベルを付ける。交差が出たら節点の並びか図の分け方を変える。群は囲みで言い色で言わない",
@@ -424,6 +442,7 @@ const chartBlockSchema = z
       .describe("系列ごとの数の並び。各 values の数は labels と揃える"),
     horizontal: z.boolean().default(false).describe("bar のときだけ効く。true で横棒にする"),
     fold,
+    aside,
   })
   .describe(
     "数の推移・割合。数が3つ以上で大小や傾きそのものを見せるとき（正確な値を読ませたいなら表）。色は書けない",
@@ -435,6 +454,7 @@ const svgBlockSchema = z
     title: inlineText.default(""),
     ...svgFields,
     fold,
+    aside,
   })
   .describe(
     "位置・重なりそのもの（画面の領域の配置・重なり方）を座標で描く。つながりだけなら graph・mermaid。色は書けない",
@@ -453,6 +473,7 @@ const progressBlockSchema = z
       .min(0)
       .describe("いまの段の位置（0始まり）。全部済んだら steps.length"),
     fold,
+    aside,
   })
   .describe(
     "「N のうち M 段目」のように段（フェーズ）の名前と位置が分かっているとき。文字で「N のうち M」と書かない",
@@ -462,6 +483,7 @@ const markdownBlockSchema = z.object({
   kind: z.literal("markdown"),
   markdown: z.string().describe("どの塊にも当てはまらない記法（svg・引用・区切り線）だけ"),
   fold,
+  aside,
 })
 
 // `report` の schema で `figure` と `sections` が共有する塊。名前を外すと両方に複製され、ツール定義が約1万字増える
@@ -590,7 +612,7 @@ export function reportSectionsOfBody(body: string): readonly ReportSection[] {
   const markdown = body.replace(/^(?:[ \t]*\n)+/, "").trimEnd()
   return markdown === ""
     ? []
-    : [{ heading: "", blocks: [{ kind: "markdown", markdown, fold: "" }] }]
+    : [{ heading: "", blocks: [{ kind: "markdown", markdown, fold: "", aside: "" }] }]
 }
 
 /**

@@ -2,6 +2,7 @@ import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
+  NotationAside,
   NotationBlock,
   NotationInline,
 } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/notation.tsx"
@@ -40,6 +41,21 @@ describe("NotationBlock（レポートの塊の記法）", () => {
     const { container } = render(<NotationBlock className="note-warn note">架空。</NotationBlock>)
 
     expect(container.querySelector(".report-note-label")?.textContent).toBe("注意")
+  })
+
+  it("余白の柱の並び（gutter）にだけ演出の印が付き、包み（with-gutter）には付かない", () => {
+    const { container } = render(
+      <NotationBlock className="with-gutter">
+        <NotationBlock className="gutter">
+          <NotationAside className="gutter-note">架空の出典</NotationAside>
+        </NotationBlock>
+      </NotationBlock>,
+    )
+
+    expect(
+      [...container.querySelectorAll("[data-reveal-gutter]")].map((element) => element.className),
+    ).toEqual(["report-gutter"])
+    expect(container.querySelector("aside")?.className).toBe("report-gutter-note")
   })
 })
 

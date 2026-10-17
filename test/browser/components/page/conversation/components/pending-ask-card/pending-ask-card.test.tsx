@@ -86,6 +86,7 @@ const BRIEFED_PENDING = {
                 done: false,
               })),
               fold: "",
+              aside: "",
             },
           ],
         },

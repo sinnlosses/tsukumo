@@ -5,8 +5,13 @@ import { tidyReportSections } from "../../../src/shared/report/report-tidy.ts"
 
 const CONCLUSION = "架空の結論。"
 
-const markdown = (body: string): ReportBlock => ({ kind: "markdown", markdown: body, fold: "" })
-const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "" })
+const markdown = (body: string): ReportBlock => ({
+  kind: "markdown",
+  markdown: body,
+  fold: "",
+  aside: "",
+})
+const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "", aside: "" })
 
 /** 逃げ道の塊1つだけの本文を整形し、残った中身を返す（塊ごと落ちたら空）。 */
 const tidy = (body: string, conclusion = CONCLUSION): string =>
@@ -165,6 +170,7 @@ describe("tidyReportSections（塊と節）", () => {
     steps: ["架空の段A", "架空の段B"],
     current: 1,
     fold: "",
+    aside: "",
   }
 
   it("同じ依頼にワークプランがあれば progress の塊を落とし、progress だけの節は節ごと落とす", () => {
@@ -208,7 +214,13 @@ describe("tidyReportSections（塊と節）", () => {
   })
 
   it("塊の残らない節は見出しごと落とし、ほかの種類の塊はそのまま残す", () => {
-    const note: ReportBlock = { kind: "note", tone: "memo", text: "以上です。", fold: "" }
+    const note: ReportBlock = {
+      kind: "note",
+      tone: "memo",
+      text: "以上です。",
+      fold: "",
+      aside: "",
+    }
     const sections = [
       { heading: "架空の節", blocks: [text("以上です。"), markdown("何かあれば言ってください。")] },
       { heading: "架空の次の節", blocks: [note] },

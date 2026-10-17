@@ -63,6 +63,29 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelectorAll("div.table-scroll + div.report-table-rest")).toHaveLength(1)
   })
 
+  it("傍注のある塊は、包みの直の子に本文の段落と余白の柱が並び、傍注の aside が許可リストで落ちない", () => {
+    const text = reportSectionsMarkdown([
+      {
+        heading: "",
+        blocks: [
+          { kind: "text", text: "架空の **本文**。", fold: "", aside: "出どころ: `a.ts:3`" },
+          { kind: "note", tone: "memo", text: "架空の覚え書き。", fold: "", aside: "" },
+        ],
+      },
+    ])
+    const { container } = render(<Markdown text={text} />)
+
+    expect(
+      [...container.querySelectorAll("div.report-with-gutter > *")].map((child) => child.tagName),
+    ).toEqual(["P", "DIV"])
+    expect(
+      [...container.querySelectorAll("div.report-gutter > aside.report-gutter-note")].map((aside) =>
+        aside.textContent.trim(),
+      ),
+    ).toEqual(["出どころ: a.ts:3", "メモ架空の覚え書き。"])
+    expect(container.querySelector(".report-gutter-note-label")?.textContent).toBe("メモ")
+  })
+
   it("レポートが直接書いた <table> も同じ器に包まれる（rehype-raw と同じ木を通るため）", () => {
     const { container } = render(
       <Markdown text="<table><tbody><tr><td>あ</td></tr></tbody></table>" />,
@@ -103,6 +126,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
               { heading: "変更後", points: ["架空の三"] },
             ],
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -128,6 +152,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
             before: { kind: "points", points: ["架空の一", "架空の二"] },
             after: { kind: "code", language: "ts", source: "const 架空 = 1" },
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -164,6 +189,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
               { name: "架空の本文", size: "", before: "" },
             ],
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -254,6 +280,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
               { label: "", text: "架空の説明だけ", done: false },
             ],
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -276,7 +303,13 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
       {
         heading: "",
         blocks: [
-          { kind: "progress", steps: ["架空の一", "架空の二", "架空の三"], current: 1, fold: "" },
+          {
+            kind: "progress",
+            steps: ["架空の一", "架空の二", "架空の三"],
+            current: 1,
+            fold: "",
+            aside: "",
+          },
         ],
       },
     ])
@@ -311,6 +344,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
             columns: ["列A", "列B"],
             rows: [{ name: "行1", cells: ["ok", "ng"] }],
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -623,6 +657,7 @@ describe("Markdown（code の marks）", () => {
       source: "a\nb\n",
       marks: [{ lines: "2", label: "架空の印" }],
       fold: "",
+      aside: "",
     } as const
     const { container } = render(
       <Markdown text={reportSectionsMarkdown([{ heading: "", blocks: [block] }])} />,
@@ -914,6 +949,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
             ],
             title: "",
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -1070,7 +1106,14 @@ describe("Markdown（image の塊の画像）", () => {
         {
           heading: "",
           blocks: [
-            { kind: "image", path: "架空/after.png", caption: "架空の画面", notes: [], fold: "" },
+            {
+              kind: "image",
+              path: "架空/after.png",
+              caption: "架空の画面",
+              notes: [],
+              fold: "",
+              aside: "",
+            },
           ],
         },
       ])
@@ -1101,6 +1144,7 @@ describe("Markdown（image の塊の画像）", () => {
               caption: "架空の画面",
               notes: ["架空の1つ目 `code`", "架空の2つ目"],
               fold: "",
+              aside: "",
             },
           ],
         },
@@ -1145,7 +1189,9 @@ describe("Markdown（image の塊の画像）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
-        blocks: [{ kind: "image", path: "架空.png", caption: "架空", notes: [], fold: "" }],
+        blocks: [
+          { kind: "image", path: "架空.png", caption: "架空", notes: [], fold: "", aside: "" },
+        ],
       },
     ])
     const { container } = render(<Markdown text={text} />)
@@ -1170,6 +1216,7 @@ describe("Markdown（image の塊の画像）", () => {
             before: { kind: "image", path: "架空/before.png" },
             after: { kind: "image", path: "架空/after.png" },
             fold: "",
+            aside: "",
           },
         ],
       },
@@ -1235,6 +1282,7 @@ describe("Markdown（image の塊の画像）", () => {
               before: { kind: "image", path: "架空/before.png" },
               after: { kind: "points", points: ["架空"] },
               fold: "",
+              aside: "",
             },
           ],
         },
@@ -1255,7 +1303,9 @@ describe("Markdown（image の塊の画像）", () => {
       const text = reportSectionsMarkdown([
         {
           heading: "",
-          blocks: [{ kind: "image", path: "架空.png", caption: "架空", notes: [], fold: "" }],
+          blocks: [
+            { kind: "image", path: "架空.png", caption: "架空", notes: [], fold: "", aside: "" },
+          ],
         },
       ])
       return render(<Markdown text={text} />).container
