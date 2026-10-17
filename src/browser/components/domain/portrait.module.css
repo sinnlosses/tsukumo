@@ -41,24 +41,26 @@
    どの動きにするかは `<Portrait>` が `data-motion` 属性で渡す（`resolvePortraitMotion`）。
    いずれの keyframes も 0%/100% を transform なし（＝呼び出し側が置いた位置）に揃えてある。
    reduced-motion（`theme.css`）は `animation-iteration-count: 1` を強制するので、無限ループの呼吸・歩行も1周目の終わりで止まり、足元が床から浮いたまま止まることはない。
+   無限ループの easing は、keyframe の1区間の移動が端末画素（devicePixelRatio 2）の0.5画素刻みになる `steps(n, jump-none)` にする。
+   位置の列は変えずに、同じ画素の描き直しになる合成のコマ数だけを減らすため。振幅を変えたら n も合わせる。
    一括指定（`animation`）ではなく個別指定で書く。
    `var()` を混ぜた一括指定だと CSS Modules の名前の付け替えが効かず、ハッシュ化された `@keyframes` を指せなくなる（実測）。 */
 .portrait[data-motion="reading"] {
   animation-name: portrait-fade-in, portrait-breathe;
   animation-duration: 0.25s, var(--portrait-breathe-duration);
-  animation-timing-function: ease-out, ease-in-out;
+  animation-timing-function: ease-out, steps(14, jump-none);
   animation-iteration-count: 1, infinite;
 }
 .portrait[data-motion="waiting"] {
   animation-name: portrait-fade-in, portrait-walk;
   animation-duration: 0.25s, var(--portrait-walk-duration);
-  animation-timing-function: ease-out, ease-in-out;
+  animation-timing-function: ease-out, steps(32, jump-none);
   animation-iteration-count: 1, infinite;
 }
 .portrait[data-motion="writing"] {
   animation-name: portrait-fade-in, portrait-write;
   animation-duration: 0.25s, var(--portrait-write-duration);
-  animation-timing-function: ease-out, ease-in-out;
+  animation-timing-function: ease-out, steps(12, jump-none);
   animation-iteration-count: 1, infinite;
 }
 .portrait[data-motion="success"] {

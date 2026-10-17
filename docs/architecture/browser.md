@@ -134,6 +134,9 @@ import するので、食い違うと入口を別のモジュールとして読�
 - `prefers-reduced-motion: reduce` を尊重する（`src/browser/styles/theme.css`）
 - 動きは CSS の `@keyframes` と `transform` で足りる。**`<canvas>` もアニメーションの
   ライブラリも要らない**（矩形しか動かさないため）
+- **無限ループ（呼吸・歩き・書く）の easing は、1区間の移動が端末画素の0.5画素刻みになる
+  `steps(n, jump-none)`**。振幅は数画素しかなく、`ease-in-out` の毎秒60コマは同じ画素の描き直しなので、
+  位置の列を変えずに合成のコマ数だけを減らす（`will-change: transform` では減らなかった）。振幅を変えたら n も合わせる
 
 ### CSS
 
