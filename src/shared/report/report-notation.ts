@@ -91,6 +91,7 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "before-after-label",
   "before-after-label-after",
   "before-after-arrow",
+  "before-after-swap",
   "dimension",
   "dimension-part",
   "dimension-name",

@@ -2,7 +2,7 @@
 //
 // 許可リストが `/report-image/` 以外の `src` を属性ごと落とすので、`src` が無い `img` も札にする（外部の URL を指していた画像など）。
 
-import { type JSX, type ReactElement, useState } from "react"
+import { createContext, type JSX, type ReactElement, type ReactNode, use, useState } from "react"
 import type { ExtraProps } from "react-markdown"
 
 import { REPORT_IMAGE_PATH_PREFIX } from "../../../../../../../shared/report/report-image.ts"
@@ -21,14 +21,92 @@ const MISSING_TEXT = `${MISSING_LABEL}（${MISSING_REASON}）`
 
 type ReportImageProps = JSX.IntrinsicElements["img"] & ExtraProps
 
+/** 前後の画像の塊の中の画像が、札に替わったことを塊へ知らせる口。塊の外では何もしない。 */
+const MissingImageContext = createContext<() => void>(() => undefined)
+
+const SWAP_SIDE_LABEL = { before: "前", after: "後" } as const
+
+type BeforeAfterSwapProps = {
+  readonly className: string | undefined
+  readonly children: ReactNode
+}
+
+/**
+ * 両側が画像の `beforeAfter` の包み。既定は並べる形で、題の行の右の口で同じ位置に重ねる形へ替える。
+ * 重ねる形では前か後の一方だけが見え、入れ替える口を押すたび即時に替わる。画像が一枚でも札になったら口を出さない。
+ */
+export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
+  const [stacked, setStacked] = useState(false)
+  const [shown, setShown] = useState<keyof typeof SWAP_SIDE_LABEL>("before")
+  const [missing, setMissing] = useState(false)
+  const other = shown === "before" ? "after" : "before"
+  const showsStack = stacked && !missing
+
+  return (
+    <MissingImageContext value={() => setMissing(true)}>
+      <div
+        className={props.className}
+        data-view={showsStack ? "stacked" : "side"}
+        data-shown={shown}
+      >
+        {props.children}
+        {!missing && (
+          <div className={styles["report-before-after-swap-controls"]}>
+            {showsStack && (
+              <Button
+                variant="outline"
+                size="label"
+                pressed="none"
+                disabled={false}
+                ariaLabel={`${SWAP_SIDE_LABEL[other]}に入れ替える（いまは${SWAP_SIDE_LABEL[shown]}）`}
+                disclosure={{ kind: "none" }}
+                ariaHasPopup={undefined}
+                title={undefined}
+                className={styles["report-before-after-swap-button"]}
+                onClick={() => setShown(other)}
+              >
+                {SWAP_SIDE_LABEL[other]}に入れ替える
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="label"
+              pressed="none"
+              disabled={false}
+              ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
+              ariaHasPopup={undefined}
+              title={undefined}
+              className={styles["report-before-after-swap-button"]}
+              onClick={() => setStacked(!stacked)}
+            >
+              {showsStack ? "並べて見る" : "重ねて見る"}
+            </Button>
+          </div>
+        )}
+      </div>
+    </MissingImageContext>
+  )
+}
+
 export function ReportImage(props: ReportImageProps): ReactElement {
   const [failed, setFailed] = useState(false)
   const [zoomed, setZoomed] = useState(false)
+  const reportMissing = use(MissingImageContext)
   const alt = props.alt ?? ""
 
   if (failed || typeof props.src !== "string" || !props.src.startsWith(REPORT_IMAGE_PATH_PREFIX)) {
     return (
-      <span role="img" aria-label={alt || MISSING_TEXT} className={styles["report-image-missing"]}>
+      <span
+        role="img"
+        aria-label={alt || MISSING_TEXT}
+        className={styles["report-image-missing"]}
+        ref={(element) => {
+          if (element !== null) {
+            reportMissing()
+          }
+        }}
+      >
         <span className={styles["report-image-missing-body"]} aria-hidden="true">
           <MissingImageIcon />
           <span className={styles["report-image-missing-label"]}>{MISSING_LABEL}</span>

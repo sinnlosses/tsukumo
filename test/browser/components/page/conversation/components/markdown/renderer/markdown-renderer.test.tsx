@@ -958,6 +958,95 @@ describe("Markdown（image の塊の画像）", () => {
     expect(missing?.textContent).toContain("読めなかったか、tsukumo を起こし直して手放した")
   })
 
+  describe("前後の画像の入れ替え", () => {
+    const imagesText = reportSectionsMarkdown([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "beforeAfter",
+            title: "架空の前後",
+            before: { kind: "image", path: "架空/before.png" },
+            after: { kind: "image", path: "架空/after.png" },
+            fold: "",
+          },
+        ],
+      },
+    ])
+
+    function swapRoot(container: HTMLElement): HTMLElement {
+      return typedElement(
+        container.querySelector("div.report-before-after-swap"),
+        HTMLElement,
+        "前後の包み",
+      )
+    }
+
+    function button(container: HTMLElement, name: string): HTMLElement {
+      const found = [...container.querySelectorAll("button")].find(
+        (candidate) => candidate.textContent === name,
+      )
+      return typedElement(found ?? null, HTMLElement, name)
+    }
+
+    it("並べた形から始まり、口を押すと重ねる形になり、入れ替える口で見える側が即時に替わる", () => {
+      const { container } = render(<Markdown text={imagesText} />)
+      const root = swapRoot(container)
+
+      expect(root.dataset["view"]).toBe("side")
+      expect(root.dataset["shown"]).toBe("before")
+
+      fireEvent.click(button(container, "重ねて見る"))
+      expect(root.dataset["view"]).toBe("stacked")
+      expect(root.dataset["shown"]).toBe("before")
+
+      fireEvent.click(button(container, "後に入れ替える"))
+      expect(root.dataset["shown"]).toBe("after")
+
+      fireEvent.click(button(container, "前に入れ替える"))
+      expect(root.dataset["shown"]).toBe("before")
+
+      fireEvent.click(button(container, "並べて見る"))
+      expect(root.dataset["view"]).toBe("side")
+      expect(container.querySelectorAll("img")).toHaveLength(2)
+    })
+
+    it("画像が片方でも読めなければ口を出さない", () => {
+      const { container } = render(<Markdown text={imagesText} />)
+      expect(container.querySelectorAll("button").length).toBeGreaterThan(0)
+
+      fireEvent.error(typedElement(container.querySelector("img"), HTMLImageElement, "画像"))
+
+      expect(container.querySelector(MISSING_SELECTOR)).not.toBeNull()
+      expect([...container.querySelectorAll("button")].map((b) => b.textContent)).not.toContain(
+        "重ねて見る",
+      )
+    })
+
+    it("片方が画像でない前後には口を出さない", () => {
+      const text = reportSectionsMarkdown([
+        {
+          heading: "",
+          blocks: [
+            {
+              kind: "beforeAfter",
+              title: "",
+              before: { kind: "image", path: "架空/before.png" },
+              after: { kind: "points", points: ["架空"] },
+              fold: "",
+            },
+          ],
+        },
+      ])
+      const { container } = render(<Markdown text={text} />)
+
+      expect(container.querySelector("div.report-before-after-swap")).toBeNull()
+      expect([...container.querySelectorAll("button")].map((b) => b.textContent)).not.toContain(
+        "重ねて見る",
+      )
+    })
+  })
+
   describe("拡大", () => {
     const ZOOM_NAME = "この画像を拡大"
 

@@ -373,6 +373,49 @@
   font-size: var(--font-heading);
   color: var(--ink-quiet);
 }
+/* 両側が画像の前後の包み。題の行の右に、重ねる・入れ替える口を置く。
+   重ねる形（`data-view="stacked"`）は前と後を同じ枠に重ね、`data-shown` の側だけを見せる。見せない側は `opacity: 0` で場所を取ったまま、見えず、押せず、フォーカスも受けない。
+   `transition` は付けない（入れ替えは即時）。 */
+.detail-block .report-before-after-swap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.5rem;
+}
+.detail-block .report-before-after-swap > .report-before-after {
+  grid-column: 1 / -1;
+}
+.detail-block .report-before-after-swap-controls {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+.detail-block .report-before-after-swap-button {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 0.6rem;
+  border-radius: 0.375rem;
+}
+.detail-block .report-before-after-swap[data-view="stacked"] > .report-before-after {
+  grid-template-columns: minmax(0, 1fr);
+}
+.detail-block .report-before-after-swap[data-view="stacked"] .report-before-after-arrow {
+  display: none;
+}
+.detail-block .report-before-after-swap[data-view="stacked"] .report-before-after-side {
+  grid-area: 1 / 1;
+  opacity: 0;
+  visibility: hidden;
+}
+.detail-block
+  .report-before-after-swap[data-view="stacked"][data-shown="before"]
+  .report-before-after-side:nth-child(1),
+.detail-block
+  .report-before-after-swap[data-view="stacked"][data-shown="after"]
+  .report-before-after-side:nth-child(3) {
+  opacity: 1;
+  visibility: visible;
+}
 /* 寸法図（`report` の `dimension` の塊から tsukumo が組む）。
    左の列に領域の箱と余白の帯を上から積み、右の列に値を置く（行を subgrid にする）。
    図は模式で、箱と帯の高さは値に比例させない。 */

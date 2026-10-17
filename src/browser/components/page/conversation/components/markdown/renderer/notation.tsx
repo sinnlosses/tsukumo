@@ -15,6 +15,7 @@ import {
   REPORT_NOTE_KINDS,
 } from "../../../../../../../shared/report/report-notation.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
+import { BeforeAfterSwap } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 
 /**
@@ -48,6 +49,12 @@ type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
 export function NotationBlock(props: NotationBlockProps): ReactElement {
   const { node: _node, className, children, ...rest } = props
   const label = noteLabel(className)
+
+  if (className !== undefined && classNameTokens(className).includes("before-after-swap")) {
+    return (
+      <BeforeAfterSwap className={resolveNotationClassName(className)}>{children}</BeforeAfterSwap>
+    )
+  }
 
   return (
     <div {...rest} className={resolveNotationClassName(className)}>
