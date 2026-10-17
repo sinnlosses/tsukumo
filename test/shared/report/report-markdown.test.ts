@@ -728,7 +728,27 @@ describe("reportSectionsMarkdown", () => {
         source: "sequenceDiagram\n  A ->> B: x",
         fold: "",
       }),
-    ).toBe(fencedFigureCaptioned("```mermaid\nsequenceDiagram\n  A ->> B: x\n```", "架空の図"))
+    ).toBe(
+      fencedFigureCaptioned(
+        "```mermaid\nsequenceDiagram\n  autonumber\n  A ->> B: x\n```",
+        "架空の図",
+      ),
+    )
+  })
+
+  it("sequenceDiagram の mermaid には autonumber を1つだけ足し、既にあるものと別の種類は変えない", () => {
+    const mermaidOf = (source: string): string =>
+      markdownOf({ kind: "mermaid", title: "", source, fold: "" })
+
+    const numbered = fencedFigureCaptioned(
+      "```mermaid\nsequenceDiagram\n  autonumber\n  A ->> B: x\n```",
+    )
+
+    expect(mermaidOf("sequenceDiagram\n  A ->> B: x")).toBe(numbered)
+    expect(mermaidOf("sequenceDiagram\n  autonumber\n  A ->> B: x")).toBe(numbered)
+    expect(mermaidOf("stateDiagram-v2\n  [*] --> A")).toBe(
+      fencedFigureCaptioned("```mermaid\nstateDiagram-v2\n  [*] --> A\n```"),
+    )
   })
 
   it("graph は ID を n0 から振り直し、ラベルを引用符で包んだ flowchart にして図の番号と題を付ける", () => {

@@ -236,7 +236,7 @@ function blockMarkdown(
         kind: "figure",
         ordinal,
         title: block.title,
-        body: fencedMarkdown("mermaid", block.source),
+        body: fencedMarkdown("mermaid", withSequenceAutonumber(block.source)),
         bodyFormat: "markdown",
         fit: false,
       })
@@ -982,6 +982,15 @@ function fencedMarkdown(info: string, source: string): string {
   const longest = Math.max(0, ...[...source.matchAll(/`+/g)].map(([run]) => run.length))
   const fence = "`".repeat(Math.max(3, longest + 1))
   return `${fence}${info}\n${source.replace(/\n$/, "")}\n${fence}`
+}
+
+/** 本文から「3 の呼び出し」と指せるよう、時系列の図の矢印に通し番号を振る。書き手が `autonumber` を書いていれば足さない。 */
+function withSequenceAutonumber(source: string): string {
+  const [head = "", ...rest] = source.split("\n")
+  if (head.trim() !== "sequenceDiagram" || rest.some((line) => /^\s*autonumber\b/.test(line))) {
+    return source
+  }
+  return ["sequenceDiagram", "  autonumber", ...rest].join("\n")
 }
 
 /**
