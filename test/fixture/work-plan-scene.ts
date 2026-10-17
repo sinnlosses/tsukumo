@@ -1,5 +1,5 @@
-// 今の段取りを動かすイベント列と、流し終えたときの今の段取りの組（段の名前とまとめはすべて架空のもの）。
-// 畳み方そのもの・状態の記録・サーバの差し戻しが、同じ列から同じ今の段取りに着くかを確かめる表。
+// 今のワークプランを動かすイベント列と、流し終えたときの今のワークプランの組（段の名前とまとめはすべて架空のもの）。
+// 畳み方そのもの・状態の記録・サーバの差し戻しが、同じ列から同じ今のワークプランに着くかを確かめる表。
 
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import type {
@@ -32,12 +32,12 @@ const NONE: LatestWorkPlan = { kind: "none" }
 
 export const WORK_PLAN_SCENES: readonly WorkPlanScene[] = [
   {
-    name: "段取りが無ければ none",
+    name: "ワークプランが無ければ none",
     events: [REQUEST, returned(1), reported("finished")],
     plan: NONE,
   },
   {
-    name: "渡された段取りがそのまま今の段取り",
+    name: "渡されたワークプランがそのまま今のワークプラン",
     events: [REQUEST, called(planAt(1))],
     plan: plannedAt(1),
   },
@@ -57,7 +57,7 @@ export const WORK_PLAN_SCENES: readonly WorkPlanScene[] = [
     plan: plannedAt(1),
   },
   {
-    name: "pending の段取りは返却で動かさない",
+    name: "pending のワークプランは返却で動かさない",
     events: [REQUEST, called(planAt(0, PENDING)), returned(1)],
     plan: plannedAt(0, PENDING),
   },
@@ -67,7 +67,7 @@ export const WORK_PLAN_SCENES: readonly WorkPlanScene[] = [
     plan: plannedAt(1),
   },
   {
-    name: "範囲の無い段取りは返却で動かさない",
+    name: "範囲の無いワークプランは返却で動かさない",
     events: [REQUEST, called(planAt(1, NO_RANGE)), returned(1)],
     plan: plannedAt(1, NO_RANGE),
   },
@@ -91,9 +91,13 @@ export const WORK_PLAN_SCENES: readonly WorkPlanScene[] = [
     events: [REQUEST, called(planAt(2)), reported("finished")],
     plan: plannedAt(2),
   },
-  { name: "依頼で前の段取りを忘れる", events: [REQUEST, called(planAt(1)), REQUEST], plan: NONE },
   {
-    name: "前の依頼の段取りは返却でも report でも動かさない",
+    name: "依頼で前のワークプランを忘れる",
+    events: [REQUEST, called(planAt(1)), REQUEST],
+    plan: NONE,
+  },
+  {
+    name: "前の依頼のワークプランは返却でも report でも動かさない",
     events: [REQUEST, called(planAt(3)), REQUEST, returned(1), reported("finished")],
     plan: NONE,
   },

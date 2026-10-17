@@ -142,7 +142,7 @@ describe("phaseDurations", () => {
     ])
   })
 
-  it("段取りが無ければ空", () => {
+  it("ワークプランが無ければ空", () => {
     expect(phaseDurations([], at(0))).toEqual([])
   })
 })

@@ -28,7 +28,7 @@
   - `phase_result` は要約を持たない。返却で済んだ段のまとめは、そのあとメインが同じ位置で呼ぶ `work_plan` の `phaseSummary` に書く
   - `skipped` はどちらの口から返しても帯で同じ結果（飛ばした段の印つきで済む）にする。メインで走る段のために `work_plan` に `skippedPhases`（飛ばした段の名前の配列。
     `phases` の名前に含まれ、その呼び出しで済んでいる段だけ。毎回の呼び出しでメインが飛ばした段をすべて渡す）を足す。`phase_result` で付いた印は tsukumo が覚えて残す
-  - `skipped` の段の帯での描き方は `docs/architecture/display.md`「段取り」に後段で決める
+  - `skipped` の段の帯での描き方は `docs/architecture/display.md`「ワークプラン」に後段で決める
 - **`stopped` は並び全体を止める。** 後のスキルは呼ばず、同じタスクを呼び直すと止まった段から再開する。再開の位置はワークフローが Beads に残す
 - **設定画面の候補は、契約を満たすと宣言したスキルだけ。** 宣言は SKILL.md の frontmatter の `metadata` の `workflow-step: "true"` で、
   `tw config --schema` がそれを拾って `steps` の `values` に候補そのものを返す。tsukumo は frontmatter も SDK のスキルの一覧も読まない

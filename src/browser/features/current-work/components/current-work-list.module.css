@@ -18,11 +18,11 @@
   display: block;
   margin: 0 0 0.5rem;
 }
-/* 段取り。 */
+/* ワークプラン。 */
 .current-work-plan-heading {
   margin: 0.4rem 0 0.2rem;
 }
-/* 段取りの群（前・本・後）1行。群の名を行の頭に置き、群が無い依頼は並びだけ。 */
+/* ワークプランの群（前・本・後）1行。群の名を行の頭に置き、群が無い依頼は並びだけ。 */
 .current-work-plan-spans {
   display: flex;
   flex-direction: column;

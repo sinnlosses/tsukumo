@@ -747,8 +747,8 @@ describe("同梱の疑似セッションの委譲の返却", () => {
   })
 })
 
-describe("同梱の疑似セッションの段取り", () => {
-  it("全ての work-plan の件が、段取りの全欄を持ち workPlanSchema を通る", () => {
+describe("同梱の疑似セッションのワークプラン", () => {
+  it("全ての work-plan の件が、ワークプランの全欄を持ち workPlanSchema を通る", () => {
     const session = bundledFakeSession()
     const plans = [...session.opening, ...session.turns.flatMap((scene) => scene.steps)].flatMap(
       ({ event }) => (event.kind === "work-plan" ? [event] : []),

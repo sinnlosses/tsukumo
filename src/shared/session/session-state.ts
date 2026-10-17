@@ -171,8 +171,8 @@ export type SessionRecord =
       readonly time: RecordTime
     }
   /**
-   * `work_plan` ツールで受け取った段取りと、`finished` の `report` で tsukumo が閉じた段取り。
-   * 届いた位置に積むだけで、今の段取りは `currentWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
+   * `work_plan` ツールで受け取ったワークプランと、`finished` の `report` で tsukumo が閉じたワークプラン。
+   * 届いた位置に積むだけで、今のワークプランは `currentWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
    */
   | ({
       readonly kind: "work-plan"
@@ -781,7 +781,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, reportDrafting: { kind: "drafting", toolUseId: event.toolUseId } }
     case "report":
       // `tool-started` と同じく、届いた位置に積むだけ（吹き出しにも帯の「いまの作業」にも出さない）。
-      // 段の閉じ方が `finished` なら、閉じた段取りの記録をその直前に積む。
+      // 段の閉じ方が `finished` なら、閉じたワークプランの記録をその直前に積む。
       return {
         ...settleReportDrafting(state, event.toolUseId),
         bodiesInTurn: { ...state.bodiesInTurn, report: true },
@@ -992,7 +992,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
 }
 
 /**
- * 委譲の返却か `report` 1件で積む記録。記録から畳んだ今の段取りを {@link nextWorkPlan} で畳み、変わったときだけその段取りを届いた時刻で1件積む。
+ * 委譲の返却か `report` 1件で積む記録。記録から畳んだ今のワークプランを {@link nextWorkPlan} で畳み、変わったときだけそのワークプランを届いた時刻で1件積む。
  */
 function workPlanRecords(
   records: readonly SessionRecord[],

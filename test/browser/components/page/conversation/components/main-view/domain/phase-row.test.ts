@@ -174,7 +174,7 @@ describe("phaseRowsOf", () => {
     expect(new Set(rows)).toEqual(new Set([PHASE_NAME]))
   })
 
-  it("板の N は段取りの段の数と一覧の数の大きいほう", () => {
+  it("板の N はワークプランの段の数と一覧の数の大きいほう", () => {
     expect(phaseTotal(rows, 5)).toBe(5)
     expect(phaseTotal(rows, 0)).toBe(3)
     expect(phaseTotal(rows, 2)).toBe(3)

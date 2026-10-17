@@ -16,7 +16,7 @@ import {
 import { reportEvent } from "../../fixture/report-event.ts"
 import { apply } from "../../fixture/session-state.ts"
 
-describe("applySessionEvent（委譲と段取り）", () => {
+describe("applySessionEvent（委譲とワークプラン）", () => {
   const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const PHASES = ["架空の計画", "架空の段1", "架空の段2", "架空の受け入れ"]
   const mainPlan = (current: number, phaseSummary = ""): SessionEvent => ({
@@ -60,7 +60,7 @@ describe("applySessionEvent（委譲と段取り）", () => {
   })
 })
 
-describe("applySessionEvent（委譲の返却で進む段取り）", () => {
+describe("applySessionEvent（委譲の返却で進むワークプラン）", () => {
   const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const PHASES = ["架空の計画", "架空の実装A", "架空の実装B", "架空の受け入れ"]
   const plan = (current: number, delegatedRange: WorkPlan["delegatedRange"]): SessionEvent => ({
@@ -85,7 +85,7 @@ describe("applySessionEvent（委譲の返却で進む段取り）", () => {
     summary,
   })
 
-  it("返却の届いた時刻で、段を済ませた段取りの記録を積む", () => {
+  it("返却の届いた時刻で、段を済ませたワークプランの記録を積む", () => {
     const planned = applySessionEvent(
       applySessionEvent(INITIAL_SESSION_STATE, request, 1_000),
       plan(1, RANGE),
@@ -125,21 +125,21 @@ describe("applySessionEvent（委譲の返却で進む段取り）", () => {
     expect(applySessionEvent(planned, returned(handback), 5_000)).toEqual(planned)
   })
 
-  it("範囲の無い段取りと、段取りの無い依頼では動かさない", () => {
+  it("範囲の無いワークプランと、ワークプランの無い依頼では動かさない", () => {
     const noRange = apply(request, plan(1, { kind: "none" }))
 
     expect(applySessionEvent(noRange, returned(done(1)), 5_000)).toEqual(noRange)
     expect(applySessionEvent(apply(request), returned(done(1)), 5_000)).toEqual(apply(request))
   })
 
-  it("前の依頼の段取りは進めない", () => {
+  it("前の依頼のワークプランは進めない", () => {
     const state = apply(request, plan(1, RANGE), request)
 
     expect(applySessionEvent(state, returned(done(1)), 5_000)).toEqual(state)
   })
 })
 
-describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
+describe("applySessionEvent（report の段の閉じ方とワークプラン）", () => {
   const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const PHASES = ["架空の段A", "架空の段B", "架空の段C"]
   const mainPlan = (current: number): SessionEvent => ({
@@ -184,7 +184,7 @@ describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
     expect(currentPlan(state)).toMatchObject({ current: 1 })
   })
 
-  it("段取りの無い依頼と、前の依頼の段取りには何も積まない", () => {
+  it("ワークプランの無い依頼と、前の依頼のワークプランには何も積まない", () => {
     const none = apply(request, reportOf("finished"))
     const previous = apply(request, mainPlan(2), request, reportOf("finished"))
 
@@ -193,7 +193,7 @@ describe("applySessionEvent（report の段の閉じ方と段取り）", () => {
   })
 })
 
-describe("applySessionEvent（段取りとレポートの時刻）", () => {
+describe("applySessionEvent（ワークプランとレポートの時刻）", () => {
   const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const mainPlan = (current: number): SessionEvent => ({
     kind: "work-plan",
@@ -226,7 +226,7 @@ describe("applySessionEvent（段取りとレポートの時刻）", () => {
     ])
   })
 
-  it("復元した段取りとレポートは、読めた時刻の recovered になり、読めなければ restored になる", () => {
+  it("復元したワークプランとレポートは、読めた時刻の recovered になり、読めなければ restored になる", () => {
     const events = [request, mainPlan(0), report]
     const withTime = applyRestoredEvents(
       INITIAL_SESSION_STATE,

@@ -848,7 +848,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 **1つの機能だけが動かす欄の畳み方は、その機能の `shared/<機能>/` に置く**（日記の `applyDiaryEvent` の形）。
 当てるのは、その機能のイベントだけで動き、値の置き換えより多い判断を持つ欄の組だけで、値を写すだけの
-イベントと、記録・ターン・セリフ・API の不調の芯は `session-state.ts` に残す。記録から導く今の段取りの
+イベントと、記録・ターン・セリフ・API の不調の芯は `session-state.ts` に残す。記録から導く今のワークプランの
 畳み方（`nextWorkPlan`・`currentWorkPlan`）は `shared/session/work-plan.ts` に1つだけ置き、`session-state.ts` と
 サーバの差し戻し（`WorkPlanReview`）はその結果を読む。
 

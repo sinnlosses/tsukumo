@@ -312,7 +312,7 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
-  it("メインの work_plan の呼び出しは、呼び出しの id を付けた段取りにする（ツールの開始にはしない）", () => {
+  it("メインの work_plan の呼び出しは、呼び出しの id を付けたワークプランにする（ツールの開始にはしない）", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -339,7 +339,7 @@ describe("toSessionEvents", () => {
     ])
   })
 
-  it("phases の無い work_plan は段取りにしない", () => {
+  it("phases の無い work_plan はワークプランにしない", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -352,7 +352,7 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
-  it("段が途中の位置で段のまとめの無い work_plan も段取りにする（まとめの要否は WorkPlanReview が決める）", () => {
+  it("段が途中の位置で段のまとめの無い work_plan もワークプランにする（まとめの要否は WorkPlanReview が決める）", () => {
     const message = assistantMessage([
       {
         type: "tool_use",

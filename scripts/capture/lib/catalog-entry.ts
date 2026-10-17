@@ -627,9 +627,9 @@ export const CATALOG: readonly CatalogEntry[] = [
   },
   {
     name: "work-plan-running",
-    // 段の2つ目で長い Bash が約7秒走るあいだに、札の段と一覧の頭の段取りを撮る。
+    // 段の2つ目で長い Bash が約7秒走るあいだに、札の段と一覧の頭のワークプランを撮る。
     scene: "work-plan",
-    label: "いまの作業の段取り（作業中）",
+    label: "いまの作業のワークプラン（作業中）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [{ kind: "click", selector: WORK_TOGGLE_SELECTOR }],
@@ -638,10 +638,10 @@ export const CATALOG: readonly CatalogEntry[] = [
   },
   {
     name: "work-plan-delegated-trail",
-    // 範囲の後ろの段が今の場面で、一覧の頭の段取りが前・本・後の群ごとの行になるのを撮る。
+    // 範囲の後ろの段が今の場面で、一覧の頭のワークプランが前・本・後の群ごとの行になるのを撮る。
     // 「いまの作業」の札は会話の画面には出ないので、キャラの画面へ移ってから押す。
     scene: "delegated-range-trail",
-    label: "いまの作業の段取り（前・本・後の群）",
+    label: "いまの作業のワークプラン（前・本・後の群）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [
@@ -655,7 +655,7 @@ export const CATALOG: readonly CatalogEntry[] = [
     name: "work-plan-main-view",
     // 最終 `report` は約10秒後に届き、中間レポートの並びの最後に最終レポートが出る。
     scene: "work-plan",
-    label: "段取りが移ったメインビュー（中間レポートと最終レポート）",
+    label: "ワークプランが移ったメインビュー（中間レポートと最終レポート）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],
@@ -669,7 +669,7 @@ export const CATALOG: readonly CatalogEntry[] = [
   {
     name: "work-plan-skipped",
     scene: "work-plan-skipped",
-    label: "段取りで飛ばした段（帯・中間レポート）",
+    label: "ワークプランで飛ばした段（帯・中間レポート）",
     homeSetup: { kind: "default" },
     workspaceSetup: { kind: "repository" },
     prepare: [],

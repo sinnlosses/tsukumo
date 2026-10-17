@@ -405,7 +405,7 @@ describe("phaseNumberOf", () => {
 function phaseOf(plan: WorkPlan): Extract<WorkPhase, { readonly kind: "phase" }> {
   const phase = currentPhaseOf({ kind: "planned", ...plan })
   if (phase.kind !== "phase") {
-    throw new Error("今の段がある段取りを渡す")
+    throw new Error("今の段があるワークプランを渡す")
   }
   return phase
 }
@@ -497,7 +497,7 @@ describe("phaseShiftOf", () => {
     })
   })
 
-  it("依頼で最初の段取りと、全部の段を終えた段取りでは何も出さない", () => {
+  it("依頼で最初のワークプランと、全部の段を終えたワークプランでは何も出さない", () => {
     const nothing = { finished: { kind: "none" } }
 
     expect(phaseShiftOf({ kind: "none" }, next(PHASES, 1, "架空のまとめ。"))).toEqual(nothing)
@@ -657,7 +657,7 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     expect(returned(planAt(1), phaseDone(1, 3))).toEqual(planAt(1))
   })
 
-  it("範囲の無い段取りと、止めた返却は動かさない", () => {
+  it("範囲の無いワークプランと、止めた返却は動かさない", () => {
     const noRange = planAt(1, SERIAL, [], { kind: "none" })
 
     expect(returned(noRange, phaseDone(1))).toEqual(noRange)
@@ -696,7 +696,7 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     expect(returned(planAt(1), phaseDone(1))).toMatchObject({ awaitingSummary: { kind: "none" } })
   })
 
-  it("phase-skipped も一足飛び・済んだ段・N の食い違い・範囲の無い段取りでは動かさず、印も付けない", () => {
+  it("phase-skipped も一足飛び・済んだ段・N の食い違い・範囲の無いワークプランでは動かさず、印も付けない", () => {
     const skipped = (phase: number, count = 2) => ({ kind: "phase-skipped", phase, count }) as const
     const noRange = planAt(1, SERIAL, [], { kind: "none" })
     const pending = planAt(1, SERIAL, [], { kind: "pending", first: 1 })
@@ -786,7 +786,7 @@ describe("nextWorkPlan（範囲を初めて宣言した work-plan）", () => {
   })
 })
 
-describe("イベントの並びから畳んだ今の段取り", () => {
+describe("イベントの並びから畳んだ今のワークプラン", () => {
   const isWorkPlanEvent = (event: SessionEvent): event is WorkPlanEvent =>
     event.kind === "request" ||
     event.kind === "work-plan" ||

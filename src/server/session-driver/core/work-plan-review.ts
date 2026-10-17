@@ -1,11 +1,11 @@
-// `work_plan` の差し戻し（形の崩れ・段の一足飛び・委譲先の段の範囲と `phase_result` の `count` の食い違い・`phase_result` を受けたのに範囲が無い）と、いまの段取りの立ち位置。
+// `work_plan` の差し戻し（形の崩れ・段の一足飛び・委譲先の段の範囲と `phase_result` の `count` の食い違い・`phase_result` を受けたのに範囲が無い）と、いまのワークプランの立ち位置。
 // 一足飛びは、同じ依頼の中で同じ段の並びのまま、済んだ段（並びを平らにして数える）を1回で2つ以上増やした呼び出し。
 // 一足飛びで越えた段には段のまとめが無く、メインビューの中間レポートがその段だけ抜けるため。
 // 飛ばした段（`skippedPhases`）は、前に印なしに済んでいた段を新しく入れる呼び出しと、メインが入れた印をまだ済んでいる段から外す呼び出しも差し戻す。
 //
 // 判定の窓口は handler だけ（`WorkPlanReview.judge`・`WorkPlanReview.judgeResult`）。
 // 委譲先の返却（`delegate-handed-back`）は本文を読まず、委譲ゲートと注記（`phase-result-called` を受けた委譲先かどうかで文が変わる）だけを立て、イベントは捨てる。
-// 覚える段取りは `nextWorkPlan` で畳んだ結果だけで、忘れる区切りも返却と `report` での進め方もここでは決めない。
+// 覚えるワークプランは `nextWorkPlan` で畳んだ結果だけで、忘れる区切りも返却と `report` での進め方もここでは決めない。
 //
 // 差し戻したあと同じターンで受け付けた呼び出しが無いことも覚え、`report` の差し戻し（`ReportReview`）が `standing` で読む。
 // ターンの区切りは `session-info`（ターンの頭に毎回届く）と `turn-finished`。
@@ -55,7 +55,7 @@ export type WorkPlanVerdict =
   | { readonly kind: "skip-mark-dropped" }
 
 /**
- * `phase_result` の判定。`accepted` の `moved` は帯を動かしたか、`handback` は結果を返却の形にしたもの、`plan` は判定のあとの段取り。
+ * `phase_result` の判定。`accepted` の `moved` は帯を動かしたか、`handback` は結果を返却の形にしたもの、`plan` は判定のあとのワークプラン。
  * 帯を動かさない呼び出しも差し戻さない。
  */
 export type PhaseResultVerdict =
@@ -71,21 +71,21 @@ export type WorkPlanReview = {
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
   readonly judge: (input: unknown) => WorkPlanVerdict
   /**
-   * `phase_result` の handler から、届いた引数のままで呼ぶ。受け付けたら、帯の段を済ませる条件を満たすときだけ段取りを進める。
+   * `phase_result` の handler から、届いた引数のままで呼ぶ。受け付けたら、帯の段を済ませる条件を満たすときだけワークプランを進める。
    * 委譲ゲートと注記は触らない。`skipped` で済ませた段の名前は、同じ依頼のあいだ飛ばした段として覚える。
    */
   readonly judgeResult: (input: unknown) => PhaseResultVerdict
-  /** いまの段取りの立ち位置（{@link WorkPlanStanding}）。 */
+  /** いまのワークプランの立ち位置（{@link WorkPlanStanding}）。 */
   readonly standing: () => WorkPlanStanding
   /** 返却が届いてから、メインの `work_plan` が受け付けられるまでのあいだ真。 */
   readonly gateRaised: () => boolean
-  /** 受け付け済みの段取りの委譲先の段の範囲。段取りが無ければ `none`。 */
+  /** 受け付け済みのワークプランの委譲先の段の範囲。ワークプランが無ければ `none`。 */
   readonly delegatedRange: () => DelegatedRange
-  /** 受け付け済みの段取りの帯の位置の文（返却で進めた位置を含む）。段取りが無ければ空。 */
+  /** 受け付け済みのワークプランの帯の位置の文（返却で進めた位置を含む）。ワークプランが無ければ空。 */
   readonly bandPosition: () => string
   /**
    * 返却を運ぶメインの入力に添える注記（`handbackNoteText`）を取り出し、溜めた返却を忘れる。
-   * 溜めるのは段取りがあるときの返却だけで、受け付けた `work_plan`・`request`・`turn-started` で捨てる。無ければ空。
+   * 溜めるのはワークプランがあるときの返却だけで、受け付けた `work_plan`・`request`・`turn-started` で捨てる。無ければ空。
    */
   readonly takeHandbackNote: () => string
   /**

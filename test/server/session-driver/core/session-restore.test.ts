@@ -168,7 +168,7 @@ describe("toRestoredEvents", () => {
     expect(reports).toEqual([reportEvent({ toolUseId: "r-2", conclusion: "架空の二" })])
   })
 
-  it("finishedInGroup を持たない前の work_plan の呼び出しも、空の finishedInGroup の段取りとして組み直す", () => {
+  it("finishedInGroup を持たない前の work_plan の呼び出しも、空の finishedInGroup のワークプランとして組み直す", () => {
     const workPlanCall = (id: string, input: unknown) => [
       assistantMessage([{ type: "tool_use", id, name: WORK_PLAN_TOOL_FULL_NAME, input }]),
       userMessage([{ type: "tool_result", tool_use_id: id, content: "ok" }]),

@@ -91,7 +91,7 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
   }
 }
 
-/** `work_plan` で受け取った段取り1件。 */
+/** `work_plan` で受け取ったワークプラン1件。 */
 export function workPlanRecord(
   overrides: Partial<Omit<Extract<SessionRecord, { readonly kind: "work-plan" }>, "kind">> = {},
 ): SessionRecord {

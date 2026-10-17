@@ -32,7 +32,7 @@ describe("headNoticeOf", () => {
       { kind: "none" },
     ],
     [
-      "過去を見ていて、最新が段取りの2段目で作業中",
+      "過去を見ていて、最新がワークプランの2段目で作業中",
       {
         content: REPORT,
         moment: "work",
@@ -42,7 +42,7 @@ describe("headNoticeOf", () => {
       { kind: "notice", text: "作業中 2/3", action: "to-newest" },
     ],
     [
-      "過去を見ていて、最新が段取り無しで作業中",
+      "過去を見ていて、最新がワークプラン無しで作業中",
       { content: REPORT, moment: "work", viewingPast: true, phase: NO_PHASE },
       { kind: "notice", text: "作業中", action: "to-newest" },
     ],

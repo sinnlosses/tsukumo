@@ -150,7 +150,7 @@ export function CurrentWorkList(props: CurrentWorkListProps): ReactElement {
   )
 }
 
-/** 段取りの群1行（前・本・後）。範囲が無い依頼は群の名を持たず、行の頭の名を出さない。 */
+/** ワークプランの群1行（前・本・後）。範囲が無い依頼は群の名を持たず、行の頭の名を出さない。 */
 function CurrentWorkPlanSpan(props: { readonly span: CurrentWorkPlanSpan }): ReactElement {
   const { span } = props
   return (
@@ -174,7 +174,7 @@ function CurrentWorkPlanSpan(props: { readonly span: CurrentWorkPlanSpan }): Rea
   )
 }
 
-/** 段取りの段1つ。済んだ・今・残りの見分けは頭の丸（✓ / 差し色の番号 / 番号）が持ち、枠と地は補助。 */
+/** ワークプランの段1つ。済んだ・今・残りの見分けは頭の丸（✓ / 差し色の番号 / 番号）が持ち、枠と地は補助。 */
 function CurrentWorkPlanPhase(props: { readonly phase: CurrentWorkPlanPhase }): ReactElement {
   const { phase } = props
   return (

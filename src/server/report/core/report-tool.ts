@@ -42,7 +42,7 @@ export const REPORT_TASK_DESCRIPTION =
 export const REPORT_WORK_PLAN_CLOSING_DESCRIPTION =
   "段の閉じ方。同じ依頼で work_plan を渡したときは必ず入れる。" +
   "finished（全部の段を終えた。最後の段にいるときに渡すと tsukumo が帯を全部済みにする）/ " +
-  "stopped（途中で止めた。帯は今の段のまま残る）。段取りの無い依頼では省く。"
+  "stopped（途中で止めた。帯は今の段のまま残る）。ワークプランの無い依頼では省く。"
 
 /**
  * `report` の `figure` 引数（レポートの図1つか、置かない理由）の説明。

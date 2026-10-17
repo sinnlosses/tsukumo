@@ -246,7 +246,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(strip).toMatchObject({ kind: "finished", result: "working", headLabel: "架空の段B" })
   })
 
-  it("委譲中に送った脇の話のあいだも、親の段取り・今の段・依頼からの経過を出し続ける", () => {
+  it("委譲中に送った脇の話のあいだも、親のワークプラン・今の段・依頼からの経過を出し続ける", () => {
     const state = foldTimed([
       [request, START],
       [plan, START + 1_000],
@@ -369,7 +369,7 @@ describe("useWorkStrip（`/clear` の依頼）", () => {
   })
 })
 
-describe("useWorkStrip（段取りが届く前）", () => {
+describe("useWorkStrip（ワークプランが届く前）", () => {
   it("送った直後から、段の丸も見出しの字も無い帯を作業中の状態で出す", () => {
     const state = foldTimed([[request, START]])
 
@@ -469,7 +469,7 @@ describe("useWorkStrip（状態）", () => {
     })
   })
 
-  it("失敗で終わったら、段取りが無くても帯を残して失敗にする", () => {
+  it("失敗で終わったら、ワークプランが無くても帯を残して失敗にする", () => {
     const failed: SessionEvent = {
       kind: "turn-finished",
       outcome: { kind: "failed", cause: { kind: "max-turns" } },
@@ -488,7 +488,7 @@ describe("useWorkStrip（状態）", () => {
     ).toMatchObject({ kind: "finished", sideLabel: "所要 7秒" })
   })
 
-  it("段取りの無いまま本文を出して閉じたら、段の丸の無い完了の帯を残す", () => {
+  it("ワークプランの無いまま本文を出して閉じたら、段の丸の無い完了の帯を残す", () => {
     const strip = stripAt(
       foldTimed([
         [request, START],
@@ -606,7 +606,7 @@ describe("useWorkStrip（回る弧）", () => {
     expect(spinningOf(strip)).toEqual([true, false])
   })
 
-  it("段取りが届く前は丸が無い", () => {
+  it("ワークプランが届く前は丸が無い", () => {
     expect(spinningOf(stripAt(foldTimed([[request, START]]), START + 5_000))).toEqual([])
   })
 

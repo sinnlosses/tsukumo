@@ -246,7 +246,7 @@ describe("CallReview の預かり（work_plan）", () => {
 })
 
 describe("CallReview の順番", () => {
-  it("結果の届かないままターンが終わると、セリフ → レポート → 段取りの順に turn-finished の直前に出る", () => {
+  it("結果の届かないままターンが終わると、セリフ → レポート → ワークプランの順に turn-finished の直前に出る", () => {
     const review = createCallReview()
     const report = reportOfDraft("toolu_r1", VALID)
 
@@ -548,7 +548,7 @@ describe("CallReview の委譲ゲートの印", () => {
     return review
   }
 
-  it("段取りを受け付けた依頼で返却が届くと立つ", () => {
+  it("ワークプランを受け付けた依頼で返却が届くと立つ", () => {
     const review = started()
     review.pass(handback())
     expect(review.gateRaised()).toBe(true)
@@ -563,14 +563,14 @@ describe("CallReview の委譲ゲートの印", () => {
     expect(review.bandPosition()).toContain("帯の今の段は 本 1/2 架空の実装A。")
   })
 
-  it("段取りが無ければ帯の位置は空", () => {
+  it("ワークプランが無ければ帯の位置は空", () => {
     const review = createCallReview()
     review.pass(REQUEST)
 
     expect(review.bandPosition()).toBe("")
   })
 
-  it("段取りを受け付けていない依頼の返却では立たない", () => {
+  it("ワークプランを受け付けていない依頼の返却では立たない", () => {
     const review = createCallReview()
     review.pass(REQUEST)
 

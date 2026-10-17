@@ -199,7 +199,7 @@
     color-mix(in srgb, var(--report-sequence-ink), var(--ground) 65%)
   );
 }
-/* 段の図（`report` の `progress` の塊と `work_plan` の段取りから tsukumo が組む）。
+/* 段の図（`report` の `progress` の塊と `work_plan` のワークプランから tsukumo が組む）。
    節（丸）と線でつないだ1本の道。済んだ・いま・まだの見分けは丸の中身（✓／輪と点／空の輪）が持ち、
    名前の字の色と線の色は補助。 */
 .detail-block .report-progress {

@@ -15,7 +15,7 @@
 //
 // 差し戻しの枠の一覧と見る順、脇の話のターン（`aside` から次の依頼・続きのターン・ターンの終わりまで）で見る枠は `ReportReview.judge` が正典。
 // 枠は規約違反の枠とは別に数える（規約違反で差し戻して直した `report` を送り直す形もある）。
-// 段取りの立ち位置は `WorkPlanReview.standing` から受け取る。段の閉じ方は同じ依頼に段取りがあるときだけ見る。
+// ワークプランの立ち位置は `WorkPlanReview.standing` から受け取る。段の閉じ方は同じ依頼にワークプランがあるときだけ見る。
 // 背景のシェルの差し戻しの文面には ID と `description` を載せるが、記録に残すのは種類の名前だけ。
 //
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`）。
@@ -103,7 +103,7 @@ type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 /**
  * {@link ReportReview} を1つ作る。セッション1つに1つ（ターンの区切りを `pass` で見ている）。
  * ターンの頭は `session-info`（SDK のターンの頭に毎回届く）と `turn-finished`。
- * `workPlanStanding` は判定のたびに呼び、いまの段取りの立ち位置を読む。
+ * `workPlanStanding` は判定のたびに呼び、いまのワークプランの立ち位置を読む。
  */
 export function createReportReview(
   workPlanStanding: () => WorkPlanStanding,
@@ -259,22 +259,22 @@ export const REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT =
   "差し戻しの直し方に従って `work_plan` を呼び直し、受け付けられてから `report` を呼ぶこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
-/** 同じ依頼に段取りがあるのに `workPlanClosing` の無い `report` を差し戻すときの戻り値。固定の文面だけ。 */
+/** 同じ依頼にワークプランがあるのに `workPlanClosing` の無い `report` を差し戻すときの戻り値。固定の文面だけ。 */
 export const REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT =
-  "この依頼では `work_plan` で段取りを渡しているので、`report` の workPlanClosing に段の閉じ方を入れる。" +
+  "この依頼では `work_plan` でワークプランを渡しているので、`report` の workPlanClosing に段の閉じ方を入れる。" +
   "全部の段を終えたなら `finished`、途中で止めたなら `stopped` を入れて呼び直すこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** `workPlanClosing` が `finished` なのに段が2つ以上残っている `report` を差し戻すときの戻り値。固定の文面だけ。 */
 export const REPORT_UNFINISHED_PHASES_REJECTION_TEXT =
-  "workPlanClosing が `finished` なのに、段取りに済んでいない段が2つ以上残っている。" +
+  "workPlanClosing が `finished` なのに、ワークプランに済んでいない段が2つ以上残っている。" +
   "`finished` で tsukumo が閉じるのは最後の段だけなので、同じ応答の中で `report` より先に `work_plan` で段を1つずつ進め、" +
   "最後の段に来てから `finished` で呼び直す。途中で止めたなら `stopped` にする。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** `task.outcome` が `finished` なのに `workPlanClosing` が `stopped` で段の残った `report` を差し戻すときの戻り値。固定の文面だけ。 */
 export const REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT =
-  "`task.outcome` が `finished` なのに、workPlanClosing が `stopped` で段取りに済んでいない段が残っている。" +
+  "`task.outcome` が `finished` なのに、workPlanClosing が `stopped` でワークプランに済んでいない段が残っている。" +
   "全部の段を終えたなら最後の段まで進めて `finished` にし、途中で止めたなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
@@ -303,7 +303,7 @@ function hasNgCheck(report: ReportDraft): boolean {
   return report.checks.some((check) => check.status === "ng")
 }
 
-/** 同じ依頼に段取りがあるときの、段の閉じ方だけで見た判定。`remaining` は済んでいない段の数（全部済みなら 0）。 */
+/** 同じ依頼にワークプランがあるときの、段の閉じ方だけで見た判定。`remaining` は済んでいない段の数（全部済みなら 0）。 */
 function judgeWorkPlanClosing(report: ReportDraft, remaining: number): ReportVerdict {
   if (report.workPlanClosing === "none") {
     return {

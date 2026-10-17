@@ -19,7 +19,7 @@ const planned = (overrides: Partial<Parameters<typeof workPlanOf>[0]>) =>
   })
 
 describe("bandPositionText", () => {
-  it("段取りが無ければ空", () => {
+  it("ワークプランが無ければ空", () => {
     expect(bandPositionText({ kind: "none" })).toBe("")
   })
 
@@ -60,7 +60,7 @@ describe("bandPositionText", () => {
 })
 
 describe("handbackNoteText", () => {
-  it("行が無いか段取りが無ければ空", () => {
+  it("行が無いかワークプランが無ければ空", () => {
     expect(handbackNoteText([], planned({}))).toBe("")
     expect(handbackNoteText(["架空の行。"], { kind: "none" })).toBe("")
   })

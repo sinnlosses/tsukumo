@@ -1,4 +1,4 @@
-// 同じ依頼の段取りの記録から、段ごとの所要と段のまとめを引く決まり。
+// 同じ依頼のワークプランの記録から、段ごとの所要と段のまとめを引く決まり。
 
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
 import { phaseDurationOf } from "./phase-duration.ts"
@@ -14,7 +14,7 @@ export type PhaseRecap = {
 }
 
 /**
- * 同じ依頼の段取りの記録 `plans`（積まれた順）から、最後の段の並びの段の `key` ごとの {@link PhaseRecap}。
+ * 同じ依頼のワークプランの記録 `plans`（積まれた順）から、最後の段の並びの段の `key` ごとの {@link PhaseRecap}。
  * まとめは隣どうしの記録を {@link shiftedPhaseOf} に通して済んだ段に載せ、同じ段が2回済めば後のまとめ。
  */
 export function phaseRecapsOf(

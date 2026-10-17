@@ -266,7 +266,7 @@ function shownView(
   }
 }
 
-/** 見ているやり取りの段取りの段の数。段取りが無ければ 0。 */
+/** 見ているやり取りのワークプランの段の数。ワークプランが無ければ 0。 */
 function planCountOf(turnStepList: TurnStepList): number {
   return turnStepList.kind === "turn" && turnStepList.plan.kind === "planned"
     ? plannedPhasesOf(turnStepList.plan).length

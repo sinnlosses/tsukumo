@@ -1,4 +1,4 @@
-// 段取り（`work_plan` ツールで受け取る段の並びと今の位置）の形と、記録から段取りを導く決まり。
+// ワークプラン（`work_plan` ツールで受け取る段の並びと今の位置）の形と、記録からワークプランを導く決まり。
 // 状態に別の入れ物は持たず、`work-plan` の記録から描くたびに導く。
 
 import { z } from "zod"
@@ -35,7 +35,7 @@ export type WorkPlan = {
 
 /**
  * 委譲の返却で済んだが段のまとめが空の段。`key` は {@link PlannedPhase} の `key`。
- * 返却で進めた段取りだけが `awaiting` を持ち、`work_plan` の呼び出しから読んだ段取りはいつも `none`。
+ * 返却で進めたワークプランだけが `awaiting` を持ち、`work_plan` の呼び出しから読んだワークプランはいつも `none`。
  */
 export type AwaitingSummary =
   | { readonly kind: "none" }
@@ -55,7 +55,7 @@ export type DelegatedRange =
 
 export const NO_DELEGATED_RANGE = { kind: "none" } as const satisfies DelegatedRange
 
-/** 段取りが持つ段の数の下限。段が無い段取りは位置を言う意味が無いので受け付けない。 */
+/** ワークプランが持つ段の数の下限。段が無いワークプランは位置を言う意味が無いので受け付けない。 */
 export const MIN_WORK_PLAN_PHASES = 1
 
 /** 並列の段が持つ段の数の下限。1段だけの並列の段は段と同じなので受け付けない。 */
@@ -64,7 +64,7 @@ export const MIN_PHASE_GROUP_SIZE = 2
 /** 段のまとめの文の数の上限。 */
 export const MAX_PHASE_SUMMARY_SENTENCES = 2
 
-/** 記録の範囲で最後に渡された段取り。1度も渡されていなければ `none`。 */
+/** 記録の範囲で最後に渡されたワークプラン。1度も渡されていなければ `none`。 */
 export type LatestWorkPlan = { readonly kind: "none" } | PlannedWorkPlan
 
 type PlannedWorkPlan = { readonly kind: "planned" } & WorkPlan
@@ -88,9 +88,9 @@ export type PlannedPhase = {
 
 /**
  * 手順1件が始まったときの段。
- * 段取りがまだ無い・全部の段が済んだあとなら `none`。
+ * ワークプランがまだ無い・全部の段が済んだあとなら `none`。
  * `indexes` は今の段（まとまりの中なら済んでいない段のすべて）の平らにした並びでの0始まりの位置、`count` は段の数、
- * `name` は今の段の名前を「・」でつないだもの、`range` は段取りの委譲先の段の範囲（番号の数え方を決める）。
+ * `name` は今の段の名前を「・」でつないだもの、`range` はワークプランの委譲先の段の範囲（番号の数え方を決める）。
  */
 export type WorkPhase =
   | { readonly kind: "none" }
@@ -200,7 +200,7 @@ export const workPlanSchema = z.object(workPlanShape).superRefine((value, contex
 })
 
 /**
- * 外来の値（ツールの引数・transcript）を段取りとして読む。{@link workPlanSchema} を通らなければ undefined。
+ * 外来の値（ツールの引数・transcript）をワークプランとして読む。{@link workPlanSchema} を通らなければ undefined。
  * ツールの handler が差し戻すかどうかと、変換がイベントにするかどうかは、この1つで決まる。
  */
 export function parseWorkPlan(value: unknown): WorkPlan | undefined {
@@ -279,9 +279,9 @@ export function finishedPhaseNames(
 }
 
 /**
- * サーバが `work_plan` を判定したあとの、いまの段取りの立ち位置（`WorkPlanReview.standing`）。
+ * サーバが `work_plan` を判定したあとの、いまのワークプランの立ち位置（`WorkPlanReview.standing`）。
  * `rejected` はこのターンで差し戻した呼び出しに、まだ受け付けた呼び出しで応えていない。
- * `planned` は同じ依頼で受け付けた段取りがあり、`remaining` はまだ済んでいない段の数（全部済みなら 0）。
+ * `planned` は同じ依頼で受け付けたワークプランがあり、`remaining` はまだ済んでいない段の数（全部済みなら 0）。
  */
 export type WorkPlanStanding =
   | { readonly kind: "none" }
@@ -299,14 +299,14 @@ export function parseWorkPlanClosing(value: unknown): WorkPlanClosing {
   return WORK_PLAN_CLOSINGS.find((closing) => closing === value) ?? "none"
 }
 
-/** 今の段取りを動かすイベント。ほかのイベント（`turn-started` も）は段取りを動かさない。 */
+/** 今のワークプランを動かすイベント。ほかのイベント（`turn-started` も）はワークプランを動かさない。 */
 export type WorkPlanEvent = Extract<
   SessionEvent,
   { readonly kind: "request" | "work-plan" | "delegate-returned" | "report" }
 >
 
 /**
- * イベント1件を受けたあとの今の段取り。
+ * イベント1件を受けたあとの今のワークプラン。
  * 依頼で忘れ、`work-plan` で置き換え、委譲の返却は {@link advancedByReturn}、段の閉じ方が `finished` の `report` は {@link closedByReport} で畳む。
  */
 export function nextWorkPlan(plan: LatestWorkPlan, event: WorkPlanEvent): LatestWorkPlan {
@@ -324,7 +324,7 @@ export function nextWorkPlan(plan: LatestWorkPlan, event: WorkPlanEvent): Latest
   }
 }
 
-/** 記録の並びから畳んだ今の段取り。記録に残る `request` と `work-plan` を {@link nextWorkPlan} に通す。 */
+/** 記録の並びから畳んだ今のワークプラン。記録に残る `request` と `work-plan` を {@link nextWorkPlan} に通す。 */
 export function currentWorkPlan(records: readonly SessionRecord[]): LatestWorkPlan {
   return records.reduce<LatestWorkPlan>(
     (plan, record) =>
@@ -335,7 +335,7 @@ export function currentWorkPlan(records: readonly SessionRecord[]): LatestWorkPl
 
 const NO_WORK_PLAN = { kind: "none" } as const satisfies LatestWorkPlan
 
-/** `work-plan` のイベントか記録1件が運ぶ段取り（段取りの欄だけを拾う）。 */
+/** `work-plan` のイベントか記録1件が運ぶワークプラン（ワークプランの欄だけを拾う）。 */
 export function workPlanOf(plan: WorkPlan): PlannedWorkPlan {
   return {
     kind: "planned",
@@ -355,7 +355,7 @@ export function isWorkPlanRecord(
   return record.kind === "work-plan"
 }
 
-/** 段取りの今の段（{@link WorkPhase}）。 */
+/** ワークプランの今の段（{@link WorkPhase}）。 */
 export function currentPhaseOf(plan: LatestWorkPlan): WorkPhase {
   if (plan.kind === "none") {
     return { kind: "none" }
@@ -374,14 +374,14 @@ export function currentPhaseOf(plan: LatestWorkPlan): WorkPhase {
 }
 
 /**
- * 同じ依頼の中の前の段取り `previous` から `next` へ移ったときに、メインビューに出すもの（{@link PhaseShift}）。
+ * 同じ依頼の中の前のワークプラン `previous` から `next` へ移ったときに、メインビューに出すもの（{@link PhaseShift}）。
  *
- * - 依頼で最初の段取りと、全部の段を終えた段取りでは何も出さない（最後の段のまとめは最終レポートが担う）
+ * - 依頼で最初のワークプランと、全部の段を終えたワークプランでは何も出さない（最後の段のまとめは最終レポートが担う）
  * - 中間レポートは、前の今の段のどれかが新しい並びで済んだ段になったときだけ出す。
  *   段は名前と同じ名前の段の中で何番目かで探すので、段を進めながら後ろの段を組み替えても終えた段を見失わず、
  *   同じ名前の済んだ段を今の段と取り違えない。
  *   戻った・組み替えただけで前の今の段が済んでいない（今の段以降にある・並びから消えた）ときは出さない
- * - そのほか、前の段取りのまとめ待ちの段が新しい並びで済んでいれば、新しいまとめをその段の中間レポートにする
+ * - そのほか、前のワークプランのまとめ待ちの段が新しい並びで済んでいれば、新しいまとめをその段の中間レポートにする
  */
 export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShift {
   const shifted = shiftedPhaseOf(previous, next)
@@ -472,7 +472,7 @@ export function plannedPhaseNumber(
 
 /**
  * いまの位置「後 1/3」（範囲が無ければ「2/4」）。全部の段が済んでいれば最後の段の群の段の数で「後 3/3」。
- * 段取りが無い・今の段が番号を持たないときは空の文字列。
+ * ワークプランが無い・今の段が番号を持たないときは空の文字列。
  */
 export function workPositionText(plan: LatestWorkPlan): string {
   if (plan.kind === "none") {
@@ -614,9 +614,9 @@ const NO_PHASE_SHIFT = {
 const NO_SHIFTED_PHASE = { kind: "none" } as const
 
 /**
- * `phase_result` の `finished`（`phase-done`）と `skipped`（`phase-skipped`）で進めた段取り。
+ * `phase_result` の `finished`（`phase-done`）と `skipped`（`phase-skipped`）で進めたワークプラン。
  * 範囲があり `count` が範囲の段の数と同じで、`phase` に当たる段が今の段の集合に入っているときだけ、その段を済ませる。
- * 一足飛び・済んだ段・範囲の無い段取り・`stopped`・並びの最後の段（返却では全部済みにしない）では `plan` をそのまま返す。
+ * 一足飛び・済んだ段・範囲の無いワークプラン・`stopped`・並びの最後の段（返却では全部済みにしない）では `plan` をそのまま返す。
  * 段のまとめは返却の要約を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもの。まとめが空なら済ませた段をまとめ待ちにする。
  * `phase-skipped` は済ませた段の名前を飛ばした段に足す。
  */
@@ -672,7 +672,7 @@ function returnedByReturn(
 }
 
 /**
- * `finished` の `report` 1回で閉じた段取り。
+ * `finished` の `report` 1回で閉じたワークプラン。
  * 残りが1段のときだけ、段の並びはそのままで全部の段を終えた位置にする（最後の段のまとめは最終レポートが担うので持たない）。
  * 段が2つ以上残っている・全部の段を終えた位置では `plan` をそのまま返す。
  */

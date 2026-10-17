@@ -27,7 +27,7 @@ export type ReportTidyInput = {
  *   2度並ぶだけになる）。最初の塊が `text` なら塊ごと、逃げ道なら頭の行
  * - 前置き・締めの定型だけの `text` の塊と、逃げ道の中の定型だけの行（{@link BOILERPLATE_LINES} と丸ごと一致するもの）
  * - 逃げ道の中の中身の無い見出し（文字が無いか、次に来るのが同じか浅い見出し・塊の終わり）
- * - 同じ依頼に段取りがあるときの `progress` の塊（進み具合の帯が同じ段を出している）
+ * - 同じ依頼にワークプランがあるときの `progress` の塊（進み具合の帯が同じ段を出している）
  * - 落として塊の残らない節（見出しごと）
  */
 export function tidyReportSections(report: ReportTidyInput): readonly ReportSection[] {

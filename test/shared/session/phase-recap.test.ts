@@ -144,7 +144,7 @@ describe("phaseRecapsOf", () => {
     })
   })
 
-  it("段取りが無ければ空", () => {
+  it("ワークプランが無ければ空", () => {
     expect(phaseRecapsOf([], at(0)).size).toBe(0)
   })
 })

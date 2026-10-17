@@ -456,7 +456,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     ])
   })
 
-  describe("段取り（work_plan）", () => {
+  describe("ワークプラン（work_plan）", () => {
     const PLANNED_RECORDS = [
       requestRecord(),
       workPlanRecord({ phases: ["架空の段A", "架空の段B", "架空の段C"], current: 0 }),
@@ -523,7 +523,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       fireEvent.click(workToggle())
 
       const list = workList()
-      expect(within(list).getByText("この依頼の段取り")).not.toBeNull()
+      expect(within(list).getByText("この依頼のワークプラン")).not.toBeNull()
       expect(
         [...list.querySelectorAll(".current-work-plan li")].map((phase) => phase.textContent),
       ).toEqual(["✓架空の段A", "2架空の段B", "3架空の段C"])
@@ -603,7 +603,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       ])
     })
 
-    it("ターンが終わると札から段は消え、一覧には前の依頼の段取りが残る", () => {
+    it("ターンが終わると札から段は消え、一覧には前の依頼のワークプランが残る", () => {
       renderScreenNav({
         turn: { kind: "finished", startedAt: 0, finishedAt: 1, ending: { kind: "ended" } },
         records: [
@@ -616,10 +616,10 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
       fireEvent.click(workToggle())
 
-      expect(within(workList()).getByText("前の依頼の段取り")).not.toBeNull()
+      expect(within(workList()).getByText("前の依頼のワークプラン")).not.toBeNull()
     })
 
-    it("段が1つの段取りでも札に「1/1 名前」を出す", () => {
+    it("段が1つのワークプランでも札に「1/1 名前」を出す", () => {
       renderScreenNav({
         turn: { kind: "running", startedAt: 0 },
         records: [requestRecord(), workPlanRecord({ phases: ["架空の段A"], current: 0 })],
@@ -628,7 +628,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       expect(document.querySelector(".current-work-phase")?.textContent).toBe("1/1 架空の段A")
     })
 
-    it("段が1つの段取りを済ませると札は「1/1 済」になる", () => {
+    it("段が1つのワークプランを済ませると札は「1/1 済」になる", () => {
       renderScreenNav({
         turn: { kind: "running", startedAt: 0 },
         records: [requestRecord(), workPlanRecord({ phases: ["架空の段A"], current: 1 })],

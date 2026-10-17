@@ -202,7 +202,7 @@ export type SessionEvent =
    */
   | { readonly kind: "report-rejected"; readonly reasons: readonly string[] }
   /**
-   * `work_plan` ツールの呼び出し（段取り）。メインが呼んだもので、`parseWorkPlan` を通ったものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
+   * `work_plan` ツールの呼び出し（ワークプラン）。メインが呼んだもので、`parseWorkPlan` を通ったものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
    * 毎回、段の並びごと届く。欄の意味は `WorkPlan`。
    */
   | ({ readonly kind: "work-plan" } & WorkPlan)

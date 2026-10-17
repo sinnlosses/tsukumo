@@ -318,7 +318,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
   })
 })
 
-describe("createReportReview の judge（段取りの残った report）", () => {
+describe("createReportReview の judge（ワークプランの残った report）", () => {
   const taskOf = (outcome: ReportTaskOutcome): ReportTask => ({
     kind: "task",
     id: "架空のタスク",
@@ -354,7 +354,7 @@ describe("createReportReview の judge（段取りの残った report）", () =>
     expect(review.judge(closing("finished"))).toEqual({ kind: "accepted" })
   })
 
-  it("段取りがあって段の閉じ方の欄が無ければ差し戻す（全部済みのあとでも）", () => {
+  it("ワークプランがあって段の閉じ方の欄が無ければ差し戻す（全部済みのあとでも）", () => {
     for (const remaining of [2, 1, 0]) {
       expect(reviewWith({ kind: "planned", remaining }).review.judge(VALID)).toEqual({
         kind: "rejected",
@@ -364,7 +364,7 @@ describe("createReportReview の judge（段取りの残った report）", () =>
     }
   })
 
-  it("段取りの無い依頼では、欄が無くてもあっても通す", () => {
+  it("ワークプランの無い依頼では、欄が無くてもあっても通す", () => {
     for (const workPlanClosing of ["none", "finished", "stopped"] as const) {
       expect(createReportReview(noPlan).judge(closing(workPlanClosing))).toEqual({
         kind: "accepted",
@@ -431,7 +431,7 @@ describe("createReportReview の judge（段取りの残った report）", () =>
     })
   })
 
-  it("脇の話のターンでは、段取りがあっても段の閉じ方の欄が無いことで差し戻さず、ターンが終われば戻る", () => {
+  it("脇の話のターンでは、ワークプランがあっても段の閉じ方の欄が無いことで差し戻さず、ターンが終われば戻る", () => {
     const { review } = reviewWith({ kind: "planned", remaining: 2 })
     const aside: SessionEvent = { kind: "aside", text: "架空の問い", images: [] }
 

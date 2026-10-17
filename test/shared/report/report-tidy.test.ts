@@ -167,7 +167,7 @@ describe("tidyReportSections（塊と節）", () => {
     fold: "",
   }
 
-  it("同じ依頼に段取りがあれば progress の塊を落とし、progress だけの節は節ごと落とす", () => {
+  it("同じ依頼にワークプランがあれば progress の塊を落とし、progress だけの節は節ごと落とす", () => {
     const sections = [
       { heading: "架空の節", blocks: [text("架空の根拠。"), progress] },
       { heading: "進み具合", blocks: [progress] },
@@ -178,7 +178,7 @@ describe("tidyReportSections（塊と節）", () => {
     ])
   })
 
-  it("段取りが無い依頼の progress の塊は落とさない", () => {
+  it("ワークプランが無い依頼の progress の塊は落とさない", () => {
     const sections = [{ heading: "進み具合", blocks: [progress] }]
 
     expect(tidySections(sections)).toEqual(sections)

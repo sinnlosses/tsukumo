@@ -37,7 +37,7 @@ function stateAfter(events: readonly SessionEvent[]): SessionState {
 }
 
 describe("CurrentStep", () => {
-  it("段取りがあれば「いまの段 · n 題」を出し、走っている手順を1行で出す", () => {
+  it("ワークプランがあれば「いまの段 · n 題」を出し、走っている手順を1行で出す", () => {
     putSession(
       stateAfter([
         REQUEST,
@@ -89,7 +89,7 @@ describe("CurrentStep", () => {
     expect(screen.getByText(/お伺いが届いた/u)).toBeTruthy()
   })
 
-  it("段取りが無いときは見出しを「いまの段」だけにする", () => {
+  it("ワークプランが無いときは見出しを「いまの段」だけにする", () => {
     putSession(stateAfter([REQUEST]))
     render(<CurrentStep />)
 

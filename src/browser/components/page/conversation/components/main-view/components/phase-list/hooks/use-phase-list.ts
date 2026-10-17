@@ -14,7 +14,7 @@ import {
 
 export type PhaseListProps = {
   readonly turn: MainViewTurn
-  /** 見ているやり取りの段取りの段の数。段取りが無ければ 0。 */
+  /** 見ているやり取りのワークプランの段の数。ワークプランが無ければ 0。 */
   readonly planCount: number
 }
 

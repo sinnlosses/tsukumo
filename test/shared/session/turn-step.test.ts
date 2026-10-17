@@ -234,8 +234,8 @@ describe("currentTurnSteps（report ツール）", () => {
   })
 })
 
-describe("currentTurnSteps（段取り）", () => {
-  it("手順はそれより前で最後の段取りの今の段を持ち、plan はその依頼で最後の段取り", () => {
+describe("currentTurnSteps（ワークプラン）", () => {
+  it("手順はそれより前で最後のワークプランの今の段を持ち、plan はその依頼で最後のワークプラン", () => {
     const list = currentTurnSteps(
       [
         requestRecord(),
@@ -261,7 +261,7 @@ describe("currentTurnSteps（段取り）", () => {
     })
   })
 
-  it("段が戻る・段の並びが組み替わる段取りでも、手順は始まったときの段取りの段を持つ", () => {
+  it("段が戻る・段の並びが組み替わるワークプランでも、手順は始まったときのワークプランの段を持つ", () => {
     const list = currentTurnSteps(
       [
         requestRecord(),
@@ -284,7 +284,7 @@ describe("currentTurnSteps（段取り）", () => {
     expect(list).toMatchObject({ plan: { phases: ["架空の段X", "架空の段Y", "架空の段Z"] } })
   })
 
-  it("前の依頼の段取りは持ち越さない", () => {
+  it("前の依頼のワークプランは持ち越さない", () => {
     const list = currentTurnSteps(
       [
         requestRecord({ turnId: 0 }),
@@ -317,7 +317,7 @@ describe("currentTurnSteps（段取り）", () => {
     expect(list).toMatchObject({ plans: [first, second] })
   })
 
-  it("脇の話を挟んでも、段取りと手順は親の依頼のまま続く", () => {
+  it("脇の話を挟んでも、ワークプランと手順は親の依頼のまま続く", () => {
     const list = currentTurnSteps(
       [
         requestRecord(),

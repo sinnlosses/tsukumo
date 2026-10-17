@@ -181,7 +181,7 @@ describe("PhoneHead", () => {
     expect(title()).toBe("架空の段A")
   })
 
-  it("段取りの無いターンは2行目に「手順 n」だけを出し、題は依頼の1行目", () => {
+  it("ワークプランの無いターンは2行目に「手順 n」だけを出し、題は依頼の1行目", () => {
     const head = renderHead({
       turn: { kind: "running", startedAt: 0 },
       records: [requestRecord({ text: "\n架空の依頼の1行目\n2行目" }), toolRecord()],

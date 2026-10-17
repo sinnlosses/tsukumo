@@ -12,7 +12,7 @@ import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { workActivityOf, type WorkActivity } from "../../../domain/work-activity.ts"
 
-/** 見出しは段取りがあるときだけ「いまの段 · 5 題」。無ければ1行だけ。 */
+/** 見出しはワークプランがあるときだけ「いまの段 · 5 題」。無ければ1行だけ。 */
 export type CurrentStepModel =
   | { readonly kind: "none" }
   | {

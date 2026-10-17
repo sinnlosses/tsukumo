@@ -3063,7 +3063,7 @@
           "afterMs": 100,
           "event": {
             "kind": "speech",
-            "text": "段取りを立てて、委譲先に任せるね。",
+            "text": "ワークプランを立てて、委譲先に任せるね。",
             "expression": "default"
           }
         },
@@ -5630,7 +5630,7 @@
           "afterMs": 0,
           "event": {
             "kind": "request",
-            "text": "段取りのある作業の長いレポートを見たい（架空の依頼）",
+            "text": "ワークプランのある作業の長いレポートを見たい（架空の依頼）",
             "images": []
           }
         },
@@ -6828,7 +6828,10 @@
           "uuid": "past-u-3",
           "session_id": "fake-past-session",
           "timestamp": "2026-01-02T03:20:00.000Z",
-          "message": { "role": "user", "content": "前のセッションの架空の依頼その3（段取りつき）" },
+          "message": {
+            "role": "user",
+            "content": "前のセッションの架空の依頼その3（ワークプランつき）"
+          },
           "parent_tool_use_id": null
         },
         {

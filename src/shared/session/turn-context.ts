@@ -41,7 +41,7 @@ export function advanceTurnContext(context: TurnContext, record: SessionRecord):
   return context
 }
 
-/** 文脈の範囲で最後に渡された段取り。 */
+/** 文脈の範囲で最後に渡されたワークプラン。 */
 export function latestWorkPlanOf(context: TurnContext): LatestWorkPlan {
   return context.plan === "none" ? { kind: "none" } : workPlanOf(context.plan)
 }

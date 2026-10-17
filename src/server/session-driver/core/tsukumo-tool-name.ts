@@ -8,7 +8,7 @@ export const SPEAK_TOOL_NAME = "speak"
  * 雑談では呼ばれないので、見分ける側は仕事か雑談かを問わず見ている。
  */
 export const REPORT_TOOL_NAME = "report"
-/** 段取りを受け取るツールの名前。載るのは仕事のときだけ。 */
+/** ワークプランを受け取るツールの名前。載るのは仕事のときだけ。 */
 export const WORK_PLAN_TOOL_NAME = "work_plan"
 /** 委譲先が段の結果を返すツールの名前。載るのは仕事のときだけ。 */
 export const PHASE_RESULT_TOOL_NAME = "phase_result"

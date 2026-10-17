@@ -322,7 +322,7 @@ function reportTool(
 }
 
 /**
- * 段取りを受け取るツール。引数の形は shared の `workPlanShape` に説明文を足したもの。
+ * ワークプランを受け取るツール。引数の形は shared の `workPlanShape` に説明文を足したもの。
  * 欄をまたぐ検査は `workPlanSchema` にあり、`answerWorkPlanCall` の判定が同じ `parseWorkPlan` で行って差し戻す。
  */
 function workPlanTool(review: CallReview) {

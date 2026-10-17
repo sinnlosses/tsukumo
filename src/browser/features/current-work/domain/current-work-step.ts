@@ -33,7 +33,7 @@ export type CurrentWorkStepFailure =
 
 /**
  * 手順を始まったときの段で区切った1まとまり。
- * 小見出しは群の名のタグと「2/4 段の名前」で、段取りより前・全部の段を終えたあとの手順は小見出しを持たない。
+ * 小見出しは群の名のタグと「2/4 段の名前」で、ワークプランより前・全部の段を終えたあとの手順は小見出しを持たない。
  * `spanName` は群の名「前」「本」「後」（範囲が無い・番号を持たない段では空）、`label` は群の名を除いた見出し、
  * `phaseIndexes` は小見出しの段の平らにした並びでの位置（{@link WorkPhase} の `indexes`）。
  */
@@ -58,7 +58,7 @@ export const BACKGROUND_TASK_KIND_LABEL = {
 
 /**
  * 並びの隣どうしで段が同じ手順を1まとまりにし、群も群の中の手順も新しい順で返す。
- * 段を戻る段取りの変更があっても、まとまりは並びの順で切る。
+ * 段を戻るワークプランの変更があっても、まとまりは並びの順で切る。
  */
 export function currentWorkStepGroups(steps: readonly TurnStep[]): readonly CurrentWorkStepGroup[] {
   const headings = steps.map((step) => stepGroupHeading(step.phase))

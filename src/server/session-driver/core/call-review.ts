@@ -38,7 +38,7 @@ export type CallReview = {
   readonly pass: (event: SessionEvent) => readonly SessionEvent[]
   /** 返却が届いてからメインの `work_plan` が受け付けられるまでのあいだ真（委譲ゲートの印）。 */
   readonly gateRaised: () => boolean
-  /** 委譲ゲートの拒否文に足す帯の位置の文。段取りが無ければ空。 */
+  /** 委譲ゲートの拒否文に足す帯の位置の文。ワークプランが無ければ空。 */
   readonly bandPosition: () => string
   /** 返却を運ぶメインの入力に添える注記を取り出す（`WorkPlanReview.takeHandbackNote`）。 */
   readonly takeHandbackNote: () => string

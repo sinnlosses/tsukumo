@@ -166,7 +166,7 @@ describe("WorkPlanReview の判定", () => {
     expect(review.judge({ phases: PHASES, current: 9 }).kind).toBe("malformed")
   })
 
-  it("範囲の無い段取りでは、phase_result を受けても位置は動かず、範囲の無い呼び出しは差し戻す", () => {
+  it("範囲の無いワークプランでは、phase_result を受けても位置は動かず、範囲の無い呼び出しは差し戻す", () => {
     const review = createWorkPlanReview()
     review.pass(REQUEST)
     review.judge(inputOf(0))
@@ -387,7 +387,7 @@ describe("WorkPlanReview の返却の注記", () => {
     expect(review.takeHandbackNote()).toContain(PHASE_RESULT_MISSING_HANDBACK_LINE)
   })
 
-  it("段取りが無ければ、返却が届いても注記を溜めない", () => {
+  it("ワークプランが無ければ、返却が届いても注記を溜めない", () => {
     const review = createWorkPlanReview()
     review.pass(REQUEST)
     review.pass(handedBack())
@@ -419,7 +419,7 @@ describe("WorkPlanReview の phase_result", () => {
       : { phase, count, outcome }
   const plannedOf = (plan: LatestWorkPlan) => {
     if (plan.kind !== "planned") {
-      throw new Error("段取りのある判定を渡す")
+      throw new Error("ワークプランのある判定を渡す")
     }
     return plan
   }
@@ -480,7 +480,7 @@ describe("WorkPlanReview の phase_result", () => {
     }
   })
 
-  it("形の誤りは malformed で、段取りを動かさない", () => {
+  it("形の誤りは malformed で、ワークプランを動かさない", () => {
     const review = started()
 
     expect(review.judgeResult({ phase: 3, count: 2, outcome: "finished" }).kind).toBe("malformed")
@@ -559,7 +559,7 @@ describe("WorkPlanReview の phase_result", () => {
 })
 
 describe("WorkPlanReview の立ち位置", () => {
-  it("受け付けた段取りの残りの段の数を返し、全部済みなら 0", () => {
+  it("受け付けたワークプランの残りの段の数を返し、全部済みなら 0", () => {
     const review = createWorkPlanReview()
     review.judge(inputOf(1))
     expect(review.standing()).toEqual({ kind: "planned", remaining: 2 })
@@ -607,7 +607,7 @@ describe("WorkPlanReview の立ち位置", () => {
   })
 })
 
-describe("WorkPlanReview の今の段取り", () => {
+describe("WorkPlanReview の今のワークプラン", () => {
   const standingOf = (plan: LatestWorkPlan): WorkPlanStanding =>
     plan.kind === "none"
       ? { kind: "none" }

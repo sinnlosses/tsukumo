@@ -780,7 +780,7 @@ describe("phase_result（委譲先の段の結果）", () => {
   })
 })
 
-describe("work_plan（段取り）", () => {
+describe("work_plan（ワークプラン）", () => {
   it("段の並びと位置を渡すと ok が返り、ターンは閉じない", async () => {
     const reply = await callTool(workServer(), "work_plan", {
       phases: ["架空の段A", "架空の段B"],
@@ -892,13 +892,13 @@ describe("work_plan（段取り）", () => {
     expect(lone.isError).toBe(true)
   })
 
-  it("段が1つだけの段取りは受け付ける", async () => {
+  it("段が1つだけのワークプランは受け付ける", async () => {
     const single = await callTool(workServer(), "work_plan", { phases: ["架空の段A"], current: 0 })
 
     expect(single).toMatchObject({ isError: false, endsTurn: false })
   })
 
-  it("段が0・空白だけの名前の段取りは形の検査で落ちる", async () => {
+  it("段が0・空白だけの名前のワークプランは形の検査で落ちる", async () => {
     const empty = await callTool(workServer(), "work_plan", { phases: [], current: 0 })
     const blank = await callTool(workServer(), "work_plan", {
       phases: ["架空の段A", "  "],

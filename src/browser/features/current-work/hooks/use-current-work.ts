@@ -63,7 +63,7 @@ const WORK_WORD_LABEL = {
 } satisfies Record<CurrentWorkState, string>
 
 /**
- * 札に出す今の段（`.current-work-phase`）。作業中・答え待ちで、その依頼に段取りがあるときだけ `shown`。
+ * 札に出す今の段（`.current-work-phase`）。作業中・答え待ちで、その依頼にワークプランがあるときだけ `shown`。
  * 字は「2/4 段の名前」、全部の段を終えていれば「4/4 済」。
  */
 export type CurrentWorkPhase =
@@ -91,12 +91,12 @@ export type CurrentWorkPlanSpan = {
   readonly phases: readonly CurrentWorkPlanPhase[]
 }
 
-/** 一覧の頭の段取り。その依頼に段取りがあれば、状態の語に関わらず出す。 */
+/** 一覧の頭のワークプラン。その依頼にワークプランがあれば、状態の語に関わらず出す。 */
 export type CurrentWorkPlan =
   | { readonly kind: "none" }
   | {
       readonly kind: "planned"
-      /** 「この依頼の段取り」（ターンが走っていなければ「前の依頼の段取り」）。 */
+      /** 「この依頼のワークプラン」（ターンが走っていなければ「前の依頼のワークプラン」）。 */
       readonly headingLabel: string
       readonly spans: readonly CurrentWorkPlanSpan[]
     }
@@ -364,7 +364,7 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Curren
   }, [])
   return {
     kind: "planned",
-    headingLabel: turnInProgress ? "この依頼の段取り" : "前の依頼の段取り",
+    headingLabel: turnInProgress ? "この依頼のワークプラン" : "前の依頼のワークプラン",
     spans,
   }
 }

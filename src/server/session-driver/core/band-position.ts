@@ -9,7 +9,7 @@ import {
 
 const HANDBACK_NOTE_HEAD = "tsukumo の注記（委譲先の返却の本文ではない）:"
 
-/** 段取りが無ければ空文字列。 */
+/** ワークプランが無ければ空文字列。 */
 export function bandPositionText(plan: LatestWorkPlan): string {
   if (plan.kind === "none") {
     return ""
@@ -28,8 +28,8 @@ export function bandPositionText(plan: LatestWorkPlan): string {
 
 /**
  * 返却を運ぶメインの入力に添える注記。
- * `lines` は返却ごとの1文（{@link RESULT_CALLED_HANDBACK_LINE}・{@link PHASE_RESULT_MISSING_HANDBACK_LINE}）、`current` は返却を受けたあとの段取り。
- * 行が無いか段取りが無ければ空文字列。
+ * `lines` は返却ごとの1文（{@link RESULT_CALLED_HANDBACK_LINE}・{@link PHASE_RESULT_MISSING_HANDBACK_LINE}）、`current` は返却を受けたあとのワークプラン。
+ * 行が無いかワークプランが無ければ空文字列。
  */
 export function handbackNoteText(lines: readonly string[], current: LatestWorkPlan): string {
   if (lines.length === 0 || current.kind === "none") {

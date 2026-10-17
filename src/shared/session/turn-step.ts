@@ -40,7 +40,7 @@ export type TurnStep = {
   readonly startedAt: RecordTime
   readonly status: TurnStepStatus
   readonly backgroundEnd: BackgroundEnd
-  /** 始まったときの段取りの段（{@link WorkPhase}）。 */
+  /** 始まったときのワークプランの段（{@link WorkPhase}）。 */
   readonly phase: WorkPhase
 }
 
@@ -74,7 +74,7 @@ export function toolRecordDuration(
 
 /**
  * {@link currentTurnSteps} の戻り値。「依頼が一度も無い」と「依頼はあるが手順が0件」を
- * 分ける（帯の一覧では出す文面が違う）。`plan` はその依頼で最後に渡された段取り、`plans` はその依頼の `work-plan` の記録（積まれた順）。
+ * 分ける（帯の一覧では出す文面が違う）。`plan` はその依頼で最後に渡されたワークプラン、`plans` はその依頼の `work-plan` の記録（積まれた順）。
  */
 export type TurnStepList =
   | { readonly kind: "no-request" }

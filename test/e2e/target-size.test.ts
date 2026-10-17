@@ -63,7 +63,7 @@ describe("会話の画面の押す的と字", () => {
   it.each([
     ["work-plan", "work-plan-quick"],
     ["verdict", "report-task-verdict"],
-  ] as const)("レポートの段取りと検証の字が下限を割らない（%s）", async (name, scene) => {
+  ] as const)("レポートのワークプランと検証の字が下限を割らない（%s）", async (name, scene) => {
     const room = await run.open({
       scenario: `target-size-report-${name}`,
       scene,

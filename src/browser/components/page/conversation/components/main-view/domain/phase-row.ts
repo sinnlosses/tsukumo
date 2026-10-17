@@ -41,7 +41,7 @@ export function phaseRowsOf(turn: MainViewTurn): readonly PhaseRow[] {
   }))
 }
 
-/** 板の頭と下端の「n/N」の N。段取りがあれば段の数（一覧より少なければ一覧の数）、無ければ一覧の数。 */
+/** 板の頭と下端の「n/N」の N。ワークプランがあれば段の数（一覧より少なければ一覧の数）、無ければ一覧の数。 */
 export function phaseTotal(rows: readonly PhaseRow[], planCount: number): number {
   return Math.max(rows.length, planCount)
 }

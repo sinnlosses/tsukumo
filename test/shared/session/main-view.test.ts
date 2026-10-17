@@ -797,7 +797,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
   })
 
-  it("段取りを渡したやり取りでは、中間レポートはまとめだけで、最終レポートは結論の下に段ごとの所要時間の帯と一覧を置く", () => {
+  it("ワークプランを渡したやり取りでは、中間レポートはまとめだけで、最終レポートは結論の下に段ごとの所要時間の帯と一覧を置く", () => {
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",
       delegatedRange: { kind: "none" },
@@ -862,7 +862,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(last).toBe(`${lead("架空の結論。")}\n\n${SECTIONS_START}\n\n架空の根拠。`)
   })
 
-  it("同じ依頼に段取りがあるレポートは progress の塊を描かず、段取りが無いレポートは描く", () => {
+  it("同じ依頼にワークプランがあるレポートは progress の塊を描かず、ワークプランが無いレポートは描く", () => {
     const withProgress: SessionEvent = reportEvent({
       toolUseId: "toolu_r1",
       sections: [
@@ -1150,7 +1150,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     })
   })
 
-  it("1段だけの段取りでは、中間レポートも出ない", () => {
+  it("1段だけのワークプランでは、中間レポートも出ない", () => {
     const single = ["架空の段A"]
     const turn = turnOf(
       [ask, plan(0, "", single), plan(1, "", single), report, finished],
@@ -1274,7 +1274,7 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     expect(reportMarkdowns(entriesAfter)[1]).toContain('<span class="check-time">5秒</span>')
   })
 
-  it("段取りのある依頼の report の最終レポートの本文には、検証の表の下に段ごとの所要時間の帯と一覧が出る", () => {
+  it("ワークプランのある依頼の report の最終レポートの本文には、検証の表の下に段ごとの所要時間の帯と一覧が出る", () => {
     const markdown = finalMarkdowns(
       mainViewEntries(
         foldTimed([
@@ -1300,7 +1300,7 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     )
   })
 
-  it("段取りの無い依頼の report には、段ごとの所要時間の帯と一覧を出さない", () => {
+  it("ワークプランの無い依頼の report には、段ごとの所要時間の帯と一覧を出さない", () => {
     const markdown = finalMarkdowns(
       mainViewEntries(
         foldTimed([

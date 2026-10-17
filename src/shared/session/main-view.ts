@@ -378,7 +378,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
  * `report` の引数を、`conclusion` → 合図の行と段ごとの所要時間 → 節の始まりの印 → `figure` の図 → `sections` → `favor` の順に1つの本文へ組む。
  * 印は結論か合図の行か段ごとの所要時間があり、図か節が1つ以上あるときだけ置く。
  * `figure` の図は見出しの無い先頭の節として描き（`sectionsWithFigure`）、図の番号は `sections` の図と通しで振られる。`none` は何も描かない。
- * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は `withPhaseTimes` のときだけ、同じ依頼の段取りから描く。
+ * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は `withPhaseTimes` のときだけ、同じ依頼のワークプランから描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
  * 空の `sections` / `favor` は塊ごと置かない。

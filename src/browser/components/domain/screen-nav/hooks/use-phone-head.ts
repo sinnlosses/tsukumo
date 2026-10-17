@@ -59,7 +59,7 @@ export type PhoneHeadDot = {
  * 2行目。
  *
  * - `none`: 出さない（依頼待ち・雑談中・会話の画面でないとき）
- * - `steps`: 段取りの無いターン。「手順 n」だけ
+ * - `steps`: ワークプランの無いターン。「手順 n」だけ
  * - `planned`: 段の点・「手順 n」
  */
 export type PhoneHeadProgress =
@@ -139,7 +139,7 @@ function screenLabelOf(screen: Screen): string {
 }
 
 /**
- * 題。走っているか答え待ちで段取りがあれば今の段の名前（全部済みなら「n段すべて済み」）。
+ * 題。走っているか答え待ちでワークプランがあれば今の段の名前（全部済みなら「n段すべて済み」）。
  * それ以外は最後の依頼の1行目、依頼が無ければ部屋の名前。
  */
 function titleOf(

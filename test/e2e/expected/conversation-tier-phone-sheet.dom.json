@@ -49,7 +49,7 @@
         {
           "tag": "ol",
           "attributes": {
-            "aria-label": "段取り"
+            "aria-label": "ワークプラン"
           },
           "children": [
             {

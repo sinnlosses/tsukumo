@@ -45,7 +45,7 @@ const RECENT: readonly ChatArchiveRecentEntry[] = [
 const RECENT_CHAT_ARCHIVE = { ...NOOP_CHAT_ARCHIVE, readRecent: () => RECENT } satisfies ChatArchive
 
 describe("takeSystemPromptAppend", () => {
-  it("仕事のときは 人格 → セリフの間合い → 段取り → レポートの記法 → 質問の書き方 の順でつながる", () => {
+  it("仕事のときは 人格 → セリフの間合い → ワークプラン → レポートの記法 → 質問の書き方 の順でつながる", () => {
     const append = takeSystemPromptAppend({ persona: PERSONA, mode: workMode() })
 
     expect(append).toBe(

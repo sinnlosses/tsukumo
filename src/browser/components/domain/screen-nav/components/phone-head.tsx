@@ -100,7 +100,7 @@ function PhoneHeadProgressLine(props: {
   return (
     <div className={styles["phone-head-line"]}>
       {progress.kind === "planned" && (
-        <ol className={styles["phone-head-dots"]} aria-label="段取り">
+        <ol className={styles["phone-head-dots"]} aria-label="ワークプラン">
           {progress.dots.map((dot) => (
             <li
               key={dot.key}
