@@ -8,7 +8,10 @@
 // コンテキストの内訳（メモリファイルのパスやスキル名を持つ）はここには入れず、別の形・別のファイル（`ContextUsageRecord`）に積む。
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const TOKEN_USAGE_FORMAT_VERSION = 2 satisfies number
+export const TOKEN_USAGE_FORMAT_VERSION = 3 satisfies number
+
+/** 読める古い版（`taskId`・`stage` の欄が無い版）。読むときだけ通し、書くのは常に {@link TOKEN_USAGE_FORMAT_VERSION}。 */
+export const TOKEN_USAGE_LEGACY_FORMAT_VERSION = 2 satisfies number
 
 /** そのターンが仕事だったか雑談だったか。 */
 export type TokenUsageMode = "work" | "chat"
@@ -84,15 +87,19 @@ export type TurnUsageBreakdown = {
 
 /**
  * JSONL に書く1行の形。1行 = 1ターン（SDK の `result` 1つ。サブエージェントの中の `result` は数えない）で、モデルが複数出たターンは `models` に並ぶ。
- * タスクには紐づけない（突き合わせは {@link at} の時刻で後追いする）。
+ * 着手の印がある作業ツリーのターンだけ、タスクIDと段の名前（どちらも tw が決めた短い識別子で、会話の文面ではない）を持つ。
  */
 export type TokenUsageRecord = {
-  readonly v: typeof TOKEN_USAGE_FORMAT_VERSION
+  readonly v: typeof TOKEN_USAGE_FORMAT_VERSION | typeof TOKEN_USAGE_LEGACY_FORMAT_VERSION
   /** ISO 8601（オフセット付き）。行だけで時刻が決まる。 */
   readonly at: string
   /** claude 側のセッションID（`system/init` の `session_id`）。 */
   readonly sessionId: string
   readonly mode: TokenUsageMode
+  /** 着手中のタスクのID（着手の印のファイル名）。印が無ければ無い。旧い版の行にも無い。 */
+  readonly taskId: string | undefined
+  /** 台帳の最新の `lap` の段の名前。タスクIDがあっても台帳に（当月と前月のどちらにも）そのタスクの lap が無い・読めなければ無い。 */
+  readonly stage: string | undefined
   /** そのターンの増分。空の並びにはならない（増分が無いターンは行を書かない）。 */
   readonly models: readonly ModelTokenUsage[]
   /** ターンの中の内訳（合計の `models` を割ったもの）。 */
