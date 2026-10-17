@@ -67,10 +67,13 @@ const tableBlockSchema = z
       .array(z.array(cellSchema))
       .min(1)
       .describe("行ごとのセル。数は columns と揃える。セルは1行、空にせず「なし」と書く"),
+    rest: inlineText
+      .default("")
+      .describe("切った残りを1行で（「ほか 12 件（0.5% 未満）」）。長い表は上位だけを rows に置く"),
     fold,
   })
   .describe(
-    "比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options、交点が状態だけなら matrix）",
+    "比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options、交点が状態だけなら matrix）。行は大きさか重要度の順（1列目のあいうえお順にしない）。単位は見出しに1回だけ書きセルに書かない。2行以下なら表にせず stats か label 付きの list",
   )
 
 export const REPORT_MATRIX_STATUSES = ["ok", "warn", "ng", "na"] as const

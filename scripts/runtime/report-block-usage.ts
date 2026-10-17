@@ -8,6 +8,7 @@
 // 強調の数・ラベルの無い辺の割合・節点数の分布は、それを記録した版7以降の行を分母にする。
 // unverified のあるレポートのうち確かめ方のある割合は、版8以降の unverified のある行を分母にする。
 // 報告の種類と必須の塊が無い割合は、版9以降の task の行を分母にする。
+// 2行以下の表のあるレポートの割合は、版10以降の行を分母にする。
 //
 // 使い方:
 //   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -33,7 +34,6 @@ import {
   reportFigureSchema,
 } from "../../src/shared/report/report-block.ts"
 import { REPORT_GENRES } from "../../src/shared/report/report-task.ts"
-import { REPORT_USAGE_FORMAT_VERSION } from "../../src/shared/report/report-usage-record.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 
 const USAGE = `使い方:
@@ -110,6 +110,13 @@ const genreRecordShape = {
   hasSourceReference: z.boolean(),
 }
 
+/** 2行以下の表の割合の分母になる最初の版。 */
+const SHORT_TABLE_FORMAT_VERSION = 10
+
+const shortTableRecordShape = {
+  shortTable: z.boolean(),
+}
+
 const recordSchema = z.union([
   z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
   z.object({
@@ -137,11 +144,21 @@ const recordSchema = z.union([
     .and(figureFieldSchema),
   z
     .object({
-      v: z.literal(REPORT_USAGE_FORMAT_VERSION),
+      v: z.literal(GENRE_FORMAT_VERSION),
       ...figureRecordShape,
       ...countRecordShape,
       ...howToVerifyRecordShape,
       ...genreRecordShape,
+    })
+    .and(figureFieldSchema),
+  z
+    .object({
+      v: z.literal(SHORT_TABLE_FORMAT_VERSION),
+      ...figureRecordShape,
+      ...countRecordShape,
+      ...howToVerifyRecordShape,
+      ...genreRecordShape,
+      ...shortTableRecordShape,
     })
     .and(figureFieldSchema),
 ])
@@ -152,6 +169,7 @@ type FigureRecord = Extract<UsageRecord, { readonly hasFigure: boolean }>
 type CountRecord = Extract<UsageRecord, { readonly emphasisCount: number }>
 type HowToVerifyRecord = Extract<UsageRecord, { readonly hasHowToVerify: boolean }>
 type GenreRecord = Extract<UsageRecord, { readonly taskGenre: string }>
+type ShortTableRecord = Extract<UsageRecord, { readonly shortTable: boolean }>
 
 /** `figure` の表に出す種類。0件でも出す。 */
 const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
@@ -170,7 +188,8 @@ const rejectionSchema = z.object({
     z.literal(COUNTLESS_FORMAT_VERSION),
     z.literal(COUNT_FORMAT_VERSION),
     z.literal(HOW_TO_VERIFY_FORMAT_VERSION),
-    z.literal(REPORT_USAGE_FORMAT_VERSION),
+    z.literal(GENRE_FORMAT_VERSION),
+    z.literal(SHORT_TABLE_FORMAT_VERSION),
   ]),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),
@@ -213,6 +232,9 @@ const genreTaskRecords = records.filter(
   (record): record is GenreRecord =>
     record.v >= GENRE_FORMAT_VERSION && "taskGenre" in record && record.forTask,
 )
+const shortTableRecords = records.filter(
+  (record): record is ShortTableRecord => record.v >= SHORT_TABLE_FORMAT_VERSION,
+)
 process.stdout.write(
   fieldRecords.length === 0
     ? "塊の欄 × レポート数: 欄を記録した行が無い"
@@ -237,6 +259,8 @@ process.stdout.write("\n\n")
 process.stdout.write(howToVerifySection(howToVerifyRecords))
 process.stdout.write("\n\n")
 process.stdout.write(genreSection(genreTaskRecords))
+process.stdout.write("\n\n")
+process.stdout.write(shortTableSection(shortTableRecords))
 process.stdout.write("\n\n")
 process.stdout.write(
   table("逃げ道の外の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
@@ -496,6 +520,23 @@ function genreSection(rows: readonly GenreRecord[]): string {
       shareLine("中断", "favor 無し", stopped, (record) => !record.hasFavor),
     ].join("\n"),
   ].join("\n\n")
+}
+
+/** 行が2つ以下の表のあるレポートの割合。 */
+function shortTableSection(rows: readonly ShortTableRecord[]): string {
+  if (rows.length === 0) {
+    return "2行以下の表のあるレポート: 記録した行が無い"
+  }
+  return [
+    `2行以下の表のあるレポート（版10以降の${String(rows.length)}件のうち。外す基準の対象ではない。差し戻しにしない）:`,
+    shareLine("全レポート", "2行以下の表あり", rows, (record) => record.shortTable),
+    shareLine(
+      "task の最終レポート",
+      "2行以下の表あり",
+      rows.filter((record) => record.forTask),
+      (record) => record.shortTable,
+    ),
+  ].join("\n")
 }
 
 /** `figure` の種類。記録する前の版の行は `none`。 */

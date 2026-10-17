@@ -1471,6 +1471,14 @@
 .detail-block tbody tr:last-child td {
   border-bottom: none;
 }
+/* 切った残りの行（`.report-table-rest`）が続く表は、最後のデータ行の下の罫を残して残りの行を表の最終行に見せる。 */
+.detail-block
+  .table-scroll:has(+ .report-table-rest):not(:has(.report-cell-status))
+  tbody
+  tr:last-child
+  td {
+  border-bottom: 1px solid var(--rule-soft);
+}
 /* 6行以上の表は、5行ごとに行の下へ 6px の隙間を入れる（その行の罫は透かす）。 */
 .detail-block
   table:not(:has(.report-cell-status))
@@ -1559,6 +1567,12 @@
   gap: 0.25rem 1rem;
   margin-bottom: 0.3rem;
   font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+/* 切った残りの1行。表の最終行に続けて、全幅で補助の色で読ませる。 */
+.detail-block .report-captioned > .report-table-rest {
+  padding-top: 6px;
+  font-size: var(--font-secondary);
   color: var(--ink-quiet);
 }
 .detail-block .report-table-status-legend-item {

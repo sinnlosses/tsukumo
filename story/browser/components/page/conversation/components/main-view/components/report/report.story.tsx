@@ -75,6 +75,7 @@ export const AutoAlignedTable = {
                 ["架空の二", "8", { status: "warn", text: "要注意" }],
                 ["架空の三で長い項目名（折り返しの見本）", "1,024", { status: "ng", text: "NG" }],
               ],
+              rest: "",
               fold: "",
             },
           ],

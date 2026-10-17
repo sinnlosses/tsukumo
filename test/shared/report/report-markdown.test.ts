@@ -109,6 +109,7 @@ describe("reportSectionsMarkdown", () => {
         ["架空の c", { status: "ng", text: "NG" }, "架空の備考"],
         ["架空の d", "架空の同じ", "架空の備考"],
       ],
+      rest: "",
       fold: "",
     }
 
@@ -128,6 +129,36 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("rest がある表は、表のあとに同じ包みの中で切った残りの1行を添える。状態のセルの表でも凡例・表・rest の順", () => {
+    const plain: ReportBlock = {
+      kind: "table",
+      title: "",
+      columns: ["項目", "備考"],
+      rows: [["架空の a", "架空の備考"]],
+      rest: "ほか 12 件（0.5% 未満）",
+      fold: "",
+    }
+    const withStatus: ReportBlock = {
+      ...plain,
+      rows: [["架空の a", { status: "ok", text: "通過" }]],
+    }
+
+    expect(markdownOf(plain)).toBe(
+      tableCaptioned(
+        [
+          "| 項目 | 備考 |",
+          "| --- | --- |",
+          "| 架空の a | 架空の備考 |",
+          "",
+          '<div class="table-rest">ほか 12 件（0.5% 未満）</div>',
+        ].join("\n"),
+      ),
+    )
+    const status = markdownOf(withStatus)
+    expect(status.indexOf("table-status-legend")).toBeLessThan(status.indexOf("| 項目 | 備考 |"))
+    expect(status.indexOf("| 項目 | 備考 |")).toBeLessThan(status.indexOf("table-rest"))
+  })
+
   it("列の全セルが数なら右揃え（桁を縦に揃える）にする。単位が付くと数だけの列にならない", () => {
     const table: ReportBlock = {
       kind: "table",
@@ -137,6 +168,7 @@ describe("reportSectionsMarkdown", () => {
         ["架空の a", "312", "12.5%"],
         ["架空の b", "-8", "架空の8件"],
       ],
+      rest: "",
       fold: "",
     }
 
@@ -161,6 +193,7 @@ describe("reportSectionsMarkdown", () => {
         ["架空の a", { from: "12", to: "8" }, { from: "`old|x`", to: "架空の新" }],
         ["架空の b", "3", "架空の据え置き"],
       ],
+      rest: "",
       fold: "",
     }
 
@@ -185,6 +218,7 @@ describe("reportSectionsMarkdown", () => {
         ["架空の a", { status: "ok", text: "" }],
         ["架空の b", { from: "架空の前", to: "架空の後" }],
       ],
+      rest: "",
       fold: "",
     }
 
@@ -200,6 +234,7 @@ describe("reportSectionsMarkdown", () => {
         ["架空の a", "40"],
         ["架空の b", "10"],
       ],
+      rest: "",
       fold: "",
     }
 
@@ -221,6 +256,7 @@ describe("reportSectionsMarkdown", () => {
       title: "",
       columns: ["項目", "件数"],
       rows: [["架空の a", "40"]],
+      rest: "",
       fold: "",
     }
 
@@ -238,6 +274,7 @@ describe("reportSectionsMarkdown", () => {
         ["架空の a", "312"],
         ["架空の b", "-8"],
       ],
+      rest: "",
       fold: "",
     }
 
@@ -257,6 +294,7 @@ describe("reportSectionsMarkdown", () => {
         ["架空の a", "0"],
         ["架空の b", "0"],
       ],
+      rest: "",
       fold: "",
     }
 
@@ -276,6 +314,7 @@ describe("reportSectionsMarkdown", () => {
         ["架空の a", { from: "12", to: "8" }],
         ["架空の b", "3"],
       ],
+      rest: "",
       fold: "",
     }
 
@@ -1152,6 +1191,7 @@ describe("reportSectionsMarkdown", () => {
       title: "",
       columns: ["項目", "件数"],
       rows: [["架空の a", "1"]],
+      rest: "",
       fold: "",
     }
     const options: ReportBlock = {

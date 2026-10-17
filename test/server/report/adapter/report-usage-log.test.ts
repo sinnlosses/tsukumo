@@ -59,6 +59,7 @@ function entry(
     taskOutcome: "finished",
     hasFavor: false,
     hasSourceReference: true,
+    shortTable: true,
   }
 }
 
@@ -112,6 +113,7 @@ describe("createReportUsageLog", () => {
       "taskOutcome",
       "hasFavor",
       "hasSourceReference",
+      "shortTable",
     ])
     expect(record).toMatchObject({
       v: REPORT_USAGE_FORMAT_VERSION,
@@ -133,6 +135,7 @@ describe("createReportUsageLog", () => {
       taskOutcome: "finished",
       hasFavor: false,
       hasSourceReference: true,
+      shortTable: true,
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)

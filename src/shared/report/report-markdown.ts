@@ -852,6 +852,9 @@ function tableMarkdown(
         row(aligns.map(alignMarker)),
         ...table.rows.map((cells) => row(cells.map(bodyCellMarkdown))),
       ].join("\n"),
+      table.rest.trim() === ""
+        ? ""
+        : `<div class="table-rest">${htmlInlineWithCode(table.rest)}</div>`,
     ]),
     bodyFormat: "markdown",
     fit: true,

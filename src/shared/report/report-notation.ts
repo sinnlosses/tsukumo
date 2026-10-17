@@ -52,6 +52,7 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "table-status-legend",
   "table-status-legend-item",
   "table-status-legend-swatch",
+  "table-rest",
   "cell-numeric",
   "cell-bar",
   "cell-numeric-value",

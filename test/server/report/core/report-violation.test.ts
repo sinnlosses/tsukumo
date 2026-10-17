@@ -50,6 +50,7 @@ describe("reportViolations", () => {
         title: "架空の表（作り物の値）",
         columns: ["列", "値"],
         rows: [["a", { status: "ok", text: "OK" }]],
+        rest: "",
         fold: "",
       },
       mermaid("sequenceDiagram\n  a ->> b: x"),
@@ -141,6 +142,7 @@ describe("reportViolations", () => {
       title: "架空の表",
       columns: ["列", "値"],
       rows: [["a", cell]],
+      rest: "",
       fold: "",
     })
 
@@ -268,6 +270,7 @@ describe("reportViolations", () => {
         title: "架空の表",
         columns: ["列", "値"],
         rows: [["a", "1"], ["b"]],
+        rest: "",
         fold: "",
       }
       expect(reportViolations(draft([table]))).toEqual([{ kind: "ragged-table", count: 1 }])

@@ -23,7 +23,7 @@ describe("reportUsageEntryOf", () => {
         heading: "架空の節1",
         blocks: [
           { kind: "text", text: "架空の根拠。", fold: "" },
-          { kind: "table", title: "", columns: ["a", "b"], rows: [["1", "2"]], fold: "" },
+          { kind: "table", title: "", columns: ["a", "b"], rows: [["1", "2"]], rest: "", fold: "" },
         ],
       },
       {
@@ -169,6 +169,7 @@ describe("reportUsageEntryOf", () => {
             title: "",
             columns: ["a", "b"],
             rows: [["架空の", { from: "1", to: "2" }]],
+            rest: "",
             fold: "",
           },
           {
@@ -195,6 +196,7 @@ describe("reportUsageEntryOf", () => {
             title: "",
             columns: ["a", "b"],
             rows: [["架空の", { from: "3", to: "4" }]],
+            rest: "",
             fold: "",
           },
         ],
@@ -204,6 +206,52 @@ describe("reportUsageEntryOf", () => {
     const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
 
     expect(entry.blockFields).toEqual(["tableChange", "listLabel", "listFlow"])
+  })
+
+  it("rest が空でない表は tableRest を数え、空白だけなら数えない", () => {
+    const fieldsOf = (rest: string): readonly string[] =>
+      reportUsageEntryOf(
+        reportOfSections([
+          {
+            heading: "",
+            blocks: [
+              { kind: "table", title: "", columns: ["a", "b"], rows: [["1", "2"]], rest, fold: "" },
+            ],
+          },
+        ]),
+        "claude-session-1",
+        1_000,
+        false,
+      ).blockFields
+
+    expect([fieldsOf("ほか 3 件"), fieldsOf(" ")]).toEqual([["tableRest"], []])
+  })
+
+  it.each([
+    ["行が1つ", 1, true],
+    ["行が2つ", 2, true],
+    ["行が3つ", 3, false],
+  ] as const)("表の%sなら shortTable は %s", (_, rowCount, expected) => {
+    const rows = Array.from({ length: rowCount }, () => ["1", "2"])
+    const entry = reportUsageEntryOf(
+      reportOfSections([
+        {
+          heading: "",
+          blocks: [{ kind: "table", title: "", columns: ["a", "b"], rows, rest: "", fold: "" }],
+        },
+      ]),
+      "claude-session-1",
+      1_000,
+      false,
+    )
+
+    expect(entry.shortTable).toBe(expected)
+  })
+
+  it("表が無いレポートの shortTable は偽", () => {
+    const entry = reportUsageEntryOf(reportOfSections([]), "claude-session-1", 1_000, false)
+
+    expect(entry.shortTable).toBe(false)
   })
 
   it("stats の total を渡した回は statsTotal を数える", () => {
@@ -338,6 +386,7 @@ describe("reportUsageEntryOf", () => {
       taskOutcome: "none",
       hasFavor: false,
       hasSourceReference: false,
+      shortTable: false,
     })
   })
 
@@ -444,6 +493,7 @@ describe("reportUsageEntryOf", () => {
           title: "",
           columns: ["a", "b"],
           rows: [["**甲**", { status: "ok", text: "**乙**" }, { from: "**前**", to: "後" }]],
+          rest: "",
           fold: "",
         },
       ])
@@ -549,7 +599,14 @@ describe("reportUsageEntryOf", () => {
       ],
       [
         "表のセルの path:line",
-        { kind: "table", title: "", columns: ["根拠"], rows: [["src/b.ts:3"]], fold: "" },
+        {
+          kind: "table",
+          title: "",
+          columns: ["根拠"],
+          rows: [["src/b.ts:3"]],
+          rest: "",
+          fold: "",
+        },
         true,
       ],
       ["note の URL", { kind: "note", tone: "info", text: "http://example.com", fold: "" }, true],

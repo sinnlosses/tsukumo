@@ -68,6 +68,8 @@ export type ReportUsageEntry = {
   readonly hasFavor: boolean
   /** `text` の本文・`list` の項目・表のセル・`note` の本文・`markdown` の中身に URL か `path:line` があるか、`code` の塊に `path` があるか。 */
   readonly hasSourceReference: boolean
+  /** 行が2つ以下の表が1つでもあるか。 */
+  readonly shortTable: boolean
 }
 
 const FIGURE_KINDS: readonly string[] = ["image", "mermaid", "graph", "svg"]
@@ -76,10 +78,11 @@ const IMAGE_FILE_EXTENSIONS: readonly string[] = [".png", ".jpg", ".jpeg", ".gif
 
 /**
  * 数える塊の欄。外す基準（直近4週間で0回）を塊の種類と同じく当てるため、既定の値でない欄が出たかを持つ。
- * 表のセルの `from` / `to`・`stats` の `before` / `total`・`list` の `label`・`list` の `flow`・`dimension` の `before`・`image` の `notes`。
+ * 表のセルの `from` / `to`・表の `rest`・`stats` の `before` / `total`・`list` の `label`・`list` の `flow`・`dimension` の `before`・`image` の `notes`。
  */
 export const REPORT_BLOCK_FIELDS = [
   "tableChange",
+  "tableRest",
   "statsBefore",
   "statsTotal",
   "listLabel",
@@ -148,6 +151,9 @@ export function reportUsageEntryOf(
     taskOutcome: event.task.kind === "task" ? event.task.outcome : "none",
     hasFavor: event.favor.trim() !== "",
     hasSourceReference: blocksOf(event.sections).some(hasSourceReference),
+    shortTable: blocksOf(drawnSections).some(
+      (block) => block.kind === "table" && block.rows.length <= 2,
+    ),
   }
 }
 
@@ -273,6 +279,8 @@ function hasField(block: ReportBlock, field: ReportBlockField): boolean {
         block.kind === "table" &&
         block.rows.some((row) => row.some((cell) => typeof cell === "object" && "from" in cell))
       )
+    case "tableRest":
+      return block.kind === "table" && block.rest.trim() !== ""
     case "statsBefore":
       return block.kind === "stats" && block.items.some((item) => item.before.trim() !== "")
     case "statsTotal":

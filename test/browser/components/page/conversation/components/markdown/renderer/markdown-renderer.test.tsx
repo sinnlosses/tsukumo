@@ -50,6 +50,18 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelectorAll("div.table-scroll > table")).toHaveLength(1)
   })
 
+  it("表の rest の行は、表の器（div.table-scroll）の直後の兄弟になる（CSS が :has(+ ...) で最後の行の罫を残すため）", () => {
+    const { container } = render(
+      <Markdown
+        text={
+          '| 見出し | 値 |\n| --- | --- |\n| あ | 1 |\n\n<div class="table-rest">ほか 3 件</div>'
+        }
+      />,
+    )
+
+    expect(container.querySelectorAll("div.table-scroll + div.report-table-rest")).toHaveLength(1)
+  })
+
   it("レポートが直接書いた <table> も同じ器に包まれる（rehype-raw と同じ木を通るため）", () => {
     const { container } = render(
       <Markdown text="<table><tbody><tr><td>あ</td></tr></tbody></table>" />,

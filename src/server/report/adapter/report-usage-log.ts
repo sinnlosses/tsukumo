@@ -72,5 +72,6 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     taskOutcome: entry.taskOutcome,
     hasFavor: entry.hasFavor,
     hasSourceReference: entry.hasSourceReference,
+    shortTable: entry.shortTable,
   }
 }

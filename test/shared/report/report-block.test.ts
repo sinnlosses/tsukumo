@@ -40,6 +40,19 @@ describe("parseReportSections", () => {
     expect(parse({ total: "5" })).toMatchObject({ items: [{ total: "5" }, { total: "" }] })
   })
 
+  it("table の rest は省くと空文字になり、渡せば残る", () => {
+    const parse = (extra: object): unknown =>
+      parseReportSections([
+        {
+          heading: "",
+          blocks: [{ kind: "table", title: "", columns: ["a", "b"], rows: [["1", "2"]], ...extra }],
+        },
+      ]).sections[0]?.blocks[0]
+
+    expect(parse({})).toMatchObject({ rest: "" })
+    expect(parse({ rest: "ほか 3 件" })).toMatchObject({ rest: "ほか 3 件" })
+  })
+
   it("beforeAfter の塊は前と後の側が画像・コード・箇条のどれかで、左右で種類が違っても受ける", () => {
     const beforeAfter = {
       kind: "beforeAfter",

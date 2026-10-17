@@ -474,6 +474,7 @@ describe("createSessionManager", () => {
           taskOutcome: "none",
           hasFavor: false,
           hasSourceReference: false,
+          shortTable: false,
           sessionSummary: undefined,
         },
       ])

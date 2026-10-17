@@ -429,6 +429,7 @@ function InquiryCompare(props: {
               axis,
               ...props.options.map((option) => option.byAxis[index] ?? ""),
             ]),
+            rest: "",
             fold: "",
           },
         ],

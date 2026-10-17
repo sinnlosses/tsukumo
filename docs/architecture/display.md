@@ -303,7 +303,12 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   ままにし、行の左に色の線は引かない。表に出た状態だけを、題（「表 n」）の直下・表の上に中央揃えの凡例
   （色見本＋記号＋語）で添える（2026-10-13 改訂。表の下の左端では、題から離れて何の凡例か読みにくかった）。
   列に `align` は持たせず、
-  `reportSectionsMarkdown`（`src/shared/report/report-markdown.ts`）が組み立てるときに1箇所で判定する
+  `reportSectionsMarkdown`（`src/shared/report/report-markdown.ts`）が組み立てるときに1箇所で判定する。
+  長い表を切った残りは `rest`（省略できる文字列。「ほか 12 件（0.5% 未満）」）で言い、空でなければ表の直後に
+  1行で添える（`ink-quiet`・罫なし。GFM の表に `tfoot` は書けないので、同じ包みの中の `table-rest` の行にする）。
+  `table` の説明には、行は大きさか重要度の順（1列目のあいうえお順にしない）・単位は見出しに1回だけでセルに書かない・
+  2行以下なら表にせず `stats` か `label` 付きの `list` に、の3条を置く。差し戻しにはせず、記録の「2行以下の表のあるレポート」で数える
+  （下の「塊を足す・外す基準」の版10）。`ReportBlock` の `table` の形が変わったので `PROTOCOL_VERSION` を 57 に上げた
 - **行と列の交点が状態だけの対応表は `matrix` の塊で見せる**（2026-10-01。`columns`・`rows`〔`name` と
   `cells`＝`ok` / `warn` / `ng` / `na`〕を受ける）。交点は印（✓ ！ ✕ －）だけで描き、状態は記号・色・
   `aria-label`（状態の語だけ。行と列の名前は表の見出しが読み上げる）で言う。**交点に補足は持たせない**
@@ -1117,7 +1122,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 版5からは、段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるかの `hasFigure` と、
 このターンにメインが画像のファイルを `Read` したのに `image` の塊が無かったかの `readImageWithoutImageBlock`
 （サブエージェントの `Read` は数えない）も足す。版6からは、`figure` の欄の種類（図の塊の `kind` か `none`）の `figureKind` と、
-`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。版9からは、`task` の報告の種類 `taskGenre`（`task` の無いレポートは `none`）と終わり方 `taskOutcome`、`favor` が空でないかの `hasFavor`、本文（`text`・`note`・`list` の項目・表のセル・`markdown`）に URL か `path:line` があるか `code` の塊に `path` があるかの `hasSourceReference` を足す。数えるだけで差し戻しにはしない。中身は一切持たない
+`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。版9からは、`task` の報告の種類 `taskGenre`（`task` の無いレポートは `none`）と終わり方 `taskOutcome`、`favor` が空でないかの `hasFavor`、本文（`text`・`note`・`list` の項目・表のセル・`markdown`）に URL か `path:line` があるか `code` の塊に `path` があるかの `hasSourceReference` を足す。版10からは、行が2つ以下の表が1つでもあるかの `shortTable` を足す（`rest` が空でない表は塊の欄の `tableRest` で数え、版は上げない）。数えるだけで差し戻しにはしない。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
 `src/server/report/adapter/report-usage-log.ts`、何を1行にするかは
 `src/server/report/core/report-usage.ts` が持つ。逃げ道の記法の検出は `src/server/report/core/report-markdown-notation.ts`、
@@ -1136,6 +1141,8 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 版9の欄の表は「報告の種類 × レポート数」（`work`・`decision`・`research`・`unspecified`）と「種類ごとに必須の塊が無い割合」
 （判断で `options` が無い・調べもので出典も `path:line` も無い・中断〔`stopped`〕で `favor` が無い）で、分母は版9以降の task の最終レポート。
 外す基準の対象ではなく、差し戻しにもしない（差し戻すかは28日の数を見てから決める）。
+版10の欄の表は「2行以下の表のあるレポート」で、全レポートと task の最終レポートの2行を出し、分母は版10以降の行。
+外す基準の対象ではなく、差し戻しにもしない（表にする意味の薄いものの多さを数えてから決める）。
 `report` が差し戻されたときも同じファイルに1行書く（`kind: "rejected"`・時刻・セッションID・差し戻しの種類の名前だけで、
 手続きの種類〔`REPORT_PROCEDURE_REJECTIONS` の名前〕と記法の違反の `kind`。本文も文面も持たない）。
 集計は「差し戻しの種類 × 回数」の表で、割合は `report` の呼び出し（受け付け＋差し戻し）の数に対して出す。
