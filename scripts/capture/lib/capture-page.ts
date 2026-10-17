@@ -34,6 +34,28 @@ export async function openPage(page: Page, url: string): Promise<void> {
     .catch(() => undefined)
 }
 
+/** 書き上げの演出が始まるのを待つ上限（ミリ秒）。 */
+const REVEAL_START_TIMEOUT_MS = 15_000
+
+/** 演出の開始を見つけてから時計を止めるまでに空ける、偽の時計の上の幅（ミリ秒）。 */
+const REVEAL_PAUSE_LEAD_MS = 10
+
+/**
+ * 書き上げの演出（`data-revealing`）が始まった直後に偽の時計を止め、そこから `ms` だけ進めた
+ * 時点で返す（途中の画を撮るため。{@link settlePage} は挟まない）。呼ぶ前に
+ * `page.clock.install()` が入っていること。止めたあとは `runFor` だけが時計と
+ * `requestAnimationFrame` を進める。演出が始まらなければ throw する。
+ */
+export async function revealPageAt(page: Page, ms: number): Promise<void> {
+  await page.waitForSelector("[data-revealing]", {
+    state: "attached",
+    timeout: REVEAL_START_TIMEOUT_MS,
+  })
+  const now = await page.evaluate(() => Temporal.Now.instant().epochMilliseconds)
+  await page.clock.pauseAt(now + REVEAL_PAUSE_LEAD_MS)
+  await page.clock.runFor(ms)
+}
+
 /**
  * 操作を順に当て、当てられなかった手を返す。`stop` は最初の外れで打ち切り、`continue` は
  * 残りも試す。1つでも試したら描き直しを待つ。

@@ -16,6 +16,7 @@
 //   node scripts/capture/capture-view.ts <URL> --wait-for '[role="table"][aria-label="検証結果"]'
 //   node scripts/capture/capture-view.ts --scene report-blocks --size 600x900 \
 //     --wait-for '[class*="report-files"]' --scroll-to '[class*="report-files"]'
+//   node scripts/capture/capture-view.ts --scene report-blocks --reveal-at 1500
 //   node scripts/capture/capture-view.ts --scene <場面> --type textarea '/' --click '[role="option"]'
 //   node scripts/capture/capture-view.ts --scene <場面> --cwd <dir> --hash '#achievement' --wait-after <selector>
 //
@@ -44,7 +45,13 @@ import { readFakeSession } from "../../src/server/session-driver/adapter/fake-dr
 import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../shared/capture-clock.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
-import { applyPreparations, openPage, SKIP_REVEAL_KEY, settlePage } from "./lib/capture-page.ts"
+import {
+  applyPreparations,
+  openPage,
+  revealPageAt,
+  SKIP_REVEAL_KEY,
+  settlePage,
+} from "./lib/capture-page.ts"
 import {
   describePreparation,
   PREPARATION_OPTIONS,
@@ -55,6 +62,11 @@ import { type Source, sourceOf } from "./lib/capture-source.ts"
 import { CATALOG } from "./lib/catalog-entry.ts"
 import { imageSceneEntry, launchPlaceOf, workspaceOf } from "./lib/catalog-setup.ts"
 import { launchFakeScene } from "./lib/fake-scene-launch.ts"
+import {
+  formatRevealSnapshot,
+  readRevealSnapshot,
+  REVEAL_SEEN_SCRIPT,
+} from "./lib/reveal-snapshot.ts"
 import { sceneBlockKinds } from "./lib/scene-catalog.ts"
 import {
   type SceneEventWatch,
@@ -104,6 +116,7 @@ const USAGE = `使い方:
   --press <キー名>      キーを押してから撮る（Escape など。狭い窓の引き出しを閉じる）
   --advance <ms>        偽の時計をミリ秒だけ進めてから撮る（待ち時間で出る画。Temporal.Now も従う）
   --clock <ISO 時刻>    ブラウザの時計をその時刻に決めて撮る（日付で表示が変わる画。オフセット付き、例 2026-01-15T12:00:00+09:00。Temporal.Now も従う）
+  --reveal-at <ms>      書き上げる演出が始まった時点から偽の時計をミリ秒だけ進めたところで止め、途中の画を撮る（正の整数。--scene と一緒にだけ使う。演出は打ち切らず、--wait-for・--advance などの操作とは併用できない）
   --wait-after <selector> その位置で要素が出るのを待つ（--hash で開いた画面の読み込みなど。出なければ失敗して終わる）
                         （7つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
@@ -122,6 +135,7 @@ type Options =
       readonly scrollTo: string | undefined
       readonly preparations: readonly Preparation[]
       readonly clock: number | undefined
+      readonly revealAt: number | undefined
       readonly fullPage: boolean
     }
 
@@ -229,12 +243,16 @@ async function capture(
     if (
       options.waitFor !== undefined ||
       options.clock !== undefined ||
+      options.revealAt !== undefined ||
       options.preparations.some((step) => step.kind === "advance")
     ) {
       await (options.clock === undefined
         ? page.clock.install()
         : page.clock.install({ time: options.clock }))
       await page.addInitScript(TEMPORAL_FOLLOWS_DATE_SCRIPT)
+    }
+    if (options.revealAt !== undefined) {
+      await page.addInitScript(REVEAL_SEEN_SCRIPT)
     }
     // 接続は遷移の途中で開くので、フレームを数え始めるのは遷移より前。
     const watch = watchSceneEvents(page)
@@ -245,10 +263,12 @@ async function capture(
       process.stderr.write(`${sceneFailure}\n`)
       return 1
     }
-    if (skipReveal) {
+    if (skipReveal && options.revealAt === undefined) {
       await page.keyboard.press(SKIP_REVEAL_KEY)
     }
-    const settleFailure = await settlePage(page).then(
+    const settleFailure = await (
+      options.revealAt === undefined ? settlePage(page) : revealPageAt(page, options.revealAt)
+    ).then(
       () => undefined,
       (error: unknown) => (error instanceof Error ? error.message : String(error)),
     )
@@ -277,6 +297,13 @@ async function capture(
     process.stdout.write(
       `撮った: ${options.out}（${String(options.width)}x${String(options.height)}）\n`,
     )
+
+    if (options.revealAt !== undefined) {
+      const snapshot = await readRevealSnapshot(page)
+      for (const line of formatRevealSnapshot(options.revealAt, snapshot)) {
+        process.stdout.write(`${line}\n`)
+      }
+    }
 
     for (const selector of options.measures) {
       process.stdout.write(`${selector}: ${await describeElement(page, selector)}\n`)
@@ -435,6 +462,7 @@ function readOptions(argv: readonly string[]): Options | undefined {
       scene: { type: "string" },
       cwd: { type: "string" },
       "until-step": { type: "string" },
+      "reveal-at": { type: "string" },
       clock: { type: "string" },
       size: { type: "string" },
       full: { type: "boolean" },
@@ -450,6 +478,10 @@ function readOptions(argv: readonly string[]): Options | undefined {
     values["until-step"] === undefined
       ? undefined
       : positiveIntegerArgument.safeParse(values["until-step"])
+  const revealAt =
+    values["reveal-at"] === undefined
+      ? undefined
+      : positiveIntegerArgument.safeParse(values["reveal-at"])
   const clock = values.clock === undefined ? undefined : readClockInstant(values.clock)
   const size = values.size === undefined ? undefined : parseSize(values.size)
   const urls = tokens.flatMap((token, index) =>
@@ -459,6 +491,11 @@ function readOptions(argv: readonly string[]): Options | undefined {
     prepared === undefined ||
     urls.length > 1 ||
     (untilStep !== undefined && !untilStep.success) ||
+    (revealAt !== undefined &&
+      (!revealAt.success ||
+        values.scene === undefined ||
+        values["wait-for"] !== undefined ||
+        prepared.preparations.length > 0)) ||
     (values.clock !== undefined && clock === undefined) ||
     (values.size !== undefined && size === undefined)
   ) {
@@ -484,6 +521,7 @@ function readOptions(argv: readonly string[]): Options | undefined {
         scrollTo: values["scroll-to"],
         preparations: prepared.preparations,
         clock,
+        revealAt: revealAt?.data,
         fullPage: values.full === true,
       }
 }
