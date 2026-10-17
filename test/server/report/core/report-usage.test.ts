@@ -175,8 +175,8 @@ describe("reportUsageEntryOf", () => {
           {
             kind: "stats",
             items: [
-              { before: "", value: "1", total: "", label: "架空の一" },
-              { before: "", value: "2", total: "", label: "架空の二" },
+              { before: "", value: "1", total: "", label: "架空の一", series: [], better: "" },
+              { before: "", value: "2", total: "", label: "架空の二", series: [], better: "" },
             ],
             fold: "",
           },
@@ -262,8 +262,8 @@ describe("reportUsageEntryOf", () => {
           {
             kind: "stats",
             items: [
-              { before: "", value: "1", total: "5", label: "架空の一" },
-              { before: "", value: "2", total: "", label: "架空の二" },
+              { before: "", value: "1", total: "5", label: "架空の一", series: [], better: "" },
+              { before: "", value: "2", total: "", label: "架空の二", series: [], better: "" },
             ],
             fold: "",
           },
@@ -274,6 +274,32 @@ describe("reportUsageEntryOf", () => {
     expect(reportUsageEntryOf(event, "claude-session-1", 1_000, false).blockFields).toEqual([
       "statsTotal",
     ])
+  })
+
+  it.each([
+    ["series を渡した回は statsSeries", [1, 2, 3], "", ["statsSeries"]],
+    ["better を渡した回は statsBetter", [], "up", ["statsBetter"]],
+    ["どちらも無ければ数えない", [], "", []],
+  ] as const)("stats の%sを数える", (_, series, better, expected) => {
+    const event = reportOfSections([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "stats",
+            items: [
+              { before: "", value: "1", total: "", label: "架空の一", series: [...series], better },
+              { before: "", value: "2", total: "", label: "架空の二", series: [], better: "" },
+            ],
+            fold: "",
+          },
+        ],
+      },
+    ])
+
+    expect(reportUsageEntryOf(event, "claude-session-1", 1_000, false).blockFields).toEqual(
+      expected,
+    )
   })
 
   it("逃げ道（markdown の塊）の外側に出た記法の種類を数える", () => {

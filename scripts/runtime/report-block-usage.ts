@@ -117,6 +117,9 @@ const shortTableRecordShape = {
   shortTable: z.boolean(),
 }
 
+/** `stats` の `series` / `better` を欄で数える最初の版（行の形は版10と同じ）。 */
+const SERIES_FORMAT_VERSION = 11
+
 const recordSchema = z.union([
   z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
   z.object({
@@ -161,6 +164,16 @@ const recordSchema = z.union([
       ...shortTableRecordShape,
     })
     .and(figureFieldSchema),
+  z
+    .object({
+      v: z.literal(SERIES_FORMAT_VERSION),
+      ...figureRecordShape,
+      ...countRecordShape,
+      ...howToVerifyRecordShape,
+      ...genreRecordShape,
+      ...shortTableRecordShape,
+    })
+    .and(figureFieldSchema),
 ])
 type UsageRecord = z.infer<typeof recordSchema>
 type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[] }>
@@ -190,6 +203,7 @@ const rejectionSchema = z.object({
     z.literal(HOW_TO_VERIFY_FORMAT_VERSION),
     z.literal(GENRE_FORMAT_VERSION),
     z.literal(SHORT_TABLE_FORMAT_VERSION),
+    z.literal(SERIES_FORMAT_VERSION),
   ]),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),

@@ -6730,8 +6730,21 @@
                   {
                     "kind": "stats",
                     "items": [
-                      { "before": "", "value": "36", "total": "48", "label": "架空の通った件数" },
-                      { "before": "12", "value": "9", "total": "48", "label": "架空の落ちた件数" },
+                      {
+                        "before": "",
+                        "value": "36",
+                        "total": "48",
+                        "label": "架空の通った件数",
+                        "series": [20, 28, 31, 36]
+                      },
+                      {
+                        "before": "12",
+                        "value": "9",
+                        "total": "48",
+                        "label": "架空の落ちた件数",
+                        "series": [14, 12, 13, 9],
+                        "better": "down"
+                      },
                       { "before": "", "value": "3", "total": "", "label": "架空の帯の無い数" }
                     ],
                     "fold": ""

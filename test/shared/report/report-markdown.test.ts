@@ -42,6 +42,8 @@ const GRAPH_SHAPE_LEGEND =
     )
     .join("") +
   "</div>"
+type StatItem = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
+const statItem: StatItem = { before: "", value: "", total: "", label: "", series: [], better: "" }
 const statsCaptioned = (body: string, ordinal = 1): string =>
   figureCaptioned(body, "", ordinal, false)
 /** 図の包みから、本体のフェンスだけを取り出す。 */
@@ -334,8 +336,8 @@ describe("reportSectionsMarkdown", () => {
     const stats: ReportBlock = {
       kind: "stats",
       items: [
-        { before: "12", value: "8", total: "", label: "架空の件数" },
-        { before: "", value: "0", total: "", label: "架空の失敗" },
+        { ...statItem, before: "12", value: "8", label: "架空の件数" },
+        { ...statItem, value: "0", label: "架空の失敗" },
       ],
       fold: "",
     }
@@ -399,12 +401,58 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  describe("stats の series と better", () => {
+    const statsHtml = (item: Partial<StatItem>): string =>
+      markdownOf({
+        kind: "stats",
+        items: [
+          { ...statItem, value: "8", label: "架空", ...item },
+          { ...statItem, value: "1" },
+        ],
+        fold: "",
+      })
+
+    it("series が3つ以上なら value の左に折れ線と最新の円を描く", () => {
+      const html = statsHtml({ series: [1, 3, 2] })
+
+      expect(html).toContain(
+        '<b><svg viewBox="0 0 48 12" aria-hidden="true">' +
+          '<polyline points="1.5,10.5 24,1.5 46.5,6"/>' +
+          '<circle cx="46.5" cy="6" r="1.2"/></svg>8</b>',
+      )
+    })
+
+    it("全部同じ値の series は中央の水平線にする", () => {
+      expect(statsHtml({ series: [5, 5, 5] })).toContain('points="1.5,6 24,6 46.5,6"')
+    })
+
+    it.each([[[]], [[1]], [[1, 2]]])("series が %j なら描かない", (series) => {
+      expect(statsHtml({ series })).not.toContain("<svg")
+    })
+
+    it.each([
+      ["up", "12", "8", "stat-before stat-worse"],
+      ["up", "8", "12", "stat-before stat-better"],
+      ["down", "12", "8", "stat-before stat-better"],
+      ["down", "8", "12", "stat-before stat-worse"],
+      ["down", "8", "8", "stat-before"],
+      ["", "12", "8", "stat-before"],
+      ["down", "約12", "8", "stat-before"],
+    ] as const)("better が %s で %s → %s なら矢印の class は %s", (better, before, value, cls) => {
+      expect(statsHtml({ better, before, value })).toContain(`<span class="${cls}">${before} →`)
+    })
+
+    it("増減の差は描かない", () => {
+      expect(statsHtml({ better: "down", before: "12", value: "8" })).not.toMatch(/[−+-]\s?4/)
+    })
+  })
+
   it("stats は数の塊で、HTML の中なので値とラベルを HTML として逃がす", () => {
     const stats: ReportBlock = {
       kind: "stats",
       items: [
-        { before: "", value: "312", total: "", label: "架空の<件数>" },
-        { before: "", value: "0", total: "", label: "架空の失敗" },
+        { ...statItem, value: "312", label: "架空の<件数>" },
+        { ...statItem, value: "0", label: "架空の失敗" },
       ],
       fold: "",
     }
@@ -421,8 +469,8 @@ describe("reportSectionsMarkdown", () => {
     const stats: ReportBlock = {
       kind: "stats",
       items: [
-        { before: "", value: "`3`", total: "", label: "架空の `a<b` 件" },
-        { before: "", value: "0", total: "", label: "架空の `` `x` `` 件" },
+        { ...statItem, value: "`3`", label: "架空の `a<b` 件" },
+        { ...statItem, value: "0", label: "架空の `` `x` `` 件" },
       ],
       fold: "",
     }
@@ -437,7 +485,7 @@ describe("reportSectionsMarkdown", () => {
 
   it("stats の total は数の後ろに文字で添え、数が全体に収まる数字なら割合の帯も出す", () => {
     const stat = (value: string, total: string): string =>
-      markdownOf({ kind: "stats", items: [{ before: "", value, total, label: "架空" }], fold: "" })
+      markdownOf({ kind: "stats", items: [{ ...statItem, value, total, label: "架空" }], fold: "" })
     const meter = (width: number): string =>
       `<span class="stat-meter" aria-hidden="true"><span class="stat-meter-fill" style="width: ${String(width)}%"></span></span>`
 
@@ -452,7 +500,7 @@ describe("reportSectionsMarkdown", () => {
 
   it("stats の total が数として読めない・数が全体を超えるときは、帯を出さず total の文字だけを出す", () => {
     const stat = (value: string, total: string): string =>
-      markdownOf({ kind: "stats", items: [{ before: "", value, total, label: "架空" }], fold: "" })
+      markdownOf({ kind: "stats", items: [{ ...statItem, value, total, label: "架空" }], fold: "" })
 
     expect(stat("25件", "28件")).toBe(
       statsCaptioned(
@@ -727,7 +775,7 @@ describe("reportSectionsMarkdown", () => {
     })
     const stats: ReportBlock = {
       kind: "stats",
-      items: [{ before: "", value: "1", total: "", label: "架空" }],
+      items: [{ ...statItem, value: "1", label: "架空" }],
       fold: "",
     }
     const bare = markdownOf(files(""))
@@ -1225,7 +1273,7 @@ describe("reportSectionsMarkdown", () => {
   it("stats は図として数え、image・chart と通しの番号になり、fold の中でも数える", () => {
     const stats = (fold: string): ReportBlock => ({
       kind: "stats",
-      items: [{ before: "", value: "1", total: "", label: "架空" }],
+      items: [{ ...statItem, value: "1", label: "架空" }],
       fold,
     })
     const image: ReportBlock = { kind: "image", path: "架空.png", caption: "", notes: [], fold: "" }

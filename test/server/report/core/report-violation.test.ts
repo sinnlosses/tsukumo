@@ -337,6 +337,27 @@ describe("reportViolations", () => {
     )
   })
 
+  describe("stats の series は3つ以上", () => {
+    const statsOf = (series: readonly number[]): ReportBlock => ({
+      kind: "stats",
+      items: [
+        { before: "", value: "1", total: "", label: "架空A", series, better: "" },
+        { before: "", value: "2", total: "", label: "架空B", series: [], better: "" },
+      ],
+      fold: "",
+    })
+
+    it.each([
+      [0, []],
+      [1, ["short-series"]],
+      [2, ["short-series"]],
+      [3, []],
+    ] as const)("series が%i個なら %j", (count, expected) => {
+      const series = Array.from({ length: count }, (_, index) => index)
+      expect(kinds(draft([statsOf(series)]))).toEqual(expected)
+    })
+  })
+
   describe("節が2つ以上なら全部に見出し", () => {
     it("見出しの無い節があれば違反", () => {
       const sections = [

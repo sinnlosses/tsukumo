@@ -67,6 +67,8 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "stats",
   "stat",
   "stat-before",
+  "stat-better",
+  "stat-worse",
   "stat-total",
   "stat-meter",
   "stat-meter-fill",

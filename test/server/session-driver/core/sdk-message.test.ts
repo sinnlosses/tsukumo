@@ -1168,8 +1168,8 @@ describe("toSessionEvents（report ツール）", () => {
       {
         kind: "stats",
         items: [
-          { before: "", value: "1", total: "", label: "架空の数" },
-          { before: "", value: "2", total: "", label: "架空の数" },
+          { before: "", value: "1", total: "", label: "架空の数", series: [], better: "" },
+          { before: "", value: "2", total: "", label: "架空の数", series: [], better: "" },
         ],
         fold: "",
       },

@@ -78,13 +78,15 @@ const IMAGE_FILE_EXTENSIONS: readonly string[] = [".png", ".jpg", ".jpeg", ".gif
 
 /**
  * 数える塊の欄。外す基準（直近4週間で0回）を塊の種類と同じく当てるため、既定の値でない欄が出たかを持つ。
- * 表のセルの `from` / `to`・表の `rest`・`stats` の `before` / `total`・`list` の `label`・`list` の `flow`・`dimension` の `before`・`image` の `notes`。
+ * 表のセルの `from` / `to`・表の `rest`・`stats` の `before` / `total` / `series` / `better`・`list` の `label`・`list` の `flow`・`dimension` の `before`・`image` の `notes`。
  */
 export const REPORT_BLOCK_FIELDS = [
   "tableChange",
   "tableRest",
   "statsBefore",
   "statsTotal",
+  "statsSeries",
+  "statsBetter",
   "listLabel",
   "listFlow",
   "dimensionBefore",
@@ -285,6 +287,10 @@ function hasField(block: ReportBlock, field: ReportBlockField): boolean {
       return block.kind === "stats" && block.items.some((item) => item.before.trim() !== "")
     case "statsTotal":
       return block.kind === "stats" && block.items.some((item) => item.total.trim() !== "")
+    case "statsSeries":
+      return block.kind === "stats" && block.items.some((item) => item.series.length > 0)
+    case "statsBetter":
+      return block.kind === "stats" && block.items.some((item) => item.better !== "")
     case "listLabel":
       return block.kind === "list" && block.items.some((item) => item.label.trim() !== "")
     case "listFlow":

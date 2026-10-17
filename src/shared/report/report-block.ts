@@ -252,6 +252,14 @@ const statsBlockSchema = z
             .default("")
             .describe("全体の数（割合を帯で添える。value が全体のうちの数のとき）"),
           label: inlineText,
+          series: z
+            .array(z.number())
+            .default([])
+            .describe("推移の数の並び（3つ以上。省いてよい）。value の左に折れ線で添える"),
+          better: z
+            .enum(["up", "down", ""])
+            .default("")
+            .describe("before と value が数のとき、増えて良いなら up・減って良いなら down"),
         }),
       )
       .min(2)
@@ -259,7 +267,7 @@ const statsBlockSchema = z
     fold,
   })
   .describe(
-    "結論に効く数（件数・前後の差）。数が2〜4個並び、その数自体が結論のとき。数を地の文に埋めない",
+    "結論に効く数（件数・前後の差）。数が2〜4個並び、その数自体が結論のとき。数を地の文に埋めない。推移の形が要る数には series、増減の良い向きが要る数には better",
   )
 
 const REPORT_OPTION_VERDICTS = ["adopt", "consider", "reject"] as const

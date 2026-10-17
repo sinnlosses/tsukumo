@@ -92,6 +92,8 @@ export type ReportViolation =
   | { readonly kind: "ragged-table"; readonly count: number }
   /** `series` の `values` の数が `labels` と揃わない、または `arrow`・`slope` の `series` が2つでない `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "ragged-chart"; readonly count: number }
+  /** `stats` の項目の `series` が1〜2個のものがある塊がある。`count` は塊の数。 */
+  | { readonly kind: "short-series"; readonly count: number }
   /** 節が2つ以上あるのに見出しの無い節がある。`count` は見出しの無い節の数。 */
   | { readonly kind: "untitled-section"; readonly count: number }
   /**
@@ -200,6 +202,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     { kind: "ragged-table", count: blocks.filter((block) => isRaggedTable(block)).length },
     { kind: "ragged-chart", count: drawnBlocks.filter((block) => isRaggedChart(block)).length },
+    { kind: "short-series", count: drawnBlocks.filter((block) => hasShortSeries(block)).length },
     {
       kind: "untitled-section",
       count:
@@ -286,6 +289,7 @@ const VIOLATION_THRESHOLDS = {
   "unordered-options": 0,
   "ragged-table": 0,
   "ragged-chart": 0,
+  "short-series": 0,
   "untitled-section": 0,
   "markdown-notation": 0,
   "broken-mermaid": 0,
@@ -327,6 +331,8 @@ function violationLine(violation: ReportViolation): string {
       return `行のセルの数が \`columns\` と揃わない表（\`matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
     case "ragged-chart":
       return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\` の \`series\` が前と後の2つでない \`chart\` の塊が${violation.count}個ある。数を揃える`
+    case "short-series":
+      return `\`stats\` の \`series\` が1〜2個の項目がある塊が${violation.count}個ある。3つ以上にするか省く`
     case "untitled-section":
       return `見出しの無い節が${violation.count}個ある。節が2つ以上なら全部に \`heading\` を付ける`
     case "markdown-notation":
@@ -553,6 +559,13 @@ function isRaggedTable(block: ReportBlock): boolean {
     default:
       return false
   }
+}
+
+function hasShortSeries(block: ReportBlock): boolean {
+  return (
+    block.kind === "stats" &&
+    block.items.some((item) => item.series.length > 0 && item.series.length < 3)
+  )
 }
 
 /** 系列の値の数が labels の数と揃わない、または arrow・slope の系列が前と後の2つでない chart の塊か。 */

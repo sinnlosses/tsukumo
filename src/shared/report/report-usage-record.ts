@@ -5,7 +5,7 @@ import type { RecordedFigureNoneReason, RecordedReportFigure } from "./report-bl
 import type { ReportGenre, ReportTaskOutcome } from "./report-task.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 10 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 11 satisfies number
 
 /**
  * `figure` の欄の記録（版6から）。`figureKind` は図の塊の `kind` か `none`、`noneReason` は `none` のときだけ。

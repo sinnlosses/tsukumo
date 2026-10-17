@@ -25,7 +25,7 @@
    数そのものが結論になる値（件数・前後の差）を、地の文に埋めずに並べる塊。
    `.report-card` と違って中身は1つの数とそのラベルだけなので、器は `.report-cols` より狭く取り、3〜4枚が1行に収まるようにする。
    タイプスケールの段は増やさないので、「大きい数」は段の上端（--font-heading）と下端（--font-label）の落差・太さ・縦積みで出す。
-   意味を固定した色（state-*）は使わない。
+   意味を固定した色（state-*）は、`better` を渡したときの前→後の矢印の字だけに使う。
    数そのものは良し悪しを持たず、良し悪しを言いたいときは同じ塊の中に `.report-badge` を添えるほうが文字でも読める。 */
 .detail-block .report-stats {
   display: grid;
@@ -58,6 +58,32 @@
 /* `stats` の変わる前の数。数の上に添え、矢印の文字でつなぐ（地のタイルと同じ ink-quiet・label の段）。 */
 .detail-block .report-stat-before {
   display: block;
+}
+.detail-block .report-stat-better {
+  color: var(--state-ok);
+}
+.detail-block .report-stat-worse {
+  color: var(--state-warn);
+}
+/* `stats` の推移の折れ線。数の左に字の高さの1.2倍・幅4emで置き、最新の点だけ明るくする。 */
+.detail-block .report-stat b > svg {
+  display: inline-block;
+  width: 4em;
+  height: 1.2em;
+  margin-right: 0.4em;
+  vertical-align: -0.1em;
+  overflow: visible;
+}
+.detail-block .report-stat b > svg polyline {
+  fill: none;
+  stroke: var(--ink-quiet);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.detail-block .report-stat b > svg circle {
+  fill: var(--ink-bright);
 }
 /* `stats` の全体の数。数の後ろに小さく並べ、割合は下の帯で添える。 */
 .detail-block .report-stat-total {

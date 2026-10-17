@@ -219,6 +219,27 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelector("b > span.report-stat-total")?.textContent).toBe(" / 28")
   })
 
+  it("stats の折れ線は許可リストを通り、svg・polyline・circle と class が DOM に残る", () => {
+    const { container } = render(
+      <Markdown
+        text={
+          '<div class="stats"><div class="stat"><span class="stat-before stat-better">12 →</span>' +
+          '<b><svg viewBox="0 0 48 12" aria-hidden="true">' +
+          '<polyline points="1.5,10.5 24,1.5 46.5,6"/>' +
+          '<circle cx="46.5" cy="6" r="1.2"/></svg>8</b>通った</div>' +
+          '<div class="stat"><b>0</b>失敗</div></div>'
+        }
+      />,
+    )
+
+    const svg = container.querySelector("div.report-stat > b > svg")
+    expect(svg?.getAttribute("viewBox")).toBe("0 0 48 12")
+    expect(svg?.getAttribute("aria-hidden")).toBe("true")
+    expect(svg?.querySelector("polyline")?.getAttribute("points")).toBe("1.5,10.5 24,1.5 46.5,6")
+    expect(svg?.querySelector("circle")?.getAttribute("r")).toBe("1.2")
+    expect(container.querySelector("span.report-stat-before.report-stat-better")).not.toBeNull()
+  })
+
   it("名前のある list は、項目ごとに印・名前・説明が li の直下に並び、説明の inline の記法が効く", () => {
     const text = reportSectionsMarkdown([
       {

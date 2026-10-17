@@ -244,6 +244,19 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
     狭いタイルの縦積みを崩さず、表の数の列の棒と同じく `span` の幅だけで描けて許可リストに足す物が無いため。
     帯は `aria-hidden` で、割合は数と全体の文字が言う）。単位付き・範囲・全体を超える値は帯を出さず文字だけにし、
     割合へ読み替える推測はしない
+  - `stats` の項目の `series`（推移の数の並び。省いてよい）: 3つ以上のときだけ、`value` の左に語の高さの折れ線を描く
+    （`<svg>` の `polyline` と最新の点の `circle`。viewBox は 48×12 で、CSS が幅 4em・高さ 1.2em に当てる）。
+    最大を上・最小を下に写し、全部同じ値なら中央の水平線にする。線は `ink-quiet`・幅 1.5・丸い端、最新の点だけ `ink-bright`。
+    色は書き手が書かず、`svg` の要素に class は付けない（class の置き換えは `div`・`span` などにだけ掛かるので、
+    CSS は `.report-stat b > svg` の子孫で当てる）。1〜2個は `short-series` で差し戻す（2点では推移の形が読めないため）
+  - `stats` の項目の `better`（`up` / `down`。省いてよい）: `before` と `value` がどちらも数で `better` があるときだけ、
+    「前 →」の矢印の字を、増減が `better` の向きなら `state-ok`・逆なら `state-warn` にする。等しいとき・数でないときは色を付けない。
+    差や増減の割合は計算も描画もしない
+  - `ReportBlock` の `stats` の項目の形が変わったので `PROTOCOL_VERSION` を 58 に上げた
+  - `series`・`better` の見本（`docs/history/mockup/report-excellence-2026-10-17/values.html`）との差: 見本は折れ線を `value` の下に
+    120×22 で置き、中央に基準線を引き、線は `ink-soft`・悪い向きは `state-ng`・差の文字（`−127 秒`）も描く。実装は
+    「`value` の左・語の高さ（4em × 1.2em）・基準線なし・線は `ink-quiet`・悪い向きは `state-warn`・差を描かない」。
+    差を描かないのは上の「欄は事実を言うものだけ」のため
   - `list` の項目の `label`: 印なしのラベルと本文の2列に組み、項目の間を細い横線で区切る
     （見本は `docs/history/mockup/report-labeled-list-2026-09-30.html`）。
     `bullet` は印を持たないが、`ordered`（番号）と `check`（済み・未了）は順番・済み未了の意味を
@@ -1108,7 +1121,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 **塊の種類・欄・逃げ道の中の記法を足すかは、上の物差し（読んで分かるまでの時間が短くなるか）で
 決める。外すかは使われ方の数で決める**（docs/research/report-block.md 6章、記録の語彙は
 `docs/research/report-architecture.md` 6章）。`report` を描く（差し戻されなかった）
-たびに、その回に出た塊の種類・既定の値でない塊の欄（表のセルの `from` / `to`・`stats` の `before` / `total`・
+たびに、その回に出た塊の種類・既定の値でない塊の欄（表のセルの `from` / `to`・`stats` の `before` / `total` / `series` / `better`・
 `list` の `label`・`list` の `flow`・`dimension` の `before`・`image` の `notes`）と、逃げ道（`markdown` の塊）に出た記法の種類（重複無し。同じ種類が
 同じレポートに何回出ても1回と数える）を `~/.tsukumo/report-usage/<YYYY-MM-DD>.jsonl` に1行記録する。
 逃げ道に出た記法は3つに分けて持つ: **塊のある記法**（表・箇条書き・`note` など、逃げ道の外側
@@ -1122,7 +1135,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 版5からは、段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるかの `hasFigure` と、
 このターンにメインが画像のファイルを `Read` したのに `image` の塊が無かったかの `readImageWithoutImageBlock`
 （サブエージェントの `Read` は数えない）も足す。版6からは、`figure` の欄の種類（図の塊の `kind` か `none`）の `figureKind` と、
-`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。版9からは、`task` の報告の種類 `taskGenre`（`task` の無いレポートは `none`）と終わり方 `taskOutcome`、`favor` が空でないかの `hasFavor`、本文（`text`・`note`・`list` の項目・表のセル・`markdown`）に URL か `path:line` があるか `code` の塊に `path` があるかの `hasSourceReference` を足す。版10からは、行が2つ以下の表が1つでもあるかの `shortTable` を足す（`rest` が空でない表は塊の欄の `tableRest` で数え、版は上げない）。数えるだけで差し戻しにはしない。中身は一切持たない
+`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。版9からは、`task` の報告の種類 `taskGenre`（`task` の無いレポートは `none`）と終わり方 `taskOutcome`、`favor` が空でないかの `hasFavor`、本文（`text`・`note`・`list` の項目・表のセル・`markdown`）に URL か `path:line` があるか `code` の塊に `path` があるかの `hasSourceReference` を足す。版10からは、行が2つ以下の表が1つでもあるかの `shortTable` を足す（`rest` が空でない表は塊の欄の `tableRest` で数え、版は上げない）。版11からは `stats` の `series` / `better` を塊の欄の `statsSeries` / `statsBetter` で数える（行の形は版10と同じで、版だけ上げて古い行と見分ける）。数えるだけで差し戻しにはしない。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
 `src/server/report/adapter/report-usage-log.ts`、何を1行にするかは
 `src/server/report/core/report-usage.ts` が持つ。逃げ道の記法の検出は `src/server/report/core/report-markdown-notation.ts`、

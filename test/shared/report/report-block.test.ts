@@ -40,6 +40,25 @@ describe("parseReportSections", () => {
     expect(parse({ total: "5" })).toMatchObject({ items: [{ total: "5" }, { total: "" }] })
   })
 
+  it("stats の series と better は省くと空になり、渡せば残る", () => {
+    const item = { before: "", value: "1", label: "架空" }
+    const parse = (extra: object): unknown =>
+      parseReportSections([
+        {
+          heading: "",
+          blocks: [{ kind: "stats", items: [{ ...item, ...extra }, item], fold: "" }],
+        },
+      ]).sections[0]?.blocks[0]
+
+    expect(parse({})).toMatchObject({ items: [{ series: [], better: "" }, {}] })
+    expect(parse({ series: [1, 2, 3], better: "down" })).toMatchObject({
+      items: [
+        { series: [1, 2, 3], better: "down" },
+        { series: [], better: "" },
+      ],
+    })
+  })
+
   it("table の rest は省くと空文字になり、渡せば残る", () => {
     const parse = (extra: object): unknown =>
       parseReportSections([
