@@ -974,6 +974,8 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 - 画面の履歴の組み直しは「`getSessionMessages` → `SessionEvent[]`（時刻付き）→ `session-manager` の
   `state` に畳む」だけ。接続したブラウザは `hello` の snapshot でそのまま同じ姿になる
   （**ブラウザ側に復元の特別な経路は要らない**）
+- 依頼は欄で見分ける。駆動は送る依頼に `origin: { kind: "human" }` を付け、組み直しは `origin` があればその `kind` だけで依頼かを決め、
+  `origin` の無い古い記録だけ `is_meta` で除いて読む。`isCompletedLocalCommand` の出力は `origin` によらず依頼にしない
 - 組み直した記録の時刻は transcript の `timestamp` から戻す（段・ツール・checks のコマンドの所要と、
   最後のやり取りの「所要」が開き直しても出るように。2026-10-04・2026-10-07 の利用者の決定）。
   `getSessionMessages` は型に無い `timestamp` を各メッセージに載せて返すので、出来事ごとに持たせて

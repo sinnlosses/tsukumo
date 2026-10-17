@@ -7,7 +7,7 @@
 // 会話の内容（本文・ツールの入出力・セリフ）がここを通るが、ログにもファイルにも書かない。
 // stderr に出すのは SDK 自身のエラー文と、Claude Code の催促が届いたという事実の1行（`isVisibleOutputNudge`。中身は写さない）だけ。
 
-import { type PermissionResult, query, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk"
+import { type PermissionResult, query } from "@anthropic-ai/claude-agent-sdk"
 
 import { expressionNames as toExpressionNames } from "../../../shared/character-pack/expression-choice.ts"
 import { parsePromptImage, type PromptImage } from "../../../shared/session-driver/prompt-image.ts"
@@ -33,6 +33,7 @@ import { readClaudeAccountTier } from "./claude-account.ts"
 import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import { readPlanUsage } from "./sdk-plan-usage.ts"
+import { createPromptStream, type PromptContentBlock } from "./sdk-prompt-stream.ts"
 import {
   buildQuerySeedOptions,
   handbackNoteHooks,
@@ -389,84 +390,6 @@ function askForAnswer(
   signal: AbortSignal,
 ): Promise<PermissionResult> {
   return queue.ask({ id, toolName, input, signal })
-}
-
-/**
- * 送る依頼1件。
- * 駆動が持つ原寸の画像はここまでで、`stream()` が渡したあとは持たない（拡大表示のために残すのは棚の側）。
- */
-type Prompt = {
-  readonly text: string
-  readonly images: readonly PromptContentBlock[]
-}
-
-/** user メッセージの内容ブロック1つ。`MessageParam` の型をそのまま使う（自前の型を作らない）。 */
-type PromptContentBlock = Extract<SDKUserMessage["message"]["content"], readonly unknown[]>[number]
-
-/**
- * ストリーミング入力。
- * `query` には「まだ終わらない」非同期イテレータを渡し、依頼が届くたびに user メッセージを1つ流す。
- *
- * 画像を添えられるのはストリーミング入力だけ（単発入力は受け付けない）。
- * 添えたときは `content` を配列にし、画像のブロックを先に、文面を後ろに置く。
- */
-function createPromptStream(
-  delayWatch: PromptDelayWatch,
-  now: () => number,
-): {
-  readonly push: (prompt: Prompt) => void
-  readonly end: () => void
-  readonly stream: () => AsyncIterable<SDKUserMessage>
-} {
-  const waiting: Prompt[] = []
-  let wake: (() => void) | undefined = undefined
-  let closed = false
-
-  const notify = (): void => {
-    const resume = wake
-    wake = undefined
-    resume?.()
-  }
-
-  return {
-    push: (prompt) => {
-      waiting.push(prompt)
-      notify()
-    },
-    end: () => {
-      closed = true
-      notify()
-    },
-    stream: async function* () {
-      while (true) {
-        const prompt = waiting.shift()
-        if (prompt === undefined) {
-          if (closed) {
-            return
-          }
-          await new Promise<void>((resolve) => {
-            wake = resolve
-          })
-          continue
-        }
-
-        yield {
-          type: "user",
-          message: { role: "user", content: promptContent(prompt) },
-          parent_tool_use_id: null,
-          session_id: "",
-        }
-        delayWatch.written(now())
-      }
-    },
-  }
-}
-
-/** 依頼1件の `content`。画像が無ければ文字列のまま。 */
-function promptContent(prompt: Prompt): SDKUserMessage["message"]["content"] {
-  return prompt.images.length === 0
-    ? prompt.text
-    : [...prompt.images, { type: "text", text: prompt.text }]
 }
 
 /**

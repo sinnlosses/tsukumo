@@ -152,22 +152,18 @@ function messageTime(message: unknown): RestoredEvent["time"] {
  * 見分けるのはメッセージの欄で、本文のタグは削らない（利用者が同じ名前のタグを打っても文面が残る）。
  *
  * - ツールの結果（`tool_result`）は依頼ではない
- * - `is_meta` が真のメッセージは仕掛けが差し込んだもの（実測: 別のエージェントからの伝言、文脈を畳んだあとの要約）
- * - `origin` があり `kind` が `human` でないメッセージは利用者の入力ではない（実測: `task-notification`・`peer`）。
+ * - `origin` がある: `kind` が `human` のものだけが依頼。駆動は送る依頼に `human` を付ける。
+ *   ほかは利用者の入力ではない（実測: `task-notification`・`peer`）。
  *   未知の `kind` も依頼にしないので、SDK が `human` の別名を足すとその依頼は組み直しから落ちる（仕掛けの文面が依頼に出るより害が小さい）
+ * - `origin` が無い（駆動が印を付ける前の古い記録）: `is_meta` が真のものは仕掛けが差し込んだもの
+ *   （実測: 別のエージェントからの伝言、文脈を畳んだあとの要約）で、依頼ではない
  * - `isCompletedLocalCommand` は SDK がローカルコマンドの行とその出力の両方に付ける。
  *   欄では2つを分けられないので、スラッシュコマンドの形に畳めるものだけを依頼にし、出力（`<local-command-stdout>` など）は依頼にしない
  *
- * tsukumo から送った依頼は `is_meta` も `origin` も持たない（実測）。
  * 欄が無く見分けられずに依頼に出るのは、CLI の `!` で打った `<bash-input>`・`<bash-stdout>` だけ。
  */
 function requestText(message: unknown): string | undefined {
-  if (
-    !isPlainObject(message) ||
-    message.is_meta === true ||
-    (message.origin !== undefined &&
-      !(isPlainObject(message.origin) && message.origin.kind === "human"))
-  ) {
+  if (!isPlainObject(message) || !isUserInput(message)) {
     return undefined
   }
   const raw = userRawText(message)?.trim()
@@ -177,6 +173,13 @@ function requestText(message: unknown): string | undefined {
   return message.isCompletedLocalCommand === true
     ? slashCommandLine(raw)
     : nonEmpty(slashCommandLine(raw) ?? raw)
+}
+
+function isUserInput(message: Readonly<Record<string, unknown>>): boolean {
+  if (message.origin !== undefined) {
+    return isPlainObject(message.origin) && message.origin.kind === "human"
+  }
+  return message.is_meta !== true
 }
 
 /** `user` のメッセージの生のテキスト。`user` でない・ツールの結果を含むメッセージは undefined。 */

@@ -425,6 +425,39 @@ describe("toRestoredEvents", () => {
     ])
   })
 
+  it("origin が human なら、is_meta が付いていても依頼にする", () => {
+    const messages = [
+      withFields(userMessage("架空の依頼"), { origin: { kind: "human" }, is_meta: true }),
+    ]
+
+    expect(eventsOf(messages)).toEqual([
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+    ])
+  })
+
+  it("origin が human でも、isCompletedLocalCommand の出力は依頼として起こさない", () => {
+    const messages = [
+      withFields(
+        userMessage(
+          "<command-name>/架空コマンド</command-name>\n<command-message>架空コマンド</command-message>\n<command-args></command-args>",
+        ),
+        { origin: { kind: "human" }, isCompletedLocalCommand: true },
+      ),
+      withFields(userMessage("<local-command-stdout>架空の出力</local-command-stdout>"), {
+        origin: { kind: "human" },
+        isCompletedLocalCommand: true,
+      }),
+      assistantMessage([{ type: "text", text: "架空の本文" }]),
+    ]
+
+    expect(eventsOf(messages)).toEqual([
+      { kind: "request", text: "/架空コマンド", images: [] },
+      { kind: "utterance", text: "架空の本文" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+    ])
+  })
+
   it("origin の kind が task-notification の user メッセージは、本文によらず続きのターンを始める", () => {
     const messages = [
       userMessage("架空の依頼"),
