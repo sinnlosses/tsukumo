@@ -65,6 +65,8 @@ react-markdown
 - **記法の class 名は部品に解決する**（`notation.tsx`）。モデルが書くのは骨格（`note` / `badge` など）で、
   **CSS が受ける class 名（`report-` 付き）は tsukumo が付ける**ので、モデルの書いた文字列とセレクタが
   直接つながらない。**知らない class 名と `style` 属性は素通し**（変換は足し算だけ）
+- **class の置き換えが掛かるのは `div`・`aside`・`span`・`ol`・`li` だけ**（`REPORT_COMPONENTS`）。`svg` の中身の
+  class はハッシュ名にならず CSS に当たらないので、親の要素からの子孫の規則（例: `.report-stat b > svg`）で当てる
 - 引用 `> `・ネストしたリスト・水平線・列揃え（`:---:`）・コードスパンの中の HTML は GFM の仕様どおりに
   描ける。`report-notation.ts` は「描けない記法」の迂回を持たない
 - **流れる本文**: 書きかけの Markdown を空行で塊に割り、塊ごとに `memo`（鍵は塊の文字列）。
