@@ -7475,6 +7475,61 @@
           "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
         }
       ]
+    },
+    {
+      "name": "report-file-peek",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "行を指したパスの照らし合わせを確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": { "kind": "speech", "text": "行を指して書くね。", "expression": "default" }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-file-peek-1",
+            "conclusion": "架空の結論: 行を指したパスに重ねると、その行の前後が浮く。",
+            "sections": [
+              {
+                "heading": "架空の行を指したパス",
+                "blocks": [
+                  {
+                    "kind": "markdown",
+                    "markdown": "管理下のファイルを並べるのは `src/server/repository/adapter/repository-file.ts:29` の1か所で、件数の上限もここで掛かる（架空）。\n\n範囲を指すときは `src/server/repository/adapter/repository-file.ts:30-34` のように書く。",
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-file-peek-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
     }
   ],
   "pastSessions": [

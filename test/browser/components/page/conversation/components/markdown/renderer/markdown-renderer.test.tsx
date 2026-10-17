@@ -7,6 +7,7 @@ import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/c
 import { encodeMarks } from "../../../../../../../../src/shared/report/code-mark.ts"
 import type { ReportSection } from "../../../../../../../../src/shared/report/report-block.ts"
 import { reportSectionsMarkdown as reportSectionsMarkdownFrom } from "../../../../../../../../src/shared/report/report-markdown.ts"
+import { UNREADABLE_FILE_EXCERPT } from "../../../../../../../../src/shared/repository/file-excerpt.ts"
 import { typedElement } from "../../../../../../../typed-element.ts"
 
 // jsdom には canvas が無く、色のトークンも解けない。
@@ -920,7 +921,13 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     open: (path: string) => void,
   ): (children: ReactNode) => ReactNode {
     return (children) => (
-      <RepositoryFileLinkContext.Provider value={{ files: new Set(paths), open }}>
+      <RepositoryFileLinkContext.Provider
+        value={{
+          files: new Set(paths),
+          open,
+          readExcerpt: () => Promise.resolve(UNREADABLE_FILE_EXCERPT),
+        }}
+      >
         {children}
       </RepositoryFileLinkContext.Provider>
     )

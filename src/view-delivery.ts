@@ -17,6 +17,7 @@ import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
 import type { SplitRelease } from "./server/experience-metric/core/experience-metric.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { projectNameOf } from "./server/repository/adapter/project-name.ts"
+import { readFileExcerpt } from "./server/repository/adapter/repository-file-excerpt.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
 import {
   defaultSessionClaimPlace,
@@ -124,6 +125,12 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
 
   const rpcRouter = createRpcRouter({
     listRepositoryFiles: () => listRepositoryFiles(options.cwd),
+    readFileExcerpt: (request) =>
+      readFileExcerpt(
+        options.cwd,
+        request,
+        async () => (await listRepositoryFiles(options.cwd)).paths,
+      ),
     projectName: () => projectNameOf(options.cwd),
     refreshTasks: () => refreshTasks(),
     // 「今日」はここで決めて渡す（OS のタイムゾーンに依るので、core は今日が何日かを知らない）。

@@ -17,6 +17,7 @@ import {
 } from "../../../../src/server/view-server/core/port-resolution.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
 import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
+import { UNREADABLE_FILE_EXCERPT } from "../../../../src/shared/repository/file-excerpt.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/token-usage/token-usage-summary.ts"
 import { closeNetServer, listenOnEphemeralPort, portOf } from "../../../fixture/net-server.ts"
@@ -35,6 +36,7 @@ const emptyViewServerOptions: ViewServerOptions = {
   findReportImage: () => undefined,
   rpcRouter: createRpcRouter({
     listRepositoryFiles: () => Promise.resolve({ paths: [], omittedCount: 0 }),
+    readFileExcerpt: () => Promise.resolve(UNREADABLE_FILE_EXCERPT),
     refreshTasks: () => Promise.resolve(),
     projectName: () => "架空のプロジェクト",
     readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,

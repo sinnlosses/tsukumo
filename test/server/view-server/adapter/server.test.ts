@@ -29,6 +29,7 @@ import type { CharacterAssetLocation } from "../../../../src/shared/character-pa
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
 import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
 import { reportImagePath } from "../../../../src/shared/report/report-image.ts"
+import { UNREADABLE_FILE_EXCERPT } from "../../../../src/shared/repository/file-excerpt.ts"
 import { RPC_PATH, type RpcClient } from "../../../../src/shared/rpc.ts"
 import { promptImagePath } from "../../../../src/shared/session-driver/prompt-image.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
@@ -78,6 +79,7 @@ function noReportImage(): undefined {
  */
 const EMPTY_RPC_PORTS = {
   listRepositoryFiles: () => Promise.resolve({ paths: [], omittedCount: 0 }),
+  readFileExcerpt: () => Promise.resolve(UNREADABLE_FILE_EXCERPT),
   refreshTasks: () => Promise.resolve(),
   projectName: () => "架空のプロジェクト",
   readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
@@ -423,6 +425,38 @@ describe("startViewServer", () => {
         paths: [],
         omittedCount: 0,
       })
+    })
+
+    it("repository.fileExcerpt は、行の範囲を口へ渡して抜き書きを返す。口が失敗した回は unreadable", async () => {
+      const requests: unknown[] = []
+      const lines = {
+        kind: "lines",
+        lines: [{ number: 12, text: "架空の行", truncated: false }],
+      } as const
+      const found = await startViewWithRpc({
+        readFileExcerpt: (request) => {
+          requests.push(request)
+          return Promise.resolve(lines)
+        },
+      })
+      const request = { path: "src/cli.ts", startLine: 12, endLine: 12 }
+      expect(await rpcClientOf(found, TOKEN).repository.fileExcerpt(request)).toEqual(lines)
+      expect(requests).toEqual([request])
+      // 終わりが頭より前の範囲は、口へ渡す前に契約が断る。
+      await expect(
+        rpcClientOf(found, TOKEN).repository.fileExcerpt({ ...request, endLine: 11 }),
+      ).rejects.toThrow()
+      expect(requests).toHaveLength(1)
+      await found.close()
+
+      const failed = await startViewWithRpc({
+        readFileExcerpt: () => Promise.reject(new Error("架空の失敗")),
+      })
+      expect(await rpcClientOf(failed, TOKEN).repository.fileExcerpt(request)).toEqual({
+        kind: "unavailable",
+        reason: "unreadable",
+      })
+      await failed.close()
     })
 
     it("repository.projectName は、渡された名前を返す", async () => {

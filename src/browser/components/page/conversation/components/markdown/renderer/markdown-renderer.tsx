@@ -21,7 +21,7 @@
 // 表は横スクロールの器で包む（`Table`）。
 // 器をここで作るのは、`rehype-raw` が生の HTML も同じ hast の木に入れるので、`table` の上書き1つで Markdown の表とレポートが直接書いた `<table>` の両方に効くため。
 //
-// git 管理下のパスを押すと Orca のエディタで開ける（inline code・フェンスのファイル名・相対リンクの3か所。判定は `repositoryFilePath`）。
+// git 管理下のパスを押すと Orca のエディタで開ける（inline code・フェンスのファイル名・相対リンクの3か所。判定は `repositoryFileTarget`）。
 
 import clsx from "clsx"
 import type { Element } from "hast"
@@ -37,7 +37,7 @@ import { decodeMarks, type CodeMark } from "../../../../../../../shared/report/c
 import { optionalString } from "../../../../../../../shared/utils/optional-string.ts"
 import {
   breakPathText,
-  repositoryFilePath,
+  repositoryFileTarget,
   RepositoryFileLinkTarget,
   useRepositoryFileLink,
 } from "../../repository-link/repository-link.tsx"
@@ -227,13 +227,17 @@ function codeSourceText(codeNode: Element): string {
 /** フェンスのファイル名のラベル。一覧にあれば押せるボタン、無ければ素のテキスト。 */
 function FileNameLabel(props: { readonly fileName: string }): ReactElement {
   const link = useRepositoryFileLink()
-  const path = repositoryFilePath(props.fileName, link.files)
+  const target = repositoryFileTarget(props.fileName, link.files)
 
-  if (path === undefined) {
+  if (target === undefined) {
     return <>{props.fileName}</>
   }
   return (
-    <RepositoryFileLinkTarget path={path} title={undefined} className={styles["report-file-link"]}>
+    <RepositoryFileLinkTarget
+      target={target}
+      title={undefined}
+      className={styles["report-file-link"]}
+    >
       {breakPathText(props.fileName, styles["report-path-glue"])}
     </RepositoryFileLinkTarget>
   )
@@ -305,9 +309,10 @@ function Code(props: CodeProps): ReactElement {
   const text = node === undefined ? "" : hastText(node)
   const carriedPath =
     node === undefined ? undefined : optionalString(node.properties[CODE_FILE_PATH_PROPERTY])
-  const path = node === undefined ? undefined : repositoryFilePath(carriedPath ?? text, link.files)
+  const target =
+    node === undefined ? undefined : repositoryFileTarget(carriedPath ?? text, link.files)
 
-  if (path === undefined) {
+  if (target === undefined) {
     const swatch = node === undefined ? undefined : colorSwatch(text, readColorToken)
     return swatch === undefined ? (
       <code className={className} {...rest}>
@@ -333,7 +338,11 @@ function Code(props: CodeProps): ReactElement {
     </code>
   )
   return (
-    <RepositoryFileLinkTarget path={path} title={undefined} className={styles["report-file-link"]}>
+    <RepositoryFileLinkTarget
+      target={target}
+      title={undefined}
+      className={styles["report-file-link"]}
+    >
       {code}
     </RepositoryFileLinkTarget>
   )
@@ -391,8 +400,8 @@ function Anchor(props: AnchorProps): ReactElement {
     )
   }
 
-  const path = repositoryFilePath(href, link.files)
-  if (path === undefined) {
+  const target = repositoryFileTarget(href, link.files)
+  if (target === undefined) {
     return (
       <span title={title} className={className}>
         {children}
@@ -401,7 +410,7 @@ function Anchor(props: AnchorProps): ReactElement {
   }
   return (
     <RepositoryFileLinkTarget
-      path={path}
+      target={target}
       title={title}
       className={clsx(styles["report-file-link"], className)}
     >

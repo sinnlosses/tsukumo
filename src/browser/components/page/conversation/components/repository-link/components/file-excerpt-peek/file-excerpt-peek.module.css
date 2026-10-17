@@ -1,0 +1,54 @@
+/* 押せるパスの近くに浮かせる抜き書き。窓の座標で置くので fixed。 */
+.file-excerpt-peek {
+  position: fixed;
+  z-index: 3;
+  box-sizing: border-box;
+  width: min(36rem, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  padding: 0.6rem 0;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  box-shadow: 0 0.4rem 1.2rem color-mix(in srgb, var(--ground) 60%, transparent);
+  pointer-events: none;
+}
+.peek-head {
+  padding: 0 0.9rem 0.4rem;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  overflow-wrap: anywhere;
+}
+.peek-code {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: var(--font-secondary);
+  line-height: 1.6;
+  white-space: pre;
+  overflow-x: hidden;
+}
+/* 長い行は字の側だけを省き、指した行の印は縮めずに行の右に残す。 */
+.peek-line {
+  display: flex;
+  padding: 0 0.9rem;
+}
+.peek-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.peek-line-pointed {
+  background: var(--surface-raised);
+  color: var(--ink-bright);
+}
+.peek-mark {
+  flex: none;
+  margin-left: 1.5em;
+  color: var(--ink-quiet);
+}
+.peek-note {
+  margin: 0;
+  padding: 0 0.9rem;
+  color: var(--ink-soft);
+  font-size: var(--font-secondary);
+}
