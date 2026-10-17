@@ -17,8 +17,6 @@
 // 枠は規約違反の枠とは別に数える（規約違反で差し戻して直した `report` を送り直す形もある）。
 // 段取りの立ち位置は `WorkPlanReview.standing` から受け取る。段の閉じ方は同じ依頼に段取りがあるときだけ見る。
 // 背景のシェルの差し戻しの文面には ID と `description` を載せるが、記録に残すのは種類の名前だけ。
-// 変更ファイルは `ReportChanges` の口から読み、読めなければ変更なしとして通す。
-// `checks` に `unverified` で `detail` が空白だけでない行があれば、画像が無くても通し、画像の枠は使わない。
 //
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`）。
 // `assistant` メッセージの変換は `report` イベントを作るだけで判定しない。
@@ -33,7 +31,6 @@
 
 import { isDeepEqual } from "remeda"
 
-import { sectionsWithFigure } from "../../../shared/report/report-block.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -44,7 +41,6 @@ import {
   type ReportViolation,
   reportViolations,
 } from "./report-violation.ts"
-import { hasScreenFile } from "./screen-file.ts"
 
 // 判定の順と脇の話の扱いは `ReportReview.judge` が正典。
 export const REPORT_PROCEDURE_REJECTIONS = [
@@ -56,7 +52,6 @@ export const REPORT_PROCEDURE_REJECTIONS = [
   "finished-but-stopped",
   "finished-with-ng",
   "background-running",
-  "no-screenshot",
 ] as const satisfies readonly string[]
 
 export type ReportRejectionReason =
@@ -79,17 +74,12 @@ export type ReportReview = {
   /**
    * `report` の handler から。
    * このターンで描いた `report` の送り直し、直前に描いた `report` のあとに新しい事実の届いていない呼び出し、
-   * 応えていない `work_plan` の差し戻し、合わない段の閉じ方、`ng` のある `finished`、背景のシェル、画像の無い画面の変更、規約違反のどれかなら、
+   * 応えていない `work_plan` の差し戻し、合わない段の閉じ方、`ng` のある `finished`、背景のシェル、規約違反のどれかなら、
    * この順に見て差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
-   * 脇の話のターンでは、合わない段の閉じ方・背景のシェル・画像の無い画面の変更を見ない（ほかは見る）。
+   * 脇の話のターンでは、合わない段の閉じ方・背景のシェルを見ない（ほかは見る）。
    * 記録に残す種類の名前は {@link REPORT_PROCEDURE_REJECTIONS}（段の閉じ方は3つの名前が1つの枠を共有する）。
    */
-  readonly judge: (report: ReportDraft, changedFiles?: readonly string[]) => ReportVerdict
-  /**
-   * ターンの頭の HEAD から今までに変わったファイル（リポジトリの根からの相対パス）。
-   * 読めないときは空。`judge` に渡す前に handler が待つ。
-   */
-  readonly changedFiles: () => Promise<readonly string[]>
+  readonly judge: (report: ReportDraft) => ReportVerdict
   /** このターンで「新しい事実が無い」差し戻しをしたか。ターンの頭（`session-info`）で戻る。 */
   readonly nothingNewRejected: () => boolean
   /**
@@ -108,20 +98,6 @@ export type ReportNews = {
   readonly backgroundTasks: () => readonly BackgroundTask[]
 }
 
-/**
- * 変更ファイルを読む口。どちらも読めないときは `undefined`（例外を投げない）。
- * `readChangedFiles` はコミット済みの差分と、作業ツリーの未コミット・未追跡のファイルを返す。
- */
-export type ReportChanges = {
-  readonly readHead: () => Promise<string | undefined>
-  readonly readChangedFiles: (head: string) => Promise<readonly string[] | undefined>
-}
-
-const NO_CHANGES = {
-  readHead: () => Promise.resolve(undefined),
-  readChangedFiles: () => Promise.resolve(undefined),
-} as const satisfies ReportChanges
-
 type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 
 /**
@@ -132,7 +108,6 @@ type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 export function createReportReview(
   workPlanStanding: () => WorkPlanStanding,
   news: ReportNews,
-  changes: ReportChanges = NO_CHANGES,
 ): ReportReview {
   let rejectedInTurn = false
   let resendRejectedInTurn = false
@@ -141,9 +116,6 @@ export function createReportReview(
   let closingRejectedInTurn = false
   let finishedWithNgRejectedInTurn = false
   let backgroundRejectedInTurn = false
-  let screenshotRejectedInTurn = false
-  // ターンの頭の HEAD（読み終わるまでは Promise）。
-  let turnHead: Promise<string | undefined> = Promise.resolve(undefined)
   let held: readonly ReportEvent[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportEvent[] = []
@@ -158,17 +130,11 @@ export function createReportReview(
     closingRejectedInTurn = false
     finishedWithNgRejectedInTurn = false
     backgroundRejectedInTurn = false
-    screenshotRejectedInTurn = false
-    turnHead = changes.readHead()
     drawn = []
   }
 
   return {
-    changedFiles: async () => {
-      const head = await turnHead
-      return head === undefined ? [] : ((await changes.readChangedFiles(head)) ?? [])
-    },
-    judge: (report, changedFiles = []) => {
+    judge: (report) => {
       if (!resendRejectedInTurn && drawn.some((previous) => isSameReport(previous, report))) {
         resendRejectedInTurn = true
         return { kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT, reasons: ["resend"] }
@@ -213,20 +179,6 @@ export function createReportReview(
           kind: "rejected",
           text: reportBackgroundRunningRejectionText(shells),
           reasons: ["background-running"],
-        }
-      }
-      if (
-        !asideTurn &&
-        !screenshotRejectedInTurn &&
-        hasScreenFile(changedFiles) &&
-        !hasImageBlock(report) &&
-        !hasUnverifiedReason(report)
-      ) {
-        screenshotRejectedInTurn = true
-        return {
-          kind: "rejected",
-          text: REPORT_NO_SCREENSHOT_REJECTION_TEXT,
-          reasons: ["no-screenshot"],
         }
       }
       const violations = reportViolations(report)
@@ -332,13 +284,6 @@ export const REPORT_FINISHED_WITH_NG_REJECTION_TEXT =
   "落ちた確認を直して `ok` にしてから `finished` で呼び直すか、直せないなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
-/** 画面のファイルを変えたターンの `report` に画像の塊が無いときの戻り値。固定の文面だけで、モデルが書いた本文も変更ファイルのパスも写さない。 */
-export const REPORT_NO_SCREENSHOT_REJECTION_TEXT =
-  "画面のファイルを変えたのに、`report` に画像が無い。" +
-  "撮った画像を `image` の塊で載せて呼び直すこと。" +
-  "画面に出ない変更・撮れない事情のときは、`checks` に `unverified` の行を足し、`detail` に撮っていない理由を書くこと。" +
-  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
-
 /** 背景のシェルが残っている `report` を差し戻すときの戻り値。残りのシェルの ID と `description` だけを載せ、モデルが書いた本文は写さない。 */
 export function reportBackgroundRunningRejectionText(shells: readonly BackgroundTask[]): string {
   const listing = shells
@@ -352,18 +297,6 @@ export function reportBackgroundRunningRejectionText(shells: readonly Background
     "`TaskStop` で止めるか、待つなら待つと決めてから `report` を呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
   )
-}
-
-/** `figure` と `sections` のどこかに `image` か `beforeAfter` の塊があるか。 */
-function hasImageBlock(report: ReportDraft): boolean {
-  return sectionsWithFigure(report.figure, report.sections).some((section) =>
-    section.blocks.some((block) => block.kind === "image" || block.kind === "beforeAfter"),
-  )
-}
-
-/** `checks` に、`unverified` で `detail` が空白だけでない行があるか。行の中身は見ない。 */
-function hasUnverifiedReason(report: ReportDraft): boolean {
-  return report.checks.some((check) => check.status === "unverified" && check.detail.trim() !== "")
 }
 
 function hasNgCheck(report: ReportDraft): boolean {

@@ -206,19 +206,18 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   `core/` `adapter/` の外に置いたファイルと、表と `SERVER_FEATURE_IMPORTS` のずれは
   `test/architecture/server-feature.test.ts` が落とす）
 
-| 機能（import する側） | 読んでよい機能                                                                                                                                           |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `report`              | `repository`                                                                                                                                             |
-| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                                 |
-| `system-prompt`       | `session-driver` `chat` `report`                                                                                                                         |
-| `view-server`         | `session`                                                                                                                                                |
-| `chat`                | `session-driver` `character-pack`                                                                                                                        |
-| `context-usage`       | `session-driver`                                                                                                                                         |
-| `session-driver`      | `chat` `report` `view-server`                                                                                                                            |
-| `diary`               | `repository` `session-driver`                                                                                                                            |
-| `usage-review`        | `session-driver`                                                                                                                                         |
-| `achievement`         | `repository`                                                                                                                                             |
-| そのほか              | —（葉。`token-usage` `plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation` `workflow-setting`） |
+| 機能（import する側） | 読んでよい機能                                                                                                                                                    |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                                          |
+| `system-prompt`       | `session-driver` `chat` `report`                                                                                                                                  |
+| `view-server`         | `session`                                                                                                                                                         |
+| `chat`                | `session-driver` `character-pack`                                                                                                                                 |
+| `context-usage`       | `session-driver`                                                                                                                                                  |
+| `session-driver`      | `chat` `report` `view-server`                                                                                                                                     |
+| `diary`               | `repository` `session-driver`                                                                                                                                     |
+| `usage-review`        | `session-driver`                                                                                                                                                  |
+| `achievement`         | `repository`                                                                                                                                                      |
+| そのほか              | —（葉。`token-usage` `plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation` `workflow-setting` `report`） |
 
 表は `test/architecture/server-feature.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
 辺が `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。

@@ -10,11 +10,7 @@
 
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import {
-  createReportReview,
-  type ReportChanges,
-  type ReportVerdict,
-} from "../../report/core/report-review.ts"
+import { createReportReview, type ReportVerdict } from "../../report/core/report-review.ts"
 import type { ReportDraft } from "../../report/core/report-violation.ts"
 import { judgePhaseMention, type PhaseMentionVerdict } from "./phase-mention.ts"
 import { createSpeechReview, type SpeechVerdict } from "./speech-review.ts"
@@ -28,9 +24,7 @@ export type CallReview = {
   /** `speak` の handler から。直前に描いたセリフのあとに新しい事実が届いていなければ差し戻す。 */
   readonly judgeSpeak: () => SpeechVerdict
   /** `report` の handler から。 */
-  readonly judgeReport: (report: ReportDraft, changedFiles?: readonly string[]) => ReportVerdict
-  /** `report` の handler から、`judgeReport` に渡す前に待つ。ターンの頭の HEAD から変わったファイル（読めなければ空）。 */
-  readonly changedFiles: () => Promise<readonly string[]>
+  readonly judgeReport: (report: ReportDraft) => ReportVerdict
   /** `speak` の handler から、`phase` を渡したときだけ呼ぶ。範囲があるあいだ、範囲の外の段の番号なら差し戻す。 */
   readonly judgePhaseMention: (phase: number) => PhaseMentionVerdict
   /** `work_plan` の handler から、届いた引数のままで呼ぶ。 */
@@ -68,27 +62,22 @@ const NEWS_SUBJECTS_BY_EVENT = {
 } as const satisfies Partial<Record<SessionEvent["kind"], readonly NewsSubject[]>>
 
 /** {@link CallReview} を1つ作る。セッション1つに1つ。 */
-export function createCallReview(changes?: ReportChanges): CallReview {
+export function createCallReview(): CallReview {
   const ledger = createNewsLedger()
   const speechReview = createSpeechReview({
     hasNews: () => ledger.hasNews("speak"),
     markDrawn: () => ledger.markDrawn("speak"),
   })
   const workPlanReview = createWorkPlanReview()
-  const reportReview = createReportReview(
-    workPlanReview.standing,
-    {
-      hasNews: () => ledger.hasNews("report"),
-      markDrawn: () => ledger.markDrawn("report"),
-      backgroundTasks: ledger.backgroundTasks,
-    },
-    changes,
-  )
+  const reportReview = createReportReview(workPlanReview.standing, {
+    hasNews: () => ledger.hasNews("report"),
+    markDrawn: () => ledger.markDrawn("report"),
+    backgroundTasks: ledger.backgroundTasks,
+  })
 
   return {
     judgeSpeak: speechReview.judge,
     judgeReport: reportReview.judge,
-    changedFiles: reportReview.changedFiles,
     judgePhaseMention: (phase) => judgePhaseMention(workPlanReview.delegatedRange(), phase),
     judgeWorkPlan: workPlanReview.judge,
     judgePhaseResult: workPlanReview.judgeResult,

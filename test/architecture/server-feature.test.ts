@@ -25,7 +25,7 @@ const DOC_ROOT = fileURLToPath(new URL("../../docs", import.meta.url)).replace(/
 // 機能 A が import してよい機能 B（同じ節の2つめの表と一致を検査する。表に無い組と、使われない組は落とす）。
 // 共有の箱はどの機能からも読んでよいので、ここには出てこない。
 const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerFeature>>> = {
-  report: new Set(["repository"]),
+  report: new Set([]),
   "system-prompt": new Set(["report", "chat", "session-driver"]),
   "context-usage": new Set(["session-driver"]),
   "experience-metric": new Set([]),

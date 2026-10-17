@@ -77,12 +77,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   または 120 秒を超えて背景に回ったもの）が生きたまま呼ばれた `report` も、止めるか待つかをモデルに決めさせる
   固定の一文（残りのシェルの ID と `description` を載せる）で別に1ターンに1回まで差し戻す。背景のサブエージェント・
   その他の種類・脇の話のターンは対象にせず、`description` は戻り値にだけ載せて `report-usage` の記録には種類の名前
-  （`background-running`）だけを残す。ターンの頭の HEAD から `src/browser/` の下のファイルが変わっている
-  （コミット済みの差分・未コミット・未追跡）のに、`figure` にも `sections` にも `image`・`beforeAfter` の塊が無い
-  `report` も、撮った画像を `image` の塊で載せる旨の固定の一文（`no-screenshot`。変更ファイルのパスも本文も写さない）で
-  別に1ターンに1回まで差し戻す。`checks` に `status` が `unverified` で `detail` が空白だけでない行が1つでもあれば、
-  画像が無くても通し、この枠は使わない（行の中身は機械では見ない。差し戻しの文面もこの逃げ道を言う）。
-  git が読めないときと脇の話のターンは通す。`src/server/report/core/report-review.ts`）。
+  （`background-running`）だけを残す。`src/server/report/core/report-review.ts`）。
   **2026-10-06 に、文字の並びで判定できる条を検査に足した**: `conclusion` の1文目が全角50字超
   （`long-first-sentence`）・見出しが30字超か疑問文（`bad-heading`）・`checks` の `figure` の分数
   （`fraction-figure`）・地の文と表のセルの `A → B`（`arrow-in-prose`。インラインコードの中・`from` / `to`・
@@ -327,7 +322,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   前と後の両方に1から番号が振られて読み分けが要る。見る場所を言うなら `image` の塊の `notes`）。題は図として
   数え、包みは縮めない。使い分けは、向きの無い2つは `compare`、1つの値の前後は表のセルの `from` / `to` か
   `stats` の `before`、行ごとの差分は `code` の `diff`、縦に積む寸法の前後は `dimension` の `before`。
-  書き手への規約（記法の条8）は、情報の形から塊を引く表（形と塊と最小の記法の見本）を持ち、構造の前後は `graph` の印、画面の前後は `beforeAfter` の `image`、1つの値の前後は `table` の `from` / `to` に分けて書かせる（画面を変えた作業は撮った画像を `image` で載せ、同じ場面の2枚は `beforeAfter` で並べる。見た目に出ない・撮れないときは `checks` の `unverified` に理由を書く。画像が無い回の差し戻しは上の節が持つ）。1行の変更に使わせない旨は `beforeAfter` の `describe` が持つ。
+  書き手への規約（記法の条8）は、情報の形から塊を引く表（形と塊と最小の記法の見本）を持ち、構造の前後は `graph` の印、画面の前後は `beforeAfter` の `image`、1つの値の前後は `table` の `from` / `to` に分けて書かせる（画面を変えた作業は撮った画像を `image` で載せ、同じ場面の2枚は `beforeAfter` で並べる。見た目に出ない・撮れないときは `checks` の `unverified` に理由を書く）。1行の変更に使わせない旨は `beforeAfter` の `describe` が持つ。
   箇条の側が6つ以上なら `options`・`compare` と同じ違反（`too-many-candidates`）で差し戻す。取り違えは差し戻さず、
   使われ方の記録の「塊の種類 × レポート数」で見る
 - **縦に積む領域の寸法は `dimension`（寸法図）の塊で見せる**（2026-10-01。`title`・`parts`〔上から順に、領域

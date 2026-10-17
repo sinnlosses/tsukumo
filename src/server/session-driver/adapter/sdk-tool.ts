@@ -295,21 +295,17 @@ function reportTool(
       const mermaidFaults = await checkMermaidSyntax(
         mermaidSourcesInSections(sectionsWithFigure(figure, sections ?? [])),
       )
-      const changedFiles = await review.changedFiles()
-      const verdict = review.judgeReport(
-        {
-          conclusion,
-          figure,
-          sections: sections ?? [],
-          favor: favor ?? "",
-          checks: checks ?? [],
-          fileContents,
-          mermaidFaults,
-          task: parseReportTask(task),
-          workPlanClosing: parseWorkPlanClosing(workPlanClosing),
-        },
-        changedFiles,
-      )
+      const verdict = review.judgeReport({
+        conclusion,
+        figure,
+        sections: sections ?? [],
+        favor: favor ?? "",
+        checks: checks ?? [],
+        fileContents,
+        mermaidFaults,
+        task: parseReportTask(task),
+        workPlanClosing: parseWorkPlanClosing(workPlanClosing),
+      })
       if (verdict.kind === "rejected") {
         onEvent({ kind: "report-rejected", reasons: verdict.reasons })
         return { content: [{ type: "text" as const, text: verdict.text }], isError: true }

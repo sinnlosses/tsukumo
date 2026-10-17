@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  REPORT_NO_SCREENSHOT_REJECTION_TEXT,
-  REPORT_NOTHING_NEW_REJECTION_TEXT,
-  type ReportChanges,
-} from "../../../../src/server/report/core/report-review.ts"
+import { REPORT_NOTHING_NEW_REJECTION_TEXT } from "../../../../src/server/report/core/report-review.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import {
   PHASE_RESULT_MISSING_HANDBACK_LINE,
@@ -609,35 +605,5 @@ describe("CallReview の委譲ゲートの印", () => {
     review.pass(REQUEST)
 
     expect(review.gateRaised()).toBe(false)
-  })
-})
-
-describe("CallReview の変更ファイル（画像の無い report）", () => {
-  const changesOf = (files: readonly string[] | undefined): ReportChanges => ({
-    readHead: () => Promise.resolve(files === undefined ? undefined : "架空のSHA"),
-    readChangedFiles: () => Promise.resolve(files),
-  })
-  const judged = async (review: CallReview, draft: ReportDraft): Promise<boolean> => {
-    review.pass(SESSION_INFO)
-    return review.judgeReport(draft, await review.changedFiles()).kind === "rejected"
-  }
-
-  it("口から読んだ画面のファイルがあり画像が無い report は差し戻し、2回目は通す", async () => {
-    const review = createCallReview(changesOf(["src/browser/架空.tsx"]))
-    review.pass(SESSION_INFO)
-    const files = await review.changedFiles()
-
-    expect(review.judgeReport(VALID, files)).toMatchObject({
-      kind: "rejected",
-      text: REPORT_NO_SCREENSHOT_REJECTION_TEXT,
-      reasons: ["no-screenshot"],
-    })
-    expect(review.judgeReport(VALID, files)).toEqual({ kind: "accepted" })
-  })
-
-  it("画面のファイルが無いときと、git が読めないときは通す", async () => {
-    expect(await judged(createCallReview(changesOf(["src/server/架空.ts"])), VALID)).toBe(false)
-    expect(await judged(createCallReview(changesOf(undefined)), VALID)).toBe(false)
-    expect(await judged(createCallReview(), VALID)).toBe(false)
   })
 })
