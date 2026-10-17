@@ -406,7 +406,7 @@ export type SessionState = {
    */
   readonly tasks: TaskSummaryResult
   /**
-   * 迎える口のおすすめの札（おすすめの順、`MAX_RECOMMENDATION_CARDS` 枚まで）。
+   * 始め方の一覧のおすすめの札（おすすめの順、`MAX_RECOMMENDATION_CARDS` 枚まで）。
    * 源は `recommendation-changed` だけで、届くたびに丸ごと置き換える。空は「まだ無い」で、画面は既定の並びを出す。
    * `tasks` と同じく起こし直しをまたいで残す。
    */

@@ -52,7 +52,7 @@ const UNKNOWN_TIME = { kind: "restored" } as const satisfies RecordTime
 const NO_GREETING_ON_SHOW = { kind: "none" } as const satisfies GreetingOnShow
 
 /**
- * `head` は迎える口の先頭の札で、迎えの挨拶の名指しに使う。
+ * `head` は始め方の一覧の先頭の札で、迎えの挨拶の名指しに使う。
  * `now` は呼び出し側が渡す現在時刻（エポックミリ秒）で、待ちの一言を出すかだけに使う。
  */
 export function shownReaction(state: SessionState, head: WelcomeHead, now: number): ShownReaction {
@@ -189,7 +189,7 @@ function shownWelcomeReaction(
 
 /**
  * 続きから起こしてまだ依頼が無い間の吹き出し（おかえり）。
- * 前回の待ちの一言、無ければ迎えの挨拶の札の無い文（迎える口の札が出ない局面のため）。
+ * 前回の待ちの一言、無ければ迎えの挨拶の札の無い文（始め方の一覧の札が出ない局面のため）。
  */
 function shownWelcomeBack(state: SessionState): UntimedReaction {
   const waitingLine = lastWaitingLine(state.records)

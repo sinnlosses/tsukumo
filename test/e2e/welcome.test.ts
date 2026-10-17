@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest"
 import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 import { BLOCKED_TASK_ID, READY_TASK_ID, writeWelcomeTasks } from "./task-room.ts"
 
-// 依頼前のメインビューの迎える口（docs/architecture/testing.md「E2E のシナリオの一覧」）。
+// 依頼前のメインビューの始め方の一覧（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 札の並びと理由は疑似セッションの場面 `welcome-recommendation`、続きの要約は `sessionDigests`、タスクは cwd の `FAKE_BEADS_ISSUES_PATH` に架空の課題を置いて用意する。
 // 要約は手続き（`/rpc`）の応答で届くので、その応答を待ってから、描かれるまで凍らせた時計を進める。
 
@@ -44,7 +44,7 @@ function draft(page: Page): Promise<string> {
   return page.locator("textarea").inputValue()
 }
 
-describe("迎える口", () => {
+describe("始め方の一覧", () => {
   it("理由つきのおすすめの札と「ほかの始め方」が並び、広い窓でも中くらいの窓でも横にあふれない", async () => {
     const room = await openWelcomeRoom("welcome-doors", "wide")
     const page = room.page

@@ -31,7 +31,7 @@ export type WelcomeGreetingState =
   | { readonly kind: "written"; readonly greeting: WelcomeGreeting }
   | { readonly kind: "unwritten" }
 
-/** 迎える口の先頭の札。`name` は挨拶に差し込む名前。 */
+/** 始め方の一覧の先頭の札。`name` は挨拶に差し込む名前。 */
 export type WelcomeHead =
   | { readonly kind: "none" }
   | { readonly kind: "card"; readonly name: string }

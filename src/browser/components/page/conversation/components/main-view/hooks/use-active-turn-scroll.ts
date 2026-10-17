@@ -20,5 +20,5 @@ export function useActiveTurnScroll(
   }, [scrollerRef, shownKey])
 }
 
-/** 先頭へ戻す相手が無い（迎える口を出している）ときの鍵。 */
+/** 先頭へ戻す相手が無い（始め方の一覧を出している）ときの鍵。 */
 export const NO_SHOWN_KEY = "none"

@@ -179,7 +179,7 @@ export type SessionEvent =
    * `waitingLine`（待ちの一言）は記録に写り、依頼を待つ間に `shownReaction` が出す。
    * `unknownBlockCount` は知らない種類で境界で落とした塊の数で、画面の状態は読まない。
    * `sessionSummary` はセッション全体の要約で、書かれていなければ undefined。レポートには描かず、切り替え画面が transcript から読み戻す。
-   * `sessionRemaining`（残っていること）も同じく描かず、切り替え画面と迎える口の「前回の続き」が transcript から読み戻す。
+   * `sessionRemaining`（残っていること）も同じく描かず、切り替え画面と始め方の一覧の「前回の続き」が transcript から読み戻す。
    */
   | {
       readonly kind: "report"

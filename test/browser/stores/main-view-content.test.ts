@@ -36,7 +36,7 @@ function content(): ReturnType<typeof useMainViewContent.getState>["content"] {
 }
 
 describe("useMainViewContent", () => {
-  it("依頼の前は迎える口、送ると働くあいだの中身、閉じるとレポートへ進む", () => {
+  it("依頼の前は始め方の一覧、送ると働くあいだの中身、閉じるとレポートへ進む", () => {
     putSession(INITIAL_SESSION_STATE)
     expect(content().kind).toBe("welcome")
 
@@ -61,7 +61,7 @@ describe("useMainViewContent", () => {
     expect(content()).toMatchObject({ kind: "report", arrived: false })
   })
 
-  it("/clear で記録が空になると迎える口へ戻る", () => {
+  it("/clear で記録が空になると始め方の一覧へ戻る", () => {
     putSession(INITIAL_SESSION_STATE)
     send()
     finish()

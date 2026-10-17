@@ -1,4 +1,4 @@
-// 迎える口に並べる札を、状態・前回のセッションの残り・タスク一覧から用意する。
+// 始め方の一覧に並べる札を、状態・前回のセッションの残り・タスク一覧から用意する。
 
 import { useSession } from "../../../../../stores/session.ts"
 import { useSessionDigest } from "../../../../domain/screen-nav/hooks/use-session-digest.ts"

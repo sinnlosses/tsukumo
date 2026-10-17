@@ -107,7 +107,7 @@ export const REPORT_SESSION_SUMMARY_DESCRIPTION =
 /** `report` の `sessionRemaining` 引数の説明。 */
 export const REPORT_SESSION_REMAINING_DESCRIPTION =
   "このセッションで残っていること（次のセッションで続ける作業）を1〜2文で。書き出しに「残り：」は付けない。" +
-  "迎える口の「前回の続き」の札の題と、次のセッションへ送る依頼の文になる。" +
+  "始め方の一覧の「前回の続き」の札の題と、次のセッションへ送る依頼の文になる。" +
   "残っていることが無ければ空の文字列にする。毎回、要約と同じくセッション全体で書き直す。"
 
 /**

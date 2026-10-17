@@ -244,11 +244,11 @@ const RICH_ACCEPTANCE = ["- [ ] まだの条件", "- [x] 済んだ条件"].join(
 /** 先頭のタスクの `notes`。 */
 const RICH_NOTES = ["1. 一つ目の手順", "2. 二つ目の手順", "", "### 段の見出し"].join("\n")
 
-/** 迎える口の足場のタスクの ID。着手できるものと、前者に依存して止まるもの。 */
+/** 始め方の一覧の足場のタスクの ID。着手できるものと、前者に依存して止まるもの。 */
 export const READY_TASK_ID = "t-001"
 export const BLOCKED_TASK_ID = "t-002"
 
-/** 依頼前の迎える口の足場。着手できるタスクと依存で止まるタスクを置いて、一覧が届くのを待つ。 */
+/** 依頼前の始め方の一覧の足場。着手できるタスクと依存で止まるタスクを置いて、一覧が届くのを待つ。 */
 export async function writeWelcomeTasks(room: ScenarioRoom): Promise<void> {
   await placeTasks(room, [
     task(READY_TASK_ID, "架空のタスク（着手できる）", "todo"),
