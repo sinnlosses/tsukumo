@@ -21,6 +21,13 @@ export type HookDenial = {
   readonly actor: DenialActor
 }
 
+/** 呼び手の欄が無い旧い行の呼び手。 */
+export const UNKNOWN_ACTOR = "不明"
+
+export type RecordedHookDenial = Omit<HookDenial, "actor"> & {
+  readonly actor: DenialActor | typeof UNKNOWN_ACTOR
+}
+
 export function recordHookDenial(denial: Omit<HookDenial, "at">): void {
   if (process.env["TSUKUMO_HOOK_DENIAL_RECORD"] === "off") {
     return
@@ -39,7 +46,7 @@ export function recordHookDenial(denial: Omit<HookDenial, "at">): void {
 }
 
 /** `since` 以降の記録。読めない行・置き場が無いときは含めない。 */
-export function readHookDenials(since: Temporal.Instant): readonly HookDenial[] {
+export function readHookDenials(since: Temporal.Instant): readonly RecordedHookDenial[] {
   try {
     const directory = denialDirectory()
     return readdirSync(directory)
@@ -52,7 +59,7 @@ export function readHookDenials(since: Temporal.Instant): readonly HookDenial[] 
   }
 }
 
-function parseDenial(line: string): readonly HookDenial[] {
+function parseDenial(line: string): readonly RecordedHookDenial[] {
   try {
     const value: unknown = JSON.parse(line)
     if (
@@ -61,14 +68,16 @@ function parseDenial(line: string): readonly HookDenial[] {
       "at" in value &&
       "hook" in value &&
       "rule" in value &&
-      "actor" in value &&
       typeof value.at === "string" &&
       typeof value.hook === "string" &&
-      typeof value.rule === "string" &&
-      (value.actor === "main" || value.actor === "subagent")
+      typeof value.rule === "string"
     ) {
       Temporal.Instant.from(value.at)
-      return [{ at: value.at, hook: value.hook, rule: value.rule, actor: value.actor }]
+      const actor =
+        "actor" in value && (value.actor === "main" || value.actor === "subagent")
+          ? value.actor
+          : UNKNOWN_ACTOR
+      return [{ at: value.at, hook: value.hook, rule: value.rule, actor }]
     }
   } catch {
     // 壊れた行は数えない

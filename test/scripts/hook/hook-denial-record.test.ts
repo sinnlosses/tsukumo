@@ -85,6 +85,42 @@ describe("集計", () => {
     expect(result.stdout).not.toContain("（未登録）")
   })
 
+  test("規則のキーごとに main / subagent / 不明の件数を出し、actor の欄が無い旧い行は不明に数える", async () => {
+    writeRegistration()
+    const directory = join(repoDir, ".git", "hook-denials")
+    mkdirSync(directory)
+    const at = Temporal.Now.instant().toString()
+    const lines = [
+      { at, hook: "deny-broad-kill", rule: "pkill-killall", actor: "main" },
+      { at, hook: "deny-broad-kill", rule: "pkill-killall", actor: "subagent" },
+      { at, hook: "deny-broad-kill", rule: "pkill-killall", actor: "subagent" },
+      { at, hook: "deny-broad-kill", rule: "pkill-killall" },
+    ]
+    writeFileSync(
+      join(directory, `${at.slice(0, 7)}.jsonl`),
+      lines.map((line) => `${JSON.stringify(line)}\n`).join(""),
+    )
+    const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
+    expect(result.stdout).toContain(
+      "deny-broad-kill: 4\n  pkill-killall: 4（main 1 / subagent 2 / 不明 1）",
+    )
+  })
+
+  test("登録に無い hook の名前（tw の関門）も、未登録と付けて内訳つきで出す", async () => {
+    writeRegistration()
+    const directory = join(repoDir, ".git", "hook-denials")
+    mkdirSync(directory)
+    const at = Temporal.Now.instant().toString()
+    writeFileSync(
+      join(directory, `${at.slice(0, 7)}.jsonl`),
+      `${JSON.stringify({ at, hook: "tw-commit-guard", rule: "shell-write", actor: "subagent" })}\n`,
+    )
+    const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
+    expect(result.stdout).toContain(
+      "tw-commit-guard（未登録）: 1\n  shell-write: 1（main 0 / subagent 1 / 不明 0）",
+    )
+  })
+
   test("記録が無ければ全部0で出す", async () => {
     writeRegistration()
     const result = await runHook(["scripts/hook/hook-denial-tally.ts"], "")
