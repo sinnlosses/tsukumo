@@ -10,7 +10,7 @@ export type PhaseDuration = {
 }
 
 /**
- * 帯と一覧の1行ぶん。段の行か、段のまとまりの行。
+ * 帯と一覧の1行ぶん。段の行か、並列の段の行。
  * まとまりの行の `label` は「並列 2–3」、`wall` はまとまりの壁時計の所要、`phases` は中の段。
  */
 export type PhaseTimeRow =

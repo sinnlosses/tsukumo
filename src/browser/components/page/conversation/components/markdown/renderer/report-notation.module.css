@@ -1011,7 +1011,7 @@
 .detail-block .report-phase-time-group {
   min-width: 0;
 }
-/* 段のまとまりの中の段は、一覧にだけ名前を字下げして並べる（帯には出さない）。 */
+/* 並列の段の中の段は、一覧にだけ名前を字下げして並べる（帯には出さない）。 */
 .detail-block .report-phase-time-inner .report-phase-time-label {
   padding-left: 12px;
 }

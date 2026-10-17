@@ -876,7 +876,7 @@ describe("work_plan（段取り）", () => {
     expect(zero.isError).toBe(true)
   })
 
-  it("同時に走る段のまとまりと finishedInGroup は形の検査を通り、1段だけのまとまりは落ちる", async () => {
+  it("並列の段と finishedInGroup は形の検査を通り、1段だけの並列の段は落ちる", async () => {
     const grouped = await callTool(workServer(), "work_plan", {
       phases: ["架空の段A", ["架空の段B", "架空の段C"]],
       current: 1,

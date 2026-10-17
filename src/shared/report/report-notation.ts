@@ -144,7 +144,7 @@ export const REPORT_NOTATION_NAMES = [
  * `checks-heading` は小見出し「検証」、`checks-verdict-word` がその右の判定の一言。
  * `checks-body` の中は、全部 ok なら一覧（`check` がその1行）、
  * ng / unverified があれば問題の項目（`checks-problem`）と通った項目の小さな札（`checks-passed-chip`）。
- * `phase-times` は検証結果の下の段ごとの所要時間（見出しの行・帯 `phase-band`・一覧）で、`phase-time` が一覧の1行。`phase-time-group` は段のまとまりの包み。
+ * `phase-times` は検証結果の下の段ごとの所要時間（見出しの行・帯 `phase-band`・一覧）で、`phase-time` が一覧の1行。`phase-time-group` は並列の段の包み。
  * `conclusion` は `task` のあるレポートの結論の一文、`conclusion-lead` は `task` の無いレポートの結論。
  * 見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
  */

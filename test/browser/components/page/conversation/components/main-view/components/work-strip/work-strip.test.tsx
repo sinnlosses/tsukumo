@@ -324,7 +324,7 @@ describe("WorkStrip（段の丸の吹き出し）", () => {
     expect(screen.queryByRole("dialog")).toBeNull()
   })
 
-  it("段のまとまりの中の丸は押せ、まとまりの囲みは button を持たない", () => {
+  it("並列の段の中の丸は押せ、並列の段の囲みは button を持たない", () => {
     putSession(
       stateAfter([
         REQUEST,

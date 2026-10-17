@@ -9,7 +9,7 @@ import type { DelegateReturn } from "./delegate-return.ts"
 import type { SessionEvent } from "./session-event.ts"
 import type { SessionRecord } from "./session-state.ts"
 
-/** 段のまとまり。同時に走る段の名前の並びで、{@link MIN_PHASE_GROUP_SIZE} 個以上の重ならない名前を持つ。 */
+/** 並列の段。同時に走る段の名前の並びで、{@link MIN_PHASE_GROUP_SIZE} 個以上の重ならない名前を持つ。 */
 export type PhaseGroup = readonly string[]
 
 export type WorkPlanEntry = string | PhaseGroup
@@ -58,7 +58,7 @@ export const NO_DELEGATED_RANGE = { kind: "none" } as const satisfies DelegatedR
 /** 段取りが持つ段の数の下限。段が無い段取りは位置を言う意味が無いので受け付けない。 */
 export const MIN_WORK_PLAN_PHASES = 1
 
-/** 段のまとまりが持つ段の数の下限。1段だけのまとまりは段と同じなので受け付けない。 */
+/** 並列の段が持つ段の数の下限。1段だけの並列の段は段と同じなので受け付けない。 */
 export const MIN_PHASE_GROUP_SIZE = 2
 
 /** 段のまとめの文の数の上限。 */
@@ -143,7 +143,7 @@ export const workPlanShape = {
  * まとまりの段が {@link MIN_PHASE_GROUP_SIZE} 個より少ないか名前が重なる・位置が0から要素の数までの整数でない・
  * `finishedInGroup` が今のまとまりの重ならない名前の一部でない・
  * 段のまとめが {@link MAX_PHASE_SUMMARY_SENTENCES} 文を超える・
- * 委譲先の段の範囲が整数でない・並びをはみ出す・段のまとまりの端をまたぐ・
+ * 委譲先の段の範囲が整数でない・並びをはみ出す・並列の段の端をまたぐ・
  * 飛ばした段の名前が重なるか、この呼び出しで済んでいる段の名前でない。
  * 途中なのに段のまとめが無いことは、ここでは見ず `WorkPlanReview` が `summary-missing` で差し戻す。
  */
@@ -586,7 +586,7 @@ function withLeadPhasesFinished(previous: LatestWorkPlan, next: PlannedWorkPlan)
   return lead === undefined || lead.entry <= next.current ? next : { ...next, current: lead.entry }
 }
 
-/** 段のまとまりの段は平らにした並びで隣り合うので、2つ以上なら先頭と末尾の番号を「–」でつなぐ。 */
+/** 並列の段の中の段は平らにした並びで隣り合うので、2つ以上なら先頭と末尾の番号を「–」でつなぐ。 */
 function numbered(
   span: PhaseSpan,
   indexes: readonly number[],

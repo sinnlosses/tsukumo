@@ -108,7 +108,7 @@ describe("parseWorkPlan の段のまとめ", () => {
   })
 })
 
-describe("parseWorkPlan の段のまとまり", () => {
+describe("parseWorkPlan の並列の段", () => {
   it("段の名前とまとまりの混ざった並びと、今のまとまりの中で済んだ段を読む", () => {
     expect(
       parseWorkPlan({
@@ -564,7 +564,7 @@ describe("parseWorkPlan の委譲先の段の範囲", () => {
     expect(read({ first: 1 })).toEqual({ kind: "pending", first: 1 })
   })
 
-  it("範囲の端が段のまとまりの端に揃っていれば、範囲の中にまとまりを含んでよい", () => {
+  it("範囲の端が並列の段の端に揃っていれば、範囲の中にまとまりを含んでよい", () => {
     expect(read({ first: 0, count: 4 })).toEqual({ kind: "range", first: 0, count: 4 })
     expect(read({ first: 1, count: 3 })).toEqual({ kind: "range", first: 1, count: 3 })
   })

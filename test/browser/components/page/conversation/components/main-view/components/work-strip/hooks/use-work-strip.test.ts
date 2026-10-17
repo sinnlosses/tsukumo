@@ -277,7 +277,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
   })
 })
 
-describe("useWorkStrip（段のまとまり）", () => {
+describe("useWorkStrip（並列の段）", () => {
   const groupedPlan = (current: number, finishedInGroup: readonly string[]): SessionEvent => ({
     kind: "work-plan",
     delegatedRange: { kind: "none" },

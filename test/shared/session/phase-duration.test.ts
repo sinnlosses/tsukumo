@@ -147,7 +147,7 @@ describe("phaseDurations", () => {
   })
 })
 
-describe("phaseDurations（段のまとまり）", () => {
+describe("phaseDurations（並列の段）", () => {
   const overlapped = [
     plan(0, at(0), GROUPED),
     plan(1, at(10), GROUPED),

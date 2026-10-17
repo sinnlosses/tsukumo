@@ -593,7 +593,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 `report` を出したままで、吹き出しは空にならず前のセリフを保っている
 ことを確かめる（`docs/architecture/screen-design.md` 13.9「バックグラウンドタスク」）。
 
-**段のまとまり（`docs/architecture/display.md`「段取り」）の描き方を確かめるときは、疑似セッションの場面
+**並列の段（`docs/architecture/display.md`「段取り」）の描き方を確かめるときは、疑似セッションの場面
 `work-strip-parallel`・`work-strip-parallel-ask`・`work-plan-parallel` を使う。** 前の2つは帯でまとまりの丸が
 1つの囲みに並び今の段の丸がどれも弧を回すこと（お伺いでは囲みの中の丸がどれも「?」）、`work-plan-parallel` は
 まとまりの中の段を後ろの番号から済ませて閉じ、帯が全部 ✓ になることと、最終レポートの段ごとの時間に
