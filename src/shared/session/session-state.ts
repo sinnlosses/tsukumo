@@ -252,7 +252,7 @@ export type SessionInfo =
 type SettingName = SettingConfirmation["setting"]
 
 /**
- * 設定の口の右肩の点の元。`at` は印を付けた時刻で、同じ値の付け直しを別の印として区別する。
+ * 設定の点の元。`at` は印を付けた時刻で、同じ値の付け直しを別の印として区別する。
  * - `none`: 点なし
  * - `accepted`: 切り替えを受け付けた（空洞の点）。見届けるまで残る。`from` は切り替える前に効いていた値
  * - `confirmed`: 受け付けた値で効いているのを見届けた（塗りの点）
@@ -367,7 +367,7 @@ export type SessionState = {
    * まだ届いていなければ undefined（見た目上の既定へは畳まない）。
    */
   readonly effort: EffortLevel | undefined
-  /** モデル・effort・許可モードの口の右肩に出す点の元（{@link SettingMarks}）。 */
+  /** モデル・effort・許可モードの設定の点の元（{@link SettingMarks}）。 */
   readonly settingMarks: SettingMarks
   /**
    * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。端末専用（`terminal_slash_commands`）は除いてある。

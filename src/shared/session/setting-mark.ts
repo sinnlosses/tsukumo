@@ -1,4 +1,4 @@
-// 設定の口の右肩の点（`SettingMark`）を、切り替えを受け付けたとき・効いているのを見届けたときに付け替える畳み込み。
+// 設定の点（`SettingMark`）を、切り替えを受け付けたとき・効いているのを見届けたときに付け替える畳み込み。
 
 import type { SettingConfirmation } from "./session-event.ts"
 import type { SessionState, SettingMark, SettingOrigin } from "./session-state.ts"

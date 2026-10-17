@@ -383,7 +383,7 @@ describe("applySessionEvent（API の不調と失敗）", () => {
   })
 })
 
-describe("設定の口の点の元（settingMarks）", () => {
+describe("設定の点の元（settingMarks）", () => {
   const RUNNING: SessionEvent = {
     kind: "session-info",
     sessionId: "s1",
