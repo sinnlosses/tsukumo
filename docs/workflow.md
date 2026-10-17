@@ -247,6 +247,28 @@ hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`�
 - `pnpm run check --full` が落ちた: 直してから打ち直す
 - やり直しの上限を超えた: `main` が速く進みすぎている。少し待つか、送る相手に相談する
 
+## 実機の Claude Code を動かす計測のとき
+
+エージェントの Bash から同梱 CLI（`claude -p`・SDK の `query`）を起こす計測は、本番の計測の前に
+**数秒の上限を付けた1回の呼び出しで、CLI が応答するか**を確かめる。macOS には `timeout` コマンドが
+無いので、上限は perl の alarm（外側）か node の `AbortController`（内側）で付ける。2026-10-17 に実機で通った形:
+
+```bash
+perl -e 'alarm 15; exec @ARGV' claude -p "1と答えて"   # 7秒で応答、exit=0
+```
+
+SDK の `query` は `maxTurns: 1` と `AbortController`（20秒）を付けて同じ形で打ち、3.6秒で応答した。
+
+過去の計測では、CLI がキーチェーンの読み出し待ちで無音のまま止まり、原因の特定に5回打ち、止まった
+9本のプロセスが残った。2026-10-17 の再確認では止まらなかったので、**止まる条件は特定できていない**
+（条件つきで起きるのだろう）。
+
+- 見分け方: 応答が上限を超えたら、止まったプロセスに `sample <pid>` を打ち、`SecItemCopyMatching`
+  （キーチェーンの読み出し待ち）が出るかを見る。これは止まったときの観測で、2026-10-17 は止まらず、
+  この見分けは実機で確かめていない
+- 止め方: 残った子のプロセスの kill は auto mode に拒まれる。エージェントは止めずに、止まった事実と
+  pid を報告に書いてメインに預ける
+
 ## 関連
 
 - 手順そのもの: `task-workflow` スキルの `SKILL.md`「手順」（`task claim` / `task done` / `task ship`）。
