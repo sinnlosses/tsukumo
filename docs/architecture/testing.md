@@ -465,7 +465,10 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 セリフのログのモーダルを開いた画は `capture-view.ts --scene welcome-greeting-cleared --until-step 2 --click 'button:has-text("ログ")'`（空のログ）で撮れる。`--wait-for` は `--click` より前に待つのでモーダルの中の要素は指せず、開いたあとの要素は `--wait-after` で待つ。
 **ワークフローの設定の面（歯車の `tw config` を読み書きする画）を、`tw` の出力を変えて撮るには `TSUKUMO_TW=<偽の tw の絶対パス>` を付ける**（schema 2 の面など、取り込みの `tw` が出さない形を撮るとき）。
 偽の `tw` はスクラッチ（作業ツリーの外）に Write で書いて実行権を付ける。`vendor/tsukumo-plugins/bin/tw` は書き換えない（戻し忘れが main に混ざる）。PATH に偽の `tw` を置いても効かない（取り込みの `bin/tw` が先に選ばれる）。
-`--scene` の `capture-view.ts` は起こす tsukumo に自分の環境変数を引き継ぐので、`TSUKUMO_TW=… node scripts/capture/capture-view.ts --scene <場面> --hash …` の形で効く。`--scene` を付けずに起こし済みの tsukumo へ撮りに行くときは、その tsukumo を起こすときに付ける。
+`--scene` の `capture-view.ts` は起こす tsukumo に自分の環境変数を引き継ぐので、`TSUKUMO_TW=… node scripts/capture/capture-view.ts --scene <場面> …` の形で効く。`--scene` を付けずに起こし済みの tsukumo へ撮りに行くときは、その tsukumo を起こすときに付ける。
+設定の面は hash では開かないので、歯車を押して開き、並びの欄を待つ（`--click 'button[aria-label="設定"]' --click 'nav[aria-label="設定の項目"] button:has-text("ワークフロー")' --wait-after 'ol[aria-label="並び"]'`）。
+偽の `tw` は `config --schema` に schema 2 の JSON、`config --json` に `config` と `keys` を持つ JSON を返す（形は `workflow-setting-reading.ts` の `configSchemaSchema`・`configOutputSchema`）。形が違うと並びの欄は出ず、「tw が並び（schema 2）の設定コマンドを返さない」などの断りが出る。
+ワークフローの面は 761px 以上の設定のダイアログにだけあり、760px 以下の引き出しの設定の面には無い。
 狭い窓（720px）でセッションの切り替え画面を開くには、引き出しを開いたあとに `--click '[aria-label="引き出し"] button[aria-haspopup="dialog"]'` を足す（`--click 'button[aria-label="やり取りとタスクを開く"]'` のあと）。
 **続きから復元した画面（`session-resume` の過去のやり取り）を撮るには、切り替え画面を開いて要求を選び、「切り替える」を押してから、復元された依頼の文を `--wait-after` で待つ。** 広い窓（900px 以上）では次の形で当たる（撮った画で、続きの最終レポートまで出ることを確かめた）。
 
