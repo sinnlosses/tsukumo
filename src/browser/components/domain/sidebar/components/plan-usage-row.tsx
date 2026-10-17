@@ -1,9 +1,7 @@
 // サイドバーの下端の帯の詳しい面の中で、コンテキストの札の下に5時間枠と7日間枠の使用状況を出す札。
-// 取り直すのは開いたとき・ターンが終わるたび・右上の ↻ を押したとき（`usePlanUsage`）。
+// 取り直すのは開いたとき・ターンが終わるたび・右上の ↻ を押したとき・「該当しない」が返った間の列（`usePlanUsage`）。
 //
-// claude.ai の契約でないとき（`not-applicable`）は、再読み込みしても変わらないので ↻ を出さない。
-// 取れなかったとき（`unavailable`）は ↻ で取り直せる一言に置き換わる。
-// どちらも2段の枠の行の代わりに1行の高さを保つ。
+// 取れなかったとき（`unavailable`）は ↻ で取り直せる一言に置き換わり、2段の枠の行の代わりに1行の高さを保つ。
 //
 // 取得中に前の値があれば、2段の枠の行を薄く残したまま「取得中…」を出す（`fetching` が `true` のとき）。
 //
@@ -33,7 +31,6 @@ import styles from "./plan-usage-row.module.css"
 const ROW_LABEL = "プラン使用量"
 const FETCHING_TEXT = "取得中…"
 const TIME_PLACEHOLDER = "—"
-const NOT_APPLICABLE_TEXT = "API キーで使っているため、プラン使用量はありません"
 const UNAVAILABLE_TEXT = "プラン使用量を取れませんでした。↻ で取り直せます"
 export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }): ReactElement {
   const { state, fetching, retry } = props.planUsage
@@ -52,27 +49,25 @@ export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }):
         >
           {headerText(state, fetching)}
         </span>
-        {state.kind !== "not-applicable" && (
-          <Button
-            variant="ghost"
-            size="action"
-            pressed="none"
-            disabled={fetching}
-            ariaLabel="プラン使用量を取り直す"
-            disclosure={{ kind: "none" }}
-            ariaHasPopup={undefined}
-            title="取り直す"
-            className={styles["plan-usage-row-refresh"]}
-            onClick={retry}
-          >
-            <span className={clsx(fetching && styles["plan-usage-row-refresh-spinning"])}>
-              <RefreshIcon />
-            </span>
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="action"
+          pressed="none"
+          disabled={fetching}
+          ariaLabel="プラン使用量を取り直す"
+          disclosure={{ kind: "none" }}
+          ariaHasPopup={undefined}
+          title="取り直す"
+          className={styles["plan-usage-row-refresh"]}
+          onClick={retry}
+        >
+          <span className={clsx(fetching && styles["plan-usage-row-refresh-spinning"])}>
+            <RefreshIcon />
+          </span>
+        </Button>
       </div>
       {windows === undefined ? (
-        <PlanUsageNote state={state} />
+        <PlanUsageNote />
       ) : (
         <div
           className={clsx(fetching && state.kind === "ready" && styles["plan-usage-row-dimmed"])}
@@ -93,15 +88,8 @@ export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }):
   )
 }
 
-/** 取れない・該当しないときの一言（2段の枠の行と同じ高さぶんの1行）。 */
-function PlanUsageNote(props: { readonly state: PlanUsageState }): ReactElement {
-  if (props.state.kind === "not-applicable") {
-    return (
-      <div className={styles["plan-usage-row-note"]}>
-        <span>{NOT_APPLICABLE_TEXT}</span>
-      </div>
-    )
-  }
+/** 取れないときの一言（2段の枠の行と同じ高さぶんの1行）。 */
+function PlanUsageNote(): ReactElement {
   return (
     <div className={styles["plan-usage-row-note"]}>
       <span className={styles["plan-usage-row-note-icon"]} aria-hidden="true">

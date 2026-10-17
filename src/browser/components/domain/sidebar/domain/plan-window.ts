@@ -13,14 +13,13 @@ export type PlanUsageState =
   | { readonly kind: "pending" }
   | { readonly kind: "ready"; readonly usage: PlanUsage; readonly takenAt: number }
   | { readonly kind: "unavailable"; readonly takenAt: number | undefined }
-  | { readonly kind: "not-applicable" }
 
 export type WindowDisplay = {
   readonly utilization: number | undefined
   readonly resetsAt: number | undefined
 }
 
-/** 描く2つの枠。取れない・該当しないときは `undefined`（一言に置き換える）。 */
+/** 描く2つの枠。取れないときは `undefined`（一言に置き換える）。 */
 export function windowsOf(
   state: PlanUsageState,
 ): { readonly fiveHour: WindowDisplay; readonly sevenDay: WindowDisplay } | undefined {

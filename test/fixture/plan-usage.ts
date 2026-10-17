@@ -11,6 +11,11 @@ export function planUsage(overrides: Partial<PlanUsage> = {}): PlanUsage {
   }
 }
 
+/** 契約の種類が無く、claude が「該当しない」を返したときの結果。 */
+export function notApplicablePlanUsage(): PlanUsageReport {
+  return { kind: "not-applicable" }
+}
+
 /** 取れたときの結果（中身は {@link planUsage}）。 */
 export function readyPlanUsage(overrides: Partial<PlanUsage> = {}): PlanUsageReport {
   return { kind: "ready", usage: planUsage(overrides) }

@@ -24,7 +24,7 @@ export type PlanUsage = {
 /**
  * プラン使用量の問い合わせの結果。3つに割るのは、画面ですることが違うから。
  * `unavailable` は再読み込みで直る見込みがある（口が落ちた・429 など）。
- * `not-applicable` は claude.ai の契約でない（API キーなど）ので再読み込みしても変わらず、札から再読み込みのボタンを外す。
+ * `not-applicable` は claude.ai の契約でない（API キーなど）か、契約の種類がまだ無いとき。
  */
 export type PlanUsageReport =
   | { readonly kind: "ready"; readonly usage: PlanUsage }
