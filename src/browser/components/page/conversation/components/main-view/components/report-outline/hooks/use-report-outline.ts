@@ -23,8 +23,8 @@ import {
   useReadingSection,
   type HeadingStep,
 } from "../../../../../../../../stores/reading-section.ts"
-import { detailBlockClassName } from "../../../../markdown/markdown.tsx"
 import type { HeadNotice, HeadNoticeAction } from "../../../domain/head-notice.ts"
+import { readableHeadings } from "../../../domain/report-heading.ts"
 import {
   isOutlineCollapsed,
   loadOutlinePanel,
@@ -108,8 +108,6 @@ const ACTIVE_SLACK_PX = 24
 /** 固定した見出しの上端が、固定したときの位置からこの距離までは動いていないとみなす（px）。 */
 const PIN_TOLERANCE_PX = 1
 
-const HEADING_SELECTOR = `.${detailBlockClassName} :is(h4, h5)`
-
 const OUTLINE_WIDTH_VARIABLE = "--outline-rail-width"
 
 /** やり取りの行の `<button>` が持つ属性。値はやり取りの id。 */
@@ -189,11 +187,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 
     function readHeadings(): void {
       // 筆がまだ届いていない節は並べない。
-      const headings = [...content.querySelectorAll<HTMLElement>(HEADING_SELECTOR)].filter(
-        (heading) =>
-          heading.closest("details:not([open])") === null &&
-          heading.closest(`[${REVEAL_PENDING_ATTRIBUTE}="pending"]`) === null,
-      )
+      const headings = readableHeadings(content)
       headingsRef.current = headings
       const next = headings.map((heading): ReportOutlineEntry => ({
         level: heading.tagName === "H4" ? "section" : "sub",

@@ -6,7 +6,8 @@ import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 // `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの場面で確かめる:
 // `notation`（記法の一覧）、`report-chart`（グラフの塊。ベンダのスクリプトが描く）、
 // `long-report-quick`（やり取りの列。札の幅で畳む）、
-// `turn-outline`（やり取りの列の上の段のやり取りと結果の印）。
+// `turn-outline`（やり取りの列の上の段のやり取りと結果の印）、
+// `reading-position`（別のやり取りへ移って戻ると読んでいた見出しの位置から見える）。
 
 const run = useScenarioRun()
 
@@ -111,5 +112,48 @@ describe("report → メインビュー", () => {
       .locator("section", { has: room.page.getByRole("heading", { level: 2, name: "依頼" }) })
       .getByText("指示をタスクにする（架空の依頼）")
       .waitFor()
+  })
+
+  it("別のやり取りへ移って戻ると、読んでいた見出しが同じ位置にあり、初めて開くやり取りは先頭から見える", async () => {
+    const room = await run.open({
+      scenario: "report-reading-position",
+      scene: "reading-position",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished", 2)
+    const heading = room.page.locator("h4", { hasText: "二の見出し2（架空）" }).filter({
+      visible: true,
+    })
+    await heading.waitFor()
+    await heading.evaluate((element) => {
+      element.scrollIntoView({ block: "start" })
+    })
+    const topOf = (): Promise<number> =>
+      heading.evaluate((element) => element.getBoundingClientRect().top)
+    // 転がり終えて落ち着いた位置を控える（Scroll Anchoring で動くことがあるので値が止まるまで待つ）。
+    await expect
+      .poll(async () => {
+        const first = await topOf()
+        await room.page.waitForTimeout(100)
+        return Math.abs((await topOf()) - first)
+      })
+      .toBeLessThan(1)
+    const before = await topOf()
+
+    await room.page.getByRole("button", { name: "完了: 読み位置の一つ目（架空の依頼）" }).click()
+    await room.page
+      .locator("h4", { hasText: "一の見出し1（架空）" })
+      .filter({ visible: true })
+      .waitFor()
+    const firstHeadingTop = await room.page
+      .locator("h4", { hasText: "一の見出し1（架空）" })
+      .filter({ visible: true })
+      .evaluate((element) => element.getBoundingClientRect().top)
+    expect(firstHeadingTop).toBeGreaterThan(0)
+
+    await room.page.getByRole("button", { name: "完了: 読み位置の二つ目（架空の依頼）" }).click()
+    await expect.poll(async () => Math.abs((await topOf()) - before)).toBeLessThanOrEqual(2)
   })
 })

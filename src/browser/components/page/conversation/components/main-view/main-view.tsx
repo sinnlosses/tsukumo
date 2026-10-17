@@ -49,7 +49,7 @@ import { Welcome } from "./components/welcome/welcome.tsx"
 import { WorkStrip } from "./components/work-strip/work-strip.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
-import { NO_SHOWN_KEY, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
+import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import { useReportOutlineTurns } from "./hooks/use-report-outline-turns.ts"
 import styles from "./main-view.module.css"
 
@@ -81,7 +81,7 @@ export function MainView(): ReactElement {
       : { kind: "newest" }
   const viewingPast = viewing.kind === "past"
   const view = shownView(content, turns, viewing)
-  useActiveTurnScroll(rootRef, shownKeyOf(view))
+  useActiveTurnScroll(rootRef, shownTargetOf(view))
 
   const notice = headNoticeOf({ content, moment, viewingPast, phase })
 
@@ -289,9 +289,9 @@ function planCountOf(turnStepList: TurnStepList): number {
 
 const NO_CARD = { kind: "none" } as const satisfies ShownCard
 
-function shownKeyOf(view: ShownView): string {
+function shownTargetOf(view: ShownView): ShownTarget {
   if (view.kind === "welcome" || view.card.kind === "none") {
-    return NO_SHOWN_KEY
+    return { kind: "none" }
   }
-  return `${view.kind}:${String(view.card.turn.id)}`
+  return { kind: view.kind, turnId: view.card.turn.id }
 }
