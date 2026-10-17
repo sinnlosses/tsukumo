@@ -7,7 +7,7 @@
 // 例外を投げない。`.beads` が無い・`bd` が無いときも `failed`。
 
 import { execFile } from "node:child_process"
-import { readdir, readFile } from "node:fs/promises"
+import { readdir, readFile, stat } from "node:fs/promises"
 import { join } from "node:path"
 
 import { z } from "zod"
@@ -97,7 +97,7 @@ export type BeadsStamp =
   | { readonly kind: "present"; readonly stamp: string | undefined }
 
 /**
- * `.beads` の有無と課題の変化の印（Dolt の `noms/manifest` の中身）を読む関数を作る。
+ * `.beads` の有無と課題の変化の印（{@link readBeadsStampOf}）を読む関数を作る。
  * `.beads` の場所は取れた1回だけ `bd where` で調べて覚え、見つからないうちは読むたびに調べ直す。
  * `bd where` がタイムアウトしたときは `.beads` があるものとして印を `undefined` にする。
  * `bd` の内部の置き場に頼るので、印が取れないとき・形が違うときは `undefined` を返し、呼ぶ側は毎回 `bd list` で読む。
@@ -149,26 +149,22 @@ export function readBeadsWorkspace(cwd: string): Promise<BeadsWorkspace> {
   })
 }
 
+/** Dolt のデータベースを置く `.beads` の下のディレクトリ。埋め込みは `embeddeddolt`、`dolt sql-server` は `dolt`。 */
+const DOLT_DATA_DIRECTORIES = ["embeddeddolt", "dolt"] as const
+
+/** Dolt の chunk journal。`dolt sql-server` は書いても manifest の中身を変えず、これだけが伸びる。 */
+const CHUNK_JOURNAL_FILE = "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+
 /**
- * `.beads` の課題の変化の印（Dolt の `noms/manifest` の中身）。
- * `bd` は読むだけでも manifest の更新時刻を進めるが、中身は書いたときだけ変わる。
+ * `.beads` の課題の変化の印（Dolt の `noms/manifest` の中身と chunk journal の大きさ）。
+ * `bd` は読むだけでも manifest の更新時刻を進めるが、中身と journal の大きさは書いたときだけ変わる。
  * `bd` の内部の置き場に頼るので、取れないとき・形が違うときは `undefined`。
  */
 export async function readBeadsStampOf(beadsDir: string): Promise<string | undefined> {
-  const databasesDir = join(beadsDir, "embeddeddolt")
-  try {
-    const entries = await readdir(databasesDir, { withFileTypes: true })
-    const manifests = await Promise.all(
-      entries
-        .filter((entry) => entry.isDirectory())
-        .map((entry) =>
-          readFile(join(databasesDir, entry.name, ".dolt", "noms", "manifest"), "utf8"),
-        ),
-    )
-    return manifests.length === 0 ? undefined : manifests.join(",")
-  } catch {
-    return undefined
-  }
+  const stamps = (
+    await Promise.all(DOLT_DATA_DIRECTORIES.map((name) => readDatabaseStamps(join(beadsDir, name))))
+  ).flat()
+  return stamps.length === 0 ? undefined : stamps.join(",")
 }
 
 /** 1件ぶんの形。読めない1件はその1件だけ読み飛ばす（ほかの課題まで「読めない」にしない）。 */
@@ -204,6 +200,28 @@ export function beadsOutcomeOf(stdout: string): BeadsOutcome {
     return issue.success ? [beadsIssueOf(issue.data)] : []
   })
   return { kind: "issues", issues }
+}
+
+/** `dataDir` の下で manifest の読めるデータベースごとの印。`dolt` には `.doltcfg` のようなデータベースでないものも並ぶので、読めないものは飛ばす。 */
+async function readDatabaseStamps(dataDir: string): Promise<readonly string[]> {
+  const entries = await readdir(dataDir, { withFileTypes: true }).catch(() => [])
+  const stamps = await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map(async (entry) => {
+        const nomsDir = join(dataDir, entry.name, ".dolt", "noms")
+        const manifest = await readFile(join(nomsDir, "manifest"), "utf8").catch(() => undefined)
+        if (manifest === undefined) {
+          return []
+        }
+        const journalSize = await stat(join(nomsDir, CHUNK_JOURNAL_FILE)).then(
+          (journal) => String(journal.size),
+          () => "",
+        )
+        return [`${manifest}#${journalSize}`]
+      }),
+  )
+  return stamps.flat()
 }
 
 function listAllBeadsIssues(cwd: string): Promise<BeadsOutcome> {
