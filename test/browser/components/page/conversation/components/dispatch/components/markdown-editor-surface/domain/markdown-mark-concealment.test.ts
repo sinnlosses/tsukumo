@@ -1,5 +1,5 @@
 import { markdownLanguage } from "@codemirror/lang-markdown"
-import { ensureSyntaxTree } from "@codemirror/language"
+import { ensureSyntaxTree, syntaxTree } from "@codemirror/language"
 import { EditorSelection, EditorState } from "@codemirror/state"
 import { describe, expect, it } from "vitest"
 
@@ -65,8 +65,15 @@ function caretAt(position: number): EditorSelection {
 
 /** 返った範囲を、種類と範囲の字（リンクなら行き先も）の組にする。 */
 function concealedTexts(text: string, selection: EditorSelection): readonly (readonly string[])[] {
-  const state = EditorState.create({ doc: text, selection, extensions: [markdownLanguage] })
-  ensureSyntaxTree(state, state.doc.length, 1000)
+  const created = EditorState.create({ doc: text, selection, extensions: [markdownLanguage] })
+  if (ensureSyntaxTree(created, created.doc.length, 1000) === null) {
+    throw new Error("構文木を最後まで作れなかった")
+  }
+  // syntaxTree(state) は create 時の木の写しを返すので、更新して完成した木を取り込む。
+  const state = created.update({}).state
+  if (syntaxTree(state).length !== state.doc.length) {
+    throw new Error("状態の構文木が文書の終わりまで届いていない")
+  }
   return concealedMarks(state).map((mark: ConcealedMark) => {
     switch (mark.kind) {
       case "quote-line":
