@@ -4,6 +4,7 @@
 // 「逃げ道の中の記法 × レポート数」「差し戻しの種類 × 回数」を割合つきで出す。
 // 欄を記録する前の版（2）の行も読み、欄の表だけはそれを記録した版の行を分母にする（欄を足す前後で逃げ道を見比べるため）。
 // `figure` を記録する前の版（5以前）の行は、`figure` の表では理由が `unrecorded` の `none` に数える。
+// 強調の数・ラベルの無い辺の割合・節点数の分布は、それを記録した版7以降の行を分母にする。
 //
 // 使い方:
 //   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -74,6 +75,19 @@ const figureFieldSchema = z.union([
   z.object({ figureKind: z.string() }),
 ])
 
+/** `figure` を記録し、強調と graph の数を記録する前の版。 */
+const COUNTLESS_FORMAT_VERSION = 6
+
+/** 強調と graph の数の表の分母になる最初の版。 */
+const COUNT_FORMAT_VERSION = 7
+
+const countRecordShape = {
+  emphasisCount: z.number(),
+  graphEdgeCount: z.number(),
+  graphUnlabeledEdgeCount: z.number(),
+  graphNodeCount: z.number(),
+}
+
 const recordSchema = z.union([
   z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
   z.object({
@@ -83,14 +97,20 @@ const recordSchema = z.union([
   }),
   z.object({ v: z.literal(MODIFIED_FORMAT_VERSION), ...visualRecordShape }),
   z.object({ v: z.literal(FIGURE_FIELDLESS_FORMAT_VERSION), ...figureRecordShape }),
+  z.object({ v: z.literal(COUNTLESS_FORMAT_VERSION), ...figureRecordShape }).and(figureFieldSchema),
   z
-    .object({ v: z.literal(REPORT_USAGE_FORMAT_VERSION), ...figureRecordShape })
+    .object({
+      v: z.literal(REPORT_USAGE_FORMAT_VERSION),
+      ...figureRecordShape,
+      ...countRecordShape,
+    })
     .and(figureFieldSchema),
 ])
 type UsageRecord = z.infer<typeof recordSchema>
 type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[] }>
 type VisualRecord = Extract<UsageRecord, { readonly hasModifiedFiles: boolean }>
 type FigureRecord = Extract<UsageRecord, { readonly hasFigure: boolean }>
+type CountRecord = Extract<UsageRecord, { readonly emphasisCount: number }>
 
 /** `figure` の表に出す種類。0件でも出す。 */
 const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
@@ -106,6 +126,7 @@ const rejectionSchema = z.object({
     z.literal(VISUALLESS_FORMAT_VERSION),
     z.literal(MODIFIED_FORMAT_VERSION),
     z.literal(FIGURE_FIELDLESS_FORMAT_VERSION),
+    z.literal(COUNTLESS_FORMAT_VERSION),
     z.literal(REPORT_USAGE_FORMAT_VERSION),
   ]),
   kind: z.literal("rejected"),
@@ -139,6 +160,9 @@ const visualRecords = records.filter(
 const figureRecords = records.filter(
   (record): record is FigureRecord => record.v >= FIGURE_FIELDLESS_FORMAT_VERSION,
 )
+const countRecords = records.filter(
+  (record): record is CountRecord => record.v >= COUNT_FORMAT_VERSION,
+)
 process.stdout.write(
   fieldRecords.length === 0
     ? "塊の欄 × レポート数: 欄を記録した行が無い"
@@ -157,6 +181,8 @@ process.stdout.write("\n\n")
 process.stdout.write(imageOversightSection(figureRecords))
 process.stdout.write("\n\n")
 process.stdout.write(figureFieldSection(records))
+process.stdout.write("\n\n")
+process.stdout.write(countSection(countRecords))
 process.stdout.write("\n\n")
 process.stdout.write(
   table("逃げ道の外の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
@@ -300,6 +326,70 @@ function figureFieldSection(rows: readonly UsageRecord[]): string {
     table("`none` の理由 × レポート数（全レポート）", reasons, rows, noneReasonsOf),
     table("`none` の理由 × レポート数（task の最終レポート）", reasons, taskRows, noneReasonsOf),
   ].join("\n\n")
+}
+
+function countSection(rows: readonly CountRecord[]): string {
+  if (rows.length === 0) {
+    return "強調の数・ラベルの無い辺の割合・節点数の分布: 記録した行が無い"
+  }
+  const bucketTable = (
+    title: string,
+    buckets: readonly string[],
+    source: readonly CountRecord[],
+    bucketOf: (record: CountRecord) => string,
+    applies: (record: CountRecord) => boolean = () => true,
+  ): string => {
+    const target = source.filter(applies)
+    const rows = buckets.map((bucket) => {
+      const count = target.filter((record) => bucketOf(record) === bucket).length
+      const percent = (target.length === 0 ? 0 : (count / target.length) * 100).toFixed(1)
+      return `  ${bucket.padEnd(10)} ${String(count).padStart(5)}  ${percent.padStart(5)}%`
+    })
+    return [`${title}:`, ...rows].join("\n")
+  }
+  const emphasisBuckets = ["0", "1", "2", "3以上"]
+  const emphasisBucket = (record: CountRecord): string =>
+    record.emphasisCount >= 3 ? "3以上" : String(record.emphasisCount)
+  const unlabeledBuckets = ["0%", "1〜49%", "50%以上"]
+  const unlabeledBucket = (record: CountRecord): string => {
+    const percent = (record.graphUnlabeledEdgeCount / record.graphEdgeCount) * 100
+    if (record.graphEdgeCount === 0 || percent === 0) {
+      return "0%"
+    }
+    return percent < 50 ? "1〜49%" : "50%以上"
+  }
+  const hasGraph = (record: CountRecord): boolean => record.graphNodeCount > 0
+  const nodeBuckets = ["〜5", "6〜10", "11以上"]
+  const nodeBucket = (record: CountRecord): string =>
+    record.graphNodeCount <= 5 ? "〜5" : record.graphNodeCount <= 10 ? "6〜10" : "11以上"
+  const scopes = [
+    ["全レポート", rows],
+    ["task の最終レポート", rows.filter((record) => record.forTask)],
+  ] as const
+  return scopes
+    .flatMap(([scope, scoped]) => [
+      bucketTable(
+        `強調の数の分布 × レポート数（${scope}。版7以降の${String(scoped.length)}件のうち。外す基準の対象ではない）`,
+        emphasisBuckets,
+        scoped,
+        emphasisBucket,
+      ),
+      bucketTable(
+        `graph のあるレポートのラベルの無い辺の割合（${scope}。graph のあるものだけが分母。外す基準の対象ではない）`,
+        unlabeledBuckets,
+        scoped,
+        unlabeledBucket,
+        hasGraph,
+      ),
+      bucketTable(
+        `graph の節点数の分布（${scope}。graph のあるものだけが分母。外す基準の対象ではない）`,
+        nodeBuckets,
+        scoped,
+        nodeBucket,
+        hasGraph,
+      ),
+    ])
+    .join("\n\n")
 }
 
 /** `figure` の種類。記録する前の版の行は `none`。 */

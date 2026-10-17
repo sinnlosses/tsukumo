@@ -321,6 +321,10 @@ describe("reportUsageEntryOf", () => {
       forTask: false,
       hasFigure: false,
       readImageWithoutImageBlock: false,
+      emphasisCount: 0,
+      graphEdgeCount: 0,
+      graphUnlabeledEdgeCount: 0,
+      graphNodeCount: 0,
     })
   })
 
@@ -398,6 +402,70 @@ describe("reportUsageEntryOf", () => {
       expect(entryOf([text, image], true).readImageWithoutImageBlock).toBe(false)
       expect(entryOf([beforeAfterImage], true).readImageWithoutImageBlock).toBe(false)
       expect(entryOf([text], false).readImageWithoutImageBlock).toBe(false)
+    })
+  })
+
+  describe("強調と graph の数", () => {
+    const entryOf = (blocks: readonly ReportBlock[]) =>
+      reportUsageEntryOf(
+        reportOfSections([{ heading: "", blocks }]),
+        "claude-session-1",
+        1_000,
+        false,
+      )
+
+    it("強調の対を text・list・表のセルに散らして合計し、インラインコードの中の ** は数えない", () => {
+      const entry = entryOf([
+        { kind: "text", text: "架空の**結論**と`**飾り**`。", fold: "" },
+        {
+          kind: "list",
+          style: "bullet",
+          items: [
+            { label: "", text: "**一**と**二**", done: false },
+            { label: "", text: "なし", done: false },
+          ],
+          fold: "",
+        },
+        {
+          kind: "table",
+          title: "",
+          columns: ["a", "b"],
+          rows: [["**甲**", { status: "ok", text: "**乙**" }, { from: "**前**", to: "後" }]],
+          fold: "",
+        },
+      ])
+
+      expect(entry.emphasisCount).toBe(6)
+    })
+
+    it("graph が2つあれば辺とラベルの無い辺を合計し、節点数は多いほうにする", () => {
+      const graph = (source: string): ReportBlock => ({
+        kind: "graph",
+        title: "",
+        direction: "TD",
+        source,
+        fold: "",
+      })
+
+      const entry = entryOf([
+        graph("架空A -> 架空B: 渡す\n架空B -> 架空C"),
+        graph("架空D -> 架空E: 呼ぶ"),
+      ])
+
+      expect(entry.graphEdgeCount).toBe(3)
+      expect(entry.graphUnlabeledEdgeCount).toBe(1)
+      expect(entry.graphNodeCount).toBe(3)
+    })
+
+    it("graph も強調も無ければすべて 0", () => {
+      const entry = entryOf([{ kind: "text", text: "架空の根拠。", fold: "" }])
+
+      expect([
+        entry.emphasisCount,
+        entry.graphEdgeCount,
+        entry.graphUnlabeledEdgeCount,
+        entry.graphNodeCount,
+      ]).toEqual([0, 0, 0, 0])
     })
   })
 

@@ -464,6 +464,10 @@ describe("createSessionManager", () => {
           forTask: false,
           hasFigure: false,
           readImageWithoutImageBlock: false,
+          emphasisCount: 0,
+          graphEdgeCount: 0,
+          graphUnlabeledEdgeCount: 0,
+          graphNodeCount: 0,
           sessionSummary: undefined,
         },
       ])

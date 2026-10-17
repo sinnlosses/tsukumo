@@ -4,7 +4,7 @@
 import type { RecordedFigureNoneReason, RecordedReportFigure } from "./report-block.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 6 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 7 satisfies number
 
 /**
  * `figure` の欄の記録（版6から）。`figureKind` は図の塊の `kind` か `none`、`noneReason` は `none` のときだけ。
@@ -42,6 +42,14 @@ export type ReportUsageRecord = ReportFigureUsage & {
   readonly hasFigure: boolean
   /** このターンにメインが画像のファイルを `Read` したのに `image` の塊が無いか（版5から）。 */
   readonly readImageWithoutImageBlock: boolean
+  /** `text`・`list`・表のセルに出た強調の対の数の合計（版7から）。 */
+  readonly emphasisCount: number
+  /** `graph` の辺の数の合計（版7から）。 */
+  readonly graphEdgeCount: number
+  /** `graph` の辺のうちラベルの無いものの数の合計（版7から）。 */
+  readonly graphUnlabeledEdgeCount: number
+  /** `graph` の節点数。複数あれば最大（版7から）。 */
+  readonly graphNodeCount: number
 }
 
 /**

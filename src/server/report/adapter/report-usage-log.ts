@@ -62,5 +62,9 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     forTask: entry.forTask,
     hasFigure: entry.hasFigure,
     readImageWithoutImageBlock: entry.readImageWithoutImageBlock,
+    emphasisCount: entry.emphasisCount,
+    graphEdgeCount: entry.graphEdgeCount,
+    graphUnlabeledEdgeCount: entry.graphUnlabeledEdgeCount,
+    graphNodeCount: entry.graphNodeCount,
   }
 }

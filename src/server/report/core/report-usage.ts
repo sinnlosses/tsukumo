@@ -3,6 +3,7 @@
 
 import { isPlainObject } from "remeda"
 
+import { readGraphSource } from "../../../shared/report/graph-source.ts"
 import {
   type ReportBlock,
   type ReportSection,
@@ -45,6 +46,14 @@ export type ReportUsageEntry = {
   readonly hasFigure: boolean
   /** このターンにメインが画像のファイルを `Read` したのに `image` の塊（`beforeAfter` の側と `figure` を含む）が無いか。 */
   readonly readImageWithoutImageBlock: boolean
+  /** `text` の塊の本文・`list` の項目の text・表のセルに出た強調の対の数の合計。インラインコードの中は数えない。 */
+  readonly emphasisCount: number
+  /** `graph` の辺の数の合計。 */
+  readonly graphEdgeCount: number
+  /** `graph` の辺のうちラベルの無いものの数の合計。 */
+  readonly graphUnlabeledEdgeCount: number
+  /** `graph` の節点数。1レポートに複数あれば最大。 */
+  readonly graphNodeCount: number
 }
 
 const FIGURE_KINDS: readonly string[] = ["image", "mermaid", "graph", "svg"]
@@ -115,6 +124,11 @@ export function reportUsageEntryOf(
           [block.before, block.after].some((side) => FIGURE_KINDS.includes(side.kind))),
     ),
     readImageWithoutImageBlock: mainReadImageFile && reportImagePaths(drawnSections).length === 0,
+    emphasisCount: blocksOf(drawnSections).reduce(
+      (total, block) => total + emphasisCountOf(block),
+      0,
+    ),
+    ...graphCountsOf(blocksOf(drawnSections)),
   }
 }
 
@@ -130,6 +144,55 @@ export function isMainImageFileRead(
   }
   const path = event.input.file_path.toLowerCase()
   return IMAGE_FILE_EXTENSIONS.some((extension) => path.endsWith(extension))
+}
+
+const INLINE_CODE = /(`+)[\s\S]*?\1/g
+
+const EMPHASIS_PAIR = /\*\*[\s\S]+?\*\*/g
+
+function emphasisCountIn(text: string): number {
+  return text.replace(INLINE_CODE, "").match(EMPHASIS_PAIR)?.length ?? 0
+}
+
+function emphasisCountOf(block: ReportBlock): number {
+  switch (block.kind) {
+    case "text":
+      return emphasisCountIn(block.text)
+    case "list":
+      return block.items.reduce((total, item) => total + emphasisCountIn(item.text), 0)
+    case "table":
+      return block.rows.reduce(
+        (total, row) =>
+          total +
+          row.reduce(
+            (rowTotal, cell) =>
+              rowTotal +
+              (typeof cell === "string"
+                ? emphasisCountIn(cell)
+                : "from" in cell
+                  ? emphasisCountIn(cell.from) + emphasisCountIn(cell.to)
+                  : emphasisCountIn(cell.text)),
+            0,
+          ),
+        0,
+      )
+    default:
+      return 0
+  }
+}
+
+function graphCountsOf(
+  blocks: readonly ReportBlock[],
+): Pick<ReportUsageEntry, "graphEdgeCount" | "graphUnlabeledEdgeCount" | "graphNodeCount"> {
+  const readings = blocks.flatMap((block) =>
+    block.kind === "graph" ? [readGraphSource(block.source)] : [],
+  )
+  const edges = readings.flatMap((reading) => reading.edges)
+  return {
+    graphEdgeCount: edges.length,
+    graphUnlabeledEdgeCount: edges.filter((edge) => edge.label.trim() === "").length,
+    graphNodeCount: Math.max(0, ...readings.map((reading) => reading.nodes.length)),
+  }
 }
 
 function blocksOf(sections: readonly ReportSection[]): readonly ReportBlock[] {

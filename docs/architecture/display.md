@@ -1071,7 +1071,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 版5からは、段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるかの `hasFigure` と、
 このターンにメインが画像のファイルを `Read` したのに `image` の塊が無かったかの `readImageWithoutImageBlock`
 （サブエージェントの `Read` は数えない）も足す。版6からは、`figure` の欄の種類（図の塊の `kind` か `none`）の `figureKind` と、
-`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。数えるだけで差し戻しにはしない。中身は一切持たない
+`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。数えるだけで差し戻しにはしない。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
 `src/server/report/adapter/report-usage-log.ts`、何を1行にするかは
 `src/server/report/core/report-usage.ts` が持つ。逃げ道の記法の検出は `src/server/report/core/report-markdown-notation.ts`、
@@ -1083,6 +1083,8 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 「`figure` の種類 × レポート数」と「`none` の理由 × レポート数」を、全レポートと task の最終レポートのそれぞれについて出す。
 欄を記録する前の行（版2）も読み、欄の表だけは欄を記録した行を、modified の表は版4以降の行を、図と画像の表は版5以降の行を分母にする（欄を足す前後で使われ方を見比べるため）。
 `figure` の表では、版5以前の行を理由が `unrecorded` の `none` に数える。
+版7の欄の表は「強調の数の分布」（0・1・2・3以上 × レポート数）・「graph のあるレポートのラベルの無い辺の割合」（0%・1〜49%・50%以上）・「graph の節点数の分布」（〜5・6〜10・11以上）で、
+全レポートと task の最終レポートのそれぞれに出し、分母は版7以降の行（割合と節点数は graph のあるレポート）。外す基準の対象ではない。
 `report` が差し戻されたときも同じファイルに1行書く（`kind: "rejected"`・時刻・セッションID・差し戻しの種類の名前だけで、
 手続きの種類〔`REPORT_PROCEDURE_REJECTIONS` の名前〕と記法の違反の `kind`。本文も文面も持たない）。
 集計は「差し戻しの種類 × 回数」の表で、割合は `report` の呼び出し（受け付け＋差し戻し）の数に対して出す。

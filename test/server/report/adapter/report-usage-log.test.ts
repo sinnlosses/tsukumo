@@ -49,6 +49,10 @@ function entry(
     forTask: true,
     hasFigure: true,
     readImageWithoutImageBlock: false,
+    emphasisCount: 0,
+    graphEdgeCount: 0,
+    graphUnlabeledEdgeCount: 0,
+    graphNodeCount: 0,
   }
 }
 
@@ -92,6 +96,10 @@ describe("createReportUsageLog", () => {
       "forTask",
       "hasFigure",
       "readImageWithoutImageBlock",
+      "emphasisCount",
+      "graphEdgeCount",
+      "graphUnlabeledEdgeCount",
+      "graphNodeCount",
     ])
     expect(record).toMatchObject({
       v: REPORT_USAGE_FORMAT_VERSION,
