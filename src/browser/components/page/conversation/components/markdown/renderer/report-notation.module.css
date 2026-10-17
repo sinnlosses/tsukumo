@@ -1413,6 +1413,13 @@
 .detail-block .code-line-output {
   color: var(--ink-soft);
 }
+/* diff の対の行の、違う語。行の地（テーマの hljs-addition / hljs-deletion）の上に状態の色を重ねる。 */
+.detail-block .code-diff-added {
+  background: color-mix(in srgb, var(--state-ok) 45%, transparent);
+}
+.detail-block .code-diff-removed {
+  background: color-mix(in srgb, var(--state-ng) 45%, transparent);
+}
 .detail-block .code-mark-label {
   flex: none;
   font-family: var(--font-sans);

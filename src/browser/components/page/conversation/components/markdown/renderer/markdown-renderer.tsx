@@ -51,6 +51,7 @@ import { splitCodeLines } from "./code-line.ts"
 import { CodeLines } from "./code-lines.tsx"
 import { colorSwatch, readColorToken } from "./color-swatch.ts"
 import { CopyButton } from "./copy-button.tsx"
+import { diffWordRanges, type DiffWordRanges } from "./diff-pair.ts"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import {
   NotationAside,
@@ -149,6 +150,8 @@ function ReportMarkdown(props: {
 
 type PreProps = JSX.IntrinsicElements["pre"] & ExtraProps
 
+const NO_WORD_RANGES: DiffWordRanges = new Map()
+
 /**
  * フェンス付きコードブロックの入れ物。
  * `node`（hast の `pre` 要素。react-markdown が渡す）の中の `code` 要素の `className` を見て、`language-mermaid` / `language-chart` なら {@link MermaidBlock} / {@link ChartBlock} に振り、それ以外は素の `<pre>` のまま描く（色付けは `rehype-highlight` がすでにこの木に当ててある）。
@@ -182,18 +185,24 @@ function Pre(props: PreProps): ReactElement {
   const marks = codeMarks(codeNode)
   const source = codeSourceText(codeNode)
   const kinds = shellLineKinds(codeLanguage(codeNode), source)
+  const wordRanges = codeLanguage(codeNode) === "diff" ? diffWordRanges(source) : NO_WORD_RANGES
   return (
     <div className={styles["code-file"]}>
       <div className={styles["code-file-name"]}>
         {fileName !== undefined && <FileNameLabel fileName={fileName} />}
         <CopyButton text={kinds === undefined ? source : shellCommandText(source, kinds)} />
       </div>
-      {marks.length === 0 && kinds === undefined ? (
+      {marks.length === 0 && kinds === undefined && wordRanges.size === 0 ? (
         <pre {...rest} />
       ) : (
         <pre {...rest}>
           <code className={clsx(codeNode.properties.className)}>
-            <CodeLines lines={splitCodeLines(codeNode.children)} marks={marks} kinds={kinds} />
+            <CodeLines
+              lines={splitCodeLines(codeNode.children)}
+              marks={marks}
+              kinds={kinds}
+              wordRanges={wordRanges}
+            />
           </code>
         </pre>
       )}

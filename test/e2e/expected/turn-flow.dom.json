@@ -777,12 +777,11 @@
                                       "children": [
                                         {
                                           "tag": "code",
-                                          "attributes": {
-                                            "data-filename": "src/a.ts"
-                                          },
                                           "children": [
-                                            "-const TICKS = 12",
-                                            "+const TICKS = 24"
+                                            "-const TICKS =",
+                                            "12",
+                                            "+const TICKS =",
+                                            "24"
                                           ]
                                         }
                                       ]

@@ -571,6 +571,30 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     )
   })
 
+  it("```diff の -/+ の対は、行の中の違う語だけが .code-diff-removed / .code-diff-added になり、行の字は変わらない", () => {
+    const { container } = render(<Markdown text={"```diff\n-const a = 1\n+const a = 2\n```"} />)
+
+    expect(
+      [...container.querySelectorAll(".hljs-deletion .code-diff-removed")].map(
+        (n) => n.textContent,
+      ),
+    ).toEqual(["1"])
+    expect(
+      [...container.querySelectorAll(".hljs-addition .code-diff-added")].map((n) => n.textContent),
+    ).toEqual(["2"])
+    expect(container.querySelector(".hljs-addition")?.textContent).toBe("+const a = 2")
+  })
+
+  it("```diff の数の違う塊と、語が 200 を超える行には語の地が付かない", () => {
+    const many = (last: string): string => `${"!".repeat(200)}${last}`
+    const words = ".code-diff-added, .code-diff-removed"
+    const unpaired = render(<Markdown text={"```diff\n-a\n-b\n+c\n```"} />)
+    expect(unpaired.container.querySelector(words)).toBeNull()
+
+    const long = render(<Markdown text={`\`\`\`diff\n-${many("a")}\n+${many("b")}\n\`\`\``} />)
+    expect(long.container.querySelector(words)).toBeNull()
+  })
+
   it("フェンスに書いたファイル名がブロックの左上のラベルになる", () => {
     // 言語名のあとのファイル名は mdast では `code` の `data.meta` に入り、rehype-raw が
     // 木を書き出して読み直す時点で落ちる。属性へ移す `rehypeCodeFileName` とサニタイザの
