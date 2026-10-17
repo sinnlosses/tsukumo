@@ -128,7 +128,7 @@ Storybook の型定義（`react-docgen-typescript` ほか）が TypeScript 7 の
 ライブラリの `.d.ts` の検査を外す必要があるため（本体の `tsconfig.json` は外さない）。
 
 `zod` と `@anthropic-ai/claude-agent-sdk` はある。`ws` を選ぶのは**ランタイム固有の API に寄せない**ため。
-**`playwright-core` はブラウザを落とさず手元の Google Chrome を動かし**、テストランナー（`@playwright/test`）は足さない。
+**`playwright-core` は Playwright 同梱の `chromium-headless-shell`（`pnpm exec playwright-core install chromium-headless-shell` で入れる）を動かし、製品版の Google Chrome は鍵をキーチェーンへ溜めるので使わず**、テストランナー（`@playwright/test`）は足さない。
 
 **足す外部コマンド**（パッケージではなく OS のもの。**ユーザーの承認済み**）: `taskpolicy`（macOS 標準。2026-10-17 承認）。
 `pnpm run check` が段の子を QoS の clamp で起こすのに使い、無い環境では `nice` で起こす

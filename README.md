@@ -331,7 +331,7 @@ pnpm run ship                  # タスクに紐付かない作業を main へ�
 pnpm run test                  # 単体テスト全体（Vitest。`test/e2e/` は外す。ファイルを渡すと規約のテストも足す）
 npx vitest run test/cli.test.ts  # 単体テストファイルのみ実行
 pnpm run test:coverage         # 単体テストのカバレッジ（src/ が対象。HTML は /tmp/tsukumo-coverage/。check には入れない）
-pnpm run test:e2e <ファイル>    # E2E（組み立ててから渡した test/e2e/*.test.ts を走らせる。手元の Chrome が要る。成果物と
+pnpm run test:e2e <ファイル>    # E2E（組み立ててから渡した test/e2e/*.test.ts を走らせる。Playwright の headless shell が要る（`pnpm exec playwright-core install chromium-headless-shell`）。成果物と
                               #   スクリーンショットは /tmp/tsukumo-e2e/。ファイルなしの全件は check --full の中でだけ通る）
 pnpm run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書き直す。git diff で読んでから入れる。
                               #   既定は check と同じ選び方の E2E だけ。--full で全件、ファイルを渡せばそれだけ

@@ -287,14 +287,13 @@ async function launchChrome(): Promise<LaunchedChrome> {
 async function launchChromeServer(): Promise<BrowserServer> {
   try {
     return await chromium.launchServer({
-      channel: "chrome",
       headless: true,
       timeout: BROWSER_STEP_TIMEOUT_MS,
     })
   } catch (error) {
     const reason = error instanceof Error ? error.message.split("\n")[0] : String(error)
     throw new Error(
-      `E2E には手元の Chrome が要る（playwright-core の channel "chrome" で起こせなかった）: ${String(reason)}`,
+      `E2E には Playwright の headless shell が要る（\`pnpm exec playwright-core install chromium-headless-shell\` を打つ）: ${String(reason)}`,
       { cause: error },
     )
   }

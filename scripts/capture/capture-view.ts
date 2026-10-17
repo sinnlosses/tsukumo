@@ -2,8 +2,9 @@
 // 数値で出す。描画に関わる変更の `evidence`（`docs/architecture/testing.md`「手で確かめること」）を
 // 作るための道具で、tsukumo 本体からは呼ばれないので scripts/ に置く。
 //
-// 手元の Google Chrome を使う（`channel: "chrome"`）。Playwright のブラウザは落とさないので、
-// 入っているのは `playwright-core`（driver だけ、13MB）。Chrome が無い環境では起動に失敗する。
+// Playwright の headless shell を使う。無い環境では起動に失敗するので
+// `pnpm exec playwright-core install chromium-headless-shell` で入れる。製品版の Google Chrome
+// （`channel: "chrome"`）は起こすたびにキーチェーンへ鍵を足すので使わない。
 //
 // fake driver（`TSUKUMO_DRIVER=fake`）と組み合わせて使う。 本物の claude を起こさずに画面全体を
 // 出せるので、API を使わずに何度でも撮り直せる（`docs/architecture/testing.md`「テスト」）。
@@ -235,7 +236,7 @@ async function capture(
   skipReveal: boolean,
   options: Extract<Options, { readonly kind: "capture" }>,
 ): Promise<number> {
-  const browser = await chromium.launch({ channel: "chrome", headless: true })
+  const browser = await chromium.launch({ headless: true })
   try {
     const page = await browser.newPage({
       viewport: { width: options.width, height: options.height },

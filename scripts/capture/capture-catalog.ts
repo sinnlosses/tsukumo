@@ -103,7 +103,7 @@ async function main(argv: readonly string[]): Promise<number> {
   }
 
   mkdirSync(options.outDir, { recursive: true })
-  const browser = await chromium.launch({ channel: "chrome", headless: true })
+  const browser = await chromium.launch({ headless: true })
   const shots: Shot[] = []
   try {
     for (const entry of entries) {

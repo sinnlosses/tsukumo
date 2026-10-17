@@ -47,7 +47,7 @@ if (files.length === 0) {
 
 let total = 0
 try {
-  const browser = await chromium.launch({ channel: "chrome", headless: true })
+  const browser = await chromium.launch({ headless: true })
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
     for (const file of files) {
