@@ -35,6 +35,11 @@ export type StagePlan = {
   readonly notice: string
 }
 
+/** 単体の段を関連のテストに絞るときの、`pnpm run test` への先頭の引数。 */
+export const RELATED_FLAG = "--related"
+
+const CODE_DIRECTORIES = ["src/", "test/", "scripts/"]
+
 /**
  * `changedPaths` が空なら変えたファイルを集められなかったものとして扱う。
  * `chooseE2eStages` は E2E の段を選ぶ呼び出しで、文書だけの変更では呼ばない。
@@ -42,6 +47,7 @@ export type StagePlan = {
 export function planStages(
   changedPaths: readonly string[],
   chooseE2eStages: () => readonly Stage[],
+  forceFull: boolean,
 ): StagePlan {
   if (isDocumentOnlyChange(changedPaths)) {
     return {
@@ -52,14 +58,20 @@ export function planStages(
       notice: "文書だけの変更のため format:check と文書の検査だけを打つ",
     }
   }
+  const codePaths = forceFull ? [] : changedPaths.filter(isCodePath)
+  const narrowed = codePaths.length > 0
   return {
     stages: [
       { name: "typecheck", args: [], heavy: false },
       { name: "lint", args: [], heavy: false },
       { name: "format:check", args: [], heavy: false },
-      { name: "test", args: [], heavy: true },
+      { name: "test", args: narrowed ? [RELATED_FLAG, ...codePaths] : [], heavy: true },
       ...chooseE2eStages(),
     ],
-    notice: "",
+    notice: narrowed ? "単体は変えたファイルに関連するものだけ" : "",
   }
+}
+
+function isCodePath(path: string): boolean {
+  return CODE_DIRECTORIES.some((directory) => path.startsWith(directory))
 }

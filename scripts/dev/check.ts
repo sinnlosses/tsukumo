@@ -51,7 +51,7 @@ const priorityTool = findPriorityTool(process.env.PATH ?? "")
 alignSubmodulesOrExit()
 
 const changedPaths = await collectPathsForPlan()
-const stagePlan = planStages(changedPaths, chooseE2eStages)
+const stagePlan = planStages(changedPaths, chooseE2eStages, forceFull)
 if (stagePlan.notice !== "") {
   process.stdout.write(`${stagePlan.notice}\n`)
 }

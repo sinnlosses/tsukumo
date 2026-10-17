@@ -19,5 +19,10 @@ export function withConventionTests(args: readonly string[]): readonly string[] 
   if (!hasFilter) {
     return args
   }
+  return withRelatedConventionTests(args)
+}
+
+/** `vitest related` に渡す引数。絞り込みの有無に関わらず、未指定の規約のテストを足す。 */
+export function withRelatedConventionTests(args: readonly string[]): readonly string[] {
   return [...args, ...CONVENTION_TEST_PATHS.filter((file) => !args.includes(file))]
 }

@@ -6,6 +6,7 @@ import { DOCUMENT_CHECK_TEST_FILES } from "../../../scripts/dev/lib/check-stage.
 import {
   CONVENTION_TEST_PATHS,
   withConventionTests,
+  withRelatedConventionTests,
 } from "../../../scripts/dev/lib/convention-test.ts"
 
 describe("withConventionTests", () => {
@@ -48,6 +49,12 @@ describe("withConventionTests", () => {
       "test/a.test.ts",
       ...CONVENTION_TEST_PATHS,
     ])
+  })
+})
+
+describe("withRelatedConventionTests", () => {
+  test("変えたファイルがテストでなくても規約のテストを後ろに足す", () => {
+    expect(withRelatedConventionTests(["src/a.ts"])).toEqual(["src/a.ts", ...CONVENTION_TEST_PATHS])
   })
 })
 

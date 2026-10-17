@@ -76,9 +76,13 @@ describe("planStages", () => {
   const choose = () => [e2eStage]
 
   test("文書だけの変更は E2E を選ばず、format:check と文書の検査だけ", () => {
-    const plan = planStages(["docs/workflow.md", "CLAUDE.md"], () => {
-      throw new Error("E2E は選ばない")
-    })
+    const plan = planStages(
+      ["docs/workflow.md", "CLAUDE.md"],
+      () => {
+        throw new Error("E2E は選ばない")
+      },
+      false,
+    )
     expect(plan.stages).toEqual([
       { name: "format:check", args: [], heavy: false },
       { name: "test:document", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
@@ -86,7 +90,7 @@ describe("planStages", () => {
   })
 
   test("変えたファイルが空なら5段すべて", () => {
-    expect(planStages([], choose).stages.map((stage) => stage.name)).toEqual([
+    expect(planStages([], choose, false).stages.map((stage) => stage.name)).toEqual([
       "typecheck",
       "lint",
       "format:check",
@@ -95,9 +99,31 @@ describe("planStages", () => {
     ])
   })
 
+  function unitStage(plan: ReturnType<typeof planStages>) {
+    return plan.stages.find((stage) => stage.name === "test")
+  }
+
+  test("--full なら変えたファイルがあっても単体は全件", () => {
+    const plan = planStages(["src/cli.ts"], choose, true)
+    expect(unitStage(plan)?.args).toEqual([])
+    expect(plan.notice).toBe("")
+  })
+
+  test("変えたファイルが src・test・scripts にあれば、それらに関連する単体だけ", () => {
+    const plan = planStages(["src/cli.ts", "docs/workflow.md", "test/cli.test.ts"], choose, false)
+    expect(unitStage(plan)?.args).toEqual(["--related", "src/cli.ts", "test/cli.test.ts"])
+    expect(plan.notice).toBe("単体は変えたファイルに関連するものだけ")
+  })
+
+  test("設定だけの変更は単体を全件に戻す", () => {
+    const plan = planStages(["package.json", "vitest.config.ts"], choose, false)
+    expect(unitStage(plan)?.args).toEqual([])
+    expect(plan.notice).toBe("")
+  })
+
   test("並べて走らせる重い段は、文書だけの変更には無く、通常の組み立てにはある", () => {
-    const documentOnly = planStages(["docs/history/tasks.md"], choose)
-    const regular = planStages(["src/cli.ts"], choose)
+    const documentOnly = planStages(["docs/history/tasks.md"], choose, false)
+    const regular = planStages(["src/cli.ts"], choose, false)
     expect(documentOnly.stages.some((stage) => stage.heavy)).toBe(false)
     expect(regular.stages.filter((stage) => stage.heavy).map((stage) => stage.name)).toEqual([
       "test",

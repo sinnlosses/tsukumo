@@ -41,8 +41,8 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
 
 ```bash
 pnpm run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す。
-                              #   E2E は変えたファイルから選んだものだけ。
-                              #   --full で5段とも E2E 全件。全件は main へ送る直前に打つ。
+                              #   単体と E2E は変えたファイルから選んだものだけ（単体は import で辿れる関連のテスト＋規約のテスト）。
+                              #   --full で5段とも単体・E2E 全件。全件は main へ送る直前に打つ。
                               #   文書だけの変更は --full でも format:check と文書の検査だけ）
 pnpm run format                # 整形（oxfmt。prettier は入っていない）
 pnpm run test                  # 単体テスト（Vitest）。ファイルを渡すと規約のテストも一緒に走る
