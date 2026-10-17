@@ -58,6 +58,7 @@ const edit = (path: string): MainViewEntry => ({
 /** `report` ツールで受け取ったレポート（引数を組んだあとの形）。中間レポートはここからしか生まれない。 */
 const toolReport = (markdown: string): MainViewEntry => ({
   kind: "report",
+  headings: [],
   markdown,
   finalMarkdown: markdown,
   conclusion: "",
@@ -668,6 +669,32 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     })
   })
 
+  it("本文の `headings` は節の `heading` の字そのもの（記号を含んでも逃がさない）で、見出しの無い節は数えない", () => {
+    const heading = "`tw accept` の判定 a<b & *c* _d_ [e](x) \\f"
+    const turn = turnOf(
+      [
+        ask,
+        reportEvent({
+          toolUseId: "toolu_r1",
+          conclusion: "架空の結論。",
+          sections: [
+            { heading, blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }] },
+            { heading: "", blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }] },
+          ],
+          favor: "",
+          checks: [],
+          task: { kind: "none" },
+        }),
+        finished,
+      ],
+      SETTLED,
+      true,
+    )
+
+    const body = turn?.steps.find((step) => step.body.kind === "text")?.body
+    expect(body?.kind === "text" ? body.headings : undefined).toEqual([heading])
+  })
+
   describe("figure", () => {
     const checks: readonly ReportCheck[] = [
       { status: "ok", label: "架空の検査", figure: "", command: "", detail: "", howToVerify: "" },
@@ -1021,6 +1048,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
+      headings: [],
       report: `<div class="conclusion">\n\n架空の結論。\n\n</div>\n\n${SECTIONS_START}\n\n架空の根拠。`,
       finalReport: `<div class="conclusion">\n\n架空の結論。\n\n</div>\n\n${SECTIONS_START}\n\n架空の根拠。`,
       firstLine: "架空の結論。",
@@ -1078,6 +1106,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual([lead("架空の結論。")])
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
+      headings: [],
       report: lead("架空の結論。"),
       finalReport: lead("架空の結論。"),
       firstLine: "架空の結論。",
@@ -1114,6 +1143,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
+      headings: [],
       report: lead("唯一の結論。"),
       finalReport: lead("唯一の結論。"),
       firstLine: "唯一の結論。",
@@ -1185,6 +1215,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     expect(step?.superseded).toBe(false)
     expect(step?.body).toEqual({
       kind: "text",
+      headings: [],
       report: "架空のまとめ。",
       finalReport: "架空のまとめ。",
       firstLine: "1/2 架空の段A",
@@ -1266,6 +1297,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     expect(turn?.steps.length).toBe(1)
     expect(turn?.steps.at(-1)?.body).toEqual({
       kind: "text",
+      headings: [],
       report: "架空のまとめ。",
       finalReport: "架空のまとめ。",
       firstLine: "1/2 架空の段A",

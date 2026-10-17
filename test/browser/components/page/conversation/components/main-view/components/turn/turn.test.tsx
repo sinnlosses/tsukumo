@@ -46,6 +46,7 @@ afterEach(() => {
 function text(report: string): MainViewStepBody {
   return {
     kind: "text",
+    headings: [],
     report,
     finalReport: report,
     firstLine: report,
@@ -309,6 +310,7 @@ describe("Turn（目録の1行と見出し）", () => {
   ): MainViewStepBody {
     return {
       kind: "text",
+      headings: [],
       report,
       finalReport: report,
       firstLine: report,
@@ -401,6 +403,7 @@ describe("Turn（目録の1行と見出し）", () => {
     putSession(INITIAL_SESSION_STATE)
     const body: MainViewStepBody = {
       kind: "text",
+      headings: [],
       report: "架空の本文",
       finalReport: "架空の本文",
       firstLine: "架空の本文",
@@ -425,6 +428,7 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
       superseded: true,
       body: {
         kind: "text",
+        headings: [],
         report: "架空のまとめ",
         finalReport: "架空のまとめ",
         firstLine: `${String(id + 1)}/2 架空の段`,

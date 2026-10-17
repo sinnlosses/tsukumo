@@ -291,6 +291,7 @@ describe("toRestoredEvents", () => {
     expect(mainViewEntries(state).filter((entry) => entry.kind === "report")).toEqual([
       {
         kind: "report",
+        headings: [],
         markdown:
           '<div class="conclusion-lead">\n\n架空の結論。\n\n</div>\n\n<div class="report-sections-start"></div>\n\n架空の根拠。',
         finalMarkdown:

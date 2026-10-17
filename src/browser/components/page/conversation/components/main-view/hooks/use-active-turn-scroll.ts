@@ -32,10 +32,14 @@ export function useActiveTurnScroll(
   const shownKind = shownTarget.kind
   const shownTurnId = shownTarget.kind === "none" ? undefined : shownTarget.turnId
 
-  // やり取りの ID はセッションごとに振るので、状態が丸ごと入れ替わったら覚えを捨てる。
+  // やり取りの ID はセッションごとに振るので、状態が丸ごと入れ替わったら（世代が変わったら）覚えを捨てる。
+  // 画面を隠して戻したときにもこの effect はやり直されるが、世代が同じなら捨てない。
   useEffect(() => {
-    useReadingPosition.getState().clear()
-    currentRef.current = undefined
+    const store = useReadingPosition.getState()
+    if (store.generation !== generation) {
+      store.forgetUnlessGeneration(generation)
+      currentRef.current = undefined
+    }
   }, [generation])
 
   // 転がる祖先は画面の幅で入れ替わるので、どれが転がっても拾えるよう `document` で捕まえる。

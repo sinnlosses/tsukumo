@@ -7,12 +7,13 @@ import {
   type ReportOutlineProps,
 } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report-outline/hooks/use-report-outline.ts"
 import { detailBlockClassName } from "../../../../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
+import { useInterimViewing } from "../../../../../../../../../../src/browser/stores/interim-viewing.ts"
 import { useReadingSection } from "../../../../../../../../../../src/browser/stores/reading-section.ts"
 
 const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
 
 const ONE_TURN = {
-  turns: [{ id: 0, title: "架空の依頼", result: "done", asideCount: 0 }],
+  turns: [{ id: 0, title: "架空の依頼", result: "done", asideCount: 0, newSectionIndexes: [] }],
   activeTurnId: 0,
   onSelectTurn: () => undefined,
   notice: { kind: "none" },
@@ -442,5 +443,66 @@ describe("useReportOutline（読んでいる節と節の移動）", () => {
 
     expect(useReadingSection.getState().mover).toEqual({ kind: "none" })
     expect(useReadingSection.getState().outlineCollapsed).toBe(false)
+  })
+})
+
+function NewMarkProbe(props: { readonly newSectionIndexes: readonly number[] }): ReactElement {
+  const { rows, contentRef, onSelect } = useReportOutline({
+    ...ONE_TURN,
+    turns: [{ ...ONE_TURN.turns[0], newSectionIndexes: props.newSectionIndexes }],
+  })
+  return (
+    <div>
+      {rows.map((entry, index) => (
+        <button
+          key={index}
+          data-testid={`new-row-${index}`}
+          data-new={String(entry.isNew)}
+          onClick={() => {
+            onSelect(index)
+          }}
+        />
+      ))}
+      <div className={detailBlockClassName} ref={contentRef}>
+        <h4>
+          <code>tw accept</code> の判定
+        </h4>
+        <h4>a&lt;b &amp; *c* _d_</h4>
+        <h5>見出し1の下</h5>
+        <h4>最後の節</h4>
+      </div>
+    </div>
+  )
+}
+
+function isNewAt(index: number): string | undefined {
+  return screen.getByTestId(`new-row-${index}`).dataset["new"]
+}
+
+describe("useReportOutline（「新」の印）", () => {
+  beforeEach(() => {
+    useInterimViewing.setState(useInterimViewing.getInitialState(), true)
+  })
+
+  it("足された節の位置の `##` の行にだけ印が付く。描いた字が記号を含んでいても同じ位置で付き、押した行だけ消える", () => {
+    render(<NewMarkProbe newSectionIndexes={[0, 1]} />)
+
+    expect([0, 1, 2, 3].map(isNewAt)).toEqual(["true", "true", "false", "false"])
+
+    fireEvent.click(screen.getByTestId("new-row-0"))
+
+    expect([0, 1, 2, 3].map(isNewAt)).toEqual(["false", "true", "false", "false"])
+  })
+
+  it("`###` の行は節の数に入れず、後ろの `##` の位置がずれない", () => {
+    render(<NewMarkProbe newSectionIndexes={[2]} />)
+
+    expect([0, 1, 2, 3].map(isNewAt)).toEqual(["false", "false", "false", "true"])
+  })
+
+  it("中間を見ていないやり取り（足された節が空）では付かない", () => {
+    render(<NewMarkProbe newSectionIndexes={[]} />)
+
+    expect([0, 1, 2, 3].map(isNewAt)).toEqual(["false", "false", "false", "false"])
   })
 })

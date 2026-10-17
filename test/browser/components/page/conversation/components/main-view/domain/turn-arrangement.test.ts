@@ -36,6 +36,7 @@ function step(id: number, shape: StepShape): MainViewStep {
         ? { kind: "none" }
         : {
             kind: "text",
+            headings: [],
             report: `本文${String(id)}`,
             finalReport: `本文${String(id)}`,
             firstLine: `先頭${String(id)}`,

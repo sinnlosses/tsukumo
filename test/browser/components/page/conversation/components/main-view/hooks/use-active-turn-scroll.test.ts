@@ -1,4 +1,4 @@
-import { cleanup, renderHook } from "@testing-library/react"
+import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
@@ -6,6 +6,7 @@ import {
   useActiveTurnScroll,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/hooks/use-active-turn-scroll.ts"
 import { useReadingPosition } from "../../../../../../../../src/browser/stores/reading-position.ts"
+import { useSession } from "../../../../../../../../src/browser/stores/session.ts"
 
 // 見出しの並びは寸法を持たない jsdom に代わって、上端を差し替えられる要素で作る。
 const headingState = vi.hoisted(() => {
@@ -60,12 +61,14 @@ function work(turnId: number): ShownTarget {
 function renderScroll(initial: ShownTarget): {
   readonly move: (shown: ShownTarget, tops: readonly number[]) => void
   readonly scrollTo: (tops: readonly number[]) => void
+  readonly unmount: () => void
 } {
   const scrollerRef = { current: root }
-  const { rerender } = renderHook(({ shown }) => useActiveTurnScroll(scrollerRef, shown), {
+  const { rerender, unmount } = renderHook(({ shown }) => useActiveTurnScroll(scrollerRef, shown), {
     initialProps: { shown: initial },
   })
   return {
+    unmount,
     move: (shown, tops) => {
       headingState.tops = [...tops]
       rerender({ shown })
@@ -95,6 +98,21 @@ describe("useActiveTurnScroll", () => {
 
     expect(scrollBy).toHaveBeenCalledWith({ top: 940, behavior: "instant" })
     expect(scrollIntoView).not.toHaveBeenCalled()
+  })
+
+  it("画面を隠して戻しても覚えは残り、セッションの世代が変わったら捨てる", () => {
+    const first = renderScroll(report(1))
+    first.scrollTo([-300, -40, 200])
+    first.move(report(2), [0, 500])
+    first.unmount()
+
+    renderScroll(report(2))
+    expect(useReadingPosition.getState().positions[1]).toBeDefined()
+
+    act(() => {
+      useSession.setState((current) => ({ generation: current.generation + 1 }))
+    })
+    expect(useReadingPosition.getState().positions).toEqual({})
   })
 
   it("覚えた番号の見出しが無くなっていれば先頭から見せる", () => {

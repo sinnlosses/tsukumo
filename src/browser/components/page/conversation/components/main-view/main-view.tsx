@@ -50,6 +50,7 @@ import { WorkStrip } from "./components/work-strip/work-strip.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
 import { type ShownTarget, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
+import { useInterimViewed } from "./hooks/use-interim-viewed.ts"
 import { useReportOutlineTurns } from "./hooks/use-report-outline-turns.ts"
 import styles from "./main-view.module.css"
 
@@ -96,6 +97,10 @@ export function MainView(): ReactElement {
 
   const cardTurn = view.kind !== "welcome" && view.card.kind === "turn" ? view.card : undefined
   const outlineTurns = useReportOutlineTurns()
+  useInterimViewed(
+    cardTurn?.turn,
+    outlineTurns.find((entry) => entry.id === cardTurn?.turn.id)?.result === "working",
+  )
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>): void {
     const keyEvent = {

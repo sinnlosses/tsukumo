@@ -10,15 +10,18 @@ export type ReadingPosition = {
 }
 
 export type ReadingPositionState = {
+  /** 覚えがどの世代のセッションのものか。やり取りの ID はセッションごとに振るので、世代が変わったら捨てる。 */
+  readonly generation: number
   /** やり取りの ID（`MainViewTurn.id`）から引く。 */
   readonly positions: Readonly<Record<number, ReadingPosition>>
   readonly remember: (turnId: number, position: ReadingPosition) => void
   readonly forget: (turnId: number) => void
-  /** 全部忘れる。やり取りの ID はセッションごとに振るので、セッションが替わったら呼ぶ。 */
-  readonly clear: () => void
+  /** 覚えがこの世代のものでなければ全部忘れる。同じ世代なら何もしない（画面を隠して戻しても残す）。 */
+  readonly forgetUnlessGeneration: (generation: number) => void
 }
 
 export const useReadingPosition = create<ReadingPositionState>()((set) => ({
+  generation: -1,
   positions: {},
   remember: (turnId, position) => {
     set((state) => ({ positions: { ...state.positions, [turnId]: position } }))
@@ -29,7 +32,7 @@ export const useReadingPosition = create<ReadingPositionState>()((set) => ({
       return { positions: rest }
     })
   },
-  clear: () => {
-    set({ positions: {} })
+  forgetUnlessGeneration: (generation) => {
+    set((state) => (state.generation === generation ? state : { generation, positions: {} }))
   },
 }))

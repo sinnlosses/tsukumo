@@ -94,9 +94,11 @@ export type MainViewEntry =
    * `conclusion` は組む前の結論で、畳んだときの先頭行に使う（{@link groupIntoSteps}）。
    * `finalMarkdown` は最終レポートになったときの本文で、`markdown` に段ごとの所要時間を足したもの。
    * `changeSummary` は記録の変更の札をそのまま通したもの。
+   * `headings` は描く節の `heading`（整形のあと・空の見出しを除いた字そのもの）の並び。
    */
   | {
       readonly kind: "report"
+      readonly headings: readonly string[]
       readonly markdown: string
       readonly finalMarkdown: string
       readonly conclusion: string
@@ -195,6 +197,8 @@ export type MainViewStepBody =
   | { readonly kind: "none" }
   | {
       readonly kind: "text"
+      /** `report` ツールの本文なら描く節の見出しの字（{@link MainViewEntry} の `report` の `headings`）。ほかの本文は空。 */
+      readonly headings: readonly string[]
       readonly report: string
       readonly finalReport: string
       readonly firstLine: string
@@ -368,6 +372,9 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
     return [
       {
         kind: "report",
+        headings: reportSectionsOf(record, context)
+          .map((section) => section.heading.trim())
+          .filter((heading) => heading !== ""),
         markdown: reportMarkdown(record, context, false),
         finalMarkdown: reportMarkdown(record, context, true),
         conclusion: record.conclusion,
@@ -415,12 +422,7 @@ function reportMarkdown(
       withPhaseTimes ? phaseTimesMarkdown(phaseDurations(context.plans, report.time)) : "",
     ),
   ].filter((part) => !isBlankText(part))
-  const tidied = tidyReportSections({
-    conclusion: report.conclusion,
-    sections: report.sections,
-    hasWorkPlan: latestWorkPlanOf(context).kind === "planned",
-  })
-  const sections = reportSectionsMarkdown(sectionsWithFigure(report.figure, tidied), {
+  const sections = reportSectionsMarkdown(reportSectionsOf(report, context), {
     kind: "shelved",
     toolUseId: report.toolUseId,
   })
@@ -434,6 +436,19 @@ function reportMarkdown(
   ]
     .filter((part) => !isBlankText(part))
     .join("\n\n")
+}
+
+/** 本文に描く節。`figure` を先頭の節にし、整形（{@link tidyReportSections}）したあとの並び。 */
+function reportSectionsOf(
+  report: Extract<SessionRecord, { readonly kind: "report" }>,
+  context: TurnContext,
+) {
+  const tidied = tidyReportSections({
+    conclusion: report.conclusion,
+    sections: report.sections,
+    hasWorkPlan: latestWorkPlanOf(context).kind === "planned",
+  })
+  return sectionsWithFigure(report.figure, tidied)
 }
 
 /**
@@ -514,6 +529,7 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
         const task = entry.kind === "report" ? entry.task : NO_REPORT_TASK
         const body = {
           kind: "text",
+          headings: entry.kind === "report" ? entry.headings : [],
           report: entry.markdown,
           finalReport: entry.kind === "report" ? entry.finalMarkdown : entry.markdown,
           firstLine: extractFirstLine(firstLineSource(entry)),
@@ -623,6 +639,7 @@ function phaseShiftStep(id: number, shift: PhaseShift, duration: MeasuredTime): 
       ? NO_BODY
       : {
           kind: "text",
+          headings: [],
           report: shift.finished.summary,
           finalReport: shift.finished.summary,
           firstLine: extractFirstLine(shift.finished.label),

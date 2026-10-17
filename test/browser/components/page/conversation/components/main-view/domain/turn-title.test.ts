@@ -16,6 +16,7 @@ function reportStep(id: number, firstLine: string): MainViewStep {
     id,
     body: {
       kind: "text",
+      headings: [],
       report: firstLine,
       finalReport: firstLine,
       firstLine,

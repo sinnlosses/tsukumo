@@ -15,8 +15,14 @@ describe("ReportOutline のやり取りの行", () => {
     render(
       <ReportOutline
         turns={[
-          { id: 0, title: "架空の前の依頼", result: "done", asideCount: 0 },
-          { id: 1, title: "架空の委譲の依頼", result: "working", asideCount: 2 },
+          { id: 0, title: "架空の前の依頼", result: "done", asideCount: 0, newSectionIndexes: [] },
+          {
+            id: 1,
+            title: "架空の委譲の依頼",
+            result: "working",
+            asideCount: 2,
+            newSectionIndexes: [],
+          },
         ]}
         activeTurnId={1}
         onSelectTurn={() => undefined}

@@ -19,6 +19,7 @@ import { isDeepEqual } from "remeda"
 
 import type { TurnResult } from "../../../../../../../../../shared/session/turn-result.ts"
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../../../domain/reveal/paint.ts"
+import { useInterimViewing } from "../../../../../../../../stores/interim-viewing.ts"
 import {
   useReadingSection,
   type HeadingStep,
@@ -45,6 +46,8 @@ export type ReportOutlineTurn = {
   readonly title: string
   readonly result: TurnResult
   readonly asideCount: number
+  /** 最終レポートに足された節の位置（最終レポートの見出しの並びでの番号。中間を見たやり取りだけ。無ければ空）。 */
+  readonly newSectionIndexes: readonly number[]
 }
 
 export type ReportOutlineProps = {
@@ -69,6 +72,8 @@ export type ReportOutlineRow = ReportOutlineEntry & {
   readonly isActive: boolean
   /** いま読んでいる見出しと同じ節（`section` の見出しとその下の `sub`）か。 */
   readonly inActiveSection: boolean
+  /** 中間レポートに無かった節で、まだ押していないか。 */
+  readonly isNew: boolean
 }
 
 /** `<ReportOutline>` が画面に出す形。 */
@@ -250,6 +255,18 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     setReached(true)
   }
 
+  const readSections = useInterimViewing((state) => state.read[props.activeTurnId])
+  const markRead = useInterimViewing((state) => state.markRead)
+  function pressHeading(index: number): void {
+    selectHeading(index)
+    if (entries[index]?.level === "section") {
+      markRead(props.activeTurnId, sectionOrdinalOf(entries, index))
+    }
+  }
+  const newSectionIndexes = (
+    props.turns.find((turn) => turn.id === props.activeTurnId)?.newSectionIndexes ?? []
+  ).filter((sectionIndex) => !(readSections ?? []).includes(sectionIndex))
+
   const section = readingSectionOf(entries, activeIndex, reached)
   const publish = useReadingSection((state) => state.publish)
   const setMover = useReadingSection((state) => state.setMover)
@@ -317,7 +334,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         props.onNotice(props.notice.action)
       }
     },
-    rows: outlineRows(entries, activeIndex),
+    rows: outlineRows(entries, activeIndex, newSectionIndexes),
     frameRef,
     contentRef,
     navRef,
@@ -328,7 +345,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         focusRow(event.key === "ArrowDown" ? 1 : -1)
       }
     },
-    onSelect: selectHeading,
+    onSelect: pressHeading,
     collapsed,
     onToggleCollapse: () => {
       commitPanel((current) => ({ ...current, collapse: collapsed ? "open" : "collapsed" }))
@@ -351,6 +368,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 function outlineRows(
   entries: readonly ReportOutlineEntry[],
   activeIndex: number,
+  newSectionIndexes: readonly number[],
 ): readonly ReportOutlineRow[] {
   const sectionOf = (index: number): number =>
     entries.findLastIndex((entry, at) => at <= index && entry.level === "section")
@@ -360,5 +378,15 @@ function outlineRows(
     isActive: index === activeIndex,
     inActiveSection:
       index === activeIndex || (activeSection !== -1 && sectionOf(index) === activeSection),
+    isNew:
+      entry.level === "section" && newSectionIndexes.includes(sectionOrdinalOf(entries, index)),
   }))
+}
+
+/**
+ * `section` の行が、一覧の `section` の行の何番目か（0 始まり）。
+ * 描いた字ではなく並びの位置で、レポートの節の見出しの並び（`MainViewStepBody.headings`）と突き合わせる。
+ */
+function sectionOrdinalOf(entries: readonly ReportOutlineEntry[], index: number): number {
+  return entries.slice(0, index + 1).filter((entry) => entry.level === "section").length - 1
 }

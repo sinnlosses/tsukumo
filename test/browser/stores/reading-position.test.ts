@@ -19,15 +19,23 @@ describe("useReadingPosition", () => {
     })
   })
 
-  it("forget は指したやり取りだけ、clear は全部忘れる", () => {
-    const { remember, forget, clear } = useReadingPosition.getState()
+  it("forget は指したやり取りだけ忘れる", () => {
+    const { remember, forget } = useReadingPosition.getState()
     remember(1, { headingIndex: 1, offsetPx: 0 })
     remember(2, { headingIndex: 1, offsetPx: 0 })
 
     forget(1)
     expect(Object.keys(useReadingPosition.getState().positions)).toEqual(["2"])
+  })
 
-    clear()
+  it("同じ世代で呼び直しても残り、世代が変わったら全部忘れる", () => {
+    useReadingPosition.getState().forgetUnlessGeneration(3)
+    useReadingPosition.getState().remember(1, { headingIndex: 1, offsetPx: 0 })
+
+    useReadingPosition.getState().forgetUnlessGeneration(3)
+    expect(Object.keys(useReadingPosition.getState().positions)).toEqual(["1"])
+
+    useReadingPosition.getState().forgetUnlessGeneration(4)
     expect(useReadingPosition.getState().positions).toEqual({})
   })
 })
