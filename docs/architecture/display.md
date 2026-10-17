@@ -569,6 +569,10 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
     `checks` に `ng` の行がある間は `finished` にさせない（`finished-with-ng` の差し戻し。`src/server/report/core/report-review.ts`）。
     未コミットの変更とは突き合わせない（どこへ送ったかを関心にしないので、未コミットのまま終えるワークフローの
     `finished` も正しい）。
+    **`id` がタスクの一覧に実在するかも突き合わせない**（2026-10-17 ユーザー決定）。`task` 付きの `report` 972 回
+    （2026-09-23〜10-16 の記録の構造だけを数えた）のうち実在しない ID は 10 回で約1%、取り違えた別の実在の ID は
+    実在の突き合わせでは捕まらず、一覧は閉じた課題を新しい 10 件で打ち切る（`CLOSED_TASK_DISPLAY_LIMIT`）ので、
+    閉じた課題の多いプロジェクトでは一覧に無い ID が「実在しない」のか「古い閉じた課題」なのか区別できないため。
     依頼の文面や結論の文字列から ID・終わり方を推し量らない。入口（`sdk-message.ts`）で揃っていない値と
     `task` の無かったころの記録は `none` に畳む（`src/shared/report/report-task.ts`）。記録とイベントの形が
     変わったので `PROTOCOL_VERSION` を 26 に上げた
