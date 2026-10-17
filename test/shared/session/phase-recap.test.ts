@@ -97,7 +97,7 @@ describe("phaseRecapsOf", () => {
     expect(recaps.get(keyOf(last, "架空の調べ"))).toEqual({ duration: known(10), summary: "" })
   })
 
-  it("まとまりの中の段が別々に済めば、段ごとに別のまとめを持つ", () => {
+  it("並列の段の中の段が別々に済めば、段ごとに別のまとめを持つ", () => {
     const last = plan(2, at(30), "架空のサーバのまとめ", GROUPED)
     const recaps = phaseRecapsOf(
       [

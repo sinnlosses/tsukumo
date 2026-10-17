@@ -100,14 +100,14 @@ type PopoverContext = {
 }
 
 /**
- * 段の群の先頭の丸（とまとまり）に付ける群の名。`name` は「前」「本」「後」、`current` は今の段がその群にあるか。
+ * 段の群の先頭の丸（と並列の段の囲み）に付ける群の名。`name` は「前」「本」「後」、`current` は今の段がその群にあるか。
  * 群の先頭でない・並び全体の群（範囲が無い）なら `none` で、前の丸と線でつなぐ。
  */
 export type WorkStripSpanHead =
   | { readonly kind: "none" }
   | { readonly kind: "head"; readonly name: string; readonly current: boolean }
 
-/** まとまりの `state` は囲みの次の線の色だけに使い、中の段が全部済めば `done`、ほかは `upcoming`。 */
+/** 並列の段の `state` は囲みの次の線の色だけに使い、中の段が全部済めば `done`、ほかは `upcoming`。 */
 export type WorkStripSlot =
   | {
       readonly kind: "phase"

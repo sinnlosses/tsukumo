@@ -104,7 +104,7 @@ describe("phaseTimesMarkdown", () => {
     expect(html).not.toContain("phase-time-longest")
   })
 
-  it("一覧は、まとまりの見出しの行と字下げする中の段の行を1つの包みに入れる", () => {
+  it("一覧は、並列の段の見出しの行と字下げする中の段の行を1つの包みに入れる", () => {
     const html = phaseTimesMarkdown([known("1/3 架空の段A", 5_000), parallelRows()])
 
     expect(html).toContain(
@@ -117,7 +117,7 @@ describe("phaseTimesMarkdown", () => {
     expect(html).toContain("計 25秒")
   })
 
-  it("並列の回は waterfall で、まとまりの棒を中の段の棒の上に開始の位置と長さで置く", () => {
+  it("並列の回は waterfall で、並列の段の棒を中の段の棒の上に開始の位置と長さで置く", () => {
     const html = phaseTimesMarkdown([
       known("1/4 架空の段A", 10_000),
       {

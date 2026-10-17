@@ -98,7 +98,7 @@ tsukumo は推し量らない。
   セリフ・レポート・`phaseSummary` の本文の段の番号は読まず、`phase` を省いた `speak` は検査しない。
   セリフで番号を言うのは本の段だけで、前・後の段は名前で言う（帯が「後 1/3」と出しても、セリフの「段1」は本の段1を指す）
 - **`phase_result` の `finished`・`skipped`（`phase` が `n`、`count` が `N`）が届き、段 `n` に当たる帯の段が今の段の集合に入っていれば、tsukumo がその段を受け付けた呼び出しの時刻で済ませる**
-  （1本道なら `current` を1つ進め、まとまりの中なら `finishedInGroup` に足す。まとまりの最後の段なら `current` を進めて空にする）
+  （1本道なら `current` を1つ進め、並列の段の中なら `finishedInGroup` に足す。並列の段の最後に残った段なら `current` を進めて空にする）
 - 一足飛び（段 `n` が今の段の集合より先）・もう済んだ段・`stopped`・範囲を宣言していない（`pending` を含む）依頼・`count` が範囲の段の数と違う呼び出しは帯を動かさない
 - `phase_result` では帯を全部済みにしない。最後の段を閉じるのは今までどおり `report` の `workPlanClosing`
 - `phase_result` で進んだあとにメインが同じ位置を渡す `work_plan` は、段のまとめ `phaseSummary` が要る（`phase_result` は要約を持たない。下の「スキルの契約」）

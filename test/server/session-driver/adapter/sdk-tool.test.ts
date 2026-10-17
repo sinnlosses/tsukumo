@@ -922,7 +922,7 @@ describe("work_plan（ワークプラン）", () => {
   it.each([
     { name: "1段", input: { phases: ["架空の段A"], current: 0 } },
     {
-      name: "まとまりの途中",
+      name: "並列の段の途中",
       input: {
         phases: ["架空の段A", ["架空の段B", "架空の段C"]],
         current: 1,
@@ -941,11 +941,11 @@ describe("work_plan（ワークプラン）", () => {
     { name: "空白だけの名前", input: { phases: ["架空の段A", "  "], current: 0 } },
     { name: "位置が段の数を超える", input: { phases: ["架空の段A"], current: 2 } },
     {
-      name: "まとまりの名前の重なり",
+      name: "並列の段の中の名前の重なり",
       input: { phases: [["架空の段A", "架空の段A"]], current: 0 },
     },
     {
-      name: "まとまり全部が済んだと渡す",
+      name: "並列の段の中の段を全部済んだと渡す",
       input: {
         phases: [["架空の段A", "架空の段B"], "架空の段C"],
         current: 0,
@@ -957,7 +957,7 @@ describe("work_plan（ワークプラン）", () => {
       input: { phases: ["架空の段A", "架空の段B"], current: 1, phaseSummary: "一。二。三。" },
     },
     {
-      name: "範囲がまとまりをまたぐ",
+      name: "範囲が並列の段をまたぐ",
       input: {
         phases: ["架空の段A", ["架空の段B", "架空の段C"]],
         current: 0,

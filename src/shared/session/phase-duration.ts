@@ -22,13 +22,13 @@ type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
  *
  * 段の区間は、その段が今の段の集合に入った記録の時刻から、集合を出た記録の時刻（全部済みも含む）まで。
  * 並列の段の中の段は並列の段に入った時刻から一斉に始まり、それぞれ自分が済んだ時刻で終わるので、重なって走った段もそれぞれの所要が出る。
- * まとまりの行の `wall` は、今の要素がそのまとまりだった区間（壁時計）。
+ * 並列の段の行の `wall` は、今の要素がその並列の段だった区間（壁時計）。
  * 最後まで今だった段は `closedAt` で閉じる。同じ段に2回入ったら区間を足す。
- * 段は名前と、同じ名前の段の中で何番目かで追い、まとまりは中の段の名前の並びで追うので、
+ * 段は名前と、同じ名前の段の中で何番目かで追い、並列の段は中の段の名前の並びで追うので、
  * 組み替えても並びに残った段の時間は引き継がれ、並びから消えた段は出さない。
  *
  * 次の段は `unknown`: 一度も今の段にならなかった段、端が `restored` の区間を含む段、
- * 依頼の最初の記録が途中の位置で始まったときに今だった段とまとまり（前の依頼で始まっていて始まりを測れない）。
+ * 依頼の最初の記録が途中の位置で始まったときに今だった段と並列の段（前の依頼で始まっていて始まりを測れない）。
  */
 export function phaseDurations(
   plans: readonly WorkPlanRecord[],
@@ -74,7 +74,7 @@ export function phaseDurations(
 }
 
 /**
- * 段の見出し `label` の段の所要（{@link phaseDurations} と同じ求め方。まとまりの中の段も探す）。
+ * 段の見出し `label` の段の所要（{@link phaseDurations} と同じ求め方。並列の段の中の段も探す）。
  * その段が最後の段の並びに無ければ `unknown`。
  */
 export function finishedPhaseDuration(
@@ -165,7 +165,7 @@ function currentGroupKeysOf(record: WorkPlanRecord): ReadonlySet<string> {
   return new Set(entry === undefined || typeof entry === "string" ? [] : [groupKeyOf(entry)])
 }
 
-/** まとまりの鍵。中の段の名前の並び。段の鍵とは別の集合でだけ使う。 */
+/** 並列の段の鍵。中の段の名前の並び。段の鍵とは別の集合でだけ使う。 */
 function groupKeyOf(group: readonly string[]): string {
   return group.join("\u0000")
 }

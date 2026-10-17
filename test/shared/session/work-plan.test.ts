@@ -109,7 +109,7 @@ describe("parseWorkPlan の段のまとめ", () => {
 })
 
 describe("parseWorkPlan の並列の段", () => {
-  it("段の名前とまとまりの混ざった並びと、今のまとまりの中で済んだ段を読む", () => {
+  it("段の名前と並列の段の混ざった並びと、今の並列の段の中で済んだ段を読む", () => {
     expect(
       parseWorkPlan({
         phases: GROUPED,
@@ -129,13 +129,13 @@ describe("parseWorkPlan の並列の段", () => {
     )
   })
 
-  it("1段だけ・名前の重なる・空白だけの名前を含むまとまりは受け付けない", () => {
+  it("1段だけ・名前の重なる・空白だけの名前を含む並列の段は受け付けない", () => {
     for (const group of [["架空の段B"], ["架空の段B", "架空の段B"], ["架空の段B", " "]]) {
       expect(parseWorkPlan({ phases: ["架空の段A", group], current: 0 })).toBeUndefined()
     }
   })
 
-  it("finishedInGroup は今のまとまりの一部の名前だけを受け付ける", () => {
+  it("finishedInGroup は今の並列の段の一部の名前だけを受け付ける", () => {
     const summary = "架空のまとめ。"
     for (const [current, finishedInGroup] of [
       [0, ["架空の段B"]],
@@ -149,7 +149,7 @@ describe("parseWorkPlan の並列の段", () => {
     }
   })
 
-  it("まとまりの中の段が済んだ途中の位置は、まとめが無くても読める", () => {
+  it("並列の段の中の段が済んだ途中の位置は、まとめが無くても読める", () => {
     expect(
       parseWorkPlan({
         phases: [["架空の段A", "架空の段B"]],
@@ -248,7 +248,7 @@ describe("plannedPhasesOf の飛ばした段", () => {
   })
 })
 
-describe("まとまりの段を済ませる順", () => {
+describe("並列の段の中の段を済ませる順", () => {
   const stateOf = (plan: LatestWorkPlan) =>
     plan.kind === "planned" ? plannedPhasesOf(plan).map((phase) => phase.state) : []
 
@@ -537,7 +537,7 @@ describe("nextWorkPlan（finished の report で閉じる）", () => {
     expect(closed(next(PHASES, 3))).toEqual({ kind: "planned", ...next(PHASES, 3) })
   })
 
-  it("最後のまとまりは、残りが1段になってから閉じる", () => {
+  it("最後の並列の段は、残りが1段になってから閉じる", () => {
     const group = ["架空の段A", ["架空の段B", "架空の段C"]] as const
 
     expect(closed(next(group, 1, "架空のまとめ。"))).toEqual({
@@ -564,7 +564,7 @@ describe("parseWorkPlan の委譲先の段の範囲", () => {
     expect(read({ first: 1 })).toEqual({ kind: "pending", first: 1 })
   })
 
-  it("範囲の端が並列の段の端に揃っていれば、範囲の中にまとまりを含んでよい", () => {
+  it("範囲の端が並列の段の端に揃っていれば、範囲の中に並列の段を含んでよい", () => {
     expect(read({ first: 0, count: 4 })).toEqual({ kind: "range", first: 0, count: 4 })
     expect(read({ first: 1, count: 3 })).toEqual({ kind: "range", first: 1, count: 3 })
   })
@@ -580,7 +580,7 @@ describe("parseWorkPlan の委譲先の段の範囲", () => {
     { first: 2 },
     { first: 5 },
     "range",
-  ])("まとまりをまたぐ・並びをはみ出す・整数でない範囲は受け付けない: %j", (range) => {
+  ])("並列の段をまたぐ・並びをはみ出す・整数でない範囲は受け付けない: %j", (range) => {
     expect(parseWorkPlan({ phases: GROUPED, current: 0, delegatedRange: range })).toBeUndefined()
   })
 })
@@ -634,7 +634,7 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     })
   })
 
-  it("まとまりの中の段は finishedInGroup に足し、最後の段で current を進めて空にする", () => {
+  it("並列の段の中の段は finishedInGroup に足し、最後の段で current を進めて空にする", () => {
     const grouped: readonly WorkPlanEntry[] = [
       "架空の計画",
       ["架空の実装A", "架空の実装B"],

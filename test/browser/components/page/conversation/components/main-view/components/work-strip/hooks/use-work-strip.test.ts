@@ -289,7 +289,7 @@ describe("useWorkStrip（並列の段）", () => {
     phaseSummary: current > 0 || finishedInGroup.length > 0 ? "架空のまとめ。" : "",
   })
 
-  it("まとまりは中の段の丸を1つにまとめ、今の段が2つなら頭の字と位置をつなぐ", () => {
+  it("並列の段は中の段の丸を1つにまとめ、今の段が2つなら頭の字と位置をつなぐ", () => {
     const state = foldTimed([
       [request, START],
       [groupedPlan(1, []), START + 1_000],
@@ -612,7 +612,7 @@ describe("useWorkStrip（回る弧）", () => {
     expect(spinningOf(stripAt(foldTimed([[request, START]]), START + 5_000))).toEqual([])
   })
 
-  it("まとまりで今の段が複数なら、今の段の丸がすべて回る", () => {
+  it("並列の段で今の段が複数なら、今の段の丸がすべて回る", () => {
     const grouped: SessionEvent = {
       kind: "work-plan",
       delegatedRange: { kind: "none" },
@@ -766,7 +766,7 @@ describe("useWorkStrip（段の吹き出し）", () => {
     expect(popoverAt(openedAt(midway, 0), 0)).toMatchObject({ meta: "済み · 所要 不明" })
   })
 
-  it("まとまりの中の丸も押せて、同じ形の吹き出しが出る", () => {
+  it("並列の段の中の丸も押せて、同じ形の吹き出しが出る", () => {
     const grouped = foldTimed([
       [request, START],
       [workPlan(["架空の段A", ["架空の段B", "架空の段C"]], 0, ""), START + 1_000],

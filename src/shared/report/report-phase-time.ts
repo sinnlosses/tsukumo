@@ -12,7 +12,7 @@ export type PhaseDuration = {
 
 /**
  * 帯と一覧の1行ぶん。段の行か、並列の段の行。
- * まとまりの行の `label` は「並列 2–3」、`start` と `wall` はまとまりの壁時計の開始と所要、`phases` は中の段。
+ * 並列の段の行の `label` は「並列 2–3」、`start` と `wall` は並列の段の壁時計の開始と所要、`phases` は中の段。
  */
 export type PhaseTimeRow =
   | ({ readonly kind: "phase" } & PhaseDuration)
@@ -29,10 +29,10 @@ export type PhaseTimeRow =
  * 見出しの行（計）・帯か横棒・一覧の順に出す。
  * 一本道で全部測れた回は、段ごとに1区間の1本の帯で、長さは時間の比。
  * 並列の段か測れなかった段がある回は、帯の代わりに1行1段の横棒（waterfall）を置く。
- * 棒の位置は依頼の頭からの開始、長さは所要で、まとまりの棒は中の段の棒の上に置き、測れなかった段は斜線の欠片で位置だけ示す。
- * 計は段（まとまりは壁時計の1区間）の測れた区間の和、割合はその区間の時間÷計の整数%、一番長い区間だけ強める。
+ * 棒の位置は依頼の頭からの開始、長さは所要で、並列の段の棒は中の段の棒の上に置き、測れなかった段は斜線の欠片で位置だけ示す。
+ * 計は段（並列の段は壁時計の1区間）の測れた区間の和、割合はその区間の時間÷計の整数%、一番長い区間だけ強める。
  * 測れなかった区間は一覧で「不明」とし、割合は空欄にする。
- * まとまりの中の段は一覧にだけ字下げして並べ、割合は空欄にする。
+ * 並列の段の中の段は一覧にだけ字下げして並べ、割合は空欄にする。
  */
 export function phaseTimesMarkdown(rows: readonly PhaseTimeRow[]): string {
   if (rows.length === 0) {
@@ -91,7 +91,7 @@ type WaterfallBar = {
 const UNKNOWN_BAR_PERCENT = 2
 
 /**
- * 行ごとの横棒。まとまりは壁時計の棒を中の段の棒の上に置く。
+ * 行ごとの横棒。並列の段は壁時計の棒を中の段の棒の上に置く。
  * 開始か所要が測れなかった棒は斜線の欠片にして、直前までの棒の終わりに置く。
  */
 function waterfallMarkdown(rows: readonly PhaseTimeRow[], longestIndex: number): string {

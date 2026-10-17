@@ -17,7 +17,7 @@ export type WorkPlanEntry = string | PhaseGroup
 /**
  * 段の並びと今の位置。
  * `current` は要素の0始まりの位置で、全部の段が済んだら `phases.length`。
- * `finishedInGroup` は `current` が指すまとまりの中で済んだ段の名前で、まとまりを指していなければ空。
+ * `finishedInGroup` は `current` が指す並列の段の中で済んだ段の名前で、並列の段を指していなければ空。
  * `phaseSummary` は終えた段のまとめ（段のまとめ）で、無ければ空の文字列。
  * `delegatedRange` は委譲先の段の範囲で、委譲しなければ `none`。
  * `skippedPhases` は済んだ段のうち飛ばした段の名前（同じ名前の段は見分けない）。
@@ -73,7 +73,7 @@ export type PlannedPhaseState = "done" | "current" | "upcoming"
 
 /**
  * 並びを平らにした段1つ。`index` は平らにした並びでの0始まりの位置（段の番号は {@link phaseNumberOf} が導く）。
- * `entry` はその段のある要素の位置で、まとまりの中の段どうしは同じ値を持つ。
+ * `entry` はその段のある要素の位置で、並列の段の中の段どうしは同じ値を持つ。
  * `key` は名前と同じ名前の段の中で何番目かの組で、組み替えた並びどうしで同じ段を引き当てるのに使う。
  */
 export type PlannedPhase = {
@@ -89,7 +89,7 @@ export type PlannedPhase = {
 /**
  * 手順1件が始まったときの段。
  * ワークプランがまだ無い・全部の段が済んだあとなら `none`。
- * `indexes` は今の段（まとまりの中なら済んでいない段のすべて）の平らにした並びでの0始まりの位置、`count` は段の数、
+ * `indexes` は今の段（並列の段の中なら済んでいない段のすべて）の平らにした並びでの0始まりの位置、`count` は段の数、
  * `name` は今の段の名前を「・」でつないだもの、`range` はワークプランの委譲先の段の範囲（番号の数え方を決める）。
  */
 export type WorkPhase =
@@ -140,8 +140,8 @@ export const workPlanShape = {
  * `work_plan` の引数の形の正典。
  * 次のどれかなら通らない:
  * 要素が {@link MIN_WORK_PLAN_PHASES} 個より少ない・空白だけの名前がある・
- * まとまりの段が {@link MIN_PHASE_GROUP_SIZE} 個より少ないか名前が重なる・位置が0から要素の数までの整数でない・
- * `finishedInGroup` が今のまとまりの重ならない名前の一部でない・
+ * 並列の段の中の段が {@link MIN_PHASE_GROUP_SIZE} 個より少ないか名前が重なる・位置が0から要素の数までの整数でない・
+ * `finishedInGroup` が今の並列の段の重ならない名前の一部でない・
  * 段のまとめが {@link MAX_PHASE_SUMMARY_SENTENCES} 文を超える・
  * 委譲先の段の範囲が整数でない・並びをはみ出す・並列の段の端をまたぐ・
  * 飛ばした段の名前が重なるか、この呼び出しで済んでいる段の名前でない。

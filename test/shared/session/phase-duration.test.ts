@@ -156,7 +156,7 @@ describe("phaseDurations（並列の段）", () => {
     plan(3, at(25), GROUPED),
   ]
 
-  it("重なって走った段はそれぞれの所要が出て、まとまりの所要は中の段の和ではなく壁時計", () => {
+  it("重なって走った段はそれぞれの所要が出て、並列の段の所要は中の段の和ではなく壁時計", () => {
     expect(phaseDurations(overlapped, at(99))).toEqual([
       row("1/4 架空の調べ", known(10), known(0)),
       {
@@ -173,11 +173,11 @@ describe("phaseDurations（並列の段）", () => {
     ])
   })
 
-  it("中間レポートの所要は、まとまりの中の段もその段の区間で探す", () => {
+  it("中間レポートの所要は、並列の段の中の段もその段の区間で探す", () => {
     expect(finishedPhaseDuration(overlapped, "3/4 架空の画面", at(99))).toEqual(known(6))
   })
 
-  it("依頼の最初の記録がまとまりの途中なら、まとまりと中の段は不明", () => {
+  it("依頼の最初の記録が並列の段の途中なら、並列の段と中の段は不明", () => {
     expect(
       phaseDurations([plan(1, at(0), GROUPED, ["架空の画面"]), plan(2, at(4), GROUPED)], at(9)),
     ).toEqual([
