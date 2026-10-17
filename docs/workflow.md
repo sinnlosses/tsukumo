@@ -42,6 +42,23 @@
   として DOM に残るので、属性にする（`data-reveal-caption` と同じ）。見た目を付ける印は、語彙と
   `.report-<名前>` の CSS を一緒に足す。属性を足すと期待値のファイルが動き、更新と `tw verify` の
   打ち直しが E2E 全件の上限（`RUN_LIMIT`）に響く。
+- **`report` の説明文を足す計画は、字数を測るテストを全部挙げ、今の字数と上限の差を数えて段に書く。**
+  測るのは3か所で、`test/server/report/core/report-notation.test.ts` が `REPORT_NOTATION_PROMPT` を
+  3700字以下に、`test/server/report/core/report-tool.test.ts` が `REPORT_TOOL_DESCRIPTION` を
+  2048字未満（MCP ツールの説明文の既定の上限）に、`test/server/session-driver/adapter/sdk-tool.test.ts` の
+  `REPORT_INPUT_SCHEMA_MAX_CHARS`（20000字）が引数 schema の JSON 全体
+  （`REPORT_TASK_DESCRIPTION` などの説明文を含む）を抑える。挙げ漏れは
+  `grep -rn 'REPORT_INPUT_SCHEMA_MAX_CHARS\|REPORT_NOTATION_PROMPT\|REPORT_TOOL_DESCRIPTION' test` で拾う。
+  一部の字数だけ数えると、実装の途中で別のファイルの上限に当たる。
+- **記録（使用量の1行）の欄を足す計画は、記録1行を作る場所と丸ごと比べるテストを grep で洗い、
+  名指すファイルに入れる。** 洗うには直近に足した欄の名前と版の定数で引く
+  （`grep -rln 'shortTable\|hasHowToVerify\|REPORT_USAGE_FORMAT_VERSION' test src scripts`）。
+  `test/server/session/core/session-manager-record.test.ts` は1行を欄の値ごと丸ごと比べ、
+  `test/server/report/core/report-usage.test.ts` は欄ごとの導出と1行の既定値を比べるので、欄が増えたら
+  どちらも直す。`test/server/report/adapter/report-usage-log.test.ts` は欄名の一覧を比べ、版は
+  `REPORT_USAGE_FORMAT_VERSION` の参照なので、欄が増えたら一覧を直し、版だけ上げるなら無修正で通る。
+  版を上げるときは `scripts/runtime/report-block-usage.ts` の版別の枝（定数・`recordSchema` の union・
+  `rejectionSchema` の literal の3か所）も足す。
 - **spec の出典**は `docs/requirements.md` と各タスクの本文（`task show GH-<n>`。GitHub の Issue は
   その写しで、正は Beads）。2026-09-27 より前に閉じたタスクの本文は、git の履歴の `develop/task/` と
   `docs/history/tasks.md` にある。**standards の出典**は `CLAUDE.md` ＋
