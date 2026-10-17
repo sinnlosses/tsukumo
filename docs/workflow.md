@@ -27,6 +27,11 @@
   必ず書く**（orca が専有している。`CLAUDE.md` の IMPORTANT）
 - **環境側の前提はその場で確かめる。** ターミナルの画像プロトコル対応、外部コマンドの有無、
   常駐プロセスの生死は時間とともに変わる。docs やタスク本文に書かれた実測を鵜呑みにしない
+- **E2E 全件を何度も流す測定のタスクは、計画の段に E2E 全件を流す回数の割り振りを段ごとに書く。**
+  割り振りは `scripts/shared/e2e-run-ledger.ts` の `RUN_LIMIT`（着手中の1件ごとに E2E 全件を
+  流してよい回数の上限）の内に収め、最後の段で `tw verify` を通す分の1回を残す。過去の測定では、
+  方式ごとに `check --full` を流して上限を使い切り、混ぜ方の測定が終わらず、最後の `tw verify` が
+  E2E の段で拒まれて、受け入れで流し直したことがあった。
 - **spec の出典**は `docs/requirements.md` と各タスクの本文（`task show GH-<n>`。GitHub の Issue は
   その写しで、正は Beads）。2026-09-27 より前に閉じたタスクの本文は、git の履歴の `develop/task/` と
   `docs/history/tasks.md` にある。**standards の出典**は `CLAUDE.md` ＋
