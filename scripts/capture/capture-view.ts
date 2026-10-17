@@ -60,6 +60,7 @@ import {
   readPreparations,
 } from "./lib/capture-preparation.ts"
 import { type Source, sourceOf } from "./lib/capture-source.ts"
+import { isStubbedCall, readRpcStub, type RpcStub, rpcPathOf } from "./lib/capture-stub.ts"
 import { CATALOG } from "./lib/catalog-entry.ts"
 import { imageSceneEntry, launchPlaceOf, workspaceOf } from "./lib/catalog-setup.ts"
 import { launchFakeScene } from "./lib/fake-scene-launch.ts"
@@ -120,6 +121,7 @@ const USAGE = `使い方:
   --reveal-at <ms>      書き上げる演出が始まった時点から偽の時計をミリ秒だけ進めたところで止め、途中の画を撮る（正の整数。--scene と一緒にだけ使う。演出は打ち切らず、--wait-for・--advance などの操作とは併用できない）
   --wait-after <selector> その位置で要素が出るのを待つ（--hash で開いた画面の読み込みなど。出なければ失敗して終わる）
                         （7つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
+  --stub-rpc '<手続き>[@<範囲>]=<JSON>'  手続きの応答を差し替えて撮る（何度でも指定できる。例 'planUsage.report={"kind":"not-applicable"}'。範囲は呼び出しの何回目かを1から数えて 3 か 1-2、省くと全部。範囲の外はサーバへ通す）
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
 `
 
@@ -137,6 +139,7 @@ type Options =
       readonly preparations: readonly Preparation[]
       readonly clock: number | undefined
       readonly revealAt: number | undefined
+      readonly stubs: readonly RpcStub[]
       readonly fullPage: boolean
     }
 
@@ -255,6 +258,9 @@ async function capture(
     if (options.revealAt !== undefined) {
       await page.addInitScript(REVEAL_SEEN_SCRIPT)
     }
+    for (const stub of options.stubs) {
+      await stubRpc(page, stub)
+    }
     // 接続は遷移の途中で開くので、フレームを数え始めるのは遷移より前。
     const watch = watchSceneEvents(page)
     await openPage(page, url)
@@ -318,6 +324,23 @@ async function capture(
   } finally {
     await browser.close()
   }
+}
+
+/** 数え上げをブラウザ側に置くと再マウントで数えが狂うので、Node 側の `calls` で持つ。 */
+async function stubRpc(page: Page, stub: RpcStub): Promise<void> {
+  let calls = 0
+  await page.route(`**/rpc/${rpcPathOf(stub.procedure)}**`, async (route) => {
+    calls += 1
+    if (!isStubbedCall(stub.range, calls)) {
+      await route.continue()
+      return
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ json: stub.body }),
+    })
+  })
 }
 
 /**
@@ -466,6 +489,7 @@ function readOptions(argv: readonly string[]): Options | undefined {
       "reveal-at": { type: "string" },
       clock: { type: "string" },
       size: { type: "string" },
+      "stub-rpc": { type: "string", multiple: true },
       full: { type: "boolean" },
       "list-scenes": { type: "boolean" },
     },
@@ -485,6 +509,7 @@ function readOptions(argv: readonly string[]): Options | undefined {
       : positiveIntegerArgument.safeParse(values["reveal-at"])
   const clock = values.clock === undefined ? undefined : readClockInstant(values.clock)
   const size = values.size === undefined ? undefined : parseSize(values.size)
+  const stubs = (values["stub-rpc"] ?? []).map(readRpcStub)
   const urls = tokens.flatMap((token, index) =>
     token.kind === "positional" && !prepared?.textTokenIndexes.has(index) ? [token.value] : [],
   )
@@ -498,6 +523,7 @@ function readOptions(argv: readonly string[]): Options | undefined {
         values["wait-for"] !== undefined ||
         prepared.preparations.length > 0)) ||
     (values.clock !== undefined && clock === undefined) ||
+    stubs.some((stub) => stub === undefined) ||
     (values.size !== undefined && size === undefined)
   ) {
     return undefined
@@ -523,6 +549,7 @@ function readOptions(argv: readonly string[]): Options | undefined {
         preparations: prepared.preparations,
         clock,
         revealAt: revealAt?.data,
+        stubs: stubs.filter((stub) => stub !== undefined),
         fullPage: values.full === true,
       }
 }
