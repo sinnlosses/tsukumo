@@ -279,7 +279,7 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     ).toBeDefined()
   })
 
-  // 必須の1つ（`docs/requirements.md`「キャラクター定義」 / characters/README.md）を消す操作は境界で弾く。
+  // 必須の1つ（`docs/requirements.md`「キャラクターパック」 / characters/README.md）を消す操作は境界で弾く。
   it("characterPack.clearPortrait で default を消そうとすると undefined（必須は消せない）", () => {
     expect(
       parseInput("characterPack.clearPortrait", { pack: "fictional", expression: "default" }),

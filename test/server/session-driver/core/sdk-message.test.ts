@@ -280,7 +280,7 @@ describe("toSessionEvents", () => {
     ])
   })
 
-  it("キャラクター定義に無い表情名は default に落とす", () => {
+  it("キャラクターパックに無い表情名は default に落とす", () => {
     const message = assistantMessage([
       {
         type: "tool_use",

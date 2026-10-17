@@ -85,7 +85,7 @@ function profileEditDialog(): Element | null {
 }
 
 describe("CharacterEdit", () => {
-  // 必須の1つ（default）は消せない（`docs/requirements.md`「キャラクター定義」）。画面にも口を出さない。
+  // 必須の1つ（default）は消せない（`docs/requirements.md`「キャラクターパック」）。画面にも口を出さない。
   it("default には消す口を出さない（立ち絵があっても）", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 

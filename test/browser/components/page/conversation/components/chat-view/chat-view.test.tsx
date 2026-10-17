@@ -36,7 +36,7 @@ const RECORDS: readonly SessionRecord[] = [
 ]
 
 // 立ち絵（`<Portrait>`）は `useQuery` を使うので `QueryClientProvider` が要る。表情を見る
-// テストだけがキャラクター定義を差し込む（定義が無いと立ち絵そのものが出ない）。
+// テストだけがキャラクターパックを差し込む（パックが無いと立ち絵そのものが出ない）。
 function renderChatView(stateOverrides: Partial<SessionState>, spy: CommandSpy = () => {}): void {
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
   render(

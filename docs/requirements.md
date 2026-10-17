@@ -48,7 +48,7 @@ sed -n '/^### 4.1 Claude Code の駆動/,/^#\{2,4\} /p' docs/requirements.md
 | ## 4. 機能要件                                 | 4.1〜4.12 の親見出し                                                      |
 | ### 4.1 Claude Code の駆動                     | SDK の `query` の動かし方と、受け取るイベントの行き先                     |
 | ### 4.3 状態連動                               | **表情の一覧と出す場面**（源は `speak` の引数だけ）、立ち絵の動き         |
-| ### 4.4 キャラクター定義                       | 素材の差し替え可能性                                                      |
+| ### 4.4 キャラクターパック                     | 素材の差し替え可能性                                                      |
 | ### 4.6 起動と設定                             | 1コマンドでの起動と、既存設定を壊さない制約                               |
 | ### 4.7 画面レイアウト                         | biim 風の4領域。1枚のHTMLにまとめた形と、狭い画面での見せ方               |
 | ### 4.8 セッションの復元                       | 起こし直したときに**何を戻し何を戻さないか**。鍵・契機・保存しない理由    |
@@ -396,7 +396,7 @@ Orca は「ページを表示するホスト」として第一級であり、VS 
     新しい渡し先に渡さない（`docs/coding-standards.md`「会話内容の扱い」は変えない）。依頼を送れば消える
   - **雑談の自発の話しかけは、立ち絵をつついたときだけのまま**（2026-09-21 決定を保つ。
     `docs/architecture/chat-mode.md` 4.9）
-- 表情の日本語ラベルはキャラクター定義の `character.json` の `expressions` が持つ。`src/shared/character-pack/expression.ts` に
+- 表情の日本語ラベルは `character.json` の `expressions` が持つ。`src/shared/character-pack/expression.ts` に
   置くのは、表情名の全体だけ（`docs/architecture/character-pack.md`）
 - **立ち絵は動くが話さない**（2026-09-13）。演出はブラウザ側の `Portrait` 部品の中に閉じる
   （`docs/architecture/browser.md`「立ち絵の動き」）
@@ -493,7 +493,7 @@ Orca は「ページを表示するホスト」として第一級であり、VS 
   動きは足さず、繰り返さない
 - `prefers-reduced-motion: reduce` を尊重する（規則は `src/browser/styles/theme.css` にある）
 
-### 4.4 キャラクター定義
+### 4.4 キャラクターパック
 
 素材（立ち絵の画像）と、表情の対応は**宣言的な定義ファイル**で差し替え可能にする。
 ハードコードしない（`docs/architecture.md` 原則4）。

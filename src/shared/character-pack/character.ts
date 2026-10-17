@@ -11,7 +11,7 @@ import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts
 import { type Expression, EXPRESSIONS } from "./expression.ts"
 
 /**
- * キャラビューに渡す、キャラクター定義の姿（`character-changed` イベント・`SessionState.character` の中身）。
+ * キャラビューに渡す、キャラクターパックの姿（`character-changed` イベント・`SessionState.character` の中身）。
  * `portraits` の値は `/character/<pack>/<file>` の URL（ファイル名ではない。素材の中身はここにもイベントにも乗せない）。
  */
 export type CharacterInfo = {
@@ -146,7 +146,7 @@ export type CharacterInfoSource = {
 }
 
 /**
- * キャラクター定義を {@link CharacterInfo}（キャラビューに渡す形）にする。ファイル名を {@link characterAssetPath} で URL に変える。
+ * `character.json` の中身を {@link CharacterInfo}（キャラビューに渡す形）にする。ファイル名を {@link characterAssetPath} で URL に変える。
  * 定義が無い・壊れているときも、欠けた形（立ち絵なし・`default` だけの表情）で返す。
  * 「この表情だけ無い」はここで `default` に畳み、読む側へ運ばない。
  */

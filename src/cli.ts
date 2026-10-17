@@ -40,7 +40,7 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       ${String(DEFAULT_VIEW_PORT)}。読めない値は無視して既定のまま）。日常の起動では使わない
                       ——実際の既定の帯を塞がずに「全部塞がっている」経路を確かめる
                       test/cli.test.ts のための口
-  TSUKUMO_CHARACTER   キャラクター定義ディレクトリ（既定は tsukumo 自身の同梱の
+  TSUKUMO_CHARACTER   キャラクターパックのディレクトリ（既定は tsukumo 自身の同梱の
                       characters/tsukumo-spirit。自分の素材を使うときは起動先の
                       characters/local などを指す。相対パスは cwd 相対、絶対パスはそのまま）
   TSUKUMO_OPEN_VIEW   起動時にタブを自動で開くか（既定は開く。0 を渡すと開かない）

@@ -222,7 +222,7 @@ export type FakeDriverOptions = {
    * 起こし直した代はもう繋がっているので、解けた約束を渡す。
    */
   readonly firstViewer: Promise<void>
-  /** キャラクター定義にある表情名。`report` の `closing` の表情を本物と同じに畳む。 */
+  /** キャラクターパックにある表情名。`report` の `closing` の表情を本物と同じに畳む。 */
   readonly expressions: readonly Expression[]
   /** 内部イベントの受け取り口（本物の駆動と同じ契約）。 */
   readonly onEvent: (event: SessionEvent) => void

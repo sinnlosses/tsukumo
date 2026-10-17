@@ -1,5 +1,5 @@
 // `speak` が選べる表情と、そのラベル。
-// 名前はコード側の語彙、ラベルはキャラクター定義ファイル側の言葉。
+// 名前はコード側の語彙、ラベルは `character.json` 側の言葉。
 
 import type { CharacterDefinition } from "./character-definition.ts"
 import { type Expression, EXPRESSIONS } from "./expression.ts"

@@ -623,7 +623,7 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
 | `src/server/<機能>/adapter/` | サーバ（Node）   | その機能の外の世界に触る境界。1ファイル = 1つの境界（SDK・HTTP・fs・子プロセス）。共有のものは `src/server/adapter/` の直下              |
 | `src/browser/`               | ブラウザ         | ブラウザ側の React の部品。中は `features/` `components/` `hooks/` `lib/` `utils/` `stores/` `styles/`（箱ごとの置くものは「全体構成」） |
 | `test/`                      | —                | テスト。`src/<相対パス>.ts` → `test/<相対パス>.test.ts` で対応させる                                                                     |
-| `characters/`                | —                | キャラクター定義とサンプル素材                                                                                                           |
+| `characters/`                | —                | キャラクターパックとサンプル素材                                                                                                         |
 | `scripts/`                   | —                | 開発・調査用のスクリプト。本体から呼ばれない                                                                                             |
 
 **`scripts/` は本体から呼ばれない調査用の道具置き場**（端末の実測幅を測るプローブなど）。

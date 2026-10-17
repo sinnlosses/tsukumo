@@ -18,7 +18,7 @@ import { putSession } from "../../../../../../../session-store.ts"
 
 // どこに見えているか（重なり・大きさ）は目視で確かめる（`docs/architecture/testing.md`
 // 「手で確かめること」）。ここで守るのは、筆先に連れて出入りすることと、置く座標を筆先から
-// 取っていることだけ。フィクスチャは手で書いた架空のキャラクター定義。
+// 取っていることだけ。フィクスチャは手で書いた架空のキャラクターパック。
 
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   ...shownPortraits({ default: "/character/default.png" }),

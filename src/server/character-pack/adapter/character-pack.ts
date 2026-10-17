@@ -49,7 +49,7 @@ const LOCAL_PACK_NAME = "local"
 const LEADING_PACK_NAME = "tsukumo"
 
 /**
- * キャラクター定義ディレクトリの既定値。自作で権利がクリーンな tsukumo-spirit を使う。
+ * キャラクターパックのディレクトリの既定値。自作で権利がクリーンな tsukumo-spirit を使う。
  * 同梱物なので cwd には依存させず、tsukumo 自身の場所からの相対で読む。
  */
 export const DEFAULT_CHARACTER_DIR_RELATIVE_PATH: readonly string[] = [

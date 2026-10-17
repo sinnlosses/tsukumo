@@ -59,7 +59,7 @@ import {
  * - `includePartialMessages` の断片で `report` の呼び出しの塊が開いたら `report-drafting` を出す（立ち絵の「書いている」の材料。メインのものだけ）。
  *   引数の断片（`input_json_delta`）は運ばない。
  *   描くのは確定した `report` だけで、書きかけの引数は JSON としても読めない
- * - `expression` は `expressions`（キャラクター定義にある表情名）に無ければ `default` に落とす
+ * - `expression` は `expressions`（キャラクターパックにある表情名）に無ければ `default` に落とす
  * - `tool-started` の `parentToolUseId` は、メッセージ本体（`message.message` の外）にある `parent_tool_use_id` から取る（サブエージェントの中で動いたツールだけ非 null。実測）。
  *   同じ assistant メッセージに含まれる `tool_use` はすべて同じ値を持つ
  * - `assistant` の `message.usage` は `step-usage` にする（ターンの中を持ち場ごとに割るため）
