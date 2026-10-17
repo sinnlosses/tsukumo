@@ -64,6 +64,11 @@
   `REPORT_USAGE_FORMAT_VERSION` の参照なので、欄が増えたら一覧を直し、版だけ上げるなら無修正で通る。
   版を上げるときは `scripts/runtime/report-block-usage.ts` の版別の枝（定数・`recordSchema` の union・
   `rejectionSchema` の literal の3か所）も足す。
+- **描き分けの条件を足し、既存の描き方に届かなくなる場合ができる変更の計画は、段に「届かなくなった描き方を
+  書いた正典の文・コメント・テスト名・分岐・印と CSS を grep で洗って直す」を置く。** 洗うには、届かなく
+  なった描き方の語（表示名・関数名・印の名前・CSS の class）で `docs/` `src/` `test/` を引く。例は帯に
+  waterfall の分岐を足した変更で、帯の斜線の箇条・2つの図・`src/shared/report/report-phase-time.ts` の
+  `bandSegmentMarkdown` の不明の枝が古くなり、段が無かったので最後の受け入れの差し戻しで初めて出た。
 - **spec の出典**は `docs/requirements.md` と各タスクの本文（`task show GH-<n>`。GitHub の Issue は
   その写しで、正は Beads）。2026-09-27 より前に閉じたタスクの本文は、git の履歴の `develop/task/` と
   `docs/history/tasks.md` にある。**standards の出典**は `CLAUDE.md` ＋
