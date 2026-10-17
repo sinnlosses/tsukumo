@@ -58,7 +58,7 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 
 ## アーキテクチャ概要
 
-**3層・プロトコル・置き場所・実装の全体図・設計判断は `docs/architecture.md` が正典。**
+**3層・共有層・置き場所・実装の全体図・設計判断は `docs/architecture.md` が正典。**
 原則の見出しだけを置く。
 
 - **原則1**: **Claude Code の TUI を使わない**（上の IMPORTANT）
@@ -139,7 +139,7 @@ node scripts/runtime/stop.ts   # 動いている tsukumo の一覧（--port <n> 
 | こういうとき                                                                                    | 読むもの                                                                      |
 | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | 要件・やらないこと・技術制約・未決事項を知りたい                                                | `docs/requirements.md`                                                        |
-| 3層・プロトコル・部品・置き場所を決める                                                         | `docs/architecture.md`（置き場所は「全体構成」）                              |
+| 3層・共有層・部品・置き場所を決める                                                             | `docs/architecture.md`（置き場所は「全体構成」）                              |
 | 色・書体・レイアウト                                                                            | `docs/architecture/screen-design.md`                                          |
 | セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/architecture/display.md`                                                |
 | ワークフローの契約（`work_plan`・`report` の口、Beads の欄）・独自のワークフローを当てる        | `docs/architecture/workflow-contract.md`                                      |
