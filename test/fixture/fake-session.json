@@ -1606,6 +1606,12 @@
                   },
                   {
                     "kind": "text",
+                    "text": "設定ファイルで目盛りを切り替える作りは一般的（架空）。[example.com](https://example.com/ticks) と [Www.Example.org](https://example.org/a) が出典で、[詳しい解説](https://example.net/b) は札にならない。",
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "text",
                     "text": "読み口は `ticks.ts` の1つに寄せ、起こし直すと新しい目盛りを読み直す（架空）。",
                     "fold": "",
                     "aside": "出どころ: 架空の計測ログ `notes/dummy/ticks.md:12` の3回ぶん"

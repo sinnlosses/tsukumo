@@ -1136,6 +1136,17 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(container.querySelector("sup > a")?.getAttribute("href")).toBe("#user-content-fn-1")
   })
 
+  it("字がホスト名と同じ外部リンクだけ出典の札の class が付く", () => {
+    const { container } = render(
+      <Markdown text={"[example.com](https://example.com/a) と [解説](https://example.com/b)"} />,
+    )
+
+    const [source, plain] = [...container.querySelectorAll("a")]
+    expect(source?.className).toContain("report-source")
+    expect(plain?.className ?? "").not.toContain("report-source")
+    expect(source?.getAttribute("rel")).toBe("noopener noreferrer")
+  })
+
   it("ページ内のリンクを押すと、location.hash を書かずに飛び先の要素へ転がす", () => {
     const { container } = render(
       <Markdown text={'<a href="#架空の先">飛ぶ</a>\n\n<div id="架空の先">先</div>'} />,

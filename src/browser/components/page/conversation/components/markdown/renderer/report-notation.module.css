@@ -2036,3 +2036,14 @@
     margin: 0 0 2px;
   }
 }
+
+.detail-block a.report-source {
+  padding: 0 0.35em;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}

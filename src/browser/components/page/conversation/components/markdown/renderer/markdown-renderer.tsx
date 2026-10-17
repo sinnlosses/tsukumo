@@ -66,6 +66,7 @@ import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
 import { shellCommandText, shellLineKinds } from "./shell-line.ts"
+import { isSourceLink } from "./source-link.ts"
 import { rehypeStyleAllowlist } from "./style-allowlist.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
 
@@ -375,8 +376,15 @@ function Anchor(props: AnchorProps): ReactElement {
   }
 
   if (href === undefined || hasUrlScheme(href)) {
+    const isSource =
+      href !== undefined && typeof children === "string" && isSourceLink(href, children)
     return (
-      <a href={href} title={title} className={className} rel="noopener noreferrer">
+      <a
+        href={href}
+        title={title}
+        className={isSource ? clsx(className, styles["report-source"]) : className}
+        rel="noopener noreferrer"
+      >
         {children}
       </a>
     )
