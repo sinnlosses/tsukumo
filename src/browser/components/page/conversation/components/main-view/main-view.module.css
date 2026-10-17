@@ -76,6 +76,24 @@
   background: var(--surface);
   min-width: 0;
 }
+/* 書き上げる演出を飛ばす口。ステップの右上に置き、演出中（本文の根に `data-revealing` が立っているあいだ）だけ出す。
+   字は 12px のままで、押せる面は高さ・幅とも 24px 以上にする。 */
+.main-step {
+  position: relative;
+}
+.reveal-skip {
+  display: none;
+  position: absolute;
+  top: 0.25rem;
+  right: 0.5rem;
+  z-index: 1;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 0.5rem;
+}
+.main-step:has(> [data-revealing]) > .reveal-skip {
+  display: block;
+}
 /* `.detail-block`（レポート本文の入れ物）本体は report-notation.module.css にあり、CSS Modules は class 名をファイルごとにハッシュ化するので、この選択子だけではそちらの `.detail-block` を指せない。
    `Report` が両方のファイルの `.detail-block` を同じ要素に重ねて付ける（このファイルの側はこの選択子のためだけに出てくる綴りで、見た目は持たない）。 */
 .main-step > .detail-block:last-child {
@@ -122,6 +140,10 @@
   /* 本文の入れ物や頭は別のファイルの `display` を持つので、読み込みの順に関わらず勝たせる。 */
   .phone-hidden {
     display: none !important;
+  }
+  /* 本文が隠れているあいだは、飛ばす口だけを残さない。 */
+  .main-step:has(> .phone-hidden[data-revealing]) > .reveal-skip {
+    display: none;
   }
 }
 

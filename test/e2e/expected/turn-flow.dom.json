@@ -453,8 +453,16 @@
                                         }
                                       ]
                                     },
-                                    "表 1",
-                                    "直したファイルと結果（架空の数）",
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "data-reveal-caption": ""
+                                      },
+                                      "children": [
+                                        "表 1",
+                                        "直したファイルと結果（架空の数）"
+                                      ]
+                                    },
                                     {
                                       "tag": "span",
                                       "attributes": {
@@ -655,8 +663,16 @@
                                         }
                                       ]
                                     },
-                                    "表 2",
-                                    "目盛りの数（架空の数）",
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "data-reveal-caption": ""
+                                      },
+                                      "children": [
+                                        "表 2",
+                                        "目盛りの数（架空の数）"
+                                      ]
+                                    },
                                     {
                                       "tag": "table",
                                       "children": [

@@ -171,27 +171,75 @@
                             {
                               "tag": "canvas"
                             },
-                            "図 1",
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-reveal-caption": ""
+                              },
+                              "children": [
+                                "図 1"
+                              ]
+                            },
                             {
                               "tag": "canvas"
                             },
-                            "図 2",
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-reveal-caption": ""
+                              },
+                              "children": [
+                                "図 2"
+                              ]
+                            },
                             {
                               "tag": "canvas"
                             },
-                            "図 3",
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-reveal-caption": ""
+                              },
+                              "children": [
+                                "図 3"
+                              ]
+                            },
                             {
                               "tag": "canvas"
                             },
-                            "図 4",
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-reveal-caption": ""
+                              },
+                              "children": [
+                                "図 4"
+                              ]
+                            },
                             {
                               "tag": "canvas"
                             },
-                            "図 5",
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-reveal-caption": ""
+                              },
+                              "children": [
+                                "図 5"
+                              ]
+                            },
                             {
                               "tag": "canvas"
                             },
-                            "図 6"
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-reveal-caption": ""
+                              },
+                              "children": [
+                                "図 6"
+                              ]
+                            }
                           ]
                         }
                       ]

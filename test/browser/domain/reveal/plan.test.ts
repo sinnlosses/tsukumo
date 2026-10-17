@@ -82,7 +82,44 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
   it("見出し・副見出し・水平線だけでは塊を分けない（節の境目の印だけが切れ目）", () => {
     expect(
       tagsOf(rootWith("<p>あ</p><hr /><h5>節の中の副見出し</h5><h3>他の見出し</h3><p>い</p>")),
-    ).toEqual([["P", "HR", "H5", "H3", "P"]])
+    ).toEqual([["P", "HR", "H3", "P"]])
+  })
+
+  it("節の見出し（h4・h5）と図表の題は筆の対象に入れず、最初から見える", () => {
+    const root = rootWith(
+      '<h4>節</h4><p>あ</p><h5>副見出し</h5><p>い</p><div data-reveal-caption="">図 1</div>',
+    )
+
+    expect(tagsOf(root)).toEqual([["P", "P"]])
+  })
+
+  it("題つきの図表は包みを対象にせず、題の行を除いた本体だけを対象にする", () => {
+    const root = rootWith(
+      '<div class="captioned"><div data-reveal-caption="">表 1</div>' +
+        "<table><tbody><tr><td>あ</td></tr></tbody></table></div>" +
+        '<div class="captioned"><pre class="mermaid">flowchart TD</pre>' +
+        '<div data-reveal-caption="">図 1</div></div>',
+    )
+
+    expect(tagsOf(root)).toEqual([["TABLE", "PRE"]])
+  })
+
+  it("演出の全体は10秒を超えない。上限をまたぐ塊はそこで書き切り、後ろの塊は上限の時刻に一度に出す", () => {
+    const section = `<h4>節</h4><p>${"あ".repeat(100)}</p>`
+    const root = rootWith(Array.from({ length: 8 }, () => section).join(BREAK))
+    const blocks = planReveal(root, STANDARD_TIMING)
+
+    expect(Math.max(...blocks.map((block) => block.endMs))).toBe(10_000)
+    expect(blocks.map((block) => [block.startMs, block.endMs])).toEqual([
+      [0, 4000],
+      [4000, 8000],
+      [8000, 10_000],
+      [10_000, 10_000],
+      [10_000, 10_000],
+      [10_000, 10_000],
+      [10_000, 10_000],
+      [10_000, 10_000],
+    ])
   })
 
   it("印より前の要素も、それだけで1つの塊になる", () => {
@@ -297,7 +334,7 @@ describe("planReveal（結論と検証結果は筆の対象に入れない）", 
   it("節の始まりの印より前の要素は塊に入らず、印も塊に入れない", () => {
     const root = rootWith(`<p>結論</p>${SECTIONS_START}<h4>節</h4><p>本文</p>`)
 
-    expect(tagsOf(root)).toEqual([["H4", "P"]])
+    expect(tagsOf(root)).toEqual([["P"]])
   })
 
   it("印が無い本文は、全体が対象", () => {

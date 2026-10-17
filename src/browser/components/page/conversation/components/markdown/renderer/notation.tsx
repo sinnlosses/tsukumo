@@ -37,6 +37,9 @@ const NOTATION_CLASS_NAMES: ReadonlyMap<string, string> = new Map(
  */
 const NOTE_LABELS = REPORT_NOTE_KINDS
 
+/** 書き上げる演出（`planReveal`）が題の行を見分ける印の属性。class はハッシュ名になり domain の層から選べない。 */
+const REVEAL_CAPTION_ATTRIBUTE = "data-reveal-caption"
+
 type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
 
 /**
@@ -56,8 +59,14 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
     )
   }
 
+  const isCaption = className !== undefined && classNameTokens(className).includes("caption")
+
   return (
-    <div {...rest} className={resolveNotationClassName(className)}>
+    <div
+      {...rest}
+      {...(isCaption ? { [REVEAL_CAPTION_ATTRIBUTE]: "" } : {})}
+      className={resolveNotationClassName(className)}
+    >
       {label !== undefined && (
         <Text
           element="span"

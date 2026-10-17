@@ -1,4 +1,4 @@
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 // `Markdown`（本物は react-markdown 一式で重い）を、呼ばれた回数と引数だけ記録する代役に
@@ -24,6 +24,51 @@ const { Report } =
 afterEach(() => {
   cleanup()
   calls = []
+})
+
+describe("Report（書き上げる演出を飛ばす口）", () => {
+  it("演出を掛けるレポートには「全部出す」の口を置き、掛けないレポートには置かない", () => {
+    const { rerender } = render(<Report reveal={true} turnId={1} className="" markdown="段落" />)
+    expect(screen.queryByRole("button", { name: "全部出す" })).not.toBeNull()
+
+    rerender(<Report reveal={false} turnId={1} className="" markdown="段落" />)
+    expect(screen.queryByRole("button", { name: "全部出す" })).toBeNull()
+  })
+
+  it("本文が phone-hidden のとき、口は本文の兄弟として並ぶ（隠す CSS が `> .phone-hidden[data-revealing]` で口を引ける形）", () => {
+    const text = "架空の本文。".repeat(40)
+    const { container } = render(
+      <Report
+        reveal={true}
+        turnId={1}
+        className="phone-hidden"
+        markdown={`結論\n\n<div class="report-sections-start"></div>\n\n${text}`}
+      />,
+    )
+
+    const body = container.querySelector("[data-markdown-stub]")?.parentElement
+    expect(body?.classList.contains("phone-hidden")).toBe(true)
+    expect(body?.hasAttribute("data-revealing")).toBe(true)
+    expect(screen.getByRole("button", { name: "全部出す" }).parentElement).toBe(body?.parentElement)
+  })
+
+  it("口を押すと、窓で聞いている飛ばしの経路に乗って演出が終わる", () => {
+    const text = "架空の本文。".repeat(40)
+    const { container } = render(
+      <Report
+        reveal={true}
+        turnId={1}
+        className=""
+        markdown={`結論\n\n<div class="report-sections-start"></div>\n\n${text}`}
+      />,
+    )
+    const body = container.querySelector("[data-markdown-stub]")?.parentElement
+    expect(body?.hasAttribute("data-revealing")).toBe(true)
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "全部出す" }))
+
+    expect(body?.hasAttribute("data-revealing")).toBe(false)
+  })
 })
 
 describe("Report（空行で塊に割り、塊ごとに memo）", () => {

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, type RenderResult } from "@testing-library/react"
-import type { ReactElement } from "react"
-import { afterEach, describe, expect, it } from "vitest"
+import { Fragment, type ReactElement } from "react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { saveRevealSpeed } from "../../../../src/browser/domain/reveal-speed.ts"
 import {
@@ -239,6 +239,71 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
     unmount()
 
     expect(hidden.style.clipPath).toBe("")
+  })
+})
+
+/** 100字の節を `count` 個並べた本文（標準の速さで1節 4000ms）。 */
+function SectionsProbe(props: { readonly count: number }): ReactElement {
+  const rootRef = useReportReveal(true, TURN_ID, () => {})
+
+  return (
+    <div data-testid="root" ref={rootRef}>
+      {Array.from({ length: props.count }, (_unused, index) => (
+        <Fragment key={index}>
+          {index > 0 && <div className="report-section-break" />}
+          <p className="section">{"あ".repeat(100)}</p>
+        </Fragment>
+      ))}
+    </div>
+  )
+}
+
+describe("useReportReveal（演出の全体の上限）", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function sections(): readonly HTMLElement[] {
+    return [...root().querySelectorAll("p.section")].filter(
+      (node): node is HTMLElement => node instanceof HTMLElement,
+    )
+  }
+
+  function startAt(count: number): void {
+    vi.useFakeTimers({ toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance"] })
+    render(<SectionsProbe count={count} />)
+  }
+
+  it("上限の前に書き終わる短いレポートは、その時刻で全部出し、演出を終える", () => {
+    startAt(2)
+
+    vi.advanceTimersByTime(7000)
+    expect(root().hasAttribute("data-revealing")).toBe(true)
+
+    vi.advanceTimersByTime(1100)
+    expect(root().hasAttribute("data-revealing")).toBe(false)
+    expect(sections().map((node) => node.style.clipPath)).toEqual(["", ""])
+  })
+
+  it("上限を超える長いレポートは、10秒の手前では後ろが隠れたまま、10秒で残りが一度に出る", () => {
+    startAt(8)
+
+    vi.advanceTimersByTime(9900)
+    expect(root().hasAttribute("data-revealing")).toBe(true)
+    expect(sections().map((node) => node.style.clipPath !== "")).toEqual([
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+    ])
+
+    vi.advanceTimersByTime(200)
+    expect(root().hasAttribute("data-revealing")).toBe(false)
+    expect(sections().map((node) => node.style.clipPath)).toEqual(Array(8).fill(""))
   })
 })
 

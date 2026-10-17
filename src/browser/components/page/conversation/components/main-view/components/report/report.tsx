@@ -8,6 +8,7 @@ import clsx from "clsx"
 import { memo, type ReactElement } from "react"
 
 import { useReportReveal } from "../../../../../../../domain/reveal/use-report-reveal.ts"
+import { Button } from "../../../../../../ui/button/button.tsx"
 import { detailBlockClassName, Markdown } from "../../../markdown/markdown.tsx"
 import styles from "../../main-view.module.css"
 import { splitReportBlocks } from "./domain/split-blocks.ts"
@@ -28,17 +29,37 @@ export function Report(props: ReportProps): ReactElement {
   const rootRef = useReportReveal(props.reveal, props.turnId, () => {})
 
   return (
-    // `.detail-block` を2つ重ねる。
-    // 見た目の本体は report-notation.module.css にあり、ステップの末尾の余白の打ち消し（`.main-step > .detail-block:last-child`）は main-view.module.css にある。
-    // CSS Modules は class 名をファイルごとにハッシュ化するので、片方だけでは打ち消しが当たらない。
-    <div
-      className={clsx(detailBlockClassName, styles["detail-block"], props.className)}
-      ref={rootRef}
-    >
-      {blocks.map((block) => (
-        <ReportBlock key={block} text={block} />
-      ))}
-    </div>
+    <>
+      {/* 飛ばす操作そのもの（押す・キー）は `useReportReveal` が窓で聞いているので、押された時点で残りは出ている。
+          口は「飛ばせる」と知らせる顔で、演出中の表示は CSS が `data-revealing` を見て決める。 */}
+      {props.reveal && (
+        <Button
+          variant="ghost"
+          size="action"
+          pressed="none"
+          disabled={false}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          disclosure={{ kind: "none" }}
+          title={undefined}
+          className={styles["reveal-skip"]}
+          onClick={() => undefined}
+        >
+          全部出す
+        </Button>
+      )}
+      {/* `.detail-block` を2つ重ねる。
+          見た目の本体は report-notation.module.css にあり、ステップの末尾の余白の打ち消し（`.main-step > .detail-block:last-child`）は main-view.module.css にある。
+          CSS Modules は class 名をファイルごとにハッシュ化するので、片方だけでは打ち消しが当たらない。 */}
+      <div
+        className={clsx(detailBlockClassName, styles["detail-block"], props.className)}
+        ref={rootRef}
+      >
+        {blocks.map((block) => (
+          <ReportBlock key={block} text={block} />
+        ))}
+      </div>
+    </>
   )
 }
 

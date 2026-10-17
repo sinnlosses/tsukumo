@@ -65,6 +65,18 @@ const SECTIONS_START_SELECTOR = ".report-sections-start"
  */
 const SHORT_REPORT_WEIGHT = 200
 
+/** 最初から出す要素。節の見出し（`SectionHeading` の `h4`・`SubHeading` の `h5`）と図表の題。 */
+const UNWRITTEN_SELECTOR = "h4, h5, [data-reveal-caption]"
+
+/**
+ * 題つきの図表の包み。包みごと隠すと題も隠れるので、包みは対象にせず中の本体を対象にする。
+ * 題の行の印は `NotationBlock` が足す（語彙の class 名はハッシュ名に置き換わるため）。
+ */
+const CAPTIONED_SELECTOR = ":has(> [data-reveal-caption])"
+
+/** 演出の全体の上限（ms）。書く速さの設定に関わらず、超えた分は上限の時刻に一度に出す。 */
+const TOTAL_LIMIT_MS = 10_000
+
 /** 節と節の境目の印（`SECTION_BREAK_MARKDOWN` と同じ class 名）。 */
 const SECTION_BREAK_SELECTOR = ".report-section-break"
 
@@ -95,23 +107,10 @@ export function isShortReport(root: Element): boolean {
  * 1つぶんの時間はそのトピックの大きさで決まる（レポート全体の長さに左右されない）。
  *
  * 塊の間に隙間は空けない（前の塊が終わった時刻が次の塊の始まり）。
+ * 全体は {@link TOTAL_LIMIT_MS} までで、上限をまたぐ塊はそこまでに書き切り、その後ろの塊は上限の時刻に一度に出す。
  */
 export function planReveal(root: Element, timing: RevealTiming): readonly RevealBlock[] {
-  return toTopics(writtenElementsOf(root)).reduce<{
-    blocks: readonly RevealBlock[]
-    at: number
-  }>(
-    (acc, members) => {
-      const contentMs = topicDurationMs(members, timing)
-      const pauses = pausesOf(members, contentMs)
-      const endMs = acc.at + contentMs + sumBy(pauses, (pause) => pause.durationMs)
-      return {
-        blocks: [...acc.blocks, { members, startMs: acc.at, endMs, pauses }],
-        at: endMs,
-      }
-    },
-    { blocks: [], at: 0 },
-  ).blocks
+  return limitTotal(planUnlimited(root, timing))
 }
 
 /**
@@ -134,11 +133,51 @@ export function blockProgress(block: RevealBlock, elapsedMs: number): number {
   return linear < 0.5 ? 4 * linear ** 3 : 1 - (2 - 2 * linear) ** 3 / 2
 }
 
-/** 筆で書く要素。節の始まりの印があれば、その後ろだけ（結論と検証結果は最初から出す）。 */
+function planUnlimited(root: Element, timing: RevealTiming): readonly RevealBlock[] {
+  return toTopics(writtenElementsOf(root)).reduce<{
+    blocks: readonly RevealBlock[]
+    at: number
+  }>(
+    (acc, members) => {
+      const contentMs = topicDurationMs(members, timing)
+      const pauses = pausesOf(members, contentMs)
+      const endMs = acc.at + contentMs + sumBy(pauses, (pause) => pause.durationMs)
+      return {
+        blocks: [...acc.blocks, { members, startMs: acc.at, endMs, pauses }],
+        at: endMs,
+      }
+    },
+    { blocks: [], at: 0 },
+  ).blocks
+}
+
+function limitTotal(blocks: readonly RevealBlock[]): readonly RevealBlock[] {
+  return blocks.map((block) => {
+    if (block.endMs <= TOTAL_LIMIT_MS) {
+      return block
+    }
+    if (block.startMs >= TOTAL_LIMIT_MS) {
+      return { ...block, startMs: TOTAL_LIMIT_MS, endMs: TOTAL_LIMIT_MS, pauses: [] }
+    }
+    return { ...block, endMs: TOTAL_LIMIT_MS, pauses: [] }
+  })
+}
+
+/**
+ * 筆で書く要素。節の始まりの印があれば、その後ろだけ（結論と検証結果は最初から出す）。
+ * 節の見出しと題は最初から出すので、対象に入れない。
+ */
 function writtenElementsOf(root: Element): readonly RevealElement[] {
   const elements = [...root.children].filter(isRevealElement)
   const start = elements.findIndex((element) => element.matches(SECTIONS_START_SELECTOR))
-  return start === -1 ? elements : elements.slice(start + 1)
+  const after = start === -1 ? elements : elements.slice(start + 1)
+  return after
+    .flatMap((element) =>
+      element.matches(CAPTIONED_SELECTOR)
+        ? [...element.children].filter(isRevealElement)
+        : [element],
+    )
+    .filter((element) => !element.matches(UNWRITTEN_SELECTOR))
 }
 
 /** 節の境目の印で切って、続く要素をひとまとめにする。印そのものはトピックに入れない。 */
