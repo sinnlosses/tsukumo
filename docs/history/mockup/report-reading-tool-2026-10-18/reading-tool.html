@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>レポートの紙面を「読む道具」に — 幾何・色・案内の見本（2026-10-18）</title>
+<style>
+/* 見本の中でだけ使うトークン。地・字・差し色は theme.css の既定（差し色はつくもパックの値）。架空の中身だけを使い、実物の会話は写さない。
+   10-17 の値（拾う字 15:1・## 21px・格子 13/26・見出し 52/13・罫 1.3:1・図の題は下で表の題は上）はそのまま。新しく振るのは次の5つ:
+     幅の段  : 本文 42em / 広 63em / 全（.wide / .full）。広は地の文の左端から右へ伸ばす。横並びは器の幅で落とす（@container）
+     コード  : 箱を1段に（ground だけ）。構文色は 5 値・2 色相（文字列 #c9c79e・数 #deb7cf）、名前は拾う字＋600
+     差分    : 行の地を全幅の帯に（追加 #203524・削除 #372120）、語の地は #345d3e / #603334。行頭の + − を溝に
+     左の色罫: 状態を運ぶ所だけ（注意・異常の note とお願い）。情報・疑問・メモの note は罫を外し、種別のラベルの字を色に
+     並び    : 依頼を1行に畳み、閉じたら最終を上に、中間は「経過 n 件」の畳みに。列を畳んだら帯に「いま: <##>」 */
+:root{
+  --ground:#191720; --surface:#221f2b; --ink:#e8e3ea; --accent:#6fe3cd;
+  --ink-bright:#f7f6f8;
+  --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+  --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+  --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+  --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
+  --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+  --rule-accent: color-mix(in srgb, var(--rule), var(--accent) 60%);
+  --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
+  --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
+  --state-ok:#7ee081; --state-warn:#e3c766; --state-ng:#f2a0a0; --state-ask:#c7aef0; --state-info:#9cc1ee;
+  --code-string:#c9c79e; --code-number:#deb7cf;
+  --diff-add-line:#203524; --diff-del-line:#372120; --diff-add-word:#345d3e; --diff-del-word:#603334;
+  --font-sans: system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-code: "IBM Plex Mono", var(--font-mono);
+  --fs-headline:21px; --fs-section:21px; --fs-sub:17px; --fs-body:15px; --fs-dense:14px; --fs-caption:13px; --fs-label:12px;
+  --lh-body:26px; --gap:13px; --gap-2:26px; --gap-4:52px;
+  --measure:42em; --measure-wide:63em;
+}
+body{margin:0;padding:32px;background:#17161e;color:var(--ink);font-family:var(--font-sans);font-size:15px;line-height:1.6;font-size-adjust: ex-height 0.545}
+h1.mock-title{margin:0 0 4px;font-size:20px;font-weight:600;color:var(--ink-bright)}
+.mock-caption{font-size:12.5px;color:var(--ink-quiet);margin:0 0 12px;max-width:80em}
+.mock-group{margin:0 0 56px}
+.mock-group > h2{margin:0 0 4px;font-size:16px;color:var(--ink-bright)}
+.mock-row{display:flex;flex-direction:column;gap:32px;align-items:flex-start}
+.mock-label{font-size:12px;font-family:var(--font-mono);color:var(--ink-quiet);margin:0 0 6px}
+
+/* ===== 画面の器（メインビューの領域を実寸で切り出す。1400×900 は 1004×512、1920×1080 は 1340×692） ===== */
+.pane{box-sizing:border-box;background:var(--surface);border:1px solid var(--rule);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.pane.w1400{width:1004px} .pane.w1920{width:1340px}
+.pane.first.w1400{height:512px} .pane.first.w1920{height:692px}
+.strip{flex:none;display:flex;align-items:center;gap:10px;height:52px;padding:0 20px 0 22px;border-bottom:1px solid var(--rule-quiet);font-size:13px;color:var(--ink-soft)}
+.strip .dot{width:8px;height:8px;border-radius:50%;background:var(--state-ok)}
+.strip .here{margin-left:18px;color:var(--ink-quiet)} .strip .here b{font-weight:500;color:var(--ink-soft)}
+.strip .right{margin-left:auto;display:flex;gap:16px;align-items:center}
+.strip .mono{font-family:var(--font-mono);font-size:12px;color:var(--ink-quiet)}
+.strip .steps{padding:4px 12px;border:1px solid var(--rule);border-radius:999px;color:var(--ink);font-size:13px}
+.turn-body{flex:1;min-height:0;display:grid;grid-template-columns:232px minmax(0,1fr);overflow:hidden}
+.pane.norail .turn-body{grid-template-columns:40px minmax(0,1fr)}
+.rail{border-right:1px solid var(--rule-quiet);padding:14px 10px;font-size:13px;color:var(--ink-quiet)}
+.pane.norail .rail{padding:14px 0;text-align:center}
+.rail .head{display:flex;justify-content:space-between;padding:0 10px 10px;font-size:12px}
+.rail .item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--surface-raised);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail .item::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+.rail .sub{padding:6px 12px 6px 26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail .sub.cur{color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+.rail .sub.seen{color:var(--ink-soft)}
+.rail .sub.seen::after{content:"·";margin-left:6px;color:var(--ink-quiet)}
+.content{min-width:0;overflow:hidden;padding:18px 24px 24px 24px;container-type:inline-size;container-name:paper}
+
+/* ===== レポート本体: 幅の段 ===== */
+.report{display:grid;grid-template-columns:minmax(0,var(--measure)) minmax(0,1fr);column-gap:28px;font-size:var(--fs-body);line-height:var(--lh-body);color:var(--ink);
+  text-autospace:normal;text-spacing-trim:trim-start;line-break:strict;font-kerning:normal;font-synthesis:weight;overflow-wrap:anywhere}
+.report > *{grid-column:1}
+.report > .wide{grid-column:1 / -1;max-width:var(--measure-wide)}
+.report > .full{grid-column:1 / -1}
+.report p{margin:0 0 var(--gap);text-wrap:pretty}
+.report code{font-family:var(--font-code);font-size:.88em;background:var(--surface-raised);padding:1px 5px;border-radius:4px;color:var(--ink);box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.report a.path{color:var(--ink);text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:3px;position:relative}
+.report strong{color:var(--ink-bright);font-weight:600}
+
+/* 依頼: 1行に畳む（開くと全文）。地も枠も罫も持たない */
+.request{display:flex;align-items:baseline;gap:10px;margin:0 0 var(--gap);font-size:var(--fs-caption);line-height:20px;color:var(--ink-quiet);white-space:nowrap;overflow:hidden}
+.request .lb{flex:none;color:var(--ink-quiet)}
+.request .tx{overflow:hidden;text-overflow:ellipsis;color:var(--ink-soft)}
+.request .more{flex:none;color:var(--accent);font-size:var(--fs-label)}
+
+/* 判決の頭（10-17 のまま） */
+.catalog{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px;margin:0 0 6px;font-size:var(--fs-label);color:var(--ink-quiet)}
+.catalog .sep{color:var(--rule)}
+.catalog .id{font-family:var(--font-mono);color:var(--accent)}
+.catalog .done{color:var(--accent);font-weight:600}
+.catalog .meta{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.catalog .meta .plus{color:var(--state-ok)} .catalog .meta .minus{color:var(--state-ng)}
+.headline{margin:0 0 var(--gap);font-size:var(--fs-headline);line-height:1.45;font-weight:700;color:var(--ink-bright);word-break:auto-phrase;text-wrap:balance;letter-spacing:.01em}
+.conclusion{margin:0 0 var(--gap-2)}
+.conclusion .why{color:var(--ink-soft)}
+.signals{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;margin:0 0 var(--gap);padding:9px 0;border-top:1px solid var(--rule-soft);border-bottom:1px solid var(--rule-soft);font-size:var(--fs-caption);line-height:20px;color:var(--ink-soft)}
+.signals .sig b{font-weight:600;color:var(--ink-bright)}
+.signals .ok{color:var(--state-ok);font-family:var(--font-mono);font-size:12px;font-weight:700}
+.signals .ask{color:var(--state-ask);font-family:var(--font-mono);font-size:12px;font-weight:700}
+.signals .n{font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+.signals .fav{margin-left:auto;display:inline-flex;gap:7px;align-items:center;color:var(--ink)}
+.signals .fav::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.checks{margin:0 0 var(--gap-2);font-size:var(--fs-caption);line-height:20px}
+.check{display:grid;grid-template-columns:7em minmax(0,1fr);column-gap:12px;padding:5px 0;border-bottom:1px solid var(--rule-soft)}
+.check:last-child{border-bottom:none}
+.check .mk{font-family:var(--font-mono);font-size:12px;white-space:nowrap}
+.check.ask .mk{color:var(--state-ask);font-weight:700}
+.check.ask .lb{color:var(--ink)}
+.check .how{color:var(--ink-soft)}
+.check .how b{font-weight:500;color:var(--ink-soft)}
+.check.rest .mk{color:var(--state-ok)}
+.check.rest .lb{color:var(--ink-quiet)}
+
+/* 節の見出し */
+.report h2{margin:var(--gap-4) 0 var(--gap);padding-bottom:6px;font-size:var(--fs-section);line-height:1.4;font-weight:700;color:var(--ink-bright);border-bottom:1px solid var(--rule-accent);word-break:auto-phrase;text-wrap:balance;letter-spacing:.01em;font-feature-settings:"palt"}
+.report h2.after-head{margin-top:var(--gap-2)}
+.report h3{margin:var(--gap-2) 0 var(--gap);font-size:var(--fs-sub);line-height:1.4;font-weight:700;color:var(--ink-bright)}
+
+/* 図と表の題: 10-17 の判断3（図は下・表は上・中央・1段）のまま。中央の軸は地の文の列（42em）に寄せる */
+.cap{margin:6px 0 var(--gap-2);text-align:center;font-size:var(--fs-label);line-height:18px;color:var(--ink-soft)}
+.cap.top{margin:0 0 8px}
+.cap .no{font-family:var(--font-mono);color:var(--ink-quiet);margin-right:8px}
+.figure{margin:0}
+.figure svg{display:block;max-width:100%;margin:0 auto}
+/* 図の高さの上限: 読む面の 70% まで縮め、全体は拡大の口で */
+.figure.capped{max-height:70cqh;overflow:hidden;position:relative}
+.figure .legend{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 18px;margin-top:8px;font-size:var(--fs-label);line-height:18px;color:var(--ink-quiet)}
+.figure .legend i{display:inline-block;vertical-align:-2px;margin-right:6px}
+
+/* 表: 左揃え・行罫 1.3:1・数は右揃えの等幅数字・6行以上は5行ごとに隙間 */
+.report table{border-collapse:collapse;width:auto;max-width:100%;margin:0;font-size:var(--fs-dense);line-height:20px}
+.report th{text-align:left;font-weight:500;font-size:var(--fs-caption);color:var(--ink-soft);padding:0 20px 6px 0;border-bottom:1px solid var(--rule);white-space:nowrap}
+.report td{padding:6px 20px 6px 0;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+.report tr:last-child td{border-bottom:none}
+.report th:last-child,.report td:last-child{padding-right:0}
+.report td.num,.report th.num{text-align:right;font-variant-numeric:tabular-nums}
+.report tr.group-gap td{padding-top:12px}
+.report tr.rest td{color:var(--ink-quiet);font-size:var(--fs-caption)}
+.from{color:var(--ink-quiet)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-caption)}
+.st::before{content:"✓";font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--state-ok)}
+.st.ask::before{content:"?";color:var(--state-ask)}
+
+.report ul.labeled{list-style:none;margin:0 0 var(--gap-2);padding:0}
+.report ul.labeled li{display:grid;grid-template-columns:9em minmax(0,1fr);column-gap:16px;padding:4px 0;border-bottom:1px solid var(--rule-soft)}
+.report ul.labeled li:last-child{border-bottom:none}
+.report ul.labeled .lb{color:var(--ink-bright);font-weight:600;font-size:var(--fs-dense)}
+
+/* note: 左の色罫は注意・異常だけ。情報・疑問・メモは罫を外し、種別のラベルの字を色にする。地の段差（13% / 6%）は 10-17 の判断7 のまま */
+.note{margin:0 0 var(--gap-2);padding:6px 14px;font-size:var(--fs-dense);line-height:22px;border-radius:8px;background:color-mix(in srgb, var(--state-info) 6%, transparent)}
+.note .kind{display:block;font-size:var(--fs-label);font-weight:600;color:var(--state-info);letter-spacing:.06em;margin-bottom:2px}
+.note.warn{border-left:3px solid var(--state-warn);border-radius:0 8px 8px 0;background:color-mix(in srgb, var(--state-warn) 13%, transparent)}
+.note.warn .kind{color:var(--state-warn)}
+.note.ng{border-left:3px solid var(--state-ng);border-radius:0 8px 8px 0;background:color-mix(in srgb, var(--state-ng) 13%, transparent)}
+.note.ng .kind{color:var(--state-ng)}
+.note.ask{background:color-mix(in srgb, var(--state-ask) 6%, transparent)}
+.note.ask .kind{color:var(--state-ask)}
+/* いまの形（比較用）: 5種すべてに 3px の左罫 */
+.v-now .note{border-left:3px solid var(--state-info);border-radius:0 8px 8px 0}
+.v-now .note.ask{border-left-color:var(--state-ask)}
+
+/* 余白の柱（10-17 のまま） */
+.aside{grid-column:2;align-self:start;font-size:var(--fs-label);line-height:18px;color:var(--ink-quiet);padding-left:14px;border-left:1px solid var(--rule-soft);margin-bottom:var(--gap)}
+.aside b{display:block;font-weight:600;color:var(--ink-soft);margin-bottom:2px}
+.aside code{font-size:11.5px;background:none;padding:0;color:var(--ink-soft)}
+.pane.w1400:not(.norail) .aside{display:none}
+.inline-aside{display:none;font-size:var(--fs-label);line-height:18px;color:var(--ink-quiet);margin:-6px 0 var(--gap)}
+.pane.w1400:not(.norail) .inline-aside{display:block}
+
+.favor{margin:var(--gap-2) 0 0;padding:10px 14px;border-left:3px solid var(--accent);background:var(--surface-accent);border-radius:0 8px 8px 0;font-size:var(--fs-dense);line-height:22px}
+.favor .lbl{display:block;font-size:var(--fs-label);letter-spacing:.08em;color:var(--ink-soft);margin-bottom:2px}
+
+/* 経過: 閉じたら最終のあとに、中間を1つの畳みにまとめる */
+.history{margin:var(--gap-4) 0 0;padding-top:var(--gap);border-top:1px solid var(--rule-soft);font-size:var(--fs-caption);line-height:20px;color:var(--ink-quiet)}
+.history summary{cursor:pointer;color:var(--ink-soft)}
+.history summary .n{font-family:var(--font-mono);font-size:12px}
+.history ul{margin:8px 0 0;padding:0 0 0 18px}
+.history li{margin:2px 0}
+.history li .t{font-family:var(--font-mono);font-size:12px;color:var(--ink-quiet);margin-left:8px}
+
+/* ===== stats: 数が3つ以上のときだけ。札は広で横に並べ、器が狭ければ全部1列に落とす ===== */
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0 0 var(--gap-2)}
+.stat{padding:2px 16px 2px 0;border-right:1px solid var(--rule-soft)}
+.stat + .stat{padding-left:16px}
+.stat:last-child{border-right:none}
+.stat .k{font-size:var(--fs-label);line-height:18px;color:var(--ink-quiet)}
+.stat .v{font-size:26px;line-height:32px;font-weight:600;color:var(--ink-bright);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .v small{font-size:13px;font-weight:500;color:var(--ink-soft);margin-left:3px;letter-spacing:0}
+.stat .d{font-family:var(--font-mono);font-size:12px;line-height:18px;font-variant-numeric:tabular-nums}
+.stat .d.good{color:var(--state-ok)} .stat .d.bad{color:var(--state-ng)} .stat .d.flat{color:var(--ink-quiet)}
+@container paper (max-width: 560px){ .stats{grid-template-columns:1fr} .stat{border-right:none;border-bottom:1px solid var(--rule-soft);padding:6px 0} .stat + .stat{padding-left:0} }
+
+/* ===== code: 箱を1段に。地は ground だけ、枠無し。構文色は 2 色相 ===== */
+.code{margin:0 0 var(--gap-2);border-radius:8px;overflow:hidden;font-family:var(--font-code);font-size:13px;line-height:20px;background:var(--ground)}
+.code .head{display:flex;align-items:baseline;gap:10px;padding:6px 14px;border-bottom:1px solid var(--rule-soft);font-family:var(--font-sans);font-size:var(--fs-label);color:var(--ink-quiet)}
+.code .head .copy{margin-left:auto}
+.code pre{margin:0;padding:10px 0;white-space:normal;overflow-x:auto;font-size-adjust:none;text-autospace:no-autospace}
+.code .ln{display:block;padding:0 14px;white-space:pre}
+.code .ln.mark{background:var(--surface-raised);box-shadow:inset 2px 0 0 var(--accent)}
+.code .ln .lbl{float:right;font-family:var(--font-sans);font-size:11.5px;color:var(--ink-quiet);padding-left:12px}
+.code .fold{display:block;padding:2px 14px;font-family:var(--font-sans);font-size:var(--fs-label);color:var(--ink-quiet);background:var(--surface-raised)}
+.k{color:var(--ink)}                         /* keyword: 地の字のまま */
+.t{color:var(--ink)}                         /* 型・組み込み: 地の字のまま */
+.f{color:var(--ink-bright);font-weight:600}  /* 関数・クラスの名前: 拾う字＋600 */
+.s{color:var(--code-string)}                 /* 文字列 */
+.n{color:var(--code-number)}                 /* 数・定数・真偽 */
+.c{color:var(--ink-soft)}                    /* コメント・句読点・演算子 */
+/* いまの形（比較用）: github-dark の 5 色相と内側の箱 */
+.v-now .code{background:var(--ground);padding:8px}
+.v-now .code pre{background:#0d1117;border-radius:6px;padding:10px 0;color:#c9d1d9}
+.v-now .k{color:#ff7b72} .v-now .t{color:#79c0ff} .v-now .f{color:#d2a8ff;font-weight:400} .v-now .s{color:#a5d6ff} .v-now .n{color:#79c0ff} .v-now .c{color:#8b949e}
+.v-now .code .ln.mark{background:#23262c}
+
+/* ===== diff: 行の地を全幅の帯に、語の地を一段強く。行頭の + − を溝に。字は構文色のまま ===== */
+.diff .ln{display:grid;grid-template-columns:22px minmax(0,1fr);padding:0 14px 0 10px}
+.diff .ln .g{font-weight:700;color:var(--ink-quiet)}
+.diff .ln.add{background:var(--diff-add-line)} .diff .ln.add .g{color:var(--state-ok)}
+.diff .ln.del{background:var(--diff-del-line)} .diff .ln.del .g{color:var(--state-ng)}
+.diff .w-add{background:var(--diff-add-word);border-radius:3px;padding:0 2px}
+.diff .w-del{background:var(--diff-del-word);border-radius:3px;padding:0 2px}
+/* いまの形（比較用）: 字の幅だけ濃い地、構文色は消える */
+.v-now .diff .ln.add{background:none} .v-now .diff .ln.del{background:none}
+.v-now .diff .ln.add .x{background:#033a16;color:#aff5b4} .v-now .diff .ln.del .x{background:#67060c;color:#ffdcd7}
+.v-now .diff .ln.add .x *,.v-now .diff .ln.del .x *{color:inherit;font-weight:400}
+.v-now .diff .w-add{background:#3a8546} .v-now .diff .w-del{background:#a64b4f}
+
+/* ===== 横並び（前後・見比べ）: 器の幅で落とす。列の下限 350px ===== */
+.pair{display:grid;grid-template-columns:1fr 24px 1fr;align-items:start;margin:0 0 var(--gap-2)}
+.pair .arrow{align-self:center;text-align:center;color:var(--ink-quiet)}
+.pair .side{border:1px solid var(--rule-soft);border-radius:8px;padding:10px 14px;font-size:var(--fs-dense);line-height:22px}
+.pair .side .h{font-size:var(--fs-label);color:var(--ink-quiet);margin-bottom:4px}
+.pair .side ul{margin:0;padding-left:18px}
+@container paper (max-width: 724px){ .pair{grid-template-columns:1fr} .pair .arrow{transform:rotate(90deg);padding:4px 0} }
+
+/* ===== options: 採る → 検討 → 採らない。札の列を作らず、1案1行で積む（3＋1 の孤児の段を作らない） ===== */
+.options{margin:0 0 var(--gap-2);font-size:var(--fs-dense);line-height:22px}
+.option{display:grid;grid-template-columns:22px 5em minmax(0,1fr);column-gap:12px;padding:6px 0;border-bottom:1px solid var(--rule-soft)}
+.option:last-child{border-bottom:none}
+.option .no{font-family:var(--font-mono);font-size:12px;color:var(--ink-quiet)}
+.option .vd{font-size:var(--fs-label);font-weight:600}
+.option.adopt .vd{color:var(--state-ok)} .option.consider .vd{color:var(--state-warn)} .option.reject .vd{color:var(--ink-quiet)}
+.option .nm{color:var(--ink-bright);font-weight:600}
+.option .rs{color:var(--ink-soft)}
+
+/* ===== path の抜き書き（押す前に前後3行） ===== */
+.peek{position:absolute;left:0;top:26px;z-index:2;width:36em;padding:8px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--surface);box-shadow:0 12px 32px color-mix(in srgb, var(--ground) 80%, transparent);font-family:var(--font-code);font-size:12px;line-height:18px;color:var(--ink-soft);white-space:pre}
+.peek .cur{color:var(--ink-bright);background:var(--surface-raised);display:block;margin:0 -12px;padding:0 12px}
+.peek .pth{font-family:var(--font-sans);font-size:11.5px;color:var(--ink-quiet);display:block;margin-bottom:4px}
+
+/* 見本の中の注記 */
+.mock-note{font-size:12px;color:var(--ink-quiet);margin:8px 0 0;max-width:80em}
+</style>
+</head>
+<body>
+<h1 class="mock-title">レポートの紙面を「読む道具」に — 幾何・色・案内の見本（2026-10-18）</h1>
+<p class="mock-caption">架空の作業「目盛りの置き場所を設定ファイルへ移す」の最終レポート。10-17 の値（拾う字・見出し・格子・罫）はそのままで、幅の段・コードと差分の色・左の色罫・依頼の1行・経過の畳み・いまの節の口を変えた。文言と ID は架空。</p>
+
+<!-- ======================================================= 1400×900（やり取りの列あり）: 最初の1画面 -->
+<div class="mock-group">
+<h2>1400×900・やり取りの列あり — 最初の1画面（1004×512）</h2>
+<p class="mock-caption">依頼が1行に畳まれ、判決の頭が領域の上端の1行目に来る。図1は読む面の 70% までに縮む。</p>
+<div class="mock-row">
+<div class="pane first w1400" id="p1400-first">
+  <div class="strip"><span class="dot"></span>完了<span class="right"><span class="mono">所要 2分05秒</span><span class="steps">手順 12 ▾</span></span></div>
+  <div class="turn-body">
+    <div class="rail">
+      <div class="head"><span>やり取り</span><span>‹</span></div>
+      <div class="item">目盛りの置き場所を設定ファイルへ…</div>
+      <div class="sub cur">変更の要所</div>
+      <div class="sub">読み口のコードと差分</div>
+      <div class="sub">限界と変えていないもの</div>
+      <div class="sub">経過 3 件</div>
+    </div>
+    <div class="content">
+      <div class="report">
+        <div class="request"><span class="lb">依頼</span><span class="tx">目盛りの置き場所を設定ファイルへ移したい。環境変数は今回入れない（架空の依頼）</span><span class="more">▾ 全文</span></div>
+        <div class="catalog"><span>最終レポート</span><span class="sep">·</span><span class="id">T-031</span><span class="sep">·</span><span class="done">✓ 完了</span><span class="sep">·</span><span class="meta">変更 4 ファイル <span class="plus">+86</span> <span class="minus">−31</span></span></div>
+        <h1 class="headline">目盛りは設定ファイルから読む（架空）</h1>
+        <p class="conclusion">次から目盛りを変えるとき、組み立て直しが要らなくなる。<span class="why">読み口は <code>ticks.ts</code> の1つだけで、定数の名前は変えていない。</span></p>
+        <div class="signals"><span class="sig"><span class="ok">✓</span> <b>検証 4件 通った</b> <span class="n">単体 3152 · E2E 111</span></span><span class="sig"><span class="ask">?</span> <b>1件 確かめていない</b></span><span class="fav">お願い 1 ↓</span></div>
+        <div class="checks">
+          <div class="check ask"><span class="mk">? 確かめていない</span><span><span class="lb">狭い窓での目盛りの見た目</span><br><span class="how"><b>確かめ方:</b> 窓を 720 幅にして、目盛りの帯が欄からはみ出さないことを見る</span></span></div>
+          <div class="check rest"><span class="mk">✓ 通った 4件</span><span class="lb">pnpm run check · 1400×900 で目盛りを見る · 設定ファイルを壊して起こす · find-stray-reference</span></div>
+        </div>
+        <div class="figure capped">
+          <svg width="560" height="150" viewBox="0 0 560 150" font-family="system-ui" font-size="13">
+            <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9a98a6"/></marker></defs>
+            <rect x="12" y="52" width="150" height="46" rx="8" fill="none" stroke="#9a98a6" stroke-width="1.5"/><text x="87" y="80" text-anchor="middle" fill="#e8e3ea">設定ファイル</text>
+            <path d="M162,75 L222,75" stroke="#9a98a6" stroke-width="1.5" marker-end="url(#ar)"/><text x="192" y="66" text-anchor="middle" fill="#b9b6bf" font-size="12">読む</text>
+            <rect x="224" y="52" width="120" height="46" rx="8" fill="none" stroke="#9a98a6" stroke-width="1.5"/><text x="284" y="80" text-anchor="middle" fill="#e8e3ea">ticks.ts</text>
+            <path d="M344,75 L404,75" stroke="#9a98a6" stroke-width="1.5" marker-end="url(#ar)"/><text x="374" y="66" text-anchor="middle" fill="#b9b6bf" font-size="12">渡す</text>
+            <rect x="406" y="52" width="140" height="46" rx="8" fill="none" stroke="#6fe3cd" stroke-width="1.5"/><text x="476" y="80" text-anchor="middle" fill="#f7f6f8">目盛りの帯</text>
+            <path d="M284,52 L284,22 L87,22 L87,52" stroke="#9a98a6" stroke-width="1.5" stroke-dasharray="4 4" fill="none" marker-end="url(#ar)"/><text x="185" y="16" text-anchor="middle" fill="#b9b6bf" font-size="12">壊れていたら既定へ戻す</text>
+          </svg>
+        </div>
+        <div class="cap"><span class="no">図 1</span>目盛りの値は設定ファイルから ticks.ts を通って帯へ渡り、壊れていれば既定に戻る（架空）</div>
+        <h2 class="after-head">変更の要所</h2>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ======================================================= 1400×900（やり取りの列あり）: 全体 -->
+<div class="mock-group">
+<h2>1400×900・やり取りの列あり — 全体</h2>
+<p class="mock-caption">数の札・表・コードは広（本文 42em を超える）、前後の見比べは全。コードの箱は1段、差分は全幅の帯。情報の note は左罫を持たず、注意だけが罫を持つ。最終のあとに「経過 3 件」の畳み。</p>
+<div class="mock-row">
+<div class="pane w1400" id="p1400-full">
+  <div class="strip"><span class="dot"></span>完了<span class="right"><span class="mono">所要 2分05秒</span><span class="steps">手順 12 ▾</span></span></div>
+  <div class="turn-body">
+    <div class="rail">
+      <div class="head"><span>やり取り</span><span>‹</span></div>
+      <div class="item">目盛りの置き場所を設定ファイルへ…</div>
+      <div class="sub cur">変更の要所</div>
+      <div class="sub">読み口のコードと差分</div>
+      <div class="sub">限界と変えていないもの</div>
+      <div class="sub">経過 3 件</div>
+    </div>
+    <div class="content">
+      <div class="report">
+        <div class="request"><span class="lb">依頼</span><span class="tx">目盛りの置き場所を設定ファイルへ移したい。環境変数は今回入れない（架空の依頼）</span><span class="more">▾ 全文</span></div>
+        <div class="catalog"><span>最終レポート</span><span class="sep">·</span><span class="id">T-031</span><span class="sep">·</span><span class="done">✓ 完了</span><span class="sep">·</span><span class="meta">変更 4 ファイル <span class="plus">+86</span> <span class="minus">−31</span></span></div>
+        <h1 class="headline">目盛りは設定ファイルから読む（架空）</h1>
+        <p class="conclusion">次から目盛りを変えるとき、組み立て直しが要らなくなる。<span class="why">読み口は <code>ticks.ts</code> の1つだけで、定数の名前は変えていない。</span></p>
+        <div class="signals"><span class="sig"><span class="ok">✓</span> <b>検証 4件 通った</b> <span class="n">単体 3152 · E2E 111</span></span><span class="sig"><span class="ask">?</span> <b>1件 確かめていない</b></span><span class="fav">お願い 1 ↓</span></div>
+        <div class="checks">
+          <div class="check ask"><span class="mk">? 確かめていない</span><span><span class="lb">狭い窓での目盛りの見た目</span><br><span class="how"><b>確かめ方:</b> 窓を 720 幅にして、目盛りの帯が欄からはみ出さないことを見る</span></span></div>
+          <div class="check rest"><span class="mk">✓ 通った 4件</span><span class="lb">pnpm run check · 1400×900 で目盛りを見る · 設定ファイルを壊して起こす · find-stray-reference</span></div>
+        </div>
+        <div class="figure capped">
+          <svg width="560" height="150" viewBox="0 0 560 150" font-family="system-ui" font-size="13">
+            <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9a98a6"/></marker></defs>
+            <rect x="12" y="52" width="150" height="46" rx="8" fill="none" stroke="#9a98a6" stroke-width="1.5"/><text x="87" y="80" text-anchor="middle" fill="#e8e3ea">設定ファイル</text>
+            <path d="M162,75 L222,75" stroke="#9a98a6" stroke-width="1.5" marker-end="url(#ar2)"/><text x="192" y="66" text-anchor="middle" fill="#b9b6bf" font-size="12">読む</text>
+            <rect x="224" y="52" width="120" height="46" rx="8" fill="none" stroke="#9a98a6" stroke-width="1.5"/><text x="284" y="80" text-anchor="middle" fill="#e8e3ea">ticks.ts</text>
+            <path d="M344,75 L404,75" stroke="#9a98a6" stroke-width="1.5" marker-end="url(#ar2)"/><text x="374" y="66" text-anchor="middle" fill="#b9b6bf" font-size="12">渡す</text>
+            <rect x="406" y="52" width="140" height="46" rx="8" fill="none" stroke="#6fe3cd" stroke-width="1.5"/><text x="476" y="80" text-anchor="middle" fill="#f7f6f8">目盛りの帯</text>
+            <path d="M284,52 L284,22 L87,22 L87,52" stroke="#9a98a6" stroke-width="1.5" stroke-dasharray="4 4" fill="none" marker-end="url(#ar2)"/><text x="185" y="16" text-anchor="middle" fill="#b9b6bf" font-size="12">壊れていたら既定へ戻す</text>
+          </svg>
+        </div>
+        <div class="cap"><span class="no">図 1</span>目盛りの値は設定ファイルから ticks.ts を通って帯へ渡り、壊れていれば既定に戻る（架空）</div>
+
+        <h2 class="after-head">変更の要所</h2>
+        <div class="stats wide">
+          <div class="stat"><div class="k">目盛りの読み口</div><div class="v">1<small>か所</small></div><div class="d good">−1 · 前 2</div></div>
+          <div class="stat"><div class="k">変えるときの組み立て直し</div><div class="v">0<small>回</small></div><div class="d good">−1 · 前 1</div></div>
+          <div class="stat"><div class="k">散っていた定数</div><div class="v">0<small>個</small></div><div class="d good">−5 · 前 5</div></div>
+        </div>
+        <p>読み口を <code>ticks.ts</code> に1つにまとめ、設定ファイルの <code>ticks</code> の欄から読む。<a class="path" href="#">src/browser/ticks.ts:12</a> が読む1か所で、壊れた値は既定に戻す。</p>
+        <div class="inline-aside">出どころ: 架空の計測ログ <code>notes/dummy/ticks.md:12</code> の3回ぶん</div>
+        <div class="aside"><b>出どころ</b>架空の計測ログ <code>notes/dummy/ticks.md:12</code> の3回ぶん</div>
+        <div class="cap top"><span class="no">表 1</span>触ったファイルと行数（架空の数。役の順）</div>
+        <table class="wide">
+          <thead><tr><th>ファイル</th><th>変更</th><th class="num">+行</th><th class="num">−行</th><th>役</th></tr></thead>
+          <tbody>
+            <tr><td><a class="path" href="#">src/browser/ticks.ts</a></td><td>追加</td><td class="num">41</td><td class="num">0</td><td>設定から目盛りを読む唯一の口</td></tr>
+            <tr><td><a class="path" href="#">src/browser/config.ts</a></td><td>変更</td><td class="num">18</td><td class="num">6</td><td><code>ticks</code> の欄と既定</td></tr>
+            <tr><td><a class="path" href="#">src/browser/band.tsx</a></td><td>変更</td><td class="num">9</td><td class="num">20</td><td>定数の参照を読み口へ</td></tr>
+            <tr><td><a class="path" href="#">test/browser/ticks.test.ts</a></td><td>追加</td><td class="num">18</td><td class="num">5</td><td>壊れた値で既定に戻ること</td></tr>
+          </tbody>
+        </table>
+        <div class="mock-note" style="grid-column:1/-1;margin:6px 0 var(--gap-2)">（数の列は右揃えの等幅数字。6行以上なら5行ごとに 12px の隙間が入る）</div>
+
+        <h2>読み口のコードと差分</h2>
+        <div class="code wide">
+          <div class="head"><span>src/browser/ticks.ts</span><span class="copy">コピー</span></div>
+<pre><span class="ln"><span class="k">export</span> <span class="k">function</span> <span class="f">pickTicks</span>(values: <span class="t">number</span>[]): <span class="t">number</span>[] {</span>
+<span class="ln">  <span class="k">const</span> sorted = [...values].sort((a, b) =&gt; a <span class="c">-</span> b)</span>
+<span class="ln mark"><span class="lbl">刻みを決める</span>  <span class="k">const</span> step = <span class="f">niceStep</span>(sorted)</span>
+<span class="ln mark"><span class="lbl">刻みの倍数だけ残す</span>  <span class="k">return</span> sorted.filter((v) =&gt; v % step === <span class="n">0</span>)</span>
+<span class="ln">}</span>
+<span class="fold">… 無印の 24 行を畳む（開く）</span>
+<span class="ln"><span class="k">export</span> <span class="k">const</span> DEFAULT_TICKS = { values: [<span class="n">0</span>, <span class="n">25</span>, <span class="n">50</span>, <span class="n">100</span>], unit: <span class="s">"%"</span> }</span></pre>
+        </div>
+        <div class="code diff wide">
+          <div class="head"><span>src/browser/band.tsx · 差分</span><span class="copy">コピー</span></div>
+<pre><span class="ln"><span class="g"> </span><span class="x"><span class="k">import</span> { <span class="f">readTicks</span> } <span class="k">from</span> <span class="s">"./ticks.ts"</span></span></span>
+<span class="ln del"><span class="g">−</span><span class="x"><span class="k">const</span> ticks = <span class="w-del">TICK_VALUES</span></span></span>
+<span class="ln add"><span class="g">+</span><span class="x"><span class="k">const</span> ticks = <span class="w-add"><span class="f">readTicks</span>(config).values</span></span></span>
+<span class="ln"><span class="g"> </span><span class="x"><span class="k">return</span> &lt;<span class="t">Band</span> ticks={ticks} unit={<span class="s">"%"</span>} /&gt;</span></span></pre>
+        </div>
+
+        <h2>限界と変えていないもの</h2>
+        <div class="note"><span class="kind">情報</span>定数の名前 <code>DEFAULT_TICKS</code> は変えていない。参照している E2E の期待値もそのまま。</div>
+        <div class="note warn"><span class="kind">注意</span>設定ファイルの <code>ticks.values</code> が空の配列だと、目盛りが1本も出ない。既定に戻すのは「壊れている」ときだけで、空は壊れていない扱い。</div>
+        <div class="cap top"><span class="no">図 2</span>目盛りの決め方の前後（架空）</div>
+        <div class="pair full">
+          <div class="side"><div class="h">前</div><ul><li>定数 <code>TICK_VALUES</code> を5か所で参照</li><li>変えるたびに組み立て直し</li><li>壊れた値の検査なし</li></ul></div>
+          <div class="arrow">→</div>
+          <div class="side"><div class="h">後</div><ul><li>設定ファイルの <code>ticks</code> を <code>ticks.ts</code> の1か所で読む</li><li>起こし直すだけで変わる</li><li>壊れた値は既定へ</li></ul></div>
+        </div>
+        <div class="options wide">
+          <div class="option adopt"><span class="no">1</span><span class="vd">採る</span><span><span class="nm">設定ファイル</span> <span class="rs">— 起こし直すだけで変わり、読み口が1つで済む</span></span></div>
+          <div class="option consider"><span class="no">2</span><span class="vd">検討</span><span><span class="nm">環境変数で上書き</span> <span class="rs">— 読み口が落ち着いてから同じ口に足す</span></span></div>
+          <div class="option reject"><span class="no">3</span><span class="vd">採らない</span><span><span class="nm">定数のまま</span> <span class="rs">— 変えるたびに組み立て直しが要る</span></span></div>
+        </div>
+        <div class="favor"><span class="lbl">お願い</span>狭い窓（720 幅）で目盛りの帯を一度見てほしい。はみ出していたら、刻みの数を 4 から 3 に落とす。</div>
+        <details class="history"><summary>経過 <span class="n">3 件</span> · 所要 2分05秒（1/3 今の形を調べる 9秒 · 2/3 読み口を作る 1分12秒 · 3/3 検証 44秒）</summary>
+          <ul><li>1/3 今の形を調べる<span class="t">9秒</span> — 定数は5か所で参照されていた</li><li>2/3 読み口を作る<span class="t">1分12秒</span> — ticks.ts を足し、4ファイルを直した</li><li>3/3 検証<span class="t">44秒</span> — 単体 3152・E2E 111 が通った</li></ul>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ======================================================= 1400×900（やり取りの列を畳む）: 最初の1画面 -->
+<div class="mock-group">
+<h2>1400×900・やり取りの列を畳んだ — 転がした途中の1画面</h2>
+<p class="mock-caption">列を畳むと、帯の1行目に「いま: 変更の要所」が出て居場所を言う。本文の右に余白の柱が出る。</p>
+<div class="mock-row">
+<div class="pane first w1400 norail" id="p1400-norail">
+  <div class="strip"><span class="dot"></span>完了<span class="here">いま: <b>変更の要所</b></span><span class="right"><span class="mono">所要 2分05秒</span><span class="steps">手順 12 ▾</span></span></div>
+  <div class="turn-body">
+    <div class="rail">›</div>
+    <div class="content">
+      <div class="report">
+        <h2 style="margin-top:0">変更の要所</h2>
+        <div class="stats wide">
+          <div class="stat"><div class="k">目盛りの読み口</div><div class="v">1<small>か所</small></div><div class="d good">−1 · 前 2</div></div>
+          <div class="stat"><div class="k">変えるときの組み立て直し</div><div class="v">0<small>回</small></div><div class="d good">−1 · 前 1</div></div>
+          <div class="stat"><div class="k">散っていた定数</div><div class="v">0<small>個</small></div><div class="d good">−5 · 前 5</div></div>
+        </div>
+        <p>読み口を <code>ticks.ts</code> に1つにまとめ、設定ファイルの <code>ticks</code> の欄から読む。<a class="path" href="#">src/browser/ticks.ts:12</a> が読む1か所で、壊れた値は既定に戻す。</p>
+        <div class="aside"><b>出どころ</b>架空の計測ログ <code>notes/dummy/ticks.md:12</code> の3回ぶん</div>
+        <div class="cap top"><span class="no">表 1</span>触ったファイルと行数（架空の数。役の順）</div>
+        <table class="wide">
+          <thead><tr><th>ファイル</th><th>変更</th><th class="num">+行</th><th class="num">−行</th><th>役</th></tr></thead>
+          <tbody>
+            <tr><td><a class="path" href="#">src/browser/ticks.ts</a></td><td>追加</td><td class="num">41</td><td class="num">0</td><td>設定から目盛りを読む唯一の口</td></tr>
+            <tr><td><a class="path" href="#">src/browser/config.ts</a></td><td>変更</td><td class="num">18</td><td class="num">6</td><td><code>ticks</code> の欄と既定</td></tr>
+            <tr><td><a class="path" href="#">src/browser/band.tsx</a></td><td>変更</td><td class="num">9</td><td class="num">20</td><td>定数の参照を読み口へ</td></tr>
+            <tr><td><a class="path" href="#">test/browser/ticks.test.ts</a></td><td>追加</td><td class="num">18</td><td class="num">5</td><td>壊れた値で既定に戻ること</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ======================================================= 1920×1080: 全体 -->
+<div class="mock-group">
+<h2>1920×1080・やり取りの列あり — 全体（1340 幅）</h2>
+<p class="mock-caption">本文 42em・広 63em・全の3段が見える幅。広の表とコードは 945px で止まり、前後の見比べだけ全に広がる。余白の柱は本文の列のすぐ右。</p>
+<div class="mock-row">
+<div class="pane w1920" id="p1920-full">
+  <div class="strip"><span class="dot"></span>完了<span class="right"><span class="mono">所要 2分05秒</span><span class="steps">手順 12 ▾</span></span></div>
+  <div class="turn-body">
+    <div class="rail">
+      <div class="head"><span>やり取り</span><span>‹</span></div>
+      <div class="item">目盛りの置き場所を設定ファイルへ…</div>
+      <div class="sub seen">変更の要所</div>
+      <div class="sub cur">読み口のコードと差分</div>
+      <div class="sub">限界と変えていないもの</div>
+      <div class="sub">経過 3 件</div>
+    </div>
+    <div class="content">
+      <div class="report">
+        <div class="request"><span class="lb">依頼</span><span class="tx">目盛りの置き場所を設定ファイルへ移したい。環境変数は今回入れない（架空の依頼）</span><span class="more">▾ 全文</span></div>
+        <div class="catalog"><span>最終レポート</span><span class="sep">·</span><span class="id">T-031</span><span class="sep">·</span><span class="done">✓ 完了</span><span class="sep">·</span><span class="meta">変更 4 ファイル <span class="plus">+86</span> <span class="minus">−31</span></span></div>
+        <h1 class="headline">目盛りは設定ファイルから読む（架空）</h1>
+        <p class="conclusion">次から目盛りを変えるとき、組み立て直しが要らなくなる。<span class="why">読み口は <code>ticks.ts</code> の1つだけで、定数の名前は変えていない。</span></p>
+        <div class="signals"><span class="sig"><span class="ok">✓</span> <b>検証 4件 通った</b> <span class="n">単体 3152 · E2E 111</span></span><span class="sig"><span class="ask">?</span> <b>1件 確かめていない</b></span><span class="fav">お願い 1 ↓</span></div>
+        <div class="checks">
+          <div class="check ask"><span class="mk">? 確かめていない</span><span><span class="lb">狭い窓での目盛りの見た目</span><br><span class="how"><b>確かめ方:</b> 窓を 720 幅にして、目盛りの帯が欄からはみ出さないことを見る</span></span></div>
+          <div class="check rest"><span class="mk">✓ 通った 4件</span><span class="lb">pnpm run check · 1400×900 で目盛りを見る · 設定ファイルを壊して起こす · find-stray-reference</span></div>
+        </div>
+        <div class="figure capped">
+          <svg width="560" height="150" viewBox="0 0 560 150" font-family="system-ui" font-size="13">
+            <defs><marker id="ar3" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9a98a6"/></marker></defs>
+            <rect x="12" y="52" width="150" height="46" rx="8" fill="none" stroke="#9a98a6" stroke-width="1.5"/><text x="87" y="80" text-anchor="middle" fill="#e8e3ea">設定ファイル</text>
+            <path d="M162,75 L222,75" stroke="#9a98a6" stroke-width="1.5" marker-end="url(#ar3)"/><text x="192" y="66" text-anchor="middle" fill="#b9b6bf" font-size="12">読む</text>
+            <rect x="224" y="52" width="120" height="46" rx="8" fill="none" stroke="#9a98a6" stroke-width="1.5"/><text x="284" y="80" text-anchor="middle" fill="#e8e3ea">ticks.ts</text>
+            <path d="M344,75 L404,75" stroke="#9a98a6" stroke-width="1.5" marker-end="url(#ar3)"/><text x="374" y="66" text-anchor="middle" fill="#b9b6bf" font-size="12">渡す</text>
+            <rect x="406" y="52" width="140" height="46" rx="8" fill="none" stroke="#6fe3cd" stroke-width="1.5"/><text x="476" y="80" text-anchor="middle" fill="#f7f6f8">目盛りの帯</text>
+            <path d="M284,52 L284,22 L87,22 L87,52" stroke="#9a98a6" stroke-width="1.5" stroke-dasharray="4 4" fill="none" marker-end="url(#ar3)"/><text x="185" y="16" text-anchor="middle" fill="#b9b6bf" font-size="12">壊れていたら既定へ戻す</text>
+          </svg>
+        </div>
+        <div class="cap"><span class="no">図 1</span>目盛りの値は設定ファイルから ticks.ts を通って帯へ渡り、壊れていれば既定に戻る（架空）</div>
+
+        <h2 class="after-head">変更の要所</h2>
+        <div class="stats wide">
+          <div class="stat"><div class="k">目盛りの読み口</div><div class="v">1<small>か所</small></div><div class="d good">−1 · 前 2</div></div>
+          <div class="stat"><div class="k">変えるときの組み立て直し</div><div class="v">0<small>回</small></div><div class="d good">−1 · 前 1</div></div>
+          <div class="stat"><div class="k">散っていた定数</div><div class="v">0<small>個</small></div><div class="d good">−5 · 前 5</div></div>
+        </div>
+        <p>読み口を <code>ticks.ts</code> に1つにまとめ、設定ファイルの <code>ticks</code> の欄から読む。<a class="path" href="#">src/browser/ticks.ts:12</a> が読む1か所で、壊れた値は既定に戻す。</p>
+        <div class="aside"><b>出どころ</b>架空の計測ログ <code>notes/dummy/ticks.md:12</code> の3回ぶん</div>
+        <div class="cap top"><span class="no">表 1</span>触ったファイルと行数（架空の数。役の順）</div>
+        <table class="wide">
+          <thead><tr><th>ファイル</th><th>変更</th><th class="num">+行</th><th class="num">−行</th><th>役</th></tr></thead>
+          <tbody>
+            <tr><td><a class="path" href="#">src/browser/ticks.ts</a></td><td>追加</td><td class="num">41</td><td class="num">0</td><td>設定から目盛りを読む唯一の口</td></tr>
+            <tr><td><a class="path" href="#">src/browser/config.ts</a></td><td>変更</td><td class="num">18</td><td class="num">6</td><td><code>ticks</code> の欄と既定</td></tr>
+            <tr><td><a class="path" href="#">src/browser/band.tsx</a></td><td>変更</td><td class="num">9</td><td class="num">20</td><td>定数の参照を読み口へ</td></tr>
+            <tr><td><a class="path" href="#">test/browser/ticks.test.ts</a></td><td>追加</td><td class="num">18</td><td class="num">5</td><td>壊れた値で既定に戻ること</td></tr>
+          </tbody>
+        </table>
+
+        <h2>読み口のコードと差分</h2>
+        <div class="code wide">
+          <div class="head"><span>src/browser/ticks.ts</span><span class="copy">コピー</span></div>
+<pre><span class="ln"><span class="k">export</span> <span class="k">function</span> <span class="f">pickTicks</span>(values: <span class="t">number</span>[]): <span class="t">number</span>[] {</span>
+<span class="ln">  <span class="k">const</span> sorted = [...values].sort((a, b) =&gt; a <span class="c">-</span> b)</span>
+<span class="ln mark"><span class="lbl">刻みを決める</span>  <span class="k">const</span> step = <span class="f">niceStep</span>(sorted)</span>
+<span class="ln mark"><span class="lbl">刻みの倍数だけ残す</span>  <span class="k">return</span> sorted.filter((v) =&gt; v % step === <span class="n">0</span>)</span>
+<span class="ln">}</span>
+<span class="fold">… 無印の 24 行を畳む（開く）</span>
+<span class="ln"><span class="k">export</span> <span class="k">const</span> DEFAULT_TICKS = { values: [<span class="n">0</span>, <span class="n">25</span>, <span class="n">50</span>, <span class="n">100</span>], unit: <span class="s">"%"</span> }</span></pre>
+        </div>
+        <div class="code diff wide">
+          <div class="head"><span>src/browser/band.tsx · 差分</span><span class="copy">コピー</span></div>
+<pre><span class="ln"><span class="g"> </span><span class="x"><span class="k">import</span> { <span class="f">readTicks</span> } <span class="k">from</span> <span class="s">"./ticks.ts"</span></span></span>
+<span class="ln del"><span class="g">−</span><span class="x"><span class="k">const</span> ticks = <span class="w-del">TICK_VALUES</span></span></span>
+<span class="ln add"><span class="g">+</span><span class="x"><span class="k">const</span> ticks = <span class="w-add"><span class="f">readTicks</span>(config).values</span></span></span>
+<span class="ln"><span class="g"> </span><span class="x"><span class="k">return</span> &lt;<span class="t">Band</span> ticks={ticks} unit={<span class="s">"%"</span>} /&gt;</span></span></pre>
+        </div>
+
+        <h2>限界と変えていないもの</h2>
+        <div class="note"><span class="kind">情報</span>定数の名前 <code>DEFAULT_TICKS</code> は変えていない。参照している E2E の期待値もそのまま。</div>
+        <div class="note warn"><span class="kind">注意</span>設定ファイルの <code>ticks.values</code> が空の配列だと、目盛りが1本も出ない。既定に戻すのは「壊れている」ときだけで、空は壊れていない扱い。</div>
+        <div class="cap top"><span class="no">図 2</span>目盛りの決め方の前後（架空）</div>
+        <div class="pair full">
+          <div class="side"><div class="h">前</div><ul><li>定数 <code>TICK_VALUES</code> を5か所で参照</li><li>変えるたびに組み立て直し</li><li>壊れた値の検査なし</li></ul></div>
+          <div class="arrow">→</div>
+          <div class="side"><div class="h">後</div><ul><li>設定ファイルの <code>ticks</code> を <code>ticks.ts</code> の1か所で読む</li><li>起こし直すだけで変わる</li><li>壊れた値は既定へ</li></ul></div>
+        </div>
+        <div class="options wide">
+          <div class="option adopt"><span class="no">1</span><span class="vd">採る</span><span><span class="nm">設定ファイル</span> <span class="rs">— 起こし直すだけで変わり、読み口が1つで済む</span></span></div>
+          <div class="option consider"><span class="no">2</span><span class="vd">検討</span><span><span class="nm">環境変数で上書き</span> <span class="rs">— 読み口が落ち着いてから同じ口に足す</span></span></div>
+          <div class="option reject"><span class="no">3</span><span class="vd">採らない</span><span><span class="nm">定数のまま</span> <span class="rs">— 変えるたびに組み立て直しが要る</span></span></div>
+        </div>
+        <div class="favor"><span class="lbl">お願い</span>狭い窓（720 幅）で目盛りの帯を一度見てほしい。はみ出していたら、刻みの数を 4 から 3 に落とす。</div>
+        <details class="history"><summary>経過 <span class="n">3 件</span> · 所要 2分05秒（1/3 今の形を調べる 9秒 · 2/3 読み口を作る 1分12秒 · 3/3 検証 44秒）</summary>
+          <ul><li>1/3 今の形を調べる<span class="t">9秒</span> — 定数は5か所で参照されていた</li><li>2/3 読み口を作る<span class="t">1分12秒</span> — ticks.ts を足し、4ファイルを直した</li><li>3/3 検証<span class="t">44秒</span> — 単体 3152・E2E 111 が通った</li></ul>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ======================================================= path の抜き書き -->
+<div class="mock-group">
+<h2>path の抜き書き — 重ねるかフォーカスすると前後3行を出す</h2>
+<p class="mock-caption">押す前に中身を確かめる口。500ms 待ってから出し、押すと今どおり Orca で開く。読むのは git 管理下のファイルだけ。</p>
+<div class="pane" style="width:660px" id="peek-demo"><div class="content" style="padding-bottom:132px"><div class="report" style="grid-template-columns:minmax(0,1fr)">
+  <p>読み口を <code>ticks.ts</code> に1つにまとめ、設定ファイルの <code>ticks</code> の欄から読む。<a class="path" href="#">src/browser/ticks.ts:12<span class="peek"><span class="pth">src/browser/ticks.ts · 10〜14 行</span>export function readTicks(config: Config): Ticks {
+  const raw = config.ticks ?? DEFAULT_TICKS
+<span class="cur">  return pickTicks(raw.values)   // ← 12 行</span>}
+</span></a> が読む1か所で、壊れた値は既定に戻す。</p>
+</div></div></div>
+</div>
+
+<!-- ======================================================= 比較: コードと差分の色、note の左罫 -->
+<div class="mock-group">
+<h2>比較 — コードと差分の色（いま／案）、note の左罫（いま／絞る）</h2>
+<p class="mock-caption">左が今の形（github-dark の 5 色相と内側の箱・字の幅だけの差分の地・5種すべてに左罫）、右が案（2 色相・1段の箱・全幅の帯・左罫は注意と異常だけ）。幅は本文の列（42em）の切り出し。</p>
+<div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+  <div class="pane v-now" style="width:660px" id="cmp-now"><div class="content"><div class="report" style="grid-template-columns:minmax(0,1fr)">
+    <div class="mock-label">いま</div>
+    <div class="code">
+      <div class="head"><span>src/browser/ticks.ts</span><span class="copy">コピー</span></div>
+<pre><span class="ln"><span class="k">export</span> <span class="k">function</span> <span class="f">pickTicks</span>(values: <span class="t">number</span>[]): <span class="t">number</span>[] {</span>
+<span class="ln">  <span class="k">const</span> sorted = [...values].sort((a, b) =&gt; a <span class="c">-</span> b)</span>
+<span class="ln mark"><span class="lbl">刻みを決める</span>  <span class="k">const</span> step = <span class="f">niceStep</span>(sorted)</span>
+<span class="ln mark"><span class="lbl">刻みの倍数だけ残す</span>  <span class="k">return</span> sorted.filter((v) =&gt; v % step === <span class="n">0</span>)</span>
+<span class="ln">}</span>
+<span class="ln"><span class="k">export</span> <span class="k">const</span> DEFAULT_TICKS = { values: [<span class="n">0</span>, <span class="n">25</span>, <span class="n">50</span>, <span class="n">100</span>], unit: <span class="s">"%"</span> }</span></pre>
+    </div>
+    <div class="code diff">
+      <div class="head"><span>src/browser/band.tsx · 差分</span><span class="copy">コピー</span></div>
+<pre><span class="ln"><span class="g"> </span><span class="x"><span class="k">import</span> { <span class="f">readTicks</span> } <span class="k">from</span> <span class="s">"./ticks.ts"</span></span></span>
+<span class="ln del"><span class="g"> </span><span class="x">- <span class="k">const</span> ticks = <span class="w-del">TICK_VALUES</span></span></span>
+<span class="ln add"><span class="g"> </span><span class="x">+ <span class="k">const</span> ticks = <span class="w-add"><span class="f">readTicks</span>(config).values</span></span></span>
+<span class="ln"><span class="g"> </span><span class="x"><span class="k">return</span> &lt;<span class="t">Band</span> ticks={ticks} unit={<span class="s">"%"</span>} /&gt;</span></span></pre>
+    </div>
+    <div class="note"><span class="kind">情報</span>定数の名前 <code>DEFAULT_TICKS</code> は変えていない。</div>
+    <div class="note ask"><span class="kind">疑問</span>空の配列を「壊れている」に数えるかは決めていない。</div>
+    <div class="note warn"><span class="kind">注意</span><code>ticks.values</code> が空だと目盛りが1本も出ない。</div>
+  </div></div></div>
+  <div class="pane" style="width:660px" id="cmp-next"><div class="content"><div class="report" style="grid-template-columns:minmax(0,1fr)">
+    <div class="mock-label">案</div>
+    <div class="code">
+      <div class="head"><span>src/browser/ticks.ts</span><span class="copy">コピー</span></div>
+<pre><span class="ln"><span class="k">export</span> <span class="k">function</span> <span class="f">pickTicks</span>(values: <span class="t">number</span>[]): <span class="t">number</span>[] {</span>
+<span class="ln">  <span class="k">const</span> sorted = [...values].sort((a, b) =&gt; a <span class="c">-</span> b)</span>
+<span class="ln mark"><span class="lbl">刻みを決める</span>  <span class="k">const</span> step = <span class="f">niceStep</span>(sorted)</span>
+<span class="ln mark"><span class="lbl">刻みの倍数だけ残す</span>  <span class="k">return</span> sorted.filter((v) =&gt; v % step === <span class="n">0</span>)</span>
+<span class="ln">}</span>
+<span class="ln"><span class="k">export</span> <span class="k">const</span> DEFAULT_TICKS = { values: [<span class="n">0</span>, <span class="n">25</span>, <span class="n">50</span>, <span class="n">100</span>], unit: <span class="s">"%"</span> }</span></pre>
+    </div>
+    <div class="code diff">
+      <div class="head"><span>src/browser/band.tsx · 差分</span><span class="copy">コピー</span></div>
+<pre><span class="ln"><span class="g"> </span><span class="x"><span class="k">import</span> { <span class="f">readTicks</span> } <span class="k">from</span> <span class="s">"./ticks.ts"</span></span></span>
+<span class="ln del"><span class="g">−</span><span class="x"><span class="k">const</span> ticks = <span class="w-del">TICK_VALUES</span></span></span>
+<span class="ln add"><span class="g">+</span><span class="x"><span class="k">const</span> ticks = <span class="w-add"><span class="f">readTicks</span>(config).values</span></span></span>
+<span class="ln"><span class="g"> </span><span class="x"><span class="k">return</span> &lt;<span class="t">Band</span> ticks={ticks} unit={<span class="s">"%"</span>} /&gt;</span></span></pre>
+    </div>
+    <div class="note"><span class="kind">情報</span>定数の名前 <code>DEFAULT_TICKS</code> は変えていない。</div>
+    <div class="note ask"><span class="kind">疑問</span>空の配列を「壊れている」に数えるかは決めていない。</div>
+    <div class="note warn"><span class="kind">注意</span><code>ticks.values</code> が空だと目盛りが1本も出ない。</div>
+  </div></div></div>
+</div>
+</div>
+</body>
+</html>
