@@ -12,7 +12,11 @@
 import type { Options as Schema } from "rehype-sanitize"
 
 import { REPORT_IMAGE_SRC_PATTERN } from "../../../../../../../shared/report/report-image.ts"
-import { CODE_FILE_NAME_PROPERTY, CODE_FILE_PATH_PROPERTY } from "./code-file-name.ts"
+import {
+  CODE_FILE_NAME_PROPERTY,
+  CODE_FILE_PATH_PROPERTY,
+  CODE_MARKS_PROPERTY,
+} from "./code-file-name.ts"
 
 /**
  * 通してよい要素（61個）。ここに無い要素は、中身のテキストだけを残してタグが落ちる。
@@ -216,7 +220,7 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
     // `code` だけに許す（`*` に足すと、どの要素にも書ける属性が1つ増える。上の43個の数もこの属性を含まない）。
     // 読むのは `Pre` で、hast の段階でラベルに変える（属性そのものは `data-filename` として DOM にも残るが、CSS も JS も引いていない）。
     // `files` の塊の `code` が運ぶフルパス（`data-file-path`）も同じ理由で `code` だけに許す。
-    code: [CODE_FILE_NAME_PROPERTY, CODE_FILE_PATH_PROPERTY],
+    code: [CODE_FILE_NAME_PROPERTY, CODE_FILE_PATH_PROPERTY, CODE_MARKS_PROPERTY],
     img: [["src", REPORT_IMAGE_SRC_PATTERN], "alt"],
     "*": [
       ...GLOBAL_ATTRIBUTES,

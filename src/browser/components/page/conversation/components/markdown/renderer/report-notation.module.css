@@ -1392,6 +1392,43 @@
   margin-top: 0;
   border-radius: 0 0 0.4rem 0.4rem;
 }
+/* 行ごとに描くコード（`marks` のある塊と、コマンドの行のある shell の塊）。1行を1つの塊にし、<pre> の左右の余白まで地と罫を伸ばす。
+   印の行は地を --surface-raised、左端に 2px の --accent を沈めた罫、ラベルは行の右端に 12px・--ink-quiet。 */
+.detail-block .code-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  min-height: 1lh;
+  margin: 0 -0.5rem;
+  padding: 0 0.5rem;
+}
+.detail-block .code-line-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.detail-block .code-line-mark {
+  background: var(--surface-raised);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.detail-block .code-line-output {
+  color: var(--ink-soft);
+}
+.detail-block .code-mark-label {
+  flex: none;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--ink-quiet);
+}
+/* 畳んだ範囲の 1 行。押すと中身が出る。 */
+.detail-block .code-fold {
+  display: block;
+  width: calc(100% + 1rem);
+  margin: 0 -0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 0;
+  text-align: left;
+  font-family: var(--font-sans);
+}
 /* コピーのボタン。ラベルの有無に関わらず帯の右端に置く。 */
 .detail-block .code-copy {
   display: inline-flex;

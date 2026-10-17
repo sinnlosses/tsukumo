@@ -1135,7 +1135,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 版5からは、段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるかの `hasFigure` と、
 このターンにメインが画像のファイルを `Read` したのに `image` の塊が無かったかの `readImageWithoutImageBlock`
 （サブエージェントの `Read` は数えない）も足す。版6からは、`figure` の欄の種類（図の塊の `kind` か `none`）の `figureKind` と、
-`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。版9からは、`task` の報告の種類 `taskGenre`（`task` の無いレポートは `none`）と終わり方 `taskOutcome`、`favor` が空でないかの `hasFavor`、本文（`text`・`note`・`list` の項目・表のセル・`markdown`）に URL か `path:line` があるか `code` の塊に `path` があるかの `hasSourceReference` を足す。版10からは、行が2つ以下の表が1つでもあるかの `shortTable` を足す（`rest` が空でない表は塊の欄の `tableRest` で数え、版は上げない）。版11からは `stats` の `series` / `better` を塊の欄の `statsSeries` / `statsBetter` で数える（行の形は版10と同じで、版だけ上げて古い行と見分ける）。数えるだけで差し戻しにはしない。中身は一切持たない
+`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。版9からは、`task` の報告の種類 `taskGenre`（`task` の無いレポートは `none`）と終わり方 `taskOutcome`、`favor` が空でないかの `hasFavor`、本文（`text`・`note`・`list` の項目・表のセル・`markdown`）に URL か `path:line` があるか `code` の塊に `path` があるかの `hasSourceReference` を足す。版10からは、行が2つ以下の表が1つでもあるかの `shortTable` を足す（`rest` が空でない表は塊の欄の `tableRest` で数え、版は上げない）。版11からは `stats` の `series` / `better` を塊の欄の `statsSeries` / `statsBetter` で数える（行の形は版10と同じで、版だけ上げて古い行と見分ける）。`code` の `marks` が空でない塊は塊の欄の `codeMarks` で数え、版は上げない。数えるだけで差し戻しにはしない。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
 `src/server/report/adapter/report-usage-log.ts`、何を1行にするかは
 `src/server/report/core/report-usage.ts` が持つ。逃げ道の記法の検出は `src/server/report/core/report-markdown-notation.ts`、
@@ -1519,14 +1519,26 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   `<span>` で、Enter・Space でも開く）。押す部品・依頼・サーバ側の検証は
   `src/browser/components/page/conversation/components/repository-link/repository-link.tsx` と
   `src/shared/contract/host.ts` の `hostContract.openFile`
-- **フェンス付きコードブロックの頭の帯に、クリックで全文をクリップボードへ写すボタンを常に置く**
+- **フェンス付きコードブロックの頭の帯に、クリックでクリップボードへ写すボタンを常に置く**（全文。shell の塊の例外は下）
   （2026-09-28 決定。2026-09-27 ユーザーの指示——デザインの依頼文を `code` の塊で出したとき、写すのに
   ドラッグで選ぶ必要があった）。**塊の種類を分けず、フェンス付きコードブロックすべてに付ける**
   （mermaid・chart は除く）。書き手が「写してよい文章か」を選び分ける負担を無くし、画面に出る形も
   1通りに保つため。写す中身はフェンスの中身そのまま（行番号・ファイル名のラベル・ボタンの文字を
-  含まない、書き上げる演出が終わった後の全文）。写すとボタンの文字が短いあいだ「コピーした」に変わる。
+  含まない、書き上げる演出が終わった後の全文。印や畳みがあっても全文）。**例外は shell の塊**
+  （言語が `bash`・`sh`・`zsh`・`console`・`shell` で、`$ ` で始まる行が1つ以上ある塊）で、コマンドの行
+  （`$ ` で始まる行と、行末が `\` のコマンドの続き）だけを頭の `$ ` を外して写す（2026-10-17）。
+  写すとボタンの文字が短いあいだ「コピーした」に変わる。
   実装は `src/browser/components/page/conversation/components/markdown/renderer/copy-button.tsx` と
   `markdown.tsx` の `Pre`
+- **`code` の塊は、強調する行 `marks`（`{ lines: "4-8" | "12", label }`）を持てる**（2026-10-17）。印の行は
+  地を `--surface-raised`、左に 2px の `--accent` を沈めた罫にし、ラベルは印の最初の行の右端に 12px・
+  `--ink-quiet` で置く。**`marks` のある塊だけ**、印の行から3行より離れた無印の範囲が20行を超えたら、
+  その範囲を「n 行を畳んだ」の1行にして、押すと開く（`marks` の無い塊は畳まない）。`lines` が読めない形か
+  ソースの行数の外なら `code-marks-range` で差し戻す。shell の塊は、`$ ` で始まる行をコマンド、それ以外を
+  出力として分け、出力の行は色付けを外して `--ink-soft` の字にする。折り返しは切らず、行番号の列は持たない。
+  `marks` はフェンスの info の末尾の `marks=<符号化した JSON>` の1語で描画側へ運ぶ
+  （`src/shared/report/code-mark.ts`・`renderer/code-file-name.ts`）。`path` 付きの塊は `source` を変えない
+  （実物との一致の検査が掛かる）
 - **色を指す inline code は、その色を地にして出す。** 中身の文字全体が1つのカラーコード
   （`#bca0ec` など。3・4・6・8桁）か、ページの色のトークン名（`ink-quiet` / `--ink-quiet` /
   `var(--ink-quiet)`）のときだけで、文中に色が混ざったものとフェンスの中は変えない。字は地の

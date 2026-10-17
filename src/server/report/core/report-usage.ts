@@ -78,7 +78,7 @@ const IMAGE_FILE_EXTENSIONS: readonly string[] = [".png", ".jpg", ".jpeg", ".gif
 
 /**
  * 数える塊の欄。外す基準（直近4週間で0回）を塊の種類と同じく当てるため、既定の値でない欄が出たかを持つ。
- * 表のセルの `from` / `to`・表の `rest`・`stats` の `before` / `total` / `series` / `better`・`list` の `label`・`list` の `flow`・`dimension` の `before`・`image` の `notes`。
+ * 表のセルの `from` / `to`・表の `rest`・`stats` の `before` / `total` / `series` / `better`・`list` の `label`・`list` の `flow`・`dimension` の `before`・`image` の `notes`・`code` の `marks`。
  */
 export const REPORT_BLOCK_FIELDS = [
   "tableChange",
@@ -91,6 +91,7 @@ export const REPORT_BLOCK_FIELDS = [
   "listFlow",
   "dimensionBefore",
   "imageNotes",
+  "codeMarks",
 ] as const satisfies readonly string[]
 
 export type ReportBlockField = (typeof REPORT_BLOCK_FIELDS)[number]
@@ -299,5 +300,7 @@ function hasField(block: ReportBlock, field: ReportBlockField): boolean {
       return block.kind === "dimension" && block.parts.some((part) => part.before.trim() !== "")
     case "imageNotes":
       return block.kind === "image" && block.notes.length > 0
+    case "codeMarks":
+      return block.kind === "code" && block.marks.length > 0
   }
 }

@@ -36,6 +36,7 @@ const code = (path: string, source: string, language = "text"): ReportBlock => (
   language,
   path,
   source,
+  marks: [],
   fold: "",
 })
 
@@ -733,6 +734,36 @@ describe("reportViolations", () => {
         new Map([["src/fixture-a.ts", "無関係な中身"]]),
       )
       expect(kinds(report)).toEqual([])
+    })
+
+    describe("marks の行の範囲", () => {
+      const SOURCE = "架空の1行目\n架空の2行目\n架空の3行目\n"
+      const marked = (lines: string, path = ""): ReportBlock => ({
+        kind: "code",
+        language: "text",
+        path,
+        source: SOURCE,
+        marks: [{ lines, label: "架空の印" }],
+        fold: "",
+      })
+
+      it.each(["1", "2-3", " 3 "])("行数以内の %s は通す", (lines) => {
+        expect(kinds(withFile([marked(lines)], new Map()))).toEqual([])
+      })
+
+      it.each(["4", "2-4", "0", "3-2", "二行目", ""])("%s は差し戻す", (lines) => {
+        expect(kinds(withFile([marked(lines)], new Map()))).toEqual(["code-marks-range"])
+      })
+
+      it("path 付きの塊に marks を足しても code-mismatch は増えない", () => {
+        const files = new Map([["src/fixture-m.ts", SOURCE]])
+        expect(kinds(withFile([marked("1-2", "src/fixture-m.ts")], files))).toEqual([])
+      })
+
+      it("文面は行数の外か読めない形だと言う", () => {
+        const rejection = reportRejectionText(reportViolations(withFile([marked("9")], new Map())))
+        expect(rejection).toContain("marks")
+      })
     })
 
     it("他の規約違反と同じ report にあれば、1回の差し戻しで両方返る", () => {

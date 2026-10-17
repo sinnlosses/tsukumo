@@ -18,6 +18,7 @@ const sectionsOf = (paths: readonly string[]): readonly ReportSection[] => [
       language: "text",
       path,
       source: "",
+      marks: [],
       fold: "",
     })),
   },

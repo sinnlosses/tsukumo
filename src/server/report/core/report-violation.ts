@@ -8,6 +8,7 @@
 
 import { keys } from "remeda"
 
+import { markFitsLines, sourceLineCount } from "../../../shared/report/code-mark.ts"
 import {
   type RecordedReportFigure,
   type ReportBlock,
@@ -107,6 +108,8 @@ export type ReportViolation =
     }
   /** `path` を付けた `code` の塊が、そのファイルの中身と一致しない。`paths` は一致しなかった `path`（重複無し）。 */
   | { readonly kind: "code-mismatch"; readonly count: number; readonly paths: readonly string[] }
+  /** `code` の塊の `marks` の `lines` が、読めない形かソースの行数の外にある。`count` はその塊の数。 */
+  | { readonly kind: "code-marks-range"; readonly count: number }
   /** `mermaid` の塊の構文が割れている。`faults` は位置と字句の名前だけで、図のソースは持たない。 */
   | {
       readonly kind: "broken-mermaid"
@@ -224,6 +227,14 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       paths: [...new Set(mismatchedCodeBlocks.map((block) => block.path))],
     },
     {
+      kind: "code-marks-range",
+      count: blocks.filter(
+        (block) =>
+          block.kind === "code" &&
+          block.marks.some((mark) => !markFitsLines(mark, sourceLineCount(block.source))),
+      ).length,
+    },
+    {
       kind: "long-first-sentence",
       count: firstSentenceLength > MAX_FIRST_SENTENCE ? 1 : 0,
       length: firstSentenceLength,
@@ -296,6 +307,7 @@ const VIOLATION_THRESHOLDS = {
   "broken-svg": 0,
   "broken-graph": 0,
   "code-mismatch": 0,
+  "code-marks-range": 0,
   "long-first-sentence": 0,
   "bad-heading": 0,
   "fraction-figure": 0,
@@ -343,6 +355,8 @@ function violationLine(violation: ReportViolation): string {
         .join("・")}を使う`
     case "code-mismatch":
       return `\`path\` 付きの \`code\` の塊が${violation.count}個、ファイルの中身と一致しない（${violation.paths.join("・")}）。実物を読み直して直すか \`path\` を外す`
+    case "code-marks-range":
+      return `\`code\` の \`marks\` の \`lines\` が読めない形か \`source\` の行数の外にある塊が${violation.count}個ある。\`4-8\` か \`12\` の形で、行数以内に直す`
     case "broken-mermaid":
       return `mermaid の図の構文が割れている（${mermaidFaultPositions(violation.faults)}）。その行の書き方を直す`
     case "broken-svg":

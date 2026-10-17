@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { encodeMarks } from "../../../src/shared/report/code-mark.ts"
 import {
   type ReportBlock,
   type ReportSection,
@@ -808,6 +809,49 @@ describe("reportSectionsMarkdown", () => {
     expect(markdownOf(files)).not.toContain("file-branch")
   })
 
+  it("marks のある code は info の末尾に符号化した marks= の 1 語を添え、無ければ添えない", () => {
+    const marks = [{ lines: "1-2", label: "架空の印 a b" }]
+    const markdown = markdownOf({
+      kind: "code",
+      language: "ts",
+      path: "",
+      source: "a\nb\n",
+      marks,
+      fold: "",
+    })
+    const info = markdown.split("\n")[0]?.slice(3) ?? ""
+    expect(info).toBe(`ts ${encodeMarks(marks)}`)
+    expect(info).not.toMatch(/\s.*\s/)
+    expect(
+      markdownOf({
+        kind: "code",
+        language: "ts",
+        path: "src/a.ts",
+        source: "a\n",
+        marks,
+        fold: "",
+      }).split("\n")[0],
+    ).toBe(`\`\`\`ts src/a.ts ${encodeMarks(marks)}`)
+  })
+
+  it("言語が空でパスか marks があるときは先頭の語を text で埋め、無ければ info を空のままにする", () => {
+    const marks = [{ lines: "1", label: "印" }]
+    const infoOf = (path: string, withMarks: boolean): string | undefined =>
+      markdownOf({
+        kind: "code",
+        language: "",
+        path,
+        source: "a\n",
+        marks: withMarks ? marks : [],
+        fold: "",
+      }).split("\n")[0]
+
+    expect(infoOf("src/a.ts", false)).toBe("```text src/a.ts")
+    expect(infoOf("", true)).toBe(`\`\`\`text ${encodeMarks(marks)}`)
+    expect(infoOf("src/a.ts", true)).toBe(`\`\`\`text src/a.ts ${encodeMarks(marks)}`)
+    expect(infoOf("", false)).toBe("```")
+  })
+
   it("コードと mermaid はフェンスで囲み、中のバッククォートより長いフェンスにする", () => {
     expect(
       markdownOf({
@@ -815,11 +859,19 @@ describe("reportSectionsMarkdown", () => {
         language: "diff",
         path: "src/dummy.ts",
         source: "-a\n+b\n",
+        marks: [],
         fold: "",
       }),
     ).toBe("```diff src/dummy.ts\n-a\n+b\n```")
     expect(
-      markdownOf({ kind: "code", language: "md", path: "", source: "```ts\nx\n```", fold: "" }),
+      markdownOf({
+        kind: "code",
+        language: "md",
+        path: "",
+        source: "```ts\nx\n```",
+        marks: [],
+        fold: "",
+      }),
     ).toBe("````md\n```ts\nx\n```\n````")
     expect(
       markdownOf({

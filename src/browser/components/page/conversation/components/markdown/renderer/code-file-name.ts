@@ -9,6 +9,14 @@
 
 import type { Element, ElementContent, Properties, Root } from "hast"
 
+import { splitMarksToken } from "../../../../../../../shared/report/code-mark.ts"
+
+/**
+ * `code` の塊の `marks` を運ぶプロパティ名（DOM の属性名は `data-marks`。中身は `encodeMarks` の `marks=` を除いた部分）。
+ * info の末尾の語を切り離して運ぶので、ファイル名には混ざらない。
+ */
+export const CODE_MARKS_PROPERTY = "dataMarks"
+
 /**
  * ファイル名を運ぶ hast のプロパティ名（DOM に出るときの属性名は `data-filename`）。
  * サニタイザの許可リストと `Pre` が同じ名前で受けるので、綴りを1箇所に置く。
@@ -44,19 +52,20 @@ function moveFileName(node: ElementContent): ElementContent {
 }
 
 function withFileName(node: Element): Properties {
-  const fileName = fenceFileName(node)
-  if (fileName === undefined) {
+  const meta = fenceMeta(node)
+  if (meta === undefined) {
     return node.properties
   }
-  return { ...node.properties, [CODE_FILE_NAME_PROPERTY]: fileName }
+  const { rest, marks } = splitMarksToken(meta)
+  return {
+    ...node.properties,
+    ...(rest === "" ? {} : { [CODE_FILE_NAME_PROPERTY]: rest }),
+    ...(marks === undefined ? {} : { [CODE_MARKS_PROPERTY]: marks }),
+  }
 }
 
 /** `data.meta` は hast の型が `string | null | undefined` を許すので、文字列のときだけ見る。 */
-function fenceFileName(node: Element): string | undefined {
+function fenceMeta(node: Element): string | undefined {
   const meta = node.data?.meta
-  if (typeof meta !== "string") {
-    return undefined
-  }
-  const trimmed = meta.trim()
-  return trimmed === "" ? undefined : trimmed
+  return typeof meta === "string" ? meta : undefined
 }

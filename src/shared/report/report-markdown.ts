@@ -6,6 +6,7 @@
 
 import { countBy } from "remeda"
 
+import { encodeMarks } from "./code-mark.ts"
 import { readGraphSource, type GraphChange, type GraphNodeShape } from "./graph-source.ts"
 import {
   REPORT_CELL_STATUSES,
@@ -230,7 +231,7 @@ function blockMarkdown(
         fit: false,
       })
     case "code":
-      return fencedMarkdown([block.language, block.path].join(" ").trim(), block.source)
+      return fencedMarkdown(codeInfo(block), block.source)
     case "mermaid":
       return captionedMarkdown({
         kind: "figure",
@@ -1101,6 +1102,18 @@ function numericBarMarkdown(cell: string, max: number): string {
     "|",
     "\\|",
   )
+}
+
+/**
+ * `code` の塊のフェンスの info。先頭の語は言語として読まれるので、言語が空でパスか印があるときは `text` で埋める
+ * （埋めないとパスや印の語が言語になり、`marks` が描画側へ届かない）。
+ */
+function codeInfo(block: Extract<ReportBlock, { readonly kind: "code" }>): string {
+  const rest = [block.path, block.marks.length === 0 ? "" : encodeMarks(block.marks)].filter(
+    (part) => part.trim() !== "",
+  )
+  const language = block.language.trim() === "" && rest.length > 0 ? "text" : block.language
+  return [language, ...rest].filter((part) => part.trim() !== "").join(" ")
 }
 
 /**

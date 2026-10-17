@@ -1633,6 +1633,30 @@
                     "fold": ""
                   }
                 ]
+              },
+              {
+                "heading": "架空のコードの印と shell の塊",
+                "blocks": [
+                  {
+                    "kind": "code",
+                    "language": "ts",
+                    "path": "",
+                    "source": "export function pickTicks(values: number[]): number[] {\n  const sorted = [...values].sort((a, b) => a - b)\n  const step = niceStep(sorted)\n  return sorted.filter((v) => v % step === 0)\n  // 架空の補足の行 5\n  // 架空の補足の行 6\n  // 架空の補足の行 7\n  // 架空の補足の行 8\n  // 架空の補足の行 9\n  // 架空の補足の行 10\n  // 架空の補足の行 11\n  // 架空の補足の行 12\n  // 架空の補足の行 13\n  // 架空の補足の行 14\n  // 架空の補足の行 15\n  // 架空の補足の行 16\n  // 架空の補足の行 17\n  // 架空の補足の行 18\n  // 架空の補足の行 19\n  // 架空の補足の行 20\n  // 架空の補足の行 21\n  // 架空の補足の行 22\n  // 架空の補足の行 23\n  // 架空の補足の行 24\n  // 架空の補足の行 25\n  // 架空の補足の行 26\n  // 架空の補足の行 27\n  // 架空の補足の行 28\n  // 架空の補足の行 29\n}\n",
+                    "marks": [
+                      { "lines": "3", "label": "刻みを決める" },
+                      { "lines": "4", "label": "刻みの倍数だけ残す" }
+                    ],
+                    "fold": ""
+                  },
+                  {
+                    "kind": "code",
+                    "language": "bash",
+                    "path": "",
+                    "source": "$ pnpm run check src/dummy/ticks.ts\ntypecheck  ok   6.1s\nlint       ok   2.3s\ntest       ok   5.5s  (31 files)\ne2e        skipped (変更なし)\n",
+                    "marks": [],
+                    "fold": ""
+                  }
+                ]
               }
             ],
             "favor": "",

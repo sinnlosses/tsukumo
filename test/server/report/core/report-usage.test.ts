@@ -159,6 +159,26 @@ describe("reportUsageEntryOf", () => {
     ])
   })
 
+  it("code の塊に marks があれば codeMarks の欄を立て、無ければ立てない", () => {
+    const code = (marks: readonly { lines: string; label: string }[]): ReportSection => ({
+      heading: "",
+      blocks: [{ kind: "code", language: "ts", path: "", source: "架空", marks, fold: "" }],
+    })
+
+    expect(
+      reportUsageEntryOf(
+        reportOfSections([code([{ lines: "1", label: "架空" }])]),
+        "claude-session-1",
+        1_000,
+        false,
+      ).blockFields,
+    ).toEqual(["codeMarks"])
+    expect(
+      reportUsageEntryOf(reportOfSections([code([])]), "claude-session-1", 1_000, false)
+        .blockFields,
+    ).toEqual([])
+  })
+
   it("既定の値でない塊の欄を、節をまたいで重複を畳んだ集合にする", () => {
     const event = reportOfSections([
       {
@@ -639,12 +659,19 @@ describe("reportUsageEntryOf", () => {
       ["markdown の path:line", { kind: "markdown", markdown: "> a.ts:1", fold: "" }, true],
       [
         "code の path",
-        { kind: "code", language: "ts", path: "src/a.ts", source: "架空", fold: "" },
+        { kind: "code", language: "ts", path: "src/a.ts", source: "架空", marks: [], fold: "" },
         true,
       ],
       [
         "path の無い code",
-        { kind: "code", language: "ts", path: "", source: "https://example.com", fold: "" },
+        {
+          kind: "code",
+          language: "ts",
+          path: "",
+          source: "https://example.com",
+          marks: [],
+          fold: "",
+        },
         false,
       ],
       ["行番号の無いパス", { kind: "text", text: "src/a.ts を読んだ", fold: "" }, false],

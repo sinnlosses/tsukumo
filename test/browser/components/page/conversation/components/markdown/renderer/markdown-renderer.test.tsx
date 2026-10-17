@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
 import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/components/page/conversation/components/repository-link/repository-link.tsx"
+import { encodeMarks } from "../../../../../../../../src/shared/report/code-mark.ts"
 import type { ReportSection } from "../../../../../../../../src/shared/report/report-block.ts"
 import { reportSectionsMarkdown as reportSectionsMarkdownFrom } from "../../../../../../../../src/shared/report/report-markdown.ts"
 import { typedElement } from "../../../../../../../typed-element.ts"
@@ -560,12 +561,179 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelector("pre code.language-diff")).not.toBeNull()
   })
 
+  it("info の末尾の marks= の語はファイル名に混ざらず、印の行として描かれる", () => {
+    const marks = [{ lines: "1", label: "架空の印" }]
+    const token = encodeMarks(marks)
+    const { container } = render(<Markdown text={`\`\`\`ts src/a.ts ${token}\na\nb\n\`\`\``} />)
+
+    const label = container.querySelector(".code-file-name")
+    expect(label?.textContent).toContain("src/a.ts")
+    expect(label?.textContent).not.toContain("marks=")
+    expect(container.querySelector("pre code.language-ts .code-line-mark")?.textContent).toContain(
+      "a",
+    )
+    expect(container.querySelector(".code-mark-label")?.textContent).toBe("架空の印")
+  })
+
   it("ファイル名は文字として出る（HTML として解釈しない）", () => {
     const { container } = render(<Markdown text={"```diff <b>src/foo.ts</b>\n-a\n+b\n```"} />)
 
     const label = container.querySelector(".code-file-name")
     expect(label?.textContent).toContain("<b>src/foo.ts</b>")
     expect(label?.querySelector("b")).toBeNull()
+  })
+})
+
+describe("Markdown（code の marks）", () => {
+  const lines = (count: number): string[] =>
+    Array.from(
+      { length: count },
+      (_, index) => `const v${String(index + 1)} = ${String(index + 1)}`,
+    )
+  const fenceWith = (
+    sourceLines: readonly string[],
+    marks: readonly { lines: string; label: string }[],
+  ): string => `\`\`\`ts ${encodeMarks(marks)}\n${sourceLines.join("\n")}\n\`\`\``
+
+  it("印の行に印のクラスが付き、ラベルは印の最初の行の右端に出る", () => {
+    const { container } = render(
+      <Markdown text={fenceWith(lines(6), [{ lines: "2-3", label: "架空の印" }])} />,
+    )
+
+    const rows = [...container.querySelectorAll("pre .code-line")]
+    expect(rows).toHaveLength(6)
+    expect(rows.map((row) => row.classList.contains("code-line-mark"))).toEqual([
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+    ])
+    expect(rows[1]?.querySelector(".code-mark-label")?.textContent).toBe("架空の印")
+    expect(container.querySelectorAll(".code-mark-label")).toHaveLength(1)
+    expect(rows[0]?.textContent).toBe("const v1 = 1")
+  })
+
+  it("言語が空の塊でも、report の塊から組んだ marks は印の行として届く", () => {
+    const block = {
+      kind: "code",
+      language: "",
+      path: "",
+      source: "a\nb\n",
+      marks: [{ lines: "2", label: "架空の印" }],
+      fold: "",
+    } as const
+    const { container } = render(
+      <Markdown text={reportSectionsMarkdown([{ heading: "", blocks: [block] }])} />,
+    )
+
+    expect(container.querySelectorAll(".code-line-mark")).toHaveLength(1)
+    expect(container.querySelector(".code-mark-label")?.textContent).toBe("架空の印")
+  })
+
+  it("marks の無い塊は行に分けず、20行を超えても畳まない", () => {
+    const { container } = render(<Markdown text={"```ts\n" + lines(40).join("\n") + "\n```"} />)
+
+    expect(container.querySelector(".code-line")).toBeNull()
+    expect(container.querySelector(".code-fold")).toBeNull()
+  })
+
+  it("印の 3 行外が20行を超える範囲は「n 行を畳んだ」の 1 行になり、押すと中身が出る", () => {
+    const { container } = render(
+      <Markdown text={fenceWith(lines(40), [{ lines: "1", label: "架空の印" }])} />,
+    )
+
+    const fold = typedElement(container.querySelector(".code-fold"), HTMLButtonElement, "畳みの行")
+    expect(fold.textContent).toBe("36 行を畳んだ")
+    expect(fold.getAttribute("aria-expanded")).toBe("false")
+    expect(container.querySelectorAll(".code-line")).toHaveLength(4)
+
+    fireEvent.click(fold)
+
+    expect(container.querySelector(".code-fold")).toBeNull()
+    expect(container.querySelectorAll(".code-line")).toHaveLength(40)
+  })
+
+  it("離れた行が20行ちょうどなら畳まない", () => {
+    const { container } = render(
+      <Markdown text={fenceWith(lines(24), [{ lines: "1", label: "架空の印" }])} />,
+    )
+
+    expect(container.querySelector(".code-fold")).toBeNull()
+    expect(container.querySelectorAll(".code-line")).toHaveLength(24)
+  })
+
+  it("コピーは畳みと印に関わらず全文を写す", async () => {
+    const calls: string[] = []
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: (text: string) => Promise.resolve(calls.push(text)).then(() => {}) },
+      configurable: true,
+    })
+    const source = lines(40)
+    const { container } = render(
+      <Markdown text={fenceWith(source, [{ lines: "1", label: "架空の印" }])} />,
+    )
+
+    await act(async () => {
+      fireEvent.click(
+        typedElement(container.querySelector(".code-copy"), HTMLButtonElement, "コピーのボタン"),
+      )
+      await Promise.resolve()
+    })
+
+    expect(calls).toEqual([source.join("\n")])
+  })
+})
+
+describe("Markdown（shell の塊）", () => {
+  const copiedText = async (text: string): Promise<string[]> => {
+    const calls: string[] = []
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: (value: string) => Promise.resolve(calls.push(value)).then(() => {}) },
+      configurable: true,
+    })
+    const { container } = render(<Markdown text={text} />)
+    await act(async () => {
+      fireEvent.click(
+        typedElement(container.querySelector(".code-copy"), HTMLButtonElement, "コピーのボタン"),
+      )
+      await Promise.resolve()
+    })
+    return calls
+  }
+
+  it("コマンドと出力の行が分かれ、出力の行にだけ出力のクラスが付く", () => {
+    const { container } = render(
+      <Markdown text={"```bash\n$ pnpm run check\ntypecheck ok\nlint ok\n```"} />,
+    )
+
+    const rows = [...container.querySelectorAll("pre .code-line")]
+    expect(rows.map((row) => row.classList.contains("code-line-output"))).toEqual([
+      false,
+      true,
+      true,
+    ])
+  })
+
+  it("コピーはコマンドの行だけを `$ ` を外して写す", async () => {
+    expect(await copiedText("```bash\n$ pnpm run check\ntypecheck ok\n$ pwd\n/tmp\n```")).toEqual([
+      "pnpm run check\npwd",
+    ])
+  })
+
+  it("shell でない言語の `$ ` 始まりは分けず、全文を写す", async () => {
+    const text = "```ts\n$ not a command\nout\n```"
+    const { container } = render(<Markdown text={text} />)
+    expect(container.querySelector(".code-line")).toBeNull()
+    expect(await copiedText(text)).toEqual(["$ not a command\nout"])
+  })
+
+  it("コマンドが 1 行も無い shell の塊は分けず、全文を写す", async () => {
+    const text = "```bash\nls -la\ncd /tmp\n```"
+    const { container } = render(<Markdown text={text} />)
+    expect(container.querySelector(".code-line")).toBeNull()
+    expect(await copiedText(text)).toEqual(["ls -la\ncd /tmp"])
   })
 })
 
@@ -580,7 +748,7 @@ describe("Markdown（フェンス付きコードブロックのコピーのボ�
     return { calls }
   }
 
-  it("フェンス付きコードブロックにコピーのボタンが出て、押すと塊の中身そのままを写す（行番号・ラベル・ボタンの文字は含まない）", async () => {
+  it("フェンス付きコードブロックにコピーのボタンが出て、押すと（shell の塊を除き）塊の中身そのままを写す（行番号・ラベル・ボタンの文字は含まない）", async () => {
     const { calls } = stubClipboardWriteText()
     const { container } = render(
       <Markdown text={"```diff .tw/tasks.json\n-const a = 1\n+const a = 2\n```"} />,

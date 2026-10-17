@@ -72,6 +72,21 @@ describe("parseReportSections", () => {
     expect(parse({ rest: "ほか 3 件" })).toMatchObject({ rest: "ほか 3 件" })
   })
 
+  it("code の marks は省くと空になり、形の違う印は塊ごと受けない", () => {
+    const parse = (block: object): unknown =>
+      parseReportSections([{ heading: "", blocks: [block] }])
+    const code = { kind: "code", language: "ts", source: "架空" }
+
+    expect(parse(code)).toMatchObject({ sections: [{ blocks: [{ marks: [], path: "" }] }] })
+    expect(parse({ ...code, marks: [{ lines: "1", label: "架空" }] })).toMatchObject({
+      sections: [{ blocks: [{ marks: [{ lines: "1", label: "架空" }] }] }],
+    })
+    expect(parse({ ...code, marks: [{ lines: 1, label: "架空" }] })).toEqual({
+      sections: [],
+      unknownBlockCount: 0,
+    })
+  })
+
   it("beforeAfter の塊は前と後の側が画像・コード・箇条のどれかで、左右で種類が違っても受ける", () => {
     const beforeAfter = {
       kind: "beforeAfter",

@@ -33,6 +33,7 @@ import rehypeSanitize from "rehype-sanitize"
 import remarkCjkFriendly from "remark-cjk-friendly"
 import remarkGfm from "remark-gfm"
 
+import { decodeMarks, type CodeMark } from "../../../../../../../shared/report/code-mark.ts"
 import { optionalString } from "../../../../../../../shared/utils/optional-string.ts"
 import {
   repositoryFilePath,
@@ -43,8 +44,11 @@ import { ChartBlock } from "./chart-block.tsx"
 import {
   CODE_FILE_NAME_PROPERTY,
   CODE_FILE_PATH_PROPERTY,
+  CODE_MARKS_PROPERTY,
   rehypeCodeFileName,
 } from "./code-file-name.ts"
+import { splitCodeLines } from "./code-line.ts"
+import { CodeLines } from "./code-lines.tsx"
 import { colorSwatch, readColorToken } from "./color-swatch.ts"
 import { CopyButton } from "./copy-button.tsx"
 import { MermaidBlock } from "./mermaid-block.tsx"
@@ -58,6 +62,7 @@ import { remarkPreviewImage } from "./preview-image.ts"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
+import { shellCommandText, shellLineKinds } from "./shell-line.ts"
 import { rehypeStyleAllowlist } from "./style-allowlist.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
 
@@ -149,6 +154,7 @@ type PreProps = JSX.IntrinsicElements["pre"] & ExtraProps
  * それ以外のフェンスは頭に帯を1本添え、{@link CopyButton} を常に置く。
  * フェンスにファイル名が書いてあれば（```diff src/foo.ts）、帯の左にラベルとして出す。
  * git 管理下の一覧にあるファイル名は押せるボタンにする。
+ * `marks` のある塊と、コマンドの行のある shell の塊は、行ごとに {@link CodeLines} で描く。
  */
 function Pre(props: PreProps): ReactElement {
   const codeNode = findCodeChild(props.node)
@@ -171,15 +177,32 @@ function Pre(props: PreProps): ReactElement {
     return <pre {...rest} />
   }
   const fileName = codeFileName(codeNode)
+  const marks = codeMarks(codeNode)
+  const source = codeSourceText(codeNode)
+  const kinds = shellLineKinds(codeLanguage(codeNode), source)
   return (
     <div className={styles["code-file"]}>
       <div className={styles["code-file-name"]}>
         {fileName !== undefined && <FileNameLabel fileName={fileName} />}
-        <CopyButton text={codeSourceText(codeNode)} />
+        <CopyButton text={kinds === undefined ? source : shellCommandText(source, kinds)} />
       </div>
-      <pre {...rest} />
+      {marks.length === 0 && kinds === undefined ? (
+        <pre {...rest} />
+      ) : (
+        <pre {...rest}>
+          <code className={clsx(codeNode.properties.className)}>
+            <CodeLines lines={splitCodeLines(codeNode.children)} marks={marks} kinds={kinds} />
+          </code>
+        </pre>
+      )}
     </div>
   )
+}
+
+/** フェンスの `marks`。{@link rehypeCodeFileName} が属性に移し、モデルが書いた値なので読めなければ無いものとして扱う。 */
+function codeMarks(codeNode: Element): readonly CodeMark[] {
+  const token = optionalString(codeNode.properties[CODE_MARKS_PROPERTY])
+  return token === undefined ? [] : decodeMarks(token)
 }
 
 /** フェンスの中身そのまま。末尾に付く1つの改行（CommonMark がフェンスの終わりに添えるもの）だけ落とす。 */
