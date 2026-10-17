@@ -10,6 +10,13 @@ import { applyPreparation, type Preparation } from "./capture-preparation.ts"
  */
 export const MAIN_REGION_SELECTOR = '[data-region="main"]'
 
+/**
+ * 演出を打ち切るキー（`entry.skipReveal`。`SKIP_EVENT_NAMES` は
+ * `keydown` ならどのキーでも拾うので、押すキーの意味は問わない）。フォーカスがどこにあっても
+ * `window` の listener が capture 段階で拾うので、打つ前にどこかへフォーカスを当てる必要も無い。
+ */
+export const SKIP_REVEAL_KEY = "Escape"
+
 /** ページの中身が落ち着くまで待つ上限（ミリ秒）。SSE / WebSocket があるので networkidle は待たない。 */
 const SETTLE_TIMEOUT_MS = 10_000
 

@@ -44,7 +44,7 @@ import { readFakeSession } from "../../src/server/session-driver/adapter/fake-dr
 import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../shared/capture-clock.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
-import { applyPreparations, openPage, settlePage } from "./lib/capture-page.ts"
+import { applyPreparations, openPage, SKIP_REVEAL_KEY, settlePage } from "./lib/capture-page.ts"
 import {
   describePreparation,
   PREPARATION_OPTIONS,
@@ -52,6 +52,8 @@ import {
   readPreparations,
 } from "./lib/capture-preparation.ts"
 import { type Source, sourceOf } from "./lib/capture-source.ts"
+import { CATALOG } from "./lib/catalog-entry.ts"
+import { imageSceneEntry, launchPlaceOf, workspaceOf } from "./lib/catalog-setup.ts"
 import { launchFakeScene } from "./lib/fake-scene-launch.ts"
 import { sceneBlockKinds } from "./lib/scene-catalog.ts"
 import {
@@ -87,7 +89,7 @@ const USAGE = `使い方:
 
   --scene <場面>        fake driver の tsukumo を自分で起こして撮り、終わったら自分で止める
                         （場面は test/fixture/fake-session.json の turns[].name。URL とは併用しない）
-  --cwd <dir>           --scene の tsukumo を起こす作業ディレクトリ（.beads や課題ファイルを探す先。既定はこの作業ツリー。--scene と一緒にだけ使う）
+  --cwd <dir>           --scene の tsukumo を起こす作業ディレクトリ（.beads や課題ファイルを探す先。既定はこの作業ツリー。手元の画像を置く場面は --out の隣に架空の画像入りの作業場所を立てる。件が演出を打ち切る場面は、--cwd の有無に関わらず打ち切ってから撮る。--scene と一緒にだけ使う）
   --until-step <n>      --scene の場面を先頭から n 手目で止めた画を撮る（正の整数。--scene と一緒にだけ使う）
   --list-scenes         場面ごとに report に出る塊の kind を一覧して終わる（撮らない）
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
@@ -134,13 +136,13 @@ async function main(argv: readonly string[]): Promise<number> {
     return printSceneCatalog()
   }
 
-  const opened = await openSource(options.source)
+  const opened = await openSource(options.source, path.dirname(path.resolve(options.out)))
   if (opened === undefined) {
     return 1
   }
 
   try {
-    return await capture(opened.url, options)
+    return await capture(opened.url, opened.skipReveal, options)
   } finally {
     opened.close()
   }
@@ -160,15 +162,20 @@ function printSceneCatalog(): number {
 }
 
 /** 開いた URL と、閉じる手段。`--scene` のときだけ閉じる手段が中身を持つ。 */
-type OpenedSource = { readonly url: string; readonly close: () => void }
+type OpenedSource = {
+  readonly url: string
+  readonly close: () => void
+  /** 場面の件が `skipReveal` のとき true（撮る前に書き上げの演出を打ち切る）。 */
+  readonly skipReveal: boolean
+}
 
 /**
  * `source` を開いて URL を得る。`--scene` は知らない場面名なら起こさずに理由を出す。
  * 起こすのに失敗したときも理由を出す。どちらも undefined（呼び出し側は撮らずに終わる）。
  */
-async function openSource(source: Source): Promise<OpenedSource | undefined> {
+async function openSource(source: Source, outDir: string): Promise<OpenedSource | undefined> {
   if (source.kind === "url") {
-    return { url: source.url, close: () => undefined }
+    return { url: source.url, close: () => undefined, skipReveal: false }
   }
 
   const reading = readFakeSession()
@@ -181,19 +188,28 @@ async function openSource(source: Source): Promise<OpenedSource | undefined> {
     return undefined
   }
 
-  if (!isDirectory(source.cwd)) {
-    process.stderr.write(`--cwd がディレクトリではない: ${source.cwd}\n`)
+  const imageEntry = imageSceneEntry(source.scene, CATALOG)
+  const place = launchPlaceOf(source.cwd, source.scene, CATALOG)
+  const cwd =
+    place.kind === "given"
+      ? place.cwd
+      : place.kind === "image-workspace"
+        ? workspaceOf(place.entry, outDir)
+        : REPOSITORY_ROOT
+  if (!isDirectory(cwd)) {
+    process.stderr.write(`--cwd がディレクトリではない: ${cwd}\n`)
     return undefined
   }
 
   try {
-    return await launchFakeScene({
-      cwd: source.cwd,
+    const launched = await launchFakeScene({
+      cwd,
       scene: source.scene,
       home: undefined,
       extraEnv:
         source.until === undefined ? {} : { TSUKUMO_FAKE_SCENE_UNTIL: String(source.until) },
     })
+    return { url: launched.url, close: launched.close, skipReveal: imageEntry?.skipReveal === true }
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
     return undefined
@@ -202,6 +218,7 @@ async function openSource(source: Source): Promise<OpenedSource | undefined> {
 
 async function capture(
   url: string,
+  skipReveal: boolean,
   options: Extract<Options, { readonly kind: "capture" }>,
 ): Promise<number> {
   const browser = await chromium.launch({ channel: "chrome", headless: true })
@@ -227,6 +244,9 @@ async function capture(
     if (sceneFailure !== undefined) {
       process.stderr.write(`${sceneFailure}\n`)
       return 1
+    }
+    if (skipReveal) {
+      await page.keyboard.press(SKIP_REVEAL_KEY)
     }
     const settleFailure = await settlePage(page).then(
       () => undefined,
@@ -450,7 +470,6 @@ function readOptions(argv: readonly string[]): Options | undefined {
     values.scene,
     untilStep?.data,
     values.cwd === undefined ? undefined : path.resolve(values.cwd),
-    REPOSITORY_ROOT,
   )
   return source === undefined
     ? undefined

@@ -21,6 +21,38 @@ const FICTIONAL_ISSUE = {
   notes: "",
 } satisfies Readonly<Record<string, unknown>>
 
+/**
+ * `--scene` に対応する、画像の作業場所を要る件。同じ `scene` の件に `report-image` があればその最初の件、
+ * 無ければ undefined。作業場所と演出の扱い（`skipReveal`）は、`--cwd` の有無に関わらずこの件に従う。
+ */
+export function imageSceneEntry(
+  scene: string,
+  catalog: readonly CatalogEntry[],
+): CatalogEntry | undefined {
+  return catalog.find(
+    (entry) => entry.scene === scene && entry.workspaceSetup.kind === "report-image",
+  )
+}
+
+/** `--scene` の tsukumo を起こす先。渡された `--cwd`・件専用の画像の作業場所・この作業ツリーのどれか。 */
+export type LaunchPlace =
+  | { readonly kind: "given"; readonly cwd: string }
+  | { readonly kind: "image-workspace"; readonly entry: CatalogEntry }
+  | { readonly kind: "repository" }
+
+/** `--cwd` があればそれを優先し、無ければ場面に画像の件があればその作業場所、無ければ作業ツリー。 */
+export function launchPlaceOf(
+  cwd: string | undefined,
+  scene: string,
+  catalog: readonly CatalogEntry[],
+): LaunchPlace {
+  if (cwd !== undefined) {
+    return { kind: "given", cwd }
+  }
+  const entry = imageSceneEntry(scene, catalog)
+  return entry === undefined ? { kind: "repository" } : { kind: "image-workspace", entry }
+}
+
 /** `entry.workspaceSetup` に合わせて作業場所を用意し、その場所を返す。 */
 export function workspaceOf(entry: CatalogEntry, outDir: string): string {
   if (entry.workspaceSetup.kind === "repository") {

@@ -47,7 +47,7 @@ import {
   type FakeSession,
   readFakeSession,
 } from "../../src/server/session-driver/adapter/fake-driver.ts"
-import { applyPreparations, openPage, settlePage } from "./lib/capture-page.ts"
+import { applyPreparations, openPage, SKIP_REVEAL_KEY, settlePage } from "./lib/capture-page.ts"
 import { describeCatalogMiss } from "./lib/capture-preparation.ts"
 import { type CatalogEntry, type CatalogSize, CATALOG, sizesOf } from "./lib/catalog-entry.ts"
 import { indexHtml, type Shot } from "./lib/catalog-index.ts"
@@ -70,13 +70,6 @@ const DEFAULT_OUT_DIR = "/tmp/tsukumo-catalog"
  * `report-checks` の2件目の `report` が届く約7秒、`work-plan-main-view` の最終 `report` が届く約10秒より余裕を持たせる。
  */
 const SETTLE_SELECTOR_TIMEOUT_MS = 20_000
-
-/**
- * 演出を打ち切るキー（`entry.skipReveal`。`SKIP_EVENT_NAMES` は
- * `keydown` ならどのキーでも拾うので、押すキーの意味は問わない）。フォーカスがどこにあっても
- * `window` の listener が capture 段階で拾うので、打つ前にどこかへフォーカスを当てる必要も無い。
- */
-const SKIP_REVEAL_KEY = "Escape"
 
 const USAGE = `使い方: node scripts/capture/capture-catalog.ts [オプション]
 
