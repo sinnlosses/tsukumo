@@ -73,6 +73,8 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   // 2つセットで借りる — 片方だけ差し替えると `FileReader` が相手の `Blob` を受け取れない。
   "File",
   "FileReader",
+  // 図の拡大（svg を文字にして `<img>` の data URL にする）が要る。
+  "XMLSerializer",
 ] as const
 
 const window = new Window({ url: "http://127.0.0.1/" })

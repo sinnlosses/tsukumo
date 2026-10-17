@@ -450,6 +450,33 @@ export const CATALOG: readonly CatalogEntry[] = [
     settle: { kind: "selector", selector: CAPTIONED_SELECTOR, phase: "before-prepare" },
   },
   {
+    name: "report-tall-figure",
+    scene: "report-tall-figure",
+    label: "縦に長い図（mermaid・svg・画像）が読む面の 70% までに収まる",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "report-image" },
+    prepare: [],
+    skipReveal: true,
+    settle: { kind: "selector", selector: CAPTIONED_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-interim-nested",
+    scene: "report-interim-nested",
+    label: "中間レポートの箱の中の塊に枠が無く、箱が1段になる",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [
+      { kind: "wait", selector: `${MAIN_REGION_SELECTOR} summary` },
+      { kind: "click", selector: `${MAIN_REGION_SELECTOR} summary` },
+    ],
+    skipReveal: true,
+    settle: {
+      kind: "selector",
+      selector: `${MAIN_REGION_SELECTOR} [class*="report-stat_"]`,
+      phase: "after-prepare",
+    },
+  },
+  {
     name: "report-figure-none",
     scene: "report-figure-none",
     label: "レポートの図の欄が none（何も描かず、節の図が図 1）",

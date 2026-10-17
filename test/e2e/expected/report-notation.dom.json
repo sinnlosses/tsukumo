@@ -487,6 +487,8 @@
                                 {
                                   "tag": "pre",
                                   "attributes": {
+                                    "role": "button",
+                                    "aria-label": "この図を拡大",
                                     "data-processed": "true"
                                   },
                                   "children": [

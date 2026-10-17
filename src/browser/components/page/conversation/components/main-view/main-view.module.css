@@ -116,6 +116,8 @@
    地は最終レポートと同じ surface のまま（`.main-step` の既定）で、枠を破線にする・小さなラベルを載せるの2つで本体のレポートと見分ける（色だけに頼らない）。 */
 .main-step.is-interim {
   border-style: dashed;
+  --report-chunk-rule: transparent;
+  --report-chunk-ground: var(--surface-raised);
 }
 /* 最終レポート（そのやり取りの最後の、中間でない本文。`MainViewStep.final`）。
    箱を持たず、領域の surface を紙にする。中間レポートの破線の箱とは形で見分ける。

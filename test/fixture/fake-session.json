@@ -2564,6 +2564,229 @@
       ]
     },
     {
+      "name": "report-tall-figure",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "縦に長い図の高さを確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "縦長の図を並べたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-tall-figure-1",
+            "conclusion": "架空の結論: 縦に長い図が読む面の高さに収まる。",
+            "sections": [
+              {
+                "heading": "架空の縦長の図",
+                "blocks": [
+                  {
+                    "kind": "mermaid",
+                    "title": "架空の縦に長い流れ",
+                    "source": "flowchart TD\n  A[架空の一段目] --> B[架空の二段目]\n  B --> C[架空の三段目]\n  C --> D[架空の四段目]\n  D --> E[架空の五段目]\n  E --> F[架空の六段目]\n  F --> G[架空の七段目]\n  G --> H[架空の八段目]\n  H --> I[架空の九段目]\n  I --> J[架空の十段目]",
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "svg",
+                    "title": "架空の縦に長い座標の図",
+                    "width": 240,
+                    "height": 720,
+                    "shapes": [
+                      {
+                        "kind": "rect",
+                        "x": 10,
+                        "y": 10,
+                        "width": 220,
+                        "height": 200,
+                        "label": "架空の上",
+                        "emphasis": false
+                      },
+                      {
+                        "kind": "rect",
+                        "x": 10,
+                        "y": 260,
+                        "width": 220,
+                        "height": 200,
+                        "label": "架空の中",
+                        "emphasis": true
+                      },
+                      {
+                        "kind": "rect",
+                        "x": 10,
+                        "y": 510,
+                        "width": 220,
+                        "height": 200,
+                        "label": "架空の下",
+                        "emphasis": false
+                      },
+                      {
+                        "kind": "line",
+                        "x1": 120,
+                        "y1": 210,
+                        "x2": 120,
+                        "y2": 260,
+                        "arrow": true,
+                        "label": ""
+                      },
+                      {
+                        "kind": "line",
+                        "x1": 120,
+                        "y1": 460,
+                        "x2": 120,
+                        "y2": 510,
+                        "arrow": true,
+                        "label": ""
+                      }
+                    ],
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "image",
+                    "path": "report-image-fixture/tall.png",
+                    "caption": "架空の縦に長い画面",
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-tall-figure-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1800,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "report-interim-nested",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "中間レポートの箱の入れ子を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "none" },
+            "toolUseId": "fake-report-interim-nested-1",
+            "conclusion": "架空の結論: 中間レポートの中の塊が箱の中で二重の枠にならない。",
+            "sections": [
+              {
+                "heading": "架空の数と候補と見比べ",
+                "blocks": [
+                  {
+                    "kind": "stats",
+                    "items": [
+                      { "before": "", "value": "36", "total": "48", "label": "架空の通った件数" },
+                      { "before": "12", "value": "9", "total": "", "label": "架空の落ちた件数" },
+                      { "before": "", "value": "3", "total": "", "label": "架空の帯の無い数" }
+                    ],
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "options",
+                    "title": "架空の候補の比較",
+                    "items": [
+                      { "name": "架空の案A", "verdict": "adopt", "reason": "架空の理由" },
+                      { "name": "架空の案B", "verdict": "reject", "reason": "架空の理由" }
+                    ],
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "compare",
+                    "title": "",
+                    "sides": [
+                      { "heading": "変更前", "points": ["架空の一行目", "架空の二行目"] },
+                      { "heading": "変更後", "points": ["架空の一行目", "架空の二行目"] }
+                    ],
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "text",
+                    "text": "架空の畳んだ補足。",
+                    "fold": "架空の畳み",
+                    "aside": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 650,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-interim-nested-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "終わったよ！", "expression": "proud" },
+            "toolUseId": "fake-report-interim-nested-2",
+            "conclusion": "架空の結論: 最後の本文。",
+            "sections": [],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1550,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-interim-nested-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "report-caption",
       "steps": [
         {

@@ -16,6 +16,7 @@ import {
   REPORT_NOTE_KINDS,
 } from "../../../../../../../shared/report/report-notation.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
+import { ZoomableSvgFigure } from "./figure-zoom.tsx"
 import { BeforeAfterSwap } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 
@@ -66,6 +67,14 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
   if (className !== undefined && classNameTokens(className).includes("before-after-swap")) {
     return (
       <BeforeAfterSwap className={resolveNotationClassName(className)}>{children}</BeforeAfterSwap>
+    )
+  }
+
+  if (className !== undefined && classNameTokens(className).includes("svg-figure")) {
+    return (
+      <ZoomableSvgFigure className={resolveNotationClassName(className)}>
+        {children}
+      </ZoomableSvgFigure>
     )
   }
 

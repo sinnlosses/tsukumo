@@ -13,6 +13,7 @@ import { isObjectType } from "remeda"
 
 import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
+import { figureZoomTriggerProps, SvgZoom } from "./figure-zoom.tsx"
 import styles from "./mermaid-block.module.css"
 import { resolveHex } from "./theme-color.ts"
 import { loadVendorScript } from "./vendor-script.ts"
@@ -48,6 +49,7 @@ export type MermaidBlockProps = {
 export function MermaidBlock(props: MermaidBlockProps): ReactElement {
   const nodeRef = useRef<HTMLPreElement>(null)
   const [error, setError] = useState<string | undefined>(undefined)
+  const [zoomed, setZoomed] = useState<SVGSVGElement | undefined>(undefined)
 
   const { code } = props
 
@@ -118,9 +120,12 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
   }
 
   return (
-    <pre ref={nodeRef} className="mermaid">
-      {props.code}
-    </pre>
+    <>
+      <pre ref={nodeRef} className="mermaid" {...figureZoomTriggerProps(setZoomed)}>
+        {props.code}
+      </pre>
+      {zoomed !== undefined && <SvgZoom svg={zoomed} onClose={() => setZoomed(undefined)} />}
+    </>
   )
 }
 

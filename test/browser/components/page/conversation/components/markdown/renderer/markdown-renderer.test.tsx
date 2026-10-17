@@ -1476,3 +1476,65 @@ describe("Markdown（image の塊の画像）", () => {
     })
   })
 })
+
+describe("Markdown（svg の塊の拡大）", () => {
+  const FIGURE_NAME = "この図を拡大"
+
+  function renderSvg(): HTMLElement {
+    const text = reportSectionsMarkdown([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "svg",
+            title: "架空",
+            width: 160,
+            height: 720,
+            shapes: [
+              { kind: "rect", x: 1, y: 1, width: 10, height: 10, label: "架空", emphasis: false },
+            ],
+            fold: "",
+            aside: "",
+          },
+        ],
+      },
+    ])
+    return render(<Markdown text={text} />).container
+  }
+
+  it("押せる図で、押すと拡大の面が開き、Esc 相当の閉じるで閉じる", () => {
+    const container = renderSvg()
+    const figure = typedElement(
+      container.querySelector(`[role="button"][aria-label="${FIGURE_NAME}"]`),
+      HTMLElement,
+      "押せる図",
+    )
+
+    fireEvent.click(figure)
+
+    const dialog = document.querySelector("dialog.image-zoom")
+    expect(dialog?.querySelector("img")?.getAttribute("src")).toContain("data:image/svg+xml")
+
+    fireEvent.click(
+      typedElement(
+        document.querySelector("dialog.image-zoom button:last-of-type"),
+        HTMLButtonElement,
+        "閉じるボタン",
+      ),
+    )
+    expect(document.querySelector("dialog.image-zoom")).toBeNull()
+  })
+
+  it("Enter でも開く", () => {
+    const container = renderSvg()
+    const figure = typedElement(
+      container.querySelector(`[role="button"][aria-label="${FIGURE_NAME}"]`),
+      HTMLElement,
+      "押せる図",
+    )
+
+    fireEvent.keyDown(figure, { key: "Enter" })
+
+    expect(document.querySelector("dialog.image-zoom")).not.toBeNull()
+  })
+})

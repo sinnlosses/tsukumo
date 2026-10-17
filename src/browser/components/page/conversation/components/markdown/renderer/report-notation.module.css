@@ -17,7 +17,7 @@
    地を親のステップと同じ surface にすると枠しか効かない。 */
 .detail-block .report-card {
   padding: 0.6rem 0.75rem;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--report-chunk-rule, var(--rule));
   border-radius: 0.5rem;
   background: var(--surface-raised);
 }
@@ -35,9 +35,9 @@
 }
 .detail-block .report-stat {
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--report-chunk-rule, var(--rule));
   border-radius: 0.5rem;
-  background: var(--surface);
+  background: var(--report-chunk-ground, var(--surface));
   font-size: var(--font-label);
   letter-spacing: 0.08em;
   line-height: 1.4;
@@ -311,7 +311,7 @@
   grid-template-columns: 1.4rem 4.5em minmax(0, 1fr);
   column-gap: 0.75rem;
   padding: 0.4rem 0;
-  border-bottom: 1px solid var(--rule-soft);
+  border-bottom: 1px solid var(--report-chunk-rule, var(--rule-soft));
 }
 .detail-block .report-option:last-child {
   border-bottom: none;
@@ -368,7 +368,7 @@
 .detail-block .report-compare-side {
   min-width: 0;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--report-chunk-rule, var(--rule));
   border-radius: 0.5rem;
   background: var(--surface-raised);
 }
@@ -392,7 +392,7 @@
 .detail-block .report-before-after-side {
   min-width: 0;
   padding: 0.5rem 0.75rem 0.75rem;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--report-chunk-rule, var(--rule));
   border-radius: 0.5rem;
   background: var(--surface-raised);
 }
@@ -1360,7 +1360,7 @@
 .detail-block details {
   margin: var(--report-block-gap) 0;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--report-chunk-rule, var(--rule));
   border-radius: 0.5rem;
   background: var(--ground);
 }
@@ -1423,6 +1423,23 @@
 .detail-block svg {
   max-width: 100%;
   height: auto;
+}
+/* 図（graph・mermaid・svg・image）の高さは読む面の高さ（`.layout-main` の内寸）の 70% まで。縦横比を保って縮み、全体は拡大で見る。chart は固定の高さのまま。
+   svg の塊は `width` の属性を外し、縮むとき幅が縦横比に従うようにする。 */
+.detail-block pre:global(.mermaid) svg {
+  max-height: var(--report-figure-max);
+}
+.detail-block .report-svg-figure svg {
+  width: auto;
+  max-height: var(--report-figure-max);
+}
+.detail-block .report-image-zoom img {
+  max-height: var(--report-figure-max);
+}
+/* 押すと拡大する図（`SvgZoom`）。mermaid は描き終えたものだけ。 */
+.detail-block pre:global(.mermaid)[data-processed],
+.detail-block .report-svg-figure {
+  cursor: zoom-in;
 }
 
 /* コードは機械の側の文字なので等幅。
@@ -1572,6 +1589,7 @@
   --report-heading-gap: 13px;
   --report-measure: 42em;
   --report-measure-wide: 63em;
+  --report-figure-max: 70cqh;
   margin: 0 0 1rem;
   line-height: var(--line-height-body);
   text-autospace: normal;

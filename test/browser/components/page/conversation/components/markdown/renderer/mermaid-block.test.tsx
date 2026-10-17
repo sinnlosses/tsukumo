@@ -1,4 +1,4 @@
-import { act, cleanup, render, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { MermaidBlock as MermaidBlockComponent } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/mermaid-block.tsx"
@@ -129,6 +129,27 @@ describe("MermaidBlock の描いた SVG の使い回し", () => {
     })
 
     expect(renderDiagram).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("MermaidBlock の拡大", () => {
+  it("描く前に押しても開かず、描き終えたあとに押すと拡大の面が開く", async () => {
+    const view = render(<MermaidBlock code="graph Z1" />)
+    const pre = view.container.querySelector("pre.mermaid")
+    expect(pre?.getAttribute("role")).toBe("button")
+
+    fireEvent.click(pre ?? view.container)
+    expect(document.querySelector("dialog.image-zoom")).toBeNull()
+
+    await finishLoading()
+    await waitFor(() => {
+      expect(view.container.querySelector("pre.mermaid svg")).not.toBeNull()
+    })
+    fireEvent.click(pre ?? view.container)
+
+    expect(document.querySelector("dialog.image-zoom img")?.getAttribute("src")).toContain(
+      "data:image/svg+xml",
+    )
   })
 })
 

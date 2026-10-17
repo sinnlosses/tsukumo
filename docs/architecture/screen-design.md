@@ -478,6 +478,17 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
   題のほかの中の文字の揃えは変えない）。42em を超える本体は左端（地の文の左端）から右へ伸び、題と凡例の軸は
   変わらない。mermaid の箱は 42em の段で描き、svg は箱いっぱいまで伸ばす。
   見比べ・前後は内幅いっぱいに広がるので、置き方は変わらない
+- **図の高さは読む面の高さの 70% まで**（2026-10-18）: `graph`・`mermaid`・`svg`・`image` は
+  縦横比を保って縮み、高さは `--report-figure-max`（`70cqh`。`.layout-main` の `container-type: size`
+  の内寸）を超えない。縦に長い図は縮むぶん字も縮むので、全体は押して開く拡大（`ImageZoom`、
+  `size="width"`）で見る。口は `image` に加えて `graph`・`mermaid`・`svg` にも付ける（図そのものを
+  押す。キーは Enter・Space。描き終える前の mermaid は開かない）。拡大の面は図を実寸（`viewBox` の幅と高さ）の
+  画像にして出し、縦に流れるときの「閉じる」は下端に貼り付く。`chart` は固定の 320px のまま。
+- **中間レポートの箱（`.main-step.is-interim`）の中は入れ子を1段にする**（2026-10-18）: 箱の中の
+  `card`・`stats`・`compare`・`beforeAfter`・畳み（`details`）は枠の色を透明にして（太さは残し、寸法を変えない）、
+  地の段（`surface-raised`。`stats` は `surface` から上げる）と余白で分ける。`options` の行の罫も外す。
+  枠の色と `stats` の地は `--report-chunk-rule`・`--report-chunk-ground` で、箱が置き、塊の側が
+  `var()` の第2引数に元の値を持つので、最終レポート（箱なし）の塊は枠つきのまま変わらない
 - **余白の柱**（2026-10-17）: レポートの本文の右の余白に、本文の流れの外の言葉を置く列。載るのは
   `memo` の `note` と、塊の `aside`（出典・どこを見るかの1行）の2つだけで、字は 12px（`--font-label`）・
   行間 18px・`--ink-quiet`、`memo` には「メモ」のラベルを `--ink-soft` で添える。傍注は直前の塊の
