@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 import { cleanup, render } from "@testing-library/react"
 import { createElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
+import { z } from "zod"
 
 import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/components/markdown/renderer/sanitize-schema.ts"
@@ -12,6 +13,7 @@ import { REPORT_FIGURE_DESCRIPTION } from "../../../../src/server/report/core/re
 import { readGraphSource } from "../../../../src/shared/report/graph-source.ts"
 import {
   parseReportSections,
+  reportBlockSchema,
   REPORT_BLOCK_KINDS,
   REPORT_FIGURE_NONE_REASONS,
   REPORT_MERMAID_KINDS,
@@ -202,7 +204,26 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("1. **結論は `conclusion` に1〜2文で書く。**")
     expect(REPORT_NOTATION_PROMPT).toContain("`favor` に分けて入れる")
     expect(REPORT_NOTATION_PROMPT).toContain("9. **見出しは節の `heading` に書く。**")
-    expect(REPORT_NOTATION_PROMPT).not.toContain("10. ")
+    expect(REPORT_NOTATION_PROMPT).toContain("2. **前置きと締めを書かない。**")
+    expect(REPORT_NOTATION_PROMPT).toContain("3. **同じことを二度言わない。**")
+  })
+
+  it("条10〜14 と条1・6 の追記が入り、図の作法と題の書き方は各 describe にある", () => {
+    for (const head of [
+      "10. **文は既知から始める。**",
+      "11. **今回の作業で生まれた名前だけ、使う前に1行で役割を言う。**",
+      "12. **列挙は同種の項目だけ。**",
+      "13. **最終レポートは終わった状態から書き直す。**",
+      "14. **撮った画像は要る所に切り抜く**",
+      "「それで何が良いか」か「変えていないもの」",
+      "「n件中k件」",
+    ]) {
+      expect(REPORT_NOTATION_PROMPT).toContain(head)
+    }
+    const graphSchema = JSON.stringify(z.toJSONSchema(reportBlockSchema))
+    expect(graphSchema).toContain("どの辺にも向きと動詞のラベルを付ける")
+    expect(graphSchema).toContain("交差は並びか分割で解く")
+    expect(graphSchema).toContain("数と向きで主張を言う1文")
   })
 
   it("検証の結果は checks に分けさせ、結論は読み手から見た変化で、文字より視覚情報を選ばせる", () => {

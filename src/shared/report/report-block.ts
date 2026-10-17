@@ -59,7 +59,9 @@ const cellSchema = z.union([
 const tableBlockSchema = z
   .object({
     kind: z.literal("table"),
-    title: inlineText.describe("セルに無いことだけ: 何を並べた表か・並べた基準・数の出どころ"),
+    title: inlineText.describe(
+      "セルに無いことだけ: 何を並べた表か・並べた基準・数の出どころ。数と向きで主張を言う1文。評価語なし",
+    ),
     columns: z.array(inlineText).min(2).describe("列は5つまで"),
     rows: z
       .array(z.array(cellSchema))
@@ -283,7 +285,7 @@ const imageBlockSchema = z
   .object({
     kind: z.literal("image"),
     path: z.string().describe("撮った画像のファイル（絶対か cwd から。png・jpeg・gif・webp）"),
-    caption: inlineText.describe("何が見えるかの1行"),
+    caption: inlineText.describe("何が見えるかの1行。数と向きで主張を言う1文。評価語なし"),
     notes: z
       .array(inlineText)
       .default([])
@@ -355,7 +357,7 @@ export const REPORT_MERMAID_KINDS = [
 const mermaidBlockSchema = z
   .object({
     kind: z.literal("mermaid"),
-    title: inlineText.default(""),
+    title: inlineText.default("").describe("数と向きで主張を言う1文。評価語なし"),
     source: z
       .string()
       .describe(
@@ -365,18 +367,18 @@ const mermaidBlockSchema = z
     fold,
   })
   .describe(
-    "時間の順（sequenceDiagram）・状態・クラス・ER など、flowchart 以外の図。「まず…次に…」の地の文で書かない",
+    "時間の順（sequenceDiagram）・状態・クラス・ER など、flowchart 以外の図。「まず…次に…」の地の文で書かない。1枚に1つの話を同じ抽象度で。辺は向きと動詞のラベル付き。交差は並びか分割で解く",
   )
 
 const graphBlockSchema = z
   .object({
     kind: z.literal("graph"),
-    title: inlineText.default(""),
+    title: inlineText.default("").describe("数と向きで主張を言う1文。評価語なし"),
     ...graphFields,
     fold,
   })
   .describe(
-    "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道でも段の名前が短ければ graph）。flowchart はこれで書く",
+    "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道でも段の名前が短ければ graph）。flowchart はこれで書く。1枚に1つの話を同じ抽象度で。どの辺にも向きと動詞のラベルを付ける。交差が出たら節点の並びか図の分け方を変える。群は囲みで言い色で言わない",
   )
 
 export const REPORT_CHART_KINDS = ["bar", "line", "pie"] as const
@@ -389,7 +391,7 @@ const chartSeriesSchema = z.object({
 const chartBlockSchema = z
   .object({
     kind: z.literal("chart"),
-    title: inlineText.default(""),
+    title: inlineText.default("").describe("数と向きで主張を言う1文。評価語なし"),
     chartKind: z
       .enum(REPORT_CHART_KINDS)
       .describe("bar は棒・line は折れ線・pie は円。pie は series の先頭だけを描く"),

@@ -269,7 +269,7 @@ function reportTool(
       conclusion: z
         .string()
         .describe(
-          `結論。レポートの冒頭の1〜${String(MAX_CONCLUSION_SENTENCES)}文。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）。悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）`,
+          `結論。レポートの冒頭の1〜${String(MAX_CONCLUSION_SENTENCES)}文。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）。悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）。2文目は「それで何が良いか」か「変えていないもの」。例: 「…分かる。読み方は変えていない」`,
         ),
       figure: reportFigureSchema.describe(REPORT_FIGURE_DESCRIPTION),
       sections: z
