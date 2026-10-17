@@ -298,35 +298,64 @@
   background: var(--surface-accent);
 }
 /* 候補の比較（`report` の `options` の塊から tsukumo が組む）。
-   候補を1枚ずつのカードにして横に並べ、入らなければ折り返す。並びは書き手の順のまま。
+   1案1行の積み。行は「番号・判定の語・名前と理由」の3列で、行どうしは罫で区切る。並びは書き手の順のまま。
    頭の番号は入力欄の質問の札の番号と同じ見た目にする。
-   判定は頭のバッジの文字（採る / 検討 / 採らない）が持ち、「採る」の縦罫は state-ok（キャラクターの色は入れない）。 */
+   判定は頭の語（採る / 検討 / 採らない）が持ち、色は state-ok / state-warn / ink-quiet。採らない行は字全体を弱くする。
+   器が狭いときは理由を名前の下の行へ落とす（器の幅で決める）。 */
 .detail-block .report-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 0.75rem;
+  container: report-options / inline-size;
   margin: var(--report-block-gap) 0;
 }
 .detail-block .report-option {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.5rem;
-  background: var(--surface-raised);
+  display: grid;
+  grid-template-columns: 1.4rem 4.5em minmax(0, 1fr);
+  column-gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--rule-soft);
 }
-/* バッジと名前の行。理由はその下に続く。 */
-.detail-block .report-option > div:first-child {
-  margin-bottom: 0.3rem;
+.detail-block .report-option:last-child {
+  border-bottom: none;
 }
 .detail-block .report-option-number {
   color: var(--ink-quiet);
   font-family: var(--font-mono);
   font-size: var(--font-label);
 }
-.detail-block .report-option-adopt {
-  border-left: 3px solid var(--state-ok);
+.detail-block .report-option-verdict {
+  font-size: var(--font-label);
+  font-weight: 600;
 }
-.detail-block .report-option-reject {
+.detail-block .report-option-adopt .report-option-verdict {
+  color: var(--state-ok);
+}
+.detail-block .report-option-consider .report-option-verdict {
+  color: var(--state-warn);
+}
+.detail-block .report-option-body {
+  min-width: 0;
+}
+.detail-block .report-option-name {
+  color: var(--ink-bright);
+  font-weight: 600;
+}
+.detail-block .report-option-reason {
+  color: var(--ink-soft);
+}
+.detail-block .report-option-reason::before {
+  content: "— ";
+}
+.detail-block
+  .report-option-reject
+  :is(.report-option-verdict, .report-option-name, .report-option-reason) {
   color: var(--ink-quiet);
+}
+@container report-options (max-width: 30rem) {
+  .detail-block .report-option-reason {
+    display: block;
+  }
+  .detail-block .report-option-reason::before {
+    content: none;
+  }
 }
 /* 見比べ（`report` の `compare` の塊から tsukumo が組む）。
    2つの側を同じ幅の札にして横に並べ、狭い画面では縦に積む（末尾の @media）。見分けは見出しの文字だけで、判定の色は持たない。 */

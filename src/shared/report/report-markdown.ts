@@ -151,18 +151,14 @@ const MATRIX_MARKS = {
   { readonly className: string; readonly symbol: string; readonly label: string }
 >
 
-/** 候補の判定 → カードとバッジの class と、バッジに出す語。「採る」は筆を留める対象。 */
+/** 候補の判定 → 行の class と、頭に出す語。「採る」は筆を留める対象。 */
 const OPTION_VERDICTS = {
-  adopt: {
-    cardClass: `option option-adopt ${PAUSE_POINT_CLASS_NAME}`,
-    badgeClass: "badge badge-ok",
-    label: "採る",
-  },
-  consider: { cardClass: "option", badgeClass: "badge", label: "検討" },
-  reject: { cardClass: "option option-reject", badgeClass: "badge", label: "採らない" },
+  adopt: { rowClass: `option option-adopt ${PAUSE_POINT_CLASS_NAME}`, label: "採る" },
+  consider: { rowClass: "option option-consider", label: "検討" },
+  reject: { rowClass: "option option-reject", label: "採らない" },
 } as const satisfies Record<
   Extract<ReportBlock, { readonly kind: "options" }>["items"][number]["verdict"],
-  { readonly cardClass: string; readonly badgeClass: string; readonly label: string }
+  { readonly rowClass: string; readonly label: string }
 >
 
 /** ファイルの変更の種別 → 札の記号・語・見た目の class（色は `report-notation.module.css` 側が持つ）。 */
@@ -540,17 +536,19 @@ function progressStepMarkdown(state: ProgressStepState, label: string): string {
 }
 
 /**
- * 候補を書き手の順のままカードにし、頭に1始まりの番号と判定のバッジを置く。
+ * 候補を書き手の順のまま1案1行にし、番号・判定の語・名前・理由の順に並べる。
  * 採る → 検討 → 採らないの順は書き手が守り、崩れていれば `reportViolations` が差し戻す（並べ替えは再構成になるのでしない）。
  */
 function optionsMarkdown(block: Extract<ReportBlock, { readonly kind: "options" }>): string {
-  const cards = block.items.map(({ name, verdict, reason }, index) => {
-    const { cardClass, badgeClass, label } = OPTION_VERDICTS[verdict]
-    return `<div class="${cardClass}"><div><span class="option-number">${String(index + 1)}</span> <span class="${badgeClass}">${label}</span> <b>${htmlInlineWithCode(name)}</b></div>${htmlInlineWithCode(reason)}</div>`
+  const rows = block.items.map(({ name, verdict, reason }, index) => {
+    const { rowClass, label } = OPTION_VERDICTS[verdict]
+    const reasonHtml =
+      reason === "" ? "" : ` <span class="option-reason">${htmlInlineWithCode(reason)}</span>`
+    return `<div class="${rowClass}"><span class="option-number">${String(index + 1)}</span><span class="option-verdict">${label}</span><span class="option-body"><span class="option-name">${htmlInlineWithCode(name)}</span>${reasonHtml}</span></div>`
   })
   return joinParts([
     block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
-    `<div class="options">${cards.join("")}</div>`,
+    `<div class="options">${rows.join("")}</div>`,
   ])
 }
 

@@ -590,7 +590,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("options は太字の見出しのあとに候補を書き手の順のままカードにし、頭に番号と判定の語のバッジを置く", () => {
+  it("options は太字の見出しのあとに候補を書き手の順のまま1案1行にし、番号・判定の語・名前・理由の順に置く（理由が空なら理由の要素は無い）", () => {
     const options: ReportBlock = {
       kind: "options",
       title: "架空の比較",
@@ -607,9 +607,9 @@ describe("reportSectionsMarkdown", () => {
     expect(markdownOf(options)).toBe(
       "**架空の比較**\n\n" +
         '<div class="options">' +
-        '<div class="option option-reject"><div><span class="option-number">1</span> <span class="badge">採らない</span> <b>架空の案A</b></div>架空の&lt;理由&gt;</div>' +
-        '<div class="option option-adopt report-pause-point"><div><span class="option-number">2</span> <span class="badge badge-ok">採る</span> <b>架空の <code>案B</code></b></div>架空の理由</div>' +
-        '<div class="option"><div><span class="option-number">3</span> <span class="badge">検討</span> <b>架空の案C</b></div></div>' +
+        '<div class="option option-reject"><span class="option-number">1</span><span class="option-verdict">採らない</span><span class="option-body"><span class="option-name">架空の案A</span> <span class="option-reason">架空の&lt;理由&gt;</span></span></div>' +
+        '<div class="option option-adopt report-pause-point"><span class="option-number">2</span><span class="option-verdict">採る</span><span class="option-body"><span class="option-name">架空の <code>案B</code></span> <span class="option-reason">架空の理由</span></span></div>' +
+        '<div class="option option-consider"><span class="option-number">3</span><span class="option-verdict">検討</span><span class="option-body"><span class="option-name">架空の案C</span></span></div>' +
         "</div>",
     )
   })

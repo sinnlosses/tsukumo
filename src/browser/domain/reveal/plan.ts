@@ -245,7 +245,7 @@ function pausesOf(
   ).pauses
 }
 
-/** メンバーの中で筆を留める対象。メンバー自身が対象なら1つ（`note` の注意・異常）、そうでなければ中の子（`options` の「採る」カード）を文書の順で拾う。 */
+/** メンバーの中で筆を留める対象。メンバー自身が対象なら1つ（`note` の注意・異常）、そうでなければ中の子（`options` の「採る」の行）を文書の順で拾う。 */
 function pauseTargetsOfMember(member: RevealMember): readonly RevealElement[] {
   if (member.element.matches(PAUSE_POINT_SELECTOR)) {
     return [member.element]
