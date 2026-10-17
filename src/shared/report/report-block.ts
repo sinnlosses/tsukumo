@@ -18,7 +18,7 @@ const aside = z.string().default("")
 const textBlockSchema = z.object({
   kind: z.literal("text"),
   text: inlineText.describe(
-    "地の文。3文まで（4文目が要るなら表・箇条書きへ移すか fold で畳む）。結論に効く数が2つ以上並ぶなら stats",
+    "地の文。3文まで（4文目が要るなら表・箇条書きへ移すか fold で畳む）。結論に効く数が3つ以上並び前後か推移を見せるなら stats",
   ),
   fold,
   aside,
@@ -44,7 +44,8 @@ const listBlockSchema = z.object({
         done: z.boolean().default(false),
       }),
     )
-    .min(1),
+    .min(1)
+    .describe("10件まで。超えるなら上位を残し、最後の項目を「ほか n 件」にする"),
   fold,
   aside,
 })
@@ -74,12 +75,14 @@ const tableBlockSchema = z
       .describe("行ごとのセル。数は columns と揃える。セルは1行、空にせず「なし」と書く"),
     rest: inlineText
       .default("")
-      .describe("切った残りを1行で（「ほか 12 件（0.5% 未満）」）。長い表は上位だけを rows に置く"),
+      .describe(
+        "切った残りを1行で（「ほか 12 件（0.5% 未満）」）。行が10を超えるなら上位10行までを rows に置き、残りをここに書く",
+      ),
     fold,
     aside,
   })
   .describe(
-    "比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options、交点が状態だけなら matrix）。行は大きさか重要度の順（1列目のあいうえお順にしない）。単位は見出しに1回だけ書きセルに書かない。2行以下なら表にせず stats か label 付きの list",
+    "比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options、交点が状態だけなら matrix）。行は大きさか重要度の順（1列目のあいうえお順にしない）。単位は見出しに1回だけ書きセルに書かない。2行以下なら表にせず label 付きの list か文に",
   )
 
 export const REPORT_MATRIX_STATUSES = ["ok", "warn", "ng", "na"] as const
@@ -273,13 +276,13 @@ const statsBlockSchema = z
             .describe("before と value が数のとき、増えて良いなら up・減って良いなら down"),
         }),
       )
-      .min(2)
+      .min(3)
       .max(4),
     fold,
     aside,
   })
   .describe(
-    "結論に効く数（件数・前後の差）。数が2〜4個並び、その数自体が結論のとき。数を地の文に埋めない。推移の形が要る数には series、増減の良い向きが要る数には better",
+    "結論に効く数（件数・前後の差）。数が3〜4個並び、前後か推移を見せるとき。2つ以下の数は結論か本文の文に入れる。推移の形が要る数には series、増減の良い向きが要る数には better",
   )
 
 const REPORT_OPTION_VERDICTS = ["adopt", "consider", "reject"] as const
@@ -356,7 +359,7 @@ const codeBlockSchema = z
         "実物の一部を引くときだけ付ける（cwd からの相対パスか絶対パス。`~` は使わない）。" +
           "中身がそのファイルの連続した一部と一致しないと差し戻される。案には付けない",
       ),
-    source: z.string(),
+    source: z.string().describe("marks の無いコードは45行まで。超えるなら要る範囲だけを引く"),
     marks: z
       .array(
         z.object({

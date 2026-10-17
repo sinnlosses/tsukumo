@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest"
+import { z } from "zod"
 
 import {
   figureBlockSchema,
   parseReportSections,
   type ReportBlock,
+  reportBlockSchema,
   reportSectionsOfBody,
 } from "../../../src/shared/report/report-block.ts"
 
@@ -27,6 +29,31 @@ describe("reportSectionsOfBody", () => {
   })
 })
 
+describe("stats の個数の説明", () => {
+  const item = { before: "", value: "1", label: "架空" }
+  const statsWith = (count: number): unknown =>
+    parseReportSections([
+      {
+        heading: "",
+        blocks: [{ kind: "stats", items: Array.from({ length: count }, () => item), fold: "" }],
+      },
+    ]).sections[0]?.blocks[0]
+
+  it("2つの stats は受け付けず、3つと4つは受け付ける", () => {
+    expect(statsWith(2)).toBeUndefined()
+    expect(statsWith(3)).toMatchObject({ kind: "stats" })
+    expect(statsWith(4)).toMatchObject({ kind: "stats" })
+    expect(statsWith(5)).toBeUndefined()
+  })
+
+  it("書き手に見せる塊の説明は、2つ以下の数を stats に誘わない", () => {
+    const descriptions = JSON.stringify(z.toJSONSchema(reportBlockSchema))
+
+    expect(descriptions).toContain("3つ以上並び前後か推移を見せるなら stats")
+    expect(descriptions).not.toMatch(/2つ以上並ぶなら stats|2〜4個|stats か/)
+  })
+})
+
 describe("parseReportSections", () => {
   it("stats の total は省くと空文字になり、渡せば残る", () => {
     const item = { before: "", value: "1", label: "架空" }
@@ -34,12 +61,16 @@ describe("parseReportSections", () => {
       parseReportSections([
         {
           heading: "",
-          blocks: [{ kind: "stats", items: [{ ...item, ...extra }, item], fold: "", aside: "" }],
+          blocks: [
+            { kind: "stats", items: [{ ...item, ...extra }, item, item], fold: "", aside: "" },
+          ],
         },
       ]).sections[0]?.blocks[0]
 
-    expect(parse({})).toMatchObject({ items: [{ total: "" }, { total: "" }] })
-    expect(parse({ total: "5" })).toMatchObject({ items: [{ total: "5" }, { total: "" }] })
+    expect(parse({})).toMatchObject({ items: [{ total: "" }, { total: "" }, { total: "" }] })
+    expect(parse({ total: "5" })).toMatchObject({
+      items: [{ total: "5" }, { total: "" }, { total: "" }],
+    })
   })
 
   it("stats の series と better は省くと空になり、渡せば残る", () => {
@@ -48,14 +79,15 @@ describe("parseReportSections", () => {
       parseReportSections([
         {
           heading: "",
-          blocks: [{ kind: "stats", items: [{ ...item, ...extra }, item], fold: "" }],
+          blocks: [{ kind: "stats", items: [{ ...item, ...extra }, item, item], fold: "" }],
         },
       ]).sections[0]?.blocks[0]
 
-    expect(parse({})).toMatchObject({ items: [{ series: [], better: "" }, {}] })
+    expect(parse({})).toMatchObject({ items: [{ series: [], better: "" }, {}, {}] })
     expect(parse({ series: [1, 2, 3], better: "down" })).toMatchObject({
       items: [
         { series: [1, 2, 3], better: "down" },
+        { series: [], better: "" },
         { series: [], better: "" },
       ],
     })

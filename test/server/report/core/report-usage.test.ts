@@ -220,6 +220,7 @@ describe("reportUsageEntryOf", () => {
             items: [
               { before: "", value: "1", total: "", label: "架空の一", series: [], better: "" },
               { before: "", value: "2", total: "", label: "架空の二", series: [], better: "" },
+              { before: "", value: "3", total: "", label: "架空の三", series: [], better: "" },
             ],
             fold: "",
             aside: "",
@@ -334,6 +335,7 @@ describe("reportUsageEntryOf", () => {
             items: [
               { before: "", value: "1", total: "5", label: "架空の一", series: [], better: "" },
               { before: "", value: "2", total: "", label: "架空の二", series: [], better: "" },
+              { before: "", value: "3", total: "", label: "架空の三", series: [], better: "" },
             ],
             fold: "",
             aside: "",
@@ -361,6 +363,7 @@ describe("reportUsageEntryOf", () => {
             items: [
               { before: "", value: "1", total: "", label: "架空の一", series: [...series], better },
               { before: "", value: "2", total: "", label: "架空の二", series: [], better: "" },
+              { before: "", value: "3", total: "", label: "架空の三", series: [], better: "" },
             ],
             fold: "",
             aside: "",

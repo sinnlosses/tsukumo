@@ -1142,6 +1142,7 @@ describe("toSessionEvents（report ツール）", () => {
         items: [
           { value: "1", label: "架空の数" },
           { value: "2", label: "架空の数" },
+          { value: "3", label: "架空の数" },
         ],
       },
       { kind: "none", reason: "single-value" },
@@ -1170,6 +1171,7 @@ describe("toSessionEvents（report ツール）", () => {
         items: [
           { before: "", value: "1", total: "", label: "架空の数", series: [], better: "" },
           { before: "", value: "2", total: "", label: "架空の数", series: [], better: "" },
+          { before: "", value: "3", total: "", label: "架空の数", series: [], better: "" },
         ],
         fold: "",
         aside: "",

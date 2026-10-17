@@ -22,6 +22,9 @@ import {
   MAX_FIRST_SENTENCE,
   MAX_HEADING,
   MAX_ITEM_LABEL,
+  MAX_LIST_ITEMS,
+  MAX_PLAIN_CODE_LINES,
+  MAX_TABLE_ROWS,
 } from "../../../shared/report/report-limit.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import { leadingSentences, sentenceCount } from "../../../shared/report/sentence-count.ts"
@@ -91,6 +94,12 @@ export type ReportViolation =
   | { readonly kind: "unordered-options"; readonly count: number }
   /** 行のセルの数が `columns` と揃わない表がある。`count` は表の数。 */
   | { readonly kind: "ragged-table"; readonly count: number }
+  /** 行が上限を超えるのに `rest` が空の `table` がある。`count` は表の数。 */
+  | { readonly kind: "long-table"; readonly count: number }
+  /** 項目が上限を超える `list` がある。`count` は塊の数。 */
+  | { readonly kind: "long-list"; readonly count: number }
+  /** `marks` が無く、行数が上限を超える `code` がある。`count` は塊の数。 */
+  | { readonly kind: "long-code"; readonly count: number }
   /** `series` の `values` の数が `labels` と揃わない、または `arrow`・`slope` の `series` が2つでない `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "ragged-chart"; readonly count: number }
   /** `stats` の項目の `series` が1〜2個のものがある塊がある。`count` は塊の数。 */
@@ -204,6 +213,27 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       count: blocks.filter((block) => block.kind === "options" && !isVerdictOrdered(block)).length,
     },
     { kind: "ragged-table", count: blocks.filter((block) => isRaggedTable(block)).length },
+    {
+      kind: "long-table",
+      count: blocks.filter(
+        (block) =>
+          block.kind === "table" && block.rows.length > MAX_TABLE_ROWS && block.rest.trim() === "",
+      ).length,
+    },
+    {
+      kind: "long-list",
+      count: blocks.filter((block) => block.kind === "list" && block.items.length > MAX_LIST_ITEMS)
+        .length,
+    },
+    {
+      kind: "long-code",
+      count: blocks.filter(
+        (block) =>
+          block.kind === "code" &&
+          block.marks.length === 0 &&
+          sourceLineCount(block.source) > MAX_PLAIN_CODE_LINES,
+      ).length,
+    },
     { kind: "ragged-chart", count: drawnBlocks.filter((block) => isRaggedChart(block)).length },
     { kind: "short-series", count: drawnBlocks.filter((block) => hasShortSeries(block)).length },
     {
@@ -299,6 +329,9 @@ const VIOLATION_THRESHOLDS = {
   "too-many-candidates": 0,
   "unordered-options": 0,
   "ragged-table": 0,
+  "long-table": 0,
+  "long-list": 0,
+  "long-code": 0,
   "ragged-chart": 0,
   "short-series": 0,
   "untitled-section": 0,
@@ -341,6 +374,12 @@ function violationLine(violation: ReportViolation): string {
       return `候補が採る → 検討 → 採らないの順に並んでいない \`options\` が${violation.count}個ある。採る候補から順に並べ直す`
     case "ragged-table":
       return `行のセルの数が \`columns\` と揃わない表（\`matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
+    case "long-table":
+      return `行が${String(MAX_TABLE_ROWS + 1)}以上で \`rest\` が空の表が${violation.count}個ある。上位${String(MAX_TABLE_ROWS)}行までを残し、残りを \`rest\` に書く`
+    case "long-list":
+      return `項目が${String(MAX_LIST_ITEMS + 1)}件以上の \`list\` が${violation.count}個ある。上位を残し、最後の項目を「ほか n 件」にして${String(MAX_LIST_ITEMS)}件までにする`
+    case "long-code":
+      return `\`marks\` が無く${String(MAX_PLAIN_CODE_LINES + 1)}行以上の \`code\` が${violation.count}個ある。要る範囲だけを引く（${String(MAX_PLAIN_CODE_LINES)}行まで）`
     case "ragged-chart":
       return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\` の \`series\` が前と後の2つでない \`chart\` の塊が${violation.count}個ある。数を揃える`
     case "short-series":

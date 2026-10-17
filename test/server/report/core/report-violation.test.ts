@@ -317,6 +317,61 @@ describe("reportViolations", () => {
     })
   })
 
+  describe("件数の上限", () => {
+    const tableOf = (rowCount: number, rest = ""): ReportBlock => ({
+      kind: "table",
+      title: "架空の表",
+      columns: ["列A", "列B"],
+      rows: Array.from({ length: rowCount }, () => ["a", "1"]),
+      rest,
+      fold: "",
+      aside: "",
+    })
+    const listOf = (itemCount: number): ReportBlock => ({
+      kind: "list",
+      style: "bullet",
+      items: Array.from({ length: itemCount }, () => ({ label: "", text: "架空", done: false })),
+      fold: "",
+      aside: "",
+    })
+    const lines = (count: number) => Array.from({ length: count }, () => "x").join("\n")
+
+    it.each([
+      [10, "", []],
+      [11, "", ["long-table"]],
+      [11, "ほか 3 件", []],
+    ] as const)("表が%i行で rest が「%s」なら %j", (rowCount, rest, expected) => {
+      expect(kinds(draft([tableOf(rowCount, rest)]))).toEqual(expected)
+    })
+
+    it.each([
+      [10, []],
+      [11, ["long-list"]],
+    ] as const)("list が%i件なら %j", (itemCount, expected) => {
+      expect(kinds(draft([listOf(itemCount)]))).toEqual(expected)
+    })
+
+    it.each([
+      [45, []],
+      [46, ["long-code"]],
+    ] as const)("marks の無い code が%i行なら %j", (lineCount, expected) => {
+      expect(kinds(draft([code("", lines(lineCount))]))).toEqual(expected)
+    })
+
+    it("marks があれば code が長くても違反にしない", () => {
+      const marked: ReportBlock = {
+        kind: "code",
+        language: "text",
+        path: "",
+        source: lines(46),
+        marks: [{ lines: "1", label: "架空" }],
+        fold: "",
+        aside: "",
+      }
+      expect(kinds(draft([marked]))).toEqual([])
+    })
+  })
+
   describe("chart の series の値の数は labels と揃える", () => {
     it("values の数が labels と揃わない系列があれば違反", () => {
       const chart: ReportBlock = {
@@ -375,6 +430,7 @@ describe("reportViolations", () => {
       items: [
         { before: "", value: "1", total: "", label: "架空A", series, better: "" },
         { before: "", value: "2", total: "", label: "架空B", series: [], better: "" },
+        { before: "", value: "3", total: "", label: "架空C", series: [], better: "" },
       ],
       fold: "",
       aside: "",
