@@ -19,6 +19,10 @@ import { isDeepEqual } from "remeda"
 
 import type { TurnResult } from "../../../../../../../../../shared/session/turn-result.ts"
 import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../../../domain/reveal/paint.ts"
+import {
+  useReadingSection,
+  type HeadingStep,
+} from "../../../../../../../../stores/reading-section.ts"
 import { detailBlockClassName } from "../../../../markdown/markdown.tsx"
 import type { HeadNotice, HeadNoticeAction } from "../../../domain/head-notice.ts"
 import {
@@ -27,6 +31,7 @@ import {
   saveOutlinePanel,
   type OutlinePanel,
 } from "../domain/outline-panel.ts"
+import { isScrolledToEnd, readHeadingIndexOf, readingSectionOf } from "../domain/reading-section.ts"
 
 /** 見出し1つ。`section` は `##`、`sub` は `###`。 */
 export type ReportOutlineEntry = {
@@ -123,6 +128,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 
   const [entries, setEntries] = useState<readonly ReportOutlineEntry[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
+  const [reached, setReached] = useState(false)
   const [panel, setPanel] = useState<OutlinePanel>(loadOutlinePanel)
   const [narrow, setNarrow] = useState(false)
   const collapsed = isOutlineCollapsed(panel.collapse, narrow)
@@ -154,6 +160,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
           Math.abs(heading.getBoundingClientRect().top - pinned.top) <= PIN_TOLERANCE_PX
         ) {
           setActiveIndex(pinned.index)
+          setReached(true)
           return
         }
         pinnedRef.current = undefined
@@ -161,13 +168,23 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       const headHeight = Number.parseFloat(
         getComputedStyle(content).getPropertyValue("--turn-card-head-height"),
       )
+      // 狭い画面では列が出ず（高さ 0）、一覧の上端は基準にならない。読む面の上端を使う。
+      const nav = navRef.current
+      const scroller = content.closest('[data-region="main"]')
+      const reference =
+        nav !== null && nav.getBoundingClientRect().height > 0 ? nav : (scroller ?? content)
       const base =
-        (navRef.current ?? content).getBoundingClientRect().top +
-        (Number.isFinite(headHeight) ? headHeight : 0)
-      const passed = headings.findLastIndex(
+        reference.getBoundingClientRect().top + (Number.isFinite(headHeight) ? headHeight : 0)
+      const passedAtTop = headings.findLastIndex(
         (heading) => heading.getBoundingClientRect().top <= base + ACTIVE_SLACK_PX,
       )
+      const passed = readHeadingIndexOf(
+        passedAtTop,
+        headings.map((heading) => (heading.tagName === "H4" ? "section" : "sub")),
+        isScrolledToEnd(scroller),
+      )
       setActiveIndex(Math.max(passed, 0))
+      setReached(passed >= 0)
     }
 
     function readHeadings(): void {
@@ -229,6 +246,42 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 
   const visible = props.turns.length >= 1
 
+  function selectHeading(index: number): void {
+    const heading = headingsRef.current[index]
+    heading?.scrollIntoView({ block: "start" })
+    if (heading !== undefined) {
+      pinnedRef.current = { index, top: heading.getBoundingClientRect().top }
+    }
+    setActiveIndex(index)
+    setReached(true)
+  }
+
+  const section = readingSectionOf(entries, activeIndex, reached)
+  const publish = useReadingSection((state) => state.publish)
+  const setMover = useReadingSection((state) => state.setMover)
+  useLayoutEffect(() => {
+    publish(section, collapsed)
+  }, [publish, section, collapsed])
+  useLayoutEffect(() => {
+    return () => {
+      publish({ kind: "none" }, false)
+      setMover({ kind: "none" })
+    }
+  }, [publish, setMover])
+  useLayoutEffect(() => {
+    setMover({
+      kind: "ready",
+      move: (step: HeadingStep) => {
+        // まだ1つも通り過ぎていないときの「後ろ」は最初の見出し。
+        const from = reached ? activeIndex : -1
+        const next = from + (step === "older" ? -1 : 1)
+        if (next >= 0 && next < headingsRef.current.length) {
+          selectHeading(next)
+        }
+      },
+    })
+  })
+
   // 見ているやり取りの行を、列の中の転がり（DOM）で見える位置へ寄せる。
   // `scrollIntoView` は転がる祖先の本文まで動かすので、列の `scrollTop` だけを動かす。
   const activeTurnId = props.activeTurnId
@@ -281,14 +334,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         focusRow(event.key === "ArrowDown" ? 1 : -1)
       }
     },
-    onSelect: (index) => {
-      const heading = headingsRef.current[index]
-      heading?.scrollIntoView({ block: "start" })
-      if (heading !== undefined) {
-        pinnedRef.current = { index, top: heading.getBoundingClientRect().top }
-      }
-      setActiveIndex(index)
-    },
+    onSelect: selectHeading,
     collapsed,
     onToggleCollapse: () => {
       commitPanel((current) => ({ ...current, collapse: collapsed ? "open" : "collapsed" }))

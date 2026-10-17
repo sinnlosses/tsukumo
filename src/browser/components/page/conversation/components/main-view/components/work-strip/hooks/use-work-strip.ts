@@ -45,6 +45,10 @@ import { useNowWhile } from "../../../../../../../../hooks/use-now-while.ts"
 import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-steps.ts"
 import { useMainViewContent } from "../../../../../../../../stores/main-view-content.ts"
 import { useMainViewTurns } from "../../../../../../../../stores/main-view-turn.ts"
+import {
+  readingLabelOf,
+  useReadingSection,
+} from "../../../../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import {
   type StepsLanding,
@@ -152,6 +156,8 @@ export type WorkStripModel =
       readonly phases: readonly WorkStripSlot[]
       /** 丸の並び（`ol`）に付ける。吹き出しを閉じる「外を押した」の基準。 */
       readonly trackRef: RefObject<HTMLOListElement | null>
+      /** 列を畳んでいるあいだの「いま: <節>」。出さないときは空。 */
+      readonly readingLabel: string
       readonly headLabel: string
       readonly positionLabel: string
       readonly sideLabel: string
@@ -163,6 +169,7 @@ export type WorkStripModel =
       readonly result: WorkStripResult
       readonly phases: readonly WorkStripSlot[]
       readonly trackRef: RefObject<HTMLOListElement | null>
+      readonly readingLabel: string
       readonly headLabel: string
       readonly sideLabel: string
       readonly steps: WorkStripSteps
@@ -223,6 +230,9 @@ export function useWorkStrip(): WorkStripModel {
   const shown = content.kind !== "welcome" && result !== undefined
   const now = useNowWhile(shown && isTurnCounting(turn, backgroundTasks.length))
   const planned = plan.kind === "planned" ? plannedPhasesOf(plan) : []
+  const readingLabel = useReadingSection((state) =>
+    state.outlineCollapsed ? readingLabelOf(state.section) : "",
+  )
   const popover = usePhasePopover(
     shown && turnStepList.kind === "turn"
       ? { kind: "shown", exchange: content.exchange, keys: planned.map(phaseKeyOf) }
@@ -280,6 +290,7 @@ export function useWorkStrip(): WorkStripModel {
       result,
       phases: stripPhases,
       trackRef,
+      readingLabel,
       headLabel: result === "working" && nowPhase.kind === "phase" ? nowPhase.name : completion,
       sideLabel: elapsedLabel,
       steps,
@@ -291,6 +302,7 @@ export function useWorkStrip(): WorkStripModel {
     phases: stripPhases,
     trackRef,
     result,
+    readingLabel,
     headLabel: planned.length === 0 ? "" : nowPhase.kind === "phase" ? nowPhase.name : completion,
     positionLabel: nowPhase.kind === "phase" ? workPositionText(plan) : "",
     sideLabel: elapsedLabel,

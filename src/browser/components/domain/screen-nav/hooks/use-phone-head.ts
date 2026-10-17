@@ -22,6 +22,7 @@ import type {
 import { useNowWhile } from "../../../../hooks/use-now-while.ts"
 import { useCurrentTurnSteps } from "../../../../stores/current-turn-steps.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
+import { readingLabelOf, useReadingSection } from "../../../../stores/reading-section.ts"
 import { useSession } from "../../../../stores/session.ts"
 
 /** 1行目の左。会話の画面は顔、ほかの画面は会話へ戻る口（画面の名前は題が運ぶ）。 */
@@ -43,6 +44,8 @@ export type PhoneHeadStatus =
       readonly wordLabel: string
       /** 「20:03」の形。数えていないときは空。 */
       readonly elapsedLabel: string
+      /** 読んでいる節の「いま: <節>」。無いときは空。 */
+      readonly readingLabel: string
     }
 
 /** 段の点1つ。 */
@@ -106,6 +109,7 @@ export function usePhoneHead(source: PhoneHeadSource): PhoneHead {
   const chatMode = useSession((session) => session.state.chatMode)
   const counting = isTurnCounting(turn, backgroundTaskCount)
   const now = useNowWhile(counting)
+  const readingLabel = useReadingSection((state) => readingLabelOf(state.section))
   const { work } = source
 
   const status: PhoneHeadStatus = {
@@ -115,6 +119,7 @@ export function usePhoneHead(source: PhoneHeadSource): PhoneHead {
     mark: work.state === "running" || work.state === "diary" ? "spinner" : work.mark,
     wordLabel: work.wordLabel,
     elapsedLabel: counting ? turnElapsedClock(turn, backgroundTaskCount, now) : "",
+    readingLabel: source.current === "conversation" ? readingLabel : "",
   }
 
   if (source.current !== "conversation") {

@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
+import { useReadingSection } from "../../../../../src/browser/stores/reading-section.ts"
 import type { StampedPendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -59,6 +60,31 @@ function title(): string | null | undefined {
 function stepsToggle(head: HTMLElement): HTMLElement {
   return within(head).getByRole("button", { name: /^手順/u })
 }
+
+describe("PhoneHead（読んでいる節）", () => {
+  afterEach(() => {
+    useReadingSection.setState({ section: { kind: "none" }, outlineCollapsed: false })
+  })
+
+  const RUNNING = {
+    turn: { kind: "running", startedAt: 0 },
+    records: [requestRecord({ text: "架空の依頼" })],
+  } as const satisfies Partial<SessionState>
+
+  it("節があれば状態の語の並びに「いま: <節>」を出す", () => {
+    useReadingSection.setState({ section: { kind: "shown", text: "確かめたこと" } })
+
+    const head = renderHead(RUNNING)
+
+    expect(head.querySelector(".phone-head-reading")?.textContent).toBe("いま: 確かめたこと")
+  })
+
+  it("節が無ければ出さない", () => {
+    const head = renderHead(RUNNING)
+
+    expect(head.querySelector(".phone-head-reading")).toBeNull()
+  })
+})
 
 describe("PhoneHead", () => {
   it("作業中は回る輪と「作業中」・経過・今の段の題を出し、2行目に段の点と「手順 n」を出す（位置の文字は出さない）", () => {

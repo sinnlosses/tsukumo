@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  headingStepOf,
   neighborTurnId,
   turnStepOf,
   type TurnStepKeyEvent,
@@ -35,6 +36,31 @@ describe("turnStepOf", () => {
   it("入力要素の中は読まない", () => {
     expect(turnStepOf(keyEvent({ target: document.createElement("textarea") }))).toBeUndefined()
     expect(turnStepOf(keyEvent({ target: document.createElement("button") }))).toBe("older")
+  })
+})
+
+describe("headingStepOf", () => {
+  it("{ は older、} は newer、[ ] やほかのキーは読まない", () => {
+    expect(headingStepOf(keyEvent({ key: "{" }))).toBe("older")
+    expect(headingStepOf(keyEvent({ key: "}" }))).toBe("newer")
+    expect(headingStepOf(keyEvent({ key: "[" }))).toBeUndefined()
+    expect(headingStepOf(keyEvent({ key: "a" }))).toBeUndefined()
+    expect(turnStepOf(keyEvent({ key: "{" }))).toBeUndefined()
+  })
+
+  it("修飾キー付き・変換中は読まない", () => {
+    expect(headingStepOf(keyEvent({ key: "{", metaKey: true }))).toBeUndefined()
+    expect(headingStepOf(keyEvent({ key: "{", ctrlKey: true }))).toBeUndefined()
+    expect(headingStepOf(keyEvent({ key: "{", altKey: true }))).toBeUndefined()
+    expect(headingStepOf(keyEvent({ key: "}", isComposing: true }))).toBeUndefined()
+  })
+
+  it("入力要素の中は読まない", () => {
+    const target = document.createElement("textarea")
+    expect(headingStepOf(keyEvent({ key: "{", target }))).toBeUndefined()
+    expect(headingStepOf(keyEvent({ key: "{", target: document.createElement("button") }))).toBe(
+      "older",
+    )
   })
 })
 

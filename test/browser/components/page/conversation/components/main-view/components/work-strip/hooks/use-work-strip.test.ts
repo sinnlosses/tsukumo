@@ -8,6 +8,10 @@ import {
   type WorkStripPhasePopover,
 } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/work-strip/hooks/use-work-strip.ts"
 import { useMainViewContent } from "../../../../../../../../../../src/browser/stores/main-view-content.ts"
+import {
+  useReadingSection,
+  type ReadingSection,
+} from "../../../../../../../../../../src/browser/stores/reading-section.ts"
 import type { SessionEvent } from "../../../../../../../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../../../../../../../src/shared/session/session-fold.ts"
 import {
@@ -366,6 +370,36 @@ describe("useWorkStrip（`/clear` の依頼）", () => {
     const strip = stripAt(state, START + 5_000)
 
     expect(strip.kind === "working" && strip.activity.text).toBe("考えている")
+  })
+})
+
+describe("useWorkStrip（読んでいる節）", () => {
+  afterEach(() => {
+    useReadingSection.setState({ section: { kind: "none" }, outlineCollapsed: false })
+  })
+
+  function readingLabelWith(
+    section: ReadingSection,
+    outlineCollapsed: boolean,
+  ): string | undefined {
+    useReadingSection.setState({ section, outlineCollapsed })
+    const state = foldTimed([[request, START]])
+    const strip = stripAt(state, START + 5_000)
+    return strip.kind === "none" ? undefined : strip.readingLabel
+  }
+
+  it("列を畳んでいて節があれば「いま: <節>」を持つ", () => {
+    expect(readingLabelWith({ kind: "shown", text: "変わったこと" }, true)).toBe(
+      "いま: 変わったこと",
+    )
+  })
+
+  it("列が開いていれば出さない", () => {
+    expect(readingLabelWith({ kind: "shown", text: "変わったこと" }, false)).toBe("")
+  })
+
+  it("節が無ければ出さない", () => {
+    expect(readingLabelWith({ kind: "none" }, true)).toBe("")
   })
 })
 

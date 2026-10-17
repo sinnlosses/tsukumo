@@ -1,12 +1,13 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import type { ReactElement } from "react"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { act, type ReactElement } from "react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   useReportOutline,
   type ReportOutlineProps,
 } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report-outline/hooks/use-report-outline.ts"
 import { detailBlockClassName } from "../../../../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
+import { useReadingSection } from "../../../../../../../../../../src/browser/stores/reading-section.ts"
 
 const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
 
@@ -269,5 +270,177 @@ describe("useReportOutline（経過の畳みのある札）", () => {
     await waitFor(() => {
       expect(outlineTexts()).toEqual(["最終の節A", "最終の小節", "最終の節B", "中間の節"])
     })
+  })
+})
+
+function StoreProbe(): ReactElement {
+  const { navRef, contentRef, onToggleCollapse } = useReportOutline(ONE_TURN)
+  return (
+    <div>
+      <nav ref={navRef}>
+        <button data-testid="toggle" onClick={onToggleCollapse} />
+      </nav>
+      <div className={detailBlockClassName} ref={contentRef}>
+        <h4>節0</h4>
+        <h5>小節0</h5>
+        <h4>節1</h4>
+        <h4>節2</h4>
+      </div>
+    </div>
+  )
+}
+
+function ScrollerProbe(): ReactElement {
+  return (
+    <div data-region="main">
+      <StoreProbe />
+    </div>
+  )
+}
+
+function outlineHeadings(): readonly HTMLElement[] {
+  return [...document.querySelectorAll<HTMLElement>("h4, h5")]
+}
+
+function placeHeadings(tops: readonly number[]): void {
+  outlineHeadings().forEach((heading, index) => {
+    stubRect(heading, tops[index] ?? 0)
+  })
+}
+
+function section(): unknown {
+  return useReadingSection.getState().section
+}
+
+function moveHeading(step: "older" | "newer"): void {
+  const { mover } = useReadingSection.getState()
+  if (mover.kind === "ready") {
+    act(() => {
+      mover.move(step)
+    })
+  }
+}
+
+describe("useReportOutline（読んでいる節と節の移動）", () => {
+  it("上端を通り過ぎた最後の `##` を、転がすと変わる形で store に出す", () => {
+    render(<StoreProbe />)
+    placeHeadings([-100, -50, 300, 600])
+    fireEvent.scroll(document)
+    expect(section()).toEqual({ kind: "shown", text: "節0" })
+
+    placeHeadings([-300, -250, -10, 600])
+    fireEvent.scroll(document)
+    expect(section()).toEqual({ kind: "shown", text: "節1" })
+  })
+
+  it("どの見出しも通り過ぎていなければ出さない", () => {
+    render(<StoreProbe />)
+    placeHeadings([300, 400, 500, 600])
+    fireEvent.scroll(document)
+
+    expect(section()).toEqual({ kind: "none" })
+  })
+
+  it("列を畳むと outlineCollapsed が真になる", () => {
+    render(<StoreProbe />)
+    expect(useReadingSection.getState().outlineCollapsed).toBe(false)
+
+    fireEvent.click(screen.getByTestId("toggle"))
+
+    expect(useReadingSection.getState().outlineCollapsed).toBe(true)
+  })
+
+  it("`newer`・`older` で `##` も `###` も区別なく前後の見出しへ移り、端では動かない", () => {
+    const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {
+      // jsdom は転がさない。
+    })
+    render(<StoreProbe />)
+    placeHeadings([-100, 300, 600, 900])
+    fireEvent.scroll(document)
+
+    moveHeading("newer")
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    expect(scrollIntoView.mock.contexts[0]).toBe(outlineHeadings()[1])
+
+    moveHeading("older")
+    expect(scrollIntoView.mock.contexts[1]).toBe(outlineHeadings()[0])
+
+    moveHeading("older")
+    expect(scrollIntoView).toHaveBeenCalledTimes(2)
+    scrollIntoView.mockRestore()
+  })
+
+  it("どの見出しも通り過ぎていないときの `newer` は最初の見出しへ移る", () => {
+    const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {
+      // jsdom は転がさない。
+    })
+    render(<StoreProbe />)
+    placeHeadings([300, 400, 500, 600])
+    fireEvent.scroll(document)
+
+    moveHeading("newer")
+
+    expect(scrollIntoView.mock.contexts[0]).toBe(outlineHeadings()[0])
+    scrollIntoView.mockRestore()
+  })
+
+  describe("転がる器の端", () => {
+    function renderScrolled(metrics: { scrollTop: number }): HTMLElement {
+      render(<ScrollerProbe />)
+      const scroller = document.querySelector<HTMLElement>('[data-region="main"]')
+      if (scroller === null) {
+        throw new Error("転がる器が見つからない")
+      }
+      Object.defineProperty(scroller, "clientHeight", { value: 300, configurable: true })
+      Object.defineProperty(scroller, "scrollHeight", { value: 1000, configurable: true })
+      Object.defineProperty(scroller, "scrollTop", { value: metrics.scrollTop, configurable: true })
+      return scroller
+    }
+
+    it("転がし切ると、最後の `##` が上端に届かなくても最後の節を出す", () => {
+      renderScrolled({ scrollTop: 700 })
+      placeHeadings([-300, -250, -10, 600])
+      fireEvent.scroll(document)
+
+      expect(section()).toEqual({ kind: "shown", text: "節2" })
+    })
+
+    it("転がし途中では、上端を通り過ぎた最後の `##` のまま", () => {
+      renderScrolled({ scrollTop: 400 })
+      placeHeadings([-300, -250, -10, 600])
+      fireEvent.scroll(document)
+
+      expect(section()).toEqual({ kind: "shown", text: "節1" })
+    })
+
+    it("上端では出さない", () => {
+      renderScrolled({ scrollTop: 0 })
+      placeHeadings([300, 400, 500, 600])
+      fireEvent.scroll(document)
+
+      expect(section()).toEqual({ kind: "none" })
+    })
+
+    it("`newer` で最後の見出しへ移った後も、転がし切りと同じ節を出す", () => {
+      vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {
+        // jsdom は転がさない。
+      })
+      renderScrolled({ scrollTop: 400 })
+      placeHeadings([-300, -250, -10, 600])
+      fireEvent.scroll(document)
+      moveHeading("newer")
+
+      expect(section()).toEqual({ kind: "shown", text: "節2" })
+    })
+  })
+
+  it("アンマウントで store を空に戻す", () => {
+    const { unmount } = render(<StoreProbe />)
+    fireEvent.click(screen.getByTestId("toggle"))
+
+    unmount()
+
+    expect(useReadingSection.getState().mover).toEqual({ kind: "none" })
+    expect(useReadingSection.getState().outlineCollapsed).toBe(false)
   })
 })

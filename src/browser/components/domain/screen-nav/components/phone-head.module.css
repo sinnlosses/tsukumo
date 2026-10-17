@@ -76,6 +76,14 @@
     font-family: var(--font-mono);
     font-size: 11px;
   }
+  .phone-head-reading {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink-quiet);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .phone-head-title {
     overflow: hidden;
     color: var(--ink);

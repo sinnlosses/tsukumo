@@ -35,6 +35,17 @@ export function PresentationalWorkStrip(props: {
     <section aria-label="進み具合" className={styles["work-strip"]} data-work-strip={strip.kind}>
       <div className={styles["work-strip-line"]}>
         <StateChip result={strip.result} />
+        {strip.readingLabel !== "" && (
+          <Text
+            element="span"
+            size="secondary"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["work-strip-reading"]}
+          >
+            {strip.readingLabel}
+          </Text>
+        )}
         {strip.phases.length > 0 && <PhaseTrack phases={strip.phases} trackRef={strip.trackRef} />}
         <Text
           element="span"

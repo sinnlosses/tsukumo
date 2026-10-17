@@ -31,6 +31,7 @@ import {
   useMainViewContent,
 } from "../../../../../stores/main-view-content.ts"
 import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
+import { useReadingSection } from "../../../../../stores/reading-section.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { Inquiry } from "../inquiry/inquiry.tsx"
@@ -47,7 +48,7 @@ import { Turn } from "./components/turn/turn.tsx"
 import { Welcome } from "./components/welcome/welcome.tsx"
 import { WorkStrip } from "./components/work-strip/work-strip.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
-import { neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
+import { headingStepOf, neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
 import { NO_SHOWN_KEY, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import { useReportOutlineTurns } from "./hooks/use-report-outline-turns.ts"
 import styles from "./main-view.module.css"
@@ -97,14 +98,25 @@ export function MainView(): ReactElement {
   const outlineTurns = useReportOutlineTurns()
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>): void {
-    const step = turnStepOf({
+    const keyEvent = {
       key: event.key,
       metaKey: event.metaKey,
       ctrlKey: event.ctrlKey,
       altKey: event.altKey,
       isComposing: event.nativeEvent.isComposing,
       target: event.target,
-    })
+    }
+    const headingStep = headingStepOf(keyEvent)
+    if (headingStep !== undefined) {
+      // 登録のたびに値が替わるので、購読せずに押した時点で読む。
+      const { mover } = useReadingSection.getState()
+      if (cardTurn !== undefined && mover.kind === "ready") {
+        event.preventDefault()
+        mover.move(headingStep)
+      }
+      return
+    }
+    const step = turnStepOf(keyEvent)
     if (step === undefined || cardTurn === undefined) {
       return
     }

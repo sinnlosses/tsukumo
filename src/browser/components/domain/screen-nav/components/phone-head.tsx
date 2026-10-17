@@ -63,6 +63,9 @@ export function PhoneHead(props: PhoneHeadProps): ReactElement {
               {head.status.elapsedLabel !== "" && (
                 <span className={styles["phone-head-elapsed"]}>{head.status.elapsedLabel}</span>
               )}
+              {head.status.readingLabel !== "" && (
+                <span className={styles["phone-head-reading"]}>{head.status.readingLabel}</span>
+              )}
             </div>
           )}
           <div className={styles["phone-head-title"]}>{head.title}</div>
