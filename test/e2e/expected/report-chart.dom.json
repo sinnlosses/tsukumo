@@ -157,87 +157,95 @@
                           "tag": "section",
                           "children": [
                             {
-                              "tag": "p",
-                              "children": [
-                                "架空の結論: 3種のグラフの見え方を確かめた。"
-                              ]
-                            },
-                            {
-                              "tag": "h4",
-                              "children": [
-                                "架空の件数の推移"
-                              ]
-                            },
-                            {
-                              "tag": "canvas"
-                            },
-                            {
                               "tag": "div",
                               "attributes": {
-                                "data-reveal-caption": ""
+                                "data-report-body": ""
                               },
                               "children": [
-                                "図 1"
-                              ]
-                            },
-                            {
-                              "tag": "canvas"
-                            },
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "data-reveal-caption": ""
-                              },
-                              "children": [
-                                "図 2"
-                              ]
-                            },
-                            {
-                              "tag": "canvas"
-                            },
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "data-reveal-caption": ""
-                              },
-                              "children": [
-                                "図 3"
-                              ]
-                            },
-                            {
-                              "tag": "canvas"
-                            },
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "data-reveal-caption": ""
-                              },
-                              "children": [
-                                "図 4"
-                              ]
-                            },
-                            {
-                              "tag": "canvas"
-                            },
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "data-reveal-caption": ""
-                              },
-                              "children": [
-                                "図 5"
-                              ]
-                            },
-                            {
-                              "tag": "canvas"
-                            },
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "data-reveal-caption": ""
-                              },
-                              "children": [
-                                "図 6"
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の結論: 3種のグラフの見え方を確かめた。"
+                                  ]
+                                },
+                                {
+                                  "tag": "h4",
+                                  "children": [
+                                    "架空の件数の推移"
+                                  ]
+                                },
+                                {
+                                  "tag": "canvas"
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-reveal-caption": ""
+                                  },
+                                  "children": [
+                                    "図 1"
+                                  ]
+                                },
+                                {
+                                  "tag": "canvas"
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-reveal-caption": ""
+                                  },
+                                  "children": [
+                                    "図 2"
+                                  ]
+                                },
+                                {
+                                  "tag": "canvas"
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-reveal-caption": ""
+                                  },
+                                  "children": [
+                                    "図 3"
+                                  ]
+                                },
+                                {
+                                  "tag": "canvas"
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-reveal-caption": ""
+                                  },
+                                  "children": [
+                                    "図 4"
+                                  ]
+                                },
+                                {
+                                  "tag": "canvas"
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-reveal-caption": ""
+                                  },
+                                  "children": [
+                                    "図 5"
+                                  ]
+                                },
+                                {
+                                  "tag": "canvas"
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-reveal-caption": ""
+                                  },
+                                  "children": [
+                                    "図 6"
+                                  ]
+                                }
                               ]
                             }
                           ]

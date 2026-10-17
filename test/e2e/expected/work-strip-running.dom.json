@@ -294,9 +294,17 @@
                               ]
                             },
                             {
-                              "tag": "p",
+                              "tag": "div",
+                              "attributes": {
+                                "data-report-body": ""
+                              },
                               "children": [
-                                "架空の数は1か所で数えていた。"
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の数は1か所で数えていた。"
+                                  ]
+                                }
                               ]
                             }
                           ]

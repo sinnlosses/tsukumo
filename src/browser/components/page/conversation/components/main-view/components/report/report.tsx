@@ -54,6 +54,7 @@ export function Report(props: ReportProps): ReactElement {
       <div
         className={clsx(detailBlockClassName, styles["detail-block"], props.className)}
         ref={rootRef}
+        data-report-body=""
       >
         {blocks.map((block) => (
           <ReportBlock key={block} text={block} />

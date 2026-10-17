@@ -1,4 +1,4 @@
-import { describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
 
@@ -36,6 +36,32 @@ describe("report → メインビュー", () => {
 
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("レポートの本文の字を選ぶと口が出て、押すと入力欄の頭に引用が入ってフォーカスが移る", async () => {
+    const room = await run.open({
+      scenario: "report-selection-ask",
+      scene: "notation",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    const paragraph = room.page.locator("[data-report-body] p").filter({ visible: true }).first()
+    await paragraph.waitFor()
+    await paragraph.click({ clickCount: 3 })
+
+    const ask = room.page.getByRole("button", { name: "引いて聞く" })
+    await ask.waitFor()
+    await ask.click()
+
+    const textArea = room.page.locator("textarea")
+    await textArea.waitFor()
+    await expect.poll(() => textArea.inputValue()).toMatch(/^> .+\n\n$/)
+    await expect
+      .poll(() => room.page.evaluate(() => document.activeElement?.tagName))
+      .toBe("TEXTAREA")
+    await ask.waitFor({ state: "hidden" })
   })
 
   it("札の幅が 48rem 未満ではやり取りの列が既定で畳まれ、開くを選ぶと読み込み直しても開いたまま、狭い画面（760px 以下）では列を出さない", async () => {

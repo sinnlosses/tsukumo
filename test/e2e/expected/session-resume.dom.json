@@ -264,73 +264,81 @@
                               ]
                             },
                             {
-                              "tag": "p",
-                              "children": [
-                                "前のセッションの架空の結論その3"
-                              ]
-                            },
-                            {
                               "tag": "div",
                               "attributes": {
-                                "role": "group",
-                                "aria-label": "検証結果"
-                              },
-                              "children": [
-                                "✓",
-                                "検証 1件",
-                                "通った",
-                                "架空 3 件",
-                                {
-                                  "tag": "details",
-                                  "children": [
-                                    {
-                                      "tag": "summary",
-                                      "children": [
-                                        "✓ 通った 1件",
-                                        "架空の検査"
-                                      ]
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            "段ごとの時間",
-                            "計 3分28秒",
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              }
-                            },
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "role": "table",
-                                "aria-label": "段ごとの所要時間"
+                                "data-report-body": ""
                               },
                               "children": [
                                 {
-                                  "tag": "div",
-                                  "attributes": {
-                                    "role": "row"
-                                  },
+                                  "tag": "p",
                                   "children": [
-                                    "1/2",
-                                    "架空の調べ",
-                                    "1分58秒",
-                                    "57%"
+                                    "前のセッションの架空の結論その3"
                                   ]
                                 },
                                 {
                                   "tag": "div",
                                   "attributes": {
-                                    "role": "row"
+                                    "role": "group",
+                                    "aria-label": "検証結果"
                                   },
                                   "children": [
-                                    "2/2",
-                                    "架空の直し",
-                                    "1分30秒",
-                                    "43%"
+                                    "✓",
+                                    "検証 1件",
+                                    "通った",
+                                    "架空 3 件",
+                                    {
+                                      "tag": "details",
+                                      "children": [
+                                        {
+                                          "tag": "summary",
+                                          "children": [
+                                            "✓ 通った 1件",
+                                            "架空の検査"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "段ごとの時間",
+                                "計 3分28秒",
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "role": "table",
+                                    "aria-label": "段ごとの所要時間"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "row"
+                                      },
+                                      "children": [
+                                        "1/2",
+                                        "架空の調べ",
+                                        "1分58秒",
+                                        "57%"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "row"
+                                      },
+                                      "children": [
+                                        "2/2",
+                                        "架空の直し",
+                                        "1分30秒",
+                                        "43%"
+                                      ]
+                                    }
                                   ]
                                 }
                               ]

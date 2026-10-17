@@ -18,3 +18,19 @@ describe("入力欄の下書きへ足す", () => {
     expect(useComposerDraft.getState().draft).toEqual({ text: "打ちかけ\n足す字", caret: 8 })
   })
 })
+
+describe("入力欄の下書きの頭へ引用を入れる", () => {
+  it("空の下書きには引用と空行が入り、キャレットは末尾に置かれる", () => {
+    useComposerDraft.getState().prependToDraft("> 引く字")
+    expect(useComposerDraft.getState().draft).toEqual({ text: "> 引く字\n\n", caret: 7 })
+  })
+
+  it("字がある下書きは引用と空行の後ろに残り、キャレットはその末尾に置かれる", () => {
+    useComposerDraft.getState().setDraft({ text: "打ちかけ", caret: 2 })
+    useComposerDraft.getState().prependToDraft("> 引く字")
+    expect(useComposerDraft.getState().draft).toEqual({
+      text: "> 引く字\n\n打ちかけ",
+      caret: 11,
+    })
+  })
+})

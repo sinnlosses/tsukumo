@@ -1,0 +1,12 @@
+/* 選択の下端に添える口。窓の座標で置くので fixed。 */
+.selection-ask {
+  position: fixed;
+  z-index: 3;
+  border-radius: 0.4rem;
+  background: var(--surface);
+}
+.selection-ask-button {
+  min-height: 1.5rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.4rem;
+}

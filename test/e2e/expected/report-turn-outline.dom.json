@@ -289,51 +289,59 @@
                           "tag": "section",
                           "children": [
                             {
-                              "tag": "h4",
+                              "tag": "div",
+                              "attributes": {
+                                "data-report-body": ""
+                              },
                               "children": [
-                                "変わったこと（架空）"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                "架空の本文。"
-                              ]
-                            },
-                            {
-                              "tag": "h4",
-                              "children": [
-                                "確かめたこと（架空）"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                "架空の本文。"
-                              ]
-                            },
-                            {
-                              "tag": "h5",
-                              "children": [
-                                "E2E の撮り直し（架空）"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                "架空の本文。"
-                              ]
-                            },
-                            {
-                              "tag": "h4",
-                              "children": [
-                                "残したこと（架空）"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                "架空の本文。"
+                                {
+                                  "tag": "h4",
+                                  "children": [
+                                    "変わったこと（架空）"
+                                  ]
+                                },
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の本文。"
+                                  ]
+                                },
+                                {
+                                  "tag": "h4",
+                                  "children": [
+                                    "確かめたこと（架空）"
+                                  ]
+                                },
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の本文。"
+                                  ]
+                                },
+                                {
+                                  "tag": "h5",
+                                  "children": [
+                                    "E2E の撮り直し（架空）"
+                                  ]
+                                },
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の本文。"
+                                  ]
+                                },
+                                {
+                                  "tag": "h4",
+                                  "children": [
+                                    "残したこと（架空）"
+                                  ]
+                                },
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の本文。"
+                                  ]
+                                }
                               ]
                             }
                           ]
