@@ -17,10 +17,14 @@
   --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
   /* 読ませる補助の字（表の見出し行・添え書き・やり取りの列の見出し）。本文より弱いが ink-quiet ほど沈めない。 */
   --ink-soft: color-mix(in srgb, var(--ink) 72%, transparent);
+  /* レポートの拾う字（見出し・太字・`stats` の数）。`surface` 上で約 15:1。 */
+  --ink-bright: #f7f6f8;
   --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
   /* 読む面の静かな罫線。カードの枠や表の行のように、線そのものは意味を持たず「ここで切れている」とだけ言えばよい場所に使う。
      `--rule` は押せる部品の縁のように、線が輪郭を担う場所。 */
   --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+  /* レポートの表の行罫。`--rule` と `--rule-quiet` のあいだ（`surface` 上で約 1.3:1）。 */
+  --rule-soft: color-mix(in srgb, var(--surface), var(--ink) 12%);
   /* surface を accent でわずかに染めた地。「選ばれたタブ」と同じ扱いでよい場所（最新の吹き出し・選ばれた選択肢・送信ボタン）にだけ使う。 */
   --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
   /* 本文の地の上に浮く塊の地（機械の名前・表の見出し行・カード・最終レポート）。
@@ -106,7 +110,6 @@
 
   /* レポートの結論部（目録の1行・見出し・一文）の字と地。見本（`docs/history/mockup/report-conclusion-2026-09-30.html`）の値を写した固定の色で、パックからは差せない。
      差し色の役のもの（タスクID・完了・流れ）だけは `--accent` から導く。 */
-  --report-catalog-ink: #9a98a6; /* 目録の1行のラベル */
   --report-catalog-separator: #4a4955; /* 目録の区切りの `·` */
   --report-task-id: color-mix(
     in srgb,
@@ -122,8 +125,6 @@
   --report-outcome-awaiting-answer: #e3b95c; /* 答え待ち */
   --report-change-added: var(--state-ok); /* 変更の札の追加行 `+a` */
   --report-change-removed: var(--state-ng); /* 変更の札の削除行 `−b` */
-  --report-headline-ink: #e4e2ea; /* 見出し */
-  --report-conclusion-ink: #d4d2dc; /* 一文と、見出しと一文の中のコードの字 */
   --report-code-surface: #26252f; /* 見出しと一文の中のコードの地 */
   --report-sequence-ink: color-mix(
     in srgb,
@@ -142,9 +143,9 @@
   --font-heading-2: 1.1875rem;
   --font-heading-1: 1.3125rem;
   /* レポートの見出し。入力欄の見出し（上の --font-heading-1〜-3）とは別のつまみ。 */
-  --report-heading-2: 1.1875rem;
+  --report-heading-2: 1.3125rem;
   --report-heading-3: 1.0625rem;
-  --line-height-body: 1.75;
+  --line-height-body: calc(26 / 15);
 
   /* 書体は system-ui と等幅の2本。レポートのコードだけ同梱の IBM Plex Mono（`--font-code`）。 */
   --font-sans: system-ui, sans-serif;

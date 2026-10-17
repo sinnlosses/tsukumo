@@ -52,7 +52,8 @@
   font-weight: 700;
   letter-spacing: normal;
   line-height: 1.3;
-  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-bright);
 }
 /* `stats` の変わる前の数。数の上に添え、矢印の文字でつなぐ（地のタイルと同じ ink-quiet・label の段）。 */
 .detail-block .report-stat-before {
@@ -506,11 +507,10 @@
   max-width: 100%;
   margin: var(--report-figure-gap) 0;
 }
-/* 縮めた包みは、題ごとレポートの幅の中央に置く。 */
+/* 縮めた包みは、題ごと本文の左端に置く。 */
 .detail-block .report-captioned-fit {
   width: fit-content;
   min-width: min(100%, 20rem);
-  margin-inline: auto;
 }
 /* mermaid の図は包みを縮めない（`MermaidBlock` の地が親の幅を取る）ので、図そのものを中央に置く。
    `mermaid` の class は `MermaidBlock` が素の名前で付ける。 */
@@ -776,7 +776,7 @@
   grid-column: 3;
   font-size: 14px;
   line-height: 1.85;
-  color: var(--report-conclusion-ink);
+  color: var(--ink);
 }
 .detail-block .report-file-note-empty {
   font-size: var(--font-secondary);
@@ -785,7 +785,7 @@
 /* 結論と本文のあいだの、合図の行のまとまり（`report` から tsukumo が組む）。
    上下の margin は隣の段落や見出しの margin と相殺されるので、ここに書いた値がそのままあきになる。 */
 .detail-block .report-status {
-  margin: 14px 0 26px;
+  margin: 13px 0 26px;
 }
 .detail-block .report-status:last-child {
   margin-bottom: 0;
@@ -1139,21 +1139,21 @@
 .detail-block .report-conclusion {
   font-size: var(--font-subheading);
   line-height: 1.85;
-  color: var(--report-conclusion-ink);
+  color: var(--ink);
 }
 /* `task` の無いレポートの結論。見出しの代わりに頭に置く。 */
 .detail-block .report-conclusion-lead {
   font-size: var(--report-heading-3);
   font-weight: 500;
   line-height: 1.6;
-  color: var(--report-conclusion-ink);
+  color: var(--ink);
 }
 .detail-block :is(.report-conclusion, .report-conclusion-lead) p {
   margin: 0;
 }
 .detail-block :is(.report-conclusion, .report-conclusion-lead) :not(pre) > code {
   font-size: 0.86em;
-  color: var(--report-conclusion-ink);
+  color: var(--ink);
   background: var(--report-code-surface);
   padding: 1px 5px;
   border-radius: 4px;
@@ -1207,26 +1207,26 @@
 }
 /* レポートの見出し（`##` / `###`）。
    `SectionHeading` / `SubHeading` が `h4` / `h5` として描く（タグは依頼の全文の見出し `h2` と段が被らないよう一段落としてある）。
-   タイプスケールはこの4段だけなので新しい段は作らず、太さ・余白・罫線の3つで `##` と `###` を見分けられるようにする。
-   罫線の側にだけキャラクターの色を混ぜる（文字は `ink` のまま）。
-   `##` は領域の幅いっぱいの1本、`###` は文字の幅だけの1本（`width: fit-content`）で、段の深さを運ぶのは罫線の長さのほう（色は段の違いを運ばない）。
+   `##` は領域の幅いっぱいの罫を引き、罫の側にだけキャラクターの色を混ぜる（文字は `ink-bright`）。
    混ぜる割合は `rule` に6割で、依頼・お願いの縦罫（素の accent）より一段弱い。
-   レポートの中で何度も出る線なので、素のまま出すと差し色が地の色になって何も指さなくなる。 */
+   `###` は罫を持たず、大きさと上のあきで段の深さを運ぶ。 */
 .detail-block h4 {
-  margin: 2.75rem 0 var(--report-heading-gap);
-  padding-bottom: 0.25rem;
+  margin: 52px 0 var(--report-heading-gap);
+  padding-bottom: 6px;
   border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
-  font-size: var(--report-heading-3);
+  font-size: var(--report-heading-2);
   font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  font-feature-settings: "palt";
+  color: var(--ink-bright);
 }
 .detail-block h5 {
-  margin: 2.25rem 0 var(--report-heading-gap);
-  /* 下罫を文字の幅で止めるためだけの `fit-content`（入りきらない見出しは今までどおり折り返し、そのときは領域の幅いっぱいになる）。 */
-  width: fit-content;
-  padding-bottom: 0.2rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
-  font-size: var(--font-body);
-  font-weight: 600;
+  margin: 26px 0 var(--report-heading-gap);
+  font-size: var(--report-heading-3);
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ink-bright);
 }
 .detail-block blockquote {
   margin: var(--report-block-gap) 0;
@@ -1370,10 +1370,11 @@
 /* 塊どうしのあき・題つきの表と図のまわりのあき・見出しから塊までのあき（値は docs/architecture/screen-design.md「レポートの塊のあき」）。
    塊ごとの上下の margin をこの3つの値だけで書く。縦の margin は相殺されるので、隣り合う塊のあきは大きいほうの値になる。 */
 .detail-block {
-  --report-block-gap: 1rem;
-  --report-figure-gap: 2rem;
-  --report-heading-gap: 1.25rem;
+  --report-block-gap: 13px;
+  --report-figure-gap: 39px;
+  --report-heading-gap: 13px;
   margin: 0 0 1rem;
+  line-height: var(--line-height-body);
   text-autospace: normal;
   line-break: strict;
   font-kerning: normal;
@@ -1400,6 +1401,8 @@
    表・箇条書き・`stats`・`note` の中の `strong` は `.detail-block` の直の子の `p` の下にならないので掛からない。 */
 .detail-block > p :is(strong, b) {
   padding: 0 0.25em;
+  color: var(--ink-bright);
+  font-weight: 600;
   border-radius: 0.2em;
   background: color-mix(in srgb, var(--surface), var(--state-info) 10%);
   box-decoration-break: clone;
@@ -1409,10 +1412,6 @@
 .detail-block > :is(h4, h5) + * {
   --report-block-gap: var(--report-heading-gap);
   --report-figure-gap: var(--report-heading-gap);
-}
-/* 箇条書きを本文より詰める。`label` 付き・`flow` は別セレクタが優先するのでそのまま。 */
-.detail-block :is(ul, ol) {
-  line-height: 1.7;
 }
 .detail-block li + li {
   margin-top: 4px;
@@ -1432,21 +1431,38 @@
   max-width: 100%;
   margin: var(--report-block-gap) 0;
   font-size: var(--font-subheading);
-  line-height: 1.5;
+  line-height: 20px;
 }
 /* 横の線だけの表（縦の罫線・見出し行の地は持たない）。
    列の揃えは `columnAlign` の GFM の記法から style 属性で届き、ここの left に勝つ。
-   数だけの列で桁が縦に揃うよう、数字は等幅にする。 */
+   数だけの列で桁が縦に揃うよう、数字は等幅にする。
+   1列目の左と最終列の右は余白 0 で、本文の左端に揃える。 */
 .detail-block th,
 .detail-block td {
-  padding: 7px 18px;
-  border-bottom: 1px solid var(--rule);
+  padding: 6px 20px 6px 0;
+  border-bottom: 1px solid var(--rule-soft);
   text-align: left;
   font-variant-numeric: tabular-nums;
 }
-/* 見出し行の下だけ、見出し（上の h4 / h5）と同じ割合でキャラクターの色を混ぜる。文字は本文より小さく、読ませる補助の色にする。 */
+.detail-block :is(th, td):last-child {
+  padding-right: 0;
+}
+.detail-block tbody tr:last-child td {
+  border-bottom: none;
+}
+/* 6行以上の表は、5行ごとに行の下へ 6px の隙間を入れる（その行の罫は透かす）。 */
+.detail-block
+  table:not(:has(.report-cell-status))
+  tbody:has(tr:nth-child(6))
+  tr:nth-child(5n):not(:last-child)
+  td {
+  padding-bottom: 12px;
+  border-bottom-color: transparent;
+}
+/* 見出し行の下だけ素の `rule`。文字は本文より小さく、読ませる補助の色にする。 */
 .detail-block th {
-  border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
+  padding-top: 0;
+  border-bottom: 1px solid var(--rule);
   font-size: var(--font-secondary);
   font-weight: 500;
   color: var(--ink-soft);
