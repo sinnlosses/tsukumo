@@ -559,21 +559,38 @@
    `captioned-fit` は入れ物を本体の幅に縮め（書き上げる演出が筆の幅を入れ物の箱で測る）、
    題の行は `contain: inline-size` で入れ物の幅の計算から外れ、入れ物の幅で折り返す。 */
 .detail-block .report-captioned {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   max-width: 100%;
   margin: var(--report-figure-gap) 0;
 }
-/* 縮めた包みは、題ごと本文の左端に置く。 */
+/* 縮めた包みは本体の幅まで縮むが、本文の列（42em）より狭くはならない。本体が列より狭ければ列の中央に置く。 */
 .detail-block .report-captioned-fit {
-  width: fit-content;
-  min-width: min(100%, 20rem);
+  inline-size: max-content;
+  min-inline-size: min(100%, var(--report-measure));
 }
-/* mermaid の図は包みを縮めない（`MermaidBlock` の地が親の幅を取る）ので、図そのものを中央に置く。
-   `mermaid` の class は `MermaidBlock` が素の名前で付ける。 */
+.detail-block .report-captioned:has(> :is(.report-compare, .report-before-after)) {
+  align-items: stretch;
+}
+/* 題と凡例は、本体の幅によらず本文の列の中心に揃える。 */
+.detail-block
+  .report-captioned
+  > :is(.report-caption, .report-table-status-legend, .report-graph-legend) {
+  align-self: flex-start;
+  inline-size: min(100%, var(--report-measure));
+}
+.detail-block .report-captioned:has(pre:global(.mermaid)) {
+  inline-size: min(100%, var(--report-measure));
+  min-inline-size: 0;
+  align-items: stretch;
+}
 .detail-block .report-captioned pre:global(.mermaid) svg {
   display: block;
   margin-inline: auto;
 }
 .detail-block .report-captioned > :not(.report-caption) {
+  max-inline-size: 100%;
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -645,6 +662,7 @@
 }
 .detail-block .report-caption {
   contain: inline-size;
+  max-inline-size: var(--report-measure);
   display: flex;
   justify-content: center;
   align-items: baseline;
@@ -1301,6 +1319,7 @@
    混ぜる割合は `rule` に6割で、依頼・お願いの縦罫（素の accent）より一段弱い。
    `###` は罫を持たず、大きさと上のあきで段の深さを運ぶ。 */
 .detail-block h4 {
+  max-inline-size: var(--report-measure);
   margin: 52px 0 var(--report-heading-gap);
   padding-bottom: 6px;
   border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
@@ -1312,6 +1331,7 @@
   color: var(--ink-bright);
 }
 .detail-block h5 {
+  max-inline-size: var(--report-measure);
   margin: 26px 0 var(--report-heading-gap);
   font-size: var(--report-heading-3);
   font-weight: 700;
@@ -1513,10 +1533,22 @@
 }
 /* 塊どうしのあき・題つきの表と図のまわりのあき・見出しから塊までのあき（値は docs/architecture/screen-design.md「レポートの塊のあき」）。
    塊ごとの上下の margin をこの3つの値だけで書く。縦の margin は相殺されるので、隣り合う塊のあきは大きいほうの値になる。 */
+@property --report-measure {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+@property --report-measure-wide {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
 .detail-block {
   --report-block-gap: 13px;
   --report-figure-gap: 39px;
   --report-heading-gap: 13px;
+  --report-measure: 42em;
+  --report-measure-wide: 63em;
   margin: 0 0 1rem;
   line-height: var(--line-height-body);
   text-autospace: normal;
@@ -1527,10 +1559,41 @@
   font-size-adjust: ex-height 0.545;
   container: report-body / inline-size;
 }
-/* 地の文（段落・箇条書き・note・お願い）だけ全角42字で折り返す。表・コード・候補・ファイル・図は領域の内幅のまま。 */
-.detail-block :is(p, li, blockquote, .report-note, .report-note-favor) {
-  max-inline-size: 42em;
+.detail-block :is(p, li, blockquote, .report-note, .report-note-favor, .report-checks) {
+  max-inline-size: var(--report-measure);
   text-wrap: pretty;
+}
+.detail-block
+  > :is(
+    .report-captioned,
+    .table-scroll,
+    pre,
+    .code-file,
+    .report-stats,
+    .report-options,
+    .report-files,
+    .report-dimension,
+    .report-matrix,
+    .report-image-notes,
+    svg
+  ) {
+  max-inline-size: min(100%, var(--report-measure-wide));
+}
+/* 列が 7 以上は「63em に入りきらない」の代わり（CSS では中身の幅で段を選べない）。
+   max-inline-size を外さず内幅に止めるのは、包みが表の max-content まで伸びて器からはみ出さないため。 */
+.detail-block
+  > :is(
+    .report-compare,
+    .report-before-after,
+    .report-captioned:has(> :is(.report-compare, .report-before-after)),
+    .report-captioned:has(tr > :nth-child(7)),
+    .table-scroll:has(tr > :nth-child(7)),
+    .report-matrix:has(tr > :nth-child(7))
+  ) {
+  max-inline-size: 100%;
+}
+.detail-block .report-with-gutter > * {
+  max-inline-size: var(--report-measure);
 }
 .detail-block :is(h4, h5),
 .detail-block .report-conclusion,
@@ -1690,6 +1753,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  max-inline-size: var(--report-measure);
   gap: 0.25rem 1rem;
   margin-bottom: 0.3rem;
   font-size: var(--font-label);
@@ -1718,6 +1782,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  max-inline-size: var(--report-measure);
   gap: 0.25rem 1rem;
   margin-top: 0.25rem;
   font-size: var(--font-label);
