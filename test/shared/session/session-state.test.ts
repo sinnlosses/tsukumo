@@ -1094,6 +1094,35 @@ describe("applySessionEvent", () => {
   })
 })
 
+describe("applySessionEvent（変更の札）", () => {
+  const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const COUNTED: SessionEvent = {
+    kind: "report-change-summary",
+    toolUseId: "toolu_r1",
+    files: 2,
+    added: 10,
+    removed: 4,
+  }
+
+  it("report の記録は札が none で積まれ、同じ toolUseId の report-change-summary で数に差し替わる", () => {
+    const reported = apply(REQUEST, reportEvent({ toolUseId: "toolu_r1" }))
+    expect(reported.records.at(-1)).toMatchObject({ changeSummary: { kind: "none" } })
+
+    expect(
+      apply(REQUEST, reportEvent({ toolUseId: "toolu_r1" }), COUNTED).records.at(-1),
+    ).toMatchObject({
+      kind: "report",
+      changeSummary: { kind: "counted", files: 2, added: 10, removed: 4 },
+    })
+  })
+
+  it("知らない toolUseId の report-change-summary では姿を変えない", () => {
+    const reported = apply(REQUEST, reportEvent({ toolUseId: "toolu_other" }))
+
+    expect(applySessionEvent(reported, COUNTED, 0)).toBe(reported)
+  })
+})
+
 describe("applySessionEvent（report を書いている間）", () => {
   // 立ち絵の「書いている」の材料（`resolvePortraitMotion`）。
   const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }

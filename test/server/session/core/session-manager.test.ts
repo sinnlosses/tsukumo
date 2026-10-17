@@ -8,6 +8,7 @@ import type {
   ChatConsolidationOutcome,
   ChatConsolidationSource,
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
+import type { NumstatOutput } from "../../../../src/server/core/change-count-git.ts"
 import type { SessionLaunchRequest } from "../../../../src/server/session/core/session-launch.ts"
 import type { SessionManagerOptions } from "../../../../src/server/session/core/session-manager.ts"
 import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
@@ -1065,6 +1066,52 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       expect(archiveCalls).toEqual([])
+    })
+  })
+
+  describe("変更の札", () => {
+    it("report は数を待たずに配られ、数は report-change-summary であとから届いて記録に畳まれる", async () => {
+      const stub = createStubDriver()
+      let resolveNumstat: (output: NumstatOutput) => void = () => {}
+      const manager = createSessionManager({
+        launchSession: (onEvent) => {
+          stub.attach(onEvent)
+          return Promise.resolve(stub.driver)
+        },
+        changeCountGit: {
+          readHead: () => Promise.resolve({ kind: "known", sha: "aaaa111" }),
+          diffNumstatSince: () =>
+            new Promise((resolve) => {
+              resolveNumstat = resolve
+            }),
+        },
+      })
+      const frames: ServerFrame[] = []
+      manager.subscribe((frame) => frames.push(frame))
+      const deliveredKinds = (): readonly string[] =>
+        frames.flatMap((frame) =>
+          frame.type === "events" ? frame.events.map(({ event }) => event.kind) : [],
+        )
+
+      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+      stub.emit(
+        reportEvent({
+          toolUseId: "fictional-task-report",
+          task: { kind: "task", id: "t-001", name: "架空の作業", outcome: "finished" },
+        }),
+      )
+      await waitForBatch()
+
+      expect(deliveredKinds()).toEqual(["request", "report"])
+
+      resolveNumstat({ kind: "output", text: "3\t1\tsrc/a.ts\n" })
+      await waitForBatch()
+
+      expect(deliveredKinds()).toEqual(["request", "report", "report-change-summary"])
+      expect(manager.commandSession.state().records.at(-1)).toMatchObject({
+        kind: "report",
+        changeSummary: { kind: "counted", files: 1, added: 3, removed: 1 },
+      })
     })
   })
 })

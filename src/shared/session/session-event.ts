@@ -13,6 +13,7 @@ import type { ReactionLine, WrittenReactions } from "../recommendation/reaction.
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
+import type { ReportChangeCount } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { TaskSummaryResult } from "../repository/task-summary.ts"
@@ -201,6 +202,14 @@ export type SessionEvent =
    * `report` の handler が差し戻したときに流す。`reasons` は差し戻しの種類の名前だけで、本文も文面も持たない。
    */
   | { readonly kind: "report-rejected"; readonly reasons: readonly string[] }
+  /**
+   * `task` のある受理された `report` のあとに、依頼の頭の HEAD からの変更の量を tsukumo が git で数えて届ける。
+   * `toolUseId` はその `report` の呼び出しの id。数えられなかったときは流れず、transcript からの復元でも流れない。
+   */
+  | ({
+      readonly kind: "report-change-summary"
+      readonly toolUseId: string
+    } & ReportChangeCount)
   /**
    * `work_plan` ツールの呼び出し（ワークプラン）。メインが呼んだもので、`parseWorkPlan` を通ったものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
    * 毎回、段の並びごと届く。欄の意味は `WorkPlan`。

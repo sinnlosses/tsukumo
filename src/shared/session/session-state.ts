@@ -15,6 +15,10 @@ import type { ReactionKind, WrittenReactionsState } from "../recommendation/reac
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
+import {
+  NO_REPORT_CHANGE_SUMMARY,
+  type ReportChangeSummary,
+} from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { TaskSummaryResult } from "../repository/task-summary.ts"
@@ -167,6 +171,8 @@ export type SessionRecord =
       readonly checks: readonly ReportCheck[]
       readonly task: ReportTask
       readonly waitingLine: ReportWaitingLine
+      /** 変更の札。積んだときは `none` で、同じ `toolUseId` の `report-change-summary` が届いたら数に差し替わる。 */
+      readonly changeSummary: ReportChangeSummary
       /** 受け付けた時刻。最後の段の所要時間を閉じる端になる。 */
       readonly time: RecordTime
     }
@@ -798,10 +804,13 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             checks: event.checks,
             task: event.task,
             waitingLine: event.waitingLine,
+            changeSummary: NO_REPORT_CHANGE_SUMMARY,
             time: { kind: "stamped", at },
           },
         ],
       }
+    case "report-change-summary":
+      return withReportChangeSummary(state, event)
     case "work-plan":
       return {
         ...state,
@@ -1052,6 +1061,35 @@ function settleUtterance(state: SessionState): SessionState {
     records: [...state.records, { kind: "detail", markdown: state.partialUtterance }],
     partialUtterance: "",
   }
+}
+
+/** 同じ `toolUseId` の `report` の記録の変更の札を数に差し替える。記録の窓に無ければ姿を変えない。 */
+function withReportChangeSummary(
+  state: SessionState,
+  event: Extract<SessionEvent, { readonly kind: "report-change-summary" }>,
+): SessionState {
+  if (!state.records.some((record) => isReportOf(record, event.toolUseId))) {
+    return state
+  }
+  const changeSummary = {
+    kind: "counted",
+    files: event.files,
+    added: event.added,
+    removed: event.removed,
+  } as const satisfies ReportChangeSummary
+  return {
+    ...state,
+    records: state.records.map((record) =>
+      isReportOf(record, event.toolUseId) ? { ...record, changeSummary } : record,
+    ),
+  }
+}
+
+function isReportOf(
+  record: SessionRecord,
+  toolUseId: string,
+): record is Extract<SessionRecord, { readonly kind: "report" }> {
+  return record.kind === "report" && record.toolUseId === toolUseId
 }
 
 /** 書いていた `report` の呼び出しが届いた・終わったなら、書いている途中の印を下ろす。 */

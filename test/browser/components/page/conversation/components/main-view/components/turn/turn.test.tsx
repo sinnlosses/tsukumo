@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { useComposerDraft } from "../../../../../../../../../src/browser/stores/composer-draft.ts"
 import { useTaskBoardRequest } from "../../../../../../../../../src/browser/stores/task-board-request.ts"
+import type { ReportChangeSummary } from "../../../../../../../../../src/shared/report/report-change-summary.ts"
 import type {
   MainViewStep,
   MainViewStepBody,
@@ -49,6 +50,7 @@ function text(report: string): MainViewStepBody {
     firstLine: report,
     task: { kind: "none" },
     finishedPhase: { kind: "none" },
+    changeSummary: { kind: "none" },
   }
 }
 
@@ -255,7 +257,10 @@ describe("Turn（目録の1行と見出し）", () => {
     outcome: "finished",
   } as const
 
-  function taskBody(report: string): MainViewStepBody {
+  function taskBody(
+    report: string,
+    changeSummary: ReportChangeSummary = { kind: "none" },
+  ): MainViewStepBody {
     return {
       kind: "text",
       report,
@@ -263,6 +268,7 @@ describe("Turn（目録の1行と見出し）", () => {
       firstLine: report,
       task: TASK,
       finishedPhase: { kind: "none" },
+      changeSummary,
     }
   }
 
@@ -277,6 +283,31 @@ describe("Turn（目録の1行と見出し）", () => {
     )
 
     expect(screen.queryByRole("button", { name: "X-7" })).toBeNull()
+  })
+
+  it("変更の札が数を持てば、目録の末尾に「変更 n ファイル +a −b」が出る", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const body = taskBody("架空の本文", { kind: "counted", files: 3, added: 12, removed: 4 })
+    const { container } = render(
+      <Turn turn={turn([step({ id: 0, body, final: true })])} newest freshReport={false} />,
+    )
+
+    expect(container.querySelector("header > p")?.textContent).toBe(
+      "最終レポート·X-7·✓ 完了·変更 3 ファイル +12 −4",
+    )
+  })
+
+  it("変更の札が none なら、目録に「変更」の字は出ない", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const { container } = render(
+      <Turn
+        turn={turn([step({ id: 0, body: taskBody("架空の本文"), final: true })])}
+        newest
+        freshReport={false}
+      />,
+    )
+
+    expect(container.querySelector("header > p")?.textContent).not.toContain("変更")
   })
 
   it("一覧にあるタスクの ID を押すと、そのタスクを選んでタスクのモーダルを開くよう頼む", () => {
@@ -329,6 +360,7 @@ describe("Turn（目録の1行と見出し）", () => {
       firstLine: "架空の本文",
       task: { ...TASK, outcome },
       finishedPhase: { kind: "none" },
+      changeSummary: { kind: "none" },
     }
     const { container } = render(
       <Turn turn={turn([step({ id: 0, body })])} newest freshReport={false} />,
@@ -357,6 +389,7 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
           duration: { kind: "known", milliseconds: 0 },
           skipped,
         },
+        changeSummary: { kind: "none" },
       },
     })
   }

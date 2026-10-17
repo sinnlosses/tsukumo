@@ -37,6 +37,7 @@ function step(
       firstLine: overrides.firstLine,
       task: { kind: "none" },
       finishedPhase: overrides.finishedPhase,
+      changeSummary: { kind: "none" },
     },
     interim: overrides.interim,
     superseded: false,

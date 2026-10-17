@@ -21,6 +21,7 @@ function reportStep(id: number, firstLine: string): MainViewStep {
       firstLine,
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
+      changeSummary: { kind: "none" },
     },
     interim: false,
     superseded: false,

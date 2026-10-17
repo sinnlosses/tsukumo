@@ -143,6 +143,7 @@ function StepCard(props: StepProps): ReactElement {
         label={reportLabel(step, step.body.task, props.hasInterimReport, folded)}
         task={step.body.task}
         phase={step.body.finishedPhase}
+        changeSummary={step.body.changeSummary}
         className={phoneHidden}
       />
       <Report

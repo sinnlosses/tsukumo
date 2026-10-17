@@ -62,6 +62,7 @@ describe("mainViewTurnsOf", () => {
       firstLine: "架空のレポート",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
+      changeSummary: { kind: "none" },
     })
   })
 

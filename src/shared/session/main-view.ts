@@ -4,6 +4,10 @@
 import { sum } from "remeda"
 
 import { sectionsWithFigure } from "../report/report-block.ts"
+import {
+  NO_REPORT_CHANGE_SUMMARY,
+  type ReportChangeSummary,
+} from "../report/report-change-summary.ts"
 import { reportChecksMarkdown } from "../report/report-check.ts"
 import {
   htmlAttribute,
@@ -89,6 +93,7 @@ export type MainViewEntry =
    * `task` は本文に組まず、描く側が目録の1行と見出しに出す。
    * `conclusion` は組む前の結論で、畳んだときの先頭行に使う（{@link groupIntoSteps}）。
    * `finalMarkdown` は最終レポートになったときの本文で、`markdown` に段ごとの所要時間を足したもの。
+   * `changeSummary` は記録の変更の札をそのまま通したもの。
    */
   | {
       readonly kind: "report"
@@ -96,6 +101,7 @@ export type MainViewEntry =
       readonly finalMarkdown: string
       readonly conclusion: string
       readonly task: ReportTask
+      readonly changeSummary: ReportChangeSummary
     }
   /**
    * `work_plan` の呼び出しで段が移ったこと（{@link phaseShiftOf}）。
@@ -183,6 +189,7 @@ const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
  * `task` は目録の1行と見出しに出すタスクで、`report` ツールの外の本文では常に `none`。
  * `finishedPhase` は目録の1行に添える終えた段の見出しで、段のまとめだけが持つ。
  * `finalReport` は最終レポートの印が立ったときに `report` と入れ替える本文（{@link markFinalReport}）。違うのは `report` ツールの本文の段ごとの所要時間だけ。
+ * `changeSummary` は目録の末尾に出す変更の札。`task` のある最終レポートだけが数を持ち、ほかは `none`（{@link markFinalReport}）。
  */
 export type MainViewStepBody =
   | { readonly kind: "none" }
@@ -193,6 +200,7 @@ export type MainViewStepBody =
       readonly firstLine: string
       readonly task: ReportTask
       readonly finishedPhase: MainViewPhaseLabel
+      readonly changeSummary: ReportChangeSummary
     }
 
 const NO_BODY = { kind: "none" } as const satisfies MainViewStepBody
@@ -364,6 +372,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
         finalMarkdown: reportMarkdown(record, context, true),
         conclusion: record.conclusion,
         task: record.task,
+        changeSummary: record.changeSummary,
       },
     ]
   }
@@ -510,6 +519,7 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
           firstLine: extractFirstLine(firstLineSource(entry)),
           task,
           finishedPhase: NO_PHASE_LABEL,
+          changeSummary: entry.kind === "report" ? entry.changeSummary : NO_REPORT_CHANGE_SUMMARY,
         } as const satisfies MainViewStepBody
         return {
           steps: [...steps, newStep(id, body, [])],
@@ -623,6 +633,7 @@ function phaseShiftStep(id: number, shift: PhaseShift, duration: MeasuredTime): 
             duration,
             skipped: shift.finished.skipped,
           },
+          changeSummary: NO_REPORT_CHANGE_SUMMARY,
         },
     [],
   )
@@ -758,6 +769,7 @@ function extractFirstLine(markdown: string): string {
  * 最終レポートなら常に箱を外し、ラベル（「最終レポート」）は中間レポートのあるやり取りか、本文に `task` があるときだけ出す。
  *
  * 印を立てた本文は `report` を `finalReport` に入れ替える（段ごとの所要時間を出すのは最終レポートだけ）。
+ * 変更の札は印を立てた `task` のある本文にだけ残し、ほかの本文では `none` に戻す。
  *
  * `closed` が false のとき（{@link mainViewTurns} の同名の引数）は `final` を1つも立てない。
  * やり取りがまだ閉じていないあいだは、次の `report` が来てこの本文が中間レポートへ回るかもしれないので、確定していないものに最終レポートの札（ラベルも箱を外すことも）を立てない。
@@ -771,11 +783,25 @@ function markFinalReport(turn: MainViewTurn, closed: boolean): MainViewTurn {
     : undefined
   return {
     ...turn,
-    steps: turn.steps.map((step) =>
-      step.id === finalId && step.body.kind === "text"
-        ? { ...step, body: { ...step.body, report: step.body.finalReport }, final: true }
-        : { ...step, final: false },
-    ),
+    steps: turn.steps.map((step) => {
+      if (step.body.kind === "none") {
+        return { ...step, final: false }
+      }
+      if (step.id !== finalId) {
+        return {
+          ...step,
+          body: { ...step.body, changeSummary: NO_REPORT_CHANGE_SUMMARY },
+          final: false,
+        }
+      }
+      const changeSummary =
+        step.body.task.kind === "task" ? step.body.changeSummary : NO_REPORT_CHANGE_SUMMARY
+      return {
+        ...step,
+        body: { ...step.body, report: step.body.finalReport, changeSummary },
+        final: true,
+      }
+    }),
     hasInterimReport: turn.steps.some((step) => step.interim),
   }
 }

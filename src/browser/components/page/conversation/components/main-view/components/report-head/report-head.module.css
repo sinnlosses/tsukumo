@@ -46,6 +46,18 @@
   color: var(--report-outcome-awaiting-answer);
 }
 
+.report-change-summary {
+  font-family: var(--font-mono);
+  font-size: var(--font-action);
+  font-variant-numeric: tabular-nums;
+}
+.report-change-added {
+  color: var(--report-change-added);
+}
+.report-change-removed {
+  color: var(--report-change-removed);
+}
+
 .report-headline {
   margin: 2px 0 0;
   font-size: var(--report-heading-2);

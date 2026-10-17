@@ -120,6 +120,8 @@
   ); /* タスクIDの点線の下線。`--surface` へ沈めた色 */
   --report-outcome-finished: color-mix(in srgb, var(--accent) 92%, var(--ground)); /* 完了 */
   --report-outcome-awaiting-answer: #e3b95c; /* 答え待ち */
+  --report-change-added: var(--state-ok); /* 変更の札の追加行 `+a` */
+  --report-change-removed: var(--state-ng); /* 変更の札の削除行 `−b` */
   --report-headline-ink: #e4e2ea; /* 見出し */
   --report-conclusion-ink: #d4d2dc; /* 一文と、見出しと一文の中のコードの字 */
   --report-code-surface: #26252f; /* 見出しと一文の中のコードの地 */

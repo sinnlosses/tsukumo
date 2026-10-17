@@ -87,6 +87,7 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
     checks: [],
     task: { kind: "none" },
     waitingLine: { kind: "none" },
+    changeSummary: { kind: "none" },
     time: STAMPED,
   }
 }

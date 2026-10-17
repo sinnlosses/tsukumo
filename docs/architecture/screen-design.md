@@ -221,7 +221,7 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 **ラベルは結論部の目録の1行の頭に置く**（2026-09-30 ユーザー決定。見本は
 `docs/history/mockup/report-conclusion-2026-09-30.html` の案A。仕組みと出す条件は
 `docs/architecture/display.md`「タスクの作業のレポートは、結論部を「目録の1行・見出し・一文」の3段にする」）。
-タスクの作業のレポートは、結論部を目録の1行（ラベル・タスクID・終わり方）・見出し（作業の名前）・一文の
+タスクの作業のレポートは、結論部を目録の1行（ラベル・タスクID・終わり方・変更の札）・見出し（作業の名前）・一文の
 3段で描く。寸法は目録 `--font-action`（12px）、見出し `--report-heading-2`（19px。レポート専用のつまみ）太字・行間 1.5、一文
 `--font-subheading`（14px）・行間 1.85、見出しと一文のあいだ 12px。見出しと一文の中のインラインコードは
 0.86em。**見出しは終わり方で色を変えない**（読みやすさを優先する）。終わり方は記号・言葉・色の3つで
@@ -238,6 +238,7 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 | 目録の字 / 区切りの `·`                | `report-catalog-ink` / `report-catalog-separator`            |
 | タスクID / その点線の下線              | `report-task-id` / `report-task-id-rule`                     |
 | 終わり方（完了 / 答え待ち）            | `report-outcome-finished` / `report-outcome-awaiting-answer` |
+| 変更の札の `+a` / `−b`                 | `report-change-added` / `report-change-removed`              |
 | 見出し / 一文とインラインコードの字    | `report-headline-ink` / `report-conclusion-ink`              |
 | 見出しと一文の中のインラインコードの地 | `report-code-surface`                                        |
 
@@ -3296,7 +3297,7 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
 `docs/history/mockup/report-checks-tile-2026-10-04.html`〔判定の札〕）。枠と地を持たず、色が出るのは記号と状態の語だけで、結論より目立たせない。
 
 ```
- 最終レポート · <タスクID> · ✓ 完了
+ 最終レポート · <タスクID> · ✓ 完了 · 変更 3 ファイル +42 −18
  架空の札に段が1つでも 1/1 のように位置を出す                      ← 見出し 19px
  次に起こす架空の画面から、…                                        ← 結論
  ────────────────────────────────────────────────────────────
@@ -3311,6 +3312,9 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
  札の組み立てを1箇所にまとめた                                       ← 節
 ```
 
+- 目録の末尾の変更の札（`task` のある最終レポートだけ。出す条件は `docs/architecture/display.md` 4.2）は
+  等幅・`tabular-nums`・`--font-action`（12px）で、`+a` を `report-change-added`（`state-ok`）、`−b`（`−` は U+2212）を
+  `report-change-removed`（`state-ng`）で塗り、「変更 n ファイル」は目録の字の色のまま
 - 上下と行の間は 1px の `rule-quiet` の罫（`rule-soft` はまだ無い）。行の内側は上下 10px、左右の空きは無く本文の左端に揃える
 - 総括行は 13px・`ink-quiet`。記号と状態の語は太字で `state-ok`・`state-warn`・`state-ng`。部分どうしは 20px 空け、
   通った件数のすぐ後ろの `figure` は等幅 12px。お願いの印は右端で、● は `accent`・12px、「お願い 1 ↓」は太字・`ink`、押す的は高さ 24px 以上

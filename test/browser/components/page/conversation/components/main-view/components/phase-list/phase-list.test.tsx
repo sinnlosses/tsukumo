@@ -40,6 +40,7 @@ function interim(id: number, title: string, seconds: number, skipped = false): M
         duration: { kind: "known", milliseconds: seconds * 1000 },
         skipped,
       },
+      changeSummary: { kind: "none" },
     },
     interim: true,
     superseded: true,

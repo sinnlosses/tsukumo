@@ -18,6 +18,7 @@ const SESSION_EVENT_KINDS = {
   "report-drafting": true,
   report: true,
   "report-rejected": true,
+  "report-change-summary": true,
   "work-plan": true,
   "work-plan-called": true,
   "delegate-returned": true,

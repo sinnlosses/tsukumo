@@ -1,10 +1,14 @@
 // レポートの結論部の頭（目録の1行と見出し）。結論の一文はこの下のレポート本文の先頭にある。
-// 目録の1行はラベル・終えた段・タスクID・終わり方のうちあるものだけを `·` でつなぎ、1つも無ければ何も描かない。
+// 目録の1行はラベル・終えた段・タスクID・終わり方・変更の札のうちあるものだけを `·` でつなぎ、1つも無ければ何も描かない。
 // 終わり方の `stopped` は描かない。
 
 import clsx from "clsx"
 import { Fragment, type ReactElement } from "react"
 
+import type {
+  ReportChangeCount,
+  ReportChangeSummary,
+} from "../../../../../../../../shared/report/report-change-summary.ts"
 import type {
   ReportTask,
   ReportTaskOutcome,
@@ -24,13 +28,20 @@ export type ReportHeadProps = {
   readonly task: ReportTask
   /** 段のまとめなら、終えた段の見出し。 */
   readonly phase: MainViewPhaseLabel
+  /** 目録の末尾に出す変更の札。 */
+  readonly changeSummary: ReportChangeSummary
   /** 置く側が足す class(狭い画面で隠すなど)。 */
   readonly className: string
 }
 
 export function ReportHead(props: ReportHeadProps): ReactElement | null {
-  const { label, task, phase } = props
-  if (label === "none" && task.kind === "none" && phase.kind === "none") {
+  const { label, task, phase, changeSummary } = props
+  if (
+    label === "none" &&
+    task.kind === "none" &&
+    phase.kind === "none" &&
+    changeSummary.kind === "none"
+  ) {
     return null
   }
 
@@ -49,6 +60,9 @@ export function ReportHead(props: ReportHeadProps): ReactElement | null {
           <TaskId id={task.id} key="id" />,
           ...(task.outcome === "stopped" ? [] : [<Outcome outcome={task.outcome} key="outcome" />]),
         ]),
+    ...(changeSummary.kind === "none"
+      ? []
+      : [<ChangeSummary summary={changeSummary} key="change-summary" />]),
   ]
 
   return (
@@ -102,6 +116,17 @@ function Outcome(props: { readonly outcome: DrawnOutcome }): ReactElement {
   return (
     <span className={clsx(styles["report-outcome"], styles[view.className])}>
       {view.mark} {view.text}
+    </span>
+  )
+}
+
+/** 変更の札「変更 n ファイル +a −b」。`−` は U+2212。 */
+function ChangeSummary(props: { readonly summary: ReportChangeCount }): ReactElement {
+  const { files, added, removed } = props.summary
+  return (
+    <span className={styles["report-change-summary"]}>
+      変更 {files} ファイル <span className={styles["report-change-added"]}>+{added}</span>{" "}
+      <span className={styles["report-change-removed"]}>−{removed}</span>
     </span>
   )
 }

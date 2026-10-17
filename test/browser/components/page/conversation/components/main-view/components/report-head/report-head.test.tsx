@@ -8,7 +8,13 @@ afterEach(cleanup)
 
 function catalog(phase: MainViewPhaseLabel): string {
   const { container } = render(
-    <ReportHead label="interim" task={{ kind: "none" }} phase={phase} className="" />,
+    <ReportHead
+      label="interim"
+      task={{ kind: "none" }}
+      phase={phase}
+      changeSummary={{ kind: "none" }}
+      className=""
+    />,
   )
   return container.querySelector("p")?.textContent ?? ""
 }

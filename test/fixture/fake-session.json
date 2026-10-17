@@ -6139,6 +6139,16 @@
           }
         },
         {
+          "afterMs": 1100,
+          "event": {
+            "kind": "report-change-summary",
+            "toolUseId": "fake-report-task-finished",
+            "files": 3,
+            "added": 42,
+            "removed": 18
+          }
+        },
+        {
           "afterMs": 2300,
           "event": {
             "kind": "turn-finished",

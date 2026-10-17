@@ -118,6 +118,17 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
+      "kind": "report-change-summary",
+      "toolUseId": "fake-report-task-finished",
+      "files": 3,
+      "added": 42,
+      "removed": 18
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
       "kind": "turn-finished",
       "outcome": {
         "kind": "completed"

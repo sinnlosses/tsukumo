@@ -48,6 +48,7 @@ import {
   type ContextUsageLog,
   createContextUsageRecorder,
 } from "../../context-usage/core/context-usage.ts"
+import type { ChangeCountGit } from "../../core/change-count-git.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
 import { createDiagnosticBuffer, type DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
 import {
@@ -83,6 +84,7 @@ import {
 } from "../../token-usage/core/token-usage.ts"
 import type { CommandSession, ModeSessions } from "./command-session.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
+import { createReportChangeCounter, type ReportChangeCounter } from "./report-change-count.ts"
 import type { SessionLaunchRequest } from "./session-launch.ts"
 import { createWaitingLineAlarm, type WaitingLineAlarm } from "./waiting-line-alarm.ts"
 
@@ -159,6 +161,8 @@ export type SessionManagerOptions = {
    * 流すイベントは、そのときの代の駆動のイベントと同じ扱いで畳む。
    */
   readonly watchTasks: (onEvent: (event: SessionEvent) => void) => SessionWatcher
+  /** 最終レポートの変更の札を数える、作業ディレクトリの git の口。 */
+  readonly changeCountGit: ChangeCountGit
 }
 
 /** 閉じるまで生きている見張り。 */
@@ -229,6 +233,8 @@ type GenerationTally = {
   readonly confirmedSettings: ConfirmedSettings
   /** 待ちの一言を出す時刻に `waiting-line-due` を流す目覚まし。代を閉じたら止める。 */
   readonly waitingLineAlarm: WaitingLineAlarm
+  /** 依頼の頭の HEAD を控え、`task` のある `report` の変更の札を数える係。 */
+  readonly reportChangeCounter: ReportChangeCounter
 }
 
 type ConfirmedSettings = {
@@ -374,6 +380,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     tally.batch.add({ at, event })
     diagnostic.add({ flow: "session-event", at, generation: tally.generation, kind: event.kind })
     experienceMetric.observe(event, state, at)
+    tally.reportChangeCounter.observe(event)
     // 会話のアーカイブへ1行足す（パックが分かっているときだけ）。
     appendChatArchiveEntry(
       options.chatArchive,
@@ -541,6 +548,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         ring: () => {
           receiveIfCurrent({ kind: "waiting-line-due" })
         },
+      }),
+      reportChangeCounter: createReportChangeCounter(options.changeCountGit, (event) => {
+        receiveIfCurrent(event)
       }),
     }
     const receiveIfCurrent = (event: SessionEvent): boolean => {

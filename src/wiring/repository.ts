@@ -1,5 +1,6 @@
 // 作業ディレクトリのリポジトリの配線。タスク一覧の見張りと、一覧が届くたびに札を作り直す推薦役を選ぶ。
 
+import { IDLE_CHANGE_COUNT_GIT } from "../server/core/change-count-git.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import {
   readRecommendationCache,
@@ -7,6 +8,7 @@ import {
 } from "../server/recommendation/adapter/recommendation-cache.ts"
 import { queryStructured } from "../server/recommendation/adapter/sdk-structured-query.ts"
 import { createRecommender, type Recommender } from "../server/recommendation/core/recommender.ts"
+import { changeCountGitOf } from "../server/repository/adapter/change-count.ts"
 import {
   taskSummaryOptionsOf,
   watchTaskSummary,
@@ -26,10 +28,12 @@ export function wireRepository(
   context: WiringContext,
   diagnosticLog: DiagnosticLog,
 ): {
-  readonly manager: Pick<SessionManagerOptions, "watchTasks">
+  readonly manager: Pick<SessionManagerOptions, "watchTasks" | "changeCountGit">
 } {
   return {
     manager: {
+      changeCountGit:
+        context.fakeSession === undefined ? changeCountGitOf(context.cwd) : IDLE_CHANGE_COUNT_GIT,
       watchTasks: (onEvent) => {
         const recommender = startRecommender(context, diagnosticLog, onEvent)
         const reportFailure = failureDiagnostic(diagnosticLog, context.now)

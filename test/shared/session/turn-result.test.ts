@@ -16,6 +16,7 @@ function reportStep(id: number, task: ReportTask): MainViewStep {
       firstLine: "架空のレポート",
       task,
       finishedPhase: { kind: "none" },
+      changeSummary: { kind: "none" },
     },
     interim: false,
     superseded: false,

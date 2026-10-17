@@ -62,6 +62,7 @@ const toolReport = (markdown: string): MainViewEntry => ({
   finalMarkdown: markdown,
   conclusion: "",
   task: { kind: "none" },
+  changeSummary: { kind: "none" },
 })
 /** 見出しと箇条書きを持つ本文。資料らしい形でも `report` の外なら出ないことを確かめるのに使う。 */
 const materialReport = (label: string): string => `## ${label}\n\n- 1つ目の発見\n- 2つ目の発見`
@@ -610,6 +611,62 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual(["架空の答え。\n\n以上です。"])
   })
 
+  describe("変更の札", () => {
+    const TASK: ReportTask = {
+      kind: "task",
+      id: "t-001",
+      name: "架空の作業",
+      outcome: "finished",
+    }
+    const counted = (toolUseId: string): SessionEvent => ({
+      kind: "report-change-summary",
+      toolUseId,
+      files: 3,
+      added: 12,
+      removed: 4,
+    })
+    const changeSummaries = (turn: ReturnType<typeof turnOf>) =>
+      (turn?.steps ?? []).map((step) =>
+        step.body.kind === "text" ? step.body.changeSummary : undefined,
+      )
+
+    it("task のある最終レポートは、report-change-summary を畳んだ数を本文に持つ", () => {
+      const turn = turnOf(
+        [ask, report("架空の結論。", "", "", [], TASK), counted("toolu_r1"), finished],
+        SETTLED,
+        true,
+      )
+
+      expect(changeSummaries(turn)).toEqual([{ kind: "counted", files: 3, added: 12, removed: 4 }])
+    })
+
+    it("中間レポートに回った本文は数を持たない", () => {
+      const turn = turnOf(
+        [
+          ask,
+          reportEvent({ toolUseId: "toolu_first", conclusion: "架空の途中。", task: TASK }),
+          counted("toolu_first"),
+          reportEvent({ toolUseId: "toolu_last", conclusion: "架空の締め。", task: TASK }),
+          finished,
+        ],
+        SETTLED,
+        true,
+      )
+
+      expect(changeSummaries(turn)).toEqual([{ kind: "none" }, { kind: "none" }])
+    })
+
+    it("task の無い最終レポートは数を持たない", () => {
+      const turn = turnOf(
+        [ask, report("架空の結論。"), counted("toolu_r1"), finished],
+        SETTLED,
+        true,
+      )
+
+      expect(changeSummaries(turn)).toEqual([{ kind: "none" }])
+    })
+  })
+
   describe("figure", () => {
     const checks: readonly ReportCheck[] = [
       { status: "ok", label: "架空の検査", figure: "", command: "", detail: "", howToVerify: "" },
@@ -948,6 +1005,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       firstLine: "架空の結論。",
       task,
       finishedPhase: { kind: "none" },
+      changeSummary: { kind: "none" },
     })
   })
 
@@ -998,6 +1056,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       firstLine: "架空の結論。",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
+      changeSummary: { kind: "none" },
     })
   })
 
@@ -1033,6 +1092,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       firstLine: "唯一の結論。",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
+      changeSummary: { kind: "none" },
     })
   })
 
@@ -1108,6 +1168,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
         duration: { kind: "known", milliseconds: 0 },
         skipped: false,
       },
+      changeSummary: { kind: "none" },
     })
   })
 
@@ -1188,6 +1249,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
         duration: { kind: "known", milliseconds: 0 },
         skipped: false,
       },
+      changeSummary: { kind: "none" },
     })
   })
 

@@ -297,6 +297,7 @@ describe("toRestoredEvents", () => {
           '<div class="conclusion-lead">\n\n架空の結論。\n\n</div>\n\n<div class="report-sections-start"></div>\n\n架空の根拠。',
         conclusion: "架空の結論。",
         task: { kind: "none" },
+        changeSummary: { kind: "none" },
       },
     ])
   })
