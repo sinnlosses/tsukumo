@@ -1,4 +1,4 @@
-// 体験の数を記録するときの判断（局面の移り変わりから何を1行にするか）と、書き口・読み口の契約。
+// 進行の計測値を記録するときの判断（局面の移り変わりから何を1行にするか）と、書き口・読み口の契約。
 //
 // 見るのはイベントの種類と、畳んだあとの姿から導く局面（`conversationMoment`）だけ。
 // 依頼の文面もセリフもツールの引数も、`ExperienceMetricEntry` に口が無いので通らない。
@@ -11,7 +11,7 @@ import {
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 
-/** 体験の数の読み書き口。書けなくても・読めなくても例外を投げない。 */
+/** 進行の計測値の読み書き口。書けなくても・読めなくても例外を投げない。 */
 export type ExperienceMetricLog = {
   readonly append: (entry: ExperienceMetricEntry) => void
   /** 期間に入る行を古い→新しい順に返す。壊れた行・版が違う行は読まずに落とす。 */

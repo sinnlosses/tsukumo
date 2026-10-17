@@ -1,4 +1,4 @@
-// 体験の数の記録。ファイルに触るのはここだけ。
+// 進行の計測値の記録。ファイルに触るのはここだけ。
 // 置き場は `~/.tsukumo/experience-metric/<YYYY-MM-DD>.jsonl` で、日付だけで分け、`cwd` には依存させない。
 // 行の形と、書いてよいものの線は `ExperienceMetricRecord` が持つ。
 //

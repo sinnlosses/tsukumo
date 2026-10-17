@@ -114,7 +114,7 @@ export type SessionManagerOptions = {
    * 渡した先は「どこに・どんな形で書くか」しか持たない。
    */
   readonly contextUsageLog: ContextUsageLog
-  /** 体験の数の書き込み口。何を1行にするかは `createExperienceMetricRecorder` が返す係が決める。 */
+  /** 進行の計測値の書き込み口。何を1行にするかは `createExperienceMetricRecorder` が返す係が決める。 */
   readonly experienceMetricLog: ExperienceMetricLog
   /** 診断ログの書き込み口。畳んだイベントの種類・時刻・駆動の代だけを1件ずつ渡す。 */
   readonly diagnosticLog: DiagnosticLog
@@ -308,7 +308,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   // コンテキストの内訳の記録。代をまたいで持つ（世代の持ち物には入れない）。
   // 続きから起こして同じIDになったときは同じセッションなので、2行目を書かない。
   const contextUsage = createContextUsageRecorder(options.contextUsageLog)
-  // 体験の数の記録。代をまたいで持つ（立ち直りまでの手数は起こし直しをまたいで数える）。
+  // 進行の計測値の記録。代をまたいで持つ（立ち直りまでの手数は起こし直しをまたいで数える）。
   const experienceMetric = createExperienceMetricRecorder(options.experienceMetricLog)
   // 診断ログの足跡。代をまたいで持ち、起こし直しで積み残しを捨てない。
   const diagnostic = createDiagnosticBuffer(options.diagnosticLog, options.batchIntervalMs)

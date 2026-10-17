@@ -33,7 +33,7 @@ export const FICTIONAL_PROJECT = "架空プロジェクト"
 /** トークン消費の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {}, readRange: () => [] }
 
-/** 体験の数の記録を気にしないテストに渡す、何もしない書き込み口。 */
+/** 進行の計測値の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_EXPERIENCE_METRIC_LOG: ExperienceMetricLog = { append: () => {}, readRange: () => [] }
 
 /** 診断ログを気にしないテストに渡す、何もしない書き込み口。 */

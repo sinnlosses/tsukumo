@@ -1,4 +1,4 @@
-// 体験の数（`~/.tsukumo/experience-metric/<YYYY-MM-DD>.jsonl`）を集計し、
+// 進行の計測値（`~/.tsukumo/experience-metric/<YYYY-MM-DD>.jsonl`）を集計し、
 // 依頼から結論まで・答え待ち・つまずきから立ち直るまでを、中央値と90パーセンタイルで出す。
 // `--split` を付けると、その日の始まりを境目に前後を並べる。
 //
@@ -61,7 +61,7 @@ if (entries.length === 0) {
   process.exit(0)
 }
 
-process.stdout.write(`直近${String(days)}日（${startDate}〜${endDate}）の体験の数\n\n`)
+process.stdout.write(`直近${String(days)}日（${startDate}〜${endDate}）の進行の計測値\n\n`)
 process.stdout.write(table(summarizeExperienceMetric(entries, split)))
 
 /** コマンドラインから `--days <n>` と `--split <YYYY-MM-DD>`（その日の始まりが境目）を読む。崩れていれば `"invalid"`。 */
