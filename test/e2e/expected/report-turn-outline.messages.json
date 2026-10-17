@@ -125,7 +125,8 @@
         "kind": "task",
         "id": "GH-9001",
         "name": "状態の置き場所（架空）",
-        "outcome": "awaiting-answer"
+        "outcome": "awaiting-answer",
+        "genre": "decision"
       },
       "workPlanClosing": "none",
       "closing": {
@@ -177,7 +178,8 @@
         "kind": "task",
         "id": "GH-9002",
         "name": "古い枝の片付け（架空）",
-        "outcome": "stopped"
+        "outcome": "stopped",
+        "genre": "work"
       },
       "workPlanClosing": "none",
       "closing": {

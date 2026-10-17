@@ -68,5 +68,9 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     graphNodeCount: entry.graphNodeCount,
     hasUnverifiedCheck: entry.hasUnverifiedCheck,
     hasHowToVerify: entry.hasHowToVerify,
+    taskGenre: entry.taskGenre,
+    taskOutcome: entry.taskOutcome,
+    hasFavor: entry.hasFavor,
+    hasSourceReference: entry.hasSourceReference,
   }
 }

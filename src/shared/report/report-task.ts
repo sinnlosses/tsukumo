@@ -8,6 +8,10 @@ export const REPORT_TASK_OUTCOMES = ["finished", "stopped", "awaiting-answer"] a
 
 export type ReportTaskOutcome = (typeof REPORT_TASK_OUTCOMES)[number]
 
+export const REPORT_GENRES = ["work", "decision", "research"] as const
+
+export type ReportGenre = (typeof REPORT_GENRES)[number]
+
 export const reportTaskSchema = z.object({
   id: z.string().trim().min(1).describe("タスクID（タスクの一覧に出る ID そのまま）"),
   name: z
@@ -22,6 +26,10 @@ export const reportTaskSchema = z.object({
     .describe(
       "finished（作業を終えた）/ stopped（止めた）/ awaiting-answer（利用者の答え待ち）。checks に ng の行がある間は finished にしない",
     ),
+  genre: z
+    .enum(REPORT_GENRES)
+    .optional()
+    .describe("報告の種類。work（作業）/ decision（判断）/ research（調べもの）"),
 })
 
 /** レポートが載せるタスク。タスクに紐付かないレポートと、`task` を持たなかったころの記録は `none`。 */
@@ -32,16 +40,19 @@ export type ReportTask =
       readonly id: string
       readonly name: string
       readonly outcome: ReportTaskOutcome
+      /** 渡されなかった・読めなかった種類と、種類を持たなかったころの記録は `unspecified`。 */
+      readonly genre: ReportGenre | "unspecified"
     }
 
 export const NO_REPORT_TASK = { kind: "none" } as const satisfies ReportTask
 
 /**
  * `report` の引数の `task` を取り出す。「無い」と形の崩れは `none` に畳む。
+ * `genre` だけが無い・崩れたときは `task` を残して `unspecified` に畳む。
  * 前の記録の終わり方 `shipped` は `finished` として読む。
  */
 export function parseReportTask(value: unknown): ReportTask {
-  const parsed = reportTaskSchema.safeParse(
+  const parsed = recordedReportTaskSchema.safeParse(
     isPlainObject(value) && value.outcome === LEGACY_FINISHED_OUTCOME
       ? { ...value, outcome: "finished" }
       : value,
@@ -58,3 +69,7 @@ export function conclusionWithTaskName(conclusion: string, task: ReportTask): st
 }
 
 const LEGACY_FINISHED_OUTCOME = "shipped"
+
+const recordedReportTaskSchema = reportTaskSchema.extend({
+  genre: z.enum([...REPORT_GENRES, "unspecified"]).catch("unspecified"),
+})

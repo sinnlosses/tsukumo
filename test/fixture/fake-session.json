@@ -1097,7 +1097,8 @@
               "kind": "task",
               "id": "GH-9001",
               "name": "状態の置き場所（架空）",
-              "outcome": "awaiting-answer"
+              "outcome": "awaiting-answer",
+              "genre": "decision"
             },
             "closing": { "kind": "none" },
             "toolUseId": "fake-turn-outline-report-1",
@@ -1123,7 +1124,8 @@
               "kind": "task",
               "id": "GH-9002",
               "name": "古い枝の片付け（架空）",
-              "outcome": "stopped"
+              "outcome": "stopped",
+              "genre": "work"
             },
             "closing": { "kind": "none" },
             "toolUseId": "fake-turn-outline-report-2",
@@ -4329,7 +4331,8 @@
               "kind": "task",
               "id": "GH-9003",
               "name": "ID の変換の対応（架空）",
-              "outcome": "stopped"
+              "outcome": "stopped",
+              "genre": "work"
             },
             "workPlanClosing": "stopped",
             "closing": {
@@ -6108,7 +6111,8 @@
               "kind": "task",
               "id": "t-002",
               "name": "架空の札に段が1つでも `1/1` のように位置を出す",
-              "outcome": "finished"
+              "outcome": "finished",
+              "genre": "work"
             },
             "closing": { "kind": "speech", "text": "終わったよ！", "expression": "proud" },
             "toolUseId": "fake-report-task-finished",
@@ -6212,7 +6216,8 @@
               "kind": "task",
               "id": "t-002",
               "name": "架空の札に段が1つでも `1/1` のように位置を出す",
-              "outcome": "finished"
+              "outcome": "finished",
+              "genre": "work"
             },
             "closing": { "kind": "speech", "text": "終わったよ！", "expression": "proud" },
             "toolUseId": "fake-report-task-verdict",

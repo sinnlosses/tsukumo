@@ -572,7 +572,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 - **タスクの作業のレポートは、結論部を「目録の1行・見出し・一文」の3段にする**（2026-09-30 ユーザー
   決定。見本は `docs/history/mockup/report-conclusion-2026-09-30.html` の案A。作業の名前がインライン
   コードの地に乗って結論の文の途中に埋もれていたため）。
-  - **書き手が `report` の任意の引数 `task`（`id` / `name` / `outcome`）で渡す。** `outcome` は `finished`
+  - **書き手が `report` の任意の引数 `task`（`id` / `name` / `outcome` / `genre`）で渡す。** `outcome` は `finished`
     （作業を終えた）/ `stopped`（止めた）/ `awaiting-answer`（答え待ち）の3つ。どこへ送ったか（主ブランチ・push）は
     tsukumo の関心にしない（`docs/architecture/adr/0024-no-skill-dependency.md`）。前の記録の `shipped`（2026-10-07 までの語）は
     `finished` として読む。
@@ -586,6 +586,12 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
     依頼の文面や結論の文字列から ID・終わり方を推し量らない。入口（`sdk-message.ts`）で揃っていない値と
     `task` の無かったころの記録は `none` に畳む（`src/shared/report/report-task.ts`）。記録とイベントの形が
     変わったので `PROTOCOL_VERSION` を 26 に上げた
+  - **`task` は省略できる `genre`（報告の種類。`work` 作業／`decision` 判断／`research` 調べもの）を持つ**（2026-10-17。
+    終わった仕事の報告は種類で型が違うため。`docs/research/report-excellence-strategy.md` 3.2）。種類ごとの既定の節の並びは
+    `REPORT_TASK_DESCRIPTION` が持ち、規約は条15でそれを指すだけ（下の「規則と置き場の対応」）。`stopped` は種類によらず中断の並び。
+    描き方は種類で変えない。`genre` の無い・読めない値は `task` を捨てずに `unspecified` に畳む（`parseReportTask`）。
+    種類ごとの必須の塊（判断の `options`・調べものの出典か `path:line`・中断の `favor`）は差し戻さず、記録で数える
+    （下の「塊を足す・外す基準」の版9）。出来事の形が変わったので `PROTOCOL_VERSION` を 56 に上げた
   - **目録の1行はラベル・タスクID・終わり方・変更の札のうちあるものだけを `·` でつなぐ**（無い要素の区切りは出さない）。
     ラベルは中間レポートなら「中間レポート」、最終レポートなら「最終レポート」で、最終レポートのラベルは
     中間レポートのあるやり取りか `task` があるときに出す（下の「各表示物」のメインビュー）。終わり方は
@@ -1073,16 +1079,17 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 
 **規則と置き場の対応。** 規則を足すたびに置き場を考え直さないため、毎ターン読ませる価値がある規約と、書く瞬間に読ませる説明と、直す瞬間だけ要る情報とで置き場を分ける。各塊の `describe` は単体の書き方だけを持つ。
 
-| 規則の内容                                                                                         | 置き場                                                                                                        | 理由                                                     |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| 情報の形 → 塊の表（形と塊と最小の記法の見本）                                                      | `src/server/report/core/report-notation.ts` の条8                                                             | 毎ターン「結論に何の塊を使うか」を読ませる価値がある規約 |
-| 各塊の段の条件・避ける書き方                                                                       | `src/shared/report/report-block.ts` の各塊の `describe`                                                       | 書く瞬間に読ませる説明。条8と二重に書かない              |
-| 1文目の目安と例（全角30字・読点1つまで、「読み手から見た変化」vs「変更の列挙」）                   | `src/server/session-driver/adapter/sdk-tool.ts` の `conclusion` 欄の説明                                      | モデルが conclusion を書く瞬間に読む、その場の説明       |
-| 2文目の役割（「それで何が良いか」か「変えていないもの」）                                          | `src/server/session-driver/adapter/sdk-tool.ts` の `conclusion` 欄の説明                                      | モデルが conclusion を書く瞬間に読む、その場の説明       |
-| 文の書き方（既知から・名前の前提・数の書き方・同種の列挙・最終レポートの書き直し・画像の切り抜き） | `src/server/report/core/report-notation.ts` の条1・6・10〜14                                                  | 毎ターン読ませる価値がある規約                           |
-| 図の作法と題（数と向きで主張を言う1文）                                                            | `src/shared/report/report-block.ts` の `graph`・`mermaid` の `describe` と、題・`caption` の `describe`       | 書く瞬間に読ませる説明                                   |
-| 実測の字数（全角50字超）と直し方                                                                   | `src/server/report/core/report-violation.ts` の差し戻し文面                                                   | 直す瞬間にだけ要る情報で、プロンプトには載せない         |
-| 書き手に強制したい規則（新しい差し戻し）                                                           | まず使われ方の記録（「塊を足す・外す基準」の集計）で数を見て、要るときだけ `report-violation.ts` の差し戻しへ | 先に入れると書き手を縛る                                 |
+| 規則の内容                                                                                         | 置き場                                                                                                           | 理由                                                      |
+| -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 情報の形 → 塊の表（形と塊と最小の記法の見本）                                                      | `src/server/report/core/report-notation.ts` の条8                                                                | 毎ターン「結論に何の塊を使うか」を読ませる価値がある規約  |
+| 各塊の段の条件・避ける書き方                                                                       | `src/shared/report/report-block.ts` の各塊の `describe`                                                          | 書く瞬間に読ませる説明。条8と二重に書かない               |
+| 1文目の目安と例（全角30字・読点1つまで、「読み手から見た変化」vs「変更の列挙」）                   | `src/server/session-driver/adapter/sdk-tool.ts` の `conclusion` 欄の説明                                         | モデルが conclusion を書く瞬間に読む、その場の説明        |
+| 2文目の役割（「それで何が良いか」か「変えていないもの」）                                          | `src/server/session-driver/adapter/sdk-tool.ts` の `conclusion` 欄の説明                                         | モデルが conclusion を書く瞬間に読む、その場の説明        |
+| 文の書き方（既知から・名前の前提・数の書き方・同種の列挙・最終レポートの書き直し・画像の切り抜き） | `src/server/report/core/report-notation.ts` の条1・6・10〜14                                                     | 毎ターン読ませる価値がある規約                            |
+| 報告の種類ごとの既定の節の並び                                                                     | `src/server/report/core/report-tool.ts` の `REPORT_TASK_DESCRIPTION`（`task` 欄の説明）。条15はそれを指す1行だけ | 書く瞬間に読む説明。毎ターンの文脈には指す1行だけを載せる |
+| 図の作法と題（数と向きで主張を言う1文）                                                            | `src/shared/report/report-block.ts` の `graph`・`mermaid` の `describe` と、題・`caption` の `describe`          | 書く瞬間に読ませる説明                                    |
+| 実測の字数（全角50字超）と直し方                                                                   | `src/server/report/core/report-violation.ts` の差し戻し文面                                                      | 直す瞬間にだけ要る情報で、プロンプトには載せない          |
+| 書き手に強制したい規則（新しい差し戻し）                                                           | まず使われ方の記録（「塊を足す・外す基準」の集計）で数を見て、要るときだけ `report-violation.ts` の差し戻しへ    | 先に入れると書き手を縛る                                  |
 
 #### 塊を足す・外す基準（2026-09-27 決定、2026-09-30 改訂）
 
@@ -1103,7 +1110,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 版5からは、段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるかの `hasFigure` と、
 このターンにメインが画像のファイルを `Read` したのに `image` の塊が無かったかの `readImageWithoutImageBlock`
 （サブエージェントの `Read` は数えない）も足す。版6からは、`figure` の欄の種類（図の塊の `kind` か `none`）の `figureKind` と、
-`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。数えるだけで差し戻しにはしない。中身は一切持たない
+`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。版9からは、`task` の報告の種類 `taskGenre`（`task` の無いレポートは `none`）と終わり方 `taskOutcome`、`favor` が空でないかの `hasFavor`、本文（`text`・`note`・`list` の項目・表のセル・`markdown`）に URL か `path:line` があるか `code` の塊に `path` があるかの `hasSourceReference` を足す。数えるだけで差し戻しにはしない。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
 `src/server/report/adapter/report-usage-log.ts`、何を1行にするかは
 `src/server/report/core/report-usage.ts` が持つ。逃げ道の記法の検出は `src/server/report/core/report-markdown-notation.ts`、
@@ -1119,6 +1126,9 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 全レポートと task の最終レポートのそれぞれに出し、分母は版7以降の行（割合と節点数は graph のあるレポート）。外す基準の対象ではない。
 版8の欄の表は「unverified のあるレポートのうち確かめ方のある割合」で、全レポートと task の最終レポートの2行を出し、
 分母は版8以降の行のうち `hasUnverifiedCheck` の行。外す基準の対象ではない。
+版9の欄の表は「報告の種類 × レポート数」（`work`・`decision`・`research`・`unspecified`）と「種類ごとに必須の塊が無い割合」
+（判断で `options` が無い・調べもので出典も `path:line` も無い・中断〔`stopped`〕で `favor` が無い）で、分母は版9以降の task の最終レポート。
+外す基準の対象ではなく、差し戻しにもしない（差し戻すかは28日の数を見てから決める）。
 `report` が差し戻されたときも同じファイルに1行書く（`kind: "rejected"`・時刻・セッションID・差し戻しの種類の名前だけで、
 手続きの種類〔`REPORT_PROCEDURE_REJECTIONS` の名前〕と記法の違反の `kind`。本文も文面も持たない）。
 集計は「差し戻しの種類 × 回数」の表で、割合は `report` の呼び出し（受け付け＋差し戻し）の数に対して出す。

@@ -78,7 +78,8 @@
         "kind": "task",
         "id": "t-002",
         "name": "架空の札に段が1つでも `1/1` のように位置を出す",
-        "outcome": "finished"
+        "outcome": "finished",
+        "genre": "work"
       },
       "workPlanClosing": "none",
       "closing": {

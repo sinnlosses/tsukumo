@@ -255,6 +255,7 @@ describe("Turn（目録の1行と見出し）", () => {
     id: "X-7",
     name: "架空の作業 `a/b` を直す",
     outcome: "finished",
+    genre: "work",
   } as const
 
   function taskBody(

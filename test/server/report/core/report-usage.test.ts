@@ -87,7 +87,13 @@ describe("reportUsageEntryOf", () => {
       notes: [],
       fold: "",
     }
-    const task = { kind: "task", id: "架空-1", name: "架空の作業", outcome: "finished" } as const
+    const task = {
+      kind: "task",
+      id: "架空-1",
+      name: "架空の作業",
+      outcome: "finished",
+      genre: "work",
+    } as const
     const table: readonly {
       readonly blocks: readonly ReportBlock[]
       readonly task: boolean
@@ -328,6 +334,10 @@ describe("reportUsageEntryOf", () => {
       graphNodeCount: 0,
       hasUnverifiedCheck: false,
       hasHowToVerify: false,
+      taskGenre: "none",
+      taskOutcome: "none",
+      hasFavor: false,
+      hasSourceReference: false,
     })
   })
 
@@ -496,6 +506,71 @@ describe("reportUsageEntryOf", () => {
         true,
         false,
       ])
+    })
+  })
+
+  describe("報告の種類と必須の塊の手掛かり", () => {
+    it.each([
+      [
+        "genre のある task",
+        { kind: "task", id: "架空-1", name: "架空", outcome: "stopped", genre: "decision" },
+        ["decision", "stopped"],
+      ],
+      [
+        "genre の無い task",
+        { kind: "task", id: "架空-1", name: "架空", outcome: "finished", genre: "unspecified" },
+        ["unspecified", "finished"],
+      ],
+      ["task の無いレポート", { kind: "none" }, ["none", "none"]],
+    ] as const)("%s は種類と終わり方をそのまま持つ", (_, task, expected) => {
+      const entry = reportUsageEntryOf(reportEvent({ task }), "claude-session-1", 1_000, false)
+
+      expect([entry.taskGenre, entry.taskOutcome]).toEqual(expected)
+    })
+
+    it("favor が空白だけなら偽、中身があれば真", () => {
+      const favorOf = (favor: string) =>
+        reportUsageEntryOf(reportEvent({ favor }), "claude-session-1", 1_000, false).hasFavor
+
+      expect([favorOf(""), favorOf(" "), favorOf("架空のお願い。")]).toEqual([false, false, true])
+    })
+
+    it.each([
+      ["text の URL", { kind: "text", text: "架空の出典 https://example.com/a", fold: "" }, true],
+      [
+        "list の path:line",
+        {
+          kind: "list",
+          style: "bullet",
+          items: [{ label: "", text: "src/a.ts:12 で読む", done: false }],
+          fold: "",
+        },
+        true,
+      ],
+      [
+        "表のセルの path:line",
+        { kind: "table", title: "", columns: ["根拠"], rows: [["src/b.ts:3"]], fold: "" },
+        true,
+      ],
+      ["note の URL", { kind: "note", tone: "info", text: "http://example.com", fold: "" }, true],
+      ["markdown の path:line", { kind: "markdown", markdown: "> a.ts:1", fold: "" }, true],
+      [
+        "code の path",
+        { kind: "code", language: "ts", path: "src/a.ts", source: "架空", fold: "" },
+        true,
+      ],
+      [
+        "path の無い code",
+        { kind: "code", language: "ts", path: "", source: "https://example.com", fold: "" },
+        false,
+      ],
+      ["行番号の無いパス", { kind: "text", text: "src/a.ts を読んだ", fold: "" }, false],
+    ] as const)("%s なら出典の有無は %s", (_, block, expected) => {
+      const event = reportOfSections([{ heading: "", blocks: [block] }])
+
+      expect(reportUsageEntryOf(event, "claude-session-1", 1_000, false).hasSourceReference).toBe(
+        expected,
+      )
     })
   })
 

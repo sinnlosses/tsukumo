@@ -395,7 +395,9 @@ describe("useWorkStrip（ワークプランが届く前）", () => {
 })
 
 function taskOf(outcome: "finished" | "stopped" | "awaiting-answer"): SessionEvent {
-  return reportEvent({ task: { kind: "task", id: "fictional-task", name: "架空の作業", outcome } })
+  return reportEvent({
+    task: { kind: "task", id: "fictional-task", name: "架空の作業", outcome, genre: "work" },
+  })
 }
 
 const completed: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }

@@ -470,6 +470,10 @@ describe("createSessionManager", () => {
           graphNodeCount: 0,
           hasUnverifiedCheck: false,
           hasHowToVerify: false,
+          taskGenre: "none",
+          taskOutcome: "none",
+          hasFavor: false,
+          hasSourceReference: false,
           sessionSummary: undefined,
         },
       ])

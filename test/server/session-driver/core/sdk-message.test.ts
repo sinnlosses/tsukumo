@@ -1306,7 +1306,7 @@ describe("toSessionEvents（report ツール）", () => {
     })
 
     expect(tasks).toEqual([
-      { kind: "task", id: "X-7", name: "架空の作業", outcome: "stopped" },
+      { kind: "task", id: "X-7", name: "架空の作業", outcome: "stopped", genre: "unspecified" },
       { kind: "none" },
       { kind: "none" },
     ])

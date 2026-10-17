@@ -13,7 +13,7 @@ const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images
 
 const TASK_REPORT = reportEvent({
   toolUseId: "fictional-task-report",
-  task: { kind: "task", id: "t-001", name: "架空の作業", outcome: "finished" },
+  task: { kind: "task", id: "t-001", name: "架空の作業", outcome: "finished", genre: "work" },
 })
 
 /** git の代役。HEAD と numstat の出力を決め打ちで返し、問われた HEAD を控える。 */

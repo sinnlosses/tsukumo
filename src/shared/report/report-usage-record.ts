@@ -2,9 +2,10 @@
 // 書いてよいのは時刻・セッションID・塊と記法の名前・数だけで、塊の中身・逃げ道の文字は入れない。
 
 import type { RecordedFigureNoneReason, RecordedReportFigure } from "./report-block.ts"
+import type { ReportGenre, ReportTaskOutcome } from "./report-task.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 8 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 9 satisfies number
 
 /**
  * `figure` の欄の記録（版6から）。`figureKind` は図の塊の `kind` か `none`、`noneReason` は `none` のときだけ。
@@ -54,6 +55,14 @@ export type ReportUsageRecord = ReportFigureUsage & {
   readonly hasUnverifiedCheck: boolean
   /** `unverified` の行があり、その全部の `howToVerify` が空でないか（版8から）。 */
   readonly hasHowToVerify: boolean
+  /** `task` の報告の種類。`task` の無いレポートは `none`（版9から）。 */
+  readonly taskGenre: ReportGenre | "unspecified" | "none"
+  /** `task` の終わり方。`task` の無いレポートは `none`（版9から）。 */
+  readonly taskOutcome: ReportTaskOutcome | "none"
+  /** `favor` が空でないか（版9から）。 */
+  readonly hasFavor: boolean
+  /** 本文に出典（URL）か `path:line` があるか、`code` の塊に `path` があるか（版9から）。 */
+  readonly hasSourceReference: boolean
 }
 
 /**

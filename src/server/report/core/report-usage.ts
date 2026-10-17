@@ -10,6 +10,7 @@ import {
   sectionsWithFigure,
 } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
+import type { ReportGenre, ReportTaskOutcome } from "../../../shared/report/report-task.ts"
 import type { ReportFigureUsage } from "../../../shared/report/report-usage-record.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { reportImagePaths } from "./report-image-shelf.ts"
@@ -59,6 +60,14 @@ export type ReportUsageEntry = {
   readonly hasUnverifiedCheck: boolean
   /** `unverified` の行があり、その全部の `howToVerify` が空でないか。 */
   readonly hasHowToVerify: boolean
+  /** `task` の報告の種類。`task` の無いレポートは `none`。 */
+  readonly taskGenre: ReportGenre | "unspecified" | "none"
+  /** `task` の終わり方。`task` の無いレポートは `none`。 */
+  readonly taskOutcome: ReportTaskOutcome | "none"
+  /** `favor` が空でないか。 */
+  readonly hasFavor: boolean
+  /** `text` の本文・`list` の項目・表のセル・`note` の本文・`markdown` の中身に URL か `path:line` があるか、`code` の塊に `path` があるか。 */
+  readonly hasSourceReference: boolean
 }
 
 const FIGURE_KINDS: readonly string[] = ["image", "mermaid", "graph", "svg"]
@@ -135,6 +144,10 @@ export function reportUsageEntryOf(
     ),
     ...graphCountsOf(blocksOf(drawnSections)),
     ...howToVerifyUsageOf(event.checks),
+    taskGenre: event.task.kind === "task" ? event.task.genre : "none",
+    taskOutcome: event.task.kind === "task" ? event.task.outcome : "none",
+    hasFavor: event.favor.trim() !== "",
+    hasSourceReference: blocksOf(event.sections).some(hasSourceReference),
   }
 }
 
@@ -150,6 +163,34 @@ export function isMainImageFileRead(
   }
   const path = event.input.file_path.toLowerCase()
   return IMAGE_FILE_EXTENSIONS.some((extension) => path.endsWith(extension))
+}
+
+const SOURCE_REFERENCE = /https?:\/\/\S|[\w./-]+\.\w+:\d+/
+
+function hasSourceReference(block: ReportBlock): boolean {
+  return block.kind === "code"
+    ? block.path.trim() !== ""
+    : writtenTextsOf(block).some((text) => SOURCE_REFERENCE.test(text))
+}
+
+function writtenTextsOf(block: ReportBlock): readonly string[] {
+  switch (block.kind) {
+    case "text":
+    case "note":
+      return [block.text]
+    case "list":
+      return block.items.map((item) => item.text)
+    case "table":
+      return block.rows.flatMap((row) =>
+        row.flatMap((cell) =>
+          typeof cell === "string" ? [cell] : "from" in cell ? [cell.from, cell.to] : [cell.text],
+        ),
+      )
+    case "markdown":
+      return [block.markdown]
+    default:
+      return []
+  }
 }
 
 const INLINE_CODE = /(`+)[\s\S]*?\1/g

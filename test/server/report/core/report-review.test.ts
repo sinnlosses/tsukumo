@@ -333,6 +333,7 @@ describe("createReportReview の judge（ワークプランの残った report�
     id: "架空のタスク",
     name: "架空の作業",
     outcome,
+    genre: "work",
   })
   const withTask = (outcome: ReportTaskOutcome, workPlanClosing: WorkPlanClosing): ReportDraft => ({
     ...VALID,
@@ -482,7 +483,7 @@ describe("createReportReview の judge（差し戻しの種類）", () => {
       createReportReview(() => ({ kind: "planned", remaining: 1 })).judge(
         reportDraft({
           conclusion: "架空の結論。",
-          task: { kind: "task", id: "架空", name: "架空", outcome: "finished" },
+          task: { kind: "task", id: "架空", name: "架空", outcome: "finished", genre: "work" },
           workPlanClosing: "stopped",
         }),
       ),
@@ -576,7 +577,7 @@ describe("createReportReview の judge（ng の確認がある finished の repo
   ): ReportDraft =>
     reportDraft({
       conclusion: "架空の結論。",
-      task: { kind: "task", id: "架空のタスク", name: "架空の作業", outcome },
+      task: { kind: "task", id: "架空のタスク", name: "架空の作業", outcome, genre: "work" },
       checks: statuses.map(check),
     })
 

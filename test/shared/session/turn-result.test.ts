@@ -51,7 +51,7 @@ function turn(id: number, overrides: Partial<MainViewTurn>): MainViewTurn {
 }
 
 function taskOf(outcome: ReportTaskOutcome): ReportTask {
-  return { kind: "task", id: "架空-1", name: "架空の作業", outcome }
+  return { kind: "task", id: "架空-1", name: "架空の作業", outcome, genre: "work" }
 }
 
 const DONE = turn(1, { steps: [reportStep(0, { kind: "none" })] })

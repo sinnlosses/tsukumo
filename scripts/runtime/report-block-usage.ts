@@ -1,11 +1,13 @@
 // `report` の塊の使われ方（`~/.tsukumo/report-usage/<YYYY-MM-DD>.jsonl`）を集計し、
 // 「塊の種類 × レポート数」「塊の欄 × レポート数」「modified のファイルがあるのに前後図も画像も無いレポート」
 // 「段1の図を含むレポート」「画像を読んだのに image が無いレポート」「`figure` の種類 × レポート数」「`none` の理由 × レポート数」
+// 「報告の種類 × レポート数」「種類ごとに必須の塊が無い割合」
 // 「逃げ道の中の記法 × レポート数」「差し戻しの種類 × 回数」を割合つきで出す。
 // 欄を記録する前の版（2）の行も読み、欄の表だけはそれを記録した版の行を分母にする（欄を足す前後で逃げ道を見比べるため）。
 // `figure` を記録する前の版（5以前）の行は、`figure` の表では理由が `unrecorded` の `none` に数える。
 // 強調の数・ラベルの無い辺の割合・節点数の分布は、それを記録した版7以降の行を分母にする。
 // unverified のあるレポートのうち確かめ方のある割合は、版8以降の unverified のある行を分母にする。
+// 報告の種類と必須の塊が無い割合は、版9以降の task の行を分母にする。
 //
 // 使い方:
 //   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -30,6 +32,7 @@ import {
   REPORT_FIGURE_NONE_REASONS,
   reportFigureSchema,
 } from "../../src/shared/report/report-block.ts"
+import { REPORT_GENRES } from "../../src/shared/report/report-task.ts"
 import { REPORT_USAGE_FORMAT_VERSION } from "../../src/shared/report/report-usage-record.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 
@@ -97,6 +100,16 @@ const howToVerifyRecordShape = {
   hasHowToVerify: z.boolean(),
 }
 
+/** 報告の種類の表の分母になる最初の版。 */
+const GENRE_FORMAT_VERSION = 9
+
+const genreRecordShape = {
+  taskGenre: z.string(),
+  taskOutcome: z.string(),
+  hasFavor: z.boolean(),
+  hasSourceReference: z.boolean(),
+}
+
 const recordSchema = z.union([
   z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
   z.object({
@@ -116,10 +129,19 @@ const recordSchema = z.union([
     .and(figureFieldSchema),
   z
     .object({
+      v: z.literal(HOW_TO_VERIFY_FORMAT_VERSION),
+      ...figureRecordShape,
+      ...countRecordShape,
+      ...howToVerifyRecordShape,
+    })
+    .and(figureFieldSchema),
+  z
+    .object({
       v: z.literal(REPORT_USAGE_FORMAT_VERSION),
       ...figureRecordShape,
       ...countRecordShape,
       ...howToVerifyRecordShape,
+      ...genreRecordShape,
     })
     .and(figureFieldSchema),
 ])
@@ -129,6 +151,7 @@ type VisualRecord = Extract<UsageRecord, { readonly hasModifiedFiles: boolean }>
 type FigureRecord = Extract<UsageRecord, { readonly hasFigure: boolean }>
 type CountRecord = Extract<UsageRecord, { readonly emphasisCount: number }>
 type HowToVerifyRecord = Extract<UsageRecord, { readonly hasHowToVerify: boolean }>
+type GenreRecord = Extract<UsageRecord, { readonly taskGenre: string }>
 
 /** `figure` の表に出す種類。0件でも出す。 */
 const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
@@ -146,6 +169,7 @@ const rejectionSchema = z.object({
     z.literal(FIGURE_FIELDLESS_FORMAT_VERSION),
     z.literal(COUNTLESS_FORMAT_VERSION),
     z.literal(COUNT_FORMAT_VERSION),
+    z.literal(HOW_TO_VERIFY_FORMAT_VERSION),
     z.literal(REPORT_USAGE_FORMAT_VERSION),
   ]),
   kind: z.literal("rejected"),
@@ -185,6 +209,10 @@ const countRecords = records.filter(
 const howToVerifyRecords = records.filter(
   (record): record is HowToVerifyRecord => record.v >= HOW_TO_VERIFY_FORMAT_VERSION,
 )
+const genreTaskRecords = records.filter(
+  (record): record is GenreRecord =>
+    record.v >= GENRE_FORMAT_VERSION && "taskGenre" in record && record.forTask,
+)
 process.stdout.write(
   fieldRecords.length === 0
     ? "塊の欄 × レポート数: 欄を記録した行が無い"
@@ -207,6 +235,8 @@ process.stdout.write("\n\n")
 process.stdout.write(countSection(countRecords))
 process.stdout.write("\n\n")
 process.stdout.write(howToVerifySection(howToVerifyRecords))
+process.stdout.write("\n\n")
+process.stdout.write(genreSection(genreTaskRecords))
 process.stdout.write("\n\n")
 process.stdout.write(
   table("逃げ道の外の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
@@ -432,6 +462,40 @@ function howToVerifySection(rows: readonly HowToVerifyRecord[]): string {
       (record) => record.hasHowToVerify,
     ),
   ].join("\n")
+}
+
+/** task の最終レポートの報告の種類の表と、種類ごとに必須の塊（判断の options・調べものの出典・中断の favor）が無い割合。 */
+function genreSection(rows: readonly GenreRecord[]): string {
+  if (rows.length === 0) {
+    return "報告の種類と必須の塊が無い割合: 記録した行が無い"
+  }
+  const decision = rows.filter((record) => record.taskGenre === "decision")
+  const research = rows.filter((record) => record.taskGenre === "research")
+  const stopped = rows.filter((record) => record.taskOutcome === "stopped")
+  return [
+    table(
+      `報告の種類 × レポート数（版9以降の task の最終レポート${String(rows.length)}件のうち）`,
+      [...REPORT_GENRES, "unspecified"],
+      rows,
+      (record) => [record.taskGenre],
+    ),
+    [
+      "種類ごとに必須の塊が無い割合（外す基準の対象ではない。差し戻しにしない）:",
+      shareLine(
+        "判断",
+        "options 無し",
+        decision,
+        (record) => !record.blockKinds.includes("options"),
+      ),
+      shareLine(
+        "調べもの",
+        "出典も path:line も無し",
+        research,
+        (record) => !record.hasSourceReference,
+      ),
+      shareLine("中断", "favor 無し", stopped, (record) => !record.hasFavor),
+    ].join("\n"),
+  ].join("\n\n")
 }
 
 /** `figure` の種類。記録する前の版の行は `none`。 */

@@ -617,6 +617,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       id: "t-001",
       name: "架空の作業",
       outcome: "finished",
+      genre: "work",
     }
     const counted = (toolUseId: string): SessionEvent => ({
       kind: "report-change-summary",
@@ -991,7 +992,13 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   })
 
   it("task のあるレポートは、結論を一文の印で包み、task を本文に組まずに運ぶ（畳んだときの先頭行は結論）", () => {
-    const task = { kind: "task", id: "X-7", name: "架空の作業", outcome: "stopped" } as const
+    const task = {
+      kind: "task",
+      id: "X-7",
+      name: "架空の作業",
+      outcome: "stopped",
+      genre: "work",
+    } as const
     const turn = turnOf(
       [ask, report("架空の結論。", "架空の根拠。", "", [], task), finished],
       SETTLED,
@@ -1010,7 +1017,13 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   })
 
   it("task のあるレポートの結論が空なら、畳んだときの先頭行は作業の名前", () => {
-    const task = { kind: "task", id: "X-7", name: "架空の作業", outcome: "stopped" } as const
+    const task = {
+      kind: "task",
+      id: "X-7",
+      name: "架空の作業",
+      outcome: "stopped",
+      genre: "work",
+    } as const
     const turn = turnOf([ask, report("", "架空の根拠。", "", [], task), finished], SETTLED, true)
 
     expect(firstLineOf(turn?.steps.find((step) => step.final))).toBe("架空の作業")

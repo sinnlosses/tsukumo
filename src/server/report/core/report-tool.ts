@@ -31,14 +31,19 @@ export const REPORT_CHECKS_DESCRIPTION =
   "label・figure・detail・howToVerify は素の文字で描かれるので、バッククォートなどの記法を使わない。"
 
 /**
- * `report` の任意の `task` 引数の説明。`conclusion` との書き分けはここだけが持つ。
+ * `report` の任意の `task` 引数の説明。`conclusion` との書き分けと、報告の種類ごとの既定の節の並びはここだけが持つ。
  */
 export const REPORT_TASK_DESCRIPTION =
-  "タスクの作業のレポートのときだけ渡す（タスクID・作業の名前・終わり方）。tsukumo が結論の上に" +
+  "タスクの作業のレポートのときだけ渡す（タスクID・作業の名前・終わり方・種類）。tsukumo が結論の上に" +
   "「最終レポート · タスクID · 終わり方」の1行と、作業の名前の見出しを描く。" +
   "渡したら conclusion に作業の名前やタスクID を書かず、これから何が変わるかだけを書く。" +
   "変更の量（ファイル数・行数）は tsukumo が git から数えて目録に添えるので書かない。" +
-  "タスクに紐付かないターンでは省く。"
+  "genre に報告の種類を入れ、sections の節をその種類の既定の並びで書く（節の数は縛らない。証拠は checks、お願いは favor）。" +
+  "work: 変化 → 証拠 → 変更の要所 → 限界と変えていないもの → お願い。" +
+  "decision: 決めたこと → 理由と採らなかった案（options）→ 結果 → 未決。" +
+  "research: 分かったこと → 根拠（出典か path:line）→ 何を意味するか → 確かめていないこと → 次。" +
+  "stopped は種類によらず: どこで止まったか → 原因 → 何を残し何を戻したか → 再開に要るもの（favor）。" +
+  "genre を省くと並びは縛らない。タスクに紐付かないターンでは task を省く。"
 
 /** `report` の任意の `workPlanClosing` 引数（段の閉じ方）の説明。 */
 export const REPORT_WORK_PLAN_CLOSING_DESCRIPTION =

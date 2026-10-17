@@ -1097,7 +1097,13 @@ describe("createSessionManager", () => {
       stub.emit(
         reportEvent({
           toolUseId: "fictional-task-report",
-          task: { kind: "task", id: "t-001", name: "架空の作業", outcome: "finished" },
+          task: {
+            kind: "task",
+            id: "t-001",
+            name: "架空の作業",
+            outcome: "finished",
+            genre: "work",
+          },
         }),
       )
       await waitForBatch()
