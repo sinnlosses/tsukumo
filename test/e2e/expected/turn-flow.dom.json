@@ -784,9 +784,11 @@
                                             {
                                               "tag": "code",
                                               "children": [
-                                                "-const TICKS =",
+                                                "-",
+                                                "const TICKS =",
                                                 "12",
-                                                "+const TICKS =",
+                                                "+",
+                                                "const TICKS =",
                                                 "24"
                                               ]
                                             }

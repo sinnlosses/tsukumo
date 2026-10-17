@@ -1440,6 +1440,12 @@
   /* 等幅の桁を和欧間アキで崩さない。 */
   text-autospace: no-autospace;
 }
+/* テーマ（github-dark）の `.hljs` が敷く地・余白・block を打ち消し、箱は `pre` の1段だけにする。字の色の規則は触らない。 */
+.detail-block pre > code {
+  display: inline;
+  padding: 0;
+  background: none;
+}
 /* フェンスの頭に添える帯。ファイル名（```diff src/foo.ts）があれば左のラベルに出し
    （差分だけを見てどのファイルか分からない、を防ぐ）、右には常にコピーのボタンを置く。
    別の枠を足さず、コードの地（--ground）を上へ伸ばして1つの塊に見せる（箱が2つ並ぶと、差分そのものより境目のほうが目立つ）。
@@ -1486,12 +1492,29 @@
 .detail-block .code-line-output {
   color: var(--ink-soft);
 }
-/* diff の対の行の、違う語。行の地（テーマの hljs-addition / hljs-deletion）の上に状態の色を重ねる。 */
+/* diff の行の地は行の器に塗る（テーマが字の幅だけに付ける hljs-addition / hljs-deletion の地は打ち消す）。値は theme.css の固定の4値。 */
+.detail-block .code-line-added {
+  background: var(--code-diff-line-added);
+}
+.detail-block .code-line-removed {
+  background: var(--code-diff-line-removed);
+}
+.detail-block .code-line-added .code-line-text > *,
+.detail-block .code-line-removed .code-line-text > * {
+  background: none;
+}
+.detail-block .code-line-added .code-line-sign {
+  color: var(--state-ok);
+}
+.detail-block .code-line-removed .code-line-sign {
+  color: var(--state-ng);
+}
+/* diff の対の行の、違う語。 */
 .detail-block .code-diff-added {
-  background: color-mix(in srgb, var(--state-ok) 45%, transparent);
+  background: var(--code-diff-word-added);
 }
 .detail-block .code-diff-removed {
-  background: color-mix(in srgb, var(--state-ng) 45%, transparent);
+  background: var(--code-diff-word-removed);
 }
 .detail-block .code-mark-label {
   flex: none;

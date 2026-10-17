@@ -11,7 +11,7 @@ import {
   type LineRange,
 } from "../../../../../../../shared/report/code-mark.ts"
 import { Button } from "../../../../../ui/button/button.tsx"
-import type { CodeLine } from "./code-line.ts"
+import { diffLineSide, markDiffSign, type CodeLine, type DiffSide } from "./code-line.ts"
 import type { DiffLineWords, DiffWordRanges } from "./diff-pair.ts"
 import { markDiffWords } from "./diff-word-mark.ts"
 import styles from "./report-notation.module.css"
@@ -88,24 +88,31 @@ function CodeLineRow(props: {
     const range = readMarkLines(mark.lines)
     return range !== undefined && props.number >= range.start && props.number <= range.end
   })
+  const side = diffLineSide(props.line)
   return (
     <span
       className={clsx(
         styles["code-line"],
         marked && styles["code-line-mark"],
         props.kind === "output" && styles["code-line-output"],
+        side === "added" && styles["code-line-added"],
+        side === "removed" && styles["code-line-removed"],
       )}
     >
       <span className={styles["code-line-text"]}>
         {props.kind === "output"
           ? props.line.map(plainText)
-          : diffWordLine(props.line, props.wordRange).map(hastToReact)}
+          : diffSignLine(diffWordLine(props.line, props.wordRange), side).map(hastToReact)}
       </span>
       {props.label !== undefined && (
         <span className={styles["code-mark-label"]}>{props.label}</span>
       )}
     </span>
   )
+}
+
+function diffSignLine(line: CodeLine, side: DiffSide | undefined): CodeLine {
+  return side === undefined ? line : markDiffSign(line, styles["code-line-sign"])
 }
 
 function diffWordLine(line: CodeLine, words: DiffLineWords | undefined): CodeLine {

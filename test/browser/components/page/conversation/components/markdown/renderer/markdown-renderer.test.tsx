@@ -595,6 +595,26 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(long.container.querySelector(words)).toBeNull()
   })
 
+  it("```diff の足した行・消した行は、対が無くても行の器に追加・削除の class が付き、行頭の字が記号の span になる", () => {
+    const { container } = render(<Markdown text={"```diff\n-a\n-b\n+c\n d\n```"} />)
+
+    const rows = [...container.querySelectorAll("pre code .code-line")]
+    expect(rows.map((row) => row.classList.contains("code-line-removed"))).toEqual([
+      true,
+      true,
+      false,
+      false,
+    ])
+    expect(rows.map((row) => row.classList.contains("code-line-added"))).toEqual([
+      false,
+      false,
+      true,
+      false,
+    ])
+    expect(container.querySelector(".code-line-added .code-line-sign")?.textContent).toBe("+")
+    expect(rows.map((row) => row.textContent)).toEqual(["-a", "-b", "+c", " d"])
+  })
+
   it("フェンスに書いたファイル名がブロックの左上のラベルになる", () => {
     // 言語名のあとのファイル名は mdast では `code` の `data.meta` に入り、rehype-raw が
     // 木を書き出して読み直す時点で落ちる。属性へ移す `rehypeCodeFileName` とサニタイザの

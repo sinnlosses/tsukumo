@@ -43,6 +43,12 @@
   --state-ask: #c7aef0;
   --state-memo: var(--ink);
 
+  /* コードの差分の地。固定の値で、color-mix で作らない。 */
+  --code-diff-line-added: #203524;
+  --code-diff-line-removed: #372120;
+  --code-diff-word-added: #345d3e;
+  --code-diff-word-removed: #603334;
+
   /* レポートの chart の系列色。`accent` の色相は使わない。 */
   --chart-series-1: #87bafd;
   --chart-series-2: #f49f81;

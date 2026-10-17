@@ -11,6 +11,53 @@ export function splitCodeLines(children: readonly ElementContent[]): readonly Co
   return lines.at(-1)?.length === 0 ? lines.slice(0, -1) : lines
 }
 
+export type DiffSide = "added" | "removed"
+
+/** `diff` の行の種別。行の字をテーマが `hljs-addition` / `hljs-deletion` で包むので、先頭の要素の class で読む。 */
+export function diffLineSide(line: CodeLine): DiffSide | undefined {
+  const first = line[0]
+  if (first?.type !== "element") {
+    return undefined
+  }
+  const names = first.properties.className
+  if (!Array.isArray(names)) {
+    return undefined
+  }
+  if (names.includes("hljs-addition")) {
+    return "added"
+  }
+  return names.includes("hljs-deletion") ? "removed" : undefined
+}
+
+/** 行の先頭の1字（`+` / `-`）を `className` の `<span>` で包む。字は動かさない。 */
+export function markDiffSign(line: CodeLine, className: string): CodeLine {
+  const [first, ...rest] = line
+  return first === undefined ? line : [...signNode(first, className), ...rest]
+}
+
+function signNode(node: ElementContent, className: string): readonly ElementContent[] {
+  if (node.type === "text") {
+    return node.value === ""
+      ? [node]
+      : [
+          {
+            type: "element",
+            tagName: "span",
+            properties: { className: [className] },
+            children: [{ type: "text", value: node.value.slice(0, 1) }],
+          },
+          ...(node.value.length > 1 ? [{ ...node, value: node.value.slice(1) }] : []),
+        ]
+  }
+  if (node.type !== "element") {
+    return [node]
+  }
+  const [child, ...rest] = node.children
+  return child === undefined
+    ? [node]
+    : [{ ...node, children: [...signNode(child, className), ...rest] } satisfies Element]
+}
+
 function splitNodes(nodes: readonly ElementContent[]): readonly CodeLine[] {
   return nodes.reduce<readonly CodeLine[]>(
     (lines, node) => {

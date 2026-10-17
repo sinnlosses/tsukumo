@@ -187,14 +187,15 @@ function Pre(props: PreProps): ReactElement {
   const marks = codeMarks(codeNode)
   const source = codeSourceText(codeNode)
   const kinds = shellLineKinds(codeLanguage(codeNode), source)
-  const wordRanges = codeLanguage(codeNode) === "diff" ? diffWordRanges(source) : NO_WORD_RANGES
+  const isDiff = codeLanguage(codeNode) === "diff"
+  const wordRanges = isDiff ? diffWordRanges(source) : NO_WORD_RANGES
   return (
     <div className={styles["code-file"]}>
       <div className={styles["code-file-name"]}>
         {fileName !== undefined && <FileNameLabel fileName={fileName} />}
         <CopyButton text={kinds === undefined ? source : shellCommandText(source, kinds)} />
       </div>
-      {marks.length === 0 && kinds === undefined && wordRanges.size === 0 ? (
+      {marks.length === 0 && kinds === undefined && !isDiff ? (
         <pre {...rest} />
       ) : (
         <pre {...rest}>

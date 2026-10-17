@@ -207,7 +207,13 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 引用とは見分けが付く。
 
 **コードの色付けは同梱のテーマのまま残す**（`highlight.js` の `github-dark`）。実測でページの中で
-いちばん情報量が多く、読めている。ただし **Chart.js と mermaid の色は `theme.css` のトークンの実効値を
+いちばん情報量が多く、読めている。**ただし箱は1段**（テーマの `.hljs` が敷く地・余白は
+`.detail-block` の中で打ち消し、地は `pre` の `ground` だけ）。**差分の行は塊の内幅いっぱいの帯**で、行の器に塗る
+（テーマの `hljs-addition`・`hljs-deletion` の地は字の幅でしか付かないので打ち消す）。行と語の地は
+`theme.css` の固定の4値（追加の行 `#203524`・削除の行 `#372120`・追加の語 `#345d3e`・削除の語 `#603334`。
+`color-mix` で作ると `ground` の紫に引かれて `accent` と重なる）で、追加を明るく・削除を暗くする。
+行頭の `+`・`-` は状態色の字にし、行の字は構文色のまま。対の無い diff も同じ行の器で描く。
+ただし **Chart.js と mermaid の色は `theme.css` のトークンの実効値を
 読んで渡す**（`markdown/renderer/chart.ts`・`mermaid-block.tsx`）。Chart.js は軸の字に `--ink-soft`・軸の線に `--rule`（格子線は引かず、凡例も出さない）、
 系列に `--chart-series-*`（内蔵の配色は止め、7本目以降は `--chart-series-other`）。mermaid は
 `theme: "base"` + `darkMode: true` に、トークンを hex に解いた `themeVariables`（地は `surface`・

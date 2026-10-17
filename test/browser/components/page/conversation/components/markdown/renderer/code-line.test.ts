@@ -1,7 +1,11 @@
 import type { Element, ElementContent } from "hast"
 import { describe, expect, it } from "vitest"
 
-import { splitCodeLines } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/code-line.ts"
+import {
+  diffLineSide,
+  markDiffSign,
+  splitCodeLines,
+} from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/code-line.ts"
 
 const text = (value: string): ElementContent => ({ type: "text", value })
 const span = (className: string, ...children: ElementContent[]): Element => ({
@@ -9,6 +13,23 @@ const span = (className: string, ...children: ElementContent[]): Element => ({
   tagName: "span",
   properties: { className: [className] },
   children,
+})
+
+describe("diffLineSide", () => {
+  it("行の先頭の hljs-addition / hljs-deletion で追加・削除を読み、ほかは undefined", () => {
+    expect(diffLineSide([span("hljs-addition", text("+a"))])).toBe("added")
+    expect(diffLineSide([span("hljs-deletion", text("-a"))])).toBe("removed")
+    expect(diffLineSide([text(" a")])).toBeUndefined()
+    expect(diffLineSide([])).toBeUndefined()
+  })
+})
+
+describe("markDiffSign", () => {
+  it("行の先頭の1字だけを包み、字の並びは変えない", () => {
+    expect(markDiffSign([span("hljs-addition", text("+ab"))], "sign")).toEqual([
+      span("hljs-addition", span("sign", text("+")), text("ab")),
+    ])
+  })
 })
 
 describe("splitCodeLines", () => {
