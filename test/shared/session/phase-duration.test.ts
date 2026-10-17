@@ -49,8 +49,8 @@ function known(seconds: number) {
 
 const UNKNOWN = { kind: "unknown" } as const
 
-function row(label: string, duration: MeasuredTime) {
-  return { kind: "phase", label, duration } as const
+function row(label: string, duration: MeasuredTime, start: MeasuredTime = UNKNOWN) {
+  return { kind: "phase", label, start, duration } as const
 }
 
 describe("phaseDurations", () => {
@@ -58,25 +58,25 @@ describe("phaseDurations", () => {
     expect(
       phaseDurations([plan(0, at(0)), plan(1, at(10)), plan(2, at(25)), plan(3, at(30))], at(99)),
     ).toEqual([
-      row("1/3 架空の調べ", known(10)),
-      row("2/3 架空の実装", known(15)),
-      row("3/3 架空の検証", known(5)),
+      row("1/3 架空の調べ", known(10), known(0)),
+      row("2/3 架空の実装", known(15), known(10)),
+      row("3/3 架空の検証", known(5), known(25)),
     ])
   })
 
   it("全部済みの呼び出しが無ければ、最後の段は report の時刻で閉じる", () => {
     expect(phaseDurations([plan(0, at(0)), plan(1, at(10)), plan(2, at(25))], at(40))).toEqual([
-      row("1/3 架空の調べ", known(10)),
-      row("2/3 架空の実装", known(15)),
-      row("3/3 架空の検証", known(15)),
+      row("1/3 架空の調べ", known(10), known(0)),
+      row("2/3 架空の実装", known(15), known(10)),
+      row("3/3 架空の検証", known(15), known(25)),
     ])
   })
 
   it("一足飛びで越えた段は不明で、飛ぶ前の段は飛んだ時刻までを持つ", () => {
     expect(phaseDurations([plan(0, at(0)), plan(2, at(10)), plan(3, at(12))], at(99))).toEqual([
-      row("1/3 架空の調べ", known(10)),
+      row("1/3 架空の調べ", known(10), known(0)),
       row("2/3 架空の実装", UNKNOWN),
-      row("3/3 架空の検証", known(2)),
+      row("3/3 架空の検証", known(2), known(10)),
     ])
   })
 
@@ -94,7 +94,7 @@ describe("phaseDurations", () => {
     expect(phaseDurations([plan(1, at(0)), plan(2, at(10))], at(15))).toEqual([
       row("1/3 架空の調べ", UNKNOWN),
       row("2/3 架空の実装", UNKNOWN),
-      row("3/3 架空の検証", known(5)),
+      row("3/3 架空の検証", known(5), known(10)),
     ])
   })
 
@@ -102,8 +102,8 @@ describe("phaseDurations", () => {
     expect(
       phaseDurations([plan(0, at(0)), plan(1, at(10)), plan(0, at(12)), plan(1, at(15))], at(20)),
     ).toEqual([
-      row("1/3 架空の調べ", known(13)),
-      row("2/3 架空の実装", known(7)),
+      row("1/3 架空の調べ", known(13), known(0)),
+      row("2/3 架空の実装", known(7), known(10)),
       row("3/3 架空の検証", UNKNOWN),
     ])
   })
@@ -114,9 +114,9 @@ describe("phaseDurations", () => {
     expect(
       phaseDurations([plan(0, at(0)), plan(1, at(10)), plan(2, at(20), reorganized)], at(30)),
     ).toEqual([
-      row("1/3 架空の調べ", known(10)),
+      row("1/3 架空の調べ", known(10), known(0)),
       row("2/3 架空の設計", UNKNOWN),
-      row("3/3 架空の実装", known(20)),
+      row("3/3 架空の実装", known(20), known(10)),
     ])
   })
 
@@ -135,10 +135,10 @@ describe("phaseDurations", () => {
         at(31),
       ),
     ).toEqual([
-      row("1/4 計画", known(5)),
-      row("2/4 実装", known(15)),
-      row("3/4 実装", known(10)),
-      row("4/4 受け入れ", known(1)),
+      row("1/4 計画", known(5), known(0)),
+      row("2/4 実装", known(15), known(5)),
+      row("3/4 実装", known(10), known(20)),
+      row("4/4 受け入れ", known(1), known(30)),
     ])
   })
 
@@ -158,17 +158,18 @@ describe("phaseDurations（並列の段）", () => {
 
   it("重なって走った段はそれぞれの所要が出て、まとまりの所要は中の段の和ではなく壁時計", () => {
     expect(phaseDurations(overlapped, at(99))).toEqual([
-      row("1/4 架空の調べ", known(10)),
+      row("1/4 架空の調べ", known(10), known(0)),
       {
         kind: "parallel",
         label: "並列 2–3",
+        start: known(10),
         wall: known(10),
         phases: [
-          { label: "2/4 架空のサーバ", duration: known(10) },
-          { label: "3/4 架空の画面", duration: known(6) },
+          { label: "2/4 架空のサーバ", start: known(10), duration: known(10) },
+          { label: "3/4 架空の画面", start: known(10), duration: known(6) },
         ],
       },
-      row("4/4 架空の検証", known(5)),
+      row("4/4 架空の検証", known(5), known(20)),
     ])
   })
 
@@ -184,13 +185,14 @@ describe("phaseDurations（並列の段）", () => {
       {
         kind: "parallel",
         label: "並列 2–3",
+        start: UNKNOWN,
         wall: UNKNOWN,
         phases: [
-          { label: "2/4 架空のサーバ", duration: UNKNOWN },
-          { label: "3/4 架空の画面", duration: UNKNOWN },
+          { label: "2/4 架空のサーバ", start: UNKNOWN, duration: UNKNOWN },
+          { label: "3/4 架空の画面", start: UNKNOWN, duration: UNKNOWN },
         ],
       },
-      row("4/4 架空の検証", known(5)),
+      row("4/4 架空の検証", known(5), known(4)),
     ])
   })
 })

@@ -38,8 +38,8 @@ export function phaseDurations(
   if (last === undefined) {
     return []
   }
-  const phaseDuration = phaseDurationOf(plans, closedAt)
-  const groupDuration = durationsOf(plans, closedAt, currentGroupKeysOf)
+  const phaseTiming = timingsOf(plans, closedAt, currentPhaseKeysOf)
+  const groupTiming = timingsOf(plans, closedAt, currentGroupKeysOf)
   const phases = plannedPhasesOf(last)
   const rowOf = (phase: PlannedPhase): PhaseDuration => ({
     label: phaseLabel({
@@ -49,7 +49,7 @@ export function phaseDurations(
       name: phase.name,
       range: last.delegatedRange,
     }),
-    duration: phaseDuration(phase.key),
+    ...phaseTiming(phase.key),
   })
   return last.phases.flatMap((entry, position): readonly PhaseTimeRow[] => {
     const members = phases.filter((phase) => phase.entry === position)
@@ -66,7 +66,7 @@ export function phaseDurations(
             phases.length,
           ),
         ),
-        wall: groupDuration(groupKeyOf(entry)),
+        ...wallOf(groupTiming(groupKeyOf(entry))),
         phases: members.map(rowOf),
       },
     ]
@@ -97,18 +97,35 @@ export function phaseDurationOf(
   plans: readonly WorkPlanRecord[],
   closedAt: RecordTime,
 ): (key: string) => MeasuredTime {
-  return durationsOf(plans, closedAt, currentPhaseKeysOf)
+  const timingOf = timingsOf(plans, closedAt, currentPhaseKeysOf)
+  return (key) => timingOf(key).duration
 }
 
 const UNKNOWN = { kind: "unknown" } as const satisfies MeasuredTime
 
-/** `keysOf` が記録ごとに返す今の鍵の集合から、鍵ごとの区間を足した所要を引く関数。 */
-function durationsOf(
+type Timing = {
+  readonly start: MeasuredTime
+  readonly duration: MeasuredTime
+}
+
+function wallOf({ start, duration }: Timing): {
+  readonly start: MeasuredTime
+  readonly wall: MeasuredTime
+} {
+  return { start, wall: duration }
+}
+
+/**
+ * `keysOf` が記録ごとに返す今の鍵の集合から、鍵ごとの開始と、区間を足した所要を引く関数。
+ * 開始は依頼の最初の記録の時刻からのミリ秒で、同じ鍵の最初の区間の始まり。
+ */
+function timingsOf(
   plans: readonly WorkPlanRecord[],
   closedAt: RecordTime,
   keysOf: (record: WorkPlanRecord) => ReadonlySet<string>,
-): (key: string) => MeasuredTime {
+): (key: string) => Timing {
   const opensMidway = plans[0] !== undefined && finishedPhaseCount(plans[0]) > 0
+  const origin = plans[0]?.time
   const keys = plans.map(keysOf)
   const stints = keys.flatMap((current, index) =>
     [...current]
@@ -117,14 +134,22 @@ function durationsOf(
         const leftAt = keys.findIndex((later, at) => at > index && !later.has(key))
         const end = leftAt < 0 ? closedAt : (plans[leftAt]?.time ?? closedAt)
         const start = plans[index]?.time ?? closedAt
+        const unmeasured = index === 0 && opensMidway
         return {
           key,
-          duration: index === 0 && opensMidway ? UNKNOWN : spanOf(start, end),
+          start: unmeasured || origin === undefined ? UNKNOWN : spanOf(origin, start),
+          duration: unmeasured ? UNKNOWN : spanOf(start, end),
         }
       }),
   )
   const byKey = groupBy(stints, (stint) => stint.key)
-  return (key) => totalOf((byKey[key] ?? []).map((stint) => stint.duration))
+  return (key) => {
+    const found = byKey[key] ?? []
+    return {
+      start: found[0]?.start ?? UNKNOWN,
+      duration: totalOf(found.map((stint) => stint.duration)),
+    }
+  }
 }
 
 function currentPhaseKeysOf(record: WorkPlanRecord): ReadonlySet<string> {

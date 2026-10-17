@@ -1052,13 +1052,33 @@
 .detail-block .report-phase-band-longest {
   background: var(--phase-band-longest);
 }
-.detail-block .report-phase-band-unknown {
-  flex: 0 0 18px;
+.detail-block .report-phase-waterfall {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.detail-block .report-phase-waterfall-row {
+  height: 14px;
+}
+.detail-block .report-phase-waterfall-bar {
+  display: block;
+  min-width: 2px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--phase-band);
+}
+.detail-block .report-phase-waterfall-longest {
+  background: var(--phase-band-longest);
+}
+.detail-block .report-phase-waterfall-unknown {
   background: repeating-linear-gradient(
     135deg,
     var(--phase-band-unknown) 0 4px,
     transparent 4px 8px
   );
+}
+.detail-block .report-phase-waterfall + [role="table"] {
+  margin-top: 14px;
 }
 .detail-block .report-phase-time {
   display: grid;
