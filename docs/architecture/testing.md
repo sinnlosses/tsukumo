@@ -92,7 +92,14 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
   `maxWorkers` で抑える。E2E の1本は vitest のワーカーに加えて
   Chrome と `node src/cli.ts` を起こすので、実際に走るプロセスは `maxWorkers` の本数を大きく超える。
   E2E の設定は `maxWorkers: "15%"`、単体テスト（`vitest.config.ts`）も `"15%"` で、2つ合わせて
-  コア数の 30% までに収める。単体は `dom` と `node` の2つの project に分け、DOM のグローバルを借りる
+  コア数の 30% までに収める。
+  **`check` は重い段を起こす前に、共有の git dir の `check-running/` へ自分の pid の印を置き
+  （`scripts/dev/lib/check-running.ts`。終了・`SIGTERM`・`SIGINT` で消し、死んだ pid の印は数えるときに消す）、
+  走っている検証の本数で worker の予算を割って、単体と E2E の段に `--maxWorkers=<n>` を同じ数ずつ渡す**
+  （`scripts/dev/lib/worker-budget.ts`。予算は 1 本のときの合計 `2 × max(1, round(コア数 × 0.15))`（`maxWorkers: "15%"` が 1 本のときに配る数と同じ）、
+  環境変数 `TSUKUMO_CHECK_WORKER_BUDGET`（正の整数）で上書きできる。1 本あたりは `floor(予算 / 本数 / 2)`、最小 1。
+  並列は止めない。途中から増えた検証は、その時点の本数で自分の分を決め、走っている検証の worker は変えない。
+  本数が多く最小 1 に当たるときは予算を超えうる）。単体は `dom` と `node` の2つの project に分け、DOM のグローバルを借りる
   `test/dom-environment.ts` は `dom`（`test/browser/` と、DOM を描くほかの置き場のファイル）にだけ掛ける。
   `vitest.config.ts` の `DOM_TEST_FILES` に無いファイルが DOM を要するようになったら、そこへ足す
 - **引数なしの `pnpm run check` は、変えたファイルから選んだ E2E のファイルだけを流し**、選んだもの

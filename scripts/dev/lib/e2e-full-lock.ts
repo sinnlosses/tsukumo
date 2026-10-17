@@ -86,6 +86,15 @@ export async function acquireLock(
   }
 }
 
+export function isProcessAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error) {
+    return isErrnoCode(error, "EPERM")
+  }
+}
+
 function tryCreate(lockPath: string, pid: number): boolean {
   try {
     writeFileSync(lockPath, `${pid}\n`, { flag: "wx" })
@@ -111,15 +120,6 @@ function readOwner(lockPath: string): number | undefined {
 function removeIfOwnedBy(lockPath: string, pid: number): void {
   if (readOwner(lockPath) === pid) {
     rmSync(lockPath, { force: true })
-  }
-}
-
-function isProcessAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch (error) {
-    return isErrnoCode(error, "EPERM")
   }
 }
 

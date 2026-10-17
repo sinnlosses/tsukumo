@@ -18,7 +18,7 @@
 
 import { type ChildProcess, spawn, spawnSync } from "node:child_process"
 import { readFileSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { availableParallelism, tmpdir } from "node:os"
 import { join } from "node:path"
 import process from "node:process"
 import { parseArgs } from "node:util"
@@ -41,16 +41,19 @@ import {
   writeCheckRecord,
 } from "./lib/check-record-repository.ts"
 import { nextRecord, planRerun, type StageRunResult } from "./lib/check-record.ts"
+import { countRunning, registerRunning, runningDirectory } from "./lib/check-running.ts"
 import { e2eStage, planStages, type Stage } from "./lib/check-stage.ts"
 import { E2E_FULL_ENVIRONMENT } from "./lib/e2e-full-guard.ts"
 import {
   acquireLock,
+  isProcessAlive,
   LockWaitTimeoutError,
   REAL_LOCK_ENVIRONMENT,
   sharedLockPath,
 } from "./lib/e2e-full-lock.ts"
 import { findPriorityTool, stageCommand } from "./lib/stage-priority.ts"
 import { alignSubmodules } from "./lib/submodule-drift.ts"
+import { workerBudget, workersPerStage } from "./lib/worker-budget.ts"
 
 const CHECK_USAGE = `使い方:
   node scripts/dev/check.ts         # 変えたファイルから選んだ E2E だけ
@@ -94,8 +97,29 @@ for (const stage of activeStages.filter((candidate) => !candidate.heavy)) {
 }
 
 const heavyStages = activeStages.filter((stage) => stage.heavy)
+const stageWorkers = heavyStages.length > 0 ? markRunningAndShareWorkers() : 0
 const heavyResults = heavyStages.length > 0 ? await runConcurrently(heavyStages) : []
 saveRecord([...lightResults, ...heavyResults])
+
+/**
+ * 走っている検証の印を置き（終了・`SIGTERM`・`SIGINT` で消す）、その時点の本数で
+ * 単体と E2E の段に配る worker の数を決めて1行出す。
+ */
+function markRunningAndShareWorkers(): number {
+  const directory = runningDirectory(ROOT)
+  const unmark = registerRunning(directory, process.pid)
+  process.on("exit", unmark)
+  for (const signal of ["SIGTERM", "SIGINT"] as const) {
+    process.on(signal, () => process.exit(128 + (signal === "SIGTERM" ? 15 : 2)))
+  }
+  const running = countRunning(directory, isProcessAlive)
+  const budget = workerBudget(availableParallelism(), process.env.TSUKUMO_CHECK_WORKER_BUDGET)
+  const workers = workersPerStage(budget, running)
+  process.stdout.write(
+    `走っている検証 ${running} 本・worker ${workers}+${workers}（予算 ${budget}）\n`,
+  )
+  return workers
+}
 
 /** 走らせている間に木が変わっていたら、控えを書かずに古い控えを消す。 */
 function saveRecord(results: readonly StageRunResult[]): void {
@@ -285,7 +309,7 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
   return new Promise((resolve) => {
     const { command, args } = stageCommand(
       stage.name,
-      [...stage.args, ...reporterArgs],
+      [...stage.args, `--maxWorkers=${stageWorkers}`, ...reporterArgs],
       priorityTool,
     )
     const child = spawn(command, args, {
