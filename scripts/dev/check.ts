@@ -37,6 +37,7 @@ import {
   REAL_LOCK_ENVIRONMENT,
   sharedLockPath,
 } from "./lib/e2e-full-lock.ts"
+import { findPriorityTool, stageCommand } from "./lib/stage-priority.ts"
 import { alignSubmodules } from "./lib/submodule-drift.ts"
 
 const CHECK_USAGE = `使い方:
@@ -45,6 +46,7 @@ const CHECK_USAGE = `使い方:
 `
 
 const forceFull = readForceFull(process.argv.slice(2))
+const priorityTool = findPriorityTool(process.env.PATH ?? "")
 
 alignSubmodulesOrExit()
 
@@ -56,7 +58,8 @@ if (stagePlan.notice !== "") {
 const activeStages = stagePlan.stages
 
 for (const stage of activeStages.filter((candidate) => !candidate.heavy)) {
-  const result = spawnSync("pnpm", ["run", stage.name, ...stage.args], {
+  const { command, args } = stageCommand(stage.name, stage.args, priorityTool)
+  const result = spawnSync(command, args, {
     cwd: ROOT,
     stdio: "inherit",
   })
@@ -238,7 +241,12 @@ function runBuffered(stage: Stage, control: StopControl): Promise<BufferedResult
   )
   const reporterArgs = ["--reporter=default", "--reporter=json", `--outputFile.json=${reportPath}`]
   return new Promise((resolve) => {
-    const child = spawn("pnpm", ["run", stage.name, ...stage.args, ...reporterArgs], {
+    const { command, args } = stageCommand(
+      stage.name,
+      [...stage.args, ...reporterArgs],
+      priorityTool,
+    )
+    const child = spawn(command, args, {
       cwd: ROOT,
       env: stage.name === "test:e2e" ? { ...process.env, ...E2E_FULL_ENVIRONMENT } : process.env,
       stdio: ["ignore", "pipe", "pipe"],

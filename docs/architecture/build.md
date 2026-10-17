@@ -1,6 +1,6 @@
 # ビルドと依存
 
-最終更新: 2026-09-28。ステータス: **正典**。
+最終更新: 2026-10-17。ステータス: **正典**。
 
 責務: 事前の組み立て、作り直しを押す仕組み（HMR）、足す依存の一覧、リポジトリの外に置いたものを持つ。
 読む時: `pnpm run build` / `dev` の挙動を知りたい・依存を足すとき。
@@ -129,3 +129,7 @@ Storybook の型定義（`react-docgen-typescript` ほか）が TypeScript 7 の
 
 `zod` と `@anthropic-ai/claude-agent-sdk` はある。`ws` を選ぶのは**ランタイム固有の API に寄せない**ため。
 **`playwright-core` はブラウザを落とさず手元の Google Chrome を動かし**、テストランナー（`@playwright/test`）は足さない。
+
+**足す外部コマンド**（パッケージではなく OS のもの。**ユーザーの承認済み**）: `taskpolicy`（macOS 標準。2026-10-17 承認）。
+`pnpm run check` が段の子を QoS の clamp で起こすのに使い、無い環境では `nice` で起こす
+（`scripts/dev/lib/stage-priority.ts`。掛ける範囲と測定は `docs/architecture/testing.md`「E2E の走らせ方」）。

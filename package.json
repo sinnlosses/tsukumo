@@ -24,7 +24,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "node scripts/dev/e2e.ts",
     "test:e2e:update": "node scripts/dev/e2e-update.ts",
-    "check": "nice node scripts/dev/check.ts",
+    "check": "node scripts/dev/check.ts",
     "ship": "node scripts/dev/ship.ts",
     "storybook": "storybook dev --port 6006 --no-open"
   },
