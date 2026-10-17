@@ -78,7 +78,18 @@ const IMAGE_FILE_EXTENSIONS: readonly string[] = [".png", ".jpg", ".jpeg", ".gif
 
 /**
  * 数える塊の欄。外す基準（直近4週間で0回）を塊の種類と同じく当てるため、既定の値でない欄が出たかを持つ。
- * 表のセルの `from` / `to`・表の `rest`・`stats` の `before` / `total` / `series` / `better`・`list` の `label`・`list` の `flow`・`dimension` の `before`・`image` の `notes`・`code` の `marks`・塊の `aside`。
+ * - tableChange: 表のセルの `from` / `to`
+ * - tableRest: 表の `rest`
+ * - statsBefore: `stats` の `before`
+ * - statsTotal: `stats` の `total`
+ * - statsSeries: `stats` の `series`
+ * - statsBetter: `stats` の `better`
+ * - listLabel: `list` の `label`
+ * - listFlow: `list` の `flow`
+ * - dimensionBefore: `dimension` の `before`
+ * - imageNotes: `image` の `notes`
+ * - codeMarks: `code` の `marks`
+ * - blockAside: 塊の `aside`
  */
 export const REPORT_BLOCK_FIELDS = [
   "tableChange",

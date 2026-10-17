@@ -1133,13 +1133,25 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 （`<details>` / `<div>`）の中に出たもの**（複数の塊を畳む・並べるのは逃げ道の役目なので、
 差し戻しではなく別に数える）・**塊の無い記法**（`cols` / `card`〔規約から外したので、書かれ続けるかを見る数〕・
 `svg`・`dl`・引用・区切り線・`<details>` そのもの。塊に当てはまらないので昇格のきっかけになる）。知らない種類で境界で
-落とした塊の数（`parseReportSections` の `unknownBlockCount`）も同じ行に足す。版4からは、
-`files` に `modified` の項目があるか・`beforeAfter` か `image` の塊があるか・`task` を渡した最終レポートかの
-3つの真偽値も足す（modified があるのに前後図も画像も無い回を数えるためのもので、塊の欄とは別。外す基準の対象にしない）。
-版5からは、段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるかの `hasFigure` と、
-このターンにメインが画像のファイルを `Read` したのに `image` の塊が無かったかの `readImageWithoutImageBlock`
-（サブエージェントの `Read` は数えない）も足す。版6からは、`figure` の欄の種類（図の塊の `kind` か `none`）の `figureKind` と、
-`none` のときだけその理由の `noneReason` を足す。版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。版9からは、`task` の報告の種類 `taskGenre`（`task` の無いレポートは `none`）と終わり方 `taskOutcome`、`favor` が空でないかの `hasFavor`、本文（`text`・`note`・`list` の項目・表のセル・`markdown`）に URL か `path:line` があるか `code` の塊に `path` があるかの `hasSourceReference` を足す。版10からは、行が2つ以下の表が1つでもあるかの `shortTable` を足す（`rest` が空でない表は塊の欄の `tableRest` で数え、版は上げない）。版11からは `stats` の `series` / `better` を塊の欄の `statsSeries` / `statsBetter` で数える（行の形は版10と同じで、版だけ上げて古い行と見分ける）。`code` の `marks` が空でない塊は塊の欄の `codeMarks` で数え、版は上げない。版12からは、`aside` が空でない塊があるかを塊の欄の `blockAside` で数える（行の形は版10と同じ）。数えるだけで差し戻しにはしない。中身は一切持たない
+落とした塊の数（`parseReportSections` の `unknownBlockCount`）も同じ行に足す。
+
+- 版4からは、
+  `files` に `modified` の項目があるか・`beforeAfter` か `image` の塊があるか・`task` を渡した最終レポートかの
+  3つの真偽値も足す（modified があるのに前後図も画像も無い回を数えるためのもので、塊の欄とは別。外す基準の対象にしない）。
+- 版5からは、段1の図（`image`・`mermaid`・`graph`・`svg`。`beforeAfter` の側を含む）があるかの `hasFigure` と、
+  このターンにメインが画像のファイルを `Read` したのに `image` の塊が無かったかの `readImageWithoutImageBlock`
+  （サブエージェントの `Read` は数えない）も足す。
+- 版6からは、`figure` の欄の種類（図の塊の `kind` か `none`）の `figureKind` と、
+  `none` のときだけその理由の `noneReason` を足す。
+- 版6からは塊の種類・欄・段1の図・画像の有無を `figure` の図も含めて数える。
+- 版7からは、強調（`text` の本文・`list` の項目の text・表のセルの `**…**` の対。インラインコードの中は数えない）の数 `emphasisCount` と、`graph` の辺の数 `graphEdgeCount`・ラベルの無い辺の数 `graphUnlabeledEdgeCount`・節点数 `graphNodeCount`（複数あれば最大）を足す。
+- 版8からは、`checks` に `unverified` の行があるかの `hasUnverifiedCheck` と、その全部に確かめ方（`howToVerify`）があるかの `hasHowToVerify` を足す。
+- 版9からは、`task` の報告の種類 `taskGenre`（`task` の無いレポートは `none`）と終わり方 `taskOutcome`、`favor` が空でないかの `hasFavor`、本文（`text`・`note`・`list` の項目・表のセル・`markdown`）に URL か `path:line` があるか `code` の塊に `path` があるかの `hasSourceReference` を足す。
+- 版10からは、行が2つ以下の表が1つでもあるかの `shortTable` を足す（`rest` が空でない表は塊の欄の `tableRest` で数え、版は上げない）。
+- 版11からは `stats` の `series` / `better` を塊の欄の `statsSeries` / `statsBetter` で数える（行の形は版10と同じで、版だけ上げて古い行と見分ける）。`code` の `marks` が空でない塊は塊の欄の `codeMarks` で数え、版は上げない。
+- 版12からは、`aside` が空でない塊があるかを塊の欄の `blockAside` で数える（行の形は版10と同じ）。
+
+数えるだけで差し戻しにはしない。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
 `src/server/report/adapter/report-usage-log.ts`、何を1行にするかは
 `src/server/report/core/report-usage.ts` が持つ。逃げ道の記法の検出は `src/server/report/core/report-markdown-notation.ts`、
