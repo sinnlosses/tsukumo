@@ -54,7 +54,9 @@ type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
  */
 export function NotationBlock(props: NotationBlockProps): ReactElement {
   const { node: _node, className, children, ...rest } = props
-  const label = noteLabel(className)
+  const kind = noteKind(className)
+  const kindName = kind?.[0]
+  const label = kind?.[1]
 
   if (className !== undefined && classNameTokens(className).includes("before-after-swap")) {
     return (
@@ -80,7 +82,7 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
           weight="inherit"
           className={styles["report-note-label"]}
         >
-          {label}
+          <span className={noteLabelColorClass(kindName)}>{label}</span>
         </Text>
       )}
       {children}
@@ -152,14 +154,28 @@ function resolveNotationClassName(className: string | undefined): string | undef
 }
 
 /** `note` の塊なら種別のラベルを、そうでなければ何も返さない（`cols` などにはラベルを足さない）。 */
-function noteLabel(className: string | undefined): string | undefined {
+function noteKind(className: string | undefined): (typeof NOTE_LABELS)[number] | undefined {
   if (className === undefined) {
     return undefined
   }
 
   const tokens = classNameTokens(className)
 
-  return NOTE_LABELS.find(([name]) => tokens.includes(name))?.[1]
+  return NOTE_LABELS.find(([name]) => tokens.includes(name))
+}
+
+/** 罫を持たない種別（情報・疑問・メモ）だけ、ラベルの字に種類の色を付ける。 */
+function noteLabelColorClass(kindName: string | undefined): string | undefined {
+  switch (kindName) {
+    case "note":
+      return styles["report-note-label-info"]
+    case "note-ask":
+      return styles["report-note-label-ask"]
+    case "note-memo":
+      return styles["report-note-label-memo"]
+    default:
+      return undefined
+  }
 }
 
 function classNameTokens(className: string): readonly string[] {

@@ -980,7 +980,8 @@ function settleDiffText(diff: readonly string[], busyHints: readonly string[]): 
   return `${diffText}\n\n${busyText}`
 }
 
-const HAS_BUSY_ELEMENT_SCRIPT = `document.querySelector('[aria-busy="true"]') !== null`
+/** 取得中の印と、描き終わっていない mermaid の図（スクリプトの読み込みが遅いと、描く前に落ち着いたと見なしてしまう）。 */
+const HAS_BUSY_ELEMENT_SCRIPT = `document.querySelector('[aria-busy="true"], pre.mermaid:not([data-processed])') !== null`
 
 /** 投げた時点で `aria-busy="true"` の各要素を、`aria-label`・役割・タグ名・class のうち分かる手がかりで表す。 */
 const BUSY_ELEMENT_HINTS_SCRIPT = `(() => {

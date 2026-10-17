@@ -43,6 +43,22 @@ describe("NotationBlock（レポートの塊の記法）", () => {
     expect(container.querySelector(".report-note-label")?.textContent).toBe("注意")
   })
 
+  it("罫を持たない情報・疑問・メモのラベルの字だけが種類の色の class を持つ", () => {
+    const labelTextClassName = (kind: string): string | null | undefined => {
+      const { container } = render(<NotationBlock className={kind}>架空。</NotationBlock>)
+      const className = container.querySelector(".report-note-label > span")?.getAttribute("class")
+      cleanup()
+      return className
+    }
+
+    expect(labelTextClassName("note")).toBe("report-note-label-info")
+    expect(labelTextClassName("note note-ask")).toBe("report-note-label-ask")
+    expect(labelTextClassName("note note-memo")).toBe("report-note-label-memo")
+    expect(labelTextClassName("note note-warn")).toBeNull()
+    expect(labelTextClassName("note note-ng")).toBeNull()
+    expect(labelTextClassName("note note-favor")).toBeNull()
+  })
+
   it("余白の柱の並び（gutter）にだけ演出の印が付き、包み（with-gutter）には付かない", () => {
     const { container } = render(
       <NotationBlock className="with-gutter">
