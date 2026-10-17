@@ -266,6 +266,152 @@ describe("設定のダイアログの「ワークフロー」の面（スキル�
   })
 })
 
+function grip(title: string): HTMLElement {
+  return within(dialog()).getByRole("button", { name: `${title} を動かす（↑↓ キーでも）` })
+}
+
+function announcement(): string | null {
+  return within(dialog()).getByRole("status").textContent
+}
+
+/** 行を高さ 40・間 10 で縦に並べた矩形に差し替える（中点は 20・70・120…）。 */
+function layOutRows(list: HTMLElement): void {
+  within(list)
+    .getAllByRole("listitem")
+    .forEach((item, index) => {
+      const top = index * 50
+      item.getBoundingClientRect = () => ({
+        top,
+        bottom: top + 40,
+        left: 0,
+        right: 400,
+        width: 400,
+        height: 40,
+        x: 0,
+        y: top,
+        toJSON: () => ({}),
+      })
+    })
+}
+
+function rowClasses(list: HTMLElement): string[] {
+  return within(list)
+    .getAllByRole("listitem")
+    .map((item) => item.className)
+}
+
+describe("設定のダイアログの「ワークフロー」の面（つかんで並べ替える）", () => {
+  it("つかむ点を押して動かすと置き場所の線が出て、離すと下書きの並びと流れの帯が変わり、まだ書かない", async () => {
+    const sent = renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲", "架空:乙", "架空:丙"])))
+    const list = await stepList()
+    layOutRows(list)
+    const handle = grip("架空の甲")
+    handle.setPointerCapture = () => {}
+
+    fireEvent.pointerDown(handle, { clientY: 20, pointerId: 1, button: 0 })
+    fireEvent.pointerMove(handle, { clientY: 125, pointerId: 1 })
+
+    expect(stepTexts(list)).toEqual(["1架空の甲甲", "2架空の乙乙", "3架空の丙丙"])
+    expect(rowClasses(list).map((name) => name.includes("step-drop-after"))).toEqual([
+      false,
+      false,
+      true,
+    ])
+    expect(rowClasses(list)[0]).toContain("step-grabbed")
+
+    fireEvent.pointerUp(handle, { clientY: 125, pointerId: 1 })
+
+    expect(stepTexts(list)).toEqual([
+      "1架空の乙乙● 並びを変えた",
+      "2架空の丙丙● 並びを変えた",
+      "3架空の甲甲● 並びを変えた",
+    ])
+    expect(flowText()).toBe("1架空の乙→2架空の丙→3架空の甲")
+    expect(rowClasses(list).some((name) => name.includes("step-drop"))).toBe(false)
+    expect(announcement()).toBe("架空の甲 を 3 番目へ置いた")
+    expect(typedElement(dialog().querySelector("footer"), HTMLElement, "下の帯").textContent).toBe(
+      "● 並びを変えたやめる保存",
+    )
+    expect(setCommands(sent)).toEqual([])
+  })
+
+  it("つかんだ行の上で離すと並びは変わらない", async () => {
+    renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲", "架空:乙"])))
+    const list = await stepList()
+    layOutRows(list)
+    const handle = grip("架空の乙")
+    handle.setPointerCapture = () => {}
+
+    fireEvent.pointerDown(handle, { clientY: 70, pointerId: 1, button: 0 })
+    fireEvent.pointerMove(handle, { clientY: 60, pointerId: 1 })
+    fireEvent.pointerUp(handle, { clientY: 60, pointerId: 1 })
+
+    expect(stepTexts(list)).toEqual(["1架空の甲甲", "2架空の乙乙"])
+    expect(bandButton("保存").getAttribute("aria-disabled")).toBe("true")
+  })
+
+  it("Space でつかみ ↑↓ で動かし Space で置くと並びが変わり、各段で読み上げの1文が替わる", async () => {
+    const sent = renderWorkflowFace(
+      () => rpcOutput(stepsView(["架空:甲", "架空:乙", "架空:丙"])),
+      (): WorkflowSettingChange => ({
+        kind: "view",
+        view: stepsView(["架空:乙", "架空:丙", "架空:甲"]),
+      }),
+    )
+    const list = await stepList()
+    const handle = grip("架空の甲")
+
+    fireEvent.keyDown(handle, { key: " " })
+    expect(announcement()).toBe(
+      "架空の甲 をつかんだ（1 番目）。↑↓ で動かし、Space で置く。Esc で戻す",
+    )
+    fireEvent.keyDown(handle, { key: "ArrowDown" })
+    fireEvent.keyDown(handle, { key: "ArrowDown" })
+    expect(announcement()).toBe("架空の甲 を 3 番目へ")
+    expect(rowClasses(list)[2]).toContain("step-drop-after")
+    expect(flowText()).toBe("1架空の甲→2架空の乙→3架空の丙")
+
+    fireEvent.keyDown(handle, { key: " " })
+
+    expect(flowText()).toBe("1架空の乙→2架空の丙→3架空の甲")
+    expect(announcement()).toBe("架空の甲 を 3 番目へ置いた")
+    expect(setCommands(sent)).toEqual([])
+    fireEvent.click(bandButton("保存"))
+    await waitFor(() => {
+      expect(setCommands(sent)).toEqual([
+        {
+          procedure: "workflowSetting.set",
+          key: "steps",
+          value: JSON.stringify(["架空:乙", "架空:丙", "架空:甲"]),
+        },
+      ])
+    })
+  })
+
+  it("Esc でつかむ前の並びに戻り、ダイアログは閉じない", async () => {
+    renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲", "架空:乙", "架空:丙"])))
+    const list = await stepList()
+    const handle = grip("架空の乙")
+
+    fireEvent.keyDown(handle, { key: " " })
+    fireEvent.keyDown(handle, { key: "ArrowUp" })
+    fireEvent.keyDown(handle, { key: "Escape" })
+
+    expect(stepTexts(list)).toEqual(["1架空の甲甲", "2架空の乙乙", "3架空の丙丙"])
+    expect(rowClasses(list).some((name) => name.includes("step-grabbed"))).toBe(false)
+    expect(announcement()).toBe("架空の乙 を 2 番目へ戻した")
+    expect(dialog()).toBeTruthy()
+  })
+
+  it("並びが1つだけなら、つかむ点は押せない", async () => {
+    renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲"])))
+    await stepList()
+
+    const handle = grip("架空の甲")
+    expect(handle.hasAttribute("disabled")).toBe(true)
+  })
+})
+
 describe("設定のダイアログの「ワークフロー」の面（リポジトリと書き込みの結果）", () => {
   it("見出しの下にリポジトリを出す", async () => {
     renderWorkflowFace(() => rpcOutput(stepsView(["架空:甲"])))

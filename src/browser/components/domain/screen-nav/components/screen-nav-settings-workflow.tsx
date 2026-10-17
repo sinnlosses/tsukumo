@@ -1,15 +1,17 @@
 // 設定のダイアログの「ワークフロー」の面。どのリポジトリの設定かを先頭に出し、並びの欄ごとに、
-// 頭の行・流れの帯・行の札（番号・名前・識別子・説明・「…」）・並びに入っていないスキルの札を置く。
+// 頭の行・流れの帯・行の札（つかむ点・番号・名前・識別子・説明・「…」）・並びに入っていないスキルの札を置く。
 // 下の帯に「やめる」「保存」を置き、操作は保存するまで書かない。
 // 欄はワークフローの設定コマンドから来たものだけで、出せないときは欄を出さずに何が無いかを1文で言う。
 
 import clsx from "clsx"
 import { Plus } from "lucide-react"
-import { Fragment, type ReactElement } from "react"
+import { Fragment, useRef, type ReactElement } from "react"
 
 import { Button } from "../../../ui/button/button.tsx"
 import { Menu, type MenuItem } from "../../../ui/menu/menu.tsx"
 import { Text } from "../../../ui/text/text.tsx"
+import { dropLineSlot } from "../domain/step-reorder.ts"
+import { useStepGrab } from "../hooks/use-step-grab.ts"
 import {
   useWorkflowSetting,
   type ScreenNavWorkflowSettingDraftChange,
@@ -19,6 +21,9 @@ import {
 } from "../hooks/use-workflow-setting.ts"
 import { ScreenNavSettingsFaceFrame } from "./screen-nav-settings-face-frame.tsx"
 import styles from "./screen-nav-settings-workflow.module.css"
+
+/** つかむ点の6つの点（2列×3行）。 */
+const GRIP_DOTS = [0, 1, 2, 3, 4, 5] as const
 
 export function ScreenNavSettingsWorkflowFace(props: { readonly title: string }): ReactElement {
   const setting = useWorkflowSetting()
@@ -93,54 +98,7 @@ function WorkflowStepsField(props: {
         </Text>
       </div>
       <WorkflowFlow steps={row.steps} />
-      <ol className={styles["steps"]} aria-label={row.label}>
-        {row.steps.map((step, index) => (
-          <li key={step.value} className={clsx(styles["step"], step.moved && styles["step-moved"])}>
-            <span className={styles["step-number"]} aria-hidden="true">
-              {index + 1}
-            </span>
-            <div className={styles["step-body"]}>
-              <p className={styles["step-name"]}>
-                <span className={styles["step-title"]}>{step.title}</span>
-                {step.known && <span className={styles["step-id"]}>{step.label}</span>}
-                {!step.known && (
-                  <Text
-                    element="span"
-                    size="label"
-                    tone="state-warn"
-                    weight="inherit"
-                    className={styles["step-unknown"]}
-                  >
-                    候補に無い
-                  </Text>
-                )}
-                {step.moved && (
-                  <Text
-                    element="span"
-                    size="label"
-                    tone="state-warn"
-                    weight="inherit"
-                    className={styles["step-moved-mark"]}
-                  >
-                    <span aria-hidden="true">● </span>並びを変えた
-                  </Text>
-                )}
-              </p>
-              {step.description !== "" && (
-                <p className={styles["step-description"]} title={step.description}>
-                  {step.description}
-                </p>
-              )}
-            </div>
-            <Menu
-              triggerLabel={`${step.title} の操作`}
-              disabled={busy}
-              items={stepMenuItems(row, step, index)}
-              className={styles["step-menu"]}
-            />
-          </li>
-        ))}
-      </ol>
+      <WorkflowStepList row={row} busy={busy} />
       {row.addable.length > 0 && (
         <div className={styles["parked"]}>
           <Text
@@ -196,6 +154,119 @@ function WorkflowStepsField(props: {
         </Text>
       )}
     </div>
+  )
+}
+
+/**
+ * 行の札の並び。左のつかむ点をポインタで押して動かすか、Space でつかんで ↑↓ で動かし Space で置く。
+ * つかんだ札は元の位置から浮かせ、置き場所は行の間の線で見せる（行そのものは動かさない）。
+ */
+function WorkflowStepList(props: {
+  readonly row: ScreenNavWorkflowSettingRow
+  readonly busy: boolean
+}): ReactElement {
+  const { row, busy } = props
+  const listRef = useRef<HTMLOListElement>(null)
+  const enabled = row.reorderable && !busy
+  const { view, announcement, handlers } = useStepGrab({
+    titles: row.steps.map((step) => step.title),
+    enabled,
+    listRef,
+    onReorder: row.onReorder,
+  })
+  const lineSlot =
+    view.kind === "grabbed" && view.from !== view.to ? dropLineSlot(view.from, view.to) : -1
+  return (
+    <>
+      <ol ref={listRef} className={styles["steps"]} aria-label={row.label}>
+        {row.steps.map((step, index) => {
+          const grabbed = view.kind === "grabbed" && view.from === index
+          return (
+            <li
+              key={step.value}
+              className={clsx(
+                styles["step"],
+                step.moved && styles["step-moved"],
+                grabbed && styles["step-grabbed"],
+                lineSlot === index && styles["step-drop-before"],
+                lineSlot === index + 1 &&
+                  index === row.steps.length - 1 &&
+                  styles["step-drop-after"],
+              )}
+              style={grabbed ? { "--step-drag-offset": `${view.offsetY}px` } : undefined}
+            >
+              <button
+                type="button"
+                className={styles["step-grip"]}
+                aria-label={`${step.title} を動かす（↑↓ キーでも）`}
+                disabled={!enabled}
+                onPointerDown={(event) => {
+                  handlers.onPointerDown(index, event)
+                }}
+                onPointerMove={handlers.onPointerMove}
+                onPointerUp={handlers.onPointerUp}
+                onPointerCancel={handlers.onPointerCancel}
+                onKeyDown={(event) => {
+                  handlers.onKeyDown(index, event)
+                }}
+                onBlur={handlers.onBlur}
+              >
+                <span className={styles["step-grip-dots"]} aria-hidden="true">
+                  {GRIP_DOTS.map((dot) => (
+                    <span key={dot} className={styles["step-grip-dot"]} />
+                  ))}
+                </span>
+              </button>
+              <span className={styles["step-number"]} aria-hidden="true">
+                {index + 1}
+              </span>
+              <div className={styles["step-body"]}>
+                <p className={styles["step-name"]}>
+                  <span className={styles["step-title"]}>{step.title}</span>
+                  {step.known && <span className={styles["step-id"]}>{step.label}</span>}
+                  {!step.known && (
+                    <Text
+                      element="span"
+                      size="label"
+                      tone="state-warn"
+                      weight="inherit"
+                      className={styles["step-unknown"]}
+                    >
+                      候補に無い
+                    </Text>
+                  )}
+                  {step.moved && (
+                    <Text
+                      element="span"
+                      size="label"
+                      tone="state-warn"
+                      weight="inherit"
+                      className={styles["step-moved-mark"]}
+                    >
+                      <span aria-hidden="true">● </span>並びを変えた
+                    </Text>
+                  )}
+                </p>
+                {step.description !== "" && (
+                  <p className={styles["step-description"]} title={step.description}>
+                    {step.description}
+                  </p>
+                )}
+              </div>
+              <Menu
+                triggerLabel={`${step.title} の操作`}
+                disabled={busy}
+                items={stepMenuItems(row, step, index)}
+                className={styles["step-menu"]}
+              />
+            </li>
+          )
+        })}
+      </ol>
+      <p className={styles["announcer"]} role="status" aria-live="polite">
+        {announcement}
+      </p>
+    </>
   )
 }
 

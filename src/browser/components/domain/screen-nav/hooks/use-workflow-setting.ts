@@ -19,6 +19,7 @@ import type {
 } from "../../../../../shared/workflow-setting/workflow-setting.ts"
 import { rpc } from "../../../../domain/rpc.ts"
 import { useSession } from "../../../../stores/session.ts"
+import { reorderSteps } from "../domain/step-reorder.ts"
 
 /** 面の見出しの下に出す、どのリポジトリの設定か。 */
 export type ScreenNavWorkflowSettingRepository = {
@@ -57,7 +58,11 @@ export type ScreenNavWorkflowSettingRow = {
   readonly notice: ScreenNavWorkflowSettingNotice
   readonly steps: readonly ScreenNavWorkflowSettingStep[]
   readonly addable: readonly WorkflowSettingOption[]
+  /** 並びが2つ以上あり、つかんで動かせる。 */
+  readonly reorderable: boolean
   readonly onMove: (index: number, to: ScreenNavWorkflowSettingMove) => void
+  /** `to` は動かしたあとにその行が占める位置。 */
+  readonly onReorder: (from: number, to: number) => void
   readonly onRemove: (index: number) => void
   readonly onAdd: (value: string) => void
 }
@@ -191,6 +196,12 @@ function stepsRow(
   setDraft: (next: readonly string[]) => void,
 ): ScreenNavWorkflowSettingRow {
   const { items, addable } = workflowSettingSteps({ ...field, current: draft })
+  const reorder = (from: number, to: number): void => {
+    const next = reorderSteps(draft, from, to)
+    if (next !== draft) {
+      setDraft(next)
+    }
+  }
   return {
     key: field.key,
     label: field.label,
@@ -204,15 +215,11 @@ function stepsRow(
       moved: field.current.indexOf(item.value) !== index,
     })),
     addable,
+    reorderable: draft.length > 1,
     onMove: (index, to) => {
-      const moving = draft[index]
-      const target = moveTarget(index, to, draft.length)
-      if (moving === undefined || target === index || target < 0 || target >= draft.length) {
-        return
-      }
-      const rest = draft.filter((_value, position) => position !== index)
-      setDraft([...rest.slice(0, target), moving, ...rest.slice(target)])
+      reorder(index, moveTarget(index, to, draft.length))
     },
+    onReorder: reorder,
     onRemove: (index) => {
       if (draft.length > 1) {
         setDraft(draft.filter((_value, position) => position !== index))

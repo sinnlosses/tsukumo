@@ -88,7 +88,8 @@
   content: "";
   position: absolute;
   top: -11px;
-  left: 24px;
+  /* 番号の丸の中心。左の内側 12・つかむ点の幅と余白の 14・間 12・丸の半分 12。 */
+  left: 50px;
   width: 1px;
   height: 10px;
   background: var(--rule);
@@ -153,6 +154,89 @@
 }
 .step-menu {
   align-self: center;
+}
+
+/* つかむ点。6つの点（各 3px・間 3px）を、行の高さいっぱいの押し口の中央に置く。
+   指で押したまま動かしてもページが送られないよう、触れたときの既定の動きを止める。 */
+.step-grip {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 40px;
+  margin: -8px -6px -8px -4px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-quiet);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.step-grip:hover:not(:disabled) {
+  color: var(--ink);
+}
+.step-grip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.step-grip:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+.step-grip-dots {
+  display: grid;
+  grid-template-columns: repeat(2, 3px);
+  gap: 3px;
+}
+.step-grip-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+/* つかんだ札。元の位置から少しずらして浮かせ、ポインタで動かした分だけ縦に追わせる。 */
+.step-grabbed {
+  z-index: 1;
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+  transform: translate(10px, calc(var(--step-drag-offset, 0px) + 4px));
+}
+.step-grabbed .step-grip {
+  cursor: grabbing;
+}
+/* 置き場所の線。行の間（間 10）の中央に引き、行の位置は動かさない。 */
+.step-drop-before::after,
+.step-drop-after::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent) 80%, transparent);
+  pointer-events: none;
+}
+.step-drop-before::after {
+  top: -8px;
+}
+.step-drop-after::after {
+  bottom: -8px;
+}
+/* 置いた結果を読み上げにだけ伝える1文。 */
+.announcer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* 並びに入っていないスキル。点線の札を押すと並びの最後に足す。 */
