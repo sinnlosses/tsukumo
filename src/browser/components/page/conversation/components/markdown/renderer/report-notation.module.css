@@ -746,9 +746,11 @@
   padding: 0;
   font-size: 13px;
   line-height: 1.5;
-  overflow-wrap: anywhere;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 .detail-block .report-file .report-file-link {
+  min-width: 0;
   text-decoration: none;
 }
 .detail-block .report-file-path-folder {
@@ -759,8 +761,13 @@
 .detail-block .report-file-path-name {
   display: inline-block;
   max-width: 100%;
+  overflow-wrap: break-word;
   color: var(--ink);
   font-weight: 500;
+}
+/* ハイフンの後ろに見えない結合子（U+2060）を生成して、ハイフンの後で折れないようにする（字は変えない）。 */
+.report-path-glue::after {
+  content: "\2060";
 }
 /* 種別の札。記号と語を並べ、色は種別ごとに変える。 */
 .detail-block .report-file-change {
@@ -1461,7 +1468,7 @@
    文字は周り（`.code-file-name` の等幅・inline code の地）をそのまま親から継ぐ。 */
 .detail-block .report-file-link {
   cursor: pointer;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
@@ -1816,19 +1823,30 @@
   margin: 0;
 }
 /* 文中のコードと、同じく「機械の側の文字」である kbd（キーの名前）・samp（機械の出力）。
-   kbd / samp を同じ見た目に寄せるのは、既定の monospace のままだと隣のコードだけが --font-mono になって不揃いに見えるため（上の .detail-block pre と同じ理由）。 */
+   3つとも等幅にそろえるのは、既定の monospace のままだと隣のコードだけが --font-mono になって不揃いに見えるため（上の .detail-block pre と同じ理由）。 */
 .detail-block kbd,
 .detail-block samp,
 .detail-block :not(pre) > code {
-  /* 機械の名前は本文の上に浮かせる。
-     ground に落とすと本文との比が 1.096:1 しかなく、地を敷いている仕組みそのものが見えていなかった（実測）。 */
-  background: var(--surface-raised);
   font-family: var(--font-code);
   font-size-adjust: none;
   padding: 0 0.25rem;
   border-radius: 0.25rem;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+}
+/* 機械の名前は本文の上に浮かせる。
+   ground に落とすと本文との比が 1.096:1 しかなく、地を敷いている仕組みそのものが見えていなかった（実測）。 */
+.detail-block :not(pre) > code {
+  background: var(--surface-raised);
+}
+.detail-block kbd {
+  background: var(--surface-raised);
+  border: 1px solid var(--rule);
+  box-shadow: inset 0 -1px 0 var(--rule);
+}
+.detail-block samp {
+  background: none;
+  color: var(--ink-soft);
 }
 /* 色を指す inline code（カラーコード・色のトークン名）。
    地はその色そのもの（`Code` が style で差す）で、字は地の明るさで ink と ground を持ち替える。

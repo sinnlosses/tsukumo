@@ -792,11 +792,11 @@ function filesMarkdown(block: Extract<ReportBlock, { readonly kind: "files" }>):
   const summaryHtml = filesSummaryHtml(block.items)
   const rows = fileTreeRows(block.items, (item) => item.path).map((row) => {
     if (row.kind === "folder") {
-      const nameHtml = htmlInline(row.name).replaceAll("/", "/<wbr>")
+      const nameHtml = pathBreakHtml(htmlInline(row.name))
       return `<div class="file-folder">${fileGuideHtml(row.guide)}<span class="file-path-folder">${nameHtml}</span></div>`
     }
     const { path, change, note } = row.item
-    const nameHtml = `<span class="file-path-name">${htmlInline(row.name)}</span>`
+    const nameHtml = `<span class="file-path-name">${pathBreakHtml(htmlInline(row.name))}</span>`
     const noteHtml = fileNoteHtml(change, note)
     const badgeHtml = fileChangeBadgeHtml(change, "")
     if (row.guide === "" && !path.includes("/")) {
@@ -806,6 +806,14 @@ function filesMarkdown(block: Extract<ReportBlock, { readonly kind: "files" }>):
     return `<div class="file">${badgeHtml}<span class="file-entry">${fileGuideHtml(row.guide)}${codeHtml}</span>${noteHtml}</div>`
   })
   return `<div class="files">${rows.join("")}${summaryHtml}</div>`
+}
+
+/**
+ * パスの折り返しの機会を `/` の直後だけにする。
+ * `/` の後に `<wbr>` を置き、ハイフンの後は空の `path-glue`（CSS が見えない結合子を付けて折れなくする）を置く。
+ */
+function pathBreakHtml(escapedPath: string): string {
+  return escapedPath.replaceAll("/", "/<wbr>").replaceAll("-", '-<span class="path-glue"></span>')
 }
 
 function fileGuideHtml(guide: string): string {

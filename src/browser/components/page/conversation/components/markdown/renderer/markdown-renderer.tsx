@@ -36,6 +36,7 @@ import remarkGfm from "remark-gfm"
 import { decodeMarks, type CodeMark } from "../../../../../../../shared/report/code-mark.ts"
 import { optionalString } from "../../../../../../../shared/utils/optional-string.ts"
 import {
+  breakPathText,
   repositoryFilePath,
   RepositoryFileLinkTarget,
   useRepositoryFileLink,
@@ -231,7 +232,7 @@ function FileNameLabel(props: { readonly fileName: string }): ReactElement {
   }
   return (
     <RepositoryFileLinkTarget path={path} title={undefined} className={styles["report-file-link"]}>
-      {props.fileName}
+      {breakPathText(props.fileName, styles["report-path-glue"])}
     </RepositoryFileLinkTarget>
   )
 }
@@ -326,7 +327,7 @@ function Code(props: CodeProps): ReactElement {
   }
   const code = (
     <code className={className} {...rest}>
-      {children}
+      {breakPathText(children, styles["report-path-glue"])}
     </code>
   )
   return (
@@ -395,7 +396,7 @@ function Anchor(props: AnchorProps): ReactElement {
       title={title}
       className={clsx(styles["report-file-link"], className)}
     >
-      {children}
+      {breakPathText(children, styles["report-path-glue"])}
     </RepositoryFileLinkTarget>
   )
 }

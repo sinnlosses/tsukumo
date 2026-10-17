@@ -135,6 +135,7 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "file-branch",
   "file-path-folder",
   "file-path-name",
+  "path-glue",
   "file-note",
   "file-note-empty",
   "with-gutter",

@@ -48,6 +48,9 @@
 - **サニタイザの許可を変えたときの目視には、疑似セッションの `report-meter` 場面（`test/fixture/fake-session.json`）で
   割合の帯（`stat-meter`）と数の棒（`cell-bar`）を撮る。** 例: `node scripts/capture/capture-view.ts --scene report-meter --size 1200x1400 --wait-for '[class*="stat-meter"]' --measure '[class*="cell-bar"]'`。
   場面は名前を指して起こすので、足しても名前を指さない既存の E2E の期待値は変わらない
+- **インラインの `kbd`・`samp`・コードと、`/` の後で折れる長いパスの目視には、`report-inline-code` 場面を撮る。**
+  押せるパスは作業ツリーの git 管理下のパスなので、`--reveal-at 30000` で書き上げ終えた画を撮る。
+  例: `node scripts/capture/capture-view.ts --scene report-inline-code --size 390x1500 --reveal-at 30000`
 
 **利用者に見える流れを1本ずつと、実ブラウザでしか確かめられないもの（寸法・入力・サーバとの往復）は E2E で守り、
 出し分けと DOM の細部は部品・フックの単体で守り、見た目（色・崩れ・間合い）は目視で確かめる。**

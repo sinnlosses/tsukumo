@@ -918,6 +918,73 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(opened).toEqual(["src/foo.ts"])
   })
 
+  it("押せるパスは `/` の直後にだけ折り返しの機会（wbr）を持ち、字は変わらず、押すと同じパスで開く", () => {
+    const opened: string[] = []
+    const wrap = withFiles(["src/a/b.ts"], (path) => opened.push(path))
+    const { container } = render(wrap(<Markdown text="見て `src/a/b.ts:3` を直した" />))
+
+    const button = typedElement(
+      container.querySelector('[role="button"]'),
+      HTMLElement,
+      "押せるパス",
+    )
+    expect(button.querySelectorAll("wbr")).toHaveLength(2)
+    expect(button.innerHTML).toContain("src/<wbr>a/<wbr>b.ts:3")
+    expect(button.textContent).toBe("src/a/b.ts:3")
+    fireEvent.click(button)
+    expect(opened).toEqual(["src/a/b.ts"])
+  })
+
+  it("押せるパスはハイフンの直後に結合子の span を持ち、字は変わらない", () => {
+    const wrap = withFiles(["src/report-notation.module.css"], () => {})
+    const { container } = render(
+      wrap(<Markdown text="見て `src/report-notation.module.css` を直した" />),
+    )
+
+    const button = typedElement(
+      container.querySelector('[role="button"]'),
+      HTMLElement,
+      "押せるパス",
+    )
+    const glues = button.querySelectorAll("span")
+    expect(glues).toHaveLength(1)
+    expect(glues[0]?.previousSibling?.textContent).toBe("report-")
+    expect(button.querySelectorAll("wbr")).toHaveLength(1)
+    expect(button.textContent).toBe("src/report-notation.module.css")
+  })
+
+  it("files の塊のパスもハイフンの直後に結合子の span を持ち、字は変わらない", () => {
+    const wrap = withFiles(["src/a-b/c-d.ts"], () => {})
+    const text = reportSectionsMarkdown([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "files",
+            items: [{ path: "src/a-b/c-d.ts", change: "modified", note: "" }],
+            title: "",
+            fold: "",
+            aside: "",
+          },
+        ],
+      },
+    ])
+    const { container } = render(wrap(<Markdown text={text} />))
+
+    const button = typedElement(
+      container.querySelector('[role="button"]'),
+      HTMLElement,
+      "押せるパス",
+    )
+    expect(button.textContent).toBe("c-d.ts")
+    const folder = container.querySelector("div[class*='file-folder']")
+    expect(folder?.textContent).toBe("src/a-b/")
+    const emptySpans = (root: Element | null | undefined) =>
+      [...(root?.querySelectorAll("span") ?? [])].filter((span) => span.childNodes.length === 0)
+    expect(emptySpans(button)).toHaveLength(1)
+    expect(emptySpans(folder)).toHaveLength(1)
+  })
+
   it("押せるパスは tabindex を持つ role=button の span で、Enter と Space で開き、ほかのキーでは開かない", () => {
     const opened: string[] = []
     const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))

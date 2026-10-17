@@ -7,7 +7,14 @@
 // `Markdown` の `components`（`REPORT_COMPONENTS`）は同じ参照を保つ必要があってモジュール定数なので、`Code` / `Pre` / `Anchor` へ props で渡せない。
 // 既定値は「何も一致しない・押しても何もしない」にしてあるので、Provider の無い場（テストの大半）でもそのまま描ける。
 
-import { createContext, useContext, type ReactElement, type ReactNode } from "react"
+import {
+  Children,
+  createContext,
+  Fragment,
+  useContext,
+  type ReactElement,
+  type ReactNode,
+} from "react"
 
 import { useSession } from "../../../../../stores/session.ts"
 import { isActivationKey } from "../hooks/activation-key.ts"
@@ -31,6 +38,26 @@ export function repositoryFilePath(
   }
   const withoutLine = candidate.replace(LINE_SUFFIX_PATTERN, "")
   return withoutLine !== candidate && files.has(withoutLine) ? withoutLine : undefined
+}
+
+/**
+ * パスの文字列で、折り返しの機会を `/` の直後（`<wbr>`）だけにする。
+ * ハイフンの直後には、`glueClassName` の空の span を置く（CSS が見えない結合子を生成して折れなくする）。
+ * 文字列でない子（強調など）はそのまま通す。表示の字は変わらない。
+ */
+export function breakPathText(children: ReactNode, glueClassName: string): ReactNode {
+  return Children.map(children, (child) => {
+    if (typeof child !== "string") {
+      return child
+    }
+    return child.split(/(?<=[/-])/).map((piece, index) => (
+      <Fragment key={index}>
+        {piece}
+        {piece.endsWith("/") && <wbr />}
+        {piece.endsWith("-") && <span className={glueClassName} />}
+      </Fragment>
+    ))
+  })
 }
 
 export type RepositoryFileLink = {
