@@ -90,7 +90,7 @@ export type ReportViolation =
   | { readonly kind: "unordered-options"; readonly count: number }
   /** 行のセルの数が `columns` と揃わない表がある。`count` は表の数。 */
   | { readonly kind: "ragged-table"; readonly count: number }
-  /** `series` の `values` の数が `labels` と揃わない `chart` の塊がある。`count` は塊の数。 */
+  /** `series` の `values` の数が `labels` と揃わない、または `arrow`・`slope` の `series` が2つでない `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "ragged-chart"; readonly count: number }
   /** 節が2つ以上あるのに見出しの無い節がある。`count` は見出しの無い節の数。 */
   | { readonly kind: "untitled-section"; readonly count: number }
@@ -317,7 +317,7 @@ function violationLine(violation: ReportViolation): string {
     case "ragged-table":
       return `行のセルの数が \`columns\` と揃わない表（\`matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
     case "ragged-chart":
-      return `\`series\` の \`values\` の数が \`labels\` と揃わない \`chart\` の塊が${violation.count}個ある。数を揃える`
+      return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\` の \`series\` が前と後の2つでない \`chart\` の塊が${violation.count}個ある。数を揃える`
     case "untitled-section":
       return `見出しの無い節が${violation.count}個ある。節が2つ以上なら全部に \`heading\` を付ける`
     case "markdown-notation":
@@ -544,10 +544,11 @@ function isRaggedTable(block: ReportBlock): boolean {
   }
 }
 
-/** 系列の値の数が labels の数と揃わない chart の塊か。 */
+/** 系列の値の数が labels の数と揃わない、または arrow・slope の系列が前と後の2つでない chart の塊か。 */
 function isRaggedChart(block: ReportBlock): boolean {
   return (
     block.kind === "chart" &&
-    block.series.some((series) => series.values.length !== block.labels.length)
+    (block.series.some((series) => series.values.length !== block.labels.length) ||
+      ((block.chartKind === "arrow" || block.chartKind === "slope") && block.series.length !== 2))
   )
 }

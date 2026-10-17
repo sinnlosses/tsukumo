@@ -50,16 +50,24 @@ declare global {
     readonly defaults: {
       color: string
       maintainAspectRatio: boolean
+      readonly font: { readonly family: string }
       readonly scale: {
-        readonly grid: { color: string }
+        readonly grid: { color: string; display: boolean }
         readonly border: { color: string }
       }
-      readonly plugins: { readonly colors: { enabled: boolean } }
+      readonly plugins: {
+        readonly colors: { enabled: boolean }
+        readonly legend: { display: boolean }
+      }
     }
-    /** `beforeUpdate` の `chart.config` は、`new Chart` に渡した config そのもの。 */
+    /**
+     * `beforeUpdate` の `chart.config` は、`new Chart` に渡した config そのもの。
+     */
     readonly register: (plugin: {
       readonly id: string
-      readonly beforeUpdate: (chart: {
+      readonly beforeLayout?: (chart: ChartInstance) => void
+      readonly afterDatasetsDraw?: (chart: ChartInstance) => void
+      readonly beforeUpdate?: (chart: {
         readonly config: {
           readonly type?: string
           readonly data?: {
@@ -73,6 +81,46 @@ declare global {
         }
       }) => void
     }) => void
+  }
+
+  /** プラグインの描画フックが受け取る `chart` のうち、読む分。 */
+  type ChartInstance = {
+    readonly ctx: CanvasRenderingContext2D
+    readonly config: { readonly type: string }
+    readonly data: {
+      readonly labels: readonly string[]
+      readonly datasets: readonly {
+        readonly label: string
+        readonly data: readonly unknown[]
+        readonly backgroundColor: unknown
+      }[]
+    }
+    readonly options: {
+      readonly indexAxis: string
+      readonly plugins: Readonly<Record<string, unknown>>
+      readonly layout: {
+        padding: {
+          readonly left: number
+          readonly right: number
+          readonly top: number
+          readonly bottom: number
+        }
+      }
+    }
+    readonly scales: Readonly<
+      Record<string, { readonly getPixelForValue: (value: number) => number }>
+    >
+    readonly isDatasetVisible: (index: number) => boolean
+    /** 棒・点は `x` `y`（値側の端の座標）、扇は `x` `y` が中心で `startAngle` `endAngle` `outerRadius` を持つ。 */
+    readonly getDatasetMeta: (index: number) => {
+      readonly data: readonly {
+        readonly x: number
+        readonly y: number
+        readonly startAngle: number
+        readonly endAngle: number
+        readonly outerRadius: number
+      }[]
+    }
   }
 }
 

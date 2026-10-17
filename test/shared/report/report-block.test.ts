@@ -206,6 +206,23 @@ describe("parseReportSections", () => {
     ])
   })
 
+  it("chart の chartKind は arrow と slope を受け、未知の種類は受けない", () => {
+    const chart = {
+      kind: "chart",
+      labels: ["架空の一"],
+      series: [
+        { name: "架空の前", values: [1] },
+        { name: "架空の後", values: [2] },
+      ],
+    }
+    const parsed = (chartKind: string) =>
+      parseReportSections([{ heading: "", blocks: [{ ...chart, chartKind }] }])
+
+    expect(parsed("arrow").sections[0]?.blocks).toHaveLength(1)
+    expect(parsed("slope").sections[0]?.blocks).toHaveLength(1)
+    expect(parsed("radar").sections[0]?.blocks ?? []).toHaveLength(0)
+  })
+
   describe("svg の塊", () => {
     const rect = { kind: "rect", x: 10, y: 10, width: 100, height: 40 }
     const line = { kind: "line", x1: 0, y1: 0, x2: 50, y2: 50 }

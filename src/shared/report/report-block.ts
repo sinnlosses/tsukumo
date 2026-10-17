@@ -381,10 +381,10 @@ const graphBlockSchema = z
     "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道でも段の名前が短ければ graph）。flowchart はこれで書く。1枚に1つの話を同じ抽象度で。どの辺にも向きと動詞のラベルを付ける。交差が出たら節点の並びか図の分け方を変える。群は囲みで言い色で言わない",
   )
 
-export const REPORT_CHART_KINDS = ["bar", "line", "pie"] as const
+export const REPORT_CHART_KINDS = ["bar", "line", "pie", "arrow", "slope"] as const
 
 const chartSeriesSchema = z.object({
-  name: inlineText.describe("凡例に出す系列名"),
+  name: inlineText.describe("線・棒の端に直接書く系列名"),
   values: z.array(z.number()).min(1),
 })
 
@@ -394,8 +394,10 @@ const chartBlockSchema = z
     title: inlineText.default("").describe("数と向きで主張を言う1文。評価語なし"),
     chartKind: z
       .enum(REPORT_CHART_KINDS)
-      .describe("bar は棒・line は折れ線・pie は円。pie は series の先頭だけを描く"),
-    labels: inlineText.array().min(1).describe("横軸・扇形の名前の並び"),
+      .describe(
+        "bar は棒・line は折れ線・pie は円（series の先頭だけを描く）。前後の差が主役なら arrow（項目ごとの前→後の矢印）、2時点の多項目は slope（項目ごとの2点の線）。arrow・slope は series を前と後の2つにし、labels を項目にする",
+      ),
+    labels: inlineText.array().min(1).describe("横軸・扇形の名前の並び（arrow・slope では項目）"),
     series: z
       .array(chartSeriesSchema)
       .min(1)

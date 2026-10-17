@@ -24,8 +24,9 @@ class FakeChart implements Instance {
   static readonly defaults = {
     color: "",
     maintainAspectRatio: true,
-    scale: { grid: { color: "" }, border: { color: "" } },
-    plugins: { colors: { enabled: true } },
+    font: { family: "" },
+    scale: { grid: { color: "", display: true }, border: { color: "" } },
+    plugins: { colors: { enabled: true }, legend: { display: true } },
   }
   static readonly register = vi.fn()
   readonly destroy = vi.fn()

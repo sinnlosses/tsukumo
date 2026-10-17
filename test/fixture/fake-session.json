@@ -1718,6 +1718,28 @@
                     "series": [{ "name": "架空系列A", "values": [50, 30, 20] }],
                     "horizontal": false,
                     "fold": ""
+                  },
+                  {
+                    "kind": "chart",
+                    "chartKind": "arrow",
+                    "labels": ["架空項目A", "架空項目B", "架空項目C"],
+                    "series": [
+                      { "name": "架空の前", "values": [12, 8, 20] },
+                      { "name": "架空の後", "values": [30, 5, 26] }
+                    ],
+                    "horizontal": false,
+                    "fold": ""
+                  },
+                  {
+                    "kind": "chart",
+                    "chartKind": "slope",
+                    "labels": ["架空店A", "架空店B", "架空店C", "架空店D"],
+                    "series": [
+                      { "name": "架空の前期", "values": [40, 42, 25, 10] },
+                      { "name": "架空の後期", "values": [55, 41, 20, 18] }
+                    ],
+                    "horizontal": false,
+                    "fold": ""
                   }
                 ]
               }

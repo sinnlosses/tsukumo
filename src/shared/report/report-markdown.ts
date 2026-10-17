@@ -342,13 +342,74 @@ type ChartConfig = {
   readonly type: string
   readonly data: {
     readonly labels: readonly string[]
-    readonly datasets: readonly { readonly label: string; readonly data: readonly number[] }[]
+    readonly datasets: readonly (
+      | { readonly label: string; readonly data: readonly number[] }
+      | {
+          readonly label: string
+          readonly data: readonly (readonly [number, number])[]
+          readonly barThickness: number
+        }
+    )[]
   }
-  readonly options: { readonly indexAxis: "y" } | Record<string, never>
+  readonly options:
+    | { readonly indexAxis: "y" }
+    | Record<string, never>
+    | { readonly indexAxis: "y"; readonly plugins: DirectLabelPlugins }
+    | {
+        readonly scales: { readonly y: { readonly display: false } }
+        readonly plugins: DirectLabelPlugins
+      }
 }
 
-/** `chart` の塊から Chart.js の設定を組む。色は書かない。`pie` は `series` の先頭だけを描く。 */
+type DirectLabelPlugins = {
+  readonly "tsukumo-direct-label": {
+    readonly mode: "arrow" | "slope"
+    readonly names: readonly string[]
+  }
+}
+
+const ARROW_BAR_THICKNESS = 4
+
+/**
+ * `chart` の塊から Chart.js の設定を組む。色は書かない。`pie` は `series` の先頭だけを描く。
+ * `arrow` は前→後を浮き棒1本ずつ、`slope` は項目ごとに前→後の線1本にして、描く側の plugin に系列名を渡す。
+ */
 function chartConfigOf(block: Extract<ReportBlock, { readonly kind: "chart" }>): ChartConfig {
+  if (block.chartKind === "arrow" || block.chartKind === "slope") {
+    const [before, after] = block.series
+    const names = [before?.name ?? "", after?.name ?? ""]
+    const pairAt = (index: number): readonly [number, number] => [
+      before?.values[index] ?? 0,
+      after?.values[index] ?? 0,
+    ]
+    const plugins = { "tsukumo-direct-label": { mode: block.chartKind, names } }
+    return block.chartKind === "arrow"
+      ? {
+          type: "bar",
+          data: {
+            labels: [...block.labels],
+            datasets: [
+              {
+                label: names.join(" → "),
+                data: block.labels.map((_, index) => pairAt(index)),
+                barThickness: ARROW_BAR_THICKNESS,
+              },
+            ],
+          },
+          options: { indexAxis: "y", plugins },
+        }
+      : {
+          type: "line",
+          data: {
+            labels: names,
+            datasets: block.labels.map((label, index) => ({
+              label,
+              data: [...pairAt(index)],
+            })),
+          },
+          options: { scales: { y: { display: false } }, plugins },
+        }
+  }
   const series = block.chartKind === "pie" ? block.series.slice(0, 1) : block.series
   return {
     type: block.chartKind,

@@ -189,7 +189,7 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 
 **コードの色付けは同梱のテーマのまま残す**（`highlight.js` の `github-dark`）。実測でページの中で
 いちばん情報量が多く、読めている。ただし **Chart.js と mermaid の色は `theme.css` のトークンの実効値を
-読んで渡す**（`markdown/renderer/chart.ts`・`mermaid-block.tsx`）。Chart.js は軸と格子に `--ink-quiet` / `--rule`、
+読んで渡す**（`markdown/renderer/chart.ts`・`mermaid-block.tsx`）。Chart.js は軸の字に `--ink-soft`・軸の線に `--rule`（格子線は引かず、凡例も出さない）、
 系列に `--chart-series-*`（内蔵の配色は止め、7本目以降は `--chart-series-other`）。mermaid は
 `theme: "base"` + `darkMode: true` に、トークンを hex に解いた `themeVariables`（地は `surface`・
 ノードは `surface-raised` を `surface` に重ねた色・字は `ink`・線は `ink-soft` を `surface` に重ねた色・

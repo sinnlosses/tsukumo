@@ -3,6 +3,7 @@
 // 描く config は読み手が持つ。
 
 import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
+import { directLabelPlugin } from "./chart-direct-label.ts"
 import { colorsForDataset, type ChartPalette } from "./chart-palette.ts"
 import { resolveColor } from "./theme-color.ts"
 import { loadVendorScript } from "./vendor-script.ts"
@@ -35,9 +36,11 @@ export function loadChart(element: HTMLElement): Promise<void> {
     // chart.js 4.5.0 以降の colors プラグインは「`defaults.borderColor` か `defaults.backgroundColor` が既定から動いていたら色を配らない」。
     // `borderColor` へ書くと系列の色が付かないまま（`undefined`）になり、棒も線も透明で描かれる（4.4.1 と 4.5.1 を並べて実測）。
     const rule = resolveColor(element, "--rule")
-    Chart.defaults.color = resolveColor(element, "--ink-quiet")
+    Chart.defaults.color = resolveColor(element, "--ink-soft")
     Chart.defaults.scale.grid.color = rule
     Chart.defaults.scale.border.color = rule
+    Chart.defaults.plugins.legend.display = false
+    Chart.defaults.scale.grid.display = false
     // アスペクト比を保つ既定だと、pie は入れ物の全幅を高さにも使おうとして縦に伸びすぎる。
     // `.chart-block` の高さ（CSS）に合わせるだけにする。
     Chart.defaults.maintainAspectRatio = false
@@ -59,6 +62,7 @@ function registerSeriesPlugin(palette: ChartPalette): void {
   if (!first) {
     return
   }
+  Chart.register(directLabelPlugin)
   Chart.register({
     id: "tsukumo-series",
     beforeUpdate: (chart) => {

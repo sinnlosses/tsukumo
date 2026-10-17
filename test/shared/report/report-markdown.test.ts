@@ -954,6 +954,71 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("chart の arrow は項目ごとの前→後を浮き棒に、slope は項目ごとの線にし、系列名を plugin に渡す", () => {
+    const series = [
+      { name: "架空の前", values: [1, 2] },
+      { name: "架空の後", values: [3, 0] },
+    ]
+    const plugins = { "tsukumo-direct-label": { names: ["架空の前", "架空の後"] } }
+    const fenceOf = (chartKind: "arrow" | "slope"): string =>
+      chartFenceOf({
+        kind: "chart",
+        title: "",
+        chartKind,
+        labels: ["架空A", "架空B"],
+        series,
+        horizontal: false,
+        fold: "",
+      })
+
+    expect(fenceOf("arrow")).toBe(
+      "```chart\n" +
+        JSON.stringify({
+          type: "bar",
+          data: {
+            labels: ["架空A", "架空B"],
+            datasets: [
+              {
+                label: "架空の前 → 架空の後",
+                data: [
+                  [1, 3],
+                  [2, 0],
+                ],
+                barThickness: 4,
+              },
+            ],
+          },
+          options: {
+            indexAxis: "y",
+            plugins: {
+              "tsukumo-direct-label": { mode: "arrow", ...plugins["tsukumo-direct-label"] },
+            },
+          },
+        }) +
+        "\n```",
+    )
+    expect(fenceOf("slope")).toBe(
+      "```chart\n" +
+        JSON.stringify({
+          type: "line",
+          data: {
+            labels: ["架空の前", "架空の後"],
+            datasets: [
+              { label: "架空A", data: [1, 3] },
+              { label: "架空B", data: [2, 0] },
+            ],
+          },
+          options: {
+            scales: { y: { display: false } },
+            plugins: {
+              "tsukumo-direct-label": { mode: "slope", ...plugins["tsukumo-direct-label"] },
+            },
+          },
+        }) +
+        "\n```",
+    )
+  })
+
   it("image は棚を引く src の img と1行の説明を組み、説明の < は逃がす。頭に図の通し番号が付く", () => {
     const image: ReportBlock = {
       kind: "image",

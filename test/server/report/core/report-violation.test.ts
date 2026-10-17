@@ -298,6 +298,27 @@ describe("reportViolations", () => {
       }
       expect(kinds(draft([chart]))).toEqual([])
     })
+
+    it.each(["arrow", "slope"] as const)(
+      "%s は series が前と後の2つでなければ違反",
+      (chartKind) => {
+        const chartOf = (seriesCount: number): ReportBlock => ({
+          kind: "chart",
+          title: "",
+          chartKind,
+          labels: ["架空A", "架空B"],
+          series: Array.from({ length: seriesCount }, (_, index) => ({
+            name: `架空系列${String(index)}`,
+            values: [1, 2],
+          })),
+          horizontal: false,
+          fold: "",
+        })
+        expect(kinds(draft([chartOf(1)]))).toEqual(["ragged-chart"])
+        expect(kinds(draft([chartOf(3)]))).toEqual(["ragged-chart"])
+        expect(kinds(draft([chartOf(2)]))).toEqual([])
+      },
+    )
   })
 
   describe("節が2つ以上なら全部に見出し", () => {
