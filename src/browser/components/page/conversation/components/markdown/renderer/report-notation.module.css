@@ -1572,6 +1572,22 @@
   height: 0;
   border-top: 3px solid var(--graph-legend-color);
 }
+.detail-block .report-graph-legend-shape {
+  box-sizing: border-box;
+  width: 1.25rem;
+  height: 0.75rem;
+  border: 1px solid var(--rule);
+}
+.detail-block .report-graph-legend-shape-box {
+  border-radius: 0.125rem;
+}
+.detail-block .report-graph-legend-shape-round {
+  border-radius: 999px;
+}
+.detail-block .report-graph-legend-shape-decision {
+  width: 0.75rem;
+  transform: rotate(45deg) scale(0.9);
+}
 .detail-block .report-graph-legend-added {
   --graph-legend-color: var(--state-ok);
 }

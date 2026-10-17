@@ -25,9 +25,16 @@ export type GraphSourceEdge = {
   readonly change: GraphChange
 }
 
+/** 囲み（`[群の名]` 〜 `[]`）。`nodes` は `GraphSourceReading.nodes` の添字。 */
+export type GraphSourceGroup = {
+  readonly name: string
+  readonly nodes: readonly number[]
+}
+
 export type GraphSourceReading = {
   readonly nodes: readonly GraphSourceNode[]
   readonly edges: readonly GraphSourceEdge[]
+  readonly groups: readonly GraphSourceGroup[]
   /** 読めなかった行の、1始まりの行番号（空行も数える）。 */
   readonly brokenLines: readonly number[]
 }
@@ -47,6 +54,8 @@ type ParsedName = {
 type ParsedLine =
   | { readonly kind: "blank" }
   | { readonly kind: "broken" }
+  | { readonly kind: "group-open"; readonly name: string }
+  | { readonly kind: "group-close" }
   | {
       readonly kind: "item"
       readonly names: readonly ParsedName[]
@@ -75,6 +84,20 @@ export function readGraphSource(source: string): GraphSourceReading {
     }
     return found < 0 ? nodes.length - 1 : found
   }
+  const groups: GraphSourceGroup[] = []
+  const groupOf = new Map<string, number>()
+  let open: { readonly name: string; readonly line: number; readonly members: number[] } | undefined
+  const closeGroup = (): void => {
+    if (open === undefined) {
+      return
+    }
+    if (open.members.length === 0) {
+      brokenLines.push(open.line)
+    } else {
+      groups.push({ name: open.name, nodes: open.members })
+    }
+    open = undefined
+  }
   source.split("\n").forEach((text, index) => {
     const line = parseLine(text)
     switch (line.kind) {
@@ -83,7 +106,42 @@ export function readGraphSource(source: string): GraphSourceReading {
       case "broken":
         brokenLines.push(index + 1)
         return
+      case "group-open":
+        if (open !== undefined) {
+          brokenLines.push(index + 1)
+          return
+        }
+        open = { name: line.name, line: index + 1, members: [] }
+        return
+      case "group-close":
+        if (open === undefined) {
+          brokenLines.push(index + 1)
+          return
+        }
+        closeGroup()
+        return
       case "item": {
+        const current = open
+        const owner = groups.length
+        if (
+          current !== undefined &&
+          line.names.some(({ name }) => (groupOf.get(name) ?? owner) !== owner)
+        ) {
+          brokenLines.push(index + 1)
+          return
+        }
+        const claim = (): void => {
+          if (current === undefined) {
+            return
+          }
+          for (const { name } of line.names) {
+            const at = nodes.findIndex((node) => node.name === name)
+            if (!current.members.includes(at)) {
+              current.members.push(at)
+              groupOf.set(name, owner)
+            }
+          }
+        }
         const [only] = line.names
         if (line.names.length === 1 && only !== undefined && line.change !== "unchanged") {
           const earlier = nodes.find((node) => node.name === only.name)?.change ?? "unchanged"
@@ -96,22 +154,39 @@ export function readGraphSource(source: string): GraphSourceReading {
           if (node !== undefined && node.change === "unchanged") {
             nodes[at] = { ...node, change: line.change }
           }
+          claim()
           return
         }
         const [from, to] = line.names.map(indexOf)
         if (from !== undefined && to !== undefined) {
           edges.push({ from, to, label: line.label, change: line.change })
         }
+        claim()
       }
     }
   })
-  return { nodes, edges, brokenLines }
+  if (open !== undefined) {
+    brokenLines.push(open.line)
+    if (open.members.length > 0) {
+      groups.push({ name: open.name, nodes: open.members })
+    }
+  }
+  return { nodes, edges, groups, brokenLines: brokenLines.toSorted((a, b) => a - b) }
 }
 
 function parseLine(text: string): ParsedLine {
   const trimmed = text.trim()
   if (trimmed === "") {
     return { kind: "blank" }
+  }
+  if (trimmed === "[]") {
+    return { kind: "group-close" }
+  }
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+    const name = trimmed.slice(1, -1).trim()
+    return name === "" || /[[\]:]/.test(name) || name.includes(ARROW)
+      ? { kind: "broken" }
+      : { kind: "group-open", name }
   }
   const mark = CHANGE_MARKS.find(([prefix]) => trimmed.startsWith(prefix))
   const change = mark?.[1] ?? "unchanged"

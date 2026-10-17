@@ -17,6 +17,22 @@ describe("checkMermaidSyntax", () => {
     ])
   })
 
+  it("graph が組む stadium（括弧を含むラベル）・subgraph・style の図は通る", async () => {
+    const graph = [
+      "flowchart LR",
+      '  n0(["@a (b) #quot;c#quot;"])',
+      '  subgraph g0["群"]',
+      '    n1["処理"]',
+      '    n2{"分岐"}',
+      "  end",
+      '  n0 -->|"a|b"| n1',
+      "  n1 --> n2",
+      "  style g0 fill:#222222,stroke:#555555,stroke-width:1px,stroke-dasharray:5 4",
+    ].join("\n")
+
+    expect(await checkMermaidSyntax([graph])).toEqual([])
+  })
+
   it("全部通れば空を返す", async () => {
     expect(await checkMermaidSyntax([VALID])).toEqual([])
   })

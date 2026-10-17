@@ -142,7 +142,8 @@ function resolveThemeVariables(node: HTMLElement): Readonly<Record<string, strin
     primaryBorderColor: hex("--rule"),
     lineColor: hex("--ink-soft", "--surface"),
     arrowheadColor: hex("--ink-soft", "--surface"),
-    clusterBkg: hex("--ground"),
+    clusterBkg: hex("--surface-raised", "--surface"),
+    clusterBorder: hex("--rule-quiet", "--surface"),
     edgeLabelBackground: hex("--surface"),
     noteBkgColor: hex("--surface-accent"),
     noteTextColor: hex("--ink"),
@@ -154,7 +155,9 @@ function resolveThemeVariables(node: HTMLElement): Readonly<Record<string, strin
  * ソースの中の `var(--…)` を hex にする。mermaid の `classDef` / `linkStyle` は色の値を hex でしか受け取れない。
  */
 function resolveTokens(code: string, node: HTMLElement): string {
-  return code.replace(/var\((--[\w-]+)\)/g, (_, property: string) => resolveHex(node, property))
+  return code.replace(/var\((--[\w-]+)\)/g, (_, property: string) =>
+    resolveHex(node, property, "--surface"),
+  )
 }
 
 function syncTheme(themeVariables: Readonly<Record<string, string | boolean>>): void {

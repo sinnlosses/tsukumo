@@ -195,9 +195,15 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   図を2枚書く手間を無くした）。行頭の `+ `（足した）・`- `（消した）・`~ `（変えた）が印で、辺の行に付ければその辺に、
   節点だけの行に付ければその節点に掛かる（辺の印は端の節点に掛けない）。印の無い行は変わらないもの。
   色は書き手が指定せず、足した＝`--state-ok`・消した＝`--state-ng`（辺と枠は破線）・変えた＝`--state-warn` を
-  `classDef` / `linkStyle` に `var(--…)` で書き、`MermaidBlock` が描く前に hex へ解く。印が1つでもある図にだけ、
-  図の下に「足した / 消した / 変えた」の凡例を出す。前だけ・後だけに切り替える部品は付けない。
-  同じ節点に違う印を節点だけの行で付けると `broken-graph` で差し戻す（文面に何個目の塊の何行目かを添える）
+  `classDef` / `linkStyle` に `var(--…)` で書き、`MermaidBlock` が描く前に hex へ解く。前だけ・後だけに切り替える部品は付けない。
+  同じ節点に違う印を節点だけの行で付けると `broken-graph` で差し戻す（文面に何個目の塊の何行目かを添える）。
+  **群は囲みで見せ、色では言わない**（`docs/research/report-block-craft.md` 1章。見本は
+  `docs/history/mockup/report-excellence-2026-10-17/values.html`）。`[群の名]` だけの行で囲みを始め、`[]` だけの行で閉じ、
+  間の行の節点がその群で、1階層。入れ子・閉じ忘れ・開いていない閉じ・空の群・別の群に入った節点を別の群で名指す行は
+  `broken-graph` で差し戻す。mermaid の `subgraph g<k>["群の名"]` に組み、地は `--surface-raised`・枠は破線の `--rule-quiet`
+  （`themeVariables` の `clusterBkg`・`clusterBorder` と、群ごとの `style`）。始点・終点の節点は stadium（`([…])`）に組む。
+  **凡例は図の下に自動で出す**。形（始点・終点＝「入口・出口」/ 処理 / 分岐）は図に2種以上出たときだけ、印は `+ - ~` が
+  1つでもあるときだけで、両方あれば同じ行に形・印の順で並べる。色は足さない。囲みは名が図に出るので凡例に載せない
 - **座標で見せる図は `svg` の塊で書く**（`docs/architecture/adr/0028-report-block-priority.md`「SVG（論点3）」）。
   `title`・`width`・`height`〔viewBox の大きさ〕・`shapes`〔`rect`・`line`・`text` の判別可能な合併〕・`fold` を受け、
   SVG の文字列は書き手が書かず、描く側が図形から組む。色は書けず、`chart` と同じくテーマの色を当てる。

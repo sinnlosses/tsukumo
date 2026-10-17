@@ -6,7 +6,7 @@
 
 import { countBy } from "remeda"
 
-import { readGraphSource, type GraphChange } from "./graph-source.ts"
+import { readGraphSource, type GraphChange, type GraphNodeShape } from "./graph-source.ts"
 import {
   REPORT_CELL_STATUSES,
   REPORT_MATRIX_STATUSES,
@@ -1073,22 +1073,36 @@ function withSequenceAutonumber(source: string): string {
  * 読めない行は呼び出し側が先に差し戻す前提で、ここでは飛ばす。
  */
 function graphSource(block: ReportGraph): string {
-  const { nodes, edges } = readGraphSource(block.source)
+  const { nodes, edges, groups } = readGraphSource(block.source)
   const mermaidId = (index: number): string => `n${String(index)}`
   const quoted = (label: string): string =>
     `"${label.replaceAll('"', "#quot;").replaceAll("`", "#96;")}"`
-  const nodeLines = nodes.map((node, index) => {
+  const nodeLine = (index: number, indent: string): string => {
+    const node = nodes[index]
+    if (node === undefined) {
+      return ""
+    }
     const label = quoted(node.name)
     const id = mermaidId(index)
     switch (node.shape) {
       case "box":
-        return `  ${id}[${label}]`
+        return `${indent}${id}[${label}]`
       case "round":
-        return `  ${id}(${label})`
+        return `${indent}${id}([${label}])`
       case "decision":
-        return `  ${id}{${label}}`
+        return `${indent}${id}{${label}}`
     }
-  })
+  }
+  const grouped = new Set(groups.flatMap((group) => group.nodes))
+  const nodeLines = [
+    ...nodes.flatMap((_, index) => (grouped.has(index) ? [] : [nodeLine(index, "  ")])),
+    ...groups.flatMap((group, index) => [
+      `  subgraph g${String(index)}[${quoted(group.name)}]`,
+      ...group.nodes.map((at) => nodeLine(at, "    ")),
+      "  end",
+    ]),
+  ]
+  const groupStyleLines = groups.map((_, index) => `  style g${String(index)} ${GRAPH_GROUP_STYLE}`)
   const edgeLines = edges.map((edge) => {
     const arrow = edge.label === "" ? "-->" : `-->|${quoted(edge.label)}|`
     return `  ${mermaidId(edge.from)} ${arrow} ${mermaidId(edge.to)}`
@@ -1110,6 +1124,7 @@ function graphSource(block: ReportGraph): string {
     `flowchart ${block.direction}`,
     ...nodeLines,
     ...edgeLines,
+    ...groupStyleLines,
     ...classDefLines,
     ...classLines,
     ...linkStyleLines,
@@ -1128,6 +1143,15 @@ const GRAPH_CHANGES = [
   readonly dashed: boolean
 }[]
 
+const GRAPH_GROUP_STYLE =
+  "fill:var(--surface-raised),stroke:var(--rule-quiet),stroke-width:1px,stroke-dasharray:5 4"
+
+const GRAPH_SHAPES = [
+  { shape: "round", label: "入口・出口" },
+  { shape: "box", label: "処理" },
+  { shape: "decision", label: "分岐" },
+] as const satisfies readonly { readonly shape: GraphNodeShape; readonly label: string }[]
+
 function graphStroke(color: string, dashed: boolean, width: number): string {
   const dash = dashed ? ",stroke-dasharray:5 4" : ""
   return `stroke:var(${color}),stroke-width:${String(width)}px${dash}`
@@ -1135,14 +1159,22 @@ function graphStroke(color: string, dashed: boolean, width: number): string {
 
 function graphLegendMarkdown(block: ReportGraph): string {
   const { nodes, edges } = readGraphSource(block.source)
-  if ([...nodes, ...edges].every(({ change }) => change === "unchanged")) {
-    return ""
-  }
-  const items = GRAPH_CHANGES.map(
-    ({ change, label }) =>
-      `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-${change}" aria-hidden="true"></span>${label}</span>`,
-  ).join("")
-  return `<div class="graph-legend">${items}</div>`
+  const shapes = GRAPH_SHAPES.filter(({ shape }) => nodes.some((node) => node.shape === shape))
+  const shapeItems = shapes.length < 2 ? [] : shapes
+  const changeItems = [...nodes, ...edges].every(({ change }) => change === "unchanged")
+    ? []
+    : GRAPH_CHANGES
+  const items = [
+    ...shapeItems.map(
+      ({ shape, label }) =>
+        `<span class="graph-legend-item"><span class="graph-legend-shape graph-legend-shape-${shape}" aria-hidden="true"></span>${label}</span>`,
+    ),
+    ...changeItems.map(
+      ({ change, label }) =>
+        `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-${change}" aria-hidden="true"></span>${label}</span>`,
+    ),
+  ]
+  return items.length === 0 ? "" : `<div class="graph-legend">${items.join("")}</div>`
 }
 
 /**

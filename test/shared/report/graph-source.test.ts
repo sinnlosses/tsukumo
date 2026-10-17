@@ -20,7 +20,43 @@ describe("readGraphSource", () => {
         { from: 1, to: 2, label: "", change: "unchanged" },
         { from: 2, to: 3, label: "yes", change: "unchanged" },
       ],
+      groups: [],
       brokenLines: [],
+    })
+  })
+
+  describe("囲み", () => {
+    it("[群の名] 〜 [] の間の行で名指した節点（辺は両端）を群に入れる", () => {
+      const reading = readGraphSource("X\n[架空の群]\nA\nB -> C\n[]\nC -> D")
+
+      expect(reading.nodes.map(({ name }) => name)).toEqual(["X", "A", "B", "C", "D"])
+      expect(reading.groups).toEqual([{ name: "架空の群", nodes: [1, 2, 3] }])
+      expect(reading.brokenLines).toEqual([])
+    })
+
+    it("群は2つ並べられる", () => {
+      const reading = readGraphSource("[甲]\nA\n[]\n[乙]\nB\n[]")
+
+      expect(reading.groups).toEqual([
+        { name: "甲", nodes: [0] },
+        { name: "乙", nodes: [1] },
+      ])
+      expect(reading.brokenLines).toEqual([])
+    })
+
+    it.each([
+      ["入れ子", "[甲]\n[乙]\nA\n[]\n[]", [2, 5]],
+      ["閉じ忘れ", "[甲]\nA", [1]],
+      ["開いていない閉じ", "A\n[]", [2]],
+      ["空の群", "[甲]\n[]", [1]],
+      ["同じ節点が2群", "[甲]\nA\n[]\n[乙]\nA\n[]", [4, 5]],
+      ["名が空・記号入り", "[ ]\n[a:b]\n[a[b]]\n[a -> b]", [1, 2, 3, 4]],
+    ])("%s は壊れた行にする", (_, source, broken) => {
+      expect(readGraphSource(source).brokenLines).toEqual(broken)
+    })
+
+    it("閉じ忘れの群は、中に節点があれば群として読む", () => {
+      expect(readGraphSource("[甲]\nA").groups).toEqual([{ name: "甲", nodes: [0] }])
     })
   })
 

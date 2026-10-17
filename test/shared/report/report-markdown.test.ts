@@ -29,6 +29,19 @@ const figureCaptioned = (body: string, title = "", ordinal = 1, fit = true): str
 /** 図の包み（本体が Markdown のフェンスで、空行で区切る）。 */
 const fencedFigureCaptioned = (body: string, title = "", ordinal = 1): string =>
   `<div class="captioned">\n\n${body}\n\n${captionRow("図", ordinal, title)}\n\n</div>`
+const GRAPH_SHAPE_LEGEND =
+  '<div class="graph-legend">' +
+  [
+    ["round", "入口・出口"],
+    ["box", "処理"],
+    ["decision", "分岐"],
+  ]
+    .map(
+      ([shape, label]) =>
+        `<span class="graph-legend-item"><span class="graph-legend-shape graph-legend-shape-${shape}" aria-hidden="true"></span>${label}</span>`,
+    )
+    .join("") +
+  "</div>"
 const statsCaptioned = (body: string, ordinal = 1): string =>
   figureCaptioned(body, "", ordinal, false)
 /** 図の包みから、本体のフェンスだけを取り出す。 */
@@ -766,14 +779,74 @@ describe("reportSectionsMarkdown", () => {
           "```mermaid",
           "flowchart LR",
           '  n0["@a (b) #quot;c#quot; #96;d#96;"]',
-          '  n1("架空の丸")',
+          '  n1(["架空の丸"])',
           '  n2{"架空の分岐"}',
           "  n0 --> n1",
           '  n1 -->|"a|b"| n2',
           "```",
+          "",
+          GRAPH_SHAPE_LEGEND,
         ].join("\n"),
         "架空の図",
       ),
+    )
+  })
+
+  it("graph の囲みを subgraph にして、群の外の節点を先に宣言し、群ごとに破線の枠の style を足す", () => {
+    const markdown = markdownOf({
+      kind: "graph",
+      title: "",
+      direction: "LR",
+      source: "A -> B\n[架空の群]\nB -> C\n[]\nD",
+      fold: "",
+    })
+
+    expect(markdown).toContain(
+      [
+        "flowchart LR",
+        '  n0["A"]',
+        '  n3["D"]',
+        '  subgraph g0["架空の群"]',
+        '    n1["B"]',
+        '    n2["C"]',
+        "  end",
+        "  n0 --> n1",
+        "  n1 --> n2",
+        "  style g0 fill:var(--surface-raised),stroke:var(--rule-quiet),stroke-width:1px,stroke-dasharray:5 4",
+        "```",
+      ].join("\n"),
+    )
+    expect(markdown).not.toContain("graph-legend")
+  })
+
+  it.each([
+    ["箱だけ", "A -> B", []],
+    ["箱と角丸", "(A) -> B", ["round", "box"]],
+    ["群があっても形が1種", "[群]\nA -> B\n[]", []],
+    ["3種", "(A) -> B\nB -> {C}", ["round", "box", "decision"]],
+  ])(
+    "graph の形の凡例は形が2種以上のときだけ、出た形を出す順で並べる（%s）",
+    (_, source, shapes) => {
+      const markdown = markdownOf({ kind: "graph", title: "", direction: "LR", source, fold: "" })
+
+      expect([...markdown.matchAll(/graph-legend-shape-(\w+)"/g)].map((match) => match[1])).toEqual(
+        shapes,
+      )
+    },
+  )
+
+  it("graph の形の凡例は印の凡例と同じ行に、形を先に並べる", () => {
+    const markdown = markdownOf({
+      kind: "graph",
+      title: "",
+      direction: "LR",
+      source: "(A) -> B\n+ B -> C",
+      fold: "",
+    })
+
+    expect(markdown.match(/<div class="graph-legend">/g)).toHaveLength(1)
+    expect(markdown.indexOf("graph-legend-shape-round")).toBeLessThan(
+      markdown.indexOf("graph-legend-added"),
     )
   })
 

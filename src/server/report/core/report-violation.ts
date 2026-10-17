@@ -342,7 +342,7 @@ function violationLine(violation: ReportViolation): string {
     case "broken-svg":
       return `\`svg\` の図形が \`width\` × \`height\` の外に出ている（${svgFaultPositions(violation.faults)}）。座標か大きさを直す`
     case "broken-graph":
-      return `\`graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）`
+      return `\`graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）。囲みは \`[群の名]\` 〜 \`[]\` の1階層で、入れ子と閉じ忘れは読めない`
     case "long-first-sentence":
       return `\`conclusion\` の1文目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1文目を短くし、補足は2文目か \`sections\` へ移す`
     case "bad-heading":

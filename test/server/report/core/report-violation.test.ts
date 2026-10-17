@@ -398,6 +398,25 @@ describe("reportViolations", () => {
       ).toEqual([{ kind: "unknown-mermaid", count: 1 }])
     })
 
+    it("graph の囲みの入れ子は broken-graph にし、文面に囲みの書き方を添える", () => {
+      const violations = reportViolations(
+        draft([
+          {
+            kind: "graph",
+            title: "",
+            direction: "TD",
+            source: "[甲]\n[乙]\nA\n[]",
+            fold: "",
+          },
+        ]),
+      )
+
+      expect(violations).toEqual([
+        { kind: "broken-graph", count: 1, faults: [{ block: 1, line: 2 }] },
+      ])
+      expect(reportRejectionText(violations)).toContain("[群の名]")
+    })
+
     it("graph の source に読めない行があれば broken-graph にし、位置だけで書き手の行は持たない", () => {
       const graph = (source: string): ReportBlock => ({
         kind: "graph",
