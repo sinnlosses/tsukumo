@@ -1,4 +1,4 @@
-// ワークフローの設定コマンド（`tw config --schema`・`tw config`・`tw config set`）の出力を、画面に見せる形へ畳む。
+// ワークフローの設定コマンド（`tw config --schema`・`tw config --json`・`tw config set`）の出力を、画面に見せる形へ畳む。
 // 欄の名前・値の語彙・既定は schema が言うものだけを使い、ここには書かない。
 
 import { z } from "zod"
@@ -41,6 +41,13 @@ export type WorkflowSettingPlace = {
 const DEFAULT_CONFIG_PATH = ".tw/config.toml"
 
 const EXIT_CONFIG_MISSING = 6
+const EXIT_CONFIG_INVALID = 3
+const EXIT_USAGE = 2
+
+const configOutputSchema = z.object({
+  config: z.string(),
+  keys: z.array(z.object({ key: z.string(), value: z.unknown() })),
+})
 
 const stepsEntrySchema = z.object({
   key: z.string(),
@@ -102,27 +109,33 @@ function parseConfigSchema(
   if (outcome.exitCode !== 0) {
     return undefined
   }
+  return parseJsonAs(configSchemaSchema, outcome.stdout)
+}
+
+function stepsOf(raw: unknown, fallback: readonly string[]): readonly string[] {
+  const parsed = z.array(z.string()).safeParse(raw)
+  return parsed.success ? parsed.data : fallback
+}
+
+function parseJsonAs<T>(schema: z.ZodType<T>, text: string): T | undefined {
   let json: unknown
   try {
-    json = JSON.parse(outcome.stdout)
+    json = JSON.parse(text)
   } catch {
     return undefined
   }
-  const parsed = configSchemaSchema.safeParse(json)
+  const parsed = schema.safeParse(json)
   return parsed.success ? parsed.data : undefined
 }
 
-/** `steps` の今の値は1行の JSON の文字列の配列。読めなければ既定。 */
-function stepsOf(raw: string | undefined, fallback: readonly string[]): readonly string[] {
-  if (raw === undefined) {
-    return fallback
+function exitReasonOf(exitCode: number): string {
+  if (exitCode === EXIT_CONFIG_INVALID) {
+    return "設定ファイルが不正で、tw が読めない"
   }
-  try {
-    const parsed = z.array(z.string()).safeParse(JSON.parse(raw))
-    return parsed.success ? parsed.data : fallback
-  } catch {
-    return fallback
+  if (exitCode === EXIT_USAGE) {
+    return "tw が config --json を知らない古い版"
   }
+  return `終了コード ${String(exitCode)}`
 }
 
 function foldConfig(
@@ -136,27 +149,22 @@ function foldConfig(
   if (outcome.exitCode === EXIT_CONFIG_MISSING) {
     return unavailable(place, "config-missing", "")
   }
-  const rows = outcome.stdout
-    .split("\n")
-    .filter((line) => line !== "")
-    .map((line) => line.split("\t"))
-  const configPath = rows.find((row) => row[0] === "CONFIG")?.[1]
-  if (outcome.exitCode !== 0 || configPath === undefined) {
-    return unavailable(place, "config-unreadable", reasonOf(outcome))
+  if (outcome.exitCode !== 0) {
+    return unavailable(place, "config-unreadable", exitReasonOf(outcome.exitCode))
   }
-  const values = new Map(
-    rows.flatMap(([key, value]) =>
-      key === undefined || value === undefined ? [] : [[key, value] as const],
-    ),
-  )
+  const config = parseJsonAs(configOutputSchema, outcome.stdout)
+  if (config === undefined) {
+    return unavailable(place, "config-unreadable", "tw config --json の出力が JSON として読めない")
+  }
+  const values = new Map(config.keys.map((entry) => [entry.key, entry.value] as const))
   return {
     kind: "available",
-    repository: repositoryOf(place, configPath),
+    repository: repositoryOf(place, config.config),
     fields: schema.keys.map((entry) => fieldOf(entry, values.get(entry.key))),
   }
 }
 
-function fieldOf(entry: SchemaEntry, raw: string | undefined): WorkflowSettingField {
+function fieldOf(entry: SchemaEntry, raw: unknown): WorkflowSettingField {
   return {
     kind: "steps",
     key: entry.key,

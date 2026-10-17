@@ -40,7 +40,7 @@ export type WorkflowSettingUnavailableReason =
 
 /**
  * ワークフローの設定の面に出すもの。
- * `unavailable` の `detail` は、`tw-missing` なら探した場所、`config-unreadable` なら `tw` が言った理由の1行で、ほかは空。
+ * `unavailable` の `detail` は、`tw-missing` なら探した場所、`config-unreadable` なら終了コードの意味か、出力を読めなかったことを言う1行で、ほかは空。
  */
 export type WorkflowSettingView =
   | {

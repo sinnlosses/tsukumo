@@ -52,11 +52,17 @@ const SCHEMA_1 = {
   ],
 }
 
-const CONFIG_LINES = [
-  "CONFIG\t.tw/config.toml",
-  "verify\t架空の検証\tconfig",
-  'steps\t["架空:二つ目"]\tconfig',
-].join("\n")
+function configJson(keys: readonly { key: string; value: unknown }[]): string {
+  return JSON.stringify({
+    config: ".tw/config.toml",
+    keys: keys.map((entry) => ({ ...entry, source: "config" })),
+  })
+}
+
+const CONFIG_JSON = configJson([
+  { key: "verify", value: "架空の検証" },
+  { key: "steps", value: ["架空:二つ目"] },
+])
 
 function ran(exitCode: number, stdout: string, stderr = ""): TwOutcome {
   return { kind: "ran", exitCode, stdout, stderr }
@@ -69,7 +75,7 @@ function portOf(
   return {
     sets,
     schema: () => Promise.resolve(outcomes.schema ?? ran(0, JSON.stringify(SCHEMA))),
-    config: () => Promise.resolve(outcomes.config ?? ran(0, CONFIG_LINES)),
+    config: () => Promise.resolve(outcomes.config ?? ran(0, CONFIG_JSON)),
     set: (key, value) => {
       sets.push([key, value])
       return Promise.resolve(outcomes.set ?? ran(0, `SET\t${key}\t${value}`))
@@ -121,24 +127,43 @@ describe("readWorkflowSetting", () => {
     expect(view).toMatchObject({ kind: "unavailable", reason: "config-missing" })
   })
 
-  it("tw config がほかの理由で失敗すれば config-unreadable で、stderr の1行目を添える", async () => {
-    const view = await readWorkflowSetting(
-      portOf({ config: ran(3, "", "\n.tw/config.toml に flow が残っている\n2行目\n") }),
-      PLACE,
+  it("tw config が失敗すれば config-unreadable で、理由は stderr でなく終了コードの意味で言う", async () => {
+    const exitCodes = [3, 2, 1]
+
+    const details = await Promise.all(
+      exitCodes.map(async (exitCode) => {
+        const view = await readWorkflowSetting(
+          portOf({ config: ran(exitCode, "", "stderr の文は使わない\n") }),
+          PLACE,
+        )
+        return view.kind === "unavailable" ? [view.reason, view.detail] : view.kind
+      }),
     )
 
-    expect(view).toEqual({
-      kind: "unavailable",
-      repository: REPOSITORY,
-      reason: "config-unreadable",
-      detail: ".tw/config.toml に flow が残っている",
-    })
+    expect(details).toEqual([
+      ["config-unreadable", "設定ファイルが不正で、tw が読めない"],
+      ["config-unreadable", "tw が config --json を知らない古い版"],
+      ["config-unreadable", "終了コード 1"],
+    ])
   })
 
-  it("読めれば、steps の欄を config の値の列の JSON の配列で描く", async () => {
+  it("終了コード0でも出力が JSON として読めなければ config-unreadable", async () => {
+    const outputs = ["JSON でない", JSON.stringify({ keys: [] })]
+
+    const reasons = await Promise.all(
+      outputs.map(async (config) => {
+        const view = await readWorkflowSetting(portOf({ config: ran(0, config) }), PLACE)
+        return view.kind === "unavailable" ? view.reason : view.kind
+      }),
+    )
+
+    expect(reasons).toEqual(["config-unreadable", "config-unreadable"])
+  })
+
+  it("読めれば、steps の欄を config の値の配列で描く", async () => {
     const view = await readWorkflowSetting(
       portOf({
-        config: ran(0, 'CONFIG\t.tw/config.toml\nsteps\t["架空:二つ目","架空:消えた"]\tconfig'),
+        config: ran(0, configJson([{ key: "steps", value: ["架空:二つ目", "架空:消えた"] }])),
       }),
       PLACE,
     )
@@ -159,11 +184,11 @@ describe("readWorkflowSetting", () => {
     })
   })
 
-  it("steps の値が config に無い・JSON として読めなければ default を使う", async () => {
-    const lines = ["CONFIG\t.tw/config.toml", "CONFIG\t.tw/config.toml\nsteps\t壊れた\tconfig"]
+  it("steps の値が config に無い・文字列の配列でなければ default を使う", async () => {
+    const outputs = [configJson([]), configJson([{ key: "steps", value: "壊れた" }])]
 
     const currents = await Promise.all(
-      lines.map(async (config) => {
+      outputs.map(async (config) => {
         const view = await readWorkflowSetting(portOf({ config: ran(0, config) }), PLACE)
         return view.kind === "available" ? view.fields[0]?.current : undefined
       }),
