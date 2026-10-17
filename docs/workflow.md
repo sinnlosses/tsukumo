@@ -32,6 +32,16 @@
   流してよい回数の上限）の内に収め、最後の段で `tw verify` を通す分の1回を残す。過去の測定では、
   方式ごとに `check --full` を流して上限を使い切り、混ぜ方の測定が終わらず、最後の `tw verify` が
   E2E の段で拒まれて、受け入れで流し直したことがあった。
+- **描画を変えるタスクは、DOM に足す class・属性が、記法の語彙の検査と E2E の DOM の期待値にどう響くかを
+  計画の段で先に確かめ、期待値の更新（`pnpm run test:e2e:update`）を1回にまとめる。**
+  語彙の検査は `test/server/report/core/report-notation.test.ts`、期待値は `test/e2e/expected/`。
+  DOM に残る class は CSS Modules のハッシュ名で選べず、class の置き換えは `div`・`span`・`ol`・`li`
+  にだけ掛かって svg の要素の class はハッシュ名にならない。印は2つに分ける。
+  選ぶためだけの印（CSS の規則を持たない印）は、語彙（`REPORT_NOTATION_NAMES`）に足すと
+  「`.report-<名前>` の CSS まで届くか」の検査に落ち、足さなければハッシュ名にならない素の class
+  として DOM に残るので、属性にする（`data-reveal-caption` と同じ）。見た目を付ける印は、語彙と
+  `.report-<名前>` の CSS を一緒に足す。属性を足すと期待値のファイルが動き、更新と `tw verify` の
+  打ち直しが E2E 全件の上限（`RUN_LIMIT`）に響く。
 - **spec の出典**は `docs/requirements.md` と各タスクの本文（`task show GH-<n>`。GitHub の Issue は
   その写しで、正は Beads）。2026-09-27 より前に閉じたタスクの本文は、git の履歴の `develop/task/` と
   `docs/history/tasks.md` にある。**standards の出典**は `CLAUDE.md` ＋
