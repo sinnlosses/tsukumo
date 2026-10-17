@@ -7,9 +7,15 @@
 .screen-nav-session-tag {
   position: relative;
   display: flex;
-  flex: none;
+  flex: 0 1 auto;
   align-items: baseline;
   gap: 0.5rem;
+  min-width: 0;
+}
+.screen-nav-session-tag-button,
+.screen-nav-session-tag-dash,
+.screen-nav-room-note {
+  flex: none;
 }
 /* 押せるのは短縮IDだけ。ふだんは枠も地も無く字だけに見せ、ホバー・開いているときに枠と地で押せることを示す（色だけで伝えない）。 */
 .screen-nav-session-tag-button {

@@ -24,7 +24,8 @@
 /* 名乗り（顔と部屋の名前）。帯の要素どうしの間（20px）より詰めて1つの塊に見せる。 */
 .screen-nav-identity {
   display: flex;
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
   align-items: center;
   gap: 12px;
 }
