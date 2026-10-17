@@ -247,9 +247,11 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 | 見出し / 一文とインラインコードの字    | `ink-bright` / `ink`                                         |
 | 見出しと一文の中のインラインコードの地 | `report-code-surface`                                        |
 
-**レポートの字の色は `ink-bright`・`ink`・`ink-soft`・`ink-quiet` の4つだけ**（2026-10-17）。`ink-bright` は
+**レポートの字の色は `ink-bright`・`ink`・`ink-soft`・`ink-quiet` の4段と、色で意味を運ぶ印の色だけ**（2026-10-17。
+印の色は `state-*`・`accent`・`report-*`・`ground`）。`ink-bright` は
 拾う字（見出し・太字・`stats` の数）で、固定の `#f7f6f8`（`surface` 上で約 15:1）。見出しが本文より暗く、
-段が3つに結論部の固定色3つを足して実質6つあった状態を、4つに畳んだ。
+段が3つに結論部の固定色3つを足して実質6つあった状態を、4段に畳んだ。字を生の色や `color-mix` で作らない
+（`test/architecture/report-color.test.ts` が `report-notation.module.css` の `color` を検査する）。
 
 **見本と揃えなかったもの**は書体（見本の丸ゴシック・IBM Plex Mono。`--font-sans` / `--font-mono` のまま）と、
 タスクID の要素（見本の `<a href="#">` ではなくモーダルを開く `<button>`）。
@@ -3474,7 +3476,9 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
 - 表は左揃えで本文の左端に揃え（題つきの包み `.report-captioned-fit` も `margin-inline: auto` を持たない）、
   1列目の左と最終列の右の余白は 0。行罫は `rule-soft`、見出し行の下だけ `rule`。6行以上の表は5行ごとに 6px の隙間を入れる
 - 枠を持つ塊（`fold` の `<details>`・合図の行）の内側は塊のあきを使わず、それぞれの padding で決める
-- 塊を足すときは上下の margin に `--report-block-gap`（題つきなら `--report-figure-gap`）を書き、固定の値を書かない
+- 塊を足すときは上下の margin に `--report-block-gap`（題つきなら `--report-figure-gap`）を書き、固定の値を書かない。
+  器を持たない塊（引用の中の段落）は既定の 1em（15px）が外へ抜けてあきを崩すので、先頭・末尾の margin を 0 にする
+- 本文の隣り合う塊のあきが 13px の倍数であることは E2E（`report-spacing`）が実ブラウザで測る
 
 #### 場面ごとのキャラクターの振る舞い
 

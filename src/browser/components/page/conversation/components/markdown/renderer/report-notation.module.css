@@ -165,7 +165,7 @@
 .detail-block .report-list-text {
   grid-column: 3;
   min-width: 0;
-  color: color-mix(in srgb, var(--ink) 90%, transparent);
+  color: var(--ink);
   font-size: var(--font-subheading);
   line-height: 1.85;
   overflow-wrap: anywhere;
@@ -682,7 +682,7 @@
 }
 .detail-block .report-image-missing-reason {
   font-size: var(--font-label);
-  color: color-mix(in srgb, var(--ink-quiet), transparent 20%);
+  color: var(--ink-quiet);
 }
 /* 触ったファイルの一覧（`report` の `files` の塊から tsukumo が組む）。
    1行に1ファイルで種別・パス・注記を列に揃え（行を subgrid にする）、末尾に種別ごとの合計の札を中央に並べる。
@@ -738,7 +738,7 @@
   font-family: var(--font-code);
   font-size: 13px;
   line-height: 1.5;
-  color: color-mix(in srgb, var(--ink-quiet), transparent 45%);
+  color: var(--ink-quiet);
 }
 /* フォルダの「/」の後には `filesMarkdown` が `<wbr>` を置く。 */
 .detail-block .report-file code {
@@ -1280,6 +1280,16 @@
   padding-left: 0.75rem;
   border-left: 3px solid var(--rule);
   color: var(--ink-quiet);
+}
+/* 引用の中の段落の既定 margin（1em）は引用の外へ抜けて引用の上下を 15px にするので、塊のあきに揃え、先頭と末尾は 0 にする。 */
+.detail-block blockquote > :is(p, ul, ol) {
+  margin: var(--report-block-gap) 0;
+}
+.detail-block blockquote > :first-child {
+  margin-top: 0;
+}
+.detail-block blockquote > :last-child {
+  margin-bottom: 0;
 }
 /* レポートの中の <details>（記法が「長い根拠・ログ・脇道」に勧める畳み方）。
    畳まれた塊だと分かることが要るので、地と枠で塊にし、開閉できることは summary のカーソルで示す（新しい色は作らない）。

@@ -47,6 +47,7 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/phone-composer.test.ts": ["dispatch", "character"],
   "test/e2e/phone-inquiry.test.ts": ["main", "dispatch", "character"],
   "test/e2e/report-main-view.test.ts": ["main"],
+  "test/e2e/report-spacing.test.ts": ["main"],
   "test/e2e/report-task.test.ts": ["main"],
   "test/e2e/run-setting.test.ts": ["sidebar"],
   "test/e2e/session-ended.test.ts": ["main", "dispatch"],
