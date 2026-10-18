@@ -6,10 +6,8 @@ import type { Meta, StoryObj } from "@storybook/react-vite"
 import { Report } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/report.tsx"
 import { loadMarkdown } from "../../../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import type { ReportSection } from "../../../../../../../../../src/shared/report/report-block.ts"
-import {
-  type ReportImageSource,
-  reportSectionsMarkdown,
-} from "../../../../../../../../../src/shared/report/report-markdown.ts"
+import type { ReportImageSource } from "../../../../../../../../../src/shared/report/report-image-markdown.ts"
+import { reportSectionsMarkdown } from "../../../../../../../../../src/shared/report/report-markdown.ts"
 
 /** 見本の本文は棚に画像を置いていない。 */
 const NO_IMAGES = { kind: "none" } as const satisfies ReportImageSource

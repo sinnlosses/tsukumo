@@ -3,11 +3,8 @@
 
 import { sectionsWithFigure } from "../report/report-block.ts"
 import { reportChecksMarkdown } from "../report/report-check.ts"
-import {
-  htmlAttribute,
-  reportSectionsMarkdown,
-  SECTIONS_START_MARKDOWN,
-} from "../report/report-markdown.ts"
+import { htmlAttribute } from "../report/report-inline-markdown.ts"
+import { reportSectionsMarkdown, SECTIONS_START_MARKDOWN } from "../report/report-markdown.ts"
 import { phaseTimesMarkdown } from "../report/report-phase-time.ts"
 import { retrospectiveMarkdown } from "../report/report-retrospective.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"

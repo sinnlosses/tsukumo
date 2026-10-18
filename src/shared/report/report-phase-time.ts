@@ -1,7 +1,7 @@
 // 最終レポートの段ごとの所要時間（1本の帯と一覧）の形と、HTML の組み立て。
 
 import { formatElapsed, formatMeasured, type MeasuredTime } from "../utils/elapsed-time.ts"
-import { htmlAttribute, htmlInline } from "./report-markdown.ts"
+import { htmlAttribute, htmlInline } from "./report-inline-markdown.ts"
 
 /** 段1つの所要時間。`label` は段の見出しの字（「2/4 段の名前」）、`start` は依頼の頭からの開始。 */
 export type PhaseDuration = {
