@@ -28,6 +28,13 @@
 **「キャラクターと一緒に楽しく仕事をする」ための手段**であって目的ではありません。
 やること・**やらないこと**の正典は [`docs/requirements.md`](./docs/requirements.md) です。
 
+本文は `docs/readme/` の4つの子のファイルにも分けてあります。節の見出しはここに残し、中身は移し先を引きます。
+
+- `docs/readme/mechanism.md`: 仕組み、データの流れ、画面レイアウト
+- `docs/readme/troubleshooting.md`: つまずいたとき
+- `docs/readme/configuration.md`: 設定、環境変数、認証、キャラクターの差し替え、会話内容の扱い
+- `docs/readme/development.md`: プロジェクト構成、ドキュメントの一覧
+
 ## 目次
 
 - [Features](#features)
@@ -41,7 +48,7 @@
   - [許可プロンプトと質問に答える](#許可プロンプトと質問に答える)
 - [設定](#設定)
   - [環境変数](#環境変数)
-  - [認証を環境変数で渡す](#認証を環境変数で渡す)
+  - [認証](#認証)
   - [キャラクターを差し替える](#キャラクターを差し替える)
 - [会話内容の扱い](#会話内容の扱い)
 - [開発](#開発)
@@ -141,15 +148,7 @@ mise run setup
 
 ### つまずいたとき
 
-| 出たもの                                                                              | 原因                                                         | 対処                                                                      |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| `zsh: command not found: tsukumo`                                                     | `$PNPM_HOME/bin` が `PATH` に通っていない                    | 新しいシェルを開いて `mise run setup` を打ち直す（手順1）                 |
-| `tsukumo: ブラウザ側の成果物を読めない`                                               | `dist/browser/` が無い                                       | リポジトリの直下で `mise run setup`（手順1）                              |
-| `tsukumo: ソース（src/browser/ src/shared/）が成果物を組み立てたときから変わっている` | 更新したあと組み立て直していない                             | `mise run setup`（手順3）。止まりはせず、古い画面のまま動く               |
-| `tsukumo: TSUKUMO_VIEW_PORT がポート番号として読めない`                               | 環境変数に数でない値が入っている                             | `TSUKUMO_VIEW_PORT` を外すか数にする                                      |
-| `tsukumo: node <版> が古い`                                                           | `PATH` の node が 26 未満（mise の node が選ばれていない）   | リポジトリの直下で `mise install`、そのあと `mise run setup`              |
-| タブが開かない                                                                        | `orca` が無い、`TSUKUMO_OPEN_VIEW=0`、か `TSUKUMO_HOST=none` | 表示された URL を手でブラウザに開く                                       |
-| タブだけ閉じてしまった                                                                | プロセスは動いたまま                                         | `node scripts/capture/open-views.ts http://127.0.0.1:<ポート>` で開き直す |
+本文は `docs/readme/troubleshooting.md`「つまずいたとき」。
 
 ### 開発しながら動かす
 
@@ -161,61 +160,15 @@ mise run setup
 
 ## 仕組み
 
-tsukumo は**1つのプロセス**で、Agent SDK で Claude Code を子プロセスとして起こし、
-受け取ったイベントを HTML のビューに変えて、ローカルのサーバから WebSocket 1本でホスト（Orca のタブ）の中の
-ブラウザへ配ります（通信の形は [`docs/architecture.md`](./docs/architecture.md)「全体構成」）。
-
-```
-┌────────────────────────────────────────────────┐
-│ ブラウザ（Orca のタブ）                        │
-│   メインビュー：レポート・お伺い               │
-│   キャラビュー：立ち絵＋セリフ                 │
-│   サイドバー：進行・タスク一覧・セッション情報 │
-│   入力欄：依頼・送信・中断・自由入力の回答     │
-└────────────────────────────────────────────────┘
-      ▲                       │
-      │ WebSocket で押す      ▼ コマンド（依頼・回答・中断。oRPC）
-┌────────────────────────────────────────────────┐
-│ tsukumo（Node の1プロセス）                    │
-│   ビューサーバ 127.0.0.1:7327                  │
-│   セッションドライバ（SDK の query）           │
-│   speak ツール（プロセス内の MCP サーバ）      │
-└────────────────────────────────────────────────┘
-      │ 起動・追加入力・中断  ▲
-      ▼                       │ イベント（本文 / ツール / canUseTool）
-┌────────────────────────────────────────────────┐
-│ Claude Code（SDK が起こす子プロセス）          │
-└────────────────────────────────────────────────┘
-```
+本文は `docs/readme/mechanism.md`「仕組み」。
 
 ### データの流れ
 
-| #   | 流れ                           | 中身                                                                                                                                                                                 |
-| --- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | 入力欄 → `query`               | 入力欄に打った依頼を WebSocket 上のコマンドの手続き（oRPC）で受け、ストリーミング入力モードの `query` へ追加入力として流す。中断も同じ経路                                           |
-| 2   | イベント → 各ビュー            | `assistant` のテキストは**レポート**（メインビュー）、`speak` の引数は**セリフと表情**（キャラビュー）、`tool_use` / `tool_result` は**進行**（サイドバー）。更新は WebSocket で押す |
-| 3   | `canUseTool` → 答え待ち → 回答 | 許可プロンプトと `AskUserQuestion` はどちらも `canUseTool` に届く。メインビューのお伺いの札に選択肢を出し、選ばれた答えを戻り値として SDK へ返す                                     |
-
-> **なぜ TUI を使わないのか**: Claude Code の TUI には割り込めないため、パイプ・hook の stdout・
-> Claude Code へのパッチのいずれも描画の経路にできません。だから TUI を捨て、SDK で動かす側に回りました
-> （採らなかった案も含め、経緯は [`docs/architecture.md`](./docs/architecture.md) が正典）。
+本文は `docs/readme/mechanism.md`「データの流れ」。
 
 ## 画面レイアウト
 
-**4つの領域（メインビュー・サイドバー・キャラビュー・入力欄）の配置と比率はページ側の CSS が
-組みます。** 仕切りはドラッグで動かせます。`orca terminal split` のようなペイン分割の道具は
-使いません。
-
-**経緯**: 当初はこの3領域も別々のビューとして開き、`orca terminal split` でペインの形に
-組み立てるつもりでした。実機で試したところ、Orca の `tab` 系コマンドにはブラウザタブをペインの
-グリッドへ配置する手段が無く（`create` / `close` / `list` / `switch` / `show` / `profile` のみ）、
-成立しないと分かったため、3領域を1枚の HTML にまとめる形へ変えました。
-
-プロセスは動かしたままタブだけ閉じてしまったときは、開き直す道具があります。
-
-```bash
-node scripts/capture/open-views.ts http://127.0.0.1:7327
-```
+本文は `docs/readme/mechanism.md`「画面レイアウト」。
 
 ## 使い方
 
@@ -243,79 +196,23 @@ node scripts/capture/open-views.ts http://127.0.0.1:7327
 
 ## 設定
 
+本文は `docs/readme/configuration.md`「設定」。
+
 ### 環境変数
 
-| 変数名                        | 必須 | デフォルト                         | 説明                                                                                                                                                                                                                                                                                                             |
-| ----------------------------- | :--: | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TSUKUMO_VIEW_PORT`           |      | `7327`                             | ビューを配るポート。**既定のまま塞がっていたら20個先まで順にずらす**（明示的に指定したときはずらさずそのまま失敗する）。`0` を渡すと空きポートを使う                                                                                                                                                             |
-| `TSUKUMO_CHARACTER`           |      | 同梱の `characters/tsukumo-spirit` | キャラクターパックのディレクトリ。相対パスは cwd 相対、絶対パスはそのまま                                                                                                                                                                                                                                        |
-| `TSUKUMO_OPEN_VIEW`           |      | 開く                               | 起動時にレイアウトページのタブを自動で開くか。`0` を渡すと開かない                                                                                                                                                                                                                                               |
-| `TSUKUMO_HOST`                |      | `orca`                             | ページとファイルを開くホスト。`orca` は起動時に Orca のタブを開き、レポートのパスを押すと Orca のエディタで開く（`orca` が無ければどちらも開かず、URL は表示される）。`none` は何も開かない: 起動時のタブは開かず、表示された URL を手で開く。レポートのパスは押しても開かず「ファイルを開けなかった」と断られる |
-| `TSUKUMO_DRIVER`              |      | `sdk`                              | セッションドライバ。`fake` を渡すと本物の `claude` を起こさず、疑似セッションどおりにイベントを流す（目視確認・自動テスト用）                                                                                                                                                                                    |
-| `TSUKUMO_FAKE_SCENE_UNTIL`    |      | 全部流す                           | `TSUKUMO_FAKE_SCENE` の場面の手を先頭から何個まで流すか（正の整数）。場面の途中の画を撮る `capture-view.ts --until-step` が使う                                                                                                                                                                                  |
-| `TSUKUMO_FAKE_SCENE`          |      | 流さない                           | `fake` のとき起こした直後に流す疑似セッションの場面の名前。依頼を送らずに特定の画面を出すための口で、状態のカタログを撮るときに使う                                                                                                                                                                              |
-| `TSUKUMO_TW`                  |      | 取り込みの `bin/tw`                | ワークフローの設定を読み書きするときに呼ぶ `tw` のパス。取り込みを載せないときの既定は PATH の `tw`。疑似セッションの撮影や自動テストで、取り込みを書き換えずに偽の `tw` へ差し替えるための口                                                                                                                    |
-| `TSUKUMO_CHECK_WORKER_BUDGET` |      | `2 × max(1, round(コア数 × 0.15))` | `pnpm run check` が同時に走る検証の間で分け合う vitest の worker の予算（正の整数）。本数で割って単体と E2E に配る                                                                                                                                                                                               |
-| `TSUKUMO_HOME`                |      | `~/.tsukumo`                       | tsukumo が覚えたキャラクター・会話のアーカイブ・トークン記録・作ったパックを置くホーム。**並行して2つを動かすときだけ** `TSUKUMO_VIEW_PORT` と一緒に分けて渡す。相対パスは cwd 相対                                                                                                                              |
-
-リポジトリごとの設定ファイルはありません。タスク一覧と成果は起動先の Beads（`bd`）から読み、
-`.beads` が無い起動先ではサイドバーにタスクの節を出しません。
+本文は `docs/readme/configuration.md`「環境変数」。
 
 ### 認証
 
-tsukumo は認証情報を読まず、子プロセスの `claude` が自分のログイン（`claude` で入ったもの）で認証します。
-**通常のログインで使ってください。サイドバーのプラン使用量はこの形でだけ出ます。**
-
-- `claude setup-token` で発行した `CLAUDE_CODE_OAUTH_TOKEN` を環境に置いても動きますが、
-  そのトークンの権限は `user:inference` だけで、プラン使用量の取得に要る `user:profile` を持ちません。
-  `CLAUDE_CODE_OAUTH_SCOPES` に `user:profile` を書いても名乗るだけで権限は増えないため、
-  サイドバーには約37秒「取得中…」のあと「プラン使用量を取れませんでした。↻ で取り直せます」と出ます
-- 環境変数のトークンを使い始めたのは、複数の tsukumo を並行して動かすと macOS の `secd`（キーチェーンの番人）が高負荷になったためです。
-  実際の原因は E2E と撮影が製品版 Google Chrome を起こすたびにキーチェーンへ鍵を足していたことで、
-  Playwright の headless shell へ替えて止まりました。トークンで回避する必要はありません
-- 変数は tsukumo を起こす前に置き、起こし直してから反映されます
+本文は `docs/readme/configuration.md`「認証」。
 
 ### キャラクターを差し替える
 
-既定のキャラクターは `characters/tsukumo-spirit/`（このリポジトリのために自作した精霊。
-**権利がクリーンなので公開リポジトリに置いてあります**）。自分の立ち絵を使うときは、
-`.gitignore` 済みの `characters/local/` に素材と定義ファイルを置き、そこを指して起動します。
-
-```bash
-TSUKUMO_CHARACTER=characters/local tsukumo
-```
-
-```json
-{
-  "name": "表示名",
-  "license": "その素材をここに置いてよい根拠",
-  "portraits": {
-    "default": "通常時の画像",
-    "thinking": "作業中",
-    "proud": "どや顔",
-    "flustered": "あわあわ"
-  }
-}
-```
-
-- **`portraits` は「あるものだけ」でよい。** 見つからない表情は `default` に落ちます
-- **ただし `default` は必須**（コード側が名前で直接参照するため）
-
-**公開リポジトリなので、権利のある画像（公式絵・ファンアートなど）をコミットしないでください。**
-定義ファイルの完全な仕様は [`characters/README.md`](./characters/README.md) が正典です。
+本文は `docs/readme/configuration.md`「キャラクターを差し替える」。
 
 ## 会話内容の扱い
 
-**会話は tsukumo のプロセスの外へ出ません。** この規約は他のどの規約よりも優先されます。
-
-- SDK は `claude` を子プロセスとして起こすだけ、`speak` は tsukumo のプロセス内の MCP サーバ
-  （戻り値は `"ok"` だけ）、ビューは `127.0.0.1` にだけバインドする
-- **ビューはファイルに書き出さない。** 本文はメモリに持ち、WebSocket と HTTP で配るだけ
-- **外部ライブラリは CDN から読まず、自分のサーバ（`node_modules` の実ファイル）から配る**
-  （`src/server/view-server/adapter/vendor-asset.ts`）。CDN から読むと、レポート本文が載ったページで外部スクリプトが
-  動き、表示のたびに外部へリクエストが飛ぶため。自分で配れば**表示時の外部通信はゼロ**になる
-
-詳細は [`docs/coding-standards.md`](./docs/coding-standards.md)「会話内容の扱い」が正典です。
+本文は `docs/readme/configuration.md`「会話内容の扱い」。
 
 ## 開発
 
@@ -368,62 +265,8 @@ CI に無い外部コマンドを起こすテストを検査で落とします�
 
 ### プロジェクト構成
 
-**層の名前は「どの実行環境で動くか」を表します**（サーバとブラウザの両方 = `shared/`、
-サーバ = `server/`、ブラウザ = `browser/`）。**サーバ側は機能ごとに分かれ、各機能が
-判断（`core/`）と外の世界に触る境界（`adapter/`）の2段を持ちます。**
-
-```
-.
-├── src/
-│   ├── shared/             # サーバとブラウザの両方で動く契約・語彙（zod。node: も document も触らない）
-│   ├── server/             # サーバ（Node）
-│   │   ├── <機能>/         #   機能ごとの置き場（session・session-driver・view-server・report・chat・
-│   │   │   ├── core/       #     character-pack など）。core は純粋な判断、
-│   │   │   └── adapter/    #     adapter は外の世界に触る境界（1ファイル = 1つの境界）
-│   │   ├── core/           #   どの機能にも属さない共有の判断
-│   │   └── adapter/        #   どの機能にも属さない共有の境界
-│   ├── browser/            # ブラウザ。React の部品、unified の Markdown 変換、CSS
-│   ├── cli.ts              # エントリポイント。引数・環境変数の読み出し・終了コードだけ
-│   ├── main.ts             # 起動の段取り（前提チェック → キャラクター → 配信 → セッション）
-│   ├── router.ts           # 全機能の手続き（oRPC）を束ねる
-│   ├── current-character.ts  # いま出しているパックと選択肢の持ち主
-│   ├── view-delivery.ts    # ビューの配信（起動トークン・組み立てたもの・開いているタブ）
-│   ├── session-start.ts    # セッションを1つ起こす（機能ごとの組み立てを結ぶ）
-│   └── wiring/             # 機能ごとの組み立て
-│                           #   ※ src/ 直下と wiring/ は配線層。全層を import してよい唯一の場所
-├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ 層の検査の architecture/）
-├── story/                  # Storybook の story（src/ と同じディレクトリ構成。設定は .storybook/）
-├── characters/             # キャラクターパックと素材（tsukumo-spirit が既定、local/ は .gitignore）
-├── plugin/                 # セッションに載せる同梱の Claude Code プラグイン（token-usage-diet）
-├── vendor/tsukumo-plugins/ # 取り込んだ tsukumo-plugins（git submodule。タスク運用のスキル・agent・hook。利用者がリンクで入れていれば載せない）
-├── scripts/                # 開発の道具（check・ship・stop・撮影・文書の検査・hook の deny-* など）
-├── assets/                 # ロゴ
-├── docs/                   # 要件定義・設計・アーキテクチャ・規約・用語集（正典）
-├── .tw/                    # タスク運用の設定（config.toml）。機能には関係しない
-├── bin/tsukumo             # エントリポイント（mise run setup でグローバルに入る）
-└── package.json
-```
-
-**層はディレクトリで表し、許した依存の辺以外は `test/architecture/` が落とします。**
-各ファイルの責務はそのファイルの冒頭のコメントが正典です。機能の一覧と置き場所の基準は
-[`docs/architecture.md`](./docs/architecture.md)「サーバの機能と、機能どうしの辺」「ディレクトリ」にあります。
+本文は `docs/readme/development.md`「プロジェクト構成」。
 
 ### ドキュメント
 
-- [`docs/requirements.md`](./docs/requirements.md) — 要件定義（やること・**やらないこと**・技術制約・未決事項）
-- [`docs/architecture.md`](./docs/architecture.md) — アーキテクチャ詳細（全体図、`shared` / `server`（`core`・`adapter`）/ `browser` の層・共有層・置き場所、設計判断）
-- [`docs/architecture/browser.md`](./docs/architecture/browser.md) — ブラウザ側（状態の持ち方・Markdown・重いライブラリ・立ち絵の動き・CSS・`components/ui/` の部品）
-- [`docs/architecture/character-pack.md`](./docs/architecture/character-pack.md) — キャラクターパック（形・探索順・画面から書くときの境界・会話の記録の置き場）
-- [`docs/architecture/testing.md`](./docs/architecture/testing.md) — テスト（対象ごとの方法・E2E・目視確認の手順）
-- [`docs/architecture/build.md`](./docs/architecture/build.md) — ビルドと依存（事前の組み立て・HMR・足す依存の一覧）
-- [`docs/architecture/screen-design.md`](./docs/architecture/screen-design.md) — 画面のデザイン（色・書体・レイアウトの計画とトークン、雑談モードの画面、背景、画面のナビの帯）
-- [`docs/architecture/display.md`](./docs/architecture/display.md) — 表示（セリフとレポートの出力分離、レポートの記法の規約、立ち絵・吹き出し・メインビュー・入力欄・サイドバーなど各表示物の仕様）
-- [`docs/architecture/workflow-contract.md`](./docs/architecture/workflow-contract.md) — ワークフローの契約（`work_plan`・`report` の口、読む Beads の欄、ワークフローがしてよいこと）
-- [`docs/architecture/chat-mode.md`](./docs/architecture/chat-mode.md) — 雑談モード（遡れる幅、記憶の圧縮と忘却、残す旗、会話のアーカイブ、人格への書き戻し）
-- [`docs/coding-standards.md`](./docs/coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）
-- [`docs/glossary.md`](./docs/glossary.md) — 用語集（日本語表記とコード上の識別子の対応）
-- [`docs/workflow.md`](./docs/workflow.md) — このリポジトリでの進捗管理の上乗せ
-- [`CLAUDE.md`](./CLAUDE.md) — Claude Code 向けのプロジェクト案内（上記への入口）
-
-**`docs/` の各ファイルは冒頭に「節の索引」を持ち、通読しない前提で書かれています。**
-知りたいことから節を1つ特定して、その節だけを読んでください。
+本文は `docs/readme/development.md`「ドキュメント」。
