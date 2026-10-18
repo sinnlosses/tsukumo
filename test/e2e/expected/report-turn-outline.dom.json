@@ -1,357 +1,195 @@
 {
-  "main": [
+  "turn-outline": [
     {
-      "tag": "main",
+      "tag": "nav",
       "attributes": {
-        "data-region": "main",
-        "aria-label": "メインビュー"
+        "aria-label": "やり取り"
       },
       "children": [
+        "やり取り",
         {
-          "tag": "div",
+          "tag": "button",
           "attributes": {
-            "data-brush-origin": "",
-            "data-main-view": ""
+            "aria-disabled": "false",
+            "aria-label": "やり取りを畳む",
+            "aria-expanded": "true",
+            "type": "button"
           },
           "children": [
             {
-              "tag": "div",
+              "tag": "svg"
+            }
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-outline-turn": "0",
+            "data-result": "done",
+            "aria-label": "完了: 指示をタスクにする（架空の依頼）",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
               "attributes": {
-                "data-main-view-content": "report"
+                "aria-hidden": "true"
               },
               "children": [
-                {
-                  "tag": "article",
-                  "children": [
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-outline": "shown",
-                        "data-outline-collapsed": "false"
-                      },
-                      "children": [
-                        {
-                          "tag": "nav",
-                          "attributes": {
-                            "aria-label": "やり取り"
-                          },
-                          "children": [
-                            "やり取り",
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "false",
-                                "aria-label": "やり取りを畳む",
-                                "aria-expanded": "true",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "svg"
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-outline-turn": "0",
-                                "data-result": "done",
-                                "aria-label": "完了: 指示をタスクにする（架空の依頼）",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "✓"
-                                  ]
-                                },
-                                "指示をタスクにする（架空の依頼）"
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-outline-turn": "1",
-                                "data-result": "failed",
-                                "aria-label": "失敗: 打ち直して通す（架空の依頼）",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "✕"
-                                  ]
-                                },
-                                "打ち直して通す（架空の依頼）"
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-outline-turn": "2",
-                                "data-result": "awaiting-answer",
-                                "aria-label": "答え待ち: 状態の置き場所を決めたい。札の頭と目次の列のどちらに持たせるかを比べて（架空の依頼）",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "?"
-                                  ]
-                                },
-                                "状態の置き場所を決めたい。札の頭と目次の列のどちらに持たせるかを比べて（架空の依頼）"
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-outline-turn": "3",
-                                "data-result": "stopped",
-                                "aria-label": "止めた: 古い枝を片付ける（架空の依頼）",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "‖"
-                                  ]
-                                },
-                                "古い枝を片付ける（架空の依頼）"
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-outline-turn": "4",
-                                "data-result": "done",
-                                "aria-current": "true",
-                                "aria-label": "完了: 目次の列を2段にする（架空の依頼）",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "●"
-                                  ]
-                                },
-                                "目次の列を2段にする（架空の依頼）"
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-level": "section",
-                                "aria-current": "location",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  }
-                                },
-                                "変わったこと（架空）"
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-level": "section",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  }
-                                },
-                                "確かめたこと（架空）"
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-level": "sub",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  }
-                                },
-                                "E2E の撮り直し（架空）"
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-level": "section",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  }
-                                },
-                                "残したこと（架空）"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "div",
-                          "attributes": {
-                            "role": "separator",
-                            "aria-orientation": "vertical",
-                            "aria-label": "やり取りと本文の境界"
-                          }
-                        },
-                        {
-                          "tag": "section",
-                          "attributes": {
-                            "aria-label": "進み具合",
-                            "data-work-strip": "finished"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "data-result": "done"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  }
-                                },
-                                "完了"
-                              ]
-                            },
-                            "所要 0秒",
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "false",
-                                "aria-expanded": "false",
-                                "type": "button"
-                              },
-                              "children": [
-                                "手順 0 ▾"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "section",
-                          "children": [
-                            {
-                              "tag": "h2",
-                              "children": [
-                                "依頼"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                "目次の列を2段にする（架空の依頼）"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "section",
-                          "children": [
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "data-report-body": ""
-                              },
-                              "children": [
-                                {
-                                  "tag": "h4",
-                                  "children": [
-                                    "変わったこと（架空）"
-                                  ]
-                                },
-                                {
-                                  "tag": "p",
-                                  "children": [
-                                    "架空の本文。"
-                                  ]
-                                },
-                                {
-                                  "tag": "h4",
-                                  "children": [
-                                    "確かめたこと（架空）"
-                                  ]
-                                },
-                                {
-                                  "tag": "p",
-                                  "children": [
-                                    "架空の本文。"
-                                  ]
-                                },
-                                {
-                                  "tag": "h5",
-                                  "children": [
-                                    "E2E の撮り直し（架空）"
-                                  ]
-                                },
-                                {
-                                  "tag": "p",
-                                  "children": [
-                                    "架空の本文。"
-                                  ]
-                                },
-                                {
-                                  "tag": "h4",
-                                  "children": [
-                                    "残したこと（架空）"
-                                  ]
-                                },
-                                {
-                                  "tag": "p",
-                                  "children": [
-                                    "架空の本文。"
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
+                "✓"
               ]
-            }
+            },
+            "指示をタスクにする（架空の依頼）"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-outline-turn": "1",
+            "data-result": "failed",
+            "aria-label": "失敗: 打ち直して通す（架空の依頼）",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                "✕"
+              ]
+            },
+            "打ち直して通す（架空の依頼）"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-outline-turn": "2",
+            "data-result": "awaiting-answer",
+            "aria-label": "答え待ち: 状態の置き場所を決めたい。札の頭と目次の列のどちらに持たせるかを比べて（架空の依頼）",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                "?"
+              ]
+            },
+            "状態の置き場所を決めたい。札の頭と目次の列のどちらに持たせるかを比べて（架空の依頼）"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-outline-turn": "3",
+            "data-result": "stopped",
+            "aria-label": "止めた: 古い枝を片付ける（架空の依頼）",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                "‖"
+              ]
+            },
+            "古い枝を片付ける（架空の依頼）"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-outline-turn": "4",
+            "data-result": "done",
+            "aria-current": "true",
+            "aria-label": "完了: 目次の列を2段にする（架空の依頼）",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                "●"
+              ]
+            },
+            "目次の列を2段にする（架空の依頼）"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-level": "section",
+            "aria-current": "location",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              }
+            },
+            "変わったこと（架空）"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-level": "section",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              }
+            },
+            "確かめたこと（架空）"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-level": "sub",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              }
+            },
+            "E2E の撮り直し（架空）"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-level": "section",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attributes": {
+                "aria-hidden": "true"
+              }
+            },
+            "残したこと（架空）"
           ]
         }
       ]

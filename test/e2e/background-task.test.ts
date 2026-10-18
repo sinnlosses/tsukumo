@@ -21,7 +21,7 @@ describe("バックグラウンドタスク", () => {
       scenario: "background-task-resumed",
       scene: "background-task-short",
       viewport: "wide",
-      domRoots: ["main", "dispatch"],
+      domRoots: ["work-strip", "turn-outline"],
     })
     const strip = room.page.locator('[data-region="main"] section[aria-label="進み具合"]')
 

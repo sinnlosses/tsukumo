@@ -70,7 +70,7 @@ describe("report → メインビュー", () => {
       scenario: "report-outline-compact",
       scene: "long-report-quick",
       viewport: "compact",
-      domRoots: ["main"],
+      domRoots: ["turn-outline"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -91,7 +91,7 @@ describe("report → メインビュー", () => {
       scenario: "report-turn-outline",
       scene: "turn-outline",
       viewport: "wide",
-      domRoots: ["main"],
+      domRoots: ["turn-outline"],
     })
 
     await room.waitForEvent("turn-finished", 5)

@@ -10,11 +10,6 @@ const run = useScenarioRun()
 const ELAPSED_MS = 60_000
 
 describe("タスクの一覧", () => {
-  it("Beads の課題を読み、サイドバーのタスク一覧に並ぶ", async () => {
-    const room = await openTaskListRoom(run, "task-list", ["task-section"])
-    await room.settleAndMatch(ELAPSED_MS)
-  })
-
   it("のぞき窓の「これを始める」から確認の「実行する」を押すと既定の文面で依頼が送られて確認とのぞき窓が閉じる", async () => {
     const room = await openTaskListRoom(run, "task-list-run-executed", [
       "task-section",

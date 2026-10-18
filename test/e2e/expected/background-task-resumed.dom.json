@@ -1,303 +1,101 @@
 {
-  "main": [
-    {
-      "tag": "main",
-      "attributes": {
-        "data-region": "main",
-        "aria-label": "メインビュー"
-      },
-      "children": [
-        {
-          "tag": "div",
-          "attributes": {
-            "data-brush-origin": "",
-            "data-main-view": ""
-          },
-          "children": [
-            {
-              "tag": "div",
-              "attributes": {
-                "data-main-view-content": "report"
-              },
-              "children": [
-                {
-                  "tag": "article",
-                  "children": [
-                    {
-                      "tag": "div",
-                      "attributes": {
-                        "data-outline": "shown",
-                        "data-outline-collapsed": "false"
-                      },
-                      "children": [
-                        {
-                          "tag": "nav",
-                          "attributes": {
-                            "aria-label": "やり取り"
-                          },
-                          "children": [
-                            "やり取り",
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "false",
-                                "aria-label": "やり取りを畳む",
-                                "aria-expanded": "true",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "svg"
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-outline-turn": "0",
-                                "data-result": "done",
-                                "aria-current": "true",
-                                "aria-label": "完了: 背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "●"
-                                  ]
-                                },
-                                "背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）"
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "data-level": "section",
-                                "aria-current": "location",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  }
-                                },
-                                "短い背景の待ちが終わった"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "div",
-                          "attributes": {
-                            "role": "separator",
-                            "aria-orientation": "vertical",
-                            "aria-label": "やり取りと本文の境界"
-                          }
-                        },
-                        {
-                          "tag": "section",
-                          "attributes": {
-                            "aria-label": "進み具合",
-                            "data-work-strip": "finished"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "data-result": "done"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  }
-                                },
-                                "完了"
-                              ]
-                            },
-                            "所要 0秒",
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "false",
-                                "aria-expanded": "false",
-                                "type": "button"
-                              },
-                              "children": [
-                                "手順 1 ▾"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "section",
-                          "children": [
-                            {
-                              "tag": "h2",
-                              "children": [
-                                "依頼"
-                              ]
-                            },
-                            {
-                              "tag": "p",
-                              "children": [
-                                "背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "section",
-                          "children": [
-                            {
-                              "tag": "div",
-                              "attributes": {
-                                "data-report-body": ""
-                              },
-                              "children": [
-                                {
-                                  "tag": "h4",
-                                  "children": [
-                                    "短い背景の待ちが終わった"
-                                  ]
-                                },
-                                {
-                                  "tag": "p",
-                                  "children": [
-                                    "これは架空の本文で、実物の会話ではない。",
-                                    {
-                                      "tag": "strong",
-                                      "children": [
-                                        "依頼なしで始めた続きのターン"
-                                      ]
-                                    },
-                                    "の報告で、前の本文は中間レポートに回る。"
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  "dispatch": [
+  "work-strip": [
     {
       "tag": "section",
       "attributes": {
-        "data-region": "dispatch",
-        "aria-label": "入力欄"
+        "aria-label": "進み具合",
+        "data-work-strip": "finished"
       },
       "children": [
         {
-          "tag": "form",
+          "tag": "span",
+          "attributes": {
+            "data-result": "done"
+          },
           "children": [
-            {
-              "tag": "textarea",
-              "attributes": {
-                "aria-label": "依頼を書く",
-                "value": ""
-              }
-            },
-            {
-              "tag": "button",
-              "attributes": {
-                "aria-disabled": "false",
-                "aria-label": "画像を添える",
-                "type": "button"
-              },
-              "children": [
-                {
-                  "tag": "svg"
-                }
-              ]
-            },
-            {
-              "tag": "button",
-              "attributes": {
-                "aria-disabled": "false",
-                "aria-label": "コマンドを補完する",
-                "type": "button"
-              },
-              "children": [
-                {
-                  "tag": "svg"
-                }
-              ]
-            },
-            {
-              "tag": "button",
-              "attributes": {
-                "aria-disabled": "false",
-                "aria-label": "ファイルを補完する",
-                "type": "button"
-              },
-              "children": [
-                {
-                  "tag": "svg"
-                }
-              ]
-            },
-            {
-              "tag": "button",
-              "attributes": {
-                "aria-pressed": "false",
-                "aria-disabled": "false",
-                "aria-label": "マークダウンエディタで書く",
-                "type": "button"
-              },
-              "children": [
-                {
-                  "tag": "svg"
-                }
-              ]
-            },
             {
               "tag": "span",
               "attributes": {
                 "aria-hidden": "true"
               }
             },
+            "完了"
+          ]
+        },
+        "所要 0秒",
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-disabled": "false",
+            "aria-expanded": "false",
+            "type": "button"
+          },
+          "children": [
+            "手順 1 ▾"
+          ]
+        }
+      ]
+    }
+  ],
+  "turn-outline": [
+    {
+      "tag": "nav",
+      "attributes": {
+        "aria-label": "やり取り"
+      },
+      "children": [
+        "やり取り",
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-disabled": "false",
+            "aria-label": "やり取りを畳む",
+            "aria-expanded": "true",
+            "type": "button"
+          },
+          "children": [
             {
-              "tag": "button",
+              "tag": "svg"
+            }
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-outline-turn": "0",
+            "data-result": "done",
+            "aria-current": "true",
+            "aria-label": "完了: 背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "span",
               "attributes": {
-                "aria-disabled": "false",
-                "aria-label": "新しいセッションを始める",
-                "type": "button"
+                "aria-hidden": "true"
               },
               "children": [
-                {
-                  "tag": "svg"
-                },
-                "新規"
+                "●"
               ]
             },
+            "背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）"
+          ]
+        },
+        {
+          "tag": "button",
+          "attributes": {
+            "data-level": "section",
+            "aria-current": "location",
+            "type": "button"
+          },
+          "children": [
             {
-              "tag": "button",
+              "tag": "span",
               "attributes": {
-                "data-shortcut": "⌘⏎",
-                "data-emphasis": "solid",
-                "type": "submit"
-              },
-              "children": [
-                "送信"
-              ]
-            }
+                "aria-hidden": "true"
+              }
+            },
+            "短い背景の待ちが終わった"
           ]
         }
       ]

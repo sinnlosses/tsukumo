@@ -21,7 +21,7 @@ describe("委譲中の脇の話", () => {
       scenario: "aside-thread",
       scene: "aside-delegating",
       viewport: "wide",
-      domRoots: ["main", "dispatch"],
+      domRoots: ["main"],
     })
     const main = room.page.locator('[data-region="main"]')
     await room.waitForEvent("turn-finished")

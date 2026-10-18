@@ -7,6 +7,41 @@
 節は `## <出典のファイル> <節番号> <節の見出し>` の形で並べ、各節の先頭に**移した日付と
 出典の節**を1行で書く。探すときは出典の節名で `grep` する。
 
+## testing.md E2E の期待値の範囲（2026-10-18 に dom の根を狭め、近縁の場面を畳んだ記録）
+
+2026-10-18 に `docs/architecture/testing.md`「E2E の期待値の範囲」の根の表と「E2E のシナリオの一覧」の2行を改めた記録
+（いまの決まりは同じ節の「部分木は名前で選ぶ」と根の表）。下の messages を絞った回の続きで、`*.dom.json` を対象にした。
+
+**改める前**: `*.dom.json` は 37 組・計 11590 行（`wc -l test/e2e/expected/*.dom.json`）。進み具合の帯・やり取りの列・覚えていることが
+主役の場面も、`main`・`dispatch`・`sidebar` の根で本文や入力欄ごと写していた。
+
+**改めたこと**: 根を3つ足し（`work-strip`・`turn-outline`・`remembered-lines`。`test/e2e/scenario-run.ts` の `DOM_ROOT_SELECTORS`）、
+題が述べる変化が出る部分木だけを写すようにした。写しが同じ場面は比べるのを1つに寄せた。
+
+| 場面 | 改めたこと | 行数（前 → 後） |
+| --- | --- | --- |
+| `report-outline-compact` | 根を `main` から `turn-outline` に（畳んだ状態は開くの button だけが写る） | 518 → 26 |
+| `work-strip-ask-medium` | `main`・`dispatch` を `work-strip` に | 456 → 107 |
+| `work-strip-running` | `main`・`dispatch` を `work-strip` に | 429 → 162 |
+| `chat-remembered-lines-edit` | `sidebar` を `remembered-lines` に | 334 → 75 |
+| `conversation-moment-medium` | 比べるのをやめて組を消した（`it` は残し、寸法は `regionRects`・`contentLog` が測る。large と JSON が同一だった） | 211 → 0 |
+| `background-task-resumed` | `main`・`dispatch` を `work-strip`・`turn-outline` に | 306 → 104 |
+| `task-list` | `it` と組を消した（`task-list-run-executed` の最後の写しと差が末尾の `"task-run-confirm": []` の2行だけ） | 167 → 0 |
+| `report-turn-outline` | 根を `main` から `turn-outline` に | 360 → 198 |
+| `conversation-tier-phone-sheet` | `screen-nav` の根を外した（`conversation-tier-phone` の `screen-nav` と JSON が同一） | 371 → 257 |
+| `aside-thread` | `dispatch` の根を外した | 449 → 342 |
+
+合計は 11590 行 → 9260 行（-2330。組は 37 → 35）。`*.messages.json` は 12 組 2298 行のまま。
+
+**確かめたこと**: 狭めた根は旧い写しの部分木と JSON が完全に一致した（撮り直しの差分は根の包みと中身の削除だけ）。残す側の変化を
+`src/browser/` で一時的に壊して（チップの `data-result`・やり取りの行の `data-result`・開くボタンの `aria-expanded`・覚えていることの
+`ul` の `aria-label`・件数チップの `aria-pressed`）、狭めた場面が `dom が期待値と食い違った` で落ちることを確かめてから戻した。
+
+**残した場面**: 次は別の変化・寸法を守るので畳まなかった。`conversation-tier-medium`・`-narrow`・`-phone`（窓の段ごとの寸法と、`narrow` は `page` の3場面の1つ）・
+`session-resume`・`chat-restored-history`（別の変化）・`task-board-open`（`test/browser/features/task-board/task-board.test.tsx` に、本文の表・チェック・生の HTML を描く確かめが無い。
+フェンスを含むのは1か所だけ）・`input-dispatch`・`markdown-composer-send`・`session-ended-restart`（`dispatch` の
+送信後の状態の持ち主）。見込みの 8k 行は messages 分を含んでいて、dom の根では届かなかった。
+
 ## testing.md E2E の期待値の範囲（2026-10-18 に messages を往復の場面だけに絞った記録）
 
 2026-10-18 に `docs/architecture/testing.md`「E2E の期待値の範囲」の `**\`*.messages.json\` は絞らない。**` の段落を改めた記録

@@ -23,7 +23,7 @@ describe("進み具合の帯", () => {
       scenario: "work-strip-running",
       scene: "work-strip-running",
       viewport: "large",
-      domRoots: ["main", "dispatch"],
+      domRoots: ["work-strip"],
     })
     const strip = stripOf(room.page)
 
@@ -75,7 +75,7 @@ describe("進み具合の帯", () => {
       scenario: "work-strip-ask-medium",
       scene: "work-strip-ask",
       viewport: "medium",
-      domRoots: ["main", "dispatch"],
+      domRoots: ["work-strip"],
     })
     const strip = stripOf(room.page)
 

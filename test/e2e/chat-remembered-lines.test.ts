@@ -23,7 +23,7 @@ describe("雑談のサイドバーの「覚えていること」", () => {
       scenario: "chat-remembered-lines-edit",
       scene: "chat-remembered-lines",
       viewport: "wide",
-      domRoots: ["sidebar"],
+      domRoots: ["remembered-lines"],
     })
 
     await room.page.getByRole("button", { name: "編集", exact: true }).click()

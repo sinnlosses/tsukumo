@@ -244,7 +244,7 @@ describe("会話の画面の段", () => {
       scenario: "conversation-tier-phone-sheet",
       scene: "phone-phases",
       viewport: "phone",
-      domRoots: ["screen-nav", "main"],
+      domRoots: ["main"],
     })
     const { page } = room
     const rows = page.locator('[data-region="main"] button[class*="phase-list-row"]')

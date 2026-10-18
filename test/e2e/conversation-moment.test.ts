@@ -28,7 +28,7 @@ describe("会話の画面の局面", () => {
         scenario: `conversation-moment-${viewport}`,
         scene: "none",
         viewport,
-        domRoots: ["main"],
+        domRoots: viewport === "large" ? ["main"] : [],
       })
       await recordContentChanges(room.page)
       await waitForContent(room.page, "welcome")
@@ -48,7 +48,9 @@ describe("会話の画面の局面", () => {
       expect(await contentLog(room.page)).toEqual(["welcome", "work", "report"])
       expect(working).toEqual(before)
       expect(delivered).toEqual(before)
-      await room.settleAndMatch(ELAPSED_MS)
+      if (viewport === "large") {
+        await room.settleAndMatch(ELAPSED_MS)
+      }
     },
   )
 })
