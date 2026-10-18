@@ -8,13 +8,9 @@ import { countBy } from "remeda"
 
 import { encodeMarks } from "./code-mark.ts"
 import { readGraphSource, type GraphChange, type GraphNodeShape } from "./graph-source.ts"
-import {
-  REPORT_CELL_STATUSES,
-  REPORT_MATRIX_STATUSES,
-  type ReportBlock,
-  type ReportGraph,
-  type ReportSection,
-} from "./report-block.ts"
+import { REPORT_CELL_STATUSES, REPORT_MATRIX_STATUSES } from "./report-block-comparison.ts"
+import type { ReportGraph } from "./report-block-diagram.ts"
+import type { ReportBlock, ReportSection } from "./report-block.ts"
 import { fileTreeRows } from "./report-file-tree.ts"
 import { reportImagePath } from "./report-image.ts"
 import { REPORT_NOTE_KINDS } from "./report-notation.ts"

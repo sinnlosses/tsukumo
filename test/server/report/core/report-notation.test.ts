@@ -11,12 +11,12 @@ import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import { REPORT_FIGURE_DESCRIPTION } from "../../../../src/server/report/core/report-tool.ts"
 import { readGraphSource } from "../../../../src/shared/report/graph-source.ts"
+import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report/report-block-diagram.ts"
 import {
   parseReportSections,
   reportBlockSchema,
   REPORT_BLOCK_KINDS,
   REPORT_FIGURE_NONE_REASONS,
-  REPORT_MERMAID_KINDS,
 } from "../../../../src/shared/report/report-block.ts"
 import {
   REPORT_DRAWN_MARK_NAMES,

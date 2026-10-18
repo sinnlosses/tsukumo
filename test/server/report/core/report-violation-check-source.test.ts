@@ -4,10 +4,8 @@ import { mermaidSourcesInSections } from "../../../../src/server/report/core/rep
 import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
-import {
-  type ReportBlock,
-  REPORT_MERMAID_KINDS,
-} from "../../../../src/shared/report/report-block.ts"
+import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report/report-block-diagram.ts"
+import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
 import { code, draft, kinds, markdown, mermaid, note } from "../../../fixture/report-draft-block.ts"
 
 type Side = Extract<ReportBlock, { readonly kind: "beforeAfter" }>["before"]

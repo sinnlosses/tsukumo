@@ -3,11 +3,10 @@
 
 import { readGraphSource } from "../../../shared/report/graph-source.ts"
 import {
-  type ReportBlock,
-  type ReportGraph,
   REPORT_MERMAID_KINDS,
-  type ReportSection,
-} from "../../../shared/report/report-block.ts"
+  type ReportGraph,
+} from "../../../shared/report/report-block-diagram.ts"
+import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
 
 /**
  * 構文が割れた `mermaid` の塊の位置。`block` は `mermaid` の塊の通し番号（1始まり）。
