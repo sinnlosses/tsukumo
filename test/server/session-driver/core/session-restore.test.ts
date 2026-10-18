@@ -162,7 +162,13 @@ describe("toRestoredEvents", () => {
 
     const reports = eventsOf(messages).filter((event) => event.kind === "report")
 
-    expect(reports).toEqual([reportEvent({ toolUseId: "r-2", conclusion: "架空の二" })])
+    expect(reports).toEqual([
+      reportEvent({
+        toolUseId: "r-2",
+        conclusion: "架空の二",
+        argumentChars: { total: 21, fields: { conclusion: 6 } },
+      }),
+    ])
   })
 
   it("finishedInGroup を持たない前の work_plan の呼び出しも、空の finishedInGroup のワークプランとして組み直す", () => {

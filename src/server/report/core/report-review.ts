@@ -31,6 +31,7 @@
 
 import { isDeepEqual } from "remeda"
 
+import type { ReportArgumentChars } from "../../../shared/report/report-argument-chars.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -50,6 +51,12 @@ export const REPORT_PROCEDURE_REJECTIONS = [
   "finished-with-ng",
   "background-running",
 ] as const satisfies readonly string[]
+
+/**
+ * handler が差し戻していないのに `isError` で返った呼び出し（形の検査で落ちて handler に届かなかったもの）の理由の名前。
+ * 差し戻しの記録（`report-rejected`）は handler ではなく `pass` が、この呼び出しの引数の字数つきで作る。
+ */
+export const REPORT_TOOL_ERROR_REASON = "tool-error"
 
 export type ReportRejectionReason =
   | (typeof REPORT_PROCEDURE_REJECTIONS)[number]
@@ -83,6 +90,7 @@ export type ReportReview = {
    * 届いたイベントを流してよい並びに変える（メインのイベントだけを渡す）。
    * `report` は同じ `toolUseId` の `tool-finished` まで預かり、`isError` でなければその直前に出す。
    * 預かったままターンが終わった `report`（結果の届かなかった呼び出し）は、`turn-finished` の直前に出す（判定の出なかった呼び出しは描く）。
+   * `isError` で返った呼び出し（引数が読めなかったものを含む）は、`tool-finished` の直後に `report-rejected`（理由の名前と引数の字数）を出す。
    * 描いた `report` の締めのセリフ（`closing`）は、そのすぐ後ろに `speech` として出す（差し戻した呼び出しの締めは出さない）。
    */
   readonly pass: (event: SessionEvent) => readonly SessionEvent[]
@@ -114,10 +122,21 @@ export function createReportReview(
   let finishedWithNgRejectedInTurn = false
   let backgroundRejectedInTurn = false
   let held: readonly ReportEvent[] = []
+  // 引数が読めず（`conclusion` が文字列でない）レポートにならなかった呼び出し。結果が届いたら差し戻しの記録にだけ使う。
+  let malformed: readonly Extract<SessionEvent, { readonly kind: "report-malformed" }>[] = []
+  // handler が直前に差し戻した理由。同じ呼び出しの `tool-finished` で使い切る。
+  let handlerReasons: readonly string[] | undefined
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportEvent[] = []
   // 脇の話（`aside`）で始まったターンか。ターンの頭の `session-info` は脇の話のターンの頭にも届くので、そこでは戻さない。
   let asideTurn = false
+
+  /** `isError` で返った呼び出しの記録。handler の差し戻しなら理由の名前、handler に届かなかった呼び出しは `tool-error`。 */
+  const rejectionOf = (argumentChars: ReportArgumentChars): SessionEvent => {
+    const reasons = handlerReasons ?? [REPORT_TOOL_ERROR_REASON]
+    handlerReasons = undefined
+    return { kind: "report-rejected", reasons, argumentChars }
+  }
 
   const startTurn = (): void => {
     rejectedInTurn = false
@@ -130,7 +149,7 @@ export function createReportReview(
     drawn = []
   }
 
-  return {
+  const review: ReportReview = {
     judge: (report) => {
       if (!resendRejectedInTurn && drawn.some((previous) => isSameReport(previous, report))) {
         resendRejectedInTurn = true
@@ -195,14 +214,22 @@ export function createReportReview(
         case "report":
           held = [...held, event]
           return []
+        case "report-malformed":
+          malformed = [...malformed, event]
+          return []
         case "tool-finished": {
+          const failed = malformed.find((candidate) => candidate.toolUseId === event.toolUseId)
+          if (failed !== undefined) {
+            malformed = malformed.filter((candidate) => candidate !== failed)
+            return [event, rejectionOf(failed.argumentChars)]
+          }
           const report = held.find((candidate) => candidate.toolUseId === event.toolUseId)
           if (report === undefined) {
             return [event]
           }
           held = held.filter((candidate) => candidate !== report)
           if (event.isError) {
-            return [event]
+            return [event, rejectionOf(report.argumentChars)]
           }
           drawn = [...drawn, report]
           news.markDrawn()
@@ -224,6 +251,7 @@ export function createReportReview(
         case "turn-finished": {
           const unsettled = held.flatMap((report) => [report, ...closingSpeech(report)])
           held = []
+          malformed = []
           asideTurn = false
           startTurn()
           return [...unsettled, event]
@@ -231,6 +259,15 @@ export function createReportReview(
         default:
           return [event]
       }
+    },
+  }
+
+  return {
+    ...review,
+    judge: (report) => {
+      const verdict = review.judge(report)
+      handlerReasons = verdict.kind === "rejected" ? verdict.reasons : undefined
+      return verdict
     },
   }
 }

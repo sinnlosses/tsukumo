@@ -102,6 +102,17 @@
     "event": {
       "kind": "report",
       "toolUseId": "fake-report-call-1",
+      "argumentChars": {
+        "total": 403,
+        "fields": {
+          "task": 15,
+          "conclusion": 34,
+          "sections": 177,
+          "favor": 2,
+          "checks": 2,
+          "closing": 59
+        }
+      },
       "conclusion": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
       "figure": {
         "kind": "none",
@@ -229,6 +240,17 @@
     "event": {
       "kind": "report",
       "toolUseId": "fake-report-call-2",
+      "argumentChars": {
+        "total": 1237,
+        "fields": {
+          "task": 15,
+          "conclusion": 35,
+          "sections": 642,
+          "favor": 37,
+          "checks": 341,
+          "closing": 53
+        }
+      },
       "conclusion": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
       "figure": {
         "kind": "none",

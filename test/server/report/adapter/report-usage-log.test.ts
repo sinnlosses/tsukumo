@@ -65,6 +65,7 @@ function entry(
     hasFavor: false,
     hasSourceReference: true,
     shortTable: true,
+    argumentChars: { total: 1200, fields: { conclusion: 40, sections: 900 } },
   }
 }
 
@@ -122,6 +123,7 @@ describe("createReportUsageLog", () => {
       "hasFavor",
       "hasSourceReference",
       "shortTable",
+      "argumentChars",
     ])
     expect(record).toMatchObject({
       v: REPORT_USAGE_FORMAT_VERSION,
@@ -147,6 +149,7 @@ describe("createReportUsageLog", () => {
       hasFavor: false,
       hasSourceReference: true,
       shortTable: true,
+      argumentChars: { total: 1200, fields: { conclusion: 40, sections: 900 } },
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)
@@ -169,15 +172,17 @@ describe("createReportUsageLog", () => {
       at: at(9, 5),
       sessionId: "claude-session-1",
       reasons: ["resend", "long-paragraph"],
+      argumentChars: { total: 800, fields: { conclusion: 50 } },
     })
 
     const [record] = readLines("2026-09-22.jsonl")
-    expect(keysOf(record)).toEqual(["v", "kind", "at", "sessionId", "reasons"])
+    expect(keysOf(record)).toEqual(["v", "kind", "at", "sessionId", "reasons", "argumentChars"])
     expect(record).toMatchObject({
       v: REPORT_USAGE_FORMAT_VERSION,
       kind: "rejected",
       sessionId: "claude-session-1",
       reasons: ["resend", "long-paragraph"],
+      argumentChars: { total: 800, fields: { conclusion: 50 } },
     })
   })
 })

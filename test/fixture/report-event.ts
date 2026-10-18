@@ -11,6 +11,7 @@ export function reportEvent(
   return {
     kind: "report",
     toolUseId: "fictional-report",
+    argumentChars: { total: 0, fields: {} },
     conclusion: "架空の結論",
     figure: { kind: "none", reason: "unrecorded" },
     sections: [],

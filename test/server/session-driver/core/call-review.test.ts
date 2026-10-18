@@ -68,6 +68,7 @@ const VALID: ReportDraft = reportDraft({ conclusion: "架空の結論。" })
 const OTHER: ReportDraft = reportDraft({ conclusion: "別の架空の結論。" })
 const NO_CLOSING = { kind: "none" } as const
 const CLOSING = { kind: "speech", text: "架空の締め", expression: "default" } as const
+const ARGUMENT_CHARS = reportEvent().argumentChars
 
 const reportOfDraft = (
   toolUseId: string,
@@ -208,7 +209,37 @@ describe("CallReview の預かり（report）", () => {
     ])
 
     review.pass(reportOfDraft("toolu_r2", OTHER, CLOSING))
-    expect(review.pass(finished("toolu_r2", true))).toEqual([finished("toolu_r2", true)])
+    expect(review.pass(finished("toolu_r2", true))).toEqual([
+      finished("toolu_r2", true),
+      { kind: "report-rejected", reasons: ["tool-error"], argumentChars: ARGUMENT_CHARS },
+    ])
+  })
+
+  it("handler が差し戻した report は、理由の名前と生の引数の字数の report-rejected を結果の直後に出す", () => {
+    const review = createCallReview()
+    drawReport(review, "toolu_r1", VALID)
+    const resent = reportOfDraft("toolu_r2", VALID)
+
+    expect(review.judgeReport(VALID).kind).toBe("rejected")
+    review.pass(resent)
+
+    expect(review.pass(finished("toolu_r2", true))).toEqual([
+      finished("toolu_r2", true),
+      { kind: "report-rejected", reasons: ["resend"], argumentChars: ARGUMENT_CHARS },
+    ])
+  })
+
+  it("引数が読めず handler に届かなかった report も、結果の直後に tool-error の report-rejected を出す", () => {
+    const review = createCallReview()
+    const chars = { total: 40, fields: { sections: 12 } }
+
+    expect(
+      review.pass({ kind: "report-malformed", toolUseId: "toolu_m1", argumentChars: chars }),
+    ).toEqual([])
+    expect(review.pass(finished("toolu_m1", true))).toEqual([
+      finished("toolu_m1", true),
+      { kind: "report-rejected", reasons: ["tool-error"], argumentChars: chars },
+    ])
   })
 
   it("speak と report の無い流れはそのまま通る", () => {

@@ -473,7 +473,17 @@ describe("reportUsageEntryOf", () => {
       hasFavor: false,
       hasSourceReference: false,
       shortTable: false,
+      argumentChars: { total: 0, fields: {} },
     })
+  })
+
+  it("イベントの引数の字数を、本文を含めずにそのまま運ぶ", () => {
+    const argumentChars = { total: 321, fields: { conclusion: 12, sections: 200 } }
+
+    const entry = reportUsageEntryOf(reportEvent({ argumentChars }), "claude-session-9", 1, false)
+
+    expect(entry.argumentChars).toEqual(argumentChars)
+    expect(JSON.stringify(entry.argumentChars)).not.toContain("架空の結論")
   })
 
   describe("hasFigure", () => {

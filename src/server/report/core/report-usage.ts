@@ -4,6 +4,7 @@
 import { groupBy, isPlainObject } from "remeda"
 
 import { readGraphSource } from "../../../shared/report/graph-source.ts"
+import type { ReportArgumentChars } from "../../../shared/report/report-argument-chars.ts"
 import {
   type ReportBlock,
   type ReportSection,
@@ -77,6 +78,8 @@ export type ReportUsageEntry = {
   readonly hasSourceReference: boolean
   /** 行が2つ以下の表が1つでもあるか。 */
   readonly shortTable: boolean
+  /** 引数の字数。全体と最上位の欄ごと。 */
+  readonly argumentChars: ReportArgumentChars
 }
 
 const FIGURE_KINDS: readonly string[] = ["image", "mermaid", "graph", "svg"]
@@ -120,6 +123,7 @@ export type ReportRejectionEntry = {
   readonly at: number
   readonly sessionId: string
   readonly reasons: readonly string[]
+  readonly argumentChars: ReportArgumentChars
 }
 
 /** 書けなくても例外を投げない。 */
@@ -177,6 +181,7 @@ export function reportUsageEntryOf(
     shortTable: blocksOf(drawnSections).some(
       (block) => block.kind === "table" && block.rows.length <= 2,
     ),
+    argumentChars: event.argumentChars,
   }
 }
 

@@ -5,6 +5,7 @@ import {
   toSessionEvents,
 } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
+import { reportArgumentCharsOf } from "../../../../src/shared/report/report-argument-chars.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import {
@@ -1085,6 +1086,7 @@ describe("toSessionEvents（report ツール）", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
       reportEvent({
         toolUseId: "toolu_r1",
+        argumentChars: expect.objectContaining({ total: expect.any(Number) }),
         conclusion: "架空の結論。",
         sections: [
           {
@@ -1300,7 +1302,11 @@ describe("toSessionEvents（report ツール）", () => {
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      reportEvent({ toolUseId: "toolu_r1", conclusion: "架空の結論。" }),
+      reportEvent({
+        toolUseId: "toolu_r1",
+        conclusion: "架空の結論。",
+        argumentChars: { total: 23, fields: { conclusion: 8 } },
+      }),
     ])
   })
 
@@ -1347,7 +1353,7 @@ describe("toSessionEvents（report ツール）", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
-  it("conclusion が文字列でない report は捨てる", () => {
+  it("conclusion が文字列でない report はレポートにせず、字数だけの report-malformed にする", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -1357,7 +1363,13 @@ describe("toSessionEvents（report ツール）", () => {
       },
     ])
 
-    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      {
+        kind: "report-malformed",
+        toolUseId: "toolu_r1",
+        argumentChars: reportArgumentCharsOf({ body: "架空の本文" }),
+      },
+    ])
   })
 
   /** `report` などの呼び出しの塊が開いた断片（`includePartialMessages`）。 */

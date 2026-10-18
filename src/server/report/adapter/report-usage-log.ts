@@ -42,6 +42,7 @@ function toRejectionRecord(entry: ReportRejectionEntry): ReportRejectionRecord {
     at: isoWithOffset(entry.at),
     sessionId: entry.sessionId,
     reasons: entry.reasons,
+    argumentChars: entry.argumentChars,
   }
 }
 
@@ -74,5 +75,6 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     hasFavor: entry.hasFavor,
     hasSourceReference: entry.hasSourceReference,
     shortTable: entry.shortTable,
+    argumentChars: entry.argumentChars,
   }
 }

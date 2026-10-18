@@ -1,12 +1,13 @@
 // `report` の塊の使われ方の記録の行の形。1行 = 描いた `report` 1回。
 // 書いてよいのは時刻・セッションID・塊と記法の名前・数だけで、塊の中身・逃げ道の文字は入れない。
 
+import type { ReportArgumentChars } from "./report-argument-chars.ts"
 import type { RecordedFigureNoneReason, RecordedReportFigure } from "./report-block.ts"
 import type { ForbiddenBlock, RecordedReportShapeTag, ReportShapeTag } from "./report-shape-tag.ts"
 import type { ReportGenre, ReportTaskOutcome } from "./report-task.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 13 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 14 satisfies number
 
 /** 札が許さない塊の組と、その回に出た数（版13から）。 */
 export type ForbiddenShapeBlockUsage = {
@@ -84,11 +85,13 @@ export type ReportUsageRecord = ReportFigureUsage &
     readonly hasSourceReference: boolean
     /** 行が2つ以下の表が1つでもあるか（版10から）。 */
     readonly shortTable: boolean
+    /** 引数の字数。全体と最上位の欄ごと（版14から）。 */
+    readonly argumentChars: ReportArgumentChars
   }
 
 /**
  * 差し戻した `report` 1回の記録の行。受け付けの行と同じファイルに入り、`kind` の有無で見分ける（受け付けの行に `kind` は無い）。
- * 書いてよいのは時刻・セッションID・差し戻しの種類の名前だけ。
+ * 書いてよいのは時刻・セッションID・差し戻しの種類の名前・引数の字数だけ。
  */
 export type ReportRejectionRecord = {
   readonly v: typeof REPORT_USAGE_FORMAT_VERSION
@@ -97,4 +100,6 @@ export type ReportRejectionRecord = {
   readonly at: string
   readonly sessionId: string
   readonly reasons: readonly string[]
+  /** 差し戻した呼び出しの引数の字数（版14から）。 */
+  readonly argumentChars: ReportArgumentChars
 }

@@ -65,6 +65,7 @@ export function recordSessionEvent(
       at,
       sessionId: state.session.sessionId,
       reasons: event.reasons,
+      argumentChars: event.argumentChars,
     })
   }
   if (event.kind === "question-answered" && state.session.kind !== "starting") {

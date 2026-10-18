@@ -40,6 +40,9 @@ import {
   waitForBatch,
 } from "../../../fixture/session-manager.ts"
 
+/** 差し戻した `report` の引数の字数（架空の値）。 */
+const ARGUMENT_CHARS = { total: 120, fields: { conclusion: 30 } } as const
+
 function sessionInfo(sessionId: string): SessionEvent {
   return {
     kind: "session-info",
@@ -499,6 +502,7 @@ describe("createSessionManager", () => {
           hasFavor: false,
           hasSourceReference: false,
           shortTable: false,
+          argumentChars: { total: 0, fields: {} },
           sessionSummary: undefined,
         },
       ])
@@ -553,7 +557,7 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(reportWithSections([]))
-      stub.emit({ kind: "report-rejected", reasons: ["resend"] })
+      stub.emit({ kind: "report-rejected", reasons: ["resend"], argumentChars: ARGUMENT_CHARS })
       await waitForBatch()
 
       expect(entries).toEqual([])
@@ -565,11 +569,20 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(sessionInfo("claude-session-1"))
-      stub.emit({ kind: "report-rejected", reasons: ["resend", "long-paragraph"] })
+      stub.emit({
+        kind: "report-rejected",
+        reasons: ["resend", "long-paragraph"],
+        argumentChars: ARGUMENT_CHARS,
+      })
       await waitForBatch()
 
       expect(rejections).toEqual([
-        { at: 1_000, sessionId: "claude-session-1", reasons: ["resend", "long-paragraph"] },
+        {
+          at: 1_000,
+          sessionId: "claude-session-1",
+          reasons: ["resend", "long-paragraph"],
+          argumentChars: ARGUMENT_CHARS,
+        },
       ])
       expect(entries).toEqual([])
     })

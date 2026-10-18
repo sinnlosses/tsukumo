@@ -198,6 +198,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return state
     case "delegate-returned":
       return { ...state, records: [...state.records, ...workPlanRecords(state.records, event, at)] }
+    case "report-malformed":
     case "report-rejected":
       return state
     case "report-drafting":

@@ -9,6 +9,7 @@
 import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
+import { reportArgumentCharsOf } from "../../../shared/report/report-argument-chars.ts"
 import {
   parseReportFigure,
   parseReportSections,
@@ -186,6 +187,7 @@ export function reportEvents(
     {
       kind: "report",
       toolUseId,
+      argumentChars: reportArgumentCharsOf(input),
       conclusion: input.conclusion,
       figure: parseReportFigure(input.figure),
       sections: parsed.sections,
@@ -531,9 +533,19 @@ function assistantBlockEvents(
   }
 
   if (block.name === tsukumoToolFullName(REPORT_TOOL_NAME)) {
-    return parentToolUseId === undefined && typeof block.id === "string"
-      ? reportEvents(block.id, block.input, expressions)
-      : []
+    if (parentToolUseId !== undefined || typeof block.id !== "string") {
+      return []
+    }
+    const reports = reportEvents(block.id, block.input, expressions)
+    return reports.length > 0
+      ? reports
+      : [
+          {
+            kind: "report-malformed",
+            toolUseId: block.id,
+            argumentChars: reportArgumentCharsOf(block.input),
+          },
+        ]
   }
 
   if (block.name === tsukumoToolFullName(WORK_PLAN_TOOL_NAME)) {

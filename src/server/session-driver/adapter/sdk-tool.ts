@@ -173,7 +173,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す（`toSessionEvents`）。
  * 受け取り口を1つにしておくと、イベントの流れが1本で済む。
  * `report` と `work_plan` の引数も同じで、handler が引数を読むのは差し戻すかと返す文を決めるためだけ。
- * `report` の差し戻しだけは `report-rejected` を流す（差し戻した呼び出しは変換のあとに捨てられ、記録の口が無いため）。
+ * 差し戻した `report` の記録（`report-rejected`）は handler ではなく `CallReview.pass` が `isError` の結果を見て作る。
  */
 export function tsukumoServer(
   expressions: readonly ExpressionChoice[],
@@ -195,7 +195,7 @@ export function tsukumoServer(
       recallEpisodeTool(mode.chatRecall),
       ...(mode.kind === "work"
         ? [
-            reportTool(expressions, callReview, onReportTitle, cwd, onEvent),
+            reportTool(expressions, callReview, onReportTitle, cwd),
             workPlanTool(callReview),
             phaseResultTool(callReview, onEvent),
             questionBriefTool(holdBrief),
@@ -258,7 +258,6 @@ function reportTool(
   review: CallReview,
   onReportTitle: (title: string) => void,
   cwd: string,
-  onEvent: (event: SessionEvent) => void,
 ) {
   return tool(
     REPORT_TOOL_NAME,
@@ -317,7 +316,6 @@ function reportTool(
         workPlanClosing: parseWorkPlanClosing(workPlanClosing),
       })
       if (verdict.kind === "rejected") {
-        onEvent({ kind: "report-rejected", reasons: verdict.reasons })
         return { content: [{ type: "text" as const, text: verdict.text }], isError: true }
       }
       if (title !== undefined) {

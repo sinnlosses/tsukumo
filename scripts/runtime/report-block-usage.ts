@@ -11,6 +11,7 @@
 // 2行以下の表のあるレポートの割合は、版10以降の行を分母にする。
 // 欄の表の `blockAside`（塊の傍注）は版12から記録している（それより前の行には出ない）。
 // 札 × 節数と、札が許さない塊を使った節・組の数は、版13以降の行の節を分母にする。
+// 引数の字数の分布と差し戻しの出し直しの割合は、版14以降の行を分母にする。
 //
 // 使い方:
 //   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -28,7 +29,10 @@ import {
   ESCAPE_NOTATIONS,
   MARKDOWN_NOTATIONS,
 } from "../../src/server/report/core/report-markdown-notation.ts"
-import { REPORT_PROCEDURE_REJECTIONS } from "../../src/server/report/core/report-review.ts"
+import {
+  REPORT_PROCEDURE_REJECTIONS,
+  REPORT_TOOL_ERROR_REASON,
+} from "../../src/server/report/core/report-review.ts"
 import { REPORT_BLOCK_FIELDS } from "../../src/server/report/core/report-usage.ts"
 import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/report-violation.ts"
 import {
@@ -138,6 +142,14 @@ const shapeTagRecordShape = {
   ),
 }
 
+/** 引数の字数を記録し始めた版。 */
+const ARGUMENT_CHARS_FORMAT_VERSION = 14
+
+const argumentCharsSchema = z.object({
+  total: z.number(),
+  fields: z.record(z.string(), z.number()),
+})
+
 const recordSchema = z.union([
   z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
   z.object({
@@ -203,6 +215,18 @@ const recordSchema = z.union([
       ...shapeTagRecordShape,
     })
     .and(figureFieldSchema),
+  z
+    .object({
+      v: z.literal(ARGUMENT_CHARS_FORMAT_VERSION),
+      ...figureRecordShape,
+      ...countRecordShape,
+      ...howToVerifyRecordShape,
+      ...genreRecordShape,
+      ...shortTableRecordShape,
+      ...shapeTagRecordShape,
+      argumentChars: argumentCharsSchema,
+    })
+    .and(figureFieldSchema),
 ])
 type UsageRecord = z.infer<typeof recordSchema>
 type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[] }>
@@ -213,6 +237,7 @@ type HowToVerifyRecord = Extract<UsageRecord, { readonly hasHowToVerify: boolean
 type GenreRecord = Extract<UsageRecord, { readonly taskGenre: string }>
 type ShortTableRecord = Extract<UsageRecord, { readonly shortTable: boolean }>
 type ShapeTagRecord = Extract<UsageRecord, { readonly forbiddenShapeSectionCount: number }>
+type ArgumentCharsRecord = Extract<UsageRecord, { readonly argumentChars: unknown }>
 
 /** `figure` の表に出す種類。0件でも出す。 */
 const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
@@ -236,9 +261,11 @@ const rejectionSchema = z.object({
     z.literal(SERIES_FORMAT_VERSION),
     z.literal(BLOCK_ASIDE_FORMAT_VERSION),
     z.literal(SHAPE_TAG_FORMAT_VERSION),
+    z.literal(ARGUMENT_CHARS_FORMAT_VERSION),
   ]),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),
+  argumentChars: argumentCharsSchema.optional(),
 })
 type RejectionRecord = z.infer<typeof rejectionSchema>
 
@@ -314,6 +341,17 @@ process.stdout.write("\n\n")
 process.stdout.write(shapeTagSection(shapeTagRecords))
 process.stdout.write("\n\n")
 process.stdout.write(
+  argumentCharsSection(
+    records.filter(
+      (record): record is ArgumentCharsRecord => record.v >= ARGUMENT_CHARS_FORMAT_VERSION,
+    ),
+    rejections.flatMap((rejection) =>
+      rejection.argumentChars === undefined ? [] : [rejection.argumentChars],
+    ),
+  ),
+)
+process.stdout.write("\n\n")
+process.stdout.write(
   table("逃げ道の外の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
 )
 process.stdout.write("\n\n")
@@ -335,7 +373,7 @@ process.stdout.write(`知らない種類で境界で落とした塊の数（合�
 process.stdout.write(
   table(
     `差し戻しの種類 × 回数（割合は \`report\` の呼び出し${String(records.length + rejections.length)}回〔受け付け${String(records.length)}＋差し戻し${String(rejections.length)}〕に対する）`,
-    [...REPORT_PROCEDURE_REJECTIONS, ...REPORT_VIOLATION_KINDS],
+    [...REPORT_PROCEDURE_REJECTIONS, REPORT_TOOL_ERROR_REASON, ...REPORT_VIOLATION_KINDS],
     rejections,
     (record) => record.reasons,
     records.length + rejections.length,
@@ -624,6 +662,63 @@ function shapeTagSection(rows: readonly ShapeTagRecord[]): string {
           .toSorted((left, right) => right.count - left.count)
           .map(({ pair, count }) => `  ${pair.padEnd(26)} ${String(count).padStart(5)}`)),
   ].join("\n")
+}
+
+/**
+ * 引数の字数（JSON にした字数。トークンの代わり）の分布。分母は版14以降の受け付けの行と、字数を持つ差し戻しの行。
+ * 受け付けも差し戻しも、モデルが書いた生の引数の字数。
+ * 形の検査で落ちて handler に届かなかった呼び出しは、理由が `tool-error` の差し戻しの行に入る。
+ */
+function argumentCharsSection(
+  accepted: readonly ArgumentCharsRecord[],
+  rejected: readonly z.infer<typeof argumentCharsSchema>[],
+): string {
+  if (accepted.length === 0) {
+    return "引数の字数: 記録した行が無い"
+  }
+  const spreadLine = (label: string, values: readonly number[]): string =>
+    `  ${label.padEnd(18)} ${String(values.length).padStart(5)}件  中央値 ${String(percentile(values, 0.5)).padStart(6)}  p90 ${String(percentile(values, 0.9)).padStart(6)}`
+  const acceptedMedian = percentile(
+    accepted.map((record) => record.argumentChars.total),
+    0.5,
+  )
+  const rejectedMedian = percentile(
+    rejected.map((chars) => chars.total),
+    0.5,
+  )
+  const fieldNames = [
+    ...new Set(accepted.flatMap((record) => Object.keys(record.argumentChars.fields))),
+  ].toSorted()
+  return [
+    `引数の字数（版14以降の受け付け${String(accepted.length)}件、差し戻し${String(rejected.length)}件。外す基準の対象ではない）:`,
+    spreadLine(
+      "受け付け 全体",
+      accepted.map((record) => record.argumentChars.total),
+    ),
+    spreadLine(
+      "差し戻し 全体",
+      rejected.map((chars) => chars.total),
+    ),
+    acceptedMedian === 0 || rejected.length === 0
+      ? "  差し戻しの出し直し: 差し戻しの字数の記録が無い"
+      : `  差し戻し1回の字数（中央値）は受け付けの ${((rejectedMedian / acceptedMedian) * 100).toFixed(1)}%（直し1回ごとに引数を全部書き直す量）`,
+    "欄ごと（受け付けのうち、その欄を渡した行）:",
+    ...fieldNames.map((name) =>
+      spreadLine(
+        name,
+        accepted.flatMap((record) => {
+          const chars = record.argumentChars.fields[name]
+          return chars === undefined ? [] : [chars]
+        }),
+      ),
+    ),
+  ].join("\n")
+}
+
+/** 昇順にしたときの `ratio` 位置の値（最近順位法）。空なら 0。 */
+function percentile(values: readonly number[], ratio: number): number {
+  const sorted = values.toSorted((left, right) => left - right)
+  return sorted[Math.max(0, Math.ceil(sorted.length * ratio) - 1)] ?? 0
 }
 
 /** `figure` の種類。記録する前の版の行は `none`。 */

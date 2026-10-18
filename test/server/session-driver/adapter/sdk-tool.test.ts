@@ -549,6 +549,24 @@ describe("report でターンを閉じる", () => {
     expect(reply.endsTurn).toBe(false)
   })
 
+  it("形の検査で落ちた report は handler に届かない（記録は CallReview.pass が結果から作る）", async () => {
+    const events: SessionEvent[] = []
+    const review = createCallReview()
+    let judged = 0
+    const judgeReport: CallReview["judgeReport"] = (draft) => {
+      judged += 1
+      return review.judgeReport(draft)
+    }
+
+    const reply = await callTool(workServer(events, [], { ...review, judgeReport }), "report", {
+      conclusion: "架空の結論",
+    })
+
+    expect(reply.isError).toBe(true)
+    expect(judged).toBe(0)
+    expect(events).toEqual([])
+  })
+
   it("選択肢に無い表情の waitingLine は形の検査で落ちる", async () => {
     const reply = await callTool(workServer(), "report", {
       conclusion: "架空の結論",
@@ -1083,15 +1101,15 @@ describe("report の差し戻しの記録", () => {
     waitingLine: WAITING_LINE,
   }
 
-  it("差し戻した report は種類の名前だけの report-rejected を流し、通した report は流さない", async () => {
+  it("差し戻した report の記録は handler からは流さない（結果を見る CallReview.pass が作る）", async () => {
     const events: SessionEvent[] = []
-    await callTool(workServer(events), "report", {
+    const reply = await callTool(workServer(events), "report", {
       ...draft,
       sections: [{ blocks: [{ kind: "markdown", markdown: "- 架空の項目" }] }],
     })
-    await callTool(workServer(events), "report", draft)
 
-    expect(events).toEqual([{ kind: "report-rejected", reasons: ["markdown-notation"] }])
+    expect(reply.isError).toBe(true)
+    expect(events).toEqual([])
   })
 })
 

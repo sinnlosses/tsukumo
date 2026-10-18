@@ -108,12 +108,16 @@ function isHandback(message: unknown): boolean {
   )
 }
 
-/** 差し戻しの1段を通す。通ったあとの出来事は、元の出来事の時刻を引き継ぐ。 */
+/** 差し戻しの1段を通す。通ったあとの出来事は、元の出来事の時刻を引き継ぐ。差し戻しの記録（`report-rejected`）は使われ方の記録の口なので、復元では出さない。 */
 function passThrough(
   events: readonly RestoredEvent[],
   pass: (event: SessionEvent) => readonly SessionEvent[],
 ): readonly RestoredEvent[] {
-  return events.flatMap(({ event, time }) => pass(event).map((passed) => ({ event: passed, time })))
+  return events.flatMap(({ event, time }) =>
+    pass(event)
+      .filter((passed) => passed.kind !== "report-rejected")
+      .map((passed) => ({ event: passed, time })),
+  )
 }
 
 function isTurnOpening(event: SessionEvent): boolean {

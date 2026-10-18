@@ -453,7 +453,11 @@ describe("startFakeSession", () => {
   })
 
   it("report は結果が届くまで預かり、差し戻された（isError の）ものは流さない（本物の駆動と同じ）", async () => {
-    const report = (toolUseId: string) => reportEvent({ toolUseId })
+    const report = (toolUseId: string) =>
+      reportEvent({
+        toolUseId,
+        argumentChars: expect.objectContaining({ total: expect.any(Number) }),
+      })
     const finished = (toolUseId: string, isError: boolean) =>
       ({ kind: "tool-finished", toolUseId, content: "架空の結果", isError }) as const
     const sink = collect()
@@ -488,6 +492,11 @@ describe("startFakeSession", () => {
     // 先頭3件は起こした直後の分（プラン・effort の対応・既定の effort。この疑似セッションは opening が空）。
     expect(sink.events.slice(3)).toEqual([
       finished("fake-r1", true),
+      {
+        kind: "report-rejected",
+        reasons: ["tool-error"],
+        argumentChars: expect.objectContaining({ total: expect.any(Number) }),
+      },
       report("fake-r2"),
       finished("fake-r2", false),
     ])
@@ -551,6 +560,7 @@ describe("startFakeSession", () => {
     expect(sink.events.filter((event) => event.kind === "report")).toEqual([
       reportEvent({
         toolUseId: "fake-r1",
+        argumentChars: expect.objectContaining({ total: expect.any(Number) }),
         closing: { kind: "speech", text: "書けたよ", expression: "default" },
       }),
     ])

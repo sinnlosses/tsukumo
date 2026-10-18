@@ -12,6 +12,7 @@ import type { DiaryEvent } from "../diary/diary.ts"
 import type { ReactionLine, WrittenReactions } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
+import type { ReportArgumentChars } from "../report/report-argument-chars.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
 import type { ReportChangeCount } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
@@ -182,10 +183,12 @@ export type SessionEvent =
    * `unknownBlockCount` は知らない種類で境界で落とした塊の数で、画面の状態は読まない。
    * `sessionSummary` はセッション全体の要約で、書かれていなければ undefined。レポートには描かず、切り替え画面が transcript から読み戻す。
    * `sessionRemaining`（残っていること）も同じく描かず、切り替え画面と始め方の一覧の「前回の続き」が transcript から読み戻す。
+   * `argumentChars` は引数の字数で、使われ方の記録だけが読む。
    */
   | {
       readonly kind: "report"
       readonly toolUseId: string
+      readonly argumentChars: ReportArgumentChars
       readonly conclusion: string
       readonly figure: RecordedReportFigure
       readonly sections: readonly ReportSection[]
@@ -201,9 +204,24 @@ export type SessionEvent =
       readonly sessionRemaining: SessionRemaining
     }
   /**
-   * `report` の handler が差し戻したときに流す。`reasons` は差し戻しの種類の名前だけで、本文も文面も持たない。
+   * 引数が読めず（`conclusion` が文字列でない）`report` にならなかったメインの呼び出し。サーバの中だけで流れる。
+   * `CallReview` が同じ `toolUseId` の `tool-finished` まで預かり、差し戻しの記録（`report-rejected`）にだけ使う（畳み込み・ブラウザには届かない）。
    */
-  | { readonly kind: "report-rejected"; readonly reasons: readonly string[] }
+  | {
+      readonly kind: "report-malformed"
+      readonly toolUseId: string
+      readonly argumentChars: ReportArgumentChars
+    }
+  /**
+   * 結果が `isError` で返った `report` の呼び出しごとに、`CallReview` が `tool-finished` の直後に作る（記録の口で、画面の状態は読まない）。
+   * `reasons` は差し戻しの種類の名前だけで、本文も文面も持たない。handler が差し戻したものはその理由、handler に届かずに落ちたものは `tool-error`。
+   * `argumentChars` は呼び出しの生の引数の字数（受理した `report` と同じ数え方）。
+   */
+  | {
+      readonly kind: "report-rejected"
+      readonly reasons: readonly string[]
+      readonly argumentChars: ReportArgumentChars
+    }
   /**
    * `task` のある受理された `report` のあとに、依頼の頭の HEAD からの変更の量を tsukumo が git で数えて届ける。
    * `toolUseId` はその `report` の呼び出しの id。数えられなかったときは流れず、transcript からの復元でも流れない。
