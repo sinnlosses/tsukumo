@@ -104,6 +104,9 @@ const REVEAL_ADVANCE_MS = 1_000
 /** 時計を進めるたびに実時間で空ける間隔（ミリ秒）。待った実時間の数え上げにも使う。 */
 const REVEAL_POLL_MS = 50
 
+/** `--scroll-to` で転がしたあと、偽の時計を進める量（ミリ秒）。転がしを受けた再描画を反映させる。 */
+const SCROLL_ADVANCE_MS = 500
+
 /** 書き上げていくように見せる演出が進行中の印（`useReportReveal` の `data-revealing`）。 */
 const REVEALING_SELECTOR = "[data-revealing]"
 
@@ -121,12 +124,12 @@ const USAGE = `使い方:
   --size <幅>x<高さ>    窓の大きさ（既定 ${String(DEFAULT_WIDTH)}x${String(DEFAULT_HEIGHT)}）
   --measure <selector>  位置と大きさ（と scrollHeight・clientHeight）を数値で出す要素（何度でも指定できる）
   --wait-for <selector> 要素が出て、演出が終わるまで待ってから撮る（出なければ失敗して終わる）
-  --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる。2つ以上に当たるとコンマ区切りでも先頭へ転がし、「一致 n 個、先頭へ転がした」の行を出す）
+  --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる。2つ以上に当たるとコンマ区切りでも先頭へ転がし、「一致 n 個、先頭へ転がした」の行を出す。準備の手のあとに当たり〔書く位置は問わない〕、転がしたあと偽の時計があれば進めて落ち着くまで待つので、--advance を後ろに足さなくてよい。--reveal-at のときは時計を止めているので待たない）
   --type <selector> <文字>  入力欄に打ってから撮る
   --click <selector>    押してから撮る
   --hover <selector>    触れてから撮る
   --hash <hash>         location.hash を書いてから撮る
-  --press <キー名>      キーを押してから撮る（Escape など。狭い窓の引き出しを閉じる）
+  --press <キー名>      キーを押してから撮る（Escape など。狭い窓の引き出しを閉じる。キーはフォーカスの置き場所へ届く。メインビューの中でもモーダルの中でもないと、置き場所を知らせる行を出す。PageDown などは先に --click で中を押す）
   --advance <ms>        偽の時計をミリ秒だけ進めてから撮る（待ち時間で出る画。Temporal.Now も従う）
   --clock <ISO 時刻>    ブラウザの時計をその時刻に決めて撮る（日付で表示が変わる画。オフセット付き、例 2026-01-15T12:00:00+09:00。Temporal.Now も従う）
   --reveal-at <ms>      書き上げる演出が始まった時点から偽の時計をミリ秒だけ進めたところで止め、途中の画を撮る（正の整数。--scene と一緒にだけ使う。演出は打ち切らず、--wait-for・--advance などの操作とは併用できない。演出が始まらない場面は 15 秒待って失敗するので、先に --list-scenes の見込みを見る）
@@ -261,12 +264,12 @@ async function capture(
     const page = await browser.newPage({
       viewport: { width: options.width, height: options.height },
     })
-    if (
+    const clockInstalled =
       options.waitFor !== undefined ||
       options.clock !== undefined ||
       options.revealAt !== undefined ||
       options.preparations.some((step) => step.kind === "advance")
-    ) {
+    if (clockInstalled) {
       await (options.clock === undefined
         ? page.clock.install()
         : page.clock.install({ time: options.clock }))
@@ -306,7 +309,9 @@ async function capture(
       return 1
     }
 
-    const [missed] = await applyPreparations(page, options.preparations, "stop")
+    const [missed] = await applyPreparations(page, options.preparations, "stop", (line) => {
+      process.stdout.write(`${line}\n`)
+    })
     if (missed !== undefined) {
       process.stderr.write(`当てられなかった: ${describePreparation(missed)}\n`)
       return 1
@@ -321,6 +326,19 @@ async function capture(
       const notice = scrollMatchNotice(options.scrollTo, matched)
       if (notice !== "") {
         process.stdout.write(`${notice}\n`)
+      }
+      if (clockInstalled && options.revealAt === undefined) {
+        await page.clock.runFor(SCROLL_ADVANCE_MS)
+      }
+      if (options.revealAt === undefined) {
+        const scrollSettleFailure = await settlePage(page).then(
+          () => undefined,
+          (error: unknown) => (error instanceof Error ? error.message : String(error)),
+        )
+        if (scrollSettleFailure !== undefined) {
+          process.stderr.write(`${scrollSettleFailure}\n`)
+          return 1
+        }
       }
     }
 

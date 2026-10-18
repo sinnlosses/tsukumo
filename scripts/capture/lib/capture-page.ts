@@ -64,16 +64,42 @@ export async function applyPreparations(
   page: Page,
   steps: readonly Preparation[],
   onMiss: "stop" | "continue",
+  onNotice: (line: string) => void = () => undefined,
 ): Promise<readonly Preparation[]> {
   const missed = await collectMisses(
     steps,
-    (step) => applyPreparation(page, step, PREPARE_TIMEOUT_MS),
+    async (step) => {
+      if (step.kind === "press") {
+        const notice = pressFocusNotice(await readFocusPlace(page))
+        if (notice !== "") {
+          onNotice(notice)
+        }
+      }
+      return applyPreparation(page, step, PREPARE_TIMEOUT_MS)
+    },
     onMiss,
   )
   if (steps.length > 0) {
     await settlePage(page)
   }
   return missed
+}
+
+export type FocusPlace = {
+  readonly description: string
+  readonly inMainView: boolean
+  readonly inDialog: boolean
+}
+
+/**
+ * `--press` のキーが、メインビューにもモーダルにも無いフォーカスへ届くときの知らせの行。
+ * 届き先がメインビューかモーダルなら空文字。
+ */
+export function pressFocusNotice(place: FocusPlace): string {
+  if (place.inMainView || place.inDialog) {
+    return ""
+  }
+  return `フォーカスがメインビューに無い（${place.description}）: メインビューで効くキー（PageDown など）は、先に --click で中を押してから --press を書く`
 }
 
 /**
@@ -201,6 +227,20 @@ export async function waitForRevealEnd(
 /** `--scroll-to` が2つ以上の要素に当たったときの知らせの行。1つなら空文字。 */
 export function scrollMatchNotice(selector: string, count: number): string {
   return count < 2 ? "" : `一致 ${String(count)} 個、先頭へ転がした: ${selector}`
+}
+
+async function readFocusPlace(page: Pick<Page, "evaluate">): Promise<FocusPlace> {
+  return page.evaluate(() => {
+    const active = document.activeElement
+    if (active === null) {
+      return { description: "なし", inMainView: false, inDialog: false }
+    }
+    return {
+      description: `${active.tagName.toLowerCase()}${active.className === "" ? "" : `.${String(active.className).slice(0, 24)}`}`,
+      inMainView: active.closest("[data-main-view]") !== null,
+      inDialog: active.closest('[role="dialog"]') !== null,
+    }
+  })
 }
 
 /**
