@@ -177,7 +177,14 @@ describe("parseReportSections", () => {
     expect(
       parse({ ...beforeAfter, before: { kind: "code", language: "ts", source: "架空" } }),
     ).toMatchObject({ sections: [{ blocks: [{ before: { kind: "code" } }] }] })
+    const region = { left: 10, top: 20, width: 30, height: 40 }
+    const withRegion = { ...beforeAfter, after: { kind: "image", path: "架空/after.png", region } }
+    expect(parse(withRegion)).toMatchObject({
+      sections: [{ blocks: [{ after: { region } }] }],
+      unknownBlockCount: 0,
+    })
     for (const broken of [
+      { ...withRegion, after: { ...withRegion.after, region: { left: 1 } } },
       { ...beforeAfter, after: undefined },
       { ...beforeAfter, before: { kind: "points", points: [] } },
       { ...beforeAfter, before: { kind: "text", text: "架空" } },

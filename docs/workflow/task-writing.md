@@ -51,10 +51,11 @@
   測るのは3か所で、`test/server/report/core/report-notation.test.ts` が `REPORT_NOTATION_PROMPT` を
   4600字以下に、`test/server/report/core/report-tool.test.ts` が `REPORT_TOOL_DESCRIPTION` を
   2048字未満（MCP ツールの説明文の既定の上限）に、`test/server/session-driver/adapter/sdk-report-tool.test.ts` の
-  `REPORT_INPUT_SCHEMA_MAX_CHARS`（20460字）が引数 schema の JSON 全体
+  `REPORT_INPUT_SCHEMA_MAX_CHARS`（20680字）が引数 schema の JSON 全体
   （`REPORT_TASK_DESCRIPTION` などの説明文を含む）を抑える。2026-10-18 に形の札を足したとき、
   実物は4542字・21426字だった（`REPORT_NOTATION_PROMPT` の上限はこのとき上げた）。2026-10-19 に
-  既定値と数・字数の制約を schema から外し、引数 schema は20362字になった。欄の既定値・空でない文字列・
+  既定値と数・字数の制約を schema から外し、引数 schema は20362字になった
+  （同日、前後の画像の側に `region` を足して20583字、上限を20680字に上げた）。欄の既定値・空でない文字列・
   正の数は `report-block-field.ts` の `omittable`・`nonEmpty`・`positiveNumber` で書く
   （`.default()`・文字列の `.min(1)`・`.positive()`・`.int()`・数の `.min()` は schema に出て、同じテストファイルの検査に落ちる）。挙げ漏れは
   `grep -rn 'REPORT_INPUT_SCHEMA_MAX_CHARS\|REPORT_NOTATION_PROMPT\|REPORT_TOOL_DESCRIPTION' test` で拾う。

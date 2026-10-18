@@ -72,6 +72,8 @@ function violationLine(violation: ReportViolation): string {
       return `\`path\` 付きの \`code\` の塊が${violation.count}個、ファイルの中身と一致しない（${violation.paths.join("・")}）。実物を読み直して直すか \`path\` を外す`
     case "code-marks-range":
       return `\`code\` の \`marks\` の \`lines\` が読めない形か \`source\` の行数の外にある塊が${violation.count}個ある。\`4-8\` か \`12\` の形で、行数以内に直す`
+    case "region-range":
+      return `\`beforeAfter\` の画像の側の \`region\` が画像の外に出る、または \`width\`・\`height\` が 0 以下の塊が${violation.count}個ある。\`left\`・\`top\` は 0 以上、\`left + width\` と \`top + height\` は 100 以下、\`width\`・\`height\` は 0 より大きい%にする`
     case "broken-mermaid":
       return `mermaid の図の構文が割れている（${mermaidFaultPositions(violation.faults)}）。その行の書き方を直す`
     case "broken-svg":

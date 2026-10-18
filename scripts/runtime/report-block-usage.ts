@@ -9,7 +9,7 @@
 // unverified のあるレポートのうち確かめ方のある割合は、版8以降の unverified のある行を分母にする。
 // 報告の種類と必須の塊が無い割合は、版9以降の task の行を分母にする。
 // 2行以下の表のあるレポートの割合は、版10以降の行を分母にする。
-// 欄の表の `blockAside`（塊の傍注）は版12から記録している（それより前の行には出ない）。
+// 欄の表の `blockAside`（塊の傍注）は版12から、`beforeAfterRegion`（前後の画像の枠）は版15から記録している（それより前の行には出ない）。
 // 札 × 節数と、札が許さない塊を使った節・組の数は、版13以降の行の節を分母にする。
 // 引数の字数の分布と差し戻しの出し直しの割合は、版14以降の行を分母にする。
 //
@@ -145,6 +145,9 @@ const shapeTagRecordShape = {
 /** 引数の字数を記録し始めた版。 */
 const ARGUMENT_CHARS_FORMAT_VERSION = 14
 
+/** 欄 `beforeAfterRegion` を記録し始めた版。行の形は版14と同じ。 */
+const REGION_FORMAT_VERSION = 15
+
 const argumentCharsSchema = z.object({
   total: z.number(),
   fields: z.record(z.string(), z.number()),
@@ -217,7 +220,7 @@ const recordSchema = z.union([
     .and(figureFieldSchema),
   z
     .object({
-      v: z.literal(ARGUMENT_CHARS_FORMAT_VERSION),
+      v: z.union([z.literal(ARGUMENT_CHARS_FORMAT_VERSION), z.literal(REGION_FORMAT_VERSION)]),
       ...figureRecordShape,
       ...countRecordShape,
       ...howToVerifyRecordShape,
@@ -262,6 +265,7 @@ const rejectionSchema = z.object({
     z.literal(BLOCK_ASIDE_FORMAT_VERSION),
     z.literal(SHAPE_TAG_FORMAT_VERSION),
     z.literal(ARGUMENT_CHARS_FORMAT_VERSION),
+    z.literal(REGION_FORMAT_VERSION),
   ]),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),

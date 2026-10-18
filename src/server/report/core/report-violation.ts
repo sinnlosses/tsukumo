@@ -81,6 +81,8 @@ export type ReportViolation =
   | { readonly kind: "code-mismatch"; readonly count: number; readonly paths: readonly string[] }
   /** `code` の塊の `marks` の `lines` が、読めない形かソースの行数の外にある。`count` はその塊の数。 */
   | { readonly kind: "code-marks-range"; readonly count: number }
+  /** `beforeAfter` の画像の側の `region` が画像の外に出る、または幅か高さが 0 以下。`count` はその塊の数。 */
+  | { readonly kind: "region-range"; readonly count: number }
   /** `mermaid` の塊の構文が割れている。`faults` は位置と字句の名前だけで、図のソースは持たない。 */
   | {
       readonly kind: "broken-mermaid"
@@ -150,6 +152,7 @@ export const VIOLATION_THRESHOLDS = {
   "broken-graph": 0,
   "code-mismatch": 0,
   "code-marks-range": 0,
+  "region-range": 0,
   "long-first-sentence": 0,
   "bad-heading": 0,
   "fraction-figure": 0,

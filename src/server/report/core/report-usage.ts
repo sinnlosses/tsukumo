@@ -100,6 +100,7 @@ const IMAGE_FILE_EXTENSIONS: readonly string[] = [".png", ".jpg", ".jpeg", ".gif
  * - imageNotes: `image` の `notes`
  * - codeMarks: `code` の `marks`
  * - blockAside: 塊の `aside`
+ * - beforeAfterRegion: `beforeAfter` の画像の側の `region`
  */
 export const REPORT_BLOCK_FIELDS = [
   "tableChange",
@@ -114,6 +115,7 @@ export const REPORT_BLOCK_FIELDS = [
   "imageNotes",
   "codeMarks",
   "blockAside",
+  "beforeAfterRegion",
 ] as const satisfies readonly string[]
 
 export type ReportBlockField = (typeof REPORT_BLOCK_FIELDS)[number]
@@ -346,5 +348,12 @@ function hasField(block: ReportBlock, field: ReportBlockField): boolean {
       return block.kind === "code" && block.marks.length > 0
     case "blockAside":
       return block.aside.trim() !== ""
+    case "beforeAfterRegion":
+      return (
+        block.kind === "beforeAfter" &&
+        [block.before, block.after].some(
+          (side) => side.kind === "image" && side.region !== undefined,
+        )
+      )
   }
 }

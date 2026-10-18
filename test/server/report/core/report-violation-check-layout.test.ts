@@ -162,4 +162,38 @@ describe("reportViolations", () => {
       ).toEqual([])
     })
   })
+
+  describe("beforeAfter の画像の側の region", () => {
+    const region = { left: 10, top: 20, width: 30, height: 40 }
+    type Region = typeof region
+    const withRegion = (before: readonly Region[], after: readonly Region[]): ReportBlock => ({
+      kind: "beforeAfter",
+      title: "架空の前後",
+      before: { kind: "image", path: "架空/before.png", ...before.map((r) => ({ region: r }))[0] },
+      after: { kind: "image", path: "架空/after.png", ...after.map((r) => ({ region: r }))[0] },
+      fold: "",
+      aside: "",
+    })
+
+    it("region が無い側、範囲内の側（端に接するのは収まり）は通る", () => {
+      expect(kinds(draft([withRegion([], [])]))).toEqual([])
+      expect(
+        kinds(draft([withRegion([region], [{ left: 0, top: 0, width: 100, height: 100 }])])),
+      ).toEqual([])
+    })
+
+    it.each([
+      ["left が負", { ...region, left: -1 }],
+      ["top が負", { ...region, top: -1 }],
+      ["left + width が100超", { ...region, left: 80 }],
+      ["top + height が100超", { ...region, top: 70 }],
+      ["幅が0", { ...region, width: 0 }],
+      ["高さが負", { ...region, height: -5 }],
+    ])("%s は region-range で、塊の数を数える", (_, bad) => {
+      expect(reportViolations(draft([withRegion([bad], []), withRegion([region], [bad])]))).toEqual(
+        [{ kind: "region-range", count: 2 }],
+      )
+      expect(reportRejectionText([{ kind: "region-range", count: 1 }])).toContain("`region`")
+    })
+  })
 })

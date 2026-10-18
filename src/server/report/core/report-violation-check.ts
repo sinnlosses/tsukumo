@@ -24,6 +24,7 @@ import { codeBlockMatchesFile } from "./code-block-match.ts"
 import {
   crowdedNoteCount,
   drawsShape,
+  hasBadRegion,
   hasShortSeries,
   hasTooManyCandidates,
   isRaggedChart,
@@ -150,6 +151,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
           block.marks.some((mark) => !markFitsLines(mark, sourceLineCount(block.source))),
       ).length,
     },
+    { kind: "region-range", count: drawnBlocks.filter((block) => hasBadRegion(block)).length },
     {
       kind: "long-first-sentence",
       count: firstSentenceLength > MAX_FIRST_SENTENCE ? 1 : 0,

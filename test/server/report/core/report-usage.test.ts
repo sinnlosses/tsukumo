@@ -193,6 +193,38 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside,
     })
+    const region = { left: 10, top: 20, width: 30, height: 40 }
+    type Side = Extract<ReportBlock, { readonly kind: "beforeAfter" }>["before"]
+    const beforeAfter = (before: Side, after: Side): ReportBlock => ({
+      kind: "beforeAfter",
+      title: "",
+      before,
+      after,
+      fold: "",
+      aside: "",
+    })
+    const plain = { kind: "image", path: "架空/a.png" } as const
+    const framed = { ...plain, region }
+
+    it.each([
+      ["beforeAfterRegion（前の側）", beforeAfter(framed, plain), ["beforeAfterRegion"]],
+      ["beforeAfterRegion（後の側）", beforeAfter(plain, framed), ["beforeAfterRegion"]],
+      ["beforeAfterRegion（region なし）", beforeAfter(plain, plain), []],
+      [
+        "beforeAfterRegion（画像でない側）",
+        beforeAfter({ kind: "points", points: ["架空"] }, plain),
+        [],
+      ],
+      ["beforeAfterRegion（単体の image）", image([]), []],
+    ] as const)("%s の欄", (_, block, expected) => {
+      const entry = reportUsageEntryOf(
+        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }]),
+        "claude-session-1",
+        1_000,
+        false,
+      )
+      expect(entry.blockFields).toEqual(expected)
+    })
 
     it.each([
       ["tableRest", table("ほか 3 件"), ["tableRest"]],

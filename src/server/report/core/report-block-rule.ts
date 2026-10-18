@@ -61,6 +61,20 @@ export function hasTooManyCandidates(block: ReportBlock): boolean {
   }
 }
 
+/** `beforeAfter` の画像の側の `region` が、画像の外に出る、または幅か高さが 0 以下の塊か。 */
+export function hasBadRegion(block: ReportBlock): boolean {
+  return (
+    block.kind === "beforeAfter" &&
+    [block.before, block.after].some((side) => {
+      if (side.kind !== "image" || side.region === undefined) return false
+      const { left, top, width, height } = side.region
+      return (
+        width <= 0 || height <= 0 || left < 0 || top < 0 || left + width > 100 || top + height > 100
+      )
+    })
+  )
+}
+
 export function isVerdictOrdered(
   block: Extract<ReportBlock, { readonly kind: "options" }>,
 ): boolean {

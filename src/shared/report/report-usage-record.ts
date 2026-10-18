@@ -7,7 +7,7 @@ import type { ForbiddenBlock, RecordedReportShapeTag, ReportShapeTag } from "./r
 import type { ReportGenre, ReportTaskOutcome } from "./report-task.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 14 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 15 satisfies number
 
 /** 札が許さない塊の組と、その回に出た数（版13から）。 */
 export type ForbiddenShapeBlockUsage = {
@@ -43,7 +43,7 @@ export type ReportUsageRecord = ReportFigureUsage &
     readonly sessionId: string
     /** その回に出た塊の種類（重複無し）。 */
     readonly blockKinds: readonly string[]
-    /** その回に出た塊の欄（重複無し。版3から。`blockAside` は版12から）。 */
+    /** その回に出た塊の欄（重複無し。版3から。`blockAside` は版12から、`beforeAfterRegion` は版15から）。 */
     readonly blockFields: readonly string[]
     /** その回に逃げ道（`markdown` の塊）の外側に出た記法の種類（重複無し）。 */
     readonly notations: readonly string[]

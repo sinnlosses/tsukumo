@@ -1160,7 +1160,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。2026-10-12 利用者決定）/ `chart` / `svg`（座標つきの図形で書く図）/ `progress` / `options` / `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
   欄の `from` / `to`（表のセルの前後）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`sides`（`compare` の2つの側。`heading` と `points`）・
-  `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
+  `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
   `width` / `height`（`svg` の viewBox の大きさ）・`shapes`（`svg` の図形の並び。`kind` が `rect`〔`x`・`y`・`width`・`height`・`label`・`emphasis`〕/ `line`〔`x1`・`y1`・`x2`・`y2`・`arrow`・`label`〕/ `text`〔`x`・`y`・`text`〕の合併型）・`emphasis`（`rect` の枠を強調する真偽値）・`arrow`（`line` の終点に矢じりを付ける真偽値）・
   `parts`（`dimension` の上から積む並び。領域の `name` / `size` / `before` と余白の `gap` / `before`）・`verdict`（`options` の候補の判定）・`change`（`files` の変更の種別）・
   `path`（`image` の画像のファイル）・`caption`（`image` の何が見えるかの1行）・`notes`（`image` の番号つきの説明の並び）・

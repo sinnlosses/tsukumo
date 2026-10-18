@@ -66,6 +66,10 @@ const beforeAfterSideSchema = z
     z.object({
       kind: z.literal("image"),
       path: z.string().describe("撮った画像のファイル（絶対か cwd から。png・jpeg・gif・webp）"),
+      region: z
+        .object({ left: z.number(), top: z.number(), width: z.number(), height: z.number() })
+        .optional()
+        .describe("変わった場所の枠（画像に対する%）"),
     }),
     z.object({
       kind: z.literal("code"),
