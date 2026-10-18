@@ -3,7 +3,7 @@
 import { useState, type ToggleEvent } from "react"
 
 import { isExchangeClosed } from "../../../../../../../../../shared/session/conversation-moment.ts"
-import type { MainViewAside } from "../../../../../../../../../shared/session/main-view.ts"
+import type { MainViewAside } from "../../../../../../../../../shared/session/main-view-shape.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 
 type AsideThreadRow = {

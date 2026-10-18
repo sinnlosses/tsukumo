@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { mainViewEntries } from "../../../src/shared/session/main-view.ts"
+import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { MAX_TOOL_TEXT_LENGTH } from "../../../src/shared/session/session-record.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"

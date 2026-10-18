@@ -4,7 +4,7 @@
 import { zip } from "remeda"
 
 import { conversationMoment } from "../../../../../../../shared/session/conversation-moment.ts"
-import { turnAsides } from "../../../../../../../shared/session/main-view.ts"
+import { turnAsides } from "../../../../../../../shared/session/main-view-shape.ts"
 import { turnResultsOf, type TurnResult } from "../../../../../../../shared/session/turn-result.ts"
 import { useInterimViewing } from "../../../../../../stores/interim-viewing.ts"
 import { useMainViewTurns } from "../../../../../../stores/main-view-turn.ts"

@@ -6,7 +6,7 @@ import type {
   MainViewStep,
   MainViewStepBody,
   MainViewTurn,
-} from "../../../../../../../shared/session/main-view.ts"
+} from "../../../../../../../shared/session/main-view-shape.ts"
 
 type TextBody = Extract<MainViewStepBody, { readonly kind: "text" }>
 

@@ -11,7 +11,7 @@ import type {
   MainViewStep,
   MainViewTurn,
   MainViewTurnFailure,
-} from "../../../../../../../../src/shared/session/main-view.ts"
+} from "../../../../../../../../src/shared/session/main-view-shape.ts"
 
 type StepShape = {
   readonly kind: "interim" | "final" | "empty"

@@ -1,7 +1,7 @@
 // 中間レポートから最終レポートへ入れ替わったときに、足された節を数える。
 // 比べるのは節の `heading` の字そのもの（`MainViewStepBody.headings`）で、描いた字や組んだ Markdown の字ではない。
 
-import type { MainViewTurn } from "../../../../../../../shared/session/main-view.ts"
+import type { MainViewTurn } from "../../../../../../../shared/session/main-view-shape.ts"
 
 /** やり取りの最後の中間レポートと最終レポートを比べた、足された節の位置（最終レポートの見出しの並びでの番号）。最終が決まっていなければ空。 */
 export function newSectionIndexesOfTurn(turn: MainViewTurn): readonly number[] {

@@ -8,11 +8,9 @@
 import { replaceEqualDeep } from "@tanstack/react-query"
 
 import { isExchangeClosed } from "../../shared/session/conversation-moment.ts"
-import {
-  mainViewEntries,
-  mainViewTurns,
-  type MainViewTurn,
-} from "../../shared/session/main-view.ts"
+import { mainViewEntries } from "../../shared/session/main-view-entry.ts"
+import type { MainViewTurn } from "../../shared/session/main-view-shape.ts"
+import { mainViewTurns } from "../../shared/session/main-view.ts"
 import type { SessionState } from "../../shared/session/session-state.ts"
 import type { TurnBodies } from "../../shared/session/turn-progress.ts"
 import { useSession } from "./session.ts"

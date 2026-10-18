@@ -18,7 +18,7 @@ import {
   type Question,
   type QuestionAnswer,
 } from "../../../../../../../../../shared/session-driver/question.ts"
-import type { MainViewQuestion } from "../../../../../../../../../shared/session/main-view.ts"
+import type { MainViewQuestion } from "../../../../../../../../../shared/session/main-view-shape.ts"
 
 export type QuestionRecordProps = {
   readonly entry: MainViewQuestion

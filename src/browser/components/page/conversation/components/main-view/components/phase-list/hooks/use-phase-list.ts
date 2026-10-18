@@ -3,7 +3,7 @@
 
 import { useState } from "react"
 
-import type { MainViewTurn } from "../../../../../../../../../shared/session/main-view.ts"
+import type { MainViewTurn } from "../../../../../../../../../shared/session/main-view-shape.ts"
 import {
   neighborRow,
   phaseRowsOf,

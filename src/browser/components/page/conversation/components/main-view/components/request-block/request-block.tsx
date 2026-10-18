@@ -5,7 +5,7 @@
 import clsx from "clsx"
 import { useState, type ReactElement } from "react"
 
-import type { MainViewRequest } from "../../../../../../../../shared/session/main-view.ts"
+import type { MainViewRequest } from "../../../../../../../../shared/session/main-view-shape.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"

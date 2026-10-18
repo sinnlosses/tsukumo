@@ -7,7 +7,7 @@ import { useSession } from "../../../../../../../../src/browser/stores/session.t
 import type {
   MainViewStep,
   MainViewTurn,
-} from "../../../../../../../../src/shared/session/main-view.ts"
+} from "../../../../../../../../src/shared/session/main-view-shape.ts"
 
 const INTERIM_STEP: MainViewStep = {
   id: 0,

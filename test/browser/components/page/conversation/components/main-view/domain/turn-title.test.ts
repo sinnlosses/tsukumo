@@ -7,7 +7,7 @@ import {
 import type {
   MainViewStep,
   MainViewTurn,
-} from "../../../../../../../../src/shared/session/main-view.ts"
+} from "../../../../../../../../src/shared/session/main-view-shape.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼とレポート（実物の会話は使わない）。
 

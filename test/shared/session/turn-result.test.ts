@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { ReportTask, ReportTaskOutcome } from "../../../src/shared/report/report-task.ts"
-import type { MainViewStep, MainViewTurn } from "../../../src/shared/session/main-view.ts"
+import type { MainViewStep, MainViewTurn } from "../../../src/shared/session/main-view-shape.ts"
 import { turnResultsOf } from "../../../src/shared/session/turn-result.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼とレポート（実物の会話は使わない）。

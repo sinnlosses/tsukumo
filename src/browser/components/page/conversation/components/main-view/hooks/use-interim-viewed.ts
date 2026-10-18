@@ -4,7 +4,7 @@
 
 import { useEffect } from "react"
 
-import type { MainViewTurn } from "../../../../../../../shared/session/main-view.ts"
+import type { MainViewTurn } from "../../../../../../../shared/session/main-view-shape.ts"
 import { useInterimViewing } from "../../../../../../stores/interim-viewing.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { hasShownInterim } from "../domain/new-heading.ts"

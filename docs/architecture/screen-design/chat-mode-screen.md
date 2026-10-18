@@ -52,7 +52,7 @@
   ウィジェットの中ではなく `ground`（絵があればその絵）の上に直接立つ。**仕事へ戻せば枠も角丸も
   戻り**、背景はキャラビューへ帰る
 - **立ち絵はメインでも枠と地を持たない**（13.1 原則2。居る場所が変わっても原則は変わらない）
-- **会話のログは `speak` のセリフから作る。** `shared/session/main-view.ts` の `mainViewEntries` は
+- **会話のログは `speak` のセリフから作る。** `shared/session/main-view-entry.ts` の `mainViewEntries` は
   セリフの記録を落とし続け、**雑談のログは `shared/chat/chat-log.ts` の `chatLogEntries` が
   別に組む**（2026-09-20、プロトタイプで確かめて決めた）。`mainViewEntries` は依頼を境目に
   やり取りへまとめて札で遡る形を作っており、**素直な時系列で積む雑談とは並びの規則が違う**

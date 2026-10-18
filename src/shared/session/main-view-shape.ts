@@ -1,0 +1,199 @@
+// メインビューに出す記録・ステップ・やり取りの形。
+// 形だけを持ち、記録から導く判断は持たない。
+
+import type { ReportChangeSummary } from "../report/report-change-summary.ts"
+import type { ReportTask } from "../report/report-task.ts"
+import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
+import type { Question, QuestionAnswer } from "../session-driver/question.ts"
+import type { TurnFailure } from "../session-driver/turn-failure.ts"
+import type { MeasuredTime } from "../utils/elapsed-time.ts"
+import type { ToolRunStatus } from "./session-record.ts"
+import type { PhaseShift } from "./work-plan.ts"
+
+/**
+ * メインビューに時系列で流す1件分の記録。
+ * 描く側が読むだけの形で、ここが決めた結果を渡す（`mainViewEntries`）。
+ */
+export type MainViewEntry =
+  | {
+      readonly kind: "request"
+      /** そのターンの通し番号（`SessionState.nextTurnId` が振ったもの）。 */
+      readonly turnId: number
+      readonly text: string
+      readonly images: readonly RecordedPromptImage[]
+    }
+  /**
+   * キャラクターからの質問（AskUserQuestion）と、それに対する答え。`answers[i]` は
+   * `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。選ばなかった質問は空）。
+   * `toolUseId` は preview の画像の棚を引く鍵。
+   */
+  | {
+      readonly kind: "question"
+      readonly toolUseId: string
+      readonly questions: readonly Question[]
+      readonly answers: readonly QuestionAnswer[]
+    }
+  | {
+      readonly kind: "tool"
+      readonly name: string
+      readonly input: unknown
+      readonly status: ToolRunStatus
+    }
+  | { readonly kind: "detail"; readonly markdown: string }
+  /**
+   * `report` ツールで受け取ったレポート。引数はここで1つの本文に組んである（`reportMarkdown`）。
+   * `detail` と分けてあるのは、このレポートがあるやり取りでは本文（`detail`）を出さないため（`selectToolReports`）。
+   * `task` は本文に組まず、描く側が目録の1行と見出しに出す。
+   * `conclusion` は組む前の結論で、畳んだときの先頭行に使う（`groupIntoSteps`）。
+   * `finalMarkdown` は最終レポートになったときの本文で、`markdown` に段ごとの所要時間を足したもの。
+   * `changeSummary` は記録の変更の札をそのまま通したもの。
+   * `headings` は描く節の `heading`（整形のあと・空の見出しを除いた字そのもの）の並び。
+   */
+  | {
+      readonly kind: "report"
+      readonly headings: readonly string[]
+      readonly markdown: string
+      readonly finalMarkdown: string
+      readonly conclusion: string
+      readonly task: ReportTask
+      readonly changeSummary: ReportChangeSummary
+    }
+  /**
+   * `work_plan` の呼び出しで段が移ったこと（`phaseShiftOf`）。
+   * 出すものが1つも無い記録からは作らない。
+   * 終えた段のまとめは中間レポートになる（`groupIntoSteps`）。
+   */
+  | {
+      readonly kind: "phase-shift"
+      readonly shift: PhaseShift
+      /** 終えた段の所要。記録の時刻から測れなければ `unknown`。 */
+      readonly duration: MeasuredTime
+    }
+  /**
+   * 失敗で終わったターンの理由（`SessionRecord` の `turn-failure` をそのまま通す）。
+   * ステップには入れない（やり取りの末尾に1つだけ出す印なので、`groupIntoTurns` がステップから外して `MainViewTurn.failure` に移す）。
+   */
+  | { readonly kind: "turn-failure"; readonly failure: TurnFailure }
+  /**
+   * 脇の話と、それへの答えのセリフ（`answersAside` の `speech`）。
+   * `groupIntoSteps` が対にして、届いた時点で最後のステップの `MainViewStep.asides` に移す。
+   */
+  | { readonly kind: "aside"; readonly text: string }
+  | { readonly kind: "aside-answer"; readonly text: string }
+
+export type MainViewToolRun = Extract<MainViewEntry, { readonly kind: "tool" }>
+export type MainViewQuestion = Extract<MainViewEntry, { readonly kind: "question" }>
+
+/** ステップの中で起きたこと。ツールの実行か、キャラクターからの質問。 */
+export type MainViewAction = MainViewToolRun | MainViewQuestion
+
+/**
+ * やり取りが失敗で終わったか（`MainViewTurn.failure`）。`failed` のときだけ、描く側がやり取りの末尾に「失敗で終わった」と理由を出す。
+ * 1つのやり取りに失敗が2つ以上あれば（バックグラウンドタスクのあとの続きのターンも失敗したときなど）、いちばん新しいものを出す。
+ */
+export type MainViewTurnFailure =
+  | { readonly kind: "none" }
+  | { readonly kind: "failed"; readonly failure: TurnFailure }
+
+/**
+ * 1ステップ＝レポート1件と、それに続く出来事。
+ *
+ * `body` は画面に出す本文（{@link MainViewStepBody}）。
+ *
+ * `interim` は、その本文が中間レポート（`report` ツールの最後でない呼び出し〔`selectToolReports`〕か、段のまとめ〔`groupIntoSteps`〕）かどうか。`body` が `none` のときは常に false。
+ *
+ * `superseded` は、自分より後ろに本文を持つステップがあるか（`markSupersededSteps`）。
+ * `interim && superseded` のときだけ描く側が畳む。本文を持たないステップでも立つ。
+ *
+ * `final` は、その本文が最終レポート（そのやり取りで最後の、中間でない本文）かどうか（`markFinalReport`）。
+ * 箱を外してラベルを載せる印（`.main-step.is-final`）で、書き上げる演出を掛ける相手を選ぶのにも使う。
+ * ラベルを出すかどうかはこれだけでは決まらない（`MainViewTurn.hasInterimReport` と本文の `task` と組み合わせる）。
+ * いちばん新しいやり取りでは、やり取りが閉じているときだけ立つ（`mainViewTurns` の `closed` 引数）。
+ *
+ * `id` は、そのやり取りの中で作られた順に先頭から数えた通し番号。
+ * `limitTurnEntries` が上限を超えた分を古いほうから落としても、残ったステップの `id` は変わらない（`groupIntoSteps` で、落とす前に振る）。
+ * 描く側はこれをステップの `key` に使う。
+ * 配列の添字を `key` にすると、古いステップが落ちて添字が前へずれた瞬間に、React が別のステップの DOM を使い回す（`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える）。
+ */
+export type MainViewStep = {
+  readonly id: number
+  readonly body: MainViewStepBody
+  readonly interim: boolean
+  readonly superseded: boolean
+  readonly final: boolean
+  readonly actions: readonly MainViewAction[]
+  /** このステップの後ろに足す脇の話（古い順）。 */
+  readonly asides: readonly MainViewAside[]
+}
+
+/** 段の見出しの字（「2/4 段の名前」）。無ければ `none`。 */
+export type MainViewPhaseLabel =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "phase"
+      readonly label: string
+      readonly duration: MeasuredTime
+      readonly skipped: boolean
+    }
+
+/**
+ * ステップの本文。本文が無い（レポートより前に起きたことをまとめたステップか、出さないと決めた本文）なら `none`。
+ * `firstLine` は畳んだときの `<summary>` に出す1行で、段のまとめなら終えた段の見出し、`report` なら結論（空なら作業の名前）、どちらも無ければ本文の先頭行（`extractFirstLine`）。
+ * `task` は目録の1行と見出しに出すタスクで、`report` ツールの外の本文では常に `none`。
+ * `finishedPhase` は目録の1行に添える終えた段の見出しで、段のまとめだけが持つ。
+ * `finalReport` は最終レポートの印が立ったときに `report` と入れ替える本文（`markFinalReport`）。違うのは `report` ツールの本文の段ごとの所要時間だけ。
+ * `changeSummary` は目録の末尾に出す変更の札。`task` のある最終レポートだけが数を持ち、ほかは `none`（`markFinalReport`）。
+ */
+export type MainViewStepBody =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "text"
+      /** `report` ツールの本文なら描く節の見出しの字（{@link MainViewEntry} の `report` の `headings`）。ほかの本文は空。 */
+      readonly headings: readonly string[]
+      readonly report: string
+      readonly finalReport: string
+      readonly firstLine: string
+      readonly task: ReportTask
+      readonly finishedPhase: MainViewPhaseLabel
+      readonly changeSummary: ReportChangeSummary
+    }
+
+export const NO_BODY = { kind: "none" } as const satisfies MainViewStepBody
+
+export type MainViewAside = {
+  readonly text: string
+  readonly answer:
+    | { readonly kind: "waiting" }
+    | { readonly kind: "answered"; readonly text: string }
+}
+
+/** やり取りの頭に出す依頼。文面と、添えた画像の控えで1つ。添えていなければ `images` は空。 */
+export type MainViewRequest = {
+  readonly text: string
+  readonly images: readonly RecordedPromptImage[]
+}
+
+/**
+ * 利用者の依頼1件と、それ以降のステップ。
+ * `request` が undefined なのは、最初の依頼より前の記録（セッションの途中から追い始めたときに起こる）。
+ * `id` は追加されても番号がずれないように先頭から数えた通し番号で、タブの選択を保つのに使う。
+ */
+export type MainViewTurn = {
+  readonly id: number
+  readonly request: MainViewRequest | undefined
+  readonly steps: readonly MainViewStep[]
+  /**
+   * このやり取りに中間レポートが1つ以上あるか（`markFinalReport`）。
+   * 最終レポートのラベルを出す条件の1つ（もう1つは本文の `task`）。本文が1つしか無く `task` も無いやり取りでは「最終」が何も区別しないので出さない。
+   */
+  readonly hasInterimReport: boolean
+  /** 上限を超えて落とした画面に出す記録の件数。0 のときは何も落としていない。 */
+  readonly droppedCount: number
+  /** このやり取りが失敗で終わったか（{@link MainViewTurnFailure}）。 */
+  readonly failure: MainViewTurnFailure
+}
+
+/** やり取りの脇の話を、届いた順に1本にしたもの。 */
+export function turnAsides(turn: MainViewTurn): readonly MainViewAside[] {
+  return turn.steps.flatMap((step) => step.asides)
+}

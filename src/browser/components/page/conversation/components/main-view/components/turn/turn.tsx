@@ -12,7 +12,7 @@ import type {
   MainViewStep,
   MainViewStepBody,
   MainViewTurn,
-} from "../../../../../../../../shared/session/main-view.ts"
+} from "../../../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../../../shared/utils/elapsed-time.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"

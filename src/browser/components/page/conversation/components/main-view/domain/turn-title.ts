@@ -10,7 +10,7 @@
 import type {
   MainViewRequest,
   MainViewTurn,
-} from "../../../../../../../shared/session/main-view.ts"
+} from "../../../../../../../shared/session/main-view-shape.ts"
 import { clipWithEllipsis } from "../../../../../../../shared/utils/clip-text.ts"
 
 /** 依頼もレポートも題にならないターン（依頼より前の記録で、本文もまだ無い）の題。 */

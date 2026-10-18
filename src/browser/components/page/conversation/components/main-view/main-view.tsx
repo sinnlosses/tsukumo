@@ -17,7 +17,7 @@ import {
 } from "react"
 
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
-import type { MainViewTurn } from "../../../../../../shared/session/main-view.ts"
+import type { MainViewTurn } from "../../../../../../shared/session/main-view-shape.ts"
 import type { TurnStepList } from "../../../../../../shared/session/turn-step.ts"
 import {
   currentPhaseOf,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { mainViewEntries } from "../../../src/shared/session/main-view.ts"
+import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import type { StampedEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"

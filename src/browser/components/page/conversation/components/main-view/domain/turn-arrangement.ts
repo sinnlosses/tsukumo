@@ -11,7 +11,7 @@ import type {
   MainViewQuestion,
   MainViewStep,
   MainViewTurn,
-} from "../../../../../../../shared/session/main-view.ts"
+} from "../../../../../../../shared/session/main-view-shape.ts"
 import {
   formatMeasured,
   type MeasuredTime,

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import type {
   MainViewStep,
   MainViewTurn,
-} from "../../../../../../../../../src/shared/session/main-view.ts"
+} from "../../../../../../../../../src/shared/session/main-view-shape.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../../../src/shared/session/session-state.ts"
 import { queryClientWrapper } from "../../../../../../../query-client.tsx"
 import { putSession } from "../../../../../../../session-store.ts"

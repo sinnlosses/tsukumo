@@ -13,7 +13,7 @@ import type {
   ReportTask,
   ReportTaskOutcome,
 } from "../../../../../../../../shared/report/report-task.ts"
-import type { MainViewPhaseLabel } from "../../../../../../../../shared/session/main-view.ts"
+import type { MainViewPhaseLabel } from "../../../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../../../shared/utils/elapsed-time.ts"
 import { codeSpanParts } from "../../../../../../../domain/code-span.ts"
 import { useSession } from "../../../../../../../stores/session.ts"

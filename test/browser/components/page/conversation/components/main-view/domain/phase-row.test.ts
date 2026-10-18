@@ -9,7 +9,7 @@ import type {
   MainViewPhaseLabel,
   MainViewStep,
   MainViewTurn,
-} from "../../../../../../../../src/shared/session/main-view.ts"
+} from "../../../../../../../../src/shared/session/main-view-shape.ts"
 import {
   NO_DELEGATED_RANGE,
   phaseLabel,

@@ -2,7 +2,7 @@ import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ReportHead } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report-head/report-head.tsx"
-import type { MainViewPhaseLabel } from "../../../../../../../../../src/shared/session/main-view.ts"
+import type { MainViewPhaseLabel } from "../../../../../../../../../src/shared/session/main-view-shape.ts"
 
 afterEach(cleanup)
 

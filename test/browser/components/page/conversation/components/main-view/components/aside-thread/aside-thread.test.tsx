@@ -2,7 +2,7 @@ import { act, cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { AsideThread } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/aside-thread/aside-thread.tsx"
-import type { MainViewAside } from "../../../../../../../../../src/shared/session/main-view.ts"
+import type { MainViewAside } from "../../../../../../../../../src/shared/session/main-view-shape.ts"
 import { putState, putSession, stateWith } from "../../../../../../../session-store.ts"
 
 afterEach(() => {

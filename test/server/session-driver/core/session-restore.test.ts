@@ -4,11 +4,9 @@ import { asidePromptText } from "../../../../src/server/session-driver/core/asid
 import { progressNudgePromptText } from "../../../../src/server/session-driver/core/progress-nudge.ts"
 import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
 import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
-import {
-  mainViewEntries,
-  mainViewTurns,
-  turnAsides,
-} from "../../../../src/shared/session/main-view.ts"
+import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
+import { turnAsides } from "../../../../src/shared/session/main-view-shape.ts"
+import { mainViewTurns } from "../../../../src/shared/session/main-view.ts"
 import { applyRestoredEvents } from "../../../../src/shared/session/restored-event.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"

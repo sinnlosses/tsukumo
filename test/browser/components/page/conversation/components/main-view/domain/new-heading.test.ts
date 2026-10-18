@@ -8,7 +8,7 @@ import {
 import type {
   MainViewStep,
   MainViewTurn,
-} from "../../../../../../../../src/shared/session/main-view.ts"
+} from "../../../../../../../../src/shared/session/main-view-shape.ts"
 
 function textStep(
   id: number,

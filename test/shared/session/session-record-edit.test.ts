@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  MAX_MAIN_VIEW_TURNS,
-  mainViewEntries,
-  mainViewTurns,
-} from "../../../src/shared/session/main-view.ts"
+import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
+import { MAX_MAIN_VIEW_TURNS, mainViewTurns } from "../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { reportEvent } from "../../fixture/report-event.ts"

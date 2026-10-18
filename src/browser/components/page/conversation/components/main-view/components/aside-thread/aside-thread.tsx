@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react"
 
-import type { MainViewAside } from "../../../../../../../../shared/session/main-view.ts"
+import type { MainViewAside } from "../../../../../../../../shared/session/main-view-shape.ts"
 import { useAsideThread } from "./hooks/use-aside-thread.ts"
 import { PresentationalAsideThread } from "./presentational-aside-thread.tsx"
 
