@@ -328,10 +328,12 @@ describe("startViewServer", () => {
     expect(response.status).toBe(404)
   })
 
-  it("/character/<pack>/<file> は、デコードしたパック名とファイル名で引いた中身をそのまま配る", async () => {
+  it("/character/<pack>/<file> は、デコードしたパック名とファイル名と `?v=`（無ければ undefined）で引いた中身をそのまま配る", async () => {
     const asked: CharacterAssetLocation[] = []
-    const server = await startView((location) => {
+    const versions: (string | undefined)[] = []
+    const server = await startView((location, version) => {
       asked.push(location)
+      versions.push(version)
       return location.fileName === "default.svg"
         ? {
             contentType: "image/svg+xml; charset=utf-8",
@@ -342,25 +344,16 @@ describe("startViewServer", () => {
     })
     const origin = viewOrigin(server)
 
-    const response = await fetch(`${origin}/character/my%20pack/default.svg?v=1`)
+    const response = await fetch(`${origin}/character/my%20pack/default.svg?v=1700000000000`)
+    await fetch(`${origin}/character/my%20pack/default.svg`)
 
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toContain("image/svg+xml")
     expect(await response.text()).toBe("<svg></svg>")
-    expect(asked).toEqual([{ pack: "my pack", fileName: "default.svg" }])
-  })
-
-  it("/character/<pack>/<file> の `?v=` は、そのまま素材を引く側へ渡る（無ければ undefined）", async () => {
-    const versions: (string | undefined)[] = []
-    const server = await startView((_location, version) => {
-      versions.push(version)
-      return { contentType: "image/png", content: Buffer.from("x"), versioned: false }
-    })
-    const origin = viewOrigin(server)
-
-    await fetch(`${origin}/character/p/a.png?v=1700000000000`)
-    await fetch(`${origin}/character/p/a.png`)
-
+    expect(asked).toEqual([
+      { pack: "my pack", fileName: "default.svg" },
+      { pack: "my pack", fileName: "default.svg" },
+    ])
     expect(versions).toEqual(["1700000000000", undefined])
   })
 

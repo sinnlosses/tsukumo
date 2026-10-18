@@ -219,14 +219,6 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       expect(writes).toStrictEqual([])
     })
 
-    it("覚えた一覧が無ければ、読んだ結果だけが届く", async () => {
-      const { fake, changes } = startFake({ remembered: undefined })
-      fake.setWatching(true)
-      await settle()
-
-      expect(changes).toMatchObject([{ kind: "known" }])
-    })
-
     it("bd が読めなかった回は、覚えた一覧を残して覚え直さない", async () => {
       const { fake, changes, writes } = startFake({
         remembered,

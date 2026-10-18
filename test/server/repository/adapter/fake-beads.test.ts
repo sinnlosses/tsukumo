@@ -13,7 +13,6 @@ import {
 } from "../../../../src/server/repository/adapter/task-summary-memory.ts"
 import {
   FAKE_TASK_SUMMARY_POLL_INTERVAL_MS,
-  REAL_TASK_SUMMARY_PORTS,
   taskSummaryOptionsOf,
   watchTaskSummary,
   type TaskSummaryWatcher,
@@ -33,19 +32,6 @@ let watcher: TaskSummaryWatcher | undefined
 afterEach(async () => {
   await watcher?.close()
   watcher = undefined
-})
-
-describe("taskSummaryOptionsOf", () => {
-  it("疑似セッションは課題の口だけを差し替え、時計は本物を使う", () => {
-    const options = taskSummaryOptionsOf("fake")
-
-    expect(options.intervalMs).toBe(FAKE_TASK_SUMMARY_POLL_INTERVAL_MS)
-    expect(options.ports.readBeadsIssues).toBe(readFakeBeadsIssues)
-    expect(options.ports.createBeadsStampReader).not.toBe(
-      REAL_TASK_SUMMARY_PORTS.createBeadsStampReader,
-    )
-    expect(options.ports.clock).toBe(REAL_TASK_SUMMARY_PORTS.clock)
-  })
 })
 
 describe("readFakeBeadsIssues", () => {

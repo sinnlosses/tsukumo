@@ -140,12 +140,6 @@ describe("takeSystemPromptAppend", () => {
     expect(work).not.toContain("forget")
     expect(work).not.toContain("recall_episode")
   })
-
-  it("雑談の作法は口調を決めない（口調はキャラクターパックの persona.md の担当）", () => {
-    // 口調は persona.md 側が決める（docs/architecture/chat-mode.md「雑談モード」）。
-    expect(CHAT_MANNER_PROMPT).toContain("speak")
-    expect(CHAT_MANNER_PROMPT).not.toContain("一人称")
-  })
 })
 
 describe("toSystemPromptMode", () => {

@@ -47,7 +47,7 @@ function readLines<T = unknown>(path: string): T[] {
 }
 
 describe("createChatArchive", () => {
-  it("依頼の行は v / at / pack / mode / kind / speaker / text を持ち、images は無いときはキー自体が無い", () => {
+  it("依頼の行は v / at / pack / mode / kind / speaker / text を持ち、images は1枚以上あるときだけ枚数を持つ", () => {
     const chatArchive = createChatArchive(root())
     const at = noonOn(2026, 9, 21)
 
@@ -58,8 +58,17 @@ describe("createChatArchive", () => {
       text: REQUEST_TEXT,
       images: undefined,
     })
+    chatArchive.append("fictional-pack", {
+      mode: "chat",
+      kind: "request",
+      at,
+      text: REQUEST_TEXT,
+      images: 2,
+    })
 
-    const [record] = readLines(join(root(), "fictional-pack", "2026-09-21.jsonl"))
+    const [record, withImages] = readLines<{ at: string }>(
+      join(root(), "fictional-pack", "2026-09-21.jsonl"),
+    )
     expect(record).toMatchObject({
       v: 2,
       pack: "fictional-pack",
@@ -71,6 +80,9 @@ describe("createChatArchive", () => {
     expect(record).not.toHaveProperty("images")
     expect(record).not.toHaveProperty("expression")
     expect(record).not.toHaveProperty("project")
+    expect(withImages).toMatchObject({ images: 2 })
+    expect(record?.at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/)
+    expect(record?.at.slice(0, 10)).toBe("2026-09-21")
   })
 
   it("仕事の行は project を持つ（雑談の行は project のキー自体が無い）", () => {
@@ -129,39 +141,6 @@ describe("createChatArchive", () => {
         text: "架空の結論",
       }),
     ])
-  })
-
-  it("`at` は行だけで時刻が決まる ISO 8601（オフセット付き）で、日付部分はローカル時刻と揃う", () => {
-    const chatArchive = createChatArchive(root())
-    const at = noonOn(2026, 9, 21)
-
-    chatArchive.append("fictional-pack", {
-      mode: "chat",
-      kind: "request",
-      at,
-      text: REQUEST_TEXT,
-      images: undefined,
-    })
-
-    const [record] = readLines<{ at: string }>(join(root(), "fictional-pack", "2026-09-21.jsonl"))
-    expect(record?.at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/)
-    expect(record?.at.slice(0, 10)).toBe("2026-09-21")
-  })
-
-  it("添えた画像は1枚以上あるときだけ枚数を持つ", () => {
-    const chatArchive = createChatArchive(root())
-    const at = noonOn(2026, 9, 21)
-
-    chatArchive.append("fictional-pack", {
-      mode: "chat",
-      kind: "request",
-      at,
-      text: REQUEST_TEXT,
-      images: 2,
-    })
-
-    const [record] = readLines(join(root(), "fictional-pack", "2026-09-21.jsonl"))
-    expect(record).toMatchObject({ images: 2 })
   })
 
   it("パックごとに別のファイルになる", () => {
