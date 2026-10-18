@@ -35,12 +35,9 @@ import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../../shared/session/work-plan.ts"
-import {
-  type ReportDraft,
-  reportRejectionText,
-  type ReportViolation,
-  reportViolations,
-} from "./report-violation.ts"
+import { reportRejectionText } from "./report-rejection.ts"
+import { reportViolations } from "./report-violation-check.ts"
+import type { ReportDraft, ReportViolation } from "./report-violation.ts"
 
 // 判定の順と脇の話の扱いは `ReportReview.judge` が正典。
 export const REPORT_PROCEDURE_REJECTIONS = [

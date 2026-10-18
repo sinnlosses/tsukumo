@@ -1,0 +1,161 @@
+import { describe, expect, it } from "vitest"
+
+import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
+import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
+import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
+import { MAX_CANDIDATES } from "../../../../src/shared/report/report-limit.ts"
+import { draft, kinds, markdown, note, text } from "../../../fixture/report-draft-block.ts"
+
+describe("reportViolations", () => {
+  describe("note の塊は1〜2個まで", () => {
+    it("3つあれば違反", () => {
+      expect(reportViolations(draft([note(), note(), note()]))).toEqual([
+        { kind: "too-many-notes", count: 3 },
+      ])
+    })
+
+    it("2つなら違反にしない", () => {
+      expect(kinds(draft([note(), note()]))).toEqual([])
+    })
+  })
+
+  describe("note は隣接させず、見出しの直後に置かない", () => {
+    const info = (): ReportBlock => ({
+      kind: "note",
+      tone: "info",
+      text: "架空の一文。",
+      fold: "",
+      aside: "",
+    })
+
+    it("info が隣り合えば違反", () => {
+      expect(reportViolations(draft([info(), info()]))).toEqual([
+        { kind: "crowded-notes", count: 1 },
+      ])
+    })
+
+    it("間に別の塊があれば通る", () => {
+      expect(kinds(draft([info(), text("架空の段落。"), info()]))).toEqual([])
+    })
+
+    it("見出しのある節の先頭の note は違反、見出しの無い節の先頭は通る", () => {
+      const titled: readonly ReportSection[] = [{ heading: "架空の見出し", blocks: [info()] }]
+      expect(kinds(draft([], "架空の結論。", titled))).toEqual(["crowded-notes"])
+      expect(kinds(draft([info()]))).toEqual([])
+    })
+
+    it("warn / ng は隣接も見出しの直後も例外", () => {
+      const ng = (): ReportBlock => ({
+        kind: "note",
+        tone: "ng",
+        text: "架空の一文。",
+        fold: "",
+        aside: "",
+      })
+      const titled: readonly ReportSection[] = [{ heading: "架空の見出し", blocks: [ng(), note()] }]
+      expect(kinds(draft([], "架空の結論。", titled))).toEqual([])
+    })
+  })
+
+  describe("fold と details を入れ子にしない", () => {
+    it("fold を持つ markdown の塊が details を含めば違反", () => {
+      const block: ReportBlock = {
+        kind: "markdown",
+        markdown: "<details><summary>架空</summary>\n\n架空の本文\n\n</details>",
+        fold: "架空の畳み",
+        aside: "",
+      }
+      expect(reportViolations(draft([block]))).toEqual([{ kind: "nested-fold", count: 1 }])
+    })
+
+    it("details の中の details は違反", () => {
+      const nested = "<details>\n<details>\n\n架空\n\n</details>\n</details>"
+      expect(kinds(draft([markdown(nested)]))).toEqual(["nested-fold"])
+    })
+
+    it("fold の無い単独の details は通る", () => {
+      expect(kinds(draft([markdown("<details>\n\n架空\n\n</details>")]))).toEqual([])
+    })
+  })
+
+  describe("候補は5つまで", () => {
+    const options = (count: number): ReportBlock => ({
+      kind: "options",
+      title: "架空の比較",
+      items: Array.from({ length: count }, () => ({
+        name: "架空",
+        verdict: "consider" as const,
+        reason: "架空の理由。",
+      })),
+      fold: "",
+      aside: "",
+    })
+    const compare = (count: number): ReportBlock => ({
+      kind: "compare",
+      title: "架空の比較",
+      sides: [
+        { heading: "案A", points: Array.from({ length: count }, () => "架空") },
+        { heading: "案B", points: ["架空"] },
+      ],
+      fold: "",
+      aside: "",
+    })
+    const image = (count: number): ReportBlock => ({
+      kind: "image",
+      path: "架空.png",
+      caption: "架空の画面",
+      notes: Array.from({ length: count }, () => "架空の場所"),
+      fold: "",
+      aside: "",
+    })
+
+    const beforeAfter = (count: number): ReportBlock => ({
+      kind: "beforeAfter",
+      title: "架空の前後",
+      before: { kind: "points", points: ["架空"] },
+      after: { kind: "points", points: Array.from({ length: count }, () => "架空") },
+      fold: "",
+      aside: "",
+    })
+
+    it("上限を1つ超えたら違反", () => {
+      const over = MAX_CANDIDATES + 1
+      expect(
+        reportViolations(draft([options(over), compare(over), image(over), beforeAfter(over)])),
+      ).toEqual([{ kind: "too-many-candidates", count: 4 }])
+    })
+
+    it("上限ちょうどなら通る", () => {
+      const max = MAX_CANDIDATES
+      expect(kinds(draft([options(max), compare(max), image(max), beforeAfter(max)]))).toEqual([])
+    })
+
+    it("差し戻しの文面に上限の数が出る", () => {
+      const text = reportRejectionText([{ kind: "too-many-candidates", count: 1 }])
+      expect(text).toContain(`${String(MAX_CANDIDATES + 1)}つ以上`)
+      expect(text).toContain(`${String(MAX_CANDIDATES)}つまでに絞る`)
+    })
+  })
+
+  describe("候補は採る → 検討 → 採らないの順", () => {
+    const options = (verdicts: readonly ("adopt" | "consider" | "reject")[]): ReportBlock => ({
+      kind: "options",
+      title: "架空の比較",
+      items: verdicts.map((verdict) => ({ name: "架空", verdict, reason: "架空の理由。" })),
+      fold: "",
+      aside: "",
+    })
+
+    it("採る候補より前に別の判定があれば違反", () => {
+      expect(
+        reportViolations(draft([options(["consider", "adopt"]), options(["reject", "consider"])])),
+      ).toEqual([{ kind: "unordered-options", count: 2 }])
+    })
+
+    it("順に並んでいれば、抜けている判定や同じ判定の連続があっても通る", () => {
+      expect(
+        kinds(draft([options(["adopt", "adopt", "reject"]), options(["consider", "reject"])])),
+      ).toEqual([])
+    })
+  })
+})
