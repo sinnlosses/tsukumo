@@ -10,7 +10,7 @@ import type { AchievementGraduation } from "../../../shared/achievement/achievem
 import type { TaskSummaryDiffItem } from "./done-task.ts"
 
 /** 卒業とみなす、登録からの日数の下限（仮）。 */
-export const GRADUATION_MIN_DAYS = 7
+const GRADUATION_MIN_DAYS = 7
 
 /**
  * その日に終えたタスクのうち、登録から {@link GRADUATION_MIN_DAYS} 日以上経っていたものを、登録の古い順で返す。

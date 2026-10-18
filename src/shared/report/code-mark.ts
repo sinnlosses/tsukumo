@@ -7,10 +7,10 @@ export type CodeMark = { readonly lines: string; readonly label: string }
 export type LineRange = { readonly start: number; readonly end: number }
 
 /** 印の行から、畳まずに残す行数。 */
-export const CODE_MARK_CONTEXT_LINES = 3
+const CODE_MARK_CONTEXT_LINES = 3
 
 /** 離れた行の連続がこの数を超えたら畳む。 */
-export const CODE_FOLD_MIN_LINES = 20
+const CODE_FOLD_MIN_LINES = 20
 
 const LINES = /^\s*(\d+)(?:\s*-\s*(\d+))?\s*$/
 

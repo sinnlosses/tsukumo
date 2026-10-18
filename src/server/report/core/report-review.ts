@@ -285,7 +285,7 @@ export const REPORT_FINISHED_WITH_NG_REJECTION_TEXT =
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** 背景のシェルが残っている `report` を差し戻すときの戻り値。残りのシェルの ID と `description` だけを載せ、モデルが書いた本文は写さない。 */
-export function reportBackgroundRunningRejectionText(shells: readonly BackgroundTask[]): string {
+function reportBackgroundRunningRejectionText(shells: readonly BackgroundTask[]): string {
   const listing = shells
     .map(
       (task) =>

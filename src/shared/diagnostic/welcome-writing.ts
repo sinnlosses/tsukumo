@@ -14,7 +14,7 @@ import { z } from "zod"
  * - `unknown-expression`: 表情の選択肢に無い表情
  * - `repeated`: 直近の挨拶と同じ文
  */
-export const WELCOME_REJECTIONS = [
+const WELCOME_REJECTIONS = [
   "missing",
   "empty",
   "newline",
@@ -27,10 +27,10 @@ export const WELCOME_REJECTIONS = [
 export type WelcomeRejection = (typeof WELCOME_REJECTIONS)[number]
 
 /** 書いたもの（迎えの挨拶か、反応の行か）。 */
-export const WELCOME_WRITING_TARGETS = ["greeting", "reactions"] as const
+const WELCOME_WRITING_TARGETS = ["greeting", "reactions"] as const
 
 /** 問い合わせ1回、または書き込み全体の結果。`timed-out` は締め切りで中断した問い合わせ。 */
-export const WELCOME_WRITING_RESULTS = ["written", "failed", "rejected", "timed-out"] as const
+const WELCOME_WRITING_RESULTS = ["written", "failed", "rejected", "timed-out"] as const
 
 export type WelcomeWritingResult = (typeof WELCOME_WRITING_RESULTS)[number]
 

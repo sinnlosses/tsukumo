@@ -6,7 +6,7 @@ import { z } from "zod"
 
 import { SPLIT_DIVIDERS } from "../experience-metric/experience-metric-record.ts"
 
-export const splitReleaseSchema = z.object({
+const splitReleaseSchema = z.object({
   divider: z.enum(SPLIT_DIVIDERS),
   releasedPercent: z.number().min(0).max(100),
   previousPercent: z.number().min(0).max(100),

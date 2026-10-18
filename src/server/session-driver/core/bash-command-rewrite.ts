@@ -3,7 +3,7 @@
 
 import { isPlainObject } from "remeda"
 
-export const BASH_TOOL_NAME = "Bash"
+const BASH_TOOL_NAME = "Bash"
 
 /** `command` を `rewrite` で差し替えた入力。Bash でない・`command` が文字列でない・差し替えが無い・同じ文字列なら `undefined`。 */
 export async function rewriteBashCommand(

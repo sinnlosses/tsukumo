@@ -31,7 +31,7 @@ const HOST_ENV_NAME = "TSUKUMO_HOST"
 /** fake driver で、起こした直後に流す場面の名前（疑似セッションの `turns[].name`）。 */
 export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
 /** fake driver で、名指しした場面の手を先頭から何個まで流すか（正の整数）。 */
-export const FAKE_SCENE_UNTIL_ENV_NAME = "TSUKUMO_FAKE_SCENE_UNTIL"
+const FAKE_SCENE_UNTIL_ENV_NAME = "TSUKUMO_FAKE_SCENE_UNTIL"
 /**
  * ワークフローの設定を読み書きするときに呼ぶ `tw` のパス（既定は取り込みの `bin/tw`。取り込みを載せないときは PATH の `tw`）。
  * 疑似セッションの撮影や自動テストで、取り込みを書き換えずに偽の `tw` へ差し替える口。

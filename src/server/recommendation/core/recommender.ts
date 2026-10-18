@@ -16,7 +16,7 @@ import {
 import type { StructuredQuery } from "./structured-query.ts"
 
 /** キャッシュに持つ組の上限（新しい順）。 */
-export const RECOMMENDATION_CACHE_LIMIT = 8
+const RECOMMENDATION_CACHE_LIMIT = 8
 
 /** キャッシュの1組。`key` は {@link recommendationKey} の印。 */
 export type RecommendationCacheEntry = {

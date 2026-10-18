@@ -4,7 +4,7 @@ import { isPlainObject } from "remeda"
 import { z } from "zod"
 
 /** 作業の終わり方。`finished` は作業を終えた、`stopped` は止めた、`awaiting-answer` は利用者の答え待ち。 */
-export const REPORT_TASK_OUTCOMES = ["finished", "stopped", "awaiting-answer"] as const
+const REPORT_TASK_OUTCOMES = ["finished", "stopped", "awaiting-answer"] as const
 
 export type ReportTaskOutcome = (typeof REPORT_TASK_OUTCOMES)[number]
 

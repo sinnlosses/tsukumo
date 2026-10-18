@@ -45,7 +45,7 @@ export const WORK_PLAN_SKIPPED_PHASES_DESCRIPTION =
   "委譲先が phase_result で飛ばした段は入れなくてよい。飛ばさなかったら省く"
 
 /** `CallReview` が差し戻した呼び出しに返す直し方。差し戻しの種類ごとに1つ。 */
-export const WORK_PLAN_REJECTIONS = {
+const WORK_PLAN_REJECTIONS = {
   malformed:
     "current は 0 から phases の要素の数 − 1 までの整数にする。" +
     "delegatedRange は phases の並びの中に収め、端を同時に走らせる段の配列の途中に置かない。" +

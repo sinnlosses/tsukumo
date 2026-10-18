@@ -422,7 +422,7 @@ const graphBlockSchema = z
     "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道でも段の名前が短ければ graph）。flowchart はこれで書く。1枚に1つの話を同じ抽象度で。どの辺にも向きと動詞のラベルを付ける。交差が出たら節点の並びか図の分け方を変える。群は囲みで言い色で言わない",
   )
 
-export const REPORT_CHART_KINDS = ["bar", "line", "pie", "arrow", "slope"] as const
+const REPORT_CHART_KINDS = ["bar", "line", "pie", "arrow", "slope"] as const
 
 const chartSeriesSchema = z.object({
   name: inlineText.describe("線・棒の端に直接書く系列名"),

@@ -108,7 +108,7 @@ export function definitionWithoutPortrait(
 }
 
 /** 画面の差し色のうちどちらを差すか。`work` は仕事中（`accent`）、`chat` は雑談中だけ（`chatAccent`）に対応する。 */
-export const ACCENT_TARGETS = ["work", "chat"] as const
+const ACCENT_TARGETS = ["work", "chat"] as const
 
 export type AccentTarget = (typeof ACCENT_TARGETS)[number]
 

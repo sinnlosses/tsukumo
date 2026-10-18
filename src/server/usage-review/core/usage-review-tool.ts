@@ -22,7 +22,7 @@ export const USAGE_REVIEW_STAGE_TOOL_NAME = "usage_review_stage"
 export const USAGE_REVIEW_RESULT_TOOL_NAME = "usage_review_result"
 
 /** 1回の見直しで渡せる提案の上限（スキルの「効きの大きい順に3〜5件」に揃える）。 */
-export const MAX_USAGE_PROPOSALS = 5
+const MAX_USAGE_PROPOSALS = 5
 
 /** モデルに見せる `usage_review_stage` の説明。いつ呼ぶかをここに書く（スキルの手順はこれを前提にする）。 */
 export const USAGE_REVIEW_STAGE_TOOL_DESCRIPTION =

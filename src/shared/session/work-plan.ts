@@ -41,7 +41,7 @@ export type AwaitingSummary =
   | { readonly kind: "none" }
   | { readonly kind: "awaiting"; readonly key: string }
 
-export const NO_AWAITING_SUMMARY = { kind: "none" } as const satisfies AwaitingSummary
+const NO_AWAITING_SUMMARY = { kind: "none" } as const satisfies AwaitingSummary
 
 /**
  * 委譲先の段の範囲。`first` は委譲先の段1に当たる位置（平らにした並びで0始まり）、`count` は委譲先の段の数。
@@ -56,10 +56,10 @@ export type DelegatedRange =
 export const NO_DELEGATED_RANGE = { kind: "none" } as const satisfies DelegatedRange
 
 /** ワークプランが持つ段の数の下限。段が無いワークプランは位置を言う意味が無いので受け付けない。 */
-export const MIN_WORK_PLAN_PHASES = 1
+const MIN_WORK_PLAN_PHASES = 1
 
 /** 並列の段が持つ段の数の下限。1段だけの並列の段は段と同じなので受け付けない。 */
-export const MIN_PHASE_GROUP_SIZE = 2
+const MIN_PHASE_GROUP_SIZE = 2
 
 /** 段のまとめの文の数の上限。 */
 export const MAX_PHASE_SUMMARY_SENTENCES = 2

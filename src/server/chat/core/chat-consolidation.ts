@@ -16,7 +16,7 @@ import { chatLineText } from "./chat-memory-prompt.ts"
 export const CHAT_TOPIC_LIMIT = 3
 
 /** 定着を起こすモデル（軽いもの）。 */
-export const CHAT_CONSOLIDATION_MODEL = "haiku"
+const CHAT_CONSOLIDATION_MODEL = "haiku"
 
 /** 定着1回の時間切れ（ミリ秒）。 */
 export const CHAT_CONSOLIDATION_TIMEOUT_MS = 120_000
@@ -77,7 +77,7 @@ export const CHAT_SYNOPSIS_RESERVED_TAGS = [
  * - `synopsis-too-long`: あらすじが `synopsisBytes` を超える
  * - `synopsis-reserved-tag`: あらすじが {@link CHAT_SYNOPSIS_RESERVED_TAGS} を含む
  */
-export const CHAT_CONSOLIDATION_REJECTIONS = [
+const CHAT_CONSOLIDATION_REJECTIONS = [
   "shape",
   "synopsis-empty",
   "synopsis-too-long",
@@ -93,7 +93,7 @@ const NONE = "（なし）"
  * `query()` の `systemPrompt` をそのまま置き換える指示文。
  * 会話の中のキャラクターの口調は持たず、要約する役目だけを持つ。
  */
-export const CHAT_CONSOLIDATION_INSTRUCTION = `あなたは、窓から溢れた会話を畳んで記憶にする役目だけを持つ。
+const CHAT_CONSOLIDATION_INSTRUCTION = `あなたは、窓から溢れた会話を畳んで記憶にする役目だけを持つ。
 ここでの「あなた」は畳む側であり、渡された会話の中のキャラクター本人ではない。
 
 渡された行の \`利用者:\` は利用者の発言、\`あなた:\` はキャラクターのセリフ、\`したこと:\` は

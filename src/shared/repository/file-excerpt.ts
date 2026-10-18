@@ -42,12 +42,7 @@ export type FileExcerptLine = {
 }
 
 /** 抜き書きを出さない理由。 */
-export const FILE_EXCERPT_UNAVAILABLE_REASONS = [
-  "untracked",
-  "too-large",
-  "binary",
-  "unreadable",
-] as const
+const FILE_EXCERPT_UNAVAILABLE_REASONS = ["untracked", "too-large", "binary", "unreadable"] as const
 
 export type FileExcerptUnavailableReason = (typeof FILE_EXCERPT_UNAVAILABLE_REASONS)[number]
 

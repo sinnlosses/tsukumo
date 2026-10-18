@@ -23,7 +23,7 @@ export function doneTasksSince(
 }
 
 /** タスクの節目の刻み（仮）。 */
-export const TASK_MILESTONE_STEP = 250
+const TASK_MILESTONE_STEP = 250
 
 /** {@link taskMilestoneOf} が数える1件。 */
 export type TaskMilestoneItem = Pick<DoneTask, "id" | "closedAtEpochMilliseconds">

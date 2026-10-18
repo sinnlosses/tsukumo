@@ -53,7 +53,7 @@ import { tsukumoServer } from "./sdk-tool.ts"
  * Claude Code の催促が届いたときに stderr へ出す1行。固定の文面だけ（届いたメッセージの中身は写さない）。
  * 出たら `CLAUDE_CODE_TERMINAL_MCP_TOOLS` が Claude Code の更新で効かなくなっている（`isVisibleOutputNudge`）。
  */
-export const VISIBLE_OUTPUT_NUDGE_NOTICE =
+const VISIBLE_OUTPUT_NUDGE_NOTICE =
   "tsukumo: Claude Code が「本文の無い応答」の催促を差し込んだ（CLAUDE_CODE_TERMINAL_MCP_TOOLS が効いていない）\n"
 
 /**

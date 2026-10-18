@@ -80,7 +80,7 @@ export const FRAME_ERROR_REASON = {
 } as const
 
 /** 受け取ったフレームの封筒だけを確かめるスキーマ。`state` と `events[].event` は「オブジェクトであること」までしか見ない。 */
-export const serverFrameSchema = z.discriminatedUnion("type", [
+const serverFrameSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("hello"),
     protocolVersion: z.number().int(),

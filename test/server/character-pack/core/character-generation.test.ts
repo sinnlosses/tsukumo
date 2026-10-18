@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  CHARACTER_GENERATION_MODEL,
   type CharacterGenerationQuery,
   generateCharacter,
   toGeneratedCharacter,
@@ -76,9 +75,8 @@ describe("generateCharacter", () => {
 
     expect(generated).toEqual(GENERATED)
     expect(requests.map((request) => [request.model, request.image])).toEqual([
-      [CHARACTER_GENERATION_MODEL, { mediaType: "image/png", base64: PORTRAIT_BASE64 }],
+      ["opus", { mediaType: "image/png", base64: PORTRAIT_BASE64 }],
     ])
-    expect(CHARACTER_GENERATION_MODEL).toBe("opus")
   })
 
   it("問い合わせが投げたら投げ直さず undefined", async () => {

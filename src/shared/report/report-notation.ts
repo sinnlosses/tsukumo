@@ -24,7 +24,7 @@ export const REPORT_NOTE_KINDS = [
  * 名前付きの `list`・`list` の `flow`・`progress` / `options` / `files` の塊・余白の柱の包みと傍注）と、
  * 塊にする前にモデルが逃げ道に書いていた `cols` / `card`。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  */
-export const REPORT_BLOCK_MARK_NAMES = [
+const REPORT_BLOCK_MARK_NAMES = [
   "cols",
   "cols-of-2",
   "cols-of-3",

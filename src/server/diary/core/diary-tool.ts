@@ -14,10 +14,10 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 export const DIARY_TOOL_NAME = "diary"
 
 /** `body` の上限（仮。文字はコードポイントで数える）。 */
-export const DIARY_BODY_MAX_CHARS = 600
+const DIARY_BODY_MAX_CHARS = 600
 
 /** `bookmark.reason` の上限（仮）。 */
-export const DIARY_BOOKMARK_REASON_MAX_CHARS = 120
+const DIARY_BOOKMARK_REASON_MAX_CHARS = 120
 
 /** モデルに見せる `diary` の説明。いつ呼ぶか・1回だけ・断られたら呼び直すをここに書く。 */
 export const DIARY_TOOL_DESCRIPTION =

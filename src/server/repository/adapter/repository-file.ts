@@ -16,7 +16,7 @@ import { runGit } from "./git.ts"
  * 返す件数の上限。巨大なリポジトリでも応答の大きさを見切れる形にしておく（ブラウザ側は一覧を1回取ってから絞り込む）。
  * 超えた分は `git ls-files` の並び（パスの辞書順）の後ろから落とし、落とした件数を返す。
  */
-export const MAX_REPOSITORY_FILES = 20000
+const MAX_REPOSITORY_FILES = 20000
 
 /**
  * git 管理下のファイルのパスを、`cwd` からの相対で返す。失敗したときは空。

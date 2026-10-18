@@ -18,7 +18,7 @@ export type ReportRetrospective =
       readonly drafts: readonly string[]
     }
 
-export const NO_REPORT_RETROSPECTIVE = {
+const NO_REPORT_RETROSPECTIVE = {
   kind: "none",
 } as const satisfies ReportRetrospective
 

@@ -7,7 +7,7 @@ import { isBlankText } from "../utils/blank-text.ts"
 import type { DelegateReturn } from "./delegate-return.ts"
 
 /** 段の結果。`finished` は済ませた、`skipped` は飛ばした、`stopped` は途中で止めた。 */
-export const PHASE_OUTCOMES = ["finished", "skipped", "stopped"] as const
+const PHASE_OUTCOMES = ["finished", "skipped", "stopped"] as const
 
 /** 引数を読んだ形。止めた理由は `stopped` だけが持つ。 */
 export type PhaseResult =

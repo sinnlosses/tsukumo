@@ -17,7 +17,7 @@ import {
 } from "../../../shared/session-driver/prompt-image.ts"
 
 /** 問い合わせを起こすモデル。 */
-export const CHARACTER_GENERATION_MODEL = "opus" satisfies ModelAlias
+const CHARACTER_GENERATION_MODEL = "opus" satisfies ModelAlias
 
 /** 問い合わせ1回の締め切り（ミリ秒）。 */
 export const CHARACTER_GENERATION_TIMEOUT_MS = 120_000

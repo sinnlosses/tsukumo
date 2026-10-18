@@ -22,11 +22,11 @@ import type { WelcomeWritingFootprint } from "./welcome-writing.ts"
 export const DIAGNOSTIC_FORMAT_VERSION = 1 satisfies number
 
 /** ブラウザの例外を拾った経路。 */
-export const BROWSER_ERROR_ROUTES = ["onerror", "unhandledrejection", "render-failure"] as const
+const BROWSER_ERROR_ROUTES = ["onerror", "unhandledrejection", "render-failure"] as const
 export type BrowserErrorRoute = (typeof BROWSER_ERROR_ROUTES)[number]
 
 /** `error.name` の既知の名前。知らない名前は `"other"` に写す。 */
-export const BROWSER_ERROR_NAMES = [
+const BROWSER_ERROR_NAMES = [
   "Error",
   "TypeError",
   "RangeError",
@@ -39,14 +39,14 @@ export const BROWSER_ERROR_NAMES = [
 export type BrowserErrorName = (typeof BROWSER_ERROR_NAMES)[number]
 
 /** スタックの1フレームの出どころ。ファイル名は運ばず、ページと同じオリジンかどうかだけに写す。 */
-export const BROWSER_ERROR_ORIGINS = ["bundle", "other"] as const
+const BROWSER_ERROR_ORIGINS = ["bundle", "other"] as const
 export type BrowserErrorOrigin = (typeof BROWSER_ERROR_ORIGINS)[number]
 
 /** 運ぶスタックフレームの数の上限。 */
 export const DIAGNOSTIC_BROWSER_ERROR_MAX_FRAMES = 5
 
 /** 行・列の数の上限。 */
-export const DIAGNOSTIC_BROWSER_ERROR_MAX_POSITION = 10_000_000
+const DIAGNOSTIC_BROWSER_ERROR_MAX_POSITION = 10_000_000
 
 const browserErrorPositionSchema = z
   .number()
@@ -54,7 +54,7 @@ const browserErrorPositionSchema = z
   .min(0)
   .max(DIAGNOSTIC_BROWSER_ERROR_MAX_POSITION)
 
-export const browserErrorFrameSchema = z.object({
+const browserErrorFrameSchema = z.object({
   origin: z.enum(BROWSER_ERROR_ORIGINS),
   line: browserErrorPositionSchema,
   column: browserErrorPositionSchema,

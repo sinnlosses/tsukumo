@@ -14,7 +14,7 @@ import type {
 import type { StructuredQuery } from "./structured-query.ts"
 
 /** 問い合わせを起こすモデル（軽いもの）。 */
-export const RECOMMENDATION_MODEL = "haiku"
+const RECOMMENDATION_MODEL = "haiku"
 
 /** 問い合わせ1回の時間切れ（ミリ秒）。 */
 export const RECOMMENDATION_TIMEOUT_MS = 60_000
@@ -26,7 +26,7 @@ export const RECOMMENDATION_REASON_CHARS = 40
 const RESUME_KEY = "resume"
 
 /** `query()` の `systemPrompt` をそのまま置き換える指示文。 */
-export const RECOMMENDATION_INSTRUCTION = `あなたは、これから作業を始める利用者に、どれから始めるとよいかを選んで見せる役目だけを持つ。
+const RECOMMENDATION_INSTRUCTION = `あなたは、これから作業を始める利用者に、どれから始めるとよいかを選んで見せる役目だけを持つ。
 
 渡された候補から、始めるのにおすすめのものを1〜${String(MAX_RECOMMENDATION_CARDS)}件、おすすめの順に選び、それぞれに理由を1行で書く。
 

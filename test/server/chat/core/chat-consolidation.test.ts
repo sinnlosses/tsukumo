@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import type { ChatUnconsolidatedEntry } from "../../../../src/server/chat/core/chat-archive-port.ts"
 import {
   CHAT_CONSOLIDATION_LIMITS,
-  CHAT_CONSOLIDATION_MODEL,
   type ChatConsolidationResult,
   CHAT_TOPIC_LIMIT,
   chatConsolidationQuery,
@@ -73,7 +72,7 @@ describe("chatConsolidationQuery", () => {
       previousEpisodeTitle: "架空の直前の見出し",
     })
 
-    expect(query.model).toBe(CHAT_CONSOLIDATION_MODEL)
+    expect(query.model).toBe("haiku")
     for (const fragment of [
       "### 2026-09-20",
       "1. 利用者: 架空の発言1",

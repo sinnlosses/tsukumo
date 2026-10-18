@@ -5,7 +5,7 @@
 
 import { isPlainObject } from "remeda"
 
-export const AGENT_TOOL_NAME = "Agent"
+const AGENT_TOOL_NAME = "Agent"
 
 export type BackgroundDelegation =
   | { readonly kind: "keep" }
