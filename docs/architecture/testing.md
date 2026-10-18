@@ -61,7 +61,8 @@
 contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れるものは1本にまとめる。E2E が判定に
 使うのは DOM の構造と WebSocket のメッセージの列だけで、スクリーンショットは目視の添え物（判定しない）。
 目視の手順は下の「手で確かめること」。足場（起こす・開く・成果物を書く・比べる）は
-`test/e2e/scenario-run.ts` の1ファイルで、シナリオはそれを呼ぶだけにする。
+`test/e2e/scenario-run.ts` を入口にし（成果物・DOM の木・記録などは同じ置き場の概念ごとのファイル）、
+シナリオは入口を呼ぶだけにする。
 
 ### フィクスチャ
 
@@ -159,7 +160,7 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
   走らせる速さに依らない）。そこから先は**場面が流れ終わるのを時間で待たず**、届いたイベントを待つ。長い場面は途中のイベントで止めて撮る。**場面を速く流す口は足さない**（ブラウザ側の
   間合いとの比が変わる）。`afterMs` は場面の始まり（`opening` は開いた時点、名指しの場面は `opening` の最後の手の続きから）からの経過で、前の手からの差ではない。手の並びの順に単調に増え（同じ値は可）、減る場面は読み込みで場面名と手の位置つきで拒まれる。**テストが答えるまで先へ進めたくない場面は、その手に `waitForAnswer: true` を付ける**（積まれた答え待ちがすべて答えられるまで流さず、その手と続く手の `afterMs` は答えが届いた時点からの経過になり、単調の検査もここで数え直す。時刻で流すと答えが遅れた分だけ手が入れ替わる。足場の間合いの検査は、次の手がこの手なら無限大として扱う）。必要な瞬間が遅い場面は、短い場面を疑似セッションに足す（名前に `-quick` を付け、元の場面と同じ手を `afterMs` だけ詰める。**最終まで流して撮るテストだけがこれを使い**、途中で止めて撮る側は元の場面のまま。詰めても、`report` が差し戻される場面は最初の静かな区切りが差し戻される `report` より前に残るようにする）
 - **途中のイベントで止めて撮る（`waitForEvent` のあと `settleAndMatch`）ときは、待った手から疑似セッションの
-  予定の次の手までの間合いを `scenario-run.ts` の足場が検査する**（`MIN_NEXT_STEP_GAP_MS` 未満なら落ちる。
+  予定の次の手までの間合いを `scene-schedule.ts` の足場が検査する**（`MIN_NEXT_STEP_GAP_MS` 未満なら落ちる。
   次の手が撮り終える前に届くと messages に1件多く載って食い違うため）。間合いが足りない場面は、名前に
   `-hold` などを付けて最初の静かな区切りで打ち切った版を別に足す（元の場面は書き換えない）
 - **起動時の切り替え先の一覧は `hello` に含まれて届くので `sessions-changed` を待たない**；`sessions-changed` を待つのは、場面が一覧を流すときと、起こし直した代が一覧を流し直すときだけ
@@ -184,7 +185,7 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
 
 ### E2E の成果物と再現
 
-**判定に使うのは2つの JSON だけ**。何を残し・落とし・置き換えるかの実装は `test/e2e/scenario-run.ts`。
+**判定に使うのは2つの JSON だけ**。何を残し・落とし・置き換えるかの実装は `test/e2e/dom-tree.ts`・`test/e2e/message-record.ts`・`test/e2e/artifact.ts`。
 
 - **DOM の構造**（`<シナリオ>.dom.json`。写す範囲は下の「E2E の期待値の範囲」）: 残すのは要素の名前・
   `role`・`aria-*`・`data-*`・入力の状態・`href` と `src` のパス・文字。**落とすのは `class`・`style`・`id`・描かれていない要素・図とグラフの中身・
@@ -216,7 +217,7 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
 test/e2e/expected/` で意図した変化だけであることを確かめる → 直した変更と同じコミットに入れる。
 shared の手続き応答に乗る型や DOM の構造を変える計画には、その変更を含むコミットで期待値を撮り直す段を置く。
 
-**期待値と食い違った回**は、`matchArtifact`（`test/e2e/scenario-run.ts`）がその回の成果物と期待値との
+**期待値と食い違った回**は、`matchArtifact`（`test/e2e/artifact.ts`）がその回の成果物と期待値との
 行単位の差分を `/tmp/tsukumo-e2e/failures/<シナリオ>/<Temporal の刻んだ名前>/` へ残す（あとで通った回に
 上書きされない。シナリオごとに直近5回まで）。落ちたときのエラー文に残した場所のパスが出る。
 
@@ -227,7 +228,7 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
 エージェントも読み切れず、「E2E の揺れを生まない書き方」の条3が見る途中の状態を見落とす。
 範囲は次の3つの決まりで絞る。
 
-1. **部分木は名前で選ぶ。** 名前から根のセレクタへの表は `test/e2e/scenario-run.ts` に1つだけ置き、
+1. **部分木は名前で選ぶ。** 名前から根のセレクタへの表は `test/e2e/dom-tree.ts` に1つだけ置き、
    場面はセレクタを書かずに名前の並びを選ぶ。根は `role`・`aria-*`・`data-*` で当て、`class` では
    当てない（当てる印が無ければ部品の側に `data-*` を出す。「E2E の成果物と再現」の意味の契約と同じ）
 
@@ -274,7 +275,7 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
 `*.messages.json` を書きも消しもしないので、比べるのをやめた場面の期待値は `git rm` で消す。
 
 比べる場面の列にも例外があり、`session-info` の `slashCommands`・`terminalSlashCommands` と `command-descriptions` の
-`descriptions`（コマンド一覧）は、`collapseCommandCatalog`（`test/e2e/scenario-run.ts`）が固定の印に
+`descriptions`（コマンド一覧）は、`collapseCommandCatalog`（`test/e2e/message-record.ts`）が固定の印に
 畳む。一覧が画面に届くことは `markdown-composer` の `/` の補完の確定が通し、中身の写しは
 `test/server/session-driver/core/sdk-message.test.ts` と `test/shared/session/command-suggestion.test.ts` が持つ。
 
@@ -291,7 +292,7 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
    `pending-changed` と場面の `speech`（`afterMs` 200）が競って揺れた。`input-dispatch`: `opening` の
    `speech` と依頼後の `partial-utterance` が同じ時刻に届いて競った）
 2. **非同期の取得（TanStack Query など）が済むまで表示が続く要素は `aria-busy="true"` を出し、
-   `settledDom`（`test/e2e/scenario-run.ts`）は DOM が2回続けて同じでも `aria-busy="true"` が
+   `settledDom`（`test/e2e/dom-tree.ts`）は DOM が2回続けて同じでも `aria-busy="true"` が
    残っていれば撮らずに待つ。** `settledDom` は DOM の中身を見ず「2回続けて同じ文字列」だけで
    落ち着いたと判定するので、「取得中…」のように取得の途中でも文字が変わらない表示があると、
    応答が届く前の DOM を2回連続で捉えて安定と誤判定する。回数や経路を数えるシナリオ専用の待ちは
@@ -341,7 +342,7 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
    ドラッグした直後のやり取りの列の幅の検査で、待たずに測ると古い幅が返った）
 9. **ブラウザの起動には `hookTimeout` より短い上限を持たせ、起こしかけのものも `afterAll` で止める。**
    負荷の高いときは起動だけで hook の上限に当たりうる。打ち切られた起動を放置すると、親を失った
-   ヘッドレス Chrome が残る（`test/e2e/scenario-run.ts` の `BROWSER_LAUNCH_TIMEOUT_MS`）
+   ヘッドレス Chrome が残る（`test/e2e/chrome-launch.ts` の `BROWSER_LAUNCH_TIMEOUT_MS`）
 10. **`expect.poll` の上限は `vitest.e2e.config.ts` の `expect.poll.timeout`（15 秒）で一括に決め、
     個別に `timeout` を渡すのは待つ内容がそれより長いときだけにする。** Vitest の既定は 1 秒で、
     負荷の高いときに足りない。待つ値は `expect.poll` に渡し、素の `expect(await …)` で1回だけ見ない。

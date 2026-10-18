@@ -3,7 +3,8 @@ import { dirname, join } from "node:path"
 
 import { FAKE_BEADS_ISSUES_PATH } from "../../src/server/repository/adapter/fake-beads.ts"
 import type { TaskDifficulty, TaskLoopable } from "../../src/shared/repository/task-summary.ts"
-import type { DomRootName, ScenarioOptions, ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
+import type { DomRootName } from "./dom-tree.ts"
+import type { ScenarioOptions, ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧とタスクのモーダルの E2E の足場（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // この一覧だけは疑似セッションの場面ではなく、cwd の課題のファイルが元になる

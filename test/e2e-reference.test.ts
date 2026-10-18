@@ -12,7 +12,7 @@ import { bundledFakeSession } from "./fixture/bundled-fake-session.ts"
 const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
 const E2E_ROOT = join(REPOSITORY_ROOT, "test/e2e")
 const EXPECTED_ROOT = join(E2E_ROOT, "expected")
-const SCENARIO_RUN = join(E2E_ROOT, "scenario-run.ts")
+const DOM_TREE = join(E2E_ROOT, "dom-tree.ts")
 
 function readText(path: string): string {
   return readFileSync(join(REPOSITORY_ROOT, path), "utf8")
@@ -74,7 +74,7 @@ describe("E2E の期待値", () => {
 
 describe("DOM_ROOT_SELECTORS の口", () => {
   const table =
-    readText("test/e2e/scenario-run.ts")
+    readText("test/e2e/dom-tree.ts")
       .split("const DOM_ROOT_SELECTORS = {\n")[1]
       ?.split("\n} as const")[0] ?? ""
   const keys = table
@@ -89,7 +89,7 @@ describe("DOM_ROOT_SELECTORS の口", () => {
   it("どの E2E も domRoots に渡さない口は無い", () => {
     const passed = new Set(
       e2eSources
-        .filter((source) => join(REPOSITORY_ROOT, source.path) !== SCENARIO_RUN)
+        .filter((source) => join(REPOSITORY_ROOT, source.path) !== DOM_TREE)
         .flatMap((source) => quotedLiterals(source.text)),
     )
     expect(keys.filter((key) => !passed.has(key))).toEqual([])
