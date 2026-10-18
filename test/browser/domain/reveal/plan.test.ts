@@ -140,19 +140,32 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     ])
   })
 
-  it("塊1つぶんの時間は、その塊の中の文字数の合計で決まる", () => {
-    const body = "あ".repeat(100)
-    const blocks = planReveal(rootWith(`<h3>見出し</h3><p>${body}</p>`), STANDARD_TIMING)
+  // 持ち時間は timing の3つ（文字あたり・下限・上限）だけで決まる。`standard` とその半分の物差しの両方で見る。
+  it.each([
+    {
+      name: "塊1つぶんの時間は、その塊の中の文字数の合計で決まる",
+      html: `<h3>見出し</h3><p>${"あ".repeat(100)}</p>`,
+      standardMs: (3 + 100) * MS_PER_CHARACTER,
+    },
+    {
+      // 3文字を素直に比例させると 60ms で、2画のZ字が一瞬で終わって筆が飛んで見える。
+      name: "短い塊でもZ字をゆっくり書き切れるだけの時間（下限）を渡す",
+      html: "<h3>見出し</h3>",
+      standardMs: MIN_BLOCK_MS,
+    },
+    {
+      // 500文字は素直に比例させると10秒。打ち切られるのはこの塊だけで、他の塊は速くならない。
+      name: "極端に長い塊だけを上限で打ち切る",
+      html: `<p>${"あ".repeat(500)}</p>`,
+      standardMs: MAX_BLOCK_MS,
+    },
+  ])("$name", ({ html, standardMs }) => {
+    for (const scale of [1, 0.5]) {
+      const blocks = planReveal(rootWith(html), timingOf(scale))
 
-    expect(blocks[0]?.startMs).toBe(0)
-    expect(blocks[0]?.endMs).toBe((3 + 100) * MS_PER_CHARACTER)
-  })
-
-  it("短い塊でもZ字をゆっくり書き切れるだけの時間を渡す", () => {
-    const blocks = planReveal(rootWith("<h3>見出し</h3>"), STANDARD_TIMING)
-
-    // 3文字を素直に比例させると 60ms で、2画のZ字が一瞬で終わって筆が飛んで見える。
-    expect(blocks[0]?.endMs).toBe(MIN_BLOCK_MS)
+      expect(blocks[0]?.startMs).toBe(0)
+      expect(blocks[0]?.endMs).toBe(standardMs * scale)
+    }
   })
 
   it("同じ塊は、後ろに何が続いても同じ時間で出る（全体の長さに引きずられない）", () => {
@@ -164,13 +177,6 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     )
 
     expect(withTail[0]?.endMs).toBe(alone[0]?.endMs ?? -1)
-  })
-
-  it("極端に長い塊だけを上限で打ち切る", () => {
-    const blocks = planReveal(rootWith(`<p>${"あ".repeat(500)}</p>`), STANDARD_TIMING)
-
-    // 500文字は素直に比例させると10秒。打ち切られるのはこの塊だけで、他の塊は速くならない。
-    expect(blocks[0]?.endMs).toBe(MAX_BLOCK_MS)
   })
 
   it("塊は隙間なく前から順に並ぶ", () => {
@@ -186,18 +192,22 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     ])
   })
 
-  it("mermaid と Chart.js の入れ物は、中身が何であれ opacity で出す側にする", () => {
-    const root = rootWith(
-      '<pre class="mermaid">flowchart TD</pre>' +
+  it.each([
+    {
+      name: "mermaid と Chart.js の入れ物は、中身が何であれ opacity で出す側にする",
+      html:
+        '<pre class="mermaid">flowchart TD</pre>' +
         '<div class="chart-block"><canvas></canvas></div>' +
         '<div class="mermaid-broken"><pre><code>壊れた図</code></pre></div>',
-    )
-
-    expect(kindsOf(root)).toEqual([["figure", "figure", "figure"]])
-  })
-
-  it("文字を1つも持たない要素も opacity で出す", () => {
-    expect(kindsOf(rootWith('<p><img src="/character/a.svg" /></p>'))).toEqual([["figure"]])
+      kinds: [["figure", "figure", "figure"]],
+    },
+    {
+      name: "文字を1つも持たない要素も opacity で出す",
+      html: '<p><img src="/character/a.svg" /></p>',
+      kinds: [["figure"]],
+    },
+  ])("$name", ({ html, kinds }) => {
+    expect(kindsOf(rootWith(html))).toEqual(kinds)
   })
 
   it("図は文字数を持たないので、段落1つぶんの重みで数える", () => {
@@ -216,30 +226,6 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
 
     expect(kindsOf(root)).toEqual([["text", "text", "figure", "text"]])
     expect(tagsOf(root)).toEqual([["H3", "P", "PRE", "P"]])
-  })
-})
-
-describe("planReveal（物差し=timing を変えると速さが変わる）", () => {
-  it("文字1つあたりの時間は timing の msPerCharacter で決まる", () => {
-    const body = "あ".repeat(100)
-    const html = `<h3>見出し</h3><p>${body}</p>`
-    const half = planReveal(rootWith(html), timingOf(0.5))
-
-    // `standard` の半分の物差しなら、同じ本文でも塊の持ち時間が半分になる。
-    expect(half[0]?.endMs).toBe(((3 + 100) * MS_PER_CHARACTER) / 2)
-  })
-
-  it("塊の上限も timing の maxBlockMs で決まる", () => {
-    const html = `<p>${"あ".repeat(500)}</p>`
-    const half = planReveal(rootWith(html), timingOf(0.5))
-
-    expect(half[0]?.endMs).toBe(MAX_BLOCK_MS / 2)
-  })
-
-  it("塊の下限も timing の minBlockMs で決まる", () => {
-    const half = planReveal(rootWith("<h3>見出し</h3>"), timingOf(0.5))
-
-    expect(half[0]?.endMs).toBe(MIN_BLOCK_MS / 2)
   })
 })
 
