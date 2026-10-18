@@ -1,9 +1,16 @@
 // 疑似セッションの場面ごとの塊の一覧を見分ける判断を検証する。
 
+import { readFileSync } from "node:fs"
+
 import { describe, expect, test } from "vitest"
 
 import { CATALOG } from "../../../scripts/capture/lib/catalog-entry.ts"
-import { sceneBlockKinds } from "../../../scripts/capture/lib/scene-catalog.ts"
+import {
+  REVEAL_FIGURE_WEIGHT,
+  REVEAL_SHORT_REPORT_WEIGHT,
+  revealForecast,
+  sceneBlockKinds,
+} from "../../../scripts/capture/lib/scene-catalog.ts"
 import { sceneEventTimeoutMs, settleSceneTarget } from "../../../scripts/capture/lib/scene-end.ts"
 import { bundledFakeSession } from "../../fixture/bundled-fake-session.ts"
 
@@ -23,6 +30,39 @@ describe("sceneBlockKinds", () => {
   test("検証結果を持つ場面には checks が出る", () => {
     expect(kinds.get("report-tool")).toContain("checks")
     expect(kinds.get("report-task-verdict")).toContain("checks")
+  })
+})
+
+describe("revealForecast", () => {
+  const forecast = revealForecast(bundledFakeSession())
+
+  test("節が短い場面は掛からない見込みになる", () => {
+    expect(forecast.get("work-plan-parallel")).toBe("unlikely")
+  })
+
+  test("図と長い本文を持つ場面は掛かる見込みになる", () => {
+    expect(forecast.get("report-blocks")).toBe("likely")
+  })
+
+  test("report を持たない場面は掛からない見込みになる", () => {
+    expect(forecast.get("welcome-greeting")).toBe("unlikely")
+  })
+})
+
+describe("写した重みの定数", () => {
+  const plan = readFileSync("src/browser/domain/reveal/plan.ts", "utf8")
+
+  function constantOf(name: string): number {
+    const match = new RegExp(`^const ${name} = (\\d+)$`, "m").exec(plan)
+    return Number(match?.[1])
+  }
+
+  test("plan.ts の SHORT_REPORT_WEIGHT と同じ値", () => {
+    expect(REVEAL_SHORT_REPORT_WEIGHT).toBe(constantOf("SHORT_REPORT_WEIGHT"))
+  })
+
+  test("plan.ts の FIGURE_WEIGHT と同じ値", () => {
+    expect(REVEAL_FIGURE_WEIGHT).toBe(constantOf("FIGURE_WEIGHT"))
   })
 })
 

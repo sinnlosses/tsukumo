@@ -51,6 +51,7 @@ import {
   MAIN_REGION_SELECTOR,
   openPage,
   revealPageAt,
+  scrollMatchNotice,
   SKIP_REVEAL_KEY,
   settlePage,
 } from "./lib/capture-page.ts"
@@ -71,7 +72,7 @@ import {
   readRevealSnapshot,
   REVEAL_SEEN_SCRIPT,
 } from "./lib/reveal-snapshot.ts"
-import { sceneBlockKinds } from "./lib/scene-catalog.ts"
+import { revealForecast, sceneBlockKinds } from "./lib/scene-catalog.ts"
 import {
   type SceneEventWatch,
   sceneEndTarget,
@@ -115,12 +116,12 @@ const USAGE = `使い方:
                         （場面は test/fixture/fake-session.json の turns[].name。URL とは併用しない）
   --cwd <dir>           --scene の tsukumo を起こす作業ディレクトリ（.beads や課題ファイルを探す先。既定はこの作業ツリー。手元の画像を置く場面は --out の隣に架空の画像入りの作業場所を立てる。件が演出を打ち切る場面は、--cwd の有無に関わらず打ち切ってから撮る。--scene と一緒にだけ使う）
   --until-step <n>      --scene の場面を先頭から n 手目で止めた画を撮る（正の整数。--scene と一緒にだけ使う）
-  --list-scenes         場面ごとに report に出る塊の kind を一覧して終わる（撮らない）
+  --list-scenes         場面ごとに report に出る塊の kind と、書き上げる演出が掛かる見込みを一覧して終わる（撮らない。見込みは節の文字数からの見積もりで、描いて確かめてはいない）
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
   --size <幅>x<高さ>    窓の大きさ（既定 ${String(DEFAULT_WIDTH)}x${String(DEFAULT_HEIGHT)}）
   --measure <selector>  位置と大きさ（と scrollHeight・clientHeight）を数値で出す要素（何度でも指定できる）
   --wait-for <selector> 要素が出て、演出が終わるまで待ってから撮る（出なければ失敗して終わる）
-  --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる）
+  --scroll-to <selector> 要素をメインビューの上端へ送ってから撮る（無ければ失敗して終わる。2つ以上に当たるとコンマ区切りでも先頭へ転がし、「一致 n 個、先頭へ転がした」の行を出す）
   --type <selector> <文字>  入力欄に打ってから撮る
   --click <selector>    押してから撮る
   --hover <selector>    触れてから撮る
@@ -128,7 +129,7 @@ const USAGE = `使い方:
   --press <キー名>      キーを押してから撮る（Escape など。狭い窓の引き出しを閉じる）
   --advance <ms>        偽の時計をミリ秒だけ進めてから撮る（待ち時間で出る画。Temporal.Now も従う）
   --clock <ISO 時刻>    ブラウザの時計をその時刻に決めて撮る（日付で表示が変わる画。オフセット付き、例 2026-01-15T12:00:00+09:00。Temporal.Now も従う）
-  --reveal-at <ms>      書き上げる演出が始まった時点から偽の時計をミリ秒だけ進めたところで止め、途中の画を撮る（正の整数。--scene と一緒にだけ使う。演出は打ち切らず、--wait-for・--advance などの操作とは併用できない）
+  --reveal-at <ms>      書き上げる演出が始まった時点から偽の時計をミリ秒だけ進めたところで止め、途中の画を撮る（正の整数。--scene と一緒にだけ使う。演出は打ち切らず、--wait-for・--advance などの操作とは併用できない。演出が始まらない場面は 15 秒待って失敗するので、先に --list-scenes の見込みを見る）
   --wait-after <selector> その位置で要素が出るのを待つ（--hash で開いた画面の読み込みなど。出なければ失敗して終わる）
                         （7つは書いた順に、--wait-for のあと・--scroll-to の前に当てる。当たらなければ失敗して終わる）
   --stub-rpc '<手続き>[@<範囲>]=<JSON>'  手続きの応答を差し替えて撮る（何度でも指定できる。例 'planUsage.report={"kind":"not-applicable"}'。範囲は呼び出しの何回目かを1から数えて 3 か 1-2、省くと全部。範囲の外はサーバへ通す）
@@ -187,8 +188,10 @@ function printSceneCatalog(): number {
     process.stderr.write(`test/fixture/fake-session.json が読めない: ${reading.reason}\n`)
     return 1
   }
+  const forecasts = revealForecast(reading.session)
   for (const [scene, kinds] of sceneBlockKinds(reading.session)) {
-    process.stdout.write(`${scene}: ${kinds.join(", ")}\n`)
+    const forecast = forecasts.get(scene) === "likely" ? "掛かる見込み" : "掛からない見込み"
+    process.stdout.write(`${scene}: ${kinds.join(", ")}（演出: ${forecast}）\n`)
   }
   return 0
 }
@@ -309,9 +312,16 @@ async function capture(
       return 1
     }
 
-    if (options.scrollTo !== undefined && !(await scrollIntoView(page, options.scrollTo))) {
-      process.stderr.write(`現れなかった: ${options.scrollTo}\n`)
-      return 1
+    if (options.scrollTo !== undefined) {
+      const matched = await scrollIntoView(page, options.scrollTo)
+      if (matched === 0) {
+        process.stderr.write(`現れなかった: ${options.scrollTo}\n`)
+        return 1
+      }
+      const notice = scrollMatchNotice(options.scrollTo, matched)
+      if (notice !== "") {
+        process.stdout.write(`${notice}\n`)
+      }
     }
 
     await page.screenshot({ path: options.out, fullPage: options.fullPage })
@@ -433,16 +443,17 @@ async function waitForRevealSettled(page: Page, selector: string): Promise<boole
   }
 }
 
-/** 要素をメインビューのスクロールの容れ物の上端へ送る。要素が無ければ false。 */
-async function scrollIntoView(page: Page, selector: string): Promise<boolean> {
+/** 先頭の要素をメインビューのスクロールの容れ物の上端へ送り、当たった個数を返す（無ければ 0）。 */
+async function scrollIntoView(page: Page, selector: string): Promise<number> {
   const locator = page.locator(selector)
-  if ((await locator.count()) === 0) {
-    return false
+  const count = await locator.count()
+  if (count === 0) {
+    return 0
   }
   await locator.first().evaluate((element) => {
     element.scrollIntoView({ block: "start" })
   })
-  return true
+  return count
 }
 
 /**

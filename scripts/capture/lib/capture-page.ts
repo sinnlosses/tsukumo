@@ -198,6 +198,11 @@ export async function waitForRevealEnd(
     .catch(() => undefined)
 }
 
+/** `--scroll-to` が2つ以上の要素に当たったときの知らせの行。1つなら空文字。 */
+export function scrollMatchNotice(selector: string, count: number): string {
+  return count < 2 ? "" : `一致 ${String(count)} 個、先頭へ転がした: ${selector}`
+}
+
 /**
  * 本文の領域の見た目が、連続2回の撮影で一致するまで待つ。立ち絵は領域の外なので見ない。
  * 書き上げの演出が進んでいるあいだは撮る回数を数えず、終わってから数える。
