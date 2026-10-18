@@ -1,0 +1,20 @@
+/* 枠の基準になる箱は画像そのもの。外の輪が切れるので overflow は付けない。 */
+.region-frame-host {
+  position: relative;
+  display: block;
+  line-height: 0;
+}
+.region-frame {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--region-frame-color);
+  border-radius: 6px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--region-frame-color) 13%, transparent);
+  pointer-events: none;
+}
+.region-frame[data-side="before"] {
+  --region-frame-color: color-mix(in srgb, var(--surface), var(--ink) 60%);
+}
+.region-frame[data-side="after"] {
+  --region-frame-color: var(--accent);
+}

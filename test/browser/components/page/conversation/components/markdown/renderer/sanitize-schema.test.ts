@@ -18,6 +18,41 @@ function sanitizedStyle(style: string): unknown {
   return first?.type === "element" ? first.properties["style"] : undefined
 }
 
+function sanitizedImageProperties(properties: Element["properties"]): Element["properties"] {
+  const img: Element = { type: "element", tagName: "img", properties, children: [] }
+  const result = unified()
+    .use(rehypeSanitize, REPORT_SANITIZE_SCHEMA)
+    .runSync({ type: "root", children: [img] })
+  const first = result.children[0]
+  return first?.type === "element" ? first.properties : {}
+}
+
+describe("REPORT_SANITIZE_SCHEMA の img の dataChangeRegion", () => {
+  it("枠の形の値は通り、形の外の値は属性ごと落ちる", () => {
+    expect(
+      sanitizedImageProperties({ dataChangeRegion: "29.6,44.6,40.5,10.6" })["dataChangeRegion"],
+    ).toBe("29.6,44.6,40.5,10.6")
+    expect(
+      sanitizedImageProperties({ dataChangeRegion: "1,2,3,x" })["dataChangeRegion"],
+    ).toBeUndefined()
+  })
+
+  it("img 以外には通さない", () => {
+    const div: Element = {
+      type: "element",
+      tagName: "div",
+      properties: { dataChangeRegion: "1,2,3,4" },
+      children: [],
+    }
+    const result = unified()
+      .use(rehypeSanitize, REPORT_SANITIZE_SCHEMA)
+      .runSync({ type: "root", children: [div] })
+    const first = result.children[0]
+
+    expect(first?.type === "element" ? first.properties["dataChangeRegion"] : "x").toBeUndefined()
+  })
+})
+
 describe("REPORT_SANITIZE_SCHEMA の style", () => {
   it.each([
     ["CSS エスケープで書いた url(", "background:\\75rl(https://example.invalid/x.png)"],

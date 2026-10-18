@@ -10,6 +10,41 @@ export const REPORT_IMAGE_PATH_PREFIX = "/report-image/"
 /** 許可リストが `img` の `src` に通す値。接頭辞で始まる値だけに当たる。 */
 export const REPORT_IMAGE_SRC_PATTERN = /^\/report-image\//
 
+/** 画像に対する%で持つ、変わった場所の枠。 */
+export type ImageRegion = {
+  readonly left: number
+  readonly top: number
+  readonly width: number
+  readonly height: number
+}
+
+/**
+ * `img` が枠を運ぶ属性の名前（hast のプロパティ名は `dataChangeRegion`）。
+ * 会話の画面の4領域が名乗る `data-region` とは別の名前にする。
+ */
+export const IMAGE_REGION_ATTRIBUTE = "data-change-region"
+
+/** 許可リストが `data-change-region` に通す値。`left,top,width,height` の非負の10進。 */
+export const IMAGE_REGION_PATTERN = /^\d+(?:\.\d+)?(?:,\d+(?:\.\d+)?){3}$/
+
+/** 枠を `data-change-region` の値に書き出す。小数は4桁で丸める。 */
+export function formatImageRegion(region: ImageRegion): string {
+  return [region.left, region.top, region.width, region.height]
+    .map((value) => String(Number(value.toFixed(4))))
+    .join(",")
+}
+
+/** `data-change-region` の値を枠に読む。形が崩れていれば undefined。 */
+export function parseImageRegion(value: unknown): ImageRegion | undefined {
+  if (typeof value !== "string" || !IMAGE_REGION_PATTERN.test(value)) {
+    return undefined
+  }
+  const [left, top, width, height] = value.split(",").map(Number)
+  return left === undefined || top === undefined || width === undefined || height === undefined
+    ? undefined
+    : { left, top, width, height }
+}
+
 /** 経路のパスの部分の長さの上限（デコードした後）。 */
 const MAX_REPORT_IMAGE_ROUTE_PATH_LENGTH = 1024
 

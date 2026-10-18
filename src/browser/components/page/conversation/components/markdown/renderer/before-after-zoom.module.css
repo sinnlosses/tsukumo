@@ -57,6 +57,12 @@
   height: auto;
   border-radius: 8px;
 }
+/* 枠を重ねる画像の箱は、画像の大きさに合わせて縮める（枠の%の基準が画像になる）。 */
+.before-after-zoom-framed {
+  flex-shrink: 0;
+  width: fit-content;
+  max-width: 100%;
+}
 .before-after-zoom-caption {
   margin: 0;
   text-align: center;

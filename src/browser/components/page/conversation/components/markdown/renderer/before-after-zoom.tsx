@@ -5,9 +5,11 @@
 import { type KeyboardEvent, type ReactElement, useState } from "react"
 import { createPortal } from "react-dom"
 
+import type { ImageRegion } from "../../../../../../../shared/report/report-image.ts"
 import { Button } from "../../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../../ui/dialog/dialog.tsx"
 import styles from "./before-after-zoom.module.css"
+import { RegionFramed } from "./region-frame.tsx"
 
 const HEADING = "前後の画像を大きく見る"
 const PAIR_LABEL = "前後"
@@ -20,6 +22,7 @@ export type BeforeAfterZoomImage = {
   readonly side: BeforeAfterZoomSide
   readonly src: string
   readonly alt: string
+  readonly region: ImageRegion | undefined
 }
 
 type BeforeAfterZoomProps = {
@@ -108,9 +111,7 @@ export function BeforeAfterZoom(props: BeforeAfterZoomProps): ReactElement {
             <span aria-hidden="true">×</span>
           </Button>
         </div>
-        {shown !== undefined && (
-          <img className={styles["before-after-zoom-image"]} src={shown.src} alt={shown.alt} />
-        )}
+        {shown !== undefined && <ShownImage image={shown} />}
         <p className={styles["before-after-zoom-caption"]}>
           <span className={styles["before-after-zoom-number"]}>{props.caption.number}</span>
           {props.caption.text !== "" && <span>{props.caption.text}</span>}
@@ -118,5 +119,21 @@ export function BeforeAfterZoom(props: BeforeAfterZoomProps): ReactElement {
       </div>
     </Dialog>,
     document.body,
+  )
+}
+
+function ShownImage(props: { readonly image: BeforeAfterZoomImage }): ReactElement {
+  const { image } = props
+  const img = <img className={styles["before-after-zoom-image"]} src={image.src} alt={image.alt} />
+  return image.region === undefined ? (
+    img
+  ) : (
+    <RegionFramed
+      region={image.region}
+      side={image.side}
+      hostClassName={styles["before-after-zoom-framed"]}
+    >
+      {img}
+    </RegionFramed>
   )
 }

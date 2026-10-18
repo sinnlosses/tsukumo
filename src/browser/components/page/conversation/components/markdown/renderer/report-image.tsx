@@ -15,7 +15,11 @@ import {
 import { flushSync } from "react-dom"
 import type { ExtraProps } from "react-markdown"
 
-import { REPORT_IMAGE_PATH_PREFIX } from "../../../../../../../shared/report/report-image.ts"
+import {
+  type ImageRegion,
+  parseImageRegion,
+  REPORT_IMAGE_PATH_PREFIX,
+} from "../../../../../../../shared/report/report-image.ts"
 import { sessionTokenUrl } from "../../../../../../domain/session-token-url.ts"
 import { Button } from "../../../../../ui/button/button.tsx"
 import { ImageZoom, type ImageZoomFallback } from "../../../../../ui/image-zoom/image-zoom.tsx"
@@ -25,6 +29,7 @@ import {
   saveBeforeAfterView,
 } from "./before-after-view.ts"
 import { BeforeAfterZoom } from "./before-after-zoom.tsx"
+import { RegionFramed } from "./region-frame.tsx"
 import styles from "./report-notation.module.css"
 
 const ZOOM_LABEL = "この画像を拡大"
@@ -35,7 +40,8 @@ const MISSING_LABEL = "画像を出せない"
 const MISSING_REASON = "読めなかったか、tsukumo を起こし直して手放した"
 const MISSING_TEXT = `${MISSING_LABEL}（${MISSING_REASON}）`
 
-type ReportImageProps = JSX.IntrinsicElements["img"] & ExtraProps
+type ReportImageProps = JSX.IntrinsicElements["img"] &
+  ExtraProps & { "data-change-region"?: string }
 
 type SwapSide = "before" | "after"
 
@@ -43,6 +49,7 @@ type SwapThumb = {
   readonly side: SwapSide
   readonly src: string
   readonly alt: string
+  readonly region: ImageRegion | undefined
 }
 
 /**
@@ -251,6 +258,21 @@ export function ReportImage(props: ReportImageProps): ReactElement {
     )
   }
   const src = sessionTokenUrl(props.src)
+  const side = sideOfAlt(alt)
+  const region = parseImageRegion(props["data-change-region"])
+  const image = (
+    <img
+      src={src}
+      alt={alt}
+      ref={(element) => {
+        imageRef.current = element
+        if (element !== null) {
+          reportImage({ side, src, alt, region })
+        }
+      }}
+      onError={() => setFailed(true)}
+    />
+  )
   return (
     <>
       <Button
@@ -265,17 +287,13 @@ export function ReportImage(props: ReportImageProps): ReactElement {
         className={styles["report-image-zoom"]}
         onClick={openZoom}
       >
-        <img
-          src={src}
-          alt={alt}
-          ref={(element) => {
-            imageRef.current = element
-            if (element !== null) {
-              reportImage({ side: sideOfAlt(alt), src, alt })
-            }
-          }}
-          onError={() => setFailed(true)}
-        />
+        {region === undefined ? (
+          image
+        ) : (
+          <RegionFramed region={region} side={side} hostClassName={undefined}>
+            {image}
+          </RegionFramed>
+        )}
       </Button>
       {zoomed && (
         <ImageZoom
@@ -305,10 +323,26 @@ function readCaption(root: HTMLElement | null): SwapZoom["caption"] {
 
 function withThumb(thumbs: readonly SwapThumb[], next: SwapThumb): readonly SwapThumb[] {
   const current = thumbs.find((thumb) => thumb.side === next.side)
-  if (current?.src === next.src && current.alt === next.alt) {
+  if (
+    current?.src === next.src &&
+    current.alt === next.alt &&
+    sameRegion(current.region, next.region)
+  ) {
     return thumbs
   }
   return [...thumbs.filter((thumb) => thumb.side !== next.side), next]
+}
+
+function sameRegion(a: ImageRegion | undefined, b: ImageRegion | undefined): boolean {
+  return (
+    a === b ||
+    (a !== undefined &&
+      b !== undefined &&
+      a.left === b.left &&
+      a.top === b.top &&
+      a.width === b.width &&
+      a.height === b.height)
+  )
 }
 
 function MissingImageIcon(): ReactElement {

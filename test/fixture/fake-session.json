@@ -2420,8 +2420,16 @@
                   {
                     "kind": "beforeAfter",
                     "title": "架空の札の見出しを 18px から 21px にした画面",
-                    "before": { "kind": "image", "path": "report-image-fixture/before.png" },
-                    "after": { "kind": "image", "path": "report-image-fixture/after.png" },
+                    "before": {
+                      "kind": "image",
+                      "path": "report-image-fixture/before.png",
+                      "region": { "left": 29.6, "top": 0, "width": 40.5, "height": 10.6 }
+                    },
+                    "after": {
+                      "kind": "image",
+                      "path": "report-image-fixture/after.png",
+                      "region": { "left": 29.6, "top": 44.6, "width": 40.5, "height": 10.6 }
+                    },
                     "fold": "",
                     "aside": ""
                   }

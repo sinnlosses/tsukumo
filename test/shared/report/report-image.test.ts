@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  formatImageRegion,
+  IMAGE_REGION_PATTERN,
   isShelvedImageUrl,
+  parseImageRegion,
   readReportImageRoute,
   REPORT_IMAGE_PATH_PREFIX,
   REPORT_IMAGE_SRC_PATTERN,
@@ -42,6 +45,24 @@ describe("reportImagePath と readReportImageRoute", () => {
     expect(REPORT_IMAGE_SRC_PATTERN.test("/tmp/a.png")).toBe(false)
     expect(REPORT_IMAGE_SRC_PATTERN.test("//example.invalid/report-image/a.png")).toBe(false)
   })
+})
+
+describe("formatImageRegion と parseImageRegion", () => {
+  it("書き出した値を読むと同じ枠に戻り、小数は4桁で丸める", () => {
+    const region = { left: 29.6, top: 44.6, width: 40.5, height: 10.6 }
+
+    expect(formatImageRegion(region)).toBe("29.6,44.6,40.5,10.6")
+    expect(parseImageRegion(formatImageRegion(region))).toEqual(region)
+    expect(formatImageRegion({ left: 0, top: 1 / 3, width: 100, height: 5 })).toBe("0,0.3333,100,5")
+  })
+
+  it.each(["", "1,2,3", "1,2,3,4,5", "a,2,3,4", "-1,2,3,4", "1e3,2,3,4", "1, 2,3,4", undefined])(
+    "読めない値は枠にしない（%s）",
+    (value) => {
+      expect(parseImageRegion(value)).toBeUndefined()
+      expect(IMAGE_REGION_PATTERN.test(String(value))).toBe(false)
+    },
+  )
 })
 
 describe("isShelvedImageUrl", () => {

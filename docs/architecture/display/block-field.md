@@ -120,7 +120,10 @@
     `region` は画像に対する % の `left`・`top`・`width`・`height`。無ければ枠を出さず、欠陥にしない。
     `report` は範囲外（0 未満・100 超・`left + width` か `top + height` が 100 超）と幅・高さ 0 以下を差し戻す
     （位置の誤りは静かに出るので、見える範囲だけでも機械で拾う）。使用の記録（`report-usage`）は、枠が付いた回を塊の欄 `beforeAfterRegion`（版15）で数える。
-    枠の見た目は見本どおり（前は灰、後は `accent`。2px・角丸 6px・外に 4px の薄い輪）で、大きく見る面でも出す
+    枠の見た目は見本どおり（前は `surface` と `ink` の混色の不透明な灰、後は `accent`。2px・角丸 6px・外に 4px の薄い輪）で、大きく見る面でも出す。
+    `region` は Markdown の `<img data-change-region="left,top,width,height">` で運び、サニタイザは `img` にだけ許す
+    （会話の画面の4領域が名乗る `data-region` とは別の名前にする。`[data-region]` で当たるのは4領域だけという前提を守る）。
+    枠は `aria-hidden` の飾りで押せる要素を足さず、`region` の無い側・切り替えの見本・画像が札になった側には出さない
   - 使い分けは、向きの無い2つは `compare`、1つの値の前後は表のセルの `from` / `to` か
     `stats` の `before`、行ごとの差分は `code` の `diff`、縦に積む寸法の前後は `dimension` の `before`、構造の前後は `graph` の印。
     書き手への規約（記法の条8）は、形の札から塊を引く表を持ち、画面を変えた作業は撮った画像を `image` で載せ、

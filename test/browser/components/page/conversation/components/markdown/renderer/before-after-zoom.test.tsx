@@ -11,8 +11,8 @@ afterEach(() => {
 })
 
 const BOTH = [
-  { side: "before", src: "/架空/before.png", alt: "前の画面" },
-  { side: "after", src: "/架空/after.png", alt: "後の画面" },
+  { side: "before", src: "/架空/before.png", alt: "前の画面", region: undefined },
+  { side: "after", src: "/架空/after.png", alt: "後の画面", region: undefined },
 ] as const satisfies readonly BeforeAfterZoomImage[]
 
 const CAPTION = { number: "図 1", text: "架空の配置の前後" }
@@ -73,6 +73,27 @@ describe("BeforeAfterZoom", () => {
     fireEvent.click(screen.getByRole("button", { name: "前" }))
     expect(pressed("前")).toBe("true")
     expect(shownSrc()).toBe("/架空/before.png")
+  })
+
+  it("region のある側を出すと枠が出て、側を替えると枠が替わり、region の無い側には出ない", () => {
+    const region = { left: 29.6, top: 44.6, width: 40.5, height: 10.6 }
+    renderZoom({
+      images: [BOTH[0], { ...BOTH[1], region }],
+    })
+    const frames = (): readonly HTMLElement[] => [
+      ...document.querySelectorAll<HTMLElement>("dialog span.region-frame"),
+    ]
+
+    expect(frames()).toHaveLength(1)
+    expect(frames()[0]?.dataset["side"]).toBe("after")
+    expect(frames()[0]?.style.left).toBe("29.6%")
+    expect(frames()[0]?.getAttribute("aria-hidden")).toBe("true")
+
+    fireEvent.keyDown(screen.getByRole("group", { name: "前後" }), { key: "ArrowLeft" })
+    expect(frames()).toHaveLength(0)
+
+    fireEvent.keyDown(screen.getByRole("group", { name: "前後" }), { key: "ArrowRight" })
+    expect(frames()).toHaveLength(1)
   })
 
   it("面は呼び出し側の入れ物（レポート本文の `.detail-block`）の外の body 直下に描かれ、本文の CSS を受けない", () => {

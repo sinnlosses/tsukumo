@@ -79,6 +79,27 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("beforeAfter の画像の側は region があるときだけ data-change-region を付ける", () => {
+    const beforeAfter: ReportBlock = {
+      kind: "beforeAfter",
+      title: "",
+      before: { kind: "image", path: "架空/before.png" },
+      after: {
+        kind: "image",
+        path: "架空/after.png",
+        region: { left: 29.6, top: 44.6, width: 40.5, height: 10.6 },
+      },
+      fold: "",
+      aside: "",
+    }
+
+    const markdown = markdownOf(beforeAfter)
+
+    expect(markdown).toContain('alt="後の画面" data-change-region="29.6,44.6,40.5,10.6">')
+    expect(markdown).toContain('alt="前の画面">')
+    expect(markdown.match(/data-change-region/g)).toHaveLength(1)
+  })
+
   it("beforeAfter の mermaid の側は mermaid のフェンスにする", () => {
     const markdown = markdownOf({
       kind: "beforeAfter",
