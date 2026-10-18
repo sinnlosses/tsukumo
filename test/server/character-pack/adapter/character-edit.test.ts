@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { omit } from "remeda"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -14,6 +15,7 @@ import {
   readCharacterPack,
 } from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import { DEFAULT_BACKGROUND_VEIL } from "../../../../src/shared/character-pack/character-background.ts"
+import type { CharacterDefinition } from "../../../../src/shared/character-pack/character-definition.ts"
 import { EXPRESSIONS } from "../../../../src/shared/character-pack/expression.ts"
 import { REMEMBERED_SECTION_HEADING } from "../../../../src/shared/character-pack/persona-section.ts"
 import type {
@@ -255,32 +257,21 @@ describe("editCharacterPack（立ち絵）", () => {
 })
 
 describe("editCharacterPack（画面の差し色）", () => {
-  it("仕事の差し色（accent）を差し替える", () => {
+  it.each([
+    { target: "work", color: "#123456", key: "accent" },
+    { target: "chat", color: "#f2984a", key: "chatAccent" },
+  ] as const)("$target の差し色（$key）を差す", ({ target, color, key }) => {
     const bundled = writeBundledPack("tsukumo")
 
     const edited = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { kind: "setAccent", pack: "tsukumo", target: "work", color: "#123456" },
+      { kind: "setAccent", pack: "tsukumo", target, color },
       join(dir(), "cwd"),
       home(),
     )
 
-    expect(edited?.definition?.accent).toBe("#123456")
-  })
-
-  it("雑談の差し色（chatAccent）を差す", () => {
-    const bundled = writeBundledPack("tsukumo")
-
-    const edited = editCharacterPack(
-      readCharacterPack(bundled),
-      [],
-      { kind: "setAccent", pack: "tsukumo", target: "chat", color: "#f2984a" },
-      join(dir(), "cwd"),
-      home(),
-    )
-
-    expect(edited?.definition?.chatAccent).toBe("#f2984a")
+    expect(edited?.definition?.[key]).toBe(color)
   })
 
   it("雑談の差し色を消すと、仕事の差し色に戻る（chatAccent が undefined になる）", () => {
@@ -444,7 +435,7 @@ describe("editCharacterPack（人格の本文）", () => {
 })
 
 describe("editCharacterPack（背景）", () => {
-  it("背景を差すと、形式から組み立てた名前で書かれ、定義がそれを指す", () => {
+  it("背景を差すと、覆いの濃さは書かなくても読むときに既定へ落ちる（画面からは変えない）", () => {
     const bundled = writeBundledPack("tsukumo")
 
     const edited = editCharacterPack(
@@ -455,12 +446,7 @@ describe("editCharacterPack（背景）", () => {
       home(),
     )
 
-    expect(edited?.definition?.background?.image).toBe("background.png")
-    // 覆いの濃さは書かなくても、読むときに既定へ落ちる（画面からは変えない）。
     expect(edited?.definition?.background?.veil).toBe(DEFAULT_BACKGROUND_VEIL)
-    expect(existsSync(join(home(), "tsukumo", "background.png"))).toBe(true)
-    // 同梱側は触っていない。
-    expect(readCharacterPack(bundled).definition?.background).toBeUndefined()
   })
 
   it("立ち絵を全表情そろえミニ立ち絵も持つパックでも、背景を差せる", () => {
@@ -476,219 +462,117 @@ describe("editCharacterPack（背景）", () => {
 
     expect(edited?.definition?.background?.image).toBe("background.png")
   })
+})
 
-  it("形式を変えて差し替えると、参照が外れた古い背景は残らない", () => {
-    const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir(), "cwd")
-
-    const first = editCharacterPack(
-      readCharacterPack(bundled),
-      [],
-      { kind: "setBackground", pack: "tsukumo", image: PNG_DATA_URL },
-      cwd,
-      home(),
-    )
-    expect(first).toBeDefined()
-    if (first === undefined) {
-      return
+describe("editCharacterPack（背景・顔・ミニ立ち絵）", () => {
+  describe.each([
+    {
+      name: "背景",
+      key: "background" as const,
+      set: (image: string): CharacterEdit => ({ kind: "setBackground", pack: "tsukumo", image }),
+      clear: { kind: "clearBackground", pack: "tsukumo" } satisfies CharacterEdit,
+      oldFile: "background.webp",
+      newFile: "background.png",
+      imageOf: (definition: CharacterDefinition | undefined) => definition?.background?.image,
+    },
+    {
+      name: "顔",
+      key: "face" as const,
+      set: (image: string): CharacterEdit => ({ kind: "setFace", pack: "tsukumo", image }),
+      clear: { kind: "clearFace", pack: "tsukumo" } satisfies CharacterEdit,
+      oldFile: "face.svg",
+      newFile: "face.png",
+      imageOf: (definition: CharacterDefinition | undefined) => definition?.face,
+    },
+    {
+      name: "ミニ立ち絵",
+      key: "mini" as const,
+      set: (image: string): CharacterEdit => ({ kind: "setMini", pack: "tsukumo", image }),
+      clear: { kind: "clearMini", pack: "tsukumo" } satisfies CharacterEdit,
+      oldFile: "mini.svg",
+      newFile: "mini.png",
+      imageOf: (definition: CharacterDefinition | undefined) => definition?.mini,
+    },
+  ])("editCharacterPack（$name の差し替えと消去）", (row) => {
+    /** 顔・背景（veil）・ミニ立ち絵・差し色・呼び名をすべて持つパックを置く。 */
+    function writeRichPack(): string {
+      const packDir = join(dir(), "bundled", "tsukumo")
+      mkdirSync(packDir, { recursive: true })
+      for (const fileName of ["default.svg", "mini.svg", "face.svg", "background.webp"]) {
+        writeFileSync(join(packDir, fileName), "x")
+      }
+      writeFileSync(
+        join(packDir, "character.json"),
+        JSON.stringify({
+          name: "tsukumo",
+          accent: "#b8c7ff",
+          portraits: { default: "default.svg" },
+          mini: "mini.svg",
+          miniCall: "架空の使い魔",
+          face: "face.svg",
+          background: { image: "background.webp", veil: 0.8 },
+        }),
+      )
+      return packDir
     }
-    const second = editCharacterPack(
-      first,
-      [],
-      { kind: "setBackground", pack: "tsukumo", image: WEBP_DATA_URL },
-      cwd,
-      home(),
-    )
 
-    expect(second?.definition?.background?.image).toBe("background.webp")
-    expect(existsSync(join(home(), "tsukumo", "background.png"))).toBe(false)
-  })
-
-  it("背景を消すと定義から外れ、ファイルも残らない（立ち絵は残る）", () => {
-    const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir(), "cwd")
-
-    const withBackground = editCharacterPack(
-      readCharacterPack(bundled),
-      [],
-      { kind: "setBackground", pack: "tsukumo", image: PNG_DATA_URL },
-      cwd,
-      home(),
-    )
-    expect(withBackground).toBeDefined()
-    if (withBackground === undefined) {
-      return
+    function expectOtherFieldsKept(
+      edited: ReturnType<typeof editCharacterPack>,
+      original: ReturnType<typeof readCharacterPack>,
+    ): void {
+      const withoutChanged = (definition: CharacterDefinition | undefined) =>
+        definition === undefined ? undefined : omit(definition, [row.key])
+      expect(edited?.definition).toBeDefined()
+      expect(withoutChanged(edited?.definition)).toEqual(withoutChanged(original.definition))
+      expect(existsSync(join(home(), "tsukumo", "default.svg"))).toBe(true)
     }
-    const cleared = editCharacterPack(
-      withBackground,
-      [],
-      { kind: "clearBackground", pack: "tsukumo" },
-      cwd,
-      home(),
-    )
 
-    expect(cleared?.definition?.background).toBeUndefined()
-    expect(existsSync(join(home(), "tsukumo", "background.png"))).toBe(false)
-    expect(existsSync(join(home(), "tsukumo", "default.svg"))).toBe(true)
+    it("差すと、形式から組み立てた名前で書かれ、定義がそれを指す", () => {
+      const bundled = writeBundledPack("tsukumo")
+
+      const edited = editCharacterPack(
+        readCharacterPack(bundled),
+        [],
+        row.set(PNG_DATA_URL),
+        join(dir(), "cwd"),
+        home(),
+      )
+
+      expect(row.imageOf(edited?.definition)).toBe(row.newFile)
+      expect(existsSync(join(home(), "tsukumo", row.newFile))).toBe(true)
+      expect(row.imageOf(readCharacterPack(bundled).definition)).toBeUndefined()
+    })
+
+    it("形式を変えて差し替えると、参照が外れた古いファイルは残らず、ほかの欄は落ちない", () => {
+      const original = readCharacterPack(writeRichPack())
+
+      const edited = editCharacterPack(
+        original,
+        [],
+        row.set(PNG_DATA_URL),
+        join(dir(), "cwd"),
+        home(),
+      )
+
+      expect(row.imageOf(edited?.definition)).toBe(row.newFile)
+      expect(existsSync(join(home(), "tsukumo", row.newFile))).toBe(true)
+      expect(existsSync(join(home(), "tsukumo", row.oldFile))).toBe(false)
+      expectOtherFieldsKept(edited, original)
+    })
+
+    it("消すと定義から外れ、ファイルも残らず、ほかの欄は落ちない", () => {
+      const original = readCharacterPack(writeRichPack())
+
+      const cleared = editCharacterPack(original, [], row.clear, join(dir(), "cwd"), home())
+
+      expect(row.imageOf(cleared?.definition)).toBeUndefined()
+      expect(existsSync(join(home(), "tsukumo", row.oldFile))).toBe(false)
+      expectOtherFieldsKept(cleared, original)
+    })
   })
 })
 
-describe("editCharacterPack（顔）", () => {
-  it("顔を差すと、形式から組み立てた名前で書かれ、定義がそれを指す", () => {
-    const bundled = writeBundledPack("tsukumo")
-
-    const edited = editCharacterPack(
-      readCharacterPack(bundled),
-      [],
-      { kind: "setFace", pack: "tsukumo", image: PNG_DATA_URL },
-      join(dir(), "cwd"),
-      home(),
-    )
-
-    expect(edited?.definition?.face).toBe("face.png")
-    expect(existsSync(join(home(), "tsukumo", "face.png"))).toBe(true)
-    // 同梱側は触っていない。
-    expect(readCharacterPack(bundled).definition?.face).toBeUndefined()
-  })
-
-  it("形式を変えて差し替えると、参照が外れた古い顔は残らない", () => {
-    const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir(), "cwd")
-
-    const first = editCharacterPack(
-      readCharacterPack(bundled),
-      [],
-      { kind: "setFace", pack: "tsukumo", image: PNG_DATA_URL },
-      cwd,
-      home(),
-    )
-    expect(first).toBeDefined()
-    if (first === undefined) {
-      return
-    }
-    const second = editCharacterPack(
-      first,
-      [],
-      { kind: "setFace", pack: "tsukumo", image: SVG_DATA_URL },
-      cwd,
-      home(),
-    )
-
-    expect(second?.definition?.face).toBe("face.svg")
-    expect(existsSync(join(home(), "tsukumo", "face.png"))).toBe(false)
-  })
-
-  it("顔を消すと定義から外れ、ファイルも残らない（立ち絵は残る）", () => {
-    const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir(), "cwd")
-
-    const withFace = editCharacterPack(
-      readCharacterPack(bundled),
-      [],
-      { kind: "setFace", pack: "tsukumo", image: PNG_DATA_URL },
-      cwd,
-      home(),
-    )
-    expect(withFace).toBeDefined()
-    if (withFace === undefined) {
-      return
-    }
-    const cleared = editCharacterPack(
-      withFace,
-      [],
-      { kind: "clearFace", pack: "tsukumo" },
-      cwd,
-      home(),
-    )
-
-    expect(cleared?.definition?.face).toBeUndefined()
-    expect(existsSync(join(home(), "tsukumo", "face.png"))).toBe(false)
-    expect(existsSync(join(home(), "tsukumo", "default.svg"))).toBe(true)
-  })
-})
-
-describe("editCharacterPack（ミニ立ち絵）", () => {
-  /** ミニ立ち絵のほかに、顔・背景（veil）・差し色・呼び名も持つパックを置く。 */
-  function writeMiniPack(name: string): string {
-    const packDir = join(dir(), "bundled", name)
-    mkdirSync(packDir, { recursive: true })
-    for (const fileName of ["default.svg", "mini.png", "face.png", "background.png"]) {
-      writeFileSync(join(packDir, fileName), "x")
-    }
-    writeFileSync(
-      join(packDir, "character.json"),
-      JSON.stringify({
-        name,
-        accent: "#b8c7ff",
-        portraits: { default: "default.svg" },
-        mini: "mini.png",
-        miniCall: "架空の使い魔",
-        face: "face.png",
-        background: { image: "background.png", veil: 0.8 },
-      }),
-    )
-    return packDir
-  }
-
-  it("ミニ立ち絵を差すと、形式から組み立てた名前で書かれ、定義がそれを指す", () => {
-    const bundled = writeBundledPack("tsukumo")
-
-    const edited = editCharacterPack(
-      readCharacterPack(bundled),
-      [],
-      { kind: "setMini", pack: "tsukumo", image: PNG_DATA_URL },
-      join(dir(), "cwd"),
-      home(),
-    )
-
-    expect(edited?.definition?.mini).toBe("mini.png")
-    expect(existsSync(join(home(), "tsukumo", "mini.png"))).toBe(true)
-    // 同梱側は触っていない。
-    expect(readCharacterPack(bundled).definition?.mini).toBeUndefined()
-  })
-
-  it("形式を変えて差し替えると、参照が外れた古いミニ立ち絵は残らず、ほかの欄は落ちない", () => {
-    const bundled = writeMiniPack("tsukumo")
-
-    const edited = editCharacterPack(
-      readCharacterPack(bundled),
-      [],
-      { kind: "setMini", pack: "tsukumo", image: SVG_DATA_URL },
-      join(dir(), "cwd"),
-      home(),
-    )
-
-    expect(edited?.definition?.mini).toBe("mini.svg")
-    expect(existsSync(join(home(), "tsukumo", "mini.png"))).toBe(false)
-    expect(existsSync(join(home(), "tsukumo", "mini.svg"))).toBe(true)
-    expect(edited?.definition?.face).toBe("face.png")
-    expect(edited?.definition?.miniCall).toBe("架空の使い魔")
-    expect(edited?.definition?.accent).toBe("#b8c7ff")
-    expect(edited?.definition?.background).toEqual({ image: "background.png", veil: 0.8 })
-    expect(edited?.definition?.portraits.default).toBe("default.svg")
-  })
-
-  it("ミニ立ち絵を消すと定義から外れ、ファイルも残らず、ほかの欄は落ちない", () => {
-    const bundled = writeMiniPack("tsukumo")
-
-    const cleared = editCharacterPack(
-      readCharacterPack(bundled),
-      [],
-      { kind: "clearMini", pack: "tsukumo" },
-      join(dir(), "cwd"),
-      home(),
-    )
-
-    expect(cleared?.definition?.mini).toBeUndefined()
-    expect(existsSync(join(home(), "tsukumo", "mini.png"))).toBe(false)
-    expect(cleared?.definition?.face).toBe("face.png")
-    expect(cleared?.definition?.miniCall).toBe("架空の使い魔")
-    expect(cleared?.definition?.accent).toBe("#b8c7ff")
-    expect(cleared?.definition?.background).toEqual({ image: "background.png", veil: 0.8 })
-    expect(cleared?.definition?.portraits.default).toBe("default.svg")
-    expect(existsSync(join(home(), "tsukumo", "default.svg"))).toBe(true)
-  })
-
+describe("editCharacterPack（ミニ立ち絵の画像の種類）", () => {
   it("受け付けない種類の画像は書かない", () => {
     const bundled = writeBundledPack("tsukumo")
 

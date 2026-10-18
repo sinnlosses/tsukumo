@@ -889,32 +889,27 @@ describe("createCommandRouter（characterPack）", () => {
 
   // どの種類が見た目の編集の行に当たるかは `CharacterEdit` の表と型が持ち主。
   // ここで見るのは、その手続きが editCharacter 経由の書き込みへ実際に届くこと。
-  it("setAccent も同じ経路を通る", async () => {
+  it.each([
+    {
+      kind: "setAccent",
+      send: (commands: ReturnType<typeof startRouter>["commands"]) =>
+        commands.characterPack.setAccent({ pack: "fictional", target: "work", color: "#ffb3a7" }),
+    },
+    {
+      kind: "setProfile",
+      send: (commands: ReturnType<typeof startRouter>["commands"]) =>
+        commands.characterPack.setProfile({
+          pack: "fictional",
+          name: "新しい表示名",
+          tagline: "ひとこと",
+        }),
+    },
+  ])("$kind も同じ経路を通る", async ({ kind, send }) => {
     const { commands, edits } = startRouter()
 
-    expect(
-      await commands.characterPack.setAccent({
-        pack: "fictional",
-        target: "work",
-        color: "#ffb3a7",
-      }),
-    ).toEqual({ ok: true })
+    expect(await send(commands)).toEqual({ ok: true })
 
-    expect(edits.map((edit) => edit.kind)).toEqual(["setAccent"])
-  })
-
-  it("setProfile も同じ経路を通る", async () => {
-    const { commands, edits } = startRouter()
-
-    expect(
-      await commands.characterPack.setProfile({
-        pack: "fictional",
-        name: "新しい表示名",
-        tagline: "ひとこと",
-      }),
-    ).toEqual({ ok: true })
-
-    expect(edits.map((edit) => edit.kind)).toEqual(["setProfile"])
+    expect(edits.map((edit) => edit.kind)).toEqual([kind])
   })
 
   it("新しいパックを作るコマンドも駆動へ渡さず、選択肢の増えた character-changed を配る", async () => {

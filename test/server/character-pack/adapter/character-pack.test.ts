@@ -29,6 +29,8 @@ const DEFINITION_JSON = JSON.stringify({
 
 const PLAUSIBLE_SVG = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'
 
+const SVG_CONTENT_TYPE = "image/svg+xml; charset=utf-8"
+
 const dir = useTempDir("character-pack")
 
 describe("readCharacterPack", () => {
@@ -92,48 +94,31 @@ describe("characterChangedEvent", () => {
     })
   })
 
-  it("face があれば素材の URL にする（mini と違い default へは畳まない）", () => {
-    writeFileSync(
-      join(dir(), "character.json"),
-      JSON.stringify({ portraits: { default: "default.svg" }, face: "face.svg" }),
-    )
+  describe.each([
+    { key: "face", fileName: "face.svg", absent: "mini や portraits から補わない" },
+    { key: "diaryFont", fileName: "shodo.woff2", absent: "--font-serif のまま描く" },
+  ] as const)("$key（素材の欄）", ({ key, fileName, absent }) => {
+    it("あれば素材の URL にする", () => {
+      writeFileSync(
+        join(dir(), "character.json"),
+        JSON.stringify({ portraits: { default: "default.svg" }, [key]: fileName }),
+      )
 
-    const pack = readCharacterPack(dir())
-    const event = characterChangedEvent(pack, [], dir())
+      const pack = readCharacterPack(dir())
+      const event = characterChangedEvent(pack, [], dir())
 
-    expect(event).toMatchObject({
-      face: `/character/${encodeURIComponent(basename(dir()))}/face.svg?v=${String(pack.revision)}`,
+      expect(event).toMatchObject({
+        [key]: `/character/${encodeURIComponent(basename(dir()))}/${fileName}?v=${String(pack.revision)}`,
+      })
     })
-  })
 
-  it("face が無いパックでは undefined のまま（mini や portraits から補わない）", () => {
-    writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
+    it(`無いパックでは undefined のまま（${absent}）`, () => {
+      writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
 
-    const event = characterChangedEvent(readCharacterPack(dir()), [], dir())
+      const event = characterChangedEvent(readCharacterPack(dir()), [], dir())
 
-    expect(event).toMatchObject({ face: undefined })
-  })
-
-  it("diaryFont があれば素材の URL にする（日記の書体。docs/architecture/character-pack.md）", () => {
-    writeFileSync(
-      join(dir(), "character.json"),
-      JSON.stringify({ portraits: { default: "default.svg" }, diaryFont: "shodo.woff2" }),
-    )
-
-    const pack = readCharacterPack(dir())
-    const event = characterChangedEvent(pack, [], dir())
-
-    expect(event).toMatchObject({
-      diaryFont: `/character/${encodeURIComponent(basename(dir()))}/shodo.woff2?v=${String(pack.revision)}`,
+      expect(event).toMatchObject({ [key]: undefined })
     })
-  })
-
-  it("diaryFont が無いパックでは undefined のまま（--font-serif のまま描く）", () => {
-    writeFileSync(join(dir(), "character.json"), DEFINITION_JSON)
-
-    const event = characterChangedEvent(readCharacterPack(dir()), [], dir())
-
-    expect(event).toMatchObject({ diaryFont: undefined })
   })
 })
 
@@ -511,46 +496,31 @@ describe("readCharacterAsset のファイル名の判断", () => {
 
     const file = readFileOf("default.svg")
 
-    expect(file?.contentType).toBe("image/svg+xml; charset=utf-8")
+    expect(file?.contentType).toBe(SVG_CONTENT_TYPE)
     expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
   })
 
-  it("character.json の mini（ミニ立ち絵）も同じ経路で配れる", () => {
+  // 中身は見ないので、書体ファイルの実物は使わない（架空のバイト列で足りる）。
+  it.each([
+    { key: "mini", fileName: "mini.svg", content: PLAUSIBLE_SVG, contentType: SVG_CONTENT_TYPE },
+    { key: "face", fileName: "face.svg", content: PLAUSIBLE_SVG, contentType: SVG_CONTENT_TYPE },
+    {
+      key: "diaryFont",
+      fileName: "shodo.woff2",
+      content: "not a real font, just bytes",
+      contentType: "font/woff2",
+    },
+  ])("character.json の $key も同じ経路で配れる", ({ key, fileName, content, contentType }) => {
     writeFileSync(
       join(dir(), "character.json"),
-      JSON.stringify({ portraits: { default: "default.svg" }, mini: "mini.svg" }),
+      JSON.stringify({ portraits: { default: "default.svg" }, [key]: fileName }),
     )
-    writeFileSync(join(dir(), "mini.svg"), PLAUSIBLE_SVG)
+    writeFileSync(join(dir(), fileName), content)
 
-    const file = readFileOf("mini.svg")
+    const file = readFileOf(fileName)
 
-    expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
-  })
-
-  it("character.json の face（顔）も同じ経路で配れる", () => {
-    writeFileSync(
-      join(dir(), "character.json"),
-      JSON.stringify({ portraits: { default: "default.svg" }, face: "face.svg" }),
-    )
-    writeFileSync(join(dir(), "face.svg"), PLAUSIBLE_SVG)
-
-    const file = readFileOf("face.svg")
-
-    expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
-  })
-
-  it("character.json の diaryFont（日記の書体）も同じ経路で配れ、拡張子に合う Content-Type になる", () => {
-    writeFileSync(
-      join(dir(), "character.json"),
-      JSON.stringify({ portraits: { default: "default.svg" }, diaryFont: "shodo.woff2" }),
-    )
-    // 中身は見ないので、書体ファイルの実物は使わない（架空のバイト列で足りる）。
-    writeFileSync(join(dir(), "shodo.woff2"), "not a real font, just bytes")
-
-    const file = readFileOf("shodo.woff2")
-
-    expect(file?.contentType).toBe("font/woff2")
-    expect(file?.content.toString("utf8")).toBe("not a real font, just bytes")
+    expect(file?.content.toString("utf8")).toBe(content)
+    expect(file?.contentType).toBe(contentType)
   })
 
   it("定義に無いファイル名は undefined（呼び出し側が404にする）", () => {
