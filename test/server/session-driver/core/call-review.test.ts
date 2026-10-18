@@ -443,6 +443,17 @@ describe("CallReview の新しい事実の数え方の差", () => {
     expect(isReportRejectedForNothingNew(review, OTHER)).toBe(true)
   })
 
+  it("progress-nudged は speak だけが新しい事実に数える", () => {
+    const review = createCallReview()
+    speak(review, "toolu_s1", "架空のセリフ1")
+    drawReport(review, "toolu_r1", VALID)
+
+    review.pass({ kind: "progress-nudged" })
+
+    expect(isSpeechRejected(review)).toBe(false)
+    expect(isReportRejectedForNothingNew(review, OTHER)).toBe(true)
+  })
+
   it("aside は report だけが新しい事実に数える", () => {
     const review = createCallReview()
     speak(review, "toolu_s1", "架空のセリフ1")

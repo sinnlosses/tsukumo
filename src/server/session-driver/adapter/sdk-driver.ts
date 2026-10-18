@@ -19,6 +19,7 @@ import { createClearAndSend } from "../core/clear-and-send.ts"
 import { createExternalToolMark } from "../core/external-tool-mark.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
+import { createProgressNudge, progressNudgePromptText } from "../core/progress-nudge.ts"
 import { createPromptDelayWatch, type PromptDelayWatch } from "../core/prompt-delay.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { isSubagentMessage, toSessionEvents } from "../core/sdk-message.ts"
@@ -67,7 +68,14 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   // claude が依頼なしで始めた続きのターンに `turn-started` を補うのに、依頼で開いたターンも見ている必要がある（`withSelfStartedTurns`）。
   const ending = createSessionEnding(given.onEvent, given.reportFailure)
   const clearAndSend = createClearAndSend()
+  const progressNudge = watchProgressNudge(given.now, (summary) => {
+    sendProgressNudge(summary)
+  })
   const deliver = (event: SessionEvent): void => {
+    progressNudge.observe(event)
+    if (event.kind === "delegate-progress" || event.kind === "progress-nudged") {
+      return
+    }
     if (event.kind === "turn-finished") {
       queue.dropBrief()
     }
@@ -162,6 +170,16 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     input.push({ text, images: [] })
   }
 
+  // 依頼を流さない（差し込みは利用者の発言ではない）。ターンの始まりは続く `init` から `turn-resumed` が補う。
+  const sendProgressNudge = (summary: string): void => {
+    if (ending.ended()) {
+      return
+    }
+    emitTurnOpening({ kind: "progress-nudged" })
+    delayWatch.pushed(options.now())
+    input.push({ text: progressNudgePromptText(summary), images: [] })
+  }
+
   void applyNeutralOutputStyle(session)
   void relayMessages(session, options, reportGate, callReview, titleIntake, titleWriter, delayWatch)
   void relayCommandDescriptions(session, options)
@@ -217,10 +235,56 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     },
     ended: ending.ended,
     close: () => {
+      progressNudge.close()
       delayWatch.discard()
       queue.settleAll()
       input.end()
       session.close()
+    },
+  }
+}
+
+/**
+ * 進みの差し込み（`ProgressNudge`）に時計とタイマーを付ける。
+ * タイマーは時計より少し早く発火することがあり、そのときは `take` が何も返さないので、残りの分だけ立て直す。
+ */
+function watchProgressNudge(
+  now: () => number,
+  send: (summary: string) => void,
+): { readonly observe: (event: SessionEvent) => void; readonly close: () => void } {
+  const nudge = createProgressNudge()
+  let armedAt: number | undefined = undefined
+  let timer: ReturnType<typeof setTimeout> | undefined = undefined
+
+  const rearm = (): void => {
+    const due = nudge.due()
+    const nextAt = due.kind === "at" ? due.at : undefined
+    if (nextAt === armedAt) {
+      return
+    }
+    clearTimeout(timer)
+    armedAt = nextAt
+    timer = nextAt === undefined ? undefined : setTimeout(ring, Math.max(0, nextAt - now()))
+  }
+  const ring = (): void => {
+    armedAt = undefined
+    timer = undefined
+    const taken = nudge.take(now())
+    if (taken.kind === "nudge") {
+      send(taken.summary)
+    }
+    rearm()
+  }
+
+  return {
+    observe: (event) => {
+      nudge.observe(event, now())
+      rearm()
+    },
+    close: () => {
+      clearTimeout(timer)
+      armedAt = undefined
+      timer = undefined
     },
   }
 }

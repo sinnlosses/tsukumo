@@ -855,6 +855,10 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     }
     case "background-tool-finished":
       return notifyBackgroundEnd(state, event.toolUseId, at)
+    // 駆動が送り出す手前で捨てる。
+    case "delegate-progress":
+    case "progress-nudged":
+      return state
     case "tool-finished":
       return finishTool(
         settleReportDrafting(state, event.toolUseId),

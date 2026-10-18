@@ -552,7 +552,33 @@ describe("toSessionEvents", () => {
       ).toEqual([])
     })
 
-    it("task_started / task_progress / task_updated はイベントにしない（顔ぶれは background_tasks_changed だけで分かる）", () => {
+    it("summary のある task_progress だけを delegate-progress にする", () => {
+      const progress = (summary: unknown) => ({
+        type: "system",
+        subtype: "task_progress",
+        task_id: "agent-1",
+        description: "架空の調べ物",
+        usage: { total_tokens: 1, tool_uses: 0, duration_ms: 1 },
+        summary,
+      })
+
+      expect(
+        ["架空の進み", "   ", undefined, 1].flatMap((summary) =>
+          toSessionEvents(progress(summary), EXPRESSIONS),
+        ),
+      ).toEqual([{ kind: "delegate-progress", taskId: "agent-1", summary: "架空の進み" }])
+    })
+
+    it("task_id の無い task_progress はイベントにしない", () => {
+      expect(
+        toSessionEvents(
+          { type: "system", subtype: "task_progress", summary: "架空の進み" },
+          EXPRESSIONS,
+        ),
+      ).toEqual([])
+    })
+
+    it("task_started / summary の無い task_progress / task_updated はイベントにしない（顔ぶれは background_tasks_changed だけで分かる）", () => {
       const edges = [
         {
           type: "system",

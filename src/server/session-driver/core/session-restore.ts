@@ -9,6 +9,7 @@ import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import { asideTextOf } from "./aside-prompt.ts"
 import { createCallReview } from "./call-review.ts"
+import { isProgressNudgePrompt } from "./progress-nudge.ts"
 import { toSessionEvents } from "./sdk-message.ts"
 
 /**
@@ -26,7 +27,7 @@ const RESTORED_TURN_FINISHED: SessionEvent = {
  *
  * - 委譲先の返却（`origin.handback` が真の `user` メッセージ）: 依頼にもイベントにもしない（`phase_result` で進んだ帯は戻さない）
  * - 利用者の依頼（`request`）と脇の話（`aside`）: 欄で利用者の入力と分かる `user` のテキストブロックから起こす（{@link requestText}）。脇の話は `asideTextOf` の包みで見分ける
- * - 続きのターンの始まり（`turn-resumed`）: バックグラウンドタスクの知らせの `user` メッセージから起こす
+ * - 続きのターンの始まり（`turn-resumed`）: バックグラウンドタスクの知らせの `user` メッセージと、進みの差し込み（`isProgressNudgePrompt` の包み）から起こす。差し込みは依頼にしない
  * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼・脇の話・続きのターンの手前と並びの末尾で区切る。時刻は直前の出来事のものを引き継ぐ
  *
  * 出来事ごとの時刻は、元のメッセージの `timestamp`（読めなければ `unknown`）。
@@ -85,6 +86,9 @@ export function restoredMessageEvents(
   const text = requestText(message)
   if (text === undefined) {
     return toSessionEvents(message, expressions)
+  }
+  if (isProgressNudgePrompt(text)) {
+    return [{ kind: "turn-resumed" }]
   }
   // 組み直した依頼に画像は付かない。
   // tsukumo は控えをディスクに残さず、原寸の棚もメモリだけで起こし直すと空になるので、読み直せるのは文面だけ。

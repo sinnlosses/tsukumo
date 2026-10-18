@@ -52,12 +52,13 @@ const NEWS_SUBJECTS: readonly NewsSubject[] = ["speak", "report"]
 
 /**
  * メインのツールの完了とバックグラウンドタスクの終わりのほかに、イベントの種類ごとに新しい事実として数える主題。
- * `session-info` は `speak` だけ、`aside` は `report` だけが数える。
+ * `session-info` と `progress-nudged` は `speak` だけ、`aside` は `report` だけが数える。
  */
 const NEWS_SUBJECTS_BY_EVENT = {
   request: ["speak", "report"],
   "turn-started": ["speak", "report"],
   "session-info": ["speak"],
+  "progress-nudged": ["speak"],
   aside: ["report"],
 } as const satisfies Partial<Record<SessionEvent["kind"], readonly NewsSubject[]>>
 
@@ -156,6 +157,7 @@ function createNewsLedger(): NewsLedger {
         case "request":
         case "turn-started":
         case "session-info":
+        case "progress-nudged":
         case "aside":
           raise(NEWS_SUBJECTS_BY_EVENT[event.kind])
           return

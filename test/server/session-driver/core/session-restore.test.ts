@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { asidePromptText } from "../../../../src/server/session-driver/core/aside-prompt.ts"
+import { progressNudgePromptText } from "../../../../src/server/session-driver/core/progress-nudge.ts"
 import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
 import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
 import {
@@ -577,6 +578,23 @@ describe("toRestoredEvents", () => {
     expect(turns).toHaveLength(1)
     expect(turns[0] === undefined ? [] : turnAsides(turns[0])).toEqual([
       { text: "架空の問い", answer: { kind: "answered", text: "架空の答え" } },
+    ])
+  })
+
+  it("進みの差し込みの包みは依頼に戻さず、続きのターンの始まりにする", () => {
+    const messages = [
+      withFields(userMessage("架空の依頼"), { origin: { kind: "human" } }),
+      withFields(userMessage(progressNudgePromptText("架空の進み")), {
+        origin: { kind: "human" },
+      }),
+    ]
+
+    const events = eventsOf(messages)
+    expect(events.map((event) => event.kind)).toEqual([
+      "request",
+      "turn-finished",
+      "turn-resumed",
+      "turn-finished",
     ])
   })
 

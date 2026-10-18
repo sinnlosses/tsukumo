@@ -69,7 +69,8 @@ import {
  * - `system` / `compact_boundary` は `compact-boundary` にする。
  *   `compact_metadata`（`trigger` / `pre_tokens` / `post_tokens` / `duration_ms`）は画面に出さないので運ばない
  * - `system` / `background_tasks_changed` は `background-tasks-changed` にする。`ambient` が true のもの（活動でないもの）は落とす
- * - `task_started` / `task_progress` / `task_updated` は変換しない。
+ * - `task_progress` は `task_id` と空白でない `summary`（`agentProgressSummaries` で委譲先に作らせる進みの1行）があるものだけを `delegate-progress` にする。
+ *   `summary` の無い `task_progress` と、`task_started` / `task_updated` は変換しない。
  *   バックグラウンドタスクが動いているかは `background_tasks_changed`（顔ぶれ全体を毎回運ぶ水準の知らせ）だけで分かる。
  *   始まり・終わりの対を数えると、取りこぼしで「動いている」が居残る（SDK の型定義がそう勧めている）
  * - `task_notification` は顔ぶれには使わず、`tool_use_id` があるときだけ `background-tool-finished` にする（`tool_use_id` は Bash の `tool_use` の id と一致する。実測）。
@@ -111,6 +112,9 @@ export function toSessionEvents(
         return typeof message.tool_use_id === "string"
           ? [{ kind: "background-tool-finished", toolUseId: message.tool_use_id }]
           : []
+      }
+      if (message.subtype === "task_progress") {
+        return delegateProgressEvents(message)
       }
       if (message.subtype === "api_retry") {
         return apiRetryEvents(message)
@@ -291,6 +295,15 @@ function backgroundTaskKind(taskType: unknown): BackgroundTaskKind {
     default:
       return "other"
   }
+}
+
+function delegateProgressEvents(
+  message: Readonly<Record<string, unknown>>,
+): readonly SessionEvent[] {
+  const summary = nonBlankString(message.summary)
+  return typeof message.task_id !== "string" || summary === undefined
+    ? []
+    : [{ kind: "delegate-progress", taskId: message.task_id, summary }]
 }
 
 /**

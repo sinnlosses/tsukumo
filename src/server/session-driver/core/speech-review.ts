@@ -1,7 +1,7 @@
 // `speak` の差し戻し。
 // 直前に描いたセリフのあとに新しい事実が届いていない `speak` を、画面に出さずに差し戻す（新しい事実が届くまで毎回）。
 // 「新しい事実」は文面ではなく、届いたもので決める:
-// 利用者の依頼（`request` / `turn-started`）、ターンの頭（`session-info`）、メインが呼んだ `speak` / `report` / `work_plan` 以外のツールの結果、バックグラウンドタスクの終わり（顔ぶれから消えた）。
+// 利用者の依頼（`request` / `turn-started`）、ターンの頭（`session-info`）、委譲先の進みの差し込み（`progress-nudged`）、メインが呼んだ `speak` / `report` / `work_plan` 以外のツールの結果、バックグラウンドタスクの終わり（顔ぶれから消えた）。
 //
 // 判定の窓口は `speak` の handler だけ（`SpeechReview.judge`）。
 // `SpeechReview.pass` が `speak-called` を同じ呼び出しの `tool-finished` まで預かり、`isError`（差し戻したら true）に従って描くか捨てるかを決める。

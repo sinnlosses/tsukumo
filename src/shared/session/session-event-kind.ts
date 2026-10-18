@@ -27,6 +27,8 @@ const SESSION_EVENT_KINDS = {
   "tool-started": true,
   "tool-finished": true,
   "background-tool-finished": true,
+  "delegate-progress": true,
+  "progress-nudged": true,
   "pending-changed": true,
   "question-answered": true,
   "turn-finished": true,

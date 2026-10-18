@@ -40,6 +40,8 @@ export type QuerySeedOptions = {
    */
   readonly additionalDirectories: string[]
   readonly includePartialMessages: true
+  /** 委譲先の `task_progress` に `summary`（進みの1行）を載せさせる。 */
+  readonly agentProgressSummaries: true
   readonly systemPrompt: {
     readonly type: "preset"
     readonly preset: "claude_code"
@@ -81,6 +83,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
     cwd: options.cwd,
     additionalDirectories: [join(tsukumoHomeDir(), "characters")],
     includePartialMessages: true,
+    agentProgressSummaries: true,
     systemPrompt: { type: "preset", preset: "claude_code", append: options.systemPromptAppend },
     permissionMode: options.permissionMode,
     model: options.model,

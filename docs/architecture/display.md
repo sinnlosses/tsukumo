@@ -124,6 +124,22 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   Claude Code は `speak` を利用者に見える出力に数えず、`speak` だけのステップが続くと
   "The user hasn't heard from you in a while" をターンの途中に差し込んで言い直しを誘うので、子プロセスに
   `CLAUDE_CODE_SILENT_TURN_REMINDER=0` を渡して切る（`src/server/session-driver/core/visible-output-nudge.ts`。仕事・雑談の両方）
+- **委譲中に吹き出しが5分黙ったら、委譲先の進みの1行をメインへ差し込む（進みの差し込み）**（2026-10-18 利用者決定）。
+  委譲先が合図を送らずに長いコマンドや調べものに入ると、吹き出しが何分も止まるため。
+  SDK に `agentProgressSummaries` を渡し、委譲先の `task_progress` の `summary`（約30秒ごとの「いま何をしているか」の1行）を
+  `delegate-progress` で受ける。差し込むかは文面を見ず、3つの状態だけで決める（`src/server/session-driver/core/progress-nudge.ts`）:
+  背景のサブエージェントが顔ぶれにいる、最後に描いたセリフ（差し戻して描かなかったものは数えない）から5分経った、
+  そのあとに新しい要約が届いた。満たせば最新の要約を1通だけ `<tsukumo-progress>` の包みで送る。
+  時計は描いたセリフ・差し込み・委譲の始まりのうち最後のものから測る。委譲先の `speak` が描かれても戻る（吹き出しが黙っていないことが目的のため）。
+  メインがターンの途中なら次の終わりまで預け、そのあいだにセリフが描かれたら捨てる。
+  - **答えは `speak` 1回で、`report` も本文も書かない**。要約をそのまま流さず「いま何をしていて、そこでどう感じているか」に
+    言い直す（合図と同じ扱い。条は `SPEECH_CADENCE_PROMPT`）。差し込みは `progress-nudged` として `speak` の新しい事実にだけ数え、
+    新しい事実の無い `report` は差し戻したまま
+  - **差し込みは利用者の発言にしない**。`request` を流さず、ターンの始まりは続く `init` から `turn-resumed` を補う。
+    組み直しも包みで見分けて `turn-resumed` にするので、組み直した画面にもセッションの要約の依頼の数にも出ない
+  - **要約は委譲先の会話から作られた字なので、差し込む文面にだけ入れる**。`delegate-progress` と `progress-nudged` は
+    駆動が送り出す手前で捨て、畳み込み・ブラウザ・ログに届かない
+  - **採らなかった形**: 声にせず帯や札に要約を出すだけの形、委譲先に時間で `SendMessage` させる形（2026-10-18 の会話で比べた）
 - **レポートは MCP ツール `report(task, conclusion, checks, figure, sections, favor, closing, waitingLine)` で受け取る**（2026-09-24 決定。
   `checks` は 2026-09-26 に、`closing` は 2026-09-27 に、`task` は 2026-09-30 に、`waitingLine` は 2026-10-05 に、`figure` は 2026-10-13 に足し、本文は 2026-09-27 に文字列の `body` から
   `sections` に替えた。
