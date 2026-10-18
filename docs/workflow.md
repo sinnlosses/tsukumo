@@ -144,8 +144,8 @@
 - **`test/e2e/` にファイルを足す計画は、名指すファイルに `scripts/shared/e2e-watch.ts` と
   `docs/architecture/testing.md` を入れ、段に「見張りの表に足す」「一覧に行を足す」を書く。**
   `E2E_WATCHED_REGIONS` にそのファイルが見ている領域（`E2E_REGION_ROOTS` の名前の配列、ページ全体を
-  見るなら `"every"`）を足し、`docs/architecture/testing.md`「E2E のシナリオの一覧」の表に行を足す
-  （2本以上のファイルは名前の直後に `（N本）`）。どちらも足し忘れると、
+  見るなら `"every"`）を足し、`docs/architecture/testing.md`「E2E のシナリオの一覧」の表に行を足す。
+  どちらも足し忘れると、
   `test/scripts/shared/e2e-selection.test.ts` の「見張りの表」と
   `test/architecture/e2e-scenario-list.test.ts` が `tw verify` の長い E2E の段のあとで落ち、足して
   打ち直すことになる。計画を書く前に

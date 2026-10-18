@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 
 import { commentLineIndexes } from "./comment-line.ts"
-import { COMMENT_REFERENCE_BACKLOG } from "./comment-reference-backlog.ts"
 
 // コメントから別の場所を、名前・置き場所が変わると古くなるもので指していないかを見る
 // （docs/coding-standards.md「コメント」の「別の場所を指すとき」）。
@@ -14,9 +13,6 @@ import { COMMENT_REFERENCE_BACKLOG } from "./comment-reference-backlog.ts"
 // - ソースファイル名（拡張子が .ts / .tsx）を書かない。コードはシンボルの名前で指す
 // - 正典の節を番号つきで指さない（節の検査は句しか照らさないので、番号は黙って古くなる）
 // - 行コメントの中に link のタグを書かない（エディタが解決するのは JSDoc の中だけ）
-//
-// まだ揃えていないファイルは `COMMENT_REFERENCE_BACKLOG` に載っている。
-// 載っていないファイルの違反と、載っているのに違反が無くなったファイルの両方で落ちる。
 
 const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url)).replace(/\/$/, "")
 
@@ -42,22 +38,10 @@ const NUMBERED_SECTION_REFERENCE =
 const LINK_IN_LINE_COMMENT = /^\s*\/\/.*\{@link\b/
 
 describe("コメント中の指し方", () => {
-  const violatingFiles = listScannedFiles().filter(hasViolation)
-
-  it("移行待ちの一覧に無いファイルは、コメントでファイル名・節番号・行コメントの {@link} を使わない", () => {
-    const backlog = new Set<string>(COMMENT_REFERENCE_BACKLOG)
-    const offenders = violatingFiles
-      .filter((path) => !backlog.has(path))
-      .flatMap((path) => violationsOf(path))
+  it("コメントでファイル名・節番号・行コメントの {@link} を使わない", () => {
+    const offenders = listScannedFiles().flatMap((path) => violationsOf(path))
 
     expect(offenders.join("\n")).toBe("")
-  })
-
-  it("移行待ちの一覧に、もう違反の無いファイルが残っていない", () => {
-    const violating = new Set(violatingFiles)
-    const cleared = COMMENT_REFERENCE_BACKLOG.filter((path) => !violating.has(path))
-
-    expect(cleared).toEqual([])
   })
 })
 
@@ -74,10 +58,6 @@ function listFiles(relativeDirectory: string): readonly string[] {
     }
     return /\.(?:tsx?|css)$/.test(name) ? [path] : []
   })
-}
-
-function hasViolation(path: string): boolean {
-  return violationsOf(path).length > 0
 }
 
 /** ファイル1つの違反を `パス:行: 中身` の形で返す。 */
