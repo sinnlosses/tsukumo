@@ -63,8 +63,8 @@
   名指すファイルに入れる。** 洗うには直近に足した欄の名前と版の定数で引く
   （`grep -rln 'shortTable\|hasHowToVerify\|REPORT_USAGE_FORMAT_VERSION' test src scripts`）。
   `test/server/session/core/session-manager-record.test.ts` は1行を欄の値ごと丸ごと比べ、
-  `test/server/report/core/report-usage.test.ts` は欄ごとの導出と1行の既定値を比べるので、欄が増えたら
-  どちらも直す。`test/server/report/adapter/report-usage-log.test.ts` は欄名の一覧を比べ、版は
+  `test/server/report/core/report-usage.test.ts` と `report-usage-hint.test.ts` は欄ごとの導出と
+  1行の既定値を比べるので、欄が増えたら全部直す。`test/server/report/adapter/report-usage-log.test.ts` は欄名の一覧を比べ、版は
   `REPORT_USAGE_FORMAT_VERSION` の参照なので、欄が増えたら一覧を直し、版だけ上げるなら無修正で通る。
   版を上げるときは `scripts/runtime/report-block-usage.ts` の版別の枝（定数・`recordSchema` の union・
   `rejectionSchema` の literal の3か所）も足す。
