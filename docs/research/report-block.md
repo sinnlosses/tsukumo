@@ -1,7 +1,7 @@
 # `report` の本文を型付きの塊で受ける案（2026-09-26）
 
 **この文書は提案であって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには作らない。
-正典は `src/server/session-driver/adapter/sdk-tool.ts`（`report` の引数の形）・
+正典は `src/server/session-driver/adapter/sdk-report-tool.ts`（`report` の引数の形）・
 `src/server/report/core/report-notation.ts`（記法の文面）・`docs/display.md` 4.2（決定の記録）・
 `docs/glossary.md`「report ツール」で、**採用が決まるまでコードは1行も変わらない**。
 

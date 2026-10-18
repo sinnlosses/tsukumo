@@ -50,7 +50,7 @@
 - **`report` の説明文を足す計画は、字数を測るテストを全部挙げ、今の字数と上限の差を数えて段に書く。**
   測るのは3か所で、`test/server/report/core/report-notation.test.ts` が `REPORT_NOTATION_PROMPT` を
   4600字以下に、`test/server/report/core/report-tool.test.ts` が `REPORT_TOOL_DESCRIPTION` を
-  2048字未満（MCP ツールの説明文の既定の上限）に、`test/server/session-driver/adapter/sdk-tool.test.ts` の
+  2048字未満（MCP ツールの説明文の既定の上限）に、`test/server/session-driver/adapter/sdk-report-tool.test.ts` の
   `REPORT_INPUT_SCHEMA_MAX_CHARS`（20460字）が引数 schema の JSON 全体
   （`REPORT_TASK_DESCRIPTION` などの説明文を含む）を抑える。2026-10-18 に形の札を足したとき、
   実物は4542字・21426字だった（`REPORT_NOTATION_PROMPT` の上限はこのとき上げた）。2026-10-19 に

@@ -3,7 +3,7 @@
 **この文書は調査の記録であって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには作らない。
 正典は `docs/architecture/display.md`「読む時間を減らす物差しと線引き」「各表示物」と
 `src/server/report/core/report-notation.ts` の規約で、`report` の引数の形は
-`src/server/session-driver/adapter/sdk-tool.ts`。**採用が決まるまでコードは1行も変わらない**。
+`src/server/session-driver/adapter/sdk-report-tool.ts`。**採用が決まるまでコードは1行も変わらない**。
 
 **主題**: 終わった仕事を人に渡す文書（コミット・PR・changelog・状態の報告・障害の報告・AI エージェントの最終報告）の
 本文の型を並べ、読者が順に抱く問いと、型の間で一致している順序を取り出す。UI の作法は
