@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { mermaidSourcesInSections } from "../../../../src/server/report/core/report-figure-fault.ts"
 import {
+  REPORT_VIOLATION_KINDS,
   type ReportDraft,
   reportRejectionText,
   reportViolations,
@@ -314,6 +315,139 @@ describe("reportViolations", () => {
         aside: "",
       }
       expect(reportViolations(draft([matrix]))).toEqual([{ kind: "ragged-table", count: 1 }])
+    })
+  })
+
+  describe("セルが文の列になっている表", () => {
+    const cells = (length: number) => "あ".repeat(length)
+    const tableWith = (
+      columns: readonly string[],
+      rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
+    ): ReportBlock => ({
+      kind: "table",
+      title: "架空の表",
+      columns,
+      rows,
+      rest: "",
+      fold: "",
+      aside: "",
+    })
+    const twoColumns = (rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"]) =>
+      tableWith(["名前", "説明"], rows)
+
+    it.each([
+      [
+        "35字ちょうどの平均",
+        twoColumns([
+          ["a", cells(35)],
+          ["b", cells(35)],
+        ]),
+        ["sentence-table"],
+      ],
+      [
+        "34字の平均",
+        twoColumns([
+          ["a", cells(34)],
+          ["b", cells(34)],
+        ]),
+        [],
+      ],
+      [
+        "平均が35字になる長短の行",
+        twoColumns([
+          ["a", cells(30)],
+          ["b", cells(40)],
+        ]),
+        ["sentence-table"],
+      ],
+      ["長いセルがあっても1行の表", twoColumns([["a", cells(80)]]), []],
+      [
+        "状態のセルは text を数える",
+        twoColumns([
+          ["a", { status: "ok", text: cells(35) }],
+          ["b", { status: "ng", text: cells(35) }],
+        ]),
+        ["sentence-table"],
+      ],
+      [
+        "変わったセルは from と to を足して数える",
+        twoColumns([
+          ["a", { from: cells(20), to: cells(15) }],
+          ["b", { from: cells(20), to: cells(15) }],
+        ]),
+        ["sentence-table"],
+      ],
+      [
+        "変わったセルの from と to の足し合わせが34字",
+        twoColumns([
+          ["a", { from: cells(20), to: cells(14) }],
+          ["b", { from: cells(20), to: cells(14) }],
+        ]),
+        [],
+      ],
+      [
+        "1列だけ長ければ、ほかの列が短くても違反",
+        tableWith(
+          ["A", "B", "C"],
+          [
+            ["a", "b", cells(36)],
+            ["c", "d", cells(36)],
+          ],
+        ),
+        ["sentence-table"],
+      ],
+      [
+        "全部の列の合計が長くても、列ごとの平均が35字未満なら通る",
+        tableWith(
+          ["A", "B", "C"],
+          [
+            [cells(20), cells(20), cells(20)],
+            [cells(20), cells(20), cells(20)],
+          ],
+        ),
+        [],
+      ],
+      [
+        "行が columns より短い表は、足りないセルを0字として行数で割る",
+        twoColumns([["a", cells(40)], ["b"]]),
+        ["ragged-table"],
+      ],
+    ] as const)("%s", (_name, table, expected) => {
+      expect(kinds(draft([table]))).toEqual(expected)
+    })
+
+    it("入力の字数は数えた値と合っている", () => {
+      expect([...cells(35)].length).toBe(35)
+      expect([...cells(34)].length).toBe(34)
+    })
+
+    it("差し戻しは表の数と字数の基準を文面に持つ", () => {
+      const violations = reportViolations(
+        draft([
+          twoColumns([
+            ["a", cells(36)],
+            ["b", cells(36)],
+          ]),
+          twoColumns([
+            ["a", cells(50)],
+            ["b", cells(50)],
+          ]),
+        ]),
+      )
+      expect(violations).toEqual([{ kind: "sentence-table", count: 2 }])
+      expect(reportRejectionText(violations)).toContain("セルの平均が35字以上の列がある表が2個")
+    })
+
+    it("long-table の次に並ぶ", () => {
+      const long = tableWith(
+        ["A", "B"],
+        Array.from({ length: 11 }, () => ["a", cells(40)]),
+      )
+      expect(kinds(draft([long]))).toEqual(["long-table", "sentence-table"])
+    })
+
+    it("違反の種類の一覧に入っている", () => {
+      expect(REPORT_VIOLATION_KINDS).toContain("sentence-table")
     })
   })
 

@@ -25,6 +25,7 @@ import {
   MAX_LIST_ITEMS,
   MAX_PLAIN_CODE_LINES,
   MAX_TABLE_ROWS,
+  SENTENCE_CELL_LENGTH,
 } from "../../../shared/report/report-limit.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import { leadingSentences, sentenceCount } from "../../../shared/report/sentence-count.ts"
@@ -96,6 +97,8 @@ export type ReportViolation =
   | { readonly kind: "ragged-table"; readonly count: number }
   /** 行が上限を超えるのに `rest` が空の `table` がある。`count` は表の数。 */
   | { readonly kind: "long-table"; readonly count: number }
+  /** 行が2つ以上で、ある列のセルの平均が全角 `SENTENCE_CELL_LENGTH` 字以上の `table` がある。`count` は表の数。 */
+  | { readonly kind: "sentence-table"; readonly count: number }
   /** 項目が上限を超える `list` がある。`count` は塊の数。 */
   | { readonly kind: "long-list"; readonly count: number }
   /** `marks` が無く、行数が上限を超える `code` がある。`count` は塊の数。 */
@@ -220,6 +223,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
           block.kind === "table" && block.rows.length > MAX_TABLE_ROWS && block.rest.trim() === "",
       ).length,
     },
+    { kind: "sentence-table", count: blocks.filter((block) => isSentenceTable(block)).length },
     {
       kind: "long-list",
       count: blocks.filter((block) => block.kind === "list" && block.items.length > MAX_LIST_ITEMS)
@@ -330,6 +334,7 @@ const VIOLATION_THRESHOLDS = {
   "unordered-options": 0,
   "ragged-table": 0,
   "long-table": 0,
+  "sentence-table": 0,
   "long-list": 0,
   "long-code": 0,
   "ragged-chart": 0,
@@ -376,6 +381,8 @@ function violationLine(violation: ReportViolation): string {
       return `行のセルの数が \`columns\` と揃わない表（\`matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
     case "long-table":
       return `行が${String(MAX_TABLE_ROWS + 1)}以上で \`rest\` が空の表が${violation.count}個ある。上位${String(MAX_TABLE_ROWS)}行までを残し、残りを \`rest\` に書く`
+    case "sentence-table":
+      return `セルの平均が${String(SENTENCE_CELL_LENGTH)}字以上の列がある表が${violation.count}個ある。その列を \`label\` 付きの \`list\` か文の塊へ移すか、セルを語句・数・状態に縮める`
     case "long-list":
       return `項目が${String(MAX_LIST_ITEMS + 1)}件以上の \`list\` が${violation.count}個ある。上位を残し、最後の項目を「ほか n 件」にして${String(MAX_LIST_ITEMS)}件までにする`
     case "long-code":
@@ -612,6 +619,25 @@ function isRaggedTable(block: ReportBlock): boolean {
     default:
       return false
   }
+}
+
+type TableCell = Extract<ReportBlock, { readonly kind: "table" }>["rows"][number][number]
+
+function cellLength(cell: TableCell): number {
+  const shown = typeof cell === "string" ? cell : "text" in cell ? cell.text : cell.from + cell.to
+  return [...shown].length
+}
+
+/** 行が2つ以上で、ある列のセルの平均が {@link SENTENCE_CELL_LENGTH} 字以上の表か。 */
+function isSentenceTable(block: ReportBlock): boolean {
+  if (block.kind !== "table" || block.rows.length < 2) return false
+  return block.columns.some((_, column) => {
+    const total = block.rows.reduce((sum, row) => {
+      const cell = row[column]
+      return cell === undefined ? sum : sum + cellLength(cell)
+    }, 0)
+    return total / block.rows.length >= SENTENCE_CELL_LENGTH
+  })
 }
 
 function hasShortSeries(block: ReportBlock): boolean {
