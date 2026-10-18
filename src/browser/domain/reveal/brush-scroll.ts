@@ -5,7 +5,7 @@
 // 行の多いトピックや表・図を含むトピックでは帯の背が器の見える高さに迫り、帯の上端・下端の両方を器の余白の内側に収めようとすると、はみ出した分を送ってはまた逆へ戻す往復が起きる。
 // 立ち絵の立つ位置は帯の下端付近の狭い範囲なので、帯が背高でもこの往復は起きない。
 //
-// どの祖先が転がっているかは画面幅で入れ替わる（広い画面は `section[data-region="main"]`、狭い画面（≤760px）はページ自身）ので、器を決め打ちにできない。
+// 転がる祖先は広い画面も狭い画面（≤760px）も `main[data-region="main"]` だが、呼ぶ側が器を決め打ちにしなくて済むよう、祖先の `overflow-y` を見て探す。
 //
 // 比べるのは器の中身の座標（器の中身の上端が 0）。
 // 筆先は基準の要素の座標で届くので、基準が器の中身のどこにあるかと器の見える高さを `remeasure` で測って覚え、毎フレーム読むのは `scrollTop` だけにする。
@@ -119,7 +119,7 @@ type ScrollerPlace = {
   readonly viewHeight: number
 }
 
-/** 根から上へたどって、最初に見つけた「転がる器」。どれも転がらなければページ自身を返す（狭い画面ではこちらが本命）。 */
+/** 根から上へたどって、最初に見つけた「転がる器」。どれも転がらなければページ自身を返す（最後の保険）。 */
 function scrollableAncestorOf(element: Element): Element {
   const parent = element.parentElement
   if (parent === null) {
@@ -137,7 +137,7 @@ function isScrollable(element: Element): boolean {
 
 /**
  * 器の「見えている範囲」をビューポート座標で返す。
- * ページ自身が器のときは矩形を測らない（`documentElement` の矩形は文書の高さであって、見えている範囲ではない）。
+ * 器が見つからずページ自身を返したときは矩形を測らない（`documentElement` の矩形は文書の高さであって、見えている範囲ではない）。
  */
 function viewportOf(scroller: Element): { readonly top: number; readonly bottom: number } {
   if (scroller === document.scrollingElement || scroller === document.documentElement) {
