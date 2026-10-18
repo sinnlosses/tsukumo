@@ -604,7 +604,8 @@
   display: block;
   margin-inline: auto;
 }
-.detail-block .report-captioned > :not(.report-caption) {
+/* 拡大の `<dialog>` は図の子として描かれるので除く（上下の margin を 0 にすると、中央寄せの `margin: auto` が効かず上端に貼り付く）。 */
+.detail-block .report-captioned > :not(.report-caption, dialog) {
   max-inline-size: 100%;
   margin-top: 0;
   margin-bottom: 0;
