@@ -15,7 +15,7 @@ import type { PromptImage } from "../../../../src/shared/session-driver/prompt-i
 import type { RestoredEvent, SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { MAX_SESSION_STATE_TURNS } from "../../../../src/shared/session/session-state.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
-import { knownRestored, unknownRestored } from "../../../fixture/restored-event.ts"
+import { knownRestored } from "../../../fixture/restored-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
 import { createSessionManager, waitForBatch } from "../../../fixture/session-manager.ts"
 
@@ -173,33 +173,8 @@ describe("レポートの画像の棚", () => {
     expect(shelf.find("toolu_live", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
   })
 
-  it("復元した report のうち、時刻が分かり24時間以内のものは画像を棚に置く", async () => {
-    const { stub, shelf } = startManagerWithReportImageShelf()
-    await waitForBatch()
-
-    stub.emitRestored(knownRestored([imageReportEvent("toolu_recent")], NOW - DAY))
-    await waitForBatch()
-
-    expect(shelf.find("toolu_recent", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
-  })
-
-  it("復元した report のうち、24時間より古いもの・時刻が分からないものは画像を棚に置かない", async () => {
+  it("復元した report のうち、棚に残るのは記録の窓に残る24時間以内のものだけ（古いもの・時刻が分からないものは読みにも行かない）", async () => {
     const { stub, shelf, readPaths } = startManagerWithReportImageShelf()
-    await waitForBatch()
-
-    stub.emitRestored([
-      ...knownRestored([imageReportEvent("toolu_old")], NOW - DAY - 1),
-      ...unknownRestored([imageReportEvent("toolu_unknown")]),
-    ])
-    await waitForBatch()
-
-    expect(readPaths).toEqual([])
-    expect(shelf.find("toolu_old", "fictional/after.png")).toBeUndefined()
-    expect(shelf.find("toolu_unknown", "fictional/after.png")).toBeUndefined()
-  })
-
-  it("復元した report のうち、棚に残るのは記録の窓に残る24時間以内のものだけ", async () => {
-    const { stub, shelf } = startManagerWithReportImageShelf()
     await waitForBatch()
     const recent = NOW - DAY
     const turn = (text: string): RestoredEvent => ({
@@ -228,6 +203,7 @@ describe("レポートの画像の棚", () => {
       (id) => shelf.find(id, "fictional/after.png") !== undefined,
     )
     expect(placed).toEqual(["toolu_kept"])
+    expect(readPaths).toHaveLength(1)
   })
 
   it("復元した report より後に更新されたファイルの画像は棚に置かない", async () => {

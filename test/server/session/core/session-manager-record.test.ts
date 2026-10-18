@@ -8,12 +8,17 @@ import type {
 } from "../../../../src/server/report/core/report-usage.ts"
 import type { QuestionUsageEntry } from "../../../../src/server/session-driver/core/question-usage.ts"
 import type { SessionDriver } from "../../../../src/server/session-driver/core/session-driver.ts"
+import type { SessionManagerOptions } from "../../../../src/server/session/core/session-manager.ts"
 import type { TokenUsageEntry } from "../../../../src/server/token-usage/core/token-usage.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../../src/shared/context-usage/context-usage.ts"
 import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
+import type {
+  DiagnosedErrorName,
+  SwallowedFailurePlace,
+} from "../../../../src/shared/diagnostic/swallowed-failure.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { Question } from "../../../../src/shared/session-driver/question.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
@@ -35,23 +40,48 @@ import {
   waitForBatch,
 } from "../../../fixture/session-manager.ts"
 
+function sessionInfo(sessionId: string): SessionEvent {
+  return {
+    kind: "session-info",
+    sessionId,
+    model: "opus",
+    permissionMode: "auto",
+    slashCommands: [],
+    terminalSlashCommands: [],
+    skillNames: [],
+    agentNames: [],
+  }
+}
+
+function launchWith(
+  stub: ReturnType<typeof createStubDriver>,
+  driver: SessionDriver = stub.driver,
+): SessionManagerOptions["launchSession"] {
+  return (onEvent, onRestoredEvents) => {
+    stub.attach(onEvent)
+    stub.attachRestored(onRestoredEvents)
+    return Promise.resolve(driver)
+  }
+}
+
+function collector<T>(): { readonly entries: T[]; readonly append: (entry: T) => void } {
+  const entries: T[] = []
+  return {
+    entries,
+    append: (entry) => {
+      entries.push(entry)
+    },
+  }
+}
+
 describe("createSessionManager", () => {
   describe("仕切りを離した記録", () => {
     function startSplitManager() {
       const stub = createStubDriver()
-      const entries: ExperienceMetricEntry[] = []
+      const { entries, append } = collector<ExperienceMetricEntry>()
       const manager = createSessionManager({
-        experienceMetricLog: {
-          append: (entry) => {
-            entries.push(entry)
-          },
-          readRange: () => [],
-        },
-        launchSession: (onEvent, onRestoredEvents) => {
-          stub.attach(onEvent)
-          stub.attachRestored(onRestoredEvents)
-          return Promise.resolve(stub.driver)
-        },
+        experienceMetricLog: { append, readRange: () => [] },
+        launchSession: launchWith(stub),
       })
       return { manager, stub, entries }
     }
@@ -65,16 +95,7 @@ describe("createSessionManager", () => {
       manager.recordSplit(RELEASE)
       expect(entries).toEqual([])
 
-      stub.emit({
-        kind: "session-info",
-        sessionId: "claude-session-1",
-        model: "opus",
-        permissionMode: "auto",
-        slashCommands: [],
-        terminalSlashCommands: [],
-        skillNames: [],
-        agentNames: [],
-      })
+      stub.emit(sessionInfo("claude-session-1"))
       await waitForBatch()
       manager.recordSplit(RELEASE)
       manager.recordSplit({ ...RELEASE, divider: "topLeft" })
@@ -95,16 +116,7 @@ describe("createSessionManager", () => {
   // トークン消費の記録。数と時刻とモデルの名前だけが
   // 記録へ渡ることを、ここで固定する。
   describe("トークン消費の記録", () => {
-    const SESSION_INFO: SessionEvent = {
-      kind: "session-info",
-      sessionId: "claude-session-1",
-      model: "opus",
-      permissionMode: "auto",
-      slashCommands: [],
-      terminalSlashCommands: [],
-      skillNames: [],
-      agentNames: [],
-    }
+    const SESSION_INFO = sessionInfo("claude-session-1")
 
     /** 架空のステップ1つぶんの使用量。 */
     const STEP_USAGE = {
@@ -146,19 +158,10 @@ describe("createSessionManager", () => {
 
     function startTokenUsageManagerWithStub() {
       const stub = createStubDriver()
-      const entries: TokenUsageEntry[] = []
+      const { entries, append } = collector<TokenUsageEntry>()
       const manager = createSessionManager({
-        tokenUsageLog: {
-          append: (entry) => {
-            entries.push(entry)
-          },
-          readRange: () => [],
-        },
-        launchSession: (onEvent, onRestoredEvents) => {
-          stub.attach(onEvent)
-          stub.attachRestored(onRestoredEvents)
-          return Promise.resolve(stub.driver)
-        },
+        tokenUsageLog: { append, readRange: () => [] },
+        launchSession: launchWith(stub),
       })
       return { manager, stub, entries }
     }
@@ -319,19 +322,6 @@ describe("createSessionManager", () => {
   // コンテキストの内訳の記録（`ContextUsageRecord`）。1行 = 1セッションで、
   // 取れなかった回は次のターンで取り直すことを、ここで固定する。
   describe("コンテキストの内訳の記録", () => {
-    function sessionInfo(sessionId: string): SessionEvent {
-      return {
-        kind: "session-info",
-        sessionId,
-        model: "opus",
-        permissionMode: "auto",
-        slashCommands: [],
-        terminalSlashCommands: [],
-        skillNames: [],
-        agentNames: [],
-      }
-    }
-
     /**
      * 内訳の問い合わせが返す答えを差し替えて起こす。`reports` は呼ばれた順に返し、尽きたら
      * 最後のものを返し続ける（`stub.driver` の既定は常に「取れた」なので、取れない回を
@@ -339,7 +329,7 @@ describe("createSessionManager", () => {
      */
     function startContextUsageManagerWithStub(reports: readonly ContextUsageReport[]) {
       const stub = createStubDriver()
-      const entries: ContextUsageEntry[] = []
+      const { entries, append } = collector<ContextUsageEntry>()
       let asked = 0
       const driver: SessionDriver = {
         ...stub.driver,
@@ -350,16 +340,8 @@ describe("createSessionManager", () => {
         },
       }
       const manager = createSessionManager({
-        contextUsageLog: {
-          append: (entry) => {
-            entries.push(entry)
-          },
-        },
-        launchSession: (onEvent, onRestoredEvents) => {
-          stub.attach(onEvent)
-          stub.attachRestored(onRestoredEvents)
-          return Promise.resolve(driver)
-        },
+        contextUsageLog: { append },
+        launchSession: launchWith(stub, driver),
       })
       return { manager, stub, entries, asked: () => asked }
     }
@@ -445,19 +427,6 @@ describe("createSessionManager", () => {
   // `report` の塊の使われ方の記録。描いた（差し戻されなかった）report だけが1行になることを
   // ここで固定する（docs/research/report-block.md「回し方（数えて足す・外す）」）。
   describe("report の塊の使われ方の記録", () => {
-    function sessionInfo(sessionId: string): SessionEvent {
-      return {
-        kind: "session-info",
-        sessionId,
-        model: "opus",
-        permissionMode: "auto",
-        slashCommands: [],
-        terminalSlashCommands: [],
-        skillNames: [],
-        agentNames: [],
-      }
-    }
-
     /** 描いた `report` の `SessionEvent`（中身はすべて手で書いた架空のもの）。 */
     function reportWithSections(
       sections: readonly ReportSection[],
@@ -473,24 +442,13 @@ describe("createSessionManager", () => {
 
     function startReportUsageManagerWithStub() {
       const stub = createStubDriver()
-      const entries: ReportUsageEntry[] = []
-      const rejections: ReportRejectionEntry[] = []
+      const { entries, append } = collector<ReportUsageEntry>()
+      const rejected = collector<ReportRejectionEntry>()
       const manager = createSessionManager({
-        reportUsageLog: {
-          append: (entry) => {
-            entries.push(entry)
-          },
-          appendRejection: (entry) => {
-            rejections.push(entry)
-          },
-        },
-        launchSession: (onEvent, onRestoredEvents) => {
-          stub.attach(onEvent)
-          stub.attachRestored(onRestoredEvents)
-          return Promise.resolve(stub.driver)
-        },
+        reportUsageLog: { append, appendRejection: rejected.append },
+        launchSession: launchWith(stub),
       })
-      return { manager, stub, entries, rejections }
+      return { manager, stub, entries, rejections: rejected.entries }
     }
 
     it("描いた report のたびに、塊の種類と時刻・セッションIDを1行書く", async () => {
@@ -607,19 +565,6 @@ describe("createSessionManager", () => {
   // 質問（AskUserQuestion）の使われ方の記録。答えが確定した質問ごとに1行、選択肢の数と
   // preview の付いた数だけを書く（会話の文面は入らない）。
   describe("質問の使われ方の記録", () => {
-    function sessionInfo(sessionId: string): SessionEvent {
-      return {
-        kind: "session-info",
-        sessionId,
-        model: "opus",
-        permissionMode: "auto",
-        slashCommands: [],
-        terminalSlashCommands: [],
-        skillNames: [],
-        agentNames: [],
-      }
-    }
-
     /** 答えが確定した質問の `SessionEvent`（中身はすべて手で書いた架空のもの）。 */
     function questionAnsweredEvent(
       questions: readonly Question[],
@@ -651,18 +596,10 @@ describe("createSessionManager", () => {
 
     function startQuestionUsageManagerWithStub() {
       const stub = createStubDriver()
-      const entries: QuestionUsageEntry[] = []
+      const { entries, append } = collector<QuestionUsageEntry>()
       const manager = createSessionManager({
-        questionUsageLog: {
-          append: (entry) => {
-            entries.push(entry)
-          },
-        },
-        launchSession: (onEvent, onRestoredEvents) => {
-          stub.attach(onEvent)
-          stub.attachRestored(onRestoredEvents)
-          return Promise.resolve(stub.driver)
-        },
+        questionUsageLog: { append },
+        launchSession: launchWith(stub),
       })
       return { manager, stub, entries }
     }
@@ -717,6 +654,20 @@ describe("createSessionManager", () => {
       )
     }
 
+    function swallowed(
+      at: number,
+      place: Extract<SwallowedFailurePlace, { feature: "session" }>["place"],
+      errorName: DiagnosedErrorName = "Error",
+    ): DiagnosticEntry {
+      return {
+        flow: "swallowed-failure",
+        at,
+        place: { feature: "session", place },
+        errorName,
+        errorCode: "none",
+      }
+    }
+
     function startDiagnosticManagerWithStub() {
       const stub = createStubDriver()
       const entries: DiagnosticEntry[] = []
@@ -729,11 +680,7 @@ describe("createSessionManager", () => {
           },
           readRange: () => [],
         },
-        launchSession: (onEvent, onRestoredEvents) => {
-          stub.attach(onEvent)
-          stub.attachRestored(onRestoredEvents)
-          return Promise.resolve(stub.driver)
-        },
+        launchSession: launchWith(stub),
       })
       const advance = (ms: number): void => {
         now += ms
@@ -800,15 +747,7 @@ describe("createSessionManager", () => {
       await manager.commands.session.switchCharacter({ name: "fictional" })
       await waitForBatch()
 
-      expect(entries).toEqual([
-        {
-          flow: "swallowed-failure",
-          at: 2_000,
-          place: { feature: "session", place: "restart" },
-          errorName: "TypeError",
-          errorCode: "none",
-        },
-      ])
+      expect(entries).toEqual([swallowed(2_000, "restart", "TypeError")])
     })
 
     it("コンテキストの内訳・プランの内訳の問い合わせが失敗したら、それぞれ場所の名前で1行書く", async () => {
@@ -827,20 +766,8 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       expect(entries).toEqual([
-        {
-          flow: "swallowed-failure",
-          at: 3_000,
-          place: { feature: "session", place: "read-context-usage" },
-          errorName: "Error",
-          errorCode: "none",
-        },
-        {
-          flow: "swallowed-failure",
-          at: 3_000,
-          place: { feature: "session", place: "read-plan-usage" },
-          errorName: "Error",
-          errorCode: "none",
-        },
+        swallowed(3_000, "read-context-usage"),
+        swallowed(3_000, "read-plan-usage"),
       ])
     })
 
@@ -870,13 +797,7 @@ describe("createSessionManager", () => {
       // 起こすときに流した sessions-changed の足跡と、失敗の1行の2件。
       expect(entries).toEqual([
         { flow: "session-event", at: 4_000, generation: 1, kind: "sessions-changed" },
-        {
-          flow: "swallowed-failure",
-          at: 4_000,
-          place: { feature: "session", place: "read-session-digest" },
-          errorName: "Error",
-          errorCode: "none",
-        },
+        swallowed(4_000, "read-session-digest"),
       ])
     })
   })

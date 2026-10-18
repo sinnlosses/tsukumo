@@ -612,6 +612,20 @@ describe("createSessionManager", () => {
 
     const TURN_FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 
+    function startWithDiagnostics() {
+      const entries: DiagnosticEntry[] = []
+      const consolidation = createManualConsolidation()
+      const { stub } = startChatManagerWithStub({
+        chatConsolidation: consolidation.source,
+        diagnosticLog: {
+          append: (appended) => entries.push(...appended),
+          readRange: () => [],
+        },
+      })
+      stub.emit(CHARACTER_EVENT)
+      return { stub, consolidation, entries }
+    }
+
     async function startInChat() {
       const consolidation = createManualConsolidation()
       const started = startChatManagerWithStub({ chatConsolidation: consolidation.source })
@@ -666,16 +680,7 @@ describe("createSessionManager", () => {
     })
 
     it("失敗は、理由の語と error.name・code の1行を診断ログへ書く（message は入らない）", async () => {
-      const entries: DiagnosticEntry[] = []
-      const consolidation = createManualConsolidation()
-      const { stub } = startChatManagerWithStub({
-        chatConsolidation: consolidation.source,
-        diagnosticLog: {
-          append: (appended) => entries.push(...appended),
-          readRange: () => [],
-        },
-      })
-      stub.emit(CHARACTER_EVENT)
+      const { stub, consolidation, entries } = startWithDiagnostics()
 
       stub.emit(TURN_FINISHED)
       consolidation.finish({
@@ -708,16 +713,7 @@ describe("createSessionManager", () => {
     })
 
     it("あらすじの古い行を落として書けたときだけ、落とした行数を診断ログへ書く", async () => {
-      const entries: DiagnosticEntry[] = []
-      const consolidation = createManualConsolidation()
-      const { stub } = startChatManagerWithStub({
-        chatConsolidation: consolidation.source,
-        diagnosticLog: {
-          append: (appended) => entries.push(...appended),
-          readRange: () => [],
-        },
-      })
-      stub.emit(CHARACTER_EVENT)
+      const { stub, consolidation, entries } = startWithDiagnostics()
 
       stub.emit(TURN_FINISHED)
       consolidation.finish({ kind: "written", topics: [], droppedLines: 0, shrinkWaived: false })
@@ -732,16 +728,7 @@ describe("createSessionManager", () => {
     })
 
     it("検査に落ちた理由と、縮みの検査を外して書いたことを、場所の語で診断ログへ書く（本文は入らない）", async () => {
-      const entries: DiagnosticEntry[] = []
-      const consolidation = createManualConsolidation()
-      const { stub } = startChatManagerWithStub({
-        chatConsolidation: consolidation.source,
-        diagnosticLog: {
-          append: (appended) => entries.push(...appended),
-          readRange: () => [],
-        },
-      })
-      stub.emit(CHARACTER_EVENT)
+      const { stub, consolidation, entries } = startWithDiagnostics()
 
       const rejections = [
         "shape",
