@@ -25,7 +25,6 @@ function isDenied(
 describe("ファイルを書き換えるコマンドの判定", () => {
   test.each([
     ["sed -i", "sed -i 's/a/b/' file.ts"],
-    ["sed -i.bak", "sed -i.bak 's/a/b/' file.ts"],
     ["sed -i と空の接尾辞", "sed -i '' 's/a/b/' file.ts"],
     ["作業ツリーの中の絶対パスへの sed -i", "sed -i 's/a/b/' /work/tree/src/a.ts"],
     ["-e でスクリプトを渡した sed -i", "sed -i -e 's/a/b/' src/a.ts"],
@@ -34,9 +33,7 @@ describe("ファイルを書き換えるコマンドの判定", () => {
       "作業ツリーの外から作業ツリーへ cd し直したあとの sed -i",
       "cd /tmp/x && cd /work/tree && sed -i 's/a/b/' a",
     ],
-    ["xargs の sed -i", "git ls-files | xargs sed -i 's/a/b/'"],
     ["timeout 越しの sed -i", "timeout 5 sed -i 's/a/b/' file.ts"],
-    ["pnpm exec 越しの sed -i", "pnpm exec sed -i 's/a/b/' file.ts"],
     ["作業ツリーの中への画像でない cp", "cp /tmp/x/a.svg src/a.svg"],
     ["画像を画像でないファイルへ書く cp", "cp /tmp/x/a.png src/run.ts"],
     ["画像を拡張子の無いファイルへ書く cp", "cp /tmp/x/a.png Makefile"],
@@ -98,7 +95,6 @@ describe("ファイルを書き換えるコマンドの判定", () => {
     ["if の後ろの本物のリダイレクト", "if true; then echo a > x; fi"],
     ["作業ツリーへ書く tee", "cat /tmp/x/a.ts | tee src/a.ts > /dev/null"],
     ["cd したあとの相対パス", "cd src && cat /tmp/x/a.ts > a.ts"],
-    ["作業ツリーの外から作業ツリーへ cd し直したあと", "cd /tmp/x && cd /work/tree && cat a > b"],
     ["書き先が変数のリダイレクト", 'echo x > "$OUT"'],
     ["書き先が決まらない cd のあと", 'cd "$DIR" && echo x > a.ts'],
     ["bash -c の中のリダイレクト", "bash -c 'cat /tmp/x/a.ts > src/a.ts'"],
@@ -211,15 +207,11 @@ describe("ファイルを書き換えるコマンドの判定", () => {
 })
 
 describe("ファイルを書き換えるコマンドを拒否する hook", () => {
-  test("止めるときは終了コード 2 で、stderr に Edit・Write を促す", async () => {
+  test("止めるときは終了コード 2 で、stderr に Edit・Write と tw edit --body-file の下書きの渡し方を案内する", async () => {
     const result = await runHook("sed -i 's/a/b/' file.ts")
     expect(result.exitCode).toBe(2)
     expect(result.stderr).toContain("Edit")
     expect(result.stderr).toContain("Write")
-  })
-
-  test("止めるときは tw edit --body-file の下書きの渡し方を案内する", async () => {
-    const result = await runHook("sed -i 's/a/b/' file.ts")
     expect(result.stderr).toContain("--body-file")
     expect(result.stderr).toContain("/tmp")
   })

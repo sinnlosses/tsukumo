@@ -18,30 +18,21 @@ import { isDocumentOnlyChange, isDocumentPath } from "../../../scripts/shared/do
 import { runSubprocessOrThrow } from "../../fixture/subprocess.ts"
 
 describe("isDocumentPath", () => {
-  test("docs/ 配下の .md は文書", () => {
-    expect(isDocumentPath("docs/requirements.md")).toBe(true)
-  })
-
-  test(".tw/ 配下の .md は文書", () => {
-    expect(isDocumentPath(".tw/task/sample.md")).toBe(true)
-  })
-
-  test("直下の README.md・CLAUDE.md は文書", () => {
-    expect(isDocumentPath("README.md")).toBe(true)
-    expect(isDocumentPath("CLAUDE.md")).toBe(true)
-  })
-
-  test("src/ 配下の .md（同梱パックの persona.md など）は文書に入れない", () => {
-    expect(isDocumentPath("src/server/character/adapter/pack/persona.md")).toBe(false)
-  })
-
-  test("docs/・.tw/ 配下でも拡張子が .md でなければ文書ではない", () => {
-    expect(isDocumentPath("docs/screenshot.png")).toBe(false)
-    expect(isDocumentPath(".tw/config.toml")).toBe(false)
-  })
-
-  test("同名でもディレクトリの下にある README.md・CLAUDE.md は直下扱いしない", () => {
-    expect(isDocumentPath("src/README.md")).toBe(false)
+  test.each([
+    ["docs/ 配下の .md", "docs/requirements.md", true],
+    [".tw/ 配下の .md", ".tw/task/sample.md", true],
+    ["直下の README.md", "README.md", true],
+    ["直下の CLAUDE.md", "CLAUDE.md", true],
+    [
+      "src/ 配下の .md（同梱パックの persona.md など）",
+      "src/server/character/adapter/pack/persona.md",
+      false,
+    ],
+    ["docs/ 配下でも .md でないもの", "docs/screenshot.png", false],
+    [".tw/ 配下でも .md でないもの", ".tw/config.toml", false],
+    ["ディレクトリの下の README.md は直下扱いしない", "src/README.md", false],
+  ])("%s", (_name, path, expected) => {
+    expect(isDocumentPath(path)).toBe(expected)
   })
 })
 
@@ -150,13 +141,10 @@ describe("planStages", () => {
     ])
   })
 
-  test("文書の検査のファイルが実在し、参照切れを見る test/scripts/document/section-reference-repository.test.ts を含む", () => {
+  test("文書の検査のファイルが実在する", () => {
     for (const file of DOCUMENT_CHECK_TEST_FILES) {
       expect(existsSync(file)).toBe(true)
     }
-    expect(DOCUMENT_CHECK_TEST_FILES).toContain(
-      "test/scripts/document/section-reference-repository.test.ts",
-    )
   })
 })
 

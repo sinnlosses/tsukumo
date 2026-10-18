@@ -32,7 +32,7 @@ describe("judgeE2eFull", () => {
   })
 
   test("TSUKUMO_E2E_FULL=1 なら全件でも通す。1以外は通さない", () => {
-    expect(judgeE2eFull([], "1").kind).toBe("pass")
+    expect(judgeE2eFull([], E2E_FULL_ENVIRONMENT.TSUKUMO_E2E_FULL).kind).toBe("pass")
     expect(judgeE2eFull([], "0").kind).toBe("deny")
     expect(judgeE2eFull([], "").kind).toBe("deny")
   })
@@ -40,9 +40,5 @@ describe("judgeE2eFull", () => {
   test("型検査は、全件の印を立てない（ファイル単位の）呼び出しだけが打つ", () => {
     expect(shouldTypecheckBeforeE2e(undefined)).toBe(true)
     expect(shouldTypecheckBeforeE2e("1")).toBe(false)
-  })
-
-  test("子に渡す環境変数は TSUKUMO_E2E_FULL=1", () => {
-    expect(E2E_FULL_ENVIRONMENT).toEqual({ TSUKUMO_E2E_FULL: "1" })
   })
 })

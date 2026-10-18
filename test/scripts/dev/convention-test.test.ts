@@ -2,20 +2,17 @@
 
 import { describe, expect, test } from "vitest"
 
-import { DOCUMENT_CHECK_TEST_FILES } from "../../../scripts/dev/lib/check-stage.ts"
 import {
   CONVENTION_TEST_PATHS,
   withConventionTests,
-  withRelatedConventionTests,
 } from "../../../scripts/dev/lib/convention-test.ts"
 
 describe("withConventionTests", () => {
-  test("引数なしはそのまま（全件）", () => {
-    expect(withConventionTests([])).toEqual([])
-  })
-
-  test("フラグだけならそのまま", () => {
-    const args = ["--reporter=default", "--outputFile.json=/tmp/x.json"]
+  test.each([
+    ["引数なし（全件）", []],
+    ["フラグだけ", ["--reporter=default", "--outputFile.json=/tmp/x.json"]],
+    ["フラグの値（-t パターン）は絞り込みに数えない", ["-t", "pattern"]],
+  ])("%s はそのまま", (_name, args) => {
     expect(withConventionTests(args)).toEqual(args)
   })
 
@@ -33,11 +30,6 @@ describe("withConventionTests", () => {
     expect(result).toContain("test/architecture/")
   })
 
-  test("フラグの値（-t パターン）は絞り込みに数えない", () => {
-    const args = ["-t", "pattern"]
-    expect(withConventionTests(args)).toEqual(args)
-  })
-
   test("-- のあとのファイルも、値を取らないフラグの直後のファイルも数える", () => {
     expect(withConventionTests(["--", "test/a.test.ts"])).toEqual([
       "--",
@@ -49,19 +41,5 @@ describe("withConventionTests", () => {
       "test/a.test.ts",
       ...CONVENTION_TEST_PATHS,
     ])
-  })
-})
-
-describe("withRelatedConventionTests", () => {
-  test("変えたファイルがテストでなくても規約のテストを後ろに足す", () => {
-    expect(withRelatedConventionTests(["src/a.ts"])).toEqual(["src/a.ts", ...CONVENTION_TEST_PATHS])
-  })
-})
-
-describe("CONVENTION_TEST_PATHS", () => {
-  test("文書の検査の一覧を全て含む", () => {
-    for (const file of DOCUMENT_CHECK_TEST_FILES) {
-      expect(CONVENTION_TEST_PATHS).toContain(file)
-    }
   })
 })

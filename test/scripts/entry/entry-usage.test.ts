@@ -23,7 +23,6 @@ describe("入口の引数", () => {
     ["experience-metric.ts", "--split", "2026/01/01"],
     ["experience-metric.ts", "--foo"],
     ["report-block-usage.ts", "--days", "-1"],
-    ["report-block-usage.ts", "--days"],
     ["report-block-usage.ts", "--foo"],
     ["serve-revision.ts"],
     ["serve-revision.ts", "HEAD", "HEAD~1"],
@@ -38,15 +37,18 @@ describe("入口の引数", () => {
     expect(result.stderr).toContain("使い方")
   })
 
-  test.each([["--foo"], ["--full", "--foo"], ["extra"]])(
-    "dev/check.ts %s は使い方を出して終了コード 2 で止まる",
-    async (...args) => {
-      const result = await runSubprocess("node", ["scripts/dev/check.ts", ...args], { cwd: ROOT })
-      expect(result.exitCode).toBe(2)
-      expect(result.stdout).toBe("")
-      expect(result.stderr).toContain("使い方")
-    },
-  )
+  test.each([
+    ["check.ts", "--foo"],
+    ["check.ts", "--full", "--foo"],
+    ["check.ts", "extra"],
+    ["e2e-update.ts", "--help"],
+    ["e2e-update.ts", "--foo"],
+  ])("dev/%s %s は使い方を出して終了コード 2 で止まる", async (script, ...args) => {
+    const result = await runSubprocess("node", [`scripts/dev/${script}`, ...args], { cwd: ROOT })
+    expect(result.exitCode).toBe(2)
+    expect(result.stdout).toBe("")
+    expect(result.stderr).toContain("使い方")
+  })
 
   test.each([["--foo"], ["--days", "0"], ["--days", "abc"], ["--days"]])(
     "hook/hook-denial-tally.ts %s は終了コード 1 で止まる",

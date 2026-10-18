@@ -24,13 +24,10 @@ describe("describeFailedStages", () => {
     expect(describeFailedStages([outcome("test", 0), outcome("test:e2e", 0)])).toEqual([])
   })
 
-  test("落ちた段だけを名前と終了コードの1行にする", () => {
+  test("落ちた段だけを名前と終了コードの1行にし、複数なら入力の順に並べる", () => {
     expect(describeFailedStages([outcome("test", 0), outcome("test:e2e", 2)])).toEqual([
       "test:e2e が終了コード 2 で落ちた",
     ])
-  })
-
-  test("複数落ちたときは入力の順に並べる", () => {
     expect(describeFailedStages([outcome("test", 1), outcome("test:e2e", 2)])).toEqual([
       "test が終了コード 1 で落ちた",
       "test:e2e が終了コード 2 で落ちた",
