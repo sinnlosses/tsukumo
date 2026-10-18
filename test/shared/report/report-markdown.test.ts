@@ -16,6 +16,7 @@ const NO_IMAGES = { kind: "none" } as const satisfies ReportImageSource
 
 const section = (blocks: readonly ReportBlock[], heading = ""): ReportSection => ({
   heading,
+  shapeTag: "unspecified",
   blocks,
 })
 const markdownOf = (block: ReportBlock): string =>

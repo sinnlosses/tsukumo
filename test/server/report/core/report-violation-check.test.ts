@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
-import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
+import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
 import { draft, kinds, markdown, mermaid, note, text } from "../../../fixture/report-draft-block.ts"
 
 describe("reportViolations", () => {
@@ -37,7 +37,9 @@ describe("reportViolations", () => {
       howToVerify: "",
     })
     const withHeading = (heading: string): ReportDraft =>
-      draft([], "架空の結論。", [{ heading, blocks: [text("架空の本文。")] }])
+      draft([], "架空の結論。", [
+        { heading, shapeTag: "unspecified", blocks: [text("架空の本文。")] },
+      ])
 
     it("1文目が全角50字なら通り、51字なら差し戻す", () => {
       expect(kinds(draft([text("架空。")], `${"あ".repeat(50)}。`))).toEqual([])
@@ -166,7 +168,9 @@ describe("reportViolations", () => {
       expect(kinds(draft([text("Fixed the bug in the parser.")]))).toEqual(["non-japanese"])
       expect(
         kinds(
-          draft([], "架空の結論。", [{ heading: "Root cause found", blocks: [text("架空。")] }]),
+          draft([], "架空の結論。", [
+            { heading: "Root cause found", shapeTag: "unspecified", blocks: [text("架空。")] },
+          ]),
         ),
       ).toEqual(["non-japanese"])
     })
@@ -179,7 +183,11 @@ describe("reportViolations", () => {
         [],
       )
       expect(
-        kinds(draft([], "架空の結論。", [{ heading: "Parser", blocks: [text("架空。")] }])),
+        kinds(
+          draft([], "架空の結論。", [
+            { heading: "Parser", shapeTag: "unspecified", blocks: [text("架空。")] },
+          ]),
+        ),
       ).toEqual([])
       expect(kinds(draft([text("OK")]))).toEqual([])
     })
@@ -233,9 +241,9 @@ describe("reportViolations", () => {
 
   describe("節が2つ以上なら全部に見出し", () => {
     it("見出しの無い節があれば違反", () => {
-      const sections = [
-        { heading: "架空の節", blocks: [text("架空の一。")] },
-        { heading: " ", blocks: [text("架空の二。")] },
+      const sections: readonly ReportSection[] = [
+        { heading: "架空の節", shapeTag: "unspecified", blocks: [text("架空の一。")] },
+        { heading: " ", shapeTag: "unspecified", blocks: [text("架空の二。")] },
       ]
       expect(reportViolations(draft([], "架空の結論。", sections))).toEqual([
         { kind: "untitled-section", count: 1 },

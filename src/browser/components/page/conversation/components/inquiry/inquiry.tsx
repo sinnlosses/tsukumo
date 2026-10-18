@@ -334,7 +334,7 @@ function InquiryDetail(props: {
   const figures =
     option.figures.length === 0
       ? ""
-      : reportSectionsMarkdown([{ heading: "", blocks: option.figures }], {
+      : reportSectionsMarkdown([{ heading: "", shapeTag: "unspecified", blocks: option.figures }], {
           kind: "shelved",
           toolUseId: props.askId,
         })
@@ -420,6 +420,7 @@ function InquiryCompare(props: {
     [
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "table",

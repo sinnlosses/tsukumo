@@ -706,8 +706,16 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
           toolUseId: "toolu_r1",
           conclusion: "架空の結論。",
           sections: [
-            { heading, blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }] },
-            { heading: "", blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }] },
+            {
+              heading,
+              shapeTag: "unspecified",
+              blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }],
+            },
+            {
+              heading: "",
+              shapeTag: "unspecified",
+              blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }],
+            },
           ],
           favor: "",
           checks: [],
@@ -730,6 +738,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const sections: readonly ReportSection[] = [
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           { kind: "text", text: "架空の根拠。", fold: "", aside: "" },
           {
@@ -1030,6 +1039,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       sections: [
         {
           heading: "架空の節",
+          shapeTag: "unspecified",
           blocks: [
             {
               kind: "progress",

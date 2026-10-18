@@ -21,6 +21,7 @@ function imageSections(...paths: readonly string[]): readonly ReportSection[] {
   return [
     {
       heading: "",
+      shapeTag: "unspecified",
       blocks: [
         ...paths.map((path) => ({
           kind: "image" as const,
@@ -103,6 +104,7 @@ describe("reportImagePaths", () => {
     const sections: readonly ReportSection[] = [
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "beforeAfter",

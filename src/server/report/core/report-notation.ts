@@ -4,6 +4,14 @@
 // ここに置くと、描ける記法の一覧が `REPORT_SANITIZE_SCHEMA` と同じコミットで動く。
 // 通す要素・class を増やしたら、この文面も同じコミットで直す。
 
+import {
+  type ForbiddenBlock,
+  REPORT_SHAPE_TAG_RULES,
+  REPORT_SHAPE_TAGS,
+  type ShapeTagBlock,
+  type ShapeTagRule,
+} from "../../../shared/report/report-shape-tag.ts"
+
 /**
  * メインビューが HTML を描けることを前提に、出力スタイルのレポート規約を上書きする文面。
  * `query()` の `systemPrompt: { type: "preset", preset: "claude_code", append }` に渡す。
@@ -84,27 +92,13 @@ export const REPORT_NOTATION_PROMPT = `## レポートの記法（tsukumo）
 7. **過程と生の出力を書かない。** 打ったコマンド・その stdout/stderr・ツールの引数を貼らない。根拠に要るなら必要な行だけ引く
 8. 図は \`figure\` の欄に置く。
    **残ったものは、文字より視覚情報で見せる。** 文で言えることでも、表・図・数の塊で見せられるなら
-   そちらを使う（文のままでよいのは下に挙げたときだけ）。**迷ったら上の行で描く:**
+   そちらを使う（文のままでよいのは下に挙げたときだけ）。節ごとに \`shapeTag\`（形の札。決め方は欄の説明）を
+   先に決め、その札の第一候補で描く。描けなければ許す代替を使い、許さない塊は使わない:
 
-|形|塊|見本|
-|-|-|-|
-|3つ以上のつながり|\`graph\`|\`A -> B: 語\`|
-|構造の変更|\`graph\`|行頭の \`+ \` \`- \` \`~ \`|
-|時間の順|\`mermaid\`|\`sequenceDiagram\`|
-|状態の移り|\`mermaid\`|\`stateDiagram-v2\`|
-|位置・重なり|\`svg\`||
-|撮った画面|\`image\`|\`beforeAfter\`|
-|推移・大小|\`chart\`||
-|結論の数3〜4個|\`stats\`||
-|縦に積む寸法|\`dimension\`||
-|候補の採否|\`options\`||
-|向きの無い2つ|\`compare\`||
-|交点が状態だけ|\`matrix\`||
-|同形の項目2つ以上|\`table\`||
-|1つの値の前後|\`table\`|\`from\` / \`to\`|
-|項目の属性1〜2つ|\`list\`||
-|文のままでよいとき|\`text\`||
+${shapeTagTable()}
 
+   前後・確度・所在は札にしない。画面の前後は \`image\` を \`beforeAfter\` で、構造の前後は \`graph\` の行頭の \`+ \` \`- \` \`~ \` で、
+   1つの値の前後は \`table\` の \`from\` / \`to\` で見せる。確度は \`note\`、所在は \`path:line\` で書く。
    \`note\`・\`files\`・\`code\`・\`progress\`・\`markdown\` は役割で使う塊。
    画面（見た目）を変えた作業では、撮った画像を \`image\` の塊で載せる。同じ場面の2枚（変更の前と後・差し色やキャラクター違い・幅違い）は
    \`image\` を2つ並べず \`beforeAfter\` で左右に並べる。見た目に出ない変更・撮れない事情のときは、\`checks\` に \`unverified\` の行を足し、
@@ -151,3 +145,41 @@ export const REPORT_NOTATION_PROMPT = `## レポートの記法（tsukumo）
 - 「詳しく説明して」と頼まれた: 根拠の量を戻す（塊の使い方は変えない）
 - 戻せない操作・取り返しのつかない判断を示す: 短さより先に \`note\` の塊（\`warn\` / \`ng\`）を1つ立てる
 `
+
+/** 条8の札の表。列は 札・第一候補・許す代替・許さない。 */
+function shapeTagTable(): string {
+  const rows = REPORT_SHAPE_TAGS.map((tag) => {
+    const rule: ShapeTagRule = REPORT_SHAPE_TAG_RULES[tag]
+    return `|${rule.name}\`${tag}\`|${blocksCell(rule.primary)}|${blocksCell(rule.alternatives)}|${forbiddenCell(rule.forbidden)}|`
+  })
+  return ["|札|第一候補|許す代替|許さない|", "|-|-|-|-|", ...rows].join("\n")
+}
+
+function blocksCell(blocks: readonly ShapeTagBlock[]): string {
+  return blocks.length === 0
+    ? "なし"
+    : blocks
+        .map((block) =>
+          block.sample === "" ? `\`${block.kind}\`` : `\`${block.kind}\`（${block.sample}）`,
+        )
+        .join("・")
+}
+
+function forbiddenCell(forbidden: readonly ForbiddenBlock[]): string {
+  return forbidden.length === 0
+    ? "なし"
+    : forbidden
+        .map((rule) => {
+          switch (rule.when) {
+            case "always":
+              return `\`${rule.kind}\``
+            case "numbers-at-least-3":
+              return `数3つ以上の\`${rule.kind}\``
+            case "attributes-at-most-1":
+              return `列2つ以下の\`${rule.kind}\``
+            case "single-item":
+              return `1項目の\`${rule.kind}\``
+          }
+        })
+        .join("・")
+}

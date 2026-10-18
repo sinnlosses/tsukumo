@@ -110,6 +110,7 @@
       "sections": [
         {
           "heading": "",
+          "shapeTag": "unspecified",
           "blocks": [
             {
               "kind": "markdown",
@@ -236,6 +237,7 @@
       "sections": [
         {
           "heading": "",
+          "shapeTag": "unspecified",
           "blocks": [
             {
               "kind": "table",

@@ -458,7 +458,11 @@ describe("createSessionManager", () => {
       stub.emit(sessionInfo("claude-session-1"))
       stub.emit(
         reportWithSections([
-          { heading: "", blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }] },
+          {
+            heading: "",
+            shapeTag: "unspecified",
+            blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }],
+          },
         ]),
       )
       await waitForBatch()
@@ -468,6 +472,11 @@ describe("createSessionManager", () => {
           at: 1_000,
           sessionId: "claude-session-1",
           figure: { figureKind: "none", noneReason: "unrecorded" },
+          shapeTags: {
+            sectionShapeTags: ["unspecified"],
+            forbiddenShapeSectionCount: 0,
+            forbiddenShapeBlocks: [],
+          },
           blockKinds: ["text"],
           blockFields: [],
           notations: [],
@@ -498,7 +507,11 @@ describe("createSessionManager", () => {
     describe("画像を読んだのに image が無い回", () => {
       const textOnly = (): SessionEvent =>
         reportWithSections([
-          { heading: "", blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }] },
+          {
+            heading: "",
+            shapeTag: "unspecified",
+            blocks: [{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }],
+          },
         ])
       const readStarted = (parentToolUseId: string | undefined): SessionEvent => ({
         kind: "tool-started",

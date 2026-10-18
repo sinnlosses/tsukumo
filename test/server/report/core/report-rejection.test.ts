@@ -176,6 +176,7 @@ describe("reportRejectionText", () => {
         withReason("no-shape", [
           {
             heading: "",
+            shapeTag: "unspecified",
             blocks: [flow, mermaid("sequenceDiagram\n  a ->> b: x"), text("架空の秘密の根拠。")],
           },
         ]),
@@ -188,16 +189,22 @@ describe("reportRejectionText", () => {
 
     it("no-shape で bullet の箇条や表しか無ければ違反にしない", () => {
       const bullet: ReportBlock = { ...flow, style: "bullet" }
-      expect(kinds(withReason("no-shape", [{ heading: "", blocks: [bullet] }]))).toEqual([])
+      expect(
+        kinds(withReason("no-shape", [{ heading: "", shapeTag: "unspecified", blocks: [bullet] }])),
+      ).toEqual([])
     })
 
     it("short-answer なのに節が2つ以上か、畳んだものも含め4文以上の地の文があれば違反になる", () => {
       const twoSections = withReason("short-answer", [
-        { heading: "架空の節1", blocks: [text("架空の根拠。")] },
-        { heading: "架空の節2", blocks: [text("架空の根拠。")] },
+        { heading: "架空の節1", shapeTag: "unspecified", blocks: [text("架空の根拠。")] },
+        { heading: "架空の節2", shapeTag: "unspecified", blocks: [text("架空の根拠。")] },
       ])
       const longFolded = withReason("short-answer", [
-        { heading: "", blocks: [text("架空の1文目。2文目。3文目。4文目。", "架空の畳み")] },
+        {
+          heading: "",
+          shapeTag: "unspecified",
+          blocks: [text("架空の1文目。2文目。3文目。4文目。", "架空の畳み")],
+        },
       ])
       expect(reportViolations(twoSections)).toEqual([
         { kind: "figure-contradiction", count: 2, reason: "short-answer" },
@@ -212,16 +219,16 @@ describe("reportRejectionText", () => {
       expect(
         kinds(
           withReason("short-answer", [
-            { heading: "", blocks: [text("架空の1文目。2文目。3文目。")] },
+            { heading: "", shapeTag: "unspecified", blocks: [text("架空の1文目。2文目。3文目。")] },
           ]),
         ),
       ).toEqual([])
     })
 
     it("ほかの理由・記録の無い理由・図を置いた回は見ない", () => {
-      const sections = [
-        { heading: "架空の節1", blocks: [flow] },
-        { heading: "架空の節2", blocks: [flow] },
+      const sections: readonly ReportSection[] = [
+        { heading: "架空の節1", shapeTag: "unspecified", blocks: [flow] },
+        { heading: "架空の節2", shapeTag: "unspecified", blocks: [flow] },
       ]
       for (const figure of [
         { kind: "none", reason: "single-value" },

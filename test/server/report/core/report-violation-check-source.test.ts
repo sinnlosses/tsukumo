@@ -127,7 +127,9 @@ describe("reportViolations", () => {
       }
       const both: ReportBlock = { ...pair, before: side("C"), after: side("D") }
       expect(
-        mermaidSourcesInSections([{ heading: "", blocks: [mermaid("A"), pair, both] }]),
+        mermaidSourcesInSections([
+          { heading: "", shapeTag: "unspecified", blocks: [mermaid("A"), pair, both] },
+        ]),
       ).toEqual(["A", "B", "C", "D"])
     })
 

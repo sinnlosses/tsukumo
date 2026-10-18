@@ -6,7 +6,7 @@ import { reportDraft } from "./report-event.ts"
 export const draft = (
   blocks: readonly ReportBlock[],
   conclusion = "架空の結論。",
-  sections: readonly ReportSection[] = [{ heading: "", blocks }],
+  sections: readonly ReportSection[] = [{ heading: "", shapeTag: "unspecified", blocks }],
 ): ReportDraft =>
   reportDraft({
     conclusion,

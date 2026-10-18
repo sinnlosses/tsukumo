@@ -123,6 +123,7 @@ describe("レポートの画像の棚", () => {
       sections: [
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [
             {
               kind: "image",

@@ -1,7 +1,7 @@
 // `report` の塊の使われ方の記録1行ぶんの中身。
 // 持つのはそのレポートに出た名前の集合と数だけで、塊の中身・逃げ道の文字は入れない。
 
-import { isPlainObject } from "remeda"
+import { groupBy, isPlainObject } from "remeda"
 
 import { readGraphSource } from "../../../shared/report/graph-source.ts"
 import {
@@ -10,8 +10,13 @@ import {
   sectionsWithFigure,
 } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
+import { isForbiddenBlock } from "../../../shared/report/report-shape-tag.ts"
 import type { ReportGenre, ReportTaskOutcome } from "../../../shared/report/report-task.ts"
-import type { ReportFigureUsage } from "../../../shared/report/report-usage-record.ts"
+import type {
+  ForbiddenShapeBlockUsage,
+  ReportFigureUsage,
+  ReportShapeTagUsage,
+} from "../../../shared/report/report-usage-record.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { reportImagePaths } from "./report-image-shelf.ts"
 import {
@@ -27,6 +32,8 @@ export type ReportUsageEntry = {
   readonly sessionId: string
   /** `figure` の欄の種類と、`none` の理由。 */
   readonly figure: ReportFigureUsage
+  /** 節の札と、札が許さない塊を使った節・組の数。 */
+  readonly shapeTags: ReportShapeTagUsage
   /** その回に出た塊の種類（`figure` の図を含む。重複無し）。 */
   readonly blockKinds: readonly string[]
   /** その回に出た塊の欄（`figure` の図を含む。重複無し）。 */
@@ -136,6 +143,7 @@ export function reportUsageEntryOf(
       event.figure.kind === "none"
         ? { figureKind: "none", noneReason: event.figure.reason }
         : { figureKind: event.figure.kind },
+    shapeTags: shapeTagUsageOf(event.sections),
     blockKinds: blockKindsOf(drawnSections),
     blockFields: blockFieldsOf(drawnSections),
     notations: notationsInSections(event.sections),
@@ -271,6 +279,23 @@ function howToVerifyUsageOf(
     hasUnverifiedCheck: unverified.length > 0,
     hasHowToVerify:
       unverified.length > 0 && unverified.every((check) => check.howToVerify.trim() !== ""),
+  }
+}
+
+function shapeTagUsageOf(sections: readonly ReportSection[]): ReportShapeTagUsage {
+  const forbiddenBySection = sections.map(({ shapeTag, blocks }) =>
+    shapeTag === "unspecified"
+      ? []
+      : blocks
+          .filter((block) => isForbiddenBlock(shapeTag, block))
+          .map((block) => ({ shapeTag, blockKind: block.kind })),
+  )
+  return {
+    sectionShapeTags: sections.map((section) => section.shapeTag),
+    forbiddenShapeSectionCount: forbiddenBySection.filter((uses) => uses.length > 0).length,
+    forbiddenShapeBlocks: Object.values(
+      groupBy(forbiddenBySection.flat(), (use) => `${use.shapeTag}/${use.blockKind}`),
+    ).map(([first, ...rest]): ForbiddenShapeBlockUsage => ({ ...first, count: rest.length + 1 })),
   }
 }
 

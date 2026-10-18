@@ -85,8 +85,8 @@ export const beforeAfterBlockSchema = z
     aside,
   })
   .describe(
-    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・構造の前後）。1行の設定や文言の変更には使わない（1つの値の前後は table のセルの from / to）。ファイル名の箇条書きで変更を説明しない。側ごとに image / code / points / mermaid / svg のどれか（左右で違ってよい）。構造の前後は graph の `+` / `-` / `~` の印、時間の順の前後は mermaid の側。" +
-      "向きの無い2つは compare、数の前後は stats の before、行ごとの差分は code の diff、寸法の前後は dimension の before",
+    "変更の前と後を左に前・右に後で並べ、間に矢印を置く（画面の撮影・構造の前後）。1行の設定や文言の変更には使わない。ファイル名の箇条書きで変更を説明しない。側ごとに image / code / points / mermaid / svg のどれか（左右で違ってよい）。時間の順の前後は mermaid の側。" +
+      "数の前後は stats の before、行ごとの差分は code の diff、寸法の前後は dimension の before",
   )
 
 const dimensionBefore = z.string().default("").describe("変わる前の値（前後を見せるときだけ）")
@@ -130,7 +130,7 @@ export const imageBlockSchema = z
     aside,
   })
   .describe(
-    "手で確かめた画面の画像1枚（何が見えたかを文で言い直さない。見る場所が2つ以上なら notes に並べる）。前後は beforeAfter。入れ子が主役の構成図は d2 で撮った PNG をこの塊で渡してよい（崩れたら graph に戻す）",
+    "手で確かめた画面の画像1枚（何が見えたかを文で言い直さない。見る場所が2つ以上なら notes に並べる）。入れ子が主役の構成図は d2 で撮った PNG をこの塊で渡してよい（崩れたら graph に戻す）",
   )
 
 /**
@@ -156,7 +156,7 @@ export const mermaidBlockSchema = z
     source: z
       .string()
       .describe(
-        `図のソース。種類は ${REPORT_MERMAID_KINDS.join(" / ")} の${String(REPORT_MERMAID_KINDS.length)}種だけ。flowchart は graph の塊で書く。` +
+        `図のソース。種類は ${REPORT_MERMAID_KINDS.join(" / ")} の${String(REPORT_MERMAID_KINDS.length)}種だけ。` +
           "ラベルの引用符・バッククォートは #quot; / #96; と書く",
       ),
     fold,
@@ -209,7 +209,7 @@ export const chartBlockSchema = z
     aside,
   })
   .describe(
-    "数の推移・割合。数が3つ以上で大小や傾きそのものを見せるとき（正確な値を読ませたいなら表）。色は書けない",
+    "数の推移・割合。数が3つ以上で大小や傾きそのものを見せるとき（正確な値を読ませたいなら表）",
   )
 
 export const svgBlockSchema = z
@@ -221,5 +221,5 @@ export const svgBlockSchema = z
     aside,
   })
   .describe(
-    "位置・重なりそのもの（画面の領域の配置・重なり方）を座標で描く。つながりだけなら graph・mermaid。色は書けない",
+    "位置・重なりそのもの（画面の領域の配置・重なり方）を座標で描く。つながりだけなら graph・mermaid",
   )

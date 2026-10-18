@@ -39,7 +39,9 @@ describe("reportViolations", () => {
     })
 
     it("見出しのある節の先頭の note は違反、見出しの無い節の先頭は通る", () => {
-      const titled: readonly ReportSection[] = [{ heading: "架空の見出し", blocks: [info()] }]
+      const titled: readonly ReportSection[] = [
+        { heading: "架空の見出し", shapeTag: "unspecified", blocks: [info()] },
+      ]
       expect(kinds(draft([], "架空の結論。", titled))).toEqual(["crowded-notes"])
       expect(kinds(draft([info()]))).toEqual([])
     })
@@ -52,7 +54,9 @@ describe("reportViolations", () => {
         fold: "",
         aside: "",
       })
-      const titled: readonly ReportSection[] = [{ heading: "架空の見出し", blocks: [ng(), note()] }]
+      const titled: readonly ReportSection[] = [
+        { heading: "架空の見出し", shapeTag: "unspecified", blocks: [ng(), note()] },
+      ]
       expect(kinds(draft([], "架空の結論。", titled))).toEqual([])
     })
   })

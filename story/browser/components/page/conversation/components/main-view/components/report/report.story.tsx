@@ -65,6 +65,7 @@ export const AutoAlignedTable = {
       [
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [
             {
               kind: "table",
@@ -94,10 +95,12 @@ export const Sections = {
       [
         {
           heading: "架空の一の節",
+          shapeTag: "unspecified",
           blocks: [{ kind: "text", text: "この節には見出しがある（架空）。", fold: "", aside: "" }],
         },
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [
             {
               kind: "text",
@@ -109,6 +112,7 @@ export const Sections = {
         },
         {
           heading: "架空の三の節",
+          shapeTag: "unspecified",
           blocks: [
             {
               kind: "markdown",

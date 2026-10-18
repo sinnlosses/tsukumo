@@ -17,10 +17,109 @@ function reportOfSections(
 }
 
 describe("reportUsageEntryOf", () => {
+  describe("節の札と、札が許さない塊", () => {
+    const text = (value: string): ReportBlock => ({
+      kind: "text",
+      text: value,
+      fold: "",
+      aside: "",
+    })
+    const list = (count: number): ReportBlock => ({
+      kind: "list",
+      style: "bullet",
+      items: Array.from({ length: count }, () => ({ label: "", text: "架空", done: false })),
+      fold: "",
+      aside: "",
+    })
+    const table = (columns: readonly [string, ...string[]]): ReportBlock => ({
+      kind: "table",
+      title: "",
+      columns,
+      rows: [columns.map(() => "架空"), columns.map(() => "架空")],
+      rest: "",
+      fold: "",
+      aside: "",
+    })
+    const graph: ReportBlock = {
+      kind: "graph",
+      title: "",
+      direction: "TD",
+      source: "架空A -> 架空B: 渡す",
+      fold: "",
+      aside: "",
+    }
+    const usageOf = (shapeTag: ReportSection["shapeTag"], block: ReportBlock) =>
+      reportUsageEntryOf(
+        reportOfSections([{ heading: "", shapeTag, blocks: [block, block] }]),
+        "claude-session-1",
+        1_000,
+        false,
+      ).shapeTags
+
+    it.each([
+      ["cause", list(2), "list"],
+      ["quantity", text("架空は 1 から 2 へ、3 件"), "text"],
+      ["parallel", table(["架空の項目", "架空の属性"]), "table"],
+      ["single", list(1), "list"],
+    ] as const)("%s の札の節の %o は許さない組に数える", (shapeTag, block, blockKind) => {
+      expect(usageOf(shapeTag, block)).toEqual({
+        sectionShapeTags: [shapeTag],
+        forbiddenShapeSectionCount: 1,
+        forbiddenShapeBlocks: [{ shapeTag, blockKind, count: 2 }],
+      })
+    })
+
+    it.each([
+      ["cause", graph],
+      ["quantity", text("架空は 1 から 2 へ")],
+      ["parallel", table(["架空の項目", "架空の属性1", "架空の属性2"])],
+      ["unspecified", list(1)],
+    ] as const)("%s の札の節の %o は数えない", (shapeTag, block) => {
+      expect(usageOf(shapeTag, block)).toEqual({
+        sectionShapeTags: [shapeTag],
+        forbiddenShapeSectionCount: 0,
+        forbiddenShapeBlocks: [],
+      })
+    })
+
+    it("節ごとの札を順に持ち、figure の図は節に数えない", () => {
+      const entry = reportUsageEntryOf(
+        reportEvent({
+          figure: {
+            kind: "graph",
+            title: "",
+            direction: "TD",
+            source: "架空A -> 架空B: 渡す",
+            fold: "",
+            aside: "",
+          },
+          sections: [
+            { heading: "架空の節1", shapeTag: "cause", blocks: [list(2)] },
+            { heading: "架空の節2", shapeTag: "unspecified", blocks: [list(2)] },
+            { heading: "架空の節3", shapeTag: "cause", blocks: [table(["a", "b", "c"])] },
+          ],
+        }),
+        "claude-session-1",
+        1_000,
+        false,
+      )
+
+      expect(entry.shapeTags).toEqual({
+        sectionShapeTags: ["cause", "unspecified", "cause"],
+        forbiddenShapeSectionCount: 2,
+        forbiddenShapeBlocks: [
+          { shapeTag: "cause", blockKind: "list", count: 1 },
+          { shapeTag: "cause", blockKind: "table", count: 1 },
+        ],
+      })
+    })
+  })
+
   it("塊の種類は節をまたいで重複を畳んだ集合にする", () => {
     const event = reportOfSections([
       {
         heading: "架空の節1",
+        shapeTag: "unspecified",
         blocks: [
           { kind: "text", text: "架空の根拠。", fold: "", aside: "" },
           {
@@ -36,6 +135,7 @@ describe("reportUsageEntryOf", () => {
       },
       {
         heading: "架空の節2",
+        shapeTag: "unspecified",
         blocks: [{ kind: "text", text: "架空の根拠その2。", fold: "", aside: "" }],
       },
     ])
@@ -124,7 +224,7 @@ describe("reportUsageEntryOf", () => {
       ["blockAside（空白だけ）", text(" "), []],
     ] as const)("%s の欄", (_, block, expected) => {
       const entry = reportUsageEntryOf(
-        reportOfSections([{ heading: "", blocks: [block] }]),
+        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }]),
         "claude-session-1",
         1_000,
         false,
@@ -180,7 +280,7 @@ describe("reportUsageEntryOf", () => {
 
     for (const row of table) {
       const event = reportEvent({
-        sections: [{ heading: "", blocks: row.blocks }],
+        sections: [{ heading: "", shapeTag: "unspecified", blocks: row.blocks }],
         task: row.task ? task : { kind: "none" },
       })
       const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
@@ -195,6 +295,7 @@ describe("reportUsageEntryOf", () => {
     const event = reportOfSections([
       {
         heading: "架空の節1",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "table",
@@ -219,6 +320,7 @@ describe("reportUsageEntryOf", () => {
       },
       {
         heading: "架空の節2",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "list",
@@ -255,6 +357,7 @@ describe("reportUsageEntryOf", () => {
       reportOfSections([
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [
             { kind: "table", title: "", columns: ["a", "b"], rows, rest: "", fold: "", aside: "" },
           ],
@@ -328,7 +431,7 @@ describe("reportUsageEntryOf", () => {
       ],
     ] as const)("%s", (_, blocks, expected) => {
       const entry = reportUsageEntryOf(
-        reportOfSections([{ heading: "架空の節", blocks }]),
+        reportOfSections([{ heading: "架空の節", shapeTag: "unspecified", blocks }]),
         "claude-session-1",
         1_000,
         false,
@@ -347,6 +450,7 @@ describe("reportUsageEntryOf", () => {
       at: 12_345,
       sessionId: "claude-session-9",
       figure: { figureKind: "none", noneReason: "unrecorded" },
+      shapeTags: { sectionShapeTags: [], forbiddenShapeSectionCount: 0, forbiddenShapeBlocks: [] },
       blockKinds: [],
       blockFields: [],
       notations: [],
@@ -375,7 +479,7 @@ describe("reportUsageEntryOf", () => {
   describe("hasFigure", () => {
     const figureOf = (block: ReportBlock): boolean =>
       reportUsageEntryOf(
-        reportOfSections([{ heading: "", blocks: [block] }]),
+        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }]),
         "claude-session-1",
         1_000,
         false,
@@ -436,7 +540,7 @@ describe("reportUsageEntryOf", () => {
   describe("readImageWithoutImageBlock", () => {
     const entryOf = (blocks: readonly ReportBlock[], mainReadImageFile: boolean) =>
       reportUsageEntryOf(
-        reportOfSections([{ heading: "", blocks }]),
+        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks }]),
         "claude-session-1",
         1_000,
         mainReadImageFile,
@@ -470,7 +574,7 @@ describe("reportUsageEntryOf", () => {
   describe("強調と graph の数", () => {
     const entryOf = (blocks: readonly ReportBlock[]) =>
       reportUsageEntryOf(
-        reportOfSections([{ heading: "", blocks }]),
+        reportOfSections([{ heading: "", shapeTag: "unspecified", blocks }]),
         "claude-session-1",
         1_000,
         false,
@@ -645,7 +749,7 @@ describe("reportUsageEntryOf", () => {
       ],
       ["行番号の無いパス", { kind: "text", text: "src/a.ts を読んだ", fold: "", aside: "" }, false],
     ] as const)("%s なら出典の有無は %s", (_, block, expected) => {
-      const event = reportOfSections([{ heading: "", blocks: [block] }])
+      const event = reportOfSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }])
 
       expect(reportUsageEntryOf(event, "claude-session-1", 1_000, false).hasSourceReference).toBe(
         expected,

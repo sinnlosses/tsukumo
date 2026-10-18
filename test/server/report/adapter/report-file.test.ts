@@ -13,6 +13,7 @@ import type { ReportSection } from "../../../../src/shared/report/report-block.t
 const sectionsOf = (paths: readonly string[]): readonly ReportSection[] => [
   {
     heading: "",
+    shapeTag: "unspecified",
     blocks: paths.map((path) => ({
       kind: "code" as const,
       language: "text",

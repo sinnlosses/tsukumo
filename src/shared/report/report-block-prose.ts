@@ -8,7 +8,7 @@ import { MAX_ITEM_LABEL } from "./report-limit.ts"
 export const textBlockSchema = z.object({
   kind: z.literal("text"),
   text: inlineText.describe(
-    "地の文。3文まで（4文目が要るなら表・箇条書きへ移すか fold で畳む）。結論に効く数が3つ以上並び前後か推移を見せるなら stats",
+    "地の文。3文まで。結論に効く数が3つ以上並び前後か推移を見せるなら stats",
   ),
   fold,
   aside,
@@ -19,7 +19,7 @@ export const listBlockSchema = z.object({
   style: z
     .enum(["bullet", "ordered", "check", "flow"])
     .describe(
-      "bullet は発見の一覧（候補の採否は options、ファイルは files。項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び / " +
+      "bullet は発見の一覧（項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び / " +
         "flow は段ごとに文が要る一本道（A → B → C と書かず項目を段にする。段の名前が短い一本道・分岐・合流・戻りがあるなら graph）",
     ),
   items: z
@@ -35,7 +35,7 @@ export const listBlockSchema = z.object({
       }),
     )
     .min(1)
-    .describe("10件まで。超えるなら上位を残し、最後の項目を「ほか n 件」にする"),
+    .describe("10件まで"),
   fold,
   aside,
 })
@@ -87,7 +87,7 @@ export const codeBlockSchema = z
         "実物の一部を引くときだけ付ける（cwd からの相対パスか絶対パス。`~` は使わない）。" +
           "中身がそのファイルの連続した一部と一致しないと差し戻される。案には付けない",
       ),
-    source: z.string().describe("marks の無いコードは45行まで。超えるなら要る範囲だけを引く"),
+    source: z.string().describe("marks の無いコードは45行まで"),
     marks: z
       .array(
         z.object({

@@ -1573,6 +1573,7 @@
             "sections": [
               {
                 "heading": "目盛りの置き場所は設定ファイル（架空）",
+                "shapeTag": "choice",
                 "blocks": [
                   {
                     "kind": "options",
@@ -1756,6 +1757,7 @@
             "sections": [
               {
                 "heading": "架空の件数の推移",
+                "shapeTag": "quantity",
                 "blocks": [
                   {
                     "kind": "chart",

@@ -28,16 +28,12 @@ export const tableBlockSchema = z
       .array(z.array(cellSchema))
       .min(1)
       .describe("行ごとのセル。数は columns と揃える。セルは1行、空にせず「なし」と書く"),
-    rest: inlineText
-      .default("")
-      .describe(
-        "切った残りを1行で（「ほか 12 件（0.5% 未満）」）。行が10を超えるなら上位10行までを rows に置き、残りをここに書く",
-      ),
+    rest: inlineText.default("").describe("切った残りを1行で（「ほか 12 件（0.5% 未満）」）"),
     fold,
     aside,
   })
   .describe(
-    "比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options、交点が状態だけなら matrix）。行は大きさか重要度の順（1列目のあいうえお順にしない）。単位は見出しに1回だけ書きセルに書かない。セルは語句・数・状態にする（セルの平均が35字以上の列は差し戻し。文の列は label 付きの list か文の塊へ）。2行以下なら表にせず label 付きの list か文に",
+    "比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options、交点が状態だけなら matrix）。行は大きさか重要度の順（1列目のあいうえお順にしない）。単位は見出しに1回だけ書きセルに書かない。セルは語句・数・状態にする（セルの平均が35字以上の列は差し戻し。文の列は label 付きの list か文の塊へ）",
   )
 
 export const REPORT_MATRIX_STATUSES = ["ok", "warn", "ng", "na"] as const
@@ -114,7 +110,7 @@ export const statsBlockSchema = z
     aside,
   })
   .describe(
-    "結論に効く数（件数・前後の差）。数が3〜4個並び、前後か推移を見せるとき。2つ以下の数は結論か本文の文に入れる。推移の形が要る数には series、増減の良い向きが要る数には better",
+    "結論に効く数（件数・前後の差）。数が3〜4個並び、前後か推移を見せるとき。推移の形が要る数には series、増減の良い向きが要る数には better",
   )
 
 const REPORT_OPTION_VERDICTS = ["adopt", "consider", "reject"] as const

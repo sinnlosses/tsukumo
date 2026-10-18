@@ -10,6 +10,7 @@
 // 報告の種類と必須の塊が無い割合は、版9以降の task の行を分母にする。
 // 2行以下の表のあるレポートの割合は、版10以降の行を分母にする。
 // 欄の表の `blockAside`（塊の傍注）は版12から記録している（それより前の行には出ない）。
+// 札 × 節数と、札が許さない塊を使った節・組の数は、版13以降の行の節を分母にする。
 //
 // 使い方:
 //   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -18,6 +19,7 @@
 import process from "node:process"
 import { parseArgs } from "node:util"
 
+import { groupBy } from "remeda"
 import { z } from "zod"
 
 import { dateFileNames, readJsonLines } from "../../src/server/adapter/lib/jsonl.ts"
@@ -34,6 +36,7 @@ import {
   REPORT_FIGURE_NONE_REASONS,
   reportFigureSchema,
 } from "../../src/shared/report/report-block.ts"
+import { REPORT_SHAPE_TAGS } from "../../src/shared/report/report-shape-tag.ts"
 import { REPORT_GENRES } from "../../src/shared/report/report-task.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 
@@ -124,6 +127,17 @@ const SERIES_FORMAT_VERSION = 11
 /** 欄 `blockAside` を記録し始めた版。行の形は版10と同じ。 */
 const BLOCK_ASIDE_FORMAT_VERSION = 12
 
+/** 節の札と、札が許さない塊の数を記録し始めた版。 */
+const SHAPE_TAG_FORMAT_VERSION = 13
+
+const shapeTagRecordShape = {
+  sectionShapeTags: z.array(z.string()),
+  forbiddenShapeSectionCount: z.number(),
+  forbiddenShapeBlocks: z.array(
+    z.object({ shapeTag: z.string(), blockKind: z.string(), count: z.number() }),
+  ),
+}
+
 const recordSchema = z.union([
   z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
   z.object({
@@ -178,6 +192,17 @@ const recordSchema = z.union([
       ...shortTableRecordShape,
     })
     .and(figureFieldSchema),
+  z
+    .object({
+      v: z.literal(SHAPE_TAG_FORMAT_VERSION),
+      ...figureRecordShape,
+      ...countRecordShape,
+      ...howToVerifyRecordShape,
+      ...genreRecordShape,
+      ...shortTableRecordShape,
+      ...shapeTagRecordShape,
+    })
+    .and(figureFieldSchema),
 ])
 type UsageRecord = z.infer<typeof recordSchema>
 type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[] }>
@@ -187,6 +212,7 @@ type CountRecord = Extract<UsageRecord, { readonly emphasisCount: number }>
 type HowToVerifyRecord = Extract<UsageRecord, { readonly hasHowToVerify: boolean }>
 type GenreRecord = Extract<UsageRecord, { readonly taskGenre: string }>
 type ShortTableRecord = Extract<UsageRecord, { readonly shortTable: boolean }>
+type ShapeTagRecord = Extract<UsageRecord, { readonly forbiddenShapeSectionCount: number }>
 
 /** `figure` の表に出す種類。0件でも出す。 */
 const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
@@ -209,6 +235,7 @@ const rejectionSchema = z.object({
     z.literal(SHORT_TABLE_FORMAT_VERSION),
     z.literal(SERIES_FORMAT_VERSION),
     z.literal(BLOCK_ASIDE_FORMAT_VERSION),
+    z.literal(SHAPE_TAG_FORMAT_VERSION),
   ]),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),
@@ -254,6 +281,9 @@ const genreTaskRecords = records.filter(
 const shortTableRecords = records.filter(
   (record): record is ShortTableRecord => record.v >= SHORT_TABLE_FORMAT_VERSION,
 )
+const shapeTagRecords = records.filter(
+  (record): record is ShapeTagRecord => record.v >= SHAPE_TAG_FORMAT_VERSION,
+)
 process.stdout.write(
   fieldRecords.length === 0
     ? "塊の欄 × レポート数: 欄を記録した行が無い"
@@ -280,6 +310,8 @@ process.stdout.write("\n\n")
 process.stdout.write(genreSection(genreTaskRecords))
 process.stdout.write("\n\n")
 process.stdout.write(shortTableSection(shortTableRecords))
+process.stdout.write("\n\n")
+process.stdout.write(shapeTagSection(shapeTagRecords))
 process.stdout.write("\n\n")
 process.stdout.write(
   table("逃げ道の外の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
@@ -555,6 +587,42 @@ function shortTableSection(rows: readonly ShortTableRecord[]): string {
       rows.filter((record) => record.forTask),
       (record) => record.shortTable,
     ),
+  ].join("\n")
+}
+
+/** 札 × 節数と、札が許さない塊を使った節の数・許さない組 × 塊の数。分母は版13以降の行の節。 */
+function shapeTagSection(rows: readonly ShapeTagRecord[]): string {
+  if (rows.length === 0) {
+    return "節の札: 記録した行が無い"
+  }
+  const tags = rows.flatMap((record) => record.sectionShapeTags)
+  const taggedCount = tags.filter((tag) => tag !== "unspecified").length
+  const forbiddenSections = rows.reduce(
+    (total, record) => total + record.forbiddenShapeSectionCount,
+    0,
+  )
+  const pairs = Object.entries(
+    groupBy(
+      rows.flatMap((record) => record.forbiddenShapeBlocks),
+      (use) => `${use.shapeTag} × ${use.blockKind}`,
+    ),
+  ).map(([pair, uses]) => ({ pair, count: uses.reduce((total, use) => total + use.count, 0) }))
+  const percentOf = (count: number, total: number): string =>
+    (total === 0 ? 0 : (count / total) * 100).toFixed(1)
+  return [
+    `札 × 節数（版13以降の${String(rows.length)}件の節${String(tags.length)}個のうち。外す基準の対象ではない）:`,
+    ...[...REPORT_SHAPE_TAGS, "unspecified"].map((tag) => {
+      const count = tags.filter((written) => written === tag).length
+      return `  ${tag.padEnd(26)} ${String(count).padStart(5)}  ${percentOf(count, tags.length).padStart(5)}%`
+    }),
+    "",
+    `札が許さない塊を使った節（札を書いた節${String(taggedCount)}個のうち。差し戻しにしない）: ${String(forbiddenSections)}  ${percentOf(forbiddenSections, taggedCount)}%`,
+    "札が許さない組 × 塊の数:",
+    ...(pairs.length === 0
+      ? ["  （無い）"]
+      : pairs
+          .toSorted((left, right) => right.count - left.count)
+          .map(({ pair, count }) => `  ${pair.padEnd(26)} ${String(count).padStart(5)}`)),
   ].join("\n")
 }
 

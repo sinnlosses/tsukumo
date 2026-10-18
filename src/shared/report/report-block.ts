@@ -29,6 +29,7 @@ import {
   textBlockSchema,
 } from "./report-block-prose.ts"
 import { MAX_HEADING } from "./report-limit.ts"
+import { type RecordedReportShapeTag, REPORT_SHAPE_TAGS } from "./report-shape-tag.ts"
 
 // `report` の schema で `figure` と `sections` が共有する塊。名前を外すと両方に複製され、ツール定義が約1万字増える
 const namedBeforeAfter = beforeAfterBlockSchema.meta({ id: "BeforeAfterBlock" })
@@ -121,7 +122,9 @@ export function sectionsWithFigure(
   figure: RecordedReportFigure,
   sections: readonly ReportSection[],
 ): readonly ReportSection[] {
-  return figure.kind === "none" ? sections : [{ heading: "", blocks: [figure] }, ...sections]
+  return figure.kind === "none"
+    ? sections
+    : [{ heading: "", shapeTag: "unspecified", blocks: [figure] }, ...sections]
 }
 
 export const reportSectionSchema = z.object({
@@ -131,10 +134,21 @@ export const reportSectionSchema = z.object({
     .describe(
       `その節の結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。${String(MAX_HEADING)}字以内で、疑問文にしない。節が1つなら省いてよく、2つ以上なら全部に付ける`,
     ),
+  shapeTag: z
+    .enum(REPORT_SHAPE_TAGS)
+    .optional()
+    .describe(
+      "その節が表す内容の形（形の札）。節の要点を1文にし、上から問いを当てて最初に当たった札にする: 1. 要素は1つか → single / 2. 要素の間に向きのある関係があるか → cause・connection・position・state（状態の移り）・time・order / 3. 数が主役か → quantity / 4. 候補を採否するか、2つの側を比べるか → choice・comparison・boundary（どこまでが対象か） / 5. 項目が2つ以上の属性を持つか → attribute・mapping（どれがどこへ） / 6. どれでもない → parallel",
+    ),
   blocks: z.array(reportBlockSchema).min(1),
 })
 
-export type ReportSection = DeepReadonly<z.infer<typeof reportSectionSchema>>
+/** 読み戻した節。札を省いた節は `unspecified`。 */
+export type ReportSection = {
+  readonly heading: string
+  readonly shapeTag: RecordedReportShapeTag
+  readonly blocks: readonly ReportBlock[]
+}
 
 /**
  * 文字列の本文（`sections` に切り替える前の `report` の `body`）を節に畳む。空白だけなら節は無く、それ以外は見出しの無い節1つに
@@ -144,7 +158,13 @@ export function reportSectionsOfBody(body: string): readonly ReportSection[] {
   const markdown = body.replace(/^(?:[ \t]*\n)+/, "").trimEnd()
   return markdown === ""
     ? []
-    : [{ heading: "", blocks: [{ kind: "markdown", markdown, fold: "", aside: "" }] }]
+    : [
+        {
+          heading: "",
+          shapeTag: "unspecified",
+          blocks: [{ kind: "markdown", markdown, fold: "", aside: "" }],
+        },
+      ]
 }
 
 /**
@@ -175,12 +195,12 @@ export function parseReportSections(value: unknown): ParsedReportSections {
     return section.success ? [section.data] : []
   })
   return {
-    sections: parsed.flatMap(({ heading, blocks }) => {
+    sections: parsed.flatMap(({ heading, shapeTag, blocks }) => {
       const valid = blocks.flatMap((block) => {
         const parsedBlock = reportBlockSchema.safeParse(block)
         return parsedBlock.success ? [parsedBlock.data] : []
       })
-      return valid.length === 0 ? [] : [{ heading, blocks: valid }]
+      return valid.length === 0 ? [] : [{ heading, shapeTag, blocks: valid }]
     }),
     unknownBlockCount: parsed.flatMap(({ blocks }) => blocks).filter(isUnknownKindBlock).length,
   }
@@ -192,9 +212,10 @@ export function parseReportFigure(value: unknown): RecordedReportFigure {
   return figure.success ? figure.data : { kind: "none", reason: "unrecorded" }
 }
 
-/** 塊を1つずつ検証するために、節の見出しだけを先に読む形。 */
+/** 塊を1つずつ検証するために、節の見出しと札だけを先に読む形。札が無い・列挙の外なら `unspecified`。 */
 const looseSectionSchema = z.object({
   heading: reportSectionSchema.shape.heading,
+  shapeTag: z.union([z.enum(REPORT_SHAPE_TAGS), z.literal("unspecified")]).catch("unspecified"),
   blocks: z.array(z.unknown()),
 })
 

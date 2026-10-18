@@ -38,6 +38,11 @@ function entry(
     at: when,
     sessionId,
     figure,
+    shapeTags: {
+      sectionShapeTags: ["cause", "unspecified"],
+      forbiddenShapeSectionCount: 1,
+      forbiddenShapeBlocks: [{ shapeTag: "cause", blockKind: "table", count: 1 }],
+    },
     blockKinds: ["text", "table"],
     blockFields: ["tableChange"],
     notations: ["list"],
@@ -80,7 +85,7 @@ describe("createReportUsageLog", () => {
     expect(readLines("2026-09-23.jsonl").length).toBe(1)
   })
 
-  it("1行の鍵は版・日時・セッションID・figure の種類と理由・塊の種類と欄・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", () => {
+  it("1行の鍵は版・日時・セッションID・figure の種類と理由・節の札と許さない塊の数・塊の種類と欄・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", () => {
     const log = createReportUsageLog(root())
 
     log.append(entry(at(9, 0)))
@@ -92,6 +97,9 @@ describe("createReportUsageLog", () => {
       "sessionId",
       "figureKind",
       "noneReason",
+      "sectionShapeTags",
+      "forbiddenShapeSectionCount",
+      "forbiddenShapeBlocks",
       "blockKinds",
       "blockFields",
       "notations",
@@ -120,6 +128,9 @@ describe("createReportUsageLog", () => {
       sessionId: "claude-session-1",
       figureKind: "none",
       noneReason: "short-answer",
+      sectionShapeTags: ["cause", "unspecified"],
+      forbiddenShapeSectionCount: 1,
+      forbiddenShapeBlocks: [{ shapeTag: "cause", blockKind: "table", count: 1 }],
       blockKinds: ["text", "table"],
       blockFields: ["tableChange"],
       notations: ["list"],

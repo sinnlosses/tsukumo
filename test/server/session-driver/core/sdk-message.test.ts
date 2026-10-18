@@ -1089,6 +1089,7 @@ describe("toSessionEvents（report ツール）", () => {
         sections: [
           {
             heading: "",
+            shapeTag: "unspecified",
             blocks: [{ kind: "markdown", markdown: "## 架空の見出し", fold: "", aside: "" }],
           },
         ],

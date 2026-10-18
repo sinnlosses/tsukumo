@@ -51,6 +51,7 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     at: isoWithOffset(entry.at),
     sessionId: entry.sessionId,
     ...entry.figure,
+    ...entry.shapeTags,
     blockKinds: entry.blockKinds,
     blockFields: entry.blockFields,
     notations: entry.notations,

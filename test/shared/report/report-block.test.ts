@@ -21,6 +21,7 @@ describe("reportSectionsOfBody", () => {
     expect(reportSectionsOfBody("\n\n    架空の字下げ\n\n架空の本文。  \n")).toEqual([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           { kind: "markdown", markdown: "    架空の字下げ\n\n架空の本文。", fold: "", aside: "" },
         ],
@@ -35,6 +36,7 @@ describe("stats の個数の説明", () => {
     parseReportSections([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [{ kind: "stats", items: Array.from({ length: count }, () => item), fold: "" }],
       },
     ]).sections[0]?.blocks[0]
@@ -55,12 +57,23 @@ describe("stats の個数の説明", () => {
 })
 
 describe("parseReportSections", () => {
+  it.each([
+    ["札を書いた節はその札", { shapeTag: "cause" }, "cause"],
+    ["札を省いた節は unspecified", {}, "unspecified"],
+    ["列挙の外の札は unspecified", { shapeTag: "架空の札" }, "unspecified"],
+  ] as const)("%s", (_, tag, expected) => {
+    expect(
+      parseReportSections([{ heading: "", ...tag, blocks: [text("架空の本文。")] }]).sections,
+    ).toEqual([{ heading: "", shapeTag: expected, blocks: [text("架空の本文。")] }])
+  })
+
   it("stats の total は省くと空文字になり、渡せば残る", () => {
     const item = { before: "", value: "1", label: "架空" }
     const parse = (extra: object): unknown =>
       parseReportSections([
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [
             { kind: "stats", items: [{ ...item, ...extra }, item, item], fold: "", aside: "" },
           ],
@@ -79,6 +92,7 @@ describe("parseReportSections", () => {
       parseReportSections([
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [{ kind: "stats", items: [{ ...item, ...extra }, item, item], fold: "" }],
         },
       ]).sections[0]?.blocks[0]
@@ -98,6 +112,7 @@ describe("parseReportSections", () => {
       parseReportSections([
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [{ kind: "table", title: "", columns: ["a", "b"], rows: [["1", "2"]], ...extra }],
         },
       ]).sections[0]?.blocks[0]
@@ -108,7 +123,7 @@ describe("parseReportSections", () => {
 
   it("code の marks は省くと空になり、形の違う印は塊ごと受けない", () => {
     const parse = (block: object): unknown =>
-      parseReportSections([{ heading: "", blocks: [block] }])
+      parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }])
     const code = { kind: "code", language: "ts", source: "架空" }
 
     expect(parse(code)).toMatchObject({ sections: [{ blocks: [{ marks: [], path: "" }] }] })
@@ -125,6 +140,7 @@ describe("parseReportSections", () => {
     const blocks = parseReportSections([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           { kind: "text", text: "架空の本文。" },
           { kind: "note", tone: "memo", text: "架空の覚え書き。", aside: "架空の出典" },
@@ -152,10 +168,10 @@ describe("parseReportSections", () => {
       aside: "",
     }
     const parse = (block: object): unknown =>
-      parseReportSections([{ heading: "", blocks: [block] }])
+      parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }])
 
     expect(parse(beforeAfter)).toEqual({
-      sections: [{ heading: "", blocks: [beforeAfter] }],
+      sections: [{ heading: "", shapeTag: "unspecified", blocks: [beforeAfter] }],
       unknownBlockCount: 0,
     })
     expect(
@@ -177,7 +193,7 @@ describe("parseReportSections", () => {
       source: "(架空の始点) -> 架空の処理",
     }
     const parse = (block: object): unknown =>
-      parseReportSections([{ heading: "", blocks: [block] }])
+      parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }])
     const beforeAfter = (before: object, after: object) => ({
       kind: "beforeAfter",
       title: "",
@@ -202,10 +218,10 @@ describe("parseReportSections", () => {
     const side = { heading: "案A", points: ["架空の1行"] }
     const compare = { kind: "compare", title: "", sides: [side, side], fold: "", aside: "" }
     const parse = (block: object): unknown =>
-      parseReportSections([{ heading: "", blocks: [block] }])
+      parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }])
 
     expect(parse(compare)).toEqual({
-      sections: [{ heading: "", blocks: [compare] }],
+      sections: [{ heading: "", shapeTag: "unspecified", blocks: [compare] }],
       unknownBlockCount: 0,
     })
     for (const broken of [
@@ -220,13 +236,18 @@ describe("parseReportSections", () => {
   it("dimension の塊は領域と余白の混じった並びを受け、省いた size と before を空文字で補う", () => {
     const parse = (parts: readonly object[]): unknown =>
       parseReportSections([
-        { heading: "", blocks: [{ kind: "dimension", title: "", parts, fold: "", aside: "" }] },
+        {
+          heading: "",
+          shapeTag: "unspecified",
+          blocks: [{ kind: "dimension", title: "", parts, fold: "", aside: "" }],
+        },
       ])
 
     expect(parse([{ name: "架空の見出し" }, { gap: "26px", before: "28px" }])).toEqual({
       sections: [
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [
             {
               kind: "dimension",
@@ -262,10 +283,12 @@ describe("parseReportSections", () => {
     }
     const broken = { ...matrix, rows: [{ name: "行1", cells: ["ok", "good"] }] }
 
-    expect(parseReportSections([{ heading: "", blocks: [matrix] }]).sections).toEqual([
-      { heading: "", blocks: [matrix] },
-    ])
-    expect(parseReportSections([{ heading: "", blocks: [broken] }])).toEqual({
+    expect(
+      parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: [matrix] }]).sections,
+    ).toEqual([{ heading: "", shapeTag: "unspecified", blocks: [matrix] }])
+    expect(
+      parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: [broken] }]),
+    ).toEqual({
       sections: [],
       unknownBlockCount: 0,
     })
@@ -275,9 +298,13 @@ describe("parseReportSections", () => {
     const image = { kind: "image", path: "架空/after.png", caption: "架空の画面" }
     const annotated = { ...image, notes: ["左上の架空の帯"] }
 
-    expect(parseReportSections([{ heading: "", blocks: [image, annotated] }]).sections).toEqual([
+    expect(
+      parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: [image, annotated] }])
+        .sections,
+    ).toEqual([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           { ...image, notes: [], fold: "", aside: "" },
           { ...annotated, fold: "", aside: "" },
@@ -286,8 +313,8 @@ describe("parseReportSections", () => {
     ])
     expect(
       parseReportSections([
-        { heading: "", blocks: [{ kind: "image", caption: "架空" }] },
-        { heading: "", blocks: [{ kind: "image", path: "架空.png" }] },
+        { heading: "", shapeTag: "unspecified", blocks: [{ kind: "image", caption: "架空" }] },
+        { heading: "", shapeTag: "unspecified", blocks: [{ kind: "image", path: "架空.png" }] },
       ]),
     ).toEqual({ sections: [], unknownBlockCount: 0 })
   })
@@ -301,9 +328,13 @@ describe("parseReportSections", () => {
       series: [{ name: "架空の系列", values: [1] }],
     }
 
-    expect(parseReportSections([{ heading: "", blocks: [mermaid, chart] }]).sections).toEqual([
+    expect(
+      parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: [mermaid, chart] }])
+        .sections,
+    ).toEqual([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           { ...mermaid, title: "", fold: "", aside: "" },
           { ...chart, title: "", horizontal: false, fold: "", aside: "" },
@@ -322,7 +353,9 @@ describe("parseReportSections", () => {
       ],
     }
     const parsed = (chartKind: string) =>
-      parseReportSections([{ heading: "", blocks: [{ ...chart, chartKind }] }])
+      parseReportSections([
+        { heading: "", shapeTag: "unspecified", blocks: [{ ...chart, chartKind }] },
+      ])
 
     expect(parsed("arrow").sections[0]?.blocks).toHaveLength(1)
     expect(parsed("slope").sections[0]?.blocks).toHaveLength(1)
@@ -338,9 +371,12 @@ describe("parseReportSections", () => {
     const svg = { kind: "svg", width: 200, height: 100, shapes: [rect, line, text] }
 
     it("rect・line・text の3種を読み、省いた label・emphasis・arrow・title・fold を補う", () => {
-      expect(parseReportSections([{ heading: "", blocks: [svg] }]).sections).toEqual([
+      expect(
+        parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: [svg] }]).sections,
+      ).toEqual([
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [
             {
               ...svg,
@@ -361,7 +397,11 @@ describe("parseReportSections", () => {
     it("beforeAfter の側に置ける", () => {
       const side = { kind: "svg", width: 200, height: 100, shapes: [text] }
       const { sections } = parseReportSections([
-        { heading: "", blocks: [{ kind: "beforeAfter", title: "t", before: side, after: side }] },
+        {
+          heading: "",
+          shapeTag: "unspecified",
+          blocks: [{ kind: "beforeAfter", title: "t", before: side, after: side }],
+        },
       ])
 
       expect(sections).toHaveLength(1)
@@ -375,7 +415,9 @@ describe("parseReportSections", () => {
         { ...svg, shapes: [{ ...rect, width: -1 }] },
       ]
 
-      expect(parseReportSections([{ heading: "", blocks: broken }])).toEqual({
+      expect(
+        parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: broken }]),
+      ).toEqual({
         sections: [],
         unknownBlockCount: 0,
       })
@@ -389,9 +431,9 @@ describe("parseReportSections", () => {
       source: "(架空の始点) -> 架空の処理",
     }
     const blocksOf = (block: unknown) =>
-      parseReportSections([{ heading: "", blocks: [block] }]).sections.flatMap(
-        (section) => section.blocks,
-      )
+      parseReportSections([
+        { heading: "", shapeTag: "unspecified", blocks: [block] },
+      ]).sections.flatMap((section) => section.blocks)
 
     it("通り、title・fold は空文字で補う", () => {
       expect(blocksOf(graph)).toEqual([{ ...graph, title: "", fold: "", aside: "" }])
@@ -425,18 +467,26 @@ describe("parseReportSections", () => {
       aside: "",
     }
 
-    const parsed = parseReportSections([{ heading: "", blocks: [progress] }])
+    const parsed = parseReportSections([
+      { heading: "", shapeTag: "unspecified", blocks: [progress] },
+    ])
 
     expect(parsed.unknownBlockCount).toBe(0)
-    expect(parsed.sections).toEqual([{ heading: "", blocks: [progress] }])
+    expect(parsed.sections).toEqual([{ heading: "", shapeTag: "unspecified", blocks: [progress] }])
   })
 
   it("知らない種類の塊は落とし、unknownBlockCount で数える", () => {
     const parsed = parseReportSections([
-      { heading: "", blocks: [{ kind: "架空の種類" }, text("架空の一。")] },
+      {
+        heading: "",
+        shapeTag: "unspecified",
+        blocks: [{ kind: "架空の種類" }, text("架空の一。")],
+      },
     ])
 
     expect(parsed.unknownBlockCount).toBe(1)
-    expect(parsed.sections).toEqual([{ heading: "", blocks: [text("架空の一。")] }])
+    expect(parsed.sections).toEqual([
+      { heading: "", shapeTag: "unspecified", blocks: [text("架空の一。")] },
+    ])
   })
 })

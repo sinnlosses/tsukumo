@@ -14,6 +14,7 @@ import {
 } from "../../../shared/character-pack/expression-choice.ts"
 import {
   reportFigureSchema,
+  type ReportSection,
   reportSectionSchema,
   sectionsWithFigure,
 } from "../../../shared/report/report-block.ts"
@@ -286,7 +287,7 @@ function reportTool(
         .string()
         .optional()
         .describe(
-          "作業を終えた・止めたあとに残る利用者へのお願い（判断・作業・情報）が実際にあるときだけ1つ（2件あってもまとめる）。無ければ省く。作業の途中で利用者の手が要るときは report を呼ばず AskUserQuestion で聞く",
+          "作業を終えた・止めたあとに残る利用者へのお願い（判断・作業・情報）が実際にあるときだけ1つ（2件あってもまとめる）。無ければ省く",
         ),
       checks: z.array(reportCheckSchema).optional().describe(REPORT_CHECKS_DESCRIPTION),
       title: z.string().optional().describe(REPORT_TITLE_DESCRIPTION),
@@ -296,14 +297,18 @@ function reportTool(
       waitingLine: z.object(speechShape(expressions)).describe(REPORT_WAITING_LINE_DESCRIPTION),
     },
     async ({ task, workPlanClosing, conclusion, figure, sections, favor, checks, title }) => {
-      const fileContents = await readReportBlockFiles(cwd, sections ?? [])
+      const taggedSections = (sections ?? []).map((section): ReportSection => ({
+        ...section,
+        shapeTag: section.shapeTag ?? "unspecified",
+      }))
+      const fileContents = await readReportBlockFiles(cwd, taggedSections)
       const mermaidFaults = await checkMermaidSyntax(
-        mermaidSourcesInSections(sectionsWithFigure(figure, sections ?? [])),
+        mermaidSourcesInSections(sectionsWithFigure(figure, taggedSections)),
       )
       const verdict = review.judgeReport({
         conclusion,
         figure,
-        sections: sections ?? [],
+        sections: taggedSections,
         favor: favor ?? "",
         checks: checks ?? [],
         fileContents,

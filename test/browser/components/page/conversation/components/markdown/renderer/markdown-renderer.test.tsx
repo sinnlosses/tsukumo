@@ -68,6 +68,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           { kind: "text", text: "架空の **本文**。", fold: "", aside: "出どころ: `a.ts:3`" },
           { kind: "note", tone: "memo", text: "架空の覚え書き。", fold: "", aside: "" },
@@ -118,6 +119,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "compare",
@@ -146,6 +148,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "beforeAfter",
@@ -180,6 +183,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "dimension",
@@ -272,6 +276,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "list",
@@ -303,6 +308,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "progress",
@@ -338,6 +344,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "matrix",
@@ -705,7 +712,9 @@ describe("Markdown（code の marks）", () => {
       aside: "",
     } as const
     const { container } = render(
-      <Markdown text={reportSectionsMarkdown([{ heading: "", blocks: [block] }])} />,
+      <Markdown
+        text={reportSectionsMarkdown([{ heading: "", shapeTag: "unspecified", blocks: [block] }])}
+      />,
     )
 
     expect(container.querySelectorAll(".code-line-mark")).toHaveLength(1)
@@ -985,6 +994,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     const text = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "files",
@@ -1058,6 +1068,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     const text = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "files",
@@ -1234,6 +1245,7 @@ describe("Markdown（image の塊の画像）", () => {
       const text = reportSectionsMarkdown([
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [
             {
               kind: "image",
@@ -1266,6 +1278,7 @@ describe("Markdown（image の塊の画像）", () => {
       const text = reportSectionsMarkdown([
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [
             {
               kind: "image",
@@ -1318,6 +1331,7 @@ describe("Markdown（image の塊の画像）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           { kind: "image", path: "架空.png", caption: "架空", notes: [], fold: "", aside: "" },
         ],
@@ -1338,6 +1352,7 @@ describe("Markdown（image の塊の画像）", () => {
     const imagesText = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "beforeAfter",
@@ -1404,6 +1419,7 @@ describe("Markdown（image の塊の画像）", () => {
       const text = reportSectionsMarkdown([
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [
             {
               kind: "beforeAfter",
@@ -1432,6 +1448,7 @@ describe("Markdown（image の塊の画像）", () => {
       const text = reportSectionsMarkdown([
         {
           heading: "",
+          shapeTag: "unspecified",
           blocks: [
             { kind: "image", path: "架空.png", caption: "架空", notes: [], fold: "", aside: "" },
           ],
@@ -1491,6 +1508,7 @@ describe("Markdown（svg の塊の拡大）", () => {
     const text = reportSectionsMarkdown([
       {
         heading: "",
+        shapeTag: "unspecified",
         blocks: [
           {
             kind: "svg",

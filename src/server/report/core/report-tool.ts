@@ -24,10 +24,9 @@ export const REPORT_TOOL_DESCRIPTION =
  * 結果を `conclusion` と `sections` に書かない条は `REPORT_NOTATION_PROMPT` の条1 が持つ。
  */
 export const REPORT_CHECKS_DESCRIPTION =
-  "検証の結果（テスト・型検査・手で確かめたこと）。tsukumo が結論の下に、件数の総括行と、落ちた・確かめていない項目の行で描き、通った項目は畳む。" +
+  "検証の結果。tsukumo が結論の下に、件数の総括行と、落ちた・確かめていない項目の行で描き、通った項目は畳む。" +
   "検証をしていないターンでは省く。" +
-  "結果の数は figure に、打ったコマンドは command に分ける（所要時間は tsukumo が測って添えるので書かない）。" +
-  "unverified の行には howToVerify に確かめ方を書く。" +
+  "結果の数は figure に、打ったコマンドは command に分ける。" +
   "label・figure・detail・howToVerify は素の文字で描かれるので、バッククォートなどの記法を使わない。"
 
 /**
@@ -43,9 +42,9 @@ export const REPORT_RETROSPECTIVE_DESCRIPTION =
 export const REPORT_TASK_DESCRIPTION =
   "タスクの作業のレポートのときだけ渡す（タスクID・作業の名前・終わり方・種類）。tsukumo が結論の上に" +
   "「最終レポート · タスクID · 終わり方」の1行と、作業の名前の見出しを描く。" +
-  "渡したら conclusion に作業の名前やタスクID を書かず、これから何が変わるかだけを書く。" +
+  "渡したら conclusion に作業の名前やタスクID を書かない。" +
   "変更の量（ファイル数・行数）は tsukumo が git から数えて目録に添えるので書かない。" +
-  "genre に報告の種類を入れ、sections の節をその種類の既定の並びで書く（節の数は縛らない。証拠は checks、お願いは favor）。" +
+  "genre に報告の種類を入れ、sections の節をその種類の既定の並びで書く（節の数は縛らない）。" +
   "work: 変化 → 証拠 → 変更の要所 → 限界と変えていないもの → お願い。" +
   "decision: 決めたこと → 理由と採らなかった案（options）→ 結果 → 未決。" +
   "research: 分かったこと → 根拠（出典か path:line）→ 何を意味するか → 確かめていないこと → 次。" +
@@ -68,7 +67,7 @@ export const REPORT_FIGURE_DESCRIPTION =
   "名前が3つ以上出てきてつながる・流れや分岐がある・構造の前後がある・数が3つ以上ある。" +
   "作業のレポートの最小の形は、ここに図1つと、sections に表か箇条書き。" +
   "図を置かないときは kind を none にして reason で理由を言う: " +
-  "short-answer（2〜3文で終わる答え）/ no-shape（つながり・時間の順・位置・3つ以上の数のどれも無い）/ " +
+  "short-answer（2〜3文で終わる答え）/ no-shape（上の4つのどれも無い）/ " +
   "single-value（前後が値1つで、table のセルの from / to か stats の before で足りる）/ " +
   "no-material（委譲先の返却に構造の材料が無く、差分も読んでいない）。none は何も描かれない。"
 

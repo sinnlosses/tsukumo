@@ -23,6 +23,7 @@ import {
   REPORT_NOTATION_NAMES,
   REPORT_NOTE_KINDS,
 } from "../../../../src/shared/report/report-notation.ts"
+import { REPORT_SHAPE_TAGS } from "../../../../src/shared/report/report-shape-tag.ts"
 
 afterEach(() => {
   cleanup()
@@ -64,7 +65,7 @@ function articleEightRows(): string[][] {
   return article8
     .split("\n")
     .map((line) => line.trim())
-    .filter((line) => line.startsWith("|") && !line.startsWith("| ---"))
+    .filter((line) => line.startsWith("|") && !/^\|[-|\s]+\|$/.test(line))
     .slice(1)
     .map((line) => line.split("|").slice(1, -1))
 }
@@ -235,12 +236,13 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(article8).toContain("**残ったものは、文字より視覚情報で見せる。**")
   })
 
-  it("前後は、構造は graph の印、画面は beforeAfter の image、1つの値は table の from / to に分けて書く", () => {
+  it("前後は札にしない添え物で、構造は graph の印、画面は beforeAfter の image、1つの値は table の from / to に分けて書く", () => {
     expect(article8).not.toContain("の側に入れる")
     expect(article8).not.toContain("梯子")
-    expect(article8).toContain("|構造の変更|`graph`|")
-    expect(article8).toContain("|撮った画面|`image`|`beforeAfter`|")
-    expect(article8).toContain("|1つの値の前後|`table`|`from` / `to`|")
+    expect(article8).toContain("前後・確度・所在は札にしない")
+    expect(article8).toContain("画面の前後は `image` を `beforeAfter` で")
+    expect(article8).toContain("構造の前後は `graph` の行頭の `+ ` `- ` `~ ` で")
+    expect(article8).toContain("1つの値の前後は `table` の `from` / `to` で")
   })
 
   it("条8の頭は figure の欄を指す1行で、図を置く条件と理由の意味は figure の describe だけにある", () => {
@@ -256,18 +258,22 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("条8の情報の形の表の塊は、report ツールの塊の種類に実在する", () => {
-    const names = articleEightRows().flatMap((cells) => backticked(cells.at(1) ?? ""))
+  it("条8の札の表は14の札を1行ずつ持ち、塊の列は report ツールの塊の種類に実在する", () => {
+    const rows = articleEightRows()
+    const names = rows.flatMap((cells) => cells.slice(1).flatMap(backticked))
     const known: readonly string[] = REPORT_BLOCK_KINDS
 
+    expect(rows.map((cells) => backticked(cells.at(0) ?? ""))).toEqual(
+      REPORT_SHAPE_TAGS.map((tag) => [tag]),
+    )
     for (const kind of ["mermaid", "graph", "svg", "image", "chart", "table", "list", "text"]) {
       expect(names).toContain(kind)
     }
     for (const name of names) {
       expect(known).toContain(name)
     }
-    expect(article8).toContain("迷ったら上の行で描く")
-    expect(article8).not.toContain("第一候補")
+    expect(article8).toContain("その札の第一候補で描く")
+    expect(article8).not.toContain("迷ったら上の行で描く")
   })
 
   it("文のままでよい条件は本文の塊の節の1箇所だけにあり、条8はそこを指して言い直さない", () => {
@@ -280,22 +286,28 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("**文のままでよいのは次のときだけ**")
   })
 
-  it("条8の表の graph と mermaid の見本は、report の入口を通る", () => {
-    const rows = articleEightRows()
-    const samples = (kind: string): string[][] =>
-      rows
-        .filter((cells) => backticked(cells.at(1) ?? "").includes(kind))
-        .map((cells) => backticked(cells.at(2) ?? ""))
-    const [arrowSample = [], marks = []] = samples("graph")
-    const [arrow = ""] = arrowSample
-    const graphSource = [arrow, ...marks.map((mark) => `${mark}架空 -> 架空2`)].join("\n")
-    const mermaidSources = samples("mermaid").flatMap((sample) => sample)
+  it("条8の表の graph と mermaid の見本と、構造の前後の印は、report の入口を通る", () => {
+    const samples = (kind: string): string[] =>
+      [...article8.matchAll(new RegExp(`\`${kind}\`（([^）]+)）`, "g"))].flatMap(
+        ([, sample]) => sample ?? [],
+      )
+    const marks = ["+ ", "- ", "~ "].filter((mark) => article8.includes(`\`${mark}\``))
+    const graphSource = [...samples("graph"), ...marks.map((mark) => `${mark}架空 -> 架空2`)].join(
+      "\n",
+    )
+    const mermaidSources = [...new Set(samples("mermaid"))]
+    const offered: readonly string[] = REPORT_MERMAID_KINDS
     const blocks = [
       { kind: "graph", direction: "LR", source: graphSource },
       ...mermaidSources.map((source) => ({ kind: "mermaid", source })),
     ]
 
-    expect(mermaidSources).toEqual(["sequenceDiagram", "stateDiagram-v2"])
+    expect(samples("graph")).not.toEqual([])
+    expect(marks).toEqual(["+ ", "- ", "~ "])
+    expect(mermaidSources).toEqual(expect.arrayContaining(["sequenceDiagram", "stateDiagram-v2"]))
+    for (const source of mermaidSources) {
+      expect(offered).toContain(source)
+    }
     for (const block of blocks) {
       expect(parseReportSections([{ heading: "", blocks: [block] }])).toMatchObject({
         sections: [{ blocks: [{ kind: block.kind }] }],
@@ -373,7 +385,8 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("文面の字数は上限以下に収まり、条を足すと落ちる", () => {
-    const limit = 4000
+    // いまの文面（条8の札の表14行を含めて4,542字）に約50字の余白を持たせた上限
+    const limit = 4600
     const length = REPORT_NOTATION_PROMPT.length
 
     expect(
