@@ -30,6 +30,6 @@ describe("会話が終わったあとの入力欄", () => {
 
     await restart.waitFor({ state: "detached" })
     await expect.poll(() => room.page.locator('button[type="submit"]').isDisabled()).toBe(false)
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchWithMessages(ELAPSED_MS)
   })
 })

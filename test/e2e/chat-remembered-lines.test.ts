@@ -34,7 +34,7 @@ describe("雑談のサイドバーの「覚えていること」", () => {
     await room.page.getByRole("button", { name: "消す", exact: true }).click()
 
     await room.page.getByRole("button", { name: "完了", exact: true }).click()
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchWithMessages(ELAPSED_MS)
   })
 
   it("長い話題と長い覚えたことを出しても、2段目・3段目の入れ物は横に転がらない", async () => {

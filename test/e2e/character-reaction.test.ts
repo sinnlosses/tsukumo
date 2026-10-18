@@ -70,7 +70,7 @@ describe("機械の出来事 → キャラビューの反応", () => {
     await room.waitForEvent("welcome-greeting-shown", 3)
     await latestBalloon.getByText(`架空の書き直した挨拶、${READY_TASK_ID} はどう？`).waitFor()
     await expectOneLoggedLine(room.page, `架空の書き直した挨拶、${READY_TASK_ID} はどう？`)
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchWithMessages(ELAPSED_MS)
   })
 })
 

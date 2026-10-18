@@ -41,7 +41,7 @@ describe("モデル・effort・許可モードの操作子", () => {
       .poll(() => room.page.getByRole("option", { name: "Fable" }).isVisible())
       .toBe(false)
 
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchWithMessages(ELAPSED_MS)
 
     await room.resize(VIEWPORTS.medium)
     const effort = room.page.getByRole("combobox", { name: /^effort /u })

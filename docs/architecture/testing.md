@@ -191,9 +191,9 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
   属性を1つも持たない `div` / `span`**（見た目の直しのたびに変わるもの）。**状態が `class` にしか
   出ていないものは、E2E で見たくなったときに `data-*` か `aria-*` に出す**（意味の契約は `data-*`・
   `aria-*`・文字に置く）
-- **WebSocket のメッセージの列**（`<シナリオ>.messages.json`）: コマンドとフレームを届いた順に並べる。
+- **WebSocket のメッセージの列**（`<シナリオ>.messages.json`。期待値と比べるのはサーバとの往復を守る場面だけで、下の「E2E の期待値の範囲」）: コマンドとフレームを届いた順に並べる。
   `events` は束をほどいてイベント1件ずつにし（束の切れ目は走らせるたびに変わる）、`hello` は版だけ、
-  `character-changed` はいまのパックの名前と表情だけを残す
+  `character-changed` はいまのパックの名前と表情だけを残す。比べない場面でも成果物には書く
 - **両方に共通の置き換え**: リポジトリ・一時のホーム・一時の cwd・ポート・`hello` の版（`PROTOCOL_VERSION`）を `<root>` などの印に置き換え、
   **起動トークンは成果物に書かない**
 
@@ -212,7 +212,7 @@ contenteditable（CodeMirror）・IME の確定。同じ場面と窓で測れる
 
 **置き場所と比べ方**: 期待値は `test/e2e/expected/<シナリオ>.*.json` に置いてリポジトリに入れ、走らせた
 結果とスクリーンショットは `/tmp/tsukumo-e2e/<シナリオ>/` に毎回書き直す。比べ方は `toEqual` で、
-**期待値が無ければ落とす**（黙って書かない）。**期待値の更新**は `pnpm run test:e2e:update` → `git diff
+**比べる期待値が無ければ落とし、比べない期待値が残っていても落とす**（黙って書かない・黙って比べない）。**期待値の更新**は `pnpm run test:e2e:update` → `git diff
 test/e2e/expected/` で意図した変化だけであることを確かめる → 直した変更と同じコミットに入れる。
 shared の手続き応答に乗る型や DOM の構造を変える計画には、その変更を含むコミットで期待値を撮り直す段を置く。
 
@@ -253,13 +253,25 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
    部品を足したときにそれを選ぶ場面が無くても、この3場面のどれかの差分に出る。**特定の部品を
    守りたくなったら `page` の場面を増やさず、部品の名前を表に足して場面で選ぶ**
 
-**どこからも引かれずに残ったものは単体の `test/e2e-reference.test.ts` が落とす。** 落とすのは、組のそろっていない・どの E2E のシナリオ名も指さない期待値のファイルと、どの E2E も `domRoots` に渡さない表の名前と、テスト・`scripts/`・`src/`・`docs/architecture/` のどこからも名前で引かれない `fake-session.json` の場面。場面は `turns` の並びで流れることを使い手と数えないので、並びに頼るなら名前で引く形にする。
+**どこからも引かれずに残ったものは単体の `test/e2e-reference.test.ts` が落とす。** 落とすのは、同じ場面の `*.dom.json` の無い `*.messages.json`・どの E2E のシナリオ名も指さない期待値のファイルと、どの E2E も `domRoots` に渡さない表の名前と、テスト・`scripts/`・`src/`・`docs/architecture/` のどこからも名前で引かれない `fake-session.json` の場面。場面は `turns` の並びで流れることを使い手と数えないので、並びに頼るなら名前で引く形にする。
 
 **E2E の足場（`test/e2e/` の `.test.ts` 以外）が export する場面を開く入口は、`test/e2e/task-room.ts` に置く `open…Room` の名前の関数だけにする。** 期待値の持ち主の判定（`scenarioOwners`）は場面名の位置の式を辿れるときだけ辿るので、名前が `ROOM_OPENER` に合わない入口や `task-room.ts` 以外の足場が export する入口を足すと、単体の `test/scripts/shared/e2e-scenario.test.ts`「場面を開く入口」が落ちる。export しない入口とテストファイルの中の局所の入口はこのテストの外で、名前は縛らない（局所の関数は呼び出しの引数と `scenario:` の値から辿る）。
 
-**`*.messages.json` は絞らない。** 書き換わった件数の見積もりと、絞らない理由の数は `docs/history/decision.md`「testing.md E2E の期待値の範囲（部分木に絞る見積もり）」。
-例外は `session-info` の `slashCommands`・`terminalSlashCommands` と `command-descriptions` の
-`descriptions`（コマンド一覧）で、`collapseCommandCatalog`（`test/e2e/scenario-run.ts`）が固定の印に
+**`*.messages.json` は、サーバとの往復を守る場面だけが比べる。** 残すのは、ブラウザが送るコマンドの中身と数（`session.prompt` の文面・`session.answer`・`session.setModel`・`session.switchSession`・`session.startNewSession`・`session.recordWelcomeGreeting`・`chat.forgetRememberedLine`）か、サーバが決めて返すイベント（`aside` など）を、ほかに比べる場面の無い形で流す場面。
+イベントの列が疑似セッションの台本の写しで、結果が `*.dom.json` に出る場面は比べない。台本に書いた並びは
+台本そのものが差分に出て、イベントの形は `sessionEventSchema`（`src/shared/session/session-event.ts`。台本も
+`fake-driver.ts` が読むときに通す）と単体テスト（`test/shared/`・`test/server/`）が守る。
+同じコマンドを同じ形で送る場面が2本あれば、比べるのは流れの持ち主の1本だけにする。
+
+**比べる成果物は、撮る口の名前で場面が選ぶ。** `settleAndMatch` は `*.dom.json` だけを比べ、
+`settleAndMatchWithMessages` は `*.messages.json` も比べる（どちらも `test/e2e/scenario-run.ts` の `ScenarioRoom`）。
+部分木の名前の並び（上の決まり2）は `open` の選択肢に書くが、こちらは `it` の本文の撮る口の名前で選ぶ。
+どちらも指定は場面のファイルにあり、期待値は写しだけを持つ。
+`settleAndMatch` の場面に `*.messages.json` が残っていると落ちる。`E2E_UPDATE=1` は比べない場面の
+`*.messages.json` を書きも消しもしないので、比べるのをやめた場面の期待値は `git rm` で消す。
+
+比べる場面の列にも例外があり、`session-info` の `slashCommands`・`terminalSlashCommands` と `command-descriptions` の
+`descriptions`（コマンド一覧）は、`collapseCommandCatalog`（`test/e2e/scenario-run.ts`）が固定の印に
 畳む。一覧が画面に届くことは `markdown-composer` の `/` の補完の確定が通し、中身の写しは
 `test/server/session-driver/core/sdk-message.test.ts` と `test/shared/session/command-suggestion.test.ts` が持つ。
 

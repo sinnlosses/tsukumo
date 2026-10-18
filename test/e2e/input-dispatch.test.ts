@@ -27,7 +27,7 @@ describe("入力欄から送る", () => {
 
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchWithMessages(ELAPSED_MS)
   })
 
   it("入力欄に打っている最中に Esc を押すと、フォーカスが入力欄から外れる", async () => {

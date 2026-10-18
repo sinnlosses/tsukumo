@@ -21,6 +21,6 @@ describe("ターンの流れ", () => {
     })
 
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchWithMessages(ELAPSED_MS)
   })
 })

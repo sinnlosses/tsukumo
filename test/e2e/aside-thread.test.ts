@@ -40,6 +40,6 @@ describe("委譲中の脇の話", () => {
     expect(
       await main.locator("li", { hasText: "いまどこ？（架空の脇の話）" }).innerText(),
     ).toContain("いまは委譲先が段2を進めているところ。")
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchWithMessages(ELAPSED_MS)
   })
 })

@@ -26,7 +26,7 @@ describe("タスクの一覧", () => {
     await room.page.getByRole("button", { name: "実行する", exact: true }).click()
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchWithMessages(ELAPSED_MS)
   })
 
   it("ドラフトのチップで絞り、のぞき窓の「計画する」から確認の「頼む」を押すと計画の文面で依頼が送られる", async () => {
@@ -41,7 +41,7 @@ describe("タスクの一覧", () => {
     await room.page.getByRole("button", { name: "頼む", exact: true }).click()
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchWithMessages(ELAPSED_MS)
   })
 })
 

@@ -7,6 +7,54 @@
 節は `## <出典のファイル> <節番号> <節の見出し>` の形で並べ、各節の先頭に**移した日付と
 出典の節**を1行で書く。探すときは出典の節名で `grep` する。
 
+## testing.md E2E の期待値の範囲（2026-10-18 に messages を往復の場面だけに絞った記録）
+
+2026-10-18 に `docs/architecture/testing.md`「E2E の期待値の範囲」の `**\`*.messages.json\` は絞らない。**` の段落を改めた記録
+（いまの決まりは同じ節の `*.messages.json` の段落と「比べる成果物は、撮る口の名前で場面が選ぶ」）。
+
+**改める前**: 37 場面すべてで `*.messages.json` を比べた（計 5818 行）。絞らない理由は下の
+「testing.md E2E の期待値の範囲（部分木に絞る見積もり）」の2つ。
+
+| # | 理由 | 何の理由か |
+| --- | --- | --- |
+| 1 | 書き換え 252 件のうち 215 件は `hello` の版だけで、版を印に置き換えてからは起きない | 費用（絞らなくても手間が小さい） |
+| 2 | 残る 37 件は、場面が流すイベントの形の変化で、場面が守る流れそのものの変化 | 価値（messages が流れを守る） |
+
+**改めた理由**: 利用者が 2026-10-18 に、リファクタリングの洗い出しの候補「E2E の期待値を絞る」を採った。
+E2E の方針（利用者に見える流れと、実ブラウザでしか確かめられない寸法・入力・サーバとの往復だけを E2E で守る）を
+理由1より優先した。理由1は費用の理由で、場面ごとに messages が何を守るかを言わないため。理由2は場面ごとに確かめ、
+当たらない 25 場面で比べるのをやめた。
+
+- 2026-10-03〜10-18 に、落とした 25 場面では同じ場面の `*.dom.json` を変えずに messages だけが書き換わった回が
+  127 件あった（その 127 件を含むコミットは 27 本。同じ期間に `*.messages.json` のどれかに触れたコミットは 66 本）。
+  読んだ3場面（`report-chart`・`work-strip-running`・`task-list`）の 25 件は、どれもイベントか台本への欄の追加・改名
+  （`report` の欄、`session-info` の欄、タスク一覧の要約の形など）で、画面に出なかった。形はセッションイベントの zod のスキーマ
+  （`src/shared/session/session-event.ts` の `sessionEventSchema`。疑似セッションの台本も `fake-driver.ts` が読むときに通し、
+  試験は `test/server/session-driver/adapter/fake-driver.test.ts`）・`report` の写し
+  （`test/server/session-driver/core/sdk-message.test.ts`）・畳み込み（`test/shared/session/session-state.test.ts`）・
+  配信の順（`test/server/session/core/session-manager.test.ts`・`test/server/view-server/adapter/session-socket.test.ts`）・
+  `setting-confirmed`（`test/server/session-driver/adapter/fake-driver.test.ts`）・`tasks-changed`
+  （`test/server/repository/adapter/task-summary.test.ts`・`fake-beads.test.ts`）が守っていた
+- 落とした場面の列は、疑似セッションの台本（`test/fixture/fake-session.json`）の写しに、`setting-confirmed` と
+  `tasks-changed` を足したものだった。台本に無いのにサーバが決めて返すイベント（`aside`・`welcome-greeting-shown`）は、
+  残した場面にしか出ない
+- 画像の棚・続きの要約・占有の問い合わせの応答は HTTP の手続きで列に載らず、続きから開いたときの履歴は
+  `hello` が版だけに畳まれるので写らない。「応答の形が主役」で残す場面は無かった
+
+**場面ごとの判定**:
+
+| 判定 | 場面 | 行数（前 → 後） |
+| --- | --- | --- |
+| 残す（ブラウザが送るコマンドを、ほかに比べる場面の無い形で流す） | `turn-flow`（ターンの流れの1本）・`input-dispatch`・`markdown-composer-send`・`aside-thread`・`inquiry-permission-mouse`・`run-setting-model-selected`・`session-switch-enter`・`session-ended-restart`・`chat-remembered-lines-edit`・`character-reaction-welcome-greeting`・`task-list-run-executed`・`task-list-draft-plan` | 12 場面 2298 → 2298 |
+| 落とす（往復の重複） | `conversation-moment-large`・`conversation-moment-medium`（`input-dispatch` と依頼の文面の2行だけ違う）・`session-resume`・`chat-restored-history`（`session.switchSession` は `session-switch-enter` と同じ形） | 4 場面 630 → 0 |
+| 落とす（台本の写しで、結果が DOM に出る） | `background-task-resumed`・`speak-bubble-closing-narration`・`character-reaction-replaced`・`character-reaction-waiting-idle`・`chat-compact-boundary`・`conversation-tier-medium`・`conversation-tier-narrow`・`conversation-tier-phone`・`conversation-tier-phone-sheet`・`inquiry-question-preview-image`・`report-notation`・`report-chart`・`report-outline-compact`・`report-task-finished`・`report-turn-outline`・`task-board-open`・`task-list`・`welcome-doors`・`work-strip-ask-medium`・`work-strip-running`・`session-switch-occupied` | 21 場面 2890 → 0 |
+
+全体は 5818 行 → 2298 行。
+
+**指定の形**: 場面ごとの指定は、撮る口を2つに分けて場面のファイルで選ぶ形にした。期待値ファイルの有無で決める形は、
+ファイルを消すと黙って比べなくなり、撮り直しが書くかどうかを決められないので採らなかった。`open` の必須の欄にする形は
+59 か所の `open` と足場の入口に波及するので採らなかった。
+
 ## display.md 画像を描く条件（2026-10-15 に起こし直しのあとも24時間以内の report の画像を読み直す形へ改めた記録）
 
 2026-10-15 に `docs/architecture/display.md`「画像を描く条件」から移す。

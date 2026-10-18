@@ -39,7 +39,7 @@ describe("セッションの切り替え", () => {
     await search.press("Enter")
     // 起こし直した代が流す一覧（fake driver なので空）を待つ。
     await room.waitForEvent("sessions-changed", 2)
-    await room.settleAndMatch(ELAPSED_MS)
+    await room.settleAndMatchWithMessages(ELAPSED_MS)
   })
 
   // 別の窓の tsukumo の占有ファイルは、このテストのプロセス（生きている）が書いたことにする。

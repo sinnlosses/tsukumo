@@ -219,9 +219,12 @@ export type ScenarioRoom = {
   readonly announced: () => Promise<readonly string[]>
   /**
    * ブラウザの時計を「凍らせた瞬間 + `elapsedMs`」で止め、DOM が落ち着くのを待ってから
-   * 成果物を書き、期待値と比べる（期待値が無ければ落とす。`E2E_UPDATE=1` なら書き直す）。
+   * 成果物を書き、DOM の構造だけを期待値と比べる（期待値が無ければ落とす。`E2E_UPDATE=1` なら書き直す）。
+   * メッセージの列の期待値が残っていれば落とす（docs/architecture/testing.md「E2E の期待値の範囲」）。
    */
   readonly settleAndMatch: (elapsedMs: number) => Promise<void>
+  /** `settleAndMatch` と同じく撮り、メッセージの列も期待値と比べる。 */
+  readonly settleAndMatchWithMessages: (elapsedMs: number) => Promise<void>
 }
 
 export type ScenarioRun = {
@@ -356,6 +359,38 @@ async function openRoom(
     [`"protocolVersion": ${PROTOCOL_VERSION}`, '"protocolVersion": "<protocol-version>"'],
   ]
 
+  const settleAndWrite = async (
+    elapsedMs: number,
+  ): Promise<{
+    readonly texts: Readonly<Record<ArtifactKind, string>>
+    readonly outDir: string
+  }> => {
+    if (lastAwaited !== undefined) {
+      assertNextStepGap(options.scenario, options.scene, lastAwaited)
+    }
+    const outDir = path.join(OUTPUT_ROOT, options.scenario)
+    mkdirSync(outDir, { recursive: true })
+    // 撮る時刻へ進める前に、ターンの終わりに始まった取り直しを済ませる。
+    // 済むのが進める前か後かで、取れた時刻（プラン使用量の「10:00 時点」など）が揺れる。
+    await settledDom(page, options.scenario, outDir)
+    await page.clock.pauseAt(Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds + elapsedMs)
+    await settledDom(page, options.scenario, outDir)
+    const dom = await page.evaluate(namedDomTreeScript(options.domRoots))
+    await page.screenshot({ path: path.join(outDir, `${options.scenario}.png`) })
+    // 両方を書いてから比べる（先の比べで落ちると、控えに前の回の成果物が混ざる）。
+    const texts = {
+      dom: writeArtifact(options.scenario, "dom", dom, replacements, outDir),
+      messages: writeArtifact(
+        options.scenario,
+        "messages",
+        collapsePartialUtterances(collapseCommandCatalog(messages.list())),
+        replacements,
+        outDir,
+      ),
+    } satisfies Record<ArtifactKind, string>
+    return { texts, outDir }
+  }
+
   return {
     page,
     cwd: cwd.real,
@@ -410,29 +445,12 @@ async function openRoom(
         return Array.isArray(log) ? log.map(String) : []
       }, ANNOUNCED_LOG),
     settleAndMatch: async (elapsedMs) => {
-      if (lastAwaited !== undefined) {
-        assertNextStepGap(options.scenario, options.scene, lastAwaited)
-      }
-      const outDir = path.join(OUTPUT_ROOT, options.scenario)
-      mkdirSync(outDir, { recursive: true })
-      // 撮る時刻へ進める前に、ターンの終わりに始まった取り直しを済ませる。
-      // 済むのが進める前か後かで、取れた時刻（プラン使用量の「10:00 時点」など）が揺れる。
-      await settledDom(page, options.scenario, outDir)
-      await page.clock.pauseAt(Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds + elapsedMs)
-      await settledDom(page, options.scenario, outDir)
-      const dom = await page.evaluate(namedDomTreeScript(options.domRoots))
-      await page.screenshot({ path: path.join(outDir, `${options.scenario}.png`) })
-      // 両方を書いてから比べる（先の比べで落ちると、控えに前の回の成果物が混ざる）。
-      const texts = {
-        dom: writeArtifact(options.scenario, "dom", dom, replacements, outDir),
-        messages: writeArtifact(
-          options.scenario,
-          "messages",
-          collapsePartialUtterances(collapseCommandCatalog(messages.list())),
-          replacements,
-          outDir,
-        ),
-      } satisfies Record<ArtifactKind, string>
+      const { texts, outDir } = await settleAndWrite(elapsedMs)
+      matchArtifact(options.scenario, "dom", texts.dom, outDir)
+      assertNoMessagesExpected(options.scenario)
+    },
+    settleAndMatchWithMessages: async (elapsedMs) => {
+      const { texts, outDir } = await settleAndWrite(elapsedMs)
       matchArtifact(options.scenario, "dom", texts.dom, outDir)
       matchArtifact(options.scenario, "messages", texts.messages, outDir)
     },
@@ -1207,6 +1225,16 @@ function matchArtifact(scenario: string, kind: ArtifactKind, text: string, outDi
       cause: error,
     })
   }
+}
+
+function assertNoMessagesExpected(scenario: string): void {
+  const expectedPath = path.join(EXPECTED_ROOT, `${scenario}.messages.json`)
+  if (UPDATE_EXPECTED || !existsSync(expectedPath)) {
+    return
+  }
+  throw new Error(
+    `比べないメッセージの列の期待値が残っている: ${path.relative(REPOSITORY_ROOT, expectedPath)}（比べるなら場面で settleAndMatchWithMessages を呼び、比べないなら git rm で消す）`,
+  )
 }
 
 function replaceAll(text: string, replacements: readonly (readonly [string, string])[]): string {
