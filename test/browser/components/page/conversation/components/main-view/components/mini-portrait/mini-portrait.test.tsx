@@ -135,9 +135,7 @@ describe("<MiniPortrait>（筆先に添うミニ立ち絵）", () => {
     })
 
     expect(miniImage()).not.toBeNull()
-    // 縦は `translateY(-100%)` が外れる＝上端が行の下端に来て、敷いた床の上に立つ。横は筆先の
-    // 座標を渡さない（右端に付けるのは `.mini-portrait-resting` の `right`）。
-    expect(placement().style.transform).toBe("translate3d(0, 206px, 0)")
+    expect(placement().style.transform).toBe("none")
     expect(placement().className).toContain("mini-portrait-resting")
   })
 

@@ -57,18 +57,25 @@
 .mini-portrait-returning {
   transition-duration: var(--mini-portrait-return-duration);
 }
-/* 書き終わって本文の右下の隅へ寄るときの置き方と間合い（`followTransform` が、残っているあいだは `translateY(-100%)` を外し、横の座標も渡さなくなる）。
+/* 書き終わって本文の右下の隅へ寄るときの置き方と間合い（`followTransform` が、残っているあいだは筆先の座標を渡さなくなる）。
 
-   横は筆先ではなく本文の右端に付ける（`left` をやめて `right`）。筆が止まるのは最後の行が終わったところなので、そこに立たせると最後の行が短いときに本文の途中の行へ重なる。
-   縦は最後の行の下端で、そこには床（`.mini-portrait-floor`）が敷いてあるので、右端と組にすると止まったあとはどの行にも重ならない。
+   本文の入れ物の右下の隅に付ける（`top` をやめて `bottom`、`left` をやめて `right`）。
+   最後の行の下端に立たせると、そこから下に続く経過の行や最後の箱の縁に重なる。
+   入れ物の末尾には床（`.mini-portrait-floor`）が敷いてあるので、隅に付ければ本文のどの行にも重ならない。
 
-   降りるのは立ち絵の高さぶんの縦移動なので、横画の 0.05s のままだと落ちたように見える。
-   ease-out は着地で緩めるため。 */
+   隅へは位置が飛ぶので、遷移ではなく立ち絵の高さぶん上から降りる動きで見せる。 */
 .mini-portrait-resting {
+  top: auto;
   right: var(--mini-portrait-gap);
+  bottom: 0;
   left: auto;
-  transition-duration: var(--mini-portrait-rest-duration);
-  transition-timing-function: ease-out;
+  transition: none;
+  animation: mini-portrait-settle var(--mini-portrait-rest-duration) ease-out;
+}
+@keyframes mini-portrait-settle {
+  from {
+    transform: translateY(-100%);
+  }
 }
 /* 立ち絵は入れ物の高さいっぱい（幅は画の縦横比なり）。
 

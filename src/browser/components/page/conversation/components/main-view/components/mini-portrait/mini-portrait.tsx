@@ -13,7 +13,7 @@
 // 残るのは、その筆先を出したやり取りが出ているあいだだけ:
 //
 // - 次の依頼を出すと本文が入れ替わるのに座標はそのままなので、筆先の `turnId` と出ているやり取りが違えば引っ込む（キャラビューの立ち絵は残る）
-// - 行の上へ立ったままだとその上の行の文字を隠すので、残っているあいだは最後の行の下へ降りる（`followTransform`）。
+// - 行の上へ立ったままだとその上の行の文字を隠すので、残っているあいだは本文の右下の隅へ降りる（`.mini-portrait-resting`）。
 //   降りた先の床は `MiniPortrait` が本文の末尾に敷く
 //
 // 素材は `CharacterInfo.mini`（`character.json` の任意の `mini`。無いパックは `portraits.default` に落ちたものが届く）。
@@ -84,7 +84,7 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
  * 戻りは横画の4〜7倍の速さで動くので、同じ間合いのままでは立ち絵の幅より大きく置いていかれる。
  * 長さは `mini-portrait.module.css` の2つの custom property が持つので、ここは class を選ぶだけにする。
  *
- * 書き終わりに行の下へ降りる動き（`resting`）にも、そのための間合いを1つ持たせる。
+ * 書き終わりに隅へ降りる動き（`resting`）にも、そのための間合いを1つ持たせる。
  * 降りるのは立ち絵の高さぶんの縦移動なので、横画の間合い（0.05s）では落ちたように見える。
  */
 function followClassName(stance: BrushStance): string {
@@ -115,18 +115,17 @@ function followBrushTip(element: HTMLDivElement): () => void {
  * 筆先の右・帯の下端に立たせる（なぞっている帯と同じ高さで、書き進む先の側）。
  * 座標は本文の入れ物の原点基準なので、置いた先は本文と一緒に転がる。
  *
- * 書き終わって残っているあいだは、本文の右下の隅へ寄る（`translateY` を外して行の下へ降り、横は `.mini-portrait-resting` で右端に付く）。
- * 止まると文字を隠したまま居座る（立ち絵の高さは行の2〜3本分あり、最後の行が短いと本文の途中の行に重なる）ので、本文の末尾に敷いた床（{@link MiniPortrait}）と右端の組で、どの行にも重ならないようにする。
+ * 書き終わって残っているあいだは、本文の右下の隅へ寄る（置くのは `.mini-portrait-resting`）。
+ * 隅は本文の末尾に敷いた床（{@link MiniPortrait}）の上なので、どの行にも重ならない。
  *
  * 置き方は `left` ではなく `transform`。
  * CSS の遷移（`transition`）が毎フレーム引き直されるので、横画では少し遅れてばねで寄り、戻りでは（間合いが 0 なので）そのフレームの筆先にそのまま乗る。
  * 行が変わるときも縦横が同時に動くので、飛ばずに滑る。
  */
 function followTransform(tip: BrushTip): string {
-  // 止まっているあいだは横の座標を使わない（右端に付けるのは CSS の側）。
-  // 縦だけを最後の行の下端へ置き、そこに敷いた床の上に立たせる。
+  // 止まっているあいだは座標を使わない（右下の隅に付けるのは CSS の側）。
   if (tip.phase === "resting") {
-    return `translate3d(0, ${px(tip.bottom)}, 0)`
+    return "none"
   }
   return `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0) translateY(-100%)`
 }
