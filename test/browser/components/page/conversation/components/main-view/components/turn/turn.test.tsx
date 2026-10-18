@@ -7,28 +7,19 @@ import type { ReportChangeSummary } from "../../../../../../../../../src/shared/
 import type {
   MainViewStep,
   MainViewStepBody,
-  MainViewTurn,
 } from "../../../../../../../../../src/shared/session/main-view-shape.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../../../src/shared/session/session-state.ts"
+import { step, text, turn } from "../../../../../../../../fixture/turn.ts"
 import { typedElement } from "../../../../../../../../typed-element.ts"
 import { putSession } from "../../../../../../../session-store.ts"
 
-// 本物の `Report`（react-markdown 一式と演出の配線を持つ）ではなく、どの本文に演出を掛けると
-// 言われたかだけを記録する代役に差し替える。演出そのもの（`useReportReveal`）は
-// レイアウトを測るので DOM だけのテストでは確かめられず、ここで見たいのは対象の選び方の規則だけ。
-let revealed: {
-  readonly markdown: string
-  readonly reveal: boolean
-  readonly turnId: number
-}[] = []
-
+// 本物の `Report`（react-markdown 一式と演出の配線を持つ）ではなく、本文だけを描く代役に差し替える。
 vi.mock(
   "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/report.tsx",
   () => ({
-    Report: (props: { readonly markdown: string; readonly reveal: boolean; turnId: number }) => {
-      revealed.push({ markdown: props.markdown, reveal: props.reveal, turnId: props.turnId })
-      return <div data-report-stub="yes">{props.markdown}</div>
-    },
+    Report: (props: { readonly markdown: string }) => (
+      <div data-report-stub="yes">{props.markdown}</div>
+    ),
   }),
 )
 
@@ -37,220 +28,8 @@ const { Turn } =
 
 afterEach(() => {
   cleanup()
-  revealed = []
   useComposerDraft.setState(useComposerDraft.getInitialState(), true)
   useTaskBoardRequest.setState(useTaskBoardRequest.getInitialState(), true)
-})
-
-/** 本文を持つステップの `body`。先頭行は本文そのもの（1行の本文しか使わないため）。 */
-function text(report: string): MainViewStepBody {
-  return {
-    kind: "text",
-    headings: [],
-    report,
-    finalReport: report,
-    firstLine: report,
-    task: { kind: "none" },
-    finishedPhase: { kind: "none" },
-    changeSummary: { kind: "none" },
-  }
-}
-
-function step(overrides: Partial<MainViewStep> & { readonly id: number }): MainViewStep {
-  return {
-    body: { kind: "none" },
-    interim: false,
-    superseded: false,
-    final: false,
-    actions: [],
-    asides: [],
-    ...overrides,
-  }
-}
-
-/** やり取りの番号。筆先に添えて配られるので、`<Report>` まで届いていることを見る。 */
-const TURN_ID = 5
-
-function turn(steps: readonly MainViewStep[]): MainViewTurn {
-  return {
-    id: TURN_ID,
-    request: { text: "架空の依頼", images: [] },
-    steps,
-    hasInterimReport: false,
-    droppedCount: 0,
-    failure: { kind: "none" },
-  }
-}
-
-/** 演出を掛けると言われた本文（`reveal` が立っているもの）。 */
-function revealTargets(): readonly string[] {
-  return revealed.filter((call) => call.reveal).map((call) => call.markdown)
-}
-
-describe("Turn（書き上げる演出を掛ける相手）", () => {
-  it("出し始めた時点で既にあった本文には掛けない（過去のターン・読み込み直し）", () => {
-    render(
-      <Turn
-        turn={turn([step({ id: 0, body: text("確定した本文"), final: true })])}
-        newest
-        freshReport={false}
-      />,
-    )
-
-    expect(revealTargets()).toEqual([])
-  })
-
-  it("地図から入れ替えたばかりのレポートは、出し始めた時点にあった最終レポートにも掛ける", () => {
-    render(
-      <Turn
-        turn={turn([step({ id: 0, body: text("届いた本文"), final: true })])}
-        newest
-        freshReport
-      />,
-    )
-
-    expect(revealTargets()).toEqual(["届いた本文"])
-  })
-
-  it("本文にはやり取りの番号を渡す（残った筆先が別のやり取りの上へ出ないため）", () => {
-    render(
-      <Turn
-        turn={turn([step({ id: 0, body: text("確定した本文"), final: true })])}
-        newest
-        freshReport={false}
-      />,
-    )
-
-    expect(revealed.map((call) => call.turnId)).toEqual([TURN_ID])
-  })
-
-  it("あとから現れた確定レポートにだけ掛ける", () => {
-    const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest freshReport={false} />)
-    revealed = []
-
-    rerender(
-      <Turn
-        turn={turn([step({ id: 0 }), step({ id: 1, body: text("確定した本文"), final: true })])}
-        newest
-        freshReport={false}
-      />,
-    )
-
-    expect(revealTargets()).toEqual(["確定した本文"])
-  })
-
-  it("確定レポートが並んだら、最後の1件だけに掛ける", () => {
-    const { rerender } = render(
-      <Turn
-        turn={turn([step({ id: 0, body: text("1件目"), final: true })])}
-        newest
-        freshReport={false}
-      />,
-    )
-    revealed = []
-
-    rerender(
-      <Turn
-        turn={turn([
-          step({ id: 0, body: text("1件目") }),
-          step({ id: 1, body: text("2件目"), final: true }),
-        ])}
-        newest
-        freshReport={false}
-      />,
-    )
-
-    expect(revealTargets()).toEqual(["2件目"])
-  })
-
-  it("閉じた瞬間に入れ替えた札では、中間レポートが経過の畳みに入っても最終レポートだけに掛ける", () => {
-    render(
-      <Turn
-        turn={turn([
-          step({ id: 0, body: text("中間0"), interim: true, superseded: true }),
-          step({ id: 1, body: text("中間1"), interim: true, superseded: true }),
-          step({ id: 2, body: text("最終"), final: true }),
-        ])}
-        newest
-        freshReport
-      />,
-    )
-
-    expect(revealTargets()).toEqual(["最終"])
-  })
-
-  it("続きのターンで最終レポートが替わると、前の最終は経過の畳みへ移り、新しい最終だけに掛ける", () => {
-    const { rerender } = render(
-      <Turn
-        turn={turn([
-          step({ id: 0, body: text("中間0"), interim: true, superseded: true }),
-          step({ id: 1, body: text("前の最終"), final: true }),
-        ])}
-        newest
-        freshReport={false}
-      />,
-    )
-    revealed = []
-
-    rerender(
-      <Turn
-        turn={turn([
-          step({ id: 0, body: text("中間0"), interim: true, superseded: true }),
-          step({ id: 1, body: text("前の最終"), interim: true, superseded: true }),
-          step({ id: 2, body: text("新しい最終"), final: true }),
-        ])}
-        newest
-        freshReport={false}
-      />,
-    )
-
-    expect(revealTargets()).toEqual(["新しい最終"])
-  })
-
-  it("中間レポートには掛けない（流れている最中に少しずつ出る本文なので）", () => {
-    const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest freshReport={false} />)
-    revealed = []
-
-    rerender(
-      <Turn
-        turn={turn([step({ id: 0 }), step({ id: 1, body: text("途中の資料"), interim: true })])}
-        newest
-        freshReport={false}
-      />,
-    )
-
-    expect(revealTargets()).toEqual([])
-  })
-
-  it("今回のやり取りでなければ掛けない", () => {
-    const { rerender } = render(
-      <Turn turn={turn([step({ id: 0 })])} newest={false} freshReport={false} />,
-    )
-    revealed = []
-
-    rerender(
-      <Turn
-        turn={turn([step({ id: 0 }), step({ id: 1, body: text("確定した本文"), final: true })])}
-        newest={false}
-        freshReport={false}
-      />,
-    )
-
-    expect(revealTargets()).toEqual([])
-  })
-
-  it("同じ本文が描き直されても、掛ける相手は変わらない（一度きりの判定ではない）", () => {
-    const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest freshReport={false} />)
-    const grown = turn([step({ id: 0 }), step({ id: 1, body: text("確定した本文"), final: true })])
-    rerender(<Turn turn={grown} newest freshReport={false} />)
-    revealed = []
-
-    rerender(<Turn turn={grown} newest freshReport={false} />)
-
-    // `Report` は `memo` で包まれていないので描き直されるが、`reveal` の値は同じまま
-    // （演出を始めるかどうかは `useReportReveal` がマウント時に1度だけ決める）。
-    expect(revealTargets()).toEqual(["確定した本文"])
-  })
 })
 
 describe("Turn（失敗で終わったやり取り）", () => {
