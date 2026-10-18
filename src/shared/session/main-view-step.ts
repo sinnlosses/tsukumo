@@ -17,7 +17,7 @@ import {
   NO_BODY,
 } from "./main-view-shape.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
-import type { PhaseShift } from "./work-plan.ts"
+import type { PhaseShift } from "./work-plan-shift.ts"
 
 const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
 

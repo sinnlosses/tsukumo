@@ -383,7 +383,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   （`docs/architecture/screen-design.md`「いまの作業」「進み具合の帯」、`docs/architecture/display.md`「ワークプラン」）
 - **注記**: **段はファイル単位・操作単位で切らない**（「今の形を調べる」「文書と検証を揃える」くらいの
   まとまり）。範囲は依頼1つで、その依頼の最後の `work-plan` の記録が今のワークプラン。記録から導くだけで
-  状態に別の入れ物を持たない（`src/shared/session/work-plan.ts`）。委譲中もメインの `work_plan` の記録だけが
+  状態に別の入れ物を持たない（`src/shared/session/work-plan-fold.ts` の `currentWorkPlan`）。委譲中もメインの `work_plan` の記録だけが
   位置を決め、最後の段で `finished` の `report` を受け付けると全部済みにした記録も積む
 - **避ける言い方**: 段取り（旧称。2026-10-17 に改めた）、計画、単独の「プラン」（契約の「プラン」と紛れるので、必ず「ワークプラン」と言う）、
   ステップ（依頼の手順と紛れる）、フェーズ（段と言う）
@@ -405,7 +405,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **英語識別子**: `awaitingSummary`（`work-plan` の記録の欄。`none` か、段の `key` を持つ `awaiting`）
 - **定義**: 委譲の返却で済んだが、**段のまとめ**が空のままの段。次に同じワークプランの `work_plan` が `phaseSummary` を持って届いたら、
   そのまとめをこの段の中間レポートにする
-- **注記**: 返却が段を済ませたときに tsukumo が付け、`work_plan` の記録では付けない（`src/shared/session/work-plan.ts` の `shiftedPhaseOf`）
+- **注記**: 返却が段を済ませたときに tsukumo が付け、`work_plan` の記録では付けない（`src/shared/session/work-plan-shift.ts` の `shiftedPhaseOf`）
 - **避ける言い方**: 未報告の段、保留の段（`hold` と紛れる）
 
 ### 並列の段

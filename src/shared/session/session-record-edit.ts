@@ -8,7 +8,7 @@ import type { SessionEvent } from "./session-event.ts"
 import { MAX_SESSION_STATE_TURNS, type SessionRecord } from "./session-record.ts"
 import type { SessionState } from "./session-state.ts"
 import { splitIntoTurns } from "./turn.ts"
-import { currentWorkPlan, nextWorkPlan, type WorkPlanEvent } from "./work-plan.ts"
+import { currentWorkPlan, nextWorkPlan, type WorkPlanEvent } from "./work-plan-fold.ts"
 
 /**
  * 委譲の返却か `report` 1件で積む記録。記録から畳んだ今のワークプランを {@link nextWorkPlan} で畳み、変わったときだけそのワークプランを届いた時刻で1件積む。

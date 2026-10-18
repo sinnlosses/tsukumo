@@ -3,7 +3,9 @@
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
 import { phaseDurationOf } from "./phase-duration.ts"
 import type { RecordTime, SessionRecord } from "./session-record.ts"
-import { type LatestWorkPlan, plannedPhasesOf, shiftedPhaseOf, workPlanOf } from "./work-plan.ts"
+import { workPlanOf } from "./work-plan-fold.ts"
+import { shiftedPhaseOf } from "./work-plan-shift.ts"
+import { type LatestWorkPlan, plannedPhasesOf } from "./work-plan.ts"
 
 type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
 

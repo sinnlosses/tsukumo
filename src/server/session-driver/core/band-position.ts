@@ -1,11 +1,8 @@
 // 進み具合の帯の現在位置を、モデルに返す1文にする。
 // 帯・札・一覧と同じ `currentPhaseOf` の結果を言い、帯の段の数え方を別に持たない。
 
-import {
-  currentPhaseOf,
-  type LatestWorkPlan,
-  phaseLabel,
-} from "../../../shared/session/work-plan.ts"
+import { phaseLabel } from "../../../shared/session/work-plan-phase-number.ts"
+import { currentPhaseOf, type LatestWorkPlan } from "../../../shared/session/work-plan.ts"
 
 const HANDBACK_NOTE_HEAD = "tsukumo の注記（委譲先の返却の本文ではない）:"
 

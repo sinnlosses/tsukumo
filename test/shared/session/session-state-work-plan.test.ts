@@ -8,11 +8,8 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
-import {
-  currentWorkPlan,
-  type WorkPlan,
-  type WorkPlanClosing,
-} from "../../../src/shared/session/work-plan.ts"
+import { currentWorkPlan } from "../../../src/shared/session/work-plan-fold.ts"
+import type { WorkPlan, WorkPlanClosing } from "../../../src/shared/session/work-plan.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { apply } from "../../fixture/session-state.ts"
 

@@ -1,9 +1,11 @@
 // 狭い画面の「いまの段」のロジック。いまの段の見出しと、いま走っている手順の1行(再試行中・答え待ちを含む)を畳む。
 
 import {
-  currentPhaseOf,
   phaseOrdinalText,
   phasePosition,
+} from "../../../../../../../../../shared/session/work-plan-phase-number.ts"
+import {
+  currentPhaseOf,
   type WorkPhase,
 } from "../../../../../../../../../shared/session/work-plan.ts"
 import { isTurnCounting } from "../../../../../../../../domain/turn-elapsed.ts"

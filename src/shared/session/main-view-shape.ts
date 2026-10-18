@@ -8,7 +8,7 @@ import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
 import type { ToolRunStatus } from "./session-record.ts"
-import type { PhaseShift } from "./work-plan.ts"
+import type { PhaseShift } from "./work-plan-shift.ts"
 
 /**
  * メインビューに時系列で流す1件分の記録。

@@ -24,7 +24,7 @@ import {
   latestWorkPlanOf,
   type TurnContext,
 } from "./turn-context.ts"
-import { phaseShiftOf } from "./work-plan.ts"
+import { phaseShiftOf } from "./work-plan-shift.ts"
 
 /**
  * メインビューに渡す記録。

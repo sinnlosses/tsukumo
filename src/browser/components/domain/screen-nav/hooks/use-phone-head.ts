@@ -8,8 +8,10 @@ import type { SessionRecord } from "../../../../../shared/session/session-record
 import type { TurnStepList } from "../../../../../shared/session/turn-step.ts"
 import {
   completionText,
-  currentPhaseOf,
   plannedPhaseTitle,
+} from "../../../../../shared/session/work-plan-phase-number.ts"
+import {
+  currentPhaseOf,
   plannedPhasesOf,
   type PlannedPhaseState,
 } from "../../../../../shared/session/work-plan.ts"

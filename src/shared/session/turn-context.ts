@@ -3,7 +3,8 @@
 
 import type { SessionRecord } from "./session-record.ts"
 import { bashCommandOf, isToolRecord, toolRecordDuration, type ToolDuration } from "./turn-step.ts"
-import { isWorkPlanRecord, workPlanOf, type LatestWorkPlan } from "./work-plan.ts"
+import { isWorkPlanRecord, workPlanOf } from "./work-plan-fold.ts"
+import type { LatestWorkPlan } from "./work-plan.ts"
 
 type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
 type ToolRecord = Extract<SessionRecord, { readonly kind: "tool" }>

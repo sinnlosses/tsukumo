@@ -22,11 +22,8 @@ import {
 } from "../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
-import {
-  currentWorkPlan,
-  type DelegatedRange,
-  parseWorkPlan,
-} from "../../../../src/shared/session/work-plan.ts"
+import { currentWorkPlan } from "../../../../src/shared/session/work-plan-fold.ts"
+import { type DelegatedRange, parseWorkPlan } from "../../../../src/shared/session/work-plan.ts"
 import { bundledFakeSession } from "../../../fixture/bundled-fake-session.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 

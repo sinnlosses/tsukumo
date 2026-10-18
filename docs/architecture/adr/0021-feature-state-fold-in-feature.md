@@ -25,7 +25,7 @@
     `reportDrafting` `apiTrouble` など）は `session-state.ts` に残す。ほとんどのイベントが記録とターンの
     欄を同時に動かすので、割るとまたがるイベントのほうが多くなる
   - 今のワークプランは `work-plan` の記録から導くもので記録の芯の中にあるので、部分の reducer にはしない。畳み方
-    （`nextWorkPlan`・`currentWorkPlan`）は `shared/session/work-plan.ts` に置き、`session-state.ts` とサーバの
+    （`nextWorkPlan`・`currentWorkPlan`）は `shared/session/work-plan-fold.ts` に置き、`session-state.ts` とサーバの
     差し戻し（`WorkPlanReview`）がその結果を読む（2026-10-11）
 - **`SessionState` の形は変えない。** 欄は平らなままで、部分の reducer は自分の欄（見直しなら2つの欄の組）
   だけを受け取って返し、入口が `SessionState` へ広げ直す。状態の形を変えると `PROTOCOL_VERSION` が

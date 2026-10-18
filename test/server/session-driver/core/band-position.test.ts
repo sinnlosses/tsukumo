@@ -4,7 +4,7 @@ import {
   bandPositionText,
   handbackNoteText,
 } from "../../../../src/server/session-driver/core/band-position.ts"
-import { workPlanOf } from "../../../../src/shared/session/work-plan.ts"
+import { workPlanOf } from "../../../../src/shared/session/work-plan-fold.ts"
 
 const planned = (overrides: Partial<Parameters<typeof workPlanOf>[0]>) =>
   workPlanOf({

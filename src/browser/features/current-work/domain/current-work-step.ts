@@ -13,8 +13,8 @@ import {
 import {
   PHASE_SPAN_NAMES,
   phasePosition,
-  type WorkPhase,
-} from "../../../../shared/session/work-plan.ts"
+} from "../../../../shared/session/work-plan-phase-number.ts"
+import type { WorkPhase } from "../../../../shared/session/work-plan.ts"
 import { clipText, type ClippedText } from "../../../../shared/utils/clip-text.ts"
 import { formatElapsed } from "../../../../shared/utils/elapsed-time.ts"
 import { summarizeToolInput } from "../../../domain/tool-summary.ts"

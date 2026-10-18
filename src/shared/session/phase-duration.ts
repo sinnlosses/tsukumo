@@ -6,14 +6,12 @@ import type { PhaseDuration, PhaseTimeRow } from "../report/report-phase-time.ts
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
 import { type RecordTime, recordTimeAt, type SessionRecord } from "./session-record.ts"
 import {
-  finishedPhaseCount,
   phaseLabel,
   type PhaseNumber,
   phaseNumberOf,
   phaseOrdinalText,
-  type PlannedPhase,
-  plannedPhasesOf,
-} from "./work-plan.ts"
+} from "./work-plan-phase-number.ts"
+import { finishedPhaseCount, type PlannedPhase, plannedPhasesOf } from "./work-plan.ts"
 
 type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>
 

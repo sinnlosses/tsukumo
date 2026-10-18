@@ -14,20 +14,22 @@ import {
 } from "../../../../../../../../../shared/session/turn-result.ts"
 import {
   completionText,
-  currentPhaseOf,
-  finishedPhaseCount,
-  type LatestWorkPlan,
-  phaseCount,
   type PhaseNumber,
   phaseNumberOf,
   phaseOrdinalText,
   PHASE_SPAN_NAMES,
   type PhaseSpan,
-  type PlannedPhase,
   plannedPhaseNumber,
   plannedPhaseTitle,
-  plannedPhasesOf,
   workPositionText,
+} from "../../../../../../../../../shared/session/work-plan-phase-number.ts"
+import {
+  currentPhaseOf,
+  finishedPhaseCount,
+  type LatestWorkPlan,
+  phaseCount,
+  type PlannedPhase,
+  plannedPhasesOf,
 } from "../../../../../../../../../shared/session/work-plan.ts"
 import { formatMeasured } from "../../../../../../../../../shared/utils/elapsed-time.ts"
 import {

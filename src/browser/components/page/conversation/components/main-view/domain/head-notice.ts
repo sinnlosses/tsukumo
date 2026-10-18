@@ -4,8 +4,8 @@ import type { ConversationMoment } from "../../../../../../../shared/session/con
 import {
   phaseNumberText,
   phasePosition,
-  type WorkPhase,
-} from "../../../../../../../shared/session/work-plan.ts"
+} from "../../../../../../../shared/session/work-plan-phase-number.ts"
+import type { WorkPhase } from "../../../../../../../shared/session/work-plan.ts"
 import type { MainViewContent } from "../../../../../../stores/main-view-content.ts"
 
 /** `to-newest` は最新のやり取りへ移り、`to-inquiry` は移ったあとお伺いの札まで転がす。 */

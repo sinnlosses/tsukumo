@@ -19,18 +19,17 @@ import { sentenceCount } from "../../../shared/report/sentence-count.ts"
 import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
 import { delegateReturnOf, parsePhaseResult } from "../../../shared/session/phase-result.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { nextWorkPlan, phaseFinishedByReturn } from "../../../shared/session/work-plan-fold.ts"
 import {
   type DelegatedRange,
   finishedPhaseCount,
   isMidWay,
   type LatestWorkPlan,
   NO_DELEGATED_RANGE,
-  nextWorkPlan,
   parseWorkPlan,
   phaseCount,
   MAX_PHASE_SUMMARY_SENTENCES,
   finishedPhaseNames,
-  phaseFinishedByReturn,
   type WorkPlan,
   type WorkPlanStanding,
 } from "../../../shared/session/work-plan.ts"

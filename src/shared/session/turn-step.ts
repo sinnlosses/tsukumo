@@ -10,13 +10,8 @@ import {
   recordTimeAt,
   type SessionRecord,
 } from "./session-record.ts"
-import {
-  currentPhaseOf,
-  isWorkPlanRecord,
-  type LatestWorkPlan,
-  nextWorkPlan,
-  type WorkPhase,
-} from "./work-plan.ts"
+import { isWorkPlanRecord, nextWorkPlan } from "./work-plan-fold.ts"
+import { currentPhaseOf, type LatestWorkPlan, type WorkPhase } from "./work-plan.ts"
 
 /**
  * 依頼の手順1件の進み具合。`failed` の `output` は失敗の中身（`<details>` で開いて読む）。

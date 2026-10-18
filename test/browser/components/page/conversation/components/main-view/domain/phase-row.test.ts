@@ -11,12 +11,14 @@ import type {
   MainViewTurn,
 } from "../../../../../../../../src/shared/session/main-view-shape.ts"
 import {
-  NO_DELEGATED_RANGE,
   phaseLabel,
   phasePosition,
-  type DelegatedRange,
   type PhaseNumber,
   type PhaseSpan,
+} from "../../../../../../../../src/shared/session/work-plan-phase-number.ts"
+import {
+  NO_DELEGATED_RANGE,
+  type DelegatedRange,
   type WorkPhase,
 } from "../../../../../../../../src/shared/session/work-plan.ts"
 

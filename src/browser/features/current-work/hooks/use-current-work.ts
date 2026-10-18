@@ -15,14 +15,16 @@ import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.t
 import type { ReportDrafting } from "../../../../shared/session/turn-progress.ts"
 import type { TurnStep, TurnStepList } from "../../../../shared/session/turn-step.ts"
 import {
-  currentPhaseOf,
   phaseLabel,
   type PhaseNumber,
   PHASE_SPAN_NAMES,
-  type PlannedPhase,
   plannedPhaseNumber,
-  plannedPhasesOf,
   workPositionText,
+} from "../../../../shared/session/work-plan-phase-number.ts"
+import {
+  currentPhaseOf,
+  type PlannedPhase,
+  plannedPhasesOf,
 } from "../../../../shared/session/work-plan.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
 import { toolInputText } from "../../../domain/tool-summary.ts"

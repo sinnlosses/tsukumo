@@ -1,13 +1,9 @@
-// ワークプラン（`work_plan` ツールで受け取る段の並びと今の位置）の形と、記録からワークプランを導く決まり。
-// 状態に別の入れ物は持たず、`work-plan` の記録から描くたびに導く。
+// ワークプラン（`work_plan` ツールで受け取る段の並びと今の位置）の形と、引数の検証、並びを平らにした段と今の段を導く決まり。
 
 import { z } from "zod"
 
-import { leadingSentences, sentenceCount } from "../report/sentence-count.ts"
+import { sentenceCount } from "../report/sentence-count.ts"
 import { isBlankText } from "../utils/blank-text.ts"
-import type { DelegateReturn } from "./delegate-return.ts"
-import type { SessionEvent } from "./session-event.ts"
-import type { SessionRecord } from "./session-record.ts"
 
 /** 並列の段。同時に走る段の名前の並びで、{@link MIN_PHASE_GROUP_SIZE} 個以上の重ならない名前を持つ。 */
 export type PhaseGroup = readonly string[]
@@ -41,7 +37,7 @@ export type AwaitingSummary =
   | { readonly kind: "none" }
   | { readonly kind: "awaiting"; readonly key: string }
 
-const NO_AWAITING_SUMMARY = { kind: "none" } as const satisfies AwaitingSummary
+export const NO_AWAITING_SUMMARY = { kind: "none" } as const satisfies AwaitingSummary
 
 /**
  * 委譲先の段の範囲。`first` は委譲先の段1に当たる位置（平らにした並びで0始まり）、`count` は委譲先の段の数。
@@ -67,12 +63,12 @@ export const MAX_PHASE_SUMMARY_SENTENCES = 2
 /** 記録の範囲で最後に渡されたワークプラン。1度も渡されていなければ `none`。 */
 export type LatestWorkPlan = { readonly kind: "none" } | PlannedWorkPlan
 
-type PlannedWorkPlan = { readonly kind: "planned" } & WorkPlan
+export type PlannedWorkPlan = { readonly kind: "planned" } & WorkPlan
 
 export type PlannedPhaseState = "done" | "current" | "upcoming"
 
 /**
- * 並びを平らにした段1つ。`index` は平らにした並びでの0始まりの位置（段の番号は {@link phaseNumberOf} が導く）。
+ * 並びを平らにした段1つ。`index` は平らにした並びでの0始まりの位置（段の番号は `phaseNumberOf` が導く）。
  * `entry` はその段のある要素の位置で、並列の段の中の段どうしは同じ値を持つ。
  * `key` は名前と同じ名前の段の中で何番目かの組で、組み替えた並びどうしで同じ段を引き当てるのに使う。
  */
@@ -101,21 +97,6 @@ export type WorkPhase =
       readonly name: string
       readonly range: DelegatedRange
     }
-
-/**
- * `work_plan` の呼び出し1つで段が移ったか。
- * `finished` は終えた段（見出しの字）とそのまとめで、中間レポートになる。
- */
-export type PhaseShift = {
-  readonly finished:
-    | { readonly kind: "none" }
-    | {
-        readonly kind: "finished"
-        readonly label: string
-        readonly summary: string
-        readonly skipped: boolean
-      }
-}
 
 const phaseNameSchema = z.string().refine((name) => !isBlankText(name))
 
@@ -299,62 +280,6 @@ export function parseWorkPlanClosing(value: unknown): WorkPlanClosing {
   return WORK_PLAN_CLOSINGS.find((closing) => closing === value) ?? "none"
 }
 
-/** 今のワークプランを動かすイベント。ほかのイベント（`turn-started` も）はワークプランを動かさない。 */
-export type WorkPlanEvent = Extract<
-  SessionEvent,
-  { readonly kind: "request" | "work-plan" | "delegate-returned" | "report" }
->
-
-/**
- * イベント1件を受けたあとの今のワークプラン。
- * 依頼で忘れ、`work-plan` で置き換え、委譲の返却は {@link advancedByReturn}、段の閉じ方が `finished` の `report` は {@link closedByReport} で畳む。
- */
-export function nextWorkPlan(plan: LatestWorkPlan, event: WorkPlanEvent): LatestWorkPlan {
-  switch (event.kind) {
-    case "request":
-      return NO_WORK_PLAN
-    case "work-plan":
-      return withLeadPhasesFinished(plan, workPlanOf(event))
-    case "delegate-returned":
-      return plan.kind === "none" ? plan : advancedByReturn(plan, event.handback)
-    case "report":
-      return plan.kind === "none" || event.workPlanClosing !== "finished"
-        ? plan
-        : closedByReport(plan)
-  }
-}
-
-/** 記録の並びから畳んだ今のワークプラン。記録に残る `request` と `work-plan` を {@link nextWorkPlan} に通す。 */
-export function currentWorkPlan(records: readonly SessionRecord[]): LatestWorkPlan {
-  return records.reduce<LatestWorkPlan>(
-    (plan, record) =>
-      record.kind === "request" || record.kind === "work-plan" ? nextWorkPlan(plan, record) : plan,
-    NO_WORK_PLAN,
-  )
-}
-
-const NO_WORK_PLAN = { kind: "none" } as const satisfies LatestWorkPlan
-
-/** `work-plan` のイベントか記録1件が運ぶワークプラン（ワークプランの欄だけを拾う）。 */
-export function workPlanOf(plan: WorkPlan): PlannedWorkPlan {
-  return {
-    kind: "planned",
-    phases: plan.phases,
-    current: plan.current,
-    finishedInGroup: plan.finishedInGroup,
-    phaseSummary: plan.phaseSummary,
-    delegatedRange: plan.delegatedRange,
-    skippedPhases: plan.skippedPhases,
-    awaitingSummary: plan.awaitingSummary,
-  }
-}
-
-export function isWorkPlanRecord(
-  record: SessionRecord,
-): record is Extract<SessionRecord, { readonly kind: "work-plan" }> {
-  return record.kind === "work-plan"
-}
-
 /** ワークプランの今の段（{@link WorkPhase}）。 */
 export function currentPhaseOf(plan: LatestWorkPlan): WorkPhase {
   if (plan.kind === "none") {
@@ -373,323 +298,7 @@ export function currentPhaseOf(plan: LatestWorkPlan): WorkPhase {
       }
 }
 
-/**
- * 同じ依頼の中の前のワークプラン `previous` から `next` へ移ったときに、メインビューに出すもの（{@link PhaseShift}）。
- *
- * - 依頼で最初のワークプランと、全部の段を終えたワークプランでは何も出さない（最後の段のまとめは最終レポートが担う）
- * - 中間レポートは、前の今の段のどれかが新しい並びで済んだ段になったときだけ出す。
- *   段は名前と同じ名前の段の中で何番目かで探すので、段を進めながら後ろの段を組み替えても終えた段を見失わず、
- *   同じ名前の済んだ段を今の段と取り違えない。
- *   戻った・組み替えただけで前の今の段が済んでいない（今の段以降にある・並びから消えた）ときは出さない
- * - そのほか、前のワークプランのまとめ待ちの段が新しい並びで済んでいれば、新しいまとめをその段の中間レポートにする
- */
-export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShift {
-  const shifted = shiftedPhaseOf(previous, next)
-  if (shifted.kind === "none") {
-    return NO_PHASE_SHIFT
-  }
-  return {
-    finished: {
-      kind: "finished",
-      label: phaseLabel({
-        kind: "phase",
-        indexes: [shifted.phase.index],
-        count: phaseCount(next.phases),
-        name: shifted.phase.name,
-        range: next.delegatedRange,
-      }),
-      summary: shifted.summary,
-      skipped: shifted.phase.skipped,
-    },
-  }
-}
-
-/**
- * `previous` から `next` へ移ったときに済んだ段（`next` の並びの段）とそのまとめ。
- * 出す・出さないの条件は {@link phaseShiftOf} と同じで、出さないときは `none`。
- */
-export function shiftedPhaseOf(
-  previous: LatestWorkPlan,
-  next: WorkPlan,
-):
-  | { readonly kind: "none" }
-  | { readonly kind: "finished"; readonly phase: PlannedPhase; readonly summary: string } {
-  if (previous.kind === "none" || currentPhaseOf({ kind: "planned", ...next }).kind === "none") {
-    return NO_SHIFTED_PHASE
-  }
-  const nextPhases = plannedPhasesOf(next)
-  const finishedNow = plannedPhasesOf(previous)
-    .filter((phase) => phase.state === "current")
-    .map((phase) => nextPhases.find((candidate) => candidate.key === phase.key))
-    .find((found) => found?.state === "done")
-  const { awaitingSummary } = previous
-  const finished =
-    finishedNow ??
-    (awaitingSummary.kind === "awaiting"
-      ? nextPhases.find(
-          (candidate) => candidate.key === awaitingSummary.key && candidate.state === "done",
-        )
-      : undefined)
-  if (finished === undefined || isBlankText(next.phaseSummary)) {
-    return NO_SHIFTED_PHASE
-  }
-  return { kind: "finished", phase: finished, summary: next.phaseSummary }
-}
-
-/**
- * 段の群。範囲が無ければ並び全体の `whole`、範囲があれば範囲の前の `lead`・範囲の `delegated`・範囲の後ろの `trail`。
- * 段の番号は群ごとに1から数える。
- */
-export type PhaseSpan = "whole" | "lead" | "delegated" | "trail"
-
-/**
- * 段の番号。`numbered` は群 `span` と、群の中の `ordinals`「2」（段が2つ以上なら「2–3」）と `text`「2/4」（「2–3/4」）、
- * `named` は番号を持たず名前だけで呼ぶ段（範囲の段の数が決まるまでの、範囲の先頭から後ろ）。
- */
-export type PhaseNumber =
-  | {
-      readonly kind: "numbered"
-      readonly span: PhaseSpan
-      readonly ordinals: string
-      readonly text: string
-    }
-  | { readonly kind: "named" }
-
-/** 群の名「前」「本」「後」。並び全体の群は名を持たず空の文字列。 */
-export const PHASE_SPAN_NAMES = {
-  whole: "",
-  lead: "前",
-  delegated: "本",
-  trail: "後",
-} as const satisfies Record<PhaseSpan, string>
-
-export function plannedPhaseNumber(
-  plan: Pick<WorkPlan, "phases" | "delegatedRange">,
-  phase: Pick<PlannedPhase, "index">,
-): PhaseNumber {
-  return phaseNumberOf(plan.delegatedRange, [phase.index], phaseCount(plan.phases))
-}
-
-/**
- * いまの位置「後 1/3」（範囲が無ければ「2/4」）。全部の段が済んでいれば最後の段の群の段の数で「後 3/3」。
- * ワークプランが無い・今の段が番号を持たないときは空の文字列。
- */
-export function workPositionText(plan: LatestWorkPlan): string {
-  if (plan.kind === "none") {
-    return ""
-  }
-  const phase = currentPhaseOf(plan)
-  if (phase.kind === "phase") {
-    return phaseNumberText(phasePosition(phase))
-  }
-  const total = phaseCount(plan.phases)
-  const last = phaseNumberOf(plan.delegatedRange, [total - 1], total)
-  return phaseNumberText(last)
-}
-
-/** 番号の字「後 1/3」（並び全体の群なら「1/3」）。番号を持たない段は空の文字列。 */
-export function phaseNumberText(number: PhaseNumber): string {
-  if (number.kind === "named") {
-    return ""
-  }
-  const name = PHASE_SPAN_NAMES[number.span]
-  return name === "" ? number.text : `${name} ${number.text}`
-}
-
-/** 群の名を前に付けた番号「後1」「2–3」（並び全体の群なら番号だけ）。番号を持たない段は空の文字列。 */
-export function phaseOrdinalText(number: PhaseNumber): string {
-  return number.kind === "named" ? "" : `${PHASE_SPAN_NAMES[number.span]}${number.ordinals}`
-}
-
-/** 全部の段（範囲の外を含む）で言う済み具合「5段すべて済み」「5段のうち4段済み」。 */
-export function completionText(
-  plan: Pick<WorkPlan, "phases" | "current" | "finishedInGroup">,
-): string {
-  const total = phaseCount(plan.phases)
-  const finished = finishedPhaseCount(plan)
-  return finished >= total
-    ? `${String(total)}段すべて済み`
-    : `${String(total)}段のうち${String(finished)}段済み`
-}
-
-/** 段の呼び名「後1. 段の名前」（範囲が無ければ「2. 段の名前」、番号を持たない段は名前だけ）。 */
-export function plannedPhaseTitle(
-  plan: Pick<WorkPlan, "phases" | "delegatedRange">,
-  phase: Pick<PlannedPhase, "index" | "name">,
-): string {
-  const ordinal = phaseOrdinalText(plannedPhaseNumber(plan, phase))
-  return ordinal === "" ? phase.name : `${ordinal}. ${phase.name}`
-}
-
-/**
- * 平らにした並びでの位置 `indexes`（全部で `total` 段）の段の番号。段の番号を組む唯一の場所。
- * 範囲が無ければ並び全体の通し番号。範囲があれば、範囲の前・範囲・範囲の後ろの群ごとに、群の先頭を1として群の段の数で数える。
- * 範囲の段の数が決まるまで（`pending`）は範囲の前だけを数え、範囲の先頭から後ろは `named`。
- */
-export function phaseNumberOf(
-  range: DelegatedRange,
-  indexes: readonly number[],
-  total: number,
-): PhaseNumber {
-  const [lead = 0] = indexes
-  if (range.kind === "none") {
-    return numbered("whole", indexes, 0, total)
-  }
-  if (lead < range.first) {
-    return numbered("lead", indexes, 0, range.first)
-  }
-  if (range.kind === "pending") {
-    return { kind: "named" }
-  }
-  const end = range.first + range.count
-  return lead < end
-    ? numbered("delegated", indexes, range.first, range.count)
-    : numbered("trail", indexes, end, total - end)
-}
-
-/** 段の見出し「後 1/3 段の名前」（範囲が無ければ「2/4 段の名前」、今の段が2つ以上なら「本 2–3/4 段B・段C」、番号を持たない段は名前だけ）。 */
-export function phaseLabel(phase: Extract<WorkPhase, { readonly kind: "phase" }>): string {
-  const text = phaseNumberText(phasePosition(phase))
-  return text === "" ? phase.name : `${text} ${phase.name}`
-}
-
-export function phasePosition(phase: Extract<WorkPhase, { readonly kind: "phase" }>): PhaseNumber {
-  return phaseNumberOf(phase.range, phase.indexes, phase.count)
-}
-
-/**
- * 委譲の返却で済む帯の段。帯を動かさない返却（{@link advancedByReturn} が `plan` をそのまま返す場合）では `unmoved`。
- */
-export function phaseFinishedByReturn(plan: WorkPlan, handback: DelegateReturn): ReturnedPhase {
-  const returned = returnedByReturn({ kind: "planned", ...plan }, handback)
-  return returned.kind === "finished" ? { kind: "finished", phase: returned.phase } : UNMOVED
-}
-
-/** 委譲の返却1件が帯の段を済ませたか（{@link phaseFinishedByReturn}）。 */
-export type ReturnedPhase =
-  | { readonly kind: "unmoved" }
-  | { readonly kind: "finished"; readonly phase: PlannedPhase }
-
-const UNMOVED = { kind: "unmoved" } as const satisfies ReturnedPhase
-
-/**
- * 範囲を初めて宣言した `work-plan` は、範囲の前の段（計画）を済ませた位置に直す。
- * 範囲の前の段は返却で済まず、範囲の先頭の段は今の段のときにしか返却で済まないので、手で `current` を進め忘れると帯が動かなくなる。
- */
-function withLeadPhasesFinished(previous: LatestWorkPlan, next: PlannedWorkPlan): PlannedWorkPlan {
-  const hadRange = previous.kind === "planned" && previous.delegatedRange.kind === "range"
-  if (hadRange || next.delegatedRange.kind !== "range" || next.finishedInGroup.length > 0) {
-    return next
-  }
-  const { first } = next.delegatedRange
-  const lead = plannedPhasesOf(next).find((phase) => phase.index === first)
-  return lead === undefined || lead.entry <= next.current ? next : { ...next, current: lead.entry }
-}
-
-/** 並列の段の中の段は平らにした並びで隣り合うので、2つ以上なら先頭と末尾の番号を「–」でつなぐ。 */
-function numbered(
-  span: PhaseSpan,
-  indexes: readonly number[],
-  origin: number,
-  count: number,
-): PhaseNumber {
-  const ordinalOf = (index: number): string => String(index - origin + 1)
-  const [first] = indexes
-  const last = indexes.at(-1)
-  const ordinals =
-    first === undefined || last === undefined || first === last
-      ? ordinalOf(first ?? origin)
-      : `${ordinalOf(first)}${ORDINAL_RANGE_SEPARATOR}${ordinalOf(last)}`
-  return { kind: "numbered", span, ordinals, text: `${ordinals}/${String(count)}` }
-}
-
-const ORDINAL_RANGE_SEPARATOR = "–"
-
 const PHASE_NAME_SEPARATOR = "・"
-
-const NO_PHASE_SHIFT = {
-  finished: { kind: "none" },
-} as const satisfies PhaseShift
-
-const NO_SHIFTED_PHASE = { kind: "none" } as const
-
-/**
- * `phase_result` の `finished`（`phase-done`）と `skipped`（`phase-skipped`）で進めたワークプラン。
- * 範囲があり `count` が範囲の段の数と同じで、`phase` に当たる段が今の段の集合に入っているときだけ、その段を済ませる。
- * 一足飛び・済んだ段・範囲の無いワークプラン・`stopped`・並びの最後の段（返却では全部済みにしない）では `plan` をそのまま返す。
- * 段のまとめは返却の要約を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもの。まとめが空なら済ませた段をまとめ待ちにする。
- * `phase-skipped` は済ませた段の名前を飛ばした段に足す。
- */
-function advancedByReturn(plan: PlannedWorkPlan, handback: DelegateReturn): PlannedWorkPlan {
-  const returned = returnedByReturn(plan, handback)
-  return returned.kind === "finished" ? returned.advanced : plan
-}
-
-function returnedByReturn(
-  plan: PlannedWorkPlan,
-  handback: DelegateReturn,
-):
-  | { readonly kind: "unmoved" }
-  | {
-      readonly kind: "finished"
-      readonly phase: PlannedPhase
-      readonly advanced: PlannedWorkPlan
-    } {
-  if (
-    (handback.kind !== "phase-done" && handback.kind !== "phase-skipped") ||
-    plan.delegatedRange.kind !== "range" ||
-    plan.delegatedRange.count !== handback.count
-  ) {
-    return UNMOVED
-  }
-  const target = plan.delegatedRange.first + handback.phase - 1
-  const phase = plannedPhasesOf(plan).find((candidate) => candidate.index === target)
-  if (phase === undefined || phase.state !== "current") {
-    return UNMOVED
-  }
-  const entry = plan.phases[phase.entry]
-  const finishedInGroup = typeof entry === "string" ? [] : [...plan.finishedInGroup, phase.name]
-  const entryDone =
-    entry === undefined || typeof entry === "string" || finishedInGroup.length === entry.length
-  const phaseSummary =
-    handback.kind === "phase-done"
-      ? leadingSentences(handback.summary, MAX_PHASE_SUMMARY_SENTENCES)
-      : ""
-  const skipped = handback.kind === "phase-skipped" && !plan.skippedPhases.includes(phase.name)
-  const advanced: PlannedWorkPlan = {
-    ...plan,
-    current: entryDone ? plan.current + 1 : plan.current,
-    finishedInGroup: entryDone ? [] : finishedInGroup,
-    phaseSummary,
-    skippedPhases: skipped ? [...plan.skippedPhases, phase.name] : plan.skippedPhases,
-    awaitingSummary: isBlankText(phaseSummary)
-      ? { kind: "awaiting", key: phase.key }
-      : NO_AWAITING_SUMMARY,
-  }
-  return finishedPhaseCount(advanced) >= phaseCount(advanced.phases)
-    ? UNMOVED
-    : { kind: "finished", phase, advanced }
-}
-
-/**
- * `finished` の `report` 1回で閉じたワークプラン。
- * 残りが1段のときだけ、段の並びはそのままで全部の段を終えた位置にする（最後の段のまとめは最終レポートが担うので持たない）。
- * 段が2つ以上残っている・全部の段を終えた位置では `plan` をそのまま返す。
- */
-function closedByReport(plan: PlannedWorkPlan): PlannedWorkPlan {
-  return phaseCount(plan.phases) - finishedPhaseCount(plan) === 1
-    ? {
-        kind: "planned",
-        phases: plan.phases,
-        current: plan.phases.length,
-        finishedInGroup: [],
-        phaseSummary: "",
-        delegatedRange: plan.delegatedRange,
-        skippedPhases: plan.skippedPhases,
-        awaitingSummary: NO_AWAITING_SUMMARY,
-      }
-    : plan
-}
 
 function delegatedRangeOf(value: z.infer<typeof workPlanShape.delegatedRange>): DelegatedRange {
   if (value === undefined) {
