@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs"
+import { dirname, resolve } from "node:path"
 
 import { uniqueBy } from "remeda"
 import { describe, expect, it } from "vitest"
@@ -336,6 +337,16 @@ function jsxUsagesWithClassName(
   return usages
 }
 
+/** CSS を読み、`@import` で取り込むファイルの中身を後ろに足す（取り込んだ規則は入口の class 名になるため）。 */
+function cssContentWithImports(path: string): string {
+  const source = readFileSync(path, "utf8")
+  const imported = [...source.matchAll(/@import\s+["']([^"']+)["']\s*;/g)].flatMap(
+    ([, specifier]) =>
+      specifier === undefined ? [] : [cssContentWithImports(resolve(dirname(path), specifier))],
+  )
+  return [source.replace(/@import\s+["'][^"']+["']\s*;/g, ""), ...imported].join("\n")
+}
+
 describe("components/ui/ の部品の className", () => {
   it('渡す className は styles["…"] の組み合わせだけで、その class は部品の property と重ならない', () => {
     const targets = classNameCheckedUiComponents()
@@ -354,7 +365,7 @@ describe("components/ui/ の部品の className", () => {
       if (cached !== undefined) {
         return cached
       }
-      const content = readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8")
+      const content = cssContentWithImports(`${SRC_ROOT}/${cssRelPath}`)
       cssContentCache.set(cssRelPath, content)
       return content
     }
@@ -403,6 +414,19 @@ describe("CSS Modules の class", () => {
       )) {
         const cssRelPath = resolveRelativeImport(relPath, importMatch[1] ?? "")
         readersByCss.set(cssRelPath, [...(readersByCss.get(cssRelPath) ?? []), content])
+      }
+    }
+
+    // `@import` で取り込まれた CSS の class 名は入口の名前になるので、入口を読む tsx がそのまま読み手になる。
+    for (const cssRelPath of cssFiles) {
+      const readers = readersByCss.get(cssRelPath) ?? []
+      const source = readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8")
+      for (const importMatch of source.matchAll(/@import\s+["']([^"']+)["']\s*;/g)) {
+        const importedRelPath = resolveRelativeImport(cssRelPath, importMatch[1] ?? "")
+        readersByCss.set(importedRelPath, [
+          ...(readersByCss.get(importedRelPath) ?? []),
+          ...readers,
+        ])
       }
     }
 

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs"
+import { readdirSync, readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 import { cleanup, render } from "@testing-library/react"
@@ -76,18 +76,19 @@ const namedClasses = [...REPORT_NOTATION_PROMPT.matchAll(/class="([^"]+)"/g)].fl
   ([, names]) => names?.split(" ") ?? [],
 )
 
-// 見た目はレポートの記法を描く機能の CSS（`markdown/renderer/report-notation.module.css`）にある。
+// 見た目はレポートの記法を描く機能の CSS（`markdown/renderer/report-*.module.css`）にある。
 // テストの中では class 名が CSS に書いた綴りのまま届く（`cssModuleIdentityPlugin`）ので、
-// 部品が付け直した名前をそのファイルの選択子とそのまま突き合わせられる。
-const STYLE_SHEET_SOURCE = readFileSync(
-  fileURLToPath(
-    new URL(
-      "../../../../src/browser/components/page/conversation/components/markdown/renderer/report-notation.module.css",
-      import.meta.url,
-    ),
+// 部品が付け直した名前をそれらのファイルの選択子とそのまま突き合わせられる。
+const STYLE_SHEET_DIRECTORY = fileURLToPath(
+  new URL(
+    "../../../../src/browser/components/page/conversation/components/markdown/renderer/",
+    import.meta.url,
   ),
-  "utf8",
 )
+const STYLE_SHEET_SOURCE = readdirSync(STYLE_SHEET_DIRECTORY)
+  .filter((file) => /^report-.*\.module\.css$/.test(file))
+  .map((file) => readFileSync(`${STYLE_SHEET_DIRECTORY}${file}`, "utf8"))
+  .join("\n")
 
 describe("REPORT_NOTATION_PROMPT", () => {
   it("名乗った要素を rehype-sanitize の schema が通す", () => {

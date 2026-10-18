@@ -11,17 +11,35 @@
 // 黙って通らない。
 
 import { readFile } from "node:fs/promises"
+import { dirname, resolve } from "node:path"
 
 import type { Plugin } from "vite"
 
 const VIRTUAL_PREFIX = "\0css-module-identity:"
 const VIRTUAL_SUFFIX = ".mjs"
 
-/** CSS の選択子に書かれた class 名（コメントの中は除く）。 */
+/** CSS の選択子に書かれた class 名（コメントと `@import` の文は除く）。 */
 export function cssClassNames(source: string): readonly string[] {
-  return [...source.replace(COMMENT_PATTERN, "").matchAll(CLASS_NAME_PATTERN)].flatMap(
-    ([, name]) => name ?? [],
+  return [
+    ...source.replace(COMMENT_PATTERN, "").replace(IMPORT_PATTERN, "").matchAll(CLASS_NAME_PATTERN),
+  ].flatMap(([, name]) => name ?? [])
+}
+
+/** `@import "./x.module.css";` の文。取り込み先のパスが1つ目の捕獲。 */
+const IMPORT_PATTERN = /@import\s+["']([^"']+)["']\s*;/g
+
+/**
+ * CSS を読み、`@import` で取り込むファイルの中身を入口の後ろに足す。
+ * ビルドでは取り込んだ規則が入口の class 名になるので、テストでも入口の対応表に入れる。
+ */
+async function readCssWithImports(path: string): Promise<string> {
+  const source = await readFile(path, "utf8")
+  const imported = await Promise.all(
+    [...source.matchAll(IMPORT_PATTERN)].flatMap(([, specifier]) =>
+      specifier === undefined ? [] : [readCssWithImports(resolve(dirname(path), specifier))],
+    ),
   )
+  return [source, ...imported].join("\n")
 }
 
 /** 選択子に出てくる class 名。数字で始まる長さの単位（`.5rem`）とは重ならない。 */
@@ -49,7 +67,7 @@ export function cssModuleIdentityPlugin(): Plugin {
         return
       }
       const path = id.slice(VIRTUAL_PREFIX.length, -VIRTUAL_SUFFIX.length)
-      const source = await readFile(path, "utf8")
+      const source = await readCssWithImports(path)
       const classNames = Object.fromEntries(cssClassNames(source).map((name) => [name, name]))
       return `export default ${JSON.stringify(classNames)}`
     },
