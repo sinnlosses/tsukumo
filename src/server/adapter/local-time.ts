@@ -44,11 +44,6 @@ export function localDateEpochRange(dateKey: string): {
   }
 }
 
-/** ローカル時刻の `HH:MM`（日付は含めない）。 */
-export function localTimeHHMM(epochMilliseconds: number): string {
-  return localTimeAt(epochMilliseconds).toPlainTime().toString({ smallestUnit: "minute" })
-}
-
 /** ローカル時刻の月・曜日（1 が月曜、7 が日曜）・時。 */
 export function localCalendarAt(epochMilliseconds: number): {
   readonly month: number

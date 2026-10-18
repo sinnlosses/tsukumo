@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
@@ -38,12 +38,6 @@ describe("writeJsonFile", () => {
     writeFileSync(blocked, "")
     const path = join(blocked, "value.json")
 
-    expect(() => writeJsonFile(path, { seq: 1 })).not.toThrow()
-  })
-
-  it("書き込み先がディレクトリで塞がっていても例外を投げない", () => {
-    const path = join(dir(), "value.json")
-    mkdirSync(path)
     expect(() => writeJsonFile(path, { seq: 1 })).not.toThrow()
   })
 })

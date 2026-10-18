@@ -14,11 +14,7 @@ describe("chooseTw", () => {
     expect(chooseTw(undefined, false)).toBe("tw")
   })
 
-  it("差し替えがあれば、取り込みを載せるときもそのパス", () => {
-    expect(chooseTw("/somewhere/fake-tw", true)).toBe("/somewhere/fake-tw")
-  })
-
-  it("差し替えがあれば、取り込みを載せないときもそのパス", () => {
-    expect(chooseTw("/somewhere/fake-tw", false)).toBe("/somewhere/fake-tw")
+  it.each([true, false])("差し替えがあれば、取り込みを載せる(%s)ときもそのパス", (mount) => {
+    expect(chooseTw("/somewhere/fake-tw", mount)).toBe("/somewhere/fake-tw")
   })
 })

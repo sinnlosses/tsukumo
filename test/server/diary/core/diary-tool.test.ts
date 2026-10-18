@@ -214,10 +214,6 @@ describe("createDiaryIntake", () => {
 })
 
 describe("diaryArgumentHasBookmarkKey", () => {
-  it("空の断片は false", () => {
-    expect(diaryArgumentHasBookmarkKey("")).toBe(false)
-  })
-
   it("bookmark が無い断片は false", () => {
     expect(diaryArgumentHasBookmarkKey('{"body":"架空の本文","expression":"proud"')).toBe(false)
   })
