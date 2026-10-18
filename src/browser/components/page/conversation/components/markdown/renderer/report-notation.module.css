@@ -1143,6 +1143,16 @@
 .detail-block .report-phase-band-longest {
   background: var(--phase-band-longest);
 }
+.detail-block .report-phase-band-unknown {
+  flex: 0 0 12px;
+  height: 14px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(
+    135deg,
+    var(--phase-band-unknown) 0 4px,
+    transparent 4px 8px
+  );
+}
 .detail-block .report-phase-waterfall {
   display: flex;
   flex-direction: column;

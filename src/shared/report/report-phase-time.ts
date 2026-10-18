@@ -27,8 +27,8 @@ export type PhaseTimeRow =
 /**
  * 段ごとの所要時間（1つの HTML の塊）。段が無ければ空文字。
  * 見出しの行（計）・帯か横棒・一覧の順に出す。
- * 一本道で全部測れた回は、段ごとに1区間の1本の帯で、長さは時間の比。
- * 並列の段か測れなかった段がある回は、帯の代わりに1行1段の横棒（waterfall）を置く。
+ * 並列の段が無い回は、段ごとに1区間の1本の帯で、長さは時間の比。測れなかった段は固定幅の斜線の区間で、比には数えない。
+ * 並列の段がある回は、帯の代わりに1行1段の横棒（waterfall）を置く。
  * 棒の位置は依頼の頭からの開始、長さは所要で、並列の段の棒は中の段の棒の上に置き、測れなかった段は斜線の欠片で位置だけ示す。
  * 計は段（並列の段は壁時計の1区間）の測れた区間の和、割合はその区間の時間÷計の整数%、一番長い区間だけ強める。
  * 測れなかった区間は一覧で「不明」とし、割合は空欄にする。
@@ -46,15 +46,9 @@ export function phaseTimesMarkdown(rows: readonly PhaseTimeRow[]): string {
   const longest = Math.max(...knownMilliseconds)
   const longestIndex = longest > 0 ? knownMilliseconds.indexOf(longest) : -1
 
-  const segments = rows.flatMap((row, index) =>
-    row.kind === "phase" && row.duration.kind === "known"
-      ? [bandSegmentMarkdown(row.label, row.duration, index === longestIndex)]
-      : [],
-  )
-  const band =
-    segments.length === rows.length
-      ? `<div class="phase-band" aria-hidden="true">${segments.join("")}</div>`
-      : waterfallMarkdown(rows, longestIndex)
+  const band = rows.some((row) => row.kind === "parallel")
+    ? waterfallMarkdown(rows, longestIndex)
+    : bandMarkdown(rows, longestIndex)
   const list = rows
     .map((row, index) => {
       const duration = intervals[index] ?? { kind: "unknown" }
@@ -137,6 +131,22 @@ function waterfallMarkdown(rows: readonly PhaseTimeRow[], longestIndex: number):
 
 function waterfallRowMarkdown(bar: string): string {
   return `<div class="phase-waterfall-row">${bar}</div>`
+}
+
+function bandMarkdown(rows: readonly PhaseTimeRow[], longestIndex: number): string {
+  const regions = rows.flatMap((row, index) => {
+    if (row.kind !== "phase") {
+      return []
+    }
+    return row.duration.kind === "known"
+      ? [bandSegmentMarkdown(row.label, row.duration, index === longestIndex)]
+      : [bandUnknownMarkdown(row.label)]
+  })
+  return `<div class="phase-band" aria-hidden="true">${regions.join("")}</div>`
+}
+
+function bandUnknownMarkdown(label: string): string {
+  return `<span class="phase-band-unknown" title="${htmlAttribute(label)} 不明"></span>`
 }
 
 function bandSegmentMarkdown(

@@ -84,22 +84,31 @@ describe("phaseTimesMarkdown", () => {
     expect(html).not.toContain("phase-waterfall")
   })
 
-  it("測れない段のある回は waterfall で、斜線の欠片を直前の棒の終わりに置く", () => {
-    const html = phaseTimesMarkdown([known("1/2 架空の段A", 5_000), unknown("2/2 架空の段B")])
+  it("並列の段が無く測れない段のある回は1本の帯のままで、測れない段を固定幅の斜線の区間にする", () => {
+    const html = phaseTimesMarkdown([
+      known("1/3 架空の段A", 5_000),
+      unknown("2/3 架空の段B"),
+      known("3/3 架空の段C", 5_000),
+    ])
 
-    expect(html).not.toContain("phase-band")
-    expect(html).toContain(
-      '<div class="phase-waterfall-row"><span class="phase-waterfall-bar phase-waterfall-unknown" title="2/2 架空の段B 不明" style="margin-left: 98%; width: 2%"></span></div>',
-    )
+    expect(html).toContain('<div class="phase-band" aria-hidden="true">')
+    expect(html).not.toContain("phase-waterfall")
+    const unknownRegion = '<span class="phase-band-unknown" title="2/3 架空の段B 不明"></span>'
+    expect(html).toContain(unknownRegion)
+    expect(html.indexOf('title="1/3 架空の段A 5秒"')).toBeLessThan(html.indexOf(unknownRegion))
+    expect(html.indexOf(unknownRegion)).toBeLessThan(html.indexOf('title="3/3 架空の段C 5秒"'))
     expect(html).toContain(
       '<span class="phase-time-value">不明</span><span class="phase-time-ratio"></span>',
     )
-    expect(html).toContain('<span class="phase-time-ratio">100%</span>')
+    expect(html.match(/<span class="phase-time-ratio">50%<\/span>/g)).toHaveLength(2)
   })
 
-  it("すべて測れなくても壊れず、計は0秒で目印は付かない", () => {
+  it("すべて測れなくても壊れず、帯のまま計は0秒で目印は付かない", () => {
     const html = phaseTimesMarkdown([unknown("1/1 架空の段")])
 
+    expect(html).toContain(
+      '<div class="phase-band" aria-hidden="true"><span class="phase-band-unknown"',
+    )
     expect(html).toContain("計 0秒")
     expect(html).not.toContain("phase-time-longest")
   })
@@ -115,6 +124,15 @@ describe("phaseTimesMarkdown", () => {
     )
     expect(html).toContain("phase-time phase-time-inner phase-time-unknown")
     expect(html).toContain("計 25秒")
+  })
+
+  it("並列の段のある回で測れない段が混じれば、waterfall のまま斜線の欠片を直前の棒の終わりに置く", () => {
+    const html = phaseTimesMarkdown([known("1/3 架空の段A", 5_000), parallelRows()])
+
+    expect(html).not.toContain("phase-band")
+    expect(html).toContain(
+      '<div class="phase-waterfall-row"><span class="phase-waterfall-bar phase-waterfall-unknown" title="3/3 架空の段C 不明" style="margin-left: 98%; width: 2%"></span></div>',
+    )
   })
 
   it("並列の回は waterfall で、並列の段の棒を中の段の棒の上に開始の位置と長さで置く", () => {

@@ -167,7 +167,7 @@ export const REPORT_NOTATION_NAMES = [
  * `verdict` は結論のすぐ下の合図の行（検証結果の判定だけを運ぶ）。
  * `checks` は検証結果の塊で、上から総括行（`checks-summary`。部分は `checks-summary-part`、お願いの印は `checks-summary-favor`）、
  * 問題の項目（`checks-problem`。確かめ方は `checks-problem-how`）、通った項目を畳んだ `<details>`（`checks-passed`。開くと `check` の行の一覧）。
- * `phase-times` は検証結果の下の段ごとの所要時間（見出しの行・帯 `phase-band` か並列や測れない段のある回の横棒 `phase-waterfall`・一覧）で、`phase-time` が一覧の1行。`phase-time-group` は並列の段の包み。
+ * `phase-times` は検証結果の下の段ごとの所要時間（見出しの行・帯 `phase-band`（測れない段は `phase-band-unknown`）か並列の段のある回の横棒 `phase-waterfall`・一覧）で、`phase-time` が一覧の1行。`phase-time-group` は並列の段の包み。
  * `conclusion` は `task` のあるレポートの結論の一文、`conclusion-lead` は `task` の無いレポートの結論。
  * 見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
  */
@@ -214,6 +214,7 @@ export const REPORT_DRAWN_MARK_NAMES = [
   "phase-band",
   "phase-band-segment",
   "phase-band-longest",
+  "phase-band-unknown",
   "phase-waterfall",
   "phase-waterfall-row",
   "phase-waterfall-bar",
