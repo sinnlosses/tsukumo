@@ -854,7 +854,9 @@ store には値だけでなく、React に属さない口も同じく持たせ�
 - 実装コードの前に失敗するテストを書く（`/tdd` スキル参照）
 - テストは `test/` 以下に、テスト対象と同じディレクトリ構成で置く
   （`src/<相対パス>.ts` → `test/<相対パス>.test.ts`）。**E2E だけは `test/e2e/<シナリオ>.test.ts`**
-  （1つのファイルの振る舞いではないため。形は `docs/architecture/testing.md`「E2E の走らせ方」）
+  （1つのファイルの振る舞いではないため。形は `docs/architecture/testing.md`「E2E の走らせ方」）。
+  同名の対象が別の場所にあるのに鏡の場所に無いテストは、`test/architecture/test-location.test.ts` の
+  許す一覧（既存の違反）を除いて落とす。一覧に無いずれが増えたとき、一覧の項目が直ったときに落ちる
 - テストランナーは Vitest。`describe` / `it` / `expect` は `vitest` から import する
 - **モックするのはシステム境界だけ**: ファイルシステム、時刻、端末の能力判定（画像プロトコルが
   使えるか）。Vitest の `vi.fn` / `vi.spyOn` を使う。自分たちのモジュール同士はモックしない
