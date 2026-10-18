@@ -31,8 +31,9 @@
 .outline-nav {
   position: sticky;
   top: calc(-1 * var(--region-padding, 0px));
-  max-height: calc(100dvh - 2rem);
+  max-height: 100cqh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.75rem 0.375rem;
 }
 .outline-list {

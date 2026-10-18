@@ -345,6 +345,16 @@ export const CATALOG: readonly CatalogEntry[] = [
     settle: SCENE_END_SETTLE,
   },
   {
+    name: "turn-outline-many",
+    scene: "turn-outline-many",
+    label: "やり取りの列（窓に収まらない12件）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: false,
+    settle: SCENE_END_SETTLE,
+  },
+  {
     name: "notation",
     scene: "notation",
     label: "レポートの記法（引用・表・注意）",
