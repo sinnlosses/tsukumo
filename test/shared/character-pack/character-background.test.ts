@@ -9,7 +9,6 @@ import {
   MAX_BACKGROUND_VEIL,
   MIN_BACKGROUND_VEIL,
   parseBackgroundImage,
-  toBackgroundVeil,
   toCharacterBackground,
 } from "../../../src/shared/character-pack/character-background.ts"
 
@@ -45,26 +44,20 @@ describe("toCharacterBackground", () => {
   })
 })
 
-describe("toBackgroundVeil", () => {
-  it("帯の中の数はそのまま", () => {
-    expect(toBackgroundVeil(0.8)).toBe(0.8)
-    expect(toBackgroundVeil(MIN_BACKGROUND_VEIL)).toBe(MIN_BACKGROUND_VEIL)
-    expect(toBackgroundVeil(MAX_BACKGROUND_VEIL)).toBe(MAX_BACKGROUND_VEIL)
-  })
-
-  it("下限を下回る値は引き上げ、上限を超える値は上限へ寄せる", () => {
-    expect(toBackgroundVeil(0.2)).toBe(MIN_BACKGROUND_VEIL)
-    expect(toBackgroundVeil(0)).toBe(MIN_BACKGROUND_VEIL)
-    expect(toBackgroundVeil(-1)).toBe(MIN_BACKGROUND_VEIL)
-    expect(toBackgroundVeil(3)).toBe(MAX_BACKGROUND_VEIL)
-  })
-
-  it("数でない値・有限でない値は既定に落ちる", () => {
-    expect(toBackgroundVeil("0.8")).toBe(DEFAULT_BACKGROUND_VEIL)
-    expect(toBackgroundVeil(undefined)).toBe(DEFAULT_BACKGROUND_VEIL)
-    expect(toBackgroundVeil(null)).toBe(DEFAULT_BACKGROUND_VEIL)
-    expect(toBackgroundVeil(Number.NaN)).toBe(DEFAULT_BACKGROUND_VEIL)
-    expect(toBackgroundVeil(Number.POSITIVE_INFINITY)).toBe(DEFAULT_BACKGROUND_VEIL)
+describe("toCharacterBackground の veil", () => {
+  it.each([
+    ["帯の中の数はそのまま", 0.8, 0.8],
+    ["下限はそのまま", MIN_BACKGROUND_VEIL, MIN_BACKGROUND_VEIL],
+    ["上限はそのまま", MAX_BACKGROUND_VEIL, MAX_BACKGROUND_VEIL],
+    ["下限を下回る値は引き上げる", 0.2, MIN_BACKGROUND_VEIL],
+    ["負の値は下限へ寄せる", -1, MIN_BACKGROUND_VEIL],
+    ["上限を超える値は上限へ寄せる", 3, MAX_BACKGROUND_VEIL],
+    ["数でない値は既定に落ちる", "0.8", DEFAULT_BACKGROUND_VEIL],
+    ["null は既定に落ちる", null, DEFAULT_BACKGROUND_VEIL],
+    ["NaN は既定に落ちる", Number.NaN, DEFAULT_BACKGROUND_VEIL],
+    ["有限でない値は既定に落ちる", Number.POSITIVE_INFINITY, DEFAULT_BACKGROUND_VEIL],
+  ])("%s", (_name, veil, expected) => {
+    expect(toCharacterBackground({ image: "background.png", veil })?.veil).toBe(expected)
   })
 })
 

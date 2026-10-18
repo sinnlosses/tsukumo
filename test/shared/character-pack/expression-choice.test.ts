@@ -67,27 +67,13 @@ describe("resolveExpressionLabel", () => {
 })
 
 describe("expressionEnumForSpeak", () => {
-  it("default を先頭に置く", () => {
+  it("default を先頭に置き、重複なく選べる全ての表情を含む", () => {
     const choices = expressionChoices(parseCharacterDefinition(FULL_DEFINITION_JSON))
 
     const result = expressionEnumForSpeak(choices)
     expect(result[0]).toBe("default")
-  })
-
-  it("重複が無い", () => {
-    const choices = expressionChoices(parseCharacterDefinition(FULL_DEFINITION_JSON))
-
-    const result = expressionEnumForSpeak(choices)
-    const unique = new Set(result)
-    expect(unique.size).toBe(result.length)
-  })
-
-  it("選べる全ての表情を含む", () => {
-    const choices = expressionChoices(parseCharacterDefinition(FULL_DEFINITION_JSON))
-
-    const result = expressionEnumForSpeak(choices)
-    const expectedNames = expressionNames(choices)
-    expect(new Set(result)).toEqual(new Set(expectedNames))
+    expect(new Set(result).size).toBe(result.length)
+    expect(new Set(result)).toEqual(new Set(expressionNames(choices)))
   })
 
   it("定義が無いときは default だけ", () => {
@@ -111,15 +97,9 @@ describe("expressionGuideForSpeak", () => {
     const definition = parseCharacterDefinition(
       JSON.stringify({ portraits: { default: "default.svg", thinking: "thinking.svg" } }),
     )
-    const choices = expressionChoices(definition)
 
-    const result = expressionGuideForSpeak(choices)
-    expect(result).toBe("表情。default（default） / thinking（thinking）")
-  })
-
-  it("定義が無い場合は default だけ", () => {
-    const choices = expressionChoices(undefined)
-
-    expect(expressionGuideForSpeak(choices)).toBe("表情。default（default）")
+    expect(expressionGuideForSpeak(expressionChoices(definition))).toBe(
+      "表情。default（default） / thinking（thinking）",
+    )
   })
 })

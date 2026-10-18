@@ -27,15 +27,14 @@ describe("isDiaryFontFileName", () => {
 })
 
 describe("diaryFontMimeType", () => {
-  it("拡張子ごとの MIME タイプを返す", () => {
-    expect(diaryFontMimeType("shodo.woff2")).toBe("font/woff2")
-    expect(diaryFontMimeType("shodo.woff")).toBe("font/woff")
-    expect(diaryFontMimeType("shodo.ttf")).toBe("font/ttf")
-    expect(diaryFontMimeType("shodo.otf")).toBe("font/otf")
-  })
-
-  it("未知の拡張子は undefined", () => {
-    expect(diaryFontMimeType("shodo.eot")).toBeUndefined()
-    expect(diaryFontMimeType("shodo")).toBeUndefined()
+  it.each([
+    ["shodo.woff2", "font/woff2"],
+    ["shodo.woff", "font/woff"],
+    ["shodo.ttf", "font/ttf"],
+    ["shodo.otf", "font/otf"],
+    ["shodo.eot", undefined],
+    ["shodo", undefined],
+  ])("%s の MIME タイプは %s", (fileName, expected) => {
+    expect(diaryFontMimeType(fileName)).toBe(expected)
   })
 })

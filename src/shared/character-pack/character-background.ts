@@ -71,17 +71,6 @@ export function toCharacterBackground(value: unknown): CharacterBackground | und
 }
 
 /**
- * 届いた `veil` を帯（{@link MIN_BACKGROUND_VEIL} 〜 {@link MAX_BACKGROUND_VEIL}）の中に収める。
- * 数でない・有限でない値は既定（{@link DEFAULT_BACKGROUND_VEIL}）に落ち、範囲外の数はいちばん近い端へ寄せる。
- */
-export function toBackgroundVeil(value: unknown): number {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return DEFAULT_BACKGROUND_VEIL
-  }
-  return Math.min(Math.max(value, MIN_BACKGROUND_VEIL), MAX_BACKGROUND_VEIL)
-}
-
-/**
  * 背景の素材として扱ってよいファイル名か。
  * 定義ファイルに書かれた名前も外部由来なので、ここで形を確かめてから `/character/<pack>/<file>` の URL にする。
  *
@@ -112,6 +101,17 @@ export function parseBackgroundImage(dataUrl: string): BackgroundImage | undefin
  */
 export function backgroundFileName(format: BackgroundFormat): string {
   return `${BACKGROUND_FILE_BASE_NAME}.${format}`
+}
+
+/**
+ * 届いた `veil` を帯（{@link MIN_BACKGROUND_VEIL} 〜 {@link MAX_BACKGROUND_VEIL}）の中に収める。
+ * 数でない・有限でない値は既定（{@link DEFAULT_BACKGROUND_VEIL}）に落ち、範囲外の数はいちばん近い端へ寄せる。
+ */
+function toBackgroundVeil(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return DEFAULT_BACKGROUND_VEIL
+  }
+  return Math.min(Math.max(value, MIN_BACKGROUND_VEIL), MAX_BACKGROUND_VEIL)
 }
 
 const BACKGROUND_FILE_BASE_NAME = "background"

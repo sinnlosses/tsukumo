@@ -55,24 +55,11 @@ describe("session.setSessionDefault コマンド", () => {
     ).toBeUndefined()
   })
 
-  it("知らないモデル名は落とす", () => {
-    expect(
-      parseSessionDefault({
-        model: "no-such-model",
-        effort: "medium",
-        permissionMode: "auto",
-      }),
-    ).toBeUndefined()
-  })
-
-  it("知らない effort は落とす", () => {
-    expect(
-      parseSessionDefault({
-        model: "sonnet",
-        effort: "no-such-effort",
-        permissionMode: "auto",
-      }),
-    ).toBeUndefined()
+  it.each([
+    ["知らないモデル名", { model: "no-such-model", effort: "medium", permissionMode: "auto" }],
+    ["知らない effort", { model: "sonnet", effort: "no-such-effort", permissionMode: "auto" }],
+  ])("%s は落とす", (_name, value) => {
+    expect(parseSessionDefault(value)).toBeUndefined()
   })
 
   it("effort が無いときは落とす（3つで1組）", () => {

@@ -49,15 +49,20 @@ describe("readCharacterAssetPath", () => {
 })
 
 describe("portraitImageMimeType", () => {
-  it("拡張子ごとの MIME タイプを返す（SVG は charset つき・大文字の拡張子も同じ）", () => {
-    expect(portraitImageMimeType("default.svg")).toBe("image/svg+xml; charset=utf-8")
-    expect(portraitImageMimeType("DEFAULT.SVG")).toBe("image/svg+xml; charset=utf-8")
-    expect(portraitImageMimeType("a.png")).toBe("image/png")
-    expect(portraitImageMimeType("a.jpg")).toBe("image/jpeg")
-    expect(portraitImageMimeType("a.jpeg")).toBe("image/jpeg")
-    expect(portraitImageMimeType("a.gif")).toBe("image/gif")
-    expect(portraitImageMimeType("a.webp")).toBe("image/webp")
-  })
+  it.each([
+    ["default.svg", "image/svg+xml; charset=utf-8"],
+    ["DEFAULT.SVG", "image/svg+xml; charset=utf-8"],
+    ["a.png", "image/png"],
+    ["a.jpg", "image/jpeg"],
+    ["a.jpeg", "image/jpeg"],
+    ["a.gif", "image/gif"],
+    ["a.webp", "image/webp"],
+  ])(
+    "%s の MIME タイプは %s（SVG は charset つき・大文字の拡張子も同じ）",
+    (fileName, expected) => {
+      expect(portraitImageMimeType(fileName)).toBe(expected)
+    },
+  )
 
   it("characterAssetPath が返した URL（?v= 付き）でも拡張子を見失わない", () => {
     expect(portraitImageMimeType(characterAssetPath("tsukumo-spirit", "default.svg", "1"))).toBe(

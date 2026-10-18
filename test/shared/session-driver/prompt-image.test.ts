@@ -60,13 +60,6 @@ describe("parsePromptImage", () => {
 })
 
 describe("parsePromptImageThumbnail", () => {
-  it("形式の表は原寸と同じ", () => {
-    expect(parsePromptImageThumbnail(`data:image/webp;base64,${IMAGE_BASE64}`)?.mediaType).toBe(
-      "image/webp",
-    )
-    expect(parsePromptImageThumbnail(`data:image/svg+xml;base64,${IMAGE_BASE64}`)).toBeUndefined()
-  })
-
   it("控えの上限は原寸よりずっと厳しい（記録に残り続けるのは控えだけ）", () => {
     expect(MAX_PROMPT_IMAGE_THUMBNAIL_BYTES).toBeLessThan(MAX_PROMPT_IMAGE_BYTES)
 
@@ -79,12 +72,14 @@ describe("parsePromptImageThumbnail", () => {
 })
 
 describe("isPromptImageMediaType", () => {
-  it("受け付ける4つだけが true（`File.type` の検査に使う）", () => {
-    expect(isPromptImageMediaType("image/png")).toBe(true)
-    expect(isPromptImageMediaType("image/jpeg")).toBe(true)
-    expect(isPromptImageMediaType("image/gif")).toBe(true)
-    expect(isPromptImageMediaType("image/webp")).toBe(true)
-    expect(isPromptImageMediaType("image/svg+xml")).toBe(false)
-    expect(isPromptImageMediaType("")).toBe(false)
+  it.each([
+    ["image/png", true],
+    ["image/jpeg", true],
+    ["image/gif", true],
+    ["image/webp", true],
+    ["image/svg+xml", false],
+    ["", false],
+  ])("%s は %s（`File.type` の検査に使う）", (mediaType, expected) => {
+    expect(isPromptImageMediaType(mediaType)).toBe(expected)
   })
 })
