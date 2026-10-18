@@ -11,7 +11,8 @@ const PIE_SIDE_PADDING = 90
 const PIE_VERTICAL_PADDING = 24
 const SERIES_SIDE_PADDING = 90
 const SLOPE_SIDE_PADDING = 130
-const ARROW_PADDING = 40
+const NAME_COLUMN_GAP = 12
+const NAME_COLUMN_SHARE = 0.4
 const NAME_ROW_PADDING = 22
 
 type ArrowOrSlope = {
@@ -36,6 +37,18 @@ export function spreadLabels(ys: readonly number[], gap: number): number[] {
   return spread
 }
 
+/**
+ * arrow の図の左右の余白。前後の数字は矢じりのそばに書くので、値が軸の端に近いと数字が描く領域の外へはみ出す（`overhang`）。
+ * 左は、そのはみ出しの外側に項目名の列（`nameWidth`）を取る。
+ */
+export function arrowPadding(
+  nameWidth: number,
+  valueWidth: number,
+): { readonly left: number; readonly right: number; readonly overhang: number } {
+  const overhang = ARROW_HEAD + LABEL_OFFSET + valueWidth
+  return { left: nameWidth + NAME_COLUMN_GAP + overhang, right: overhang, overhang }
+}
+
 export const directLabelPlugin = {
   id: DIRECT_LABEL_PLUGIN_ID,
   beforeLayout: (chart: ChartInstance): void => {
@@ -45,7 +58,7 @@ export const directLabelPlugin = {
     const { ctx } = chart
     ctx.save()
     ctx.fillStyle = Chart.defaults.color
-    ctx.font = `${String(FONT_SIZE)}px ${Chart.defaults.font.family}`
+    ctx.font = labelFont()
     const option = arrowOrSlopeOf(chart.options.plugins[DIRECT_LABEL_PLUGIN_ID])
     if (option?.mode === "arrow") {
       drawArrows(chart, option.names)
@@ -66,7 +79,8 @@ function paddingFor(chart: ChartInstance): Padding {
   const none = { left: 0, right: 0, top: 0, bottom: 0 }
   const option = arrowOrSlopeOf(chart.options.plugins[DIRECT_LABEL_PLUGIN_ID])
   if (option?.mode === "arrow") {
-    return { ...none, left: ARROW_PADDING, right: ARROW_PADDING, top: NAME_ROW_PADDING }
+    const { left, right } = arrowExtent(chart)
+    return { ...none, left, right, top: NAME_ROW_PADDING }
   }
   if (option?.mode === "slope") {
     return { ...none, left: SLOPE_SIDE_PADDING, right: SLOPE_SIDE_PADDING }
@@ -95,6 +109,29 @@ function paddingFor(chart: ChartInstance): Padding {
   }
 }
 
+function labelFont(): string {
+  return `${String(FONT_SIZE)}px ${Chart.defaults.font.family}`
+}
+
+function widestText(ctx: CanvasRenderingContext2D, texts: readonly string[]): number {
+  return Math.max(0, ...texts.map((text) => ctx.measureText(text).width))
+}
+
+// 項目名と前後の数字の字の幅から、左右の余白を決める。`beforeLayout` でも呼ぶので、描く領域（`chartArea`）はまだ無く、読まない。
+function arrowExtent(chart: ChartInstance) {
+  const { ctx } = chart
+  const values = (chart.data.datasets[0]?.data ?? []).flatMap((pair) =>
+    Array.isArray(pair) ? pair.filter((value) => typeof value === "number").map(String) : [],
+  )
+  ctx.save()
+  ctx.font = labelFont()
+  const names = widestText(ctx, chart.data.labels)
+  const valueWidth = widestText(ctx, values)
+  ctx.restore()
+  const nameWidth = Math.min(names, chart.width * NAME_COLUMN_SHARE)
+  return { ...arrowPadding(nameWidth, valueWidth), nameWidth }
+}
+
 function arrowOrSlopeOf(value: unknown): ArrowOrSlope | undefined {
   if (typeof value !== "object" || value === null || !("mode" in value) || !("names" in value)) {
     return undefined
@@ -121,6 +158,19 @@ function drawText(
   ctx.textAlign = align
   ctx.textBaseline = baseline
   ctx.fillText(text, x, y)
+}
+
+// 幅が `maxWidth` を超えるときは、字を詰めて収める。
+function drawNameInColumn(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  right: number,
+  y: number,
+  maxWidth: number,
+): void {
+  ctx.textAlign = "right"
+  ctx.textBaseline = "middle"
+  ctx.fillText(text, right, y, maxWidth)
 }
 
 function drawPie(chart: ChartInstance): void {
@@ -225,7 +275,10 @@ function drawArrows(chart: ChartInstance, names: readonly string[]): void {
   }
   const color =
     typeof dataset.backgroundColor === "string" ? dataset.backgroundColor : Chart.defaults.color
+  const { overhang, nameWidth } = arrowExtent(chart)
+  const nameRight = chart.chartArea.left - overhang - NAME_COLUMN_GAP
   chart.getDatasetMeta(0).data.forEach(({ y }, row) => {
+    drawNameInColumn(ctx, chart.data.labels[row] ?? "", nameRight, y, nameWidth)
     const pair = dataset.data[row]
     if (!Array.isArray(pair)) {
       return
@@ -262,8 +315,28 @@ function drawArrows(chart: ChartInstance, names: readonly string[]): void {
       "middle",
     )
     if (row === 0) {
-      drawText(ctx, names[0] ?? "", from, y - ARROW_HEAD - 4, "center", "bottom")
-      drawText(ctx, names[1] ?? "", to, y - ARROW_HEAD - 4, "center", "bottom")
+      drawSeriesNames(ctx, names, from, to, y - ARROW_HEAD - 4)
     }
   })
+}
+
+// 前後の系列名は1行目の矢印の両端の上に書く。端が近くて中央揃えだと重なるときは、外へ向けて離す。
+function drawSeriesNames(
+  ctx: CanvasRenderingContext2D,
+  names: readonly string[],
+  from: number,
+  to: number,
+  y: number,
+): void {
+  const first = names[0] ?? ""
+  const second = names[1] ?? ""
+  const needed = (ctx.measureText(first).width + ctx.measureText(second).width) / 2 + LABEL_OFFSET
+  if (Math.abs(to - from) >= needed) {
+    drawText(ctx, first, from, y, "center", "bottom")
+    drawText(ctx, second, to, y, "center", "bottom")
+    return
+  }
+  const firstIsLeft = from <= to
+  drawText(ctx, first, from, y, firstIsLeft ? "right" : "left", "bottom")
+  drawText(ctx, second, to, y, firstIsLeft ? "left" : "right", "bottom")
 }

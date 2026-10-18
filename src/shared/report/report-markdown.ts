@@ -420,7 +420,11 @@ type ChartConfig = {
   readonly options:
     | { readonly indexAxis: "y" }
     | Record<string, never>
-    | { readonly indexAxis: "y"; readonly plugins: DirectLabelPlugins }
+    | {
+        readonly indexAxis: "y"
+        readonly scales: { readonly y: { readonly display: false } }
+        readonly plugins: DirectLabelPlugins
+      }
     | {
         readonly scales: { readonly y: { readonly display: false } }
         readonly plugins: DirectLabelPlugins
@@ -439,6 +443,7 @@ const ARROW_BAR_THICKNESS = 4
 /**
  * `chart` の塊から Chart.js の設定を組む。色は書かない。`pie` は `series` の先頭だけを描く。
  * `arrow` は前→後を浮き棒1本ずつ、`slope` は項目ごとに前→後の線1本にして、描く側の plugin に系列名を渡す。
+ * どちらも項目名は plugin が書くので、縦の軸（`y`）は出さない。
  */
 function chartConfigOf(block: Extract<ReportBlock, { readonly kind: "chart" }>): ChartConfig {
   if (block.chartKind === "arrow" || block.chartKind === "slope") {
@@ -462,7 +467,7 @@ function chartConfigOf(block: Extract<ReportBlock, { readonly kind: "chart" }>):
               },
             ],
           },
-          options: { indexAxis: "y", plugins },
+          options: { indexAxis: "y", scales: { y: { display: false } }, plugins },
         }
       : {
           type: "line",

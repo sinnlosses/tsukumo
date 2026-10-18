@@ -86,6 +86,9 @@ declare global {
   /** プラグインの描画フックが受け取る `chart` のうち、読む分。 */
   type ChartInstance = {
     readonly ctx: CanvasRenderingContext2D
+    /** 描く領域（余白の内側）の左端の座標と、canvas 全体の幅。 */
+    readonly chartArea: { readonly left: number }
+    readonly width: number
     readonly config: { readonly type: string }
     readonly data: {
       readonly labels: readonly string[]

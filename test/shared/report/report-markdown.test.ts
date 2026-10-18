@@ -1073,7 +1073,11 @@ describe("reportSectionsMarkdown", () => {
               },
             ],
           },
-          options: { indexAxis: "y", plugins: direct("arrow") },
+          options: {
+            indexAxis: "y",
+            scales: { y: { display: false } },
+            plugins: direct("arrow"),
+          },
         },
       ],
       [
