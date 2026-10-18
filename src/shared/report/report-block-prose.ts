@@ -2,7 +2,7 @@
 
 import { z } from "zod"
 
-import { aside, fold, inlineText } from "./report-block-field.ts"
+import { aside, fold, inlineText, omittable } from "./report-block-field.ts"
 import { MAX_ITEM_LABEL } from "./report-limit.ts"
 
 export const textBlockSchema = z.object({
@@ -25,13 +25,11 @@ export const listBlockSchema = z.object({
   items: z
     .array(
       z.object({
-        label: inlineText
-          .default("")
-          .describe(
-            `名前と説明の対の名前（「名前: 説明」と text に書かず、名前をここに分ける。${String(MAX_ITEM_LABEL)}字以内）`,
-          ),
+        label: omittable(inlineText, "").describe(
+          `名前と説明の対の名前（「名前: 説明」と text に書かず、名前をここに分ける。${String(MAX_ITEM_LABEL)}字以内）`,
+        ),
         text: inlineText,
-        done: z.boolean().default(false),
+        done: omittable(z.boolean(), false),
       }),
     )
     .min(1)
@@ -64,13 +62,13 @@ export const filesBlockSchema = z
         z.object({
           path: z.string().describe("cwd からの相対パス"),
           change: z.enum(REPORT_FILE_CHANGES),
-          note: inlineText.default(""),
+          note: omittable(inlineText, ""),
         }),
       )
       .min(1),
-    title: inlineText
-      .default("")
-      .describe("何のファイルの一覧か（パスは写さない）。空なら題も番号も出ない"),
+    title: omittable(inlineText, "").describe(
+      "何のファイルの一覧か（パスは写さない）。空なら題も番号も出ない",
+    ),
     fold,
     aside,
   })
@@ -80,23 +78,20 @@ export const codeBlockSchema = z
   .object({
     kind: z.literal("code"),
     language: z.string().describe("言語名。変更の前後は diff"),
-    path: z
-      .string()
-      .default("")
-      .describe(
-        "実物の一部を引くときだけ付ける（cwd からの相対パスか絶対パス。`~` は使わない）。" +
-          "中身がそのファイルの連続した一部と一致しないと差し戻される。案には付けない",
-      ),
+    path: omittable(z.string(), "").describe(
+      "実物の一部を引くときだけ付ける（cwd からの相対パスか絶対パス。`~` は使わない）。" +
+        "中身がそのファイルの連続した一部と一致しないと差し戻される。案には付けない",
+    ),
     source: z.string().describe("marks の無いコードは45行まで"),
-    marks: z
-      .array(
+    marks: omittable(
+      z.array(
         z.object({
           lines: z.string(),
           label: z.string(),
         }),
-      )
-      .default([])
-      .describe("強調する行（行は `4-8`・`12`）"),
+      ),
+      [],
+    ).describe("強調する行（行は `4-8`・`12`）"),
     fold,
     aside,
   })
@@ -114,8 +109,8 @@ export const progressBlockSchema = z
       .describe("段の名前の並び。空文字の段は tsukumo が1始まりの番号を振る"),
     current: z
       .number()
-      .int()
-      .min(0)
+      .refine(Number.isSafeInteger, { message: "Invalid input: expected int, received number" })
+      .refine((value) => value >= 0, { message: "Too small: expected number to be >=0" })
       .describe("いまの段の位置（0始まり）。全部済んだら steps.length"),
     fold,
     aside,

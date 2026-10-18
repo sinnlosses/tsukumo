@@ -2,7 +2,7 @@
 
 import { z } from "zod"
 
-import { aside, fold, inlineText } from "./report-block-field.ts"
+import { aside, fold, inlineText, omittable } from "./report-block-field.ts"
 import { MAX_CANDIDATES } from "./report-limit.ts"
 
 export const REPORT_CELL_STATUSES = ["ok", "warn", "ng"] as const
@@ -28,7 +28,7 @@ export const tableBlockSchema = z
       .array(z.array(cellSchema))
       .min(1)
       .describe("行ごとのセル。数は columns と揃える。セルは1行、空にせず「なし」と書く"),
-    rest: inlineText.default("").describe("切った残りを1行で（「ほか 12 件（0.5% 未満）」）"),
+    rest: omittable(inlineText, "").describe("切った残りを1行で（「ほか 12 件（0.5% 未満）」）"),
     fold,
     aside,
   })
@@ -87,21 +87,18 @@ export const statsBlockSchema = z
     items: z
       .array(
         z.object({
-          before: z.string().default("").describe("変わる前の数（前後を見せるときだけ）"),
+          before: omittable(z.string(), "").describe("変わる前の数（前後を見せるときだけ）"),
           value: z.string(),
-          total: z
-            .string()
-            .default("")
-            .describe("全体の数（割合を帯で添える。value が全体のうちの数のとき）"),
+          total: omittable(z.string(), "").describe(
+            "全体の数（割合を帯で添える。value が全体のうちの数のとき）",
+          ),
           label: inlineText,
-          series: z
-            .array(z.number())
-            .default([])
-            .describe("推移の数の並び（3つ以上。省いてよい）。value の左に折れ線で添える"),
-          better: z
-            .enum(["up", "down", ""])
-            .default("")
-            .describe("before と value が数のとき、増えて良いなら up・減って良いなら down"),
+          series: omittable(z.array(z.number()), []).describe(
+            "推移の数の並び（3つ以上。省いてよい）。value の左に折れ線で添える",
+          ),
+          better: omittable(z.enum(["up", "down", ""]), "").describe(
+            "before と value が数のとき、増えて良いなら up・減って良いなら down",
+          ),
         }),
       )
       .min(3)

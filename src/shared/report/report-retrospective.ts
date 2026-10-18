@@ -4,9 +4,11 @@
 import { isPlainObject } from "remeda"
 import { z } from "zod"
 
+import { nonEmpty, omittable } from "./report-block-field.ts"
+
 export const reportRetrospectiveSchema = z.object({
-  summary: z.string().trim().min(1).describe("結果を1〜2文で"),
-  drafts: z.array(z.string().trim().min(1)).default([]).describe("積んだドラフトのID"),
+  summary: nonEmpty(z.string().trim()).describe("結果を1〜2文で"),
+  drafts: omittable(z.array(nonEmpty(z.string().trim())), []).describe("積んだドラフトのID"),
 })
 
 /** レポートが載せる振り返りの結果。欄が無い・形が崩れたレポートと、欄を持たなかったころの記録は `none`。 */

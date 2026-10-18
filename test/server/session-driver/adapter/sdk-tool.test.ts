@@ -1041,6 +1041,43 @@ describe("report の本文（sections）", () => {
     expect(JSON.stringify(inputSchema).length).toBeLessThan(REPORT_INPUT_SCHEMA_MAX_CHARS)
   })
 
+  it("report の引数の schema に、既定値と書き方に効かない数・字数の制約が出ない", async () => {
+    const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_WHOLE_SCHEMA_REPLY)
+    const inputSchema = reply.result.tools.find((tool) => tool.name === "report")?.inputSchema
+
+    expect(JSON.stringify(inputSchema)).not.toMatch(
+      /"(?:default|exclusiveMinimum|minLength|minimum|maximum)":/,
+    )
+  })
+
+  it("schema から外した制約も検査には残り、空白だけの ID と0の幅の report は差し戻す", async () => {
+    const reply = await callTool(workServer(), "report", {
+      task: { id: " ", name: "架空の作業", outcome: "finished" },
+      conclusion: "架空の結論",
+      sections: [
+        {
+          blocks: [
+            {
+              kind: "svg",
+              width: 0,
+              height: 10,
+              shapes: [{ kind: "text", x: 0, y: 0, text: "架空" }],
+            },
+          ],
+        },
+      ],
+      closing: CLOSING,
+      figure: FIGURE,
+      sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
+      waitingLine: WAITING_LINE,
+    })
+
+    expect(reply.isError).toBe(true)
+    expect(reply.text).toContain("Too small: expected string to have >=1 characters")
+    expect(reply.text).toContain("Too small: expected number to be >0")
+  })
+
   it("conclusion の説明に、目安の字数・読点の数・悪い例と良い例がある", async () => {
     const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_SCHEMA_REPLY)
     const conclusion = z
@@ -1208,8 +1245,8 @@ const SHARED_BLOCK_DEFINITIONS = [
   "SvgShape",
 ]
 
-/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（節の札の欄を含めて21,426字）には余白を持たせた上限。 */
-const REPORT_INPUT_SCHEMA_MAX_CHARS = 21_500
+/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（20,362字）には余白を持たせた上限。 */
+const REPORT_INPUT_SCHEMA_MAX_CHARS = 20_460
 
 /** `tools/list` の応答のうち、引数の schema を丸ごと読む形。 */
 const TOOLS_WHOLE_SCHEMA_REPLY = z.object({

@@ -223,7 +223,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
     ]) {
       expect(REPORT_NOTATION_PROMPT).toContain(head)
     }
-    const graphSchema = JSON.stringify(z.toJSONSchema(reportBlockSchema))
+    const graphSchema = JSON.stringify(z.toJSONSchema(reportBlockSchema, { io: "input" }))
     expect(graphSchema).toContain("どの辺にも向きと動詞のラベルを付ける")
     expect(graphSchema).toContain("交差は並びか分割で解く")
     expect(graphSchema).toContain("数と向きで主張を言う1文")

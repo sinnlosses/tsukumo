@@ -18,7 +18,7 @@ import {
   mermaidBlockSchema,
   svgBlockSchema,
 } from "./report-block-diagram.ts"
-import type { DeepReadonly } from "./report-block-field.ts"
+import { type DeepReadonly, omittable } from "./report-block-field.ts"
 import {
   codeBlockSchema,
   filesBlockSchema,
@@ -128,12 +128,9 @@ export function sectionsWithFigure(
 }
 
 export const reportSectionSchema = z.object({
-  heading: z
-    .string()
-    .default("")
-    .describe(
-      `その節の結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。${String(MAX_HEADING)}字以内で、疑問文にしない。節が1つなら省いてよく、2つ以上なら全部に付ける`,
-    ),
+  heading: omittable(z.string(), "").describe(
+    `その節の結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。${String(MAX_HEADING)}字以内で、疑問文にしない。節が1つなら省いてよく、2つ以上なら全部に付ける`,
+  ),
   shapeTag: z
     .enum(REPORT_SHAPE_TAGS)
     .optional()
