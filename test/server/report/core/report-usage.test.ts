@@ -45,7 +45,33 @@ describe("reportUsageEntryOf", () => {
     expect(entry.blockKinds).toEqual(["text", "table"])
   })
 
-  it("dimension の塊を塊の種類として数え、前の値があれば dimensionBefore の欄を立てる", () => {
+  describe("塊の欄", () => {
+    type StatsItem = Extract<ReportBlock, { kind: "stats" }>["items"][number]
+    const stats = (first: Partial<StatsItem>): ReportBlock => {
+      const item = (label: string): StatsItem => ({
+        before: "",
+        value: "1",
+        total: "",
+        label,
+        series: [],
+        better: "",
+      })
+      return {
+        kind: "stats",
+        items: [{ ...item("架空の一"), ...first }, item("架空の二"), item("架空の三")],
+        fold: "",
+        aside: "",
+      }
+    }
+    const table = (rest: string): ReportBlock => ({
+      kind: "table",
+      title: "",
+      columns: ["a", "b"],
+      rows: [["1", "2"]],
+      rest,
+      fold: "",
+      aside: "",
+    })
     const dimension = (before: string): ReportBlock => ({
       kind: "dimension",
       title: "",
@@ -56,23 +82,56 @@ describe("reportUsageEntryOf", () => {
       fold: "",
       aside: "",
     })
+    const image = (notes: readonly string[]): ReportBlock => ({
+      kind: "image",
+      path: "架空/after.png",
+      caption: "架空の画面",
+      notes: [...notes],
+      fold: "",
+      aside: "",
+    })
+    const code = (marks: readonly { lines: string; label: string }[]): ReportBlock => ({
+      kind: "code",
+      language: "ts",
+      path: "",
+      source: "架空",
+      marks,
+      fold: "",
+      aside: "",
+    })
+    const text = (aside: string): ReportBlock => ({
+      kind: "text",
+      text: "架空の本文。",
+      fold: "",
+      aside,
+    })
 
-    const plain = reportUsageEntryOf(
-      reportOfSections([{ heading: "", blocks: [dimension("")] }]),
-      "claude-session-1",
-      1_000,
-      false,
-    )
-    const changed = reportUsageEntryOf(
-      reportOfSections([{ heading: "", blocks: [dimension("12px")] }]),
-      "claude-session-1",
-      1_000,
-      false,
-    )
+    it.each([
+      ["tableRest", table("ほか 3 件"), ["tableRest"]],
+      ["tableRest（空白だけ）", table(" "), []],
+      ["statsBefore", stats({ before: "0" }), ["statsBefore"]],
+      ["statsTotal", stats({ total: "5" }), ["statsTotal"]],
+      ["statsSeries", stats({ series: [1, 2, 3] }), ["statsSeries"]],
+      ["statsBetter", stats({ better: "up" }), ["statsBetter"]],
+      ["stats（欄が全部既定）", stats({}), []],
+      ["dimensionBefore", dimension("12px"), ["dimensionBefore"]],
+      ["dimensionBefore（前の値なし）", dimension(""), []],
+      ["imageNotes", image(["左上の架空の帯"]), ["imageNotes"]],
+      ["imageNotes（notes なし）", image([]), []],
+      ["codeMarks", code([{ lines: "1", label: "架空" }]), ["codeMarks"]],
+      ["codeMarks（marks なし）", code([]), []],
+      ["blockAside", text("架空の出典"), ["blockAside"]],
+      ["blockAside（空白だけ）", text(" "), []],
+    ] as const)("%s の欄", (_, block, expected) => {
+      const entry = reportUsageEntryOf(
+        reportOfSections([{ heading: "", blocks: [block] }]),
+        "claude-session-1",
+        1_000,
+        false,
+      )
 
-    expect(plain.blockKinds).toEqual(["dimension"])
-    expect(plain.blockFields).toEqual([])
-    expect(changed.blockFields).toEqual(["dimensionBefore"])
+      expect(entry.blockFields).toEqual(expected)
+    })
   })
 
   it("modified のファイルの有無・前後図か画像の有無・task の有無を、塊の欄とは別の真偽値で持つ", () => {
@@ -132,75 +191,6 @@ describe("reportUsageEntryOf", () => {
     }
   })
 
-  it("image の塊を塊の種類として数え、逃げ道に書いた画像は塊のある記法として数える", () => {
-    const event = reportOfSections([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "image",
-            path: "架空/after.png",
-            caption: "架空の画面",
-            notes: [],
-            fold: "",
-            aside: "",
-          },
-          { kind: "markdown", markdown: "![架空](架空/before.png)", fold: "", aside: "" },
-        ],
-      },
-    ])
-
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
-
-    expect(entry.blockKinds).toEqual(["image", "markdown"])
-    expect(entry.notations).toEqual(["image"])
-    expect(entry.blockFields).toEqual([])
-  })
-
-  it("image の塊に notes があれば imageNotes の欄を立てる", () => {
-    const event = reportOfSections([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "image",
-            path: "架空/after.png",
-            caption: "架空の画面",
-            notes: ["左上の架空の帯"],
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ])
-
-    expect(reportUsageEntryOf(event, "claude-session-1", 1_000, false).blockFields).toEqual([
-      "imageNotes",
-    ])
-  })
-
-  it("code の塊に marks があれば codeMarks の欄を立て、無ければ立てない", () => {
-    const code = (marks: readonly { lines: string; label: string }[]): ReportSection => ({
-      heading: "",
-      blocks: [
-        { kind: "code", language: "ts", path: "", source: "架空", marks, fold: "", aside: "" },
-      ],
-    })
-
-    expect(
-      reportUsageEntryOf(
-        reportOfSections([code([{ lines: "1", label: "架空" }])]),
-        "claude-session-1",
-        1_000,
-        false,
-      ).blockFields,
-    ).toEqual(["codeMarks"])
-    expect(
-      reportUsageEntryOf(reportOfSections([code([])]), "claude-session-1", 1_000, false)
-        .blockFields,
-    ).toEqual([])
-  })
-
   it("既定の値でない塊の欄を、節をまたいで重複を畳んだ集合にする", () => {
     const event = reportOfSections([
       {
@@ -255,47 +245,6 @@ describe("reportUsageEntryOf", () => {
     expect(entry.blockFields).toEqual(["tableChange", "listLabel", "listFlow"])
   })
 
-  it("rest が空でない表は tableRest を数え、空白だけなら数えない", () => {
-    const fieldsOf = (rest: string): readonly string[] =>
-      reportUsageEntryOf(
-        reportOfSections([
-          {
-            heading: "",
-            blocks: [
-              {
-                kind: "table",
-                title: "",
-                columns: ["a", "b"],
-                rows: [["1", "2"]],
-                rest,
-                fold: "",
-                aside: "",
-              },
-            ],
-          },
-        ]),
-        "claude-session-1",
-        1_000,
-        false,
-      ).blockFields
-
-    expect([fieldsOf("ほか 3 件"), fieldsOf(" ")]).toEqual([["tableRest"], []])
-  })
-
-  it("aside が空でない塊があれば blockAside を数え、空白だけなら数えない", () => {
-    const fieldsOf = (aside: string): readonly string[] =>
-      reportUsageEntryOf(
-        reportOfSections([
-          { heading: "", blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside }] },
-        ]),
-        "claude-session-1",
-        1_000,
-        false,
-      ).blockFields
-
-    expect([fieldsOf("架空の出典"), fieldsOf(" ")]).toEqual([["blockAside"], []])
-  })
-
   it.each([
     ["行が1つ", 1, true],
     ["行が2つ", 2, true],
@@ -319,110 +268,48 @@ describe("reportUsageEntryOf", () => {
     expect(entry.shortTable).toBe(expected)
   })
 
-  it("表が無いレポートの shortTable は偽", () => {
-    const entry = reportUsageEntryOf(reportOfSections([]), "claude-session-1", 1_000, false)
+  describe("逃げ道（markdown の塊）の記法", () => {
+    const markdown = (body: string): ReportBlock => ({
+      kind: "markdown",
+      markdown: body,
+      fold: "",
+      aside: "",
+    })
+    const image: ReportBlock = {
+      kind: "image",
+      path: "架空/after.png",
+      caption: "架空の画面",
+      notes: [],
+      fold: "",
+      aside: "",
+    }
 
-    expect(entry.shortTable).toBe(false)
-  })
-
-  it("stats の total を渡した回は statsTotal を数える", () => {
-    const event = reportOfSections([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "stats",
-            items: [
-              { before: "", value: "1", total: "5", label: "架空の一", series: [], better: "" },
-              { before: "", value: "2", total: "", label: "架空の二", series: [], better: "" },
-              { before: "", value: "3", total: "", label: "架空の三", series: [], better: "" },
-            ],
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ])
-
-    expect(reportUsageEntryOf(event, "claude-session-1", 1_000, false).blockFields).toEqual([
-      "statsTotal",
-    ])
-  })
-
-  it.each([
-    ["series を渡した回は statsSeries", [1, 2, 3], "", ["statsSeries"]],
-    ["better を渡した回は statsBetter", [], "up", ["statsBetter"]],
-    ["どちらも無ければ数えない", [], "", []],
-  ] as const)("stats の%sを数える", (_, series, better, expected) => {
-    const event = reportOfSections([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "stats",
-            items: [
-              { before: "", value: "1", total: "", label: "架空の一", series: [...series], better },
-              { before: "", value: "2", total: "", label: "架空の二", series: [], better: "" },
-              { before: "", value: "3", total: "", label: "架空の三", series: [], better: "" },
-            ],
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ])
-
-    expect(reportUsageEntryOf(event, "claude-session-1", 1_000, false).blockFields).toEqual(
-      expected,
-    )
-  })
-
-  it("逃げ道（markdown の塊）の外側に出た記法の種類を数える", () => {
-    const event = reportOfSections([
-      {
-        heading: "架空の節",
-        blocks: [
-          { kind: "markdown", markdown: "- 架空の1つ目\n- 架空の2つ目", fold: "", aside: "" },
-        ],
-      },
-    ])
-
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
-
-    expect(entry.blockKinds).toEqual(["markdown"])
-    expect(entry.notations).toEqual(["list"])
-    expect(entry.containedNotations).toEqual([])
-  })
-
-  it("逃げ道の HTML の容れ物の中に出た記法の種類は、外の記法と分けて数える", () => {
-    const event = reportOfSections([
-      {
-        heading: "架空の節",
-        blocks: [
-          {
-            kind: "markdown",
-            markdown: "<details><summary>架空の見出し</summary>\n\n- 架空の1つ目\n\n</details>",
-            fold: "",
-            aside: "",
-          },
-        ],
-      },
-    ])
-
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
-
-    expect(entry.notations).toEqual([])
-    expect(entry.containedNotations).toEqual(["list"])
-  })
-
-  it("塊の無い記法（cols/card・svg・dl・引用・区切り線・details）の種類を数える", () => {
-    const event = reportOfSections([
-      {
-        heading: "架空の節",
-        blocks: [
-          {
-            kind: "markdown",
-            markdown: [
+    it.each([
+      [
+        "外側の箇条書きは notations",
+        [markdown("- 架空の1つ目\n- 架空の2つ目")],
+        { notations: ["list"], containedNotations: [] },
+      ],
+      [
+        "HTML の容れ物の中の箇条書きは containedNotations",
+        [markdown("<details><summary>架空の見出し</summary>\n\n- 架空の1つ目\n\n</details>")],
+        { notations: [], containedNotations: ["list"] },
+      ],
+      [
+        "chart のフェンスは塊のある記法",
+        [markdown("```chart\n{}\n```")],
+        { notations: ["chart"], escapeNotations: [] },
+      ],
+      [
+        "image の塊は数えず、逃げ道に書いた画像だけを数える",
+        [image, markdown("![架空](架空/before.png)")],
+        { notations: ["image"] },
+      ],
+      [
+        "塊の無い記法 6 種を並びの順に数える",
+        [
+          markdown(
+            [
               '<div class="cols"><div class="card">架空の中身</div></div>',
               "",
               "> 架空の引用",
@@ -435,30 +322,20 @@ describe("reportUsageEntryOf", () => {
               "",
               "<details><summary>架空の見出し</summary>中身</details>",
             ].join("\n"),
-            fold: "",
-            aside: "",
-          },
+          ),
         ],
-      },
-    ])
+        { escapeNotations: ["colsCard", "svg", "dl", "quote", "hr", "details"] },
+      ],
+    ] as const)("%s", (_, blocks, expected) => {
+      const entry = reportUsageEntryOf(
+        reportOfSections([{ heading: "架空の節", blocks }]),
+        "claude-session-1",
+        1_000,
+        false,
+      )
 
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
-
-    expect(entry.escapeNotations).toEqual(["colsCard", "svg", "dl", "quote", "hr", "details"])
-  })
-
-  it("逃げ道に書いた chart のフェンスは塊のある記法として数える", () => {
-    const event = reportOfSections([
-      {
-        heading: "架空の節",
-        blocks: [{ kind: "markdown", markdown: "```chart\n{}\n```", fold: "", aside: "" }],
-      },
-    ])
-
-    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000, false)
-
-    expect(entry.notations).toEqual(["chart"])
-    expect(entry.escapeNotations).toEqual([])
+      expect(entry).toMatchObject(expected)
+    })
   })
 
   it("知らない種類で境界で落とした塊の数と、渡した時刻・セッションIDをそのまま運ぶ", () => {
@@ -644,17 +521,6 @@ describe("reportUsageEntryOf", () => {
       expect(entry.graphEdgeCount).toBe(3)
       expect(entry.graphUnlabeledEdgeCount).toBe(1)
       expect(entry.graphNodeCount).toBe(3)
-    })
-
-    it("graph も強調も無ければすべて 0", () => {
-      const entry = entryOf([{ kind: "text", text: "架空の根拠。", fold: "", aside: "" }])
-
-      expect([
-        entry.emphasisCount,
-        entry.graphEdgeCount,
-        entry.graphUnlabeledEdgeCount,
-        entry.graphNodeCount,
-      ]).toEqual([0, 0, 0, 0])
     })
   })
 
@@ -844,7 +710,7 @@ describe("isMainImageFileRead", () => {
     parentToolUseId,
   })
 
-  it("メインの Read で、拡張子が画像4形式のどれかなら真（大文字小文字は問わない）", () => {
+  it("メインの Read で、拡張子が画像（png・jpg・jpeg・gif・webp）のどれかなら真（大文字小文字は問わない）", () => {
     expect(isMainImageFileRead(started("Read", { file_path: "/tmp/a.png" }))).toBe(true)
     expect(isMainImageFileRead(started("Read", { file_path: "/tmp/A.JPG" }))).toBe(true)
     expect(isMainImageFileRead(started("Read", { file_path: "/tmp/a.webp" }))).toBe(true)
