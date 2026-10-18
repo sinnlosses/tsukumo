@@ -9,13 +9,10 @@
 
 import type { ReactionLine } from "../recommendation/reaction.ts"
 import { isWelcomeGreetingLine, NO_WELCOME_HEAD } from "../recommendation/welcome-greeting.ts"
+import { advanceSessionState } from "./session-advance.ts"
 import type { SessionEvent } from "./session-event.ts"
-import {
-  advanceSessionState,
-  type RecordTime,
-  type SessionRecord,
-  type SessionState,
-} from "./session-state.ts"
+import type { RecordTime, SessionRecord } from "./session-record.ts"
+import type { SessionState } from "./session-state.ts"
 import { greetingOnShow, shownReaction, type ShownReaction } from "./shown-reaction.ts"
 
 /** 吹き出しが文の反応を出し始めうる出来事。 */

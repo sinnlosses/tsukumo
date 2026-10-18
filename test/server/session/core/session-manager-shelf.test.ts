@@ -13,7 +13,7 @@ import {
 import type { ServerFrame } from "../../../../src/shared/frame.ts"
 import type { PromptImage } from "../../../../src/shared/session-driver/prompt-image.ts"
 import type { RestoredEvent, SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { MAX_SESSION_STATE_TURNS } from "../../../../src/shared/session/session-state.ts"
+import { MAX_SESSION_STATE_TURNS } from "../../../../src/shared/session/session-record.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { knownRestored } from "../../../fixture/restored-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"

@@ -9,7 +9,7 @@ import {
   type RecordTime,
   recordTimeAt,
   type SessionRecord,
-} from "./session-state.ts"
+} from "./session-record.ts"
 import {
   currentPhaseOf,
   isWorkPlanRecord,

@@ -1,7 +1,7 @@
 // 立ち絵をいま動かしてよいか、動かすなら5つのうちどれかを決める。
 // 動くのは利用者の注意が空いているときだけ。優先順位は `resolvePortraitMotion` が持つ。
 
-import type { TurnProgress } from "./session-state.ts"
+import type { TurnProgress } from "./turn-progress.ts"
 
 /** 立ち絵がいまとる動き。CSS 側は `data-motion` としてこの値をそのまま受け取る。 */
 export type PortraitMotion = "reading" | "waiting" | "writing" | "success" | "failure"

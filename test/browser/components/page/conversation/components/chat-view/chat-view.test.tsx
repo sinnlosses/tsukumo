@@ -5,10 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { ChatView } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-view.tsx"
 import { useSession } from "../../../../../../../src/browser/stores/session.ts"
 import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
+import type {
+  RecordTime,
+  SessionRecord,
+} from "../../../../../../../src/shared/session/session-record.ts"
 import {
   INITIAL_SESSION_STATE,
-  type RecordTime,
-  type SessionRecord,
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"

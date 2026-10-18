@@ -4,7 +4,7 @@ import type {
   BackgroundTask,
   BackgroundTaskKind,
 } from "../../../../shared/session-driver/background-task.ts"
-import { MAX_TOOL_TEXT_LENGTH } from "../../../../shared/session/session-state.ts"
+import { MAX_TOOL_TEXT_LENGTH } from "../../../../shared/session/session-record.ts"
 import {
   toolDuration,
   type TurnStep,

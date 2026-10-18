@@ -1,4 +1,4 @@
-// session-state のテストが共有する、畳み込みの道具。
+// セッションの状態の畳み込みのテストが共有する、畳み込みの道具。
 
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../src/shared/session/session-fold.ts"

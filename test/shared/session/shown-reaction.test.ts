@@ -5,10 +5,10 @@ import {
   NO_WELCOME_HEAD,
   type WelcomeHead,
 } from "../../../src/shared/recommendation/welcome-greeting.ts"
+import { applyRestoredEvents } from "../../../src/shared/session/restored-event.ts"
 import type { ReportWaitingLine, SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {
-  applyRestoredEvents,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"

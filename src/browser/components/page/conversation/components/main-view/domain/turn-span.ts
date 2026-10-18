@@ -7,7 +7,7 @@ import {
   recordTimeAt,
   type RecordTime,
   type SessionRecord,
-} from "../../../../../../../shared/session/session-state.ts"
+} from "../../../../../../../shared/session/session-record.ts"
 import { splitIntoTurns, turnIdOf } from "../../../../../../../shared/session/turn.ts"
 import { clockTime, zonedDateTime } from "../../../../../../utils/clock.ts"
 

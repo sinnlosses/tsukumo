@@ -18,7 +18,7 @@ import { entryDay, startsNewDay } from "../../../../../../../../../shared/chat/c
 import type {
   RecordTime,
   SessionRecord,
-} from "../../../../../../../../../shared/session/session-state.ts"
+} from "../../../../../../../../../shared/session/session-record.ts"
 import {
   turnSpeeches,
   type TurnSpeech,

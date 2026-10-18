@@ -1,6 +1,6 @@
 // 記録の時刻（`RecordTime`）に添える時計の字（`HH:MM`。秒は出さない）。
 
-import { type RecordTime, recordTimeAt } from "../../../../../shared/session/session-state.ts"
+import { type RecordTime, recordTimeAt } from "../../../../../shared/session/session-record.ts"
 import {
   clockDateTime,
   clockTime,

@@ -4,7 +4,7 @@ import {
   finishedPhaseDuration,
   phaseDurations,
 } from "../../../src/shared/session/phase-duration.ts"
-import type { RecordTime, SessionRecord } from "../../../src/shared/session/session-state.ts"
+import type { RecordTime, SessionRecord } from "../../../src/shared/session/session-record.ts"
 import type { WorkPlanEntry } from "../../../src/shared/session/work-plan.ts"
 import type { MeasuredTime } from "../../../src/shared/utils/elapsed-time.ts"
 

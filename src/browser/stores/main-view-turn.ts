@@ -13,7 +13,8 @@ import {
   mainViewTurns,
   type MainViewTurn,
 } from "../../shared/session/main-view.ts"
-import type { SessionState, TurnBodies } from "../../shared/session/session-state.ts"
+import type { SessionState } from "../../shared/session/session-state.ts"
+import type { TurnBodies } from "../../shared/session/turn-progress.ts"
 import { useSession } from "./session.ts"
 
 const TURNS_BY_STATE = new WeakMap<SessionState, readonly MainViewTurn[]>()

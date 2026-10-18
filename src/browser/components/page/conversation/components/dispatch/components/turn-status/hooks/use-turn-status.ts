@@ -12,7 +12,7 @@
 
 import type { ApiTrouble } from "../../../../../../../../../shared/session-driver/api-trouble.ts"
 import type { RateLimit } from "../../../../../../../../../shared/session-driver/rate-limit.ts"
-import type { TurnProgress } from "../../../../../../../../../shared/session/session-state.ts"
+import type { TurnProgress } from "../../../../../../../../../shared/session/turn-progress.ts"
 import {
   isTurnCounting,
   turnElapsedLabel,

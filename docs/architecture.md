@@ -843,14 +843,14 @@ Layout に出す。復帰したときにセッションを続きから起こし�
   写し替える。読めない出来事は直前に読めた時刻（まだ無ければ今）で畳む。流し直した時刻を記録に残すと、
   起こし直した直後のログが全部「いま」に見える
 
-**`session-state.ts` は純粋な畳み込み。** 姿から導くだけのもの（メインビューに出す形・`/`
+**`session-advance.ts` は純粋な畳み込み。** 姿から導くだけのもの（メインビューに出す形・`/`
 補完の候補）は `main-view.ts` / `command-suggestion.ts` に分けてある。状態を持つのはサーバ側の `session-manager` と
 ブラウザ側（`browser/stores/session.ts` の zustand の store）だけで、「イベント1件でどう変わるか」はすべてここのテストで守れる。
 
 **1つの機能だけが動かす欄の畳み方は、その機能の `shared/<機能>/` に置く**（日記の `applyDiaryEvent` の形）。
 当てるのは、その機能のイベントだけで動き、値の置き換えより多い判断を持つ欄の組だけで、値を写すだけの
-イベントと、記録・ターン・セリフ・API の不調の芯は `session-state.ts` に残す。記録から導く今のワークプランの
-畳み方（`nextWorkPlan`・`currentWorkPlan`）は `shared/session/work-plan.ts` に1つだけ置き、`session-state.ts` と
+イベントと、記録・ターン・セリフ・API の不調の芯は `session-advance.ts` に残す。記録から導く今のワークプランの
+畳み方（`nextWorkPlan`・`currentWorkPlan`）は `shared/session/work-plan.ts` に1つだけ置き、`session-advance.ts` と
 サーバの差し戻し（`WorkPlanReview`）はその結果を読む。
 
 - **`SessionState` の形は平らなまま変えない。** 部分の reducer は自分の欄だけを受けて返し、`SessionState` を
@@ -858,7 +858,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 - **またがるイベント**（`turn-finished`・`session-ended`・`conversation-cleared`）は
   `advanceSessionState` の1つの `case` で畳み、各部分は名前の付いた関数で反応を出す（入口の `applySessionEvent` は
   それを呼んでから、吹き出しが出し始めた反応を記録に積む）
-- **テスト**は部分の reducer を直に呼ぶものを `test/shared/<機能>/` に置き、`session-state.test.ts` には芯と、
+- **テスト**は部分の reducer を直に呼ぶものを `test/shared/<機能>/` に置き、`session-advance-*.test.ts` には芯と、
   委ねていること・またがるイベントの効き方だけを残す
 
 理由・分けないと決めたもの（`sdk-message.ts`・`session-manager.ts`）・採らなかった案は

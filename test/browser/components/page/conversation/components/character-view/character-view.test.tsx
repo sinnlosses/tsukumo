@@ -9,15 +9,15 @@ import {
 } from "../../../../../../../src/browser/stores/location-hash.ts"
 import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
 import type { WrittenReactions } from "../../../../../../../src/shared/recommendation/reaction.ts"
+import { applyRestoredEvents } from "../../../../../../../src/shared/session/restored-event.ts"
 import type {
   ReportWaitingLine,
   SessionEvent,
 } from "../../../../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../../../../src/shared/session/session-fold.ts"
+import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
 import {
-  applyRestoredEvents,
   INITIAL_SESSION_STATE,
-  type SessionRecord,
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"

@@ -9,10 +9,12 @@ import type {
 } from "../../../../../../../shared/session-driver/pending-ask.ts"
 import {
   recordTimeAt,
-  type ReportDrafting,
   type SessionRecord,
-  type TurnProgress,
-} from "../../../../../../../shared/session/session-state.ts"
+} from "../../../../../../../shared/session/session-record.ts"
+import type {
+  ReportDrafting,
+  TurnProgress,
+} from "../../../../../../../shared/session/turn-progress.ts"
 import type { TurnStep, TurnStepList } from "../../../../../../../shared/session/turn-step.ts"
 import { formatElapsed } from "../../../../../../../shared/utils/elapsed-time.ts"
 import { summarizeToolInput } from "../../../../../../domain/tool-summary.ts"

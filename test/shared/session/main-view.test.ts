@@ -21,8 +21,8 @@ import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-  type TurnBodies,
 } from "../../../src/shared/session/session-state.ts"
+import type { TurnBodies } from "../../../src/shared/session/turn-progress.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 
 /** いちばん新しいやり取りの本文がどれも確定している（ターンが終わっている）。 */

@@ -10,7 +10,7 @@ import type {
   RecordTime,
   SessionRecord,
   ToolRunStatus,
-} from "../../src/shared/session/session-state.ts"
+} from "../../src/shared/session/session-record.ts"
 
 /** 利用者の依頼1件。 */
 export function requestRecord(

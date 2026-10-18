@@ -4,9 +4,9 @@ import { afterEach, describe, expect, it } from "vitest"
 import { TurnList } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/turn-list/turn-list.tsx"
 import { readHashRoute } from "../../../../../../../../../src/browser/stores/location-hash.ts"
 import { useNavDrawer } from "../../../../../../../../../src/browser/stores/nav-drawer.ts"
+import type { SessionRecord } from "../../../../../../../../../src/shared/session/session-record.ts"
 import {
   INITIAL_SESSION_STATE,
-  type SessionRecord,
   type SessionState,
 } from "../../../../../../../../../src/shared/session/session-state.ts"
 import {

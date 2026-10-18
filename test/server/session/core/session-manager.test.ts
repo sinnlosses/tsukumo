@@ -17,12 +17,10 @@ import {
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../../../src/shared/frame.ts"
+import { applyRestoredEvents } from "../../../../src/shared/session/restored-event.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import {
-  applyRestoredEvents,
-  INITIAL_SESSION_STATE,
-} from "../../../../src/shared/session/session-state.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { characterChangedEvent } from "../../../fixture/character.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 import { readyContextUsage } from "../../../fixture/context-usage.ts"

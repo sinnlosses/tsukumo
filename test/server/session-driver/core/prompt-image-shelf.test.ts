@@ -9,7 +9,7 @@ import {
   type PromptImage,
   promptImageIdSchema,
 } from "../../../../src/shared/session-driver/prompt-image.ts"
-import type { SessionRecord } from "../../../../src/shared/session/session-state.ts"
+import type { SessionRecord } from "../../../../src/shared/session/session-record.ts"
 
 function image(label: string): PromptImage {
   return {

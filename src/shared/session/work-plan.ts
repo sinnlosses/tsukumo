@@ -7,7 +7,7 @@ import { leadingSentences, sentenceCount } from "../report/sentence-count.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import type { DelegateReturn } from "./delegate-return.ts"
 import type { SessionEvent } from "./session-event.ts"
-import type { SessionRecord } from "./session-state.ts"
+import type { SessionRecord } from "./session-record.ts"
 
 /** 並列の段。同時に走る段の名前の並びで、{@link MIN_PHASE_GROUP_SIZE} 個以上の重ならない名前を持つ。 */
 export type PhaseGroup = readonly string[]

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { phaseRecapsOf } from "../../../src/shared/session/phase-recap.ts"
-import type { RecordTime, SessionRecord } from "../../../src/shared/session/session-state.ts"
+import type { RecordTime, SessionRecord } from "../../../src/shared/session/session-record.ts"
 import { plannedPhasesOf, type WorkPlanEntry } from "../../../src/shared/session/work-plan.ts"
 
 type WorkPlanRecord = Extract<SessionRecord, { readonly kind: "work-plan" }>

@@ -6,12 +6,12 @@ import {
   type WelcomeHead,
   welcomeGreetingLine,
 } from "../../../src/shared/recommendation/welcome-greeting.ts"
+import { applyRestoredEvents } from "../../../src/shared/session/restored-event.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
+import { recordTimeAt } from "../../../src/shared/session/session-record.ts"
 import {
-  applyRestoredEvents,
   INITIAL_SESSION_STATE,
-  recordTimeAt,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 import { shownReaction, WAITING_LINE_DELAY_MS } from "../../../src/shared/session/shown-reaction.ts"

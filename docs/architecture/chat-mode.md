@@ -140,7 +140,7 @@ sed -n '/^#### 記憶の圧縮と忘却/,/^#\{2,4\} /p' docs/architecture/chat-m
 
 #### どこまで遡れるか
 
-**雑談だけ記録の上限を上げる**（2026-09-20 決定）。`src/shared/session/session-state.ts` の
+**雑談だけ記録の上限を上げる**（2026-09-20 決定）。`src/shared/session/session-record.ts` の
 `MAX_SESSION_STATE_TURNS = 20` は仕事のときの値として据え置き、**雑談のときは 100 ターン**を
 持つ。雑談の1ターンはセリフ1〜2件で軽く、20往復は会話としては短いため。上限そのものは消さない
 （**常駐プロセスが持つ記録を無限に増やさない**という `trimToRecentTurns` の前提）。

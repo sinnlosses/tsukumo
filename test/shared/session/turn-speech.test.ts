@@ -5,10 +5,8 @@ import {
   mainViewEntries,
   mainViewTurns,
 } from "../../../src/shared/session/main-view.ts"
-import {
-  INITIAL_SESSION_STATE,
-  type SessionRecord,
-} from "../../../src/shared/session/session-state.ts"
+import type { SessionRecord } from "../../../src/shared/session/session-record.ts"
+import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { turnSpeeches } from "../../../src/shared/session/turn-speech.ts"
 import { PRE_REQUEST_TURN_ID } from "../../../src/shared/session/turn.ts"
 import {

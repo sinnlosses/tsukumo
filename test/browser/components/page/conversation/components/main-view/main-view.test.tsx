@@ -16,9 +16,9 @@ import { loadMarkdown } from "../../../../../../../src/browser/components/page/c
 import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-answer.ts"
 import { useInquiryCardVisibility } from "../../../../../../../src/browser/stores/inquiry-card-visibility.ts"
 import { useInquiryJump } from "../../../../../../../src/browser/stores/inquiry-jump.ts"
+import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
 import {
   INITIAL_SESSION_STATE,
-  type SessionRecord,
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
 import {

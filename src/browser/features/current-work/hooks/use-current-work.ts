@@ -12,7 +12,7 @@ import { useState, type RefCallback, type RefObject } from "react"
 import type { DiaryWriting } from "../../../../shared/diary/diary.ts"
 import type { BackgroundTask } from "../../../../shared/session-driver/background-task.ts"
 import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
-import type { ReportDrafting } from "../../../../shared/session/session-state.ts"
+import type { ReportDrafting } from "../../../../shared/session/turn-progress.ts"
 import type { TurnStep, TurnStepList } from "../../../../shared/session/turn-step.ts"
 import {
   currentPhaseOf,

@@ -2,10 +2,8 @@ import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { useTurnSelection } from "../../../src/browser/stores/turn-selection.ts"
-import {
-  INITIAL_SESSION_STATE,
-  type SessionRecord,
-} from "../../../src/shared/session/session-state.ts"
+import type { SessionRecord } from "../../../src/shared/session/session-record.ts"
+import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { detailRecord, requestRecord } from "../../fixture/session-record.ts"
 import { putState, putSession } from "../session-store.ts"
 

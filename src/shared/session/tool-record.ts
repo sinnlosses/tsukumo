@@ -2,7 +2,8 @@
 
 import { isPlainObject } from "remeda"
 
-import type { SessionState, ToolRunStatus } from "./session-state.ts"
+import type { ToolRunStatus } from "./session-record.ts"
+import type { SessionState } from "./session-state.ts"
 
 type ToolResult = Extract<ToolRunStatus, { readonly kind: "finished" }>["result"]
 

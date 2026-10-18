@@ -3,7 +3,7 @@
 //
 // `useSession` のセレクタは同じ姿なら同じものを返す必要があるので、記録の並びそのものをキーにして結果を覚える（`WeakMap` なので、古い記録と一緒に落ちる）。
 
-import type { SessionRecord } from "../../shared/session/session-state.ts"
+import type { SessionRecord } from "../../shared/session/session-record.ts"
 import { currentTurnSteps, type TurnStepList } from "../../shared/session/turn-step.ts"
 import { useSession } from "./session.ts"
 

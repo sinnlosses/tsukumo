@@ -2,7 +2,7 @@
 //
 // ターンが終わっていても `backgroundTasks` が残っている間は「経過」のまま数え続け、残っていないターンの終わりで初めてその時刻に止まる。
 
-import type { TurnProgress } from "../../shared/session/session-state.ts"
+import type { TurnProgress } from "../../shared/session/turn-progress.ts"
 import { formatElapsed } from "../../shared/utils/elapsed-time.ts"
 
 const ELAPSED_LABEL = "経過"

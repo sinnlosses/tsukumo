@@ -9,12 +9,10 @@ import {
   mainViewTurns,
   turnAsides,
 } from "../../../../src/shared/session/main-view.ts"
+import { applyRestoredEvents } from "../../../../src/shared/session/restored-event.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../../src/shared/session/session-fold.ts"
-import {
-  applyRestoredEvents,
-  INITIAL_SESSION_STATE,
-} from "../../../../src/shared/session/session-state.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import {
   assistantMessage,

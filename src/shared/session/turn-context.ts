@@ -1,7 +1,7 @@
 // 同じやり取り（最後の `request` より後）の中で、前にある記録から後ろの記録へ持ち回すもの。
 // 記録を前から1回なぞるあいだに積み上げ、記録ごとに頭から探し直さないために置く。
 
-import type { SessionRecord } from "./session-state.ts"
+import type { SessionRecord } from "./session-record.ts"
 import { bashCommandOf, isToolRecord, toolRecordDuration, type ToolDuration } from "./turn-step.ts"
 import { isWorkPlanRecord, workPlanOf, type LatestWorkPlan } from "./work-plan.ts"
 

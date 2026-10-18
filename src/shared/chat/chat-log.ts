@@ -3,7 +3,7 @@
 
 import type { Expression } from "../character-pack/expression.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
-import { type RecordTime, recordTimeAt, type SessionRecord } from "../session/session-state.ts"
+import { type RecordTime, recordTimeAt, type SessionRecord } from "../session/session-record.ts"
 
 /**
  * 会話のログ1件。話したのがどちらかと文面、話した時刻を持つ。

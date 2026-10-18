@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import type { BackgroundTask } from "../../../src/shared/session-driver/background-task.ts"
+import { applyRestoredEvents } from "../../../src/shared/session/restored-event.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {
-  applyRestoredEvents,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"

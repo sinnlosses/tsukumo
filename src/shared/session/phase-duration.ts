@@ -4,7 +4,7 @@ import { groupBy } from "remeda"
 
 import type { PhaseDuration, PhaseTimeRow } from "../report/report-phase-time.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
-import { type RecordTime, recordTimeAt, type SessionRecord } from "./session-state.ts"
+import { type RecordTime, recordTimeAt, type SessionRecord } from "./session-record.ts"
 import {
   finishedPhaseCount,
   phaseLabel,

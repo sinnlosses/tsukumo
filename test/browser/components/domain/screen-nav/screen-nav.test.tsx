@@ -6,9 +6,9 @@ import { useNavDrawer } from "../../../../../src/browser/stores/nav-drawer.ts"
 import { MODEL_ALIASES } from "../../../../../src/shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"
 import type { StampedPendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
+import type { SessionInfo } from "../../../../../src/shared/session/session-info.ts"
 import {
   INITIAL_SESSION_STATE,
-  type SessionInfo,
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
 import { setPageUrl } from "../../../../dom-environment.ts"

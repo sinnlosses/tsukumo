@@ -28,10 +28,9 @@ import { finishedPhaseDuration, phaseDurations } from "./phase-duration.ts"
 import {
   MAX_SESSION_STATE_TURNS,
   type SessionRecord,
-  type SessionState,
   type ToolRunStatus,
-  type TurnBodies,
-} from "./session-state.ts"
+} from "./session-record.ts"
+import type { SessionState } from "./session-state.ts"
 import {
   advanceTurnContext,
   bashCommandDuration,
@@ -40,6 +39,7 @@ import {
   latestWorkPlanOf,
   type TurnContext,
 } from "./turn-context.ts"
+import type { TurnBodies } from "./turn-progress.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
 import { type PhaseShift, phaseShiftOf } from "./work-plan.ts"
 

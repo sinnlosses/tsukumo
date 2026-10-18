@@ -21,17 +21,14 @@ import {
 } from "../../../shared/plan-usage/plan-usage.ts"
 import { sectionsWithFigure } from "../../../shared/report/report-block.ts"
 import { conclusionWithTaskName } from "../../../shared/report/report-task.ts"
+import { applyRestoredEvents } from "../../../shared/session/restored-event.ts"
 import {
   type SessionDigest,
   UNAVAILABLE_SESSION_DIGEST,
 } from "../../../shared/session/session-digest.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import { applySessionEvent } from "../../../shared/session/session-fold.ts"
-import {
-  applyRestoredEvents,
-  INITIAL_SESSION_STATE,
-  type SessionState,
-} from "../../../shared/session/session-state.ts"
+import { INITIAL_SESSION_STATE, type SessionState } from "../../../shared/session/session-state.ts"
 import { waitingLineDueAt } from "../../../shared/session/shown-reaction.ts"
 import type { PreviousUsageReview } from "../../../shared/usage-review/usage-review.ts"
 import {

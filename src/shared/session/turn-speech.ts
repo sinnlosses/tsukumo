@@ -3,8 +3,16 @@
 // 今のターンの吹き出しは `SessionState.speeches` / `speechExpression` が持つ（`request` で空に戻るなどの規則が乗っていて、記録から素直には導けない）。
 
 import type { Expression } from "../character-pack/expression.ts"
-import type { SessionRecord, Speech } from "./session-state.ts"
+import type { RecordTime, SessionRecord } from "./session-record.ts"
 import { splitIntoTurns, turnIdOf } from "./turn.ts"
+
+/** `speak` で来た1件のセリフと、そのときの表情。吹き出し・セリフのログが押して遡る先の材料になる。 */
+export type Speech = {
+  readonly text: string
+  readonly expression: Expression
+  /** 言った時刻（記録の `time` と同じ値）。 */
+  readonly time: RecordTime
+}
 
 /** ターンの吹き出しに出した1件。`source` は `speak` のセリフ（`speak`）か、出し始めた反応（`reaction`）か。 */
 export type TurnLine = Speech & { readonly source: "speak" | "reaction" }

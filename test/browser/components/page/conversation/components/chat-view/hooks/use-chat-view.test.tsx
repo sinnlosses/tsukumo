@@ -7,10 +7,12 @@ import {
   type ChatRow,
 } from "../../../../../../../../src/browser/components/page/conversation/components/chat-view/hooks/use-chat-view.ts"
 import type { ClockStamp } from "../../../../../../../../src/browser/components/page/conversation/domain/clock-stamp.ts"
+import type {
+  RecordTime,
+  SessionRecord,
+} from "../../../../../../../../src/shared/session/session-record.ts"
 import {
   INITIAL_SESSION_STATE,
-  type RecordTime,
-  type SessionRecord,
   type SessionState,
 } from "../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../../fixture/character.ts"

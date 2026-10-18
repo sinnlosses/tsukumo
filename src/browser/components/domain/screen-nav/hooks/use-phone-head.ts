@@ -4,7 +4,7 @@
 // 1行目は顔・状態の語と経過・題、2行目は段の点・n/N・「手順 n」。
 // 会話の画面でないときは、1行目の左が「‹ 会話へ」と画面の名前になり、2行目を出さない。
 
-import type { SessionRecord } from "../../../../../shared/session/session-state.ts"
+import type { SessionRecord } from "../../../../../shared/session/session-record.ts"
 import type { TurnStepList } from "../../../../../shared/session/turn-step.ts"
 import {
   completionText,

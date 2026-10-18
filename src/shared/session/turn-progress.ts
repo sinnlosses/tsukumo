@@ -8,7 +8,38 @@ import type {
   TurnFailureCause,
   TurnOutcome,
 } from "../session-driver/turn-failure.ts"
-import type { SessionState, TurnBodies, TurnProgress } from "./session-state.ts"
+import type { SessionState } from "./session-state.ts"
+
+/**
+ * ターンの進み具合。`request` で `running` になり、`turn-finished` / `session-ended` で `finished` になる（入力欄が送信と中断を切り替える判断材料）。
+ *
+ * - `idle`: まだ一度も依頼が無い
+ * - `running`: 依頼を送って、まだ終わっていない。
+ *   委譲した続きを claude が自分で始めたとき（`turn-resumed`）も `startedAt` は付け直さず、依頼を送った時刻のまま引き継ぐ（`resumeTurn`）
+ * - `finished`: 終わった。`startedAt` は次の `request` まで持ち続ける（入力欄の経過時間表示が「所要」として出し続ける）。
+ *   `ending` は失敗で終わったか（{@link TurnEnding}。入力欄の「失敗」の字と、立ち絵の「失敗でびくっ」の材料。`session-ended` で終わったときは `ended`）。
+ *   ここが `finished` でも {@link SessionState.backgroundTasks} が残っていれば、入力欄は「経過」のまま数え続ける
+ */
+export type TurnProgress =
+  | { readonly kind: "idle" }
+  | { readonly kind: "running"; readonly startedAt: number }
+  | {
+      readonly kind: "finished"
+      readonly startedAt: number
+      readonly finishedAt: number
+      readonly ending: TurnEnding
+    }
+
+/**
+ * いま走っている SDK ターンで届いた本文の種類（{@link SessionState.bodiesInTurn}）。`report` は
+ * `report` ツールの呼び出し、`utterance` はツールの外に書いた本文（空白だけのものは数えない）。
+ */
+export type TurnBodies = { readonly report: boolean; readonly utterance: boolean }
+
+/** メインが `report` の引数を書いている途中か（{@link SessionState.reportDrafting}）。 */
+export type ReportDrafting =
+  | { readonly kind: "idle" }
+  | { readonly kind: "drafting"; readonly toolUseId: string }
 
 export const INITIAL_SPEECH_EXPRESSION = "default" as const satisfies Expression
 
@@ -106,6 +137,13 @@ export function finishTurn(turn: TurnProgress, at: number, ending: TurnEnding): 
  */
 export function finishedTurnCountOf(state: SessionState): number {
   return state.turn.kind === "running" ? state.finishedTurnCount + 1 : state.finishedTurnCount
+}
+
+/** 書いていた `report` の呼び出しが届いた・終わったなら、書いている途中の印を下ろす。 */
+export function settleReportDrafting(state: SessionState, toolUseId: string): SessionState {
+  return state.reportDrafting.kind === "drafting" && state.reportDrafting.toolUseId === toolUseId
+    ? { ...state, reportDrafting: { kind: "idle" } }
+    : state
 }
 
 /** 続きのターンが引き継ぐ始まりの時刻。まだ一度もターンが無ければ `at`。 */

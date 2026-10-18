@@ -9,7 +9,7 @@ import {
 } from "../../../../src/server/report/core/report-image-shelf.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { StampedPendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
-import type { SessionRecord } from "../../../../src/shared/session/session-state.ts"
+import type { SessionRecord } from "../../../../src/shared/session/session-record.ts"
 import { reportRecord, requestRecord } from "../../../fixture/session-record.ts"
 
 // 画像は架空のバイト列（実物の画像は使わない）。

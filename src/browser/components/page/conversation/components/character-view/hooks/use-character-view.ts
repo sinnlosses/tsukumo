@@ -20,12 +20,12 @@ import {
   type PortraitMotion,
   type PortraitMotionInput,
 } from "../../../../../../../shared/session/portrait-motion.ts"
-import type { Speech } from "../../../../../../../shared/session/session-state.ts"
 import {
   shownReaction,
   type ShownReaction,
   waitingLineDueAt,
 } from "../../../../../../../shared/session/shown-reaction.ts"
+import type { Speech } from "../../../../../../../shared/session/turn-speech.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
 import {
   characterFaceInfo,
