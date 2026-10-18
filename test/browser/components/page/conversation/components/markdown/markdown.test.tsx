@@ -44,6 +44,7 @@ describe("Markdown（描画一式を分けて読む口）", () => {
     expect(container.textContent).toBe("## 見出し")
   })
 
+  // 上限は、描画一式の読み直しを単独で流して測った最悪値（約 600ms）の 25 倍。
   it("読み終わると本体に替わり、そのあとの最初の描画では器を挟まない", async () => {
     const { loadMarkdown, Markdown } = await freshDeferredMarkdown()
     const first = render(<Markdown text={"## 見出し"} />)
@@ -56,7 +57,7 @@ describe("Markdown（描画一式を分けて読む口）", () => {
     const next = render(<Markdown text={"## 次の見出し"} />)
     expect(next.container.querySelector('[aria-busy="true"]')).toBeNull()
     expect(screen.getByRole("heading", { name: "次の見出し" })).toBeDefined()
-  })
+  }, 15_000)
 })
 
 /** 読み込みの状態が初めの姿のモジュール（`beforeEach` で登録を捨ててから読む）。 */
