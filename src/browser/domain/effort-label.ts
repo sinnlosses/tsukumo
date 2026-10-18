@@ -5,7 +5,7 @@
 // 値が届くまでを「対応するモデルだが、まだ分からない」という独立した状態として持つ（`EffortSelect` の `unknown`）。
 
 import type { EffortLevel, ModelAlias } from "../../shared/command.ts"
-import type { ModelEffortSupport } from "../../shared/session/session-event.ts"
+import type { ModelEffortSupport } from "../../shared/session/session-event-setting.ts"
 
 /** effort の値と、画面に出すラベル。値そのものは SDK の語彙で、人が選ぶ言葉に言い換えていない。 */
 export const EFFORT_LABELS = [

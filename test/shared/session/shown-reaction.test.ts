@@ -6,7 +6,8 @@ import {
   type WelcomeHead,
 } from "../../../src/shared/recommendation/welcome-greeting.ts"
 import { applyRestoredEvents } from "../../../src/shared/session/restored-event.ts"
-import type { ReportWaitingLine, SessionEvent } from "../../../src/shared/session/session-event.ts"
+import type { ReportWaitingLine } from "../../../src/shared/session/session-event-report.ts"
+import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import {
   INITIAL_SESSION_STATE,

@@ -754,8 +754,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### SessionEvent
 
-`SessionEvent` の一覧とフィールド、各イベントの出どころは `src/shared/session/session-event.ts` の型定義
-（`kind` ごとの doc コメント）を正典とする。ここに残すのは、コードから読み取れない決定だけ。
+`SessionEvent` の一覧とフィールド、各イベントの出どころは `src/shared/session/session-event.ts` と、
+概念ごとに分けた `session-event-*.ts` の型定義（`kind` ごとの doc コメント）を正典とする。ここに残すのは、コードから読み取れない決定だけ。
 
 **イベントは時刻を持って送る**（`StampedEvent`）。`at` はサーバの時計で、reducer は
 `applySessionEvent(state, event, at)`。**ブラウザ側で時計を reducer に渡さない**（両側の状態が同じに

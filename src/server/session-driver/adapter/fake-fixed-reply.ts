@@ -4,7 +4,7 @@
 import type { EffortLevel } from "../../../shared/command.ts"
 import type { ContextUsage } from "../../../shared/context-usage/context-usage.ts"
 import type { PlanUsage } from "../../../shared/plan-usage/plan-usage.ts"
-import type { ModelEffortSupport } from "../../../shared/session/session-event.ts"
+import type { ModelEffortSupport } from "../../../shared/session/session-event-setting.ts"
 
 /** fake driver が流す固定のプラン。会話の内容ではないので、疑似セッションの JSON に持たせず、ここに直接書く。 */
 export const FAKE_PLAN = "Claude Max"

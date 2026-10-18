@@ -1,6 +1,6 @@
 // 設定の点（`SettingMark`）を、切り替えを受け付けたとき・効いているのを見届けたときに付け替える畳み込み。
 
-import type { SettingConfirmation } from "./session-event.ts"
+import type { SettingConfirmation } from "./session-event-setting.ts"
 import type { SessionState } from "./session-state.ts"
 
 type SettingName = SettingConfirmation["setting"]

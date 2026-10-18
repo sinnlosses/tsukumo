@@ -11,7 +11,7 @@ import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { TurnFailure } from "../session-driver/turn-failure.ts"
 import type { ClippedText } from "../utils/clip-text.ts"
-import type { ReportWaitingLine } from "./session-event.ts"
+import type { ReportWaitingLine } from "./session-event-report.ts"
 import type { WorkPlan } from "./work-plan.ts"
 
 /**

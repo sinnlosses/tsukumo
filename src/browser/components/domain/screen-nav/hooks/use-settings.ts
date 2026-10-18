@@ -15,7 +15,7 @@ import {
   type SessionDefault,
   type SessionDefaultPermissionMode,
 } from "../../../../../shared/session/session-default.ts"
-import type { ModelEffortSupport } from "../../../../../shared/session/session-event.ts"
+import type { ModelEffortSupport } from "../../../../../shared/session/session-event-setting.ts"
 import { resolveEffortSelect, type EffortSelect } from "../../../../domain/effort-label.ts"
 import { useSession } from "../../../../stores/session.ts"
 import {

@@ -17,7 +17,7 @@ import {
 import type { ReactElement } from "react"
 
 import type { EffortLevel, PermissionMode } from "../../../../shared/command.ts"
-import type { ModelEffortSupport } from "../../../../shared/session/session-event.ts"
+import type { ModelEffortSupport } from "../../../../shared/session/session-event-setting.ts"
 import {
   EFFORT_LABELS,
   EFFORT_PLACEHOLDER_VALUE,

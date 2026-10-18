@@ -12,7 +12,7 @@ import {
   type ModelAlias,
   type PermissionMode,
 } from "../../shared/command.ts"
-import type { ModelEffortSupport } from "../../shared/session/session-event.ts"
+import type { ModelEffortSupport } from "../../shared/session/session-event-setting.ts"
 import type { SettingMark } from "../../shared/session/setting-mark.ts"
 import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
 import { resolveModelAlias } from "../domain/model-label.ts"

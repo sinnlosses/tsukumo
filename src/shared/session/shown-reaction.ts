@@ -18,7 +18,7 @@ import {
   welcomeGreetingLine,
 } from "../recommendation/welcome-greeting.ts"
 import { conversationMoment } from "./conversation-moment.ts"
-import type { ReportWaitingLine } from "./session-event.ts"
+import type { ReportWaitingLine } from "./session-event-report.ts"
 import type { RecordTime, SessionRecord } from "./session-record.ts"
 import type { SessionState } from "./session-state.ts"
 
