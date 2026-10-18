@@ -127,7 +127,8 @@
       "toolUseId": "fake-report-task-finished",
       "files": 3,
       "added": 42,
-      "removed": 18
+      "removed": 18,
+      "mixed": false
     }
   },
   {

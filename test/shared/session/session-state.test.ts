@@ -1102,6 +1102,7 @@ describe("applySessionEvent（変更の札）", () => {
     files: 2,
     added: 10,
     removed: 4,
+    mixed: true,
   }
 
   it("report の記録は札が none で積まれ、同じ toolUseId の report-change-summary で数に差し替わる", () => {
@@ -1112,7 +1113,7 @@ describe("applySessionEvent（変更の札）", () => {
       apply(REQUEST, reportEvent({ toolUseId: "toolu_r1" }), COUNTED).records.at(-1),
     ).toMatchObject({
       kind: "report",
-      changeSummary: { kind: "counted", files: 2, added: 10, removed: 4 },
+      changeSummary: { kind: "counted", files: 2, added: 10, removed: 4, mixed: true },
     })
   })
 

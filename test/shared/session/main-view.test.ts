@@ -651,6 +651,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       files: 3,
       added: 12,
       removed: 4,
+      mixed: false,
     })
     const changeSummaries = (turn: ReturnType<typeof turnOf>) =>
       (turn?.steps ?? []).map((step) =>
@@ -664,7 +665,9 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         true,
       )
 
-      expect(changeSummaries(turn)).toEqual([{ kind: "counted", files: 3, added: 12, removed: 4 }])
+      expect(changeSummaries(turn)).toEqual([
+        { kind: "counted", files: 3, added: 12, removed: 4, mixed: false },
+      ])
     })
 
     it("中間レポートに回った本文は数を持たない", () => {

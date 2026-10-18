@@ -335,13 +335,37 @@ describe("Turn（目録の1行と見出し）", () => {
 
   it("変更の札が数を持てば、目録の末尾に「変更 n ファイル +a −b」が出る", () => {
     putSession(INITIAL_SESSION_STATE)
-    const body = taskBody("架空の本文", { kind: "counted", files: 3, added: 12, removed: 4 })
+    const body = taskBody("架空の本文", {
+      kind: "counted",
+      files: 3,
+      added: 12,
+      removed: 4,
+      mixed: false,
+    })
     const { container } = render(
       <Turn turn={turn([step({ id: 0, body, final: true })])} newest freshReport={false} />,
     )
 
     expect(container.querySelector("header > p")?.textContent).toBe(
       "最終レポート·X-7·✓ 完了·変更 3 ファイル +12 −4",
+    )
+  })
+
+  it("変更の札が mixed なら、数の後ろに「※他の変更を含みうる」の注記が出る", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const body = taskBody("架空の本文", {
+      kind: "counted",
+      files: 3,
+      added: 12,
+      removed: 4,
+      mixed: true,
+    })
+    const { container } = render(
+      <Turn turn={turn([step({ id: 0, body, final: true })])} newest freshReport={false} />,
+    )
+
+    expect(container.querySelector("header > p")?.textContent).toBe(
+      "最終レポート·X-7·✓ 完了·変更 3 ファイル +12 −4 ※他の変更を含みうる",
     )
   })
 

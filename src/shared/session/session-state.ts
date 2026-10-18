@@ -1079,6 +1079,7 @@ function withReportChangeSummary(
     files: event.files,
     added: event.added,
     removed: event.removed,
+    mixed: event.mixed,
   } as const satisfies ReportChangeSummary
   return {
     ...state,

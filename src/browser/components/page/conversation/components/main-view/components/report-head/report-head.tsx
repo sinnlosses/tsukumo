@@ -120,13 +120,14 @@ function Outcome(props: { readonly outcome: DrawnOutcome }): ReactElement {
   )
 }
 
-/** 変更の札「変更 n ファイル +a −b」。`−` は U+2212。 */
+/** 変更の札「変更 n ファイル +a −b」。`−` は U+2212。範囲に別の変更が混ざりうるときは末尾に控えめな注記を添える。 */
 function ChangeSummary(props: { readonly summary: ReportChangeCount }): ReactElement {
-  const { files, added, removed } = props.summary
+  const { files, added, removed, mixed } = props.summary
   return (
     <span className={styles["report-change-summary"]}>
       変更 {files} ファイル <span className={styles["report-change-added"]}>+{added}</span>{" "}
       <span className={styles["report-change-removed"]}>−{removed}</span>
+      {mixed && <span className={styles["report-change-mixed"]}> ※他の変更を含みうる</span>}
     </span>
   )
 }

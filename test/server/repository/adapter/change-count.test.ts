@@ -51,6 +51,38 @@ describe("changeCountGitOf", () => {
     expect(output).toEqual({ kind: "unavailable" })
   })
 
+  it("控えた HEAD より後のコミットを新しい順に SHA と件名で出し、そのコミットだけの numstat を引ける", async () => {
+    const repository = await repositoryWithCommit()
+    const port = changeCountGitOf(repository)
+    const head = await port.readHead()
+    writeFileSync(join(repository, "b.txt"), "x\n")
+    await git(repository, ["add", "b.txt"])
+    await git(repository, ["commit", "--quiet", "-m", "架空の一歩目"])
+    writeFileSync(join(repository, "a.txt"), "1\n")
+    await git(repository, ["add", "a.txt"])
+    await git(repository, ["commit", "--quiet", "-m", "架空の二歩目"])
+
+    const commits = head.kind === "known" ? await port.commitsSince(head.sha) : undefined
+    expect(commits?.kind).toBe("output")
+    const listed = commits?.kind === "output" ? commits.commits : []
+    expect(listed.map((commit) => commit.subject)).toEqual(["架空の二歩目", "架空の一歩目"])
+    expect(await port.numstatOfCommit(listed[1]?.sha ?? "")).toEqual({
+      kind: "output",
+      text: "1\t0\tb.txt\n",
+    })
+  })
+
+  it("控えた HEAD がいまの HEAD の祖先でなければ、コミットの一覧も unavailable", async () => {
+    const repository = await repositoryWithCommit()
+    const port = changeCountGitOf(repository)
+    const head = await port.readHead()
+    await git(repository, ["checkout", "--quiet", "--orphan", "fictional-other"])
+    await git(repository, ["commit", "--quiet", "-m", "架空の別の根"])
+
+    const commits = head.kind === "known" ? await port.commitsSince(head.sha) : undefined
+    expect(commits).toEqual({ kind: "unavailable" })
+  })
+
   it("git リポジトリでなければ HEAD は unknown", async () => {
     const outside = mkdtempSync(join(tmpdir(), "tsukumo-change-count-outside-"))
 

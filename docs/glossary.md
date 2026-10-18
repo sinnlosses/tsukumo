@@ -1061,7 +1061,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 - **英語識別子**: `changeSummary`（型は `ReportChangeSummary`、配る出来事は `report-change-summary`）
 - **定義**: **`task` のある最終レポートの目録の1行の末尾に出す「変更 n ファイル +a −b」**。依頼の頭の HEAD から
-  `git diff --numstat` で tsukumo が数え、モデルには書かせない。数えられないときは出さない
+  `git` の `numstat` で tsukumo が数え（件名が `<タスクID>:` のコミットだけ。絞れないときは範囲全体で、数の後ろに
+  「※他の変更を含みうる」を添える）、モデルには書かせない。数えられないときは出さない
   （`docs/architecture/display.md`「`task` のある最終レポートだけ、目録の末尾に変更の札「変更 n ファイル +a −b」を出す」）
 - **避ける言い方**: diffstat、差分の統計
 

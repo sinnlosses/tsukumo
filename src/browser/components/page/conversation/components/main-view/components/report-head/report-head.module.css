@@ -57,6 +57,10 @@
 .report-change-removed {
   color: var(--report-change-removed);
 }
+.report-change-mixed {
+  color: var(--ink-quiet);
+  font-family: var(--font-sans);
+}
 
 .report-headline {
   margin: 2px 0 0;
