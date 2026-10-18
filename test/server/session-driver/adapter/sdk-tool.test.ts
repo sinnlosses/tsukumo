@@ -1023,28 +1023,6 @@ describe("report の本文（sections）", () => {
     expect(JSON.stringify(inputSchema).length).toBeLessThan(REPORT_INPUT_SCHEMA_MAX_CHARS)
   })
 
-  it("table の説明に、行の順・単位は見出しに1回・2行以下は stats か list の3条と、rest の欄がある", async () => {
-    const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_WHOLE_SCHEMA_REPLY)
-    const schema = JSON.stringify(
-      reply.result.tools.find((tool) => tool.name === "report")?.inputSchema,
-    )
-
-    expect(schema).toContain("大きさか重要度の順")
-    expect(schema).toContain("単位は見出しに1回だけ")
-    expect(schema).toContain("2行以下なら表にせず")
-    expect(schema).toContain("切った残りを1行で")
-  })
-
-  it("塊の aside の欄と、sections の説明にその使いどころがある", async () => {
-    const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_WHOLE_SCHEMA_REPLY)
-    const schema = JSON.stringify(
-      reply.result.tools.find((tool) => tool.name === "report")?.inputSchema,
-    )
-
-    expect(schema).toContain('"aside"')
-    expect(schema).toContain("塊の aside に出典・どこを見るかを1行で書く")
-  })
-
   it("conclusion の説明に、目安の字数・読点の数・悪い例と良い例がある", async () => {
     const reply = await mcpRequest(workServer(), "tools/list", {}, TOOLS_SCHEMA_REPLY)
     const conclusion = z

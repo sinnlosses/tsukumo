@@ -182,23 +182,12 @@ describe("toSessionEvents", () => {
     ])
   })
 
-  it("local_command_run の command が model 以外のときは何も出さない", () => {
-    const message = {
-      ...assistantMessage([]),
-      local_command_run: { command: "clear", args: "" },
-    }
-
-    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
-  })
-
-  it("local_command_run に args が無いときは何も出さない", () => {
-    const message = { ...assistantMessage([]), local_command_run: { command: "model" } }
-
-    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
-  })
-
-  it("引数なしの /model（args が空）では何も出さない", () => {
-    const message = { ...assistantMessage([]), local_command_run: { command: "model", args: " " } }
+  it.each([
+    ["command が model 以外", { command: "clear", args: "" }],
+    ["args が無い", { command: "model" }],
+    ["引数なしの /model（args が空白）", { command: "model", args: " " }],
+  ])("local_command_run は %s のとき何も出さない", (_name, localCommandRun) => {
+    const message = { ...assistantMessage([]), local_command_run: localCommandRun }
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
