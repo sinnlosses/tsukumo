@@ -480,6 +480,10 @@ readonly turn:
 `undefined` に畳む**。「無い」の表し方が2つあると、チェックが `== null` か `=== undefined` かで
 揺れ、どちらが起きうるのかを呼び出し側が毎回確かめることになる。この判断を境界の1箇所に寄せる。
 
+`scripts/` の `export` された型・インターフェース・関数（アロー関数と関数式の変数、
+`export default` を含む）の引数と戻り値・変数の型注釈・クラスのメンバの型の `null` は、
+`test/architecture/script-null-type.test.ts` が機械で見る。
+
 ## 会話内容の扱い
 
 **このリポジトリ固有の規約で、優先度が最も高い。** transcript には利用者と Claude の
