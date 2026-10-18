@@ -1,7 +1,7 @@
 import { sumBy } from "remeda"
 
 import type { FakeSession } from "../../../src/server/session-driver/adapter/fake-driver.ts"
-import { reportEvents } from "../../../src/server/session-driver/core/sdk-message.ts"
+import { reportEvents } from "../../../src/server/session-driver/core/sdk-report-message.ts"
 import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
 
 /** `table` の塊のうち、状態のセル（`{ status, text }`）を1つでも持つものに付ける印。 */

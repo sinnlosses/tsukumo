@@ -1150,7 +1150,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   本文は節の並びで、入れ子は節の1段だけ。見出しが空の節は見出しを描かない
 - **注記**: `report` の引数 `sections` がこの形で、節が2つ以上なら全部に見出しを付けさせる（無ければ
   差し戻す）。引数が文字列の `body` だったころの記録は、呼び出しをイベントに変える境目
-  （`sdk-message.ts` の `reportEvents`）で見出しの無い節1つ・逃げ道の塊1つに畳むので、描く側は文字列の
+  （`sdk-report-message.ts` の `reportEvents`）で見出しの無い節1つ・逃げ道の塊1つに畳むので、描く側は文字列の
   本文を見ない。形の案は `docs/research/report-block.md`、決定は `docs/architecture/display.md` 4.2
 - **避ける言い方**: セクション（Markdown の見出しの区切りと紛れる）、章
 

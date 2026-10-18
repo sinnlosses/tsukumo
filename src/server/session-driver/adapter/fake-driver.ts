@@ -28,7 +28,7 @@ import {
 import { createCallReview } from "../core/call-review.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { briefedQuestions } from "../core/question-brief.ts"
-import { reportEvents } from "../core/sdk-message.ts"
+import { reportEvents } from "../core/sdk-report-message.ts"
 import type { SessionDriver } from "../core/session-driver.ts"
 
 /** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
