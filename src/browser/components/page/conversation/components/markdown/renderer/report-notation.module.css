@@ -580,9 +580,18 @@
   align-self: flex-start;
   inline-size: min(100%, var(--report-measure));
 }
-/* 札の列・グラフ・ファイル一覧は包みの中央に置くので、題も包みの中心に揃える（包みが本文の列より広いとき、列の中心とずれる）。 */
+/* 札の列・グラフ・ファイル一覧・対応表・見比べ・前後は、本文の列より広い包みの中央か内幅いっぱいに置くので、題も包みの中心に揃える（包みが本文の列より広いとき、列の中心とずれる）。 */
 .detail-block
-  .report-captioned:has(:is(.report-stats, .report-files, :global(.chart-block)))
+  .report-captioned:has(
+    :is(
+      .report-stats,
+      .report-files,
+      .report-matrix,
+      .report-compare,
+      .report-before-after,
+      :global(.chart-block)
+    )
+  )
   > :is(.report-caption, .report-table-status-legend, .report-graph-legend) {
   align-self: center;
 }
@@ -669,11 +678,8 @@
 .detail-block .report-caption {
   contain: inline-size;
   max-inline-size: var(--report-measure);
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: 10px;
   text-align: center;
+  text-wrap: balance;
   font-size: var(--font-label);
   color: var(--ink-quiet);
 }
@@ -684,14 +690,13 @@
   margin-top: 0.25rem;
 }
 .detail-block .report-caption-number {
-  flex-shrink: 0;
+  margin-inline-end: 10px;
   font-family: var(--font-mono);
   font-size: var(--font-label);
   letter-spacing: 0.08em;
   color: var(--report-sequence-ink);
 }
 .detail-block .report-caption-text {
-  min-width: 0;
   overflow-wrap: anywhere;
   color: var(--ink-quiet);
 }
