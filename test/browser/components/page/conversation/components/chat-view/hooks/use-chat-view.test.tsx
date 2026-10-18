@@ -306,6 +306,62 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
     }
   })
 
+  it("新しいターンが始まっても、まだ話していないあいだは直前の吹き出しの表情のまま。新しいセリフが出たら替わる", () => {
+    const clock = mockTickingNow()
+    try {
+      const previous = speechRecord({ text: "前のターンの架空のセリフ", expression: "proud" })
+      const { result } = renderUseChatView({
+        records: [previous],
+        character: FIXTURE_CHARACTER,
+        speechExpression: "proud",
+      })
+
+      act(() => {
+        putState({
+          ...INITIAL_SESSION_STATE,
+          records: [previous, requestRecord({ turnId: 1, text: "架空の依頼" })],
+          character: FIXTURE_CHARACTER,
+          // `beginTurn` はサーバ側の表情を既定へ戻す。
+          speechExpression: "default",
+          speechCalledInTurn: false,
+          turn: { kind: "running", startedAt: 0 },
+        })
+      })
+      expect(result.current.expression).toBe("proud")
+
+      act(() => {
+        putState({
+          ...INITIAL_SESSION_STATE,
+          records: [
+            previous,
+            requestRecord({ turnId: 1, text: "架空の依頼" }),
+            speechRecord({ text: "新しい架空のセリフ", expression: "curious" }),
+          ],
+          character: FIXTURE_CHARACTER,
+          speechExpression: "curious",
+          speechCalledInTurn: true,
+          turn: { kind: "running", startedAt: 0 },
+        })
+        vi.advanceTimersByTime(2001)
+      })
+      expect(result.current.expression).toBe("curious")
+    } finally {
+      vi.useRealTimers()
+      clock.mockRestore()
+    }
+  })
+
+  it("出した吹き出しがまだ無い最初のターンは default のまま", () => {
+    const { result } = renderUseChatView({
+      records: [requestRecord({ turnId: 0, text: "架空の依頼" })],
+      character: FIXTURE_CHARACTER,
+      speechExpression: "default",
+      turn: { kind: "running", startedAt: 0 },
+    })
+
+    expect(result.current.expression).toBe("default")
+  })
+
   it("ターンが終わったあとも、待たせているセリフが残っていれば「...」が出続ける", () => {
     const clock = mockNow(0)
     try {

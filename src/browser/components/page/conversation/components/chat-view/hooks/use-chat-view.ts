@@ -124,11 +124,9 @@ export function useChatView(): ChatViewModel {
   // 表情は「留めた行 → 出した吹き出し」の順に決まる。
   // 留めていないときも `speechExpression`（届いた最新）をそのまま読まない。
   // 待たせている間は、届いたセリフではなくすでに出した吹き出しの表情のままにする。
-  // ただし新しいターンの始まり（まだ何も話していない）は、待っている吹き出しがあっても構わず既定へ戻す（`speechExpression` は `beginTurn` でここだけ即座に既定へ戻るので、そのまま使ってよい）。
-  const shownExpression =
-    turnInProgress && !speechCalledInTurn
-      ? speechExpression
-      : (speechExpressionAt(shown, shownSpeechIndex) ?? speechExpression)
+  // 新しいターンの始まり（まだ何も話していない）も直前の吹き出しの表情を残し、新しいセリフを出したときに替える。
+  // 出した吹き出しがまだ無いときだけ `speechExpression` になる。
+  const shownExpression = speechExpressionAt(shown, shownSpeechIndex) ?? speechExpression
   const expression = speechExpressionAt(shown, pinnedIndex) ?? shownExpression
 
   function toggle(index: number): void {
