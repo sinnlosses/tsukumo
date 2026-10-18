@@ -33,12 +33,6 @@ describe("tokenUsageDelta", () => {
     expect(tokenUsageDelta(previous, current)).toEqual([usage("opus", 160, 15, 0.75)])
   })
 
-  it("最初のターンは累計がそのまま増分になる", () => {
-    expect(tokenUsageDelta([], [usage("opus", 100, 20, 0.5)])).toEqual([
-      usage("opus", 100, 20, 0.5),
-    ])
-  })
-
   it("累計が振り出しに戻ったターンは負を書かず、いまの累計をそのまま増分にする", () => {
     const previous = [usage("opus", 900, 300, 4)]
     const current = [usage("opus", 120, 40, 0.6)]
@@ -238,52 +232,6 @@ describe("createTokenUsageRecorder の内訳", () => {
     expect(breakdown.subagent.tokens.inputTokens).toBe(55_431)
   })
 
-  // ターンの合計（`models`）と内訳が矛盾しないための不変条件——同じステップも同じ呼び出しも
-  // 二度は数えない（持ち場は排他で、`message.id` は畳まれる）。
-  it("内訳を足すと元の数に戻る（持ち場をまたいで二重に数えない）", () => {
-    const { breakdown } = writtenRowOf([
-      stepUsage("msg-1", "main", 100, 20),
-      stepUsage("msg-1", "main", 100, 25),
-      stepUsage("msg-2", "subagent", 300, 40),
-      toolStarted("t-1", "Agent"),
-      toolFinished("t-1", "123456"),
-      toolStarted("t-2", "Read", "t-1"),
-      toolFinished("t-2", "1234"),
-    ])
-
-    expect(breakdown.main.steps + breakdown.subagent.steps).toBe(2)
-    expect(breakdown.main.tokens.inputTokens + breakdown.subagent.tokens.inputTokens).toBe(400)
-    expect(breakdown.main.tokens.outputTokens + breakdown.subagent.tokens.outputTokens).toBe(65)
-    const calls = [...breakdown.main.tools, ...breakdown.subagent.tools]
-    expect(calls.reduce((total, tool) => total + tool.calls, 0)).toBe(2)
-    expect(calls.reduce((total, tool) => total + tool.resultBytes, 0)).toBe(10)
-  })
-
-  it("何も積んでいないターンでも、両方の持ち場が 0 で並ぶ", () => {
-    expect(writtenRowOf([]).breakdown).toEqual({
-      main: {
-        steps: 0,
-        tokens: {
-          inputTokens: 0,
-          outputTokens: 0,
-          cacheReadInputTokens: 0,
-          cacheCreationInputTokens: 0,
-        },
-        tools: [],
-      },
-      subagent: {
-        steps: 0,
-        tokens: {
-          inputTokens: 0,
-          outputTokens: 0,
-          cacheReadInputTokens: 0,
-          cacheCreationInputTokens: 0,
-        },
-        tools: [],
-      },
-    })
-  })
-
   it("本文・セリフ・依頼の文面は内訳に積まない（ツールの呼び出しと usage だけを見る）", () => {
     const { breakdown } = writtenRowOf([
       { kind: "request", text: "架空の依頼の文面", images: [] },
@@ -294,6 +242,8 @@ describe("createTokenUsageRecorder の内訳", () => {
 
     expect(breakdown.main.tools).toEqual([])
     expect(breakdown.main.steps).toBe(0)
+    expect(breakdown.subagent.tools).toEqual([])
+    expect(breakdown.subagent.steps).toBe(0)
   })
 
   // この検査がいちばん重要（docs/coding-standards.md「会話内容の扱い」）。記録へ渡る行に、

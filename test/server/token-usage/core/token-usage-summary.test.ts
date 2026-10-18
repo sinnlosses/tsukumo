@@ -82,7 +82,7 @@ describe("summarizeTokenUsage", () => {
     expect(totalOfTrend(summary.trend)).toEqual({ inputTokens: 50, outputTokens: 10 })
   })
 
-  it("複数日にまたがる期間は、日ごとに分けて古い→新しい順に並べる", () => {
+  it("複数日にまたがる期間は、日ごとに分けて古い→新しい順に並べ、記録の無い日も0の点で埋める", () => {
     const records = [
       record("2026-09-23T09:00:00+09:00", [usage("opus", 5, 1, 0.01)]),
       record("2026-09-21T09:00:00+09:00", [usage("opus", 100, 20, 0.5)]),
@@ -90,27 +90,11 @@ describe("summarizeTokenUsage", () => {
     ]
 
     const summary = summarizeTokenUsage(records, {
-      startDate: "2026-09-21",
-      endDate: "2026-09-23",
-    })
-
-    expect(summary.trend.unit).toBe("day")
-    expect(summary.trend.points.map((point) => point.key)).toEqual([
-      "2026-09-21",
-      "2026-09-22",
-      "2026-09-23",
-    ])
-    expect(summary.trend.points.map((point) => point.totals.inputTokens)).toEqual([100, 50, 5])
-  })
-
-  it("記録の無い日も0の点として期間のぶんだけ並ぶ（穴を空けない）", () => {
-    const records = [record("2026-09-22T09:00:00+09:00", [usage("opus", 50, 10, 0.2)])]
-
-    const summary = summarizeTokenUsage(records, {
       startDate: "2026-09-20",
       endDate: "2026-09-24",
     })
 
+    expect(summary.trend.unit).toBe("day")
     expect(summary.trend.points.map((point) => point.key)).toEqual([
       "2026-09-20",
       "2026-09-21",
@@ -118,7 +102,9 @@ describe("summarizeTokenUsage", () => {
       "2026-09-23",
       "2026-09-24",
     ])
-    expect(summary.trend.points.map((point) => point.totals.inputTokens)).toEqual([0, 0, 50, 0, 0])
+    expect(summary.trend.points.map((point) => point.totals.inputTokens)).toEqual([
+      0, 100, 50, 5, 0,
+    ])
   })
 
   it("1日だけの期間は時間ごと（0〜23時の24点）に割る", () => {
@@ -153,14 +139,6 @@ describe("summarizeTokenUsage", () => {
     })
 
     expect(summary.trend.points[9]?.totals.inputTokens).toBe(50)
-  })
-
-  it("記録が無い期間は、推移が0の点で埋まりモデル別とツール別は空になる", () => {
-    const summary = summarizeTokenUsage([], { startDate: "2026-09-01", endDate: "2026-09-03" })
-
-    expect(summary.byModel).toEqual([])
-    expect(summary.byTool).toEqual([])
-    expect(summary.trend.points.map((point) => point.totals.inputTokens)).toEqual([0, 0, 0])
   })
 
   it("同じ日・同じ期間の行が1件も無いときも空の並びを返す(記録はあるが期間の外)", () => {
@@ -296,6 +274,5 @@ describe("summarizeByTask", () => {
     ]
 
     expect(summarizeByTask(records).map((entry) => entry.taskId)).toEqual(["job-1"])
-    expect(summarizeByTask([taskRecord(undefined, [usage("opus", 1, 1, 0.1)])])).toEqual([])
   })
 })

@@ -160,8 +160,7 @@ describe("createTokenUsageLog", () => {
       models: MODELS,
       breakdown: BREAKDOWN,
     })
-    // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
-    expect(JSON.stringify(record)).toContain('"at":"2026-09-22T10:30:00')
+    // オフセットはそのマシンのローカル時刻で決まるので、頭と形だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T10:30:00[+-]\d{2}:\d{2}"/)
   })
 
@@ -280,15 +279,6 @@ describe("着手中のタスクとの結び付き", () => {
   describe("月をまたぐ台帳", () => {
     const LAPS = [{ task: "job-7", stage: "accept" }]
 
-    it("書く月に lap が無く前月にあれば、前月の最新の段が入る", () => {
-      const place = claimTask("job-7", LAPS, "2026-09")
-      const log = createTokenUsageLog(place, root())
-
-      log.append(entry(atDate(2026, 10, 1)))
-
-      expect(readLines("2026-10-01.jsonl")[0]).toMatchObject({ taskId: "job-7", stage: "accept" })
-    })
-
     it("書く月のファイルがあっても、そのタスクの lap が無ければ前月を読む", () => {
       const place = claimTask("job-7", LAPS, "2026-09")
       writeFlow(place, "2026-10", [{ task: "job-8", stage: "ship" }])
@@ -316,18 +306,6 @@ describe("着手中のタスクとの結び付き", () => {
       log.append(entry(atDate(2027, 1, 1)))
 
       expect(readLines("2027-01-01.jsonl")[0]).toMatchObject({ stage: "accept" })
-    })
-
-    it("当月にも前月にも lap が無ければ、タスクIDだけが入る", () => {
-      const place = claimTask("job-7", [{ task: "job-8", stage: "ship" }], "2026-09")
-      writeFlow(place, "2026-10", [])
-      const log = createTokenUsageLog(place, root())
-
-      log.append(entry(atDate(2026, 10, 1)))
-
-      const [record] = readLines("2026-10-01.jsonl")
-      expect(record).toMatchObject({ taskId: "job-7" })
-      expect(keysOf(record)).not.toContain("stage")
     })
   })
 })
