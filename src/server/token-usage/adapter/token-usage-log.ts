@@ -25,7 +25,7 @@ import {
 } from "../../../shared/token-usage/token-usage.ts"
 import {
   appendJsonLine,
-  dateFileNames,
+  dateFileNamesBetween,
   dateFilePath,
   readJsonLines,
   readValidLines,
@@ -206,17 +206,9 @@ function listDir(path: string): readonly string[] {
  * 期間の外のファイルは開かない（ファイル名が日付そのものを表すので、開く前に範囲で絞り込める）。
  */
 function readRecordsInRange(root: string, period: TokenUsagePeriod): readonly TokenUsageRecord[] {
-  return fileNamesInRange(root, period).flatMap((fileName) =>
+  return dateFileNamesBetween(root, period.startDate, period.endDate).flatMap((fileName) =>
     readValidRecords(join(root, fileName)),
   )
-}
-
-/** 期間に入る日付のファイル名を古い順に並べる（読めないディレクトリは空）。 */
-function fileNamesInRange(root: string, period: TokenUsagePeriod): readonly string[] {
-  return dateFileNames(root).filter((name) => {
-    const date = name.slice(0, 10)
-    return date >= period.startDate && date <= period.endDate
-  })
 }
 
 /** 1ファイルの行を検証して返す（{@link tokenUsageRecordSchema} を通らない行は1行ずつ落とす）。 */

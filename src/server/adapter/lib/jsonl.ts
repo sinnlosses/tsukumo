@@ -45,7 +45,7 @@ export function readJsonLines(path: string): readonly unknown[] {
 
 /**
  * 日付のファイル名（`YYYY-MM-DD.jsonl`）だけを古い→新しい順に並べる（読めないディレクトリは空）。
- * 範囲で絞る・新しい順にする判断は呼び出し元が行う。
+ * 新しい順にする判断は呼び出し元が行う。
  */
 export function dateFileNames(dir: string): readonly string[] {
   try {
@@ -55,6 +55,18 @@ export function dateFileNames(dir: string): readonly string[] {
   } catch {
     return []
   }
+}
+
+/** {@link dateFileNames} のうち、日付が `fromDate` 以上 `toDate` 以下のものを古い順に返す（`undefined` の側は絞らない）。 */
+export function dateFileNamesBetween(
+  dir: string,
+  fromDate: string | undefined,
+  toDate: string | undefined,
+): readonly string[] {
+  return dateFileNames(dir).filter((name) => {
+    const date = name.slice(0, 10)
+    return (fromDate === undefined || date >= fromDate) && (toDate === undefined || date <= toDate)
+  })
 }
 
 /** 日付キー（`YYYY-MM-DD`）の日のファイルのパス。名前の形は {@link dateFileNames} が拾う形と同じ。 */

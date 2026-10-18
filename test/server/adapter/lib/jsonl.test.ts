@@ -7,6 +7,7 @@ import { z } from "zod"
 import {
   appendJsonLine,
   dateFileNames,
+  dateFileNamesBetween,
   dateFilePath,
   readJsonLines,
   readValidLines,
@@ -87,6 +88,23 @@ describe("readValidLines", () => {
     const schema = z.object({ seq: z.number() })
 
     expect(readValidLines(path, schema)).toEqual([{ seq: 1 }, { seq: 3 }])
+  })
+})
+
+describe("dateFileNamesBetween", () => {
+  it.each([
+    { name: "両端を含む", from: "2026-01-02", to: "2026-01-03", expected: [2, 3] },
+    { name: "from を省くと先頭から", from: undefined, to: "2026-01-02", expected: [1, 2] },
+    { name: "to を省くと末尾まで", from: "2026-01-03", to: undefined, expected: [3, 4] },
+    { name: "両方省くと全部", from: undefined, to: undefined, expected: [1, 2, 3, 4] },
+  ])("$name", ({ from, to, expected }) => {
+    for (const day of [4, 1, 3, 2]) {
+      writeFileSync(join(dir(), `2026-01-0${day}.jsonl`), "")
+    }
+
+    expect(dateFileNamesBetween(dir(), from, to)).toEqual(
+      expected.map((day) => `2026-01-0${day}.jsonl`),
+    )
   })
 })
 

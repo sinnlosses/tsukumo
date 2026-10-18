@@ -15,7 +15,7 @@ import {
 } from "../../../shared/experience-metric/experience-metric-record.ts"
 import {
   appendJsonLine,
-  dateFileNames,
+  dateFileNamesBetween,
   dateFilePath,
   readValidLines,
 } from "../../adapter/lib/jsonl.ts"
@@ -127,12 +127,9 @@ function readEntriesInRange(
   root: string,
   period: ExperienceMetricPeriod,
 ): readonly ExperienceMetricEntry[] {
-  return dateFileNames(root)
-    .filter((name) => {
-      const date = name.slice(0, 10)
-      return date >= period.startDate && date <= period.endDate
-    })
-    .flatMap((fileName) => readValidEntries(join(root, fileName)))
+  return dateFileNamesBetween(root, period.startDate, period.endDate).flatMap((fileName) =>
+    readValidEntries(join(root, fileName)),
+  )
 }
 
 /** 1ファイルの行を検証して件に戻す（通らない行は1行ずつ落とす）。 */

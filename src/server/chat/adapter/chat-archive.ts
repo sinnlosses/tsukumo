@@ -28,6 +28,7 @@ import { byteLength } from "../../../shared/utils/byte-length.ts"
 import {
   appendJsonLine,
   dateFileNames,
+  dateFileNamesBetween,
   dateFilePath,
   readJsonLines,
 } from "../../adapter/lib/jsonl.ts"
@@ -531,16 +532,4 @@ function readEpisodeEntries(
     whenFirstExceeds: "stop",
   })
   return { entries: taken.map(recentEntryOf), overflowed }
-}
-
-/** 日付のファイル名のうち、日付が `fromDate` 以上 `toDate` 以下のものを古い順に返す（`undefined` の側は絞らない）。 */
-function dateFileNamesBetween(
-  dir: string,
-  fromDate: string | undefined,
-  toDate: string | undefined,
-): readonly string[] {
-  return dateFileNames(dir).filter((name) => {
-    const date = name.slice(0, 10)
-    return (fromDate === undefined || date >= fromDate) && (toDate === undefined || date <= toDate)
-  })
 }
