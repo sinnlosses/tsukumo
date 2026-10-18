@@ -121,6 +121,9 @@
         }
       ],
       "favor": "",
+      "retrospective": {
+        "kind": "none"
+      },
       "checks": [],
       "task": {
         "kind": "none"
@@ -306,6 +309,9 @@
         }
       ],
       "favor": "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。",
+      "retrospective": {
+        "kind": "none"
+      },
       "checks": [
         {
           "status": "ok",

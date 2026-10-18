@@ -74,6 +74,9 @@
         }
       ],
       "favor": "",
+      "retrospective": {
+        "kind": "none"
+      },
       "checks": [],
       "task": {
         "kind": "task",

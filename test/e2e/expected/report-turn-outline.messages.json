@@ -120,6 +120,9 @@
       },
       "sections": [],
       "favor": "",
+      "retrospective": {
+        "kind": "none"
+      },
       "checks": [],
       "task": {
         "kind": "task",
@@ -173,6 +176,9 @@
       },
       "sections": [],
       "favor": "",
+      "retrospective": {
+        "kind": "none"
+      },
       "checks": [],
       "task": {
         "kind": "task",

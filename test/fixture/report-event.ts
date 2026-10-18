@@ -15,6 +15,7 @@ export function reportEvent(
     figure: { kind: "none", reason: "unrecorded" },
     sections: [],
     favor: "",
+    retrospective: { kind: "none" },
     checks: [],
     task: { kind: "none" },
     workPlanClosing: "none",

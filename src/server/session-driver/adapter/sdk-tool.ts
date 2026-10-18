@@ -24,6 +24,7 @@ import {
   MAX_CONCLUSION_SENTENCES,
   MAX_FIRST_SENTENCE,
 } from "../../../shared/report/report-limit.ts"
+import { reportRetrospectiveSchema } from "../../../shared/report/report-retrospective.ts"
 import { parseReportTask, reportTaskSchema } from "../../../shared/report/report-task.ts"
 import {
   type QuestionBrief,
@@ -42,6 +43,7 @@ import { checkMermaidSyntax } from "../../report/adapter/report-mermaid-syntax.t
 import { mermaidSourcesInSections } from "../../report/core/report-figure-fault.ts"
 import {
   REPORT_CHECKS_DESCRIPTION,
+  REPORT_RETROSPECTIVE_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
   REPORT_FIGURE_DESCRIPTION,
   REPORT_SECTIONS_DESCRIPTION,
@@ -277,6 +279,9 @@ function reportTool(
         .min(1)
         .optional()
         .describe(REPORT_SECTIONS_DESCRIPTION),
+      retrospective: reportRetrospectiveSchema
+        .optional()
+        .describe(REPORT_RETROSPECTIVE_DESCRIPTION),
       favor: z
         .string()
         .optional()

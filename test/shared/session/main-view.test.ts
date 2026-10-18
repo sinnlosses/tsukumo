@@ -582,6 +582,31 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
   })
 
+  it("retrospective の塊は sections の後ろ・favor の前に置く", () => {
+    const turn = turnOf(
+      [
+        ask,
+        reportEvent({
+          toolUseId: "toolu_r1",
+          conclusion: "架空の結論。",
+          sections: reportSectionsOfBody("架空の根拠。"),
+          retrospective: { kind: "recorded", summary: "架空の結果。", drafts: [] },
+          favor: "架空のお願い",
+        }),
+        finished,
+      ],
+      SETTLED,
+      true,
+    )
+
+    const [shown] = shownReports(turn)
+    const order = ["架空の根拠。", 'class="retrospective"', 'class="note note-favor"'].map((part) =>
+      shown?.indexOf(part),
+    )
+    expect(order).toEqual([...order].sort((a, b) => (a ?? 0) - (b ?? 0)))
+    expect(order.every((index) => index !== undefined && index >= 0)).toBe(true)
+  })
+
   it("body は整形してから組む（落とせる行は描かず、残りと favor はそのまま）", () => {
     const turn = turnOf(
       [

@@ -84,6 +84,7 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
     figure: { kind: "none", reason: "unrecorded" },
     sections: [],
     favor: "",
+    retrospective: { kind: "none" },
     checks: [],
     task: { kind: "none" },
     waitingLine: { kind: "none" },

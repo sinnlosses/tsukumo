@@ -15,6 +15,7 @@ import {
   SECTIONS_START_MARKDOWN,
 } from "../report/report-markdown.ts"
 import { phaseTimesMarkdown } from "../report/report-phase-time.ts"
+import { retrospectiveMarkdown } from "../report/report-retrospective.ts"
 import { NO_REPORT_TASK, type ReportTask } from "../report/report-task.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
@@ -397,7 +398,8 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
  * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は `withPhaseTimes` のときだけ、同じ依頼のワークプランから描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
- * 空の `sections` / `favor` は塊ごと置かない。
+ * 空の `sections` / `favor` と、欄の無い `retrospective` は塊ごと置かない。
+ * `retrospective` の塊は `sections` の後ろ・`favor` の前に置く（{@link retrospectiveMarkdown}）。
  * `favor` の塊は `favor-<toolUseId>` の `id` を持ち、合図の行の総括行にある印がそこへ飛ぶ。
  * `conclusion` は、`task` のあるレポートでは見出しの下の一文として `conclusion` の印で、無いレポートでは見出しの代わりとして `conclusion-lead` の印で包む（`task` そのものは本文に組まない）。
  *
@@ -430,6 +432,7 @@ function reportMarkdown(
     ...head,
     head.length > 0 && !isBlankText(sections) ? SECTIONS_START_MARKDOWN : "",
     sections,
+    retrospectiveMarkdown(report.retrospective),
     isBlankText(report.favor)
       ? ""
       : `<div class="note note-favor" id="${htmlAttribute(favorId)}">\n\n${report.favor}\n\n</div>`,

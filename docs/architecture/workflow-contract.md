@@ -57,6 +57,10 @@ tsukumo は推し量らない。
 | `workPlanClosing` | 段の閉じ方。`work_plan` を渡した依頼では必須。`finished`（最後の段にいるときに渡すと tsukumo が帯を全部済みにする）／`stopped`（止まった段が「今」のまま残る）                                                                                                                                            |
 | `figure`          | 必須。レポートの図1つ（`image`・`mermaid`・`graph`・`svg`・`beforeAfter`・`chart`・`stats`・`dimension` の塊）か、`{ kind: "none", reason }`（`short-answer`／`no-shape`／`single-value`／`no-material`）。理由が本文と合わないと差し戻す（`docs/architecture/display.md`「出力の分離（セリフと詳細）」） |
 
+`retrospective`（任意）は、ワークフローに振り返りの段があるとき、その結果を本文の節に混ぜずに受ける欄。
+`summary`（結果の1〜2文）と `drafts`（積んだドラフトのタスクID。積まなければ空）を持ち、`sections` の後ろ・`favor` の前に専用の塊として描く。
+tsukumo は帯の段の名前を見ず、欄があるときだけ描く（段の名前を契約にすると他のワークフローを縛るため）。欄が欠けても差し戻さず、数えない。
+
 `task.outcome` は目録の1行の終わり方で、帯は閉じない。どこへ送ったかは tsukumo の関心にしない。
 `task.genre` は種類ごとの既定の節の並びを選ぶだけで、描き方も差し戻しも変えない（並びの正典は `REPORT_TASK_DESCRIPTION`）。
 `checks` に `ng` の行がある `report` の `finished` は差し戻す（`docs/architecture/display.md`「出力の分離（セリフと詳細）」）。

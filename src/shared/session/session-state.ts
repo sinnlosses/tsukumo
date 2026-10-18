@@ -20,6 +20,7 @@ import {
   type ReportChangeSummary,
 } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
+import type { ReportRetrospective } from "../report/report-retrospective.ts"
 import type { ReportTask } from "../report/report-task.ts"
 import type { TaskSummaryResult } from "../repository/task-summary.ts"
 import type { ApiTrouble } from "../session-driver/api-trouble.ts"
@@ -168,6 +169,7 @@ export type SessionRecord =
       readonly figure: RecordedReportFigure
       readonly sections: readonly ReportSection[]
       readonly favor: string
+      readonly retrospective: ReportRetrospective
       readonly checks: readonly ReportCheck[]
       readonly task: ReportTask
       readonly waitingLine: ReportWaitingLine
@@ -801,6 +803,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             figure: event.figure,
             sections: event.sections,
             favor: event.favor,
+            retrospective: event.retrospective,
             checks: event.checks,
             task: event.task,
             waitingLine: event.waitingLine,

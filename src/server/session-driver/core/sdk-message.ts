@@ -15,6 +15,7 @@ import {
   reportSectionsOfBody,
 } from "../../../shared/report/report-block.ts"
 import { parseReportChecks } from "../../../shared/report/report-check.ts"
+import { parseReportRetrospective } from "../../../shared/report/report-retrospective.ts"
 import { parseReportTask } from "../../../shared/report/report-task.ts"
 import { API_ERROR_KINDS, type ApiErrorKind } from "../../../shared/session-driver/api-trouble.ts"
 import type {
@@ -154,6 +155,7 @@ export function isSubagentMessage(message: unknown): boolean {
  * `sections` は塊ごとに検証して崩れた塊・知らない種類の塊を落とす（{@link parseReportSections}）。
  * `sections` の無い呼び出し（引数が文字列の `body` だったころの transcript）は、`body` を逃げ道の塊1つの節に畳む（{@link reportSectionsOfBody}）。
  * `figure` の「無い」（引数に `figure` が無かったころの transcript）と形の崩れは、理由が `unrecorded` の `none` に畳む（{@link parseReportFigure}）。
+ * `retrospective` の「無い」と形の崩れは `none` に畳む。
  * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。
  * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。`workPlanClosing` も同じ。
  * `closing` の「無い」（引数に `closing` が無かったころの transcript）は `none` に畳む。
@@ -184,6 +186,7 @@ export function reportEvents(
       figure: parseReportFigure(input.figure),
       sections: parsed.sections,
       favor: optionalString(input.favor) ?? "",
+      retrospective: parseReportRetrospective(input.retrospective),
       checks: parseReportChecks(input.checks),
       task: parseReportTask(input.task),
       workPlanClosing: parseWorkPlanClosing(input.workPlanClosing),
