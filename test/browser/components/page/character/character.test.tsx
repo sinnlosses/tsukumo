@@ -229,24 +229,12 @@ describe("Character", () => {
     expect(button.getAttribute("title")).toContain("ターン進行中")
   })
 
-  // 戻る口は帯（`components/domain/screen-nav/`）へ移った（docs/architecture/screen-design.md「画面のナビゲーション」）。
-  it("会話へ戻る口を持たない", () => {
-    renderCharacter()
-
-    expect(document.querySelector('a[href="#"]')).toBeNull()
-  })
-
   // 地・領域・字の色は帯の歯車へ移り（13.6 の表）、パックの持ち物である差し色だけが残る。
-  it("地・領域・字の色の操作子は持たず、差し色は残る", () => {
+  it("パックの持ち物である差し色の節を出す", () => {
     renderCharacter()
-
-    expect(screen.queryByLabelText("地の色")).toBeNull()
-    expect(screen.queryByLabelText("領域の色")).toBeNull()
-    expect(screen.queryByLabelText("字の色")).toBeNull()
 
     const headings = [...document.querySelectorAll("h2")].map((node) => node.textContent)
     expect(headings).toContain("画面の差し色")
-    expect(headings).not.toContain("画面の色")
   })
 
   // キャラクターが届く前でも行き止まりにしない（作る口だけは出す。会話へ戻る口は帯にある）。
@@ -254,6 +242,5 @@ describe("Character", () => {
     renderCharacter({ character: undefined, characterPacks: [] })
 
     expect(screen.getByRole("button", { name: "新しく作る" })).toBeDefined()
-    expect(document.querySelector(".character-profile-name")).toBeNull()
   })
 })

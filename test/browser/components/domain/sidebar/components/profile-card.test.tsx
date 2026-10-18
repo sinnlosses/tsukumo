@@ -1,7 +1,7 @@
 // 雑談中のサイドバーの最上段、プロフィールの札（docs/architecture/screen-design.md「雑談のときのサイドバー」）。
 // ここで見るのは、自己紹介文が無いパックで空の行を置かないことだけ。
 
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ProfileCard } from "../../../../../../src/browser/components/domain/sidebar/components/profile-card.tsx"
@@ -36,7 +36,7 @@ describe("ProfileCard", () => {
       character: characterInfo({ name: "架空の精霊", tagline: undefined }),
     })
 
-    expect(document.querySelector(".profile-card-name")?.textContent).toBe("架空の精霊")
-    expect(document.querySelector(".profile-card-tagline")).toBeNull()
+    const lines = screen.getByRole("region", { name: "プロフィール" }).querySelectorAll("p")
+    expect([...lines].map((line) => line.textContent)).toEqual(["架空の精霊"])
   })
 })

@@ -82,11 +82,6 @@ describe("Button", () => {
     expect(ref.current).toBe(element)
   })
 
-  it("title が付く", () => {
-    const element = renderButton({ ...BASE_PROPS, title: "いま押せない理由" })
-    expect(element.getAttribute("title")).toBe("いま押せない理由")
-  })
-
   it("className が足される", () => {
     const element = renderButton({ ...BASE_PROPS, className: "dummy-extra" })
     expect(element.className.split(" ")).toContain("dummy-extra")

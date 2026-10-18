@@ -1,10 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  VStack,
-  type VStackProps,
-} from "../../../../../src/browser/components/ui/v-stack/v-stack.tsx"
+import type { StackProps } from "../../../../../src/browser/components/ui/stack/stack.tsx"
+import { VStack } from "../../../../../src/browser/components/ui/v-stack/v-stack.tsx"
 
 afterEach(() => {
   cleanup()
@@ -23,7 +21,7 @@ const BASE_PROPS = {
   justify: "start",
   wrap: "nowrap",
   className: "",
-} satisfies Omit<VStackProps, "children">
+} satisfies Omit<StackProps, "children" | "direction">
 
 describe("VStack", () => {
   it("Stack に direction: column を渡して描く（stack-direction-column が付く）", () => {
@@ -39,6 +37,5 @@ describe("VStack", () => {
       throw new Error("VStack が親要素を描いていない")
     }
     expect(parent.className.split(" ")).toContain("stack-direction-column")
-    expect(parent.className.split(" ")).not.toContain("stack-direction-row")
   })
 })

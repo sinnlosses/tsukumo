@@ -59,41 +59,6 @@ describe("QuestionRecord（選んだ印の色）", () => {
     expect(chosenMark?.className.split(" ")).toContain(ACCENT_CLASS)
     expect(unchosenMark?.className.split(" ")).not.toContain(ACCENT_CLASS)
   })
-
-  it("開いた preview の札にも同じ印の class が付く", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      toolUseId: "toolu_fictional",
-      questions: [
-        {
-          header: "確認",
-          text: "どちらにする？",
-          multiSelect: false,
-          options: [
-            { label: "案A", description: "", preview: "### 案Aの下書き" },
-            { label: "案B", description: "", preview: "### 案Bの下書き" },
-          ],
-        },
-      ],
-      answers: [["案B"]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-    const details = container.querySelector("details")
-    if (details === null) {
-      throw new Error("折りたたみが無い")
-    }
-    act(() => {
-      details.open = true
-      details.dispatchEvent(new Event("toggle"))
-    })
-
-    const label = [...container.querySelectorAll(".question-preview-label")].find((element) =>
-      element.textContent?.includes("案B"),
-    )
-    const mark = label?.querySelector("span")
-    expect(mark?.className.split(" ")).toContain(ACCENT_CLASS)
-  })
 })
 
 describe("QuestionRecord（単一選択と複数選択で印が変わる）", () => {

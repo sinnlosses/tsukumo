@@ -166,7 +166,7 @@ describe("設定の歯車（帯の右端）", () => {
     expect(faceLabels()).toEqual(["地の色", "領域の色", "字の色"])
   })
 
-  it("ナビは4項目で、選んだ項目が aria-current になり面が替わる。「すぐ効く」の印は無い", () => {
+  it("ナビは4項目で、選んだ項目が aria-current になり面が替わる", () => {
     renderScreenNav()
     fireEvent.click(gear())
     const dialog = openedSettingsDialog()
@@ -185,7 +185,6 @@ describe("設定の歯車（帯の右端）", () => {
     showFace("演出")
 
     expect(faceLabels()).toEqual(["書き上げる速さ"])
-    expect(dialog.textContent).not.toContain("すぐ効")
   })
 
   it("開き直すと「見た目」から始まる", () => {

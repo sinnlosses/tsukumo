@@ -4,7 +4,7 @@ import type { ReactElement } from "react"
 
 import { Stack, type StackProps } from "../stack/stack.tsx"
 
-export type HStackProps = Omit<StackProps, "direction">
+type HStackProps = Omit<StackProps, "direction">
 
 export function HStack(props: HStackProps): ReactElement {
   return <Stack {...props} direction="row" />

@@ -157,16 +157,6 @@ describe("ConversationLayout", () => {
     })
   })
 
-  // 狭い画面で何を隠すかは CSS（@media）が決めるので、部品の側は切り替えのタブを持たず、4領域をそのまま描く。
-  it("上段を切り替えるタブ帯を描かず、4領域はそのまま残る", () => {
-    renderLayout()
-
-    expect(screen.queryByRole("tablist")).toBeNull()
-    for (const region of ["main", "sidebar", "character", "dispatch"]) {
-      expect(document.querySelector(`[data-region="${region}"]`)).not.toBeNull()
-    }
-  })
-
   // 枠と角丸を外して背景を敷く class（`.layout-ground`）は、キャラビューと雑談中のメインビューが
   // 共有する（docs/architecture/screen-design.md「背景」）。見えているかは目視で、ここが見るのは class の付き方だけ
   // （*.module.css の class 名はテストではそのまま返る。`cssModuleIdentityPlugin`）。

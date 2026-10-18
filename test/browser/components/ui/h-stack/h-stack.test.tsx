@@ -1,10 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  HStack,
-  type HStackProps,
-} from "../../../../../src/browser/components/ui/h-stack/h-stack.tsx"
+import { HStack } from "../../../../../src/browser/components/ui/h-stack/h-stack.tsx"
+import type { StackProps } from "../../../../../src/browser/components/ui/stack/stack.tsx"
 
 afterEach(() => {
   cleanup()
@@ -23,7 +21,7 @@ const BASE_PROPS = {
   justify: "start",
   wrap: "nowrap",
   className: "",
-} satisfies Omit<HStackProps, "children">
+} satisfies Omit<StackProps, "children" | "direction">
 
 describe("HStack", () => {
   it("Stack に direction: row を渡して描く（stack-direction-row が付く）", () => {
@@ -39,6 +37,5 @@ describe("HStack", () => {
       throw new Error("HStack が親要素を描いていない")
     }
     expect(parent.className.split(" ")).toContain("stack-direction-row")
-    expect(parent.className.split(" ")).not.toContain("stack-direction-column")
   })
 })

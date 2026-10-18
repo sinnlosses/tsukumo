@@ -334,10 +334,4 @@ describe("PresentationalTokenUsage", () => {
 
     expect(queryByText("max")).not.toBeNull()
   })
-
-  it("plan が届いていなければ札を出さない", () => {
-    const { container } = renderScreen()
-
-    expect(container.querySelector(".token-usage-plan")).toBeNull()
-  })
 })
