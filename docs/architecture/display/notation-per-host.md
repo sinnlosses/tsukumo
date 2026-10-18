@@ -17,7 +17,7 @@
   キャラクター性より優先する）。書く場所は `src/server/report/core/report-notation.ts` で、
   **`persona.md` の側には書かない**
 - **レポートは必ず日本語で書かせる**（2026-09-23 決定）。`CLAUDE.md` の「対話言語」だけでは
-  本文が英語で出たことがあるため、同じ `report-notation.ts` の文面で縛り、検査（`non-japanese`）でも差し戻す。
+  本文が英語で出たことがあるため、同じ `report-notation.ts` の文面で縛り、検査でも差し戻す。
   英語のまま残してよいのは識別子・パス・コマンド・コード・エラー文・原文の引用だけ
 - **HTML・mermaid・chart の規約は tsukumo が持つ。** `query()` の
   `systemPrompt: { type: "preset", preset: "claude_code", append }` で足す。正典がリポジトリ内に
@@ -31,15 +31,11 @@
   段を進めるときのセリフとの並べ方と委譲中の `n/N` はワークプランの節）、**差し戻しの文が直し方まで言う条は
   文面から外す**（`fold` の入れ子・候補の数・見出しの欠け・逃げ道に書いた塊の記法・段の飛ばし・段のまとめの欠け）。
   ただし最初の1回で外しやすい条（`conclusion` の長さ・地の文の段落の長さ）、差し戻しのたびに1往復が要る条
-  （新しい事実の無いターンは `report` を呼ばない）は残す。文面の正典は各定数で、
-  ここには写さない。削った前後で差し戻しが増えていないかは、変更の前後の同じ日数の transcript で
-  メインの `report` / `work_plan` の呼び出しと差し戻しの数を、差し戻しの1行目の種類ごとに数えて比べる
-  （数え方は `docs/history/decision.md`「display.md 4.2 レポートの記法（ツールの定義の字数の推移と切り替えの
-  前の差し戻しの集計）」と同じ）
+  （新しい事実の無いターンは `report` を呼ばない）は残す。文面の正典は各定数で、ここには写さない。
+  削った前後で差し戻しが増えていないかの数え方は `docs/history/decision.md`「display.md 4.2 レポートの記法（ツールの定義の字数の推移と切り替えの
+  前の差し戻しの集計）」
 
-**この2つの案は採らない**（理由は `docs/history/decision.md`「requirements.md 4.2 表示 /
-レポートの記法は、TUI と tsukumo で出し分ける」）: 出力スタイルを2ファイルに分けて選ぶ案と、
-1ファイルのまま条件分岐で書く案。
+出力スタイルを2ファイルに分けて選ぶ案と、1ファイルのまま条件分岐で書く案は採らない（理由は `docs/history/decision.md`
+「requirements.md 4.2 表示 / レポートの記法は、TUI と tsukumo で出し分ける」）。
 
-**文面は `src/server/report/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` にあり、
-`startSdkDriver`（`src/server/session-driver/adapter/sdk-driver.ts`）が `query()` の `systemPrompt` へ渡す。**
+**文面は `src/server/report/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` にあり、セッションの駆動が `query()` の `systemPrompt` へ渡す。**
