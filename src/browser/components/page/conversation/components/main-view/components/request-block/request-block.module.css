@@ -13,7 +13,7 @@
   line-height: 20px;
 }
 .request-lines {
-  flex: 0 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   margin: 0;
   overflow: hidden;
@@ -23,7 +23,6 @@
 }
 /* 開いたあとは全行を折り返して出し、長いときは窓の 40% で内側に転がす。 */
 .request-lines.is-expanded {
-  flex: 1 1 0;
   max-height: 40vh;
   overflow-y: auto;
   overflow-wrap: anywhere;
