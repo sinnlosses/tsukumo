@@ -157,13 +157,13 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("レポートの文体は中立と決めている（キャラクターの口調はセリフが担う）", () => {
     // どのパックに切り替えても本文の読みやすさが変わらないようにするための決定
-    // （docs/architecture/display.md「レポートの文体は tsukumo が決める」）。文体を persona.md 側に持たせない。
+    // （docs/architecture/display/notation-per-host.md「レポートの文体は tsukumo が決める」）。文体を persona.md 側に持たせない。
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは中立の文体で書く")
   })
 
   it("レポートは日本語で書くと決める", () => {
     // 読んだコードや英語の文面に引きずられて本文が英語で出たことがある
-    // （docs/architecture/display.md「レポートは必ず日本語で書かせる」）。
+    // （docs/architecture/display/notation-per-host.md「レポートは必ず日本語で書かせる」）。
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは必ず日本語で書く")
   })
 

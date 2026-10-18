@@ -1,5 +1,5 @@
 // タスクの本文（mdast）のうち、いまの一覧に載っている ID と字面が一致する箇所を
-// 押せるリンクへ書き換える（`docs/architecture/display.md`「本文中の ID の自動リンク」）。
+// 押せるリンクへ書き換える（`docs/architecture/display/task-modal.md`「本文中の ID の自動リンク」）。
 // 当てるのは地の文と、中身がまるごと1つの ID の inline code だけ。語の途中・フェンスの中は当てない。
 // ID の形は決め打ちせず、渡された集合とだけ照らす。
 //

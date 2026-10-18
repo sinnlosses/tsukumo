@@ -209,7 +209,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   `SessionState.rateLimit`、イベントは `rate-limit-changed`）
 - **定義**: claude.ai の契約で使える量の枠（5時間枠・7日間枠など）に達した、という状態と、
   いつ戻るか。SDK の `rate_limit_event` が運ぶ
-- **注記**: 入力欄の経過時間の行に出す（`docs/architecture/display.md` 4.2「入力欄」）。「近い」
+- **注記**: 入力欄の経過時間の行に出す（`docs/architecture/display/input-box.md`「入力欄」）。「近い」
   （`allowed_warning`）は出さない——枠の残り具合は**プラン使用量**がサイドバーで出す。API キーで
   使っているときは届かない。**プランとは別のもの**（プランは契約の段、利用上限はその段で決まる
   枠に達したかどうか）
@@ -1057,7 +1057,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   （`report` の `task`。終わり方は `outcome`）
 - **定義**: **レポートの結論部のいちばん上の1行**。ラベル（「中間レポート」「最終レポート」）・タスクID・
   終わり方（✓ 完了〔`finished`〕 / ？ 答え待ち。`stopped` は描かない）・変更の札のうち、あるものだけを `·` で
-  つなぐ。`task` があれば、その下に作業の名前を見出しとして出す（`docs/architecture/display.md`
+  つなぐ。`task` があれば、その下に作業の名前を見出しとして出す（`docs/architecture/display/conclusion.md`
   「タスクの作業のレポートは、結論部を「目録の1行・見出し・一文」の3段にする」）
 - **避ける言い方**: パンくず、メタ情報（パンくずはタスクのモーダルの「戻る」の呼び名）
 
@@ -1075,7 +1075,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **定義**: **`task` のある最終レポートの目録の1行の末尾に出す「変更 n ファイル +a −b」**。依頼の頭の HEAD から
   `git` の `numstat` で tsukumo が数え（件名が `<タスクID>:` のコミットだけ。絞れないときは範囲全体で、数の後ろに
   「※他の変更を含みうる」を添える）、モデルには書かせない。数えられないときは出さない
-  （`docs/architecture/display.md`「`task` のある最終レポートだけ、目録の末尾に変更の札「変更 n ファイル +a −b」を出す」）
+  （`docs/architecture/display/conclusion.md`「`task` のある最終レポートだけ、目録の末尾に変更の札「変更 n ファイル +a −b」を出す」）
 - **避ける言い方**: diffstat、差分の統計
 
 ### 中間レポート
@@ -1139,7 +1139,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **英語識別子**: `verdict`（描く印の名前。`src/shared/report/report-notation.ts` の `REPORT_DRAWN_MARK_NAMES`）
 - **定義**: レポートの結論のすぐ下に置く、検証結果の塊（総括行と、落ちた・確かめていない行と、通った行の畳み）
 - **注記**: 検証の無いレポートでは出ない。お願いがあれば総括行の右端に、末尾のお願いへ飛ぶ「お願い 1 ↓」の印を置く。
-  規則は `docs/architecture/display.md` 4.2「検証結果は、総括行と開く行で描く」が正典
+  規則は `docs/architecture/display/check-result.md`「検証結果は、総括行と開く行で描く」が正典
 - **避ける言い方**: サマリー行（何の要約か分からない）、委譲の返却（別の語。委譲先からの知らせ）
 
 ### 節

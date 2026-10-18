@@ -1072,7 +1072,7 @@ Standards 軸はこの節から入るので、レビューで見ることをこ�
 - `test/architecture/layer.test.ts`: 層をまたぐ `import` を構文木（`vite` の `parseSync`）で検査し、許した辺以外を落とす。静的 import・`export … from`・動的 `import()`・`require()` を拾う
 - `src/server/report/core/report-review.ts`: 規約違反のある `report` 呼び出しを handler が差し戻す。
   差し戻しの枠を足すときは、`REPORT_PROCEDURE_REJECTIONS` と `ReportReview.judge` の JSDoc（順と脇の話の扱い）を直し、
-  `docs/architecture/display.md` の「枠の数え方」と脇の話の節の列挙を同じ順・同じ枠に合わせる
+  `docs/architecture/display/work-plan-closing.md` の「枠の数え方」と脇の話の節の列挙を同じ順・同じ枠に合わせる
 - `src/server/report/core/report-tool.ts` の `Stop` フックの関所: ターンの最後に `report` を
   通さない本文で止まろうとしたら差し戻す
 - `.oxlintrc.json` の `no-restricted-globals`: `Date` の使用を lint で落とす

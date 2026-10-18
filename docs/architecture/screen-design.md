@@ -245,7 +245,7 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 
 **ラベルは結論部の目録の1行の頭に置く**（2026-09-30 ユーザー決定。見本は
 `docs/history/mockup/report-conclusion-2026-09-30.html` の案A。仕組みと出す条件は
-`docs/architecture/display.md`「タスクの作業のレポートは、結論部を「目録の1行・見出し・一文」の3段にする」）。
+`docs/architecture/display/conclusion.md`「タスクの作業のレポートは、結論部を「目録の1行・見出し・一文」の3段にする」）。
 タスクの作業のレポートは、結論部を目録の1行（ラベル・タスクID・終わり方・変更の札）・見出し（作業の名前）・一文の
 3段で描く。寸法は目録 `--font-action`（12px）、見出し `--report-heading-2`（21px。レポート専用のつまみ）太字・行間 1.45・字間 0.01em、一文
 `--font-subheading`（14px）・行間 1.85、見出しと一文のあいだ 12px。見出しと一文の中のインラインコードは
@@ -1707,7 +1707,7 @@ hook 入力の `effort.level`（ターンの終わり。実測は `docs/history/
   （13.13「読み上げとフォーカス」）の仕事
 - **API の不調（再試行中・利用上限・失敗の理由）は札に出さない**（2026-09-24 決定）。再試行中も
   作業は続いているので語は「作業中」のままで、知らせは入力欄の経過時間の行の枠が持つ
-  （`docs/architecture/display.md` 4.2「入力欄」）。いつも見えている入力欄の行に寄せた。**会話の画面の仕事のときは、経過と再試行中は進み具合の帯が持ち、失敗の理由はレポートの頭の
+  （`docs/architecture/display/input-box.md`「入力欄」）。いつも見えている入力欄の行に寄せた。**会話の画面の仕事のときは、経過と再試行中は進み具合の帯が持ち、失敗の理由はレポートの頭の
   失敗の塊へ移し、入力欄の行に残るのは「利用上限に達した」だけにする**（2026-10-02。13.13「進み具合の帯」と
   13.13「失敗の塊」）
 - **モックの札の頭にある名前（「tsukumo 作業中」）は置かない。** 左端の顔と部屋の名前が
@@ -3393,12 +3393,12 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
 - 枠と見出しの字は `--state-ng`（`.main-step.is-failed`）。口は始め方の一覧と同じ中立の枠で、新しい色は足さない。
   `aria-live` は付けない（読み上げは上の「読み上げとフォーカス」）
 - 仕事のときは入力欄の行に失敗の理由を出さない（雑談モードは塊が無いので、行に理由の語を出す。
-  `docs/architecture/display.md` 4.2「入力欄」）
+  `docs/architecture/display/input-box.md`「入力欄」）
 
 #### レポートの頭（合図の行）
 
 **結論のすぐ下に、検証結果を総括行と開く行で出す**（2026-10-17 に描き替えた。何を出すかの正典は
-`docs/architecture/display.md` 4.2「検証結果は、総括行と開く行で描く」。見本は
+`docs/architecture/display/check-result.md`「検証結果は、総括行と開く行で描く」。見本は
 `docs/history/mockup/report-excellence-2026-10-17/after-first.png`。それまでの見本は
 `docs/history/mockup/report-verdict-quiet-2026-10-08.html`〔左の色罫のカード〕と
 `docs/history/mockup/report-checks-tile-2026-10-04.html`〔判定の札〕）。枠と地を持たず、色が出るのは記号と状態の語だけで、結論より目立たせない。
@@ -3496,7 +3496,7 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
 
 **種類の札と、フォルダを畳んだ樹形図・説明の3列で見せる**（2026-10-03 デザイン案A、2026-10-14 に
 パスを樹形図へ。見本の元は `docs/history/mockup/report-files-block-2026-10-03.html` で、樹形図は
-それに無い）。`files` の塊の構造は `docs/architecture/display.md` 4.2「候補の比較は `options`、
+それに無い）。`files` の塊の構造は `docs/architecture/display/block-field.md`「候補の比較は `options`、
 触ったファイルの一覧は `files` の塊で見せる」が持つ。
 
 ```
