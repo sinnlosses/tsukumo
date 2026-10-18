@@ -20,6 +20,9 @@ const SHARE_INSIDE_PADDING = 6
 const SHARE_ROW_HEIGHT = 18
 const SHARE_ROW_GAP = 8
 const SHARE_TEXT_GAP = 10
+const SHARE_MARK_SIZE = 8
+const SHARE_MARK_GAP = 5
+const SHARE_MARK_WIDTH = SHARE_MARK_SIZE + SHARE_MARK_GAP
 
 type DirectLabelOption = {
   readonly mode: "arrow" | "slope" | "span" | "share"
@@ -36,7 +39,7 @@ type ShareSegment = {
 type ShareLabelPlace = {
   /** -1 は棒の中。0 以上は棒の下の行の番号。 */
   readonly row: number
-  /** 字の左端（px。棒の左端を 0 とする）。 */
+  /** 棒の中は字の左端、棒の下は部分の色の四角の左端（px。棒の左端を 0 とする）。字は四角の右に続く。 */
   readonly left: number
 }
 
@@ -71,8 +74,8 @@ export function arrowPadding(
 }
 
 /**
- * share の部分ごとの字の置き場。幅に収まる部分は棒の中、収まらない部分（幅0を含む）は字を部分の中心に置いて
- * 棒の下の行へ出し、先に置いた字と横で重ならない最小の行にする。`total` は棒の全幅で、字は端からはみ出さない。
+ * share の部分ごとの字の置き場。幅に収まる部分は棒の中、収まらない部分（幅0を含む）は部分の色の四角と字を
+ * 部分の中心に置いて棒の下の行へ出し、先に置いたものと横で重ならない最小の行にする。`total` は棒の全幅で、四角と字は端からはみ出さない。
  */
 export function shareLabelRows(
   segments: readonly ShareSegment[],
@@ -86,8 +89,9 @@ export function shareLabelRows(
     if (textWidth + SHARE_INSIDE_PADDING * 2 <= width) {
       return { row: -1, left: center - textWidth / 2 }
     }
-    const left = Math.max(0, Math.min(center - textWidth / 2, total - textWidth))
-    const right = left + textWidth
+    const unitWidth = SHARE_MARK_WIDTH + textWidth
+    const left = Math.max(0, Math.min(center - unitWidth / 2, total - unitWidth))
+    const right = left + unitWidth
     let row = 0
     while (
       (rows[row] ?? []).some(
@@ -197,7 +201,9 @@ function arrowExtent(chart: ChartInstance, head: number) {
 }
 
 // share は左右の余白が0で x 軸が 0〜100 なので、部分の幅は `chart.width` と割合だけから決まる。`beforeLayout` と描く時で同じ置き場になる。
-function shareRows(chart: ChartInstance): (ShareLabelPlace & { readonly text: string })[] {
+function shareRows(
+  chart: ChartInstance,
+): (ShareLabelPlace & { readonly text: string; readonly color: unknown })[] {
   const { ctx } = chart
   ctx.save()
   ctx.font = labelFont()
@@ -208,7 +214,11 @@ function shareRows(chart: ChartInstance): (ShareLabelPlace & { readonly text: st
   })
   ctx.restore()
   const places = shareLabelRows(parts, chart.width)
-  return places.map((place, index) => ({ ...place, text: parts[index]?.text ?? "" }))
+  return places.map((place, index) => ({
+    ...place,
+    text: parts[index]?.text ?? "",
+    color: chart.data.datasets[index]?.backgroundColor,
+  }))
 }
 
 function directLabelOptionOf(value: unknown): DirectLabelOption | undefined {
@@ -392,11 +402,17 @@ function drawShare(chart: ChartInstance): void {
   const barBottom = bar.y + bar.height / 2
   const left = chart.chartArea.left
   const onFill = resolveColor(chart.canvas, "--ground")
-  shareRows(chart).forEach(({ row, left: textLeft, text }) => {
-    const y =
-      row < 0 ? bar.y : barBottom + SHARE_ROW_GAP + row * SHARE_ROW_HEIGHT + SHARE_ROW_HEIGHT / 2
-    chart.ctx.fillStyle = row < 0 ? onFill : Chart.defaults.color
-    drawText(chart.ctx, text, left + textLeft, y, "left", "middle")
+  shareRows(chart).forEach(({ row, left: unitLeft, text, color }) => {
+    if (row < 0) {
+      chart.ctx.fillStyle = onFill
+      drawText(chart.ctx, text, left + unitLeft, bar.y, "left", "middle")
+      return
+    }
+    const y = barBottom + SHARE_ROW_GAP + row * SHARE_ROW_HEIGHT + SHARE_ROW_HEIGHT / 2
+    chart.ctx.fillStyle = typeof color === "string" ? color : Chart.defaults.color
+    chart.ctx.fillRect(left + unitLeft, y - SHARE_MARK_SIZE / 2, SHARE_MARK_SIZE, SHARE_MARK_SIZE)
+    chart.ctx.fillStyle = Chart.defaults.color
+    drawText(chart.ctx, text, left + unitLeft + SHARE_MARK_WIDTH, y, "left", "middle")
   })
 }
 

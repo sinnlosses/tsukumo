@@ -22,7 +22,7 @@ describe("shareLabelRows", () => {
     ])
   })
 
-  it("字が幅に収まらない部分は棒の下の行へ出し、字の中心を部分の中心に置く", () => {
+  it("字が幅に収まらない部分は棒の下の行へ出し、色の四角（13px）と字を合わせた中心を部分の中心に置く", () => {
     expect(
       shareLabelRows(
         [
@@ -33,7 +33,7 @@ describe("shareLabelRows", () => {
       ),
     ).toEqual([
       { row: -1, left: 50 },
-      { row: 0, left: 190 },
+      { row: 0, left: 183.5 },
     ])
   })
 
@@ -64,7 +64,7 @@ describe("shareLabelRows", () => {
     ).toEqual([
       { row: 0, left: 0 },
       { row: -1, left: 23 },
-      { row: 0, left: 60 },
+      { row: 1, left: 47 },
     ])
   })
 })
