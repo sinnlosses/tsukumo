@@ -60,6 +60,22 @@ function renderModel(
   return result
 }
 
+function renderRecording(pending: readonly StampedPendingAsk[]): {
+  readonly result: { readonly current: InquiryModel }
+  readonly calls: unknown[]
+} {
+  const calls: unknown[] = []
+  const result = renderModel(pending, (command) => calls.push(command))
+  return { result, calls }
+}
+
+function twoQuestions(): StampedPendingAsk {
+  return questionPending([
+    question({ header: "1問目", options: [option("A案"), option("B案")] }),
+    question({ header: "2問目", options: [option("C案"), option("D案")] }),
+  ])
+}
+
 function asking(model: InquiryModel): Extract<InquiryModel, { kind: "question" }> {
   if (model.kind !== "question") {
     throw new Error("質問が出ている前提の検査")
@@ -92,9 +108,8 @@ describe("useInquiryAnswer の許可要求", () => {
     expect(model.canAnswer).toBe(false)
   })
 
-  it("選ばずには送らず、選んでから「これで答える」で allow / deny を送る", () => {
-    const calls: unknown[] = []
-    const result = renderModel([PERMISSION_PENDING], (command) => calls.push(command))
+  it("選ばずには送らず、選び直したら最後に選んだほうで送る", () => {
+    const { result, calls } = renderRecording([PERMISSION_PENDING])
 
     act(() => permission(result.current).onAnswer())
     expect(calls).toEqual([])
@@ -102,6 +117,7 @@ describe("useInquiryAnswer の許可要求", () => {
     act(() => permission(result.current).onToggle("拒否"))
     expect(permission(result.current).options.find((row) => row.selected)?.label).toBe("拒否")
     act(() => permission(result.current).onToggle("許可"))
+    expect(permission(result.current).options.find((row) => row.selected)?.label).toBe("許可")
     act(() => permission(result.current).onAnswer())
 
     expect(calls).toEqual([
@@ -109,34 +125,33 @@ describe("useInquiryAnswer の許可要求", () => {
     ])
   })
 
-  it("「拒否」を選んで答えると deny を送る", () => {
-    const calls: unknown[] = []
-    const result = renderModel([PERMISSION_PENDING], (command) => calls.push(command))
+  it.each([
+    ["許可", "allow"],
+    ["拒否", "deny"],
+  ] as const)("「%s」を選んで「これで答える」を押すと %s を送る", (label, kind) => {
+    const { result, calls } = renderRecording([PERMISSION_PENDING])
 
-    act(() => permission(result.current).onToggle("拒否"))
+    act(() => permission(result.current).onToggle(label))
     act(() => permission(result.current).onAnswer())
 
-    expect(calls).toEqual([
-      { procedure: "session.answer", id: "ask-perm", answer: { kind: "deny" } },
-    ])
+    expect(calls).toEqual([{ procedure: "session.answer", id: "ask-perm", answer: { kind } }])
+  })
+
+  it.each([
+    ["許可", "allow"],
+    ["拒否", "deny"],
+  ] as const)("「%s」は選んだ瞬間に %s を送る", (label, kind) => {
+    const { result, calls } = renderRecording([PERMISSION_PENDING])
+
+    act(() => permission(result.current).onChoose(label))
+
+    expect(calls).toEqual([{ procedure: "session.answer", id: "ask-perm", answer: { kind } }])
   })
 })
 
 describe("useInquiryAnswer の押した瞬間に答える口", () => {
-  it("許可は「許可」「拒否」を選んだ瞬間に allow / deny を送る", () => {
-    const calls: unknown[] = []
-    const result = renderModel([PERMISSION_PENDING], (command) => calls.push(command))
-
-    act(() => permission(result.current).onChoose("拒否"))
-
-    expect(calls).toEqual([
-      { procedure: "session.answer", id: "ask-perm", answer: { kind: "deny" } },
-    ])
-  })
-
   it("1問だけの単一選択は、選んだ瞬間に答えを送る", () => {
-    const calls: unknown[] = []
-    const result = renderModel([questionPending([question()])], (command) => calls.push(command))
+    const { result, calls } = renderRecording([questionPending([question()])])
 
     act(() => asking(result.current).onChoose("B案"))
 
@@ -150,16 +165,7 @@ describe("useInquiryAnswer の押した瞬間に答える口", () => {
   })
 
   it("2問のとき、1問目は次の問いへ進むだけで送らず、2問目で全問ぶんを送る", () => {
-    const calls: unknown[] = []
-    const result = renderModel(
-      [
-        questionPending([
-          question({ header: "1問目", options: [option("A案"), option("B案")] }),
-          question({ header: "2問目", options: [option("C案"), option("D案")] }),
-        ]),
-      ],
-      (command) => calls.push(command),
-    )
+    const { result, calls } = renderRecording([twoQuestions()])
 
     act(() => asking(result.current).onChoose("A案"))
     expect(calls).toEqual([])
@@ -176,10 +182,7 @@ describe("useInquiryAnswer の押した瞬間に答える口", () => {
   })
 
   it("複数選択では何もしない", () => {
-    const calls: unknown[] = []
-    const result = renderModel([questionPending([question({ multiSelect: true })])], (command) =>
-      calls.push(command),
-    )
+    const { result, calls } = renderRecording([questionPending([question({ multiSelect: true })])])
 
     act(() => asking(result.current).onChoose("A案"))
 
@@ -224,8 +227,7 @@ describe("useInquiryAnswer の選択肢", () => {
 
 describe("useInquiryAnswer の質問の答え方", () => {
   it("1問・単一選択は、選んでから「これで答える」で送る（選んだ瞬間には送らない）", () => {
-    const calls: unknown[] = []
-    const result = renderModel([questionPending([question()])], (command) => calls.push(command))
+    const { result, calls } = renderRecording([questionPending([question()])])
 
     expect(asking(result.current).canAnswer).toBe(false)
     act(() => asking(result.current).onToggle("B案"))
@@ -273,60 +275,43 @@ describe("useInquiryAnswer の質問の答え方", () => {
     ).toEqual(["B案"])
   })
 
-  it("入力欄に書いた答えは、いま見ている1問の答えとして送る（単一選択では選択と排他）", () => {
-    const calls: unknown[] = []
-    const result = renderModel([questionPending([question()])], (command) => calls.push(command))
+  it.each([
+    {
+      name: "単一選択では選択と排他で、前後の空白を落として送る",
+      multiSelect: false,
+      written: "  架空の自由な答え  ",
+      calls: [
+        {
+          procedure: "session.answer",
+          id: "ask-1",
+          answer: { kind: "answers", labels: [["架空の自由な答え"]] },
+        },
+      ],
+    },
+    {
+      name: "複数選択では選んだラベルの末尾に足す",
+      multiSelect: true,
+      written: "架空の補足",
+      calls: [
+        {
+          procedure: "session.answer",
+          id: "ask-1",
+          answer: { kind: "answers", labels: [["A案", "架空の補足"]] },
+        },
+      ],
+    },
+    { name: "空白だけの答えでは何も送らない", multiSelect: false, written: "   ", calls: [] },
+  ])("入力欄に書いた答え: $name", ({ multiSelect, written, calls: expected }) => {
+    const { result, calls } = renderRecording([questionPending([question({ multiSelect })])])
 
     act(() => asking(result.current).onToggle("A案"))
-    act(() => asking(result.current).onAnswerWithText("  架空の自由な答え  "))
+    act(() => asking(result.current).onAnswerWithText(written))
 
-    expect(calls).toEqual([
-      {
-        procedure: "session.answer",
-        id: "ask-1",
-        answer: { kind: "answers", labels: [["架空の自由な答え"]] },
-      },
-    ])
-  })
-
-  it("複数選択では、入力欄に書いた答えは選んだラベルの末尾に足す", () => {
-    const calls: unknown[] = []
-    const result = renderModel([questionPending([question({ multiSelect: true })])], (command) =>
-      calls.push(command),
-    )
-
-    act(() => asking(result.current).onToggle("A案"))
-    act(() => asking(result.current).onAnswerWithText("架空の補足"))
-
-    expect(calls).toEqual([
-      {
-        procedure: "session.answer",
-        id: "ask-1",
-        answer: { kind: "answers", labels: [["A案", "架空の補足"]] },
-      },
-    ])
-  })
-
-  it("空白だけの答えでは何も送らない", () => {
-    const calls: unknown[] = []
-    const result = renderModel([questionPending([question()])], (command) => calls.push(command))
-
-    act(() => asking(result.current).onAnswerWithText("   "))
-
-    expect(calls).toEqual([])
+    expect(calls).toEqual(expected)
   })
 
   it("2問は1問ずつ進み、最後に全問ぶんを1回だけ送る（「戻る」で選び直せる）", () => {
-    const calls: unknown[] = []
-    const result = renderModel(
-      [
-        questionPending([
-          question({ header: "1問目", options: [option("A案"), option("B案")] }),
-          question({ header: "2問目", options: [option("C案"), option("D案")] }),
-        ]),
-      ],
-      (command) => calls.push(command),
-    )
+    const { result, calls } = renderRecording([twoQuestions()])
 
     expect(asking(result.current).progressLabel).toBe("1 / 2")
     expect(asking(result.current).showBack).toBe(false)
@@ -359,16 +344,7 @@ describe("useInquiryAnswer の質問の答え方", () => {
   })
 
   it("1問目を入力欄に書いて答えると、2問目へ進み、書いた答えが札に残る", () => {
-    const calls: unknown[] = []
-    const result = renderModel(
-      [
-        questionPending([
-          question({ header: "1問目", options: [option("A案")] }),
-          question({ header: "2問目", options: [option("C案")] }),
-        ]),
-      ],
-      (command) => calls.push(command),
-    )
+    const { result, calls } = renderRecording([twoQuestions()])
 
     act(() => asking(result.current).onAnswerWithText("架空の自由な答え"))
     expect(asking(result.current).header).toBe("2問目")
