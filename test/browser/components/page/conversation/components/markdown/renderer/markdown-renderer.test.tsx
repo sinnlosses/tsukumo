@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react"
 import type { ReactNode } from "react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/markdown-renderer.tsx"
 import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/components/page/conversation/components/repository-link/repository-link.tsx"
@@ -1348,7 +1348,7 @@ describe("Markdown（image の塊の画像）", () => {
     expect(missing?.textContent).toContain("読めなかったか、tsukumo を起こし直して手放した")
   })
 
-  describe("前後の画像の入れ替え", () => {
+  describe("前後の画像の見せ方", () => {
     const imagesText = reportSectionsMarkdown([
       {
         heading: "",
@@ -1381,38 +1381,121 @@ describe("Markdown（image の塊の画像）", () => {
       return typedElement(found ?? null, HTMLElement, name)
     }
 
-    it("並べた形から始まり、口を押すと重ねる形になり、入れ替える口で見える側が即時に替わる", () => {
+    const VIEW_KEY = "tsukumo-before-after-view:v1"
+
+    function zoomButton(container: HTMLElement): HTMLElement {
+      return typedElement(
+        container.querySelector('button[aria-label="この画像を拡大"]'),
+        HTMLElement,
+        "大きな1枚",
+      )
+    }
+
+    function expectPressed(container: HTMLElement, name: string, pressed: string): void {
+      expect(button(container, name).getAttribute("aria-pressed")).toBe(pressed)
+    }
+
+    beforeEach(() => {
+      localStorage.removeItem(VIEW_KEY)
+    })
+
+    afterEach(() => {
+      localStorage.removeItem(VIEW_KEY)
+    })
+
+    it("並べるから始まり、「重ねて見る」「並べて見る」の口も入れ替える口も出さない", () => {
       const { container } = render(<Markdown text={imagesText} />)
       const root = swapRoot(container)
 
       expect(root.dataset["view"]).toBe("side")
-      expect(root.dataset["shown"]).toBe("before")
+      expect(container.querySelectorAll('[role="group"][aria-label="見せ方"]')).toHaveLength(1)
+      expectPressed(container, "並べる", "true")
+      expectPressed(container, "切り替え", "false")
+      expect(container.querySelectorAll("img")).toHaveLength(2)
+      const names = [...container.querySelectorAll("button")].map((b) => b.textContent)
+      expect(names).not.toContain("重ねて見る")
+      expect(names).not.toContain("並べて見る")
+    })
 
-      fireEvent.click(button(container, "重ねて見る"))
-      expect(root.dataset["view"]).toBe("stacked")
-      expect(root.dataset["shown"]).toBe("before")
+    it("切り替えを選ぶと見本が前・後の2つ出て、見本を押すと見える側が即時に替わり aria-pressed が追従する", () => {
+      const { container } = render(<Markdown text={imagesText} />)
+      const root = swapRoot(container)
 
-      fireEvent.click(button(container, "後に入れ替える"))
+      fireEvent.click(button(container, "切り替え"))
+      expect(root.dataset["view"]).toBe("switch")
+      expect(root.dataset["shown"]).toBe("before")
+      expectPressed(container, "切り替え", "true")
+      expectPressed(container, "前", "true")
+      expectPressed(container, "後", "false")
+
+      fireEvent.click(button(container, "後"))
       expect(root.dataset["shown"]).toBe("after")
+      expectPressed(container, "前", "false")
+      expectPressed(container, "後", "true")
 
-      fireEvent.click(button(container, "前に入れ替える"))
+      fireEvent.click(button(container, "前"))
       expect(root.dataset["shown"]).toBe("before")
 
-      fireEvent.click(button(container, "並べて見る"))
+      fireEvent.click(button(container, "並べる"))
       expect(root.dataset["view"]).toBe("side")
       expect(container.querySelectorAll("img")).toHaveLength(2)
     })
 
-    it("画像が片方でも読めなければ口を出さない", () => {
+    it("切り替えで大きな1枚にフォーカスがあるときの Space で前と後がかわり、拡大は開かない", () => {
+      const { container } = render(<Markdown text={imagesText} />)
+      const root = swapRoot(container)
+      fireEvent.click(button(container, "切り替え"))
+
+      fireEvent.keyDown(zoomButton(container), { key: " " })
+      expect(root.dataset["shown"]).toBe("after")
+      expectPressed(container, "後", "true")
+      expect(document.querySelector('[role="dialog"]')).toBeNull()
+
+      fireEvent.keyDown(zoomButton(container), { key: " " })
+      expect(root.dataset["shown"]).toBe("before")
+    })
+
+    it("見本の Space は大きな1枚の入れかえに数えず、並べるの間は Space で替わらない", () => {
+      const { container } = render(<Markdown text={imagesText} />)
+      const root = swapRoot(container)
+
+      fireEvent.keyDown(zoomButton(container), { key: " " })
+      expect(root.dataset["shown"]).toBe("before")
+
+      fireEvent.click(button(container, "切り替え"))
+      fireEvent.keyDown(button(container, "後"), { key: " " })
+      expect(root.dataset["shown"]).toBe("before")
+    })
+
+    it("選んだ見せ方は覚え、描き直しても残る。壊れた値は並べるに落ちる", () => {
+      const first = render(<Markdown text={imagesText} />)
+      fireEvent.click(button(first.container, "切り替え"))
+      expect(localStorage.getItem(VIEW_KEY)).toBe("switch")
+      first.unmount()
+
+      const second = render(<Markdown text={imagesText} />)
+      expect(swapRoot(second.container).dataset["view"]).toBe("switch")
+      expectPressed(second.container, "切り替え", "true")
+      second.unmount()
+
+      localStorage.setItem(VIEW_KEY, "stacked")
+      const third = render(<Markdown text={imagesText} />)
+      expect(swapRoot(third.container).dataset["view"]).toBe("side")
+    })
+
+    it("画像が片方でも読めなければ2つ組も見本も出さない（切り替えを覚えていても並べる）", () => {
+      localStorage.setItem(VIEW_KEY, "switch")
       const { container } = render(<Markdown text={imagesText} />)
       expect(container.querySelectorAll("button").length).toBeGreaterThan(0)
 
       fireEvent.error(typedElement(container.querySelector("img"), HTMLImageElement, "画像"))
 
       expect(container.querySelector(MISSING_SELECTOR)).not.toBeNull()
-      expect([...container.querySelectorAll("button")].map((b) => b.textContent)).not.toContain(
-        "重ねて見る",
-      )
+      expect(container.querySelector('[role="group"][aria-label="見せ方"]')).toBeNull()
+      const names = [...container.querySelectorAll("button")].map((b) => b.textContent)
+      expect(names).not.toContain("切り替え")
+      expect(names).not.toContain("前")
+      expect(swapRoot(container).dataset["view"]).toBe("side")
     })
 
     it("片方が画像でない前後には口を出さない", () => {
@@ -1435,9 +1518,7 @@ describe("Markdown（image の塊の画像）", () => {
       const { container } = render(<Markdown text={text} />)
 
       expect(container.querySelector("div.report-before-after-swap")).toBeNull()
-      expect([...container.querySelectorAll("button")].map((b) => b.textContent)).not.toContain(
-        "重ねて見る",
-      )
+      expect(container.querySelector('[role="group"][aria-label="見せ方"]')).toBeNull()
     })
   })
 

@@ -2,13 +2,26 @@
 //
 // 許可リストが `/report-image/` 以外の `src` を属性ごと落とすので、`src` が無い `img` も札にする（外部の URL を指していた画像など）。
 
-import { createContext, type JSX, type ReactElement, type ReactNode, use, useState } from "react"
+import {
+  createContext,
+  type JSX,
+  type KeyboardEvent,
+  type ReactElement,
+  type ReactNode,
+  use,
+  useState,
+} from "react"
 import type { ExtraProps } from "react-markdown"
 
 import { REPORT_IMAGE_PATH_PREFIX } from "../../../../../../../shared/report/report-image.ts"
 import { sessionTokenUrl } from "../../../../../../domain/session-token-url.ts"
 import { Button } from "../../../../../ui/button/button.tsx"
 import { ImageZoom, type ImageZoomFallback } from "../../../../../ui/image-zoom/image-zoom.tsx"
+import {
+  type BeforeAfterView,
+  loadBeforeAfterView,
+  saveBeforeAfterView,
+} from "./before-after-view.ts"
 import styles from "./report-notation.module.css"
 
 const ZOOM_LABEL = "この画像を拡大"
@@ -21,10 +34,38 @@ const MISSING_TEXT = `${MISSING_LABEL}（${MISSING_REASON}）`
 
 type ReportImageProps = JSX.IntrinsicElements["img"] & ExtraProps
 
-/** 前後の画像の塊の中の画像が、札に替わったことを塊へ知らせる口。塊の外では何もしない。 */
-const MissingImageContext = createContext<() => void>(() => undefined)
+type SwapSide = "before" | "after"
 
-const SWAP_SIDE_LABEL = { before: "前", after: "後" } as const
+type SwapThumb = {
+  readonly side: SwapSide
+  readonly src: string
+  readonly alt: string
+}
+
+/**
+ * 前後の画像の塊の中の画像が、札に替わったことと、読めた画像の `src`・`alt` を塊へ知らせる口。
+ * `alt` の先頭の字（前の画面・後の画面）が前か後かを言う。塊の外では何もしない。
+ */
+type BeforeAfterSwapContextValue = {
+  readonly reportMissing: () => void
+  readonly reportImage: (thumb: SwapThumb) => void
+}
+
+const BeforeAfterSwapContext = createContext<BeforeAfterSwapContextValue>({
+  reportMissing: () => undefined,
+  reportImage: () => undefined,
+})
+
+const SWAP_SIDE_LABEL = { before: "前", after: "後" } as const satisfies Record<SwapSide, string>
+
+const SWAP_SIDES = ["before", "after"] as const satisfies readonly SwapSide[]
+
+const SWAP_VIEW_LABEL = { side: "並べる", switch: "切り替え" } as const satisfies Record<
+  BeforeAfterView,
+  string
+>
+
+const SWAP_VIEWS = ["side", "switch"] as const satisfies readonly BeforeAfterView[]
 
 type BeforeAfterSwapProps = {
   readonly className: string | undefined
@@ -32,67 +73,109 @@ type BeforeAfterSwapProps = {
 }
 
 /**
- * 両側が画像の `beforeAfter` の包み。既定は並べる形で、題の行の右の口で同じ位置に重ねる形へ替える。
- * 重ねる形では前か後の一方だけが見え、入れ替える口を押すたび即時に替わる。画像が一枚でも札になったら口を出さない。
+ * 両側が画像の `beforeAfter` の包み。題の行の右の2つ組で「並べる」「切り替え」を選び、選び方を覚える。
+ * 切り替えでは大きな1枚（前か後）と前・後の見本が並び、見本か、大きな1枚にフォーカスがあるときの Space で入れかわる。
+ * 画像が一枚でも札になったら2つ組も見本も出さず、並べる形に落とす。
  */
 export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
-  const [stacked, setStacked] = useState(false)
-  const [shown, setShown] = useState<keyof typeof SWAP_SIDE_LABEL>("before")
+  const [view, setView] = useState<BeforeAfterView>(loadBeforeAfterView)
+  const [shown, setShown] = useState<SwapSide>("before")
   const [missing, setMissing] = useState(false)
-  const other = shown === "before" ? "after" : "before"
-  const showsStack = stacked && !missing
+  const [thumbs, setThumbs] = useState<readonly SwapThumb[]>([])
+  const switches = view === "switch" && !missing
+
+  function chooseView(next: BeforeAfterView): void {
+    setView(next)
+    saveBeforeAfterView(next)
+  }
+
+  function toggleShown(event: KeyboardEvent<HTMLDivElement>): void {
+    if (
+      switches &&
+      event.key === " " &&
+      event.target instanceof Element &&
+      event.target.closest(`.${styles["report-image-zoom"] ?? ""}`) !== null
+    ) {
+      event.preventDefault()
+      setShown(shown === "before" ? "after" : "before")
+    }
+  }
 
   return (
-    <MissingImageContext value={() => setMissing(true)}>
+    <BeforeAfterSwapContext
+      value={{
+        reportMissing: () => setMissing(true),
+        reportImage: (thumb) => setThumbs((current) => withThumb(current, thumb)),
+      }}
+    >
       <div
         className={props.className}
-        data-view={showsStack ? "stacked" : "side"}
+        data-view={switches ? "switch" : "side"}
         data-shown={shown}
+        onKeyDown={toggleShown}
       >
         {props.children}
         {!missing && (
-          <div className={styles["report-before-after-swap-controls"]}>
-            {showsStack && (
+          <div
+            role="group"
+            aria-label="見せ方"
+            className={styles["report-before-after-swap-views"]}
+          >
+            {SWAP_VIEWS.map((choice) => (
               <Button
-                variant="outline"
+                key={choice}
+                variant="ghost"
                 size="label"
-                pressed="none"
+                pressed={view === choice ? "on" : "off"}
                 disabled={false}
-                ariaLabel={`${SWAP_SIDE_LABEL[other]}に入れ替える（いまは${SWAP_SIDE_LABEL[shown]}）`}
+                ariaLabel={undefined}
                 disclosure={{ kind: "none" }}
                 ariaHasPopup={undefined}
                 title={undefined}
-                className={styles["report-before-after-swap-button"]}
-                onClick={() => setShown(other)}
+                className={styles["report-before-after-swap-view"]}
+                onClick={() => chooseView(choice)}
               >
-                {SWAP_SIDE_LABEL[other]}に入れ替える
+                {SWAP_VIEW_LABEL[choice]}
               </Button>
-            )}
-            <Button
-              variant="outline"
-              size="label"
-              pressed="none"
-              disabled={false}
-              ariaLabel={undefined}
-              disclosure={{ kind: "none" }}
-              ariaHasPopup={undefined}
-              title={undefined}
-              className={styles["report-before-after-swap-button"]}
-              onClick={() => setStacked(!stacked)}
-            >
-              {showsStack ? "並べて見る" : "重ねて見る"}
-            </Button>
+            ))}
+          </div>
+        )}
+        {switches && (
+          <div className={styles["report-before-after-swap-thumbs"]}>
+            {SWAP_SIDES.map((side) => {
+              const thumb = thumbs.find((candidate) => candidate.side === side)
+              return (
+                thumb !== undefined && (
+                  <Button
+                    key={side}
+                    variant={shown === side ? "outline-accent-tinted" : "outline"}
+                    size="label"
+                    pressed={shown === side ? "on" : "off"}
+                    disabled={false}
+                    ariaLabel={undefined}
+                    disclosure={{ kind: "none" }}
+                    ariaHasPopup={undefined}
+                    title={undefined}
+                    className={styles["report-before-after-swap-thumb"]}
+                    onClick={() => setShown(side)}
+                  >
+                    <img src={thumb.src} alt="" />
+                    <span>{SWAP_SIDE_LABEL[side]}</span>
+                  </Button>
+                )
+              )
+            })}
           </div>
         )}
       </div>
-    </MissingImageContext>
+    </BeforeAfterSwapContext>
   )
 }
 
 export function ReportImage(props: ReportImageProps): ReactElement {
   const [failed, setFailed] = useState(false)
   const [zoomed, setZoomed] = useState(false)
-  const reportMissing = use(MissingImageContext)
+  const { reportMissing, reportImage } = use(BeforeAfterSwapContext)
   const alt = props.alt ?? ""
 
   if (failed || typeof props.src !== "string" || !props.src.startsWith(REPORT_IMAGE_PATH_PREFIX)) {
@@ -130,7 +213,16 @@ export function ReportImage(props: ReportImageProps): ReactElement {
         className={styles["report-image-zoom"]}
         onClick={() => setZoomed(true)}
       >
-        <img src={src} alt={alt} onError={() => setFailed(true)} />
+        <img
+          src={src}
+          alt={alt}
+          ref={(element) => {
+            if (element !== null) {
+              reportImage({ side: sideOfAlt(alt), src, alt })
+            }
+          }}
+          onError={() => setFailed(true)}
+        />
       </Button>
       {zoomed && (
         <ImageZoom
@@ -143,6 +235,18 @@ export function ReportImage(props: ReportImageProps): ReactElement {
       )}
     </>
   )
+}
+
+function sideOfAlt(alt: string): SwapSide {
+  return alt.startsWith(SWAP_SIDE_LABEL.after) ? "after" : "before"
+}
+
+function withThumb(thumbs: readonly SwapThumb[], next: SwapThumb): readonly SwapThumb[] {
+  const current = thumbs.find((thumb) => thumb.side === next.side)
+  if (current?.src === next.src && current.alt === next.alt) {
+    return thumbs
+  }
+  return [...thumbs.filter((thumb) => thumb.side !== next.side), next]
 }
 
 function MissingImageIcon(): ReactElement {

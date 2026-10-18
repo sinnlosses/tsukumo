@@ -379,7 +379,7 @@ type Captioned = {
 
 /**
  * 本体と、番号つきの題の行を包む。表は題が本体の上、図は本体の下。
- * `swap` は包みに、前と後を同じ位置で入れ替える口の印（`before-after-swap`）を付ける。
+ * `swap` は包みに、見せ方（並べる・切り替え）を選ぶ口の印（`before-after-swap`）を付ける。
  */
 function captionedMarkdown(
   { kind, ordinal, title, body, bodyFormat, fit }: Captioned,
