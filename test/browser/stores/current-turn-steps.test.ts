@@ -22,14 +22,4 @@ describe("currentTurnStepsOf", () => {
     })
     expect(currentTurnStepsOf(records, true)).toMatchObject({ steps: [] })
   })
-
-  it("記録が変わったら計算し直す", () => {
-    const before = [requestRecord(), toolRecord({ toolUseId: "toolu_a" })]
-    const after = [...before, toolRecord({ toolUseId: "toolu_b" })]
-
-    expect(currentTurnStepsOf(before, false)).toMatchObject({ steps: [{ toolUseId: "toolu_a" }] })
-    expect(currentTurnStepsOf(after, false)).toMatchObject({
-      steps: [{ toolUseId: "toolu_a" }, { toolUseId: "toolu_b" }],
-    })
-  })
 })

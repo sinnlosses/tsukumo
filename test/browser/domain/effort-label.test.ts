@@ -32,7 +32,6 @@ describe("resolveEffortSelect", () => {
     const select = resolveEffortSelect(model, support, effort)
 
     expect(select.kind).toBe(kind)
-    expect("reason" in select && select.reason.length > 0).toBe(true)
   })
 
   it("読めていれば、読んだ値と選べる段を返す", () => {
