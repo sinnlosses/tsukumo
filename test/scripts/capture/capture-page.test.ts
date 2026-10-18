@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test, vi } from "vitest"
 import {
   collectMisses,
   settleRender,
+  waitForRevealEnd,
   waitUntilStable,
 } from "../../../scripts/capture/lib/capture-page.ts"
 import type { Preparation } from "../../../scripts/capture/lib/capture-preparation.ts"
@@ -207,5 +208,24 @@ describe("settleRender", () => {
     await vi.advanceTimersByTimeAsync(5000)
 
     expect(await outcome).toEqual(new Error("描き直しが終わらなかった（5000ms）"))
+  })
+})
+
+describe("waitForRevealEnd", () => {
+  test("演出の印が消えるのを待つ", async () => {
+    const waitForSelector = vi.fn(() => Promise.resolve(null))
+
+    await waitForRevealEnd({ waitForSelector }, 1234)
+
+    expect(waitForSelector).toHaveBeenCalledWith("[data-revealing]", {
+      state: "detached",
+      timeout: 1234,
+    })
+  })
+
+  test("上限までに消えなくても throw しない", async () => {
+    const waitForSelector = vi.fn(() => Promise.reject(new Error("timeout")))
+
+    await expect(waitForRevealEnd({ waitForSelector }, 10)).resolves.toBeUndefined()
   })
 })

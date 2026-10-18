@@ -177,13 +177,38 @@ const STILL_ATTEMPTS = 42
 /** 本文の領域の縁から内側へ、比べる範囲を縮める幅（px）。縁の1行で揺れる描画（領域の外の部品との重なり）を見ない。 */
 const STILL_INSET_PX = 4
 
+/** 書き上げの演出が終わるのを待つ上限（ミリ秒）。既定の速さで長いレポートが約10秒かかる実測の3倍。 */
+const REVEAL_END_TIMEOUT_MS = 30_000
+
+/**
+ * 書き上げの演出（`data-revealing`）が消えるのを待つ。上限までに消えなくても throw せず進む
+ * （上限を超えて演出が続くときは、続く静止の待ちが落とす）。
+ */
+export async function waitForRevealEnd(
+  page: {
+    readonly waitForSelector: (
+      selector: string,
+      options: { readonly state: "detached"; readonly timeout: number },
+    ) => Promise<unknown>
+  },
+  timeoutMs: number = REVEAL_END_TIMEOUT_MS,
+): Promise<void> {
+  await page
+    .waitForSelector("[data-revealing]", { state: "detached", timeout: timeoutMs })
+    .catch(() => undefined)
+}
+
 /**
  * 本文の領域の見た目が、連続2回の撮影で一致するまで待つ。立ち絵は領域の外なので見ない。
+ * 書き上げの演出が進んでいるあいだは撮る回数を数えず、終わってから数える。
  * 比べる撮影は `animations: "disabled"` で撮り、終わりのない動き（回る輪）を初期の姿に止める
  * （動き続けるものは静止しないので、その動きだけを比べから外す。ほかの変化は見る）。
  * 上限まで静止しなければ throw する（撮らずに落とす）。
  */
-async function settleStill(page: Pick<Page, "locator" | "screenshot">): Promise<void> {
+async function settleStill(
+  page: Pick<Page, "locator" | "screenshot" | "waitForSelector">,
+): Promise<void> {
+  await waitForRevealEnd(page)
   const main = page.locator(MAIN_REGION_SELECTOR).first()
   if ((await main.count()) === 0) {
     return

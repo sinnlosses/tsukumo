@@ -49,8 +49,8 @@
   割合の帯（`stat-meter`）と数の棒（`cell-bar`）を撮る。** 例: `node scripts/capture/capture-view.ts --scene report-meter --size 1200x1400 --wait-for '[class*="stat-meter"]' --measure '[class*="cell-bar"]'`。
   場面は名前を指して起こすので、足しても名前を指さない既存の E2E の期待値は変わらない
 - **インラインの `kbd`・`samp`・コードと、`/` の後で折れる長いパスの目視には、`report-inline-code` 場面を撮る。**
-  押せるパスは作業ツリーの git 管理下のパスなので、`--reveal-at 30000` で書き上げ終えた画を撮る。
-  例: `node scripts/capture/capture-view.ts --scene report-inline-code --size 390x1500 --reveal-at 30000`
+  既定の撮り方は書き上げの演出が終わる（約10秒）のを待ってから撮る。
+  例: `node scripts/capture/capture-view.ts --scene report-inline-code --size 390x1500`
 - **行を指したパスに重ねて出る抜き書きの浮きの目視には、`report-file-peek` 場面を撮る。**
   例: `node scripts/capture/capture-view.ts --scene report-file-peek --size 1440x900 --wait-for '[class*="is-final_"]' --hover '[role="button"]:has-text("repository-file.ts:29")' --advance 800`
 
