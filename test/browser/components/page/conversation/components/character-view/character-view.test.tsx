@@ -1,14 +1,6 @@
-import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { cleanup, fireEvent, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { CharacterView } from "../../../../../../../src/browser/components/page/conversation/components/character-view/character-view.tsx"
-import {
-  writeHashRoute,
-  type ViewedTurn,
-} from "../../../../../../../src/browser/stores/location-hash.ts"
-import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
-import type { WrittenReactions } from "../../../../../../../src/shared/recommendation/reaction.ts"
 import { applyRestoredEvents } from "../../../../../../../src/shared/session/restored-event.ts"
 import type { ReportWaitingLine } from "../../../../../../../src/shared/session/session-event-report.ts"
 import type { SessionEvent } from "../../../../../../../src/shared/session/session-event.ts"
@@ -18,6 +10,13 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../src/shared/session/session-state.ts"
+import {
+  FIXTURE_CHARACTER,
+  REACTIONS,
+  renderCharacterView,
+  speech,
+  WRITTEN_REACTIONS,
+} from "../../../../../../fixture/character-view.tsx"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
 import { reportEvent } from "../../../../../../fixture/report-event.ts"
 import {
@@ -26,20 +25,6 @@ import {
   speechRecord,
 } from "../../../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
-import { createTestQueryClient } from "../../../../../query-client.tsx"
-import { putSession } from "../../../../../session-store.ts"
-
-/** `SessionState.speeches` の1件（表情は既定でよいテストのための簡略記法）。 */
-function speech(
-  text: string,
-  expression: Expression = "default",
-): SessionState["speeches"][number] {
-  return { text, expression, time: { kind: "stamped", at: 0 } }
-}
-
-const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
-  ...shownPortraits({ default: "/character/default.png" }),
-})
 
 const CHARACTER_WITH_THINKING: NonNullable<SessionState["character"]> = {
   ...FIXTURE_CHARACTER,
@@ -56,44 +41,10 @@ const WRITTEN_GREETING: SessionState["welcomeGreeting"] = {
   },
 }
 
-const REACTIONS = {
-  retrying: { text: "架空の再試行反応", expression: "thinking" },
-  failed: { text: "架空の失敗の反応", expression: "sad" },
-  limited: { text: "架空の上限の反応", expression: "default" },
-  idle: { text: "架空の待ちの反応", expression: "default" },
-} as const satisfies WrittenReactions
-
-/** 反応の行が書けた姿。 */
-const WRITTEN_REACTIONS: SessionState["writtenReactions"] = {
-  kind: "written",
-  reactions: REACTIONS,
-}
-
 afterEach(() => {
   cleanup()
   window.location.hash = ""
 })
-
-// `<CharacterView>` は立ち絵に `<Portrait>`（`useQuery`）を使うので `QueryClientProvider` が要る。
-// 過去のターンを見るテストは、そのターンの通し番号（`request` の `turnId`）を hash に乗せてから描く。
-function renderCharacterView(
-  stateOverrides: Partial<SessionState>,
-  viewedTurn: ViewedTurn = "newest",
-): void {
-  writeHashRoute({
-    screen: "conversation",
-    turn: viewedTurn,
-    pack: { kind: "in-use" },
-    achievementDate: { kind: "today" },
-  })
-  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
-  const queryClient = createTestQueryClient()
-  render(
-    <QueryClientProvider client={queryClient}>
-      <CharacterView />
-    </QueryClientProvider>,
-  )
-}
 
 /** 通し番号 0 / 1 の2ターン分の記録（0 が過去、1 が今回）。 */
 const TWO_TURN_RECORDS: readonly SessionRecord[] = [
@@ -317,128 +268,6 @@ describe("CharacterView（反応の吹き出し）", () => {
     const latest = document.querySelector(".balloon[data-latest='true']")
     expect(latest?.getAttribute("data-reaction")).toBe(reaction)
     expect(latest?.textContent).toContain(text)
-  })
-})
-
-describe("CharacterView（吹き出しを押すと遡る。docs/architecture/screen-design.md 13.7）", () => {
-  const CHARACTER_WITH_PROUD: NonNullable<SessionState["character"]> = {
-    ...FIXTURE_CHARACTER,
-    expressions: [
-      { name: "default", label: "通常" },
-      { name: "proud", label: "得意げ" },
-    ],
-    ...shownPortraits({
-      default: "/character/default.png",
-      proud: "/character/proud.png",
-    }),
-  }
-
-  /** 今のターンに、表情の違うセリフを2件並べた状態。 */
-  function twoSpeechState(): Partial<SessionState> {
-    return {
-      records: [
-        requestRecord({ text: "架空の依頼", turnId: 0 }),
-        speechRecord({ text: "1つ目のセリフ", expression: "default" }),
-        speechRecord({ text: "2つ目のセリフ", expression: "proud" }),
-      ],
-      speeches: [speech("1つ目のセリフ", "default"), speech("2つ目のセリフ", "proud")],
-      speechExpression: "proud",
-      speechCalledInTurn: true,
-      character: CHARACTER_WITH_PROUD,
-    }
-  }
-
-  it("吹き出しを押すと、そのセリフの表情へ立ち絵が遡り、もう一度押すと最新へ戻る", () => {
-    renderCharacterView(twoSpeechState())
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
-
-    const olderBalloon = document.querySelector("[data-latest='false']")
-    expect(olderBalloon?.textContent).toBe("1つ目のセリフ")
-    fireEvent.click(olderBalloon!)
-
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
-    expect(olderBalloon?.getAttribute("aria-pressed")).toBe("true")
-
-    fireEvent.click(olderBalloon!)
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
-  })
-
-  it("セリフのログの行を押すと、ログの床の立ち絵がその表情になる", () => {
-    renderCharacterView(twoSpeechState())
-    fireEvent.click(screen.getByRole("button", { name: /^ログ$/ }))
-    const log = screen.getByRole("dialog", { name: "セリフのログ", hidden: true })
-    const floorExpression = (): string | null | undefined =>
-      log.querySelector(".speech-log-floor .portrait")?.getAttribute("data-expression")
-    expect(floorExpression()).toBe("proud")
-
-    fireEvent.click(within(log).getByRole("button", { name: "1つ目のセリフ", hidden: true }))
-
-    expect(floorExpression()).toBe("default")
-  })
-
-  it("反応を出しているときも、セリフを押して留めればそのセリフの表情が勝つ", () => {
-    renderCharacterView({
-      ...twoSpeechState(),
-      turn: {
-        kind: "finished",
-        startedAt: 0,
-        finishedAt: 1,
-        ending: { kind: "failed", failure: { kind: "execution-error" } },
-      },
-      character: CHARACTER_WITH_PROUD,
-      writtenReactions: WRITTEN_REACTIONS,
-    })
-    expect(document.querySelector("[data-reaction='failed']")).not.toBeNull()
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("sad")
-
-    const olderBalloon = [...document.querySelectorAll("[data-interactive='true']")].find(
-      (balloon) => balloon.textContent === "1つ目のセリフ",
-    )
-    fireEvent.click(olderBalloon!)
-
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
-  })
-
-  it("今のターンの記録に反応が挟まっていても、ログの行と吹き出しは同じセリフを留める", () => {
-    renderCharacterView({
-      records: [
-        requestRecord({ text: "架空の依頼", turnId: 0 }),
-        reactionRecord({ reaction: "retrying", text: "架空の再試行反応", expression: "proud" }),
-        speechRecord({ text: "1つ目のセリフ", expression: "default" }),
-        speechRecord({ text: "2つ目のセリフ", expression: "proud" }),
-      ],
-      speeches: [speech("1つ目のセリフ", "default"), speech("2つ目のセリフ", "proud")],
-      speechExpression: "proud",
-      speechCalledInTurn: true,
-      character: CHARACTER_WITH_PROUD,
-    })
-    fireEvent.click(screen.getByRole("button", { name: /^ログ$/ }))
-    const log = screen.getByRole("dialog", { name: "セリフのログ", hidden: true })
-
-    fireEvent.click(within(log).getByRole("button", { name: "1つ目のセリフ", hidden: true }))
-
-    const track = typedElement(
-      document.querySelector(".balloon-track"),
-      HTMLElement,
-      "吹き出しの並び",
-    )
-    expect(
-      within(track).getByRole("button", { name: "1つ目のセリフ" }).getAttribute("aria-pressed"),
-    ).toBe("true")
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
-
-    fireEvent.click(within(track).getByRole("button", { name: /2つ目のセリフ$/ }))
-
-    expect(
-      within(log)
-        .getByRole("button", { name: /2つ目のセリフ$/, hidden: true })
-        .getAttribute("aria-pressed"),
-    ).toBe("true")
-    expect(
-      within(log)
-        .getByRole("button", { name: "架空の再試行反応", hidden: true })
-        .getAttribute("aria-pressed"),
-    ).toBe("false")
   })
 })
 
