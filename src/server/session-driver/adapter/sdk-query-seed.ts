@@ -22,6 +22,7 @@ import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
 import { pinToBackground } from "../core/background-delegation.ts"
+import { rewriteBashCommand } from "../core/bash-command-rewrite.ts"
 import type { ExternalToolMark } from "../core/external-tool-mark.ts"
 import { judgePhaseResultCaller } from "../core/phase-result-tool.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
@@ -100,6 +101,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
  * `PreToolUse` フックを1つ登録する。
  * メインの `phase_result`（`judgePhaseResultCaller`）と、委譲ゲート（`judgeToolAgainstGate`）で拒むときは `permissionDecision: "deny"` を返す。
  * 通したメインの `Agent` 呼び出しは背景に固定する（`updatedInput` だけを返し、許可の判定には触らない）。
+ * `Bash` の `command` は `rewriteBash` が返した短い出力の版へ差し替える（同じく `updatedInput` だけ。サブエージェントの中の呼び出しも対象）。
  * `agent_id` はサブエージェント内の呼び出しにだけ付くので、ここで真偽に畳んでから渡す。
  *
  * 印を読む前に、拒む側に当たったときだけ1回 macrotask を待つ。
@@ -112,6 +114,7 @@ export function preToolUseHooks(
   bandPosition: () => string,
   onEvent: (event: SessionEvent) => void,
   externalToolMark: Pick<ExternalToolMark, "observeTool">,
+  rewriteBash: (command: string) => Promise<string | undefined>,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     PreToolUse: [
@@ -150,9 +153,19 @@ export function preToolUseHooks(
               }
             }
             const pinned = pinToBackground(input.tool_name, input.tool_input, inSubagent)
-            return pinned.kind === "rewrite"
-              ? { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: pinned.input } }
-              : {}
+            if (pinned.kind === "rewrite") {
+              return {
+                hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: pinned.input },
+              }
+            }
+            const shortened = await rewriteBashCommand(
+              input.tool_name,
+              input.tool_input,
+              rewriteBash,
+            )
+            return shortened === undefined
+              ? {}
+              : { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: shortened } }
           },
         ],
       },

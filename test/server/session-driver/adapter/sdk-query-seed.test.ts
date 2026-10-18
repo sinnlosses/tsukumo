@@ -185,8 +185,9 @@ async function runPreToolUse(
   onEvent: (event: SessionEvent) => void = () => {},
   settings: Pick<BaseHookInput, "effort" | "permission_mode"> = {},
   externalToolMark: ExternalToolMark = createExternalToolMark(),
+  rewriteBash: (command: string) => Promise<string | undefined> = () => Promise.resolve(undefined),
 ): Promise<unknown> {
-  const callback = preToolUseHooks(gateRaised, bandPosition, onEvent, externalToolMark)
+  const callback = preToolUseHooks(gateRaised, bandPosition, onEvent, externalToolMark, rewriteBash)
     .PreToolUse?.[0]?.hooks[0]
   expect(callback).toBeDefined()
   return callback?.(
@@ -315,6 +316,61 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
   it("サブエージェント内の呼び出しと、すでに背景の呼び出しは何も返さない", async () => {
     expect(await runPreToolUse("Agent", { prompt: "手順" }, "sub-1")).toEqual({})
     expect(await runPreToolUse("Agent", { run_in_background: true })).toEqual({})
+  })
+})
+
+describe("preToolUseHooks（Bash の command を短い出力の版へ差し替える）", () => {
+  const shorten = (command: string): Promise<string | undefined> =>
+    Promise.resolve(`rtk ${command}`)
+  const rewriting = (toolName: string, toolInput: unknown, agentId?: string) =>
+    runPreToolUse(
+      toolName,
+      toolInput,
+      agentId,
+      () => false,
+      () => "",
+      () => {},
+      {},
+      createExternalToolMark(),
+      shorten,
+    )
+
+  it("メインの Bash は updatedInput で command を差し替え、permissionDecision は返さない", async () => {
+    expect(await rewriting("Bash", { command: "git status" })).toEqual({
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        updatedInput: { command: "rtk git status" },
+      },
+    })
+  })
+
+  it("サブエージェントの中の Bash も差し替える", async () => {
+    expect(await rewriting("Bash", { command: "ls" }, "sub-1")).toEqual({
+      hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { command: "rtk ls" } },
+    })
+  })
+
+  it("Bash 以外は差し替えず、委譲ゲートで拒むときは差し替えを返さない", async () => {
+    expect(await rewriting("Read", { command: "git status" })).toEqual({})
+    expect(
+      await runPreToolUse(
+        "Bash",
+        { command: "ls" },
+        undefined,
+        () => true,
+        () => "",
+        () => {},
+        {},
+        createExternalToolMark(),
+        shorten,
+      ),
+    ).toEqual({
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "deny",
+        permissionDecisionReason: expect.stringContaining("work_plan"),
+      },
+    })
   })
 })
 
