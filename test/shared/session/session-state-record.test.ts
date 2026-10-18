@@ -162,7 +162,7 @@ describe("applySessionEvent（見直し）", () => {
     )
   }
 
-  it("見直しのイベントは見直しの欄だけを動かし、会話の記録とターンを動かさない", () => {
+  it("見直しのイベントは見直しの欄だけを動かし、セッションの記録（records）とターンを動かさない", () => {
     const before = applySessionEvent(
       INITIAL_SESSION_STATE,
       { kind: "request", text: "架空の依頼", images: [] },
