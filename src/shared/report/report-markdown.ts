@@ -415,6 +415,11 @@ type ChartConfig = {
           readonly data: readonly (readonly [number, number])[]
           readonly barThickness: number
         }
+      | {
+          readonly label: string
+          readonly data: readonly number[]
+          readonly barThickness: number
+        }
     )[]
   }
   readonly options:
@@ -429,24 +434,68 @@ type ChartConfig = {
         readonly scales: { readonly y: { readonly display: false } }
         readonly plugins: DirectLabelPlugins
       }
+    | {
+        readonly indexAxis: "y"
+        readonly scales: {
+          readonly x: {
+            readonly stacked: true
+            readonly display: false
+            readonly min: 0
+            readonly max: 100
+          }
+          readonly y: { readonly stacked: true; readonly display: false }
+        }
+        readonly plugins: DirectLabelPlugins
+      }
 }
 
 type DirectLabelPlugins = {
   readonly "tsukumo-direct-label": {
-    readonly mode: "arrow" | "slope"
+    readonly mode: "arrow" | "slope" | "span" | "share"
     readonly names: readonly string[]
   }
 }
 
 const ARROW_BAR_THICKNESS = 4
+const SPAN_BAR_THICKNESS = 12
+const SHARE_BAR_THICKNESS = 36
+
+/** 各値を（負を0に丸めた）合計に対する百分率にする。合計が0なら全部0。 */
+function percentagesOf(values: readonly number[]): number[] {
+  const total = values.reduce((sum, value) => sum + Math.max(0, value), 0)
+  return values.map((value) => (total > 0 ? (Math.max(0, value) / total) * 100 : 0))
+}
 
 /**
  * `chart` の塊から Chart.js の設定を組む。色は書かない。`pie` は `series` の先頭だけを描く。
  * `arrow` は前→後を浮き棒1本ずつ、`slope` は項目ごとに前→後の線1本にして、描く側の plugin に系列名を渡す。
- * どちらも項目名は plugin が書くので、縦の軸（`y`）は出さない。
+ * `span` は項目ごとの始まり〜終わりを矢じりの無い太い浮き棒にする。`share` は先頭の系列を百分率にして、部分ごとに1系列の積み上げ横棒1本にする。
+ * どれも項目名・部分の名前は plugin が書くので、縦の軸（`y`）は出さない。
  */
 function chartConfigOf(block: Extract<ReportBlock, { readonly kind: "chart" }>): ChartConfig {
-  if (block.chartKind === "arrow" || block.chartKind === "slope") {
+  if (block.chartKind === "share") {
+    const percents = percentagesOf(block.series[0]?.values ?? [])
+    return {
+      type: "bar",
+      data: {
+        labels: [""],
+        datasets: block.labels.map((label, index) => ({
+          label,
+          data: [percents[index] ?? 0],
+          barThickness: SHARE_BAR_THICKNESS,
+        })),
+      },
+      options: {
+        indexAxis: "y",
+        scales: {
+          x: { stacked: true, display: false, min: 0, max: 100 },
+          y: { stacked: true, display: false },
+        },
+        plugins: { "tsukumo-direct-label": { mode: "share", names: [] } },
+      },
+    }
+  }
+  if (block.chartKind === "arrow" || block.chartKind === "slope" || block.chartKind === "span") {
     const [before, after] = block.series
     const names = [before?.name ?? "", after?.name ?? ""]
     const pairAt = (index: number): readonly [number, number] => [
@@ -454,7 +503,7 @@ function chartConfigOf(block: Extract<ReportBlock, { readonly kind: "chart" }>):
       after?.values[index] ?? 0,
     ]
     const plugins = { "tsukumo-direct-label": { mode: block.chartKind, names } }
-    return block.chartKind === "arrow"
+    return block.chartKind === "arrow" || block.chartKind === "span"
       ? {
           type: "bar",
           data: {
@@ -463,7 +512,8 @@ function chartConfigOf(block: Extract<ReportBlock, { readonly kind: "chart" }>):
               {
                 label: names.join(" → "),
                 data: block.labels.map((_, index) => pairAt(index)),
-                barThickness: ARROW_BAR_THICKNESS,
+                barThickness:
+                  block.chartKind === "arrow" ? ARROW_BAR_THICKNESS : SPAN_BAR_THICKNESS,
               },
             ],
           },

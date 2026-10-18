@@ -103,7 +103,7 @@ export type ReportViolation =
   | { readonly kind: "long-list"; readonly count: number }
   /** `marks` が無く、行数が上限を超える `code` がある。`count` は塊の数。 */
   | { readonly kind: "long-code"; readonly count: number }
-  /** `series` の `values` の数が `labels` と揃わない、または `arrow`・`slope` の `series` が2つでない `chart` の塊がある。`count` は塊の数。 */
+  /** `series` の `values` の数が `labels` と揃わない、または `arrow`・`slope`・`span` の `series` が2つでない `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "ragged-chart"; readonly count: number }
   /** `stats` の項目の `series` が1〜2個のものがある塊がある。`count` は塊の数。 */
   | { readonly kind: "short-series"; readonly count: number }
@@ -388,7 +388,7 @@ function violationLine(violation: ReportViolation): string {
     case "long-code":
       return `\`marks\` が無く${String(MAX_PLAIN_CODE_LINES + 1)}行以上の \`code\` が${violation.count}個ある。要る範囲だけを引く（${String(MAX_PLAIN_CODE_LINES)}行まで）`
     case "ragged-chart":
-      return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\` の \`series\` が前と後の2つでない \`chart\` の塊が${violation.count}個ある。数を揃える`
+      return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\`・\`span\` の \`series\` が前と後（span は始まりと終わり）の2つでない \`chart\` の塊が${violation.count}個ある。数を揃える`
     case "short-series":
       return `\`stats\` の \`series\` が1〜2個の項目がある塊が${violation.count}個ある。3つ以上にするか省く`
     case "untitled-section":
@@ -647,11 +647,12 @@ function hasShortSeries(block: ReportBlock): boolean {
   )
 }
 
-/** 系列の値の数が labels の数と揃わない、または arrow・slope の系列が前と後の2つでない chart の塊か。 */
+/** 系列の値の数が labels の数と揃わない、または arrow・slope・span の系列が2つでない chart の塊か。 */
 function isRaggedChart(block: ReportBlock): boolean {
   return (
     block.kind === "chart" &&
     (block.series.some((series) => series.values.length !== block.labels.length) ||
-      ((block.chartKind === "arrow" || block.chartKind === "slope") && block.series.length !== 2))
+      ((block.chartKind === "arrow" || block.chartKind === "slope" || block.chartKind === "span") &&
+        block.series.length !== 2))
   )
 }

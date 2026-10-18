@@ -86,6 +86,7 @@ declare global {
   /** プラグインの描画フックが受け取る `chart` のうち、読む分。 */
   type ChartInstance = {
     readonly ctx: CanvasRenderingContext2D
+    readonly canvas: HTMLCanvasElement
     /** 描く領域（余白の内側）の左端の座標と、canvas 全体の幅。 */
     readonly chartArea: { readonly left: number }
     readonly width: number
@@ -114,11 +115,12 @@ declare global {
       Record<string, { readonly getPixelForValue: (value: number) => number }>
     >
     readonly isDatasetVisible: (index: number) => boolean
-    /** 棒・点は `x` `y`（値側の端の座標）、扇は `x` `y` が中心で `startAngle` `endAngle` `outerRadius` を持つ。 */
+    /** 棒・点は `x` `y`（値側の端の座標）、扇は `x` `y` が中心で `startAngle` `endAngle` `outerRadius` を持つ。`height` は横棒の太さで、棒以外では読まない。 */
     readonly getDatasetMeta: (index: number) => {
       readonly data: readonly {
         readonly x: number
         readonly y: number
+        readonly height: number
         readonly startAngle: number
         readonly endAngle: number
         readonly outerRadius: number

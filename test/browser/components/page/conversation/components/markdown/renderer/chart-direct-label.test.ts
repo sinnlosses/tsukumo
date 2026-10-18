@@ -2,8 +2,72 @@ import { describe, expect, it } from "vitest"
 
 import {
   arrowPadding,
+  shareLabelRows,
   spreadLabels,
 } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/chart-direct-label.ts"
+
+describe("shareLabelRows", () => {
+  it("幅に収まる部分は棒の中に、部分の中心へ置く", () => {
+    expect(
+      shareLabelRows(
+        [
+          { width: 200, textWidth: 100 },
+          { width: 100, textWidth: 60 },
+        ],
+        300,
+      ),
+    ).toEqual([
+      { row: -1, left: 50 },
+      { row: -1, left: 220 },
+    ])
+  })
+
+  it("字が幅に収まらない部分は棒の下の行へ出し、字の中心を部分の中心に置く", () => {
+    expect(
+      shareLabelRows(
+        [
+          { width: 200, textWidth: 100 },
+          { width: 40, textWidth: 60 },
+        ],
+        300,
+      ),
+    ).toEqual([
+      { row: -1, left: 50 },
+      { row: 0, left: 190 },
+    ])
+  })
+
+  it("下の字どうしが横で重なるなら次の行へ分け、離れていれば同じ行に置く", () => {
+    const rows = shareLabelRows(
+      [
+        { width: 300, textWidth: 50 },
+        { width: 10, textWidth: 40 },
+        { width: 10, textWidth: 40 },
+        { width: 200, textWidth: 50 },
+        { width: 10, textWidth: 40 },
+      ],
+      530,
+    )
+    expect(rows.map(({ row }) => row)).toEqual([-1, 0, 1, -1, 0])
+  })
+
+  it("端の部分や幅0の部分でも、字は棒の左右の端からはみ出さない", () => {
+    expect(
+      shareLabelRows(
+        [
+          { width: 0, textWidth: 30 },
+          { width: 96, textWidth: 50 },
+          { width: 4, textWidth: 40 },
+        ],
+        100,
+      ),
+    ).toEqual([
+      { row: 0, left: 0 },
+      { row: -1, left: 23 },
+      { row: 0, left: 60 },
+    ])
+  })
+})
 
 describe("spreadLabels", () => {
   it("近い2つは gap だけ離し、遠いものは動かさない", () => {

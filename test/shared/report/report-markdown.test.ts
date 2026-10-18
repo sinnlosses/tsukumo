@@ -987,9 +987,17 @@ describe("reportSectionsMarkdown", () => {
       { name: "架空の前", values: [1, 2] },
       { name: "架空の後", values: [3, 0] },
     ]
-    const direct = (mode: "arrow" | "slope") => ({
+    const direct = (mode: "arrow" | "slope" | "span") => ({
       "tsukumo-direct-label": { mode, names: ["架空の前", "架空の後"] },
     })
+    const shareOptions = {
+      indexAxis: "y",
+      scales: {
+        x: { stacked: true, display: false, min: 0, max: 100 },
+        y: { stacked: true, display: false },
+      },
+      plugins: { "tsukumo-direct-label": { mode: "share", names: [] } },
+    }
 
     it.each([
       [
@@ -1095,6 +1103,67 @@ describe("reportSectionsMarkdown", () => {
             ],
           },
           options: { scales: { y: { display: false } }, plugins: direct("slope") },
+        },
+      ],
+      [
+        "span は項目ごとの始まり〜終わりを太い浮き棒にして系列名を plugin に渡す",
+        "span",
+        pair,
+        false,
+        {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "架空の前 → 架空の後",
+                data: [
+                  [1, 3],
+                  [2, 0],
+                ],
+                barThickness: 12,
+              },
+            ],
+          },
+          options: {
+            indexAxis: "y",
+            scales: { y: { display: false } },
+            plugins: direct("span"),
+          },
+        },
+      ],
+      [
+        "share は先頭の系列を百分率にして部分ごとの系列にする",
+        "share",
+        [{ name: "架空系列", values: [1, 3] }],
+        false,
+        {
+          type: "bar",
+          data: {
+            labels: [""],
+            datasets: [
+              { label: "架空A", data: [25], barThickness: 36 },
+              { label: "架空B", data: [75], barThickness: 36 },
+            ],
+          },
+          options: shareOptions,
+        },
+      ],
+      [
+        "share は合計が0なら全部0%、負は0として数える",
+        "share",
+        [{ name: "架空系列", values: [0, -2] }],
+        false,
+        {
+          type: "bar",
+          data: {
+            labels: [""],
+            datasets: [
+              { label: "架空A", data: [0], barThickness: 36 },
+              { label: "架空B", data: [0], barThickness: 36 },
+            ],
+          },
+          options: shareOptions,
         },
       ],
     ] as const)(

@@ -1,5 +1,7 @@
 // グラフの凡例を出さない代わりに、系列名・項目名を線と棒の端に直接書く Chart.js の plugin。
-// arrow と slope の種類と系列名は `options.plugins["tsukumo-direct-label"]` から読む。
+// arrow・slope・span・share の種類と系列名は `options.plugins["tsukumo-direct-label"]` から読む。
+
+import { resolveColor } from "./theme-color.ts"
 
 const DIRECT_LABEL_PLUGIN_ID = "tsukumo-direct-label"
 
@@ -14,10 +16,28 @@ const SLOPE_SIDE_PADDING = 130
 const NAME_COLUMN_GAP = 12
 const NAME_COLUMN_SHARE = 0.4
 const NAME_ROW_PADDING = 22
+const SHARE_INSIDE_PADDING = 6
+const SHARE_ROW_HEIGHT = 18
+const SHARE_ROW_GAP = 8
+const SHARE_TEXT_GAP = 10
 
-type ArrowOrSlope = {
-  readonly mode: "arrow" | "slope"
+type DirectLabelOption = {
+  readonly mode: "arrow" | "slope" | "span" | "share"
   readonly names: readonly string[]
+}
+
+type ShareSegment = {
+  /** 部分の幅（px）。 */
+  readonly width: number
+  /** 名前と割合を並べた字の幅（px）。 */
+  readonly textWidth: number
+}
+
+type ShareLabelPlace = {
+  /** -1 は棒の中。0 以上は棒の下の行の番号。 */
+  readonly row: number
+  /** 字の左端（px。棒の左端を 0 とする）。 */
+  readonly left: number
 }
 
 type Padding = ChartInstance["options"]["layout"]["padding"]
@@ -39,14 +59,46 @@ export function spreadLabels(ys: readonly number[], gap: number): number[] {
 
 /**
  * arrow の図の左右の余白。前後の数字は矢じりのそばに書くので、値が軸の端に近いと数字が描く領域の外へはみ出す（`overhang`）。
- * 左は、そのはみ出しの外側に項目名の列（`nameWidth`）を取る。
+ * 左は、そのはみ出しの外側に項目名の列（`nameWidth`）を取る。矢じりの無い span は `head` を 0 にする。
  */
 export function arrowPadding(
   nameWidth: number,
   valueWidth: number,
+  head: number = ARROW_HEAD,
 ): { readonly left: number; readonly right: number; readonly overhang: number } {
-  const overhang = ARROW_HEAD + LABEL_OFFSET + valueWidth
+  const overhang = head + LABEL_OFFSET + valueWidth
   return { left: nameWidth + NAME_COLUMN_GAP + overhang, right: overhang, overhang }
+}
+
+/**
+ * share の部分ごとの字の置き場。幅に収まる部分は棒の中、収まらない部分（幅0を含む）は字を部分の中心に置いて
+ * 棒の下の行へ出し、先に置いた字と横で重ならない最小の行にする。`total` は棒の全幅で、字は端からはみ出さない。
+ */
+export function shareLabelRows(
+  segments: readonly ShareSegment[],
+  total: number,
+): ShareLabelPlace[] {
+  const rows: { readonly left: number; readonly right: number }[][] = []
+  let start = 0
+  return segments.map(({ width, textWidth }) => {
+    const center = start + width / 2
+    start += width
+    if (textWidth + SHARE_INSIDE_PADDING * 2 <= width) {
+      return { row: -1, left: center - textWidth / 2 }
+    }
+    const left = Math.max(0, Math.min(center - textWidth / 2, total - textWidth))
+    const right = left + textWidth
+    let row = 0
+    while (
+      (rows[row] ?? []).some(
+        (placed) => left < placed.right + SHARE_TEXT_GAP && placed.left < right + SHARE_TEXT_GAP,
+      )
+    ) {
+      row += 1
+    }
+    rows[row] = [...(rows[row] ?? []), { left, right }]
+    return { row, left }
+  })
 }
 
 export const directLabelPlugin = {
@@ -59,9 +111,13 @@ export const directLabelPlugin = {
     ctx.save()
     ctx.fillStyle = Chart.defaults.color
     ctx.font = labelFont()
-    const option = arrowOrSlopeOf(chart.options.plugins[DIRECT_LABEL_PLUGIN_ID])
+    const option = directLabelOptionOf(chart.options.plugins[DIRECT_LABEL_PLUGIN_ID])
     if (option?.mode === "arrow") {
       drawArrows(chart, option.names)
+    } else if (option?.mode === "span") {
+      drawSpans(chart)
+    } else if (option?.mode === "share") {
+      drawShare(chart)
     } else if (option?.mode === "slope") {
       drawSlope(chart)
     } else if (chart.config.type === "pie") {
@@ -77,10 +133,18 @@ export const directLabelPlugin = {
 
 function paddingFor(chart: ChartInstance): Padding {
   const none = { left: 0, right: 0, top: 0, bottom: 0 }
-  const option = arrowOrSlopeOf(chart.options.plugins[DIRECT_LABEL_PLUGIN_ID])
+  const option = directLabelOptionOf(chart.options.plugins[DIRECT_LABEL_PLUGIN_ID])
   if (option?.mode === "arrow") {
-    const { left, right } = arrowExtent(chart)
+    const { left, right } = arrowExtent(chart, ARROW_HEAD)
     return { ...none, left, right, top: NAME_ROW_PADDING }
+  }
+  if (option?.mode === "span") {
+    const { left, right } = arrowExtent(chart, 0)
+    return { ...none, left, right }
+  }
+  if (option?.mode === "share") {
+    const rows = shareRows(chart).reduce((most, { row }) => Math.max(most, row + 1), 0)
+    return { ...none, bottom: rows === 0 ? 0 : SHARE_ROW_GAP + rows * SHARE_ROW_HEIGHT }
   }
   if (option?.mode === "slope") {
     return { ...none, left: SLOPE_SIDE_PADDING, right: SLOPE_SIDE_PADDING }
@@ -118,7 +182,7 @@ function widestText(ctx: CanvasRenderingContext2D, texts: readonly string[]): nu
 }
 
 // 項目名と前後の数字の字の幅から、左右の余白を決める。`beforeLayout` でも呼ぶので、描く領域（`chartArea`）はまだ無く、読まない。
-function arrowExtent(chart: ChartInstance) {
+function arrowExtent(chart: ChartInstance, head: number) {
   const { ctx } = chart
   const values = (chart.data.datasets[0]?.data ?? []).flatMap((pair) =>
     Array.isArray(pair) ? pair.filter((value) => typeof value === "number").map(String) : [],
@@ -129,16 +193,31 @@ function arrowExtent(chart: ChartInstance) {
   const valueWidth = widestText(ctx, values)
   ctx.restore()
   const nameWidth = Math.min(names, chart.width * NAME_COLUMN_SHARE)
-  return { ...arrowPadding(nameWidth, valueWidth), nameWidth }
+  return { ...arrowPadding(nameWidth, valueWidth, head), nameWidth }
 }
 
-function arrowOrSlopeOf(value: unknown): ArrowOrSlope | undefined {
+// share は左右の余白が0で x 軸が 0〜100 なので、部分の幅は `chart.width` と割合だけから決まる。`beforeLayout` と描く時で同じ置き場になる。
+function shareRows(chart: ChartInstance): (ShareLabelPlace & { readonly text: string })[] {
+  const { ctx } = chart
+  ctx.save()
+  ctx.font = labelFont()
+  const parts = chart.data.datasets.map((dataset) => {
+    const percent = typeof dataset.data[0] === "number" ? dataset.data[0] : 0
+    const text = `${dataset.label} ${String(Math.round(percent))}%`
+    return { text, width: (chart.width * percent) / 100, textWidth: ctx.measureText(text).width }
+  })
+  ctx.restore()
+  const places = shareLabelRows(parts, chart.width)
+  return places.map((place, index) => ({ ...place, text: parts[index]?.text ?? "" }))
+}
+
+function directLabelOptionOf(value: unknown): DirectLabelOption | undefined {
   if (typeof value !== "object" || value === null || !("mode" in value) || !("names" in value)) {
     return undefined
   }
   const { mode, names } = value
   if (
-    (mode !== "arrow" && mode !== "slope") ||
+    (mode !== "arrow" && mode !== "slope" && mode !== "span" && mode !== "share") ||
     !Array.isArray(names) ||
     !names.every((name): name is string => typeof name === "string")
   ) {
@@ -266,6 +345,61 @@ function drawSlope(chart: ChartInstance): void {
   })
 }
 
+function drawSpans(chart: ChartInstance): void {
+  const scale = chart.scales["x"]
+  const dataset = chart.data.datasets[0]
+  if (scale === undefined || dataset === undefined) {
+    return
+  }
+  const { overhang, nameWidth } = arrowExtent(chart, 0)
+  const nameRight = chart.chartArea.left - overhang - NAME_COLUMN_GAP
+  chart.getDatasetMeta(0).data.forEach(({ y }, row) => {
+    drawNameInColumn(chart.ctx, chart.data.labels[row] ?? "", nameRight, y, nameWidth)
+    const pair = dataset.data[row]
+    if (!Array.isArray(pair)) {
+      return
+    }
+    const [start, end] = pair
+    if (typeof start !== "number" || typeof end !== "number") {
+      return
+    }
+    const low = Math.min(start, end)
+    const high = Math.max(start, end)
+    drawText(
+      chart.ctx,
+      String(low),
+      scale.getPixelForValue(low) - LABEL_OFFSET,
+      y,
+      "right",
+      "middle",
+    )
+    drawText(
+      chart.ctx,
+      String(high),
+      scale.getPixelForValue(high) + LABEL_OFFSET,
+      y,
+      "left",
+      "middle",
+    )
+  })
+}
+
+function drawShare(chart: ChartInstance): void {
+  const bar = chart.getDatasetMeta(0).data[0]
+  if (bar === undefined) {
+    return
+  }
+  const barBottom = bar.y + bar.height / 2
+  const left = chart.chartArea.left
+  const onFill = resolveColor(chart.canvas, "--ground")
+  shareRows(chart).forEach(({ row, left: textLeft, text }) => {
+    const y =
+      row < 0 ? bar.y : barBottom + SHARE_ROW_GAP + row * SHARE_ROW_HEIGHT + SHARE_ROW_HEIGHT / 2
+    chart.ctx.fillStyle = row < 0 ? onFill : Chart.defaults.color
+    drawText(chart.ctx, text, left + textLeft, y, "left", "middle")
+  })
+}
+
 function drawArrows(chart: ChartInstance, names: readonly string[]): void {
   const { ctx } = chart
   const scale = chart.scales["x"]
@@ -275,7 +409,7 @@ function drawArrows(chart: ChartInstance, names: readonly string[]): void {
   }
   const color =
     typeof dataset.backgroundColor === "string" ? dataset.backgroundColor : Chart.defaults.color
-  const { overhang, nameWidth } = arrowExtent(chart)
+  const { overhang, nameWidth } = arrowExtent(chart, ARROW_HEAD)
   const nameRight = chart.chartArea.left - overhang - NAME_COLUMN_GAP
   chart.getDatasetMeta(0).data.forEach(({ y }, row) => {
     drawNameInColumn(ctx, chart.data.labels[row] ?? "", nameRight, y, nameWidth)

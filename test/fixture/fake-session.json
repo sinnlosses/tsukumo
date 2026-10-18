@@ -1741,7 +1741,7 @@
           "afterMs": 300,
           "event": {
             "kind": "speech",
-            "text": "3種を並べて書くね。",
+            "text": "7種を並べて書くね。",
             "expression": "default"
           }
         },
@@ -1752,7 +1752,7 @@
             "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
             "toolUseId": "fake-report-chart-1",
-            "conclusion": "架空の結論: 3種のグラフの見え方を確かめた。",
+            "conclusion": "架空の結論: 7種のグラフの見え方を確かめた。",
             "sections": [
               {
                 "heading": "架空の件数の推移",
@@ -1823,6 +1823,32 @@
                       { "name": "架空の前期", "values": [40, 42, 25, 10] },
                       { "name": "架空の後期", "values": [55, 41, 20, 18] }
                     ],
+                    "horizontal": false,
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "chart",
+                    "chartKind": "span",
+                    "labels": [
+                      "架空の取得",
+                      "架空の長い名前の変換処理",
+                      "架空の確認",
+                      "架空の書き出し"
+                    ],
+                    "series": [
+                      { "name": "架空の始まり", "values": [0, 12, 14, 95] },
+                      { "name": "架空の終わり", "values": [30, 80, 15, 120] }
+                    ],
+                    "horizontal": false,
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "chart",
+                    "chartKind": "share",
+                    "labels": ["架空A", "架空の長い部分名B", "架空C", "架空D", "架空E"],
+                    "series": [{ "name": "架空の件数", "values": [62, 25, 6, 4, 3] }],
                     "horizontal": false,
                     "fold": "",
                     "aside": ""

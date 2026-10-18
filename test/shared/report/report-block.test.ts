@@ -312,7 +312,7 @@ describe("parseReportSections", () => {
     ])
   })
 
-  it("chart の chartKind は arrow と slope を受け、未知の種類は受けない", () => {
+  it("chart の chartKind は arrow・slope・span・share を受け、未知の種類は受けない", () => {
     const chart = {
       kind: "chart",
       labels: ["架空の一"],
@@ -326,6 +326,8 @@ describe("parseReportSections", () => {
 
     expect(parsed("arrow").sections[0]?.blocks).toHaveLength(1)
     expect(parsed("slope").sections[0]?.blocks).toHaveLength(1)
+    expect(parsed("span").sections[0]?.blocks).toHaveLength(1)
+    expect(parsed("share").sections[0]?.blocks).toHaveLength(1)
     expect(parsed("radar").sections[0]?.blocks ?? []).toHaveLength(0)
   })
 

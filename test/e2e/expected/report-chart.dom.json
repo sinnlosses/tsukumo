@@ -165,7 +165,7 @@
                                 {
                                   "tag": "p",
                                   "children": [
-                                    "架空の結論: 3種のグラフの見え方を確かめた。"
+                                    "架空の結論: 7種のグラフの見え方を確かめた。"
                                   ]
                                 },
                                 {
@@ -244,6 +244,30 @@
                                   },
                                   "children": [
                                     "図 6"
+                                  ]
+                                },
+                                {
+                                  "tag": "canvas"
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-reveal-caption": ""
+                                  },
+                                  "children": [
+                                    "図 7"
+                                  ]
+                                },
+                                {
+                                  "tag": "canvas"
+                                },
+                                {
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-reveal-caption": ""
+                                  },
+                                  "children": [
+                                    "図 8"
                                   ]
                                 }
                               ]
