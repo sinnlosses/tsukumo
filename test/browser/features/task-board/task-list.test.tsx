@@ -96,61 +96,27 @@ describe("taskList", () => {
     expect(screen.getByText("タスクが無い")).toBeDefined()
   })
 
-  it("todo は空の丸の印を持つ", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
-
-    const items = screen.getAllByRole("listitem")
-    expect(items[1]?.querySelector(".task-mark-todo")).not.toBeNull()
-  })
-
-  it("done は薄く打ち消し線で出す", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
-
-    const items = screen.getAllByRole("listitem")
-    expect(items[2]?.className).toContain("task-done")
-    expect(items[2]?.querySelector(".task-mark-done")).not.toBeNull()
-    expect(items[1]?.className).not.toContain("task-done")
-  })
-
-  it("status が無い要素は印を出さない", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="all" />)
-
-    const items = screen.getAllByRole("listitem")
-    expect(items[3]?.querySelector(".task-mark-todo")).toBeNull()
-    expect(items[3]?.querySelector(".task-mark-done")).toBeNull()
-    expect(items[3]?.querySelector(".task-mark-other")).toBeNull()
-  })
-
-  it("想定外の status は注意色の印を出す", () => {
-    const items: readonly TaskSummaryItem[] = [
-      {
-        id: "X-005",
-        summary: "架空のタスク5",
-        status: "archived",
-        dependencies: [],
-        waitingFor: [],
-        labels: [],
-        difficulty: undefined,
-        loopable: undefined,
-        body: "",
-        location: { kind: "none" },
-      },
-    ]
+  it.each([
+    { status: "todo", mark: "todo", done: false },
+    { status: "draft", mark: "draft", done: false },
+    { status: "done", mark: "done", done: true },
+    { status: "archived", mark: "other", done: false },
+    { status: undefined, mark: undefined, done: false },
+  ])("status が $status の行は印が $mark だけで、薄く打ち消すのは $done", (expected) => {
+    const items = [{ ...taskOf("X-010", "todo"), status: expected.status }]
     render(<TaskList tasks={known(items)} selectedStatus="all" />)
 
-    expect(screen.getByRole("listitem").querySelector(".task-mark-other")).not.toBeNull()
+    const item = screen.getByRole("listitem")
+    for (const mark of ["todo", "draft", "done", "other"]) {
+      expect(item.querySelector(`.task-mark-${mark}`) !== null).toBe(mark === expected.mark)
+    }
+    expect(item.className.includes("task-done")).toBe(expected.done)
   })
 
-  it("ドラフトは破線の丸の印で出て、ドラフトで絞ると他の行は消え、todo の印は変わらない", () => {
+  it("ドラフトで絞ると他の行は消える", () => {
     const draft: TaskSummaryItem = { ...TASKS[0]!, id: "X-009", status: "draft" }
-    const { container, rerender } = render(
-      <TaskList tasks={known([...TASKS, draft])} selectedStatus="all" />,
-    )
+    render(<TaskList tasks={known([...TASKS, draft])} selectedStatus="draft" />)
 
-    expect(container.querySelector(".task-mark-draft")).not.toBeNull()
-    expect(container.querySelectorAll(".task-mark-todo")).toHaveLength(1)
-
-    rerender(<TaskList tasks={known([...TASKS, draft])} selectedStatus="draft" />)
     expect(screen.getAllByRole("listitem")).toHaveLength(1)
     expect(screen.getByText("X-009")).toBeDefined()
   })
@@ -197,33 +163,25 @@ describe("taskList", () => {
     expect(text).not.toContain("loopable:Y")
   })
 
-  it("行に難しさも loopable も出さない", () => {
+  it("行には難しさ・loopable・ラベルを、アイコンでも字でも出さない", () => {
     const items: readonly TaskSummaryItem[] = [
-      { ...taskOf("X-011", "todo"), difficulty: "sonnet", loopable: "Y" },
+      {
+        ...taskOf("X-011", "todo"),
+        difficulty: "sonnet",
+        loopable: "Y",
+        labels: ["任意のタグ"],
+      },
       { ...taskOf("X-012", "todo"), difficulty: "opus", loopable: "N" },
     ]
     render(<TaskList tasks={known(items)} selectedStatus="all" />)
 
-    expect(row("X-011").textContent).not.toContain("sonnet")
-    expect(row("X-011").textContent).not.toContain("loopable")
-    expect(row("X-012").textContent).not.toContain("opus")
-    expect(row("X-012").textContent).not.toContain("loop:N")
-  })
-
-  it("属性の無い行には属性の札を出さない", () => {
-    render(<TaskList tasks={known([taskOf("X-013", "todo")])} selectedStatus="all" />)
-
-    expect(row("X-013").querySelector("[data-attribute]")).toBeNull()
-  })
-
-  it("行にはラベルも難しさも出さない", () => {
-    const items: readonly TaskSummaryItem[] = [
-      { ...taskOf("X-014", "todo"), labels: ["任意のタグ"], difficulty: "haiku" },
-    ]
-    render(<TaskList tasks={known(items)} selectedStatus="all" />)
-
-    expect(row("X-014").textContent).not.toContain("haiku")
-    expect(row("X-014").textContent).not.toContain("任意のタグ")
+    for (const id of ["X-011", "X-012"]) {
+      expect(row(id).querySelector("[role='img'], [data-attribute]")).toBeNull()
+    }
+    for (const word of ["sonnet", "opus", "loop", "任意のタグ"]) {
+      expect(row("X-011").textContent).not.toContain(word)
+      expect(row("X-012").textContent).not.toContain(word)
+    }
   })
 
   it("進行中のカードを押しても同じ窓が開く", () => {
