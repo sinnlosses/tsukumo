@@ -133,7 +133,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("note の6種は、どれも部品がラベルを出し、その先に見た目が付いている", () => {
     // 部品（ラベルの文字）→ CSS の鎖を6種ぶん見る。種別の文字を
-    // 出すのは tsukumo 側（docs/architecture/screen-design.md「意味を固定した色は誰が来ても変わらず、
+    // 出すのは tsukumo 側（docs/architecture/screen-design/principle-and-type.md「意味を固定した色は誰が来ても変わらず、
     // 文字と対でだけ増やす」）なので、印だけ足してラベルを足し忘れる
     // と、素の note と同じ「何の塊か読み取れない」状態に戻る。種別の並びは
     // `REPORT_NOTE_KINDS` が正典（並びの理由もそこにある）。

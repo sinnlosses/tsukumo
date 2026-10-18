@@ -89,7 +89,7 @@
   }
 }
 
-/* 余白の柱（塊の `aside` と `memo` の `note` の傍注。値は docs/architecture/screen-design.md「余白の柱」）。
+/* 余白の柱（塊の `aside` と `memo` の `note` の傍注。値は docs/architecture/screen-design/layout.md「余白の柱」）。
    `with-gutter` が塊1つと傍注の並び `gutter` を包む。
    既定は、傍注を塊の直後に 12px の1行ずつで畳む（上の負の margin は、塊の下のあきと相殺して塊に寄せる）。 */
 .detail-block .report-gutter {

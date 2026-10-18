@@ -1202,7 +1202,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   （2026-10-08。以前は「目次」）
 - **注記**: 見出しは描いた本文の DOM（`h4` / `h5`）から拾い、畳んだ `<details>` の中のものは数えない。
   列は隠さず常に出し、幅が足りないときは畳んだ細い列になる。出し方の規則は `docs/architecture/display.md` 4.2、
-  寸法・畳みの幅は `docs/architecture/screen-design.md` 13.4「やり取りの列」
+  寸法・畳みの幅は `docs/architecture/screen-design/layout.md` 13.4「やり取りの列」
 - **注記**: 狭い画面（760px 以下）では、やり取りの並びは引き出しの「やり取り」のタブに移る（2026-10-09）
 - **避ける言い方**: 目次（見出しだけの並びだった頃の名前）、アウトライン、TOC
 
@@ -1361,7 +1361,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **英語識別子**: `SettingMark`（セッションごとの束は `SettingMarks`、`SessionState.settingMarks`）
 - **定義**: モデル・effort・許可モードの選択欄の右肩に出す7pxの丸。切り替えを受け付けたこと（空洞）と、
   受け付けた値で効いているのを見届けたこと（塗り）を言い分ける。字は出さず、ポインタを載せたときの `title` だけが言う
-  （`docs/architecture/screen-design.md` 13.9「設定の点」）
+  （`docs/architecture/screen-design/nav-mode-control.md` 13.9「設定の点」）
 - **避ける言い方**: 設定の口の右肩の点（旧称。「設定の口」が `tw config` を指す語だったため紛れる）
 
 ### 添え書き

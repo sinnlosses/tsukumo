@@ -101,7 +101,7 @@ describe("CharacterEdit", () => {
   })
 
   // 立ち絵が無い表情は、その表情の名前を書いた点線の空欄
-  // （docs/architecture/screen-design.md「立ち絵がまだ無い表情は、その表情の名前を書いた点線の空欄」）。
+  // （docs/architecture/screen-design/character-screen.md「立ち絵がまだ無い表情は、その表情の名前を書いた点線の空欄」）。
   it("立ち絵が無い表情は名前つきの空欄で出し、消す口は出さない", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
@@ -170,7 +170,7 @@ describe("CharacterEdit", () => {
     })
   })
 
-  // 消す前の確かめ（docs/architecture/screen-design.md「表情を消す前の確かめ」）。
+  // 消す前の確かめ（docs/architecture/screen-design/character-screen.md「表情を消す前の確かめ」）。
   it("消す口を押しただけでは送らず、確かめの吹き出しを開く", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
@@ -656,7 +656,7 @@ describe("CharacterEdit", () => {
     expect(document.querySelectorAll(".character-gallery")).toHaveLength(0)
   })
 
-  // 名前と自己紹介文を設定するダイアログ（docs/architecture/screen-design.md「名乗り」）。
+  // 名前と自己紹介文を設定するダイアログ（docs/architecture/screen-design/character-screen.md「名乗り」）。
   describe("名前と自己紹介文を設定する", () => {
     it("押すと、いまの名前とひとことを入れたダイアログを開く", () => {
       renderCharacterEdit({ ...FIXTURE_CHARACTER, name: "架空の精霊", tagline: "気ままな相棒" })
@@ -806,7 +806,7 @@ describe("CharacterEdit", () => {
     })
   })
 
-  // このキャラクターを消す帯とその確かめ（docs/architecture/screen-design.md「このキャラクターを消す」）。
+  // このキャラクターを消す帯とその確かめ（docs/architecture/screen-design/character-screen.md「このキャラクターを消す」）。
   describe("このキャラクターを消す", () => {
     it("removal が none なら帯を出さない", () => {
       renderCharacterEdit(FIXTURE_CHARACTER, () => {}, [
@@ -827,7 +827,7 @@ describe("CharacterEdit", () => {
     })
 
     // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
-    // 選ぶ（`docs/architecture/screen-design.md`「選んでいるパックは hash に持つ」）。
+    // 選ぶ（`docs/architecture/screen-design/character-screen.md`「選んでいるパックは hash に持つ」）。
     const OTHER_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
       pack: "other",
       name: "別の精霊",

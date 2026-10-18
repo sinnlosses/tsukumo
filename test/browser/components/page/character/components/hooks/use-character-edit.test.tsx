@@ -220,7 +220,7 @@ describe("useCharacterEdit", () => {
   })
 
   // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
-  // 選ぶ（`docs/architecture/screen-design.md`「選んでいるパックは hash に持つ」）。
+  // 選ぶ（`docs/architecture/screen-design/character-screen.md`「選んでいるパックは hash に持つ」）。
   it("同梱を直したパックは「同梱に戻す」の文言になる", () => {
     window.location.hash = "#character?pack=other"
     const { result } = renderHook(() => useCharacterEdit(), {
