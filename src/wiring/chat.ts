@@ -9,7 +9,7 @@ import {
   type ChatConsolidationSource,
   createChatConsolidationWriter,
 } from "../server/chat/core/chat-consolidation-writer.ts"
-import type { SessionManagerOptions } from "../server/session/core/session-manager.ts"
+import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import type { WiringContext } from "./wiring-context.ts"
 
 export function wireChat(

@@ -9,291 +9,48 @@
 //
 // 会話の内容がイベントとして通るが、ログにもファイルにも書かない。配る先は購読しているブラウザだけ。
 
-import {
-  type ContextUsageReport,
-  UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../shared/context-usage/context-usage.ts"
 import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
-import {
-  type PlanUsageReport,
-  UNAVAILABLE_PLAN_USAGE,
-} from "../../../shared/plan-usage/plan-usage.ts"
 import { sectionsWithFigure } from "../../../shared/report/report-block.ts"
-import { conclusionWithTaskName } from "../../../shared/report/report-task.ts"
 import { applyRestoredEvents } from "../../../shared/session/restored-event.ts"
-import {
-  type SessionDigest,
-  UNAVAILABLE_SESSION_DIGEST,
-} from "../../../shared/session/session-digest.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import { applySessionEvent } from "../../../shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../shared/session/session-state.ts"
 import { waitingLineDueAt } from "../../../shared/session/shown-reaction.ts"
-import type { PreviousUsageReview } from "../../../shared/usage-review/usage-review.ts"
-import {
-  appendChatArchiveConclusion,
-  appendChatArchiveEntry,
-} from "../../chat/core/chat-archive-entry.ts"
-import type { ChatArchive } from "../../chat/core/chat-archive-port.ts"
-import type {
-  ChatConsolidationOutcome,
-  ChatConsolidationSource,
-} from "../../chat/core/chat-consolidation-writer.ts"
-import type { ChatConsolidationRejection } from "../../chat/core/chat-consolidation.ts"
-import {
-  type ContextUsageLog,
-  createContextUsageRecorder,
-} from "../../context-usage/core/context-usage.ts"
-import type { ChangeCountGit } from "../../core/change-count-git.ts"
+import type { ChatConsolidationOutcome } from "../../chat/core/chat-consolidation-writer.ts"
+import { createContextUsageRecorder } from "../../context-usage/core/context-usage.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
-import { createDiagnosticBuffer, type DiagnosticLog } from "../../diagnostic/core/diagnostic.ts"
+import { createDiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
 import {
   createExperienceMetricRecorder,
-  type ExperienceMetricLog,
-  type SplitRelease,
   splitEntry,
 } from "../../experience-metric/core/experience-metric.ts"
 import { questionImagePaths } from "../../report/core/question-image-path.ts"
 import {
-  type ReadReportImage,
   type ReadReportImagePath,
   releasedImageToolUseIds,
-  type ReportImageShelf,
   reportImagePaths,
 } from "../../report/core/report-image-shelf.ts"
-import {
-  isMainImageFileRead,
-  type ReportUsageLog,
-  reportUsageEntryOf,
-} from "../../report/core/report-usage.ts"
-import {
-  type PromptImageShelf,
-  releasedPromptImageIds,
-} from "../../session-driver/core/prompt-image-shelf.ts"
-import {
-  type QuestionUsageLog,
-  questionUsageEntriesOf,
-} from "../../session-driver/core/question-usage.ts"
+import { releasedPromptImageIds } from "../../session-driver/core/prompt-image-shelf.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
-import {
-  createTokenUsageRecorder,
-  type TokenUsageLog,
-  type TokenUsageRecorder,
-} from "../../token-usage/core/token-usage.ts"
+import { createTokenUsageRecorder } from "../../token-usage/core/token-usage.ts"
 import type { CommandSession, ModeSessions } from "./command-session.ts"
-import { createEventBatch, type EventBatch } from "./event-batch.ts"
-import { createReportChangeCounter, type ReportChangeCounter } from "./report-change-count.ts"
+import { noteConsolidationOutcome } from "./consolidation-footprint.ts"
+import { createEventBatch } from "./event-batch.ts"
+import { createReportChangeCounter } from "./report-change-count.ts"
+import { shelveRestoredReportImages } from "./restored-report-image.ts"
+import { createDriverRead } from "./session-driver-read.ts"
+import { recordSessionEvent } from "./session-event-record.ts"
+import {
+  createConfirmedSettings,
+  createPendingConclusion,
+  createTurnImageRead,
+  type GenerationTally,
+  type SessionGeneration,
+} from "./session-generation.ts"
 import type { SessionLaunchRequest } from "./session-launch.ts"
-import { createWaitingLineAlarm, type WaitingLineAlarm } from "./waiting-line-alarm.ts"
-
-export type SessionManagerOptions = {
-  /** 現在時刻（エポックミリ秒）を返す関数（呼び出し側が時計を渡す。テストは偽の時計を渡す）。 */
-  readonly now: () => number
-  /** イベントをまとめる間隔（ミリ秒）。既定は `EVENT_BATCH_INTERVAL_MS`。 */
-  readonly batchIntervalMs: number
-  /** 会話のアーカイブの書き込み口（雑談と仕事の両方が書く）。 */
-  readonly chatArchive: ChatArchive
-  /**
-   * 仕事の行に付ける `project`（アーカイブの `docs/architecture/chat-mode.md`「会話のアーカイブ」）。
-   * リポジトリの名前だけで、パスは持たない。起動時に1回だけ配線層が取って渡す。
-   */
-  readonly project: string
-  /**
-   * 定着の出どころ（`ChatConsolidationSource`）。疑似セッションでは `dont-consolidate`。
-   * いつ起こすか（駆動由来のターンの終わり。雑談・仕事とも）と、プロセスの中で1本に絞るのはここ。
-   */
-  readonly chatConsolidation: ChatConsolidationSource
-  /**
-   * トークン消費の書き込み口。
-   * 前の `result` からの増分を出すのは {@link TokenUsageRecorder}（駆動1代ぶんの持ち物として前回の累計を覚えている）で、渡した先は「どこに・どんな形で書くか」しか持たない。
-   */
-  readonly tokenUsageLog: TokenUsageLog
-  /**
-   * コンテキストの内訳の書き込み口。
-   * セッション1つにつき1行で、いつ書くか（＝そのセッションでまだ書いていない最初のターンの終わり）を決めるのは `createContextUsageRecorder` が返す係。
-   * 渡した先は「どこに・どんな形で書くか」しか持たない。
-   */
-  readonly contextUsageLog: ContextUsageLog
-  /** 進行の計測値の書き込み口。何を1行にするかは `createExperienceMetricRecorder` が返す係が決める。 */
-  readonly experienceMetricLog: ExperienceMetricLog
-  /** 診断ログの書き込み口。畳んだイベントの種類・時刻・駆動の代だけを1件ずつ渡す。 */
-  readonly diagnosticLog: DiagnosticLog
-  /** 描いた `report` 1回につき1行、塊の使われ方を書く口。 */
-  readonly reportUsageLog: ReportUsageLog
-  /** 答えが確定した質問1件につき1行、選択肢の数と preview の付いた数を書く口。 */
-  readonly questionUsageLog: QuestionUsageLog
-  /**
-   * 依頼に添えた画像の原寸の棚。`/prompt-image/<id>` で配る側と同じ棚を渡すこと。
-   * 置くのと捨てるのはここで、`prompt` を受けたときに置き、記録から依頼が消えたときに捨てる。
-   */
-  readonly promptImageShelf: PromptImageShelf
-  /**
-   * `image` の塊と質問の preview の画像の棚。`/report-image/` で配る側と同じ棚を渡すこと。
-   * 駆動から届いた `report` と新しく積まれた質問を受けたときに置き（続きから復元した再生では、記録の窓に残った時刻が分かり24時間以内の `report` の画像を、更新時刻がその時刻以前のものだけ読み直して置く）、記録にも答え待ちにも無くなったときに捨てる。
-   */
-  readonly reportImageShelf: ReportImageShelf
-  /** `image` の塊と質問の preview の画像のパスを読む口（cwd から解く）。 */
-  readonly readReportImage: ReadReportImage
-  /**
-   * セッションを1つ起こす（起こし直しも含む）一続き。
-   * 駆動を起こすだけでなく、パックを決めて続きを探し、復元した履歴を流すところまでを1つでやる（`createSessionLaunch` が実体）。
-   * ここは駆動の種類（SDK か fake driver か）を知らない。
-   *
-   * 受け口は2つ。`onEvent` は駆動（と見張り）から新しく届くイベントで、いまの代が受け取ったら `true`、閉じた代のものを捨てたら `false` を返す。
-   * `onRestoredEvents` は前のセッションの記録を組み直した再生だけを、まとめて1回で受ける。
-   *
-   * 知らない名前のときに何を起こすかも、名前を覚えるかどうかも呼び出し側が決める。
-   */
-  readonly launchSession: (
-    onEvent: (event: SessionEvent) => boolean,
-    onRestoredEvents: (events: readonly RestoredEvent[]) => void,
-    request: SessionLaunchRequest,
-  ) => Promise<SessionDriver>
-  /**
-   * ホームに残っている前回の見直しの結果。
-   * 起こしたときに1回だけ読み、初期の姿（{@link SessionState.previousUsageReview}）に載せる。
-   */
-  readonly readPreviousUsageReview: () => PreviousUsageReview
-  /**
-   * 作業ディレクトリのタスク一覧の見張りを起こす。起こし直しをまたいで1つだけ動き、閉じるまで続く。
-   * 流すイベントは、そのときの代の駆動のイベントと同じ扱いで畳む。
-   */
-  readonly watchTasks: (onEvent: (event: SessionEvent) => void) => SessionWatcher
-  /** 最終レポートの変更の札を数える、作業ディレクトリの git の口。 */
-  readonly changeCountGit: ChangeCountGit
-}
-
-/** 閉じるまで生きている見張り。 */
-type SessionWatcher = {
-  readonly close: () => void
-  /** 画面が1つでも購読しているあいだだけ真にする（動かすのは見張りが要るあいだだけ）。 */
-  readonly setWatching: (watching: boolean) => void
-  /** 次の見回りを待たず今すぐ1回読み、読み終えてから解決する。 */
-  readonly refresh: () => Promise<void>
-}
-
-/**
- * セッション1つぶんの持ち物。起こした時点で駆動も起こし始める。
- * `create` の段は無い（1プロセスが持つセッションは1つで、切り替えは中で起こし直す）。
- */
-export type SessionManager = {
-  /** コマンドの受け手に見せる口。代は呼ばれたその時点のものを返す。 */
-  readonly commandSession: CommandSession
-  /**
-   * いまのコンテキストの内訳を駆動から取る。
-   * 押すのではなく引くので、状態にもフレームにも乗らない。取れなかったときは「取れない」。
-   */
-  readonly readContextUsage: () => Promise<ContextUsageReport>
-  /**
-   * いまのプラン使用量を駆動から取る。
-   * 押すのではなく引くので、状態にもフレームにも乗らない。取れなかったときは「取れない」。
-   */
-  readonly readPlanUsage: () => Promise<PlanUsageReport>
-  /** タスク一覧を今すぐ1回読み直し、読み終えてから解決する。 */
-  readonly refreshTasks: () => Promise<void>
-  /** 仕切りを離した1回を体験の記録へ書く。セッションIDがまだ無いときは書かない。 */
-  readonly recordSplit: (release: SplitRelease) => void
-  /**
-   * セッション1件の中身を駆動から取る。
-   * 読んでよいのは、いま配っている一覧（`sessions-changed`）に載ったものと、いま出しているセッションだけ。
-   * 画面から届いたIDでよその transcript を読まない。
-   * それ以外と、取れなかったときは「読めない」。
-   */
-  readonly readSessionDigest: (sessionId: string) => Promise<SessionDigest>
-  /** 接続を購読に加える。まず `hello` を1つ送ってから加え、外すための関数を返す。 */
-  readonly subscribe: (send: (frame: ServerFrame) => void) => () => void
-  /** 駆動を閉じる（プロセスを終えるとき。claude の子プロセスを残さないため必ず呼ぶ）。 */
-  readonly close: () => void
-}
-
-/**
- * 駆動1代ぶんの勘定。
- * イベントを受けるときに見るのはここだけなので、届いたイベントは必ずそれを生んだ代の勘定に積まれる（起こし直しをまたいで混ざらない）。
- */
-type GenerationTally = {
-  /** プロセスを起こしてから何代目か（1から）。 */
-  readonly generation: number
-  /** まとめて配る束（代をまたいで積み残しを配らない）。 */
-  readonly batch: EventBatch
-  /** トークンの累計と、いま進んでいるターンの内訳。 */
-  readonly tokenUsage: TokenUsageRecorder
-  /**
-   * 起き上がった駆動。閉じるのを待たないために値でも持つ。
-   * プロセスの終了は `process.exit` ですぐ進むので、待っていると claude の子プロセスが閉じられずに残る。
-   * まだ起き上がっていない・起こせなかったときは `undefined`。
-   */
-  readonly liveDriver: () => SessionDriver | undefined
-  /** 振り返りの書き手を中断する信号。起こし直しで代を閉じたら、書いている最中の問い合わせも中断する。 */
-  readonly diarySignal: AbortSignal
-  /** そのターンで最後に届いた `report` の結論を預かる入れ物（仕事のときだけ使う）。 */
-  readonly pendingConclusion: PendingConclusion
-  /** いまのターンにメインが画像のファイルを `Read` したか（`turn-finished` で空に戻す）。 */
-  readonly turnImageRead: TurnImageRead
-  /** この代で流した `setting-confirmed` の設定ごとの最後の値。 */
-  readonly confirmedSettings: ConfirmedSettings
-  /** 待ちの一言を出す時刻に `waiting-line-due` を流す目覚まし。代を閉じたら止める。 */
-  readonly waitingLineAlarm: WaitingLineAlarm
-  /** 依頼の頭の HEAD を控え、`task` のある `report` の変更の札を数える係。 */
-  readonly reportChangeCounter: ReportChangeCounter
-}
-
-type ConfirmedSettings = {
-  /** 同じ値の繰り返しで、畳んでも状態が動かないものなら `true`。 */
-  readonly isRepeat: (event: SessionEvent, state: SessionState) => boolean
-  readonly note: (event: SessionEvent) => void
-}
-
-type TurnImageRead = {
-  readonly mark: () => void
-  readonly peek: () => boolean
-  readonly clear: () => void
-}
-
-/**
- * そのターンで最後に届いた `report` の結論を代の勘定に預ける入れ物。
- * 途中の `report` は上書きするだけで、`turn-finished` で読み出して空に戻す
- * （`report` 無しで終わったターンは預けたものが残らず、次のターンへ持ち越さない）。
- */
-type PendingConclusion = {
-  readonly hold: (conclusion: string) => void
-  readonly takeAndClear: () => string | undefined
-}
-
-/**
- * 駆動1代ぶんの持ち物。起こし直しはこれを丸ごと作り直すことで、代のあいだだけ意味のある勘定を1つずつ手で空へ戻さない。
- * 代をまたいで残るもの（購読者・棚・コンテキストの内訳を書いたセッションID）はここに入れない。
- */
-type SessionGeneration = GenerationTally & {
-  /** 駆動が起き上がるのを待つ口（コマンドを渡す側が待つ）。 */
-  readonly driver: Promise<SessionDriver>
-  /** 駆動を閉じ、積み残したイベントを捨てる。 */
-  readonly close: () => void
-  /** 新しい `hello` を配り終えたと知らせ、束を配り始める（起こし直しの代だけが待っている）。 */
-  readonly announce: () => void
-  /**
-   * この代が生きているあいだだけイベントを畳む（駆動由来と同じ扱い）。代を閉じたあとに呼んでも黙って捨てる。
-   * 長く続く非同期の処理が、あとから届いたイベントをこの代に固定して流すための口。
-   */
-  readonly emit: (event: SessionEvent) => void
-}
-
-/** 続きから復元した report の画像を読み直す、復元した時点からの遡り幅。 */
-const RESTORED_REPORT_IMAGE_WINDOW_MS = 24 * 60 * 60 * 1000
-
-const CONSOLIDATION_FAILURE_PLACES = {
-  aborted: "consolidation-aborted",
-  threw: "consolidation-threw",
-  "summary-write": "consolidation-summary-write",
-} as const satisfies Record<string, string>
-
-const CONSOLIDATION_REJECTION_PLACES = {
-  shape: "consolidation-unreadable-result",
-  "synopsis-empty": "consolidation-synopsis-empty",
-  "synopsis-too-long": "consolidation-synopsis-too-long",
-  "synopsis-reserved-tag": "consolidation-synopsis-reserved-tag",
-  "synopsis-shrunk": "consolidation-synopsis-shrunk",
-} as const satisfies Record<ChatConsolidationRejection | "synopsis-shrunk", string>
+import type { SessionManager, SessionManagerOptions } from "./session-manager-port.ts"
+import { createWaitingLineAlarm } from "./waiting-line-alarm.ts"
 
 const NO_MODE_SESSIONS: ModeSessions = { work: { kind: "none" }, chat: { kind: "none" } }
 
@@ -382,69 +139,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     diagnostic.add({ flow: "session-event", at, generation: tally.generation, kind: event.kind })
     experienceMetric.observe(event, state, at)
     tally.reportChangeCounter.observe(event)
-    // 会話のアーカイブへ1行足す（パックが分かっているときだけ）。
-    appendChatArchiveEntry(
-      options.chatArchive,
-      state.character?.pack,
-      state.chatMode ? "chat" : "work",
-      options.project,
-      at,
-      event,
-    )
-    // 仕事のターンの結論を、代の勘定に預けて上書きする（`turn-finished` で読み出す）。
-    if (event.kind === "report") {
-      tally.pendingConclusion.hold(conclusionWithTaskName(event.conclusion, event.task))
-    }
-    // ターンの中の内訳（ツール別・持ち場別）を積む。
-    tally.tokenUsage.tally(event)
-    // そのターンのトークン消費を1行書く。
-    if (event.kind === "token-usage") {
-      tally.tokenUsage.append(event.cumulative, at, state)
-    }
-    // トークン消費の内訳を、1ターンぶんだけ持つところから捨てる（次のターンでまた0から数える）。
-    // `token-usage` は `turn-finished` より先に届く（変換する側が `result` 1つをこの順に変換する）ので、書き終えたあとに捨てることになる。
-    // セッションIDが決まる前の行は、どのセッションのものか分からなくなるので書かない。
-    if (event.kind === "report" && state.session.kind !== "starting") {
-      options.reportUsageLog.append(
-        reportUsageEntryOf(event, state.session.sessionId, at, tally.turnImageRead.peek()),
-      )
-    }
-    if (event.kind === "tool-started" && isMainImageFileRead(event)) {
-      tally.turnImageRead.mark()
-    }
-    if (event.kind === "report-rejected" && state.session.kind !== "starting") {
-      options.reportUsageLog.appendRejection({
-        at,
-        sessionId: state.session.sessionId,
-        reasons: event.reasons,
-      })
-    }
-    if (event.kind === "question-answered" && state.session.kind !== "starting") {
-      for (const entry of questionUsageEntriesOf(event, state.session.sessionId, at)) {
-        options.questionUsageLog.append(entry)
-      }
-    }
-    if (event.kind === "turn-finished") {
-      tally.turnImageRead.clear()
-      tally.tokenUsage.finishTurn()
-      // コンテキストの内訳はセッションに1行なので、まだ書いていなければ問い合わせる。
-      // 待たずに次へ進む（ターンの終わりを遅らせない）。駆動がまだ無い回は次のターンで揃う。
-      const driver = tally.liveDriver()
-      if (driver !== undefined) {
-        void contextUsage.recordOnce(state, at, driver)
-      }
-      // 仕事のときだけ、預けておいた結論を1行書く。`report` 無しで終わったターンは何も足さない。
-      const conclusion = tally.pendingConclusion.takeAndClear()
-      if (!state.chatMode && conclusion !== undefined) {
-        appendChatArchiveConclusion(
-          options.chatArchive,
-          state.character?.pack,
-          options.project,
-          at,
-          conclusion,
-        )
-      }
-    }
+    recordSessionEvent({ ...options, contextUsage }, tally, state, event, at)
     // 定着を起こす。ターンの終わり（雑談・仕事）で、走っていれば契機を捨てる。待たずに次へ進む。
     if (event.kind === "turn-finished") {
       startConsolidation(state.character?.pack)
@@ -472,37 +167,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       .catch(reject)
       .then((outcome) => {
         consolidating = false
-        if (outcome.kind === "failed") {
-          diagnostic.add(
-            swallowedFailureFootprint(
-              options.now(),
-              {
-                feature: "chat",
-                place:
-                  outcome.reason === "unreadable-result"
-                    ? CONSOLIDATION_REJECTION_PLACES[outcome.rejection]
-                    : CONSOLIDATION_FAILURE_PLACES[outcome.reason],
-              },
-              outcome.reason === "threw" ? outcome.error : undefined,
-            ),
-          )
-        }
-        if (outcome.kind === "written" && outcome.shrinkWaived) {
-          diagnostic.add(
-            swallowedFailureFootprint(
-              options.now(),
-              { feature: "chat", place: "consolidation-synopsis-shrink-waived" },
-              undefined,
-            ),
-          )
-        }
-        if (outcome.kind === "written" && outcome.droppedLines > 0) {
-          diagnostic.add({
-            flow: "synopsis-trim",
-            at: options.now(),
-            droppedLines: outcome.droppedLines,
-          })
-        }
+        noteConsolidationOutcome(outcome, diagnostic, options.now)
         if (
           outcome.kind === "written" &&
           !closed &&
@@ -576,23 +241,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       const restoredAt = options.now()
       replaceState(applyRestoredEvents(state, events, restoredAt))
       tally.waitingLineAlarm.set(waitingLineDueAt(state))
-      const kept = new Set(
-        state.records.flatMap((record) => (record.kind === "report" ? [record.toolUseId] : [])),
-      )
-      for (const { event, time } of events) {
-        if (
-          event.kind === "report" &&
-          kept.has(event.toolUseId) &&
-          time.kind === "known" &&
-          restoredAt - time.at <= RESTORED_REPORT_IMAGE_WINDOW_MS
-        ) {
-          options.reportImageShelf.shelve(
-            event.toolUseId,
-            reportImagePaths(sectionsWithFigure(event.figure, event.sections)),
-            (path) => options.readReportImage(path, time.at),
-          )
-        }
-      }
+      shelveRestoredReportImages(options, state, events, restoredAt)
       if (!held) {
         tally.batch.discard()
         publish(helloFrame(), subscribers)
@@ -704,22 +353,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
 
   return {
     commandSession,
-    readContextUsage: async () => {
-      // 起こし直しの最中・起こせなかったときは駆動そのものが無い。画面の札が1枚出ないだけで、常駐プロセスは落とさない。
-      try {
-        const started = await generation.driver
-        return await started.readContextUsage()
-      } catch (error) {
-        diagnostic.add(
-          swallowedFailureFootprint(
-            options.now(),
-            { feature: "session", place: "read-context-usage" },
-            error,
-          ),
-        )
-        return UNAVAILABLE_CONTEXT_USAGE
-      }
-    },
+    ...createDriverRead({
+      driver: () => generation.driver,
+      state: () => state,
+      diagnostic,
+      now: options.now,
+    }),
     refreshTasks: () => taskWatcher.refresh(),
     recordSplit: (release) => {
       if (state.session.kind === "starting") {
@@ -728,40 +367,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       options.experienceMetricLog.append(
         splitEntry(release, state.session.sessionId, options.now()),
       )
-    },
-    readPlanUsage: async () => {
-      // 起こし直しの最中・起こせなかったときは駆動そのものが無い。
-      try {
-        const started = await generation.driver
-        return await started.readPlanUsage()
-      } catch (error) {
-        diagnostic.add(
-          swallowedFailureFootprint(
-            options.now(),
-            { feature: "session", place: "read-plan-usage" },
-            error,
-          ),
-        )
-        return UNAVAILABLE_PLAN_USAGE
-      }
-    },
-    readSessionDigest: async (sessionId) => {
-      if (!isReadableSession(state, sessionId)) {
-        return UNAVAILABLE_SESSION_DIGEST
-      }
-      try {
-        const started = await generation.driver
-        return await started.readSessionDigest(sessionId)
-      } catch (error) {
-        diagnostic.add(
-          swallowedFailureFootprint(
-            options.now(),
-            { feature: "session", place: "read-session-digest" },
-            error,
-          ),
-        )
-        return UNAVAILABLE_SESSION_DIGEST
-      }
     },
     subscribe: (send) => {
       send(helloFrame())
@@ -808,60 +413,9 @@ function rememberedModeSessions(
     : { ...modeSessions, work: remembered }
 }
 
-/** 画面から中身を頼まれてよいセッションか（一覧に載ったものか、いま出しているもの）。 */
-function isReadableSession(state: SessionState, sessionId: string): boolean {
-  return (
-    state.sessions.some((session) => session.sessionId === sessionId) ||
-    (state.session.kind !== "starting" && state.session.sessionId === sessionId)
-  )
-}
-
 /** 購読者全員に配る。閉じかけている接続を無視するのは送る側の仕事。 */
 function publish(frame: ServerFrame, subscribers: ReadonlySet<(frame: ServerFrame) => void>): void {
   for (const send of subscribers) {
     send(frame)
-  }
-}
-
-function createTurnImageRead(): TurnImageRead {
-  let read = false
-  return {
-    mark: () => {
-      read = true
-    },
-    peek: () => read,
-    clear: () => {
-      read = false
-    },
-  }
-}
-
-function createPendingConclusion(): PendingConclusion {
-  let current: string | undefined = undefined
-  return {
-    hold: (conclusion) => {
-      current = conclusion
-    },
-    takeAndClear: () => {
-      const conclusion = current
-      current = undefined
-      return conclusion
-    },
-  }
-}
-
-function createConfirmedSettings(): ConfirmedSettings {
-  const last = new Map<string, string>()
-  return {
-    isRepeat: (event, state) =>
-      event.kind === "setting-confirmed" &&
-      last.get(event.setting) === event.value &&
-      state.settingMarks[event.setting].kind !== "accepted" &&
-      (event.setting !== "effort" || state.effort === event.value),
-    note: (event) => {
-      if (event.kind === "setting-confirmed") {
-        last.set(event.setting, event.value)
-      }
-    },
   }
 }

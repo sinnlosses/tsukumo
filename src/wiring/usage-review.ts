@@ -3,7 +3,7 @@
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
 import { readBeadsWorkspace } from "../server/repository/adapter/beads.ts"
 import type { SessionLaunchSeed } from "../server/session/core/session-launch.ts"
-import type { SessionManagerOptions } from "../server/session/core/session-manager.ts"
+import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import {
   readPreviousUsageReview,
   writePreviousUsageReview,

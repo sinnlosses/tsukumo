@@ -8,7 +8,7 @@ import type {
 } from "../../../../src/server/report/core/report-usage.ts"
 import type { QuestionUsageEntry } from "../../../../src/server/session-driver/core/question-usage.ts"
 import type { SessionDriver } from "../../../../src/server/session-driver/core/session-driver.ts"
-import type { SessionManagerOptions } from "../../../../src/server/session/core/session-manager.ts"
+import type { SessionManagerOptions } from "../../../../src/server/session/core/session-manager-port.ts"
 import type { TokenUsageEntry } from "../../../../src/server/token-usage/core/token-usage.ts"
 import {
   type ContextUsageReport,

@@ -861,7 +861,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 - **テスト**は部分の reducer を直に呼ぶものを `test/shared/<機能>/` に置き、`session-advance-*.test.ts` には芯と、
   委ねていること・またがるイベントの効き方だけを残す
 
-理由・分けないと決めたもの（`sdk-message.ts`・`session-manager.ts`）・採らなかった案は
+理由・分けないと決めたもの（`sdk-message.ts`）・採らなかった案は
 `docs/architecture/adr/0021-feature-state-fold-in-feature.md`。
 
 ### ClientCommand
@@ -935,8 +935,9 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 
 **イベントを受けて何かを記録するものは、その概念のファイルへ寄せる。** `token-usage.ts` /
 `context-usage.ts` は書き口の契約と走行中の勘定を、`chat-archive-entry.ts` は「どのイベントを
-アーカイブの1行にするか」を持つ。`session-manager.ts` に残るのは、どの順で・どちらの由来の
-ときに呼ぶか（`origin` と `chatMode` の門）だけ。
+アーカイブの1行にするか」を持つ。どちらのモードか・セッションIDが決まったあとかの門は
+`session-event-record.ts` の `recordSessionEvent` が持ち、`session-manager.ts` に残るのは
+それを呼ぶ順と、復元した再生では呼ばないこと（再生は記録に数えない）だけ。
 
 **ツールで受け取るものは、同じ形で受ける**（`report`・見直しの2つ・`diary`）:
 

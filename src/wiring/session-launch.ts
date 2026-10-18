@@ -40,7 +40,7 @@ import {
   createSessionLaunch,
   type SessionLaunchSeed,
 } from "../server/session/core/session-launch.ts"
-import type { SessionManagerOptions } from "../server/session/core/session-manager.ts"
+import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import {
   takeSystemPromptAppend,
   toSystemPromptMode,

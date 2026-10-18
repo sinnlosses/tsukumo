@@ -9,10 +9,8 @@ import { createReportImageShelf } from "../../src/server/report/core/report-imag
 import type { ReportUsageLog } from "../../src/server/report/core/report-usage.ts"
 import { createPromptImageShelf } from "../../src/server/session-driver/core/prompt-image-shelf.ts"
 import type { QuestionUsageLog } from "../../src/server/session-driver/core/question-usage.ts"
-import {
-  createSessionManager as createSessionManagerWithoutCommands,
-  type SessionManagerOptions,
-} from "../../src/server/session/core/session-manager.ts"
+import type { SessionManagerOptions } from "../../src/server/session/core/session-manager-port.ts"
+import { createSessionManager as createSessionManagerWithoutCommands } from "../../src/server/session/core/session-manager.ts"
 import type { TokenUsageLog } from "../../src/server/token-usage/core/token-usage.ts"
 import type { CharacterEdit } from "../../src/shared/contract/character-pack.ts"
 import type { UsageProposalKeyInput } from "../../src/shared/contract/usage-review.ts"

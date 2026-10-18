@@ -13,7 +13,7 @@ import {
   taskSummaryOptionsOf,
   watchTaskSummary,
 } from "../server/repository/adapter/task-summary.ts"
-import type { SessionManagerOptions } from "../server/session/core/session-manager.ts"
+import type { SessionManagerOptions } from "../server/session/core/session-manager-port.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
 import type { WiringContext } from "./wiring-context.ts"

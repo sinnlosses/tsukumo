@@ -175,8 +175,8 @@ characters/<name>/
 - **口（型）は `session-driver/core/session-driver.ts`、ファイルに触るのは上の adapter、結ぶのは配線層
   （`src/session-start.ts` と `src/wiring/`）。** 置き場を差し替えられる `root` 引数も同じ手で持つ（テストがホームを
   汚さない）
-- **アーカイブへ書くのは `session/core/session-manager.ts` の `receive`**（イベントが1件ずつ通る
-  場所）。雑談でも仕事でも書き、行にそのときのモードを持たせる。復元の再生は駆動と別の口
+- **アーカイブへ書くのは `session/core/session-event-record.ts` の `recordSessionEvent`**（`session-manager.ts` の
+  `receive` がイベント1件ずつ通すときに呼ぶ）。雑談でも仕事でも書き、行にそのときのモードを持たせる。復元の再生は駆動と別の口
   （`onRestoredEvents`）でまとめて1回で渡し、`session-manager` は駆動から新しく届いたぶんだけを書く。仕事の
   `conclusion` はターンの終わりまで駆動の代の勘定に預ける。読み戻しはセッションを起こすとき1回だけで、配線層が呼ぶ
 - **判断は `chat/core/` の純関数**（載せる判断・定着の指示文と検査・採点。アダプタは読んで渡すだけ）で、
