@@ -3,7 +3,7 @@
 import {
   type FakeSession,
   readFakeSession,
-} from "../../src/server/session-driver/adapter/fake-driver.ts"
+} from "../../src/server/session-driver/adapter/fake-session.ts"
 
 export function bundledFakeSession(): FakeSession {
   const reading = readFakeSession()

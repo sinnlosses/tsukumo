@@ -6,7 +6,7 @@ import type { RestoredEvent } from "../../../shared/session/session-event.ts"
 import { worktreeNameOf, type SessionCatalog } from "../core/session-catalog.ts"
 import { readSessionMark } from "../core/session-mark.ts"
 import { toRestoredEvents } from "../core/session-restore.ts"
-import type { FakeSession } from "./fake-driver.ts"
+import type { FakeSession } from "./fake-session.ts"
 
 /**
  * 名指しの場面が `resume` に過去の transcript を指しているときだけ、それを切り替え先の1件に出す一覧。

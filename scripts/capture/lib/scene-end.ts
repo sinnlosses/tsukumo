@@ -7,7 +7,7 @@ import {
   type FakeSession,
   type FakeSessionStep,
   startupSteps,
-} from "../../../src/server/session-driver/adapter/fake-driver.ts"
+} from "../../../src/server/session-driver/adapter/fake-session.ts"
 import { parseServerFrame } from "../../../src/shared/frame.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import type { Settle } from "./catalog-entry.ts"

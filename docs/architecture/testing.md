@@ -263,7 +263,7 @@ shared の手続き応答に乗る型や DOM の構造を変える計画には�
 **`*.messages.json` は、サーバとの往復を守る場面だけが比べる。** 残すのは、ブラウザが送るコマンドの中身と数（`session.prompt` の文面・`session.answer`・`session.setModel`・`session.switchSession`・`session.startNewSession`・`session.recordWelcomeGreeting`・`chat.forgetRememberedLine`）か、サーバが決めて返すイベント（`aside` など）を、ほかに比べる場面の無い形で流す場面。
 イベントの列が疑似セッションの台本の写しで、結果が `*.dom.json` に出る場面は比べない。台本に書いた並びは
 台本そのものが差分に出て、イベントの形は `sessionEventSchema`（`src/shared/session/session-event.ts`。台本も
-`fake-driver.ts` が読むときに通す）と単体テスト（`test/shared/`・`test/server/`）が守る。
+`fake-session.ts` が読むときに通す）と単体テスト（`test/shared/`・`test/server/`）が守る。
 同じコマンドを同じ形で送る場面が2本あれば、比べるのは流れの持ち主の1本だけにする。
 
 **比べる成果物は、撮る口の名前で場面が選ぶ。** `settleAndMatch` は `*.dom.json` だけを比べ、

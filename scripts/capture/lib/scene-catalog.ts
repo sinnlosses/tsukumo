@@ -1,6 +1,6 @@
 import { sumBy } from "remeda"
 
-import type { FakeSession } from "../../../src/server/session-driver/adapter/fake-driver.ts"
+import type { FakeSession } from "../../../src/server/session-driver/adapter/fake-session.ts"
 import { reportEvents } from "../../../src/server/session-driver/core/sdk-report-message.ts"
 import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
 

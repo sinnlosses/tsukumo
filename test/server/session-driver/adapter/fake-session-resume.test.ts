@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import type { FakeSession } from "../../../../src/server/session-driver/adapter/fake-driver.ts"
 import {
   createFakeSessionCatalog,
   readFakeRestoredEvents,
 } from "../../../../src/server/session-driver/adapter/fake-session-resume.ts"
+import type { FakeSession } from "../../../../src/server/session-driver/adapter/fake-session.ts"
 import { bundledFakeSession } from "../../../fixture/bundled-fake-session.ts"
 import {
   assistantMessage,

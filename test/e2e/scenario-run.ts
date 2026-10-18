@@ -44,7 +44,7 @@ import { spawnFakeTsukumo, waitForViewUrl } from "../../scripts/shared/fake-tsuk
 import {
   type FakeSessionStep,
   startupSteps,
-} from "../../src/server/session-driver/adapter/fake-driver.ts"
+} from "../../src/server/session-driver/adapter/fake-session.ts"
 import { PROTOCOL_VERSION } from "../../src/shared/frame.ts"
 import { writeBeadsConfig } from "../fixture/beads-repository.ts"
 import { bundledFakeSession } from "../fixture/bundled-fake-session.ts"

@@ -14,7 +14,7 @@ import {
   type FakeSession,
   type FakeSessionStep,
   startupSteps,
-} from "../../../src/server/session-driver/adapter/fake-driver.ts"
+} from "../../../src/server/session-driver/adapter/fake-session.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { bundledFakeSession } from "../../fixture/bundled-fake-session.ts"
 

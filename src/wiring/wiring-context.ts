@@ -3,7 +3,7 @@
 
 import type { AchievementCache } from "../server/achievement/adapter/closed-issue.ts"
 import type { ChatArchive } from "../server/chat/core/chat-archive-port.ts"
-import type { FakeSession } from "../server/session-driver/adapter/fake-driver.ts"
+import type { FakeSession } from "../server/session-driver/adapter/fake-session.ts"
 
 export type WiringContext = {
   /** claude の作業先（tsukumo を起こしたディレクトリ）。 */

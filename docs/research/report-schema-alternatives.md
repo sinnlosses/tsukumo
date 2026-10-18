@@ -10,7 +10,7 @@
 
 - 使った記録は `~/.tsukumo/context-usage/`・`report-usage/`・`token-usage/` の数の欄だけ。会話の文面・ツールの引数は読んでいない。
 - `context-usage` はセッション1つにつき1行で、書くのはそのセッションの最初のターンが終わったとき（`src/server/context-usage/core/context-usage.ts` の `createContextUsageRecorder`）。この表は「最初のターンの終わりに載っていたか」で、毎ターンの値ではない。
-- 疑似セッション（fake driver）の行は除いた。`totalTokens` が 121,500 で `MCP tools` が 800 の行で、`fake-driver.ts` の固定値と一致する。2,287 行あった。
+- 疑似セッション（fake driver）の行は除いた。`totalTokens` が 121,500 で `MCP tools` が 800 の行で、`fake-fixed-reply.ts` の固定値と一致する。2,287 行あった。
 - 記録の `mcpTools` には、ツールごとに used か deferred かの欄が無い。そこで、`categories` の `MCP tools`（used）の値が `mcpTools` のどの組み合わせの和と一致するかで判別した。
   - report を除いた残りの組み合わせで、`MCP tools` から report の値を引いた数になれば used。
   - report を含めずに `MCP tools` の値になれば deferred。

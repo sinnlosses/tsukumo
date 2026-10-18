@@ -42,7 +42,7 @@ import { parseArgs } from "node:util"
 
 import { chromium, type Page } from "playwright-core"
 
-import { readFakeSession } from "../../src/server/session-driver/adapter/fake-driver.ts"
+import { readFakeSession } from "../../src/server/session-driver/adapter/fake-session.ts"
 import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../shared/capture-clock.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"

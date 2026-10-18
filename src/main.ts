@@ -15,7 +15,7 @@ import {
 } from "./server/diagnostic/adapter/diagnostic-log.ts"
 import type { Host, HostResult } from "./server/host/core/host.ts"
 import { createReportImageShelf } from "./server/report/core/report-image-shelf.ts"
-import { readFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
+import { readFakeSession } from "./server/session-driver/adapter/fake-session.ts"
 import {
   readWorkflowPlugin,
   readWorkflowPluginMount,
