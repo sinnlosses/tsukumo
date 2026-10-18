@@ -580,9 +580,9 @@
   align-self: flex-start;
   inline-size: min(100%, var(--report-measure));
 }
-/* 札の列・グラフは包みの中央に置くので、題も包みの中心に揃える（包みが本文の列より広いとき、列の中心とずれる）。 */
+/* 札の列・グラフ・ファイル一覧は包みの中央に置くので、題も包みの中心に揃える（包みが本文の列より広いとき、列の中心とずれる）。 */
 .detail-block
-  .report-captioned:has(:is(.report-stats, :global(.chart-block)))
+  .report-captioned:has(:is(.report-stats, .report-files, :global(.chart-block)))
   > :is(.report-caption, .report-table-status-legend, .report-graph-legend) {
   align-self: center;
 }
