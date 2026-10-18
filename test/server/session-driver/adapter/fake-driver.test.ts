@@ -8,9 +8,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   FAKE_DEFAULT_EFFORT,
   FAKE_MODEL_EFFORT_SUPPORT,
+  type FakeSession,
+  type FakeSessionScene,
+  type FakeSessionStep,
   readFakeSession,
   startFakeSession,
 } from "../../../../src/server/session-driver/adapter/fake-driver.ts"
+import type { SessionDriver } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
 import {
   type SessionEvent,
@@ -77,6 +81,51 @@ function collect(): {
   return { events, onEvent: (event) => events.push(event) }
 }
 
+function sessionOfOnly(
+  opening: readonly FakeSessionStep[],
+  turns: readonly FakeSessionScene[],
+): FakeSession {
+  return {
+    opening,
+    turns,
+    pastSessions: [],
+    sessionDigests: {},
+    usageReview: { review: [], proposal: [] },
+  }
+}
+
+function startWithoutScene(
+  session: FakeSession,
+  onEvent: (event: SessionEvent) => void,
+): SessionDriver {
+  return startFakeSession({
+    session,
+    scene: undefined,
+    sceneUntil: undefined,
+    sessionDefault: BUILTIN_SESSION_DEFAULT,
+    firstViewer: Promise.resolve(),
+    expressions: [],
+    onEvent,
+  })
+}
+
+function startOnScene(
+  session: FakeSession,
+  onEvent: (event: SessionEvent) => void,
+  scene: string,
+  sceneUntil: number | undefined,
+): SessionDriver {
+  return startFakeSession({
+    session,
+    scene,
+    sceneUntil,
+    sessionDefault: BUILTIN_SESSION_DEFAULT,
+    firstViewer: Promise.resolve(),
+    expressions: [],
+    onEvent,
+  })
+}
+
 /** 既定のまま起こしたセッションが、ターンの頭で見届ける3つ。 */
 function confirmedAtTurnStart(): readonly SessionEvent[] {
   return [
@@ -90,43 +139,39 @@ function confirmedAtTurnStart(): readonly SessionEvent[] {
   ]
 }
 
+/** 起こした直後に流れる4件（プラン・effort の対応・既定の effort・opening の場面）。 */
+const STARTUP_EVENTS: readonly SessionEvent[] = [
+  { kind: "plan", plan: "Claude Max" },
+  { kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT },
+  { kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT },
+  { kind: "speech", text: "架空の挨拶", expression: "default" },
+]
+
 function tick(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 10))
 }
 
 describe("startFakeSession", () => {
-  it("起こした直後にプラン（docs/glossary.md「プラン」）を流し、続けて opening の場面を流す", async () => {
-    const sink = collect()
-    const driver = startFakeSession({
-      session: FAKE_SESSION,
-      scene: undefined,
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
-    await tick()
-    driver.close()
+  it.each([
+    ["場面を名指ししない", undefined],
+    ["疑似セッションに無い名前を名指しする", "無い場面"],
+  ])(
+    "起こした直後にプラン（docs/glossary.md「プラン」）を流し、続けて opening の場面だけを流す（%s）",
+    async (_, scene) => {
+      const sink = collect()
+      const driver =
+        scene === undefined
+          ? startWithoutScene(FAKE_SESSION, sink.onEvent)
+          : startOnScene(FAKE_SESSION, sink.onEvent, scene, undefined)
+      await tick()
+      driver.close()
 
-    expect(sink.events).toEqual([
-      { kind: "plan", plan: "Claude Max" },
-      { kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT },
-      { kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT },
-      { kind: "speech", text: "架空の挨拶", expression: "default" },
-    ])
-  })
+      expect(sink.events).toEqual(STARTUP_EVENTS)
+    },
+  )
 
   it("セッションの中身は疑似セッションに書いたものを返し、無いIDは「読めない」", async () => {
-    const driver = startFakeSession({
-      session: FAKE_SESSION,
-      scene: undefined,
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: () => {},
-    })
+    const driver = startWithoutScene(FAKE_SESSION, () => {})
 
     expect(await driver.readSessionDigest("fake-other")).toEqual(
       FAKE_SESSION.sessionDigests["fake-other"],
@@ -135,25 +180,28 @@ describe("startFakeSession", () => {
     driver.close()
   })
 
-  it("prompt で request を流してから、次の場面を流す", async () => {
+  it.each([
+    [
+      "prompt で request を流してから、次の場面を流す",
+      (driver: SessionDriver) => driver.prompt("架空の依頼", [], "request"),
+      { kind: "request", text: "架空の依頼", images: [] },
+    ],
+    [
+      // 送った文面はどのイベントにも乗らない（docs/architecture/screen-design.md「雑談モードの画面」）。
+      "promptWithoutRecord は request を流さず、turn-started だけを流して次の場面へ進む",
+      (driver: SessionDriver) => driver.promptWithoutRecord("架空の合図"),
+      { kind: "turn-started" },
+    ],
+  ] as const)("%s", async (_, send, head) => {
     const sink = collect()
-    const driver = startFakeSession({
-      session: FAKE_SESSION,
-      scene: undefined,
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
+    const driver = startWithoutScene(FAKE_SESSION, sink.onEvent)
     await tick()
-    driver.prompt("架空の依頼", [], "request")
+    send(driver)
     await tick()
     driver.close()
 
-    // 先頭4件は起こした直後の分（プラン・effort の対応・既定の effort・opening の場面）。
-    expect(sink.events.slice(4)).toEqual([
-      { kind: "request", text: "架空の依頼", images: [] },
+    expect(sink.events.slice(STARTUP_EVENTS.length)).toEqual([
+      head,
       ...confirmedAtTurnStart(),
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
@@ -162,48 +210,14 @@ describe("startFakeSession", () => {
     ])
   })
 
-  it("promptWithoutRecord は request を流さず、turn-started だけを流して次の場面へ進む", async () => {
-    const sink = collect()
-    const driver = startFakeSession({
-      session: FAKE_SESSION,
-      scene: undefined,
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
-    await tick()
-    driver.promptWithoutRecord("架空の合図")
-    await tick()
-    driver.close()
-
-    // 送った文面はどのイベントにも乗らない（docs/architecture/screen-design.md「雑談モードの画面」）。先頭4件は起こした直後の分
-    // （プラン・effort の対応・既定の effort・opening の場面）。
-    expect(sink.events.slice(4)).toEqual([
-      { kind: "turn-started" },
-      ...confirmedAtTurnStart(),
-      { kind: "utterance", text: "架空の本文" },
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-      { kind: "setting-confirmed", setting: "effort", value: FAKE_DEFAULT_EFFORT },
-    ])
-  })
-
   it("切り替えを受け付けたあと、次のターンの頭で切り替えた値を見届ける", async () => {
     const sink = collect()
-    const driver = startFakeSession({
-      session: FAKE_SESSION,
-      scene: undefined,
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
+    const driver = startWithoutScene(FAKE_SESSION, sink.onEvent)
     await tick()
     await driver.setPermissionMode("plan")
     await driver.setEffort("xhigh")
     expect(sink.events).toContainEqual({ kind: "permission-mode-changed", mode: "plan" })
+    expect(sink.events.at(-1)).toEqual({ kind: "effort-changed", effort: "xhigh" })
     expect(sink.events.some((event) => event.kind === "setting-confirmed")).toBe(false)
 
     driver.prompt("架空の依頼", [], "request")
@@ -224,8 +238,8 @@ describe("startFakeSession", () => {
 
   it("切り替えで流す session-info は、場面が流したスキルとエージェントの名前を保つ", async () => {
     const sink = collect()
-    const driver = startFakeSession({
-      session: {
+    const driver = startWithoutScene(
+      {
         ...FAKE_SESSION,
         opening: [
           {
@@ -244,13 +258,8 @@ describe("startFakeSession", () => {
           },
         ],
       },
-      scene: undefined,
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
+      sink.onEvent,
+    )
     await tick()
     await driver.setModel("sonnet")
     await driver.setPermissionMode("plan")
@@ -268,8 +277,8 @@ describe("startFakeSession", () => {
 
   it("session-ended の手を流したあとは ended が真になる", async () => {
     const sink = collect()
-    const driver = startFakeSession({
-      session: {
+    const driver = startWithoutScene(
+      {
         ...FAKE_SESSION,
         turns: [
           {
@@ -285,13 +294,8 @@ describe("startFakeSession", () => {
           },
         ],
       },
-      scene: undefined,
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
+      sink.onEvent,
+    )
     await tick()
     expect(driver.ended()).toBe(false)
     driver.prompt("架空の依頼", [], "request")
@@ -299,25 +303,6 @@ describe("startFakeSession", () => {
     driver.close()
 
     expect(driver.ended()).toBe(true)
-  })
-
-  it("起こした直後に既定の effort を、setEffort のたびに受け付けた値を effort-changed で流す", async () => {
-    const sink = collect()
-    const driver = startFakeSession({
-      session: FAKE_SESSION,
-      scene: undefined,
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
-    await tick()
-    expect(sink.events).toContainEqual({ kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT })
-
-    await driver.setEffort("xhigh")
-    expect(sink.events.at(-1)).toEqual({ kind: "effort-changed", effort: "xhigh" })
-    driver.close()
   })
 
   it("opening と名指しの場面は、最初のビューが繋がるまで流さない（プランと effort の対応は先に流す）", async () => {
@@ -347,15 +332,7 @@ describe("startFakeSession", () => {
 
   it("scene で名指しした次の依頼は、その次の場面から続く（名指しした場面を繰り返さない）", async () => {
     const sink = collect()
-    const driver = startFakeSession({
-      session: FAKE_SESSION,
-      scene: "架空の場面1",
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
+    const driver = startOnScene(FAKE_SESSION, sink.onEvent, "架空の場面1", undefined)
     await tick()
     driver.prompt("架空の依頼", [], "request")
     await tick()
@@ -366,15 +343,7 @@ describe("startFakeSession", () => {
 
   it("sceneUntil を渡すと、名指しした場面の手を先頭からその個数で止める（opening は流す）", async () => {
     const sink = collect()
-    const driver = startFakeSession({
-      session: FAKE_SESSION,
-      scene: "架空の場面1",
-      sceneUntil: 1,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
+    const driver = startOnScene(FAKE_SESSION, sink.onEvent, "架空の場面1", 1)
     await tick()
     driver.close()
 
@@ -384,36 +353,10 @@ describe("startFakeSession", () => {
     ])
   })
 
-  it("疑似セッションに無い名前を名指ししても、opening だけを流す", async () => {
-    const sink = collect()
-    const driver = startFakeSession({
-      session: FAKE_SESSION,
-      scene: "無い場面",
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
-    await tick()
-    driver.close()
-
-    expect(sink.events).toEqual([
-      { kind: "plan", plan: "Claude Max" },
-      { kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT },
-      { kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT },
-      { kind: "speech", text: "架空の挨拶", expression: "default" },
-    ])
-  })
-
   it("疑似セッションから積まれた答え待ちに答えると、列から消える", async () => {
-    const sink = collect()
-    const driver = startFakeSession({
-      session: {
-        sessionDigests: {},
-        usageReview: { review: [], proposal: [] },
-        pastSessions: [],
-        opening: [
+    const driver = startWithoutScene(
+      sessionOfOnly(
+        [
           {
             afterMs: 0,
             waitForAnswer: false,
@@ -423,15 +366,10 @@ describe("startFakeSession", () => {
             },
           },
         ],
-        turns: [],
-      },
-      scene: undefined,
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
+        [],
+      ),
+      () => {},
+    )
     await tick()
 
     expect(driver.pending()).toHaveLength(1)
@@ -442,15 +380,10 @@ describe("startFakeSession", () => {
   })
 
   describe("waitForAnswer の手", () => {
-    function startAskThenFollow(
-      sink: ReturnType<typeof collect>,
-    ): ReturnType<typeof startFakeSession> {
-      return startFakeSession({
-        session: {
-          sessionDigests: {},
-          usageReview: { review: [], proposal: [] },
-          pastSessions: [],
-          opening: [
+    function startAskThenFollow(sink: ReturnType<typeof collect>): SessionDriver {
+      return startWithoutScene(
+        sessionOfOnly(
+          [
             {
               afterMs: 0,
               waitForAnswer: false,
@@ -465,15 +398,10 @@ describe("startFakeSession", () => {
               event: { kind: "utterance", text: "答えのあとの本文" },
             },
           ],
-          turns: [],
-        },
-        scene: undefined,
-        sceneUntil: undefined,
-        sessionDefault: BUILTIN_SESSION_DEFAULT,
-        firstViewer: Promise.resolve(),
-        expressions: [],
-        onEvent: sink.onEvent,
-      })
+          [],
+        ),
+        sink.onEvent,
+      )
     }
 
     it("答えが届くまで流さず、届いたら afterMs 後に流す", async () => {
@@ -506,37 +434,25 @@ describe("startFakeSession", () => {
 
   it("close したあとは疑似セッションの続きを流さない", async () => {
     const sink = collect()
-    const driver = startFakeSession({
-      session: {
-        sessionDigests: {},
-        usageReview: { review: [], proposal: [] },
-        pastSessions: [],
-        opening: [
+    const driver = startWithoutScene(
+      sessionOfOnly(
+        [
           {
             afterMs: 50,
             waitForAnswer: false,
             event: { kind: "utterance", text: "遅れて来る本文" },
           },
         ],
-        turns: [],
-      },
-      scene: undefined,
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
+        [],
+      ),
+      sink.onEvent,
+    )
     driver.close()
     await new Promise((resolve) => setTimeout(resolve, 80))
 
     // プランと effort の対応は opening のタイマーより先、`close` より前に同期で流れる
     // （起こしたことそのものの合図なので、`close` で止められるのは疑似セッションの続きだけ）。
-    expect(sink.events).toEqual([
-      { kind: "plan", plan: "Claude Max" },
-      { kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT },
-      { kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT },
-    ])
+    expect(sink.events).toEqual(STARTUP_EVENTS.slice(0, 3))
   })
 
   it("report は結果が届くまで預かり、差し戻された（isError の）ものは流さない（本物の駆動と同じ）", async () => {
@@ -544,13 +460,10 @@ describe("startFakeSession", () => {
     const finished = (toolUseId: string, isError: boolean) =>
       ({ kind: "tool-finished", toolUseId, content: "架空の結果", isError }) as const
     const sink = collect()
-    const driver = startFakeSession({
-      session: {
-        sessionDigests: {},
-        usageReview: { review: [], proposal: [] },
-        pastSessions: [],
-        opening: [],
-        turns: [
+    const driver = startOnScene(
+      sessionOfOnly(
+        [],
+        [
           {
             name: "架空の差し戻し",
             resume: undefined,
@@ -562,14 +475,11 @@ describe("startFakeSession", () => {
             ],
           },
         ],
-      },
-      scene: "架空の差し戻し",
-      sceneUntil: undefined,
-      sessionDefault: BUILTIN_SESSION_DEFAULT,
-      firstViewer: Promise.resolve(),
-      expressions: [],
-      onEvent: sink.onEvent,
-    })
+      ),
+      sink.onEvent,
+      "架空の差し戻し",
+      undefined,
+    )
     // この場面だけ手が afterMs: 0, 1, 2, 3 の4段で、実時間の setTimeout を3回跨ぐ。決め打ちの
     // 時間で待つと、負荷でイベントループが混み合ったときに最後の手を取りこぼす
     // （driver.close() が残りの手のタイマーを捨てる）ので、最後の手が実際に届くまで待つ。
@@ -586,17 +496,14 @@ describe("startFakeSession", () => {
     ])
   })
 
-  it("report は本物と同じ検証と既定値の補いを通してから流れ、conclusion の無いものは流れない", async () => {
+  it("report は本物と同じ検証を通してから流れ、締めの表情をキャラクターパックに合わせ、conclusion の無いものは流れない", async () => {
     // 疑似セッションの JSON は実行時に検証されないので、欄を省いた形を型の外から渡す。
     const partial = (event: object): SessionEvent => sessionEventSchema.parse(event)
     const sink = collect()
     const driver = startFakeSession({
-      session: {
-        sessionDigests: {},
-        usageReview: { review: [], proposal: [] },
-        pastSessions: [],
-        opening: [],
-        turns: [
+      session: sessionOfOnly(
+        [],
+        [
           {
             name: "架空の省略",
             resume: undefined,
@@ -610,13 +517,6 @@ describe("startFakeSession", () => {
                     "toolUseId",
                     "conclusion",
                   ]),
-                  sections: [
-                    {
-                      heading: "",
-                      blocks: [{ kind: "markdown", markdown: "本文", fold: "", aside: "" }],
-                    },
-                    { heading: "", blocks: [{ kind: "no-such-block" }] },
-                  ],
                   closing: { kind: "speech", text: "書けたよ", expression: "知らない表情" },
                 }),
               },
@@ -638,7 +538,7 @@ describe("startFakeSession", () => {
             ],
           },
         ],
-      },
+      ),
       scene: "架空の省略",
       sceneUntil: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
@@ -654,11 +554,7 @@ describe("startFakeSession", () => {
     expect(sink.events.filter((event) => event.kind === "report")).toEqual([
       reportEvent({
         toolUseId: "fake-r1",
-        sections: [
-          { heading: "", blocks: [{ kind: "markdown", markdown: "本文", fold: "", aside: "" }] },
-        ],
         closing: { kind: "speech", text: "書けたよ", expression: "default" },
-        unknownBlockCount: 1,
       }),
     ])
   })
