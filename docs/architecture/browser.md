@@ -195,6 +195,8 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   **`position-area: bottom span-left` で左へ吊り、`margin` で窓の縁から離す**。柱の中など吊る向きが
   違う口は、修飾子の class で上書きする
 
+**押せる要素（`button`・`a`・`summary` など）を足す・直すときは、高さも幅も 24px 以上にする**（約束は `docs/architecture/screen-design.md` 13.4 の「押せるものは 24x24 以上」。実ブラウザで測らないと分からず単体では拾えないので、守っているのは E2E の `test/e2e/target-size.test.ts`）。足したら `pnpm run test:e2e test/e2e/target-size.test.ts` を単独で流してから全件へ進む。
+
 ### `components/ui/` の部品（variant の作法と一覧）
 
 **語彙を持たない部品は、見た目の違いを variant（props の文字列リテラルの合併型）で表し**、呼び出しを
