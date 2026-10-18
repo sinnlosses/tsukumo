@@ -9,8 +9,10 @@ import {
   type ReactElement,
   type ReactNode,
   use,
+  useRef,
   useState,
 } from "react"
+import { flushSync } from "react-dom"
 import type { ExtraProps } from "react-markdown"
 
 import { REPORT_IMAGE_PATH_PREFIX } from "../../../../../../../shared/report/report-image.ts"
@@ -22,6 +24,7 @@ import {
   loadBeforeAfterView,
   saveBeforeAfterView,
 } from "./before-after-view.ts"
+import { BeforeAfterZoom } from "./before-after-zoom.tsx"
 import styles from "./report-notation.module.css"
 
 const ZOOM_LABEL = "この画像を拡大"
@@ -43,18 +46,35 @@ type SwapThumb = {
 }
 
 /**
- * 前後の画像の塊の中の画像が、札に替わったことと、読めた画像の `src`・`alt` を塊へ知らせる口。
- * `alt` の先頭の字（前の画面・後の画面）が前か後かを言う。塊の外では何もしない。
+ * 画像を押したときの拡大の先。`swap` は塊の前後の面（押した側と、戻すフォーカスの先を渡す）、`own` は画像ごとの拡大。
+ */
+type ImageZoomTarget =
+  | { readonly kind: "own" }
+  | {
+      readonly kind: "swap"
+      readonly open: (side: SwapSide, opener: HTMLElement | undefined) => void
+    }
+
+/**
+ * 前後の画像の塊の中の画像が、札に替わったことと、読めた画像の `src`・`alt` を塊へ知らせる口と、押したときの拡大の先。
+ * `alt` の先頭の字（前の画面・後の画面）が前か後かを言う。塊の外では何もせず、拡大は画像ごと。
  */
 type BeforeAfterSwapContextValue = {
   readonly reportMissing: () => void
   readonly reportImage: (thumb: SwapThumb) => void
+  readonly zoom: ImageZoomTarget
 }
 
 const BeforeAfterSwapContext = createContext<BeforeAfterSwapContextValue>({
   reportMissing: () => undefined,
   reportImage: () => undefined,
+  zoom: { kind: "own" },
 })
+
+type SwapZoom = {
+  readonly side: SwapSide
+  readonly caption: { readonly number: string; readonly text: string }
+}
 
 const SWAP_SIDE_LABEL = { before: "前", after: "後" } as const satisfies Record<SwapSide, string>
 
@@ -82,7 +102,20 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
   const [shown, setShown] = useState<SwapSide>("before")
   const [missing, setMissing] = useState(false)
   const [thumbs, setThumbs] = useState<readonly SwapThumb[]>([])
+  const [zoom, setZoom] = useState<SwapZoom | undefined>(undefined)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const openerRef = useRef<HTMLElement | undefined>(undefined)
   const switches = view === "switch" && !missing
+
+  function openZoom(side: SwapSide, opener: HTMLElement | undefined): void {
+    openerRef.current = opener
+    setZoom({ side, caption: readCaption(rootRef.current) })
+  }
+
+  function closeZoom(): void {
+    flushSync(() => setZoom(undefined))
+    openerRef.current?.focus()
+  }
 
   function chooseView(next: BeforeAfterView): void {
     setView(next)
@@ -106,9 +139,11 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
       value={{
         reportMissing: () => setMissing(true),
         reportImage: (thumb) => setThumbs((current) => withThumb(current, thumb)),
+        zoom: missing ? { kind: "own" } : { kind: "swap", open: openZoom },
       }}
     >
       <div
+        ref={rootRef}
         className={props.className}
         data-view={switches ? "switch" : "side"}
         data-shown={shown}
@@ -167,6 +202,14 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
             })}
           </div>
         )}
+        {zoom !== undefined && thumbs.length > 0 && (
+          <BeforeAfterZoom
+            images={thumbs}
+            start={zoom.side}
+            caption={zoom.caption}
+            onClose={closeZoom}
+          />
+        )}
       </div>
     </BeforeAfterSwapContext>
   )
@@ -175,8 +218,17 @@ export function BeforeAfterSwap(props: BeforeAfterSwapProps): ReactElement {
 export function ReportImage(props: ReportImageProps): ReactElement {
   const [failed, setFailed] = useState(false)
   const [zoomed, setZoomed] = useState(false)
-  const { reportMissing, reportImage } = use(BeforeAfterSwapContext)
+  const { reportMissing, reportImage, zoom } = use(BeforeAfterSwapContext)
+  const imageRef = useRef<HTMLImageElement | null>(null)
   const alt = props.alt ?? ""
+
+  function openZoom(): void {
+    if (zoom.kind === "swap") {
+      zoom.open(sideOfAlt(alt), imageRef.current?.closest("button") ?? undefined)
+    } else {
+      setZoomed(true)
+    }
+  }
 
   if (failed || typeof props.src !== "string" || !props.src.startsWith(REPORT_IMAGE_PATH_PREFIX)) {
     return (
@@ -211,12 +263,13 @@ export function ReportImage(props: ReportImageProps): ReactElement {
         ariaHasPopup={undefined}
         title={undefined}
         className={styles["report-image-zoom"]}
-        onClick={() => setZoomed(true)}
+        onClick={openZoom}
       >
         <img
           src={src}
           alt={alt}
           ref={(element) => {
+            imageRef.current = element
             if (element !== null) {
               reportImage({ side: sideOfAlt(alt), src, alt })
             }
@@ -239,6 +292,15 @@ export function ReportImage(props: ReportImageProps): ReactElement {
 
 function sideOfAlt(alt: string): SwapSide {
   return alt.startsWith(SWAP_SIDE_LABEL.after) ? "after" : "before"
+}
+
+function readCaption(root: HTMLElement | null): SwapZoom["caption"] {
+  const read = (name: string | undefined): string =>
+    name === undefined ? "" : (root?.querySelector(`.${name}`)?.textContent ?? "")
+  return {
+    number: read(styles["report-caption-number"]),
+    text: read(styles["report-caption-text"]),
+  }
 }
 
 function withThumb(thumbs: readonly SwapThumb[], next: SwapThumb): readonly SwapThumb[] {

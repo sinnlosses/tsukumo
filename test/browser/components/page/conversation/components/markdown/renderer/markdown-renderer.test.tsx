@@ -1498,6 +1498,86 @@ describe("Markdown（image の塊の画像）", () => {
       expect(swapRoot(container).dataset["view"]).toBe("side")
     })
 
+    describe("押して大きく見る", () => {
+      function zoomButtons(container: HTMLElement): HTMLElement[] {
+        return [...container.querySelectorAll<HTMLElement>('button[aria-label="この画像を拡大"]')]
+      }
+
+      function pairPressed(dialog: HTMLElement, name: string): string | null {
+        const found = [...dialog.querySelectorAll("button")].find(
+          (candidate) => candidate.textContent === name,
+        )
+        return found?.getAttribute("aria-pressed") ?? null
+      }
+
+      function beforeAfterDialog(): HTMLElement {
+        return typedElement(
+          document.querySelector("dialog.before-after-zoom"),
+          HTMLElement,
+          "前後の面",
+        )
+      }
+
+      it("押した側から前後の面が開き、塊の題を添える", () => {
+        const { container } = render(<Markdown text={imagesText} />)
+
+        fireEvent.click(typedElement(zoomButtons(container)[1] ?? null, HTMLElement, "後の画像"))
+        const dialog = beforeAfterDialog()
+        expect(pairPressed(dialog, "後")).toBe("true")
+        expect(pairPressed(dialog, "前")).toBe("false")
+        expect(dialog.textContent).toContain("図 1")
+        expect(dialog.textContent).toContain("架空の前後")
+        expect(document.querySelector("dialog.image-zoom")).toBeNull()
+      })
+
+      it("前の画像を押すと前から開く", () => {
+        const { container } = render(<Markdown text={imagesText} />)
+
+        fireEvent.click(typedElement(zoomButtons(container)[0] ?? null, HTMLElement, "前の画像"))
+
+        expect(pairPressed(beforeAfterDialog(), "前")).toBe("true")
+      })
+
+      it("切り替えでは、見せている側でなく押した画像の側から開く", () => {
+        const { container } = render(<Markdown text={imagesText} />)
+        fireEvent.click(button(container, "切り替え"))
+        fireEvent.click(button(container, "後"))
+
+        fireEvent.click(typedElement(zoomButtons(container)[0] ?? null, HTMLElement, "前の画像"))
+
+        expect(pairPressed(beforeAfterDialog(), "前")).toBe("true")
+      })
+
+      it("面を閉じると、押した画像のボタンにフォーカスが戻る", () => {
+        const { container } = render(<Markdown text={imagesText} />)
+        const afterButton = typedElement(zoomButtons(container)[1] ?? null, HTMLElement, "後の画像")
+
+        fireEvent.click(afterButton)
+        fireEvent.click(
+          typedElement(
+            [...beforeAfterDialog().querySelectorAll("button")].find(
+              (candidate) => candidate.getAttribute("aria-label") === "閉じる",
+            ) ?? null,
+            HTMLElement,
+            "×",
+          ),
+        )
+
+        expect(document.querySelector("dialog.before-after-zoom")).toBeNull()
+        expect(document.activeElement).toBe(afterButton)
+      })
+
+      it("画像が片方札になった塊では、読めた側は今の面（画像ごとの拡大）を開く", () => {
+        const { container } = render(<Markdown text={imagesText} />)
+        fireEvent.error(typedElement(container.querySelector("img"), HTMLImageElement, "画像"))
+
+        fireEvent.click(typedElement(zoomButtons(container)[0] ?? null, HTMLElement, "読めた画像"))
+
+        expect(document.querySelector("dialog.image-zoom")).not.toBeNull()
+        expect(document.querySelector("dialog.before-after-zoom")).toBeNull()
+      })
+    })
+
     it("片方が画像でない前後には口を出さない", () => {
       const text = reportSectionsMarkdown([
         {

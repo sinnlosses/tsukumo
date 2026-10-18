@@ -81,7 +81,7 @@
 番号は等幅 12px。最初の段だけ丸の中を `color-mix(in srgb, var(--surface-raised), var(--report-sequence-ink) 14%)`
 で淡く塗る。本文は 14.5px・行間 1.95、段の間は 28px、線は丸の下端から次の丸の上端まで。左の列は 28px・
 本文との間は 18px（狭い幅でもこの形のまま、本文だけが折り返す）。画像を出せない札は高さ 168px・角丸 14px。
-レポートの `image` の画像は押すと拡大して見られる（`ImageZoom`、`size="width"`。原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる。札には入口を付けない）。
+レポートの `image` の画像は押すと拡大して見られる（`ImageZoom`、`size="width"`。原寸を上限に面の幅へ合わせ、縦に長ければ面が縦に流れる。札には入口を付けない）。前後の塊の中の画像は別の面（`BeforeAfterZoom`）で開き、前／後の2つ組は選んだ側を `accent` の枠と `accent` の薄い地、もう一方を `rule` の枠で描く。暗幕は `Dialog` の `deep`。
 
 **`progress` の丸・線（`.report-progress`）とは別の部品**で、`progress` はパックの
 `--accent` をそのまま使うのに対し、`flow` は `--accent` を `ground` へ少し沈めた `report-sequence-ink` を使う。

@@ -1,0 +1,73 @@
+/* 前後の画像を大きく見る面。暗幕（`deep`）の上に直接置き、面そのものは地も枠も持たない。
+   幅は 960px を上限に画面へ収め、縦に長い画像は面の中で流れる（上の行は流れても残す）。 */
+.before-after-zoom {
+  box-sizing: border-box;
+  width: min(960px, calc(100vw - 2rem));
+  max-width: none;
+  max-height: calc(100vh - 2rem);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.before-after-zoom-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.before-after-zoom-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-block: 2px;
+  background: color-mix(in srgb, var(--ground) 88%, transparent);
+}
+.before-after-zoom-pair {
+  display: inline-flex;
+  gap: 4px;
+}
+.before-after-zoom-side {
+  min-width: 24px;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 8px;
+}
+.before-after-zoom-guide {
+  margin-left: auto;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+.before-after-zoom-close {
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 18px;
+}
+.before-after-zoom-image {
+  display: block;
+  flex-shrink: 0;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+.before-after-zoom-caption {
+  margin: 0;
+  text-align: center;
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+  overflow-wrap: anywhere;
+}
+.before-after-zoom-number {
+  margin-inline-end: 10px;
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  letter-spacing: 0.08em;
+  color: var(--report-sequence-ink);
+}
