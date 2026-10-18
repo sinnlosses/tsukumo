@@ -63,7 +63,10 @@ describe("E2E の期待値", () => {
   })
 
   it("どのシナリオ名の文字列からも引かれない期待値は無い", () => {
-    const patterns = literals.map(literalPattern)
+    // `${…}` だけの文字列は `^.+$` になり、どの場面名にも当たる
+    const patterns = literals
+      .filter((literal) => literal.replace(/\$\{[^}]*\}/g, "") !== "")
+      .map(literalPattern)
     const orphans = scenarioNames.filter((name) => !patterns.some((pattern) => pattern.test(name)))
     expect(orphans).toEqual([])
   })
