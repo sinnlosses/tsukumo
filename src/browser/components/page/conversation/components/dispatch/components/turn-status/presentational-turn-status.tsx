@@ -88,7 +88,7 @@ export function PresentationalPhoneTurnAction(props: PhoneTurnActionModel): Reac
 /** Command+Enter で送信できることを示す記号（`dispatch.module.css` が `::after` で描く）。 */
 const SEND_SHORTCUT_HINT = "⌘⏎"
 
-export type PresentationalTurnStatusProps = TurnStatusModel & {
+type PresentationalTurnStatusProps = TurnStatusModel & {
   /** 経過の右、送信⇄中断の左に挟むもの（道具の行の「新規」）。 */
   readonly betweenElapsedAndAction: ReactNode
 }

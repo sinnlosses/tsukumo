@@ -10,7 +10,7 @@ import type { AsideThreadModel } from "./hooks/use-aside-thread.ts"
 const OPEN_MARK = "▾"
 const CLOSED_MARK = "▸"
 
-export type PresentationalAsideThreadProps = AsideThreadModel
+type PresentationalAsideThreadProps = AsideThreadModel
 
 export function PresentationalAsideThread(props: PresentationalAsideThreadProps): ReactElement {
   return (

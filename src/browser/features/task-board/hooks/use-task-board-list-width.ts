@@ -9,7 +9,7 @@ import {
   taskBoardListWidthFromRatio,
 } from "../domain/task-board-list-width.ts"
 
-export type TaskBoardListWidth = {
+type TaskBoardListWidth = {
   /** 一覧と詳細を横に並べる器。仕切りのドラッグが比率の基準にし、ドラッグ中はここへ幅を書く。 */
   readonly columnsRef: RefObject<HTMLDivElement | null>
   readonly style: CSSProperties

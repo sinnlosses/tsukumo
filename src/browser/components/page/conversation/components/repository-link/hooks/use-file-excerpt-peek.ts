@@ -21,7 +21,7 @@ export type PeekAnchor = {
   readonly bottom: number
 }
 
-export type FileExcerptPeekState =
+type FileExcerptPeekState =
   | { readonly kind: "closed" }
   | {
       readonly kind: "shown"

@@ -120,14 +120,14 @@ export function useInquiryAnswer(): InquiryModel {
     : questionModel(pending, { answer, setAnswer }, touched, dispatch)
 }
 
-export type InquiryDraftState = {
+type InquiryDraftState = {
   /** どの答え待ち（`PendingAsk.id`）に対して組み立てている答えか。まだ何も触っていなければ undefined。 */
   readonly draft: { readonly pendingId: string; readonly answer: DraftAnswer } | undefined
 }
 
 export const useInquiryDraft = create<InquiryDraftState>()(() => ({ draft: undefined }))
 
-export type InquiryFocusState = {
+type InquiryFocusState = {
   /** 詳細の面に出すと触って決めた選択肢。どの答え待ちの何問目かも持ち、別の問に替われば読まない。 */
   readonly focus:
     | { readonly pendingId: string; readonly index: number; readonly label: string }

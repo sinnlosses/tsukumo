@@ -34,7 +34,7 @@ import { isSpeechSelected, type PinnedSpeech } from "../../../domain/pinned-spee
  * セリフの古さの段。最新からいくつ前かで決める。
  * `recent`（1つ前）→ `older`（2つ前）→ `oldest`（3つ前から先は全部）の順に薄くなる。薄さの値は `character-view.module.css` が持つ。
  */
-export type SpeechAge = "latest" | "recent" | "older" | "oldest"
+type SpeechAge = "latest" | "recent" | "older" | "oldest"
 
 /** ログに並べる1行（依頼の区切り、またはセリフ1件）。 */
 export type SpeechLogEntry =

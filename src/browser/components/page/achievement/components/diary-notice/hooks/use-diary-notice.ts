@@ -16,7 +16,7 @@ import { useSession } from "../../../../../../stores/session.ts"
 import { monthDayLabel } from "../../../../../../utils/month-day-label.ts"
 import { requestDiaryBookOpen } from "../../../hooks/use-diary-book-open-request.ts"
 
-export type DiaryNoticeView =
+type DiaryNoticeView =
   | { readonly kind: "hidden" }
   | {
       readonly kind: "shown"

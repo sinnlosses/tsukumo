@@ -24,7 +24,7 @@ import { linkTaskBodyIds, taskLinkId } from "../domain/task-body-link.ts"
 import styles from "./task-body.module.css"
 
 /** `detail` はタスクのモーダルの詳細、`peek` はサイドバーののぞき窓（字を一段小さく組む）。 */
-export type TaskBodyTypesetting = "detail" | "peek"
+type TaskBodyTypesetting = "detail" | "peek"
 
 export type TaskBodyProps = {
   readonly text: string

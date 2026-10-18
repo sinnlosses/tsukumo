@@ -6,7 +6,7 @@
 // 色は `context-usage-card.module.css` の `.context-tone-<tone>` に対応する。
 
 /** 分類1つの見せ方。 */
-export type CategoryLook = {
+type CategoryLook = {
   /** 画面に出す名前。 */
   readonly label: string
   /** 色の綴り（`context-usage-card.module.css` の `.context-tone-<tone>`）。 */
@@ -14,7 +14,7 @@ export type CategoryLook = {
 }
 
 /** 色の綴り。`context-usage-card.module.css` にある `.context-tone-<tone>` の数だけ並ぶ。 */
-export type ContextTone =
+type ContextTone =
   | "system-prompt"
   | "system-tools"
   | "mcp-tools"

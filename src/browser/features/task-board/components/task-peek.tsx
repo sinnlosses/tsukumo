@@ -26,7 +26,7 @@ export type TaskPeekRun =
   | { readonly kind: "available"; readonly held: boolean; readonly confirm: TaskPeekConfirm }
   | { readonly kind: "draft"; readonly confirm: TaskPeekConfirm }
 
-export type TaskPeekProps = {
+type TaskPeekProps = {
   readonly task: TaskSummaryItem
   readonly domId: string
   readonly anchorId: string

@@ -9,7 +9,7 @@ import { useState, type KeyboardEvent } from "react"
 import { useSessionDigest, type SessionDigestView } from "./use-session-digest.ts"
 import type { SessionSwitcherRow } from "./use-session-switcher.ts"
 
-export type SessionSwitcherSelection = {
+type SessionSwitcherSelection = {
   readonly query: string
   readonly onQueryChange: (query: string) => void
   /** 探す欄で絞ったあとの行（並びは一覧のまま）。 */

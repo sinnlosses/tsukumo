@@ -42,7 +42,7 @@ const ANSWER_TITLE = "⌘⏎ で答える"
  * 押せる口。送信と中断は同時に出さないので、どちらか1つに畳んでから presenter へ渡す。
  * `send` の `emphasis` は塗るか（`solid`）枠だけか（`quiet`）。答え待ちの質問のあいだは、自由入力の字があるときだけ塗る。
  */
-export type TurnStatusAction =
+type TurnStatusAction =
   | {
       readonly kind: "send"
       readonly label: string
@@ -58,7 +58,7 @@ export type TurnStatusAction =
  * `label` は行に出す短い字、`detail` は `title` で読ませる全文。
  * `tone` は枠と字の色（`warn` は続く・まだ使える、`ng` は止まった・使えない）。
  */
-export type TurnStatusNotice =
+type TurnStatusNotice =
   | { readonly kind: "none" }
   | {
       readonly kind: "shown"
@@ -72,7 +72,7 @@ export type TurnStatusNotice =
  * `label` は進行中は「経過」、終わったあとは「所要」、失敗で終わったら「失敗」。
  * `text` は経過・所要で、まだ一度も依頼が無ければ `-`。
  */
-export type TurnStatusElapsed =
+type TurnStatusElapsed =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly label: string; readonly text: string }
 

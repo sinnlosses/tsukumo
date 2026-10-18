@@ -46,7 +46,7 @@ export function filePathQuery(text: string, caret: number): FilePathQuery | unde
   return /\s/.test(term) ? undefined : { start, end: caret, term }
 }
 
-export type FileSuggestionsProps = {
+type FileSuggestionsProps = {
   readonly matches: readonly string[]
   /** 候補の元の一覧から、件数の上限で落とされた件数。0 でなければ一覧は一部だけで、一言添える。 */
   readonly omittedCount: number

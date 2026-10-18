@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type ReactElement } from "react"
 
 import { loadChart } from "./chart.ts"
 
-export type ChartBlockProps = {
+type ChartBlockProps = {
   /** ```chart フェンスの中身（Chart.js の設定を JSON で書いたもの）。 */
   readonly spec: string
 }

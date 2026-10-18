@@ -4,7 +4,7 @@
 
 import { create } from "zustand"
 
-export type InquiryCardVisibilityState = {
+type InquiryCardVisibilityState = {
   readonly visible: boolean
   readonly setVisible: (visible: boolean) => void
 }

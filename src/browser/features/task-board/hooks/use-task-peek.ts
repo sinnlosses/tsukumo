@@ -19,7 +19,7 @@ export type TaskPeekConfirm =
   | { readonly kind: "none" }
   | { readonly kind: "request"; readonly request: TaskRequest }
 
-export type TaskPeekState =
+type TaskPeekState =
   | { readonly kind: "closed" }
   | { readonly kind: "open"; readonly id: string; readonly confirm: TaskPeekConfirm }
 

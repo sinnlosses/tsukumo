@@ -5,12 +5,12 @@ export type ChartPalette = {
   readonly other: string
 }
 
-export type DatasetColors = {
+type DatasetColors = {
   readonly backgroundColor: string | readonly string[]
   readonly borderColor: string | readonly string[]
 }
 
-export type DatasetShape = {
+type DatasetShape = {
   readonly type?: string
   readonly data?: readonly unknown[]
   readonly backgroundColor?: unknown

@@ -35,7 +35,7 @@ import { useFileExcerptPeek } from "./hooks/use-file-excerpt-peek.ts"
 const LINE_SUFFIX_PATTERN = /:(\d+)(?::\d+|-(\d+))?$/
 
 /** 押せるパス。開くのは `path`（裸のパス）で、抜き書きは `pointed` の行の前後。 */
-export type RepositoryFileTarget = {
+type RepositoryFileTarget = {
   readonly path: string
   readonly pointed: PointedLines
 }
@@ -83,7 +83,7 @@ export function breakPathText(children: ReactNode, glueClassName: string): React
   })
 }
 
-export type RepositoryFileLink = {
+type RepositoryFileLink = {
   /** git 管理下のファイルのパス（cwd 相対）の一覧。 */
   readonly files: ReadonlySet<string>
   /** このパスを Orca のエディタで開いてもらう（`host.openFile` を1回送る）。 */
@@ -111,7 +111,7 @@ export function useRepositoryFileLink(): RepositoryFileLink {
   return useContext(RepositoryFileLinkContext)
 }
 
-export type RepositoryFileLinkTargetProps = {
+type RepositoryFileLinkTargetProps = {
   /** 開くパスと指した行（{@link repositoryFileTarget} の戻り値）。 */
   readonly target: RepositoryFileTarget
   readonly title: string | undefined
@@ -181,7 +181,7 @@ export function RepositoryFileLinkTarget(props: RepositoryFileLinkTargetProps): 
   )
 }
 
-export type RepositoryFileLinkProviderProps = {
+type RepositoryFileLinkProviderProps = {
   readonly children: ReactNode
 }
 

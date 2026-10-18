@@ -24,7 +24,7 @@ export type ImageZoomFallback =
   | { readonly kind: "none" }
   | { readonly kind: "substitute"; readonly src: string; readonly note: string }
 
-export type ImageZoomProps = {
+type ImageZoomProps = {
   /** 拡大して見せる原寸（data URL か、原寸を配る経路の URL）。 */
   readonly src: string
   readonly alt: string

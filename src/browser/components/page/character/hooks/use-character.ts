@@ -7,7 +7,7 @@
 import { useState } from "react"
 
 /** 新しく作るダイアログの開閉。`key` は閉じるたびに進み、次に開いたときに下書きを空へ戻す。 */
-export type CharacterCreateDialogModel = {
+type CharacterCreateDialogModel = {
   readonly key: number
   readonly open: boolean
   readonly onOpen: () => void

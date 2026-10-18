@@ -22,7 +22,7 @@ import styles from "./composer.module.css"
 import { NEW_SESSION_LABEL, type ComposerModel } from "./hooks/use-composer.ts"
 import type { CompletionTrigger } from "./hooks/use-suggestion.ts"
 
-export type PresentationalComposerProps = ComposerModel
+type PresentationalComposerProps = ComposerModel
 
 /**
  * props はここだけ分解して受ける。

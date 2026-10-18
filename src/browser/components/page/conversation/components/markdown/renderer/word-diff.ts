@@ -3,13 +3,13 @@
 /** 文字列の区間（UTF-16 の添字、`end` は含まない）。 */
 export type TextRange = { readonly start: number; readonly end: number }
 
-export type WordDiff = {
+type WordDiff = {
   readonly before: readonly TextRange[]
   readonly after: readonly TextRange[]
 }
 
 /** どちらかの行の語がこの数を超えたら比べない。 */
-export const WORD_DIFF_MAX_WORDS = 200
+const WORD_DIFF_MAX_WORDS = 200
 
 const WORD = /[\p{L}\p{N}_]+|\s+|[^]/gu
 

@@ -23,7 +23,7 @@ import styles from "./report-head.module.css"
 /** 目録の頭に置く、何のレポートかの語。 */
 export type ReportLabel = "none" | "interim" | "final"
 
-export type ReportHeadProps = {
+type ReportHeadProps = {
   readonly label: ReportLabel
   readonly task: ReportTask
   /** 段のまとめなら、終えた段の見出し。 */

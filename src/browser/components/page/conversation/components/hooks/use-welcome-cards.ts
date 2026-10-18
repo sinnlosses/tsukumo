@@ -9,7 +9,7 @@ import {
   type WelcomeCard,
 } from "../../domain/welcome-entries.ts"
 
-export type WelcomeCards = {
+type WelcomeCards = {
   readonly cards: readonly WelcomeCard[]
   /** 切り替え画面で選べる、いまのセッション以外の行があるか（「前のやり取りを見る」を出すか）。 */
   readonly hasOtherSessions: boolean

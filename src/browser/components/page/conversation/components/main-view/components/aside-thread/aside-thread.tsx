@@ -6,7 +6,7 @@ import type { MainViewAside } from "../../../../../../../../shared/session/main-
 import { useAsideThread } from "./hooks/use-aside-thread.ts"
 import { PresentationalAsideThread } from "./presentational-aside-thread.tsx"
 
-export type AsideThreadProps = {
+type AsideThreadProps = {
   readonly asides: readonly MainViewAside[]
   /** いちばん新しいやり取りか。それより前のやり取りは閉じているので、欄を畳んで出す。 */
   readonly newest: boolean

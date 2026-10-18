@@ -31,7 +31,7 @@ export type BoardEntry = {
   readonly state: TaskStateView
 }
 
-export type BoardContentInput = {
+type BoardContentInput = {
   readonly query: string
   readonly filter: TaskBoardFilter
   readonly run: (taskId: string, request: TaskRequest) => void

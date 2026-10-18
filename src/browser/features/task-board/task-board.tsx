@@ -7,7 +7,7 @@ import type { TaskBoardRequest } from "../../stores/task-board-request.ts"
 import { useTaskBoard } from "./hooks/use-task-board.ts"
 import { PresentationalTaskBoard } from "./presentational-task-board.tsx"
 
-export type TaskBoardProps = {
+type TaskBoardProps = {
   readonly tasks: TaskSummaryResult
   readonly request: TaskBoardRequest
   readonly onClose: () => void

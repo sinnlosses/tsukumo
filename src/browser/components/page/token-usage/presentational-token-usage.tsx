@@ -27,7 +27,7 @@ const EMPTY_NOTE = "この期間の記録はまだ無い"
 /** 集計を取れなかったときの一言（記録が無いときと区別する）。 */
 const FAILED_NOTE = "集計を取れなかった"
 
-export type PresentationalTokenUsageProps = UseTokenUsageResult & {
+type PresentationalTokenUsageProps = UseTokenUsageResult & {
   /** いまのコンテキストの内訳。 */
   readonly contextUsage: UseContextUsageResult
   /** 「減らし方を見てもらう」区画。 */

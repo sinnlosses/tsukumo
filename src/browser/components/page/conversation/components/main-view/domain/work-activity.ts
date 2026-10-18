@@ -21,7 +21,7 @@ import { apiRetryNotice } from "../../../domain/api-error-label.ts"
 import { isClearRequest } from "../../../domain/clear-request.ts"
 
 /** 再試行の知らせ。 */
-export type WorkRetry =
+type WorkRetry =
   | { readonly kind: "none" }
   | { readonly kind: "retrying"; readonly label: string; readonly detail: string }
 
@@ -35,7 +35,7 @@ export type WorkActivity = {
   readonly retry: WorkRetry
 }
 
-export type WorkActivitySource = {
+type WorkActivitySource = {
   readonly turnStepList: Extract<TurnStepList, { readonly kind: "turn" }>
   readonly firstPending: StampedPendingAsk | undefined
   readonly reportDrafting: ReportDrafting

@@ -19,7 +19,7 @@ import styles from "./conversation-layout.module.css"
 import { percentFromRatio } from "./domain/split.ts"
 import type { UseConversationLayoutResult } from "./hooks/use-conversation-layout.ts"
 
-export type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
+type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
   readonly main: ReactNode
   readonly sidebar: ReactNode
   readonly character: ReactNode

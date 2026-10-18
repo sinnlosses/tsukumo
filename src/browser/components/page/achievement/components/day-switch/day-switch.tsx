@@ -15,7 +15,7 @@ import styles from "./day-switch.module.css"
 
 const LOADING_VALUE = "…"
 
-export type DaySwitchProps = {
+type DaySwitchProps = {
   readonly daySwitch: AchievementDaySwitch
   readonly onPreviousDay: () => void
   readonly onNextDay: () => void

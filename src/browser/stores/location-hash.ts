@@ -64,7 +64,7 @@ export type AchievementDateSelection =
   | { readonly kind: "today" }
   | { readonly kind: "chosen"; readonly date: string }
 
-export type HashRoute = {
+type HashRoute = {
   readonly screen: Screen
   readonly turn: ViewedTurn
   readonly pack: PackSelection

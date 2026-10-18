@@ -5,7 +5,7 @@ import { useRef, useState, type RefCallback, type RefObject } from "react"
 
 import { useDismissSignal, type DismissCause } from "./use-dismiss-signal.ts"
 
-export type Popover = {
+type Popover = {
   readonly open: boolean
   readonly onToggle: () => void
   /** フォーカスは動かさずに閉じる。 */
@@ -13,7 +13,7 @@ export type Popover = {
   readonly toggleRef: RefCallback<HTMLButtonElement>
 }
 
-export type PopoverOptions = {
+type PopoverOptions = {
   /** この箱の外を押すと閉じる。 */
   readonly rootRef: RefObject<HTMLElement | null>
   /** 開閉が変わるたびに、開閉の直後に呼ぶ。 */

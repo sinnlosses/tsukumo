@@ -48,7 +48,7 @@ import { linkedPaste } from "./domain/markdown-link-paste.ts"
 import { concealedMarks, type ConcealedMark } from "./domain/markdown-mark-concealment.ts"
 import styles from "./markdown-editor-surface.module.css"
 
-export type MarkdownEditorSurfaceProps = ComposerSurfaceHandlers & {
+type MarkdownEditorSurfaceProps = ComposerSurfaceHandlers & {
   readonly ref: Ref<ComposerSurface | null>
   readonly draft: Draft
   readonly placeholder: string

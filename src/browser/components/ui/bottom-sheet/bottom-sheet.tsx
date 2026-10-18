@@ -10,7 +10,7 @@ import styles from "./bottom-sheet.module.css"
 import { useSheetSwipe } from "./hooks/use-sheet-swipe.ts"
 
 /** 下端の口。無いときは下端ごと描かない。 */
-export type BottomSheetFooter =
+type BottomSheetFooter =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly node: ReactNode }
 

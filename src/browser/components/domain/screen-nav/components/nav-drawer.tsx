@@ -55,7 +55,7 @@ export function NavDrawerToggle(props: { readonly drawer: NavDrawerView }): Reac
   )
 }
 
-export type NavDrawerProps = {
+type NavDrawerProps = {
   readonly parts: ScreenNavParts
   readonly drawer: NavDrawerView
   readonly slots: NavDrawerSlots

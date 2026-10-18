@@ -27,7 +27,7 @@ export type ScreenNavWorkflowSettingRepository = {
   readonly path: string
 }
 
-export type ScreenNavWorkflowSettingNotice =
+type ScreenNavWorkflowSettingNotice =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly text: string }
 
@@ -47,7 +47,7 @@ export type ScreenNavWorkflowSettingStep = {
   readonly moved: boolean
 }
 
-export type ScreenNavWorkflowSettingMove = "top" | "up" | "down" | "bottom"
+type ScreenNavWorkflowSettingMove = "top" | "up" | "down" | "bottom"
 
 /** 欄1つ。`steps`・`addable` は下書きの並びから作る。 */
 export type ScreenNavWorkflowSettingRow = {
@@ -72,7 +72,7 @@ export type ScreenNavWorkflowSettingDraftChange =
   | { readonly kind: "none" }
   | { readonly kind: "changed"; readonly text: string }
 
-export type ScreenNavWorkflowSetting =
+type ScreenNavWorkflowSetting =
   | { readonly kind: "loading" }
   /** 手続きそのものが返らなかった。 */
   | { readonly kind: "unreachable"; readonly message: string }

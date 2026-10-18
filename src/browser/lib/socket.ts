@@ -32,7 +32,7 @@ export type SessionSocket = {
   readonly close: () => void
 }
 
-export type SessionSocketHandlers = {
+type SessionSocketHandlers = {
   readonly onFrame: (frame: ServerFrame) => void
   readonly onStatusChange: (status: ConnectionStatus) => void
 }

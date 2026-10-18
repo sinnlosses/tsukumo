@@ -4,7 +4,7 @@ import type { RateLimit, RateLimitBucket } from "../../../../../shared/session-d
 import { dayAwareClockTime } from "../../../../utils/clock.ts"
 
 /** 戻る時刻の字。同じ日なら「18:00」、別の日なら「9/26 18:00」。知らせに時刻が無ければ `unknown`。 */
-export type RateLimitResetText =
+type RateLimitResetText =
   | { readonly kind: "known"; readonly text: string }
   | { readonly kind: "unknown" }
 

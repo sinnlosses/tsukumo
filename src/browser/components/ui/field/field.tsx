@@ -5,7 +5,7 @@ import type { ReactElement, ReactNode } from "react"
 
 import styles from "./field.module.css"
 
-export type FieldVariant = "form" | "confirm"
+type FieldVariant = "form" | "confirm"
 
 export type FieldProps = {
   readonly variant: FieldVariant

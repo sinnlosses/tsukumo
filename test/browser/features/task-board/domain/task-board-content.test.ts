@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import {
   boardContent,
   boardEntries,
-  type BoardContentInput,
 } from "../../../../../src/browser/features/task-board/domain/task-board-content.ts"
 import { matchesFilter } from "../../../../../src/browser/features/task-board/domain/task-board-filter.ts"
 import type {
@@ -14,6 +13,8 @@ import type {
   TaskSummaryItem,
   TaskSummaryResult,
 } from "../../../../../src/shared/repository/task-summary.ts"
+
+type BoardContentInput = Parameters<typeof boardContent>[7]
 
 // フィクスチャはすべて手で書いた架空のタスク（実物のタスクファイルは使わない）。
 

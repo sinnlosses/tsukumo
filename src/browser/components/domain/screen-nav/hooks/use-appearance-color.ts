@@ -39,7 +39,7 @@ export type ScreenNavSettingsColorNotice =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly text: string }
 
-export type AppearanceColor = {
+type AppearanceColor = {
   readonly colors: readonly ScreenNavSettingsColor[]
   readonly colorNotice: ScreenNavSettingsColorNotice
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */

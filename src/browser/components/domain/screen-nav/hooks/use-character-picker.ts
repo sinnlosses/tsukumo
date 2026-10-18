@@ -12,7 +12,7 @@ import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/ch
 import { usePopover } from "../../../../hooks/use-popover.ts"
 import { useRestartRefused, useSession } from "../../../../stores/session.ts"
 
-export type CharacterPickerOption = {
+type CharacterPickerOption = {
   readonly name: string
   readonly label: string
   readonly face: CharacterFaceInfo

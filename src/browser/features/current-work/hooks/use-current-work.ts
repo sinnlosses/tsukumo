@@ -66,7 +66,7 @@ const WORK_WORD_LABEL = {
  * 札に出す今の段（`.current-work-phase`）。作業中・答え待ちで、その依頼にワークプランがあるときだけ `shown`。
  * 字は「2/4 段の名前」、全部の段を終えていれば「4/4 済」。
  */
-export type CurrentWorkPhase =
+type CurrentWorkPhase =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly label: string }
 
@@ -92,7 +92,7 @@ export type CurrentWorkPlanSpan = {
 }
 
 /** 一覧の頭のワークプラン。その依頼にワークプランがあれば、状態の語に関わらず出す。 */
-export type CurrentWorkPlan =
+type CurrentWorkPlan =
   | { readonly kind: "none" }
   | {
       readonly kind: "planned"
@@ -108,7 +108,7 @@ export type CurrentWorkPlan =
  * - `silent`: 実行中の手順はあるが、いまの状態の語では札に要約を出さない（`idle` / `background` / `stopped`。一覧を開けば出る）
  * - `shown`: 実行中の手順があり、札にも要約を出す（`pending` / `running`）
  */
-export type CurrentWorkRunningStep =
+type CurrentWorkRunningStep =
   | { readonly kind: "none" }
   | { readonly kind: "silent"; readonly toolName: string; readonly fullText: string }
   | {
@@ -123,7 +123,7 @@ export type CurrentWorkRunningStep =
  * 答え待ちで先頭の答え待ちが質問なら、実行中の手順の要約より質問の要約を優先する。
  * 許可要求の答え待ちは実行中の手順の要約に従う。
  */
-export type CurrentWorkSummary =
+type CurrentWorkSummary =
   | { readonly kind: "none" }
   | { readonly kind: "text"; readonly label: string }
 
@@ -136,7 +136,7 @@ export type CurrentWorkBackgroundTask = {
 }
 
 /** 一覧の「背景で動いているもの」の区画。状態の語に関わらず、動いているものがあれば出す。 */
-export type CurrentWorkBackgroundList =
+type CurrentWorkBackgroundList =
   | { readonly kind: "none" }
   | {
       readonly kind: "tasks"
@@ -145,7 +145,7 @@ export type CurrentWorkBackgroundList =
     }
 
 /** 「手順をすべて見る」の口。{@link MAX_COLLAPSED_STEPS} 件以下なら出さない（`fixed`）。 */
-export type CurrentWorkToggleAll =
+type CurrentWorkToggleAll =
   | { readonly kind: "fixed" }
   | { readonly kind: "expandable"; readonly label: string }
 
@@ -156,7 +156,7 @@ export type CurrentWorkToggleAll =
  * - `empty`: 依頼はあるが、この依頼ではまだツールを使っていない
  * - `steps`: 手順が1件以上ある
  */
-export type CurrentWorkStepList =
+type CurrentWorkStepList =
   | { readonly kind: "no-request" }
   | { readonly kind: "empty" }
   | {
@@ -174,7 +174,7 @@ export type CurrentWorkStepList =
  * 一覧の見出しの下に出す、答えの場所への口。
  * 答え待ち（許可要求・質問）のときだけ「お伺いへ」を出し、押すとメインビューのお伺いの札へ連れていく。
  */
-export type CurrentWorkPendingHint =
+type CurrentWorkPendingHint =
   | { readonly kind: "none" }
   | { readonly kind: "inquiry"; readonly onGoToInquiry: () => void }
 

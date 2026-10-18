@@ -26,15 +26,15 @@ import { readingLabelOf, useReadingSection } from "../../../../stores/reading-se
 import { useSession } from "../../../../stores/session.ts"
 
 /** 1行目の左。会話の画面は顔、ほかの画面は会話へ戻る口（画面の名前は題が運ぶ）。 */
-export type PhoneHeadLead =
+type PhoneHeadLead =
   | { readonly kind: "face"; readonly face: CharacterFaceInfo }
   | { readonly kind: "back"; readonly href: string }
 
 /** 状態の印。作業中と振り返り中は回る輪、ほかは「いまの作業」の札と同じ字。 */
-export type PhoneHeadMark = "spinner" | "○" | "●"
+type PhoneHeadMark = "spinner" | "○" | "●"
 
 /** 状態の語と経過。会話の画面でないときは答え待ちのときだけ出す。 */
-export type PhoneHeadStatus =
+type PhoneHeadStatus =
   | { readonly kind: "none" }
   | {
       readonly kind: "shown"
@@ -49,7 +49,7 @@ export type PhoneHeadStatus =
     }
 
 /** 段の点1つ。 */
-export type PhoneHeadDot = {
+type PhoneHeadDot = {
   readonly key: string
   readonly state: PlannedPhaseState
   /** 済んだ段のうち飛ばした段。`state` は `done` のまま。 */
@@ -82,7 +82,7 @@ export type PhoneHead = {
   readonly progress: PhoneHeadProgress
 }
 
-export type PhoneHeadSource = {
+type PhoneHeadSource = {
   readonly current: Screen
   readonly work: CurrentWork
   readonly face: CharacterFaceInfo

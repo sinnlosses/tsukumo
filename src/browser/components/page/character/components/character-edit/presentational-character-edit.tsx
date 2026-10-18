@@ -17,7 +17,7 @@ import { CharacterProfile } from "./components/character-profile/character-profi
 import { ImageField } from "./components/image-field/image-field.tsx"
 import { PortraitCard } from "./components/portrait-card/portrait-card.tsx"
 
-export type PresentationalCharacterEditProps = CharacterEditModel
+type PresentationalCharacterEditProps = CharacterEditModel
 
 export function PresentationalCharacterEdit(
   props: PresentationalCharacterEditProps,

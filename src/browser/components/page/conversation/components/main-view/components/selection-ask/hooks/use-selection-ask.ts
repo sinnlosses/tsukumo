@@ -8,9 +8,9 @@ import { quoteOf } from "../domain/selection-quote.ts"
 import { reportSelectionOf, type ReportSelection } from "../domain/selection-range.ts"
 
 /** 口の中で起きた操作かを見分ける印の名前。JSX の属性名に定数を書けないので、口の側は同じ綴りを直に置く。 */
-export const SELECTION_ASK_ATTRIBUTE = "data-selection-ask"
+const SELECTION_ASK_ATTRIBUTE = "data-selection-ask"
 
-export type SelectionAskView = {
+type SelectionAskView = {
   readonly selection: ReportSelection | undefined
   readonly onAsk: () => void
 }

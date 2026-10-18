@@ -20,7 +20,7 @@ const VIEWPORT_MARGIN = 16
 /** 吹き出しの高さの見積もり（下に置くか上に置くかを決めるためだけの値。実寸は内容で決まる）。 */
 const ESTIMATED_HEIGHT = 190
 
-export type PortraitClearConfirmProps = {
+type PortraitClearConfirmProps = {
   /** 押した「消す」アイコンを含むカードの位置（開いた瞬間の1回だけ測ったもの）。 */
   readonly anchor: DOMRect
   /** 消そうとしている表情のラベル。 */

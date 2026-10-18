@@ -11,7 +11,7 @@ import { CharacterFace } from "../../../../../../domain/character-face.tsx"
 import type { PhoneBalloonLine } from "../../hooks/use-character-view.ts"
 import styles from "./phone-balloon.module.css"
 
-export type PhoneBalloonProps = {
+type PhoneBalloonProps = {
   readonly face: CharacterFaceInfo
   readonly line: PhoneBalloonLine
   readonly onOpenLog: () => void

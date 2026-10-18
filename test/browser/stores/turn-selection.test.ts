@@ -1,16 +1,15 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  useTurnSelection,
-  type TurnSelectionValue,
-} from "../../../src/browser/stores/turn-selection.ts"
+import { useTurnSelection } from "../../../src/browser/stores/turn-selection.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
 } from "../../../src/shared/session/session-state.ts"
 import { detailRecord, requestRecord } from "../../fixture/session-record.ts"
 import { putState, putSession } from "../session-store.ts"
+
+type TurnSelectionValue = ReturnType<typeof useTurnSelection>
 
 afterEach(() => {
   cleanup()

@@ -52,12 +52,12 @@ const PROPOSAL_RUNNING_BLOCKED_REASON = "いま提案を頼んでいる。終わ
 const TICK_INTERVAL_MS = 1000
 
 /** ボタンを押せるか（押せないときは理由を添える）。 */
-export type UsageReviewStartAvailability =
+type UsageReviewStartAvailability =
   | { readonly kind: "available" }
   | { readonly kind: "blocked"; readonly reason: string }
 
 /** 段の右に添える数。数える元が無い段（コンテキスト・見直し案）は常に `none`。 */
-export type UsageReviewStageCount =
+type UsageReviewStageCount =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly label: string }
 
@@ -72,7 +72,7 @@ export type UsageReviewStageView = {
 }
 
 /** 走っている見直しか提案の実行の直近のセリフ。まだ無ければ `none`。 */
-export type UsageReviewSpeechView = UsageReviewSpeech
+type UsageReviewSpeechView = UsageReviewSpeech
 
 /**
  * 札1枚ぶんの提案の実行の様子。実行した提案（`usageProposalRun.key`）の札にだけ出す。
@@ -96,7 +96,7 @@ export type UsageProposalRunView =
     }
 
 /** 「前回の提案」のリンク。無ければ出さない。 */
-export type PreviousUsageReviewView =
+type PreviousUsageReviewView =
   | { readonly kind: "none" }
   | { readonly kind: "found"; readonly dateLabel: string; readonly onOpen: () => void }
 
@@ -104,7 +104,7 @@ export type PreviousUsageReviewView =
  * 結果の場面を閉じて「前回の提案」を開く前の画面へ戻る口。
  * 実際の結果（`usageReview.kind === "result"`）には、戻る先の「ふだん」が無いので出さない。
  */
-export type UsageReviewResultClose =
+type UsageReviewResultClose =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly onClose: () => void }
 

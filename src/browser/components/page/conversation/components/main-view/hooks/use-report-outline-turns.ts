@@ -13,7 +13,7 @@ import { newSectionIndexesOfTurn } from "../domain/new-heading.ts"
 import { turnTitle } from "../domain/turn-title.ts"
 
 /** やり取り1件。題・結果・脇の話の数。 */
-export type ReportOutlineTurnEntry = {
+type ReportOutlineTurnEntry = {
   readonly id: number
   readonly title: string
   readonly result: TurnResult

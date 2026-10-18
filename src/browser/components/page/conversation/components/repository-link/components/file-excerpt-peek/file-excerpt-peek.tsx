@@ -14,7 +14,7 @@ const GAP_PX = 6
 /** 窓の端から空ける幅（px）。 */
 const WINDOW_MARGIN_PX = 8
 
-export type FileExcerptPeekProps = {
+type FileExcerptPeekProps = {
   /** 押せるパスの `aria-describedby` が指す id。 */
   readonly id: string
   readonly path: string

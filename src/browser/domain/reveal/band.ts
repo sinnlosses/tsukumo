@@ -38,7 +38,7 @@ export type RevealFrame = {
 }
 
 /** Z字の1画ぶんの帯。ビューポート座標（塊はトピックなので、要素をまたいで1本に伸びる）。 */
-export type RevealBand = {
+type RevealBand = {
   readonly top: number
   readonly bottom: number
   /** 書き始めの左端。どの帯も塊の左端（行頭は揃っている）。 */

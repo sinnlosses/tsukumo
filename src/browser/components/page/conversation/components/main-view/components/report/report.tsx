@@ -13,7 +13,7 @@ import { detailBlockClassName, Markdown } from "../../../markdown/markdown.tsx"
 import styles from "../../main-view.module.css"
 import { splitReportBlocks } from "./domain/split-blocks.ts"
 
-export type ReportProps = {
+type ReportProps = {
   readonly markdown: string
   /** 書き上げていくように見せるか。見るのはマウントした時点の値だけ。 */
   readonly reveal: boolean

@@ -6,11 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { queryClient } from "../../../src/browser/domain/query-client.ts"
 import { rpc } from "../../../src/browser/domain/rpc.ts"
-import type { SessionSocketHandlers } from "../../../src/browser/lib/socket.ts"
+import type { connectSessionSocket } from "../../../src/browser/lib/socket.ts"
 import { useSessionConnection } from "../../../src/browser/stores/session.ts"
 import { PROTOCOL_VERSION, type ServerFrame } from "../../../src/shared/frame.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+
+type SessionSocketHandlers = Parameters<typeof connectSessionSocket>[1]
 
 let handlers: SessionSocketHandlers | undefined = undefined
 

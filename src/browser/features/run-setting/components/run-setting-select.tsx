@@ -23,7 +23,7 @@ export type RunSettingSelectOption = {
   readonly row: ReactNode
 }
 
-export type RunSettingSelectProps = {
+type RunSettingSelectProps = {
   readonly id: string
   readonly ariaLabel: string
   /** 吊り札の頭の見出し（「モデル」「effort」「許可モード」）。 */

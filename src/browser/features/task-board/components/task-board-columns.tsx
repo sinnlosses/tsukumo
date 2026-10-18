@@ -7,7 +7,7 @@ import { LayoutResizer } from "../../../components/ui/layout-resizer/layout-resi
 import { useTaskBoardListWidth } from "../hooks/use-task-board-list-width.ts"
 import taskBoardStyles from "../task-board.module.css"
 
-export type TaskBoardColumnsProps = {
+type TaskBoardColumnsProps = {
   readonly list: ReactNode
   readonly detail: ReactNode
 }

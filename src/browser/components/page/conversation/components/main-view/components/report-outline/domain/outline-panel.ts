@@ -7,7 +7,7 @@ import { isPlainObject } from "remeda"
  * 利用者が選んだ畳み。`unset` のあいだは札の幅で決まる（{@link isOutlineCollapsed}）。
  * 一度でも開く・畳むを選んだら、札の幅に関わらずその選択を使う。
  */
-export type OutlineCollapseChoice = "unset" | "collapsed" | "open"
+type OutlineCollapseChoice = "unset" | "collapsed" | "open"
 
 export type OutlinePanel = {
   /**

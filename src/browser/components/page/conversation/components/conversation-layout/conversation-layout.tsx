@@ -8,7 +8,7 @@ import type { ReactElement, ReactNode } from "react"
 import { useConversationLayout } from "./hooks/use-conversation-layout.ts"
 import { PresentationalConversationLayout } from "./presentational-conversation-layout.tsx"
 
-export type ConversationLayoutProps = {
+type ConversationLayoutProps = {
   readonly main: ReactNode
   readonly sidebar: ReactNode
   readonly character: ReactNode

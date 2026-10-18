@@ -1,7 +1,7 @@
 // グラフの凡例を出さない代わりに、系列名・項目名を線と棒の端に直接書く Chart.js の plugin。
 // arrow と slope の種類と系列名は `options.plugins["tsukumo-direct-label"]` から読む。
 
-export const DIRECT_LABEL_PLUGIN_ID = "tsukumo-direct-label"
+const DIRECT_LABEL_PLUGIN_ID = "tsukumo-direct-label"
 
 const LABEL_GAP = 14
 const LABEL_OFFSET = 8

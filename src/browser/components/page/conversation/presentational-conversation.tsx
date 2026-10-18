@@ -18,7 +18,7 @@ import { MainView } from "./components/main-view/main-view.tsx"
 import { PendingAskCard } from "./components/pending-ask-card/pending-ask-card.tsx"
 import { RequestedTaskBoard } from "./components/requested-task-board/requested-task-board.tsx"
 
-export type PresentationalConversationProps = {
+type PresentationalConversationProps = {
   readonly chatMode: boolean
 }
 

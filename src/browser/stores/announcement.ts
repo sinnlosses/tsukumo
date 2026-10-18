@@ -6,13 +6,13 @@ import { create } from "zustand"
 import { announcementsBetween } from "../domain/session-announcement.ts"
 import { useSession } from "./session.ts"
 
-export type AnnouncementBatch = {
+type AnnouncementBatch = {
   /** 入れ替えるたびに進む。同じ文面が続いても別の挿入として読ませる。 */
   readonly id: number
   readonly texts: readonly string[]
 }
 
-export type AnnouncementState = {
+type AnnouncementState = {
   readonly batch: AnnouncementBatch
 }
 

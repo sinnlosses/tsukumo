@@ -19,7 +19,7 @@ import styles from "./question-record.module.css"
 const FREE_TEXT_SUFFIX = "（自由入力）"
 const PREVIEWS_SUMMARY = "比べた内容"
 
-export type PresentationalQuestionRecordProps = QuestionRecordModel
+type PresentationalQuestionRecordProps = QuestionRecordModel
 
 export function PresentationalQuestionRecord(
   props: PresentationalQuestionRecordProps,

@@ -15,7 +15,7 @@ import {
 } from "../domain/step-reorder.ts"
 
 /** つかんでいる行と置き場所。`offsetY` はポインタで動かした縦の量で、キーボードでは 0。 */
-export type StepGrabView =
+type StepGrabView =
   | { readonly kind: "idle" }
   | {
       readonly kind: "grabbed"
@@ -24,7 +24,7 @@ export type StepGrabView =
       readonly offsetY: number
     }
 
-export type StepGrabHandlers = {
+type StepGrabHandlers = {
   readonly onPointerDown: (index: number, event: PointerEvent<HTMLElement>) => void
   readonly onPointerMove: (event: PointerEvent<HTMLElement>) => void
   readonly onPointerUp: (event: PointerEvent<HTMLElement>) => void

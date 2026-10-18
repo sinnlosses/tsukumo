@@ -53,14 +53,14 @@ export type PortraitDropModel = {
 }
 
 /** id の欄の下に出す一言。空・形が合う・押せる間は静かな案内、崩れたら理由に変わる。 */
-export type CreateIdNoteModel =
+type CreateIdNoteModel =
   | { readonly kind: "hint"; readonly text: string }
   | { readonly kind: "invalid" | "taken" | "failed"; readonly text: string }
 
 type GenerationStage = (typeof GENERATION_STAGES)[number]["stage"]
 
 /** 生成中の段の並び。済んだ段・いまの段・まだの段を `state` で言う。 */
-export type GenerationProgressModel =
+type GenerationProgressModel =
   | { readonly kind: "idle" }
   | {
       readonly kind: "running"
@@ -71,7 +71,7 @@ export type GenerationProgressModel =
     }
 
 /** 「立ち絵から生成」のボタンと、その下の一言・進み。 */
-export type CharacterGenerationModel = {
+type CharacterGenerationModel = {
   readonly label: string
   readonly progress: GenerationProgressModel
   readonly canGenerate: boolean
@@ -79,7 +79,7 @@ export type CharacterGenerationModel = {
   readonly note: { readonly kind: "hint" | "failed"; readonly text: string }
 }
 
-export type CreatePersonaModel = {
+type CreatePersonaModel = {
   readonly hint: string
   readonly value: string
   readonly onChange: (persona: string) => void

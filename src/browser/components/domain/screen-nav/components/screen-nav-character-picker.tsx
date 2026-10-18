@@ -13,7 +13,7 @@ import type { ScreenNavCharacterPicker as Picker } from "../hooks/use-character-
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-character-picker.module.css"
 
-export type ScreenNavCharacterPickerProps = {
+type ScreenNavCharacterPickerProps = {
   readonly picker: Picker
 }
 

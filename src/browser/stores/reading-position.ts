@@ -9,7 +9,7 @@ export type ReadingPosition = {
   readonly offsetPx: number
 }
 
-export type ReadingPositionState = {
+type ReadingPositionState = {
   /** 覚えがどの世代のセッションのものか。やり取りの ID はセッションごとに振るので、世代が変わったら捨てる。 */
   readonly generation: number
   /** やり取りの ID（`MainViewTurn.id`）から引く。 */

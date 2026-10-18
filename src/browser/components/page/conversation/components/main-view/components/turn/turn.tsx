@@ -25,7 +25,7 @@ import { Report } from "../report/report.tsx"
 import { TurnFailureBlock } from "../turn-failure-block/turn-failure-block.tsx"
 import styles from "./turn.module.css"
 
-export type TurnProps = {
+type TurnProps = {
   readonly turn: MainViewTurn
   /** 今回（いちばん新しい）のやり取りか。演出を掛けてよいのは今回だけで、過去のターンでは本文が最初から全部出ている。 */
   readonly newest: boolean

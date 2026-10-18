@@ -41,7 +41,7 @@ const MINI_EXPRESSION = "default"
  */
 const MINI_CALL_FALLBACK = "ミニ立ち絵"
 
-export type MiniPortraitProps = {
+type MiniPortraitProps = {
   /** いま出ているやり取り（`MainViewTurn.id`）。筆先が別のやり取りのものなら出さない（座標の先にはもう違う本文がある）。 */
   readonly shownTurnId: number
 }

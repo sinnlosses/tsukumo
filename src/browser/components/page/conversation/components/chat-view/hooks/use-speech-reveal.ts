@@ -20,7 +20,7 @@ import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 /** キャラクターの吹き出しどうしを最低これだけ空ける（ms）。 */
 const MIN_GAP_MS = 2000
 
-export type RevealedChatLog = {
+type RevealedChatLog = {
   /** いま出してよい記録（`entries` の先頭からの一部）。 */
   readonly entries: readonly ChatLogEntry[]
   /** まだ出していない記録が控えている（`showTyping` の条件に足す）。 */

@@ -28,11 +28,11 @@ type PendingAccent<Target> = {
 type HeldColors<Target extends string> = Readonly<Record<string, Partial<Record<Target, string>>>>
 
 /** `set` は色を動かして送る。`reset` は上書きを外すだけで送らない（送り先の側で戻す）。 */
-export type HeldAccentChange =
+type HeldAccentChange =
   | { readonly kind: "set"; readonly color: string }
   | { readonly kind: "reset" }
 
-export type HeldAccent<Target extends string> = {
+type HeldAccent<Target extends string> = {
   /** パックの上書き（引きずっていない欄は入っていない）。 */
   readonly heldOf: (pack: string) => Partial<Record<Target, string>>
   readonly hold: (pack: string, target: Target, change: HeldAccentChange) => void

@@ -3,7 +3,7 @@
 
 import { create } from "zustand"
 
-export type ComposerFocusState = {
+type ComposerFocusState = {
   readonly signal: number
   readonly requestFocus: () => void
 }

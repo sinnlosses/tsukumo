@@ -6,7 +6,7 @@
 import { create } from "zustand"
 
 /** 「この日を開いて」の1回ぶん。`token` は呼ぶたびに増え、同じ日への2回目の要求も見分けられる。 */
-export type DiaryBookOpenRequest = { readonly date: string; readonly token: number }
+type DiaryBookOpenRequest = { readonly date: string; readonly token: number }
 
 /** 見開きに「この日を開いて」と頼む。 */
 export function requestDiaryBookOpen(date: string): void {

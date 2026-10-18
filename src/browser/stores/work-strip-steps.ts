@@ -14,11 +14,11 @@ export type StepsLanding =
   | { readonly kind: "phase"; readonly phaseIndex: number; readonly signal: number }
 
 /** 一覧の開き具合。`exchange` は開いたときのやり取り（`MainViewContent` の `exchange`）で、やり取りが替わると閉じて見える。 */
-export type WorkStripStepsOpened =
+type WorkStripStepsOpened =
   | { readonly kind: "closed" }
   | { readonly kind: "open"; readonly exchange: number; readonly landing: StepsLanding }
 
-export type WorkStripStepsState = {
+type WorkStripStepsState = {
   readonly opened: WorkStripStepsOpened
   /** 行や段を指して開いた回数。合図を押すたびに変えるために数える。 */
   readonly landingCount: number

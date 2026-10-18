@@ -24,7 +24,7 @@ export type PhaseMove =
   | { readonly kind: "move"; readonly position: string; readonly row: PhaseRow }
 
 /** 板で開いている行。 */
-export type PhaseSheet =
+type PhaseSheet =
   | { readonly kind: "closed" }
   | {
       readonly kind: "open"

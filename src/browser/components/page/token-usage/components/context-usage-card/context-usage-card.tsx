@@ -33,7 +33,7 @@ const UNAVAILABLE_NOTE = "いまのコンテキストはまだ取れていない
 /** 畳んだ内訳の見出し（`details` の `summary`）。 */
 const DETAIL_SUMMARY = "MCP ツール・メモリファイル・スキルの内訳を見る"
 
-export type ContextUsageCardProps = {
+type ContextUsageCardProps = {
   readonly card: UseContextUsageResult
 }
 

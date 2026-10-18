@@ -41,7 +41,7 @@ export type ReportOutlineEntry = {
 }
 
 /** 上の段に並べるやり取り1件。 */
-export type ReportOutlineTurn = {
+type ReportOutlineTurn = {
   readonly id: number
   readonly title: string
   readonly result: TurnResult

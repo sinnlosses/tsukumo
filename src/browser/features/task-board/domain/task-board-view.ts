@@ -120,7 +120,7 @@ export type TaskBoardContent =
       readonly knownIds: ReadonlySet<string>
     }
 
-export type TaskBoardConfirm =
+type TaskBoardConfirm =
   | { readonly kind: "closed" }
   | {
       readonly kind: "open"
@@ -129,7 +129,7 @@ export type TaskBoardConfirm =
     }
 
 /** `onKeyDown` がフックの中で読む分だけの、キー入力の形（React の `KeyboardEvent` はそのまま渡せる）。 */
-export type TaskBoardKeyEvent = {
+type TaskBoardKeyEvent = {
   readonly nativeEvent: { readonly isComposing: boolean }
   readonly metaKey: boolean
   readonly ctrlKey: boolean

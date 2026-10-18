@@ -31,7 +31,7 @@ export type TurnBeside =
  * - `arrival`: `turn.steps` を届いた順に出す
  * - `final-first`: 最終レポート → `besides` → 経過の畳み（`progress`。空なら畳みを出さない）
  */
-export type TurnArrangement =
+type TurnArrangement =
   | { readonly kind: "arrival" }
   | {
       readonly kind: "final-first"

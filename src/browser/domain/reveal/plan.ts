@@ -22,7 +22,7 @@ import { clamp } from "./paint.ts"
 /** 見せる範囲を進められる要素。`clip-path` と `opacity` を持つもの（レポートの塊は全部これ）。 */
 export type RevealElement = HTMLElement | SVGElement
 
-export type RevealBlockKind = "text" | "figure"
+type RevealBlockKind = "text" | "figure"
 
 /** トピックを構成する要素1つ。 */
 export type RevealMember = {
@@ -35,7 +35,7 @@ export type RevealMember = {
  * （`topicDurationMs` が返す持ち時間のうちどこまで進んだら留めるか）で、実際の時間帯は
  * 塊が並ぶにつれて後ろへずれる（{@link RevealBlock.endMs} に足し込まれる）。
  */
-export type RevealPause = {
+type RevealPause = {
   readonly atMs: number
   readonly durationMs: number
 }

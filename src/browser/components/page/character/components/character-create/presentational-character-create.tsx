@@ -19,7 +19,7 @@ import styles from "./character-create.module.css"
 import { PortraitDrop } from "./components/portrait-drop/portrait-drop.tsx"
 import type { CharacterCreateModel } from "./hooks/use-character-create.ts"
 
-export type PresentationalCharacterCreateProps = CharacterCreateModel & {
+type PresentationalCharacterCreateProps = CharacterCreateModel & {
   readonly onClose: () => void
 }
 

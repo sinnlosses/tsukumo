@@ -1,7 +1,7 @@
 // いま選んでいる字のうち、レポートの本文の中にあるものを、口を出す位置と一緒に取り出す。
 
 /** レポートの本文の器に付ける印の名前。JSX の属性名に定数を書けないので、器の側は同じ綴りを直に置く。 */
-export const REPORT_BODY_ATTRIBUTE = "data-report-body"
+const REPORT_BODY_ATTRIBUTE = "data-report-body"
 
 export type ReportSelection = {
   readonly text: string

@@ -22,7 +22,7 @@ const PLACEHOLDER_CELLS = Array.from({ length: 35 }, (_, index): CalendarCell =>
 }))
 const PLACEHOLDER_RANGE_LABEL = " "
 
-export type LanternCalendarProps = {
+type LanternCalendarProps = {
   readonly calendar: AchievementCalendarView
   /** 見ている日（枠を `--accent` にする。まだ分からなければ `undefined`）。 */
   readonly viewedDate: string | undefined

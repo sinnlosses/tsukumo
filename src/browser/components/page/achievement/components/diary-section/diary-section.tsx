@@ -27,7 +27,7 @@ const STAGE_LABEL = {
   pick: "いちばんを選ぶ",
 } as const satisfies Record<DiaryStage, string>
 
-export type DiarySectionProps = {
+type DiarySectionProps = {
   readonly diary: DiarySectionModel
   readonly isFetching: boolean
   readonly writing: AchievementWriting

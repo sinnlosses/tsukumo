@@ -17,7 +17,7 @@ import {
 } from "./run-setting-option.tsx"
 import { RunSettingSelect } from "./run-setting-select.tsx"
 
-export type RunSettingPlacement = "sidebar-footer" | "rail" | "nav-drawer"
+type RunSettingPlacement = "sidebar-footer" | "rail" | "nav-drawer"
 
 const PLACEMENT_CLASS = {
   "sidebar-footer": styles["run-setting-group-footer"],

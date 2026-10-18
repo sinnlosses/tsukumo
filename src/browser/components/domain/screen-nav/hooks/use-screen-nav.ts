@@ -38,7 +38,7 @@ import {
 import { useSettings, type ScreenNavSettings } from "./use-settings.ts"
 
 /** 口に添える絵の種類。絵そのものは口の部品が引く。 */
-export type ScreenNavGateIcon = "work" | "chat" | "character" | "token" | "achievement"
+type ScreenNavGateIcon = "work" | "chat" | "character" | "token" | "achievement"
 
 /**
  * 帯に並ぶ口1つ。「いまの画面か」「押せるか」は畳んで渡す（部品は判定を持たない）。
@@ -80,7 +80,7 @@ export type ScreenNavParts = {
 }
 
 /** 引き出しの切り替えのタブ1つ。 */
-export type NavDrawerTabView = {
+type NavDrawerTabView = {
   readonly tab: NavDrawerTab
   readonly label: string
   readonly selected: boolean
@@ -90,7 +90,7 @@ export type NavDrawerTabView = {
  * 引き出しの下端の「＋ 新しいやり取り」。
  * `restartRefused` の間は何も送らないことは `onStart` の中で決めていて、部品は「送るかどうか」を持たない。
  */
-export type NavDrawerNewSession = {
+type NavDrawerNewSession = {
   readonly disabled: boolean
   /** `disabled` のときだけ理由を持つ。 */
   readonly title: string | undefined

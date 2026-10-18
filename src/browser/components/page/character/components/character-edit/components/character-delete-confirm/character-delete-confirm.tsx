@@ -18,7 +18,7 @@ import characterStyles from "../../../../character.module.css"
 import type { CharacterDeleteBandModel } from "../../../../domain/character-edit-model.ts"
 import styles from "./character-delete-confirm.module.css"
 
-export type CharacterDeleteConfirmProps = {
+type CharacterDeleteConfirmProps = {
   readonly band: Extract<CharacterDeleteBandModel, { readonly kind: "shown" }>
   /** 打った id が一致した状態で実行ボタンを押したとき。 */
   readonly onConfirm: () => void

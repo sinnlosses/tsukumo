@@ -6,7 +6,7 @@ import type { Draft } from "../../../../../../../stores/composer-draft.ts"
 import styles from "../../dispatch.module.css"
 import type { ComposerSurface, ComposerSurfaceHandlers } from "../../domain/composer-surface.ts"
 
-export type TextAreaSurfaceProps = ComposerSurfaceHandlers & {
+type TextAreaSurfaceProps = ComposerSurfaceHandlers & {
   readonly ref: Ref<ComposerSurface | null>
   readonly draft: Draft
   readonly placeholder: string

@@ -7,12 +7,12 @@ import type { ReactElement } from "react"
 
 import styles from "./select.module.css"
 
-export type SelectOption = {
+type SelectOption = {
   readonly value: string
   readonly label: string
 }
 
-export type SelectProps = {
+type SelectProps = {
   readonly id: string
   readonly ariaLabel: string
   /**

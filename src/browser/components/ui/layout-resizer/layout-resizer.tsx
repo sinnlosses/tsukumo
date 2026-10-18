@@ -5,7 +5,7 @@ import { useEffectEvent, type PointerEvent, type ReactElement, type RefObject } 
 
 import styles from "./layout-resizer.module.css"
 
-export type LayoutResizerProps = {
+type LayoutResizerProps = {
   readonly orientation: "horizontal" | "vertical"
   /** 動かす対象そのもの（仕切りの両側を含む要素）。`toValue` の比率の基準にする。 */
   readonly containerRef: RefObject<HTMLElement | null>

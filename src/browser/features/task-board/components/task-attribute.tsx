@@ -7,7 +7,7 @@ import type { ReactElement } from "react"
 import type { TaskDifficulty, TaskLoopable } from "../../../../shared/repository/task-summary.ts"
 import styles from "./task-attribute.module.css"
 
-export type TaskAttributeValue =
+type TaskAttributeValue =
   | { readonly kind: "difficulty"; readonly value: TaskDifficulty }
   | { readonly kind: "loopable"; readonly value: TaskLoopable }
 

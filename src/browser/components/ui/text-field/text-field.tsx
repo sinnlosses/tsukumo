@@ -7,7 +7,7 @@ import type { ReactElement } from "react"
 
 import styles from "./text-field.module.css"
 
-export type TextFieldProps = {
+type TextFieldProps = {
   readonly element: "input" | "textarea"
   readonly id: string
   readonly className: string

@@ -24,12 +24,12 @@ import styles from "./balloon.module.css"
  * `reaction` は反応の吹き出しで、記録に無いので押せない（`data-reaction` に出来事を出す）。
  * `writing` は迎えの挨拶を書いている途中の吹き出しで、`props.text` を使わず点3つを出す。
  */
-export type BalloonInteraction =
+type BalloonInteraction =
   | { readonly kind: "reaction"; readonly reaction: ReactionKind }
   | { readonly kind: "writing" }
   | { readonly kind: "toggleable"; readonly selected: boolean; readonly onToggle: () => void }
 
-export type BalloonProps = {
+type BalloonProps = {
   /** `interaction.kind === "writing"` のときは使わない。 */
   readonly text: string
   /** 並びの中でいちばん新しいセリフか（`data-latest` に出し、CSS が最新の見た目を当てる）。 */

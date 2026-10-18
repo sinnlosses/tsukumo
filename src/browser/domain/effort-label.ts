@@ -31,7 +31,7 @@ const EFFORT_UNKNOWN_REASON = "まだ effort が分からない"
 export const EFFORT_PLACEHOLDER_VALUE = ""
 
 /** モデルの吊り札の行に添える、effort に対応しない旨。 */
-export const EFFORT_UNSUPPORTED_NOTE = "effort なし"
+const EFFORT_UNSUPPORTED_NOTE = "effort なし"
 
 /**
  * モデルの吊り札の行に「effort なし」を添えるかどうか。

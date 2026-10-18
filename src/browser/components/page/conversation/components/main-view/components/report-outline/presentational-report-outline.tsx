@@ -33,7 +33,7 @@ const ACTIVE_TURN_MARK = "●"
 const NEW_SECTION_MARK = "新"
 const NEW_SECTION_LABEL = "中間レポートに無かった節"
 
-export type PresentationalReportOutlineProps = ReportOutlineModel & {
+type PresentationalReportOutlineProps = ReportOutlineModel & {
   readonly children: ReactNode
 }
 

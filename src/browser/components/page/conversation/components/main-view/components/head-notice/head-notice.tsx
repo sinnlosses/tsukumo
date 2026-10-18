@@ -9,7 +9,7 @@ import styles from "./head-notice.module.css"
 const NOTICE_ARROW = "→"
 const NOTICE_MARK = "!"
 
-export type HeadNoticeProps = {
+type HeadNoticeProps = {
   readonly text: string
   readonly form: "row" | "mark"
   readonly onPress: () => void

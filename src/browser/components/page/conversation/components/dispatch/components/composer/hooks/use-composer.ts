@@ -54,7 +54,7 @@ import {
  * 答えはメインビューのお伺いの札で選ぶ（質問ならここに書いて送ってもよい）。
  * `onJump` は「お伺いへ」の口で、お伺いの札の最初の選択肢へフォーカスを移す。
  */
-export type ComposerBand =
+type ComposerBand =
   | { readonly kind: "none" }
   | { readonly kind: "inquiry"; readonly text: string; readonly onJump: () => void }
   | { readonly kind: "disconnected"; readonly text: string }

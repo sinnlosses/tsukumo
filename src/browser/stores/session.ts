@@ -34,10 +34,10 @@ export type SessionDispatch = CommandClient
  * 手続きの結果を待つ呼び出し専用の送り口。型は {@link SessionDispatch} と同じ。
  * 断られたとき（契約の `REFUSED`）・接続が切れたとき・繋がっていないときは握りつぶさず reject する。
  */
-export type AwaitedDispatch = CommandClient
+type AwaitedDispatch = CommandClient
 
 /** コマンドの送り先。`connectSessionSocket` の接続がそのまま満たす（閉じるのは store の関心ではない）。 */
-export type CommandSocket = {
+type CommandSocket = {
   readonly commandLink: CommandLink
 }
 
@@ -46,12 +46,12 @@ export type CommandSocket = {
  * `mismatched` の間は `events` を畳まない（形の違う記録を読むと、部品が無いはずのフィールドを読んで壊れる）。
  * 次の `hello` で合えば `compatible` に戻る。
  */
-export type ProtocolAgreement = "compatible" | "mismatched"
+type ProtocolAgreement = "compatible" | "mismatched"
 
 /**
  * store の中身。接続の状態（`connection`）と版の一致（`protocol`）はブラウザだけが持つので、`SessionState` には入れず同じ store に相乗りさせる。
  */
-export type SessionStoreState = {
+type SessionStoreState = {
   readonly state: SessionState
   readonly connection: ConnectionStatus
   /** 接続が一度切れてから、まだ `open` に戻っていないか。初回の接続中は false。 */

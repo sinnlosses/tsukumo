@@ -17,7 +17,7 @@ import { PhoneBalloon } from "./components/phone-balloon/phone-balloon.tsx"
 import { SpeechLog } from "./components/speech-log/speech-log.tsx"
 import type { CharacterViewModel } from "./hooks/use-character-view.ts"
 
-export type PresentationalCharacterViewProps = CharacterViewModel
+type PresentationalCharacterViewProps = CharacterViewModel
 
 export function PresentationalCharacterView({
   portraitUrl,

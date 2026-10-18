@@ -23,7 +23,7 @@ import { SessionSwitcher } from "./components/session-switcher.tsx"
 import type { ScreenNavView } from "./hooks/use-screen-nav.ts"
 import styles from "./screen-nav.module.css"
 
-export type PresentationalScreenNavProps = ScreenNavView & {
+type PresentationalScreenNavProps = ScreenNavView & {
   readonly slots: NavDrawerSlots
 }
 

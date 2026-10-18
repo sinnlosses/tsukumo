@@ -1,6 +1,6 @@
 // 始め方の一覧で札を始めるキー（`1`〜`3`）・入力欄へ移るキー（`/`）・前のやり取りを見るキー（`←`）の読み取り。
 
-export type WelcomeKey =
+type WelcomeKey =
   | { readonly kind: "card"; readonly index: number }
   | { readonly kind: "write" }
   | { readonly kind: "previous" }

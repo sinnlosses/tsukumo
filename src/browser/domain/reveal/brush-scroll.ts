@@ -27,13 +27,13 @@ const KEEP_MARGIN_PX = 96
  * `tipBottom` は帯の下端（ミニ立ち絵の足元）、`tipHeight` はそこから立ち絵の高さぶん上までの見積もりで、呼ぶ側が固定値で渡す。
  * 実際の高さは窓幅で 60〜96px に変わるが（`mini-portrait.module.css` の `--mini-portrait-height`）、ここで DOM を測ると、立ち絵が出ない状況（素材が無い・印が見つからない）の分岐まで持ち込むことになる。
  */
-export type BrushTipRange = {
+type BrushTipRange = {
   readonly tipBottom: number
   readonly tipHeight: number
 }
 
 /** 筆先を追う器と、その見張り。 */
-export type BrushScroller = {
+type BrushScroller = {
   /** 送る器。寸法が変わったら `remeasure` が要る。 */
   readonly element: Element
   /** 基準の位置と器の見える高さを測り直す。`follow` より先に1回は呼ぶ（呼ぶまでは送らない）。 */

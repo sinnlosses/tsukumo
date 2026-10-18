@@ -14,7 +14,7 @@ import type {
 import { usePackSelection } from "../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../stores/session.ts"
 
-export type SelectedPack =
+type SelectedPack =
   | {
       /** まだ `character-changed` が届いていない（接続直後の一瞬）。 */
       readonly kind: "waiting"

@@ -16,7 +16,7 @@ import { Balloon } from "../balloon/balloon.tsx"
 
 const NO_TIME = { kind: "unknown" } satisfies ClockStamp
 
-export type BalloonTrackProps = {
+type BalloonTrackProps = {
   /** 古い→新しいの順（`SessionState.speeches` と同じ並び）。 */
   readonly speeches: readonly CharacterViewSpeech[]
   readonly reaction: BalloonReaction

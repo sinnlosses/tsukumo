@@ -44,7 +44,7 @@ export function matchingCommands(
   return [...prefixMatches, ...partialMatches].slice(0, MAX_COMMAND_SUGGESTIONS)
 }
 
-export type CommandSuggestionsProps = {
+type CommandSuggestionsProps = {
   readonly matches: readonly CommandDescription[]
   readonly selectedIndex: number
   /** マウスで押した（`mousedown`）。既定動作（フォーカス移動）は呼び出し側で止める。 */

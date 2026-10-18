@@ -2,7 +2,7 @@
 
 import { create } from "zustand"
 
-export type InterimViewingState = {
+type InterimViewingState = {
   /** 覚えがどの世代のセッションのものか。やり取りの ID はセッションごとに振るので、世代が変わったら捨てる。 */
   readonly generation: number
   /** やり取りの ID（`MainViewTurn.id`）から引く。中間レポートを見たやり取り。 */

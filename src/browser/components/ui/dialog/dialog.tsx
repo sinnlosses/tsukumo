@@ -8,7 +8,7 @@ import type { CSSProperties, MouseEvent, ReactElement, ReactNode } from "react"
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import styles from "./dialog.module.css"
 
-export type DialogBackdrop = "dim" | "deep" | "veil" | "sheet" | "clear"
+type DialogBackdrop = "dim" | "deep" | "veil" | "sheet" | "clear"
 
 /**
  * 置き方。`auto` は部品が置き方を持たない（ブラウザ既定の中央寄せか、`className` の CSS で置く）。

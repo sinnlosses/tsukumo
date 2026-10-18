@@ -20,7 +20,7 @@ import { Text } from "../../../../ui/text/text.tsx"
 import tokenUsageStyles from "../../token-usage.module.css"
 import styles from "./period-usage-card.module.css"
 
-export type PeriodUsageCardProps = {
+type PeriodUsageCardProps = {
   /** 何の数か（入力・出力・キャッシュ読み・キャッシュ作成）。 */
   readonly label: string
   /** 期間の合計（書き方は呼ぶ側が当てたあとの文字列）。 */

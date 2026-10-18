@@ -6,7 +6,7 @@ import type { ReactElement } from "react"
 import type { DiaryBookmark } from "../../../../../../shared/diary/diary.ts"
 import styles from "./bookmark-section.module.css"
 
-export type BookmarkSectionProps = {
+type BookmarkSectionProps = {
   /** 日記が無い日は `undefined`。 */
   readonly bookmark: DiaryBookmark | undefined
   /** 書いたパックの名前（見出しの「<名前>が選んだ」に使う）。 */

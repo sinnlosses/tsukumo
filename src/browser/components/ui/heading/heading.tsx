@@ -14,10 +14,10 @@ import {
 } from "../text/text.tsx"
 import styles from "./heading.module.css"
 
-export type HeadingLevel = 1 | 2 | 3 | 4
-export type HeadingSize = Exclude<TextSize, "inherit">
-export type HeadingTone = TextTone
-export type HeadingWeight = Exclude<TextWeight, "inherit">
+type HeadingLevel = 1 | 2 | 3 | 4
+type HeadingSize = Exclude<TextSize, "inherit">
+type HeadingTone = TextTone
+type HeadingWeight = Exclude<TextWeight, "inherit">
 
 export type HeadingProps = {
   readonly level: HeadingLevel

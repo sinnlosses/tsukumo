@@ -18,9 +18,9 @@ import type {
 import styles from "./screen-nav-session-tag.module.css"
 
 /** 札を置く場所。広い画面の帯の左端か、狭い画面の引き出しの名乗りの行か。 */
-export type ScreenNavSessionTagPlacement = "screen-nav" | "nav-drawer"
+type ScreenNavSessionTagPlacement = "screen-nav" | "nav-drawer"
 
-export type ScreenNavSessionTagProps = {
+type ScreenNavSessionTagProps = {
   readonly tag: ScreenNavSessionTag
   readonly placement: ScreenNavSessionTagPlacement
 }

@@ -4,7 +4,7 @@ import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import type { TaskBoardFilter } from "../domain/task-board-view.ts"
 
 /** 検索の文字・絞り込みの札・選んでいる行と、詳細を押して切り替えた回数。閉じると `focusSignal` 以外を初めに戻す。 */
-export type BoardState = {
+type BoardState = {
   readonly query: string
   readonly filter: TaskBoardFilter
   readonly chosen: ChosenRow

@@ -9,7 +9,7 @@ export type NavDrawerTab = "turns" | "tasks" | "usage"
 
 export type NavDrawerFace = "tabs" | "settings"
 
-export type NavDrawerState = {
+type NavDrawerState = {
   readonly open: boolean
   readonly tab: NavDrawerTab
   readonly face: NavDrawerFace

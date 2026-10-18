@@ -15,7 +15,7 @@ import { usePhoneHeadHeight } from "../hooks/use-phone-head-height.ts"
 import type { PhoneHead as Head, PhoneHeadProgress } from "../hooks/use-phone-head.ts"
 import styles from "./phone-head.module.css"
 
-export type PhoneHeadProps = {
+type PhoneHeadProps = {
   readonly head: Head
   readonly work: CurrentWork
   /** 1行目の右端に置く、引き出しを開く ≡。 */

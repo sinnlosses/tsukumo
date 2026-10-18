@@ -20,7 +20,7 @@ type PressOrigin = {
 /** 見分けに使うマウスの値（押し始めと手を離したとき）。 */
 type PointerAt = Pick<MouseEvent, "clientX" | "clientY" | "detail">
 
-export type SpeechPressView = {
+type SpeechPressView = {
   readonly onMouseDown: (event: PointerAt) => void
   readonly onClick: (event: PointerAt) => void
   readonly onKeyDown: (event: Pick<KeyboardEvent, "key" | "preventDefault">) => void

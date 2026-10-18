@@ -6,7 +6,7 @@ import { create } from "zustand"
 /** `focus` が true なら、転がしたあと最初の選択肢へフォーカスを移す。 */
 export type InquiryJump = { readonly signal: number; readonly focus: boolean }
 
-export type InquiryJumpState = {
+type InquiryJumpState = {
   readonly jump: InquiryJump
   readonly requestJump: (request: { readonly focus: boolean }) => void
 }

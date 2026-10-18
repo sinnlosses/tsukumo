@@ -8,7 +8,7 @@ export type Draft = {
   readonly caret: number
 }
 
-export type ComposerDraftState = {
+type ComposerDraftState = {
   readonly draft: Draft
   readonly setDraft: (draft: Draft) => void
   /** 字がある下書きは上書きせず、改行1つを挟んで末尾に足す。キャレットは足した字の末尾へ置く。 */

@@ -62,7 +62,7 @@ export type AchievementDaySwitch =
  * 画面の中身。日の切り替えとは別に持つ。
  * 「Beads が読めない」ときだけ日の切り替えも隠すので、`unavailable` はここでも特別に扱う。
  */
-export type AchievementView =
+type AchievementView =
   | { readonly kind: "loading" }
   | { readonly kind: "unavailable" }
   | { readonly kind: "failed" }

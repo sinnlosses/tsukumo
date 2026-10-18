@@ -14,11 +14,11 @@ export function readingLabelOf(section: ReadingSection): string {
 
 export type HeadingStep = "older" | "newer"
 
-export type HeadingMover =
+type HeadingMover =
   | { readonly kind: "none" }
   | { readonly kind: "ready"; readonly move: (step: HeadingStep) => void }
 
-export type ReadingSectionState = {
+type ReadingSectionState = {
   readonly section: ReadingSection
   /** 列を畳んでいるか。 */
   readonly outlineCollapsed: boolean

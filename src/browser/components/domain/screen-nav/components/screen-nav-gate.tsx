@@ -22,7 +22,7 @@ const GATE_ICONS = {
   achievement: <AchievementIcon />,
 } satisfies Record<Gate["icon"], ReactElement>
 
-export type ScreenNavGateProps = {
+type ScreenNavGateProps = {
   readonly gate: Gate
   /** 押したあとに引き出しを閉じる呼び先（広い画面では開いていないので何も起きない）。 */
   readonly onSelect: () => void

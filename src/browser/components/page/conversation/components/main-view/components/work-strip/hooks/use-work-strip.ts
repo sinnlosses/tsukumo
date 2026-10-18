@@ -59,7 +59,7 @@ import { workActivityOf, type WorkActivity } from "../../../domain/work-activity
 import { usePhasePopover, type PhasePopover } from "./use-phase-popover.ts"
 
 /** 段の丸1つの状態。`asking` は今の段で答え待ちが来ているとき。 */
-export type WorkStripPhaseState = "done" | "current" | "asking" | "upcoming"
+type WorkStripPhaseState = "done" | "current" | "asking" | "upcoming"
 
 export type WorkStripPhase = {
   readonly key: string

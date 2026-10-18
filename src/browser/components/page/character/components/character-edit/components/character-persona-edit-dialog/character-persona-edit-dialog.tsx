@@ -17,7 +17,7 @@ import styles from "../../../../character.module.css"
 const PERSONA_HINT =
   "口調や性格を書く。保存した人格が効くのは次に起こすセッションから。雑談で覚えたことはここには出ない"
 
-export type CharacterPersonaEditDialogProps = {
+type CharacterPersonaEditDialogProps = {
   /** 開いた時点の本文。 */
   readonly persona: string
   /** 「保存する」を押したとき。返りを待ち、書き終えてから閉じる（断られたら開いたまま）。 */

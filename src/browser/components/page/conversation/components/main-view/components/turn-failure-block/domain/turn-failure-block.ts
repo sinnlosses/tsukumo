@@ -12,7 +12,7 @@ import { rateLimitResetText } from "../../../../../domain/rate-limit-label.ts"
  * - `request`: 同じ依頼を入力欄に戻す
  * - `after-reset`: 利用上限が戻る時刻を字に添えて、同じ依頼を入力欄に戻す
  */
-export type TurnFailureRetry =
+type TurnFailureRetry =
   | { readonly kind: "none" }
   | {
       readonly kind: "request" | "after-reset"
@@ -21,7 +21,7 @@ export type TurnFailureRetry =
     }
 
 /** 進み具合の帯の手順の一覧で、失敗した手順を開く口。 */
-export type TurnFailureStepsDoor =
+type TurnFailureStepsDoor =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly label: string }
 

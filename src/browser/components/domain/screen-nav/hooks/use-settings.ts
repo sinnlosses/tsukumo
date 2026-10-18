@@ -29,7 +29,7 @@ import {
 } from "./use-reveal-speed-setting.ts"
 
 /** 新しいセッションの既定の操作子。表示はサーバから届いた値だけに従い、押した側へ先に倒さない。 */
-export type ScreenNavSettingsSessionDefault = {
+type ScreenNavSettingsSessionDefault = {
   readonly model: ModelAlias
   readonly onChangeModel: (value: string) => void
   /**

@@ -37,7 +37,7 @@ export function useRepositoryFilePaths(enabled: boolean): readonly string[] {
 }
 
 /** `@` 補完の索引と、サーバが上限で落とした件数。 */
-export type RepositoryFileIndex = {
+type RepositoryFileIndex = {
   readonly index: FileSuggestionIndex
   readonly omittedCount: number
 }

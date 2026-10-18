@@ -3,7 +3,7 @@
 
 import { create } from "zustand"
 
-export type SessionSwitcherRequestState = {
+type SessionSwitcherRequestState = {
   readonly open: boolean
   /** 開いた時刻（エポックミリ秒）。一覧の「今日」「昨日」の分け方の基準で、開いているあいだだけ意味を持つ。 */
   readonly openedAt: number

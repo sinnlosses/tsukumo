@@ -12,7 +12,7 @@ import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "./surprise-section.module.css"
 
-export type SurpriseSectionProps = {
+type SurpriseSectionProps = {
   readonly graduations: readonly AchievementGraduation[]
   readonly milestones: readonly AchievementMilestone[]
 }

@@ -42,7 +42,7 @@ let drawnTheme: string | undefined
 let initializedTheme: string | undefined
 let nextId = 0
 
-export type MermaidBlockProps = {
+type MermaidBlockProps = {
   readonly code: string
 }
 

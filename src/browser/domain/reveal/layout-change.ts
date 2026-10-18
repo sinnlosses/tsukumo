@@ -7,7 +7,7 @@
 // 拾いたい位置のずれは、見張る側が「ずれの原因になる要素の寸法」を対象に含めて拾う。
 
 /** 見張り。あとから現れた要素（遅れて描かれた図）を足せる。 */
-export type LayoutWatch = {
+type LayoutWatch = {
   /** 見張る要素を足す。もう見ている要素を渡しても、寸法が変わっていなければ知らせない。 */
   readonly watch: (targets: readonly Element[]) => void
   /** 見張りを外す。 */

@@ -6,12 +6,12 @@
 
 import { create } from "zustand"
 
-export type DeferredModuleState<Module> =
+type DeferredModuleState<Module> =
   | { readonly kind: "loading" }
   | { readonly kind: "ready"; readonly module: Module }
   | { readonly kind: "failed" }
 
-export type DeferredModule<Module> = {
+type DeferredModule<Module> = {
   /**
    * 読み込む。何度呼んでも読み込みは1回。
    * 失敗しても reject せず、読めなかった状態にして返す。

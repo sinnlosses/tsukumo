@@ -22,7 +22,7 @@ import styles from "../../../../character.module.css"
 const TAGLINE_HINT = "画面や雑談のサイドバーのプロフィールの札に出る一言"
 const NAME_HINT = "画面や吹き出しに出る名前。空にすると id をそのまま使います"
 
-export type CharacterProfileEditDialogProps = {
+type CharacterProfileEditDialogProps = {
   /** 開いた時点の値。 */
   readonly name: string
   readonly tagline: string

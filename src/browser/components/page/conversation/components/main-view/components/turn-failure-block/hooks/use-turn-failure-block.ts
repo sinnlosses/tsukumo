@@ -9,7 +9,7 @@ import { useSession } from "../../../../../../../../stores/session.ts"
 import { useWorkStripSteps } from "../../../../../../../../stores/work-strip-steps.ts"
 import { turnFailureBlockOf, type TurnFailureBlockModel } from "../domain/turn-failure-block.ts"
 
-export type TurnFailureBlockView = TurnFailureBlockModel & {
+type TurnFailureBlockView = TurnFailureBlockModel & {
   /** 依頼の文を入力欄の下書きの末尾に足す。送らない。 */
   readonly onRetry: (request: string) => void
   /** 進み具合の帯の手順の一覧を、失敗した手順を指して開く。 */

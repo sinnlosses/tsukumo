@@ -6,7 +6,7 @@ import type { ReactElement } from "react"
 import { useCharacterCreate } from "./hooks/use-character-create.ts"
 import { PresentationalCharacterCreate } from "./presentational-character-create.tsx"
 
-export type CharacterCreateProps = {
+type CharacterCreateProps = {
   readonly open: boolean
   readonly onClose: () => void
 }

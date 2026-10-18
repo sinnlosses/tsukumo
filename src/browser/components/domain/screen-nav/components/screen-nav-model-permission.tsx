@@ -20,7 +20,7 @@ import { Select } from "../../../ui/select/select.tsx"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-model-permission.module.css"
 
-export type ScreenNavModelPermissionProps = {
+type ScreenNavModelPermissionProps = {
   readonly modelPermission: ModelPermissionControl
 }
 

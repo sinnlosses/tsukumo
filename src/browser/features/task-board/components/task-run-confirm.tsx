@@ -16,7 +16,7 @@ import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
 import styles from "./task-run-confirm.module.css"
 
-export type TaskRunConfirmProps = {
+type TaskRunConfirmProps = {
   readonly taskId: string
   /** 頼みの種類。送る文面を決める（保留の着手には、着手の前に判断を聞く旨が添わる）。 */
   readonly request: TaskRequest

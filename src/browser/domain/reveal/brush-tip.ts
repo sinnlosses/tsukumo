@@ -40,7 +40,7 @@ export type BrushStroke = "sweep" | "return"
  * 帯はトピック（見出しから次の見出しまで）の行を上下に割ったもので、要素をまたいで伸びる。
  * 行が1つしか取れないトピックでは、その上端と下端がそのまま入る。
  */
-export type BrushPlace = {
+type BrushPlace = {
   readonly x: number
   readonly top: number
   readonly bottom: number

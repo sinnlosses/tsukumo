@@ -15,12 +15,12 @@ import { Heading } from "../../../ui/heading/heading.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import styles from "./section.module.css"
 
-export type SidebarSectionAction = {
+type SidebarSectionAction = {
   readonly label: string
   readonly onAction: () => void
 }
 
-export type SidebarSectionProps = {
+type SidebarSectionProps = {
   readonly title: string
   /** 区画ごとの高さの取り方を足す class 名。 */
   readonly extraClass: string

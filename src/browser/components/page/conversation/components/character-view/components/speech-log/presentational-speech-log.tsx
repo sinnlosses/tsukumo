@@ -25,7 +25,7 @@ const DIALOG_LABEL = "セリフのログ"
 const MORE_LABEL = "もっと前を読む ↑"
 const EMPTY_MESSAGE = "（まだセリフがありません）"
 
-export type PresentationalSpeechLogProps = SpeechLogModel & {
+type PresentationalSpeechLogProps = SpeechLogModel & {
   readonly open: boolean
   readonly onOpen: () => void
   readonly onClose: () => void

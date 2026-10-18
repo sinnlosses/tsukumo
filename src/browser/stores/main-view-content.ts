@@ -19,7 +19,7 @@ export type MainViewContent =
   | { readonly kind: "work"; readonly exchange: number }
   | { readonly kind: "report"; readonly exchange: number; readonly arrived: boolean }
 
-export type MainViewContentState = {
+type MainViewContentState = {
   readonly content: MainViewContent
 }
 

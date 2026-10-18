@@ -33,7 +33,7 @@ export type PeriodChoiceView = {
   readonly pressed: boolean
 }
 
-export type PeriodCardView = {
+type PeriodCardView = {
   readonly label: string
   /** 期間の合計（書き終えた文字列）。 */
   readonly value: string

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from 
 
 import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
 
-export type MenuState = {
+type MenuState = {
   readonly open: boolean
   readonly rootRef: RefObject<HTMLDivElement | null>
   readonly triggerRef: RefObject<HTMLButtonElement | null>

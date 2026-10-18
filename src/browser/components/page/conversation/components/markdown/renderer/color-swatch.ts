@@ -3,7 +3,7 @@
 import { relativeLuminance } from "../../../../../../domain/relative-luminance.ts"
 
 /** 地の色と、その上に載せる文字の側（明るい地には暗い字、暗い地には明るい字）。 */
-export type ColorSwatch = {
+type ColorSwatch = {
   readonly background: string
   readonly ink: "dark" | "light"
 }
@@ -20,7 +20,7 @@ export type ResolvedColor = {
 }
 
 /** トークン名から実効の色を引く口。無いトークン・色でないトークンは `undefined`。 */
-export type ColorTokenReader = (name: string) => ResolvedColor | undefined
+type ColorTokenReader = (name: string) => ResolvedColor | undefined
 
 /**
  * inline code の文字列が色を指していれば、見せ方を返す。

@@ -42,7 +42,7 @@ import { takeDiaryBookOpenRequest, useDiaryBookOpenRequest } from "./use-diary-b
 const BLANK_REVIEW_LABEL = "この日を振り返る"
 
 /** 見開きを開いた口（頭の行の添え書きに出す）。`notice` は書き終わりの知らせの「日記帳で開く」。 */
-export type DiaryBookOpenSource = "diary-section" | "notice"
+type DiaryBookOpenSource = "diary-section" | "notice"
 
 const OPEN_NOTE = {
   "diary-section": "この日の日記から開きました",
@@ -85,13 +85,13 @@ export type DiaryBookBookmark =
     }
 
 /** 右ページの1段落。2つ目以降だけ書いた時刻を持つ。 */
-export type DiaryBookParagraph = {
+type DiaryBookParagraph = {
   readonly key: string
   readonly body: string
   readonly timeLabel: string | undefined
 }
 
-export type DiaryBookRight =
+type DiaryBookRight =
   | { readonly kind: "written"; readonly paragraphs: readonly DiaryBookParagraph[] }
   | { readonly kind: "blank"; readonly review: AchievementReviewButton }
 
@@ -113,7 +113,7 @@ export type DiaryBookPage =
       readonly portrait: PortraitAppearance
     }
 
-export type DiaryBookTocDay = { readonly date: string; readonly label: string }
+type DiaryBookTocDay = { readonly date: string; readonly label: string }
 export type DiaryBookTocMonth = {
   readonly heading: string
   readonly days: readonly DiaryBookTocDay[]

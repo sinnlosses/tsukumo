@@ -13,7 +13,7 @@ import { acquireOverlay } from "./open-overlay.ts"
 /** 閉じる合図の出どころ。Esc とそれ以外を呼び出し側が区別できるようにする。 */
 export type DismissCause = "outside" | "escape"
 
-export type DismissSignalOptions = {
+type DismissSignalOptions = {
   readonly open: boolean
   /** 「外側」の基準になる要素。この中での `pointerdown` では閉じない。 */
   readonly rootRef: RefObject<HTMLElement | null>

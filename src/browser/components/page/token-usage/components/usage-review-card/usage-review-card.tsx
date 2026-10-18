@@ -60,7 +60,7 @@ const FOLLOW_UP_LABELS = {
   task: "タスクにする",
 } as const satisfies Record<UsageProposalFollowUp, string>
 
-export type UsageReviewCardProps = {
+type UsageReviewCardProps = {
   readonly review: UseUsageReviewResult
 }
 

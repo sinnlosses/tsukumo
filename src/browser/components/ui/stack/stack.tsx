@@ -8,17 +8,17 @@ import { createElement, type ReactElement, type ReactNode, type Ref } from "reac
 
 import styles from "./stack.module.css"
 
-export type StackElement = "div" | "section" | "span" | "header" | "footer" | "label" | "p"
+type StackElement = "div" | "section" | "span" | "header" | "footer" | "label" | "p"
 /** アクセシブルネームの付け方。付けないか、見える文字列を渡すか、見出しなど別の要素の id を指すか。 */
-export type StackName =
+type StackName =
   | { readonly kind: "none" }
   | { readonly kind: "label"; readonly label: string }
   | { readonly kind: "labelledby"; readonly id: string }
-export type StackDirection = "row" | "column"
-export type StackGap = "none" | "xs" | "sm" | "md" | "lg" | "xl"
-export type StackAlign = "start" | "center" | "end" | "baseline" | "stretch"
-export type StackJustify = "start" | "center" | "end" | "between"
-export type StackWrap = "nowrap" | "wrap"
+type StackDirection = "row" | "column"
+type StackGap = "none" | "xs" | "sm" | "md" | "lg" | "xl"
+type StackAlign = "start" | "center" | "end" | "baseline" | "stretch"
+type StackJustify = "start" | "center" | "end" | "between"
+type StackWrap = "nowrap" | "wrap"
 
 export type StackProps = {
   readonly element: StackElement

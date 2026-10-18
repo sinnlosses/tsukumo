@@ -10,7 +10,7 @@ import { Button } from "../button/button.tsx"
 import { useMenu } from "./hooks/use-menu.ts"
 import styles from "./menu.module.css"
 
-export type MenuItemTone = "default" | "danger"
+type MenuItemTone = "default" | "danger"
 
 export type MenuItem = {
   readonly key: string

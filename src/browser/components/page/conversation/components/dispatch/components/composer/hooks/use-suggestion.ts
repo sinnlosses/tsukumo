@@ -35,7 +35,7 @@ export type ActiveSuggestions =
       readonly omittedCount: number
     }
 
-export type UseSuggestionArgs = {
+type UseSuggestionArgs = {
   readonly draft: Draft
   readonly pendingActive: boolean
   readonly slashCommands: readonly string[]
@@ -44,7 +44,7 @@ export type UseSuggestionArgs = {
   readonly onConfirmed: (draft: Draft) => void
 }
 
-export type SuggestionModel = {
+type SuggestionModel = {
   readonly suggestions: ActiveSuggestions
   /** 候補の中で選んでいる位置（候補の件数に収めたもの）。 */
   readonly selectedIndex: number

@@ -32,7 +32,7 @@ import {
 } from "./hooks/use-task-peek.ts"
 import styles from "./task-board.module.css"
 
-export type TaskListProps = {
+type TaskListProps = {
   readonly tasks: TaskSummaryResult
   readonly selectedStatus: TaskListFilterStatus
 }

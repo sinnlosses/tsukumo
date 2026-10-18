@@ -4,15 +4,13 @@
 import { create } from "zustand"
 
 /** 開いたときに選ぶ行。`first` は一覧の先頭。 */
-export type TaskBoardFocus =
-  | { readonly kind: "first" }
-  | { readonly kind: "task"; readonly id: string }
+type TaskBoardFocus = { readonly kind: "first" } | { readonly kind: "task"; readonly id: string }
 
 export type TaskBoardRequest =
   | { readonly kind: "closed" }
   | { readonly kind: "open"; readonly focus: TaskBoardFocus }
 
-export type TaskBoardRequestState = {
+type TaskBoardRequestState = {
   readonly request: TaskBoardRequest
   readonly openList: () => void
   readonly openTask: (id: string) => void

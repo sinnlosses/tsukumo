@@ -1,10 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  formatHash,
-  readHashRoute,
-  type HashRoute,
-} from "../../../src/browser/stores/location-hash.ts"
+import { formatHash, readHashRoute } from "../../../src/browser/stores/location-hash.ts"
+
+type HashRoute = ReturnType<typeof readHashRoute>
 
 const IN_USE = { kind: "in-use" } as const
 const TODAY = { kind: "today" } as const

@@ -5,7 +5,7 @@ import { useRef, type PointerEvent } from "react"
 /** これだけ下へ動いたら閉じる（px）。 */
 const CLOSE_DISTANCE = 48
 
-export type SheetSwipe = {
+type SheetSwipe = {
   readonly onPointerDown: (event: PointerEvent<HTMLElement>) => void
   readonly onPointerMove: (event: PointerEvent<HTMLElement>) => void
   readonly onPointerEnd: (event: PointerEvent<HTMLElement>) => void

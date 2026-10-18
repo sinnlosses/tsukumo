@@ -6,7 +6,7 @@ import { isExchangeClosed } from "../../../../../../../../../shared/session/conv
 import type { MainViewAside } from "../../../../../../../../../shared/session/main-view.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 
-export type AsideThreadRow = {
+type AsideThreadRow = {
   readonly key: string
   readonly text: string
   readonly answer: string

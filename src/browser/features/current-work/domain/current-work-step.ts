@@ -27,7 +27,7 @@ export type CurrentWorkStep = {
   readonly failure: CurrentWorkStepFailure
 }
 
-export type CurrentWorkStepFailure =
+type CurrentWorkStepFailure =
   | { readonly kind: "none" }
   | { readonly kind: "failed"; readonly outputText: string; readonly inputText: string }
 

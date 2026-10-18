@@ -20,7 +20,7 @@ export type StepGrabOutcome =
   /** Esc でつかむ前の位置へ戻した。 */
   | { readonly kind: "cancelled"; readonly index: number }
 
-export type StepGrabTransition = {
+type StepGrabTransition = {
   readonly grab: StepGrab
   readonly outcome: StepGrabOutcome
 }

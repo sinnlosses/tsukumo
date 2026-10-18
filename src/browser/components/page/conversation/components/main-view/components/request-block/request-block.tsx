@@ -18,7 +18,7 @@ const REQUEST_LABEL = "依頼"
 const OPEN_LABEL = "全文"
 const COLLAPSE_LABEL = "畳む"
 
-export type RequestBlockProps = {
+type RequestBlockProps = {
   readonly request: MainViewRequest
 }
 

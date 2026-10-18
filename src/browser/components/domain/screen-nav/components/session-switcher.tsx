@@ -24,7 +24,7 @@ import {
 } from "../hooks/use-session-switcher.ts"
 import styles from "./session-switcher.module.css"
 
-export type SessionSwitcherProps = {
+type SessionSwitcherProps = {
   readonly switcher: ScreenNavSessionSwitcher
   /** 右の欄の見出しの横に添える、いまのキャラクターの顔と名前。 */
   readonly character: CharacterFaceInfo

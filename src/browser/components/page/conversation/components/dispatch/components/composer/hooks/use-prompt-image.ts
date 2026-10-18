@@ -14,7 +14,7 @@ import {
   readPromptImage,
 } from "../domain/prompt-image.ts"
 
-export type UsePromptImageArgs = {
+type UsePromptImageArgs = {
   /** 画像を選び終えたあと、入力欄へフォーカスを戻す。 */
   readonly focusSurface: () => void
 }

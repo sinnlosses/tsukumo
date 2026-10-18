@@ -9,7 +9,7 @@ import type { CurrentWork } from "../hooks/use-current-work.ts"
 import { CurrentWorkList } from "./current-work-list.tsx"
 import styles from "./current-work-pill.module.css"
 
-export type CurrentWorkPillProps = {
+type CurrentWorkPillProps = {
   readonly work: CurrentWork
 }
 

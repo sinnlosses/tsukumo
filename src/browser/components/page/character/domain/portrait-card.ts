@@ -13,7 +13,7 @@ import type { PortraitCardModel } from "./character-edit-model.ts"
 import { readFile, readPicked } from "./picked-image.ts"
 
 /** カードから送る2つ（どちらも選んでいるパックへ書く）。 */
-export type PortraitSenders = {
+type PortraitSenders = {
   readonly pick: (expression: Expression, image: string) => void
   readonly clear: (expression: RemovableExpression) => void
 }

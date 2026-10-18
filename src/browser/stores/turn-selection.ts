@@ -13,7 +13,7 @@ import { readHashRoute, useHashRoute, writeHashRoute, type ViewedTurn } from "./
 import { mainViewTurnsOf } from "./main-view-turn.ts"
 import { useSession } from "./session.ts"
 
-export type TurnSelectionValue = {
+type TurnSelectionValue = {
   /**
    * いま見ているターンの通し番号（`mainViewTurns` が振るもの）。
    * hash が指すターンが窓に無ければ今回に戻る。ターンが1つも無ければ undefined。

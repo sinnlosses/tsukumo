@@ -27,7 +27,7 @@ export function apiErrorLabel(error: ApiErrorKind): string {
 }
 
 /** 呼び直しを待っているあいだの知らせ。`label` は行に出す短い字、`detail` は `title` で読ませる全文。 */
-export type ApiRetryNotice = { readonly label: string; readonly detail: string }
+type ApiRetryNotice = { readonly label: string; readonly detail: string }
 
 /** 呼び直しの知らせ（「再試行中 2/10」と、理由と待ち時間）。 */
 export function apiRetryNotice(

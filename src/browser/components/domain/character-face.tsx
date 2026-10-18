@@ -8,7 +8,7 @@
 
 import type { ReactElement } from "react"
 
-export type CharacterFaceProps = {
+type CharacterFaceProps = {
   /** `/character/<pack>/<file>` の URL。無ければ顔を出さない。 */
   readonly url: string | undefined
   /** 読み上げに渡す名前（パックの `name`）。無ければ空文字。 */

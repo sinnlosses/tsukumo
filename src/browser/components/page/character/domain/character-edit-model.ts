@@ -106,7 +106,7 @@ export type ImageFieldModel = {
 }
 
 /** 直前に選んだ画像の書き込みを断られたときの一言。次に選び直すと消える。 */
-export type ImageRejectionNoteModel =
+type ImageRejectionNoteModel =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly text: string }
 

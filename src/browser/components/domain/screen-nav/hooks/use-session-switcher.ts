@@ -77,7 +77,7 @@ export type ScreenNavSessionSwitcher = {
   readonly onStartNew: () => void
 }
 
-export type SessionSwitcherView = {
+type SessionSwitcherView = {
   readonly tag: ScreenNavSessionTag
   readonly switcher: ScreenNavSessionSwitcher
 }

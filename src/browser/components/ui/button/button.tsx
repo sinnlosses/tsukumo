@@ -9,7 +9,7 @@ import type { ReactElement, ReactNode, Ref } from "react"
 import { TEXT_SIZE_CLASS, type TextSize } from "../text/text.tsx"
 import styles from "./button.module.css"
 
-export type ButtonVariant =
+type ButtonVariant =
   | "outline"
   | "outline-dashed"
   | "outline-hover-warn"
@@ -36,14 +36,14 @@ export type ButtonVariant =
   | "ghost-hover-outline"
   | "link"
   | "text-accent"
-export type ButtonSize = Exclude<TextSize, "heading" | "inherit">
+type ButtonSize = Exclude<TextSize, "heading" | "inherit">
 /** トグルボタンの押された状態。`"none"` は `aria-pressed` を付けない（トグルボタンではない）。 */
-export type ButtonPressed = "none" | "on" | "off"
+type ButtonPressed = "none" | "on" | "off"
 /**
  * 押すと開く面との関係。
  * `expander` は `aria-expanded` だけを付け、`popover` は開く面の id（`aria-controls`）と、Esc で戻る先として DOM を預ける `ref` も付ける。
  */
-export type ButtonDisclosure =
+type ButtonDisclosure =
   | { readonly kind: "none" }
   | { readonly kind: "expander"; readonly expanded: boolean }
   | {

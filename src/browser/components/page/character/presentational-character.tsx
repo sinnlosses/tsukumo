@@ -9,7 +9,7 @@ import { CharacterEdit } from "./components/character-edit/character-edit.tsx"
 import { CharacterList } from "./components/character-list/character-list.tsx"
 import type { UseCharacterResult } from "./hooks/use-character.ts"
 
-export type PresentationalCharacterProps = UseCharacterResult
+type PresentationalCharacterProps = UseCharacterResult
 
 export function PresentationalCharacter(props: PresentationalCharacterProps): ReactElement {
   const { create } = props

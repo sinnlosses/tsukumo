@@ -36,7 +36,7 @@ const RELEASED_NOTE = "原寸はもう手放したので、控えを拡大して
 /** 札の原寸はブラウザのメモリにあり、読めないことが起きないので代わりを持たない。 */
 const NO_FALLBACK = { kind: "none" } as const satisfies ImageZoomFallback
 
-export type PromptImageChipsProps = {
+type PromptImageChipsProps = {
   readonly images: readonly PromptImage[]
   readonly onRemove: (index: number) => void
 }
@@ -105,7 +105,7 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
   )
 }
 
-export type PromptImageThumbnailsProps = {
+type PromptImageThumbnailsProps = {
   /** 控えと、棚の原寸を指す id の組の並び（記録に残っているのはこれだけ）。 */
   readonly images: readonly RecordedPromptImage[]
   /**

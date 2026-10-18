@@ -15,13 +15,13 @@ export const MODEL_LABELS = [
 ] satisfies readonly (readonly [ModelAlias, string])[]
 
 /** モデルの吊り札の行に出す、1行の用途と重さ（狐火の●の数）。 */
-export type ModelDescription = {
+type ModelDescription = {
   readonly summary: string
   readonly weight: number
 }
 
 /** 並びは `MODEL_LABELS` と同じ重い順。`weight` が大きいほど狐火の●を多く灯す。 */
-export const MODEL_DESCRIPTIONS = [
+const MODEL_DESCRIPTIONS = [
   ["fable", { summary: "いちばん難しい判断に", weight: 4 }],
   ["opus", { summary: "難しい判断に", weight: 3 }],
   ["sonnet", { summary: "ふだんの作業に", weight: 2 }],

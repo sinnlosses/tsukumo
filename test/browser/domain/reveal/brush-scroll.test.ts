@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  brushScroller,
-  type BrushScroller,
-} from "../../../../src/browser/domain/reveal/brush-scroll.ts"
+import { brushScroller } from "../../../../src/browser/domain/reveal/brush-scroll.ts"
+
+type BrushScroller = ReturnType<typeof brushScroller>
 
 /**
  * 転がる器のふり（happy-dom はレイアウトを持たないので、寸法を自分で名乗らせる）。
