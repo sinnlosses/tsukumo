@@ -53,7 +53,7 @@ const CALLER_LIST_IN_PARENS =
   /（`[^`]+`(?:\s*[・、と/]\s*`[^`]+`)*\s*(?:(?:が|から)(?:呼ぶ|使う|呼び出す)|に(?:呼ばれる|使われる))）/
 
 describe("コメント中の呼ぶ側", () => {
-  it("src / test / scripts / story / .storybook の *.ts / *.tsx で、コメント行が括弧に呼ぶ側・使う側を並べない（docs/coding-standards.md「別の場所を指すとき」）", () => {
+  it("src / test / scripts / story / .storybook の *.ts / *.tsx で、コメント行が括弧に呼ぶ側・使う側を並べない（docs/coding-standards/comment-reference-and-style.md「別の場所を指すとき」）", () => {
     const offenders = offendingCommentLines(TYPESCRIPT_EXTENSIONS, (line) =>
       CALLER_LIST_IN_PARENS.test(line),
     )

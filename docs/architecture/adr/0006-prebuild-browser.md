@@ -19,7 +19,7 @@
 
 **古いときに落とさない**のは、古くても画面は動くからで、落とすと `git pull` の直後や
 `src/browser/` を直した直後に仕事が止まる。**無いときだけ落とす**（起動時の前提不足。
-`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」の「起動時の前提不足だけが
+`docs/coding-standards/error-input-and-absent-value.md`「常駐プロセスは描画1回の失敗で落ちない」の「起動時の前提不足だけが
 即時終了」の側）。
 
 指紋に入れるのは `src/browser/` と `src/shared/`（ブラウザ側が import している）の下だけで、

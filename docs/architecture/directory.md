@@ -69,7 +69,7 @@ Beads アダプタ（`server/**/adapter/` の Beads を読むファイル）が�
 kebab-case のファイル名・barrel file を作らない・`@/` を使わない相対 import はそのまま（PascalCase・
 1部品1フォルダは真似しない）。**例外は `components/ui/` と、ページの `components/` の2つだけ**で、
 部品と CSS の対が平たく並ぶと見づらいので部品ごとに `<部品>/<部品>.tsx`・`<部品>.module.css` の
-1フォルダへ分ける（例外の中でも `index.tsx` は置かない。`docs/coding-standards.md`「barrel file を作らない」）。
+1フォルダへ分ける（例外の中でも `index.tsx` は置かない。`docs/coding-standards/layer-and-dependency.md`「barrel file を作らない」）。
 **実体が無い箱は先に作らない**（手本の `app/` `api/` `config/` `assets/` `testing/` などは作らない。
 理由は `docs/history/decision.md`「design.md 2. 全体構成 / ディレクトリ（採らなかった bullet-proof-react の要素）」）。
 ファイルを移すときは、パスを指す記述が `.module.css` のコメントにもあるので `grep -rn` の対象から外さない。
