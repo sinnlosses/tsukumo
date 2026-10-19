@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   decisionRows,
+  glossaryFileRows,
   glossaryIndexRows,
   readTableRows,
   replaceTableRows,
@@ -23,13 +24,25 @@ describe("decisionRows", () => {
   })
 })
 
+describe("glossaryFileRows", () => {
+  it("用語集の子のファイルをファイル名の昇順に、パスと題の行にする", () => {
+    expect(
+      glossaryFileRows([
+        { fileName: "view.md", title: "用語集: 見る" },
+        { fileName: "block.md", title: "用語集: 塊" },
+      ]),
+    ).toEqual([
+      ["`docs/glossary/block.md`", "用語集: 塊"],
+      ["`docs/glossary/view.md`", "用語集: 見る"],
+    ])
+  })
+})
+
 describe("glossaryIndexRows", () => {
   const glossary = [
-    "## このファイルの読み方",
-    "```bash",
-    "### 枠の中",
-    "```",
-    "### 用語の索引",
+    "# 用語集: 題",
+    "## 節の索引",
+    "| 節 | 収録している用語 |",
     "## 節1",
     "### 甲",
     "### 乙",
@@ -37,7 +50,7 @@ describe("glossaryIndexRows", () => {
     "### 丙",
   ].join("\n")
 
-  it("節ごとの見出しを ` / ` でつなぎ、読み方の節とコードの中は載せない", () => {
+  it("節ごとの見出しを ` / ` でつなぎ、用語の無い節（節の索引）は載せない", () => {
     expect(glossaryIndexRows(glossary)).toEqual([
       ["## 節1", "甲 / 乙"],
       ["## 節2", "丙"],

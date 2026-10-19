@@ -22,1694 +22,640 @@ tsukumo で使う固有の用語を、**日本語表記・コード上で使う�
 その見出しだけを読む:
 
 ```bash
-sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
+sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary/*.md
 ```
 
 ### 用語の索引
 
-この表は `pnpm run format` が `### ` 見出しから書き直すので、手で直さない。
+この表は `pnpm run format` が `docs/glossary/` の子のファイルの1行目の題から書き直すので、手で直さない。
 
-| 節                        | 収録している用語                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ## 実行構成               | サイドカー / ペイン / サイドバー / ホスト / Claude Code / 部屋 / チェックアウト / Beads アダプタ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ## 会話の駆動             | セッション / セッションの占有ファイル / 短縮ID / セッションの要約 / セッションドライバ / プラン / 利用上限 / プラン使用量 / コンテキストの内訳 / ターン / ターンの失敗 / 終わったターンの数 / バックグラウンドタスク / speak ツール / report ツール / work_plan ツール / question_brief ツール / clear_and_send ツール / ワークプラン / 段のまとめ / まとめ待ちの段 / 並列の段 / 段の群 / 委譲の返却 / phase_result ツール / 飛ばした段 / 委譲先の段の範囲 / 委譲ゲート / ワークフローの設定 / 並び / 設定コマンド / 呼び出しの差し戻し / 脇の話 / 進みの差し込み / remember ツール / forget ツール / 外部由来の印 / recall ツール / recall_episode ツール / 覚えたこと / あらすじ / 最近の話題 / 会話のアーカイブ / 作業記憶 / 定着 / エピソード索引 / 圧縮の区切り / 許可プロンプト / transcript / プロジェクトスラッグ / ターンの本文 / 見直し / 見直しの段 / 提案 / usage_review_stage ツール / usage_review_result ツール / 見送り / 前回の見直し / diary ツール |
-| ## 表示                   | ビュー / 画面 / キャラクター画面 / メインビュー / キャラビュー / ビューサーバ / 立ち絵 / 顔 / プロフィール / ペルソナ / 立ち絵からの生成 / 自己紹介文 / 利用者の呼び名 / ミニ立ち絵の呼び名 / 吹き出し / 反応 / セリフのログ / セリフ / 詳細 / 最終レポート / 目録の1行 / 報告の種類 / 変更の札 / 中間レポート / 経過の畳み / お願い / 検証結果 / 合図の行 / 節 / 塊 / 形の札 / 確度つきの主張 / 余白の柱 / やり取りの列 / 選択肢の比較 / 表情 / 書く動き / 背景のオーバーレイ / いまの作業 / 依頼の手順 / 局面 / 失敗の塊 / 進み具合の帯 / お伺い / 画面の頭 / 引き出し / 答え待ちの札 / ボトムシート / 設定の点 / 添え書き / 始め方の一覧 / おすすめの札 / 迎えの挨拶 / 待ちの一言 / 依頼の全文 / 知らせの行 / 進行の計測値 / 診断ログ / 成果 / 成果の日記書き / 日記 / 日記帳 / しおり / 灯りの暦 / 卒業 / 節目 / キャラクターパック / フォールバック                                                                                                              |
-| ## Claude Code 側の仕組み | hook / statusline / output style                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ## 通信（移行後）         | 共有層 / アダプタ / フレーム / コマンド / 契約 / 手続き / セッションの状態 / fake driver / 疑似セッション                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ファイル                                   | 中身                                         |
+| ------------------------------------------ | -------------------------------------------- |
+| `docs/glossary/achievement.md`             | 用語集: 成果と日記                           |
+| `docs/glossary/block.md`                   | 用語集: レポートの節と塊                     |
+| `docs/glossary/character.md`               | 用語集: 立ち絵とキャラクターパック           |
+| `docs/glossary/communication.md`           | 用語集: 通信（移行後）                       |
+| `docs/glossary/conversation-archive.md`    | 用語集: 会話のアーカイブと作業記憶           |
+| `docs/glossary/conversation-phase.md`      | 用語集: 会話の画面の局面と札                 |
+| `docs/glossary/conversation-tool.md`       | 用語集: 会話のツールと呼び出しの差し戻し     |
+| `docs/glossary/delegation.md`              | 用語集: 委譲                                 |
+| `docs/glossary/detail-and-report.md`       | 用語集: 詳細とレポート                       |
+| `docs/glossary/local-record.md`            | 用語集: 手元に残す記録                       |
+| `docs/glossary/memory.md`                  | 用語集: 覚えることと思い出すこと             |
+| `docs/glossary/runtime-and-claude-code.md` | 用語集: 実行構成と Claude Code 側の仕組み    |
+| `docs/glossary/session-and-plan.md`        | 用語集: セッション・プラン・transcript       |
+| `docs/glossary/speech.md`                  | 用語集: 吹き出しとセリフ                     |
+| `docs/glossary/turn.md`                    | 用語集: ターン                               |
+| `docs/glossary/usage-review.md`            | 用語集: トークン消費の見直し                 |
+| `docs/glossary/view.md`                    | 用語集: ビューと画面の面                     |
+| `docs/glossary/work-plan.md`               | 用語集: ワークプランと段・ワークフローの設定 |
+
+本文は 18 の子のファイル（`docs/glossary/`）に分けてある。見出しはここに残し、中身は移し先を引く。新しい用語は子のファイルにだけ足す。
 
 ## 実行構成
 
+本文は `docs/glossary/runtime-and-claude-code.md`。
+
 ### サイドカー
 
-- **英語識別子**: 使わない
-- **定義**: **2026-09-11 の方針転換で役目を終えた語。** Claude Code とは別のペインで常駐し、
-  transcript と状態ファイルを読んでビューを配るプロセスを指していた
-- **注記**: いまの tsukumo は Claude Code を**動かす側**であって、横で覗くプロセスではない。
-  **プロセスそのものを指したいときは「tsukumo」と書く**
-- **避ける言い方**: **「サイドカー」を現在の説明に使わない**（経緯を語るときだけ使ってよい）
+本文は `docs/glossary/runtime-and-claude-code.md`。
 
 ### ペイン
 
-- **英語識別子**: `pane`
-- **定義**: ターミナルの分割された1区画
-- **注記**: **tsukumo はもうペインを分割しない**（2026-09-11）。画面は1枚のページに収まり、
-  ターミナルのペインは tsukumo を起動する1つで足りる。tmux は未導入で、前提にもしない
-  （`docs/history/decision.md`「ペイン分割は Orca を前提にした」に経緯がある）
+本文は `docs/glossary/runtime-and-claude-code.md`。
 
 ### サイドバー
 
-- **英語識別子**: `sidebar`
-- **定義**: 画面レイアウトの右上に置く、幅の狭いビュー。会話ではなく「その他情報」を出す
-  （`docs/requirements.md` 4.7）
-- **注記**: 中身は上から **(1) タスク一覧 (2) セッション情報** の2区画
-  （`docs/architecture/display.md` 4.2）。コンテキスト使用量は出さない。**「いま何をしているか」の区画は
-  2026-09-23 に帯の「いまの作業」へ移した**（`docs/architecture/screen-design.md` 13.9）
-- **注記**: **雑談中は中身が差し替わる**（2026-09-23）: 上から **プロフィール・最近の話題・
-  覚えていること・セッション** の4段で、タスク一覧は出さない（`docs/architecture/screen-design.md` 13.7「雑談のときの
-  サイドバー」）
-- **注記**: **レポートやセリフはここに出さない**（同じものを2箇所に出さないため）
-- **注記**: **中くらいの窓幅（761〜1100px）では柱（英語識別子 `rail`。CSS は `layout-rail`）に畳む**。
-  柱の口を押すと、サイドバーがメインビューの上に重なって開く（`docs/architecture/screen-design.md` 13.4）
-- **注記**: **狭い画面（760px 以下）では出さず、区画は引き出しのタブに入る**（2026-10-09。タスク一覧は「タスク」、
-  雑談の4段は「話題」、目盛りとプラン使用量は「使用量」。`docs/architecture/screen-design.md` 13.9「狭い画面（760px 以下）」）
-- **避ける言い方**: 情報パネル、ステータスペイン、HUD
+本文は `docs/glossary/runtime-and-claude-code.md`。
 
 ### ホスト
 
-- **英語識別子**: `host`
-- **定義**: tsukumo のページを出す相手。実測環境では Orca（ページを開くブラウザタブも含めて指す）。
-  ページ自体は「どのホストでも動く Web アプリ」として作る。**頼む仕事はビューを見せること
-  （`showView`）とファイルを開くこと（`openFile`）だけ**で、それ以外の依存は持たない
-  （`docs/architecture/adr/0011-separate-shell-and-app.md`）
-- **注記**: ホストに依存する操作は1つのポート（`src/server/host/core/host.ts`）の裏に置き、実装は
-  アダプタ（`src/server/host/adapter/orca-host.ts` と、何も開かない `none-host.ts`）に閉じ込める。
-  どれを使うかは `TSUKUMO_HOST` で選ぶ
-  （`docs/architecture/adr/0015-single-host-port.md`。「アダプタ」の項は「通信（移行後）」にある）
-- **注記**: **「Claude Code」とは別のもの**。Claude Code は CLI を指す
-- **避ける言い方**: 箱（ホストに統合した旧称）、端末環境、プラットフォーム、シェル、コンテナ（別の意味に取られる）、ラッパー
+本文は `docs/glossary/runtime-and-claude-code.md`。
 
 ### Claude Code
 
-- **英語識別子**: 使わない（コード上に Claude Code を指す識別子は現れない）
-- **定義**: Claude Code の CLI そのもの。**tsukumo から見て、SDK が子プロセスとして起こす側**
-  （2026-09-11 まではこちらが親で、transcript を書き出す側だった）
-- **避ける言い方**: 本体（Claude Code の旧称。「本体のチェックアウト」は別の意味で、チェックアウトの項にある）、親、ホスト、メイン
+本文は `docs/glossary/runtime-and-claude-code.md`。
 
 ### 部屋
 
-- **英語識別子**: `room`（名前は `roomName(viewPort)`。`src/shared/view-server/room.ts`）
-- **定義**: 起こした tsukumo 1つの居場所。**ビューのポート1つが部屋1つ**で、同じディレクトリで
-  2つめを起こすとポートがずれて別の部屋になる
-- **注記**: 名前は和の色名12個をポートの並び順に割り当てたもの（7327 が「空色の間」。
-  `docs/architecture/screen-design.md` 13.9）で、**語彙の外のポートはポート番号をそのまま名乗る**。
-  **名前は画面（帯の左端）のためだけのもので、セッションの目印はポート番号のまま**。
-  帯の主の字は作業ディレクトリの名前（`repository.projectName`）で、部屋の名前はその右の補足の字。
-  キャラクターの持ち物ではないので、語彙はパックの定義ファイルではなくコード側にある。
-  **切り替え画面の行には出さない**（一覧は部屋で絞らず、部屋はポートで決まる起動順の番号なので
-  行の見分けに使わない。行を見分けるのは作業ツリーの名前と短縮IDと SDK の見出し。
-  `docs/architecture/screen-design.md`「切り替え画面」）
-- **避ける言い方**: ルーム、ワークスペース、インスタンス
+本文は `docs/glossary/runtime-and-claude-code.md`。
 
 ### チェックアウト
 
-- **英語識別子**: `checkout`（`src/server/checkout/`）
-- **定義**: tsukumo のリポジトリの作業ツリー1つ。本体の checkout と `tsukumo-N` の作業ツリーが
-  どれもチェックアウトで、**ディレクトリの根の `package.json` の `name` が `tsukumo` のもの**
-- **注記**: グローバルの `tsukumo` は本体のチェックアウトの `bin/tsukumo` を指すが、
-  チェックアウトの中で打ったときは、そのチェックアウトの `bin/tsukumo` へ委ねる。
-  切り替え画面の行に出る**作業ツリーの名前**（`SessionChoice.worktree`）は、セッションの `cwd` の
-  末尾のディレクトリ名（無ければ `gitBranch`）で、tsukumo のリポジトリに限らず同じリポジトリの作業ツリーを指す
-- **避ける言い方**: ワークツリー（`git worktree` の語を指すときだけ使う）、クローン
+本文は `docs/glossary/runtime-and-claude-code.md`。
 
 ### Beads アダプタ
 
-- **英語識別子（予定）**: `beadsTask`（`src/server/**/adapter/` の Beads を読むファイルに置く）
-- **定義**: Beads の課題を、組み込みの欄（ID・題・状態・依存・作った時刻と閉じた時刻・`external_ref`・`labels`・
-  `description`・`acceptance_criteria`・`notes`）と、metadata の `difficulty`（`haiku`・`sonnet`・`opus`）・
-  `loopable`（`Y`・`N`。無い・不正なら無し）だけからタスク一般の形（`TaskSummaryItem`・`DoneTask`。
-  `src/shared/repository/task-summary.ts`）へ写す境界。状態は `open` → todo・`in_progress` → doing・
-  `deferred` → hold・`closed` → done に写し、ほかの値は生のまま
-- **注記**: 属性は metadata の2つに限り、label からは読まない。タスク一般の形は属性を `difficulty`・`loopable` の2欄で持つ（おすすめの選びには使わない）。
-  ラベルは字のまま並べるだけで解釈せず、担当（`assignee`）は読まない。特定のスキルが課題に足した独自の状態・本文の節の書式・ID の書き換えは読まない
-  （`docs/architecture/adr/0024-no-skill-dependency.md`）。一覧・成果・おすすめは写したあとのタスク一般の形だけを読む
-- **避ける言い方**: Beads の読み口（Beads アダプタの旧称）、task-model 方式（スキルの名前で、tsukumo はスキルの規則を写さない）、Beads の形
+本文は `docs/glossary/runtime-and-claude-code.md`。
 
 ## 会話の駆動
 
+本文は `docs/glossary/session-and-plan.md`・`docs/glossary/turn.md`・`docs/glossary/conversation-tool.md`・`docs/glossary/work-plan.md`・`docs/glossary/delegation.md`・`docs/glossary/memory.md`・`docs/glossary/conversation-archive.md`・`docs/glossary/usage-review.md`・`docs/glossary/achievement.md`。
+
 ### セッション
 
-- **英語識別子**: `session`
-- **定義**: SDK の `query` 1つ。**tsukumo 1プロセスにつき1つ**
-- **注記**: **起動・切り替えは新規のセッションから始まり、前のセッションへは切り替え画面から戻る**（`docs/requirements.md` 4.8。鍵は同じリポジトリと、
-  tsukumo が `tagSession` で付けた印のパックとモード。**印はキャラクターパックごと・
-  雑談かどうか・ビューのポートごとに違う**（`tsukumo:<パック名>@7327` と
-  `tsukumo:<パック名>:chat@7327`。**末尾の `@` から先が目印で、中身はポート番号**。コード上は
-  `SessionMark.viewPort` / `SessionChoice.viewPort`。**画面には部屋の名前として出る**）ので、
-  セッションはキャラクターとモードと目印で分かれる）。
-- **避ける言い方**: 会話、スレッド、コンテキスト
+本文は `docs/glossary/session-and-plan.md`。
 
 ### セッションの占有ファイル
 
-- **英語識別子**: `SessionClaim`（置き場は `$TSUKUMO_HOME/session-claim/<pid>.json`）/ `occupiedElsewhere`（切り替え画面の行が別の窓で使用中か）
-- **定義**: 動いている tsukumo が、いま持っているセッションのIDを自分の pid と一緒に書き置いたもの。
-  ほかの tsukumo はこれを読み、そのプロセスが生きているものだけを「別の窓で使用中」とする
-- **注記**: 書くのは pid とセッションIDだけ（`docs/requirements.md` 4.8「別の窓で使用中のセッション」）。
-  ポートの塞がりと印の目印は使用中の判定に使わない（`docs/architecture/adr/0026-session-claim-file.md`）
-- **避ける言い方**: セッションの名乗り（旧称）、ロック、使用中フラグ
+本文は `docs/glossary/session-and-plan.md`。
 
 ### 短縮ID
 
-- **英語識別子**: `shortId`（組み立ては `shortSessionIds`）
-- **定義**: セッションのID（UUID）の先頭2字を大文字にしたもの（`FA`）。帯の部屋の名前の札と、
-  切り替え画面の一覧・探す欄に出す
-- **注記**: **並べる中で2字が重なったものだけ3字に伸ばす**（2026-09-27 ユーザー決定）。3字でも
-  重なるものはそのまま。印（`tagSession`）にも transcript にも書かない、画面だけの呼び名
-- **避ける言い方**: セッション番号、略号
+本文は `docs/glossary/session-and-plan.md`。
 
 ### セッションの要約
 
-- **英語識別子**: `sessionSummary`（`report` の引数）/ `sessionRemaining`（`report` の引数。残っていること）/
-  `SessionRemaining`（`report` のイベントに写した残り。`none`・`remaining`・`unrecorded`）/
-  `SessionDigest`（切り替え画面に配る1件の中身。残りは欄 `remaining`）
-- **定義**: そのセッションでここまでにしたことを claude が書いた数段落。`report` の引数
-  `sessionSummary` で毎ターン書き直させ、切り替え画面が transcript の最後に通った `report` から
-  読み戻す。残っていることは要約に書かず、同じ `report` の必須の引数 `sessionRemaining`（無ければ空の文字列）に書く
-- **注記**: **tsukumo は要約を別の場所に書き出さない**（transcript のツールの入力に残るだけ）。
-  切り替え画面に配る1件の中身（`SessionDigest`）は要約・残り・依頼の数・最後のセリフの4つで、選んだ
-  1件ぶんだけ手続き `sessionDigest.read` で取りに来る。一覧に載ったセッションといま出している
-  セッション以外のIDは読まない。要約が無い古いセッションは「要約はまだ無い」になる。
-  `sessionRemaining` の無かった頃の `report`（`unrecorded`）だけ、要約の段落の頭が「残り」の段落を残りとして読み、要約から外す
-- **避ける言い方**: あらすじ（雑談の記憶のほう）、見出し（SDK の `summary`。1行の題）
+本文は `docs/glossary/session-and-plan.md`。
 
 ### セッションドライバ
 
-- **英語識別子**: `SessionDriver`（型。機能のディレクトリは `session-driver/`）
-- **定義**: SDK を起動し、届いたイベントを tsukumo 内部の型に変換するモジュール。
-  原則2の「受け取る」層にあたる
-- **注記**: ここに表示の都合を持ち込まない。何をどう出すかは「決める」層の仕事
-- **避ける言い方**: セッション駆動（旧称）、ランナー、ブリッジ、クライアント
+本文は `docs/glossary/session-and-plan.md`。
 
 ### プラン
 
-- **英語識別子**: `plan`
-- **定義**: 契約の段と枠（`Max 20x` / `Pro` など）。出どころは2つあり、**Claude Code 自身の控え
-  （`CLAUDE_CONFIG_DIR`、無ければ `~` の `.claude.json` の `oauthAccount`）を先に見る**
-- **注記**: **SDK の `accountInfo()` が返す `subscriptionType` は契約の段と合わないことがある**
-  （Max の契約でも `"Claude Pro"` を返す実測がある）。控えは段（`claude_max`）と枠
-  （`default_claude_max_20x`）を別々に持つので、そちらから組み立てられるならそれを使い、
-  **組み立てられないときだけ SDK の値へ落ちる**（決めるのは `src/server/session-driver/core/plan.ts`）。
-  **知らない綴りは訳さない**（勝手な名前を付けると、画面の値が実態と違っていても気づけない）。
-  どちらからも決まらなければ画面に何も出さない。`email` / `organization` はここに含めない
-  （駆動の外へ出さない。会話内容の扱いと同じ考え方）
-- **避ける言い方**: サブスクリプション、契約種別、ティア
+本文は `docs/glossary/session-and-plan.md`。
 
 ### 利用上限
 
-- **英語識別子**: `rateLimit`（型は `src/shared/session-driver/rate-limit.ts` の `RateLimit`、状態は
-  `SessionState.rateLimit`、イベントは `rate-limit-changed`）
-- **定義**: claude.ai の契約で使える量の枠（5時間枠・7日間枠など）に達した、という状態と、
-  いつ戻るか。SDK の `rate_limit_event` が運ぶ
-- **注記**: 入力欄の経過時間の行に出す（`docs/architecture/display/input-box.md`「入力欄」）。「近い」
-  （`allowed_warning`）は出さない——枠の残り具合は**プラン使用量**がサイドバーで出す。API キーで
-  使っているときは届かない。**プランとは別のもの**（プランは契約の段、利用上限はその段で決まる
-  枠に達したかどうか）
-- **避ける言い方**: レートリミット、クォータ、制限
+本文は `docs/glossary/session-and-plan.md`。
 
 ### プラン使用量
 
-- **英語識別子**: `planUsage`
-- **定義**: 5時間枠と7日間枠それぞれの、いまの使用率（0〜100 の百分率）と戻る時刻。Agent SDK の
-  `usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET()` が返すもので、中身は Claude Code の
-  `/usage` と同じ（`docs/research/plan-usage.md`）
-- **注記**: サイドバーの下端の帯に2つの円で出し、押すと開く面のコンテキストの札の下で、再読み込みのボタンで取り直す
-  （`docs/architecture/display.md` 4.2「各表示物」のサイドバー）。知らせを待たずに取りに行く点が**利用上限**と
-  違う。claude.ai の契約でないときは取れない
-- **避ける言い方**: 利用枠（旧称）、クォータ、残量、レート
+本文は `docs/glossary/session-and-plan.md`。
 
 ### コンテキストの内訳
 
-- **英語識別子**: `contextUsage`
-- **定義**: いまのセッションが**文脈の窓**をどう使っているかを分類ごとに割った数。Agent SDK の
-  `getContextUsage()` が返すもので、中身は Claude Code の `/context` と同じ
-- **注記**: **ここでの「コンテキスト」は文脈の窓のこと**で、セッションの言い換えではない
-  （セッションの「避ける言い方」としての「コンテキスト」とは別の語）。**分類は `kind`
-  （`used` / `free` / `buffer` / `deferred`）で判定し、`name`（英語の表示名）では判定しない**
-  — 知らない `name` は訳さずそのまま出す。**入るのはメモリファイルのパス・スキル名・MCP
-  ツール名だけ**で、会話の文面は入らない（メッセージは数だけ）
-- **避ける言い方**: コンテキスト使用量、コンテキストウィンドウ、トークン残量
+本文は `docs/glossary/session-and-plan.md`。
 
 ### ターン
 
-- **英語識別子**: `turn`
-- **定義**: **利用者の依頼1つに対する応答**のまとまり。メインビューは1ターン＝1枚のレポートで
-  区切る（`docs/architecture/display.md` 4.2）
-- **注記**: 1つのターンの中に、複数の `speak` の呼び出しと、複数のツール実行が入りうる。
-  **依頼なしで claude が自分で始めるターンもある**（バックグラウンドタスクが終わった知らせを受けて
-  続きを報告する。記録を持たない続きのターンの始まり `turn-resumed` として扱い、吹き出しの
-  セリフと表情は持ち越し、メインビューでは元の依頼のやり取りに積む。`docs/architecture/screen-design.md` 13.9「バックグラウンドタスク」）
-- **注記**: 「やり取り」はターンの言い換えとしては使わないが、**画面の字としては使う**（依頼1つと、その続きのターン・脇の話・
-  レポートをまとめた札の単位。やり取りの列・引き出しの「やり取り」のタブ・「＋ 新しいやり取り」）。識別子にはしない
-- **避ける言い方**: やり取り（識別子と定義の文で。画面の字は上の注記）、ラウンド、メッセージ
+本文は `docs/glossary/turn.md`。
 
 ### ターンの失敗
 
-- **英語識別子**: `turnFailure`（型は `src/shared/session-driver/turn-failure.ts` の `TurnFailure`、
-  記録は `SessionRecord` の `turn-failure`、終わり方は `turn-finished` の `outcome`）
-- **定義**: ターンが**失敗で終わった**ことと、その理由（API のエラーの種類・往復の上限・予算の
-  上限・実行中のエラー）。**中断は失敗に含めない**
-- **注記**: 理由は型の決まった値だけで、SDK の自由文（`result` の `errors`）は含めない。
-  メインビューのやり取りの頭の失敗の塊に出る。入力欄の経過時間の行に理由を出す（「所要」が「失敗」になる）のは
-  雑談モードだけ。画面の字は人の言葉で、内部の綴り（`server_error` など）は `title` にだけ出す。
-  **API のエラーが届いただけでは失敗ではない**（Claude Code が立て直して続けることがある）。呼び直しの
-  途中の状態（再試行中）は一般の概念なので用語にしない（`SessionState.apiTrouble`）
-- **避ける言い方**: エラー終了、異常終了（中断まで含むように読める）
+本文は `docs/glossary/turn.md`。
 
 ### 終わったターンの数
 
-- **英語識別子**: `finishedTurnCount`（`SessionState.finishedTurnCount`。目盛りの口の属性は
-  `data-finished-turn-count`）
-- **定義**: セッションが始まってから**ターンが終わった回数**。`turn-finished`・`session-ended` が
-  実際にターンを終わらせたときだけ1つ増える。続きのターン（`turn-resumed`）が終わったときも増える
-- **注記**: サイドバーの使用量とトークン消費の画面は、この数を取り直しの合図にする。時刻ではなく
-  回数にしてあるのは、E2E で止めたサーバの時計の下でもターンごとに違う値になるようにするため。
-  サイドバーの目盛りの口は、出している値をどの回数のときに取ったかを `data-finished-turn-count` に出す
-  （値を出していない取得中は出さない）。ターンの通し番号（`nextTurnId`）はターンの始まりで増えるので別物
-- **避ける言い方**: ターン数（始まった数と区別がつかない）
+本文は `docs/glossary/turn.md`。
 
 ### バックグラウンドタスク
 
-- **英語識別子**: `backgroundTask`（型は `src/shared/session-driver/background-task.ts` の
-  `BackgroundTask`、状態は `SessionState.backgroundTasks`、イベントは `background-tasks-changed`）
-- **定義**: ターンが終わったあとも claude が動かし続けているもの（`run_in_background` の Bash・
-  背景のサブエージェントなど）。SDK の `system` / `background_tasks_changed` が顔ぶれ全体を
-  運び、`ambient`（活動でないもの）は数えない
-- **注記**: 帯の「いまの作業」が、ターンの外でも「背景で作業中」として出す
-  （`docs/architecture/screen-design.md` 13.9「バックグラウンドタスク」）。**Beads の課題のタスク（サイドバーの
-  タスク一覧）とは別のもの**
-- **避ける言い方**: 背景のタスク・背景タスク（旧称）、バックグラウンドジョブ、タスク単独（タスク一覧と紛れるので、
-  「バックグラウンド」を付けて言う）
+本文は `docs/glossary/turn.md`。
 
 ### speak ツール
 
-- **英語識別子**: `speak`（ツール名そのもの）/ `phase`（セリフが番号で言う委譲先の段。任意）
-- **定義**: tsukumo がプロセス内の MCP サーバとして提供するツール。引数は `text`（セリフ）と
-  `expression`（表情）と任意の `phase`（委譲先の段を番号で言うときの、その番号。`phase_result` の `phase` と同じ数え方）で、
-  **戻り値は `"ok"` か、仕事のときに新しい事実の無い呼び出しを差し戻す固定の一文か、
-  委譲先の段の範囲があるあいだ範囲の外の `phase` を差し戻す固定の一文**
-  （差し戻した呼び出しは吹き出しに出さない。`src/server/session-driver/core/speech-review.ts`・`phase-mention.ts`）。
-  `phase` は差し戻しの検査だけが読み、画面へは運ばない。セリフの本文の段の番号は読まない
-- **注記**: **セリフの唯一の主経路**（`docs/architecture/adr/0009-speech-via-tool.md`）。
-  **セリフが届く経路はこれだけ**（行頭マーカーの補助は
-  2026-09-21 に撤去した）
-- **避ける言い方**: 発話ツール、say、talk
+本文は `docs/glossary/conversation-tool.md`。
 
 ### report ツール
 
-- **英語識別子**: `report`（ツール名そのもの）
-- **定義**: tsukumo が `speak` と同じプロセス内の MCP サーバで提供するツール。引数は
-  `task`（タスクの作業のレポートの、タスクID・作業の名前・終わり方・種類。任意。「目録の1行」「報告の種類」）・
-  `conclusion`（結論。必須）・`checks`（検証結果。任意）・`sections`（本文。節と塊の並び。任意）・`favor`（お願い。
-  任意）・`closing`（締めのセリフ。必須。`speak` と同じ `text` と `expression`）・`waitingLine`（待ちの一言。
-  任意。`closing` と同じ形。下の「待ちの一言」）・`title`（セッション一覧の
-  見出し。任意）・`sessionSummary`（セッションの要約。任意。描かない）で、**戻り値は `"ok"` か、
-  差し戻すときの規約違反だけ**。メインビューには `task`（目録の1行と見出し）→ `conclusion` → 合図の行（`checks` の総括と
-  お願いの口）→ `sections` → `favor`（お願いの塊）の順に描き、そのあと `closing` を吹き出しに出す。**通った呼び出しはそこで
-  ターンを閉じる**（結果の `_meta["claude/endTurn"]`。差し戻しでは閉じない）
-- **注記**: **仕事のセッションには常に載り、雑談には載らない**（2026-09-24 に試行から採用へ）。
-  `report` は作業を終えてから最後に1回呼び、途中の経過は `speak` で言う。伝える
-  新しい事実が無いターンは `report` を呼ばずに終えてよい（条は `src/server/report/core/report-notation.ts`）。レポートにするのはメインの呼び出しだけで、
-  サブエージェントの呼び出しは捨てる。1つでも呼ばれたターンではツールの外に書いた本文を出さず、
-  最後の呼び出しが最終レポート、それより前が中間レポートになる。`Stop` フックの関所は
-  `src/server/report/core/report-tool.ts` にあり、`report` を呼ばずに1行を超える本文を書いて
-  止まろうとしたターンを差し戻し、`report` で渡し直させる。
-  **呼び出しそのものも検査する**: 機械で判定できる記法の条に違反した呼び出しは描かずに、違反と
-  直し方を戻り値で返して呼び直させる（1ターンに1回まで。`src/server/report/core/report-review.ts`）。
-  本文は描く前に塊ごとに整形して、意味の変わらないもの（`conclusion` の繰り返し・定型だけの塊と行・
-  逃げ道の中の中身の無い見出し・塊の残らない節）を落とす（`src/shared/report/report-tidy.ts`）
-- **避ける言い方**: レポートツール、reply
+本文は `docs/glossary/conversation-tool.md`。
 
 ### work_plan ツール
 
-- **英語識別子**: `work_plan`（ツール名そのもの）
-- **定義**: `speak` と同じプロセス内の MCP サーバで提供するツール。作業中のターンで**ワークプラン**を渡す。
-  引数は `phases`（段の名前か**並列の段**の並び。1つ以上）と `current`（今の要素の位置。0始まりで、全部済んだら要素の数。
-  最後の段は `report` の段の閉じ方 `finished` で tsukumo が閉じる）と
-  `finishedInGroup`（今の並列の段の中で済んだ段の名前。省けば空）と
-  `phaseSummary`（**段のまとめ**。済んだ段が1つ以上あり全部済みでない呼び出しでは必須。`phase_result` で進んだ位置でも省けない）。
-  委譲中は**委譲先の段の範囲**（`delegatedRange`。`docs/architecture/workflow-contract.md`「委譲の返却」）も渡す。
-  **毎回、段の並びごと渡す**（委譲で進めるときも同じで、ワークプランを渡した依頼で委譲の返却（`SubagentHandback`）を受けたあとは委譲ゲートが下りるまで呼ぶ）。
-  戻り値は `"ok"` か、`current` が要素の数を超えた・段のまとめが足りない・長すぎる・1回で2段以上済ませた・
-  委譲先の段の範囲の段の数が委譲の返却の `N` と違う・範囲の端が並列の段をまたぐときの直し方だけで、ターンは閉じない
-- **注記**: **仕事のときだけ載る**。呼ぶ条件と段の切り方は `WORK_PLAN_PROMPT`
-  （`src/server/session-driver/core/work-plan-tool.ts`）が持つ。メインの呼び出しだけを
-  `work-plan` のイベントにし、サブエージェントの呼び出しは捨てる（`report` と同じ線）
-- **避ける言い方**: plan ツール（「プラン」と紛れる）、進捗ツール
+本文は `docs/glossary/conversation-tool.md`。
 
 ### question_brief ツール
 
-- **英語識別子**: `question_brief`（ツール名そのもの。定数は `QUESTION_BRIEF_TOOL_NAME`）
-- **定義**: `speak` と同じプロセス内の MCP サーバで提供するツール。`AskUserQuestion` の前に呼び、次の
-  `AskUserQuestion` 1回ぶんの**添え書き**を `questions`（1〜4件。各件は `header` でその質問と突き合わせる）で渡す。
-  答えを待たずに戻り、戻り値は `"ok"` か、背景が空か4文以上・判断の軸が0個か6個以上か重複・選択肢が2件未満か
-  5件以上・`label` の空か重複・軸ごとの評価の数が軸と違う・良い点と悪い点がどちらも空・図が選択肢1つに3つ以上・`header` の空か重複の
-  ときの直し方だけ
-- **注記**: **仕事のときだけ載る**。預かる添え書きは1つで、呼び直すと置き換わる。次の `AskUserQuestion` で
-  使い切り、許可要求では使わず、ターンの終わりにも捨てる（`docs/architecture/display.md`「許可と質問」）
-- **避ける言い方**: 質問ツール（`AskUserQuestion` を置き換えるものではない）、ask_brief
+本文は `docs/glossary/conversation-tool.md`。
 
 ### clear_and_send ツール
 
-- **英語識別子**: `clear_and_send`（ツール名そのもの。定数は `CLEAR_AND_SEND_TOOL_NAME`）
-- **定義**: `speak` と同じプロセス内の MCP サーバで提供するツール。引数は依頼の文面 `text` の1つ。
-  呼んだターンが成功で終わったあと、tsukumo が `/clear` を送り、続けて `text` を送る。
-  戻り値は `"ok"`（呼んだ時点では何も送らない）
-- **注記**: **仕事のときだけ載る**。預かる文面は1つで、呼び直すと後勝ちで置き換わる。
-  `/clear` の完了は待たずに続けて積み（実測: 順に走り、2つ目は空の会話の最初の依頼になる）、
-  `/clear` を積んだ時点で預かりを空にする。次のとき送らずに捨てる: ターンが中断・失敗で終わった・
-  呼んだあとに利用者が依頼か脇の話を送った・答え待ちが残っている・セッションが終わった。
-  送る2つは利用者の依頼と同じく列に出る
-- **避ける言い方**: 送り直し（`report` の同じ引数の再送の意味で使う）、リセットツール
+本文は `docs/glossary/conversation-tool.md`。
 
 ### ワークプラン
 
-- **英語識別子**: `workPlan`（型は `WorkPlan`。段と並列の段の並びは `phases`、今の要素の位置は `current`。
-  イベントと記録は `work-plan`。段ごとの所要時間は `phaseDurations` で、帯と一覧の行の型は `PhaseTimeRow`（段の行と、並列の段の行）・段1つの所要は `PhaseDuration`。
-  `report` の段の閉じ方の欄は `workPlanClosing`・型は `WorkPlanClosing`（`none` / `finished` / `stopped`）、
-  イベントを受けて今のワークプランを畳む決まり〔依頼で忘れる・返却で進める・`finished` で最後の段を閉じる〕は `nextWorkPlan`、
-  記録から畳んだ今のワークプランは `currentWorkPlan`）
-- **定義**: 作業中のターンで claude が `work_plan` ツールで渡す、**段**（作業のまとまり・フェーズ）の
-  並びと今の位置。同時に走る段は**並列の段**として並びの1要素にする。いまの作業の札・依頼の手順の一覧の頭・会話の画面の**進み具合の帯**に出て、段が移ると
-  メインビューに中間レポートが出る。レポートの本文には描かない
-  （`docs/architecture/screen-design.md`「いまの作業」「進み具合の帯」、`docs/architecture/display.md`「ワークプラン」）
-- **注記**: **段はファイル単位・操作単位で切らない**（「今の形を調べる」「文書と検証を揃える」くらいの
-  まとまり）。範囲は依頼1つで、その依頼の最後の `work-plan` の記録が今のワークプラン。記録から導くだけで
-  状態に別の入れ物を持たない（`src/shared/session/work-plan-fold.ts` の `currentWorkPlan`）。委譲中もメインの `work_plan` の記録だけが
-  位置を決め、最後の段で `finished` の `report` を受け付けると全部済みにした記録も積む
-- **避ける言い方**: 段取り（旧称。2026-10-17 に改めた）、計画、単独の「プラン」（契約の「プラン」と紛れるので、必ず「ワークプラン」と言う）、
-  ステップ（依頼の手順と紛れる）、フェーズ（段と言う）
+本文は `docs/glossary/work-plan.md`。
 
 ### 段のまとめ
 
-- **英語識別子**: `phaseSummary`（`work_plan` の引数と `work-plan` の記録の欄）
-- **定義**: 段を進める `work_plan` の呼び出しで渡す、**終えた段でしたこと・分かったことの1〜2文**。
-  委譲中は、`phase_result` では空で、メインが同じ位置で渡す `work_plan` の `phaseSummary`（省けない）が段のまとめになる。メインビューに中間レポートとして出る（進み具合の帯の済んだ段の丸の吹き出しにも出る）。記法は `report` の `conclusion` と同じ
-- **注記**: 済んだ段が1つ以上あり全部済みでない呼び出し（途中の位置）では必須で、無い・3文以上
-  なら `parseWorkPlan` が差し戻す。並列の段の中の段が別々に済めば、段ごとに別のまとめになる。全部の段を終えたワークプランには入れない（最後の段のまとめは最終レポートが
-  担う）。戻る・組み替えるだけの呼び出しでも途中の位置なら要るが、段が済んでいないので画面には出さない
-  （`docs/architecture/display.md`「ワークプラン」）。
-  **`phase_result` ツール**で済んだ段は要約を持たないので、まとめは同じ位置の `work_plan` で書き、省けない（**まとめ待ちの段**）
-- **避ける言い方**: 段の結論（`report` の `conclusion` と紛れる）、要約（セッションの要約と紛れる）
+本文は `docs/glossary/work-plan.md`。
 
 ### まとめ待ちの段
 
-- **英語識別子**: `awaitingSummary`（`work-plan` の記録の欄。`none` か、段の `key` を持つ `awaiting`）
-- **定義**: 委譲の返却で済んだが、**段のまとめ**が空のままの段。次に同じワークプランの `work_plan` が `phaseSummary` を持って届いたら、
-  そのまとめをこの段の中間レポートにする
-- **注記**: 返却が段を済ませたときに tsukumo が付け、`work_plan` の記録では付けない（`src/shared/session/work-plan-shift.ts` の `shiftedPhaseOf`）
-- **避ける言い方**: 未報告の段、保留の段（`hold` と紛れる）
+本文は `docs/glossary/work-plan.md`。
 
 ### 並列の段
 
-- **英語識別子**: `PhaseGroup`（`phases` の要素のうち段の名前の配列のもの。今の並列の段の中で済んだ段は `finishedInGroup`）
-- **定義**: **ワークプラン**の中で同時に走る段の組。`phases` の1要素として、2つ以上の段の名前を重ならずに並べる。
-  段の番号は並びを平らにした読み順で振る（`[A, [B, C], D]` なら B が 2、C が 3。今の段が並列の段の中の2つなら「2–3」）。`current` が並列の段を指すあいだは、
-  その中で `finishedInGroup` に無い段がどれも「今」の段になる
-- **注記**: 並列にできるかを決めるのはワークプランを渡す側で、tsukumo は推し量らない。中の段はどの順で済ませてもよく、
-  1回の `work_plan` で済ませるのは1段（`docs/architecture/display.md`「ワークプラン」）
-- **避ける言い方**: 段のまとまり（旧称。「段のまとめ」と一字違いで紛れるので改めた）、並列ステップ（依頼の手順と紛れる）、グループ
+本文は `docs/glossary/work-plan.md`。
 
 ### 段の群
 
-- **英語識別子**: `PhaseSpan`（`whole`・`lead`・`delegated`・`trail`。群の名は `PHASE_SPAN_NAMES`、群つきの番号は `PhaseNumber` の `span`）
-- **定義**: **ワークプラン**の段を、**委譲先の段の範囲**の前（前）・範囲（本）・範囲の後ろ（後）に分けた組。段の番号は群ごとに1から数え、
-  「前 1/1」「本 2/3」「後 1/3」のように群の名を前に付けて言う。範囲の無い依頼は並び全体が1つの群（`whole`）で、群の名を付けない
-- **注記**: 群は `delegatedRange` の位置だけで決まり、`work_plan` に群を宣言する欄は無い。本の番号は委譲先の段の番号と同じで、
-  セリフで番号を言うのは本の段だけ（前・後の段は名前で言う）。範囲の段の数が決まる前（`pending`）は前の段だけが番号を持つ。
-  並列の段の番号は先頭と末尾を「–」でつなぐ（「2–3」）（`docs/architecture/display.md`「ワークプラン」）
-- **避ける言い方**: 段の範囲（**委譲先の段の範囲**と紛れる）、フェーズ、前手順・本手順・後手順（依頼の手順と紛れる）
+本文は `docs/glossary/work-plan.md`。
 
 ### 委譲の返却
 
-- **英語識別子**: `DelegateReturn`（**`phase_result` ツール**の結果を読んだ形。`skipped` は `phase-skipped`）、`delegate-returned`（`phase_result` が帯を動かしたときの内部のイベント）、`delegate-handed-back`（`SubagentHandback` が届いた事実を運ぶ、サーバの中だけのイベント）
-- **定義**: 背景で委譲したサブエージェントがメインへ返す報告。委譲先が `phase_result` で段の結果を返し、`SubagentHandback` の本文は読まない。
-  `phase` に当たる帯の段が今の段の集合に入っているときだけ、その段を済ませる（一足飛び・もう済んだ段・範囲の無い依頼・`count` が宣言した**委譲先の段の範囲**の段の数と違う呼び出しでは帯は動かない）
-- **注記**: 規則の正典は `docs/architecture/workflow-contract.md`「委譲の返却」で、スキルの依頼文は参照するだけ
-  （2026-10-10 の改訂。`docs/architecture/adr/0024-no-skill-dependency.md`）。
-  ワークプランを渡した仕事の依頼では、返却が届いたらメインが `work_plan` を呼ぶまで作業のツールを拒む委譲ゲートが立つ。
-  委譲先が途中で `SendMessage({ to: "main" })` で送る1行は吹き出しの材料で、帯を動かさない
-  （`docs/architecture/display.md`「ワークプラン」）
-- **避ける言い方**: 委譲の合図（途中で送る1行と紛れる）、進捗報告・状況報告（`report` と紛れる）
+本文は `docs/glossary/delegation.md`。
 
 ### phase_result ツール
 
-- **英語識別子**: `phase_result`（ツール名そのもの）、`PhaseResult`（引数を読んだ形）、`phase-result-called`（委譲先の呼び出しを運ぶサーバの中だけのイベント）
-- **定義**: `speak` と同じプロセス内の MCP サーバで提供するツール。委譲先が段ごとに1回呼び、段の結果を返す構造化した返却。
-  引数は `phase`（委譲先の段の番号）・`count`（委譲先の段の数）・`outcome`（`finished`・`skipped`・`stopped`）・`reason`（`stopped` のときだけ）。
-  受け付けた呼び出しは、委譲先の段の範囲の中の `phase` に当たる帯の段が今の段の集合に入っているときだけ帯を動かす
-- **注記**: 要約を持たない（**まとめ待ちの段**）。引数と帯の動かし方の正典は `docs/architecture/workflow-contract.md`「スキルの契約」
-- **避ける言い方**: 返却ツール（`SubagentHandback` と紛れる）、結果報告（`report` と紛れる）
+本文は `docs/glossary/delegation.md`。
 
 ### 飛ばした段
 
-- **英語識別子**: `skippedPhases`（`work_plan` の引数と `work-plan` の記録の欄。飛ばした段の名前の配列）、`phase-skipped`（`skipped` の **`phase_result` ツール**の結果を読んだ `DelegateReturn`）
-- **定義**: 近道・`loopable` などで要らなかった段。帯では済んだ段に数え、飛ばした印を持ち、済んだ段と見分けて描く。
-  メインで走る段は `work_plan` の `skippedPhases`、委譲先で走る段は `phase_result` の `skipped` で印が付く
-- **注記**: 印の付け方と差し戻しの正典は `docs/architecture/workflow-contract.md`「スキルの契約」の「飛ばした段の印の決まり」。
-  描き方は `docs/architecture/display.md`「ワークプラン」
-- **避ける言い方**: スキップした段（言い方を揃える）、省いた段（並びから消した段と紛れる）
+本文は `docs/glossary/delegation.md`。
 
 ### 委譲先の段の範囲
 
-- **英語識別子**: `delegatedRange`（`work_plan` の引数。`first` と `count`）
-- **定義**: **ワークプラン**のうち、委譲先の段1〜`N` に1つずつ当たる帯の段の範囲。`first` は委譲先の段1に当たる位置
-  （平らにした並びで0始まり）、`count` は段の数。委譲先の段 `n` は `first + n - 1` の帯の段に当たる
-- **`pending`**: 計画を委譲先に頼む最初の呼び出しで、`count` を省いた `{ first }`。段の数が未定のあいだ範囲の先頭から後ろの段は番号を持たず、
-  範囲の先頭の丸が「…」になり、委譲先の返却では動かない。返却を受けたあとの `pending` は差し戻す
-- **段の番号**: 範囲の前後と範囲で**段の群**（前・本・後）に分かれ、群ごとに1から数える
-- **注記**: 範囲の前後にはメインの段（計画・受け入れなど）を置いてよい。範囲の端をまたぐ**並列の段**と、
-  同じ依頼で最後に受けた**委譲の返却**の `N` と `count` が違う呼び出しは差し戻す（`docs/architecture/workflow-contract.md`「委譲の返却」）
-- **避ける言い方**: 委譲区間、サブタスクの段（タスクと紛れる）
+本文は `docs/glossary/delegation.md`。
 
 ### 委譲ゲート
 
-- **英語識別子**: `judgeToolAgainstGate`（ツールを通すか拒むかの判定）、`CallReview.gateRaised`（印）
-- **定義**: 委譲の返却が届いてからメインが `work_plan` を呼ぶまでのあいだ、メインの作業のツールを拒む仕掛け。
-  `report` の関所（`ReportGate`）とは別物
-- **注記**: 立つ・下りる条件と通すツールの正典は `docs/architecture/workflow-contract.md`「委譲の返却」
-- **避ける言い方**: 関門（旧称。`report` の関所と紛れる）、ロック、ブロック（`report` の関所と紛れる）
+本文は `docs/glossary/delegation.md`。
 
 ### ワークフローの設定
 
-- **英語識別子**: `workflowSetting`（読み取りと書き込みの手続きの名前。`WorkflowSettingView` が画面へ運ぶ形）
-- **定義**: ワークフローが自分の設定ファイル（`tsukumo-plugins` のものは `.tw/config.toml`）に持つ、スキルの並び（`steps`）の値。リポジトリに属し、tsukumo は値も欄の名前も持たない
-- **注記**: 歯車の設定の「ワークフロー」の面は、**設定コマンド**で欄の形をもらって描き、設定コマンドで書くだけ
-  （`docs/architecture/workflow-contract.md`「設定コマンド」、`docs/architecture/adr/0025-no-project-settings.md`「2026-10-14 の改訂」）
-- **避ける言い方**: プロジェクトの設定（2026-10-08 に無くした `.tsukumo/project.json` と紛れる）、リポジトリの設定
+本文は `docs/glossary/work-plan.md`。
 
 ### 並び
 
-- **英語識別子**: `steps`（**ワークフローの設定**の `schema: 2` の欄のキー）
-- **定義**: ワークフローを組む、契約を満たすと宣言したスキルの線形の並び。並びの順がそのまま実行の順で、1つ以上
-- **注記**: 欄の形と決まりは `docs/architecture/workflow-contract.md`「設定コマンド」、並びに置くスキルの契約は同じ文書の「スキルの契約」。
-  tsukumo は並びを読まず、帯はメインの `work_plan` で受ける
-- **避ける言い方**: 流れ（廃止した `flow` と紛れる）、パイプライン、ステップ（依頼の手順と紛れる）
+本文は `docs/glossary/work-plan.md`。
 
 ### 設定コマンド
 
-- **英語識別子（予定）**: なし（コマンドの名前 `tw config --schema`・`tw config set` で呼ぶ）
-- **定義**: **ワークフローの設定**を見せて書くために、ワークフローが持つ2つのコマンド。`tw config --schema` が欄の形
-  （`schema: 2` の1行の JSON）を返し、`tw config set <キー> <値>` が検査してから書く
-- **注記**: 契約の一部で、任意の口ではない（`docs/architecture/workflow-contract.md`「設定コマンド」）。
-  tsukumo は `.tw/config.toml` を直に読み書きしない。旧称は「設定の口」
-- **避ける言い方**: 設定の口（旧称。「work_plan・report の口」と並べた呼び方で、コマンドが2つであることが名前から読めなかった）、設定 API、設定のフック（hook と紛れる）
+本文は `docs/glossary/work-plan.md`。
 
 ### 呼び出しの差し戻し
 
-- **英語識別子**: `CallReview`（`src/server/session-driver/core/call-review.ts`。セッション1つに1つ）
-- **定義**: メインの `speak`・`report`・`work_plan` の呼び出しを、handler で判定して差し戻し、差し戻した呼び出しを
-  画面に出さない仕掛けの一式。3つのツールの判定の窓口と、メインのイベントを「差し戻しを済ませた並び」に変える口を持つ。
-  呼び出しを描いてよいかを決める「新しい事実」の帳面も、3つのツールでここに1つだけ持つ
-- **注記**: `Stop` フックで止まろうとしたターンを差し戻す `report` の関所（`ReportGate`）はこれに含めず、
-  この一式の結果を読む側に置く。**委譲ゲート**の印はこの一式が出す。
-  差し戻した `report` のあとの出し直しは直す欄だけを渡せばよく、渡さなかった欄は同じターンで直前に差し戻した
-  呼び出しの値を引き継ぐ（`ReportInheritance`。`src/server/report/core/report-inheritance.ts`。描く値と handler の判定は同じ土台を読む。
-  決まりは `docs/architecture/display/speak-tool.md` の `report` の項）。差し戻しの判定そのものは引き継ぎで変わらない
-- **避ける言い方**: 関所（`ReportGate` と紛れる）、検閲、フィルタ
+本文は `docs/glossary/conversation-tool.md`。
 
 ### 脇の話
 
-- **英語識別子**: `aside`（イベントと記録は `aside`、メインビューのやり取りが持つ並びは `MainViewTurn.asides`・1件は `MainViewAside`。
-  入力欄の送り方は `PromptRouting` の `aside-when-background` / `new-request`、脇の話への答えのセリフの印は `answersAside`、
-  脇の話のターンの中かは `SessionState.answeringAside`。塊の欄の `aside` は別物で「余白の柱」）
-- **定義**: **バックグラウンドタスク**が残っているあいだに入力欄から送った言葉。新しい依頼にせず、親のやり取りに吊るす。
-  札も「n / N」も増やさず、進み具合の帯・経過・中間レポートは親のやり取りのまま出し続ける。答えは `speak` で受け、
-  吹き出しと、親の札の帯の下の欄に「きみ: 言葉 → 答え」の対で出す
-- **注記**: 脇の話かどうかは、仕事のときにサーバが `prompt` を受けた瞬間のバックグラウンドタスクの有無で決め、本文は読まない。
-  ⌘⇧⏎ で送るとバックグラウンドタスクがあっても新しい依頼になる。脇の話のターンでも親のワークプランは引き継がれ、`work_plan` は
-  親の帯を進める（`docs/architecture/display.md`「脇の話」）
-- **避ける言い方**: btw・割り込み（ターンの中断と紛れる）、サブ依頼・追加の依頼（新しい依頼と紛れる）
+本文は `docs/glossary/turn.md`。
 
 ### 進みの差し込み
 
-- **英語識別子**: `ProgressNudge`（差し込むかを決める部品。`src/server/session-driver/core/progress-nudge.ts`）、
-  包みは `<tsukumo-progress>`、委譲先の進みの1行を運ぶイベントは `delegate-progress`、差し込んだ事実は `progress-nudged`
-- **定義**: 委譲中に、最後に描いたセリフから5分経ち、そのあとに委譲先の進みの要約（SDK の `task_progress` の `summary`）が
-  届いていたとき、tsukumo が最新の要約を1通だけ `<tsukumo-progress>` で包んでメインへ送ること。メインは `speak` 1回で
-  「いま何をしていて、そこでどう感じているか」に言い直し、`report` も本文も書かずに終える
-- **注記**: 差し込むかは委譲中か・セリフからの経過・新しい要約の有無だけで決め、要約の文面は見ない。差し込みは利用者の発言ではないので、
-  依頼にも**脇の話**にも数えず、画面・組み直し・セッションの要約に出ない。要約は委譲先の会話から作られた字で、
-  差し込む文面の外（記録・ログ・ブラウザ）へ写さない（`docs/architecture/display.md`「出力の分離（セリフと詳細）」）
-- **避ける言い方**: 催促（Claude Code が差し込む催促・雑談の話題を振る文面と紛れる）、合図（委譲先が `SendMessage` で送る1行と紛れる）、進捗通知
+本文は `docs/glossary/delegation.md`。
 
 ### remember ツール
 
-- **英語識別子**: `remember`（ツール名そのもの）
-- **定義**: tsukumo が `speak` と同じプロセス内の MCP サーバで提供するツール。引数は
-  **1行の文字列1つ**で、**戻り値は書けたら `"ok"`、書けなかったら理由の種類ごとの固定の一文**
-  （`isError`。行は載せない）。受け取った1行を「覚えたこと」へ書き足す
-- **注記**: **雑談モードのときだけ載る**（`docs/architecture/chat-mode.md` 4.9）。何を書いてよいかの判断は
-  モデル側の条（`src/server/chat/core/chat-manner.ts`）が持ち、tsukumo 側は書く場所と上限と、
-  下の「外部由来の印」・同じ文面の重複で断ることだけを持つ
-- **避ける言い方**: 記憶ツール、memorize、save
+本文は `docs/glossary/memory.md`。
 
 ### forget ツール
 
-- **英語識別子**: `forget`（ツール名そのもの）
-- **定義**: `remember` と同じプロセス内の MCP サーバで提供するツール。引数は**消したい1行の
-  文字列1つ**で、**戻り値は消せたら `"ok"`、消せなかったら理由の種類ごとの固定の一文**（`isError`）。
-  「覚えたこと」の中の**完全一致する1行**を消す
-- **注記**: **雑談モードのときだけ載る**（`remember` と同じ）。**消せるのは「覚えたこと」の節の
-  行だけ**で、もともと `persona.md` にあった文面は消せない。一致する行が無ければ写し直すよう促す
-  固定の一文を返し、行の一覧は返さない（`docs/architecture/chat-mode.md` 4.9）
-- **避ける言い方**: 忘却ツール、delete、remove、unremember
+本文は `docs/glossary/memory.md`。
 
 ### 外部由来の印
 
-- **英語識別子**: `ExternalToolMark`（`createExternalToolMark`）
-- **定義**: 駆動が依頼を送ってから次の依頼を送るまでに、tsukumo のツール以外のツールが呼ばれたかの印。
-  立っているあいだは雑談の `remember` を通さない
-- **注記**: 外部由来かどうかは tsukumo の MCP サーバのツール（名前の頭が `mcp__tsukumo__`。`isTsukumoTool`）を許す側とし、それ以外（Read・Bash・Web・
-  他の MCP・`Agent` など。サブエージェントの中の呼び出しも）をすべて外部由来に数える。印を立てるのは
-  PreToolUse のフックで、下ろすのは依頼を送ったときだけ（脇の話・claude が自分で始めた続きのターンでは下ろさない）
-- **避ける言い方**: 汚染フラグ、taint
+本文は `docs/glossary/memory.md`。
 
 ### recall ツール
 
-- **英語識別子**: `recall`（ツール名そのもの）
-- **定義**: `remember` と同じプロセス内の MCP サーバで提供するツール。引数は**引く言葉**で、
-  **戻り値は候補の一覧**（下の「エピソード索引」を採点した上位の `id`・見出し・要旨。当たらなければ
-  短い一言だけ）。**逐語は返さない** — 1件を開くのは下の「recall_episode ツール」
-- **注記**: **仕事・雑談のどちらのセッションにも載る**（`remember` / `forget` は雑談だけ）。
-  索引には仕事の会話のエピソードも入るので、雑談中に仕事の話を、仕事中に雑談の話を引ける。
-  **戻り値が `"ok"` だけではないツール**の1つで、返すのは**その会話自身の過去の目次**だけ
-  （`docs/architecture/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」）。**一覧は 2 KiB まで・1ターンに2回まで**（2026-09-25 に2段階へ組み替えた。
-  それまでは当たった日の逐語を 8 KiB まで返していた）
-- **避ける言い方**: 検索ツール、search、grep、思い出しツール
+本文は `docs/glossary/memory.md`。
 
 ### recall_episode ツール
 
-- **英語識別子**: `recall_episode`（ツール名そのもの）
-- **定義**: `recall` と同じ MCP サーバで提供するツール。引数は**一覧で見たエピソードの `id`**で、
-  **戻り値はその1件の範囲の会話そのもの**（アーカイブの逐語を古いほうから 8 KiB まで。知らない
-  `id` なら短い一言だけ）
-- **注記**: **仕事・雑談のどちらのセッションにも載る**（`recall` と同じ）。**開けるのは1ターンに2件まで**。開いたことは
-  `recalled.jsonl` に残り、そのエピソードが忘れにくくなる（下の「エピソード索引」）。引いた逐語は
-  画面に出さない
-- **避ける言い方**: 詳細取得、fetch、open、読み込みツール
+本文は `docs/glossary/memory.md`。
 
 ### 覚えたこと
 
-- **英語識別子**: `personaMemory`（節の見出しは `## 覚えたこと`）
-- **定義**: `remember` ツールで書き足した、**キャラクター自身についての1行**を並べた
-  `persona.md` 末尾の節。書き先は `~/.tsukumo/characters/<パック名>/persona.md` の1箇所だけ
-- **注記**: **利用者について知ったことは入らない**（`docs/architecture/chat-mode.md` 4.9 が正典）。
-  節より前は書き換えず、節を消せば書き足す前の人格に戻る。**1行ずつ消せるのは `forget`
-  ツールだけ**で、節の外の文面はどちらのツールからも触れない
-- **避ける言い方**: メモリ、記憶、学習した内容
+本文は `docs/glossary/memory.md`。
 
 ### あらすじ
 
-- **英語識別子**: `chatSummary`（置き場は `~/.tsukumo/chat-summary/<パック名>.md`。
-  2026-09-25 まで「雑談の要約」と呼んでいたものの名前と置き場を引き継ぐ）
-- **定義**: 定着が畳んだ会話（雑談と仕事の両方）の**話の筋**を1つにまとめた文章。**書くのは下の「定着」**で、
-  定着のたびに前のあらすじと畳んだエピソードから書き直される（上書き、8 KiB まで）
-- **注記**: 持つのは**新しいセッションへ記憶を渡すため**で、載せるのは両方のモードの `systemPrompt`。
-  雑談では**新規に起こしたとき**と**`/clear` を見たあと**の2つで、それ以外の `resume` には載せない
-  （claude 側の文脈に会話が既にある）。どちらかは**ファイルの1行目の印**が持つ。仕事では印を見ず、
-  **起こすたびに載せる**。
-  **「別の場所に複製しない」に対して認められた例外の1つ**（残る3つは下の「会話のアーカイブ」と
-  「エピソード索引」と、雑談で貼った画像〔会話のアーカイブの置き場の `images/`〕。`docs/architecture/chat-mode.md` 4.9。置き場は `docs/architecture/character-pack.md`「会話の記録の置き場」）
-- **避ける言い方**: 雑談の要約（2026-09-25 まで）、要約の写し、コンパクト、圧縮ログ、会話の履歴
+本文は `docs/glossary/memory.md`。
 
 ### 最近の話題
 
-- **英語識別子**: `chatTopics`（状態の欄。イベントは `chat-topics-changed`、部品は
-  `RecentTopicSection`）
-- **定義**: 雑談中のサイドバーの2段目に並べる、話題の見出し（新しい順に3件まで）。**あらすじの本文とは
-  別のファイルに持つ見出し**（`<パック名>.topics.json`。見出しを書くのは定着の `query()`）から読む
-  （`docs/architecture/chat-mode.md` 4.9）
-- **注記**: 更新されるのは定着のときだけ。**画面へ運ぶのは見出しだけ**で、あらすじの本文は運ばない
-- **避ける言い方**: 話題の一覧、トピック、履歴
+本文は `docs/glossary/memory.md`。
 
 ### 会話のアーカイブ
 
-- **英語識別子**: `chatArchive`
-- **定義**: キャラクターと利用者の会話を、届いたその場で1行ずつ書き足していくファイル
-  （`~/.tsukumo/chat-archive/<パック名>/<日付>.jsonl`）。雑談では依頼とセリフ（表情つき）、仕事では
-  **依頼の冒頭・セリフ（表情つき）・そのターンの最終レポートの結論（`conclusion`）**を書き、
-  各行が雑談か仕事かの印を持つ
-- **注記**: **英語識別子・置き場の `chat` は据え置きで、仕事の会話も入る**（呼び名は仕事の会話も入ることが分かる「会話のアーカイブ」に改めた）
-  （置き場のパスを変えると、既にあるファイルと古い版で動くプロセスの書き先が分かれる）。
-  記憶は雑談と仕事で1つで、分かれているのは claude 側の文脈（セッション）だけ
-- **注記**: **画面のログとは別物。** 画面の 100 ターンは**画面の上限**で、アーカイブは
-  その上限にも圧縮にも影響されない（`docs/architecture/chat-mode.md` 4.9）。本文（レポートの
-  `body` / `sections`）・ツールの入出力・許可プロンプト・質問・画像そのものは入らない（雑談で貼った画像は
-  同じ置き場の `images/` に7日だけ置き、依頼の行がファイル名で指す。規約の例外の4つ目）
-- **注記**: **「別の場所に複製しない」に認められた例外の2つ目**（3つ目は下の「エピソード索引」。範囲は
-  `docs/architecture/chat-mode.md` 4.9。置き場は `docs/architecture/character-pack.md`「会話の記録の置き場」）。**画面の復元の材料ではない**
-  （画面を組み直すのは transcript から。4.8）が、**キャラクターの記憶の材料ではある** —
-  セッションを起こすとき、**新しいほうから一定量**（雑談 64 KiB・仕事 16 KiB。下の「作業記憶」）
-  だけを逐語のまま読み戻して `systemPrompt` に載せる
-- **注記**: **仕事の窓（16 KiB）から溢れた会話は、下の「定着」でエピソードに畳まれ**、
-  `recall` → `recall_episode` で引いたときに戻る（`docs/architecture/chat-mode.md` 4.9）
-- **避ける言い方**: 雑談のアーカイブ・雑談の会話のアーカイブ（どちらも旧称。仕事の会話も入る）、雑談の要約とアーカイブ・雑談のあらすじとアーカイブ（あらすじと並べた旧称。「アーカイブ」だけが雑談に限るように読める）、雑談の記録（あらすじ・会話のアーカイブ・エピソード索引を束ねた旧称。「会話の記録」と言う。`SessionState` の `records` は「セッションの記録」と言い、「会話の記録」とは別）、雑談の記憶の置き場（節名の旧称。置き場は仕事の会話も入れる「会話の記録の置き場」）、バックアップ、会話ログの保存、履歴ファイル
+本文は `docs/glossary/conversation-archive.md`。
 
 ### 作業記憶
 
-- **英語識別子**: `recent`（容量の表の `recentBytes`、読む口の `readRecent`）
-- **定義**: 会話のアーカイブの**新しいほうから一定量**の会話（雑談と仕事の行を区別せずに数える）。
-  セッションを起こすとき、逐語のまま `systemPrompt` に載せる。量は**雑談 64 KiB（`recentBytes`）・
-  仕事 16 KiB（`workRecentBytes`）**（`docs/architecture/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」）
-- **注記**: 雑談の 64 KiB は画面の 100 ターンより広く、**画面で見た話を忘れることは無い**。
-  小さいほう（仕事の 16 KiB）から溢れた会話は下の「定着」が畳む
-- **避ける言い方**: 短期記憶、直近ログ、窓（文中で「窓」と略すのはよい）
+本文は `docs/glossary/conversation-archive.md`。
 
 ### 定着
 
-- **英語識別子**: `consolidation`（関数・型は `chatConsolidation…`）
-- **定義**: 仕事の作業記憶（16 KiB）から溢れた未定着の会話を、背景の**使い捨ての `query()`** に渡して、
-  下の「エピソード索引」の行と、書き直した「あらすじ」と、最近の話題の見出しを返させ、書くこと
-  （`docs/architecture/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」）
-- **注記**: **雑談・仕事のターンの終わりに、溢れた未定着の行が 8 KiB 溜まったときだけ・プロセスを
-  またいで同時に1本だけ**（錠のファイル）走る。失敗したらその回を諦め、行は次の契機で拾い直す
-- **避ける言い方**: 圧縮、コンパクト、要約処理、インデックス作成
+本文は `docs/glossary/conversation-archive.md`。
 
 ### エピソード索引
 
-- **英語識別子**: `chatEpisode`（ファイルは `episode.jsonl`。思い出した記録は `recalled.jsonl`）
-- **定義**: 定着が区切った**エピソード**（話題のまとまり）ごとに、見出し・要旨・手がかり語・大事さと、
-  アーカイブの行の範囲を1行ずつ並べたファイル（`~/.tsukumo/chat-archive/<パック名>/episode.jsonl`）。
-  引くのは `recall`（候補の一覧）と `recall_episode`（1件の逐語）
-- **注記**: **会話の写しではなく目次**（claude が自分の言葉で書いた見出しと要旨）。逐語は
-  アーカイブにしか無い。**「別の場所に複製しない」に認められた例外の3つ目**（2026-09-25 に、
-  キャラクターが `index` で書いていた `index.jsonl` の見出しを置き換えた。`docs/architecture/chat-mode.md` 4.9、
-  置き場は `docs/architecture/character-pack.md`「会話の記録の置き場」）
-- **注記**: **忘却は「消える」ではなく「引きにくくなる」**。古くて一度も思い出していないエピソードは
-  一覧の下へ沈むが、はっきりした言葉なら届く。**全文検索の仕組みは持たない**
-- **避ける言い方**: 雑談の索引（2026-09-25 まで）、全文検索、インデックス（カタカナ）、検索インデックス、目録
+本文は `docs/glossary/conversation-archive.md`。
 
 ### 圧縮の区切り
 
-- **英語識別子**: `compact-boundary`（`SessionEvent` の `kind`）
-- **定義**: claude 自身の圧縮が起きた位置に、雑談のログへ出す**細い線1本**
-  （SDK では `system` / `compact_boundary` のメッセージにあたる）。2026-09-25 から tsukumo は
-  `/compact` を投げないので、起きるのは claude の自動の圧縮と、利用者が手で打った `/compact` だけ
-- **注記**: **文言は添えない**（2026-09-21 決定。ユーザーの言葉「これは頭の中で行われるもの、
-  という想定だから文言は出さないよ」）。「ここから前は要約になっている」に当たる説明文は
-  画面に出さない。**セリフでも知らせない** — セリフの文面を決めるのは claude だけで、
-  tsukumo がキャラクターの言葉を作らない（`docs/architecture/chat-mode.md` 4.9）
-- **注記**: **押せない・畳めない**（利用者の操作の対象にしない）。**圧縮の数値**
-  （`compact_metadata` の `pre_tokens` / `post_tokens` / `duration_ms`）は運ばない・画面に
-  出さない
-- **注記**: **仕事のメインビューには出さない。** 出るのは雑談のログ（`shared/chat/chat-log.ts` の
-  `chatLogEntries`）だけ
-- **避ける言い方**: 忘却の印、要約の境界、コンパクション境界
+本文は `docs/glossary/conversation-archive.md`。
 
 ### 許可プロンプト
 
-- **英語識別子（予定）**: `permissionPrompt`
-- **定義**: ツールを実行してよいかをモデルが利用者に尋ねるもの。SDK では `canUseTool` に届く
-- **注記**: **キャラが聞く**。吹き出しに出して、その下のボタンで答える。`AskUserQuestion`
-  （キャラクターからの質問）も同じ経路・同じ見た目で扱う（`docs/architecture/display.md` 4.2）
-- **避ける言い方**: 確認ダイアログ、承認フロー、パーミッション
+本文は `docs/glossary/turn.md`。
 
 ### transcript
 
-- **英語識別子**: `transcript`
-- **定義**: Claude Code がセッションごとに書き出す JSONL ファイル。1行1イベントで、
-  `~/.claude/projects/<プロジェクトスラッグ>/<session-id>.jsonl` にある
-- **注記**: **ユーザーの生の会話ログである**。扱いの制約は
-  `docs/coding-standards.md`「会話内容の扱い」が正典。**SDK のイベントも同じ扱い**
-- **注記**: SDK で動かしても transcript は書かれる。**セッションの復元では、ここを正典として
-  読み直す**（`docs/requirements.md` 4.8。tsukumo 側にコピーは作らない。2026-09-11 の
-  「もう読まない」はこの決定で覆った）
-- **避ける言い方**: ログ、履歴、JSONL（ファイル形式を指したいときだけ「JSONL」と言う）
+本文は `docs/glossary/session-and-plan.md`。
 
 ### プロジェクトスラッグ
 
-- **英語識別子（予定）**: `projectSlug`
-- **定義**: transcript の置き場所を決めるために、cwd をスラッグ化したディレクトリ名
-- **注記**: **2026-09-11 の方針転換で役目を終えた語。** transcript を読まなくなり、追従先を
-  探す必要も無くなった（`docs/history/decision.md`「追従先は自前でスラッグ化せず、hookが書いた
-  パスを読む」に経緯がある）。スラッグはセッションごとでなく cwd（プロジェクト）ごとに決まるので、
-  識別子に合わせて「セッション」を「プロジェクト」に改めた
-- **避ける言い方**: セッションスラッグ（旧称。スラッグはセッションごとでなく cwd ごとに決まる）
+本文は `docs/glossary/session-and-plan.md`。
 
 ### ターンの本文
 
-- **英語識別子**: `utterance`
-- **定義**: ターンの本文。SDK の `assistant` イベントのテキストにあたる
-- **注記**: **セリフは含まない**（セリフは `speak` ツールで別に届く）。本文はすべて詳細
-  （レポート）として扱う（`docs/architecture/display.md` 4.2）。旧称は「発話」で、2026-09-11 までは
-  「セリフと詳細を両方含んだ全体」を指していた。英語識別子 `utterance` の改名は、このタスクの外で決める
-- **注記**: 本文をそのまま吹き出しに出すことはしない
-- **避ける言い方**: 発話（旧称。セリフと紛れる）、メッセージ、レスポンス
+本文は `docs/glossary/turn.md`。
 
 ### 見直し
 
-- **英語識別子**: `usageReview`（状態は `UsageReview`、ツールが渡す結果は `UsageReviewFindings`）
-- **定義**: トークン消費の記録から**消費の減らし方を挙げてもらう1回**。トークン消費の画面から頼むと、
-  仕事の会話とは別の使い捨ての問い合わせ（見直しの走り。`UsageReviewRunner`）が起き、
-  tsukumo に同梱したスキル `tsukumo:token-usage-diet` が流れ、結果を下の2つのツールで tsukumo へ渡す。tsukumo は分析せず、
-  受け取って整えて描くだけ
-- **注記**: 状態は **ふだん（`idle`）/ 見直し中（`running`）/ 結果（`result`）** の3つ。見直しの走りが
-  流す始まり（`usage-review-started`）で見直し中になり、終わり（`usage-review-ended`）までに結果が
-  届かなければふだんへ戻る。仕事のターン・起こし直しでは動かない。提案の実行の状態は別の欄
-  （`usageProposalRun`）が持つ（`docs/requirements.md` 4.12「トークン消費の見直し」）
-- **避ける言い方**: 分析、診断、レビュー（`report` の検査の「差し戻し」と紛れる）
+本文は `docs/glossary/usage-review.md`。
 
 ### 見直しの段
 
-- **英語識別子**: `UsageReviewStage`（`model` / `cache` / `tool` / `context` / `proposal`）
-- **定義**: 見直しの進みを区切る5つの段。モデルの使い分け → キャッシュの効き方 → ツールの呼び方と
-  結果の大きさ → コンテキストの中身 → 見直し案をまとめる、の順
-- **注記**: 段の並びと見出しは `src/shared/usage-review/usage-review.ts` が持つ。**いまの段より前は済、後は
-  未着手**と読む（済んだ段を1つずつ運ばない）。段の右に添える数（モデルの数など）はスキルから
-  受け取らず、画面が tsukumo の集計から出す
-- **避ける言い方**: ステップ（依頼の手順・`step-usage` と紛れる）、フェーズ
+本文は `docs/glossary/usage-review.md`。
 
 ### 提案
 
-- **英語識別子**: `UsageProposal`
-- **定義**: 見直しの結果の1件。**種類（`kind`）・対象（`target`）・効きめ（`impact`。`large` /
-  `medium` / `small`）・見出し（`title`）・根拠（`basis`）・やること（`action`）・押す口
-  （`followUp`。`delegate` =「tsukumo に頼む」/ `task` =「タスクにする」）**を持つ
-- **注記**: **提案の識別子**（`usageProposalKey`）は種類と対象の組で、言い回しが変わっても同じ
-  提案だと分かる。種類は `shared` に固定した列挙で、列挙に無い種類は受け付けない。押す口を
-  押すと、仕事の会話へは送らず、その提案だけの別の問い合わせ（**提案の実行**。`usageProposalRun`）を起こす。
-  依頼文は提案が持たずに `usageProposalRequestText` が組み立てる
-- **避ける言い方**: アドバイス、改善案、サジェスト（入力欄の補完の候補と紛れる）
+本文は `docs/glossary/usage-review.md`。
 
 ### usage_review_stage ツール
 
-- **英語識別子**: `usage_review_stage`（ツール名そのもの）
-- **定義**: `speak` と同じプロセス内の MCP サーバで提供するツール。見直しが次の段に入ったときに、
-  段（`stage`）と期間の日数（`days`）を渡す
-- **注記**: **見直しの問い合わせにだけ載る**（仕事の会話・雑談には載らない）。戻り値は `"ok"` に**利用者が見送った提案の識別子**を添えた
-  もので、スキルはそれを結果に入れない
-- **避ける言い方**: 進捗ツール、progress
+本文は `docs/glossary/usage-review.md`。
 
 ### usage_review_result ツール
 
-- **英語識別子**: `usage_review_result`（ツール名そのもの）
-- **定義**: 見直しの結果を1回で渡すツール。引数は期間の日数（`days`）・冒頭の一言（`headline`。
-  キャラクターの口調）・提案の並び（`proposals`）
-- **注記**: **見直しの問い合わせにだけ載る**。境界で検査し、形の崩れた引数や見送った提案の混じった結果は
-  状態を変えずに、理由を `isError` 付きの戻り値で返して呼び直させる（`report` と同じ線）
-- **避ける言い方**: 結果ツール、提案ツール
+本文は `docs/glossary/usage-review.md`。
 
 ### 見送り
 
-- **英語識別子**: `dismiss`（画面のコマンドは `usageReview.dismissProposal`、届いたイベントは
-  `usage-proposal-dismissed`、記録の読み書きは `usage-proposal-dismissal.ts`）
-- **定義**: 結果の札の「見送る」を押し、その提案を次の見直しでも出さないようにすること。
-  識別子（`usageProposalKey`）で指し、ホームのファイルに一覧として残る
-- **注記**: **取り消す口は無い**（見本にも無い）。取り消したくなったら、ホームのファイルの
-  `keys` から手で1件消す
-- **避ける言い方**: 却下、無視、非表示（消えるのは画面からだけでなく、次の見直しの対象からも
-  外れるため）
+本文は `docs/glossary/usage-review.md`。
 
 ### 前回の見直し
 
-- **英語識別子**: `PreviousUsageReview`（`src/shared/usage-review/usage-review.ts`）
-- **定義**: 直前の1回の見直しの結果。ホームのファイル（`previous-usage-review.ts` が読み書き）に
-  残り、トークン消費の画面の「前回の提案」のリンクが読む
-- **注記**: **「見直し」の状態（`idle` / `running` / `result`）とは別**——見直しはプロセスを起こし直すと
-  ふだんへ戻るが、こちらはプロセスの再起動でも消えない。書くのは見直しの走りで、受け付けた結果を書く。持つのは直前の1回だけで、古い結果は
-  新しい結果に置き換わる
-- **避ける言い方**: 履歴、ログ（並べて選ぶものではなく、直前の1回だけを指すため）
+本文は `docs/glossary/usage-review.md`。
 
 ### diary ツール
 
-- **英語識別子**: `diary`（ツール名そのもの。受け取る窓口は `createDiaryIntake`）
-- **定義**: tsukumo がプロセス内の MCP サーバで提供するツール。成果の日記書きの問い合わせで、
-  日記の本文（`body`）・表情（`expression`）・しおり（`bookmark`。`taskId` と `reason`）を1回で渡す
-- **注記**: **載るのは日記書きの使い捨ての問い合わせだけ**で、会話のセッションには載らない
-  （2026-09-25。それまでは会話に仕事・雑談とも載っていた）。しおりの ID がその日の終えたタスクに
-  無い・本文が空などは、状態を変えずに理由を `isError` 付きで返して呼び直させる（`report` と
-  同じ線）。受け付けたら `"ok"` だけ（`docs/requirements.md` 4.11「日記」）
-- **避ける言い方**: 日誌ツール、振り返りツール
+本文は `docs/glossary/achievement.md`。
 
 ## 表示
 
+本文は `docs/glossary/view.md`・`docs/glossary/character.md`・`docs/glossary/speech.md`・`docs/glossary/detail-and-report.md`・`docs/glossary/block.md`・`docs/glossary/conversation-phase.md`・`docs/glossary/local-record.md`・`docs/glossary/achievement.md`。
+
 ### ビュー
 
-- **英語識別子（予定）**: `view`（識別子は `ViewName` = `main` / `character` / `sidebar`）
-- **定義**: tsukumo が HTML で組み立て、ホストのブラウザタブに出す表示単位。
-  メインビュー・キャラビュー・サイドバーの3つがあり、**入力欄と合わせて1枚のページ**に入る
-- **注記**: **表示はすべてビューである**（2026-09-09 に全 HTML 化した。
-  `docs/architecture/adr/0016-html-instead-of-terminal.md`）
-- **避ける言い方**: ウィンドウ、パネル。**「画面」はビューの言い換えに使わない**（ページを丸ごと
-  使う単位を指す別の語。下記）
+本文は `docs/glossary/view.md`。
 
 ### 画面
 
-- **英語識別子**: `screen`（`stores/screen.tsx` の `useScreen()` が返す値は
-  `conversation` / `character` / `character-create`）
-- **定義**: ページを丸ごと使う表示の単位。**会話の画面**（4つのビューと入力欄）、
-  **キャラクター画面**、**作る画面**の3つで、同時に出るのは1つ。切り替えは URL の hash
-  （`docs/architecture/screen-design.md` 13.6）
-- **注記**: ビューは会話の画面の中の領域で、画面はそれらを入れ替える器。「メイン画面」と
-  言いたくなったら、それはメインビューか会話の画面かのどちらか
-- **避ける言い方**: ページ（HTML は1枚なので、画面が変わってもページは変わらない）、ルート、タブ
+本文は `docs/glossary/view.md`。
 
 ### キャラクター画面
 
-- **英語識別子**: `character-screen`（`src/browser/components/page/character/`。hash は
-  `#character`、一覧で選んだパックは `#character?pack=<名前>`。作る画面は同じ機能の中の
-  `character-create`、hash は `#character/new`）
-- **定義**: 左にパックの一覧、右に選んでいるパックの立ち絵・差し色・背景を並べ、画面から直す画面。
-  使用中以外のパックも直せ、そこから切り替えられる。新しいパックを作る**作る画面**へ入る口もここ
-  （`docs/architecture/screen-design.md` 13.6）
-- **注記**: **会話の画面と入れ替わる**（重ねない）。入る口も戻る口も全画面の最上部の帯（狭い画面は引き出しの歯車の面と画面の頭の「‹ 会話へ」）
-  （`docs/architecture/screen-design.md` 13.9）
-- **避ける言い方**: 見た目の引き出し（2026-09-17 に無くした。いまの「引き出し」は狭い画面の別の面）、設定画面、オプション
+本文は `docs/glossary/view.md`。
 
 ### メインビュー
 
-- **英語識別子**: `main`
-- **定義**: レイアウトの左上に置く、いちばん広いビュー。**レポートだけ**を出す
-- **注記**: **作業の進行はサイドバーへ移した**（2026-09-11 決定）。1ターン＝1枚で、書きかけの
-  本文がリアルタイムに流れる（`docs/architecture/display.md` 4.2）
-- **注記**: 以前は「詳細ビュー」と呼んでいた
-- **避ける言い方**: 詳細ビュー、詳細ペイン、プレビュー
+本文は `docs/glossary/view.md`。
 
 ### キャラビュー
 
-- **英語識別子**: `character`
-- **定義**: レイアウトの左下に置くビュー。**立ち絵と吹き出しが同じ領域に同居する**
-- **注記**: 許可プロンプトと質問のボタンは**ここには出さない**。メインビューの**お伺い**に出る
-  （2026-10-02。2026-09-11 からは入力欄の上の箱だった。吹き出しの下に出したときは気づきにくかった）
-- **注記**: ターミナルのペインではなく HTML のビュー。**これが決まったことで、端末の画像
-  プロトコルが通らない問題は関係なくなった**
-- **注記**: **狭い画面（760px 以下）では出さない**（2026-10-09）。立ち絵の舞台の代わりに、入力欄の上に顔と最新1件の
-  吹き出しを出す（`docs/architecture/screen-design.md` 13.9「狭い画面（760px 以下）」）
-- **避ける言い方**: キャラペイン、立ち絵ペイン
+本文は `docs/glossary/view.md`。
 
 ### ビューサーバ
 
-- **英語識別子**: `view-server`（機能のディレクトリ `src/server/view-server/`）
-- **定義**: ビューをブラウザに配るローカルの HTTP サーバ。`127.0.0.1` にだけバインドし、
-  ページ・束ねた JS と CSS・同梱物・立ち絵を配り、イベントは WebSocket 1本で流し、
-  コマンドは oRPC で受ける（`docs/architecture.md`「動きの流れ」）
-- **注記**: **本文をファイルに書き出さない。** 会話の一部を含むため
-  （`docs/coding-standards.md`「会話内容の扱い」）
-- **避ける言い方**: プレビューサーバ、開発サーバ
+本文は `docs/glossary/view.md`。
 
 ### 立ち絵
 
-- **英語識別子**: `portrait`
-- **定義**: キャラビューに表示するキャラクターの画像。HTML の `<img>` で出す
-- **注記**: 素材はリポジトリに同梱せず、キャラクターパックからパスで参照する
-- **避ける言い方**: スプライト、アバター、アイコン、マスコット（「マスコット」は
-  statusline 側の小さい絵を指す語として空けておく）
+本文は `docs/glossary/character.md`。
 
 ### 顔
 
-- **英語識別子**: `face`（`character.json` の欄の名前も `face`）
-- **定義**: 画面の最上部の帯の左端に、部屋の名前と並べて丸く切り抜いて出す、キャラクターの
-  顔だけの小さい絵。いまのパックの持ち物で、キャラクターを替えると変わる（`docs/architecture/screen-design.md` 13.9）。
-  狭い画面では画面の頭の左・吹き出しの左・引き出しの名乗りの行に出す
-- **注記**: **表情では変わらない1枚**（ミニ立ち絵の `mini` と同じ扱い）。**定義に無いパックでは
-  何も出さない**（立ち絵や `mini` から切り抜いて代わりにしない。顔の位置は絵ごとに違うため）
-- **避ける言い方**: アイコン、アバター、サムネイル（どれも立ち絵の「避ける言い方」と同じ理由）
+本文は `docs/glossary/character.md`。
 
 ### プロフィール
 
-- **英語識別子**: `profileCard`（部品は `ProfileCard`）
-- **定義**: 雑談中のサイドバーの最上段に出す、いまのパックのキャラクターの名乗り。**顔・名前・
-  自己紹介文**を並べる
-  （`docs/architecture/screen-design.md` 13.7「雑談のときのサイドバー」）
-- **注記**: 仕事のときは出ない（キャラクターの切り替えは帯の顔から開く選び口に戻る）
-- **注記**: 以前は「プロフィールの札」と呼び、「プロフィール」は人格の本文（いまの「ペルソナ」）を指す画面の字だった。
-  顔・名前・自己紹介文を並べたものを「プロフィール」、`persona.md` の本文を「ペルソナ」と分けた。
-  識別子 `profileCard`・`ProfileCard` は現状のままで、改名するかは追随のタスクで決める
-- **避ける言い方**: プロフィールの札（旧称）、プロフィールカード、キャラクターカード（カードはレポートの中の塊の呼び名）
+本文は `docs/glossary/character.md`。
 
 ### ペルソナ
 
-- **英語識別子**: `personaBody`（書く手続きは `characterPack.setPersona`）
-- **定義**: `persona.md` の `## 覚えたこと` の節より前。画面で読み書きできるのはここだけ（画面の「プロフィールを設定する」の字は「ペルソナを設定する」へ改める予定）
-- **注記**: 節は画面に出さず、保存のときは書く瞬間のファイルの節をそのまま残す。以前は「人格の本文」と呼び、画面の字では「プロフィール」と呼んでいた
-- **避ける言い方**: 人格の本文（旧称）、人格全文（節を含むかが曖昧になる）、単独の「プロフィール」（顔・名前・自己紹介文を並べた札を指す）
+本文は `docs/glossary/character.md`。
 
 ### 立ち絵からの生成
 
-- **英語識別子**: `generateFromPortrait`（手続きは `characterPack.generateFromPortrait`、返る値の型は `GeneratedCharacter`）
-- **定義**: 作るダイアログに置いた立ち絵1枚から、id・名前・画面の差し色2つ・ペルソナを Opus に書かせて欄を埋めること。
-  何も書き込まず、利用者が直してから「作る」を押す
-- **注記**: 置いただけでは走らず、「立ち絵から生成」を押したときだけ走る。入力は立ち絵1枚だけ
-- **避ける言い方**: 下書き（作るダイアログの作りかけの値と紛れる）、自動作成（パックまで作ると読める）
+本文は `docs/glossary/character.md`。
 
 ### 自己紹介文
 
-- **英語識別子**: `tagline`（`character.json` の欄の名前も `tagline`）
-- **定義**: プロフィールで名前の下に添える、キャラクターを一言で言い表す1行。パックの持ち物で、
-  書くのはパックの作者（`characters/README.md`）
-- **注記**: **任意**で、無いパックの札は名前だけになる。雑談の中で書き換わる `persona.md` の
-  「覚えたこと」とは別物（こちらは定義ファイルに手で書く）
-- **避ける言い方**: 説明（`character.json` の `description` はパックの作者向けの覚え書きで、
-  画面には出ない）、ひとことプロフィール（旧称）
+本文は `docs/glossary/character.md`。
 
 ### 利用者の呼び名
 
-- **英語識別子**: `userCall`（`character.json` の欄の名前も `userCall`）
-- **定義**: キャラクターが利用者を呼ぶ言葉（「きみ」「あるじ」など）。パックの持ち物で、
-  書くのはパックの作者（`characters/README.md`）。セリフのログの依頼の区切りの頭に付く
-- **注記**: **任意**で、無いパックの区切りは呼び名を付けず「」だけになる。**キャラクターの言葉
-  なのでコードに持たない**（`CLAUDE.md` 原則4）。セリフの中の呼び方は `persona.md` が決め、
-  この欄は読まない
-- **避ける言い方**: 二人称、ユーザー名（利用者の名前ではなく呼び方）
+本文は `docs/glossary/character.md`。
 
 ### ミニ立ち絵の呼び名
 
-- **英語識別子**: `miniCall`（`character.json` の欄の名前も `miniCall`）
-- **定義**: ミニ立ち絵（筆先に添う小さい1体）をキャラクターの世界で何と呼ぶか（「式神」など）。
-  ミニ立ち絵の alt に `<名前>の<呼び名>` の形で出る
-- **注記**: **任意**で、無いパックは画面の用語の「ミニ立ち絵」に落ちる
-- **避ける言い方**: ミニの名前（`mini` は素材のファイル名の欄で、紛れる）
+本文は `docs/glossary/character.md`。
 
 ### 吹き出し
 
-- **英語識別子**: `balloon`（並びは `balloon-track`）
-- **定義**: **セリフ**1件を囲って見せる表示。キャラビューの中で立ち絵と同居する。
-  1件につき1つ出し、今のターンの分を並び（`balloon-track`）に縦へ積んで**最新を一番上**に見せる
-  （並びは自前でスクロールする）。**立ち絵は領域の左下、並びは右上**に置き、領域の高さは全部使う。
-  **最新の1件だけを濃く大きくし**（左下の角から立ち絵へ向けて尻尾を伸ばす）、過去は小さく薄くする
-  （2026-09-12 決定）。折り返し・全角文字の幅・禁則処理はブラウザに任せる
-- **注記**: **ターンの本文は入れない**（本文はメインビューのレポートに回る）。
-  答え待ちの許可・質問のボタンは吹き出しの下ではなく、メインビューの**お伺い**に出る（`docs/requirements.md` 4.7）
-- **注記**: **狭い画面（760px 以下）では、入力欄の上に顔と並べて最新の1件だけを出す**（2026-10-09。作業中も常に出し、
-  3行で切る。押すとセリフのログ。`docs/architecture/screen-design.md` 13.9「狭い画面（760px 以下）」）
-- **注記**: 進み具合の帯の段の丸を押すと出る小さな面は「段の吹き出し」と呼び、セリフの吹き出しとは別物
-  （`docs/architecture/screen-design.md` 13.13「進み具合の帯」。2026-10-14）
-- **避ける言い方**: バブル、コメント欄、メッセージボックス
+本文は `docs/glossary/speech.md`。
 
 ### 反応
 
-- **英語識別子**: 出来事は `ReactionKind` で、値は迎える `welcome` / 再試行 `retrying` / 失敗 `failed` /
-  利用上限 `limited` / 待ち `idle`。1行は `ReactionLine`、反応の行の問い合わせが書く4つの行は
-  `WrittenReactions`（状態の欄は `writtenReactions` で型は `WrittenReactionsState`、イベントは
-  `reactions-written`）・`ShownReaction`（いま出す反応。導く関数は
-  `src/shared/session/shown-reaction.ts` の `shownReaction`）・記録の種類 `reaction`（出し始めた出来事で積む。
-  積む関数は `src/shared/session/session-fold.ts` の `applySessionEvent`）・待ちの一言を出す時刻が来た合図の
-  イベント `waiting-line-due`
-- **定義**: 機械の出来事に応えて、吹き出しに出す1行のセリフと表情（2026-10-02）。迎えるは下の
-  「迎えの挨拶」、ほかは挨拶とは別の問い合わせが代（起こした1回）につき1回書いた行（パックには書かない。
-  `/clear` では書き直さない）
-- **注記**: **`speak` ではない**。吹き出しに出すものはセッションの状態から導き、出し始めた時刻で記録（`reaction`）に
-  1件積んでセリフのログに残す（2026-10-15 利用者決定）。
-  どの出来事で何を出すか・無ければどうするか・いつ消えるかは
-  `docs/architecture/display.md` 4.2「出力の分離（セリフと詳細）」
-- **避ける言い方**: プレースホルダ、定型文（キャラクターの言葉として出すもの）、自動セリフ
+本文は `docs/glossary/speech.md`。
 
 ### セリフのログ
 
-- **英語識別子**: `speech-log`
-- **定義**: キャラビューの右上の「ログ」から開くモーダル。**キャラビューの舞台（立ち絵と吹き出し）を
-  そのまま上へ伸ばし**、このセッションのセリフを吹き出しのまま遡って読む。並びは古い→新しいを
-  上→下で、ターンの境目に依頼の区切り（`<利用者の呼び名>「<依頼の1行目>」 <時刻>`）を挟み、開いた直後は
-  最新（下端）が見えている。過去の吹き出しは古いほど薄い（2026-09-23）
-- **注記**: 材料は記録（`records`）で、別に溜めない。**雑談のログ・会話のアーカイブとは別物**
-  （あちらは雑談モードの会話で、利用者の発言も並ぶ）
-- **注記**: 狭い画面（760px 以下）では入力欄の上の吹き出しを押して全面で開く（キャラビューが無いため）
-- **避ける言い方**: 履歴、発言履歴
+本文は `docs/glossary/speech.md`。
 
 ### セリフ
 
-- **英語識別子**: `speech`
-- **定義**: **`speak` ツールの `text` 引数**。吹き出しに出す、会話のための言葉
-- **注記**: 分離は**ツール呼び出しで届く**（2026-09-11）。行頭マーカー（`アスナ: `）で本文から
-  切り出す補助の経路は**2026-09-21 に撤去した**（どの `persona.md` もマーカーを使えと書いて
-  おらず、発火していなかった。`docs/architecture/display.md` 4.2）
-- **注記**: 以前この語は「キャラクター定義側の固定文言」を指すために空けてあったが、
-  出力の分離が決まったことで**キャラクターが話す言葉**を指す語に確定した。固定文言を
-  指したくなったら別の語を立てる
-- **避ける言い方**: 台詞（表記は「セリフ」に統一）、メッセージ、一言
+本文は `docs/glossary/speech.md`。
 
 ### 詳細
 
-- **英語識別子**: `detail`
-- **定義**: **ターンの本文**そのもの（手順・コード・表・判断とその理由）。メインビューに
-  レポートとして出す
-- **注記**: **中身は変えない。** 読みづらさの主因は見た目なので、整形は見た目の範囲に留める
-  （`docs/requirements.md` 2.2）。**文体は中立の技術文**で、キャラクターの口調はセリフが担う
-  （`docs/architecture/display.md` 4.2）
-- **注記**: 表示単位としては「レポート」と呼ぶ。「詳細」はセリフと対になる役割の名前
-- **注記**: レポート本文と質問の選択肢の `preview` の入れ物の CSS の class 名は `detailBlockClassName`
-  （Markdown の部品が公開する。外の部品は CSS を import せずこの名前を自分の要素に重ねて付ける）
-- **避ける言い方**: ログ、詳細情報
+本文は `docs/glossary/detail-and-report.md`。
 
 ### 最終レポート
 
-- **英語識別子**: `final`（`MainViewStep.final`）
-- **定義**: **そのやり取りで最後の、中間でない本文**。`report` ツールが呼ばれたターンでは
-  最後の呼び出し、呼ばれなかったターンでは最後の本文（`main-view.ts` の `markFinalReport` /
-  `selectLastText`）。ラベル「最終レポート」（目録の1行の頭）が出るのは、同じやり取りに中間レポートがあるときか、
-  本文に `report` の `task` があるときだけ（どちらも無ければ区別にならないため）。**いちばん新しいやり取りでは、加えて
-  そのやり取りが閉じている（ターンが `running` でなく、バックグラウンドタスクも残っていない）ときだけ
-  `final` が立つ**（2026-09-26 決定。閉じていないあいだは、次の `report` でいま最後の本文が
-  中間レポートへ回るかもしれないため）
-- **注記**: **以前は「締めの本文」と呼んでいた。** `report` が呼ばれなかったターンの受け皿
-  だけに残る過去の呼び名で、いまは判定を持たない（本文の中身が実況かどうかも問わない）。
-  それまで積んでいた実況・英訳・資料の判定と、その経緯は `docs/history/decision.md` が正典
-- **避ける言い方**: 結論、まとめ、サマリー（`report` ツールの `conclusion` 引数と紛れる）
+本文は `docs/glossary/detail-and-report.md`。
 
 ### 目録の1行
 
-- **英語識別子**: `catalog`（`report-head.tsx` の `report-catalog`）。載せるタスクは `ReportTask`
-  （`report` の `task`。終わり方は `outcome`）
-- **定義**: **レポートの結論部のいちばん上の1行**。ラベル（「中間レポート」「最終レポート」）・タスクID・
-  終わり方（✓ 完了〔`finished`〕 / ？ 答え待ち。`stopped` は描かない）・変更の札のうち、あるものだけを `·` で
-  つなぐ。`task` があれば、その下に作業の名前を見出しとして出す（`docs/architecture/display/conclusion.md`
-  「タスクの作業のレポートは、結論部を「目録の1行・見出し・一文」の3段にする」）
-- **避ける言い方**: パンくず、メタ情報（パンくずはタスクのモーダルの「戻る」の呼び名）
+本文は `docs/glossary/detail-and-report.md`。
 
 ### 報告の種類
 
-- **英語識別子**: `genre`（`report` の `task` の欄）。型は `ReportGenre`、値は `work`（作業）・`decision`（判断）・
-  `research`（調べもの）。無い・読めないときは `unspecified`
-- **定義**: **終わった仕事の報告の型**。種類ごとに既定の節の並びを選ぶ（並びの正典は `REPORT_TASK_DESCRIPTION`）。
-  省略できる。止めた報告（`outcome` の `stopped`）は種類によらず中断の型で、この欄とは別
-- **避ける言い方**: 報告の kind、type（`kind` は `ReportTask` の判別子）
+本文は `docs/glossary/detail-and-report.md`。
 
 ### 変更の札
 
-- **英語識別子**: `changeSummary`（型は `ReportChangeSummary`、配る出来事は `report-change-summary`）
-- **定義**: **`task` のある最終レポートの目録の1行の末尾に出す「変更 n ファイル +a −b」**。依頼の頭の HEAD から
-  `git` の `numstat` で tsukumo が数え（件名が `<タスクID>:` のコミットだけ。絞れないときは範囲全体で、数の後ろに
-  「※他の変更を含みうる」を添える）、モデルには書かせない。数えられないときは出さない
-  （`docs/architecture/display/conclusion.md`「`task` のある最終レポートだけ、目録の末尾に変更の札「変更 n ファイル +a −b」を出す」）
-- **避ける言い方**: diffstat、差分の統計
+本文は `docs/glossary/detail-and-report.md`。
 
 ### 中間レポート
 
-- **英語識別子**: `interim`（`MainViewStep.interim`）
-- **定義**: **ターンの途中で出たレポート**。出どころは2つ: 1つのターンで `report` ツールが何度か
-  呼ばれたときの最後でない呼び出し（`src/shared/session/main-view.ts` の `selectToolReports`）と、
-  段を進めた `work_plan` の**段のまとめ**（委譲中は `phase_result` では空で、メインが同じ位置で渡す `work_plan` の `phaseSummary` が段のまとめになる。
-  `docs/architecture/display.md`「ワークプラン」）。メインビューには印を付けた枠で残る。通った
-  `report` はそこで SDK のターンを閉じるので、`report` からの中間レポートはバックグラウンドタスクや委譲の返却で
-  始まる続きのターンをまたいで生まれる。段のまとめからの中間レポートは1つのターンの中で生まれ、届いた
-  時点で中間と決まるのでターンが動いているあいだも出る
-- **注記**: `report` も段のまとめも無いターンには中間レポートは無い（最後の本文だけを出す）。規則は
-  `docs/architecture/display.md` 4.2 が正典
-- **注記**: あとに別のレポートが出た中間レポートは `<details>` で畳む（`MainViewStep.superseded` /
-  `firstLine`）。まだ追い越されていない最後の1件だけは開いたまま。規則は `docs/architecture/display.md`
-  4.2 が正典
-- **避ける言い方**: 途中経過、進捗レポート、速報
+本文は `docs/glossary/detail-and-report.md`。
 
 ### 経過の畳み
 
-- **英語識別子**: `progressFold`（`progressFoldSummary`）
-- **定義**: **最終レポートのある閉じたやり取りで、最終レポートの下に置く1つの畳み**。中に中間レポートを
-  届いた順に1行の畳みで入れ、`<summary>` は「経過 n 件」（n は中間レポートの数）に段の所要を添える。
-  働くあいだと、最終レポートの無いまま閉じたやり取りには置かない。規則は `docs/architecture/display.md` 4.2 が正典
-- **避ける言い方**: 履歴、ログ（セリフのログ・診断ログと紛れる）
+本文は `docs/glossary/detail-and-report.md`。
 
 ### お願い
 
-- **英語識別子**: `favor`（`report` ツールの引数の名前。描くときは `note-favor` の塊）
-- **定義**: **キャラクターから利用者への1件**。利用者にしか決められない・できないこと
-  （判断・作業・情報）を、`report` の `favor` に1つだけ入れる。**作業を終えた・止めたあとに残るものに限り**、
-  作業の途中で利用者の手が要るときは `report` を呼ばず `AskUserQuestion` で聞く。レポートの最後に印を付けた塊で描かれ、
-  「お願い」のラベルは tsukumo 側（`src/browser/components/page/conversation/components/markdown/renderer/notation.tsx`）が
-  文字として付ける
-- **注記**: **向きが「依頼」と逆。** 依頼は利用者からキャラクターへ、お願いは
-  キャラクターから利用者へ向く
-- **注記**: **レポートが正典**で、`speak` の側では「お願いがある」ことだけを言う（中身を二重に
-  書かない）。**無いターンでは置かない**。規約は `src/server/report/core/report-notation.ts` と
-  各パックの `persona.md`
-- **避ける言い方**: 依頼（逆向き）、質問（選択肢を出して答えを待つ
-  `AskUserQuestion` は別物で、そちらは `PendingAsk`）、宿題・TODO（やり残しと読める）
+本文は `docs/glossary/detail-and-report.md`。
 
 ### 検証結果
 
-- **英語識別子**: `checks`（`report` ツールの引数の名前）/ `ReportCheck`（1項目。
-  `src/shared/report/report-check.ts`）/ `ReportCheckStatus`（`ok` / `ng` / `unverified`）/
-  `howToVerify`（確かめ方。`unverified` の行で、知らない人が繰り返せる手順）
-- **定義**: **そのターンで何をどう確かめたか**（テスト・型検査・手で見たこと）。1項目は
-  状態（`status`）・何で確かめたか（`label`）・結果の数（`figure`）・打ったコマンド（`command`）・
-  理由（`detail`）・確かめ方（`howToVerify`）で、`report` の `checks` に並べて入れる。tsukumo が結論のすぐ下の
-  合図の行に総括行を出し、落ちた・確かめていない行だけを開き、通った行は1行に畳む。状態は記号と語
-  （✓ 通った / ✕ 落ちた / ？ 確かめていない）の両方で見せる
-- **注記**: **検証をしていないターンでは渡さない**（総括も出ない）。確かめなかった・飛ばしたものは
-  `unverified` にまとめ、理由は `detail` に、確かめ方は `howToVerify` に書く。`conclusion` と `sections` には書かない（規約は
-  `src/server/report/core/report-notation.ts` の条1）。規則は `docs/architecture/display.md` 4.2 が正典
-- **避ける言い方**: テスト結果（型検査や目視も入る）、確認結果
+本文は `docs/glossary/detail-and-report.md`。
 
 ### 合図の行
 
-- **英語識別子**: `verdict`（描く印の名前。`src/shared/report/report-notation.ts` の `REPORT_DRAWN_MARK_NAMES`）
-- **定義**: レポートの結論のすぐ下に置く、検証結果の塊（総括行と、落ちた・確かめていない行と、通った行の畳み）
-- **注記**: 検証の無いレポートでは出ない。お願いがあれば総括行の右端に、末尾のお願いへ飛ぶ「お願い 1 ↓」の印を置く。
-  規則は `docs/architecture/display/check-result.md`「検証結果は、総括行と開く行で描く」が正典
-- **避ける言い方**: サマリー行（何の要約か分からない）、委譲の返却（別の語。委譲先からの知らせ）
+本文は `docs/glossary/detail-and-report.md`。
 
 ### 節
 
-- **英語識別子**: `ReportSection`（`src/shared/report/report-block.ts`）/ `sections`（記録と
-  `SessionEvent` の `report` の欄）/ `heading`（節の見出し）
-- **定義**: **レポートの本文を区切る1段**。見出し（`heading`）と、その下に平らに並ぶ塊の並びを持つ。
-  本文は節の並びで、入れ子は節の1段だけ。見出しが空の節は見出しを描かない
-- **注記**: `report` の引数 `sections` がこの形で、節が2つ以上なら全部に見出しを付けさせる（無ければ
-  差し戻す）。引数が文字列の `body` だったころの記録は、呼び出しをイベントに変える境目
-  （`sdk-report-message.ts` の `reportEvents`）で見出しの無い節1つ・逃げ道の塊1つに畳むので、描く側は文字列の
-  本文を見ない。形の案は `docs/research/report-block.md`、決定は `docs/architecture/display.md` 4.2
-- **避ける言い方**: セクション（Markdown の見出しの区切りと紛れる）、章
+本文は `docs/glossary/block.md`。
 
 ### 塊
 
-- **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。2026-10-12 利用者決定）/ `chart` / `svg`（座標つきの図形で書く図）/ `progress` / `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
-  欄の `from` / `to`（表のセルの前後）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`label`（`list` の項目の名前）・
-  `flow`（`list` の `style` の一本道の流れ）・`sides`（`compare` の2つの側。`heading` と `points`）・
-  `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
-  `width` / `height`（`svg` の viewBox の大きさ）・`shapes`（`svg` の図形の並び。`kind` が `rect`〔`x`・`y`・`width`・`height`・`label`・`emphasis`〕/ `line`〔`x1`・`y1`・`x2`・`y2`・`arrow`・`label`〕/ `text`〔`x`・`y`・`text`〕の合併型）・`emphasis`（`rect` の枠を強調する真偽値）・`arrow`（`line` の終点に矢じりを付ける真偽値）・
-  `parts`（`dimension` の上から積む並び。領域の `name` / `size` / `before` と余白の `gap` / `before`）・`verdict`（`options` の候補の判定）・`claim` / `certainty` / `basis` / `howToVerify`（`claims` の項目。下の「確度つきの主張」）・`change`（`files` の変更の種別）・
-  `path`（`image` の画像のファイル）・`caption`（`image` の何が見えるかの1行）・`notes`（`image` の番号つきの説明の並び）・
-  `chartKind`（`chart` の種類。`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・`labels`（`chart` の横軸・扇形・項目・部分の名前）・
-  `series`（`chart` の系列。`name` と `values`）・`horizontal`（`chart` の `bar` を横棒にする真偽値）/
-  `ReportBlockField`（使われ方の記録で数える欄の名前）
-- **定義**: **節の中に並ぶ、種類の決まった本文の1単位**。種類ごとに決まった形で Markdown に組んで
-  描く（`reportSectionsMarkdown`）。塊の文字は行頭の塊の記法と `<` を逃がし、インラインの記法
-  （inline code・太字・リンク）だけが効く。`fold` のある塊は `<details>` に畳む
-- **注記**: **`markdown` の塊が逃げ道**で、中身は逃がさず今の本文と同じ経路で描き、行を落とす整形
-  （`tidyReportSections`）もこの塊に掛かる。どの塊にも当てはまらないときだけ使い、逃げ道の外側に塊の
-  種類がある記法（見出し・表・箇条書き・`note`・`stats`・`progress`・フェンス）を書いた `report` は
-  差し戻す。崩れた塊・知らない種類の塊は入口で落とす。種類ごとの使いどころは各塊の `describe` が持つ。
-  **`progress` は段（フェーズ）の位置**（`steps` と `current`）を、済んだ段・いまの段・残りの段が
-  枠と文字（済／今／番号）の両方で見分けられる図として描く（`docs/architecture/display.md` 4.2）。
-  **`options` は候補の比較**（候補ごとの判定〔採る / 検討 / 採らない〕と理由を1案1行に積む。書き手の順のまま描く）、
-  **`files` は触ったファイルの一覧**（1行に1ファイルで、変更の種別〔追加 / 変更 / 削除 / 読んだ〕とパス）。
-  **欄**は事実か判定を言うものだけで（前後の値・名前・流れ・判定・変更の種別）、描き方は tsukumo がその意味から決める。
-  段ごとに文が要る一本道は `list` の `flow`、一本道でも段の名前が短ければ・分岐・合流があれば `graph`（`source` の1行1辺の記法〔`A -> B: 語`〕で渡し、ID とラベルの引用符は tsukumo が組む。2026-10-12 利用者決定。flowchart 以外の図が `mermaid`）
-- **避ける言い方**: ブロック（Markdown の block と紛れる）、要素（HTML の要素と紛れる）、`options` を
-  「選択肢の比較」と呼ぶこと（質問の `preview` を並べた面の名前と紛れる。`options` は「候補の比較」）
+本文は `docs/glossary/block.md`。
 
 ### 形の札
 
-- **英語識別子**: `ReportShapeTag`（`src/shared/report/report-shape-tag.ts`）/ 列挙 `REPORT_SHAPE_TAGS` /
-  札ごとの表 `REPORT_SHAPE_TAG_RULES` / 節の欄 `shapeTag` / 札を省いた節を含む `RecordedReportShapeTag`（`unspecified`）。
-  値は 因果 `cause`・つながり `connection`・位置 `position`・状態 `state`・時間 `time`・順序 `order`・量 `quantity`・
-  選択 `choice`・属性の並び `attribute`・対応 `mapping`・見比べ `comparison`・境界 `boundary`・並列 `parallel`・一言 `single`
-- **定義**: **節が表す内容の形。** 書き手が節ごとに1つ言い、札ごとに第一候補・許す代替・許さない塊が決まる。
-  許さないのは下の段（`table`・`list`・`text`）だけ
-- **注記**: 前後・確度・所在は札にせず、どの札にも掛かる添え物として扱う（確度は `claims` の塊が受ける）。`svg` の塊の欄 `shapes` と紛れるので、
-  識別子に `shape` を単独で使わない
-- **避ける言い方**: タグ、型（`task` の `genre`〔報告の種類〕と紛れる）
+本文は `docs/glossary/block.md`。
 
 ### 確度つきの主張
 
-- **英語識別子**: 塊の `kind` の `claims`（`src/shared/report/report-block-prose.ts` の `claimsBlockSchema`）/ 項目の欄 `claim`（主張）・
-  `certainty`（確度。確定 `confirmed`・推測 `inferred`・未確認 `unverified`）・`basis`（根拠）・`howToVerify`（確かめ方）
-- **定義**: **主張ごとに確度・根拠・確かめ方を1組で持つ塊。** 確かめていないこと・推測を書く置き場で、確定でない項目は確かめ方を空にできない
-- **注記**: 検証の結果（テスト・型検査）は `checks` に書き、この塊に入れない。`note` の `ask` は答えの出ていない問い1つに使う。
-  決定は `docs/architecture/display.md` の「出力の分離（セリフと詳細）」（`display/block-field.md`）
-- **避ける言い方**: `claim` を単独で概念の名前にすること（セッションの占有 `SessionClaim` と紛れる）、確信度
+本文は `docs/glossary/block.md`。
 
 ### 余白の柱
 
-- **英語識別子**: `gutter`（記法の印は `with-gutter`〔塊と傍注の包み〕/ `gutter`〔傍注の並び〕/ `gutter-note`〔傍注1つ〕、
-  CSS は `report-gutter` ほか）/ 塊の欄 `aside`（**塊の傍注**。出典・どこを見るかの1行）
-- **定義**: **レポートの本文の列（42em）の右に置く、傍注の列**。出すのは `memo` の `note` と塊の `aside` だけで、
-  直前の塊の上端に揃える。本文の列の右に 160px 以上空かないときは、塊の直後の1行として本文の中に畳む
-- **注記**: 塊の欄の `aside` は「脇の話」の `aside` とは別物。「柱」とだけ書くと中くらいの窓幅でサイドバーを畳んだ
-  柱（`rail`）と紛れるので、文書では「余白の柱」と書く
-- **避ける言い方**: 柱（`rail` と紛れる）、サイドノート、脇（脇の話と紛れる）
+本文は `docs/glossary/block.md`。
 
 ### やり取りの列
 
-- **英語識別子**: `ReportOutline`（部品。`main-view/components/report-outline/`）/
-  `ReportOutlineEntry`（見出し1つ。`level` は `section`〔`##`〕/ `sub`〔`###`〕）
-- **定義**: **メインビューの左の列**。窓の中のやり取りの一覧と、見ているやり取りのレポートの見出しの
-  並びを、本文を押しのける列として置く。押すとそのやり取り・見出しへ転がす。名前は「やり取り」
-  （2026-10-08。以前は「目次」）
-- **注記**: 見出しは描いた本文の DOM（`h4` / `h5`）から拾い、畳んだ `<details>` の中のものは数えない。
-  列は隠さず常に出し、幅が足りないときは畳んだ細い列になる。出し方の規則は `docs/architecture/display.md` 4.2、
-  寸法・畳みの幅は `docs/architecture/screen-design/layout.md` 13.4「やり取りの列」
-- **注記**: 狭い画面（760px 以下）では、やり取りの並びは引き出しの「やり取り」のタブに移る（2026-10-09）
-- **避ける言い方**: 目次（見出しだけの並びだった頃の名前）、アウトライン、TOC
+本文は `docs/glossary/block.md`。
 
 ### 選択肢の比較
 
-- **英語識別子**: `QuestionOption.preview`（`src/shared/session-driver/question.ts`。札は `<Inquiry>`）
-- **定義**: 質問（`AskUserQuestion`）の**選択肢ごとに付く Markdown の本文**と、それをメインビューに
-  並べた面。表・図・メリットとデメリットで案を見比べるためのもので、答え待ちの間だけ出る
-- **注記**: **選択肢そのものは入力欄の箱に出たまま**（押す場所と読む場所を分ける。2026-09-21 決定。
-  `docs/architecture/display.md` 4.2）。箱で触れた選択肢の札が比較の面で光る
-- **注記**: `preview` は `AskUserQuestion` が元から持つ項目名なので**そのまま使う**。描くのは
-  レポートと同じ経路（同じ記法・同じサニタイズ）
-- **避ける言い方**: プレビュー（カタカナだけだと「下書きの見え方」と読める）、選択肢の詳細
-  （`description` と紛れる）
+本文は `docs/glossary/block.md`。
 
 ### 表情
 
-- **英語識別子**: `expression`
-- **定義**: 立ち絵の差分（思案 / どや顔 / あわあわ など）。**切り替わるのは `speak` の
-  `expression` 引数だけ**（源はこの1つ。ツールの実行中に自動で「作業中」へ上書きする経路は
-  2026-09-17 に撤去した。`docs/requirements.md` 4.3）
-- **注記**: **どの表情があるかと、それぞれを出す場面の一覧は `docs/requirements.md` 4.3 が正典**
-  （日本語ラベルはキャラクターごとなので `character.json` の `expressions` 側）
-- **避ける言い方**: 感情、ステート、ムード
+本文は `docs/glossary/character.md`。
 
 ### 書く動き
 
-- **英語識別子**: `writing`（`PortraitMotion` の値の1つ）
-- **定義**: メインが `report` ツールの引数を書いている間（`includePartialMessages` の断片で
-  `report` の呼び出しが開いてから、その呼び出しが届くか結果が返るまで）、立ち絵に出す動き。
-  レポートが画面に出るまで何も起きなく見える間を埋める（2026-09-23 決定。材料は 2026-09-24 に
-  「締めのセリフより後ろに伸びる本文」から `report` の引数へ移した——`report` の外の本文は
-  画面に出ないため）
-- **注記**: 表情や素材は増やさず、CSS の動き1つ（筆を運ぶような小さな横の揺れ）で表す。優先順位
-  （失敗でびくっ・完了の反応に負ける）と他の立ち絵の動きの一覧は `docs/architecture/browser.md`「立ち絵の動き」が正典
-- **避ける言い方**: 書いている（動詞の進行形だけでは、何が書いているのか読み取れないため）、執筆中、タイピング中
+本文は `docs/glossary/character.md`。
 
 ### 背景のオーバーレイ
 
-- **英語識別子**: `veil`（`character.json` の `background.veil`。「背景のオーバーレイ」の識別子での名前）
-- **定義**: キャラビュー（と雑談中のメインビュー）に敷いた**背景画像の上に1枚かぶせる、
-  `ground` 一色の膜**。値はその膜の不透明度で、`0.75` なら画像が見えるのは 25%。DOM の要素では
-  なく、`.layout-ground` の `background` に積む2枚目のレイヤ（`linear-gradient()` に `ground` を
-  同じ値で2回並べた平らな面）を指す
-- **注記**: 画像の明暗によらず地の明るさを `ground` の側へ引き戻すために置く。これがあるので
-  画像を `#ffffff` / `#000000` の2点と仮定するだけでコントラストの最悪値を押さえられる。
-  **下限は 0.7**（`docs/architecture/screen-design.md` 13.8）。立ち絵より奥にあるので立ち絵は薄くならない
-- **避ける言い方**: 覆い（旧称）、単独の「オーバーレイ」（`screen-design.md` では帯を画面の上に浮かべる部品を指す。**必ず「背景の」を付ける**）、マスク、フィルタ、暗幕
+本文は `docs/glossary/view.md`。
 
 ### いまの作業
 
-- **英語識別子**: `current-work`（置かれる機能。`src/browser/features/current-work/`）
-- **定義**: 帯のまん中に出す、tsukumo がいま何をしているかの札。状態の語（作業中 / 答え待ち /
-  背景で作業中 / 依頼待ち / 止まっている）と、実行中の手順の1行の要約（メインが `report` の
-  引数を書いている途中は「レポートを書いています」）を並べる。押すと**依頼の手順**の一覧が
-  帯の下に開く（`docs/architecture/screen-design.md` 13.9）
-- **注記**: 2026-09-23 に、サイドバーの「いま何をしているか」の区画と帯の答え待ちの印を
-  これ1つに置き換えた。**会話の画面では帯にもメインビューにも置かず、進み具合の帯と知らせの行が持つ**
-  （2026-10-02。2026-09-28 からはメインビューの下に浮かべていた）。**失敗したツールの引数と出力を読める場所は、開いた一覧の中の失敗した行**
-  （会話の画面では進み具合の帯の「手順 n」から開く一覧）
-- **注記**: 狭い画面（760px 以下）では札を置かず、同じことを画面の頭の1行目（状態の語・経過・今の段の題）が持つ（2026-10-09）
-- **避ける言い方**: ピル、ステータスバッジ、インジケーター（形の名前で、何を出すかを言わないため）
+本文は `docs/glossary/conversation-phase.md`。
 
 ### 依頼の手順
 
-- **英語識別子**: `turnStep`（一覧を導く関数は `src/shared/session/turn-step.ts` の
-  `currentTurnSteps`）
-- **定義**: いちばん新しい依頼（ターン）の中で claude が呼んだツール1回ぶん。済み / 実行中 /
-  失敗 のどれかで、ツール名と対象（`summarizeToolInput` の要約）を持つ
-- **注記**: **範囲は依頼1つ**で、「直近の何件」ではない。状態に別の入れ物は持たず、
-  セッションの記録（`records`）から最後の依頼より後のツールの記録を拾って導く
-- **避ける言い方**: ステップ（メインビューの `MainViewStep` は本文の区切りで、別のもの）、
-  アクティビティ、ログ（「会話のログ」は雑談の画面の語）
+本文は `docs/glossary/conversation-phase.md`。
 
 ### 局面
 
-- **英語識別子**: `ConversationMoment`（値は 迎える `greet` / 働く `work` / 尋ねる `ask` /
-  渡す `deliver` / つまずく `stumble`。導く関数は `src/shared/session/conversation-moment.ts`）
-- **定義**: 仕事のセッションの会話の画面が、いまどの場面にあるか。セッションの状態から導き、
-  メインビューに出す中身（始め方の一覧 / 働くあいだの札 / レポート）と、知らせの行の語を決める
-  （`docs/architecture/screen-design.md` 13.13）
-- **注記**: 局面は5つだが中身は3つ。尋ねるは進み具合の帯の今の段が答え待ちになり、答える札が本文に出る形、
-  つまずくはレポートの頭に失敗の塊が付く形で、中身そのものは替わらない。いま出している中身は `MainViewContent`
-  （値は `welcome` / `work` / `report`。`src/browser/stores/main-view-content.ts`）で、局面からは導けない
-  （送った・閉じたの遷移でしか変わらず、閉じたあとの続きのターンでもレポートのまま残る）
-- **避ける言い方**: フェーズ、段（ワークプランの段・`WorkPhase` と紛れる）、モード（仕事 / 雑談の切り替えと紛れる）
+本文は `docs/glossary/conversation-phase.md`。
 
 ### 失敗の塊
 
-- **英語識別子**: `TurnFailureBlock`（`src/browser/components/page/conversation/components/main-view/components/turn-failure-block/`）
-- **定義**: 失敗で終わったやり取りのレポートの頭に出す塊。何が起きたかを人の言葉で言い、次の手
-  （同じ依頼を入力欄に戻す・利用上限の戻る時刻を示して入力欄に戻す・失敗した手順を見る）を押せる
-- **注記**: 次の手はどれも入力欄に戻すか一覧を開くだけで、送らず、自動では再開しない
-  （`docs/architecture/screen-design.md` 13.13「失敗の塊」）
-- **避ける言い方**: エラー表示、エラーバナー（中身が理由だけに読める）
+本文は `docs/glossary/conversation-phase.md`。
 
 ### 進み具合の帯
 
-- **英語識別子**: `WorkStrip`（`src/browser/components/page/conversation/components/main-view/components/work-strip/`）
-- **定義**: 会話の画面のメインビューの札に載せる、段の丸の並び・今の段の名前・経過・
-  いま走っている手順（再試行中・答え待ちも）と、押すと開く依頼の手順の一覧の口を持つ横の帯。
-  段の丸を押すと、その段の名前・所要・段のまとめの吹き出しが出る（2026-10-14）。
-  レポートに入れ替わったあとは「7段すべて済み · 所要 …」の1行で残る
-- **注記**: **本文ではない**（進行中の本文は出さない、の対象外）。ワークプランの無いターンでは出さない。
-  会話の画面では、いまの作業の札の代わりにこれが進行を見せる（2026-10-02 に作業の地図・浮かぶ札・
-  レポートの「進み具合」を置き換えた。`docs/architecture/screen-design.md` 13.13「進み具合の帯」）。
-  札の中の置き場は `docs/architecture/display.md` 4.2「各表示物」のメインビューの項
-- **注記**: 狭い画面（760px 以下）では出さず、同じものを画面の頭の2行が持つ（2026-10-09）
-- **避ける言い方**: 作業の地図（置き換えた前の案）、進捗バー、ステッパー、ダッシュボード
+本文は `docs/glossary/conversation-phase.md`。
 
 ### お伺い
 
-- **英語識別子**: `Inquiry`（中身は `PendingAsk` の許可要求と質問。質問は添え書きの並び `briefs` も持つ）
-- **定義**: 許可要求と質問を同じ形で出す札。メインビューの本文に出し、番号つきの選択肢で答える
-  （置き場は `docs/architecture/display.md` 4.2「各表示物」のメインビューの項）
-- **注記**: 狭い画面（760px 以下）では本文に出さず、答え待ちの札で答える。添え書きはボトムシートの中で1列の形に読む（2026-10-09）
-- **避ける言い方**: 答え待ちの箱（入力欄の上にあった許可の箱の名前）、ダイアログ、プロンプト
+本文は `docs/glossary/conversation-phase.md`。
 
 ### 画面の頭
 
-- **英語識別子（予定）**: `PhoneHead`
-- **定義**: 狭い画面（760px 以下）の会話の画面の最上部に置く2行。1行目に顔・状態の語と経過・今の段の題・引き出しを開く ≡、
-  2行目に段の点・n/N・「手順 n」（`docs/architecture/screen-design.md` 13.9「狭い画面（760px 以下）」）
-- **注記**: 広い画面の帯の名乗りといまの作業と、進み具合の帯を1つにまとめたもの。札の頭・レポートの頭（合図の行）とは別物（2026-10-17 に、
-  この2つと紛れる「頭」から「画面の頭」へ改めた）
-- **避ける言い方**: 頭（旧称）、ヘッダー、ナビバー、帯（帯は広い画面の全画面の最上部の帯と進み具合の帯を指す）
+本文は `docs/glossary/view.md`。
 
 ### 引き出し
 
-- **英語識別子（予定）**: `NavDrawer`
-- **定義**: 狭い画面（760px 以下）で画面の頭の ≡ を押すと右から出る幅 330 の面。名乗りの行・動き方の段（仕事・雑談の門、モデル・effort・
-  許可モード）・「やり取り / タスク / 使用量」の切り替え・下端の「＋ 新しいやり取り」と設定の歯車を持つ
-  （`docs/architecture/screen-design.md` 13.9「狭い画面（760px 以下）」）
-- **注記**: 広い画面の帯とサイドバーが持つものの行き先。2026-09-17 に無くした「見た目の引き出し」（キャラクター画面の前身）とは別物
-- **避ける言い方**: メニュー、サイドメニュー、ドロワー、「≡」の面（2026-10-09 までの、帯の中身が縦に落ちてくる面）
+本文は `docs/glossary/view.md`。
 
 ### 答え待ちの札
 
-- **英語識別子（予定）**: `PendingAskCard`
-- **定義**: 狭い画面（760px 以下）で、答え待ち（許可要求・質問）のあいだだけ入力欄のすぐ上に固定する札。「？ 答え待ち」の字・問い・
-  等幅の札の並び（「ほか n」）・高さ 44 の答えのボタンを持ち、押した瞬間に答える（複数選択を除く）
-- **注記**: 中身はお伺いと同じ `PendingAsk` で、狭い画面ではお伺いの札の代わりに出す（同じものを2箇所に出さない）。
-  添え書きは「詳しく」からボトムシートで読む（`docs/architecture/screen-design.md` 13.9「狭い画面（760px 以下）」）
-- **避ける言い方**: 答え待ちの箱（2026-10-02 に無くした許可の箱の名前）、質問カード、プロンプト
+本文は `docs/glossary/conversation-phase.md`。
 
 ### ボトムシート
 
-- **英語識別子（予定）**: `BottomSheet`
-- **定義**: 狭い画面（760px 以下）で下から上がる面。中間レポート・依頼の手順の一覧・答え待ちの札の「ほか n」と添え書きを読む。
-  上端につまみ、下端に前後へ移るボタン（中間レポートのとき）を持ち、面の外を押す・つまみを下へ払う・Esc で閉じる
-  （`docs/architecture/screen-design.md` 13.9「狭い画面（760px 以下）」）
-- **避ける言い方**: 板（旧称。一文字の一般語で、どの面か読み取れなかった）、単独の「シート」（必ず「ボトムシート」と書く）、モーダル（`<dialog>` で中央に開くもの）、ポップオーバー
+本文は `docs/glossary/view.md`。
 
 ### 設定の点
 
-- **英語識別子**: `SettingMark`（セッションごとの束は `SettingMarks`、`SessionState.settingMarks`）
-- **定義**: モデル・effort・許可モードの選択欄の右肩に出す7pxの丸。切り替えを受け付けたこと（空洞）と、
-  受け付けた値で効いているのを見届けたこと（塗り）を言い分ける。字は出さず、ポインタを載せたときの `title` だけが言う
-  （`docs/architecture/screen-design/nav-mode-control.md` 13.9「設定の点」）
-- **避ける言い方**: 設定の口の右肩の点（旧称。「設定の口」が `tw config` を指す語だったため紛れる）
+本文は `docs/glossary/view.md`。
 
 ### 添え書き
 
-- **英語識別子**: `QuestionBrief`（1問ぶん。選択肢1件は `QuestionBriefOption`。`src/shared/session-driver/question-brief.ts`）/
-  `FigureBlock`（図に使える塊。`src/shared/report/report-block.ts` の `figureBlockSchema`）
-- **定義**: `question_brief` ツールで質問の前に渡す、1問ぶんの判断の材料。背景 `background`（なぜ今聞くか。2〜3文）・
-  判断の軸 `axes`（短い語。1〜5個）・選択肢ごとの良い点 `pros`・悪い点 `cons`・軸ごとの評価 `byAxis`・
-  戻せない印 `irreversible`・図 `figures`（`list`・`table`・`compare`・`mermaid`・`code`・`image` の塊。2つまで）。
-  形は MADR（背景・判断の軸・候補ごとの良い点と悪い点）に寄せた
-- **注記**: 選択肢は `label`（末尾のおすすめの印を外した字。「その他」は除く）で質問の選択肢と突き合わせ、
-  合ったときだけ答え待ちの `PendingAsk.briefs` に載ってお伺いの札に出る。合わない添え書きは捨てて、質問は
-  添え書き無しで出す。軸 × 選択肢の表はモデルに書かせず、`axes` と `byAxis` から画面が組む。
-  答えたあとの質問の記録には残さない
-- **避ける言い方**: 補足、プレビュー（`preview` は選択肢の Markdown の本文で別物）、説明（`description` と紛れる）
+本文は `docs/glossary/conversation-phase.md`。
 
 ### 始め方の一覧
 
-- **英語識別子**: `Welcome`
-- **定義**: 迎える局面（そのセッションにやり取りが1件も無いとき）のメインビューに出す、おすすめの札3枚と
-  「ほかの始め方」。「始める」とキー 1・2・3 は、入力欄を経由せず依頼をすぐ送る
-- **注記**: 札の並びと理由の1行は下の「おすすめの札」が運ぶ
-- **避ける言い方**: 迎える口（「口」が何を指すか伝わりにくいため改めた旧称）、スタート画面、ホーム（選ばないと進めない画面ではない）
+本文は `docs/glossary/conversation-phase.md`。
 
 ### おすすめの札
 
-- **英語識別子**: `recommendation`（機能 `src/server/recommendation/`・状態の欄・イベントは
-  `recommendation-changed`）。1枚は `RecommendationCard`、並べる元の1件は `RecommendationCandidate`
-- **定義**: 始め方の一覧に並べる、tsukumo が選んだ始め方の候補（前回の続きと、着手できる未着手のタスク）の
-  並び（3枚まで）と、各枚の理由の1行。背景の使い捨ての `query()`（`haiku`）が作る
-- **注記**: 理由は「効き目」「軽さ」「つながり（前の作業の続き）」のどれかが分かる言い方にし、数を
-  競わせない。候補が同じあいだは `~/.tsukumo/recommendation.json` の結果を使い回す。作り方は
-  `docs/architecture/screen-design.md` 13.13「おすすめの札の中身」
-- **避ける言い方**: 提案（見直しの提案と混ざる）、推薦、ランキング
+本文は `docs/glossary/conversation-phase.md`。
 
 ### 迎えの挨拶
 
-- **英語識別子**: `welcomeGreeting`（状態の欄。イベントは `welcome-greeting-changed`）。挨拶1つは
-  `WelcomeGreeting`、札の名前の差し込み口は `WELCOME_GREETING_CARD_MARK`、書く関数は
-  `src/server/recommendation/core/welcome-greeter.ts` の `greetWelcome`。書けた挨拶と反応の行をセッションごとに
-  覚えて同じセッションへ戻る代で出し直す口は `src/server/recommendation/core/kept-welcome.ts` の `createWelcomeKeeper`
-- **定義**: 迎える局面の吹き出しに出す、セッションを新しく起こすたびと `/clear` のたびに背景の使い捨ての `query()`
-  （`haiku`）がパックの人格の口調で書く1〜2文の挨拶。札があるときは始め方の一覧の先頭の札を名指す
-- **注記**: 札の名前は書かせず、差し込み口を書かせて画面が出すときに先頭の札の名前を差し込む（札の並びが
-  後から変わっても名指しが古くならない）。反応の行は持たない（別の問い合わせが書く）。反応と同じく記録に積んでセリフのログに
-  残し、記録の文は画面が表示した1行（札の名前込み。コマンド `recordWelcomeGreeting`・イベント `welcome-greeting-shown`）。いつ書き直すか・書けなかったときはどうするか・続きから起こしたときのおかえりは
-  `docs/architecture/display.md` 4.2「出力の分離（セリフと詳細）」
-- **避ける言い方**: 自動セリフ、定型の挨拶（毎回書き直すもの）
+本文は `docs/glossary/speech.md`。
 
 ### 待ちの一言
 
-- **英語識別子**: `waitingLine`（`report` の引数と、イベント・記録の欄。値は `ReportWaitingLine`）・
-  `WAITING_LINE_DELAY_MS`（ターンが閉じてから出すまでの間）。導く関数は `src/shared/session/shown-reaction.ts` の
-  `shownReaction` と `waitingLineDueAt`
-- **定義**: 依頼を待つ間に吹き出しへ出す一言。Claude Code がターンの終わりに `report` の引数で前もって書く
-  （`closing` と同じ文と表情の組。2026-10-05 利用者決定）
-- **注記**: 反応と同じく、出すたびに記録に積んでセリフのログに残す。出す時刻はサーバの時計が決め、
-  `waiting-line-due` を流す。いつ出るか・書いていないときはどうするか・
-  続きから起こした直後のおかえりは `docs/architecture/display.md` 4.2「出力の分離（セリフと詳細）」
-- **避ける言い方**: 放置セリフ、アイドルのセリフ（長いアイドルのふるまいは作らない）
+本文は `docs/glossary/speech.md`。
 
 ### 依頼の全文
 
-- **英語識別子**: `RequestBlock`（`src/browser/components/page/conversation/components/main-view/components/request-block/`）
-- **定義**: メインビューの本文の頭に、見ているやり取りの依頼の全文と
-  添えた画像を出す塊。見出し「依頼」がページの `h2`。1行に畳み、「全文」で開いて畳み直せる
-- **注記**: 2026-10-08 に札の頭の題の行を無くしたときに置いた。列の行には依頼の1行目だけを出す。
-  置き場と規則は `docs/architecture/display.md` 4.2「各表示物」のメインビューの項、形は `docs/architecture/screen-design.md` 13.3
-- **避ける言い方**: 依頼の塊（「塊」は report の本文の塊と紛れるため改めた旧称）、依頼の続き、題の行（無くした札の頭の部品）
+本文は `docs/glossary/conversation-phase.md`。
 
 ### 知らせの行
 
-- **英語識別子**: `HeadNotice`（head は列の頭）
-- **定義**: やり取りの列の頭（見出し「やり取り」の下・やり取りの行の上）に出す、いま見ている中身の外で起きたことの1つの口
-  （最新のやり取りが作業中・お伺いが届いた・失敗で終わった）。押すとそこへ移る
-- **注記**: 答え待ちの色（`--state-warn`）の枠と字の1行。畳んだ列では「!」だけの印の口。
-  2026-10-08 に札の頭の右端（「最新」の印・「最新へ」の口と同じ席）から移した
-- **避ける言い方**: 通知、トースト
+本文は `docs/glossary/conversation-phase.md`。
 
 ### 進行の計測値
 
-- **英語識別子**: `experienceMetric`（機能は `experience-metric`、記録の1行は `ExperienceMetricRecord`）
-- **定義**: 会話の画面の使い心地を、改善の前後で比べるために手元に残す数。依頼を送ってから結論が見えるまでの時間・
-  答え待ちで止まっていた時間・つまずいてから立ち直るまでの手数の3つと、仕切りを離した回数と比率
-  （`docs/architecture/screen-design.md` 13.13）
-- **注記**: 入るのは数・時刻・セッションID・局面の名前（`ConversationMoment` の値）・仕切りの名前（固定の3語）と比率（%）だけで、会話の中身は入らない。
-  外へは送らない
-- **避ける言い方**: 体験の数（何を数えたものか伝わりにくいため改めた旧称）、テレメトリ（外へ送るように読める）、UX 指標、メトリクス
+本文は `docs/glossary/local-record.md`。
 
 ### 診断ログ
 
-- **英語識別子**: `diagnostic`（機能は `diagnostic`、記録の1行は `DiagnosticRecord`、書き口は `DiagnosticLog`）
-- **定義**: 不具合の経緯をあとから追うために手元に残す足跡。`~/.tsukumo/diagnostic/<日付>.jsonl` の1本に、
-  流れ（`flow`）ごとの行を積む。流れは、畳んだ `SessionEvent` の足跡（種類・時刻・駆動の代）、
-  ブラウザの例外の足跡（拾った経路・`error.name`・スタックの先頭数フレームの出どころと行・列）、
-  握りつぶした失敗の足跡（`swallowed-failure`）、依頼の遅れの足跡（`prompt-delay`）、
-  迎えの挨拶と反応の行の書き込みの足跡（`welcome-writing`。結果・所要・各回の結果・検査落ちの理由の語）、
-  あらすじの古い行を上限のために落とした足跡（`synopsis-trim`。時刻と落とした行数）の6つ
-- **注記**: 入るのは数・真偽・決まった語だけで、会話の中身もエラーのメッセージも入らない。外へは送らない。
-  14日を過ぎた日付のファイルは消える
-- **避ける言い方**: ログ（stderr や会話のアーカイブと紛れる）、テレメトリ、トレース
+本文は `docs/glossary/local-record.md`。
 
 ### 成果
 
-- **英語識別子**: `achievement`（1日ぶんの応答は `DailyAchievement`。画面は `#achievement`）
-- **定義**: 終えた仕事を1日ぶん数えたもの。**その日に `done` になったタスク**（Beads の閉じた課題の
-  ID と題）だけを数える（2026-10-08 にコミットの数を外した）
-- **注記**: 日はローカル時刻の0時で切り、課題を閉じた時刻（`closed_at`）で決める。規則は
-  `docs/requirements.md` 4.11、画面は `docs/architecture/screen-design.md` 13.10
-- **避ける言い方**: 実績、スコア、統計（数を競わせる語にしない）
+本文は `docs/glossary/achievement.md`。
 
 ### 成果の日記書き
 
-- **英語識別子**: `achievementReflection`（依頼文は `achievementReflectionRequestText`、
-  画面から送るコマンドは `session.reflectAchievement`）
-- **定義**: 成果の画面のボタン（と見開きの「この日を振り返る」）から頼む、その日の日記書き。
-  tsukumo がその日の数・終えたタスク・卒業と節目を数えて依頼文を組み、**会話とは別の使い捨ての
-  問い合わせ**でキャラクターに `diary` ツールでその日の**日記**を書いてもらう（2026-09-25。
-  それまでは `speak` で感想を言ってもらい、同日のうちに会話へ1ターンの依頼を送る形から改めた）
-- **注記**: 画面を開いただけでは書かせない。雑談のときも会話のターン中も頼める。会話のメインビュー・
-  キャラビューには何も出ない。進みは3段（この日のタスクを読む／日記を書く／いちばんを選ぶ）で、
-  状態は `diaryWriting`。書かせる口は `diary-writer.ts`（`docs/requirements.md` 4.11「日記」）
-- **避ける言い方**: 成果の振り返り（やることは日記書きで、`/retrospect` スキルの「振り返り」と紛れるため改めた旧称）、
-  振り返り（単独で使わない。`/retrospect` スキルの「振り返り」と紛れる）、レトロスペクティブ
+本文は `docs/glossary/achievement.md`。
 
 ### 日記
 
-- **英語識別子**: `diary`（1日ぶんは `Diary`、1回ぶんの書き込みは `DiaryParagraph`、
-  書いている状態は `DiaryWriting`）
-- **定義**: 成果の日記書きでキャラクターが `diary` ツールで書く、ある1日の1ページ。本文・しおり・
-  表情に、tsukumo が書いた時刻と書いたパックの名前を添えて、ホームの下に**リポジトリごと・
-  日付ごと**に残す（`docs/requirements.md` 4.11「日記」）
-- **注記**: **同じ日に2回日記書きを頼むと段落が書き足される**（しおりは新しいほうに差し替わる）。
-  日記はセリフの写しではなく、その日のページとして残る別の成果物。成果の画面の吹き出しに
-  いちばん新しい段落が、**日記帳**の見開きに全部の段落が出る
-- **避ける言い方**: 日誌、ログ、感想（感想は日記の中身の一部で、残る物の名前ではない）、
-  レポート（メインビューのレポートと紛れる）
+本文は `docs/glossary/achievement.md`。
 
 ### 日記帳
 
-- **英語識別子**: `diaryBook`（見開きのモーダルの部品は `DiarySpread`）
-- **定義**: 日記を1日1見開きで読み返すモーダル。画面の題は「つくもの日記帳」。左ページに
-  しおり・その日に終えたこと・卒業と節目の印、右ページに縦書きの本文・漢数字の日付・曜日・
-  灯り・署名（書いたパックの顔と名前）。日記の無い日は白紙のページと「この日を振り返る」
-- **注記**: 「つくもの日記帳」は画面の固定の名前で、キャラクターの名前ではない（付喪神の「つくも」。
-  パックを替えても変わらない）。開く口は成果の画面の「日記帳で読む」・書き終わりの
-  知らせの「日記帳で開く」（`docs/architecture/screen-design.md` 13.10）
-- **避ける言い方**: アルバム、アーカイブ（会話のアーカイブと紛れる）、履歴
+本文は `docs/glossary/achievement.md`。
 
 ### しおり
 
-- **英語識別子**: `bookmark`（`DiaryBookmark`。`diary` ツールの欄も `bookmark`）
-- **定義**: 日記に挟む「この日のいちばん」。キャラクターがその日に終えたタスクから1件を選び、
-  選んだ理由を添える。成果の画面では日記の区画の下、日記帳では左ページの頭に出る
-- **注記**: 選ぶのはキャラクター（tsukumo は ID がその日の終えたタスクにあるかだけを確かめる）。
-  終えたタスクが無い日の日記には無い。書き足したときは新しいほうに差し替わる
-- **避ける言い方**: ハイライト、ベスト、おすすめ（数を競わせる語・推薦の語にしない）
+本文は `docs/glossary/achievement.md`。
 
 ### 灯りの暦
 
-- **英語識別子**: `achievementCalendar`（応答は `AchievementCalendar`、段階は `LampLevel`・
-  判定は `lampLevel`）
-- **定義**: 成果の画面の下に置く、直近5週の日ごとの成果を狐火の灯りで並べた暦。1マスに日付・
-  灯り・日記ありの鈴。押すとその日の日記帳の見開きが開く
-- **注記**: **灯り**の段階は4つ（灯りなし `none` / ほのか `faint` / ともる `lit` / 明るい `bright`）で、
-  その日に閉じた Beads の課題の数だけで決まる（区切りは `docs/requirements.md` 4.11「灯りの段階」）。
-  **日記あり**の印は鈴で、灯りとは別に出る
-- **避ける言い方**: ヒートマップ、草、カレンダー（単独で。日付の選び方の部品と紛れる）
+本文は `docs/glossary/achievement.md`。
 
 ### 卒業
 
-- **英語識別子**: `graduation`（`DailyAchievement.graduations`）
-- **定義**: **先輩タスクの卒業**。その日に終えたタスクのうち、登録から一定の日数（仮に7日）以上
-  経っていたもの。登録日は Beads の課題を作った日（`created_at` のローカルの日）
-  （`docs/requirements.md` 4.11「卒業と節目」）
-- **注記**: 数えるのは tsukumo で、モデルには選ばせない。**先輩タスク**は長く待っていたタスクの
-  愛称で、単独の型は持たない。成果の画面の「小さな驚き」と日記書きの依頼に出る
-- **避ける言い方**: 滞留タスク、古いタスク、放置（責める語にしない）
+本文は `docs/glossary/achievement.md`。
 
 ### 節目
 
-- **英語識別子**: `milestone`（`DailyAchievement.milestones`）
-- **定義**: 終えたタスクの通算の数が刻みの倍数をその日にまたいだこと（**通算 N 件目のタスク**。刻みは仮に 250 件。
-  `docs/requirements.md` 4.11「卒業と節目」）
-- **注記**: 数えるのは tsukumo。成果の画面の「小さな驚き」と日記書きの依頼に出る。前日比・連続
-  日数のような「比べる数」は節目に含めない（置かない）
-- **避ける言い方**: 実績、トロフィー、達成（数を競わせる語にしない）
+本文は `docs/glossary/achievement.md`。
 
 ### キャラクターパック
 
-- **英語識別子**: `characterPack`
-- **定義**: 立ち絵の素材パスと、表情の対応を宣言的に書いた差し替え可能な定義。`character.json`（表情の
-  ラベルを含む）と `persona.md`（tsukumo 向けの人格）と素材を1つのディレクトリで束ねたもの
-  （`docs/architecture/character-pack.md`）
-- **注記**: 人格と素材を別々に選ぶ形はやめた（2026-09-13 決定）。**コードにキャラクターの中身を書かない**ための置き場所
-  （`docs/architecture.md` 原則4）
-- **避ける言い方**: キャラクター定義（旧称。2026-10-17 に改めた）、設定ファイル（`config` は別の意味に使いたくなるため）、テーマ
+本文は `docs/glossary/character.md`。
 
 ### フォールバック
 
-- **英語識別子**: 使わない（動作の呼び名であって、対応する識別子は置かない）
-- **定義**: 表示物が1つ欠けても、残りを表示して動作を続けること。立ち絵の素材が無ければ
-  セリフだけを出し、`orca` が無ければタブを開かずに配信だけ続ける
-- **注記**: **表示物が1つ欠けたことを起動失敗にしない**（`docs/architecture/display.md` 4.2）
-- **注記**: 端末の画像プロトコルが使えるかどうかは、立ち絵が `<img>` になったことで
-  関係なくなった（2026-09-09）
+本文は `docs/glossary/character.md`。
 
 ## Claude Code 側の仕組み
 
+本文は `docs/glossary/runtime-and-claude-code.md`。
+
 ### hook
 
-- **英語識別子（予定）**: `hook`
-- **定義**: Claude Code が特定のイベント（`SessionStart` / `PreToolUse` / `Stop` など）で
-  実行する外部コマンド
-- **注記**: **tsukumo は hook を使わない**（2026-09-11）。状態はすべて SDK のイベントで届く。
-  以前は状態ファイルを書くために使っていた
-- **注記**: hook の stdout はエスケープされてテキスト扱いになるため、そこから描画はできない
-  （`docs/requirements.md`「3. 技術制約」）。登録先の `~/.claude/settings.json` は
-  **orca が専有しているので上書きしない**
+本文は `docs/glossary/runtime-and-claude-code.md`。
 
 ### statusline
 
-- **英語識別子（予定）**: `statusline`
-- **定義**: Claude Code の入力欄下に出る1行の表示。ここに小さいマスコットを出すのが案B
-- **注記**: 現状 orca が専有している。優先度は低く、MVPには含めない
+本文は `docs/glossary/runtime-and-claude-code.md`。
 
 ### output style
 
-- **英語識別子**: 使わない
-- **定義**: Claude Code の応答の人格・口調を定義する設定。実測環境では `Asuna` が有効
-- **注記**: **`speak` を呼ぶタイミングの規約もここに書く**（`docs/architecture/display.md` 4.2）
-- **注記**: **人格は毎ターン `systemPrompt` の append として渡っている**
-  （`src/server/session-driver/adapter/sdk-driver.ts` が `{ type: "preset", preset: "claude_code", append }` を組む）。
-  2026-09-11 のスパイクで確かめてあり、未決ではない
+本文は `docs/glossary/runtime-and-claude-code.md`。
 
 ## 通信（移行後）
 
-2026-09-13 に決めた移行（`docs/architecture.md`）で加わった語。
+本文は `docs/glossary/communication.md`。
 
 ### 共有層
 
-- **英語識別子**: `shared`（ディレクトリ `src/shared/`）
-- **定義**: サーバ（core）とブラウザ（browser）の**両方が import する契約**。イベント・状態・reducer・
-  コマンドとフレームの zod スキーマ・`PROTOCOL_VERSION`
-- **注記**: `node:` にも `document` にも触らない。zod のスキーマが正典で、型は `z.infer`。
-  **ディレクトリ名は 2026-09-20 に `protocol` から `shared` へ改めた**（層の名前を「どの実行環境で
-  動くか」に合わせたため。`docs/history/architecture-placement.md`）
-- **避ける言い方**: プロトコル（旧称。2026-10-17 に改めた）、共通、API、コントラクト
+本文は `docs/glossary/communication.md`。
 
 ### アダプタ
 
-- **英語識別子**: `adapter`（ディレクトリ `src/server/adapter/`）
-- **定義**: 外の世界（Agent SDK・HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るコードの
-  置き場所。**1ファイル = 1つの境界**。判断は持たず、`core` から呼ばれるか `cli.ts` が結ぶ
-- **注記**: インターフェースは**実装が2つあるもの（駆動・ホスト）にだけ** `core` に置く
-  （`session-driver/core/session-driver.ts` / `host/core/host.ts`）。`core → adapter` の import は
-  `test/architecture/layer.test.ts`「層と依存の向き」が落とす
-- **避ける言い方**: インフラ層、外界、helpers
+本文は `docs/glossary/communication.md`。
 
 ### フレーム
 
-- **英語識別子**: `ServerFrame`（`hello` / `events` / `refresh`）
-- **定義**: サーバがブラウザへ WebSocket で押す1件。ブラウザが接続ごとに呼ぶ購読の手続き
-  `frame.subscribe` の Event Iterator の1件として届く。`hello` は購読の最初の snapshot、`events` は
-  まとめたイベント、`refresh` は開発中の取り直しの合図。**コマンドの応答はフレームではない**
-  （同じ `/ws` に乗る手続きの応答。下の「コマンド」）
-- **注記**: 経路名 `/ws` とトークンのクエリ名は `src/shared/view-server/session-socket.ts` が正典で、
-  `adapter` と `browser` は値を再掲しない
-- **避ける言い方**: メッセージ（SDK の `SDKMessage` と紛れる）、パケット
+本文は `docs/glossary/communication.md`。
 
 ### コマンド
 
-- **英語識別子**: 手続きの名前（`session.prompt` / `session.interrupt` / `session.switchCharacter` /
-  `characterPack.setPortrait` など31種。形は `src/shared/contract/<機能>.ts`、束は
-  `src/shared/rpc.ts` の `commandContract`）
-- **定義**: ブラウザがサーバへ送る**書き込みの手続き**。`/ws` の上で oRPC の要求として送り、
-  断られたら契約のエラー `REFUSED`（理由は定型文）が応答で返る
-- **注記**: **スラッシュコマンド（`/model` など）とは別物。** あちらは `session.prompt` の `text` に
-  書く。**どの機能が受け、どの条件で断るかは契約**（断る条件は `meta`）**と機能ごとの表**
-  （`src/server/<機能>/core/<機能>-command.ts`。`docs/architecture.md`「コマンドの受け手と手続きの
-  置き方」）。2026-09-26 まではコマンドの和 `ClientCommand`（`src/shared/command.ts`）だった
-- **避ける言い方**: リクエスト、アクション
+本文は `docs/glossary/communication.md`。
 
 ### 契約
 
-- **英語識別子**: `contract`（ディレクトリ `src/shared/contract/`）
-- **定義**: ブラウザとサーバが取り交わす**手続き1つぶんの形**（入力・出力・エラー・断る条件の `meta`）。
-  機能ごとに `src/shared/contract/<機能>.ts` に置き、zod と `@orpc/contract` で書く
-- **注記**: 上の「共有層」（`shared` 全体。イベント・状態・reducer も含む）の一部で、そのうち
-  **手続きの形だけ**を指す。受け手は含まない（受け手を付けたものが「手続き」）。
-  `docs/architecture.md`「コマンドの受け手と手続きの置き方」
-- **避ける言い方**: スキーマ（zod の1つを指すときと紛れる）、インターフェース、API
+本文は `docs/glossary/communication.md`。
 
 ### 手続き
 
-- **英語識別子**: `procedure`（`src/server/<機能>/adapter/<機能>-procedure.ts`）
-- **定義**: 契約に受け手を付けたもの。**画面からのコマンドと読み取りのどちらもこれで受ける**
-  （oRPC の手続き。全部を束ねるのは配線の `src/router.ts`）
-- **注記**: 中身は機能の `core` へ委ねる数行で、判断を書かない。断る条件（雑談の外・ターン中）は
-  手続きの中ではなく、契約の `meta` を見る `rpc-guard.ts` が掛ける
-- **避ける言い方**: エンドポイント、ハンドラ、コントローラー（手本の語。tsukumo では「受け手」と言う）
+本文は `docs/glossary/communication.md`。
 
 ### セッションの状態
 
-- **英語識別子**: `SessionState`（移行前は `SessionView`）
-- **定義**: イベントを畳んで得た「いま画面に出すべき中身」。サーバとブラウザが**同じ reducer**
-  （`applySessionEvent`）で同じ状態を持つ
-- **注記**: 時刻はイベントの `at`（サーバの時計）から入る。ブラウザの時計を reducer に渡さない
-- **避ける言い方**: セッションの姿（旧称。2026-10-17 に改めた）、ビューモデル、ストア、単独の「状態」（接続中かどうかなどと紛れるので、必ず「セッションの状態」と言う）
+本文は `docs/glossary/communication.md`。
 
 ### fake driver
 
-- **英語識別子**: `startFakeSession`（引数の型 `FakeDriverOptions`。`TSUKUMO_DRIVER=fake`）
-- **定義**: `SessionDriver`（`src/server/session-driver/core/session-driver.ts` の契約）と同じ形で、手で書いた
-  疑似セッションどおりにイベントを流す実装（`src/server/session-driver/adapter/fake-driver.ts`）。claude を起こさずに
-  画面全体を動かすための道具
-- **注記**: 疑似セッションは**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
-- **避ける言い方**: モック（テストの中の置き換え一般と紛れる）、スタブ
+本文は `docs/glossary/communication.md`。
 
 ### 疑似セッション
 
-- **英語識別子**: `fakeSession`
-- **定義**: fake driver（`src/server/session-driver/adapter/fake-driver.ts`）が流すために手で書いた架空のイベント列
-  （`test/fixture/fake-session.json`）。claude を起こさずに画面全体を動かすための材料
-- **注記**: 疑似セッションは**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
-- **避ける言い方**: シナリオ、スクリプト（脚本という含みが強すぎる）
+本文は `docs/glossary/communication.md`。

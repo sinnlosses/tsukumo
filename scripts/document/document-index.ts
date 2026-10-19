@@ -1,8 +1,8 @@
-// ADR の一覧表と用語集の索引を、元の見出しから組み立てる純粋関数。
+// ADR の一覧表と用語集の索引を、元の題と見出しから組み立てる純粋関数。
 // 表の範囲は、指定した見出しより後で最初に現れる `|` で始まる連続した行。
 
-/** ADR 1件（ファイル名と、1行目の `# ` の題）。 */
-export type AdrEntry = {
+/** 一覧に載せる文書1件（ADR・用語集の子のファイル。ファイル名と、1行目の `# ` の題）。 */
+export type TitledFile = {
   readonly fileName: string
   readonly title: string
 }
@@ -11,31 +11,30 @@ export type TableRow = readonly [string, string]
 
 export const DECISION_TABLE_HEADING = "## 設計判断（なぜ今の形なのか）"
 export const GLOSSARY_INDEX_HEADING = "### 用語の索引"
-
-const GLOSSARY_SKIPPED_SECTION = "## このファイルの読み方"
+export const GLOSSARY_FILE_INDEX_HEADING = "## 節の索引"
 
 /** 設計判断の表の行（ファイル名の昇順）。 */
-export function decisionRows(adrs: readonly AdrEntry[]): TableRow[] {
-  return adrs
-    .toSorted((a, b) => (a.fileName < b.fileName ? -1 : a.fileName > b.fileName ? 1 : 0))
-    .map(({ fileName, title }) => [`\`docs/architecture/adr/${fileName}\``, title])
+export function decisionRows(adrs: readonly TitledFile[]): TableRow[] {
+  return fileRows("docs/architecture/adr", adrs)
 }
 
-/** 用語集の索引の行（`## ` 節ごとの `### ` 見出し）。 */
+/** 用語集の親の索引の行（子のファイルのパスと題。ファイル名の昇順）。 */
+export function glossaryFileRows(files: readonly TitledFile[]): TableRow[] {
+  return fileRows("docs/glossary", files)
+}
+
+/** 用語集の子のファイルの索引の行（`## ` 節ごとの `### ` 見出し）。 */
 export function glossaryIndexRows(glossary: string): TableRow[] {
   const sections: { heading: string; terms: string[] }[] = []
-  let inFence = false
   for (const line of glossary.split("\n")) {
-    if (line.startsWith("```")) {
-      inFence = !inFence
-    } else if (!inFence && line.startsWith("## ")) {
+    if (line.startsWith("## ")) {
       sections.push({ heading: line.trim(), terms: [] })
-    } else if (!inFence && line.startsWith("### ")) {
+    } else if (line.startsWith("### ")) {
       sections.at(-1)?.terms.push(line.slice(4).trim())
     }
   }
   return sections
-    .filter(({ heading, terms }) => heading !== GLOSSARY_SKIPPED_SECTION && terms.length > 0)
+    .filter(({ terms }) => terms.length > 0)
     .map(({ heading, terms }) => [heading, terms.join(" / ")])
 }
 
@@ -57,6 +56,12 @@ export function replaceTableRows(text: string, heading: string, rows: readonly T
   }
   const rendered = [...range.lines.slice(0, 2), ...rows.map(([a, b]) => `| ${a} | ${b} |`)]
   return [...lines.slice(0, range.start), ...rendered, ...lines.slice(range.end)].join("\n")
+}
+
+function fileRows(directory: string, files: readonly TitledFile[]): TableRow[] {
+  return files
+    .toSorted((a, b) => (a.fileName < b.fileName ? -1 : a.fileName > b.fileName ? 1 : 0))
+    .map(({ fileName, title }) => [`\`${directory}/${fileName}\``, title])
 }
 
 function findTableRange(
