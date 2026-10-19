@@ -107,6 +107,7 @@ mise run setup  # 依存を入れ、ブラウザ側を組み立て、tsukumo コ
 ```
 
 `mise run setup` は `pnpm install`・`pnpm run build`（成果物は `dist/browser/`）・
+共有の `.git/hooks/pre-commit`（20,000 バイトを超えるファイルの追加・拡大をコミットの手前で止める検査。別の `pre-commit` があれば上書きしません）・
 `pnpm add --global "link:<このリポジトリ>"`（`bin/tsukumo` を `tsukumo` コマンドとして入れる）の順に進みます。
 pnpm のグローバルの置き場（`$PNPM_HOME/bin`）が `PATH` に無いときだけ、代わりに `pnpm setup --force` を
 打って止まり、新しいシェルを開くよう知らせます（シェルの設定ファイルの `# pnpm` 〜 `# pnpm end` の区画を

@@ -20,7 +20,7 @@
 - `docs/workflow/task-writing.md`: タスクを書くとき・受け入れるとき、`summary` の長さ
 - `docs/workflow/loopable.md`: `loopable` の判定、tsukumo を起こすときの作法と hook
 - `docs/workflow/reference-material.md`: 参考に示された画像・ディレクトリの残し方
-- `docs/workflow/worktree-and-ship.md`: 作業ツリーの並行、`main` への送り出し、実機の Claude Code を動かす計測
+- `docs/workflow/worktree-and-ship.md`: 作業ツリーの並行、`main` への送り出し、コミット前のファイルの大きさの検査、実機の Claude Code を動かす計測
 
 ## 節の索引
 
@@ -32,6 +32,7 @@
 | ## `summary` の長さ                                          | 全角40文字以内                      |
 | ## 作業ツリーを並行させるとき                                | ポートとホームの分け方              |
 | ## タスクに紐付かない作業を main へ送る                      | `pnpm run ship`                     |
+| ## コミット前のファイルの大きさの検査                        | 20,000 バイトの上限                 |
 | ## 実機の Claude Code を動かす計測のとき                     | 応答の確かめ方                      |
 | ## 関連                                                      | 手順・正典・記録の置き場            |
 
@@ -62,6 +63,10 @@
 ## タスクに紐付かない作業を main へ送る
 
 本文は `docs/workflow/worktree-and-ship.md`「タスクに紐付かない作業を main へ送る」。
+
+## コミット前のファイルの大きさの検査
+
+本文は `docs/workflow/worktree-and-ship.md`「コミット前のファイルの大きさの検査」。
 
 ## 実機の Claude Code を動かす計測のとき
 
