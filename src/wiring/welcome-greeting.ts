@@ -1,6 +1,7 @@
 // 迎えの挨拶と反応の行の配線。代を起こすたびに、起こす代のパックで両方を背景で書かせ
 // （続きから起こした代は組み直した履歴から決めた迎え方で）、
 // その代の受け取り口に `/clear` が流れるたびに挨拶だけを書き直す。
+// 同じプロセスの中で前に書けたセッションへ続きから戻る代は、書かせずに覚えたものを出し直す。
 
 import { localCalendarAt } from "../server/adapter/local-time.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
@@ -10,6 +11,7 @@ import {
   readRecentWelcomeGreetings,
   writeRecentWelcomeGreetings,
 } from "../server/recommendation/adapter/welcome-greeting-memory.ts"
+import { createWelcomeKeeper } from "../server/recommendation/core/kept-welcome.ts"
 import { resumedWelcome } from "../server/recommendation/core/resumed-welcome.ts"
 import { createWelcomeGreeter } from "../server/recommendation/core/welcome-greeter.ts"
 import {
@@ -40,11 +42,13 @@ export function wireWelcomeGreeting(
 } {
   const { cwd, inheritedEnv } = context
   const reportFailure = failureDiagnostic(diagnosticLog, context.now)
+  const keeper = createWelcomeKeeper()
   return {
     noteLaunched: (seed, onEvent, restored) => {
       if (context.fakeSession !== undefined || seed.chat) {
         return NO_OBSERVER
       }
+      const kept = keeper.noteLaunched(seed.start, onEvent)
       const greeter = createWelcomeGreeter({
         readRecent: () => readRecentWelcomeGreetings(seed.pack.name),
         writeRecent: (recent) => {
@@ -53,10 +57,10 @@ export function wireWelcomeGreeting(
         query: (request, signal) => queryStructured(request, { cwd, env: inheritedEnv }, signal),
         now: context.now,
         emit: (state) => {
-          onEvent({ kind: "welcome-greeting-changed", state })
+          kept.emit({ kind: "welcome-greeting-changed", state })
         },
         emitReactions: (reactions) => {
-          onEvent({ kind: "reactions-written", reactions })
+          kept.emit({ kind: "reactions-written", reactions })
         },
         onUnwritten: (place, error) => {
           reportFailure({ feature: "recommendation", place }, error)
@@ -77,11 +81,14 @@ export function wireWelcomeGreeting(
           break
         case "resume":
           void restored.then((events) => {
-            greeter.start(material(resumedWelcome(events, context.now())))
+            if (!kept.replay()) {
+              greeter.start(material(resumedWelcome(events, context.now())))
+            }
           })
           break
       }
       return (event) => {
+        kept.observe(event)
         if (event.kind === "conversation-cleared") {
           greeter.rewriteGreeting(material(START_VISIT))
         }
