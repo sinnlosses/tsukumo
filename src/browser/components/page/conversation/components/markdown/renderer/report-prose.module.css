@@ -41,7 +41,7 @@
   border-left: 3px solid var(--state-ng);
   background: color-mix(in srgb, var(--surface), var(--state-ng) 13%);
 }
-/* 疑問（まだ確かめていないこと・決めきれていないこと）。 */
+/* 疑問（答えの出ていない問い）。 */
 .detail-block .report-note-ask {
   background: color-mix(in srgb, var(--surface), var(--state-ask) 6%);
 }

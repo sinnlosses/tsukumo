@@ -1,4 +1,4 @@
-// 文・並び・注記・ファイル・コード・段・逃げ道の塊の形。
+// 文・並び・注記・ファイル・コード・段・確度つきの主張・逃げ道の塊の形。
 
 import { z } from "zod"
 
@@ -44,7 +44,9 @@ export const noteBlockSchema = z.object({
   kind: z.literal("note"),
   tone: z
     .enum(REPORT_NOTE_TONES)
-    .describe("info は結論 / warn は注意 / ng は異常 / ask は確かめていないこと / memo は覚え書き"),
+    .describe(
+      "info は結論 / warn は注意 / ng は異常 / ask は答えの出ていない問い（確かめていないことは claims） / memo は覚え書き",
+    ),
   text: inlineText.describe(
     "読み飛ばされると困る一文。種別を言う語（「注意:」など）は書かない。1つのレポートに2個まで・隣接させない・見出しの直後に置かない（戻せない操作の warn / ng は隣接と見出しの直後が例外）",
   ),
@@ -117,6 +119,36 @@ export const progressBlockSchema = z
   })
   .describe(
     "「N のうち M 段目」のように段（フェーズ）の名前と位置が分かっているとき。文字で「N のうち M」と書かない",
+  )
+
+const REPORT_CLAIM_CERTAINTIES = ["confirmed", "inferred", "unverified"] as const
+
+export const claimsBlockSchema = z
+  .object({
+    kind: z.literal("claims"),
+    items: z
+      .array(
+        z
+          .object({
+            claim: inlineText,
+            certainty: z.enum(REPORT_CLAIM_CERTAINTIES),
+            basis: omittable(inlineText, "").describe("path:line か [ドメイン](URL)"),
+            howToVerify: omittable(inlineText, "").describe(
+              "確定でなければ必須。繰り返せる手順を1文で",
+            ),
+          })
+          .refine((item) => item.certainty === "confirmed" || item.howToVerify.trim() !== "", {
+            message: "確定でない項目は howToVerify に確かめ方を書く",
+            path: ["howToVerify"],
+          }),
+      )
+      .min(1)
+      .describe("10件まで"),
+    fold,
+    aside,
+  })
+  .describe(
+    "確かめていないこと・推測を、主張ごとに確度・根拠・確かめ方で1行ずつ書く。テスト・型検査の結果は checks",
   )
 
 export const markdownBlockSchema = z.object({

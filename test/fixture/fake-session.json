@@ -1806,6 +1806,37 @@
                 ]
               },
               {
+                "heading": "目盛りの読み替えは2点が未確定（架空）",
+                "shapeTag": "parallel",
+                "blocks": [
+                  {
+                    "kind": "claims",
+                    "items": [
+                      {
+                        "claim": "目盛りは起こし直したときだけ読み直す（架空）",
+                        "certainty": "confirmed",
+                        "basis": "`src/dummy/ticks.ts:12`",
+                        "howToVerify": ""
+                      },
+                      {
+                        "claim": "設定ファイルの読み込みは起動を 10ms ほど遅らせる（架空）",
+                        "certainty": "inferred",
+                        "basis": "[example.com](https://example.com/dummy)",
+                        "howToVerify": "架空の計測スクリプトで起動の前後を10回ずつ測り、中央値を比べる"
+                      },
+                      {
+                        "claim": "古い目盛りのファイルを読む口がほかに残っていない（架空）",
+                        "certainty": "unverified",
+                        "basis": "",
+                        "howToVerify": "`old-ticks` でリポジトリ全体を検索し、当たりが無いことを見る"
+                      }
+                    ],
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              },
+              {
                 "heading": "触ったファイルは4つ（架空）",
                 "blocks": [
                   {

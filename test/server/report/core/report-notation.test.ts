@@ -243,6 +243,8 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(article8).toContain("画面の前後は `image` を `beforeAfter` で")
     expect(article8).toContain("構造の前後は `graph` の行頭の `+ ` `- ` `~ ` で")
     expect(article8).toContain("1つの値の前後は `table` の `from` / `to` で")
+    expect(article8).toContain("確度は `claims`")
+    expect(REPORT_NOTATION_PROMPT).toContain("**何を確かめていないか**を `claims` に書く")
   })
 
   it("条8の頭は figure の欄を指す1行で、図を置く条件と理由の意味は figure の describe だけにある", () => {

@@ -347,3 +347,69 @@
     content: none;
   }
 }
+/* 確度つきの主張（`report` の `claims` の塊から tsukumo が組む）。
+   1項目1行の積みで、行どうしは罫で区切る。行の中身は Markdown の段落1つ（`path:line` とリンクを効かせるため）で、
+   その段落を「確度・本文」の2列にし、本文の列に主張・根拠・確かめ方を縦に積む。
+   確度は記号と語の字だけが色を持ち（確定 state-ok / 推測 state-warn / 未確認 state-ask）、地は染めない。
+   器が狭いときは確度を主張の上の行に落とす。 */
+.detail-block .report-claims {
+  container: report-claims / inline-size;
+  margin: var(--report-block-gap) 0;
+}
+.detail-block .report-claim {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--report-chunk-rule, var(--rule-soft));
+}
+.detail-block .report-claim:last-child {
+  border-bottom: none;
+}
+.detail-block .report-claim > p {
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr);
+  column-gap: 0.75rem;
+  max-inline-size: none;
+  margin: 0;
+}
+.detail-block .report-claim-certainty {
+  grid-row: 1 / span 3;
+  grid-column: 1;
+  font-size: var(--font-label);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.detail-block .report-claim-mark {
+  margin-right: 0.3em;
+}
+.detail-block .report-claim-confirmed .report-claim-certainty {
+  color: var(--state-ok);
+}
+.detail-block .report-claim-inferred .report-claim-certainty {
+  color: var(--state-warn);
+}
+.detail-block .report-claim-unverified .report-claim-certainty {
+  color: var(--state-ask);
+}
+.detail-block :is(.report-claim-text, .report-claim-basis, .report-claim-how) {
+  grid-column: 2;
+}
+.detail-block .report-claim-text {
+  color: var(--ink-bright);
+}
+.detail-block :is(.report-claim-basis, .report-claim-how) {
+  color: var(--ink-soft);
+}
+.detail-block .report-claim-field {
+  margin-right: 0.5em;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+@container report-claims (max-width: 30rem) {
+  .detail-block .report-claim > p {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .detail-block
+    :is(.report-claim-certainty, .report-claim-text, .report-claim-basis, .report-claim-how) {
+    grid-row: auto;
+    grid-column: 1;
+  }
+}

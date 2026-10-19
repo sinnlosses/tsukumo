@@ -20,6 +20,7 @@ import {
 } from "./report-block-diagram.ts"
 import { type DeepReadonly, omittable } from "./report-block-field.ts"
 import {
+  claimsBlockSchema,
   codeBlockSchema,
   filesBlockSchema,
   listBlockSchema,
@@ -58,6 +59,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   namedSvg,
   progressBlockSchema,
   optionsBlockSchema,
+  claimsBlockSchema,
   namedImage,
   filesBlockSchema,
   markdownBlockSchema,

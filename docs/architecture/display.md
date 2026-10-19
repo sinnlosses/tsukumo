@@ -56,7 +56,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 
 - `docs/architecture/display/speak-tool.md`: speak と report のツール
 - `docs/architecture/display/section-and-block.md`: 本文の節と塊、図の塊
-- `docs/architecture/display/block-field.md`: 塊の欄・進み具合・候補とファイル・表・対応表・見比べ・前後
+- `docs/architecture/display/block-field.md`: 塊の欄・進み具合・候補とファイル・確度つきの主張（確かめていないことはこの塊に書く）・表・対応表・見比べ・前後
 - `docs/architecture/display/figure-caption.md`: 寸法図・画像・図と表の題・書き上げる演出・入口の検査
 - `docs/architecture/display/speech-convention.md`: セリフの規約と機械の出来事への反応
 - `docs/architecture/display/conclusion.md`: /clear・レポートの構造・お願い・振り返り・検証結果の受け取り・結論部

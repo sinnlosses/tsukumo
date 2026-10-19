@@ -47,7 +47,7 @@ export const REPORT_TASK_DESCRIPTION =
   "genre に報告の種類を入れ、sections の節をその種類の既定の並びで書く（節の数は縛らない）。" +
   "work: 変化 → 証拠 → 変更の要所 → 限界と変えていないもの → お願い。" +
   "decision: 決めたこと → 理由と採らなかった案（options）→ 結果 → 未決。" +
-  "research: 分かったこと → 根拠（出典か path:line）→ 何を意味するか → 確かめていないこと → 次。" +
+  "research: 分かったこと → 根拠（出典か path:line）→ 何を意味するか → 確かめていないこと（claims）→ 次。" +
   "stopped は種類によらず: どこで止まったか → 原因 → 何を残し何を戻したか → 再開に要るもの（favor）。" +
   "genre を省くと並びは縛らない。タスクに紐付かないターンでは task を省く。"
 

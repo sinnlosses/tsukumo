@@ -395,8 +395,8 @@ const SHARED_BLOCK_DEFINITIONS = [
   "SvgShape",
 ]
 
-/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（20,583字）には余白を持たせた上限。 */
-const REPORT_INPUT_SCHEMA_MAX_CHARS = 20_680
+/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（21,207字）には余白を持たせた上限。 */
+const REPORT_INPUT_SCHEMA_MAX_CHARS = 21_300
 
 /** `tools/list` の応答のうち、引数の schema を丸ごと読む形。 */
 const TOOLS_WHOLE_SCHEMA_REPLY = z.object({

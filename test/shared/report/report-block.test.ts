@@ -465,6 +465,45 @@ describe("parseReportSections", () => {
     })
   })
 
+  describe("claims の塊", () => {
+    const claimsWith = (item: object) => ({ kind: "claims", items: [item] })
+    const blocksOf = (block: unknown) =>
+      parseReportSections([
+        { heading: "", shapeTag: "unspecified", blocks: [block] },
+      ]).sections.flatMap((section) => section.blocks)
+
+    it("確定の項目は根拠と確かめ方を省くと空文字で補って受ける", () => {
+      expect(blocksOf(claimsWith({ claim: "架空の主張", certainty: "confirmed" }))).toEqual([
+        {
+          kind: "claims",
+          items: [{ claim: "架空の主張", certainty: "confirmed", basis: "", howToVerify: "" }],
+          fold: "",
+          aside: "",
+        },
+      ])
+    })
+
+    it.each([
+      ["推測で確かめ方なし", { certainty: "inferred" }],
+      ["未確認で確かめ方が空白だけ", { certainty: "unverified", howToVerify: "  " }],
+    ])("%s は受けず、howToVerify を名指して差し戻す", (_, extra) => {
+      const block = claimsWith({ claim: "架空の主張", basis: "架空の根拠", ...extra })
+
+      expect(blocksOf(block)).toEqual([])
+      expect(reportBlockSchema.safeParse(block).error?.issues.map((issue) => issue.path)).toEqual([
+        ["items", 0, "howToVerify"],
+      ])
+    })
+
+    it("確定でない項目も確かめ方があれば受け、列挙の外の確度は受けない", () => {
+      const item = { claim: "架空の主張", howToVerify: "架空の確かめ方" }
+
+      expect(blocksOf(claimsWith({ ...item, certainty: "inferred" }))).toHaveLength(1)
+      expect(blocksOf(claimsWith({ ...item, certainty: "unverified" }))).toHaveLength(1)
+      expect(blocksOf(claimsWith({ ...item, certainty: "架空の確度" }))).toEqual([])
+    })
+  })
+
   it("progress の塊は知らない種類として落とさない（unknownBlockCount が0になる）", () => {
     const progress = {
       kind: "progress",

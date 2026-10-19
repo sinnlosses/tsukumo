@@ -133,4 +133,55 @@ describe("reportSectionsMarkdown", () => {
         "</div>",
     )
   })
+
+  it("claims は1項目1行の div で、確度の記号と語・主張・根拠・確かめ方を Markdown の行内として段落に置き、空の根拠と確かめ方は欄ごと出さない", () => {
+    const claims: ReportBlock = {
+      kind: "claims",
+      items: [
+        {
+          claim: "架空の主張A",
+          certainty: "confirmed",
+          basis: "`src/架空.ts:12`",
+          howToVerify: "",
+        },
+        {
+          claim: "架空の主張B",
+          certainty: "inferred",
+          basis: "[example.com](https://example.com/dummy)",
+          howToVerify: "架空の画面を開いて見る",
+        },
+        {
+          claim: "架空の<主張C>",
+          certainty: "unverified",
+          basis: "",
+          howToVerify: "架空の確かめ方",
+        },
+      ],
+      fold: "",
+      aside: "",
+    }
+
+    expect(markdownOf(claims)).toBe(
+      [
+        '<div class="claims">',
+        '<div class="claim claim-confirmed">',
+        '<span class="claim-certainty"><span class="claim-mark" aria-hidden="true">✓</span>確定</span>' +
+          '<span class="claim-text">架空の主張A</span>' +
+          '<span class="claim-basis"><span class="claim-field">根拠</span>`src/架空.ts:12`</span>',
+        "</div>",
+        '<div class="claim claim-inferred">',
+        '<span class="claim-certainty"><span class="claim-mark" aria-hidden="true">〜</span>推測</span>' +
+          '<span class="claim-text">架空の主張B</span>' +
+          '<span class="claim-basis"><span class="claim-field">根拠</span>[example.com](https://example.com/dummy)</span>' +
+          '<span class="claim-how"><span class="claim-field">確かめ方</span>架空の画面を開いて見る</span>',
+        "</div>",
+        '<div class="claim claim-unverified">',
+        '<span class="claim-certainty"><span class="claim-mark" aria-hidden="true">？</span>未確認</span>' +
+          '<span class="claim-text">架空の&lt;主張C></span>' +
+          '<span class="claim-how"><span class="claim-field">確かめ方</span>架空の確かめ方</span>',
+        "</div>",
+        "</div>",
+      ].join("\n\n"),
+    )
+  })
 })
