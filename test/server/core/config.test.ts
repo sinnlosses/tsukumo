@@ -16,6 +16,7 @@ describe("readConfig", () => {
       twCommand: undefined,
       claudeConfigDir: undefined,
       fixedClock: undefined,
+      reportSchema: "json-schema",
       inheritedEnv: {},
     })
   })
@@ -32,6 +33,7 @@ describe("readConfig", () => {
       TSUKUMO_FAKE_SCENE_UNTIL: " 3 ",
       TSUKUMO_TW: " /somewhere/fake-tw ",
       CLAUDE_CONFIG_DIR: " /somewhere/claude ",
+      TSUKUMO_REPORT_SCHEMA: " short-type ",
     }
 
     expect(readConfig(env)).toEqual({
@@ -46,6 +48,7 @@ describe("readConfig", () => {
       twCommand: "/somewhere/fake-tw",
       claudeConfigDir: "/somewhere/claude",
       fixedClock: undefined,
+      reportSchema: "short-type",
       // 子プロセスへ引き継ぐ分は、読んだ環境をそのまま持つ
       inheritedEnv: env,
     })
@@ -68,5 +71,9 @@ describe("readConfig", () => {
 
   it("知らない駆動の名前は sdk に倒す", () => {
     expect(readConfig({ TSUKUMO_DRIVER: "まぼろし" }).driver).toBe("sdk")
+  })
+
+  it("知らない型の渡し方は json-schema に倒す", () => {
+    expect(readConfig({ TSUKUMO_REPORT_SCHEMA: "json" }).reportSchema).toBe("json-schema")
   })
 })

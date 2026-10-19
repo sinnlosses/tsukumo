@@ -19,6 +19,7 @@ import {
 } from "../../../shared/report/report-limit.ts"
 import { reportRetrospectiveSchema } from "../../../shared/report/report-retrospective.ts"
 import { reportTaskSchema } from "../../../shared/report/report-task.ts"
+import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
 import { WORK_PLAN_CLOSINGS } from "../../../shared/session/work-plan.ts"
 import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
 import { checkMermaidSyntax } from "../../report/adapter/report-mermaid-syntax.ts"
@@ -30,7 +31,9 @@ import {
   REPORT_RETROSPECTIVE_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
   REPORT_FIGURE_DESCRIPTION,
+  REPORT_FIGURE_SHORT_TYPE_NOTE,
   REPORT_SECTIONS_DESCRIPTION,
+  REPORT_SECTIONS_SHORT_TYPE_HEADING,
   REPORT_SESSION_REMAINING_DESCRIPTION,
   REPORT_SESSION_SUMMARY_DESCRIPTION,
   REPORT_TASK_DESCRIPTION,
@@ -39,6 +42,7 @@ import {
   REPORT_WAITING_LINE_DESCRIPTION,
   REPORT_WORK_PLAN_CLOSING_DESCRIPTION,
 } from "../../report/core/report-tool.ts"
+import { reportShortTypeText } from "../../report/core/short-type-text.ts"
 import type { CallReview } from "../core/call-review.ts"
 import { reportEvents } from "../core/sdk-report-message.ts"
 import { REPORT_TOOL_NAME } from "../core/tsukumo-tool-name.ts"
@@ -63,58 +67,77 @@ import { speechShape } from "./sdk-speech-tool.ts"
  * `title` は差し戻されなかったときだけ `onReportTitle` へ渡す。
  * 差し戻された呼び出しの題を渡すと、規約違反を書いたついでの題が残ってしまう。
  * 実際に書くかどうかの判断（利用者の `/rename` を上書きしないなど）は `decideSessionTitle` が持つので、ここは渡すだけ。
+ *
+ * `short-type` のときは `figure` と `sections` を緩い形で受け、塊の型は `sections` の欄の説明に短い型の表記で載せる。
+ * Claude Code はツールの説明文を既定 2048 字で切り、欄の説明は切らない。型の表記をツールの説明文へ移すと切れる。
+ * 緩い形は SDK の検査を素通りするので、handler が `json-schema` と同じ形で検査し直し、落ちたら判定せずに `isError` で返す。
  */
 export function reportTool(
   expressions: readonly ExpressionChoice[],
   review: CallReview,
   onReportTitle: (title: string) => void,
   cwd: string,
+  reportSchema: ReportSchemaVariant,
 ) {
   const expressionNames = expressions.map((choice) => choice.name)
+  const answer = async (input: unknown) => {
+    const called = reportEvents(HANDLER_TOOL_USE_ID, input, expressionNames).find(
+      (event) => event.kind === "report",
+    )
+    const report = called === undefined ? undefined : review.fillReport(called)
+    const missing =
+      report === undefined
+        ? REQUIRED_REPORT_FIELDS
+        : REQUIRED_REPORT_FIELDS.filter((field) => !hasReportField(report, field))
+    if (report === undefined || missing.length > 0) {
+      return {
+        content: [{ type: "text" as const, text: missingFieldsText(missing) }],
+        isError: true,
+      }
+    }
+    const fileContents = await readReportBlockFiles(cwd, report.sections)
+    const mermaidFaults = await checkMermaidSyntax(
+      mermaidSourcesInSections(sectionsWithFigure(report.figure, report.sections)),
+    )
+    const verdict = review.judgeReport({
+      conclusion: report.conclusion,
+      figure: report.figure,
+      sections: report.sections,
+      favor: report.favor,
+      checks: report.checks,
+      fileContents,
+      mermaidFaults,
+      task: report.task,
+      workPlanClosing: report.workPlanClosing,
+    })
+    if (verdict.kind === "rejected") {
+      return { content: [{ type: "text" as const, text: verdict.text }], isError: true }
+    }
+    if (report.title !== undefined) {
+      onReportTitle(report.title)
+    }
+    return {
+      content: [{ type: "text" as const, text: "ok" }],
+      _meta: { [END_TURN_META_KEY]: true },
+    }
+  }
+
+  if (reportSchema === "json-schema") {
+    return tool(REPORT_TOOL_NAME, REPORT_TOOL_DESCRIPTION, reportInputShape(expressions), answer)
+  }
+  const strictInput = z.object(reportInputShape(expressions))
   return tool(
     REPORT_TOOL_NAME,
     REPORT_TOOL_DESCRIPTION,
-    reportInputShape(expressions),
+    shortTypeInputShape(expressions),
     async (input) => {
-      const called = reportEvents(HANDLER_TOOL_USE_ID, input, expressionNames).find(
-        (event) => event.kind === "report",
-      )
-      const report = called === undefined ? undefined : review.fillReport(called)
-      const missing =
-        report === undefined
-          ? REQUIRED_REPORT_FIELDS
-          : REQUIRED_REPORT_FIELDS.filter((field) => !hasReportField(report, field))
-      if (report === undefined || missing.length > 0) {
-        return {
-          content: [{ type: "text" as const, text: missingFieldsText(missing) }],
-          isError: true,
-        }
-      }
-      const fileContents = await readReportBlockFiles(cwd, report.sections)
-      const mermaidFaults = await checkMermaidSyntax(
-        mermaidSourcesInSections(sectionsWithFigure(report.figure, report.sections)),
-      )
-      const verdict = review.judgeReport({
-        conclusion: report.conclusion,
-        figure: report.figure,
-        sections: report.sections,
-        favor: report.favor,
-        checks: report.checks,
-        fileContents,
-        mermaidFaults,
-        task: report.task,
-        workPlanClosing: report.workPlanClosing,
-      })
-      if (verdict.kind === "rejected") {
-        return { content: [{ type: "text" as const, text: verdict.text }], isError: true }
-      }
-      if (report.title !== undefined) {
-        onReportTitle(report.title)
-      }
-      return {
-        content: [{ type: "text" as const, text: "ok" }],
-        _meta: { [END_TURN_META_KEY]: true },
-      }
+      const parsed = strictInput.safeParse(input)
+      return parsed.success
+        ? answer(parsed.data)
+        : {
+            content: [{ type: "text" as const, text: invalidInputText(parsed.error) }],
+            isError: true,
+          }
     },
   )
 }
@@ -173,6 +196,29 @@ function reportInputShape(expressions: readonly ExpressionChoice[]) {
       .optional()
       .describe(REPORT_WAITING_LINE_DESCRIPTION),
   }
+}
+
+/** `short-type` のときモデルに渡す引数の形。`figure` と `sections` だけを緩い形にし、ほかの欄と説明は `json-schema` と同じ。 */
+function shortTypeInputShape(expressions: readonly ExpressionChoice[]) {
+  return {
+    ...reportInputShape(expressions),
+    figure: LOOSE_OBJECT.optional().describe(
+      `${REPORT_FIGURE_DESCRIPTION}${REPORT_FIGURE_SHORT_TYPE_NOTE}`,
+    ),
+    sections: z
+      .array(LOOSE_OBJECT)
+      .optional()
+      .describe(
+        `${REPORT_SECTIONS_DESCRIPTION}\n${REPORT_SECTIONS_SHORT_TYPE_HEADING}\n${reportShortTypeText()}`,
+      ),
+  }
+}
+
+const LOOSE_OBJECT = z.record(z.string(), z.unknown())
+
+/** handler の検査で落ちたときの戻り値。SDK が自分の検査で落としたときと同じ書き出しにする。 */
+function invalidInputText(error: z.ZodError): string {
+  return `Input validation error: Invalid arguments for tool ${REPORT_TOOL_NAME}: ${error.message}`
 }
 
 /** ツールの結果の `_meta` に true で載せると、Claude Code がそこでターンを閉じるキー。 */

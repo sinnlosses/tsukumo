@@ -19,7 +19,6 @@
 //   node scripts/runtime/report-block-usage.ts --days 14   # 直近14日
 
 import process from "node:process"
-import { parseArgs } from "node:util"
 
 import { groupBy } from "remeda"
 import { z } from "zod"
@@ -43,7 +42,7 @@ import {
 } from "../../src/shared/report/report-block.ts"
 import { REPORT_SHAPE_TAGS } from "../../src/shared/report/report-shape-tag.ts"
 import { REPORT_GENRES } from "../../src/shared/report/report-task.ts"
-import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
+import { parseDaysOption } from "../shared/days-option.ts"
 
 const USAGE = `使い方:
   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -152,6 +151,9 @@ const REGION_FORMAT_VERSION = 15
 /** 差し戻しから引き継いだ欄の名前（`inheritedFields`）を記録し始めた版。 */
 const INHERITED_FIELDS_FORMAT_VERSION = 16
 
+/** 型の渡し方（`reportSchema`）を記録し始めた版。 */
+const REPORT_SCHEMA_FORMAT_VERSION = 17
+
 const argumentCharsSchema = z.object({
   total: z.number(),
   fields: z.record(z.string(), z.number()),
@@ -236,7 +238,10 @@ const recordSchema = z.union([
     .and(figureFieldSchema),
   z
     .object({
-      v: z.literal(INHERITED_FIELDS_FORMAT_VERSION),
+      v: z.union([
+        z.literal(INHERITED_FIELDS_FORMAT_VERSION),
+        z.literal(REPORT_SCHEMA_FORMAT_VERSION),
+      ]),
       ...figureRecordShape,
       ...countRecordShape,
       ...howToVerifyRecordShape,
@@ -269,22 +274,7 @@ const UNRECORDED_REASON = "unrecorded"
 
 /** 差し戻した呼び出しの行（`kind: "rejected"`）。受け付けの行には `kind` が無い。 */
 const rejectionSchema = z.object({
-  v: z.union([
-    z.literal(VISUALLESS_FORMAT_VERSION),
-    z.literal(MODIFIED_FORMAT_VERSION),
-    z.literal(FIGURE_FIELDLESS_FORMAT_VERSION),
-    z.literal(COUNTLESS_FORMAT_VERSION),
-    z.literal(COUNT_FORMAT_VERSION),
-    z.literal(HOW_TO_VERIFY_FORMAT_VERSION),
-    z.literal(GENRE_FORMAT_VERSION),
-    z.literal(SHORT_TABLE_FORMAT_VERSION),
-    z.literal(SERIES_FORMAT_VERSION),
-    z.literal(BLOCK_ASIDE_FORMAT_VERSION),
-    z.literal(SHAPE_TAG_FORMAT_VERSION),
-    z.literal(ARGUMENT_CHARS_FORMAT_VERSION),
-    z.literal(REGION_FORMAT_VERSION),
-    z.literal(INHERITED_FIELDS_FORMAT_VERSION),
-  ]),
+  v: z.number().int().min(VISUALLESS_FORMAT_VERSION).max(REPORT_SCHEMA_FORMAT_VERSION),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),
   argumentChars: argumentCharsSchema.optional(),
@@ -405,21 +395,6 @@ process.stdout.write(
   ),
 )
 process.stdout.write("\n")
-
-/** コマンドラインから `--days <n>` を読む。無ければ既定の28日、崩れていれば `"invalid"`。 */
-function parseDaysOption(argv: readonly string[]): number | "invalid" {
-  try {
-    const { values } = parseArgs({
-      args: [...argv],
-      strict: true,
-      options: { days: { type: "string" } },
-    })
-    const parsed = positiveIntegerArgument.default(28).safeParse(values.days)
-    return parsed.success ? parsed.data : "invalid"
-  } catch {
-    return "invalid"
-  }
-}
 
 /** 今日を含む直近 `dayCount` 日の記録を、日付でファイルを絞って読む（壊れた行は読み飛ばす）。 */
 function readRecentRecords(

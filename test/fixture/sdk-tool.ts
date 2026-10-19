@@ -22,7 +22,14 @@ export const NOT_FOUND_RECALL = {
   finishTurn: () => {},
 } satisfies ChatRecall
 
-export const WORK_MODE: SessionMode = { kind: "work", chatRecall: NOT_FOUND_RECALL }
+export const WORK_MODE: SessionMode = {
+  kind: "work",
+  chatRecall: NOT_FOUND_RECALL,
+  reportSchema: "json-schema",
+}
+
+/** `report` の塊の型を短い型の表記で渡す仕事のモード。 */
+export const SHORT_TYPE_WORK_MODE: SessionMode = { ...WORK_MODE, reportSchema: "short-type" }
 
 export const CHAT_MODE: SessionMode = {
   kind: "chat",
@@ -51,10 +58,11 @@ export function workServer(
   titles: string[] = [],
   callReview: CallReview = createCallReview(),
   heldBriefs: (readonly QuestionBrief[])[] = [],
+  mode: SessionMode = WORK_MODE,
 ): McpSdkServerConfigWithInstance {
   return tsukumoServer(
     EXPRESSIONS,
-    WORK_MODE,
+    mode,
     callReview,
     (title) => {
       titles.push(title)

@@ -24,6 +24,8 @@ describe("入口の引数", () => {
     ["experience-metric.ts", "--foo"],
     ["report-block-usage.ts", "--days", "-1"],
     ["report-block-usage.ts", "--foo"],
+    ["short-type-trial.ts", "--days", "0"],
+    ["short-type-trial.ts", "--foo"],
     ["serve-revision.ts"],
     ["serve-revision.ts", "HEAD", "HEAD~1"],
     ["serve-revision.ts", "HEAD", "--port", "0"],
@@ -65,6 +67,7 @@ describe("入口の引数", () => {
   test.each([
     ["experience-metric.ts", "--days", "1", "--split", "2026-01-01"],
     ["report-block-usage.ts", "--days", "1"],
+    ["short-type-trial.ts", "--days", "1"],
     ["diagnostic.ts", "--from", "2026-01-01", "--to", "2026-01-02", "--generation", "1"],
   ])("%s の正しい引数は使い方に落ちない", async (script, ...args) => {
     const result = await runSubprocess("node", [`scripts/runtime/${script}`, ...args], {

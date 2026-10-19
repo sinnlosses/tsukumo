@@ -2,6 +2,8 @@
 // 値の意味と既定は各名前の doc コメントが正典で、利用者向けの一覧は `README.md`「環境変数」。
 // セッションの印（`sessionTag` / `readSessionMark`）は環境変数ではないので、ここには置かない。
 
+import type { ReportSchemaVariant } from "../../shared/report/schema-variant.ts"
+
 /**
  * ビューを配るポート（既定は `DEFAULT_VIEW_PORT`）。
  * 既定のまま塞がっていれば +1 ずつ20個まで試し、明示したときはずらさない（`resolveViewPort`）。
@@ -53,6 +55,11 @@ export const HOME_ENV_NAME = "TSUKUMO_HOME"
  * 未設定・空は `~`。相対は cwd 相対、`~` は展開しない（`TSUKUMO_HOME` と同じ）。
  */
 const CLAUDE_CONFIG_DIR_ENV_NAME = "CLAUDE_CONFIG_DIR"
+/**
+ * `report` の塊の型の渡し方（`json-schema` / `short-type`。既定は `json-schema`）。
+ * `short-type` のときだけ短い型の表記で渡す試しの版になり、ほかの値は既定に倒す。
+ */
+const REPORT_SCHEMA_ENV_NAME = "TSUKUMO_REPORT_SCHEMA"
 
 /**
  * セッションドライバの種類。
@@ -89,6 +96,7 @@ export type Config = {
   readonly claudeConfigDir: string | undefined
   /** 凍らせる瞬間。未設定・読めない値なら undefined ＝ 本物の時計。 */
   readonly fixedClock: Temporal.Instant | undefined
+  readonly reportSchema: ReportSchemaVariant
   /**
    * 起こした環境変数の全部。claude の子プロセスへそのまま引き継ぐためのもので、tsukumo 自身はここから読まない。
    * SDK の `env` は tsukumo 自身の環境と混ぜずに丸ごと置き換えるので、足したい変数（`childProcessEnv` が足すもの）と一緒に渡す必要がある。
@@ -113,6 +121,8 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     twCommand: nonEmpty(env[TW_ENV_NAME]),
     claudeConfigDir: nonEmpty(env[CLAUDE_CONFIG_DIR_ENV_NAME]),
     fixedClock: parseInstant(env[FIXED_CLOCK_ENV_NAME]),
+    reportSchema:
+      env[REPORT_SCHEMA_ENV_NAME]?.trim() === "short-type" ? "short-type" : "json-schema",
     inheritedEnv: env,
   }
 }

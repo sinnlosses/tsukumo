@@ -82,6 +82,13 @@ export const REPORT_SECTIONS_DESCRIPTION =
   "塊の fold に見出しを書くと畳んで描く（畳んでも結論が通る塊だけ）。" +
   "塊の aside に出典・どこを見るかを1行で書くと、本文の流れの外（本文の右の余白）に置く。"
 
+/** 短い型の表記で渡す版で、`figure` の説明の後ろに足す文。 */
+export const REPORT_FIGURE_SHORT_TYPE_NOTE = "型は sections の説明の ReportFigure。"
+
+/** 短い型の表記で渡す版で、`sections` の説明と型の表記の間に置く見出し。 */
+export const REPORT_SECTIONS_SHORT_TYPE_HEADING =
+  "各節の型は ReportSection（TypeScript の表記。? の欄は省ける）:"
+
 /**
  * `report` の `closing` 引数（締めのセリフ）の説明。
  * `report` はターンを閉じるので、締めの一言はあとから `speak` で言えず、ここで受け取る。

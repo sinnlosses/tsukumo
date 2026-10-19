@@ -8,6 +8,7 @@ import {
   type ReportRejectionRecord,
   type ReportUsageRecord,
 } from "../../../shared/report/report-usage-record.ts"
+import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
 import { appendJsonLine, dateFilePath } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
@@ -23,19 +24,31 @@ export function reportUsageDir(): string {
   return join(tsukumoHomeDir(), REPORT_USAGE_DIR_NAME)
 }
 
-/** `root` はテストがホームを汚さないために差し替える。 */
-export function createReportUsageLog(root: string = reportUsageDir()): ReportUsageLog {
+/**
+ * `reportSchema` はこのプロセスが `report` の塊の型をどう渡しているか（`Config.reportSchema`）で、全部の行に書く。
+ * `root` はテストがホームを汚さないために差し替える。
+ */
+export function createReportUsageLog(
+  reportSchema: ReportSchemaVariant,
+  root: string = reportUsageDir(),
+): ReportUsageLog {
   return {
     append: (entry) => {
-      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry))
+      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry, reportSchema))
     },
     appendRejection: (entry) => {
-      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRejectionRecord(entry))
+      appendJsonLine(
+        dateFilePath(root, localDateKey(entry.at)),
+        toRejectionRecord(entry, reportSchema),
+      )
     },
   }
 }
 
-function toRejectionRecord(entry: ReportRejectionEntry): ReportRejectionRecord {
+function toRejectionRecord(
+  entry: ReportRejectionEntry,
+  reportSchema: ReportSchemaVariant,
+): ReportRejectionRecord {
   return {
     v: REPORT_USAGE_FORMAT_VERSION,
     kind: "rejected",
@@ -44,10 +57,11 @@ function toRejectionRecord(entry: ReportRejectionEntry): ReportRejectionRecord {
     reasons: entry.reasons,
     argumentChars: entry.argumentChars,
     inheritedFields: entry.inheritedFields,
+    reportSchema,
   }
 }
 
-function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
+function toRecord(entry: ReportUsageEntry, reportSchema: ReportSchemaVariant): ReportUsageRecord {
   return {
     v: REPORT_USAGE_FORMAT_VERSION,
     at: isoWithOffset(entry.at),
@@ -78,5 +92,6 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     shortTable: entry.shortTable,
     argumentChars: entry.argumentChars,
     inheritedFields: entry.inheritedFields,
+    reportSchema,
   }
 }

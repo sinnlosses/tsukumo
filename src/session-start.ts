@@ -123,7 +123,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     contextUsageLog: createContextUsageLog(),
     experienceMetricLog: createExperienceMetricLog(),
     diagnosticLog: options.diagnosticLog,
-    reportUsageLog: createReportUsageLog(),
+    reportUsageLog: createReportUsageLog(config.reportSchema),
     questionUsageLog: createQuestionUsageLog(),
     promptImageShelf,
     reportImageShelf: options.reportImageShelf,

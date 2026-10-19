@@ -9,6 +9,7 @@ import type { EffortLevel, ModelAlias, PermissionMode } from "../../../shared/co
 import type { ContextUsageReport } from "../../../shared/context-usage/context-usage.ts"
 import type { PromptDelayFootprint } from "../../../shared/diagnostic/diagnostic-record.ts"
 import type { PlanUsageReport } from "../../../shared/plan-usage/plan-usage.ts"
+import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
 import type { SessionDigest } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -159,7 +160,12 @@ export type ChatArchiveLineOrigin =
  */
 export type SessionMode =
   /** 仕事。覚えたことを書き換える口とあらすじの印の口は渡らない。 */
-  | { readonly kind: "work"; readonly chatRecall: ChatRecall }
+  | {
+      readonly kind: "work"
+      readonly chatRecall: ChatRecall
+      /** `report` の塊の型の渡し方（`Config.reportSchema`）。 */
+      readonly reportSchema: ReportSchemaVariant
+    }
   | {
       readonly kind: "chat"
       /** 渡ったときだけ `remember` と `forget` のツールが `mcpServers` に載る。 */

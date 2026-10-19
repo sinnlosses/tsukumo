@@ -5,9 +5,10 @@ import type { ReportArgumentChars, ReportArgumentField } from "./report-argument
 import type { RecordedFigureNoneReason, RecordedReportFigure } from "./report-block.ts"
 import type { ForbiddenBlock, RecordedReportShapeTag, ReportShapeTag } from "./report-shape-tag.ts"
 import type { ReportGenre, ReportTaskOutcome } from "./report-task.ts"
+import type { ReportSchemaVariant } from "./schema-variant.ts"
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 16 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 17 satisfies number
 
 /** 札が許さない塊の組と、その回に出た数（版13から）。 */
 export type ForbiddenShapeBlockUsage = {
@@ -89,11 +90,13 @@ export type ReportUsageRecord = ReportFigureUsage &
     readonly argumentChars: ReportArgumentChars
     /** 渡さずに、直前に差し戻した呼び出しから引き継いだ欄の名前（版16から）。 */
     readonly inheritedFields: readonly ReportArgumentField[]
+    /** どちらの型の渡し方で受けたか（版17から）。 */
+    readonly reportSchema: ReportSchemaVariant
   }
 
 /**
  * 差し戻した `report` 1回の記録の行。受け付けの行と同じファイルに入り、`kind` の有無で見分ける（受け付けの行に `kind` は無い）。
- * 書いてよいのは時刻・セッションID・差し戻しの種類の名前・引数の字数・引き継いだ欄の名前だけ。
+ * 書いてよいのは時刻・セッションID・差し戻しの種類の名前・引数の字数・引き継いだ欄の名前・型の渡し方だけ。
  */
 export type ReportRejectionRecord = {
   readonly v: typeof REPORT_USAGE_FORMAT_VERSION
@@ -106,4 +109,6 @@ export type ReportRejectionRecord = {
   readonly argumentChars: ReportArgumentChars
   /** 差し戻した呼び出しが引き継いだ欄の名前（版16から）。 */
   readonly inheritedFields: readonly ReportArgumentField[]
+  /** どちらの型の渡し方で受けたか（版17から）。 */
+  readonly reportSchema: ReportSchemaVariant
 }

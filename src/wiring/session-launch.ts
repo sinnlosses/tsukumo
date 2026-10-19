@@ -48,6 +48,7 @@ import {
 import { expressionChoices, expressionNames } from "../shared/character-pack/expression-choice.ts"
 import type { PromptDelayFootprint } from "../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
+import type { ReportSchemaVariant } from "../shared/report/schema-variant.ts"
 import type { SessionDefault } from "../shared/session/session-default.ts"
 import type { RestoredEvent, SessionEvent } from "../shared/session/session-event.ts"
 import { failureDiagnostic } from "./failure-diagnostic.ts"
@@ -127,6 +128,7 @@ export function wireSessionLaunch(options: {
             scene: config.fakeScene,
             sceneUntil: config.fakeSceneUntil,
             claudeConfigDir: config.claudeConfigDir,
+            reportSchema: config.reportSchema,
             mountWorkflowPlugin: options.mountWorkflowPlugin,
             firstViewer: options.firstViewer,
             viewPort,
@@ -183,6 +185,7 @@ function startDriver(options: {
   readonly sceneUntil: number | undefined
   readonly claudeConfigDir: string | undefined
   readonly mountWorkflowPlugin: boolean
+  readonly reportSchema: ReportSchemaVariant
   readonly firstViewer: Promise<void>
   readonly viewPort: number
   /** 印が付いたセッションのIDと、付けた印を受け取る口。 */
@@ -207,7 +210,7 @@ function startDriver(options: {
     })
   }
 
-  const mode = sessionMode(seed, context, onEvent, options.reportFailure)
+  const mode = sessionMode(seed, context, options.reportSchema, onEvent, options.reportFailure)
   const tag = sessionTag(seed.pack.name, seed.chat, options.viewPort)
 
   return startSdkDriver({
@@ -262,12 +265,13 @@ function rememberSessionDefault(sessionDefault: SessionDefault): SessionEvent {
 function sessionMode(
   seed: SessionLaunchSeed<CharacterPack>,
   context: WiringContext,
+  reportSchema: ReportSchemaVariant,
   onEvent: (event: SessionEvent) => void,
   reportFailure: (place: SwallowedFailurePlace, error: unknown) => void,
 ): SessionMode {
   const chatRecall = createChatRecall(context.chatArchive, seed.pack.name, context.now)
   if (!seed.chat) {
-    return { kind: "work", chatRecall }
+    return { kind: "work", chatRecall, reportSchema }
   }
 
   return {

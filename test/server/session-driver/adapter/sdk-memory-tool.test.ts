@@ -220,6 +220,7 @@ describe("recall / recall_episode ツール", () => {
   it("仕事のときも recall / recall_episode が引け、仕事の行が印つきで返る", async () => {
     const workMode: SessionMode = {
       kind: "work",
+      reportSchema: "json-schema",
       chatRecall: {
         recallList: () => ({ kind: "not-found" }),
         recallEpisode: (id) => ({

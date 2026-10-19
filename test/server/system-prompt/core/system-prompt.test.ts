@@ -181,6 +181,7 @@ describe("toSystemPromptMode", () => {
     const readChatSummary = (): undefined => undefined
     const sessionMode: SessionMode = {
       kind: "work",
+      reportSchema: "json-schema",
       chatRecall: {
         recallList: () => ({ kind: "not-found" }),
         recallEpisode: () => ({ kind: "not-found" }),

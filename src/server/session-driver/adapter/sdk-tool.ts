@@ -68,7 +68,7 @@ export function tsukumoServer(
       recallEpisodeTool(mode.chatRecall),
       ...(mode.kind === "work"
         ? [
-            reportTool(expressions, callReview, onReportTitle, cwd),
+            reportTool(expressions, callReview, onReportTitle, cwd, mode.reportSchema),
             workPlanTool(callReview),
             phaseResultTool(callReview, onEvent),
             questionBriefTool(holdBrief),

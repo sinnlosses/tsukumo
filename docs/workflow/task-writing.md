@@ -68,7 +68,7 @@
   1行の既定値を比べるので、欄が増えたら全部直す。`test/server/report/adapter/report-usage-log.test.ts` は欄名の一覧を比べ、版は
   `REPORT_USAGE_FORMAT_VERSION` の参照なので、欄が増えたら一覧を直し、版だけ上げるなら無修正で通る。
   版を上げるときは `scripts/runtime/report-block-usage.ts` の版別の枝（定数・`recordSchema` の union・
-  `rejectionSchema` の literal の3か所）も足す。
+  `rejectionSchema` の版の上限の3か所）も足す。
 - **描き分けの条件を足し、既存の描き方に届かなくなる場合ができる変更の計画は、段に「届かなくなった描き方を
   書いた正典の文・コメント・テスト名・分岐・印と CSS を grep で洗って直す」を置く。** 洗うには、届かなく
   なった描き方の語（表示名・関数名・印の名前・CSS の class）で `docs/` `src/` `test/` を引く。例は帯に
