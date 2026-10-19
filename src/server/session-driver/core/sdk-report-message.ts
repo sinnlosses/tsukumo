@@ -33,16 +33,23 @@ import { speechEvents } from "./sdk-speech-message.ts"
  * `task` の「無い」と形の崩れ（引数に `task` が無かったころの transcript も）は `none` に畳む。`workPlanClosing` も同じ。
  * `closing` の「無い」（引数に `closing` が無かったころの transcript）は `none` に畳む。
  * `waitingLine` の「無い」（省いた・文が空白だけ・形の崩れ）も `none` に畳む。
+ * `title` の「無い」と文字列でないものは undefined。
  * `sessionSummary` の「無い」（空白だけも）は undefined。
  * `sessionRemaining` は空白だけなら `none`、文字列なら `remaining`、欄が無い（欄の無かった頃の transcript）・文字列でないなら `unrecorded` に畳む。
- * `conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、モデルには Claude Code がエラーを返す）。
+ * `conclusion` の「無い」は空の文字列に畳む（差し戻しのあとの出し直しで省いた欄は `ReportInheritance` が埋める）。
+ * `conclusion` が文字列でも省略でもなければ捨てる（引数の検査に落ちた呼び出しで、モデルには Claude Code がエラーを返す）。
+ * `inheritedFields` はここでは空で、引き継ぎは `ReportInheritance` がする。
  */
 export function reportEvents(
   toolUseId: string,
   input: unknown,
   expressions: readonly Expression[],
 ): readonly SessionEvent[] {
-  if (!isPlainObject(input) || typeof input.conclusion !== "string") {
+  if (!isPlainObject(input)) {
+    return []
+  }
+  const conclusion = input.conclusion === undefined ? "" : input.conclusion
+  if (typeof conclusion !== "string") {
     return []
   }
 
@@ -56,7 +63,8 @@ export function reportEvents(
       kind: "report",
       toolUseId,
       argumentChars: reportArgumentCharsOf(input),
-      conclusion: input.conclusion,
+      inheritedFields: [],
+      conclusion,
       figure: parseReportFigure(input.figure),
       sections: parsed.sections,
       favor: optionalString(input.favor) ?? "",
@@ -69,6 +77,7 @@ export function reportEvents(
         (speech) => speech.text.trim() !== "",
       ) ?? { kind: "none" },
       unknownBlockCount: parsed.unknownBlockCount,
+      title: optionalString(input.title),
       sessionSummary: nonBlankString(input.sessionSummary),
       sessionRemaining: sessionRemainingOf(input.sessionRemaining),
     },

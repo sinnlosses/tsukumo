@@ -413,15 +413,22 @@ describe("reportUsageEntryOf", () => {
       hasSourceReference: false,
       shortTable: false,
       argumentChars: { total: 0, fields: {} },
+      inheritedFields: [],
     })
   })
 
-  it("イベントの引数の字数を、本文を含めずにそのまま運ぶ", () => {
+  it("イベントの引数の字数と引き継いだ欄の名前を、本文を含めずにそのまま運ぶ", () => {
     const argumentChars = { total: 321, fields: { conclusion: 12, sections: 200 } }
 
-    const entry = reportUsageEntryOf(reportEvent({ argumentChars }), "claude-session-9", 1, false)
+    const entry = reportUsageEntryOf(
+      reportEvent({ argumentChars, inheritedFields: ["favor"], favor: "架空のお願い" }),
+      "claude-session-9",
+      1,
+      false,
+    )
 
     expect(entry.argumentChars).toEqual(argumentChars)
-    expect(JSON.stringify(entry.argumentChars)).not.toContain("架空の結論")
+    expect(entry.inheritedFields).toEqual(["favor"])
+    expect(JSON.stringify([entry.argumentChars, entry.inheritedFields])).not.toContain("架空の")
   })
 })

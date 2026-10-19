@@ -147,6 +147,44 @@ describe("toRestoredEvents", () => {
     ])
   })
 
+  it("差し戻しのあと欄を省いて呼び直した report は、省いた欄を差し戻した値で埋めて組み直す", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      assistantMessage([
+        {
+          type: "tool_use",
+          id: "r-1",
+          name: REPORT_TOOL_FULL_NAME,
+          input: { conclusion: "架空の一", favor: "架空のお願い" },
+        },
+      ]),
+      userMessage([
+        { type: "tool_result", tool_use_id: "r-1", content: "架空の差し戻し", is_error: true },
+      ]),
+      assistantMessage([
+        {
+          type: "tool_use",
+          id: "r-2",
+          name: REPORT_TOOL_FULL_NAME,
+          input: { conclusion: "架空の二" },
+        },
+      ]),
+      userMessage([{ type: "tool_result", tool_use_id: "r-2", content: "ok" }]),
+    ]
+
+    const reports = eventsOf(messages).filter((event) => event.kind === "report")
+
+    expect(reports).toEqual([
+      reportEvent({
+        toolUseId: "r-2",
+        conclusion: "架空の二",
+        favor: "架空のお願い",
+        argumentChars: { total: 21, fields: { conclusion: 6 } },
+        inheritedFields: ["favor"],
+      }),
+    ])
+  })
+
   it("finishedInGroup を持たない前の work_plan の呼び出しも、空の finishedInGroup のワークプランとして組み直す", () => {
     const workPlanCall = (id: string, input: unknown) => [
       assistantMessage([{ type: "tool_use", id, name: WORK_PLAN_TOOL_FULL_NAME, input }]),

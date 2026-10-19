@@ -66,6 +66,7 @@ function entry(
     hasSourceReference: true,
     shortTable: true,
     argumentChars: { total: 1200, fields: { conclusion: 40, sections: 900 } },
+    inheritedFields: ["favor", "closing"],
   }
 }
 
@@ -124,6 +125,7 @@ describe("createReportUsageLog", () => {
       "hasSourceReference",
       "shortTable",
       "argumentChars",
+      "inheritedFields",
     ])
     expect(record).toMatchObject({
       v: REPORT_USAGE_FORMAT_VERSION,
@@ -150,6 +152,7 @@ describe("createReportUsageLog", () => {
       hasSourceReference: true,
       shortTable: true,
       argumentChars: { total: 1200, fields: { conclusion: 40, sections: 900 } },
+      inheritedFields: ["favor", "closing"],
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)
@@ -165,7 +168,7 @@ describe("createReportUsageLog", () => {
     expect(keysOf(record)).not.toContain("noneReason")
   })
 
-  it("差し戻しの行は同じ日付ファイルに入り、鍵は版・種類・日時・セッションID・差し戻しの名前だけ", () => {
+  it("差し戻しの行は同じ日付ファイルに入り、鍵は版・種類・日時・セッションID・差し戻しの名前・引数の字数・引き継いだ欄の名前だけ", () => {
     const log = createReportUsageLog(root())
 
     log.appendRejection({
@@ -173,16 +176,26 @@ describe("createReportUsageLog", () => {
       sessionId: "claude-session-1",
       reasons: ["resend", "long-paragraph"],
       argumentChars: { total: 800, fields: { conclusion: 50 } },
+      inheritedFields: ["sections"],
     })
 
     const [record] = readLines("2026-09-22.jsonl")
-    expect(keysOf(record)).toEqual(["v", "kind", "at", "sessionId", "reasons", "argumentChars"])
+    expect(keysOf(record)).toEqual([
+      "v",
+      "kind",
+      "at",
+      "sessionId",
+      "reasons",
+      "argumentChars",
+      "inheritedFields",
+    ])
     expect(record).toMatchObject({
       v: REPORT_USAGE_FORMAT_VERSION,
       kind: "rejected",
       sessionId: "claude-session-1",
       reasons: ["resend", "long-paragraph"],
       argumentChars: { total: 800, fields: { conclusion: 50 } },
+      inheritedFields: ["sections"],
     })
   })
 })

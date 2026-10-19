@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest"
 
-import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
+import {
+  REPORT_CHANGED_FIELDS_ONLY_TEXT,
+  reportRejectionText,
+} from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
 import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
 import { code, draft, kinds, markdown, mermaid, text } from "../../../fixture/report-draft-block.ts"
 
 describe("reportRejectionText", () => {
-  it("違反した条と直し方を1行ずつ並べ、レポートの文面は写さない", () => {
+  it("違反した条と直し方を1行ずつ並べ、直す欄だけで呼び直せることを末尾に添え、レポートの文面は写さない", () => {
     const report = draft([markdown("# 架空の見出しXYZ")], "架空の1文目XYZ。2文目。3文目。")
     const rejection = reportRejectionText(reportViolations(report))
 
-    expect(rejection.split("\n")).toHaveLength(3)
+    expect(rejection.split("\n")).toHaveLength(4)
+    expect(rejection.split("\n").at(-1)).toBe(REPORT_CHANGED_FIELDS_ONLY_TEXT)
     expect(rejection).toContain("`conclusion` が3文ある")
     expect(rejection).toContain(
       "`markdown` の塊に塊で書ける記法（`#` / `##` の見出し）がある。代わりに節の `heading`を使う",

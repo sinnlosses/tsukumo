@@ -31,12 +31,15 @@
 
 import { isDeepEqual } from "remeda"
 
-import type { ReportArgumentChars } from "../../../shared/report/report-argument-chars.ts"
+import type {
+  ReportArgumentChars,
+  ReportArgumentField,
+} from "../../../shared/report/report-argument-chars.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../../shared/session/work-plan.ts"
-import { reportRejectionText } from "./report-rejection.ts"
+import { REPORT_CHANGED_FIELDS_ONLY_TEXT, reportRejectionText } from "./report-rejection.ts"
 import { reportViolations } from "./report-violation-check.ts"
 import type { ReportDraft, ReportViolation } from "./report-violation.ts"
 
@@ -53,7 +56,7 @@ export const REPORT_PROCEDURE_REJECTIONS = [
 ] as const satisfies readonly string[]
 
 /**
- * handler が差し戻していないのに `isError` で返った呼び出し（形の検査で落ちて handler に届かなかったもの）の理由の名前。
+ * 判定が差し戻していないのに `isError` で返った呼び出し（形の検査で落ちて handler に届かなかったものと、handler で組んだ値が形の検査に落ちたもの）の理由の名前。
  * 差し戻しの記録（`report-rejected`）は handler ではなく `pass` が、この呼び出しの引数の字数つきで作る。
  */
 export const REPORT_TOOL_ERROR_REASON = "tool-error"
@@ -90,7 +93,7 @@ export type ReportReview = {
    * 届いたイベントを流してよい並びに変える（メインのイベントだけを渡す）。
    * `report` は同じ `toolUseId` の `tool-finished` まで預かり、`isError` でなければその直前に出す。
    * 預かったままターンが終わった `report`（結果の届かなかった呼び出し）は、`turn-finished` の直前に出す（判定の出なかった呼び出しは描く）。
-   * `isError` で返った呼び出し（引数が読めなかったものを含む）は、`tool-finished` の直後に `report-rejected`（理由の名前と引数の字数）を出す。
+   * `isError` で返った呼び出し（引数が読めなかったものを含む）は、`tool-finished` の直後に `report-rejected`（理由の名前と引数の字数と引き継いだ欄の名前）を出す。
    * 描いた `report` の締めのセリフ（`closing`）は、そのすぐ後ろに `speech` として出す（差し戻した呼び出しの締めは出さない）。
    */
   readonly pass: (event: SessionEvent) => readonly SessionEvent[]
@@ -122,7 +125,7 @@ export function createReportReview(
   let finishedWithNgRejectedInTurn = false
   let backgroundRejectedInTurn = false
   let held: readonly ReportEvent[] = []
-  // 引数が読めず（`conclusion` が文字列でない）レポートにならなかった呼び出し。結果が届いたら差し戻しの記録にだけ使う。
+  // 引数が読めず（`conclusion` が文字列でも省略でもない）レポートにならなかった呼び出し。結果が届いたら差し戻しの記録にだけ使う。
   let malformed: readonly Extract<SessionEvent, { readonly kind: "report-malformed" }>[] = []
   // handler が直前に差し戻した理由。同じ呼び出しの `tool-finished` で使い切る。
   let handlerReasons: readonly string[] | undefined
@@ -131,11 +134,14 @@ export function createReportReview(
   // 脇の話（`aside`）で始まったターンか。ターンの頭の `session-info` は脇の話のターンの頭にも届くので、そこでは戻さない。
   let asideTurn = false
 
-  /** `isError` で返った呼び出しの記録。handler の差し戻しなら理由の名前、handler に届かなかった呼び出しは `tool-error`。 */
-  const rejectionOf = (argumentChars: ReportArgumentChars): SessionEvent => {
+  /** `isError` で返った呼び出しの記録。判定の差し戻しなら理由の名前、判定まで届かなかった呼び出しは `tool-error`。 */
+  const rejectionOf = (
+    argumentChars: ReportArgumentChars,
+    inheritedFields: readonly ReportArgumentField[],
+  ): SessionEvent => {
     const reasons = handlerReasons ?? [REPORT_TOOL_ERROR_REASON]
     handlerReasons = undefined
-    return { kind: "report-rejected", reasons, argumentChars }
+    return { kind: "report-rejected", reasons, argumentChars, inheritedFields }
   }
 
   const startTurn = (): void => {
@@ -221,7 +227,7 @@ export function createReportReview(
           const failed = malformed.find((candidate) => candidate.toolUseId === event.toolUseId)
           if (failed !== undefined) {
             malformed = malformed.filter((candidate) => candidate !== failed)
-            return [event, rejectionOf(failed.argumentChars)]
+            return [event, rejectionOf(failed.argumentChars, [])]
           }
           const report = held.find((candidate) => candidate.toolUseId === event.toolUseId)
           if (report === undefined) {
@@ -229,7 +235,7 @@ export function createReportReview(
           }
           held = held.filter((candidate) => candidate !== report)
           if (event.isError) {
-            return [event, rejectionOf(report.argumentChars)]
+            return [event, rejectionOf(report.argumentChars, report.inheritedFields)]
           }
           drawn = [...drawn, report]
           news.markDrawn()
@@ -278,7 +284,8 @@ export function createReportReview(
  */
 export const REPORT_RESEND_REJECTION_TEXT =
   "この `report` は、このターンですでに受け取った `report` と同じ引数になっている。" +
-  "同じ引数で送り直さず、そのあとに `report` の外に書いた本文の中身を `report` に入れて呼び直すこと。"
+  "同じ引数で送り直さず、そのあとに `report` の外に書いた本文の中身を `report` に入れて呼び直すこと。" +
+  REPORT_CHANGED_FIELDS_ONLY_TEXT
 
 /** 新しい事実の無い `report` を差し戻すときの戻り値。固定の文面だけで、モデルが書いた本文も画面の状態も写さない。 */
 export const REPORT_NOTHING_NEW_REJECTION_TEXT =
@@ -291,12 +298,14 @@ export const REPORT_NOTHING_NEW_REJECTION_TEXT =
 export const REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT =
   "このターンで差し戻された `work_plan` に、まだ応えていない。" +
   "差し戻しの直し方に従って `work_plan` を呼び直し、受け付けられてから `report` を呼ぶこと。" +
+  REPORT_CHANGED_FIELDS_ONLY_TEXT +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** 同じ依頼にワークプランがあるのに `workPlanClosing` の無い `report` を差し戻すときの戻り値。固定の文面だけ。 */
 export const REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT =
   "この依頼では `work_plan` でワークプランを渡しているので、`report` の workPlanClosing に段の閉じ方を入れる。" +
   "全部の段を終えたなら `finished`、途中で止めたなら `stopped` を入れて呼び直すこと。" +
+  REPORT_CHANGED_FIELDS_ONLY_TEXT +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** `workPlanClosing` が `finished` なのに段が2つ以上残っている `report` を差し戻すときの戻り値。固定の文面だけ。 */
@@ -304,18 +313,21 @@ export const REPORT_UNFINISHED_PHASES_REJECTION_TEXT =
   "workPlanClosing が `finished` なのに、ワークプランに済んでいない段が2つ以上残っている。" +
   "`finished` で tsukumo が閉じるのは最後の段だけなので、同じ応答の中で `report` より先に `work_plan` で段を1つずつ進め、" +
   "最後の段に来てから `finished` で呼び直す。途中で止めたなら `stopped` にする。" +
+  REPORT_CHANGED_FIELDS_ONLY_TEXT +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** `task.outcome` が `finished` なのに `workPlanClosing` が `stopped` で段の残った `report` を差し戻すときの戻り値。固定の文面だけ。 */
 export const REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT =
   "`task.outcome` が `finished` なのに、workPlanClosing が `stopped` でワークプランに済んでいない段が残っている。" +
   "全部の段を終えたなら最後の段まで進めて `finished` にし、途中で止めたなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
+  REPORT_CHANGED_FIELDS_ONLY_TEXT +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** `task.outcome` が `finished` なのに `checks` に `ng` の行がある `report` を差し戻すときの戻り値。固定の文面だけで、モデルが書いた本文も `checks` の中身も写さない。 */
 export const REPORT_FINISHED_WITH_NG_REJECTION_TEXT =
   "`task.outcome` が `finished` なのに、`checks` に `ng` の行がある。" +
   "落ちた確認を直して `ok` にしてから `finished` で呼び直すか、直せないなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
+  REPORT_CHANGED_FIELDS_ONLY_TEXT +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** 背景のシェルが残っている `report` を差し戻すときの戻り値。残りのシェルの ID と `description` だけを載せ、モデルが書いた本文は写さない。 */
@@ -329,6 +341,7 @@ function reportBackgroundRunningRejectionText(shells: readonly BackgroundTask[])
   return (
     `背景で動いているコマンドが残っている: ${listing}。` +
     "`TaskStop` で止めるか、待つなら待つと決めてから `report` を呼び直すこと。" +
+    REPORT_CHANGED_FIELDS_ONLY_TEXT +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
   )
 }

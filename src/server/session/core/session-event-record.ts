@@ -77,6 +77,7 @@ export function recordSessionEvent(
       sessionId: state.session.sessionId,
       reasons: event.reasons,
       argumentChars: event.argumentChars,
+      inheritedFields: event.inheritedFields,
     })
   }
   if (event.kind === "question-answered" && state.session.kind !== "starting") {

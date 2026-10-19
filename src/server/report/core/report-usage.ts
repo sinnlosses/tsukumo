@@ -4,7 +4,10 @@
 import { groupBy, isPlainObject } from "remeda"
 
 import { readGraphSource } from "../../../shared/report/graph-source.ts"
-import type { ReportArgumentChars } from "../../../shared/report/report-argument-chars.ts"
+import type {
+  ReportArgumentChars,
+  ReportArgumentField,
+} from "../../../shared/report/report-argument-chars.ts"
 import {
   type ReportBlock,
   type ReportSection,
@@ -78,8 +81,10 @@ export type ReportUsageEntry = {
   readonly hasSourceReference: boolean
   /** 行が2つ以下の表が1つでもあるか。 */
   readonly shortTable: boolean
-  /** 引数の字数。全体と最上位の欄ごと。 */
+  /** 引数の字数。全体と最上位の欄ごと。渡した欄だけを数える。 */
   readonly argumentChars: ReportArgumentChars
+  /** 直前に差し戻した呼び出しから引き継いだ欄の名前。 */
+  readonly inheritedFields: readonly ReportArgumentField[]
 }
 
 const FIGURE_KINDS: readonly string[] = ["image", "mermaid", "graph", "svg"]
@@ -126,6 +131,7 @@ export type ReportRejectionEntry = {
   readonly sessionId: string
   readonly reasons: readonly string[]
   readonly argumentChars: ReportArgumentChars
+  readonly inheritedFields: readonly ReportArgumentField[]
 }
 
 /** 書けなくても例外を投げない。 */
@@ -184,6 +190,7 @@ export function reportUsageEntryOf(
       (block) => block.kind === "table" && block.rows.length <= 2,
     ),
     argumentChars: event.argumentChars,
+    inheritedFields: event.inheritedFields,
   }
 }
 

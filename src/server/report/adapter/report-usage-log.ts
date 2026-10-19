@@ -43,6 +43,7 @@ function toRejectionRecord(entry: ReportRejectionEntry): ReportRejectionRecord {
     sessionId: entry.sessionId,
     reasons: entry.reasons,
     argumentChars: entry.argumentChars,
+    inheritedFields: entry.inheritedFields,
   }
 }
 
@@ -76,5 +77,6 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     hasSourceReference: entry.hasSourceReference,
     shortTable: entry.shortTable,
     argumentChars: entry.argumentChars,
+    inheritedFields: entry.inheritedFields,
   }
 }

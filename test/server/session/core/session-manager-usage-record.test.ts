@@ -93,6 +93,7 @@ describe("createSessionManager", () => {
           hasSourceReference: false,
           shortTable: false,
           argumentChars: { total: 0, fields: {} },
+          inheritedFields: [],
           sessionSummary: undefined,
         },
       ])
@@ -147,7 +148,12 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(reportWithSections([]))
-      stub.emit({ kind: "report-rejected", reasons: ["resend"], argumentChars: ARGUMENT_CHARS })
+      stub.emit({
+        kind: "report-rejected",
+        reasons: ["resend"],
+        argumentChars: ARGUMENT_CHARS,
+        inheritedFields: [],
+      })
       await waitForBatch()
 
       expect(entries).toEqual([])
@@ -163,6 +169,7 @@ describe("createSessionManager", () => {
         kind: "report-rejected",
         reasons: ["resend", "long-paragraph"],
         argumentChars: ARGUMENT_CHARS,
+        inheritedFields: ["favor"],
       })
       await waitForBatch()
 
@@ -172,6 +179,7 @@ describe("createSessionManager", () => {
           sessionId: "claude-session-1",
           reasons: ["resend", "long-paragraph"],
           argumentChars: ARGUMENT_CHARS,
+          inheritedFields: ["favor"],
         },
       ])
       expect(entries).toEqual([])

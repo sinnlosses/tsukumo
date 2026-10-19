@@ -34,12 +34,12 @@ export const CHAT_MODE: SessionMode = {
 /** `report` に渡す締めのセリフ（架空）。 */
 export const CLOSING = { text: "架空の締めの一言", expression: "default" }
 
-/** `report` に渡す待ちの一言とセッションの要約（架空）。どちらも必須。 */
+/** `report` に渡す待ちの一言とセッションの要約（架空）。どちらも組んだ値に欠かせない。 */
 export const WAITING_LINE = { text: "架空の待ちの一言", expression: "default" }
 export const SUMMARY = "架空の要約"
 export const REMAINING = "架空の残り"
 
-/** `report` に渡す図の欄（必須）。図を置かない理由を言う形。 */
+/** `report` に渡す図の欄（組んだ値に欠かせない）。図を置かない理由を言う形。 */
 export const FIGURE = { kind: "none", reason: "short-answer" }
 
 /**

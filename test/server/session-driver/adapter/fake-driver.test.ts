@@ -369,6 +369,7 @@ describe("startFakeSession", () => {
         kind: "report-rejected",
         reasons: ["tool-error"],
         argumentChars: expect.objectContaining({ total: expect.any(Number) }),
+        inheritedFields: [],
       },
       report("fake-r2"),
       finished("fake-r2", false),

@@ -1,6 +1,6 @@
 // セッションの出来事（`SessionEvent`）のうち、`report` ツールの呼び出しに関するものの型。
 
-import type { ReportArgumentChars } from "../report/report-argument-chars.ts"
+import type { ReportArgumentChars, ReportArgumentField } from "../report/report-argument-chars.ts"
 import type { RecordedReportFigure, ReportSection } from "../report/report-block.ts"
 import type { ReportChangeCount } from "../report/report-change-summary.ts"
 import type { ReportCheck } from "../report/report-check.ts"
@@ -36,12 +36,16 @@ export type ReportEvent =
    * `unknownBlockCount` は知らない種類で境界で落とした塊の数で、画面の状態は読まない。
    * `sessionSummary` はセッション全体の要約で、書かれていなければ undefined。レポートには描かず、切り替え画面が transcript から読み戻す。
    * `sessionRemaining`（残っていること）も同じく描かず、切り替え画面と始め方の一覧の「前回の続き」が transcript から読み戻す。
-   * `argumentChars` は引数の字数で、使われ方の記録だけが読む。
+   * `argumentChars` は渡した引数だけの字数で、使われ方の記録だけが読む。
+   * `inheritedFields` は渡さずに、同じターンで直前に差し戻した呼び出しから値を引き継いだ欄の名前（`ReportInheritance` が埋める）。使われ方の記録だけが読む。
+   * `conclusion` を渡さず引き継ぐ土台も無い呼び出しは、`conclusion` が空の文字列になる。
+   * `title`（セッション一覧の見出し）は書かれていなければ undefined。画面の状態は読まず、差し戻しのあとの出し直しで引き継ぐためだけに持つ（書き込むのは handler）。
    */
   | {
       readonly kind: "report"
       readonly toolUseId: string
       readonly argumentChars: ReportArgumentChars
+      readonly inheritedFields: readonly ReportArgumentField[]
       readonly conclusion: string
       readonly figure: RecordedReportFigure
       readonly sections: readonly ReportSection[]
@@ -53,11 +57,12 @@ export type ReportEvent =
       readonly closing: ReportClosing
       readonly waitingLine: ReportWaitingLine
       readonly unknownBlockCount: number
+      readonly title: string | undefined
       readonly sessionSummary: string | undefined
       readonly sessionRemaining: SessionRemaining
     }
   /**
-   * 引数が読めず（`conclusion` が文字列でない）`report` にならなかったメインの呼び出し。サーバの中だけで流れる。
+   * 引数が読めず（`conclusion` が文字列でも省略でもない）`report` にならなかったメインの呼び出し。サーバの中だけで流れる。
    * `CallReview` が同じ `toolUseId` の `tool-finished` まで預かり、差し戻しの記録（`report-rejected`）にだけ使う（畳み込み・ブラウザには届かない）。
    */
   | {
@@ -67,13 +72,15 @@ export type ReportEvent =
     }
   /**
    * 結果が `isError` で返った `report` の呼び出しごとに、`CallReview` が `tool-finished` の直後に作る（記録の口で、画面の状態は読まない）。
-   * `reasons` は差し戻しの種類の名前だけで、本文も文面も持たない。handler が差し戻したものはその理由、handler に届かずに落ちたものは `tool-error`。
-   * `argumentChars` は呼び出しの生の引数の字数（受理した `report` と同じ数え方）。
+   * `reasons` は差し戻しの種類の名前だけで、本文も文面も持たない。判定が差し戻したものはその理由、形の検査で落ちたもの（handler に届かなかったものと、組んだ値が落ちたもの）は `tool-error`。
+   * `argumentChars` は呼び出しの生の引数の字数で、`inheritedFields` は引き継いだ欄の名前（どちらも受理した `report` と同じ）。
+   * 引数が読めなかった呼び出しの `inheritedFields` は空。
    */
   | {
       readonly kind: "report-rejected"
       readonly reasons: readonly string[]
       readonly argumentChars: ReportArgumentChars
+      readonly inheritedFields: readonly ReportArgumentField[]
     }
   /**
    * `task` のある受理された `report` のあとに、依頼の頭の HEAD からの変更の量を tsukumo が git で数えて届ける。

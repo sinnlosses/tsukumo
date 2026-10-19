@@ -2,6 +2,7 @@
 //
 // 復元（`toRestoredEvents`）が組む履歴を数えた結果と同じになるよう、メッセージ列を1回なめて畳む。
 // 差し戻された `speak` のセリフと、差し戻された `report` の要約・締めのセリフは拾わない。
+// 差し戻しのあとの出し直しで省いた欄は、復元と同じ `ReportInheritance` で埋めてから畳む。
 // 読んだものはどこにも書き出さない。
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
@@ -14,6 +15,7 @@ import {
 } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
+import { createReportInheritance } from "../../report/core/report-inheritance.ts"
 import { restoredMessageEvents } from "./session-restore.ts"
 
 /** transcript のメッセージ列を、セッション1件の中身にする。列でなければ読めなかったものとして扱う。 */
@@ -25,8 +27,12 @@ export function toSessionDigest(
     return UNAVAILABLE_SESSION_DIGEST
   }
 
+  const reportInheritance = createReportInheritance()
   const folded = messages.reduce<DigestFold>(
-    (fold, message) => restoredMessageEvents(message, expressions).reduce(foldEvent, fold),
+    (fold, message) =>
+      restoredMessageEvents(message, expressions)
+        .map((event) => reportInheritance.pass(event))
+        .reduce(foldEvent, fold),
     INITIAL_FOLD,
   )
   const { summary, remaining, lastLine } = folded.turnOpen ? adoptHeld(folded) : folded

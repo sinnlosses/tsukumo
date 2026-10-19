@@ -189,6 +189,48 @@ describe("CallReview の預かり（report）", () => {
     ])
   })
 
+  it("差し戻しのあと欄を省いて呼び直した report は、省いた欄を差し戻した値で埋めて出す", () => {
+    const review = createCallReview()
+    const rejected = reportEvent({
+      toolUseId: "toolu_r1",
+      argumentChars: { total: 30, fields: { conclusion: 10, favor: 10, closing: 10 } },
+      conclusion: "架空の差し戻された結論",
+      favor: "架空のお願い",
+      closing: CLOSING,
+    })
+    const resent = reportEvent({
+      toolUseId: "toolu_r2",
+      argumentChars: { total: 10, fields: { conclusion: 10 } },
+      conclusion: "架空の直した結論",
+    })
+    const filled = reportEvent({
+      ...resent,
+      favor: "架空のお願い",
+      closing: CLOSING,
+      inheritedFields: ["favor", "closing"],
+    })
+
+    const passed = [
+      rejected,
+      finished("toolu_r1", true),
+      resent,
+      finished("toolu_r2", false),
+    ].flatMap((event) => review.pass(event))
+
+    expect(passed).toEqual([
+      finished("toolu_r1", true),
+      {
+        kind: "report-rejected",
+        reasons: ["tool-error"],
+        argumentChars: rejected.argumentChars,
+        inheritedFields: [],
+      },
+      filled,
+      finished("toolu_r2", false),
+      CLOSING,
+    ])
+  })
+
   it("結果の届かないまま終わったターンの report は、締めのセリフも turn-finished の直前に出す", () => {
     const review = createCallReview()
     const report = reportOfDraft("toolu_r1", VALID, CLOSING)
@@ -211,7 +253,12 @@ describe("CallReview の預かり（report）", () => {
     review.pass(reportOfDraft("toolu_r2", OTHER, CLOSING))
     expect(review.pass(finished("toolu_r2", true))).toEqual([
       finished("toolu_r2", true),
-      { kind: "report-rejected", reasons: ["tool-error"], argumentChars: ARGUMENT_CHARS },
+      {
+        kind: "report-rejected",
+        reasons: ["tool-error"],
+        argumentChars: ARGUMENT_CHARS,
+        inheritedFields: [],
+      },
     ])
   })
 
@@ -225,7 +272,12 @@ describe("CallReview の預かり（report）", () => {
 
     expect(review.pass(finished("toolu_r2", true))).toEqual([
       finished("toolu_r2", true),
-      { kind: "report-rejected", reasons: ["resend"], argumentChars: ARGUMENT_CHARS },
+      {
+        kind: "report-rejected",
+        reasons: ["resend"],
+        argumentChars: ARGUMENT_CHARS,
+        inheritedFields: [],
+      },
     ])
   })
 
@@ -238,7 +290,12 @@ describe("CallReview の預かり（report）", () => {
     ).toEqual([])
     expect(review.pass(finished("toolu_m1", true))).toEqual([
       finished("toolu_m1", true),
-      { kind: "report-rejected", reasons: ["tool-error"], argumentChars: chars },
+      {
+        kind: "report-rejected",
+        reasons: ["tool-error"],
+        argumentChars: chars,
+        inheritedFields: [],
+      },
     ])
   })
 

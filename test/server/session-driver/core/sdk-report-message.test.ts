@@ -295,22 +295,38 @@ describe("toSessionEvents（report ツール）", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
-  it("conclusion が文字列でない report はレポートにせず、字数だけの report-malformed にする", () => {
+  it("conclusion が文字列でも省略でもない report はレポートにせず、字数だけの report-malformed にする", () => {
+    const input = { conclusion: 42, body: "架空の本文" }
     const message = assistantMessage([
-      {
-        type: "tool_use",
-        id: "toolu_r1",
-        name: REPORT_TOOL_FULL_NAME,
-        input: { body: "架空の本文" },
-      },
+      { type: "tool_use", id: "toolu_r1", name: REPORT_TOOL_FULL_NAME, input },
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
       {
         kind: "report-malformed",
         toolUseId: "toolu_r1",
-        argumentChars: reportArgumentCharsOf({ body: "架空の本文" }),
+        argumentChars: reportArgumentCharsOf(input),
       },
+    ])
+  })
+
+  it("conclusion を省いた report は、結論が空のレポートにする（引き継ぎは後ろの段が埋める）", () => {
+    const message = assistantMessage([
+      {
+        type: "tool_use",
+        id: "toolu_r1",
+        name: REPORT_TOOL_FULL_NAME,
+        input: { favor: "架空のお願い" },
+      },
+    ])
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      reportEvent({
+        toolUseId: "toolu_r1",
+        argumentChars: reportArgumentCharsOf({ favor: "架空のお願い" }),
+        conclusion: "",
+        favor: "架空のお願い",
+      }),
     ])
   })
 

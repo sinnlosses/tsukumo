@@ -90,14 +90,15 @@ describe("report でターンを閉じる", () => {
     expect(reply.text).not.toContain("there")
   })
 
-  it("closing の無い report は形の検査で落ち、ターンを閉じない", async () => {
+  it("引き継ぐ土台が無いのに closing を省いた report は組んだ値の形の検査で落ち、ターンを閉じない", async () => {
     const reply = await callTool(workServer(), "report", { conclusion: "架空の結論" })
 
     expect(reply.isError).toBe(true)
+    expect(reply.text).toContain("Input validation error")
     expect(reply.endsTurn).toBe(false)
   })
 
-  it("形の検査で落ちた report は handler に届かない（記録は CallReview.pass が結果から作る）", async () => {
+  it("組んだ値の形の検査で落ちた report は判定しない（記録は CallReview.pass が結果から作る）", async () => {
     const events: SessionEvent[] = []
     const review = createCallReview()
     let judged = 0

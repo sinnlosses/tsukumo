@@ -17,6 +17,10 @@ import {
 import { MARKDOWN_NOTATION_NAMES } from "./report-markdown-notation.ts"
 import type { ReportViolation } from "./report-violation.ts"
 
+/** 差し戻しの戻り値に足す、直す欄だけで呼び直せることの1文。 */
+export const REPORT_CHANGED_FIELDS_ONLY_TEXT =
+  "呼び直すときは直す欄だけを渡せばよい（渡さなかった欄はこの呼び出しの値を引き継ぐ）。"
+
 /**
  * 差し戻すときの `report` の戻り値。
  * 違反した条と直し方だけを1行ずつ並べ、画面の状態（描けたか・どこに出たか）は載せない。モデルの文脈に戻るので短くする。
@@ -25,6 +29,7 @@ export function reportRejectionText(violations: readonly ReportViolation[]): str
   return [
     "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:",
     ...violations.map((violation) => `- ${violationLine(violation)}`),
+    REPORT_CHANGED_FIELDS_ONLY_TEXT,
   ].join("\n")
 }
 

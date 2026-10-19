@@ -12,6 +12,7 @@
 // 欄の表の `blockAside`（塊の傍注）は版12から、`beforeAfterRegion`（前後の画像の枠）は版15から記録している（それより前の行には出ない）。
 // 札 × 節数と、札が許さない塊を使った節・組の数は、版13以降の行の節を分母にする。
 // 引数の字数の分布と差し戻しの出し直しの割合は、版14以降の行を分母にする。
+// 引き継ぎで出した呼び出しの数は、版16以降の行を分母にする。
 //
 // 使い方:
 //   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -148,6 +149,9 @@ const ARGUMENT_CHARS_FORMAT_VERSION = 14
 /** 欄 `beforeAfterRegion` を記録し始めた版。行の形は版14と同じ。 */
 const REGION_FORMAT_VERSION = 15
 
+/** 差し戻しから引き継いだ欄の名前（`inheritedFields`）を記録し始めた版。 */
+const INHERITED_FIELDS_FORMAT_VERSION = 16
+
 const argumentCharsSchema = z.object({
   total: z.number(),
   fields: z.record(z.string(), z.number()),
@@ -230,6 +234,19 @@ const recordSchema = z.union([
       argumentChars: argumentCharsSchema,
     })
     .and(figureFieldSchema),
+  z
+    .object({
+      v: z.literal(INHERITED_FIELDS_FORMAT_VERSION),
+      ...figureRecordShape,
+      ...countRecordShape,
+      ...howToVerifyRecordShape,
+      ...genreRecordShape,
+      ...shortTableRecordShape,
+      ...shapeTagRecordShape,
+      argumentChars: argumentCharsSchema,
+      inheritedFields: z.array(z.string()),
+    })
+    .and(figureFieldSchema),
 ])
 type UsageRecord = z.infer<typeof recordSchema>
 type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[] }>
@@ -266,10 +283,12 @@ const rejectionSchema = z.object({
     z.literal(SHAPE_TAG_FORMAT_VERSION),
     z.literal(ARGUMENT_CHARS_FORMAT_VERSION),
     z.literal(REGION_FORMAT_VERSION),
+    z.literal(INHERITED_FIELDS_FORMAT_VERSION),
   ]),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),
   argumentChars: argumentCharsSchema.optional(),
+  inheritedFields: z.array(z.string()).optional(),
 })
 type RejectionRecord = z.infer<typeof rejectionSchema>
 
@@ -350,7 +369,9 @@ process.stdout.write(
       (record): record is ArgumentCharsRecord => record.v >= ARGUMENT_CHARS_FORMAT_VERSION,
     ),
     rejections.flatMap((rejection) =>
-      rejection.argumentChars === undefined ? [] : [rejection.argumentChars],
+      rejection.argumentChars === undefined
+        ? []
+        : [{ argumentChars: rejection.argumentChars, inheritedFields: rejection.inheritedFields }],
     ),
   ),
 )
@@ -670,24 +691,37 @@ function shapeTagSection(rows: readonly ShapeTagRecord[]): string {
 
 /**
  * 引数の字数（JSON にした字数。トークンの代わり）の分布。分母は版14以降の受け付けの行と、字数を持つ差し戻しの行。
- * 受け付けも差し戻しも、モデルが書いた生の引数の字数。
- * 形の検査で落ちて handler に届かなかった呼び出しは、理由が `tool-error` の差し戻しの行に入る。
+ * 受け付けも差し戻しも、モデルが書いた生の引数の字数（差し戻しから引き継いだ欄は数えない）。
+ * 形の検査で落ちた呼び出し（handler に届かなかったものと、組んだ値が落ちたもの）は、理由が `tool-error` の差し戻しの行に入る。
+ * 引き継ぎで出した呼び出し（`inheritedFields` が空でない）の数は、版16以降の行を分母にする。
  */
 function argumentCharsSection(
   accepted: readonly ArgumentCharsRecord[],
-  rejected: readonly z.infer<typeof argumentCharsSchema>[],
+  rejected: readonly {
+    readonly argumentChars: z.infer<typeof argumentCharsSchema>
+    readonly inheritedFields: readonly string[] | undefined
+  }[],
 ): string {
   if (accepted.length === 0) {
     return "引数の字数: 記録した行が無い"
   }
   const spreadLine = (label: string, values: readonly number[]): string =>
     `  ${label.padEnd(18)} ${String(values.length).padStart(5)}件  中央値 ${String(percentile(values, 0.5)).padStart(6)}  p90 ${String(percentile(values, 0.9)).padStart(6)}`
+  const inheritanceLine = (
+    label: string,
+    inherited: readonly (readonly string[] | undefined)[],
+  ): string => {
+    const recorded = inherited.flatMap((fields) => (fields === undefined ? [] : [fields]))
+    const count = recorded.filter((fields) => fields.length > 0).length
+    const percent = (recorded.length === 0 ? 0 : (count / recorded.length) * 100).toFixed(1)
+    return `  ${label.padEnd(18)} ${String(count).padStart(5)}件  版16以降の${String(recorded.length)}件のうち ${percent}%`
+  }
   const acceptedMedian = percentile(
     accepted.map((record) => record.argumentChars.total),
     0.5,
   )
   const rejectedMedian = percentile(
-    rejected.map((chars) => chars.total),
+    rejected.map((row) => row.argumentChars.total),
     0.5,
   )
   const fieldNames = [
@@ -701,11 +735,20 @@ function argumentCharsSection(
     ),
     spreadLine(
       "差し戻し 全体",
-      rejected.map((chars) => chars.total),
+      rejected.map((row) => row.argumentChars.total),
     ),
     acceptedMedian === 0 || rejected.length === 0
       ? "  差し戻しの出し直し: 差し戻しの字数の記録が無い"
-      : `  差し戻し1回の字数（中央値）は受け付けの ${((rejectedMedian / acceptedMedian) * 100).toFixed(1)}%（直し1回ごとに引数を全部書き直す量）`,
+      : `  差し戻し1回の字数（中央値）は受け付けの ${((rejectedMedian / acceptedMedian) * 100).toFixed(1)}%（直し1回ごとに書いた量）`,
+    "引き継ぎで出した呼び出し（差し戻しから欄を1つ以上引き継いだもの）:",
+    inheritanceLine(
+      "受け付け",
+      accepted.map((record) => ("inheritedFields" in record ? record.inheritedFields : undefined)),
+    ),
+    inheritanceLine(
+      "差し戻し",
+      rejected.map((row) => row.inheritedFields),
+    ),
     "欄ごと（受け付けのうち、その欄を渡した行）:",
     ...fieldNames.map((name) =>
       spreadLine(
