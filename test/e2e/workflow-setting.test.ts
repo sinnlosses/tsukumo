@@ -19,6 +19,9 @@ const run = useScenarioRun()
 /** 書き込み1回のサーバの最悪: `tw config set` と、読み直しの `tw` 最大2回（schema・config）が各々上限まで掛かる。 */
 const WRITE_ROUND_TRIP_TIMEOUT_MS = TW_TIMEOUT_MS * 3
 
+/** 取り込みの `tw config set` が、並びの候補に無い名前を断るときの理由の一部。 */
+const REJECTED_NAME_REASON = "候補にも今の値にも無い名前"
+
 describe("ワークフローの設定", () => {
   it("外して足して保存すると、並び全体の書き込みが tw まで届く", async () => {
     const { room, dialog } = await openWorkflowFace("workflow-setting-steps", [
@@ -87,8 +90,8 @@ describe("ワークフローの設定", () => {
 })
 
 /**
- * 取り込みの `tw` が schema 1 のままのあいだは、読み取りの応答だけを schema 2 の面に差し替える。
- * 書き込みは本物の `tw config set` まで届き、知らないキーとして断られる理由が欄の下に出ることで、往復を確かめる。
+ * 読み取りの応答だけを架空のスキルの並びの面に差し替える。
+ * 書き込みは本物の `tw config set` まで届き、候補に無い名前として断られる理由が欄の下に出ることで、往復を確かめる。
  */
 async function openWorkflowFace(
   scenario: string,
@@ -139,7 +142,7 @@ async function openWorkflowFace(
 
 async function expectWrittenAfterSave(room: ScenarioRoom, dialog: Locator): Promise<void> {
   await room.page.clock.runFor(50)
-  expect(await dialog.getByText("'steps'", { exact: false }).count()).toBe(0)
+  expect(await dialog.getByText(REJECTED_NAME_REASON, { exact: false }).count()).toBe(0)
 
   await dialog.getByRole("button", { name: "保存" }).click()
 
@@ -147,7 +150,7 @@ async function expectWrittenAfterSave(room: ScenarioRoom, dialog: Locator): Prom
     .poll(
       async () => {
         await room.page.clock.runFor(50)
-        return dialog.getByText("'steps'", { exact: false }).count()
+        return dialog.getByText(REJECTED_NAME_REASON, { exact: false }).count()
       },
       { timeout: WRITE_ROUND_TRIP_TIMEOUT_MS },
     )

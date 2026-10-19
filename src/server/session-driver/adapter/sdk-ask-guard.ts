@@ -2,17 +2,12 @@
 // 主のセッションの `AskUserQuestion` の PreToolUse に当てる。
 // 子が起動できない・失敗・出力が読めないときは何も拒まない（質問を通す側）。
 
-import { execFile } from "node:child_process"
-import { join } from "node:path"
-
 import type { HookCallbackMatcher, HookEvent } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
 
-import { workflowPluginDir } from "./workflow-plugin.ts"
+import { runWorkflowTw, WORKFLOW_TW_TIMEOUT_MS, workflowTwPath } from "./sdk-workflow-tw.ts"
 
 const ASK_TOOL = "AskUserQuestion"
-const ASK_GUARD_TIMEOUT_MS = 5000
-const MAX_OUTPUT_BYTES = 1024 * 1024
 
 const denyOutputSchema = z.object({
   hookSpecificOutput: z.looseObject({
@@ -23,17 +18,11 @@ const denyOutputSchema = z.object({
 
 /** hook の入力 JSON を標準入力に渡して `ask-guard` を走らせ、標準出力を返す。失敗・タイムアウトは空文字列。 */
 export function runAskGuard(stdin: string): Promise<string> {
-  return new Promise((resolve) => {
-    const child = execFile(
-      join(workflowPluginDir(), "bin", "tw"),
-      ["ask-guard"],
-      { timeout: ASK_GUARD_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
-      (error, stdout) => {
-        resolve(error === null ? stdout : "")
-      },
-    )
-    child.stdin?.on("error", () => {})
-    child.stdin?.end(stdin)
+  return runWorkflowTw({
+    twPath: workflowTwPath(),
+    subcommand: "ask-guard",
+    stdin,
+    timeoutMs: WORKFLOW_TW_TIMEOUT_MS,
   })
 }
 

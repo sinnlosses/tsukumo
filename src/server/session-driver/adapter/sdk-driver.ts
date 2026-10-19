@@ -34,6 +34,7 @@ import { readClaudeAccountTier } from "./claude-account.ts"
 import { rewriteWithRtk } from "./rtk-rewrite.ts"
 import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
+import { runLapHook, withLapHook } from "./sdk-lap-hook.ts"
 import { readPlanUsage } from "./sdk-plan-usage.ts"
 import { createPromptStream, type PromptContentBlock } from "./sdk-prompt-stream.ts"
 import {
@@ -123,20 +124,24 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     prompt: input.stream(),
     options: {
       ...buildQuerySeedOptions(options),
-      hooks: withAskGuard(
-        {
-          ...stopHooks(options.mode, reportGate, options.onEvent),
-          ...preToolUseHooks(
-            callReview.gateRaised,
-            callReview.bandPosition,
-            options.onEvent,
-            externalToolMark,
-            rewriteWithRtk,
-          ),
-          ...handbackNoteHooks(callReview.takeHandbackNote),
-        },
+      hooks: withLapHook(
+        withAskGuard(
+          {
+            ...stopHooks(options.mode, reportGate, options.onEvent),
+            ...preToolUseHooks(
+              callReview.gateRaised,
+              callReview.bandPosition,
+              options.onEvent,
+              externalToolMark,
+              rewriteWithRtk,
+            ),
+            ...handbackNoteHooks(callReview.takeHandbackNote),
+          },
+          options.mountWorkflowPlugin,
+          runAskGuard,
+        ),
         options.mountWorkflowPlugin,
-        runAskGuard,
+        runLapHook,
       ),
       mcpServers: {
         [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(
