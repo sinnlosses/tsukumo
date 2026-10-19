@@ -56,7 +56,7 @@
     セリフは `speak` の handler が専用のイベントで状態へ流すだけで、会話のアーカイブが拾うセリフの経路を通らない
   - ホームに書くのは今までどおり、見直しの結果（`~/.tsukumo/usage-review.json`）と見送った提案の識別子だけ。
     結果を書くのは見直しの走りで、`session-manager` は書かない
-  - 使用量はトークン消費の記録に混ぜない（`docs/architecture.md`「使い捨ての `query()`」）
+  - 使用量はトークン消費の記録に混ぜない（`docs/architecture/core-and-adapter.md`「使い捨ての `query()`」）
 - **疑似セッション（`TSUKUMO_DRIVER=fake`）では `query()` を起こさず**、疑似セッションのファイルに書いた
   架空の見直しの手順をそのまま流し直す。画面の往復を claude なしで E2E と目視にかけるため
 

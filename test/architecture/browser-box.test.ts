@@ -82,7 +82,7 @@ describe("browser/ の機能どうしの import", () => {
   })
 })
 
-// `src/browser/` の箱をまたぐ縦の辺（`docs/architecture.md`「`src/browser/` の箱と、置く基準」の表そのもの）。
+// `src/browser/` の箱をまたぐ縦の辺（`docs/architecture/browser-box.md`「`src/browser/` の箱と、置く基準」の表そのもの）。
 // 上の `BROWSER_FRAMES` / `BROWSER_SCREENS` / `BROWSER_PLACED_FEATURES` の検査はまとまりどうしの横の辺を見るのに対し、こちらは
 // `main.tsx` / `features/` / `components/app/` / `components/page/` / `components/domain/` / `components/ui/` /
 // `hooks/` / `domain/` / `lib/` / `utils/` / `stores/` という箱をまたぐ辺を見る
@@ -114,7 +114,7 @@ const BROWSER_BOXES = [
 ] as const
 type BrowserBox = (typeof BROWSER_BOXES)[number]
 
-// 各箱が import してよい先（docs/architecture.md「`src/browser/` の箱と、置く基準」の表そのもの。`main` は「すべて」なので全箱を許す）。
+// 各箱が import してよい先（docs/architecture/browser-box.md「`src/browser/` の箱と、置く基準」の表そのもの。`main` は「すべて」なので全箱を許す）。
 // `utils/` は誰からも引けて、自分は `utils/` の中しか引かない（外部パッケージ・`shared` も
 // 引かないことは、この表では見えないので下の「browser/utils/ の import」が見る）。
 const ALLOWED_BROWSER_BOX_IMPORTS: Readonly<Record<BrowserBox, ReadonlySet<BrowserBox>>> = {
@@ -181,7 +181,7 @@ type BrowserBoxViolation = {
 }
 
 describe("browser/ の箱をまたぐ import", () => {
-  it("src/browser/ の箱どうしの import は、docs/architecture.md「`src/browser/` の箱と、置く基準」の表にある辺だけで構成されている", () => {
+  it("src/browser/ の箱どうしの import は、docs/architecture/browser-box.md「`src/browser/` の箱と、置く基準」の表にある辺だけで構成されている", () => {
     const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
     expect(files.length).toBeGreaterThan(0)
 
@@ -216,9 +216,9 @@ describe("browser/utils/ の import", () => {
 })
 
 // 機能をまたぐ箱に、1つの機能しか読まないファイルが残っていないことを見る
-// （`docs/architecture.md`「上げる引き金は「2つ目の読み手が出たとき」」。引き金は逆にも引き、
+// （`docs/architecture/browser-box.md`「上げる引き金は「2つ目の読み手が出たとき」」。引き金は逆にも引き、
 // 読み手が1つに戻ったものはその機能の中へ下ろす）。`components/domain/` の直下にも
-// 同じ基準を掛ける（docs/architecture.md「引き金は逆にも引く」）。`components/ui/` は汎用の部品の置き場で、
+// 同じ基準を掛ける（docs/architecture/browser-box.md「引き金は逆にも引く」）。`components/ui/` は汎用の部品の置き場で、
 // 読み手の数を問わないので対象外（docs/architecture/browser.md「読み手の数は問わない」）。
 //
 // 読み手が機能の外だけのものは対象外（`lib/socket.ts` と `domain/refresh.ts` は `stores/` が
@@ -228,7 +228,7 @@ describe("browser/utils/ の import", () => {
 // 別の判断が要るため。
 //
 // `components/domain/` は直下のファイルだけを対象にする（サブディレクトリは全画面で共有する
-// 枠（領域）で、1つの領域だけが読むのが正しい形。docs/architecture.md「`components/domain/` の直下のファイルは
+// 枠（領域）で、1つの領域だけが読むのが正しい形。docs/architecture/browser-box.md「`components/domain/` の直下のファイルは
 // 領域ではなく共有の部品」）。
 const SHARED_BROWSER_BOXES = ["lib", "domain"] as const
 
@@ -252,7 +252,7 @@ describe("browser/ の機能をまたぐ箱", () => {
   })
 })
 
-// `components/ui/` の置き方（docs/architecture.md「1部品1フォルダは真似しない」の例外）を検査で守る。
+// `components/ui/` の置き方（docs/architecture/directory.md「1部品1フォルダは真似しない」の例外）を検査で守る。
 // 直下にファイルを置かない（部品ごとのディレクトリの中に置く）、`ui/<部品>/` には必ず
 // `<部品>.tsx` がある（ディレクトリ名がそのまま部品のファイル名になる）の2つ。barrel file
 // （`index.tsx`）で束ねていないかは、ここが `<部品>.tsx` の存在を見ることで同時に落ちる
@@ -287,7 +287,7 @@ describe("components/ui/ の置き方", () => {
   })
 })
 
-// ページの形（`docs/architecture.md`「ページの形」）。`components/page/<ページ>/` の直下は
+// ページの形（`docs/architecture/directory.md`「ページの形」）。`components/page/<ページ>/` の直下は
 // container / presenter の対（`<ページ>.tsx` / `presentational-<ページ>.tsx`）・`<ページ>.module.css`・
 // `domain/` `hooks/` `components/` だけ。部品（`components/<部品>/`）も同じ作り（`<部品>.tsx` /
 // `presentational-<部品>.tsx` / `<部品>.module.css` / `hooks/` `domain/` `components/`）で、ほかに
@@ -337,7 +337,7 @@ describe("components/page/ の形", () => {
   })
 })
 
-/** ページ・部品1件の直下を検査する（`docs/architecture.md`「ページの形」）。 */
+/** ページ・部品1件の直下を検査する（`docs/architecture/directory.md`「ページの形」）。 */
 function pageNodeViolations(
   relPath: string,
   dirName: string,

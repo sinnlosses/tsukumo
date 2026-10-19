@@ -640,7 +640,7 @@ tsukumo から外へは出ない。
 import の輪ができると初期化前参照で落ちる。`typescript/no-import-type-side-effects` が落とす。
 
 **`browser` 層の中も、箱（`main.tsx` / `app.tsx` / `features/` / `components/` / `lib/` / `stores/`）ごとに
-import してよい先が決まっている**（表は二重に書かず `docs/architecture.md`「`src/browser/` の箱と、
+import してよい先が決まっている**（表は二重に書かず `docs/architecture/browser-box.md`「`src/browser/` の箱と、
 置く基準」を正典とする）。この縦の辺も `test/architecture/browser-box.test.ts` が落とす。
 
 **ファイルは単数形にする。** 複数は「複数返す」関数名の側で表す（`beads-task.ts` の
@@ -665,7 +665,7 @@ bullet-proof-react の名前（`features/` `components/` `lib/` `stores/` `style
 「design.md 12. 移行の段階」の段3）で bulletproof-react の実例と突き合わせて決めた。
 
 **`components/ui/` の部品は `ui/<部品>/<部品>.tsx` に置き、`index.tsx` は作らない。検査が
-落とす。** 部品ごとのディレクトリに分けるのは `docs/architecture.md`「1部品1フォルダは
+落とす。** 部品ごとのディレクトリに分けるのは `docs/architecture/directory.md`「1部品1フォルダは
 真似しない」の例外で、barrel file を作らない理由はここと二重に書かない。
 
 ## React

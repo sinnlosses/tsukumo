@@ -55,7 +55,7 @@ import するので、食い違うと入口を別のモジュールとして読�
 ### CSS
 
 **CSS Modules（`*.module.css`）を部品と同居させる。** 置き場は **class ごとに、読み手すべてを含む
-いちばん近い箱**（`docs/architecture.md`「ページの形」の表と同じ決め方）。**1つの部品（と中の子部品）だけが
+いちばん近い箱**（`docs/architecture/directory.md`「ページの形」の表と同じ決め方）。**1つの部品（と中の子部品）だけが
 読む class は部品の隣の `<部品>.module.css`** に置き、**container / presenter か2つ以上の部品が読む class
 だけ**を領域・機能・ページの1枚（`<領域>/<領域>.module.css`・`features/<機能>/<機能>.module.css`・
 `<ページ>.module.css`）に置く。部品が平たく並ぶ `components/`（`features/<機能>/components/` など）でも、

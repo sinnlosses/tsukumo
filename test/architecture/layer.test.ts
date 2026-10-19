@@ -121,7 +121,7 @@ describe("import の拾い方", () => {
   })
 })
 
-// 手続き（oRPC）の依存の辺（docs/architecture.md「コマンドの受け手と手続きの置き方」の「許す依存の
+// 手続き（oRPC）の依存の辺（docs/architecture/command-procedure.md「コマンドの受け手と手続きの置き方」の「許す依存の
 // 辺」）。受け手を付ける `@orpc/server` は外の世界に触る側（機能の `adapter/` と配線）だけが読み、
 // `core` と共有の箱からは読まない。契約だけを書く `@orpc/contract` は `shared` が読んでよい
 // （ブラウザも読むので、`@orpc/server` と `node:` は読まない）。

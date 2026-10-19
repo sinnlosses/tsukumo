@@ -2,7 +2,7 @@
 
 export type Layer = "shared" | "core" | "adapter" | "browser" | "cli" | "ambient"
 
-// サーバの機能（docs/architecture.md「サーバの機能と、機能どうしの辺」の1つめの表）。機能を足す
+// サーバの機能（docs/architecture/server-feature.md「サーバの機能と、機能どうしの辺」の1つめの表）。機能を足す
 // ときは、ここと `SERVER_FEATURE_IMPORTS` に足す（一覧に無いディレクトリを `server/` の下に
 // 作ると `layerOf` が throw する）。まだ移していないファイルは共有の箱（`server/core/`
 // `server/adapter/` の直下）に居るまま動く。

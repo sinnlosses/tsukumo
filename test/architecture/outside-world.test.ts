@@ -8,7 +8,7 @@ import { importSpecifiers, listSourceFiles, parseSourceProgram, SRC_ROOT } from 
 // ここから、層の辺だけでは表せない限定の検査（`adapter` の中のどのファイルか、まで絞る）。
 
 // SDK（`@anthropic-ai/claude-agent-sdk`）を import するのは機能の `adapter/` 直下
-// （`server/<機能>/adapter/`）の `sdk-` で始まるファイルに閉じ込める（docs/architecture.md「1ファイル = 1つの境界」）。
+// （`server/<機能>/adapter/`）の `sdk-` で始まるファイルに閉じ込める（docs/architecture/overview-and-layer.md「1ファイル = 1つの境界」）。
 // SDK は1つの境界だが1ファイルには収まらないので、許す先を一覧ではなく名前で決める —
 // 足すファイルは名前で SDK の境界を名乗ることになり、名乗らずに import すればここで落ちる。
 // import 文のクォートされた specifier だけを拾うので、バッククォートで囲んだ日本語の説明文は
@@ -33,7 +33,7 @@ describe("Agent SDK を import する箇所", () => {
 // （`main` の上のタスク一覧・成果の集計・git 管理下のファイルの列挙のどれもがここを使う）・
 // `bd` を起こす1つの口（Beads 方式のタスク一覧と成果の集計）・別のチェックアウトの
 // `bin/tsukumo` へ委ねる口・取り込んだワークフローの `bin/tw` の hook のサブコマンド（`ask-guard`・`lap-hook`）を起こす口・
-// ワークフローの設定コマンド（`tw config`）を起こす口・Bash の出力を縮める `rtk rewrite` を起こす口の8つの境界に閉じ込める（docs/architecture.md「1ファイル = 1つの境界」）。
+// ワークフローの設定コマンド（`tw config`）を起こす口・Bash の出力を縮める `rtk rewrite` を起こす口の8つの境界に閉じ込める（docs/architecture/overview-and-layer.md「1ファイル = 1つの境界」）。
 // そのうち `orca` コマンドを起こすのは orca-host.ts だけ。
 // `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、その字面で探す。
 // ファイル名やバッククォートで囲んだ日本語の説明文はクォートされた文字列リテラルではないので拾わない。

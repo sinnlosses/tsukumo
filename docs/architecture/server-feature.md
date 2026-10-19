@@ -1,0 +1,98 @@
+# アーキテクチャ詳細: サーバの機能と、機能どうしの辺
+
+ステータス: **正典**。入口は `docs/architecture.md`（全体構造の入口と、子のファイルの一覧）。
+
+責務: `src/server/` を割る機能の一覧と、どの機能にも属さない共有の箱、機能どうしの import の規則と辺の表を持つ。
+読む時: サーバに機能を足すとき、機能どうしの import が許されるかを確かめたいとき。
+直す時: 機能を足す・消すとき、機能どうしの辺を変えたとき（表は `test/architecture/server-feature.test.ts` が読む）。
+
+## 節の索引
+
+| 節                                 | 中身                                                                                                                                |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| ### サーバの機能と、機能どうしの辺 | 機能の一覧、共有の箱、機能どうしの import の規則、読んでよい機能の表（コマンドの受け手は `docs/architecture/command-procedure.md`） |
+
+## 全体構成
+
+### サーバの機能と、機能どうしの辺
+
+`src/server/` は**機能のまとまりで割り、機能の中を層（`core/` と `adapter/`）で割る**。機能の名前は
+`docs/glossary.md` の語（単数形）で、**1つの機能 = 1つのディレクトリ**。機能の中は `core/`（判断）と
+`adapter/`（境界）の2段だけで、中身の無い段は作らない。機能の中のファイルは
+`ls src/server/<機能>/core/ src/server/<機能>/adapter/` が正典で、各ファイルの持ち物はそのファイルの
+冒頭のコメント（「core と adapter」）。
+
+| 機能                 | 何の機能か                                                                                                              |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `session/`           | セッションを持つ・起こす・頼む。**各機能の判断を束ねる**（下の「束ねる機能」）                                          |
+| `session-driver/`    | セッションドライバ。契約・SDK の実装・fake driver・メッセージの変換・答え待ち・続きから始める・セッションの占有ファイル |
+| `report/`            | レポートの記法・`report` ツール・検査と差し戻し・塊の使われ方の記録                                                     |
+| `system-prompt/`     | `systemPrompt` の append の組み立てと、セリフの間合いの規約                                                             |
+| `chat/`              | 雑談モード。作法・記憶・話しかけ・アーカイブ・要約・覚えたこと・定着                                                    |
+| `character-pack/`    | キャラクターパックの選択・読み込み・画面からの編集・立ち絵からの生成（使い捨ての `query()`）                            |
+| `diary/`             | 日記。`diary` ツールと保存                                                                                              |
+| `achievement/`       | 成果。終えたタスクを Beads の閉じた課題から数える                                                                       |
+| `usage-review/`      | 見直し。見直しと提案の実行の走り（使い捨ての `query()`）・2つのツール・前回の結果・見送り                               |
+| `token-usage/`       | トークン消費の記録と集計                                                                                                |
+| `context-usage/`     | コンテキストの内訳の記録                                                                                                |
+| `plan-usage/`        | プラン使用量（`/usage` と同じ上限）の手続き                                                                             |
+| `experience-metric/` | 進行の計測値の記録と集計                                                                                                |
+| `diagnostic/`        | 診断ログ（不具合の経緯を追う足跡）の書き口・束ね・置き場と掃除                                                          |
+| `host/`              | ホストのポートと Orca・`none` の実装、ホストへ渡す前の門番                                                              |
+| `view-server/`       | ビューサーバ。ポートの決定・http・ws・同梱の外部ライブラリ・ブラウザ側の組み立てと開発サーバ                            |
+| `repository/`        | 作業ディレクトリの git リポジトリを読む。`git` を起こす口・管理下のファイルと行の抜き書き・タスク一覧                   |
+| `recommendation/`    | おすすめの札。候補・使い捨ての `query()`・出力の検査・キャッシュ                                                        |
+| `checkout/`          | 打った場所のチェックアウトと自分の根を比べ、違えば打った側の `bin/tsukumo` へ委ねる                                     |
+| `workflow-setting/`  | ワークフローの設定。`tw` の設定コマンドを起こす口と読み書きの手続き                                                     |
+
+**どの機能にも属さない共有のもの**は、`server/core/` と `server/adapter/` の**直下**に置く
+（いまあるものは `ls src/server/core/ src/server/adapter/`）。置いてよいのは**どの機能の語彙も名乗らず、読み手が
+2つ以上ある（機能・共有の箱・配線のどれでも数える）もの**だけで、読み手が1つの機能だけに
+なったらその機能へ下ろす（`browser/domain/` と同じ引き金）。
+
+**機能どうしの import の規則**:
+
+- **層の規則が先に効く。** `core/` は、どの機能のものでも `adapter/` を import しない
+- **機能 A が機能 B を import してよいのは、下の表にある組だけ。** 共有の箱はどの機能からも
+  読んでよく、**共有の箱は機能を読まない**
+- **層ごとに循環させない。** 機能の `core/` どうしの辺と、機能の `adapter/` どうしの辺は、それぞれ
+  一方通行（表はその順に並ぶ）。機能の単位で見ると輪が2つある（`chat` ↔ `session-driver` と、
+  `view-server` → `session` → `session-driver` → `view-server`）が、どちらも1本が
+  `adapter → 別の機能の core` で層の辺と同じ向きなので、ファイルの単位では輪にならない
+- **束ねる機能は `session/` の1つ。** `session-manager.ts` は外の世界に触らないので `core` だが、
+  各機能の判断（日記・トークン消費・会話のアーカイブ）を読んで1つのセッションに
+  まとめる。**外の世界の実装を選んで渡すのは配線（`src/` 直下の `session-start.ts` と `src/wiring/`）**、
+  渡されたものを使って順序と状態を持つのが `session/`、という境目
+- **セッションの配線は機能ごとに組み立てる。** `src/wiring/<機能>.ts` の `wire<機能>` が、その機能の
+  「`createSessionManager` へ渡す口」（`manager`）と「`createSocketRouter` へ渡す口」（`commands`、
+  `session` の口の一部なら `sessionCommands`）を返し、`startSession` はそれを spread で結ぶだけにする。
+  機能を足すときに触るのは、その機能の組み立てと、結ぶ行だけ。口の揃いは結ぶ側の型検査が見る。
+  2つ以上の組み立てが読む値（作業先・時計・引き継ぐ環境・疑似セッション・会話のアーカイブ・成果の
+  入れ物）だけを `WiringContext`（`src/wiring/wiring-context.ts`）にまとめて渡し、1つの組み立てしか
+  読まないものはその中で作る。組み立てどうしの受け渡しは口で渡す（起こす組み立てが代を起こすたびに
+  日記の組み立ての `noteLaunched` を呼ぶ）。`createSessionManager` の引数を機能ごとの束に変える案は
+  採らない（`session-manager.ts` は割らない。`docs/architecture/adr/0021-feature-state-fold-in-feature.md`）。
+  配線には単体テストを持たない（守る振る舞いは E2E が本物のプロセスで、口の揃いは型検査が守り、
+  単体で書くには adapter を差し替える本番に要らない口が要る）
+- **Agent SDK を import してよいのは、機能の `adapter/` の直下の `sdk-` で始まるファイルだけ**
+  （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）
+- **機能を足すときは、検査の機能の一覧と下の表に足す**（知らない機能のディレクトリと、
+  `core/` `adapter/` の外に置いたファイルと、表と `SERVER_FEATURE_IMPORTS` のずれは
+  `test/architecture/server-feature.test.ts` が落とす）
+
+| 機能（import する側） | 読んでよい機能                                                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session`             | `session-driver` `chat` `diary` `token-usage` `context-usage` `experience-metric` `diagnostic` `character-pack` `report`                            |
+| `system-prompt`       | `session-driver` `chat` `report`                                                                                                                    |
+| `view-server`         | `session`                                                                                                                                           |
+| `chat`                | `session-driver` `character-pack`                                                                                                                   |
+| `context-usage`       | `session-driver`                                                                                                                                    |
+| `session-driver`      | `chat` `report` `view-server`                                                                                                                       |
+| `token-usage`         | `repository`                                                                                                                                        |
+| `diary`               | `repository` `session-driver`                                                                                                                       |
+| `usage-review`        | `session-driver`                                                                                                                                    |
+| `achievement`         | `repository`                                                                                                                                        |
+| そのほか              | —（葉。`plan-usage` `experience-metric` `diagnostic` `character-pack` `host` `repository` `checkout` `recommendation` `workflow-setting` `report`） |
+
+表は `test/architecture/server-feature.test.ts` の `SERVER_FEATURE_IMPORTS` と一致を検査され、使われない組も落ちる。
+辺が `core` と `adapter` のどちらからどちらへ向かうかは表に持たず、実際の import が正典。

@@ -80,7 +80,7 @@ describe("server/ の機能どうしの import", () => {
     expect(unused.join("\n")).toBe("")
   })
 
-  it("docs/architecture.md の機能どうしの辺の表は、SERVER_FEATURE_IMPORTS と同じ", () => {
+  it("docs/architecture/server-feature.md の機能どうしの辺の表は、SERVER_FEATURE_IMPORTS と同じ", () => {
     const table = featureEdgeTable()
     const mismatches = SERVER_FEATURES.flatMap((feature) => {
       const documented = table.get(feature)
@@ -193,9 +193,9 @@ function serverFeatureOf(relPath: string): ServerFeature | undefined {
   return place.kind === "feature" ? place.feature : undefined
 }
 
-/** docs/architecture.md の機能どうしの辺の表から、機能 → 読んでよい機能を取り出す（`そのほか` 行の葉は空）。 */
+/** docs/architecture/server-feature.md の機能どうしの辺の表から、機能 → 読んでよい機能を取り出す（`そのほか` 行の葉は空）。 */
 function featureEdgeTable(): ReadonlyMap<string, readonly string[]> {
-  const doc = readFileSync(`${DOC_ROOT}/architecture.md`, "utf8")
+  const doc = readFileSync(`${DOC_ROOT}/architecture/server-feature.md`, "utf8")
   const start = doc.indexOf("\n| 機能（import する側） |")
   const end = doc.indexOf("\n\n", start + 1)
   const quoted = (cell: string): readonly string[] =>
