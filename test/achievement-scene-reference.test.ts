@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest"
 // 1か所だけに書く。ほかの文書は節の名前で引く。場面の名前は表の「場面」列から読む。
 
 const DOCS_ROOT = fileURLToPath(new URL("../docs", import.meta.url))
-const CANON_FILE = "requirements.md"
+const CANON_FILE = "requirements/achievement.md"
 const SECTION_HEADING = "#### 数えられない・読めないとき"
 
 function readSceneNames(canon: string): readonly string[] {

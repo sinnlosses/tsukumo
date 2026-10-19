@@ -76,8 +76,8 @@
   開閉だけを追随させる。既存の `<dialog>` と同じ形〔`task-board/hooks/use-task-board.ts`〕）。
   **表示上の状態なので URL には持たせない**——`#character/new` という独立の hash は無くなった
   （`stores/location-hash.ts`）
-- 中身は `docs/requirements.md` 4.4「新しく作る」のまま（名前・id・`default` の立ち絵・画面の差し色2つ・人格）。
-  **名前と id を別の欄に分ける**（見本に合わせる。`docs/requirements.md` 4.4「id と表示名を分けて受け取る」）。
+- 中身は `docs/requirements/character-pack.md` 4.4「新しく作る」のまま（名前・id・`default` の立ち絵・画面の差し色2つ・人格）。
+  **名前と id を別の欄に分ける**（見本に合わせる。`docs/requirements/character-pack.md` 4.4「id と表示名を分けて受け取る」）。
   id の欄の下には、空・形が合う間は静かな案内、崩れたら理由（形が合わない／もう使われている）が
   出る（見本の「英数字とハイフン」は規則より狭いので、id の案内文はいまの規則
   〔`isCharacterPackName`〕に合わせて書き直した）
