@@ -1,4 +1,4 @@
-// test/e2e/*.test.ts と testing.md「E2E のシナリオの一覧」の食い違いを落とす検査。
+// test/e2e/*.test.ts と、docs/architecture/testing/ の子に割った「E2E のシナリオの一覧」の表との食い違いを落とす検査。
 
 import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
@@ -9,12 +9,16 @@ import { listSourceFiles } from "./source-file.ts"
 
 const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
 const E2E_ROOT = `${REPO_ROOT}/test/e2e`
-const TESTING_DOC = `${REPO_ROOT}/docs/architecture/testing.md`
+const TESTING_ROOT = `${REPO_ROOT}/docs/architecture/testing`
 const LIST_HEADING = "### E2E のシナリオの一覧"
 
 describe("E2E のシナリオの一覧", () => {
   it("3列目のファイル名の集合は、test/e2e/*.test.ts と一致する", () => {
-    const names = new Set(listedNames(readFileSync(TESTING_DOC, "utf8")))
+    const names = new Set(
+      listSourceFiles(TESTING_ROOT, TESTING_ROOT, [".md"]).flatMap((relPath) =>
+        listedNames(readFileSync(`${TESTING_ROOT}/${relPath}`, "utf8")),
+      ),
+    )
     const actual = listSourceFiles(E2E_ROOT)
       .filter((relPath) => !relPath.includes("/") && relPath.endsWith(".test.ts"))
       .map((relPath) => relPath.slice(0, -".test.ts".length))
@@ -39,10 +43,25 @@ describe("E2E のシナリオの一覧", () => {
     ].join("\n")
     expect(listedNames(table)).toEqual(["one", "two", "three"])
   })
+
+  it("見出しの無い文書からは何も拾わない", () => {
+    const doc = [
+      "### 別の節",
+      "",
+      "| a | b | ファイル | d |",
+      "| - | - | - | - |",
+      "| x | y | `one` | r |",
+    ].join("\n")
+    expect(listedNames(doc)).toEqual([])
+  })
 })
 
 function listedNames(doc: string): readonly string[] {
-  const section = doc.slice(doc.indexOf(`\n${LIST_HEADING}\n`) + 1).split(/\n#{2,3} /)[0] ?? ""
+  const start = `\n${doc}`.indexOf(`\n${LIST_HEADING}\n`)
+  if (start < 0) {
+    return []
+  }
+  const section = doc.slice(start).split(/\n#{2,3} /)[0] ?? ""
   return section
     .split("\n")
     .filter((line) => line.startsWith("|"))
