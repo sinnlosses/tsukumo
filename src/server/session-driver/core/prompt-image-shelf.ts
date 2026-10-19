@@ -3,7 +3,8 @@
 //
 // 記録（`SessionState`）と `hello` には原寸を載せない。
 // 載るのは控えと id の組（`RecordedPromptImage`）だけで、原寸はここにしか無い。
-// 原寸は会話の内容なので、ディスクには書かない。
+// 原寸は会話の内容なので、棚はディスクに書かない。
+// 雑談の依頼の原寸だけは、会話のアーカイブがこの棚から引いて別に書く（`docs/coding-standards.md`「会話内容の扱い」の例外の表）。
 //
 // 捨てる契機は2つ:
 //   - 記録の窓（`MAX_SESSION_STATE_TURNS`）から依頼が落ちたとき（`releasedPromptImageIds`）

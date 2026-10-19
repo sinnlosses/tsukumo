@@ -7,9 +7,10 @@ import type {
   ChatSummaryRecord,
 } from "../../src/server/session-driver/core/session-driver.ts"
 
-/** 何も書かず、読むと空を返し、定着の錠はいつでも取れる `ChatArchive`。 */
+/** 何も書かず（画像は書けなかったと返す）、読むと空を返し、定着の錠はいつでも取れる `ChatArchive`。 */
 export const NOOP_CHAT_ARCHIVE = {
   append: () => {},
+  writeImage: () => ({ kind: "failed", error: undefined }),
   readRecent: () => [],
   unconsolidated: () => ({
     entries: [],

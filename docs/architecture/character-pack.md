@@ -155,7 +155,7 @@ characters/<name>/
 
 ### 会話の記録の置き場
 
-**会話の記録（あらすじ・会話のアーカイブ・エピソード索引）は `~/.tsukumo/` の下の、キャラクターパックの外に置く。** 仕事の会話も同じ置き場に
+**会話の記録（あらすじ・会話のアーカイブ・エピソード索引・雑談の画像）は `~/.tsukumo/` の下の、キャラクターパックの外に置く。** 仕事の会話も同じ置き場に
 入る（記憶は雑談と仕事で1つ）。 仕様（何を・いつ・どんな形で
 書き、どう読み戻すか・上限）は `docs/architecture/chat-mode.md` 4.9 が正典で、ここは置き場と持ち場だけを持つ。
 
@@ -164,6 +164,7 @@ characters/<name>/
 | あらすじ（と渡し済みの印）     | `~/.tsukumo/chat-summary/<pack>.md`（話題の見出しは同じ場所の `<pack>.topics.json`）                     | `chat/adapter/chat-summary.ts`            |
 | 会話のアーカイブ               | `~/.tsukumo/chat-archive/<pack>/<YYYY-MM-DD>.jsonl`                                                      | `chat/adapter/chat-archive.ts`            |
 | エピソード索引・思い出した記録 | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` / `recalled.jsonl`                                        | `chat/adapter/chat-archive.ts`（同じ1つ） |
+| 雑談で貼った画像（7日で消す）  | `~/.tsukumo/chat-archive/<pack>/images/<YYYY-MM-DD>-<id>.<拡張子>`（依頼の行の `imageFiles` が指す）     | `chat/adapter/chat-archive.ts`（同じ1つ） |
 | 定着の錠                       | `~/.tsukumo/chat-archive/<pack>/consolidation.lock`                                                      | `chat/adapter/chat-consolidation-lock.ts` |
 | 覚えたこと                     | `~/.tsukumo/characters/<pack>/persona.md` の末尾の節（「画面から作るときの置き場と受け取り方」の置き場） | `chat/adapter/persona-memory.ts`          |
 

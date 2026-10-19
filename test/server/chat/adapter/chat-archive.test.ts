@@ -57,6 +57,7 @@ describe("createChatArchive", () => {
       at,
       text: REQUEST_TEXT,
       images: undefined,
+      imageFiles: undefined,
     })
     chatArchive.append("fictional-pack", {
       mode: "chat",
@@ -64,6 +65,7 @@ describe("createChatArchive", () => {
       at,
       text: REQUEST_TEXT,
       images: 2,
+      imageFiles: undefined,
     })
 
     const [record, withImages] = readLines<{ at: string }>(
@@ -153,6 +155,7 @@ describe("createChatArchive", () => {
       at,
       text: "pack-a の依頼",
       images: undefined,
+      imageFiles: undefined,
     })
     chatArchive.append("pack-b", {
       mode: "chat",
@@ -160,6 +163,7 @@ describe("createChatArchive", () => {
       at,
       text: "pack-b の依頼",
       images: undefined,
+      imageFiles: undefined,
     })
 
     expect(readLines(join(root(), "pack-a", "2026-09-21.jsonl"))).toHaveLength(1)
@@ -175,6 +179,7 @@ describe("createChatArchive", () => {
       at: noonOn(2026, 9, 21),
       text: "21日の依頼",
       images: undefined,
+      imageFiles: undefined,
     })
     chatArchive.append("fictional-pack", {
       mode: "chat",
@@ -182,6 +187,7 @@ describe("createChatArchive", () => {
       at: noonOn(2026, 9, 22),
       text: "22日の依頼",
       images: undefined,
+      imageFiles: undefined,
     })
 
     expect(readdirSync(join(root(), "fictional-pack")).sort()).toEqual([
@@ -199,6 +205,7 @@ describe("createChatArchive", () => {
       at: noonOn(2026, 9, 21),
       text: REQUEST_TEXT,
       images: undefined,
+      imageFiles: undefined,
     })
 
     expect(existsSync(root())).toBe(false)
@@ -222,6 +229,7 @@ describe("createChatArchive", () => {
         at: noonOn(2026, 9, 21),
         text: REQUEST_TEXT,
         images: undefined,
+        imageFiles: undefined,
       }),
     ).not.toThrow()
   })
@@ -252,6 +260,7 @@ describe("createChatArchive の readRecent", () => {
       at: noonOn(2026, 9, 20),
       text: "20日の依頼",
       images: undefined,
+      imageFiles: undefined,
     })
     chatArchive.append("fictional-pack", {
       mode: "chat",
@@ -277,6 +286,7 @@ describe("createChatArchive の readRecent", () => {
         at: noonOn(2026, 9, 19 + index),
         text,
         images: undefined,
+        imageFiles: undefined,
       })
     }
 
@@ -295,6 +305,7 @@ describe("createChatArchive の readRecent", () => {
       at: noonOn(2026, 9, 21),
       text: TWELVE_BYTES,
       images: undefined,
+      imageFiles: undefined,
     })
 
     expect(chatArchive.readRecent("fictional-pack", withRecentBytes(5))).toEqual([])
@@ -309,6 +320,7 @@ describe("createChatArchive の readRecent", () => {
       at,
       text: REQUEST_TEXT,
       images: 2,
+      imageFiles: undefined,
     })
     chatArchive.append("fictional-pack", {
       mode: "chat",
@@ -465,6 +477,7 @@ describe("createChatArchive の readRecent", () => {
       at,
       text: "pack-a の依頼",
       images: undefined,
+      imageFiles: undefined,
     })
     chatArchive.append("pack-b", {
       mode: "chat",
@@ -472,6 +485,7 @@ describe("createChatArchive の readRecent", () => {
       at,
       text: "pack-b の依頼",
       images: undefined,
+      imageFiles: undefined,
     })
 
     expect(chatArchive.readRecent("pack-a", LIMIT_ALL).map((entry) => entry.text)).toEqual([
@@ -492,6 +506,7 @@ describe("createChatArchive の unconsolidated", () => {
       at: noonOn(2026, 9, day),
       text,
       images: undefined,
+      imageFiles: undefined,
     })
   }
 
@@ -569,6 +584,7 @@ describe("createChatArchive の unconsolidated", () => {
         at: noonOn(2026, 9, 20) + offset,
         text,
         images: undefined,
+        imageFiles: undefined,
       })
     }
     appendRequest(chatArchive, 21, "21日の依頼")
@@ -809,6 +825,7 @@ describe("createChatArchive の recallEpisode", () => {
       }).epochMilliseconds,
       text,
       images: undefined,
+      imageFiles: undefined,
     })
   }
 

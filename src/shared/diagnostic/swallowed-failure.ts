@@ -31,6 +31,8 @@ const SWALLOWED_FAILURE_PLACES = {
     "consolidation-summary-write",
     "persona-remember",
     "persona-forget",
+    "archive-image-write",
+    "archive-image-prune",
   ],
   recommendation: [
     "recommend-aborted",

@@ -21,6 +21,11 @@ export type ChatArchive = {
    */
   readonly append: (packName: string, entry: ChatArchiveEntry) => void
   /**
+   * 雑談の依頼に添えた画像の原寸1枚を、そのパックの画像の置き場へ書く。
+   * 書けたら置き場の下のファイル名を返す。書けないときも例外は投げず、失敗を返す。
+   */
+  readonly writeImage: (packName: string, image: ChatArchiveImage) => ChatArchiveImageWriteResult
+  /**
    * そのパックの直近の会話を、新しいほうから遡って {@link ChatReadbackLimits} のバイト数まで読む。
    * 返すのは古い→新しいの順。
    * 1件を単位にし、途中では切らない（溢れる1件は載せない）。
@@ -131,6 +136,19 @@ export type ChatReadbackLimits = {
   readonly recentBytes: number
 }
 
+/** {@link ChatArchive.writeImage} に渡す1枚。`id` は棚が振ったもの、`at` は依頼が届いた時刻（エポックミリ秒）。 */
+export type ChatArchiveImage = {
+  readonly id: string
+  readonly at: number
+  /** 原寸の data URL。 */
+  readonly dataUrl: string
+}
+
+/** {@link ChatArchive.writeImage} が返すもの。`error` は診断に落とすためだけに持つ。 */
+export type ChatArchiveImageWriteResult =
+  | { readonly kind: "written"; readonly fileName: string }
+  | { readonly kind: "failed"; readonly error: unknown }
+
 /**
  * {@link ChatArchive.append} に渡す1件。`at` は届いた時刻（エポックミリ秒）。
  * `mode` は書いたときが雑談か仕事か、`kind` は依頼・セリフ・仕事のターンの結論のどれか。
@@ -146,6 +164,8 @@ export type ChatArchiveEntry =
       readonly text: string
       /** 添えた画像の枚数。1枚以上あるときだけ値を持つ。 */
       readonly images: number | undefined
+      /** 書けた画像のファイル名（{@link ChatArchive.writeImage} の戻り値）。1枚以上書けたときだけ値を持つ。 */
+      readonly imageFiles: readonly string[] | undefined
     }
   | {
       readonly mode: "chat"

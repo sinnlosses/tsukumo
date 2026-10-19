@@ -7,7 +7,12 @@ import process from "node:process"
 
 import { createCurrentCharacter } from "./current-character.ts"
 import { createAchievementCache } from "./server/achievement/adapter/closed-issue.ts"
-import { createServerClock, todayLocalDateKey } from "./server/adapter/local-time.ts"
+import {
+  createServerClock,
+  millisecondsUntilNextLocalDay,
+  todayLocalDateKey,
+} from "./server/adapter/local-time.ts"
+import { pruneChatImages } from "./server/chat/adapter/chat-archive.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import {
   createDiagnosticLog,
@@ -103,6 +108,13 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   pruneDiagnosticFiles(todayLocalDateKey())
   const clock = createServerClock(config.fixedClock)
   const reportFailure = failureDiagnostic(diagnosticLog, clock)
+  const pruneExpiredChatImages = (): void => {
+    pruneChatImages(todayLocalDateKey(), (error) => {
+      reportFailure({ feature: "chat", place: "archive-image-prune" }, error)
+    })
+  }
+  pruneExpiredChatImages()
+  repeatAtEachLocalDayStart(pruneExpiredChatImages)
 
   const character = createCurrentCharacter(config, launch.cwd, (place, error) => {
     reportFailure({ feature: "chat", place }, error)
@@ -241,6 +253,21 @@ function stopSessionOnExit(
     void shutdown(1)
   })
 }
+
+/**
+ * 次のローカルの日の始まりごとに `task` を呼ぶ。タイマーはプロセスを生かし続けない。
+ * 境目の直前に起きて同じ日のまま呼ばないよう、少し遅らせて起きる。
+ */
+function repeatAtEachLocalDayStart(task: () => void): void {
+  const timer = setTimeout(() => {
+    task()
+    repeatAtEachLocalDayStart(task)
+  }, millisecondsUntilNextLocalDay() + DAY_START_MARGIN_MS)
+  timer.unref()
+}
+
+/** 日の境目から起きるまでの遅れ。 */
+const DAY_START_MARGIN_MS = 1_000
 
 // 起動したことと URL は、ペインに残る唯一の出力。
 // URL には起動トークンが付くので、タブを開き直すときはこの URL をそのまま使う。

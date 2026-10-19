@@ -2,6 +2,7 @@
 // どのイベントをどの記録口へ、どちらのモード・セッションIDが決まったあとかで渡すかの門がここにある。
 // 復元した再生はここを通らない（呼ぶ側が呼ばない）。
 
+import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
 import { conclusionWithTaskName } from "../../../shared/report/report-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
@@ -10,6 +11,7 @@ import {
   appendChatArchiveEntry,
 } from "../../chat/core/chat-archive-entry.ts"
 import type { ContextUsageRecorder } from "../../context-usage/core/context-usage.ts"
+import type { DiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
 import { isMainImageFileRead, reportUsageEntryOf } from "../../report/core/report-usage.ts"
 import { questionUsageEntriesOf } from "../../session-driver/core/question-usage.ts"
 import type { GenerationTally } from "./session-generation.ts"
@@ -17,9 +19,10 @@ import type { SessionManagerOptions } from "./session-manager-port.ts"
 
 type EventRecordPorts = Pick<
   SessionManagerOptions,
-  "chatArchive" | "project" | "reportUsageLog" | "questionUsageLog"
+  "chatArchive" | "project" | "reportUsageLog" | "questionUsageLog" | "promptImageShelf"
 > & {
   readonly contextUsage: ContextUsageRecorder
+  readonly diagnostic: DiagnosticBuffer
 }
 
 /** `state` は `event` を畳んだあとの姿。 */
@@ -38,6 +41,14 @@ export function recordSessionEvent(
     ports.project,
     at,
     event,
+    {
+      find: ports.promptImageShelf.find,
+      reportFailure: (error) => {
+        ports.diagnostic.add(
+          swallowedFailureFootprint(at, { feature: "chat", place: "archive-image-write" }, error),
+        )
+      },
+    },
   )
   // 仕事のターンの結論を、代の勘定に預けて上書きする（`turn-finished` で読み出す）。
   if (event.kind === "report") {

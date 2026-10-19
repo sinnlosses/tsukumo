@@ -139,7 +139,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     diagnostic.add({ flow: "session-event", at, generation: tally.generation, kind: event.kind })
     experienceMetric.observe(event, state, at)
     tally.reportChangeCounter.observe(event)
-    recordSessionEvent({ ...options, contextUsage }, tally, state, event, at)
+    recordSessionEvent({ ...options, contextUsage, diagnostic }, tally, state, event, at)
     // 定着を起こす。ターンの終わり（雑談・仕事）で、走っていれば契機を捨てる。待たずに次へ進む。
     if (event.kind === "turn-finished") {
       startConsolidation(state.character?.pack)

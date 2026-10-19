@@ -7,11 +7,29 @@ import {
 import type {
   ChatArchive,
   ChatArchiveEntry,
+  ChatArchiveImage,
+  ChatArchiveImageWriteResult,
 } from "../../../../src/server/chat/core/chat-archive-port.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 
 const FICTIONAL_PROJECT = "架空プロジェクト"
+
+/** 棚が空の画像の口を渡して1件渡す。 */
+function appendEntryWithoutShelf(
+  archive: ChatArchive,
+  packName: string | undefined,
+  mode: "chat" | "work",
+  project: string,
+  at: number,
+  event: SessionEvent,
+): void {
+  appendChatArchiveEntry(archive, packName, mode, project, at, event, {
+    find: () => undefined,
+    reportFailure: () => {},
+  })
+}
 
 /** 呼ばれた `append` の引数だけを覚える代役。 */
 function recordingChatArchive(): {
@@ -34,7 +52,7 @@ describe("appendChatArchiveEntry", () => {
   it("雑談の依頼はそのままの文面で渡る（project は持たない）", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendChatArchiveEntry(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text: "架空の依頼",
       images: [],
@@ -43,7 +61,14 @@ describe("appendChatArchiveEntry", () => {
     expect(calls).toEqual([
       {
         packName: "fictional-pack",
-        entry: { mode: "chat", kind: "request", at: 1_000, text: "架空の依頼", images: undefined },
+        entry: {
+          mode: "chat",
+          kind: "request",
+          at: 1_000,
+          text: "架空の依頼",
+          images: undefined,
+          imageFiles: undefined,
+        },
       },
     ])
   })
@@ -51,7 +76,7 @@ describe("appendChatArchiveEntry", () => {
   it("雑談のセリフは表情つきで渡る", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendChatArchiveEntry(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "speech",
       text: "架空のセリフ",
       expression: "proud",
@@ -75,7 +100,7 @@ describe("appendChatArchiveEntry", () => {
     const { archive, calls } = recordingChatArchive()
     const text = "あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars)
 
-    appendChatArchiveEntry(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text,
       images: [],
@@ -100,7 +125,7 @@ describe("appendChatArchiveEntry", () => {
     const { archive, calls } = recordingChatArchive()
     const text = "あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 1)
 
-    appendChatArchiveEntry(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text,
       images: [],
@@ -114,7 +139,7 @@ describe("appendChatArchiveEntry", () => {
     // 各絵文字は UTF-16 で2コード単位だが、コードポイントとしては1文字。
     const text = "😀".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 1)
 
-    appendChatArchiveEntry(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text,
       images: [],
@@ -127,7 +152,7 @@ describe("appendChatArchiveEntry", () => {
     const { archive, calls } = recordingChatArchive()
     const text = "あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 1)
 
-    appendChatArchiveEntry(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
       kind: "speech",
       text,
       expression: "default",
@@ -151,7 +176,7 @@ describe("appendChatArchiveEntry", () => {
   it("添えた画像は1枚以上あるときだけ枚数を持つ", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendChatArchiveEntry(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text: "架空の依頼",
       images: [{ id: "fictional-id", thumbnail: "data:image/png;base64,AAAA" }],
@@ -163,7 +188,7 @@ describe("appendChatArchiveEntry", () => {
   it("packName が undefined のときは何も渡さない", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendChatArchiveEntry(archive, undefined, "chat", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, undefined, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text: "架空の依頼",
       images: [],
@@ -175,16 +200,139 @@ describe("appendChatArchiveEntry", () => {
   it("依頼・セリフ以外のイベントは渡さない", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendChatArchiveEntry(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "turn-finished",
       outcome: { kind: "completed" },
     })
-    appendChatArchiveEntry(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "utterance",
       text: "本文はここに出ない",
     })
 
     expect(calls).toEqual([])
+  })
+})
+
+describe("appendChatArchiveEntry の画像", () => {
+  /** 合成のバイト列（3バイト）の data URL。実物の画像は使わない。 */
+  const SYNTHETIC_DATA_URL = "data:image/png;base64,AQID"
+  const WRITE_ERROR = new Error("架空の書き損じ")
+
+  /** `writeImage` を覚え、id が `failing` のものだけ書けなかったと返す代役。 */
+  function imageRecordingArchive(failing: ReadonlySet<string>) {
+    const { archive, calls } = recordingChatArchive()
+    const writes: { readonly packName: string; readonly id: string; readonly dataUrl: string }[] =
+      []
+    return {
+      archive: {
+        ...archive,
+        writeImage: (packName: string, image: ChatArchiveImage): ChatArchiveImageWriteResult => {
+          writes.push({ packName, id: image.id, dataUrl: image.dataUrl })
+          return failing.has(image.id)
+            ? { kind: "failed", error: WRITE_ERROR }
+            : { kind: "written", fileName: `${image.id}.png` }
+        },
+      } satisfies ChatArchive,
+      calls,
+      writes,
+    }
+  }
+
+  function shelfOf(ids: readonly string[]) {
+    const failures: unknown[] = []
+    return {
+      source: {
+        find: (id: string) => (ids.includes(id) ? SYNTHETIC_DATA_URL : undefined),
+        reportFailure: (error: unknown) => {
+          failures.push(error)
+        },
+      },
+      failures,
+    }
+  }
+
+  function requestWith(ids: readonly string[]): SessionEvent {
+    return {
+      kind: "request",
+      text: "架空の依頼",
+      images: ids.map((id) => ({ id, thumbnail: SYNTHETIC_DATA_URL })),
+    }
+  }
+
+  it("雑談の依頼は、棚の原寸を書いてから、書けたファイル名を行に載せる", () => {
+    const { archive, calls, writes } = imageRecordingArchive(new Set())
+    const { source, failures } = shelfOf(["id-1", "id-2"])
+
+    appendChatArchiveEntry(
+      archive,
+      "fictional-pack",
+      "chat",
+      FICTIONAL_PROJECT,
+      1_000,
+      requestWith(["id-1", "id-2"]),
+      source,
+    )
+
+    expect(writes).toEqual([
+      { packName: "fictional-pack", id: "id-1", dataUrl: SYNTHETIC_DATA_URL },
+      { packName: "fictional-pack", id: "id-2", dataUrl: SYNTHETIC_DATA_URL },
+    ])
+    expect(calls[0]?.entry).toMatchObject({ images: 2, imageFiles: ["id-1.png", "id-2.png"] })
+    expect(failures).toEqual([])
+  })
+
+  it("仕事の依頼は画像を書かず、枚数だけを残す", () => {
+    const { archive, calls, writes } = imageRecordingArchive(new Set())
+    const { source } = shelfOf(["id-1"])
+
+    appendChatArchiveEntry(
+      archive,
+      "fictional-pack",
+      "work",
+      FICTIONAL_PROJECT,
+      1_000,
+      requestWith(["id-1"]),
+      source,
+    )
+
+    expect(writes).toEqual([])
+    expect(calls[0]?.entry).toMatchObject({ images: 1 })
+    expect(calls[0]?.entry).not.toHaveProperty("imageFiles")
+  })
+
+  it("書けなかった1枚と棚から落ちていた1枚は行に載せず、知らせたうえで行は書く", () => {
+    const { archive, calls } = imageRecordingArchive(new Set(["id-failing"]))
+    const { source, failures } = shelfOf(["id-ok", "id-failing"])
+
+    appendChatArchiveEntry(
+      archive,
+      "fictional-pack",
+      "chat",
+      FICTIONAL_PROJECT,
+      1_000,
+      requestWith(["id-ok", "id-failing", "id-gone"]),
+      source,
+    )
+
+    expect(calls[0]?.entry).toMatchObject({ images: 3, imageFiles: ["id-ok.png"] })
+    expect(failures).toEqual([WRITE_ERROR, undefined])
+  })
+
+  it("1枚も書けなければ imageFiles を持たない", () => {
+    const { archive, calls } = imageRecordingArchive(new Set(["id-1"]))
+    const { source } = shelfOf(["id-1"])
+
+    appendChatArchiveEntry(
+      archive,
+      "fictional-pack",
+      "chat",
+      FICTIONAL_PROJECT,
+      1_000,
+      requestWith(["id-1"]),
+      source,
+    )
+
+    expect(calls[0]?.entry).toMatchObject({ imageFiles: undefined })
   })
 })
 

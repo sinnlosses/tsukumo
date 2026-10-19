@@ -27,6 +27,15 @@ export function todayLocalDateKey(): string {
   return Temporal.Now.plainDateISO().toString()
 }
 
+/** いまから次のローカルの日の始まりまでのミリ秒。 */
+export function millisecondsUntilNextLocalDay(): number {
+  const now = Temporal.Now.zonedDateTimeISO()
+  return (
+    now.toPlainDate().add({ days: 1 }).toZonedDateTime(now.timeZoneId).epochMilliseconds -
+    now.epochMilliseconds
+  )
+}
+
 /**
  * 日付キー（`YYYY-MM-DD`）が指すローカルの日の、始まりと終わり（エポックミリ秒。終わりは次の日の始まりで、含まない）。
  * 時計は読まない。

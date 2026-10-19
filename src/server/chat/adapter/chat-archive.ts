@@ -1,5 +1,7 @@
 // 雑談と仕事の会話のアーカイブ。ファイルに触るのはここだけ。
 // 置き場は `~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl` で、パックごと・日ごとに分け、`cwd` には依存させない。
+// 雑談の依頼に添えた画像の原寸は、同じパックの `images/<YYYY-MM-DD>-<id>.<拡張子>` に1枚1ファイルで書き、`pruneChatImages` が期限を過ぎたものを消す。
+// 画像は読み戻さない（行の `imageFiles` も読まないので、指す画像が消えていても行は読める）。
 // 書き出してよい範囲・読み戻して渡してよい範囲は `docs/coding-standards.md`「会話内容の扱い」の例外の表が決めている。
 //
 // 何を残すか・いつ書くかの判断はここが決めない。
@@ -17,13 +19,18 @@
 // `kept.jsonl`（「残す」旗の索引）は書きも読みもしない。
 // 過去に書かれたファイルが残っていても消さず、単に読まない。
 
-import { rmSync } from "node:fs"
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { z } from "zod"
 
 import { isCharacterPackName } from "../../../shared/character-pack/character.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
+import {
+  parsePromptImage,
+  promptImageIdSchema,
+  type PromptImageMediaType,
+} from "../../../shared/session-driver/prompt-image.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
 import {
   appendJsonLine,
@@ -42,6 +49,8 @@ import type {
 import type {
   ChatArchive,
   ChatArchiveEntry,
+  ChatArchiveImage,
+  ChatArchiveImageWriteResult,
   ChatEpisodeDraft,
   ChatEpisodeReadResult,
   ChatEpisodeRecallListResult,
@@ -57,6 +66,23 @@ import { isAfterAt, isBeforeAt } from "../core/chat-instant-order.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-archive/`）。 */
 const CHAT_ARCHIVE_DIR_NAME = "chat-archive"
+
+/** パックの下の、雑談の画像の置き場のディレクトリ名。 */
+const CHAT_IMAGE_DIR_NAME = "images"
+
+/** 画像のファイルの拡張子。受け付ける形式の表（`PROMPT_IMAGE_MEDIA_TYPES`）と1対1。 */
+const CHAT_IMAGE_EXTENSIONS = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/gif": "gif",
+  "image/webp": "webp",
+} as const satisfies Record<PromptImageMediaType, string>
+
+/** 雑談の画像を残す日数。名前の先頭の日付がこれより古いファイルは消す。 */
+const CHAT_IMAGE_RETENTION_DAYS = 7
+
+/** {@link writeChatImage} が書く名前の形。掃除はこの形のファイルにだけ触る。 */
+const CHAT_IMAGE_FILE_NAME_PATTERN = /^\d{4}-\d{2}-\d{2}-[0-9a-f-]{36}\.(?:png|jpg|gif|webp)$/
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。書くときは常にこの版。 */
 const ARCHIVE_FORMAT_VERSION = 2 satisfies number
@@ -82,7 +108,7 @@ const RECALLED_FORMAT_VERSION = 1 satisfies number
 /**
  * 読み戻すときに要る鍵だけを検査する（`v` が知らない版・鍵が足りない行はここで落ちる）。
  * `v:1`（`mode`・`kind`・`project` を持たない雑談の行）と `v:2` の両方を通す。
- * `expression` と `images` は読まないので、形も見ない。
+ * `expression`・`images`・`imageFiles` は読まないので、形も見ない。
  * `v:1` の行は雑談として扱い、行の種類は `speaker` から決める。
  */
 const archiveLineSchema = z.object({
@@ -154,6 +180,37 @@ export function discardChatArchive(packName: string, root: string = chatArchiveD
 }
 
 /**
+ * 今日（`today`。`YYYY-MM-DD`）から数えて {@link CHAT_IMAGE_RETENTION_DAYS} 日を過ぎた日付の、雑談の画像を全パックぶん消す。
+ * 期限は名前の先頭の日付だけで決め、ファイルの時刻は見ない。{@link CHAT_IMAGE_FILE_NAME_PATTERN} の形でないファイルには触らない。
+ * 置き場が無いのは失敗ではない。読めない・消せないときは `onFailure` に渡して続ける。
+ */
+export function pruneChatImages(
+  today: string,
+  onFailure: (error: unknown) => void,
+  root: string = chatArchiveDir(),
+): void {
+  const oldestKept = Temporal.PlainDate.from(today)
+    .subtract({ days: CHAT_IMAGE_RETENTION_DAYS })
+    .toString()
+  for (const packName of entryNames(root, onFailure)) {
+    if (!isCharacterPackName(packName)) {
+      continue
+    }
+    const dir = join(root, packName, CHAT_IMAGE_DIR_NAME)
+    for (const name of entryNames(dir, onFailure)) {
+      if (!CHAT_IMAGE_FILE_NAME_PATTERN.test(name) || name.slice(0, 10) >= oldestKept) {
+        continue
+      }
+      try {
+        rmSync(join(dir, name), { force: true })
+      } catch (error) {
+        onFailure(error)
+      }
+    }
+  }
+}
+
+/**
  * アーカイブの読み書き口を作る。`root` は置き場の親（既定は {@link chatArchiveDir}）。
  *
  * 1つの口を複数のパック・複数の日にまたいで使い回せる。
@@ -170,6 +227,7 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
         toArchiveRecord(packName, entry),
       )
     },
+    writeImage: (packName, image) => writeChatImage(root, packName, image),
     readRecent: (packName, limits) => readReadback(root, packName, limits),
     unconsolidated: (packName, limits) => readUnconsolidated(root, packName, limits),
     appendEpisodes: (packName, episodes) => writeEpisodes(root, packName, episodes),
@@ -183,7 +241,7 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
 /**
  * JSONL の1行の形（正典は `docs/architecture/chat-mode.md`「会話のアーカイブ」の表）。tsukumo の内部の型をそのまま書き出さない。
  * `speaker` は `kind` から決まる（`request` は利用者、`speech`・`conclusion` はキャラクター）。
- * `expression` / `images` / `project` のどれを持つかは `kind` と `mode` が決めるので、
+ * `expression` / `images` / `imageFiles` / `project` のどれを持つかは `kind` と `mode` が決めるので、
  * 値を渡すたびに持たない鍵へ明示的に `undefined` を渡す。
  */
 type ArchiveRecord = {
@@ -197,11 +255,12 @@ type ArchiveRecord = {
   readonly text: string
   readonly expression: Expression | undefined
   readonly images: number | undefined
+  readonly imageFiles: readonly string[] | undefined
 }
 
 /**
  * {@link ChatArchiveEntry} を書き出す形へ変換する。
- * `images` は依頼の行だけ、`expression` はセリフの行だけ、`project` は仕事の行だけが持つ
+ * `images` は依頼の行だけ、`imageFiles` は雑談の依頼の行だけ、`expression` はセリフの行だけ、`project` は仕事の行だけが持つ
  * （`JSON.stringify` は値が `undefined` のキーを落とす）。
  */
 function toArchiveRecord(packName: string, entry: ChatArchiveEntry): ArchiveRecord {
@@ -216,6 +275,49 @@ function toArchiveRecord(packName: string, entry: ChatArchiveEntry): ArchiveReco
     text: entry.text,
     expression: entry.kind === "speech" ? entry.expression : undefined,
     images: entry.kind === "request" ? entry.images : undefined,
+    imageFiles: entry.kind === "request" && entry.mode === "chat" ? entry.imageFiles : undefined,
+  }
+}
+
+/**
+ * 雑談の画像1枚を `<root>/<パック名>/images/<YYYY-MM-DD>-<id>.<拡張子>` に書く（{@link ChatArchive.writeImage} の実装）。
+ * 日付は `at` のローカル日付で、期限切れの掃除は名前の先頭の日付だけを見る。
+ * パック名・id・data URL のどれかが通らないときはパスを組み立てずに失敗を返す。
+ * 同じ名前のファイルがあれば上書きせずに失敗にする。
+ */
+function writeChatImage(
+  root: string,
+  packName: string,
+  image: ChatArchiveImage,
+): ChatArchiveImageWriteResult {
+  const source = parsePromptImage(image.dataUrl)
+  if (
+    !isCharacterPackName(packName) ||
+    !promptImageIdSchema.safeParse(image.id).success ||
+    source === undefined
+  ) {
+    return { kind: "failed", error: undefined }
+  }
+  const fileName = `${localDateKey(image.at)}-${image.id}.${CHAT_IMAGE_EXTENSIONS[source.mediaType]}`
+  const dir = join(root, packName, CHAT_IMAGE_DIR_NAME)
+  try {
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, fileName), Buffer.from(source.base64, "base64"), { flag: "wx" })
+    return { kind: "written", fileName }
+  } catch (error) {
+    return { kind: "failed", error }
+  }
+}
+
+/** ディレクトリの中の名前。無ければ空で、それ以外で読めなければ `onFailure` に渡して空を返す。 */
+function entryNames(dir: string, onFailure: (error: unknown) => void): readonly string[] {
+  try {
+    return readdirSync(dir)
+  } catch (error) {
+    if (!(error instanceof Error && Reflect.get(error, "code") === "ENOENT")) {
+      onFailure(error)
+    }
+    return []
   }
 }
 

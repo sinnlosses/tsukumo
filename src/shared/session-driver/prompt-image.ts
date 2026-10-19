@@ -5,7 +5,7 @@
 // こちらの形式は tsukumo の都合ではなく API の天井で、`Base64ImageSource.media_type` が取る4つ（png / jpeg / gif / webp）しか渡せない。
 //
 // 原寸と控えは別の寿命を持つ。
-// 原寸（`PromptImage.full`）はブラウザのメモリ → WebSocket の1フレーム → サーバのメモリ → SDK の子プロセス、と流れ、サーバのメモリでは直近の数枚だけが棚に残る（ディスクには書かない）。
+// 原寸（`PromptImage.full`）はブラウザのメモリ → WebSocket の1フレーム → サーバのメモリ → SDK の子プロセス、と流れ、サーバのメモリでは直近の数枚だけが棚に残る（棚はディスクに書かない。雑談の画像だけは会話のアーカイブが別に書く）。
 // 記録（`SessionState`）に載るのは控え（`PromptImage.thumbnail`）と、棚の原寸を指す id だけ（`RecordedPromptImage`）。
 // 上限が2つあるのはそのためで、控えのほうが桁違いに小さい。
 
