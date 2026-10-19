@@ -161,6 +161,11 @@
   済ませて返し、段ごとの往復が中身のない確認になる。1段にしたときは、満たす完了条件の欄にすべての行を
   引き、検証（`pnpm run check`。打つのは `tw verify`）もその段に含める。段の分け方の一般の基準は
   `~/.claude/skills/task-model/WORKFLOW.md`「段の形」を見る
+- **大きいファイルを割るタスクの計画には、呼ぶ側の数え方と関数の並べ替えを書く。** 呼ぶ側を数える
+  `grep` の範囲は `src test scripts docs story` にする（`story/` の `*.story.tsx` も型を import するので、
+  外すと数え漏れが後の段の型検査で初めて見つかる）。群をまたぐ private を `export` にした段は、
+  `test/function-order.test.ts`（export する関数は export しない関数より前）が落ちるので、
+  宣言の並べ替えを同じ段に含める
 
 ## `summary` の長さ
 
