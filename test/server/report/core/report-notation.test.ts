@@ -101,8 +101,8 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("逃げ道に残る記法は class を名乗らない（class を持つ記法は塊から組む）", () => {
-    expect(namedClasses).toEqual([])
+  it("逃げ道で名乗る class は区画の格子と札だけ", () => {
+    expect(new Set(namedClasses)).toEqual(new Set(["cols", "card", "badge", "badge-ok"]))
   })
 
   it("語彙（src/shared/report/report-notation.ts）の印はどれも部品で解決され、CSS まで届く", () => {
@@ -387,8 +387,8 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("文面の字数は上限以下に収まり、条を足すと落ちる", () => {
-    // いまの文面（条8の札の表14行を含めて4,542字）に約50字の余白を持たせた上限
-    const limit = 4600
+    // いまの文面（4,811字）に約50字の余白を持たせた上限
+    const limit = 4860
     const length = REPORT_NOTATION_PROMPT.length
 
     expect(

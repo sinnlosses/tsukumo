@@ -2091,6 +2091,54 @@
       ]
     },
     {
+      "name": "report-board",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": { "kind": "request", "text": "板の型を試したい（架空の依頼）", "images": [] }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-board-1",
+            "conclusion": "架空の結論: 毎朝の収集結果を4つの区画にまとめた。公開テストだけが CLI の制約で止まっている。",
+            "sections": [
+              {
+                "heading": "",
+                "shapeTag": "quantity",
+                "blocks": [
+                  {
+                    "kind": "stats",
+                    "items": [
+                      { "before": "", "value": "2.1.173", "total": "", "label": "Claude Code" },
+                      { "before": "", "value": "92 KB", "total": "", "label": "Input files" },
+                      { "before": "", "value": "5", "total": "", "label": "Drafts" },
+                      { "before": "", "value": "blocked", "total": "", "label": "Publish test" }
+                    ],
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "markdown",
+                    "markdown": "<div class=\"cols\">\n<div class=\"card\">\n\n**今日の入力** <span class=\"badge badge-warn\">鮮度メモあり</span>\n\n| 項目 | 取得経路 |\n| --- | --- |\n| ウォッチ対象の X | ログイン済み Chrome |\n| tech accounts | X guest API |\n| Zenn/HN trend | `fetch_trends.py` |\n\n</div>\n<div class=\"card\">\n\n**公式ソースで言えること** <span class=\"badge badge-ok\">source checked</span>\n\n- **共有範囲**: 同じ組織のログインが要る\n- **ページ制約**: 外部リクエスト不可・16MiB 以下\n\n</div>\n<div class=\"card\">\n\n**下書き候補** <span class=\"badge\">5 drafts</span>\n\n1. 毎朝の実行結果を板にする\n2. Record & Replay を skill にする\n\n</div>\n<div class=\"card\">\n\n**公開前チェック** <span class=\"badge badge-ng\">do not overclaim</span>\n\n公開テストは非対話の CLI で止まっている。\n\n</div>\n</div>",
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 1300,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
+    },
+    {
       "name": "report-svg",
       "steps": [
         {

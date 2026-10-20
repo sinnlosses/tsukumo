@@ -153,7 +153,11 @@ export const claimsBlockSchema = z
 
 export const markdownBlockSchema = z.object({
   kind: z.literal("markdown"),
-  markdown: z.string().describe("どの塊にも当てはまらない記法（svg・引用・区切り線）だけ"),
+  markdown: z
+    .string()
+    .describe(
+      "どの塊にも当てはまらない記法（svg・引用・区切り線・区画の格子 cols / card・札 badge）だけ",
+    ),
   fold,
   aside,
 })

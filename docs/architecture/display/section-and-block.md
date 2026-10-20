@@ -6,7 +6,9 @@
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
 - 塊の種類は `src/shared/report/report-block.ts` が持ち、逃げ道は `markdown`。**種類ごとの使いどころは各塊の `describe` が持ち**、
-  `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（引用・区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。
+  `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（引用・区切り線・複数の塊をまとめて畳む `<details>`・
+  互いに独立した区画を見渡させる `cols` / `card`・区画の状態の札 `badge`）だけを置く（`cols` / `card` / `badge` は 2026-10-20 利用者決定で
+  教え直した。板の型が効くかを書かれ方と画で見てから、欄にするかを決める。`docs/research/dashboard-layout-proposal.md` 5.1）。
   同じことを両方に書くと毎ターンの文脈に2回載る。
 - 節は `heading` と並んで、省ける欄 `shapeTag`（`docs/glossary.md`「形の札」）を持つ。省いた節は `unspecified` に畳む。
   札と塊の照合は「塊を足す・外す基準」の「形の札の照合」（数えるだけで差し戻さない）
