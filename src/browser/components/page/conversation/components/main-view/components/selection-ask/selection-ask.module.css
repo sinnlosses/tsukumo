@@ -2,11 +2,21 @@
 .selection-ask {
   position: fixed;
   z-index: 3;
+  display: flex;
   border-radius: 0.4rem;
   background: var(--surface);
 }
+/* 見える面は行の隙間（選択の下端から次の行の字の上端まで約8px）にできるだけ寄せて低くし、次の行の頭を覆う量を減らす。
+   押せる的は ::after で上下に広げて 24px 以上に保つ。 */
 .selection-ask-button {
-  min-height: 1.5rem;
-  padding: 0.2rem 0.6rem;
+  position: relative;
+  min-height: 0;
+  padding: 0 0.5rem;
   border-radius: 0.4rem;
+  line-height: 1;
+}
+.selection-ask-button::after {
+  content: "";
+  position: absolute;
+  inset: -5px -4px;
 }
