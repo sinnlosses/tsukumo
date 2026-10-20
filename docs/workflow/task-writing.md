@@ -47,15 +47,15 @@
   として DOM に残るので、属性にする（`data-reveal-caption` と同じ）。見た目を付ける印は、語彙と
   `.report-<名前>` の CSS を一緒に足す。属性を足すと期待値のファイルが動き、更新と `tw verify` の
   打ち直しが E2E 全件の上限（`RUN_LIMIT`）に響く。
-- **`report` の説明文を足す計画は、字数を測るテストを全部挙げ、今の字数と上限の差を数えて段に書く。**
+- **`report` の説明文または塊（型の定義）を足す計画は、字数を測るテストを全部挙げ、今の字数と上限の差を数えて段に書く。**
   測るのは3か所で、`test/server/report/core/report-notation.test.ts` が `REPORT_NOTATION_PROMPT` を
   4600字以下に、`test/server/report/core/report-tool.test.ts` が `REPORT_TOOL_DESCRIPTION` を
   2048字未満（MCP ツールの説明文の既定の上限）に、`test/server/session-driver/adapter/sdk-report-tool.test.ts` の
   `REPORT_INPUT_SCHEMA_MAX_CHARS`（21300字）が引数 schema の JSON 全体
-  （`REPORT_TASK_DESCRIPTION` などの説明文を含む）を抑える。2026-10-18 に形の札を足したとき、
-  実物は4542字・21426字だった（`REPORT_NOTATION_PROMPT` の上限はこのとき上げた）。2026-10-19 に
-  既定値と数・字数の制約を schema から外し、引数 schema は20362字になった
-  （同日、前後の画像の側に `region` を足して20583字、上限を20680字に上げた。さらに確度つきの主張の塊 `claims` を足して21207字、上限を21300字に上げた）。欄の既定値・空でない文字列・
+  （`REPORT_TASK_DESCRIPTION` などの説明文を含む）を抑える。
+  塊を足す計画は、前提の裏取りの行に `REPORT_INPUT_SCHEMA_MAX_CHARS` と実物の字数の差（余白）と、足す塊の
+  型の定義のおおよその字数（`claims` で約620字、`region` で約220字）を書き、余白より
+  大きければ上限を上げる段を入れる。欄の既定値・空でない文字列・
   正の数は `report-block-field.ts` の `omittable`・`nonEmpty`・`positiveNumber` で書く
   （`.default()`・文字列の `.min(1)`・`.positive()`・`.int()`・数の `.min()` は schema に出て、同じテストファイルの検査に落ちる）。挙げ漏れは
   `grep -rn 'REPORT_INPUT_SCHEMA_MAX_CHARS\|REPORT_NOTATION_PROMPT\|REPORT_TOOL_DESCRIPTION' test` で拾う。
