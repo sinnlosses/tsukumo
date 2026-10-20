@@ -298,9 +298,10 @@
   flex-direction: column;
   align-items: center;
   max-width: 100%;
-  margin: var(--report-figure-gap) 0;
+  margin: var(--report-figure-gap) auto;
 }
-/* 縮めた包みは本体の幅まで縮むが、本文の列（42em）より狭くはならない。本体が列より狭ければ列の中央に置く。 */
+/* 縮めた包みは本体の幅まで縮むが、本文の列（42em）より狭くはならない。本体が列より狭ければ列の中央に置く。
+   包みそのものは左右の `auto` でレポートの幅の中央に置く（本文の列より広い本体も）。 */
 .detail-block .report-captioned-fit {
   inline-size: max-content;
   min-inline-size: min(100%, var(--report-measure));
@@ -308,27 +309,12 @@
 .detail-block .report-captioned:has(> :is(.report-compare, .report-before-after)) {
   align-items: stretch;
 }
-/* 題と凡例は、本体の幅によらず本文の列の中心に揃える。 */
+/* 題と凡例は、本文の列の幅（折り返す幅）で包みの中心に揃える。 */
 .detail-block
   .report-captioned
   > :is(.report-caption, .report-table-status-legend, .report-graph-legend) {
-  align-self: flex-start;
-  inline-size: min(100%, var(--report-measure));
-}
-/* 札の列・グラフ・ファイル一覧・対応表・見比べ・前後は、本文の列より広い包みの中央か内幅いっぱいに置くので、題も包みの中心に揃える（包みが本文の列より広いとき、列の中心とずれる）。 */
-.detail-block
-  .report-captioned:has(
-    :is(
-      .report-stats,
-      .report-files,
-      .report-matrix,
-      .report-compare,
-      .report-before-after,
-      :global(.chart-block)
-    )
-  )
-  > :is(.report-caption, .report-table-status-legend, .report-graph-legend) {
   align-self: center;
+  inline-size: min(100%, var(--report-measure));
 }
 .detail-block .report-captioned:has(pre:global(.mermaid)) {
   inline-size: min(100%, var(--report-measure));

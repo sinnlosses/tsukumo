@@ -105,6 +105,11 @@
 .detail-block .table-scroll > table {
   margin-block: 0;
 }
+/* 題を持たない表は、表の幅まで縮めてレポートの幅の中央に置く（題つきの表は包み `.report-captioned` が置く）。 */
+.detail-block > .table-scroll {
+  inline-size: fit-content;
+  margin-inline: auto;
+}
 .detail-block table {
   border-collapse: collapse;
   max-width: 100%;
