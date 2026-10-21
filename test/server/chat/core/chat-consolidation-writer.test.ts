@@ -10,7 +10,10 @@ import {
   CHAT_CONSOLIDATION_LIMITS,
   type ChatConsolidationQuery,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
-import type { ChatSummary } from "../../../../src/server/session-driver/core/session-driver.ts"
+import type {
+  ChatSummary,
+  ChatSummaryFold,
+} from "../../../../src/server/session-driver/core/session-driver.ts"
 import type { CharacterPackName } from "../../../../src/shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { characterPackName } from "../../../fixture/character.ts"
@@ -18,6 +21,9 @@ import { characterPackName } from "../../../fixture/character.ts"
 const PACK = characterPackName("fictional")
 
 // `query()` は差し替え、本物の claude は起こさない。
+
+/** 前の定着でエピソードとあらすじの両方が取り込んだ最後の行の時刻。 */
+const PREVIOUS_FOLDED_AT = "2026-09-20T09:59:00+09:00"
 
 /** 契機にちょうど届いた量の、架空の未定着の行。 */
 const DUE_BATCH: ChatUnconsolidatedBatch = {
@@ -43,6 +49,7 @@ const DUE_BATCH: ChatUnconsolidatedBatch = {
   ],
   usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes,
   previousEpisodeTitle: "架空の直前の見出し",
+  episodesThrough: { kind: "through", at: PREVIOUS_FOLDED_AT },
   overflowed: false,
 }
 
@@ -74,14 +81,22 @@ function createPorts(
   const summaryPacks: string[] = []
   let summary = PREVIOUS_SUMMARY
   let topics: readonly string[] = ["架空の古い話題"]
+  let fold: ChatSummaryFold = { kind: "through", at: PREVIOUS_FOLDED_AT }
   const chatSummary: ChatSummary = {
     read: () => ({ summary, delivered: true }),
     readTopics: () => topics,
-    write: (next, nextTopics) => {
+    readFold: () => fold,
+    write: (next, nextTopics, foldedThrough) => {
       order.push("write-summary")
       summary = next
       topics = nextTopics
+      fold = { kind: "through", at: foldedThrough }
       return summaryWritable ? { kind: "written", droppedLines } : { kind: "failed" }
+    },
+    writeFold: (next) => {
+      order.push("write-fold")
+      fold = next
+      return { kind: "written" }
     },
     markUndelivered: () => {},
     markDelivered: () => {},
@@ -95,6 +110,7 @@ function createPorts(
       appendEpisodes: (_packName, drafts) => {
         order.push("append-episodes")
         episodes.push(...drafts)
+        return { kind: "written" }
       },
     },
     lockConsolidation: (packName, staleAfterMs, now) => {
@@ -131,6 +147,7 @@ function createPorts(
       summary = next
     },
     topics: () => topics,
+    fold: () => fold,
   }
 }
 
@@ -190,6 +207,7 @@ describe("createChatConsolidationWriter", () => {
         ],
         usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2 + 1,
         previousEpisodeTitle: "",
+        episodesThrough: { kind: "none" as const },
         overflowed: true,
       },
     ],
@@ -206,6 +224,7 @@ describe("createChatConsolidationWriter", () => {
         ],
         usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes - 1,
         previousEpisodeTitle: "",
+        episodesThrough: { kind: "none" as const },
         overflowed: true,
       },
     ],
@@ -272,6 +291,7 @@ describe("createChatConsolidationWriter", () => {
     // 本文には話題を埋め込まず、見出しは別の欄に書く。
     expect(ports.summary()).toBe("架空の書き直したあらすじ")
     expect(ports.topics()).toEqual(["架空の話題1", "架空の話題2"])
+    expect(ports.fold()).toEqual({ kind: "through", at: "2026-09-20T10:02:00+09:00" })
     expect(ports.summaryPacks).toEqual([PACK])
   })
 

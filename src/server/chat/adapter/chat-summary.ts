@@ -1,46 +1,60 @@
 // あらすじ（雑談と仕事で1つ）の写し。ファイルに触るのはここだけ。
-// 置き場は `~/.tsukumo/chat-summary/<パック名>.md` で、パックごとに1ファイル、`cwd` には依存させない。
+// 置き場は `~/.tsukumo/chat-summary/<パック名>.summary.json` で、パックごとに1ファイル、`cwd` には依存させない。
 // 書き出してよい範囲は `docs/coding-standards.md`「会話内容の扱い」の例外の表が決めている。
 //
 // 何を載せるかの判断はここが決めない。ここが持つのは写しと印の読み書きだけ。
 //
-// 中身は1行目が印、2行目から要約の本文。
-// 印は「次に起こすセッションへ渡す必要があるか」の1ビットで、`DELIVERED_MARK` の1行だけを「渡し済み」と読む。
-// それ以外（別の文字列・無い・読めない）はすべて「未渡し」として扱い、倒れる方向を「同じ要約が2度載る」側にする。
+// 1つの JSON に、あらすじの本文・最近の話題の見出し・渡し済みの印・あらすじが取り込んだところ（`fold`）を持ち、
+// 一時ファイルからの rename で丸ごと置き換える（書きかけの状態を読ませない）。
+// 読めない JSON は無いものとして扱い、倒れる方向を「同じ要約が2度載る」側にする（印は「未渡し」）。
 //
-// 最近の話題の見出しは、本文と別の `<パック名>.topics.json`（文字列の配列）に持つ。
-// このファイルが無い・読めない写しは、本文の中に `<topics>` の組を埋め込んでいた形として読む（読みだけ。書くときは埋め込まない）。
+// 旧い形（`<パック名>.md` の1行目が印・2行目から本文、話題は `<パック名>.topics.json`、さらに古い写しは本文の `<topics>` の組）は、
+// 新しい形が無い・読めないときだけ読む。新しい形を書けたら旧いファイルを消す（消せなくても新しい形が正）。
 //
-// 書けなくても例外を投げない（`write` は書けたかどうかを返す）。
+// 書けなくても例外を投げない（書く口は書けたかどうかを返す）。
 
-import { mkdirSync, rmSync, writeFileSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { mkdirSync, readdirSync, rmSync } from "node:fs"
+import { join } from "node:path"
+
+import { z } from "zod"
 
 import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
+import { writeFileAtomic } from "../../adapter/lib/atomic-file.ts"
+import { readJsonFile } from "../../adapter/lib/json-file.ts"
 import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-import type { ChatSummary, ChatSummaryRecord } from "../../session-driver/core/session-driver.ts"
+import type {
+  ChatSummary,
+  ChatSummaryFold,
+  ChatSummaryRecord,
+} from "../../session-driver/core/session-driver.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-summary/`）。 */
 const CHAT_SUMMARY_DIR_NAME = "chat-summary"
 
-/** ファイルの1行目に書く印の文字列。この1行だけが「渡し済み」で、それ以外は「未渡し」。 */
-const DELIVERED_MARK = "delivered"
-const UNDELIVERED_MARK = "undelivered"
-
 /**
- * 1ファイルの上限。印の行を含めて数える。
- * 写しと印は同じ書き込みで揃う1つのファイルなので、上限も分けない。
+ * 新しい形のファイル名の後ろ。
+ * パック名はドットを含めるので、`<パック名>.json` だと別のパックの旧い `<パック名>.topics.json` と重なりうる。
  */
+const SUMMARY_FILE_SUFFIX = ".summary.json"
+
+/** 旧い形の1行目の印。この1行だけが「渡し済み」で、それ以外は「未渡し」。 */
+const LEGACY_DELIVERED_MARK = "delivered"
+
+const SUMMARY_FORMAT_VERSION = 1 satisfies number
+
+/** あらすじの本文の上限（UTF-8 バイト数）。 */
 export const CHAT_SUMMARY_LIMIT_BYTES = CHAT_MEMORY_BUDGET.synopsisBytes
 
 /** 置き場を組めないパック（名前が {@link CharacterPackName} にならない）に渡す、読み書きとも何もしない口。 */
 export const UNAVAILABLE_CHAT_SUMMARY: ChatSummary = {
   read: () => undefined,
   readTopics: () => [],
+  readFold: () => ({ kind: "unknown" }),
   write: () => ({ kind: "failed" }),
+  writeFold: () => ({ kind: "failed" }),
   markUndelivered: () => {},
   markDelivered: () => {},
 }
@@ -54,42 +68,58 @@ export function createChatSummary(
   packName: CharacterPackName,
   root: string = chatSummaryDir(),
 ): ChatSummary {
-  const path = join(root, `${packName}.md`)
-  const topicsPath = join(root, `${packName}.topics.json`)
+  const paths = summaryPaths(root, packName)
   return {
-    read: () => readRecord(path, topicsPath),
-    readTopics: () => readTopics(path, topicsPath),
-    write: (summary, topics) => {
+    read: () => recordOf(readStored(paths)),
+    readTopics: () => readStored(paths)?.topics ?? [],
+    readFold: () => readStored(paths)?.fold ?? UNKNOWN_FOLD,
+    write: (summary, topics, foldedThrough) => {
       const truncated = truncatedSummary(summary)
-      const written =
-        writeRecord(path, {
-          summary: truncated.text,
-          delivered: readRaw(path)?.delivered ?? false,
-        }) && writeTopics(topicsPath, topics)
+      const written = store(paths, {
+        delivered: readStored(paths)?.delivered ?? false,
+        synopsis: truncated.text,
+        topics,
+        fold: { kind: "through", at: foldedThrough },
+      })
       return written
         ? { kind: "written", droppedLines: truncated.droppedLines }
         : { kind: "failed" }
     },
+    writeFold: (fold) => {
+      const current = readStored(paths) ?? EMPTY_STORED
+      return store(paths, { ...current, fold }) ? { kind: "written" } : { kind: "failed" }
+    },
     markUndelivered: () => {
-      rewriteMark(path, false)
+      store(paths, { ...(readStored(paths) ?? EMPTY_STORED), delivered: false })
     },
     markDelivered: () => {
-      rewriteMark(path, true)
+      store(paths, { ...(readStored(paths) ?? EMPTY_STORED), delivered: true })
     },
   }
 }
 
 /**
- * パック1つぶんの写しを消す。同じ名前で作り直したパックが、消したパックの要約を黙って拾わないため。
+ * パック1つぶんの写しを消す（新しい形・旧い形・書きかけで残った一時ファイル）。
+ * 同じ名前で作り直したパックが、消したパックの要約を黙って拾わないため。
  * 無い・消せないときも何もせず続ける。
  */
 export function discardChatSummary(
   packName: CharacterPackName,
   root: string = chatSummaryDir(),
 ): void {
-  for (const name of [`${packName}.md`, `${packName}.topics.json`]) {
+  const paths = summaryPaths(root, packName)
+  const tempPrefix = `${packName}${SUMMARY_FILE_SUFFIX}.`
+  const temps = entryNames(root).filter(
+    (name) => name.startsWith(tempPrefix) && TEMP_SUFFIX.test(name.slice(tempPrefix.length)),
+  )
+  for (const path of [
+    paths.current,
+    paths.legacyBody,
+    paths.legacyTopics,
+    ...temps.map((name) => join(root, name)),
+  ]) {
     try {
-      rmSync(join(root, name), { force: true })
+      rmSync(path, { force: true })
     } catch {
       // 消せないだけ。パックはもう一覧に無いので、写しは次に同じ名前で作るまで読まれない。
     }
@@ -101,49 +131,122 @@ function chatSummaryDir(): string {
   return join(tsukumoHomeDir(), CHAT_SUMMARY_DIR_NAME)
 }
 
-/** 呼び出し側へ返す写し。話題を別のファイルに持たない古い形は、本文から話題の組を除いて返す。 */
-function readRecord(path: string, topicsPath: string): ChatSummaryRecord | undefined {
-  const raw = readRaw(path)
-  if (raw === undefined || readStoredTopics(topicsPath) !== undefined) {
-    return raw
-  }
-  return { summary: withoutEmbeddedTopics(raw.summary), delivered: raw.delivered }
+/** `writeFileAtomic` の一時ファイルの名前の後ろ（16進12桁と `.tmp`）。 */
+const TEMP_SUFFIX = /^[0-9a-f]{12}\.tmp$/
+
+type SummaryPaths = {
+  readonly root: string
+  readonly current: string
+  readonly legacyBody: string
+  readonly legacyTopics: string
 }
 
-function readTopics(path: string, topicsPath: string): readonly string[] {
-  const stored = readStoredTopics(topicsPath)
-  if (stored !== undefined) {
-    return stored
+function summaryPaths(root: string, packName: CharacterPackName): SummaryPaths {
+  return {
+    root,
+    current: join(root, `${packName}${SUMMARY_FILE_SUFFIX}`),
+    legacyBody: join(root, `${packName}.md`),
+    legacyTopics: join(root, `${packName}.topics.json`),
   }
-  return embeddedTopics(readRaw(path)?.summary ?? "")
 }
 
-/** 話題のファイルを読む。無い・JSON でない・文字列の配列でないときは undefined（古い形の写しとして読ませる）。 */
-function readStoredTopics(topicsPath: string): readonly string[] | undefined {
-  const content = readOptionalFile(topicsPath)
+type StoredSummary = {
+  readonly delivered: boolean
+  readonly synopsis: string
+  readonly topics: readonly string[]
+  readonly fold: ChatSummaryFold
+}
+
+const UNKNOWN_FOLD = { kind: "unknown" } as const satisfies ChatSummaryFold
+
+/** 写しが無いところへ印だけを書くときの中身。 */
+const EMPTY_STORED = {
+  delivered: false,
+  synopsis: "",
+  topics: [],
+  fold: UNKNOWN_FOLD,
+} as const satisfies StoredSummary
+
+const foldSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("unknown") }),
+  z.object({ kind: z.literal("none") }),
+  z.object({ kind: z.literal("through"), at: z.string().regex(/^\d{4}-\d{2}-\d{2}T/) }),
+])
+
+const storedSchema = z.object({
+  v: z.literal(SUMMARY_FORMAT_VERSION),
+  delivered: z.boolean(),
+  synopsis: z.string(),
+  topics: z.array(z.string()),
+  fold: foldSchema,
+})
+
+function recordOf(stored: StoredSummary | undefined): ChatSummaryRecord | undefined {
+  return stored === undefined
+    ? undefined
+    : { summary: stored.synopsis, delivered: stored.delivered }
+}
+
+/** 新しい形を読み、無い・読めないときは旧い形を読む。どちらも無ければ undefined。 */
+function readStored(paths: SummaryPaths): StoredSummary | undefined {
+  const parsed = storedSchema.safeParse(readJsonFile(paths.current))
+  if (parsed.success) {
+    const { delivered, synopsis, topics, fold } = parsed.data
+    return { delivered, synopsis, topics, fold }
+  }
+  return readLegacy(paths)
+}
+
+/**
+ * 新しい形の JSON を丸ごと書き、書けたら旧いファイルを消す。書けたら true。失敗しても例外を投げない。
+ */
+function store(paths: SummaryPaths, stored: StoredSummary): boolean {
+  try {
+    mkdirSync(paths.root, { recursive: true })
+    writeFileAtomic(paths.current, JSON.stringify({ v: SUMMARY_FORMAT_VERSION, ...stored }))
+  } catch {
+    return false
+  }
+  for (const legacy of [paths.legacyBody, paths.legacyTopics]) {
+    try {
+      rmSync(legacy, { force: true })
+    } catch {
+      // 新しい形が正なので、残っても読まれない。
+    }
+  }
+  return true
+}
+
+/**
+ * 旧い形を読む。本文のファイルが無い・読めないときは undefined。
+ * 話題は `<パック名>.topics.json` を読み、無い・読めない・文字列の配列でないときは本文に埋め込んだ組から読んで、本文からは組を除く。
+ */
+function readLegacy(paths: SummaryPaths): StoredSummary | undefined {
+  const content = readOptionalFile(paths.legacyBody)
   if (content === undefined) {
     return undefined
   }
 
-  try {
-    const parsed: unknown = JSON.parse(content)
-    return Array.isArray(parsed) && parsed.every((topic) => typeof topic === "string")
-      ? parsed
-      : undefined
-  } catch {
-    return undefined
+  const newline = content.indexOf("\n")
+  const mark = newline === -1 ? content : content.slice(0, newline)
+  const body = newline === -1 ? "" : content.slice(newline + 1)
+  const delivered = mark === LEGACY_DELIVERED_MARK
+  const stored = readLegacyTopics(paths.legacyTopics)
+  if (stored !== undefined) {
+    return { delivered, synopsis: body, topics: stored, fold: UNKNOWN_FOLD }
+  }
+  return {
+    delivered,
+    synopsis: withoutEmbeddedTopics(body),
+    topics: embeddedTopics(body),
+    fold: UNKNOWN_FOLD,
   }
 }
 
-/** 話題の見出しを1回の書き込みで置き換える。書けたら true。失敗しても例外を投げない。 */
-function writeTopics(topicsPath: string, topics: readonly string[]): boolean {
-  try {
-    mkdirSync(dirname(topicsPath), { recursive: true })
-    writeFileSync(topicsPath, JSON.stringify(topics))
-    return true
-  } catch {
-    return false
-  }
+/** 旧い形の話題のファイルを読む。無い・JSON でない・文字列の配列でないときは undefined。 */
+function readLegacyTopics(topicsPath: string): readonly string[] | undefined {
+  const parsed = z.array(z.string()).safeParse(readJsonFile(topicsPath))
+  return parsed.success ? parsed.data : undefined
 }
 
 /** 話題を本文に埋め込んでいた古い形の組（`<topics>` から次の `</topics>` まで）。 */
@@ -183,65 +286,36 @@ function embeddedTopics(body: string): readonly string[] {
     .filter((topic) => topic !== "")
 }
 
-/** 印だけを書き換える。ファイルの本文は既にある写しのまま保つ（無ければ空のまま）。 */
-function rewriteMark(path: string, delivered: boolean): boolean {
-  return writeRecord(path, { summary: readRaw(path)?.summary ?? "", delivered })
-}
-
-/** ファイルの1行目の印と、2行目からの中身をそのまま読む。ファイルが無い・読めないときは undefined。 */
-function readRaw(path: string): ChatSummaryRecord | undefined {
-  const content = readOptionalFile(path)
-  if (content === undefined) {
-    return undefined
-  }
-
-  const newline = content.indexOf("\n")
-  const mark = newline === -1 ? content : content.slice(0, newline)
-  const summary = newline === -1 ? "" : content.slice(newline + 1)
-  return { summary, delivered: mark === DELIVERED_MARK }
-}
-
-/** 写しと印を1回の書き込みで揃える（上書き）。書けたら true。失敗しても例外を投げない。 */
-function writeRecord(path: string, record: ChatSummaryRecord): boolean {
+/** ディレクトリの中の名前（読めなければ空）。 */
+function entryNames(dir: string): readonly string[] {
   try {
-    mkdirSync(dirname(path), { recursive: true })
-    const mark = record.delivered ? DELIVERED_MARK : UNDELIVERED_MARK
-    writeFileSync(path, `${mark}\n${record.summary}`)
-    return true
+    return readdirSync(dir)
   } catch {
-    return false
+    return []
   }
 }
 
 /**
- * {@link CHAT_SUMMARY_LIMIT_BYTES}（印の行を含む）に収まるよう、要約の本文を行単位で切り詰める。
+ * {@link CHAT_SUMMARY_LIMIT_BYTES} に収まるよう、要約の本文を行単位で切り詰める。
  * 古いほうの行から落とし、行の途中では切らない。
  *
  * 本文の行は「新しい→古い」の順に積み、収まらなくなったところで古い行を落とす。
  * 要約の文面は「前の要約 + 新しい会話」を毎回まとめ直したものなので、末尾に近いほうが新しい話題という前提。
  *
- * 1行だけで印を除いた残りの上限を超えるとき（改行が無い）は、その1行をそのまま残す。
+ * 1行だけで上限を超えるとき（改行が無い）は、その1行をそのまま残す。
  * 空にする（＝要約ごと消える）よりも、上限を少し超えるほうを選ぶ。
  */
 function truncatedSummary(summary: string): {
   readonly text: string
   readonly droppedLines: number
 } {
-  // 印の行の分（マークの長さ + 改行1つ）を引いた残りが本文の予算。
-  // 渡し済み・未渡しのどちらで書かれるかは呼び出し側が決めるので、長いほう（`UNDELIVERED_MARK`）で見積もっておけば、あとで印だけ書き換えても超えない。
-  const markBudget = byteLength(UNDELIVERED_MARK) + 1
-  const budget = CHAT_SUMMARY_LIMIT_BYTES - markBudget
   const lines = summary.split("\n")
-  if (budget <= 0) {
-    return { text: "", droppedLines: lines.length }
-  }
-
   const kept: string[] = []
   let usedBytes = 0
   for (const line of lines.toReversed()) {
     const separatorBytes = kept.length > 0 ? 1 : 0
     const lineBytes = byteLength(line) + separatorBytes
-    if (kept.length > 0 && usedBytes + lineBytes > budget) {
+    if (kept.length > 0 && usedBytes + lineBytes > CHAT_SUMMARY_LIMIT_BYTES) {
       break
     }
     kept.unshift(line)

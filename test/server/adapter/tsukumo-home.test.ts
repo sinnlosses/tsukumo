@@ -54,9 +54,13 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
   it("あらすじは移った先の chat-summary の下へ書かれる", () => {
     process.env[HOME_ENV_NAME] = dir()
 
-    createChatSummary(characterPackName("moved-pack")).write("架空の要約", [])
+    createChatSummary(characterPackName("moved-pack")).write(
+      "架空の要約",
+      [],
+      "2026-09-20T10:00:00+09:00",
+    )
 
-    expect(existsSync(join(dir(), "chat-summary", "moved-pack.md"))).toBe(true)
+    expect(existsSync(join(dir(), "chat-summary", "moved-pack.summary.json"))).toBe(true)
   })
 
   it("覚えたキャラクター（state.json）も移った先から読まれる", () => {

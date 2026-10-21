@@ -6,7 +6,16 @@
 //
 // 書けなくても・読めなくても例外を投げない。壊れた行は1行ずつ読み飛ばす。
 
-import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
+import {
+  appendFileSync,
+  closeSync,
+  fstatSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  readSync,
+} from "node:fs"
 import { dirname, join } from "node:path"
 
 import { parseJson } from "../../../shared/utils/parse-json.ts"
@@ -14,21 +23,26 @@ import { parseJson } from "../../../shared/utils/parse-json.ts"
 /** 日付だけで積むファイルの名前（`YYYY-MM-DD.jsonl`）。これ以外のファイルは対象にしない。 */
 const DATE_FILE_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/
 
-/** 1行を追記する。ディレクトリが無ければ作る。失敗したその回は諦めて次へ進む。 */
-export function appendJsonLine(path: string, record: unknown): void {
-  appendJsonLines(path, [record])
+/** 1行を追記する。ディレクトリが無ければ作る。失敗したその回は諦めて次へ進む。書けたら true。 */
+export function appendJsonLine(path: string, record: unknown): boolean {
+  return appendJsonLines(path, [record])
 }
 
-/** 複数行を1回の書き込みで追記する。空なら何もしない。失敗したその回は諦めて次へ進む。 */
-export function appendJsonLines(path: string, records: readonly unknown[]): void {
+/**
+ * 複数行を1回の書き込みで追記する。空なら何もしない（true）。失敗したその回は諦めて次へ進む。書けたら true。
+ * 書きかけで落ちて末尾が改行で終わっていないファイルには、改行を補ってから足す（足す最初の行が書きかけの行に繋がって読めなくなるため）。
+ */
+export function appendJsonLines(path: string, records: readonly unknown[]): boolean {
   if (records.length === 0) {
-    return
+    return true
   }
   try {
     mkdirSync(dirname(path), { recursive: true })
-    appendFileSync(path, records.map((record) => `${JSON.stringify(record)}\n`).join(""))
+    const lines = records.map((record) => `${JSON.stringify(record)}\n`).join("")
+    appendFileSync(path, endsWithoutNewline(path) ? `\n${lines}` : lines)
+    return true
   } catch {
-    // 書けなかった回は諦めて次へ進む。
+    return false
   }
 }
 
@@ -95,3 +109,36 @@ function readRawLines(path: string): readonly string[] {
     return []
   }
 }
+
+/** ファイルがあり、空でなく、最後の1バイトが改行でないとき true。無いファイルは false で、それ以外の読めない失敗は投げる。 */
+function endsWithoutNewline(path: string): boolean {
+  const fd = openIfExists(path)
+  if (fd === undefined) {
+    return false
+  }
+  try {
+    const { size } = fstatSync(fd)
+    if (size === 0) {
+      return false
+    }
+    const last = Buffer.alloc(1)
+    readSync(fd, last, 0, 1, size - 1)
+    return last[0] !== NEWLINE_BYTE
+  } finally {
+    closeSync(fd)
+  }
+}
+
+/** 読むために開く。無ければ undefined で、それ以外の失敗は投げる。 */
+function openIfExists(path: string): number | undefined {
+  try {
+    return openSync(path, "r")
+  } catch (error) {
+    if (error instanceof Error && Reflect.get(error, "code") === "ENOENT") {
+      return undefined
+    }
+    throw error
+  }
+}
+
+const NEWLINE_BYTE = 0x0a

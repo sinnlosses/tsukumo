@@ -1,8 +1,17 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs"
 import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
+import { z } from "zod"
 
+import { readValidLines } from "../../../../src/server/adapter/lib/jsonl.ts"
 import { createChatArchive } from "../../../../src/server/chat/adapter/chat-archive.ts"
 import type {
   ChatArchive,
@@ -477,173 +486,6 @@ describe("createChatArchive の readRecent", () => {
   })
 })
 
-describe("createChatArchive の unconsolidated", () => {
-  // フィクスチャは手で書いた架空の依頼だけ（実物の会話は使わない）。1行12バイト（全角4文字）に
-  // 揃えてあるので、上限（バイト）と落ちる件数の対応が読める。
-  const TWELVE_BYTES = "あいうえ"
-
-  function appendRequest(chatArchive: ChatArchive, day: number, text: string): void {
-    chatArchive.append(PACK, {
-      mode: "chat",
-      kind: "request",
-      at: noonOn(2026, 9, day),
-      text,
-      images: undefined,
-      imageFiles: undefined,
-    })
-  }
-
-  /** その日のファイルに書いた行の `at`（ISO）。 */
-  function writtenAt(day: number): string {
-    const [record] = readLines<{ at: string }>(
-      join(root(), PACK, `2026-09-${String(day).padStart(2, "0")}.jsonl`),
-    )
-    if (record === undefined) {
-      throw new Error("行が書かれていない")
-    }
-    return record.at
-  }
-
-  it("エピソードが無ければアーカイブの最初から、窓の外の行を古い→新しいで返す", () => {
-    const chatArchive = createChatArchive(root())
-    appendRequest(chatArchive, 19, "19日の依頼")
-    appendRequest(chatArchive, 20, "20日の依頼")
-    appendRequest(chatArchive, 21, "21日の依頼")
-
-    // 窓（recentBytes）には最新の1件だけが収まる大きさにする。
-    const recentBytes = Buffer.byteLength("21日の依頼")
-    const { entries, usedBytes, previousEpisodeTitle, overflowed } = chatArchive.unconsolidated(
-      PACK,
-      {
-        recentBytes,
-        maxBytes: 1024,
-      },
-    )
-
-    expect(entries.map((entry) => entry.text)).toEqual(["19日の依頼", "20日の依頼"])
-    expect(entries.map((entry) => entry.kind)).toEqual(["request", "request"])
-    expect(previousEpisodeTitle).toBe("")
-    expect(usedBytes).toBe(Buffer.byteLength("19日の依頼") + Buffer.byteLength("20日の依頼"))
-    expect(overflowed).toBe(false)
-  })
-
-  it("最後のエピソードの to より後の行だけを返す", () => {
-    const chatArchive = createChatArchive(root())
-    appendRequest(chatArchive, 19, "19日の依頼")
-    appendRequest(chatArchive, 20, "20日の依頼")
-    appendRequest(chatArchive, 21, "21日の依頼")
-    chatArchive.appendEpisodes(PACK, [
-      {
-        from: writtenAt(19),
-        to: writtenAt(19),
-        title: "架空の見出し",
-        gist: "架空の要旨。",
-        cues: [],
-        weight: 1,
-      },
-    ])
-
-    // 窓は使い切れないほど広く取り、to より後かどうかだけを見る。
-    const { entries, previousEpisodeTitle } = chatArchive.unconsolidated(PACK, {
-      recentBytes: 0,
-      maxBytes: 1024,
-    })
-
-    expect(entries.map((entry) => entry.text)).toEqual(["20日の依頼", "21日の依頼"])
-    expect(previousEpisodeTitle).toBe("架空の見出し")
-  })
-
-  it("to と同じ日のファイルは、to より後の行だけを返す", () => {
-    const chatArchive = createChatArchive(root())
-    appendRequest(chatArchive, 19, "19日の依頼")
-    const hour = 3_600_000
-    for (const [offset, text] of [
-      [0, "20日の前の依頼"],
-      [hour, "20日の後の依頼"],
-    ] as const) {
-      chatArchive.append(PACK, {
-        mode: "chat",
-        kind: "request",
-        at: noonOn(2026, 9, 20) + offset,
-        text,
-        images: undefined,
-        imageFiles: undefined,
-      })
-    }
-    appendRequest(chatArchive, 21, "21日の依頼")
-    // 20日の1行目（前の依頼）の時刻を to にする。
-    const to = writtenAt(20)
-    chatArchive.appendEpisodes(PACK, [
-      { from: writtenAt(19), to, title: "架空の見出し", gist: "架空の要旨。", cues: [], weight: 1 },
-    ])
-
-    const { entries } = chatArchive.unconsolidated(PACK, {
-      recentBytes: 0,
-      maxBytes: 1024,
-    })
-
-    expect(entries.map((entry) => entry.text)).toEqual(["20日の後の依頼", "21日の依頼"])
-  })
-
-  it("maxBytes で古いほうから区切り、溢れる1件は載せない（usedBytes で溜まった量が分かる）", () => {
-    const chatArchive = createChatArchive(root())
-    appendRequest(chatArchive, 19, TWELVE_BYTES)
-    appendRequest(chatArchive, 20, "かきくけ")
-    appendRequest(chatArchive, 21, "さしすせ")
-
-    // 1件（12バイト）は収まるが、2件目の途中までしか入らない上限。
-    const { entries, usedBytes, overflowed } = chatArchive.unconsolidated(PACK, {
-      recentBytes: 0,
-      maxBytes: 13,
-    })
-
-    expect(entries.map((entry) => entry.text)).toEqual([TWELVE_BYTES])
-    expect(usedBytes).toBe(Buffer.byteLength(TWELVE_BYTES))
-    expect(overflowed).toBe(true)
-  })
-
-  it("先頭の1件だけで maxBytes を超えるときは、切らずにその1件だけを単独で返し overflowed は true", () => {
-    const chatArchive = createChatArchive(root())
-    appendRequest(chatArchive, 19, TWELVE_BYTES)
-    appendRequest(chatArchive, 20, "かきくけ")
-
-    const { entries, usedBytes, overflowed } = chatArchive.unconsolidated(PACK, {
-      recentBytes: 0,
-      maxBytes: 5,
-    })
-
-    expect(entries.map((entry) => entry.text)).toEqual([TWELVE_BYTES])
-    expect(usedBytes).toBe(Buffer.byteLength(TWELVE_BYTES))
-    expect(overflowed).toBe(true)
-  })
-
-  it("仕事の行も雑談の行と区別せずに返し、印とプロジェクトの名前が付く", () => {
-    const chatArchive = createChatArchive(root())
-    appendRequest(chatArchive, 19, "19日の雑談")
-    chatArchive.append(PACK, {
-      mode: "work",
-      kind: "conclusion",
-      at: noonOn(2026, 9, 20),
-      text: "20日の結論",
-      project: FICTIONAL_PROJECT,
-    })
-
-    const { entries } = chatArchive.unconsolidated(PACK, {
-      recentBytes: 0,
-      maxBytes: 1024,
-    })
-
-    expect(entries.map(({ kind, origin, text }) => ({ kind, origin, text }))).toEqual([
-      { kind: "request", origin: { mode: "chat" }, text: "19日の雑談" },
-      {
-        kind: "conclusion",
-        origin: { mode: "work", project: FICTIONAL_PROJECT },
-        text: "20日の結論",
-      },
-    ])
-  })
-})
-
 describe("createChatArchive の appendEpisodes", () => {
   function episodeIndexLines(): unknown[] {
     return readLines(join(root(), PACK, "episode.jsonl"))
@@ -705,9 +547,35 @@ describe("createChatArchive の appendEpisodes", () => {
   it("0件のときは書かない", () => {
     const chatArchive = createChatArchive(root())
 
-    chatArchive.appendEpisodes(PACK, [])
+    expect(chatArchive.appendEpisodes(PACK, [])).toEqual({ kind: "written" })
 
     expect(existsSync(join(root(), PACK, "episode.jsonl"))).toBe(false)
+  })
+
+  it("書けたら written、書けなかったら failed を返す", () => {
+    expect(createChatArchive(root()).appendEpisodes(PACK, [draft()])).toEqual({
+      kind: "written",
+    })
+
+    // パックの置き場の名前でファイルを作っておくと、その下に索引を書けない。
+    writeFileSync(join(root(), PACK_B), "")
+    expect(createChatArchive(root()).appendEpisodes(PACK_B, [draft()])).toEqual({
+      kind: "failed",
+    })
+  })
+
+  it("書きかけで落ちて改行で終わっていない索引に足しても、足した行はすべて読める", () => {
+    const chatArchive = createChatArchive(root())
+    chatArchive.appendEpisodes(PACK, [draft()])
+    appendFileSync(join(root(), PACK, "episode.jsonl"), '{"v":2,"id":"2026-09-25-2","fr')
+
+    chatArchive.appendEpisodes(PACK, [draft({ title: "あとの見出し" }), draft()])
+
+    const titles = readValidLines(
+      join(root(), PACK, "episode.jsonl"),
+      z.object({ title: z.string() }),
+    ).map((line) => line.title)
+    expect(titles).toEqual(["架空の見出し", "あとの見出し", "架空の見出し"])
   })
 })
 

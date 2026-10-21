@@ -34,13 +34,22 @@ describe("appendJsonLine", () => {
     expect(readFileSync(path, "utf8")).toBe('{"seq":1}\n{"seq":2}\n')
   })
 
-  it("書けなくても例外を投げない（常駐プロセスを落とさない）", () => {
+  it("書けなくても例外を投げず、false を返す（常駐プロセスを落とさない）", () => {
     // 置き場の名前でファイルを作っておくと、その下にディレクトリを作れない。
     const blocked = join(dir(), "blocked")
     writeFileSync(blocked, "")
     const path = join(blocked, "2026-01-01.jsonl")
 
-    expect(() => appendJsonLine(path, { seq: 1 })).not.toThrow()
+    expect(appendJsonLine(path, { seq: 1 })).toBe(false)
+  })
+
+  it("末尾が改行で終わっていない（書きかけで落ちた）ファイルには、改行を補ってから足す", () => {
+    const path = join(dir(), "2026-01-01.jsonl")
+    writeFileSync(path, '{"seq":1}\n{"se')
+
+    expect(appendJsonLine(path, { seq: 2 })).toBe(true)
+
+    expect(readJsonLines(path)).toEqual([{ seq: 1 }, { seq: 2 }])
   })
 })
 

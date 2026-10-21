@@ -9,6 +9,7 @@ const CONSOLIDATION_FAILURE_PLACES = {
   aborted: "consolidation-aborted",
   threw: "consolidation-threw",
   "summary-write": "consolidation-summary-write",
+  "episode-write": "consolidation-episode-write",
 } as const satisfies Record<string, string>
 
 const CONSOLIDATION_REJECTION_PLACES = {

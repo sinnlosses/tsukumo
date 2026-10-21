@@ -161,7 +161,7 @@ characters/<name>/
 
 | 何                             | 置き場                                                                                                   | ファイルに触る adapter                    |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| あらすじ（と渡し済みの印）     | `~/.tsukumo/chat-summary/<pack>.md`（話題の見出しは同じ場所の `<pack>.topics.json`）                     | `chat/adapter/chat-summary.ts`            |
+| あらすじ（と渡し済みの印）     | `~/.tsukumo/chat-summary/<pack>.summary.json`（話題の見出しも同じ JSON）                                 | `chat/adapter/chat-summary.ts`            |
 | 会話のアーカイブ               | `~/.tsukumo/chat-archive/<pack>/<YYYY-MM-DD>.jsonl`                                                      | `chat/adapter/chat-archive.ts`            |
 | エピソード索引・思い出した記録 | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` / `recalled.jsonl`                                        | `chat/adapter/chat-archive.ts`（同じ1つ） |
 | 雑談で貼った画像（7日で消す）  | `~/.tsukumo/chat-archive/<pack>/images/<YYYY-MM-DD>-<id>.<拡張子>`（依頼の行の `imageFiles` が指す）     | `chat/adapter/chat-archive.ts`（同じ1つ） |

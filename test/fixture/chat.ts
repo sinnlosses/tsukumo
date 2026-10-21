@@ -4,6 +4,7 @@
 import type { ChatArchive } from "../../src/server/chat/core/chat-archive-port.ts"
 import type {
   ChatSummary,
+  ChatSummaryFold,
   ChatSummaryRecord,
 } from "../../src/server/session-driver/core/session-driver.ts"
 
@@ -16,9 +17,10 @@ export const NOOP_CHAT_ARCHIVE = {
     entries: [],
     usedBytes: 0,
     previousEpisodeTitle: "",
+    episodesThrough: { kind: "none" },
     overflowed: false,
   }),
-  appendEpisodes: () => {},
+  appendEpisodes: () => ({ kind: "written" }),
   recallList: () => ({ kind: "not-found" }),
   recallEpisode: () => ({ kind: "not-found" }),
 } satisfies ChatArchive
@@ -28,7 +30,9 @@ export function fixedChatSummary(record: ChatSummaryRecord | undefined): ChatSum
   return {
     read: () => record,
     readTopics: () => [],
+    readFold: () => ({ kind: "unknown" }),
     write: () => ({ kind: "written", droppedLines: 0 }),
+    writeFold: () => ({ kind: "written" }),
     markUndelivered: () => {},
     markDelivered: () => {},
   }
@@ -38,13 +42,20 @@ export function fixedChatSummary(record: ChatSummaryRecord | undefined): ChatSum
 export function inMemoryChatSummary(initial: ChatSummaryRecord | undefined): ChatSummary {
   let record = initial
   let topics: readonly string[] = []
+  let fold: ChatSummaryFold = { kind: "unknown" }
   return {
     read: () => record,
     readTopics: () => topics,
-    write: (summary, nextTopics) => {
+    readFold: () => fold,
+    write: (summary, nextTopics, foldedThrough) => {
       record = { summary, delivered: record?.delivered ?? false }
       topics = nextTopics
+      fold = { kind: "through", at: foldedThrough }
       return { kind: "written", droppedLines: 0 }
+    },
+    writeFold: (next) => {
+      fold = next
+      return { kind: "written" }
     },
     markUndelivered: () => {
       record = { summary: record?.summary ?? "", delivered: false }

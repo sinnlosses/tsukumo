@@ -418,7 +418,7 @@ describe("chatEpisodeDrafts の weight の上限", () => {
 describe("readChatTopics", () => {
   function topicsOf(topics: readonly string[]): readonly string[] {
     const chatSummary = inMemoryChatSummary(undefined)
-    chatSummary.write("架空のあらすじ", topics)
+    chatSummary.write("架空のあらすじ", topics, "2026-09-20T10:00:00+09:00")
     return readChatTopics(chatSummary)
   }
 

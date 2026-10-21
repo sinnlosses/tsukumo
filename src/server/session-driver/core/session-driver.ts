@@ -56,13 +56,21 @@ export type ChatSummary = {
   readonly read: () => ChatSummaryRecord | undefined
   /** 最近の話題の見出しを、新しい順のまま読む（写しがまだ無い・読めないときは空）。 */
   readonly readTopics: () => readonly string[]
+  /** あらすじがアーカイブのどの行まで取り込んだか（写しが無い・旧い形は `unknown`）。 */
+  readonly readFold: () => ChatSummaryFold
   /**
-   * 定着が書き直したあらすじの本文と、最近の話題の見出し（新しい順）を上書きする。
+   * 定着が書き直したあらすじの本文と、最近の話題の見出し（新しい順）と、取り込んだ最後の行の時刻を上書きする。
    * 印は変えない（ファイルが無ければ「未渡し」で書く）。
    * 書けたかどうかと、書くときに上限で落とした古い行の数を返す（例外は投げない）。
    * 定着はどのプロセスのどちらのモードのターンからも走り、畳んだ会話を文脈に持っているセッションが決まらないため。
    */
-  readonly write: (summary: string, topics: readonly string[]) => ChatSummaryWriteResult
+  readonly write: (
+    summary: string,
+    topics: readonly string[],
+    foldedThrough: string,
+  ) => ChatSummaryWriteResult
+  /** 本文・話題・印を保ったまま、取り込んだところだけを書く（例外は投げない）。 */
+  readonly writeFold: (fold: ChatFoldPoint) => ChatSummaryFoldWriteResult
   /** 印を「未渡し」に戻す（`/clear` を見たとき）。 */
   readonly markUndelivered: () => void
   /** 印を「渡し済み」にする（読んで `systemPrompt` へ載せたとき）。 */
@@ -74,7 +82,21 @@ export type ChatSummaryWriteResult =
   | { readonly kind: "failed" }
   | { readonly kind: "written"; readonly droppedLines: number }
 
-/** {@link ChatSummary.read} が返す1件。`delivered` が写しの1行目の印。 */
+/** {@link ChatSummary.writeFold} の結果。 */
+export type ChatSummaryFoldWriteResult = { readonly kind: "written" } | { readonly kind: "failed" }
+
+/**
+ * アーカイブのどの行まで畳んだか。
+ * `none` はまだ1行も畳んでいない、`through` は `at`（アーカイブの行の時刻）の行まで畳んだ。
+ */
+export type ChatFoldPoint =
+  | { readonly kind: "none" }
+  | { readonly kind: "through"; readonly at: string }
+
+/** あらすじが取り込んだところ。印をまだ持たない写し（無い・旧い形）は `unknown`。 */
+export type ChatSummaryFold = ChatFoldPoint | { readonly kind: "unknown" }
+
+/** {@link ChatSummary.read} が返す1件。`delivered` が渡し済みの印。 */
 export type ChatSummaryRecord = {
   readonly summary: string
   readonly delivered: boolean
