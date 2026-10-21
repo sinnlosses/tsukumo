@@ -52,6 +52,10 @@ const svgShapeSchema = z
       y2: z.number(),
       arrow: omittable(z.boolean(), false).describe("true で終点（x2, y2）に矢じりを付ける"),
       label: omittable(inlineText, "").describe("線に添える語。無ければ空"),
+      dashed: omittable(z.boolean(), false).describe("true で点線にする"),
+      tone: omittable(z.enum(["none", ...SVG_TONES]), "none").describe(
+        "線の意味の目印（a〜e の5色。rect の tone と同じ。使った tone は図の legend に名前を書く）",
+      ),
     }),
     z.object({ kind: z.literal("text"), x: z.number(), y: z.number(), text: inlineText }),
   ])

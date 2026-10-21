@@ -324,7 +324,9 @@ function svgShapeHtml(shape: SvgShape): string {
     }
     case "line": {
       const markerEnd = shape.arrow ? ` marker-end="url(#${SVG_ARROW_MARKER_ID})"` : ""
-      const line = `<line x1="${String(shape.x1)}" y1="${String(shape.y1)}" x2="${String(shape.x2)}" y2="${String(shape.y2)}"${markerEnd}></line>`
+      const dashArray = shape.dashed ? ' stroke-dasharray="6 4"' : ""
+      const toneAttribute = shape.tone === "none" ? "" : ` data-tone="${shape.tone}"`
+      const line = `<line x1="${String(shape.x1)}" y1="${String(shape.y1)}" x2="${String(shape.x2)}" y2="${String(shape.y2)}"${markerEnd}${dashArray}${toneAttribute}></line>`
       return shape.label.trim() === ""
         ? line
         : line +

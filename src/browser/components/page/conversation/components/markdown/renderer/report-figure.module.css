@@ -238,19 +238,19 @@
 .detail-block .report-svg-figure svg rect[data-tone][stroke-width] {
   stroke-width: 3px;
 }
-.detail-block svg rect[data-tone="a"] {
+.detail-block svg [data-tone="a"] {
   --tone-color: var(--chart-series-1);
 }
-.detail-block svg rect[data-tone="b"] {
+.detail-block svg [data-tone="b"] {
   --tone-color: var(--chart-series-2);
 }
-.detail-block svg rect[data-tone="c"] {
+.detail-block svg [data-tone="c"] {
   --tone-color: var(--chart-series-3);
 }
-.detail-block svg rect[data-tone="d"] {
+.detail-block svg [data-tone="d"] {
   --tone-color: var(--chart-series-4);
 }
-.detail-block svg rect[data-tone="e"] {
+.detail-block svg [data-tone="e"] {
   --tone-color: var(--chart-series-5);
 }
 .detail-block .report-svg-legend {
@@ -269,8 +269,11 @@
   stroke: var(--ink-quiet);
   stroke-width: 2px;
 }
+.detail-block .report-svg-figure svg line[data-tone] {
+  stroke: var(--tone-color);
+}
 .detail-block .report-svg-figure svg marker path {
-  fill: var(--ink-quiet);
+  fill: context-stroke;
 }
 .detail-block .report-svg-figure svg text {
   fill: var(--ink);

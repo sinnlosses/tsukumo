@@ -75,7 +75,17 @@ describe("reportRejectionText", () => {
         svg([
           { kind: "text", x: 5, y: 5, text: "架空の秘密" },
           rect(90, 0, 20, 10),
-          { kind: "line", x1: 0, y1: 0, x2: 10, y2: -1, arrow: false, label: "" },
+          {
+            kind: "line",
+            x1: 0,
+            y1: 0,
+            x2: 10,
+            y2: -1,
+            arrow: false,
+            label: "",
+            dashed: false,
+            tone: "none",
+          },
         ]),
       ])
       expect(reportViolations(report)).toEqual([
@@ -106,6 +116,24 @@ describe("reportRejectionText", () => {
       expect(rejection).toContain("2個目の b")
       expect(rejection).not.toContain("架空の秘密")
       expect(kinds(draft([toned("a", [{ tone: "a", label: "層" }])]))).toEqual([])
+    })
+
+    it("line の tone も legend に無ければ差し戻す", () => {
+      const line = {
+        kind: "line",
+        x1: 0,
+        y1: 0,
+        x2: 10,
+        y2: 0,
+        arrow: false,
+        label: "",
+        dashed: false,
+        tone: "c",
+      } as const
+      expect(reportViolations(draft([svg([line])]))).toEqual([
+        { kind: "unlegended-svg-tone", count: 1, faults: [{ block: 1, tone: "c" }] },
+      ])
+      expect(kinds(draft([svg([line], [{ tone: "c", label: "層" }])]))).toEqual([])
     })
 
     it("beforeAfter の svg の側も数える", () => {

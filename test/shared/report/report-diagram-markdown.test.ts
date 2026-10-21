@@ -149,7 +149,17 @@ describe("reportSectionsMarkdown", () => {
           labelAt: "center",
           tone: "none",
         },
-        { kind: "line", x1: 90, y1: 40, x2: 100, y2: 40, arrow: true, label: "" },
+        {
+          kind: "line",
+          x1: 90,
+          y1: 40,
+          x2: 100,
+          y2: 40,
+          arrow: true,
+          label: "",
+          dashed: false,
+          tone: "none",
+        },
         { kind: "text", x: 5, y: 90, text: "架空の字" },
       ],
     })
@@ -230,6 +240,30 @@ describe("reportSectionsMarkdown", () => {
     expect(markdown).toContain('<div class="svg-legend">')
     expect(markdown).toContain('<rect data-tone="b" x="1" y="1" width="14" height="10" rx="2">')
     expect(markdown).toContain("層&lt;A&gt;</span>")
+  })
+
+  it("svg の line の tone は data-tone、dashed は stroke-dasharray で運ぶ", () => {
+    const line = { kind: "line", x1: 0, y1: 0, x2: 50, y2: 0, arrow: true, label: "" } as const
+    const markdown = markdownOf({
+      kind: "svg",
+      title: "",
+      width: 100,
+      height: 50,
+      fold: "",
+      aside: "",
+      legend: [{ tone: "b", label: "異常" }],
+      shapes: [
+        { ...line, dashed: false, tone: "b" },
+        { ...line, y1: 10, y2: 10, dashed: true, tone: "none" },
+      ],
+    })
+
+    expect(markdown).toContain(
+      '<line x1="0" y1="0" x2="50" y2="0" marker-end="url(#report-svg-arrow)" data-tone="b"></line>',
+    )
+    expect(markdown).toContain(
+      '<line x1="0" y1="10" x2="50" y2="10" marker-end="url(#report-svg-arrow)" stroke-dasharray="6 4"></line>',
+    )
   })
 
   it("beforeAfter の svg の側も SVG を組む", () => {

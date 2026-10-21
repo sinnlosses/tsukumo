@@ -87,7 +87,7 @@ export function svgToneFaultsInSections(
   return svgFiguresInSections(sections).flatMap((figure, figureIndex) => {
     const legended = new Set(figure.legend.map((entry) => entry.tone))
     const used = figure.shapes.flatMap((shape) =>
-      shape.kind === "rect" && shape.tone !== "none" ? [shape.tone] : [],
+      (shape.kind === "rect" || shape.kind === "line") && shape.tone !== "none" ? [shape.tone] : [],
     )
     return [...new Set(used)]
       .filter((tone) => !legended.has(tone))
