@@ -22,6 +22,7 @@ import type { Host, HostResult } from "./server/host/core/host.ts"
 import { readItemAsset } from "./server/item/adapter/item-asset.ts"
 import { createReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-session.ts"
+import { pruneInputLedgerFiles } from "./server/session-driver/adapter/input-ledger-file.ts"
 import {
   readWorkflowPlugin,
   readWorkflowPluginMount,
@@ -110,6 +111,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   const diagnosticLog = createDiagnosticLog()
   pruneDiagnosticFiles(todayLocalDateKey())
   const clock = createServerClock(config.fixedClock)
+  pruneInputLedgerFiles(clock())
   const reportFailure = failureDiagnostic(diagnosticLog, clock)
   const pruneExpiredChatImages = (): void => {
     pruneChatImages(todayLocalDateKey(), (error) => {

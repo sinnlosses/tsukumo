@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { EMPTY_INPUT_LEDGER } from "../../../../src/server/session-driver/core/input-ledger.ts"
 import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
 import { applyRestoredEvents } from "../../../../src/shared/session/restored-event.ts"
@@ -17,7 +18,7 @@ import { EXPRESSIONS, eventsOf, stamped } from "../../../fixture/session-restore
 
 describe("toRestoredEvents", () => {
   it("組み直せたものが無ければ空", () => {
-    expect(toRestoredEvents([null, { type: "user" }], EXPRESSIONS)).toEqual([])
+    expect(toRestoredEvents([null, { type: "user" }], EXPRESSIONS, EMPTY_INPUT_LEDGER)).toEqual([])
   })
 
   it("出来事は元のメッセージの timestamp を持ち、ターンの境目は直前の出来事の時刻を引き継ぐ", () => {
@@ -28,7 +29,10 @@ describe("toRestoredEvents", () => {
     ]
 
     expect(
-      toRestoredEvents(messages, EXPRESSIONS).map(({ event, time }) => [event.kind, time]),
+      toRestoredEvents(messages, EXPRESSIONS, EMPTY_INPUT_LEDGER).map(({ event, time }) => [
+        event.kind,
+        time,
+      ]),
     ).toEqual([
       ["request", { kind: "known", at: 1767322800000 }],
       ["utterance", { kind: "known", at: 1767323100000 }],
@@ -47,7 +51,7 @@ describe("toRestoredEvents", () => {
 
     const state = applyRestoredEvents(
       INITIAL_SESSION_STATE,
-      toRestoredEvents(messages, EXPRESSIONS),
+      toRestoredEvents(messages, EXPRESSIONS, EMPTY_INPUT_LEDGER),
       999,
     )
 
@@ -64,12 +68,9 @@ describe("toRestoredEvents", () => {
       userMessage("架空の依頼その2"),
     ]
 
-    expect(toRestoredEvents(messages, EXPRESSIONS).map(({ time }) => time.kind)).toEqual([
-      "unknown",
-      "unknown",
-      "unknown",
-      "unknown",
-    ])
+    expect(
+      toRestoredEvents(messages, EXPRESSIONS, EMPTY_INPUT_LEDGER).map(({ time }) => time.kind),
+    ).toEqual(["unknown", "unknown", "unknown", "unknown"])
   })
 
   it("依頼・本文・セリフ・ツールの行が起き、ターンの境目が依頼ごとに分かれる", () => {
@@ -345,8 +346,8 @@ describe("toRestoredEvents", () => {
   })
 
   it("空の列・壊れた要素が混じった列でも落ちず、読めたものだけを返す", () => {
-    expect(toRestoredEvents([], EXPRESSIONS)).toEqual([])
-    expect(toRestoredEvents(undefined, EXPRESSIONS)).toEqual([])
+    expect(toRestoredEvents([], EXPRESSIONS, EMPTY_INPUT_LEDGER)).toEqual([])
+    expect(toRestoredEvents(undefined, EXPRESSIONS, EMPTY_INPUT_LEDGER)).toEqual([])
 
     const messages = [
       null,

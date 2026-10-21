@@ -10,10 +10,12 @@ function newPromptStream() {
   )
 }
 
+const UUID = "00000000-0000-4000-8000-000000000001"
+
 describe("createPromptStream", () => {
-  it("文面だけの依頼は、利用者の入力の印と文字列の content を持つメッセージで流れる", async () => {
+  it("文面だけの依頼は、利用者の入力の印と文字列の content と、渡した uuid を持つメッセージで流れる", async () => {
     const prompts = newPromptStream()
-    prompts.push({ text: "作り物の依頼", images: [] })
+    prompts.push({ text: "作り物の依頼", images: [], uuid: UUID })
 
     const first = await prompts.stream()[Symbol.asyncIterator]().next()
 
@@ -21,6 +23,7 @@ describe("createPromptStream", () => {
       type: "user",
       origin: { kind: "human" },
       message: { role: "user", content: "作り物の依頼" },
+      uuid: UUID,
     })
   })
 
@@ -30,7 +33,7 @@ describe("createPromptStream", () => {
       type: "image",
       source: { type: "base64", media_type: "image/png", data: "AAAA" },
     } as const
-    prompts.push({ text: "作り物の依頼", images: [image] })
+    prompts.push({ text: "作り物の依頼", images: [image], uuid: UUID })
 
     const first = await prompts.stream()[Symbol.asyncIterator]().next()
 
@@ -42,7 +45,7 @@ describe("createPromptStream", () => {
 
   it("end のあとは、溜まった依頼を流し終えて stream が終わる", async () => {
     const prompts = newPromptStream()
-    prompts.push({ text: "作り物の依頼", images: [] })
+    prompts.push({ text: "作り物の依頼", images: [], uuid: UUID })
     prompts.end()
     const iterator = prompts.stream()[Symbol.asyncIterator]()
 

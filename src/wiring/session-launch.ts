@@ -260,6 +260,9 @@ function startDriver(options: {
     reportWorkflowTwFailure: (place) => {
       options.reportFailure({ feature: "session", place }, undefined)
     },
+    reportHandbackHeadMismatch: () => {
+      options.reportFailure({ feature: "session", place: "handback-head-mismatch" }, undefined)
+    },
   })
 }
 

@@ -31,6 +31,7 @@ import {
   noteConversationCleared,
   type SessionTitleState,
 } from "../core/session-title.ts"
+import { readInputLedger } from "./input-ledger-file.ts"
 
 /**
  * 同じリポジトリのセッションの一覧を SDK から読む（印で絞るのと、続きを選ぶのは core 側）。
@@ -55,6 +56,8 @@ export async function listRepositorySessions(cwd: string): Promise<unknown> {
  * `dir` は渡さない（SDK 側はすべてのプロジェクトから探す）。
  * 続きから始めるセッションは別の worktree で起きたものでありうるので、いまの作業ディレクトリで絞ると見つからない。
  * 指しているのは一意なセッションIDなので、絞らなくても別のものには当たらない。
+ *
+ * 入力の種類とターンの終わり方は、そのセッションの入力の控え（`readInputLedger`）から引く。
  */
 export async function readRestoredEvents(
   sessionId: string,
@@ -64,6 +67,7 @@ export async function readRestoredEvents(
     return toRestoredEvents(
       await getSessionMessages(sessionId, { includeSystemMessages: true }),
       toExpressionNames(expressions),
+      readInputLedger(sessionId),
     )
   } catch {
     return []

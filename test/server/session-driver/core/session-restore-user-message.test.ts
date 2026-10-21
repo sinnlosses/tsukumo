@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { asidePromptText } from "../../../../src/server/session-driver/core/aside-prompt.ts"
+import { EMPTY_INPUT_LEDGER } from "../../../../src/server/session-driver/core/input-ledger.ts"
 import { progressNudgePromptText } from "../../../../src/server/session-driver/core/progress-nudge.ts"
 import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
 import { mainViewEntries } from "../../../../src/shared/session/main-view-entry.ts"
@@ -245,7 +246,7 @@ describe("toRestoredEvents", () => {
 
     const state = applyRestoredEvents(
       INITIAL_SESSION_STATE,
-      toRestoredEvents(messages, EXPRESSIONS),
+      toRestoredEvents(messages, EXPRESSIONS, EMPTY_INPUT_LEDGER),
       0,
     )
     const turns = mainViewTurns(mainViewEntries(state), { report: false, utterance: false }, true)

@@ -49,6 +49,8 @@ export type CallReview = {
   readonly bandPosition: () => string
   /** 返却を運ぶメインの入力に添える注記を取り出す（`WorkPlanReview.takeHandbackNote`）。 */
   readonly takeHandbackNote: () => string
+  /** 返却を溜めていて、注記をまだ取り出していないか（`WorkPlanReview.handbackNotePending`）。 */
+  readonly handbackNotePending: () => boolean
   /** このターンで「新しい事実が無い」`report` の差し戻しをしたか。 */
   readonly nothingNewRejected: () => boolean
 }
@@ -101,6 +103,7 @@ export function createCallReview(): CallReview {
     gateRaised: workPlanReview.gateRaised,
     bandPosition: workPlanReview.bandPosition,
     takeHandbackNote: workPlanReview.takeHandbackNote,
+    handbackNotePending: workPlanReview.handbackNotePending,
     nothingNewRejected: reportReview.nothingNewRejected,
   }
 }

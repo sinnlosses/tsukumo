@@ -113,7 +113,7 @@ export function progressNudgePromptText(summary: string): string {
   return `${PROGRESS_OPEN}\n${summary}\n${PROGRESS_CLOSE}`
 }
 
-/** transcript の `user` の文面が差し込みの包みか。組み直しが利用者の依頼と見分ける唯一の手がかり。 */
+/** transcript の `user` の文面が差し込みの包みか。入力の控え（`InputLedger`）の無い入力を、組み直しが利用者の依頼と見分ける手がかり。 */
 export function isProgressNudgePrompt(raw: string): boolean {
   return PROGRESS_PROMPT.test(raw.trim())
 }

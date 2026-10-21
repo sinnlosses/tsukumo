@@ -8,7 +8,7 @@ import type { ModelTokenUsage, StepTokenUsage, TurnUsageScope } from "../token-u
 export type TurnHealthEvent =
   /**
    * ターンが終わった（`result`。サブエージェントの中の `result` は変換で捨てる）。`outcome` は終わり方（{@link TurnOutcome}）。中断は失敗にしない。
-   * 駆動が自分で起こすのは fake driver の中断（`interrupted`）と、復元の再生の区切り（`completed`）。
+   * 駆動が自分で起こすのは fake driver の中断（`interrupted`）と、復元の再生の区切り（入力の控えにある終わり方。無ければ `completed`）。
    */
   | { readonly kind: "turn-finished"; readonly outcome: TurnOutcome }
   /**

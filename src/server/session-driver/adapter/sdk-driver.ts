@@ -7,6 +7,8 @@
 // 会話の内容（本文・ツールの入出力・セリフ）がここを通るが、ログにもファイルにも書かない。
 // stderr に出すのは SDK 自身のエラー文と、Claude Code の催促が届いたという事実の1行（`isVisibleOutputNudge`。中身は写さない）だけ。
 
+import { randomUUID, type UUID } from "node:crypto"
+
 import { type PermissionResult, query } from "@anthropic-ai/claude-agent-sdk"
 
 import { expressionNames as toExpressionNames } from "../../../shared/character-pack/expression-choice.ts"
@@ -17,6 +19,7 @@ import { asidePromptText } from "../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../core/call-review.ts"
 import { createClearAndSend } from "../core/clear-and-send.ts"
 import { createExternalToolMark } from "../core/external-tool-mark.ts"
+import { createInputLedgerIntake, type InputLedgerIntake } from "../core/input-ledger.ts"
 import { createInterruptMark, type InterruptMark } from "../core/interrupt-mark.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { createProgressNudge, progressNudgePromptText } from "../core/progress-nudge.ts"
@@ -29,6 +32,7 @@ import { createSessionEnding } from "../core/session-ending.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
 import { TSUKUMO_MCP_SERVER_NAME } from "../core/tsukumo-tool-name.ts"
 import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
+import { appendInputLedger } from "./input-ledger-file.ts"
 import { rewriteWithRtk } from "./rtk-rewrite.ts"
 import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
@@ -138,7 +142,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
               externalToolMark,
               rewriteWithRtk,
             ),
-            ...handbackNoteHooks(callReview.takeHandbackNote),
+            ...handbackNoteHooks(callReview, options.reportHandbackHeadMismatch),
           },
           options.mountWorkflowPlugin,
           runAskGuard,
@@ -177,10 +181,17 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     }
   }
 
+  const ledgerIntake = createInputLedgerIntake()
+  const push = (text: string, images: readonly PromptContentBlock[]): UUID => {
+    const uuid = randomUUID()
+    input.push({ text, images, uuid })
+    return uuid
+  }
+
   const sendRequest = (text: string): void => {
     emitTurnOpening({ kind: "request", text, images: [] })
     delayWatch.pushed(options.now())
-    input.push({ text, images: [] })
+    ledgerIntake.noteSent(push(text, []), "request")
   }
 
   // 依頼を流さない（差し込みは利用者の発言ではない）。ターンの始まりは続く `init` から `turn-resumed` が補う。
@@ -190,7 +201,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     }
     emitTurnOpening({ kind: "progress-nudged" })
     delayWatch.pushed(options.now())
-    input.push({ text: progressNudgePromptText(summary), images: [] })
+    ledgerIntake.noteSent(push(progressNudgePromptText(summary), []), "progress-nudge")
   }
 
   void applyNeutralOutputStyle(session)
@@ -203,6 +214,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     titleWriter,
     delayWatch,
     interruptMark,
+    ledgerIntake,
   )
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
@@ -217,17 +229,18 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       // 控えと id だけが記録（`request` / `aside`）へ行き、原寸はストリーミング入力へ流れる（棚に残っているぶんは棚の寿命で捨てる）。
       emitTurnOpening({ kind: opening, text, images: recordedPromptImages(images) })
       delayWatch.pushed(options.now())
-      input.push({
-        text: opening === "aside" ? asidePromptText(text) : text,
-        images: images.flatMap(toImageBlocks),
-      })
+      const uuid = push(
+        opening === "aside" ? asidePromptText(text) : text,
+        images.flatMap(toImageBlocks),
+      )
+      ledgerIntake.noteSent(uuid, opening)
     },
     promptWithoutRecord: (text) => {
       // `request` を流さない（送った文面をログにも記録にも残さない）。
       // 代わりにターンの始まりだけを流し、吹き出しと進行中の印は依頼と同じに動かす。
       emitTurnOpening({ kind: "turn-started" })
       delayWatch.pushed(options.now())
-      input.push({ text, images: [] })
+      push(text, [])
     },
     interrupt: async () => {
       delayWatch.discard()
@@ -323,6 +336,7 @@ function watchProgressNudge(
  * 呼び出しは同じ呼び出しの結果まで預かり、差し戻した呼び出しを描かない。
  *
  * `titleIntake` が覚えている題（`report` の `title` 引数）もターンの終わりに取り出し、`titleWriter` で書く。
+ * 入力の控え（`ledgerIntake`）もメインのメッセージを見て、ターンの終わりに書く。
  */
 async function relayMessages(
   session: AsyncIterable<unknown>,
@@ -333,6 +347,7 @@ async function relayMessages(
   titleWriter: SessionTitleWriter,
   delayWatch: PromptDelayWatch,
   interruptMark: InterruptMark,
+  ledgerIntake: InputLedgerIntake,
 ): Promise<void> {
   // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに印を付け直す（`markSession`）。
   let sessionId: string | undefined = undefined
@@ -341,6 +356,7 @@ async function relayMessages(
       const fromMain = !isSubagentMessage(message)
       if (fromMain) {
         delayWatch.received(options.now())
+        ledgerIntake.observe(message)
       }
       // 環境変数が効かなくなったことに気づくための1行。届いた事実だけで、中身は写さない。
       if (fromMain && isVisibleOutputNudge(message)) {
@@ -360,6 +376,12 @@ async function relayMessages(
           sessionId = event.sessionId
         }
         interruptMark.observe(event)
+        if (event.kind === "turn-finished" && fromMain) {
+          const ledgerEntry = ledgerIntake.finishTurn(message, event.outcome)
+          if (ledgerEntry !== undefined) {
+            appendInputLedger(ledgerEntry)
+          }
+        }
         if (event.kind === "turn-finished") {
           // 1ターンに書けるのは1行、引けるのは recall / recall_episode それぞれ決めた回数まで。
           // ターンの区切りを知っているのはここだけなので、終わるたびに次の1行・次の回数を受け付けさせる。

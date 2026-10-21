@@ -87,6 +87,8 @@ export type WorkPlanReview = {
    * 溜めるのはワークプランがあるときの返却だけで、受け付けた `work_plan`・`request`・`turn-started` で捨てる。無ければ空。
    */
   readonly takeHandbackNote: () => string
+  /** 返却を溜めていて、注記をまだ取り出していないか。 */
+  readonly handbackNotePending: () => boolean
   /**
    * 届いたイベントを流してよい並びに変える。
    * `work-plan-called` は同じ `toolUseId` の `tool-finished` まで預かり、`isError` でなければその直前に `work-plan` として出す。
@@ -220,6 +222,7 @@ export function createWorkPlanReview(): WorkPlanReview {
       handbackLines = []
       return note
     },
+    handbackNotePending: () => handbackLines.length > 0,
     pass: (event) => {
       switch (event.kind) {
         case "work-plan-called":

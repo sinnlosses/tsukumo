@@ -16,6 +16,7 @@ import {
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { clipWithEllipsis } from "../../../shared/utils/clip-text.ts"
 import { createReportInheritance } from "../../report/core/report-inheritance.ts"
+import { EMPTY_INPUT_LEDGER } from "./input-ledger.ts"
 import { restoredMessageEvents } from "./session-restore.ts"
 
 /** transcript のメッセージ列を、セッション1件の中身にする。列でなければ読めなかったものとして扱う。 */
@@ -30,7 +31,7 @@ export function toSessionDigest(
   const reportInheritance = createReportInheritance()
   const folded = messages.reduce<DigestFold>(
     (fold, message) =>
-      restoredMessageEvents(message, expressions)
+      restoredMessageEvents(message, expressions, EMPTY_INPUT_LEDGER)
         .map((event) => reportInheritance.pass(event))
         .reduce(foldEvent, fold),
     INITIAL_FOLD,

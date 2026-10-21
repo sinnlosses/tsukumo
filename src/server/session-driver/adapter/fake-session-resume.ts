@@ -3,6 +3,7 @@
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { RestoredEvent } from "../../../shared/session/session-event.ts"
+import { EMPTY_INPUT_LEDGER } from "../core/input-ledger.ts"
 import { worktreeNameOf, type SessionCatalog } from "../core/session-catalog.ts"
 import { readSessionMark } from "../core/session-mark.ts"
 import { toRestoredEvents } from "../core/session-restore.ts"
@@ -51,5 +52,5 @@ export function readFakeRestoredEvents(
   expressions: readonly Expression[],
 ): readonly RestoredEvent[] {
   const past = session.pastSessions.find((candidate) => candidate.sessionId === sessionId)
-  return past === undefined ? [] : toRestoredEvents(past.messages, expressions)
+  return past === undefined ? [] : toRestoredEvents(past.messages, expressions, EMPTY_INPUT_LEDGER)
 }

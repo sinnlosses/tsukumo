@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { EMPTY_INPUT_LEDGER } from "../../../../src/server/session-driver/core/input-ledger.ts"
 import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
 import { applyRestoredEvents } from "../../../../src/shared/session/restored-event.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
@@ -95,7 +96,7 @@ describe("toRestoredEvents（委譲の返却）", () => {
 
     const state = applyRestoredEvents(
       INITIAL_SESSION_STATE,
-      toRestoredEvents(messages, EXPRESSIONS),
+      toRestoredEvents(messages, EXPRESSIONS, EMPTY_INPUT_LEDGER),
       999,
     )
     const plans = state.records.filter((record) => record.kind === "work-plan")

@@ -1,34 +1,35 @@
 // transcript のメッセージ列から、画面の履歴（内部イベント）を組み直す。SDK を呼ばない純粋な部分だけをここに置く。
 //
 // 読み直す先は claude 自身が書いた transcript（正典）で、tsukumo 側にキャッシュもスナップショットも作らない。
+// transcript に残らない入力の種類とターンの終わり方だけは、入力の控え（`InputLedger`）から引く。
 // ここを通るのは会話の内容そのものなので、ログにもファイルにも出さない。
 
 import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
+import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
 import type { RestoredEvent, SessionEvent } from "../../../shared/session/session-event.ts"
 import { asideTextOf } from "./aside-prompt.ts"
 import { createCallReview } from "./call-review.ts"
+import type { InputLedger, LedgeredInputKind, LedgeredTurn } from "./input-ledger.ts"
 import { isProgressNudgePrompt } from "./progress-nudge.ts"
 import { toSessionEvents } from "./sdk-message.ts"
 
 /**
- * 組み直した履歴のターンの終わり。transcript には `result`（ターンの終わり）が残らないので、終わり方は分からない。
+ * 控えに終わり方の無いターンの終わり方。transcript には `result`（ターンの終わり）が残らない。
  * 完了（`completed`）に倒すのは、失敗の印を出すより「終わったこと」を伝えるほうが画面の意味に合うため（進行中に見えると入力欄が中断ボタンのまま止まる）。
  */
-const RESTORED_TURN_FINISHED: SessionEvent = {
-  kind: "turn-finished",
-  outcome: { kind: "completed" },
-}
+const UNLEDGERED_TURN_OUTCOME: TurnOutcome = { kind: "completed" }
 
 /**
  * transcript のメッセージ列を内部イベントに変える（メインビューのやり取りと吹き出しのセリフを組み直すため）。
  * メッセージ1件の形は SDK のイベントとほぼ同じなので、変換の本体は {@link toSessionEvents} に任せ、ここが足すのは transcript には残らないものだけ:
  *
  * - 委譲先の返却（`origin.handback` が真の `user` メッセージ）: 依頼にもイベントにもしない（`phase_result` で進んだ帯は戻さない）
- * - 利用者の依頼（`request`）と脇の話（`aside`）: 欄で利用者の入力と分かる `user` のテキストブロックから起こす（{@link requestText}）。脇の話は `asideTextOf` の包みで見分ける
- * - 続きのターンの始まり（`turn-resumed`）: バックグラウンドタスクの知らせの `user` メッセージと、進みの差し込み（`isProgressNudgePrompt` の包み）から起こす。差し込みは依頼にしない
- * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼・脇の話・続きのターンの手前と並びの末尾で区切る。時刻は直前の出来事のものを引き継ぐ
+ * - 利用者の依頼（`request`）と脇の話（`aside`）: 欄で利用者の入力と分かる `user` のテキストブロックから起こす（{@link requestText}）。
+ *   依頼・脇の話・進みの差し込みのどれかは、メッセージの `uuid` で控えを引いて決め、控えに無ければ包み（`asideTextOf`・`isProgressNudgePrompt`）で見分ける
+ * - 続きのターンの始まり（`turn-resumed`）: バックグラウンドタスクの知らせの `user` メッセージと、進みの差し込みから起こす。差し込みは依頼にしない
+ * - ターンの境目（`turn-finished`）: `result` が残らないので、次の依頼・脇の話・続きのターンの手前と並びの末尾で区切る（{@link boundedTurns}）。時刻は直前の出来事のものを引き継ぐ
  *
  * 出来事ごとの時刻は、元のメッセージの `timestamp`（読めなければ `unknown`）。
  * 読めない出来事の時刻は推し量らない。
@@ -40,42 +41,28 @@ const RESTORED_TURN_FINISHED: SessionEvent = {
 export function toRestoredEvents(
   messages: unknown,
   expressions: readonly Expression[],
+  ledger: InputLedger,
 ): readonly RestoredEvent[] {
   if (!Array.isArray(messages)) {
     return []
   }
 
-  const converted = messages.flatMap((message): readonly RestoredEvent[] => {
+  const steps = messages.flatMap((message): readonly RestoringStep[] => {
     const time = messageTime(message)
-    return restoredMessageEvents(message, expressions).map((event) => ({ event, time }))
+    const turn = ledger.turnOf(messageUuid(message) ?? "")
+    return restoredMessageEvents(message, expressions, ledger).map((event) => ({
+      event,
+      time,
+      turn,
+    }))
   })
-  // 最初の依頼より前には閉じるターンも、続きを始めるターンも無い。
-  const firstRequest = converted.findIndex(({ event }) => isTurnOpening(event))
-  const bounded = converted.flatMap((restored, index): readonly RestoredEvent[] => {
-    const afterFirst = firstRequest !== -1 && index > firstRequest
-    if (restored.event.kind === "turn-resumed" && !afterFirst) {
-      return []
-    }
-    return afterFirst && (isTurnOpening(restored.event) || restored.event.kind === "turn-resumed")
-      ? [
-          { event: RESTORED_TURN_FINISHED, time: converted[index - 1]?.time ?? restored.time },
-          restored,
-        ]
-      : [restored]
-  })
-  const closed =
-    firstRequest === -1
-      ? bounded
-      : [
-          ...bounded,
-          { event: RESTORED_TURN_FINISHED, time: converted.at(-1)?.time ?? UNKNOWN_TIME },
-        ]
-  return passThrough(closed, createCallReview().pass)
+  return passThrough(boundedTurns(steps), createCallReview().pass)
 }
 
 export function restoredMessageEvents(
   message: unknown,
   expressions: readonly Expression[],
+  ledger: InputLedger,
 ): readonly SessionEvent[] {
   if (isHandback(message)) {
     return []
@@ -87,15 +74,71 @@ export function restoredMessageEvents(
   if (text === undefined) {
     return toSessionEvents(message, expressions)
   }
-  if (isProgressNudgePrompt(text)) {
-    return [{ kind: "turn-resumed" }]
-  }
   // 組み直した依頼に画像は付かない。
-  // tsukumo は控えをディスクに残さず、原寸の棚もメモリだけで起こし直すと空になるので、読み直せるのは文面だけ。
-  const aside = asideTextOf(text)
-  return aside === undefined
-    ? [{ kind: "request", text, images: [] }]
-    : [{ kind: "aside", text: aside, images: [] }]
+  // tsukumo は画像の控えをディスクに残さず、原寸の棚もメモリだけで起こし直すと空になるので、読み直せるのは文面だけ。
+  switch (ledger.inputKindOf(messageUuid(message) ?? "") ?? kindByWrapping(text)) {
+    case "progress-nudge":
+      return [{ kind: "turn-resumed" }]
+    case "aside":
+      return [{ kind: "aside", text: asideTextOf(text) ?? text, images: [] }]
+    case "request":
+      return [{ kind: "request", text, images: [] }]
+  }
+}
+
+/** 組み直しの途中の出来事1件。`turn` は元のメッセージの uuid で控えから引いたターン。 */
+type RestoringStep = RestoredEvent & { readonly turn: LedgeredTurn | undefined }
+
+/**
+ * ターンの境目に `turn-finished` を挟む。
+ * 最初の依頼より前には閉じるターンも、続きを始めるターンも無い。
+ * 控えで同じターンと分かる入力（ターンの途中で送った脇の話）の手前には挟まない。
+ * 終わり方はそのターンで控えから引けたもので、引けなければ {@link UNLEDGERED_TURN_OUTCOME}。
+ */
+function boundedTurns(steps: readonly RestoringStep[]): readonly RestoredEvent[] {
+  let started = false
+  let current: LedgeredTurn | undefined = undefined
+  let lastTime: RestoredEvent["time"] = UNKNOWN_TIME
+  const finished = (time: RestoredEvent["time"]): RestoredEvent => ({
+    event: { kind: "turn-finished", outcome: current?.outcome ?? UNLEDGERED_TURN_OUTCOME },
+    time,
+  })
+
+  const bounded = steps.flatMap(({ event, time, turn }): readonly RestoredEvent[] => {
+    const opening = isTurnOpening(event)
+    const resumed = event.kind === "turn-resumed"
+    if (!started) {
+      if (resumed) {
+        return []
+      }
+      lastTime = time
+      if (opening) {
+        started = true
+        current = turn
+      }
+      return [{ event, time }]
+    }
+    const boundary = (opening || resumed) && (turn === undefined || turn !== current)
+    const closing = boundary ? [finished(lastTime)] : []
+    if (boundary || current === undefined) {
+      current = turn
+    }
+    lastTime = time
+    return [...closing, { event, time }]
+  })
+  return started ? [...bounded, finished(lastTime)] : bounded
+}
+
+/** 控えの無い入力の種類を、本文の包みで見分ける（控えの無い古いセッションと、控えに無い uuid）。 */
+function kindByWrapping(text: string): LedgeredInputKind {
+  if (isProgressNudgePrompt(text)) {
+    return "progress-nudge"
+  }
+  return asideTextOf(text) === undefined ? "request" : "aside"
+}
+
+function messageUuid(message: unknown): string | undefined {
+  return isPlainObject(message) && typeof message.uuid === "string" ? message.uuid : undefined
 }
 
 /** 委譲先の返却か。`origin.handback` が真の `user` メッセージ。 */

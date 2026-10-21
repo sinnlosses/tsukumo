@@ -1,5 +1,5 @@
 // 脇の話を claude へ送る文面の包みと、transcript から包みを読み戻す決まり。
-// 包みは claude が脇の話と分かる印で、組み直し（`toRestoredEvents`）が脇の話を見分ける唯一の手がかりでもある。
+// 包みは claude が脇の話と分かる印で、入力の控え（`InputLedger`）の無い入力を組み直し（`toRestoredEvents`）が脇の話と見分ける手がかりでもある。
 
 const ASIDE_OPEN = "<tsukumo-aside>"
 const ASIDE_CLOSE = "</tsukumo-aside>"

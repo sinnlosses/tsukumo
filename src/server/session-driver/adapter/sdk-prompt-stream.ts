@@ -1,6 +1,8 @@
 // SDK へ渡す依頼のストリーミング入力。依頼が届くたびに user メッセージを1つ流す。
 // 流す依頼には利用者の入力の印（`origin: { kind: "human" }`）を付ける。復元はこの欄で依頼を見分ける。
 
+import type { UUID } from "node:crypto"
+
 import type { SDKUserMessage } from "@anthropic-ai/claude-agent-sdk"
 
 import type { PromptDelayWatch } from "../core/prompt-delay.ts"
@@ -12,6 +14,8 @@ import type { PromptDelayWatch } from "../core/prompt-delay.ts"
 export type Prompt = {
   readonly text: string
   readonly images: readonly PromptContentBlock[]
+  /** 流す user メッセージの `uuid`。transcript の行の `uuid` にそのまま入り、入力の控えの鍵になる。 */
+  readonly uuid: UUID
 }
 
 /** user メッセージの内容ブロック1つ。`MessageParam` の型をそのまま使う（自前の型を作らない）。 */
@@ -73,6 +77,7 @@ export function createPromptStream(
           parent_tool_use_id: null,
           session_id: "",
           origin: { kind: "human" },
+          uuid: prompt.uuid,
         }
         delayWatch.written(now())
       }

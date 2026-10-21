@@ -23,6 +23,7 @@ import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { ReportGate } from "../../report/core/report-tool.ts"
 import { pinToBackground } from "../core/background-delegation.ts"
 import { rewriteBashCommand } from "../core/bash-command-rewrite.ts"
+import type { CallReview } from "../core/call-review.ts"
 import type { ExternalToolMark } from "../core/external-tool-mark.ts"
 import { judgePhaseResultCaller } from "../core/phase-result-tool.ts"
 import type { SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
@@ -182,24 +183,30 @@ export function preToolUseHooks(
  * `source` は SDK 0.3.288 の実測で常に undefined なので見ない。
  *
  * 注記を読む前に1回 macrotask を待つ（{@link preToolUseHooks} と同じく、返却を運ぶメッセージが `relayMessages` の反復へ渡るのを待つ）。
+ *
+ * フックの入力には返却を見分ける欄が無い（SDK 0.3.288 の実測で、`source` も `origin` も来ない）ので、見分けは包みの頭のまま。
+ * 頭の合わないメインの入力が届いたときに注記が溜まったままなら、包みの形が変わったとみて `reportHeadMismatch` を呼ぶ（注記は添えない）。
  */
 export function handbackNoteHooks(
-  takeHandbackNote: () => string,
+  review: Pick<CallReview, "takeHandbackNote" | "handbackNotePending">,
+  reportHeadMismatch: () => void,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     UserPromptSubmit: [
       {
         hooks: [
           async (input) => {
-            if (
-              input.hook_event_name !== "UserPromptSubmit" ||
-              input.agent_id !== undefined ||
-              !input.prompt.trimStart().startsWith(HANDBACK_PROMPT_HEAD)
-            ) {
+            if (input.hook_event_name !== "UserPromptSubmit" || input.agent_id !== undefined) {
               return {}
             }
             await setImmediate()
-            const note = takeHandbackNote()
+            if (!input.prompt.trimStart().startsWith(HANDBACK_PROMPT_HEAD)) {
+              if (review.handbackNotePending()) {
+                reportHeadMismatch()
+              }
+              return {}
+            }
+            const note = review.takeHandbackNote()
             return note === ""
               ? {}
               : {

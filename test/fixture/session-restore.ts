@@ -1,3 +1,7 @@
+import {
+  EMPTY_INPUT_LEDGER,
+  type InputLedger,
+} from "../../src/server/session-driver/core/input-ledger.ts"
 import { toRestoredEvents } from "../../src/server/session-driver/core/session-restore.ts"
 import type { Expression } from "../../src/shared/character-pack/expression.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
@@ -7,9 +11,12 @@ import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 // docs/architecture/overview-and-layer.md「1ファイル = 1つの境界」）。
 export const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
-/** 組み直した出来事だけを取り出す（時刻は見ない）。 */
-export function eventsOf(messages: unknown): readonly SessionEvent[] {
-  return toRestoredEvents(messages, EXPRESSIONS).map(({ event }) => event)
+/** 組み直した出来事だけを取り出す（時刻は見ない）。`ledger` を渡さなければ控えの無いセッションとして組む。 */
+export function eventsOf(
+  messages: unknown,
+  ledger: InputLedger = EMPTY_INPUT_LEDGER,
+): readonly SessionEvent[] {
+  return toRestoredEvents(messages, EXPRESSIONS, ledger).map(({ event }) => event)
 }
 
 export function stamped(message: unknown, timestamp: string): unknown {

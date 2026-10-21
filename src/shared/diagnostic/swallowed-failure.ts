@@ -24,6 +24,7 @@ const SWALLOWED_FAILURE_PLACES = {
     "lap-hook-failed",
     "lap-hook-timed-out",
     "lap-hook-not-started",
+    "handback-head-mismatch",
   ],
   "view-server": ["socket-message", "http-server-error", "instance-location-write"],
   chat: [
