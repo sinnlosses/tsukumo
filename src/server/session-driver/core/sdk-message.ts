@@ -76,12 +76,14 @@ import {
  *   運ぶのは型の決まった値（エラーの列挙値・HTTP の状態コード・回数・待ち時間・枠・戻る時刻）だけ。
  *   `result` の `errors` は運ばない（自由文で、会話の断片が混ざりうる）。
  *   `error` の付いた `assistant` の本文は本文として流す（出力の上限で切れた本物の本文のこともあり、Claude Code が作った API エラーの文面と見分ける印が型に無い）
- * - `result` の終わり方は `outcome` に畳む（{@link turnOutcome}。中断は失敗にしない）
+ * - `result` の終わり方は `outcome` に畳む（{@link turnOutcome}）。`interruptSent` は、そのターンに tsukumo が中断を送ったか。
+ *   transcript から組み直すときは送った事実を知らないので false（既定）
  * - 知らない `type`・壊れた形は空の並びを返す（落ちない）
  */
 export function toSessionEvents(
   message: unknown,
   expressions: readonly Expression[],
+  interruptSent = false,
 ): readonly SessionEvent[] {
   if (!isPlainObject(message) || typeof message.type !== "string") {
     return []
@@ -130,7 +132,7 @@ export function toSessionEvents(
       return optionalString(message.parent_tool_use_id) === undefined
         ? [
             ...tokenUsageEvents(message.modelUsage),
-            { kind: "turn-finished", outcome: turnOutcome(message) },
+            { kind: "turn-finished", outcome: turnOutcome(message, interruptSent) },
           ]
         : []
     case "conversation_reset":

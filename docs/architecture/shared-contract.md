@@ -60,7 +60,9 @@
 - `result` は API のエラーの種類を持たないので、**種類を足すのは畳み込み**（そのターンの `api-error`、
   無ければ最後の `api-retry`、どちらも無ければ `unknown`）。変換（`sdk-message.ts`）は状態を持たない
   1メッセージ1変換のまま保つ
-- **中断は失敗にしない**（`error_during_execution` は、`terminal_reason` が中断か無いときは `interrupted`）
+- **中断は失敗にしない**（`error_during_execution` は、`terminal_reason` が中断なら `interrupted`。
+  `terminal_reason` が無いときは、tsukumo がそのターンに中断を送っていたときだけ `interrupted`、送っていなければ失敗。
+  transcript から組み直すときは送った事実が分からないので、理由の無いものは失敗になる）
 - **運ぶのは型の決まった値だけ**で、`result` の `errors` の自由文は契約に入れない（`docs/requirements.md` 4.1）
 
 ### SessionState

@@ -359,20 +359,36 @@ describe("toSessionEvents", () => {
     ])
   })
 
-  // 中断されたターンはこの subtype で終わる（実測）。`terminal_reason` を載せない古い Claude Code でも
-  // 中断を失敗と出さない。
-  it("result の error_during_execution は、中断の terminal_reason か無いときは中断にする", () => {
+  it("result の error_during_execution は、理由が無くても中断を送ったターンなら中断にする", () => {
+    const message = { type: "result", subtype: "error_during_execution" }
+
+    expect(toSessionEvents(message, EXPRESSIONS, true)).toEqual([
+      { kind: "turn-finished", outcome: { kind: "interrupted" } },
+    ])
+  })
+
+  it("result の error_during_execution は、理由が無く中断を送っていないなら失敗にする", () => {
+    const message = { type: "result", subtype: "error_during_execution" }
+
+    expect(toSessionEvents(message, EXPRESSIONS, false)).toEqual([
+      { kind: "turn-finished", outcome: { kind: "failed", cause: { kind: "execution-error" } } },
+    ])
+  })
+
+  it("result の error_during_execution は、中断の terminal_reason なら送ったかによらず中断にする", () => {
     const messages = [
-      { type: "result", subtype: "error_during_execution" },
       { type: "result", subtype: "error_during_execution", terminal_reason: "aborted_streaming" },
       { type: "result", subtype: "error_during_execution", terminal_reason: "aborted_tools" },
     ]
 
-    expect(messages.flatMap((message) => toSessionEvents(message, EXPRESSIONS))).toEqual([
-      { kind: "turn-finished", outcome: { kind: "interrupted" } },
-      { kind: "turn-finished", outcome: { kind: "interrupted" } },
-      { kind: "turn-finished", outcome: { kind: "interrupted" } },
-    ])
+    for (const interruptSent of [true, false]) {
+      expect(
+        messages.flatMap((message) => toSessionEvents(message, EXPRESSIONS, interruptSent)),
+      ).toEqual([
+        { kind: "turn-finished", outcome: { kind: "interrupted" } },
+        { kind: "turn-finished", outcome: { kind: "interrupted" } },
+      ])
+    }
   })
 
   it("知らない種別は無視する（種別は Claude Code の更新で増える）", () => {

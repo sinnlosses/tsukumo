@@ -11,7 +11,7 @@ import type { ApiErrorKind } from "./api-trouble.ts"
  * - `api-error`: API のエラーで止まった（`result` の `success` で `is_error` が true）
  * - `max-turns`: 往復の上限に当たった（`error_max_turns`）
  * - `max-budget`: 予算の上限に当たった（`error_max_budget_usd`）
- * - `execution-error`: 実行中のエラー（中断でない `error_during_execution` と、知らない種別）
+ * - `execution-error`: 実行中のエラー（中断でない `error_during_execution`〔理由が無く、中断を送っていないターンを含む〕と、知らない種別）
  */
 export type TurnFailureCause =
   | { readonly kind: "api-error" }
@@ -24,7 +24,7 @@ export type TurnFailureCause =
  *
  * - `completed`: 終わった（`result` の `success`）
  * - `interrupted`: 途中で止まったが、失敗ではない
- *   （中断。止まった理由が分からない `error_during_execution` もここ。中断がいちばん多く、失敗と言い切れないため）
+ *   （中断。`error_during_execution` は、`terminal_reason` が中断か、理由が無く tsukumo が中断を送ったターンのときここ）
  * - `failed`: 失敗で終わった。理由は {@link TurnFailureCause}
  */
 export type TurnOutcome =

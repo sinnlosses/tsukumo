@@ -17,20 +17,18 @@ import { asidePromptText } from "../core/aside-prompt.ts"
 import { type CallReview, createCallReview, passRelayedEvents } from "../core/call-review.ts"
 import { createClearAndSend } from "../core/clear-and-send.ts"
 import { createExternalToolMark } from "../core/external-tool-mark.ts"
+import { createInterruptMark, type InterruptMark } from "../core/interrupt-mark.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
-import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { createProgressNudge, progressNudgePromptText } from "../core/progress-nudge.ts"
 import { createPromptDelayWatch, type PromptDelayWatch } from "../core/prompt-delay.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { isSubagentMessage, toSessionEvents } from "../core/sdk-message.ts"
-import { toCommandDescriptions, toModelEffortSupport, toPlan } from "../core/sdk-query-reply.ts"
 import { withSelfStartedTurns } from "../core/self-started-turn.ts"
 import type { SessionDriver, SessionDriverOptions } from "../core/session-driver.ts"
 import { createSessionEnding } from "../core/session-ending.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
 import { TSUKUMO_MCP_SERVER_NAME } from "../core/tsukumo-tool-name.ts"
 import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
-import { readClaudeAccountTier } from "./claude-account.ts"
 import { rewriteWithRtk } from "./rtk-rewrite.ts"
 import { runAskGuard, withAskGuard } from "./sdk-ask-guard.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
@@ -43,6 +41,11 @@ import {
   preToolUseHooks,
   stopHooks,
 } from "./sdk-query-seed.ts"
+import {
+  relayCommandDescriptions,
+  relayPlan,
+  relaySupportedModels,
+} from "./sdk-session-metadata.ts"
 import {
   createSessionTitleWriter,
   createSessionDigestReader,
@@ -161,8 +164,11 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     },
   })
 
+  const interruptMark = createInterruptMark()
+
   // 依頼も差し戻しに見せる（新しい事実の届いた印。`CallReview`）。
   const emitTurnOpening = (event: SessionEvent): void => {
+    interruptMark.observe(event)
     externalToolMark.observe(event)
     for (const passed of callReview.pass(event)) {
       options.onEvent(passed)
@@ -186,7 +192,16 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   }
 
   void applyNeutralOutputStyle(session)
-  void relayMessages(session, options, reportGate, callReview, titleIntake, titleWriter, delayWatch)
+  void relayMessages(
+    session,
+    options,
+    reportGate,
+    callReview,
+    titleIntake,
+    titleWriter,
+    delayWatch,
+    interruptMark,
+  )
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
   void relaySupportedModels(session, options)
@@ -214,6 +229,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     },
     interrupt: async () => {
       delayWatch.discard()
+      interruptMark.send()
       await session.interrupt()
     },
     answer: (id, answer) => queue.answer(id, answer),
@@ -314,6 +330,7 @@ async function relayMessages(
   titleIntake: SessionTitleIntake,
   titleWriter: SessionTitleWriter,
   delayWatch: PromptDelayWatch,
+  interruptMark: InterruptMark,
 ): Promise<void> {
   // セッションIDは `session-info`（ターンのたびに届く）から取り、ターンが終わるたびに印を付け直す（`markSession`）。
   let sessionId: string | undefined = undefined
@@ -327,7 +344,11 @@ async function relayMessages(
       if (fromMain && isVisibleOutputNudge(message)) {
         process.stderr.write(VISIBLE_OUTPUT_NUDGE_NOTICE)
       }
-      const converted = toSessionEvents(message, toExpressionNames(options.expressions))
+      const converted = toSessionEvents(
+        message,
+        toExpressionNames(options.expressions),
+        interruptMark.sent(),
+      )
       const events = passRelayedEvents(callReview, converted, fromMain)
       for (const event of events) {
         if (fromMain) {
@@ -336,6 +357,7 @@ async function relayMessages(
         if (event.kind === "session-info") {
           sessionId = event.sessionId
         }
+        interruptMark.observe(event)
         if (event.kind === "turn-finished") {
           // 1ターンに書けるのは1行、引けるのは recall / recall_episode それぞれ決めた回数まで。
           // ターンの区切りを知っているのはここだけなので、終わるたびに次の1行・次の回数を受け付けさせる。
@@ -383,69 +405,6 @@ async function applyNeutralOutputStyle(session: {
     await session.applyFlagSettings({ outputStyle: "default" })
   } catch {
     // 中立に戻せなかっただけなので、何も流さずに諦める。
-  }
-}
-
-/**
- * コマンドの説明を1回だけ取りに行く。
- * `init` の `slash_commands` は名前だけなので、説明はこの制御リクエストから受け取る（組み込みコマンドの分も返る）。
- * 以降セッション中に増減したときは `commands_changed` が押してくる（`toCommandDescriptions`）。
- * 取れなくてもセッションは続ける（説明が無いまま名前だけの補完に戻るだけ）。
- */
-async function relayCommandDescriptions(
-  session: { readonly supportedCommands: () => Promise<unknown> },
-  options: SessionDriverOptions,
-): Promise<void> {
-  try {
-    const descriptions = toCommandDescriptions(await session.supportedCommands())
-    if (descriptions.length > 0) {
-      options.onEvent({ kind: "command-descriptions", descriptions })
-    }
-  } catch {
-    // 説明が付かないだけなので、何も流さずに諦める。
-  }
-}
-
-/**
- * プランを1回だけ取りに行く。
- * `accountInfo()` は `email` / `organization` も返すが、駆動の外へ出すのは `toPlan` が取り出した `subscriptionType` だけ。
- *
- * 名前は Claude Code の控えを先に見て決める（`planName`）。
- * SDK の `subscriptionType` は契約の段と合わないことがあり、控えのほうが段と枠を別々に持つ。
- * 控えから決まらなければ SDK の値をそのまま出す。
- *
- * 取れなくてもセッションは続ける（API キーや Bedrock のときは元々この値が無い）。
- */
-async function relayPlan(
-  session: { readonly accountInfo: () => Promise<unknown> },
-  options: SessionDriverOptions,
-  readTier: () => ClaudeAccountTier = () => readClaudeAccountTier(options.claudeConfigDir),
-): Promise<void> {
-  try {
-    const plan = planName(readTier(), toPlan(await session.accountInfo()))
-    if (plan !== undefined) {
-      options.onEvent({ kind: "plan", plan })
-    }
-  } catch {
-    // プランが取れないだけなので、何も流さずに諦める。
-  }
-}
-
-/**
- * モデルごとの effort の対応（`ModelEffortSupport`）を `supportedModels()` から1回だけ取りに行く。
- * 取れなくても・空でもセッションは続ける（画面は effort を「対応するかどうか分からない」のまま扱うだけ）。
- */
-async function relaySupportedModels(
-  session: { readonly supportedModels: () => Promise<unknown> },
-  options: SessionDriverOptions,
-): Promise<void> {
-  try {
-    const models = toModelEffortSupport(await session.supportedModels())
-    if (models.length > 0) {
-      options.onEvent({ kind: "model-effort-support", models })
-    }
-  } catch {
-    // 対応が取れないだけなので、何も流さずに諦める。
   }
 }
 
