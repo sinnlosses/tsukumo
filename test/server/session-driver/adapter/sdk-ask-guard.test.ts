@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest"
 
 import { withAskGuard } from "../../../../src/server/session-driver/adapter/sdk-ask-guard.ts"
+import type { WorkflowTwResult } from "../../../../src/server/session-driver/adapter/sdk-workflow-tw.ts"
+import type { WorkflowTwFailurePlace } from "../../../../src/server/session-driver/core/session-driver.ts"
+
+function ok(stdout: string): WorkflowTwResult {
+  return { kind: "ok", stdout }
+}
 
 const DENY = {
   hookSpecificOutput: {
@@ -22,8 +28,12 @@ function inputOf(toolName: string, eventName = "PreToolUse") {
   }
 }
 
-async function callWith(run: (stdin: string) => Promise<string>, input: unknown): Promise<unknown> {
-  const matcher = withAskGuard({}, false, run).PreToolUse?.find(
+async function callWith(
+  run: (stdin: string) => Promise<WorkflowTwResult>,
+  input: unknown,
+  report: (place: WorkflowTwFailurePlace) => void = () => {},
+): Promise<unknown> {
+  const matcher = withAskGuard({}, false, run, report).PreToolUse?.find(
     (entry) => entry.matcher === "AskUserQuestion",
   )
   expect(matcher?.matcher).toBe("AskUserQuestion")
@@ -37,31 +47,50 @@ describe("withAskGuard の AskUserQuestion の hook", () => {
     const input = inputOf("AskUserQuestion")
     const result = await callWith(async (stdin) => {
       received.push(stdin)
-      return JSON.stringify(DENY)
+      return ok(JSON.stringify(DENY))
     }, input)
     expect(result).toEqual(DENY)
     expect(received.map((stdin) => JSON.parse(stdin))).toEqual([input])
   })
 
   it.each([
-    ["空の出力", async () => ""],
-    ["読めない出力", async () => "not json"],
+    ["空の出力", async () => ok(""), undefined],
     [
       "deny でない出力",
-      async () => JSON.stringify({ hookSpecificOutput: { permissionDecision: "allow" } }),
+      async () => ok(JSON.stringify({ hookSpecificOutput: { permissionDecision: "allow" } })),
+      undefined,
+    ],
+    ["読めない出力", async () => ok("not json"), "ask-guard-unreadable"],
+    ["失敗", async () => ({ kind: "failed" }) satisfies WorkflowTwResult, "ask-guard-failed"],
+    [
+      "時間切れ",
+      async () => ({ kind: "timed-out" }) satisfies WorkflowTwResult,
+      "ask-guard-timed-out",
+    ],
+    [
+      "起動できない",
+      async () => ({ kind: "not-started" }) satisfies WorkflowTwResult,
+      "ask-guard-not-started",
     ],
     [
       "例外",
-      async () => {
+      async (): Promise<WorkflowTwResult> => {
         throw new Error("boom")
       },
+      "ask-guard-failed",
     ],
-  ])("%sは何も拒まない", async (_name, run) => {
-    expect(await callWith(run, inputOf("AskUserQuestion"))).toEqual({})
+  ])("%sは何も拒まず、足跡は必要なときだけ1件", async (_name, run, place) => {
+    const reported: WorkflowTwFailurePlace[] = []
+    expect(
+      await callWith(run, inputOf("AskUserQuestion"), (reportedPlace) => {
+        reported.push(reportedPlace)
+      }),
+    ).toEqual({})
+    expect(reported).toEqual(place === undefined ? [] : [place])
   })
 
   it("AskUserQuestion 以外のツールと PreToolUse 以外のイベントでは子を呼ばない", async () => {
-    const run = vi.fn(async () => JSON.stringify(DENY))
+    const run = vi.fn(async () => ok(JSON.stringify(DENY)))
     expect(await callWith(run, inputOf("Bash"))).toEqual({})
     expect(await callWith(run, inputOf("AskUserQuestion", "PostToolUse"))).toEqual({})
     expect(run).toHaveBeenCalledTimes(0)
@@ -73,14 +102,14 @@ describe("withAskGuard", () => {
     PreToolUse: [{ hooks: [async () => ({})] }],
     Stop: [{ hooks: [async () => ({})] }],
   }
-  const run = async () => ""
+  const run = async () => ok("")
 
   it("載せるときは表を変えない", () => {
-    expect(withAskGuard(base, true, run)).toBe(base)
+    expect(withAskGuard(base, true, run, () => {})).toBe(base)
   })
 
   it("載せないときは PreToolUse の後ろに AskUserQuestion の matcher を足し、他のキーと元の表は変えない", () => {
-    const merged = withAskGuard(base, false, run)
+    const merged = withAskGuard(base, false, run, () => {})
     expect(merged.PreToolUse?.map((entry) => entry.matcher)).toEqual([undefined, "AskUserQuestion"])
     expect(merged.Stop).toBe(base.Stop)
     expect(base.PreToolUse).toHaveLength(1)

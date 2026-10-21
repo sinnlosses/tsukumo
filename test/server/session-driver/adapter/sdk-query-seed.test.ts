@@ -30,6 +30,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   now: () => 0,
   reportPromptDelay: () => {},
   reportUsageFailure: () => {},
+  reportWorkflowTwFailure: () => {},
 }
 
 describe("buildQuerySeedOptions", () => {

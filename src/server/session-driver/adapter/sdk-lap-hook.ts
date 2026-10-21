@@ -4,12 +4,18 @@
 
 import type { HookCallback, HookCallbackMatcher, HookEvent } from "@anthropic-ai/claude-agent-sdk"
 
-import { runWorkflowTw, WORKFLOW_TW_TIMEOUT_MS, workflowTwPath } from "./sdk-workflow-tw.ts"
+import type { WorkflowTwFailurePlace } from "../core/session-driver.ts"
+import {
+  runWorkflowTw,
+  WORKFLOW_TW_TIMEOUT_MS,
+  type WorkflowTwResult,
+  workflowTwPath,
+} from "./sdk-workflow-tw.ts"
 
 const SKILL_TOOL = "Skill"
 
-/** hook の入力 JSON を標準入力に渡して `lap-hook` を走らせる。失敗・タイムアウトは空文字列。 */
-export function runLapHook(stdin: string): Promise<string> {
+/** hook の入力 JSON を標準入力に渡して `lap-hook` を走らせる。 */
+export function runLapHook(stdin: string): Promise<WorkflowTwResult> {
   return runWorkflowTw({
     twPath: workflowTwPath(),
     subcommand: "lap-hook",
@@ -22,16 +28,18 @@ export function runLapHook(stdin: string): Promise<string> {
  * 取り込んだワークフローを載せないとき（`mountWorkflowPlugin` が偽）だけ、
  * `SubagentStart` と `PreToolUse` の `Skill` に `lap-hook` の matcher を足した表を返す。
  * 載せるときは plugin の `hooks/hooks.json` が同じ判定をするので、`base` をそのまま返す。
+ * 子が失敗して段の記録が残らなかったときは、`report` に場所を渡す。
  */
 export function withLapHook(
   base: Partial<Record<HookEvent, HookCallbackMatcher[]>>,
   mountWorkflowPlugin: boolean,
-  run: (stdin: string) => Promise<string>,
+  run: (stdin: string) => Promise<WorkflowTwResult>,
+  report: (place: WorkflowTwFailurePlace) => void,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   if (mountWorkflowPlugin) {
     return base
   }
-  const hook = lapHook(run)
+  const hook = lapHook(run, report)
   return {
     ...base,
     PreToolUse: [...(base.PreToolUse ?? []), { matcher: SKILL_TOOL, hooks: [hook] }],
@@ -39,12 +47,18 @@ export function withLapHook(
   }
 }
 
-function lapHook(run: (stdin: string) => Promise<string>): HookCallback {
+function lapHook(
+  run: (stdin: string) => Promise<WorkflowTwResult>,
+  report: (place: WorkflowTwFailurePlace) => void,
+): HookCallback {
   return async (input) => {
     try {
-      await run(JSON.stringify(input))
+      const result = await run(JSON.stringify(input))
+      if (result.kind !== "ok") {
+        report(`lap-hook-${result.kind}`)
+      }
     } catch {
-      // 子の失敗では会話を止めない。
+      report("lap-hook-failed")
     }
     return {}
   }

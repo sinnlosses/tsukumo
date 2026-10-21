@@ -142,9 +142,11 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           },
           options.mountWorkflowPlugin,
           runAskGuard,
+          options.reportWorkflowTwFailure,
         ),
         options.mountWorkflowPlugin,
         runLapHook,
+        options.reportWorkflowTwFailure,
       ),
       mcpServers: {
         [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(

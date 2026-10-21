@@ -248,6 +248,9 @@ function startDriver(options: {
     reportUsageFailure: (place, error) => {
       options.reportFailure({ feature: "session", place }, error)
     },
+    reportWorkflowTwFailure: (place) => {
+      options.reportFailure({ feature: "session", place }, undefined)
+    },
   })
 }
 

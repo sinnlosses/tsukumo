@@ -17,6 +17,13 @@ const SWALLOWED_FAILURE_PLACES = {
     "restore-events",
     "event-handler",
     "session-claim",
+    "ask-guard-failed",
+    "ask-guard-timed-out",
+    "ask-guard-not-started",
+    "ask-guard-unreadable",
+    "lap-hook-failed",
+    "lap-hook-timed-out",
+    "lap-hook-not-started",
   ],
   "view-server": ["socket-message", "http-server-error"],
   chat: [

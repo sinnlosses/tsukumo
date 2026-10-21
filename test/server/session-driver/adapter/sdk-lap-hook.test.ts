@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest"
 
 import { withLapHook } from "../../../../src/server/session-driver/adapter/sdk-lap-hook.ts"
+import type { WorkflowTwResult } from "../../../../src/server/session-driver/adapter/sdk-workflow-tw.ts"
+import type { WorkflowTwFailurePlace } from "../../../../src/server/session-driver/core/session-driver.ts"
+
+function ok(stdout: string): WorkflowTwResult {
+  return { kind: "ok", stdout }
+}
 
 const SUBAGENT_START_INPUT = {
   session_id: "s-1",
@@ -26,11 +32,12 @@ const DENY = JSON.stringify({
 })
 
 async function callWith(
-  run: (stdin: string) => Promise<string>,
+  run: (stdin: string) => Promise<WorkflowTwResult>,
   event: "SubagentStart" | "PreToolUse",
   input: unknown,
+  report: (place: WorkflowTwFailurePlace) => void = () => {},
 ): Promise<unknown> {
-  const hooks = withLapHook({}, false, run)
+  const hooks = withLapHook({}, false, run, report)
   const matcher =
     event === "SubagentStart"
       ? hooks.SubagentStart?.[0]
@@ -49,7 +56,7 @@ describe("withLapHook の hook", () => {
     const result = await callWith(
       async (stdin) => {
         received.push(stdin)
-        return ""
+        return ok("")
       },
       event,
       input,
@@ -58,18 +65,44 @@ describe("withLapHook の hook", () => {
     expect(received.map((stdin) => JSON.parse(stdin))).toEqual([input])
   })
 
+  it("deny の形の出力でも結果は空で、子の出力を写さず、足跡も残さない", async () => {
+    const reported: WorkflowTwFailurePlace[] = []
+    const report = (place: WorkflowTwFailurePlace) => {
+      reported.push(place)
+    }
+    expect(
+      await callWith(async () => ok(DENY), "SubagentStart", SUBAGENT_START_INPUT, report),
+    ).toEqual({})
+    expect(await callWith(async () => ok(DENY), "PreToolUse", SKILL_INPUT, report)).toEqual({})
+    expect(reported).toEqual([])
+  })
+
   it.each([
-    ["失敗・タイムアウトの空の出力", async () => ""],
-    ["deny の形の出力", async () => DENY],
+    ["失敗", async () => ({ kind: "failed" }) satisfies WorkflowTwResult, "lap-hook-failed"],
+    [
+      "時間切れ",
+      async () => ({ kind: "timed-out" }) satisfies WorkflowTwResult,
+      "lap-hook-timed-out",
+    ],
+    [
+      "起動できない",
+      async () => ({ kind: "not-started" }) satisfies WorkflowTwResult,
+      "lap-hook-not-started",
+    ],
     [
       "例外",
-      async () => {
+      async (): Promise<WorkflowTwResult> => {
         throw new Error("boom")
       },
+      "lap-hook-failed",
     ],
-  ])("%sでも結果は空で、子の出力を写さない", async (_name, run) => {
-    expect(await callWith(run, "SubagentStart", SUBAGENT_START_INPUT)).toEqual({})
-    expect(await callWith(run, "PreToolUse", SKILL_INPUT)).toEqual({})
+  ])("%sでも結果は空で、足跡が1件残る", async (_name, run, place) => {
+    const reported: WorkflowTwFailurePlace[] = []
+    const result = await callWith(run, "SubagentStart", SUBAGENT_START_INPUT, (reportedPlace) => {
+      reported.push(reportedPlace)
+    })
+    expect(result).toEqual({})
+    expect(reported).toEqual([place])
   })
 })
 
@@ -78,17 +111,17 @@ describe("withLapHook", () => {
     PreToolUse: [{ matcher: "AskUserQuestion", hooks: [async () => ({})] }],
     Stop: [{ hooks: [async () => ({})] }],
   }
-  const run = async () => ""
+  const run = async () => ok("")
 
   it("載せるときは表を変えず、SubagentStart も Skill の matcher も足さない", () => {
-    const merged = withLapHook(base, true, run)
+    const merged = withLapHook(base, true, run, () => {})
     expect(merged).toBe(base)
     expect(merged.SubagentStart).toBeUndefined()
     expect(merged.PreToolUse?.map((entry) => entry.matcher)).toEqual(["AskUserQuestion"])
   })
 
   it("載せないときは PreToolUse の後ろに Skill の matcher を、SubagentStart に matcher なしの1件を足し、他のキーと元の表は変えない", () => {
-    const merged = withLapHook(base, false, run)
+    const merged = withLapHook(base, false, run, () => {})
     expect(merged.PreToolUse?.map((entry) => entry.matcher)).toEqual(["AskUserQuestion", "Skill"])
     expect(merged.SubagentStart?.map((entry) => entry.matcher)).toEqual([undefined])
     expect(merged.Stop).toBe(base.Stop)

@@ -226,7 +226,19 @@ export type SessionDriverOptions = {
   readonly reportPromptDelay: (footprint: PromptDelayFootprint) => void
   /** 文脈・プラン使用量を「取れない」に畳んだ理由を診断ログへ書く口。ここで例外を投げないこと。 */
   readonly reportUsageFailure: (place: UsageFailurePlace, error: unknown) => void
+  /** 取り込んだ `tw` の hook が失敗して何もしなかったことを診断ログへ書く口。ここで例外を投げないこと。 */
+  readonly reportWorkflowTwFailure: (place: WorkflowTwFailurePlace) => void
 }
+
+/** `tw` の hook を走らせて失敗した場所。サブコマンド名と失敗の種類だけで、入出力は持たない。 */
+export type WorkflowTwFailurePlace =
+  | "ask-guard-failed"
+  | "ask-guard-timed-out"
+  | "ask-guard-not-started"
+  | "ask-guard-unreadable"
+  | "lap-hook-failed"
+  | "lap-hook-timed-out"
+  | "lap-hook-not-started"
 
 /** 使用量の問い合わせを「取れない」に畳んだ場所。 */
 export type UsageFailurePlace =

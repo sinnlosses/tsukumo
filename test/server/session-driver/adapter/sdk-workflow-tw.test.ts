@@ -29,22 +29,26 @@ describe("runWorkflowTw", () => {
 
     expect(
       await runWorkflowTw({ twPath, subcommand: "lap-hook", stdin: '{"a":1}', timeoutMs: 5000 }),
-    ).toBe('lap-hook:{"a":1}')
+    ).toEqual({ kind: "ok", stdout: 'lap-hook:{"a":1}' })
   })
 
-  it("0 以外で終わると空文字列", async () => {
+  it("0 以外で終わると failed で、標準出力は返さない", async () => {
     const twPath = await twScript("echo out; exit 3")
 
-    expect(await runWorkflowTw({ twPath, subcommand: "x", stdin: "", timeoutMs: 5000 })).toBe("")
+    expect(await runWorkflowTw({ twPath, subcommand: "x", stdin: "", timeoutMs: 5000 })).toEqual({
+      kind: "failed",
+    })
   })
 
-  it("タイムアウトすると空文字列", async () => {
+  it("タイムアウトすると timed-out", async () => {
     const twPath = await twScript("sleep 5; echo late")
 
-    expect(await runWorkflowTw({ twPath, subcommand: "x", stdin: "", timeoutMs: 200 })).toBe("")
+    expect(await runWorkflowTw({ twPath, subcommand: "x", stdin: "", timeoutMs: 200 })).toEqual({
+      kind: "timed-out",
+    })
   })
 
-  it("実行ファイルが無いと空文字列", async () => {
+  it("実行ファイルが無いと not-started", async () => {
     expect(
       await runWorkflowTw({
         twPath: join(dir, "missing"),
@@ -52,6 +56,6 @@ describe("runWorkflowTw", () => {
         stdin: "{}",
         timeoutMs: 5000,
       }),
-    ).toBe("")
+    ).toEqual({ kind: "not-started" })
   })
 })
