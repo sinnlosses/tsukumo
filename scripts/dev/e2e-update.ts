@@ -49,13 +49,13 @@ if (argument.kind === "help") {
 }
 
 async function chooseTarget(
-  argument: Exclude<E2eUpdateArgument, { kind: "help" } | { kind: "unknown" }>,
+  chosen: Exclude<E2eUpdateArgument, { kind: "help" } | { kind: "unknown" }>,
 ): Promise<UpdateTarget> {
-  if (argument.kind === "full") {
+  if (chosen.kind === "full") {
     return { kind: "all" }
   }
-  if (argument.kind === "files") {
-    return { kind: "files", files: argument.files }
+  if (chosen.kind === "files") {
+    return { kind: "files", files: chosen.files }
   }
   const changedPaths = collectChangedPaths(ROOT, PRIMARY_BRANCH)
   const { selection, total } = readE2eSelection(ROOT, changedPaths)

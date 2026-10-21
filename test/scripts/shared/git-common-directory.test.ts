@@ -36,6 +36,6 @@ describe("git の共通ディレクトリ", () => {
   })
 
   test("リポジトリの外では例外を投げる", () => {
-    expect(() => readGitCommonDirectory(realpathSync(tempDir()))).toThrow()
+    expect(() => readGitCommonDirectory(realpathSync(tempDir()))).toThrow("git rev-parse")
   })
 })

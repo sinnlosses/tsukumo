@@ -39,7 +39,7 @@ describe("matchingFilePaths", () => {
 
   it("前方一致が上限を超えるときは、辞書順の先頭から上限まで", () => {
     const many = Array.from({ length: 30 }, (_, index) => `a-${String(99 - index)}.ts`)
-    const expected = [...many].sort().slice(0, MAX_SUGGESTIONS)
+    const expected = many.toSorted().slice(0, MAX_SUGGESTIONS)
 
     expect(match([...many, "x/a-.ts"], "a-")).toEqual(expected)
   })
@@ -50,6 +50,6 @@ describe("matchingFilePaths", () => {
 
     expect(result).toHaveLength(MAX_SUGGESTIONS)
     expect(result[0]).toBe("sub-first.ts")
-    expect(result.slice(1)).toEqual([...partial].sort().slice(0, MAX_SUGGESTIONS - 1))
+    expect(result.slice(1)).toEqual(partial.toSorted().slice(0, MAX_SUGGESTIONS - 1))
   })
 })

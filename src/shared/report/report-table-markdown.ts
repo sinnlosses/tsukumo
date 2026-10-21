@@ -30,7 +30,6 @@ export function tableMarkdown(
   table: Extract<ReportBlock, { readonly kind: "table" }>,
   ordinal: number,
 ): string {
-  const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`
   const aligns = table.columns.map((_, index) => columnAlign(table.rows, index))
   const bars = table.columns.map((_, index) => columnBar(table.rows, index))
   const statusColumns = table.columns.map((_, index) =>
@@ -47,9 +46,9 @@ export function tableMarkdown(
     body: joinParts([
       tableStatusLegendMarkdown(table),
       [
-        row(table.columns.map((column) => cellMarkdown(column, NO_BAR))),
-        row(aligns.map(alignMarker)),
-        ...table.rows.map((cells) => row(cells.map(bodyCellMarkdown))),
+        markdownRow(table.columns.map((column) => cellMarkdown(column, NO_BAR))),
+        markdownRow(aligns.map(alignMarker)),
+        ...table.rows.map((cells) => markdownRow(cells.map(bodyCellMarkdown))),
       ].join("\n"),
       table.rest.trim() === ""
         ? ""
@@ -68,12 +67,14 @@ type MatrixStatus = MatrixBlock["rows"][number]["cells"][number]
  * 印の名前は表の見出しの読み上げが担うので、`aria-label` は状態の語だけにする。
  */
 export function matrixMarkdown(block: MatrixBlock, ordinal: number): string {
-  const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`
   const grid = [
-    row(["", ...block.columns.map(cellTextMarkdown)]),
-    row(["---", ...block.columns.map(() => ":---:")]),
+    markdownRow(["", ...block.columns.map(cellTextMarkdown)]),
+    markdownRow(["---", ...block.columns.map(() => ":---:")]),
     ...block.rows.map(({ name, cells }) =>
-      row([cellTextMarkdown(name), ...cells.map((status) => matrixMarkMarkdown(status, false))]),
+      markdownRow([
+        cellTextMarkdown(name),
+        ...cells.map((status) => matrixMarkMarkdown(status, false)),
+      ]),
     ),
   ].join("\n")
   const present = REPORT_MATRIX_STATUSES.filter((status) =>
@@ -225,4 +226,8 @@ function numericBarMarkdown(cell: string, max: number): string {
     "|",
     "\\|",
   )
+}
+
+function markdownRow(cells: readonly string[]): string {
+  return `| ${cells.join(" | ")} |`
 }

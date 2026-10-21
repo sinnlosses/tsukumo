@@ -59,14 +59,14 @@ describe("BottomSheet", () => {
   })
 
   it("Esc（<dialog> の close イベント）で onClose を呼ぶ", () => {
-    const onClose = vi.fn(() => {})
+    const onClose = vi.fn<() => void>()
     const dialog = renderSheet({ ...BASE_PROPS, onClose })
     fireEvent(dialog, new Event("close"))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it("覆い（<dialog> 自身へのクリック）で onClose を呼び、中身へのクリックでは呼ばない", () => {
-    const onClose = vi.fn(() => {})
+    const onClose = vi.fn<() => void>()
     const dialog = renderSheet({ ...BASE_PROPS, onClose })
     fireEvent.click(document.querySelector("p") ?? dialog)
     expect(onClose).not.toHaveBeenCalled()
@@ -75,7 +75,7 @@ describe("BottomSheet", () => {
   })
 
   it("つまみを一定以上下へ払うと onClose を呼び、わずかな動きでは呼ばない", () => {
-    const onClose = vi.fn(() => {})
+    const onClose = vi.fn<() => void>()
     renderSheet({ ...BASE_PROPS, onClose })
     const element = grip()
     element.setPointerCapture = () => {}

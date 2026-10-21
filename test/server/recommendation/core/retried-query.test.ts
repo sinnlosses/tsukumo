@@ -33,13 +33,13 @@ describe("runRetriedQuery", () => {
         60_000,
         5000,
       )
-      const settled = expect(outcome).rejects.toBe(checkFailure)
+      const settled = outcome.catch((error: unknown) => error)
       await vi.advanceTimersByTimeAsync(5000)
       expect(settles).toHaveLength(2)
       settles[0]?.("first")
       settles[1]?.("second")
 
-      await settled
+      expect(await settled).toBe(checkFailure)
     } finally {
       vi.useRealTimers()
     }

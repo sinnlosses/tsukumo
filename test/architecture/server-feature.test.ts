@@ -117,10 +117,14 @@ describe("server/ の機能どうしの import", () => {
     expect(layerOf("server/report/core/report-tool.ts")).toBe("core")
     expect(layerOf("server/core/config.ts")).toBe("core")
     expect(layerOf("server/adapter/lib/json-file.ts")).toBe("adapter")
-    expect(() => layerOf("server/unknown-feature/core/x.ts")).toThrow()
-    expect(() => layerOf("server/report/x.ts")).toThrow()
-    expect(() => layerOf("server/report/lib/x.ts")).toThrow()
-    expect(() => layerOf("server/x.ts")).toThrow()
+    expect(() => layerOf("server/unknown-feature/core/x.ts")).toThrow("の置き場を判定できない")
+    expect(() => layerOf("server/report/x.ts")).toThrow(
+      "機能 report の core/ か adapter/ の下に置く",
+    )
+    expect(() => layerOf("server/report/lib/x.ts")).toThrow(
+      "機能 report の core/ か adapter/ の下に置く",
+    )
+    expect(() => layerOf("server/x.ts")).toThrow("src/server/x.ts の置き場を判定できない")
   })
 
   it("循環の検出は、機能どうしの輪を見つける", () => {

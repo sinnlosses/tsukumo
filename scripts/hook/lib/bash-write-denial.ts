@@ -3,7 +3,7 @@
 // `sed -i`・`perl -i`、書き込みのリダイレクト・`tee`、作業ツリーの外からの `cp` / `mv`（画像のみは通す）、
 // Python と node のコード（`-c` / `-e`・heredoc・作業ツリーの外のスクリプトのファイル）での書き込み。
 // 書き先が作業ツリーの外と決まるものは当たらない。
-// `pnpm`・`git`・作業ツリーの中のスクリプトのように、ツールの中で書くものは判定にかけない。
+// `pnpm`・`git`・作業ツリーの中のスクリプトは、ツールの中で書くので判定にかけない。
 
 import { existsSync, readFileSync, statSync } from "node:fs"
 import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path"
@@ -171,8 +171,6 @@ function writeRuleOf(
   const locate = (word: ShellWord): Location => locatePath(word, directory, workRoot)
   const name = simple.argv[0] === undefined ? "" : baseName(simple.argv[0].text)
   const args = simple.argv.slice(1)
-  const writes = (denied: boolean, rule = "worktree-write"): string | undefined =>
-    denied ? rule : undefined
 
   if (name !== "[[" && simple.writes.some((word) => locate(word) !== "outside")) {
     return "worktree-write"
@@ -210,6 +208,10 @@ function editsInPlace(
     return false
   }
   return inPlaceTargets(args, options).some((word) => locate(word) !== "outside")
+}
+
+function writes(denied: boolean, rule = "worktree-write"): string | undefined {
+  return denied ? rule : undefined
 }
 
 /** `sed` / `perl` の引数のうち、書き換えるファイル。スクリプトを引数で渡さないときの先頭の語はスクリプトなので除く。 */

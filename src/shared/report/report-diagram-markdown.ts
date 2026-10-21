@@ -198,9 +198,6 @@ export function withSequenceAutonumber(source: string): string {
  */
 export function graphSource(block: ReportGraph): string {
   const { nodes, edges, groups } = readGraphSource(block.source)
-  const mermaidId = (index: number): string => `n${String(index)}`
-  const quoted = (label: string): string =>
-    `"${label.replaceAll('"', "#quot;").replaceAll("`", "#96;")}"`
   const nodeLine = (index: number, indent: string): string => {
     const node = nodes[index]
     if (node === undefined) {
@@ -294,6 +291,14 @@ export function graphLegendMarkdown(block: ReportGraph): string {
     ),
   ]
   return items.length === 0 ? "" : `<div class="graph-legend">${items.join("")}</div>`
+}
+
+function mermaidId(index: number): string {
+  return `n${String(index)}`
+}
+
+function quoted(label: string): string {
+  return `"${label.replaceAll('"', "#quot;").replaceAll("`", "#96;")}"`
 }
 
 /** 各値を（負を0に丸めた）合計に対する百分率にする。合計が0なら全部0。 */

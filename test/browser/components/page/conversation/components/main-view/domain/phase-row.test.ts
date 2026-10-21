@@ -159,7 +159,7 @@ describe("phaseRowsOf", () => {
   })
 
   it("組む側 phaseLabel が返す形の全部で、位置が残らず段の名前だけが題に残る", () => {
-    const rows = Object.entries(LABELED_PHASES).flatMap(([key, phases]) =>
+    const titles = Object.entries(LABELED_PHASES).flatMap(([key, phases]) =>
       phases.map((workPhase) => {
         expect(spanKeyOf(phasePosition(workPhase))).toBe(key)
         return phaseRowsOf(
@@ -174,8 +174,8 @@ describe("phaseRowsOf", () => {
       }),
     )
 
-    expect(rows).toHaveLength(Object.values(LABELED_PHASES).flat().length)
-    expect(new Set(rows)).toEqual(new Set([PHASE_NAME]))
+    expect(titles).toHaveLength(Object.values(LABELED_PHASES).flat().length)
+    expect(new Set(titles)).toEqual(new Set([PHASE_NAME]))
   })
 
   it("板の N はワークプランの段の数と一覧の数の大きいほう", () => {

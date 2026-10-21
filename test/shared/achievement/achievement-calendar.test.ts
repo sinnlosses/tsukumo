@@ -15,7 +15,7 @@ describe("achievementCalendarDateKeys", () => {
     expect(dateKeys[0]).toBe("2026-08-24")
     expect(dateKeys.at(-1)).toBe("2026-09-24")
     expect(dateKeys).toHaveLength(32)
-    expect(dateKeys).toEqual([...dateKeys].sort())
+    expect(dateKeys).toEqual(dateKeys.toSorted())
   })
 
   it("今日が月曜のときは、その日を含む週の月曜（今日そのもの）から4週前の月曜まで", () => {

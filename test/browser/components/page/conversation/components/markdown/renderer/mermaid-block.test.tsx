@@ -14,8 +14,9 @@ vi.mock(
 
 const scripts: Node[] = []
 
-const initialize = vi.fn()
-const renderDiagram = vi.fn()
+const initialize = vi.fn<() => void>()
+const renderDiagram =
+  vi.fn<(id: string, code: string) => Promise<{ svg: string; bindFunctions: undefined }>>()
 
 let MermaidBlock: typeof MermaidBlockComponent
 

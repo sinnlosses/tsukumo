@@ -91,14 +91,16 @@ describe("decodePng", () => {
     const rows = [[0, 0, 0]]
     expect(() =>
       decodePng(encodePng({ width: 1, rows, colorType: 2, filters: [0], depth: 16 })),
-    ).toThrow()
+    ).toThrow("読めない PNG: depth 16")
     expect(() =>
       decodePng(encodePng({ width: 1, rows, colorType: 2, filters: [0], interlace: 1 })),
-    ).toThrow()
-    expect(() => decodePng(encodePng({ width: 1, rows, colorType: 3, filters: [0] }))).toThrow()
+    ).toThrow("読めない PNG: depth 8 interlace 1")
+    expect(() => decodePng(encodePng({ width: 1, rows, colorType: 3, filters: [0] }))).toThrow(
+      "読めない PNG: color type 3",
+    )
   })
 
   test("PNG でないものは throw する", () => {
-    expect(() => decodePng(Buffer.from("not a png"))).toThrow()
+    expect(() => decodePng(Buffer.from("not a png"))).toThrow("PNG ではない")
   })
 })

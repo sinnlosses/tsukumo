@@ -159,7 +159,7 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
       if (entries.size === 0) {
         return
       }
-      for (const [id, entry] of [...entries]) {
+      for (const [id, entry] of entries) {
         entries.delete(id)
         detachers.get(id)?.()
         detachers.delete(id)

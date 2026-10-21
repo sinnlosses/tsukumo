@@ -62,7 +62,7 @@ export function scanPorts(
     const port = viewTabPort(url)
     return port === undefined ? [] : [port]
   })
-  return [...new Set([...defaultPorts, ...fromTabs])].sort((a, b) => a - b)
+  return [...new Set([...defaultPorts, ...fromTabs])].toSorted((a, b) => a - b)
 }
 
 /**
@@ -89,7 +89,7 @@ export function pickRooms(
     rooms.set(port, { port, pid: listener.pid, url })
   }
 
-  return [...rooms.values()].sort((a, b) => a.port - b.port)
+  return [...rooms.values()].toSorted((a, b) => a.port - b.port)
 }
 
 /**

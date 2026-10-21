@@ -475,7 +475,7 @@ describe("ScreenNav", () => {
       )
       const optionValues = Array.from(select.options).map((option) => option.value)
 
-      expect([...optionValues].sort()).toEqual([...MODEL_ALIASES].sort())
+      expect(optionValues.toSorted()).toEqual(MODEL_ALIASES.toSorted())
     })
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ。

@@ -16,8 +16,6 @@ export type DiffLineWords = {
  */
 export function diffWordRanges(source: string): DiffWordRanges {
   const lines = source.split("\n")
-  const shift = (ranges: readonly TextRange[]): readonly TextRange[] =>
-    ranges.map((range) => ({ start: range.start + 1, end: range.end + 1 }))
   return new Map(
     [...pairDiffLines(lines)].flatMap(([removed, added]) => {
       const result = diffWords((lines[removed] ?? "").slice(1), (lines[added] ?? "").slice(1))
@@ -52,6 +50,10 @@ function pairsFrom(lines: readonly string[], from: number): readonly (readonly [
         ])
       : []
   return [...here, ...pairsFrom(lines, from + Math.max(removed + added, 1))]
+}
+
+function shift(ranges: readonly TextRange[]): readonly TextRange[] {
+  return ranges.map((range) => ({ start: range.start + 1, end: range.end + 1 }))
 }
 
 /** `from` から続く、`sign` で始まる行（ファイルの頭の `---`/`+++` を除く）の数。 */

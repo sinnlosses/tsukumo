@@ -106,7 +106,7 @@ function recorder(): {
 
 describe("createUsageReviewRunner（見直し）", () => {
   it("始まり → 段 → 結果 → 終わりの順に流し、受け付けた結果をホームへ1回書く", async () => {
-    const writePreviousUsageReview = vi.fn()
+    const writePreviousUsageReview = vi.fn<UsageReviewRunnerPorts["writePreviousUsageReview"]>()
     const requests: UsageReviewQueryRequest[] = []
     const runner = createUsageReviewRunner(
       ports(
@@ -253,7 +253,7 @@ describe("createUsageReviewRunner（提案の実行）", () => {
 
 describe("createUsageReviewRunner（疑似セッションの再生）", () => {
   it("手順を順に流し、前回の結果はホームに書かない", async () => {
-    const writePreviousUsageReview = vi.fn()
+    const writePreviousUsageReview = vi.fn<UsageReviewRunnerPorts["writePreviousUsageReview"]>()
     const runner = createUsageReviewRunner(
       ports(
         {

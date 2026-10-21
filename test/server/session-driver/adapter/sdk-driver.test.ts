@@ -14,7 +14,7 @@ describe("shared の値の一覧と SDK の型", () => {
     // 出さないので shared の一覧には入れていない）ので、確かめるのはこの向きだけ。
     const asSdk: readonly SdkPermissionMode[] = PERMISSION_MODES
 
-    expect([...asSdk].sort()).toEqual([
+    expect(asSdk.toSorted()).toEqual([
       "acceptEdits",
       "auto",
       "bypassPermissions",
@@ -50,6 +50,6 @@ describe("shared の値の一覧と SDK の型", () => {
     // 代入できること自体が型の検査（PERMISSION_MODES と同じやり方）。
     const asSdk: readonly SdkEffortLevel[] = EFFORT_LEVELS
 
-    expect([...asSdk].sort()).toEqual(["high", "low", "max", "medium", "xhigh"])
+    expect(asSdk.toSorted()).toEqual(["high", "low", "max", "medium", "xhigh"])
   })
 })

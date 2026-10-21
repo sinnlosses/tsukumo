@@ -12,7 +12,7 @@ describe("itemCommands", () => {
       clearSeat: () => Promise.resolve(undefined),
     })
     expect(Object.values(table).map((row) => [row.kind, row.failure])).toEqual(
-      Array(4).fill(["write", FRAME_ERROR_REASON.itemEditFailed]),
+      Array.from({ length: 4 }, () => ["write", FRAME_ERROR_REASON.itemEditFailed]),
     )
   })
 })

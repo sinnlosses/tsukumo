@@ -180,13 +180,13 @@ describe("タスクのモーダルの選択", () => {
     renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
     fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
     fireEvent.click(screen.getByRole("button", { name: /^着手できる/ }))
-    expectShown("X-001")
+    expect(isShown("X-001")).toBe(true)
 
     fireEvent.click(screen.getByRole("link", { name: "X-002" }))
-    expectShown("X-002")
+    expect(isShown("X-002")).toBe(true)
     fireEvent.click(screen.getByRole("button", { name: "X-001 に戻る" }))
 
-    expectShown("X-001")
+    expect(isShown("X-001")).toBe(true)
   })
 
   it("先頭へ落ちたあと絞り込みを外しても先頭のまま。検索で0件にしてから消すと、その前に選んでいた行へ戻る", () => {
@@ -194,14 +194,14 @@ describe("タスクのモーダルの選択", () => {
     fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
     fireEvent.click(screen.getByRole("button", { name: /^着手できる/ }))
     fireEvent.click(screen.getByRole("button", { name: /^すべて/ }))
-    expectShown("X-001")
+    expect(isShown("X-001")).toBe(true)
 
     fireEvent.click(screen.getByRole("option", { name: /X-003/ }))
     fireEvent.change(searchBox(), { target: { value: "どこにも無い語" } })
     expect(screen.queryByRole("option")).toBeNull()
     fireEvent.change(searchBox(), { target: { value: "" } })
 
-    expectShown("X-003")
+    expect(isShown("X-003")).toBe(true)
   })
 
   it("閉じて開き直すと検索・絞り込み・パンくずが初めに戻り、タスクを指して開くと絞り込みの外でもその行を出す", () => {
@@ -213,7 +213,7 @@ describe("タスクのモーダルの選択", () => {
     board.rerenderWith(SELECTION_TASKS, { kind: "closed" })
     board.rerenderWith(SELECTION_TASKS, OPEN_FIRST)
 
-    expectShown("X-001")
+    expect(isShown("X-001")).toBe(true)
     expect(searchBox().value).toBe("")
     expect(screen.getByRole("button", { name: /^すべて/ }).getAttribute("aria-pressed")).toBe(
       "true",
@@ -223,7 +223,7 @@ describe("タスクのモーダルの選択", () => {
     fireEvent.click(screen.getByRole("button", { name: /^着手できる/ }))
     board.rerenderWith(SELECTION_TASKS, { kind: "open", focus: { kind: "task", id: "X-002" } })
 
-    expectShown("X-002")
+    expect(isShown("X-002")).toBe(true)
     expect(screen.getByRole("option", { selected: true }).textContent).toContain("絞り込みの外")
   })
 })
@@ -238,11 +238,11 @@ describe("タスクのモーダルの検索欄と本文のリンク", () => {
       fireEvent.change(searchBox(), { target: { value } })
       expect(document.activeElement).toBe(searchBox())
     }
-    expectShown("X-001")
+    expect(isShown("X-001")).toBe(true)
 
     fireEvent.click(screen.getByRole("link", { name: "X-002" }))
 
-    expectShown("X-002")
+    expect(isShown("X-002")).toBe(true)
     expect(screen.getByRole("button", { name: "X-001 に戻る" })).toBeDefined()
   })
 })
@@ -306,11 +306,11 @@ describe("タスクのモーダル（つながりをたどる）", () => {
   it("Alt+← でもパンくずの「戻る」と同じ場所へ戻る", () => {
     renderSelectionBoard(JUMP_TASKS, OPEN_FIRST)
     fireEvent.click(within(body()).getAllByRole("link", { name: "X-002" })[0] ?? body())
-    expectShown("X-002")
+    expect(isShown("X-002")).toBe(true)
 
     fireEvent.keyDown(frame(), { key: "ArrowLeft", altKey: true })
 
-    expectShown("X-001")
+    expect(isShown("X-001")).toBe(true)
   })
 
   it("「先に終わっていてほしいもの」「これを待っているもの」の札を押すと行き来できる", () => {
@@ -323,14 +323,14 @@ describe("タスクのモーダル（つながりをたどる）", () => {
         { name: /X-001/ },
       ),
     )
-    expectShown("X-001")
+    expect(isShown("X-001")).toBe(true)
 
     fireEvent.click(
       within(screen.getByRole("group", { name: "これを待っているもの" })).getByRole("button", {
         name: /X-002/,
       }),
     )
-    expectShown("X-002")
+    expect(isShown("X-002")).toBe(true)
   })
 
   it("↓ で行を移ると詳細が切り替わり、待ちのタスクは頼めない理由を添える", () => {
@@ -338,7 +338,7 @@ describe("タスクのモーダル（つながりをたどる）", () => {
 
     fireEvent.keyDown(frame(), { key: "ArrowDown" })
 
-    expectShown("X-002")
+    expect(isShown("X-002")).toBe(true)
     expect(
       within(screen.getByRole("group", { name: "先に終わっていてほしいもの" })).getByRole(
         "button",
@@ -369,14 +369,14 @@ describe("タスクのモーダル（つながりをたどる）", () => {
 describe("タスクのモーダルの選択（一覧が届き直したとき）", () => {
   it("開いてから何も操作しないまま、先頭に別の行が来る一覧が届くと、新しい先頭の行を出す", () => {
     const board = renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
-    expectShown("X-001")
+    expect(isShown("X-001")).toBe(true)
 
     board.rerenderWith(
       [selectionTask("X-000", "todo", "架空の本文。\n"), ...SELECTION_TASKS],
       OPEN_FIRST,
     )
 
-    expectShown("X-000")
+    expect(isShown("X-000")).toBe(true)
   })
 })
 
@@ -428,8 +428,10 @@ function searchBox(): HTMLInputElement {
   return screen.getByRole<HTMLInputElement>("combobox", { name: "タスクを探す" })
 }
 
-/** 一覧で選んでいる行と、右に出している詳細が、どちらも `id` のタスクであること。 */
-function expectShown(id: string): void {
-  expect(screen.getByRole("option", { selected: true }).id).toBe(`task-board-option-${id}`)
-  expect(screen.getByRole("region", { name: `${id} の詳細` })).toBeDefined()
+/** 一覧で選んでいる行と、右に出している詳細が、どちらも `id` のタスクか。 */
+function isShown(id: string): boolean {
+  return (
+    screen.getByRole("option", { selected: true }).id === `task-board-option-${id}` &&
+    screen.queryByRole("region", { name: `${id} の詳細` }) !== null
+  )
 }

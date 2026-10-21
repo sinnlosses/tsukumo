@@ -17,7 +17,7 @@ export function reportSelectionOf(selection: Selection | null): ReportSelection 
   const range = selection.getRangeAt(0)
   const container = range.commonAncestorContainer
   const element = container instanceof Element ? container : container.parentElement
-  if (element?.closest(`[${REPORT_BODY_ATTRIBUTE}]`) == null) {
+  if ((element?.closest(`[${REPORT_BODY_ATTRIBUTE}]`) ?? undefined) === undefined) {
     return undefined
   }
   const text = selection.toString()

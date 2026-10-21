@@ -111,6 +111,8 @@ export async function measurePaperMetric(page: Page): Promise<PaperMetric> {
       ).length
       const firstFigure = figures.slice(0, 1)
 
+      // evaluate でブラウザへ文字列として渡すので、外へ出すと届かない
+      // oxlint-disable-next-line unicorn/consistent-function-scoping
       const isStacked = (sides: readonly Element[]): boolean => {
         const rects = sides
           .map((side) => side.getBoundingClientRect())

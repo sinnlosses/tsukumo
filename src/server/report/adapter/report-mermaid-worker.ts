@@ -17,8 +17,11 @@ async function loadMermaid() {
 }
 
 const mermaidReady = loadMermaid()
+// worker_threads の postMessage は targetOrigin を取らない
 mermaidReady.then(
+  // oxlint-disable-next-line unicorn/require-post-message-target-origin
   () => parentPort?.postMessage({ ready: true }),
+  // oxlint-disable-next-line unicorn/require-post-message-target-origin
   () => parentPort?.postMessage({ ready: false }),
 )
 
@@ -29,7 +32,9 @@ parentPort?.on("message", (message: unknown) => {
   }
   const { id, sources } = request.data
   check(sources).then(
+    // oxlint-disable-next-line unicorn/require-post-message-target-origin
     (faults) => parentPort?.postMessage({ id, ok: true, faults }),
+    // oxlint-disable-next-line unicorn/require-post-message-target-origin
     () => parentPort?.postMessage({ id, ok: false }),
   )
 })

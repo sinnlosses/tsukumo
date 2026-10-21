@@ -350,7 +350,7 @@ function readEntriesBackward(
 ): readonly TimedEntry[] {
   function* newestFirst(): Generator<TimedEntry> {
     for (const fileName of fileNames) {
-      for (const raw of [...readJsonLines(join(dir, fileName))].reverse()) {
+      for (const raw of readJsonLines(join(dir, fileName)).toReversed()) {
         const timed = toTimedEntry(raw)
         if (timed !== undefined) {
           yield timed
@@ -364,7 +364,7 @@ function readEntriesBackward(
     sizeOf: timedEntryBytes,
     whenFirstExceeds: "stop",
   })
-  return [...taken].reverse()
+  return taken.toReversed()
 }
 
 function timedEntryBytes(timed: TimedEntry): number {
@@ -373,7 +373,7 @@ function timedEntryBytes(timed: TimedEntry): number {
 
 /** 日付のファイル名だけを新しい順に並べる（読めないディレクトリは空）。 */
 function newestFirstFileNames(dir: string): readonly string[] {
-  return [...dateFileNames(dir)].reverse()
+  return dateFileNames(dir).toReversed()
 }
 
 /**

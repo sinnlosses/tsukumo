@@ -90,7 +90,9 @@ describe("withAskGuard の AskUserQuestion の hook", () => {
   })
 
   it("AskUserQuestion 以外のツールと PreToolUse 以外のイベントでは子を呼ばない", async () => {
-    const run = vi.fn(async () => ok(JSON.stringify(DENY)))
+    const run = vi.fn<(stdin: string) => Promise<WorkflowTwResult>>(async () =>
+      ok(JSON.stringify(DENY)),
+    )
     expect(await callWith(run, inputOf("Bash"))).toEqual({})
     expect(await callWith(run, inputOf("AskUserQuestion", "PostToolUse"))).toEqual({})
     expect(run).toHaveBeenCalledTimes(0)

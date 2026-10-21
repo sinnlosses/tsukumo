@@ -112,7 +112,7 @@ describe("BeforeAfterZoom", () => {
   })
 
   it("×と、ダイアログの close（Esc）で onClose を呼ぶ", () => {
-    const onClose = vi.fn()
+    const onClose = vi.fn<() => void>()
     renderZoom({ onClose })
 
     fireEvent.click(screen.getByRole("button", { name: "閉じる" }))

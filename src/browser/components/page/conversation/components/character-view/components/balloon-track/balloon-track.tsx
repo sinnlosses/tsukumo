@@ -35,7 +35,7 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
   // speeches はターンの中で末尾へ積むだけ（`applySessionEvent`）なので、この番号はセリフが増えても既存のセリフでは変わらない。
   // 位置（newestFirst の index）を key にすると、増えるたびに既存のセリフの key がずれて、別のセリフの内容が同じ DOM ノードへ上書きされる。
   // すると `data-latest` が外れる瞬間が起きず、押し上げ（`character-view.module.css` の `.balloon-row` の `balloon-push-up`）が再生されない。
-  const newestFirst = [...props.speeches].reverse()
+  const newestFirst = props.speeches.toReversed()
   const oldestIndexOf = (indexFromNewest: number): number =>
     props.speeches.length - 1 - indexFromNewest
 

@@ -189,7 +189,7 @@ function hedgeTimer(
   ms: number,
   signal: AbortSignal,
 ): { readonly promise: Promise<undefined>; readonly cancel: () => void } {
-  let cancel = (): void => {}
+  let cancel: () => void = noCancel
   const promise = new Promise<undefined>((resolve) => {
     const done = (): void => {
       resolve(undefined)
@@ -203,6 +203,8 @@ function hedgeTimer(
   })
   return { promise, cancel }
 }
+
+function noCancel(): void {}
 
 function attemptTraceOf<T>(attempt: Attempt<T>): WelcomeAttemptTrace {
   return attempt.kind === "rejected"

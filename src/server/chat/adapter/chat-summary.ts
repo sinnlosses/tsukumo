@@ -238,7 +238,7 @@ function truncatedSummary(summary: string): {
 
   const kept: string[] = []
   let usedBytes = 0
-  for (const line of [...lines].reverse()) {
+  for (const line of lines.toReversed()) {
     const separatorBytes = kept.length > 0 ? 1 : 0
     const lineBytes = byteLength(line) + separatorBytes
     if (kept.length > 0 && usedBytes + lineBytes > budget) {

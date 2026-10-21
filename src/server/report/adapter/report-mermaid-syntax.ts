@@ -70,6 +70,8 @@ function requestCheck(
       clearTimeout(timer)
       resolve(faults)
     })
+    // worker_threads の postMessage は targetOrigin を取らない
+    // oxlint-disable-next-line unicorn/require-post-message-target-origin
     current.worker.postMessage({ id, sources })
   })
 }

@@ -82,7 +82,7 @@ describe("描画中に時計を読む箇所", () => {
   })
 
   it("構文エラーのあるソースは throw する", () => {
-    expect(() => renderTimeClockReads("a.ts", "const = (")).toThrow()
+    expect(() => renderTimeClockReads("a.ts", "const = (")).toThrow("a.ts を読めない")
   })
 })
 

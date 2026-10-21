@@ -424,8 +424,8 @@ function readRecentRecords(
 }
 
 /** modified のファイルがあるレポートのうち、前後図も画像も無かった数。外す基準の対象ではない。 */
-function modifiedWithoutVisualSection(visualRecords: readonly VisualRecord[]): string {
-  if (visualRecords.length === 0) {
+function modifiedWithoutVisualSection(reports: readonly VisualRecord[]): string {
+  if (reports.length === 0) {
     return "modified のファイルがあるのに前後図も画像も無いレポート: 記録した行が無い"
   }
   const line = (label: string, rows: readonly VisualRecord[]): string => {
@@ -435,11 +435,11 @@ function modifiedWithoutVisualSection(visualRecords: readonly VisualRecord[]): s
     return `  ${label.padEnd(16)} modified あり ${String(modified.length).padStart(5)}  うち前後図も画像も無し ${String(missing).padStart(5)}  ${percent.padStart(5)}%`
   }
   return [
-    `modified のファイルがあるのに前後図も画像も無いレポート（前後図・画像の有無を記録した${String(visualRecords.length)}件のうち。外す基準の対象ではない）:`,
-    line("全レポート", visualRecords),
+    `modified のファイルがあるのに前後図も画像も無いレポート（前後図・画像の有無を記録した${String(reports.length)}件のうち。外す基準の対象ではない）:`,
+    line("全レポート", reports),
     line(
       "task の最終レポート",
-      visualRecords.filter((record) => record.forTask),
+      reports.filter((record) => record.forTask),
     ),
   ].join("\n")
 }
@@ -507,12 +507,12 @@ function countSection(rows: readonly CountRecord[]): string {
     applies: (record: CountRecord) => boolean = () => true,
   ): string => {
     const target = source.filter(applies)
-    const rows = buckets.map((bucket) => {
+    const bucketLines = buckets.map((bucket) => {
       const count = target.filter((record) => bucketOf(record) === bucket).length
       const percent = (target.length === 0 ? 0 : (count / target.length) * 100).toFixed(1)
       return `  ${bucket.padEnd(10)} ${String(count).padStart(5)}  ${percent.padStart(5)}%`
     })
-    return [`${title}:`, ...rows].join("\n")
+    return [`${title}:`, ...bucketLines].join("\n")
   }
   const emphasisBuckets = ["0", "1", "2", "3以上"]
   const emphasisBucket = (record: CountRecord): string =>
@@ -645,8 +645,6 @@ function shapeTagSection(rows: readonly ShapeTagRecord[]): string {
       (use) => `${use.shapeTag} × ${use.blockKind}`,
     ),
   ).map(([pair, uses]) => ({ pair, count: uses.reduce((total, use) => total + use.count, 0) }))
-  const percentOf = (count: number, total: number): string =>
-    (total === 0 ? 0 : (count / total) * 100).toFixed(1)
   return [
     `札 × 節数（版13以降の${String(rows.length)}件の節${String(tags.length)}個のうち。外す基準の対象ではない）:`,
     ...[...REPORT_SHAPE_TAGS, "unspecified"].map((tag) => {
@@ -662,6 +660,10 @@ function shapeTagSection(rows: readonly ShapeTagRecord[]): string {
           .toSorted((left, right) => right.count - left.count)
           .map(({ pair, count }) => `  ${pair.padEnd(26)} ${String(count).padStart(5)}`)),
   ].join("\n")
+}
+
+function percentOf(count: number, total: number): string {
+  return (total === 0 ? 0 : (count / total) * 100).toFixed(1)
 }
 
 /**
@@ -682,15 +684,6 @@ function argumentCharsSection(
   }
   const spreadLine = (label: string, values: readonly number[]): string =>
     `  ${label.padEnd(18)} ${String(values.length).padStart(5)}件  中央値 ${String(percentile(values, 0.5)).padStart(6)}  p90 ${String(percentile(values, 0.9)).padStart(6)}`
-  const inheritanceLine = (
-    label: string,
-    inherited: readonly (readonly string[] | undefined)[],
-  ): string => {
-    const recorded = inherited.flatMap((fields) => (fields === undefined ? [] : [fields]))
-    const count = recorded.filter((fields) => fields.length > 0).length
-    const percent = (recorded.length === 0 ? 0 : (count / recorded.length) * 100).toFixed(1)
-    return `  ${label.padEnd(18)} ${String(count).padStart(5)}件  版16以降の${String(recorded.length)}件のうち ${percent}%`
-  }
   const acceptedMedian = percentile(
     accepted.map((record) => record.argumentChars.total),
     0.5,
@@ -735,6 +728,16 @@ function argumentCharsSection(
       ),
     ),
   ].join("\n")
+}
+
+function inheritanceLine(
+  label: string,
+  inherited: readonly (readonly string[] | undefined)[],
+): string {
+  const recorded = inherited.flatMap((fields) => (fields === undefined ? [] : [fields]))
+  const count = recorded.filter((fields) => fields.length > 0).length
+  const percent = (recorded.length === 0 ? 0 : (count / recorded.length) * 100).toFixed(1)
+  return `  ${label.padEnd(18)} ${String(count).padStart(5)}件  版16以降の${String(recorded.length)}件のうち ${percent}%`
 }
 
 /** 昇順にしたときの `ratio` 位置の値（最近順位法）。空なら 0。 */

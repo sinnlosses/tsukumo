@@ -42,7 +42,6 @@ function statSparkMarkdown(series: readonly number[]): string {
   }
   const low = Math.min(...series)
   const high = Math.max(...series)
-  const round = (number: number): string => String(Math.round(number * 10) / 10)
   const points = series.map((number, index) => ({
     x:
       STAT_SPARK_MARGIN +
@@ -63,6 +62,10 @@ function statSparkMarkdown(series: readonly number[]): string {
     `<polyline points="${path}"/>` +
     `<circle cx="${round(last.x)}" cy="${round(last.y)}" r="1.2"/></svg>`
   )
+}
+
+function round(number: number): string {
+  return String(Math.round(number * 10) / 10)
 }
 
 /** 数と全体の数がどちらも数字で、数が全体に収まるときだけ、割合の帯を返す。 */

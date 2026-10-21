@@ -129,4 +129,6 @@ declare global {
   }
 }
 
+// このファイルをモジュールにして declare global を効かせるのに要る
+// oxlint-disable-next-line unicorn/require-module-specifiers
 export {}

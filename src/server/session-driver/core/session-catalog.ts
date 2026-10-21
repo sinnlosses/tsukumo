@@ -198,7 +198,7 @@ function listMarkedSessions(
   return sessions
     .filter((session) => family !== undefined && session.family === family)
     .map((session) => omit(session, ["tag", "family"]))
-    .sort((left, right) => right.lastModified - left.lastModified)
+    .toSorted((left, right) => right.lastModified - left.lastModified)
     .slice(0, MAX_SESSION_CHOICES)
 }
 

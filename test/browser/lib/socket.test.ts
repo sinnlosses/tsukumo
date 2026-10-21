@@ -25,7 +25,7 @@ describe("connectSessionSocket の commandLink", () => {
 
     await expect(
       socket.commandLink.call(["characterPack", "create"], {}, { context: {} }),
-    ).rejects.toThrow()
+    ).rejects.toThrow("サーバに繋がっていない")
 
     socket.close()
   })

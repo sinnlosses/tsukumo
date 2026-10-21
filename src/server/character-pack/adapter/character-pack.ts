@@ -329,8 +329,8 @@ function listPackDirs(root: string): readonly string[] {
     return []
   }
 
-  return [...names]
-    .sort((a, b) => a.localeCompare(b))
+  return names
+    .toSorted((a, b) => a.localeCompare(b))
     .map((name) => join(root, name))
     .filter(hasDefinition)
 }

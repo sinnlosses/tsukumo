@@ -27,12 +27,14 @@ describe("writeFileAtomic", () => {
     const path = join(dir(), "occupied")
     mkdirSync(path)
     writeFileSync(join(path, "inner.txt"), "元の中身")
-    expect(() => writeFileAtomic(path, "新しい中身")).toThrow()
+    expect(() => writeFileAtomic(path, "新しい中身")).toThrow("EISDIR")
     expect(readdirSync(dir())).toEqual(["occupied"])
     expect(readFileSync(join(path, "inner.txt"), "utf8")).toBe("元の中身")
   })
 
   it("書けない場所では例外を投げる", () => {
-    expect(() => writeFileAtomic(join(dir(), "no-such-dir", "value.json"), "中身")).toThrow()
+    expect(() => writeFileAtomic(join(dir(), "no-such-dir", "value.json"), "中身")).toThrow(
+      "ENOENT",
+    )
   })
 })

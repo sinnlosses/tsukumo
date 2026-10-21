@@ -57,7 +57,7 @@ export function findRunningTsukumo(
       : []
   })
   const confirmedPids = new Set(confirmed.map((found) => found.pid))
-  return [...confirmed, ...scanned.filter((found) => !confirmedPids.has(found.pid))].sort(
+  return [...confirmed, ...scanned.filter((found) => !confirmedPids.has(found.pid))].toSorted(
     (a, b) => a.port - b.port,
   )
 }

@@ -12,7 +12,7 @@ export type QuotedSpan = {
 /** 引用符・heredoc の範囲を、それぞれ空白1つへ置き換えたコマンド。 */
 export function withSpansBlanked(command: string, spans: readonly QuotedSpan[]): string {
   let result = command
-  for (const span of [...spans].sort((a, b) => b.start - a.start)) {
+  for (const span of spans.toSorted((a, b) => b.start - a.start)) {
     result = `${result.slice(0, span.start)} ${result.slice(span.end)}`
   }
   return result

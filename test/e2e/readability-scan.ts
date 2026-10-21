@@ -125,7 +125,7 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
         chain.push(node)
       }
       let background: Rgba = { r: 255, g: 255, b: 255, a: 1 }
-      for (const node of chain.reverse()) {
+      for (const node of chain.toReversed()) {
         const style = getComputedStyle(node)
         if (style.backgroundImage !== "none") {
           return undefined

@@ -146,9 +146,9 @@ export function watchSceneEvents(page: WatchedPage): SceneEventWatch {
     })
   })
   return {
-    waitFor: (target, options) =>
-      new Promise<void>((resolve, reject) => {
-        const reached = (): boolean => (counts.get(target.kind) ?? 0) >= target.occurrence
+    waitFor: (target, options) => {
+      const reached = (): boolean => (counts.get(target.kind) ?? 0) >= target.occurrence
+      return new Promise<void>((resolve, reject) => {
         if (reached()) {
           resolve()
           return
@@ -172,7 +172,8 @@ export function watchSceneEvents(page: WatchedPage): SceneEventWatch {
           )
         }, options.timeoutMs)
         listeners.add(check)
-      }),
+      })
+    },
   }
 }
 

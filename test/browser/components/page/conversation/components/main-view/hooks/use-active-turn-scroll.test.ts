@@ -28,8 +28,8 @@ vi.mock(
 
 let scroller: HTMLElement
 let root: HTMLElement
-const scrollIntoView = vi.fn()
-const scrollBy = vi.fn()
+const scrollIntoView = vi.fn<() => void>()
+const scrollBy = vi.fn<() => void>()
 
 beforeEach(() => {
   scroller = document.createElement("div")

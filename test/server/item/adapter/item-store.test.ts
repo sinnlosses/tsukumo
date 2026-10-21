@@ -63,8 +63,8 @@ describe("item-store", () => {
 
   it("画像の名前は id から組み、名前に ../ を入れても items/ の外に何も書かれない", () => {
     addItemToHome({ name: "../x", image: PNG }, home())
-    expect(readdirSync(home()).sort()).toEqual(["items"])
-    expect(readdirSync(itemsDir(home())).sort()).toEqual(["1.png", "items.json"])
+    expect(readdirSync(home()).toSorted()).toEqual(["items"])
+    expect(readdirSync(itemsDir(home())).toSorted()).toEqual(["1.png", "items.json"])
   })
 
   it("別の呼び出しで読み直しても席が残る", () => {

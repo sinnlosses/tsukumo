@@ -84,7 +84,7 @@ describe("findRunningTsukumo", () => {
 
     const found = findRunningTsukumo([located.port, old.port], dir())
 
-    expect(found.map((entry) => entry.pid).sort()).toEqual([located.pid, old.pid].sort())
+    expect(found.map((entry) => entry.pid).toSorted()).toEqual([located.pid, old.pid].toSorted())
     expect(found.find((entry) => entry.pid === located.pid)?.command).toBe("/架空")
   })
 })

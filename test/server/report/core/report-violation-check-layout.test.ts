@@ -135,9 +135,9 @@ describe("reportViolations", () => {
     })
 
     it("差し戻しの文面に上限の数が出る", () => {
-      const text = reportRejectionText([{ kind: "too-many-candidates", count: 1 }])
-      expect(text).toContain(`${String(MAX_CANDIDATES + 1)}つ以上`)
-      expect(text).toContain(`${String(MAX_CANDIDATES)}つまでに絞る`)
+      const rejection = reportRejectionText([{ kind: "too-many-candidates", count: 1 }])
+      expect(rejection).toContain(`${String(MAX_CANDIDATES + 1)}つ以上`)
+      expect(rejection).toContain(`${String(MAX_CANDIDATES)}つまでに絞る`)
     })
   })
 

@@ -104,7 +104,7 @@ describe("import の拾い方", () => {
   })
 
   it("構文エラーのある本文は throw する", () => {
-    expect(() => importSpecifiers("const = (")).toThrow()
+    expect(() => importSpecifiers("const = (")).toThrow("source.ts を読めない")
   })
 
   it("動的 import・re-export の層またぎを違反として拾い、許した辺は拾わない", () => {

@@ -54,21 +54,21 @@ describe("Dialog", () => {
   })
 
   it("Esc（<dialog> の close イベント）で onClose を呼ぶ", () => {
-    const onClose = vi.fn(() => {})
+    const onClose = vi.fn<() => void>()
     const dialog = renderDialog({ ...BASE_PROPS, onClose })
     fireEvent(dialog, new Event("close"))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it("外側（backdrop）のクリックで onClose を呼ぶ", () => {
-    const onClose = vi.fn(() => {})
+    const onClose = vi.fn<() => void>()
     const dialog = renderDialog({ ...BASE_PROPS, onClose })
     fireEvent.click(dialog)
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it("中のクリックでは onClose を呼ばない", () => {
-    const onClose = vi.fn(() => {})
+    const onClose = vi.fn<() => void>()
     const dialog = renderDialog({ ...BASE_PROPS, onClose })
     const button = dialog.querySelector("button")
     if (button === null) {

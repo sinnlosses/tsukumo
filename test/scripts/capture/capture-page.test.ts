@@ -113,7 +113,7 @@ describe("settleRender", () => {
   })
 
   test("ページの中の待ちが終われば返る", async () => {
-    const evaluate = vi.fn(() => Promise.resolve())
+    const evaluate = vi.fn<() => Promise<void>>(() => Promise.resolve())
 
     await expect(settleRender({ evaluate })).resolves.toBeUndefined()
     expect(evaluate).toHaveBeenCalledTimes(1)
@@ -213,7 +213,7 @@ describe("settleRender", () => {
 
 describe("waitForRevealEnd", () => {
   test("演出の印が消えるのを待つ", async () => {
-    const waitForSelector = vi.fn(() => Promise.resolve(null))
+    const waitForSelector = vi.fn<() => Promise<null>>(() => Promise.resolve(null))
 
     await waitForRevealEnd({ waitForSelector }, 1234)
 
@@ -224,7 +224,7 @@ describe("waitForRevealEnd", () => {
   })
 
   test("上限までに消えなくても throw しない", async () => {
-    const waitForSelector = vi.fn(() => Promise.reject(new Error("timeout")))
+    const waitForSelector = vi.fn<() => Promise<null>>(() => Promise.reject(new Error("timeout")))
 
     await expect(waitForRevealEnd({ waitForSelector }, 10)).resolves.toBeUndefined()
   })

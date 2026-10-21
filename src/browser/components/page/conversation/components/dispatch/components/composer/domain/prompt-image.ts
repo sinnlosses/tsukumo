@@ -100,12 +100,12 @@ async function shrinkToThumbnail(full: string): Promise<string | undefined> {
 function decodeImage(dataUrl: string): Promise<HTMLImageElement | undefined> {
   return new Promise((resolve) => {
     const image = new Image()
-    image.onload = () => {
+    image.addEventListener("load", () => {
       resolve(image)
-    }
-    image.onerror = () => {
+    })
+    image.addEventListener("error", () => {
       resolve(undefined)
-    }
+    })
     image.src = dataUrl
   })
 }

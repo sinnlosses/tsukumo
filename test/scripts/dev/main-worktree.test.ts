@@ -67,7 +67,9 @@ describe("main-worktree", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
     })
 
     test("そのブランチを出している作業ツリーが無ければ例外を投げる", () => {
-      expect(() => resolveMainWorktreePath(shared.root, "trunk")).toThrow()
+      expect(() => resolveMainWorktreePath(shared.root, "trunk")).toThrow(
+        "trunk を出している作業ツリーが見つからない",
+      )
     })
   })
 

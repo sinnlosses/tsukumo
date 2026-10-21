@@ -61,7 +61,7 @@ describe("scripts/ の export された型・関数の null", () => {
   })
 
   it("構文エラーのあるソースは throw する", () => {
-    expect(() => exportedNullTypeLines("a.ts", "export type = (")).toThrow()
+    expect(() => exportedNullTypeLines("a.ts", "export type = (")).toThrow("a.ts を読めない")
   })
 })
 

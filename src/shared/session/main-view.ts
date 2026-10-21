@@ -200,7 +200,7 @@ function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
 
   const kept: MainViewStep[] = []
   let remaining = MAX_MAIN_VIEW_ENTRIES
-  for (const [index, step] of [...turn.steps].reverse().entries()) {
+  for (const [index, step] of turn.steps.toReversed().entries()) {
     const count = counts[counts.length - 1 - index] ?? 0
     if (count > remaining) {
       break

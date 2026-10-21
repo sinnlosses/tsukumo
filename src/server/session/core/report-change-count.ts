@@ -106,7 +106,7 @@ function countNumstat(texts: readonly string[], mixed: boolean): ReportChangeSum
   const paths = new Set<string>()
   let added = 0
   let removed = 0
-  for (const line of texts.flatMap((text) => text.split("\n")).filter((line) => line !== "")) {
+  for (const line of texts.flatMap((text) => text.split("\n")).filter((entry) => entry !== "")) {
     const match = NUMSTAT_LINE.exec(line)
     if (match === null) {
       return NO_REPORT_CHANGE_SUMMARY

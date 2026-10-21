@@ -10,7 +10,7 @@ afterEach(() => {
 
 describe("TextField", () => {
   it("element が input のときは 1 行の <input> を描き、入力した値を onChange に渡す", () => {
-    const onChange = vi.fn()
+    const onChange = vi.fn<(value: string) => void>()
     render(
       <TextField
         element="input"
@@ -34,7 +34,7 @@ describe("TextField", () => {
   })
 
   it("element が textarea のときは複数行の <textarea> を描き、入力した値を onChange に渡す", () => {
-    const onChange = vi.fn()
+    const onChange = vi.fn<(value: string) => void>()
     render(
       <TextField
         element="textarea"

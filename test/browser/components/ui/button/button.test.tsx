@@ -41,14 +41,14 @@ describe("Button", () => {
   })
 
   it("押すと onClick を呼ぶ", () => {
-    const onClick = vi.fn(() => {})
+    const onClick = vi.fn<() => void>()
     const element = renderButton({ ...BASE_PROPS, onClick })
     fireEvent.click(element)
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
   it('disabled のときは押しても onClick を呼ばず、aria-disabled="true" が付く', () => {
-    const onClick = vi.fn(() => {})
+    const onClick = vi.fn<() => void>()
     const element = renderButton({ ...BASE_PROPS, disabled: true, onClick })
     expect(element.getAttribute("aria-disabled")).toBe("true")
     fireEvent.click(element)

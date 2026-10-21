@@ -162,11 +162,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       return
     }
     consolidating = true
-    const reject = (error: unknown): ChatConsolidationOutcome => ({
-      kind: "failed",
-      reason: "threw",
-      error,
-    })
     const settle = (outcome: ChatConsolidationOutcome): void => {
       consolidating = false
       noteConsolidationOutcome(outcome, diagnostic, options.now)
@@ -181,7 +176,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
     const run = async (): Promise<void> => {
       try {
-        settle(await source.consolidate(packName, consolidationAbort.signal).catch(reject))
+        settle(
+          await source.consolidate(packName, consolidationAbort.signal).catch(consolidationThrew),
+        )
       } catch (error) {
         consolidating = false
         diagnostic.add(
@@ -428,6 +425,10 @@ function rememberedModeSessions(
   return state.chatMode
     ? { ...modeSessions, chat: remembered }
     : { ...modeSessions, work: remembered }
+}
+
+function consolidationThrew(error: unknown): ChatConsolidationOutcome {
+  return { kind: "failed", reason: "threw", error }
 }
 
 /** 購読者全員に配る。閉じかけている接続を無視するのは送る側の仕事。 */

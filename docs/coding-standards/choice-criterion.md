@@ -51,6 +51,7 @@
 - `src/server/report/core/report-tool.ts` の `Stop` フックの関所: ターンの最後に `report` を
   通さない本文で止まろうとしたら差し戻す
 - `.oxlintrc.json` の `no-restricted-globals`: `Date` の使用を lint で落とす
+- `package.json` の `lint` の `--deny-warnings`: 警告が1件でもあれば `pnpm run lint` が落ちる。規則を丸ごと切るのは `.oxlintrc.json` の `overrides` の3規則だけで、切る理由は規則の直前のコメントに書く
 - `test/scripts/document/section-reference-repository.test.ts`: 正典の節への参照が切れていないかを検査する
 
 **キャラクターのセリフ・振る舞い**（頻度・間合い・言い回し）はこの優先の対象外で、ヒューリスティックでよい。

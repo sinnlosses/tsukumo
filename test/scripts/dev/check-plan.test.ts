@@ -64,8 +64,8 @@ describe("E2E の bail", () => {
 })
 
 describe("planStages", () => {
-  const e2eStage = { name: "test:e2e", args: [], heavy: true }
-  const choose = () => [e2eStage]
+  const chosenStage = { name: "test:e2e", args: [], heavy: true }
+  const choose = () => [chosenStage]
   const SETUP_FILES = ["test/tsukumo-home-setup.ts", "test/dom-environment.ts"]
 
   test("文書だけの変更は E2E を選ばず、format:check と文書の検査だけ", () => {

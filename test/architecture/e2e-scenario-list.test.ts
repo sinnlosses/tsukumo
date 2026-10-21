@@ -23,8 +23,8 @@ describe("E2E のシナリオの一覧", () => {
       .filter((relPath) => !relPath.includes("/") && relPath.endsWith(".test.ts"))
       .map((relPath) => relPath.slice(0, -".test.ts".length))
     expect({
-      行の無いファイル: actual.filter((name) => !names.has(name)).sort(),
-      ファイルの無い行: [...names].filter((name) => !actual.includes(name)).sort(),
+      行の無いファイル: actual.filter((name) => !names.has(name)).toSorted(),
+      ファイルの無い行: [...names].filter((name) => !actual.includes(name)).toSorted(),
     }).toEqual({ 行の無いファイル: [], ファイルの無い行: [] })
   })
 

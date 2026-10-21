@@ -143,7 +143,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const order = ["架空の根拠。", 'class="retrospective"', 'class="note note-favor"'].map((part) =>
       shown?.indexOf(part),
     )
-    expect(order).toEqual([...order].sort((a, b) => (a ?? 0) - (b ?? 0)))
+    expect(order).toEqual(order.toSorted((a, b) => (a ?? 0) - (b ?? 0)))
     expect(order.every((index) => index !== undefined && index >= 0)).toBe(true)
   })
 

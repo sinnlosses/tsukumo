@@ -52,7 +52,7 @@ function taskIdPattern(knownIds: ReadonlySet<string>): RegExp | undefined {
     return undefined
   }
   const alternatives = [...knownIds]
-    .sort((a, b) => b.length - a.length)
+    .toSorted((a, b) => b.length - a.length)
     .map(escapeRegExp)
     .join("|")
   return new RegExp(`(?<!\\w)(?:${alternatives})(?!\\w)`, "g")

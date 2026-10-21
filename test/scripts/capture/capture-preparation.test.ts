@@ -79,9 +79,11 @@ describe("readPreparations", () => {
   })
 
   test("知らない旗と値の無い旗は parseArgs の段で落ちる", () => {
-    expect(() => readArguments(["--foo", "x"])).toThrow()
-    expect(() => readArguments(["--click"])).toThrow()
-    expect(() => readArguments(["--advance", "-5"])).toThrow()
+    expect(() => readArguments(["--foo", "x"])).toThrow("Unknown option '--foo'")
+    expect(() => readArguments(["--click"])).toThrow("Option '--click <value>' argument missing")
+    expect(() => readArguments(["--advance", "-5"])).toThrow(
+      "Option '--advance' argument is ambiguous",
+    )
   })
 })
 

@@ -374,8 +374,8 @@ describe("parseReportSections", () => {
   describe("svg の塊", () => {
     const rect = { kind: "rect", x: 10, y: 10, width: 100, height: 40 }
     const line = { kind: "line", x1: 0, y1: 0, x2: 50, y2: 50 }
-    const text = { kind: "text", x: 5, y: 5, text: "架空の字" }
-    const svg = { kind: "svg", width: 200, height: 100, shapes: [rect, line, text] }
+    const textShape = { kind: "text", x: 5, y: 5, text: "架空の字" }
+    const svg = { kind: "svg", width: 200, height: 100, shapes: [rect, line, textShape] }
 
     it("rect・line・text の3種を読み、省いた label・emphasis・arrow・title・fold を補う", () => {
       expect(
@@ -394,7 +394,7 @@ describe("parseReportSections", () => {
               shapes: [
                 { ...rect, label: "", sub: "", emphasis: false, labelAt: "center", tone: "none" },
                 { ...line, arrow: false, label: "", dashed: false, tone: "none" },
-                text,
+                textShape,
               ],
             },
           ],
@@ -403,7 +403,7 @@ describe("parseReportSections", () => {
     })
 
     it("beforeAfter の側に置ける", () => {
-      const side = { kind: "svg", width: 200, height: 100, shapes: [text] }
+      const side = { kind: "svg", width: 200, height: 100, shapes: [textShape] }
       const { sections } = parseReportSections([
         {
           heading: "",

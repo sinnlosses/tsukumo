@@ -68,7 +68,7 @@ describe("Menu", () => {
   })
 
   it("Enter で onSelect を呼んで閉じ、押す口へフォーカスを戻す", () => {
-    const onSelect = vi.fn(() => {})
+    const onSelect = vi.fn<() => void>()
     const trigger = openMenu({ ...BASE_PROPS, items: [item("甲", { onSelect })] })
     fireEvent.keyDown(screen.getByRole("menuitem", { name: "甲" }), { key: "Enter" })
     expect(onSelect).toHaveBeenCalledTimes(1)
@@ -77,7 +77,7 @@ describe("Menu", () => {
   })
 
   it("押せない行は押しても Enter でも onSelect を呼ばない", () => {
-    const onSelect = vi.fn(() => {})
+    const onSelect = vi.fn<() => void>()
     openMenu({ ...BASE_PROPS, items: [item("甲", {}), item("乙", { disabled: true, onSelect })] })
     const disabled = screen.getByRole("menuitem", { name: "乙" })
     expect(disabled.getAttribute("aria-disabled")).toBe("true")

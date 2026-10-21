@@ -36,7 +36,7 @@ function contrastOfVeiled(ground: string, image: string, veil: number, ink: stri
       )
     }, 0)
   const inkChannels = [1, 3, 5].map((at) => Number.parseInt(ink.slice(at, at + 2), 16))
-  const [lighter, darker] = [luminance(mixed), luminance(inkChannels)].sort((a, b) => b - a)
+  const [lighter, darker] = [luminance(mixed), luminance(inkChannels)].toSorted((a, b) => b - a)
   return ((lighter ?? 0) + 0.05) / ((darker ?? 0) + 0.05)
 }
 

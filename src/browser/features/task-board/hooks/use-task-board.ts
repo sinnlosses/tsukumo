@@ -84,8 +84,8 @@ export function useTaskBoard(
   const content = boardContent(tasks, entries, byId, rows, selected, isVisible, knownIds, {
     query,
     filter,
-    run: (taskId, request) => {
-      setConfirming({ taskId, request })
+    run: (taskId, taskRequest) => {
+      setConfirming({ taskId, request: taskRequest })
     },
     onJump: jumpTo,
     breadcrumb:

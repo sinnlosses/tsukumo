@@ -170,8 +170,8 @@ function bandOf(
  * 行の矩形は行ごと・インラインの箱ごとに取れるので、段落の中の `<code>` や、同じ行に並ぶ表のセルが別々の矩形になっている。
  */
 function mergeLines(boxes: readonly LineBox[]): readonly LineBox[] {
-  return [...boxes]
-    .sort((left, right) => left.top - right.top)
+  return boxes
+    .toSorted((left, right) => left.top - right.top)
     .reduce<readonly LineBox[]>((lines, box) => {
       const last = lines.at(-1)
       return last !== undefined && box.top < last.bottom

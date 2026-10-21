@@ -281,7 +281,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
       <Markdown text={'<a href="#架空の先">飛ぶ</a>\n\n<div id="架空の先">先</div>'} />,
     )
     const target = typedElement(container.querySelector("div[id]"), HTMLDivElement, "飛び先")
-    const scrolled = vi.fn()
+    const scrolled = vi.fn<(options?: boolean | ScrollIntoViewOptions) => void>()
     target.scrollIntoView = scrolled
     const hashBefore = window.location.hash
 

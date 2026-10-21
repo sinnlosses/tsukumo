@@ -319,7 +319,7 @@ describe("process の env / cwd を読む形の検出", () => {
   })
 
   it("構文エラーのある本文は throw する", () => {
-    expect(() => readsProcessMember("const = (", "env")).toThrow()
+    expect(() => readsProcessMember("const = (", "env")).toThrow("source.ts を読めない")
   })
 })
 

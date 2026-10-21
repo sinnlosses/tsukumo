@@ -121,7 +121,7 @@ function recordFailure(scenario: string, outDir: string): string {
 function pruneOldFailures(failuresRoot: string, keptStamp: string): void {
   const stamps = readdirSync(failuresRoot)
     .filter((name) => name !== keptStamp)
-    .sort()
+    .toSorted()
   const overflow = stamps.length - (FAILURE_RETENTION_COUNT - 1)
   for (const stamp of stamps.slice(0, Math.max(overflow, 0))) {
     rmSync(path.join(failuresRoot, stamp), { recursive: true, force: true })

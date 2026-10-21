@@ -117,13 +117,11 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   const viewers = new Set<(frame: ServerFrame) => void>()
   // セッションから引く読み口の3つ。
   // セッションは配り始めたあとに繋がるので、繋がるまでは「取れない」を返すものを置いておき、`connect` で本物に差し替える。
-  let readContextUsage: () => Promise<ContextUsageReport> = () =>
-    Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
-  let readPlanUsage: () => Promise<PlanUsageReport> = () => Promise.resolve(UNAVAILABLE_PLAN_USAGE)
-  let refreshTasks: () => Promise<void> = () => Promise.resolve()
-  let recordSplit: (release: SplitRelease) => void = () => {}
-  let readSessionDigest: (sessionId: string) => Promise<SessionDigest> = () =>
-    Promise.resolve(UNAVAILABLE_SESSION_DIGEST)
+  let readContextUsage: () => Promise<ContextUsageReport> = unavailableContextUsage
+  let readPlanUsage: () => Promise<PlanUsageReport> = unavailablePlanUsage
+  let refreshTasks: () => Promise<void> = noTasksToRefresh
+  let recordSplit: (release: SplitRelease) => void = ignoreSplit
+  let readSessionDigest: (sessionId: string) => Promise<SessionDigest> = unavailableSessionDigest
   const { achievementCache } = options
 
   const rpcRouter = createRpcRouter({
@@ -265,4 +263,22 @@ function pushRefresh(
   for (const send of viewers) {
     send({ type: "refresh", target })
   }
+}
+
+function unavailableContextUsage(): Promise<ContextUsageReport> {
+  return Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
+}
+
+function unavailablePlanUsage(): Promise<PlanUsageReport> {
+  return Promise.resolve(UNAVAILABLE_PLAN_USAGE)
+}
+
+function noTasksToRefresh(): Promise<void> {
+  return Promise.resolve()
+}
+
+function ignoreSplit(): void {}
+
+function unavailableSessionDigest(): Promise<SessionDigest> {
+  return Promise.resolve(UNAVAILABLE_SESSION_DIGEST)
 }

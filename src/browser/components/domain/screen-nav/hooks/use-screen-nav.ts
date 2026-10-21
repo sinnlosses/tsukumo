@@ -190,13 +190,13 @@ export function useScreenNav(): ScreenNavView {
   const modelPermission = useModelPermission()
   const settings = useSettings()
   const character = useCharacterPicker(ref)
-  const roomName = currentRoomName()
-  const { tag: sessionTag, switcher } = useSessionSwitcher(roomName, useProjectName())
+  const currentRoom = currentRoomName()
+  const { tag: sessionTag, switcher } = useSessionSwitcher(currentRoom, useProjectName())
   const head = usePhoneHead({
     current,
     work,
     face: character.face,
-    roomName,
+    roomName: currentRoom,
     conversationHref: screenHref("conversation"),
   })
 

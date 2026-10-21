@@ -5,12 +5,12 @@
 export function readDataUrl(file: File): Promise<string | undefined> {
   return new Promise((resolve) => {
     const reader = new FileReader()
-    reader.onload = () => {
+    reader.addEventListener("load", () => {
       resolve(typeof reader.result === "string" ? reader.result : undefined)
-    }
-    reader.onerror = () => {
+    })
+    reader.addEventListener("error", () => {
       resolve(undefined)
-    }
+    })
     reader.readAsDataURL(file)
   })
 }

@@ -33,9 +33,6 @@ export function PortraitDrop(props: { readonly drop: PortraitDropModel }): React
 function PortraitCard(props: { readonly drop: PortraitDropModel }): ReactElement {
   const { drop } = props
 
-  const onDragOver = (event: DragEvent): void => {
-    event.preventDefault()
-  }
   const onDrop = (event: DragEvent): void => {
     event.preventDefault()
     const file = event.dataTransfer.files[0]
@@ -100,4 +97,8 @@ function PortraitCard(props: { readonly drop: PortraitDropModel }): ReactElement
       {fileInput}
     </label>
   )
+}
+
+function onDragOver(event: DragEvent): void {
+  event.preventDefault()
 }

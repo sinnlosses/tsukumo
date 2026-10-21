@@ -42,7 +42,7 @@ describe("colorSwatch", () => {
 
 describe("cachedColorTokenReader", () => {
   it("同じ名前は stamp が同じあいだ1回だけ読み、色でない名前（undefined）も覚える", () => {
-    const read = vi.fn(readToken)
+    const read = vi.fn<typeof readToken>(readToken)
     const cached = cachedColorTokenReader(read, () => "a")
 
     const results = ["state-memo", "state-memo", "font-body", "font-body", "state-memo"].map(cached)
@@ -54,7 +54,7 @@ describe("cachedColorTokenReader", () => {
   it("stamp が変わったら覚えた色を捨てて読み直す", () => {
     let stamp = "a"
     let color: ResolvedColor | undefined = TOKENS.get("state-memo")
-    const read = vi.fn(() => color)
+    const read = vi.fn<() => ResolvedColor | undefined>(() => color)
     const cached = cachedColorTokenReader(read, () => stamp)
 
     expect(cached("state-memo")).toBe(color)
@@ -66,7 +66,7 @@ describe("cachedColorTokenReader", () => {
   })
 
   it("カラーコードの2回目以降も surface を読み直さない", () => {
-    const read = vi.fn(readToken)
+    const read = vi.fn<typeof readToken>(readToken)
     const cached = cachedColorTokenReader(read, () => "a")
 
     colorSwatch("#fff", cached)

@@ -1,5 +1,5 @@
 {
-  "plugins": ["typescript", "react"],
+  "plugins": ["typescript", "react", "unicorn", "oxc", "vitest"],
   "env": {
     "es2024": true
   },
@@ -23,7 +23,13 @@
       { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
     ],
     "typescript/no-explicit-any": "error",
-    "typescript/no-import-type-side-effects": "error"
+    "typescript/no-import-type-side-effects": "error",
+    "unicorn/no-array-sort": "error",
+    "unicorn/no-array-reverse": "error",
+    "vitest/no-focused-tests": "error",
+    "vitest/no-disabled-tests": "error",
+    "vitest/valid-expect": ["error", { "maxArgs": 2 }],
+    "eqeqeq": "error"
   },
   "overrides": [
     {
@@ -46,7 +52,20 @@
             ]
           }
         ],
-        "typescript/consistent-type-assertions": ["error", { "assertionStyle": "never" }]
+        "typescript/consistent-type-assertions": ["error", { "assertionStyle": "never" }],
+        // describe の中の it ごとの小さな補助関数を、使う it の近くに置いて読めるようにする。
+        // 巻き上げると describe の外へ離れて、どのテストの前提かが読めなくなる
+        "unicorn/consistent-function-scoping": "off",
+        // 判別の値を先に expect で確かめ、型を絞る if の中で残りの欄を確かめる形がある。
+        // as を使わずに型を絞るために、期待が if の中に入る
+        "vitest/no-conditional-expect": "off"
+      }
+    },
+    {
+      "files": ["test/e2e/**"],
+      "rules": {
+        // E2E の確かめは画面の撮影の比較（settleAndMatch）が持ち、it の直下に expect が現れない
+        "vitest/expect-expect": "off"
       }
     }
   ]

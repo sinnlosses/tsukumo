@@ -33,7 +33,7 @@ function renderPage(): { inside: Node; outside: Node } {
   )
   const inside = container.querySelector("[data-report-body] p")?.firstChild
   const outside = container.querySelector(":scope > p")?.firstChild
-  if (inside == null || outside == null) {
+  if (inside === undefined || inside === null || outside === undefined || outside === null) {
     throw new Error("フィクスチャの本文が描かれていない")
   }
   return { inside, outside }

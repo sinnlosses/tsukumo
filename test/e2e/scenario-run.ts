@@ -172,7 +172,7 @@ export function useScenarioRun(): ScenarioRun {
 
   afterEach(async () => {
     // 後から起こしたものから閉じる（コンテキスト → tsukumo → 一時のディレクトリ）。
-    for (const cleanup of cleanups.splice(0).reverse()) {
+    for (const cleanup of cleanups.splice(0).toReversed()) {
       await cleanup()
     }
   })

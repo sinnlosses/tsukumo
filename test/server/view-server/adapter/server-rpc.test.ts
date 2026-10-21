@@ -111,7 +111,7 @@ describe("startViewServer", () => {
       // 終わりが頭より前の範囲は、口へ渡す前に契約が断る。
       await expect(
         rpcClientOf(found, TOKEN).repository.fileExcerpt({ ...request, endLine: 11 }),
-      ).rejects.toThrow()
+      ).rejects.toThrow("Input validation failed")
       expect(requests).toHaveLength(1)
       await found.close()
 

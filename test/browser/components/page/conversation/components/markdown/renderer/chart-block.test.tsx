@@ -28,8 +28,8 @@ class FakeChart implements Instance {
     scale: { grid: { color: "", display: true }, border: { color: "" } },
     plugins: { colors: { enabled: true }, legend: { display: true } },
   }
-  static readonly register = vi.fn()
-  readonly destroy = vi.fn()
+  static readonly register = vi.fn<() => void>()
+  readonly destroy = vi.fn<() => void>()
 
   constructor() {
     instances.push(this)
