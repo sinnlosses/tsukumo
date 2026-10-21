@@ -7,10 +7,10 @@
 // 人格（`persona.md` の全文）は文字列で受け取り、パックの型も fs も知らない。
 
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
-import type { ChatArchive } from "../../chat/core/chat-archive-port.ts"
 import { CHAT_MANNER_PROMPT } from "../../chat/core/chat-manner.ts"
 import {
   type ChatMemorySources,
+  type ReadRecent,
   takeChatMemoryPromptParts,
   type WorkMemorySources,
   workMemoryPromptParts,
@@ -58,18 +58,16 @@ export type SystemPromptMode =
  */
 export function toSystemPromptMode(
   mode: SessionMode,
-  chatArchive: ChatArchive,
+  readRecent: ReadRecent,
   readChatSummary: ChatSummary["read"],
   start: SessionStart,
-  packName: string,
 ): SystemPromptMode {
   if (mode.kind === "work") {
     return {
       kind: "work",
       memory: {
         chatSummary: { read: readChatSummary },
-        chatArchive,
-        packName,
+        readRecent,
         readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes },
       },
     }
@@ -80,8 +78,7 @@ export function toSystemPromptMode(
     memory: {
       start,
       chatSummary: mode.chatSummary,
-      chatArchive,
-      packName,
+      readRecent,
       readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
     },
   }

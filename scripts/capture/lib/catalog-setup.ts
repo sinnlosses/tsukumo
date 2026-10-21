@@ -5,6 +5,7 @@ import path from "node:path"
 
 import { appendDiaryParagraph } from "../../../src/server/diary/adapter/diary.ts"
 import { FAKE_BEADS_ISSUES_PATH } from "../../../src/server/repository/adapter/fake-beads.ts"
+import { parseDateKey } from "../../../src/shared/achievement/achievement.ts"
 import { fictionalPng } from "../../shared/fictional-png.ts"
 import { REPOSITORY_ROOT } from "../../shared/repository-root.ts"
 import type { CatalogEntry, HomeSetup } from "./catalog-entry.ts"
@@ -87,10 +88,14 @@ export async function applyHomeSetup(setup: HomeSetup, homeDir: string): Promise
     return
   }
 
+  const date = parseDateKey(setup.date)
+  if (date === undefined) {
+    throw new Error(`日記の日付が YYYY-MM-DD の実在の日でない: ${setup.date}`)
+  }
   const written = await appendDiaryParagraph(
     REPOSITORY_ROOT,
     {
-      date: setup.date,
+      date,
       writtenAtEpochMilliseconds: diaryEpochMilliseconds(setup.date),
       body: setup.body,
       expression: "proud",

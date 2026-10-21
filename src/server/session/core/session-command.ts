@@ -4,6 +4,7 @@
 import {
   achievementReflectionRequestText,
   type DailyAchievement,
+  type DateKey,
   isEmptyAchievementDay,
 } from "../../../shared/achievement/achievement.ts"
 import type { CommandInputs } from "../../../shared/command.ts"
@@ -241,7 +242,7 @@ function toDriver<C>(
  * 会話の `SessionDriver` は通らない（書き手は会話とは別の使い捨ての問い合わせ）。
  */
 async function reflectAchievement(
-  date: string,
+  date: DateKey,
   session: CommandSession,
   ports: SessionCommandPorts,
 ): Promise<DispatchResult> {

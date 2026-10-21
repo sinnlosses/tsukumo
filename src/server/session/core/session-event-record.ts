@@ -2,6 +2,7 @@
 // どのイベントをどの記録口へ、どちらのモード・セッションIDが決まったあとかで渡すかの門がここにある。
 // 復元した再生はここを通らない（呼ぶ側が呼ばない）。
 
+import { shownCharacterPackName } from "../../../shared/character-pack/character.ts"
 import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
 import { conclusionWithTaskName } from "../../../shared/report/report-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -33,23 +34,26 @@ export function recordSessionEvent(
   event: SessionEvent,
   at: number,
 ): void {
-  // 会話のアーカイブへ1行足す（パックが分かっているときだけ）。
-  appendChatArchiveEntry(
-    ports.chatArchive,
-    state.character?.pack,
-    state.chatMode ? "chat" : "work",
-    ports.project,
-    at,
-    event,
-    {
-      find: ports.promptImageShelf.find,
-      reportFailure: (error) => {
-        ports.diagnostic.add(
-          swallowedFailureFootprint(at, { feature: "chat", place: "archive-image-write" }, error),
-        )
+  // 会話のアーカイブへ1行足す。パックがまだ決まっていない・名前が検査を通らないときは足さない。
+  const packName = shownCharacterPackName(state.character)
+  if (packName !== undefined) {
+    appendChatArchiveEntry(
+      ports.chatArchive,
+      packName,
+      state.chatMode ? "chat" : "work",
+      ports.project,
+      at,
+      event,
+      {
+        find: ports.promptImageShelf.find,
+        reportFailure: (error) => {
+          ports.diagnostic.add(
+            swallowedFailureFootprint(at, { feature: "chat", place: "archive-image-write" }, error),
+          )
+        },
       },
-    },
-  )
+    )
+  }
   // 仕事のターンの結論を、代の勘定に預けて上書きする（`turn-finished` で読み出す）。
   if (event.kind === "report") {
     tally.pendingConclusion.hold(conclusionWithTaskName(event.conclusion, event.task))
@@ -96,14 +100,8 @@ export function recordSessionEvent(
     }
     // 仕事のときだけ、預けておいた結論を1行書く。`report` 無しで終わったターンは何も足さない。
     const conclusion = tally.pendingConclusion.takeAndClear()
-    if (!state.chatMode && conclusion !== undefined) {
-      appendChatArchiveConclusion(
-        ports.chatArchive,
-        state.character?.pack,
-        ports.project,
-        at,
-        conclusion,
-      )
+    if (!state.chatMode && conclusion !== undefined && packName !== undefined) {
+      appendChatArchiveConclusion(ports.chatArchive, packName, ports.project, at, conclusion)
     }
   }
 }

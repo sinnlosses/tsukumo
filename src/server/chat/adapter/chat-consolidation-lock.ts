@@ -4,7 +4,6 @@
 import { mkdirSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
-import { isCharacterPackName } from "../../../shared/character-pack/character.ts"
 import { isoWithOffset } from "../../adapter/local-time.ts"
 import type {
   ChatConsolidationLock,
@@ -23,10 +22,6 @@ export function createChatConsolidationLock(
   root: string = chatArchiveDir(),
 ): ChatConsolidationWriterPorts["lockConsolidation"] {
   return (packName, staleAfterMs, now) => {
-    if (!isCharacterPackName(packName)) {
-      return undefined
-    }
-
     const path = join(root, packName, CONSOLIDATION_LOCK_FILE_NAME)
     if (createLockFile(path, now)) {
       return releasableLock(path)

@@ -4,7 +4,7 @@
 
 import { isPlainObject } from "remeda"
 
-import { isCharacterPackName } from "../../../shared/character-pack/character.ts"
+import { parseCharacterPackName } from "../../../shared/character-pack/character.ts"
 import {
   type GeneratedCharacter,
   generatedCharacterSchema,
@@ -78,7 +78,7 @@ export function toGeneratedCharacter(value: unknown): GeneratedCharacter | undef
   if (!isPlainObject(value)) {
     return undefined
   }
-  const id = typeof value.id === "string" && isCharacterPackName(value.id) ? value.id : ""
+  const id = typeof value.id === "string" ? (parseCharacterPackName(value.id) ?? "") : ""
   const parsed = generatedCharacterSchema.safeParse({ ...value, id })
   return parsed.success ? parsed.data : undefined
 }

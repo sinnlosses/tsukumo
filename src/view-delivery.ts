@@ -40,7 +40,7 @@ import {
   startOnResolvedPort,
 } from "./server/view-server/core/port-resolution.ts"
 import type { StartedSession } from "./session-start.ts"
-import { resolveAchievementDateKey } from "./shared/achievement/achievement.ts"
+import { parseDateKey, resolveAchievementDateKey } from "./shared/achievement/achievement.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
@@ -146,7 +146,10 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     // 見る日の検証・今日への丸め込みも呼ぶたびにここで済ませ、`readAchievement` には検証済みの日付キーだけを渡す。
     // 日記はここで合わせる（`readAchievement` は数だけを持ち、日記の置き場を知らない）。
     readAchievementDay: async (selection) => {
-      const today = todayLocalDateKey()
+      const today = parseDateKey(todayLocalDateKey())
+      if (today === undefined) {
+        return { kind: "unavailable" }
+      }
       const dateKey = resolveAchievementDateKey(selection, today)
       const [result, diary] = await Promise.all([
         readAchievement(dateKey, today, achievementCache),

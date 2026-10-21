@@ -10,6 +10,7 @@
 // メモリにだけ持ち、書くのは索引とあらすじのファイルだけで、ログには出さない。
 // 書いてよい範囲と定着の `query()` へ渡してよい範囲は `docs/coding-standards.md`「会話内容の扱い」の例外の表が決めている。
 
+import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import type { ChatSummary } from "../../session-driver/core/session-driver.ts"
 import type { ChatArchive } from "./chat-archive-port.ts"
@@ -57,7 +58,7 @@ export type ChatConsolidationOutcome =
 
 /** そのパックの定着を1回走らせる。`signal` が中断されたら、待たずに `failed` で返り、何も書かない。 */
 export type ChatConsolidationWriter = (
-  packName: string,
+  packName: CharacterPackName,
   signal: AbortSignal,
 ) => Promise<ChatConsolidationOutcome>
 
@@ -87,12 +88,12 @@ export type ChatConsolidationWriterPorts = {
    * 書いてから `staleAfterMs` を過ぎた錠は、落ちたプロセスの残りとして消して取り直す。
    */
   readonly lockConsolidation: (
-    packName: string,
+    packName: CharacterPackName,
     staleAfterMs: number,
     now: Temporal.Instant,
   ) => ChatConsolidationLock | undefined
   /** パック1つぶんのあらすじの読み書き口（書くのは起こした時点のパックのファイル）。 */
-  readonly chatSummary: (packName: string) => ChatSummary
+  readonly chatSummary: (packName: CharacterPackName) => ChatSummary
   /** 使い捨ての `query()`。返すのは `structured_output` のまま（検査はここでする）。 */
   readonly query: (request: ChatConsolidationQuery, signal: AbortSignal) => Promise<unknown>
   /** いまの時刻（エポックミリ秒）。錠の古さを測るのに使う。 */
@@ -111,8 +112,8 @@ const CHAT_CONSOLIDATION_LOCK_STALE_MS = CHAT_CONSOLIDATION_TIMEOUT_MS * 2
  * プロセスのメモリにだけ持つ（起こし直すと 0 から数え直す）。
  */
 type ShrinkTally = {
-  readonly read: (packName: string) => number
-  readonly put: (packName: string, count: number) => void
+  readonly read: (packName: CharacterPackName) => number
+  readonly put: (packName: CharacterPackName, count: number) => void
 }
 
 export function createChatConsolidationWriter(
@@ -134,7 +135,7 @@ export function createChatConsolidationWriter(
 async function consolidate(
   ports: ChatConsolidationWriterPorts,
   shrinkTally: ShrinkTally,
-  packName: string,
+  packName: CharacterPackName,
   signal: AbortSignal,
 ): Promise<ChatConsolidationOutcome> {
   const lock = ports.lockConsolidation(
@@ -155,7 +156,7 @@ async function consolidate(
 async function consolidateLocked(
   ports: ChatConsolidationWriterPorts,
   shrinkTally: ShrinkTally,
-  packName: string,
+  packName: CharacterPackName,
   signal: AbortSignal,
 ): Promise<ChatConsolidationOutcome> {
   try {

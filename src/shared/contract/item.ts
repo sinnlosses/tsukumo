@@ -3,11 +3,11 @@
 
 import { z } from "zod"
 
-import { isCharacterPackName } from "../character-pack/character.ts"
+import { characterPackNameSchema } from "../character-pack/character.ts"
 import { commandBase } from "../command.ts"
 import {
-  isItemId,
   MAX_ITEM_DATA_URL_LENGTH,
+  parseItemId,
   parseItemImage,
   parseItemName,
   SEAT_KEYS,
@@ -25,10 +25,10 @@ const itemImageSchema = z
   .max(MAX_ITEM_DATA_URL_LENGTH)
   .refine((value) => parseItemImage(value) !== undefined)
 
-const itemIdSchema = z.string().refine(isItemId)
+const itemIdSchema = z.string().refine((value) => parseItemId(value) !== undefined)
 
 /** 席を置くパックの名前。一覧にあるかは書き込む側が突き合わせる。 */
-const seatPackSchema = z.string().refine(isCharacterPackName)
+const seatPackSchema = characterPackNameSchema
 
 const seatSchema = z.enum(SEAT_KEYS)
 

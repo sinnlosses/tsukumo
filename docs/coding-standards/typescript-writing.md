@@ -78,6 +78,16 @@ transcript の1行のような**外から来た素のデータ**に使う。捕�
 prototype を持つものを見るときだけ `isObjectType` で、`code` のようなフィールドは `in` で
 確かめてから読む。
 
+**パスに組む文字列など、検査を通ったことに意味がある値は、検査済みの branded な型
+（`string & { readonly __brand: "…" }`）にして運ぶ。** 検査が `boolean` を返すだけだと、通っても
+値は `string` のままで、門を通さずにパスを組む呼び出しを型が止めない。作れるのは
+`parse…(value: string): … | undefined` の1つと、契約の入力に使う型述語（`value is …`）つきの
+`refine` だけで、`as` では作らない。パスを組む関数はその型だけを受け、通らない値は境界で
+`undefined` に畳んで内側へ運ばない。通らないときに「何もしない」を残すなら、配線の1か所で
+検査して、何もしない口（`UNAVAILABLE_CHAT_SUMMARY` など）を渡し、core の引数に `| undefined` を
+持ち込まない。テストでは `test/fixture/` の作り手（`parse…` を通し、
+`undefined` なら throw する）で値を作る。例は `CharacterPackName`・`ItemId`・`DateKey`。
+
 ### テストの DOM 要素のキャスト
 
 `test/**` では `typescript/consistent-type-assertions`（`assertionStyle: "never"`）を

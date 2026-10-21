@@ -2,6 +2,7 @@
 // `SessionMode` から引かれる雑談の型（`ChatRecall` が使う `ChatArchiveLine` など）は、
 // 駆動の契約と輪になるので、駆動の契約の側に残る。
 
+import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type {
   ChatArchiveLine,
@@ -17,14 +18,17 @@ import type {
 export type ChatArchive = {
   /**
    * 依頼・セリフ・仕事のターンの結論のいずれか1件を追記する。
-   * `packName` が `isCharacterPackName` を通らない・書けないときは黙って何もしない。
+   * 書けないときは黙って何もしない。
    */
-  readonly append: (packName: string, entry: ChatArchiveEntry) => void
+  readonly append: (packName: CharacterPackName, entry: ChatArchiveEntry) => void
   /**
    * 雑談の依頼に添えた画像の原寸1枚を、そのパックの画像の置き場へ書く。
    * 書けたら置き場の下のファイル名を返す。書けないときも例外は投げず、失敗を返す。
    */
-  readonly writeImage: (packName: string, image: ChatArchiveImage) => ChatArchiveImageWriteResult
+  readonly writeImage: (
+    packName: CharacterPackName,
+    image: ChatArchiveImage,
+  ) => ChatArchiveImageWriteResult
   /**
    * そのパックの直近の会話を、新しいほうから遡って {@link ChatReadbackLimits} のバイト数まで読む。
    * 返すのは古い→新しいの順。
@@ -33,7 +37,7 @@ export type ChatArchive = {
    * 読めなければ空を返し、そのセッションは逐語なしで始まる。
    */
   readonly readRecent: (
-    packName: string,
+    packName: CharacterPackName,
     limits: ChatReadbackLimits,
   ) => readonly ChatArchiveRecentEntry[]
   /**
@@ -44,24 +48,27 @@ export type ChatArchive = {
    * 契機（`consolidateEveryBytes`）に届いたかは、呼び出し側が {@link ChatUnconsolidatedBatch.usedBytes} で比べる。
    */
   readonly unconsolidated: (
-    packName: string,
+    packName: CharacterPackName,
     limits: ChatUnconsolidatedLimits,
   ) => ChatUnconsolidatedBatch
   /** 定着ができたエピソードを追記する（`id` はここで振る）。書けなくても例外は投げない。 */
-  readonly appendEpisodes: (packName: string, episodes: readonly ChatEpisodeDraft[]) => void
+  readonly appendEpisodes: (
+    packName: CharacterPackName,
+    episodes: readonly ChatEpisodeDraft[],
+  ) => void
   /**
    * 索引を引く言葉で採点し、点の高い順に {@link ChatEpisodeCandidate} を返す。
    * 採点は `scoreChatEpisodes` の純関数で、ここは `episode.jsonl` と `recalled.jsonl` を読んで渡すだけ。
    */
   readonly recallList: (
-    packName: string,
+    packName: CharacterPackName,
     keyword: string,
     limitBytes: number,
     now: Temporal.Instant,
   ) => ChatEpisodeRecallListResult
   /** 1件のエピソードの範囲を、アーカイブから逐語のまま古いほうから読む。開いたことは `recalled.jsonl` に残る。 */
   readonly recallEpisode: (
-    packName: string,
+    packName: CharacterPackName,
     id: string,
     limitBytes: number,
     now: Temporal.Instant,

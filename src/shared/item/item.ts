@@ -50,9 +50,12 @@ export function parseItemImage(dataUrl: string): PortraitImage | undefined {
   return parsePortraitImage(dataUrl)
 }
 
-/** サーバが振る id（10進の数字列）の形か。受け取った文字列をパスにしないための門。 */
-export function isItemId(value: string): boolean {
-  return ITEM_ID_PATTERN.test(value)
+/** サーバが振る id（10進の数字列）として検査したもの。作れるのは {@link parseItemId} だけ。 */
+export type ItemId = string & { readonly __brand: "ItemId" }
+
+/** サーバが振る id（10進の数字列）の形なら検査済みの型にして返す。受け取った文字列をパスにしないための門。 */
+export function parseItemId(value: string): ItemId | undefined {
+  return hasItemIdShape(value) ? value : undefined
 }
 
 /** 画像のファイル名として読んでよい形（`<id>.<svg|png|gif>`）か。 */
@@ -61,14 +64,18 @@ export function isItemImageFileName(value: string): boolean {
 }
 
 /** 画像のファイル名。名前ではなく id から組む。 */
-export function itemFileName(id: string, format: PortraitFormat): string {
+export function itemFileName(id: ItemId, format: PortraitFormat): string {
   return `${id}.${format}`
 }
 
-/** いまある id の最大＋1 の10進。空なら `"1"`。 */
-export function nextItemId(items: readonly ItemEntry[]): string {
+/** いまある id の最大＋1 の10進。空なら `"1"`。桁の上限を超えるときは undefined。 */
+export function nextItemId(items: readonly ItemEntry[]): ItemId | undefined {
   const largest = items.reduce((max, item) => Math.max(max, Number(item.id)), 0)
-  return String(largest + 1)
+  return parseItemId(String(largest + 1))
+}
+
+function hasItemIdShape(value: string): value is ItemId {
+  return ITEM_ID_PATTERN.test(value)
 }
 
 const ITEM_ID_PATTERN = /^[1-9][0-9]{0,8}$/

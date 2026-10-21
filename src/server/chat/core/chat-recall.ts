@@ -4,6 +4,7 @@
 // 上限に当たった呼び出しは `ChatArchive` を読まずに `"exhausted"` を返す。
 // アーカイブが何年ぶん増えても、上限に当たった回はファイルを1つも開かない。
 
+import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
 import {
   CHAT_MEMORY_BUDGET,
   type ChatMemoryBudget,
@@ -11,13 +12,20 @@ import {
 import type { ChatRecall } from "../../session-driver/core/session-driver.ts"
 import type { ChatArchive } from "./chat-archive-port.ts"
 
+/** 置き場を組めないパック（名前が {@link CharacterPackName} にならない）に渡す、何も見つからないと返す口。 */
+export const UNAVAILABLE_CHAT_RECALL: ChatRecall = {
+  recallList: () => ({ kind: "not-found" }),
+  recallEpisode: () => ({ kind: "not-found" }),
+  finishTurn: () => {},
+}
+
 /**
  * `ChatRecall` を1つ作る。`packName` と読む量（`budget`）はここで縛ってから {@link ChatArchive} へ渡す。
  * `now` は現在時刻（エポックミリ秒）。
  */
 export function createChatRecall(
   chatArchive: ChatArchive,
-  packName: string,
+  packName: CharacterPackName,
   now: () => number,
   budget: ChatMemoryBudget = CHAT_MEMORY_BUDGET,
 ): ChatRecall {

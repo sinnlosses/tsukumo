@@ -7,7 +7,10 @@ import {
   createChatArchive,
   pruneChatImages,
 } from "../../../../src/server/chat/adapter/chat-archive.ts"
+import { characterPackName } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
+
+const PACK = characterPackName("fictional-a")
 
 const FICTIONAL_ID = "0b6f6a54-1c1e-4d7a-9c55-2f1f0a6b1e01"
 
@@ -49,7 +52,7 @@ describe("writeImage", () => {
   it("原寸のバイト列を images/<日付>-<id>.<拡張子> に書き、その名前を返す", () => {
     const chatArchive = createChatArchive(root())
 
-    const written = chatArchive.writeImage("fictional-a", {
+    const written = chatArchive.writeImage(PACK, {
       id: FICTIONAL_ID,
       at: noonOn(20),
       dataUrl: SYNTHETIC_DATA_URL,
@@ -57,34 +60,32 @@ describe("writeImage", () => {
 
     const fileName = `2026-10-20-${FICTIONAL_ID}.png`
     expect(written).toEqual({ kind: "written", fileName })
-    expect(readFileSync(join(imagesDir("fictional-a"), fileName))).toEqual(SYNTHETIC_BYTES)
+    expect(readFileSync(join(imagesDir(PACK), fileName))).toEqual(SYNTHETIC_BYTES)
   })
 
   it("同じ名前のファイルがあれば上書きせず失敗を返す", () => {
     const chatArchive = createChatArchive(root())
     const image = { id: FICTIONAL_ID, at: noonOn(20), dataUrl: SYNTHETIC_DATA_URL }
-    chatArchive.writeImage("fictional-a", image)
+    chatArchive.writeImage(PACK, image)
 
-    const again = chatArchive.writeImage("fictional-a", {
+    const again = chatArchive.writeImage(PACK, {
       ...image,
       dataUrl: `data:image/png;base64,${Buffer.from([0x09]).toString("base64")}`,
     })
 
     expect(again.kind).toBe("failed")
-    expect(readFileSync(join(imagesDir("fictional-a"), `2026-10-20-${FICTIONAL_ID}.png`))).toEqual(
+    expect(readFileSync(join(imagesDir(PACK), `2026-10-20-${FICTIONAL_ID}.png`))).toEqual(
       SYNTHETIC_BYTES,
     )
   })
 
-  it("パック名・id・data URL のどれかが通らなければ、何も書かずに失敗を返す", () => {
+  it("id・data URL のどちらかが通らなければ、何も書かずに失敗を返す", () => {
     const chatArchive = createChatArchive(root())
     const image = { id: FICTIONAL_ID, at: noonOn(20), dataUrl: SYNTHETIC_DATA_URL }
 
-    expect(chatArchive.writeImage("..", image).kind).toBe("failed")
-    expect(chatArchive.writeImage("fictional-a", { ...image, id: "../escape" }).kind).toBe("failed")
+    expect(chatArchive.writeImage(PACK, { ...image, id: "../escape" }).kind).toBe("failed")
     expect(
-      chatArchive.writeImage("fictional-a", { ...image, dataUrl: "data:image/svg+xml;base64,AQID" })
-        .kind,
+      chatArchive.writeImage(PACK, { ...image, dataUrl: "data:image/svg+xml;base64,AQID" }).kind,
     ).toBe("failed")
     expect(existsSync(root())).toBe(false)
   })
@@ -92,25 +93,25 @@ describe("writeImage", () => {
 
 describe("pruneChatImages", () => {
   it("今日から7日を過ぎた日付の画像を全パックぶん消し、7日目までは残す", () => {
-    placeImage("fictional-a", "2026-10-12")
-    const kept = placeImage("fictional-a", "2026-10-13")
+    placeImage(PACK, "2026-10-12")
+    const kept = placeImage(PACK, "2026-10-13")
     placeImage("fictional-b", "2026-10-01")
     const failures: unknown[] = []
 
     pruneChatImages("2026-10-20", (error) => failures.push(error), root())
 
-    expect(readdirSync(imagesDir("fictional-a"))).toEqual([kept])
+    expect(readdirSync(imagesDir(PACK))).toEqual([kept])
     expect(readdirSync(imagesDir("fictional-b"))).toEqual([])
     expect(failures).toEqual([])
   })
 
   it("書く名前の形でないファイルには、日付が古くても触らない", () => {
-    mkdirSync(imagesDir("fictional-a"), { recursive: true })
-    writeFileSync(join(imagesDir("fictional-a"), "2026-01-01-note.txt"), SYNTHETIC_BYTES)
+    mkdirSync(imagesDir(PACK), { recursive: true })
+    writeFileSync(join(imagesDir(PACK), "2026-01-01-note.txt"), SYNTHETIC_BYTES)
 
     pruneChatImages("2026-10-20", () => {}, root())
 
-    expect(readdirSync(imagesDir("fictional-a"))).toEqual(["2026-01-01-note.txt"])
+    expect(readdirSync(imagesDir(PACK))).toEqual(["2026-01-01-note.txt"])
   })
 
   it("置き場が無いのは失敗にしない", () => {
@@ -126,7 +127,7 @@ describe("消えた画像を指す行の読み戻し", () => {
   it("imageFiles の指す画像が無くても行は読め、読み戻しにファイル名も枚数も載らない", () => {
     const chatArchive = createChatArchive(root())
 
-    chatArchive.append("fictional-a", {
+    chatArchive.append(PACK, {
       mode: "chat",
       kind: "request",
       at: noonOn(20),
@@ -135,7 +136,7 @@ describe("消えた画像を指す行の読み戻し", () => {
       imageFiles: [`2026-10-01-${FICTIONAL_ID}.png`],
     })
 
-    expect(chatArchive.readRecent("fictional-a", { recentBytes: 1_000 })).toEqual([
+    expect(chatArchive.readRecent(PACK, { recentBytes: 1_000 })).toEqual([
       { kind: "request", text: "架空の依頼", date: "2026-10-20", origin: { mode: "chat" } },
     ])
   })

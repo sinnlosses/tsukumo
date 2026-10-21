@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 
-import type { ChatArchive } from "../../../../src/server/chat/core/chat-archive-port.ts"
 import { CHAT_MANNER_PROMPT } from "../../../../src/server/chat/core/chat-manner.ts"
 import {
+  type ReadRecent,
   takeChatMemoryPromptParts,
   workMemoryPromptParts,
 } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
@@ -22,7 +22,7 @@ import {
   toSystemPromptMode,
 } from "../../../../src/server/system-prompt/core/system-prompt.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
-import { fixedChatSummary, inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
+import { fixedChatSummary, inMemoryChatSummary } from "../../../fixture/chat.ts"
 
 // `systemPrompt` に何が・どの順で載るかを、3通り（仕事・雑談・続きから始めるとき）で固定する
 // （docs/architecture/character-pack.md「append に入る節の並び」）。本物の駆動を起こして確かめることはできない（`systemPrompt` は
@@ -41,8 +41,10 @@ const RECENT: readonly ChatArchiveRecentEntry[] = [
   { kind: "speech", origin: { mode: "chat" }, text: "おかえりなのじゃ", date: "2026-09-21" },
 ]
 
-/** 読み戻すと `RECENT` を返す `ChatArchive`。 */
-const RECENT_CHAT_ARCHIVE = { ...NOOP_CHAT_ARCHIVE, readRecent: () => RECENT } satisfies ChatArchive
+/** 読み戻すと `RECENT` を返す口。 */
+const READ_RECENT: ReadRecent = () => RECENT
+
+const READ_NOTHING: ReadRecent = () => []
 
 describe("takeSystemPromptAppend", () => {
   it("仕事のときは 人格 → セリフの間合い → ワークプラン → レポートの記法 → 質問の書き方 の順でつながる", () => {
@@ -57,14 +59,13 @@ describe("takeSystemPromptAppend", () => {
     const summary = inMemoryChatSummary({ summary: SUMMARY, delivered: true })
     const expectedMemory = workMemoryPromptParts({
       chatSummary: summary,
-      chatArchive: RECENT_CHAT_ARCHIVE,
-      packName: "架空",
+      readRecent: READ_RECENT,
       readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes },
     })
 
     const append = takeSystemPromptAppend({
       persona: PERSONA,
-      mode: workMode(summary, RECENT_CHAT_ARCHIVE),
+      mode: workMode(summary, READ_RECENT),
     })
 
     expect(expectedMemory).toHaveLength(2)
@@ -84,18 +85,16 @@ describe("takeSystemPromptAppend", () => {
 
   it("雑談のときは 人格 → 雑談の作法 → 雑談の記憶 の順でつながる（仕事の2つは載らない）", () => {
     const summary = inMemoryChatSummary({ summary: SUMMARY, delivered: false })
-    const archive = RECENT_CHAT_ARCHIVE
     const expectedMemory = takeChatMemoryPromptParts({
       start: { kind: "new" },
       chatSummary: inMemoryChatSummary({ summary: SUMMARY, delivered: false }),
-      chatArchive: archive,
-      packName: "架空",
+      readRecent: READ_RECENT,
       readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
     })
 
     const append = takeSystemPromptAppend({
       persona: PERSONA,
-      mode: chatMode({ kind: "new" }, summary, archive),
+      mode: chatMode({ kind: "new" }, summary, READ_RECENT),
     })
 
     expect(append).toBe([PERSONA, CHAT_MANNER_PROMPT, ...expectedMemory].join("\n\n"))
@@ -110,7 +109,7 @@ describe("takeSystemPromptAppend", () => {
 
     const append = takeSystemPromptAppend({
       persona: PERSONA,
-      mode: chatMode({ kind: "resume", sessionId: "fictional" }, summary, RECENT_CHAT_ARCHIVE),
+      mode: chatMode({ kind: "resume", sessionId: "fictional" }, summary, READ_RECENT),
     })
 
     expect(append).toBe(`${PERSONA}\n\n${CHAT_MANNER_PROMPT}`)
@@ -127,10 +126,7 @@ describe("takeSystemPromptAppend", () => {
   it("雑談のときだけ載る条（覚える・忘れる・思い出す）は、仕事の append に入らない", () => {
     const work = takeSystemPromptAppend({
       persona: PERSONA,
-      mode: workMode(
-        inMemoryChatSummary({ summary: SUMMARY, delivered: true }),
-        RECENT_CHAT_ARCHIVE,
-      ),
+      mode: workMode(inMemoryChatSummary({ summary: SUMMARY, delivered: true }), READ_RECENT),
     })
 
     expect(CHAT_MANNER_PROMPT).toContain("remember")
@@ -145,7 +141,6 @@ describe("takeSystemPromptAppend", () => {
 describe("toSystemPromptMode", () => {
   it("読み戻す量は表（CHAT_MEMORY_BUDGET）から読む", () => {
     const chatSummary = inMemoryChatSummary({ summary: SUMMARY, delivered: false })
-    const chatArchive = RECENT_CHAT_ARCHIVE
     const sessionMode: SessionMode = {
       kind: "chat",
       personaMemory: { remember: () => "written", forget: () => "erased", finishTurn: () => {} },
@@ -157,21 +152,14 @@ describe("toSystemPromptMode", () => {
       },
     }
 
-    const mode = toSystemPromptMode(
-      sessionMode,
-      chatArchive,
-      () => undefined,
-      { kind: "new" },
-      "架空",
-    )
+    const mode = toSystemPromptMode(sessionMode, READ_RECENT, () => undefined, { kind: "new" })
 
     expect(mode).toEqual({
       kind: "chat",
       memory: {
         start: { kind: "new" },
         chatSummary,
-        chatArchive,
-        packName: "架空",
+        readRecent: READ_RECENT,
         readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
       },
     })
@@ -189,20 +177,16 @@ describe("toSystemPromptMode", () => {
       },
     }
 
-    const mode = toSystemPromptMode(
-      sessionMode,
-      RECENT_CHAT_ARCHIVE,
-      readChatSummary,
-      { kind: "resume", sessionId: "fictional" },
-      "架空",
-    )
+    const mode = toSystemPromptMode(sessionMode, READ_RECENT, readChatSummary, {
+      kind: "resume",
+      sessionId: "fictional",
+    })
 
     expect(mode).toEqual({
       kind: "work",
       memory: {
         chatSummary: { read: readChatSummary },
-        chatArchive: RECENT_CHAT_ARCHIVE,
-        packName: "架空",
+        readRecent: READ_RECENT,
         readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes },
       },
     })
@@ -212,14 +196,13 @@ describe("toSystemPromptMode", () => {
 /** 仕事のモード（既定は記憶が空。読む量は本物の配線と同じ値）。 */
 function workMode(
   chatSummary: Pick<ChatSummary, "read"> = fixedChatSummary(undefined),
-  chatArchive: ChatArchive = NOOP_CHAT_ARCHIVE,
+  readRecent: ReadRecent = READ_NOTHING,
 ): SystemPromptMode {
   return {
     kind: "work",
     memory: {
       chatSummary,
-      chatArchive,
-      packName: "架空",
+      readRecent,
       readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes },
     },
   }
@@ -229,15 +212,14 @@ function workMode(
 function chatMode(
   start: SessionStart,
   chatSummary: ChatSummary,
-  chatArchive: ChatArchive,
+  readRecent: ReadRecent,
 ): SystemPromptMode {
   return {
     kind: "chat",
     memory: {
       start,
       chatSummary,
-      chatArchive,
-      packName: "架空",
+      readRecent,
       readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
     },
   }

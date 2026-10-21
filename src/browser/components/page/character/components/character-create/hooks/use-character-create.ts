@@ -11,12 +11,12 @@
 // 下書きの掃除はこのフックでは行わない。
 // 閉じるたびに呼び出し元が `<CharacterCreate>` を `key` で作り直すので、次に開いたときは自然に空へ戻る。
 //
-// id の形はサーバと同じ規則（`isCharacterPackName`）で先に見て、送ってから黙って落ちるのではなく、押せない理由を id の欄の下に出す。
+// id の形はサーバと同じ規則（`parseCharacterPackName`）で先に見て、送ってから黙って落ちるのではなく、押せない理由を id の欄の下に出す。
 // 作れなかったとき（断られた・切れた）はダイアログを閉じず、id の欄の下に失敗を出す。
 
 import { useState } from "react"
 
-import { isCharacterPackName } from "../../../../../../../shared/character-pack/character.ts"
+import { parseCharacterPackName } from "../../../../../../../shared/character-pack/character.ts"
 import type { GeneratedCharacter } from "../../../../../../../shared/character-pack/generated-character.ts"
 import { MAX_PORTRAIT_BYTES } from "../../../../../../../shared/character-pack/portrait-image.ts"
 import { readAccentColor } from "../../../../../../domain/appearance-color.ts"
@@ -136,7 +136,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   }
 
   const taken = id !== "" && characterPacks.some((pack) => pack.name === id)
-  const validFormat = isCharacterPackName(id)
+  const validFormat = parseCharacterPackName(id) !== undefined
   const canSubmit = validFormat && !taken && portraitImage !== undefined && !sending && !generating
   const canGenerate = portraitImage !== undefined && !generating && !sending
 

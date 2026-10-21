@@ -150,17 +150,26 @@ export function nextDateKey(dateKey: string): string {
  */
 export function resolveAchievementDateKey(
   selection: AchievementDaySelection,
-  today: string,
-): string {
+  today: DateKey,
+): DateKey {
   if (selection.kind === "today") {
     return today
   }
-  const date = dateKeyOf(selection.date)
+  const date = parseDateKey(dateKeyOf(selection.date)?.toString() ?? "")
   if (date === undefined) {
     return today
   }
-  return date.toString() > today ? today : date.toString()
+  return date > today ? today : date
 }
+
+/** 日付ごとのファイルの名前や置き場になる、実在する日の `YYYY-MM-DD`。作れるのは {@link parseDateKey} と {@link dateKeySchema} だけ。 */
+export type DateKey = string & { readonly __brand: "DateKey" }
+
+export function parseDateKey(value: string): DateKey | undefined {
+  return hasDateKeyShape(value) ? value : undefined
+}
+
+export const dateKeySchema = z.string().refine(hasDateKeyShape)
 
 /** 「小さな驚き:」の下に並べる行（卒業→節目の順）。該当が無ければ空。 */
 function achievementSurpriseLines(
@@ -195,6 +204,10 @@ function achievementTaskListLines(doneTasks: readonly AchievementTask[]): readon
   const rest = doneTasks.length - shown.length
   const lines = shown.map((task) => `- ${task.id} ${task.summary}`)
   return rest > 0 ? [...lines, `- ほか ${String(rest)} 件`] : lines
+}
+
+function hasDateKeyShape(value: string): value is DateKey {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && dateKeyOf(value)?.toString() === value
 }
 
 /** `YYYY-MM-DD` として読めれば {@link Temporal.PlainDate}、読めなければ `undefined`。 */

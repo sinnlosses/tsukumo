@@ -6,6 +6,7 @@
 // 「会話内容の扱い」の例外の表が決めている。
 // 会話の文面と画像が引数として通るが、ログには出さない。
 
+import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import type { RecordedPromptImage } from "../../../shared/session-driver/prompt-image.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -22,7 +23,6 @@ export type ChatArchiveImageSource = {
 
 /**
  * イベント1件を会話のアーカイブへ渡す。拾うのは依頼とセリフの2種類だけ。
- * `packName` がまだ分からない（`character-changed` が一度も届いていない）ときは何もしない。
  *
  * 仕事のとき（`mode === "work"`）は依頼の文面を {@link CHAT_MEMORY_BUDGET.workExcerptChars} で
  * 切り、切ったら末尾に「…」を付ける。雑談のときは切らない。
@@ -32,16 +32,13 @@ export type ChatArchiveImageSource = {
  */
 export function appendChatArchiveEntry(
   chatArchive: ChatArchive,
-  packName: string | undefined,
+  packName: CharacterPackName,
   mode: "chat" | "work",
   project: string,
   at: number,
   event: SessionEvent,
   imageSource: ChatArchiveImageSource,
 ): void {
-  if (packName === undefined) {
-    return
-  }
   if (event.kind === "request") {
     const images = event.images.length > 0 ? event.images.length : undefined
     if (mode === "work") {
@@ -79,18 +76,14 @@ export function appendChatArchiveEntry(
 /**
  * そのターンで最後に届いた `report` の結論を1行、会話のアーカイブへ渡す（仕事のときだけ呼ぶ）。
  * 文面は {@link CHAT_MEMORY_BUDGET.workExcerptChars} で切り、切ったら末尾に「…」を付ける。
- * `packName` がまだ分からないときは何もしない。
  */
 export function appendChatArchiveConclusion(
   chatArchive: ChatArchive,
-  packName: string | undefined,
+  packName: CharacterPackName,
   project: string,
   at: number,
   conclusion: string,
 ): void {
-  if (packName === undefined) {
-    return
-  }
   chatArchive.append(packName, {
     mode: "work",
     kind: "conclusion",
@@ -103,7 +96,7 @@ export function appendChatArchiveConclusion(
 /** 添えた順に1枚ずつ書き、書けたファイル名を返す。棚から落ちていた1枚も書けなかったものとして知らせる。 */
 function writeChatImages(
   chatArchive: ChatArchive,
-  packName: string,
+  packName: CharacterPackName,
   at: number,
   images: readonly RecordedPromptImage[],
   imageSource: ChatArchiveImageSource,

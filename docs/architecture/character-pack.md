@@ -84,7 +84,7 @@ characters/<name>/
 | 1つのパックが持てる画像   | 表情の数 + 3 枚（ミニ立ち絵・背景・顔）                                             |
 | WebSocket の `maxPayload` | 16 MiB（依頼に添える画像の上限で決まる。`docs/requirements.md` 4.10「上限」と同じ） |
 
-- **受け取った文字列をパスにしない。** パックの名前は shared のスキーマ（`isCharacterPackName`。
+- **受け取った文字列をパスにしない。** パックの名前は shared の検査（`parseCharacterPackName`。
   `[A-Za-z0-9._-]` だけ・`.` で始まらない）で検証し、ファイル名は受け取らず種類と形式から組む
   （`<表情>.<svg|png|gif>`・`background.<png|jpg|webp>`・`face.<svg|png|gif>`・`mini.<svg|png|gif>`）。同じ表情の差し替えは
   同じ名前の上書きになる
@@ -170,8 +170,8 @@ characters/<name>/
 
 - **パックのディレクトリの中に置かない**（覚えたことを除く）。会話に由来する文章を混ぜると**パックを
   渡すことが会話を渡すことになる**。覚えたことはキャラクターの属性1行で、「画面から作るときの置き場と受け取り方」の道に乗る
-- **`cwd` に依存させない**。**鍵はパックの名前1つだけ**で、`isCharacterPackName` を通してからパスを
-  組む。日付のファイルとエピソード索引は**名前で見分ける**（窓の側は `YYYY-MM-DD.jsonl` にだけ
+- **`cwd` に依存させない**。**鍵はパックの名前1つだけ**で、`parseCharacterPackName` を通した
+  `CharacterPackName` だけをパスに組む。日付のファイルとエピソード索引は**名前で見分ける**（窓の側は `YYYY-MM-DD.jsonl` にだけ
   当たる正規表現でファイルを選ぶ）
 - **口（型）は `session-driver/core/session-driver.ts`、ファイルに触るのは上の adapter、結ぶのは配線層
   （`src/session-start.ts` と `src/wiring/`）。** 置き場を差し替えられる `root` 引数も同じ手で持つ（テストがホームを

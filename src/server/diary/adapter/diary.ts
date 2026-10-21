@@ -12,6 +12,7 @@ import { basename, dirname, join } from "node:path"
 
 import { identity, sortBy } from "remeda"
 
+import type { DateKey } from "../../../shared/achievement/achievement.ts"
 import {
   DIARY_VERSION,
   readDiary,
@@ -41,7 +42,7 @@ export function diaryDir(root: string = tsukumoHomeDir()): string {
 
 /** 1段落を書き足すのに渡すもの。`writer` は書いた時点のパック（ディレクトリ名と表示名）。 */
 export type DiaryParagraphInput = {
-  readonly date: string
+  readonly date: DateKey
   readonly writtenAtEpochMilliseconds: number
   readonly body: string
   readonly expression: string
@@ -95,7 +96,7 @@ export async function appendDiaryParagraph(
  */
 export async function readDiaryDay(
   cwd: string,
-  date: string,
+  date: DateKey,
   root: string = tsukumoHomeDir(),
 ): Promise<DailyDiaryStatus> {
   const repositoryId = await repositoryDiaryId(cwd)
@@ -133,7 +134,7 @@ export async function listDiaryDates(
   return sortBy(dates, [identity(), "desc"])
 }
 
-function diaryFilePath(root: string, repositoryId: string, date: string): string {
+function diaryFilePath(root: string, repositoryId: string, date: DateKey): string {
   return join(diaryDir(root), repositoryId, `${date}.json`)
 }
 

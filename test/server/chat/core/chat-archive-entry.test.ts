@@ -10,16 +10,20 @@ import type {
   ChatArchiveImage,
   ChatArchiveImageWriteResult,
 } from "../../../../src/server/chat/core/chat-archive-port.ts"
+import type { CharacterPackName } from "../../../../src/shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { characterPackName } from "../../../fixture/character.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
+
+const PACK = characterPackName("fictional-pack")
 
 const FICTIONAL_PROJECT = "架空プロジェクト"
 
 /** 棚が空の画像の口を渡して1件渡す。 */
 function appendEntryWithoutShelf(
   archive: ChatArchive,
-  packName: string | undefined,
+  packName: CharacterPackName,
   mode: "chat" | "work",
   project: string,
   at: number,
@@ -52,7 +56,7 @@ describe("appendChatArchiveEntry", () => {
   it("雑談の依頼はそのままの文面で渡る（project は持たない）", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendEntryWithoutShelf(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text: "架空の依頼",
       images: [],
@@ -60,7 +64,7 @@ describe("appendChatArchiveEntry", () => {
 
     expect(calls).toEqual([
       {
-        packName: "fictional-pack",
+        packName: PACK,
         entry: {
           mode: "chat",
           kind: "request",
@@ -76,7 +80,7 @@ describe("appendChatArchiveEntry", () => {
   it("雑談のセリフは表情つきで渡る", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendEntryWithoutShelf(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "speech",
       text: "架空のセリフ",
       expression: "proud",
@@ -84,7 +88,7 @@ describe("appendChatArchiveEntry", () => {
 
     expect(calls).toEqual([
       {
-        packName: "fictional-pack",
+        packName: PACK,
         entry: {
           mode: "chat",
           kind: "speech",
@@ -100,7 +104,7 @@ describe("appendChatArchiveEntry", () => {
     const { archive, calls } = recordingChatArchive()
     const text = "あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars)
 
-    appendEntryWithoutShelf(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text,
       images: [],
@@ -108,7 +112,7 @@ describe("appendChatArchiveEntry", () => {
 
     expect(calls).toEqual([
       {
-        packName: "fictional-pack",
+        packName: PACK,
         entry: {
           mode: "work",
           kind: "request",
@@ -125,7 +129,7 @@ describe("appendChatArchiveEntry", () => {
     const { archive, calls } = recordingChatArchive()
     const text = "あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 1)
 
-    appendEntryWithoutShelf(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text,
       images: [],
@@ -139,7 +143,7 @@ describe("appendChatArchiveEntry", () => {
     // 各絵文字は UTF-16 で2コード単位だが、コードポイントとしては1文字。
     const text = "😀".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 1)
 
-    appendEntryWithoutShelf(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text,
       images: [],
@@ -152,7 +156,7 @@ describe("appendChatArchiveEntry", () => {
     const { archive, calls } = recordingChatArchive()
     const text = "あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 1)
 
-    appendEntryWithoutShelf(archive, "fictional-pack", "work", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, PACK, "work", FICTIONAL_PROJECT, 1_000, {
       kind: "speech",
       text,
       expression: "default",
@@ -160,7 +164,7 @@ describe("appendChatArchiveEntry", () => {
 
     expect(calls).toEqual([
       {
-        packName: "fictional-pack",
+        packName: PACK,
         entry: {
           mode: "work",
           kind: "speech",
@@ -176,7 +180,7 @@ describe("appendChatArchiveEntry", () => {
   it("添えた画像は1枚以上あるときだけ枚数を持つ", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendEntryWithoutShelf(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "request",
       text: "架空の依頼",
       images: [{ id: "fictional-id", thumbnail: "data:image/png;base64,AAAA" }],
@@ -185,26 +189,14 @@ describe("appendChatArchiveEntry", () => {
     expect(calls[0]?.entry).toMatchObject({ images: 1 })
   })
 
-  it("packName が undefined のときは何も渡さない", () => {
-    const { archive, calls } = recordingChatArchive()
-
-    appendEntryWithoutShelf(archive, undefined, "chat", FICTIONAL_PROJECT, 1_000, {
-      kind: "request",
-      text: "架空の依頼",
-      images: [],
-    })
-
-    expect(calls).toEqual([])
-  })
-
   it("依頼・セリフ以外のイベントは渡さない", () => {
     const { archive, calls } = recordingChatArchive()
 
-    appendEntryWithoutShelf(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "turn-finished",
       outcome: { kind: "completed" },
     })
-    appendEntryWithoutShelf(archive, "fictional-pack", "chat", FICTIONAL_PROJECT, 1_000, {
+    appendEntryWithoutShelf(archive, PACK, "chat", FICTIONAL_PROJECT, 1_000, {
       kind: "utterance",
       text: "本文はここに出ない",
     })
@@ -265,7 +257,7 @@ describe("appendChatArchiveEntry の画像", () => {
 
     appendChatArchiveEntry(
       archive,
-      "fictional-pack",
+      PACK,
       "chat",
       FICTIONAL_PROJECT,
       1_000,
@@ -274,8 +266,8 @@ describe("appendChatArchiveEntry の画像", () => {
     )
 
     expect(writes).toEqual([
-      { packName: "fictional-pack", id: "id-1", dataUrl: SYNTHETIC_DATA_URL },
-      { packName: "fictional-pack", id: "id-2", dataUrl: SYNTHETIC_DATA_URL },
+      { packName: PACK, id: "id-1", dataUrl: SYNTHETIC_DATA_URL },
+      { packName: PACK, id: "id-2", dataUrl: SYNTHETIC_DATA_URL },
     ])
     expect(calls[0]?.entry).toMatchObject({ images: 2, imageFiles: ["id-1.png", "id-2.png"] })
     expect(failures).toEqual([])
@@ -287,7 +279,7 @@ describe("appendChatArchiveEntry の画像", () => {
 
     appendChatArchiveEntry(
       archive,
-      "fictional-pack",
+      PACK,
       "work",
       FICTIONAL_PROJECT,
       1_000,
@@ -306,7 +298,7 @@ describe("appendChatArchiveEntry の画像", () => {
 
     appendChatArchiveEntry(
       archive,
-      "fictional-pack",
+      PACK,
       "chat",
       FICTIONAL_PROJECT,
       1_000,
@@ -324,7 +316,7 @@ describe("appendChatArchiveEntry の画像", () => {
 
     appendChatArchiveEntry(
       archive,
-      "fictional-pack",
+      PACK,
       "chat",
       FICTIONAL_PROJECT,
       1_000,
@@ -341,11 +333,11 @@ describe("appendChatArchiveConclusion", () => {
     const { archive, calls } = recordingChatArchive()
     const text = "架空の結論"
 
-    appendChatArchiveConclusion(archive, "fictional-pack", FICTIONAL_PROJECT, 1_000, text)
+    appendChatArchiveConclusion(archive, PACK, FICTIONAL_PROJECT, 1_000, text)
 
     expect(calls).toEqual([
       {
-        packName: "fictional-pack",
+        packName: PACK,
         entry: { mode: "work", kind: "conclusion", at: 1_000, text, project: FICTIONAL_PROJECT },
       },
     ])
@@ -355,16 +347,8 @@ describe("appendChatArchiveConclusion", () => {
     const { archive, calls } = recordingChatArchive()
     const text = "い".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 1)
 
-    appendChatArchiveConclusion(archive, "fictional-pack", FICTIONAL_PROJECT, 1_000, text)
+    appendChatArchiveConclusion(archive, PACK, FICTIONAL_PROJECT, 1_000, text)
 
     expect(calls[0]?.entry.text).toBe(`${"い".repeat(CHAT_MEMORY_BUDGET.workExcerptChars)}…`)
-  })
-
-  it("packName が undefined のときは何も渡さない", () => {
-    const { archive, calls } = recordingChatArchive()
-
-    appendChatArchiveConclusion(archive, undefined, FICTIONAL_PROJECT, 1_000, "架空の結論")
-
-    expect(calls).toEqual([])
   })
 })

@@ -16,6 +16,7 @@ import type {
   ChatSummaryRecord,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
+import { characterPackName } from "../../../fixture/character.ts"
 import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 
 const SUMMARY = "利用者と最近読んだ本の話をした。次は続きの巻の感想を聞きたがっていた。"
@@ -39,7 +40,7 @@ const WORK_RECENT: readonly ChatArchiveRecentEntry[] = [
   },
 ]
 
-const PACK_NAME = "fictional-pack"
+const PACK_NAME = characterPackName("fictional-pack")
 const LIMITS: ChatReadbackLimits = { recentBytes: CHAT_MEMORY_BUDGET.recentBytes }
 
 /** メモリ上の `ChatSummary`（テスト用）。届けた印を付けた回数も数える。 */
@@ -86,8 +87,7 @@ function take(
   return takeChatMemoryPromptParts({
     start: resume === undefined ? { kind: "new" } : { kind: "resume", sessionId: resume },
     chatSummary,
-    chatArchive,
-    packName: PACK_NAME,
+    readRecent: (limits) => chatArchive.readRecent(PACK_NAME, limits),
     readbackLimits: LIMITS,
   })
 }
@@ -226,8 +226,7 @@ describe("workMemoryPromptParts", () => {
   function takeWork(chatSummary: ChatSummary, chatArchive: ChatArchive): readonly string[] {
     return workMemoryPromptParts({
       chatSummary,
-      chatArchive,
-      packName: PACK_NAME,
+      readRecent: (limits) => chatArchive.readRecent(PACK_NAME, limits),
       readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes },
     })
   }

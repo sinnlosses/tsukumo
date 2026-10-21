@@ -8,6 +8,7 @@ import type {
 import { createPromptImageShelf } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
 import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { characterChangedEvent } from "../../../fixture/character.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 import { reportEvent } from "../../../fixture/report-event.ts"
 import { createStubDriver } from "../../../fixture/session-driver.ts"
@@ -277,6 +278,70 @@ describe("createSessionManager", () => {
         },
       ])
       expect(archiveCalls[0]).toMatchObject({ mode: "chat", images: 1, imageFiles: undefined })
+    })
+  })
+
+  describe("パックを名指しできないとき", () => {
+    /** アーカイブへの `append` と定着の呼び出しを数える口を付けて起こす。 */
+    function startCountingManager() {
+      const stub = createStubDriver()
+      const appended: string[] = []
+      const consolidated: string[] = []
+      const manager = createSessionManager({
+        chatArchive: {
+          ...NOOP_CHAT_ARCHIVE,
+          append: (packName) => {
+            appended.push(packName)
+          },
+        },
+        chatConsolidation: {
+          kind: "consolidate",
+          consolidate: (packName) => {
+            consolidated.push(packName)
+            return Promise.resolve({ kind: "failed", reason: "aborted" })
+          },
+        },
+        launchSession: (onEvent, onRestoredEvents) => {
+          stub.attach(onEvent)
+          stub.attachRestored(onRestoredEvents)
+          return Promise.resolve(stub.driver)
+        },
+      })
+      return { manager, stub, appended, consolidated }
+    }
+
+    /** 雑談と仕事のそれぞれで、依頼・セリフ・レポート・ターンの終わりを送る。 */
+    function emitTurns(stub: ReturnType<typeof createStubDriver>): void {
+      for (const chat of [true, false]) {
+        stub.emit({ kind: "chat-mode-changed", chat })
+        stub.emit({ kind: "request", text: "架空の依頼", images: [] })
+        stub.emit({ kind: "speech", text: "架空のセリフ", expression: "proud" })
+        stub.emit(reportEvent({ toolUseId: "toolu_r1", conclusion: "架空の結論" }))
+        stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
+      }
+    }
+
+    it("パックが決まる前は、アーカイブへ何も足さず、定着も起こさない", async () => {
+      const { stub, appended, consolidated } = startCountingManager()
+      await waitForBatch()
+
+      emitTurns(stub)
+      await waitForBatch()
+
+      expect(appended).toEqual([])
+      expect(consolidated).toEqual([])
+    })
+
+    it("検査を通らない名前のパックのときは、アーカイブへ何も足さず、定着も起こさない", async () => {
+      const { stub, appended, consolidated } = startCountingManager()
+      await waitForBatch()
+
+      stub.emit(characterChangedEvent({ pack: "架空" }))
+      emitTurns(stub)
+      await waitForBatch()
+
+      expect(appended).toEqual([])
+      expect(consolidated).toEqual([])
     })
   })
 })

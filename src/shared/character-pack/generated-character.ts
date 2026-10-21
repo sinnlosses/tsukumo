@@ -4,7 +4,7 @@
 import { z } from "zod"
 
 import { isAccentColor, MAX_CHARACTER_NAME_LENGTH } from "./character-definition.ts"
-import { isCharacterPackName } from "./character.ts"
+import { parseCharacterPackName } from "./character.ts"
 import { MAX_PERSONA_BODY_LENGTH, rememberedSectionStart } from "./persona-section.ts"
 
 /**
@@ -13,7 +13,7 @@ import { MAX_PERSONA_BODY_LENGTH, rememberedSectionStart } from "./persona-secti
  * 人格の本文は `## 覚えたこと` の節の見出しを含まない（含むと節より前だけを本文とする読み方とずれる）。
  */
 export const generatedCharacterSchema = z.object({
-  id: z.string().refine((value) => value === "" || isCharacterPackName(value)),
+  id: z.string().refine((value) => value === "" || parseCharacterPackName(value) !== undefined),
   name: z
     .string()
     .max(MAX_CHARACTER_NAME_LENGTH)

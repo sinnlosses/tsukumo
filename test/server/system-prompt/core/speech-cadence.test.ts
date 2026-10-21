@@ -4,7 +4,7 @@ import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/repor
 import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import { takeSystemPromptAppend } from "../../../../src/server/system-prompt/core/system-prompt.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
-import { fixedChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
+import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 // この規約はパックによらず同じもの（docs/architecture/display.md「表示」）。文面そのものではなく、
 // どのパックの append にも載ることを見る（人格が無いパックで落ちると、そのパックだけ
@@ -22,8 +22,7 @@ function workAppend(persona: string): string {
       kind: "work",
       memory: {
         chatSummary: fixedChatSummary(undefined),
-        chatArchive: NOOP_CHAT_ARCHIVE,
-        packName: "架空",
+        readRecent: () => [],
         readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes },
       },
     },

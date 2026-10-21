@@ -4,10 +4,11 @@
 
 import type { CurrentCharacter } from "../current-character.ts"
 import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
-import { createChatSummary } from "../server/chat/adapter/chat-summary.ts"
+import { createChatSummary, UNAVAILABLE_CHAT_SUMMARY } from "../server/chat/adapter/chat-summary.ts"
 import { createPersonaMemory, readRememberedLines } from "../server/chat/adapter/persona-memory.ts"
 import { readChatTopics } from "../server/chat/core/chat-consolidation.ts"
-import { createChatRecall } from "../server/chat/core/chat-recall.ts"
+import type { ReadRecent } from "../server/chat/core/chat-memory-prompt.ts"
+import { createChatRecall, UNAVAILABLE_CHAT_RECALL } from "../server/chat/core/chat-recall.ts"
 import type { Config } from "../server/core/config.ts"
 import type { DiagnosticLog } from "../server/diagnostic/core/diagnostic.ts"
 import { startFakeSession } from "../server/session-driver/adapter/fake-driver.ts"
@@ -29,7 +30,12 @@ import {
   type SessionCatalog,
 } from "../server/session-driver/core/session-catalog.ts"
 import { createSessionClaim } from "../server/session-driver/core/session-claim.ts"
-import type { SessionDriver, SessionMode } from "../server/session-driver/core/session-driver.ts"
+import type {
+  ChatRecall,
+  ChatSummary,
+  SessionDriver,
+  SessionMode,
+} from "../server/session-driver/core/session-driver.ts"
 import { sessionTag } from "../server/session-driver/core/session-mark.ts"
 import {
   readRememberedSessionDefault,
@@ -45,6 +51,7 @@ import {
   takeSystemPromptAppend,
   toSystemPromptMode,
 } from "../server/system-prompt/core/system-prompt.ts"
+import { parseCharacterPackName } from "../shared/character-pack/character.ts"
 import { expressionChoices, expressionNames } from "../shared/character-pack/expression-choice.ts"
 import type { PromptDelayFootprint } from "../shared/diagnostic/diagnostic-record.ts"
 import type { SwallowedFailurePlace } from "../shared/diagnostic/swallowed-failure.ts"
@@ -111,7 +118,7 @@ export function wireSessionLaunch(options: {
         readSessionDefault: () => readRememberedSessionDefault(),
         characterEvent: () => character.event(),
         itemsEvent: options.itemsEvent,
-        readChatTopics: (pack) => readChatTopics(createChatSummary(pack.name)),
+        readChatTopics: (pack) => readChatTopics(chatMemoryOf(pack, context).chatSummary),
         readRememberedLines: (pack) => readRememberedLines(pack),
         listSessions: (pack, chat) =>
           sessionCatalog.listChoices(sessionTag(pack.name, chat, viewPort)),
@@ -200,7 +207,7 @@ function startDriver(options: {
   readonly reportPromptDelay: (footprint: PromptDelayFootprint) => void
 }): SessionDriver {
   const { seed, context, onEvent } = options
-  const { chatArchive, cwd, inheritedEnv, fakeSession } = context
+  const { cwd, inheritedEnv, fakeSession } = context
   if (fakeSession !== undefined) {
     return startFakeSession({
       session: fakeSession,
@@ -213,7 +220,15 @@ function startDriver(options: {
     })
   }
 
-  const mode = sessionMode(seed, context, options.reportSchema, onEvent, options.reportFailure)
+  const memory = chatMemoryOf(seed.pack, context)
+  const mode = sessionMode(
+    seed,
+    context,
+    memory,
+    options.reportSchema,
+    onEvent,
+    options.reportFailure,
+  )
   const tag = sessionTag(seed.pack.name, seed.chat, options.viewPort)
 
   return startSdkDriver({
@@ -225,13 +240,7 @@ function startDriver(options: {
     effort: seed.sessionDefault.effort,
     systemPromptAppend: takeSystemPromptAppend({
       persona: seed.pack.persona ?? "",
-      mode: toSystemPromptMode(
-        mode,
-        chatArchive,
-        createChatSummary(seed.pack.name).read,
-        seed.start,
-        seed.pack.name,
-      ),
+      mode: toSystemPromptMode(mode, memory.readRecent, memory.chatSummary.read, seed.start),
     }),
     start: seed.start,
     tag,
@@ -271,11 +280,12 @@ function rememberSessionDefault(sessionDefault: SessionDefault): SessionEvent {
 function sessionMode(
   seed: SessionLaunchSeed<CharacterPack>,
   context: WiringContext,
+  memory: ChatMemoryPorts,
   reportSchema: ReportSchemaVariant,
   onEvent: (event: SessionEvent) => void,
   reportFailure: (place: SwallowedFailurePlace, error: unknown) => void,
 ): SessionMode {
-  const chatRecall = createChatRecall(context.chatArchive, seed.pack.name, context.now)
+  const { chatRecall } = memory
   if (!seed.chat) {
     return { kind: "work", chatRecall, reportSchema }
   }
@@ -290,7 +300,33 @@ function sessionMode(
       (lines) => onEvent({ kind: "remembered-lines-changed", lines }),
       (place, error) => reportFailure({ feature: "chat", place }, error),
     ),
-    chatSummary: createChatSummary(seed.pack.name),
+    chatSummary: memory.chatSummary,
     chatRecall,
+  }
+}
+
+type ChatMemoryPorts = {
+  readonly chatSummary: ChatSummary
+  readonly chatRecall: ChatRecall
+  readonly readRecent: ReadRecent
+}
+
+/**
+ * パックの記憶（あらすじ・思い出す口・直近の逐語）の口を、パックの名前を検査して1か所で決める。
+ * 名前が `CharacterPackName` にならないパックには、どれも何もしない口を渡す。
+ */
+function chatMemoryOf(pack: CharacterPack, context: WiringContext): ChatMemoryPorts {
+  const packName = parseCharacterPackName(pack.name)
+  if (packName === undefined) {
+    return {
+      chatSummary: UNAVAILABLE_CHAT_SUMMARY,
+      chatRecall: UNAVAILABLE_CHAT_RECALL,
+      readRecent: () => [],
+    }
+  }
+  return {
+    chatSummary: createChatSummary(packName),
+    chatRecall: createChatRecall(context.chatArchive, packName, context.now),
+    readRecent: (limits) => context.chatArchive.readRecent(packName, limits),
   }
 }

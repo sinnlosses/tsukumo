@@ -24,7 +24,10 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import { isCharacterPackName } from "../../../shared/character-pack/character.ts"
+import {
+  type CharacterPackName,
+  parseCharacterPackName,
+} from "../../../shared/character-pack/character.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import {
   parsePromptImage,
@@ -165,13 +168,12 @@ export function chatArchiveDir(): string {
 /**
  * パック1つぶんのアーカイブ（日ごとの会話・エピソード索引・思い出した記録）をディレクトリごと消す。
  * 同じ名前で作り直したパックが、消したパックとの会話を読み戻したり思い出したりしないため。
- * 無い・消せないときも何もせず続ける。名前が {@link isCharacterPackName} を通らなければパスを組み立てない。
+ * 無い・消せないときも何もせず続ける。
  */
-export function discardChatArchive(packName: string, root: string = chatArchiveDir()): void {
-  if (!isCharacterPackName(packName)) {
-    return
-  }
-
+export function discardChatArchive(
+  packName: CharacterPackName,
+  root: string = chatArchiveDir(),
+): void {
   try {
     rmSync(join(root, packName), { recursive: true, force: true })
   } catch {
@@ -193,7 +195,7 @@ export function pruneChatImages(
     .subtract({ days: CHAT_IMAGE_RETENTION_DAYS })
     .toString()
   for (const packName of entryNames(root, onFailure)) {
-    if (!isCharacterPackName(packName)) {
+    if (parseCharacterPackName(packName) === undefined) {
       continue
     }
     const dir = join(root, packName, CHAT_IMAGE_DIR_NAME)
@@ -219,9 +221,6 @@ export function pruneChatImages(
 export function createChatArchive(root: string = chatArchiveDir()): ChatArchive {
   return {
     append: (packName, entry) => {
-      if (!isCharacterPackName(packName)) {
-        return
-      }
       appendJsonLine(
         dateFilePath(join(root, packName), localDateKey(entry.at)),
         toArchiveRecord(packName, entry),
@@ -263,7 +262,7 @@ type ArchiveRecord = {
  * `images` は依頼の行だけ、`imageFiles` は雑談の依頼の行だけ、`expression` はセリフの行だけ、`project` は仕事の行だけが持つ
  * （`JSON.stringify` は値が `undefined` のキーを落とす）。
  */
-function toArchiveRecord(packName: string, entry: ChatArchiveEntry): ArchiveRecord {
+function toArchiveRecord(packName: CharacterPackName, entry: ChatArchiveEntry): ArchiveRecord {
   return {
     v: ARCHIVE_FORMAT_VERSION,
     at: isoWithOffset(entry.at),
@@ -282,20 +281,16 @@ function toArchiveRecord(packName: string, entry: ChatArchiveEntry): ArchiveReco
 /**
  * 雑談の画像1枚を `<root>/<パック名>/images/<YYYY-MM-DD>-<id>.<拡張子>` に書く（{@link ChatArchive.writeImage} の実装）。
  * 日付は `at` のローカル日付で、期限切れの掃除は名前の先頭の日付だけを見る。
- * パック名・id・data URL のどれかが通らないときはパスを組み立てずに失敗を返す。
+ * id・data URL のどちらかが通らないときはパスを組み立てずに失敗を返す。
  * 同じ名前のファイルがあれば上書きせずに失敗にする。
  */
 function writeChatImage(
   root: string,
-  packName: string,
+  packName: CharacterPackName,
   image: ChatArchiveImage,
 ): ChatArchiveImageWriteResult {
   const source = parsePromptImage(image.dataUrl)
-  if (
-    !isCharacterPackName(packName) ||
-    !promptImageIdSchema.safeParse(image.id).success ||
-    source === undefined
-  ) {
+  if (!promptImageIdSchema.safeParse(image.id).success || source === undefined) {
     return { kind: "failed", error: undefined }
   }
   const fileName = `${localDateKey(image.at)}-${image.id}.${CHAT_IMAGE_EXTENSIONS[source.mediaType]}`
@@ -324,13 +319,9 @@ function entryNames(dir: string, onFailure: (error: unknown) => void): readonly 
 /** 直近の窓を読む（{@link ChatArchive.readRecent} の実装）。 */
 function readReadback(
   root: string,
-  packName: string,
+  packName: CharacterPackName,
   limits: ChatReadbackLimits,
 ): readonly ChatArchiveRecentEntry[] {
-  if (!isCharacterPackName(packName)) {
-    return []
-  }
-
   const dir = join(root, packName)
   return readRecentEntries(dir, limits.recentBytes).map(recentEntryOf)
 }
@@ -428,13 +419,9 @@ function recentEntryOf(timed: TimedEntry): ChatArchiveRecentEntry {
  */
 function readUnconsolidated(
   root: string,
-  packName: string,
+  packName: CharacterPackName,
   limits: ChatUnconsolidatedLimits,
 ): ChatUnconsolidatedBatch {
-  if (!isCharacterPackName(packName)) {
-    return { entries: [], usedBytes: 0, previousEpisodeTitle: "", overflowed: false }
-  }
-
   const dir = join(root, packName)
   const previousEpisode = readEpisodes(root, packName).at(-1)
   const afterAt = previousEpisode?.to
@@ -479,10 +466,10 @@ function readUnconsolidated(
  */
 function writeEpisodes(
   root: string,
-  packName: string,
+  packName: CharacterPackName,
   episodes: readonly ChatEpisodeDraft[],
 ): void {
-  if (!isCharacterPackName(packName) || episodes.length === 0) {
+  if (episodes.length === 0) {
     return
   }
 
@@ -511,15 +498,11 @@ function writeEpisodes(
  */
 function readEpisodeCandidates(
   root: string,
-  packName: string,
+  packName: CharacterPackName,
   keyword: string,
   limitBytes: number,
   now: Temporal.Instant,
 ): ChatEpisodeRecallListResult {
-  if (!isCharacterPackName(packName)) {
-    return { kind: "not-found" }
-  }
-
   const episodes = readEpisodes(root, packName)
   if (episodes.length === 0) {
     return { kind: "not-found" }
@@ -547,15 +530,11 @@ function readEpisodeCandidates(
  */
 function readEpisode(
   root: string,
-  packName: string,
+  packName: CharacterPackName,
   id: string,
   limitBytes: number,
   now: Temporal.Instant,
 ): ChatEpisodeReadResult {
-  if (!isCharacterPackName(packName)) {
-    return { kind: "not-found" }
-  }
-
   const episode = readEpisodes(root, packName).find((record) => record.id === id)
   if (episode === undefined) {
     return { kind: "not-found" }
@@ -576,17 +555,17 @@ function readEpisode(
 }
 
 /** `~/.tsukumo/chat-archive/<パック名>/episode.jsonl` のパス。 */
-function episodeIndexPath(root: string, packName: string): string {
+function episodeIndexPath(root: string, packName: CharacterPackName): string {
   return join(root, packName, EPISODE_INDEX_FILE_NAME)
 }
 
 /** `~/.tsukumo/chat-archive/<パック名>/recalled.jsonl` のパス。 */
-function recalledPath(root: string, packName: string): string {
+function recalledPath(root: string, packName: CharacterPackName): string {
   return join(root, packName, RECALLED_FILE_NAME)
 }
 
 /** エピソード索引を読み、読める行だけを書いた順のまま返す（読めない行・知らない版は飛ばす）。 */
-function readEpisodes(root: string, packName: string): readonly EpisodeLine[] {
+function readEpisodes(root: string, packName: CharacterPackName): readonly EpisodeLine[] {
   return readJsonLines(episodeIndexPath(root, packName)).flatMap((raw) => {
     const record = episodeLineSchema.safeParse(raw)
     return record.success ? [record.data] : []
@@ -594,7 +573,10 @@ function readEpisodes(root: string, packName: string): readonly EpisodeLine[] {
 }
 
 /** 思い出した記録から、`id` ごとに開いた回数を数える（読めない行・知らない版は数えない）。 */
-function readRecalledCounts(root: string, packName: string): ReadonlyMap<string, number> {
+function readRecalledCounts(
+  root: string,
+  packName: CharacterPackName,
+): ReadonlyMap<string, number> {
   const counts = new Map<string, number>()
   for (const raw of readJsonLines(recalledPath(root, packName))) {
     const record = recalledLineSchema.safeParse(raw)

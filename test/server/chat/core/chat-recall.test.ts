@@ -5,9 +5,15 @@ import type {
   ChatEpisodeRecallListResult,
   ChatEpisodeReadResult,
 } from "../../../../src/server/chat/core/chat-archive-port.ts"
-import { createChatRecall } from "../../../../src/server/chat/core/chat-recall.ts"
+import {
+  createChatRecall,
+  UNAVAILABLE_CHAT_RECALL,
+} from "../../../../src/server/chat/core/chat-recall.ts"
 import type { ChatMemoryBudget } from "../../../../src/shared/chat/chat-memory-budget.ts"
+import { characterPackName } from "../../../fixture/character.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
+
+const PACK = characterPackName("fictional-pack")
 
 const BUDGET: ChatMemoryBudget = {
   recentBytes: 1024,
@@ -59,14 +65,14 @@ function fakeChatArchive(): ChatArchive & {
 describe("createChatRecall / recallList", () => {
   it("ChatArchive の結果をそのまま返し、パック名・容量の表の recallListBytes・now を渡す", () => {
     const chatArchive = fakeChatArchive()
-    const chatRecall = createChatRecall(chatArchive, "fictional-pack", () => 1_000, BUDGET)
+    const chatRecall = createChatRecall(chatArchive, PACK, () => 1_000, BUDGET)
 
     const result = chatRecall.recallList("散歩")
 
     expect(result).toEqual(FOUND_LIST)
     expect(chatArchive.recallListCalls()).toEqual([
       {
-        packName: "fictional-pack",
+        packName: PACK,
         keyword: "散歩",
         limitBytes: BUDGET.recallListBytes,
         now: Temporal.Instant.fromEpochMilliseconds(1_000),
@@ -76,7 +82,7 @@ describe("createChatRecall / recallList", () => {
 
   it("1ターンに recallListsPerTurn 回まで引ける。超えたら ChatArchive を読まずに exhausted を返す", () => {
     const chatArchive = fakeChatArchive()
-    const chatRecall = createChatRecall(chatArchive, "fictional-pack", () => 1_000, BUDGET)
+    const chatRecall = createChatRecall(chatArchive, PACK, () => 1_000, BUDGET)
 
     expect(chatRecall.recallList("散歩").kind).toBe("found")
     expect(chatRecall.recallList("料理").kind).toBe("found")
@@ -85,9 +91,14 @@ describe("createChatRecall / recallList", () => {
     expect(chatArchive.recallListCalls()).toHaveLength(2)
   })
 
+  it("UNAVAILABLE_CHAT_RECALL は何を引いても not-found を返す", () => {
+    expect(UNAVAILABLE_CHAT_RECALL.recallList("散歩")).toEqual({ kind: "not-found" })
+    expect(UNAVAILABLE_CHAT_RECALL.recallEpisode("2026-09-25-1")).toEqual({ kind: "not-found" })
+  })
+
   it("finishTurn を呼ぶと、また recallListsPerTurn 回から数え直す", () => {
     const chatArchive = fakeChatArchive()
-    const chatRecall = createChatRecall(chatArchive, "fictional-pack", () => 1_000, BUDGET)
+    const chatRecall = createChatRecall(chatArchive, PACK, () => 1_000, BUDGET)
     chatRecall.recallList("1回目")
     chatRecall.recallList("2回目")
     expect(chatRecall.recallList("3回目").kind).toBe("exhausted")
@@ -101,14 +112,14 @@ describe("createChatRecall / recallList", () => {
 describe("createChatRecall / recallEpisode", () => {
   it("ChatArchive の結果をそのまま返し、パック名・容量の表の recallEpisodeBytes・now を渡す", () => {
     const chatArchive = fakeChatArchive()
-    const chatRecall = createChatRecall(chatArchive, "fictional-pack", () => 2_000, BUDGET)
+    const chatRecall = createChatRecall(chatArchive, PACK, () => 2_000, BUDGET)
 
     const result = chatRecall.recallEpisode("2026-09-25-1")
 
     expect(result).toEqual(FOUND_EPISODE)
     expect(chatArchive.recallEpisodeCalls()).toEqual([
       {
-        packName: "fictional-pack",
+        packName: PACK,
         id: "2026-09-25-1",
         limitBytes: BUDGET.recallEpisodeBytes,
         now: Temporal.Instant.fromEpochMilliseconds(2_000),
@@ -118,7 +129,7 @@ describe("createChatRecall / recallEpisode", () => {
 
   it("1ターンに recallEpisodesPerTurn 件まで開ける。超えたら ChatArchive を読まずに exhausted を返す", () => {
     const chatArchive = fakeChatArchive()
-    const chatRecall = createChatRecall(chatArchive, "fictional-pack", () => 2_000, BUDGET)
+    const chatRecall = createChatRecall(chatArchive, PACK, () => 2_000, BUDGET)
 
     expect(chatRecall.recallEpisode("id-1").kind).toBe("found")
     expect(chatRecall.recallEpisode("id-2").kind).toBe("found")
@@ -129,7 +140,7 @@ describe("createChatRecall / recallEpisode", () => {
 
   it("recallList と recallEpisode の回数は別々に数える", () => {
     const chatArchive = fakeChatArchive()
-    const chatRecall = createChatRecall(chatArchive, "fictional-pack", () => 2_000, BUDGET)
+    const chatRecall = createChatRecall(chatArchive, PACK, () => 2_000, BUDGET)
 
     chatRecall.recallList("1回目")
     chatRecall.recallList("2回目")
@@ -141,7 +152,7 @@ describe("createChatRecall / recallEpisode", () => {
 
   it("finishTurn を呼ぶと、また recallEpisodesPerTurn 件から数え直す", () => {
     const chatArchive = fakeChatArchive()
-    const chatRecall = createChatRecall(chatArchive, "fictional-pack", () => 2_000, BUDGET)
+    const chatRecall = createChatRecall(chatArchive, PACK, () => 2_000, BUDGET)
     chatRecall.recallEpisode("id-1")
     chatRecall.recallEpisode("id-2")
     expect(chatRecall.recallEpisode("id-3").kind).toBe("exhausted")

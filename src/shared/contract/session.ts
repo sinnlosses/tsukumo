@@ -3,6 +3,7 @@
 
 import { z } from "zod"
 
+import { dateKeySchema } from "../achievement/achievement.ts"
 import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../character-pack/character.ts"
 import { EXPRESSIONS } from "../character-pack/expression.ts"
 import { commandBase, EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../command.ts"
@@ -135,9 +136,7 @@ export const sessionContract = {
    * 画面は日付（`YYYY-MM-DD`）だけを送り、依頼文はサーバがその日の成果を数え直して組む。
    * 会話のターン中・答え待ちでも受けるので `meta` では断らない（断るかどうかは受け手の中で見る）。
    */
-  reflectAchievement: commandBase.input(
-    z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
-  ),
+  reflectAchievement: commandBase.input(z.object({ date: dateKeySchema })),
   /**
    * 新しいセッションの既定（モデル・effort・許可モード）を覚える（帯の右端の歯車）。
    * いま動いているセッションには効かず、効くのは次に起こすときから。

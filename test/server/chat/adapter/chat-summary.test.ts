@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
@@ -7,8 +7,16 @@ import {
   CHAT_SUMMARY_LIMIT_BYTES,
   createChatSummary,
   discardChatSummary,
+  UNAVAILABLE_CHAT_SUMMARY,
 } from "../../../../src/server/chat/adapter/chat-summary.ts"
+import { characterPackName } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
+
+const PACK = characterPackName("fictional-pack")
+const PACK_A = characterPackName("pack-a")
+const PACK_B = characterPackName("pack-b")
+const FICTIONAL_PACK = characterPackName("fictional")
+const SECOND_PACK = characterPackName("fictional-2")
 
 const textEncoder = new TextEncoder()
 function byteLength(text: string): number {
@@ -26,7 +34,7 @@ function root(): string {
 
 describe("createChatSummary", () => {
   it("write すると読める。写しが無かったときの印は「未渡し」", () => {
-    const chatSummary = createChatSummary("fictional-pack", root())
+    const chatSummary = createChatSummary(PACK, root())
 
     chatSummary.write(SUMMARY, [])
 
@@ -34,17 +42,17 @@ describe("createChatSummary", () => {
   })
 
   it("write は書けたかどうかを返す", () => {
-    const chatSummary = createChatSummary("fictional-pack", root())
+    const chatSummary = createChatSummary(PACK, root())
     expect(chatSummary.write(SUMMARY, [])).toEqual({ kind: "written", droppedLines: 0 })
 
     writeFileSync(join(dir(), "blocked"), "")
-    expect(createChatSummary("fictional-pack", join(dir(), "blocked")).write(SUMMARY, [])).toEqual({
+    expect(createChatSummary(PACK, join(dir(), "blocked")).write(SUMMARY, [])).toEqual({
       kind: "failed",
     })
   })
 
   it("write は印を変えない（「渡し済み」も「未渡し」もそのまま）", () => {
-    const chatSummary = createChatSummary("fictional-pack", root())
+    const chatSummary = createChatSummary(PACK, root())
     chatSummary.markDelivered()
 
     chatSummary.write(SUMMARY, [])
@@ -58,8 +66,8 @@ describe("createChatSummary", () => {
   })
 
   it("パックごとに別のファイルになる", () => {
-    const a = createChatSummary("pack-a", root())
-    const b = createChatSummary("pack-b", root())
+    const a = createChatSummary(PACK_A, root())
+    const b = createChatSummary(PACK_B, root())
 
     a.write(SUMMARY, [])
 
@@ -68,7 +76,7 @@ describe("createChatSummary", () => {
   })
 
   it("印の行が要約の本文に混ざらない（1行目だけが印）", () => {
-    const chatSummary = createChatSummary("fictional-pack", root())
+    const chatSummary = createChatSummary(PACK, root())
 
     chatSummary.write(SUMMARY, [])
     const path = join(root(), "fictional-pack.md")
@@ -81,7 +89,7 @@ describe("createChatSummary", () => {
 
   describe("markUndelivered / markDelivered", () => {
     it("markUndelivered で印が「未渡し」に戻る。本文は保つ", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
       chatSummary.write(SUMMARY, [])
 
       chatSummary.markUndelivered()
@@ -90,7 +98,7 @@ describe("createChatSummary", () => {
     })
 
     it("markDelivered で印が「渡し済み」に戻る。本文は保つ", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
       chatSummary.write(SUMMARY, [])
       chatSummary.markUndelivered()
 
@@ -100,7 +108,7 @@ describe("createChatSummary", () => {
     })
 
     it("写しが無いまま markUndelivered を呼んでも落ちない", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
 
       expect(() => chatSummary.markUndelivered()).not.toThrow()
     })
@@ -108,7 +116,7 @@ describe("createChatSummary", () => {
 
   describe("話題の見出し", () => {
     it("本文と別のファイルに書き、本文には混ざらない", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
 
       chatSummary.write(SUMMARY, ["架空の新しい話題", "架空の古い話題"])
 
@@ -120,7 +128,7 @@ describe("createChatSummary", () => {
     })
 
     it("本文に <topics> の組の文字列が出ても、本文はそのまま・見出しは別の欄のまま", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
       const body = "架空の地の文。\n<topics>\n- 本文に出た架空の文字列\n</topics>\n続き。"
 
       chatSummary.write(body, ["架空の見出し"])
@@ -130,7 +138,7 @@ describe("createChatSummary", () => {
     })
 
     it("見出しが0件でも書く（古い形の埋め込みを読み戻さない）", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
       mkdirSync(root(), { recursive: true })
       writeFileSync(
         join(root(), "fictional-pack.md"),
@@ -143,7 +151,7 @@ describe("createChatSummary", () => {
     })
 
     it("markDelivered・markUndelivered は見出しを変えない", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
       chatSummary.write(SUMMARY, ["架空の見出し"])
 
       chatSummary.markDelivered()
@@ -152,7 +160,7 @@ describe("createChatSummary", () => {
     })
 
     it("見出しのファイルだけ書けなかったときは failed を返し、本文は書き直されている", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
       mkdirSync(join(root(), "fictional-pack.topics.json"), { recursive: true })
 
       expect(chatSummary.write(SUMMARY, ["架空の見出し"])).toEqual({ kind: "failed" })
@@ -161,7 +169,7 @@ describe("createChatSummary", () => {
     })
 
     it("見出しのファイルだけ残って本文が無いときは、写しは無し・見出しは残ったものを読む", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
       chatSummary.write(SUMMARY, ["架空の見出し"])
       rmSync(join(root(), "fictional-pack.md"))
 
@@ -170,7 +178,7 @@ describe("createChatSummary", () => {
     })
 
     it("写しがまだ無いときは空", () => {
-      expect(createChatSummary("fictional-pack", root()).readTopics()).toEqual([])
+      expect(createChatSummary(PACK, root()).readTopics()).toEqual([])
     })
   })
 
@@ -178,7 +186,7 @@ describe("createChatSummary", () => {
     function legacy(body: string): ReturnType<typeof createChatSummary> {
       mkdirSync(root(), { recursive: true })
       writeFileSync(join(root(), "fictional-pack.md"), `delivered\n${body}`)
-      return createChatSummary("fictional-pack", root())
+      return createChatSummary(PACK, root())
     }
 
     it("組の間の行を、書かれた順のまま取り出し、本文からは組を除く", () => {
@@ -262,7 +270,7 @@ describe("createChatSummary", () => {
 
   describe("印が無い・読めないとき", () => {
     it("印の1行目が既定の文字列と違うファイルは「未渡し」扱いになる", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
       chatSummary.write(SUMMARY, [])
       // 壊れた印（既知の2つの文字列のどちらでもない）に手で書き換える。
       const path = join(root(), "fictional-pack.md")
@@ -275,7 +283,7 @@ describe("createChatSummary", () => {
 
   describe("8 KiB の上限", () => {
     it("超えたら古いほうの行から落ちる。行の途中では切らない", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
       const lines = Array.from({ length: 200 }, (_, i) => `第${i}回のやり取りの短い要約行です。`)
       const summary = lines.join("\n")
       expect(byteLength(summary)).toBeGreaterThan(CHAT_SUMMARY_LIMIT_BYTES)
@@ -297,7 +305,7 @@ describe("createChatSummary", () => {
     })
 
     it("要約が1行だけで8 KiBを超えるとき（改行が無い）も空にならない", () => {
-      const chatSummary = createChatSummary("fictional-pack", root())
+      const chatSummary = createChatSummary(PACK, root())
       const hugeSingleLine = "あ".repeat(6000) // 1文字3バイトなので 18,000 バイト超
 
       const result = chatSummary.write(hugeSingleLine, [])
@@ -310,46 +318,35 @@ describe("createChatSummary", () => {
     })
   })
 
-  describe("パック名の検証", () => {
-    it("isCharacterPackName を通らない名前では何も書かない", () => {
-      const chatSummary = createChatSummary("../evil", root())
-
-      chatSummary.write(SUMMARY, [])
-
-      expect(chatSummary.read()).toBeUndefined()
-      expect(existsSync(root())).toBe(false)
+  describe("UNAVAILABLE_CHAT_SUMMARY", () => {
+    it("読み書きとも何もしない", () => {
+      expect(UNAVAILABLE_CHAT_SUMMARY.write(SUMMARY, [])).toEqual({ kind: "failed" })
+      expect(UNAVAILABLE_CHAT_SUMMARY.read()).toBeUndefined()
+      expect(UNAVAILABLE_CHAT_SUMMARY.readTopics()).toEqual([])
     })
   })
 })
 
 describe("discardChatSummary", () => {
   it("そのパックの写しだけを消し、ほかのパックの写しは残す", () => {
-    createChatSummary("fictional-2", root()).write(SUMMARY, [])
-    createChatSummary("fictional", root()).write(SUMMARY, [])
+    createChatSummary(SECOND_PACK, root()).write(SUMMARY, [])
+    createChatSummary(FICTIONAL_PACK, root()).write(SUMMARY, [])
 
-    discardChatSummary("fictional-2", root())
+    discardChatSummary(SECOND_PACK, root())
 
-    expect(createChatSummary("fictional-2", root()).read()).toBeUndefined()
-    expect(createChatSummary("fictional", root()).read()?.summary).toBe(SUMMARY)
-  })
-
-  it("パックの名前として通らない値ではパスを組み立てず、何も消さない", () => {
-    createChatSummary("fictional", root()).write(SUMMARY, [])
-
-    discardChatSummary("../chat-summary/fictional", root())
-
-    expect(readdirSync(root()).toSorted()).toEqual(["fictional.md", "fictional.topics.json"])
+    expect(createChatSummary(SECOND_PACK, root()).read()).toBeUndefined()
+    expect(createChatSummary(FICTIONAL_PACK, root()).read()?.summary).toBe(SUMMARY)
   })
 
   it("話題の見出しのファイルも消す", () => {
-    createChatSummary("fictional", root()).write(SUMMARY, ["架空の話題"])
+    createChatSummary(FICTIONAL_PACK, root()).write(SUMMARY, ["架空の話題"])
 
-    discardChatSummary("fictional", root())
+    discardChatSummary(FICTIONAL_PACK, root())
 
     expect(readdirSync(root())).toEqual([])
   })
 
   it("写しが無くても投げない", () => {
-    expect(() => discardChatSummary("fictional", root())).not.toThrow()
+    expect(() => discardChatSummary(FICTIONAL_PACK, root())).not.toThrow()
   })
 })

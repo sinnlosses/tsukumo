@@ -5,6 +5,8 @@ import {
   type CharacterInfo,
   type CharacterInfoSource,
   effectiveAccent,
+  parseCharacterPackName,
+  shownCharacterPackName,
   toCharacterInfo,
 } from "../../../src/shared/character-pack/character.ts"
 import { expressionChoices } from "../../../src/shared/character-pack/expression-choice.ts"
@@ -199,5 +201,25 @@ describe("effectiveAccent（雑談中に切り替える accent。docs/architectu
 
   it("パックそのものが無ければ undefined（既定値に落ちる）", () => {
     expect(effectiveAccent(undefined, true)).toBeUndefined()
+  })
+})
+
+describe("parseCharacterPackName", () => {
+  it("半角英数字と . _ - の名前は検査済みの型で返す", () => {
+    expect(parseCharacterPackName("fictional-pack_1.2")).toBe("fictional-pack_1.2")
+  })
+
+  it("パスの区切り・. 始まり・空・非 ASCII・長すぎる名前は undefined", () => {
+    for (const name of ["../evil", "a/b", ".hidden", "", "架空", "a b", "a".repeat(201)]) {
+      expect(parseCharacterPackName(name)).toBeUndefined()
+    }
+  })
+})
+
+describe("shownCharacterPackName", () => {
+  it("出しているパックの名前を検査して返し、無い・通らないときは undefined", () => {
+    expect(shownCharacterPackName(characterInfo({ pack: "fictional" }))).toBe("fictional")
+    expect(shownCharacterPackName(characterInfo({ pack: "架空" }))).toBeUndefined()
+    expect(shownCharacterPackName(undefined)).toBeUndefined()
   })
 })

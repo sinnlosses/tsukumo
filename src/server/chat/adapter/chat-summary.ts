@@ -16,7 +16,7 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
-import { isCharacterPackName } from "../../../shared/character-pack/character.ts"
+import type { CharacterPackName } from "../../../shared/character-pack/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
 import { readOptionalFile } from "../../adapter/lib/optional-file.ts"
@@ -36,23 +36,24 @@ const UNDELIVERED_MARK = "undelivered"
  */
 export const CHAT_SUMMARY_LIMIT_BYTES = CHAT_MEMORY_BUDGET.synopsisBytes
 
+/** 置き場を組めないパック（名前が {@link CharacterPackName} にならない）に渡す、読み書きとも何もしない口。 */
+export const UNAVAILABLE_CHAT_SUMMARY: ChatSummary = {
+  read: () => undefined,
+  readTopics: () => [],
+  write: () => ({ kind: "failed" }),
+  markUndelivered: () => {},
+  markDelivered: () => {},
+}
+
 /**
  * パック1つぶんの写しの読み書き口を作る。
- * `packName` は {@link isCharacterPackName} を通ったものだけ受け付け、通らない名前はパスを組み立てず、読み書きとも何もしない口を返す。
  *
  * `root` は書き込み先の親（既定は {@link chatSummaryDir}）。
  */
-export function createChatSummary(packName: string, root: string = chatSummaryDir()): ChatSummary {
-  if (!isCharacterPackName(packName)) {
-    return {
-      read: () => undefined,
-      readTopics: () => [],
-      write: () => ({ kind: "failed" }),
-      markUndelivered: () => {},
-      markDelivered: () => {},
-    }
-  }
-
+export function createChatSummary(
+  packName: CharacterPackName,
+  root: string = chatSummaryDir(),
+): ChatSummary {
   const path = join(root, `${packName}.md`)
   const topicsPath = join(root, `${packName}.topics.json`)
   return {
@@ -80,13 +81,12 @@ export function createChatSummary(packName: string, root: string = chatSummaryDi
 
 /**
  * パック1つぶんの写しを消す。同じ名前で作り直したパックが、消したパックの要約を黙って拾わないため。
- * 無い・消せないときも何もせず続ける。名前が {@link isCharacterPackName} を通らなければパスを組み立てない。
+ * 無い・消せないときも何もせず続ける。
  */
-export function discardChatSummary(packName: string, root: string = chatSummaryDir()): void {
-  if (!isCharacterPackName(packName)) {
-    return
-  }
-
+export function discardChatSummary(
+  packName: CharacterPackName,
+  root: string = chatSummaryDir(),
+): void {
   for (const name of [`${packName}.md`, `${packName}.topics.json`]) {
     try {
       rmSync(join(root, name), { force: true })

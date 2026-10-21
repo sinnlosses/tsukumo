@@ -6,6 +6,7 @@
 //
 // 3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数）もここに持つ。
 
+import type { DateKey } from "../../../shared/achievement/achievement.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { DiaryBookmark } from "../../../shared/diary/diary.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -33,7 +34,7 @@ export type DiaryDayTask = { readonly id: string; readonly summary: string }
 
 /** 書く日（`session.reflectAchievement` を受けたときに数え直した結果）。 */
 export type DiaryDay = {
-  readonly date: string
+  readonly date: DateKey
   readonly doneTasks: readonly DiaryDayTask[]
 }
 
@@ -52,7 +53,7 @@ export type DiaryVerdict =
 
 /** 1段落を保存する口。 */
 export type SaveDiaryParagraph = (params: {
-  readonly date: string
+  readonly date: DateKey
   readonly writtenAtEpochMilliseconds: number
   readonly body: string
   readonly expression: Expression

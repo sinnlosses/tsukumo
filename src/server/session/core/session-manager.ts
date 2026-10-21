@@ -9,6 +9,10 @@
 //
 // 会話の内容がイベントとして通るが、ログにもファイルにも書かない。配る先は購読しているブラウザだけ。
 
+import {
+  type CharacterPackName,
+  shownCharacterPackName,
+} from "../../../shared/character-pack/character.ts"
 import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
 import { sectionsWithFigure } from "../../../shared/report/report-block.ts"
@@ -141,8 +145,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     tally.reportChangeCounter.observe(event)
     recordSessionEvent({ ...options, contextUsage, diagnostic }, tally, state, event, at)
     // 定着を起こす。ターンの終わり（雑談・仕事）で、走っていれば契機を捨てる。待たずに次へ進む。
-    if (event.kind === "turn-finished") {
-      startConsolidation(state.character?.pack)
+    const packName = shownCharacterPackName(state.character)
+    if (event.kind === "turn-finished" && packName !== undefined) {
+      startConsolidation(packName)
     }
   }
 
@@ -151,9 +156,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
    * 書くのは起こした時点のパックのファイルで、書けたときの話題の見出しは、そのときの状態が雑談で同じパックのときだけ今の代へ流す。
    * 起こし直しのあとに遅れて届いた結果が、別のパックの画面に混ざらないため。
    */
-  const startConsolidation = (packName: string | undefined): void => {
+  const startConsolidation = (packName: CharacterPackName): void => {
     const source = options.chatConsolidation
-    if (source.kind === "dont-consolidate" || packName === undefined || consolidating) {
+    if (source.kind === "dont-consolidate" || consolidating) {
       return
     }
     consolidating = true

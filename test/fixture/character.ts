@@ -22,12 +22,23 @@
 // 一覧の1件（`CharacterPackEntry`）は `characterPackEntry` で組む。
 
 import type { CharacterDefinition } from "../../src/shared/character-pack/character-definition.ts"
-import type {
-  CharacterInfo,
-  CharacterPackEntry,
+import {
+  type CharacterInfo,
+  type CharacterPackEntry,
+  type CharacterPackName,
+  parseCharacterPackName,
 } from "../../src/shared/character-pack/character.ts"
 import { type Expression, EXPRESSIONS } from "../../src/shared/character-pack/expression.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
+
+/** パックの名前として通る文字列を検査済みの型にする。通らない文字列を渡したテストの書き間違いは throw で落とす。 */
+export function characterPackName(value: string): CharacterPackName {
+  const name = parseCharacterPackName(value)
+  if (name === undefined) {
+    throw new Error(`パックの名前として通らない: ${value}`)
+  }
+  return name
+}
 
 /** 画面に渡る姿（`SessionState.character` と `character-changed` の中身）。 */
 export function characterInfo(overrides: Partial<CharacterInfo> = {}): CharacterInfo {

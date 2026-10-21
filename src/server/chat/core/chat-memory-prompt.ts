@@ -21,7 +21,7 @@ import type {
   ChatSummary,
   SessionStart,
 } from "../../session-driver/core/session-driver.ts"
-import type { ChatArchive, ChatReadbackLimits } from "./chat-archive-port.ts"
+import type { ChatReadbackLimits } from "./chat-archive-port.ts"
 
 /**
  * 要約の前置き。要約であって会話ではないことと引用しないことを短く添える。
@@ -104,19 +104,19 @@ export type ChatMemorySources = {
   readonly start: SessionStart
   /** あらすじの写しの口。 */
   readonly chatSummary: ChatSummary
-  /** 会話のアーカイブの口（読むのはここから起こすパックのぶんだけ）。 */
-  readonly chatArchive: ChatArchive
-  /** これから起こすキャラクターパックの名前。 */
-  readonly packName: string
+  /** これから起こすパックの直近の逐語を読む口（パックはここで縛ってある）。 */
+  readonly readRecent: ReadRecent
   /** 逐語で読み戻す量（バイト）。 */
   readonly readbackLimits: ChatReadbackLimits
 }
 
+/** 読むパックを縛った `ChatArchive.readRecent`。 */
+export type ReadRecent = (limits: ChatReadbackLimits) => readonly ChatArchiveRecentEntry[]
+
 /** {@link workMemoryPromptParts} に渡す口。あらすじの印は書き換えない（読む口しか渡さない）。 */
 export type WorkMemorySources = {
   readonly chatSummary: Pick<ChatSummary, "read">
-  readonly chatArchive: ChatArchive
-  readonly packName: string
+  readonly readRecent: ReadRecent
   readonly readbackLimits: ChatReadbackLimits
 }
 
@@ -144,10 +144,7 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
     return []
   }
 
-  const parts = memoryParts(
-    record?.summary ?? "",
-    sources.chatArchive.readRecent(sources.packName, sources.readbackLimits),
-  )
+  const parts = memoryParts(record?.summary ?? "", sources.readRecent(sources.readbackLimits))
   if (parts.length === 0) {
     return []
   }
@@ -163,7 +160,7 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
 export function workMemoryPromptParts(sources: WorkMemorySources): readonly string[] {
   return memoryParts(
     sources.chatSummary.read()?.summary ?? "",
-    sources.chatArchive.readRecent(sources.packName, sources.readbackLimits),
+    sources.readRecent(sources.readbackLimits),
   )
 }
 

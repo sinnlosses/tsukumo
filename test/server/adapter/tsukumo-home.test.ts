@@ -11,6 +11,7 @@ import { chatArchiveDir } from "../../../src/server/chat/adapter/chat-archive.ts
 import { createChatSummary } from "../../../src/server/chat/adapter/chat-summary.ts"
 import { readRememberedCharacter } from "../../../src/server/session/adapter/remembered-default.ts"
 import { tokenUsageDir } from "../../../src/server/token-usage/adapter/token-usage-log.ts"
+import { characterPackName } from "../../fixture/character.ts"
 import { useTempDir } from "../../fixture/temp-dir.ts"
 
 // ホームの差し替え口（`TSUKUMO_HOME`）は `process.env` から読むので、ここだけは環境変数を
@@ -53,7 +54,7 @@ describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
   it("あらすじは移った先の chat-summary の下へ書かれる", () => {
     process.env[HOME_ENV_NAME] = dir()
 
-    createChatSummary("moved-pack").write("架空の要約", [])
+    createChatSummary(characterPackName("moved-pack")).write("架空の要約", [])
 
     expect(existsSync(join(dir(), "chat-summary", "moved-pack.md"))).toBe(true)
   })

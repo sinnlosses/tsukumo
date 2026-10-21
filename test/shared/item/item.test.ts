@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  isItemId,
   itemFileName,
   type ItemEntry,
   nextItemId,
+  parseItemId,
   parseItemImage,
   parseItemName,
 } from "../../../src/shared/item/item.ts"
+import { itemId } from "../../fixture/item-id.ts"
 
 const PNG = "data:image/png;base64,iVBORw0KGgo="
 
@@ -47,17 +48,26 @@ describe("nextItemId", () => {
     expect(nextItemId([])).toBe("1")
     expect(nextItemId([entry("1"), entry("5"), entry("3")])).toBe("6")
   })
+
+  it("桁の上限を超えるときは undefined", () => {
+    expect(nextItemId([entry("999999999")])).toBeUndefined()
+  })
 })
 
 describe("識別子の門", () => {
   it("id は10進の数字列だけを通す", () => {
-    expect(isItemId("12")).toBe(true)
-    expect(isItemId("../1")).toBe(false)
-    expect(isItemId("0")).toBe(false)
-    expect(isItemId("")).toBe(false)
+    expect(parseItemId("12")).toBe("12")
+    expect(parseItemId("../1")).toBeUndefined()
+    expect(parseItemId("0")).toBeUndefined()
+    expect(parseItemId("")).toBeUndefined()
   })
 
   it("画像のファイル名を組む", () => {
-    expect(itemFileName("3", "svg")).toBe("3.svg")
+    expect(itemFileName(itemId("3"), "svg")).toBe("3.svg")
+  })
+
+  it("検査していない文字列では画像のファイル名を組めない（型検査が落とす）", () => {
+    // @ts-expect-error 検査していない string は ItemId ではない
+    expect(itemFileName("../x", "png")).toBe("../x.png")
   })
 })

@@ -16,7 +16,7 @@ import {
 } from "../character-pack/character-definition.ts"
 import { MAX_FACE_DATA_URL_LENGTH, parseFaceImage } from "../character-pack/character-face.ts"
 import { MAX_MINI_DATA_URL_LENGTH, parseMiniImage } from "../character-pack/character-mini.ts"
-import { isCharacterPackName } from "../character-pack/character.ts"
+import { characterPackNameSchema } from "../character-pack/character.ts"
 import {
   type Expression,
   isExpression,
@@ -81,16 +81,16 @@ const accentColorSchema = z.string().refine(isAccentColor)
 
 /**
  * 新しく作るパックの名前。
- * 受け取った文字列がディレクトリ名になるので、切り替え（`session.switchCharacter`）の「長さだけ」より厳しく {@link isCharacterPackName} で見る。
+ * 受け取った文字列がディレクトリ名になるので、切り替え（`session.switchCharacter`）の「長さだけ」より厳しく {@link characterPackNameSchema} で見る。
  */
-const newCharacterPackNameSchema = z.string().refine(isCharacterPackName)
+const newCharacterPackNameSchema = characterPackNameSchema
 
 /**
  * 見た目の編集で書き込む先のパックの名前。使用中を暗黙にしないので、編集のコマンドはどれもこれを必須で持つ。
- * 書き込み先 `~/.tsukumo/characters/<name>/` のディレクトリ名になる値なので、作るときと同じ {@link isCharacterPackName} で見る。
+ * 書き込み先 `~/.tsukumo/characters/<name>/` のディレクトリ名になる値なので、作るときと同じ {@link characterPackNameSchema} で見る。
  * 一覧にある名前かどうかは書き込む側が突き合わせる。
  */
-const editedCharacterPackNameSchema = z.string().refine(isCharacterPackName)
+const editedCharacterPackNameSchema = newCharacterPackNameSchema
 
 /**
  * 表示名（`character.json` の `name`）。
@@ -201,10 +201,10 @@ export type CharacterCreate = z.infer<typeof characterCreateInput>
 /**
  * キャラクターパックを消す入力。
  * 消すのはホームの版だけで、同梱のパックを画面で直したものなら同梱の版が一覧に戻る。
- * 形は見た目の編集と同じ {@link isCharacterPackName} で見る。
+ * 形は見た目の編集と同じ {@link characterPackNameSchema} で見る。
  * id を打って確かめるのは画面の側で、サーバは名前を受けて消すだけ（使用中・ホームに無いパックは断る）。
  */
-const characterDeleteInput = z.object({ pack: editedCharacterPackNameSchema })
+const characterDeleteInput = z.object({ pack: characterPackNameSchema })
 
 export type CharacterDelete = z.infer<typeof characterDeleteInput>
 

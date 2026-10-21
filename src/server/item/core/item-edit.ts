@@ -33,10 +33,10 @@ export function addItem(
   format: PortraitFormat,
 ): ItemAdded | undefined {
   const name = parseItemName(rawName)
-  if (name === undefined || file.items.length >= MAX_ITEMS) {
+  const id = nextItemId(file.items)
+  if (name === undefined || id === undefined || file.items.length >= MAX_ITEMS) {
     return undefined
   }
-  const id = nextItemId(file.items)
   const imageFile = itemFileName(id, format)
   const entry: ItemEntry = { id, name, image: imageFile }
   return { file: { ...file, items: [...file.items, entry] }, imageFile }

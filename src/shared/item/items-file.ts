@@ -3,13 +3,13 @@
 
 import { z } from "zod"
 
-import { isCharacterPackName } from "../character-pack/character.ts"
+import { parseCharacterPackName } from "../character-pack/character.ts"
 import { parseJson } from "../utils/parse-json.ts"
 import {
-  isItemId,
   isItemImageFileName,
   type ItemEntry,
   MAX_ITEMS,
+  parseItemId,
   parseItemName,
   SEAT_KEYS,
   type SeatKey,
@@ -30,7 +30,7 @@ export type ItemsFileReading =
 export const EMPTY_ITEMS_FILE: ItemsFile = { items: [], seats: {} }
 
 const itemEntrySchema = z.object({
-  id: z.string().refine(isItemId),
+  id: z.string().refine((value) => parseItemId(value) !== undefined),
   name: z.string().refine((value) => parseItemName(value) === value),
   image: z.string().refine(isItemImageFileName),
 })
@@ -39,7 +39,7 @@ const itemsFileSchema = z
   .object({
     items: z.array(itemEntrySchema).max(MAX_ITEMS),
     seats: z.record(
-      z.string().refine(isCharacterPackName),
+      z.string().refine((name) => parseCharacterPackName(name) !== undefined),
       z.partialRecord(z.enum(SEAT_KEYS), z.string()),
     ),
   })
