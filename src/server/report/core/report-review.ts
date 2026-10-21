@@ -42,6 +42,7 @@ import type { WorkPlanStanding } from "../../../shared/session/work-plan.ts"
 import { REPORT_CHANGED_FIELDS_ONLY_TEXT, reportRejectionText } from "./report-rejection.ts"
 import { reportViolations } from "./report-violation-check.ts"
 import type { ReportDraft, ReportViolation } from "./report-violation.ts"
+import type { TurnRejection } from "./turn-rejection.ts"
 
 // 判定の順と脇の話の扱いは `ReportReview.judge` が正典。
 export const REPORT_PROCEDURE_REJECTIONS = [
@@ -117,18 +118,12 @@ export function createReportReview(
   workPlanStanding: () => WorkPlanStanding,
   news: ReportNews,
 ): ReportReview {
-  let rejectedInTurn = false
-  let resendRejectedInTurn = false
-  let nothingNewRejectedInTurn = false
-  let unansweredPlanRejectedInTurn = false
-  let closingRejectedInTurn = false
-  let finishedWithNgRejectedInTurn = false
-  let backgroundRejectedInTurn = false
+  let rejectedInTurn: ReadonlySet<TurnRejection> = new Set()
   let held: readonly ReportEvent[] = []
   // 引数が読めず（`conclusion` が文字列でも省略でもない）レポートにならなかった呼び出し。結果が届いたら差し戻しの記録にだけ使う。
   let malformed: readonly Extract<SessionEvent, { readonly kind: "report-malformed" }>[] = []
   // handler が直前に差し戻した理由。同じ呼び出しの `tool-finished` で使い切る。
-  let handlerReasons: readonly string[] | undefined
+  let handlerReasons: readonly ReportRejectionReason[] | undefined
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportEvent[] = []
   // 脇の話（`aside`）で始まったターンか。ターンの頭の `session-info` は脇の話のターンの頭にも届くので、そこでは戻さない。
@@ -145,24 +140,25 @@ export function createReportReview(
   }
 
   const startTurn = (): void => {
-    rejectedInTurn = false
-    resendRejectedInTurn = false
-    nothingNewRejectedInTurn = false
-    unansweredPlanRejectedInTurn = false
-    closingRejectedInTurn = false
-    finishedWithNgRejectedInTurn = false
-    backgroundRejectedInTurn = false
+    rejectedInTurn = new Set()
     drawn = []
+  }
+
+  const markRejected = (rejection: TurnRejection): void => {
+    rejectedInTurn = new Set([...rejectedInTurn, rejection])
   }
 
   const review: ReportReview = {
     judge: (report) => {
-      if (!resendRejectedInTurn && drawn.some((previous) => isSameReport(previous, report))) {
-        resendRejectedInTurn = true
+      if (
+        !rejectedInTurn.has("resend") &&
+        drawn.some((previous) => isSameReport(previous, report))
+      ) {
+        markRejected("resend")
         return { kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT, reasons: ["resend"] }
       }
-      if (!news.hasNews() && !nothingNewRejectedInTurn) {
-        nothingNewRejectedInTurn = true
+      if (!news.hasNews() && !rejectedInTurn.has("nothing-new")) {
+        markRejected("nothing-new")
         return {
           kind: "rejected",
           text: REPORT_NOTHING_NEW_REJECTION_TEXT,
@@ -170,8 +166,8 @@ export function createReportReview(
         }
       }
       const standing = workPlanStanding()
-      if (standing.kind === "rejected" && !unansweredPlanRejectedInTurn) {
-        unansweredPlanRejectedInTurn = true
+      if (standing.kind === "rejected" && !rejectedInTurn.has("unanswered-work-plan")) {
+        markRejected("unanswered-work-plan")
         return {
           kind: "rejected",
           text: REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
@@ -182,12 +178,16 @@ export function createReportReview(
         standing.kind === "planned" && !asideTurn
           ? judgeWorkPlanClosing(report, standing.remaining)
           : { kind: "accepted" }
-      if (closingVerdict.kind === "rejected" && !closingRejectedInTurn) {
-        closingRejectedInTurn = true
+      if (closingVerdict.kind === "rejected" && !rejectedInTurn.has("closing")) {
+        markRejected("closing")
         return closingVerdict
       }
-      if (!finishedWithNgRejectedInTurn && isFinished(report.task) && hasNgCheck(report)) {
-        finishedWithNgRejectedInTurn = true
+      if (
+        !rejectedInTurn.has("finished-with-ng") &&
+        isFinished(report.task) &&
+        hasNgCheck(report)
+      ) {
+        markRejected("finished-with-ng")
         return {
           kind: "rejected",
           text: REPORT_FINISHED_WITH_NG_REJECTION_TEXT,
@@ -195,8 +195,8 @@ export function createReportReview(
         }
       }
       const shells = news.backgroundTasks().filter((task) => task.kind === "shell")
-      if (shells.length > 0 && !asideTurn && !backgroundRejectedInTurn) {
-        backgroundRejectedInTurn = true
+      if (shells.length > 0 && !asideTurn && !rejectedInTurn.has("background-running")) {
+        markRejected("background-running")
         return {
           kind: "rejected",
           text: reportBackgroundRunningRejectionText(shells),
@@ -204,17 +204,17 @@ export function createReportReview(
         }
       }
       const violations = reportViolations(report)
-      if (violations.length === 0 || rejectedInTurn) {
+      if (violations.length === 0 || rejectedInTurn.has("violation")) {
         return { kind: "accepted" }
       }
-      rejectedInTurn = true
+      markRejected("violation")
       return {
         kind: "rejected",
         text: reportRejectionText(violations),
         reasons: [...new Set(violations.map((violation) => violation.kind))],
       }
     },
-    nothingNewRejected: () => nothingNewRejectedInTurn,
+    nothingNewRejected: () => rejectedInTurn.has("nothing-new"),
     pass: (event) => {
       switch (event.kind) {
         case "report":
