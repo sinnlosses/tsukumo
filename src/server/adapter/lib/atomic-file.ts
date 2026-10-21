@@ -4,11 +4,14 @@
 import { randomBytes } from "node:crypto"
 import { renameSync, rmSync, writeFileSync } from "node:fs"
 
-/** 同じディレクトリの一時ファイルへ書いてから rename する。失敗したら一時ファイルを消して投げ直す。 */
-export function writeFileAtomic(path: string, content: string): void {
+/**
+ * 同じディレクトリの一時ファイルへ書いてから rename する。失敗したら一時ファイルを消して投げ直す。
+ * `mode` は一時ファイルを作るときの権限（umask で削られる）。
+ */
+export function writeFileAtomic(path: string, content: string, mode = 0o666): void {
   const tempPath = `${path}.${randomBytes(6).toString("hex")}.tmp`
   try {
-    writeFileSync(tempPath, content)
+    writeFileSync(tempPath, content, { mode })
     renameSync(tempPath, path)
   } catch (error) {
     rmSync(tempPath, { force: true })

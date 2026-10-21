@@ -25,7 +25,7 @@ const SWALLOWED_FAILURE_PLACES = {
     "lap-hook-timed-out",
     "lap-hook-not-started",
   ],
-  "view-server": ["socket-message", "http-server-error"],
+  "view-server": ["socket-message", "http-server-error", "instance-location-write"],
   chat: [
     "consolidation-aborted",
     "consolidation-threw",

@@ -113,7 +113,7 @@ async function main(argv: readonly string[]): Promise<number> {
   })
   let url: string
   try {
-    url = await waitForViewUrl(session, LAUNCH_TIMEOUT_MS)
+    url = await waitForViewUrl(session, revision.homeDir, LAUNCH_TIMEOUT_MS)
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
     session.kill("SIGTERM")

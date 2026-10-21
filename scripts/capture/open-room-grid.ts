@@ -25,7 +25,8 @@ import {
 } from "../../src/server/host/adapter/orca-host.ts"
 import { createStartupToken } from "../../src/server/view-server/adapter/server.ts"
 import { roomName } from "../../src/shared/view-server/room.ts"
-import { candidatePorts, findListener, run, type Listener } from "../shared/port-listener.ts"
+import { findRunningTsukumo } from "../shared/instance-location.ts"
+import { candidatePorts, run, type Listener } from "../shared/port-listener.ts"
 import {
   buildRoomGridHtml,
   type GridTabObservation,
@@ -163,7 +164,7 @@ async function scanRooms(): Promise<
 
   const listedUrls = tabsResult.tabs.map((tab) => tab.url)
   const ports = scanPorts(candidatePorts(), listedUrls)
-  const listeners = ports.flatMap((port) => findListener(port) ?? [])
+  const listeners = findRunningTsukumo(ports)
   const unlisted = listeners.filter((listener) => pickRooms([listener], listedUrls).length === 0)
   const wokenUrls = await Promise.all(unlisted.map((listener) => wakeViewTabUrls(listener)))
   const tabUrls = [...listedUrls, ...wokenUrls.flat()]

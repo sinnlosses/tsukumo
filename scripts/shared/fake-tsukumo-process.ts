@@ -1,5 +1,9 @@
 import { type ChildProcess, spawn } from "node:child_process"
+import { join } from "node:path"
 import process from "node:process"
+
+import { INSTANCE_LOCATION_DIR_NAME } from "../../src/server/view-server/adapter/instance-location-file.ts"
+import { readInstanceLocation } from "./instance-location.ts"
 
 export type FakeTsukumoOptions = {
   /** 起こす CLI の入口ファイルのパス。 */
@@ -9,8 +13,8 @@ export type FakeTsukumoOptions = {
   readonly scene: string | undefined
   /** 0 なら空きポート。 */
   readonly port: number
-  /** 渡すと `TSUKUMO_HOME` を上書きする。 */
-  readonly home: string | undefined
+  /** `TSUKUMO_HOME` に渡すホーム。所在のファイルもその下に書かれる。 */
+  readonly home: string
   readonly extraEnv: Readonly<Record<string, string>>
   /** 親の `TSUKUMO_` で始まる変数を外してから渡す。 */
   readonly dropInheritedTsukumoEnv: boolean
@@ -30,7 +34,7 @@ export function spawnFakeTsukumo(options: FakeTsukumoOptions): ChildProcess {
       ...inherited,
       TSUKUMO_DRIVER: "fake",
       ...(options.scene === undefined ? {} : { TSUKUMO_FAKE_SCENE: options.scene }),
-      ...(options.home === undefined ? {} : { TSUKUMO_HOME: options.home }),
+      TSUKUMO_HOME: options.home,
       TSUKUMO_VIEW_PORT: String(options.port),
       TSUKUMO_OPEN_VIEW: "0",
       ...options.extraEnv,
@@ -40,32 +44,49 @@ export function spawnFakeTsukumo(options: FakeTsukumoOptions): ChildProcess {
 }
 
 /**
- * 起こした tsukumo が出す配信 URL を待つ。出ないまま終わる・上限を過ぎたときは reject する。
+ * 起こした tsukumo が所在のファイルに書いた配信 URL を待つ。`home` は起こすときに渡したホーム。
+ * 書かれないまま終わる・上限を過ぎたときは reject する。
  * 標準エラーをパイプで受けているときは、reject のメッセージに添える。
  */
-export function waitForViewUrl(child: ChildProcess, timeoutMs: number): Promise<string> {
+export function waitForViewUrl(
+  child: ChildProcess,
+  home: string,
+  timeoutMs: number,
+): Promise<string> {
   return new Promise((resolve, reject) => {
-    let stdout = ""
     let stderr = ""
     const detail = (): string => (stderr === "" ? "" : `\n${stderr}`)
+    const path = join(home, INSTANCE_LOCATION_DIR_NAME, `${String(child.pid)}.json`)
+    const finish = (settle: () => void): void => {
+      clearTimeout(timer)
+      clearInterval(poll)
+      settle()
+    }
     const timer = setTimeout(() => {
-      reject(new Error(`tsukumo が URL を出さない（${String(timeoutMs)}ms）${detail()}`))
+      finish(() => {
+        reject(new Error(`tsukumo が所在を書かない（${String(timeoutMs)}ms）${detail()}`))
+      })
     }, timeoutMs)
+    const poll = setInterval(() => {
+      const location = readInstanceLocation(path)
+      if (location !== undefined) {
+        finish(() => {
+          resolve(location.url)
+        })
+      }
+    }, LOCATION_POLL_INTERVAL_MS)
 
+    child.stdout?.resume()
     child.stderr?.on("data", (chunk: Buffer) => {
       stderr += chunk.toString("utf8")
     })
-    child.stdout?.on("data", (chunk: Buffer) => {
-      stdout += chunk.toString("utf8")
-      const url = /https?:\/\/\S+/.exec(stdout)?.[0]
-      if (url !== undefined) {
-        clearTimeout(timer)
-        resolve(url)
-      }
-    })
     child.once("exit", (code) => {
-      clearTimeout(timer)
-      reject(new Error(`tsukumo が終了した（コード ${String(code)}）${detail()}`))
+      finish(() => {
+        reject(new Error(`tsukumo が終了した（コード ${String(code)}）${detail()}`))
+      })
     })
   })
 }
+
+/** 所在のファイルを見に行く間隔（ミリ秒）。 */
+const LOCATION_POLL_INTERVAL_MS = 50

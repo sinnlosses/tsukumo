@@ -2,8 +2,9 @@
 //
 // 複数の tsukumo を並べて動かすと、プロセスのコマンドラインはどれも `node src/cli.ts` に
 // なって見分けが付かない（`pnpm run dev` 経由でも同じ）。そのため名前やパターンで止めると
-// 利用者が使っている本体まで落ちる。見分けが付く手がかりは待ち受けているポートだけなので、
-// この道具はポートを入口にする。広く狙う形の `kill` を拒否する hook が、
+// 利用者が使っている本体まで落ちる。見分けが付く手がかりは、起動した tsukumo が書く
+// 所在のファイルと待ち受けているポートで、この道具はポートを入口にする。所在を書かない
+// 古いプロセスのために、ポートの走査を併用する。広く狙う形の `kill` を拒否する hook が、
 // 代わりに案内する先がここ。
 //
 // 使い方:
@@ -19,7 +20,8 @@ import {
   DEFAULT_VIEW_PORT,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../src/server/view-server/core/port-resolution.ts"
-import { candidatePorts, findListener } from "../shared/port-listener.ts"
+import { findRunningTsukumo } from "../shared/instance-location.ts"
+import { candidatePorts } from "../shared/port-listener.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 
 const portSchema = positiveIntegerArgument.pipe(z.number().max(65535))
@@ -43,9 +45,9 @@ if (port === "none") {
   await stopOne(port)
 }
 
-/** 既定のポートから数えた探索範囲を全部引いて、見つかったものを表にして出す。 */
+/** 動いている tsukumo を表にして出す。所在のファイルに加えて、既定のポートから数えた探索範囲も引く。 */
 function listAll(): void {
-  const listeners = candidatePorts().flatMap((candidate) => findListener(candidate) ?? [])
+  const listeners = findRunningTsukumo(candidatePorts())
   if (listeners.length === 0) {
     process.stdout.write(
       `動いている tsukumo は見つからなかった（${String(DEFAULT_VIEW_PORT)} から ${String(
@@ -55,7 +57,7 @@ function listAll(): void {
     return
   }
 
-  process.stdout.write("ポート\tpid\tコマンド\n")
+  process.stdout.write("ポート\tpid\t場所・コマンド\n")
   for (const listener of listeners) {
     process.stdout.write(`${String(listener.port)}\t${String(listener.pid)}\t${listener.command}\n`)
   }
@@ -64,7 +66,7 @@ function listAll(): void {
 
 /** 名指しされたポートのものだけに SIGTERM を送り、終わったかどうかまで見届ける。 */
 async function stopOne(target: number): Promise<void> {
-  const listener = findListener(target)
+  const listener = findRunningTsukumo([target]).find((running) => running.port === target)
   if (listener === undefined) {
     process.stdout.write(`ポート ${String(target)} で待っているプロセスは無い\n`)
     return

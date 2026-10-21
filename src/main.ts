@@ -32,6 +32,10 @@ import { createTokenUsageLog } from "./server/token-usage/adapter/token-usage-lo
 import { createOpenTaskReader, twClaimsRunner } from "./server/token-usage/adapter/tw-claims.ts"
 import { builtUiDir, readUiBundle } from "./server/view-server/adapter/bundle.ts"
 import {
+  defaultInstanceLocationDir,
+  writeInstanceLocation,
+} from "./server/view-server/adapter/instance-location-file.ts"
+import {
   resolveViewPort,
   resolveViewPortFallbackBase,
 } from "./server/view-server/core/port-resolution.ts"
@@ -176,13 +180,21 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   })
   view.connect(session)
 
+  const removeInstanceLocation = writeInstanceLocation({
+    dir: defaultInstanceLocationDir(),
+    location: { pid: process.pid, port: view.port, url: view.url, cwd: launch.cwd },
+    reportFailure: (error) => {
+      reportFailure({ feature: "view-server", place: "instance-location-write" }, error)
+    },
+  })
+
   announce(view.url)
 
   const openedView = config.openView
     ? await openLayoutView(host, config.driver, view.url)
     : { tracked: false as const }
 
-  stopSessionOnExit(session.manager.close, openedView, reportFailure)
+  stopSessionOnExit(session.manager.close, removeInstanceLocation, openedView, reportFailure)
 
   return 0
 }
@@ -219,12 +231,13 @@ async function checkWorkflowPlugin(
 
 /**
  * プロセスが終わるときにセッションを閉じる。閉じないと claude の子プロセスが残るので、
- * 割り込み（Ctrl-C）・終了要求・端末を閉じたとき（SIGHUP）で入力を閉じてから抜ける。
+ * 割り込み（Ctrl-C）・終了要求・端末を閉じたとき（SIGHUP）で所在のファイルを消し、入力を閉じてから抜ける。
  * `openedView` を追跡しているとき（疑似セッションでビューを開いたとき）だけ、そのビューも閉じる。
  * 未処理の拒否は記録して続け、未処理の例外は記録してから同じ閉じ方で終わる。
  */
 function stopSessionOnExit(
   closeSessions: () => void,
+  removeInstanceLocation: () => void,
   openedView: OpenedFakeView,
   reportFailure: (place: SwallowedFailurePlace, error: unknown) => void,
 ): void {
@@ -236,6 +249,7 @@ function stopSessionOnExit(
     }
     stopping = true
     try {
+      removeInstanceLocation()
       closeSessions()
       if (openedView.tracked) {
         await openedView.close()

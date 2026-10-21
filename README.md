@@ -136,6 +136,9 @@ tsukumo: ビューを配信中
 
 止めるときは、起動したターミナルで Ctrl-C を押します。複数動かしているときは、リポジトリの直下で
 `node scripts/runtime/stop.ts` を打つと一覧が出て、`--port <n>` で1つだけ止められます。
+起動した tsukumo は `$TSUKUMO_HOME/instance-location/<pid>.json` に自分の pid・ポート・URL・cwd を書き、
+一覧はそれを読み、そのポートで待っているのが書いた pid であるものだけを採ります。
+所在を書かない古いプロセスのために、ポートの走査も併用します。
 
 ### 3. 更新する
 

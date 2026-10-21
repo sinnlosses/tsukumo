@@ -213,7 +213,7 @@ async function openRoom(
 
   const child = spawnTsukumo(options.scene, home.real, userHome.real, cwd.real)
   addCleanup(() => stopTsukumo(child))
-  const viewUrl = await waitForViewUrl(child, LAUNCH_TIMEOUT_MS)
+  const viewUrl = await waitForViewUrl(child, home.real, LAUNCH_TIMEOUT_MS)
   const url = new URL(viewUrl)
 
   const context = await browser.newContext({
