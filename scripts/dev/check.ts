@@ -236,7 +236,7 @@ function alignSubmodulesOrExit(): void {
       process.stdout.write(`submodule のずれを揃えた: ${move.path} ${move.from} → ${move.to}\n`)
     }
   } else if (alignment.kind === "blocked") {
-    process.stderr.write(`${alignment.reason}\n直し方: git submodule update --init\n`)
+    process.stderr.write(`${alignment.reason}\n`)
     process.exit(1)
   }
 }
