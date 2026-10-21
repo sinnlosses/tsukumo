@@ -151,7 +151,7 @@ export type SessionRecord =
       readonly text: string
       readonly expression: Expression
       readonly time: RecordTime
-      /** 脇の話のターン（`SessionState.answeringAside`）で呼ばれた、脇の話への答えか。 */
+      /** 脇の話のターン（`SessionState.sdkTurn` の `answeringAside`）で呼ばれた、脇の話への答えか。 */
       readonly answersAside: boolean
     }
   /**

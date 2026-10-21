@@ -137,6 +137,10 @@ tsukumo で使う固有の用語を、**日本語表記・コード上で使う�
 
 本文は `docs/glossary/turn.md`。
 
+### SDK のターン
+
+本文は `docs/glossary/turn.md`。
+
 ### バックグラウンドタスク
 
 本文は `docs/glossary/turn.md`。

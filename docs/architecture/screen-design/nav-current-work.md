@@ -92,7 +92,7 @@
   変わるたびに `scrollIntoView({ block: "nearest", behavior: "smooth" })` をやり直す（新しい答え待ちが
   来たときと同じ経路）。フォーカスを移すのは入力欄の帯の「お伺いへ」だけ
 
-**レポートを書いている途中**（`SessionState.reportDrafting` が `drafting`）:
+**レポートを書いている途中**（`SessionState.sdkTurn` の `reportDrafting` が `drafting`）:
 
 - メインが `report` の引数を書き終えるまで、その呼び出しは依頼の手順として届かない
   （`toRunningStepView` は `findLast(isRunningStep)` で拾うが、書いている途中の `report` はまだ

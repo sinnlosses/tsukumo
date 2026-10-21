@@ -12,7 +12,7 @@ import { useState, type RefCallback, type RefObject } from "react"
 import type { DiaryWriting } from "../../../../shared/diary/diary.ts"
 import type { BackgroundTask } from "../../../../shared/session-driver/background-task.ts"
 import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
-import type { ReportDrafting } from "../../../../shared/session/turn-progress.ts"
+import { reportDraftingOf, type ReportDrafting } from "../../../../shared/session/turn-progress.ts"
 import type { TurnStep, TurnStepList } from "../../../../shared/session/turn-step.ts"
 import {
   phaseLabel,
@@ -107,7 +107,7 @@ type CurrentWorkPlan =
  * 実行中の手順があるかどうかと、札の要約にも出すか（`pending` / `running` のときだけ）。
  *
  * - `none`: 実行中の手順が無い
- * - `silent`: 実行中の手順はあるが、いまの状態の語では札に要約を出さない（`idle` / `background` / `stopped`。一覧を開けば出る）
+ * - `silent`: 実行中の手順はあるが札に要約を出さない（`idle` / `background` / `stopped`）
  * - `shown`: 実行中の手順があり、札にも要約を出す（`pending` / `running`）
  */
 type CurrentWorkRunningStep =
@@ -218,7 +218,7 @@ export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): Curr
   const turnStepList = useCurrentTurnSteps()
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
   const diaryWriting = useSession((session) => session.state.diaryWriting)
-  const reportDrafting = useSession((session) => session.state.reportDrafting)
+  const reportDrafting = useSession((session) => reportDraftingOf(session.state.sdkTurn))
   const chatMode = useSession((session) => session.state.chatMode)
   const characterName = useSession((session) => session.state.character?.name)
   const screen = useScreen()

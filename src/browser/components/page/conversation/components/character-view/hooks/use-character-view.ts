@@ -26,6 +26,7 @@ import {
   type ShownReaction,
   waitingLineDueAt,
 } from "../../../../../../../shared/session/shown-reaction.ts"
+import { reportDraftingOf } from "../../../../../../../shared/session/turn-progress.ts"
 import type { Speech } from "../../../../../../../shared/session/turn-speech.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
 import {
@@ -123,7 +124,9 @@ export function useCharacterView(): CharacterViewModel {
   const itemSeats = useSession((session) => session.state.itemSeats)
   const turn = useSession((session) => session.state.turn)
   const lastToolFailureAt = useSession((session) => session.state.lastToolFailureAt)
-  const draftingReport = useSession((session) => session.state.reportDrafting.kind === "drafting")
+  const draftingReport = useSession(
+    (session) => reportDraftingOf(session.state.sdkTurn).kind === "drafting",
+  )
   const state = useSession((session) => session.state)
   const { cards: welcomeCards } = useWelcomeCards()
   const welcomeHead = welcomeHeadOf(welcomeCards)

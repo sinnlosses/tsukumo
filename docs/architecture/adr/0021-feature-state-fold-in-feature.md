@@ -22,7 +22,7 @@
   - 値を写すだけのイベント（`chat-topics-changed`・`plan`・`tasks-changed` など）は入口の1行のまま。
     部分の reducer にすると、消しても複雑さが戻らない素通しになる
   - 記録・ターン・セリフ・API の不調の芯（`records` `turn` `speeches` `partialUtterance`
-    `reportDrafting` `apiTrouble` など）は `session-state.ts` に残す。ほとんどのイベントが記録とターンの
+    `sdkTurn` `apiTrouble` など）は `session-state.ts` に残す。ほとんどのイベントが記録とターンの
     欄を同時に動かすので、割るとまたがるイベントのほうが多くなる
   - 今のワークプランは `work-plan` の記録から導くもので記録の芯の中にあるので、部分の reducer にはしない。畳み方
     （`nextWorkPlan`・`currentWorkPlan`）は `shared/session/work-plan-fold.ts` に置き、`session-state.ts` とサーバの

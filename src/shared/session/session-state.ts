@@ -29,10 +29,9 @@ import type { SessionInfo } from "./session-info.ts"
 import type { SessionRecord } from "./session-record.ts"
 import { NO_SETTING_MARK, type SettingMarks } from "./setting-mark.ts"
 import {
+  CLOSED_SDK_TURN,
   INITIAL_SPEECH_EXPRESSION,
-  NO_TURN_BODIES,
-  type ReportDrafting,
-  type TurnBodies,
+  type SdkTurn,
   type TurnProgress,
 } from "./turn-progress.ts"
 import type { Speech } from "./turn-speech.ts"
@@ -53,23 +52,21 @@ export type SessionState = {
   readonly speechExpression: Expression
   /**
    * 今のターンで `speak` が呼ばれたか（前のターンのセリフを捨てて今のターンだけの並びにするか、今のターンに積み重ねるかの判定に使う）。
-   * `request` で false に戻る。
+   * `request`・記録を持たないターンの始まり・脇の話・`/clear`（`conversation-cleared`）で false に戻る。
+   * 続きのターン（`turn-resumed`）とターンの終わりでは戻さず持ち越すので、SDK のターン（{@link sdkTurn}）の持ち物にはしない。
    */
   readonly speechCalledInTurn: boolean
   /**
-   * いま走っている SDK ターンで本文が届いたか（{@link TurnBodies}）。
-   * やり取り（依頼）ではなく SDK のターンで区切る（claude が自分で始めたターンでも戻す）。
-   * メインビューが「まだ伸びうる本文」を伏せるときに、前の SDK ターンで確定した本文まで巻き込まないために要る。
+   * SDK のターンの持ち物（{@link SdkTurn}）。依頼・記録を持たないターンの始まり・脇の話・続きのターンで開き、`turn-finished` / `session-ended` で閉じる。
+   * `turn` が `idle` なのに開いている組も型の上では作れるが、開く・閉じるのは `turn` を動かす同じ関数だけなので起きない。
    */
-  readonly bodiesInTurn: TurnBodies
-  /**
-   * いま走っている SDK ターンが脇の話（`aside`）で始まったか。
-   * `aside` で true になり、依頼・記録を持たないターンの始まり・続きのターン・ターンの終わりで false に戻る。
-   */
-  readonly answeringAside: boolean
+  readonly sdkTurn: SdkTurn
   /** 確定した記録。書きかけの本文は含まない。 */
   readonly records: readonly SessionRecord[]
-  /** 書きかけの本文。完成した本文が来たら空に戻る。 */
+  /**
+   * 書きかけの本文。完成した本文が来たら空に戻る。
+   * ターンの境目ごとに記録へ流す置き場で、`utterance` は SDK のターンが閉じていてもここを通って記録に積まれ、メインビューも `turn` を見ずに読むので、{@link sdkTurn} の持ち物にはしない。
+   */
   readonly partialUtterance: string
   /** 答え待ちの列（許可プロンプトと質問）。届いた時刻つき。 */
   readonly pending: readonly StampedPendingAsk[]
@@ -178,11 +175,6 @@ export type SessionState = {
    */
   readonly lastToolFailureAt: number | undefined
   /**
-   * メインがいま `report` の引数を書いているか。立ち絵の「書いている」の判定にだけ使う。
-   * `report-drafting` で書き始め、同じ `toolUseId` の `report` か `tool-finished`（差し戻されて `report` が届かないときもこちらは届く）、ターンの境目で終わる。
-   */
-  readonly reportDrafting: ReportDrafting
-  /**
    * 雑談モードに入っているか。入っている間はレポートを出さず、メインビューが立ち絵と会話のログになる。
    * 源は `chat-mode-changed` だけ。切り替えは駆動の起こし直しなので、起こし直したあとにサーバから流れ直す（起こし直しで状態が初期値へ戻るため）。
    */
@@ -256,8 +248,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   speeches: [],
   speechExpression: INITIAL_SPEECH_EXPRESSION,
   speechCalledInTurn: false,
-  bodiesInTurn: NO_TURN_BODIES,
-  answeringAside: false,
+  sdkTurn: CLOSED_SDK_TURN,
   records: [],
   partialUtterance: "",
   pending: [],
@@ -288,7 +279,6 @@ export const INITIAL_SESSION_STATE: SessionState = {
   itemSeats: {},
   sessions: [],
   lastToolFailureAt: undefined,
-  reportDrafting: { kind: "idle" },
   chatMode: false,
   chatTopics: [],
   rememberedLines: [],

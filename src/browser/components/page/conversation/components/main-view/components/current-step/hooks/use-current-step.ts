@@ -1,5 +1,6 @@
 // 狭い画面の「いまの段」のロジック。いまの段の見出しと、いま走っている手順の1行(再試行中・答え待ちを含む)を畳む。
 
+import { reportDraftingOf } from "../../../../../../../../../shared/session/turn-progress.ts"
 import {
   phaseOrdinalText,
   phasePosition,
@@ -29,7 +30,7 @@ export function useCurrentStep(): CurrentStepModel {
   const turnStepList = useCurrentTurnSteps()
   const turn = useSession((session) => session.state.turn)
   const pending = useSession((session) => session.state.pending)
-  const reportDrafting = useSession((session) => session.state.reportDrafting)
+  const reportDrafting = useSession((session) => reportDraftingOf(session.state.sdkTurn))
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
   const records = useSession((session) => session.state.records)

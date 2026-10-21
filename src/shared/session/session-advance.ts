@@ -24,16 +24,19 @@ import type { SessionState } from "./session-state.ts"
 import { originOf, withAcceptedMark, withConfirmedMark } from "./setting-mark.ts"
 import { finishTool, notifyBackgroundEnd, runsInBackground } from "./tool-record.ts"
 import {
+  answeringAsideOf,
   beginAside,
   beginTurn,
+  clearedSdkTurn,
+  CLOSED_SDK_TURN,
   finishedTurnCountOf,
   finishTurn,
   INITIAL_SPEECH_EXPRESSION,
-  NO_TURN_BODIES,
   recordTurnFailure,
   resumeTurn,
   settleReportDrafting,
   turnEnding,
+  withOpenSdkTurn,
 } from "./turn-progress.ts"
 
 /**
@@ -163,11 +166,13 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, partialUtterance: state.partialUtterance + event.text }
     case "utterance":
       return settleUtterance({
-        ...state,
+        ...(isBlankText(event.text)
+          ? state
+          : withOpenSdkTurn(state, (open) => ({
+              ...open,
+              bodies: { ...open.bodies, utterance: true },
+            }))),
         partialUtterance: event.text,
-        bodiesInTurn: isBlankText(event.text)
-          ? state.bodiesInTurn
-          : { ...state.bodiesInTurn, utterance: true },
       })
     case "speech":
       return {
@@ -180,12 +185,12 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             text: event.text,
             expression: event.expression,
             time: { kind: "stamped", at },
-            answersAside: state.answeringAside,
+            answersAside: answeringAsideOf(state.sdkTurn),
           },
         ],
         // 前のターンのセリフが残っているなら、ここで捨てて今のターンだけの並びにする。
         speeches: [
-          ...(state.speechCalledInTurn || state.answeringAside ? state.speeches : []),
+          ...(state.speechCalledInTurn || answeringAsideOf(state.sdkTurn) ? state.speeches : []),
           { text: event.text, expression: event.expression, time: { kind: "stamped", at } },
         ],
         speechExpression: event.expression,
@@ -207,13 +212,18 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "report-rejected":
       return state
     case "report-drafting":
-      return { ...state, reportDrafting: { kind: "drafting", toolUseId: event.toolUseId } }
+      return withOpenSdkTurn(state, (open) => ({
+        ...open,
+        reportDrafting: { kind: "drafting", toolUseId: event.toolUseId },
+      }))
     case "report":
       // `tool-started` と同じく、届いた位置に積むだけ（吹き出しにも帯の「いまの作業」にも出さない）。
       // 段の閉じ方が `finished` なら、閉じたワークプランの記録をその直前に積む。
       return {
-        ...settleReportDrafting(state, event.toolUseId),
-        bodiesInTurn: { ...state.bodiesInTurn, report: true },
+        ...withOpenSdkTurn(settleReportDrafting(state, event.toolUseId), (open) => ({
+          ...open,
+          bodies: { ...open.bodies, report: true },
+        })),
         records: [
           ...state.records,
           ...workPlanRecords(state.records, event, at),
@@ -314,8 +324,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         ...recordTurnFailure(settleUtterance(state), ending),
         turn: finishTurn(state.turn, at, ending),
         finishedTurnCount: finishedTurnCountOf(state),
-        reportDrafting: { kind: "idle" },
-        answeringAside: false,
+        sdkTurn: CLOSED_SDK_TURN,
         apiTrouble: { kind: "none" },
       }
     }
@@ -323,8 +332,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       // `diaryWriting` と見直しの欄はここでは動かさない（`turn-finished` と同じ理由）。
       return {
         ...settleUtterance(state),
-        reportDrafting: { kind: "idle" },
-        answeringAside: false,
+        sdkTurn: CLOSED_SDK_TURN,
         endedReason: event.reason,
         turn: finishTurn(state.turn, at, { kind: "ended" }),
         finishedTurnCount: finishedTurnCountOf(state),
@@ -345,11 +353,9 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         speeches: [],
         speechExpression: INITIAL_SPEECH_EXPRESSION,
         speechCalledInTurn: false,
-        bodiesInTurn: NO_TURN_BODIES,
-        answeringAside: false,
+        sdkTurn: clearedSdkTurn(state.sdkTurn),
         records: [],
         partialUtterance: "",
-        reportDrafting: { kind: "idle" },
         welcomeGreeting: { kind: "none" },
       }
     case "tasks-changed":

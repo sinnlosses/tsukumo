@@ -57,10 +57,16 @@ const WRITING_DIARY = {
   startedAt: 0,
   stage: "read",
 } satisfies SessionState["diaryWriting"]
+const NOT_DRAFTING = {
+  kind: "open",
+  bodies: { report: false, utterance: false },
+  answeringAside: false,
+  reportDrafting: { kind: "idle" },
+} satisfies SessionState["sdkTurn"]
 const DRAFTING = {
-  kind: "drafting",
-  toolUseId: "fake-report-1",
-} satisfies SessionState["reportDrafting"]
+  ...NOT_DRAFTING,
+  reportDrafting: { kind: "drafting", toolUseId: "fake-report-1" },
+} satisfies SessionState["sdkTurn"]
 
 const RUNNING_BASH = [
   requestRecord(),
@@ -133,22 +139,22 @@ describe("useCurrentWork の札の語・印・要約（状態の強さの順）"
     ],
     [
       "許可要求の答え待ちでレポートを書いている途中なら要約はレポートを書いています",
-      { turn: RUNNING, pending: [PERMISSION], reportDrafting: DRAFTING },
+      { turn: RUNNING, pending: [PERMISSION], sdkTurn: DRAFTING },
       { word: "答え待ち", summary: "レポートを書いています" },
     ],
     [
       "質問の答え待ちは、レポートを書いている途中でも質問の要約が勝つ",
-      { turn: RUNNING, pending: [questionPending(["最初の見出し"])], reportDrafting: DRAFTING },
+      { turn: RUNNING, pending: [questionPending(["最初の見出し"])], sdkTurn: DRAFTING },
       { word: "答え待ち", summary: "最初の見出し" },
     ],
     [
       "レポートが届けば実行中の手順の要約に戻る",
-      { turn: RUNNING, records: RUNNING_BASH, reportDrafting: { kind: "idle" } },
+      { turn: RUNNING, records: RUNNING_BASH, sdkTurn: NOT_DRAFTING },
       { word: "作業中", summary: "Bash: echo dummy" },
     ],
     [
       "レポートを書いている途中は実行中の手順の要約を覆う",
-      { turn: RUNNING, records: RUNNING_BASH, reportDrafting: DRAFTING },
+      { turn: RUNNING, records: RUNNING_BASH, sdkTurn: DRAFTING },
       { word: "作業中", summary: "レポートを書いています" },
     ],
     [
@@ -191,7 +197,7 @@ describe("useCurrentWork の札の今の段", () => {
     ["作業中は「位置/段の数 名前」", { turn: RUNNING, records: PLANNED_RECORDS }, "2/3 架空の段B"],
     [
       "レポートを書いている途中も段は残る",
-      { turn: RUNNING, records: PLANNED_RECORDS, reportDrafting: DRAFTING },
+      { turn: RUNNING, records: PLANNED_RECORDS, sdkTurn: DRAFTING },
       "2/3 架空の段B",
     ],
     [

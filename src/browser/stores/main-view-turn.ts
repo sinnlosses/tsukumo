@@ -12,7 +12,7 @@ import { mainViewEntries } from "../../shared/session/main-view-entry.ts"
 import type { MainViewTurn } from "../../shared/session/main-view-shape.ts"
 import { mainViewTurns } from "../../shared/session/main-view.ts"
 import type { SessionState } from "../../shared/session/session-state.ts"
-import type { TurnBodies } from "../../shared/session/turn-progress.ts"
+import { bodiesOf, type TurnBodies } from "../../shared/session/turn-progress.ts"
 import { useSession } from "./session.ts"
 
 const TURNS_BY_STATE = new WeakMap<SessionState, readonly MainViewTurn[]>()
@@ -45,7 +45,7 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
 /**
  * いちばん新しいやり取りでまだ伸びうる本文の種類（`mainViewTurns` の2つめの引数）。
  *
- * 伸びうるのは、いま走っている SDK ターンで届いた本文だけ（`SessionState.bodiesInTurn`）。
+ * 伸びうるのは、いま走っている SDK のターンで届いた本文だけ（`SessionState.sdkTurn` の `bodies`）。
  * サブエージェントの `SendMessage` やバックグラウンドタスクの通知で claude が自分で続きのターンを始めると `running` に戻る。
  * そこで前の SDK ターンで確定した `report` まで伏せると、合図が届くたびに出ていた中間レポートが消えて、ターンが終わると同じものが出直す（画面で出た）。
  *
@@ -63,7 +63,7 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
 function unsettledBodies(state: SessionState): TurnBodies {
   const running = state.turn.kind === "running"
   return {
-    report: running && state.bodiesInTurn.report,
+    report: running && bodiesOf(state.sdkTurn).report,
     utterance: running || state.backgroundTasks.length > 0 || state.partialUtterance !== "",
   }
 }

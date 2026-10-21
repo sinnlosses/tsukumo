@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
+import { answeringAsideOf, reportDraftingOf } from "../../../src/shared/session/turn-progress.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 import { apply } from "../../fixture/session-state.ts"
 
@@ -149,7 +150,7 @@ describe("applySessionEvent", () => {
     expect(aside.speeches).toEqual(finished.speeches)
     expect(aside.speeches).toHaveLength(1)
     expect(aside.speechCalledInTurn).toBe(false)
-    expect(aside.answeringAside).toBe(true)
+    expect(answeringAsideOf(aside.sdkTurn)).toBe(true)
     expect(aside.records.at(-1)).toEqual({
       kind: "aside",
       text: "架空の問い",
@@ -270,13 +271,13 @@ describe("applySessionEvent（report を書いている間）", () => {
   const DRAFTING: SessionEvent = { kind: "report-drafting", toolUseId: "toolu_r1" }
 
   it("report-drafting で書いている途中になり、同じ呼び出しの report で下りる", () => {
-    expect(apply(REQUEST, DRAFTING).reportDrafting).toEqual({
+    expect(reportDraftingOf(apply(REQUEST, DRAFTING).sdkTurn)).toEqual({
       kind: "drafting",
       toolUseId: "toolu_r1",
     })
-    expect(apply(REQUEST, DRAFTING, reportEvent({ toolUseId: "toolu_r1" })).reportDrafting).toEqual(
-      { kind: "idle" },
-    )
+    expect(
+      reportDraftingOf(apply(REQUEST, DRAFTING, reportEvent({ toolUseId: "toolu_r1" })).sdkTurn),
+    ).toEqual({ kind: "idle" })
   })
 
   it("report の待ちの一言は記録に写る", () => {
@@ -302,7 +303,7 @@ describe("applySessionEvent（report を書いている間）", () => {
       isError: true,
     })
 
-    expect(finished.reportDrafting).toEqual({ kind: "idle" })
+    expect(reportDraftingOf(finished.sdkTurn)).toEqual({ kind: "idle" })
     // report の結果はツールの記録ではないので、「失敗でびくっ」の材料にもならない。
     expect(finished.lastToolFailureAt).toBeUndefined()
   })
@@ -315,13 +316,15 @@ describe("applySessionEvent（report を書いている間）", () => {
       isError: false,
     })
 
-    expect(other.reportDrafting.kind).toBe("drafting")
+    expect(reportDraftingOf(other.sdkTurn).kind).toBe("drafting")
   })
 
   it("ターンが終わったら（中断で呼び出しが届かなくても）下りる", () => {
     expect(
-      apply(REQUEST, DRAFTING, { kind: "turn-finished", outcome: { kind: "interrupted" } })
-        .reportDrafting,
+      reportDraftingOf(
+        apply(REQUEST, DRAFTING, { kind: "turn-finished", outcome: { kind: "interrupted" } })
+          .sdkTurn,
+      ),
     ).toEqual({ kind: "idle" })
   })
 })

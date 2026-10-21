@@ -31,19 +31,48 @@ export type TurnProgress =
     }
 
 /**
- * いま走っている SDK ターンで届いた本文の種類（{@link SessionState.bodiesInTurn}）。`report` は
+ * いま走っている SDK のターンで届いた本文の種類（{@link OpenSdkTurn} の `bodies`）。`report` は
  * `report` ツールの呼び出し、`utterance` はツールの外に書いた本文（空白だけのものは数えない）。
  */
 export type TurnBodies = { readonly report: boolean; readonly utterance: boolean }
 
-/** メインが `report` の引数を書いている途中か（{@link SessionState.reportDrafting}）。 */
+/** メインが `report` の引数を書いている途中か（{@link OpenSdkTurn} の `reportDrafting`）。 */
 export type ReportDrafting =
   | { readonly kind: "idle" }
   | { readonly kind: "drafting"; readonly toolUseId: string }
 
+/**
+ * SDK のターンの持ち物（{@link SessionState.sdkTurn}）。開いている間だけ欄を持ち、閉じると型の上で消える。
+ *
+ * - `bodies`: このターンで届いた本文の種類。
+ *   メインビューが「まだ伸びうる本文」を伏せるときに、前の SDK のターンで確定した本文まで巻き込まないために要る
+ * - `answeringAside`: 脇の話（`aside`）で開いたか
+ * - `reportDrafting`: メインが `report` の引数を書いている途中か。
+ *   `report-drafting` で書き始め、同じ `toolUseId` の `report` か `tool-finished`（差し戻されて `report` が届かないときもこちらは届く）で終わる
+ */
+export type SdkTurn = { readonly kind: "closed" } | OpenSdkTurn
+
+export type OpenSdkTurn = {
+  readonly kind: "open"
+  readonly bodies: TurnBodies
+  readonly answeringAside: boolean
+  readonly reportDrafting: ReportDrafting
+}
+
 export const INITIAL_SPEECH_EXPRESSION = "default" as const satisfies Expression
 
 export const NO_TURN_BODIES = { report: false, utterance: false } as const satisfies TurnBodies
+
+export const CLOSED_SDK_TURN = { kind: "closed" } as const satisfies SdkTurn
+
+const NOT_DRAFTING = { kind: "idle" } as const satisfies ReportDrafting
+
+const OPENED_SDK_TURN = {
+  kind: "open",
+  bodies: NO_TURN_BODIES,
+  answeringAside: false,
+  reportDrafting: NOT_DRAFTING,
+} as const satisfies SdkTurn
 
 /**
  * ターンの始まりを畳む（記録は動かさない）。`request` と「記録を持たないターンの始まり」
@@ -58,12 +87,10 @@ export function beginTurn(state: SessionState, at: number): SessionState {
     // 表情も既定へ戻す。次の `speak` が来るまではこのままで、ツールの実行状況では動かない。
     speechExpression: INITIAL_SPEECH_EXPRESSION,
     partialUtterance: "",
-    reportDrafting: { kind: "idle" },
     turn: { kind: "running", startedAt: at },
     nextTurnId: state.nextTurnId + 1,
     speechCalledInTurn: false,
-    bodiesInTurn: NO_TURN_BODIES,
-    answeringAside: false,
+    sdkTurn: OPENED_SDK_TURN,
     apiTrouble: { kind: "none" },
   }
 }
@@ -80,7 +107,7 @@ export function beginAside(state: SessionState, at: number): SessionState {
     speechExpression: state.speechExpression,
     turn: { kind: "running", startedAt: runningStartedAt(state.turn, at) },
     nextTurnId: state.nextTurnId,
-    answeringAside: true,
+    sdkTurn: { ...OPENED_SDK_TURN, answeringAside: true },
   }
 }
 
@@ -93,10 +120,8 @@ export function resumeTurn(state: SessionState, at: number): SessionState {
   return {
     ...state,
     partialUtterance: "",
-    reportDrafting: { kind: "idle" },
     turn: { kind: "running", startedAt: runningStartedAt(state.turn, at) },
-    bodiesInTurn: NO_TURN_BODIES,
-    answeringAside: false,
+    sdkTurn: OPENED_SDK_TURN,
     apiTrouble: { kind: "none" },
   }
 }
@@ -141,9 +166,38 @@ export function finishedTurnCountOf(state: SessionState): number {
 
 /** 書いていた `report` の呼び出しが届いた・終わったなら、書いている途中の印を下ろす。 */
 export function settleReportDrafting(state: SessionState, toolUseId: string): SessionState {
-  return state.reportDrafting.kind === "drafting" && state.reportDrafting.toolUseId === toolUseId
-    ? { ...state, reportDrafting: { kind: "idle" } }
+  const drafting = reportDraftingOf(state.sdkTurn)
+  return drafting.kind === "drafting" && drafting.toolUseId === toolUseId
+    ? withOpenSdkTurn(state, (open) => ({ ...open, reportDrafting: NOT_DRAFTING }))
     : state
+}
+
+/** 開いている SDK のターンだけを書き換える。閉じていれば姿をそのまま返す。 */
+export function withOpenSdkTurn(
+  state: SessionState,
+  update: (open: OpenSdkTurn) => OpenSdkTurn,
+): SessionState {
+  return state.sdkTurn.kind === "open" ? { ...state, sdkTurn: update(state.sdkTurn) } : state
+}
+
+/** `/clear` のあとの SDK のターン。開いていれば中身を空にして開いたまま、閉じていれば閉じたまま。 */
+export function clearedSdkTurn(sdkTurn: SdkTurn): SdkTurn {
+  return sdkTurn.kind === "open" ? OPENED_SDK_TURN : CLOSED_SDK_TURN
+}
+
+/** `report` の引数を書いている途中か。閉じていれば書いていない（毎回同じ値を返す）。 */
+export function reportDraftingOf(sdkTurn: SdkTurn): ReportDrafting {
+  return sdkTurn.kind === "open" ? sdkTurn.reportDrafting : NOT_DRAFTING
+}
+
+/** 脇の話で開いた SDK のターンの中か。 */
+export function answeringAsideOf(sdkTurn: SdkTurn): boolean {
+  return sdkTurn.kind === "open" && sdkTurn.answeringAside
+}
+
+/** いまの SDK のターンで届いた本文の種類。閉じていれば何も届いていない（毎回同じ値を返す）。 */
+export function bodiesOf(sdkTurn: SdkTurn): TurnBodies {
+  return sdkTurn.kind === "open" ? sdkTurn.bodies : NO_TURN_BODIES
 }
 
 /** 続きのターンが引き継ぐ始まりの時刻。まだ一度もターンが無ければ `at`。 */

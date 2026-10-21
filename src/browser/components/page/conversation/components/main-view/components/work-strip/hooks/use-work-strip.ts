@@ -8,6 +8,7 @@ import {
   type PhaseRecap,
   phaseRecapsOf,
 } from "../../../../../../../../../shared/session/phase-recap.ts"
+import { reportDraftingOf } from "../../../../../../../../../shared/session/turn-progress.ts"
 import {
   turnResultsOf,
   type TurnResult,
@@ -216,7 +217,7 @@ export function useWorkStrip(): WorkStripModel {
   const turn = useSession((session) => session.state.turn)
   const pending = useSession((session) => session.state.pending)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
-  const reportDrafting = useSession((session) => session.state.reportDrafting)
+  const reportDrafting = useSession((session) => reportDraftingOf(session.state.sdkTurn))
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
   const opened = useWorkStripSteps((state) => state.opened)
   const toggle = useWorkStripSteps((state) => state.toggle)

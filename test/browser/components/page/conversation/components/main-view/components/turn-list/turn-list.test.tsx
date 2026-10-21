@@ -77,7 +77,12 @@ describe("TurnList", () => {
     renderTurnList({
       records: [requestRecord({ turnId: 0, text: "架空の作業中の依頼" })],
       turn: { kind: "running", startedAt },
-      bodiesInTurn: { report: true, utterance: true },
+      sdkTurn: {
+        kind: "open",
+        bodies: { report: true, utterance: true },
+        answeringAside: false,
+        reportDrafting: { kind: "idle" },
+      },
     })
 
     const [row] = rows()

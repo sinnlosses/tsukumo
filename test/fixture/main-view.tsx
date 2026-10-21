@@ -18,9 +18,16 @@ export function renderMainView(
 ): RenderResult {
   // 動いているターンを渡したときは、記録の本文がいまの SDK ターンで届いたものとして扱う
   // （前の SDK ターンで確定した本文は、動いているあいだも出したままになるため）。
-  const bodiesInTurn =
-    turn.kind === "running" ? { report: true, utterance: true } : INITIAL_SESSION_STATE.bodiesInTurn
-  putSession({ ...INITIAL_SESSION_STATE, records, turn, bodiesInTurn, pending })
+  const sdkTurn: SessionState["sdkTurn"] =
+    turn.kind === "running"
+      ? {
+          kind: "open",
+          bodies: { report: true, utterance: true },
+          answeringAside: false,
+          reportDrafting: { kind: "idle" },
+        }
+      : INITIAL_SESSION_STATE.sdkTurn
+  putSession({ ...INITIAL_SESSION_STATE, records, turn, sdkTurn, pending })
   // `MainView` は `<RepositoryFileLinkProvider>`（レポートのパスを押せる部品にする一覧の取得）を
   // 内側で mount するので `useQuery` が要る。ここでは一覧の中身を見ないので、フェッチそのものは
   // 差し替えない（`window.fetch` は happy-dom の対象外なので落ちるだけで、テストは待たない）。
