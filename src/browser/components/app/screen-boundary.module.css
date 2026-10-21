@@ -1,0 +1,20 @@
+/* 描けなかった画面の代わりに出す知らせ。画面のナビの帯の下に置く。 */
+.screen-failure {
+  box-sizing: border-box;
+  max-width: calc(100vw - 2 * var(--page-padding));
+  margin: 10vh auto 0;
+  padding: 1rem 1.25rem;
+  width: 28rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--state-warn);
+  border-radius: 0.75rem;
+  line-height: var(--line-height-body);
+  overflow-wrap: anywhere;
+}
+
+.screen-failure-reload {
+  margin-top: 0.75rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 0.5rem;
+}

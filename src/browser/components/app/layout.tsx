@@ -2,6 +2,7 @@
 //
 // 画面の入れ替えを画面の側に持たせると画面どうしの import になり、構造の検査「browser/ の機能どうしの import」が落とす。
 // だから、すべての画面を知ってよいここで選ぶ。
+// 描画の失敗は画面ごとの `<ScreenBoundary>` で受け止める。帯は境界の外に置き、壊れた画面からでも別の画面へ移れるようにする。
 
 import { Activity, type ReactElement } from "react"
 
@@ -19,6 +20,7 @@ import { Character } from "../page/character/character.tsx"
 import { TurnList } from "../page/conversation/components/main-view/components/turn-list/turn-list.tsx"
 import { Conversation } from "../page/conversation/conversation.tsx"
 import { TokenUsage } from "../page/token-usage/token-usage.tsx"
+import { ScreenBoundary } from "./screen-boundary.tsx"
 
 /**
  * 出している画面を選ぶ（`location.hash`）。
@@ -38,12 +40,18 @@ export function Layout(): ReactElement {
       {/* 書き終わりの知らせ。成果の画面でだけ出す。
           ほかの画面へ移っても「×」で消したかどうかを忘れないよう、外さずに `<Activity>` で隠す。 */}
       <Activity mode={screen === "achievement" ? "visible" : "hidden"}>
-        <DiaryNotice />
+        <ScreenBoundary>
+          <DiaryNotice />
+        </ScreenBoundary>
       </Activity>
       <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
-        <Conversation />
+        <ScreenBoundary>
+          <Conversation />
+        </ScreenBoundary>
       </Activity>
-      {screen !== "conversation" && OVERLAY_SCREEN[screen]}
+      {screen !== "conversation" && (
+        <ScreenBoundary key={screen}>{OVERLAY_SCREEN[screen]}</ScreenBoundary>
+      )}
     </>
   )
 }
