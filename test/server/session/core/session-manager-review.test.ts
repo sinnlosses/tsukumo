@@ -125,7 +125,7 @@ describe("createSessionManager（見直し）", () => {
 })
 
 describe("タスク一覧の見張り", () => {
-  const KNOWN_TASKS = { kind: "known", items: [] } as const
+  const KNOWN_TASKS = { kind: "known", items: [], omittedClosedCount: 0 } as const
 
   /** 見張りの起こす・閉じるを数え、流す口を手で握る session-manager。 */
   function startManagerWithTaskWatch() {

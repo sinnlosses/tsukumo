@@ -6,6 +6,7 @@ import {
   recommendationKey,
 } from "../../../../src/server/recommendation/core/recommendation-candidate.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
+import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
 
 // すべて手で書いた架空のタスク一覧。
 
@@ -18,7 +19,7 @@ function task(
   return {
     id,
     summary: `架空の${id}`,
-    status,
+    status: taskStatusOfWord(status),
     dependencies,
     waitingFor,
     labels: [],
@@ -40,7 +41,7 @@ describe("recommendationCandidates", () => {
       task("X-006", "done", [], ["X-005"]),
     ]
 
-    expect(recommendationCandidates({ kind: "known", items })).toEqual({
+    expect(recommendationCandidates(knownTaskSummary(items))).toEqual({
       candidates: [
         { kind: "resume" },
         { kind: "task", id: "X-002", summary: "架空のX-002", waitedBy: ["X-003", "X-004"] },
@@ -55,7 +56,7 @@ describe("recommendationCandidates", () => {
       task(`X-${String(index + 100)}`, "todo", []),
     )
 
-    const selection = recommendationCandidates({ kind: "known", items })
+    const selection = recommendationCandidates(knownTaskSummary(items))
 
     expect(selection.candidates).toHaveLength(RECOMMENDATION_TASK_CANDIDATE_LIMIT + 1)
     expect(selection.omittedCount).toBe(3)
@@ -66,29 +67,22 @@ describe("recommendationCandidates", () => {
       task(`X-${String(index + 100)}`, "todo", []),
     )
 
-    expect(recommendationCandidates({ kind: "known", items }).omittedCount).toBe(0)
+    expect(recommendationCandidates(knownTaskSummary(items)).omittedCount).toBe(0)
   })
 })
 
 describe("recommendationKey", () => {
   it("要約が変われば印も変わる", () => {
-    const before = recommendationCandidates({
-      kind: "known",
-      items: [task("X-002", "todo", [])],
-    })
-    const after = recommendationCandidates({
-      kind: "known",
-      items: [{ ...task("X-002", "todo", []), summary: "直した架空の要約" }],
-    })
+    const before = recommendationCandidates(knownTaskSummary([task("X-002", "todo", [])]))
+    const after = recommendationCandidates(
+      knownTaskSummary([{ ...task("X-002", "todo", []), summary: "直した架空の要約" }]),
+    )
 
     expect(recommendationKey(before)).not.toBe(recommendationKey(after))
   })
 
   it("切っていなければ印は候補の並びだけで決まり、切ったときだけ件数が印に入る", () => {
-    const { candidates } = recommendationCandidates({
-      kind: "known",
-      items: [task("X-002", "todo", [])],
-    })
+    const { candidates } = recommendationCandidates(knownTaskSummary([task("X-002", "todo", [])]))
 
     expect(recommendationKey({ candidates, omittedCount: 0 })).toBe(JSON.stringify(candidates))
     expect(recommendationKey({ candidates, omittedCount: 2 })).not.toBe(

@@ -7,6 +7,7 @@ import {
 } from "../../../../../src/browser/features/task-board/domain/task-board-filter.ts"
 import type { TaskStateView } from "../../../../../src/browser/features/task-board/domain/task-board-view.ts"
 import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
+import { taskStatusOfWord } from "../../../../fixture/session-state.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物のタスクファイルは使わない）。
 
@@ -14,7 +15,7 @@ function taskOf(overrides: Partial<TaskSummaryItem>): TaskSummaryItem {
   return {
     id: "X-001",
     summary: "要約",
-    status: "todo",
+    status: taskStatusOfWord("todo"),
     dependencies: [],
     waitingFor: [],
     labels: [],

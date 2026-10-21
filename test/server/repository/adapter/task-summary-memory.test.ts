@@ -9,6 +9,7 @@ import {
   writeTaskSummaryMemory,
 } from "../../../../src/server/repository/adapter/task-summary-memory.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
+import { taskStatusOfWord } from "../../../fixture/session-state.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const root = useTempDir("task-summary-memory")
@@ -21,7 +22,7 @@ function item(id: string, overrides: Partial<TaskSummaryItem> = {}): TaskSummary
   return {
     id,
     summary: `${id} の要約`,
-    status: "todo",
+    status: taskStatusOfWord("todo"),
     dependencies: [],
     waitingFor: [],
     labels: [],

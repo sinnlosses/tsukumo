@@ -12,6 +12,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
+import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
 import { queryClientWrapper } from "../../query-client.tsx"
 import { type CommandSpy, putSession } from "../../session-store.ts"
 
@@ -22,14 +23,14 @@ afterEach(() => {
 })
 
 function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
-  return { kind: "known", items }
+  return knownTaskSummary(items)
 }
 
 const TASKS: readonly TaskSummaryItem[] = [
   {
     id: "X-001",
     summary: "架空の済んだタスク",
-    status: "done",
+    status: taskStatusOfWord("done"),
     dependencies: [],
     waitingFor: [],
     labels: [],
@@ -41,7 +42,7 @@ const TASKS: readonly TaskSummaryItem[] = [
   {
     id: "X-002",
     summary: "架空の未着手タスク",
-    status: "todo",
+    status: taskStatusOfWord("todo"),
     dependencies: [],
     waitingFor: [],
     labels: [],
@@ -173,7 +174,7 @@ describe("タスクの実行を頼む", () => {
     ): TaskSummaryItem => ({
       id,
       summary: `架空のタスク ${id}`,
-      status,
+      status: taskStatusOfWord(status),
       dependencies,
       waitingFor: dependencies,
       labels: [],
@@ -388,7 +389,7 @@ function holdTask(
   return {
     id,
     summary: `架空の保留 ${id}`,
-    status: "hold",
+    status: taskStatusOfWord("hold"),
     dependencies,
     waitingFor,
     labels: [],
@@ -400,7 +401,11 @@ function holdTask(
 }
 
 function draftTask(id: string): TaskSummaryItem {
-  return { ...holdTask(id, [], []), summary: `架空のドラフト ${id}`, status: "draft" }
+  return {
+    ...holdTask(id, [], []),
+    summary: `架空のドラフト ${id}`,
+    status: taskStatusOfWord("draft"),
+  }
 }
 
 /** 区画の一覧の行（カード）のボタン。 */

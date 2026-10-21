@@ -1,5 +1,11 @@
 // セッションの状態の畳み込みのテストが共有する、畳み込みの道具。
 
+import {
+  TASK_STATUSES,
+  type TaskSummaryItem,
+  type TaskSummaryResult,
+  type TaskSummaryStatus,
+} from "../../src/shared/repository/task-summary.ts"
 import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../src/shared/session/session-fold.ts"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
@@ -24,6 +30,23 @@ export function runningSession(
     throw new Error("session-info がまだ届いていない、または permissionMode が未確定")
   }
   return state.session
+}
+
+/** 語から {@link TaskSummaryStatus} を作る。語彙の外の語は `other`、語が無ければ `none`。 */
+export function taskStatusOfWord(word: string | undefined): TaskSummaryStatus {
+  if (word === undefined) {
+    return { kind: "none" }
+  }
+  const status = TASK_STATUSES.find((candidate) => candidate === word)
+  return status === undefined ? { kind: "other", raw: word } : { kind: "known", status }
+}
+
+/** 読めたタスク一覧。切って落とした閉じたタスクの件数は既定で 0。 */
+export function knownTaskSummary(
+  items: readonly TaskSummaryItem[],
+  omittedClosedCount: number = 0,
+): Extract<TaskSummaryResult, { readonly kind: "known" }> {
+  return { kind: "known", items, omittedClosedCount }
 }
 
 /** `sessionId` が分かっている（`identified` か `running`）ときだけ返す。まだなら undefined。 */

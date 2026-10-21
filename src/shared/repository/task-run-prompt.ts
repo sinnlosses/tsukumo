@@ -1,6 +1,6 @@
 // 「tsukumo に頼む」で頼めるタスクと、送る文面。
 
-import { taskReadiness, type TaskSummaryItem } from "./task-summary.ts"
+import { hasTaskStatus, taskReadiness, type TaskSummaryItem } from "./task-summary.ts"
 
 const HELD_NOTE = "このタスクは保留なので、着手の前に判断を聞いて。"
 
@@ -12,7 +12,7 @@ export type TaskRequest =
 
 /** 着手できる `todo` と、待ちの無い保留。保留は文面が着手の前に判断を尋ねさせるので頼める。 */
 export function isTaskRequestable(task: TaskSummaryItem): boolean {
-  if (task.status === "hold") {
+  if (hasTaskStatus(task, "hold")) {
     return task.waitingFor.length === 0
   }
   return taskReadiness(task)?.kind === "ready"

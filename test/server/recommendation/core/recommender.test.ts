@@ -14,18 +14,18 @@ import type {
   TaskSummaryItem,
   TaskSummaryResult,
 } from "../../../../src/shared/repository/task-summary.ts"
+import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
 
 // `query()` は差し替え、本物の claude は起こさない。タスク一覧はすべて架空。
 
 function tasksOf(
   ...ids: readonly string[]
 ): Extract<TaskSummaryResult, { readonly kind: "known" }> {
-  return {
-    kind: "known",
-    items: ids.map((id): TaskSummaryItem => ({
+  return knownTaskSummary(
+    ids.map((id): TaskSummaryItem => ({
       id,
       summary: `架空の${id}`,
-      status: "todo",
+      status: taskStatusOfWord("todo"),
       dependencies: [],
       waitingFor: [],
       labels: [],
@@ -34,7 +34,7 @@ function tasksOf(
       body: "",
       location: { kind: "none" },
     })),
-  }
+  )
 }
 
 const OUTPUT = { cards: [{ key: "X-001", reason: "架空の理由" }] }

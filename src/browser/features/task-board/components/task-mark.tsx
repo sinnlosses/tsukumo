@@ -3,23 +3,27 @@
 
 import type { ReactElement } from "react"
 
+import type { TaskSummaryStatus } from "../../../../shared/repository/task-summary.ts"
 import styles from "./task-mark.module.css"
 
-export function TaskMark(props: { readonly status: string | undefined }): ReactElement | null {
-  if (props.status === undefined) {
+export function TaskMark(props: { readonly status: TaskSummaryStatus }): ReactElement | null {
+  const { status } = props
+  if (status.kind === "none") {
     return null
   }
-  if (props.status === "todo") {
-    return <span className={styles["task-mark-todo"]} title="未着手" />
+  if (status.kind === "other") {
+    return <span className={styles["task-mark-other"]} title={status.raw} />
   }
-  if (props.status === "draft") {
-    return <span className={styles["task-mark-draft"]} title="ドラフト" />
+  switch (status.status) {
+    case "todo":
+      return <span className={styles["task-mark-todo"]} title="未着手" />
+    case "draft":
+      return <span className={styles["task-mark-draft"]} title="ドラフト" />
+    case "doing":
+      return <span className={styles["task-mark-doing"]} title="進行中" />
+    case "done":
+      return <span className={styles["task-mark-done"]} title="完了" />
+    case "hold":
+      return <span className={styles["task-mark-other"]} title={status.status} />
   }
-  if (props.status === "doing") {
-    return <span className={styles["task-mark-doing"]} title="進行中" />
-  }
-  if (props.status === "done") {
-    return <span className={styles["task-mark-done"]} title="完了" />
-  }
-  return <span className={styles["task-mark-other"]} title={props.status} />
 }

@@ -26,7 +26,7 @@ function issue(overrides: Partial<BeadsIssue> & Pick<BeadsIssue, "id" | "status"
 }
 
 describe("taskSummaryItemsOfBeadsIssues", () => {
-  it("組み込みの状態を todo・doing・hold・done に読み替え、ほかの値は生のまま出す", () => {
+  it("組み込みの状態を todo・doing・hold・done に読み替え、ほかの値は other の変種に生の語のまま入れる", () => {
     const items = taskSummaryItemsOfBeadsIssues([
       issue({ id: "t-1", status: "open", createdAtEpochMilliseconds: 1 }),
       issue({ id: "t-2", status: "in_progress", createdAtEpochMilliseconds: 2 }),
@@ -42,12 +42,12 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
     ])
 
     expect(items.map((item) => [item.id, item.status])).toEqual([
-      ["t-1", "todo"],
-      ["t-2", "doing"],
-      ["t-3", "hold"],
-      ["t-4", "done"],
-      ["t-5", "pending"],
-      ["t-6", "blocked"],
+      ["t-1", { kind: "known", status: "todo" }],
+      ["t-2", { kind: "known", status: "doing" }],
+      ["t-3", { kind: "known", status: "hold" }],
+      ["t-4", { kind: "known", status: "done" }],
+      ["t-5", { kind: "other", raw: "pending" }],
+      ["t-6", { kind: "other", raw: "blocked" }],
     ])
   })
 
@@ -86,11 +86,11 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
     ])
 
     expect(items.map((item) => [item.id, item.status])).toEqual([
-      ["t-1", "draft"],
-      ["t-2", "draft"],
-      ["t-3", "doing"],
-      ["t-4", "done"],
-      ["t-5", "hold"],
+      ["t-1", { kind: "known", status: "draft" }],
+      ["t-2", { kind: "known", status: "draft" }],
+      ["t-3", { kind: "known", status: "doing" }],
+      ["t-4", { kind: "known", status: "done" }],
+      ["t-5", { kind: "known", status: "hold" }],
     ])
   })
 
@@ -110,7 +110,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
     expect(item).toEqual({
       id: "gh-12",
       summary: "架空の題",
-      status: "doing",
+      status: { kind: "known", status: "doing" },
       dependencies: ["gh-3", "t-a1b2"],
       waitingFor: [],
       labels: ["任意のタグ"],
@@ -168,7 +168,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
     ])
   })
 
-  it("閉じた課題を10件を超えて落としたときだけ、落とした件数を結果に載せる", () => {
+  it("閉じた課題を10件を超えて落とした件数を結果に載せ、落としていなければ 0 を載せる", () => {
     const closedIssues = (count: number): BeadsIssue[] =>
       Array.from({ length: count }, (_, index) =>
         issue({
@@ -185,7 +185,7 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
     })
     const whole = knownTaskSummaryOfBeadsIssues(closedIssues(10))
     expect(whole.items).toHaveLength(10)
-    expect("omittedClosedCount" in whole).toBe(false)
+    expect(whole.omittedClosedCount).toBe(0)
   })
 
   it("external_ref が https:// の URL のときだけ置き場所にする", () => {

@@ -9,7 +9,11 @@ import { X } from "lucide-react"
 import type { ReactElement } from "react"
 
 import type { TaskRequest } from "../../../../shared/repository/task-run-prompt.ts"
-import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
+import type {
+  TaskStatus,
+  TaskSummaryItem,
+  TaskSummaryStatus,
+} from "../../../../shared/repository/task-summary.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import type { TaskRunConfirmOutcome } from "../domain/task-run-confirm-outcome.ts"
@@ -164,20 +168,24 @@ export function TaskPeek(props: TaskPeekProps): ReactElement {
   )
 }
 
-const STATUS_WORD: ReadonlyMap<string, string> = new Map([
-  ["todo", "未着手"],
-  ["doing", "進行中"],
-  ["done", "完了"],
-  ["hold", "保留"],
-  ["draft", "ドラフト"],
-])
+const STATUS_WORD = {
+  todo: "未着手",
+  doing: "進行中",
+  done: "完了",
+  hold: "保留",
+  draft: "ドラフト",
+} satisfies Record<TaskStatus, string>
 
 /** 想定外の値はそのまま、読めないときは「—」。 */
-function statusWordOf(status: string | undefined): string {
-  if (status === undefined) {
-    return "—"
+function statusWordOf(status: TaskSummaryStatus): string {
+  switch (status.kind) {
+    case "known":
+      return STATUS_WORD[status.status]
+    case "other":
+      return status.raw
+    case "none":
+      return "—"
   }
-  return STATUS_WORD.get(status) ?? status
 }
 
 /** 行の左端から窓の右端まで。行はサイドバーの枠から約 22px 内にあり、窓と枠のあいだを約 20px 空ける。 */

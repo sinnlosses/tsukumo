@@ -8,12 +8,33 @@ export type TaskDifficulty = (typeof TASK_DIFFICULTIES)[number]
 export const TASK_LOOPABLES = ["Y", "N"] as const
 export type TaskLoopable = (typeof TASK_LOOPABLES)[number]
 
+export const TASK_STATUSES = ["todo", "doing", "hold", "draft", "done"] as const
+export type TaskStatus = (typeof TASK_STATUSES)[number]
+
+/**
+ * タスクの状態。
+ * - `known`: 語彙（{@link TaskStatus}）の中の状態
+ * - `other`: 読み元の語が語彙に無い。読み元の語を `raw` のまま持つ
+ * - `none`: 状態を持たない課題
+ */
+export type TaskSummaryStatus =
+  | { readonly kind: "known"; readonly status: TaskStatus }
+  | { readonly kind: "other"; readonly raw: string }
+  | { readonly kind: "none" }
+
+/** タスクの状態が `status` か。語彙の外（`other`・`none`）はどの `status` でもない。 */
+export function hasTaskStatus(
+  task: { readonly status: TaskSummaryStatus },
+  status: TaskStatus,
+): boolean {
+  return task.status.kind === "known" && task.status.status === status
+}
+
 /** タスク一覧1件分。一覧は読み元が並べた順（ID の番号の昇順）のまま持つ（status ごとにまとめない）。 */
 export type TaskSummaryItem = {
   readonly id: string
   readonly summary: string
-  /** 読み元の状態を写した字（`todo`・`doing`・`hold`・`draft`・`done` など。表に無い状態は読み元の語のまま）。 */
-  readonly status: string | undefined
+  readonly status: TaskSummaryStatus
   readonly dependencies: readonly string[]
   /**
    * 依存のうち、まだ済んでいないもの（`dependencies` の順）。止めるかどうかは読み元が判定して載せる。
@@ -39,25 +60,17 @@ export type TaskLocation =
  * - `no-beads`: 起動先に `.beads` が無い（タスク運用なし）。Beads は読まない
  * - `loading`: 最初の見回りの結果がまだ届いていない（状態の初期値。見張りは1回目に必ず `loading` 以外を知らせる）
  * - `unknown`: 読めない（`.beads` はあるが `bd` が読めない）
- * - `known`: 読めた。閉じた課題を件数の上限で切ったときだけ、落とした件数 `omittedClosedCount` を持つ
+ * - `known`: 読めた。閉じた課題を件数の上限で切ったときの、落とした件数を `omittedClosedCount` に持つ（切っていなければ 0）
  */
 export type TaskSummaryResult =
   | { readonly kind: "no-beads" }
   | { readonly kind: "loading" }
   | { readonly kind: "unknown" }
-  | { readonly kind: "known"; readonly items: readonly TaskSummaryItem[] }
   | {
       readonly kind: "known"
       readonly items: readonly TaskSummaryItem[]
       readonly omittedClosedCount: number
     }
-
-/** 読めた一覧のうち、上限で落とした閉じた課題の件数。切っていなければ 0。 */
-export function omittedClosedCountOf(
-  tasks: Extract<TaskSummaryResult, { readonly kind: "known" }>,
-): number {
-  return "omittedClosedCount" in tasks ? tasks.omittedClosedCount : 0
-}
 
 /** 終えたタスク1件。時刻はエポックミリ秒。 */
 export type DoneTask = {
@@ -77,7 +90,7 @@ export type TaskReadiness =
 
 /** 1件の着手可否。`todo` 以外は判定せず、止めるのは `waitingFor` に残る依存だけ。 */
 export function taskReadiness(task: TaskSummaryItem): TaskReadiness | undefined {
-  if (task.status !== "todo") {
+  if (!hasTaskStatus(task, "todo")) {
     return undefined
   }
   return task.waitingFor.length === 0

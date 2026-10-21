@@ -10,6 +10,7 @@ import type {
   TaskSummaryResult,
 } from "../../../../src/shared/repository/task-summary.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
+import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
 import { queryClientWrapper } from "../../query-client.tsx"
 import { putSession } from "../../session-store.ts"
 
@@ -30,7 +31,7 @@ function beadsTask(location: TaskSummaryItem["location"]): TaskSummaryItem {
   return {
     id: "X-012",
     summary: "架空の課題",
-    status: "todo",
+    status: taskStatusOfWord("todo"),
     dependencies: [],
     waitingFor: [],
     labels: [],
@@ -45,7 +46,7 @@ function renderBoard(task: TaskSummaryItem): void {
   putSession(INITIAL_SESSION_STATE)
   render(
     <TaskBoard
-      tasks={{ kind: "known", items: [task] }}
+      tasks={knownTaskSummary([task])}
       request={{ kind: "open", focus: { kind: "first" } }}
       onClose={() => {}}
     />,
@@ -76,11 +77,7 @@ describe("タスクのモーダルの閉じたタスクの一言", () => {
   }
 
   it("閉じたタスクを落としたときだけ、一覧の末尾に落とした件数つきの一言を出す", () => {
-    renderWith({
-      kind: "known",
-      items: [beadsTask({ kind: "none" })],
-      omittedClosedCount: 4,
-    })
+    renderWith(knownTaskSummary([beadsTask({ kind: "none" })], 4))
 
     expect(
       screen.getByText("一部のみ（閉じたタスクは新しいものだけで、ほか 4 件は載っていません）"),
@@ -88,7 +85,7 @@ describe("タスクのモーダルの閉じたタスクの一言", () => {
   })
 
   it("落としていないときは一言を出さない", () => {
-    renderWith({ kind: "known", items: [beadsTask({ kind: "none" })] })
+    renderWith(knownTaskSummary([beadsTask({ kind: "none" })]))
 
     expect(screen.queryByText(/一部のみ/)).toBeNull()
   })
@@ -152,14 +149,11 @@ describe("タスクのモーダルの一覧の行の属性", () => {
     const base = beadsTask({ kind: "none" })
     render(
       <TaskBoard
-        tasks={{
-          kind: "known",
-          items: [
-            { ...base, id: "X-021", difficulty: "sonnet", loopable: "Y" },
-            { ...base, id: "X-022", difficulty: "opus", loopable: "N" },
-            { ...base, id: "X-023" },
-          ],
-        }}
+        tasks={knownTaskSummary([
+          { ...base, id: "X-021", difficulty: "sonnet", loopable: "Y" },
+          { ...base, id: "X-022", difficulty: "opus", loopable: "N" },
+          { ...base, id: "X-023" },
+        ])}
         request={{ kind: "open", focus: { kind: "first" } }}
         onClose={() => {}}
       />,
@@ -392,7 +386,7 @@ function selectionTask(id: string, status: string, body: string): TaskSummaryIte
   return {
     id,
     summary: `架空の課題（${id}）`,
-    status,
+    status: taskStatusOfWord(status),
     dependencies: [],
     waitingFor: [],
     labels: [],
@@ -420,11 +414,7 @@ function renderSelectionBoard(
     nextItems: readonly TaskSummaryItem[],
     nextRequest: TaskBoardRequest,
   ): ReactElement => (
-    <TaskBoard
-      tasks={{ kind: "known", items: nextItems }}
-      request={nextRequest}
-      onClose={() => {}}
-    />
+    <TaskBoard tasks={knownTaskSummary(nextItems)} request={nextRequest} onClose={() => {}} />
   )
   const { rerender } = render(boardOf(items, request), { wrapper: queryClientWrapper() })
   return {

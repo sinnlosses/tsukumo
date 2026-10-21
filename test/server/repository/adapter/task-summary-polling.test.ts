@@ -198,8 +198,8 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       await settle()
 
       expect(changes).toStrictEqual([
-        { kind: "known", items: remembered },
-        { kind: "known", items: [] },
+        { kind: "known", items: remembered, omittedClosedCount: 0 },
+        { kind: "known", items: [], omittedClosedCount: 0 },
       ])
       expect(writes).toStrictEqual([[]])
     })

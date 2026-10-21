@@ -13,6 +13,7 @@ import type {
   TaskSummaryItem,
   TaskSummaryResult,
 } from "../../../../../src/shared/repository/task-summary.ts"
+import { knownTaskSummary, taskStatusOfWord } from "../../../../fixture/session-state.ts"
 
 type BoardContentInput = Parameters<typeof boardContent>[7]
 
@@ -22,7 +23,7 @@ function taskOf(id: string, overrides: Partial<TaskSummaryItem>): TaskSummaryIte
   return {
     id,
     summary: `${id} の要約`,
-    status: "todo",
+    status: taskStatusOfWord("todo"),
     dependencies: [],
     waitingFor: [],
     labels: [],
@@ -55,15 +56,19 @@ describe("boardEntries の状態の言い方", () => {
   it("保留は待ちが残っていれば ID を添え、無ければ字だけ", () => {
     const states = statesOf([
       taskOf("X-001", {}),
-      taskOf("X-002", { status: "hold", dependencies: ["X-001"], waitingFor: ["X-001"] }),
-      taskOf("X-003", { status: "hold" }),
+      taskOf("X-002", {
+        status: taskStatusOfWord("hold"),
+        dependencies: ["X-001"],
+        waitingFor: ["X-001"],
+      }),
+      taskOf("X-003", { status: taskStatusOfWord("hold") }),
     ])
     expect(states.at(1)).toEqual({ kind: "hold", text: "保留 · X-001" })
     expect(states.at(2)).toEqual({ kind: "hold", text: "保留" })
   })
 
   it("ドラフトは todo・hold と別の言い方になる", () => {
-    expect(statesOf([taskOf("X-001", { status: "draft" })])).toEqual([
+    expect(statesOf([taskOf("X-001", { status: taskStatusOfWord("draft") })])).toEqual([
       { kind: "draft", text: "ドラフト" },
     ])
   })
@@ -71,10 +76,10 @@ describe("boardEntries の状態の言い方", () => {
   it("進行中・完了・想定外の値はそれぞれの言い方になる", () => {
     expect(
       statesOf([
-        taskOf("X-002", { status: "doing" }),
-        taskOf("X-003", { status: "done" }),
-        taskOf("X-005", { status: "archived" }),
-        taskOf("X-006", { status: undefined }),
+        taskOf("X-002", { status: taskStatusOfWord("doing") }),
+        taskOf("X-003", { status: taskStatusOfWord("done") }),
+        taskOf("X-005", { status: taskStatusOfWord("archived") }),
+        taskOf("X-006", { status: taskStatusOfWord(undefined) }),
       ]),
     ).toEqual([
       { kind: "doing", text: "進行中" },
@@ -111,7 +116,7 @@ describe("boardContent", () => {
   }
 
   function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
-    return { kind: "known", items }
+    return knownTaskSummary(items)
   }
 
   it("読み込み中は loading、読めないときは unknown、0件なら empty", () => {
@@ -122,7 +127,7 @@ describe("boardContent", () => {
 
   it("一覧を行と札へ畳み、選んだ行に印を付ける", () => {
     const content = contentOf(
-      known([taskOf("X-001", {}), taskOf("X-002", { status: "done" })]),
+      known([taskOf("X-001", {}), taskOf("X-002", { status: taskStatusOfWord("done") })]),
       "X-001",
     )
     if (content.kind !== "known") {
@@ -148,7 +153,7 @@ describe("boardContent", () => {
   it("詳細に依存と依存元の札・置き場所の口・頼めるかを畳む", () => {
     const content = contentOf(
       known([
-        taskOf("X-001", { status: "doing" }),
+        taskOf("X-001", { status: taskStatusOfWord("doing") }),
         taskOf("X-002", {
           dependencies: ["X-001", "X-999"],
           waitingFor: ["X-001"],
@@ -173,7 +178,10 @@ describe("boardContent", () => {
   })
 
   it("ドラフトの詳細では「計画する」「却下する」の口を返す", () => {
-    const content = contentOf(known([taskOf("X-001", { status: "draft" })]), "X-001")
+    const content = contentOf(
+      known([taskOf("X-001", { status: taskStatusOfWord("draft") })]),
+      "X-001",
+    )
     if (content.kind !== "known" || content.selection.kind !== "some") {
       throw new Error("選択があるはず")
     }

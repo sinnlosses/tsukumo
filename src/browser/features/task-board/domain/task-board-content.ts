@@ -5,11 +5,11 @@ import {
   type TaskRequest,
 } from "../../../../shared/repository/task-run-prompt.ts"
 import {
-  omittedClosedCountOf,
   taskReadiness,
   type TaskLocation,
   type TaskSummaryItem,
   type TaskSummaryResult,
+  type TaskSummaryStatus,
 } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import { FILTER_CHIPS, matchesFilter } from "./task-board-filter.ts"
@@ -96,7 +96,7 @@ export function boardContent(
       selected: entry === selected,
       outOfFilter: !isVisible(entry),
     })),
-    omittedClosedCount: omittedClosedCountOf(tasks),
+    omittedClosedCount: tasks.omittedClosedCount,
     activeOptionId: selected === undefined ? undefined : optionIdOf(selected.task.id),
     selection:
       selected === undefined ? { kind: "none" } : selectionOf(selected, entries, byId, input),
@@ -115,7 +115,7 @@ function selectionOf(
     kind: "some",
     detail: {
       id: task.id,
-      status: task.status ?? MISSING,
+      status: statusTextOf(task.status),
       title: codeSpanParts(task.summary),
       state: entry.state,
       labels: task.labels,
@@ -206,7 +206,10 @@ function taskStateOf(task: TaskSummaryItem): TaskStateView {
       : { kind: "blocked", text: `待ち ${readiness.blockedBy.join(", ")}` }
   }
 
-  switch (task.status) {
+  if (task.status.kind !== "known") {
+    return { kind: "other", text: statusTextOf(task.status) }
+  }
+  switch (task.status.status) {
     case "hold":
       return {
         kind: "hold",
@@ -218,8 +221,19 @@ function taskStateOf(task: TaskSummaryItem): TaskStateView {
       return { kind: "doing", text: "進行中" }
     case "done":
       return { kind: "done", text: "完了" }
-    default:
-      return { kind: "other", text: task.status ?? MISSING }
+    case "todo":
+      return { kind: "other", text: task.status.status }
+  }
+}
+
+function statusTextOf(status: TaskSummaryStatus): string {
+  switch (status.kind) {
+    case "known":
+      return status.status
+    case "other":
+      return status.raw
+    case "none":
+      return MISSING
   }
 }
 

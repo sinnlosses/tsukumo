@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { orderTasksForSidebar } from "../../../../../src/browser/features/task-board/domain/task-sidebar-order.ts"
 import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
+import { taskStatusOfWord } from "../../../../fixture/session-state.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物のタスクファイルは使わない）。
 
@@ -9,7 +10,7 @@ function taskOf(id: string, status: string | undefined): TaskSummaryItem {
   return {
     id,
     summary: `${id} の要約`,
-    status,
+    status: taskStatusOfWord(status),
     dependencies: [],
     waitingFor: [],
     labels: [],

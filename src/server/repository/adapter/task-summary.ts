@@ -178,7 +178,7 @@ export function watchTaskSummary(
     if (items === undefined || closed) {
       return undefined
     }
-    const shown: TaskSummaryResult = { kind: "known", items }
+    const shown: TaskSummaryResult = { kind: "known", items, omittedClosedCount: 0 }
     onChange(shown)
     return shown
   }

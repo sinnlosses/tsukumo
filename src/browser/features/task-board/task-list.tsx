@@ -14,7 +14,11 @@
 import type { ReactElement } from "react"
 
 import { isTaskRequestable } from "../../../shared/repository/task-run-prompt.ts"
-import type { TaskSummaryItem, TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
+import {
+  hasTaskStatus,
+  type TaskSummaryItem,
+  type TaskSummaryResult,
+} from "../../../shared/repository/task-summary.ts"
 import { Text } from "../../components/ui/text/text.tsx"
 import { TaskItem, type TaskItemPeek } from "./components/task-item.tsx"
 import { TaskPeek, type TaskPeekRun } from "./components/task-peek.tsx"
@@ -135,11 +139,11 @@ type PeekContext = {
 }
 
 function peekRunOf(task: TaskSummaryItem, confirm: TaskPeekConfirm): TaskPeekRun {
-  if (task.status === "draft") {
+  if (hasTaskStatus(task, "draft")) {
     return { kind: "draft", confirm }
   }
   return isTaskRequestable(task)
-    ? { kind: "available", held: task.status === "hold", confirm }
+    ? { kind: "available", held: hasTaskStatus(task, "hold"), confirm }
     : { kind: "none" }
 }
 

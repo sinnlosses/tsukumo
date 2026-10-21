@@ -166,11 +166,12 @@ describe("Turn（目録の1行と見出し）", () => {
       ...INITIAL_SESSION_STATE,
       tasks: {
         kind: "known",
+        omittedClosedCount: 0,
         items: [
           {
             id: "X-7",
             summary: "架空のタスク",
-            status: "done",
+            status: { kind: "known", status: "done" },
             dependencies: [],
             waitingFor: [],
             labels: [],

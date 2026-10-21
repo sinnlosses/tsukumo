@@ -13,7 +13,10 @@ describe("createTaskBeadsSource", () => {
     })
 
     expect(await source.read()).toEqual({ kind: "read", result: { kind: "unknown" } })
-    expect(await source.read()).toEqual({ kind: "read", result: { kind: "known", items: [] } })
+    expect(await source.read()).toEqual({
+      kind: "read",
+      result: { kind: "known", items: [], omittedClosedCount: 0 },
+    })
     expect(await source.read()).toEqual({ kind: "unchanged" })
     expect(calls).toBe(2)
   })
@@ -47,7 +50,10 @@ describe("createTaskBeadsSource", () => {
     expect(await source.read()).toEqual({ kind: "read", result: { kind: "no-beads" } })
     expect(calls).toBe(0)
     beadsStamp = { kind: "present", stamp: "same" }
-    expect(await source.read()).toEqual({ kind: "read", result: { kind: "known", items: [] } })
+    expect(await source.read()).toEqual({
+      kind: "read",
+      result: { kind: "known", items: [], omittedClosedCount: 0 },
+    })
     expect(calls).toBe(1)
   })
 })

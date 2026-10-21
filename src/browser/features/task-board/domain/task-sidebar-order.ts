@@ -1,6 +1,6 @@
 // サイドバーの一覧に出す並び。進行中（doing）だけ先頭にまとめ、残りはタスクの一覧の順のままにする（todo と done は混ざったままでよい）。
 
-import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
+import { hasTaskStatus, type TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 
 export type TaskSidebarOrder = {
   /** 先頭に並べる進行中のタスク（一覧の順のまま。2件以上あれば2枚以上のカードになる）。 */
@@ -10,7 +10,7 @@ export type TaskSidebarOrder = {
 }
 
 export function orderTasksForSidebar(items: readonly TaskSummaryItem[]): TaskSidebarOrder {
-  const running = items.filter((task) => task.status === "doing")
-  const rest = items.filter((task) => task.status !== "doing")
+  const running = items.filter((task) => hasTaskStatus(task, "doing"))
+  const rest = items.filter((task) => !hasTaskStatus(task, "doing"))
   return { running, rest }
 }

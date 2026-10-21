@@ -81,7 +81,7 @@ describe("applySessionEvent", () => {
       {
         id: "X-001",
         summary: "架空のタスク",
-        status: "todo",
+        status: { kind: "known", status: "todo" },
         dependencies: [],
         waitingFor: [],
         labels: [],
@@ -91,7 +91,7 @@ describe("applySessionEvent", () => {
         location: { kind: "none" },
       },
     ]
-    const known = { kind: "known", items } as const
+    const known = { kind: "known", items, omittedClosedCount: 0 } as const
     const withTasks = apply({ kind: "tasks-changed", tasks: known })
     expect(withTasks.tasks).toEqual(known)
 

@@ -8,6 +8,7 @@ import { z } from "zod"
 import {
   TASK_DIFFICULTIES,
   TASK_LOOPABLES,
+  TASK_STATUSES,
   type TaskSummaryItem,
 } from "../../../shared/repository/task-summary.ts"
 import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
@@ -16,7 +17,7 @@ import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 const TASK_SUMMARY_MEMORY_FILE_NAME = "task-summary.json"
 
 /** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける。 */
-const TASK_SUMMARY_MEMORY_FORMAT_VERSION = 5 satisfies number
+const TASK_SUMMARY_MEMORY_FORMAT_VERSION = 6 satisfies number
 
 /** 覚える作業ディレクトリの数。超えたら古いものから落とす。 */
 export const TASK_SUMMARY_MEMORY_LIMIT = 8
@@ -26,11 +27,17 @@ const taskLocationSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("none") }),
 ])
 
+const taskStatusSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("known"), status: z.enum(TASK_STATUSES) }),
+  z.object({ kind: z.literal("other"), raw: z.string() }),
+  z.object({ kind: z.literal("none") }),
+])
+
 // JSON は `undefined` の欄を落とすので、`undefined` を持てる欄は欠けていてもよいものとして読む。
 const taskSummaryItemSchema = z.object({
   id: z.string(),
   summary: z.string(),
-  status: z.string().optional(),
+  status: taskStatusSchema,
   dependencies: z.array(z.string()),
   waitingFor: z.array(z.string()),
   labels: z.array(z.string()),

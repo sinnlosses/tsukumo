@@ -1,6 +1,6 @@
 // サイドバーの「タスク一覧」区画の見出し下に出す件数のチップの文言。
 
-import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
+import { hasTaskStatus, type TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 
 export type TaskListCountItem = {
   readonly status: "all" | "open" | "draft" | "done"
@@ -27,8 +27,8 @@ const CHIP_ORDER = [
  * その判定は呼ぶ側が持ち、ここは件数を数えられる並びだけを受ける。
  */
 export function taskListCounts(items: readonly TaskSummaryItem[]): readonly TaskListCountItem[] {
-  const done = items.filter((task) => task.status === "done").length
-  const draft = items.filter((task) => task.status === "draft").length
+  const done = items.filter((task) => hasTaskStatus(task, "done")).length
+  const draft = items.filter((task) => hasTaskStatus(task, "draft")).length
   const counts = { all: items.length, open: items.length - done - draft, draft, done }
   return CHIP_ORDER.map((chip) => ({ ...chip, count: counts[chip.status] }))
 }

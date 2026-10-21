@@ -5,7 +5,7 @@ import clsx from "clsx"
 import { ChevronRight } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
-import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
+import { hasTaskStatus, type TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { codeSpanParts } from "../../../domain/code-span.ts"
 import taskBoardStyles from "../task-board.module.css"
 import styles from "./task-item.module.css"
@@ -23,7 +23,7 @@ export function TaskItem(props: {
     <li
       className={clsx(
         taskBoardStyles["task-item"],
-        props.task.status === "done" && taskBoardStyles["task-done"],
+        hasTaskStatus(props.task, "done") && taskBoardStyles["task-done"],
       )}
     >
       <button

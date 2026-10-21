@@ -4,10 +4,12 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 import { loadTaskBody } from "../../../../src/browser/features/task-board/components/deferred-task-body.tsx"
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
 import { useTaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
-import type {
-  TaskSummaryItem,
-  TaskSummaryResult,
+import {
+  hasTaskStatus,
+  type TaskSummaryItem,
+  type TaskSummaryResult,
 } from "../../../../src/shared/repository/task-summary.ts"
+import { knownTaskSummary, taskStatusOfWord } from "../../../fixture/session-state.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（タスクファイルの内容は会話ではないが、
 // テストのフィクスチャとしても実物は使わない）。
@@ -22,14 +24,14 @@ afterEach(() => {
 })
 
 function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
-  return { kind: "known", items }
+  return knownTaskSummary(items)
 }
 
 const TASKS: readonly TaskSummaryItem[] = [
   {
     id: "X-001",
     summary: "架空のタスク1",
-    status: "todo",
+    status: taskStatusOfWord("todo"),
     dependencies: [],
     waitingFor: [],
     labels: [],
@@ -41,7 +43,7 @@ const TASKS: readonly TaskSummaryItem[] = [
   {
     id: "X-002",
     summary: "架空のタスク2",
-    status: "done",
+    status: taskStatusOfWord("done"),
     dependencies: [],
     waitingFor: [],
     labels: [],
@@ -53,7 +55,7 @@ const TASKS: readonly TaskSummaryItem[] = [
   {
     id: "X-003",
     summary: "架空のタスク3",
-    status: undefined,
+    status: taskStatusOfWord(undefined),
     dependencies: [],
     waitingFor: [],
     labels: [],
@@ -65,7 +67,7 @@ const TASKS: readonly TaskSummaryItem[] = [
   {
     id: "X-004",
     summary: "架空のタスク4",
-    status: "doing",
+    status: taskStatusOfWord("doing"),
     dependencies: [],
     waitingFor: [],
     labels: [],
@@ -103,7 +105,7 @@ describe("taskList", () => {
     { status: "archived", mark: "other", done: false },
     { status: undefined, mark: undefined, done: false },
   ])("status が $status の行は印が $mark だけで、薄く打ち消すのは $done", (expected) => {
-    const items = [{ ...taskOf("X-010", "todo"), status: expected.status }]
+    const items = [{ ...taskOf("X-010", "todo"), status: taskStatusOfWord(expected.status) }]
     render(<TaskList tasks={known(items)} selectedStatus="all" />)
 
     const item = screen.getByRole("listitem")
@@ -114,7 +116,7 @@ describe("taskList", () => {
   })
 
   it("ドラフトで絞ると他の行は消える", () => {
-    const draft: TaskSummaryItem = { ...TASKS[0]!, id: "X-009", status: "draft" }
+    const draft: TaskSummaryItem = { ...TASKS[0]!, id: "X-009", status: taskStatusOfWord("draft") }
     render(<TaskList tasks={known([...TASKS, draft])} selectedStatus="draft" />)
 
     expect(screen.getAllByRole("listitem")).toHaveLength(1)
@@ -122,7 +124,7 @@ describe("taskList", () => {
   })
 
   it("絞った結果が0件のときは選んだ状態の名前を添えた一言を出す", () => {
-    const doneOnly = TASKS.filter((task) => task.status === "done")
+    const doneOnly = TASKS.filter((task) => hasTaskStatus(task, "done"))
     render(<TaskList tasks={known(doneOnly)} selectedStatus="open" />)
 
     expect(screen.getByText("未完了のタスクが無い")).toBeDefined()
@@ -291,7 +293,7 @@ function taskOf(id: string, status: string): TaskSummaryItem {
   return {
     id,
     summary: `架空のタスク ${id}`,
-    status,
+    status: taskStatusOfWord(status),
     dependencies: [],
     waitingFor: [],
     labels: [],

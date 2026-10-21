@@ -7,8 +7,10 @@ import { sortBy } from "remeda"
 import type {
   DoneTask,
   TaskLocation,
+  TaskStatus,
   TaskSummaryItem,
   TaskSummaryResult,
+  TaskSummaryStatus,
 } from "../../../shared/repository/task-summary.ts"
 import type { BeadsIssue } from "./beads.ts"
 
@@ -37,8 +39,8 @@ export function taskSummaryItemsOfBeadsIssues(
 }
 
 /**
- * 読めた一覧の結果。{@link taskSummaryItemsOfBeadsIssues} の一覧に、閉じた課題を上限で落としたときだけ落とした件数を添える
- * （落としていなければ `omittedClosedCount` は付けない）。
+ * 読めた一覧の結果。{@link taskSummaryItemsOfBeadsIssues} の一覧に、閉じた課題を上限で落とした件数を添える
+ * （落としていなければ 0）。
  */
 export function knownTaskSummaryOfBeadsIssues(
   issues: readonly BeadsIssue[],
@@ -46,9 +48,7 @@ export function knownTaskSummaryOfBeadsIssues(
   const items = taskSummaryItemsOfBeadsIssues(issues)
   const closedCount = issues.filter((issue) => issue.status === CLOSED_STATUS).length
   const omittedClosedCount = Math.max(0, closedCount - CLOSED_TASK_DISPLAY_LIMIT)
-  return omittedClosedCount === 0
-    ? { kind: "known", items }
-    : { kind: "known", items, omittedClosedCount }
+  return { kind: "known", items, omittedClosedCount }
 }
 
 /** 閉じた課題のうち閉じた時刻のあるものを、閉じた時刻の順に（同じ時刻なら ID の順に）並べる。 */
@@ -95,11 +95,12 @@ function taskSummaryItemOfBeadsIssue(
 }
 
 /** ドラフトの印は、着手前（`open`・`deferred`）の課題でだけ状態になる。 */
-function taskStatusOf(issue: BeadsIssue): string {
+function taskStatusOf(issue: BeadsIssue): TaskSummaryStatus {
   if (issue.draft && (issue.status === "open" || issue.status === "deferred")) {
-    return "draft"
+    return { kind: "known", status: "draft" }
   }
-  return TASK_STATUS_OF_BEADS_STATUS.get(issue.status) ?? issue.status
+  const status = TASK_STATUS_OF_BEADS_STATUS.get(issue.status)
+  return status === undefined ? { kind: "other", raw: issue.status } : { kind: "known", status }
 }
 
 /** 課題の `external_ref` が `https://` で始まる URL のときだけそれを置き場所にする。 */
@@ -140,9 +141,9 @@ const CLOSED_STATUS = "closed"
 const CLOSED_TASK_DISPLAY_LIMIT = 10
 
 /** Beads の組み込みの状態の読み替え。表に無い状態は Beads の語のまま出す。 */
-const TASK_STATUS_OF_BEADS_STATUS: ReadonlyMap<string, string> = new Map([
+const TASK_STATUS_OF_BEADS_STATUS: ReadonlyMap<string, TaskStatus> = new Map([
   ["open", "todo"],
   ["in_progress", "doing"],
   ["deferred", "hold"],
   [CLOSED_STATUS, "done"],
-])
+] satisfies readonly (readonly [string, TaskStatus])[])

@@ -98,7 +98,10 @@
           {
             "id": "t-001",
             "summary": "架空のタスク（着手できる）",
-            "status": "todo",
+            "status": {
+              "kind": "known",
+              "status": "todo"
+            },
             "dependencies": [],
             "waitingFor": [],
             "labels": [],
@@ -110,7 +113,10 @@
           {
             "id": "t-002",
             "summary": "架空のタスク（依存で止まる）",
-            "status": "todo",
+            "status": {
+              "kind": "known",
+              "status": "todo"
+            },
             "dependencies": [
               "t-001"
             ],
@@ -123,7 +129,8 @@
               "kind": "none"
             }
           }
-        ]
+        ],
+        "omittedClosedCount": 0
       }
     }
   },

@@ -12,6 +12,7 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
+import { knownTaskSummary, taskStatusOfWord } from "../../../../fixture/session-state.ts"
 import { createTestQueryClient } from "../../../query-client.tsx"
 import { rpcError, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { putSession } from "../../../session-store.ts"
@@ -83,10 +84,7 @@ describe("Sidebar のタスクの節", () => {
 
   it("チップは1つだけ選べ、押し直しても変わらず、「すべて」で外れ、別のチップで切り替わる", () => {
     renderSidebar({
-      tasks: {
-        kind: "known",
-        items: [chipTask("X-001", "todo"), chipTask("X-002", "done")],
-      },
+      tasks: knownTaskSummary([chipTask("X-001", "todo"), chipTask("X-002", "done")]),
     })
     const shown = (): readonly string[] =>
       [...document.querySelectorAll("[id^='task-row-']")].map((element) => element.id)
@@ -117,7 +115,7 @@ function chipTask(id: string, status: string): TaskSummaryItem {
   return {
     id,
     summary: `架空のタスク ${id}`,
-    status,
+    status: taskStatusOfWord(status),
     dependencies: [],
     waitingFor: [],
     labels: [],

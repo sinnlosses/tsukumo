@@ -98,7 +98,7 @@ function sleep(ms: number): Promise<void> {
 
 /** `TaskSummaryResult` の `known` 側を組み立てる。 */
 function known(...items: readonly Record<string, unknown>[]): Record<string, unknown> {
-  return { kind: "known", items }
+  return { kind: "known", items, omittedClosedCount: 0 }
 }
 
 /** 何も付けずに作った未着手の課題1件の要約。 */
@@ -106,7 +106,7 @@ function plainTodo(id: string, summary: string): Record<string, unknown> {
   return {
     id,
     summary,
-    status: "todo",
+    status: { kind: "known", status: "todo" },
     dependencies: [],
     waitingFor: [],
     labels: [],
@@ -138,11 +138,11 @@ describe("watchTaskSummary", () => {
 
       expect(changes).toEqual([
         known(
-          { ...plainTodo("t-001", "済み"), status: "done" },
-          { ...plainTodo("t-002", "保留"), status: "hold" },
+          { ...plainTodo("t-001", "済み"), status: { kind: "known", status: "done" } },
+          { ...plainTodo("t-002", "保留"), status: { kind: "known", status: "hold" } },
           {
             ...plainTodo("t-003", "着手中"),
-            status: "doing",
+            status: { kind: "known", status: "doing" },
             dependencies: ["t-010"],
             waitingFor: ["t-010"],
           },
@@ -166,7 +166,7 @@ describe("watchTaskSummary", () => {
 
       expect(changes).toEqual([
         known(plainTodo("t-001", "閉じる前")),
-        known({ ...plainTodo("t-001", "閉じる前"), status: "done" }),
+        known({ ...plainTodo("t-001", "閉じる前"), status: { kind: "known", status: "done" } }),
       ])
     },
   )

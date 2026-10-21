@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { taskReadiness, type TaskSummaryItem } from "../../../src/shared/repository/task-summary.ts"
+import { taskStatusOfWord } from "../../fixture/session-state.ts"
 
 // すべて手で書いた架空のタスク一覧。
 
@@ -8,7 +9,7 @@ describe("taskReadiness", () => {
   const item = (id: string, status: string, waitingFor: readonly string[]): TaskSummaryItem => ({
     id,
     summary: `架空の${id}`,
-    status,
+    status: taskStatusOfWord(status),
     dependencies: waitingFor,
     waitingFor,
     labels: [],

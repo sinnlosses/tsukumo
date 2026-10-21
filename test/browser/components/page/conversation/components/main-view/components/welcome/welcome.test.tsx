@@ -20,7 +20,7 @@ afterEach(() => {
 const READY_TASK: TaskSummaryItem = {
   id: "X-1",
   summary: "架空のタスク",
-  status: "todo",
+  status: { kind: "known", status: "todo" },
   dependencies: [],
   waitingFor: [],
   labels: [],
@@ -32,7 +32,7 @@ const READY_TASK: TaskSummaryItem = {
 
 /** 着手できるタスクが1件と、いまのセッションの前のセッションが1件ある帳面。 */
 const FILLED: Partial<SessionState> = {
-  tasks: { kind: "known", items: [READY_TASK] },
+  tasks: { kind: "known", items: [READY_TASK], omittedClosedCount: 0 },
   sessions: [
     {
       viewPort: 1,
@@ -90,7 +90,7 @@ describe("Welcome（ほかの始め方）", () => {
   it("別の作業ツリーの行しか無いときは、前回の続きの札は出ないが「前のやり取りを見る」は出る", () => {
     const [previous] = FILLED.sessions ?? []
     renderWelcome({
-      tasks: { kind: "known", items: [] },
+      tasks: { kind: "known", items: [], omittedClosedCount: 0 },
       sessions: previous === undefined ? [] : [{ ...previous, inCurrentWorktree: false }],
     })
 
@@ -99,7 +99,7 @@ describe("Welcome（ほかの始め方）", () => {
   })
 
   it("空の帳面（タスク0件・続き無し）では札が出ず、「自分で書く」だけが大きく出て、前のやり取りの口も無い", () => {
-    renderWelcome({ tasks: { kind: "known", items: [] } })
+    renderWelcome({ tasks: { kind: "known", items: [], omittedClosedCount: 0 } })
 
     expect(document.body.querySelector("ul")).toBeNull()
     expect(

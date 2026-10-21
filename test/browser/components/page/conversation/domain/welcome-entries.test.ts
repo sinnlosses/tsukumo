@@ -12,6 +12,7 @@ import type {
   TaskSummaryResult,
 } from "../../../../../../src/shared/repository/task-summary.ts"
 import type { SessionChoice } from "../../../../../../src/shared/session/session-choice.ts"
+import { knownTaskSummary, taskStatusOfWord } from "../../../../../fixture/session-state.ts"
 
 function choice(
   sessionId: string,
@@ -33,7 +34,7 @@ function task(id: string, status: string, waitingFor: readonly string[]): TaskSu
   return {
     id,
     summary: `架空の${id}`,
-    status,
+    status: taskStatusOfWord(status),
     dependencies: waitingFor,
     waitingFor,
     labels: [],
@@ -45,7 +46,7 @@ function task(id: string, status: string, waitingFor: readonly string[]): TaskSu
 }
 
 function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
-  return { kind: "known", items }
+  return knownTaskSummary(items)
 }
 
 function taskCard(taskId: string, reason: string): RecommendationCard {
