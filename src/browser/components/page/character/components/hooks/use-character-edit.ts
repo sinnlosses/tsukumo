@@ -43,6 +43,7 @@ import { readPicked } from "../../domain/picked-image.ts"
 import { portraitCards } from "../../domain/portrait-card.ts"
 import { deleteBandOf } from "./character-delete-band.ts"
 import { useHeldAccent } from "./use-held-accent.ts"
+import { useItemEdit } from "./use-item-edit.ts"
 import { useSelectedPack } from "./use-selected-pack.ts"
 
 export function useCharacterEdit(): CharacterEditModel {
@@ -57,7 +58,9 @@ export function useCharacterEdit(): CharacterEditModel {
   // 差し色が定義に無いパックの初期値（`--accent`）。読みは描画の外（マウント時の1回）に置く。
   const [accentFallback] = useState(readAccentColor)
 
-  if (selected.kind === "waiting") {
+  const items = useItemEdit()
+
+  if (selected.kind === "waiting" || items === undefined) {
     return { kind: "waiting" }
   }
 
@@ -252,6 +255,7 @@ export function useCharacterEdit(): CharacterEditModel {
     face,
     mini,
     background,
+    items,
     deleteBand,
   }
 }

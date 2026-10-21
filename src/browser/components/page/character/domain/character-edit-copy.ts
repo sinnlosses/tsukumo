@@ -4,6 +4,7 @@ import { MAX_BACKGROUND_BYTES } from "../../../../../shared/character-pack/chara
 import type { CharacterPackRemoval } from "../../../../../shared/character-pack/character.ts"
 import { MAX_PORTRAIT_BYTES } from "../../../../../shared/character-pack/portrait-image.ts"
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
+import { MAX_ITEM_NAME_LENGTH, MAX_ITEMS, type SeatKey } from "../../../../../shared/item/item.ts"
 
 /** 背景の行の、いまの状態を表す字（印だけにしない）。 */
 export const BACKGROUND_LABEL = { present: "いまの背景", absent: "背景なし" } as const
@@ -87,6 +88,24 @@ export const DELETE_COPY = {
     readonly blockedTitle: string
   }
 >
+
+/** アイテムの区画の見出しの下の一言。一覧は共通で、席はキャラクターごとと言う。 */
+export const ITEM_LEAD = "一覧はどのキャラクターにも共通で、席はこのキャラクターだけのものです"
+
+/** 席の札の字。 */
+export const SEAT_LABEL = {
+  topLeft: "左上",
+  belowLeft: "キャラの左下",
+  belowRight: "キャラの右下",
+} as const satisfies Record<SeatKey, string>
+
+/** 席の選び口の先頭（何も置かない）。 */
+export const SEAT_EMPTY_OPTION = "置かない"
+
+export const ITEM_ADD_FULL_TITLE = `アイテムは ${String(MAX_ITEMS)} 個まで。足すには先にどれかを消してください`
+
+/** 足すダイアログで断られたときの一言。理由は分けて返らないので、受け付ける条件を並べて言う。 */
+export const ITEM_ADD_REJECTED_NOTE = `足せなかった。名前は ${String(MAX_ITEM_NAME_LENGTH)} 字までで、画像は SVG・PNG・GIF の ${mebibytes(MAX_PORTRAIT_BYTES)} までにしてほしい`
 
 function mebibytes(bytes: number): string {
   return `${String(bytes / (1024 * 1024))} MiB`

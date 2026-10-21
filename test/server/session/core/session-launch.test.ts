@@ -41,6 +41,7 @@ describe("createSessionLaunch", () => {
     ])
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
+      "items-changed",
       "chat-mode-changed",
       "session-default-changed",
       "sessions-changed",
@@ -93,6 +94,7 @@ describe("createSessionLaunch", () => {
 
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
+      "items-changed",
       "chat-mode-changed",
       "session-default-changed",
       "sessions-changed",
@@ -362,6 +364,7 @@ describe("createSessionLaunch", () => {
     // 起動そのものが流す `character-changed` / `chat-mode-changed` は onEvent 側だけに乗る。
     expect(harness.driverEvents.map((event) => event.kind)).toEqual([
       "character-changed",
+      "items-changed",
       "chat-mode-changed",
       "session-default-changed",
       "sessions-changed",
@@ -373,6 +376,7 @@ describe("createSessionLaunch", () => {
     // 両方を混ぜた時系列は今までどおり（画面の見え方・順序は変わらない）。
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
+      "items-changed",
       "chat-mode-changed",
       "session-default-changed",
       "sessions-changed",

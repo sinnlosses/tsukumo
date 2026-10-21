@@ -18,6 +18,7 @@ import { diagnosticContract } from "./contract/diagnostic.ts"
 import { experienceMetricContract } from "./contract/experience-metric.ts"
 import { frameContract } from "./contract/frame.ts"
 import { hostContract } from "./contract/host.ts"
+import { itemContract } from "./contract/item.ts"
 import { planUsageContract } from "./contract/plan-usage.ts"
 import { repositoryContract } from "./contract/repository.ts"
 import { sessionClaimContract } from "./contract/session-claim.ts"
@@ -53,6 +54,7 @@ export type RpcClient = ContractRouterClient<typeof rpcContract>
 export const commandContract = {
   session: sessionContract,
   characterPack: characterPackContract,
+  item: itemContract,
   chat: chatContract,
   usageReview: usageReviewContract,
   host: hostContract,

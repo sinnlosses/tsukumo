@@ -29,6 +29,7 @@ import type { TokenUsageLog } from "./server/token-usage/core/token-usage.ts"
 import type { UiBundle } from "./server/view-server/adapter/bundle.ts"
 import {
   createStartupToken,
+  type ServeItemAsset,
   startViewServer,
   type ViewUi,
 } from "./server/view-server/adapter/server.ts"
@@ -60,6 +61,8 @@ export type ViewDeliveryOptions = {
   readonly bundle: UiBundle
   /** `/character/<pack>/<file>` に配る1件の出どころ。 */
   readonly character: CurrentCharacter
+  /** `/item/<file>` に配る1件の出どころ。 */
+  readonly serveItemAsset: ServeItemAsset
   /**
    * トークン消費の記録の読み口（手続き `tokenUsage.summary` が配る集計の出どころ）。
    * ここで読むのは要求が来たときだけで、配信を始める時点ではファイルに触らない。
@@ -176,6 +179,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     startViewServer(port, {
       ui: () => ui,
       serveCharacterAsset: (location, version) => options.character.serveAsset(location, version),
+      serveItemAsset: options.serveItemAsset,
       findPromptImage: (id) => options.promptImageShelf.find(id),
       findReportImage: (toolUseId, path) => options.reportImageShelf.find(toolUseId, path),
       rpcRouter,

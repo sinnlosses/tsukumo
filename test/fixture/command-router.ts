@@ -27,6 +27,9 @@ export const CHARACTER_EVENT: SessionEvent = characterChangedEvent({
   ...shownPortraits({ default: "/character/default.png?v=fictional@2" }),
 })
 
+/** アイテムの一覧・席を変えられたときに流し直す `items-changed`（空の一覧）。 */
+export const ITEMS_EVENT: SessionEvent = { kind: "items-changed", items: [], seats: {} }
+
 /** 立ち絵から生成できたときに口が返す欄の値（手で書いた架空のキャラクター）。 */
 export const GENERATED_CHARACTER = {
   id: "fictional-3",
@@ -92,6 +95,7 @@ export function createRecordingPorts(
   const creates: CharacterCreate[] = []
   const deletes: CharacterDelete[] = []
   const generations: string[] = []
+  const itemCalls: string[] = []
   const remembered: SessionDefault[] = []
   const forgottenLines: string[] = []
   const openedFiles: string[] = []
@@ -148,6 +152,24 @@ export function createRecordingPorts(
         return Promise.resolve(writeResult === "written" ? GENERATED_CHARACTER : undefined)
       },
     },
+    item: {
+      addItem: (input) => {
+        itemCalls.push(`add:${input.name}`)
+        return Promise.resolve(writeResult === "written" ? ITEMS_EVENT : undefined)
+      },
+      removeItem: ({ id }) => {
+        itemCalls.push(`remove:${id}`)
+        return Promise.resolve(writeResult === "written" ? ITEMS_EVENT : undefined)
+      },
+      setSeat: ({ pack, seat, id }) => {
+        itemCalls.push(`setSeat:${pack}:${seat}:${id}`)
+        return Promise.resolve(writeResult === "written" ? ITEMS_EVENT : undefined)
+      },
+      clearSeat: ({ pack, seat }) => {
+        itemCalls.push(`clearSeat:${pack}:${seat}`)
+        return Promise.resolve(writeResult === "written" ? ITEMS_EVENT : undefined)
+      },
+    },
     chat: {
       forgetRememberedLine: (line) => {
         forgottenLines.push(line)
@@ -185,6 +207,7 @@ export function createRecordingPorts(
     creates,
     deletes,
     generations,
+    itemCalls,
     remembered,
     forgottenLines,
     openedFiles,

@@ -55,6 +55,7 @@ const SESSION_EVENT_KINDS = {
   "chat-mode-changed": true,
   "chat-topics-changed": true,
   "remembered-lines-changed": true,
+  "items-changed": true,
   "session-default-changed": true,
   "compact-boundary": true,
   "background-tasks-changed": true,

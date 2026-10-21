@@ -388,6 +388,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, chatTopics: event.topics }
     case "remembered-lines-changed":
       return { ...state, rememberedLines: event.lines }
+    case "items-changed":
+      return { ...state, items: event.items, itemSeats: event.seats }
     case "session-default-changed":
       return { ...state, sessionDefault: event.sessionDefault }
     case "compact-boundary":

@@ -59,6 +59,8 @@ export function wireSessionLaunch(options: {
   readonly config: Config
   /** いま出しているキャラクター。起こすパックを決めるのも覚えるのもこれ越し。 */
   readonly character: CurrentCharacter
+  /** 起こすたびに流す、いまのアイテムの一覧と席（`wireItem` の `itemsEvent`）。 */
+  readonly itemsEvent: () => SessionEvent
   /**
    * ビューが実際に待ち受けているポート。セッションの印の目印がここから決まる（`sessionTag`）。
    * 同じディレクトリで2つめを起こすとポートがずれ、目印も分かれるので、互いのセッションを取り合わない。
@@ -108,6 +110,7 @@ export function wireSessionLaunch(options: {
         // 覚えた既定は起こすたびに読む（歯車で書き換えたあと、起こし直しで効く）。
         readSessionDefault: () => readRememberedSessionDefault(),
         characterEvent: () => character.event(),
+        itemsEvent: options.itemsEvent,
         readChatTopics: (pack) => readChatTopics(createChatSummary(pack.name)),
         readRememberedLines: (pack) => readRememberedLines(pack),
         listSessions: (pack, chat) =>

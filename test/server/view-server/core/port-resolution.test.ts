@@ -32,6 +32,7 @@ const emptyViewUi: ViewUi = {
 const emptyViewServerOptions: ViewServerOptions = {
   ui: () => emptyViewUi,
   serveCharacterAsset: () => undefined,
+  serveItemAsset: () => undefined,
   findPromptImage: () => undefined,
   findReportImage: () => undefined,
   rpcRouter: createRpcRouter({

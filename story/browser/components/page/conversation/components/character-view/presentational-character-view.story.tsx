@@ -38,6 +38,7 @@ const meta = {
     onCloseSpeechLog: () => {},
     face: { url: undefined, alt: "つくもの精霊" },
     phoneLine: { kind: "text", text: "次はテストを走らせてみるね（架空）。", time: SAMPLE_TIME },
+    seats: { topLeft: undefined, belowLeft: undefined, belowRight: undefined },
   },
 } satisfies Meta<typeof PresentationalCharacterView>
 

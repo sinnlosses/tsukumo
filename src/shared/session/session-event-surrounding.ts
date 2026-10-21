@@ -1,6 +1,7 @@
 // セッションの出来事（`SessionEvent`）のうち、サイドバーと画面の周辺の状態（タスク・おすすめ・迎えの挨拶・キャラクター・セッション一覧・雑談・既定・圧縮）に関するものの型。
 
 import type { CharacterInfo, CharacterPackEntry } from "../character-pack/character.ts"
+import type { ItemInfo, ItemSeatMap } from "../item/item.ts"
 import type { ReactionLine, WrittenReactions } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
@@ -86,6 +87,15 @@ export type SurroundingEvent =
    * 上限に当たった・一致する行が無かった・書けなかったときは流れない（変わらなかった回は知らせない）。
    */
   | { readonly kind: "remembered-lines-changed"; readonly lines: readonly string[] }
+  /**
+   * アイテムの一覧と、全パックの席が変わった（駆動を起こしたときと、一覧・席を変えるコマンドのあと）。
+   * 口ごとの差分は配らず、そのつど丸ごと置き換える。`seats` の鍵はパックの名前で、空の席は undefined。
+   */
+  | {
+      readonly kind: "items-changed"
+      readonly items: readonly ItemInfo[]
+      readonly seats: Readonly<Record<string, ItemSeatMap>>
+    }
   /**
    * 新しいセッションの既定が分かった。駆動を起こしたときと、起こし直したときの1回ずつと、歯車から `session.setSessionDefault` で覚え直したときに流れる。
    * 運ぶのは覚えた値（読めなければ同梱の既定へ畳んだあとの値）で、いま動いているセッションの値ではない（そちらは `session-info` の `model` / `permissionMode`）。

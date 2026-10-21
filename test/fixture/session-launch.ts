@@ -39,6 +39,9 @@ export const CHOICES = [
 ] as const
 
 /** 切り替え画面から前の仕事のセッションを選んだときの決め方。 */
+/** 起こすたびに流す `items-changed`（空の一覧）。 */
+export const ITEMS_EVENT: SessionEvent = { kind: "items-changed", items: [], seats: {} }
+
 export const PREVIOUS_WORK = { by: "id", sessionId: "prev-work-session" } as const
 
 export const CHAT_TOPICS = ["架空の話題その1", "架空の話題その2"] as const
@@ -113,6 +116,7 @@ export function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {})
       calls.push("readSessionDefault")
       return BUILTIN_SESSION_DEFAULT
     },
+    itemsEvent: () => ITEMS_EVENT,
     characterEvent: (pack: Pack) =>
       characterChangedEvent(
         {

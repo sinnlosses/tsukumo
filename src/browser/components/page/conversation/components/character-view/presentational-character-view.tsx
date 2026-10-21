@@ -13,6 +13,7 @@ import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "./character-view.module.css"
 import { BalloonTrack } from "./components/balloon-track/balloon-track.tsx"
+import { ItemSeats } from "./components/item-seats/item-seats.tsx"
 import { PhoneBalloon } from "./components/phone-balloon/phone-balloon.tsx"
 import { SpeechLog } from "./components/speech-log/speech-log.tsx"
 import type { CharacterViewModel } from "./hooks/use-character-view.ts"
@@ -34,6 +35,7 @@ export function PresentationalCharacterView({
   onCloseSpeechLog,
   face,
   phoneLine,
+  seats,
 }: PresentationalCharacterViewProps): ReactElement {
   const portrait = portraitUrl !== undefined && (
     <Portrait
@@ -80,6 +82,7 @@ export function PresentationalCharacterView({
           <BalloonTrack speeches={speeches} reaction={reaction} speakerName={speakerName} />
         </HStack>
       </div>
+      <ItemSeats seats={seats} portraitShown={portraitUrl !== undefined} />
     </VStack>
   )
 }

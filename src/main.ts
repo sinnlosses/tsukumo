@@ -19,6 +19,7 @@ import {
   pruneDiagnosticFiles,
 } from "./server/diagnostic/adapter/diagnostic-log.ts"
 import type { Host, HostResult } from "./server/host/core/host.ts"
+import { readItemAsset } from "./server/item/adapter/item-asset.ts"
 import { createReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-session.ts"
 import {
@@ -138,6 +139,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     achievementCache,
     bundle: built.bundle,
     character,
+    serveItemAsset: (fileName, version) => readItemAsset(fileName, version),
     tokenUsageLog,
     promptImageShelf,
     reportImageShelf,

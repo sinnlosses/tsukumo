@@ -22,6 +22,7 @@ const SHARED_FEATURES = [
   "diagnostic",
   "diary",
   "experience-metric",
+  "item",
   "plan-usage",
   "recommendation",
   "report",

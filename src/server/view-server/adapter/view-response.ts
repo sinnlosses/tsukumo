@@ -3,6 +3,7 @@
 import type { ServerResponse } from "node:http"
 
 import { readCharacterAssetPath } from "../../../shared/character-pack/character-asset.ts"
+import { readItemAssetPath } from "../../../shared/item/item-asset.ts"
 import { readReportImageRoute } from "../../../shared/report/report-image.ts"
 import {
   parsePromptImage,
@@ -10,7 +11,13 @@ import {
 } from "../../../shared/session-driver/prompt-image.ts"
 import { vendorAssetPath } from "../../../shared/view-server/vendor-asset.ts"
 import type { UiBundle } from "./bundle.ts"
-import type { FindPromptImage, FindReportImage, ServeCharacterAsset, ViewUi } from "./server.ts"
+import type {
+  FindPromptImage,
+  FindReportImage,
+  ServeCharacterAsset,
+  ServeItemAsset,
+  ViewUi,
+} from "./server.ts"
 import type { VendorAssetFile } from "./vendor-asset.ts"
 
 /**
@@ -117,6 +124,32 @@ export function writeCharacterAsset(
   if (asset === undefined) {
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
     response.end("not found\n")
+    return
+  }
+
+  response.writeHead(200, {
+    "content-type": asset.contentType,
+    "cache-control": asset.versioned ? "max-age=31536000, immutable" : "no-store",
+    "content-security-policy": CHARACTER_ASSET_CONTENT_SECURITY_POLICY,
+  })
+  response.end(asset.content)
+}
+
+/**
+ * `/item/<file>` を配る。`version` は要求の `?v=`（無ければ undefined）。
+ * 経路をファイル名に読むのは `readItemAssetPath`（形が崩れていれば404）、載っているかの判断は `serveItemAsset` に任せる。
+ * キャッシュと CSP は {@link writeCharacterAsset} と同じ。
+ */
+export function writeItemAsset(
+  response: ServerResponse,
+  rest: string,
+  version: string | undefined,
+  serveItemAsset: ServeItemAsset,
+): void {
+  const fileName = readItemAssetPath(rest)
+  const asset = fileName === undefined ? undefined : serveItemAsset(fileName, version)
+  if (asset === undefined) {
+    writeNotFound(response)
     return
   }
 

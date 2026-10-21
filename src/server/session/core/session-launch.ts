@@ -73,6 +73,8 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   readonly readSessionDefault: () => SessionDefault
   /** いま出しているパックを画面へ流す形（立ち絵の URL・選択肢・画面から変えられるか）。 */
   readonly characterEvent: (pack: Pack) => SessionEvent
+  /** いまのアイテムの一覧と全パックの席を流す形（`items-changed`）。起こすたびに読み直す。 */
+  readonly itemsEvent: () => SessionEvent
   /**
    * そのパックのあらすじの写しから、最近の話題の見出しを読む（写しがまだ無い・取り出せないときは空）。
    * 雑談で起こすときだけ呼ばれる。
@@ -141,6 +143,8 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
       ports.rememberPack(pack)
     }
     onEvent(ports.characterEvent(pack))
+    // アイテムの一覧と席も同じ理由で流し直す（画面はこのイベントでしか知れない）。
+    onEvent(ports.itemsEvent())
     // 起こし直すと状態が初期値へ戻るので、雑談かどうかもここで流し直す（画面は `chat-mode-changed` でしか知れない）。
     onEvent({ kind: "chat-mode-changed", chat })
     // 最近の話題も同じ理由で流し直す。

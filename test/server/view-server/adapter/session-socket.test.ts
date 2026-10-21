@@ -103,6 +103,12 @@ async function start(openFileResult = true): Promise<Started> {
         deleteCharacter: unexpected,
         generateFromPortrait: unexpected,
       },
+      item: {
+        addItem: unexpected,
+        removeItem: unexpected,
+        setSeat: unexpected,
+        clearSeat: unexpected,
+      },
       chat: { forgetRememberedLine: unexpected },
       usageReview: {
         dismissUsageProposal: unexpected,

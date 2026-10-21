@@ -156,6 +156,12 @@ export function createSessionManager(
         deleteCharacter,
         generateFromPortrait: () => Promise.resolve(undefined),
       },
+      item: {
+        addItem: () => Promise.resolve(undefined),
+        removeItem: () => Promise.resolve(undefined),
+        setSeat: () => Promise.resolve(undefined),
+        clearSeat: () => Promise.resolve(undefined),
+      },
       chat: { forgetRememberedLine },
       usageReview: { dismissUsageProposal, runner },
       host: { openFile },

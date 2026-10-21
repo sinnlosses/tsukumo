@@ -28,6 +28,8 @@ import {
 } from "./server/experience-metric/adapter/experience-metric-procedure.ts"
 import { hostProcedure } from "./server/host/adapter/host-procedure.ts"
 import type { HostCommandPorts } from "./server/host/core/host-command.ts"
+import { itemProcedure } from "./server/item/adapter/item-procedure.ts"
+import type { ItemCommandPorts } from "./server/item/core/item-command.ts"
 import {
   type PlanUsageProcedurePorts,
   planUsageProcedure,
@@ -101,6 +103,7 @@ export function createRpcRouter(ports: RpcRouterPorts) {
 export type CommandRouterPorts = {
   readonly session: SessionCommandPorts
   readonly characterPack: CharacterPackCommandPorts
+  readonly item: ItemCommandPorts
   readonly chat: ChatCommandPorts
   readonly usageReview: UsageReviewCommandPorts
   readonly host: HostCommandPorts
@@ -116,6 +119,7 @@ export function createCommandRouter(ports: CommandRouterPorts) {
     .router({
       session: sessionProcedure(ports.session),
       characterPack: characterPackProcedure(ports.characterPack),
+      item: itemProcedure(ports.item),
       chat: chatProcedure(ports.chat),
       usageReview: usageReviewProcedure(ports.usageReview),
       host: hostProcedure(ports.host),

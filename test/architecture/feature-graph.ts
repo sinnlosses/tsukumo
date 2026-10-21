@@ -22,6 +22,7 @@ export const SERVER_FEATURES = [
   "workflow-setting",
   "achievement",
   "character-pack",
+  "item",
   "diary",
   "chat",
   "session-driver",

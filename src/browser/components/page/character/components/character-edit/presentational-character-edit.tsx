@@ -1,5 +1,5 @@
 // キャラクター画面の右側、選んでいるパックの詳しい設定の器。
-// 上から 名乗り → 顔 → ミニ立ち絵 → 表情の格子 → 差し色（画面の差し色と立ち絵の差し色を横に並べる） → 背景。
+// 上から 名乗り → 顔 → ミニ立ち絵 → 表情の格子 → 差し色（画面の差し色と立ち絵の差し色を横に並べる） → 背景 → アイテム。
 
 import type { ReactElement } from "react"
 
@@ -15,6 +15,7 @@ import styles from "./character-edit.module.css"
 import { CharacterDelete } from "./components/character-delete/character-delete.tsx"
 import { CharacterProfile } from "./components/character-profile/character-profile.tsx"
 import { ImageField } from "./components/image-field/image-field.tsx"
+import { ItemSection } from "./components/item-section/item-section.tsx"
 import { PortraitCard } from "./components/portrait-card/portrait-card.tsx"
 
 type PresentationalCharacterEditProps = CharacterEditModel
@@ -155,6 +156,7 @@ export function PresentationalCharacterEdit(
         </Heading>
         <ImageField field={props.background} disabled={props.disabled} />
       </VStack>
+      <ItemSection section={props.items} />
       <CharacterDelete band={props.deleteBand} />
     </div>
   )

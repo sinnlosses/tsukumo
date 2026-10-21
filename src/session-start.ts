@@ -31,6 +31,7 @@ import { wireCharacterPack } from "./wiring/character-pack.ts"
 import { wireChat } from "./wiring/chat.ts"
 import { wireDiary } from "./wiring/diary.ts"
 import { wireHost } from "./wiring/host.ts"
+import { wireItem } from "./wiring/item.ts"
 import { wireRepository } from "./wiring/repository.ts"
 import { wireSessionLaunch } from "./wiring/session-launch.ts"
 import { wireUsageReview } from "./wiring/usage-review.ts"
@@ -91,10 +92,12 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   const diary = wireDiary(context)
   const welcomeGreeting = wireWelcomeGreeting(context, options.diagnosticLog)
   const usageReview = wireUsageReview(context, options.mountWorkflowPlugin)
+  const item = wireItem(context)
   const launch = wireSessionLaunch({
     context,
     config,
     character,
+    itemsEvent: item.itemsEvent,
     viewPort: options.viewPort,
     mountWorkflowPlugin: options.mountWorkflowPlugin,
     firstViewer: firstViewer.promise,
@@ -142,6 +145,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
       ...diary.sessionCommands,
     },
     characterPack: characterPack.commands,
+    item: item.commands,
     chat: chat.commands,
     usageReview: usageReview.commands,
     host: host.commands,

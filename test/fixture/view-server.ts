@@ -5,6 +5,7 @@ import {
   createStartupToken,
   type FindReportImage,
   type ServeCharacterAsset,
+  type ServeItemAsset,
   startViewServer,
   type ViewServer,
 } from "../../src/server/view-server/adapter/server.ts"
@@ -62,6 +63,11 @@ export function noCharacterAsset(): undefined {
   return undefined
 }
 
+/** `/item/<file>` を配る係の代役。既定では何も配らない（404）。 */
+export function noItemAsset(): undefined {
+  return undefined
+}
+
 /** 棚の代役。既定では何も置いていない（どの id を引いても無い）。 */
 export function noPromptImage(): undefined {
   return undefined
@@ -77,6 +83,7 @@ export async function startView(
   rpcPorts: Partial<RpcRouterPorts> = {},
   findReportImage: FindReportImage = noReportImage,
   onRuntimeError: (error: unknown) => void = () => {},
+  serveItemAsset: ServeItemAsset = noItemAsset,
 ): Promise<ViewServer> {
   const server = await startViewServer(0, {
     ui: () => ({
@@ -88,6 +95,7 @@ export async function startView(
       },
     }),
     serveCharacterAsset,
+    serveItemAsset,
     findPromptImage,
     findReportImage,
     rpcRouter: createRpcRouter({ ...EMPTY_RPC_PORTS, ...rpcPorts }),

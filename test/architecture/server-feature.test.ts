@@ -40,6 +40,7 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   "workflow-setting": new Set([]),
   achievement: new Set(["repository"]),
   "character-pack": new Set([]),
+  item: new Set([]),
   diary: new Set(["repository", "session-driver"]),
   chat: new Set(["character-pack", "session-driver"]),
   "session-driver": new Set(["chat", "report", "view-server"]),

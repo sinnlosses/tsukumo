@@ -2,6 +2,7 @@
 
 import type { Expression } from "../../../../../shared/character-pack/expression.ts"
 import type { AccentSwatchModel } from "./accent-swatch-model.ts"
+import type { ItemSectionModel } from "./item-edit-model.ts"
 
 /** 名乗り（大きな顔・名前・id・使用中の札・ひとこと）と、その右の口。 */
 export type CharacterProfileModel = {
@@ -158,5 +159,6 @@ export type CharacterEditModel =
       readonly face: ImageFieldModel
       readonly mini: ImageFieldModel
       readonly background: ImageFieldModel
+      readonly items: ItemSectionModel
       readonly deleteBand: CharacterDeleteBandModel
     }

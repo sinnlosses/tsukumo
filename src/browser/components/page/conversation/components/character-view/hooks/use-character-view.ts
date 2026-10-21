@@ -13,6 +13,7 @@
 import { useEffect, useState } from "react"
 
 import type { Expression } from "../../../../../../../shared/character-pack/expression.ts"
+import type { ItemSeatMap } from "../../../../../../../shared/item/item.ts"
 import type { ReactionKind } from "../../../../../../../shared/recommendation/reaction.ts"
 import {
   nextPortraitMotionTransitionDelayMs,
@@ -100,6 +101,8 @@ export type CharacterViewModel = {
   readonly face: CharacterFaceInfo
   /** 狭い画面の吹き出しに出す最新の1件。 */
   readonly phoneLine: PhoneBalloonLine
+  /** 使用中のパックの3つの席に置いたアイテム。行が無ければ全席が空。 */
+  readonly seats: ItemSeatMap
 }
 
 /**
@@ -117,6 +120,7 @@ export function useCharacterView(): CharacterViewModel {
   const speeches = useSession((session) => session.state.speeches)
   const speechExpression = useSession((session) => session.state.speechExpression)
   const character = useSession((session) => session.state.character)
+  const itemSeats = useSession((session) => session.state.itemSeats)
   const turn = useSession((session) => session.state.turn)
   const lastToolFailureAt = useSession((session) => session.state.lastToolFailureAt)
   const draftingReport = useSession((session) => session.state.reportDrafting.kind === "drafting")
@@ -191,7 +195,14 @@ export function useCharacterView(): CharacterViewModel {
     onCloseSpeechLog: () => setSpeechLogOpen(false),
     face: characterFaceInfo(character),
     phoneLine: phoneLineOf(reaction, activeSpeeches, now),
+    seats: (character === undefined ? undefined : itemSeats[character.pack]) ?? EMPTY_SEATS,
   }
+}
+
+const EMPTY_SEATS: ItemSeatMap = {
+  topLeft: undefined,
+  belowLeft: undefined,
+  belowRight: undefined,
 }
 
 function phoneLineOf(

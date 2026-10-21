@@ -7,6 +7,7 @@ import type { CharacterInfo, CharacterPackEntry } from "../character-pack/charac
 import type { Expression } from "../character-pack/expression.ts"
 import type { EffortLevel } from "../command.ts"
 import type { DiaryWriting } from "../diary/diary.ts"
+import type { ItemInfo, ItemSeatMap } from "../item/item.ts"
 import type { WrittenReactionsState } from "../recommendation/reaction.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
@@ -155,6 +156,16 @@ export type SessionState = {
    */
   readonly characterPacks: readonly CharacterPackEntry[]
   /**
+   * アイテムの一覧（全キャラクター共通。足した順）。源は `items-changed` だけで、届くたびに丸ごと置き換える。
+   * 起こすたびに流し直される。まだ届いていないときは空。
+   */
+  readonly items: readonly ItemInfo[]
+  /**
+   * パックの名前 → そのパックの席ごとのアイテム。源は `items` と同じ `items-changed`。
+   * 行の無いパックは全席が空。
+   */
+  readonly itemSeats: Readonly<Record<string, ItemSeatMap>>
+  /**
    * 切り替え先として選べるセッションの一覧。
    * `sessions-changed` と一緒に届き、起こしたときの姿のまま変わらない（ターンのたびには引き直さない）。
    * まだ届いていない・印の付いたセッションが1つも無いときは空。
@@ -273,6 +284,8 @@ export const INITIAL_SESSION_STATE: SessionState = {
   writtenReactions: { kind: "none" },
   character: undefined,
   characterPacks: [],
+  items: [],
+  itemSeats: {},
   sessions: [],
   lastToolFailureAt: undefined,
   reportDrafting: { kind: "idle" },

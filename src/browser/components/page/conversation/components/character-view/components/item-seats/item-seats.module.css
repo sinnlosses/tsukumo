@@ -1,0 +1,50 @@
+/* キャラビューの席。基準は `.character-region`（`position: relative`、`container-type: size`）。
+   重なりは 背景 → 左上 → 立ち絵（z-index 1）→ 左下・右下 → 吹き出しの列（z-index 3）。
+   立ち絵の位置は `character-view.module.css` が `.character-layout > .portrait` に付ける `--stage-portrait` で引く。
+   anchor の参照元が DOM で先にないと位置が効かないので、この箱は `.character-stage` の後ろに置く。
+   箱そのものは `display: contents` で、領域の縦の並び（gap）に加わらない。 */
+.item-seats {
+  display: contents;
+  pointer-events: none;
+}
+.seat {
+  position: absolute;
+  max-width: 14cqw;
+  max-height: 24cqh;
+  object-fit: contain;
+}
+.seat[data-seat="topLeft"] {
+  top: 0;
+  left: 16px;
+  z-index: 0;
+  object-position: left top;
+}
+.seat[data-seat="belowLeft"],
+.seat[data-seat="belowRight"] {
+  position-anchor: --stage-portrait;
+  bottom: 0;
+  z-index: 2;
+  max-width: min(14cqw, calc(anchor-size(width) * 0.35));
+  object-position: center bottom;
+}
+.seat[data-seat="belowLeft"] {
+  left: calc(anchor(left) + 8px);
+}
+.seat[data-seat="belowRight"] {
+  right: calc(anchor(right) + var(--balloon-overlap));
+}
+
+/* 領域が細いと吹き出しの列が立ち絵の下へ回り込み、足元の席が列の下に隠れる。回り込む幅（およそ 21rem）の手前から左下・右下を出さない。 */
+@container (max-width: 21.5rem) {
+  .seat[data-seat="belowLeft"],
+  .seat[data-seat="belowRight"] {
+    display: none;
+  }
+}
+
+/* 狭い画面（760px 以下）では出さない。 */
+@media (max-width: 760px) {
+  .item-seats {
+    display: none;
+  }
+}

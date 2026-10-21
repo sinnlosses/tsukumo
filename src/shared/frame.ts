@@ -55,6 +55,7 @@ export const FRAME_ERROR_REASON = {
   characterCreateFailed: "キャラクターを作れなかった",
   characterDeleteFailed: "キャラクターを消せなかった",
   characterGenerationFailed: "立ち絵から生成できなかった",
+  itemEditFailed: "アイテムを変えられなかった",
   sessionDefaultFailed: "新しいセッションの既定を覚えられなかった",
   switchDuringTurn:
     "ターン進行中か委譲中はキャラクターを切り替えられない（中断するか委譲を止めると切り替えられる）",

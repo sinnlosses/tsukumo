@@ -8,7 +8,7 @@
   position: absolute;
   top: calc(4px - var(--region-padding));
   right: calc(4px - var(--region-padding));
-  z-index: 1;
+  z-index: 4;
   display: inline-flex;
   align-items: center;
   gap: 6px;

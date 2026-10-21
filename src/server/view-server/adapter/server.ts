@@ -24,6 +24,7 @@ import {
   CHARACTER_ASSET_PATH_PREFIX,
   type CharacterAssetLocation,
 } from "../../../shared/character-pack/character-asset.ts"
+import { ITEM_ASSET_PATH_PREFIX } from "../../../shared/item/item-asset.ts"
 import { REPORT_IMAGE_PATH_PREFIX } from "../../../shared/report/report-image.ts"
 import { RPC_PATH, type rpcContract } from "../../../shared/rpc.ts"
 import { PROMPT_IMAGE_PATH_PREFIX } from "../../../shared/session-driver/prompt-image.ts"
@@ -40,6 +41,7 @@ import {
   uiScriptPath,
   writeBundledAsset,
   writeCharacterAsset,
+  writeItemAsset,
   writeLayoutPage,
   writeNotFound,
   writePromptImage,
@@ -85,6 +87,23 @@ export type ServeCharacterAsset = (
   version: string | undefined,
 ) => CharacterAssetFile | undefined
 
+/** `/item/<file>` を1件配るために要るもの。中身はアイテムの置き場を読むアダプタが決める。 */
+export type ItemAssetFile = {
+  readonly contentType: string
+  readonly content: Buffer
+  /** 要求の `?v=` が素材の今の版と一致した（ブラウザに長期に持たせてよい）。 */
+  readonly versioned: boolean
+}
+
+/**
+ * `/item/<file>` の1件を配ってよい形にする。`version` は要求の `?v=`（無ければ undefined）。
+ * 一覧に載っていない・ディスクに無いときは undefined（呼び出し側が404にする）。
+ */
+export type ServeItemAsset = (
+  fileName: string,
+  version: string | undefined,
+) => ItemAssetFile | undefined
+
 /**
  * 棚から、id が指す原寸の data URL を引く。
  * 棚に無い（捨てた・知らない）ときは undefined（配る側が 404 にする）。
@@ -112,6 +131,8 @@ export type ViewServerOptions = {
   readonly ui: () => ViewUi
   /** `/character/<pack>/<file>` の1件を配ってよい形にする。 */
   readonly serveCharacterAsset: ServeCharacterAsset
+  /** `/item/<file>` の1件を配ってよい形にする。 */
+  readonly serveItemAsset: ServeItemAsset
   /** `/prompt-image/<id>` に配る原寸の引き口（棚の `find`）。 */
   readonly findPromptImage: FindPromptImage
   /** `/report-image/<toolUseId>/<path>` に配る画像の引き口（棚の `find`）。 */
@@ -257,6 +278,18 @@ const ROUTES = [
         path.slice(CHARACTER_ASSET_PATH_PREFIX.length),
         queryValue(request, "v"),
         options.serveCharacterAsset,
+      ),
+  },
+  {
+    match: { kind: "prefix", prefix: ITEM_ASSET_PATH_PREFIX },
+    method: "GET",
+    requiresToken: false,
+    handle: (request, response, path, { options }) =>
+      writeItemAsset(
+        response,
+        path.slice(ITEM_ASSET_PATH_PREFIX.length),
+        queryValue(request, "v"),
+        options.serveItemAsset,
       ),
   },
   {
