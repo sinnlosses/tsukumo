@@ -203,12 +203,24 @@
   height: auto;
 }
 /* 図（graph・mermaid・svg・image）の高さは読む面の高さ（`.layout-main` の内寸）の 70% まで。縦横比を保って縮み、全体は拡大で見る。chart は固定の高さのまま。
-   svg の塊は `width` の属性を外し、縮むとき幅が縦横比に従うようにする。 */
+   svg の塊は書き手の `width` の1.5倍まで器の幅へ拡大し、高さの上限に当たるときは幅が縦横比に従う。`attr()` を解さない描画では `width: auto`（書き手の幅まで）に戻る。
+   包みは器の幅まで伸ばす（縮めると `100%` が自分の幅を指して拡大しない）。 */
 .detail-block pre:global(.mermaid) svg {
   max-height: var(--report-figure-max);
 }
+.detail-block .report-svg-figure {
+  display: flex;
+  align-self: stretch;
+  justify-content: center;
+}
 .detail-block .report-svg-figure svg {
+  min-width: 0;
   width: auto;
+  width: min(
+    100%,
+    calc(attr(width px, 9999px) * 1.5),
+    calc(var(--report-figure-max) * attr(width type(<number>), 1) / attr(height type(<number>), 1))
+  );
   max-height: var(--report-figure-max);
 }
 .detail-block .report-image-zoom img {

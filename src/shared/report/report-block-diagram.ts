@@ -65,7 +65,9 @@ const svgShapeSchema = z
   .meta({ id: "SvgShape" })
 
 const svgFields = {
-  width: positiveNumber.describe("viewBox の幅。図形はこの内側に収める"),
+  width: positiveNumber.describe(
+    "viewBox の幅。目安は 480〜640（字は 14px を基準に器の幅へ比例し、幅 360 でも約 1.5 倍に拡大する）。図形はこの内側に収める",
+  ),
   height: positiveNumber.describe("viewBox の高さ。図形はこの内側に収める"),
   shapes: z
     .array(svgShapeSchema)
