@@ -79,9 +79,9 @@ E2E のファイル単位の実行（`pnpm run test:e2e test/e2e/<ファイル>.
 委譲先の Bash の中では E2E の設定の globalSetup（`test/e2e-entry-setup.ts`）が止める。
 ファイルを名指した直の起動（`npx vitest run --config vitest.e2e.config.ts test/e2e/<シナリオ>.test.ts -t '<it>'`）は数えず、止めない。
 
-数はその作業ツリー固有の git dir の `e2e-full-runs` に、開いている着手の印の `id:birthtimeMs` を鍵にして置く
-（作業ツリーをまたいで混ざらない）。着手の印は tw と同じ順（`.tw/local/task-open-claims/` →
-`.tw/` 直下 → git dir）で探し、無ければ数えない。**着手し直す（印が消えて作り直される）と0に戻る。**
+数はその作業ツリー固有の git dir の `e2e-full-runs` に、`{key, count}` の JSON（一時ファイルへ書いてから名前を変える）で置く。
+鍵は `tw status --claims` が返す着手の `claim`（作業ツリーをまたいで混ざらない）。
+着手が1件でないとき・口が打てない／読めないときは数えない。**着手し直すと鍵が変わり0に戻る。**
 委譲先の呼び出しかどうかは hook（`scripts/hook/mark-subagent-bash.ts`）が渡す。
 入力に `agent_id` がある Bash の PreToolUse で git dir の `subagent-bash/<tool_use_id>` に印を置き、
 PostToolUse・PostToolUseFailure で消す（背景の呼び出しは消さない）。10分より古い印は無いものとみなし、

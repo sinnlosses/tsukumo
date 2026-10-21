@@ -1,20 +1,14 @@
-import {
-  appendFileSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  realpathSync,
-  writeFileSync,
-} from "node:fs"
+import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
+import { createTokenUsageLog } from "../../../../src/server/token-usage/adapter/token-usage-log.ts"
 import {
-  createTokenUsageLog,
-  resolveTaskPlace,
-  type TaskPlace,
-} from "../../../../src/server/token-usage/adapter/token-usage-log.ts"
+  createOpenTaskReader,
+  type OpenTaskReader,
+  type TwClaimsRunner,
+} from "../../../../src/server/token-usage/adapter/tw-claims.ts"
 import type { TokenUsageEntry } from "../../../../src/server/token-usage/core/token-usage.ts"
 import {
   TOKEN_USAGE_FORMAT_VERSION,
@@ -22,7 +16,6 @@ import {
   type TurnUsageBreakdown,
 } from "../../../../src/shared/token-usage/token-usage.ts"
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
-import { runSubprocess } from "../../../fixture/subprocess.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const MODELS: readonly ModelTokenUsage[] = [
@@ -92,50 +85,26 @@ function readLines(fileName: string): unknown[] {
   return readJsonLines(join(root(), fileName))
 }
 
-/** 着手の印の無い作業ツリー（`.git` だけがある）。台帳の置き場も同じ下に作る。 */
-function worktree(): TaskPlace {
-  const path = join(dir(), "worktree")
-  mkdirSync(join(path, ".git"), { recursive: true })
-  return { worktreeRoot: path, gitCommonDir: join(path, ".git") }
-}
+/** 着手中のタスクが無い作業ツリー。 */
+const NO_TASK: OpenTaskReader = () => undefined
 
-type Lap = { readonly task: string; readonly stage: string }
+type Claim = { readonly task: string; readonly stage: string | null }
 
-/** 台帳の1か月ぶん（`flow/<month>.jsonl`）に `lap` の出来事を並べる。 */
-function writeFlow(place: TaskPlace, month: string, laps: readonly Lap[]): void {
-  const flow = join(place.gitCommonDir, "task-workflow", "flow")
-  mkdirSync(flow, { recursive: true })
-  writeFileSync(
-    join(flow, `${month}.jsonl`),
-    laps.map((lap) => `${JSON.stringify({ event: "lap", edge: "start", ...lap })}\n`).join(""),
-  )
-}
-
-/** `worktree()` の作業ツリーに着手の印を置き、台帳（既定は9月）の `lap` の出来事を並べる。 */
-function claimTask(taskId: string, laps: readonly Lap[], month = "2026-09"): TaskPlace {
-  const place = worktree()
-  mkdirSync(join(place.worktreeRoot, ".tw", "local", "task-open-claims"), { recursive: true })
-  writeFileSync(join(place.worktreeRoot, ".tw", "local", "task-open-claims", taskId), "")
-  writeFlow(place, month, laps)
-  return place
-}
-
-/** 指定の日のローカル 10:30 のエポックミリ秒（月・年をまたぐ場面用）。 */
-function atDate(year: number, month: number, day: number): number {
-  return Temporal.ZonedDateTime.from({
-    year,
-    month,
-    day,
-    hour: 10,
-    minute: 30,
-    second: 0,
-    timeZone: Temporal.Now.timeZoneId(),
-  }).epochMilliseconds
+/** 口（`tw status --claims`）が `claims` を返す代役。打った回数も数える。 */
+function claimsRunner(claims: readonly Claim[]): { run: TwClaimsRunner; calls: () => number } {
+  let calls = 0
+  return {
+    run: () => {
+      calls += 1
+      return JSON.stringify({ claims: claims.map((claim) => ({ ...claim, claim: "t" })) })
+    },
+    calls: () => calls,
+  }
 }
 
 describe("createTokenUsageLog", () => {
   it("日付ごとのファイルに1行ずつ追記する", () => {
-    const log = createTokenUsageLog(worktree(), root())
+    const log = createTokenUsageLog(NO_TASK, root())
 
     log.append(entry(at(10, 30)))
     log.append(entry(at(10, 31)))
@@ -147,7 +116,7 @@ describe("createTokenUsageLog", () => {
   })
 
   it("1行の鍵は版・日時・セッションID・モード・モデルごとの数・内訳で、日時は ISO 8601（オフセット付き）", () => {
-    const log = createTokenUsageLog(worktree(), root())
+    const log = createTokenUsageLog(NO_TASK, root())
 
     log.append(entry(at(10, 30)))
 
@@ -168,7 +137,7 @@ describe("createTokenUsageLog", () => {
   // （docs/coding-standards.md「会話内容の扱い」）。会話の文面が混ざる余地が無いことを、
   // 行に出てくる文字列を数え上げて固定する。
   it("行に出てくる文字列は、鍵の名前とモデル・ツールの名前・セッションID・モード・時刻だけ", () => {
-    const log = createTokenUsageLog(worktree(), root())
+    const log = createTokenUsageLog(NO_TASK, root())
 
     log.append(entry(at(10, 30)))
 
@@ -213,13 +182,11 @@ describe("createTokenUsageLog", () => {
 })
 
 describe("着手中のタスクとの結び付き", () => {
-  it("着手の印があれば、行にタスクIDと台帳の最新の lap の段が入る", () => {
-    const place = claimTask("job-7", [
-      { task: "job-7", stage: "delegate" },
-      { task: "job-8", stage: "ship" },
-      { task: "job-7", stage: "accept" },
-    ])
-    const log = createTokenUsageLog(place, root())
+  it("口が着手中のタスクを返せば、行にタスクIDと段が入る", () => {
+    const log = createTokenUsageLog(
+      createOpenTaskReader(claimsRunner([{ task: "job-7", stage: "accept" }]).run),
+      root(),
+    )
 
     log.append(entry(at(10, 30)))
 
@@ -237,9 +204,11 @@ describe("着手中のタスクとの結び付き", () => {
     ])
   })
 
-  it("台帳にそのタスクの lap が無ければ、タスクIDだけが入る", () => {
-    const place = claimTask("job-7", [])
-    const log = createTokenUsageLog(place, root())
+  it("段が null なら、タスクIDだけが入る", () => {
+    const log = createTokenUsageLog(
+      createOpenTaskReader(claimsRunner([{ task: "job-7", stage: null }]).run),
+      root(),
+    )
 
     log.append(entry(at(10, 30)))
 
@@ -248,8 +217,8 @@ describe("着手中のタスクとの結び付き", () => {
     expect(keysOf(record)).not.toContain("stage")
   })
 
-  it("着手の印が無ければ、どちらの欄も入らない", () => {
-    const log = createTokenUsageLog(worktree(), root())
+  it("着手中のタスクが無ければ、どちらの欄も入らない", () => {
+    const log = createTokenUsageLog(createOpenTaskReader(claimsRunner([]).run), root())
 
     log.append(entry(at(10, 30)))
 
@@ -258,104 +227,64 @@ describe("着手中のタスクとの結び付き", () => {
     expect(keysOf(record)).not.toContain("stage")
   })
 
-  it("着手の印が2件あるときは、どのタスクか決められないので入れない", () => {
-    const place = claimTask("job-7", [{ task: "job-7", stage: "delegate" }])
-    writeFileSync(join(place.worktreeRoot, ".tw", "local", "task-open-claims", "job-8"), "")
-    const log = createTokenUsageLog(place, root())
-
-    log.append(entry(at(10, 30)))
-
-    expect(keysOf(readLines("2026-09-22.jsonl")[0])).not.toContain("taskId")
-  })
-
-  it("作業ツリーが決まらない（git の作業ツリーでない）ときは、どちらの欄も入らない", () => {
-    const log = createTokenUsageLog(undefined, root())
-
-    log.append(entry(at(10, 30)))
-
-    expect(keysOf(readLines("2026-09-22.jsonl")[0])).not.toContain("taskId")
-  })
-
-  describe("月をまたぐ台帳", () => {
-    const LAPS = [{ task: "job-7", stage: "accept" }]
-
-    it("書く月のファイルがあっても、そのタスクの lap が無ければ前月を読む", () => {
-      const place = claimTask("job-7", LAPS, "2026-09")
-      writeFlow(place, "2026-10", [{ task: "job-8", stage: "ship" }])
-      const log = createTokenUsageLog(place, root())
-
-      log.append(entry(atDate(2026, 10, 1)))
-
-      expect(readLines("2026-10-01.jsonl")[0]).toMatchObject({ stage: "accept" })
-    })
-
-    it("書く月に lap があれば、前月より書く月の段を使う", () => {
-      const place = claimTask("job-7", LAPS, "2026-09")
-      writeFlow(place, "2026-10", [{ task: "job-7", stage: "ship" }])
-      const log = createTokenUsageLog(place, root())
-
-      log.append(entry(atDate(2026, 10, 2)))
-
-      expect(readLines("2026-10-02.jsonl")[0]).toMatchObject({ stage: "ship" })
-    })
-
-    it("年をまたぐ（1月に前年12月の段を読む）", () => {
-      const place = claimTask("job-7", LAPS, "2026-12")
-      const log = createTokenUsageLog(place, root())
-
-      log.append(entry(atDate(2027, 1, 1)))
-
-      expect(readLines("2027-01-01.jsonl")[0]).toMatchObject({ stage: "accept" })
-    })
-  })
-})
-
-describe("resolveTaskPlace", () => {
-  it("git の作業ツリーでは、根と共有の git dir を返す", async () => {
-    const repo = realpathSync(dir())
-    await runSubprocess("git", ["init", "-q"], { cwd: repo })
-    mkdirSync(join(repo, "src", "deep"), { recursive: true })
-
-    const place = await resolveTaskPlace(join(repo, "src", "deep"))
-
-    expect(place).toEqual({ worktreeRoot: repo, gitCommonDir: join(repo, ".git") })
-  })
-
-  it("リンクした作業ツリーでは、根は作業ツリー自身で、git dir は本体の .git", async () => {
-    const repo = join(realpathSync(dir()), "main")
-    mkdirSync(repo)
-    await runSubprocess("git", ["init", "-q"], { cwd: repo })
-    await runSubprocess(
-      "git",
-      [
-        "-c",
-        "user.name=t",
-        "-c",
-        "user.email=t@example.com",
-        "commit",
-        "-q",
-        "--allow-empty",
-        "-m",
-        "x",
-      ],
-      { cwd: repo },
+  it("着手中が2件あるときは、どのタスクか決められないので入れない", () => {
+    const log = createTokenUsageLog(
+      createOpenTaskReader(
+        claimsRunner([
+          { task: "job-7", stage: "delegate" },
+          { task: "job-8", stage: "ship" },
+        ]).run,
+      ),
+      root(),
     )
-    const linked = join(realpathSync(dir()), "linked")
-    await runSubprocess("git", ["worktree", "add", "-q", linked, "-b", "linked"], { cwd: repo })
 
-    const place = await resolveTaskPlace(linked)
+    log.append(entry(at(10, 30)))
 
-    expect(place).toEqual({ worktreeRoot: linked, gitCommonDir: join(repo, ".git") })
+    expect(keysOf(readLines("2026-09-22.jsonl")[0])).not.toContain("taskId")
   })
 
-  it("git の作業ツリーでなければ undefined", async () => {
-    expect(await resolveTaskPlace(dir())).toBeUndefined()
+  it("口が打てない・JSON が読めないときは、どちらの欄も入らない", () => {
+    const broken = createOpenTaskReader(() => "not json")
+    const unavailable = createOpenTaskReader(() => undefined)
+
+    createTokenUsageLog(broken, root()).append(entry(at(10, 30)))
+    createTokenUsageLog(unavailable, root()).append(entry(at(10, 31)))
+
+    for (const record of readLines("2026-09-22.jsonl")) {
+      expect(keysOf(record)).not.toContain("taskId")
+      expect(keysOf(record)).not.toContain("stage")
+    }
+  })
+
+  it("控えの時間（10秒）のあいだは口を打ち直さず、過ぎたら打ち直す", () => {
+    const runner = claimsRunner([{ task: "job-7", stage: "delegate" }])
+    const log = createTokenUsageLog(createOpenTaskReader(runner.run), root())
+
+    log.append(entry(at(10, 30)))
+    log.append(entry(at(10, 30) + 9_000))
+    expect(runner.calls()).toBe(1)
+
+    log.append(entry(at(10, 30) + 10_000))
+    expect(runner.calls()).toBe(2)
+  })
+
+  it("失敗も控える", () => {
+    let calls = 0
+    const reader = createOpenTaskReader(() => {
+      calls += 1
+      return undefined
+    })
+
+    reader(at(10, 30))
+    reader(at(10, 30) + 1_000)
+
+    expect(calls).toBe(1)
   })
 })
 
 describe("readRange", () => {
   it("日またぎの境界: 期間に入る日のファイルだけを読む", () => {
-    const log = createTokenUsageLog(worktree(), root())
+    const log = createTokenUsageLog(NO_TASK, root())
     log.append(entry(at(23, 59, 21)))
     log.append(entry(at(0, 0, 22)))
     log.append(entry(at(0, 0, 23)))
@@ -367,7 +296,7 @@ describe("readRange", () => {
   })
 
   it("複数日にまたがる期間は、古い→新しい順に日をまたいで返す", () => {
-    const log = createTokenUsageLog(worktree(), root())
+    const log = createTokenUsageLog(NO_TASK, root())
     log.append(entry(at(9, 0, 23)))
     log.append(entry(at(9, 0, 21)))
     log.append(entry(at(9, 0, 22)))
@@ -382,7 +311,7 @@ describe("readRange", () => {
   })
 
   it("記録が無い期間・置き場がまだ無いときは空の並びを返す（例外にならない）", () => {
-    const log = createTokenUsageLog(worktree(), root())
+    const log = createTokenUsageLog(NO_TASK, root())
 
     expect(log.readRange({ startDate: "2026-09-01", endDate: "2026-09-30" })).toEqual([])
   })
@@ -424,7 +353,7 @@ describe("readRange", () => {
       join(root(), "2026-09-22.jsonl"),
       `${validLine}\n${oldVersionLine}\nこれはJSONではない\n${missingKeyLine}\n${version2Line}\n\n`,
     )
-    const log = createTokenUsageLog(worktree(), root())
+    const log = createTokenUsageLog(NO_TASK, root())
 
     const records = log.readRange({ startDate: "2026-09-22", endDate: "2026-09-22" })
 

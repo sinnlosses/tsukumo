@@ -28,10 +28,8 @@ import {
   workflowPluginDir,
 } from "./server/session-driver/adapter/workflow-plugin.ts"
 import { createPromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
-import {
-  createTokenUsageLog,
-  resolveTaskPlace,
-} from "./server/token-usage/adapter/token-usage-log.ts"
+import { createTokenUsageLog } from "./server/token-usage/adapter/token-usage-log.ts"
+import { createOpenTaskReader, twClaimsRunner } from "./server/token-usage/adapter/tw-claims.ts"
 import { builtUiDir, readUiBundle } from "./server/view-server/adapter/bundle.ts"
 import {
   resolveViewPort,
@@ -42,7 +40,7 @@ import type { SwallowedFailurePlace } from "./shared/diagnostic/swallowed-failur
 import { startViewDelivery } from "./view-delivery.ts"
 import { failureDiagnostic } from "./wiring/failure-diagnostic.ts"
 import { createHost } from "./wiring/host.ts"
-import { wireWorkflowSetting } from "./wiring/workflow-setting.ts"
+import { chooseTw, wireWorkflowSetting } from "./wiring/workflow-setting.ts"
 
 /** 環境変数ではなく起動の引数で選ぶもの。 */
 export type LaunchOptions = {
@@ -123,7 +121,11 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
 
   // トークン消費の記録の口は1つをここで作ってセッションとビューの両側へ渡す。
   // 置き場（`~/.tsukumo/token-usage/`）を知っているところを増やさない。
-  const tokenUsageLog = createTokenUsageLog(await resolveTaskPlace(launch.cwd))
+  const tokenUsageLog = createTokenUsageLog(
+    createOpenTaskReader(
+      twClaimsRunner(chooseTw(config.twCommand, mountWorkflowPlugin), launch.cwd),
+    ),
+  )
   // 依頼に添えた画像の原寸の棚と、レポートの画像の棚も1つずつをここで作って両側へ渡す。
   // 両側が同じ棚を見ないと、置いた原寸をビューが引けない。
   const promptImageShelf = createPromptImageShelf()

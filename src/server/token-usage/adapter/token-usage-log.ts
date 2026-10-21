@@ -2,7 +2,7 @@
 // 置き場は `~/.tsukumo/token-usage/<YYYY-MM-DD>.jsonl` で、日付だけで分ける。
 // 使用量はキャラクターパックに依らないので、パックごとに分けると「その日いくら使ったか」を出すのに全部のディレクトリを混ぜ直すことになる。
 // 置き場は作業ツリーにも依存させない（どのプロジェクトから起こしても同じ場所に積む）。
-// 作業ツリーが決めるのは、行に結ぶ着手中のタスクのIDと段だけ。
+// 行に結ぶ着手中のタスクのIDと段は、tw の読む口から読む（`createOpenTaskReader`）。
 //
 // 何をいつ書くかの判断はここが決めない。
 // ここが持つのは「どこに・どんな形で書くか」と「日付の範囲からどのファイルを開くか」だけ。
@@ -13,7 +13,6 @@
 //
 // 書けなくても・読めなくても例外を投げない。壊れた行・版が違う行は読まずに1行ずつ落とす。
 
-import { readdirSync } from "node:fs"
 import { join } from "node:path"
 
 import { z } from "zod"
@@ -27,13 +26,12 @@ import {
   appendJsonLine,
   dateFileNamesBetween,
   dateFilePath,
-  readJsonLines,
   readValidLines,
 } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-import { runGit } from "../../repository/adapter/git.ts"
 import type { TokenUsageEntry, TokenUsageLog, TokenUsagePeriod } from "../core/token-usage.ts"
+import type { OpenTaskReader } from "./tw-claims.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/token-usage/`）。 */
 const TOKEN_USAGE_DIR_NAME = "token-usage"
@@ -89,59 +87,30 @@ const tokenUsageRecordSchema = z
   })
   .transform((row) => ({ ...row, taskId: row.taskId, stage: row.stage }))
 
-/** 着手の印の置き場（作業ツリーの根から）。tw が置く。 */
-const TASK_CLAIMS_DIR = join(".tw", "local", "task-open-claims")
-
-/** 台帳の `lap` の出来事のうち、段を読むのに要る鍵。 */
-const lapEventSchema = z.object({ event: z.literal("lap"), task: z.string(), stage: z.string() })
-
 /** 書き込んでよいのはこの下だけ。 */
 export function tokenUsageDir(): string {
   return join(tsukumoHomeDir(), TOKEN_USAGE_DIR_NAME)
 }
 
 /**
- * 着手の印（作業ツリーの根）と台帳（全作業ツリーが共有する git dir）の場所。
- * git の作業ツリーでなければ、記録にタスクは結ばない。
- */
-export type TaskPlace = {
-  readonly worktreeRoot: string
-  readonly gitCommonDir: string
-}
-
-/** `cwd` から {@link TaskPlace} を git に尋ねる（起動時に1回）。git が無い・作業ツリーでないときは `undefined`。 */
-export async function resolveTaskPlace(cwd: string): Promise<TaskPlace | undefined> {
-  const [toplevel, common] = await Promise.all([
-    runGit(cwd, ["rev-parse", "--show-toplevel"]),
-    runGit(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"]),
-  ])
-  if (toplevel.kind !== "output" || common.kind !== "output") {
-    return undefined
-  }
-  const worktreeRoot = toplevel.stdout.trim()
-  const gitCommonDir = common.stdout.trim()
-  return worktreeRoot === "" || gitCommonDir === "" ? undefined : { worktreeRoot, gitCommonDir }
-}
-
-/**
- * 記録の読み書き口を作る。`place` は着手の印と台帳の場所（無ければタスクを結ばない）、`root` は置き場（既定は {@link tokenUsageDir}）。
+ * 記録の読み書き口を作る。`openTask` はこの作業ツリーで着手中のタスクを読む口（{@link OpenTaskReader}）、`root` は置き場（既定は {@link tokenUsageDir}）。
  * 1つの口を日をまたいで使い回せる（`append` のたびに `entry.at` から行き先を組み立てる）。
  */
 export function createTokenUsageLog(
-  place: TaskPlace | undefined,
+  openTask: OpenTaskReader,
   root: string = tokenUsageDir(),
 ): TokenUsageLog {
   return {
     append: (entry) => {
-      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry, place))
+      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry, openTask))
     },
     readRange: (period) => readRecordsInRange(root, period),
   }
 }
 
 /** 1ターンぶんの記録を、書き出す行（`TokenUsageRecord`）へ変換する。 */
-function toRecord(entry: TokenUsageEntry, place: TaskPlace | undefined): TokenUsageRecord {
-  const task = place === undefined ? undefined : readOpenTask(place, entry.at)
+function toRecord(entry: TokenUsageEntry, openTask: OpenTaskReader): TokenUsageRecord {
+  const task = openTask(entry.at)
   return {
     v: TOKEN_USAGE_FORMAT_VERSION,
     at: isoWithOffset(entry.at),
@@ -151,53 +120,6 @@ function toRecord(entry: TokenUsageEntry, place: TaskPlace | undefined): TokenUs
     stage: task?.stage,
     models: entry.models,
     breakdown: entry.breakdown,
-  }
-}
-
-/**
- * 作業ツリーで着手中のタスクと、その段。
- * 着手の印がちょうど1件のときだけ結ぶ（0件は着手していない、2件以上はどれか決められない）。
- * 段は {@link latestLapStage}。読めなければ段だけ無い。
- */
-function readOpenTask(
-  place: TaskPlace,
-  at: number,
-): { readonly taskId: string; readonly stage: string | undefined } | undefined {
-  const claims = listDir(join(place.worktreeRoot, TASK_CLAIMS_DIR))
-  const taskId = claims.length === 1 ? claims[0] : undefined
-  if (taskId === undefined) {
-    return undefined
-  }
-  return { taskId, stage: latestLapStage(place.gitCommonDir, taskId, at) }
-}
-
-/**
- * タスクの最後の `lap` の段。台帳は月ごとのファイルなので、書く月に無ければ前月を読む。
- * 月をまたいで続くタスクと、月初でまだ当月の lap が出ていないターンが、月の中と同じ段になる。
- */
-function latestLapStage(gitCommonDir: string, taskId: string, at: number): string | undefined {
-  const thisMonth = Temporal.PlainDate.from(localDateKey(at)).toPlainYearMonth()
-  return [thisMonth, thisMonth.subtract({ months: 1 })]
-    .map((month) => lapStagesOf(gitCommonDir, month.toString(), taskId).at(-1))
-    .find((stage) => stage !== undefined)
-}
-
-/** 台帳の1か月ぶん（`flow/<YYYY-MM>.jsonl`）にある、そのタスクの `lap` の段を書いた順に返す。 */
-function lapStagesOf(gitCommonDir: string, month: string, taskId: string): readonly string[] {
-  return readJsonLines(join(gitCommonDir, "task-workflow", "flow", `${month}.jsonl`)).flatMap(
-    (raw) => {
-      const parsed = lapEventSchema.safeParse(raw)
-      return parsed.success && parsed.data.task === taskId ? [parsed.data.stage] : []
-    },
-  )
-}
-
-/** ディレクトリの中の名前（読めなければ空）。 */
-function listDir(path: string): readonly string[] {
-  try {
-    return readdirSync(path)
-  } catch {
-    return []
   }
 }
 

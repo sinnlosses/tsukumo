@@ -31,7 +31,7 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   "experience-metric": new Set([]),
   diagnostic: new Set([]),
   "plan-usage": new Set([]),
-  "token-usage": new Set(["repository"]),
+  "token-usage": new Set([]),
   "usage-review": new Set(["session-driver"]),
   host: new Set([]),
   repository: new Set([]),

@@ -1,16 +1,18 @@
 // サブエージェントが E2E を全部流した回数の、着手中の1件ごとの台帳。
-// 回数はこの作業ツリー固有の git dir の `e2e-full-runs` に置く。
-// 鍵は開いている着手の印の `id:birthtimeMs` の並びで、印が消えて作り直されると鍵が変わり、数が戻る。
-// 着手の印は tw の控えと同じ順（`.tw/local/` → `.tw/` 直下 → git dir）で探す。
+// 回数はこの作業ツリー固有の git dir の `e2e-full-runs` に、`{key, count}` の JSON で置く。
+// 鍵は `tw status --claims` の着手の同一性の鍵（`claim`）で、着手し直すと鍵が変わり、数が戻る。
+// 着手が1件でないときと口が読めないときは数えない。tw の内部の置き場は読まない。
 // サブエージェントの Bash が走っている印は git dir の `subagent-bash/` の下に hook が置き、
 // `MARK_STALE_MS` より古い印は無いものとみなす。
 // 印は作業ツリーごとで呼び出し元を区別しないので、サブエージェントの Bash と同時に走る主のセッションの実行も数える。
 
+import { execFileSync } from "node:child_process"
 import {
   existsSync,
   mkdirSync,
   readdirSync,
   readFileSync,
+  renameSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -30,18 +32,7 @@ const MARK_STALE_MS = 600_000
 const MARK_NAME = /^[\w-]+$/
 
 const RUNS_FILE_NAME = "e2e-full-runs"
-const OPEN_CLAIMS_DIR_NAME = "task-open-claims"
-const TW_DIR_NAME = ".tw"
-const TW_LOCAL_DIR_NAME = "local"
-
-/** tw が `.tw/local/` を作るときに `.tw/` 直下から移す控えの名前。1つでもあれば `.tw/` 直下が控えの置き場。 */
-const TW_LEGACY_STATE_NAMES: ReadonlySet<string> = new Set([
-  "task-ship-verify-owed",
-  "task-verify-stamp",
-  "task-pause-stamp",
-  "task-step-stamps",
-  OPEN_CLAIMS_DIR_NAME,
-])
+const TW_CLAIMS_TIMEOUT_MS = 5000
 
 /** 数える場所。`workRoot` は作業ツリーの根、`gitDir` はその作業ツリー固有の git dir。 */
 export type E2eRunPlace = { readonly workRoot: string; readonly gitDir: string }
@@ -49,13 +40,20 @@ export type E2eRunPlace = { readonly workRoot: string; readonly gitDir: string }
 /** `uncounted` はサブエージェントの印か着手の印が無くて数えなかったもの。 */
 export type E2eRunRecord = "uncounted" | "counted" | "over-limit"
 
-/** 1回を台帳に足す。足すと上限を超えるなら足さずに `over-limit`。読み書きに失敗したら `uncounted`。 */
-export function recordE2eRun(place: E2eRunPlace, nowMs: number): E2eRunRecord {
+/**
+ * 1回を台帳に足す。足すと上限を超えるなら足さずに `over-limit`。読み書きに失敗したら `uncounted`。
+ * `readClaimKey` は着手の同一性の鍵を返す（既定は {@link readTwClaimKey}）。
+ */
+export function recordE2eRun(
+  place: E2eRunPlace,
+  nowMs: number,
+  readClaimKey: (workRoot: string) => string | undefined = readTwClaimKey,
+): E2eRunRecord {
   try {
     if (!hasFreshSubagentMark(place.gitDir, nowMs)) {
       return "uncounted"
     }
-    const key = openClaimsKey(place)
+    const key = readClaimKey(place.workRoot)
     if (key === undefined) {
       return "uncounted"
     }
@@ -64,7 +62,7 @@ export function recordE2eRun(place: E2eRunPlace, nowMs: number): E2eRunRecord {
     if (before + 1 > RUN_LIMIT) {
       return "over-limit"
     }
-    writeFileSync(runsPath, `${key}\n${"x\n".repeat(before + 1)}`)
+    writeRunCount(runsPath, key, before + 1)
     return "counted"
   } catch {
     return "uncounted"
@@ -99,37 +97,52 @@ export function removeSubagentMark(gitDir: string, toolUseId: string): void {
   }
 }
 
-/** 開いている着手の印を `id:birthtimeMs` で並べた鍵。印が無ければ `undefined`。 */
-function openClaimsKey(place: E2eRunPlace): string | undefined {
-  const claimsDir = join(twStateDirectory(place), OPEN_CLAIMS_DIR_NAME)
-  if (!existsSync(claimsDir)) {
+/** `tw status --claims` が返す、着手が1件のときのその同一性の鍵。打てない・読めない・1件でないときは `undefined`。 */
+export function readTwClaimKey(workRoot: string): string | undefined {
+  try {
+    const output = execFileSync("tw", ["status", "--claims"], {
+      cwd: workRoot,
+      timeout: TW_CLAIMS_TIMEOUT_MS,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+    const parsed: unknown = JSON.parse(output)
+    const claims = isRecord(parsed) ? parsed["claims"] : undefined
+    if (!Array.isArray(claims) || claims.length !== 1) {
+      return undefined
+    }
+    const claim: unknown = claims[0]
+    const key = isRecord(claim) ? claim["claim"] : undefined
+    return typeof key === "string" && key !== "" ? key : undefined
+  } catch {
     return undefined
   }
-  const ids = readdirSync(claimsDir).toSorted()
-  if (ids.length === 0) {
-    return undefined
-  }
-  return ids.map((id) => `${id}:${statSync(join(claimsDir, id)).birthtimeMs}`).join(",")
 }
 
-/** tw が控えを読む置き場。`.tw/local/` があればそこ、`.tw/` 直下に旧い控えがあればそこ、無ければ git dir。 */
-function twStateDirectory(place: E2eRunPlace): string {
-  const twDir = join(place.workRoot, TW_DIR_NAME)
-  const localDir = join(twDir, TW_LOCAL_DIR_NAME)
-  if (existsSync(localDir) && statSync(localDir).isDirectory()) {
-    return localDir
-  }
-  if (existsSync(twDir) && readdirSync(twDir).some((name) => TW_LEGACY_STATE_NAMES.has(name))) {
-    return twDir
-  }
-  return place.gitDir
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
 }
 
-/** 控えの鍵が今の鍵と同じときだけ、記録済みの回数を返す。違えば0。 */
+/** 台帳の鍵が今の鍵と同じときだけ、記録済みの回数を返す。違う・読めないなら0。 */
 function readRunCount(runsPath: string, key: string): number {
   if (!existsSync(runsPath)) {
     return 0
   }
-  const [recordedKey, ...runLines] = readFileSync(runsPath, "utf8").split("\n")
-  return recordedKey === key ? runLines.filter((line) => line !== "").length : 0
+  try {
+    const recorded: unknown = JSON.parse(readFileSync(runsPath, "utf8"))
+    if (!isRecord(recorded) || recorded["key"] !== key) {
+      return 0
+    }
+    const count = recorded["count"]
+    return typeof count === "number" && Number.isInteger(count) && count > 0 ? count : 0
+  } catch {
+    return 0
+  }
+}
+
+/** 一時ファイルに書いてから名前を変える（読む側に書きかけが見えない）。 */
+function writeRunCount(runsPath: string, key: string, count: number): void {
+  const temporaryPath = `${runsPath}.${process.pid}.tmp`
+  writeFileSync(temporaryPath, JSON.stringify({ key, count }))
+  renameSync(temporaryPath, runsPath)
 }
