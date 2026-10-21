@@ -5,7 +5,7 @@
 import { type AnyContractProcedure, type InferSchemaOutput, oc } from "@orpc/contract"
 import { z } from "zod"
 
-import type { FRAME_ERROR_REASON } from "./frame.ts"
+import { FRAME_ERROR_REASON } from "./frame.ts"
 
 /** 許可モードの値の全体。SDK の `PermissionMode` と同じ値に揃える（テストが型で守る）。 */
 export const PERMISSION_MODES = [
@@ -49,6 +49,10 @@ export function isEffortLevel(value: string): value is EffortLevel {
 /** 断るときに返す定型文（`FRAME_ERROR_REASON` の値のどれか）。 */
 export type CommandRefusalReason = (typeof FRAME_ERROR_REASON)[keyof typeof FRAME_ERROR_REASON]
 
+function isCommandRefusalReason(value: unknown): value is CommandRefusalReason {
+  return Object.values(FRAME_ERROR_REASON).some((reason) => reason === value)
+}
+
 /**
  * 断る条件（契約の `meta`）。値は `false`（断らない）か、断るときの理由。
  * 見る順は `chatOnly`（雑談の外なら断る）→ `idleTurn`（ターン中なら断る）で、見るのは `commandGuard` の1箇所。
@@ -73,7 +77,10 @@ export const NO_COMMAND_REFUSAL = {
  * `status` が表と食い違うと、契約に無いエラー（`defined: false`・500）として届くため。
  */
 export const COMMAND_ERRORS = {
-  REFUSED: { status: 409, data: z.object({ reason: z.string() }) },
+  REFUSED: {
+    status: 409,
+    data: z.object({ reason: z.custom<CommandRefusalReason>(isCommandRefusalReason) }),
+  },
 }
 
 /** 全部のコマンドの契約の土台。契約はこれに入力と（断るものだけ）`meta` を足して書く。 */

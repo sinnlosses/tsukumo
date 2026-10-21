@@ -8,7 +8,9 @@ import type { CommandContract, CommandInputs, CommandRefusalReason } from "../..
 import type { SessionEvent } from "../../shared/session/session-event.ts"
 
 /** コマンドを受け付けられたか。理由は定型文（`FRAME_ERROR_REASON`）だけを返す。 */
-export type DispatchResult = { readonly ok: true } | { readonly ok: false; readonly reason: string }
+export type DispatchResult =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly reason: CommandRefusalReason }
 
 /**
  * 書き込み口を呼び、返ったイベントを流す行。`undefined` が返ったとき・投げたときは `failure` で断る。

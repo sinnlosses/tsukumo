@@ -1,7 +1,7 @@
 // Claude Code の許可モード（`PERMISSION_MODES`）を、画面に出す日本語ラベルにする。
 
-import { isPermissionMode, type PermissionMode } from "../../shared/command.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../shared/session/session-default.ts"
+import type { PermissionMode } from "../../shared/command.ts"
+import type { ReportedPermissionMode } from "../../shared/session/session-info.ts"
 
 /** 許可モードの値と、日本語ラベル。並びは `<select>` に出す順（緩い側が下）。 */
 export const PERMISSION_MODE_LABELS = [
@@ -12,15 +12,22 @@ export const PERMISSION_MODE_LABELS = [
   ["bypassPermissions", "全部許す"],
 ] satisfies readonly (readonly [PermissionMode, string])[]
 
-/** 届いた `permissionMode` から、画面で扱う許可モードを決める。まだ届いていないときは見た目上の既定へ畳む。 */
-export function resolvePermissionMode(mode: string | undefined): PermissionMode {
-  return mode !== undefined && isPermissionMode(mode)
-    ? mode
-    : BUILTIN_SESSION_DEFAULT.permissionMode
+/** 許可モードの字。知らない語は届いた語のまま出す（既定のモードの字に倒さない）。 */
+export function permissionModeLabel(mode: ReportedPermissionMode): string {
+  return typeof mode === "string"
+    ? (PERMISSION_MODE_LABELS.find(([value]) => value === mode)?.[1] ?? mode)
+    : mode.raw
+}
+
+export function permissionModeChoices(
+  mode: ReportedPermissionMode,
+): readonly { readonly value: string; readonly label: string }[] {
+  const known = PERMISSION_MODE_LABELS.map(([value, label]) => ({ value, label }))
+  return typeof mode === "string" ? known : [...known, { value: mode.raw, label: mode.raw }]
 }
 
 /** 「全部許す」かどうか。この1つだけは字に意味の色を載せる。 */
-export function isDangerousPermissionMode(mode: PermissionMode): boolean {
+export function isDangerousPermissionMode(mode: ReportedPermissionMode): boolean {
   return mode === DANGEROUS_PERMISSION_MODE
 }
 

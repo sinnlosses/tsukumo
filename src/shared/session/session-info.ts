@@ -1,5 +1,23 @@
 // `init` と `sessions-changed` がどこまで届いたかを表す型。
 
+import { isPermissionMode, type PermissionMode } from "../command.ts"
+
+/**
+ * SDK の `init` が運んできた許可モード。tsukumo が知っている語は {@link PermissionMode}、知らない語は届いた文字列のまま `unknown` で運ぶ。
+ * 知らない語を既定のモードに倒すと、許可の強さを誤って伝える。
+ */
+export type ReportedPermissionMode =
+  | PermissionMode
+  | { readonly kind: "unknown"; readonly raw: string }
+
+export function foldPermissionMode(raw: string): ReportedPermissionMode {
+  return isPermissionMode(raw) ? raw : { kind: "unknown", raw }
+}
+
+export function permissionModeValue(mode: ReportedPermissionMode): string {
+  return typeof mode === "string" ? mode : mode.raw
+}
+
 /**
  * `init`（`session-info`）と、続きから始めたときの `sessions-changed` がどこまで届いたか。
  * `sessionId` が分かる口は2つ（`init` と `sessions-changed`）、`permissionMode` は1つ（`init`）なので、どこまで届いたかが3つの状態になる。
@@ -16,4 +34,8 @@
 export type SessionInfo =
   | { readonly kind: "starting" }
   | { readonly kind: "identified"; readonly sessionId: string }
-  | { readonly kind: "running"; readonly sessionId: string; readonly permissionMode: string }
+  | {
+      readonly kind: "running"
+      readonly sessionId: string
+      readonly permissionMode: ReportedPermissionMode
+    }

@@ -5,6 +5,21 @@ import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state
 import { apply, runningSession } from "../../fixture/session-state.ts"
 
 describe("applySessionEvent", () => {
+  it("知らない許可モードの init は unknown のまま running に運ぶ", () => {
+    const view = apply({
+      kind: "session-info",
+      sessionId: "s-1",
+      model: undefined,
+      permissionMode: { kind: "unknown", raw: "dontAsk" },
+      slashCommands: [],
+      terminalSlashCommands: [],
+      skillNames: [],
+      agentNames: [],
+    })
+
+    expect(runningSession(view).permissionMode).toEqual({ kind: "unknown", raw: "dontAsk" })
+  })
+
   it("init のたびにセッション情報を上書きする（端末専用コマンドは候補から除く）", () => {
     const view = apply(
       {

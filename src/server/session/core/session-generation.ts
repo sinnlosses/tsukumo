@@ -1,5 +1,6 @@
 // 駆動1代ぶんの持ち物と、その中の小さな入れ物。起こし直しは `SessionGeneration` を丸ごと作り直す。
 
+import type { SettingConfirmation } from "../../../shared/session/session-event-setting.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
@@ -107,7 +108,7 @@ export function createPendingConclusion(): PendingConclusion {
 }
 
 export function createConfirmedSettings(): ConfirmedSettings {
-  const last = new Map<string, string>()
+  const last = new Map<SettingConfirmation["setting"], string>()
   return {
     isRepeat: (event, state) =>
       event.kind === "setting-confirmed" &&

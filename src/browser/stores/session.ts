@@ -7,6 +7,7 @@ import { startTransition, useEffect } from "react"
 import { isPlainObject } from "remeda"
 import { create } from "zustand"
 
+import type { CommandRefusalReason } from "../../shared/command.ts"
 import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
 import type { CommandClient } from "../../shared/rpc.ts"
 import { applySessionEvent } from "../../shared/session/session-fold.ts"
@@ -178,7 +179,7 @@ export function useSessionConnection(): void {
 }
 
 /** `dispatchAwaited` の失敗が、その理由で断られたもの（契約の `REFUSED`）か。 */
-export function isRefusedFor(error: unknown, reason: string): boolean {
+export function isRefusedFor(error: unknown, reason: CommandRefusalReason): boolean {
   return (
     error instanceof ORPCError &&
     error.code === "REFUSED" &&

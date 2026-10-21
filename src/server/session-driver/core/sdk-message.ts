@@ -12,6 +12,7 @@ import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportArgumentCharsOf } from "../../../shared/report/report-argument-chars.ts"
 import { parsePhaseResult } from "../../../shared/session/phase-result.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { foldPermissionMode } from "../../../shared/session/session-info.ts"
 import { parseWorkPlan } from "../../../shared/session/work-plan.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { nonBlankString } from "../../../shared/utils/non-blank-string.ts"
@@ -154,7 +155,9 @@ function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly
   }
 
   const model = optionalString(message.model)
-  const permissionMode = optionalString(message.permissionMode)
+  const rawPermissionMode = optionalString(message.permissionMode)
+  const permissionMode =
+    rawPermissionMode === undefined ? undefined : foldPermissionMode(rawPermissionMode)
   return [
     {
       kind: "session-info",
@@ -169,7 +172,7 @@ function sessionInfoEvents(message: Readonly<Record<string, unknown>>): readonly
     ...(model === undefined
       ? []
       : [{ kind: "setting-confirmed", setting: "model", value: model } as const]),
-    ...(permissionMode === undefined
+    ...(typeof permissionMode !== "string"
       ? []
       : [{ kind: "setting-confirmed", setting: "permissionMode", value: permissionMode } as const]),
   ]

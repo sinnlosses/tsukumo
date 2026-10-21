@@ -12,9 +12,10 @@
 import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
+import { permissionModeValue } from "../../../../../shared/session/session-info.ts"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../../../../domain/effort-label.ts"
 import { MODEL_LABELS } from "../../../../domain/model-label.ts"
-import { PERMISSION_MODE_LABELS } from "../../../../domain/permission-mode-label.ts"
+import { permissionModeChoices } from "../../../../domain/permission-mode-label.ts"
 import type { ModelPermissionControl } from "../../../../stores/model-permission.ts"
 import { Select } from "../../../ui/select/select.tsx"
 import shellStyles from "../screen-nav.module.css"
@@ -93,10 +94,10 @@ export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionPr
         ariaLabel="許可モード"
         frameClassName={styles["screen-nav-select"]}
         className={permissionModeClass}
-        value={permissionMode}
+        value={permissionModeValue(permissionMode)}
         disabled={false}
         title="許可モード"
-        options={PERMISSION_MODE_LABELS.map(([value, label]) => ({ value, label }))}
+        options={permissionModeChoices(permissionMode)}
         onChange={onSetPermissionMode}
       />
     </span>

@@ -85,6 +85,22 @@ function dotOf(label: RegExp): string | undefined {
   return select.parentElement?.querySelector("[data-dot]")?.getAttribute("data-dot") ?? undefined
 }
 
+describe("RunSettingGroup（知らない許可モード）", () => {
+  it("既定の字に倒さず、届いた語を許可モードの口の名前にする", () => {
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      session: {
+        kind: "running",
+        sessionId: "s-fixture",
+        permissionMode: { kind: "unknown", raw: "dontAsk" },
+      },
+    })
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    expect(screen.getByRole("combobox", { name: "許可モード dontAsk" })).toBeTruthy()
+  })
+})
+
 describe("RunSettingGroup（口の右肩の点）", () => {
   it("印が無ければ点を出さない", () => {
     putSession(stateWithMarks(marksWith({})))

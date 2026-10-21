@@ -9,7 +9,12 @@ import type { IncomingMessage } from "node:http"
 
 import { ORPCError, os } from "@orpc/server"
 
-import { COMMAND_ERRORS, type CommandMeta, NO_COMMAND_REFUSAL } from "../../../shared/command.ts"
+import {
+  COMMAND_ERRORS,
+  type CommandMeta,
+  type CommandRefusalReason,
+  NO_COMMAND_REFUSAL,
+} from "../../../shared/command.ts"
 import { restartRefused, type SessionState } from "../../../shared/session/session-state.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/view-server/session-socket.ts"
 import type { CommandSession } from "../../session/core/command-session.ts"
@@ -82,7 +87,7 @@ export const commandGuard = os
   })
 
 /** 断る理由（断らないなら undefined）。 */
-function refusalOf(meta: CommandMeta, state: SessionState): string | undefined {
+function refusalOf(meta: CommandMeta, state: SessionState): CommandRefusalReason | undefined {
   if (!state.chatMode && meta.chatOnly !== false) {
     return meta.chatOnly
   }

@@ -5,15 +5,17 @@
 import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
+import { permissionModeValue } from "../../../../shared/session/session-info.ts"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../../../domain/effort-label.ts"
 import { MODEL_LABELS } from "../../../domain/model-label.ts"
-import { PERMISSION_MODE_LABELS } from "../../../domain/permission-mode-label.ts"
+import { permissionModeLabel } from "../../../domain/permission-mode-label.ts"
 import { type SettingDot, useModelPermission } from "../../../stores/model-permission.ts"
 import styles from "./run-setting-group.module.css"
 import {
   effortSelectOptions,
   modelSelectOptions,
   permissionModeSelectOptions,
+  unknownPermissionModeOption,
 } from "./run-setting-option.tsx"
 import { RunSettingSelect } from "./run-setting-select.tsx"
 
@@ -33,7 +35,7 @@ export function RunSettingGroup(props: { readonly placement: RunSettingPlacement
   const rail = props.placement === "rail"
 
   const modelLabel = labelOf(MODEL_LABELS, control.model)
-  const permissionModeLabel = labelOf(PERMISSION_MODE_LABELS, control.permissionMode)
+  const permissionModeText = permissionModeLabel(control.permissionMode)
   const { effort } = control
   const effortName = effort.kind === "known" ? effortLabel(effort.value) : effort.reason
   const effortValue = effort.kind === "known" ? effort.value : EFFORT_PLACEHOLDER_VALUE
@@ -78,16 +80,21 @@ export function RunSettingGroup(props: { readonly placement: RunSettingPlacement
       <span className={styles["run-setting-divider"]} aria-hidden="true" />
       <RunSettingSelect
         id={permissionModeSelectId}
-        ariaLabel={`許可モード ${permissionModeLabel}`}
+        ariaLabel={`許可モード ${permissionModeText}`}
         heading="許可モード"
-        value={control.permissionMode}
-        options={permissionModeSelectOptions(undefined)}
+        value={permissionModeValue(control.permissionMode)}
+        options={[
+          ...permissionModeSelectOptions(undefined),
+          ...(typeof control.permissionMode === "string"
+            ? []
+            : [unknownPermissionModeOption(control.permissionMode.raw)]),
+        ]}
         disabled={false}
         danger={control.permissionModeDangerous}
         rail={rail}
         layout="list"
         mouth="icon"
-        title={dotTitle(`許可モード ${permissionModeLabel}`, control.permissionModeDot)}
+        title={dotTitle(`許可モード ${permissionModeText}`, control.permissionModeDot)}
         dot={control.permissionModeDot}
         onChange={control.onSetPermissionMode}
       />

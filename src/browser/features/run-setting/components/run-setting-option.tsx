@@ -7,6 +7,7 @@
 
 import clsx from "clsx"
 import {
+  Shield,
   ShieldCheck,
   ShieldEllipsis,
   ShieldHalf,
@@ -91,6 +92,20 @@ export function effortSelectOptions(effort: EffortSelect): readonly RunSettingSe
       </>
     ),
   }))
+}
+
+/** 知らない許可モードが届いたときに末尾へ足す行。絵は何の強さも名乗らない素の盾で、字は届いた語。 */
+export function unknownPermissionModeOption(raw: string): RunSettingSelectOption {
+  return {
+    value: raw,
+    disabled: false,
+    icon: (
+      <span className={styles["run-setting-shield"]} data-fill="empty">
+        <Shield size={16} strokeWidth={1.9} aria-hidden="true" />
+      </span>
+    ),
+    row: <RunSettingName danger={false}>{raw}</RunSettingName>,
+  }
 }
 
 /** `modes` は出す許可モード。`undefined` なら全部。 */

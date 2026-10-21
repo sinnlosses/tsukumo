@@ -14,10 +14,10 @@ export type ModelEffortSupport = {
 }
 
 /** `setting-confirmed` が運ぶ、どの設定をどの値で見届けたか。 */
-export type SettingConfirmation = {
-  readonly setting: "model" | "effort" | "permissionMode"
-  readonly value: string
-}
+export type SettingConfirmation =
+  | { readonly setting: "model"; readonly value: string }
+  | { readonly setting: "effort"; readonly value: EffortLevel }
+  | { readonly setting: "permissionMode"; readonly value: PermissionMode }
 
 export type SettingEvent =
   /**
@@ -45,7 +45,7 @@ export type SettingEvent =
   /** 許可モードの切り替えを受け付けた（`session.setPermissionMode` が通った）。`model-changed` / `effort-changed` と同じ受け付けの合図。 */
   | { readonly kind: "permission-mode-changed"; readonly mode: PermissionMode }
   /**
-   * モデル・effort・許可モードのどれかが効いているのを、SDK から届いた値で見届けた。値を運ぶだけで、受け付けた値と合うかは読む側が決める。
+   * モデル・effort・許可モードのどれかが効いているのを、SDK から届いた値で見届けた。値は設定ごとの型に絞ってあり、受け付けた値と合うかは読む側が決める。
    * 出どころは `assistant` の `message.model`（メインのみ）・`init` の `model` / `permissionMode`・
    * フック入力（`PreToolUse` と `Stop`）の `effort.level` / `permission_mode`。
    * effort に対応しないモデルでは `effort.level` が来ないので、effort のこの合図は出ない。

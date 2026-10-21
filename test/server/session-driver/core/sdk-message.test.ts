@@ -200,6 +200,21 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(assistantMessage([overflow]), EXPRESSIONS)).toEqual([])
   })
 
+  it("init の知らない許可モードは unknown のまま運び、見届けの合図にはしない", () => {
+    const message = {
+      type: "system",
+      subtype: "init",
+      session_id: "session-dummy",
+      permissionMode: "dontAsk",
+    }
+
+    const events = toSessionEvents(message, EXPRESSIONS)
+
+    expect(events).toMatchObject([
+      { kind: "session-info", permissionMode: { kind: "unknown", raw: "dontAsk" } },
+    ])
+  })
+
   it("system の init からセッション情報を取り出す", () => {
     const message = {
       type: "system",

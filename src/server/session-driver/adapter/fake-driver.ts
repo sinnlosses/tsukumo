@@ -5,7 +5,7 @@
 // 疑似セッションは手で書いた架空の会話だけで、実物の transcript は使わない。
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
-import type { EffortLevel } from "../../../shared/command.ts"
+import type { EffortLevel, PermissionMode } from "../../../shared/command.ts"
 import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
 import type { SessionDefault } from "../../../shared/session/session-default.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../shared/session/session-digest.ts"
@@ -68,7 +68,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   let pending: readonly PendingAsk[] = []
   // いま動いているモデルと許可モード。起こした既定から始まり、`setModel` / `setPermissionMode` で変わる（本物は SDK が持つ値で、ここはその代わり）。
   let model: string = options.sessionDefault.model
-  let permissionMode: string = options.sessionDefault.permissionMode
+  let permissionMode: PermissionMode = options.sessionDefault.permissionMode
   // いま効いている effort。起こした直後・`setEffort` のたび・ターンが終わるたびに画面へ流す。
   let effort: EffortLevel = FAKE_DEFAULT_EFFORT
   // 差し戻しの預かり（本物の駆動と同じ `CallReview`）。

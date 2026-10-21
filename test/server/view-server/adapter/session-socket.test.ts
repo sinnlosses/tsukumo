@@ -15,6 +15,7 @@ import {
   attachSessionSocket,
   type SessionSocket,
 } from "../../../../src/server/view-server/adapter/session-socket.ts"
+import type { CommandRefusalReason } from "../../../../src/shared/command.ts"
 import {
   FRAME_ERROR_REASON,
   PROTOCOL_VERSION,
@@ -224,7 +225,7 @@ async function refusalOf(call: Promise<unknown>): Promise<unknown> {
 }
 
 /** 契約の `REFUSED` として届いたときの要点。 */
-function REFUSED(reason: string) {
+function REFUSED(reason: CommandRefusalReason) {
   return { code: "REFUSED", status: 409, defined: true, data: { reason } }
 }
 

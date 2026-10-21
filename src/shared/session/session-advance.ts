@@ -2,7 +2,7 @@
 // 時刻は畳み込みの中で時計を読まず、イベントに打たれた `at`（エポックミリ秒）を受け取る（サーバとブラウザの状態が同じになるように、時刻はイベントの発生側が決める）。
 
 import type { CharacterInfo } from "../character-pack/character.ts"
-import { isEffortLevel, isModelAlias } from "../command.ts"
+import { isModelAlias } from "../command.ts"
 import { applyDiaryEvent } from "../diary/diary.ts"
 import { NO_REPORT_CHANGE_SUMMARY } from "../report/report-change-summary.ts"
 import type { PendingAsk, StampedPendingAsk } from "../session-driver/pending-ask.ts"
@@ -12,6 +12,7 @@ import { clipText } from "../utils/clip-text.ts"
 import { commandCandidates } from "./command-suggestion.ts"
 import { isSessionEventKind } from "./session-event-kind.ts"
 import type { SessionEvent } from "./session-event.ts"
+import { permissionModeValue } from "./session-info.ts"
 import {
   settleUtterance,
   trimToRecentTurns,
@@ -115,14 +116,16 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         state,
         "permissionMode",
         event.mode,
-        originOf(state.session.kind === "running" ? state.session.permissionMode : undefined),
+        originOf(
+          state.session.kind === "running"
+            ? permissionModeValue(state.session.permissionMode)
+            : undefined,
+        ),
         at,
       )
     case "setting-confirmed":
       return withConfirmedMark(
-        event.setting === "effort" && isEffortLevel(event.value)
-          ? { ...state, effort: event.value }
-          : state,
+        event.setting === "effort" ? { ...state, effort: event.value } : state,
         event,
         at,
       )

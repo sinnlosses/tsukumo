@@ -16,6 +16,7 @@ import type { SettingEvent } from "./session-event-setting.ts"
 import type { SpeakCalledEvent, SpeechEvent } from "./session-event-speech.ts"
 import type { SurroundingEvent } from "./session-event-surrounding.ts"
 import type { TurnHealthEvent } from "./session-event-turn-health.ts"
+import type { ReportedPermissionMode } from "./session-info.ts"
 
 /**
  * `/` 補完に出すコマンド1件。
@@ -41,7 +42,7 @@ export type SessionEvent =
       readonly kind: "session-info"
       readonly sessionId: string
       readonly model: string | undefined
-      readonly permissionMode: string | undefined
+      readonly permissionMode: ReportedPermissionMode | undefined
       readonly slashCommands: readonly string[]
       /**
        * `slash_commands` のうち、端末専用（UX が端末に結び付く。`doctor` / `color` / `reload-plugins` など）のもの。入力欄の補完からは除く。
