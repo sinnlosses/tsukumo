@@ -61,6 +61,7 @@
 - [`docs/architecture.md`](../architecture.md) — アーキテクチャ詳細（全体図、`shared` / `server`（`core`・`adapter`）/ `browser` の層・共有層・置き場所、設計判断）
 - [`docs/architecture/browser.md`](../architecture/browser.md) — ブラウザ側（状態の持ち方・Markdown・重いライブラリ・立ち絵の動き・CSS・`components/ui/` の部品）
 - [`docs/architecture/character-pack.md`](../architecture/character-pack.md) — キャラクターパック（形・探索順・画面から書くときの境界・会話の記録の置き場）
+- [`docs/architecture/stage-item.md`](../architecture/stage-item.md) — アイテム（キャラビューの席に置く飾りの一覧と席の置き場・画面から足すときの受け取り方・配る URL）
 - [`docs/architecture/testing.md`](../architecture/testing.md) — テスト（対象ごとの方法・E2E・目視確認の手順）
 - [`docs/architecture/build.md`](../architecture/build.md) — ビルドと依存（事前の組み立て・HMR・足す依存の一覧）
 - [`docs/architecture/screen-design.md`](../architecture/screen-design.md) — 画面のデザイン（色・書体・レイアウトの計画とトークン、雑談モードの画面、背景、画面のナビの帯）
