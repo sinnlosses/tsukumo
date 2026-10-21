@@ -19,6 +19,9 @@ export const checkRequestSchema = z.object({
   sources: z.array(z.string()),
 })
 
+/** mermaid の読み込みが済んだ（`ready: true`）か、読み込めなかった（`ready: false`）ことの合図。 */
+export const readySignalSchema = z.object({ ready: z.boolean() })
+
 /** `ok: false` は worker が mermaid を読み込めなかったなど、検査そのものが動かなかったとき。 */
 export const checkReplySchema = z.discriminatedUnion("ok", [
   z.object({ id: z.number().int(), ok: z.literal(true), faults: z.array(faultSchema) }),

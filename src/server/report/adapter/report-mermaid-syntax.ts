@@ -5,13 +5,17 @@
 import { Worker } from "node:worker_threads"
 
 import type { MermaidFault } from "../core/report-figure-fault.ts"
-import { checkReplySchema } from "./report-mermaid-message.ts"
+import { checkReplySchema, readySignalSchema } from "./report-mermaid-message.ts"
 
-/** 1回の検査を待つ上限（初回の mermaid の読み込みを含む）。 */
+/** worker が mermaid を読み込み終えるまでを待つ上限。 */
+const LOAD_TIMEOUT_MS = 20000
+/** 読み込みが済んだあとの1回の検査を待つ上限。 */
 const CHECK_TIMEOUT_MS = 5000
 
 type Running = {
   readonly worker: Worker
+  /** worker が mermaid を読み込めたか。読み込みの失敗・時間切れ・異常終了は false。 */
+  readonly loaded: Promise<boolean>
   readonly pending: Map<number, (faults: readonly MermaidFault[]) => void>
 }
 
@@ -40,24 +44,33 @@ async function stopMermaidChecker(): Promise<void> {
   await current?.worker.terminate()
 }
 
-function checkOnce(sources: readonly string[]): Promise<readonly MermaidFault[]> {
+async function checkOnce(sources: readonly string[]): Promise<readonly MermaidFault[]> {
+  try {
+    const current = ensureWorker()
+    if (!(await current.loaded)) {
+      return []
+    }
+    return await requestCheck(current, sources)
+  } catch {
+    return []
+  }
+}
+
+function requestCheck(
+  current: Running,
+  sources: readonly string[],
+): Promise<readonly MermaidFault[]> {
   const id = nextId++
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
       void stopMermaidChecker()
       resolve([])
     }, CHECK_TIMEOUT_MS)
-    const settle = (faults: readonly MermaidFault[]): void => {
+    current.pending.set(id, (faults) => {
       clearTimeout(timer)
       resolve(faults)
-    }
-    try {
-      const current = ensureWorker()
-      current.pending.set(id, settle)
-      current.worker.postMessage({ id, sources })
-    } catch {
-      settle([])
-    }
+    })
+    current.worker.postMessage({ id, sources })
   })
 }
 
@@ -67,8 +80,19 @@ function ensureWorker(): Running {
   }
   const worker = new Worker(new URL("./report-mermaid-worker.ts", import.meta.url))
   const pending = new Map<number, (faults: readonly MermaidFault[]) => void>()
-  const started = { worker, pending } satisfies Running
+  const { promise: loaded, resolve: settleLoaded } = Promise.withResolvers<boolean>()
+  const timer = setTimeout(() => {
+    void stopMermaidChecker()
+    settleLoaded(false)
+  }, LOAD_TIMEOUT_MS)
+  const started = { worker, pending, loaded } satisfies Running
   worker.on("message", (message: unknown) => {
+    const signal = readySignalSchema.safeParse(message)
+    if (signal.success) {
+      clearTimeout(timer)
+      settleLoaded(signal.data.ready)
+      return
+    }
     const reply = checkReplySchema.safeParse(message)
     if (!reply.success) {
       return
@@ -77,6 +101,8 @@ function ensureWorker(): Running {
     pending.delete(reply.data.id)
   })
   const fail = (): void => {
+    clearTimeout(timer)
+    settleLoaded(false)
     if (running === started) {
       running = undefined
     }

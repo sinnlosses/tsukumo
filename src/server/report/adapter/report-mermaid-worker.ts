@@ -6,10 +6,8 @@ import { parentPort } from "node:worker_threads"
 import { Window } from "happy-dom"
 
 import type { MermaidFault } from "../core/report-figure-fault.ts"
+import { faultOfParseError } from "./report-mermaid-error.ts"
 import { checkRequestSchema } from "./report-mermaid-message.ts"
-
-const LINE_PATTERN = /Parse error on line (\d+)/
-const TOKEN_PATTERN = /got '([A-Z_]+)'/
 
 async function loadMermaid() {
   const window = new Window()
@@ -19,6 +17,10 @@ async function loadMermaid() {
 }
 
 const mermaidReady = loadMermaid()
+mermaidReady.then(
+  () => parentPort?.postMessage({ ready: true }),
+  () => parentPort?.postMessage({ ready: false }),
+)
 
 parentPort?.on("message", (message: unknown) => {
   const request = checkRequestSchema.safeParse(message)
@@ -41,20 +43,7 @@ async function check(sources: readonly string[]): Promise<readonly MermaidFault[
       await mermaid.parse(source)
       return faults
     } catch (error) {
-      return [...faults, faultOf(index + 1, error)]
+      return [...faults, faultOfParseError(index + 1, error)]
     }
   }, Promise.resolve([]))
-}
-
-function faultOf(block: number, error: unknown): MermaidFault {
-  const text =
-    typeof error === "object" && error !== null && "str" in error && typeof error.str === "string"
-      ? error.str
-      : error instanceof Error
-        ? error.message
-        : ""
-  const line = LINE_PATTERN.exec(text)?.[1]
-  return line === undefined
-    ? { kind: "unlocated", block }
-    : { kind: "located", block, line: Number(line), token: TOKEN_PATTERN.exec(text)?.[1] ?? "" }
 }
