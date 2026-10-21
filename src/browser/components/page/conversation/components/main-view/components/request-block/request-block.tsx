@@ -6,6 +6,7 @@ import clsx from "clsx"
 import { useState, type ReactElement } from "react"
 
 import type { MainViewRequest } from "../../../../../../../../shared/session/main-view-shape.ts"
+import { withOccurrenceKeys } from "../../../../../../../domain/occurrence-key.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -43,8 +44,8 @@ export function RequestBlock(props: RequestBlockProps): ReactElement {
         </Heading>
         <p className={clsx(styles["request-lines"], expanded && styles["is-expanded"])} ref={ref}>
           <Text element="span" size="secondary" tone="inherit" weight="inherit" className="">
-            {shown.map((line, index) => (
-              <span key={index}>
+            {withOccurrenceKeys(shown, (text) => text).map(({ key, item: line, index }) => (
+              <span key={key}>
                 {index > 0 && <br />}
                 {line}
               </span>

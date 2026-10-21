@@ -77,7 +77,7 @@ export function MarkdownEditorSurface({
   const paste = useEffectEvent((event: ClipboardEvent) => {
     onPaste(event)
   })
-  const format: FormatBarProps["onFormat"] = useEffectEvent((makeEdit) => {
+  const format: FormatBarProps["onFormat"] = (makeEdit) => {
     const view = viewRef.current
     if (view === null) {
       return
@@ -90,7 +90,7 @@ export function MarkdownEditorSurface({
       userEvent: "input",
     })
     view.focus()
-  })
+  }
   const dragOver = useEffectEvent((event: DragEvent) => {
     onDragOver(event)
   })

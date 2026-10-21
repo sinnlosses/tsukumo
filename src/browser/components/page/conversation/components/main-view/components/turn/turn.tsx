@@ -158,8 +158,8 @@ function Step(props: StepProps): ReactElement | null {
 function StepCard(props: StepProps): ReactElement {
   const { step } = props
   const questions = step.actions.filter(isQuestion)
-  const questionCards = questions.map((question, index) => (
-    <QuestionRecord entry={question} key={index} />
+  const questionCards = questions.map((question) => (
+    <QuestionRecord entry={question} key={question.toolUseId} />
   ))
 
   if (!(step.interim && step.superseded)) {

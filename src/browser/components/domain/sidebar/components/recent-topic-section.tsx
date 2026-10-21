@@ -7,6 +7,7 @@
 
 import type { ReactElement } from "react"
 
+import { withOccurrenceKeys } from "../../../../domain/occurrence-key.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { Text } from "../../../ui/text/text.tsx"
 import sidebarStyles from "../sidebar.module.css"
@@ -29,10 +30,9 @@ export function RecentTopicSection(): ReactElement {
         </Text>
       ) : (
         <ul className={styles["sidebar-topic-list"]} aria-label="最近の話題">
-          {topics.map((topic, index) => (
-            // 並びは届くたびに丸ごと置き換わり、同じ見出しが2つ並ぶこともあるので位置で引く。
-            <li key={index} className={styles["sidebar-topic"]}>
-              {topic}
+          {withOccurrenceKeys(topics, (topic) => topic).map(({ key, item }) => (
+            <li key={key} className={styles["sidebar-topic"]}>
+              {item}
             </li>
           ))}
         </ul>

@@ -133,6 +133,7 @@ function LinesProbe(): ReactElement {
   return (
     <div ref={rootRef}>
       {LINE_BOXES.map((_line, index) => (
+        // oxlint-disable-next-line react/no-array-index-key -- 並びが変わらない固定の矩形
         <div className="chart-block" data-line={index} key={index}>
           {/* `measure.ts` の `lineBoxesOf` が図の塊で測るのは入れ物ではなく描かれた
               `canvas` 自身なので、行に見立てた矩形はこちらにも付ける。 */}

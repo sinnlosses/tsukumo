@@ -16,6 +16,7 @@ import type {
 import type { MainViewPhaseLabel } from "../../../../../../../../shared/session/main-view-shape.ts"
 import { formatMeasured } from "../../../../../../../../shared/utils/elapsed-time.ts"
 import { codeSpanParts } from "../../../../../../../domain/code-span.ts"
+import { withOccurrenceKeys } from "../../../../../../../domain/occurrence-key.ts"
 import { useSession } from "../../../../../../../stores/session.ts"
 import { useTaskBoardRequest } from "../../../../../../../stores/task-board-request.ts"
 import styles from "./report-head.module.css"
@@ -81,14 +82,15 @@ export function ReportHead(props: ReportHeadProps): ReactElement | null {
       </p>
       {task.kind === "task" && (
         <h3 className={styles["report-headline"]}>
-          {codeSpanParts(task.name).map((part, index) =>
-            part.kind === "code" ? (
-              <code key={index} className={styles["report-headline-code"]}>
-                {part.text}
-              </code>
-            ) : (
-              <Fragment key={index}>{part.text}</Fragment>
-            ),
+          {withOccurrenceKeys(codeSpanParts(task.name), (part) => part.text).map(
+            ({ key, item: part }) =>
+              part.kind === "code" ? (
+                <code key={key} className={styles["report-headline-code"]}>
+                  {part.text}
+                </code>
+              ) : (
+                <Fragment key={key}>{part.text}</Fragment>
+              ),
           )}
         </h3>
       )}

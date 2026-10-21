@@ -17,7 +17,9 @@
       }
     ],
     "react/no-unstable-nested-components": "error",
+    "react/no-array-index-key": "error",
     "react/react-in-jsx-scope": "off",
+    "react/rules-of-hooks": "error",
     "typescript/consistent-type-imports": [
       "error",
       { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
@@ -53,6 +55,8 @@
           }
         ],
         "typescript/consistent-type-assertions": ["error", { "assertionStyle": "never" }],
+        // `useTempDir` などの `use` で始まるテスト用の補助を、React の外の `describe` 直下で呼ぶため
+        "react/rules-of-hooks": "off",
         // describe の中の it ごとの小さな補助関数を、使う it の近くに置いて読めるようにする。
         // 巻き上げると describe の外へ離れて、どのテストの前提かが読めなくなる
         "unicorn/consistent-function-scoping": "off",

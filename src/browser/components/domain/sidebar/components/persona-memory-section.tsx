@@ -10,6 +10,7 @@
 
 import { useState, type ReactElement } from "react"
 
+import { withOccurrenceKeys } from "../../../../domain/occurrence-key.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
@@ -50,9 +51,8 @@ export function PersonaMemorySection(): ReactElement {
         </Text>
       ) : (
         <ul className={styles["sidebar-persona-memory-list"]} aria-label="覚えていること">
-          {lines.map((line, index) => (
-            // 並びは届くたびに丸ごと置き換わり、同じ文面が2行あることもあるので位置で引く。
-            <li key={index} className={styles["sidebar-persona-memory-item"]}>
+          {withOccurrenceKeys(lines, (text) => text).map(({ key, item: line }) => (
+            <li key={key} className={styles["sidebar-persona-memory-item"]}>
               <button
                 type="button"
                 className={styles["sidebar-persona-memory-chip"]}

@@ -37,6 +37,7 @@ function Probe(): ReactElement {
       <nav ref={navRef}>
         {rows.map((entry, index) => (
           <button
+            // oxlint-disable-next-line react/no-array-index-key -- 見出しが重なりうる固定の並びを位置で引く検査用の描画
             key={index}
             data-testid={`row-${index}`}
             aria-current={entry.isActive ? "location" : undefined}
@@ -223,6 +224,7 @@ function ProgressFoldProbe(): ReactElement {
     <div>
       <ul>
         {rows.map((entry, index) => (
+          // oxlint-disable-next-line react/no-array-index-key -- 位置で引く検査用の描画
           <li key={index} data-testid="outline-row">
             {entry.text}
           </li>
@@ -455,6 +457,7 @@ function NewMarkProbe(props: { readonly newSectionIndexes: readonly number[] }):
     <div>
       {rows.map((entry, index) => (
         <button
+          // oxlint-disable-next-line react/no-array-index-key -- 位置で引く検査用の描画
           key={index}
           data-testid={`new-row-${index}`}
           data-new={String(entry.isNew)}

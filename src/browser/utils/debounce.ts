@@ -44,6 +44,7 @@ export function useDebouncedCallback<Key, Value>(
       setTimeout(() => {
         timers.current.delete(key)
         pending.current.delete(key)
+        // oxlint-disable-next-line react/rules-of-hooks -- タイマーの中で呼ぶ（docs/coding-standards/react.md）
         run(key, value)
       }, delayMs),
     )

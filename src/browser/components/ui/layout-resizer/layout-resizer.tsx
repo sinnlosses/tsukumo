@@ -53,13 +53,16 @@ export function LayoutResizer(props: LayoutResizerProps): ReactElement {
         props.orientation === "horizontal"
           ? (moveEvent.clientY - rect.top) / rect.height
           : (moveEvent.clientX - rect.left) / rect.width
+      // oxlint-disable-next-line react/rules-of-hooks -- ドラッグの間だけ生きるリスナの中で呼ぶ（docs/coding-standards/react.md）
       lastValue = toValue(ratio, rect)
+      // oxlint-disable-next-line react/rules-of-hooks -- 同上
       change(lastValue)
     }
     const onUp = (): void => {
       target.removeEventListener("pointermove", onMove)
       target.removeEventListener("pointerup", onUp)
       if (lastValue !== undefined) {
+        // oxlint-disable-next-line react/rules-of-hooks -- 同上
         commit(lastValue)
       }
     }

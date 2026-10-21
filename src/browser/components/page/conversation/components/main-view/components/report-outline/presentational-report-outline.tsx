@@ -8,6 +8,7 @@ import clsx from "clsx"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
+import { withOccurrenceKeys } from "../../../../../../../domain/occurrence-key.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { LayoutResizer } from "../../../../../../ui/layout-resizer/layout-resizer.tsx"
 import { TURN_RESULT_MARKS } from "../../../../domain/turn-result-mark.ts"
@@ -205,27 +206,29 @@ function HeadingRows(props: {
 }): ReactElement {
   return (
     <>
-      {props.rows.map((row, index) => (
-        <button
-          type="button"
-          key={index}
-          className={clsx(styles["outline-row"], row.inActiveSection && styles["is-in-section"])}
-          data-level={row.level}
-          aria-current={row.isActive ? "location" : undefined}
-          title={row.text}
-          onClick={() => {
-            props.onSelect(index)
-          }}
-        >
-          <span className={styles["outline-row-mark"]} aria-hidden="true" />
-          <span className={styles["outline-row-text"]}>{row.text}</span>
-          {row.isNew && (
-            <span className={styles["outline-row-new"]} aria-label={NEW_SECTION_LABEL}>
-              {NEW_SECTION_MARK}
-            </span>
-          )}
-        </button>
-      ))}
+      {withOccurrenceKeys(props.rows, (row) => `${row.level}:${row.text}`).map(
+        ({ key, item: row, index }) => (
+          <button
+            type="button"
+            key={key}
+            className={clsx(styles["outline-row"], row.inActiveSection && styles["is-in-section"])}
+            data-level={row.level}
+            aria-current={row.isActive ? "location" : undefined}
+            title={row.text}
+            onClick={() => {
+              props.onSelect(index)
+            }}
+          >
+            <span className={styles["outline-row-mark"]} aria-hidden="true" />
+            <span className={styles["outline-row-text"]}>{row.text}</span>
+            {row.isNew && (
+              <span className={styles["outline-row-new"]} aria-label={NEW_SECTION_LABEL}>
+                {NEW_SECTION_MARK}
+              </span>
+            )}
+          </button>
+        ),
+      )}
     </>
   )
 }

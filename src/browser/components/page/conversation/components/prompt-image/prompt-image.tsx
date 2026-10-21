@@ -19,6 +19,7 @@ import {
   promptImagePath,
   type RecordedPromptImage,
 } from "../../../../../../shared/session-driver/prompt-image.ts"
+import { withOccurrenceKeys } from "../../../../../domain/occurrence-key.ts"
 import { sessionTokenUrl } from "../../../../../domain/session-token-url.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { ImageZoom, type ImageZoomFallback } from "../../../../ui/image-zoom/image-zoom.tsx"
@@ -54,43 +55,44 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
   return (
     <>
       <ul className={styles["prompt-images"]}>
-        {props.images.map((image, index) => (
-          // 並びは末尾に積むか途中を外すかだけで、並べ替えは無い。
-          <li className={styles["prompt-image-chip"]} key={index}>
-            {/* ボタンの中にボタンを入れないので、絵を押すボタンと外す `×` は兄弟にして、`×` を絵の右上に重ねる（CSS 側）。 */}
-            <Button
-              variant="ghost"
-              size="label"
-              pressed="none"
-              disabled={false}
-              ariaLabel={ZOOM_LABEL}
-              disclosure={{ kind: "none" }}
-              ariaHasPopup={undefined}
-              title={undefined}
-              className={styles["prompt-image-zoom"]}
-              onClick={() => setZoomedIndex(index)}
-            >
-              <img className={styles["prompt-image"]} src={image.thumbnail} alt={IMAGE_ALT} />
-              <Search className={styles["prompt-image-zoom-icon"]} size={16} />
-            </Button>
-            <Button
-              variant="outline-ground"
-              size="secondary"
-              pressed="none"
-              disabled={false}
-              ariaLabel={REMOVE_LABEL}
-              disclosure={{ kind: "none" }}
-              ariaHasPopup={undefined}
-              title={undefined}
-              className={styles["prompt-image-remove"]}
-              onClick={() => {
-                props.onRemove(index)
-              }}
-            >
-              <X size={12} strokeWidth={2.5} aria-hidden="true" />
-            </Button>
-          </li>
-        ))}
+        {withOccurrenceKeys(props.images, (image) => image.thumbnail).map(
+          ({ key, item: image, index }) => (
+            <li className={styles["prompt-image-chip"]} key={key}>
+              {/* ボタンの中にボタンを入れないので、絵を押すボタンと外す `×` は兄弟にして、`×` を絵の右上に重ねる（CSS 側）。 */}
+              <Button
+                variant="ghost"
+                size="label"
+                pressed="none"
+                disabled={false}
+                ariaLabel={ZOOM_LABEL}
+                disclosure={{ kind: "none" }}
+                ariaHasPopup={undefined}
+                title={undefined}
+                className={styles["prompt-image-zoom"]}
+                onClick={() => setZoomedIndex(index)}
+              >
+                <img className={styles["prompt-image"]} src={image.thumbnail} alt={IMAGE_ALT} />
+                <Search className={styles["prompt-image-zoom-icon"]} size={16} />
+              </Button>
+              <Button
+                variant="outline-ground"
+                size="secondary"
+                pressed="none"
+                disabled={false}
+                ariaLabel={REMOVE_LABEL}
+                disclosure={{ kind: "none" }}
+                ariaHasPopup={undefined}
+                title={undefined}
+                className={styles["prompt-image-remove"]}
+                onClick={() => {
+                  props.onRemove(index)
+                }}
+              >
+                <X size={12} strokeWidth={2.5} aria-hidden="true" />
+              </Button>
+            </li>
+          ),
+        )}
       </ul>
       {zoomedImage !== undefined && (
         <ImageZoom

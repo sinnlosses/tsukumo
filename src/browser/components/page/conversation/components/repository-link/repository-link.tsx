@@ -23,6 +23,7 @@ import {
   type FileExcerptRequest,
   UNREADABLE_FILE_EXCERPT,
 } from "../../../../../../shared/repository/file-excerpt.ts"
+import { withOccurrenceKeys } from "../../../../../domain/occurrence-key.ts"
 import { rpc } from "../../../../../domain/rpc.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { isActivationKey } from "../hooks/activation-key.ts"
@@ -73,13 +74,15 @@ export function breakPathText(children: ReactNode, glueClassName: string): React
     if (typeof child !== "string") {
       return child
     }
-    return child.split(/(?<=[/-])/).map((piece, index) => (
-      <Fragment key={index}>
-        {piece}
-        {piece.endsWith("/") && <wbr />}
-        {piece.endsWith("-") && <span className={glueClassName} />}
-      </Fragment>
-    ))
+    return withOccurrenceKeys(child.split(/(?<=[/-])/), (piece) => piece).map(
+      ({ key, item: piece }) => (
+        <Fragment key={key}>
+          {piece}
+          {piece.endsWith("/") && <wbr />}
+          {piece.endsWith("-") && <span className={glueClassName} />}
+        </Fragment>
+      ),
+    )
   })
 }
 
