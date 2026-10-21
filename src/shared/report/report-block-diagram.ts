@@ -33,6 +33,9 @@ const svgShapeSchema = z
       height: positiveNumber,
       label: omittable(inlineText, "").describe("枠の中に出す名前。無ければ空"),
       emphasis: omittable(z.boolean(), false).describe("true で枠を強調する"),
+      labelAt: omittable(z.enum(["center", "top-left"]), "center").describe(
+        "枠の題の位置。入れ子の外側の枠は top-left",
+      ),
     }),
     z.object({
       kind: z.literal("line"),

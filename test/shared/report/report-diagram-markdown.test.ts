@@ -126,8 +126,26 @@ describe("reportSectionsMarkdown", () => {
       fold: "",
       aside: "",
       shapes: [
-        { kind: "rect", x: 10, y: 20, width: 80, height: 40, label: "A<b>", emphasis: true },
-        { kind: "rect", x: 100, y: 20, width: 80, height: 40, label: "", emphasis: false },
+        {
+          kind: "rect",
+          x: 10,
+          y: 20,
+          width: 80,
+          height: 40,
+          label: "A<b>",
+          emphasis: true,
+          labelAt: "center",
+        },
+        {
+          kind: "rect",
+          x: 100,
+          y: 20,
+          width: 80,
+          height: 40,
+          label: "",
+          emphasis: false,
+          labelAt: "center",
+        },
         { kind: "line", x1: 90, y1: 40, x2: 100, y2: 40, arrow: true, label: "" },
         { kind: "text", x: 5, y: 90, text: "架空の字" },
       ],
@@ -143,6 +161,35 @@ describe("reportSectionsMarkdown", () => {
     expect(markdown).toContain('<text x="5" y="90" font-size="14">架空の字</text>')
     expect(markdown).not.toContain("\n\n<svg")
     expect(markdown).toContain(captionRow("図", 1, "架空の配置"))
+  })
+
+  it("svg の枠の題は center なら枠の中心、top-left なら左上の内側に左寄せで置く", () => {
+    const rect = {
+      kind: "rect",
+      x: 10,
+      y: 20,
+      width: 80,
+      height: 40,
+      label: "題",
+      emphasis: false,
+    } as const
+    const markdown = markdownOf({
+      kind: "svg",
+      title: "",
+      width: 200,
+      height: 100,
+      fold: "",
+      aside: "",
+      shapes: [
+        { ...rect, labelAt: "center" },
+        { ...rect, x: 110, labelAt: "top-left" },
+      ],
+    })
+
+    expect(markdown).toContain(
+      '<text x="50" y="40" font-size="14" text-anchor="middle" dominant-baseline="middle">題</text>',
+    )
+    expect(markdown).toContain('<text x="122" y="42" font-size="14">題</text>')
   })
 
   it("beforeAfter の svg の側も SVG を組む", () => {

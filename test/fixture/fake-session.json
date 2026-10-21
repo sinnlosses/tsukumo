@@ -2200,7 +2200,17 @@
                         "width": 190,
                         "height": 90,
                         "label": "架空の本文",
-                        "emphasis": true
+                        "emphasis": true,
+                        "labelAt": "top-left"
+                      },
+                      {
+                        "kind": "rect",
+                        "x": 135,
+                        "y": 90,
+                        "width": 160,
+                        "height": 48,
+                        "label": "架空の子の枠",
+                        "emphasis": false
                       },
                       {
                         "kind": "line",

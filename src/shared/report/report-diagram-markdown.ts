@@ -151,6 +151,10 @@ const SVG_ARROW_MARKER_ID = "report-svg-arrow"
 
 const SVG_LABEL_FONT_SIZE = 14
 
+const SVG_LABEL_INSET = 12
+
+const SVG_LABEL_TOP_GAP = 8
+
 /**
  * 図形を `<svg viewBox="0 0 W H">` の1行に組む（空行を挟むと Markdown の HTML の塊が切れる）。
  * 色は書かない。`report-svg-figure` の下の要素に CSS が当てる（強調の枠だけ `stroke-width` の属性が目印）。
@@ -293,9 +297,16 @@ function svgShapeHtml(shape: SvgShape): string {
       return shape.label.trim() === ""
         ? rect
         : rect +
-            svgTextHtml(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.label, {
-              centered: true,
-            })
+            (shape.labelAt === "top-left"
+              ? svgTextHtml(
+                  shape.x + SVG_LABEL_INSET,
+                  shape.y + SVG_LABEL_FONT_SIZE + SVG_LABEL_TOP_GAP,
+                  shape.label,
+                  { centered: false },
+                )
+              : svgTextHtml(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.label, {
+                  centered: true,
+                }))
     }
     case "line": {
       const markerEnd = shape.arrow ? ` marker-end="url(#${SVG_ARROW_MARKER_ID})"` : ""

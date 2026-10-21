@@ -49,7 +49,16 @@ describe("reportRejectionText", () => {
       aside: "",
     })
     const rect = (x: number, y: number, width: number, height: number) =>
-      ({ kind: "rect", x, y, width, height, label: "", emphasis: false }) as const
+      ({
+        kind: "rect",
+        x,
+        y,
+        width,
+        height,
+        label: "",
+        emphasis: false,
+        labelAt: "center",
+      }) as const
 
     it("枠内に収まる図形は違反にならない（端に接するのは収まり）", () => {
       expect(kinds(draft([svg([rect(0, 0, 100, 50)])]))).not.toContain("broken-svg")

@@ -459,7 +459,16 @@ describe("Markdown（svg の塊の拡大）", () => {
             width: 160,
             height: 720,
             shapes: [
-              { kind: "rect", x: 1, y: 1, width: 10, height: 10, label: "架空", emphasis: false },
+              {
+                kind: "rect",
+                x: 1,
+                y: 1,
+                width: 10,
+                height: 10,
+                label: "架空",
+                emphasis: false,
+                labelAt: "center",
+              },
             ],
             fold: "",
             aside: "",
