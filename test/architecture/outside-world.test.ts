@@ -97,6 +97,209 @@ describe("process.cwd() を読む箇所", () => {
   })
 })
 
+// 会話の中身を外へ送る経路を足せないよう、ネットワークの口を2つに限る。
+// 受け口は view-server の server.ts（127.0.0.1 だけに listen する）、呼ぶ口はブラウザの rpc-client.ts の `fetch` だけ。
+// 型だけの import（`import type` と全指定子が `type` の import）は数えない。
+const NETWORK_MODULES = new Set(["http", "https", "net", "tls", "dgram", "http2"])
+const NETWORK_SERVER_FILE = "server/view-server/adapter/server.ts"
+const FETCH_CALLER_FILE = "browser/lib/rpc-client.ts"
+const USER_HOME_FILE = "server/adapter/tsukumo-home.ts"
+
+describe("ネットワークの口", () => {
+  it("`node:http` 系を値として import するのは view-server の server.ts だけ", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => relPath !== NETWORK_SERVER_FILE)
+      .filter((relPath) =>
+        importsModuleValue(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"), isNetworkModule),
+      )
+
+    expect(offenders).toEqual([])
+    expect(
+      importsModuleValue(
+        readFileSync(`${SRC_ROOT}/${NETWORK_SERVER_FILE}`, "utf8"),
+        isNetworkModule,
+      ),
+    ).toBe(true)
+  })
+
+  it("`fetch` を呼ぶのはブラウザの rpc-client.ts だけ", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => relPath !== FETCH_CALLER_FILE)
+      .filter((relPath) => callsFetch(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")))
+
+    expect(offenders).toEqual([])
+    expect(callsFetch(readFileSync(`${SRC_ROOT}/${FETCH_CALLER_FILE}`, "utf8"))).toBe(true)
+  })
+
+  it("`listen` の宛先は `BIND_HOST` だけ", () => {
+    const listens = listSourceFiles(SRC_ROOT).map((relPath) => ({
+      relPath,
+      misbound: listenWithoutBindHost(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+    }))
+
+    expect(listens.filter((entry) => entry.misbound).map((entry) => entry.relPath)).toEqual([])
+    expect(
+      listens.some(
+        (entry) =>
+          entry.relPath === NETWORK_SERVER_FILE &&
+          /\.listen\(/.test(readFileSync(`${SRC_ROOT}/${entry.relPath}`, "utf8")),
+      ),
+    ).toBe(true)
+  })
+})
+
+// ホームディレクトリ（`homedir()`）は tsukumo-home.ts だけが読み、ほかはその関数を通して受け取る。
+// `node:os` の値の import を禁じるので、別名や名前空間 import からの `homedir` も通らない。
+describe("homedir を読む箇所", () => {
+  it("`node:os` を値として import するのは src/server/adapter/tsukumo-home.ts だけ", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => relPath !== USER_HOME_FILE)
+      .filter((relPath) =>
+        importsModuleValue(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"), isOsModule),
+      )
+
+    expect(offenders).toEqual([])
+    expect(
+      importsModuleValue(readFileSync(`${SRC_ROOT}/${USER_HOME_FILE}`, "utf8"), isOsModule),
+    ).toBe(true)
+  })
+})
+
+describe("ネットワークと homedir を読む形の検出", () => {
+  it("値の import は拾い、型だけの import・文字列・コメントは拾わない", () => {
+    expect(importsModuleValue('import { createServer } from "node:http"', isNetworkModule)).toBe(
+      true,
+    )
+    expect(importsModuleValue('import http from "http"', isNetworkModule)).toBe(true)
+    expect(importsModuleValue('import "node:net"', isNetworkModule)).toBe(true)
+    expect(importsModuleValue('export * from "node:tls"', isNetworkModule)).toBe(true)
+    expect(importsModuleValue('const m = await import("node:dgram")', isNetworkModule)).toBe(true)
+    expect(importsModuleValue('const m = require("node:https")', isNetworkModule)).toBe(true)
+    expect(
+      importsModuleValue('import { type Server, createServer } from "node:http"', isNetworkModule),
+    ).toBe(true)
+    expect(importsModuleValue('import { homedir } from "node:os"', isOsModule)).toBe(true)
+
+    expect(importsModuleValue('import type { Server } from "node:http"', isNetworkModule)).toBe(
+      false,
+    )
+    expect(importsModuleValue('import { type Server } from "node:http"', isNetworkModule)).toBe(
+      false,
+    )
+    expect(importsModuleValue('const a = "node:http"', isNetworkModule)).toBe(false)
+    expect(importsModuleValue('// import "node:http"', isNetworkModule)).toBe(false)
+    expect(importsModuleValue('import { join } from "node:path"', isNetworkModule)).toBe(false)
+  })
+
+  it("`fetch` の呼び出しは拾い、`/fetch` の import と文字列は拾わない", () => {
+    expect(callsFetch("fetch(url)")).toBe(true)
+    expect(callsFetch("globalThis.fetch(url)")).toBe(true)
+    expect(callsFetch('window["fetch"](url)')).toBe(true)
+
+    expect(callsFetch('import { RPCHandler } from "@orpc/server/fetch"')).toBe(false)
+    expect(callsFetch('const a = "fetch(url)"')).toBe(false)
+    expect(callsFetch("// fetch(url)")).toBe(false)
+    expect(callsFetch("request.fetch(url)")).toBe(false)
+  })
+
+  it("`listen` は第2引数が `BIND_HOST` でなければ拾う", () => {
+    expect(listenWithoutBindHost("server.listen(port, BIND_HOST, cb)")).toBe(false)
+    expect(listenWithoutBindHost('server.listen(port, "0.0.0.0", cb)')).toBe(true)
+    expect(listenWithoutBindHost("server.listen(port, cb)")).toBe(true)
+    expect(listenWithoutBindHost("server.listen(port)")).toBe(true)
+    expect(listenWithoutBindHost("const a = 1")).toBe(false)
+  })
+})
+
+function isNetworkModule(specifier: string): boolean {
+  return NETWORK_MODULES.has(specifier.replace(/^node:/, ""))
+}
+
+function isOsModule(specifier: string): boolean {
+  return specifier === "node:os" || specifier === "os"
+}
+
+/**
+ * `matches` に合う module を値として読む形（`import`・`export … from`・動的 `import()`・`require()`）。
+ * 型だけの import は拾わない。
+ */
+function importsModuleValue(content: string, matches: (specifier: string) => boolean): boolean {
+  return astDescendants(parseSourceProgram(content)).some((node) => {
+    const type = astString(node, "type")
+    const source = astString(astObject(node, "source"), "value")
+    if (type === "ImportDeclaration") {
+      const specifiers = astChildren(node, "specifiers")
+      const typeOnly =
+        astString(node, "importKind") === "type" ||
+        (specifiers.length > 0 &&
+          specifiers.every((specifier) => astString(specifier, "importKind") === "type"))
+      return source !== undefined && matches(source) && !typeOnly
+    }
+    if (type === "ExportNamedDeclaration" || type === "ExportAllDeclaration") {
+      return source !== undefined && matches(source) && astString(node, "exportKind") !== "type"
+    }
+    if (type === "ImportExpression") {
+      return source !== undefined && matches(source)
+    }
+    if (type === "CallExpression") {
+      const callee = astObject(node, "callee")
+      const [argument] = astChildren(node, "arguments")
+      const value = astString(argument, "value")
+      return (
+        astString(callee, "type") === "Identifier" &&
+        astString(callee, "name") === "require" &&
+        value !== undefined &&
+        matches(value)
+      )
+    }
+    return false
+  })
+}
+
+const GLOBAL_OBJECT_NAMES = new Set(["globalThis", "window", "self", "global"])
+
+/** `fetch(…)` と、`globalThis.fetch(…)` のような大域のオブジェクト越しの呼び出し。 */
+function callsFetch(content: string): boolean {
+  return astDescendants(parseSourceProgram(content)).some((node) => {
+    if (astString(node, "type") !== "CallExpression") {
+      return false
+    }
+    const callee = astObject(node, "callee")
+    if (astString(callee, "type") === "Identifier") {
+      return astString(callee, "name") === "fetch"
+    }
+    if (astString(callee, "type") !== "MemberExpression") {
+      return false
+    }
+    const object = astObject(callee, "object")
+    const property = astObject(callee, "property")
+    const computed = Reflect.get(callee ?? {}, "computed") === true
+    return (
+      astString(object, "type") === "Identifier" &&
+      GLOBAL_OBJECT_NAMES.has(astString(object, "name") ?? "") &&
+      (computed ? astString(property, "value") : astString(property, "name")) === "fetch"
+    )
+  })
+}
+
+/** 第2引数が識別子 `BIND_HOST` でない `.listen(…)` の呼び出しがあるか。 */
+function listenWithoutBindHost(content: string): boolean {
+  return astDescendants(parseSourceProgram(content)).some((node) => {
+    if (astString(node, "type") !== "CallExpression") {
+      return false
+    }
+    const callee = astObject(node, "callee")
+    if (
+      astString(callee, "type") !== "MemberExpression" ||
+      astString(astObject(callee, "property"), "name") !== "listen"
+    ) {
+      return false
+    }
+    const host = astChildren(node, "arguments")[1]
+    return !(astString(host, "type") === "Identifier" && astString(host, "name") === "BIND_HOST")
+  })
+}
+
 describe("process の env / cwd を読む形の検出", () => {
   it("分割代入・別名・名前付き import・添字の読み取りを拾い、コメントと文字列は拾わない", () => {
     expect(readsProcessMember("const a = process.env.X", "env")).toBe(true)

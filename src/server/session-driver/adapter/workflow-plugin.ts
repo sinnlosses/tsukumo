@@ -3,10 +3,10 @@
 
 import type { Dirent } from "node:fs"
 import { access, readdir } from "node:fs/promises"
-import { homedir } from "node:os"
 import { join } from "node:path"
 
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
+import { defaultClaudeConfigDir } from "../../adapter/tsukumo-home.ts"
 
 export type WorkflowPluginReading =
   | { readonly ok: true }
@@ -29,7 +29,7 @@ export async function readWorkflowPluginMount(
   pluginDir: string,
   claudeConfigDir: string | undefined,
 ): Promise<WorkflowPluginMount> {
-  const configDir = claudeConfigDir ?? join(homedir(), ".claude")
+  const configDir = claudeConfigDir ?? defaultClaudeConfigDir()
   return classifyWorkflowPluginMount(await readNames(pluginDir), await readNames(configDir))
 }
 

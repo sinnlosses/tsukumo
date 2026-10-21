@@ -13,6 +13,7 @@ import process from "node:process"
 import { HOME_ENV_NAME } from "../core/config.ts"
 
 const HOME_DIR_NAME = ".tsukumo"
+const CLAUDE_CONFIG_DIR_NAME = ".claude"
 
 /**
  * ホームのディレクトリ。`TSUKUMO_HOME` を渡すとホームごとそこへ移る（`state.json`・あらすじと会話のアーカイブ・トークンの記録・画面から作ったパックのすべて）。
@@ -23,5 +24,15 @@ const HOME_DIR_NAME = ".tsukumo"
  */
 export function tsukumoHomeDir(): string {
   const raw = process.env[HOME_ENV_NAME]?.trim()
-  return raw === undefined || raw === "" ? join(homedir(), HOME_DIR_NAME) : resolve(raw)
+  return raw === undefined || raw === "" ? join(userHomeDir(), HOME_DIR_NAME) : resolve(raw)
+}
+
+/** 利用者のホームディレクトリ（`~`）。`homedir()` を読むのはこのファイルだけ。 */
+export function userHomeDir(): string {
+  return homedir()
+}
+
+/** Claude Code の設定ディレクトリの既定（`~/.claude`）。 */
+export function defaultClaudeConfigDir(): string {
+  return join(userHomeDir(), CLAUDE_CONFIG_DIR_NAME)
 }

@@ -7,13 +7,13 @@
 // これは tsukumo の持ち物ではなく Claude Code の内部のファイルで、形が変わっても知らせは来ない。
 // 読めない・鍵が無い・形が違うときは「無い」を返し、呼ぶ側が SDK の値へ落ちる。
 
-import { homedir } from "node:os"
 import { join } from "node:path"
 
 import { isPlainObject } from "remeda"
 
 import { optionalString } from "../../../shared/utils/optional-string.ts"
 import { readJsonFile } from "../../adapter/lib/json-file.ts"
+import { userHomeDir } from "../../adapter/tsukumo-home.ts"
 import type { ClaudeAccountTier } from "../core/plan.ts"
 
 const ACCOUNT_FILE_NAME = ".claude.json"
@@ -24,9 +24,9 @@ const UNKNOWN_TIER = {
   rateLimitTier: undefined,
 } satisfies ClaudeAccountTier
 
-/** 設定ディレクトリの控えから契約の段を読む。無いときは `~` の控えで、そのときだけ `homedir()` を読む。 */
+/** 設定ディレクトリの控えから契約の段を読む。無いときは `~` の控えで、そのときだけ `userHomeDir()` を読む。 */
 export function readClaudeAccountTier(configDir: string | undefined): ClaudeAccountTier {
-  const parsed = readJsonFile(join(configDir ?? homedir(), ACCOUNT_FILE_NAME))
+  const parsed = readJsonFile(join(configDir ?? userHomeDir(), ACCOUNT_FILE_NAME))
   if (!isPlainObject(parsed) || !isPlainObject(parsed.oauthAccount)) {
     return UNKNOWN_TIER
   }
