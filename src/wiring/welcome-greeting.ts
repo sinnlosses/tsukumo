@@ -80,11 +80,16 @@ export function wireWelcomeGreeting(
           greeter.start(material(START_VISIT))
           break
         case "resume":
-          void restored.then((events) => {
-            if (!kept.replay()) {
-              greeter.start(material(resumedWelcome(events, context.now())))
-            }
-          })
+          restored.then(
+            (events) => {
+              if (!kept.replay()) {
+                greeter.start(material(resumedWelcome(events, context.now())))
+              }
+            },
+            (error: unknown) => {
+              reportFailure({ feature: "session", place: "restore-events" }, error)
+            },
+          )
           break
       }
       return (event) => {

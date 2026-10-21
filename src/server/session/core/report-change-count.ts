@@ -37,13 +37,23 @@ export function createReportChangeCounter(
         return
       }
       const { toolUseId } = event
-      void countSince(git, head, event.task.id).then((summary) => {
-        if (summary.kind === "counted") {
-          const { files, added, removed, mixed } = summary
-          emit({ kind: "report-change-summary", toolUseId, files, added, removed, mixed })
-        }
-      })
+      void emitSummary(toolUseId, countSince(git, head, event.task.id))
     },
+  }
+
+  async function emitSummary(
+    toolUseId: string,
+    counting: Promise<ReportChangeSummary>,
+  ): Promise<void> {
+    try {
+      const summary = await counting
+      if (summary.kind === "counted") {
+        const { files, added, removed, mixed } = summary
+        emit({ kind: "report-change-summary", toolUseId, files, added, removed, mixed })
+      }
+    } catch {
+      // 数えられないときは何も流さない（ファイル先頭の約束）。
+    }
   }
 }
 

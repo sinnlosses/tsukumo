@@ -75,10 +75,13 @@ export function memoizeByStamp(read: (cwd: string) => Promise<BeadsOutcome>): Be
     }
     const entry = { stamp, outcome: read(cwd) }
     remembered.set(cwd, entry)
-    void entry.outcome.then((outcome) => {
-      if (outcome.kind !== "issues" && remembered.get(cwd) === entry) {
+    const forgetUnless = (outcome: BeadsOutcome | undefined): void => {
+      if (outcome?.kind !== "issues" && remembered.get(cwd) === entry) {
         remembered.delete(cwd)
       }
+    }
+    entry.outcome.then(forgetUnless, () => {
+      forgetUnless(undefined)
     })
     return entry.outcome
   }

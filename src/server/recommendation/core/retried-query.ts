@@ -165,8 +165,8 @@ function firstWritten<T>(
   return new Promise((resolve) => {
     let pending = 2
     const watch = (promise: Promise<Attempt<T>>, index: 0 | 1): void => {
-      void promise.then((attempt) => {
-        if (attempt.kind === "written") {
+      const settle = (attempt: Attempt<T> | undefined): void => {
+        if (attempt?.kind === "written") {
           resolve({ index, attempt })
           return
         }
@@ -174,6 +174,9 @@ function firstWritten<T>(
         if (pending === 0) {
           resolve(undefined)
         }
+      }
+      promise.then(settle, () => {
+        settle(undefined)
       })
     }
     watch(first, 0)

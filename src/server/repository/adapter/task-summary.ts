@@ -187,13 +187,15 @@ export function watchTaskSummary(
     cancelTimer = undefined
     polling = true
     runningPoll = poll().catch(onFailure)
-    void runningPoll.then(() => {
+    const next = (): void => {
       polling = false
       if (closed || !watching) {
         return
       }
       cancelTimer = ports.clock.after(intervalMs, loop)
-    })
+    }
+    // `onFailure` が投げて runningPoll が reject しても、次の見回りを予約する。
+    runningPoll.then(next, next)
   }
 
   loop()

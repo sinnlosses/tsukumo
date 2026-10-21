@@ -190,12 +190,16 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // 本物の駆動と同じく、起こした effort を最初のターンを待たずに流す。
   options.onEvent({ kind: "effort-changed", effort })
 
-  void options.firstViewer.then(() => {
-    if (closed) {
-      return
-    }
-    play(startupSteps(options.session, options.scene, options.sceneUntil), 0)
-  })
+  // `firstViewer` は resolve だけで reject しない（`Promise.withResolvers` の resolve のみ呼ばれる）。
+  options.firstViewer.then(
+    () => {
+      if (closed) {
+        return
+      }
+      play(startupSteps(options.session, options.scene, options.sceneUntil), 0)
+    },
+    () => {},
+  )
   const namedIndex = options.session.turns.findIndex((scene) => scene.name === options.scene)
   let playedTurns = namedIndex + 1
 

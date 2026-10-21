@@ -162,21 +162,33 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       reason: "threw",
       error,
     })
-    void source
-      .consolidate(packName, consolidationAbort.signal)
-      .catch(reject)
-      .then((outcome) => {
+    const settle = (outcome: ChatConsolidationOutcome): void => {
+      consolidating = false
+      noteConsolidationOutcome(outcome, diagnostic, options.now)
+      if (
+        outcome.kind === "written" &&
+        !closed &&
+        state.chatMode &&
+        state.character?.pack === packName
+      ) {
+        generation.emit({ kind: "chat-topics-changed", topics: outcome.topics })
+      }
+    }
+    const run = async (): Promise<void> => {
+      try {
+        settle(await source.consolidate(packName, consolidationAbort.signal).catch(reject))
+      } catch (error) {
         consolidating = false
-        noteConsolidationOutcome(outcome, diagnostic, options.now)
-        if (
-          outcome.kind === "written" &&
-          !closed &&
-          state.chatMode &&
-          state.character?.pack === packName
-        ) {
-          generation.emit({ kind: "chat-topics-changed", topics: outcome.topics })
-        }
-      })
+        diagnostic.add(
+          swallowedFailureFootprint(
+            options.now(),
+            { feature: "chat", place: "consolidation-threw" },
+            error,
+          ),
+        )
+      }
+    }
+    void run()
   }
 
   /** 駆動を1代起こし、その代ぶんの勘定をまとめて作る。 */

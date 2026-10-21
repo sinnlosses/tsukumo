@@ -79,11 +79,11 @@ export function createAchievementCache(cwd: string): AchievementCache {
           lastBeadsRead = undefined
         }
       }
-      void read.then((result) => {
+      read.then((result) => {
         if (typeof result === "string") {
           forget()
         }
-      })
+      }, forget)
       return stamp === undefined ? read : (lastDone ?? read)
     },
   }
