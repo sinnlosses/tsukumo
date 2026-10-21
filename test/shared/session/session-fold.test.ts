@@ -7,7 +7,8 @@ import {
   welcomeGreetingLine,
 } from "../../../src/shared/recommendation/welcome-greeting.ts"
 import { applyRestoredEvents } from "../../../src/shared/session/restored-event.ts"
-import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
+import { advanceSessionState } from "../../../src/shared/session/session-advance.ts"
+import { sessionEventSchema, type SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
 import { recordTimeAt } from "../../../src/shared/session/session-record.ts"
 import {
@@ -583,5 +584,13 @@ describe("applySessionEvent の反応の記録", () => {
     )
 
     expect(reactionRecords(restored)).toEqual([])
+  })
+})
+
+describe("advanceSessionState の知らない kind", () => {
+  it("知らない kind のイベントは、姿を同じ参照のまま返す", () => {
+    const unknown = sessionEventSchema.parse({ kind: "future-kind" })
+
+    expect(advanceSessionState(INITIAL_SESSION_STATE, unknown, 1)).toBe(INITIAL_SESSION_STATE)
   })
 })

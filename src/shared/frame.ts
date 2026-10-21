@@ -6,6 +6,7 @@
 import { isPlainObject } from "remeda"
 import { z } from "zod"
 
+import { isSessionEventKind } from "./session/session-event-kind.ts"
 import { stampedEventSchema, type StampedEvent } from "./session/session-event.ts"
 import type { SessionState } from "./session/session-state.ts"
 
@@ -97,5 +98,11 @@ const serverFrameSchema = z.discriminatedUnion("type", [
  */
 export function parseServerFrame(value: unknown): ServerFrame | undefined {
   const parsed = serverFrameSchema.safeParse(value)
-  return parsed.success ? parsed.data : undefined
+  if (!parsed.success) return undefined
+  const frame = parsed.data
+  if (frame.type !== "events") return frame
+  return {
+    type: "events",
+    events: frame.events.filter(({ event }) => isSessionEventKind(event.kind)),
+  }
 }

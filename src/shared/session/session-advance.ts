@@ -10,6 +10,7 @@ import { applyUsageReviewEvent } from "../usage-review/usage-review.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { clipText } from "../utils/clip-text.ts"
 import { commandCandidates } from "./command-suggestion.ts"
+import { isSessionEventKind } from "./session-event-kind.ts"
 import type { SessionEvent } from "./session-event.ts"
 import {
   settleUtterance,
@@ -60,6 +61,7 @@ export function advanceSessionState(
   event: SessionEvent,
   at: number,
 ): SessionState {
+  if (!isSessionEventKind(event.kind)) return state
   return foldSessionEvent(
     MODEL_OUTPUT_EVENT_KINDS.has(event.kind) ? { ...state, apiTrouble: { kind: "none" } } : state,
     event,

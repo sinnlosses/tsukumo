@@ -57,4 +57,25 @@ describe("parseServerFrame（落とす形）", () => {
     expect(parseServerFrame({ type: "refresh", target: "everything" })).toBeUndefined()
     expect(parseServerFrame(null)).toBeUndefined()
   })
+
+  it("events の束から知らない kind の1件だけを落とし、残りを返す", () => {
+    const speech = { kind: "speech", text: "架空のセリフ", expression: "default" }
+
+    expect(
+      parseServerFrame({
+        type: "events",
+        events: [
+          { at: 1, event: speech },
+          { at: 2, event: { kind: "future-kind" } },
+          { at: 3, event: speech },
+        ],
+      }),
+    ).toEqual({
+      type: "events",
+      events: [
+        { at: 1, event: speech },
+        { at: 3, event: speech },
+      ],
+    })
+  })
 })
