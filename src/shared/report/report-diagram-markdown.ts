@@ -156,6 +156,17 @@ const SVG_LABEL_INSET = 12
 
 const SVG_LABEL_TOP_GAP = 8
 
+const SVG_SUB_FONT_SIZE = 12
+
+/** `top-left` の題の下に説明を置くときの、題の基線から説明の基線までの距離。 */
+const SVG_SUB_LINE_GAP = 16
+
+/** `center` で説明があるとき、題を枠の中心から上げる量。 */
+const SVG_SUB_LABEL_SHIFT = 8
+
+/** `center` で説明があるとき、説明を枠の中心から下げる量。 */
+const SVG_SUB_DROP = 10
+
 /**
  * 図形を `<svg viewBox="0 0 W H">` の1行に組む（空行を挟むと Markdown の HTML の塊が切れる）。
  * 色は書かない。`report-svg-figure` の下の要素に CSS が当てる（強調の枠は `stroke-width`、`tone` は `data-tone` の属性が目印）。
@@ -308,19 +319,29 @@ function svgShapeHtml(shape: SvgShape): string {
       const strokeWidth = shape.emphasis ? ' stroke-width="3"' : ""
       const toneAttribute = shape.tone === "none" ? "" : ` data-tone="${shape.tone}"`
       const rect = `<rect x="${String(shape.x)}" y="${String(shape.y)}" width="${String(shape.width)}" height="${String(shape.height)}" rx="4"${strokeWidth}${toneAttribute}></rect>`
-      return shape.label.trim() === ""
-        ? rect
-        : rect +
-            (shape.labelAt === "top-left"
-              ? svgTextHtml(
-                  shape.x + SVG_LABEL_INSET,
-                  shape.y + SVG_LABEL_FONT_SIZE + SVG_LABEL_TOP_GAP,
-                  shape.label,
-                  { centered: false },
-                )
-              : svgTextHtml(shape.x + shape.width / 2, shape.y + shape.height / 2, shape.label, {
-                  centered: true,
-                }))
+      if (shape.label.trim() === "") return rect
+      const hasSub = shape.sub.trim() !== ""
+      if (shape.labelAt === "top-left") {
+        const labelY = shape.y + SVG_LABEL_FONT_SIZE + SVG_LABEL_TOP_GAP
+        const sub = hasSub
+          ? svgSubTextHtml(shape.x + SVG_LABEL_INSET, labelY + SVG_SUB_LINE_GAP, shape.sub, {
+              centered: false,
+            })
+          : ""
+        return (
+          rect +
+          svgTextHtml(shape.x + SVG_LABEL_INSET, labelY, shape.label, { centered: false }) +
+          sub
+        )
+      }
+      const centerX = shape.x + shape.width / 2
+      const centerY = shape.y + shape.height / 2
+      if (!hasSub) return rect + svgTextHtml(centerX, centerY, shape.label, { centered: true })
+      return (
+        rect +
+        svgTextHtml(centerX, centerY - SVG_SUB_LABEL_SHIFT, shape.label, { centered: true }) +
+        svgSubTextHtml(centerX, centerY + SVG_SUB_DROP, shape.sub, { centered: true })
+      )
     }
     case "line": {
       const markerEnd = shape.arrow ? ` marker-end="url(#${SVG_ARROW_MARKER_ID})"` : ""
@@ -345,8 +366,31 @@ function svgTextHtml(
   text: string,
   { centered }: { readonly centered: boolean },
 ): string {
+  return svgTextElement(x, y, text, { centered, fontSize: SVG_LABEL_FONT_SIZE, extra: "" })
+}
+
+/** `rect` の `sub`。`report-figure.module.css` が `data-sub` を目印に弱い色を当てる。 */
+function svgSubTextHtml(
+  x: number,
+  y: number,
+  text: string,
+  { centered }: { readonly centered: boolean },
+): string {
+  return svgTextElement(x, y, text, { centered, fontSize: SVG_SUB_FONT_SIZE, extra: " data-sub" })
+}
+
+function svgTextElement(
+  x: number,
+  y: number,
+  text: string,
+  {
+    centered,
+    fontSize,
+    extra,
+  }: { readonly centered: boolean; readonly fontSize: number; readonly extra: string },
+): string {
   const anchor = centered ? ' text-anchor="middle" dominant-baseline="middle"' : ""
-  return `<text x="${String(x)}" y="${String(y)}" font-size="${String(SVG_LABEL_FONT_SIZE)}"${anchor}>${htmlInline(text)}</text>`
+  return `<text x="${String(x)}" y="${String(y)}" font-size="${String(fontSize)}"${anchor}${extra}>${htmlInline(text)}</text>`
 }
 
 function graphStroke(color: string, dashed: boolean, width: number): string {

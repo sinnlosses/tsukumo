@@ -392,7 +392,7 @@ describe("parseReportSections", () => {
               aside: "",
               legend: [],
               shapes: [
-                { ...rect, label: "", emphasis: false, labelAt: "center", tone: "none" },
+                { ...rect, label: "", sub: "", emphasis: false, labelAt: "center", tone: "none" },
                 { ...line, arrow: false, label: "", dashed: false, tone: "none" },
                 text,
               ],

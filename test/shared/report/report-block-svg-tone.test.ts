@@ -16,6 +16,17 @@ describe("svg の塊の tone・legend・dashed", () => {
     expect(parse({ ...svg, legend: [{ tone: "none", label: "層" }] })).toHaveLength(0)
   })
 
+  it("rect の sub は文字列を読み、省けば空になる", () => {
+    const shapesOf = (shape: object) => {
+      const [section] = parse({ ...svg, shapes: [shape] })
+      const [block] = section?.blocks ?? []
+      return block?.kind === "svg" ? block.shapes : []
+    }
+    expect(shapesOf({ ...rect, label: "題", sub: "説明" })).toMatchObject([{ sub: "説明" }])
+    expect(shapesOf({ ...rect })).toMatchObject([{ sub: "" }])
+    expect(parse({ ...svg, shapes: [{ ...rect, sub: 1 }] })).toHaveLength(0)
+  })
+
   it("line の dashed は真偽値、tone は a〜e と none だけを読む", () => {
     expect(parse({ ...svg, legend, shapes: [{ ...line, dashed: true, tone: "a" }] })).toHaveLength(
       1,

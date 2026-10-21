@@ -2370,6 +2370,7 @@
                         "width": 150,
                         "height": 70,
                         "label": "架空の画面",
+                        "sub": "状態 = 架空の表示の組",
                         "tone": "a",
                         "emphasis": false
                       },
@@ -2380,6 +2381,7 @@
                         "width": 150,
                         "height": 70,
                         "label": "架空のサーバ",
+                        "sub": "依存・割り込み",
                         "tone": "b",
                         "emphasis": true
                       },

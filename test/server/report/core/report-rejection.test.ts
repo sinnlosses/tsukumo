@@ -60,6 +60,7 @@ describe("reportRejectionText", () => {
         width,
         height,
         label: "",
+        sub: "",
         emphasis: false,
         labelAt: "center",
         tone: "none",

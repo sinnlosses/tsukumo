@@ -134,6 +134,7 @@ describe("reportSectionsMarkdown", () => {
           width: 80,
           height: 40,
           label: "A<b>",
+          sub: "",
           emphasis: true,
           labelAt: "center",
           tone: "none",
@@ -145,6 +146,7 @@ describe("reportSectionsMarkdown", () => {
           width: 80,
           height: 40,
           label: "",
+          sub: "",
           emphasis: false,
           labelAt: "center",
           tone: "none",
@@ -184,6 +186,7 @@ describe("reportSectionsMarkdown", () => {
       width: 80,
       height: 40,
       label: "題",
+      sub: "",
       emphasis: false,
       tone: "none",
     } as const
@@ -207,6 +210,42 @@ describe("reportSectionsMarkdown", () => {
     expect(markdown).toContain('<text x="122" y="42" font-size="14">題</text>')
   })
 
+  it("svg の枠の sub は題の下に小さい字で置き、label が空なら描かない", () => {
+    const rect = {
+      kind: "rect",
+      x: 10,
+      y: 20,
+      width: 80,
+      height: 40,
+      emphasis: false,
+      tone: "none",
+    } as const
+    const markdown = markdownOf({
+      kind: "svg",
+      title: "",
+      width: 200,
+      height: 100,
+      fold: "",
+      aside: "",
+      legend: [],
+      shapes: [
+        { ...rect, label: "題", sub: "説明", labelAt: "center" },
+        { ...rect, x: 110, label: "題", sub: "説明", labelAt: "top-left" },
+        { ...rect, y: 70, label: "", sub: "出ない説明", labelAt: "center" },
+      ],
+    })
+
+    expect(markdown).toContain(
+      '<text x="50" y="32" font-size="14" text-anchor="middle" dominant-baseline="middle">題</text>',
+    )
+    expect(markdown).toContain(
+      '<text x="50" y="50" font-size="12" text-anchor="middle" dominant-baseline="middle" data-sub>説明</text>',
+    )
+    expect(markdown).toContain('<text x="122" y="42" font-size="14">題</text>')
+    expect(markdown).toContain('<text x="122" y="58" font-size="12" data-sub>説明</text>')
+    expect(markdown).not.toContain("出ない説明")
+  })
+
   it("svg の rect の tone は data-tone で運び、legend は図の下に tone ごとの見本と名前で並べる", () => {
     const markdown = markdownOf({
       kind: "svg",
@@ -227,6 +266,7 @@ describe("reportSectionsMarkdown", () => {
           width: 80,
           height: 40,
           label: "",
+          sub: "",
           emphasis: false,
           labelAt: "center",
           tone: "a",

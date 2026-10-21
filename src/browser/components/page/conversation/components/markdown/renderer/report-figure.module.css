@@ -278,6 +278,9 @@
 .detail-block .report-svg-figure svg text {
   fill: var(--ink);
 }
+.detail-block .report-svg-figure svg text[data-sub] {
+  fill: var(--ink-quiet);
+}
 .detail-block .report-dimension-part,
 .detail-block .report-dimension-gap {
   display: grid;

@@ -228,6 +228,8 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
     // `svg` の塊の `rect`・`line` の `tone`（色の目印）。値は a〜e だけ。
     rect: [["dataTone", /^[a-e]$/]],
     line: [["dataTone", /^[a-e]$/]],
+    // `rect` の `sub`（題の下の説明）の `text` が持つ目印。
+    text: [["dataSub", /^$/]],
     img: [["src", REPORT_IMAGE_SRC_PATTERN], "alt", ["dataChangeRegion", IMAGE_REGION_PATTERN]],
     "*": [
       ...GLOBAL_ATTRIBUTES,

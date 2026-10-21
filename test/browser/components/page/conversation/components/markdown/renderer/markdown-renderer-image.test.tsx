@@ -466,6 +466,7 @@ describe("Markdown（svg の塊の拡大）", () => {
                 width: 10,
                 height: 10,
                 label: "架空",
+                sub: "",
                 emphasis: false,
                 labelAt: "center",
                 tone: "none",
