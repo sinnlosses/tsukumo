@@ -131,14 +131,24 @@ describe("applySessionEvent", () => {
     const view = apply({
       kind: "model-effort-support",
       models: [
-        { model: "opus", supportsEffort: true, effortLevels: ["low", "medium", "high"] },
-        { model: "haiku", supportsEffort: false, effortLevels: [] },
+        {
+          model: "opus",
+          resolvedModel: "claude-opus-5-5",
+          supportsEffort: true,
+          effortLevels: ["low", "medium", "high"],
+        },
+        { model: "haiku", resolvedModel: "haiku", supportsEffort: false, effortLevels: [] },
       ],
     })
 
     expect(view.modelEffortSupport).toEqual([
-      { model: "opus", supportsEffort: true, effortLevels: ["low", "medium", "high"] },
-      { model: "haiku", supportsEffort: false, effortLevels: [] },
+      {
+        model: "opus",
+        resolvedModel: "claude-opus-5-5",
+        supportsEffort: true,
+        effortLevels: ["low", "medium", "high"],
+      },
+      { model: "haiku", resolvedModel: "haiku", supportsEffort: false, effortLevels: [] },
     ])
   })
 

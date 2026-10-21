@@ -5,10 +5,13 @@ import type { EffortLevel, PermissionMode } from "../command.ts"
 /**
  * SDK のモデル一覧（`supportedModels()`）1件のうち、effort に関わる部分だけを写したもの。
  * 「いま効いている値」ではなく「対応の有無・選べる段」だけ。
- * `model` は SDK の `ModelInfo.value` で、エイリアスと一致するとは限らない（実測: `fable` は `claude-fable-5-1` のような値になる）。エイリアスへの対応付けは読む側が持つ。
+ * `model` は SDK の `ModelInfo.value`（`opus` のような別名や明示のモデル ID）。
+ * `resolvedModel` は `model` が指す正規のモデル ID で、SDK が返さないときは `model` と同じ。
+ * 名前の照合はこの `resolvedModel` を通して完全一致で行う。
  */
 export type ModelEffortSupport = {
   readonly model: string
+  readonly resolvedModel: string
   readonly supportsEffort: boolean
   readonly effortLevels: readonly EffortLevel[]
 }

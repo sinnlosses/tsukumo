@@ -422,10 +422,16 @@ describe("設定の歯車（新しいセッションの既定）", () => {
 describe("設定の歯車（新しいセッションの既定の effort）", () => {
   const OPUS_SUPPORT = {
     model: "opus",
+    resolvedModel: "claude-opus-5",
     supportsEffort: true,
     effortLevels: ["low", "medium", "high", "xhigh", "max"],
   } as const
-  const HAIKU_SUPPORT = { model: "haiku", supportsEffort: false, effortLevels: [] } as const
+  const HAIKU_SUPPORT = {
+    model: "haiku",
+    resolvedModel: "claude-haiku-4-5-20251001",
+    supportsEffort: false,
+    effortLevels: [],
+  } as const
 
   // haiku は実測で supportsEffort が無いモデル（docs/history/decision.md）。帯といま出している
   // モデルが違っても、既定のモデル（haiku）の対応がそのまま出る。

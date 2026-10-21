@@ -1,5 +1,6 @@
 // 設定の点（`SettingMark`）を、切り替えを受け付けたとき・効いているのを見届けたときに付け替える畳み込み。
 
+import { sameModel } from "./model-name.ts"
 import type { SettingConfirmation } from "./session-event-setting.ts"
 import type { SessionState } from "./session-state.ts"
 
@@ -47,7 +48,7 @@ export function withAcceptedMark(
   }
   const current = state.settingMarks[setting]
   const from = current.kind === "accepted" ? current.from : origin
-  const reverted = from.kind === "known" && sameSettingValue(setting, from.value, value)
+  const reverted = from.kind === "known" && sameSettingValue(state, setting, from.value, value)
   return {
     ...state,
     settingMarks: {
@@ -67,7 +68,7 @@ export function withConfirmedMark(
   at: number,
 ): SessionState {
   const mark = state.settingMarks[confirmation.setting]
-  return mark.kind === "accepted" && settingValueMatches(confirmation, mark.value)
+  return mark.kind === "accepted" && settingValueMatches(state, confirmation, mark.value)
     ? {
         ...state,
         settingMarks: {
@@ -78,11 +79,20 @@ export function withConfirmedMark(
     : state
 }
 
-function settingValueMatches(confirmation: SettingConfirmation, accepted: string): boolean {
-  return sameSettingValue(confirmation.setting, confirmation.value, accepted)
+function settingValueMatches(
+  state: SessionState,
+  confirmation: SettingConfirmation,
+  accepted: string,
+): boolean {
+  return sameSettingValue(state, confirmation.setting, confirmation.value, accepted)
 }
 
-/** モデルだけ、`sonnet` のような別名がフルネームに含まれていれば同じ値とみなす。 */
-function sameSettingValue(setting: SettingName, left: string, right: string): boolean {
-  return left === right || (setting === "model" && (left.includes(right) || right.includes(left)))
+/** モデルだけ、表で同じモデルに引ける別名と正規の ID を同じ値とみなす。 */
+function sameSettingValue(
+  state: SessionState,
+  setting: SettingName,
+  left: string,
+  right: string,
+): boolean {
+  return setting === "model" ? sameModel(state.modelEffortSupport, left, right) : left === right
 }

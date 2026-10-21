@@ -13,8 +13,37 @@ afterEach(() => {
   window.location.hash = ""
 })
 
-describe("ScreenNav の許可モード", () => {
+describe("ScreenNav の選択中の値", () => {
   // 会話の画面の帯にはドロップダウンが無いので、ほかの画面で見る。
+  it("状態の model / permissionMode の値を選択する", () => {
+    window.location.hash = "#character"
+    putSession(
+      {
+        ...INITIAL_SESSION_STATE,
+        model: "claude-sonnet-5",
+        modelEffortSupport: [
+          {
+            model: "sonnet",
+            resolvedModel: "claude-sonnet-5",
+            supportsEffort: true,
+            effortLevels: ["low"],
+          },
+        ],
+        session: { kind: "running", sessionId: "s-fixture", permissionMode: "plan" },
+      },
+      () => {},
+    )
+    render(<ScreenNav drawer={MARKED_NAV_DRAWER_SLOTS} />, { wrapper: queryClientWrapper() })
+
+    expect(
+      typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
+    ).toBe("sonnet")
+    expect(
+      typedElement(screen.getByLabelText("許可モード"), HTMLSelectElement, "許可モードの<select>")
+        .value,
+    ).toBe("plan")
+  })
+
   it("知らない許可モードは既定の字に倒さず、届いた語を選択する", () => {
     window.location.hash = "#character"
     putSession(

@@ -14,6 +14,7 @@ afterEach(() => {
 
 const OPUS_SUPPORT = {
   model: "opus",
+  resolvedModel: "claude-opus-5",
   supportsEffort: true,
   effortLevels: ["low", "medium", "high", "xhigh", "max"],
 } as const
@@ -84,6 +85,20 @@ function dotOf(label: RegExp): string | undefined {
   const select = screen.getByRole("combobox", { name: label })
   return select.parentElement?.querySelector("[data-dot]")?.getAttribute("data-dot") ?? undefined
 }
+
+describe("RunSettingGroup（知らないモデル）", () => {
+  it("既定のモデルに畳まず、届いた名前を口の名前と吊り札の行にする", () => {
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      model: "claude-opus-4-8",
+      modelEffortSupport: [OPUS_SUPPORT],
+    })
+    render(<RunSettingGroup placement="sidebar-footer" />)
+
+    expect(screen.getByRole("combobox", { name: "モデル claude-opus-4-8" })).toBeTruthy()
+    expect(optionsOf(/^モデル /).map((option) => option.value)).toContain("claude-opus-4-8")
+  })
+})
 
 describe("RunSettingGroup（知らない許可モード）", () => {
   it("既定の字に倒さず、届いた語を許可モードの口の名前にする", () => {

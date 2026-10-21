@@ -13,22 +13,34 @@ export const FAKE_PLAN = "Claude Max"
  * fake driver が起こした直後に1回だけ流す、モデルごとの effort の対応。
  * 会話の内容ではないので疑似セッションの JSON には持たせず、ここに直接書く。
  * 本物の `supportedModels()` の実測値をそのまま写した。
- * `opus` / `sonnet` は5段すべてに対応し、`fable` はエイリアスと違う値〔`claude-fable-5-1`〕で返る。`haiku` は `supportsEffort` 自体が無い。
- * effort に対応しないモデルで選べなくなることと、エイリアスと一致しない値の当て方（画面側の表示ラベルの決め方）の両方を、疑似セッションでも確かめられるようにしてある。
+ * `opus` / `fable` / `sonnet` は5段すべてに対応し、`haiku` は `supportsEffort` 自体が無い。
+ * 別名と正規のモデル ID の対応（`resolvedModel`）も実測のとおり。
  */
 export const FAKE_MODEL_EFFORT_SUPPORT: readonly ModelEffortSupport[] = [
-  { model: "opus", supportsEffort: true, effortLevels: ["low", "medium", "high", "xhigh", "max"] },
   {
-    model: "claude-fable-5-1",
+    model: "opus",
+    resolvedModel: "claude-opus-5-5",
+    supportsEffort: true,
+    effortLevels: ["low", "medium", "high", "xhigh", "max"],
+  },
+  {
+    model: "fable",
+    resolvedModel: "claude-fable-5-1",
     supportsEffort: true,
     effortLevels: ["low", "medium", "high", "xhigh", "max"],
   },
   {
     model: "sonnet",
+    resolvedModel: "claude-sonnet-5-5",
     supportsEffort: true,
     effortLevels: ["low", "medium", "high", "xhigh", "max"],
   },
-  { model: "haiku", supportsEffort: false, effortLevels: [] },
+  {
+    model: "haiku",
+    resolvedModel: "claude-haiku-4-5-20251001",
+    supportsEffort: false,
+    effortLevels: [],
+  },
 ]
 
 /** fake driver が起こしたときに効いている既定の effort（疑似セッションだけの値）。 */

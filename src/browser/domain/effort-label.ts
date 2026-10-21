@@ -4,7 +4,8 @@
 // effort だけ「まだ届いていない値」を見た目上の既定へ倒さない。
 // 値が届くまでを「対応するモデルだが、まだ分からない」という独立した状態として持つ（`EffortSelect` の `unknown`）。
 
-import type { EffortLevel, ModelAlias } from "../../shared/command.ts"
+import type { EffortLevel } from "../../shared/command.ts"
+import { findModelSupport } from "../../shared/session/model-name.ts"
 import type { ModelEffortSupport } from "../../shared/session/session-event-setting.ts"
 
 /** effort の値と、画面に出すラベル。値そのものは SDK の語彙で、人が選ぶ言葉に言い換えていない。 */
@@ -39,10 +40,10 @@ const EFFORT_UNSUPPORTED_NOTE = "effort なし"
  * 対応表がまだ届いていない・行が無いときは、分かってもいないことを言わず `undefined` を返す。
  */
 export function modelEffortNote(
-  model: ModelAlias,
+  model: string,
   support: readonly ModelEffortSupport[],
 ): string | undefined {
-  const entry = findModelEffortSupport(support, model)
+  const entry = findModelSupport(support, model)
   return entry !== undefined && !entry.supportsEffort ? EFFORT_UNSUPPORTED_NOTE : undefined
 }
 
@@ -71,11 +72,11 @@ export type EffortSelect =
  * モデルを切り替えた直後、前に読んだ値がいまのモデルの選べる段に無ければ `unknown` に畳む（古いモデルの値を新しいモデルの選択肢として出さない）。
  */
 export function resolveEffortSelect(
-  model: ModelAlias,
+  model: string,
   support: readonly ModelEffortSupport[],
   effort: EffortLevel | undefined,
 ): EffortSelect {
-  const entry = findModelEffortSupport(support, model)
+  const entry = findModelSupport(support, model)
   if (entry === undefined) {
     return { kind: "unknown", reason: EFFORT_UNKNOWN_REASON }
   }
@@ -86,20 +87,4 @@ export function resolveEffortSelect(
     return { kind: "unknown", reason: EFFORT_UNKNOWN_REASON }
   }
   return { kind: "known", value: effort, options: entry.effortLevels }
-}
-
-/**
- * `support` からいまのモデルに当たる1件を探す。まず完全一致、無ければ部分一致。
- *
- * 実測: `supportedModels()` の `value` はエイリアスと一致するとは限らない。
- * `opus` / `sonnet` / `haiku` は一致するが、`fable` は `claude-fable-5-1` のような値になる。
- */
-function findModelEffortSupport(
-  support: readonly ModelEffortSupport[],
-  model: ModelAlias,
-): ModelEffortSupport | undefined {
-  return (
-    support.find((entry) => entry.model === model) ??
-    support.find((entry) => entry.model.includes(model))
-  )
 }

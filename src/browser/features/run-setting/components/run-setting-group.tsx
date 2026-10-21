@@ -5,9 +5,10 @@
 import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
+import { isModelAlias } from "../../../../shared/command.ts"
 import { permissionModeValue } from "../../../../shared/session/session-info.ts"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../../../domain/effort-label.ts"
-import { MODEL_LABELS } from "../../../domain/model-label.ts"
+import { modelLabel } from "../../../domain/model-label.ts"
 import { permissionModeLabel } from "../../../domain/permission-mode-label.ts"
 import { type SettingDot, useModelPermission } from "../../../stores/model-permission.ts"
 import styles from "./run-setting-group.module.css"
@@ -15,6 +16,7 @@ import {
   effortSelectOptions,
   modelSelectOptions,
   permissionModeSelectOptions,
+  unknownModelOption,
   unknownPermissionModeOption,
 } from "./run-setting-option.tsx"
 import { RunSettingSelect } from "./run-setting-select.tsx"
@@ -34,7 +36,7 @@ export function RunSettingGroup(props: { readonly placement: RunSettingPlacement
   const permissionModeSelectId = useId()
   const rail = props.placement === "rail"
 
-  const modelLabel = labelOf(MODEL_LABELS, control.model)
+  const modelText = modelLabel(control.model)
   const permissionModeText = permissionModeLabel(control.permissionMode)
   const { effort } = control
   const effortName = effort.kind === "known" ? effortLabel(effort.value) : effort.reason
@@ -48,16 +50,19 @@ export function RunSettingGroup(props: { readonly placement: RunSettingPlacement
     >
       <RunSettingSelect
         id={modelSelectId}
-        ariaLabel={`モデル ${modelLabel}`}
+        ariaLabel={`モデル ${modelText}`}
         heading="モデル"
         value={control.model}
-        options={modelSelectOptions(control.modelEffortSupport)}
+        options={[
+          ...modelSelectOptions(control.modelEffortSupport),
+          ...(isModelAlias(control.model) ? [] : [unknownModelOption(control.model)]),
+        ]}
         disabled={false}
         danger={false}
         rail={rail}
         layout="list"
         mouth="icon"
-        title={dotTitle(`モデル ${modelLabel}`, control.modelDot)}
+        title={dotTitle(`モデル ${modelText}`, control.modelDot)}
         dot={control.modelDot}
         onChange={control.onSetModel}
       />
@@ -111,9 +116,4 @@ function dotTitle(title: string, dot: SettingDot): string {
     case "none":
       return title
   }
-}
-
-/** ラベルの表から値の字を引く。無ければ値をそのまま返す。 */
-function labelOf(labels: readonly (readonly [string, string])[], value: string): string {
-  return labels.find(([candidate]) => candidate === value)?.[1] ?? value
 }

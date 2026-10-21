@@ -75,11 +75,27 @@ describe("toModelEffortSupport", () => {
     ).toEqual([
       {
         model: "opus",
+        resolvedModel: "claude-opus-5-5",
         supportsEffort: true,
         effortLevels: ["low", "medium", "high", "xhigh", "max"],
       },
-      { model: "haiku", supportsEffort: false, effortLevels: [] },
+      {
+        model: "haiku",
+        resolvedModel: "claude-haiku-4-5",
+        supportsEffort: false,
+        effortLevels: [],
+      },
     ])
+  })
+
+  it("resolvedModel が無い・空・文字列でないときは value で埋める", () => {
+    expect(
+      toModelEffortSupport([
+        { value: "a" },
+        { value: "b", resolvedModel: "" },
+        { value: "c", resolvedModel: 7 },
+      ]).map((entry) => entry.resolvedModel),
+    ).toEqual(["a", "b", "c"])
   })
 
   it("知らない段の値は落とす。supportedEffortLevels が配列でなければ空にする", () => {
@@ -93,8 +109,8 @@ describe("toModelEffortSupport", () => {
         { value: "sonnet", supportsEffort: true, supportedEffortLevels: "high" },
       ]),
     ).toEqual([
-      { model: "opus", supportsEffort: true, effortLevels: ["low", "max"] },
-      { model: "sonnet", supportsEffort: true, effortLevels: [] },
+      { model: "opus", resolvedModel: "opus", supportsEffort: true, effortLevels: ["low", "max"] },
+      { model: "sonnet", resolvedModel: "sonnet", supportsEffort: true, effortLevels: [] },
     ])
   })
 

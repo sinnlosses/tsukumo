@@ -68,6 +68,15 @@ export function modelSelectOptions(
   })
 }
 
+export function unknownModelOption(name: string): RunSettingSelectOption {
+  return {
+    value: name,
+    disabled: false,
+    icon: <ModelIcon letter={name.slice(0, 1).toUpperCase()} />,
+    row: <RunSettingName danger={false}>{name}</RunSettingName>,
+  }
+}
+
 export function effortSelectOptions(effort: EffortSelect): readonly RunSettingSelectOption[] {
   if (effort.kind !== "known") {
     return [

@@ -428,6 +428,17 @@ describe("設定の点の元（settingMarks）", () => {
     )
     const viaOther = apply(
       RUNNING,
+      {
+        kind: "model-effort-support",
+        models: [
+          {
+            model: "opus",
+            resolvedModel: "claude-opus-5",
+            supportsEffort: true,
+            effortLevels: ["low"],
+          },
+        ],
+      },
       { kind: "model-changed", model: "sonnet" },
       { kind: "model-changed", model: "haiku" },
       { kind: "model-changed", model: "opus" },
@@ -467,26 +478,6 @@ describe("設定の点の元（settingMarks）", () => {
     expect(state.settingMarks.effort.kind).toBe("none")
     expect(state.model).toBe("sonnet")
     expect(state.effort).toBe("low")
-  })
-
-  it("受け付けたモデルの別名がフルネームに含まれる見届けで confirmed になる", () => {
-    const state = apply(
-      RUNNING,
-      { kind: "model-changed", model: "sonnet" },
-      { kind: "setting-confirmed", setting: "model", value: "claude-sonnet-5-5" },
-    )
-
-    expect(state.settingMarks.model).toEqual({ kind: "confirmed", value: "sonnet", at: 0 })
-  })
-
-  it("違うモデルの見届けでは accepted のまま", () => {
-    const state = apply(
-      RUNNING,
-      { kind: "model-changed", model: "sonnet" },
-      { kind: "setting-confirmed", setting: "model", value: "claude-opus-5" },
-    )
-
-    expect(state.settingMarks.model.kind).toBe("accepted")
   })
 
   it("effort の見届けは、合わなくても state.effort を更新し、合えば confirmed にする", () => {

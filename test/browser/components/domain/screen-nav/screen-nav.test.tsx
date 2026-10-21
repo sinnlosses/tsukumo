@@ -465,21 +465,6 @@ describe("ScreenNav", () => {
       window.location.hash = "#character"
     })
 
-    it("状態の model / permissionMode の値を選択する", () => {
-      renderScreenNav({
-        model: "claude-sonnet-5",
-        session: { ...RUNNING_SESSION, permissionMode: "plan" },
-      })
-
-      expect(
-        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
-      ).toBe("sonnet")
-      expect(
-        typedElement(screen.getByLabelText("許可モード"), HTMLSelectElement, "許可モードの<select>")
-          .value,
-      ).toBe("plan")
-    })
-
     it("モデルの選択肢は MODEL_ALIASES と過不足なく一致する（片方だけの追加漏れを防ぐ）", () => {
       renderScreenNav()
 
@@ -545,6 +530,7 @@ describe("ScreenNav", () => {
 
     const OPUS_SUPPORT = {
       model: "opus",
+      resolvedModel: "claude-opus-5",
       supportsEffort: true,
       effortLevels: ["low", "medium", "high", "xhigh", "max"],
     } as const

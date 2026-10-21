@@ -12,6 +12,7 @@
 import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
+import { isModelAlias } from "../../../../../shared/command.ts"
 import { permissionModeValue } from "../../../../../shared/session/session-info.ts"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../../../../domain/effort-label.ts"
 import { MODEL_LABELS } from "../../../../domain/model-label.ts"
@@ -61,7 +62,10 @@ export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionPr
         value={model}
         disabled={false}
         title="モデル"
-        options={MODEL_LABELS.map(([value, label]) => ({ value, label }))}
+        options={[
+          ...MODEL_LABELS.map(([value, label]) => ({ value, label })),
+          ...(isModelAlias(model) ? [] : [{ value: model, label: model }]),
+        ]}
         onChange={onSetModel}
       />
       {effort.kind === "known" ? (

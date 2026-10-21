@@ -5,17 +5,12 @@
 
 import { useEffect, useState } from "react"
 
-import {
-  isEffortLevel,
-  isModelAlias,
-  isPermissionMode,
-  type ModelAlias,
-} from "../../shared/command.ts"
+import { isEffortLevel, isModelAlias, isPermissionMode } from "../../shared/command.ts"
 import type { ModelEffortSupport } from "../../shared/session/session-event-setting.ts"
 import type { ReportedPermissionMode } from "../../shared/session/session-info.ts"
 import type { SettingMark } from "../../shared/session/setting-mark.ts"
 import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
-import { resolveModelAlias } from "../domain/model-label.ts"
+import { resolveShownModel } from "../domain/model-label.ts"
 import { isDangerousPermissionMode } from "../domain/permission-mode-label.ts"
 import { nowEpochMilliseconds } from "../utils/clock.ts"
 import { useSession } from "./session.ts"
@@ -26,7 +21,7 @@ export type SettingDot = "none" | "accepted" | "confirmed"
 const CONFIRMED_DOT_MS = 3000
 
 export type ModelPermissionControl = {
-  readonly model: ModelAlias
+  readonly model: string
   readonly modelDot: SettingDot
   readonly effortDot: SettingDot
   readonly permissionModeDot: SettingDot
@@ -56,7 +51,8 @@ export function useModelPermission(): ModelPermissionControl {
 
   const shownPermissionMode = permissionMode ?? sessionDefault.permissionMode
   // effort の選べる段は「いま出しているモデル」で決まるので、model の畳み込みと同じ値を使う。
-  const shownModel = model === undefined ? sessionDefault.model : resolveModelAlias(model)
+  const shownModel =
+    model === undefined ? sessionDefault.model : resolveShownModel(model, modelEffortSupport)
 
   const settingMarks = useSession((session) => session.state.settingMarks)
   const modelDot = useSettingDot(settingMarks.model)

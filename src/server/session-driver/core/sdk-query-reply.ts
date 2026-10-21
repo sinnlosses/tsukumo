@@ -57,9 +57,11 @@ export function toModelEffortSupport(value: unknown): readonly ModelEffortSuppor
       return []
     }
     const levels = Array.isArray(item.supportedEffortLevels) ? item.supportedEffortLevels : []
+    const resolved = optionalString(item.resolvedModel) ?? ""
     return [
       {
         model: item.value,
+        resolvedModel: resolved === "" ? item.value : resolved,
         supportsEffort: item.supportsEffort === true,
         effortLevels: levels.filter(
           (level): level is EffortLevel => typeof level === "string" && isEffortLevel(level),
