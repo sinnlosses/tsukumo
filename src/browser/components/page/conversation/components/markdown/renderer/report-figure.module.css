@@ -228,6 +228,43 @@
   stroke: var(--accent);
   stroke-width: 3px;
 }
+/* `tone` の5色。系列色を枠にし、地は面の色へ薄く混ぜる。凡例の見本（`report-svg-legend`）も同じ規則で描く。 */
+.detail-block .report-svg-figure svg rect[data-tone],
+.detail-block .report-svg-legend svg rect[data-tone] {
+  fill: color-mix(in srgb, var(--tone-color) 22%, var(--surface-raised));
+  stroke: var(--tone-color);
+  stroke-width: 1.5px;
+}
+.detail-block .report-svg-figure svg rect[data-tone][stroke-width] {
+  stroke-width: 3px;
+}
+.detail-block svg rect[data-tone="a"] {
+  --tone-color: var(--chart-series-1);
+}
+.detail-block svg rect[data-tone="b"] {
+  --tone-color: var(--chart-series-2);
+}
+.detail-block svg rect[data-tone="c"] {
+  --tone-color: var(--chart-series-3);
+}
+.detail-block svg rect[data-tone="d"] {
+  --tone-color: var(--chart-series-4);
+}
+.detail-block svg rect[data-tone="e"] {
+  --tone-color: var(--chart-series-5);
+}
+.detail-block .report-svg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0.25rem 0 var(--report-block-gap);
+  color: var(--ink-quiet);
+}
+.detail-block .report-svg-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
 .detail-block .report-svg-figure svg line {
   stroke: var(--ink-quiet);
   stroke-width: 2px;

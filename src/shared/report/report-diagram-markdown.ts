@@ -143,6 +143,7 @@ type SvgFigure = {
   readonly width: number
   readonly height: number
   readonly shapes: readonly SvgShape[]
+  readonly legend: Extract<ReportBlock, { readonly kind: "svg" }>["legend"]
 }
 
 type SvgShape = Extract<ReportBlock, { readonly kind: "svg" }>["shapes"][number]
@@ -157,16 +158,17 @@ const SVG_LABEL_TOP_GAP = 8
 
 /**
  * 図形を `<svg viewBox="0 0 W H">` の1行に組む（空行を挟むと Markdown の HTML の塊が切れる）。
- * 色は書かない。`report-svg-figure` の下の要素に CSS が当てる（強調の枠だけ `stroke-width` の属性が目印）。
+ * 色は書かない。`report-svg-figure` の下の要素に CSS が当てる（強調の枠は `stroke-width`、`tone` は `data-tone` の属性が目印）。
+ * `legend` は図の下に、色の見本と名前の並びで出す。
  */
-export function svgHtml({ width, height, shapes }: SvgFigure): string {
+export function svgHtml({ width, height, shapes, legend }: SvgFigure): string {
   const w = String(width)
   const h = String(height)
   const marker =
     `<defs><marker id="${SVG_ARROW_MARKER_ID}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">` +
     `<path d="M0,0 L10,5 L0,10 z"></path></marker></defs>`
   const body = shapes.map(svgShapeHtml).join("")
-  return `<div class="svg-figure"><svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${marker}${body}</svg></div>`
+  return `<div class="svg-figure"><svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${marker}${body}</svg></div>${svgLegendHtml(legend)}`
 }
 
 /** 本文から「3 の呼び出し」と指せるよう、時系列の図の矢印に通し番号を振る。書き手が `autonumber` を書いていれば足さない。 */
@@ -289,11 +291,23 @@ function percentagesOf(values: readonly number[]): number[] {
   return values.map((value) => (total > 0 ? (Math.max(0, value) / total) * 100 : 0))
 }
 
+function svgLegendHtml(legend: SvgFigure["legend"]): string {
+  if (legend.length === 0) return ""
+  const items = legend
+    .map(
+      ({ tone, label }) =>
+        `<span class="svg-legend-item"><svg viewBox="0 0 16 12" width="16" height="12"><rect data-tone="${tone}" x="1" y="1" width="14" height="10" rx="2"></rect></svg>${htmlInline(label)}</span>`,
+    )
+    .join("")
+  return `<div class="svg-legend">${items}</div>`
+}
+
 function svgShapeHtml(shape: SvgShape): string {
   switch (shape.kind) {
     case "rect": {
       const strokeWidth = shape.emphasis ? ' stroke-width="3"' : ""
-      const rect = `<rect x="${String(shape.x)}" y="${String(shape.y)}" width="${String(shape.width)}" height="${String(shape.height)}" rx="4"${strokeWidth}></rect>`
+      const toneAttribute = shape.tone === "none" ? "" : ` data-tone="${shape.tone}"`
+      const rect = `<rect x="${String(shape.x)}" y="${String(shape.y)}" width="${String(shape.width)}" height="${String(shape.height)}" rx="4"${strokeWidth}${toneAttribute}></rect>`
       return shape.label.trim() === ""
         ? rect
         : rect +

@@ -35,6 +35,7 @@ import {
 import {
   graphFaultsInSections,
   svgFaultsInSections,
+  svgToneFaultsInSections,
   unknownMermaidCount,
 } from "./report-figure-fault.ts"
 import { hasNestedFold, notationsInSections, splitFences } from "./report-markdown-notation.ts"
@@ -69,6 +70,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   const drawnSections = sectionsWithFigure(report.figure, report.sections)
   const drawnBlocks = drawnSections.flatMap((section) => section.blocks)
   const svgFaults = svgFaultsInSections(drawnSections)
+  const svgToneFaults = svgToneFaultsInSections(drawnSections)
   const graphFaults = graphFaultsInSections(drawnSections)
 
   const counted = [
@@ -137,6 +139,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       faults: report.mermaidFaults,
     },
     { kind: "broken-svg", count: svgFaults.length, faults: svgFaults },
+    { kind: "unlegended-svg-tone", count: svgToneFaults.length, faults: svgToneFaults },
     { kind: "broken-graph", count: graphFaults.length, faults: graphFaults },
     {
       kind: "code-mismatch",

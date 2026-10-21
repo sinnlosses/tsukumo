@@ -125,6 +125,7 @@ describe("reportSectionsMarkdown", () => {
       height: 100,
       fold: "",
       aside: "",
+      legend: [],
       shapes: [
         {
           kind: "rect",
@@ -135,6 +136,7 @@ describe("reportSectionsMarkdown", () => {
           label: "A<b>",
           emphasis: true,
           labelAt: "center",
+          tone: "none",
         },
         {
           kind: "rect",
@@ -145,6 +147,7 @@ describe("reportSectionsMarkdown", () => {
           label: "",
           emphasis: false,
           labelAt: "center",
+          tone: "none",
         },
         { kind: "line", x1: 90, y1: 40, x2: 100, y2: 40, arrow: true, label: "" },
         { kind: "text", x: 5, y: 90, text: "架空の字" },
@@ -172,6 +175,7 @@ describe("reportSectionsMarkdown", () => {
       height: 40,
       label: "題",
       emphasis: false,
+      tone: "none",
     } as const
     const markdown = markdownOf({
       kind: "svg",
@@ -180,6 +184,7 @@ describe("reportSectionsMarkdown", () => {
       height: 100,
       fold: "",
       aside: "",
+      legend: [],
       shapes: [
         { ...rect, labelAt: "center" },
         { ...rect, x: 110, labelAt: "top-left" },
@@ -192,12 +197,48 @@ describe("reportSectionsMarkdown", () => {
     expect(markdown).toContain('<text x="122" y="42" font-size="14">題</text>')
   })
 
+  it("svg の rect の tone は data-tone で運び、legend は図の下に tone ごとの見本と名前で並べる", () => {
+    const markdown = markdownOf({
+      kind: "svg",
+      title: "",
+      width: 200,
+      height: 100,
+      fold: "",
+      aside: "",
+      legend: [
+        { tone: "a", label: "層<A>" },
+        { tone: "b", label: "層B" },
+      ],
+      shapes: [
+        {
+          kind: "rect",
+          x: 10,
+          y: 20,
+          width: 80,
+          height: 40,
+          label: "",
+          emphasis: false,
+          labelAt: "center",
+          tone: "a",
+        },
+      ],
+    })
+
+    expect(markdown).toContain(
+      '<rect x="10" y="20" width="80" height="40" rx="4" data-tone="a"></rect>',
+    )
+    expect(markdown).toContain('<div class="svg-legend">')
+    expect(markdown).toContain('<rect data-tone="b" x="1" y="1" width="14" height="10" rx="2">')
+    expect(markdown).toContain("層&lt;A&gt;</span>")
+  })
+
   it("beforeAfter の svg の側も SVG を組む", () => {
     const side = {
       kind: "svg",
       width: 50,
       height: 50,
       shapes: [{ kind: "text", x: 1, y: 2, text: "架空" }],
+      legend: [],
     } as const
     const markdown = markdownOf({
       kind: "beforeAfter",

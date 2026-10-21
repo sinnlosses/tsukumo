@@ -86,7 +86,7 @@
 ### SVG（論点3）
 
 **SVG は新しい `svg` の塊に上げ、座標つきの図形の並びで書く。** 書き手は SVG の文字列を書かず、
-描画の側が図形から SVG を組む。色は書けない（`chart` と同じく、テーマの色を描画の側が当てる）。
+描画の側が図形から SVG を組む。色は書けない（`chart` と同じく、テーマの色を描画の側が当てる。2026-10-21 の改訂で `tone` の5値だけ書ける）。
 
 ```ts
 {
@@ -94,10 +94,11 @@
   title: string,
   width: number, height: number,       // viewBox の大きさ
   shapes: Array<
-    | { kind: "rect", x, y, width, height, label: string, emphasis: boolean }
+    | { kind: "rect", x, y, width, height, label: string, emphasis: boolean, tone: "none" | "a".."e" }
     | { kind: "line", x1, y1, x2, y2, arrow: boolean, label: string }
     | { kind: "text", x, y, text: string }
   >,
+  legend: Array<{ tone: "a".."e", label: string }>,
   fold,
 }
 ```
@@ -106,6 +107,11 @@
   `svg` は試さない（段1の並びの最後）
 - 図形が `width` × `height` の外にはみ出すのは描き損じとして、`broken-mermaid` と同じく初めから差し戻す
   （順位の違反ではなく、描いた図が崩れる）
+- **改訂（2026-10-21）: 「色は書けない」を `tone` の5値に改める。** 素の HTML の層の図と並べると、層ごとの色の
+  区別が無いことが差の1つだった。書けるのは色の名前でなく意味の目印 `rect` の `tone`（`a`〜`e`。
+  描く側が系列色 `--chart-series-1`〜`5` に当てる）だけで、色そのものは書き手が持たない。
+  色だけで意味を言わない（`docs/research/report-block-craft.md` の C4）ので、`tone` を使う図は
+  `legend`（`tone` と名前の並び）を必ず付け、`legend` に無い `tone` は差し戻す
 - 逃げ道の `<svg>` は条8の記法の表から外す。記録の「塊の無い記法」の `svg` は残し、塊に上げたあとも
   書かれ続けるかを見る
 
@@ -151,17 +157,6 @@
 | SVG を逃げ道のまま梯子に載せる                       | 座標を書き手が SVG の文字列で書き、描き損じを検査する口が無い。利用者の判断で塊に上げる                        |
 | 上の段の乱用（条件を満たさない図）を差し戻す・数える | 図を避けさせる向きに働き、上の段を先に試させる梯子の狙いと逆になる                                             |
 | 描画を変えた作業で画像を必須にする                   | 描画を変えたかの判定がパス・拡張子のヒューリスティックになり、ほかのプロジェクトに当てはまらない               |
-
-## 実装で直す箇所（後段の実装タスクの下書き）
-
-| 箇所                                                                              | 直すこと                                                                                                                                                |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/server/report/core/report-notation.ts` の条8                                 | 第一候補の表を梯子の表（段の名前と塊の名前だけ）に替え、「迷ったら上の段で描く」と役割の塊を1行ずつ書く。本文の塊の節の記法の表から `svg` の行を外す    |
-| `src/shared/report/report-block.ts`                                               | `svg` の塊を足す（`beforeAfter` の側にも）。`graph` の `describe` の「一本道なら list の flow」を言い直し、`beforeAfter` の但し書きを `describe` へ移す |
-| `src/server/report/core/report-violation.ts`                                      | `svg` のはみ出しの差し戻しを足す                                                                                                                        |
-| `src/browser/components/page/conversation/components/markdown/renderer/`          | `svg` の塊を図形から SVG に組んで描く（テーマの色）                                                                                                     |
-| `src/server/report/core/report-usage.ts`・`scripts/runtime/report-block-usage.ts` | 記録を版5にし、段1の図を含む割合と、画像を `Read` したのに `image` が無い回を足す                                                                       |
-| `docs/architecture/display.md`                                                    | 「規則と置き場の対応」の条8の行と、各表示物の塊の一覧に `svg` を足し、「塊を足す・外す基準」の記録の版5を書く                                           |
 
 ## 追記: 図を欄で必須にした（2026-10-13）
 

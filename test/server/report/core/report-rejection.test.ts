@@ -39,12 +39,16 @@ describe("reportRejectionText", () => {
   })
 
   describe("broken-svg", () => {
-    const svg = (shapes: Extract<ReportBlock, { kind: "svg" }>["shapes"]): ReportBlock => ({
+    const svg = (
+      shapes: Extract<ReportBlock, { kind: "svg" }>["shapes"],
+      legend: Extract<ReportBlock, { kind: "svg" }>["legend"] = [],
+    ): ReportBlock => ({
       kind: "svg",
       title: "",
       width: 100,
       height: 50,
       shapes,
+      legend,
       fold: "",
       aside: "",
     })
@@ -58,6 +62,7 @@ describe("reportRejectionText", () => {
         label: "",
         emphasis: false,
         labelAt: "center",
+        tone: "none",
       }) as const
 
     it("枠内に収まる図形は違反にならない（端に接するのは収まり）", () => {
@@ -88,12 +93,28 @@ describe("reportRejectionText", () => {
       expect(rejection).not.toContain("架空の秘密")
     })
 
+    it("legend に無い tone を、何個目の塊のどの tone かだけで言い、legend にあれば通す", () => {
+      const toned = (
+        tone: "a" | "b",
+        legend: Extract<ReportBlock, { kind: "svg" }>["legend"],
+      ): ReportBlock => svg([{ ...rect(0, 0, 10, 10), label: "架空の秘密", tone }], legend)
+      const report = draft([toned("a", [{ tone: "a", label: "層" }]), toned("b", [])])
+      expect(reportViolations(report)).toEqual([
+        { kind: "unlegended-svg-tone", count: 1, faults: [{ block: 2, tone: "b" }] },
+      ])
+      const rejection = reportRejectionText(reportViolations(report))
+      expect(rejection).toContain("2個目の b")
+      expect(rejection).not.toContain("架空の秘密")
+      expect(kinds(draft([toned("a", [{ tone: "a", label: "層" }])]))).toEqual([])
+    })
+
     it("beforeAfter の svg の側も数える", () => {
       const side = {
         kind: "svg",
         width: 10,
         height: 10,
         shapes: [{ kind: "text", x: 11, y: 0, text: "架空" }],
+        legend: [],
       } as const
       const report = draft([
         { kind: "beforeAfter", title: "", before: side, after: side, fold: "", aside: "" },
@@ -154,6 +175,7 @@ describe("reportRejectionText", () => {
           width: 10,
           height: 10,
           shapes: [{ kind: "text", x: 11, y: 0, text: "架空" }],
+          legend: [],
           fold: "",
           aside: "",
         },

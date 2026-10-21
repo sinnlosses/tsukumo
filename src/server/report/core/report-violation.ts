@@ -7,7 +7,7 @@ import type { ReportCheck } from "../../../shared/report/report-check.ts"
 import { MAX_CONCLUSION_SENTENCES } from "../../../shared/report/report-limit.ts"
 import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { WorkPlanClosing } from "../../../shared/session/work-plan.ts"
-import type { GraphFault, MermaidFault, SvgFault } from "./report-figure-fault.ts"
+import type { GraphFault, MermaidFault, SvgFault, SvgToneFault } from "./report-figure-fault.ts"
 import type { MarkdownNotation } from "./report-markdown-notation.ts"
 
 /** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
@@ -95,6 +95,12 @@ export type ReportViolation =
       readonly count: number
       readonly faults: readonly SvgFault[]
     }
+  /** `svg` の塊の `rect` の `tone` が `legend` に無い。`faults` は位置と `tone` の名前だけ。 */
+  | {
+      readonly kind: "unlegended-svg-tone"
+      readonly count: number
+      readonly faults: readonly SvgToneFault[]
+    }
   /** `graph` の塊の `source` に読めない行がある。`faults` は位置だけで、書き手の行は持たない。 */
   | {
       readonly kind: "broken-graph"
@@ -149,6 +155,7 @@ export const VIOLATION_THRESHOLDS = {
   "markdown-notation": 0,
   "broken-mermaid": 0,
   "broken-svg": 0,
+  "unlegended-svg-tone": 0,
   "broken-graph": 0,
   "code-mismatch": 0,
   "code-marks-range": 0,

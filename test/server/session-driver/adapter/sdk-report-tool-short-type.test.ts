@@ -176,8 +176,8 @@ describe("short-type の report の受理", () => {
   })
 })
 
-/** 今の形（15,517字）に余白を持たせた上限。 */
-const SHORT_TYPE_INPUT_SCHEMA_MAX_CHARS = 15_700
+/** 今の形（16,040字）に余白を持たせた上限。 */
+const SHORT_TYPE_INPUT_SCHEMA_MAX_CHARS = 16_200
 
 function shortTypeServer() {
   return workServer([], [], createCallReview(), [], SHORT_TYPE_WORK_MODE)

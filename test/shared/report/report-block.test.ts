@@ -377,6 +377,15 @@ describe("parseReportSections", () => {
     const text = { kind: "text", x: 5, y: 5, text: "架空の字" }
     const svg = { kind: "svg", width: 200, height: 100, shapes: [rect, line, text] }
 
+    it("rect の tone は a〜e と none だけ、legend の tone は a〜e だけを読む", () => {
+      const parse = (block: object) =>
+        parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: [block] }]).sections
+      const legend = [{ tone: "a", label: "層" }]
+      expect(parse({ ...svg, legend, shapes: [{ ...rect, tone: "e" }] })).toHaveLength(1)
+      expect(parse({ ...svg, shapes: [{ ...rect, tone: "f" }] })).toHaveLength(0)
+      expect(parse({ ...svg, legend: [{ tone: "none", label: "層" }] })).toHaveLength(0)
+    })
+
     it("rect・line・text の3種を読み、省いた label・emphasis・arrow・title・fold を補う", () => {
       expect(
         parseReportSections([{ heading: "", shapeTag: "unspecified", blocks: [svg] }]).sections,
@@ -390,8 +399,9 @@ describe("parseReportSections", () => {
               title: "",
               fold: "",
               aside: "",
+              legend: [],
               shapes: [
-                { ...rect, label: "", emphasis: false, labelAt: "center" },
+                { ...rect, label: "", emphasis: false, labelAt: "center", tone: "none" },
                 { ...line, arrow: false, label: "" },
                 text,
               ],

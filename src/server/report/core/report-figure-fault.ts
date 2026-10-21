@@ -65,26 +65,39 @@ export function mermaidFaultPositions(faults: readonly MermaidFault[]): string {
 /** `block` は `svg` の塊（`beforeAfter` の側を含む）の出現順の1始まり、`shape` は `shapes` の中の1始まり。 */
 export type SvgFault = { readonly block: number; readonly shape: number }
 
-type SvgFigure = Pick<Extract<ReportBlock, { readonly kind: "svg" }>, "width" | "height" | "shapes">
+/** `block` は `svg` の塊の出現順の1始まり、`tone` は凡例に無い色の目印。 */
+export type SvgToneFault = { readonly block: number; readonly tone: string }
+
+type SvgFigure = Pick<
+  Extract<ReportBlock, { readonly kind: "svg" }>,
+  "width" | "height" | "shapes" | "legend"
+>
 
 export function svgFaultsInSections(sections: readonly ReportSection[]): readonly SvgFault[] {
-  const figures = sections
-    .flatMap((section) => section.blocks)
-    .flatMap((block): readonly SvgFigure[] => {
-      switch (block.kind) {
-        case "svg":
-          return [block]
-        case "beforeAfter":
-          return [block.before, block.after].flatMap((side) => (side.kind === "svg" ? [side] : []))
-        default:
-          return []
-      }
-    })
-  return figures.flatMap((figure, figureIndex) =>
+  return svgFiguresInSections(sections).flatMap((figure, figureIndex) =>
     figure.shapes.flatMap((shape, shapeIndex) =>
       isInsideSvg(shape, figure) ? [] : [{ block: figureIndex + 1, shape: shapeIndex + 1 }],
     ),
   )
+}
+
+export function svgToneFaultsInSections(
+  sections: readonly ReportSection[],
+): readonly SvgToneFault[] {
+  return svgFiguresInSections(sections).flatMap((figure, figureIndex) => {
+    const legended = new Set(figure.legend.map((entry) => entry.tone))
+    const used = figure.shapes.flatMap((shape) =>
+      shape.kind === "rect" && shape.tone !== "none" ? [shape.tone] : [],
+    )
+    return [...new Set(used)]
+      .filter((tone) => !legended.has(tone))
+      .map((tone) => ({ block: figureIndex + 1, tone }))
+  })
+}
+
+/** 凡例に無い `tone` の位置（何個目の塊のどの `tone` か）の並び。 */
+export function svgToneFaultPositions(faults: readonly SvgToneFault[]): string {
+  return faults.map((fault) => `${String(fault.block)}個目の ${fault.tone}`).join("、")
 }
 
 /** はみ出した図形の位置（何個目の塊の何番目の図形か）の並び。 */
@@ -108,6 +121,21 @@ export function graphFaultsInSections(sections: readonly ReportSection[]): reado
 
 export function graphFaultPositions(faults: readonly GraphFault[]): string {
   return faults.map((fault) => `${String(fault.block)}個目の ${String(fault.line)} 行目`).join("、")
+}
+
+function svgFiguresInSections(sections: readonly ReportSection[]): readonly SvgFigure[] {
+  return sections
+    .flatMap((section) => section.blocks)
+    .flatMap((block): readonly SvgFigure[] => {
+      switch (block.kind) {
+        case "svg":
+          return [block]
+        case "beforeAfter":
+          return [block.before, block.after].flatMap((side) => (side.kind === "svg" ? [side] : []))
+        default:
+          return []
+      }
+    })
 }
 
 function isInsideSvg(shape: SvgFigure["shapes"][number], { width, height }: SvgFigure): boolean {

@@ -2317,6 +2317,155 @@
       ]
     },
     {
+      "name": "report-svg-tone",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "層の図の色の見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "層ごとに色を付けて書くね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-svg-tone-1",
+            "conclusion": "架空の結論: 層の色が凡例とそろって見える。",
+            "sections": [
+              {
+                "heading": "架空の層の図",
+                "blocks": [
+                  {
+                    "kind": "svg",
+                    "title": "架空の3層と外の世界",
+                    "width": 560,
+                    "height": 230,
+                    "shapes": [
+                      {
+                        "kind": "rect",
+                        "x": 10,
+                        "y": 10,
+                        "width": 540,
+                        "height": 210,
+                        "label": "架空のアプリ",
+                        "labelAt": "top-left",
+                        "emphasis": false
+                      },
+                      {
+                        "kind": "rect",
+                        "x": 30,
+                        "y": 50,
+                        "width": 150,
+                        "height": 70,
+                        "label": "架空の画面",
+                        "tone": "a",
+                        "emphasis": false
+                      },
+                      {
+                        "kind": "rect",
+                        "x": 205,
+                        "y": 50,
+                        "width": 150,
+                        "height": 70,
+                        "label": "架空のサーバ",
+                        "tone": "b",
+                        "emphasis": true
+                      },
+                      {
+                        "kind": "rect",
+                        "x": 380,
+                        "y": 50,
+                        "width": 150,
+                        "height": 70,
+                        "label": "架空の共有",
+                        "tone": "c",
+                        "emphasis": false
+                      },
+                      {
+                        "kind": "rect",
+                        "x": 205,
+                        "y": 145,
+                        "width": 150,
+                        "height": 55,
+                        "label": "架空の外の世界",
+                        "tone": "d",
+                        "emphasis": false
+                      },
+                      {
+                        "kind": "line",
+                        "x1": 180,
+                        "y1": 85,
+                        "x2": 205,
+                        "y2": 85,
+                        "arrow": true,
+                        "label": ""
+                      },
+                      {
+                        "kind": "line",
+                        "x1": 355,
+                        "y1": 85,
+                        "x2": 380,
+                        "y2": 85,
+                        "arrow": true,
+                        "label": ""
+                      },
+                      {
+                        "kind": "line",
+                        "x1": 280,
+                        "y1": 120,
+                        "x2": 280,
+                        "y2": 145,
+                        "arrow": true,
+                        "label": ""
+                      }
+                    ],
+                    "legend": [
+                      { "tone": "a", "label": "画面の層" },
+                      { "tone": "b", "label": "サーバの層" },
+                      { "tone": "c", "label": "共有の層" },
+                      { "tone": "d", "label": "外の世界" }
+                    ],
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-svg-tone-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "report-matrix",
       "steps": [
         {

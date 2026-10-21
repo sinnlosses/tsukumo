@@ -139,13 +139,17 @@ describe("reportUsageEntryOf", () => {
           width: 10,
           height: 10,
           shapes: [svgShape],
+          legend: [],
           fold: "",
           aside: "",
         }),
       ).toBe(true)
       expect(
         figureOf(
-          beforeAfterOf({ kind: "svg", width: 10, height: 10, shapes: [svgShape] }, codeSide),
+          beforeAfterOf(
+            { kind: "svg", width: 10, height: 10, shapes: [svgShape], legend: [] },
+            codeSide,
+          ),
         ),
       ).toBe(true)
       expect(figureOf(beforeAfterOf(codeSide, pointsSide))).toBe(false)

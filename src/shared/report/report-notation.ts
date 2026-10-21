@@ -114,6 +114,8 @@ const REPORT_BLOCK_MARK_NAMES = [
   "dimension-value",
   "dimension-before",
   "svg-figure",
+  "svg-legend",
+  "svg-legend-item",
   "image-notes",
   "image-note-list",
   "image-note-number",

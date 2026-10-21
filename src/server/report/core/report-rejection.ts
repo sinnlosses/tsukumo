@@ -13,6 +13,7 @@ import {
   graphFaultPositions,
   mermaidFaultPositions,
   svgFaultPositions,
+  svgToneFaultPositions,
 } from "./report-figure-fault.ts"
 import { MARKDOWN_NOTATION_NAMES } from "./report-markdown-notation.ts"
 import type { ReportViolation } from "./report-violation.ts"
@@ -83,6 +84,8 @@ function violationLine(violation: ReportViolation): string {
       return `mermaid の図の構文が割れている（${mermaidFaultPositions(violation.faults)}）。その行の書き方を直す`
     case "broken-svg":
       return `\`svg\` の図形が \`width\` × \`height\` の外に出ている（${svgFaultPositions(violation.faults)}）。座標か大きさを直す`
+    case "unlegended-svg-tone":
+      return `\`svg\` の \`rect\` の \`tone\` が \`legend\` に無い（${svgToneFaultPositions(violation.faults)}）。\`legend\` に \`tone\` と名前を足す（色だけで意味を言わない）`
     case "broken-graph":
       return `\`graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）。囲みは \`[群の名]\` 〜 \`[]\` の1階層で、入れ子と閉じ忘れは読めない`
     case "long-first-sentence":

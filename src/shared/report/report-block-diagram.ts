@@ -23,6 +23,10 @@ const graphFields = {
     ),
 }
 
+export const SVG_TONES = ["a", "b", "c", "d", "e"] as const
+
+const svgToneSchema = z.enum(SVG_TONES)
+
 const svgShapeSchema = z
   .discriminatedUnion("kind", [
     z.object({
@@ -35,6 +39,9 @@ const svgShapeSchema = z
       emphasis: omittable(z.boolean(), false).describe("true で枠を強調する"),
       labelAt: omittable(z.enum(["center", "top-left"]), "center").describe(
         "枠の題の位置。入れ子の外側の枠は top-left",
+      ),
+      tone: omittable(z.enum(["none", ...SVG_TONES]), "none").describe(
+        "枠の意味の目印（a〜e の5色。色そのものは書けない）。使った tone は図の legend に名前を書く",
       ),
     }),
     z.object({
@@ -56,7 +63,10 @@ const svgFields = {
   shapes: z
     .array(svgShapeSchema)
     .min(1)
-    .describe("座標つきの図形の並び。色は書けない（rect の emphasis だけで強調する）"),
+    .describe("座標つきの図形の並び。色は書けず、rect の tone（a〜e）か emphasis で目印を付ける"),
+  legend: omittable(z.array(z.object({ tone: svgToneSchema, label: inlineText })), []).describe(
+    "rect の tone ごとの名前。tone を使った図には必ず付ける（色だけで意味を言わない）",
+  ),
 }
 
 const beforeAfterSideSchema = z
