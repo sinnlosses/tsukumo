@@ -61,6 +61,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 - `docs/architecture/display/speech-convention.md`: セリフの規約と機械の出来事への反応
 - `docs/architecture/display/conclusion.md`: /clear・レポートの構造・お願い・振り返り・検証結果の受け取り・結論部
 - `docs/architecture/display/check-result.md`: 検証結果の描き方
+- `docs/architecture/adr/0031-report-body-as-regions.md`: レポートの本文を欄の構造のまま渡し、欄ごとに描く（演出と目次の区切り）
 
 #### ワークプラン
 
