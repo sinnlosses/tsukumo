@@ -2,14 +2,16 @@ import { describe, expect, it } from "vitest"
 
 import {
   hasShownInterim,
-  newSectionIndexesOf,
-  newSectionIndexesOfTurn,
+  headedSectionIdsOfTurn,
+  newSectionIdsOf,
+  newSectionIdsOfTurn,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/new-heading.ts"
 import type {
   MainViewStep,
   MainViewTurn,
 } from "../../../../../../../../src/shared/session/main-view-shape.ts"
 
+/** 見出しが空文字の節は、見出しの無い節の欄（ID は並びの位置のまま）。 */
 function textStep(
   id: number,
   headings: readonly string[],
@@ -26,7 +28,7 @@ function textStep(
         sections: headings.map((heading, index) => ({
           id: index,
           heading,
-          markdown: `## ${heading}`,
+          markdown: heading === "" ? "架空の本文" : `## ${heading}`,
         })),
         retrospective: "",
         favor: { id: "favor-toolu_fictional", markdown: "" },
@@ -55,14 +57,25 @@ function turnOf(steps: readonly MainViewStep[]): MainViewTurn {
   }
 }
 
-describe("newSectionIndexesOfTurn", () => {
-  it("最後の中間と最終の差の位置を返す。最終が決まる前は空", () => {
+function sectionsOf(headings: readonly string[]): ReadonlyArray<{ id: number; heading: string }> {
+  return headings.map((heading, id) => ({ id, heading }))
+}
+
+describe("newSectionIdsOfTurn", () => {
+  it("最後の中間と最終の差の欄の ID を返す。最終が決まる前は空", () => {
     const interim = textStep(0, ["一", "二"], { interim: true, final: false })
     const open = textStep(1, ["一", "二", "三"], { interim: false, final: false })
     const closed = textStep(1, ["一", "二", "三"], { interim: false, final: true })
 
-    expect(newSectionIndexesOfTurn(turnOf([interim, open]))).toEqual([])
-    expect(newSectionIndexesOfTurn(turnOf([interim, closed]))).toEqual([2])
+    expect(newSectionIdsOfTurn(turnOf([interim, open]))).toEqual([])
+    expect(newSectionIdsOfTurn(turnOf([interim, closed]))).toEqual([2])
+  })
+
+  it("見出しの無い節が間に挟まっても、足された節の ID は欄の位置で返す", () => {
+    const interim = textStep(0, ["一", ""], { interim: true, final: false })
+    const closed = textStep(1, ["", "一", "", "二"], { interim: false, final: true })
+
+    expect(newSectionIdsOfTurn(turnOf([interim, closed]))).toEqual([3])
   })
 
   it("中間が複数あれば、最後の中間と比べる", () => {
@@ -70,36 +83,49 @@ describe("newSectionIndexesOfTurn", () => {
     const last = textStep(1, ["一", "二"], { interim: true, final: false })
     const closed = textStep(2, ["一", "二"], { interim: false, final: true })
 
-    expect(newSectionIndexesOfTurn(turnOf([first, last, closed]))).toEqual([])
+    expect(newSectionIdsOfTurn(turnOf([first, last, closed]))).toEqual([])
   })
 
   it("中間が無いやり取りは空で、中間があれば hasShownInterim が立つ", () => {
     const closed = textStep(0, ["一"], { interim: false, final: true })
     const interim = textStep(0, ["一"], { interim: true, final: false })
 
-    expect(newSectionIndexesOfTurn(turnOf([closed]))).toEqual([])
+    expect(newSectionIdsOfTurn(turnOf([closed]))).toEqual([])
     expect(hasShownInterim(turnOf([closed]))).toBe(false)
     expect(hasShownInterim(turnOf([interim]))).toBe(true)
   })
 })
 
-describe("newSectionIndexesOf", () => {
-  const FINAL = ["変わったこと", "確かめたこと", "残った課題"]
+describe("headedSectionIdsOfTurn", () => {
+  it("見出しのある節の欄の ID を、最終レポートがあればそれから返す", () => {
+    const interim = textStep(0, ["一"], { interim: true, final: false })
+    const closed = textStep(1, ["", "一", "二"], { interim: false, final: true })
+
+    expect(headedSectionIdsOfTurn(turnOf([interim, closed]))).toEqual([1, 2])
+    expect(headedSectionIdsOfTurn(turnOf([interim]))).toEqual([0])
+    expect(headedSectionIdsOfTurn(turnOf([]))).toEqual([])
+  })
+})
+
+describe("newSectionIdsOf", () => {
+  const FINAL = sectionsOf(["変わったこと", "確かめたこと", "残った課題"])
 
   it("中間レポートが無ければ空", () => {
-    expect(newSectionIndexesOf(undefined, FINAL)).toEqual([])
+    expect(newSectionIdsOf(undefined, FINAL)).toEqual([])
   })
 
   it("見出しが同じなら空", () => {
-    expect(newSectionIndexesOf(FINAL, FINAL)).toEqual([])
+    expect(newSectionIdsOf(FINAL, FINAL)).toEqual([])
   })
 
-  it("足された見出しの位置を返す", () => {
-    expect(newSectionIndexesOf(["変わったこと", "確かめたこと"], FINAL)).toEqual([2])
+  it("足された見出しの欄の ID を返す", () => {
+    expect(newSectionIdsOf(sectionsOf(["変わったこと", "確かめたこと"]), FINAL)).toEqual([2])
   })
 
   it("字が変わった見出しは新しい節として数える", () => {
-    expect(newSectionIndexesOf(["変わったこと", "確かめた事", "残った課題"], FINAL)).toEqual([1])
+    expect(
+      newSectionIdsOf(sectionsOf(["変わったこと", "確かめた事", "残った課題"]), FINAL),
+    ).toEqual([1])
   })
 
   it.each([
@@ -110,7 +136,7 @@ describe("newSectionIndexesOf", () => {
     "[リンク](https://example.com) の節",
     "逃がし\\の節",
   ])("記号を含む見出し「%s」は、中間にも最終にもあれば同じ節、無ければ足された節", (heading) => {
-    expect(newSectionIndexesOf([heading], [heading])).toEqual([])
-    expect(newSectionIndexesOf(["別の節"], [heading])).toEqual([0])
+    expect(newSectionIdsOf(sectionsOf([heading]), sectionsOf([heading]))).toEqual([])
+    expect(newSectionIdsOf(sectionsOf(["別の節"]), sectionsOf([heading]))).toEqual([0])
   })
 })

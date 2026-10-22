@@ -31,11 +31,15 @@ export function orderedReportRegions(body: MainViewReportBody): readonly MainVie
   return regions.filter((region) => !isBlankText(region.markdown))
 }
 
-/** 描く節の見出しの字の並び。見出しの無い節と、`report` ツールの外の本文は数えない。 */
-export function reportBodyHeadings(body: MainViewReportBody): readonly string[] {
+/** 見出しのある節の欄の ID と見出しの字。見出しの無い節と、`report` ツールの外の本文は数えない。 */
+export function reportHeadedSections(
+  body: MainViewReportBody,
+): readonly { readonly id: number; readonly heading: string }[] {
   return body.kind === "markdown"
     ? []
-    : body.sections.map((section) => section.heading).filter((heading) => heading !== "")
+    : body.sections.flatMap((section) =>
+        section.heading === "" ? [] : [{ id: section.id, heading: section.heading }],
+      )
 }
 
 /** 最終レポートの本文。頭を最終のときの頭に替える。 */

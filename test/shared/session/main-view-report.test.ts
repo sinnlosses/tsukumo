@@ -11,7 +11,7 @@ import type { ReportTask } from "../../../src/shared/report/report-task.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
 import {
   orderedReportRegions,
-  reportBodyHeadings,
+  reportHeadedSections,
 } from "../../../src/shared/session/main-view-report-body.ts"
 import type { MainViewStep } from "../../../src/shared/session/main-view-shape.ts"
 import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
@@ -321,7 +321,40 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     const body = turn?.steps.find((step) => step.body.kind === "text")?.body
-    expect(body?.kind === "text" ? reportBodyHeadings(body.report) : undefined).toEqual([heading])
+    expect(body?.kind === "text" ? reportHeadedSections(body.report) : undefined).toEqual([
+      { id: 0, heading },
+    ])
+  })
+
+  it("見出しのある節の欄の ID は節の並びの位置で、見出しの無い節の位置を飛ばさず、`markdown` 本文は空になる", () => {
+    const section = (heading: string): ReportSection => ({
+      heading,
+      shapeTag: "unspecified",
+      blocks: [{ kind: "text", text: "架空の本文。", fold: "", aside: "" }],
+    })
+    const turn = turnOf(
+      [
+        ask,
+        reportEvent({
+          toolUseId: "toolu_r1",
+          conclusion: "架空の結論。",
+          sections: [section(""), section("一つ目"), section(""), section("二つ目")],
+          favor: "",
+          checks: [],
+          task: { kind: "none" },
+        }),
+        finished,
+      ],
+      SETTLED,
+      true,
+    )
+
+    const body = turn?.steps.find((step) => step.body.kind === "text")?.body
+    expect(body?.kind === "text" ? reportHeadedSections(body.report) : undefined).toEqual([
+      { id: 1, heading: "一つ目" },
+      { id: 3, heading: "二つ目" },
+    ])
+    expect(reportHeadedSections({ kind: "markdown", markdown: "## 見出し" })).toEqual([])
   })
 
   describe("figure", () => {

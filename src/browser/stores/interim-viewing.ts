@@ -7,10 +7,10 @@ type InterimViewingState = {
   readonly generation: number
   /** やり取りの ID（`MainViewTurn.id`）から引く。中間レポートを見たやり取り。 */
   readonly viewed: Readonly<Record<number, true>>
-  /** 押して読んだ（「新」を消した）節の、最終レポートの見出しの並びでの番号。 */
+  /** 押して読んだ（「新」を消した）節の欄の ID（`MainViewReportSection.id`）。 */
   readonly read: Readonly<Record<number, readonly number[]>>
   readonly markViewed: (turnId: number) => void
-  readonly markRead: (turnId: number, sectionIndex: number) => void
+  readonly markRead: (turnId: number, sectionId: number) => void
   /** 覚えがこの世代のものでなければ全部忘れる。同じ世代なら何もしない（画面を隠して戻しても残す）。 */
   readonly forgetUnlessGeneration: (generation: number) => void
 }
@@ -22,12 +22,12 @@ export const useInterimViewing = create<InterimViewingState>()((set) => ({
   markViewed: (turnId) => {
     set((state) => (state.viewed[turnId] ? state : { viewed: { ...state.viewed, [turnId]: true } }))
   },
-  markRead: (turnId, sectionIndex) => {
+  markRead: (turnId, sectionId) => {
     set((state) => {
       const already = state.read[turnId] ?? []
-      return already.includes(sectionIndex)
+      return already.includes(sectionId)
         ? state
-        : { read: { ...state.read, [turnId]: [...already, sectionIndex] } }
+        : { read: { ...state.read, [turnId]: [...already, sectionId] } }
     })
   },
   forgetUnlessGeneration: (generation) => {
