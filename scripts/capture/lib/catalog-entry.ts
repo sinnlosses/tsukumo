@@ -4,6 +4,37 @@
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { MAIN_REGION_SELECTOR } from "./capture-page.ts"
 import type { Preparation } from "./capture-preparation.ts"
+import {
+  BEFORE_AFTER_CODE_SELECTOR,
+  BEFORE_AFTER_POINTS_SELECTOR,
+  BEFORE_AFTER_SELECTOR,
+  CAPTIONED_FIGURE_SELECTOR,
+  CAPTIONED_SELECTOR,
+  CHARACTER_DELETE_BAND_BUTTON_SELECTOR,
+  CHART_SELECTOR,
+  CHECKS_SELECTOR,
+  COMPOSER_SELECTOR,
+  DIARY_BODY_SELECTOR,
+  DIARY_NOTICE_OPEN_SELECTOR,
+  DIFF_SELECTOR,
+  DIMENSION_SELECTOR,
+  DRAWER_TASKS_TAB_SELECTOR,
+  DRAWER_TOGGLE_SELECTOR,
+  FLOW_SELECTOR,
+  GRAPH_LEGEND_SELECTOR,
+  IMAGE_NOTES_SELECTOR,
+  MERMAID_SELECTOR,
+  NOTE_FAVOR_SELECTOR,
+  NOTE_KINDS_SELECTOR,
+  NOTE_MEMO_SELECTOR,
+  PORTRAIT_CLEAR_BUTTON_SELECTOR,
+  PREVIEW_IMAGE_MISSING_SELECTOR,
+  PREVIEW_IMAGE_SELECTOR,
+  TASK_BOARD_SELECTOR,
+  VERDICT_SELECTOR,
+  WORK_PLAN_FINAL_SELECTOR,
+  WORK_TOGGLE_SELECTOR,
+} from "./catalog-selector.ts"
 
 /**
  * 撮る前に、その件専用の `TSUKUMO_HOME` へ置いておくもの。既定のホーム（利用者の
@@ -87,88 +118,6 @@ export type CatalogEntry = {
   readonly skipReveal: boolean
   readonly settle: Settle
 }
-
-/** 本文が入る領域の中で、領域の外まではみ出して1枚に入らないもの（疑似セッションの `notation`）。 */
-const MERMAID_SELECTOR = `${MAIN_REGION_SELECTOR} svg`
-const CHART_SELECTOR = `${MAIN_REGION_SELECTOR} canvas`
-/**
- * `note` の種別の並びのうちいちばん上に出るもの（情報）。ここまで送ると、続く注意・異常・
- * 疑問・メモが1枚に収まる（お願いだけは規約でレポートの末尾に置くので別の1枚になる）。
- * class 名は組み立てのたびにハッシュ化される（`report-note_nkMPPQ`）ので、種別の印
- * （`report-note-warn` など）を巻き込まないよう区切りの `_` まで含めて前方一致で指す
- * （`docs/architecture/testing.md`「手で確かめること」）。
- */
-const NOTE_KINDS_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note_"]`
-/** お願いの塊（レポートの末尾）。 */
-/** メモの塊。狭い窓では種別の並びの1枚（`notation-note`）に入りきらない。 */
-const NOTE_MEMO_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-memo_"]`
-const NOTE_FAVOR_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-favor_"]`
-/** 番号つきの題を持つ図と表の包み・寸法図。 */
-const CAPTIONED_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-captioned_"]`
-const CAPTIONED_FIGURE_SELECTOR = `${CAPTIONED_SELECTOR} pre.mermaid svg`
-const DIMENSION_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-dimension_"]`
-const IMAGE_NOTES_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-image-notes_"]`
-/** 前後の塊（`report-before-after` 場面の先頭は画像の前後）と、その中の最初のコード・箇条。 */
-const BEFORE_AFTER_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-before-after_"]`
-const BEFORE_AFTER_CODE_SELECTOR = `${BEFORE_AFTER_SELECTOR} pre`
-const BEFORE_AFTER_POINTS_SELECTOR = `${BEFORE_AFTER_SELECTOR} ul`
-
-/** 印つきの `graph` を包む図（`report-before-after` 場面の構造の変更の節。凡例を持つ包み）。 */
-const GRAPH_LEGEND_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-captioned"]:has([class*="report-graph-legend_"])`
-/** 質問の選択肢の preview に書いた画像（`question-preview-image` 場面の横長の画像と、描かない画像の札）。 */
-const PREVIEW_IMAGE_SELECTOR = `${MAIN_REGION_SELECTOR} img[alt="架空の横長の画面"]`
-const PREVIEW_IMAGE_MISSING_SELECTOR = `${MAIN_REGION_SELECTOR} [role="img"][aria-label="架空の外部の画像"]`
-/** `list` の `flow`（一本道の手順）。 */
-const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
-/**
- * 検証結果の表（`report` の `checks`）。class 名でなく role・aria-label で指す
- * （`reportChecksMarkdown` が組む `<div role="table" aria-label="検証結果">`
- * の属性はハッシュ化されない）。落ちた・確かめていない項目は「検証結果の問題」の表で開いて見え、
- * 通った項目は「検証結果」の表で `<details>` の中に畳まれる。
- */
-const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label^="検証結果"]`
-/** 結論のすぐ下の合図の行（`mainViewTurns` が組む。総括行・問題の項目・通った項目の畳みを含む検証結果の塊）。 */
-const VERDICT_SELECTOR = `${MAIN_REGION_SELECTOR} [role="group"][aria-label="検証結果"]`
-
-/** 最終レポートの器。最終 `report` が届くまで現れず、中間レポートの器（`is-interim`）とは別。 */
-const WORK_PLAN_FINAL_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="is-final_"]`
-
-/** 日記帳の見開きの右ページの本文。白紙のページは別の class なので、日記が書けていないと現れない。 */
-const DIARY_BODY_SELECTOR = '[class*="diary-book-body_"]'
-
-/** 入力欄。ページに `<textarea>` は1つしか無い。 */
-const COMPOSER_SELECTOR = "textarea"
-
-/**
- * 狭い窓でだけ出る引き出しを開く口と、その中のタスクのタブ。タスク一覧を開く口もある。
- * 広い窓では引き出しの口もタブも出ないので、この2手は空振りする
- * （空振りは飛ばして次の手へ進む。`applyPreparations` の `continue`）。
- */
-const DRAWER_TOGGLE_SELECTOR = '[aria-label="やり取りとタスクを開く"]'
-const DRAWER_TASKS_TAB_SELECTOR = '[role="tab"]:has-text("タスク")'
-const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
-
-/**
- * 帯の「いまの作業」の外枠（`data-work-state` を持つ div）の中の押す口（`CurrentWorkPill`）。
- * 見えているものだけを `:visible` で絞る。狭い画面には帯の札が無いので、この手は空振りする
- * （`applyPreparations` の `continue` が当たらなかった手を飛ばす）。
- */
-const WORK_TOGGLE_SELECTOR = "[data-work-state] button[aria-controls]:visible"
-
-/**
- * 書き終わりの知らせ（`DiaryNotice`）の「日記帳で開く」。成果の画面（`#achievement`）
- * だけに出る（`App` の `<Activity>`）。
- */
-const DIARY_NOTICE_OPEN_SELECTOR = 'button:has-text("日記帳で開く")'
-
-/**
- * キャラクター画面、表情のカードの「消す」（`PortraitCard`）。見える字は無くアイコン
- * だけなので `title` で当てる。
- */
-const PORTRAIT_CLEAR_BUTTON_SELECTOR = 'button[title="消す"]'
-
-/** キャラクター画面、最下部の「このキャラクターを消す」帯のボタン（`CharacterDelete`）。 */
-const CHARACTER_DELETE_BAND_BUTTON_SELECTOR = 'button:has-text("を消す")'
 
 /**
  * {@link HomeSetup} の `character` が置くパックのディレクトリ名。同梱の `chou` とは別名にして、
@@ -298,6 +247,16 @@ export const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "scroll", selector: CHECKS_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: CHECKS_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-diff",
+    scene: "report-tool",
+    label: "diff の塊（ファイル名の帯・+ と - の行）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [{ kind: "scroll", selector: DIFF_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: DIFF_SELECTOR, phase: "before-prepare" },
   },
   {
     name: "report-task-finished",

@@ -10,7 +10,10 @@ import { describe, expect, test } from "vitest"
 import { cssClassNames } from "../../css-module-loader.ts"
 
 const SRC_DIR = fileURLToPath(new URL("../../../src/", import.meta.url))
-const CAPTURE_SOURCES = [new URL("../../../scripts/capture/lib/catalog-entry.ts", import.meta.url)]
+const CAPTURE_SOURCES = [
+  new URL("../../../scripts/capture/lib/catalog-entry.ts", import.meta.url),
+  new URL("../../../scripts/capture/lib/catalog-selector.ts", import.meta.url),
+]
 
 const SELECTOR_CLASS_PATTERN = /\[class\*="([^"]+)_"\]/g
 
