@@ -52,7 +52,7 @@ export type RevealBlock = {
  * 図・グラフに与える重み（文字数に換算した値）。
  * 図は文字数を持たないので、文字と同じ物差しに載せるために決め打ちの重みを置く。段落1つぶんに相当させる。
  */
-const FIGURE_WEIGHT = 100
+export const FIGURE_WEIGHT = 100
 
 const FIGURE_SELECTOR = ".mermaid, .mermaid-broken, .chart-block, canvas, svg, img"
 
@@ -63,7 +63,7 @@ const SECTIONS_START_SELECTOR = ".report-sections-start"
  * 筆で書く対象の重み（文字数。図は {@link FIGURE_WEIGHT}）の合計がこれに満たないレポートは、演出せずに出す。
  * 速さの設定には左右されない。
  */
-const SHORT_REPORT_WEIGHT = 200
+export const SHORT_REPORT_WEIGHT = 200
 
 /** 最初から出す要素。節の見出し（`SectionHeading` の `h4`・`SubHeading` の `h5`）と図表の題と余白の柱。 */
 const UNWRITTEN_SELECTOR = "h4, h5, [data-reveal-caption], [data-reveal-gutter]"

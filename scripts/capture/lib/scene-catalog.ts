@@ -1,5 +1,6 @@
 import { sumBy } from "remeda"
 
+import { FIGURE_WEIGHT, SHORT_REPORT_WEIGHT } from "../../../src/browser/domain/reveal/plan.ts"
 import type { FakeSession } from "../../../src/server/session-driver/adapter/fake-session.ts"
 import { reportEvents } from "../../../src/server/session-driver/core/sdk-report-message.ts"
 import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
@@ -9,12 +10,6 @@ const TABLE_WITH_STATUS = "table(status)"
 
 /** 検証結果（`report` の `checks`）が1件以上あるときに積む印。 */
 const CHECKS = "checks"
-
-/** `use-report-reveal` が演出しない短さの境（`SHORT_REPORT_WEIGHT`）と同じ値。単体テストが定義の行と突き合わせる。 */
-export const REVEAL_SHORT_REPORT_WEIGHT = 200
-
-/** 図1つの重み（`FIGURE_WEIGHT`）と同じ値。単体テストが定義の行と突き合わせる。 */
-export const REVEAL_FIGURE_WEIGHT = 100
 
 export type RevealForecast = "likely" | "unlikely"
 
@@ -71,13 +66,13 @@ export function revealForecast(session: FakeSession): ReadonlyMap<string, Reveal
     })
     result.set(
       scene.name,
-      weights.some((weight) => weight >= REVEAL_SHORT_REPORT_WEIGHT) ? "likely" : "unlikely",
+      weights.some((weight) => weight >= SHORT_REPORT_WEIGHT) ? "likely" : "unlikely",
     )
   }
   return result
 }
 
-/** 描くと図になる塊。重みは文字数ではなく {@link REVEAL_FIGURE_WEIGHT} で数える。 */
+/** 描くと図になる塊。重みは文字数ではなく {@link FIGURE_WEIGHT} で数える。 */
 const FIGURE_BLOCK_KINDS: ReadonlySet<string> = new Set([
   "mermaid",
   "svg",
@@ -88,7 +83,7 @@ const FIGURE_BLOCK_KINDS: ReadonlySet<string> = new Set([
 ])
 
 function blockWeight(block: ReportBlock): number {
-  return FIGURE_BLOCK_KINDS.has(block.kind) ? REVEAL_FIGURE_WEIGHT : textLength(block)
+  return FIGURE_BLOCK_KINDS.has(block.kind) ? FIGURE_WEIGHT : textLength(block)
 }
 
 /** 塊の中の文字列の長さの合計（`kind` と `style` の値は描かないので数えない）。 */

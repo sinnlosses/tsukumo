@@ -51,7 +51,6 @@ export const E2E_WATCHED_REGIONS = {
   "test/e2e/report-task.test.ts": ["main"],
   "test/e2e/run-setting.test.ts": ["sidebar"],
   "test/e2e/session-ended.test.ts": ["main", "dispatch"],
-  "test/e2e/session-resume.test.ts": ["main"],
   "test/e2e/session-switch.test.ts": "every",
   "test/e2e/speak-bubble.test.ts": ["character"],
   "test/e2e/target-size.test.ts": "every",
