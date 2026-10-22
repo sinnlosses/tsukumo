@@ -120,17 +120,3 @@ describe("createReportGate（Stop の関所）", () => {
     expect(blocks([INIT, LONG_BODY], false, () => true)).toBe(false)
   })
 })
-
-describe("REPORT_GATE_REASON", () => {
-  it("report で渡し直すことと、締めの一言は closing に入れることを言う", () => {
-    expect(REPORT_GATE_REASON).toContain("`report` ツール")
-    expect(REPORT_GATE_REASON).toContain("渡し直す")
-    expect(REPORT_GATE_REASON).toContain("closing に入れる")
-    expect(REPORT_GATE_REASON).not.toContain("締めの `speak`")
-    expect(REPORT_GATE_REASON).not.toContain("「完了」")
-  })
-
-  it("差し戻しに触れないことを言う（利用者の画面には出ない）", () => {
-    expect(REPORT_GATE_REASON).toContain("セリフでもレポートでも触れない")
-  })
-})

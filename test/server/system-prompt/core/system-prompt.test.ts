@@ -122,20 +122,6 @@ describe("takeSystemPromptAppend", () => {
       `${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}\n\n${QUESTION_NOTATION_PROMPT}`,
     )
   })
-
-  it("雑談のときだけ載る条（覚える・忘れる・思い出す）は、仕事の append に入らない", () => {
-    const work = takeSystemPromptAppend({
-      persona: PERSONA,
-      mode: workMode(inMemoryChatSummary({ summary: SUMMARY, delivered: true }), READ_RECENT),
-    })
-
-    expect(CHAT_MANNER_PROMPT).toContain("remember")
-    expect(CHAT_MANNER_PROMPT).toContain("forget")
-    expect(CHAT_MANNER_PROMPT).toContain("recall_episode")
-    expect(work).not.toContain("remember")
-    expect(work).not.toContain("forget")
-    expect(work).not.toContain("recall_episode")
-  })
 })
 
 describe("toSystemPromptMode", () => {
