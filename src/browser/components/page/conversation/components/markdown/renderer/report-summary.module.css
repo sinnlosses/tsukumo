@@ -216,6 +216,52 @@
     color-mix(in srgb, var(--report-sequence-ink), var(--ground) 65%)
   );
 }
+/* 段が少なく短い流れ（`flow-row`）は横の箱の列にする。縦へ落とす規則は `report-notation.module.css` の @container。 */
+.detail-block .report-flow-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.75rem 1.5rem;
+}
+.detail-block .report-flow-row .report-flow-step {
+  position: relative;
+  box-sizing: border-box;
+  margin-top: 0;
+  display: flex;
+  flex: 1 1 7rem;
+  min-width: 0;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--report-chunk-rule, var(--rule));
+  border-radius: 0.5rem;
+  background: var(--surface-raised);
+  line-height: 1.6;
+}
+.detail-block .report-flow-row .report-flow-number {
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.detail-block .report-flow-row .report-flow-step:first-child .report-flow-number {
+  background: none;
+}
+.detail-block .report-flow-row .report-flow-rail {
+  display: none;
+}
+.detail-block .report-flow-arrow {
+  display: none;
+}
+.detail-block .report-flow-row .report-flow-arrow {
+  display: block;
+  position: absolute;
+  right: -1.25rem;
+  top: 50%;
+  translate: 0 -50%;
+  color: var(--report-sequence-ink);
+}
 /* 段の図（`report` の `progress` の塊と `work_plan` のワークプランから tsukumo が組む）。
    節（丸）と線でつないだ1本の道。済んだ・いま・まだの見分けは丸の中身（✓／輪と点／空の輪）が持ち、
    名前の字の色と線の色は補助。 */

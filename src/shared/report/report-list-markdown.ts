@@ -113,16 +113,32 @@ export function claimsMarkdown(block: ClaimsBlock): string {
   return joinParts(['<div class="claims">', ...rows, "</div>"])
 }
 
-/** 項目を番号の丸と1本の線でつないだ `<ol>` にする。名前があれば段の頭に太字で添える。 */
+const FLOW_ROW_MAX_STEPS = 5
+const FLOW_ROW_MAX_CHARS = 50
+
+function flowFitsRow(items: ListBlock["items"]): boolean {
+  return (
+    items.length <= FLOW_ROW_MAX_STEPS &&
+    items.every((item) => item.label.trim().length + item.text.length <= FLOW_ROW_MAX_CHARS)
+  )
+}
+
+/**
+ * 項目を番号の丸と1本の線でつないだ `<ol>` にする。名前があれば段の頭に太字で添える。
+ * 段が少なく短いときは `flow-row`（横の箱の列）を足し、最後以外の段に矢印を付ける。縦へ落とすのは CSS。
+ */
 function flowMarkdown(block: ListBlock): string {
   const lastIndex = block.items.length - 1
+  const row = flowFitsRow(block.items)
   const steps = block.items.map(({ label, text }, index) => {
     const name = label.trim() === "" ? "" : `<b>${htmlInlineWithCode(label)}</b>`
     const number = `<span class="flow-number" aria-hidden="true">${String(index + 1)}</span>`
     const rail = index === lastIndex ? "" : '<span class="flow-rail" aria-hidden="true"></span>'
-    return `<li class="flow-step">${number}${rail}<span>${name}${htmlInlineWithCode(text)}</span></li>`
+    const arrow =
+      row && index !== lastIndex ? '<span class="flow-arrow" aria-hidden="true">→</span>' : ""
+    return `<li class="flow-step">${number}${rail}<span>${name}${htmlInlineWithCode(text)}</span>${arrow}</li>`
   })
-  return `<ol class="flow" aria-label="流れ">${steps.join("")}</ol>`
+  return `<ol class="${row ? "flow flow-row" : "flow"}" aria-label="流れ">${steps.join("")}</ol>`
 }
 
 function listMarker(

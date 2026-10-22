@@ -39,21 +39,64 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("flow は番号の丸と線でつないだ ol/li で組み、名前があれば本文の頭に太字で添える", () => {
-    const items = [
-      { label: "", text: "架空の `入口`", done: false },
-      { label: "架空の段", text: "架空の<中>", done: true },
-      { label: "", text: "架空の出口", done: false },
-    ]
+  const flowOf = (items: { label: string; text: string }[]): string =>
+    markdownOf({
+      kind: "list",
+      style: "flow",
+      items: items.map((item) => ({ ...item, done: false })),
+      fold: "",
+      aside: "",
+    })
 
-    expect(markdownOf({ kind: "list", style: "flow", items, fold: "", aside: "" })).toBe(
+  it("flow は番号の丸と線でつないだ ol/li で組み、名前があれば本文の頭に太字で添える", () => {
+    const long = "あ".repeat(51)
+
+    expect(
+      flowOf([
+        { label: "", text: "架空の `入口`" },
+        { label: "架空の段", text: "架空の<中>" },
+        { label: "", text: long },
+      ]),
+    ).toBe(
       '<ol class="flow" aria-label="流れ">' +
         '<li class="flow-step"><span class="flow-number" aria-hidden="true">1</span>' +
         '<span class="flow-rail" aria-hidden="true"></span><span>架空の <code>入口</code></span></li>' +
         '<li class="flow-step"><span class="flow-number" aria-hidden="true">2</span>' +
         '<span class="flow-rail" aria-hidden="true"></span><span><b>架空の段</b>架空の&lt;中&gt;</span></li>' +
         '<li class="flow-step"><span class="flow-number" aria-hidden="true">3</span>' +
-        "<span>架空の出口</span></li></ol>",
+        `<span>${long}</span></li></ol>`,
+    )
+  })
+
+  it("flow は5段以下で各段が50字以内なら flow-row にし、最後以外の段に矢印を付ける", () => {
+    const fifty = "あ".repeat(50)
+
+    expect(
+      flowOf([
+        { label: "架空の段", text: "架空の<中>" },
+        { label: "", text: fifty },
+      ]),
+    ).toBe(
+      '<ol class="flow flow-row" aria-label="流れ">' +
+        '<li class="flow-step"><span class="flow-number" aria-hidden="true">1</span>' +
+        '<span class="flow-rail" aria-hidden="true"></span><span><b>架空の段</b>架空の&lt;中&gt;</span>' +
+        '<span class="flow-arrow" aria-hidden="true">→</span></li>' +
+        '<li class="flow-step"><span class="flow-number" aria-hidden="true">2</span>' +
+        `<span>${fifty}</span></li></ol>`,
+    )
+    expect(flowOf([{ label: "", text: "架空の一段" }])).not.toContain("flow-arrow")
+    expect(flowOf(Array.from({ length: 5 }, () => ({ label: "", text: "短い" })))).toContain(
+      "flow-row",
+    )
+  })
+
+  it("flow は6段・51字の段・名前込みで51字になる段のいずれかで縦のまま", () => {
+    const short = { label: "", text: "短い" }
+
+    expect(flowOf(Array.from({ length: 6 }, () => short))).not.toContain("flow-row")
+    expect(flowOf([short, { label: "", text: "あ".repeat(51) }])).not.toContain("flow-row")
+    expect(flowOf([short, { label: "あ".repeat(10), text: "い".repeat(41) }])).not.toContain(
+      "flow-row",
     )
   })
 

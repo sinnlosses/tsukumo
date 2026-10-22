@@ -52,6 +52,42 @@
   .detail-block .report-file-note {
     grid-column: 2;
   }
+  /* 横の列の流れ（`flow-row`）は縦の流れの見た目へ戻す（丸・線・段の間）。 */
+  .detail-block .report-flow-row {
+    display: block;
+  }
+  .detail-block .report-flow-row .report-flow-step {
+    box-sizing: content-box;
+    display: grid;
+    align-items: normal;
+    gap: 0 18px;
+    padding: 0 0 28px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    line-height: 1.95;
+  }
+  .detail-block .report-flow-row .report-flow-step + .report-flow-step {
+    margin-top: 4px;
+  }
+  .detail-block .report-flow-row .report-flow-step:last-child {
+    padding-bottom: 0;
+  }
+  .detail-block .report-flow-row .report-flow-number {
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--report-sequence-ink);
+    border-radius: 50%;
+  }
+  .detail-block .report-flow-row .report-flow-step:first-child .report-flow-number {
+    background: color-mix(in srgb, var(--surface-raised), var(--report-sequence-ink) 14%);
+  }
+  .detail-block .report-flow-row .report-flow-rail {
+    display: block;
+  }
+  .detail-block .report-flow-row .report-flow-arrow {
+    display: none;
+  }
 }
 
 /* `stats` / `cols` の列数は、項目数（`stats-of-<n>` / `cols-of-<n>`。`NotationBlock` が足す）の全部か約数か1列にする（3＋1 のような半端な段を作らない）。

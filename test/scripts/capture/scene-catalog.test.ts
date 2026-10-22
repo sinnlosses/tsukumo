@@ -20,6 +20,10 @@ describe("sceneBlockKinds", () => {
     expect(kinds.get("report-dimension")).not.toContain("table(status)")
   })
 
+  test("流れの塊の撮影用の場面は list を持つ", () => {
+    expect(kinds.get("report-flow-row")).toContain("list")
+  })
+
   test("検証結果を持つ場面には checks が出る", () => {
     expect(kinds.get("report-tool")).toContain("checks")
     expect(kinds.get("report-task-verdict")).toContain("checks")

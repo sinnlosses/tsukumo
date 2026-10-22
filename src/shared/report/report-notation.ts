@@ -91,6 +91,8 @@ const REPORT_BLOCK_MARK_NAMES = [
   "flow-step",
   "flow-number",
   "flow-rail",
+  "flow-row",
+  "flow-arrow",
   "progress",
   "progress-step",
   "progress-step-done",
