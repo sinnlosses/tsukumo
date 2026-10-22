@@ -11,10 +11,10 @@ import {
   hasFreshSubagentMark,
   recordE2eRun,
   RUN_LIMIT,
-  SUBAGENT_BASH_MARK_DIRECTORY,
 } from "../../../scripts/shared/e2e-run-ledger.ts"
 import { useTempDir } from "../../fixture/temp-dir.ts"
 
+const SUBAGENT_BASH_MARK_DIRECTORY = "subagent-bash"
 const NOW_MS = 1_800_000_000_000
 const STALE_AGE_MS = 600_000
 

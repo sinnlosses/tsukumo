@@ -10,8 +10,6 @@ import {
   pickRooms,
   previousGridTabs,
   type Room,
-  ROOM_GRID_PATH,
-  ROOM_GRID_TITLE,
   roomGridPath,
   routeRoomGridRequest,
   scanPorts,
@@ -22,6 +20,8 @@ const FAKE_TOKEN_A = "fake0000aaaa1111bbbb2222cccc3333"
 const FAKE_TOKEN_B = "fake4444dddd5555eeee6666ffff7777"
 const FAKE_GRID_KEY = "fakegridkey0000111122223333444455"
 const RELOAD_HREF = roomGridPath(FAKE_GRID_KEY)
+const ROOM_GRID_PATH = "/room-grid"
+const ROOM_GRID_TITLE = "tsukumoの格子"
 
 function listener(port: number, pid: number): Listener {
   return { port, pid, command: "node src/cli.ts" }

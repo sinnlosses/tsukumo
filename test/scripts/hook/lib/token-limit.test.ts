@@ -1,11 +1,18 @@
 import { describe, expect, test } from "vitest"
 
 import {
-  EXEMPT_PATH_PATTERNS,
   findOversizedFiles,
   formatTokenLimitRefusal,
   type StagedChange,
 } from "../../../../scripts/hook/lib/token-limit.ts"
+
+const EXEMPT_PATH_PATTERNS = [
+  "pnpm-lock.yaml",
+  "test/e2e/expected/",
+  "docs/history/",
+  "vendor/",
+  "test/fixture/fake-session.json",
+] as const
 
 function change(overrides: Partial<StagedChange>): StagedChange {
   return { path: "src/a.ts", headBytes: undefined, stagedBytes: 0, binary: false, ...overrides }

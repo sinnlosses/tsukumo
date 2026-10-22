@@ -6,10 +6,10 @@ import process from "node:process"
 
 import { beforeEach, describe, expect, test } from "vitest"
 
-import { SUBAGENT_BASH_MARK_DIRECTORY } from "../../../scripts/shared/e2e-run-ledger.ts"
 import { runSubprocess } from "../../fixture/subprocess.ts"
 import { useTempDir } from "../../fixture/temp-dir.ts"
 
+const SUBAGENT_BASH_MARK_DIRECTORY = "subagent-bash"
 const HOOK_PATH = resolve("scripts/hook/mark-subagent-bash.ts")
 const TOOL_USE_ID = "toolu_fictional1"
 

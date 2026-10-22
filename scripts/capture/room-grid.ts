@@ -13,13 +13,13 @@ import type { Listener } from "../shared/port-listener.ts"
 import { escapeHtml } from "./lib/html-escape.ts"
 
 /** 前回開いた格子のタブを見分けて閉じるための、固定の `<title>`。会話由来ではない定型文。 */
-export const ROOM_GRID_TITLE = "tsukumoの格子"
+const ROOM_GRID_TITLE = "tsukumoの格子"
 
 /**
  * 格子を配るパス。部屋のレイアウトページ（`LAYOUT_PATH`）と違うパスにする — 格子のタブの URL
  * も `127.0.0.1` なので、同じパスだと {@link pickRooms} に格子自身が部屋として拾われる。
  */
-export const ROOM_GRID_PATH = "/room-grid"
+const ROOM_GRID_PATH = "/room-grid"
 
 /** 格子のサーバへの要求の行き先。 */
 export type RoomGridRoute = "grid" | "forbidden" | "not-found"

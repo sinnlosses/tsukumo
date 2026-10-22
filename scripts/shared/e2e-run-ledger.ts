@@ -23,7 +23,7 @@ import { join } from "node:path"
 export const RUN_LIMIT = 6
 
 /** サブエージェントの Bash が走っている印を置く、git dir の下のディレクトリの名前。 */
-export const SUBAGENT_BASH_MARK_DIRECTORY = "subagent-bash"
+const SUBAGENT_BASH_MARK_DIRECTORY = "subagent-bash"
 
 /** Bash の timeout の上限。これより古い印は、消し損ねたものとみなす。 */
 const MARK_STALE_MS = 600_000

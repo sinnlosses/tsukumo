@@ -2,10 +2,14 @@
 
 import { describe, expect, test } from "vitest"
 
-import {
-  CONVENTION_TEST_PATHS,
-  withConventionTests,
-} from "../../../scripts/dev/lib/convention-test.ts"
+import { DOCUMENT_CHECK_TEST_FILES } from "../../../scripts/dev/lib/check-stage.ts"
+import { withConventionTests } from "../../../scripts/dev/lib/convention-test.ts"
+
+const CONVENTION_TEST_PATHS = [
+  "test/architecture/",
+  "test/function-order.test.ts",
+  ...DOCUMENT_CHECK_TEST_FILES,
+] as const
 
 describe("withConventionTests", () => {
   test.each([

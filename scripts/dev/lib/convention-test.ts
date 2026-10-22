@@ -2,7 +2,7 @@
 
 import { DOCUMENT_CHECK_TEST_FILES } from "./check-stage.ts"
 
-export const CONVENTION_TEST_PATHS = [
+const CONVENTION_TEST_PATHS = [
   "test/architecture/",
   "test/function-order.test.ts",
   ...DOCUMENT_CHECK_TEST_FILES,

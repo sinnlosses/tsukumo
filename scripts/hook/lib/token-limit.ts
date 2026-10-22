@@ -5,7 +5,7 @@ export const TOKEN_LIMIT = 5000
 export const BYTES_PER_TOKEN = 4
 
 /** 検査から外すパス。前方一致（末尾が `/` のもの）か完全一致。足すときはここだけを直す。 */
-export const EXEMPT_PATH_PATTERNS = [
+const EXEMPT_PATH_PATTERNS = [
   "pnpm-lock.yaml",
   "test/e2e/expected/",
   "docs/history/",
