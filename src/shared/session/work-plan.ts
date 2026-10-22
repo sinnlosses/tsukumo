@@ -2,7 +2,6 @@
 
 import { z } from "zod"
 
-import { sentenceCount } from "../report/sentence-count.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 
 /** 並列の段。同時に走る段の名前の並びで、{@link MIN_PHASE_GROUP_SIZE} 個以上の重ならない名前を持つ。 */
@@ -56,9 +55,6 @@ const MIN_WORK_PLAN_PHASES = 1
 
 /** 並列の段が持つ段の数の下限。1段だけの並列の段は段と同じなので受け付けない。 */
 const MIN_PHASE_GROUP_SIZE = 2
-
-/** 段のまとめの文の数の上限。 */
-export const MAX_PHASE_SUMMARY_SENTENCES = 2
 
 /** 記録の範囲で最後に渡されたワークプラン。1度も渡されていなければ `none`。 */
 export type LatestWorkPlan = { readonly kind: "none" } | PlannedWorkPlan
@@ -123,20 +119,12 @@ export const workPlanShape = {
  * 要素が {@link MIN_WORK_PLAN_PHASES} 個より少ない・空白だけの名前がある・
  * 並列の段の中の段が {@link MIN_PHASE_GROUP_SIZE} 個より少ないか名前が重なる・位置が0から要素の数までの整数でない・
  * `finishedInGroup` が今の並列の段の重ならない名前の一部でない・
- * 段のまとめが {@link MAX_PHASE_SUMMARY_SENTENCES} 文を超える・
  * 委譲先の段の範囲が整数でない・並びをはみ出す・並列の段の端をまたぐ・
  * 飛ばした段の名前が重なるか、この呼び出しで済んでいる段の名前でない。
  * 途中なのに段のまとめが無いことは、ここでは見ず `WorkPlanReview` が `summary-missing` で差し戻す。
  */
 export const workPlanSchema = z.object(workPlanShape).superRefine((value, context) => {
-  const {
-    phases,
-    current,
-    finishedInGroup = [],
-    phaseSummary = "",
-    delegatedRange,
-    skippedPhases = [],
-  } = value
+  const { phases, current, finishedInGroup = [], delegatedRange, skippedPhases = [] } = value
   const reject = (path: string): void => {
     context.addIssue({ code: "custom", message: "invalid work plan", path: [path] })
   }
@@ -157,9 +145,6 @@ export const workPlanSchema = z.object(workPlanShape).superRefine((value, contex
     ) {
       reject("finishedInGroup")
     }
-  }
-  if (!isBlankText(phaseSummary) && sentenceCount(phaseSummary) > MAX_PHASE_SUMMARY_SENTENCES) {
-    reject("phaseSummary")
   }
   if (delegatedRange !== undefined) {
     const { first, count } = delegatedRange

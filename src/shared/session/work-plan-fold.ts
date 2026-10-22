@@ -1,13 +1,11 @@
 // イベントと記録の並びからいまのワークプランを畳む決まりと、委譲の返却・`report` が段を進める決まり。
 
-import { leadingSentences } from "../report/sentence-count.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import type { DelegateReturn } from "./delegate-return.ts"
 import type { SessionEvent } from "./session-event.ts"
 import type { SessionRecord } from "./session-record.ts"
 import {
   finishedPhaseCount,
-  MAX_PHASE_SUMMARY_SENTENCES,
   NO_AWAITING_SUMMARY,
   phaseCount,
   type LatestWorkPlan,
@@ -106,7 +104,7 @@ function withLeadPhasesFinished(previous: LatestWorkPlan, next: PlannedWorkPlan)
  * `phase_result` の `finished`（`phase-done`）と `skipped`（`phase-skipped`）で進めたワークプラン。
  * 範囲があり `count` が範囲の段の数と同じで、`phase` に当たる段が今の段の集合に入っているときだけ、その段を済ませる。
  * 一足飛び・済んだ段・範囲の無いワークプラン・`stopped`・並びの最後の段（返却では全部済みにしない）では `plan` をそのまま返す。
- * 段のまとめは返却の要約を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもの。まとめが空なら済ませた段をまとめ待ちにする。
+ * 段のまとめは返却の要約。まとめが空なら済ませた段をまとめ待ちにする。
  * `phase-skipped` は済ませた段の名前を飛ばした段に足す。
  */
 function advancedByReturn(plan: PlannedWorkPlan, handback: DelegateReturn): PlannedWorkPlan {
@@ -140,10 +138,7 @@ function returnedByReturn(
   const finishedInGroup = typeof entry === "string" ? [] : [...plan.finishedInGroup, phase.name]
   const entryDone =
     entry === undefined || typeof entry === "string" || finishedInGroup.length === entry.length
-  const phaseSummary =
-    handback.kind === "phase-done"
-      ? leadingSentences(handback.summary, MAX_PHASE_SUMMARY_SENTENCES)
-      : ""
+  const phaseSummary = handback.kind === "phase-done" ? handback.summary : ""
   const skipped = handback.kind === "phase-skipped" && !plan.skippedPhases.includes(phase.name)
   const advanced: PlannedWorkPlan = {
     ...plan,

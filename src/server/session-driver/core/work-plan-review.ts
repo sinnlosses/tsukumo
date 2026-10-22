@@ -15,7 +15,6 @@
 
 import { isDeepEqual } from "remeda"
 
-import { sentenceCount } from "../../../shared/report/sentence-count.ts"
 import type { DelegateReturn } from "../../../shared/session/delegate-return.ts"
 import { delegateReturnOf, parsePhaseResult } from "../../../shared/session/phase-result.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -28,12 +27,10 @@ import {
   NO_DELEGATED_RANGE,
   parseWorkPlan,
   phaseCount,
-  MAX_PHASE_SUMMARY_SENTENCES,
   finishedPhaseNames,
   type WorkPlan,
   type WorkPlanStanding,
 } from "../../../shared/session/work-plan.ts"
-import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import {
   bandPositionText,
   handbackNoteText,
@@ -45,7 +42,6 @@ export type WorkPlanVerdict =
   | { readonly kind: "accepted"; readonly plan: WorkPlan }
   | { readonly kind: "malformed" }
   | { readonly kind: "summary-missing" }
-  | { readonly kind: "summary-too-long" }
   | { readonly kind: "skipped-phase" }
   | { readonly kind: "range-mismatch" }
   | { readonly kind: "range-missing" }
@@ -182,7 +178,7 @@ export function createWorkPlanReview(): WorkPlanReview {
   return {
     judge: (input) => {
       const plan = parseWorkPlan(input)
-      return settle(plan === undefined ? judgeUnparsed(input) : judgeWellFormed(plan))
+      return settle(plan === undefined ? { kind: "malformed" } : judgeWellFormed(plan))
     },
     judgeResult: (input) => {
       const result = parsePhaseResult(input)
@@ -285,21 +281,6 @@ export function createWorkPlanReview(): WorkPlanReview {
       }
     },
   }
-}
-
-// 3文以上は `parseWorkPlan` が読まないので、ここで見分ける。まとめだけが原因のときに限り `summary-too-long` にする。
-function judgeUnparsed(input: unknown): WorkPlanVerdict {
-  if (typeof input !== "object" || input === null || !("phaseSummary" in input)) {
-    return { kind: "malformed" }
-  }
-  const { phaseSummary } = input
-  const tooLong =
-    typeof phaseSummary === "string" &&
-    !isBlankText(phaseSummary) &&
-    sentenceCount(phaseSummary) > MAX_PHASE_SUMMARY_SENTENCES
-  return tooLong && parseWorkPlan({ ...input, phaseSummary: undefined }) !== undefined
-    ? { kind: "summary-too-long" }
-    : { kind: "malformed" }
 }
 
 function skipsPhase(previous: WorkPlan, next: WorkPlan): boolean {

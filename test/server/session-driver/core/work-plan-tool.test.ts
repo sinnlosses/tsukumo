@@ -13,13 +13,12 @@ describe("answerWorkPlanCall の malformed の差し戻し", () => {
     return result.text
   }
 
-  it("まとめが無い・3文以上・それ以外の崩れで別の固定文を返し、呼び出しの内容を入れない", () => {
+  it("まとめが無い・それ以外の崩れで別の固定文を返し、呼び出しの内容を入れない", () => {
     const missing = answer({ phases: PHASES, current: 1 })
-    const tooLong = answer({ phases: PHASES, current: 1, phaseSummary: LONG_SUMMARY })
     const other = answer({ phases: PHASES, current: 9, phaseSummary: LONG_SUMMARY })
 
-    expect(new Set([missing, tooLong, other]).size).toBe(3)
-    for (const text of [missing, tooLong, other]) {
+    expect(new Set([missing, other]).size).toBe(2)
+    for (const text of [missing, other]) {
       expect(text).not.toContain("架空")
     }
   })

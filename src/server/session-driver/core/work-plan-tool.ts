@@ -29,7 +29,7 @@ export const WORK_PLAN_FINISHED_IN_GROUP_DESCRIPTION =
   "配列を指していないときは省く"
 
 export const WORK_PLAN_PHASE_SUMMARY_DESCRIPTION =
-  "終えた段でしたこと・分かったことを1〜2文で（記法は report の conclusion と同じ）。" +
+  "終えた段でしたこと・分かったことを2文以内で（目安。記法は report の conclusion と同じ）。" +
   "済んだ段が1つ以上あり全部は済んでいない呼び出しでは必ず入れる。戻る・組み替えるだけのときは、そこまでで分かったことを書く。" +
   "最後の段のまとめは report に書く"
 
@@ -56,10 +56,6 @@ const WORK_PLAN_REJECTIONS = {
   "summary-missing":
     "済んだ段が1つ以上あり全部は済んでいないのに、phaseSummary が無いか空。" +
     "phaseSummary に終えた段のまとめを2文以内で入れて呼び直すこと。" +
-    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
-  "summary-too-long":
-    "phaseSummary が3文以上ある。" +
-    "終えた段のまとめを2文以内に縮めて呼び直すこと。" +
     "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。",
   "closed-by-plan":
     "current が phases の要素の数に等しい（全部済みの位置）。" +

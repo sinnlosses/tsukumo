@@ -34,17 +34,11 @@ describe("parseWorkPlan の段のまとめ", () => {
     expect(parseWorkPlan({ phases: PHASES, current: 3 })?.phaseSummary).toBe("")
   })
 
-  it("3文以上のまとめは受け付けず、括弧とインラインコードの中の句点は数えない", () => {
+  it("3文以上のまとめもそのまま受け付ける", () => {
     expect(
-      parseWorkPlan({ phases: PHASES, current: 1, phaseSummary: "一つ目。二つ目。三つ目。" }),
-    ).toBeUndefined()
-    expect(
-      parseWorkPlan({
-        phases: PHASES,
-        current: 1,
-        phaseSummary: "架空の形を調べた（中は。を含む）。`a。b` は変えない。",
-      })?.phaseSummary,
-    ).toBe("架空の形を調べた（中は。を含む）。`a。b` は変えない。")
+      parseWorkPlan({ phases: PHASES, current: 1, phaseSummary: "一つ目。二つ目。三つ目。" })
+        ?.phaseSummary,
+    ).toBe("一つ目。二つ目。三つ目。")
   })
 
   it("文字列でないまとめは受け付けない", () => {

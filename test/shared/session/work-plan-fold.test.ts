@@ -95,9 +95,9 @@ describe("nextWorkPlan（委譲の返却で進める）", () => {
     })
   })
 
-  it("要約は2文に切り詰める", () => {
+  it("要約は3文以上でも切り詰めない", () => {
     expect(returned(planAt(1), phaseDone(1, 2, "一つ目。二つ目。三つ目。"))).toMatchObject({
-      phaseSummary: "一つ目。二つ目。",
+      phaseSummary: "一つ目。二つ目。三つ目。",
     })
   })
 

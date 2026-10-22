@@ -139,7 +139,7 @@ describe("WorkPlanReview の判定", () => {
     expect(review.judge({ current: 1, phaseSummary: SUMMARY }).kind).toBe("malformed")
   })
 
-  it("途中でまとめが空・まとめが3文以上・その他の崩れは別の種類で差し戻す", () => {
+  it("途中でまとめが空なら summary-missing、3文以上でも受け付け、その他の崩れは malformed で差し戻す", () => {
     const review = createWorkPlanReview()
     const threeSentences = "一つ目。二つ目。三つ目。"
 
@@ -148,7 +148,7 @@ describe("WorkPlanReview の判定", () => {
       "summary-missing",
     )
     expect(review.judge({ phases: PHASES, current: 1, phaseSummary: threeSentences }).kind).toBe(
-      "summary-too-long",
+      "accepted",
     )
     expect(review.judge({ phases: PHASES, current: 9, phaseSummary: threeSentences }).kind).toBe(
       "malformed",
