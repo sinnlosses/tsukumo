@@ -54,7 +54,7 @@
 
 いまのパックの顔（`CharacterInfo.face`）をこの区画にも出す。`<CharacterFace>` へ渡す形
 （`{ url, alt }`）は帯（`screen-nav`）と同じ導き方なので、`browser/domain/character-face.ts`
-（`characterFaceInfo`）へ出して2機能で共有した（CLAUDE.md 原則5）。
+（`characterFaceInfo`）へ出して2機能で共有した（AGENTS.md 原則5）。
 
 **結果の場面**（`usage-review-card.tsx` の `ResultReviewCard`。見本
 `docs/history/mockup/token-advice-result-2026-09-23.html`）は、**今回の結果

@@ -181,7 +181,7 @@ describe("CharacterEdit", () => {
     expect(clearConfirmDialog()?.hasAttribute("open")).toBe(true)
     expect(screen.getByText("「どや顔」を消しますか？")).toBeDefined()
     // 本文の「代わりに出る表情」の名前もパックのラベル
-    // （`resolveExpressionLabel`。CLAUDE.md「キャラクターの中身をコードに書かない」）。
+    // （`resolveExpressionLabel`。AGENTS.md「キャラクターの中身をコードに書かない」）。
     expect(screen.getByText("この表情を使う場面では「通常」が出ます。")).toBeDefined()
   })
 

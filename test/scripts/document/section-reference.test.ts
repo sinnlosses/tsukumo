@@ -20,7 +20,7 @@ import {
 const DISPLAY = "docs/architecture/display.md"
 const RESEARCH = "docs/research/topic.md"
 const HISTORY = "docs/history/tasks.md"
-const CLAUDE = "CLAUDE.md"
+const AGENTS = "AGENTS.md"
 const GONE = "docs/gone.md"
 const ABSENT = `docs/${"absent"}.md`
 
@@ -44,7 +44,7 @@ describe("findSectionReferences", () => {
           `\`${DISPLAY}\` 2章「三」`,
           `\`${DISPLAY}\` 7.1 の「四」`,
           `${DISPLAY} 原則4「五」`,
-          `\`${CLAUDE}\` の「六」`,
+          `\`${AGENTS}\` の「六」`,
         ].join("\n"),
       ),
     ).toEqual(["一", "二", "三", "四", "五", "六"])
@@ -59,8 +59,8 @@ describe("findSectionReferences", () => {
     expect(phrasesOf(`${RESEARCH}「調査」 ${HISTORY}「記録」`)).toEqual(["調査"])
   })
 
-  test("別の場所の CLAUDE.md（直前が / のもの）は拾わない", () => {
-    expect(phrasesOf(`~/.claude/${CLAUDE}「よそ」`)).toEqual([])
+  test("別の場所の AGENTS.md（直前が / のもの）は拾わない", () => {
+    expect(phrasesOf(`~/.codex/${AGENTS}「よそ」`)).toEqual([])
   })
 
   test("句の中の「」は入れ子として数え、外側の 」で閉じる", () => {
@@ -222,9 +222,9 @@ describe("isScannedSource", () => {
     expect(isScannedSource(".tw/tasks.json")).toBe(false)
   })
 
-  test("それ以外の docs/・src/・CLAUDE.md は対象にする", () => {
+  test("それ以外の docs/・src/・AGENTS.md は対象にする", () => {
     expect(isScannedSource("docs/architecture.md")).toBe(true)
     expect(isScannedSource("src/shared/session/main-view.ts")).toBe(true)
-    expect(isScannedSource("CLAUDE.md")).toBe(true)
+    expect(isScannedSource("AGENTS.md")).toBe(true)
   })
 })

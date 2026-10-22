@@ -12,7 +12,7 @@
 // 許す——同じファイルでもコメント（`//`・`/* */`・JSDoc）とテスト名（`describe`/`it`/`test` の
 // 最初の文字列引数）に書かれた出現は拾う。置き場所の判定は `contextRangesOf` が行う、
 // (2) 既知の例外 `T-225`、
-// (3) `docs/requirements.md`「7. 未決事項」の表の「対応タスク」列（CLAUDE.md が唯一許す docs の
+// (3) `docs/requirements.md`「7. 未決事項」の表の「対応タスク」列（AGENTS.md が唯一許す docs の
 // 例外）。(3) は `maskAllowedRequirementsPendingTaskColumn` が、拾う前にその列だけ伏せて実現する
 // （伏せた場所は 1列目や節の外まで広げない）。
 

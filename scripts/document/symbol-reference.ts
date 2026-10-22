@@ -12,7 +12,7 @@
 // 対象の文書は次のとおり。
 // `docs/` の `.md`（`docs/history/` と `docs/research/` を除く）。
 // `README.md`。
-// `CLAUDE.md`。
+// `AGENTS.md`。
 // `.claude/rules/` の `.md`。
 
 /** 文書中の、ソースのシンボルを指す参照1つ。 */
@@ -82,7 +82,7 @@ export function isSymbolCheckedDocument(path: string): boolean {
     path.startsWith("docs/") ||
     path.startsWith(".claude/rules/") ||
     path === "README.md" ||
-    path === "CLAUDE.md"
+    path === "AGENTS.md"
   )
 }
 

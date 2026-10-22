@@ -9,7 +9,7 @@ import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-
 import { WORK_MODE } from "../../../fixture/sdk-tool.ts"
 
 // `startSdkDriver` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
-// （docs/requirements.md「起動と設定」 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の
+// （docs/requirements.md「起動と設定」 / AGENTS.md「よく使うコマンド」）。`query()` に渡る `options` の
 // うち、クロージャを含まない部分（`buildQuerySeedOptions`）だけを検査する。
 const BASE_OPTIONS: SessionDriverOptions = {
   cwd: "/tmp/tsukumo-test",

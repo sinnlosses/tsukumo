@@ -5,7 +5,7 @@
 // 拾う形は「ファイル名 → 閉じのバッククォート（あってもなくても）→ 番号（`4.2` / `7章` /
 // `原則4`。無くてもよい）→ `の`（無くてもよい）→ 「句」」だけ。あいだに他の語が挟まるもの
 // （ファイル名 7章）。人格の「…」、のように「」が節を指していないもの）は拾わない。
-// ファイル名の無い「同ファイル「…」」と、`CLAUDE.md` の中で節を `## 節名` の形で指すものは、
+// ファイル名の無い「同ファイル「…」」と、`AGENTS.md` の中で節を `## 節名` の形で指すものは、
 // 指す先が文脈でしか決まらないので追わない。
 //
 // 参照を探すのは `docs/history/`（据え置きの記録）・`docs/research/`（調査した時点の正典を引いた
@@ -25,7 +25,7 @@ export type SectionReference = {
   readonly sourcePath: string
   /** 参照が始まる行（1始まり）。 */
   readonly line: number
-  /** 引いている先（`docs/architecture/display.md` / `CLAUDE.md` の形）。 */
+  /** 引いている先（`docs/architecture/display.md` / `AGENTS.md` の形）。 */
   readonly targetPath: string
   /** 句の前に書かれた節番号（`4.9` / `7`）。番号の無い参照、`原則4` は `undefined`。 */
   readonly section: string | undefined
@@ -60,14 +60,14 @@ const UNSCANNED_PREFIXES = [
 ] as const satisfies readonly string[]
 
 // ファイル名・閉じのバッククォート・番号・「の」のあとに「 が来る形。`docs/` 配下はサブディレクトリ
-// （`docs/research/`）も含む。`CLAUDE.md` は直前が `/` や英数字でないもの（別の場所の CLAUDE.md を
+// （`docs/research/`）も含む。`AGENTS.md` は直前が `/` や英数字でないもの（別の場所の AGENTS.md を
 // 指していない）だけ。
 const REFERENCE_HEAD =
-  /(?<![\w/.-])((?:docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|CLAUDE)\.md)`?[ \t]*(?:(?:(\d+(?:\.\d+)*)章?|原則\d+)[ \t]*)?の?[ \t]*「/gu
+  /(?<![\w/.-])((?:docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|AGENTS)\.md)`?[ \t]*(?:(?:(\d+(?:\.\d+)*)章?|原則\d+)[ \t]*)?の?[ \t]*「/gu
 
 // 上と同じ頭だが、「 が無いまま行が終わる形。「 の開きそのものが次の行にある参照を拾うために使う。
 const REFERENCE_HEAD_WITHOUT_BRACKET =
-  /(?<![\w/.-])((?:docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|CLAUDE)\.md)`?[ \t]*(?:(?:(\d+(?:\.\d+)*)章?|原則\d+)[ \t]*)?の?[ \t]*$/u
+  /(?<![\w/.-])((?:docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|AGENTS)\.md)`?[ \t]*(?:(?:(\d+(?:\.\d+)*)章?|原則\d+)[ \t]*)?の?[ \t]*$/u
 
 // `docs/` 以下の `.md` のパス。直前が `/` や英数字のもの（URL や別のリポジトリの中のパス）は拾わない。
 const FILE_PATH = /(?<![\w/.-])docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*\.md(?![\w-])/gu

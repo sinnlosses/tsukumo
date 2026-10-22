@@ -22,7 +22,7 @@ describe("isDocumentPath", () => {
     ["docs/ 配下の .md", "docs/requirements.md", true],
     [".tw/ 配下の .md", ".tw/task/sample.md", true],
     ["直下の README.md", "README.md", true],
-    ["直下の CLAUDE.md", "CLAUDE.md", true],
+    ["直下の AGENTS.md", "AGENTS.md", true],
     [
       "src/ 配下の .md（同梱パックの persona.md など）",
       "src/server/character/adapter/pack/persona.md",
@@ -64,7 +64,7 @@ describe("planStages", () => {
 
   test("文書だけの変更は E2E を選ばず、format:check と文書の検査だけ", () => {
     const plan = planStages(
-      ["docs/workflow.md", "CLAUDE.md"],
+      ["docs/workflow.md", "AGENTS.md"],
       () => {
         throw new Error("E2E は選ばない")
       },

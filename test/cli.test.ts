@@ -119,7 +119,7 @@ describe("tsukumo CLI", () => {
   // 全滅も必ず終了コード1（ずらす先が無いのでどのみち起こらない）。
   // 「既定ポートが塞がっていて、ずらした先で実際に listen できる」経路だけは、成功すると
   // 本物のセッション（claude の子プロセス）が起きてしまうため、ここでは確かめない
-  // （手元での目視確認に譲る。CLAUDE.md「テスト方針」）。
+  // （手元での目視確認に譲る。AGENTS.md「テスト方針」）。
 
   it("TSUKUMO_VIEW_PORT で明示したポートが塞がっていると、ずらさず終了コード1で終わる", async () => {
     const blocker = await listenOnEphemeralPort()

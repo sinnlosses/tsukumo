@@ -51,14 +51,14 @@ describe("文書が指すシンボルの置き場所", () => {
     ])
   })
 
-  it("記録の置き場は対象外で、正典・README.md・CLAUDE.md・規約は対象", () => {
+  it("記録の置き場は対象外で、正典・README.md・AGENTS.md・規約は対象", () => {
     expect(
       [
         "docs/history/tasks.md",
         "docs/research/topic.md",
         "docs/architecture.md",
         "README.md",
-        "CLAUDE.md",
+        "AGENTS.md",
         ".claude/rules/typescript.md",
         "src/a.md",
       ].map(isSymbolCheckedDocument),

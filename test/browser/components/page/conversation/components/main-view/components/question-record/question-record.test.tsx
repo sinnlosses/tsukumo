@@ -1,4 +1,4 @@
-// 色そのものはテストしない（`CLAUDE.md`「見た目（色・崩れ）は目視で確かめる」）。
+// 色そのものはテストしない（`AGENTS.md`「見た目（色・崩れ）は目視で確かめる」）。
 // 差し色が当たる側の class を持つことまでを測る。
 
 import { act, cleanup, render, screen } from "@testing-library/react"
