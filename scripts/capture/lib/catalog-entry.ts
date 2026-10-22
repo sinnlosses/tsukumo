@@ -5,6 +5,11 @@ import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { MAIN_REGION_SELECTOR } from "./capture-page.ts"
 import type { Preparation } from "./capture-preparation.ts"
 import {
+  DIARY_FIXTURE_BODY,
+  DIARY_FIXTURE_DATE,
+  SAMPLE_CHARACTER_PACK_NAME,
+} from "./catalog-fixture.ts"
+import {
   BEFORE_AFTER_CODE_SELECTOR,
   BEFORE_AFTER_POINTS_SELECTOR,
   BEFORE_AFTER_SELECTOR,
@@ -26,6 +31,7 @@ import {
   MERMAID_SELECTOR,
   NOTE_FAVOR_SELECTOR,
   NOTE_KINDS_SELECTOR,
+  NEW_SECTION_MARK_SELECTOR,
   NOTE_MEMO_SELECTOR,
   PORTRAIT_CLEAR_BUTTON_SELECTOR,
   PREVIEW_IMAGE_MISSING_SELECTOR,
@@ -118,19 +124,6 @@ export type CatalogEntry = {
   readonly skipReveal: boolean
   readonly settle: Settle
 }
-
-/**
- * {@link HomeSetup} の `character` が置くパックのディレクトリ名。同梱の `chou` とは別名にして、
- * 「ホームにしか無いパック」（`removal: "delete"`）にする。 */
-const SAMPLE_CHARACTER_PACK_NAME = "chou-sample"
-
-/** {@link HomeSetup} の `diary` が書く日（`diary-written` 場面が書く日付と揃える）。 */
-const DIARY_FIXTURE_DATE = "2026-09-20"
-
-/** {@link HomeSetup} の `diary` が書く本文。架空の日記で、実物の記録ではない。 */
-const DIARY_FIXTURE_BODY =
-  "今日は日記帳の見開きを撮るための架空の日記。実物の作業内容は含まない。" +
-  "ダミーの振り返りとして、架空のタスクを1件終えたことにしてある。"
 
 /**
  * 並べて見たい状態。網羅はしない — 直したときに崩れやすい場所（答え待ちの箱・ツールの進行・
@@ -257,6 +250,16 @@ export const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "scroll", selector: DIFF_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: DIFF_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-new-section",
+    scene: "report-new-section",
+    label: "目次の「新」の印（最終レポートで増えた節の行）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: true,
+    settle: { kind: "selector", selector: NEW_SECTION_MARK_SELECTOR, phase: "before-prepare" },
   },
   {
     name: "report-task-finished",
@@ -764,10 +767,14 @@ export const SIZES = [
 
 export type CatalogSize = (typeof SIZES)[number]
 
-/** 狭い窓は選択肢が角丸のボタンの縦並びで、選んだ選択肢の preview の面が出ないので、広い窓だけで撮る件。 */
+/**
+ * 広い窓だけで撮る件。狭い窓は選択肢が角丸のボタンの縦並びで preview の面が出ず、
+ * 目次の列も窓の幅が約 870px 未満では出ない。
+ */
 const WIDE_ONLY_NAMES: ReadonlySet<string> = new Set([
   "question-preview-image",
   "question-preview-image-missing",
+  "report-new-section",
 ])
 
 export function sizesOf(entry: CatalogEntry): readonly CatalogSize[] {
