@@ -1,5 +1,6 @@
 // 狭い画面の「済んだ段」の一覧のロジック。
 // どの行を板で開いているかを持ち、板の頭と下端に出す字（n/N・前後の行）を畳む。
+// 最終レポートのあるやり取りは行を持たない（中間レポートは経過の畳みで読む）。
 
 import { useState } from "react"
 
@@ -11,6 +12,7 @@ import {
   type PhaseNeighbor,
   type PhaseRow,
 } from "../../../domain/phase-row.ts"
+import { arrangeTurn } from "../../../domain/turn-arrangement.ts"
 
 export type PhaseListProps = {
   readonly turn: MainViewTurn
@@ -49,7 +51,7 @@ const CLOSED = { kind: "closed" } as const satisfies OpenStep
 
 export function usePhaseList(props: PhaseListProps): PhaseListModel {
   const [opened, setOpened] = useState<OpenStep>(CLOSED)
-  const rows = phaseRowsOf(props.turn)
+  const rows = arrangeTurn(props.turn).kind === "final-first" ? [] : phaseRowsOf(props.turn)
   const total = phaseTotal(rows, props.planCount)
   const positionOf = (row: PhaseRow): string => `${String(row.number)}/${String(total)}`
   const moveOf = (neighbor: PhaseNeighbor): PhaseMove =>

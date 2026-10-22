@@ -362,6 +362,30 @@ describe("Turn（経過の畳み）", () => {
     expect(stubs.slice(1).every((stub) => fold.contains(stub))).toBe(true)
   })
 
+  it("経過の畳みの中は狭い画面でも隠さず、働くあいだの畳んだ中間レポートは隠したまま", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const closed = render(
+      <Turn
+        turn={turn([...interims, step({ id: 3, body: text("最終"), final: true })])}
+        newest
+        freshReport={false}
+      />,
+    )
+    const fold = closed.container.querySelector(".progress-fold")
+    expect(fold?.classList.contains("phone-hidden")).toBe(false)
+    expect(fold?.querySelectorAll(".phone-hidden")).toHaveLength(0)
+    closed.unmount()
+
+    const working = render(
+      <Turn
+        turn={turn([...interims, step({ id: 3, body: text("まだ決まらない本文") })])}
+        newest
+        freshReport={false}
+      />,
+    )
+    expect(working.container.querySelectorAll("details.is-interim.phone-hidden")).toHaveLength(3)
+  })
+
   it("中間レポートが無い閉じたやり取りには、経過の畳みを出さない", () => {
     putSession(INITIAL_SESSION_STATE)
     const { container } = render(

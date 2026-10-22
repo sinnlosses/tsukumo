@@ -109,6 +109,12 @@ describe("PhaseList", () => {
     expect(document.body.textContent).toBe("")
   })
 
+  it("最終レポートのあるやり取りでは、中間レポートがあっても何も描かない（経過の畳みで読む）", () => {
+    const finalStep: MainViewStep = { ...interim(2, "最終", 1), interim: false, final: true }
+    renderList({ ...TURN, steps: [interim(0, "段A", 1), interim(1, "段B", 1), finalStep] })
+    expect(document.body.textContent).toBe("")
+  })
+
   it("行を押すと板が開き、頭に n/N · 所要・題、中に本文が出る", () => {
     renderList()
     fireEvent.click(screen.getByRole("button", { name: /段B/u }))

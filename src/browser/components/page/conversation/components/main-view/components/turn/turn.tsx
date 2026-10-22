@@ -176,6 +176,7 @@ function StepCard(props: StepProps): ReactElement {
           reveal={props.reveal}
           hasInterimReport={props.hasInterimReport}
           folded={false}
+          phoneHidden={step.interim}
         />
         {questionCards}
       </section>
@@ -184,7 +185,12 @@ function StepCard(props: StepProps): ReactElement {
 
   return (
     <>
-      <FoldedStep step={step} turnId={props.turnId} hasInterimReport={props.hasInterimReport} />
+      <FoldedStep
+        step={step}
+        turnId={props.turnId}
+        hasInterimReport={props.hasInterimReport}
+        phoneHidden
+      />
       {questionCards}
     </>
   )
@@ -194,6 +200,7 @@ type FoldedStepProps = {
   readonly step: MainViewStep
   readonly turnId: number
   readonly hasInterimReport: boolean
+  readonly phoneHidden: boolean
 }
 
 /** 中間レポートを `<summary>` の1行に畳んだ形。質問の記録は持たない（呼ぶ側が畳みの外に出す）。 */
@@ -203,7 +210,7 @@ function FoldedStep(props: FoldedStepProps): ReactElement {
       className={clsx(
         mainViewStyles["main-step"],
         mainViewStyles["is-interim"],
-        mainViewStyles["phone-hidden"],
+        props.phoneHidden && mainViewStyles["phone-hidden"],
       )}
     >
       <Text
@@ -221,6 +228,7 @@ function FoldedStep(props: FoldedStepProps): ReactElement {
         reveal={false}
         hasInterimReport={props.hasInterimReport}
         folded
+        phoneHidden={props.phoneHidden}
       />
     </details>
   )
@@ -232,6 +240,8 @@ type StepReportProps = {
   readonly reveal: boolean
   readonly hasInterimReport: boolean
   readonly folded: boolean
+  /** 狭い画面で本文を隠すか。隠すのは本文の側だけで、質問の記録は残す。 */
+  readonly phoneHidden: boolean
 }
 
 function StepReport(props: StepReportProps): ReactElement | null {
@@ -239,8 +249,7 @@ function StepReport(props: StepReportProps): ReactElement | null {
   if (step.body.kind !== "text") {
     return null
   }
-  // 狭い画面は中間レポートの本文を一覧と板で読む。隠すのは本文の側だけで、質問の記録は残す。
-  const phoneHidden = step.interim ? mainViewStyles["phone-hidden"] : ""
+  const phoneHidden = props.phoneHidden ? mainViewStyles["phone-hidden"] : ""
   return (
     <>
       <ReportHead
@@ -283,11 +292,10 @@ type ProgressFoldProps = {
 
 /**
  * 経過の畳み。中間レポートを届いた順に、1行の畳みの形で入れる。
- * 狭い画面は中間レポートを一覧と板で読むので、畳みごと隠す。
  */
 function ProgressFold(props: ProgressFoldProps): ReactElement {
   return (
-    <details className={clsx(styles["progress-fold"], mainViewStyles["phone-hidden"])}>
+    <details className={styles["progress-fold"]}>
       <Text element="summary" size="label" tone="ink-quiet" weight="inherit" className="">
         {progressFoldSummary(props.progress)}
       </Text>
@@ -306,6 +314,7 @@ function ProgressFold(props: ProgressFoldProps): ReactElement {
             step={step}
             turnId={props.turnId}
             hasInterimReport={props.hasInterimReport}
+            phoneHidden={false}
             key={step.id}
           />
         ))}
