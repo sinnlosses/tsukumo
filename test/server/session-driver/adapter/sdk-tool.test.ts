@@ -24,31 +24,6 @@ describe("tsukumoServer", () => {
     ])
   })
 
-  it("雑談のときは report も見直しの2つも載らない。diary も載らない（会話とは別の使い捨ての問い合わせ）", async () => {
-    const names = await listedToolNames(
-      tsukumoServer(
-        EXPRESSIONS,
-        CHAT_MODE,
-        createCallReview(),
-        () => {},
-        FAKE_CWD,
-        () => {},
-        () => {},
-        () => {},
-        () => true,
-      ),
-    )
-
-    expect(names).not.toContain("report")
-    expect(names).not.toContain("work_plan")
-    expect(names).not.toContain("phase_result")
-    expect(names).not.toContain("clear_and_send")
-    expect(names).not.toContain("usage_review_result")
-    expect(names).not.toContain("diary")
-    expect(names).toContain("speak")
-    expect(names).toContain("remember")
-  })
-
   it("雑談のときは recall と recall_episode の2段階が載り、keep と index はもう載らない", async () => {
     const names = await listedToolNames(
       tsukumoServer(

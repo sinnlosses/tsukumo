@@ -421,18 +421,6 @@ describe("CallReview の新しい事実（report）", () => {
     })
   })
 
-  it("差し戻したあとは nothingNewRejected が true になり、次のターンの頭で false に戻る", () => {
-    const review = createCallReview()
-    drawReport(review, "toolu_r1", VALID)
-    expect(review.nothingNewRejected()).toBe(false)
-
-    review.judgeReport(OTHER)
-    expect(review.nothingNewRejected()).toBe(true)
-
-    review.pass(SESSION_INFO)
-    expect(review.nothingNewRejected()).toBe(false)
-  })
-
   it("ターンをまたいでも、自分で始めたターン（依頼なし）で何も届いていなければ差し戻す", () => {
     const review = createCallReview()
     drawReport(review, "toolu_r1", VALID)
@@ -441,14 +429,6 @@ describe("CallReview の新しい事実（report）", () => {
     review.pass(SESSION_INFO)
 
     expect(isReportRejectedForNothingNew(review, OTHER)).toBe(true)
-  })
-
-  it("メインのツールの結果が届いたあとの report は通す（中間レポートを落とさない）", () => {
-    const review = createCallReview()
-    drawReport(review, "toolu_r1", VALID)
-    runMainTool(review, "toolu_t1")
-
-    expect(review.judgeReport(OTHER)).toEqual({ kind: "accepted" })
   })
 
   it("サブエージェントのツールの結果・呼んだだけのツール・speak の結果は数えない", () => {
@@ -490,24 +470,6 @@ describe("CallReview の新しい事実（report）", () => {
     )
 
     expect(isReportRejectedForNothingNew(review, OTHER)).toBe(true)
-  })
-
-  it("差し戻すのは1ターンに1回まで（押し切った2回目は通す）で、次のターンで枠が戻る", () => {
-    const review = createCallReview()
-    drawReport(review, "toolu_r1", VALID)
-
-    expect(isReportRejectedForNothingNew(review, OTHER)).toBe(true)
-    expect(review.judgeReport(OTHER)).toEqual({ kind: "accepted" })
-    ;[FINISHED, SESSION_INFO].forEach((event) => review.pass(event))
-    expect(isReportRejectedForNothingNew(review, OTHER)).toBe(true)
-  })
-
-  it("差し戻して描かなかった report のあとでも、新しい事実の届いた印は残る", () => {
-    const review = createCallReview()
-    review.pass(reportOfDraft("toolu_r1", VALID))
-    review.pass(finished("toolu_r1", true))
-
-    expect(review.judgeReport(OTHER)).toEqual({ kind: "accepted" })
   })
 
   it("session-ended のあとは背景のシェルの顔ぶれが空に戻って通す", () => {

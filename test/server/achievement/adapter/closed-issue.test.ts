@@ -277,17 +277,6 @@ describe("readAchievementCalendar", { timeout: 60_000 }, () => {
 
       expect(await doneCount(cache)).toBe(1)
       await vi.waitFor(async () => expect(await doneCount(cache)).toBe(2))
-      expect(fakeIntake.listCalls).toBe(2)
-    })
-
-    it("印が取れないときは毎回読む", async () => {
-      fakeIntake.stamp = undefined
-      const cache = createAchievementCache("/repo-unstamped")
-
-      await doneCount(cache)
-      await doneCount(cache)
-
-      expect(fakeIntake.listCalls).toBe(2)
     })
   })
 

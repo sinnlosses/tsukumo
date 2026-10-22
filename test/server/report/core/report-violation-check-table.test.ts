@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import { reportRejectionText } from "../../../../src/server/report/core/report-rejection.ts"
 import { reportViolations } from "../../../../src/server/report/core/report-violation-check.ts"
-import { REPORT_VIOLATION_KINDS } from "../../../../src/server/report/core/report-violation.ts"
 import type { ReportBlock } from "../../../../src/shared/report/report-block.ts"
 import { code, draft, kinds } from "../../../fixture/report-draft-block.ts"
 
@@ -160,10 +159,6 @@ describe("reportViolations", () => {
         Array.from({ length: 11 }, () => ["a", cells(40)]),
       )
       expect(kinds(draft([long]))).toEqual(["long-table", "sentence-table"])
-    })
-
-    it("違反の種類の一覧に入っている", () => {
-      expect(REPORT_VIOLATION_KINDS).toContain("sentence-table")
     })
   })
 

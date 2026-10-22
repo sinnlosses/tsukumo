@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  summarizeByTask,
-  summarizeTokenUsage,
-} from "../../../../src/server/token-usage/core/token-usage-summary.ts"
+import { summarizeTokenUsage } from "../../../../src/server/token-usage/core/token-usage-summary.ts"
 import type { TokenUsageTrend } from "../../../../src/shared/token-usage/token-usage-summary.ts"
 import {
   TOKEN_USAGE_FORMAT_VERSION,
@@ -226,53 +223,5 @@ describe("summarizeTokenUsage", () => {
       { name: "Grep", calls: 1, resultBytes: 40 },
       { name: "Read", calls: 1, resultBytes: 10 },
     ])
-  })
-})
-
-describe("summarizeByTask", () => {
-  function taskRecord(taskId: string | undefined, models: readonly ModelTokenUsage[]) {
-    return { ...record("2026-09-22T09:00:00+09:00", models), taskId, stage: undefined }
-  }
-
-  it("タスクIDごとに足し合わせ、費用の多い順に並べる", () => {
-    const records = [
-      taskRecord("job-1", [usage("opus", 100, 20, 0.5)]),
-      taskRecord("job-2", [usage("opus", 10, 2, 1)]),
-      taskRecord("job-1", [usage("opus", 50, 10, 0.25), usage("sonnet", 5, 1, 0.01)]),
-    ]
-
-    expect(summarizeByTask(records)).toEqual([
-      {
-        taskId: "job-2",
-        totals: {
-          inputTokens: 10,
-          outputTokens: 2,
-          thinkingTokens: 0,
-          cacheReadInputTokens: 0,
-          cacheCreationInputTokens: 0,
-          costUsd: 1,
-        },
-      },
-      {
-        taskId: "job-1",
-        totals: {
-          inputTokens: 155,
-          outputTokens: 31,
-          thinkingTokens: 0,
-          cacheReadInputTokens: 0,
-          cacheCreationInputTokens: 0,
-          costUsd: 0.76,
-        },
-      },
-    ])
-  })
-
-  it("タスクIDの無い行（着手していないターン・旧い版の行）は含めず、集計は壊れない", () => {
-    const records = [
-      taskRecord(undefined, [usage("opus", 100, 20, 0.5)]),
-      taskRecord("job-1", [usage("opus", 1, 1, 0.1)]),
-    ]
-
-    expect(summarizeByTask(records).map((entry) => entry.taskId)).toEqual(["job-1"])
   })
 })

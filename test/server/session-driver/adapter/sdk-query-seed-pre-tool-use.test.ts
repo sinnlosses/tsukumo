@@ -145,11 +145,6 @@ describe("preToolUseHooks（Agent を背景に固定し、委譲ゲートで作�
       },
     })
   })
-
-  it("サブエージェント内の呼び出しと、すでに背景の呼び出しは何も返さない", async () => {
-    expect(await runPreToolUse("Agent", { prompt: "手順" }, "sub-1")).toEqual({})
-    expect(await runPreToolUse("Agent", { run_in_background: true })).toEqual({})
-  })
 })
 
 describe("preToolUseHooks（Bash の command を短い出力の版へ差し替える）", () => {

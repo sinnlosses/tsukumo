@@ -50,30 +50,6 @@ export function summarizeTokenUsage(
   }
 }
 
-/** タスク1件の合計。 */
-export type TaskUsageTotal = {
-  readonly taskId: string
-  readonly totals: TokenUsageTotals
-}
-
-/**
- * タスクIDごとに畳む。`taskId` を持たない行（着手していないターン・旧い版の行）は含めない。
- * 並びは費用の多い順（同じならタスクID順）。
- */
-export function summarizeByTask(records: readonly TokenUsageRecord[]): readonly TaskUsageTotal[] {
-  const tasked = records.flatMap((record) =>
-    record.taskId === undefined ? [] : [{ taskId: record.taskId, models: record.models }],
-  )
-  return sortBy(
-    Object.entries(groupBy(tasked, prop("taskId"))).map(([taskId, rows]) => ({
-      taskId,
-      totals: sumTotals(rows.flatMap((row) => row.models)),
-    })),
-    [(entry) => entry.totals.costUsd, "desc"],
-    prop("taskId"),
-  )
-}
-
 /**
  * 「今日を含む直近 `days` 日」を期間にして、記録を読んで畳む。
  * 今日が何日かはここが決めない（`endDate` を受け取る。OS のタイムゾーンに依る）。
