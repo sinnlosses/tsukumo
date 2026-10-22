@@ -35,7 +35,7 @@ describe("reportRejectionText", () => {
   it("code-mismatch は食い違った path を載せる", () => {
     const report: ReportDraft = {
       ...draft([code("src/fixture-f.ts", "架空の行")]),
-      fileContents: new Map(),
+      fileContents: new Map([["src/fixture-f.ts", "架空の別の行"]]),
     }
     const rejection = reportRejectionText(reportViolations(report))
     expect(rejection).toContain("src/fixture-f.ts")

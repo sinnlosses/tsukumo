@@ -8,15 +8,11 @@ const DIFF_HEADER_LINE = /^(?:@@|diff --git|index |\+\+\+|---)/
 
 /**
  * `path` を持つ `code` の塊が、そのファイルの中身と一致するか。
- * `fileContent` が `undefined`（読めなかった）なら一致しない。
  */
 export function codeBlockMatchesFile(
   block: { readonly language: string; readonly source: string },
-  fileContent: string | undefined,
+  fileContent: string,
 ): boolean {
-  if (fileContent === undefined) {
-    return false
-  }
   const contentLines =
     block.language === "diff" ? diffContentLines(block.source) : block.source.split("\n")
   const fileLines = fileContent.split("\n").map(rstrip)

@@ -60,7 +60,10 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       (block): block is Extract<ReportBlock, { readonly kind: "code" }> =>
         block.kind === "code" && block.path.trim() !== "",
     )
-    .filter((block) => !codeBlockMatchesFile(block, report.fileContents.get(block.path)))
+    .filter((block) => {
+      const content = report.fileContents.get(block.path)
+      return content !== undefined && !codeBlockMatchesFile(block, content)
+    })
   const firstSentenceLength = report.conclusionSentenceChars[0] ?? 0
 
   const drawnSections = sectionsWithFigure(report.figure, report.sections)

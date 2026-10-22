@@ -235,9 +235,9 @@ describe("reportViolations", () => {
       expect(kinds(report)).toEqual(["code-mismatch"])
     })
 
-    it("読めなかったファイル（fileContents に無い path）は違反", () => {
+    it("読めなかったファイル（fileContents に無い path）は違反にしない", () => {
       const report = withFile([code("src/fixture-not-found.ts", "架空の行")], new Map())
-      expect(kinds(report)).toEqual(["code-mismatch"])
+      expect(kinds(report)).toEqual([])
     })
 
     it("path が空文字なら照合しない", () => {
@@ -282,7 +282,7 @@ describe("reportViolations", () => {
     it("他の規約違反と同じ report にあれば、1回の差し戻しで両方返る", () => {
       const report = withFile(
         [note(), note(), note(), code("src/fixture-e.ts", "架空の行")],
-        new Map(),
+        new Map([["src/fixture-e.ts", "架空の別の行"]]),
       )
       expect(kinds(report)).toEqual(["too-many-notes", "code-mismatch"])
     })

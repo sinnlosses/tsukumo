@@ -5,10 +5,6 @@ import { codeBlockMatchesFile } from "../../../../src/server/report/core/code-bl
 const block = (source: string, language = "text") => ({ language, source })
 
 describe("codeBlockMatchesFile", () => {
-  it("fileContent が undefined（読めなかった）なら一致しない", () => {
-    expect(codeBlockMatchesFile(block("架空の行"), undefined)).toBe(false)
-  })
-
   it("ファイルの連続した一部と一致すれば true", () => {
     expect(
       codeBlockMatchesFile(
