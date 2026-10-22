@@ -122,7 +122,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
 
   const callReview = createCallReview()
   const externalToolMark = createExternalToolMark()
-  const reportGate = createReportGate(callReview.nothingNewRejected)
+  const reportGate = createReportGate(callReview.nothingNewRejected, callReview.backgroundRunning)
   const readSessionDigest = createSessionDigestReader(options.expressions)
   const titleIntake = createSessionTitleIntake()
   const titleWriter = createSessionTitleWriter()

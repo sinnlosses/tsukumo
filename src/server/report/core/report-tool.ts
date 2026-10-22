@@ -2,7 +2,7 @@
 //
 // ここに置くのは、ツールの説明文と `Stop` フックの関所（`createReportGate`）。
 // 通った `report` はそこでターンを閉じる（handler が結果に `claude/endTurn` を付ける）ので、`report` のあとに本文が書かれることは無い。
-// 関所が止めるのは `report` を呼ばずに1行を超える本文を書いて止まろうとしたターンだけで、`report` で渡し直させる。
+// 関所が止めるのは、背景の仕事が走っていないのに `report` を呼ばずに本文を書いて止まろうとしたターンだけで、`report` で渡し直させる。
 // `report` の呼び出しそのものの検査と差し戻しは `ReportReview` が持つ。
 
 import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session/session-choice.ts"
@@ -155,7 +155,7 @@ export type ReportGate = {
   readonly observe: (event: SessionEvent) => void
   /**
    * 差し戻すか。`stopHookActive`（すでに一度差し戻して続けているところ）なら差し戻さない（ループさせない）。
-   * それ以外は、覚えた本文が1行を超えていれば差し戻す。
+   * それ以外は、背景の仕事が走っておらず、覚えた本文が1字でもあれば差し戻す。
    */
   readonly verdict: (stopHookActive: boolean) => ReportGateVerdict
 }
@@ -169,8 +169,12 @@ export type ReportGateVerdict =
  * {@link ReportGate} を1つ作る。セッション1つに1つ（ターンの区切りを自分で見ている）。
  * `nothingNewRejected` が true を返すターンは、`CallReview.judgeReport` が「新しい事実が無い」で
  * `report` を差し戻している。渡し直す本文は無いので、本文の量によらず通す。
+ * `backgroundRunning` が true を返すあいだは、背景の仕事（シェル・サブエージェントなど種類を問わない）の終わりを待つ一言を書いて止まるので、通す。
  */
-export function createReportGate(nothingNewRejected: () => boolean): ReportGate {
+export function createReportGate(
+  nothingNewRejected: () => boolean,
+  backgroundRunning: () => boolean,
+): ReportGate {
   let unreported: readonly string[] = []
 
   return {
@@ -178,18 +182,11 @@ export function createReportGate(nothingNewRejected: () => boolean): ReportGate 
       unreported = nextUnreported(unreported, event)
     },
     verdict: (stopHookActive) =>
-      stopHookActive || nothingNewRejected() || !exceedsOneLine(unreported)
+      stopHookActive || nothingNewRejected() || backgroundRunning() || !hasText(unreported)
         ? { kind: "pass" }
         : { kind: "block", reason: REPORT_GATE_REASON },
   }
 }
-
-/**
- * 「1行」の字数の上限（コードポイントで数える）。
- * 改行を含まなくても、これを超えたら1行と見なさない（改行の無い段落1つでレポートを書き切ることがあるため）。
- * 試行で通ってよかった1行（背景の委譲を待つ一言など）は64字以下、差し戻すべきだった本文は131字以上だった（`docs/research/report-tool-trial.md`）。その間に余裕を取って置く。
- */
-const ONE_LINE_MAX_CHARS = 100
 
 /** SDK のターンの頭（か最後の `report`）からいままでに書いた本文の並び。 */
 function nextUnreported(unreported: readonly string[], event: SessionEvent): readonly string[] {
@@ -205,8 +202,7 @@ function nextUnreported(unreported: readonly string[], event: SessionEvent): rea
   }
 }
 
-/** 本文の並びが1行を超えるか。本文が2つ以上あれば、それぞれ1行でも2行と数える。 */
-function exceedsOneLine(texts: readonly string[]): boolean {
-  const text = texts.join("\n").trim()
-  return text.includes("\n") || [...text].length > ONE_LINE_MAX_CHARS
+/** 本文の並びに空白でない字が1字でもあるか。 */
+function hasText(texts: readonly string[]): boolean {
+  return texts.some((text) => text.trim() !== "")
 }

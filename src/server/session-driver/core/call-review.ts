@@ -53,6 +53,8 @@ export type CallReview = {
   readonly handbackNotePending: () => boolean
   /** このターンで「新しい事実が無い」`report` の差し戻しをしたか。 */
   readonly nothingNewRejected: () => boolean
+  /** バックグラウンドタスクが種類を問わず1件でも動いているか。 */
+  readonly backgroundRunning: () => boolean
 }
 
 type ReportCalled = Extract<SessionEvent, { readonly kind: "report" }>
@@ -105,6 +107,7 @@ export function createCallReview(): CallReview {
     takeHandbackNote: workPlanReview.takeHandbackNote,
     handbackNotePending: workPlanReview.handbackNotePending,
     nothingNewRejected: reportReview.nothingNewRejected,
+    backgroundRunning: () => ledger.backgroundTasks().length > 0,
   }
 }
 

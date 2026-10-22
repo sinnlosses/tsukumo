@@ -56,8 +56,9 @@ function verdictOf(
   events: readonly SessionEvent[],
   stopHookActive = false,
   nothingNewRejected: () => boolean = () => false,
+  backgroundRunning: () => boolean = () => false,
 ) {
-  const gate = createReportGate(nothingNewRejected)
+  const gate = createReportGate(nothingNewRejected, backgroundRunning)
   for (const event of events) {
     gate.observe(event)
   }
@@ -69,39 +70,48 @@ function blocks(
   events: readonly SessionEvent[],
   stopHookActive = false,
   nothingNewRejected: () => boolean = () => false,
+  backgroundRunning: () => boolean = () => false,
 ): boolean {
-  return verdictOf(events, stopHookActive, nothingNewRejected).kind === "block"
+  return verdictOf(events, stopHookActive, nothingNewRejected, backgroundRunning).kind === "block"
 }
 
 describe("createReportGate（Stop の関所）", () => {
-  it("report の無いターンで1行を超える本文を書いて止まろうとしたら差し戻す", () => {
+  it("背景の仕事が無ければ、report の無い本文は短い1行でも差し戻す", () => {
     expect(blocks([INIT, LONG_BODY])).toBe(true)
+    expect(blocks([INIT, ONE_LINE])).toBe(true)
   })
 
-  it("report の無いターンでも1行以内（背景の委譲を待つ一言）なら通す", () => {
-    expect(blocks([INIT, utterance("架空の委譲を待つ一言")])).toBe(false)
+  it("背景の仕事が走っていれば、report の無い本文（委譲を待つ一言も長い本文も）を通す", () => {
+    expect(
+      blocks(
+        [INIT, utterance("架空の委譲を待つ一言")],
+        false,
+        () => false,
+        () => true,
+      ),
+    ).toBe(false)
+    expect(
+      blocks(
+        [INIT, LONG_BODY],
+        false,
+        () => false,
+        () => true,
+      ),
+    ).toBe(false)
+  })
+
+  it("本文が無い・空白と改行だけのターンは通す", () => {
     expect(blocks([INIT])).toBe(false)
+    expect(blocks([INIT, utterance(" \n\n ")])).toBe(false)
   })
 
   it("report の前に書いた本文は数えない（通った report でターンが閉じる）", () => {
     expect(blocks([INIT, LONG_BODY, REPORT])).toBe(false)
   })
 
-  it("1行ずつでも本文が2つあれば2行と数える", () => {
-    expect(blocks([INIT, utterance("架空の1行"), ONE_LINE])).toBe(true)
-  })
-
-  it("改行が無くても 100 字を超えたら1行と見なさない", () => {
-    expect(blocks([INIT, utterance("あ".repeat(100))])).toBe(false)
-    expect(blocks([INIT, utterance("あ".repeat(101))])).toBe(true)
-  })
-
-  it("本文の前後の改行・空白は行に数えない", () => {
-    expect(blocks([INIT, utterance("\n完了\n")])).toBe(false)
-  })
-
-  it("stop_hook_active（差し戻したあとの続き）なら、長い本文でも通す", () => {
+  it("stop_hook_active（差し戻したあとの続き）なら、背景の仕事が無くても通す", () => {
     expect(blocks([INIT, LONG_BODY], true)).toBe(false)
+    expect(blocks([INIT, ONE_LINE], true)).toBe(false)
   })
 
   it("report で渡し直させる理由で差し戻す（前のターンの report は持ち越さない）", () => {
@@ -112,11 +122,12 @@ describe("createReportGate（Stop の関所）", () => {
   })
 
   it("ターンの頭（init）と終わり（turn-finished）で前のターンの本文を持ち越さない", () => {
-    expect(blocks([INIT, LONG_BODY, INIT, ONE_LINE])).toBe(false)
+    expect(blocks([INIT, LONG_BODY, INIT])).toBe(false)
     expect(blocks([INIT, LONG_BODY, FINISHED])).toBe(false)
   })
 
-  it("新しい事実が無い差し戻しがあったターンでは、1行を超える本文でも通す", () => {
+  it("新しい事実が無い差し戻しがあったターンでは、背景の仕事が無くても通す", () => {
     expect(blocks([INIT, LONG_BODY], false, () => true)).toBe(false)
+    expect(blocks([INIT, ONE_LINE], false, () => true)).toBe(false)
   })
 })
