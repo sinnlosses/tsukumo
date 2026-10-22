@@ -36,7 +36,7 @@ export type AchievementCache = {
 
 /**
  * `cwd` の {@link AchievementCache} を1つ作る。
- * 印が変わっても、前に読めた結果があればそれを先に返し、`bd list`（1秒ほどかかる）は裏で読み直す。
+ * 印が変わっても、前に読めた結果があればそれを先に返し、課題の読みは裏で読み直す。
  * 裏の読みが終われば次の読みから新しい結果が出る。最初の1回だけは読み終わるまで待つ。
  */
 export function createAchievementCache(cwd: string, now: () => number): AchievementCache {

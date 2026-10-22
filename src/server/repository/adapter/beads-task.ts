@@ -12,7 +12,7 @@ import type {
   TaskSummaryResult,
   TaskSummaryStatus,
 } from "../../../shared/repository/task-summary.ts"
-import type { BeadsIssue } from "./beads.ts"
+import { CLOSED_TASK_DISPLAY_LIMIT, type BeadsIssue } from "./beads.ts"
 
 /**
  * タスクの一覧に出す要約。閉じていない課題はすべて出し、閉じた課題は `closedAtEpochMilliseconds`
@@ -137,8 +137,6 @@ const ACCEPTANCE_HEADING = "## 受け入れ条件"
 const NOTES_HEADING = "## メモ"
 
 const CLOSED_STATUS = "closed"
-/** タスク板に残す、閉じた課題の件数。 */
-const CLOSED_TASK_DISPLAY_LIMIT = 10
 
 /** Beads の組み込みの状態の読み替え。表に無い状態は Beads の語のまま出す。 */
 const TASK_STATUS_OF_BEADS_STATUS: ReadonlyMap<string, TaskStatus> = new Map([

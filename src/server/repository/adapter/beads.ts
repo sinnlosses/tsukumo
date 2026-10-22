@@ -3,6 +3,7 @@
 //
 // `bd list --json` には作成者（owner）なども入るが、境界で落とす（`BeadsIssue` の欄だけを運ぶ）。
 // 本文（description・acceptance_criteria・notes）と `external_ref` はタスクのモーダルの詳細が使うので運ぶ（会話内容ではないが、ログには出さない）。
+// 本文を読むのはタスク板が出す課題だけ（全件の本文は出力の上限 `MAX_OUTPUT_BYTES` に届く大きさになる）。
 //
 // 例外を投げない。`.beads` が無い・`bd` が無いときも `failed`。
 
@@ -21,6 +22,7 @@ import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "./git.ts"
 /**
  * `bd list --json` の1件のうち、Beads の組み込みの欄でこの読み手が使うものだけ。
  * `closedAtEpochMilliseconds`・`externalRef` は Beads の側で無ければ `undefined`、`labels` は無ければ空、本文の3欄は無ければ空文字列。
+ * 閉じた課題は閉じた時刻の新しい {@link CLOSED_TASK_DISPLAY_LIMIT} 件だけ本文を付け、ほかは本文の3欄が空文字列。
  */
 export type BeadsIssue = {
   readonly id: string
@@ -48,6 +50,9 @@ export type BeadsOutcome =
   | { readonly kind: "issues"; readonly issues: readonly BeadsIssue[] }
   | { readonly kind: "failed" }
   | { readonly kind: "timed-out" }
+
+/** タスク板に残す、閉じた課題の件数。 */
+export const CLOSED_TASK_DISPLAY_LIMIT = 10
 
 /** 印が動かなくても読み直す間隔。印が書き込みを取りこぼしたときに結果が古いまま残る長さの上限になる。 */
 export const BEADS_REREAD_INTERVAL_MS = 60_000
@@ -94,8 +99,8 @@ export function memoizeByStamp(read: (cwd: string) => Promise<BeadsOutcome>): Be
 }
 
 /**
- * 閉じたものも含めて全件を読む。`bd list` は `-n 0` を付けないと50件で打ち切る。
- * 一覧と成果が同じ印で続けて読むときは、`bd list` を1回で済ませる。
+ * 閉じたものも含めて全件を読む。
+ * 一覧と成果が同じ印で続けて読むときは、読みを1回で済ませる。
  * `cwd` はどの作業ツリーでもよい（`bd` が本体の作業ツリーの `.beads` を見つける）。
  */
 export const readBeadsIssues: BeadsIssuesReader = memoizeByStamp(listAllBeadsIssues)
@@ -222,11 +227,58 @@ function parsedJsonOf(stdout: string): unknown {
   }
 }
 
-function listAllBeadsIssues(cwd: string): Promise<BeadsOutcome> {
+// `bd list` は `-n 0` を付けないと50件で打ち切る。`--all` を付けないと閉じた課題を出さない。
+const ALL_WITHOUT_BODY_ARGS = ["--all", "-n", "0", "--brief"] as const
+const UNFINISHED_ARGS = ["-n", "0"] as const
+const RECENT_CLOSED_ARGS = [
+  "--status",
+  "closed",
+  "--sort",
+  "closed",
+  "-n",
+  String(CLOSED_TASK_DISPLAY_LIMIT),
+] as const
+
+/**
+ * 全件を本文なしで読み、本文は閉じていない課題と閉じた新しい課題の2本から id で付ける。
+ * 本文つきの2本にしか無い課題（読みのあいだに足された課題）は出さない。
+ */
+async function listAllBeadsIssues(cwd: string): Promise<BeadsOutcome> {
+  const [all, unfinished, recentClosed] = await Promise.all([
+    listBeadsIssues(cwd, ALL_WITHOUT_BODY_ARGS),
+    listBeadsIssues(cwd, UNFINISHED_ARGS),
+    listBeadsIssues(cwd, RECENT_CLOSED_ARGS),
+  ])
+  if (all.kind !== "issues" || unfinished.kind !== "issues" || recentClosed.kind !== "issues") {
+    return [all, unfinished, recentClosed].some((outcome) => outcome.kind === "failed")
+      ? { kind: "failed" }
+      : { kind: "timed-out" }
+  }
+
+  const withBody = new Map(
+    [...unfinished.issues, ...recentClosed.issues].map((issue) => [issue.id, issue]),
+  )
+  return {
+    kind: "issues",
+    issues: all.issues.map((issue) => {
+      const body = withBody.get(issue.id)
+      return body === undefined
+        ? issue
+        : {
+            ...issue,
+            description: body.description,
+            acceptanceCriteria: body.acceptanceCriteria,
+            notes: body.notes,
+          }
+    }),
+  }
+}
+
+function listBeadsIssues(cwd: string, args: readonly string[]): Promise<BeadsOutcome> {
   return new Promise((resolve) => {
     execFile(
       "bd",
-      ["list", "--json", "--all", "-n", "0", "--flat"],
+      ["list", "--json", "--flat", ...args],
       { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
       (error, stdout) => {
         if (error === null) {
