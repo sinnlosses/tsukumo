@@ -298,6 +298,21 @@
 .detail-block .report-graph-legend-changed {
   --graph-legend-color: var(--state-warn);
 }
+.detail-block .report-graph-legend-tone-a {
+  --graph-legend-color: var(--chart-series-1);
+}
+.detail-block .report-graph-legend-tone-b {
+  --graph-legend-color: var(--chart-series-2);
+}
+.detail-block .report-graph-legend-tone-c {
+  --graph-legend-color: var(--chart-series-3);
+}
+.detail-block .report-graph-legend-tone-d {
+  --graph-legend-color: var(--chart-series-4);
+}
+.detail-block .report-graph-legend-tone-e {
+  --graph-legend-color: var(--chart-series-5);
+}
 /* 対応表（`report` の `matrix` の塊から tsukumo が組む）。交点は印だけで、状態は記号と色の両方で言う。 */
 .detail-block .report-matrix {
   margin: var(--report-block-gap) 0;

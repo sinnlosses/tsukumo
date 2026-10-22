@@ -38,6 +38,7 @@ const graph: ReportBlock = {
   kind: "graph",
   title: "",
   direction: "TD",
+  legend: [],
   source: "架空A -> 架空B: 渡す",
   fold: "",
   aside: "",

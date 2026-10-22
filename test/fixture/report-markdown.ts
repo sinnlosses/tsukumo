@@ -40,8 +40,12 @@ export const GRAPH_SHAPE_LEGEND =
     .join("") +
   "</div>"
 export type StatItem = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
-export const graphMarkdown = (source: string, title = ""): string =>
-  markdownOf({ kind: "graph", title, direction: "LR", source, fold: "", aside: "" })
+export const graphMarkdown = (
+  source: string,
+  title = "",
+  legend: Extract<ReportBlock, { readonly kind: "graph" }>["legend"] = [],
+): string =>
+  markdownOf({ kind: "graph", title, direction: "LR", legend, source, fold: "", aside: "" })
 export const statItem: StatItem = {
   before: "",
   value: "",

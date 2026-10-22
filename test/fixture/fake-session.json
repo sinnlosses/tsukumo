@@ -2471,6 +2471,77 @@
       ]
     },
     {
+      "name": "report-graph-tone",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "層の図の色の見え方を graph で確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "座標なしで層ごとに色を付けて書くね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-graph-tone-1",
+            "conclusion": "架空の結論: 群と節点の色が凡例とそろって見える。",
+            "sections": [
+              {
+                "heading": "架空の層の図",
+                "blocks": [
+                  {
+                    "kind": "graph",
+                    "title": "架空の3層と外の世界",
+                    "direction": "LR",
+                    "source": "[架空の画面の層] @a\n架空の画面 @a\n架空の状態\n架空の画面 -> 架空の状態: 読む\n[]\n[架空のサーバの層] @b\n架空のサーバ @b\n架空の取り込み @b\n架空のサーバ -> 架空の取り込み: 渡す @b\n[]\n[架空の共有の層] @c\n架空の共有 @c\n[]\n架空の状態 -> 架空のサーバ: 送る @b\n架空のサーバ -> 架空の共有: 型を使う @c\n架空の取り込み -.> 架空の外の世界: 読む @e\n架空の外の世界 @d",
+                    "legend": [
+                      { "tone": "a", "label": "画面の層" },
+                      { "tone": "b", "label": "サーバの層" },
+                      { "tone": "c", "label": "共有の層" },
+                      { "tone": "d", "label": "外の世界" },
+                      { "tone": "e", "label": "架空の外への読み（点線）" }
+                    ],
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-graph-tone-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "report-matrix",
       "steps": [
         {

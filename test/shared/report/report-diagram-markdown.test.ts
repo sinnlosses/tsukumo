@@ -117,6 +117,35 @@ describe("reportSectionsMarkdown", () => {
     expect(plain).not.toContain("graph-legend")
   })
 
+  it("graph の色の目印を系列色の classDef / style / linkStyle にし、点線の辺を破線にして、凡例を図の下に並べる", () => {
+    const toned = graphMarkdown(
+      "[層] @a\nA @b\nB -.> C @c\n[]\nD -> E: 語 @b\nE -.> D\n+ F @a\nF -> A",
+      "",
+      [
+        { tone: "a", label: "甲" },
+        { tone: "b", label: "乙" },
+      ],
+    )
+
+    expect(toned).toContain(
+      "  style g0 fill:var(--surface-raised),stroke:var(--chart-series-1),stroke-width:2px",
+    )
+    expect(toned).toContain("  classDef tone-b stroke:var(--chart-series-2),stroke-width:3px")
+    expect(toned).not.toContain("classDef tone-a")
+    expect(toned).toContain("  class n0 tone-b")
+    expect(toned).toContain("  class n5 added")
+    expect(toned).toContain(
+      [
+        "  linkStyle 0 stroke:var(--chart-series-3),stroke-width:2px,stroke-dasharray:5 4",
+        "  linkStyle 1 stroke:var(--chart-series-2),stroke-width:2px",
+        "  linkStyle 2 stroke-dasharray:5 4",
+      ].join("\n"),
+    )
+    expect(toned).toContain('class="graph-legend-swatch graph-legend-tone-a"')
+    expect(toned).toContain("乙")
+    expect(toned.indexOf("graph-legend-tone-a")).toBeLessThan(toned.indexOf("graph-legend-tone-b"))
+  })
+
   it("svg は図形から viewBox つきの1行の SVG を組み、強調の枠・矢じり・ラベルの逃がしを含めて図の番号と題を付ける", () => {
     const markdown = markdownOf({
       kind: "svg",

@@ -1,6 +1,11 @@
 // 図の塊（`chart`・`graph`・`svg`・`mermaid`）の本体を組む。Chart.js の設定・flowchart のソース・SVG・凡例を持つ。
 
-import { readGraphSource, type GraphChange, type GraphNodeShape } from "./graph-source.ts"
+import {
+  readGraphSource,
+  type GraphChange,
+  type GraphNodeShape,
+  type GraphTone,
+} from "./graph-source.ts"
 import type { ReportGraph } from "./report-block-diagram.ts"
 import type { ReportBlock } from "./report-block.ts"
 import { htmlInline } from "./report-inline-markdown.ts"
@@ -223,23 +228,38 @@ export function graphSource(block: ReportGraph): string {
       "  end",
     ]),
   ]
-  const groupStyleLines = groups.map((_, index) => `  style g${String(index)} ${GRAPH_GROUP_STYLE}`)
+  const groupStyleLines = groups.map(
+    (group, index) =>
+      `  style g${String(index)} ${group.tone === "none" ? GRAPH_GROUP_STYLE : graphToneGroupStyle(group.tone)}`,
+  )
   const edgeLines = edges.map((edge) => {
     const arrow = edge.label === "" ? "-->" : `-->|${quoted(edge.label)}|`
     return `  ${mermaidId(edge.from)} ${arrow} ${mermaidId(edge.to)}`
   })
   const changes = new Set([...nodes, ...edges].map(({ change }) => change))
-  const classDefLines = GRAPH_CHANGES.filter(({ change }) => changes.has(change)).map(
-    ({ change, color, dashed }) => `  classDef ${change} ${graphStroke(color, dashed, 3)}`,
-  )
-  const classLines = nodes.flatMap((node, index) =>
-    node.change === "unchanged" ? [] : [`  class ${mermaidId(index)} ${node.change}`],
-  )
+  const classDefLines = [
+    ...GRAPH_CHANGES.filter(({ change }) => changes.has(change)).map(
+      ({ change, color, dashed }) => `  classDef ${change} ${graphStroke(color, dashed, 3)}`,
+    ),
+    ...GRAPH_TONES.filter(({ tone }) =>
+      nodes.some((node) => node.change === "unchanged" && node.tone === tone),
+    ).map(({ tone, color }) => `  classDef tone-${tone} ${graphStroke(color, false, 3)}`),
+  ]
+  const classLines = nodes.flatMap((node, index) => {
+    if (node.change !== "unchanged") {
+      return [`  class ${mermaidId(index)} ${node.change}`]
+    }
+    return node.tone === "none" ? [] : [`  class ${mermaidId(index)} tone-${node.tone}`]
+  })
   const linkStyleLines = edges.flatMap((edge, index) => {
     const style = GRAPH_CHANGES.find(({ change }) => change === edge.change)
-    return style === undefined
-      ? []
-      : [`  linkStyle ${String(index)} ${graphStroke(style.color, style.dashed, 2)}`]
+    const color = style?.color ?? GRAPH_TONES.find(({ tone }) => tone === edge.tone)?.color
+    const dashed = (style?.dashed ?? false) || edge.dashed
+    const properties = [
+      ...(color === undefined ? [] : [`stroke:var(${color})`, "stroke-width:2px"]),
+      ...(dashed ? ["stroke-dasharray:5 4"] : []),
+    ]
+    return properties.length === 0 ? [] : [`  linkStyle ${String(index)} ${properties.join(",")}`]
   })
   return [
     `flowchart ${block.direction}`,
@@ -267,6 +287,15 @@ const GRAPH_CHANGES = [
 const GRAPH_GROUP_STYLE =
   "fill:var(--surface-raised),stroke:var(--rule-quiet),stroke-width:1px,stroke-dasharray:5 4"
 
+/** 色の目印 → 系列色のトークン（`svg` の `tone` と同じ）。 */
+const GRAPH_TONES = [
+  { tone: "a", color: "--chart-series-1" },
+  { tone: "b", color: "--chart-series-2" },
+  { tone: "c", color: "--chart-series-3" },
+  { tone: "d", color: "--chart-series-4" },
+  { tone: "e", color: "--chart-series-5" },
+] as const satisfies readonly { readonly tone: GraphTone; readonly color: string }[]
+
 const GRAPH_SHAPES = [
   { shape: "round", label: "入口・出口" },
   { shape: "box", label: "処理" },
@@ -280,6 +309,10 @@ export function graphLegendMarkdown(block: ReportGraph): string {
   const changeItems = [...nodes, ...edges].every(({ change }) => change === "unchanged")
     ? []
     : GRAPH_CHANGES
+  const toneItems = block.legend.map(
+    ({ tone, label }) =>
+      `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-tone-${tone}" aria-hidden="true"></span>${htmlInline(label)}</span>`,
+  )
   const items = [
     ...shapeItems.map(
       ({ shape, label }) =>
@@ -289,8 +322,14 @@ export function graphLegendMarkdown(block: ReportGraph): string {
       ({ change, label }) =>
         `<span class="graph-legend-item"><span class="graph-legend-swatch graph-legend-${change}" aria-hidden="true"></span>${label}</span>`,
     ),
+    ...toneItems,
   ]
   return items.length === 0 ? "" : `<div class="graph-legend">${items.join("")}</div>`
+}
+
+function graphToneGroupStyle(tone: GraphTone): string {
+  const color = GRAPH_TONES.find((entry) => entry.tone === tone)?.color ?? "--rule-quiet"
+  return `fill:var(--surface-raised),stroke:var(${color}),stroke-width:2px`
 }
 
 function mermaidId(index: number): string {

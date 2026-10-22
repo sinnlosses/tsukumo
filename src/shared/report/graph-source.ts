@@ -10,11 +10,18 @@ const CHANGE_MARKS = [
   ["~ ", "changed"],
 ] as const satisfies readonly (readonly [string, GraphChange])[]
 
+/** 行末の ` @a`〜` @e` で付ける色の意味の目印。`none` は付けていない。 */
+export type GraphTone = "none" | "a" | "b" | "c" | "d" | "e"
+
+const TONE_SUFFIX = /\s@([a-e])$/
+
 export type GraphSourceNode = {
   readonly name: string
   readonly shape: GraphNodeShape
   /** 節点だけの行に付いた印。辺の行の印は端の節点に掛けない。 */
   readonly change: GraphChange
+  /** 節点だけの行に付いた色の目印。辺の行の目印は端の節点に掛けない。 */
+  readonly tone: GraphTone
 }
 
 /** `from` と `to` は `nodes` の添字。 */
@@ -23,12 +30,16 @@ export type GraphSourceEdge = {
   readonly to: number
   readonly label: string
   readonly change: GraphChange
+  readonly tone: GraphTone
+  /** `-.>` で書いた点線の辺。 */
+  readonly dashed: boolean
 }
 
 /** 囲み（`[群の名]` 〜 `[]`）。`nodes` は `GraphSourceReading.nodes` の添字。 */
 export type GraphSourceGroup = {
   readonly name: string
   readonly nodes: readonly number[]
+  readonly tone: GraphTone
 }
 
 export type GraphSourceReading = {
@@ -40,6 +51,9 @@ export type GraphSourceReading = {
 }
 
 const ARROW = "->"
+
+/** 実線（`->`）と点線（`-.>`）の矢印。分けると演算子も配列に残る。 */
+const ARROW_OR_DASHED = /(-\.>|->)/
 
 /** `-` や `=>` だけの語。矢印を書き損じた行を節点の宣言と読まないために弾く。 */
 const STRAY_ARROW = /(?:^|\s)(?:-+>?|=+>|→)(?:\s|$)/
@@ -54,13 +68,15 @@ type ParsedName = {
 type ParsedLine =
   | { readonly kind: "blank" }
   | { readonly kind: "broken" }
-  | { readonly kind: "group-open"; readonly name: string }
+  | { readonly kind: "group-open"; readonly name: string; readonly tone: GraphTone }
   | { readonly kind: "group-close" }
   | {
       readonly kind: "item"
       readonly names: readonly ParsedName[]
       readonly label: string
       readonly change: GraphChange
+      readonly tone: GraphTone
+      readonly dashed: boolean
     }
 
 export function readGraphSource(source: string): GraphSourceReading {
@@ -71,12 +87,13 @@ export function readGraphSource(source: string): GraphSourceReading {
   const indexOf = (parsed: ParsedName): number => {
     const found = nodes.findIndex((node) => node.name === parsed.name)
     if (found < 0) {
-      nodes.push({ name: parsed.name, shape: parsed.shape, change: "unchanged" })
+      nodes.push({ name: parsed.name, shape: parsed.shape, change: "unchanged", tone: "none" })
     } else if (parsed.wrapped && !wrappedNames.has(parsed.name)) {
       nodes[found] = {
         name: parsed.name,
         shape: parsed.shape,
         change: nodes[found]?.change ?? "unchanged",
+        tone: nodes[found]?.tone ?? "none",
       }
     }
     if (parsed.wrapped) {
@@ -86,7 +103,14 @@ export function readGraphSource(source: string): GraphSourceReading {
   }
   const groups: GraphSourceGroup[] = []
   const groupOf = new Map<string, number>()
-  let open: { readonly name: string; readonly line: number; readonly members: number[] } | undefined
+  let open:
+    | {
+        readonly name: string
+        readonly tone: GraphTone
+        readonly line: number
+        readonly members: number[]
+      }
+    | undefined
   const closeGroup = (): void => {
     if (open === undefined) {
       return
@@ -94,7 +118,7 @@ export function readGraphSource(source: string): GraphSourceReading {
     if (open.members.length === 0) {
       brokenLines.push(open.line)
     } else {
-      groups.push({ name: open.name, nodes: open.members })
+      groups.push({ name: open.name, nodes: open.members, tone: open.tone })
     }
     open = undefined
   }
@@ -111,7 +135,7 @@ export function readGraphSource(source: string): GraphSourceReading {
           brokenLines.push(index + 1)
           return
         }
-        open = { name: line.name, line: index + 1, members: [] }
+        open = { name: line.name, tone: line.tone, line: index + 1, members: [] }
         return
       case "group-close":
         if (open === undefined) {
@@ -143,23 +167,43 @@ export function readGraphSource(source: string): GraphSourceReading {
           }
         }
         const [only] = line.names
-        if (line.names.length === 1 && only !== undefined && line.change !== "unchanged") {
-          const earlier = nodes.find((node) => node.name === only.name)?.change ?? "unchanged"
-          if (earlier !== "unchanged" && earlier !== line.change) {
+        if (
+          line.names.length === 1 &&
+          only !== undefined &&
+          (line.change !== "unchanged" || line.tone !== "none")
+        ) {
+          const earlierNode = nodes.find((node) => node.name === only.name)
+          const earlier = earlierNode?.change ?? "unchanged"
+          const earlierTone = earlierNode?.tone ?? "none"
+          if (
+            (earlier !== "unchanged" && line.change !== "unchanged" && earlier !== line.change) ||
+            (earlierTone !== "none" && line.tone !== "none" && earlierTone !== line.tone)
+          ) {
             brokenLines.push(index + 1)
             return
           }
           const at = indexOf(only)
           const node = nodes[at]
-          if (node !== undefined && node.change === "unchanged") {
-            nodes[at] = { ...node, change: line.change }
+          if (node !== undefined) {
+            nodes[at] = {
+              ...node,
+              change: node.change === "unchanged" ? line.change : node.change,
+              tone: node.tone === "none" ? line.tone : node.tone,
+            }
           }
           claim()
           return
         }
         const [from, to] = line.names.map(indexOf)
         if (from !== undefined && to !== undefined) {
-          edges.push({ from, to, label: line.label, change: line.change })
+          edges.push({
+            from,
+            to,
+            label: line.label,
+            change: line.change,
+            tone: line.tone,
+            dashed: line.dashed,
+          })
         }
         claim()
       }
@@ -168,38 +212,45 @@ export function readGraphSource(source: string): GraphSourceReading {
   if (open !== undefined) {
     brokenLines.push(open.line)
     if (open.members.length > 0) {
-      groups.push({ name: open.name, nodes: open.members })
+      groups.push({ name: open.name, nodes: open.members, tone: open.tone })
     }
   }
   return { nodes, edges, groups, brokenLines: brokenLines.toSorted((a, b) => a - b) }
 }
 
 function parseLine(text: string): ParsedLine {
-  const trimmed = text.trim()
-  if (trimmed === "") {
+  const written = text.trim()
+  if (written === "") {
     return { kind: "blank" }
   }
+  const toneMatch = TONE_SUFFIX.exec(written)
+  const tone = toneToken(toneMatch?.[1])
+  const trimmed = toneMatch === null ? written : written.slice(0, toneMatch.index).trim()
+  // 色の目印は行末の1つだけ。名前やラベルの中の ` @` は読めない行にする。
   if (trimmed === "[]") {
-    return { kind: "group-close" }
+    return tone === "none" ? { kind: "group-close" } : { kind: "broken" }
+  }
+  if (/\s@/.test(trimmed)) {
+    return { kind: "broken" }
   }
   if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
     const name = trimmed.slice(1, -1).trim()
-    return name === "" || /[[\]:]/.test(name) || name.includes(ARROW)
+    return name === "" || /[[\]:]/.test(name) || name.includes(ARROW) || name.includes("-.>")
       ? { kind: "broken" }
-      : { kind: "group-open", name }
+      : { kind: "group-open", name, tone }
   }
   const mark = CHANGE_MARKS.find(([prefix]) => trimmed.startsWith(prefix))
   const change = mark?.[1] ?? "unchanged"
   const line = mark === undefined ? trimmed : trimmed.slice(mark[0].length).trim()
-  const parts = line.split(ARROW)
+  const parts = line.split(ARROW_OR_DASHED)
   if (parts.length === 1) {
     const name = parseName(line)
     return name === undefined
       ? { kind: "broken" }
-      : { kind: "item", names: [name], label: "", change }
+      : { kind: "item", names: [name], label: "", change, tone, dashed: false }
   }
-  const [left, right] = parts
-  if (parts.length !== 2 || left === undefined || right === undefined) {
+  const [left, arrow, right] = parts
+  if (parts.length !== 3 || left === undefined || right === undefined) {
     return { kind: "broken" }
   }
   const colon = right.indexOf(":")
@@ -210,7 +261,20 @@ function parseLine(text: string): ParsedLine {
   if (from === undefined || to === undefined || label.includes(":")) {
     return { kind: "broken" }
   }
-  return { kind: "item", names: [from, to], label, change }
+  return { kind: "item", names: [from, to], label, change, tone, dashed: arrow === "-.>" }
+}
+
+function toneToken(letter: string | undefined): GraphTone {
+  switch (letter) {
+    case "a":
+    case "b":
+    case "c":
+    case "d":
+    case "e":
+      return letter
+    default:
+      return "none"
+  }
 }
 
 function parseName(text: string): ParsedName | undefined {

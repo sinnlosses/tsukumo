@@ -435,9 +435,20 @@ describe("parseReportSections", () => {
         { heading: "", shapeTag: "unspecified", blocks: [block] },
       ]).sections.flatMap((section) => section.blocks)
 
-    it("通り、title・fold は空文字で補う", () => {
-      expect(blocksOf(graph)).toEqual([{ ...graph, title: "", fold: "", aside: "" }])
+    it("通り、title・fold は空文字で、legend は空の並びで補う", () => {
+      expect(blocksOf(graph)).toEqual([{ ...graph, title: "", fold: "", aside: "", legend: [] }])
       expect(figureBlockSchema.safeParse(graph).success).toBe(true)
+    })
+
+    it("legend の色の名前の並びを受け、a〜e の外の色は落ちる", () => {
+      const legend = [{ tone: "a", label: "架空の層" }]
+
+      expect(blocksOf({ ...graph, legend })).toEqual([
+        { ...graph, title: "", fold: "", aside: "", legend },
+      ])
+      expect(
+        figureBlockSchema.safeParse({ ...graph, legend: [{ tone: "f", label: "架空" }] }).success,
+      ).toBe(false)
     })
 
     it("nodes・edges の旧い形と、節点が1つも無い source は落ちる", () => {

@@ -215,7 +215,7 @@ describe("report の本文（sections）", () => {
     expect(Object.keys(schema.definitions).toSorted()).toEqual(SHARED_BLOCK_DEFINITIONS)
     expect(figureRefs.toSorted()).toEqual(
       SHARED_BLOCK_DEFINITIONS.filter(
-        (name) => name !== "BeforeAfterSide" && name !== "SvgShape",
+        (name) => name !== "BeforeAfterSide" && name !== "SvgShape" && name !== "ToneLegend",
       ).map((name) => `#/definitions/${name}`),
     )
     expect(JSON.stringify(inputSchema).length).toBeLessThan(REPORT_INPUT_SCHEMA_MAX_CHARS)
@@ -394,10 +394,11 @@ const SHARED_BLOCK_DEFINITIONS = [
   "StatsBlock",
   "SvgBlock",
   "SvgShape",
+  "ToneLegend",
 ]
 
-/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（22,151字）には余白を持たせた上限。 */
-const REPORT_INPUT_SCHEMA_MAX_CHARS = 22_300
+/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（22,356字）には余白を持たせた上限。 */
+const REPORT_INPUT_SCHEMA_MAX_CHARS = 22_500
 
 /** `tools/list` の応答のうち、引数の schema を丸ごと読む形。 */
 const TOOLS_WHOLE_SCHEMA_REPLY = z.object({

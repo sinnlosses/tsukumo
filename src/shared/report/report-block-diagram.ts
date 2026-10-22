@@ -13,19 +13,24 @@ import {
 } from "./report-block-field.ts"
 import { MAX_CANDIDATES } from "./report-limit.ts"
 
+export const SVG_TONES = ["a", "b", "c", "d", "e"] as const
+
+const svgToneSchema = z.enum(SVG_TONES)
+
+const toneLegendSchema = z
+  .array(z.object({ tone: svgToneSchema, label: inlineText }))
+  .meta({ id: "ToneLegend" })
+
 const graphFields = {
   direction: z.enum(["TD", "LR"]).describe("TD は上から下 / LR は左から右"),
   source: z
     .string()
     .refine((value) => readGraphSource(value).nodes.length > 0, "source に節点が1つも無い")
     .describe(
-      "1行1辺。`A -> B: 語`（`: 語` は辺のラベル。省ける）。`(始点)` は始点・終点、`{分岐?}` は分岐、包みが無ければ処理。同じ名前は同じ節点（包みは最初の1回だけでよい）。`->` の無い行は節点だけの宣言。変更の前後は行頭に `+ `（足した）・`- `（消した）・`~ `（変えた）を付ける（辺の行は辺に、節点だけの行は節点に掛かる。同じ節点に違う印は付けない）。囲みは `[群の名]` だけの行で始め `[]` だけの行で閉じる（間の行の節点がその群。1階層で入れ子は不可）",
+      "1行1辺。`A -> B: 語`（`: 語` は辺のラベル。省ける。点線は `A -.> B`）。`(始点)` は始点・終点、`{分岐?}` は分岐、包みが無ければ処理。同じ名前は同じ節点（包みは最初の1回だけでよい）。`->` の無い行は節点だけの宣言。変更の前後は行頭に `+ `（足した）・`- `（消した）・`~ `（変えた）を付ける（辺の行は辺に、節点だけの行は節点に掛かる。同じ節点に違う印は付けない）。色は行末に ` @a`〜` @e`（節点・辺・囲みの行。名前に ` @` は書かない）。囲みは `[群の名]` だけの行で始め `[]` だけの行で閉じる（間の行の節点がその群。1階層で入れ子は不可）",
     ),
+  legend: omittable(toneLegendSchema, []).describe("` @a`〜` @e` を使った色ごとの名前"),
 }
-
-export const SVG_TONES = ["a", "b", "c", "d", "e"] as const
-
-const svgToneSchema = z.enum(SVG_TONES)
 
 const svgShapeSchema = z
   .discriminatedUnion("kind", [
@@ -73,7 +78,7 @@ const svgFields = {
     .array(svgShapeSchema)
     .min(1)
     .describe("座標つきの図形の並び。色は書けず、rect の tone（a〜e）か emphasis で目印を付ける"),
-  legend: omittable(z.array(z.object({ tone: svgToneSchema, label: inlineText })), []).describe(
+  legend: omittable(toneLegendSchema, []).describe(
     "rect の tone ごとの名前。tone を使った図には必ず付ける（色だけで意味を言わない）",
   ),
 }

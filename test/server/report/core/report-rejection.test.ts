@@ -119,6 +119,33 @@ describe("reportRejectionText", () => {
       expect(kinds(draft([toned("a", [{ tone: "a", label: "層" }])]))).toEqual([])
     })
 
+    it("graph の色の目印も legend に無ければ、何個目の塊のどの tone かだけで言って差し戻す", () => {
+      const graph = (
+        source: string,
+        legend: Extract<ReportBlock, { kind: "graph" }>["legend"],
+      ): ReportBlock => ({
+        kind: "graph",
+        title: "",
+        direction: "TD",
+        legend,
+        source,
+        fold: "",
+        aside: "",
+      })
+      const report = draft([
+        graph("[架空の秘密] @a\nA\n[]\nA -> B @b", [{ tone: "a", label: "層" }]),
+        graph("C -> D @c", [{ tone: "c", label: "線" }]),
+      ])
+
+      expect(reportViolations(report)).toEqual([
+        { kind: "unlegended-graph-tone", count: 1, faults: [{ block: 1, tone: "b" }] },
+      ])
+      const rejection = reportRejectionText(reportViolations(report))
+      expect(rejection).toContain("1個目の b")
+      expect(rejection).not.toContain("架空の秘密")
+      expect(kinds(draft([graph("C -> D @c", [{ tone: "c", label: "線" }])]))).toEqual([])
+    })
+
     it("line の tone も legend に無ければ差し戻す", () => {
       const line = {
         kind: "line",
@@ -186,9 +213,25 @@ describe("reportRejectionText", () => {
     it("figure の graph の読めない行は、描く順の1個目として違反になる", () => {
       const report: ReportDraft = {
         ...draft([
-          { kind: "graph", title: "", direction: "TD", source: "A -> B", fold: "", aside: "" },
+          {
+            kind: "graph",
+            title: "",
+            direction: "TD",
+            legend: [],
+            source: "A -> B",
+            fold: "",
+            aside: "",
+          },
         ]),
-        figure: { kind: "graph", title: "", direction: "TD", source: "A ->", fold: "", aside: "" },
+        figure: {
+          kind: "graph",
+          title: "",
+          direction: "TD",
+          legend: [],
+          source: "A ->",
+          fold: "",
+          aside: "",
+        },
       }
       expect(reportViolations(report)).toEqual([
         { kind: "broken-graph", count: 1, faults: [{ block: 1, line: 1 }] },
@@ -298,7 +341,15 @@ describe("reportRejectionText", () => {
         { kind: "none", reason: "single-value" },
         { kind: "none", reason: "no-material" },
         { kind: "none", reason: "unrecorded" },
-        { kind: "graph", title: "", direction: "TD", source: "A -> B", fold: "", aside: "" },
+        {
+          kind: "graph",
+          title: "",
+          direction: "TD",
+          legend: [],
+          source: "A -> B",
+          fold: "",
+          aside: "",
+        },
       ] as const) {
         expect(kinds({ ...draft([], "架空の結論。", sections), figure })).toEqual([])
       }

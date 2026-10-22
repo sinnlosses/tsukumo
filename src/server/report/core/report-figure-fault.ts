@@ -65,8 +65,8 @@ export function mermaidFaultPositions(faults: readonly MermaidFault[]): string {
 /** `block` は `svg` の塊（`beforeAfter` の側を含む）の出現順の1始まり、`shape` は `shapes` の中の1始まり。 */
 export type SvgFault = { readonly block: number; readonly shape: number }
 
-/** `block` は `svg` の塊の出現順の1始まり、`tone` は凡例に無い色の目印。 */
-export type SvgToneFault = { readonly block: number; readonly tone: string }
+/** `block` は `svg`（`graph`）の塊の出現順の1始まり、`tone` は凡例に無い色の目印。 */
+export type ToneFault = { readonly block: number; readonly tone: string }
 
 type SvgFigure = Pick<
   Extract<ReportBlock, { readonly kind: "svg" }>,
@@ -81,9 +81,7 @@ export function svgFaultsInSections(sections: readonly ReportSection[]): readonl
   )
 }
 
-export function svgToneFaultsInSections(
-  sections: readonly ReportSection[],
-): readonly SvgToneFault[] {
+export function svgToneFaultsInSections(sections: readonly ReportSection[]): readonly ToneFault[] {
   return svgFiguresInSections(sections).flatMap((figure, figureIndex) => {
     const legended = new Set(figure.legend.map((entry) => entry.tone))
     const used = figure.shapes.flatMap((shape) =>
@@ -96,7 +94,7 @@ export function svgToneFaultsInSections(
 }
 
 /** 凡例に無い `tone` の位置（何個目の塊のどの `tone` か）の並び。 */
-export function svgToneFaultPositions(faults: readonly SvgToneFault[]): string {
+export function toneFaultPositions(faults: readonly ToneFault[]): string {
   return faults.map((fault) => `${String(fault.block)}個目の ${fault.tone}`).join("、")
 }
 
@@ -121,6 +119,22 @@ export function graphFaultsInSections(sections: readonly ReportSection[]): reado
 
 export function graphFaultPositions(faults: readonly GraphFault[]): string {
   return faults.map((fault) => `${String(fault.block)}個目の ${String(fault.line)} 行目`).join("、")
+}
+
+export function graphToneFaultsInSections(
+  sections: readonly ReportSection[],
+): readonly ToneFault[] {
+  return sections
+    .flatMap((section) => section.blocks)
+    .flatMap((block): readonly ReportGraph[] => (block.kind === "graph" ? [block] : []))
+    .flatMap((graph, graphIndex) => {
+      const { nodes, edges, groups } = readGraphSource(graph.source)
+      const legended = new Set(graph.legend.map((entry) => entry.tone))
+      const used = [...nodes, ...edges, ...groups].map(({ tone }) => tone)
+      return [...new Set(used)]
+        .filter((tone) => tone !== "none" && !legended.has(tone))
+        .map((tone) => ({ block: graphIndex + 1, tone }))
+    })
 }
 
 function svgFiguresInSections(sections: readonly ReportSection[]): readonly SvgFigure[] {

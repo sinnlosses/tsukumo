@@ -34,6 +34,7 @@ import {
 } from "./report-block-rule.ts"
 import {
   graphFaultsInSections,
+  graphToneFaultsInSections,
   svgFaultsInSections,
   svgToneFaultsInSections,
   unknownMermaidCount,
@@ -72,6 +73,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   const svgFaults = svgFaultsInSections(drawnSections)
   const svgToneFaults = svgToneFaultsInSections(drawnSections)
   const graphFaults = graphFaultsInSections(drawnSections)
+  const graphToneFaults = graphToneFaultsInSections(drawnSections)
 
   const counted = [
     { kind: "long-conclusion", count: sentenceCount(report.conclusion) },
@@ -140,6 +142,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     { kind: "broken-svg", count: svgFaults.length, faults: svgFaults },
     { kind: "unlegended-svg-tone", count: svgToneFaults.length, faults: svgToneFaults },
+    { kind: "unlegended-graph-tone", count: graphToneFaults.length, faults: graphToneFaults },
     { kind: "broken-graph", count: graphFaults.length, faults: graphFaults },
     {
       kind: "code-mismatch",
