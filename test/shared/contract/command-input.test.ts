@@ -43,21 +43,26 @@ const TINY_PNG_DATA_URL = "data:image/png;base64,AAAA"
 /** 依頼に添える画像1枚ぶん（原寸と控えの対）。どちらも手で作った最小の data URL。 */
 const TINY_PROMPT_IMAGE = { full: TINY_PNG_DATA_URL, thumbnail: TINY_PNG_DATA_URL }
 
+const SVG_DATA_URL = "data:image/svg+xml;base64,AAAA"
+
 /** 画像を `count` 枚添えた `prompt`（ほかの欄は通る形で固定する）。 */
 function promptWithImages(images: readonly unknown[]): unknown {
   return { text: "架空の依頼", images }
 }
 
-/** id だけを差し替えた `characterPack.create`（ほかの欄は通る形で固定する）。 */
-function createCharacter(id: string): unknown {
-  return {
-    id,
-    name: "",
-    portraits: { default: TINY_PNG_DATA_URL },
-    accent: "#b8c7ff",
-    chatAccent: "#eaa77a",
-    persona: "",
-  }
+/** `characterPack.create` の入力（通る形に `overrides` を重ねる。`undefined` を渡した欄は省く）。 */
+function createCharacter(overrides: Record<string, unknown>): unknown {
+  return Object.fromEntries(
+    Object.entries({
+      id: "fictional-2",
+      name: "",
+      portraits: { default: TINY_PNG_DATA_URL },
+      accent: "#b8c7ff",
+      chatAccent: "#eaa77a",
+      persona: "",
+      ...overrides,
+    }).filter(([, value]) => value !== undefined),
+  )
 }
 
 describe("コマンドの契約の入力（受け付ける形）", () => {
@@ -71,7 +76,6 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
     expect(
       parseInput("session.prompt", { text: "架空の依頼", routing: "aside-when-background" }),
     ).toMatchObject({ routing: "aside-when-background" })
-    expect(parseInput("session.prompt", { text: "架空の依頼", routing: "aside" })).toBeUndefined()
   })
 
   it("nudge・interrupt は入力を持たない（押した事実だけが届く）", () => {
@@ -79,11 +83,6 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
     // `CHAT_NUDGE_PROMPT` が持つ。docs/architecture/screen-design.md「雑談モードの画面」）。
     expect(INPUT_SCHEMAS.get("session.nudge")).toBeUndefined()
     expect(INPUT_SCHEMAS.get("session.interrupt")).toBeUndefined()
-  })
-
-  it("session.reflectAchievement は YYYY-MM-DD の形でない日付を拒む", () => {
-    expect(parseInput("session.reflectAchievement", { date: "9/23" })).toBeUndefined()
-    expect(parseInput("session.reflectAchievement", { date: "" })).toBeUndefined()
   })
 
   it("session.recordWelcomeGreeting は上限までの文と知っている表情を受け付ける", () => {
@@ -94,100 +93,25 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
     })
   })
 
-  it("session.recordWelcomeGreeting は空・上限超えの文と知らない表情を拒む", () => {
-    const tooLong = "あ".repeat(MAX_SHOWN_WELCOME_GREETING_LENGTH + 1)
-    expect(
-      parseInput("session.recordWelcomeGreeting", { text: "", expression: "curious" }),
-    ).toBeUndefined()
-    expect(
-      parseInput("session.recordWelcomeGreeting", { text: tooLong, expression: "curious" }),
-    ).toBeUndefined()
-    expect(
-      parseInput("session.recordWelcomeGreeting", { text: "架空の挨拶", expression: "架空の顔" }),
-    ).toBeUndefined()
-  })
-})
-
-describe("コマンドの契約の入力（キャラクターの見た目）", () => {
-  // 使用中を暗黙にしない（`docs/architecture/character-pack.md`「画面から作るときの置き場と受け取り方」）。書き込む先のディレクトリ名になる値なので、
-  // 作るときと同じ形の検査を通す。
-  it("見た目の編集は書き込む先のパックが無い・パックの名前として通らない形なら undefined", () => {
-    expect(parseInput("characterPack.clearBackground", {})).toBeUndefined()
-    for (const pack of ["", "..", "../fictional", "fictional/other", ".hidden", "架空"]) {
-      expect(parseInput("characterPack.clearBackground", { pack })).toBeUndefined()
-    }
+  it("見た目の編集は、パックの名前として通る形なら受け付ける", () => {
     expect(parseInput("characterPack.clearBackground", { pack: "fictional-2" })).toEqual({
       pack: "fictional-2",
     })
   })
 
-  // 必須の1つ（`docs/requirements.md`「キャラクターパック」 / characters/README.md）を消す操作は境界で弾く。
-  it("characterPack.clearPortrait で default を消そうとすると undefined（必須は消せない）", () => {
-    expect(
-      parseInput("characterPack.clearPortrait", { pack: "fictional", expression: "default" }),
-    ).toBeUndefined()
-  })
-
   it("characterPack.create の名前と人格は空文字でも受け付ける（空なら書き込む側が id へ落とす・人格を書かない）", () => {
-    expect(
-      parseInput("characterPack.create", {
-        id: "fictional-2",
-        name: "",
-        portraits: { default: TINY_PNG_DATA_URL },
-        accent: "#b8c7ff",
-        chatAccent: "#eaa77a",
-        persona: "",
-      }),
-    ).toMatchObject({ name: "", persona: "" })
+    expect(parseInput("characterPack.create", createCharacter({}))).toMatchObject({
+      name: "",
+      persona: "",
+    })
   })
 
-  it("characterPack.create は人格の本文の上限を超えると受け付けない", () => {
-    expect(
-      parseInput("characterPack.create", {
-        id: "fictional-2",
-        name: "",
-        portraits: { default: TINY_PNG_DATA_URL },
-        accent: "#b8c7ff",
-        chatAccent: "#eaa77a",
-        persona: "あ".repeat(MAX_PERSONA_BODY_LENGTH + 1),
-      }),
-    ).toBeUndefined()
-  })
-
-  it("characterPack.setProfile は名前・ひとことが長すぎると undefined、パックの名前がパスになると undefined", () => {
-    expect(
-      parseInput("characterPack.setProfile", {
-        pack: "fictional",
-        name: "あ".repeat(MAX_CHARACTER_NAME_LENGTH + 1),
-        tagline: "ひとこと",
-      }),
-    ).toBeUndefined()
-    expect(
-      parseInput("characterPack.setProfile", {
-        pack: "fictional",
-        name: "架空",
-        tagline: "あ".repeat(MAX_CHARACTER_TAGLINE_LENGTH + 1),
-      }),
-    ).toBeUndefined()
-    expect(
-      parseInput("characterPack.setProfile", {
-        pack: "../escape",
-        name: "架空",
-        tagline: "ひとこと",
-      }),
-    ).toBeUndefined()
-  })
-
-  it("session.switchSession を受け付ける（空のIDは弾く）", () => {
+  it("session.switchSession を受け付ける", () => {
     expect(parseInput("session.switchSession", { sessionId: "s-架空" })).toEqual({
       sessionId: "s-架空",
     })
-    expect(parseInput("session.switchSession", { sessionId: "" })).toBeUndefined()
-    expect(parseInput("session.switchSession", {})).toBeUndefined()
   })
-})
 
-describe("コマンドの契約の入力（依頼に添える画像）", () => {
   it("上限の枚数までは、原寸と控えの対をそのまま通す", () => {
     const images = Array.from({ length: MAX_PROMPT_IMAGES }, () => TINY_PROMPT_IMAGE)
 
@@ -198,58 +122,123 @@ describe("コマンドの契約の入力（依頼に添える画像）", () => {
     })
   })
 
-  it("枚数が上限を超えたら undefined（1枚だけ落とさず、コマンドごと受け付けない）", () => {
-    const tooMany = Array.from({ length: MAX_PROMPT_IMAGES + 1 }, () => TINY_PROMPT_IMAGE)
-
-    expect(parseInput("session.prompt", promptWithImages(tooMany))).toBeUndefined()
+  it("半角の英数字と `.` `_` `-` だけで `.` で始まらない名前なら、新しいパックを作らせる", () => {
+    expect(parseInput("characterPack.create", createCharacter({ id: "my_pack-2.0" }))).toBeDefined()
   })
 
-  it("受け付けない形式は undefined（`.svg` は API が取らないので渡せない）", () => {
-    const svg = "data:image/svg+xml;base64,AAAA"
-
+  it("characterPack.generateFromPortrait はモデルへ渡せる画像（png など）を受け付ける", () => {
     expect(
-      parseInput("session.prompt", promptWithImages([{ full: svg, thumbnail: svg }])),
-    ).toBeUndefined()
-    expect(
-      parseInput("session.prompt", promptWithImages([{ full: svg, thumbnail: TINY_PNG_DATA_URL }])),
-    ).toBeUndefined()
+      parseInput("characterPack.generateFromPortrait", { portrait: TINY_PNG_DATA_URL }),
+    ).toEqual({ portrait: TINY_PNG_DATA_URL })
   })
 
-  it("data URL でない値・対の片側が欠けた形は undefined", () => {
-    expect(parseInput("session.prompt", promptWithImages(["架空の文字列"]))).toBeUndefined()
-    expect(
-      parseInput("session.prompt", promptWithImages([{ full: TINY_PNG_DATA_URL }])),
-    ).toBeUndefined()
-    expect(
-      parseInput("session.prompt", promptWithImages([{ thumbnail: TINY_PNG_DATA_URL }])),
-    ).toBeUndefined()
-  })
-
-  it("控えが大きすぎる依頼は undefined（記録に残るのは控えなので、原寸より厳しく見る）", () => {
-    const tooLargeThumbnail = `data:image/png;base64,${"A".repeat(
-      MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH,
-    )}`
-
-    expect(
-      parseInput(
-        "session.prompt",
-        promptWithImages([{ full: TINY_PNG_DATA_URL, thumbnail: tooLargeThumbnail }]),
-      ),
-    ).toBeUndefined()
+  it("characterPack.delete はパックの名前を受け付ける", () => {
+    expect(parseInput("characterPack.delete", { pack: "fictional-2" })).toEqual({
+      pack: "fictional-2",
+    })
   })
 })
 
 describe("コマンドの契約の入力（落とす形）", () => {
-  it("空白だけの依頼と、上限を超えた依頼は undefined", () => {
-    expect(parseInput("session.prompt", { text: "   " })).toBeUndefined()
-    expect(
-      parseInput("session.prompt", { text: "あ".repeat(MAX_PROMPT_TEXT_LENGTH + 1) }),
-    ).toBeUndefined()
+  const tooLargeThumbnail = `data:image/png;base64,${"A".repeat(
+    MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH,
+  )}`
+  const tooManyImages = Array.from({ length: MAX_PROMPT_IMAGES + 1 }, () => TINY_PROMPT_IMAGE)
+  const welcome = (text: string, expression: string) => ({ text, expression })
+  const profile = (overrides: Record<string, unknown>) => ({
+    pack: "fictional",
+    name: "架空",
+    tagline: "ひとこと",
+    ...overrides,
   })
 
-  // 名前はディレクトリ名になるので、パスの区切りと `..` を通さない（docs/architecture/character-pack.md「画面から作るときの置き場と受け取り方」）。
-  it("パックの区切り・`..`・隠しディレクトリになる名前では、新しいパックを作らせない", () => {
-    const rejected = [
+  // 名前はディレクトリ名になるので、パスの区切りと `..` を通さない。必須の立ち絵は消させない
+  // （docs/architecture/character-pack.md「画面から作るときの置き場と受け取り方」）。
+  const rejected: readonly (readonly [string, `${string}.${string}`, unknown])[] = [
+    ["prompt の routing が知らない値", "session.prompt", { text: "架空の依頼", routing: "aside" }],
+    ["空白だけの依頼", "session.prompt", { text: "   " }],
+    ["上限を超えた依頼", "session.prompt", { text: "あ".repeat(MAX_PROMPT_TEXT_LENGTH + 1) }],
+    [
+      "枚数が上限を超えた依頼（1枚だけ落とさず、コマンドごと受け付けない）",
+      "session.prompt",
+      promptWithImages(tooManyImages),
+    ],
+    [
+      "原寸も控えも svg の画像（API が取らない）",
+      "session.prompt",
+      promptWithImages([{ full: SVG_DATA_URL, thumbnail: SVG_DATA_URL }]),
+    ],
+    [
+      "原寸だけ svg の画像",
+      "session.prompt",
+      promptWithImages([{ full: SVG_DATA_URL, thumbnail: TINY_PNG_DATA_URL }]),
+    ],
+    ["data URL でない画像", "session.prompt", promptWithImages(["架空の文字列"])],
+    [
+      "対の片側（控え）が欠けた画像",
+      "session.prompt",
+      promptWithImages([{ full: TINY_PNG_DATA_URL }]),
+    ],
+    [
+      "対の片側（原寸）が欠けた画像",
+      "session.prompt",
+      promptWithImages([{ thumbnail: TINY_PNG_DATA_URL }]),
+    ],
+    [
+      "控えが大きすぎる画像（記録に残るのは控えなので原寸より厳しく見る）",
+      "session.prompt",
+      promptWithImages([{ full: TINY_PNG_DATA_URL, thumbnail: tooLargeThumbnail }]),
+    ],
+    ["reflectAchievement の YYYY-MM-DD でない日付", "session.reflectAchievement", { date: "9/23" }],
+    ["reflectAchievement の空の日付", "session.reflectAchievement", { date: "" }],
+    ["recordWelcomeGreeting の空の文", "session.recordWelcomeGreeting", welcome("", "curious")],
+    [
+      "recordWelcomeGreeting の上限超えの文",
+      "session.recordWelcomeGreeting",
+      welcome("あ".repeat(MAX_SHOWN_WELCOME_GREETING_LENGTH + 1), "curious"),
+    ],
+    [
+      "recordWelcomeGreeting の知らない表情",
+      "session.recordWelcomeGreeting",
+      welcome("架空の挨拶", "架空の顔"),
+    ],
+    ["clearBackground のパックの名前が無い", "characterPack.clearBackground", {}],
+    ...["", "..", "../fictional", "fictional/other", ".hidden", "架空"].map(
+      (pack) =>
+        [
+          `clearBackground のパックの名前 ${JSON.stringify(pack)}`,
+          "characterPack.clearBackground",
+          { pack },
+        ] as const,
+    ),
+    [
+      "clearPortrait で default を消そうとする（必須は消せない）",
+      "characterPack.clearPortrait",
+      { pack: "fictional", expression: "default" },
+    ],
+    [
+      "create の人格の本文が上限超え",
+      "characterPack.create",
+      createCharacter({ persona: "あ".repeat(MAX_PERSONA_BODY_LENGTH + 1) }),
+    ],
+    [
+      "setProfile の名前が長すぎる",
+      "characterPack.setProfile",
+      profile({ name: "あ".repeat(MAX_CHARACTER_NAME_LENGTH + 1) }),
+    ],
+    [
+      "setProfile のひとことが長すぎる",
+      "characterPack.setProfile",
+      profile({ tagline: "あ".repeat(MAX_CHARACTER_TAGLINE_LENGTH + 1) }),
+    ],
+    [
+      "setProfile のパックの名前がパスになる",
+      "characterPack.setProfile",
+      profile({ pack: "../escape" }),
+    ],
+    ["switchSession の空のID", "session.switchSession", { sessionId: "" }],
+    ["switchSession のIDが無い", "session.switchSession", {}],
+    ...[
       "../escape",
       "..",
       ".hidden",
@@ -259,103 +248,74 @@ describe("コマンドの契約の入力（落とす形）", () => {
       "日本語",
       "",
       "a".repeat(MAX_CHARACTER_PACK_NAME_LENGTH + 1),
-    ]
-
-    for (const name of rejected) {
-      expect(parseInput("characterPack.create", createCharacter(name))).toBeUndefined()
-    }
-    // 半角の英数字と `.` `_` `-` だけなら通る（`.` で始まらないこと）。
-    expect(parseInput("characterPack.create", createCharacter("my_pack-2.0"))).toBeDefined()
-  })
-
-  it("characterPack.generateFromPortrait はモデルへ渡せる画像（png など）を受け付け、svg・壊れた data URL を拒む", () => {
-    expect(
-      parseInput("characterPack.generateFromPortrait", { portrait: TINY_PNG_DATA_URL }),
-    ).toEqual({ portrait: TINY_PNG_DATA_URL })
-
-    for (const portrait of [
-      `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
-      "data:image/png,AAAA",
-      "",
-    ]) {
-      expect(parseInput("characterPack.generateFromPortrait", { portrait })).toBeUndefined()
-    }
-  })
-
-  it("characterPack.delete はパックの名前だけを受け付け、パスになる名前は通さない", () => {
-    expect(parseInput("characterPack.delete", { pack: "fictional-2" })).toEqual({
-      pack: "fictional-2",
-    })
-
-    for (const pack of ["../escape", "..", ".hidden", "nested/name", ""]) {
-      expect(parseInput("characterPack.delete", { pack })).toBeUndefined()
-    }
-  })
-
-  // `default` はここで required（欠けたパックが書き込む側まで届かない）。
-  it("必須の立ち絵が欠けた characterPack.create は undefined", () => {
-    expect(
-      parseInput("characterPack.create", {
-        id: "fictional-2",
-        name: "",
-        portraits: {},
-        accent: "#b8c7ff",
-        chatAccent: "#eaa77a",
-      }),
-    ).toBeUndefined()
-  })
-
-  it("必須の立ち絵が data URL でない characterPack.create は undefined", () => {
-    expect(
-      parseInput("characterPack.create", {
-        id: "fictional-2",
-        name: "",
+    ].map(
+      (id) =>
+        [
+          `create のパックの名前 ${JSON.stringify(id.length > 40 ? "長すぎる名前" : id)}`,
+          "characterPack.create",
+          createCharacter({ id }),
+        ] as const,
+    ),
+    [
+      "generateFromPortrait の svg",
+      "characterPack.generateFromPortrait",
+      { portrait: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}` },
+    ],
+    [
+      "generateFromPortrait の壊れた data URL",
+      "characterPack.generateFromPortrait",
+      { portrait: "data:image/png,AAAA" },
+    ],
+    ["generateFromPortrait の空", "characterPack.generateFromPortrait", { portrait: "" }],
+    ...["../escape", "..", ".hidden", "nested/name", ""].map(
+      (pack) =>
+        [
+          `delete のパックの名前 ${JSON.stringify(pack)}`,
+          "characterPack.delete",
+          { pack },
+        ] as const,
+    ),
+    [
+      "create の必須の立ち絵が欠けている",
+      "characterPack.create",
+      createCharacter({ portraits: {}, persona: undefined }),
+    ],
+    [
+      "create の必須の立ち絵が data URL でない",
+      "characterPack.create",
+      createCharacter({
         portraits: { default: "data:text/plain;base64,AAAA" },
-        accent: "#b8c7ff",
-        chatAccent: "#eaa77a",
+        persona: undefined,
       }),
-    ).toBeUndefined()
-  })
+    ],
+    [
+      "create の雑談の差し色が欠けている（両方 required）",
+      "characterPack.create",
+      createCharacter({ chatAccent: undefined, persona: undefined }),
+    ],
+    ["forgetRememberedLine の空の行", "chat.forgetRememberedLine", { line: "" }],
+    [
+      "forgetRememberedLine の上限を超えた行",
+      "chat.forgetRememberedLine",
+      { line: "あ".repeat(MAX_REMEMBERED_LINE_LENGTH + 1) },
+    ],
+    ["host.openFile の空の path", "host.openFile", { path: "" }],
+    ["一覧に無いモデル", "session.setModel", { model: "gpt" }],
+    ["一覧に無い許可モード", "session.setPermissionMode", { mode: "dontAsk" }],
+    ["一覧に無い effort", "session.setEffort", { effort: "ultra" }],
+    ["形の合わない答え", "session.answer", { id: "toolu_1", answer: { kind: "??" } }],
+    ...[
+      ["labels が数の配列", { kind: "answers", labels: [1, 2] }],
+      ["labels が文字列の配列（配列の配列でない）", { kind: "answers", labels: ["答え"] }],
+      ["labels が文字列", { kind: "answers", labels: "答え" }],
+      ["labels が無い", { kind: "answers" }],
+    ].map(
+      ([name, answer]) =>
+        [`answers の${String(name)}`, "session.answer", { id: "toolu_1", answer }] as const,
+    ),
+  ]
 
-  it("雑談の差し色が欠けた characterPack.create は undefined（両方 required）", () => {
-    expect(
-      parseInput("characterPack.create", {
-        id: "fictional-2",
-        name: "",
-        portraits: { default: TINY_PNG_DATA_URL },
-        accent: "#b8c7ff",
-      }),
-    ).toBeUndefined()
-  })
-
-  it("空の行と、上限を超えた行を持つ chat.forgetRememberedLine は undefined", () => {
-    expect(parseInput("chat.forgetRememberedLine", { line: "" })).toBeUndefined()
-    expect(
-      parseInput("chat.forgetRememberedLine", {
-        line: "あ".repeat(MAX_REMEMBERED_LINE_LENGTH + 1),
-      }),
-    ).toBeUndefined()
-  })
-
-  it("空の path を持つ host.openFile は undefined", () => {
-    expect(parseInput("host.openFile", { path: "" })).toBeUndefined()
-  })
-
-  it("一覧に無いモデル・許可モード、形の合わない答えは undefined", () => {
-    expect(parseInput("session.setModel", { model: "gpt" })).toBeUndefined()
-    expect(parseInput("session.setPermissionMode", { mode: "dontAsk" })).toBeUndefined()
-    expect(parseInput("session.setEffort", { effort: "ultra" })).toBeUndefined()
-    expect(parseInput("session.answer", { id: "toolu_1", answer: { kind: "??" } })).toBeUndefined()
-  })
-
-  it("answers の labels が「文字列の配列」の配列でない答えは undefined", () => {
-    for (const answer of [
-      { kind: "answers", labels: [1, 2] },
-      { kind: "answers", labels: ["答え"] },
-      { kind: "answers", labels: "答え" },
-      { kind: "answers" },
-    ]) {
-      expect(parseInput("session.answer", { id: "toolu_1", answer })).toBeUndefined()
-    }
+  it.each(rejected)("%s は undefined", (_, procedure, input) => {
+    expect(parseInput(procedure, input)).toBeUndefined()
   })
 })
