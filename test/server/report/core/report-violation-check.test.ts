@@ -27,7 +27,7 @@ describe("reportViolations", () => {
     expect(reportViolations(draft(blocks, ["架空の結論の1文目。", "2文目。"]))).toEqual([])
   })
 
-  describe("結論の1文目・見出し・checks の分数", () => {
+  describe("結論の1文目・見出し・checks の figure", () => {
     const check = (figure: string) => ({
       status: "ok" as const,
       label: "架空の確認",
@@ -75,13 +75,13 @@ describe("reportViolations", () => {
       expect(kinds(withHeading("what?"))).toEqual(["bad-heading"])
     })
 
-    it("figure の分数は差し戻し、件数や単位つきの数は通る", () => {
+    it("figure は分数に見える書き方や日付も差し戻さない", () => {
       const withFigure = (figure: string): ReportDraft => ({
         ...draft([text("架空。")]),
         checks: [check(figure)],
       })
-      expect(kinds(withFigure("2849 / 56"))).toEqual(["fraction-figure"])
-      expect(kinds(withFigure("1/2"))).toEqual(["fraction-figure"])
+      expect(kinds(withFigure("2849 / 56"))).toEqual([])
+      expect(kinds(withFigure("2026/10/21"))).toEqual([])
       expect(kinds(withFigure("56 件中 1 件"))).toEqual([])
       expect(kinds(withFigure("ずれ 2px"))).toEqual([])
       expect(kinds(withFigure(""))).toEqual([])
@@ -171,15 +171,15 @@ describe("reportViolations", () => {
   })
 
   describe("日本語でない地の文・見出し", () => {
-    it("仮名も漢字も無い英語の文は text でも見出しでも差し戻す", () => {
+    it("仮名も漢字も無い英語の文は text の塊なら差し戻し、見出しは差し戻さない", () => {
       expect(kinds(draft([text("Fixed the bug in the parser.")]))).toEqual(["non-japanese"])
       expect(
         kinds(
           draft([], "架空の結論。", [
-            { heading: "Root cause found", shapeTag: "unspecified", blocks: [text("架空。")] },
+            { heading: "Claude Agent SDK", shapeTag: "unspecified", blocks: [text("架空。")] },
           ]),
         ),
-      ).toEqual(["non-japanese"])
+      ).toEqual([])
     })
 
     it("日本語を含む文・コードやパスだけの文・語の少ない見出しは通る", () => {

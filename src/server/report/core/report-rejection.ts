@@ -94,8 +94,6 @@ function violationLine(violation: ReportViolation): string {
       return `\`conclusion\` の1要素目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1要素目を短くし、補足は2要素目か \`sections\` へ移す`
     case "bad-heading":
       return `見出しが${violation.count}個、${String(MAX_HEADING)}字を超えるか疑問文になっている。その節の結論を言う短い語にする`
-    case "fraction-figure":
-      return `\`checks\` の \`figure\` に分数（数 / 数）がある項目が${violation.count}個ある。「56 件中 1 件」のように言い換える`
     case "unverified-without-how":
       return `\`checks\` の \`unverified\` の行のうち \`howToVerify\` が空のものが${violation.count}個ある。知らない人が繰り返せる確かめ方を1〜2文で書く`
     case "arrow-in-prose":
@@ -105,7 +103,7 @@ function violationLine(violation: ReportViolation): string {
     case "labeled-ordered":
       return `全部の項目に \`label\` がある3段以上の \`ordered\` の \`list\` が${violation.count}個ある。名前の付いた段を辿る流れは \`flow\` にする`
     case "non-japanese":
-      return `仮名も漢字も無い英語の地の文・見出しが${violation.count}個ある。日本語で書き直す（識別子・パス・コマンド・コードは \`\` で囲めば英語のままでよい）`
+      return `仮名も漢字も無い英語の地の文が${violation.count}個ある。日本語で書き直す（識別子・パス・コマンド・コードは \`\` で囲めば英語のままでよい）`
     case "figure-contradiction":
       return violation.reason === "no-shape"
         ? `\`figure\` の reason が \`no-shape\` なのに、\`sections\` に流れ・つながり・構造を描く塊（\`list\` の \`flow\`・\`beforeAfter\`・\`graph\`・\`mermaid\`・\`svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`

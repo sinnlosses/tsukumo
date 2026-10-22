@@ -166,10 +166,6 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       count: report.sections.filter(({ heading }) => isBadHeading(heading)).length,
     },
     {
-      kind: "fraction-figure",
-      count: report.checks.filter((check) => FRACTION.test(check.figure)).length,
-    },
-    {
       kind: "unverified-without-how",
       count: report.checks.filter(
         (check) => check.status === "unverified" && check.howToVerify.trim() === "",
@@ -189,18 +185,13 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     {
       kind: "non-japanese",
-      count:
-        report.sections.filter(({ heading }) => isNonJapanese(heading)).length +
-        blocks.filter((block) => block.kind === "text" && isNonJapanese(block.text)).length,
+      count: blocks.filter((block) => block.kind === "text" && isNonJapanese(block.text)).length,
     },
     figureContradiction(report.figure, report.sections),
   ] as const satisfies readonly ReportViolation[]
 
   return counted.filter((violation) => violation.count > VIOLATION_THRESHOLDS[violation.kind])
 }
-
-/** `数 / 数`（空白は任意）。 */
-const FRACTION = /\d\s*\/\s*\d/
 
 function figureContradiction(
   figure: RecordedReportFigure,

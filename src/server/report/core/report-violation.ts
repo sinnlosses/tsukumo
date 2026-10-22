@@ -119,8 +119,6 @@ export type ReportViolation =
   | { readonly kind: "long-first-sentence"; readonly count: number; readonly length: number }
   /** 節の `heading` が30字を超える、または疑問文（末尾が `?`・`？`）。`count` は該当の節の数。 */
   | { readonly kind: "bad-heading"; readonly count: number }
-  /** `checks` の `figure` が `数 / 数` の分数に見える。`count` は該当の項目の数。 */
-  | { readonly kind: "fraction-figure"; readonly count: number }
   /** `checks` の `unverified` の行の `howToVerify` が空（空白だけを含む）。`count` は該当の行の数。 */
   | { readonly kind: "unverified-without-how"; readonly count: number }
   /** `text` の塊か表のセルに ` → ` がある（インラインコードの中は除く）。`count` は該当の塊の数。 */
@@ -129,7 +127,7 @@ export type ReportViolation =
   | { readonly kind: "label-in-item"; readonly count: number }
   /** 項目が3つ以上の `ordered` の `list` で、全部の項目に `label` がある。`count` は該当の塊の数。 */
   | { readonly kind: "labeled-ordered"; readonly count: number }
-  /** `text` の塊か節の見出しが、仮名も漢字も無く英語の語が並ぶ地の文になっている。`count` は該当の数。 */
+  /** `text` の塊が、仮名も漢字も無く英語の語が並ぶ地の文になっている。`count` は該当の数。 */
   | { readonly kind: "non-japanese"; readonly count: number }
   /**
    * `figure` の `none` の理由が本文と合わない。
@@ -171,7 +169,6 @@ export const VIOLATION_THRESHOLDS = {
   "region-range": 0,
   "long-first-sentence": 0,
   "bad-heading": 0,
-  "fraction-figure": 0,
   "unverified-without-how": 0,
   "arrow-in-prose": 0,
   "label-in-item": 0,
