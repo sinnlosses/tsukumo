@@ -14,3 +14,4 @@ paths:
 - **条件付きの描画は `{条件 && <部品 />}` で書き、`? … : null` にしない。** 左辺は `boolean` に限る（「条件付きの描画は `&&` で書く」）
 - **`useEffect` は「React の外と同期する」4類型だけ。** 依存配列を手で間引かない（「React」節「useEffect は4類型だけ」「useEffect の代わりに使うもの」）
 - **2つ以上の class 名をつなぐときは clsx を使う**。`components/ui/` の部品へ渡す className は除く（`composes` で畳む）（「class 名は clsx で組む」）
+- **条件つきで上書きしたら宣言を列挙し戻す側も同数**（`browser.md`「CSS」）
