@@ -45,6 +45,7 @@ const SWALLOWED_FAILURE_PLACES = {
     "consolidation-synopsis-reserved-tag",
     "consolidation-synopsis-shrunk",
     "consolidation-synopsis-shrink-waived",
+    "consolidation-backed-off",
     "consolidation-summary-write",
     "consolidation-episode-write",
     "persona-remember",

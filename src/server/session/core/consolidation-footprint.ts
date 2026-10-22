@@ -1,4 +1,4 @@
-// 定着が終わったときの結果のうち、診断ログへ足跡を残すもの（失敗・縮みの免除・削った行）。
+// 定着が終わったときの結果のうち、診断ログへ足跡を残すもの（失敗・飛ばした契機・縮みの免除・削った行）。
 
 import {
   swallowedFailureFootprint,
@@ -52,6 +52,15 @@ export function noteConsolidationOutcome(
           place: failurePlaceOf(outcome),
         },
         outcome.reason === "threw" ? outcome.error : undefined,
+      ),
+    )
+  }
+  if (outcome.kind === "backed-off") {
+    diagnostic.add(
+      swallowedFailureFootprint(
+        now(),
+        { feature: "chat", place: "consolidation-backed-off" },
+        undefined,
       ),
     )
   }

@@ -184,7 +184,7 @@ describe("createSessionManager", () => {
       ])
     })
 
-    it("検査に落ちた理由と、縮みの検査を外して書いたことを、場所の語で診断ログへ書く（本文は入らない）", async () => {
+    it("検査に落ちた理由と、飛ばした契機と、縮みの検査を外して書いたことを、場所の語で診断ログへ書く（本文は入らない）", async () => {
       const { stub, consolidation, entries } = startWithDiagnostics()
 
       const rejections = [
@@ -207,6 +207,9 @@ describe("createSessionManager", () => {
         consolidation.finish({ kind: "failed", reason: "query-result", resultKind })
         await waitForBatch()
       }
+      stub.emit(TURN_FINISHED)
+      consolidation.finish({ kind: "backed-off" })
+      await waitForBatch()
       stub.emit(TURN_FINISHED)
       consolidation.finish({
         kind: "written",
@@ -231,6 +234,7 @@ describe("createSessionManager", () => {
         "consolidation-synopsis-shrunk",
         "consolidation-result-error-max-turns",
         "consolidation-result-other",
+        "consolidation-backed-off",
         "consolidation-synopsis-shrink-waived",
       ])
       expect(JSON.stringify(entries)).not.toContain("架空の話題")

@@ -25,6 +25,10 @@ import type {
   ChatUnconsolidatedLimits,
 } from "./chat-archive-port.ts"
 import {
+  type ChatConsolidationBackoffEffect,
+  createChatConsolidationBackoff,
+} from "./chat-consolidation-backoff.ts"
+import {
   CHAT_CONSOLIDATION_LIMITS,
   CHAT_CONSOLIDATION_TIMEOUT_MS,
   type ChatConsolidationRejection,
@@ -43,6 +47,7 @@ import { isBeforeAt } from "./chat-instant-order.ts"
  *
  * - `not-due`: 未定着の行が契機（`consolidateEveryBytes`）に届いていないので起こさなかった
  * - `locked`: ほかのプロセスが錠を持っているので起こさなかった（その契機は捨てる）
+ * - `backed-off`: 続けて落ちたので、この契機は錠も取らず行も読まずに飛ばした（`CHAT_CONSOLIDATION_BACKOFF`）
  * - `written`: 書けた。`topics` は書いたあとのファイルから読み直した最近の話題の見出し、`droppedLines` は上限に収めるために落としたあらすじの行数、
  *   `shrinkWaived` は縮みの検査に落ちる続きが {@link CHAT_CONSOLIDATION_LIMITS.synopsisShrinkWaiveAt} 回目に届き、縮んだまま書いたこと
  * - `failed`: 書けなかった。次の契機で拾い直す。`reason` で見分ける
@@ -56,6 +61,7 @@ import { isBeforeAt } from "./chat-instant-order.ts"
 export type ChatConsolidationOutcome =
   | { readonly kind: "not-due" }
   | { readonly kind: "locked" }
+  | { readonly kind: "backed-off" }
   | {
       readonly kind: "written"
       readonly topics: readonly string[]
@@ -144,6 +150,7 @@ export type ChatConsolidationWriterPorts = {
 const ABORTED = { kind: "failed", reason: "aborted" } as const satisfies ChatConsolidationOutcome
 const NOT_DUE = { kind: "not-due" } as const satisfies ChatConsolidationOutcome
 const LOCKED = { kind: "locked" } as const satisfies ChatConsolidationOutcome
+const BACKED_OFF = { kind: "backed-off" } as const satisfies ChatConsolidationOutcome
 
 /** 書いてからこれを過ぎた錠は、落ちたプロセスの残りとして取り直す。 */
 const CHAT_CONSOLIDATION_LOCK_STALE_MS = CHAT_CONSOLIDATION_TIMEOUT_MS * 2
@@ -167,9 +174,42 @@ export function createChatConsolidationWriter(
       counts.set(packName, count)
     },
   }
-  return (packName, signal) => {
+  const backoff = createChatConsolidationBackoff()
+  return async (packName, signal) => {
+    if (backoff.holdsBack(packName)) {
+      return BACKED_OFF
+    }
     const bounded = AbortSignal.any([signal, AbortSignal.timeout(CHAT_CONSOLIDATION_TIMEOUT_MS)])
-    return Promise.race([consolidate(ports, shrinkTally, packName, bounded), abortion(bounded)])
+    const outcome = await Promise.race([
+      consolidate(ports, shrinkTally, packName, bounded),
+      abortion(bounded),
+    ])
+    backoff.note(packName, backoffEffectOf(outcome))
+    return outcome
+  }
+}
+
+/** 数えるのは同じ入力で落ち続けうる失敗だけ（`docs/architecture/chat-mode/consolidation-failure.md`「続けて落ちたら契機を間引く」）。 */
+function backoffEffectOf(outcome: ChatConsolidationOutcome): ChatConsolidationBackoffEffect {
+  switch (outcome.kind) {
+    case "written":
+    case "not-due":
+      return "reset"
+    case "locked":
+    case "backed-off":
+      return "keep"
+    case "failed":
+      switch (outcome.reason) {
+        case "threw":
+        case "query-result":
+          return "count"
+        case "unreadable-result":
+          return outcome.rejection === "synopsis-shrunk" ? "keep" : "count"
+        case "aborted":
+        case "summary-write":
+        case "episode-write":
+          return "keep"
+      }
   }
 }
 

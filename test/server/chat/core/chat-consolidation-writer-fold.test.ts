@@ -18,6 +18,7 @@ import {
   type ChatConsolidationOutcome,
   createChatConsolidationWriter,
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
+import type { ChatConsolidationQuery } from "../../../../src/server/chat/core/chat-consolidation.ts"
 import type { ChatSummary } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { characterPackName } from "../../../fixture/character.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
@@ -41,7 +42,7 @@ function createHarness() {
   const summaryRoot = join(dir(), "chat-summary")
   const archive = createChatArchive(archiveRoot)
   const start = Temporal.Instant.from("2026-09-20T03:00:00Z").epochMilliseconds
-  for (let index = 0; index < LINE_COUNT; index += 1) {
+  const appendLine = (index: number): void => {
     archive.append(PACK, {
       mode: "chat",
       kind: "request",
@@ -51,12 +52,17 @@ function createHarness() {
       imageFiles: undefined,
     })
   }
+  for (let index = 0; index < LINE_COUNT; index += 1) {
+    appendLine(index)
+  }
 
   const faults: {
     summaryWrite: boolean
     foldWrite: boolean
     episodeAppend: "ok" | "fail" | "first-then-torn"
-  } = { summaryWrite: false, foldWrite: false, episodeAppend: "ok" }
+    queryRejects: boolean
+  } = { summaryWrite: false, foldWrite: false, episodeAppend: "ok", queryRejects: false }
+  const queries: ChatConsolidationQuery[] = []
   /** `unconsolidated` が返した行の番号（発言の先頭の2桁）を、呼ばれた順に。 */
   const batches: (readonly number[])[] = []
   let lastBatchLength = 0
@@ -96,7 +102,11 @@ function createHarness() {
     archive: faultyArchive,
     lockConsolidation: () => ({ release: () => {} }),
     chatSummary,
-    query: () => {
+    query: (request) => {
+      queries.push(request)
+      if (faults.queryRejects) {
+        return Promise.reject(new Error("架空の失敗"))
+      }
       const count = lastBatchLength
       const half = Math.max(1, Math.floor(count / 2))
       const ends = half < count ? [half, count] : [count]
@@ -119,6 +129,8 @@ function createHarness() {
   return {
     faults,
     batches,
+    queries,
+    appendLine,
     summaryRoot,
     run: (): Promise<ChatConsolidationOutcome> => writer(PACK, new AbortController().signal),
     episodeEnds: (): readonly string[] =>
@@ -225,6 +237,25 @@ describe("定着の途中で落ちたあとの次の定着", () => {
     expect(resummarized).toEqual(crashed)
     expect(harness.episodeEnds()).toEqual(ends)
     expect(harness.summary().readFold()).toEqual({ kind: "through", at: ends.at(-1) })
+  })
+
+  it("1回に畳む上限まで溜まった範囲で query() が落ちると、行が書き足されても次の回は同じ入力で query() を起こす", async () => {
+    const harness = createHarness()
+    harness.faults.queryRejects = true
+
+    expect((await harness.run()).kind).toBe("failed")
+    for (let index = LINE_COUNT; index < LINE_COUNT + 5; index += 1) {
+      harness.appendLine(index)
+    }
+    expect((await harness.run()).kind).toBe("failed")
+
+    const [first, second] = harness.batches
+    expect(first?.at(-1)).toBeLessThan(LINE_COUNT - 1)
+    expect(second).toEqual(first)
+    expect(harness.queries).toHaveLength(2)
+    expect(harness.queries[1]).toEqual(harness.queries[0])
+    expect(harness.episodeEnds()).toEqual([])
+    expect(harness.summary().readFold()).toEqual({ kind: "unknown" })
   })
 
   it("取り込んだところを置く書き込みが失敗したら、エピソードを書かずに summary-write", async () => {
