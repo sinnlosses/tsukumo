@@ -13,6 +13,7 @@ describe("readConfig", () => {
       host: "orca",
       fakeScene: undefined,
       fakeSceneUntil: undefined,
+      fakeSession: undefined,
       twCommand: undefined,
       claudeConfigDir: undefined,
       fixedClock: undefined,
@@ -31,6 +32,7 @@ describe("readConfig", () => {
       TSUKUMO_HOST: " none ",
       TSUKUMO_FAKE_SCENE: " question-multi ",
       TSUKUMO_FAKE_SCENE_UNTIL: " 3 ",
+      TSUKUMO_FAKE_SESSION: " /somewhere/session.json ",
       TSUKUMO_TW: " /somewhere/fake-tw ",
       CLAUDE_CONFIG_DIR: " /somewhere/claude ",
       TSUKUMO_REPORT_SCHEMA: " short-type ",
@@ -45,6 +47,7 @@ describe("readConfig", () => {
       host: "none",
       fakeScene: "question-multi",
       fakeSceneUntil: 3,
+      fakeSession: "/somewhere/session.json",
       twCommand: "/somewhere/fake-tw",
       claudeConfigDir: "/somewhere/claude",
       fixedClock: undefined,
@@ -56,6 +59,15 @@ describe("readConfig", () => {
 
   it("CLAUDE_CONFIG_DIR が空文字なら未設定と同じに倒す", () => {
     expect(readConfig({ CLAUDE_CONFIG_DIR: "  " }).claudeConfigDir).toBeUndefined()
+  })
+
+  it("疑似セッションのパスは空白だけなら同梱に倒し、fake 以外の駆動では読まない", () => {
+    expect(
+      readConfig({ TSUKUMO_DRIVER: "fake", TSUKUMO_FAKE_SESSION: "  " }).fakeSession,
+    ).toBeUndefined()
+    expect(
+      readConfig({ TSUKUMO_FAKE_SESSION: "/somewhere/session.json" }).fakeSession,
+    ).toBeUndefined()
   })
 
   it("TSUKUMO_TW が空白だけなら未設定と同じに倒す", () => {

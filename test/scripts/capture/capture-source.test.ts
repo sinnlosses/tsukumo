@@ -6,36 +6,40 @@ import { imageSceneEntry, launchPlaceOf } from "../../../scripts/capture/lib/cat
 
 describe("sourceOf", () => {
   test("URL だけなら URL を開く", () => {
-    expect(sourceOf("http://x", undefined, undefined, undefined)).toEqual({
+    expect(sourceOf("http://x", undefined, undefined, undefined, undefined)).toEqual({
       kind: "url",
       url: "http://x",
     })
   })
 
-  test("場面の起動先は --cwd が無ければ決めずに残る", () => {
-    expect(sourceOf(undefined, "report", 3, undefined)).toEqual({
+  test("場面の起動先は --cwd が無ければ決めずに残り、--session が無ければ同梱のファイルを読む", () => {
+    expect(sourceOf(undefined, "report", 3, undefined, undefined)).toEqual({
       kind: "scene",
       scene: "report",
       until: 3,
       cwd: undefined,
+      session: undefined,
     })
   })
 
-  test("--cwd は場面の起動先になる", () => {
-    expect(sourceOf(undefined, "report", undefined, "/scratch/a")).toEqual({
+  test("--cwd は場面の起動先に、--session は場面を読むファイルになる", () => {
+    expect(sourceOf(undefined, "report", undefined, "/scratch/a", "/scratch/s.json")).toEqual({
       kind: "scene",
       scene: "report",
       until: undefined,
       cwd: "/scratch/a",
+      session: "/scratch/s.json",
     })
   })
 
-  test("URL と --cwd・場面と URL・場面の無い --until-step / --cwd は読まない", () => {
-    expect(sourceOf("http://x", undefined, undefined, "/a")).toBeUndefined()
-    expect(sourceOf("http://x", "report", undefined, undefined)).toBeUndefined()
-    expect(sourceOf(undefined, undefined, 2, undefined)).toBeUndefined()
-    expect(sourceOf(undefined, undefined, undefined, "/a")).toBeUndefined()
-    expect(sourceOf(undefined, undefined, undefined, undefined)).toBeUndefined()
+  test("URL と --cwd / --session・場面と URL・場面の無い --until-step / --cwd / --session は読まない", () => {
+    expect(sourceOf("http://x", undefined, undefined, "/a", undefined)).toBeUndefined()
+    expect(sourceOf("http://x", undefined, undefined, undefined, "/s.json")).toBeUndefined()
+    expect(sourceOf("http://x", "report", undefined, undefined, undefined)).toBeUndefined()
+    expect(sourceOf(undefined, undefined, 2, undefined, undefined)).toBeUndefined()
+    expect(sourceOf(undefined, undefined, undefined, "/a", undefined)).toBeUndefined()
+    expect(sourceOf(undefined, undefined, undefined, undefined, "/s.json")).toBeUndefined()
+    expect(sourceOf(undefined, undefined, undefined, undefined, undefined)).toBeUndefined()
   })
 })
 

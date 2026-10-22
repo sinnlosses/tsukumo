@@ -7,6 +7,7 @@ import {
   CHARACTER_ENV_NAME,
   DRIVER_ENV_NAME,
   FAKE_SCENE_ENV_NAME,
+  FAKE_SESSION_ENV_NAME,
   OPEN_VIEW_ENV_NAME,
   VIEW_PORT_ENV_NAME,
   VIEW_PORT_FALLBACK_BASE_ENV_NAME,
@@ -43,6 +44,7 @@ const CLI_ENV_NAMES: ReadonlySet<string> = new Set([
   OPEN_VIEW_ENV_NAME,
   DRIVER_ENV_NAME,
   FAKE_SCENE_ENV_NAME,
+  FAKE_SESSION_ENV_NAME,
 ])
 
 function runCliToExit(
@@ -112,6 +114,18 @@ describe("tsukumo CLI", () => {
 
     expect(result.exitCode).toBe(0)
     expect(result.stdout).toContain("使い方:")
+  })
+
+  it("fake driver で TSUKUMO_FAKE_SESSION のファイルを読めないとき、そのパスを理由に添えて終了コード1で終わる", async () => {
+    const missing = "/nonexistent/tsukumo-fake-session.json"
+    const result = await runCliToExit([], {
+      TSUKUMO_VIEW_PORT: "0",
+      TSUKUMO_DRIVER: "fake",
+      TSUKUMO_FAKE_SESSION: missing,
+    })
+
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain(`疑似セッションを読めない: ファイルを読めない（${missing}）`)
   })
 
   // 以下の2つは「起動時の前提チェックで終わる」経路のまま安全に確かめられる。

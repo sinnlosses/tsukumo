@@ -16,6 +16,8 @@ export async function launchFakeScene(options: {
   readonly cwd: string
   readonly scene: string
   readonly home: string | undefined
+  /** 疑似セッションのファイル。undefined なら同梱のファイル。 */
+  readonly session: string | undefined
   readonly extraEnv: Readonly<Record<string, string>>
 }): Promise<LaunchedScene> {
   const home = options.home ?? tsukumoHomeDir()
@@ -25,6 +27,7 @@ export async function launchFakeScene(options: {
     scene: options.scene,
     port: 0,
     home,
+    session: options.session,
     extraEnv: options.extraEnv,
     dropInheritedTsukumoEnv: false,
     stderr: "inherit",

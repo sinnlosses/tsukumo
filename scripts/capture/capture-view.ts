@@ -42,7 +42,6 @@ import { parseArgs } from "node:util"
 
 import { chromium, type Page } from "playwright-core"
 
-import { readFakeSession } from "../../src/server/session-driver/adapter/fake-session.ts"
 import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../shared/capture-clock.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
@@ -65,6 +64,7 @@ import { type Source, sourceOf } from "./lib/capture-source.ts"
 import { isStubbedCall, readRpcStub, type RpcStub, rpcPathOf } from "./lib/capture-stub.ts"
 import { CATALOG } from "./lib/catalog-entry.ts"
 import { imageSceneEntry, launchPlaceOf, workspaceOf } from "./lib/catalog-setup.ts"
+import { describeElement } from "./lib/element-description.ts"
 import { launchFakeScene } from "./lib/fake-scene-launch.ts"
 import { formatPaperMetric, measurePaperMetric } from "./lib/paper-metric.ts"
 import {
@@ -79,6 +79,7 @@ import {
   sceneEventTimeoutMs,
   watchSceneEvents,
 } from "./lib/scene-end.ts"
+import { readSceneSession } from "./lib/scene-session.ts"
 
 /** 既定の窓の大きさ。実機の目視で使ってきた値に揃えてある。 */
 const DEFAULT_WIDTH = 1400
@@ -113,11 +114,12 @@ const REVEALING_SELECTOR = "[data-revealing]"
 const USAGE = `使い方:
   node scripts/capture/capture-view.ts <URL> [オプション]
   node scripts/capture/capture-view.ts --scene <場面> [オプション]
-  node scripts/capture/capture-view.ts --list-scenes
+  node scripts/capture/capture-view.ts --list-scenes [--session <ファイル>]
 
   --scene <場面>        fake driver の tsukumo を自分で起こして撮り、終わったら自分で止める
-                        （場面は test/fixture/fake-session.json の turns[].name。URL とは併用しない）
+                        （場面は test/fixture/fake-session.json〔--session があればそのファイル〕の turns[].name。URL とは併用しない）
   --cwd <dir>           --scene の tsukumo を起こす作業ディレクトリ（.beads や課題ファイルを探す先。既定はこの作業ツリー。手元の画像を置く場面は --out の隣に架空の画像入りの作業場所を立てる。件が演出を打ち切る場面は、--cwd の有無に関わらず打ち切ってから撮る。--scene と一緒にだけ使う）
+  --session <ファイル>  --scene・--list-scenes が読む疑似セッションを同梱のファイルから差し替える（ファイルでなければ使い方を出して終わる）。読ませるのは架空の会話だけで、実物の会話（transcript・SDK のイベント）は渡さない
   --until-step <n>      --scene の場面を先頭から n 手目で止めた画を撮る（正の整数。--scene と一緒にだけ使う）
   --list-scenes         場面ごとに report に出る塊の kind と、書き上げる演出が掛かる見込みを一覧して終わる（撮らない。見込みは節の文字数からの見積もりで、描いて確かめてはいない）
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
@@ -142,7 +144,7 @@ const USAGE = `使い方:
 `
 
 type Options =
-  | { readonly kind: "list-scenes" }
+  | { readonly kind: "list-scenes"; readonly session: string | undefined }
   | {
       readonly kind: "capture"
       readonly source: Source
@@ -169,7 +171,7 @@ async function main(argv: readonly string[]): Promise<number> {
   }
 
   if (options.kind === "list-scenes") {
-    return printSceneCatalog()
+    return printSceneCatalog(options.session)
   }
 
   const opened = await openSource(options.source, path.dirname(path.resolve(options.out)))
@@ -185,10 +187,10 @@ async function main(argv: readonly string[]): Promise<number> {
 }
 
 /** 場面ごとの塊の一覧を出す。何も起こさない。戻り値は終了コード。 */
-function printSceneCatalog(): number {
-  const reading = readFakeSession()
+function printSceneCatalog(sessionPath: string | undefined): number {
+  const reading = readSceneSession(sessionPath)
   if (reading.kind === "unreadable") {
-    process.stderr.write(`test/fixture/fake-session.json が読めない: ${reading.reason}\n`)
+    process.stderr.write(`${reading.message}\n`)
     return 1
   }
   const forecasts = revealForecast(reading.session)
@@ -216,9 +218,9 @@ async function openSource(source: Source, outDir: string): Promise<OpenedSource 
     return { url: source.url, close: () => undefined, skipReveal: false }
   }
 
-  const reading = readFakeSession()
+  const reading = readSceneSession(source.session)
   if (reading.kind === "unreadable") {
-    process.stderr.write(`test/fixture/fake-session.json が読めない: ${reading.reason}\n`)
+    process.stderr.write(`${reading.message}\n`)
     return undefined
   }
   if (!reading.session.turns.some((scene) => scene.name === source.scene)) {
@@ -244,6 +246,7 @@ async function openSource(source: Source, outDir: string): Promise<OpenedSource 
       cwd,
       scene: source.scene,
       home: undefined,
+      session: source.session,
       extraEnv:
         source.until === undefined ? {} : { TSUKUMO_FAKE_SCENE_UNTIL: String(source.until) },
     })
@@ -425,9 +428,9 @@ async function waitForSceneEnd(
   if (source.kind !== "scene") {
     return undefined
   }
-  const reading = readFakeSession()
+  const reading = readSceneSession(source.session)
   if (reading.kind === "unreadable") {
-    return `test/fixture/fake-session.json が読めない: ${reading.reason}`
+    return reading.message
   }
   const target = sceneEndTarget(reading.session, source.scene, source.until)
   const timeoutMs =
@@ -474,51 +477,6 @@ async function scrollIntoView(page: Page, selector: string): Promise<number> {
   return count
 }
 
-/**
- * 要素1つの位置と大きさ、内容の高さ（scrollHeight）と見えている高さ（clientHeight）を1行にする。見つからないときは "無し" を返して続ける
- * （道具なので、1つ測れなくても残りを出す）。同じセレクタに複数当たったら件数も添える。
- */
-async function describeElement(
-  page: { readonly locator: (selector: string) => Locator },
-  selector: string,
-): Promise<string> {
-  const locator = page.locator(selector)
-  const count = await locator.count()
-  if (count === 0) {
-    return "無し"
-  }
-
-  const box = await locator.first().boundingBox()
-  if (box === null) {
-    return `${String(count)}件（描画されていない）`
-  }
-
-  const scroll = await locator.first().evaluate((element) => ({
-    scrollHeight: element.scrollHeight,
-    clientHeight: element.clientHeight,
-  }))
-  const rect = `top ${round(box.y)} / bottom ${round(box.y + box.height)} / left ${round(box.x)} / 幅 ${round(box.width)} / 高さ ${round(box.height)} / scrollHeight ${String(scroll.scrollHeight)} / clientHeight ${String(scroll.clientHeight)}`
-  return count === 1 ? rect : `${String(count)}件、先頭: ${rect}`
-}
-
-type ScrollExtent = { readonly scrollHeight: number; readonly clientHeight: number }
-
-/** Playwright の `Locator` のうち、この道具が使う分だけ。 */
-type Locator = {
-  readonly count: () => Promise<number>
-  readonly first: () => {
-    readonly evaluate: (
-      pageFunction: (element: HTMLElement) => ScrollExtent,
-    ) => Promise<ScrollExtent>
-    readonly boundingBox: () => Promise<{
-      readonly x: number
-      readonly y: number
-      readonly width: number
-      readonly height: number
-    } | null>
-  }
-}
-
 function isDirectory(target: string): boolean {
   try {
     return statSync(target).isDirectory()
@@ -527,8 +485,12 @@ function isDirectory(target: string): boolean {
   }
 }
 
-function round(value: number): number {
-  return Math.round(value * 100) / 100
+function isFile(target: string): boolean {
+  try {
+    return statSync(target).isFile()
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -566,10 +528,15 @@ function readOptions(argv: readonly string[]): Options | undefined {
       viewport: { type: "string", multiple: true },
       full: { type: "boolean" },
       "list-scenes": { type: "boolean" },
+      session: { type: "string" },
     },
   })
+  const session = values.session === undefined ? undefined : path.resolve(values.session)
+  if (session !== undefined && !isFile(session)) {
+    return undefined
+  }
   if (values["list-scenes"] === true) {
-    return { kind: "list-scenes" }
+    return { kind: "list-scenes", session }
   }
 
   const prepared = readPreparations(tokens)
@@ -613,6 +580,7 @@ function readOptions(argv: readonly string[]): Options | undefined {
     values.scene,
     untilStep?.data,
     values.cwd === undefined ? undefined : path.resolve(values.cwd),
+    session,
   )
   return source === undefined
     ? undefined

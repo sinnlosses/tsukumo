@@ -11,6 +11,8 @@ export type FakeTsukumoOptions = {
   readonly cwd: string
   /** 起こした直後に流す疑似セッションの場面。 */
   readonly scene: string | undefined
+  /** 疑似セッションのファイル（`TSUKUMO_FAKE_SESSION`）。undefined なら同梱のファイル。 */
+  readonly session: string | undefined
   /** 0 なら空きポート。 */
   readonly port: number
   /** `TSUKUMO_HOME` に渡すホーム。所在のファイルもその下に書かれる。 */
@@ -34,6 +36,7 @@ export function spawnFakeTsukumo(options: FakeTsukumoOptions): ChildProcess {
       ...inherited,
       TSUKUMO_DRIVER: "fake",
       ...(options.scene === undefined ? {} : { TSUKUMO_FAKE_SCENE: options.scene }),
+      ...(options.session === undefined ? {} : { TSUKUMO_FAKE_SESSION: options.session }),
       TSUKUMO_HOME: options.home,
       TSUKUMO_VIEW_PORT: String(options.port),
       TSUKUMO_OPEN_VIEW: "0",

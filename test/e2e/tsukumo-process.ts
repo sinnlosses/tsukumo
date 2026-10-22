@@ -36,6 +36,7 @@ export function spawnTsukumo(
     entry: path.join(REPOSITORY_ROOT, "src", "cli.ts"),
     cwd,
     scene: scene === "none" ? undefined : scene,
+    session: undefined,
     port: 0,
     home,
     extraEnv: { TSUKUMO_FIXED_CLOCK: FIXED_INSTANT, TZ: TIME_ZONE, HOME: userHome },

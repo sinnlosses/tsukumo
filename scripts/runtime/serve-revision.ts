@@ -105,6 +105,7 @@ async function main(argv: readonly string[]): Promise<number> {
     entry: path.join(revision.treeDir, "src", "cli.ts"),
     cwd: revision.treeDir,
     scene: options.scene,
+    session: undefined,
     port: options.port,
     home: revision.homeDir,
     extraEnv: {},

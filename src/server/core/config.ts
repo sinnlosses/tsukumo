@@ -35,6 +35,11 @@ export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
 /** fake driver で、名指しした場面の手を先頭から何個まで流すか（正の整数）。 */
 const FAKE_SCENE_UNTIL_ENV_NAME = "TSUKUMO_FAKE_SCENE_UNTIL"
 /**
+ * fake driver が読む疑似セッションのファイルのパス（相対は cwd 相対。既定は同梱の `test/fixture/fake-session.json`）。
+ * 読ませるのは架空の会話だけで、利用者と Claude の実物の会話（transcript・SDK のイベント）を渡さない。
+ */
+export const FAKE_SESSION_ENV_NAME = "TSUKUMO_FAKE_SESSION"
+/**
  * ワークフローの設定を読み書きするときに呼ぶ `tw` のパス（既定は取り込みの `bin/tw`。取り込みを載せないときは PATH の `tw`）。
  * 疑似セッションの撮影や自動テストで、取り込みを書き換えずに偽の `tw` へ差し替える口。
  */
@@ -90,6 +95,8 @@ export type Config = {
   readonly fakeScene: string | undefined
   /** `fakeScene` の手を流す個数の上限。未設定・正の整数でない値なら undefined ＝ 全部流す。 */
   readonly fakeSceneUntil: number | undefined
+  /** 疑似セッションのファイルのパス。未設定・空、または `driver` が `fake` でなければ undefined ＝ 同梱のファイル。 */
+  readonly fakeSession: string | undefined
   /** `TSUKUMO_TW` の値（未設定・空なら undefined ＝ 既定の `tw`）。 */
   readonly twCommand: string | undefined
   /** `CLAUDE_CONFIG_DIR` の値（未設定・空なら undefined ＝ `~`）。 */
@@ -109,15 +116,17 @@ export type Config = {
  * 読めない値は既定へ倒し、ポート番号のように起動を止めるべきものだけを呼び出し側が判断する。
  */
 export function readConfig(env: Readonly<Record<string, string | undefined>>): Config {
+  const driver = env[DRIVER_ENV_NAME]?.trim() === "fake" ? "fake" : "sdk"
   return {
     rawViewPort: env[VIEW_PORT_ENV_NAME],
     rawViewPortFallbackBase: env[VIEW_PORT_FALLBACK_BASE_ENV_NAME],
     character: nonEmpty(env[CHARACTER_ENV_NAME]),
     openView: env[OPEN_VIEW_ENV_NAME]?.trim() !== "0",
-    driver: env[DRIVER_ENV_NAME]?.trim() === "fake" ? "fake" : "sdk",
+    driver,
     host: env[HOST_ENV_NAME]?.trim() === "none" ? "none" : "orca",
     fakeScene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
     fakeSceneUntil: parsePositiveInteger(env[FAKE_SCENE_UNTIL_ENV_NAME]),
+    fakeSession: driver === "fake" ? nonEmpty(env[FAKE_SESSION_ENV_NAME]) : undefined,
     twCommand: nonEmpty(env[TW_ENV_NAME]),
     claudeConfigDir: nonEmpty(env[CLAUDE_CONFIG_DIR_ENV_NAME]),
     fixedClock: parseInstant(env[FIXED_CLOCK_ENV_NAME]),

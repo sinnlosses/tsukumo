@@ -114,6 +114,14 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 （`scripts/capture/capture-catalog.ts`）が、消せるキャラクターパック（同梱の `chou` を別名でコピー）や
 架空の日記を、撮る前にそこへ書く。**既定のホーム（利用者の `~/.tsukumo/`）には触らない。**
 
+**撮りたい場面が疑似セッションに無いときは、`test/fixture/fake-session.json` に場面を足さず、
+会話ファイルを差し替えて撮る。** 同梱のファイルを写した架空の会話を作業ツリーの外（スクラッチパッドや
+`/tmp/<名前>/`）に置き、`node scripts/capture/capture-view.ts --scene <場面> --session <ファイル>` で撮る
+（`--list-scenes` も同じファイルを読む。起こす tsukumo には `TSUKUMO_FAKE_SESSION` で渡る）。同梱のファイルに
+場面を足すと E2E の期待値に波及するが、この形なら作業ツリーを変えない。**読ませるのは架空の会話だけで、
+利用者と Claude の実物の会話（transcript・SDK のイベント）を渡さない**（`docs/coding-standards.md`「会話内容の扱い」）。
+`capture-catalog.ts` の件は同梱のファイルを読み続ける。
+
 **fake driver の質問の場面を Playwright で自動操作すると、`turnInProgress` が解けないまま残る
 ことがある**（再現条件は分かっておらず、手で触ったときには起きていない。操作側の問題の
 可能性もある）。そのときは疑似セッションの `opening` に質問を足して、開いた時点で出す形で
