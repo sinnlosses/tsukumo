@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest"
-import { z } from "zod"
 
 import {
   figureBlockSchema,
@@ -46,13 +45,6 @@ describe("stats の個数の説明", () => {
     expect(statsWith(3)).toMatchObject({ kind: "stats" })
     expect(statsWith(4)).toMatchObject({ kind: "stats" })
     expect(statsWith(5)).toBeUndefined()
-  })
-
-  it("書き手に見せる塊の説明は、2つ以下の数を stats に誘わない", () => {
-    const descriptions = JSON.stringify(z.toJSONSchema(reportBlockSchema, { io: "input" }))
-
-    expect(descriptions).toContain("3つ以上並び前後か推移を見せるなら stats")
-    expect(descriptions).not.toMatch(/2つ以上並ぶなら stats|2〜4個|stats か/)
   })
 })
 

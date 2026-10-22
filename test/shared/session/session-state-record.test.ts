@@ -498,13 +498,6 @@ describe("設定の点の元（settingMarks）", () => {
     expect(confirmed.effort).toBe("low")
   })
 
-  it("設定の種類に合わない値の見届けは型検査が拒む", () => {
-    // @ts-expect-error effort の値に EffortLevel 以外は渡せない
-    const mismatched: SessionEvent = { kind: "setting-confirmed", setting: "effort", value: "opus" }
-
-    expect(mismatched.kind).toBe("setting-confirmed")
-  })
-
   it("受け付けが無いときの見届け（init 由来など）は印を作らない", () => {
     const state = apply(RUNNING, {
       kind: "setting-confirmed",

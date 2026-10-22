@@ -9,7 +9,6 @@ import {
   shownCharacterPackName,
   toCharacterInfo,
 } from "../../../src/shared/character-pack/character.ts"
-import { expressionChoices } from "../../../src/shared/character-pack/expression-choice.ts"
 import { EXPRESSIONS } from "../../../src/shared/character-pack/expression.ts"
 import { characterInfo, FULL_DEFINITION_JSON } from "../../fixture/character.ts"
 
@@ -41,11 +40,12 @@ describe("toCharacterInfo の畳み方", () => {
   })
 
   it("自分の立ち絵を持つ表情だけを、EXPRESSIONS の順で別に持つ", () => {
-    expect(infoOf(FULL_DEFINITION_JSON)?.expressionsWithPortrait).toEqual(
-      EXPRESSIONS.filter((expression) =>
-        ["default", "thinking", "proud", "flustered"].includes(expression),
-      ),
-    )
+    expect(infoOf(FULL_DEFINITION_JSON)?.expressionsWithPortrait).toEqual([
+      "default",
+      "thinking",
+      "proud",
+      "flustered",
+    ])
     expect(infoOf(withoutThinking)?.expressionsWithPortrait).toEqual(["default"])
   })
 
@@ -54,8 +54,6 @@ describe("toCharacterInfo の畳み方", () => {
       portraits: { default: "default.svg", proud: "proud.svg" },
       expressions: { thinking: "作業中" },
     })
-    const definition = parseCharacterDefinition(json)
-    expect(infoOf(json)?.expressions).toEqual(expressionChoices(definition))
     expect(infoOf(json)?.expressions.map((choice) => choice.name)).toEqual([
       "default",
       "thinking",

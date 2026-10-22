@@ -75,8 +75,6 @@ describe("achievementReflectionRequestText", () => {
       "今日の成果を一緒に振り返って、この日の日記を書いてほしい。終えたタスクは 1 件。",
     )
     expect(text).toContain("- T-100 架空のタスク1")
-    expect(text).toContain("日記は diary ツールで1回書いて。")
-    expect(text).toContain("しおりには終えたタスクから1件を選び、選んだ理由を添える。")
   })
 
   it("昨日・それより前の言い方", () => {

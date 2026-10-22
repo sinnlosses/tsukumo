@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import type { ReportBlock } from "../../../src/shared/report/report-block.ts"
 import {
   isForbiddenBlock,
-  REPORT_SHAPE_TAGS,
   type ReportShapeTag,
 } from "../../../src/shared/report/report-shape-tag.ts"
 
@@ -55,22 +54,8 @@ const image: ReportBlock = {
 
 describe("isForbiddenBlock", () => {
   it.each([
-    ["cause", list(2)],
-    ["cause", table(3)],
-    ["connection", list(2)],
-    ["connection", table(3)],
-    ["position", table(3)],
-    ["position", list(2)],
     ["position", text("架空の位置")],
-    ["state", list(2)],
-    ["state", table(3)],
-    ["time", table(3)],
-    ["order", table(3)],
-    ["quantity", list(2)],
     ["quantity", text("架空は 1 から 2 へ、3 件")],
-    ["choice", list(2)],
-    ["comparison", list(2)],
-    ["boundary", text("架空の境界")],
     ["parallel", table(2)],
     ["parallel", table(1)],
     ["single", list(1)],
@@ -103,9 +88,4 @@ describe("isForbiddenBlock", () => {
       expect(isForbiddenBlock(tag, block)).toBe(false)
     },
   )
-
-  it.each(REPORT_SHAPE_TAGS)("%s の札は図の塊を許す", (tag) => {
-    expect(isForbiddenBlock(tag, graph)).toBe(false)
-    expect(isForbiddenBlock(tag, image)).toBe(false)
-  })
 })

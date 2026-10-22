@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { PERMISSION_MODES } from "../../../src/shared/command.ts"
 import { sessionContract } from "../../../src/shared/contract/session.ts"
 import {
   isSessionDefaultPermissionMode,
@@ -12,9 +11,12 @@ import {
 // / docs/architecture/screen-design.md「設定の置き場所」）。
 describe("既定に選べる許可モード", () => {
   it("「全部許す」（bypassPermissions）だけを落とした一覧になっている", () => {
-    expect([...SESSION_DEFAULT_PERMISSION_MODES]).toEqual(
-      PERMISSION_MODES.filter((mode) => mode !== "bypassPermissions"),
-    )
+    expect([...SESSION_DEFAULT_PERMISSION_MODES]).toEqual([
+      "default",
+      "acceptEdits",
+      "auto",
+      "plan",
+    ])
   })
 
   it("「全部許す」は既定として受け付けない", () => {

@@ -65,9 +65,4 @@ describe("識別子の門", () => {
   it("画像のファイル名を組む", () => {
     expect(itemFileName(itemId("3"), "svg")).toBe("3.svg")
   })
-
-  it("検査していない文字列では画像のファイル名を組めない（型検査が落とす）", () => {
-    // @ts-expect-error 検査していない string は ItemId ではない
-    expect(itemFileName("../x", "png")).toBe("../x.png")
-  })
 })

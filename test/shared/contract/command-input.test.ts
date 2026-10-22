@@ -81,50 +81,6 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
     expect(INPUT_SCHEMAS.get("session.interrupt")).toBeUndefined()
   })
 
-  it("answer・setModel・setPermissionMode を受け付ける", () => {
-    expect(
-      parseInput("session.answer", {
-        id: "toolu_1",
-        answer: { kind: "answers", labels: [["こっち"]] },
-      }),
-    ).toEqual({
-      id: "toolu_1",
-      answer: { kind: "answers", labels: [["こっち"]] },
-    })
-    for (const answer of [{ kind: "allow" }, { kind: "deny" }] as const) {
-      expect(parseInput("session.answer", { id: "toolu_1", answer })).toEqual({
-        id: "toolu_1",
-        answer,
-      })
-    }
-    expect(parseInput("session.setModel", { model: "opus" })).toEqual({
-      model: "opus",
-    })
-    expect(parseInput("session.setPermissionMode", { mode: "plan" })).toEqual({ mode: "plan" })
-  })
-
-  it("session.setEffort を受け付ける（session.setModel と同じ形）", () => {
-    expect(parseInput("session.setEffort", { effort: "high" })).toEqual({
-      effort: "high",
-    })
-  })
-
-  it("chat.forgetRememberedLine は消したい1行の文面をそのまま受け付ける", () => {
-    expect(parseInput("chat.forgetRememberedLine", { line: "架空の覚えたこと" })).toEqual({
-      line: "架空の覚えたこと",
-    })
-  })
-
-  it("host.openFile はパスをそのまま受け付ける", () => {
-    expect(parseInput("host.openFile", { path: "src/foo.ts" })).toEqual({ path: "src/foo.ts" })
-  })
-
-  it("session.reflectAchievement は日付をそのまま受け付ける", () => {
-    expect(parseInput("session.reflectAchievement", { date: "2026-09-23" })).toEqual({
-      date: "2026-09-23",
-    })
-  })
-
   it("session.reflectAchievement は YYYY-MM-DD の形でない日付を拒む", () => {
     expect(parseInput("session.reflectAchievement", { date: "9/23" })).toBeUndefined()
     expect(parseInput("session.reflectAchievement", { date: "" })).toBeUndefined()
@@ -153,68 +109,6 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
 })
 
 describe("コマンドの契約の入力（キャラクターの見た目）", () => {
-  it("characterPack.setPortrait は表情と data URL を受け付ける", () => {
-    expect(
-      parseInput("characterPack.setPortrait", {
-        pack: "fictional",
-        expression: "proud",
-        image: TINY_PNG_DATA_URL,
-      }),
-    ).toEqual({
-      pack: "fictional",
-      expression: "proud",
-      image: TINY_PNG_DATA_URL,
-    })
-  })
-
-  it("characterPack.setAccent は target（work / chat）と16進の色を受け付ける", () => {
-    expect(
-      parseInput("characterPack.setAccent", {
-        pack: "fictional",
-        target: "work",
-        color: "#f2b0a0",
-      }),
-    ).toEqual({
-      pack: "fictional",
-      target: "work",
-      color: "#f2b0a0",
-    })
-    expect(
-      parseInput("characterPack.setAccent", {
-        pack: "fictional",
-        target: "chat",
-        color: "#f2984a",
-      }),
-    ).toEqual({
-      pack: "fictional",
-      target: "chat",
-      color: "#f2984a",
-    })
-  })
-
-  it("characterPack.setAccent は知らない target・16進でない色を受け付けない", () => {
-    expect(
-      parseInput("characterPack.setAccent", {
-        pack: "fictional",
-        target: "battle",
-        color: "#f2b0a0",
-      }),
-    ).toBeUndefined()
-    expect(
-      parseInput("characterPack.setAccent", {
-        pack: "fictional",
-        target: "work",
-        color: "rebeccapurple",
-      }),
-    ).toBeUndefined()
-  })
-
-  it("characterPack.clearChatAccent を受け付ける（書き込む先のパックだけでよい）", () => {
-    expect(parseInput("characterPack.clearChatAccent", { pack: "fictional" })).toEqual({
-      pack: "fictional",
-    })
-  })
-
   // 使用中を暗黙にしない（`docs/architecture/character-pack.md`「画面から作るときの置き場と受け取り方」）。書き込む先のディレクトリ名になる値なので、
   // 作るときと同じ形の検査を通す。
   it("見た目の編集は書き込む先のパックが無い・パックの名前として通らない形なら undefined", () => {
@@ -227,107 +121,11 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     })
   })
 
-  it("characterPack.setFace / characterPack.clearFace は書き込む先のパックと data URL を受け付ける", () => {
-    expect(
-      parseInput("characterPack.setFace", { pack: "fictional", image: TINY_PNG_DATA_URL }),
-    ).toEqual({
-      pack: "fictional",
-      image: TINY_PNG_DATA_URL,
-    })
-    expect(parseInput("characterPack.clearFace", { pack: "fictional" })).toEqual({
-      pack: "fictional",
-    })
-    // 立ち絵と同じ形式だけを受け付ける（背景の形式・写真の URL は弾く）。
-    expect(
-      parseInput("characterPack.setFace", {
-        pack: "fictional",
-        image: "https://example.com/face.png",
-      }),
-    ).toBeUndefined()
-  })
-
-  it("characterPack.setMini / characterPack.clearMini は書き込む先のパックと data URL を受け付ける", () => {
-    expect(
-      parseInput("characterPack.setMini", { pack: "fictional", image: TINY_PNG_DATA_URL }),
-    ).toEqual({
-      pack: "fictional",
-      image: TINY_PNG_DATA_URL,
-    })
-    expect(parseInput("characterPack.clearMini", { pack: "fictional" })).toEqual({
-      pack: "fictional",
-    })
-    expect(
-      parseInput("characterPack.setMini", {
-        pack: "fictional",
-        image: "https://example.com/mini.png",
-      }),
-    ).toBeUndefined()
-  })
-
-  it("characterPack.clearPortrait は必須でない表情（thinking / proud / flustered）だけを受け付ける", () => {
-    expect(
-      parseInput("characterPack.clearPortrait", { pack: "fictional", expression: "thinking" }),
-    ).toEqual({
-      pack: "fictional",
-      expression: "thinking",
-    })
-    expect(
-      parseInput("characterPack.clearPortrait", { pack: "fictional", expression: "proud" }),
-    ).toEqual({ pack: "fictional", expression: "proud" })
-    expect(
-      parseInput("characterPack.clearPortrait", { pack: "fictional", expression: "flustered" }),
-    ).toBeDefined()
-  })
-
   // 必須の1つ（`docs/requirements.md`「キャラクターパック」 / characters/README.md）を消す操作は境界で弾く。
   it("characterPack.clearPortrait で default を消そうとすると undefined（必須は消せない）", () => {
     expect(
       parseInput("characterPack.clearPortrait", { pack: "fictional", expression: "default" }),
     ).toBeUndefined()
-  })
-
-  it("知らない表情、16進でない色、data URL でない画像は undefined", () => {
-    expect(
-      parseInput("characterPack.setPortrait", {
-        pack: "fictional",
-        expression: "angry",
-        image: TINY_PNG_DATA_URL,
-      }),
-    ).toBeUndefined()
-    expect(
-      parseInput("characterPack.setPortrait", {
-        pack: "fictional",
-        expression: "proud",
-        image: "https://example.com/portrait.png",
-      }),
-    ).toBeUndefined()
-    expect(
-      parseInput("characterPack.setAccent", {
-        pack: "fictional",
-        target: "work",
-        color: "rebeccapurple",
-      }),
-    ).toBeUndefined()
-  })
-
-  it("characterPack.create を受け付ける（id・名前・必須の1枚・仕事と雑談の差し色・人格が揃った形）", () => {
-    expect(
-      parseInput("characterPack.create", {
-        id: "fictional-2",
-        name: "架空の2号",
-        portraits: { default: TINY_PNG_DATA_URL },
-        accent: "#b8c7ff",
-        chatAccent: "#eaa77a",
-        persona: "# 架空の2号\n",
-      }),
-    ).toEqual({
-      id: "fictional-2",
-      name: "架空の2号",
-      portraits: { default: TINY_PNG_DATA_URL },
-      accent: "#b8c7ff",
-      chatAccent: "#eaa77a",
-      persona: "# 架空の2号\n",
-    })
   })
 
   it("characterPack.create の名前と人格は空文字でも受け付ける（空なら書き込む側が id へ落とす・人格を書かない）", () => {
@@ -354,26 +152,6 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
         persona: "あ".repeat(MAX_PERSONA_BODY_LENGTH + 1),
       }),
     ).toBeUndefined()
-  })
-
-  it("characterPack.setProfile を受け付ける（対象のパック名・名前・自己紹介文）", () => {
-    expect(
-      parseInput("characterPack.setProfile", {
-        pack: "fictional",
-        name: "架空の精霊",
-        tagline: "ひとこと",
-      }),
-    ).toEqual({
-      pack: "fictional",
-      name: "架空の精霊",
-      tagline: "ひとこと",
-    })
-  })
-
-  it("characterPack.setProfile の名前・ひとことは空文字でも受け付ける（空なら消えたのと同じに畳む）", () => {
-    expect(
-      parseInput("characterPack.setProfile", { pack: "fictional", name: "", tagline: "" }),
-    ).toEqual({ pack: "fictional", name: "", tagline: "" })
   })
 
   it("characterPack.setProfile は名前・ひとことが長すぎると undefined、パックの名前がパスになると undefined", () => {

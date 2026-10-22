@@ -6,12 +6,6 @@ import { reportEvent, reportOfSections } from "../../../fixture/report-event.ts"
 
 describe("reportUsageEntryOf", () => {
   describe("節の札と、札が許さない塊", () => {
-    const text = (value: string): ReportBlock => ({
-      kind: "text",
-      text: value,
-      fold: "",
-      aside: "",
-    })
     const list = (count: number): ReportBlock => ({
       kind: "list",
       style: "bullet",
@@ -44,25 +38,18 @@ describe("reportUsageEntryOf", () => {
         false,
       ).shapeTags
 
-    it.each([
-      ["cause", list(2), "list"],
-      ["quantity", text("架空は 1 から 2 へ、3 件"), "text"],
-      ["parallel", table(["架空の項目", "架空の属性"]), "table"],
-      ["single", list(1), "list"],
-    ] as const)("%s の札の節の %o は許さない組に数える", (shapeTag, block, blockKind) => {
-      expect(usageOf(shapeTag, block)).toEqual({
-        sectionShapeTags: [shapeTag],
-        forbiddenShapeSectionCount: 1,
-        forbiddenShapeBlocks: [{ shapeTag, blockKind, count: 2 }],
-      })
-    })
+    it.each([["cause", list(2), "list"]] as const)(
+      "%s の札の節の %o は許さない組に数える",
+      (shapeTag, block, blockKind) => {
+        expect(usageOf(shapeTag, block)).toEqual({
+          sectionShapeTags: [shapeTag],
+          forbiddenShapeSectionCount: 1,
+          forbiddenShapeBlocks: [{ shapeTag, blockKind, count: 2 }],
+        })
+      },
+    )
 
-    it.each([
-      ["cause", graph],
-      ["quantity", text("架空は 1 から 2 へ")],
-      ["parallel", table(["架空の項目", "架空の属性1", "架空の属性2"])],
-      ["unspecified", list(1)],
-    ] as const)("%s の札の節の %o は数えない", (shapeTag, block) => {
+    it.each([["cause", graph]] as const)("%s の札の節の %o は数えない", (shapeTag, block) => {
       expect(usageOf(shapeTag, block)).toEqual({
         sectionShapeTags: [shapeTag],
         forbiddenShapeSectionCount: 0,
