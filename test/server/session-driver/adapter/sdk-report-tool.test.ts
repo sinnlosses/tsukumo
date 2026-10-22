@@ -20,7 +20,7 @@ import {
 describe("report でターンを閉じる", () => {
   it("通った report の結果にだけ claude/endTurn を付ける", async () => {
     const reply = await callTool(workServer(), "report", {
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
@@ -32,9 +32,9 @@ describe("report でターンを閉じる", () => {
   })
 
   it("差し戻した report（isError）には付けない（直して呼び直せる）", async () => {
-    // conclusion が3文以上（規約違反「冒頭の1〜2文で結論」）だと差し戻される。
+    // conclusion が3要素以上（規約違反「冒頭の1〜2文で結論」）だと差し戻される。
     const reply = await callTool(workServer(), "report", {
-      conclusion: "架空の一文目。架空の二文目。架空の三文目。",
+      conclusion: ["架空の一文目。", "架空の二文目。", "架空の三文目。"],
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
@@ -48,7 +48,7 @@ describe("report でターンを閉じる", () => {
 
   it("構文が割れる mermaid の図を含む report は差し戻し、直した report は通す", async () => {
     const withDiagram = (source: string) => ({
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
       sections: [{ blocks: [{ kind: "mermaid", source }] }],
       closing: CLOSING,
       figure: FIGURE,
@@ -76,7 +76,7 @@ describe("report でターンを閉じる", () => {
 
   it("figure に置いた mermaid の構文も検査し、描く順の1個目として差し戻す", async () => {
     const reply = await callTool(workServer(), "report", {
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
       figure: { kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi; there" },
       sections: [{ blocks: [{ kind: "mermaid", source: "sequenceDiagram\n  A->>B: hi" }] }],
       closing: CLOSING,
@@ -91,7 +91,22 @@ describe("report でターンを閉じる", () => {
   })
 
   it("引き継ぐ土台が無いのに closing を省いた report は組んだ値の形の検査で落ち、ターンを閉じない", async () => {
-    const reply = await callTool(workServer(), "report", { conclusion: "架空の結論" })
+    const reply = await callTool(workServer(), "report", { conclusion: ["架空の結論"] })
+
+    expect(reply.isError).toBe(true)
+    expect(reply.text).toContain("Input validation error")
+    expect(reply.endsTurn).toBe(false)
+  })
+
+  it("conclusion を配列でなく文字列で渡した report は引数の検査で落ち、ターンを閉じない", async () => {
+    const reply = await callTool(workServer(), "report", {
+      conclusion: "架空の結論",
+      closing: CLOSING,
+      figure: FIGURE,
+      sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
+      waitingLine: WAITING_LINE,
+    })
 
     expect(reply.isError).toBe(true)
     expect(reply.text).toContain("Input validation error")
@@ -108,7 +123,7 @@ describe("report でターンを閉じる", () => {
     }
 
     const reply = await callTool(workServer(events, [], { ...review, judgeReport }), "report", {
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
     })
 
     expect(reply.isError).toBe(true)
@@ -118,7 +133,7 @@ describe("report でターンを閉じる", () => {
 
   it("選択肢に無い表情の waitingLine は形の検査で落ちる", async () => {
     const reply = await callTool(workServer(), "report", {
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
@@ -132,7 +147,7 @@ describe("report でターンを閉じる", () => {
 
   it("waitingLine・sessionSummary・sessionRemaining のどれかの無い report は形の検査で落ち、ターンを閉じない", async () => {
     const complete = {
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
       figure: FIGURE,
       closing: CLOSING,
       waitingLine: WAITING_LINE,
@@ -157,7 +172,7 @@ describe("report でターンを閉じる", () => {
 
   it("figure の無い report・理由の無い none は形の検査で落ち、図の塊1つか none と理由で通る", async () => {
     const withFigure = (figure: unknown) => ({
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
       ...(figure === undefined ? {} : { figure }),
       closing: CLOSING,
       sessionSummary: SUMMARY,
@@ -233,7 +248,7 @@ describe("report の本文（sections）", () => {
   it("schema から外した制約も検査には残り、空白だけの ID と0の幅の report は差し戻す", async () => {
     const reply = await callTool(workServer(), "report", {
       task: { id: " ", name: "架空の作業", outcome: "finished" },
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
       sections: [
         {
           blocks: [
@@ -276,7 +291,7 @@ describe("report の本文（sections）", () => {
 
   it("塊で書いた report は通り、逃げ道に塊の種類がある記法を書いた report は差し戻す", async () => {
     const accepted = await callTool(workServer(), "report", {
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
       sections: [
         {
           heading: "架空の節",
@@ -293,7 +308,7 @@ describe("report の本文（sections）", () => {
       waitingLine: WAITING_LINE,
     })
     const rejected = await callTool(workServer(), "report", {
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
       sections: [{ blocks: [{ kind: "markdown", markdown: "- 架空の項目" }] }],
       closing: CLOSING,
       figure: FIGURE,
@@ -310,7 +325,7 @@ describe("report の本文（sections）", () => {
 
 describe("report の差し戻しの記録", () => {
   const draft = {
-    conclusion: "架空の結論",
+    conclusion: ["架空の結論"],
     closing: CLOSING,
     figure: FIGURE,
     sessionSummary: SUMMARY,
@@ -335,7 +350,7 @@ describe("report の title", () => {
     const titles: string[] = []
 
     const reply = await callTool(workServer([], titles), "report", {
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
@@ -352,7 +367,7 @@ describe("report の title", () => {
     const titles: string[] = []
 
     const reply = await callTool(workServer([], titles), "report", {
-      conclusion: "架空の結論",
+      conclusion: ["架空の結論"],
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
@@ -368,7 +383,7 @@ describe("report の title", () => {
     const titles: string[] = []
 
     const reply = await callTool(workServer([], titles), "report", {
-      conclusion: "架空の一文目。架空の二文目。架空の三文目。",
+      conclusion: ["架空の一文目。", "架空の二文目。", "架空の三文目。"],
       closing: CLOSING,
       figure: FIGURE,
       sessionSummary: SUMMARY,
@@ -397,7 +412,7 @@ const SHARED_BLOCK_DEFINITIONS = [
   "ToneLegend",
 ]
 
-/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（22,356字）には余白を持たせた上限。 */
+/** 塊の定義が `figure` と `sections` に複製されていたとき（約3.0万字）に落ち、いまの形（22,407字）には余白を持たせた上限。 */
 const REPORT_INPUT_SCHEMA_MAX_CHARS = 22_500
 
 /** `tools/list` の応答のうち、引数の schema を丸ごと読む形。 */

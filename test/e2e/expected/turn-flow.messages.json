@@ -115,6 +115,9 @@
       },
       "inheritedFields": [],
       "conclusion": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
+      "conclusionSentenceChars": [
+        31
+      ],
       "figure": {
         "kind": "none",
         "reason": "unrecorded"
@@ -254,6 +257,9 @@
       },
       "inheritedFields": [],
       "conclusion": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
+      "conclusionSentenceChars": [
+        32
+      ],
       "figure": {
         "kind": "none",
         "reason": "unrecorded"

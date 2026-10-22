@@ -37,7 +37,7 @@ export function reportRejectionText(violations: readonly ReportViolation[]): str
 function violationLine(violation: ReportViolation): string {
   switch (violation.kind) {
     case "long-conclusion":
-      return `\`conclusion\` が${violation.count}文ある。2文以内にし、残りは \`sections\` へ移す`
+      return `\`conclusion\` が${violation.count}要素ある。1要素1文で2要素以内にし、残りは \`sections\` へ移す`
     case "long-paragraph":
       return `4文以上の地の文が${violation.count}個ある。表・箇条書きへ移すか、\`fold\` で畳む`
     case "unknown-mermaid":
@@ -91,7 +91,7 @@ function violationLine(violation: ReportViolation): string {
     case "broken-graph":
       return `\`graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）。囲みは \`[群の名]\` 〜 \`[]\` の1階層で、入れ子と閉じ忘れは読めない`
     case "long-first-sentence":
-      return `\`conclusion\` の1文目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1文目を短くし、補足は2文目か \`sections\` へ移す`
+      return `\`conclusion\` の1要素目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1要素目を短くし、補足は2要素目か \`sections\` へ移す`
     case "bad-heading":
       return `見出しが${violation.count}個、${String(MAX_HEADING)}字を超えるか疑問文になっている。その節の結論を言う短い語にする`
     case "fraction-figure":

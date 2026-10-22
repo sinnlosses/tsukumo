@@ -1,15 +1,17 @@
 import { reportViolations } from "../../src/server/report/core/report-violation-check.ts"
 import type { ReportDraft } from "../../src/server/report/core/report-violation.ts"
+import { parseConclusion } from "../../src/shared/report/conclusion-sentence.ts"
 import type { ReportBlock, ReportSection } from "../../src/shared/report/report-block.ts"
 import { reportDraft } from "./report-event.ts"
 
+/** `conclusion` は文字列なら1要素、配列なら要素の並び。 */
 export const draft = (
   blocks: readonly ReportBlock[],
-  conclusion = "架空の結論。",
+  conclusion: string | readonly string[] = "架空の結論。",
   sections: readonly ReportSection[] = [{ heading: "", shapeTag: "unspecified", blocks }],
 ): ReportDraft =>
   reportDraft({
-    conclusion,
+    ...parseConclusion(conclusion),
     sections:
       blocks.length === 0 ? sections.filter((section) => section.blocks.length > 0) : sections,
   })

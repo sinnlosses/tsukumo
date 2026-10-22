@@ -13,6 +13,8 @@ import type { MarkdownNotation } from "./report-markdown-notation.ts"
 /** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
 export type ReportDraft = {
   readonly conclusion: string
+  /** `conclusion` の要素ごとの字数（`ParsedConclusion`）。 */
+  readonly conclusionSentenceChars: readonly number[]
   readonly figure: RecordedReportFigure
   readonly sections: readonly ReportSection[]
   readonly favor: string
@@ -33,7 +35,7 @@ export type ReportDraft = {
  * `code-mismatch` の `paths` は `code` の塊の `path`（schema が決めた識別子で、書いた自由文ではない）。
  */
 export type ReportViolation =
-  /** `conclusion` が3文以上ある（条1「冒頭の1〜2文で結論」）。 */
+  /** `conclusion` が3要素以上ある（条1「冒頭の1〜2文で結論」）。 */
   | { readonly kind: "long-conclusion"; readonly count: number }
   /** 4文以上の地の文がある（「地の文の段落は3文まで」）。`count` は `text` の塊と逃げ道の段落の数。 */
   | { readonly kind: "long-paragraph"; readonly count: number }
@@ -113,7 +115,7 @@ export type ReportViolation =
       readonly count: number
       readonly faults: readonly GraphFault[]
     }
-  /** `conclusion` の1文目が全角50字を超える。`count` は1か0、`length` は1文目の字数。 */
+  /** `conclusion` の1要素目が全角50字を超える。`count` は1か0、`length` は1要素目の字数。 */
   | { readonly kind: "long-first-sentence"; readonly count: number; readonly length: number }
   /** 節の `heading` が30字を超える、または疑問文（末尾が `?`・`？`）。`count` は該当の節の数。 */
   | { readonly kind: "bad-heading"; readonly count: number }

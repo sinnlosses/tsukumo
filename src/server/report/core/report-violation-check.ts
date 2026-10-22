@@ -19,7 +19,6 @@ import {
   MAX_PLAIN_CODE_LINES,
   MAX_TABLE_ROWS,
 } from "../../../shared/report/report-limit.ts"
-import { leadingSentences, sentenceCount } from "../../../shared/report/sentence-count.ts"
 import { codeBlockMatchesFile } from "./code-block-match.ts"
 import {
   crowdedNoteCount,
@@ -62,11 +61,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
         block.kind === "code" && block.path.trim() !== "",
     )
     .filter((block) => !codeBlockMatchesFile(block, report.fileContents.get(block.path)))
-  const firstSentenceLength = [
-    ...leadingSentences(report.conclusion, 1)
-      .trim()
-      .replace(/[。！？]+$/, ""),
-  ].length
+  const firstSentenceLength = report.conclusionSentenceChars[0] ?? 0
 
   const drawnSections = sectionsWithFigure(report.figure, report.sections)
   const drawnBlocks = drawnSections.flatMap((section) => section.blocks)
@@ -76,7 +71,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   const graphToneFaults = graphToneFaultsInSections(drawnSections)
 
   const counted = [
-    { kind: "long-conclusion", count: sentenceCount(report.conclusion) },
+    { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
     {
       kind: "long-paragraph",
       count:

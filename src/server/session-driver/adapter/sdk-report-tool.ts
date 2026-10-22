@@ -101,6 +101,7 @@ export function reportTool(
     )
     const verdict = review.judgeReport({
       conclusion: report.conclusion,
+      conclusionSentenceChars: report.conclusionSentenceChars,
       figure: report.figure,
       sections: report.sections,
       favor: report.favor,
@@ -172,10 +173,10 @@ function reportInputShape(expressions: readonly ExpressionChoice[]) {
       .optional()
       .describe(REPORT_WORK_PLAN_CLOSING_DESCRIPTION),
     conclusion: z
-      .string()
+      .array(z.string())
       .optional()
       .describe(
-        `結論。レポートの冒頭の1〜${String(MAX_CONCLUSION_SENTENCES)}文。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）。悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）。2文目は「それで何が良いか」か「変えていないもの」。例: 「…分かる。読み方は変えていない」`,
+        `結論。レポートの冒頭の文を1要素1文（句点まで）で1〜${String(MAX_CONCLUSION_SENTENCES)}要素。1文目は全角${String(MAX_FIRST_SENTENCE)}字以内（目安は${String(FIRST_SENTENCE_TARGET)}字、読点は${String(FIRST_SENTENCE_TARGET_COMMAS)}つまで）。悪い例: 「設定の読み込みを共通化し、型を整理し、テストも足して、起動の流れを書き換えた」（変更の列挙）。良い例: 「次から設定の書き間違いが起動時に分かる」（読み手から見た変化）。2文目は「それで何が良いか」か「変えていないもの」。例: ["…分かる。", "読み方は変えていない。"]`,
       ),
     figure: reportFigureSchema.optional().describe(REPORT_FIGURE_DESCRIPTION),
     sections: z.array(reportSectionSchema).min(1).optional().describe(REPORT_SECTIONS_DESCRIPTION),

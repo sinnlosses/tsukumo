@@ -101,6 +101,7 @@ function inherited(event: ReportEvent, base: ReportEvent): ReportEvent {
     task: from("task").task,
     workPlanClosing: from("workPlanClosing").workPlanClosing,
     conclusion: from("conclusion").conclusion,
+    conclusionSentenceChars: from("conclusion").conclusionSentenceChars,
     figure: from("figure").figure,
     sections: from("sections").sections,
     unknownBlockCount: from("sections").unknownBlockCount,

@@ -24,7 +24,7 @@ describe("reportViolations", () => {
       markdown('<div class="cols"><div class="card">架空の案A</div></div>'),
     ]
 
-    expect(reportViolations(draft(blocks, "架空の結論の1文目。2文目。"))).toEqual([])
+    expect(reportViolations(draft(blocks, ["架空の結論の1文目。", "2文目。"]))).toEqual([])
   })
 
   describe("結論の1文目・見出し・checks の分数", () => {
@@ -41,7 +41,7 @@ describe("reportViolations", () => {
         { heading, shapeTag: "unspecified", blocks: [text("架空の本文。")] },
       ])
 
-    it("1文目が全角50字なら通り、51字なら差し戻す", () => {
+    it("1要素目が全角50字なら通り、51字なら差し戻す", () => {
       expect(kinds(draft([text("架空。")], `${"あ".repeat(50)}。`))).toEqual([])
       expect(kinds(draft([text("架空。")], `${"あ".repeat(51)}。`))).toEqual([
         "long-first-sentence",
@@ -51,14 +51,21 @@ describe("reportViolations", () => {
     it.each([
       [51, "。"],
       [63, "！"],
-    ])("1文目が%i字の差し戻しは、実測の字数を値と文面に持つ", (length, end) => {
+    ])("1要素目が%i字の差し戻しは、実測の字数を値と文面に持つ", (length, end) => {
       const violations = reportViolations(draft([text("架空。")], `${"あ".repeat(length)}${end}`))
       expect(violations).toEqual([{ kind: "long-first-sentence", count: 1, length }])
       expect(reportRejectionText(violations)).toContain(`いま${String(length)}字`)
     })
 
-    it("2文目が長くても1文目が短ければ通る", () => {
-      expect(kinds(draft([text("架空。")], `短い。${"あ".repeat(60)}。`))).toEqual([])
+    it("2要素目が長くても1要素目が短ければ通る", () => {
+      expect(kinds(draft([text("架空。")], ["短い。", `${"あ".repeat(60)}。`]))).toEqual([])
+    })
+
+    it.each([
+      ["「」の中の句点", "画面に「保存しました。」と出るようにした。"],
+      ["英語のピリオド", "Fixed the parser. Tests pass."],
+    ])("%sを含む1要素は割らずに1文と数える", (_, sentence) => {
+      expect(kinds(draft([text("架空。")], [sentence, "架空の2文目。"]))).toEqual([])
     })
 
     it("見出しが30字なら通り、31字か疑問文なら差し戻す", () => {
@@ -193,19 +200,15 @@ describe("reportViolations", () => {
     })
   })
 
-  describe("conclusion は2文まで", () => {
-    it("3文あれば違反", () => {
-      expect(reportViolations(draft([], "架空の1文目。2文目。3文目。"))).toEqual([
+  describe("conclusion は2要素まで", () => {
+    it("3要素あれば違反", () => {
+      expect(reportViolations(draft([], ["架空の1文目。", "2文目。", "3文目。"]))).toEqual([
         { kind: "long-conclusion", count: 3 },
       ])
     })
 
-    it("句点で終わらない末尾も1文と数える", () => {
-      expect(kinds(draft([], "架空の1文目。2文目。3文目"))).toEqual(["long-conclusion"])
-    })
-
-    it("inline code と全角の丸括弧の中の句点では割らない", () => {
-      expect(kinds(draft([], "架空の結論（補足。補足。）。`a。b。` を直した。"))).toEqual([])
+    it("1要素の中の句点では文を数えない", () => {
+      expect(kinds(draft([], ["架空の1文目。2文目。3文目。"]))).toEqual([])
     })
   })
 

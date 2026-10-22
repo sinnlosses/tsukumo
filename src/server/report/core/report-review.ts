@@ -120,7 +120,7 @@ export function createReportReview(
 ): ReportReview {
   let rejectedInTurn: ReadonlySet<TurnRejection> = new Set()
   let held: readonly ReportEvent[] = []
-  // 引数が読めず（`conclusion` が文字列でも省略でもない）レポートにならなかった呼び出し。結果が届いたら差し戻しの記録にだけ使う。
+  // 引数が読めず（`conclusion` の形が不正）レポートにならなかった呼び出し。結果が届いたら差し戻しの記録にだけ使う。
   let malformed: readonly Extract<SessionEvent, { readonly kind: "report-malformed" }>[] = []
   // handler が直前に差し戻した理由。同じ呼び出しの `tool-finished` で使い切る。
   let handlerReasons: readonly ReportRejectionReason[] | undefined

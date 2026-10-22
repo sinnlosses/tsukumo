@@ -104,7 +104,7 @@ describe("speak の phase の差し戻し", () => {
     ).toMatchObject({ isError: false })
     expect(
       await callTool(workServer([], [], rangedReview()), "report", {
-        conclusion: "段9まで済んだ",
+        conclusion: ["段9まで済んだ"],
         workPlanClosing: "stopped",
         closing: { text: "段9まで済んだ", expression: "default" },
         figure: FIGURE,

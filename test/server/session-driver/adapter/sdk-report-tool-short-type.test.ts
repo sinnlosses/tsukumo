@@ -50,7 +50,7 @@ describe("short-type の report の定義", () => {
 
 describe("short-type の report の受理", () => {
   const draft = {
-    conclusion: "架空の結論",
+    conclusion: ["架空の結論"],
     closing: CLOSING,
     figure: FIGURE,
     sessionSummary: SUMMARY,
@@ -176,7 +176,7 @@ describe("short-type の report の受理", () => {
   })
 })
 
-/** 今の形（16,452字）に余白を持たせた上限。 */
+/** 今の形（16,503字）に余白を持たせた上限。 */
 const SHORT_TYPE_INPUT_SCHEMA_MAX_CHARS = 16_600
 
 function shortTypeServer() {

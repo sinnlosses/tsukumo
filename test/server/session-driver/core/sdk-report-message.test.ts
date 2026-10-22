@@ -295,20 +295,53 @@ describe("toSessionEvents（report ツール）", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
-  it("conclusion が文字列でも省略でもない report はレポートにせず、字数だけの report-malformed にする", () => {
-    const input = { conclusion: 42, body: "架空の本文" }
-    const message = assistantMessage([
-      { type: "tool_use", id: "toolu_r1", name: REPORT_TOOL_FULL_NAME, input },
-    ])
+  it.each([[42], [["架空の1文目。", 42]]])(
+    "conclusion が文字列・文字列の配列・省略のどれでもない report（%j）はレポートにせず、字数だけの report-malformed にする",
+    (conclusion) => {
+      const input = { conclusion, body: "架空の本文" }
+      const message = assistantMessage([
+        { type: "tool_use", id: "toolu_r1", name: REPORT_TOOL_FULL_NAME, input },
+      ])
 
-    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      {
-        kind: "report-malformed",
-        toolUseId: "toolu_r1",
-        argumentChars: reportArgumentCharsOf(input),
-      },
-    ])
-  })
+      expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+        {
+          kind: "report-malformed",
+          toolUseId: "toolu_r1",
+          argumentChars: reportArgumentCharsOf(input),
+        },
+      ])
+    },
+  )
+
+  it.each([
+    {
+      conclusion: ["架空の1文目。", "架空の2文目。"],
+      joined: "架空の1文目。架空の2文目。",
+      chars: [6, 6],
+    },
+    {
+      conclusion: ["画面に「保存しました。」と出るようにした。", "Fixed the parser. Tests pass."],
+      joined: "画面に「保存しました。」と出るようにした。Fixed the parser. Tests pass.",
+      chars: [20, 29],
+    },
+    { conclusion: "架空の1文目。架空の2文目。", joined: "架空の1文目。架空の2文目。", chars: [13] },
+  ])(
+    "conclusion の配列は連結し、要素ごとの字数を持つ。文字列（古い transcript）は1要素として読む: $joined",
+    ({ conclusion, joined, chars }) => {
+      const [event] = toSessionEvents(
+        assistantMessage([
+          { type: "tool_use", id: "toolu_r1", name: REPORT_TOOL_FULL_NAME, input: { conclusion } },
+        ]),
+        EXPRESSIONS,
+      )
+
+      expect(
+        event?.kind === "report"
+          ? { conclusion: event.conclusion, chars: event.conclusionSentenceChars }
+          : undefined,
+      ).toEqual({ conclusion: joined, chars })
+    },
+  )
 
   it("conclusion を省いた report は、結論が空のレポートにする（引き継ぎは後ろの段が埋める）", () => {
     const message = assistantMessage([
@@ -325,6 +358,7 @@ describe("toSessionEvents（report ツール）", () => {
         toolUseId: "toolu_r1",
         argumentChars: reportArgumentCharsOf({ favor: "架空のお願い" }),
         conclusion: "",
+        conclusionSentenceChars: [],
         favor: "架空のお願い",
       }),
     ])

@@ -28,7 +28,7 @@ import {
 type ReportCalled = Extract<SessionEvent, { kind: "report" }>
 
 const COMPLETE = {
-  conclusion: "架空の結論",
+  conclusion: ["架空の結論"],
   figure: FIGURE,
   favor: "架空のお願い",
   closing: CLOSING,
@@ -37,8 +37,11 @@ const COMPLETE = {
   waitingLine: WAITING_LINE,
   title: "架空の題",
 }
-// conclusion が3文以上（規約違反「冒頭の1〜2文で結論」）だと差し戻される。
-const VIOLATING = { ...COMPLETE, conclusion: "架空の一文目。架空の二文目。架空の三文目。" }
+// conclusion が3要素以上（規約違反「冒頭の1〜2文で結論」）だと差し戻される。
+const VIOLATING = {
+  ...COMPLETE,
+  conclusion: ["架空の一文目。", "架空の二文目。", "架空の三文目。"],
+}
 
 /** 本物の駆動と同じ並びで、1つのセッションに `report` を呼んでいく口。 */
 function session() {
@@ -104,7 +107,7 @@ describe("report の差し戻しのあとの出し直し", () => {
     const live = session()
 
     const rejected = await live.call(VIOLATING)
-    const resent = await live.call({ conclusion: "架空の直した結論" })
+    const resent = await live.call({ conclusion: ["架空の直した結論"] })
 
     expect(rejected.reply.isError).toBe(true)
     expect(resent.reply).toEqual({ text: "ok", isError: false, endsTurn: true })
@@ -112,6 +115,25 @@ describe("report の差し戻しのあとの出し直し", () => {
     expectJudgedAsDrawn(live.drafts.at(-1), resent.drawn)
     expect(live.titles).toEqual(["架空の題"])
   })
+
+  it.each([
+    { conclusion: VIOLATING.conclusion, chars: [6, 6, 6] },
+    { conclusion: [`${"あ".repeat(40)}。`, `${"い".repeat(40)}。`], chars: [40, 40] },
+  ])(
+    "conclusion を省いた出し直しは、引き継いだ結論の要素ごとの字数で判定する: $chars",
+    async ({ conclusion, chars }) => {
+      const live = session()
+
+      await live.call({
+        ...COMPLETE,
+        conclusion,
+        sections: [{ blocks: [{ kind: "markdown", markdown: "- 架空の項目" }] }],
+      })
+      await live.call({ favor: "架空の直したお願い" })
+
+      expect(live.drafts.map((draft) => draft.conclusionSentenceChars)).toEqual([chars, chars])
+    },
+  )
 
   it("入力検査で落ちて handler に届かなかった呼び出しも土台になり、判定と描画が同じ値を見る", async () => {
     const live = session()
@@ -133,7 +155,7 @@ describe("report の差し戻しのあとの出し直し", () => {
   it("土台が無いのに省けない欄を省いた呼び出しは判定せず isError で返し、そのあとの出し直しはその呼び出しを土台にする", async () => {
     const live = session()
 
-    const missing = await live.call({ conclusion: "架空の結論", favor: "架空のお願い" })
+    const missing = await live.call({ conclusion: ["架空の結論"], favor: "架空のお願い" })
     const resent = await live.call({
       figure: FIGURE,
       closing: CLOSING,
@@ -156,7 +178,7 @@ describe("report の差し戻しのあとの出し直し", () => {
     // 規約違反の枠は1ターン1回で2回目からは判定が通すので、続く2回は入力検査で落とす。
     await live.call({ favor: "架空の二度目", sections: [] })
     await live.call({ favor: "架空の三度目", closing: { text: "架空", expression: "架空の表情" } })
-    const resent = await live.call({ conclusion: "架空の直した結論" })
+    const resent = await live.call({ conclusion: ["架空の直した結論"] })
 
     expect(resent.drawn?.favor).toBe("架空の三度目")
     expectJudgedAsDrawn(live.drafts.at(-1), resent.drawn)
@@ -166,7 +188,7 @@ describe("report の差し戻しのあとの出し直し", () => {
     const live = session()
 
     await live.call(VIOLATING)
-    const resent = await live.call({ conclusion: "架空の結論", favor: "" })
+    const resent = await live.call({ conclusion: ["架空の結論"], favor: "" })
 
     expect(resent.drawn?.favor).toBe("")
     expectJudgedAsDrawn(live.drafts.at(-1), resent.drawn)
@@ -176,8 +198,8 @@ describe("report の差し戻しのあとの出し直し", () => {
     const live = session()
 
     await live.call(VIOLATING)
-    await live.call({ conclusion: "架空の直した結論" })
-    const next = await live.call({ conclusion: "架空の次の結論" })
+    await live.call({ conclusion: ["架空の直した結論"] })
+    const next = await live.call({ conclusion: ["架空の次の結論"] })
 
     expect(next.reply.isError).toBe(true)
     expect(next.drawn).toBeUndefined()
@@ -188,7 +210,7 @@ describe("report の差し戻しのあとの出し直し", () => {
 
     await live.call(VIOLATING)
     live.review.pass({ kind: "turn-finished", outcome: { kind: "completed" } })
-    const next = await live.call({ conclusion: "架空の直した結論" })
+    const next = await live.call({ conclusion: ["架空の直した結論"] })
 
     expect(next.reply.isError).toBe(true)
     expect(next.drawn).toBeUndefined()
@@ -201,7 +223,7 @@ describe("report の差し戻しのあとの出し直し", () => {
     // 描いたあと新しい事実が無いので、別の中身の呼び出しは「新しい事実が無い」で差し戻る。
     const nothingNew = await live.call({
       ...COMPLETE,
-      conclusion: "架空の別の結論",
+      conclusion: ["架空の別の結論"],
       favor: "架空の別のお願い",
     })
     const resent = await live.call({ conclusion: COMPLETE.conclusion, favor: COMPLETE.favor })

@@ -7,6 +7,7 @@
 import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
+import { parseConclusion } from "../../../shared/report/conclusion-sentence.ts"
 import { reportArgumentCharsOf } from "../../../shared/report/report-argument-chars.ts"
 import {
   parseReportFigure,
@@ -36,8 +37,9 @@ import { speechEvents } from "./sdk-speech-message.ts"
  * `title` の「無い」と文字列でないものは undefined。
  * `sessionSummary` の「無い」（空白だけも）は undefined。
  * `sessionRemaining` は空白だけなら `none`、文字列なら `remaining`、欄が無い（欄の無かった頃の transcript）・文字列でないなら `unrecorded` に畳む。
+ * `conclusion` は文字列の配列を連結し、文字列（引数が文字列だったころの transcript）は1要素として読む（{@link parseConclusion}）。
  * `conclusion` の「無い」は空の文字列に畳む（差し戻しのあとの出し直しで省いた欄は `ReportInheritance` が埋める）。
- * `conclusion` が文字列でも省略でもなければ捨てる（引数の検査に落ちた呼び出しで、モデルには Claude Code がエラーを返す）。
+ * `conclusion` が文字列・文字列の配列・省略のどれでもなければ捨てる（引数の検査に落ちた呼び出しで、モデルには Claude Code がエラーを返す）。
  * `inheritedFields` はここでは空で、引き継ぎは `ReportInheritance` がする。
  */
 export function reportEvents(
@@ -48,8 +50,8 @@ export function reportEvents(
   if (!isPlainObject(input)) {
     return []
   }
-  const conclusion = input.conclusion === undefined ? "" : input.conclusion
-  if (typeof conclusion !== "string") {
+  const conclusion = parseConclusion(input.conclusion)
+  if (conclusion === undefined) {
     return []
   }
 
@@ -64,7 +66,8 @@ export function reportEvents(
       toolUseId,
       argumentChars: reportArgumentCharsOf(input),
       inheritedFields: [],
-      conclusion,
+      conclusion: conclusion.conclusion,
+      conclusionSentenceChars: conclusion.conclusionSentenceChars,
       figure: parseReportFigure(input.figure),
       sections: parsed.sections,
       favor: optionalString(input.favor) ?? "",

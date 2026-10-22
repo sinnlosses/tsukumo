@@ -39,6 +39,7 @@ export type ReportEvent =
    * `argumentChars` は渡した引数だけの字数で、使われ方の記録だけが読む。
    * `inheritedFields` は渡さずに、同じターンで直前に差し戻した呼び出しから値を引き継いだ欄の名前（`ReportInheritance` が埋める）。使われ方の記録だけが読む。
    * `conclusion` を渡さず引き継ぐ土台も無い呼び出しは、`conclusion` が空の文字列になる。
+   * `conclusionSentenceChars` は `conclusion` の要素ごとの字数で、記法の検査だけが読む。
    * `title`（セッション一覧の見出し）は書かれていなければ undefined。画面の状態は読まず、差し戻しのあとの出し直しで引き継ぐためだけに持つ（書き込むのは handler）。
    */
   | {
@@ -47,6 +48,7 @@ export type ReportEvent =
       readonly argumentChars: ReportArgumentChars
       readonly inheritedFields: readonly ReportArgumentField[]
       readonly conclusion: string
+      readonly conclusionSentenceChars: readonly number[]
       readonly figure: RecordedReportFigure
       readonly sections: readonly ReportSection[]
       readonly favor: string
@@ -62,7 +64,7 @@ export type ReportEvent =
       readonly sessionRemaining: SessionRemaining
     }
   /**
-   * 引数が読めず（`conclusion` が文字列でも省略でもない）`report` にならなかったメインの呼び出し。サーバの中だけで流れる。
+   * 引数が読めず（`conclusion` が文字列・文字列の配列・省略のどれでもない）`report` にならなかったメインの呼び出し。サーバの中だけで流れる。
    * `CallReview` が同じ `toolUseId` の `tool-finished` まで預かり、差し戻しの記録（`report-rejected`）にだけ使う（畳み込み・ブラウザには届かない）。
    */
   | {

@@ -11,12 +11,15 @@ import { code, draft, kinds, markdown, mermaid, text } from "../../../fixture/re
 
 describe("reportRejectionText", () => {
   it("違反した条と直し方を1行ずつ並べ、直す欄だけで呼び直せることを末尾に添え、レポートの文面は写さない", () => {
-    const report = draft([markdown("# 架空の見出しXYZ")], "架空の1文目XYZ。2文目。3文目。")
+    const report = draft(
+      [markdown("# 架空の見出しXYZ")],
+      ["架空の1文目XYZ。", "2文目。", "3文目。"],
+    )
     const rejection = reportRejectionText(reportViolations(report))
 
     expect(rejection.split("\n")).toHaveLength(4)
     expect(rejection.split("\n").at(-1)).toBe(REPORT_CHANGED_FIELDS_ONLY_TEXT)
-    expect(rejection).toContain("`conclusion` が3文ある")
+    expect(rejection).toContain("`conclusion` が3要素ある")
     expect(rejection).toContain(
       "`markdown` の塊に塊で書ける記法（`#` / `##` の見出し）がある。代わりに節の `heading`を使う",
     )
