@@ -1,8 +1,8 @@
 // コミットにステージしたファイルが大きくなりすぎていないかを判定し、拒否文を組み立てる。git には触らない。
 
 /** 1 ファイルのトークン数の上限。`BYTES_PER_TOKEN` バイトを 1 トークンと数え、超えたら大きすぎる。 */
-export const TOKEN_LIMIT = 5000
-export const BYTES_PER_TOKEN = 4
+const TOKEN_LIMIT = 5000
+const BYTES_PER_TOKEN = 4
 
 /** 検査から外すパス。前方一致（末尾が `/` のもの）か完全一致。足すときはここだけを直す。 */
 const EXEMPT_PATH_PATTERNS = [

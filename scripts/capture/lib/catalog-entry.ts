@@ -760,7 +760,7 @@ export const CATALOG: readonly CatalogEntry[] = [
  * 狭いほうだけページ全体を撮る。縦に積み替わるので、窓に収まる範囲だけでは下の領域
  * （吹き出しと答え待ちの箱）が1枚に入らない。
  */
-export const SIZES = [
+const SIZES = [
   { name: "wide", width: 1400, height: 900, fullPage: false },
   { name: "narrow", width: 720, height: 900, fullPage: true },
 ] as const

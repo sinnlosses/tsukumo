@@ -10,7 +10,7 @@ import { readGitCommonDirectory } from "../../shared/git-common-directory.ts"
 
 const LOCK_FILE_NAME = "e2e-full-lock"
 
-export const WAIT_LIMIT_MS = 15 * 60_000
+const WAIT_LIMIT_MS = 15 * 60_000
 const POLL_INTERVAL_MS = 2_000
 const NOTICE_INTERVAL_MS = 60_000
 

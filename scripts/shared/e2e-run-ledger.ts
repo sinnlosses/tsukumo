@@ -98,7 +98,7 @@ export function removeSubagentMark(gitDir: string, toolUseId: string): void {
 }
 
 /** `tw status --claims` が返す、着手が1件のときのその同一性の鍵。打てない・読めない・1件でないときは `undefined`。 */
-export function readTwClaimKey(workRoot: string): string | undefined {
+function readTwClaimKey(workRoot: string): string | undefined {
   try {
     const output = execFileSync("tw", ["status", "--claims"], {
       cwd: workRoot,

@@ -1,16 +1,17 @@
 import { readFileSync } from "node:fs"
 import { posix } from "node:path"
-import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
 
 import { DOCUMENT_CHECK_TEST_FILES } from "../../scripts/dev/lib/check-stage.ts"
-import { astChildren, astDescendants, astObject, astString, type AstNode } from "./ast-node.ts"
-import { listSourceFiles, parseSourceProgram } from "./source-file.ts"
-
-const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url)).replace(/\/$/, "")
-
-const CONFIG_FILES = ["vite.config.ts", "vitest.config.ts", "vitest.e2e.config.ts"] as const
+import { astChildren, astDescendants, astObject, astString } from "./ast-node.ts"
+import {
+  CONFIG_FILES,
+  readRepositorySources,
+  readScriptExportUse,
+  REPOSITORY_ROOT,
+} from "./script-export-use.ts"
+import { parseSourceProgram } from "./source-file.ts"
 
 const VITEST_CONFIG_FILES = ["vitest.config.ts", "vitest.e2e.config.ts"] as const
 
@@ -103,22 +104,6 @@ describe("scripts/ のテストからしか import されない export", () => {
   })
 })
 
-type ImportUse = { readonly target: string; readonly names: readonly string[] | "all" }
-
-type ExportedSymbol = { readonly name: string; readonly local: string }
-
-function readRepositorySources(): ReadonlyMap<string, string> {
-  const paths = [
-    ...listSourceFiles(`${REPOSITORY_ROOT}/scripts`, `${REPOSITORY_ROOT}/scripts`, [".ts"]).map(
-      (path) => `scripts/${path}`,
-    ),
-    ...listSourceFiles(`${REPOSITORY_ROOT}/src`).map((path) => `src/${path}`),
-    ...listSourceFiles(`${REPOSITORY_ROOT}/test`).map((path) => `test/${path}`),
-    ...CONFIG_FILES,
-  ]
-  return new Map(paths.map((path) => [path, readFileSync(`${REPOSITORY_ROOT}/${path}`, "utf8")]))
-}
-
 function productionReader(): (path: string) => boolean {
   const readers = new Set<string>([
     ...CONFIG_FILES,
@@ -147,148 +132,6 @@ function testOnlyExports(
   sources: ReadonlyMap<string, string>,
   isReader: (path: string) => boolean,
 ): readonly string[] {
-  const programs = new Map([...sources].map(([path, source]) => [path, parseSourceProgram(source)]))
-  const exportsOf = new Map(
-    [...programs]
-      .filter(([path]) => path.startsWith("scripts/"))
-      .map(([path, program]) => [path, exportedSymbols(program)]),
-  )
-  const productionUses = new Set<string>()
-  const testUses = new Set<string>()
-  for (const [reader, program] of programs) {
-    for (const use of importUses(reader, program)) {
-      const symbols = exportsOf.get(use.target)
-      if (symbols === undefined) {
-        continue
-      }
-      const names = use.names === "all" ? symbols.map(({ name }) => name) : use.names
-      for (const name of names) {
-        ;(isReader(reader) ? productionUses : testUses).add(`${use.target}#${name}`)
-      }
-    }
-  }
-  return [...exportsOf].flatMap(([path, symbols]) => {
-    const used = symbols.filter(({ name }) => productionUses.has(`${path}#${name}`))
-    const signatureTypes = typesNamedFrom(
-      programs.get(path) ?? {},
-      used.map(({ local }) => local),
-    )
-    return symbols
-      .filter(
-        ({ name, local }) =>
-          testUses.has(`${path}#${name}`) &&
-          !productionUses.has(`${path}#${name}`) &&
-          !signatureTypes.has(local),
-      )
-      .map(({ name }) => `${path}#${name}`)
-  })
-}
-
-function exportedSymbols(program: AstNode): readonly ExportedSymbol[] {
-  return astChildren(program, "body").flatMap((statement): readonly ExportedSymbol[] => {
-    switch (astString(statement, "type")) {
-      case "ExportDefaultDeclaration":
-        return [{ name: "default", local: "default" }]
-      case "ExportNamedDeclaration": {
-        const declared = declaredNames(astObject(statement, "declaration")).map((name) => ({
-          name,
-          local: name,
-        }))
-        const specified = astChildren(statement, "specifiers").map((specifier) => ({
-          name: symbolName(astObject(specifier, "exported")),
-          local: symbolName(astObject(specifier, "local")),
-        }))
-        return [...declared, ...specified]
-      }
-      default:
-        return []
-    }
-  })
-}
-
-function declaredNames(declaration: AstNode | undefined): readonly string[] {
-  if (astString(declaration, "type") === "VariableDeclaration") {
-    return astChildren(declaration, "declarations").flatMap(
-      (declarator) => astString(astObject(declarator, "id"), "name") ?? [],
-    )
-  }
-  return [astString(astObject(declaration, "id"), "name") ?? []].flat()
-}
-
-function symbolName(node: AstNode | undefined): string {
-  return astString(node, "name") ?? astString(node, "value") ?? ""
-}
-
-function importUses(reader: string, program: AstNode): readonly ImportUse[] {
-  return astDescendants(program).flatMap((node): readonly ImportUse[] => {
-    const specifier = astString(astObject(node, "source"), "value")
-    if (specifier === undefined || !specifier.startsWith(".")) {
-      return []
-    }
-    const target = posix.normalize(posix.join(posix.dirname(reader), specifier))
-    switch (astString(node, "type")) {
-      case "ImportDeclaration":
-        return [{ target, names: importedNames(node) }]
-      case "ExportNamedDeclaration":
-        return [
-          {
-            target,
-            names: astChildren(node, "specifiers").map((s) => symbolName(astObject(s, "local"))),
-          },
-        ]
-      case "ExportAllDeclaration":
-      case "ImportExpression":
-        return [{ target, names: "all" }]
-      default:
-        return []
-    }
-  })
-}
-
-function importedNames(declaration: AstNode): readonly string[] | "all" {
-  const specifiers = astChildren(declaration, "specifiers")
-  if (specifiers.some((s) => astString(s, "type") === "ImportNamespaceSpecifier")) {
-    return "all"
-  }
-  return specifiers.map((specifier) =>
-    astString(specifier, "type") === "ImportDefaultSpecifier"
-      ? "default"
-      : symbolName(astObject(specifier, "imported")),
-  )
-}
-
-// 本番が使う宣言の型注釈から、同じファイルの宣言をたどって名指される型の名前。
-function typesNamedFrom(program: AstNode, roots: readonly string[]): ReadonlySet<string> {
-  const declarations = topLevelDeclarations(program)
-  const reached = new Set<string>()
-  const pending = [...roots]
-  for (let name = pending.pop(); name !== undefined; name = pending.pop()) {
-    const referenced = (declarations.get(name) ?? [])
-      .flatMap(astDescendants)
-      .filter((node) => astString(node, "type") === "TSTypeReference")
-      .flatMap((node) => astString(astObject(node, "typeName"), "name") ?? [])
-    for (const typeName of referenced) {
-      if (!reached.has(typeName)) {
-        reached.add(typeName)
-        pending.push(typeName)
-      }
-    }
-  }
-  return reached
-}
-
-function topLevelDeclarations(program: AstNode): ReadonlyMap<string, readonly AstNode[]> {
-  const declarations = new Map<string, AstNode[]>()
-  for (const statement of astChildren(program, "body")) {
-    const type = astString(statement, "type")
-    const declaration =
-      type === "ExportNamedDeclaration" || type === "ExportDefaultDeclaration"
-        ? astObject(statement, "declaration")
-        : statement
-    const names = type === "ExportDefaultDeclaration" ? ["default"] : declaredNames(declaration)
-    for (const name of names) {
-      declarations.set(name, [...(declarations.get(name) ?? []), declaration ?? statement])
-    }
-  }
-  return declarations
+  const use = readScriptExportUse(sources)
+  return use.unreadBy(isReader).filter((key) => use.imported.has(key))
 }

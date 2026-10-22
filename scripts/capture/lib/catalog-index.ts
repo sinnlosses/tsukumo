@@ -55,7 +55,7 @@ ${sections}
 }
 
 /** 撮れた順のまま、1件につき1つだけ取り出す（同じ件は広い窓と狭い窓で2枚ある）。 */
-export function catalogEntriesOf(shots: readonly Shot[]): readonly CatalogEntry[] {
+function catalogEntriesOf(shots: readonly Shot[]): readonly CatalogEntry[] {
   return shots
     .map((shot) => shot.entry)
     .filter((entry, index, all) => all.findIndex((other) => other.name === entry.name) === index)
