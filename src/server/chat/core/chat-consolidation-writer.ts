@@ -50,6 +50,7 @@ import { isBeforeAt } from "./chat-instant-order.ts"
  *   - `unreadable-result`: 結果が検査を通らない。`rejection` が落ちた理由（`synopsis-shrunk` は前のあらすじから縮みすぎ）
  *   - `summary-write`: あらすじの写しが書けなかった
  *   - `episode-write`: エピソードの索引が書けなかった（あらすじも書かない）
+ *   - `query-result`: `query()` の result が成功でなかった。`resultKind` が SDK の `subtype`
  *   - `threw`: 上以外の例外（起こせない・API の失敗など）。`error` は受け取った側が `error.name` と code だけを写す
  */
 export type ChatConsolidationOutcome =
@@ -67,7 +68,34 @@ export type ChatConsolidationOutcome =
       readonly reason: "unreadable-result"
       readonly rejection: ChatConsolidationRejection | "synopsis-shrunk"
     }
+  | {
+      readonly kind: "failed"
+      readonly reason: "query-result"
+      readonly resultKind: ChatConsolidationResultKind
+    }
   | { readonly kind: "failed"; readonly reason: "threw"; readonly error: unknown }
+
+const CHAT_CONSOLIDATION_RESULT_KINDS = [
+  "error_during_execution",
+  "error_max_turns",
+  "error_max_budget_usd",
+  "error_max_structured_output_retries",
+  "other",
+] as const
+
+/** SDK の result が成功でなかったときの `subtype`（知らない語は `other`）。 */
+export type ChatConsolidationResultKind = (typeof CHAT_CONSOLIDATION_RESULT_KINDS)[number]
+
+/** `query()` の result が成功でなかったときに口が投げる。`subtype` は SDK の語のまま持つ。 */
+export class ChatConsolidationResultError extends Error {
+  readonly subtype: string
+
+  constructor(subtype: string) {
+    super("定着の result が成功でなかった")
+    this.name = "ChatConsolidationResultError"
+    this.subtype = subtype
+  }
+}
 
 /** そのパックの定着を1回走らせる。`signal` が中断されたら、待たずに `failed` で返り、何も書かない。 */
 export type ChatConsolidationWriter = (
@@ -210,7 +238,13 @@ async function consolidateLocked(
     }
     return writeSynopsis(shrinkTally, packName, chatSummary, folded, lastEntry.at)
   } catch (error) {
-    return signal.aborted ? ABORTED : { kind: "failed", reason: "threw", error }
+    if (signal.aborted) {
+      return ABORTED
+    }
+    if (error instanceof ChatConsolidationResultError) {
+      return { kind: "failed", reason: "query-result", resultKind: resultKindOf(error) }
+    }
+    return { kind: "failed", reason: "threw", error }
   }
 }
 
@@ -338,6 +372,10 @@ function writeSynopsis(
     droppedLines: written.droppedLines,
     shrinkWaived: folded.shrunk,
   }
+}
+
+function resultKindOf(error: ChatConsolidationResultError): ChatConsolidationResultKind {
+  return CHAT_CONSOLIDATION_RESULT_KINDS.find((kind) => kind === error.subtype) ?? "other"
 }
 
 /** `signal` が中断されたら `aborted` の `failed` で返る（口が中断を無視しても待たない）。 */

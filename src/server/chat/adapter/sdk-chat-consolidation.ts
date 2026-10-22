@@ -12,6 +12,7 @@
 
 import { query } from "@anthropic-ai/claude-agent-sdk"
 
+import { ChatConsolidationResultError } from "../core/chat-consolidation-writer.ts"
 import type { ChatConsolidationQuery } from "../core/chat-consolidation.ts"
 
 /** 子プロセスを起こす場所と環境変数（雑談のセッションと同じものを引き継ぐ）。 */
@@ -64,7 +65,7 @@ export async function queryChatConsolidation(
       if (message.subtype === "success") {
         return message.structured_output
       }
-      throw new Error(`定着を走らせられなかった（${message.subtype}）`)
+      throw new ChatConsolidationResultError(message.subtype)
     }
   }
   throw new Error("定着の result が届かなかった")

@@ -1,7 +1,13 @@
 // 定着が終わったときの結果のうち、診断ログへ足跡を残すもの（失敗・縮みの免除・削った行）。
 
-import { swallowedFailureFootprint } from "../../../shared/diagnostic/swallowed-failure.ts"
-import type { ChatConsolidationOutcome } from "../../chat/core/chat-consolidation-writer.ts"
+import {
+  swallowedFailureFootprint,
+  type SwallowedFailurePlace,
+} from "../../../shared/diagnostic/swallowed-failure.ts"
+import type {
+  ChatConsolidationOutcome,
+  ChatConsolidationResultKind,
+} from "../../chat/core/chat-consolidation-writer.ts"
 import type { ChatConsolidationRejection } from "../../chat/core/chat-consolidation.ts"
 import type { DiagnosticBuffer } from "../../diagnostic/core/diagnostic.ts"
 
@@ -13,12 +19,23 @@ const CONSOLIDATION_FAILURE_PLACES = {
 } as const satisfies Record<string, string>
 
 const CONSOLIDATION_REJECTION_PLACES = {
-  shape: "consolidation-unreadable-result",
+  "shape-structure": "consolidation-shape-structure",
+  "shape-episode": "consolidation-shape-episode",
+  "shape-coverage": "consolidation-shape-coverage",
+  "shape-topics": "consolidation-shape-topics",
   "synopsis-empty": "consolidation-synopsis-empty",
   "synopsis-too-long": "consolidation-synopsis-too-long",
   "synopsis-reserved-tag": "consolidation-synopsis-reserved-tag",
   "synopsis-shrunk": "consolidation-synopsis-shrunk",
 } as const satisfies Record<ChatConsolidationRejection | "synopsis-shrunk", string>
+
+const CONSOLIDATION_RESULT_KIND_PLACES = {
+  error_during_execution: "consolidation-result-error-during-execution",
+  error_max_turns: "consolidation-result-error-max-turns",
+  error_max_budget_usd: "consolidation-result-error-max-budget-usd",
+  error_max_structured_output_retries: "consolidation-result-error-max-structured-output-retries",
+  other: "consolidation-result-other",
+} as const satisfies Record<ChatConsolidationResultKind, string>
 
 /** 足跡ごとに `now()` を呼んで時刻を打つ。 */
 export function noteConsolidationOutcome(
@@ -32,10 +49,7 @@ export function noteConsolidationOutcome(
         now(),
         {
           feature: "chat",
-          place:
-            outcome.reason === "unreadable-result"
-              ? CONSOLIDATION_REJECTION_PLACES[outcome.rejection]
-              : CONSOLIDATION_FAILURE_PLACES[outcome.reason],
+          place: failurePlaceOf(outcome),
         },
         outcome.reason === "threw" ? outcome.error : undefined,
       ),
@@ -56,5 +70,18 @@ export function noteConsolidationOutcome(
       at: now(),
       droppedLines: outcome.droppedLines,
     })
+  }
+}
+
+function failurePlaceOf(
+  outcome: Extract<ChatConsolidationOutcome, { kind: "failed" }>,
+): Extract<SwallowedFailurePlace, { feature: "chat" }>["place"] {
+  switch (outcome.reason) {
+    case "unreadable-result":
+      return CONSOLIDATION_REJECTION_PLACES[outcome.rejection]
+    case "query-result":
+      return CONSOLIDATION_RESULT_KIND_PLACES[outcome.resultKind]
+    default:
+      return CONSOLIDATION_FAILURE_PLACES[outcome.reason]
   }
 }

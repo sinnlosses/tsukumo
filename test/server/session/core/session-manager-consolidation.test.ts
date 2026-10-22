@@ -6,6 +6,7 @@ import type {
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import type { SessionManagerOptions } from "../../../../src/server/session/core/session-manager-port.ts"
 import type { DiagnosticEntry } from "../../../../src/shared/diagnostic/diagnostic-record.ts"
+import { isSwallowedFailurePlace } from "../../../../src/shared/diagnostic/swallowed-failure.ts"
 import type { ServerFrame } from "../../../../src/shared/frame.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import { characterChangedEvent } from "../../../fixture/character.ts"
@@ -187,7 +188,10 @@ describe("createSessionManager", () => {
       const { stub, consolidation, entries } = startWithDiagnostics()
 
       const rejections = [
-        "shape",
+        "shape-structure",
+        "shape-episode",
+        "shape-coverage",
+        "shape-topics",
         "synopsis-empty",
         "synopsis-too-long",
         "synopsis-reserved-tag",
@@ -196,6 +200,11 @@ describe("createSessionManager", () => {
       for (const rejection of rejections) {
         stub.emit(TURN_FINISHED)
         consolidation.finish({ kind: "failed", reason: "unreadable-result", rejection })
+        await waitForBatch()
+      }
+      for (const resultKind of ["error_max_turns", "other"] as const) {
+        stub.emit(TURN_FINISHED)
+        consolidation.finish({ kind: "failed", reason: "query-result", resultKind })
         await waitForBatch()
       }
       stub.emit(TURN_FINISHED)
@@ -212,14 +221,22 @@ describe("createSessionManager", () => {
           .filter((entry) => entry.flow === "swallowed-failure")
           .map((entry) => entry.place.place),
       ).toEqual([
-        "consolidation-unreadable-result",
+        "consolidation-shape-structure",
+        "consolidation-shape-episode",
+        "consolidation-shape-coverage",
+        "consolidation-shape-topics",
         "consolidation-synopsis-empty",
         "consolidation-synopsis-too-long",
         "consolidation-synopsis-reserved-tag",
         "consolidation-synopsis-shrunk",
+        "consolidation-result-error-max-turns",
+        "consolidation-result-other",
         "consolidation-synopsis-shrink-waived",
       ])
       expect(JSON.stringify(entries)).not.toContain("架空の話題")
+      for (const footprint of entries.filter((entry) => entry.flow === "swallowed-failure")) {
+        expect(isSwallowedFailurePlace(footprint.place)).toBe(true)
+      }
     })
 
     it("定着の口が拒否しても、失敗として記録して次のターンの終わりでまた起こす", async () => {

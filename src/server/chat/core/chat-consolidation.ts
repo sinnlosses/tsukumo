@@ -73,14 +73,13 @@ export const CHAT_SYNOPSIS_RESERVED_TAGS = [
 
 /**
  * 検査に落ちた理由。
- *
- * - `shape`: 構造化出力の形・エピソード・区切り・`topics` の崩れ
- * - `synopsis-empty`: あらすじが空
- * - `synopsis-too-long`: あらすじが `synopsisBytes` を超える
- * - `synopsis-reserved-tag`: あらすじが {@link CHAT_SYNOPSIS_RESERVED_TAGS} を含む
+ * `shape-*` は構造化出力の最上位の形・エピソード・行の覆い・`topics` の崩れ、`synopsis-*` はあらすじの空・長すぎ・予約タグの含有。
  */
 const CHAT_CONSOLIDATION_REJECTIONS = [
-  "shape",
+  "shape-structure",
+  "shape-episode",
+  "shape-coverage",
+  "shape-topics",
   "synopsis-empty",
   "synopsis-too-long",
   "synopsis-reserved-tag",
@@ -198,7 +197,7 @@ export type ChatConsolidationCheck =
  * 前のあらすじからの縮みはここでは見ない（{@link chatSynopsisShrunk}）。
  *
  * - 形: `episodes` が1件以上の配列で、各要素の `title` / `gist` / `cues` / `weight` が {@link CHAT_CONSOLIDATION_LIMITS} に収まる
- * - 区切り: `end` が前のエピソードより大きく、最後のエピソードの `end` が `lineCount` と一致（渡した行をすべて、切れ目なくどれかのエピソードに含めている）
+ * - 区切り: `end` が前のエピソードより大きく、最後のエピソードの `end` が `lineCount` と一致（渡した行を切れ目なく覆う）
  * - `synopsis` は空でなく、{@link CHAT_SYNOPSIS_RESERVED_TAGS} を含まず、{@link CHAT_MEMORY_BUDGET.synopsisBytes} バイト以下。`topics` は0〜{@link CHAT_CONSOLIDATION_LIMITS.topicsMax}件、各{@link CHAT_CONSOLIDATION_LIMITS.topicChars}字まで
  */
 export function parseChatConsolidationResult(
@@ -211,7 +210,7 @@ export function parseChatConsolidationResult(
     typeof value.synopsis !== "string" ||
     !Array.isArray(value.topics)
   ) {
-    return SHAPE_REJECTED
+    return rejected("shape-structure")
   }
 
   const synopsis = value.synopsis.trim()
@@ -222,10 +221,10 @@ export function parseChatConsolidationResult(
 
   const episodes = value.episodes.map(toEpisode)
   if (!episodes.every((episode): episode is ChatConsolidationEpisode => episode !== undefined)) {
-    return SHAPE_REJECTED
+    return rejected("shape-episode")
   }
   if (!coversLinesContiguously(episodes, lineCount)) {
-    return SHAPE_REJECTED
+    return rejected("shape-coverage")
   }
 
   const topics = value.topics.map(toTopic)
@@ -233,7 +232,7 @@ export function parseChatConsolidationResult(
     topics.length > CHAT_CONSOLIDATION_LIMITS.topicsMax ||
     !topics.every((topic): topic is string => topic !== undefined)
   ) {
-    return SHAPE_REJECTED
+    return rejected("shape-topics")
   }
 
   return { kind: "accepted", result: { episodes, synopsis, topics } }
@@ -367,10 +366,9 @@ function cappedWeight(weight: 1 | 2 | 3, range: readonly ChatUnconsolidatedEntry
   return weight === 3 && !range.some((entry) => entry.origin.mode === "chat") ? 2 : weight
 }
 
-const SHAPE_REJECTED = {
-  kind: "rejected",
-  rejection: "shape",
-} as const satisfies ChatConsolidationCheck
+function rejected(rejection: ChatConsolidationRejection): ChatConsolidationCheck {
+  return { kind: "rejected", rejection }
+}
 
 /**
  * 前後の空白を落としたあらすじが形の検査に落ちる理由（通れば `undefined`）。

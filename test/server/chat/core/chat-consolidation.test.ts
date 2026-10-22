@@ -304,7 +304,17 @@ describe("parseChatConsolidationResult", () => {
       const check = parseResult(value, ENTRIES.length)
       return check.kind === "rejected" ? check.rejection : undefined
     }
-    expect(rejectionOf({ ...VALID_OUTPUT, episodes: [] })).toBe("shape")
+    expect(rejectionOf("架空")).toBe("shape-structure")
+    expect(rejectionOf({ ...VALID_OUTPUT, topics: "架空" })).toBe("shape-structure")
+    expect(rejectionOf({ ...VALID_OUTPUT, episodes: [{ end: 4 }] })).toBe("shape-episode")
+    expect(rejectionOf({ ...VALID_OUTPUT, episodes: [] })).toBe("shape-coverage")
+    expect(rejectionOf({ ...VALID_OUTPUT, episodes: [VALID_OUTPUT.episodes[0]] })).toBe(
+      "shape-coverage",
+    )
+    expect(rejectionOf({ ...VALID_OUTPUT, topics: ["架空1", "架空2", "架空3", "架空4"] })).toBe(
+      "shape-topics",
+    )
+    expect(rejectionOf({ ...VALID_OUTPUT, topics: [1] })).toBe("shape-topics")
     expect(rejectionOf({ ...VALID_OUTPUT, synopsis: " " })).toBe("synopsis-empty")
     expect(
       rejectionOf({

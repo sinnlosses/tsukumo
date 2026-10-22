@@ -5,7 +5,10 @@ import type {
   ChatUnconsolidatedBatch,
   ChatUnconsolidatedLimits,
 } from "../../../../src/server/chat/core/chat-archive-port.ts"
-import { createChatConsolidationWriter } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
+import {
+  ChatConsolidationResultError,
+  createChatConsolidationWriter,
+} from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import {
   CHAT_CONSOLIDATION_LIMITS,
   type ChatConsolidationQuery,
@@ -295,13 +298,13 @@ describe("createChatConsolidationWriter", () => {
     expect(ports.summaryPacks).toEqual([PACK])
   })
 
-  it("出力の形が崩れているときは unreadable-result（shape）で、索引にもあらすじにも書かない", async () => {
+  it("出力の形が崩れているときは unreadable-result（shape-coverage）で、索引にもあらすじにも書かない", async () => {
     const ports = createPorts(DUE_BATCH, () => Promise.resolve({ ...VALID_OUTPUT, episodes: [] }))
 
     expect(await ports.write(PACK, NEVER_ABORTED)).toEqual({
       kind: "failed",
       reason: "unreadable-result",
-      rejection: "shape",
+      rejection: "shape-coverage",
     })
     expect(ports.order).toEqual([])
     expect(ports.summary()).toBe(PREVIOUS_SUMMARY)
@@ -383,6 +386,23 @@ describe("createChatConsolidationWriter", () => {
     })
     expect(ports.order).toEqual([])
     expect(ports.summary()).toBe(PREVIOUS_SUMMARY)
+  })
+
+  it.each([
+    ["error_max_turns", "error_max_turns"],
+    ["error_during_execution", "error_during_execution"],
+    ["架空の知らない種類", "other"],
+  ])("query() の result が %s で終わったときは query-result（%s）", async (subtype, resultKind) => {
+    const ports = createPorts(DUE_BATCH, () =>
+      Promise.reject(new ChatConsolidationResultError(subtype)),
+    )
+
+    expect(await ports.write(PACK, NEVER_ABORTED)).toEqual({
+      kind: "failed",
+      reason: "query-result",
+      resultKind,
+    })
+    expect(ports.order).toEqual([])
   })
 
   it("あらすじの写しが書けなかったときは summary-write", async () => {
