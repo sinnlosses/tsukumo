@@ -146,6 +146,8 @@ export function wireSessionLaunch(options: {
             onEvent: watched,
             reportFailure,
             reportPromptDelay: (footprint) => options.diagnosticLog.append([footprint]),
+            reportGateBlock: () =>
+              options.diagnosticLog.append([{ flow: "report-gate-block", at: context.now() }]),
           })
         },
         restoreEvents: (resumed, pack) =>
@@ -205,6 +207,8 @@ function startDriver(options: {
   readonly reportFailure: (place: SwallowedFailurePlace, error: unknown) => void
   /** 依頼が Claude Code へ届くまでの遅れを診断ログへ書く口。 */
   readonly reportPromptDelay: (footprint: PromptDelayFootprint) => void
+  /** `report` の関所が `Stop` を止めたことを診断ログへ書く口。 */
+  readonly reportGateBlock: () => void
 }): SessionDriver {
   const { seed, context, onEvent } = options
   const { cwd, inheritedEnv, fakeSession } = context
@@ -263,6 +267,7 @@ function startDriver(options: {
     reportHandbackHeadMismatch: () => {
       options.reportFailure({ feature: "session", place: "handback-head-mismatch" }, undefined)
     },
+    reportGateBlock: options.reportGateBlock,
   })
 }
 

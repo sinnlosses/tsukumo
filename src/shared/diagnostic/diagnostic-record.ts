@@ -14,6 +14,7 @@ import { z } from "zod"
 
 import { isSessionEventKind } from "../session/session-event-kind.ts"
 import type { SessionEvent } from "../session/session-event.ts"
+import type { ReportGateBlockFootprint } from "./report-gate-block.ts"
 import type { SwallowedFailureFootprint } from "./swallowed-failure.ts"
 import type { SynopsisTrimFootprint } from "./synopsis-trim.ts"
 import type { WelcomeWritingFootprint } from "./welcome-writing.ts"
@@ -116,6 +117,7 @@ export type DiagnosticEntry =
   | PromptDelayFootprint
   | WelcomeWritingFootprint
   | SynopsisTrimFootprint
+  | ReportGateBlockFootprint
 
 /** JSONL に書く1行の形。 */
 export type DiagnosticRecord = DiagnosticEntry & {

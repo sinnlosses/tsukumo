@@ -68,6 +68,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
             () => false,
           ),
           () => {},
+          () => {},
         ),
       ),
     ).toEqual(["Stop"])
@@ -80,72 +81,109 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
             () => false,
           ),
           () => {},
+          () => {},
         ),
       ),
     ).toEqual(["Stop"])
   })
 
-  it("背景の仕事が無いのに report の無い本文で止まろうとしたら、固定の理由文で block を返す（仕事のときだけ）", async () => {
+  it("背景の仕事が無いのに report の無い本文で止まろうとしたら、固定の理由文で block を返し、止めたことを1回知らせる（仕事のときだけ）", async () => {
     const gate = createReportGate(
       () => false,
       () => false,
     )
     gate.observe(LONG_BODY)
+    let blocks = 0
 
     expect(
       await runStop(
-        stopHooks(WORK_MODE, gate, () => {}),
+        stopHooks(
+          WORK_MODE,
+          gate,
+          () => {},
+          () => {
+            blocks += 1
+          },
+        ),
         false,
       ),
     ).toEqual({
       decision: "block",
       reason: REPORT_GATE_REASON,
     })
+    expect(blocks).toBe(1)
   })
 
-  it("背景の仕事が走っていれば、待つ一言では何も返さない（止まってよい）", async () => {
+  it("背景の仕事が走っていれば、待つ一言では何も返さず、止めたことも知らせない（止まってよい）", async () => {
     const gate = createReportGate(
       () => false,
       () => true,
     )
     gate.observe({ kind: "utterance", text: "架空の委譲を待つ一言" })
+    let blocks = 0
 
     expect(
       await runStop(
-        stopHooks(WORK_MODE, gate, () => {}),
+        stopHooks(
+          WORK_MODE,
+          gate,
+          () => {},
+          () => {
+            blocks += 1
+          },
+        ),
         false,
       ),
     ).toEqual({})
+    expect(blocks).toBe(0)
   })
 
-  it("stop_hook_active のときは report の無い本文でも block しない", async () => {
+  it("stop_hook_active のときは report の無い本文でも block せず、止めたことも知らせない", async () => {
     const gate = createReportGate(
       () => false,
       () => false,
     )
     gate.observe(LONG_BODY)
+    let blocks = 0
 
     expect(
       await runStop(
-        stopHooks(WORK_MODE, gate, () => {}),
+        stopHooks(
+          WORK_MODE,
+          gate,
+          () => {},
+          () => {
+            blocks += 1
+          },
+        ),
         true,
       ),
     ).toEqual({})
+    expect(blocks).toBe(0)
   })
 
-  it("雑談のときは長い本文でも block しない（関所は仕事だけ）", async () => {
+  it("雑談のときは長い本文でも block せず、止めたことも知らせない（関所は仕事だけ）", async () => {
     const gate = createReportGate(
       () => false,
       () => false,
     )
     gate.observe(LONG_BODY)
+    let blocks = 0
 
     expect(
       await runStop(
-        stopHooks(chatMode(fixedChatSummary(undefined)), gate, () => {}),
+        stopHooks(
+          chatMode(fixedChatSummary(undefined)),
+          gate,
+          () => {},
+          () => {
+            blocks += 1
+          },
+        ),
         false,
       ),
     ).toEqual({})
+    expect(blocks).toBe(0)
   })
 
   it("effort.level が読めたら setting-confirmed（effort）を流す（仕事でも雑談でも）", async () => {
@@ -158,6 +196,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
           () => false,
         ),
         (event) => workEvents.push(event),
+        () => {},
       ),
       false,
       "high",
@@ -173,6 +212,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
           () => false,
         ),
         (event) => chatEvents.push(event),
+        () => {},
       ),
       false,
       "low",
@@ -190,6 +230,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
           () => false,
         ),
         (event) => withoutEffort.push(event),
+        () => {},
       ),
       false,
     )
@@ -204,6 +245,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
           () => false,
         ),
         (event) => unknownLevel.push(event),
+        () => {},
       ),
       false,
       "未来の段",

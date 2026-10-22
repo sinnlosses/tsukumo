@@ -32,6 +32,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   reportUsageFailure: () => {},
   reportWorkflowTwFailure: () => {},
   reportHandbackHeadMismatch: () => {},
+  reportGateBlock: () => {},
 }
 
 describe("buildQuerySeedOptions", () => {

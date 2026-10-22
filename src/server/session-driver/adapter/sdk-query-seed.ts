@@ -242,6 +242,7 @@ export function stopHooks(
   mode: SessionMode,
   gate: ReportGate,
   onEvent: (event: SessionEvent) => void,
+  reportGateBlock: () => void,
 ): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
   return {
     Stop: [
@@ -257,7 +258,11 @@ export function stopHooks(
             }
             await setImmediate()
             const verdict = gate.verdict(input.stop_hook_active)
-            return verdict.kind === "block" ? { decision: "block", reason: verdict.reason } : {}
+            if (verdict.kind !== "block") {
+              return {}
+            }
+            reportGateBlock()
+            return { decision: "block", reason: verdict.reason }
           },
         ],
       },

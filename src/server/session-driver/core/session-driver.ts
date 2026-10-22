@@ -252,6 +252,8 @@ export type SessionDriverOptions = {
   readonly reportWorkflowTwFailure: (place: WorkflowTwFailurePlace) => void
   /** 委譲先の返却が包みの頭で見分けられなかった（注記が溜まったまま、頭の合わない入力が届いた）ことを診断ログへ書く口。ここで例外を投げないこと。 */
   readonly reportHandbackHeadMismatch: () => void
+  /** `report` の関所が `Stop` を止めたことを診断ログへ書く口。ここで例外を投げないこと。 */
+  readonly reportGateBlock: () => void
 }
 
 /** `tw` の hook を走らせて失敗した場所。サブコマンド名と失敗の種類だけで、入出力は持たない。 */

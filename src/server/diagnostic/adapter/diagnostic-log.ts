@@ -18,6 +18,7 @@ import {
   promptDelayFootprintSchema,
   sessionEventFootprintSchema,
 } from "../../../shared/diagnostic/diagnostic-record.ts"
+import { reportGateBlockFootprintSchema } from "../../../shared/diagnostic/report-gate-block.ts"
 import { swallowedFailureFootprintSchema } from "../../../shared/diagnostic/swallowed-failure.ts"
 import { synopsisTrimFootprintSchema } from "../../../shared/diagnostic/synopsis-trim.ts"
 import { welcomeWritingFootprintSchema } from "../../../shared/diagnostic/welcome-writing.ts"
@@ -47,6 +48,7 @@ const diagnosticRecordSchema = z.discriminatedUnion("flow", [
   promptDelayFootprintSchema.extend(VERSION),
   welcomeWritingFootprintSchema.extend(VERSION),
   synopsisTrimFootprintSchema.extend(VERSION),
+  reportGateBlockFootprintSchema.extend(VERSION),
 ])
 
 /** 書き込んでよいのはこの下だけ。 */

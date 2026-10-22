@@ -148,6 +148,15 @@ describe("createDiagnosticLog", () => {
     expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([trim])
   })
 
+  it("report の関所が止めたこと（report-gate-block）も往復する", () => {
+    const log = createDiagnosticLog(root())
+    const block: DiagnosticEntry = { flow: "report-gate-block", at: at(10, 0) }
+
+    log.append([block])
+
+    expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([block])
+  })
+
   it("壊れた行・版が違う行・知らない種類の行は読み飛ばす", () => {
     const path = join(root(), "2026-09-22.jsonl")
     mkdirSync(root(), { recursive: true })

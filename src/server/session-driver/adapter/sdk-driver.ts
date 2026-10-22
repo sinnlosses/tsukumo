@@ -134,7 +134,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       hooks: withLapHook(
         withAskGuard(
           {
-            ...stopHooks(options.mode, reportGate, options.onEvent),
+            ...stopHooks(options.mode, reportGate, options.onEvent, options.reportGateBlock),
             ...preToolUseHooks(
               callReview.gateRaised,
               callReview.bandPosition,
