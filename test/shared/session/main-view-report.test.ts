@@ -7,9 +7,13 @@ import {
   reportSectionsOfBody,
 } from "../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../src/shared/report/report-check.ts"
-import { SECTIONS_START_MARKDOWN as SECTIONS_START } from "../../../src/shared/report/report-markdown.ts"
+import {
+  SECTION_BREAK_MARKDOWN as SECTION_BREAK,
+  SECTIONS_START_MARKDOWN as SECTIONS_START,
+} from "../../../src/shared/report/report-markdown.ts"
 import type { ReportTask } from "../../../src/shared/report/report-task.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
+import { reportBodyHeadings } from "../../../src/shared/session/main-view-report-body.ts"
 import type { MainViewStep } from "../../../src/shared/session/main-view-shape.ts"
 import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
@@ -147,6 +151,56 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(order.every((index) => index !== undefined && index >= 0)).toBe(true)
   })
 
+  it("欄は頭・節（並びの位置を ID に持つ）・振り返り・お願いに分かれ、連結した本文はそれを順に並べたもの", () => {
+    const turn = turnOf(
+      [
+        ask,
+        reportEvent({
+          toolUseId: "toolu_r1",
+          conclusion: "架空の結論。",
+          sections: [
+            {
+              heading: " 架空の節A ",
+              shapeTag: "unspecified",
+              blocks: [{ kind: "text", text: "架空の本文A。", fold: "", aside: "" }],
+            },
+            {
+              heading: "",
+              shapeTag: "unspecified",
+              blocks: [{ kind: "text", text: "架空の本文B。", fold: "", aside: "" }],
+            },
+          ],
+          retrospective: { kind: "recorded", summary: "架空の結果。", drafts: [] },
+          favor: "架空のお願い",
+        }),
+        finished,
+      ],
+      SETTLED,
+      true,
+    )
+
+    const body = turn?.steps[0]?.body
+    const regions = body?.kind === "text" ? body.report : undefined
+    const retrospective =
+      '<div class="retrospective">\n\n<div class="retrospective-label">振り返り</div>\n\n架空の結果。\n\n</div>'
+    expect(regions).toEqual({
+      kind: "regions",
+      head: lead("架空の結論。"),
+      finalHead: lead("架空の結論。"),
+      sections: [
+        { id: 0, heading: "架空の節A", markdown: "## 架空の節A\n\n架空の本文A。" },
+        { id: 1, heading: "", markdown: "架空の本文B。" },
+      ],
+      retrospective,
+      favor: { id: "favor-toolu_r1", markdown: "架空のお願い" },
+    })
+    expect(shownReports(turn)).toEqual([
+      `${lead("架空の結論。")}\n\n${SECTIONS_START}\n\n## 架空の節A\n\n架空の本文A。\n\n` +
+        `${SECTION_BREAK}\n\n架空の本文B。\n\n${retrospective}\n\n` +
+        '<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>',
+    ])
+  })
+
   it("body は整形してから組む（落とせる行は描かず、残りと favor はそのまま）", () => {
     const turn = turnOf(
       [
@@ -237,7 +291,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     })
   })
 
-  it("本文の `headings` は節の `heading` の字そのもの（記号を含んでも逃がさない）で、見出しの無い節は数えない", () => {
+  it("本文の節の見出しの並びは節の `heading` の字そのもの（記号を含んでも逃がさない）で、見出しの無い節は数えない", () => {
     const heading = "`tw accept` の判定 a<b & *c* _d_ [e](x) \\f"
     const turn = turnOf(
       [
@@ -268,7 +322,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     const body = turn?.steps.find((step) => step.body.kind === "text")?.body
-    expect(body?.kind === "text" ? body.headings : undefined).toEqual([heading])
+    expect(body?.kind === "text" ? reportBodyHeadings(body.report) : undefined).toEqual([heading])
   })
 
   describe("figure", () => {

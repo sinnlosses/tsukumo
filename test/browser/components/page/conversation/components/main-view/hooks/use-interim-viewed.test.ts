@@ -13,9 +13,14 @@ const INTERIM_STEP: MainViewStep = {
   id: 0,
   body: {
     kind: "text",
-    headings: ["一"],
-    report: "",
-    finalReport: "",
+    report: {
+      kind: "regions",
+      head: "",
+      finalHead: "",
+      sections: [{ id: 0, heading: "一", markdown: "## 一" }],
+      retrospective: "",
+      favor: { id: "favor-toolu_fictional", markdown: "" },
+    },
     firstLine: "",
     task: { kind: "none" },
     finishedPhase: { kind: "none" },

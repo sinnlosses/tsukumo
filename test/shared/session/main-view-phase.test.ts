@@ -38,9 +38,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     expect(step?.superseded).toBe(false)
     expect(step?.body).toEqual({
       kind: "text",
-      headings: [],
-      report: "架空のまとめ。",
-      finalReport: "架空のまとめ。",
+      report: { kind: "markdown", markdown: "架空のまとめ。" },
       firstLine: "1/2 架空の段A",
       task: { kind: "none" },
       finishedPhase: {
@@ -120,9 +118,7 @@ describe("mainViewTurns（段が移ったときの中間レポート）", () => 
     expect(turn?.steps.length).toBe(1)
     expect(turn?.steps.at(-1)?.body).toEqual({
       kind: "text",
-      headings: [],
-      report: "架空のまとめ。",
-      finalReport: "架空のまとめ。",
+      report: { kind: "markdown", markdown: "架空のまとめ。" },
       firstLine: "1/2 架空の段A",
       task: { kind: "none" },
       finishedPhase: {

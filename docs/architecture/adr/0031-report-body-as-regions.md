@@ -7,8 +7,9 @@
 
 ## 何が困っていたか
 
-`report` の引数は構造化されているのに、`src/shared/session/main-view-entry.ts` の `reportMarkdown` が
-それを1本の文字列に連結していた。
+`report` の引数は構造化されているのに、`src/shared/session/main-view-entry.ts` が
+それを1本の文字列に連結していた（移行の段1で、欄に組む `reportRegionsOf` と、欄から文字列を導く
+`src/shared/session/main-view-report-body.ts` の `reportBodyMarkdown` に分けた）。
 
 - `conclusion` は `<div class="conclusion">`・`<div class="conclusion-lead">` で、`favor` は
   `<div class="note note-favor">` で、モデルの書いた文字のまま包む（逃がさない）

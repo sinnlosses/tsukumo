@@ -3,13 +3,12 @@
 
 import { sectionsWithFigure } from "../report/report-block.ts"
 import { reportChecksMarkdown } from "../report/report-check.ts"
-import { htmlAttribute } from "../report/report-inline-markdown.ts"
-import { reportSectionsMarkdown, SECTIONS_START_MARKDOWN } from "../report/report-markdown.ts"
+import { reportSectionMarkdowns } from "../report/report-markdown.ts"
 import { phaseTimesMarkdown } from "../report/report-phase-time.ts"
 import { retrospectiveMarkdown } from "../report/report-retrospective.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"
 import { isBlankText } from "../utils/blank-text.ts"
-import type { MainViewEntry } from "./main-view-shape.ts"
+import type { MainViewEntry, MainViewReportRegions } from "./main-view-shape.ts"
 import { finishedPhaseDuration, phaseDurations } from "./phase-duration.ts"
 import type { SessionRecord } from "./session-record.ts"
 import type { SessionState } from "./session-state.ts"
@@ -115,11 +114,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
     return [
       {
         kind: "report",
-        headings: reportSectionsOf(record, context)
-          .map((section) => section.heading.trim())
-          .filter((heading) => heading !== ""),
-        markdown: reportMarkdown(record, context, false),
-        finalMarkdown: reportMarkdown(record, context, true),
+        regions: reportRegionsOf(record, context),
         conclusion: record.conclusion,
         task: record.task,
         changeSummary: record.changeSummary,
@@ -134,53 +129,53 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 }
 
 /**
- * `report` の引数を、`conclusion` → 合図の行と段ごとの所要時間 → 節の始まりの印 → `figure` の図 → `sections` → `favor` の順に1つの本文へ組む。
- * 印は結論か合図の行か段ごとの所要時間があり、図か節が1つ以上あるときだけ置く。
+ * `report` の引数を欄に組む。頭は `conclusion` → 合図の行と段ごとの所要時間の順で、節は `figure` の図 → `sections` の順。
  * `figure` の図は見出しの無い先頭の節として描き（`sectionsWithFigure`）、図の番号は `sections` の図と通しで振られる。`none` は何も描かない。
- * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は `withPhaseTimes` のときだけ、同じ依頼のワークプランから描く。
+ * 合図の行と段ごとの所要時間は {@link statusMarkdown}。段ごとの所要時間は最終のときの頭にだけ、同じ依頼のワークプランから描く。
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
- * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
- * 空の `sections` / `favor` と、欄の無い `retrospective` は塊ごと置かない。
- * `retrospective` の塊は `sections` の後ろ・`favor` の前に置く（{@link retrospectiveMarkdown}）。
  * `favor` の塊は `favor-<toolUseId>` の `id` を持ち、合図の行の総括行にある印がそこへ飛ぶ。
+ * 中身の無い節は欄にしない。欄の無い `retrospective` は空文字にする（{@link retrospectiveMarkdown}）。
  * `conclusion` は、`task` のあるレポートでは見出しの下の一文として `conclusion` の印で、無いレポートでは見出しの代わりとして `conclusion-lead` の印で包む（`task` そのものは本文に組まない）。
  *
  * 節の並びはここで整形する（{@link tidyReportSections}。記録は引数のまま持ち、描くたびに導く）。
  */
-function reportMarkdown(
+function reportRegionsOf(
   report: Extract<SessionRecord, { readonly kind: "report" }>,
   context: TurnContext,
-  withPhaseTimes: boolean,
-): string {
+): MainViewReportRegions {
   const favorId = `favor-${report.toolUseId}`
-  const head = [
-    isBlankText(report.conclusion)
-      ? ""
-      : `<div class="${report.task.kind === "task" ? "conclusion" : "conclusion-lead"}">\n\n${report.conclusion}\n\n</div>`,
-    statusMarkdown(
-      reportChecksMarkdown(
-        report.checks,
-        (command) => bashCommandDuration(context, command),
-        isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
+  const head = (withPhaseTimes: boolean) =>
+    [
+      isBlankText(report.conclusion)
+        ? ""
+        : `<div class="${report.task.kind === "task" ? "conclusion" : "conclusion-lead"}">\n\n${report.conclusion}\n\n</div>`,
+      statusMarkdown(
+        reportChecksMarkdown(
+          report.checks,
+          (command) => bashCommandDuration(context, command),
+          isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", id: favorId },
+        ),
+        withPhaseTimes ? phaseTimesMarkdown(phaseDurations(context.plans, report.time)) : "",
       ),
-      withPhaseTimes ? phaseTimesMarkdown(phaseDurations(context.plans, report.time)) : "",
-    ),
-  ].filter((part) => !isBlankText(part))
-  const sections = reportSectionsMarkdown(reportSectionsOf(report, context), {
+    ]
+      .filter((part) => !isBlankText(part))
+      .join("\n\n")
+  const sections = reportSectionsOf(report, context)
+  const markdowns = reportSectionMarkdowns(sections, {
     kind: "shelved",
     toolUseId: report.toolUseId,
   })
-  return [
-    ...head,
-    head.length > 0 && !isBlankText(sections) ? SECTIONS_START_MARKDOWN : "",
-    sections,
-    retrospectiveMarkdown(report.retrospective),
-    isBlankText(report.favor)
-      ? ""
-      : `<div class="note note-favor" id="${htmlAttribute(favorId)}">\n\n${report.favor}\n\n</div>`,
-  ]
-    .filter((part) => !isBlankText(part))
-    .join("\n\n")
+  return {
+    kind: "regions",
+    head: head(false),
+    finalHead: head(true),
+    sections: sections.flatMap((section, id) => {
+      const markdown = markdowns[id] ?? ""
+      return markdown === "" ? [] : [{ id, heading: section.heading.trim(), markdown }]
+    }),
+    retrospective: retrospectiveMarkdown(report.retrospective),
+    favor: { id: favorId, markdown: report.favor },
+  }
 }
 
 /** 本文に描く節。`figure` を先頭の節にし、整形（{@link tidyReportSections}）したあとの並び。 */

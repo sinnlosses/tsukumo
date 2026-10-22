@@ -34,9 +34,7 @@ function step(
     id,
     body: {
       kind: "text",
-      headings: [],
-      report: `本文${String(id)}`,
-      finalReport: `本文${String(id)}`,
+      report: { kind: "markdown", markdown: `本文${String(id)}` },
       firstLine: overrides.firstLine,
       task: { kind: "none" },
       finishedPhase: overrides.finishedPhase,

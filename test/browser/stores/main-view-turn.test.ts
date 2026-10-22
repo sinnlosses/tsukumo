@@ -57,9 +57,7 @@ describe("mainViewTurnsOf", () => {
   it("書きかけが片付けば締めの本文を出す", () => {
     expect(mainViewTurnsOf(FIXTURE_STATE)[0]?.steps.at(-1)?.body).toEqual({
       kind: "text",
-      headings: [],
-      report: "架空のレポート",
-      finalReport: "架空のレポート",
+      report: { kind: "markdown", markdown: "架空のレポート" },
       firstLine: "架空のレポート",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },

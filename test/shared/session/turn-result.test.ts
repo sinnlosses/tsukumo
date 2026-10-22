@@ -11,9 +11,7 @@ function reportStep(id: number, task: ReportTask): MainViewStep {
     id,
     body: {
       kind: "text",
-      headings: [],
-      report: "架空のレポート",
-      finalReport: "架空のレポート",
+      report: { kind: "markdown", markdown: "架空のレポート" },
       firstLine: "架空のレポート",
       task,
       finishedPhase: { kind: "none" },

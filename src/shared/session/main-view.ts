@@ -5,6 +5,7 @@ import { sum } from "remeda"
 
 import { NO_REPORT_CHANGE_SUMMARY } from "../report/report-change-summary.ts"
 import { isBlankText } from "../utils/blank-text.ts"
+import { finalReportBody, reportBodyMarkdown } from "./main-view-report-body.ts"
 import {
   type MainViewEntry,
   type MainViewStep,
@@ -76,7 +77,10 @@ export function mainViewTurns(
 function selectLastText(turn: MainViewTurn, settled: boolean): MainViewTurn {
   const lastId = settled
     ? turn.steps.findLast(
-        (step) => !step.interim && step.body.kind === "text" && !isBlankText(step.body.report),
+        (step) =>
+          !step.interim &&
+          step.body.kind === "text" &&
+          !isBlankText(reportBodyMarkdown(step.body.report)),
       )?.id
     : undefined
   return {
@@ -149,7 +153,7 @@ function markSupersededSteps(turn: MainViewTurn): MainViewTurn {
  * 2つに分かれているのは、箱とラベルで条件が違うため。
  * 最終レポートなら常に箱を外し、ラベル（「最終レポート」）は中間レポートのあるやり取りか、本文に `task` があるときだけ出す。
  *
- * 印を立てた本文は `report` を `finalReport` に入れ替える（段ごとの所要時間を出すのは最終レポートだけ）。
+ * 印を立てた本文は頭を最終のときの頭に替える（段ごとの所要時間を出すのは最終レポートだけ。{@link finalReportBody}）。
  * 変更の札は印を立てた `task` のある本文にだけ残し、ほかの本文では `none` に戻す。
  *
  * `closed` が false のとき（{@link mainViewTurns} の同名の引数）は `final` を1つも立てない。
@@ -179,7 +183,7 @@ function markFinalReport(turn: MainViewTurn, closed: boolean): MainViewTurn {
         step.body.task.kind === "task" ? step.body.changeSummary : NO_REPORT_CHANGE_SUMMARY
       return {
         ...step,
-        body: { ...step.body, report: step.body.finalReport, changeSummary },
+        body: { ...step.body, report: finalReportBody(step.body.report), changeSummary },
         final: true,
       }
     }),

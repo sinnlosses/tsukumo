@@ -41,19 +41,15 @@ export type MainViewEntry =
     }
   | { readonly kind: "detail"; readonly markdown: string }
   /**
-   * `report` ツールで受け取ったレポート。引数はここで1つの本文に組んである（`reportMarkdown`）。
+   * `report` ツールで受け取ったレポート。引数はここで欄に組んである（`reportRegionsOf`）。
    * `detail` と分けてあるのは、このレポートがあるやり取りでは本文（`detail`）を出さないため（`selectToolReports`）。
    * `task` は本文に組まず、描く側が目録の1行と見出しに出す。
    * `conclusion` は組む前の結論で、畳んだときの先頭行に使う（`groupIntoSteps`）。
-   * `finalMarkdown` は最終レポートになったときの本文で、`markdown` に段ごとの所要時間を足したもの。
    * `changeSummary` は記録の変更の札をそのまま通したもの。
-   * `headings` は描く節の `heading`（整形のあと・空の見出しを除いた字そのもの）の並び。
    */
   | {
       readonly kind: "report"
-      readonly headings: readonly string[]
-      readonly markdown: string
-      readonly finalMarkdown: string
+      readonly regions: MainViewReportRegions
       readonly conclusion: string
       readonly task: ReportTask
       readonly changeSummary: ReportChangeSummary
@@ -80,6 +76,37 @@ export type MainViewEntry =
    */
   | { readonly kind: "aside"; readonly text: string }
   | { readonly kind: "aside-answer"; readonly text: string }
+
+/**
+ * `report` ツールの本文の欄の並び。連結した Markdown は欄から導く（`reportBodyMarkdown`）。
+ * `head` は結論と合図の行、`finalHead` は最終レポートのときの頭で、`head` に段ごとの所要時間を足したもの。
+ * `sections` は中身のある節だけを並べる。
+ * `retrospective` は振り返りの塊の Markdown（無ければ空文字）。
+ * `favor` はお願いの本文（無ければ空文字）と、合図の行の印が飛ぶ先の `id`。
+ */
+export type MainViewReportRegions = {
+  readonly kind: "regions"
+  readonly head: string
+  readonly finalHead: string
+  readonly sections: readonly MainViewReportSection[]
+  readonly retrospective: string
+  readonly favor: { readonly id: string; readonly markdown: string }
+}
+
+/**
+ * 節の欄。`id` は整形して図を先頭に足したあとの節の並びの位置。
+ * `heading` は節の `heading` の字そのもの（前後の空白を除く。見出しの無い節は空文字）。
+ */
+export type MainViewReportSection = {
+  readonly id: number
+  readonly heading: string
+  readonly markdown: string
+}
+
+/** メインビューの本文。`report` ツールの本文は欄の並びで、ほかの本文（`detail`・段のまとめ）は Markdown 1本の欄。 */
+export type MainViewReportBody =
+  | MainViewReportRegions
+  | { readonly kind: "markdown"; readonly markdown: string }
 
 export type MainViewToolRun = Extract<MainViewEntry, { readonly kind: "tool" }>
 export type MainViewQuestion = Extract<MainViewEntry, { readonly kind: "question" }>
@@ -141,17 +168,14 @@ export type MainViewPhaseLabel =
  * `firstLine` は畳んだときの `<summary>` に出す1行で、段のまとめなら終えた段の見出し、`report` なら結論（空なら作業の名前）、どちらも無ければ本文の先頭行（`extractFirstLine`）。
  * `task` は目録の1行と見出しに出すタスクで、`report` ツールの外の本文では常に `none`。
  * `finishedPhase` は目録の1行に添える終えた段の見出しで、段のまとめだけが持つ。
- * `finalReport` は最終レポートの印が立ったときに `report` と入れ替える本文（`markFinalReport`）。違うのは `report` ツールの本文の段ごとの所要時間だけ。
+ * `report` は最終レポートの印が立つと、頭を最終のときの頭に替える（`markFinalReport`）。
  * `changeSummary` は目録の末尾に出す変更の札。`task` のある最終レポートだけが数を持ち、ほかは `none`（`markFinalReport`）。
  */
 export type MainViewStepBody =
   | { readonly kind: "none" }
   | {
       readonly kind: "text"
-      /** `report` ツールの本文なら描く節の見出しの字（{@link MainViewEntry} の `report` の `headings`）。ほかの本文は空。 */
-      readonly headings: readonly string[]
-      readonly report: string
-      readonly finalReport: string
+      readonly report: MainViewReportBody
       readonly firstLine: string
       readonly task: ReportTask
       readonly finishedPhase: MainViewPhaseLabel

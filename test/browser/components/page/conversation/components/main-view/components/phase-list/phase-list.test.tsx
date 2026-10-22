@@ -30,9 +30,7 @@ function interim(id: number, title: string, seconds: number, skipped = false): M
     id,
     body: {
       kind: "text",
-      headings: [],
-      report: `${title}の本文`,
-      finalReport: `${title}の本文`,
+      report: { kind: "markdown", markdown: `${title}の本文` },
       firstLine: title,
       task: { kind: "none" },
       finishedPhase: {

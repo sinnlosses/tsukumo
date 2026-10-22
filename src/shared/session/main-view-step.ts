@@ -6,6 +6,7 @@ import { NO_REPORT_TASK } from "../report/report-task.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { clipWithEllipsis } from "../utils/clip-text.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
+import { reportBodyMarkdown } from "./main-view-report-body.ts"
 import {
   type MainViewAction,
   type MainViewAside,
@@ -87,9 +88,10 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
         const task = entry.kind === "report" ? entry.task : NO_REPORT_TASK
         const body = {
           kind: "text",
-          headings: entry.kind === "report" ? entry.headings : [],
-          report: entry.markdown,
-          finalReport: entry.kind === "report" ? entry.finalMarkdown : entry.markdown,
+          report:
+            entry.kind === "report"
+              ? entry.regions
+              : { kind: "markdown", markdown: entry.markdown },
           firstLine: extractFirstLine(firstLineSource(entry)),
           task,
           finishedPhase: NO_PHASE_LABEL,
@@ -197,9 +199,7 @@ function phaseShiftStep(id: number, shift: PhaseShift, duration: MeasuredTime): 
       ? NO_BODY
       : {
           kind: "text",
-          headings: [],
-          report: shift.finished.summary,
-          finalReport: shift.finished.summary,
+          report: { kind: "markdown", markdown: shift.finished.summary },
           firstLine: extractFirstLine(shift.finished.label),
           task: NO_REPORT_TASK,
           finishedPhase: {
@@ -235,7 +235,7 @@ function firstLineSource(
   if (!isBlankText(entry.conclusion)) {
     return entry.conclusion
   }
-  return entry.task.kind === "task" ? entry.task.name : entry.markdown
+  return entry.task.kind === "task" ? entry.task.name : reportBodyMarkdown(entry.regions)
 }
 
 /**

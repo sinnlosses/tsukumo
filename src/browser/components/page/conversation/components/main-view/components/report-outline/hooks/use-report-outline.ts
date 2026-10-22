@@ -385,7 +385,7 @@ function outlineRows(
 
 /**
  * `section` の行が、一覧の `section` の行の何番目か（0 始まり）。
- * 描いた字ではなく並びの位置で、レポートの節の見出しの並び（`MainViewStepBody.headings`）と突き合わせる。
+ * 描いた字ではなく並びの位置で、レポートの節の見出しの並び（`reportBodyHeadings`）と突き合わせる。
  */
 function sectionOrdinalOf(entries: readonly ReportOutlineEntry[], index: number): number {
   return entries.slice(0, index + 1).filter((entry) => entry.level === "section").length - 1

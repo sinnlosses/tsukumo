@@ -4,6 +4,10 @@ import { describe, expect, it } from "vitest"
 import type { ReportCheck } from "../../../src/shared/report/report-check.ts"
 import { SECTIONS_START_MARKDOWN as SECTIONS_START } from "../../../src/shared/report/report-markdown.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
+import type {
+  MainViewReportRegions,
+  MainViewReportSection,
+} from "../../../src/shared/session/main-view-shape.ts"
 import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import { applySessionEvent } from "../../../src/shared/session/session-fold.ts"
@@ -26,6 +30,19 @@ import {
   turnOf,
 } from "../../fixture/main-view-report.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
+
+/** 段ごとの所要時間も振り返りもお願いも無い `report` の欄（頭と最終のときの頭が同じ）。 */
+const regionsOf = (
+  head: string,
+  sections: readonly MainViewReportSection[],
+): MainViewReportRegions => ({
+  kind: "regions",
+  head,
+  finalHead: head,
+  sections,
+  retrospective: "",
+  favor: { id: "favor-toolu_r1", markdown: "" },
+})
 
 describe("mainViewTurns（report ツールで受け取ったレポート）", () => {
   it("checks は結論のすぐ下の合図の行に組み、総括行の印が末尾のお願いの塊を指す。お願いの本文は末尾のまま", () => {
@@ -230,6 +247,38 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(final?.endsWith(`</div>\n\n${SECTIONS_START}\n\n架空の根拠。`)).toBe(true)
   })
 
+  it("段ごとの所要時間は最終のときの頭にだけ入り、最終レポートの印が立つと本文の頭がそれに替わる", () => {
+    const plan = (current: number, phaseSummary: string): SessionEvent => ({
+      kind: "work-plan",
+      delegatedRange: { kind: "none" },
+      skippedPhases: [],
+      awaitingSummary: { kind: "none" },
+      phases: ["架空の段A", "架空の段B"],
+      current,
+      finishedInGroup: [],
+      phaseSummary,
+    })
+    const events = [
+      ask,
+      plan(0, ""),
+      plan(1, "架空のまとめ。"),
+      report("架空の結論。", "架空の根拠。"),
+      finished,
+    ]
+    const entry = mainViewEntries(fold(events)).find((each) => each.kind === "report")
+    const regions = entry?.kind === "report" ? entry.regions : undefined
+    const [summary, final] = (turnOf(events, SETTLED, true)?.steps ?? []).flatMap((step) =>
+      step.body.kind === "text" ? [step.body.report] : [],
+    )
+
+    expect(regions?.head).toBe(lead("架空の結論。"))
+    expect(regions?.finalHead).toMatch(
+      new RegExp(`^${lead("架空の結論。")}\n\n<div class="status">\n\n<div class="phase-times">`),
+    )
+    expect(summary).toEqual({ kind: "markdown", markdown: "架空のまとめ。" })
+    expect(final).toEqual({ ...regions, head: regions?.finalHead })
+  })
+
   it("やり取りが閉じていないあいだの report には、段ごとの所要時間の帯と一覧を出さない", () => {
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",
@@ -311,9 +360,9 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
-      headings: [],
-      report: `<div class="conclusion">\n\n架空の結論。\n\n</div>\n\n${SECTIONS_START}\n\n架空の根拠。`,
-      finalReport: `<div class="conclusion">\n\n架空の結論。\n\n</div>\n\n${SECTIONS_START}\n\n架空の根拠。`,
+      report: regionsOf(`<div class="conclusion">\n\n架空の結論。\n\n</div>`, [
+        { id: 0, heading: "", markdown: "架空の根拠。" },
+      ]),
       firstLine: "架空の結論。",
       task,
       finishedPhase: { kind: "none" },
@@ -369,9 +418,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual([lead("架空の結論。")])
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
-      headings: [],
-      report: lead("架空の結論。"),
-      finalReport: lead("架空の結論。"),
+      report: regionsOf(lead("架空の結論。"), []),
       firstLine: "架空の結論。",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
@@ -406,9 +453,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
-      headings: [],
-      report: lead("唯一の結論。"),
-      finalReport: lead("唯一の結論。"),
+      report: regionsOf(lead("唯一の結論。"), []),
       firstLine: "唯一の結論。",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },

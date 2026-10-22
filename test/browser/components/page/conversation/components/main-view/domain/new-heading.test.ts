@@ -19,9 +19,18 @@ function textStep(
     id,
     body: {
       kind: "text",
-      headings,
-      report: "",
-      finalReport: "",
+      report: {
+        kind: "regions",
+        head: "",
+        finalHead: "",
+        sections: headings.map((heading, index) => ({
+          id: index,
+          heading,
+          markdown: `## ${heading}`,
+        })),
+        retrospective: "",
+        favor: { id: "favor-toolu_fictional", markdown: "" },
+      },
       firstLine: "",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },

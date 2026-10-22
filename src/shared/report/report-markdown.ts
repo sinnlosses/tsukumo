@@ -32,7 +32,7 @@ import { statMarkdown } from "./report-stat-markdown.ts"
 import { matrixMarkdown, tableMarkdown } from "./report-table-markdown.ts"
 
 /** 節と節の境目に置く、見た目を持たない印。書き上げる演出（`planReveal`）がこれで節を1トピックに割る。 */
-const SECTION_BREAK_MARKDOWN = '<div class="report-section-break"></div>'
+export const SECTION_BREAK_MARKDOWN = '<div class="report-section-break"></div>'
 
 /** 結論と検証結果のあと、最初の節の前に置く印。書き上げる演出は、この印より後ろだけを筆の対象にする。 */
 export const SECTIONS_START_MARKDOWN = '<div class="report-sections-start"></div>'
@@ -52,15 +52,28 @@ type GutterGroup = {
 
 /**
  * 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間に {@link SECTION_BREAK_MARKDOWN} を挟む。
- * 題を持つ塊（図 6種・表 2種）は、節をまたいで並びの順に数えた「図 n」「表 n」の番号を1回だけ受け取る（{@link foldedBlockMarkdown}）。
- * 番号は題が空でも、`fold` の中でも数える。
- * 塊の `aside` と `memo` の `note` は傍注になり、直前の塊と一緒に包む（{@link gutterGroupMarkdown}）。
- * `memo` の `note` は本文の位置に残さない。節の最初の `memo` は塊の無い包みになる。
+ * 節ごとの組み方は {@link reportSectionMarkdowns}。
  */
 export function reportSectionsMarkdown(
   sections: readonly ReportSection[],
   imageSource: ReportImageSource,
 ): string {
+  return reportSectionMarkdowns(sections, imageSource)
+    .filter((part) => part.trim() !== "")
+    .join(`\n\n${SECTION_BREAK_MARKDOWN}\n\n`)
+}
+
+/**
+ * 節ごとの Markdown。入力と同じ並び・同じ長さで、中身の無い節は空文字になる。
+ * 題を持つ塊（図 6種・表 2種）は、節をまたいで並びの順に数えた「図 n」「表 n」の番号を1回だけ受け取る（{@link foldedBlockMarkdown}）。
+ * 番号は題が空でも、`fold` の中でも数える。
+ * 塊の `aside` と `memo` の `note` は傍注になり、直前の塊と一緒に包む（{@link gutterGroupMarkdown}）。
+ * `memo` の `note` は本文の位置に残さない。節の最初の `memo` は塊の無い包みになる。
+ */
+export function reportSectionMarkdowns(
+  sections: readonly ReportSection[],
+  imageSource: ReportImageSource,
+): readonly string[] {
   const { parts } = sections.reduce<SectionsFold>(
     (acc, section) => {
       const blocks = section.blocks.reduce<{
@@ -94,13 +107,13 @@ export function reportSectionsMarkdown(
         ...blocks.groups.map(gutterGroupMarkdown),
       ])
       return {
-        parts: part.trim() === "" ? acc.parts : [...acc.parts, part],
+        parts: [...acc.parts, part.trim() === "" ? "" : part],
         counts: blocks.counts,
       }
     },
     { parts: [], counts: { figure: 0, table: 0 } },
   )
-  return parts.join(`\n\n${SECTION_BREAK_MARKDOWN}\n\n`)
+  return parts
 }
 
 /**

@@ -309,11 +309,14 @@ describe("toRestoredEvents", () => {
     expect(mainViewEntries(state).filter((entry) => entry.kind === "report")).toEqual([
       {
         kind: "report",
-        headings: [],
-        markdown:
-          '<div class="conclusion-lead">\n\n架空の結論。\n\n</div>\n\n<div class="report-sections-start"></div>\n\n架空の根拠。',
-        finalMarkdown:
-          '<div class="conclusion-lead">\n\n架空の結論。\n\n</div>\n\n<div class="report-sections-start"></div>\n\n架空の根拠。',
+        regions: {
+          kind: "regions",
+          head: '<div class="conclusion-lead">\n\n架空の結論。\n\n</div>',
+          finalHead: '<div class="conclusion-lead">\n\n架空の結論。\n\n</div>',
+          sections: [{ id: 0, heading: "", markdown: "架空の根拠。" }],
+          retrospective: "",
+          favor: { id: "favor-r-1", markdown: "" },
+        },
         conclusion: "架空の結論。",
         task: { kind: "none" },
         changeSummary: { kind: "none" },

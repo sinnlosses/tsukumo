@@ -13,9 +13,7 @@ export const TURN_ID = 5
 export function text(report: string): MainViewStepBody {
   return {
     kind: "text",
-    headings: [],
-    report,
-    finalReport: report,
+    report: { kind: "markdown", markdown: report },
     firstLine: report,
     task: { kind: "none" },
     finishedPhase: { kind: "none" },

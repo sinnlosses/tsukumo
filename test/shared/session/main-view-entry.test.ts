@@ -2,6 +2,10 @@
 import { describe, expect, it } from "vitest"
 
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
+import {
+  finalReportBody,
+  reportBodyMarkdown,
+} from "../../../src/shared/session/main-view-report-body.ts"
 import { type MainViewEntry, turnAsides } from "../../../src/shared/session/main-view-shape.ts"
 import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
@@ -60,9 +64,11 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
             ],
     })
   const reportMarkdowns = (entries: readonly MainViewEntry[]) =>
-    entries.flatMap((entry) => (entry.kind === "report" ? [entry.markdown] : []))
+    entries.flatMap((entry) => (entry.kind === "report" ? [reportBodyMarkdown(entry.regions)] : []))
   const finalMarkdowns = (entries: readonly MainViewEntry[]) =>
-    entries.flatMap((entry) => (entry.kind === "report" ? [entry.finalMarkdown] : []))
+    entries.flatMap((entry) =>
+      entry.kind === "report" ? [reportBodyMarkdown(finalReportBody(entry.regions))] : [],
+    )
 
   it("記録を足しても、前からある記録の結果は同じ参照のまま返る", () => {
     const before: readonly Timed[] = [

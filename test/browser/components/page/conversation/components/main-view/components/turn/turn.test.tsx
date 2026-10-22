@@ -89,9 +89,7 @@ describe("Turn（目録の1行と見出し）", () => {
   ): MainViewStepBody {
     return {
       kind: "text",
-      headings: [],
-      report,
-      finalReport: report,
+      report: { kind: "markdown", markdown: report },
       firstLine: report,
       task: TASK,
       finishedPhase: { kind: "none" },
@@ -207,9 +205,7 @@ describe("Turn（目録の1行と見出し）", () => {
     putSession(INITIAL_SESSION_STATE)
     const body: MainViewStepBody = {
       kind: "text",
-      headings: [],
-      report: "架空の本文",
-      finalReport: "架空の本文",
+      report: { kind: "markdown", markdown: "架空の本文" },
       firstLine: "架空の本文",
       task: { ...TASK, outcome },
       finishedPhase: { kind: "none" },
@@ -232,9 +228,7 @@ describe("Turn（畳んだ中間レポートの見出し）", () => {
       superseded: true,
       body: {
         kind: "text",
-        headings: [],
-        report: "架空のまとめ",
-        finalReport: "架空のまとめ",
+        report: { kind: "markdown", markdown: "架空のまとめ" },
         firstLine: `${String(id + 1)}/2 架空の段`,
         task: { kind: "none" },
         finishedPhase: {

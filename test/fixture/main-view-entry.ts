@@ -1,3 +1,4 @@
+import { reportBodyMarkdown } from "../../src/shared/session/main-view-report-body.ts"
 import type { MainViewEntry, MainViewStep } from "../../src/shared/session/main-view-shape.ts"
 import type { TurnBodies } from "../../src/shared/session/turn-progress.ts"
 
@@ -6,9 +7,9 @@ export const SETTLED = { report: false, utterance: false } as const satisfies Tu
 /** いま走っている SDK ターンで `report` もツールの外の本文も届いている。 */
 export const WRITING = { report: true, utterance: true } as const satisfies TurnBodies
 
-/** 本文を持つステップならその本文。持たなければ（ステップが無ければ）undefined。 */
+/** 本文を持つステップなら連結した本文。持たなければ（ステップが無ければ）undefined。 */
 export const reportOf = (step: MainViewStep | undefined) =>
-  step?.body.kind === "text" ? step.body.report : undefined
+  step?.body.kind === "text" ? reportBodyMarkdown(step.body.report) : undefined
 export const firstLineOf = (step: MainViewStep | undefined) =>
   step?.body.kind === "text" ? step.body.firstLine : undefined
 /** `task` の無い `report` の結論を包んだ形。 */
@@ -32,12 +33,17 @@ export const edit = (path: string): MainViewEntry => ({
     result: { kind: "succeeded" },
   },
 })
-/** `report` ツールで受け取ったレポート（引数を組んだあとの形）。中間レポートはここからしか生まれない。 */
+/** `report` ツールで受け取ったレポート（引数を組んだあとの形。本文は頭の欄だけ）。中間レポートはここからしか生まれない。 */
 export const toolReport = (markdown: string): MainViewEntry => ({
   kind: "report",
-  headings: [],
-  markdown,
-  finalMarkdown: markdown,
+  regions: {
+    kind: "regions",
+    head: markdown,
+    finalHead: markdown,
+    sections: [],
+    retrospective: "",
+    favor: { id: "favor-toolu_fictional", markdown: "" },
+  },
   conclusion: "",
   task: { kind: "none" },
   changeSummary: { kind: "none" },

@@ -7,6 +7,7 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { reportBodyMarkdown } from "../../../../../../../../shared/session/main-view-report-body.ts"
 import { BottomSheet } from "../../../../../../ui/bottom-sheet/bottom-sheet.tsx"
 import type { PhaseRow } from "../../domain/phase-row.ts"
 import { ReportHead } from "../report-head/report-head.tsx"
@@ -83,7 +84,7 @@ export function PresentationalPhaseList(props: {
               className=""
             />
             <Report
-              markdown={sheet.row.body.report}
+              markdown={reportBodyMarkdown(sheet.row.body.report)}
               reveal={false}
               turnId={props.turnId}
               className=""
