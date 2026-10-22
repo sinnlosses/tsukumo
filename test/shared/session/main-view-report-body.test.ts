@@ -2,8 +2,8 @@
 import { describe, expect, it } from "vitest"
 
 import type { ReportCheck } from "../../../src/shared/report/report-check.ts"
-import { SECTIONS_START_MARKDOWN as SECTIONS_START } from "../../../src/shared/report/report-markdown.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
+import { orderedReportRegions } from "../../../src/shared/session/main-view-report-body.ts"
 import type {
   MainViewReportRegions,
   MainViewReportSection,
@@ -80,13 +80,16 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       ),
     ).toBe(true)
     expect(shown).toContain('<span class="checks-summary-favor"><a href="#favor-toolu_r1">')
-    expect(shown.indexOf('href="#favor-toolu_r1"')).toBeLessThan(
-      shown.indexOf('id="favor-toolu_r1"'),
-    )
+    const body = turn?.steps[0]?.body
+    expect((body?.kind === "text" ? orderedReportRegions(body.report) : []).at(-1)).toEqual({
+      kind: "favor",
+      id: "favor-toolu_r1",
+      markdown: '<div class="note note-favor">\n\n架空のお願い\n\n</div>',
+    })
     expect(
       shown.endsWith(
-        `</div>\n\n</div>\n\n${SECTIONS_START}\n\n` +
-          '架空の根拠。\n\n<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>',
+        "</div>\n\n</div>\n\n" +
+          '架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
       ),
     ).toBe(true)
     expect(shown.split('<div class="status">')).toHaveLength(2)
@@ -244,7 +247,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(final).toContain(
       '<span class="phase-time-label"><span class="phase-time-num">2/2</span>架空の段B</span>',
     )
-    expect(final?.endsWith(`</div>\n\n${SECTIONS_START}\n\n架空の根拠。`)).toBe(true)
+    expect(final?.endsWith("</div>\n\n架空の根拠。")).toBe(true)
   })
 
   it("段ごとの所要時間は最終のときの頭にだけ入り、最終レポートの印が立つと本文の頭がそれに替わる", () => {
@@ -304,7 +307,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     const [, last] = shownReports(turn)
 
-    expect(last).toBe(`${lead("架空の結論。")}\n\n${SECTIONS_START}\n\n架空の根拠。`)
+    expect(last).toBe(`${lead("架空の結論。")}\n\n架空の根拠。`)
   })
 
   it("同じ依頼にワークプランがあるレポートは progress の塊を描かず、ワークプランが無いレポートは描く", () => {
@@ -383,7 +386,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(firstLineOf(turn?.steps.find((step) => step.final))).toBe("架空の作業")
   })
 
-  it("節の始まりの印は、結論か検証結果があり節もあるときだけ置く", () => {
+  it("結論の無いレポートは節だけ、節の無いレポートは結論だけを出す", () => {
     const sectionsOnly = turnOf([ask, report("", "架空の根拠。"), finished], SETTLED, true)
     const conclusionOnly = turnOf([ask, report("架空の結論だけ。"), finished], SETTLED, true)
 
@@ -395,8 +398,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const turn = turnOf([ask, report("架空の結論。", "", "架空のお願い"), finished], SETTLED, true)
 
     expect(shownReports(turn)).toEqual([
-      `${lead("架空の結論。")}\n\n` +
-        '<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>',
+      `${lead("架空の結論。")}\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>`,
     ])
   })
 
@@ -492,5 +494,53 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       [lead("前のターンの結論。")],
       ["テキストで書いた答え"],
     ])
+  })
+})
+
+describe("orderedReportRegions", () => {
+  it("report の本文は頭 → 節 → 振り返り → お願いの順に並べ、お願いは記法の塊で包んで飛ぶ先の id を欄に持たせる", () => {
+    expect(
+      orderedReportRegions({
+        kind: "regions",
+        head: "架空の頭",
+        finalHead: "架空の最終の頭",
+        sections: [
+          { id: 0, heading: "架空の節", markdown: "## 架空の節\n\n架空の一。" },
+          { id: 2, heading: "", markdown: "架空の二。" },
+        ],
+        retrospective: "架空の振り返り",
+        favor: { id: "favor-toolu_fictional", markdown: "架空のお願い" },
+      }),
+    ).toEqual([
+      { kind: "head", markdown: "架空の頭" },
+      { kind: "section", id: 0, markdown: "## 架空の節\n\n架空の一。" },
+      { kind: "section", id: 2, markdown: "架空の二。" },
+      { kind: "retrospective", markdown: "架空の振り返り" },
+      {
+        kind: "favor",
+        id: "favor-toolu_fictional",
+        markdown: '<div class="note note-favor">\n\n架空のお願い\n\n</div>',
+      },
+    ])
+  })
+
+  it("空白だけの欄は置かない", () => {
+    expect(
+      orderedReportRegions({
+        kind: "regions",
+        head: " ",
+        finalHead: "",
+        sections: [{ id: 0, heading: "", markdown: "架空の一。" }],
+        retrospective: "",
+        favor: { id: "favor-toolu_fictional", markdown: "\n" },
+      }),
+    ).toEqual([{ kind: "section", id: 0, markdown: "架空の一。" }])
+  })
+
+  it("Markdown 1本の本文は、空でなければ markdown の欄1つ", () => {
+    expect(orderedReportRegions({ kind: "markdown", markdown: "架空の本文" })).toEqual([
+      { kind: "markdown", markdown: "架空の本文" },
+    ])
+    expect(orderedReportRegions({ kind: "markdown", markdown: "  " })).toEqual([])
   })
 })

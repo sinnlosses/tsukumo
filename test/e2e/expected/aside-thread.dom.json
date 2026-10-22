@@ -282,9 +282,17 @@
                               },
                               "children": [
                                 {
-                                  "tag": "p",
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-report-region": "markdown"
+                                  },
                                   "children": [
-                                    "架空の計画は3つの段で、委譲先にそのまま渡せる形だった。"
+                                    {
+                                      "tag": "p",
+                                      "children": [
+                                        "架空の計画は3つの段で、委譲先にそのまま渡せる形だった。"
+                                      ]
+                                    }
                                   ]
                                 }
                               ]

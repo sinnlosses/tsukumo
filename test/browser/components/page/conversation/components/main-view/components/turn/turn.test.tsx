@@ -5,10 +5,12 @@ import { useComposerDraft } from "../../../../../../../../../src/browser/stores/
 import { useTaskBoardRequest } from "../../../../../../../../../src/browser/stores/task-board-request.ts"
 import type { ReportChangeSummary } from "../../../../../../../../../src/shared/report/report-change-summary.ts"
 import type {
+  MainViewReportBody,
   MainViewStep,
   MainViewStepBody,
 } from "../../../../../../../../../src/shared/session/main-view-shape.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../../../src/shared/session/session-state.ts"
+import { bodyMarkdownOf } from "../../../../../../../../fixture/main-view-entry.ts"
 import { step, text, turn } from "../../../../../../../../fixture/turn.ts"
 import { typedElement } from "../../../../../../../../typed-element.ts"
 import { putSession } from "../../../../../../../session-store.ts"
@@ -17,8 +19,8 @@ import { putSession } from "../../../../../../../session-store.ts"
 vi.mock(
   "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/report.tsx",
   () => ({
-    Report: (props: { readonly markdown: string }) => (
-      <div data-report-stub="yes">{props.markdown}</div>
+    Report: (props: { readonly body: MainViewReportBody }) => (
+      <div data-report-stub="yes">{bodyMarkdownOf(props.body)}</div>
     ),
   }),
 )

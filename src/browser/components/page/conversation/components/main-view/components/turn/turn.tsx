@@ -7,7 +7,6 @@ import clsx from "clsx"
 import { Fragment, useState, type ReactElement } from "react"
 
 import type { ReportTask } from "../../../../../../../../shared/report/report-task.ts"
-import { reportBodyMarkdown } from "../../../../../../../../shared/session/main-view-report-body.ts"
 import type {
   MainViewAction,
   MainViewStep,
@@ -252,7 +251,7 @@ function StepReport(props: StepReportProps): ReactElement | null {
         className={phoneHidden}
       />
       <Report
-        markdown={reportBodyMarkdown(step.body.report)}
+        body={step.body.report}
         reveal={props.reveal}
         turnId={props.turnId}
         className={phoneHidden}

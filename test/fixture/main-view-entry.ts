@@ -1,5 +1,9 @@
-import { reportBodyMarkdown } from "../../src/shared/session/main-view-report-body.ts"
-import type { MainViewEntry, MainViewStep } from "../../src/shared/session/main-view-shape.ts"
+import { orderedReportRegions } from "../../src/shared/session/main-view-report-body.ts"
+import type {
+  MainViewEntry,
+  MainViewReportBody,
+  MainViewStep,
+} from "../../src/shared/session/main-view-shape.ts"
 import type { TurnBodies } from "../../src/shared/session/turn-progress.ts"
 
 /** いちばん新しいやり取りの本文がどれも確定している（ターンが終わっている）。 */
@@ -7,9 +11,14 @@ export const SETTLED = { report: false, utterance: false } as const satisfies Tu
 /** いま走っている SDK ターンで `report` もツールの外の本文も届いている。 */
 export const WRITING = { report: true, utterance: true } as const satisfies TurnBodies
 
-/** 本文を持つステップなら連結した本文。持たなければ（ステップが無ければ）undefined。 */
+/** 本文の、描く順の欄の Markdown を空行でつないだもの。 */
+export const bodyMarkdownOf = (body: MainViewReportBody) =>
+  orderedReportRegions(body)
+    .map((region) => region.markdown)
+    .join("\n\n")
+/** 本文を持つステップなら {@link bodyMarkdownOf}。持たなければ（ステップが無ければ）undefined。 */
 export const reportOf = (step: MainViewStep | undefined) =>
-  step?.body.kind === "text" ? reportBodyMarkdown(step.body.report) : undefined
+  step?.body.kind === "text" ? bodyMarkdownOf(step.body.report) : undefined
 export const firstLineOf = (step: MainViewStep | undefined) =>
   step?.body.kind === "text" ? step.body.firstLine : undefined
 /** `task` の無い `report` の結論を包んだ形。 */

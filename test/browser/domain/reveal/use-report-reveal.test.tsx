@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, type RenderResult } from "@testing-library/react"
-import { Fragment, type ReactElement } from "react"
+import type { ReactElement } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { saveRevealSpeed } from "../../../../src/browser/domain/reveal-speed.ts"
@@ -27,11 +27,14 @@ function Probe(props: { readonly reveal: boolean; readonly bodyText: string }): 
 
   return (
     <div data-testid="root" ref={rootRef}>
-      <p className="conclusion">架空の結論</p>
-      <div className="report-sections-start" />
-      <p className="body">{props.bodyText}</p>
-      <div className="chart-block">
-        <canvas />
+      <div data-report-region="head">
+        <p className="conclusion">架空の結論</p>
+      </div>
+      <div data-report-region="section" data-report-section="0">
+        <p className="body">{props.bodyText}</p>
+        <div className="chart-block">
+          <canvas />
+        </div>
       </div>
     </div>
   )
@@ -250,10 +253,9 @@ function SectionsProbe(props: { readonly count: number }): ReactElement {
   return (
     <div data-testid="root" ref={rootRef}>
       {Array.from({ length: props.count }, (_unused, index) => (
-        <Fragment key={index}>
-          {index > 0 && <div className="report-section-break" />}
+        <div key={index} data-report-region="section" data-report-section={String(index)}>
           <p className="section">{"あ".repeat(100)}</p>
-        </Fragment>
+        </div>
       ))}
     </div>
   )

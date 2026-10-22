@@ -93,9 +93,17 @@
                               },
                               "children": [
                                 {
-                                  "tag": "p",
+                                  "tag": "div",
+                                  "attributes": {
+                                    "data-report-region": "markdown"
+                                  },
                                   "children": [
-                                    "答え待ちの箱を出す場面（架空）。答えると箱が消える。"
+                                    {
+                                      "tag": "p",
+                                      "children": [
+                                        "答え待ちの箱を出す場面（架空）。答えると箱が消える。"
+                                      ]
+                                    }
                                   ]
                                 }
                               ]

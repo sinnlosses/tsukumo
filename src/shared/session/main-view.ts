@@ -4,8 +4,7 @@
 import { sum } from "remeda"
 
 import { NO_REPORT_CHANGE_SUMMARY } from "../report/report-change-summary.ts"
-import { isBlankText } from "../utils/blank-text.ts"
-import { finalReportBody, reportBodyMarkdown } from "./main-view-report-body.ts"
+import { finalReportBody, orderedReportRegions } from "./main-view-report-body.ts"
 import {
   type MainViewEntry,
   type MainViewStep,
@@ -80,7 +79,7 @@ function selectLastText(turn: MainViewTurn, settled: boolean): MainViewTurn {
         (step) =>
           !step.interim &&
           step.body.kind === "text" &&
-          !isBlankText(reportBodyMarkdown(step.body.report)),
+          orderedReportRegions(step.body.report).length > 0,
       )?.id
     : undefined
   return {

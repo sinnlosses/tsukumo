@@ -31,11 +31,12 @@
 
 - **英語識別子**: `MainViewReportBody`（メインビューの本文。`regions` か `markdown`）/ `MainViewReportRegions`（`report` ツールの本文の欄の並び）/
   `head`（頭）/ `finalHead`（最終のときの頭）/ `MainViewReportSection`（節の欄。`id`・`heading`・`markdown`）/
-  `retrospective`（振り返りの欄）/ `favor`（お願いの欄）
+  `retrospective`（振り返りの欄）/ `favor`（お願いの欄）/ `MainViewReportRegion`（描く順に並べた欄1つ）/
+  `orderedReportRegions`（本文を描く順の欄に並べる）
 - **定義**: **メインビューの本文を、Markdown 1本に畳まずに分けて持つ単位**。`report` ツールの本文は、頭（結論と合図の行）・
   節の並び・振り返り・お願いの欄を持つ。最終のときの頭は、頭に段ごとの所要時間を足したもの。節の欄の `id` は、整形して
   図を先頭に足したあとの節の並びの位置。`report` ツール以外の本文（詳細・段のまとめ）は Markdown 1本の欄にする
-- **注記**: 欄が正で、連結した Markdown の文字列は欄から導く（`src/shared/session/main-view-report-body.ts`）。
+- **注記**: 欄が正で、描く側は欄を描く順に並べて（`orderedReportRegions`。`src/shared/session/main-view-report-body.ts`）欄ごとに描く。
   形の決めは `docs/architecture/adr/0031-report-body-as-regions.md`
 - **避ける言い方**: ブロック、塊（節の中の `ReportBlock` と紛れる）、パート
 

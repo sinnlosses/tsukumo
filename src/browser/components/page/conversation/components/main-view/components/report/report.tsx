@@ -1,5 +1,6 @@
-// 1ステップぶんのレポート本文（Markdown）。
-// 書きかけの本文を空行で塊に割り、塊ごとに `memo`。描き直すのは変わった塊（たいてい末尾の1つ）だけで、確定済みの塊は Markdown の変換をやり直さない。
+// 1ステップぶんのレポート本文。
+// 欄ごとに入れ物を作り、欄の中の書きかけの本文を空行で塊に割り、塊ごとに `memo`。描き直すのは変わった塊（たいてい末尾の1つ）だけで、確定済みの塊は Markdown の変換をやり直さない。
+// 欄は別々に解析するので、閉じないタグはその欄の中で閉じ、次の欄の入れ物を巻き込まない。
 //
 // 書き上げていくように見せる演出（`useReportReveal`）はここに掛ける。
 // 完成した DOM の根を渡すだけで、塊の中身には触らない。
@@ -7,6 +8,11 @@
 import clsx from "clsx"
 import { memo, type ReactElement } from "react"
 
+import { orderedReportRegions } from "../../../../../../../../shared/session/main-view-report-body.ts"
+import type {
+  MainViewReportBody,
+  MainViewReportRegion,
+} from "../../../../../../../../shared/session/main-view-shape.ts"
 import { useReportReveal } from "../../../../../../../domain/reveal/use-report-reveal.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { detailBlockClassName, Markdown } from "../../../markdown/markdown.tsx"
@@ -14,7 +20,7 @@ import styles from "../../main-view.module.css"
 import { splitReportBlocks } from "./domain/split-blocks.ts"
 
 type ReportProps = {
-  readonly markdown: string
+  readonly body: MainViewReportBody
   /** 書き上げていくように見せるか。見るのはマウントした時点の値だけ。 */
   readonly reveal: boolean
   /** この本文が載っているやり取り（`MainViewTurn.id`）。配る筆先に添える。 */
@@ -24,7 +30,7 @@ type ReportProps = {
 }
 
 export function Report(props: ReportProps): ReactElement {
-  const blocks = splitReportBlocks(props.markdown)
+  const regions = orderedReportRegions(props.body)
   // 完成した DOM をそのまま渡す（演出は見せる範囲を進めるだけで、塊の中身には触らない）。
   const rootRef = useReportReveal(props.reveal, props.turnId, () => {})
 
@@ -56,11 +62,33 @@ export function Report(props: ReportProps): ReactElement {
         ref={rootRef}
         data-report-body=""
       >
-        {blocks.map((block) => (
-          <ReportBlock key={block} text={block} />
+        {regions.map((region) => (
+          <ReportRegion
+            key={region.kind === "section" ? `section-${region.id}` : region.kind}
+            region={region}
+          />
         ))}
       </div>
     </>
+  )
+}
+
+/**
+ * 欄1つの入れ物。`data-report-region` は欄の種類、節の欄は `data-report-section` に欄の ID を持つ（書き上げる演出が読む）。
+ * お願いの欄は、合図の行の印が飛ぶ先の `id` を持つ。
+ */
+function ReportRegion(props: { readonly region: MainViewReportRegion }): ReactElement {
+  const { region } = props
+  return (
+    <div
+      data-report-region={region.kind}
+      data-report-section={region.kind === "section" ? String(region.id) : undefined}
+      id={region.kind === "favor" ? region.id : undefined}
+    >
+      {splitReportBlocks(region.markdown).map((block) => (
+        <ReportBlock key={block} text={block} />
+      ))}
+    </div>
   )
 }
 

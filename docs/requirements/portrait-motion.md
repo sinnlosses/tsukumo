@@ -35,7 +35,7 @@
   - **筆で書くのは節（`sections`）だけ**（2026-10-02 決定。覆した旧い決定と戻し方は
     `docs/history/decision.md`「requirements.md 4.3 レポートの書き上げの演出」）。**結論（`conclusion`）と
     検証結果（`checks`）は、ターンの確定と同時に最初から出す**（結論が筆で書かれて待たされないように。
-    境目は節の始まりの印 `.report-sections-start`）。**節が短いレポートは演出せずに出す**——筆の対象の
+    境目は頭の欄の入れ物 `data-report-region="head"`）。**節が短いレポートは演出せずに出す**——筆の対象の
     文字数（図は100字相当）の合計が 200 に満たないとき（速さの設定に依らない）
   - **文字を足していく実装にしない。** Markdown のソースを1文字ずつ増やして変換し直すと、表・
     mermaid・Chart.js が未完成のソースで作り直され、非同期に描く mermaid は途中の形で失敗する
@@ -82,7 +82,7 @@
     文字数に比例した書く速さそのものは変わらない。留める位置は DOM の実測ではなく文字数の重みの
     比例で決める（`src/browser/domain/reveal/plan.ts` の `pausesOf`）。対象の印
     （`report-pause-point`）は記法の語彙に無い class 名で、`NotationBlock` の置き換えを受けない
-    （`report-section-break` と同じやり方。`src/shared/report/report-markdown.ts`）
+    （`src/shared/report/report-pause-point.ts`）
   - **書いているあいだは画面が筆先に付いていく**（2026-09-20 決定）。**追うのは帯ぜんたいでは
     なくミニ立ち絵の立つ位置**（帯の下端から立ち絵の高さぶん上まで。2026-09-23）。そこが器の
     上下の縁から 96px 以内に入ったら、その差だけ器を送る。**器がその範囲と上下の余白を両方とも

@@ -6,7 +6,7 @@ import { NO_REPORT_TASK } from "../report/report-task.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import { clipWithEllipsis } from "../utils/clip-text.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
-import { reportBodyMarkdown } from "./main-view-report-body.ts"
+import { orderedReportRegions } from "./main-view-report-body.ts"
 import {
   type MainViewAction,
   type MainViewAside,
@@ -235,7 +235,9 @@ function firstLineSource(
   if (!isBlankText(entry.conclusion)) {
     return entry.conclusion
   }
-  return entry.task.kind === "task" ? entry.task.name : reportBodyMarkdown(entry.regions)
+  return entry.task.kind === "task"
+    ? entry.task.name
+    : (orderedReportRegions(entry.regions).at(0)?.markdown ?? "")
 }
 
 /**

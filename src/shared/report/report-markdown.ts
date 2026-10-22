@@ -31,12 +31,6 @@ import { PAUSE_POINT_CLASS_NAME } from "./report-pause-point.ts"
 import { statMarkdown } from "./report-stat-markdown.ts"
 import { matrixMarkdown, tableMarkdown } from "./report-table-markdown.ts"
 
-/** 節と節の境目に置く、見た目を持たない印。書き上げる演出（`planReveal`）がこれで節を1トピックに割る。 */
-export const SECTION_BREAK_MARKDOWN = '<div class="report-section-break"></div>'
-
-/** 結論と検証結果のあと、最初の節の前に置く印。書き上げる演出は、この印より後ろだけを筆の対象にする。 */
-export const SECTIONS_START_MARKDOWN = '<div class="report-sections-start"></div>'
-
 type CaptionCounts = Readonly<Record<CaptionKind, number>>
 
 type SectionsFold = {
@@ -51,7 +45,7 @@ type GutterGroup = {
 }
 
 /**
- * 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間に {@link SECTION_BREAK_MARKDOWN} を挟む。
+ * 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間は空行で区切る。
  * 節ごとの組み方は {@link reportSectionMarkdowns}。
  */
 export function reportSectionsMarkdown(
@@ -60,7 +54,7 @@ export function reportSectionsMarkdown(
 ): string {
   return reportSectionMarkdowns(sections, imageSource)
     .filter((part) => part.trim() !== "")
-    .join(`\n\n${SECTION_BREAK_MARKDOWN}\n\n`)
+    .join("\n\n")
 }
 
 /**

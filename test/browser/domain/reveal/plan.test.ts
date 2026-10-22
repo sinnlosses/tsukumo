@@ -27,8 +27,20 @@ const MS_PER_CHARACTER = STANDARD_TIMING.msPerCharacter
 const MIN_BLOCK_MS = STANDARD_TIMING.minBlockMs
 const MAX_BLOCK_MS = STANDARD_TIMING.maxBlockMs
 
-/** 節と節の境目の印（`SECTION_BREAK_MARKDOWN` と同じ class）。 */
-const BREAK = '<div class="report-section-break"></div>'
+/** 節の欄の入れ物（`Report` が作る形）。 */
+function section(id: number, html: string): string {
+  return `<div data-report-region="section" data-report-section="${id}">${html}</div>`
+}
+
+/** 節でない欄の入れ物（`Report` が作る形）。 */
+function region(kind: "head" | "retrospective" | "favor" | "markdown", html: string): string {
+  return `<div data-report-region="${kind}">${html}</div>`
+}
+
+/** 節の欄を並べた本文。 */
+function sections(htmls: readonly string[]): string {
+  return htmls.map((html, index) => section(index, html)).join("")
+}
 
 function rootWith(html: string): HTMLElement {
   const root = document.createElement("div")
@@ -67,10 +79,12 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     expect(planReveal(rootWith(""), STANDARD_TIMING)).toEqual([])
   })
 
-  it("節の境目の印から次の印までを1つの塊にまとめる", () => {
+  it("節の欄1つを1つの塊にまとめる", () => {
     const root = rootWith(
-      "<h3>はじめ</h3><p>あ</p><table><tbody><tr><td>い</td></tr></tbody></table>" +
-        `${BREAK}<h3>つぎ</h3><p>う</p>`,
+      sections([
+        "<h3>はじめ</h3><p>あ</p><table><tbody><tr><td>い</td></tr></tbody></table>",
+        "<h3>つぎ</h3><p>う</p>",
+      ]),
     )
 
     expect(tagsOf(root)).toEqual([
@@ -79,7 +93,7 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     ])
   })
 
-  it("見出し・副見出し・水平線だけでは塊を分けない（節の境目の印だけが切れ目）", () => {
+  it("見出し・副見出し・水平線だけでは塊を分けない（節の欄の入れ物だけが切れ目）", () => {
     expect(
       tagsOf(rootWith("<p>あ</p><hr /><h5>節の中の副見出し</h5><h3>他の見出し</h3><p>い</p>")),
     ).toEqual([["P", "HR", "H3", "P"]])
@@ -116,8 +130,8 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
   })
 
   it("演出の全体は10秒を超えない。上限をまたぐ塊はそこで書き切り、後ろの塊は上限の時刻に一度に出す", () => {
-    const section = `<h4>節</h4><p>${"あ".repeat(100)}</p>`
-    const root = rootWith(Array.from({ length: 8 }, () => section).join(BREAK))
+    const html = `<h4>節</h4><p>${"あ".repeat(100)}</p>`
+    const root = rootWith(sections(Array.from({ length: 8 }, () => html)))
     const blocks = planReveal(root, STANDARD_TIMING)
 
     expect(Math.max(...blocks.map((block) => block.endMs))).toBe(10_000)
@@ -133,11 +147,31 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     ])
   })
 
-  it("印より前の要素も、それだけで1つの塊になる", () => {
-    expect(tagsOf(rootWith(`<p>まえがき</p>${BREAK}<h3>本題</h3><p>なかみ</p>`))).toEqual([
+  it("最初の節の欄より前の、頭でない要素も、それだけで1つの塊になる", () => {
+    expect(tagsOf(rootWith(`<p>まえがき</p>${section(0, "<h3>本題</h3><p>なかみ</p>")}`))).toEqual([
       ["P"],
       ["H3", "P"],
     ])
+  })
+
+  it("振り返りとお願いの欄は、最後の節の欄と同じ塊に入る", () => {
+    const root = rootWith(
+      sections(["<p>あ</p>", "<p>い</p>"]) +
+        region("retrospective", "<div>振り返り</div>") +
+        region("favor", '<div class="note">お願い</div>'),
+    )
+
+    expect(tagsOf(root)).toEqual([["P"], ["P", "DIV", "DIV"]])
+  })
+
+  it("節の欄を持たない本文（data-report-section の無い markdown の欄）は、全体で1つの塊になる", () => {
+    const root = rootWith(region("markdown", "<h3>見出し</h3><p>あ</p><hr /><p>い</p>"))
+
+    expect(tagsOf(root)).toEqual([["H3", "P", "HR", "P"]])
+  })
+
+  it("中身が見出しだけの節の欄は塊を作らない", () => {
+    expect(tagsOf(rootWith(sections(["<h4>見出しだけ</h4>", "<p>あ</p>"])))).toEqual([["P"]])
   })
 
   // 持ち時間は timing の3つ（文字あたり・下限・上限）だけで決まる。`standard` とその半分の物差しの両方で見る。
@@ -172,7 +206,7 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     const head = `<h3>見出し</h3><p>${"あ".repeat(100)}</p>`
     const alone = planReveal(rootWith(head), STANDARD_TIMING)
     const withTail = planReveal(
-      rootWith(`${head}${BREAK}<h3>つぎ</h3><p>${"う".repeat(500)}</p>`),
+      rootWith(sections([head, `<h3>つぎ</h3><p>${"う".repeat(500)}</p>`])),
       STANDARD_TIMING,
     )
 
@@ -181,7 +215,7 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
 
   it("塊は隙間なく前から順に並ぶ", () => {
     const blocks = planReveal(
-      rootWith(`<h3>あ</h3>${BREAK}<h3>い</h3>${BREAK}<h3>う</h3>`),
+      rootWith(sections(["<h3>あ</h3>", "<h3>い</h3>", "<h3>う</h3>"])),
       STANDARD_TIMING,
     )
 
@@ -323,18 +357,26 @@ describe("blockProgress（留めている間は足踏みする）", () => {
   })
 })
 
-const SECTIONS_START = '<div class="report-sections-start"></div>'
-
 const SHORT_REPORT_WEIGHT = 200
 
 describe("planReveal（結論と検証結果は筆の対象に入れない）", () => {
-  it("節の始まりの印より前の要素は塊に入らず、印も塊に入れない", () => {
-    const root = rootWith(`<p>結論</p>${SECTIONS_START}<h4>節</h4><p>本文</p>`)
+  it("頭の欄の要素は塊に入らない", () => {
+    const root = rootWith(region("head", "<p>結論</p>") + section(0, "<h4>節</h4><p>本文</p>"))
 
     expect(tagsOf(root)).toEqual([["P"]])
   })
 
-  it("印が無い本文は、全体が対象", () => {
+  it("頭の欄だけで節の無い本文は、お願いだけが対象", () => {
+    const root = rootWith(region("head", "<p>結論</p>") + region("favor", "<p>お願い</p>"))
+
+    expect(
+      planReveal(root, STANDARD_TIMING).map((block) =>
+        block.members.map((member) => member.element.textContent),
+      ),
+    ).toEqual([["お願い"]])
+  })
+
+  it("欄の入れ物が無い本文は、全体が対象", () => {
     const root = rootWith("<p>前置き</p><p>続き</p>")
 
     expect(tagsOf(root)).toEqual([["P", "P"]])
@@ -348,13 +390,15 @@ describe("isShortReport（短いレポートは演出しない）", () => {
   })
 
   it("結論は数えない", () => {
-    const root = rootWith(`<p>${"あ".repeat(SHORT_REPORT_WEIGHT)}</p>${SECTIONS_START}<p>短い</p>`)
+    const root = rootWith(
+      region("head", `<p>${"あ".repeat(SHORT_REPORT_WEIGHT)}</p>`) + section(0, "<p>短い</p>"),
+    )
 
     expect(isShortReport(root)).toBe(true)
   })
 
-  it("節の境目の印は数えず、図は100字ぶんで数える", () => {
-    const root = rootWith(`<p>短い</p>${BREAK}<div class="mermaid"></div>`)
+  it("欄の入れ物そのものは数えず、図は100字ぶんで数える", () => {
+    const root = rootWith(sections(["<p>短い</p>", '<div class="mermaid"></div>']))
 
     expect(isShortReport(root)).toBe(true)
   })

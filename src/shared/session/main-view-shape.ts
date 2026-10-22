@@ -78,7 +78,7 @@ export type MainViewEntry =
   | { readonly kind: "aside-answer"; readonly text: string }
 
 /**
- * `report` ツールの本文の欄の並び。連結した Markdown は欄から導く（`reportBodyMarkdown`）。
+ * `report` ツールの本文の欄の並び。描く順の並びは `orderedReportRegions` が導く。
  * `head` は結論と合図の行、`finalHead` は最終レポートのときの頭で、`head` に段ごとの所要時間を足したもの。
  * `sections` は中身のある節だけを並べる。
  * `retrospective` は振り返りの塊の Markdown（無ければ空文字）。
@@ -106,6 +106,17 @@ export type MainViewReportSection = {
 /** メインビューの本文。`report` ツールの本文は欄の並びで、ほかの本文（`detail`・段のまとめ）は Markdown 1本の欄。 */
 export type MainViewReportBody =
   | MainViewReportRegions
+  | { readonly kind: "markdown"; readonly markdown: string }
+
+/**
+ * 描く順に並べた欄1つ（`orderedReportRegions`）。`markdown` は空でない。
+ * 節の欄の `id` は {@link MainViewReportSection} の `id`、お願いの欄の `id` は合図の行の印が飛ぶ先。
+ */
+export type MainViewReportRegion =
+  | { readonly kind: "head"; readonly markdown: string }
+  | { readonly kind: "section"; readonly id: number; readonly markdown: string }
+  | { readonly kind: "retrospective"; readonly markdown: string }
+  | { readonly kind: "favor"; readonly id: string; readonly markdown: string }
   | { readonly kind: "markdown"; readonly markdown: string }
 
 export type MainViewToolRun = Extract<MainViewEntry, { readonly kind: "tool" }>

@@ -2,7 +2,7 @@
 //
 // DOM は完成品のまま置き、見せる範囲だけを進めるので、ここが返すのは「塊ごとの出し始めと出し終わりの時刻」だけになる。
 //
-// 塊は「トピック」。`report` の節1つが1トピックで、境目は `reportSectionsMarkdown` が節の間に挟む印で知る。
+// 塊は「トピック」。`report` の節1つが1トピックで、境目は `Report` が節ごとに作る欄の入れ物（`data-report-section`）で知る。
 // 段落や表の1つ1つではない（細かく割ると筆が何度も折り返して落ち着かず、目で追えなくなる）。
 //
 // 塊1つぶんの時間を決める物差し（`RevealTiming`）は呼び出し側から受け取り、ここは値を持たない。
@@ -56,8 +56,14 @@ export const FIGURE_WEIGHT = 100
 
 const FIGURE_SELECTOR = ".mermaid, .mermaid-broken, .chart-block, canvas, svg, img"
 
-/** 結論と検証結果の終わり、節の始まりの印（`SECTIONS_START_MARKDOWN` と同じ class 名）。 */
-const SECTIONS_START_SELECTOR = ".report-sections-start"
+/** 欄の入れ物（`Report` が付ける `data-report-region`）。中の子に降りて塊を拾う。 */
+const REGION_SELECTOR = "[data-report-region]"
+
+/** 頭の欄（結論と検証結果）。筆の対象にせず、最初から出す。 */
+const HEAD_REGION_SELECTOR = '[data-report-region="head"]'
+
+/** 節の欄。1つが新しいトピックを始める。 */
+const SECTION_REGION_SELECTOR = "[data-report-section]"
 
 /**
  * 筆で書く対象の重み（文字数。図は {@link FIGURE_WEIGHT}）の合計がこれに満たないレポートは、演出せずに出す。
@@ -77,9 +83,6 @@ const WRAPPER_SELECTOR = ":has(> [data-reveal-caption]), :has(> [data-reveal-gut
 /** 演出の全体の上限（ms）。書く速さの設定に関わらず、超えた分は上限の時刻に一度に出す。 */
 const TOTAL_LIMIT_MS = 10_000
 
-/** 節と節の境目の印（`SECTION_BREAK_MARKDOWN` と同じ class 名）。 */
-const SECTION_BREAK_SELECTOR = ".report-section-break"
-
 /**
  * 筆を留める対象の印（`PAUSE_POINT_CLASS_NAME` と同じ class 名。`NOTE_CLASSES` の注意・異常と
  * `OPTION_VERDICTS` の「採る」に付く）。記法の語彙に無い名前なので `NotationBlock` の置き換えを
@@ -95,10 +98,7 @@ const PAUSE_MS = 400
 
 /** 筆で書く対象が短く、演出せずに出すレポートか。 */
 export function isShortReport(root: Element): boolean {
-  const weight = sumBy(
-    writtenElementsOf(root).filter((element) => !isSectionBreak(element)),
-    (element) => memberWeight({ element, kind: blockKind(element) }),
-  )
+  const weight = sumBy(topicsOf(root).flat(), (element) => memberWeight(memberOf(element)))
   return weight < SHORT_REPORT_WEIGHT
 }
 
@@ -134,21 +134,23 @@ export function blockProgress(block: RevealBlock, elapsedMs: number): number {
 }
 
 function planUnlimited(root: Element, timing: RevealTiming): readonly RevealBlock[] {
-  return toTopics(writtenElementsOf(root)).reduce<{
-    blocks: readonly RevealBlock[]
-    at: number
-  }>(
-    (acc, members) => {
-      const contentMs = topicDurationMs(members, timing)
-      const pauses = pausesOf(members, contentMs)
-      const endMs = acc.at + contentMs + sumBy(pauses, (pause) => pause.durationMs)
-      return {
-        blocks: [...acc.blocks, { members, startMs: acc.at, endMs, pauses }],
-        at: endMs,
-      }
-    },
-    { blocks: [], at: 0 },
-  ).blocks
+  return topicsOf(root)
+    .flatMap(topicMembers)
+    .reduce<{
+      blocks: readonly RevealBlock[]
+      at: number
+    }>(
+      (acc, members) => {
+        const contentMs = topicDurationMs(members, timing)
+        const pauses = pausesOf(members, contentMs)
+        const endMs = acc.at + contentMs + sumBy(pauses, (pause) => pause.durationMs)
+        return {
+          blocks: [...acc.blocks, { members, startMs: acc.at, endMs, pauses }],
+          at: endMs,
+        }
+      },
+      { blocks: [], at: 0 },
+    ).blocks
 }
 
 function limitTotal(blocks: readonly RevealBlock[]): readonly RevealBlock[] {
@@ -164,14 +166,41 @@ function limitTotal(blocks: readonly RevealBlock[]): readonly RevealBlock[] {
 }
 
 /**
- * 筆で書く要素。節の始まりの印があれば、その後ろだけ（結論と検証結果は最初から出す）。
- * 節の見出しと題は最初から出すので、対象に入れない。
+ * 根の直下の子を、筆で書く要素のトピックへまとめる（文書の順）。
+ * 頭の欄は飛ばす（結論と検証結果は最初から出す）。節の欄は新しいトピックを始め、ほかの子（振り返り・お願い・Markdown 1本の欄、入れ物でない要素）は直前のトピックへ足す。
+ * 節の見出しと題は最初から出すので、対象に入れない。要素の無いトピックも返しうる。
  */
-function writtenElementsOf(root: Element): readonly RevealElement[] {
-  const elements = [...root.children].filter(isRevealElement)
-  const start = elements.findIndex((element) => element.matches(SECTIONS_START_SELECTOR))
-  const after = start === -1 ? elements : elements.slice(start + 1)
-  return after.flatMap(unwrapped).filter((element) => !element.matches(UNWRITTEN_SELECTOR))
+function topicsOf(root: Element): readonly (readonly RevealElement[])[] {
+  return [...root.children]
+    .filter(isRevealElement)
+    .filter((child) => !child.matches(HEAD_REGION_SELECTOR))
+    .reduce<readonly (readonly RevealElement[])[]>((topics, child) => {
+      const elements = writtenElementsOf(child)
+      const last = topics.at(-1)
+      return child.matches(SECTION_REGION_SELECTOR) || last === undefined
+        ? [...topics, elements]
+        : [...topics.slice(0, -1), [...last, ...elements]]
+    }, [])
+}
+
+/** 根の直下の子1つの、筆で書く要素。欄の入れ物なら中の子に降りる。 */
+function writtenElementsOf(child: RevealElement): readonly RevealElement[] {
+  const elements = child.matches(REGION_SELECTOR)
+    ? [...child.children].filter(isRevealElement)
+    : [child]
+  return elements.flatMap(unwrapped).filter((element) => !element.matches(UNWRITTEN_SELECTOR))
+}
+
+/** 要素が無ければトピックを作らない。 */
+function topicMembers(
+  elements: readonly RevealElement[],
+): readonly (readonly [RevealMember, ...(readonly RevealMember[])])[] {
+  const [first, ...rest] = elements
+  return first === undefined ? [] : [[memberOf(first), ...rest.map(memberOf)]]
+}
+
+function memberOf(element: RevealElement): RevealMember {
+  return { element, kind: blockKind(element) }
 }
 
 /** 包み（{@link WRAPPER_SELECTOR}）なら中の要素に降りる。余白の柱の包みの中の題つきの包みにも降りる。 */
@@ -179,35 +208,6 @@ function unwrapped(element: RevealElement): readonly RevealElement[] {
   return element.matches(WRAPPER_SELECTOR)
     ? [...element.children].filter(isRevealElement).flatMap(unwrapped)
     : [element]
-}
-
-/** 節の境目の印で切って、続く要素をひとまとめにする。印そのものはトピックに入れない。 */
-function toTopics(
-  elements: readonly RevealElement[],
-): readonly (readonly [RevealMember, ...(readonly RevealMember[])])[] {
-  return elements.reduce<{
-    readonly topics: readonly (readonly [RevealMember, ...(readonly RevealMember[])])[]
-    readonly atBreak: boolean
-  }>(
-    (acc, element) => {
-      if (isSectionBreak(element)) {
-        return { topics: acc.topics, atBreak: true }
-      }
-      const member: RevealMember = { element, kind: blockKind(element) }
-      const last = acc.topics.at(-1)
-      return last === undefined || acc.atBreak
-        ? { topics: [...acc.topics, [member]], atBreak: false }
-        : {
-            topics: [...acc.topics.slice(0, -1), [last[0], ...last.slice(1), member]],
-            atBreak: false,
-          }
-    },
-    { topics: [], atBreak: false },
-  ).topics
-}
-
-function isSectionBreak(element: RevealElement): boolean {
-  return element.matches(SECTION_BREAK_SELECTOR)
 }
 
 function topicDurationMs(members: readonly RevealMember[], timing: RevealTiming): number {

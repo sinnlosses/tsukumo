@@ -105,11 +105,12 @@
 .main-step > .detail-block {
   container: report-gutter report-body / inline-size;
 }
-/* 本文の最初と最後の塊の margin は器の padding に足されるので落とす（padding がそのまま器の内側のあきになる）。 */
-.main-step > .detail-block > :first-child {
+/* 本文の最初と最後の塊の margin は器の padding に足されるので落とす（padding がそのまま器の内側のあきになる）。
+   塊の margin は欄の入れ物を通り抜けるので、最初と最後の欄の中の塊を指す。 */
+.main-step > .detail-block > [data-report-region]:first-child > :first-child {
   margin-top: 0;
 }
-.main-step > .detail-block > :last-child {
+.main-step > .detail-block > [data-report-region]:last-child > :last-child {
   margin-bottom: 0;
 }
 /* 中間レポート（`report` ツールの最後でない呼び出し）。

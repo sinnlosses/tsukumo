@@ -28,17 +28,14 @@ describe("reportSectionsMarkdown", () => {
     ]
 
     expect(reportSectionsMarkdown(sections, NO_IMAGES)).toBe(
-      '## 架空の節\n\n架空の一。\n\n<div class="report-section-break"></div>\n\n' +
-        "## 架空の次の節\n\n架空の二。",
+      "## 架空の節\n\n架空の一。\n\n## 架空の次の節\n\n架空の二。",
     )
   })
 
-  it("節と節の境目には見た目を持たない印を挟む。見出しの無い節どうしでも挟む", () => {
+  it("見出しの無い節どうしも空行で区切る", () => {
     const sections = [section([text("架空の一。")]), section([text("架空の二。")])]
 
-    expect(reportSectionsMarkdown(sections, NO_IMAGES)).toBe(
-      '架空の一。\n\n<div class="report-section-break"></div>\n\n架空の二。',
-    )
+    expect(reportSectionsMarkdown(sections, NO_IMAGES)).toBe("架空の一。\n\n架空の二。")
   })
 
   it.each([
@@ -225,12 +222,9 @@ describe("reportSectionsMarkdown", () => {
           NO_IMAGES,
         ),
       ).toBe(
-        [
-          "架空の前の節。",
-          '<div class="report-section-break"></div>',
-          "## 架空の見出し",
-          withGutter("", [memoNote("架空の覚え書き。")]),
-        ].join("\n\n"),
+        ["架空の前の節。", "## 架空の見出し", withGutter("", [memoNote("架空の覚え書き。")])].join(
+          "\n\n",
+        ),
       )
     })
 

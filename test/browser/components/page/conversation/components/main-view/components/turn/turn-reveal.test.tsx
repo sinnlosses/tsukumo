@@ -1,6 +1,8 @@
 import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import type { MainViewReportBody } from "../../../../../../../../../src/shared/session/main-view-shape.ts"
+import { bodyMarkdownOf } from "../../../../../../../../fixture/main-view-entry.ts"
 import { step, text, turn, TURN_ID } from "../../../../../../../../fixture/turn.ts"
 
 // 本物の `Report`（react-markdown 一式と演出の配線を持つ）ではなく、どの本文に演出を掛けると
@@ -15,9 +17,14 @@ let revealed: {
 vi.mock(
   "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/report.tsx",
   () => ({
-    Report: (props: { readonly markdown: string; readonly reveal: boolean; turnId: number }) => {
-      revealed.push({ markdown: props.markdown, reveal: props.reveal, turnId: props.turnId })
-      return <div data-report-stub="yes">{props.markdown}</div>
+    Report: (props: {
+      readonly body: MainViewReportBody
+      readonly reveal: boolean
+      turnId: number
+    }) => {
+      const markdown = bodyMarkdownOf(props.body)
+      revealed.push({ markdown, reveal: props.reveal, turnId: props.turnId })
+      return <div data-report-stub="yes">{markdown}</div>
     },
   }),
 )

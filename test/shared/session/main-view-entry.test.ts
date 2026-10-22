@@ -2,10 +2,7 @@
 import { describe, expect, it } from "vitest"
 
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
-import {
-  finalReportBody,
-  reportBodyMarkdown,
-} from "../../../src/shared/session/main-view-report-body.ts"
+import { finalReportBody } from "../../../src/shared/session/main-view-report-body.ts"
 import { type MainViewEntry, turnAsides } from "../../../src/shared/session/main-view-shape.ts"
 import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
@@ -14,7 +11,14 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
-import { detail, question, reportOf, request, SETTLED } from "../../fixture/main-view-entry.ts"
+import {
+  bodyMarkdownOf,
+  detail,
+  question,
+  reportOf,
+  request,
+  SETTLED,
+} from "../../fixture/main-view-entry.ts"
 import { reportEvent } from "../../fixture/report-event.ts"
 
 describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
@@ -64,10 +68,10 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
             ],
     })
   const reportMarkdowns = (entries: readonly MainViewEntry[]) =>
-    entries.flatMap((entry) => (entry.kind === "report" ? [reportBodyMarkdown(entry.regions)] : []))
+    entries.flatMap((entry) => (entry.kind === "report" ? [bodyMarkdownOf(entry.regions)] : []))
   const finalMarkdowns = (entries: readonly MainViewEntry[]) =>
     entries.flatMap((entry) =>
-      entry.kind === "report" ? [reportBodyMarkdown(finalReportBody(entry.regions))] : [],
+      entry.kind === "report" ? [bodyMarkdownOf(finalReportBody(entry.regions))] : [],
     )
 
   it("記録を足しても、前からある記録の結果は同じ参照のまま返る", () => {

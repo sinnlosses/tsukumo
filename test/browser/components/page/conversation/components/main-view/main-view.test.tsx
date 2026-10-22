@@ -3,6 +3,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest"
 
 import { loadMarkdown } from "../../../../../../../src/browser/components/page/conversation/components/markdown/markdown.tsx"
 import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-answer.ts"
+import type { ReportBlock } from "../../../../../../../src/shared/report/report-block.ts"
 import type { SessionRecord } from "../../../../../../../src/shared/session/session-record.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -284,5 +285,65 @@ describe("MainView（答えた質問の記録）", () => {
     expect(folds[0]?.textContent).toContain("架空の中間レポート")
     expect([...document.querySelectorAll("details")].every((details) => !details.open)).toBe(true)
     expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+})
+
+describe("MainView（レポートを欄ごとに描く）", () => {
+  const textBlock = (text: string): ReportBlock => ({ kind: "text", text, fold: "", aside: "" })
+  const regionedReport = (conclusion: string, firstBlock: ReportBlock): SessionRecord => {
+    const base = reportRecord(conclusion)
+    if (base.kind !== "report") {
+      throw new Error("report の記録ではない")
+    }
+    return {
+      ...base,
+      sections: [
+        { heading: "架空の節A", shapeTag: "unspecified", blocks: [firstBlock] },
+        { heading: "架空の節B", shapeTag: "unspecified", blocks: [textBlock("架空の本文B。")] },
+      ],
+      favor: "架空のお願い",
+    }
+  }
+  const reportBody = (): HTMLElement => {
+    const body = document.querySelector("[data-report-body]")
+    if (!(body instanceof HTMLElement)) {
+      throw new Error("レポートの本文が見つからない")
+    }
+    return body
+  }
+  const regionsOfBody = (): readonly string[] =>
+    [...reportBody().children].map(
+      (child) =>
+        child.getAttribute("data-report-section") ?? child.getAttribute("data-report-region") ?? "",
+    )
+
+  it("結論に閉じない <div> があっても、節とお願いの欄は結論の入れ物に呑まれない", () => {
+    renderMainView([
+      requestRecord({ text: "架空の依頼", turnId: 0 }),
+      regionedReport("<div>架空の結論", textBlock("架空の本文A。")),
+    ])
+
+    expect(regionsOfBody()).toEqual(["head", "0", "1", "favor"])
+    expect(reportBody().querySelector('[data-report-region="head"] h4')).toBeNull()
+    expect(reportBody().querySelector('[data-report-section="1"] h4')?.textContent).toBe(
+      "架空の節B",
+    )
+  })
+
+  it("節の逃げ道の塊に閉じない <details> があっても、次の節は畳みの中に入らない", () => {
+    renderMainView([
+      requestRecord({ text: "架空の依頼", turnId: 0 }),
+      regionedReport("架空の結論", {
+        kind: "markdown",
+        markdown: "<details><summary>架空の畳み</summary>\n\n架空の脇道。",
+        fold: "",
+        aside: "",
+      }),
+    ])
+
+    const heading = reportBody().querySelector('[data-report-section="1"] h4')
+    expect(regionsOfBody()).toEqual(["head", "0", "1", "favor"])
+    expect(heading?.textContent).toBe("架空の節B")
+    expect(heading?.closest("details")).toBeNull()
   })
 })

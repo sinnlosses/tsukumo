@@ -7,13 +7,12 @@ import {
   reportSectionsOfBody,
 } from "../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../src/shared/report/report-check.ts"
-import {
-  SECTION_BREAK_MARKDOWN as SECTION_BREAK,
-  SECTIONS_START_MARKDOWN as SECTIONS_START,
-} from "../../../src/shared/report/report-markdown.ts"
 import type { ReportTask } from "../../../src/shared/report/report-task.ts"
 import { mainViewEntries } from "../../../src/shared/session/main-view-entry.ts"
-import { reportBodyHeadings } from "../../../src/shared/session/main-view-report-body.ts"
+import {
+  orderedReportRegions,
+  reportBodyHeadings,
+} from "../../../src/shared/session/main-view-report-body.ts"
 import type { MainViewStep } from "../../../src/shared/session/main-view-shape.ts"
 import { mainViewTurns } from "../../../src/shared/session/main-view.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
@@ -110,6 +109,9 @@ describe("mainViewTurns（締めの speak → レポートで終える並び）"
   })
 })
 
+/** お願いの欄の Markdown（記法の「お願い」の塊で包む）。 */
+const favorNote = (favor: string) => `<div class="note note-favor">\n\n${favor}\n\n</div>`
+
 describe("mainViewTurns（report ツールで受け取ったレポート）", () => {
   it("conclusion → body → favor（お願いの塊）の順に1つの本文へ組み、最終レポートにする", () => {
     const turn = turnOf(
@@ -119,8 +121,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     expect(shownReports(turn)).toEqual([
-      `${lead("架空の結論。")}\n\n` +
-        `${SECTIONS_START}\n\n| 列 |\n| --- |\n| 値 |\n\n<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>`,
+      `${lead("架空の結論。")}\n\n| 列 |\n| --- |\n| 値 |\n\n${favorNote("架空のお願い")}`,
     ])
     expect(turn?.steps.map((step) => step.final)).toEqual([true])
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
@@ -151,7 +152,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(order.every((index) => index !== undefined && index >= 0)).toBe(true)
   })
 
-  it("欄は頭・節（並びの位置を ID に持つ）・振り返り・お願いに分かれ、連結した本文はそれを順に並べたもの", () => {
+  it("欄は頭・節（並びの位置を ID に持つ）・振り返り・お願いに分かれ、描く順の欄はそれを順に並べたもの", () => {
     const turn = turnOf(
       [
         ask,
@@ -194,10 +195,12 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       retrospective,
       favor: { id: "favor-toolu_r1", markdown: "架空のお願い" },
     })
-    expect(shownReports(turn)).toEqual([
-      `${lead("架空の結論。")}\n\n${SECTIONS_START}\n\n## 架空の節A\n\n架空の本文A。\n\n` +
-        `${SECTION_BREAK}\n\n架空の本文B。\n\n${retrospective}\n\n` +
-        '<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>',
+    expect(regions === undefined ? undefined : orderedReportRegions(regions)).toEqual([
+      { kind: "head", markdown: lead("架空の結論。") },
+      { kind: "section", id: 0, markdown: "## 架空の節A\n\n架空の本文A。" },
+      { kind: "section", id: 1, markdown: "架空の本文B。" },
+      { kind: "retrospective", markdown: retrospective },
+      { kind: "favor", id: "favor-toolu_r1", markdown: favorNote("架空のお願い") },
     ])
   })
 
@@ -218,11 +221,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     const [shown] = shownReports(turn)
     expect(shown?.startsWith(lead("架空の結論。"))).toBe(true)
-    expect(
-      shown?.endsWith(
-        `${SECTIONS_START}\n\n架空の根拠。\n\n<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>`,
-      ),
-    ).toBe(true)
+    expect(shown?.endsWith(`</div>\n\n架空の根拠。\n\n${favorNote("架空のお願い")}`)).toBe(true)
   })
 
   it("report が呼ばれなかったターンの本文には整形を掛けない", () => {
@@ -379,7 +378,6 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
       const order = [
         shown.indexOf('aria-label="検証結果"'),
-        shown.indexOf(SECTIONS_START),
         shown.indexOf('図 1</span><span class="caption-text">架空の欄の図'),
         shown.indexOf("架空の根拠。"),
         shown.indexOf('図 2</span><span class="caption-text">架空の節の図'),

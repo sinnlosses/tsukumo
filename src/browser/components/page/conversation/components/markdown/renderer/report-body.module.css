@@ -31,7 +31,7 @@
   max-inline-size: var(--report-measure);
   text-wrap: pretty;
 }
-.detail-block
+:is(.detail-block, [data-report-region])
   > :is(
     .report-captioned,
     .table-scroll,
@@ -50,7 +50,7 @@
 }
 /* 列が 7 以上は「63em に入りきらない」の代わり（CSS では中身の幅で段を選べない）。
    max-inline-size を外さず内幅に止めるのは、包みが表の max-content まで伸びて器からはみ出さないため。 */
-.detail-block
+:is(.detail-block, [data-report-region])
   > :is(
     .report-compare,
     .report-before-after,
@@ -71,14 +71,14 @@
   text-wrap: balance;
 }
 /* 段落と箇条書きは器を持たないので、ブラウザ既定の 1em をここで塊のあきに揃える。 */
-.detail-block > :is(p, ul, ol),
-.detail-block > .report-with-gutter > :is(p, ul, ol) {
+:is(.detail-block, [data-report-region]) > :is(p, ul, ol),
+:is(.detail-block, [data-report-region]) > .report-with-gutter > :is(p, ul, ol) {
   margin: var(--report-block-gap) 0;
 }
 /* 地付きの強調は地の文の段落の直下だけ（余白の柱の包みの中の段落を含む）。
-   表・箇条書き・`stats`・`note` の中の `strong` は `.detail-block` の直の子の `p` の下にならないので掛からない。 */
-.detail-block > p :is(strong, b),
-.detail-block > .report-with-gutter > p :is(strong, b) {
+   表・箇条書き・`stats`・`note` の中の `strong` は本文の直の子（欄の入れ物の直の子）の `p` の下にならないので掛からない。 */
+:is(.detail-block, [data-report-region]) > p :is(strong, b),
+:is(.detail-block, [data-report-region]) > .report-with-gutter > p :is(strong, b) {
   padding: 0 0.25em;
   color: var(--ink-bright);
   font-weight: 600;
@@ -88,7 +88,7 @@
 }
 /* 見出しの直後の塊は、上の margin を見出しのあきに差し替える（塊のあきのほうが大きく、相殺で見出しのあきが消えるため）。
    変数で差し替えるのは、塊ごとの規則のほうが詳細度が高く、margin を直に書いても負けるから。 */
-.detail-block > :is(h4, h5) + * {
+:is(.detail-block, [data-report-region]) > :is(h4, h5) + * {
   --report-block-gap: var(--report-heading-gap);
   --report-figure-gap: var(--report-heading-gap);
 }
@@ -106,7 +106,7 @@
   margin-block: 0;
 }
 /* 題を持たない表は、表の幅まで縮めてレポートの幅の中央に置く（題つきの表は包み `.report-captioned` が置く）。 */
-.detail-block > .table-scroll {
+:is(.detail-block, [data-report-region]) > .table-scroll {
   inline-size: fit-content;
   margin-inline: auto;
 }

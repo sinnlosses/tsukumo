@@ -134,7 +134,7 @@
 .detail-block .report-status {
   margin: 13px 0 26px;
 }
-.detail-block .report-status:last-child {
+.detail-block [data-report-region]:last-child > .report-status:last-child {
   margin-bottom: 0;
 }
 /* 合図の行（検証結果の判定だけを運ぶ）。中身は `.report-checks` そのもの。 */
