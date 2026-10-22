@@ -38,7 +38,7 @@ import {
   svgToneFaultsInSections,
   unknownMermaidCount,
 } from "./report-figure-fault.ts"
-import { hasNestedFold, notationsInSections, splitFences } from "./report-markdown-notation.ts"
+import { hasNestedFold, notationsInSections } from "./report-markdown-notation.ts"
 import {
   hasArrow,
   isBadHeading,
@@ -78,10 +78,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     { kind: "crowded-notes", count: crowdedNoteCount(report.sections) },
     {
       kind: "nested-fold",
-      count: blocks.filter(
-        (block) =>
-          block.kind === "markdown" && hasNestedFold(block.fold, splitFences(block.markdown)),
-      ).length,
+      count: blocks.filter((block) => block.kind === "markdown" && hasNestedFold(block)).length,
     },
     {
       kind: "too-many-candidates",

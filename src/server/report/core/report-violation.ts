@@ -56,7 +56,7 @@ export type ReportViolation =
   | { readonly kind: "ragged-table"; readonly count: number }
   /** 行が上限を超えるのに `rest` が空の `table` がある。`count` は表の数。 */
   | { readonly kind: "long-table"; readonly count: number }
-  /** 行が2つ以上で、ある列のセルの平均が全角 `SENTENCE_CELL_LENGTH` 字以上の `table` がある。`count` は表の数。 */
+  /** 行が2つ以上で、ある列のセルの平均が全角 `SENTENCE_CELL_LENGTH` 字以上の `table` がある（インラインコードとリンクの URL は数えない）。`count` は表の数。 */
   | { readonly kind: "sentence-table"; readonly count: number }
   /** 項目が上限を超える `list` がある。`count` は塊の数。 */
   | { readonly kind: "long-list"; readonly count: number }

@@ -211,6 +211,18 @@ describe("reportViolations", () => {
     it("フェンスの中の記法は見ない", () => {
       expect(notationsOf("```text\n# 架空\n- 架空\n```")).toEqual(["code"])
     })
+
+    it("インラインコードの <div> は容れ物にせず、そのあとの箇条書きを差し戻す", () => {
+      expect(notationsOf("架空の `<div>` を使う。\n\n- 架空の1\n- 架空の2")).toEqual(["list"])
+    })
+
+    it("インラインコードの中の画像の記法は画像にしない", () => {
+      expect(notationsOf("架空の `![架空](a.png)` の形。")).toEqual([])
+    })
+
+    it("1行に並べた cols の中の note は容れ物の中とみなす", () => {
+      expect(notationsOf('<div class="cols"><div class="note">架空</div></div>')).toEqual([])
+    })
   })
 
   describe("path 付きの code の塊はファイルと照合する", () => {

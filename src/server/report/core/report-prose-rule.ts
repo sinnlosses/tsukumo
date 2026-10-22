@@ -2,6 +2,7 @@
 
 import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { MAX_HEADING, MAX_ITEM_LABEL } from "../../../shared/report/report-limit.ts"
+import { withoutInlineCode } from "./markdown-tree.ts"
 
 /** 英語の地の文とみなす語の数の下限。 */
 const MIN_ENGLISH_WORDS = 3
@@ -13,8 +14,7 @@ const KANA_OR_KANJI = /[぀-ヿ㐀-䶿一-鿿]/
  * インラインコード・リンク・URL・パスらしい語（`/` `.` `_` を含む）は数えない。
  */
 export function isNonJapanese(text: string): boolean {
-  const words = text
-    .replace(/`[^`\n]*`/g, " ")
+  const words = withoutInlineCode(text, " ")
     .replace(/\[[^\]]*\]\([^)]*\)/g, " ")
     .split(/\s+/)
     .map((word) => word.replace(/[.,;:!?]+$/, ""))
@@ -30,7 +30,7 @@ const ARROW = " → "
 const ITEM_LABEL = new RegExp(`^[^\`:：。\\n]{1,${String(MAX_ITEM_LABEL)}}[:：](?!//)(?!\\d)`)
 
 export function hasArrow(text: string): boolean {
-  return withoutInlineCode(text).includes(ARROW)
+  return withoutInlineCode(text, "").includes(ARROW)
 }
 
 export function proseTexts(block: ReportBlock): readonly string[] {
@@ -67,8 +67,4 @@ export function isLabeledOrdered(block: ReportBlock): boolean {
 export function isBadHeading(heading: string): boolean {
   const trimmed = heading.trim()
   return [...trimmed].length > MAX_HEADING || /[?？]$/.test(trimmed)
-}
-
-function withoutInlineCode(text: string): string {
-  return text.replace(/`[^`\n]*`/g, "")
 }

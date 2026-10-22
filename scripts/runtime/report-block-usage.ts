@@ -3,13 +3,13 @@
 // 「段1の図を含むレポート」「画像を読んだのに image が無いレポート」「`figure` の種類 × レポート数」「`none` の理由 × レポート数」
 // 「報告の種類 × レポート数」「種類ごとに必須の塊が無い割合」
 // 「逃げ道の中の記法 × レポート数」「差し戻しの種類 × 回数」を割合つきで出す。
-// 欄を記録する前の版（2）の行も読み、欄の表だけはそれを記録した版の行を分母にする（欄を足す前後で逃げ道を見比べるため）。
+// 欄を記録する前の版（2）の行も読み、欄の表だけはそれを記録した版の行を分母にする。
 // `figure` を記録する前の版（5以前）の行は、`figure` の表では理由が `unrecorded` の `none` に数える。
 // 強調の数・ラベルの無い辺の割合・節点数の分布は、それを記録した版7以降の行を分母にする。
 // unverified のあるレポートのうち確かめ方のある割合は、版8以降の unverified のある行を分母にする。
 // 報告の種類と必須の塊が無い割合は、版9以降の task の行を分母にする。
 // 2行以下の表のあるレポートの割合は、版10以降の行を分母にする。
-// 欄の表の `blockAside`（塊の傍注）は版12から、`beforeAfterRegion`（前後の画像の枠）は版15から記録している（それより前の行には出ない）。
+// 欄の表の `blockAside`（塊の傍注）は版12から、`beforeAfterRegion`（前後の画像の枠）は版15から記録している。
 // 札 × 節数と、札が許さない塊を使った節・組の数は、版13以降の行の節を分母にする。
 // 引数の字数の分布と差し戻しの出し直しの割合は、版14以降の行を分母にする。
 // 引き継ぎで出した呼び出しの数は、版16以降の行を分母にする。
@@ -154,6 +154,9 @@ const INHERITED_FIELDS_FORMAT_VERSION = 16
 /** 型の渡し方（`reportSchema`）を記録し始めた版。 */
 const REPORT_SCHEMA_FORMAT_VERSION = 17
 
+/** 逃げ道の記法を構文木で数え始めた版。 */
+const NOTATION_TREE_FORMAT_VERSION = 18
+
 const argumentCharsSchema = z.object({
   total: z.number(),
   fields: z.record(z.string(), z.number()),
@@ -241,6 +244,7 @@ const recordSchema = z.union([
       v: z.union([
         z.literal(INHERITED_FIELDS_FORMAT_VERSION),
         z.literal(REPORT_SCHEMA_FORMAT_VERSION),
+        z.literal(NOTATION_TREE_FORMAT_VERSION),
       ]),
       ...figureRecordShape,
       ...countRecordShape,
@@ -274,7 +278,7 @@ const UNRECORDED_REASON = "unrecorded"
 
 /** 差し戻した呼び出しの行（`kind: "rejected"`）。受け付けの行には `kind` が無い。 */
 const rejectionSchema = z.object({
-  v: z.number().int().min(VISUALLESS_FORMAT_VERSION).max(REPORT_SCHEMA_FORMAT_VERSION),
+  v: z.number().int().min(VISUALLESS_FORMAT_VERSION).max(NOTATION_TREE_FORMAT_VERSION),
   kind: z.literal("rejected"),
   reasons: z.array(z.string()),
   argumentChars: argumentCharsSchema.optional(),
@@ -423,7 +427,7 @@ function readRecentRecords(
   }
 }
 
-/** modified のファイルがあるレポートのうち、前後図も画像も無かった数。外す基準の対象ではない。 */
+/** modified のファイルがあるレポートのうち、前後図も画像も無かった数。 */
 function modifiedWithoutVisualSection(reports: readonly VisualRecord[]): string {
   if (reports.length === 0) {
     return "modified のファイルがあるのに前後図も画像も無いレポート: 記録した行が無い"
@@ -770,7 +774,7 @@ function shareLine<Row>(
   return `  ${label.padEnd(16)} ${what} ${String(count).padStart(5)}  ${String(rows.length).padStart(5)}件のうち ${percent.padStart(5)}%`
 }
 
-/** 名前ごとに「出た行の数」を数えた表。`knownNames` は0件でも出す（外す基準は0回を見る）。`total` は割合の分母で、既定は行の数。 */
+/** 名前ごとに「出た行の数」を数えた表。`knownNames` は0件でも出す。`total` は割合の分母で、既定は行の数。 */
 function table<Row>(
   title: string,
   knownNames: readonly string[],

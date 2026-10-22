@@ -7,8 +7,8 @@ import type { ForbiddenBlock, RecordedReportShapeTag, ReportShapeTag } from "./r
 import type { ReportGenre, ReportTaskOutcome } from "./report-task.ts"
 import type { ReportSchemaVariant } from "./schema-variant.ts"
 
-/** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 17 satisfies number
+/** 行の形の版。形か数え方を変えたら上げ、古い行と見分ける。 */
+export const REPORT_USAGE_FORMAT_VERSION = 18 satisfies number
 
 /** 札が許さない塊の組と、その回に出た数（版13から）。 */
 export type ForbiddenShapeBlockUsage = {

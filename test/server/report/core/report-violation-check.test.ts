@@ -137,6 +137,11 @@ describe("reportViolations", () => {
       expect(kinds(draft([text("架空の-->と=>は対象外。")]))).toEqual([])
     })
 
+    it("二重のバッククォートのインラインコードを取り違えない", () => {
+      expect(kinds(draft([text("架空の ``a ` → ` b`` と書く。")]))).toEqual([])
+      expect(kinds(draft([text("架空の ``a`b`` → `c` に変わる。")]))).toEqual(["arrow-in-prose"])
+    })
+
     it("項目の頭の「名前: 説明」は差し戻す", () => {
       expect(kinds(draft([list([{ text: "名前: 架空の説明" }])]))).toEqual(["label-in-item"])
       expect(kinds(draft([list([{ text: "名前：架空の説明" }])]))).toEqual(["label-in-item"])
@@ -197,6 +202,10 @@ describe("reportViolations", () => {
         ),
       ).toEqual([])
       expect(kinds(draft([text("OK")]))).toEqual([])
+    })
+
+    it("二重のバッククォートの中の英語は数えない", () => {
+      expect(kinds(draft([text("``use the ` thing here`` ok")]))).toEqual([])
     })
   })
 

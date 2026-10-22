@@ -80,6 +80,16 @@ describe("reportViolations", () => {
     it("fold の無い単独の details は通る", () => {
       expect(kinds(draft([markdown("<details>\n\n架空\n\n</details>")]))).toEqual([])
     })
+
+    it("fold を持つ塊のインラインコードの <details> は details にしない", () => {
+      const block: ReportBlock = {
+        kind: "markdown",
+        markdown: "架空の `<details>` の形。",
+        fold: "架空の畳み",
+        aside: "",
+      }
+      expect(kinds(draft([block]))).toEqual([])
+    })
   })
 
   describe("候補は5つまで", () => {

@@ -123,6 +123,41 @@ describe("reportViolations", () => {
         [],
       ],
       [
+        "インラインコードのパスの列は数えない",
+        tableWith(
+          ["ファイル", "変更"],
+          [
+            ["`src/server/report/core/report-violation-check.ts`", "架空"],
+            ["`src/server/report/core/report-markdown-notation.ts`", "架空"],
+          ],
+        ),
+        [],
+      ],
+      [
+        "リンクの URL は数えない",
+        twoColumns([
+          ["a", `[架空](https://example.invalid/${"a".repeat(40)})`],
+          ["b", `[架空](https://example.invalid/${"b".repeat(40)})`],
+        ]),
+        [],
+      ],
+      [
+        "リンクの文字は数える",
+        twoColumns([
+          ["a", `[${cells(35)}](https://example.invalid/a)`],
+          ["b", `[${cells(35)}](https://example.invalid/b)`],
+        ]),
+        ["sentence-table"],
+      ],
+      [
+        "インラインコードの外の文字が35字以上なら違反",
+        twoColumns([
+          ["a", `${cells(35)} \`src/a.ts\``],
+          ["b", `${cells(35)} \`src/b.ts\``],
+        ]),
+        ["sentence-table"],
+      ],
+      [
         "行が columns より短い表は、足りないセルを0字として行数で割る",
         twoColumns([["a", cells(40)], ["b"]]),
         ["ragged-table"],

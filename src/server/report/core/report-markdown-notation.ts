@@ -1,9 +1,11 @@
 // 逃げ道（`markdown` の塊）の中の記法の検出。
-// Markdown として構文解析せず、行で見る（フェンスの中だけは飛ばす）。
-// 描く側のパーサはブラウザの層にあって使えず、判定に要るのは行頭の形と数えられる印だけなので。
+// 逃げ道を構文木（mdast）にして文書の順に辿り、ブラウザが記法として描く形だけを数える。
+// HTML の容れ物（`<details>` / `<div>`）は木にならないので、深さは `html` ノードの中のタグを1つずつ数えて決める。
 
-import type { ReportSection } from "../../../shared/report/report-block.ts"
-import { closesFence, openingFence } from "../../../shared/report/report-fence.ts"
+import type { Nodes } from "mdast"
+
+import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
+import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
 
 /** 逃げ道の中の記法 → 差し戻しの文面での呼び名と、代わりに使うもの。 */
 export const MARKDOWN_NOTATION_NAMES = {
@@ -59,213 +61,154 @@ export function containedNotationsInSections(
   return markdownNotationsAt(sections, true)
 }
 
-/** 逃げ道に出た、塊の無い記法の種類（重複無し）。 */
+/** 逃げ道に出た、塊の無い記法の種類（重複無し）。容れ物の中か外かは問わない。 */
 export function escapeNotationsInSections(
   sections: readonly ReportSection[],
 ): readonly EscapeNotation[] {
-  const markdowns = markdownsOf(sections)
+  const readings = readingsOf(sections)
   return ESCAPE_NOTATIONS.filter((notation) =>
-    markdowns.some((markdown) => hasEscapeNotation(markdown, notation)),
+    readings.some((reading) => reading.escapes.includes(notation)),
   )
 }
 
-/**
- * 逃げ道の中身を、フェンスの外の行とフェンスの並びに分ける。
- * `outside` は行の並びを保つため、フェンスの行（開き・中身・閉じ）を空行に置き換えて残す。閉じの無いフェンスは末尾まで続く。
- */
-export function splitFences(markdown: string): SplitMarkdown {
-  type Open = Fence & { readonly marker: string }
-  const initial: {
-    readonly outside: readonly string[]
-    readonly fences: readonly Fence[]
-    readonly open: Open | undefined
-  } = { outside: [], fences: [], open: undefined }
-
-  const final = markdown.split("\n").reduce((state, line) => {
-    const open = state.open
-    if (open !== undefined) {
-      return closesFence(line, open.marker)
-        ? {
-            outside: [...state.outside, ""],
-            fences: [...state.fences, fenceOf(open)],
-            open: undefined,
-          }
-        : {
-            ...state,
-            outside: [...state.outside, ""],
-            open: { ...open, content: [...open.content, line] },
-          }
-    }
-    const opening = openingFence(line)
-    if (opening === undefined) {
-      return { ...state, outside: [...state.outside, line] }
-    }
-    return {
-      ...state,
-      outside: [...state.outside, ""],
-      open: {
-        marker: opening.marker,
-        info: opening.info,
-        content: [],
-        line: state.outside.length,
-      },
-    }
-  }, initial)
-
-  return {
-    outside: final.outside,
-    fences: final.open === undefined ? final.fences : [...final.fences, fenceOf(final.open)],
-  }
+/** `<details>` の中に `<details>` があるか、`fold` を持つ塊の中身に `<details>` があるか。 */
+export function hasNestedFold({
+  fold,
+  markdown,
+}: Pick<Extract<ReportBlock, { readonly kind: "markdown" }>, "fold" | "markdown">): boolean {
+  const reading = markdownReadingOf(markdown)
+  return reading.nestedDetails || (fold.trim() !== "" && reading.escapes.includes("details"))
 }
 
-export function hasNestedFold(fold: string, { outside }: SplitMarkdown): boolean {
-  const opens = outside.reduce(
-    (state, line) => {
-      const opened = countMatches(line, /<details\b/g)
-      return {
-        depth: Math.max(state.depth + opened - countMatches(line, /<\/details>/g), 0),
-        nested: state.nested || state.depth + opened >= 2,
-      }
-    },
-    { depth: 0, nested: false },
-  )
-  return opens.nested || (fold.trim() !== "" && outside.some((line) => DETAILS_TAG.test(line)))
+/** 逃げ道1つに出た記法。`placed` は塊のある記法と、それが容れ物の中にあるか。 */
+type MarkdownReading = {
+  readonly placed: readonly { readonly notation: MarkdownNotation; readonly inContainer: boolean }[]
+  readonly escapes: readonly EscapeNotation[]
+  readonly nestedDetails: boolean
 }
 
-/** 逃げ道（`markdown` の塊）の中身を、塊ごとにフェンスの外の行とフェンスの並びに分けたもの。 */
-function markdownsOf(sections: readonly ReportSection[]): readonly SplitMarkdown[] {
-  return sections
-    .flatMap((section) => section.blocks)
-    .flatMap((block) => (block.kind === "markdown" ? [splitFences(block.markdown)] : []))
-}
+/** 文書の順に並べた、深さを変える印と記法の印。 */
+type Mark =
+  | { readonly kind: "notation"; readonly notation: MarkdownNotation }
+  | { readonly kind: "escape"; readonly notation: EscapeNotation }
+  | { readonly kind: "open"; readonly details: boolean }
+  | { readonly kind: "close"; readonly details: boolean }
 
-/** Markdown の画像（`![…](`）か `<img>` のタグ。 */
-const IMAGE_NOTATION = /!\[[^\]]*\]\(|<img\b/i
+/** HTML のタグ1つ（開きか閉じ）。 */
+const HTML_TAG = /<(\/?)([A-Za-z][\w-]*)([^>]*)>?/g
 
-/** `#` / `##` の見出し（CommonMark の ATX 見出し。行頭の空白は3つまで）。`###` は節の下の段で、塊の種類が無い。 */
-const SECTION_HEADING = /^ {0,3}#{1,2}(?:[ \t]|$)/
-
-/** 箇条書き・番号付きリスト・チェックリストの項目の頭。 */
-const LIST_ITEM = /^ {0,3}(?:[-*+]|\d{1,9}[.)])[ \t]/
-
-/** 表の区切りの行（`| --- | :---: |`）。`|` を1つ以上含み、セルは `-` と両端の `:` だけ。 */
-const TABLE_DELIMITER = /^ *\|?(?: *:?-+:? *\|)+(?: *:?-+:? *)?$|^ *:?-+:? *\|(?: *:?-+:? *\|?)*$/
-
-/** HTML の塊の開き・閉じ（入れ子の深さを数える要素）。 */
-const HTML_BLOCK_OPEN = /<(?:details|div)\b/g
-const HTML_BLOCK_CLOSE = /<\/(?:details|div)>/g
-
-/** 塊の無い記法の印。 */
-const SVG_TAG = /<svg\b/
-const DL_TAG = /<dl\b/
-const DETAILS_TAG = /<details\b/
-const QUOTE_LINE = /^ {0,3}>/
-/** 水平線（CommonMark の thematic break。`-` / `*` / `_` のどれかを3つ以上、空白を挟んでもよい）。 */
-const HR_LINE = /^ {0,3}(?:-[ \t]*){3,}$|^ {0,3}(?:\*[ \t]*){3,}$|^ {0,3}(?:_[ \t]*){3,}$/
-
-/**
- * フェンス1つ。`info` は開きの info 文字列の最初の語（無ければ空）、`line` は開きの行の位置。
- */
-type Fence = { readonly info: string; readonly content: readonly string[]; readonly line: number }
-
-/** 逃げ道の中身を、フェンスの外の行とフェンスの並びに分けたもの。 */
-export type SplitMarkdown = {
-  readonly outside: readonly string[]
-  readonly fences: readonly Fence[]
-}
+/** 容れ物として深さを数える要素。 */
+const CONTAINER_TAGS: readonly string[] = ["details", "div"]
 
 function markdownNotationsAt(
   sections: readonly ReportSection[],
   inContainer: boolean,
 ): readonly MarkdownNotation[] {
-  const markdowns = markdownsOf(sections)
+  const readings = readingsOf(sections)
   return MARKDOWN_NOTATIONS.filter((notation) =>
-    markdowns.some((markdown) => hasNotation(markdown, notation, inContainer)),
+    readings.some((reading) =>
+      reading.placed.some(
+        (placed) => placed.notation === notation && placed.inContainer === inContainer,
+      ),
+    ),
   )
 }
 
-function fenceOf({ info, content, line }: Fence): Fence {
-  return { info, content, line }
+function readingsOf(sections: readonly ReportSection[]): readonly MarkdownReading[] {
+  return sections
+    .flatMap((section) => section.blocks)
+    .flatMap((block) => (block.kind === "markdown" ? [markdownReadingOf(block.markdown)] : []))
 }
 
-/**
- * その記法が、逃げ道の HTML の容れ物（`<details>` / `<div>`）の中と外のどちらにあるか。
- * `inContainer` が `false` なら外側だけ（差し戻しの判定はここ）、`true` なら中だけを見る。
- * 複数の塊を1つに畳む・`cols` に並べるのは逃げ道の役目なので、中は差し戻さない。
- */
-function hasNotation(
-  { outside, fences }: SplitMarkdown,
-  notation: MarkdownNotation,
-  inContainer: boolean,
-): boolean {
-  const topLevel = topLevelFlags(outside)
-  const atLevel = (index: number): boolean => topLevel[index] === !inContainer
-  const lines = outside.filter((_, index) => atLevel(index))
-  const levelFences = fences.filter((fence) => atLevel(fence.line))
-  switch (notation) {
+function markdownReadingOf(markdown: string): MarkdownReading {
+  const initial: MarkdownReading & { readonly depth: number; readonly detailsDepth: number } = {
+    placed: [],
+    escapes: [],
+    nestedDetails: false,
+    depth: 0,
+    detailsDepth: 0,
+  }
+  const final = nodesInOrder(markdownTreeOf(markdown))
+    .flatMap(marksOf)
+    .reduce((state, mark) => {
+      switch (mark.kind) {
+        case "notation":
+          return {
+            ...state,
+            placed: [...state.placed, { notation: mark.notation, inContainer: state.depth > 0 }],
+          }
+        case "escape":
+          return { ...state, escapes: [...state.escapes, mark.notation] }
+        case "open": {
+          const detailsDepth = state.detailsDepth + (mark.details ? 1 : 0)
+          return {
+            ...state,
+            depth: state.depth + 1,
+            detailsDepth,
+            nestedDetails: state.nestedDetails || detailsDepth >= 2,
+          }
+        }
+        case "close":
+          return {
+            ...state,
+            depth: Math.max(state.depth - 1, 0),
+            detailsDepth: Math.max(state.detailsDepth - (mark.details ? 1 : 0), 0),
+          }
+      }
+    }, initial)
+  return { placed: final.placed, escapes: final.escapes, nestedDetails: final.nestedDetails }
+}
+
+function marksOf(node: Nodes): readonly Mark[] {
+  switch (node.type) {
     case "heading":
-      return lines.some((line) => SECTION_HEADING.test(line))
+      return node.depth <= 2 ? [{ kind: "notation", notation: "heading" }] : []
     case "table":
-      return outside.some(
-        (line, index) =>
-          atLevel(index) && line.includes("|") && TABLE_DELIMITER.test(outside[index + 1] ?? ""),
-      )
+      return [{ kind: "notation", notation: "table" }]
     case "list":
-      return lines.some((line) => LIST_ITEM.test(line))
-    case "note":
-    case "stats":
-    case "progress":
-      return lines.some((line) => classLists(line).some((classes) => classes.includes(notation)))
+      return [{ kind: "notation", notation: "list" }]
     case "code":
-      return levelFences.some((fence) => fence.info !== "mermaid" && fence.info !== "chart")
-    case "mermaid":
-      return levelFences.some((fence) => fence.info === "mermaid")
-    case "chart":
-      return levelFences.some((fence) => fence.info === "chart")
+      return [
+        {
+          kind: "notation",
+          notation: node.lang === "mermaid" ? "mermaid" : node.lang === "chart" ? "chart" : "code",
+        },
+      ]
     case "image":
-      return lines.some((line) => IMAGE_NOTATION.test(line))
-  }
-}
-
-/** 塊の無い記法があるか。フェンスの中は見ない。 */
-function hasEscapeNotation({ outside }: SplitMarkdown, notation: EscapeNotation): boolean {
-  switch (notation) {
-    case "colsCard":
-      return outside.some((line) =>
-        classLists(line).some((classes) => classes.includes("cols") || classes.includes("card")),
+    case "imageReference":
+      return [{ kind: "notation", notation: "image" }]
+    case "blockquote":
+      return [{ kind: "escape", notation: "quote" }]
+    case "thematicBreak":
+      return [{ kind: "escape", notation: "hr" }]
+    case "html":
+      return [...node.value.matchAll(HTML_TAG)].flatMap((match) =>
+        tagMarks(match[1] === "/", (match[2] ?? "").toLowerCase(), match[3] ?? ""),
       )
-    case "svg":
-      return outside.some((line) => SVG_TAG.test(line))
-    case "dl":
-      return outside.some((line) => DL_TAG.test(line))
-    case "quote":
-      return outside.some((line) => QUOTE_LINE.test(line))
-    case "hr":
-      return outside.some((line) => HR_LINE.test(line))
-    case "details":
-      return outside.some((line) => DETAILS_TAG.test(line))
+    default:
+      return []
   }
 }
 
-/** 行ごとに、その行の頭が HTML の塊の外にあるか。 */
-function topLevelFlags(lines: readonly string[]): readonly boolean[] {
-  return lines.reduce<{ readonly flags: readonly boolean[]; readonly depth: number }>(
-    (state, line) => ({
-      flags: [...state.flags, state.depth === 0],
-      depth: Math.max(
-        state.depth + countMatches(line, HTML_BLOCK_OPEN) - countMatches(line, HTML_BLOCK_CLOSE),
-        0,
-      ),
-    }),
-    { flags: [], depth: 0 },
-  ).flags
-}
-
-/** 行に書かれた class の並びごとの名前（`class="note note-warn"` なら `["note", "note-warn"]`）。 */
-function classLists(line: string): readonly (readonly string[])[] {
-  return [...line.matchAll(/class=["']([^"']*)["']/g)].map((match) => (match[1] ?? "").split(/\s+/))
-}
-
-function countMatches(text: string, pattern: RegExp): number {
-  return [...text.matchAll(pattern)].length
+function tagMarks(closing: boolean, name: string, attributes: string): readonly Mark[] {
+  const container = CONTAINER_TAGS.includes(name)
+  if (closing) {
+    return container ? [{ kind: "close", details: name === "details" }] : []
+  }
+  const classes = [...attributes.matchAll(/class=["']([^"']*)["']/g)].flatMap((match) =>
+    (match[1] ?? "").split(/\s+/),
+  )
+  return [
+    ...(["note", "stats", "progress"] as const)
+      .filter((notation) => classes.includes(notation))
+      .map((notation): Mark => ({ kind: "notation", notation })),
+    ...(name === "img" ? [{ kind: "notation", notation: "image" } as const] : []),
+    ...(classes.includes("cols") || classes.includes("card")
+      ? [{ kind: "escape", notation: "colsCard" } as const]
+      : []),
+    ...(name === "svg" || name === "dl" || name === "details"
+      ? [{ kind: "escape", notation: name } as const]
+      : []),
+    ...(container ? [{ kind: "open", details: name === "details" } as const] : []),
+  ]
 }

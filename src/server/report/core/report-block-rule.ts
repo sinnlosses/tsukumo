@@ -2,6 +2,7 @@
 
 import type { ReportBlock, ReportSection } from "../../../shared/report/report-block.ts"
 import { MAX_CANDIDATES, SENTENCE_CELL_LENGTH } from "../../../shared/report/report-limit.ts"
+import { textLengthOf } from "./markdown-tree.ts"
 
 /** 流れ・つながり・構造を描く塊か（`no-shape` と合わない塊）。 */
 export function drawsShape(block: ReportBlock): boolean {
@@ -94,7 +95,10 @@ export function isRaggedTable(block: ReportBlock): boolean {
   }
 }
 
-/** 行が2つ以上で、ある列のセルの平均が {@link SENTENCE_CELL_LENGTH} 字以上の表か。 */
+/**
+ * 行が2つ以上で、ある列のセルの平均が {@link SENTENCE_CELL_LENGTH} 字以上の表か。
+ * 字数はセルを構文木にした `text` ノードだけを数え、インラインコードとリンクの URL は数えない。
+ */
 export function isSentenceTable(block: ReportBlock): boolean {
   if (block.kind !== "table" || block.rows.length < 2) return false
   return block.columns.some((_, column) => {
@@ -126,6 +130,6 @@ export function isRaggedChart(block: ReportBlock): boolean {
 type TableCell = Extract<ReportBlock, { readonly kind: "table" }>["rows"][number][number]
 
 function cellLength(cell: TableCell): number {
-  const shown = typeof cell === "string" ? cell : "text" in cell ? cell.text : cell.from + cell.to
-  return [...shown].length
+  if (typeof cell === "string") return textLengthOf(cell)
+  return "text" in cell ? textLengthOf(cell.text) : textLengthOf(cell.from) + textLengthOf(cell.to)
 }
