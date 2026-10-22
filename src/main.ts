@@ -139,7 +139,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   const host = createHost(config.host)
   // 成果の画面が Beads の読みを覚える入れ物も1つで、ビューとセッションの両側が同じものを見る。
   // 温めはセッション側が起こす（ビューが別の入れ物を持つと、温めた読みが画面に届かない）。
-  const achievementCache = createAchievementCache(launch.cwd)
+  const achievementCache = createAchievementCache(launch.cwd, clock)
   const workflowSetting = wireWorkflowSetting(launch.cwd, mountWorkflowPlugin, config.twCommand)
 
   const view = await startViewDelivery({

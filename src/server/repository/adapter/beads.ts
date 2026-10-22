@@ -49,6 +49,14 @@ export type BeadsOutcome =
   | { readonly kind: "failed" }
   | { readonly kind: "timed-out" }
 
+/** 印が動かなくても読み直す間隔。印が書き込みを取りこぼしたときに結果が古いまま残る長さの上限になる。 */
+export const BEADS_REREAD_INTERVAL_MS = 60_000
+
+/** 時計が戻ったとき（負の経過）も間隔の外として読み直す。 */
+export function isWithinRereadInterval(elapsedMs: number): boolean {
+  return elapsedMs >= 0 && elapsedMs < BEADS_REREAD_INTERVAL_MS
+}
+
 /** `cwd` の課題を読む。`stamp` は呼ぶ側が先に読んだ課題の変化の印で、取れないときは `undefined`。 */
 export type BeadsIssuesReader = (cwd: string, stamp: string | undefined) => Promise<BeadsOutcome>
 

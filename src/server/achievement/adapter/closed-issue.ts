@@ -15,6 +15,7 @@ import type { DoneTask } from "../../../shared/repository/task-summary.ts"
 import { localDateEpochRange, localDateKey } from "../../adapter/local-time.ts"
 import { doneTasksOfBeadsIssues } from "../../repository/adapter/beads-task.ts"
 import {
+  isWithinRereadInterval,
   readBeadsIssues,
   readBeadsStampOf,
   readBeadsWorkspace,
@@ -27,6 +28,7 @@ type AchievementBeadsRead = readonly DoneTask[] | "missing" | "unavailable"
 /**
  * 成果の読みが覚えるものの入れ物。配線が1つ作り、{@link readAchievement} と {@link readAchievementCalendar} の両方に渡す。
  * 課題の変化の印が前に読んだときと同じなら `bd list` を起こさず同じ結果を返す。
+ * 印が同じでも、前回読み始めてから `BEADS_REREAD_INTERVAL_MS` 経っていれば読み直す。
  */
 export type AchievementCache = {
   readonly readBeads: () => Promise<AchievementBeadsRead>
@@ -37,9 +39,13 @@ export type AchievementCache = {
  * 印が変わっても、前に読めた結果があればそれを先に返し、`bd list`（1秒ほどかかる）は裏で読み直す。
  * 裏の読みが終われば次の読みから新しい結果が出る。最初の1回だけは読み終わるまで待つ。
  */
-export function createAchievementCache(cwd: string): AchievementCache {
+export function createAchievementCache(cwd: string, now: () => number): AchievementCache {
   let lastBeadsRead:
-    | { readonly stamp: string; readonly read: Promise<AchievementBeadsRead> }
+    | {
+        readonly stamp: string
+        readonly at: number
+        readonly read: Promise<AchievementBeadsRead>
+      }
     | undefined = undefined
   let lastDone: readonly DoneTask[] | undefined = undefined
   // `.beads` の有無は見つかった1回だけ `bd where` で調べて覚える（呼ぶたびに調べると1秒ほどかかる）。
@@ -67,12 +73,16 @@ export function createAchievementCache(cwd: string): AchievementCache {
       }
       // 印は `bd list` の前に読む（読んでいるあいだの更新を次の読みで拾うため）。
       const stamp = await readBeadsStampOf(cwd)
-      if (stamp !== undefined && lastBeadsRead?.stamp === stamp) {
+      const at = now()
+      const rereadDue =
+        lastBeadsRead !== undefined && !isWithinRereadInterval(at - lastBeadsRead.at)
+      if (stamp !== undefined && lastBeadsRead?.stamp === stamp && !rereadDue) {
         return lastDone ?? lastBeadsRead.read
       }
-      const read = readAndRemember(stamp)
+      // 読み直しの回は印を渡さない（印ごとに覚えた結果を使い回させない）。
+      const read = readAndRemember(rereadDue ? undefined : stamp)
       // 読み始めた時点で覚え、同時に来た読みにも同じ `bd list` を渡す。
-      const remembered = stamp === undefined ? undefined : { stamp, read }
+      const remembered = stamp === undefined ? undefined : { stamp, at, read }
       lastBeadsRead = remembered
       const forget = (): void => {
         if (lastBeadsRead === remembered) {

@@ -7,11 +7,8 @@
 // タイムアウトしたときはその回を諦める。
 
 import { knownTaskSummaryOfBeadsIssues } from "./beads-task.ts"
-import type { BeadsIssuesReader, BeadsStamp } from "./beads.ts"
+import { isWithinRereadInterval, type BeadsIssuesReader, type BeadsStamp } from "./beads.ts"
 import type { TaskSource } from "./task-source.ts"
-
-/** 印が動かなくても読み直す間隔。印が書き込みを取りこぼしたときに一覧が古いまま残る長さの上限になる。 */
-const BEADS_REREAD_INTERVAL_MS = 60_000
 
 export type TaskBeadsSourcePorts = {
   readonly readBeadsIssues: BeadsIssuesReader
@@ -57,9 +54,4 @@ export function createTaskBeadsSource(cwd: string, ports: TaskBeadsSourcePorts):
       }
     },
   }
-}
-
-/** 時計が戻ったとき（負の経過）も間隔の外として読み直す。 */
-function isWithinRereadInterval(elapsedMs: number): boolean {
-  return elapsedMs >= 0 && elapsedMs < BEADS_REREAD_INTERVAL_MS
 }

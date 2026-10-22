@@ -12,7 +12,10 @@ import {
 } from "../../../../src/server/achievement/adapter/closed-issue.ts"
 import type * as BeadsAdapter from "../../../../src/server/repository/adapter/beads.ts"
 import type { BeadsOutcome } from "../../../../src/server/repository/adapter/beads.ts"
-import { readBeadsIssues } from "../../../../src/server/repository/adapter/beads.ts"
+import {
+  BEADS_REREAD_INTERVAL_MS,
+  readBeadsIssues,
+} from "../../../../src/server/repository/adapter/beads.ts"
 import type * as GitAdapter from "../../../../src/server/repository/adapter/git.ts"
 import { createTaskBeadsSource } from "../../../../src/server/repository/adapter/task-beads-source.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
@@ -67,6 +70,8 @@ useBeadsHome(() => join(root(), "home"))
 
 // 木曜。今週の月曜からその4週前の月曜までが暦の範囲になる。
 const TODAY = "2026-09-24"
+
+const fixedClock = (): number => 0
 
 /**
  * `date`（`YYYY-MM-DD`）の `hhmm` を、`readAchievement` が読む `Temporal.Now.timeZoneId()` と同じゾーンのローカル時刻として、オフセット付き ISO に直す。
@@ -124,7 +129,7 @@ describe("readAchievement", { timeout: 60_000 }, () => {
     ])
 
     const achievement = known(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(repository)),
+      await readAchievement("2026-09-23", TODAY, createAchievementCache(repository, fixedClock)),
     )
 
     expect(achievement).toMatchObject({
@@ -142,7 +147,7 @@ describe("readAchievement", { timeout: 60_000 }, () => {
       issue("t-001", "先に済んだ", ["2026-09-20", "10:00"], ["2026-09-23", "10:00"]),
       issue("t-002", "あとで閉じる", ["2026-09-20", "10:00"], "open"),
     ])
-    const cache = createAchievementCache(repository)
+    const cache = createAchievementCache(repository, fixedClock)
     // `bd close` は閉じた時刻を今にするので、数える日も今日にする。
     const today = Temporal.Now.plainDateISO().toString()
     const doneCount = async (): Promise<number> =>
@@ -171,7 +176,7 @@ describe("readAchievement", { timeout: 60_000 }, () => {
     ])
 
     const achievement = known(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(repository)),
+      await readAchievement("2026-09-23", TODAY, createAchievementCache(repository, fixedClock)),
     )
 
     expect(achievement.milestones).toEqual([{ count: 250, taskId: "t-250" }])
@@ -185,7 +190,7 @@ describe("readAchievement", { timeout: 60_000 }, () => {
     ])
 
     const achievement = known(
-      await readAchievement("2026-09-23", TODAY, createAchievementCache(dir)),
+      await readAchievement("2026-09-23", TODAY, createAchievementCache(dir, fixedClock)),
     )
 
     expect(achievement.doneTasks).toEqual([{ id: "t-001", summary: "今日済んだ" }])
@@ -194,7 +199,9 @@ describe("readAchievement", { timeout: 60_000 }, () => {
   it(".beads が無ければ「不明」", async () => {
     const repository = await initRepository(root())
 
-    expect(await readAchievement("2026-09-23", TODAY, createAchievementCache(repository))).toEqual({
+    expect(
+      await readAchievement("2026-09-23", TODAY, createAchievementCache(repository, fixedClock)),
+    ).toEqual({
       kind: "ok",
       achievement: { kind: "unknown" },
     })
@@ -206,7 +213,9 @@ describe("readAchievement", { timeout: 60_000 }, () => {
     ])
     rmSync(join(repository, ".beads", "embeddeddolt"), { recursive: true, force: true })
 
-    expect(await readAchievement("2026-09-23", TODAY, createAchievementCache(repository))).toEqual({
+    expect(
+      await readAchievement("2026-09-23", TODAY, createAchievementCache(repository, fixedClock)),
+    ).toEqual({
       kind: "unavailable",
     })
   })
@@ -223,7 +232,7 @@ describe("readAchievementCalendar", { timeout: 60_000 }, () => {
     ])
 
     const calendar = knownCalendar(
-      await readAchievementCalendar(TODAY, createAchievementCache(repository)),
+      await readAchievementCalendar(TODAY, createAchievementCache(repository, fixedClock)),
     )
 
     expect(calendar.days[0]).toEqual({ date: "2026-08-24", count: 1 })
@@ -257,7 +266,7 @@ describe("readAchievementCalendar", { timeout: 60_000 }, () => {
         readBeadsStamp: () => Promise.resolve({ kind: "present", stamp: "s1" }),
         now: () => 0,
       })
-      const cache = createAchievementCache("/repo-shared")
+      const cache = createAchievementCache("/repo-shared", fixedClock)
 
       await source.read()
       expect(await doneCount(cache)).toBe(1)
@@ -266,7 +275,7 @@ describe("readAchievementCalendar", { timeout: 60_000 }, () => {
     })
 
     it("印が変わると読み直し、前の結果を先に返して裏で新しい結果に替わる", async () => {
-      const cache = createAchievementCache("/repo-changed")
+      const cache = createAchievementCache("/repo-changed", fixedClock)
       expect(await doneCount(cache)).toBe(1)
 
       fakeIntake.stamp = "s2"
@@ -278,12 +287,62 @@ describe("readAchievementCalendar", { timeout: 60_000 }, () => {
       expect(await doneCount(cache)).toBe(1)
       await vi.waitFor(async () => expect(await doneCount(cache)).toBe(2))
     })
+
+    describe("印が動かないとき", () => {
+      let nowMs = 0
+      const clock = (): number => nowMs
+      beforeEach(() => {
+        nowMs = 1_000
+      })
+
+      const changeIssuesWithoutStamp = (): void => {
+        fakeIntake.issues = [
+          ...fakeIntake.issues,
+          issue("t-002", "あとで済んだ", ["2026-09-20", "10:00"], ["2026-09-23", "11:00"]),
+        ]
+      }
+
+      it("間隔の前は読み直さない", async () => {
+        const cache = createAchievementCache("/repo-before", clock)
+        expect(await doneCount(cache)).toBe(1)
+        changeIssuesWithoutStamp()
+
+        nowMs += BEADS_REREAD_INTERVAL_MS - 1
+
+        expect(await doneCount(cache)).toBe(1)
+        expect(fakeIntake.listCalls).toBe(1)
+      })
+
+      it("間隔が過ぎたら読み直し、前の結果を先に返して裏で新しい結果に替わる", async () => {
+        const cache = createAchievementCache("/repo-due", clock)
+        expect(await doneCount(cache)).toBe(1)
+        changeIssuesWithoutStamp()
+
+        nowMs += BEADS_REREAD_INTERVAL_MS
+
+        expect(await doneCount(cache)).toBe(1)
+        await vi.waitFor(async () => expect(await doneCount(cache)).toBe(2))
+      })
+
+      it("時計が戻ったら読み直す", async () => {
+        const cache = createAchievementCache("/repo-back", clock)
+        expect(await doneCount(cache)).toBe(1)
+        changeIssuesWithoutStamp()
+
+        nowMs -= 1
+
+        expect(await doneCount(cache)).toBe(1)
+        await vi.waitFor(async () => expect(await doneCount(cache)).toBe(2))
+      })
+    })
   })
 
   it(".beads が無ければ「不明」", async () => {
     const repository = await initRepository(root())
 
-    expect(await readAchievementCalendar(TODAY, createAchievementCache(repository))).toEqual({
+    expect(
+      await readAchievementCalendar(TODAY, createAchievementCache(repository, fixedClock)),
+    ).toEqual({
       kind: "ok",
       calendar: { kind: "unknown" },
     })
