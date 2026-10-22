@@ -215,3 +215,4 @@ sed -n '/^## shared/,/^## /p' docs/architecture/shared-contract.md
 | `docs/architecture/adr/0029-usage-review-own-query.md`        | トークン消費の見直しは、会話とは別の使い捨ての `query()` で走らせる（2026-10-12）      |
 | `docs/architecture/adr/0030-workflow-as-skill-sequence.md`    | ワークフローを、契約を満たすスキルの並びにする（2026-10-15）                           |
 | `docs/architecture/adr/0031-report-body-as-regions.md`        | レポートの本文は欄の構造のままブラウザへ渡し、欄ごとに独立して描く（2026-10-22）       |
+| `docs/architecture/adr/0032-free-html-block.md`               | モデルが自由に書いた HTML を、レポートに載せる口は持たない（2026-10-23）               |
