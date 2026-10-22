@@ -258,7 +258,7 @@ function parseLine(text: string): ParsedLine {
   const label = colon < 0 ? "" : right.slice(colon + 1).trim()
   const from = parseName(left)
   const to = parseName(target)
-  if (from === undefined || to === undefined || label.includes(":")) {
+  if (from === undefined || to === undefined) {
     return { kind: "broken" }
   }
   return { kind: "item", names: [from, to], label, change, tone, dashed: arrow === "-.>" }

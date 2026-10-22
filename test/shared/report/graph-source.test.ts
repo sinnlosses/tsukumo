@@ -87,11 +87,9 @@ describe("readGraphSource", () => {
   })
 
   it("読めない行は行番号（空行も数える）を返し、その行の節点は足さない", () => {
-    const reading = readGraphSource(
-      "A -> B\n\nA - B\nX -> Y -> Z\n -> C\nD -> E: 語: 語\nF: 語\n()",
-    )
+    const reading = readGraphSource("A -> B\n\nA - B\nX -> Y -> Z\n -> C\nF: 語\n()")
 
-    expect(reading.brokenLines).toEqual([3, 4, 5, 6, 7, 8])
+    expect(reading.brokenLines).toEqual([3, 4, 5, 6, 7])
     expect(reading.nodes.map(({ name }) => name)).toEqual(["A", "B"])
     expect(reading.edges).toEqual([
       { from: 0, to: 1, label: "", change: "unchanged", tone: "none", dashed: false },
@@ -168,6 +166,18 @@ describe("readGraphSource", () => {
     ])("%s は読めない行にする", (_, source) => {
       expect(readGraphSource(source).brokenLines.length).toBeGreaterThan(0)
     })
+  })
+
+  it("ラベルの中の : は壊れた行にせず、最初の : より後ろを全部ラベルにする", () => {
+    const { edges, brokenLines } = readGraphSource("起動 -> 集計: 12:00 に走る")
+    expect(brokenLines).toEqual([])
+    expect(edges).toHaveLength(1)
+    expect(edges[0]?.label).toBe("12:00 に走る")
+  })
+
+  it("節点の名前の中の : は壊れた行にする", () => {
+    expect(readGraphSource("A:1 -> B").brokenLines).toEqual([1])
+    expect(readGraphSource("A:1").brokenLines).toEqual([1])
   })
 
   it("節点が1つも無い source は節点を持たない", () => {
