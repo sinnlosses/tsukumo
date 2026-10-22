@@ -59,6 +59,7 @@ function testPorts(): TaskSummaryPorts {
   return {
     ...REAL_TASK_SUMMARY_PORTS,
     clock: {
+      ...REAL_TASK_SUMMARY_PORTS.clock,
       after: (delayMs, wake) => {
         pollsFinished += 1
         return REAL_TASK_SUMMARY_PORTS.clock.after(delayMs, wake)

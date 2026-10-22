@@ -1,5 +1,5 @@
 // Beads（`bd`）を起こす口。`bd` を起こすのはここだけ（検査の「子プロセスを起こしてよい箇所」の許可はこのファイル）。
-// 起こすのは読むだけの `bd list` で、ネットワークにも出ない。
+// 起こすのは読むだけの `bd list`・`bd where`・`bd vc status` で、ネットワークにも出ない。
 //
 // `bd list --json` には作成者（owner）なども入るが、境界で落とす（`BeadsIssue` の欄だけを運ぶ）。
 // 本文（description・acceptance_criteria・notes）と `external_ref` はタスクのモーダルの詳細が使うので運ぶ（会話内容ではないが、ログには出さない）。
@@ -7,8 +7,6 @@
 // 例外を投げない。`.beads` が無い・`bd` が無いときも `failed`。
 
 import { execFile } from "node:child_process"
-import { readdir, readFile, stat } from "node:fs/promises"
-import { join } from "node:path"
 
 import { z } from "zod"
 
@@ -103,13 +101,12 @@ export type BeadsStamp =
  * `.beads` の有無と課題の変化の印（{@link readBeadsStampOf}）を読む関数を作る。
  * `.beads` の場所は取れた1回だけ `bd where` で調べて覚え、見つからないうちは読むたびに調べ直す。
  * `bd where` がタイムアウトしたときは `.beads` があるものとして印を `undefined` にする。
- * `bd` の内部の置き場に頼るので、印が取れないとき・形が違うときは `undefined` を返し、呼ぶ側は毎回 `bd list` で読む。
  */
 export function createBeadsStampReader(cwd: string): () => Promise<BeadsStamp> {
-  let beadsDir: string | undefined = undefined
+  let beadsFound = false
 
   return async () => {
-    if (beadsDir === undefined) {
+    if (!beadsFound) {
       const workspace = await readBeadsWorkspace(cwd)
       if (workspace.kind === "missing") {
         return { kind: "missing" }
@@ -117,9 +114,9 @@ export function createBeadsStampReader(cwd: string): () => Promise<BeadsStamp> {
       if (workspace.kind === "timed-out") {
         return { kind: "present", stamp: undefined }
       }
-      beadsDir = workspace.dir
+      beadsFound = true
     }
-    return { kind: "present", stamp: await readBeadsStampOf(beadsDir) }
+    return { kind: "present", stamp: await readBeadsStampOf(cwd) }
   }
 }
 
@@ -152,22 +149,22 @@ export function readBeadsWorkspace(cwd: string): Promise<BeadsWorkspace> {
   })
 }
 
-/** Dolt のデータベースを置く `.beads` の下のディレクトリ。埋め込みは `embeddeddolt`、`dolt sql-server` は `dolt`。 */
-const DOLT_DATA_DIRECTORIES = ["embeddeddolt", "dolt"] as const
-
-/** Dolt の chunk journal。`dolt sql-server` は書いても manifest の中身を変えず、これだけが伸びる。 */
-const CHUNK_JOURNAL_FILE = "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
-
 /**
- * `.beads` の課題の変化の印（Dolt の `noms/manifest` の中身と chunk journal の大きさ）。
- * `bd` は読むだけでも manifest の更新時刻を進めるが、中身と journal の大きさは書いたときだけ変わる。
- * `bd` の内部の置き場に頼るので、取れないとき・形が違うときは `undefined`。
+ * `cwd` の課題の変化の印（`bd vc status --json` の `commit`。Beads の Dolt の HEAD）。
+ * bd 1.3.1 では課題の作成・更新・ラベル・コメント・依存・クローズのどれでも変わり、読むだけでは変わらない。
+ * `bd` が無い・落ちた・時間切れ・形が違うときは `undefined`。
  */
-export async function readBeadsStampOf(beadsDir: string): Promise<string | undefined> {
-  const stamps = (
-    await Promise.all(DOLT_DATA_DIRECTORIES.map((name) => readDatabaseStamps(join(beadsDir, name))))
-  ).flat()
-  return stamps.length === 0 ? undefined : stamps.join(",")
+export function readBeadsStampOf(cwd: string): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    execFile(
+      "bd",
+      ["vc", "status", "--json"],
+      { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
+      (error, stdout) => {
+        resolve(error === null ? beadsStampOfVcStatus(stdout) : undefined)
+      },
+    )
+  })
 }
 
 /** 1件ぶんの形。読めない1件はその1件だけ読み飛ばす（ほかの課題まで「読めない」にしない）。 */
@@ -188,12 +185,7 @@ const beadsIssueSchema = z.object({
 
 /** `bd list --json` の出力（課題の配列）を読み替える。配列でない・JSON でないときは `failed`。 */
 export function beadsOutcomeOf(stdout: string): BeadsOutcome {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(stdout)
-  } catch {
-    return { kind: "failed" }
-  }
+  const parsed = parsedJsonOf(stdout)
   if (!Array.isArray(parsed)) {
     return { kind: "failed" }
   }
@@ -205,26 +197,21 @@ export function beadsOutcomeOf(stdout: string): BeadsOutcome {
   return { kind: "issues", issues }
 }
 
-/** `dataDir` の下で manifest の読めるデータベースごとの印。`dolt` には `.doltcfg` のようなデータベースでないものも並ぶので、読めないものは飛ばす。 */
-async function readDatabaseStamps(dataDir: string): Promise<readonly string[]> {
-  const entries = await readdir(dataDir, { withFileTypes: true }).catch(() => [])
-  const stamps = await Promise.all(
-    entries
-      .filter((entry) => entry.isDirectory())
-      .map(async (entry) => {
-        const nomsDir = join(dataDir, entry.name, ".dolt", "noms")
-        const manifest = await readFile(join(nomsDir, "manifest"), "utf8").catch(() => undefined)
-        if (manifest === undefined) {
-          return []
-        }
-        const journalSize = await stat(join(nomsDir, CHUNK_JOURNAL_FILE)).then(
-          (journal) => String(journal.size),
-          () => "",
-        )
-        return [`${manifest}#${journalSize}`]
-      }),
-  )
-  return stamps.flat()
+const vcStatusSchema = z.object({ commit: z.string().min(1) })
+
+/** `bd vc status --json` の出力から `commit` を取り出す。JSON でない・`commit` が無い・空なら `undefined`。 */
+function beadsStampOfVcStatus(stdout: string): string | undefined {
+  const status = vcStatusSchema.safeParse(parsedJsonOf(stdout))
+  return status.success ? status.data.commit : undefined
+}
+
+/** JSON として読めなければ `undefined`（JSON の値に `undefined` は無いので、読めた値と混ざらない）。 */
+function parsedJsonOf(stdout: string): unknown {
+  try {
+    return JSON.parse(stdout)
+  } catch {
+    return undefined
+  }
 }
 
 function listAllBeadsIssues(cwd: string): Promise<BeadsOutcome> {

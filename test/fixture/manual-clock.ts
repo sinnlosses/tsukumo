@@ -31,6 +31,7 @@ export function createManualClock(): ManualClock {
           remove(id)
         }
       },
+      now: () => now,
     },
     now: () => now,
     advance: (ms) => {

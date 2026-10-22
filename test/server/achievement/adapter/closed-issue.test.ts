@@ -255,6 +255,7 @@ describe("readAchievementCalendar", { timeout: 60_000 }, () => {
       const source = createTaskBeadsSource("/repo-shared", {
         readBeadsIssues,
         readBeadsStamp: () => Promise.resolve({ kind: "present", stamp: "s1" }),
+        now: () => 0,
       })
       const cache = createAchievementCache("/repo-shared")
 

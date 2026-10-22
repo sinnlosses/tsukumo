@@ -42,8 +42,8 @@ export function createAchievementCache(cwd: string): AchievementCache {
     | { readonly stamp: string; readonly read: Promise<AchievementBeadsRead> }
     | undefined = undefined
   let lastDone: readonly DoneTask[] | undefined = undefined
-  // `.beads` の場所は見つかった1回だけ `bd where` で調べて覚える（呼ぶたびに調べると1秒ほどかかる）。
-  let beadsDir: string | undefined = undefined
+  // `.beads` の有無は見つかった1回だけ `bd where` で調べて覚える（呼ぶたびに調べると1秒ほどかかる）。
+  let beadsFound = false
 
   async function readAndRemember(stamp: string | undefined): Promise<AchievementBeadsRead> {
     const result = await readDoneTasks(cwd, stamp)
@@ -55,7 +55,7 @@ export function createAchievementCache(cwd: string): AchievementCache {
 
   return {
     readBeads: async () => {
-      if (beadsDir === undefined) {
+      if (!beadsFound) {
         const workspace = await readBeadsWorkspace(cwd)
         if (workspace.kind === "missing") {
           return "missing"
@@ -63,10 +63,10 @@ export function createAchievementCache(cwd: string): AchievementCache {
         if (workspace.kind === "timed-out") {
           return "unavailable"
         }
-        beadsDir = workspace.dir
+        beadsFound = true
       }
       // 印は `bd list` の前に読む（読んでいるあいだの更新を次の読みで拾うため）。
-      const stamp = await readBeadsStampOf(beadsDir)
+      const stamp = await readBeadsStampOf(cwd)
       if (stamp !== undefined && lastBeadsRead?.stamp === stamp) {
         return lastDone ?? lastBeadsRead.read
       }

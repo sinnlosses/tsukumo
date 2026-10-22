@@ -11,6 +11,7 @@
 import { isDeepEqual } from "remeda"
 
 import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
+import { createServerClock } from "../../adapter/local-time.ts"
 import { createBeadsStampReader, readBeadsIssues } from "./beads.ts"
 import { createFakeBeadsStampReader, readFakeBeadsIssues } from "./fake-beads.ts"
 import { createTaskBeadsSource } from "./task-beads-source.ts"
@@ -41,9 +42,10 @@ export type TaskSummaryWatcher = {
   readonly refresh: () => Promise<void>
 }
 
-/** 時計の口。`delayMs` 後に `wake` を1回呼び、返した関数で取り消す。 */
+/** 時計の口。`after` は `delayMs` 後に `wake` を1回呼び、返した関数で取り消す。`now` はいまの時刻（ミリ秒）。 */
 export type TaskSummaryClock = {
   readonly after: (delayMs: number, wake: () => void) => () => void
+  readonly now: () => number
 }
 
 /** 見回りが外の世界を読む口。確かめるときは偽に差し替える。 */
@@ -73,6 +75,7 @@ export const REAL_TASK_SUMMARY_PORTS = {
         clearTimeout(timer)
       }
     },
+    now: createServerClock(undefined),
   },
 } satisfies TaskSummaryPorts
 
@@ -119,6 +122,7 @@ export function watchTaskSummary(
   const source: TaskSource = createTaskBeadsSource(cwd, {
     readBeadsIssues: ports.readBeadsIssues,
     readBeadsStamp: ports.createBeadsStampReader(cwd),
+    now: ports.clock.now,
   })
   let notified: TaskSummaryResult = { kind: "loading" }
   let memoryTried = false
