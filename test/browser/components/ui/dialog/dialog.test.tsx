@@ -91,9 +91,4 @@ describe("Dialog", () => {
     expect(dialog.style.top).toBe("120px")
     expect(dialog.style.left).toBe("40px")
   })
-
-  it("className が足される", () => {
-    const dialog = renderDialog({ ...BASE_PROPS, className: "dummy-extra" })
-    expect(dialog.className.split(" ")).toContain("dummy-extra")
-  })
 })

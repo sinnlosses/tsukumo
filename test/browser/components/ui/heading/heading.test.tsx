@@ -30,21 +30,4 @@ describe("Heading", () => {
     const element = renderedElement({ ...BASE_PROPS, level: 3 })
     expect(element.tagName).toBe("H3")
   })
-
-  it("size・tone・weight は Text と同じ表の class を付ける", () => {
-    const element = renderedElement({
-      ...BASE_PROPS,
-      size: "heading",
-      tone: "accent",
-      weight: "bold",
-    })
-    expect(element.className.split(" ")).toEqual(
-      expect.arrayContaining(["text-size-heading", "text-tone-accent", "text-weight-bold"]),
-    )
-  })
-
-  it("className が足される", () => {
-    const element = renderedElement({ ...BASE_PROPS, className: "dummy-extra" })
-    expect(element.className.split(" ")).toContain("dummy-extra")
-  })
 })

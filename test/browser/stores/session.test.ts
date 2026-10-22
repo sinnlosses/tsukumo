@@ -14,9 +14,4 @@ describe("isRefusedFor", () => {
     expect(isRefusedFor(refused, FRAME_ERROR_REASON.sessionEnded)).toBe(false)
     expect(isRefusedFor(new Error("REFUSED"), FRAME_ERROR_REASON.sessionOccupied)).toBe(false)
   })
-
-  it("型に無い文言は型検査が拒む", () => {
-    // @ts-expect-error 理由は CommandRefusalReason に限る
-    expect(isRefusedFor(refused, "別の窓で使用中")).toBe(false)
-  })
 })

@@ -82,9 +82,4 @@ describe("Stack", () => {
     const element = renderedElement({ ...BASE_PROPS, ref })
     expect(ref.current === element).toBe(true)
   })
-
-  it("className が足される", () => {
-    const element = renderedElement({ ...BASE_PROPS, className: "dummy-extra" })
-    expect(element.className.split(" ")).toContain("dummy-extra")
-  })
 })

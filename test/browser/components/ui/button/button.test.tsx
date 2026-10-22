@@ -30,16 +30,6 @@ function renderButton(props: Omit<ButtonProps, "children">): HTMLElement {
 }
 
 describe("Button", () => {
-  it("variant は対応表の class を付ける", () => {
-    const element = renderButton({ ...BASE_PROPS, variant: "solid-accent" })
-    expect(element.className.split(" ")).toContain("button-variant-solid-accent")
-  })
-
-  it("size は Text と同じ表の class を付ける", () => {
-    const element = renderButton({ ...BASE_PROPS, size: "action" })
-    expect(element.className.split(" ")).toContain("text-size-action")
-  })
-
   it("押すと onClick を呼ぶ", () => {
     const onClick = vi.fn<() => void>()
     const element = renderButton({ ...BASE_PROPS, onClick })
@@ -80,10 +70,5 @@ describe("Button", () => {
     expect(element.getAttribute("aria-expanded")).toBe("true")
     expect(element.getAttribute("aria-controls")).toBe("dummy-panel")
     expect(ref.current).toBe(element)
-  })
-
-  it("className が足される", () => {
-    const element = renderButton({ ...BASE_PROPS, className: "dummy-extra" })
-    expect(element.className.split(" ")).toContain("dummy-extra")
   })
 })

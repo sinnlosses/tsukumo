@@ -32,7 +32,7 @@ export function diffWordRanges(source: string): DiffWordRanges {
  * `-` の連続が n 行、直後に `+` の連続がちょうど n 行のときだけ、同じ順の行どうしを対にする。
  * 返す Map は `-` の行の添字から対の `+` の行の添字。`---`/`+++` で始まるファイルの頭の行は対にしない。
  */
-export function pairDiffLines(lines: readonly string[]): ReadonlyMap<number, number> {
+function pairDiffLines(lines: readonly string[]): ReadonlyMap<number, number> {
   return new Map(pairsFrom(lines, 0))
 }
 

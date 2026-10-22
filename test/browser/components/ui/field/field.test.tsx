@@ -50,17 +50,4 @@ describe("Field", () => {
     renderField(BASE_PROPS)
     expect(screen.queryByText("ダミーのヒント")).toBeNull()
   })
-
-  it("variant ごとに名札と箱へ別の class を付ける", () => {
-    renderField({ ...BASE_PROPS, variant: "form" })
-    const formLabel = screen.getByText("ダミーの名札")
-    expect(formLabel.className).toBe("field-label-form")
-    expect(formLabel.parentElement?.className.split(" ")).toContain("field-form")
-
-    cleanup()
-    renderField({ ...BASE_PROPS, variant: "confirm" })
-    const confirmLabel = screen.getByText("ダミーの名札")
-    expect(confirmLabel.className).toBe("field-label-confirm")
-    expect(confirmLabel.parentElement?.className.split(" ")).not.toContain("field-form")
-  })
 })

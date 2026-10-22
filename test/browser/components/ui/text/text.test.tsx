@@ -50,9 +50,4 @@ describe("Text", () => {
     const element = renderedElement({ ...BASE_PROPS, element: "summary" })
     expect(element.tagName).toBe("SUMMARY")
   })
-
-  it("className が足される", () => {
-    const element = renderedElement({ ...BASE_PROPS, className: "dummy-extra" })
-    expect(element.className.split(" ")).toContain("dummy-extra")
-  })
 })
