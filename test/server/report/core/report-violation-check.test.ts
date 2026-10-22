@@ -212,33 +212,10 @@ describe("reportViolations", () => {
     })
   })
 
-  describe("地の文の段落は3文まで", () => {
-    it("4文の text の塊は違反", () => {
-      expect(reportViolations(draft([text("架空の1文目。2文目。3文目。4文目。")]))).toEqual([
-        { kind: "long-paragraph", count: 1 },
-      ])
-    })
-
-    it("fold で畳んだ text の塊は数えない（4文目の逃げ先なので）", () => {
-      expect(kinds(draft([text("架空の1文目。2文目。3文目。4文目。", "架空の見出し")]))).toEqual([])
-    })
-
-    it("逃げ道の中の段落も数え、空行で割った段落はそれぞれで数える", () => {
-      expect(kinds(draft([markdown("架空の1文目。2文目。3文目。4文目。")]))).toEqual([
-        "long-paragraph",
-      ])
-      expect(kinds(draft([markdown("架空の1文目。2文目。\n\n3文目。4文目。")]))).toEqual([])
-    })
-
-    it("逃げ道の <details> の中の段落は数えない", () => {
-      const body = [
-        "<details><summary>架空の見出し</summary>",
-        "",
-        "架空の1文目。2文目。3文目。4文目。",
-        "",
-        "</details>",
-      ].join("\n")
-      expect(kinds(draft([markdown(body)]))).toEqual([])
+  describe("地の文の長さ", () => {
+    it("4文以上の text の塊・markdown の段落は違反にしない", () => {
+      expect(kinds(draft([text("架空の1文目。2文目。3文目。4文目。")]))).toEqual([])
+      expect(kinds(draft([markdown("架空の1文目。2文目。3文目。4文目。")]))).toEqual([])
     })
   })
 

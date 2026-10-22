@@ -55,13 +55,24 @@ describe("answerQuestionBriefCall", () => {
     expect(held).toEqual([briefs])
   })
 
+  it.each<readonly [string, string]>([
+    ["句点の無い短い背景", "（前提は下の表）"],
+    ["4文の背景", "架空の1。架空の2。架空の3。架空の4。"],
+  ])("%s は差し戻さない", (_, background) => {
+    const held: (readonly QuestionBrief[])[] = []
+
+    const answer = answerQuestionBriefCall([brief({ background })], [], (given) => held.push(given))
+
+    expect(answer.isError).toBe(false)
+    expect(held).toHaveLength(1)
+  })
+
   it.each<readonly [string, readonly QuestionBrief[]]>([
     ["質問が0件", []],
     ["質問が5件", ["1", "2", "3", "4", "5"].map((header) => brief({ header }))],
     ["header の重なり", [brief(), brief()]],
     ["空の header", [brief({ header: " " })]],
     ["空の背景", [brief({ background: " " })]],
-    ["4文の背景", [brief({ background: "架空の1。架空の2。架空の3。架空の4。" })]],
     [
       "軸が0個",
       [

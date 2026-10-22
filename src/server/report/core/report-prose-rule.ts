@@ -2,24 +2,6 @@
 
 import type { ReportBlock } from "../../../shared/report/report-block.ts"
 import { MAX_HEADING, MAX_ITEM_LABEL } from "../../../shared/report/report-limit.ts"
-import { sentenceCount } from "../../../shared/report/sentence-count.ts"
-import { paragraphs, splitFences } from "./report-markdown-notation.ts"
-
-/** 地の文の段落の文の上限（条「地の文の段落は3文まで」）。 */
-const MAX_PARAGRAPH_SENTENCES = 3
-
-export function isLongProse(text: string): boolean {
-  return sentenceCount(text) > MAX_PARAGRAPH_SENTENCES
-}
-
-/** 逃げ道の外側の段落のうち、文の上限を超えるものの数。 */
-export function longMarkdownParagraphCount(blocks: readonly ReportBlock[]): number {
-  return blocks
-    .flatMap((block) =>
-      block.kind === "markdown" ? paragraphs(splitFences(block.markdown).outside) : [],
-    )
-    .filter(isLongProse).length
-}
 
 /** 英語の地の文とみなす語の数の下限。 */
 const MIN_ENGLISH_WORDS = 3

@@ -38,8 +38,6 @@ function violationLine(violation: ReportViolation): string {
   switch (violation.kind) {
     case "long-conclusion":
       return `\`conclusion\` が${violation.count}要素ある。1要素1文で2要素以内にし、残りは \`sections\` へ移す`
-    case "long-paragraph":
-      return `4文以上の地の文が${violation.count}個ある。表・箇条書きへ移すか、\`fold\` で畳む`
     case "unknown-mermaid":
       return `mermaid の図に規約の9種の外の種類が${violation.count}個ある。flowchart は graph の塊で書き、それ以外は9種から選ぶ`
     case "too-many-notes":
@@ -107,6 +105,6 @@ function violationLine(violation: ReportViolation): string {
     case "figure-contradiction":
       return violation.reason === "no-shape"
         ? `\`figure\` の reason が \`no-shape\` なのに、\`sections\` に流れ・つながり・構造を描く塊（\`list\` の \`flow\`・\`beforeAfter\`・\`graph\`・\`mermaid\`・\`svg\`）が${violation.count}個ある。その図を \`figure\` に置くか、合う reason にする`
-        : `\`figure\` の reason が \`short-answer\` なのに、節が2つ以上あるか4文以上の地の文がある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
+        : `\`figure\` の reason が \`short-answer\` なのに、節が2つ以上ある。2〜3文で終わる答えでなければ \`figure\` に図を置くか、合う reason にする`
   }
 }

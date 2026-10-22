@@ -121,7 +121,7 @@
     図は `checks` の下・`sections` の上に、見出しの無い先頭の節として描き、図の番号は `sections` の図と通しで振る（`figure` の図が「図 1」）。
     `none` は何も描かない（空の枠や札も置かない）。図の塊の検査（構文・はみ出し・種類）と画像の棚も、`figure` を先頭に含めて見る。
     `reason` が本文と合わない回は差し戻す（規約違反の1ターン1回の枠。`no-shape` なのに `sections` に
-    `list` の `flow`・`beforeAfter`・`graph`・`mermaid`・`svg` がある回と、`short-answer` なのに節が2つ以上か4文以上の地の文がある回）。
+    `list` の `flow`・`beforeAfter`・`graph`・`mermaid`・`svg` がある回と、`short-answer` なのに節が2つ以上ある回）。
     欄の無い古い transcript の `report` は、理由が `unrecorded` の `none` に畳んで読む（`unrecorded` は書き手には出さない）
 - ターンの途中の経過は `speak` で言う。雑談には `report` を使わない（1ターンに `speak` を何度か呼ぶのが普通の形なので、
   閉じるツールを置くと切れる）。`report` の外に書いたターンの本文（`assistant` のテキスト）は、`report` が1つでも

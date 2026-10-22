@@ -43,10 +43,8 @@ import {
   hasArrow,
   isBadHeading,
   isLabeledOrdered,
-  isLongProse,
   isNonJapanese,
   labelInItemCount,
-  longMarkdownParagraphCount,
   proseTexts,
 } from "./report-prose-rule.ts"
 import { type ReportDraft, type ReportViolation, VIOLATION_THRESHOLDS } from "./report-violation.ts"
@@ -75,13 +73,6 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
 
   const counted = [
     { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
-    {
-      kind: "long-paragraph",
-      count:
-        blocks.filter(
-          (block) => block.kind === "text" && block.fold.trim() === "" && isLongProse(block.text),
-        ).length + longMarkdownParagraphCount(blocks),
-    },
     { kind: "unknown-mermaid", count: unknownMermaidCount(drawnSections) },
     { kind: "too-many-notes", count: blocks.filter((block) => block.kind === "note").length },
     { kind: "crowded-notes", count: crowdedNoteCount(report.sections) },
@@ -206,12 +197,9 @@ function figureContradiction(
     }
   }
   if (figure.kind === "none" && figure.reason === "short-answer") {
-    const longProse =
-      blocks.filter((block) => block.kind === "text" && isLongProse(block.text)).length +
-      longMarkdownParagraphCount(blocks)
     return {
       kind: "figure-contradiction",
-      count: (sections.length >= 2 ? sections.length : 0) + longProse,
+      count: sections.length >= 2 ? sections.length : 0,
       reason: "short-answer",
     }
   }

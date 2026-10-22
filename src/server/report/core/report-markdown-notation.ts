@@ -118,35 +118,6 @@ export function splitFences(markdown: string): SplitMarkdown {
   }
 }
 
-/**
- * 地の文の段落。HTML の塊（`<details>` / `<div>`）の中は数えない（4文以上の段落の逃げ先が `<details>` なので）。
- * 段落は空行か、地の文でない行で切れる。
- */
-export function paragraphs(lines: readonly string[]): readonly string[] {
-  const initial: {
-    readonly done: readonly string[]
-    readonly current: readonly string[]
-    readonly depth: number
-  } = { done: [], current: [], depth: 0 }
-
-  const flushed = (state: typeof initial): readonly string[] =>
-    state.current.length === 0 ? state.done : [...state.done, state.current.join("")]
-
-  const final = lines.reduce((state, line) => {
-    const depth = Math.max(
-      state.depth + countMatches(line, HTML_BLOCK_OPEN) - countMatches(line, HTML_BLOCK_CLOSE),
-      0,
-    )
-    const prose =
-      state.depth === 0 && depth === 0 && line.trim() !== "" && !NON_PROSE_LINE.test(line)
-    return prose
-      ? { ...state, current: [...state.current, line.trim()], depth }
-      : { done: flushed(state), current: [], depth }
-  }, initial)
-
-  return flushed(final)
-}
-
 export function hasNestedFold(fold: string, { outside }: SplitMarkdown): boolean {
   const opens = outside.reduce(
     (state, line) => {
@@ -179,9 +150,6 @@ const LIST_ITEM = /^ {0,3}(?:[-*+]|\d{1,9}[.)])[ \t]/
 
 /** 表の区切りの行（`| --- | :---: |`）。`|` を1つ以上含み、セルは `-` と両端の `:` だけ。 */
 const TABLE_DELIMITER = /^ *\|?(?: *:?-+:? *\|)+(?: *:?-+:? *)?$|^ *:?-+:? *\|(?: *:?-+:? *\|?)*$/
-
-/** 地の文の段落にしない行の頭（見出し・表・引用・箇条書き・番号・HTML・区切り線）。 */
-const NON_PROSE_LINE = /^ *(?:#|\||>|[-*+] |\d+[.)] |<|---|\*\*\*|___)/
 
 /** HTML の塊の開き・閉じ（入れ子の深さを数える要素）。 */
 const HTML_BLOCK_OPEN = /<(?:details|div)\b/g

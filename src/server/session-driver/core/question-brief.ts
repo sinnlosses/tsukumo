@@ -1,7 +1,6 @@
 // 質問の添え書きの、`question_brief` を呼んだ時点の検査と、届いた `AskUserQuestion` との突き合わせ。
 // 理由の文はモデルへ返すだけで、ログにもファイルにも書かない（添え書きの字が入る）。
 
-import { sentenceCount } from "../../../shared/report/sentence-count.ts"
 import type { QuestionBrief } from "../../../shared/session-driver/question-brief.ts"
 import {
   FREE_TEXT_OPTION_LABEL,
@@ -12,7 +11,6 @@ import { type MermaidFault, mermaidFaultPositions } from "../../report/core/repo
 
 /** `AskUserQuestion` が1回に持てる質問の数と同じ。 */
 const MAX_BRIEF_QUESTIONS = 4
-const MAX_BACKGROUND_SENTENCES = 3
 const MAX_BRIEF_AXES = 5
 /** `AskUserQuestion` が1問に持てる選択肢の数と同じ。 */
 const MIN_BRIEF_OPTIONS = 2
@@ -146,13 +144,9 @@ function pairQuestionBrief(
 
 function briefReasons(brief: QuestionBrief): readonly string[] {
   const at = `「${brief.header}」の`
-  const sentences = sentenceCount(brief.background)
   return [
     ...(brief.header.trim() === "" ? ["header を空にしない"] : []),
-    ...(sentences === 0 ? [`${at}background を空にしない`] : []),
-    ...(sentences > MAX_BACKGROUND_SENTENCES
-      ? [`${at}background は${String(MAX_BACKGROUND_SENTENCES)}文以内にする`]
-      : []),
+    ...(brief.background.trim() === "" ? [`${at}background を空にしない`] : []),
     ...(brief.axes.length === 0 || brief.axes.length > MAX_BRIEF_AXES
       ? [`${at}axes は1〜${String(MAX_BRIEF_AXES)}個にする`]
       : []),

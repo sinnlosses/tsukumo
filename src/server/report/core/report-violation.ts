@@ -37,8 +37,6 @@ export type ReportDraft = {
 export type ReportViolation =
   /** `conclusion` が3要素以上ある（条1「冒頭の1〜2文で結論」）。 */
   | { readonly kind: "long-conclusion"; readonly count: number }
-  /** 4文以上の地の文がある（「地の文の段落は3文まで」）。`count` は `text` の塊と逃げ道の段落の数。 */
-  | { readonly kind: "long-paragraph"; readonly count: number }
   /** `mermaid` の塊に、規約が挙げる種類（`REPORT_MERMAID_KINDS`）の外の種類がある。 */
   | { readonly kind: "unknown-mermaid"; readonly count: number }
   /** `note` の塊が3つ以上ある（「1つのレポートに1〜2個まで」）。 */
@@ -132,7 +130,7 @@ export type ReportViolation =
   /**
    * `figure` の `none` の理由が本文と合わない。
    * `no-shape` なのに `sections` に流れ・つながり・構造を描く塊（`list` の `flow`・`beforeAfter`・`graph`・`mermaid`・`svg`）がある（`count` はその塊の数）か、
-   * `short-answer` なのに節が2つ以上か4文以上の地の文の塊がある（`count` はその節の数と塊の数の和）。
+   * `short-answer` なのに節が2つ以上ある（`count` はその節の数）。
    */
   | {
       readonly kind: "figure-contradiction"
@@ -143,7 +141,6 @@ export type ReportViolation =
 /** 違反にしない上限（これを超えたら違反）。 */
 export const VIOLATION_THRESHOLDS = {
   "long-conclusion": MAX_CONCLUSION_SENTENCES,
-  "long-paragraph": 0,
   "unknown-mermaid": 0,
   "too-many-notes": 2,
   "crowded-notes": 0,

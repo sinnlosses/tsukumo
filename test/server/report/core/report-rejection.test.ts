@@ -304,32 +304,26 @@ describe("reportRejectionText", () => {
       ).toEqual([])
     })
 
-    it("short-answer なのに節が2つ以上か、畳んだものも含め4文以上の地の文があれば違反になる", () => {
+    it("short-answer なのに節が2つ以上あれば違反になる", () => {
       const twoSections = withReason("short-answer", [
         { heading: "架空の節1", shapeTag: "unspecified", blocks: [text("架空の根拠。")] },
         { heading: "架空の節2", shapeTag: "unspecified", blocks: [text("架空の根拠。")] },
       ])
-      const longFolded = withReason("short-answer", [
-        {
-          heading: "",
-          shapeTag: "unspecified",
-          blocks: [text("架空の1文目。2文目。3文目。4文目。", "架空の畳み")],
-        },
-      ])
       expect(reportViolations(twoSections)).toEqual([
         { kind: "figure-contradiction", count: 2, reason: "short-answer" },
       ])
-      expect(reportViolations(longFolded)).toEqual([
-        { kind: "figure-contradiction", count: 1, reason: "short-answer" },
-      ])
-      expect(reportRejectionText(reportViolations(longFolded))).not.toContain("架空の1文目")
+      expect(reportRejectionText(reportViolations(twoSections))).not.toContain("架空の根拠")
     })
 
-    it("short-answer で節1つ・3文までの地の文なら違反にしない", () => {
+    it("short-answer で節1つなら、4文以上の地の文でも違反にしない", () => {
       expect(
         kinds(
           withReason("short-answer", [
-            { heading: "", shapeTag: "unspecified", blocks: [text("架空の1文目。2文目。3文目。")] },
+            {
+              heading: "",
+              shapeTag: "unspecified",
+              blocks: [text("架空の1文目。2文目。3文目。4文目。")],
+            },
           ]),
         ),
       ).toEqual([])
