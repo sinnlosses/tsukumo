@@ -197,7 +197,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     },
   })
 
-  announce(view.url)
+  announce(view.url, launch.devServer)
 
   const openedView = config.openView
     ? await openLayoutView(host, config.driver, view.url)
@@ -215,7 +215,7 @@ type OpenedFakeView =
 
 /**
  * 取り込んだ tsukumo-plugins が読めるかの検査と、セッションに載せるかの判定。
- * 読めないとき、と載せない・一部だけのときは、理由を stderr に1行出す。
+ * 読めないとき、と一部だけのときは、理由を stderr に1行出す（揃っていて載せないのは通常の状態なので黙る）。
  */
 async function checkWorkflowPlugin(
   claudeConfigDir: string | undefined,
@@ -226,11 +226,7 @@ async function checkWorkflowPlugin(
     return { ok: false }
   }
   const mount = await readWorkflowPluginMount(workflowPluginDir(), claudeConfigDir)
-  if (mount.kind === "user-installed") {
-    process.stderr.write(
-      "tsukumo: 利用者の設定ディレクトリにタスク運用のスキルとエージェントが揃っているので、取り込んだプラグインは載せない\n",
-    )
-  } else if (mount.kind === "partial") {
+  if (mount.kind === "partial") {
     process.stderr.write(
       `tsukumo: 利用者側にタスク運用の一部が無い（${mount.missing.join("・")}）ので、取り込んだプラグインを載せる\n`,
     )
@@ -298,8 +294,9 @@ const DAY_START_MARGIN_MS = 1_000
 
 // 起動したことと URL は、ペインに残る唯一の出力。
 // URL には起動トークンが付くので、タブを開き直すときはこの URL をそのまま使う。
-function announce(url: string): void {
-  process.stdout.write(`tsukumo: ビューを配信中\n  ${url}\n`)
+function announce(url: string, devServer: boolean): void {
+  const devNote = devServer ? "  開発サーバ: src/browser/ の保存が画面にそのまま当たる\n" : ""
+  process.stdout.write(`tsukumo: ビューを配信中\n  ${url}\n${devNote}`)
 }
 
 /**

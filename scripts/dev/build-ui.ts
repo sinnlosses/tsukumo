@@ -11,10 +11,13 @@ import process from "node:process"
 
 import { buildUiBundle, builtUiDir } from "../../src/server/view-server/adapter/bundle.ts"
 
+process.stdout.write("ブラウザ側を組み立てている…\n")
+const started = performance.now()
 const result = await buildUiBundle(builtUiDir())
 if (!result.ok) {
   process.stderr.write(`ブラウザ側を組み立てられない\n${result.reason}\n`)
   process.exit(1)
 }
 
-process.stdout.write(`組み立てた: ${builtUiDir()}\n`)
+const seconds = ((performance.now() - started) / 1000).toFixed(1)
+process.stdout.write(`ブラウザ側を組み立てた（${seconds} 秒）: ${builtUiDir()}\n`)

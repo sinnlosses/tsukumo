@@ -30,6 +30,9 @@ const HOT_UPDATE_SOCKET_PROTOCOLS: readonly string[] = ["vite-hmr", "vite-ping"]
 /** 開発サーバが読む入口。Vite の root（`src/browser/`）からの経路で、ページの `<script>` に書く。 */
 const ENTRY_SCRIPT_PATH = "/main.tsx"
 
+/** Vite が、PostCSS の plugin が `from` を渡さなかったときに出す警告の頭。 */
+const POSTCSS_MISSING_FROM_WARNING = "A PostCSS plugin did not pass the `from` option"
+
 export type UiDevServerOptions = {
   /** Vite の HMR の WebSocket を載せる、listen 済みのビューサーバ。 */
   readonly httpServer: Server
@@ -50,11 +53,22 @@ export type UiDevServer = {
 
 /** Vite の開発サーバを起こす。設定はブラウザ側の組み立てと同じ Vite の設定ファイル。 */
 export async function startUiDevServer(options: UiDevServerOptions): Promise<UiDevServer> {
-  const { createServer } = await import("vite")
+  const { createLogger, createServer } = await import("vite")
   const startupServerSource = serverSourceFingerprint()
   let serverSourceChanged = false
 
+  // 他ファイルを `composes ... from` で引く CSS Modules は、開発サーバの変換で Vite のこの警告を1度出す。
+  // 画面は正しく動き、利用者にできることも無いので、起動のログに流さない。
+  const logger = createLogger("warn")
+  const warnOnce = logger.warnOnce
+  logger.warnOnce = (message, warnOptions) => {
+    if (!message.includes(POSTCSS_MISSING_FROM_WARNING)) {
+      warnOnce(message, warnOptions)
+    }
+  }
+
   const vite = await createServer({
+    customLogger: logger,
     configFile: bundledFilePath(...VITE_CONFIG_RELATIVE_PATH),
     root: bundledFilePath(...UI_SOURCE_DIR_RELATIVE_PATH),
     appType: "custom",
