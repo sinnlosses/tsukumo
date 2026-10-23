@@ -53,13 +53,13 @@
 ### ホスト
 
 - **英語識別子**: `host`
-- **定義**: tsukumo のページを出す相手。実測環境では Orca（ページを開くブラウザタブも含めて指す）。
+- **定義**: tsukumo のページを出す相手。Orca（ページを開くブラウザタブも含めて指す）か macOS の既定のブラウザ。
   ページ自体は「どのホストでも動く Web アプリ」として作る。**頼む仕事はビューを見せること
   （`showView`）とファイルを開くこと（`openFile`）だけ**で、それ以外の依存は持たない
   （`docs/architecture/adr/0011-separate-shell-and-app.md`）
 - **注記**: ホストに依存する操作は1つのポート（`src/server/host/core/host.ts`）の裏に置き、実装は
-  アダプタ（`src/server/host/adapter/orca-host.ts` と、何も開かない `none-host.ts`）に閉じ込める。
-  どれを使うかは `TSUKUMO_HOST` で選ぶ
+  アダプタ（`src/server/host/adapter/orca-host.ts`・`browser-host.ts` と、何も開かない `none-host.ts`）に閉じ込める。
+  どれを使うかは `TSUKUMO_HOST`（`orca` / `browser` / `none`）で選び、未設定なら Orca の中は `orca`、外は `browser`
   （`docs/architecture/adr/0015-single-host-port.md`。「アダプタ」の項は「通信（移行後）」にある）
 - **注記**: **「Claude Code」とは別のもの**。Claude Code は CLI を指す
 - **避ける言い方**: 箱（ホストに統合した旧称）、端末環境、プラットフォーム、シェル、コンテナ（別の意味に取られる）、ラッパー

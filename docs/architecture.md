@@ -194,7 +194,7 @@ sed -n '/^## shared/,/^## /p' docs/architecture/shared-contract.md
 | `docs/architecture/adr/0008-sdk-instead-of-tui.md`            | Claude Code の TUI を捨て、SDK で動かす                                                |
 | `docs/architecture/adr/0009-speech-via-tool.md`               | セリフはテキストの規約ではなく、ツール呼び出しで受け取る                               |
 | `docs/architecture/adr/0010-report-via-tool.md`               | レポートはテキストではなく `report` ツールで受け取る                                   |
-| `docs/architecture/adr/0011-separate-shell-and-app.md`        | ホスト（Orca のタブ）と中身（Web アプリ）を分ける                                      |
+| `docs/architecture/adr/0011-separate-shell-and-app.md`        | ホスト（Orca か既定のブラウザ）と中身（Web アプリ）を分ける                            |
 | `docs/architecture/adr/0012-bundle-vendor-library.md`         | 外部ライブラリは CDN から読まず、同梱して自分で配る                                    |
 | `docs/architecture/adr/0013-tolerate-missing-display.md`      | 表示物が1つ欠けても起動失敗にしない                                                    |
 | `docs/architecture/adr/0014-no-bundled-character-asset.md`    | キャラクター素材はリポジトリに同梱しない                                               |

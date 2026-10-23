@@ -35,14 +35,15 @@ describe("Agent SDK を import する箇所", () => {
 // `bin/tsukumo` へ委ねる口・取り込んだワークフローの `bin/tw` の hook のサブコマンド（`ask-guard`・`lap-hook`）を起こす口・
 // ワークフローの設定コマンド（`tw config`）を起こす口・着手中のタスクを読む `tw status --claims` を起こす口・
 // Bash の出力を縮める `rtk rewrite` を起こす口の9つの境界に閉じ込める（docs/architecture/overview-and-layer.md「1ファイル = 1つの境界」）。
-// そのうち `orca` コマンドを起こすのは orca-host.ts だけ。
+// そのうち `orca` コマンドを起こすのは orca-host.ts だけ、`open` コマンドを起こすのは browser-host.ts だけ。
 // `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、その字面で探す。
 // ファイル名やバッククォートで囲んだ日本語の説明文はクォートされた文字列リテラルではないので拾わない。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは orca-host.ts・bundle.ts・git.ts・beads.ts・checkout-launch.ts・rtk-rewrite.ts・sdk-workflow-tw.ts・tw-config.ts・tw-claims.ts だけで、`orca` コマンドを呼ぶのは orca-host.ts だけ", () => {
+  it("`node:child_process` を import するのは orca-host.ts・browser-host.ts・bundle.ts・git.ts・beads.ts・checkout-launch.ts・rtk-rewrite.ts・sdk-workflow-tw.ts・tw-config.ts・tw-claims.ts だけで、`orca` コマンドを呼ぶのは orca-host.ts だけ、`open` コマンドを呼ぶのは browser-host.ts だけ", () => {
     const allowed = new Set([
       "server/checkout/adapter/checkout-launch.ts",
       "server/host/adapter/orca-host.ts",
+      "server/host/adapter/browser-host.ts",
       "server/view-server/adapter/bundle.ts",
       "server/repository/adapter/git.ts",
       "server/repository/adapter/beads.ts",
@@ -63,6 +64,11 @@ describe("子プロセスを起こす箇所", () => {
         /["']orca["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
       ),
     ).toEqual(["server/host/adapter/orca-host.ts"])
+    expect(
+      spawning.filter((relPath) =>
+        /OPEN_COMMAND\s*=\s*["']open["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")),
+      ),
+    ).toEqual(["server/host/adapter/browser-host.ts"])
   })
 })
 

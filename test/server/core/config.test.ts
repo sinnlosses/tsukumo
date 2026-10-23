@@ -10,7 +10,7 @@ describe("readConfig", () => {
       character: undefined,
       openView: true,
       driver: "sdk",
-      host: "orca",
+      host: "browser",
       fakeScene: undefined,
       fakeSceneUntil: undefined,
       fakeSession: undefined,
@@ -20,6 +20,23 @@ describe("readConfig", () => {
       reportSchema: "json-schema",
       inheritedEnv: {},
     })
+  })
+
+  it.each([
+    ["Orca の中で未設定なら orca", { TERM_PROGRAM: "Orca" }, "orca"],
+    ["Orca の外で未設定ならブラウザ", { TERM_PROGRAM: "iTerm.app" }, "browser"],
+    ["TERM_PROGRAM が無ければブラウザ", {}, "browser"],
+    ["Orca の中で知らない値なら orca", { TERM_PROGRAM: "Orca", TSUKUMO_HOST: "emacs" }, "orca"],
+    ["Orca の外で知らない値ならブラウザ", { TSUKUMO_HOST: "emacs" }, "browser"],
+    ["明示の orca は外でも効く", { TERM_PROGRAM: "iTerm.app", TSUKUMO_HOST: " orca " }, "orca"],
+    [
+      "明示の browser は Orca の中でも効く",
+      { TERM_PROGRAM: "Orca", TSUKUMO_HOST: "browser" },
+      "browser",
+    ],
+    ["明示の none は Orca の中でも効く", { TERM_PROGRAM: "Orca", TSUKUMO_HOST: "none" }, "none"],
+  ] as const)("ホスト: %s", (_name, env, expected) => {
+    expect(readConfig(env).host).toBe(expected)
   })
 
   it("環境変数をそのまま読む（ポートは解釈せず生のまま渡す）", () => {

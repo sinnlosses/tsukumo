@@ -1,6 +1,7 @@
 // ホストの配線。設定でホストの実装を選び、レポートのパスを開くコマンドの中身を組む。
 
 import type { HostKind } from "../server/core/config.ts"
+import { createBrowserHost } from "../server/host/adapter/browser-host.ts"
 import { createNoneHost } from "../server/host/adapter/none-host.ts"
 import { createOrcaHost } from "../server/host/adapter/orca-host.ts"
 import type { HostCommandPorts } from "../server/host/core/host-command.ts"
@@ -14,6 +15,8 @@ export function createHost(kind: HostKind): Host {
   switch (kind) {
     case "orca":
       return createOrcaHost()
+    case "browser":
+      return createBrowserHost()
     case "none":
       return createNoneHost()
   }

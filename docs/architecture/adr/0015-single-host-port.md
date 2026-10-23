@@ -1,14 +1,14 @@
 # ホスト依存の操作は1つのポートにまとめる
 
-Orca に全面的に依存してよいが、**ホスト（ターミナル環境）に依存する操作は1つのポートの裏に
-置く**。ポートは `src/server/host/core/host.ts`、アダプタは `src/server/host/adapter/orca-host.ts` と
-何も開かない `src/server/host/adapter/none-host.ts`。今あるのは次の2つ:
+**ホスト（Orca か既定のブラウザ）に依存する操作は1つのポートの裏に
+置く**。ポートは `src/server/host/core/host.ts`、アダプタは `src/server/host/adapter/orca-host.ts`・
+`src/server/host/adapter/browser-host.ts` と何も開かない `src/server/host/adapter/none-host.ts`。今あるのは次の2つ:
 
 - **ビューを見せる**（`showView`）— URL のビューが無ければ開き、あればその内容を最新にする。
   見せられたときは、そのビューを閉じる手段（`close`）を結果に付けて返す（2026-10-04。疑似セッションが
   終了時に自分の開いたタブを閉じるのに使う。閉じる操作を口の外に置くと、`none` を選んでも
   疑似セッションが `orca` を直に呼ぶことになるため）
-- **ファイルを開く**（`openFile`）— レポートに書かれた git 管理下のパスを Orca のエディタで開く
+- **ファイルを開く**（`openFile`）— レポートに書かれた git 管理下のパスをホストで開く（Orca はエディタ、ブラウザは OS の既定のアプリ）
   （2026-09-24 追加。行番号を渡す引数は無いので、渡すのは裸のパスだけ）
 
 **「開く」と「更新する」を1つの操作にしてある（`showView`）。** 分けると呼び出し側が
@@ -24,12 +24,14 @@ Orca に全面的に依存してよいが、**ホスト（ターミナル環境�
 **ポートに乗る操作の数と、アダプタの数（下）は別の軸**——`openFile` を足したことは2つ目の
 アダプタを書く理由にはならない。
 
-アダプタは**Orca と、何も開かない `none` の2つ**（2026-10-04 に `none` を足した。2026-10-03 に
-「いま2つ目の実装は作らない」を外したため。`docs/requirements.md`「2.2 対象外とすること」）。
-VS Code 用・Electron 用・OS 既定のブラウザで開く実装は**まだ書かない**（外部コマンドを足すには
-利用者の承認が要る）。手で確かめるのは Orca だけで、ほかのホストは落ちずに開ければよい。
+アダプタは**Orca・macOS の既定のブラウザ（`browser`。`open` コマンド）・何も開かない `none` の3つ**
+（2026-10-04 に `none` を、2026-10-24 に `browser` を足した。`docs/requirements.md`「2.2 対象外とすること」）。
+`browser` の `showView` が返す `close` は、OS のブラウザのタブを閉じる口が無いので失敗を返す。
+VS Code 用・Electron 用・Linux の `xdg-open` などは**まだ書かない**（外部コマンドを足すには
+利用者の承認が要る）。手で確かめるのは Orca と macOS の既定のブラウザで、ほかは落ちずに開ければよい。
 
-**どのアダプタを使うかは環境変数 `TSUKUMO_HOST` で選ぶ**（`orca` / `none`。既定は `orca`）。
+**どのアダプタを使うかは環境変数 `TSUKUMO_HOST` で選ぶ**（`orca` / `browser` / `none`。未設定・知らない値は
+`TERM_PROGRAM` が `Orca` なら `orca`、そうでなければ `browser`）。
 どのホストで開くかは起動のしかたに属するので環境変数に置く（`docs/architecture/adr/0022-three-setting-homes.md`）。
 値から実装を作るのは `src/wiring/host.ts` の `createHost` で、`src/main.ts` がそれで1つ作って
 起動時のタブとレポートのパスの両方に渡す。タブだけを開き直す `scripts/capture/open-views.ts` は Orca 用の

@@ -28,8 +28,11 @@ export const CHARACTER_ENV_NAME = "TSUKUMO_CHARACTER"
 export const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
 /** セッションドライバ（`sdk` / `fake`。既定は `sdk`）。 */
 export const DRIVER_ENV_NAME = "TSUKUMO_DRIVER"
-/** ビューとファイルを開くホスト（`orca` / `none`。既定は `orca`）。 */
+/** ビューとファイルを開くホスト（`orca` / `browser` / `none`。未設定・知らない値は Orca の中なら `orca`、外なら `browser`）。 */
 const HOST_ENV_NAME = "TSUKUMO_HOST"
+/** Orca のターミナルが付ける環境変数。この値が {@link ORCA_TERM_PROGRAM} なら Orca の中。 */
+const TERM_PROGRAM_ENV_NAME = "TERM_PROGRAM"
+const ORCA_TERM_PROGRAM = "Orca"
 /** fake driver で、起こした直後に流す場面の名前（疑似セッションの `turns[].name`）。 */
 export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
 /** fake driver で、名指しした場面の手を先頭から何個まで流すか（正の整数）。 */
@@ -74,9 +77,10 @@ export type DriverKind = "sdk" | "fake"
 
 /**
  * ビューとファイルを開くホストの種類。
+ * `browser` は macOS の既定のブラウザ・アプリで開く。
  * `none` は何も開かない（URL は起動時に出るので手で開く）。
  */
-export type HostKind = "orca" | "none"
+export type HostKind = "orca" | "browser" | "none"
 
 export type Config = {
   /** `TSUKUMO_VIEW_PORT` の生の値。既定か明示かの区別とずらす判断は `resolveViewPort` が持つ。 */
@@ -123,7 +127,7 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     character: nonEmpty(env[CHARACTER_ENV_NAME]),
     openView: env[OPEN_VIEW_ENV_NAME]?.trim() !== "0",
     driver,
-    host: env[HOST_ENV_NAME]?.trim() === "none" ? "none" : "orca",
+    host: readHost(env),
     fakeScene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
     fakeSceneUntil: parsePositiveInteger(env[FAKE_SCENE_UNTIL_ENV_NAME]),
     fakeSession: driver === "fake" ? nonEmpty(env[FAKE_SESSION_ENV_NAME]) : undefined,
@@ -134,6 +138,15 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
       env[REPORT_SCHEMA_ENV_NAME]?.trim() === "short-type" ? "short-type" : "json-schema",
     inheritedEnv: env,
   }
+}
+
+function readHost(env: Readonly<Record<string, string | undefined>>): HostKind {
+  const value = env[HOST_ENV_NAME]?.trim()
+  if (value === "orca" || value === "browser" || value === "none") {
+    return value
+  }
+
+  return env[TERM_PROGRAM_ENV_NAME]?.trim() === ORCA_TERM_PROGRAM ? "orca" : "browser"
 }
 
 function nonEmpty(value: string | undefined): string | undefined {

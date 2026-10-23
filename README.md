@@ -86,13 +86,13 @@ macOS の zsh を前提に書いています（bash なら `~/.zshrc` を `~/.ba
 
 ### 0. 前もって用意するもの
 
-| 用意するもの                                        | 何に使うか                                                                                                       | 確かめ方                     |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| [mise](https://mise.jdx.dev/getting-started.html)   | Node 26 と pnpm 12 と D2 を、リポジトリの `mise.toml` が固定した版で入れる（D2 は書き手が図を撮るときだけ使う）  | `mise --version`             |
-| Claude Code へのログイン                            | tsukumo は Claude Code を子プロセスとして起こす。実行ファイルは `pnpm install` で入る Agent SDK に同梱されている | 普段どおり `claude` が使える |
-| [Orca](https://www.onorca.dev/)（無くても起動する） | 画面を出すホスト。`orca` コマンドがあれば、起動時にタブが自動で開く                                              | `which orca`                 |
+| 用意するもの                                        | 何に使うか                                                                                                              | 確かめ方                     |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| [mise](https://mise.jdx.dev/getting-started.html)   | Node 26 と pnpm 12 と D2 を、リポジトリの `mise.toml` が固定した版で入れる（D2 は書き手が図を撮るときだけ使う）         | `mise --version`             |
+| Claude Code へのログイン                            | tsukumo は Claude Code を子プロセスとして起こす。実行ファイルは `pnpm install` で入る Agent SDK に同梱されている        | 普段どおり `claude` が使える |
+| [Orca](https://www.onorca.dev/)（無くても起動する） | 画面を出すホストの1つ。Orca の中で起こすと、起動時に Orca のタブが自動で開く。外で起こすと macOS の既定のブラウザで開く | `which orca`                 |
 
-Orca が無いときはタブが自動で開かないだけで、配信は続きます。起動時に表示される URL を手で
+Orca の外では macOS の `open` で既定のブラウザに開きます。`open` が失敗したときや `TSUKUMO_HOST=none` のときはタブが自動で開かないだけで、配信は続きます。起動時に表示される URL を手で
 ブラウザに開いてください。`tsukumo` コマンド自身は mise の `node`（手順1で入れた版）を自分で
 見つけて起こすので、`mise activate` などのシェル連携は要りません。
 
@@ -127,7 +127,7 @@ cd ~/path/to/your-project
 tsukumo
 ```
 
-次の表示が出れば起動できています。Orca があれば、この URL のタブが自動で開きます。
+次の表示が出れば起動できています。この URL のページが、Orca の中なら Orca のタブで、外なら既定のブラウザで自動で開きます。
 
 ```
 tsukumo: ビューを配信中
@@ -240,7 +240,7 @@ pnpm run lint                  # oxlint（--fix は lint:fix）
 pnpm run format                # ADR の一覧表と用語集の索引を見出しから書き直し、oxfmt で自動整形（--check は format:check）
 pnpm run build                 # ブラウザ側（src/browser/）を dist/browser/ に組み立てる。起動時には組み立てない
                               #   ので、pnpm install のあとと src/browser/ を直したあとに打つ
-pnpm run start                 # セッションを起こし、ページのタブを Orca 内に開く（`tsukumo` コマンドと同じ。
+pnpm run start                 # セッションを起こし、ページをホスト（Orca か既定のブラウザ）に開く（`tsukumo` コマンドと同じ。
                               #   TSUKUMO_OPEN_VIEW=0 で自動オープンを止める。本物の claude を子プロセスで起こす。
                               #   成果物か vendor/tsukumo-plugins が無ければ前提不足で止まり、ソースの指紋が組み立て時と違えば1行知らせて古いまま配る）
 pnpm run dev                   # pnpm run build のあと、start と同じ経路を Vite の開発サーバつき（--dev）で起こす
