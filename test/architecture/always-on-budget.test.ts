@@ -13,7 +13,7 @@ const AGENTS_MD_LIMIT = 9000
 const RULES_TOTAL_LIMIT = 2400
 
 const REMEDY =
-  "足すなら何かを削る（上限は上げない）。出し先の梯子は hook・検査 → スクリプト → スキル → サブエージェント → 常設の文章"
+  "足すなら何かを削る（上限は上げない）。出し先の梯子は hook・検査 → スクリプト → スキル → サブエージェント → 常設の文章。直しの確かめは検証全体でなく単体で打つ: pnpm run test test/architecture/always-on-budget.test.ts"
 
 describe("常設の文章の字数", () => {
   it("AGENTS.md は上限以内", () => {
@@ -39,6 +39,7 @@ describe("常設の文章の字数", () => {
     const message = overBudget("AGENTS.md", [`${agentsMd}あ`], limit)
     expect(message).toContain("足すなら何かを削る")
     expect(message).toContain("hook・検査 → スクリプト → スキル → サブエージェント → 常設の文章")
+    expect(message).toContain("pnpm run test test/architecture/always-on-budget.test.ts")
     expect(message).toContain(`${limit + 1}字`)
   })
 
