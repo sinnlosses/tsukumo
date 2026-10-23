@@ -19,6 +19,12 @@ export function changeCountGitOf(cwd: string): ChangeCountGit {
   }
 }
 
+/** いまの HEAD のコミット。読めなければ undefined。 */
+export async function readHeadSha(cwd: string): Promise<string | undefined> {
+  const head = await readHead(cwd)
+  return head.kind === "known" ? head.sha : undefined
+}
+
 async function readHead(cwd: string): Promise<GitHead> {
   const outcome = await runGit(cwd, ["rev-parse", "--verify", "HEAD"])
   const sha = outcome.kind === "output" ? outcome.stdout.trim() : ""

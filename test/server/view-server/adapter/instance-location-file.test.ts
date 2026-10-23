@@ -13,6 +13,7 @@ const location = {
   port: 7330,
   url: "http://127.0.0.1:7330/?t=架空のトークン",
   cwd: "/架空/作業場",
+  head: "0123456789abcdef0123456789abcdef01234567",
 }
 
 describe("writeInstanceLocation", () => {
@@ -32,6 +33,17 @@ describe("writeInstanceLocation", () => {
     remove()
     expect(existsSync(path)).toBe(false)
     expect(failures).toEqual([])
+  })
+
+  it("head が読めなかったとき、欄を書かない", () => {
+    const dir = join(home(), "no-head")
+    writeInstanceLocation({
+      dir,
+      location: { ...location, head: undefined },
+      reportFailure: () => undefined,
+    })
+
+    expect(JSON.parse(readFileSync(join(dir, "4242.json"), "utf8"))).not.toHaveProperty("head")
   })
 
   it("書けなかった失敗は投げずに渡し、消す関数も落ちない", () => {

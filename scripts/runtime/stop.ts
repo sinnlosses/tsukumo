@@ -20,7 +20,12 @@ import {
   DEFAULT_VIEW_PORT,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../src/server/view-server/core/port-resolution.ts"
-import { findRunningTsukumo } from "../shared/instance-location.ts"
+import { queryGit } from "../shared/git-query.ts"
+import {
+  describeFreshness,
+  findRunningTsukumo,
+  type RunningTsukumo,
+} from "../shared/instance-location.ts"
 import { candidatePorts } from "../shared/port-listener.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 
@@ -57,11 +62,20 @@ function listAll(): void {
     return
   }
 
-  process.stdout.write("ポート\tpid\t場所・コマンド\n")
+  process.stdout.write("ポート\tpid\t鮮度\t場所・コマンド\n")
   for (const listener of listeners) {
-    process.stdout.write(`${String(listener.port)}\t${String(listener.pid)}\t${listener.command}\n`)
+    process.stdout.write(
+      `${String(listener.port)}\t${String(listener.pid)}\t${freshnessOf(listener)}\t${listener.command}\n`,
+    )
   }
   process.stdout.write(`\n止めるには: node scripts/runtime/stop.ts --port <ポート>\n`)
+}
+
+/** そのプロセスの `cwd` の今の HEAD を読んで、起動時の HEAD と比べる。 */
+function freshnessOf(running: RunningTsukumo): string {
+  const current =
+    running.cwd === undefined ? undefined : queryGit(running.cwd, ["rev-parse", "HEAD"])?.trim()
+  return describeFreshness(running.startHead, current)
 }
 
 /** 名指しされたポートのものだけに SIGTERM を送り、終わったかどうかまで見届ける。 */

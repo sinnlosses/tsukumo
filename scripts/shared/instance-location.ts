@@ -18,7 +18,32 @@ const instanceLocationSchema = z.object({
   port: z.number().int().min(0).max(65535),
   url: z.string(),
   cwd: z.string(),
+  head: z
+    .string()
+    .optional()
+    .transform((head) => head),
 }) satisfies z.ZodType<InstanceLocation>
+
+/** 動いている tsukumo。所在を書かない古いプロセスは `cwd`・`startHead` が無い。 */
+export type RunningTsukumo = Listener & {
+  readonly cwd: string | undefined
+  readonly startHead: string | undefined
+}
+
+const SHORT_HEAD_LENGTH = 7
+
+/** 起動時の HEAD と今の HEAD を比べた表示。どちらかが読めなければ「不明」。 */
+export function describeFreshness(
+  startHead: string | undefined,
+  currentHead: string | undefined,
+): string {
+  if (startHead === undefined || currentHead === undefined || currentHead === "") {
+    return "不明"
+  }
+  return currentHead === startHead
+    ? "最新"
+    : `古い（起動 ${startHead.slice(0, SHORT_HEAD_LENGTH)} → 今 ${currentHead.slice(0, SHORT_HEAD_LENGTH)}）`
+}
 
 /** 所在のファイルを1つ読む。読めない・形が違うときは undefined。 */
 export function readInstanceLocation(path: string): InstanceLocation | undefined {
@@ -47,19 +72,28 @@ export function readLiveInstanceLocations(
 export function findRunningTsukumo(
   scanPorts: readonly number[],
   dir = defaultInstanceLocationDir(),
-): readonly Listener[] {
+): readonly RunningTsukumo[] {
   const scanned = scanPorts.flatMap((port) => findListener(port) ?? [])
-  const confirmed = readLiveInstanceLocations(dir).flatMap((location) => {
+  const confirmed = readLiveInstanceLocations(dir).flatMap((location): RunningTsukumo[] => {
     const listener =
       scanned.find((found) => found.port === location.port) ?? findListener(location.port)
     return listener?.pid === location.pid
-      ? [{ port: location.port, pid: location.pid, command: location.cwd }]
+      ? [
+          {
+            port: location.port,
+            pid: location.pid,
+            command: location.cwd,
+            cwd: location.cwd,
+            startHead: location.head,
+          },
+        ]
       : []
   })
   const confirmedPids = new Set(confirmed.map((found) => found.pid))
-  return [...confirmed, ...scanned.filter((found) => !confirmedPids.has(found.pid))].toSorted(
-    (a, b) => a.port - b.port,
-  )
+  const unlocated = scanned
+    .filter((found) => !confirmedPids.has(found.pid))
+    .map((found): RunningTsukumo => ({ ...found, cwd: undefined, startHead: undefined }))
+  return [...confirmed, ...unlocated].toSorted((a, b) => a.port - b.port)
 }
 
 function listFileNames(dir: string): readonly string[] {

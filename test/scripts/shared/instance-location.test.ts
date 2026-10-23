@@ -6,6 +6,7 @@ import process from "node:process"
 import { afterEach, describe, expect, test } from "vitest"
 
 import {
+  describeFreshness,
   findRunningTsukumo,
   readInstanceLocation,
   readLiveInstanceLocations,
@@ -37,8 +38,27 @@ describe("readLiveInstanceLocations", () => {
     expect(readInstanceLocation(deadPath)?.pid).toBe(deadPid)
   })
 
+  test("head の欄を読み、欄の無い古いファイルは undefined で読む", () => {
+    const withHead = put("111.json", { ...location(process.pid), head: "abc1234567" })
+    const withoutHead = put("222.json", location(process.pid))
+
+    expect(readInstanceLocation(withHead)?.head).toBe("abc1234567")
+    expect(readInstanceLocation(withoutHead)?.pid).toBe(process.pid)
+    expect(readInstanceLocation(withoutHead)?.head).toBeUndefined()
+  })
+
   test("置き場が無ければ空", () => {
     expect(readLiveInstanceLocations(join(dir(), "無い"))).toEqual([])
+  })
+})
+
+describe("describeFreshness", () => {
+  test("同じなら最新、違えば短い HEAD で古い、どちらかが読めなければ不明", () => {
+    expect(describeFreshness("abc1234567", "abc1234567")).toBe("最新")
+    expect(describeFreshness("abc1234567", "def5678901")).toBe("古い（起動 abc1234 → 今 def5678）")
+    expect(describeFreshness(undefined, "def5678901")).toBe("不明")
+    expect(describeFreshness("abc1234567", undefined)).toBe("不明")
+    expect(describeFreshness("abc1234567", "")).toBe("不明")
   })
 })
 
@@ -80,11 +100,17 @@ describe("findRunningTsukumo", () => {
   test("所在を確かめた分に、所在に無い pid の走査の分を足して両方返す", async () => {
     const located = await spawnListener()
     const old = await spawnListener()
-    put(`${String(located.pid)}.json`, { ...location(located.pid), port: located.port })
+    put(`${String(located.pid)}.json`, {
+      ...location(located.pid),
+      port: located.port,
+      head: "abc1234567",
+    })
 
     const found = findRunningTsukumo([located.port, old.port], dir())
 
     expect(found.map((entry) => entry.pid).toSorted()).toEqual([located.pid, old.pid].toSorted())
     expect(found.find((entry) => entry.pid === located.pid)?.command).toBe("/架空")
+    expect(found.find((entry) => entry.pid === located.pid)?.startHead).toBe("abc1234567")
+    expect(found.find((entry) => entry.pid === old.pid)?.startHead).toBeUndefined()
   })
 })

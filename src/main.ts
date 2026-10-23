@@ -21,6 +21,7 @@ import {
 import type { Host, HostResult } from "./server/host/core/host.ts"
 import { readItemAsset } from "./server/item/adapter/item-asset.ts"
 import { createReportImageShelf } from "./server/report/core/report-image-shelf.ts"
+import { readHeadSha } from "./server/repository/adapter/change-count.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-session.ts"
 import { pruneInputLedgerFiles } from "./server/session-driver/adapter/input-ledger-file.ts"
 import {
@@ -184,7 +185,13 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
 
   const removeInstanceLocation = writeInstanceLocation({
     dir: defaultInstanceLocationDir(),
-    location: { pid: process.pid, port: view.port, url: view.url, cwd: launch.cwd },
+    location: {
+      pid: process.pid,
+      port: view.port,
+      url: view.url,
+      cwd: launch.cwd,
+      head: await readHeadSha(launch.cwd),
+    },
     reportFailure: (error) => {
       reportFailure({ feature: "view-server", place: "instance-location-write" }, error)
     },

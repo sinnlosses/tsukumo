@@ -20,6 +20,8 @@ export type InstanceLocation = {
   readonly port: number
   readonly url: string
   readonly cwd: string
+  /** 起動時の `git rev-parse HEAD`。読めなければ欠く（書かれない）。 */
+  readonly head: string | undefined
 }
 
 /** 所在のファイルの置き場（ホームの下）。 */

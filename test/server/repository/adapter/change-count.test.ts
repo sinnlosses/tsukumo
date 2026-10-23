@@ -4,7 +4,10 @@ import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
-import { changeCountGitOf } from "../../../../src/server/repository/adapter/change-count.ts"
+import {
+  changeCountGitOf,
+  readHeadSha,
+} from "../../../../src/server/repository/adapter/change-count.ts"
 import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
 
 // ここは本物の `git` を一時のリポジトリで起こす（打つ引数と祖先の判定そのものが検査の対象）。
@@ -87,5 +90,14 @@ describe("changeCountGitOf", () => {
     const outside = mkdtempSync(join(tmpdir(), "tsukumo-change-count-outside-"))
 
     expect(await changeCountGitOf(outside).readHead()).toEqual({ kind: "unknown" })
+    expect(await readHeadSha(outside)).toBeUndefined()
+  })
+
+  it("readHeadSha はコミットのあるリポジトリで HEAD の sha を返す", async () => {
+    const repository = await repositoryWithCommit()
+    const head = await changeCountGitOf(repository).readHead()
+
+    expect(head.kind === "known" ? head.sha : undefined).toBe(await readHeadSha(repository))
+    expect(await readHeadSha(repository)).toMatch(/^[0-9a-f]{40}$/u)
   })
 })
