@@ -19,6 +19,7 @@ export function reportEvent(
     inheritedFields: [],
     conclusion,
     conclusionSentenceChars: parseConclusion(conclusion)?.conclusionSentenceChars ?? [],
+    conclusionFirstSentence: parseConclusion(conclusion)?.conclusionFirstSentence ?? "",
     figure: { kind: "none", reason: "unrecorded" },
     sections: [],
     favor: "",

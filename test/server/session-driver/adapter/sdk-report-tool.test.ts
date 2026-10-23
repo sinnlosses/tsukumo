@@ -28,7 +28,29 @@ describe("report でターンを閉じる", () => {
       waitingLine: WAITING_LINE,
     })
 
-    expect(reply).toEqual({ text: "ok", isError: false, endsTurn: true })
+    expect(reply).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
+  })
+
+  it.each([
+    { name: "2要素", conclusion: ["架空の一文目。", "架空の二文目。"], text: "架空の一文目。" },
+    { name: "句点の無い2要素", conclusion: ["架空の結論A", "架空の補足B"], text: "架空の結論A" },
+    {
+      name: "鉤括弧の中に句点がある1要素目",
+      conclusion: ["「架空の設定。」を直した。", "架空の二文目。"],
+      text: "「架空の設定。」を直した。",
+    },
+    { name: "前後に空白のある1要素目", conclusion: ["  架空の結論。 "], text: "架空の結論。" },
+  ])("通った report の結果の文は結論の1要素目になる（$name）", async ({ conclusion, text }) => {
+    const reply = await callTool(workServer(), "report", {
+      conclusion,
+      closing: CLOSING,
+      figure: FIGURE,
+      sessionSummary: SUMMARY,
+      sessionRemaining: REMAINING,
+      waitingLine: WAITING_LINE,
+    })
+
+    expect(reply).toEqual({ text, isError: false, endsTurn: true })
   })
 
   it("差し戻した report（isError）には付けない（直して呼び直せる）", async () => {
@@ -71,7 +93,7 @@ describe("report でターンを閉じる", () => {
     expect(broken.isError).toBe(true)
     expect(broken.text).toContain("1個目の 2 行目")
     expect(broken.text).not.toContain("there")
-    expect(fixed).toEqual({ text: "ok", isError: false, endsTurn: true })
+    expect(fixed).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
   })
 
   it("figure に置いた mermaid の構文も検査し、描く順の1個目として差し戻す", async () => {
@@ -192,7 +214,7 @@ describe("report でターンを閉じる", () => {
     )
 
     expect(replies.map((reply) => reply.isError)).toEqual([true, true, true, true, false, false])
-    expect(replies[5]).toEqual({ text: "ok", isError: false, endsTurn: true })
+    expect(replies[5]).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
   })
 
   it("speak はターンを閉じない", async () => {
@@ -317,7 +339,7 @@ describe("report の本文（sections）", () => {
       waitingLine: WAITING_LINE,
     })
 
-    expect(accepted).toEqual({ text: "ok", isError: false, endsTurn: true })
+    expect(accepted).toEqual({ text: "架空の結論", isError: false, endsTurn: true })
     expect(rejected.isError).toBe(true)
     expect(rejected.text).toContain("`list` の塊")
   })

@@ -50,7 +50,7 @@ import { speechShape } from "./sdk-speech-tool.ts"
 
 /**
  * レポートを受け取るツール。差し戻しの判定の窓口はここだけ（`CallReview.judgeReport`）。
- * 通すときの戻り値は "ok" だけ、差し戻すときは規約違反と直し方だけを `isError` 付きで返す（画面の事情は載せない）。
+ * 通すときの戻り値は結論の1文目だけ、差し戻すときは規約違反と直し方だけを `isError` 付きで返す（画面の事情は載せない）。
  * 描くか捨てるかはこの `isError` を見て決まる。
  * レポートにする引数（締めのセリフの `closing` も）は、ここではなく `assistant` メッセージの変換が取り出す（`toSessionEvents`）。
  *
@@ -118,7 +118,7 @@ export function reportTool(
       onReportTitle(report.title)
     }
     return {
-      content: [{ type: "text" as const, text: "ok" }],
+      content: [{ type: "text" as const, text: report.conclusionFirstSentence }],
       _meta: { [END_TURN_META_KEY]: true },
     }
   }

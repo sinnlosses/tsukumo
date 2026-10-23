@@ -68,6 +68,7 @@ export function reportEvents(
       inheritedFields: [],
       conclusion: conclusion.conclusion,
       conclusionSentenceChars: conclusion.conclusionSentenceChars,
+      conclusionFirstSentence: conclusion.conclusionFirstSentence,
       figure: parseReportFigure(input.figure),
       sections: parsed.sections,
       favor: optionalString(input.favor) ?? "",

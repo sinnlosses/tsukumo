@@ -110,7 +110,7 @@ describe("report の差し戻しのあとの出し直し", () => {
     const resent = await live.call({ conclusion: ["架空の直した結論"] })
 
     expect(rejected.reply.isError).toBe(true)
-    expect(resent.reply).toEqual({ text: "ok", isError: false, endsTurn: true })
+    expect(resent.reply).toEqual({ text: "架空の直した結論", isError: false, endsTurn: true })
     expect(resent.drawn).toMatchObject({ conclusion: "架空の直した結論", favor: "架空のお願い" })
     expectJudgedAsDrawn(live.drafts.at(-1), resent.drawn)
     expect(live.titles).toEqual(["架空の題"])
@@ -134,6 +134,21 @@ describe("report の差し戻しのあとの出し直し", () => {
       expect(live.drafts.map((draft) => draft.conclusionSentenceChars)).toEqual([chars, chars])
     },
   )
+
+  it("conclusion を省いた出し直しの結果の文は、引き継いだ結論の1要素目になる", async () => {
+    const live = session()
+
+    await live.call({
+      ...COMPLETE,
+      conclusion: ["架空の結論A", "架空の補足B"],
+      sections: [{ blocks: [{ kind: "markdown", markdown: "- 架空の項目" }] }],
+    })
+    const resent = await live.call({
+      sections: [{ blocks: [{ kind: "text", text: "架空の本文。" }] }],
+    })
+
+    expect(resent.reply).toEqual({ text: "架空の結論A", isError: false, endsTurn: true })
+  })
 
   it("入力検査で落ちて handler に届かなかった呼び出しも土台になり、判定と描画が同じ値を見る", async () => {
     const live = session()

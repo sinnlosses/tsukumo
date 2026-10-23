@@ -40,6 +40,7 @@ export type ReportEvent =
    * `inheritedFields` は渡さずに、同じターンで直前に差し戻した呼び出しから値を引き継いだ欄の名前（`ReportInheritance` が埋める）。使われ方の記録だけが読む。
    * `conclusion` を渡さず引き継ぐ土台も無い呼び出しは、`conclusion` が空の文字列になる。
    * `conclusionSentenceChars` は `conclusion` の要素ごとの字数で、記法の検査だけが読む。
+   * `conclusionFirstSentence` は `conclusion` の1要素目で、通った `report` のツール結果の文になる。
    * `title`（セッション一覧の見出し）は書かれていなければ undefined。画面の状態は読まず、差し戻しのあとの出し直しで引き継ぐためだけに持つ（書き込むのは handler）。
    */
   | {
@@ -49,6 +50,7 @@ export type ReportEvent =
       readonly inheritedFields: readonly ReportArgumentField[]
       readonly conclusion: string
       readonly conclusionSentenceChars: readonly number[]
+      readonly conclusionFirstSentence: string
       readonly figure: RecordedReportFigure
       readonly sections: readonly ReportSection[]
       readonly favor: string

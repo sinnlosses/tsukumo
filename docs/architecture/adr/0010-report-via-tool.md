@@ -61,6 +61,14 @@ assistant を挟まずにターンを終える。`report` のあとに本文を�
 状態は載せない（tsukumo からモデルへの逆流路を広げない。上の「セリフはテキストの規約ではなく、
 ツール呼び出しで受け取る」の「戻り値は `"ok"` だけにする」と同じ理由）。
 
+**通った `report` の戻り値だけは、結論の1文目にする**（2026-10-24 決定。`"ok"` だったのを変えた）。
+orca は `PostToolUse` と `PostToolUseFailure` のツール結果の文を「最後のメッセージ」として保存し、
+完了通知の本文に使う。差し戻し（`isError`）は `PostToolUseFailure` で届くので、`"ok"` のままだと
+通知に差し戻しの文言が残る。通った呼び出しの結果を結論の1文目（`conclusion` 配列の1要素目の
+前後の空白を除いたもの。文字列の切り出しはしない）にすると、差し戻しの文がそれで上書きされ、通知の本文が結論になる。
+モデルが自分で書いた文を返すだけなので、tsukumo からモデルへの逆流にはならない。通った `report` は
+そこでターンを閉じ、結果はモデルの次の応答に使われない。差し戻しの戻り値は変えない。
+
 **ターンが `speak` で終わると Claude Code が催促を差し込む**（`[Your previous response had no visible
 output. ...]` を利用者の発言として足し、1往復増える）。塞ぐのは子プロセスに
 `CLAUDE_CODE_TERMINAL_MCP_TOOLS=mcp__tsukumo__speak` を渡すこと（`src/server/session-driver/core/visible-output-nudge.ts`。

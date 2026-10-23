@@ -1,9 +1,10 @@
 // `report` の `conclusion` 引数（1要素1文の文字列の配列）を、描く文字列と要素ごとの字数に畳む。
 
-/** 畳んだ `conclusion`。`conclusionSentenceChars` は要素ごとの字数で、文面は持たない。 */
+/** 畳んだ `conclusion`。`conclusionSentenceChars` は要素ごとの字数で、文面は持たない。`conclusionFirstSentence` は1要素目（前後の空白を除く）で、要素なしなら空の文字列。 */
 export type ParsedConclusion = {
   readonly conclusion: string
   readonly conclusionSentenceChars: readonly number[]
+  readonly conclusionFirstSentence: string
 }
 
 /**
@@ -20,6 +21,7 @@ export function parseConclusion(value: unknown): ParsedConclusion | undefined {
   return {
     conclusion: sentences.join(""),
     conclusionSentenceChars: sentences.map(sentenceChars),
+    conclusionFirstSentence: sentences[0]?.trim() ?? "",
   }
 }
 

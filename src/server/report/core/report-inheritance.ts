@@ -102,6 +102,7 @@ function inherited(event: ReportEvent, base: ReportEvent): ReportEvent {
     workPlanClosing: from("workPlanClosing").workPlanClosing,
     conclusion: from("conclusion").conclusion,
     conclusionSentenceChars: from("conclusion").conclusionSentenceChars,
+    conclusionFirstSentence: from("conclusion").conclusionFirstSentence,
     figure: from("figure").figure,
     sections: from("sections").sections,
     unknownBlockCount: from("sections").unknownBlockCount,
