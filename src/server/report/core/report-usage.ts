@@ -22,6 +22,7 @@ import type {
   ReportShapeTagUsage,
 } from "../../../shared/report/report-usage-record.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { mermaidKind, mermaidSourcesInSections } from "./report-figure-fault.ts"
 import { reportImagePaths } from "./report-image-shelf.ts"
 import {
   containedNotationsInSections,
@@ -49,6 +50,10 @@ export type ReportUsageEntry = {
   /** その回に逃げ道に出た、塊の無い記法の種類（重複無し）。 */
   readonly escapeNotations: readonly EscapeNotation[]
   readonly unknownBlockCount: number
+  /** その回に出た `list` の `style`（重複無し）。 */
+  readonly listStyles: readonly string[]
+  /** その回に出た `mermaid` の図の種類（ソースの最初の語。重複無し。`figure` の図を含む）。 */
+  readonly mermaidKinds: readonly string[]
   /** `files` の塊に `modified` の項目があるか。 */
   readonly hasModifiedFiles: boolean
   /** `beforeAfter` か `image` の塊が1つでもあるか（`figure` を含む）。 */
@@ -162,6 +167,8 @@ export function reportUsageEntryOf(
     containedNotations: containedNotationsInSections(event.sections),
     escapeNotations: escapeNotationsInSections(event.sections),
     unknownBlockCount: event.unknownBlockCount,
+    listStyles: listStylesOf(drawnSections),
+    mermaidKinds: [...new Set(mermaidSourcesInSections(drawnSections).map(mermaidKind))],
     hasModifiedFiles: blocksOf(event.sections).some(
       (block) => block.kind === "files" && block.items.some((item) => item.change === "modified"),
     ),
@@ -306,11 +313,20 @@ function shapeTagUsageOf(sections: readonly ReportSection[]): ReportShapeTagUsag
   )
   return {
     sectionShapeTags: sections.map((section) => section.shapeTag),
+    sectionBlockKinds: sections.map((section) => [
+      ...new Set(section.blocks.map((block) => block.kind)),
+    ]),
     forbiddenShapeSectionCount: forbiddenBySection.filter((uses) => uses.length > 0).length,
     forbiddenShapeBlocks: Object.values(
       groupBy(forbiddenBySection.flat(), (use) => `${use.shapeTag}/${use.blockKind}`),
     ).map(([first, ...rest]): ForbiddenShapeBlockUsage => ({ ...first, count: rest.length + 1 })),
   }
+}
+
+function listStylesOf(sections: readonly ReportSection[]): readonly string[] {
+  return [
+    ...new Set(blocksOf(sections).flatMap((block) => (block.kind === "list" ? [block.style] : []))),
+  ]
 }
 
 function blocksOf(sections: readonly ReportSection[]): readonly ReportBlock[] {

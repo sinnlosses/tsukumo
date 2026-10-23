@@ -6,6 +6,7 @@ import { join } from "node:path"
 import {
   REPORT_USAGE_FORMAT_VERSION,
   type ReportRejectionRecord,
+  type ReportUsageDriver,
   type ReportUsageRecord,
 } from "../../../shared/report/report-usage-record.ts"
 import type { ReportSchemaVariant } from "../../../shared/report/schema-variant.ts"
@@ -25,21 +26,26 @@ export function reportUsageDir(): string {
 }
 
 /**
- * `reportSchema` はこのプロセスが `report` の塊の型をどう渡しているか（`Config.reportSchema`）で、全部の行に書く。
+ * `reportSchema` はこのプロセスが `report` の塊の型をどう渡しているか（`Config.reportSchema`）、
+ * `driver` はこのプロセスの駆動（`Config.driver`）で、どちらも全部の行に書く。
  * `root` はテストがホームを汚さないために差し替える。
  */
 export function createReportUsageLog(
   reportSchema: ReportSchemaVariant,
+  driver: ReportUsageDriver,
   root: string = reportUsageDir(),
 ): ReportUsageLog {
   return {
     append: (entry) => {
-      appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry, reportSchema))
+      appendJsonLine(
+        dateFilePath(root, localDateKey(entry.at)),
+        toRecord(entry, reportSchema, driver),
+      )
     },
     appendRejection: (entry) => {
       appendJsonLine(
         dateFilePath(root, localDateKey(entry.at)),
-        toRejectionRecord(entry, reportSchema),
+        toRejectionRecord(entry, reportSchema, driver),
       )
     },
   }
@@ -48,12 +54,14 @@ export function createReportUsageLog(
 function toRejectionRecord(
   entry: ReportRejectionEntry,
   reportSchema: ReportSchemaVariant,
+  driver: ReportUsageDriver,
 ): ReportRejectionRecord {
   return {
     v: REPORT_USAGE_FORMAT_VERSION,
     kind: "rejected",
     at: isoWithOffset(entry.at),
     sessionId: entry.sessionId,
+    driver,
     reasons: entry.reasons,
     argumentChars: entry.argumentChars,
     inheritedFields: entry.inheritedFields,
@@ -61,11 +69,16 @@ function toRejectionRecord(
   }
 }
 
-function toRecord(entry: ReportUsageEntry, reportSchema: ReportSchemaVariant): ReportUsageRecord {
+function toRecord(
+  entry: ReportUsageEntry,
+  reportSchema: ReportSchemaVariant,
+  driver: ReportUsageDriver,
+): ReportUsageRecord {
   return {
     v: REPORT_USAGE_FORMAT_VERSION,
     at: isoWithOffset(entry.at),
     sessionId: entry.sessionId,
+    driver,
     ...entry.figure,
     ...entry.shapeTags,
     blockKinds: entry.blockKinds,
@@ -74,6 +87,8 @@ function toRecord(entry: ReportUsageEntry, reportSchema: ReportSchemaVariant): R
     containedNotations: entry.containedNotations,
     escapeNotations: entry.escapeNotations,
     unknownBlockCount: entry.unknownBlockCount,
+    listStyles: entry.listStyles,
+    mermaidKinds: entry.mermaidKinds,
     hasModifiedFiles: entry.hasModifiedFiles,
     hasBeforeAfterOrImage: entry.hasBeforeAfterOrImage,
     forTask: entry.forTask,

@@ -44,6 +44,7 @@ describe("reportUsageEntryOf", () => {
       (shapeTag, block, blockKind) => {
         expect(usageOf(shapeTag, block)).toEqual({
           sectionShapeTags: [shapeTag],
+          sectionBlockKinds: [[blockKind]],
           forbiddenShapeSectionCount: 1,
           forbiddenShapeBlocks: [{ shapeTag, blockKind, count: 2 }],
         })
@@ -53,6 +54,7 @@ describe("reportUsageEntryOf", () => {
     it.each([["cause", graph]] as const)("%s の札の節の %o は数えない", (shapeTag, block) => {
       expect(usageOf(shapeTag, block)).toEqual({
         sectionShapeTags: [shapeTag],
+        sectionBlockKinds: [["graph"]],
         forbiddenShapeSectionCount: 0,
         forbiddenShapeBlocks: [],
       })
@@ -83,6 +85,7 @@ describe("reportUsageEntryOf", () => {
 
       expect(entry.shapeTags).toEqual({
         sectionShapeTags: ["cause", "unspecified", "cause"],
+        sectionBlockKinds: [["list"], ["list"], ["table"]],
         forbiddenShapeSectionCount: 2,
         forbiddenShapeBlocks: [
           { shapeTag: "cause", blockKind: "list", count: 1 },
@@ -90,6 +93,44 @@ describe("reportUsageEntryOf", () => {
         ],
       })
     })
+  })
+
+  it("list の style と mermaid の図種は重複を畳んで持つ", () => {
+    const list = (style: "bullet" | "ordered"): ReportBlock => ({
+      kind: "list",
+      style,
+      items: [{ label: "", text: "架空", done: false }],
+      fold: "",
+      aside: "",
+    })
+    const mermaid = (source: string): ReportBlock => ({
+      kind: "mermaid",
+      title: "",
+      source,
+      fold: "",
+      aside: "",
+    })
+    const entry = reportUsageEntryOf(
+      reportOfSections([
+        {
+          heading: "架空の節",
+          shapeTag: "unspecified",
+          blocks: [
+            list("bullet"),
+            list("bullet"),
+            list("ordered"),
+            mermaid("sequenceDiagram\n  A->>B: 架空"),
+            mermaid("%% 架空\nsequenceDiagram\n  A->>B: 架空"),
+          ],
+        },
+      ]),
+      "claude-session-1",
+      1_000,
+      false,
+    )
+
+    expect(entry.listStyles).toEqual(["bullet", "ordered"])
+    expect(entry.mermaidKinds).toEqual(["sequenceDiagram"])
   })
 
   it("塊の種類は節をまたいで重複を畳んだ集合にする", () => {
@@ -378,13 +419,20 @@ describe("reportUsageEntryOf", () => {
       at: 12_345,
       sessionId: "claude-session-9",
       figure: { figureKind: "none", noneReason: "unrecorded" },
-      shapeTags: { sectionShapeTags: [], forbiddenShapeSectionCount: 0, forbiddenShapeBlocks: [] },
+      shapeTags: {
+        sectionShapeTags: [],
+        sectionBlockKinds: [],
+        forbiddenShapeSectionCount: 0,
+        forbiddenShapeBlocks: [],
+      },
       blockKinds: [],
       blockFields: [],
       notations: [],
       containedNotations: [],
       escapeNotations: [],
       unknownBlockCount: 2,
+      listStyles: [],
+      mermaidKinds: [],
       hasModifiedFiles: false,
       hasBeforeAfterOrImage: false,
       forTask: false,

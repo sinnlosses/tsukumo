@@ -13,15 +13,17 @@
 // 札 × 節数と、札が許さない塊を使った節・組の数は、版13以降の行の節を分母にする。
 // 引数の字数の分布と差し戻しの出し直しの割合は、版14以降の行を分母にする。
 // 引き継ぎで出した呼び出しの数は、版16以降の行を分母にする。
+// 札 × 塊の種類の節数・`list` の style・`mermaid` の図種・駆動の数は、版19以降の行を分母にする。
+// 疑似セッションの行（`driver` が `fake`、`driver` の無い行は `sessionId` が `fake-session`）は、既定で全部の表から除く。
 //
 // 使い方:
-//   node scripts/runtime/report-block-usage.ts             # 直近28日
-//   node scripts/runtime/report-block-usage.ts --days 14   # 直近14日
+//   node scripts/runtime/report-block-usage.ts                       # 直近28日
+//   node scripts/runtime/report-block-usage.ts --days 14             # 直近14日
+//   node scripts/runtime/report-block-usage.ts --include-fake        # 疑似セッションの行も数える
 
 import process from "node:process"
 
 import { groupBy } from "remeda"
-import { z } from "zod"
 
 import { dateFileNames, readJsonLines } from "../../src/server/adapter/lib/jsonl.ts"
 import { reportUsageDir } from "../../src/server/report/adapter/report-usage-log.ts"
@@ -35,6 +37,8 @@ import {
 } from "../../src/server/report/core/report-review.ts"
 import { REPORT_BLOCK_FIELDS } from "../../src/server/report/core/report-usage.ts"
 import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/report-violation.ts"
+import { REPORT_MERMAID_KINDS } from "../../src/shared/report/report-block-diagram.ts"
+import { listBlockSchema } from "../../src/shared/report/report-block-prose.ts"
 import {
   REPORT_BLOCK_KINDS,
   REPORT_FIGURE_NONE_REASONS,
@@ -43,221 +47,24 @@ import {
 import { REPORT_SHAPE_TAGS } from "../../src/shared/report/report-shape-tag.ts"
 import { REPORT_GENRES } from "../../src/shared/report/report-task.ts"
 import { parseDaysOption } from "../shared/days-option.ts"
+import {
+  ARGUMENT_CHARS_FORMAT_VERSION,
+  COUNT_FORMAT_VERSION,
+  FIELDLESS_FORMAT_VERSION,
+  FIGURE_FIELDLESS_FORMAT_VERSION,
+  GENRE_FORMAT_VERSION,
+  HOW_TO_VERIFY_FORMAT_VERSION,
+  isFakeSessionRow,
+  MODIFIED_FORMAT_VERSION,
+  recordSchema,
+  rejectionSchema,
+  SECTION_BLOCK_FORMAT_VERSION,
+  SHAPE_TAG_FORMAT_VERSION,
+  SHORT_TABLE_FORMAT_VERSION,
+  type RejectionRecord,
+  type UsageRecord,
+} from "./report-usage-row.ts"
 
-const USAGE = `使い方:
-  node scripts/runtime/report-block-usage.ts             # 直近28日
-  node scripts/runtime/report-block-usage.ts --days <日数>`
-
-/** 欄（`blockFields`）を記録する前の版。 */
-const FIELDLESS_FORMAT_VERSION = 2
-
-const commonRecordShape = {
-  blockKinds: z.array(z.string()),
-  notations: z.array(z.string()),
-  containedNotations: z.array(z.string()),
-  escapeNotations: z.array(z.string()),
-  unknownBlockCount: z.number(),
-}
-
-/** 欄を記録し、前後図・画像の有無を記録する前の版。 */
-const VISUALLESS_FORMAT_VERSION = 3
-
-/** modified の表の分母になる最初の版（前後図・画像の有無を記録した）。 */
-const MODIFIED_FORMAT_VERSION = 4
-
-const visualRecordShape = {
-  blockFields: z.array(z.string()),
-  hasModifiedFiles: z.boolean(),
-  hasBeforeAfterOrImage: z.boolean(),
-  forTask: z.boolean(),
-  ...commonRecordShape,
-}
-
-/** 段1の図の有無を記録し、`figure` を記録する前の版。 */
-const FIGURE_FIELDLESS_FORMAT_VERSION = 5
-
-const figureRecordShape = {
-  hasFigure: z.boolean(),
-  readImageWithoutImageBlock: z.boolean(),
-  ...visualRecordShape,
-}
-
-const figureFieldSchema = z.union([
-  z.object({ figureKind: z.literal("none"), noneReason: z.string() }),
-  z.object({ figureKind: z.string() }),
-])
-
-/** `figure` を記録し、強調と graph の数を記録する前の版。 */
-const COUNTLESS_FORMAT_VERSION = 6
-
-/** 強調と graph の数の表の分母になる最初の版。 */
-const COUNT_FORMAT_VERSION = 7
-
-const countRecordShape = {
-  emphasisCount: z.number(),
-  graphEdgeCount: z.number(),
-  graphUnlabeledEdgeCount: z.number(),
-  graphNodeCount: z.number(),
-}
-
-/** 確かめ方の表の分母になる最初の版。 */
-const HOW_TO_VERIFY_FORMAT_VERSION = 8
-
-const howToVerifyRecordShape = {
-  hasUnverifiedCheck: z.boolean(),
-  hasHowToVerify: z.boolean(),
-}
-
-/** 報告の種類の表の分母になる最初の版。 */
-const GENRE_FORMAT_VERSION = 9
-
-const genreRecordShape = {
-  taskGenre: z.string(),
-  taskOutcome: z.string(),
-  hasFavor: z.boolean(),
-  hasSourceReference: z.boolean(),
-}
-
-/** 2行以下の表の割合の分母になる最初の版。 */
-const SHORT_TABLE_FORMAT_VERSION = 10
-
-const shortTableRecordShape = {
-  shortTable: z.boolean(),
-}
-
-/** `stats` の `series` / `better` を欄で数える最初の版（行の形は版10と同じ）。 */
-const SERIES_FORMAT_VERSION = 11
-
-/** 欄 `blockAside` を記録し始めた版。行の形は版10と同じ。 */
-const BLOCK_ASIDE_FORMAT_VERSION = 12
-
-/** 節の札と、札が許さない塊の数を記録し始めた版。 */
-const SHAPE_TAG_FORMAT_VERSION = 13
-
-const shapeTagRecordShape = {
-  sectionShapeTags: z.array(z.string()),
-  forbiddenShapeSectionCount: z.number(),
-  forbiddenShapeBlocks: z.array(
-    z.object({ shapeTag: z.string(), blockKind: z.string(), count: z.number() }),
-  ),
-}
-
-/** 引数の字数を記録し始めた版。 */
-const ARGUMENT_CHARS_FORMAT_VERSION = 14
-
-/** 欄 `beforeAfterRegion` を記録し始めた版。行の形は版14と同じ。 */
-const REGION_FORMAT_VERSION = 15
-
-/** 差し戻しから引き継いだ欄の名前（`inheritedFields`）を記録し始めた版。 */
-const INHERITED_FIELDS_FORMAT_VERSION = 16
-
-/** 型の渡し方（`reportSchema`）を記録し始めた版。 */
-const REPORT_SCHEMA_FORMAT_VERSION = 17
-
-/** 逃げ道の記法を構文木で数え始めた版。 */
-const NOTATION_TREE_FORMAT_VERSION = 18
-
-const argumentCharsSchema = z.object({
-  total: z.number(),
-  fields: z.record(z.string(), z.number()),
-})
-
-const recordSchema = z.union([
-  z.object({ v: z.literal(FIELDLESS_FORMAT_VERSION), ...commonRecordShape }),
-  z.object({
-    v: z.literal(VISUALLESS_FORMAT_VERSION),
-    blockFields: z.array(z.string()),
-    ...commonRecordShape,
-  }),
-  z.object({ v: z.literal(MODIFIED_FORMAT_VERSION), ...visualRecordShape }),
-  z.object({ v: z.literal(FIGURE_FIELDLESS_FORMAT_VERSION), ...figureRecordShape }),
-  z.object({ v: z.literal(COUNTLESS_FORMAT_VERSION), ...figureRecordShape }).and(figureFieldSchema),
-  z
-    .object({
-      v: z.literal(COUNT_FORMAT_VERSION),
-      ...figureRecordShape,
-      ...countRecordShape,
-    })
-    .and(figureFieldSchema),
-  z
-    .object({
-      v: z.literal(HOW_TO_VERIFY_FORMAT_VERSION),
-      ...figureRecordShape,
-      ...countRecordShape,
-      ...howToVerifyRecordShape,
-    })
-    .and(figureFieldSchema),
-  z
-    .object({
-      v: z.literal(GENRE_FORMAT_VERSION),
-      ...figureRecordShape,
-      ...countRecordShape,
-      ...howToVerifyRecordShape,
-      ...genreRecordShape,
-    })
-    .and(figureFieldSchema),
-  z
-    .object({
-      v: z.literal(SHORT_TABLE_FORMAT_VERSION),
-      ...figureRecordShape,
-      ...countRecordShape,
-      ...howToVerifyRecordShape,
-      ...genreRecordShape,
-      ...shortTableRecordShape,
-    })
-    .and(figureFieldSchema),
-  z
-    .object({
-      v: z.union([z.literal(SERIES_FORMAT_VERSION), z.literal(BLOCK_ASIDE_FORMAT_VERSION)]),
-      ...figureRecordShape,
-      ...countRecordShape,
-      ...howToVerifyRecordShape,
-      ...genreRecordShape,
-      ...shortTableRecordShape,
-    })
-    .and(figureFieldSchema),
-  z
-    .object({
-      v: z.literal(SHAPE_TAG_FORMAT_VERSION),
-      ...figureRecordShape,
-      ...countRecordShape,
-      ...howToVerifyRecordShape,
-      ...genreRecordShape,
-      ...shortTableRecordShape,
-      ...shapeTagRecordShape,
-    })
-    .and(figureFieldSchema),
-  z
-    .object({
-      v: z.union([z.literal(ARGUMENT_CHARS_FORMAT_VERSION), z.literal(REGION_FORMAT_VERSION)]),
-      ...figureRecordShape,
-      ...countRecordShape,
-      ...howToVerifyRecordShape,
-      ...genreRecordShape,
-      ...shortTableRecordShape,
-      ...shapeTagRecordShape,
-      argumentChars: argumentCharsSchema,
-    })
-    .and(figureFieldSchema),
-  z
-    .object({
-      v: z.union([
-        z.literal(INHERITED_FIELDS_FORMAT_VERSION),
-        z.literal(REPORT_SCHEMA_FORMAT_VERSION),
-        z.literal(NOTATION_TREE_FORMAT_VERSION),
-      ]),
-      ...figureRecordShape,
-      ...countRecordShape,
-      ...howToVerifyRecordShape,
-      ...genreRecordShape,
-      ...shortTableRecordShape,
-      ...shapeTagRecordShape,
-      argumentChars: argumentCharsSchema,
-      inheritedFields: z.array(z.string()),
-    })
-    .and(figureFieldSchema),
-])
-type UsageRecord = z.infer<typeof recordSchema>
 type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[] }>
 type VisualRecord = Extract<UsageRecord, { readonly hasModifiedFiles: boolean }>
 type FigureRecord = Extract<UsageRecord, { readonly hasFigure: boolean }>
@@ -267,6 +74,14 @@ type GenreRecord = Extract<UsageRecord, { readonly taskGenre: string }>
 type ShortTableRecord = Extract<UsageRecord, { readonly shortTable: boolean }>
 type ShapeTagRecord = Extract<UsageRecord, { readonly forbiddenShapeSectionCount: number }>
 type ArgumentCharsRecord = Extract<UsageRecord, { readonly argumentChars: unknown }>
+type SectionBlockRecord = Extract<UsageRecord, { readonly sectionBlockKinds: unknown }>
+
+const USAGE = `使い方:
+  node scripts/runtime/report-block-usage.ts             # 直近28日
+  node scripts/runtime/report-block-usage.ts --days <日数>
+  node scripts/runtime/report-block-usage.ts --include-fake  # 疑似セッションの行も数える`
+
+const INCLUDE_FAKE_FLAG = "--include-fake"
 
 /** `figure` の表に出す種類。0件でも出す。 */
 const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
@@ -276,29 +91,27 @@ const FIGURE_KINDS: readonly string[] = reportFigureSchema.options.map(
 /** `figure` を記録する前の行の理由。 */
 const UNRECORDED_REASON = "unrecorded"
 
-/** 差し戻した呼び出しの行（`kind: "rejected"`）。受け付けの行には `kind` が無い。 */
-const rejectionSchema = z.object({
-  v: z.number().int().min(VISUALLESS_FORMAT_VERSION).max(NOTATION_TREE_FORMAT_VERSION),
-  kind: z.literal("rejected"),
-  reasons: z.array(z.string()),
-  argumentChars: argumentCharsSchema.optional(),
-  inheritedFields: z.array(z.string()).optional(),
-})
-type RejectionRecord = z.infer<typeof rejectionSchema>
-
-const days = parseDaysOption(process.argv.slice(2))
+const argv = process.argv.slice(2)
+const includeFake = argv.includes(INCLUDE_FAKE_FLAG)
+const days = parseDaysOption(argv.filter((argument) => argument !== INCLUDE_FAKE_FLAG))
 if (days === "invalid") {
   process.stderr.write(`${USAGE}\n`)
   process.exit(2)
 }
 
-const { records, rejections } = readRecentRecords(reportUsageDir(), days)
+const { records, rejections, fakeCount } = readRecentRecords(reportUsageDir(), days, includeFake)
 if (records.length === 0 && rejections.length === 0) {
   process.stdout.write(`直近${String(days)}日の記録が無い（\`~/.tsukumo/report-usage/\` を見た）\n`)
   process.exit(0)
 }
 
-process.stdout.write(`直近${String(days)}日のレポート数: ${String(records.length)}\n\n`)
+process.stdout.write(
+  `直近${String(days)}日のレポート数: ${String(records.length)}（${
+    includeFake
+      ? "疑似セッションの行も数えた"
+      : `疑似セッションの行 ${String(fakeCount)} 件は除いた。含めるなら ${INCLUDE_FAKE_FLAG}`
+  }）\n\n`,
+)
 process.stdout.write(
   table("塊の種類 × レポート数", REPORT_BLOCK_KINDS, records, (record) => record.blockKinds),
 )
@@ -358,6 +171,14 @@ process.stdout.write("\n\n")
 process.stdout.write(shapeTagSection(shapeTagRecords))
 process.stdout.write("\n\n")
 process.stdout.write(
+  sectionBlockSection(
+    records.filter(
+      (record): record is SectionBlockRecord => record.v >= SECTION_BLOCK_FORMAT_VERSION,
+    ),
+  ),
+)
+process.stdout.write("\n\n")
+process.stdout.write(
   argumentCharsSection(
     records.filter(
       (record): record is ArgumentCharsRecord => record.v >= ARGUMENT_CHARS_FORMAT_VERSION,
@@ -404,18 +225,25 @@ process.stdout.write("\n")
 function readRecentRecords(
   root: string,
   dayCount: number,
-): { readonly records: readonly UsageRecord[]; readonly rejections: readonly RejectionRecord[] } {
+  withFake: boolean,
+): {
+  readonly records: readonly UsageRecord[]
+  readonly rejections: readonly RejectionRecord[]
+  readonly fakeCount: number
+} {
   const endDate = Temporal.Now.plainDateISO().toString()
   const startDate = Temporal.PlainDate.from(endDate)
     .subtract({ days: dayCount - 1 })
     .toString()
-  const raws = dateFileNames(root)
+  const allRaws = dateFileNames(root)
     .filter((name) => {
       const date = name.slice(0, 10)
       return date >= startDate && date <= endDate
     })
     .flatMap((name) => readJsonLines(`${root}/${name}`))
+  const raws = withFake ? allRaws : allRaws.filter((raw) => !isFakeSessionRow(raw))
   return {
+    fakeCount: allRaws.length - raws.length,
     records: raws.flatMap((raw) => {
       const record = recordSchema.safeParse(raw)
       return record.success ? [record.data] : []
@@ -666,6 +494,60 @@ function shapeTagSection(rows: readonly ShapeTagRecord[]): string {
   ].join("\n")
 }
 
+/**
+ * 札 × 節に出た塊の種類の節数、`list` の style・`mermaid` の図種 × レポート数、駆動 × レポート数。分母は版19以降の行。
+ * 節の数は `sectionShapeTags` と `sectionBlockKinds` の同じ位置を対にして数える。
+ */
+function sectionBlockSection(rows: readonly SectionBlockRecord[]): string {
+  if (rows.length === 0) {
+    return "札 × 節に出た塊の種類・list の style・mermaid の図種・駆動: 版19以降の行が無い"
+  }
+  const sections = rows.flatMap((record) =>
+    record.sectionShapeTags.map((shapeTag, index) => ({
+      shapeTag,
+      blockKinds: record.sectionBlockKinds[index] ?? [],
+    })),
+  )
+  const tagLines = [...REPORT_SHAPE_TAGS, "unspecified"].map((tag) => {
+    const own = sections.filter((section) => section.shapeTag === tag)
+    const kindCounts = Object.entries(
+      groupBy(
+        own.flatMap((section) => section.blockKinds),
+        (kind) => kind,
+      ),
+    )
+      .map(([kind, uses]) => ({ kind, count: uses.length }))
+      .toSorted((left, right) => right.count - left.count)
+      .map(({ kind, count }) => `${kind} ${String(count)}`)
+    return `  ${tag.padEnd(26)} ${String(own.length).padStart(5)}節  ${kindCounts.join("・")}`
+  })
+  return [
+    `札 × 節に出た塊の種類の節数（版19以降の${String(rows.length)}件の節${String(sections.length)}個。外す基準の対象ではない）:`,
+    ...tagLines,
+    "",
+    table(
+      `\`list\` の style × レポート数（版19以降の${String(rows.length)}件のうち）`,
+      listBlockSchema.shape.style.options,
+      rows,
+      (record) => record.listStyles,
+    ),
+    "",
+    table(
+      `\`mermaid\` の図種 × レポート数（版19以降の${String(rows.length)}件のうち）`,
+      REPORT_MERMAID_KINDS,
+      rows,
+      (record) => record.mermaidKinds,
+    ),
+    "",
+    table(
+      `駆動 × レポート数（版19以降の${String(rows.length)}件のうち）`,
+      ["sdk", "fake"],
+      rows,
+      (record) => [record.driver],
+    ),
+  ].join("\n")
+}
+
 function percentOf(count: number, total: number): string {
   return (total === 0 ? 0 : (count / total) * 100).toFixed(1)
 }
@@ -679,7 +561,7 @@ function percentOf(count: number, total: number): string {
 function argumentCharsSection(
   accepted: readonly ArgumentCharsRecord[],
   rejected: readonly {
-    readonly argumentChars: z.infer<typeof argumentCharsSchema>
+    readonly argumentChars: ArgumentCharsRecord["argumentChars"]
     readonly inheritedFields: readonly string[] | undefined
   }[],
 ): string {

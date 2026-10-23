@@ -126,7 +126,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     contextUsageLog: createContextUsageLog(),
     experienceMetricLog: createExperienceMetricLog(),
     diagnosticLog: options.diagnosticLog,
-    reportUsageLog: createReportUsageLog(config.reportSchema),
+    reportUsageLog: createReportUsageLog(config.reportSchema, config.driver),
     questionUsageLog: createQuestionUsageLog(),
     promptImageShelf,
     reportImageShelf: options.reportImageShelf,

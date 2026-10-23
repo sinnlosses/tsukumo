@@ -40,6 +40,7 @@ function entry(
     figure,
     shapeTags: {
       sectionShapeTags: ["cause", "unspecified"],
+      sectionBlockKinds: [["table"], ["text"]],
       forbiddenShapeSectionCount: 1,
       forbiddenShapeBlocks: [{ shapeTag: "cause", blockKind: "table", count: 1 }],
     },
@@ -49,6 +50,8 @@ function entry(
     containedNotations: [],
     escapeNotations: [],
     unknownBlockCount: 0,
+    listStyles: ["bullet"],
+    mermaidKinds: [],
     hasModifiedFiles: true,
     hasBeforeAfterOrImage: false,
     forTask: true,
@@ -76,7 +79,7 @@ function readLines(fileName: string): unknown[] {
 
 describe("createReportUsageLog", () => {
   it("日付ごとのファイルに1行ずつ追記する", () => {
-    const log = createReportUsageLog("json-schema", root())
+    const log = createReportUsageLog("json-schema", "sdk", root())
 
     log.append(entry(at(9, 0), "claude-session-1"))
     log.append(entry(at(23, 30), "claude-session-2"))
@@ -88,7 +91,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("1行の鍵は版・日時・セッションID・figure の種類と理由・節の札と許さない塊の数・塊の種類と欄・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", () => {
-    const log = createReportUsageLog("json-schema", root())
+    const log = createReportUsageLog("json-schema", "sdk", root())
 
     log.append(entry(at(9, 0)))
 
@@ -97,9 +100,11 @@ describe("createReportUsageLog", () => {
       "v",
       "at",
       "sessionId",
+      "driver",
       "figureKind",
       "noneReason",
       "sectionShapeTags",
+      "sectionBlockKinds",
       "forbiddenShapeSectionCount",
       "forbiddenShapeBlocks",
       "blockKinds",
@@ -108,6 +113,8 @@ describe("createReportUsageLog", () => {
       "containedNotations",
       "escapeNotations",
       "unknownBlockCount",
+      "listStyles",
+      "mermaidKinds",
       "hasModifiedFiles",
       "hasBeforeAfterOrImage",
       "forTask",
@@ -133,9 +140,13 @@ describe("createReportUsageLog", () => {
       sessionId: "claude-session-1",
       figureKind: "none",
       noneReason: "short-answer",
+      driver: "sdk",
       sectionShapeTags: ["cause", "unspecified"],
+      sectionBlockKinds: [["table"], ["text"]],
       forbiddenShapeSectionCount: 1,
       forbiddenShapeBlocks: [{ shapeTag: "cause", blockKind: "table", count: 1 }],
+      listStyles: ["bullet"],
+      mermaidKinds: [],
       blockKinds: ["text", "table"],
       blockFields: ["tableChange"],
       notations: ["list"],
@@ -161,7 +172,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("figure に図を置いた行は figureKind だけを持ち、noneReason を持たない", () => {
-    const log = createReportUsageLog("json-schema", root())
+    const log = createReportUsageLog("json-schema", "sdk", root())
 
     log.append(entry(at(9, 0), "claude-session-1", { figureKind: "graph" }))
 
@@ -171,7 +182,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("差し戻しの行は同じ日付ファイルに入り、鍵は版・種類・日時・セッションID・差し戻しの名前・引数の字数・引き継いだ欄の名前・型の渡し方だけ", () => {
-    const log = createReportUsageLog("json-schema", root())
+    const log = createReportUsageLog("json-schema", "sdk", root())
 
     log.appendRejection({
       at: at(9, 5),
@@ -187,6 +198,7 @@ describe("createReportUsageLog", () => {
       "kind",
       "at",
       "sessionId",
+      "driver",
       "reasons",
       "argumentChars",
       "inheritedFields",
@@ -204,7 +216,7 @@ describe("createReportUsageLog", () => {
   })
 
   it("短い型の表記で起こした記録は、受け付けと差し戻しの両方の行にそれを書く", () => {
-    const log = createReportUsageLog("short-type", root())
+    const log = createReportUsageLog("short-type", "sdk", root())
 
     log.append(entry(at(9, 0)))
     log.appendRejection({

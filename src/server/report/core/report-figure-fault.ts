@@ -51,6 +51,20 @@ export function unknownMermaidCount(sections: readonly ReportSection[]): number 
   ).length
 }
 
+/**
+ * mermaid の図の種類（ソースの最初の語）。空行・`%%` の行（コメントと init の指定）と、先頭の `---` で囲んだ設定は飛ばす。
+ * 中身が空なら空文字（規約の種類に無いので違反になる）。
+ */
+export function mermaidKind(source: string): string {
+  const lines = source.split("\n").map((line) => line.trim())
+  const afterFrontmatter =
+    lines.find((line) => line !== "") === "---"
+      ? lines.slice(lines.indexOf("---", lines.indexOf("---") + 1) + 1)
+      : lines
+  const first = afterFrontmatter.find((line) => line !== "" && !line.startsWith("%%"))
+  return first?.split(/\s/)[0] ?? ""
+}
+
 /** 割れた図の位置（何個目の何行目・字句の名前）の並び。書き手のソースの文字は入れない。 */
 export function mermaidFaultPositions(faults: readonly MermaidFault[]): string {
   return faults
@@ -162,18 +176,4 @@ function isInsideSvg(shape: SvgFigure["shapes"][number], { width, height }: SvgF
     case "text":
       return inside(shape.x, shape.y)
   }
-}
-
-/**
- * mermaid の図の種類（ソースの最初の語）。空行・`%%` の行（コメントと init の指定）と、先頭の `---` で囲んだ設定は飛ばす。
- * 中身が空なら空文字（規約の種類に無いので違反になる）。
- */
-function mermaidKind(source: string): string {
-  const lines = source.split("\n").map((line) => line.trim())
-  const afterFrontmatter =
-    lines.find((line) => line !== "") === "---"
-      ? lines.slice(lines.indexOf("---", lines.indexOf("---") + 1) + 1)
-      : lines
-  const first = afterFrontmatter.find((line) => line !== "" && !line.startsWith("%%"))
-  return first?.split(/\s/)[0] ?? ""
 }

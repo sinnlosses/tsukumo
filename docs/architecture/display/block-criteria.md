@@ -36,6 +36,9 @@
 - 版17: どちらの型の渡し方で `report` を受けたか（`reportSchema`。`json-schema` か `short-type`）。受け付けと差し戻しの両方の行に入る
 - 版18: 逃げ道の記法を構文木（mdast）で数える（行の形は版17と同じ。版17以前の行とは数え方が違う。
   インラインコードの中の `<div>` で容れ物の深さが狂わず、ブラウザが記法として描かない形は数えない）
+- 版19: 節ごとに出た塊の種類（`sectionBlockKinds`。`sectionShapeTags` と同じ並び）、`list` の style の集合（`listStyles`）、
+  `mermaid` の図種の集合（`mermaidKinds`）、駆動（`driver`。`sdk` か `fake`）。受け付けと差し戻しの両方の行に `driver` が入る。
+  集計スクリプトは疑似セッションの行（`driver` が `fake`、版18以前は `sessionId` が `fake-session`）を既定で除き、`--include-fake` で含める
 
 4版以降の真偽値と数は、塊の欄とは別で外す基準の対象にしない。
 

@@ -67,6 +67,7 @@ describe("createSessionManager", () => {
           figure: { figureKind: "none", noneReason: "unrecorded" },
           shapeTags: {
             sectionShapeTags: ["unspecified"],
+            sectionBlockKinds: [["text"]],
             forbiddenShapeSectionCount: 0,
             forbiddenShapeBlocks: [],
           },
@@ -76,6 +77,8 @@ describe("createSessionManager", () => {
           containedNotations: [],
           escapeNotations: [],
           unknownBlockCount: 0,
+          listStyles: [],
+          mermaidKinds: [],
           hasModifiedFiles: false,
           hasBeforeAfterOrImage: false,
           forTask: false,

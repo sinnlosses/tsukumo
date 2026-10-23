@@ -8,7 +8,10 @@ import type { ReportGenre, ReportTaskOutcome } from "./report-task.ts"
 import type { ReportSchemaVariant } from "./schema-variant.ts"
 
 /** 行の形の版。形か数え方を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 18 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 19 satisfies number
+
+/** どの駆動で起こしたプロセスの行か（版19から）。`fake` は疑似セッションで、集計は既定で除く。 */
+export type ReportUsageDriver = "sdk" | "fake"
 
 /** 札が許さない塊の組と、その回に出た数（版13から）。 */
 export type ForbiddenShapeBlockUsage = {
@@ -21,6 +24,8 @@ export type ForbiddenShapeBlockUsage = {
 export type ReportShapeTagUsage = {
   /** 節の順の札。札を省いた節は `unspecified`。`figure` の図は節に数えない。 */
   readonly sectionShapeTags: readonly RecordedReportShapeTag[]
+  /** 節の順の、節の中の塊の種類（重複無し）。`sectionShapeTags` と同じ並び（版19から）。 */
+  readonly sectionBlockKinds: readonly (readonly string[])[]
   /** 札が許さない塊を1つ以上含む節の数。 */
   readonly forbiddenShapeSectionCount: number
   /** 札が許さない塊の組ごとの数。0の組は入れない。 */
@@ -52,6 +57,12 @@ export type ReportUsageRecord = ReportFigureUsage &
     readonly containedNotations: readonly string[]
     /** その回に逃げ道に出た、塊の無い記法の種類（重複無し）。 */
     readonly escapeNotations: readonly string[]
+    /** その回に出た `list` の `style`（重複無し。版19から）。 */
+    readonly listStyles: readonly string[]
+    /** その回に出た `mermaid` の図の種類（ソースの最初の語。重複無し。`figure` の図を含む。版19から）。 */
+    readonly mermaidKinds: readonly string[]
+    /** どの駆動で起こしたプロセスの行か（版19から）。 */
+    readonly driver: ReportUsageDriver
     /** 知らない種類で境界で落とした塊の数。 */
     readonly unknownBlockCount: number
     /** `files` の塊に `modified` の項目があるか（版4から）。 */
@@ -105,6 +116,8 @@ export type ReportRejectionRecord = {
   readonly at: string
   readonly sessionId: string
   readonly reasons: readonly string[]
+  /** どの駆動で起こしたプロセスの行か（版19から）。 */
+  readonly driver: ReportUsageDriver
   /** 差し戻した呼び出しの引数の字数（版14から）。 */
   readonly argumentChars: ReportArgumentChars
   /** 差し戻した呼び出しが引き継いだ欄の名前（版16から）。 */
