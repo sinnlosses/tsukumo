@@ -228,7 +228,7 @@ async function checkWorkflowPlugin(
   const mount = await readWorkflowPluginMount(workflowPluginDir(), claudeConfigDir)
   if (mount.kind === "partial") {
     process.stderr.write(
-      `tsukumo: 利用者側にタスク運用の一部が無い（${mount.missing.join("・")}）ので、取り込んだプラグインを載せる\n`,
+      `tsukumo: plugin partly missing (${mount.missing.join(", ")}): using bundled one\n`,
     )
   }
   return { ok: true, mount: mount.kind !== "user-installed" }
@@ -295,8 +295,8 @@ const DAY_START_MARGIN_MS = 1_000
 // 起動したことと URL は、ペインに残る唯一の出力。
 // URL には起動トークンが付くので、タブを開き直すときはこの URL をそのまま使う。
 function announce(url: string, devServer: boolean): void {
-  const devNote = devServer ? "  開発サーバ: src/browser/ の保存が画面にそのまま当たる\n" : ""
-  process.stdout.write(`tsukumo: ビューを配信中\n  ${url}\n${devNote}`)
+  const devNote = devServer ? "  dev server: edits under src/browser/ apply live\n" : ""
+  process.stdout.write(`tsukumo is running\n  ${url}\n${devNote}`)
 }
 
 /**
