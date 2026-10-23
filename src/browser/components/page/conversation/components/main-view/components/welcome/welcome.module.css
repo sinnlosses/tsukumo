@@ -110,6 +110,28 @@
   object-fit: cover;
 }
 
+.card-request {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-left: 2px solid var(--rule-quiet);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  line-height: 1.6;
+}
+.card-request-label {
+  font-size: var(--font-label);
+}
+.card-request-text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
 .card-foot {
   display: flex;
   align-items: center;

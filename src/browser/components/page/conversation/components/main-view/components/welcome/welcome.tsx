@@ -20,10 +20,12 @@ import { useWelcome, type WelcomeModel } from "./hooks/use-welcome.ts"
 import styles from "./welcome.module.css"
 
 const TITLE = "何から始める？"
-const LEAD_WITH_CARDS = "tsukumo のおすすめ。「始める」を押すと、すぐに頼んで作業が始まる。"
+const LEAD_WITH_CARDS =
+  "tsukumo のおすすめ。「始める」を押すと、札に書いた依頼がそのまま送られて作業が始まる。"
 const LEAD_WITHOUT_CARDS = "下の入力欄から頼める。"
 const TOP_BADGE = "いちばんのおすすめ"
 const OTHERS_LABEL = "ほかの始め方"
+const REQUEST_LABEL = "送られる依頼"
 
 export function Welcome(): ReactElement {
   const model = useWelcome()
@@ -80,6 +82,10 @@ function Card(props: {
           <span>{card.reason}</span>
         </span>
       )}
+      <span className={styles["card-request"]}>
+        <span className={styles["card-request-label"]}>{REQUEST_LABEL}</span>
+        <span className={styles["card-request-text"]}>{card.request}</span>
+      </span>
       <span className={styles["card-foot"]}>
         <kbd className={styles["card-key"]}>{index + 1}</kbd>
         <Button
