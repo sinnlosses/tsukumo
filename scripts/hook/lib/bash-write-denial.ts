@@ -10,6 +10,7 @@ import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path
 
 import { findQuotedSpans, withSpansBlanked, type QuotedSpan } from "./quoted-span.ts"
 import { parseShellCommand, type ShellWord, type SimpleCommand } from "./shell-command.ts"
+import { writeRuleFor, type Location } from "./write-rule-key.ts"
 
 /**
  * in-place で書き換える `sed` / `perl` の引数の形。
@@ -104,9 +105,6 @@ const SCRIPT_SIZE_LIMIT = 1024 * 1024
 /** 読んだスクリプトのファイル。`foreign` は、別の git 作業ツリーの中にあり、作業ツリーの外のディレクトリで走らせるもの。 */
 type PythonScript = { readonly text: string; readonly foreign: boolean }
 
-/** パスが作業ツリーのどちら側にあるか。`unknown` は展開や読めない `cd` で決まらないもの。 */
-type Location = "inside" | "outside" | "unknown"
-
 /** 当たった規則のキー。当たらなければ `undefined`。`cwd` は入力の作業ディレクトリ、`workRoot` は作業ツリーの根。 */
 export function findDeniedBashRule(
   command: string,
@@ -172,8 +170,11 @@ function writeRuleOf(
   const name = simple.argv[0] === undefined ? "" : baseName(simple.argv[0].text)
   const args = simple.argv.slice(1)
 
-  if (name !== "[[" && simple.writes.some((word) => locate(word) !== "outside")) {
-    return "worktree-write"
+  if (name !== "[[") {
+    const redirect = writeRuleFor("redirect-write", simple.writes.map(locate))
+    if (redirect !== undefined) {
+      return redirect
+    }
   }
   switch (name) {
     case "sed":
@@ -183,15 +184,16 @@ function writeRuleOf(
     case "xargs":
       return xargsInPlaceRule(args)
     case "tee":
-      return writes(operands(args).some((word) => locate(word) !== "outside"))
+      return writeRuleFor("tee-write", operands(args).map(locate))
     case "cp":
     case "mv":
-      return writes(copiesIntoWorkTree(args, locate, directory))
+      return writeRuleFor("copy-write", copiesIntoWorkTree(args, locate, directory))
     case "node":
       return writes(
         nodeCodes(args, simple, locate, directory).some((code) =>
           hasUnsafeWrite(code, NODE_WRITES, workRoot),
         ),
+        "node-write",
       )
     default:
       return undefined
@@ -210,10 +212,9 @@ function editsInPlace(
   return inPlaceTargets(args, options).some((word) => locate(word) !== "outside")
 }
 
-function writes(denied: boolean, rule = "worktree-write"): string | undefined {
+function writes(denied: boolean, rule: string): string | undefined {
   return denied ? rule : undefined
 }
-
 /** `sed` / `perl` の引数のうち、書き換えるファイル。スクリプトを引数で渡さないときの先頭の語はスクリプトなので除く。 */
 function inPlaceTargets(args: readonly ShellWord[], options: InPlaceOptions): readonly ShellWord[] {
   const rest: ShellWord[] = []
@@ -254,12 +255,12 @@ function xargsInPlaceRule(args: readonly ShellWord[]): string | undefined {
     : undefined
 }
 
-/** `cp` / `mv` の書き先が作業ツリーの外でなく、移す元のどれかが作業ツリーの中と決まっておらず、画像のみでもないか。 */
+/** `cp` / `mv` が、移す元のどれかが作業ツリーの中と決まらず画像のみでもないとき、書き先の位置。当たらなければ空。 */
 function copiesIntoWorkTree(
   args: readonly ShellWord[],
   locate: (word: ShellWord) => Location,
   directory: string | undefined,
-): boolean {
+): readonly Location[] {
   const flagAt = args.findIndex((word) => word.text === "-t")
   const option = args.find((word) => word.text.startsWith(TARGET_DIRECTORY_OPTION))
   const targetDirectory =
@@ -274,18 +275,16 @@ function copiesIntoWorkTree(
   const destination = targetDirectory ?? paths.at(-1)
   const sources = targetDirectory === undefined ? paths.slice(0, -1) : paths
   if (destination === undefined || sources.length === 0) {
-    return false
+    return []
   }
   const placesImages =
     sources.every(isBinaryFile) &&
     (targetDirectory !== undefined ||
       isDirectory(destination, directory) ||
       isBinaryFile(destination))
-  return (
-    !placesImages &&
-    locate(destination) !== "outside" &&
-    sources.some((word) => locate(word) !== "inside")
-  )
+  return !placesImages && sources.some((word) => locate(word) !== "inside")
+    ? [locate(destination)]
+    : []
 }
 
 function isBinaryFile(word: ShellWord): boolean {
