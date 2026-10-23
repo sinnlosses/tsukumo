@@ -61,6 +61,12 @@
   min-width: 100%;
   margin: 0.2rem 0 0;
 }
+/* 起動スキルの入力欄。名前の隣に残りの幅を取る。 */
+.screen-nav-settings-text-field {
+  flex: 1;
+  min-width: 0;
+  padding: 0.3rem 0.5rem;
+}
 /* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ。 */
 .screen-nav-settings-reset {
   margin-left: auto;

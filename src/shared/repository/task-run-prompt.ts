@@ -18,16 +18,35 @@ export function isTaskRequestable(task: TaskSummaryItem): boolean {
   return taskReadiness(task)?.kind === "ready"
 }
 
-/** 頼みの文面。保留のタスクの着手には、着手の前に判断を聞く旨を末尾に添える。 */
-export function requestPromptOf(taskId: string, request: TaskRequest): string {
+/**
+ * 頼みの文面。保留のタスクの着手には、着手の前に判断を聞く旨を末尾に添える。
+ * `launchSkill` は利用者が書いた起動スキル名で、着手のときだけ使う。
+ * 先頭の `/` と前後の空白を畳み、空・使えない文字を含む値は未設定として固定の文面にする。
+ */
+export function requestPromptOf(taskId: string, request: TaskRequest, launchSkill = ""): string {
   switch (request.kind) {
     case "start": {
-      const prompt = `タスク ${taskId} を進めて（bd show ${taskId} で読める）。`
-      return request.held ? `${prompt}${HELD_NOTE}` : prompt
+      const skill = launchSkillOf(launchSkill)
+      const prompt =
+        skill === ""
+          ? `タスク ${taskId} を進めて（bd show ${taskId} で読める）。`
+          : `/${skill} ${taskId}`
+      if (!request.held) {
+        return prompt
+      }
+      return skill === "" ? `${prompt}${HELD_NOTE}` : `${prompt} ${HELD_NOTE}`
     }
     case "plan":
       return `ドラフト ${taskId} を計画して（bd show ${taskId} で読める）。## 完了条件 と ## やること を書いて、着手できる todo にする。`
     case "drop":
       return `ドラフト ${taskId} を却下して（bd show ${taskId} で読める）。理由を ## 結果 に書いて、dropped で閉じる。`
   }
+}
+
+const LAUNCH_SKILL_PATTERN = /^[A-Za-z0-9_:-]+$/
+
+/** 畳んだスキル名。未設定・使えない文字を含む値は空文字。 */
+function launchSkillOf(raw: string): string {
+  const skill = raw.trim().replace(/^\//, "").trim()
+  return LAUNCH_SKILL_PATTERN.test(skill) ? skill : ""
 }

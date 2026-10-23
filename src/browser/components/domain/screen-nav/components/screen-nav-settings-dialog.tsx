@@ -3,7 +3,7 @@
 // 選んでいる面はこの部品の `useState` が持つ。ダイアログを閉じると部品ごと消えるので、開くたび先頭の面から始まる。
 
 import clsx from "clsx"
-import { Palette, Settings, SlidersHorizontal, Sparkles, Workflow, X } from "lucide-react"
+import { Palette, Play, Settings, SlidersHorizontal, Sparkles, Workflow, X } from "lucide-react"
 import { useState, type ComponentType, type ReactElement } from "react"
 
 import { Button } from "../../../ui/button/button.tsx"
@@ -16,6 +16,7 @@ import { ScreenNavSettingsLookFace } from "./screen-nav-settings-look.tsx"
 import { ScreenNavSettingsWorkflowFace } from "./screen-nav-settings-workflow.tsx"
 import gearStyles from "./screen-nav-settings.module.css"
 import {
+  ScreenNavSettingsLaunchSkillFace,
   ScreenNavSettingsRevealFace,
   ScreenNavSettingsSessionDefaultFace,
   type ScreenNavSettingsProps,
@@ -50,6 +51,13 @@ const FACES = [
     foot: "reset",
   },
   { key: "reveal", label: "演出", icon: Sparkles, Body: DialogRevealFace, foot: "reset" },
+  {
+    key: "launch-skill",
+    label: "タスクの実行",
+    icon: Play,
+    Body: ScreenNavSettingsLaunchSkillFace,
+    foot: "reset",
+  },
   // ワークフローの値は歯車の設定（`settings`）に無く、面が自分で読み書きする。
   {
     key: "workflow",

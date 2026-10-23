@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
+import { saveLaunchSkill } from "../../../../src/browser/domain/launch-skill.ts"
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
 import type {
@@ -20,6 +21,7 @@ import { type CommandSpy, putSession } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
+  saveLaunchSkill("")
 })
 
 function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
@@ -368,6 +370,30 @@ describe("タスクの実行を頼む", () => {
         images: [],
       },
     ])
+  })
+
+  it("起動スキルを設定していれば、確認に出る文面も送る文面も「/スキル名 ID」になる", () => {
+    saveLaunchSkill("/next-task")
+    const sent: unknown[] = []
+    renderBoard(collectInto(sent))
+
+    openRunConfirm("X-002")
+    expect(confirmDialog()?.textContent).toContain("/next-task X-002")
+    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
+
+    expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-002", images: [] }])
+  })
+
+  it("起動スキルを設定していても、ドラフトの計画の文面は変わらない", () => {
+    saveLaunchSkill("next-task")
+    const sent: unknown[] = []
+    renderBoard(collectInto(sent), [], [draftTask("X-004")])
+
+    fireEvent.click(screen.getByRole("option", { name: /X-004/ }))
+    fireEvent.click(screen.getByRole("button", { name: "計画する" }))
+    fireEvent.click(screen.getByRole("button", { name: "頼む" }))
+
+    expect(JSON.stringify(sent)).toContain("ドラフト X-004 を計画して")
   })
 
   it("モーダルでも待ちの残る保留は頼めない", () => {

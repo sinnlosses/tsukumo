@@ -39,7 +39,8 @@ vendor/tsukumo-plugins/       取り込んだ tsukumo-plugins（git submodule。
 置き場は無い）。ワークフローの設定（スキルの並び）は tsukumo が持たず、ワークフローの `.tw/config.toml` に置いたまま、
 歯車の「ワークフロー」の面が設定コマンド（`tw config --schema`・`tw config set`。`server/workflow-setting/`）を通して見せて書く
 （同じ ADR の「2026-10-14 の改訂」）。タスクの節と使い方の見直しの「タスクにする」は、起動先の `.beads` が読めるかだけで出し分ける。
-「tsukumo に頼む」の文面は固定で、`shared/repository/task-run-prompt.ts` の `runPromptOf` が作る。
+「tsukumo に頼む」の文面は、`shared/repository/task-run-prompt.ts` の `requestPromptOf` が作る。
+着手の文面だけは、歯車の「タスクの実行」に利用者が書いたスキル名があれば「/スキル名 ID」になる（同じ ADR の「2026-10-24 の改訂」）。
 
 **タスク一覧の読み元は Beads だけ**（`server/repository/adapter/task-beads-source.ts`。`bd` の課題）。
 **課題の解釈は Beads アダプタの1か所に閉じる**（`docs/architecture/adr/0024-no-skill-dependency.md`）。

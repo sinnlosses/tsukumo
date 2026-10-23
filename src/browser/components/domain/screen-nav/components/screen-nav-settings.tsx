@@ -1,4 +1,4 @@
-// 設定の3つの面（色・セッションの既定・演出）と、3つを見出し付きで並べた中身（`ScreenNavSettingsBody`、狭い画面の引き出しの設定の面が置く）。
+// 設定の4つの面（色・セッションの既定・演出・タスクの実行）と、4つを見出し付きで並べた中身（`ScreenNavSettingsBody`、狭い画面の引き出しの設定の面が置く）。
 // id は `useId()` でこの器ごとに振る（`<label for>` が指す先が重ならないようにする）。
 
 import { useId, type ReactElement } from "react"
@@ -19,6 +19,7 @@ import {
 } from "../../../../features/run-setting/components/run-setting-select.tsx"
 import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
+import { TextField } from "../../../ui/text-field/text-field.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import type { ScreenNavSettings } from "../hooks/use-settings.ts"
 import styles from "./screen-nav-settings.module.css"
@@ -39,7 +40,7 @@ const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]): RunSettin
   row: <RunSettingName danger={false}>{label}</RunSettingName>,
 }))
 
-/** 設定の中身（3つの面を見出し付きで並べ、末尾に既定に戻す）。狭い画面の引き出しの設定の面が置く。 */
+/** 設定の中身（4つの面を見出し付きで並べ、末尾に既定に戻す）。狭い画面の引き出しの設定の面が置く。 */
 export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
 
@@ -75,6 +76,16 @@ export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactEleme
         書き上げる演出の速さ
       </Text>
       <ScreenNavSettingsRevealFace settings={settings} label="速さ" />
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["screen-nav-settings-heading"]}
+      >
+        タスクの実行
+      </Text>
+      <ScreenNavSettingsLaunchSkillFace settings={settings} />
       <HStack
         element="div"
         name={{ kind: "none" }}
@@ -285,6 +296,47 @@ export function ScreenNavSettingsRevealFace(
           onChange={settings.revealSpeed.onChange}
         />
       </HStack>
+    </>
+  )
+}
+
+/** タスクの実行の面（見出しなし）。起動スキルの名前を1行で書く。 */
+export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps): ReactElement {
+  const { settings } = props
+  const fieldId = useId()
+
+  return (
+    <>
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="lg"
+        align="center"
+        justify="between"
+        wrap="nowrap"
+        className={styles["screen-nav-settings-row"]}
+      >
+        <label htmlFor={`${fieldId}-launch-skill`}>起動するスキル</label>
+        <TextField
+          element="input"
+          id={`${fieldId}-launch-skill`}
+          className={styles["screen-nav-settings-text-field"]}
+          value={settings.launchSkill.value}
+          maxLength={64}
+          placeholder="スキル名（空なら固定の文面）"
+          onChange={settings.launchSkill.onChange}
+        />
+      </HStack>
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["screen-nav-settings-notice"]}
+      >
+        タスクの実行で呼ぶスキル。空なら「タスク GH-xxxx を進めて」と送る。
+      </Text>
     </>
   )
 }

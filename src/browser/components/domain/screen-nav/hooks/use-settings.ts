@@ -24,6 +24,10 @@ import {
   type ScreenNavSettingsColorNotice,
 } from "./use-appearance-color.ts"
 import {
+  useLaunchSkillSetting,
+  type ScreenNavSettingsLaunchSkill,
+} from "./use-launch-skill-setting.ts"
+import {
   useRevealSpeedSetting,
   type ScreenNavSettingsRevealSpeed,
 } from "./use-reveal-speed-setting.ts"
@@ -53,6 +57,7 @@ export type ScreenNavSettings = {
   readonly colorNotice: ScreenNavSettingsColorNotice
   readonly sessionDefault: ScreenNavSettingsSessionDefault
   readonly revealSpeed: ScreenNavSettingsRevealSpeed
+  readonly launchSkill: ScreenNavSettingsLaunchSkill
   /** 上書きが1つも無いときは押せない（戻す先が無い）。 */
   readonly resetDisabled: boolean
   readonly onReset: () => void
@@ -66,6 +71,7 @@ export function useSettings(): ScreenNavSettings {
   const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
   const color = useAppearanceColor()
   const revealSpeed = useRevealSpeedSetting()
+  const launchSkill = useLaunchSkillSetting()
   const [open, setOpen] = useState(false)
   const toggleRef = useRef<HTMLButtonElement>(null)
 
@@ -123,6 +129,7 @@ export function useSettings(): ScreenNavSettings {
       },
     },
     revealSpeed,
+    launchSkill,
     toggleRef,
   }
 }
