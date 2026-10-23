@@ -12,6 +12,9 @@ export type Stage = {
 
 export const E2E_BAIL_COUNT = 3
 
+/** 文書だけの変更でも打つ、ファイルの大きさの上限の検査。 */
+const TOKEN_LIMIT_STAGE: Stage = { name: "token-limit", args: [], heavy: false }
+
 /** `files` は流す E2E のファイル（空なら全件）。 */
 export function e2eStage(files: readonly string[]): Stage {
   return { name: "test:e2e", args: [...files, `--bail=${E2E_BAIL_COUNT}`], heavy: true }
@@ -56,9 +59,10 @@ export function planStages(
     return {
       stages: [
         { name: "format:check", args: [], heavy: false },
+        TOKEN_LIMIT_STAGE,
         { name: "test:document", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
       ],
-      notice: "文書だけの変更のため format:check と文書の検査だけを打つ",
+      notice: "文書だけの変更のため format:check・token-limit と文書の検査だけを打つ",
     }
   }
   const touchesSetup = changedPaths.some((path) => setupFiles.includes(path))
@@ -69,6 +73,7 @@ export function planStages(
       { name: "typecheck", args: [], heavy: false },
       { name: "lint", args: [], heavy: false },
       { name: "format:check", args: [], heavy: false },
+      TOKEN_LIMIT_STAGE,
       { name: "test", args: narrowed ? [RELATED_FLAG, ...codePaths] : [], heavy: true },
       ...chooseE2eStages(),
     ],

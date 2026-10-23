@@ -55,7 +55,7 @@
   本数が多く最小 1 に当たるときは予算を超えうる）。単体は `dom` と `node` の2つの project に分け、DOM のグローバルを借りる
   `test/dom-environment.ts` は `dom`（`test/browser/` と、DOM を描くほかの置き場のファイル）にだけ掛ける。
   `vitest.config.ts` の `DOM_TEST_FILES` に無いファイルが DOM を要するようになったら、そこへ足す
-- **変えたファイルがすべて文書なら、`--full` でも段は `format:check` と文書の検査（`pnpm run test:document`）だけになり、E2E は流れない。**
+- **変えたファイルがすべて文書なら、`--full` でも段は `format:check`・`token-limit` と文書の検査（`pnpm run test:document`）だけになり、E2E は流れない。**
   選んだ段は `文書だけの変更のため…` の1行で出る（`scripts/dev/lib/check-stage.ts` の `planStages`）
 - **引数なしの `pnpm run check` は、変えたファイルから選んだ E2E のファイルだけを流し**、選んだもの
   （または全件に倒した理由のパス）を1行で出す。**全件は `pnpm run check --full` で、main へ送る直前

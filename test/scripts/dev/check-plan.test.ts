@@ -62,7 +62,7 @@ describe("planStages", () => {
   const choose = () => [chosenStage]
   const SETUP_FILES = ["test/tsukumo-home-setup.ts", "test/dom-environment.ts"]
 
-  test("文書だけの変更は E2E を選ばず、format:check と文書の検査だけ", () => {
+  test("文書だけの変更は E2E を選ばず、format:check・token-limit と文書の検査だけ", () => {
     const plan = planStages(
       ["docs/workflow.md", "AGENTS.md"],
       () => {
@@ -73,15 +73,17 @@ describe("planStages", () => {
     )
     expect(plan.stages).toEqual([
       { name: "format:check", args: [], heavy: false },
+      { name: "token-limit", args: [], heavy: false },
       { name: "test:document", args: DOCUMENT_CHECK_TEST_FILES, heavy: false },
     ])
   })
 
-  test("変えたファイルが空なら5段すべて", () => {
+  test("変えたファイルが空なら token-limit を含む6段すべて", () => {
     expect(planStages([], choose, false, SETUP_FILES).stages.map((stage) => stage.name)).toEqual([
       "typecheck",
       "lint",
       "format:check",
+      "token-limit",
       "test",
       "test:e2e",
     ])

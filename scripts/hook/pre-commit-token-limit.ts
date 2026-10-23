@@ -5,6 +5,7 @@
 
 import process from "node:process"
 
+import { type ChangedEntry, parseBinaryPaths, parseNameStatus } from "../shared/git-diff-output.ts"
 import { queryGit } from "../shared/git-query.ts"
 import {
   findOversizedFiles,
@@ -12,12 +13,7 @@ import {
   type StagedChange,
 } from "./lib/token-limit.ts"
 
-type StagedEntry = {
-  readonly status: string
-  readonly path: string
-  readonly previousPath: string
-  readonly binary: boolean
-}
+type StagedEntry = ChangedEntry & { readonly binary: boolean }
 
 const cwd = process.cwd()
 const oversized = findOversizedFiles(readStagedChanges(cwd))
@@ -57,48 +53,11 @@ function readStagedEntries(directory: string): readonly StagedEntry[] {
     return []
   }
 
-  const binaryPaths = readBinaryPaths(numstat)
-  const tokens = nameStatus.split("\0")
-  const entries: StagedEntry[] = []
-  for (let index = 0; index < tokens.length;) {
-    const status = tokens[index] ?? ""
-    if (status === "") {
-      break
-    }
-    const moves = status.startsWith("R") || status.startsWith("C")
-    const previousPath = tokens[index + 1] ?? ""
-    const path = moves ? (tokens[index + 2] ?? "") : previousPath
-    index += moves ? 3 : 2
-    if (path !== "" && /^[AMRC]/.test(status)) {
-      entries.push({
-        status: status.slice(0, 1),
-        path,
-        previousPath,
-        binary: binaryPaths.has(path),
-      })
-    }
-  }
-  return entries
-}
-
-/** `numstat -z` の出力から、バイナリ（`-\t-\t`）のファイルの新しいパスを集める。 */
-function readBinaryPaths(numstat: string): ReadonlySet<string> {
-  const tokens = numstat.split("\0")
-  const binaryPaths = new Set<string>()
-  for (let index = 0; index < tokens.length;) {
-    const token = tokens[index] ?? ""
-    if (token === "") {
-      break
-    }
-    const [added = "", deleted = "", path = ""] = token.split("\t")
-    const moves = path === ""
-    const newPath = moves ? (tokens[index + 2] ?? "") : path
-    index += moves ? 3 : 1
-    if (added === "-" && deleted === "-") {
-      binaryPaths.add(newPath)
-    }
-  }
-  return binaryPaths
+  const binaryPaths = parseBinaryPaths(numstat)
+  return parseNameStatus(nameStatus).map((entry) => ({
+    ...entry,
+    binary: binaryPaths.has(entry.path),
+  }))
 }
 
 function readBlobBytes(directory: string, object: string): number | undefined {

@@ -221,7 +221,7 @@ mise run setup
 ## 開発
 
 ```bash
-pnpm run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す。
+pnpm run check                 # typecheck + lint + format:check + token-limit + test + test:e2e（変更後は必ずこれを通す。
                               #   段の選び方と打ち直しの飛ばしは docs/architecture/testing.md「E2E の走らせ方」。
                               #   --full の全件は main へ送る直前に打つ）
 pnpm run ship                  # タスクに紐付かない作業を main へ送る（取り込み・検証・送り出しを

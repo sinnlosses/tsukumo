@@ -19,6 +19,7 @@
     "lint:fix": "oxlint src test scripts story .storybook vite.config.ts --fix --deny-warnings",
     "format": "node scripts/document/write-document-index.ts && oxfmt .",
     "format:check": "oxfmt . --check",
+    "token-limit": "node scripts/dev/token-limit.ts",
     "test": "node scripts/dev/test.ts",
     "test:document": "vitest run",
     "test:coverage": "vitest run --coverage",

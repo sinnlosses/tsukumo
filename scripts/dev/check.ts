@@ -4,7 +4,7 @@
 // 並べた2段の出力は段ごとに溜め、両方が終わってから段の順に出し、落ちた段は最後の行で名指しする。
 //
 // 変えたファイルが `docs/`・`.tw/` の Markdown と直下の `README.md`・`AGENTS.md` だけのときは、
-// `--full` の有無に関わらず `format:check` と文書の検査（`DOCUMENT_CHECK_TEST_FILES`）だけを打つ。
+// `--full` の有無に関わらず `format:check`・`token-limit` と文書の検査（`DOCUMENT_CHECK_TEST_FILES`）だけを打つ。
 //
 // 段を組む前に、submodule が記録の版とずれていれば `git submodule update --init` で揃える。
 //
@@ -13,8 +13,8 @@
 //
 // 使い方:
 //   node scripts/dev/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら文書の検査だけにする
-//   node scripts/dev/check.ts --full  # 文書だけの変更でなければ、5段すべてを、E2E は全件で走らせる
-//                                 # （変えたファイルを集められないときも5段すべて）
+//   node scripts/dev/check.ts --full  # 文書だけの変更でなければ、6段すべてを、E2E は全件で走らせる
+//                                 # （変えたファイルを集められないときも6段すべて）
 
 import { type ChildProcess, spawn, spawnSync } from "node:child_process"
 import { readFileSync, rmSync } from "node:fs"
@@ -58,7 +58,7 @@ import { workerBudget, workersPerStage } from "./lib/worker-budget.ts"
 
 const CHECK_USAGE = `使い方:
   node scripts/dev/check.ts         # 変えたファイルから選んだ E2E だけ
-  node scripts/dev/check.ts --full  # 5段すべて、E2E は全件
+  node scripts/dev/check.ts --full  # 6段すべて、E2E は全件
 `
 
 const NO_FAILED_FILES = { files: [], failedTestCount: 0 } as const satisfies FailedFiles
@@ -256,7 +256,7 @@ function readForceFull(args: readonly string[]): boolean {
   }
 }
 
-/** 変えたファイル。`--full` で集められないときは空（5段すべてを打つ）。 */
+/** 変えたファイル。`--full` で集められないときは空（6段すべてを打つ）。 */
 async function collectPathsForPlan(): Promise<readonly string[]> {
   try {
     return collectChangedPaths(ROOT, PRIMARY_BRANCH)
