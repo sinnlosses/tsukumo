@@ -1,0 +1,109 @@
+// 状態のカタログのうち、レポートの基本の表示（検証結果・diff・合図の行）とターンの並びの場面。
+
+import { MAIN_REGION_SELECTOR } from "./capture-page.ts"
+import {
+  CHECKS_SELECTOR,
+  DIFF_SELECTOR,
+  NEW_SECTION_MARK_SELECTOR,
+  VERDICT_SELECTOR,
+} from "./catalog-selector.ts"
+import { SCENE_END_SETTLE, type CatalogEntry } from "./catalog-type.ts"
+
+export const REPORT_ENTRIES: readonly CatalogEntry[] = [
+  {
+    name: "report",
+    scene: "report",
+    label: "レポートとツールの進行",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: false,
+    settle: SCENE_END_SETTLE,
+  },
+  {
+    name: "report-checks",
+    // 検証結果は2件目の `report`（3状態を混ぜてある）にしか無く、約7秒後まで現れない。
+    scene: "report-tool",
+    label: "検証結果の表（ok・ng・unverified）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [{ kind: "scroll", selector: CHECKS_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: CHECKS_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-diff",
+    scene: "report-tool",
+    label: "diff の塊（ファイル名の帯・+ と - の行）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [{ kind: "scroll", selector: DIFF_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: DIFF_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-new-section",
+    scene: "report-new-section",
+    label: "目次の「新」の印（最終レポートで増えた節の行）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: true,
+    settle: { kind: "selector", selector: NEW_SECTION_MARK_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-task-finished",
+    scene: "report-task-finished",
+    label: "最終レポートの目録の1行（タスクIDのリンクの点線の下線・「完了」の札）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "task-list" },
+    prepare: [],
+    skipReveal: true,
+    settle: {
+      kind: "selector",
+      selector: `${MAIN_REGION_SELECTOR} [class*="report-task-id-link"]`,
+      phase: "before-prepare",
+    },
+  },
+  {
+    name: "report-verdict",
+    // 転がさずに撮り、最初の1画面に結論と合図の行が入っているかを見る。
+    scene: "report-task-verdict",
+    label: "合図の行（確かめていない項目が1つあり、お願いがある）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: true,
+    settle: { kind: "selector", selector: VERDICT_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-verdict-open",
+    scene: "report-task-verdict",
+    label: "合図の行（畳んだ通った項目を開いた）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [{ kind: "click", selector: `${VERDICT_SELECTOR} summary` }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: VERDICT_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "turn-history",
+    scene: "turn-history",
+    label: "ターンの札（4件）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: false,
+    settle: SCENE_END_SETTLE,
+  },
+  {
+    name: "turn-outline-many",
+    scene: "turn-outline-many",
+    label: "やり取りの列（窓に収まらない12件）",
+    homeSetup: { kind: "default" },
+    workspaceSetup: { kind: "repository" },
+    prepare: [],
+    skipReveal: false,
+    settle: SCENE_END_SETTLE,
+  },
+]

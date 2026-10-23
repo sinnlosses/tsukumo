@@ -72,7 +72,7 @@ tsukumo を空きポートで自分で起こし、配信 URL を待って撮り�
 `--scene` の撮影は、止めた先（`--until-step` が無ければ場面の最後）の手が画面に届くまで待ってから、
 メインビューの静止を待って撮る。URL を渡す撮影は静止だけを待つので、遅い手で止めるときは
 `--wait-for` でその手が出す目印まで待つ（`--advance` はページの時計だけでサーバの手は進めない）。
-最終レポートまで流し切って待つときは `--wait-for '[class*="is-final_"]'`（`scripts/capture/lib/catalog-entry.ts`
+最終レポートまで流し切って待つときは `--wait-for '[class*="is-final_"]'`（`scripts/capture/lib/catalog-selector.ts`
 の `WORK_PLAN_FINAL_SELECTOR` と同じ。`report-head` や `--advance` で待つと中間レポートや作業中の画を撮る）。
 **割れた `report` の差し戻しと直した `report` の描画は、場面 `report-mermaid-rejected`**（疑似セッションは判定せず、場面の `tool-finished` の `isError` に従う）。
 差し戻しの画は `--until-step 5 --wait-for 'text=流れを図にして出すね'`（本文に図が無く、吹き出しに直して出し直す一言が出る）、

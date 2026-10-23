@@ -11,9 +11,16 @@ import { cssClassNames } from "../../css-module-loader.ts"
 
 const SRC_DIR = fileURLToPath(new URL("../../../src/", import.meta.url))
 const CAPTURE_SOURCES = [
-  new URL("../../../scripts/capture/lib/catalog-entry.ts", import.meta.url),
-  new URL("../../../scripts/capture/lib/catalog-selector.ts", import.meta.url),
-]
+  "catalog-entry.ts",
+  "catalog-home.ts",
+  "catalog-notation.ts",
+  "catalog-question.ts",
+  "catalog-report.ts",
+  "catalog-screen.ts",
+  "catalog-selector.ts",
+  "catalog-type.ts",
+  "catalog-work-plan.ts",
+].map((file) => new URL(`../../../scripts/capture/lib/${file}`, import.meta.url))
 
 const SELECTOR_CLASS_PATTERN = /\[class\*="([^"]+)_"\]/g
 
@@ -24,8 +31,8 @@ describe("撮影の件のセレクタの class", () => {
     ),
   )
 
-  test("セレクタに書いた class の名前を1つ以上読めている", () => {
-    expect(selectorNames.length).toBeGreaterThan(0)
+  test("セレクタに書いた class の名前を、件のファイルを割る前の14件から減らさず読めている", () => {
+    expect(selectorNames.length).toBeGreaterThanOrEqual(14)
   })
 
   test("すべて src の *.module.css に定義がある", () => {

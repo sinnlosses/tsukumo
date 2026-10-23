@@ -39,7 +39,7 @@
 `/tmp/tsukumo-catalog/index.html` に並べる（`--out` で置き場を変えられる）。**依頼を手で送らなくても狙った状態が出る**ので、
 お伺いの札・レポートの記法を直したら前後で撮り比べる。1枚だけ撮って要素の位置と大きさを
 数値で読むのは `capture-view.ts`（class セレクタで測るときは `[class*="…"]` — CSS Modules が
-`名前_ハッシュ` に焼くため）。**`scripts/capture/lib/catalog-entry.ts`（`capture-catalog.ts` の件の定義）が待つ `[class*="名前_"]` の名前が CSS Modules に
+`名前_ハッシュ` に焼くため）。**`scripts/capture/lib/` の `catalog-*.ts`（`capture-catalog.ts` の件の定義。件は概念ごとのファイルに置き、`catalog-entry.ts` が組み立てる）が待つ `[class*="名前_"]` の名前が CSS Modules に
 定義されているかは `test/scripts/capture/capture-catalog-selector.test.ts` が確かめる**（件そのものは
 `pnpm run check` で走らない）。逃げ道の区画の格子と札（`cols`・`card`・`badge`）の見え方は、場面 `report-board` を
 `capture-view.ts --scene` で撮って見る。**撮った画像はリポジトリに置かない。** 疑似セッションの会話は架空でも、
