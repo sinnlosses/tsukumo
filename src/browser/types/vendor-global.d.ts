@@ -12,6 +12,8 @@ declare global {
     readonly initialize: (options: {
       readonly startOnLoad: boolean
       readonly theme: string
+      /** 図の配置の計算。mermaid 12.1.0 の既定は `elk`。 */
+      readonly layout: "dagre" | "elk"
       /** `theme: "base"` のときだけ効く。値は hex のみ（CSS 変数・色名は受け取らない）。 */
       readonly themeVariables: Readonly<Record<string, string | boolean>>
       readonly securityLevel: string
