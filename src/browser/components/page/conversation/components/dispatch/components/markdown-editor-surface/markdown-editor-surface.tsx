@@ -46,6 +46,7 @@ import type {
 import { FormatBar, type FormatBarProps } from "../format-bar/format-bar.tsx"
 import { linkedPaste } from "./domain/markdown-link-paste.ts"
 import { concealedMarks, type ConcealedMark } from "./domain/markdown-mark-concealment.ts"
+import { continueMarkupOnEnter } from "./domain/markdown-newline-continuation.ts"
 import styles from "./markdown-editor-surface.module.css"
 
 type MarkdownEditorSurfaceProps = ComposerSurfaceHandlers & {
@@ -167,7 +168,11 @@ export function MarkdownEditorSurface({
             }),
           ),
           history(),
-          keymap.of([...EDITOR_KEYMAP, ...historyKeymap]),
+          keymap.of([
+            { key: "Enter", run: continueMarkupOnEnter },
+            ...EDITOR_KEYMAP,
+            ...historyKeymap,
+          ]),
           markdownLanguage,
           syntaxHighlighting(MARKDOWN_HIGHLIGHT),
           MARK_CONCEALMENT,

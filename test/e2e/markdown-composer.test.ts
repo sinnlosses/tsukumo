@@ -189,6 +189,35 @@ describe("入力欄のマークダウンエディタ", () => {
     await page.keyboard.press("Backspace")
     expect(await draftText()).toBe("二")
   })
+
+  it("箇条書き・引用の行の Enter は次の行にも同じ記号を付け、空の行の Enter は記号を消す", async () => {
+    const room = await run.open({
+      scenario: "markdown-composer-ime",
+      scene: "none",
+      viewport: "wide",
+      domRoots: ["dispatch"],
+    })
+    const { page } = room
+    const toggle = page.getByRole("button", { name: TOGGLE_NAME })
+    await toggle.click()
+    await page.locator(".cm-content").click()
+
+    await page.keyboard.type("- 一")
+    await page.keyboard.press("Enter")
+    await page.keyboard.type("二")
+    await page.keyboard.press("Enter")
+    await page.keyboard.press("Enter")
+    await page.keyboard.type("> 三")
+    await page.keyboard.press("Enter")
+    await page.keyboard.type("四")
+    await page.keyboard.press("Enter")
+    await page.keyboard.press("Enter")
+
+    await toggle.click()
+    expect(await page.locator("textarea").inputValue()).toBe(
+      ["- 一", "- 二", "> 三", "> 四", ""].join("\n"),
+    )
+  })
 })
 
 /** キャレットを先頭の行に置いたまま、行頭の記号が見た目だけ替わるのを確かめる下書き。 */
