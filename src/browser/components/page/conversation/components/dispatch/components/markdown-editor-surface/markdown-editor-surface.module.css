@@ -85,6 +85,7 @@
 }
 .markdown-bullet {
   color: var(--ink-quiet);
+  white-space: pre;
 }
 /* 行の余白を消す .cm-line の指定と同じ詳細度で、後に書いて勝たせる。 */
 .markdown-editor .markdown-editor-view .markdown-quote-line {

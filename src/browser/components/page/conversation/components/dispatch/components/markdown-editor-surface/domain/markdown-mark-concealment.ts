@@ -1,5 +1,5 @@
 // 入力欄のマークダウンエディタで、キャレットの無い行から隠す記号の範囲を構文木から拾う。
-// キャレット（選択範囲）が掛かる行の記号は返さない。
+// キャレット（選択範囲）が掛かる行の記号は返さない。ただし行頭の `- ` と `> ` は返す。
 
 import { syntaxTree } from "@codemirror/language"
 import type { EditorState } from "@codemirror/state"
@@ -48,16 +48,21 @@ type Context = {
 function marksIn(node: SyntaxNode, context: Context): readonly ConcealedMark[] {
   switch (node.name) {
     case "HeaderMark":
-    case "QuoteMark":
       return hidden(node.from, withTrailingSpace(node.to, context.state), context)
+    case "QuoteMark": {
+      const end = leadingMarkEnd(node, context)
+      return end === undefined ? [] : hidden(node.from, end, context, true)
+    }
     case "EmphasisMark":
     case "StrikethroughMark":
     case "CodeMark":
       return hidden(node.from, node.to, context)
-    case "ListMark":
-      return node.parent?.parent?.name === "BulletList" && !context.touchesCaret(node.from, node.to)
-        ? [{ kind: "bullet", from: node.from, to: node.to }]
+    case "ListMark": {
+      const end = leadingMarkEnd(node, context)
+      return node.parent?.parent?.name === "BulletList" && end !== undefined
+        ? [{ kind: "bullet", from: node.from, to: end }]
         : []
+    }
     case "FencedCode":
       return fencedCodeMarks(node, context)
     case "Link":
@@ -125,15 +130,29 @@ function quoteLines(node: SyntaxNode, state: EditorState): readonly ConcealedMar
 }
 
 /** 改行をまたぐ範囲は隠さない。 */
-function hidden(from: number, to: number, context: Context): readonly ConcealedMark[] {
+function hidden(
+  from: number,
+  to: number,
+  context: Context,
+  onCaretLine = false,
+): readonly ConcealedMark[] {
   if (
     from >= to ||
     context.state.doc.lineAt(from).number !== context.state.doc.lineAt(to).number ||
-    context.touchesCaret(from, to)
+    (!onCaretLine && context.touchesCaret(from, to))
   ) {
     return []
   }
   return [{ kind: "hidden", from, to }]
+}
+
+/**
+ * 行頭の `- ` `> ` の置き換えの終わり。キャレットの行では、後ろの空白まで打ったあとにだけ置き換える
+ * （`>` や `-` だけの段階で消えると、記号そのものを打ちたいときに字が消えたように見える）。
+ */
+function leadingMarkEnd(node: SyntaxNode, context: Context): number | undefined {
+  const end = withTrailingSpace(node.to, context.state)
+  return end === node.to && context.touchesCaret(node.from, node.to) ? undefined : end
 }
 
 function withTrailingSpace(to: number, state: EditorState): number {

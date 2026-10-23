@@ -33,14 +33,22 @@ describe("concealedMarks", () => {
       ["hidden", "](https://example.test)"],
       ["quote-line", ""],
       ["hidden", "> "],
-      ["bullet", "-"],
+      ["bullet", "- "],
     ])
   })
 
-  it("キャレットの行は引用の行の頭のほかは返さない", () => {
-    const text = "> **引用**\n\n末尾"
+  it("キャレットの行は、行頭の `> ` `- ` のほかの記号を返さない", () => {
+    expect(concealedTexts("> **引用**\n\n末尾", caretAt(3))).toEqual([
+      ["quote-line", ""],
+      ["hidden", "> "],
+    ])
+    expect(concealedTexts("- **一**\n二", caretAt(3))).toEqual([["bullet", "- "]])
+  })
 
-    expect(concealedTexts(text, caretAt(3))).toEqual([["quote-line", ""]])
+  it("キャレットの行の行頭の記号は、後ろの空白を打つまで置き換えない", () => {
+    expect(concealedTexts(">", caretAt(1))).toEqual([["quote-line", ""]])
+    expect(concealedTexts("-", caretAt(1))).toEqual([])
+    expect(concealedTexts("- ", caretAt(2))).toEqual([["bullet", "- "]])
   })
 
   it("選択が2行にまたがると、どちらの行の記号も返さない", () => {

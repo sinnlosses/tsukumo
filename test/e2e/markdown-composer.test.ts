@@ -93,7 +93,7 @@ describe("入力欄のマークダウンエディタ", () => {
     expect(await lines.allTextContents()).toEqual([
       "架空の見出し日本",
       ...CONCEALED_LINES.slice(1, 3),
-      "- 架空の箇条日本",
+      "• 架空の箇条日本",
       ...CONCEALED_LINES.slice(4),
     ])
 
@@ -116,7 +116,83 @@ describe("入力欄のマークダウンエディタ", () => {
       ].join("\n"),
     )
   })
+
+  it("キャレットの行でも行頭の `- ` `> ` は見た目だけ替わり、記号の直後の変換は壊れず、Backspace は記号ごと外す", async () => {
+    const room = await run.open({
+      scenario: "markdown-composer-ime",
+      scene: "none",
+      viewport: "wide",
+      domRoots: ["dispatch"],
+    })
+    const { page } = room
+    const lines = page.locator(".cm-line")
+    const toggle = page.getByRole("button", { name: TOGGLE_NAME })
+    const cdp = await page.context().newCDPSession(page)
+    const load = async (draft: string): Promise<void> => {
+      if ((await page.locator(".cm-content").count()) > 0) {
+        await toggle.click()
+      }
+      await page.locator("textarea").fill(draft)
+      await toggle.click()
+      await page.locator(".cm-content").click()
+      await page.keyboard.press("ControlOrMeta+Home")
+    }
+    const draftText = async (): Promise<string> => {
+      await toggle.click()
+      return page.locator("textarea").inputValue()
+    }
+
+    await load(LEAD_DRAFT.join("\n"))
+    expect(await lines.allTextContents()).toEqual(["• 一", "二", "三"])
+    const textLeft = (): Promise<number[]> =>
+      page.evaluate(() =>
+        ["一", "二"].map((text) => {
+          const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+          for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
+            const at = node.textContent?.indexOf(text) ?? -1
+            if (at >= 0 && (node.parentElement?.closest(".cm-line") ?? null) !== null) {
+              const range = document.createRange()
+              range.setStart(node, at)
+              range.setEnd(node, at + 1)
+              return range.getBoundingClientRect().left
+            }
+          }
+          return -1
+        }),
+      )
+    const onCaretLine = await textLeft()
+    await page.keyboard.press("ControlOrMeta+End")
+    expect(await textLeft()).toEqual(onCaretLine)
+    await page.keyboard.press("ControlOrMeta+Home")
+
+    await page.keyboard.press("ArrowDown")
+    await page.keyboard.press("Home")
+    await page.keyboard.press("ArrowRight")
+    for (const reading of ["に", "にほ", "にほん"]) {
+      await cdp.send("Input.imeSetComposition", {
+        text: reading,
+        selectionStart: reading.length,
+        selectionEnd: reading.length,
+      })
+      expect(await lines.count()).toBe(LEAD_DRAFT.length)
+    }
+    await cdp.send("Input.insertText", { text: "日本" })
+    expect(await draftText()).toBe(["- 一", "> 日本二", "三"].join("\n"))
+
+    await load("- 一")
+    await page.keyboard.press("ArrowRight")
+    await page.keyboard.press("Backspace")
+    expect(await draftText()).toBe("一")
+
+    await load("> 二")
+    await page.keyboard.press("ArrowRight")
+    await page.keyboard.press("Backspace")
+    expect(await draftText()).toBe("二")
+  })
 })
+
+/** キャレットを先頭の行に置いたまま、行頭の記号が見た目だけ替わるのを確かめる下書き。 */
+const LEAD_DRAFT = ["- 一", "> 二", "三"] as const
 
 /** 隠す記号をひととおり含む下書き。キャレットは末尾の行に置いたまま切り替える。 */
 const CONCEALED_DRAFT = [

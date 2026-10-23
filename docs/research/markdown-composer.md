@@ -36,26 +36,13 @@
 
 ## いまのコードの前提（2026-09-27 実測）
 
-- 入力欄は `src/browser/components/page/conversation/components/dispatch/components/composer/`
-  の4ファイル。`presentational-composer.tsx` が `<textarea>`・候補一覧・道具の行を置き、
-  `hooks/use-composer.ts` が下書き（`Draft = { text, caret }`）・質問の帯・送信とキーの読み替えを、
-  `hooks/use-suggestion.ts` が `/` と `@` の補完を、`hooks/use-prompt-image.ts` が画像を持つ
-- `use-composer.ts` が DOM に触るのは `textAreaRef` 経由の4箇所だけ: 確定・送信・画像のあとの
-  `focus()`、`useEffect` の中の `selectionStart` の読みと `setSelectionRange`、`/`・`@` の
-  ボタンで `selectionStart` を読むところ。型は `ComposerKey`（`KeyboardEvent<HTMLTextAreaElement>`
-  から見るものだけ）と `ComposerChange`（`HTMLTextAreaElement` の `value` と `selectionStart`）
-- `use-suggestion.ts` は DOM を読まない。受け取った `Draft` から候補を畳み、確定した `Draft` を
-  返すだけ（`ComposerKey` の型だけを `use-composer.ts` から借りている）
-- `use-prompt-image.ts` のイベントの型は `Pick<ClipboardEvent, "clipboardData" | "preventDefault">`
-  などで、`<textarea>` に縛られていない
-- 補完の候補一覧（`.dispatch-suggestions`）は、`<textarea>` の包み（`.dispatch-text-wrap`）の
-  下端に底を合わせた絶対配置で、キャレットの位置には追従しない
-- 入力欄の単体テストは `test/browser/components/page/conversation/components/dispatch/dispatch.test.tsx`
-  の1件（入力欄と答え待ちの箱を両方描く）だけ。E2E は `test/e2e/input-dispatch.test.ts` が
-  `locator("textarea")` に書いて `Meta+Enter` で送る1本で、`test/e2e/expected/` の DOM の
-  写し17件が `textarea` を含む（`scenario-run.ts` は `textarea` の子を辿らない）
-- 依存に編集中の装飾の部品は無い。Markdown の描画はレポートの `react-markdown` 系だけ
-- いまの `dist/browser/main.js` は 3,102,758 バイト（gzip 604,067）。`bun build` は minify しない
+- 入力欄は `dispatch/components/composer/` の4ファイル。`hooks/use-composer.ts` が下書き
+  （`Draft = { text, caret }`）・質問の帯・送信とキーの読み替えを持ち、DOM に触るのは
+  `textAreaRef` 経由の4箇所だけ（`focus()`・`selectionStart` の読み・`setSelectionRange`）
+- 補完の候補一覧は `<textarea>` の包みの下端に底を合わせた絶対配置で、キャレットには追従しない
+- E2E は `test/e2e/input-dispatch.test.ts` が `locator("textarea")` に書く1本で、
+  `test/e2e/expected/` の DOM の写し17件が `textarea` を含む
+- 依存に編集中の装飾の部品は無い。`dist/browser/main.js` は 3,102,758 バイト（gzip 604,067）
 
 ## エディタの部品
 
@@ -120,6 +107,12 @@ CodeMirror 6 は変換中の DOM を書き換えない作りで、装飾（`Deco
 「に → にほ → にほん → 日本」と確定し、どれも変換中に行の数が変わらず、確定した文面は記号を
 含む元の文に「日本」が入っただけになった（`test/e2e/markdown-composer.test.ts` の
 `markdown-composer-ime`）。隣の行は変換中も確定後も隠れたままだった。
+
+**行頭の `- ` と `> ` をキャレットの行でも置き換えても、変換は壊れない**（2026-10-23。
+`test/e2e/markdown-composer.test.ts` の「キャレットの行でも行頭の `- ` `> `…」）。
+置き換えた範囲を `EditorView.atomicRanges` に入れ、キャレットが範囲の内側に入らないことが条件:
+入れない形では `> 二` の `>` と空白のあいだでの変換が `> 日本にほんにほに二` と壊れ、
+入れた形では記号の手前・直後・行末のどこでも行の数が変わらず文面が壊れなかった。
 
 **確かめていないこと**: 実機の IME（macOS の日本語入力）での打鍵。CDP の合成入力は
 `keydown` の `isComposing` / `keyCode === 229` を実機と同じ形では出さないので、変換確定の
@@ -231,6 +224,7 @@ CodeMirror の既定（字の挿入）へ流さない。字の貼り付け・字
 付けるのは字の大きさ・太さ・色・等幅で、**行の高さを大きく変えない**（入力欄は画面の一角で、
 見出しで行が伸びすぎると書いている行が押し出される）。**記号はキャレット（選択範囲）の無い行で
 隠し、キャレットの行では出す**（2026-10-01 決定。Obsidian のライブプレビューと同じ形）。
+ただし行頭の `- ` と `> ` は、キャレットの行でも替える（下の「箇条書きの印」「引用」。2026-10-23 に改訂）。
 
 - 見出し（`#` 〜 `###`）: 段ごとに字の大きさを分けて太く（`#` が最も大きく `###` が最も小さい）。4以降は太字だけ
 - 太字・斜体・取り消し線: そのまま
@@ -241,9 +235,13 @@ CodeMirror の既定（字の挿入）へ流さない。字の貼り付け・字
   開きと閉じを両方出す。隠しても行は空の行として残るので、中の行の位置はずれない）
 - リンク（行き先のある `[字](URL)`）: 隠すときは `[` と `](URL)` を消して字だけを見せ、字に
   `title` で行き先を添える。参照の形・`<URL>`・画像は記号のまま
-- 箇条書きの印（`-`・`*`・`+`）: 隠すときは `•` に替える。番号付きの印は残す
-- 引用: 隠すときは `> ` を消す。引用の行にはキャレットの有無に関わらず左の罫を付ける
+- 箇条書きの印（`-`・`*`・`+`）: 後ろの空白と合わせて `• ` に替える。番号付きの印は残す
+- 引用: `> ` を消す。引用の行にはキャレットの有無に関わらず左の罫を付ける
   （行に入っても横位置が変わらない）
+- 上の2つ（行頭の `- ` と `> `）は例外で、**キャレットの行でも替える**（2026-10-23。Slack と同じ見え方）。
+  後ろの空白を打つまでは替えない（`-` や `>` だけで消えると、記号を打ちたいときに字が消えて見える）。
+  替えた範囲は `atomicRanges` に入れ、行頭の記号の直後の Backspace と手前の Delete は記号ごと外す
+  （`- 一` → `一`）。字の左端はキャレットの行とほかの行で同じ位置。文面は `- ` `> ` のまま
 - 隠した字のぶん折り返しが減っている行（長いリンクなど）にキャレットが入ると、その行は高くなる
 - 表は装飾しない（等幅にしないと桁が揃わず、揃えるには入力欄が狭い）
 

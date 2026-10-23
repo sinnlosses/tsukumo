@@ -1,6 +1,6 @@
 // 入力欄のマークダウンエディタの面（CodeMirror）。
 // Markdown の構文木に沿って字の大きさ・太さ・色・等幅を付け、キャレットの無い行の記号は隠す。
-// キャレット（選択範囲）の行は記号を残したまま置き換えない。
+// キャレット（選択範囲）の行は、行頭の `- ` と `> ` のほかは記号を残したまま置き換えない。
 // 変換中の IME はその行にしか居ず、その行の DOM の形を変えると確定を壊しうる。
 //
 // 面の上に書式のボタンの行を持ち、範囲を選んで URL を貼ると選んだ字をリンクにする。
@@ -288,7 +288,13 @@ const MARK_CONCEALMENT = StateField.define<DecorationSet>({
     syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
       ? concealmentDecorations(transaction.state)
       : decorations,
-  provide: (field) => EditorView.decorations.from(field),
+  provide: (field) => [
+    EditorView.decorations.from(field),
+    // 置き換えた範囲の中にキャレットが入ると、そこでの変換が壊れる。矢印と削除がひとまとまりで越えるようにする。
+    EditorView.atomicRanges.of((view) =>
+      view.state.field(field).update({ filter: (_from, _to, value) => value.point }),
+    ),
+  ],
 })
 
 function concealmentDecorations(state: EditorState): DecorationSet {
@@ -317,7 +323,7 @@ class BulletWidget extends WidgetType {
   toDOM(): HTMLElement {
     const bullet = document.createElement("span")
     bullet.className = styles["markdown-bullet"]
-    bullet.textContent = "•"
+    bullet.textContent = "• "
     return bullet
   }
 }
