@@ -1,9 +1,6 @@
 // 使われ方の集計の表のうち、「割合の1行」だけで済む欄（2行以下の表・`keyFigures`）の組み立て。
 
-import type { UsageRecord } from "./report-usage-row.ts"
-
-export type ShortTableRecord = Extract<UsageRecord, { readonly shortTable: boolean }>
-export type KeyFiguresRecord = Extract<UsageRecord, { readonly hasKeyFigures: boolean }>
+import type { KeyFiguresRow, UsageRecord } from "./report-usage-row.ts"
 
 export function shareLine<Row>(
   label: string,
@@ -17,12 +14,12 @@ export function shareLine<Row>(
 }
 
 /** 行が2つ以下の表のあるレポートの割合。 */
-export function shortTableSection(rows: readonly ShortTableRecord[]): string {
+export function shortTableSection(rows: readonly UsageRecord[]): string {
   if (rows.length === 0) {
     return "2行以下の表のあるレポート: 記録した行が無い"
   }
   return [
-    `2行以下の表のあるレポート（版10以降の${String(rows.length)}件のうち。外す基準の対象ではない。差し戻しにしない）:`,
+    `2行以下の表のあるレポート（${String(rows.length)}件のうち。外す基準の対象ではない。差し戻しにしない）:`,
     shareLine("全レポート", "2行以下の表あり", rows, (record) => record.shortTable),
     shareLine(
       "task の最終レポート",
@@ -33,14 +30,14 @@ export function shortTableSection(rows: readonly ShortTableRecord[]): string {
   ].join("\n")
 }
 
-/** `keyFigures` の有無と、結論の文に数が3つ以上あるのに無いレポートの割合。分母は版20以降の行。差し戻しにはしない。 */
-export function keyFiguresSection(rows: readonly KeyFiguresRecord[]): string {
+/** `keyFigures` の有無と、結論の文に数が3つ以上あるのに無いレポートの割合。分母は `keyFigures` の欄を記録した行。差し戻しにはしない。 */
+export function keyFiguresSection(rows: readonly KeyFiguresRow[]): string {
   if (rows.length === 0) {
-    return "keyFigures: 版20以降の行が無い"
+    return "keyFigures: 記録した行が無い"
   }
   const forTask = rows.filter((record) => record.forTask)
   return [
-    `keyFigures（版20以降の${String(rows.length)}件のうち。28日の数を見てから差し戻すか決める）:`,
+    `keyFigures（${String(rows.length)}件のうち。28日の数を見てから差し戻すか決める）:`,
     shareLine("全レポート", "keyFigures あり", rows, (record) => record.hasKeyFigures),
     shareLine(
       "全レポート",

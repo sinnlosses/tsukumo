@@ -3,18 +3,9 @@
 // 「段1の図を含むレポート」「画像を読んだのに image が無いレポート」「`figure` の種類 × レポート数」「`none` の理由 × レポート数」
 // 「報告の種類 × レポート数」「種類ごとに必須の塊が無い割合」
 // 「逃げ道の中の記法 × レポート数」「差し戻しの種類 × 回数」を割合つきで出す。
-// 欄を記録する前の版（2）の行も読み、欄の表だけはそれを記録した版の行を分母にする。
-// `figure` を記録する前の版（5以前）の行は、`figure` の表では理由が `unrecorded` の `none` に数える。
-// 強調の数・ラベルの無い辺の割合・節点数の分布は、それを記録した版7以降の行を分母にする。
-// unverified のあるレポートのうち確かめ方のある割合は、版8以降の unverified のある行を分母にする。
-// 報告の種類と必須の塊が無い割合は、版9以降の task の行を分母にする。
-// 2行以下の表のあるレポートの割合は、版10以降の行を分母にする。
-// 欄の表の `blockAside`（塊の傍注）は版12から、`beforeAfterRegion`（前後の画像の枠）は版15から記録している。
-// 札 × 節数と、札が許さない塊を使った節・組の数は、版13以降の行の節を分母にする。
-// 引数の字数の分布と差し戻しの出し直しの割合は、版14以降の行を分母にする。
-// 引き継ぎで出した呼び出しの数は、版16以降の行を分母にする。
-// 札 × 塊の種類の節数・`list` の style・`mermaid` の図種・駆動の数は、版19以降の行を分母にする。
-// `keyFigures` の有無と、結論に数が並ぶのに無い割合は、版20以降の行を分母にする。
+// 読むのは `MIN_FORMAT_VERSION` 以降の行だけで、それより古い行は捨てる。
+// 札 × 塊の種類の節数・`list` の style・`mermaid` の図種・駆動の数は、`sectionBlockKinds` を記録した行を分母にする。
+// `keyFigures` の有無と、結論に数が並ぶのに無い割合は、その欄を記録した行を分母にする。
 // 疑似セッションの行（`driver` が `fake`、`driver` の無い行は `sessionId` が `fake-session`）は、既定で全部の表から除く。
 //
 // 使い方:
@@ -49,40 +40,15 @@ import { REPORT_SHAPE_TAGS } from "../../src/shared/report/report-shape-tag.ts"
 import { REPORT_GENRES } from "../../src/shared/report/report-task.ts"
 import { parseDaysOption } from "../shared/days-option.ts"
 import {
-  ARGUMENT_CHARS_FORMAT_VERSION,
-  COUNT_FORMAT_VERSION,
-  FIELDLESS_FORMAT_VERSION,
-  FIGURE_FIELDLESS_FORMAT_VERSION,
-  GENRE_FORMAT_VERSION,
-  HOW_TO_VERIFY_FORMAT_VERSION,
   isFakeSessionRow,
-  MODIFIED_FORMAT_VERSION,
   recordSchema,
-  KEY_FIGURES_FORMAT_VERSION,
   rejectionSchema,
-  SECTION_BLOCK_FORMAT_VERSION,
-  SHAPE_TAG_FORMAT_VERSION,
-  SHORT_TABLE_FORMAT_VERSION,
+  keyFiguresRowOf,
   type RejectionRecord,
+  type SectionBlockRecord,
   type UsageRecord,
 } from "./report-usage-row.ts"
-import {
-  type KeyFiguresRecord,
-  keyFiguresSection,
-  shareLine,
-  type ShortTableRecord,
-  shortTableSection,
-} from "./report-usage-section.ts"
-
-type FieldRecord = Extract<UsageRecord, { readonly blockFields: readonly string[] }>
-type VisualRecord = Extract<UsageRecord, { readonly hasModifiedFiles: boolean }>
-type FigureRecord = Extract<UsageRecord, { readonly hasFigure: boolean }>
-type CountRecord = Extract<UsageRecord, { readonly emphasisCount: number }>
-type HowToVerifyRecord = Extract<UsageRecord, { readonly hasHowToVerify: boolean }>
-type GenreRecord = Extract<UsageRecord, { readonly taskGenre: string }>
-type ShapeTagRecord = Extract<UsageRecord, { readonly forbiddenShapeSectionCount: number }>
-type ArgumentCharsRecord = Extract<UsageRecord, { readonly argumentChars: unknown }>
-type SectionBlockRecord = Extract<UsageRecord, { readonly sectionBlockKinds: unknown }>
+import { keyFiguresSection, shareLine, shortTableSection } from "./report-usage-section.ts"
 
 const USAGE = `使い方:
   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -124,86 +90,41 @@ process.stdout.write(
   table("塊の種類 × レポート数", REPORT_BLOCK_KINDS, records, (record) => record.blockKinds),
 )
 process.stdout.write("\n\n")
-const fieldRecords = records.filter(
-  (record): record is FieldRecord => record.v !== FIELDLESS_FORMAT_VERSION,
-)
-const visualRecords = records.filter(
-  (record): record is VisualRecord => record.v >= MODIFIED_FORMAT_VERSION,
-)
-const figureRecords = records.filter(
-  (record): record is FigureRecord => record.v >= FIGURE_FIELDLESS_FORMAT_VERSION,
-)
-const countRecords = records.filter(
-  (record): record is CountRecord => record.v >= COUNT_FORMAT_VERSION,
-)
-const howToVerifyRecords = records.filter(
-  (record): record is HowToVerifyRecord => record.v >= HOW_TO_VERIFY_FORMAT_VERSION,
-)
-const genreTaskRecords = records.filter(
-  (record): record is GenreRecord =>
-    record.v >= GENRE_FORMAT_VERSION && "taskGenre" in record && record.forTask,
-)
-const shortTableRecords = records.filter(
-  (record): record is ShortTableRecord => record.v >= SHORT_TABLE_FORMAT_VERSION,
-)
-const shapeTagRecords = records.filter(
-  (record): record is ShapeTagRecord => record.v >= SHAPE_TAG_FORMAT_VERSION,
-)
 process.stdout.write(
-  fieldRecords.length === 0
-    ? "塊の欄 × レポート数: 欄を記録した行が無い"
-    : table(
-        `塊の欄 × レポート数（欄を記録した${String(fieldRecords.length)}件のうち）`,
-        REPORT_BLOCK_FIELDS,
-        fieldRecords,
-        (record) => record.blockFields,
-      ),
+  table(
+    `塊の欄 × レポート数（${String(records.length)}件のうち）`,
+    REPORT_BLOCK_FIELDS,
+    records,
+    (record) => record.blockFields,
+  ),
 )
 process.stdout.write("\n\n")
-process.stdout.write(modifiedWithoutVisualSection(visualRecords))
+process.stdout.write(modifiedWithoutVisualSection(records))
 process.stdout.write("\n\n")
-process.stdout.write(figureSection(figureRecords))
+process.stdout.write(figureSection(records))
 process.stdout.write("\n\n")
-process.stdout.write(imageOversightSection(figureRecords))
+process.stdout.write(imageOversightSection(records))
 process.stdout.write("\n\n")
 process.stdout.write(figureFieldSection(records))
 process.stdout.write("\n\n")
-process.stdout.write(countSection(countRecords))
+process.stdout.write(countSection(records))
 process.stdout.write("\n\n")
-process.stdout.write(howToVerifySection(howToVerifyRecords))
+process.stdout.write(howToVerifySection(records))
 process.stdout.write("\n\n")
-process.stdout.write(genreSection(genreTaskRecords))
+process.stdout.write(genreSection(records.filter((record) => record.forTask)))
 process.stdout.write("\n\n")
-process.stdout.write(shortTableSection(shortTableRecords))
+process.stdout.write(shortTableSection(records))
 process.stdout.write("\n\n")
-process.stdout.write(shapeTagSection(shapeTagRecords))
+process.stdout.write(shapeTagSection(records))
 process.stdout.write("\n\n")
-process.stdout.write(
-  sectionBlockSection(
-    records.filter(
-      (record): record is SectionBlockRecord => record.v >= SECTION_BLOCK_FORMAT_VERSION,
-    ),
-  ),
+const sectionBlockRecords = records.filter(
+  (record): record is SectionBlockRecord => "sectionBlockKinds" in record,
 )
+process.stdout.write(sectionBlockSection(sectionBlockRecords))
 process.stdout.write("\n\n")
-process.stdout.write(
-  keyFiguresSection(
-    records.filter((record): record is KeyFiguresRecord => record.v >= KEY_FIGURES_FORMAT_VERSION),
-  ),
-)
+process.stdout.write(keyFiguresSection(sectionBlockRecords.flatMap(keyFiguresRowOf)))
 process.stdout.write("\n\n")
-process.stdout.write(
-  argumentCharsSection(
-    records.filter(
-      (record): record is ArgumentCharsRecord => record.v >= ARGUMENT_CHARS_FORMAT_VERSION,
-    ),
-    rejections.flatMap((rejection) =>
-      rejection.argumentChars === undefined
-        ? []
-        : [{ argumentChars: rejection.argumentChars, inheritedFields: rejection.inheritedFields }],
-    ),
-  ),
-)
+process.stdout.write(argumentCharsSection(records, rejections))
 process.stdout.write("\n\n")
 process.stdout.write(
   table("逃げ道の外の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
@@ -270,28 +191,29 @@ function readRecentRecords(
 }
 
 /** modified のファイルがあるレポートのうち、前後図も画像も無かった数。 */
-function modifiedWithoutVisualSection(reports: readonly VisualRecord[]): string {
+function modifiedWithoutVisualSection(reports: readonly UsageRecord[]): string {
   if (reports.length === 0) {
     return "modified のファイルがあるのに前後図も画像も無いレポート: 記録した行が無い"
   }
-  const line = (label: string, rows: readonly VisualRecord[]): string => {
-    const modified = rows.filter((record) => record.hasModifiedFiles)
-    const missing = modified.filter((record) => !record.hasBeforeAfterOrImage).length
-    const percent = (modified.length === 0 ? 0 : (missing / modified.length) * 100).toFixed(1)
-    return `  ${label.padEnd(16)} modified あり ${String(modified.length).padStart(5)}  うち前後図も画像も無し ${String(missing).padStart(5)}  ${percent.padStart(5)}%`
-  }
   return [
     `modified のファイルがあるのに前後図も画像も無いレポート（前後図・画像の有無を記録した${String(reports.length)}件のうち。外す基準の対象ではない）:`,
-    line("全レポート", reports),
-    line(
+    modifiedWithoutVisualLine("全レポート", reports),
+    modifiedWithoutVisualLine(
       "task の最終レポート",
       reports.filter((record) => record.forTask),
     ),
   ].join("\n")
 }
 
+function modifiedWithoutVisualLine(label: string, rows: readonly UsageRecord[]): string {
+  const modified = rows.filter((record) => record.hasModifiedFiles)
+  const missing = modified.filter((record) => !record.hasBeforeAfterOrImage).length
+  const percent = (modified.length === 0 ? 0 : (missing / modified.length) * 100).toFixed(1)
+  return `  ${label.padEnd(16)} modified あり ${String(modified.length).padStart(5)}  うち前後図も画像も無し ${String(missing).padStart(5)}  ${percent.padStart(5)}%`
+}
+
 /** 段1の図（image・mermaid・graph・svg。beforeAfter の側を含む）を含むレポートの割合。 */
-function figureSection(rows: readonly FigureRecord[]): string {
+function figureSection(rows: readonly UsageRecord[]): string {
   if (rows.length === 0) {
     return "段1の図を含むレポート: 記録した行が無い"
   }
@@ -308,7 +230,7 @@ function figureSection(rows: readonly FigureRecord[]): string {
 }
 
 /** メインが画像のファイルを Read したのに image の塊が無かったレポートの割合。 */
-function imageOversightSection(rows: readonly FigureRecord[]): string {
+function imageOversightSection(rows: readonly UsageRecord[]): string {
   if (rows.length === 0) {
     return "画像を読んだのに image が無いレポート: 記録した行が無い"
   }
@@ -326,7 +248,7 @@ function imageOversightSection(rows: readonly FigureRecord[]): string {
 
 /** `figure` の種類と `none` の理由を、全レポートと task の最終レポートで1つずつ数えた表。 */
 function figureFieldSection(rows: readonly UsageRecord[]): string {
-  const taskRows = rows.filter((record) => "forTask" in record && record.forTask)
+  const taskRows = rows.filter((record) => record.forTask)
   const reasons = [...REPORT_FIGURE_NONE_REASONS, UNRECORDED_REASON]
   return [
     table("`figure` の種類 × レポート数（全レポート）", FIGURE_KINDS, rows, figureKindsOf),
@@ -341,40 +263,13 @@ function figureFieldSection(rows: readonly UsageRecord[]): string {
   ].join("\n\n")
 }
 
-function countSection(rows: readonly CountRecord[]): string {
+function countSection(rows: readonly UsageRecord[]): string {
   if (rows.length === 0) {
     return "強調の数・ラベルの無い辺の割合・節点数の分布: 記録した行が無い"
   }
-  const bucketTable = (
-    title: string,
-    buckets: readonly string[],
-    source: readonly CountRecord[],
-    bucketOf: (record: CountRecord) => string,
-    applies: (record: CountRecord) => boolean = () => true,
-  ): string => {
-    const target = source.filter(applies)
-    const bucketLines = buckets.map((bucket) => {
-      const count = target.filter((record) => bucketOf(record) === bucket).length
-      const percent = (target.length === 0 ? 0 : (count / target.length) * 100).toFixed(1)
-      return `  ${bucket.padEnd(10)} ${String(count).padStart(5)}  ${percent.padStart(5)}%`
-    })
-    return [`${title}:`, ...bucketLines].join("\n")
-  }
   const emphasisBuckets = ["0", "1", "2", "3以上"]
-  const emphasisBucket = (record: CountRecord): string =>
-    record.emphasisCount >= 3 ? "3以上" : String(record.emphasisCount)
   const unlabeledBuckets = ["0%", "1〜49%", "50%以上"]
-  const unlabeledBucket = (record: CountRecord): string => {
-    const percent = (record.graphUnlabeledEdgeCount / record.graphEdgeCount) * 100
-    if (record.graphEdgeCount === 0 || percent === 0) {
-      return "0%"
-    }
-    return percent < 50 ? "1〜49%" : "50%以上"
-  }
-  const hasGraph = (record: CountRecord): boolean => record.graphNodeCount > 0
   const nodeBuckets = ["〜5", "6〜10", "11以上"]
-  const nodeBucket = (record: CountRecord): string =>
-    record.graphNodeCount <= 5 ? "〜5" : record.graphNodeCount <= 10 ? "6〜10" : "11以上"
   const scopes = [
     ["全レポート", rows],
     ["task の最終レポート", rows.filter((record) => record.forTask)],
@@ -382,7 +277,7 @@ function countSection(rows: readonly CountRecord[]): string {
   return scopes
     .flatMap(([scope, scoped]) => [
       bucketTable(
-        `強調の数の分布 × レポート数（${scope}。版7以降の${String(scoped.length)}件のうち。外す基準の対象ではない）`,
+        `強調の数の分布 × レポート数（${scope}。${String(scoped.length)}件のうち。外す基準の対象ではない）`,
         emphasisBuckets,
         scoped,
         emphasisBucket,
@@ -405,14 +300,50 @@ function countSection(rows: readonly CountRecord[]): string {
     .join("\n\n")
 }
 
+function bucketTable(
+  title: string,
+  buckets: readonly string[],
+  source: readonly UsageRecord[],
+  bucketOf: (record: UsageRecord) => string,
+  applies: (record: UsageRecord) => boolean = () => true,
+): string {
+  const target = source.filter(applies)
+  const bucketLines = buckets.map((bucket) => {
+    const count = target.filter((record) => bucketOf(record) === bucket).length
+    const percent = (target.length === 0 ? 0 : (count / target.length) * 100).toFixed(1)
+    return `  ${bucket.padEnd(10)} ${String(count).padStart(5)}  ${percent.padStart(5)}%`
+  })
+  return [`${title}:`, ...bucketLines].join("\n")
+}
+
+function emphasisBucket(record: UsageRecord): string {
+  return record.emphasisCount >= 3 ? "3以上" : String(record.emphasisCount)
+}
+
+function unlabeledBucket(record: UsageRecord): string {
+  const percent = (record.graphUnlabeledEdgeCount / record.graphEdgeCount) * 100
+  if (record.graphEdgeCount === 0 || percent === 0) {
+    return "0%"
+  }
+  return percent < 50 ? "1〜49%" : "50%以上"
+}
+
+function hasGraph(record: UsageRecord): boolean {
+  return record.graphNodeCount > 0
+}
+
+function nodeBucket(record: UsageRecord): string {
+  return record.graphNodeCount <= 5 ? "〜5" : record.graphNodeCount <= 10 ? "6〜10" : "11以上"
+}
+
 /** `checks` に unverified の行があるレポートのうち、その全部に確かめ方があった割合。 */
-function howToVerifySection(rows: readonly HowToVerifyRecord[]): string {
+function howToVerifySection(rows: readonly UsageRecord[]): string {
   const unverified = rows.filter((record) => record.hasUnverifiedCheck)
   if (unverified.length === 0) {
     return "unverified のあるレポートのうち確かめ方のある割合: 記録した行が無い"
   }
   return [
-    `unverified のあるレポートのうち確かめ方のある割合（版8以降の${String(rows.length)}件のうち unverified のある${String(unverified.length)}件が分母。外す基準の対象ではない）:`,
+    `unverified のあるレポートのうち確かめ方のある割合（${String(rows.length)}件のうち unverified のある${String(unverified.length)}件が分母。外す基準の対象ではない）:`,
     shareLine("全レポート", "確かめ方あり", unverified, (record) => record.hasHowToVerify),
     shareLine(
       "task の最終レポート",
@@ -424,7 +355,7 @@ function howToVerifySection(rows: readonly HowToVerifyRecord[]): string {
 }
 
 /** task の最終レポートの報告の種類の表と、種類ごとに必須の塊（判断の options・調べものの出典・中断の favor）が無い割合。 */
-function genreSection(rows: readonly GenreRecord[]): string {
+function genreSection(rows: readonly UsageRecord[]): string {
   if (rows.length === 0) {
     return "報告の種類と必須の塊が無い割合: 記録した行が無い"
   }
@@ -433,7 +364,7 @@ function genreSection(rows: readonly GenreRecord[]): string {
   const stopped = rows.filter((record) => record.taskOutcome === "stopped")
   return [
     table(
-      `報告の種類 × レポート数（版9以降の task の最終レポート${String(rows.length)}件のうち）`,
+      `報告の種類 × レポート数（task の最終レポート${String(rows.length)}件のうち）`,
       [...REPORT_GENRES, "unspecified"],
       rows,
       (record) => [record.taskGenre],
@@ -457,8 +388,8 @@ function genreSection(rows: readonly GenreRecord[]): string {
   ].join("\n\n")
 }
 
-/** 札 × 節数と、札が許さない塊を使った節の数・許さない組 × 塊の数。分母は版13以降の行の節。 */
-function shapeTagSection(rows: readonly ShapeTagRecord[]): string {
+/** 札 × 節数と、札が許さない塊を使った節の数・許さない組 × 塊の数。分母は行の節。 */
+function shapeTagSection(rows: readonly UsageRecord[]): string {
   if (rows.length === 0) {
     return "節の札: 記録した行が無い"
   }
@@ -475,7 +406,7 @@ function shapeTagSection(rows: readonly ShapeTagRecord[]): string {
     ),
   ).map(([pair, uses]) => ({ pair, count: uses.reduce((total, use) => total + use.count, 0) }))
   return [
-    `札 × 節数（版13以降の${String(rows.length)}件の節${String(tags.length)}個のうち。外す基準の対象ではない）:`,
+    `札 × 節数（${String(rows.length)}件の節${String(tags.length)}個のうち。外す基準の対象ではない）:`,
     ...[...REPORT_SHAPE_TAGS, "unspecified"].map((tag) => {
       const count = tags.filter((written) => written === tag).length
       return `  ${tag.padEnd(26)} ${String(count).padStart(5)}  ${percentOf(count, tags.length).padStart(5)}%`
@@ -492,12 +423,12 @@ function shapeTagSection(rows: readonly ShapeTagRecord[]): string {
 }
 
 /**
- * 札 × 節に出た塊の種類の節数、`list` の style・`mermaid` の図種 × レポート数、駆動 × レポート数。分母は版19以降の行。
+ * 札 × 節に出た塊の種類の節数、`list` の style・`mermaid` の図種 × レポート数、駆動 × レポート数。分母は `sectionBlockKinds` を記録した行。
  * 節の数は `sectionShapeTags` と `sectionBlockKinds` の同じ位置を対にして数える。
  */
 function sectionBlockSection(rows: readonly SectionBlockRecord[]): string {
   if (rows.length === 0) {
-    return "札 × 節に出た塊の種類・list の style・mermaid の図種・駆動: 版19以降の行が無い"
+    return "札 × 節に出た塊の種類・list の style・mermaid の図種・駆動: 記録した行が無い"
   }
   const sections = rows.flatMap((record) =>
     record.sectionShapeTags.map((shapeTag, index) => ({
@@ -519,25 +450,25 @@ function sectionBlockSection(rows: readonly SectionBlockRecord[]): string {
     return `  ${tag.padEnd(26)} ${String(own.length).padStart(5)}節  ${kindCounts.join("・")}`
   })
   return [
-    `札 × 節に出た塊の種類の節数（版19以降の${String(rows.length)}件の節${String(sections.length)}個。外す基準の対象ではない）:`,
+    `札 × 節に出た塊の種類の節数（${String(rows.length)}件の節${String(sections.length)}個。外す基準の対象ではない）:`,
     ...tagLines,
     "",
     table(
-      `\`list\` の style × レポート数（版19以降の${String(rows.length)}件のうち）`,
+      `\`list\` の style × レポート数（${String(rows.length)}件のうち）`,
       listBlockSchema.shape.style.options,
       rows,
       (record) => record.listStyles,
     ),
     "",
     table(
-      `\`mermaid\` の図種 × レポート数（版19以降の${String(rows.length)}件のうち）`,
+      `\`mermaid\` の図種 × レポート数（${String(rows.length)}件のうち）`,
       REPORT_MERMAID_KINDS,
       rows,
       (record) => record.mermaidKinds,
     ),
     "",
     table(
-      `駆動 × レポート数（版19以降の${String(rows.length)}件のうち）`,
+      `駆動 × レポート数（${String(rows.length)}件のうち）`,
       ["sdk", "fake"],
       rows,
       (record) => [record.driver],
@@ -550,17 +481,13 @@ function percentOf(count: number, total: number): string {
 }
 
 /**
- * 引数の字数（JSON にした字数。トークンの代わり）の分布。分母は版14以降の受け付けの行と、字数を持つ差し戻しの行。
+ * 引数の字数（JSON にした字数。トークンの代わり）の分布。分母は受け付けの行と差し戻しの行。
  * 受け付けも差し戻しも、モデルが書いた生の引数の字数（差し戻しから引き継いだ欄は数えない）。
  * 形の検査で落ちた呼び出し（handler に届かなかったものと、組んだ値が落ちたもの）は、理由が `tool-error` の差し戻しの行に入る。
- * 引き継ぎで出した呼び出し（`inheritedFields` が空でない）の数は、版16以降の行を分母にする。
  */
 function argumentCharsSection(
-  accepted: readonly ArgumentCharsRecord[],
-  rejected: readonly {
-    readonly argumentChars: ArgumentCharsRecord["argumentChars"]
-    readonly inheritedFields: readonly string[] | undefined
-  }[],
+  accepted: readonly UsageRecord[],
+  rejected: readonly RejectionRecord[],
 ): string {
   if (accepted.length === 0) {
     return "引数の字数: 記録した行が無い"
@@ -579,7 +506,7 @@ function argumentCharsSection(
     ...new Set(accepted.flatMap((record) => Object.keys(record.argumentChars.fields))),
   ].toSorted()
   return [
-    `引数の字数（版14以降の受け付け${String(accepted.length)}件、差し戻し${String(rejected.length)}件。外す基準の対象ではない）:`,
+    `引数の字数（受け付け${String(accepted.length)}件、差し戻し${String(rejected.length)}件。外す基準の対象ではない）:`,
     spreadLine(
       "受け付け 全体",
       accepted.map((record) => record.argumentChars.total),
@@ -594,7 +521,7 @@ function argumentCharsSection(
     "引き継ぎで出した呼び出し（差し戻しから欄を1つ以上引き継いだもの）:",
     inheritanceLine(
       "受け付け",
-      accepted.map((record) => ("inheritedFields" in record ? record.inheritedFields : undefined)),
+      accepted.map((record) => record.inheritedFields),
     ),
     inheritanceLine(
       "差し戻し",
@@ -613,14 +540,10 @@ function argumentCharsSection(
   ].join("\n")
 }
 
-function inheritanceLine(
-  label: string,
-  inherited: readonly (readonly string[] | undefined)[],
-): string {
-  const recorded = inherited.flatMap((fields) => (fields === undefined ? [] : [fields]))
-  const count = recorded.filter((fields) => fields.length > 0).length
-  const percent = (recorded.length === 0 ? 0 : (count / recorded.length) * 100).toFixed(1)
-  return `  ${label.padEnd(18)} ${String(count).padStart(5)}件  版16以降の${String(recorded.length)}件のうち ${percent}%`
+function inheritanceLine(label: string, inherited: readonly (readonly string[])[]): string {
+  const count = inherited.filter((fields) => fields.length > 0).length
+  const percent = (inherited.length === 0 ? 0 : (count / inherited.length) * 100).toFixed(1)
+  return `  ${label.padEnd(18)} ${String(count).padStart(5)}件  ${String(inherited.length)}件のうち ${percent}%`
 }
 
 /** 昇順にしたときの `ratio` 位置の値（最近順位法）。空なら 0。 */
@@ -629,16 +552,12 @@ function percentile(values: readonly number[], ratio: number): number {
   return sorted[Math.max(0, Math.ceil(sorted.length * ratio) - 1)] ?? 0
 }
 
-/** `figure` の種類。記録する前の版の行は `none`。 */
 function figureKindsOf(record: UsageRecord): readonly string[] {
-  return ["figureKind" in record ? record.figureKind : "none"]
+  return [record.figureKind]
 }
 
-/** `none` の理由。図を置いた行は無く、記録する前の版の行は `unrecorded`。 */
+/** `none` の理由。図を置いた行は無い。 */
 function noneReasonsOf(record: UsageRecord): readonly string[] {
-  if (!("figureKind" in record)) {
-    return [UNRECORDED_REASON]
-  }
   return "noneReason" in record ? [record.noneReason] : []
 }
 

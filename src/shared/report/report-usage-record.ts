@@ -9,7 +9,11 @@ import { REPORT_SHAPE_TAGS } from "./report-shape-tag.ts"
 import { REPORT_GENRES, reportTaskSchema } from "./report-task.ts"
 import { REPORT_SCHEMA_VARIANTS } from "./schema-variant.ts"
 
-/** 行の形の版。形か数え方を変えたら上げ、古い行と見分ける。 */
+/**
+ * 行の形の版。形か数え方を変えたら上げ、古い行と見分ける。
+ * 欄を足したら版を上げ、集計は `MIN_FORMAT_VERSION` より古い行を読まない。
+ * 集計は版で分母を切らず、欄を記録した行を分母にする。
+ */
 export const REPORT_USAGE_FORMAT_VERSION = 20 satisfies number
 
 /** どの駆動で起こしたプロセスの行か（版19から）。`fake` は疑似セッションで、集計は既定で除く。 */
