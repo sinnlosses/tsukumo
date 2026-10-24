@@ -163,18 +163,19 @@ function newDiagramId(): string {
  * mermaid の `themeVariables` をページの色のトークンから作る。`base` だけが差せて、値は hex しか受け取らない。
  */
 function resolveThemeVariables(node: HTMLElement): Readonly<Record<string, string | boolean>> {
-  const hex = (property: string, backdrop?: string): string => resolveHex(node, property, backdrop)
+  const hex = (property: string): string => resolveHex(node, property, undefined)
+  const hexOnSurface = (property: string): string => resolveHex(node, property, "--surface")
   return {
     darkMode: true,
     background: hex("--surface"),
-    primaryColor: hex("--surface-raised", "--surface"),
+    primaryColor: hexOnSurface("--surface-raised"),
     primaryTextColor: hex("--ink"),
     textColor: hex("--ink"),
     primaryBorderColor: hex("--rule"),
-    lineColor: hex("--ink-soft", "--surface"),
-    arrowheadColor: hex("--ink-soft", "--surface"),
-    clusterBkg: hex("--surface-raised", "--surface"),
-    clusterBorder: hex("--rule-quiet", "--surface"),
+    lineColor: hexOnSurface("--ink-soft"),
+    arrowheadColor: hexOnSurface("--ink-soft"),
+    clusterBkg: hexOnSurface("--surface-raised"),
+    clusterBorder: hexOnSurface("--rule-quiet"),
     edgeLabelBackground: hex("--surface"),
     noteBkgColor: hex("--surface-accent"),
     noteTextColor: hex("--ink"),

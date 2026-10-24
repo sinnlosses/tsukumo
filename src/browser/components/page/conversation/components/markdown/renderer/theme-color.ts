@@ -20,7 +20,11 @@ type Rgba = { readonly r: number; readonly g: number; readonly b: number; readon
  * 色の表記（`rgb()` / `color(srgb ...)`）は処理系で違うので、文字列は割らず canvas に塗って読む。
  * 透ける色（`ink-soft` など）は `backdrop` のトークンの上に重ねた不透明な色にする。
  */
-export function resolveHex(element: HTMLElement, property: string, backdrop?: string): string {
+export function resolveHex(
+  element: HTMLElement,
+  property: string,
+  backdrop: string | undefined,
+): string {
   const front = readPixel(resolveColor(element, property))
   const back = backdrop === undefined ? undefined : readPixel(resolveColor(element, backdrop))
   const channel = (get: (color: Rgba) => number): string => {

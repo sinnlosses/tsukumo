@@ -9,9 +9,9 @@ export const PROMPT_DELAY_THRESHOLD_MS = 3000
 export type PromptDelayWatch = {
   /**
    * 依頼を SDK へ渡した。追っていた前の依頼は捨てて、この依頼を追う。
-   * `startedAt` は渡す手順に入った時刻で、`at` との差が準備の区間になる（省略は準備なし）。
+   * `startedAt` は渡す手順に入った時刻で、`at` との差が準備の区間になる（`undefined` は準備なし）。
    */
-  readonly pushed: (at: number, startedAt?: number) => void
+  readonly pushed: (at: number, startedAt: number | undefined) => void
   /** 追っている依頼を捨てる（中断・駆動の終わり）。 */
   readonly discard: () => void
   /** SDK が依頼を書き終えた（入力の生成器が再開した）。 */
@@ -35,8 +35,8 @@ export function createPromptDelayWatch(
 ): PromptDelayWatch {
   let tracking: Tracking = { stage: "idle" }
   return {
-    pushed: (at, startedAt = at) => {
-      tracking = { stage: "pushed", pushedAt: at, prepareMs: at - startedAt }
+    pushed: (at, startedAt) => {
+      tracking = { stage: "pushed", pushedAt: at, prepareMs: at - (startedAt ?? at) }
     },
     discard: () => {
       tracking = { stage: "idle" }

@@ -181,7 +181,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       return
     }
     emitTurnOpening({ kind: "progress-nudged" })
-    delayWatch.pushed(options.now())
+    delayWatch.pushed(options.now(), undefined)
     ledgerIntake.noteSent(push(progressNudgePromptText(summary), []), "progress-nudge")
   }
 
@@ -220,7 +220,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       // `request` を流さない（送った文面をログにも記録にも残さない）。
       // 代わりにターンの始まりだけを流し、吹き出しと進行中の印は依頼と同じに動かす。
       emitTurnOpening({ kind: "turn-started" })
-      delayWatch.pushed(options.now())
+      delayWatch.pushed(options.now(), undefined)
       push(text, [])
     },
     interrupt: async () => {

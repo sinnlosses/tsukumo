@@ -79,7 +79,8 @@ tsukumo を起こしたディレクトリ（`process.cwd()`）も同じで、読
 `readonly x: T | undefined` なら値の受け渡しのたびに `undefined` を明示させられる。
 `?:` で書いてよいのは例外5だけで、丸ごと省略できる引数の中身なので渡し忘れる相手がいない。
 外来の型（Chart.js の形など）の再掲も `?:` のまま写す。
-`test/architecture/lint-rule.test.ts` が、許可の一覧に無い `?:` を `src/` の型に書くと落とす。
+引数にも `?:` は使わない。
+`test/architecture/lint-rule.test.ts` が、許可の一覧に無い `?:` を `src/` の型と引数に書くと落とす。
 
 **例外1に当てはまらないのに `| undefined` を書くとき**は、書く前に次の3つを確かめる
 （例外2〜5は書くかどうかを選べないので対象外）:
