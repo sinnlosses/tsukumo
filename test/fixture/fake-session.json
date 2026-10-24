@@ -8566,6 +8566,173 @@
           "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
         }
       ]
+    },
+    {
+      "name": "turn-headings",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "見出しの付いた本文で報告して（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "report",
+            "closing": { "kind": "none" },
+            "toolUseId": "fake-turn-headings-1",
+            "conclusion": "架空の調べが済んだ。",
+            "sections": [
+              {
+                "heading": "調べたこと（架空）",
+                "blocks": [
+                  {
+                    "kind": "markdown",
+                    "markdown": "### 読み込みの順\n\n架空の部品は設定を先に読む。\n\n### 設定の置き場\n\n架空の設定は1か所にまとまっている。",
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              },
+              {
+                "heading": "",
+                "blocks": [
+                  {
+                    "kind": "markdown",
+                    "markdown": "## 次にやること（架空）\n\n### 手順\n\n架空の読み込みの順を揃える。\n\n### 確かめ方\n\n架空の部品を起こして順を見る。",
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 550,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-turn-headings-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 900,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
+    },
+    {
+      "name": "turn-running-report",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "途中経過を報告しながら進めて（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "report",
+            "closing": { "kind": "none" },
+            "toolUseId": "fake-turn-running-report-1",
+            "conclusion": "架空の調べが半分済んだ。",
+            "sections": [
+              {
+                "heading": "ここまで（架空）",
+                "blocks": [
+                  {
+                    "kind": "text",
+                    "text": "架空の部品の読み込みを確かめた。",
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 550,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-turn-running-report-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-turn-running-read-1",
+            "name": "Read",
+            "input": { "file_path": "/tmp/dummy/a.ts" }
+          }
+        },
+        {
+          "afterMs": 900,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-turn-running-read-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "closing": { "kind": "none" },
+            "toolUseId": "fake-turn-running-report-2",
+            "conclusion": "架空の続きも済んだ。",
+            "sections": [
+              {
+                "heading": "続き（架空）",
+                "blocks": [
+                  {
+                    "kind": "text",
+                    "text": "架空の部品の続きを確かめた。",
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-turn-running-report-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1300,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-turn-running-read-2",
+            "name": "Read",
+            "input": { "file_path": "/tmp/dummy/b.ts" }
+          }
+        }
+      ]
     }
   ],
   "pastSessions": [
