@@ -17,7 +17,13 @@ import {
 
 const PATH_TW = "tw"
 
-export function wireWorkflowSetting(cwd: string, tw: string): WorkflowSettingProcedurePorts {
+export function wireWorkflowSetting(
+  cwd: string,
+  tw: string,
+): {
+  readonly rpc: Pick<WorkflowSettingProcedurePorts, "readWorkflowSetting" | "readWorkflowEntries">
+  readonly commands: Pick<WorkflowSettingProcedurePorts, "changeWorkflowSetting">
+} {
   const port = twConfigPort(tw, cwd)
   const place: WorkflowSettingPlace = {
     worktreeName: projectNameOf(cwd),
@@ -25,9 +31,13 @@ export function wireWorkflowSetting(cwd: string, tw: string): WorkflowSettingPro
     twLocation: tw === PATH_TW ? "PATH の tw" : tw,
   }
   return {
-    readWorkflowSetting: () => readWorkflowSetting(port, place),
-    readWorkflowEntries: () => readWorkflowEntries(port),
-    changeWorkflowSetting: (key, value) => changeWorkflowSetting(port, place, key, value),
+    rpc: {
+      readWorkflowSetting: () => readWorkflowSetting(port, place),
+      readWorkflowEntries: () => readWorkflowEntries(port),
+    },
+    commands: {
+      changeWorkflowSetting: (key, value) => changeWorkflowSetting(port, place, key, value),
+    },
   }
 }
 

@@ -77,8 +77,6 @@ export type RpcRouterPorts = RepositoryProcedurePorts &
   AchievementProcedurePorts &
   SessionDigestProcedurePorts &
   SessionClaimProcedurePorts &
-  DiagnosticProcedurePorts &
-  ExperienceMetricProcedurePorts &
   Pick<WorkflowSettingProcedurePorts, "readWorkflowSetting" | "readWorkflowEntries">
 
 /** 読み取りの手続きを束ね、照合のミドルウェアを全部の前に掛ける（`/rpc` に載る）。 */
@@ -94,8 +92,6 @@ export function createRpcRouter(ports: RpcRouterPorts) {
       achievement: achievementProcedure(ports),
       sessionDigest: sessionDigestProcedure(ports),
       sessionClaim: sessionClaimProcedure(ports),
-      diagnostic: diagnosticProcedure(ports),
-      experienceMetric: experienceMetricProcedure(ports),
       workflowSetting: workflowSettingProcedure(ports),
     })
 }
@@ -108,6 +104,8 @@ export type CommandRouterPorts = {
   readonly usageReview: UsageReviewCommandPorts
   readonly host: HostCommandPorts
   readonly workflowSetting: Pick<WorkflowSettingProcedurePorts, "changeWorkflowSetting">
+  readonly diagnostic: DiagnosticProcedurePorts
+  readonly experienceMetric: ExperienceMetricProcedurePorts
 }
 
 /** コマンドの手続きを束ね、照合と断る条件のミドルウェアを全部の前に掛ける（`/ws` に載る）。 */
@@ -124,6 +122,8 @@ export function createCommandRouter(ports: CommandRouterPorts) {
       usageReview: usageReviewProcedure(ports.usageReview),
       host: hostProcedure(ports.host),
       workflowSetting: workflowSettingCommandProcedure(ports.workflowSetting),
+      diagnostic: diagnosticProcedure(ports.diagnostic),
+      experienceMetric: experienceMetricProcedure(ports.experienceMetric),
     })
 }
 

@@ -6,17 +6,15 @@ import {
   type BrowserErrorRoute,
   DIAGNOSTIC_BROWSER_ERROR_MAX_FRAMES,
   toBrowserErrorName,
-} from "../../shared/diagnostic/diagnostic-record.ts"
-import { rpc } from "./rpc.ts"
+} from "../../../shared/diagnostic/diagnostic-record.ts"
+import { useSession } from "../../stores/session.ts"
 
 export function reportBrowserError(route: BrowserErrorRoute, error: unknown): void {
-  rpc.diagnostic.reportBrowserError
-    .call({
-      route,
-      errorName: toBrowserErrorName(error instanceof Error ? error.name : undefined),
-      frames: stackFrames(error),
-    })
-    .catch(() => {})
+  void useSession.getState().dispatch.diagnostic.reportBrowserError({
+    route,
+    errorName: toBrowserErrorName(error instanceof Error ? error.name : undefined),
+    frames: stackFrames(error),
+  })
 }
 
 /** V8 形式の `error.stack`（`    at <関数> (<file>:<line>:<column>)` / `    at <file>:<line>:<column>`）。 */

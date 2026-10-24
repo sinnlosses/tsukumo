@@ -13,7 +13,7 @@ import {
   millisecondsUntilNextLocalDay,
   todayLocalDateKey,
 } from "./server/adapter/local-time.ts"
-import { pruneChatImages } from "./server/chat/adapter/chat-archive.ts"
+import { createChatArchive, pruneChatImages } from "./server/chat/adapter/chat-archive.ts"
 import { type Config, type ConfigDriver, ENV_NAMES } from "./server/core/config.ts"
 import type { Host, HostResult } from "./server/host/core/host.ts"
 import { readItemAsset } from "./server/item/adapter/item-asset.ts"
@@ -42,10 +42,14 @@ import { startSession } from "./session-start.ts"
 import type { SwallowedFailurePlace } from "./shared/diagnostic/swallowed-failure.ts"
 import { openViewAfterRegisteringExit, readStartupPrerequisites } from "./startup-order.ts"
 import { startViewDelivery } from "./view-delivery.ts"
+import { wireAchievement } from "./wiring/achievement.ts"
 import { failureDiagnostic } from "./wiring/failure-diagnostic.ts"
 import { createHost } from "./wiring/host.ts"
+import { wireRepository } from "./wiring/repository.ts"
+import { wireSessionClaim } from "./wiring/session-claim.ts"
+import { wireTokenUsage } from "./wiring/token-usage.ts"
 import { wireUsageLogs } from "./wiring/usage-log.ts"
-import type { WiringDriver } from "./wiring/wiring-context.ts"
+import type { WiringContext, WiringDriver } from "./wiring/wiring-context.ts"
 import { chooseTw, wireWorkflowSetting } from "./wiring/workflow-setting.ts"
 
 /** 環境変数ではなく起動の引数で選ぶもの。 */
@@ -157,24 +161,37 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   const readBeadsStamp = createBeadsStampReader(launch.cwd)
   const achievementCache = createAchievementCache(launch.cwd, clock, readBeadsStamp)
   const workflowSetting = wireWorkflowSetting(launch.cwd, workflowTw)
+  const context: WiringContext = {
+    cwd: launch.cwd,
+    now: clock,
+    inheritedEnv: config.inheritedEnv,
+    driver,
+    chatArchive: createChatArchive(),
+  }
+  const achievement = wireAchievement(context, achievementCache)
+  const repository = wireRepository(context, diagnosticLog, readBeadsStamp)
+  const tokenUsage = wireTokenUsage(context, tokenUsageLog)
+  const sessionClaim = wireSessionClaim()
 
   const headSha = readHeadSha(launch.cwd)
 
   const view = await startViewDelivery({
     portResolution,
-    achievementCache,
+    rpc: {
+      ...repository.rpc,
+      ...tokenUsage.rpc,
+      ...sessionClaim.rpc,
+      ...achievement.rpc,
+      ...workflowSetting.rpc,
+    },
     bundle: built.bundle,
     character,
     serveItemAsset: (fileName, version) => readItemAsset(fileName, version),
-    tokenUsageLog,
     promptImageShelf,
     reportImageShelf,
     diagnosticLog,
     now: clock,
     devServer: launch.devServer,
-    cwd: launch.cwd,
-    readWorkflowSetting: workflowSetting.readWorkflowSetting,
-    readWorkflowEntries: workflowSetting.readWorkflowEntries,
   })
   if (!view.ok) {
     process.stderr.write(`tsukumo: ビューを配れない: ${view.reason}\n`)
@@ -187,18 +204,17 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   const session = await startSession({
     config,
     character,
-    driver,
+    context,
+    achievement,
+    repository,
     usageLogs,
-    achievementCache,
-    readBeadsStamp,
     promptImageShelf,
     reportImageShelf,
     viewPort: view.port,
-    cwd: launch.cwd,
     host,
     mountWorkflowPlugin,
     workflowTw,
-    workflowSetting,
+    workflowSetting: workflowSetting.commands,
   })
   view.connect(session)
 

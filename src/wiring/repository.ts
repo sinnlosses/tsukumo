@@ -8,7 +8,12 @@ import {
 } from "../server/recommendation/adapter/recommendation-cache.ts"
 import { queryStructured } from "../server/recommendation/adapter/sdk-structured-query.ts"
 import { createRecommender, type Recommender } from "../server/recommendation/core/recommender.ts"
+import type { BeadsStamp } from "../server/repository/adapter/beads.ts"
 import { changeCountGitOf } from "../server/repository/adapter/change-count.ts"
+import { projectNameOf } from "../server/repository/adapter/project-name.ts"
+import { readFileExcerpt } from "../server/repository/adapter/repository-file-excerpt.ts"
+import { listRepositoryFiles } from "../server/repository/adapter/repository-file.ts"
+import type { RepositoryProcedurePorts } from "../server/repository/adapter/repository-procedure.ts"
 import {
   taskSummaryOptionsOf,
   watchTaskSummary,
@@ -28,10 +33,22 @@ const IDLE_RECOMMENDER: Recommender = {
 export function wireRepository(
   context: WiringContext,
   diagnosticLog: DiagnosticLog,
+  readBeadsStamp: () => Promise<BeadsStamp>,
 ): {
+  readonly rpc: Omit<RepositoryProcedurePorts, "refreshTasks">
   readonly manager: Pick<SessionManagerOptions, "watchTasks" | "changeCountGit">
 } {
   return {
+    rpc: {
+      listRepositoryFiles: () => listRepositoryFiles(context.cwd),
+      readFileExcerpt: (request) =>
+        readFileExcerpt(
+          context.cwd,
+          request,
+          async () => (await listRepositoryFiles(context.cwd)).paths,
+        ),
+      projectName: () => projectNameOf(context.cwd),
+    },
     manager: {
       changeCountGit: changeCountGitOfContext(context),
       watchTasks: (onEvent) => {
@@ -43,7 +60,7 @@ export function wireRepository(
             onEvent({ kind: "tasks-changed", tasks: change })
             recommender.observe(result)
           },
-          taskSummaryOptionsOfContext(context),
+          taskSummaryOptionsOfContext(context, readBeadsStamp),
           (error) => {
             reportFailure({ feature: "repository", place: "task-summary-poll" }, error)
           },
@@ -62,7 +79,10 @@ export function wireRepository(
 }
 
 /** 疑似セッションは偽の読み元のまま。ふだんは成果のキャッシュと共有する印の読み手を使う。 */
-function taskSummaryOptionsOfContext(context: WiringContext): TaskSummaryOptions {
+function taskSummaryOptionsOfContext(
+  context: WiringContext,
+  readBeadsStamp: () => Promise<BeadsStamp>,
+): TaskSummaryOptions {
   const { driver } = context
   switch (driver.kind) {
     case "fake":
@@ -71,7 +91,7 @@ function taskSummaryOptionsOfContext(context: WiringContext): TaskSummaryOptions
       const options = taskSummaryOptionsOf("real")
       return {
         ...options,
-        ports: { ...options.ports, createBeadsStampReader: () => context.readBeadsStamp },
+        ports: { ...options.ports, createBeadsStampReader: () => readBeadsStamp },
       }
     }
     default:

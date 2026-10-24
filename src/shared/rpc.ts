@@ -42,8 +42,6 @@ export const rpcContract = {
   achievement: achievementContract,
   sessionDigest: sessionDigestContract,
   sessionClaim: sessionClaimContract,
-  diagnostic: diagnosticContract,
-  experienceMetric: experienceMetricContract,
   workflowSetting: workflowSettingContract,
 }
 
@@ -59,6 +57,8 @@ export const commandContract = {
   usageReview: usageReviewContract,
   host: hostContract,
   workflowSetting: workflowSettingCommandContract,
+  diagnostic: diagnosticContract,
+  experienceMetric: experienceMetricContract,
 }
 
 /** ブラウザがコマンドを送る client の型（契約から導く）。 */

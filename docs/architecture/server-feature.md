@@ -67,10 +67,14 @@
 - **セッションの配線は機能ごとに組み立てる。** `src/wiring/<機能>.ts` の `wire<機能>` が、その機能の
   「`createSessionManager` へ渡す口」（`manager`）と「`createSocketRouter` へ渡す口」（`commands`、
   `session` の口の一部なら `sessionCommands`）を返し、`startSession` はそれを spread で結ぶだけにする。
+  `/rpc` の読み口を持つ機能は `rpc` も返し、`src/view-delivery.ts` はそれを spread で結ぶだけにする
+  （セッションが繋がってから本物になる読み口だけは、配信が「取れない」から差し替える形で持つ）。
+  `WiringContext` は `src/main.ts` が作り、`startViewDelivery` と `startSession` の両側の組み立てに渡す。
   機能を足すときに触るのは、その機能の組み立てと、結ぶ行だけ。口の揃いは結ぶ側の型検査が見る。
-  2つ以上の組み立てが読む値（作業先・時計・引き継ぐ環境・疑似セッション・会話のアーカイブ・成果の
-  入れ物）だけを `WiringContext`（`src/wiring/wiring-context.ts`）にまとめて渡し、1つの組み立てしか
-  読まないものはその中で作る。組み立てどうしの受け渡しは口で渡す（起こす組み立てが代を起こすたびに
+  2つ以上の組み立てが読む値（作業先・時計・引き継ぐ環境・疑似セッション・会話のアーカイブ）だけを
+  `WiringContext`（`src/wiring/wiring-context.ts`）にまとめて渡し、1つの組み立てしか
+  読まないもの（成果の入れ物・`.beads` の印の読み手など）はその組み立ての引数に渡す。
+  各欄が2つ以上の `src/wiring/*.ts` から読まれることは `test/architecture/wiring-context.test.ts` が見る。組み立てどうしの受け渡しは口で渡す（起こす組み立てが代を起こすたびに
   日記の組み立ての `noteLaunched` を呼ぶ）。`createSessionManager` の引数を機能ごとの束に変える案は
   採らない（`session-manager.ts` は割らない。`docs/architecture/adr/0021-feature-state-fold-in-feature.md`）。
   配線には単体テストを持たない（守る振る舞いは E2E が本物のプロセスで、口の揃いは型検査が守り、

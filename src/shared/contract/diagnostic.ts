@@ -1,11 +1,10 @@
-// 診断ログへブラウザの例外を書く手続きの契約。
+// 診断ログへブラウザの例外を書くコマンドの契約。
 // 運ぶのは経路・`error.name`・スタックの先頭数フレームの行列だけで、`message` は運ばない。
 
-import { oc } from "@orpc/contract"
-
+import { commandBase } from "../command.ts"
 import { browserErrorReportSchema } from "../diagnostic/diagnostic-record.ts"
 
 export const diagnosticContract = {
-  /** セッションの有無に関係なく常に受け付ける。 */
-  reportBrowserError: oc.input(browserErrorReportSchema),
+  /** `/ws` の接続が無い間（繋ぐ前と切れている間）は送らずに捨てる。 */
+  reportBrowserError: commandBase.input(browserErrorReportSchema),
 }

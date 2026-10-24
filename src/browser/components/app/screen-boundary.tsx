@@ -4,9 +4,9 @@
 
 import { Component, type ErrorInfo, type ReactElement, type ReactNode } from "react"
 
-import { reportBrowserError } from "../../domain/browser-error-report.ts"
 import { Button } from "../ui/button/button.tsx"
 import { Text } from "../ui/text/text.tsx"
+import { reportBrowserError } from "./browser-error-report.ts"
 import styles from "./screen-boundary.module.css"
 
 const FAILURE_MESSAGE = "この画面を描けませんでした。読み込み直してください。"

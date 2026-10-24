@@ -200,6 +200,8 @@ export function createRecordingPorts(
     workflowSetting: {
       changeWorkflowSetting: () => Promise.reject(new Error("ワークフローの設定は使わない")),
     },
+    diagnostic: { reportBrowserError: () => {} },
+    experienceMetric: { recordSplit: () => {} },
   }
   return {
     ports,

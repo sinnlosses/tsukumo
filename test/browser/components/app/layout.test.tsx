@@ -59,7 +59,7 @@ vi.mock("../../../../src/browser/components/page/token-usage/token-usage.tsx", (
   loaded.names.add("token-usage")
   return { TokenUsage: () => stubPart("token-usage")() }
 })
-vi.mock("../../../../src/browser/domain/browser-error-report.ts", () => ({
+vi.mock("../../../../src/browser/components/app/browser-error-report.ts", () => ({
   reportBrowserError: vi.fn<() => void>(),
 }))
 

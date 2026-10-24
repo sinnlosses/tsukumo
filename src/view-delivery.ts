@@ -5,27 +5,10 @@
 import process from "node:process"
 
 import type { CurrentCharacter } from "./current-character.ts"
-import { createRpcRouter } from "./router.ts"
-import {
-  readAchievement,
-  readAchievementCalendar,
-  type AchievementCache,
-} from "./server/achievement/adapter/closed-issue.ts"
-import { todayLocalDateKey } from "./server/adapter/local-time.ts"
+import { createRpcRouter, type RpcRouterPorts } from "./router.ts"
 import type { DiagnosticLog } from "./server/diagnostic/core/diagnostic.ts"
-import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
-import type { SplitRelease } from "./server/experience-metric/core/experience-metric.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
-import { projectNameOf } from "./server/repository/adapter/project-name.ts"
-import { readFileExcerpt } from "./server/repository/adapter/repository-file-excerpt.ts"
-import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
-import {
-  defaultSessionClaimPlace,
-  readOccupiedSessionIds,
-} from "./server/session-driver/adapter/session-claim-file.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
-import { summarizeRecentTokenUsage } from "./server/token-usage/core/token-usage-summary.ts"
-import type { TokenUsageLog } from "./server/token-usage/core/token-usage.ts"
 import type { UiBundle } from "./server/view-server/adapter/bundle.ts"
 import {
   createStartupToken,
@@ -40,7 +23,6 @@ import {
   startOnResolvedPort,
 } from "./server/view-server/core/port-resolution.ts"
 import type { StartedSession } from "./session-start.ts"
-import { parseDateKey, resolveAchievementDateKey } from "./shared/achievement/achievement.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
@@ -49,10 +31,6 @@ import { swallowedFailureFootprint } from "./shared/diagnostic/swallowed-failure
 import type { RefreshTarget, ServerFrame } from "./shared/frame.ts"
 import { type PlanUsageReport, UNAVAILABLE_PLAN_USAGE } from "./shared/plan-usage/plan-usage.ts"
 import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "./shared/session/session-digest.ts"
-import type {
-  WorkflowEntry,
-  WorkflowSettingView,
-} from "./shared/workflow-setting/workflow-setting.ts"
 
 export type ViewDeliveryOptions = {
   /** どのポートで試すか（決めるのは `resolveViewPort`）。 */
@@ -66,13 +44,11 @@ export type ViewDeliveryOptions = {
   readonly character: CurrentCharacter
   /** `/item/<file>` に配る1件の出どころ。 */
   readonly serveItemAsset: ServeItemAsset
-  /**
-   * トークン消費の記録の読み口（手続き `tokenUsage.summary` が配る集計の出どころ）。
-   * ここで読むのは要求が来たときだけで、配信を始める時点ではファイルに触らない。
-   */
-  readonly tokenUsageLog: TokenUsageLog
-  /** 成果の画面（1日ぶん・暦）が Beads の読みを覚える入れ物。セッションの側と同じ1つを渡す。 */
-  readonly achievementCache: AchievementCache
+  /** 各機能の組み立て（`wire<機能>`）が返した `/rpc` の読み口。セッションが繋がってから本物になる4本はここに無く、配信が差し替える。 */
+  readonly rpc: Omit<
+    RpcRouterPorts,
+    "refreshTasks" | "readContextUsage" | "readPlanUsage" | "readSessionDigest"
+  >
   /**
    * 依頼に添えた画像の原寸の棚（`/prompt-image/<id>` に配る原寸の出どころ）。
    * ここは引くだけで、置くのと捨てるのはセッションの側。
@@ -84,14 +60,8 @@ export type ViewDeliveryOptions = {
   readonly diagnosticLog: DiagnosticLog
   /** 診断ログに書く「いま」を読む時計。 */
   readonly now: () => number
-  /** tsukumo を起こしたディレクトリ。 */
-  readonly cwd: string
   /** Vite の開発サーバを差し込み、`src/browser/` の保存を HMR で当てるか（`--dev`）。 */
   readonly devServer: boolean
-  /** ワークフローの設定を読む口（`wireWorkflowSetting`）。 */
-  readonly readWorkflowSetting: () => Promise<WorkflowSettingView>
-  /** 起動できる入口のスキルを読む口（`wireWorkflowSetting`）。 */
-  readonly readWorkflowEntries: () => Promise<readonly WorkflowEntry[]>
 }
 
 /** 配り始めた結果。失敗は起動時の前提不足なので、理由だけを返して呼び出し側が即時終了する。 */
@@ -120,66 +90,19 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   // 開いているタブ。
   // セッションのイベントとは別に押したいもの（`refresh`）があるので、購読をセッションに渡すついでにここでも持つ。
   const viewers = new Set<(frame: ServerFrame) => void>()
-  // セッションから引く読み口の3つ。
+  // セッションから引く読み口の4つ。
   // セッションは配り始めたあとに繋がるので、繋がるまでは「取れない」を返すものを置いておき、`connect` で本物に差し替える。
   let readContextUsage: () => Promise<ContextUsageReport> = unavailableContextUsage
   let readPlanUsage: () => Promise<PlanUsageReport> = unavailablePlanUsage
   let refreshTasks: () => Promise<void> = noTasksToRefresh
-  let recordSplit: (release: SplitRelease) => void = ignoreSplit
   let readSessionDigest: (sessionId: string) => Promise<SessionDigest> = unavailableSessionDigest
-  const { achievementCache } = options
 
   const rpcRouter = createRpcRouter({
-    listRepositoryFiles: () => listRepositoryFiles(options.cwd),
-    readFileExcerpt: (request) =>
-      readFileExcerpt(
-        options.cwd,
-        request,
-        async () => (await listRepositoryFiles(options.cwd)).paths,
-      ),
-    projectName: () => projectNameOf(options.cwd),
+    ...options.rpc,
     refreshTasks: () => refreshTasks(),
-    // 「今日」はここで決めて渡す（OS のタイムゾーンに依るので、core は今日が何日かを知らない）。
-    readTokenUsageSummary: (days) =>
-      summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(options.now), days),
     readContextUsage: () => readContextUsage(),
     readPlanUsage: () => readPlanUsage(),
     readSessionDigest: (sessionId) => readSessionDigest(sessionId),
-    readOccupiedSessionIds: () => readOccupiedSessionIds(defaultSessionClaimPlace()),
-    // 見る日の検証・今日への丸め込みも呼ぶたびにここで済ませ、`readAchievement` には検証済みの日付キーだけを渡す。
-    // 日記はここで合わせる（`readAchievement` は数だけを持ち、日記の置き場を知らない）。
-    readAchievementDay: async (selection) => {
-      const today = parseDateKey(todayLocalDateKey(options.now))
-      if (today === undefined) {
-        return { kind: "unavailable" }
-      }
-      const dateKey = resolveAchievementDateKey(selection, today)
-      const [result, diary] = await Promise.all([
-        readAchievement(dateKey, today, achievementCache),
-        readDiaryDay(options.cwd, dateKey),
-      ])
-      return result.kind === "ok" && result.achievement.kind === "known"
-        ? { kind: "ok", achievement: { ...result.achievement, diary } }
-        : result
-    },
-    // 灯りの暦（直近5週ぶん）。日記のある日の一覧もここで合わせる。
-    readAchievementCalendar: async () => {
-      const [result, diaryDates] = await Promise.all([
-        readAchievementCalendar(todayLocalDateKey(options.now), achievementCache),
-        listDiaryDates(options.cwd),
-      ])
-      return result.kind === "ok" && result.calendar.kind === "known"
-        ? { kind: "ok", calendar: { ...result.calendar, diaryDates } }
-        : result
-    },
-    reportBrowserError: (report) => {
-      options.diagnosticLog.append([{ flow: "browser-error", at: options.now(), ...report }])
-    },
-    recordSplit: (release) => {
-      recordSplit(release)
-    },
-    readWorkflowSetting: options.readWorkflowSetting,
-    readWorkflowEntries: options.readWorkflowEntries,
   })
 
   const started = await startOnResolvedPort(options.portResolution, (port) =>
@@ -225,7 +148,6 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       readContextUsage = manager.readContextUsage
       readPlanUsage = manager.readPlanUsage
       refreshTasks = manager.refreshTasks
-      recordSplit = manager.recordSplit
       readSessionDigest = manager.readSessionDigest
       attachSessionSocket({
         httpServer: server.httpServer,
@@ -282,8 +204,6 @@ function unavailablePlanUsage(): Promise<PlanUsageReport> {
 function noTasksToRefresh(): Promise<void> {
   return Promise.resolve()
 }
-
-function ignoreSplit(): void {}
 
 function unavailableSessionDigest(): Promise<SessionDigest> {
   return Promise.resolve(UNAVAILABLE_SESSION_DIGEST)

@@ -167,6 +167,8 @@ export function createSessionManager(
       workflowSetting: {
         changeWorkflowSetting: () => Promise.reject(new Error("ワークフローの設定は使わない")),
       },
+      diagnostic: { reportBrowserError: () => {} },
+      experienceMetric: { recordSplit: () => {} },
     },
     manager.commandSession,
   )

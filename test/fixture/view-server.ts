@@ -46,8 +46,6 @@ export const EMPTY_RPC_PORTS = {
   readOccupiedSessionIds: () => Promise.resolve([]),
   readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
   readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
-  reportBrowserError: () => {},
-  recordSplit: () => {},
   readWorkflowEntries: () => Promise.resolve([]),
   readWorkflowSetting: () =>
     Promise.resolve({

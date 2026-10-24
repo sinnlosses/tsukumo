@@ -6,7 +6,8 @@ import {
   saveSplit,
 } from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/domain/split.ts"
 import { useConversationLayout } from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/hooks/use-conversation-layout.ts"
-import { rpcOutput, stubRpcFetch } from "../../../../../../rpc-fetch-stub.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../../../../src/shared/session/session-state.ts"
+import { putSession, type SentCommand } from "../../../../../../session-store.ts"
 
 /**
  * `<ConversationLayout>` を丸ごと描かずに、比率の state・ドラッグの読み替え・保存だけを測る
@@ -45,45 +46,50 @@ describe("useConversationLayout", () => {
 
   it("仕切りを離すたびに1回だけ、離した比率と動かす前の比率を体験の記録へ送る（動かしている途中は送らない）", async () => {
     saveSplit({ ...DEFAULT_SPLIT, rowTop: 40, topLeft: 20, bottomLeft: 70 })
-    const stub = stubRpcFetch(() => rpcOutput(undefined))
-    try {
-      const { result } = renderHook(() => useConversationLayout(false))
+    const sent: SentCommand[] = []
+    putSession(INITIAL_SESSION_STATE, (command) => {
+      sent.push(command)
+    })
+    const { result } = renderHook(() => useConversationLayout(false))
 
-      act(() => {
-        result.current.onTopLeftChange(25)
-        result.current.onTopLeftChange(30)
-      })
-      await flush()
-      expect(stub.calls()).toEqual([])
+    act(() => {
+      result.current.onTopLeftChange(25)
+      result.current.onTopLeftChange(30)
+    })
+    await flush()
+    expect(sent).toEqual([])
 
-      act(() => {
-        result.current.onTopLeftCommit(30)
-      })
-      act(() => {
-        result.current.onRowTopCommit(50)
-      })
-      act(() => {
-        result.current.onBottomLeftCommit(60)
-      })
-      await flush()
+    act(() => {
+      result.current.onTopLeftCommit(30)
+    })
+    act(() => {
+      result.current.onRowTopCommit(50)
+    })
+    act(() => {
+      result.current.onBottomLeftCommit(60)
+    })
+    await flush()
 
-      expect(stub.calls()).toEqual([
-        {
-          procedure: "experienceMetric/recordSplit",
-          input: { divider: "topLeft", releasedPercent: 30, previousPercent: 20 },
-        },
-        {
-          procedure: "experienceMetric/recordSplit",
-          input: { divider: "rowTop", releasedPercent: 50, previousPercent: 40 },
-        },
-        {
-          procedure: "experienceMetric/recordSplit",
-          input: { divider: "bottomLeft", releasedPercent: 60, previousPercent: 70 },
-        },
-      ])
-    } finally {
-      stub.restore()
-    }
+    expect(sent).toEqual([
+      {
+        procedure: "experienceMetric.recordSplit",
+        divider: "topLeft",
+        releasedPercent: 30,
+        previousPercent: 20,
+      },
+      {
+        procedure: "experienceMetric.recordSplit",
+        divider: "rowTop",
+        releasedPercent: 50,
+        previousPercent: 40,
+      },
+      {
+        procedure: "experienceMetric.recordSplit",
+        divider: "bottomLeft",
+        releasedPercent: 60,
+        previousPercent: 70,
+      },
+    ])
   })
 })
 

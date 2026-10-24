@@ -1,9 +1,7 @@
 // 機能ごとの組み立てが共有する、起動時に1回だけ決まる値。
-// 2つ以上の組み立てが読むものだけを置き、1つの組み立てしか読まないものはその組み立ての中で作る。
+// 2つ以上の組み立てが読むものだけを置き、1つの組み立てしか読まないものは、その組み立ての中で作るか引数に渡す。
 
-import type { AchievementCache } from "../server/achievement/adapter/closed-issue.ts"
 import type { ChatArchive } from "../server/chat/core/chat-archive-port.ts"
-import type { BeadsStamp } from "../server/repository/adapter/beads.ts"
 import type { FakeSession } from "../server/session-driver/adapter/fake-session.ts"
 
 export type WiringDriver =
@@ -28,11 +26,4 @@ export type WiringContext = {
   readonly driver: WiringDriver
   /** 会話のアーカイブの口。書く側（セッションの管理）と読む側（起こすとき・定着）で1つを共有する。 */
   readonly chatArchive: ChatArchive
-  /**
-   * 成果の日記書きがその日の成果を数え直すための入れ物。
-   * ビューの配信が持つものとは別の1つで、同じ日を両方から数えても結果は変わらない。
-   */
-  readonly achievementCache: AchievementCache
-  /** `.beads` の有無と課題の変化の印の読み手。成果のキャッシュとタスク一覧の見張りで1つを共有する。 */
-  readonly readBeadsStamp: () => Promise<BeadsStamp>
 }

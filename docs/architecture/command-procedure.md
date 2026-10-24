@@ -51,6 +51,10 @@
 - **押し出しも手続き**（購読 `frame.subscribe`）。`/ws` の上は**すべて oRPC の手続きの要求と応答**で、
   `hello` / `events` / `refresh` のフレームは Event Iterator で届く。購読の元を**取りこぼさず・捨てずに**
   写し、接続が切れたら購読を外す。購読には照合（`rpcGuard`）だけを掛け、断る条件は見ない
+- **ブラウザからの書き込みはすべて `/ws` のコマンド**で、`/rpc` に残るのは読み取りだけ。
+  診断ログへのブラウザの例外（`diagnostic.reportBrowserError`）と体験の記録への仕切りの離し
+  （`experienceMetric.recordSplit`）も、断る条件なしで出力を持たないコマンドとして `/ws` に載る。
+  `/ws` の接続が無い間（繋ぐ前・切れている間）に起きた報告は、送らずに捨てる
 - ブラウザは型付きの client（`src/browser/stores/session.ts` の `dispatch`）で呼ぶ。**送りっぱなしで、
   断られても画面には出さない**（画面は同じ条件で先に操作子を塞いでいる）
 - **`/ws` の上で値を返す手続きは `characterPack.generateFromPortrait` と `workflowSetting.set` の2つだけ。**
