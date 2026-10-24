@@ -36,6 +36,7 @@ import {
   tableMarkdown,
   tagTonesOf,
 } from "./report-table-markdown.ts"
+import { timelineHtml } from "./timeline-markdown.ts"
 
 type CaptionCounts = Readonly<Record<CaptionKind, number>>
 
@@ -267,6 +268,15 @@ function blockMarkdown(
         bodyFormat: "html",
         fit: true,
       })
+    case "timeline":
+      return captionedMarkdown({
+        kind: "figure",
+        ordinal,
+        title: block.title,
+        body: timelineHtml(block),
+        bodyFormat: "html",
+        fit: false,
+      })
     case "progress":
       return progressMarkdown(block)
     case "options":
@@ -301,6 +311,7 @@ function captionKindOf(block: ReportBlock): CaptionKind | undefined {
     case "graph":
     case "chart":
     case "svg":
+    case "timeline":
     case "stats":
       return "figure"
     case "table":

@@ -17,6 +17,7 @@ import {
 } from "./report-figure-fault.ts"
 import { MARKDOWN_NOTATION_NAMES } from "./report-markdown-notation.ts"
 import type { ReportViolation } from "./report-violation.ts"
+import { timelineFaultPositions } from "./timeline-fault.ts"
 
 /** 差し戻しの戻り値に足す、直す欄だけで呼び直せることの1文。 */
 export const REPORT_CHANGED_FIELDS_ONLY_TEXT =
@@ -97,6 +98,8 @@ function violationLine(violation: ReportViolation): string {
       return `\`graph\` の \` @a\`〜\` @e\` の色の目印が \`legend\` に無い（${toneFaultPositions(violation.faults)}）。\`legend\` に \`tone\` と名前を足す（色だけで意味を言わない）`
     case "broken-graph":
       return `\`graph\` の \`source\` に読めない行がある（${graphFaultPositions(violation.faults)}）。1行を \`A -> B: 語\` の形に直す（\`: 語\` は省ける）。囲みは \`[群の名]\` 〜 \`[]\` の1階層で、入れ子と閉じ忘れは読めない`
+    case "broken-timeline":
+      return `\`timeline\` の時刻に誤りがある（${timelineFaultPositions(violation.faults)}）。時刻は HH:MM・ISO・分の数のどれか1つに揃え、行は start の昇順、end は start より後、出来事は at の昇順にし、\`emphasis\` は行の \`name\` と同じ字にする`
     case "long-first-sentence":
       return `\`conclusion\` の1要素目がいま${String(violation.length)}字で、全角${String(MAX_FIRST_SENTENCE)}字を超える。1要素目を短くし、補足は2要素目か \`sections\` へ移す`
     case "bad-heading":

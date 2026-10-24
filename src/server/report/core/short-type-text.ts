@@ -88,6 +88,9 @@ function typeOf(schema: z.core.JSONSchema._JSONSchema, indent: string): string {
   if (alternatives !== undefined) {
     return unionTypeOf(alternatives, indent)
   }
+  if (Array.isArray(schema.type)) {
+    return schema.type.map((type) => typeOf({ type }, indent)).join(" | ")
+  }
   switch (schema.type) {
     case "object":
       return objectTypeOf(schema, indent)

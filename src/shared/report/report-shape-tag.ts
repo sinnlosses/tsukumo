@@ -99,9 +99,9 @@ export const REPORT_SHAPE_TAG_RULES = {
   },
   time: {
     name: "時間",
-    primary: [{ kind: "mermaid", sample: "sequenceDiagram" }],
+    primary: [{ kind: "timeline", sample: "" }],
     alternatives: [
-      { kind: "mermaid", sample: "gantt" },
+      { kind: "mermaid", sample: "sequenceDiagram" },
       { kind: "list", sample: "ordered" },
     ],
     forbidden: [{ kind: "table", when: "always" }],

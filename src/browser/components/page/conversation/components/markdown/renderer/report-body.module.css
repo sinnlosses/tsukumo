@@ -46,6 +46,7 @@
     .report-matrix,
     .report-image-notes,
     .report-card-chain,
+    .report-timeline,
     svg
   ) {
   max-inline-size: min(100%, var(--report-measure-wide));

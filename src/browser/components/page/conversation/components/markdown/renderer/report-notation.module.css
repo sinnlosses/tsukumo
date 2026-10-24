@@ -8,6 +8,7 @@
 @import "./report-summary.module.css";
 @import "./report-figure.module.css";
 @import "./report-card-chain.module.css";
+@import "./report-timeline.module.css";
 @import "./report-result.module.css";
 @import "./report-prose.module.css";
 @import "./report-body.module.css";

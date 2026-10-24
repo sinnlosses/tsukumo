@@ -84,6 +84,7 @@ const FIGURE_BLOCK_KINDS: ReadonlySet<string> = new Set([
   "chart",
   "graph",
   "beforeAfter",
+  "timeline",
 ])
 
 function blockWeight(block: ReportBlock): number {

@@ -6,6 +6,8 @@
 // claude に教える文面（`REPORT_NOTATION_PROMPT`）はここから組み立てず、手で書く。
 // 印を足すときは見た目（`report-notation.module.css` の `report-<名前>`）にも書き足す（書き忘れはテストが落とす）。
 
+import { TIMELINE_MARK_NAMES } from "./timeline-markdown.ts"
+
 /**
  * `note` の種別。記法の class 名 → tsukumo が文字として描くラベル。
  * 並びは種別を言っている側から素の `note` の順（`class="note note-warn"` のように種別と素の `note` を並べて書くので、種別を言っているほうを先に見つける。素の `note` は「情報」の受け皿なので最後）。
@@ -25,6 +27,7 @@ export const REPORT_NOTE_KINDS = [
  * 塊にする前にモデルが逃げ道に書いていた `cols` / `card`。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  */
 const REPORT_BLOCK_MARK_NAMES = [
+  ...TIMELINE_MARK_NAMES,
   "cols",
   "cols-of-2",
   "cols-of-3",

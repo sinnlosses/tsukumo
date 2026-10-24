@@ -27,13 +27,13 @@
   並びは親の幅を取るので包みを縮めない（`notes` が空なら本体の幅に縮める）。画像が読めないときも、並びは
   「画像を出せない」の札の横に残る。6つ以上は `options`・`compare` と同じ違反で差し戻す
 - **図と表には番号つきの題を付ける**（2026-10-03。利用者決定は 2026-10-02）。図（`image`・`dimension`・
-  `compare`・`beforeAfter`・`mermaid`・`graph`・`chart`・`svg`・`stats`）は題を本体の**下**に「図 n」、表（`table`・`matrix`）は
+  `compare`・`beforeAfter`・`mermaid`・`graph`・`chart`・`timeline`・`svg`・`stats`）は題を本体の**下**に「図 n」、表（`table`・`matrix`）は
   題を本体の**上**に「表 n」。番号は図と表を別々に、節をまたいで塊の並びの順に1から数える。
   `options` は候補の採否の札なので数えない。**題が空でも番号は出し**（題の有無で番号の振り方が変わらない）、
-  **`fold` で畳んだ中も数える**（畳んでも番号が飛ばない）。引数は `title`（`image` だけ `caption`）で、`mermaid`・`graph`・`chart`・`svg` は
+  **`fold` で畳んだ中も数える**（畳んでも番号が飛ばない）。引数は `title`（`image` だけ `caption`）で、`mermaid`・`graph`・`chart`・`timeline`・`svg` は
   `title` を省いてよい。`stats` は `title` を持たないので、番号だけの題の行になる。
   **題は本体の幅を超えない**: `image`・`table`・`matrix`・`dimension`・`svg` は包みが本体の幅に縮み（20rem を下限にして、
-  短い表の題が何行にも折れないようにする）、題の行は包みの幅で折り返す。親の幅を取る `chart`・`stats`・`compare`・`beforeAfter` と、
+  短い表の題が何行にも折れないようにする）、題の行は包みの幅で折り返す。親の幅を取る `chart`・`timeline`・`stats`・`compare`・`beforeAfter` と、
   `pre` に描く `mermaid`・`graph` は、題と凡例の幅を図の幅の段にそろえる（段の選び方は次の項）。題の文字は inline code だけを解く（太字・リンクは効かない）
 - **`mermaid`・`graph` の図は、文字 12px（CSS px。svg の自然な文字 16px × 縮尺）を守る幅の段で描く**（2026-10-24）。
   図を差したあと、描画後の svg の縮尺を 42em（`body`）→ 63em（`wide`）→ 読む面（`full`）の順に当てて測り、12px 以上になる最初の段にする。

@@ -15,6 +15,7 @@ export function drawsShape(block: ReportBlock): boolean {
     case "graph":
     case "mermaid":
     case "svg":
+    case "timeline":
       return true
     default:
       return false

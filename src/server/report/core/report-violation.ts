@@ -9,6 +9,7 @@ import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { WorkPlanClosing } from "../../../shared/session/work-plan.ts"
 import type { GraphFault, MermaidFault, SvgFault, ToneFault } from "./report-figure-fault.ts"
 import type { MarkdownNotation } from "./report-markdown-notation.ts"
+import type { TimelineBlockFault } from "./timeline-fault.ts"
 
 /** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
 export type ReportDraft = {
@@ -128,6 +129,12 @@ export type ReportViolation =
       readonly count: number
       readonly faults: readonly GraphFault[]
     }
+  /** `timeline` の塊の時刻が読めない・尺度が混ざる・昇順でない・終了が開始より前・`emphasis` が行に無い。`faults` は位置と理由だけで、行の名前と時刻の字は持たない。 */
+  | {
+      readonly kind: "broken-timeline"
+      readonly count: number
+      readonly faults: readonly TimelineBlockFault[]
+    }
   /** `conclusion` の1要素目が全角50字を超える。`count` は1か0、`length` は1要素目の字数。 */
   | { readonly kind: "long-first-sentence"; readonly count: number; readonly length: number }
   /** 節の `heading` が30字を超える、または疑問文（末尾が `?`・`？`）。`count` は該当の節の数。 */
@@ -183,6 +190,7 @@ export const VIOLATION_THRESHOLDS = {
   "unlegended-svg-tone": 0,
   "unlegended-graph-tone": 0,
   "broken-graph": 0,
+  "broken-timeline": 0,
   "code-mismatch": 0,
   "code-marks-range": 0,
   "region-range": 0,

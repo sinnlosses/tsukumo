@@ -227,7 +227,7 @@ export const chartBlockSchema = z
     chartKind: z
       .enum(REPORT_CHART_KINDS)
       .describe(
-        "bar は棒・line は折れ線・pie は円（series の先頭だけを描く）。前後の差が主役なら arrow（項目ごとの前→後の矢印）、2時点の多項目は slope（項目ごとの2点の線）。arrow・slope は series を前と後の2つにし、labels を項目にする。段の所要と重なりのように項目ごとの始まり〜終わりの区間は span（series は始まりと終わりの2つ、labels が項目）、全体に占める割合の内訳は share（100% の横棒1本。labels が部分の名前で、series の先頭だけを描く）",
+        "bar は棒・line は折れ線・pie は円（series の先頭だけを描く）。前後の差が主役なら arrow（項目ごとの前→後の矢印）、2時点の多項目は slope（項目ごとの2点の線）。arrow・slope は series を前と後の2つにし、labels を項目にする。段の所要と重なりのように項目ごとの始まり〜終わりの区間は span（series は始まりと終わりの2つ、labels が項目。時刻の目盛り・延び・出来事が要るなら timeline）、全体に占める割合の内訳は share（100% の横棒1本。labels が部分の名前で、series の先頭だけを描く）",
       ),
     labels: inlineText
       .array()

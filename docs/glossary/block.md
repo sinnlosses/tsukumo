@@ -29,7 +29,7 @@
 ### 塊
 
 - **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く。2026-10-12 利用者決定）/ `chart` / `svg`（座標つきの図形で書く図）/ `progress` / `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
+  `table` / `matrix` / `compare` / `beforeAfter`（前後）/ `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `graph`（`source` の1行1辺の記法で受ける flowchart。行頭の `+ ` / `- ` / `~ ` が足した・消した・変えたの印。節点だけの行は `名前 | 説明` で説明の1行を足せ、分岐・合流・囲み・点線の無い5節点以下の一本道はカードの連鎖で描く。2026-10-12 利用者決定）/ `chart` / `timeline`（時刻の軸に行ごとの帯・延びた分・出来事を並べる図。延び・出来事・一点の無い区間の長さの比べは `chart` の `span`）/ `svg`（座標つきの図形で書く図）/ `progress` / `options` / `claims`（確度つきの主張）/ `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/ `aside`（塊の傍注。下の「余白の柱」）/
   欄の `from` / `to`（表のセルの前後）・`tag`（表のセルの列挙型の札。同じ字は同じ色）・`emphasis`（表の行の強調。`{ cells, emphasis: true }`で3行まで。超えれば差し戻し）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`keyFigures`（`report` の欄。結論の直下に並べる 3〜4 個の数の札で、項目の形は `stats` の `items` と同じ。塊の欄ではない）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`cards`（`list` の `style` の並列の区画。2〜4項目を横に並べる）・`sides`（`compare` の2つの側。`heading` と `points`）・
   `before` / `after`（`beforeAfter` の前の側と後の側。`kind` が `image`〔`path`と任意の `region`（変わった場所の枠。% の `left`・`top`・`width`・`height`）〕/ `code`〔`language`・`source`〕/ `points` / `mermaid`〔`source`〕/ `svg`〔`width`・`height`・`shapes`〕の合併型）・
@@ -37,7 +37,9 @@
   `parts`（`dimension` の上から積む並び。領域の `name` / `size` / `before` と余白の `gap` / `before`）・`verdict`（`options` の候補の判定）・`claim` / `certainty` / `basis` / `howToVerify`（`claims` の項目。下の「確度つきの主張」）・`change`（`files` の変更の種別）・
   `path`（`image` の画像のファイル）・`caption`（`image` の何が見えるかの1行）・`notes`（`image` の番号つきの説明の並び）・
   `chartKind`（`chart` の種類。`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・`labels`（`chart` の横軸・扇形・項目・部分の名前）・
-  `series`（`chart` の系列。`name` と `values`）・`horizontal`（`chart` の `bar` を横棒にする真偽値）・`emphasis`（`chart` で差し色にする項目の名前の並び。`labels` の部分集合。`svg` の `rect` の `emphasis` とは別）/
+  `series`（`chart` の系列。`name` と `values`）・`horizontal`（`chart` の `bar` を横棒にする真偽値）・`emphasis`（`chart` で差し色にする項目の名前の並び。`labels` の部分集合。`svg` の `rect` の `emphasis` とは別。`timeline` では差し色にする行の `name` の並び）・
+  `rows`（`timeline` の行の並び。`name`・`start`・`end`〔省くと一点〕・`extra`・`lane`）・`start` / `end`（`timeline` の行の開始と終了。`HH:MM`・ISO の日時・分の数のどれかで、1つの塊の中で混ぜない）・
+  `extra`（`timeline` の行の `end` より後へ延びた区切りの時刻の昇順の並び）・`lane`（`timeline` の行の役ごとのまとまり）・`events`（`timeline` の出来事の印の並び。`at` と `label`）・`at`（出来事の時刻）/
   `ReportBlockField`（使われ方の記録で数える欄の名前）
 - **定義**: **節の中に並ぶ、種類の決まった本文の1単位**。種類ごとに決まった形で Markdown に組んで
   描く（`reportSectionsMarkdown`）。塊の文字は行頭の塊の記法と `<` を逃がし、インラインの記法

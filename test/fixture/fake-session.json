@@ -3957,6 +3957,108 @@
       ]
     },
     {
+      "name": "report-timeline",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "時刻の軸の図の見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "時刻の軸に並べるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "並べたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-timeline-1",
+            "conclusion": "架空の結論: 8 つの手順は 72 分で、架空の実装が 2 回延びた。",
+            "figure": {
+              "kind": "timeline",
+              "title": "架空の 8 手順は 14:00 から 72 分で、架空の実装が 2 回延びた",
+              "rows": [
+                { "name": "架空の受付", "start": "14:00", "end": "14:08" },
+                {
+                  "name": "架空の計画を書いて読み直す長い名前の手順",
+                  "start": "14:08",
+                  "end": "14:20",
+                  "extra": ["14:26"]
+                },
+                {
+                  "name": "架空の実装",
+                  "start": "14:20",
+                  "end": "14:36",
+                  "extra": ["14:44", "14:52"]
+                },
+                { "name": "架空の目視待ち", "start": "14:52" },
+                { "name": "架空の検証", "start": "14:52", "end": "15:00" },
+                { "name": "架空の受け入れ", "start": "15:00", "end": "15:05" },
+                { "name": "架空の振り返り", "start": "15:05", "end": "15:08" },
+                { "name": "架空の送り出し", "start": "15:08", "end": "15:12" }
+              ],
+              "events": [{ "at": "14:40", "label": "架空の割り込み" }],
+              "emphasis": ["架空の実装"],
+              "fold": "",
+              "aside": ""
+            },
+            "sections": [
+              {
+                "heading": "架空の役ごとの所要",
+                "shapeTag": "time",
+                "blocks": [
+                  {
+                    "kind": "timeline",
+                    "title": "架空の役 2 つの所要は 40 分に収まった",
+                    "rows": [
+                      { "name": "架空の下調べ", "start": 0, "end": 12, "lane": "架空の役A" },
+                      { "name": "架空の下書き", "start": 12, "end": 30, "lane": "架空の役A" },
+                      { "name": "架空の見直し", "start": 5, "end": 25, "lane": "架空の役B" },
+                      {
+                        "name": "架空の清書",
+                        "start": 25,
+                        "end": 34,
+                        "extra": [40],
+                        "lane": "架空の役B"
+                      }
+                    ],
+                    "fold": "",
+                    "aside": ""
+                  }
+                ]
+              }
+            ],
+            "favor": ""
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-timeline-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1800,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "report-figure-none",
       "steps": [
         {

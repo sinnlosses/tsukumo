@@ -31,6 +31,7 @@ import {
 } from "./report-block-prose.ts"
 import { MAX_HEADING } from "./report-limit.ts"
 import { type RecordedReportShapeTag, REPORT_SHAPE_TAGS } from "./report-shape-tag.ts"
+import { timelineBlockSchema } from "./timeline-block.ts"
 
 // `report` の schema で `figure` と `sections` が共有する塊。名前を外すと両方に複製され、ツール定義が約1万字増える
 const namedBeforeAfter = beforeAfterBlockSchema.meta({ id: "BeforeAfterBlock" })
@@ -41,6 +42,7 @@ const namedGraph = graphBlockSchema.meta({ id: "GraphBlock" })
 const namedChart = chartBlockSchema.meta({ id: "ChartBlock" })
 const namedSvg = svgBlockSchema.meta({ id: "SvgBlock" })
 const namedImage = imageBlockSchema.meta({ id: "ImageBlock" })
+const namedTimeline = timelineBlockSchema.meta({ id: "TimelineBlock" })
 
 export const reportBlockSchema = z.discriminatedUnion("kind", [
   textBlockSchema,
@@ -57,6 +59,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   namedGraph,
   namedChart,
   namedSvg,
+  namedTimeline,
   progressBlockSchema,
   optionsBlockSchema,
   claimsBlockSchema,
@@ -94,6 +97,7 @@ export const reportFigureSchema = z.discriminatedUnion("kind", [
   namedMermaid,
   namedGraph,
   namedSvg,
+  namedTimeline,
   namedBeforeAfter,
   namedChart,
   namedStats,

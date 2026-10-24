@@ -52,6 +52,7 @@ import {
   proseTexts,
 } from "./report-prose-rule.ts"
 import { type ReportDraft, type ReportViolation, VIOLATION_THRESHOLDS } from "./report-violation.ts"
+import { timelineFaults } from "./timeline-fault.ts"
 
 /** レポートの規約違反を並べる。空なら違反は無い。 */
 export function reportViolations(report: ReportDraft): readonly ReportViolation[] {
@@ -75,6 +76,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
   const svgToneFaults = svgToneFaultsInSections(drawnSections)
   const graphFaults = graphFaultsInSections(drawnSections)
   const graphToneFaults = graphToneFaultsInSections(drawnSections)
+  const timelineFaultList = timelineFaults(drawnBlocks.filter((block) => block.kind === "timeline"))
 
   const counted = [
     { kind: "long-conclusion", count: report.conclusionSentenceChars.length },
@@ -143,6 +145,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     { kind: "unlegended-svg-tone", count: svgToneFaults.length, faults: svgToneFaults },
     { kind: "unlegended-graph-tone", count: graphToneFaults.length, faults: graphToneFaults },
     { kind: "broken-graph", count: graphFaults.length, faults: graphFaults },
+    { kind: "broken-timeline", count: timelineFaultList.length, faults: timelineFaultList },
     {
       kind: "code-mismatch",
       count: mismatchedCodeBlocks.length,
