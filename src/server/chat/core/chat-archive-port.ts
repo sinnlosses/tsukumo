@@ -52,6 +52,11 @@ export type ChatArchive = {
     limits: ChatUnconsolidatedLimits,
     range: ChatUnconsolidatedRange,
   ) => ChatUnconsolidatedBatch
+  /**
+   * このプロセスが {@link ChatArchive.append} で書いた文面の UTF-8 バイト数の、そのパックの累計。
+   * ファイルは読まない。定着が `unconsolidated` を読むかどうかを先に決めるのに使う。
+   */
+  readonly appendedBytes: (packName: CharacterPackName) => number
   /** 定着ができたエピソードを1回の書き込みで追記する（`id` はここで振る）。書けなくても例外は投げず、失敗を返す。 */
   readonly appendEpisodes: (
     packName: CharacterPackName,

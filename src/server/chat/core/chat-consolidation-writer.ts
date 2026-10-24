@@ -128,7 +128,7 @@ export type ChatConsolidationLock = {
 /** 書く口に外の世界から渡すもの（配線が渡す）。 */
 export type ChatConsolidationWriterPorts = {
   /** 定着の入力の行の取り出しとエピソードの追記。 */
-  readonly archive: Pick<ChatArchive, "unconsolidated" | "appendEpisodes">
+  readonly archive: Pick<ChatArchive, "unconsolidated" | "appendEpisodes" | "appendedBytes">
   /**
    * そのパックの定着の錠を取る。プロセスをまたいで1本だけが取れる。
    * 取れなければ undefined（ほかの誰かが走らせている）。
@@ -175,17 +175,58 @@ export function createChatConsolidationWriter(
     },
   }
   const backoff = createChatConsolidationBackoff()
+  const dueGate = createDueGate(ports.archive)
   return async (packName, signal) => {
     if (backoff.holdsBack(packName)) {
       return BACKED_OFF
     }
+    if (dueGate.isTooEarly(packName)) {
+      return NOT_DUE
+    }
     const bounded = AbortSignal.any([signal, AbortSignal.timeout(CHAT_CONSOLIDATION_TIMEOUT_MS)])
     const outcome = await Promise.race([
-      consolidate(ports, shrinkTally, packName, bounded),
+      consolidate(ports, shrinkTally, dueGate, packName, bounded),
       abortion(bounded),
     ])
+    if (outcome.kind !== "not-due" && outcome.kind !== "locked") {
+      dueGate.reset(packName)
+    }
     backoff.note(packName, backoffEffectOf(outcome))
     return outcome
+  }
+}
+
+/**
+ * 契機に届くまで `unconsolidated` を読まないための控え（プロセスのメモリ）。
+ * 前に読んで契機に届かなかったときの未定着のバイト数に、その後このプロセスが追記したバイト数を足した値が契機に届くまで、読まずに not-due にする。
+ * 起こしてから最初の1回と、契機に届いて走らせたあとは控えが無いので読む（前のプロセスの書き残しや、続きの未定着を拾う）。
+ */
+type DueGate = {
+  readonly isTooEarly: (packName: CharacterPackName) => boolean
+  readonly defer: (packName: CharacterPackName, unconsolidatedBytes: number) => void
+  readonly reset: (packName: CharacterPackName) => void
+}
+
+function createDueGate(archive: Pick<ChatArchive, "appendedBytes">): DueGate {
+  const deferred = new Map<string, { readonly appendedAt: number; readonly bytes: number }>()
+  return {
+    isTooEarly: (packName) => {
+      const at = deferred.get(packName)
+      return (
+        at !== undefined &&
+        at.bytes + archive.appendedBytes(packName) - at.appendedAt <
+          CHAT_MEMORY_BUDGET.consolidateEveryBytes
+      )
+    },
+    defer: (packName, unconsolidatedBytes) => {
+      deferred.set(packName, {
+        appendedAt: archive.appendedBytes(packName),
+        bytes: unconsolidatedBytes,
+      })
+    },
+    reset: (packName) => {
+      deferred.delete(packName)
+    },
   }
 }
 
@@ -216,6 +257,7 @@ function backoffEffectOf(outcome: ChatConsolidationOutcome): ChatConsolidationBa
 async function consolidate(
   ports: ChatConsolidationWriterPorts,
   shrinkTally: ShrinkTally,
+  dueGate: DueGate,
   packName: CharacterPackName,
   signal: AbortSignal,
 ): Promise<ChatConsolidationOutcome> {
@@ -228,7 +270,7 @@ async function consolidate(
     return LOCKED
   }
   try {
-    return await consolidateLocked(ports, shrinkTally, packName, signal)
+    return await consolidateLocked(ports, shrinkTally, dueGate, packName, signal)
   } finally {
     lock.release()
   }
@@ -237,6 +279,7 @@ async function consolidate(
 async function consolidateLocked(
   ports: ChatConsolidationWriterPorts,
   shrinkTally: ShrinkTally,
+  dueGate: DueGate,
   packName: CharacterPackName,
   signal: AbortSignal,
 ): Promise<ChatConsolidationOutcome> {
@@ -256,6 +299,7 @@ async function consolidateLocked(
       lastEntry === undefined ||
       (!batch.overflowed && batch.usedBytes < CHAT_MEMORY_BUDGET.consolidateEveryBytes)
     ) {
+      dueGate.defer(packName, batch.usedBytes)
       return NOT_DUE
     }
 

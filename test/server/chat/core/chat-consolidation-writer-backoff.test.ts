@@ -56,10 +56,13 @@ function createHarness() {
     markUndelivered: () => {},
     markDelivered: () => {},
   }
+  let appended = 0
   const write = createChatConsolidationWriter({
     archive: {
       unconsolidated: () => (reply === "not-due" ? { ...DUE_BATCH, usedBytes: 0 } : DUE_BATCH),
       appendEpisodes: () => ({ kind: "written" }),
+      // 呼ぶたびに契機の分だけ追記が進むことにして、契機の手前の読み飛ばしを起こさない。
+      appendedBytes: () => (appended += CHAT_MEMORY_BUDGET.consolidateEveryBytes),
     },
     lockConsolidation: () => {
       locks += 1

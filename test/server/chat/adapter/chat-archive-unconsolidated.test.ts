@@ -70,6 +70,17 @@ describe("createChatArchive の unconsolidated", () => {
     return record.at
   }
 
+  it("appendedBytes は、そのパックにこのプロセスが追記した文面のバイト数を累計する", () => {
+    const chatArchive = createChatArchive(root())
+    expect(chatArchive.appendedBytes(PACK)).toBe(0)
+
+    appendRequest(chatArchive, 19, TWELVE_BYTES)
+    appendRequest(chatArchive, 20, TWELVE_BYTES)
+
+    expect(chatArchive.appendedBytes(PACK)).toBe(24)
+    expect(chatArchive.appendedBytes(characterPackName("other-pack"))).toBe(0)
+  })
+
   it("エピソードが無ければアーカイブの最初から、窓の外の行を古い→新しいで返す", () => {
     const chatArchive = createChatArchive(root())
     appendRequest(chatArchive, 19, "19日の依頼")

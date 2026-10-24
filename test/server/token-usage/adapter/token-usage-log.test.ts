@@ -1,4 +1,12 @@
-import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
+import {
+  appendFileSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  utimesSync,
+  writeFileSync,
+} from "node:fs"
 import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
@@ -308,6 +316,30 @@ describe("readRange", () => {
       "2026-09-22",
       "2026-09-23",
     ])
+  })
+
+  // 中身だけを差し替えて mtime と size を戻す。開き直せば差し替えた中身が見え、開かなければ前の中身のまま。
+  it("2回目の読みで (mtime, size) が同じファイルは開かず、変わったファイルは読み直す", () => {
+    const log = createTokenUsageLog(NO_TASK, root())
+    log.append(entry(at(9, 0, 21)))
+    log.append(entry(at(9, 0, 22)))
+    const period = { startDate: "2026-09-21", endDate: "2026-09-22" }
+    const unchangedPath = join(root(), "2026-09-21.jsonl")
+    // 秒に丸めた時刻にしておくと、書き戻した mtime が桁落ちで食い違わない。
+    const fixedSeconds = 1_790_000_000
+    utimesSync(unchangedPath, fixedSeconds, fixedSeconds)
+    expect(log.readRange(period).length).toBe(2)
+
+    const before = statSync(unchangedPath)
+    const replaced = readFileSync(unchangedPath, "utf8").replace('"work"', '"chat"')
+    writeFileSync(unchangedPath, replaced)
+    utimesSync(unchangedPath, fixedSeconds, fixedSeconds)
+    expect(statSync(unchangedPath).size).toBe(before.size)
+
+    expect(log.readRange(period).map((record) => record.mode)).toEqual(["work", "work"])
+
+    log.append(entry(at(9, 1, 22)))
+    expect(log.readRange(period).length).toBe(3)
   })
 
   it("記録が無い期間・置き場がまだ無いときは空の並びを返す（例外にならない）", () => {

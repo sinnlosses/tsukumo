@@ -68,7 +68,8 @@ function createHarness() {
   let lastBatchLength = 0
   let synopsisCount = 0
 
-  const faultyArchive: Pick<ChatArchive, "unconsolidated" | "appendEpisodes"> = {
+  const faultyArchive: Pick<ChatArchive, "unconsolidated" | "appendEpisodes" | "appendedBytes"> = {
+    appendedBytes: (packName) => archive.appendedBytes(packName),
     unconsolidated: (packName, limits, range) => {
       const batch = archive.unconsolidated(packName, limits, range)
       lastBatchLength = batch.entries.length

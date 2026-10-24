@@ -19,7 +19,7 @@
 // `kept.jsonl`（「残す」旗の索引）は書きも読みもしない。
 // 過去に書かれたファイルが残っていても消さず、単に読まない。
 
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs"
+import { readdirSync, rmSync } from "node:fs"
 import { join } from "node:path"
 
 import { z } from "zod"
@@ -29,11 +29,6 @@ import {
   parseCharacterPackName,
 } from "../../../shared/character-pack/character.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
-import {
-  parsePromptImage,
-  promptImageIdSchema,
-  type PromptImageMediaType,
-} from "../../../shared/session-driver/prompt-image.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
 import {
   appendJsonLine,
@@ -52,8 +47,6 @@ import type {
 import type {
   ChatArchive,
   ChatArchiveEntry,
-  ChatArchiveImage,
-  ChatArchiveImageWriteResult,
   ChatEpisodeReadResult,
   ChatEpisodeRecallListResult,
   ChatReadbackLimits,
@@ -65,21 +58,11 @@ import type {
 import { takeWithinBytes } from "../core/chat-byte-budget.ts"
 import { scoreChatEpisodes, type ChatEpisodeRecord } from "../core/chat-episode-score.ts"
 import { isAfterAt, isBeforeAt } from "../core/chat-instant-order.ts"
+import { CHAT_IMAGE_DIR_NAME, writeChatImage } from "./chat-archive-image.ts"
 import { appendEpisodes, readEpisodes } from "./chat-episode-index.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-archive/`）。 */
 const CHAT_ARCHIVE_DIR_NAME = "chat-archive"
-
-/** パックの下の、雑談の画像の置き場のディレクトリ名。 */
-const CHAT_IMAGE_DIR_NAME = "images"
-
-/** 画像のファイルの拡張子。受け付ける形式の表（`PROMPT_IMAGE_MEDIA_TYPES`）と1対1。 */
-const CHAT_IMAGE_EXTENSIONS = {
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/gif": "gif",
-  "image/webp": "webp",
-} as const satisfies Record<PromptImageMediaType, string>
 
 /** 雑談の画像を残す日数。名前の先頭の日付がこれより古いファイルは消す。 */
 const CHAT_IMAGE_RETENTION_DAYS = 7
@@ -183,13 +166,18 @@ export function pruneChatImages(
  * `append` のたびに `packName` と `entry.at`（ローカル日付）から行き先のパスを組み立てるので、パックの切り替えをまたいでも作り直す必要が無い。
  */
 export function createChatArchive(root: string = chatArchiveDir()): ChatArchive {
+  const appendedBytes = new Map<string, number>()
   return {
     append: (packName, entry) => {
-      appendJsonLine(
+      const written = appendJsonLine(
         dateFilePath(join(root, packName), localDateKey(entry.at)),
         toArchiveRecord(packName, entry),
       )
+      if (written) {
+        appendedBytes.set(packName, (appendedBytes.get(packName) ?? 0) + byteLength(entry.text))
+      }
     },
+    appendedBytes: (packName) => appendedBytes.get(packName) ?? 0,
     writeImage: (packName, image) => writeChatImage(root, packName, image),
     readRecent: (packName, limits) => readReadback(root, packName, limits),
     unconsolidated: (packName, limits, range) => readUnconsolidated(root, packName, limits, range),
@@ -239,32 +227,6 @@ function toArchiveRecord(packName: CharacterPackName, entry: ChatArchiveEntry): 
     expression: entry.kind === "speech" ? entry.expression : undefined,
     images: entry.kind === "request" ? entry.images : undefined,
     imageFiles: entry.kind === "request" && entry.mode === "chat" ? entry.imageFiles : undefined,
-  }
-}
-
-/**
- * 雑談の画像1枚を `<root>/<パック名>/images/<YYYY-MM-DD>-<id>.<拡張子>` に書く（{@link ChatArchive.writeImage} の実装）。
- * 日付は `at` のローカル日付で、期限切れの掃除は名前の先頭の日付だけを見る。
- * id・data URL のどちらかが通らないときはパスを組み立てずに失敗を返す。
- * 同じ名前のファイルがあれば上書きせずに失敗にする。
- */
-function writeChatImage(
-  root: string,
-  packName: CharacterPackName,
-  image: ChatArchiveImage,
-): ChatArchiveImageWriteResult {
-  const source = parsePromptImage(image.dataUrl)
-  if (!promptImageIdSchema.safeParse(image.id).success || source === undefined) {
-    return { kind: "failed", error: undefined }
-  }
-  const fileName = `${localDateKey(image.at)}-${image.id}.${CHAT_IMAGE_EXTENSIONS[source.mediaType]}`
-  const dir = join(root, packName, CHAT_IMAGE_DIR_NAME)
-  try {
-    mkdirSync(dir, { recursive: true })
-    writeFileSync(join(dir, fileName), Buffer.from(source.base64, "base64"), { flag: "wx" })
-    return { kind: "written", fileName }
-  } catch (error) {
-    return { kind: "failed", error }
   }
 }
 

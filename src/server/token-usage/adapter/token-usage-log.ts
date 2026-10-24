@@ -13,6 +13,7 @@
 //
 // 書けなくても・読めなくても例外を投げない。壊れた行・版が違う行は読まずに1行ずつ落とす。
 
+import { statSync } from "node:fs"
 import { join } from "node:path"
 
 import { z } from "zod"
@@ -100,11 +101,27 @@ export function createTokenUsageLog(
   openTask: OpenTaskReader,
   root: string = tokenUsageDir(),
 ): TokenUsageLog {
+  const cache: ReadCache = new Map()
   return {
     append: (entry) => {
       appendJsonLine(dateFilePath(root, localDateKey(entry.at)), toRecord(entry, openTask))
     },
-    readRange: (period) => readRecordsInRange(root, period),
+    readRange: (period) => readRecordsInRange(root, period, cache),
+  }
+}
+
+/** 読んだファイルの検証済みの行。`(mtime, size)` が変わらない間は開き直さない。 */
+type ReadCache = Map<
+  string,
+  { readonly mtimeMs: number; readonly size: number; readonly records: readonly TokenUsageRecord[] }
+>
+
+function statOf(path: string): { mtimeMs: number; size: number } | undefined {
+  try {
+    const { mtimeMs, size } = statSync(path)
+    return { mtimeMs, size }
+  } catch {
+    return undefined
   }
 }
 
@@ -127,13 +144,30 @@ function toRecord(entry: TokenUsageEntry, openTask: OpenTaskReader): TokenUsageR
  * 期間に入る日付のファイルだけを開き、古い→新しい順に行を集める（`TokenUsageLog.readRange` の実装）。
  * 期間の外のファイルは開かない（ファイル名が日付そのものを表すので、開く前に範囲で絞り込める）。
  */
-function readRecordsInRange(root: string, period: TokenUsagePeriod): readonly TokenUsageRecord[] {
+function readRecordsInRange(
+  root: string,
+  period: TokenUsagePeriod,
+  cache: ReadCache,
+): readonly TokenUsageRecord[] {
   return dateFileNamesBetween(root, period.startDate, period.endDate).flatMap((fileName) =>
-    readValidRecords(join(root, fileName)),
+    readValidRecords(join(root, fileName), cache),
   )
 }
 
-/** 1ファイルの行を検証して返す（{@link tokenUsageRecordSchema} を通らない行は1行ずつ落とす）。 */
-function readValidRecords(path: string): readonly TokenUsageRecord[] {
-  return readValidLines(path, tokenUsageRecordSchema)
+/**
+ * 1ファイルの行を検証して返す（{@link tokenUsageRecordSchema} を通らない行は1行ずつ落とす）。
+ * 読む前の `(mtime, size)` を控えるので、読んでいる間に追記されても次の読みで気づく。
+ */
+function readValidRecords(path: string, cache: ReadCache): readonly TokenUsageRecord[] {
+  const stat = statOf(path)
+  if (stat === undefined) {
+    return []
+  }
+  const cached = cache.get(path)
+  if (cached?.mtimeMs === stat.mtimeMs && cached.size === stat.size) {
+    return cached.records
+  }
+  const records = readValidLines(path, tokenUsageRecordSchema)
+  cache.set(path, { ...stat, records })
+  return records
 }

@@ -104,8 +104,10 @@ function createPorts(
     markUndelivered: () => {},
     markDelivered: () => {},
   }
+  let appended = 0
   const write = createChatConsolidationWriter({
     archive: {
+      appendedBytes: () => appended,
       unconsolidated: (_packName, given) => {
         limits.push(given)
         return batch
@@ -145,6 +147,9 @@ function createPorts(
     episodes,
     queries,
     summaryPacks,
+    appendBytes: (bytes: number) => {
+      appended += bytes
+    },
     summary: () => summary,
     setSummary: (next: string) => {
       summary = next
@@ -173,6 +178,25 @@ describe("createChatConsolidationWriter", () => {
         maxBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2,
       },
     ])
+  })
+
+  it("契機に届かなかったあと、追記が契機に届くまでは行を読まず not-due。届くと読む", async () => {
+    const half = CHAT_MEMORY_BUDGET.consolidateEveryBytes / 2
+    const ports = createPorts({ ...DUE_BATCH, usedBytes: half }, () =>
+      Promise.resolve(VALID_OUTPUT),
+    )
+
+    // 起こしてから最初の1回は読む。
+    expect(await ports.write(PACK, NEVER_ABORTED)).toEqual({ kind: "not-due" })
+    expect(ports.limits.length).toBe(1)
+
+    ports.appendBytes(half - 1)
+    expect(await ports.write(PACK, NEVER_ABORTED)).toEqual({ kind: "not-due" })
+    expect(ports.limits.length).toBe(1)
+
+    ports.appendBytes(1)
+    expect(await ports.write(PACK, NEVER_ABORTED)).toEqual({ kind: "not-due" })
+    expect(ports.limits.length).toBe(2)
   })
 
   it("錠を取れなければ行も読まず query() も起こさず locked", async () => {

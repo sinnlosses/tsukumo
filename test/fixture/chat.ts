@@ -20,6 +20,7 @@ export const NOOP_CHAT_ARCHIVE = {
     episodesThrough: { kind: "none" },
     overflowed: false,
   }),
+  appendedBytes: () => 0,
   appendEpisodes: () => ({ kind: "written" }),
   recallList: () => ({ kind: "not-found" }),
   recallEpisode: () => ({ kind: "not-found" }),
