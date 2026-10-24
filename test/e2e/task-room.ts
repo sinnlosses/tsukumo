@@ -218,6 +218,23 @@ export async function openTaskBoardRoom(
   return room
 }
 
+/** タスク板の足場のうち、仕分けの対象のドラフト2件と保留の1件を置くもの。 */
+export async function openTaskBoardRoomWithDrafts(
+  run: ScenarioRun,
+  scenario: string,
+  domRoots: readonly DomRootName[],
+): Promise<ScenarioRoom> {
+  const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
+  await placeTasks(room, [
+    task("t-001", "架空のタスク（未着手）", "todo"),
+    task("t-002", "架空のタスク（ドラフト甲）", "draft"),
+    task("t-003", "架空のタスク（ドラフト乙）", "draft"),
+    task("t-004", "架空のタスク（保留）", "hold"),
+  ])
+  await room.page.getByRole("button", { name: "一覧を見る" }).click()
+  return room
+}
+
 /** 先頭のタスクの `description`。 */
 const RICH_DESCRIPTION = [
   "## 目的・背景",

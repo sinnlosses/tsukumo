@@ -6,7 +6,11 @@ import { describe, expect, it } from "vitest"
 import { git, initGitRepository } from "../fixture/git-repository.ts"
 import { expectReadable } from "./readability-scan.ts"
 import { useScenarioRun, VIEWPORTS } from "./scenario-run.ts"
-import { openTaskListRoomWithRunningTask, READY_TASK_ID } from "./task-room.ts"
+import {
+  openTaskBoardRoomWithDrafts,
+  openTaskListRoomWithRunningTask,
+  READY_TASK_ID,
+} from "./task-room.ts"
 
 // 会話の画面の押せるものが 24x24 以上で名前を持ち、字が 12px 以上・4.5:1 以上であること
 // （docs/architecture/testing.md「E2E のシナリオの一覧」）。期待値は撮らず、割れたものの名前と寸法を差分に出す。
@@ -71,6 +75,21 @@ describe("会話の画面の押す的と字", () => {
       domRoots: [],
     })
     await room.waitForEvent("turn-finished")
+    await expectReadable(room.page)
+  })
+})
+
+describe("タスク板のドラフトの仕分けの押す的と字", () => {
+  it("行の3択・却下の理由の欄・下端の帯の押せるもの・字が下限を割らない", async () => {
+    const room = await openTaskBoardRoomWithDrafts(run, "target-size-draft-sort", [])
+    const board = room.page.getByRole("dialog", { name: "タスク" })
+    await board.getByRole("button", { name: "ドラフト 2", exact: true }).click()
+    const groups = board.getByRole("radiogroup")
+    await groups.nth(0).getByRole("radio", { name: "却下" }).click()
+    await room.page.getByText("却下の理由:").waitFor()
+    await groups.nth(1).getByRole("radio", { name: "計画" }).click()
+    await room.page.getByRole("button", { name: "仕分けを戻す" }).waitFor()
+    await room.page.getByRole("button", { name: /を頼む$/ }).waitFor()
     await expectReadable(room.page)
   })
 })

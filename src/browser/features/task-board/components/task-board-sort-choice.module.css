@@ -1,4 +1,6 @@
-/* 行の右端の3択。選んだ札は左の「●」と字の色で言う（色だけで伝えない）。値は見本 `docs/history/mockup/task-board-draft-batch-2026-10-24.html` の写し。 */
+/* 行の右端の3択。選んだ札は左の「●」と字の色で言う（色だけで伝えない）。値は見本 `docs/history/mockup/task-board-draft-batch-2026-10-24.html` の写し。
+   ただし `.task-board-sort-drop.task-board-sort-on` の地だけ見本の 18% でなく 10%
+   （選んだ札の字が下限 4.5:1 を割るため。18% へ戻さない）。 */
 .task-board-sort-group {
   display: inline-flex;
   flex: none;
@@ -31,7 +33,7 @@
   color: var(--state-ok);
 }
 .task-board-sort-drop.task-board-sort-on {
-  background: color-mix(in srgb, var(--state-ng) 18%, transparent);
+  background: color-mix(in srgb, var(--state-ng) 10%, transparent);
   color: var(--state-ng);
 }
 .task-board-sort-hold.task-board-sort-on {
