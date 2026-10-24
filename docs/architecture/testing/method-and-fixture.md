@@ -37,6 +37,7 @@
 - **`pnpm run test <ファイル>` は、渡したファイルに加えて規約のテスト（`CONVENTION_TEST_PATHS`）も走らせる。**
   リポジトリ全体を読むので、変えたファイルとは別のテストが落ちうる。文書だけの変更で `pnpm run check` が打つ
   文書の検査は `pnpm run test:document` で、この一覧のうち層の検査（`test/architecture/`）と関数の並びの検査を除いたもの。
+  `test/scripts/document/` の直下で `repository-root` を import するか `readFileSync` を使うテストを `DOCUMENT_CHECK_TEST_FILES` へ足し忘れると、`test/scripts/dev/check-plan.test.ts` が落ちる。
   層の検査は塊ごとのファイルに分かれているので、一覧はファイルを並べずにディレクトリ `test/architecture/` を1つ指す。
   vitest は渡した文字列をパスの部分一致の絞り込みとして読むので、ディレクトリの中のファイルがすべて走り、
   そのうちの1つを別に渡しても二重には走らない（ファイルを足しても一覧を直さずに済む）。

@@ -1,7 +1,15 @@
 // `pnpm run check` が重い段（typecheck・lint・test:e2e）を省いてよいかの判定と、
 // その材料になる「変えたファイル」の集め方を検証する。
 
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 
@@ -146,7 +154,31 @@ describe("planStages", () => {
       expect(existsSync(file)).toBe(true)
     }
   })
+
+  test("test/scripts/document/ の下で実物のリポジトリを読むテストは DOCUMENT_CHECK_TEST_FILES に入っている", () => {
+    const registered: readonly string[] = DOCUMENT_CHECK_TEST_FILES
+    const missing = readdirSync(DOCUMENT_TEST_DIRECTORY)
+      .filter((name) => name.endsWith(".test.ts"))
+      .map((name) => `${DOCUMENT_TEST_DIRECTORY}/${name}`)
+      .filter((path) => readsRepository(readFileSync(path, "utf8")))
+      .filter((path) => !registered.includes(path))
+    expect(
+      missing,
+      `${missing.join(", ")} は文書だけの変更で走らない。DOCUMENT_CHECK_TEST_FILES に足すか、実物を読まないように直す`,
+    ).toEqual([])
+  })
+
+  test("readsRepository は repository-root の import か readFileSync を持つテキストだけ true", () => {
+    expect(readsRepository('import { REPOSITORY_ROOT } from "../repository-root.ts"\n')).toBe(true)
+    expect(readsRepository("expect(parseSection(text)).toBe(1)\n")).toBe(false)
+  })
 })
+
+const DOCUMENT_TEST_DIRECTORY = "test/scripts/document"
+
+function readsRepository(source: string): boolean {
+  return source.includes("repository-root") || source.includes("readFileSync(")
+}
 
 // 一時リポジトリで git を何回も走らせるので、`pnpm run check` の並列の負荷で既定の 5000ms を
 // 超えることがある。
