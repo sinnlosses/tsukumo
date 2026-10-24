@@ -6,7 +6,7 @@ import { readFileSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
 
-import { readGitCommonDirectory } from "../../shared/git-common-directory.ts"
+import { readGitCommonDirectory } from "../../shared/git-query.ts"
 
 const LOCK_FILE_NAME = "e2e-full-lock"
 

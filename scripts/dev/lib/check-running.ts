@@ -4,7 +4,7 @@
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { readGitCommonDirectory } from "../../shared/git-common-directory.ts"
+import { readGitCommonDirectory } from "../../shared/git-query.ts"
 
 const DIRECTORY_NAME = "check-running"
 

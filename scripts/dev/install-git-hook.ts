@@ -3,7 +3,7 @@
 import { join } from "node:path"
 import process from "node:process"
 
-import { readGitCommonDirectory } from "../shared/git-common-directory.ts"
+import { readGitCommonDirectory } from "../shared/git-query.ts"
 import { installPreCommitHook } from "./lib/git-hook-install.ts"
 
 const hooksDirectory = join(readGitCommonDirectory(process.cwd()), "hooks")

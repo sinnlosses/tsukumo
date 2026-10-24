@@ -8,7 +8,7 @@ import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import process from "node:process"
 
-import { readGitCommonDirectory } from "../../shared/git-common-directory.ts"
+import { readGitCommonDirectory } from "../../shared/git-query.ts"
 
 const DIRECTORY_NAME = "hook-denials"
 

@@ -1,90 +1,63 @@
-import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { fireEvent, screen, waitFor } from "@testing-library/react"
+import { describe, expect, it } from "vitest"
 
-import { CharacterEdit } from "../../../../../../../src/browser/components/page/character/components/character-edit/character-edit.tsx"
-import type { CharacterPackEntry } from "../../../../../../../src/shared/character-pack/character.ts"
 import { EXPRESSIONS } from "../../../../../../../src/shared/character-pack/expression.ts"
-import {
-  INITIAL_SESSION_STATE,
-  type SessionState,
-} from "../../../../../../../src/shared/session/session-state.ts"
-import {
-  characterInfo,
-  characterPackEntry,
-  shownPortraits,
-} from "../../../../../../fixture/character.ts"
+import type { SessionState } from "../../../../../../../src/shared/session/session-state.ts"
+import { shownPortraits } from "../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
-import { createTestQueryClient } from "../../../../../query-client.tsx"
-import { type CommandSpy, putSession } from "../../../../../session-store.ts"
+import {
+  clearConfirmDialog,
+  FIXTURE_CHARACTER,
+  renderCharacterEdit,
+  setUpCharacterEditScreen,
+} from "./character-edit-screen.tsx"
 
 // 立ち絵があるのはこの3つだけ（残りの表情は空の枠として並ぶ。数を見るテストがある）。
 const EXPRESSIONS_WITH_PORTRAIT = ["default", "thinking", "proud"] as const
 
-const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
-  expressions: [
-    { name: "default", label: "通常" },
-    { name: "thinking", label: "作業中" },
-    { name: "proud", label: "どや顔" },
-  ],
-  ...shownPortraits({
-    default: "/character/default.png?v=fictional@1",
-    thinking: "/character/thinking.png?v=fictional@1",
-    proud: "/character/proud.png?v=fictional@1",
-  }),
-})
-
-let themeStyleElement: HTMLStyleElement | undefined
-
-beforeEach(() => {
-  // `--accent` は差し色が定義に無いパックの初期値として読まれる（theme.css の代役）。
-  themeStyleElement = document.createElement("style")
-  themeStyleElement.textContent = ":root { --accent: #f2b0a0; }"
-  document.head.appendChild(themeStyleElement)
-})
-
-afterEach(() => {
-  cleanup()
-  themeStyleElement?.remove()
-  themeStyleElement = undefined
-  window.location.hash = ""
-})
-
-// `<CharacterEdit>` は立ち絵に `<Portrait>`（`useQuery`）を使うので `QueryClientProvider` が要る
-// （このフィクスチャの立ち絵はラスタなので実際には fetch しないが、hook 自体は呼ばれる）。
-function renderCharacterEdit(
-  character: SessionState["character"],
-  dispatch: CommandSpy = () => {},
-  characterPacks: readonly CharacterPackEntry[] = [],
-): void {
-  putSession({ ...INITIAL_SESSION_STATE, character, characterPacks }, dispatch)
-  const queryClient = createTestQueryClient()
-  render(
-    <QueryClientProvider client={queryClient}>
-      <CharacterEdit />
-    </QueryClientProvider>,
-  )
+type ImageFieldCase = {
+  label: string
+  kind: "Background" | "Face" | "Mini"
+  blankSelector: string
+  blankText: string
+  alt: string
+  url: string
+  present: (url: string) => Partial<NonNullable<SessionState["character"]>>
 }
 
-/** 表情を消す前の確かめ（`PortraitClearConfirm`）。開いていなければ `null`。 */
-function clearConfirmDialog(): Element | null {
-  return document.querySelector(".character-clear-confirm")
-}
-
-/** キャラクターを消す前の確かめ（`CharacterDeleteConfirm`）。開いていなければ `null`。 */
-function deleteConfirmDialog(): Element | null {
-  return document.querySelector(".character-delete-dialog")
-}
-
-/**
- * 名前と自己紹介文を設定するダイアログ（`CharacterProfileEditDialog`）。開いていなければ
- * `null`。作るダイアログと同じ `.character-create-dialog` を流用しているので `aria-label` で見分ける。
- */
-function profileEditDialog(): Element | null {
-  return document.querySelector('dialog[aria-label="名前と自己紹介文を設定する"]')
-}
+const IMAGE_FIELDS = [
+  {
+    label: "背景",
+    kind: "Background",
+    blankSelector: ".character-background-blank",
+    blankText: "背景なし",
+    alt: "いまの背景",
+    url: "/character/background.png?v=fictional@1",
+    present: (url: string) => ({ background: { image: url, veil: 0.75 } }),
+  },
+  {
+    label: "顔",
+    kind: "Face",
+    blankSelector: ".character-face-field-blank",
+    blankText: "顔なし",
+    alt: "いまの顔",
+    url: "/character/face.png?v=fictional@1",
+    present: (url: string) => ({ face: url }),
+  },
+  {
+    label: "ミニ立ち絵",
+    kind: "Mini",
+    blankSelector: ".character-mini-field-blank",
+    blankText: "いつもの立ち絵を縮めて使う",
+    alt: "いまのミニ立ち絵",
+    url: "/character/mini.png?v=fictional@1",
+    present: (url: string) => ({ mini: url, hasOwnMini: true }),
+  },
+] satisfies readonly ImageFieldCase[]
 
 describe("CharacterEdit", () => {
+  setUpCharacterEditScreen()
+
   // 必須の1つ（default）は消せない（`docs/requirements.md`「キャラクターパック」）。画面にも口を出さない。
   it("default には消す口を出さない（立ち絵があっても）", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
@@ -253,120 +226,6 @@ describe("CharacterEdit", () => {
     expect(input.value).toBe("")
   })
 
-  // 画面を開いただけでは何も送らない（`docs/coding-standards.md`「useEffect は4類型だけ」の
-  // タイマーは効かせるが、起こすのは onChange だけ）。
-  it("開いただけでは何も送らない", async () => {
-    vi.useFakeTimers()
-    try {
-      const calls: unknown[] = []
-      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-
-      await vi.advanceTimersByTimeAsync(250)
-
-      expect(calls).toEqual([])
-    } finally {
-      vi.useRealTimers()
-    }
-  })
-
-  // 引きずったまま画面を閉じても、まだ送っていない最後の値を落とさない
-  // （`useDebouncedCallback` のアンマウント時のフラッシュ）。
-  it("送信前に画面を閉じても、待っていた最後の値をそのまま送る", () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-
-    fireEvent.change(screen.getByLabelText("仕事"), { target: { value: "#123456" } })
-    expect(calls).toEqual([])
-    cleanup()
-
-    expect(calls).toEqual([
-      {
-        procedure: "characterPack.setAccent",
-        pack: "fictional",
-        target: "work",
-        color: "#123456",
-      },
-    ])
-  })
-
-  it("画面の差し色（仕事 / 雑談）の口を出す", () => {
-    renderCharacterEdit({ ...FIXTURE_CHARACTER, accent: "#f2b0a0", chatAccent: "#f2984a" })
-
-    expect(
-      typedElement(screen.getByLabelText("仕事"), HTMLInputElement, "仕事の入力欄").value,
-    ).toBe("#f2b0a0")
-    expect(
-      typedElement(screen.getByLabelText("雑談"), HTMLInputElement, "雑談の入力欄").value,
-    ).toBe("#f2984a")
-    expect(screen.getByRole("button", { name: "雑談も仕事と同じにする" })).toBeDefined()
-    expect(screen.queryByText("雑談も仕事と同じ")).toBeNull()
-    // 色だけにせず、今の値を16進の字でも添える。
-    expect(screen.getByText("#f2984a")).toBeDefined()
-  })
-
-  it("chatAccent が無いパックでは、雑談の見本に仕事の差し色と「雑談も仕事と同じ」の字を出し、戻す口は出さない", () => {
-    renderCharacterEdit({ ...FIXTURE_CHARACTER, accent: "#f2b0a0", chatAccent: undefined })
-
-    expect(
-      typedElement(screen.getByLabelText("雑談"), HTMLInputElement, "雑談の入力欄").value,
-    ).toBe("#f2b0a0")
-    expect(screen.queryByRole("button", { name: "雑談も仕事と同じにする" })).toBeNull()
-    // 色見本が仕事と同じ色なのを、色だけでなく字でも伝える（13.1 原則1）。
-    expect(screen.getByText("雑談も仕事と同じ")).toBeDefined()
-  })
-
-  it("仕事の差し色を変えると、少し待ってから characterPack.setAccent（target: work）を dispatch する", async () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-
-    fireEvent.change(screen.getByLabelText("仕事"), { target: { value: "#123456" } })
-    expect(calls).toEqual([])
-
-    await waitFor(() => {
-      expect(calls).toEqual([
-        {
-          procedure: "characterPack.setAccent",
-          pack: "fictional",
-          target: "work",
-          color: "#123456",
-        },
-      ])
-    })
-  })
-
-  it("「雑談も仕事と同じにする」を押すと characterPack.clearChatAccent を dispatch する", () => {
-    const calls: unknown[] = []
-    renderCharacterEdit({ ...FIXTURE_CHARACTER, chatAccent: "#f2984a" }, (command) =>
-      calls.push(command),
-    )
-
-    fireEvent.click(screen.getByRole("button", { name: "雑談も仕事と同じにする" }))
-
-    expect(calls).toEqual([{ procedure: "characterPack.clearChatAccent", pack: "fictional" }])
-  })
-
-  it("画面から変えられないパックでは、画面の差し色と戻す口も操作できない", () => {
-    renderCharacterEdit({ ...FIXTURE_CHARACTER, chatAccent: "#f2984a", editable: false })
-
-    expect(
-      typedElement(screen.getByLabelText("仕事"), HTMLInputElement, "仕事の入力欄").disabled,
-    ).toBe(true)
-    expect(
-      typedElement(screen.getByLabelText("雑談"), HTMLInputElement, "雑談の入力欄").disabled,
-    ).toBe(true)
-    expect(
-      screen.getByRole("button", { name: "雑談も仕事と同じにする" }).getAttribute("aria-disabled"),
-    ).toBe("true")
-  })
-
-  it("差し色がまったく無いパックでは、--accent の値を初期値にする（JS 側に既定の色を持たない）", () => {
-    renderCharacterEdit({ ...FIXTURE_CHARACTER, accent: undefined })
-
-    expect(
-      typedElement(screen.getByLabelText("仕事"), HTMLInputElement, "仕事の入力欄").value,
-    ).toBe("#f2b0a0")
-  })
-
   it("画面から変えられないパックでは、口を出すが操作できない（理由も出す）", () => {
     renderCharacterEdit({ ...FIXTURE_CHARACTER, editable: false })
 
@@ -385,148 +244,94 @@ describe("CharacterEdit", () => {
     )
   })
 
-  // 背景（`docs/architecture/screen-design.md`「背景」）。口は「差し替える」と「消す」の2つだけで、覆いの濃さの
-  // つまみは出さない。
-  it("背景が無いパックでは、点線の枠と「背景なし」を出し、消す口は出さない", () => {
-    renderCharacterEdit(FIXTURE_CHARACTER)
+  // 背景・顔・ミニ立ち絵は同じ `<ImageField>` の口（`docs/architecture/screen-design.md`「背景」「顔」
+  // 「ミニ立ち絵」）。差し替える・消すの2つだけで、覆いの濃さのつまみは背景にだけ要らない。
+  it.each(IMAGE_FIELDS)(
+    "$label が無いパックでは、点線の枠と「$blankText」を出し、消す口は出さない",
+    ({ label, blankSelector, blankText, alt }) => {
+      renderCharacterEdit(FIXTURE_CHARACTER)
 
-    expect(document.querySelectorAll(".character-background-blank")).toHaveLength(1)
-    expect(screen.getByText("背景なし")).toBeDefined()
-    expect(screen.getByLabelText("背景を差し替える")).toBeDefined()
-    expect(screen.queryByRole("button", { name: "背景を消す" })).toBeNull()
-  })
+      expect(document.querySelectorAll(blankSelector)).toHaveLength(1)
+      expect(screen.getByText(blankText)).toBeDefined()
+      expect(screen.getByLabelText(`${label}を差し替える`)).toBeDefined()
+      expect(screen.queryByAltText(alt)).toBeNull()
+      expect(screen.queryByRole("button", { name: `${label}を消す` })).toBeNull()
+    },
+  )
 
-  it("背景があるパックでは、いまの背景を小さく出して消す口も出す", () => {
-    renderCharacterEdit({
-      ...FIXTURE_CHARACTER,
-      background: { image: "/character/background.png?v=fictional@1", veil: 0.75 },
-    })
+  it.each(IMAGE_FIELDS)(
+    "$label があるパックでは、いまの画像を小さく出して消す口も出す",
+    ({ label, alt, url, present }) => {
+      renderCharacterEdit({ ...FIXTURE_CHARACTER, ...present(url) })
 
-    expect(
-      typedElement(
-        screen.getByAltText("いまの背景"),
-        HTMLImageElement,
-        "いまの背景の画像",
-      ).getAttribute("src"),
-    ).toBe("/character/background.png?v=fictional@1")
-    expect(screen.getByRole("button", { name: "背景を消す" })).toBeDefined()
-  })
+      expect(
+        typedElement(screen.getByAltText(alt), HTMLImageElement, `${alt}の画像`).getAttribute(
+          "src",
+        ),
+      ).toBe(url)
+      expect(screen.getByRole("button", { name: `${label}を消す` })).toBeDefined()
+    },
+  )
 
-  it("背景を消す口を押すと characterPack.clearBackground を dispatch する", () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(
-      {
-        ...FIXTURE_CHARACTER,
-        background: { image: "/character/background.png?v=fictional@1", veil: 0.75 },
-      },
-      (command) => calls.push(command),
-    )
+  it.each(IMAGE_FIELDS)(
+    "$label を消す口を押すと characterPack.clear$kind を dispatch する",
+    ({ label, kind, url, present }) => {
+      const calls: unknown[] = []
+      renderCharacterEdit({ ...FIXTURE_CHARACTER, ...present(url) }, (command) =>
+        calls.push(command),
+      )
 
-    fireEvent.click(screen.getByRole("button", { name: "背景を消す" }))
+      fireEvent.click(screen.getByRole("button", { name: `${label}を消す` }))
 
-    expect(calls).toEqual([{ procedure: "characterPack.clearBackground", pack: "fictional" }])
-  })
+      expect(calls).toEqual([{ procedure: `characterPack.clear${kind}`, pack: "fictional" }])
+    },
+  )
 
-  it("背景を選ぶと data URL を載せた characterPack.setBackground を dispatch し、入力欄を空に戻す", async () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-    const input = typedElement(
-      screen.getByLabelText("背景を差し替える"),
-      HTMLInputElement,
-      "背景を差し替えるの入力欄",
-    )
+  it.each(IMAGE_FIELDS)(
+    "$label を選ぶと data URL を載せた characterPack.set$kind を dispatch し、入力欄を空に戻す",
+    async ({ label, kind }) => {
+      const calls: unknown[] = []
+      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+      const input = typedElement(
+        screen.getByLabelText(`${label}を差し替える`),
+        HTMLInputElement,
+        `${label}を差し替えるの入力欄`,
+      )
 
-    fireEvent.change(input, {
-      target: { files: [new File(["png"], "forest.png", { type: "image/png" })] },
-    })
+      fireEvent.change(input, {
+        target: { files: [new File(["png"], "picture.png", { type: "image/png" })] },
+      })
 
-    await waitFor(() => {
-      expect(calls).toEqual([
-        {
-          procedure: "characterPack.setBackground",
-          pack: "fictional",
-          image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
-        },
-      ])
-    })
-    expect(input.value).toBe("")
-  })
+      await waitFor(() => {
+        expect(calls).toEqual([
+          {
+            procedure: `characterPack.set${kind}`,
+            pack: "fictional",
+            image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+          },
+        ])
+      })
+      expect(input.value).toBe("")
+    },
+  )
 
-  // 顔（`docs/architecture/screen-design.md`「顔」）。口は「差し替える」と「消す」の2つだけで、背景と
-  // 同じ形。
-  it("顔が無いパックでは、点線の丸と「顔なし」を出し、消す口は出さない", () => {
-    renderCharacterEdit(FIXTURE_CHARACTER)
+  it.each([
+    ["顔", /顔は SVG・PNG・GIF の 2 MiB までの画像/u],
+    ["ミニ立ち絵", /ミニ立ち絵は SVG・PNG・GIF の 2 MiB までの画像/u],
+  ])(
+    "%sの書き込みが断られたら、欄の下に受け付ける種類と 2 MiB の上限を言う一言を出す",
+    async (label, pattern) => {
+      renderCharacterEdit(FIXTURE_CHARACTER, () => Promise.reject(new Error("断り")))
 
-    expect(document.querySelectorAll(".character-face-field-blank")).toHaveLength(1)
-    expect(screen.getByText("顔なし")).toBeDefined()
-    expect(screen.getByLabelText("顔を差し替える")).toBeDefined()
-    expect(screen.queryByRole("button", { name: "顔を消す" })).toBeNull()
-  })
+      fireEvent.change(screen.getByLabelText(`${label}を差し替える`), {
+        target: { files: [new File(["png"], "picture.png", { type: "image/png" })] },
+      })
 
-  it("顔があるパックでは、いまの顔を小さく出して消す口も出す", () => {
-    renderCharacterEdit({
-      ...FIXTURE_CHARACTER,
-      face: "/character/face.png?v=fictional@1",
-    })
+      expect(await screen.findByText(pattern)).toBeDefined()
+    },
+  )
 
-    expect(
-      typedElement(
-        screen.getByAltText("いまの顔"),
-        HTMLImageElement,
-        "いまの顔の画像",
-      ).getAttribute("src"),
-    ).toBe("/character/face.png?v=fictional@1")
-    expect(screen.getByRole("button", { name: "顔を消す" })).toBeDefined()
-  })
-
-  it("顔を消す口を押すと characterPack.clearFace を dispatch する", () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(
-      { ...FIXTURE_CHARACTER, face: "/character/face.png?v=fictional@1" },
-      (command) => calls.push(command),
-    )
-
-    fireEvent.click(screen.getByRole("button", { name: "顔を消す" }))
-
-    expect(calls).toEqual([{ procedure: "characterPack.clearFace", pack: "fictional" }])
-  })
-
-  it("顔を選ぶと data URL を載せた characterPack.setFace を dispatch し、入力欄を空に戻す", async () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-    const input = typedElement(
-      screen.getByLabelText("顔を差し替える"),
-      HTMLInputElement,
-      "顔を差し替えるの入力欄",
-    )
-
-    fireEvent.change(input, {
-      target: { files: [new File(["png"], "face.png", { type: "image/png" })] },
-    })
-
-    await waitFor(() => {
-      expect(calls).toEqual([
-        {
-          procedure: "characterPack.setFace",
-          pack: "fictional",
-          image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
-        },
-      ])
-    })
-    expect(input.value).toBe("")
-  })
-
-  it("顔の書き込みが断られたら、欄の下に受け付ける種類と 2 MiB の上限を言う一言を出す", async () => {
-    renderCharacterEdit(FIXTURE_CHARACTER, () => Promise.reject(new Error("断り")))
-
-    fireEvent.change(screen.getByLabelText("顔を差し替える"), {
-      target: { files: [new File(["png"], "face.png", { type: "image/png" })] },
-    })
-
-    expect(await screen.findByText(/顔は SVG・PNG・GIF の 2 MiB までの画像/u)).toBeDefined()
-  })
-
-  // ミニ立ち絵。縮図は定義に `mini` を持つときだけ。
+  // ミニ立ち絵の縮図は定義に `mini` を持つときだけ。`mini` の URL が default に落ちていても持たないことになる。
   it("ミニ立ち絵を持たないパックでは、mini の URL が default に落ちていても点線の枠と一言を出し、消す口は出さない", () => {
     renderCharacterEdit({
       ...FIXTURE_CHARACTER,
@@ -534,28 +339,9 @@ describe("CharacterEdit", () => {
       hasOwnMini: false,
     })
 
-    expect(document.querySelectorAll(".character-mini-field-blank")).toHaveLength(1)
     expect(document.querySelectorAll(".character-mini-field-preview")).toHaveLength(0)
     expect(screen.getByText("いつもの立ち絵を縮めて使う")).toBeDefined()
-    expect(screen.getByLabelText("ミニ立ち絵を差し替える")).toBeDefined()
     expect(screen.queryByRole("button", { name: "ミニ立ち絵を消す" })).toBeNull()
-  })
-
-  it("ミニ立ち絵を持つパックでは、縮図を出して消す口も出す", () => {
-    renderCharacterEdit({
-      ...FIXTURE_CHARACTER,
-      mini: "/character/mini.png?v=fictional@1",
-      hasOwnMini: true,
-    })
-
-    expect(
-      typedElement(
-        screen.getByAltText("いまのミニ立ち絵"),
-        HTMLImageElement,
-        "いまのミニ立ち絵の画像",
-      ).getAttribute("src"),
-    ).toBe("/character/mini.png?v=fictional@1")
-    expect(screen.getByRole("button", { name: "ミニ立ち絵を消す" })).toBeDefined()
   })
 
   it("縮図を押すと拡大して見られる", () => {
@@ -568,53 +354,6 @@ describe("CharacterEdit", () => {
     fireEvent.click(screen.getByRole("button", { name: "ミニ立ち絵を拡大" }))
 
     expect(screen.getAllByAltText("いまのミニ立ち絵")).toHaveLength(2)
-  })
-
-  it("ミニ立ち絵を消す口を押すと characterPack.clearMini を dispatch する", () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(
-      { ...FIXTURE_CHARACTER, mini: "/character/mini.png?v=fictional@1", hasOwnMini: true },
-      (command) => calls.push(command),
-    )
-
-    fireEvent.click(screen.getByRole("button", { name: "ミニ立ち絵を消す" }))
-
-    expect(calls).toEqual([{ procedure: "characterPack.clearMini", pack: "fictional" }])
-  })
-
-  it("ミニ立ち絵を選ぶと data URL を載せた characterPack.setMini を dispatch し、入力欄を空に戻す", async () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-    const input = typedElement(
-      screen.getByLabelText("ミニ立ち絵を差し替える"),
-      HTMLInputElement,
-      "ミニ立ち絵を差し替えるの入力欄",
-    )
-
-    fireEvent.change(input, {
-      target: { files: [new File(["png"], "mini.png", { type: "image/png" })] },
-    })
-
-    await waitFor(() => {
-      expect(calls).toEqual([
-        {
-          procedure: "characterPack.setMini",
-          pack: "fictional",
-          image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
-        },
-      ])
-    })
-    expect(input.value).toBe("")
-  })
-
-  it("ミニ立ち絵の書き込みが断られたら、欄の下に受け付ける種類と 2 MiB の上限を言う一言を出す", async () => {
-    renderCharacterEdit(FIXTURE_CHARACTER, () => Promise.reject(new Error("断り")))
-
-    fireEvent.change(screen.getByLabelText("ミニ立ち絵を差し替える"), {
-      target: { files: [new File(["png"], "mini.png", { type: "image/png" })] },
-    })
-
-    expect(await screen.findByText(/ミニ立ち絵は SVG・PNG・GIF の 2 MiB までの画像/u)).toBeDefined()
   })
 
   it("画面から変えられないパックでは、ミニ立ち絵の差し替える・消すが押せない", () => {
@@ -654,243 +393,5 @@ describe("CharacterEdit", () => {
 
     expect(document.querySelectorAll("section")).toHaveLength(0)
     expect(document.querySelectorAll(".character-gallery")).toHaveLength(0)
-  })
-
-  // 名前と自己紹介文を設定するダイアログ（docs/architecture/screen-design/character-screen.md「名乗り」）。
-  describe("名前と自己紹介文を設定する", () => {
-    it("押すと、いまの名前とひとことを入れたダイアログを開く", () => {
-      renderCharacterEdit({ ...FIXTURE_CHARACTER, name: "架空の精霊", tagline: "気ままな相棒" })
-
-      fireEvent.click(screen.getByRole("button", { name: "名前と自己紹介文を設定する" }))
-
-      expect(profileEditDialog()?.hasAttribute("open")).toBe(true)
-      expect(
-        typedElement(screen.getByLabelText("名前"), HTMLInputElement, "名前の入力欄").value,
-      ).toBe("架空の精霊")
-      expect(
-        typedElement(screen.getByLabelText("自己紹介文"), HTMLInputElement, "自己紹介文の入力欄")
-          .value,
-      ).toBe("気ままな相棒")
-    })
-
-    it("名前とひとことを書き換えて保存すると、characterPack.setProfile を1回送って閉じる", () => {
-      const calls: unknown[] = []
-      renderCharacterEdit(
-        { ...FIXTURE_CHARACTER, name: "架空の精霊", tagline: "気ままな相棒" },
-        (command) => calls.push(command),
-      )
-
-      fireEvent.click(screen.getByRole("button", { name: "名前と自己紹介文を設定する" }))
-      fireEvent.change(screen.getByLabelText("名前"), { target: { value: "新しい名前" } })
-      fireEvent.change(screen.getByLabelText("自己紹介文"), {
-        target: { value: "新しいひとこと" },
-      })
-      fireEvent.click(screen.getByRole("button", { name: "保存する" }))
-
-      expect(calls).toEqual([
-        {
-          procedure: "characterPack.setProfile",
-          pack: "fictional",
-          name: "新しい名前",
-          tagline: "新しいひとこと",
-        },
-      ])
-      expect(profileEditDialog()).toBeNull()
-    })
-
-    it("「やめる」で閉じ、何も送らない", () => {
-      const calls: unknown[] = []
-      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-
-      fireEvent.click(screen.getByRole("button", { name: "名前と自己紹介文を設定する" }))
-      fireEvent.change(screen.getByLabelText("名前"), { target: { value: "触らない名前" } })
-      fireEvent.click(screen.getByRole("button", { name: "やめる" }))
-
-      expect(calls).toEqual([])
-      expect(profileEditDialog()).toBeNull()
-    })
-
-    it("画面から変えられないパックでは口を出さない", () => {
-      renderCharacterEdit({ ...FIXTURE_CHARACTER, editable: false })
-
-      expect(screen.queryByRole("button", { name: "名前と自己紹介文を設定する" })).toBeNull()
-    })
-  })
-
-  describe("プロフィールを設定する", () => {
-    const PACKS = [
-      characterPackEntry("fictional", "架空の精霊", { inUse: true, personaBody: "# 人格\n\n本文" }),
-    ]
-
-    function personaDialog(): Element | null {
-      return document.querySelector('dialog[aria-label="プロフィールを設定する"]')
-    }
-
-    it("押すと、いまの本文を入れたダイアログを開く", () => {
-      renderCharacterEdit(FIXTURE_CHARACTER, () => {}, PACKS)
-
-      fireEvent.click(screen.getByRole("button", { name: "プロフィールを設定する" }))
-
-      expect(personaDialog()?.hasAttribute("open")).toBe(true)
-      expect(
-        typedElement(screen.getByLabelText("本文"), HTMLTextAreaElement, "本文の入力欄").value,
-      ).toBe("# 人格\n\n本文")
-    })
-
-    it("書き換えて保存すると、characterPack.setPersona を1回送り、返りを待って閉じる", async () => {
-      const calls: unknown[] = []
-      let reply: () => void = () => {}
-      renderCharacterEdit(
-        FIXTURE_CHARACTER,
-        (command) => {
-          calls.push(command)
-          return new Promise<void>((resolve) => {
-            reply = resolve
-          })
-        },
-        PACKS,
-      )
-
-      fireEvent.click(screen.getByRole("button", { name: "プロフィールを設定する" }))
-      fireEvent.change(screen.getByLabelText("本文"), { target: { value: "新しい人格" } })
-      fireEvent.click(screen.getByRole("button", { name: "保存する" }))
-
-      expect(calls).toEqual([
-        { procedure: "characterPack.setPersona", pack: "fictional", persona: "新しい人格" },
-      ])
-      // 返る前に閉じると、流し直し前の古い本文で開き直せてしまう。
-      expect(personaDialog()).not.toBeNull()
-
-      reply()
-      await waitFor(() => {
-        expect(personaDialog()).toBeNull()
-      })
-    })
-
-    it("保存が断られたら閉じない", async () => {
-      const calls: unknown[] = []
-      renderCharacterEdit(
-        FIXTURE_CHARACTER,
-        (command) => {
-          calls.push(command)
-          return Promise.reject(new Error("断られた"))
-        },
-        PACKS,
-      )
-
-      fireEvent.click(screen.getByRole("button", { name: "プロフィールを設定する" }))
-      fireEvent.click(screen.getByRole("button", { name: "保存する" }))
-
-      await waitFor(() => {
-        expect(calls).toHaveLength(1)
-      })
-      expect(personaDialog()).not.toBeNull()
-    })
-
-    it("「やめる」で閉じ、何も送らない", () => {
-      const calls: unknown[] = []
-      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command), PACKS)
-
-      fireEvent.click(screen.getByRole("button", { name: "プロフィールを設定する" }))
-      fireEvent.change(screen.getByLabelText("本文"), { target: { value: "触らない" } })
-      fireEvent.click(screen.getByRole("button", { name: "やめる" }))
-
-      expect(calls).toEqual([])
-      expect(personaDialog()).toBeNull()
-    })
-
-    it("画面から変えられないパックでは口を出さない", () => {
-      renderCharacterEdit({ ...FIXTURE_CHARACTER, editable: false }, () => {}, PACKS)
-
-      expect(screen.queryByRole("button", { name: "プロフィールを設定する" })).toBeNull()
-    })
-  })
-
-  // このキャラクターを消す帯とその確かめ（docs/architecture/screen-design/character-screen.md「このキャラクターを消す」）。
-  describe("このキャラクターを消す", () => {
-    it("removal が none なら帯を出さない", () => {
-      renderCharacterEdit(FIXTURE_CHARACTER, () => {}, [
-        characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "none" }),
-      ])
-
-      expect(document.querySelector(".character-delete-band")).toBeNull()
-    })
-
-    it("使用中のパックは帯のボタンが押せない", () => {
-      renderCharacterEdit(FIXTURE_CHARACTER, () => {}, [
-        characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "delete" }),
-      ])
-
-      expect(
-        screen.getByRole("button", { name: /架空の精霊 を消す/ }).getAttribute("aria-disabled"),
-      ).toBe("true")
-    })
-
-    // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
-    // 選ぶ（`docs/architecture/screen-design/character-screen.md`「選んでいるパックは hash に持つ」）。
-    const OTHER_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
-      pack: "other",
-      name: "別の精霊",
-    })
-    const OTHER_PACKS: readonly CharacterPackEntry[] = [
-      characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "none" }),
-      characterPackEntry("other", "別の精霊", {
-        character: OTHER_CHARACTER,
-        inUse: false,
-        removal: "delete",
-      }),
-    ]
-
-    function selectOther(): void {
-      window.location.hash = "#character?pack=other"
-    }
-
-    it("押すと確かめのダイアログを開き、id が違うと「消す」が押せない", () => {
-      selectOther()
-      renderCharacterEdit(FIXTURE_CHARACTER, () => {}, OTHER_PACKS)
-
-      fireEvent.click(screen.getByRole("button", { name: /別の精霊 を消す/ }))
-
-      const dialog = deleteConfirmDialog()
-      expect(dialog?.hasAttribute("open")).toBe(true)
-      expect(screen.getByText("別の精霊 を消しますか？")).toBeDefined()
-      const okButton = screen.getByRole("button", { name: "消す" })
-      expect(okButton.getAttribute("aria-disabled")).toBe("true")
-
-      fireEvent.change(screen.getByLabelText("確かめのため、id を入力してください"), {
-        target: { value: "othe" },
-      })
-      expect(okButton.getAttribute("aria-disabled")).toBe("true")
-    })
-
-    it("id が完全に一致すると「消す」が押せ、characterPack.delete を1回だけ送って閉じる", () => {
-      selectOther()
-      const calls: unknown[] = []
-      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command), OTHER_PACKS)
-
-      fireEvent.click(screen.getByRole("button", { name: /別の精霊 を消す/ }))
-      fireEvent.change(screen.getByLabelText("確かめのため、id を入力してください"), {
-        target: { value: "other" },
-      })
-      const okButton = screen.getByRole("button", { name: "消す" })
-      expect(okButton.getAttribute("aria-disabled")).toBe("false")
-
-      fireEvent.click(okButton)
-
-      expect(calls).toEqual([{ procedure: "characterPack.delete", pack: "other" }])
-      expect(deleteConfirmDialog()).toBeNull()
-    })
-
-    it("「やめる」で閉じ、何も送らない", () => {
-      selectOther()
-      const calls: unknown[] = []
-      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command), OTHER_PACKS)
-
-      fireEvent.click(screen.getByRole("button", { name: /別の精霊 を消す/ }))
-      fireEvent.click(screen.getByRole("button", { name: "やめる" }))
-
-      expect(calls).toEqual([])
-      expect(deleteConfirmDialog()).toBeNull()
-    })
   })
 })
