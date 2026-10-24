@@ -41,6 +41,8 @@
   集計スクリプトは疑似セッションの行（`driver` が `fake`、版18以前は `sessionId` が `fake-session`）を既定で除き、`--include-fake` で含める
 - 版20: `keyFigures` が1つ以上あるか（`hasKeyFigures`）、`keyFigures` が無いのに結論の文（インラインコードの外）に数が3つ以上あるか
   （`conclusionNumbersWithoutKeyFigures`）。受け付けの行だけに入る。差し戻しにはせず、28日の数を見てから差し戻すか決める
+- 版21: 通した `report` が当たった数えるだけの条（`REPORT_REJECTION_MODES` が `count` の条）の名前を、差し戻しの行と同じ形の
+  `kind: "counted"` の行に書く。集計スクリプトは差し戻しの表に混ぜず、「数えるだけの条 × 回数」の表に出す
 
 4版以降の真偽値と数は、塊の欄とは別で外す基準の対象にしない。
 

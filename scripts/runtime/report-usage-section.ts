@@ -1,4 +1,4 @@
-// 使われ方の集計の表のうち、「割合の1行」だけで済む欄（2行以下の表・`keyFigures`）の組み立て。
+// 使われ方の集計の表のうち、「割合の1行」だけで済む欄（2行以下の表・`keyFigures`・段1の図・前後図の無い modified）の組み立て。
 
 import type { KeyFiguresRow, UsageRecord } from "./report-usage-row.ts"
 
@@ -30,6 +30,38 @@ export function shortTableSection(rows: readonly UsageRecord[]): string {
   ].join("\n")
 }
 
+/** modified のファイルがあるレポートのうち、前後図も画像も無かった数。 */
+export function modifiedWithoutVisualSection(reports: readonly UsageRecord[]): string {
+  if (reports.length === 0) {
+    return "modified のファイルがあるのに前後図も画像も無いレポート: 記録した行が無い"
+  }
+  return [
+    `modified のファイルがあるのに前後図も画像も無いレポート（前後図・画像の有無を記録した${String(reports.length)}件のうち。外す基準の対象ではない）:`,
+    modifiedWithoutVisualLine("全レポート", reports),
+    modifiedWithoutVisualLine(
+      "task の最終レポート",
+      reports.filter((record) => record.forTask),
+    ),
+  ].join("\n")
+}
+
+/** 段1の図（image・mermaid・graph・svg。beforeAfter の側を含む）を含むレポートの割合。 */
+export function figureSection(rows: readonly UsageRecord[]): string {
+  if (rows.length === 0) {
+    return "段1の図を含むレポート: 記録した行が無い"
+  }
+  return [
+    `段1の図（image・mermaid・graph・svg。beforeAfter の側を含む）を含むレポート（図の有無を記録した${String(rows.length)}件のうち。外す基準の対象ではない）:`,
+    shareLine("全レポート", "図あり", rows, (record) => record.hasFigure),
+    shareLine(
+      "task の最終レポート",
+      "図あり",
+      rows.filter((record) => record.forTask),
+      (record) => record.hasFigure,
+    ),
+  ].join("\n")
+}
+
 /** `keyFigures` の有無と、結論の文に数が3つ以上あるのに無いレポートの割合。分母は `keyFigures` の欄を記録した行。差し戻しにはしない。 */
 export function keyFiguresSection(rows: readonly KeyFiguresRow[]): string {
   if (rows.length === 0) {
@@ -53,4 +85,11 @@ export function keyFiguresSection(rows: readonly KeyFiguresRow[]): string {
       (record) => record.conclusionNumbersWithoutKeyFigures,
     ),
   ].join("\n")
+}
+
+function modifiedWithoutVisualLine(label: string, rows: readonly UsageRecord[]): string {
+  const modified = rows.filter((record) => record.hasModifiedFiles)
+  const missing = modified.filter((record) => !record.hasBeforeAfterOrImage).length
+  const percent = (modified.length === 0 ? 0 : (missing / modified.length) * 100).toFixed(1)
+  return `  ${label.padEnd(16)} modified あり ${String(modified.length).padStart(5)}  うち前後図も画像も無し ${String(missing).padStart(5)}  ${percent.padStart(5)}%`
 }

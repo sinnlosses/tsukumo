@@ -1,6 +1,10 @@
 // `ReportReview` の単体テストが共有する、手で書いた架空の下書き・イベントと、新しい事実の帳面を手で動かせる `ReportReview`。
 
 import {
+  REPORT_REJECTION_MODES,
+  type ReportRejectionModes,
+} from "../../src/server/report/core/rejection-mode.ts"
+import {
   createReportReview as createReviewWithNews,
   type ReportReview,
 } from "../../src/server/report/core/report-review.ts"
@@ -60,16 +64,24 @@ export type TestReview = ReportReview & {
   readonly setTasks: (tasks: readonly BackgroundTask[]) => void
 }
 
-export function createReportReview(workPlanStanding: () => WorkPlanStanding): TestReview {
+/** `modes` は条ごとの段。既定は本番の表。 */
+export function createReportReview(
+  workPlanStanding: () => WorkPlanStanding,
+  modes: ReportRejectionModes = REPORT_REJECTION_MODES,
+): TestReview {
   let hasNews = true
   let tasks: readonly BackgroundTask[] = []
-  const review = createReviewWithNews(workPlanStanding, {
-    hasNews: () => hasNews,
-    markDrawn: () => {
-      hasNews = false
+  const review = createReviewWithNews(
+    workPlanStanding,
+    {
+      hasNews: () => hasNews,
+      markDrawn: () => {
+        hasNews = false
+      },
+      backgroundTasks: () => tasks,
     },
-    backgroundTasks: () => tasks,
-  })
+    modes,
+  )
   return {
     ...review,
     raiseNews: () => {

@@ -147,6 +147,7 @@ describe("createReportUsageLog", () => {
   it("差し戻しの件の欄は全部行に残る", async () => {
     const log = createReportUsageLog("json-schema", root())
     const rejection = {
+      mode: "reject",
       at: at(9, 5),
       sessionId: "claude-session-1",
       reasons: ["resend"],
@@ -159,7 +160,26 @@ describe("createReportUsageLog", () => {
 
     const lines = readLines("2026-09-22.jsonl")
     expect(lines).toHaveLength(1)
-    expectEveryFieldKept(rejection, lines[0])
+    // `mode` は行の `kind` に写る。
+    expectEveryFieldKept(rejection, lines[0], ["mode"])
+  })
+
+  it("数えるだけの条の件は、差し戻しの行と同じ形の counted の行になる", async () => {
+    const log = createReportUsageLog("json-schema", root())
+
+    log.appendRejection({
+      mode: "count",
+      at: at(9, 5),
+      sessionId: "claude-session-1",
+      reasons: ["long-code"],
+      argumentChars: { total: 800, fields: { conclusion: 50 } },
+      inheritedFields: [],
+    })
+    await log.flush()
+
+    expect(readLines("2026-09-22.jsonl")).toMatchObject([
+      { v: REPORT_USAGE_FORMAT_VERSION, kind: "counted", reasons: ["long-code"] },
+    ])
   })
 
   it("保持の日数が無いので、掃除しても古い日付のファイルは消えない", async () => {
@@ -187,6 +207,7 @@ describe("createReportUsageLog", () => {
     const log = createReportUsageLog("json-schema", root())
 
     log.appendRejection({
+      mode: "reject",
       at: at(9, 5),
       sessionId: "claude-session-1",
       reasons: ["resend", "long-paragraph"],
@@ -223,6 +244,7 @@ describe("createReportUsageLog", () => {
 
     log.append(entry(at(9, 0)))
     log.appendRejection({
+      mode: "reject",
       at: at(9, 5),
       sessionId: "claude-session-1",
       reasons: ["tool-error"],

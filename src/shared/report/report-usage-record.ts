@@ -14,7 +14,7 @@ import { REPORT_SCHEMA_VARIANTS } from "./schema-variant.ts"
  * 欄を足したら版を上げ、集計は `MIN_FORMAT_VERSION` より古い行を読まない。
  * 集計は版で分母を切らず、欄を記録した行を分母にする。
  */
-export const REPORT_USAGE_FORMAT_VERSION = 20 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 21 satisfies number
 
 /** どの駆動で起こしたプロセスの行か（版19から）。`fake` は疑似セッションで、集計は既定で除く。 */
 const reportUsageDriverSchema = z.enum(["sdk", "fake"])
@@ -164,11 +164,12 @@ export type ReportUsageRecord = z.infer<typeof reportUsageRecordSchema>
 /**
  * 差し戻した `report` 1回の記録の行。受け付けの行と同じファイルに入り、`kind` の有無で見分ける（受け付けの行に `kind` は無い）。
  * 書いてよいのは時刻・セッションID・差し戻しの種類の名前・引数の字数・引き継いだ欄の名前・型の渡し方だけ。
+ * `kind` が `counted` の行は、通した `report` が当たった数えるだけの条の名前を同じ形で持つ（版21から）。差し戻しの集計に混ぜない。
  */
 export const reportRejectionRecordSchema = z
   .object({
     v: z.literal(REPORT_USAGE_FORMAT_VERSION),
-    kind: z.literal("rejected"),
+    kind: z.enum(["rejected", "counted"]),
     /** ISO 8601（オフセット付き）。 */
     at: z.string(),
     sessionId: z.string(),

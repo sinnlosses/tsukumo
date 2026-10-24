@@ -74,8 +74,12 @@ export function recordSessionEvent(
   if (event.kind === "tool-started" && isMainImageFileRead(event)) {
     tally.turnImageRead.mark()
   }
-  if (event.kind === "report-rejected" && state.session.kind !== "starting") {
+  if (
+    (event.kind === "report-rejected" || event.kind === "report-counted") &&
+    state.session.kind !== "starting"
+  ) {
     ports.reportUsageLog.appendRejection({
+      mode: event.kind === "report-rejected" ? "reject" : "count",
       at,
       sessionId: state.session.sessionId,
       reasons: event.reasons,

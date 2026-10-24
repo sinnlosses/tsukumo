@@ -1,6 +1,7 @@
 // `report` の差し戻し（「検査 → 整形 → 描画」の検査の段）。
 // 規約違反のある `report` を画面に出さずに差し戻し、直した呼び直しを描く。
 // 1ターンに差し戻すのは1回まで（2回目からは違反があっても通す。無限に往復させない）。
+// 条ごとの段（`REPORT_REJECTION_MODES`）が `count` の条は差し戻さず、通した呼び出しの記録（`report-counted`）に名前を残すだけ。
 //
 // 同じターンで画面に出した `report` と同じ引数の呼び出しも差し戻す（送り直し）。
 // `Stop` の関所（`ReportGate`）に止められたモデルが、止められた本文を入れずに前の `report` を送り直して関所を抜ける形を塞ぐ。
@@ -39,32 +40,28 @@ import type { ReportTask } from "../../../shared/report/report-task.ts"
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { WorkPlanStanding } from "../../../shared/session/work-plan.ts"
-import { REPORT_CHANGED_FIELDS_ONLY_TEXT, reportRejectionText } from "./report-rejection.ts"
+import {
+  type ProcedureRejection,
+  REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT,
+  REPORT_FINISHED_WITH_NG_REJECTION_TEXT,
+  REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
+  REPORT_NOTHING_NEW_REJECTION_TEXT,
+  REPORT_RESEND_REJECTION_TEXT,
+  REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
+  REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
+  reportBackgroundRunningRejectionText,
+} from "./procedure-rejection.ts"
+import type { ReportRejectionModes, ReportRejectionReason } from "./rejection-mode.ts"
+import { reportRejectionText } from "./report-rejection.ts"
 import { reportViolations } from "./report-violation-check.ts"
-import type { ReportDraft, ReportViolation } from "./report-violation.ts"
+import type { ReportDraft } from "./report-violation.ts"
 import type { TurnRejection } from "./turn-rejection.ts"
-
-// 判定の順と脇の話の扱いは `ReportReview.judge` が正典。
-export const REPORT_PROCEDURE_REJECTIONS = [
-  "resend",
-  "nothing-new",
-  "unanswered-work-plan",
-  "missing-work-plan-closing",
-  "unfinished-phases",
-  "finished-but-stopped",
-  "finished-with-ng",
-  "background-running",
-] as const satisfies readonly string[]
 
 /**
  * 判定が差し戻していないのに `isError` で返った呼び出し（形の検査で落ちて handler に届かなかったものと、handler で組んだ値が形の検査に落ちたもの）の理由の名前。
  * 差し戻しの記録（`report-rejected`）は handler ではなく `pass` が、この呼び出しの引数の字数つきで作る。
  */
 export const REPORT_TOOL_ERROR_REASON = "tool-error"
-
-export type ReportRejectionReason =
-  | (typeof REPORT_PROCEDURE_REJECTIONS)[number]
-  | ReportViolation["kind"]
 
 /**
  * handler の判定。`rejected` の `text` はそのまま `report` の戻り値になる。
@@ -85,7 +82,8 @@ export type ReportReview = {
    * 応えていない `work_plan` の差し戻し、合わない段の閉じ方、`ng` のある `finished`、背景のシェル、規約違反のどれかなら、
    * この順に見て差し戻す（枠はそれぞれ1ターンに1回。使い切っていれば通す）。
    * 脇の話のターンでは、合わない段の閉じ方・背景のシェルを見ない（ほかは見る）。
-   * 記録に残す種類の名前は {@link REPORT_PROCEDURE_REJECTIONS}（段の閉じ方は3つの名前が1つの枠を共有する）。
+   * 記録に残す種類の名前は `REPORT_PROCEDURE_REJECTIONS`（段の閉じ方は3つの名前が1つの枠を共有する）。
+   * 段が `count` の条は、枠の残りに関わらず当てはまれば預け、枠を使わずに次の条へ進む（差し戻した呼び出しの預かりは捨てる）。
    */
   readonly judge: (report: ReportDraft) => ReportVerdict
   /** このターンで「新しい事実が無い」差し戻しをしたか。ターンの頭（`session-info`）で戻る。 */
@@ -96,6 +94,7 @@ export type ReportReview = {
    * 預かったままターンが終わった `report`（結果の届かなかった呼び出し）は、`turn-finished` の直前に出す（判定の出なかった呼び出しは描く）。
    * `isError` で返った呼び出し（引数が読めなかったものを含む）は、`tool-finished` の直後に `report-rejected`（理由の名前と引数の字数と引き継いだ欄の名前）を出す。
    * 描いた `report` の締めのセリフ（`closing`）は、そのすぐ後ろに `speech` として出す（差し戻した呼び出しの締めは出さない）。
+   * 描いた呼び出しが段 `count` の条に当てはまっていたら、最後に `report-counted`（条の名前と引数の字数と引き継いだ欄の名前）を出す。
    */
   readonly pass: (event: SessionEvent) => readonly SessionEvent[]
 }
@@ -113,10 +112,12 @@ type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
  * {@link ReportReview} を1つ作る。セッション1つに1つ（ターンの区切りを `pass` で見ている）。
  * ターンの頭は `session-info`（SDK のターンの頭に毎回届く）と `turn-finished`。
  * `workPlanStanding` は判定のたびに呼び、いまのワークプランの立ち位置を読む。
+ * `modes` は条ごとの段（本番は `REPORT_REJECTION_MODES`）。
  */
 export function createReportReview(
   workPlanStanding: () => WorkPlanStanding,
   news: ReportNews,
+  modes: ReportRejectionModes,
 ): ReportReview {
   let rejectedInTurn: ReadonlySet<TurnRejection> = new Set()
   let held: readonly ReportEvent[] = []
@@ -124,6 +125,8 @@ export function createReportReview(
   let malformed: readonly Extract<SessionEvent, { readonly kind: "report-malformed" }>[] = []
   // handler が直前に差し戻した理由。同じ呼び出しの `tool-finished` で使い切る。
   let handlerReasons: readonly ReportRejectionReason[] | undefined
+  // handler が直前に通した呼び出しが当てはまった、段 `count` の条。同じ呼び出しの `tool-finished` で使い切る。
+  let handlerCounted: readonly ReportRejectionReason[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportEvent[] = []
   // 脇の話（`aside`）で始まったターンか。ターンの頭の `session-info` は脇の話のターンの頭にも届くので、そこでは戻さない。
@@ -148,71 +151,111 @@ export function createReportReview(
     rejectedInTurn = new Set([...rejectedInTurn, rejection])
   }
 
-  const review: ReportReview = {
-    judge: (report) => {
-      if (
-        !rejectedInTurn.has("resend") &&
-        drawn.some((previous) => isSameReport(previous, report))
-      ) {
-        markRejected("resend")
-        return { kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT, reasons: ["resend"] }
+  /** 判定と、通したときに記録へ残す段 `count` の条。 */
+  const decide = (
+    report: ReportDraft,
+  ): { readonly verdict: ReportVerdict; readonly counted: readonly ReportRejectionReason[] } => {
+    let counted: readonly ReportRejectionReason[] = []
+    const accepted: ReportVerdict = { kind: "accepted" }
+    // 当てはまった条を段で振り分ける。差し戻すなら枠を使って差し戻し、数えるだけなら預けて通す。
+    const settle = (
+      rejection: TurnRejection,
+      reason: ReportRejectionReason,
+      text: string,
+    ): ReportVerdict => {
+      if (modes[reason] === "count") {
+        counted = [...counted, reason]
+        return accepted
       }
-      if (!news.hasNews() && !rejectedInTurn.has("nothing-new")) {
-        markRejected("nothing-new")
-        return {
-          kind: "rejected",
-          text: REPORT_NOTHING_NEW_REJECTION_TEXT,
-          reasons: ["nothing-new"],
-        }
+      if (rejectedInTurn.has(rejection)) {
+        return accepted
+      }
+      markRejected(rejection)
+      return { kind: "rejected", text, reasons: [reason] }
+    }
+    const firstRejection = (): ReportVerdict => {
+      const resend = drawn.some((previous) => isSameReport(previous, report))
+        ? settle("resend", "resend", REPORT_RESEND_REJECTION_TEXT)
+        : accepted
+      if (resend.kind === "rejected") {
+        return resend
+      }
+      const nothingNew = news.hasNews()
+        ? accepted
+        : settle("nothing-new", "nothing-new", REPORT_NOTHING_NEW_REJECTION_TEXT)
+      if (nothingNew.kind === "rejected") {
+        return nothingNew
       }
       const standing = workPlanStanding()
-      if (standing.kind === "rejected" && !rejectedInTurn.has("unanswered-work-plan")) {
-        markRejected("unanswered-work-plan")
-        return {
-          kind: "rejected",
-          text: REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
-          reasons: ["unanswered-work-plan"],
-        }
+      const unanswered =
+        standing.kind === "rejected"
+          ? settle(
+              "unanswered-work-plan",
+              "unanswered-work-plan",
+              REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT,
+            )
+          : accepted
+      if (unanswered.kind === "rejected") {
+        return unanswered
       }
-      const closingVerdict: ReportVerdict =
+      const closing: ClosingFit =
         standing.kind === "planned" && !asideTurn
           ? judgeWorkPlanClosing(report, standing.remaining)
-          : { kind: "accepted" }
-      if (closingVerdict.kind === "rejected" && !rejectedInTurn.has("closing")) {
-        markRejected("closing")
+          : { kind: "fit" }
+      const closingVerdict =
+        closing.kind === "unfit" ? settle("closing", closing.reason, closing.text) : accepted
+      if (closingVerdict.kind === "rejected") {
         return closingVerdict
       }
-      if (
-        !rejectedInTurn.has("finished-with-ng") &&
-        isFinished(report.task) &&
-        hasNgCheck(report)
-      ) {
-        markRejected("finished-with-ng")
-        return {
-          kind: "rejected",
-          text: REPORT_FINISHED_WITH_NG_REJECTION_TEXT,
-          reasons: ["finished-with-ng"],
-        }
+      const finishedWithNg =
+        isFinished(report.task) && hasNgCheck(report)
+          ? settle("finished-with-ng", "finished-with-ng", REPORT_FINISHED_WITH_NG_REJECTION_TEXT)
+          : accepted
+      if (finishedWithNg.kind === "rejected") {
+        return finishedWithNg
       }
       const shells = news.backgroundTasks().filter((task) => task.kind === "shell")
-      if (shells.length > 0 && !asideTurn && !rejectedInTurn.has("background-running")) {
-        markRejected("background-running")
-        return {
-          kind: "rejected",
-          text: reportBackgroundRunningRejectionText(shells),
-          reasons: ["background-running"],
-        }
+      const backgroundRunning =
+        shells.length > 0 && !asideTurn
+          ? settle(
+              "background-running",
+              "background-running",
+              reportBackgroundRunningRejectionText(shells),
+            )
+          : accepted
+      if (backgroundRunning.kind === "rejected") {
+        return backgroundRunning
       }
       const violations = reportViolations(report)
-      if (violations.length === 0 || rejectedInTurn.has("violation")) {
-        return { kind: "accepted" }
+      const rejecting = violations.filter((violation) => modes[violation.kind] === "reject")
+      counted = [
+        ...counted,
+        ...new Set(
+          violations
+            .filter((violation) => modes[violation.kind] === "count")
+            .map((violation) => violation.kind),
+        ),
+      ]
+      if (rejecting.length === 0 || rejectedInTurn.has("violation")) {
+        return accepted
       }
       markRejected("violation")
       return {
         kind: "rejected",
-        text: reportRejectionText(violations),
-        reasons: [...new Set(violations.map((violation) => violation.kind))],
+        text: reportRejectionText(rejecting),
+        reasons: [...new Set(rejecting.map((violation) => violation.kind))],
       }
+    }
+    const verdict = firstRejection()
+    return { verdict, counted }
+  }
+
+  const review: ReportReview = {
+    judge: (report) => {
+      const { verdict, counted } = decide(report)
+      handlerReasons = verdict.kind === "rejected" ? verdict.reasons : undefined
+      handlerCounted = verdict.kind === "accepted" ? counted : []
+      return verdict
     },
     nothingNewRejected: () => rejectedInTurn.has("nothing-new"),
     pass: (event) => {
@@ -234,12 +277,14 @@ export function createReportReview(
             return [event]
           }
           held = held.filter((candidate) => candidate !== report)
+          const counted = handlerCounted
+          handlerCounted = []
           if (event.isError) {
             return [event, rejectionOf(report.argumentChars, report.inheritedFields)]
           }
           drawn = [...drawn, report]
           news.markDrawn()
-          return [report, event, ...closingSpeech(report)]
+          return [report, event, ...closingSpeech(report), ...countedRecord(report, counted)]
         }
         case "request":
         case "turn-started":
@@ -268,82 +313,7 @@ export function createReportReview(
     },
   }
 
-  return {
-    ...review,
-    judge: (report) => {
-      const verdict = review.judge(report)
-      handlerReasons = verdict.kind === "rejected" ? verdict.reasons : undefined
-      return verdict
-    },
-  }
-}
-
-/**
- * 送り直しを差し戻すときの `report` の戻り値。
- * 固定の文面だけで、モデルが書いた本文は写さず、画面の状態（描けたか・どこに出たか）も載せない。
- */
-const REPORT_RESEND_REJECTION_TEXT =
-  "この `report` は、このターンですでに受け取った `report` と同じ引数になっている。" +
-  "同じ引数で送り直さず、そのあとに `report` の外に書いた本文の中身を `report` に入れて呼び直すこと。" +
-  REPORT_CHANGED_FIELDS_ONLY_TEXT
-
-/** 新しい事実の無い `report` を差し戻すときの戻り値。固定の文面だけで、モデルが書いた本文も画面の状態も写さない。 */
-const REPORT_NOTHING_NEW_REJECTION_TEXT =
-  "直前の `report` のあと、新しい依頼もツールの結果もバックグラウンドタスクの終わりも届いていないので、" +
-  "この `report` は画面に出していない。伝える新しい事実が無いターンは、`report` を" +
-  "呼ばず、何も書かずに終えてよい。言い回しを変えて同じ中身の `report` を送り直さないこと。" +
-  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
-
-/** 同じターンで差し戻した `work_plan` にまだ応えていない `report` を差し戻すときの戻り値。固定の文面だけ。 */
-const REPORT_UNANSWERED_WORK_PLAN_REJECTION_TEXT =
-  "このターンで差し戻された `work_plan` に、まだ応えていない。" +
-  "差し戻しの直し方に従って `work_plan` を呼び直し、受け付けられてから `report` を呼ぶこと。" +
-  REPORT_CHANGED_FIELDS_ONLY_TEXT +
-  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
-
-/** 同じ依頼にワークプランがあるのに `workPlanClosing` の無い `report` を差し戻すときの戻り値。固定の文面だけ。 */
-const REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT =
-  "この依頼では `work_plan` でワークプランを渡しているので、`report` の workPlanClosing に段の閉じ方を入れる。" +
-  "全部の段を終えたなら `finished`、途中で止めたなら `stopped` を入れて呼び直すこと。" +
-  REPORT_CHANGED_FIELDS_ONLY_TEXT +
-  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
-
-/** `workPlanClosing` が `finished` なのに段が2つ以上残っている `report` を差し戻すときの戻り値。固定の文面だけ。 */
-const REPORT_UNFINISHED_PHASES_REJECTION_TEXT =
-  "workPlanClosing が `finished` なのに、ワークプランに済んでいない段が2つ以上残っている。" +
-  "`finished` で tsukumo が閉じるのは最後の段だけなので、同じ応答の中で `report` より先に `work_plan` で段を1つずつ進め、" +
-  "最後の段に来てから `finished` で呼び直す。途中で止めたなら `stopped` にする。" +
-  REPORT_CHANGED_FIELDS_ONLY_TEXT +
-  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
-
-/** `task.outcome` が `finished` なのに `workPlanClosing` が `stopped` で段の残った `report` を差し戻すときの戻り値。固定の文面だけ。 */
-const REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT =
-  "`task.outcome` が `finished` なのに、workPlanClosing が `stopped` でワークプランに済んでいない段が残っている。" +
-  "全部の段を終えたなら最後の段まで進めて `finished` にし、途中で止めたなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
-  REPORT_CHANGED_FIELDS_ONLY_TEXT +
-  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
-
-/** `task.outcome` が `finished` なのに `checks` に `ng` の行がある `report` を差し戻すときの戻り値。固定の文面だけで、モデルが書いた本文も `checks` の中身も写さない。 */
-const REPORT_FINISHED_WITH_NG_REJECTION_TEXT =
-  "`task.outcome` が `finished` なのに、`checks` に `ng` の行がある。" +
-  "落ちた確認を直して `ok` にしてから `finished` で呼び直すか、直せないなら outcome を `stopped` か `awaiting-answer` にして呼び直すこと。" +
-  REPORT_CHANGED_FIELDS_ONLY_TEXT +
-  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
-
-/** 背景のシェルが残っている `report` を差し戻すときの戻り値。残りのシェルの ID と `description` だけを載せ、モデルが書いた本文は写さない。 */
-function reportBackgroundRunningRejectionText(shells: readonly BackgroundTask[]): string {
-  const listing = shells
-    .map(
-      (task) =>
-        `\`${task.taskId}\`（${task.description === "" ? "背景のコマンド" : task.description}）`,
-    )
-    .join("、")
-  return (
-    `背景で動いているコマンドが残っている: ${listing}。` +
-    "`TaskStop` で止めるか、待つなら待つと決めてから `report` を呼び直すこと。" +
-    REPORT_CHANGED_FIELDS_ONLY_TEXT +
-    "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
-  )
+  return review
 }
 
 function hasNgCheck(report: ReportDraft): boolean {
@@ -351,29 +321,55 @@ function hasNgCheck(report: ReportDraft): boolean {
 }
 
 /** 同じ依頼にワークプランがあるときの、段の閉じ方だけで見た判定。`remaining` は済んでいない段の数（全部済みなら 0）。 */
-function judgeWorkPlanClosing(report: ReportDraft, remaining: number): ReportVerdict {
+function judgeWorkPlanClosing(report: ReportDraft, remaining: number): ClosingFit {
   if (report.workPlanClosing === "none") {
     return {
-      kind: "rejected",
+      kind: "unfit",
+      reason: "missing-work-plan-closing",
       text: REPORT_MISSING_WORK_PLAN_CLOSING_REJECTION_TEXT,
-      reasons: ["missing-work-plan-closing"],
     }
   }
   if (report.workPlanClosing === "finished" && remaining >= 2) {
     return {
-      kind: "rejected",
+      kind: "unfit",
+      reason: "unfinished-phases",
       text: REPORT_UNFINISHED_PHASES_REJECTION_TEXT,
-      reasons: ["unfinished-phases"],
     }
   }
   if (report.workPlanClosing === "stopped" && remaining > 0 && isFinished(report.task)) {
     return {
-      kind: "rejected",
+      kind: "unfit",
+      reason: "finished-but-stopped",
       text: REPORT_FINISHED_BUT_STOPPED_REJECTION_TEXT,
-      reasons: ["finished-but-stopped"],
     }
   }
-  return { kind: "accepted" }
+  return { kind: "fit" }
+}
+
+/** 段の閉じ方の判定。合わなければ、当てはまった条の名前と差し戻しの文面。 */
+type ClosingFit =
+  | { readonly kind: "fit" }
+  | {
+      readonly kind: "unfit"
+      readonly reason: ProcedureRejection
+      readonly text: string
+    }
+
+/** 描いた `report` が段 `count` の条に当てはまっていたときの記録。当てはまらなければ何も出さない。 */
+function countedRecord(
+  report: ReportEvent,
+  reasons: readonly ReportRejectionReason[],
+): readonly SessionEvent[] {
+  return reasons.length === 0
+    ? []
+    : [
+        {
+          kind: "report-counted",
+          reasons,
+          argumentChars: report.argumentChars,
+          inheritedFields: report.inheritedFields,
+        },
+      ]
 }
 
 function isFinished(task: ReportTask): boolean {

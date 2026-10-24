@@ -92,5 +92,7 @@
   この一式の結果を読む側に置く。**委譲ゲート**の印はこの一式が出す。
   差し戻した `report` のあとの出し直しは直す欄だけを渡せばよく、渡さなかった欄は同じターンで直前に差し戻した
   呼び出しの値を引き継ぐ（`ReportInheritance`。`src/server/report/core/report-inheritance.ts`。描く値と handler の判定は同じ土台を読む。
-  決まりは `docs/architecture/display/speak-tool.md` の `report` の項）。差し戻しの判定そのものは引き継ぎで変わらない
+  決まりは `docs/architecture/display/speak-tool.md` の `report` の項）。差し戻しの判定そのものは引き継ぎで変わらない。
+  `report` の条はそれぞれ段（`ReportRejectionMode`。表は `REPORT_REJECTION_MODES`）を持ち、`reject` は差し戻し、`count` は差し戻さず
+  通した呼び出しの記録（`report-counted`）に名前を残すだけ
 - **避ける言い方**: 関所（`ReportGate` と紛れる）、検閲、フィルタ

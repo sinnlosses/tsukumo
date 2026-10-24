@@ -19,14 +19,16 @@ import { groupBy } from "remeda"
 
 import { dateFileNames, readJsonLines } from "../../src/server/adapter/lib/jsonl.ts"
 import { reportUsageDir } from "../../src/server/report/adapter/report-usage-log.ts"
+import { REPORT_PROCEDURE_REJECTIONS } from "../../src/server/report/core/procedure-rejection.ts"
+import {
+  REPORT_REJECTION_MODES,
+  type ReportRejectionMode,
+} from "../../src/server/report/core/rejection-mode.ts"
 import {
   ESCAPE_NOTATIONS,
   MARKDOWN_NOTATIONS,
 } from "../../src/server/report/core/report-markdown-notation.ts"
-import {
-  REPORT_PROCEDURE_REJECTIONS,
-  REPORT_TOOL_ERROR_REASON,
-} from "../../src/server/report/core/report-review.ts"
+import { REPORT_TOOL_ERROR_REASON } from "../../src/server/report/core/report-review.ts"
 import { REPORT_BLOCK_FIELDS } from "../../src/server/report/core/report-usage.ts"
 import { REPORT_VIOLATION_KINDS } from "../../src/server/report/core/report-violation.ts"
 import { REPORT_MERMAID_KINDS } from "../../src/shared/report/report-block-diagram.ts"
@@ -40,6 +42,8 @@ import { REPORT_SHAPE_TAGS } from "../../src/shared/report/report-shape-tag.ts"
 import { REPORT_GENRES } from "../../src/shared/report/report-task.ts"
 import { parseDaysOption } from "../shared/days-option.ts"
 import {
+  type CountedRecord,
+  countedSchema,
   isFakeSessionRow,
   recordSchema,
   rejectionSchema,
@@ -48,7 +52,13 @@ import {
   type SectionBlockRecord,
   type UsageRecord,
 } from "./report-usage-row.ts"
-import { keyFiguresSection, shareLine, shortTableSection } from "./report-usage-section.ts"
+import {
+  figureSection,
+  keyFiguresSection,
+  modifiedWithoutVisualSection,
+  shareLine,
+  shortTableSection,
+} from "./report-usage-section.ts"
 
 const USAGE = `使い方:
   node scripts/runtime/report-block-usage.ts             # 直近28日
@@ -73,7 +83,11 @@ if (days === "invalid") {
   process.exit(2)
 }
 
-const { records, rejections, fakeCount } = readRecentRecords(reportUsageDir(), days, includeFake)
+const { records, rejections, counts, fakeCount } = readRecentRecords(
+  reportUsageDir(),
+  days,
+  includeFake,
+)
 if (records.length === 0 && rejections.length === 0) {
   process.stdout.write(`直近${String(days)}日の記録が無い（\`~/.tsukumo/report-usage/\` を見た）\n`)
   process.exit(0)
@@ -154,6 +168,8 @@ process.stdout.write(
     records.length + rejections.length,
   ),
 )
+process.stdout.write("\n\n")
+process.stdout.write(countedSection(records.length, counts))
 process.stdout.write("\n")
 
 /** 今日を含む直近 `dayCount` 日の記録を、日付でファイルを絞って読む（壊れた行は読み飛ばす）。 */
@@ -164,6 +180,7 @@ function readRecentRecords(
 ): {
   readonly records: readonly UsageRecord[]
   readonly rejections: readonly RejectionRecord[]
+  readonly counts: readonly CountedRecord[]
   readonly fakeCount: number
 } {
   const endDate = Temporal.Now.plainDateISO().toString()
@@ -187,46 +204,28 @@ function readRecentRecords(
       const rejection = rejectionSchema.safeParse(raw)
       return rejection.success ? [rejection.data] : []
     }),
+    counts: raws.flatMap((raw) => {
+      const counted = countedSchema.safeParse(raw)
+      return counted.success ? [counted.data] : []
+    }),
   }
 }
 
-/** modified のファイルがあるレポートのうち、前後図も画像も無かった数。 */
-function modifiedWithoutVisualSection(reports: readonly UsageRecord[]): string {
-  if (reports.length === 0) {
-    return "modified のファイルがあるのに前後図も画像も無いレポート: 記録した行が無い"
+/** 段 `count` の条ごとに、通した `report` が当たった回数。割合は受け付けた `report` に対する。 */
+function countedSection(acceptedCount: number, countedRecords: readonly CountedRecord[]): string {
+  const countingNames = Object.entries<ReportRejectionMode>(REPORT_REJECTION_MODES)
+    .filter(([, mode]) => mode === "count")
+    .map(([reason]) => reason)
+  if (countingNames.length === 0 && countedRecords.length === 0) {
+    return "数えるだけの条 × 回数: 数えるだけの条は無い"
   }
-  return [
-    `modified のファイルがあるのに前後図も画像も無いレポート（前後図・画像の有無を記録した${String(reports.length)}件のうち。外す基準の対象ではない）:`,
-    modifiedWithoutVisualLine("全レポート", reports),
-    modifiedWithoutVisualLine(
-      "task の最終レポート",
-      reports.filter((record) => record.forTask),
-    ),
-  ].join("\n")
-}
-
-function modifiedWithoutVisualLine(label: string, rows: readonly UsageRecord[]): string {
-  const modified = rows.filter((record) => record.hasModifiedFiles)
-  const missing = modified.filter((record) => !record.hasBeforeAfterOrImage).length
-  const percent = (modified.length === 0 ? 0 : (missing / modified.length) * 100).toFixed(1)
-  return `  ${label.padEnd(16)} modified あり ${String(modified.length).padStart(5)}  うち前後図も画像も無し ${String(missing).padStart(5)}  ${percent.padStart(5)}%`
-}
-
-/** 段1の図（image・mermaid・graph・svg。beforeAfter の側を含む）を含むレポートの割合。 */
-function figureSection(rows: readonly UsageRecord[]): string {
-  if (rows.length === 0) {
-    return "段1の図を含むレポート: 記録した行が無い"
-  }
-  return [
-    `段1の図（image・mermaid・graph・svg。beforeAfter の側を含む）を含むレポート（図の有無を記録した${String(rows.length)}件のうち。外す基準の対象ではない）:`,
-    shareLine("全レポート", "図あり", rows, (record) => record.hasFigure),
-    shareLine(
-      "task の最終レポート",
-      "図あり",
-      rows.filter((record) => record.forTask),
-      (record) => record.hasFigure,
-    ),
-  ].join("\n")
+  return table(
+    `数えるだけの条 × 回数（割合は受け付けた \`report\` ${String(acceptedCount)}回に対する）`,
+    countingNames,
+    countedRecords,
+    (record) => record.reasons,
+    acceptedCount,
+  )
 }
 
 /** メインが画像のファイルを Read したのに image の塊が無かったレポートの割合。 */

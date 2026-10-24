@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
 
+import {
+  REPORT_REJECTION_MODES,
+  type ReportRejectionModes,
+  type ReportRejectionReason,
+} from "../../../../src/server/report/core/rejection-mode.ts"
 import type {
   ReportReview,
   ReportVerdict,
@@ -388,3 +393,82 @@ describe("createReportReview の judge（背景のシェルが残っている re
     expect(review.judge(OTHER)).toMatchObject({ reasons: ["background-running"] })
   })
 })
+
+describe("createReportReview の judge（数えるだけの条）", () => {
+  /** 本番の表のうち `reasons` だけを数えるだけの条にした、架空の表。 */
+  const countingOnly = (...reasons: readonly ReportRejectionReason[]): ReportRejectionModes => ({
+    ...REPORT_REJECTION_MODES,
+    ...Object.fromEntries(reasons.map((reason) => [reason, "count"])),
+  })
+  /** 見出しの違反（`markdown-notation`）と、3要素の結論（`long-conclusion`）を両方持つ下書き。 */
+  const TWO_VIOLATIONS: ReportDraft = { ...INVALID, conclusionSentenceChars: [5, 5, 5] }
+
+  it("数えるだけの条に当たった report は通し、描いた report の後ろに条の名前の記録を出す", () => {
+    const review = createReportReview(noPlan, countingOnly("markdown-notation"))
+    const report = reportOfDraft("toolu_c1", INVALID)
+
+    expect(review.judge(INVALID)).toEqual({ kind: "accepted" })
+    review.pass(report)
+    expect(review.pass(finished("toolu_c1", false))).toEqual([
+      report,
+      finished("toolu_c1", false),
+      {
+        kind: "report-counted",
+        reasons: ["markdown-notation"],
+        argumentChars: report.argumentChars,
+        inheritedFields: report.inheritedFields,
+      },
+    ])
+  })
+
+  it("数えるだけの条は枠を使わず、同じターンの差し戻す条はまだ差し戻す", () => {
+    const review = createReportReview(noPlan, countingOnly("markdown-notation"))
+
+    expect(review.judge(INVALID)).toEqual({ kind: "accepted" })
+    expect(review.judge(TWO_VIOLATIONS)).toMatchObject({
+      kind: "rejected",
+      reasons: ["long-conclusion"],
+    })
+  })
+
+  it("差し戻す条と数えるだけの条が両方ある report は、差し戻す条だけで差し戻し、数えた記録を出さない", () => {
+    const review = createReportReview(noPlan, countingOnly("markdown-notation"))
+    const report = reportOfDraft("toolu_c1", TWO_VIOLATIONS)
+
+    const verdict = review.judge(TWO_VIOLATIONS)
+    review.pass(report)
+    const passed = review.pass(finished("toolu_c1", true))
+
+    expect(verdict).toMatchObject({ kind: "rejected", reasons: ["long-conclusion"] })
+    expect(verdict.kind === "rejected" ? verdict.text : "").not.toContain("`#` / `##` の見出し")
+    expect(passed.map((event) => event.kind)).toEqual(["tool-finished", "report-rejected"])
+    expect(passed[1]).toMatchObject({ reasons: ["long-conclusion"] })
+  })
+
+  it("手続きの条も数えるだけにでき、送り直しを通して条の名前を記録する", () => {
+    const review = createReportReview(noPlan, countingOnly("resend"))
+    draw(review, "toolu_c1", VALID)
+    runTool(review)
+
+    expect(review.judge(VALID)).toEqual({ kind: "accepted" })
+    review.pass(reportOfDraft("toolu_c2", VALID))
+    expect(review.pass(finished("toolu_c2", false)).at(-1)).toMatchObject({
+      kind: "report-counted",
+      reasons: ["resend"],
+    })
+  })
+
+  it("本番の表では数えた記録を出さない", () => {
+    const review = createReportReview(noPlan)
+    draw(review, "toolu_c1", VALID)
+    runTool(review)
+
+    review.judge(OTHER_THAN_VALID)
+    review.pass(reportOfDraft("toolu_c2", OTHER_THAN_VALID))
+    expect(
+      review.pass(finished("toolu_c2", false)).filter((event) => event.kind === "report-counted"),
+    ).toEqual([])
+  })
+})
+
+const OTHER_THAN_VALID: ReportDraft = reportDraft({ conclusion: "架空の別の結論。" })

@@ -94,6 +94,16 @@ export type ReportEvent =
       readonly inheritedFields: readonly ReportArgumentField[]
     }
   /**
+   * 通した `report` の呼び出しが、差し戻さず数えるだけの条に当てはまったとき、`CallReview` が描いた `report` の後ろに作る（記録の口で、画面の状態は読まない）。
+   * `reasons` は当てはまった条の名前だけ。`argumentChars` と `inheritedFields` はその `report` と同じ。
+   */
+  | {
+      readonly kind: "report-counted"
+      readonly reasons: readonly string[]
+      readonly argumentChars: ReportArgumentChars
+      readonly inheritedFields: readonly ReportArgumentField[]
+    }
+  /**
    * `task` のある受理された `report` のあとに、依頼の頭の HEAD からの変更の量を tsukumo が git で数えて届ける。
    * `toolUseId` はその `report` の呼び出しの id。数えられなかったときは流れず、transcript からの復元でも流れない。
    */

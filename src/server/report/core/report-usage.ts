@@ -24,6 +24,7 @@ import type {
 } from "../../../shared/report/report-usage-record.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { markdownTreeOf, nodesInOrder } from "./markdown-tree.ts"
+import type { ReportRejectionMode } from "./rejection-mode.ts"
 import { mermaidKind, mermaidSourcesInSections } from "./report-figure-fault.ts"
 import { reportImagePaths } from "./report-image-shelf.ts"
 import {
@@ -136,8 +137,12 @@ export const REPORT_BLOCK_FIELDS = [
 
 export type ReportBlockField = (typeof REPORT_BLOCK_FIELDS)[number]
 
-/** 差し戻した `report` 1回の記録。種類の名前だけで、本文も差し戻しの文面も持たない。 */
+/**
+ * 条に当たった `report` 1回の記録。種類の名前だけで、本文も差し戻しの文面も持たない。
+ * `mode` が `reject` なら差し戻した呼び出し、`count` なら通した呼び出しが当たった数えるだけの条。
+ */
 export type ReportRejectionEntry = {
+  readonly mode: ReportRejectionMode
   readonly at: number
   readonly sessionId: string
   readonly reasons: readonly string[]

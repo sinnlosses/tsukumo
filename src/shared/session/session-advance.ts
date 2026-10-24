@@ -213,6 +213,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, records: [...state.records, ...workPlanRecords(state.records, event, at)] }
     case "report-malformed":
     case "report-rejected":
+    case "report-counted":
       return state
     case "report-drafting":
       return withOpenSdkTurn(state, (open) => ({

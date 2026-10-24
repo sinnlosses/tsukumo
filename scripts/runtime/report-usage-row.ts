@@ -97,6 +97,14 @@ export const rejectionSchema = z.object({
 })
 export type RejectionRecord = z.infer<typeof rejectionSchema>
 
+/** 通した呼び出しが当たった数えるだけの条の行（`kind: "counted"`。版21から）。 */
+export const countedSchema = z.object({
+  v: z.number().int().min(MIN_FORMAT_VERSION).max(REPORT_USAGE_FORMAT_VERSION),
+  kind: z.literal("counted"),
+  reasons: z.array(z.string()),
+})
+export type CountedRecord = z.infer<typeof countedSchema>
+
 /** 疑似セッションの印。`driver` を持たない行は `sessionId` が固定の値で見分ける。 */
 const FAKE_SESSION_ID = "fake-session"
 

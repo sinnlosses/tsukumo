@@ -178,11 +178,38 @@ describe("createSessionManager", () => {
 
       expect(rejections).toEqual([
         {
+          mode: "reject",
           at: 1_000,
           sessionId: "claude-session-1",
           reasons: ["resend", "long-paragraph"],
           argumentChars: ARGUMENT_CHARS,
           inheritedFields: ["favor"],
+        },
+      ])
+      expect(entries).toEqual([])
+    })
+
+    it("数えるだけの条に当たった report は、同じ口に count の件として書く", async () => {
+      const { stub, entries, rejections } = startReportUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emit({
+        kind: "report-counted",
+        reasons: ["long-code"],
+        argumentChars: ARGUMENT_CHARS,
+        inheritedFields: [],
+      })
+      await waitForBatch()
+
+      expect(rejections).toEqual([
+        {
+          mode: "count",
+          at: 1_000,
+          sessionId: "claude-session-1",
+          reasons: ["long-code"],
+          argumentChars: ARGUMENT_CHARS,
+          inheritedFields: [],
         },
       ])
       expect(entries).toEqual([])

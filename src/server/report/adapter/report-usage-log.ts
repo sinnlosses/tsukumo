@@ -64,7 +64,7 @@ function toRejectionRecord(
 ): ReportRejectionRecord {
   return {
     v: REPORT_USAGE_FORMAT_VERSION,
-    kind: "rejected",
+    kind: entry.mode === "reject" ? "rejected" : "counted",
     at: isoWithOffset(entry.at),
     sessionId: entry.sessionId,
     driver: RECORDED_DRIVER,

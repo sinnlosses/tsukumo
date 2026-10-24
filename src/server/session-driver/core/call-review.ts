@@ -10,6 +10,7 @@
 
 import type { BackgroundTask } from "../../../shared/session-driver/background-task.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { REPORT_REJECTION_MODES } from "../../report/core/rejection-mode.ts"
 import { createReportInheritance } from "../../report/core/report-inheritance.ts"
 import { createReportReview, type ReportVerdict } from "../../report/core/report-review.ts"
 import type { ReportDraft } from "../../report/core/report-violation.ts"
@@ -86,11 +87,15 @@ export function createCallReview(): CallReview {
     markDrawn: () => ledger.markDrawn("speak"),
   })
   const workPlanReview = createWorkPlanReview()
-  const reportReview = createReportReview(workPlanReview.standing, {
-    hasNews: () => ledger.hasNews("report"),
-    markDrawn: () => ledger.markDrawn("report"),
-    backgroundTasks: ledger.backgroundTasks,
-  })
+  const reportReview = createReportReview(
+    workPlanReview.standing,
+    {
+      hasNews: () => ledger.hasNews("report"),
+      markDrawn: () => ledger.markDrawn("report"),
+      backgroundTasks: ledger.backgroundTasks,
+    },
+    REPORT_REJECTION_MODES,
+  )
 
   return {
     judgeSpeak: speechReview.judge,
