@@ -188,6 +188,13 @@ describe("入力欄のマークダウンエディタ", () => {
     await page.keyboard.press("ArrowRight")
     await page.keyboard.press("Backspace")
     expect(await draftText()).toBe("二")
+
+    await load("")
+    await page.keyboard.type(">")
+    expect(await lines.allTextContents()).toEqual([""])
+    await cdp.send("Input.insertText", { text: "日本" })
+    expect(await lines.allTextContents()).toEqual(["日本"])
+    expect(await draftText()).toBe(">日本")
   })
 
   it("箇条書き・引用の行の Enter は次の行にも同じ記号を付け、空の行の Enter は記号を消す", async () => {

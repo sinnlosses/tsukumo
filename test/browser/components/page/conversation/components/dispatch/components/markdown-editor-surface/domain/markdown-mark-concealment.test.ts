@@ -45,8 +45,15 @@ describe("concealedMarks", () => {
     expect(concealedTexts("- **一**\n二", caretAt(3))).toEqual([["bullet", "- "]])
   })
 
-  it("キャレットの行の行頭の記号は、後ろの空白を打つまで置き換えない", () => {
-    expect(concealedTexts(">", caretAt(1))).toEqual([["quote-line", ""]])
+  it("キャレットの行の行頭の `>` は打った時点で罫に置き換え、`-` は後ろの空白を打つまで置き換えない", () => {
+    expect(concealedTexts(">", caretAt(1))).toEqual([
+      ["quote-line", ""],
+      ["hidden", ">"],
+    ])
+    expect(concealedTexts(">a", caretAt(1))).toEqual([
+      ["quote-line", ""],
+      ["hidden", ">"],
+    ])
     expect(concealedTexts("-", caretAt(1))).toEqual([])
     expect(concealedTexts("- ", caretAt(2))).toEqual([["bullet", "- "]])
   })

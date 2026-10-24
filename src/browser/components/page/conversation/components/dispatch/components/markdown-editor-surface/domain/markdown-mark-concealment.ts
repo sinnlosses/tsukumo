@@ -49,10 +49,8 @@ function marksIn(node: SyntaxNode, context: Context): readonly ConcealedMark[] {
   switch (node.name) {
     case "HeaderMark":
       return hidden(node.from, withTrailingSpace(node.to, context.state), context)
-    case "QuoteMark": {
-      const end = leadingMarkEnd(node, context)
-      return end === undefined ? [] : hidden(node.from, end, context, true)
-    }
+    case "QuoteMark":
+      return hidden(node.from, withTrailingSpace(node.to, context.state), context, true)
     case "EmphasisMark":
     case "StrikethroughMark":
     case "CodeMark":
@@ -147,8 +145,8 @@ function hidden(
 }
 
 /**
- * 行頭の `- ` `> ` の置き換えの終わり。キャレットの行では、後ろの空白まで打ったあとにだけ置き換える
- * （`>` や `-` だけの段階で消えると、記号そのものを打ちたいときに字が消えたように見える）。
+ * 行頭の `- ` の置き換えの終わり。キャレットの行では、後ろの空白まで打ったあとにだけ置き換える
+ * （`-` だけの段階で消えると、記号そのものを打ちたいときに字が消えたように見える）。
  */
 function leadingMarkEnd(node: SyntaxNode, context: Context): number | undefined {
   const end = withTrailingSpace(node.to, context.state)
