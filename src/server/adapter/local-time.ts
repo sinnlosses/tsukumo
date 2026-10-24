@@ -3,11 +3,11 @@
 // 引数のエポックミリ秒だけを読むように見えて、OS のタイムゾーン（`Temporal.Now.timeZoneId()`）に依っている。
 // 置き場を日付で分けるファイルが複数あり、同じ日の境目で切れていないと後から突き合わせられないので、書き方はここに1つだけ置く。
 // 素通しに見えても呼び出し側へ畳まない。`Temporal.Now` が散ると、日の境目の決め方が複数箇所に分かれる。
+// `Temporal.Now` を読むのは `createServerClock` と `timeZoneId` の中だけで、今日は引数の時計から導く。
 
 /**
  * サーバの時計（いまのエポックミリ秒を返す関数）。サーバで「いま」を読むのはここだけ（検査が縛る）。
  * `fixed`（`TSUKUMO_FIXED_CLOCK`）があれば、その瞬間で止まった進まない時計を返す。
- * 日付キー（{@link todayLocalDateKey}）は凍らせない。
  */
 export function createServerClock(fixed: Temporal.Instant | undefined): () => number {
   if (fixed !== undefined) {
@@ -22,17 +22,17 @@ export function localDateKey(epochMilliseconds: number): string {
   return localTimeAt(epochMilliseconds).toPlainDate().toString()
 }
 
-/** 今日のローカル日付（`YYYY-MM-DD`）。時計を読むのはここだけ。 */
-export function todayLocalDateKey(): string {
-  return Temporal.Now.plainDateISO().toString()
+/** `now` が指す今日のローカル日付（`YYYY-MM-DD`）。 */
+export function todayLocalDateKey(now: () => number): string {
+  return localDateKey(now())
 }
 
-/** いまから次のローカルの日の始まりまでのミリ秒。 */
-export function millisecondsUntilNextLocalDay(): number {
-  const now = Temporal.Now.zonedDateTimeISO()
+/** `now` から次のローカルの日の始まりまでのミリ秒。 */
+export function millisecondsUntilNextLocalDay(now: () => number): number {
+  const at = localTimeAt(now())
   return (
-    now.toPlainDate().add({ days: 1 }).toZonedDateTime(now.timeZoneId).epochMilliseconds -
-    now.epochMilliseconds
+    at.toPlainDate().add({ days: 1 }).toZonedDateTime(at.timeZoneId).epochMilliseconds -
+    at.epochMilliseconds
   )
 }
 
@@ -45,7 +45,7 @@ export function localDateEpochRange(dateKey: string): {
   readonly startEpochMilliseconds: number
   readonly endEpochMilliseconds: number
 } {
-  const zone = Temporal.Now.timeZoneId()
+  const zone = timeZoneId()
   const date = Temporal.PlainDate.from(dateKey)
   return {
     startEpochMilliseconds: date.toZonedDateTime(zone).epochMilliseconds,
@@ -82,15 +82,16 @@ export function localDateTimeEpochMilliseconds(raw: string): number | undefined 
     return undefined
   }
   try {
-    return Temporal.PlainDateTime.from(raw).toZonedDateTime(Temporal.Now.timeZoneId())
-      .epochMilliseconds
+    return Temporal.PlainDateTime.from(raw).toZonedDateTime(timeZoneId()).epochMilliseconds
   } catch {
     return undefined
   }
 }
 
 function localTimeAt(epochMilliseconds: number): Temporal.ZonedDateTime {
-  return Temporal.Instant.fromEpochMilliseconds(epochMilliseconds).toZonedDateTimeISO(
-    Temporal.Now.timeZoneId(),
-  )
+  return Temporal.Instant.fromEpochMilliseconds(epochMilliseconds).toZonedDateTimeISO(timeZoneId())
+}
+
+function timeZoneId(): string {
+  return Temporal.Now.timeZoneId()
 }

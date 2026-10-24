@@ -98,7 +98,7 @@
           {
             "object": "Temporal",
             "property": "Now",
-            "message": "Temporal.Now を読むのは server/adapter/local-time.ts と browser/utils/clock.ts だけ"
+            "message": "Temporal.Now を読むのは server/adapter/local-time.ts（createServerClock と timeZoneId の中だけ。test/architecture/clock.test.ts が縛る）と browser/utils/clock.ts だけ"
           },
           {
             "object": "globalThis",

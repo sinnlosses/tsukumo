@@ -196,3 +196,64 @@ function isDeferredArgument(argument: AstNode, call: AstNode): boolean {
       astChildren(call, "arguments").indexOf(argument)
   )
 }
+
+// oxlint の `no-restricted-properties` はファイル単位でしか許せないので、関数単位の締めはここで落とす。
+describe("サーバで Temporal.Now を読む箇所", () => {
+  const SERVER_CLOCK_FILE = "server/adapter/local-time.ts"
+  const SERVER_CLOCK_READERS = new Set(["createServerClock", "timeZoneId"])
+
+  it("local-time.ts で Temporal.Now を読むのは createServerClock と timeZoneId の中だけ", () => {
+    const offenders = temporalNowReads(
+      SERVER_CLOCK_FILE,
+      readFileSync(`${SRC_ROOT}/${SERVER_CLOCK_FILE}`, "utf8"),
+    ).filter((read) => !SERVER_CLOCK_READERS.has(read.owner ?? ""))
+
+    expect(offenders).toEqual([])
+  })
+
+  it("2つの関数の外の読みを拾い、中の読みは拾わない", () => {
+    expect(
+      temporalNowReads(
+        "a.ts",
+        "export function todayLocalDateKey() {\n  return Temporal.Now.plainDateISO().toString()\n}",
+      ),
+    ).toEqual([{ owner: "todayLocalDateKey", line: 2 }])
+    expect(temporalNowReads("a.ts", "const zone = Temporal.Now.timeZoneId()")).toEqual([
+      { owner: undefined, line: 1 },
+    ])
+    expect(
+      temporalNowReads(
+        "a.ts",
+        "function createServerClock() {\n  return () => Temporal.Now.instant()\n}\nfunction timeZoneId() {\n  return Temporal.Now.timeZoneId()\n}",
+      ),
+    ).toEqual([
+      { owner: "createServerClock", line: 2 },
+      { owner: "timeZoneId", line: 5 },
+    ])
+  })
+})
+
+function temporalNowReads(
+  fileName: string,
+  source: string,
+): readonly { readonly owner: string | undefined; readonly line: number }[] {
+  const reads: { owner: string | undefined; line: number }[] = []
+  const visit = (node: AstNode, owner: string | undefined): void => {
+    const type = astString(node, "type")
+    const nextOwner =
+      type === "FunctionDeclaration" ? astString(astObject(node, "id"), "name") : owner
+    if (
+      type === "MemberExpression" &&
+      astString(astObject(node, "object"), "name") === "Temporal" &&
+      astString(astObject(node, "property"), "name") === "Now"
+    ) {
+      const start = astNumber(node, "start") ?? 0
+      reads.push({ owner, line: source.slice(0, start).split("\n").length })
+    }
+    for (const child of astAllChildren(node)) {
+      visit(child, nextOwner)
+    }
+  }
+  visit(parseProgram(fileName, source), undefined)
+  return reads
+}

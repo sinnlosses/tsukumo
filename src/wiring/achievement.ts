@@ -12,7 +12,11 @@ export function wireAchievement(context: WiringContext): {
     sessionCommands: {
       // 読めなかった・Beads が読めない日は `undefined` に畳み、断る理由はコマンドの受け手が決める。
       readAchievementDay: async (date) => {
-        const result = await readAchievement(date, todayLocalDateKey(), context.achievementCache)
+        const result = await readAchievement(
+          date,
+          todayLocalDateKey(context.now),
+          context.achievementCache,
+        )
         return result.kind === "ok" ? result.achievement : undefined
       },
     },

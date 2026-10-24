@@ -141,7 +141,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     refreshTasks: () => refreshTasks(),
     // 「今日」はここで決めて渡す（OS のタイムゾーンに依るので、core は今日が何日かを知らない）。
     readTokenUsageSummary: (days) =>
-      summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
+      summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(options.now), days),
     readContextUsage: () => readContextUsage(),
     readPlanUsage: () => readPlanUsage(),
     readSessionDigest: (sessionId) => readSessionDigest(sessionId),
@@ -149,7 +149,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     // 見る日の検証・今日への丸め込みも呼ぶたびにここで済ませ、`readAchievement` には検証済みの日付キーだけを渡す。
     // 日記はここで合わせる（`readAchievement` は数だけを持ち、日記の置き場を知らない）。
     readAchievementDay: async (selection) => {
-      const today = parseDateKey(todayLocalDateKey())
+      const today = parseDateKey(todayLocalDateKey(options.now))
       if (today === undefined) {
         return { kind: "unavailable" }
       }
@@ -165,7 +165,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     // 灯りの暦（直近5週ぶん）。日記のある日の一覧もここで合わせる。
     readAchievementCalendar: async () => {
       const [result, diaryDates] = await Promise.all([
-        readAchievementCalendar(todayLocalDateKey(), achievementCache),
+        readAchievementCalendar(todayLocalDateKey(options.now), achievementCache),
         listDiaryDates(options.cwd),
       ])
       return result.kind === "ok" && result.calendar.kind === "known"

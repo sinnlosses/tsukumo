@@ -136,11 +136,11 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   const clock = createServerClock(config.fixedClock)
   const reportFailure = failureDiagnostic(diagnosticLog, clock)
   const pruneExpiredChatImages = (): void => {
-    pruneChatImages(todayLocalDateKey(), (error) => {
+    pruneChatImages(todayLocalDateKey(clock), (error) => {
       reportFailure({ feature: "chat", place: "archive-image-prune" }, error)
     })
   }
-  repeatAtEachLocalDayStart(pruneExpiredChatImages)
+  repeatAtEachLocalDayStart(pruneExpiredChatImages, clock)
 
   const character = createCurrentCharacter(config, launch.cwd, (place, error) => {
     reportFailure({ feature: "chat", place }, error)
@@ -221,7 +221,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
       announce(view.url, launch.devServer)
       // 古い日付のファイルは起動のたびに1回だけ、知らせたあとに消す。
       setImmediate(() => {
-        usageLogs.pruneExpired(todayLocalDateKey())
+        usageLogs.pruneExpired(todayLocalDateKey(clock))
         pruneInputLedgerFiles(clock())
         pruneExpiredChatImages()
       })
@@ -331,12 +331,19 @@ function stopSessionOnExit(
 /**
  * 次のローカルの日の始まりごとに `task` を呼ぶ。タイマーはプロセスを生かし続けない。
  * 境目の直前に起きて同じ日のまま呼ばないよう、少し遅らせて起きる。
+ * 起きても `now` が進んでいない（凍らせた時計）なら次を仕掛けない。境目の直前で凍っていると短い間隔で回り続けるため。
  */
-function repeatAtEachLocalDayStart(task: () => void): void {
-  const timer = setTimeout(() => {
-    task()
-    repeatAtEachLocalDayStart(task)
-  }, millisecondsUntilNextLocalDay() + DAY_START_MARGIN_MS)
+function repeatAtEachLocalDayStart(task: () => void, now: () => number): void {
+  const armedAt = now()
+  const timer = setTimeout(
+    () => {
+      task()
+      if (now() !== armedAt) {
+        repeatAtEachLocalDayStart(task, now)
+      }
+    },
+    millisecondsUntilNextLocalDay(now) + DAY_START_MARGIN_MS,
+  )
   timer.unref()
 }
 

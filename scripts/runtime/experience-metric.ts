@@ -13,7 +13,11 @@ import { parseArgs } from "node:util"
 
 import { z } from "zod"
 
-import { localDateEpochRange, todayLocalDateKey } from "../../src/server/adapter/local-time.ts"
+import {
+  createServerClock,
+  localDateEpochRange,
+  todayLocalDateKey,
+} from "../../src/server/adapter/local-time.ts"
 import {
   createExperienceMetricLog,
   experienceMetricDir,
@@ -66,7 +70,7 @@ if (options === "invalid") {
 }
 
 const { days, split } = options
-const endDate = todayLocalDateKey()
+const endDate = todayLocalDateKey(createServerClock(undefined))
 const startDate = Temporal.PlainDate.from(endDate)
   .subtract({ days: days - 1 })
   .toString()

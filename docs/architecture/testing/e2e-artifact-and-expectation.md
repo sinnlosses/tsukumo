@@ -34,8 +34,9 @@
 
 - **サーバの時計は `TSUKUMO_FIXED_CLOCK` で凍らせる**（進む時計だと `at` と「N 秒」が走らせるたびに
   ずれる。経過の計算は `shared` の単体テストが守る）
-- **`Temporal.Now` を読むのはサーバの `src/server/adapter/local-time.ts` と、ブラウザの
-  `src/browser/utils/clock.ts` の2つだけ**で、`.oxlintrc.json` の `no-restricted-properties`（`Temporal.Now`）がそれを縛る（固定が黙って
+- **`Temporal.Now` を読むのはサーバの `src/server/adapter/local-time.ts`（`createServerClock` と
+  `timeZoneId` の中だけ）と、ブラウザの `src/browser/utils/clock.ts` の2つだけ**で、`.oxlintrc.json` の
+  `no-restricted-properties`（`Temporal.Now`。ファイル単位）と `test/architecture/clock.test.ts`（関数単位）がそれを縛る（固定が黙って
   効かなくならないように）
 - **ブラウザの時計は E2E の側だけで差し替える**（`page.clock` は `Temporal.Now` を差し替えないので、
   初期スクリプトで `Temporal.Now.instant()` を `Date.now()` に従わせる。本番のコードに試験用の口を作らない）。

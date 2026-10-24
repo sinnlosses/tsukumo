@@ -15,6 +15,7 @@ import { parseArgs } from "node:util"
 import { countBy, groupBy, sortBy } from "remeda"
 
 import {
+  createServerClock,
   isoWithOffset,
   localDateEpochRange,
   localDateTimeEpochMilliseconds,
@@ -40,7 +41,7 @@ type GenerationFilter =
   | { readonly kind: "one"; readonly generation: number }
 
 const argv = readArguments(process.argv.slice(2))
-const today = localDateEpochRange(todayLocalDateKey())
+const today = localDateEpochRange(todayLocalDateKey(createServerClock(undefined)))
 const startAt = parseTimeOption(argv?.from, today.startEpochMilliseconds)
 const endAt = parseTimeOption(argv?.to, today.endEpochMilliseconds)
 const generation = parseGenerationOption(argv?.generation)
