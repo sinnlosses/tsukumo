@@ -40,7 +40,11 @@
 画面全体で共有する状態は **zustand の `create()`** で書き、`Context` の `Provider` で配らない
 （書き方と `useShallow` の使いどころは `docs/coding-standards.md`「zustand の store」）。**姿そのものを
 購読しない**（読む値が変わっていない部品まで毎フレーム描き直しになる）ので、部品はセレクタで読む値だけを取る。
-**答え待ち（`pending`）が動くフレームだけ緊急**にし、レポートやツールの進行は `startTransition` に載せる。
+届いた `events` は `useSessionConnection` が**次の描画の手前（`requestAnimationFrame`）まで溜め、到着順につないで1回の差し替え**にする
+（答え待ちが動くフレームも区別しない）。**ページが隠れている間（`document.hidden`）は渡さずに溜め続け、表に戻った `visibilitychange` で1回にまとめて渡す**
+（答え待ちの変化〔`pending-changed`〕を含むときは隠れていても溜めた分と合わせてすぐ渡す。タブの印のため）。
+**`hello` は隠れていても溜めずにその場で置き換え、溜めていた `events` は捨てる**。
+`startTransition` は使わない（zustand は `useSyncExternalStore` で購読するので、外部の store の描き直しは同期レーンで走る）。
 **`location.hash` を正典にする状態は zustand に写さない**（`useHashRoute` が `useSyncExternalStore` で直接
 購読する。写すと hash と store の2か所に持つことになる）。
 

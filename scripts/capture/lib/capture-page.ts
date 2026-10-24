@@ -43,8 +43,8 @@ const REVEAL_PAUSE_LEAD_MS = 10
 /**
  * 書き上げの演出（`data-revealing`）が始まった直後に偽の時計を止め、そこから `ms` だけ進めた
  * 時点で返す（途中の画を撮るため。{@link settlePage} は挟まない）。呼ぶ前に
- * `page.clock.install()` が入っていること。止めたあとは `runFor` だけが時計と
- * `requestAnimationFrame` を進める。演出が始まらなければ throw する。
+ * `page.clock.install()` が入っていること。止めたあとは `runFor` だけが時計を進める
+ * （`requestAnimationFrame` は本物の描画のフレームでも呼ばれるが、時刻は止まったまま）。演出が始まらなければ throw する。
  */
 export async function revealPageAt(page: Page, ms: number): Promise<void> {
   await page.waitForSelector("[data-revealing]", {

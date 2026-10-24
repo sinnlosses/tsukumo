@@ -85,6 +85,15 @@
     }
   },
   {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "setting-confirmed",
+      "setting": "effort",
+      "value": "medium"
+    }
+  },
+  {
     "sent": "session.answer",
     "order": 1,
     "input": {
@@ -95,26 +104,17 @@
     }
   },
   {
-    "received": "response",
-    "order": 1,
-    "status": 200,
-    "body": {}
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "setting-confirmed",
-      "setting": "effort",
-      "value": "medium"
-    }
-  },
-  {
     "received": "event",
     "at": 1768438800000,
     "event": {
       "kind": "pending-changed",
       "pending": []
     }
+  },
+  {
+    "received": "response",
+    "order": 1,
+    "status": 200,
+    "body": {}
   }
 ]

@@ -30,7 +30,9 @@ describe("お伺い", () => {
     const inquiry = inquiryOf(room.page)
 
     // 場面の手が流れ終わってから押す（押して流れる `pending-changed` を場面の手と競わせない）。
+    // ターンの終わりのあとに駆動が流す `setting-confirmed` まで待つ（答えの応答と届く順を競わせない）。
     await room.waitForEvent("turn-finished")
+    await room.waitForEvent("setting-confirmed")
     await inquiry.getByRole("radio", { name: /許可/ }).click()
     await inquiry.getByRole("button", { name: /これで答える/ }).click()
     await room.waitForEvent("pending-changed", 2)

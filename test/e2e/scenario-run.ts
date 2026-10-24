@@ -114,6 +114,7 @@ export type ScenarioRoom = {
    * WebSocket で `kind` のイベントが `occurrence` 回目（既定1回目）届くまで待つ（場面が流れ
    * 終わるのを時間で待たない）。同じ `kind` が場面の中で複数回流れる場合（`turn-finished` が
    * 続きのターンのたびに来るなど）に、狙った回目まで進める口。
+   * 届いたあと描画のフレームを1つ待ち、ページが rAF で束ねて渡したイベントが姿に入ってから返す。
    */
   readonly waitForEvent: (kind: string, occurrence?: number) => Promise<void>
   /**
@@ -293,10 +294,11 @@ async function openRoom(
     home: home.real,
     waitForEvent: async (kind, occurrence = 1) => {
       await messages.waitForEvent(kind, occurrence)
+      await nextAnimationFrame(page)
       lastAwaited = { kind, occurrence }
     },
-    waitForTasksContaining: (ids) =>
-      messages.waitForEventMatching("tasks-changed", (event) => {
+    waitForTasksContaining: async (ids) => {
+      await messages.waitForEventMatching("tasks-changed", (event) => {
         const tasks = asRecord(event["tasks"])
         if (tasks["kind"] !== "known") {
           return false
@@ -304,7 +306,9 @@ async function openRoom(
         const order = Array.isArray(tasks["order"]) ? tasks["order"] : []
         const presentIds = new Set(order.map(String))
         return ids.every((id) => presentIds.has(id))
-      }),
+      })
+      await nextAnimationFrame(page)
+    },
     revealAfterResponse: async (target, { response, baseline }) => {
       const counted = await countedBefore(baseline, () => responses.count(response))
       await responses.waitForCount(response, counted + 1)
@@ -322,12 +326,14 @@ async function openRoom(
         )
       }
     },
-    waitForPending: (id) =>
-      messages.waitForEventMatching("pending-changed", (event) =>
+    waitForPending: async (id) => {
+      await messages.waitForEventMatching("pending-changed", (event) =>
         Array.isArray(event["pending"])
           ? event["pending"].some((ask) => String(asRecord(ask)["id"]) === id)
           : false,
-      ),
+      )
+      await nextAnimationFrame(page)
+    },
     resize: async (viewport) => {
       await page.setViewportSize(viewport)
       await page.waitForFunction(
@@ -383,6 +389,18 @@ async function countedBefore(
     case "all":
       return 0
   }
+}
+
+/** ページの描画のフレームを1つ待つ（止めた時計の上でも、rAF は本物のフレームで呼ばれる〔`followFakeClock`〕）。 */
+async function nextAnimationFrame(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          resolve()
+        })
+      }),
+  )
 }
 
 /** 要素が見えるまで、凍らせた時計を進める。上限は要素を待つ時間で決め、進める回数では決めない。 */

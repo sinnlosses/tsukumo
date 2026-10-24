@@ -3,13 +3,14 @@
 // サーバは 100ms ごとにフレームを押すので、姿ごと読むとターンが流れている間は毎秒10回描き直しになる。
 
 import { createORPCClient, ORPCError } from "@orpc/client"
-import { startTransition, useEffect } from "react"
+import { useEffect } from "react"
 import { isPlainObject } from "remeda"
 import { create } from "zustand"
 
 import type { CommandRefusalReason } from "../../shared/command.ts"
 import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
 import type { CommandClient } from "../../shared/rpc.ts"
+import type { StampedEvent } from "../../shared/session/session-event.ts"
 import { applySessionEvent } from "../../shared/session/session-fold.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -113,17 +114,7 @@ export const useSession = create<SessionStoreState>()((set, get) => {
       if (state === current.state && generation === current.generation) {
         return
       }
-      // 答え待ち（許可要求・質問）が動いたフレームだけ緊急にする。人が待っている箱なので遅らせない。
-      // レポートやツールの進行は毎秒10回届くので、入力欄の操作を優先できるようトランジションに載せる。
-      // React は外部の store（zustand も `useSyncExternalStore`）の描き直しを同期レーンで走らせる（`forceStoreRerender`）ので、入力欄との競合にいま効いているのは購読の絞り込み（セレクタ）のほう。
-      // 緊急かどうかの境目はここ1箇所に置く。
-      if (state.pending !== current.state.pending) {
-        set({ state, generation })
-        return
-      }
-      startTransition(() => {
-        set({ state, generation })
-      })
+      set({ state, generation })
     },
     setConnection: (status) => {
       const current = get()
@@ -152,6 +143,7 @@ export function useRestartRefused(): boolean {
 export function useSessionConnection(): void {
   useEffect(() => {
     const { receive, setConnection, attachSocket } = useSession.getState()
+    const frames = batchByAnimationFrame(receive)
     const socket = connectSessionSocket(sessionTokenUrl(SESSION_SOCKET_PATH), {
       // `refresh` は状態ではなくブラウザへの指示なので、畳み込みに入れず手前で捌く（開発中だけ届く）。
       onFrame: (frame) => {
@@ -166,13 +158,14 @@ export function useSessionConnection(): void {
         ) {
           invalidateAchievement()
         }
-        receive(frame)
+        frames.push(frame)
       },
       onStatusChange: setConnection,
     })
     attachSocket(socket)
     return () => {
       socket.close()
+      frames.cancel()
       attachSocket(undefined)
     }
   }, [])
@@ -186,6 +179,66 @@ export function isRefusedFor(error: unknown, reason: CommandRefusalReason): bool
     isPlainObject(error.data) &&
     error.data.reason === reason
   )
+}
+
+type FrameBatch = {
+  readonly push: (frame: ServerFrame) => void
+  /** 溜めたフレームを渡さずに捨て、予約した呼び出しと `visibilitychange` の購読を外す。 */
+  readonly cancel: () => void
+}
+
+/**
+ * 届いた `events` を次の描画の手前（`requestAnimationFrame`）まで溜め、到着順につないだ1つの `events` にして `receive` へ渡す。
+ * ページが隠れている間（`document.hidden`）は渡さずに溜め続け、表に戻った `visibilitychange` で1回にまとめて渡す
+ * （隠れたタブでも `requestAnimationFrame` が呼ばれるホストがあるので、描画の手前でも隠れていれば渡さない）。
+ * ただし答え待ちの変化（`pending-changed`）を含むフレームは、隠れていても溜めた分と合わせてすぐ渡す（裏のタブのタイトルに答え待ちの印を付けるため）。
+ * `hello` は隠れていても溜めずにすぐ渡し、溜めていた `events` は捨てる（`hello` の姿がそれより新しい）。
+ */
+function batchByAnimationFrame(receive: (frame: ServerFrame) => void): FrameBatch {
+  // 隠れている間は長く溜まるので、届くたびに写し直さず足していく。
+  const queued: StampedEvent[] = []
+  let scheduled: number | undefined = undefined
+  const unschedule = (): void => {
+    if (scheduled !== undefined) {
+      cancelAnimationFrame(scheduled)
+      scheduled = undefined
+    }
+  }
+  const deliver = (): void => {
+    unschedule()
+    if (queued.length > 0) {
+      receive({ type: "events", events: queued.splice(0) })
+    }
+  }
+  const flush = (): void => {
+    if (document.hidden) {
+      unschedule()
+      return
+    }
+    deliver()
+  }
+  document.addEventListener("visibilitychange", flush)
+  return {
+    push: (frame) => {
+      if (frame.type !== "events") {
+        unschedule()
+        queued.splice(0)
+        receive(frame)
+        return
+      }
+      queued.push(...frame.events)
+      if (!document.hidden) {
+        scheduled ??= requestAnimationFrame(flush)
+      } else if (frame.events.some(({ event }) => event.kind === "pending-changed")) {
+        deliver()
+      }
+    },
+    cancel: () => {
+      unschedule()
+      queued.splice(0)
+      document.removeEventListener("visibilitychange", flush)
+    },
+  }
 }
 
 function applyFrame(state: SessionState, frame: ServerFrame): SessionState {

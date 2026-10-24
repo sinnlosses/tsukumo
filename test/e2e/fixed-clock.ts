@@ -2,7 +2,7 @@
 
 import type { Page } from "playwright-core"
 
-import { TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../../scripts/shared/capture-clock.ts"
+import { followFakeClock } from "../../scripts/shared/capture-clock.ts"
 
 /** サーバとブラウザの時計を凍らせる瞬間（走らせる日に依らない固定の値）。 */
 export const FIXED_INSTANT = "2026-01-15T01:00:00Z"
@@ -26,5 +26,5 @@ export async function installFixedClock(page: Page): Promise<void> {
   // pauseAt(fixed) が過去を指して投げる。手前で install して fixed へ進めて止める。
   await page.clock.install({ time: fixed - 1000 })
   await page.clock.pauseAt(fixed)
-  await page.addInitScript(TEMPORAL_FOLLOWS_DATE_SCRIPT)
+  await followFakeClock(page)
 }

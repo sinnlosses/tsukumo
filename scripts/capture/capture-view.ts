@@ -42,7 +42,7 @@ import { parseArgs } from "node:util"
 
 import { chromium, type Page } from "playwright-core"
 
-import { readClockInstant, TEMPORAL_FOLLOWS_DATE_SCRIPT } from "../shared/capture-clock.ts"
+import { followFakeClock, readClockInstant } from "../shared/capture-clock.ts"
 import { positiveIntegerArgument } from "../shared/positive-integer-argument.ts"
 import { REPOSITORY_ROOT } from "../shared/repository-root.ts"
 import {
@@ -276,7 +276,7 @@ async function capture(
       await (options.clock === undefined
         ? page.clock.install()
         : page.clock.install({ time: options.clock }))
-      await page.addInitScript(TEMPORAL_FOLLOWS_DATE_SCRIPT)
+      await followFakeClock(page)
     }
     if (options.revealAt !== undefined) {
       await page.addInitScript(REVEAL_SEEN_SCRIPT)
