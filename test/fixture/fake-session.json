@@ -2064,6 +2064,59 @@
                     "horizontal": false,
                     "fold": "",
                     "aside": ""
+                  },
+                  {
+                    "kind": "chart",
+                    "chartKind": "bar",
+                    "title": "架空の振り返りが最も多い",
+                    "labels": [
+                      "架空の振り返り",
+                      "架空の実装",
+                      "架空の受け入れ",
+                      "架空の計画",
+                      "架空の送り出し",
+                      "架空の検証",
+                      "架空のレビュー",
+                      "架空の文書",
+                      "架空の調査",
+                      "架空の整理",
+                      "架空の相談"
+                    ],
+                    "series": [
+                      { "name": "架空の件数", "values": [35, 28, 22, 20, 18, 15, 12, 10, 8, 6, 3] }
+                    ],
+                    "horizontal": true,
+                    "emphasis": ["架空の振り返り"],
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "chart",
+                    "chartKind": "share",
+                    "title": "架空の内訳は振り返りが 35%",
+                    "labels": [
+                      "架空の振り返り",
+                      "架空の実装",
+                      "架空の受け入れ",
+                      "架空の計画",
+                      "架空の相談"
+                    ],
+                    "series": [{ "name": "架空の件数", "values": [35, 28, 22, 10, 5] }],
+                    "horizontal": false,
+                    "emphasis": ["架空の振り返り"],
+                    "fold": "",
+                    "aside": ""
+                  },
+                  {
+                    "kind": "chart",
+                    "chartKind": "bar",
+                    "title": "架空の3月が最も多い",
+                    "labels": ["架空1月", "架空2月", "架空3月", "架空4月"],
+                    "series": [{ "name": "架空の件数", "values": [12, 18, 24, 9] }],
+                    "horizontal": false,
+                    "emphasis": ["架空3月"],
+                    "fold": "",
+                    "aside": ""
                   }
                 ]
               }

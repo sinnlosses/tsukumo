@@ -336,7 +336,7 @@ describe("parseReportSections", () => {
         shapeTag: "unspecified",
         blocks: [
           { ...mermaid, title: "", fold: "", aside: "" },
-          { ...chart, title: "", horizontal: false, fold: "", aside: "" },
+          { ...chart, title: "", horizontal: false, emphasis: [], fold: "", aside: "" },
         ],
       },
     ])

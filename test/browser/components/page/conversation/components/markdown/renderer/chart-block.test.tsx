@@ -83,6 +83,38 @@ describe("ChartBlock の見えてから描く", () => {
   })
 })
 
+describe("ChartBlock の入れ物", () => {
+  it("spec の tsukumo.height を入れ物の高さにし、Chart.js へ渡す設定からは外す", async () => {
+    const created: unknown[] = []
+    vi.stubGlobal(
+      "Chart",
+      class extends FakeChart {
+        constructor(_canvas: unknown, config: unknown) {
+          super()
+          created.push(config)
+        }
+      },
+    )
+    const view = render(<ChartBlock spec='{"type":"bar","tsukumo":{"height":356}}' />)
+    finishLoading()
+    await waitFor(() => {
+      expect(created).toHaveLength(1)
+    })
+
+    const block = view.container.querySelector<HTMLElement>(".chart-block")
+    expect(block?.style.height).toBe("356px")
+    expect(created[0]).toEqual({ type: "bar" })
+  })
+
+  it("目印の chart-block を持ち、高さが無ければ style を付けない", () => {
+    const view = render(<ChartBlock spec={SPEC_A} />)
+
+    const block = view.container.firstElementChild
+    expect(block?.classList.contains("chart-block")).toBe(true)
+    expect(block?.getAttribute("style")).toBeNull()
+  })
+})
+
 describe("ChartBlock の後片付け", () => {
   it("アンマウントで、作ったインスタンスが1回だけ破棄される", async () => {
     const view = render(<ChartBlock spec={SPEC_A} />)

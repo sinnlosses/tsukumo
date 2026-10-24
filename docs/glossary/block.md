@@ -37,7 +37,7 @@
   `parts`（`dimension` の上から積む並び。領域の `name` / `size` / `before` と余白の `gap` / `before`）・`verdict`（`options` の候補の判定）・`claim` / `certainty` / `basis` / `howToVerify`（`claims` の項目。下の「確度つきの主張」）・`change`（`files` の変更の種別）・
   `path`（`image` の画像のファイル）・`caption`（`image` の何が見えるかの1行）・`notes`（`image` の番号つきの説明の並び）・
   `chartKind`（`chart` の種類。`bar` / `line` / `pie` / `arrow` / `slope` / `span` / `share`）・`labels`（`chart` の横軸・扇形・項目・部分の名前）・
-  `series`（`chart` の系列。`name` と `values`）・`horizontal`（`chart` の `bar` を横棒にする真偽値）/
+  `series`（`chart` の系列。`name` と `values`）・`horizontal`（`chart` の `bar` を横棒にする真偽値）・`emphasis`（`chart` で差し色にする項目の名前の並び。`labels` の部分集合。`svg` の `rect` の `emphasis` とは別）/
   `ReportBlockField`（使われ方の記録で数える欄の名前）
 - **定義**: **節の中に並ぶ、種類の決まった本文の1単位**。種類ごとに決まった形で Markdown に組んで
   描く（`reportSectionsMarkdown`）。塊の文字は行頭の塊の記法と `<` を逃がし、インラインの記法

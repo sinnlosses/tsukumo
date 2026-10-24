@@ -7,6 +7,7 @@ const DIRECT_LABEL_PLUGIN_ID = "tsukumo-direct-label"
 
 const LABEL_GAP = 14
 const LABEL_OFFSET = 8
+const BAR_END_GAP = 6
 const ARROW_HEAD = 7
 const FONT_SIZE = 12
 const PIE_SIDE_PADDING = 90
@@ -71,6 +72,30 @@ export function arrowPadding(
 ): { readonly left: number; readonly right: number; readonly overhang: number } {
   const overhang = head + LABEL_OFFSET + valueWidth
   return { left: nameWidth + NAME_COLUMN_GAP + overhang, right: overhang, overhang }
+}
+
+/**
+ * 棒の端に書く字。系列名があれば値の前に添える（系列が2つ以上のとき、各系列の先頭の棒だけ）。
+ */
+export function barEndText(seriesName: string | undefined, value: unknown): string {
+  return seriesName === undefined ? String(value) : `${seriesName}  ${String(value)}`
+}
+
+/**
+ * bar の端の字が描く領域の外へはみ出さないための余白。横棒は右に字の幅（`textWidth`）、縦棒は上に1行。
+ * 系列が2つ以上の横棒は、系列名の分（`SERIES_SIDE_PADDING`）より狭くしない。
+ */
+export function barEndPadding(
+  horizontal: boolean,
+  seriesCount: number,
+  textWidth: number,
+): Padding {
+  const none = { left: 0, right: 0, top: 0, bottom: 0 }
+  if (!horizontal) {
+    return { ...none, top: NAME_ROW_PADDING }
+  }
+  const named = seriesCount >= 2 ? SERIES_SIDE_PADDING : 0
+  return { ...none, right: Math.max(named, BAR_END_GAP + textWidth) }
 }
 
 /**
@@ -166,12 +191,7 @@ function paddingFor(chart: ChartInstance): Padding {
     case "line":
       return seriesCount > 1 ? { ...none, right: SERIES_SIDE_PADDING } : none
     case "bar":
-      if (seriesCount < 2) {
-        return none
-      }
-      return chart.options.indexAxis === "y"
-        ? { ...none, right: SERIES_SIDE_PADDING }
-        : { ...none, top: NAME_ROW_PADDING }
+      return barEndPadding(chart.options.indexAxis === "y", seriesCount, barEndTextWidth(chart))
     default:
       return none
   }
@@ -302,21 +322,35 @@ function visibleEnds(chart: ChartInstance) {
 }
 
 function drawBarEnds(chart: ChartInstance): void {
-  if (chart.data.datasets.length < 2) {
-    return
-  }
   const horizontal = chart.options.indexAxis === "y"
   chart.data.datasets.forEach((dataset, index) => {
-    const bar = chart.getDatasetMeta(index).data[0]
-    if (bar === undefined) {
-      return
-    }
-    if (horizontal) {
-      drawText(chart.ctx, dataset.label, bar.x + 6, bar.y, "left", "middle")
-    } else {
-      drawText(chart.ctx, dataset.label, bar.x, bar.y - 6, "center", "bottom")
-    }
+    chart.getDatasetMeta(index).data.forEach((bar, point) => {
+      const text = barEndText(seriesNameAt(chart, index, point), dataset.data[point])
+      if (horizontal) {
+        drawText(chart.ctx, text, bar.x + BAR_END_GAP, bar.y, "left", "middle")
+      } else {
+        drawText(chart.ctx, text, bar.x, bar.y - BAR_END_GAP, "center", "bottom")
+      }
+    })
   })
+}
+
+function seriesNameAt(chart: ChartInstance, series: number, point: number): string | undefined {
+  return chart.data.datasets.length >= 2 && point === 0
+    ? chart.data.datasets[series]?.label
+    : undefined
+}
+
+// 余白は `beforeLayout` で決めるので、描く前の字の幅を測る。
+function barEndTextWidth(chart: ChartInstance): number {
+  const texts = chart.data.datasets.flatMap((dataset, series) =>
+    dataset.data.map((value, point) => barEndText(seriesNameAt(chart, series, point), value)),
+  )
+  chart.ctx.save()
+  chart.ctx.font = labelFont()
+  const width = widestText(chart.ctx, texts)
+  chart.ctx.restore()
+  return width
 }
 
 function drawSlope(chart: ChartInstance): void {

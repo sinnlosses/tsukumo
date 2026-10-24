@@ -2,13 +2,27 @@
 // tsukumo 自身のサーバから配り、グラフが実際に要るときだけ `<script>` で読み込む（束ねには入れない）。
 // 描く config は読み手が持つ。
 
+import { z } from "zod"
+
 import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
 import { directLabelPlugin } from "./chart-direct-label.ts"
-import { colorsForDataset, type ChartPalette } from "./chart-palette.ts"
+import {
+  colorsForDataset,
+  emphasisColorsForDataset,
+  type ChartPalette,
+  type EmphasisAxis,
+} from "./chart-palette.ts"
 import { resolveColor } from "./theme-color.ts"
 import { loadVendorScript } from "./vendor-script.ts"
 
 const CHART_SRC = vendorAssetPath("chart.umd.min.js")
+
+const emphasisOptionsSchema = z.object({
+  plugins: z.object({
+    "tsukumo-series": z.object({ emphasis: z.array(z.number()) }),
+    "tsukumo-direct-label": z.object({ mode: z.string() }).optional(),
+  }),
+})
 
 const SERIES_PROPERTIES = [
   "--chart-series-1",
@@ -49,6 +63,7 @@ export function loadChart(element: HTMLElement): Promise<void> {
     const palette = {
       series: SERIES_PROPERTIES.map((property) => resolveColor(element, property)),
       other: resolveColor(element, "--chart-series-other"),
+      muted: resolveColor(element, "--ink-quiet"),
     } satisfies ChartPalette
     Chart.defaults.plugins.colors.enabled = false
     registerSeriesPlugin(palette)
@@ -70,8 +85,12 @@ function registerSeriesPlugin(palette: ChartPalette): void {
         return
       }
       const current = latestPalette
+      const emphasis = emphasisOf(chart.config.options)
       chart.config.data?.datasets?.forEach((dataset, index) => {
-        const colors = colorsForDataset(dataset, chart.config.type, index, current)
+        const colors =
+          emphasis === undefined
+            ? colorsForDataset(dataset, chart.config.type, index, current)
+            : emphasisColorsForDataset(dataset, index, current, emphasis)
         if (colors !== undefined) {
           dataset.backgroundColor = colors.backgroundColor
           dataset.borderColor = colors.borderColor
@@ -79,4 +98,18 @@ function registerSeriesPlugin(palette: ChartPalette): void {
       })
     },
   })
+}
+
+function emphasisOf(
+  options: unknown,
+): { readonly positions: readonly number[]; readonly axis: EmphasisAxis } | undefined {
+  const parsed = emphasisOptionsSchema.safeParse(options)
+  if (!parsed.success) {
+    return undefined
+  }
+  const { plugins } = parsed.data
+  return {
+    positions: plugins["tsukumo-series"].emphasis,
+    axis: plugins["tsukumo-direct-label"]?.mode === "share" ? "series" : "point",
+  }
 }

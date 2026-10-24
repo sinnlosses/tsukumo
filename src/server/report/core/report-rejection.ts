@@ -62,6 +62,8 @@ function violationLine(violation: ReportViolation): string {
       return `\`marks\` が無く${String(MAX_PLAIN_CODE_LINES + 1)}行以上の \`code\` が${violation.count}個ある。要る範囲だけを引く（${String(MAX_PLAIN_CODE_LINES)}行まで）`
     case "ragged-chart":
       return `\`series\` の \`values\` の数が \`labels\` と揃わない、または \`arrow\`・\`slope\`・\`span\` の \`series\` が前と後（span は始まりと終わり）の2つでない \`chart\` の塊が${violation.count}個ある。数を揃える`
+    case "unknown-emphasis":
+      return `\`emphasis\` に \`labels\` に無い名前がある \`chart\` の塊が${violation.count}個ある。\`labels\` にある名前だけにする`
     case "short-series":
       return `\`stats\` の \`series\` が1〜2個の項目がある塊が${violation.count}個ある。3つ以上にするか省く`
     case "untitled-section":

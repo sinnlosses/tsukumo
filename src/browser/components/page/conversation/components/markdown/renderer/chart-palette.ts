@@ -3,6 +3,7 @@
 export type ChartPalette = {
   readonly series: readonly string[]
   readonly other: string
+  readonly muted: string
 }
 
 type DatasetColors = {
@@ -37,4 +38,29 @@ export function colorsForDataset(
     return { backgroundColor: colors, borderColor: colors }
   }
   return { backgroundColor: colorAt(index), borderColor: colorAt(index) }
+}
+
+/** 強調する位置が、データ点（bar・pie）か系列（share は部分ごとに1系列）のどちらの添字か。 */
+export type EmphasisAxis = "point" | "series"
+
+/**
+ * 強調する項目だけ先頭の系列色、ほかは `muted` にする。色を持つ系列は `undefined`。
+ * 強調が無いときは {@link colorsForDataset} を使う。
+ */
+export function emphasisColorsForDataset(
+  dataset: DatasetShape,
+  index: number,
+  palette: ChartPalette,
+  emphasis: { readonly positions: readonly number[]; readonly axis: EmphasisAxis },
+): DatasetColors | undefined {
+  if (dataset.backgroundColor !== undefined || dataset.borderColor !== undefined) {
+    return undefined
+  }
+  const colorAt = (position: number): string =>
+    emphasis.positions.includes(position) ? (palette.series[0] ?? palette.other) : palette.muted
+  const colors =
+    emphasis.axis === "series"
+      ? colorAt(index)
+      : (dataset.data ?? []).map((_, position) => colorAt(position))
+  return { backgroundColor: colors, borderColor: colors }
 }

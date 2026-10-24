@@ -127,6 +127,10 @@ export function isRaggedChart(block: ReportBlock): boolean {
   )
 }
 
+export function hasUnknownEmphasis(block: ReportBlock): boolean {
+  return block.kind === "chart" && block.emphasis.some((name) => !block.labels.includes(name))
+}
+
 type TableCell = Extract<ReportBlock, { readonly kind: "table" }>["rows"][number][number]
 
 function cellLength(cell: TableCell): number {

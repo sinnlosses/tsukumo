@@ -10,7 +10,9 @@ import type { ReportGraph } from "./report-block-diagram.ts"
 import type { ReportBlock } from "./report-block.ts"
 import { htmlInline } from "./report-inline-markdown.ts"
 
-type ChartConfig = {
+type ChartConfig = ChartBody | (ChartBody & { readonly tsukumo: { readonly height: number } })
+
+type ChartBody = {
   readonly type: string
   readonly data: {
     readonly labels: readonly string[]
@@ -29,8 +31,17 @@ type ChartConfig = {
     )[]
   }
   readonly options:
-    | { readonly indexAxis: "y" }
+    | {
+        readonly indexAxis: "y"
+        readonly scales: { readonly y: { readonly ticks: { readonly autoSkip: false } } }
+      }
+    | {
+        readonly indexAxis: "y"
+        readonly scales: { readonly y: { readonly ticks: { readonly autoSkip: false } } }
+        readonly plugins: SeriesPlugins
+      }
     | Record<string, never>
+    | { readonly plugins: SeriesPlugins }
     | {
         readonly indexAxis: "y"
         readonly scales: { readonly y: { readonly display: false } }
@@ -55,6 +66,10 @@ type ChartConfig = {
       }
 }
 
+type SeriesPlugins = {
+  readonly "tsukumo-series": { readonly emphasis: readonly number[] }
+}
+
 type DirectLabelPlugins = {
   readonly "tsukumo-direct-label": {
     readonly mode: "arrow" | "slope" | "span" | "share"
@@ -65,6 +80,9 @@ type DirectLabelPlugins = {
 const ARROW_BAR_THICKNESS = 4
 const SPAN_BAR_THICKNESS = 12
 const SHARE_BAR_THICKNESS = 36
+const CHART_MIN_HEIGHT = 320
+const CHART_ROW_HEIGHT = 28
+const CHART_FRAME_HEIGHT = 48
 
 /**
  * `chart` の塊から Chart.js の設定を組む。色は書かない。`pie` は `series` の先頭だけを描く。
@@ -93,7 +111,10 @@ export function chartConfigOf(
           x: { stacked: true, display: false, min: 0, max: 100 },
           y: { stacked: true, display: false },
         },
-        plugins: { "tsukumo-direct-label": { mode: "share", names: [] } },
+        plugins: {
+          "tsukumo-direct-label": { mode: "share", names: [] },
+          ...seriesPluginsOf(block).plugins,
+        },
       },
     }
   }
@@ -134,14 +155,28 @@ export function chartConfigOf(
         }
   }
   const series = block.chartKind === "pie" ? block.series.slice(0, 1) : block.series
-  return {
-    type: block.chartKind,
-    data: {
-      labels: [...block.labels],
-      datasets: series.map(({ name, values }) => ({ label: name, data: [...values] })),
-    },
-    options: block.chartKind === "bar" && block.horizontal ? { indexAxis: "y" } : {},
+  const data = {
+    labels: [...block.labels],
+    datasets: series.map(({ name, values }) => ({ label: name, data: [...values] })),
   }
+  if (block.chartKind === "bar" && block.horizontal) {
+    return {
+      type: block.chartKind,
+      data,
+      options: {
+        indexAxis: "y",
+        scales: { y: { ticks: { autoSkip: false } } },
+        ...seriesPluginsOf(block),
+      },
+      tsukumo: {
+        height: Math.max(
+          CHART_MIN_HEIGHT,
+          block.labels.length * CHART_ROW_HEIGHT + CHART_FRAME_HEIGHT,
+        ),
+      },
+    }
+  }
+  return { type: block.chartKind, data, options: { ...seriesPluginsOf(block) } }
 }
 
 type SvgFigure = {
@@ -435,6 +470,27 @@ function svgTextElement(
 ): string {
   const anchor = centered ? ' text-anchor="middle" dominant-baseline="middle"' : ""
   return `<text x="${String(x)}" y="${String(y)}" font-size="${String(fontSize)}"${anchor}${extra}>${htmlInline(text)}</text>`
+}
+
+/**
+ * `emphasis` の項目を、`labels` の何番目かの並びにして描く側の plugin に渡す。
+ * 効くのは bar・pie・share だけで、`emphasis` が空ならなにも足さない。
+ */
+function seriesPluginsOf(
+  block: Extract<ReportBlock, { readonly kind: "chart" }>,
+): { readonly plugins: SeriesPlugins } | Record<string, never> {
+  const emphasized = ["bar", "pie", "share"].includes(block.chartKind) && block.emphasis.length > 0
+  return emphasized
+    ? {
+        plugins: {
+          "tsukumo-series": {
+            emphasis: block.labels.flatMap((label, index) =>
+              block.emphasis.includes(label) ? [index] : [],
+            ),
+          },
+        },
+      }
+    : {}
 }
 
 function graphStroke(color: string, dashed: boolean, width: number): string {

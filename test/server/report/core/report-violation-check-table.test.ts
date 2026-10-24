@@ -261,6 +261,7 @@ describe("reportViolations", () => {
         labels: ["架空A", "架空B"],
         series: [{ name: "架空系列", values: [1] }],
         horizontal: false,
+        emphasis: [],
         fold: "",
         aside: "",
       }
@@ -275,6 +276,7 @@ describe("reportViolations", () => {
         labels: ["架空A", "架空B"],
         series: [{ name: "架空系列", values: [1, 2] }],
         horizontal: false,
+        emphasis: [],
         fold: "",
         aside: "",
       }
@@ -292,6 +294,7 @@ describe("reportViolations", () => {
           values: [1, 2],
         })),
         horizontal: false,
+        emphasis: [],
         fold: "",
         aside: "",
       })
@@ -312,6 +315,7 @@ describe("reportViolations", () => {
             values: [1, 2],
           })),
           horizontal: false,
+          emphasis: [],
           fold: "",
           aside: "",
         })
@@ -320,6 +324,32 @@ describe("reportViolations", () => {
         expect(kinds(draft([chartOf(2)]))).toEqual([])
       },
     )
+  })
+
+  describe("chart の emphasis は labels の部分集合", () => {
+    const chartOf = (emphasis: readonly string[]): ReportBlock => ({
+      kind: "chart",
+      title: "",
+      chartKind: "bar",
+      labels: ["架空A", "架空B"],
+      series: [{ name: "架空系列", values: [1, 2] }],
+      horizontal: false,
+      emphasis,
+      fold: "",
+      aside: "",
+    })
+
+    it("labels に無い名前があれば違反", () => {
+      expect(reportViolations(draft([chartOf(["架空C"])]))).toEqual([
+        { kind: "unknown-emphasis", count: 1 },
+      ])
+      expect(kinds(draft([chartOf(["架空A", "架空C"])]))).toEqual(["unknown-emphasis"])
+    })
+
+    it("部分集合・省略なら違反にしない", () => {
+      expect(kinds(draft([chartOf(["架空B"])]))).toEqual([])
+      expect(kinds(draft([chartOf([])]))).toEqual([])
+    })
   })
 
   describe("stats の series は3つ以上", () => {

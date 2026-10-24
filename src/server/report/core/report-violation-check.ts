@@ -27,6 +27,7 @@ import {
   hasBadRegion,
   hasShortSeries,
   hasTooManyCandidates,
+  hasUnknownEmphasis,
   isRaggedChart,
   isRaggedTable,
   isSentenceTable,
@@ -113,6 +114,10 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       ).length,
     },
     { kind: "ragged-chart", count: drawnBlocks.filter((block) => isRaggedChart(block)).length },
+    {
+      kind: "unknown-emphasis",
+      count: drawnBlocks.filter((block) => hasUnknownEmphasis(block)).length,
+    },
     { kind: "short-series", count: drawnBlocks.filter((block) => hasShortSeries(block)).length },
     {
       kind: "untitled-section",

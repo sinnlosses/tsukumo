@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest"
 
 import {
   arrowPadding,
+  barEndPadding,
+  barEndText,
   shareLabelRows,
   spreadLabels,
 } from "../../../../../../../../src/browser/components/page/conversation/components/markdown/renderer/chart-direct-label.ts"
@@ -80,6 +82,26 @@ describe("spreadLabels", () => {
 
   it("3つ以上が詰まっていれば連鎖して離す", () => {
     expect(spreadLabels([0, 1, 2], 10)).toEqual([0, 10, 20])
+  })
+})
+
+describe("barEndText", () => {
+  it("系列名が無ければ値だけ、あれば値の前に添える", () => {
+    expect(barEndText(undefined, 35)).toBe("35")
+    expect(barEndText("架空系列", 35)).toBe("架空系列  35")
+  })
+})
+
+describe("barEndPadding", () => {
+  it("横棒は右に字の幅だけ取り、系列が2つ以上なら系列名の幅（90）より狭くしない", () => {
+    expect(barEndPadding(true, 1, 20)).toEqual({ left: 0, right: 26, top: 0, bottom: 0 })
+    expect(barEndPadding(true, 1, 40).right).toBeGreaterThan(barEndPadding(true, 1, 20).right)
+    expect(barEndPadding(true, 2, 20).right).toBe(90)
+    expect(barEndPadding(true, 2, 120).right).toBe(126)
+  })
+
+  it("縦棒は上に1行だけ取る", () => {
+    expect(barEndPadding(false, 1, 20)).toEqual({ left: 0, right: 0, top: 22, bottom: 0 })
   })
 })
 

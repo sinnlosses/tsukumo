@@ -451,7 +451,8 @@
 .detail-block .report-color-ink-dark {
   color: var(--ground);
 }
-/* Chart.js の入れ物（ChartBlock）。maintainAspectRatio を切っているので、グラフの高さはここだけが決める。 */
+/* Chart.js の入れ物（ChartBlock）。maintainAspectRatio を切っているので、グラフの高さはここが決める。
+   ここは既定の高さで、横棒だけ ChartBlock が style で上書きする。 */
 .detail-block .chart-block {
   position: relative;
   width: 100%;

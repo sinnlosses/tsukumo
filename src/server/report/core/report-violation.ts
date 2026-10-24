@@ -64,6 +64,8 @@ export type ReportViolation =
   | { readonly kind: "long-code"; readonly count: number }
   /** `series` の `values` の数が `labels` と揃わない、または `arrow`・`slope`・`span` の `series` が2つでない `chart` の塊がある。`count` は塊の数。 */
   | { readonly kind: "ragged-chart"; readonly count: number }
+  /** `emphasis` に `labels` に無い名前がある `chart` の塊がある。`count` は塊の数。 */
+  | { readonly kind: "unknown-emphasis"; readonly count: number }
   /** `stats` の項目の `series` が1〜2個のものがある塊がある。`count` は塊の数。 */
   | { readonly kind: "short-series"; readonly count: number }
   /** 節が2つ以上あるのに見出しの無い節がある。`count` は見出しの無い節の数。 */
@@ -158,6 +160,7 @@ export const VIOLATION_THRESHOLDS = {
   "long-list": 0,
   "long-code": 0,
   "ragged-chart": 0,
+  "unknown-emphasis": 0,
   "short-series": 0,
   "untitled-section": 0,
   "markdown-notation": 0,

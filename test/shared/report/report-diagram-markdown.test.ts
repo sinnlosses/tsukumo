@@ -391,14 +391,15 @@ describe("reportSectionsMarkdown", () => {
         },
       ],
       [
-        "bar の horizontal は indexAxis を y にする",
+        "bar の horizontal は indexAxis を y にし、目盛りを間引かず高さを添える",
         "bar",
         one,
         true,
         {
           type: "bar",
           data: { labels, datasets: [{ label: "架空系列", data: [1, 2] }] },
-          options: { indexAxis: "y" },
+          options: { indexAxis: "y", scales: { y: { ticks: { autoSkip: false } } } },
+          tsukumo: { height: 320 },
         },
       ],
       [
@@ -556,11 +557,84 @@ describe("reportSectionsMarkdown", () => {
             labels,
             series,
             horizontal,
+            emphasis: [],
             fold: "",
             aside: "",
           }),
         ).toBe(`\`\`\`chart\n${JSON.stringify(config)}\n\`\`\``)
       },
     )
+
+    it.each([
+      [3, 320],
+      [11, 356],
+      [20, 608],
+    ])("横棒 %i 本の高さは %i px", (count, height) => {
+      const names = Array.from({ length: count }, (_, index) => `架空${String(index)}`)
+      const fence = chartFenceOf({
+        kind: "chart",
+        title: "",
+        chartKind: "bar",
+        labels: names,
+        series: [{ name: "架空系列", values: names.map(() => 1) }],
+        horizontal: true,
+        emphasis: [],
+        fold: "",
+        aside: "",
+      })
+
+      expect(fence).toContain(`"tsukumo":{"height":${String(height)}}`)
+    })
+
+    it.each([
+      ["bar", false],
+      ["bar", true],
+      ["pie", false],
+      ["share", false],
+      ["arrow", false],
+      ["line", false],
+    ] as const)(
+      "emphasis は %s（横棒 %s）で labels の何番目かにして plugin へ渡す",
+      (chartKind, horizontal) => {
+        const effective = chartKind === "bar" || chartKind === "pie" || chartKind === "share"
+        const fence = chartFenceOf({
+          kind: "chart",
+          title: "",
+          chartKind,
+          labels: ["架空A", "架空B", "架空C"],
+          series: [
+            { name: "架空1", values: [1, 2, 3] },
+            { name: "架空2", values: [1, 2, 3] },
+          ],
+          horizontal,
+          emphasis: ["架空B"],
+          fold: "",
+          aside: "",
+        })
+
+        expect(fence.includes('"tsukumo-series":{"emphasis":[1]}')).toBe(effective)
+      },
+    )
+
+    it("縦棒と share には高さを添えない", () => {
+      for (const [chartKind, horizontal] of [
+        ["bar", false],
+        ["share", true],
+      ] as const) {
+        expect(
+          chartFenceOf({
+            kind: "chart",
+            title: "",
+            chartKind,
+            labels,
+            series: one,
+            horizontal,
+            emphasis: [],
+            fold: "",
+            aside: "",
+          }),
+        ).not.toContain('"tsukumo":')
+      }
+    })
   })
 })

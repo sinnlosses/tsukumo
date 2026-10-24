@@ -242,6 +242,9 @@ export const chartBlockSchema = z
       .min(1)
       .describe("系列ごとの数の並び。各 values の数は labels と揃える"),
     horizontal: omittable(z.boolean(), false).describe("bar のときだけ効く。true で横棒にする"),
+    emphasis: omittable(inlineText.array(), []).describe(
+      "題の主語だけ（labels の一部）。bar・pie・share で差し色",
+    ),
     fold,
     aside,
   })

@@ -46,7 +46,7 @@
   の内寸）を超えない。縦に長い図は縮むぶん字も縮むので、全体は押して開く拡大（`ImageZoom`、
   `size="width"`）で見る。口は `image` に加えて `graph`・`mermaid`・`svg` にも付ける（図そのものを
   押す。キーは Enter・Space。描き終える前の mermaid は開かない）。拡大の面は図を実寸（`viewBox` の幅と高さ）の
-  画像にして出し、縦に流れるときの「閉じる」は下端に貼り付く。`chart` は固定の 320px のまま。
+  画像にして出し、縦に流れるときの「閉じる」は下端に貼り付く。`chart` の高さは横棒だけ項目数で決まり（`max(320px, 項目数 × 28px + 48px)`）、ほかは 320px のまま。
 - **中間レポートの箱（`.main-step.is-interim`）の中は入れ子を1段にする**（2026-10-18）: 箱の中の
   `card`・`stats`・`compare`・`beforeAfter`・畳み（`details`）は枠の色を透明にして（太さは残し、寸法を変えない）、
   地の段（`surface-raised`。`stats` は `surface` から上げる）と余白で分ける。`options` の行の罫も外す。

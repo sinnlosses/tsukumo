@@ -72,6 +72,7 @@ declare global {
       readonly beforeUpdate?: (chart: {
         readonly config: {
           readonly type?: string
+          readonly options?: unknown
           readonly data?: {
             readonly datasets?: {
               type?: string

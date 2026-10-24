@@ -284,6 +284,45 @@
                                       "children": [
                                         "図 8"
                                       ]
+                                    },
+                                    {
+                                      "tag": "canvas"
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "data-reveal-caption": ""
+                                      },
+                                      "children": [
+                                        "図 9",
+                                        "架空の振り返りが最も多い"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "canvas"
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "data-reveal-caption": ""
+                                      },
+                                      "children": [
+                                        "図 10",
+                                        "架空の内訳は振り返りが 35%"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "canvas"
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "data-reveal-caption": ""
+                                      },
+                                      "children": [
+                                        "図 11",
+                                        "架空の3月が最も多い"
+                                      ]
                                     }
                                   ]
                                 }

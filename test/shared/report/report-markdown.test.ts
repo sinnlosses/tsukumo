@@ -151,6 +151,7 @@ describe("reportSectionsMarkdown", () => {
       labels: ["a"],
       series: [{ name: "系列", values: [1] }],
       horizontal: false,
+      emphasis: [],
       fold: "",
       aside: "",
     }
