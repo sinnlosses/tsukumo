@@ -1,0 +1,575 @@
+.detail-block {
+  & .report-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+  /* `cols` の列数は項目数（`cols-of-<n>`。`NotationBlock` が足す）の全部か約数か1列にする（`stats` の列数と同じ決まり）。
+   器の幅が列の最小幅 14rem とすき間 0.75rem を足した幅に届くたびに、次に大きい約数の列数へ広げる。 */
+  @container report-body (min-width: calc(2 * 14rem + 0.75rem)) {
+    & .report-cols.report-cols-of-2,
+    & .report-cols.report-cols-of-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @container report-body (min-width: calc(3 * 14rem + 2 * 0.75rem)) {
+    & .report-cols.report-cols-of-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @container report-body (min-width: calc(4 * 14rem + 3 * 0.75rem)) {
+    & .report-cols.report-cols-of-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  /* カードは「浮く」塊。
+   地を親のステップと同じ surface にすると枠しか効かない。 */
+  & .report-card {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--report-chunk-rule, var(--rule));
+    border-radius: 0.5rem;
+    background: var(--surface-raised);
+  }
+  /* 読む順・因果の無い並列の区画（`list` の `cards`）。
+   項目数で等分した横 1 行にし、器の幅が 760px 以下なら縦（既定の 1 列のまま）。 */
+  & .report-cards {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    margin: var(--report-block-gap) 0;
+  }
+  @container report-body (min-width: 761px) {
+    & .report-cards {
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+      grid-template-columns: none;
+    }
+  }
+  & .report-cards .report-card {
+    border-color: var(--rule-quiet);
+  }
+  & .report-cards .report-card > p {
+    margin: 0;
+  }
+  & .report-cards .report-card > p + p {
+    margin-top: 0.4rem;
+  }
+  /* 数の要約（KPI タイル）。
+   数そのものが結論になる値（件数・前後の差）を、地の文に埋めずに並べる塊。
+   `.report-card` と違って中身は1つの数とそのラベルだけなので、器は `.report-cols` より狭く取り、3〜4枚が1行に収まるようにする。
+   タイプスケールの段は増やさないので、「大きい数」は段の上端（--font-heading）と下端（--font-label）の落差・太さ・縦積みで出す。
+   意味を固定した色（state-*）は、`better` を渡したときの前→後の矢印の字だけに使う。
+   数そのものは良し悪しを持たず、良し悪しを言いたいときは同じ塊の中に `.report-badge` を添えるほうが文字でも読める。 */
+  & .report-stats {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    margin: var(--report-block-gap) 0;
+  }
+  /* `stats` の列数は、項目数（`stats-of-<n>`。`NotationBlock` が足す）の全部か約数か1列にする（3＋1 のような半端な段を作らない）。
+   既定は1列で、器の幅が列の最小幅（10rem。折れ線・値・分母の `36 / 48` が1行に収まる幅）とすき間 0.75rem を足した幅に届くたびに、次に大きい約数の列数へ広げる。
+   項目数の class が無いもの（2個、5個以上）は1列のまま。 */
+  @container report-body (min-width: calc(2 * 10rem + 0.75rem)) {
+    & .report-stats.report-stats-of-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @container report-body (min-width: calc(3 * 10rem + 2 * 0.75rem)) {
+    & .report-stats.report-stats-of-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @container report-body (min-width: calc(4 * 10rem + 3 * 0.75rem)) {
+    & .report-stats.report-stats-of-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  & .report-stat {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--report-chunk-rule, var(--rule));
+    border-radius: 0.5rem;
+    background: var(--report-chunk-ground, var(--surface));
+    font-size: var(--font-label);
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    color: var(--ink-quiet);
+  }
+  /* 数の側。
+   `<b>` と `<strong>` の両方を受ける（レポートの HTML を書くのはモデルなので、どちらで書かれても同じ見た目になるようにする）。 */
+  & .report-stat b,
+  & .report-stat strong {
+    display: block;
+    font-size: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: normal;
+    line-height: 1.3;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-bright);
+  }
+  /* `stats` の変わる前の数。数の上に添え、矢印の文字でつなぐ（地のタイルと同じ ink-quiet・label の段）。 */
+  & .report-stat-before {
+    display: block;
+  }
+  & .report-stat-better {
+    color: var(--state-ok);
+  }
+  & .report-stat-worse {
+    color: var(--state-warn);
+  }
+  /* `stats` の推移の折れ線。数の左に字の高さの1.2倍・幅4emで置き、最新の点だけ明るくする。 */
+  & .report-stat b > svg {
+    display: inline-block;
+    width: 4em;
+    height: 1.2em;
+    margin-right: 0.4em;
+    vertical-align: -0.1em;
+    overflow: visible;
+  }
+  & .report-stat b > svg polyline {
+    fill: none;
+    stroke: var(--ink-quiet);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+  & .report-stat b > svg circle {
+    fill: var(--ink-bright);
+  }
+  /* `stats` の全体の数。数の後ろに小さく並べ、割合は下の帯で添える。 */
+  & .report-stat-total {
+    font-size: var(--font-label);
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    color: var(--ink-quiet);
+  }
+  & .report-stat-meter {
+    display: block;
+    height: 0.3rem;
+    margin: 0.35rem 0;
+    border-radius: 999px;
+    background: var(--rule);
+    overflow: hidden;
+  }
+  & .report-stat-meter-fill {
+    display: block;
+    height: 100%;
+    background: var(--ink-quiet);
+  }
+  /* 表の変化したセルの前の値と矢印の文字。後の値は地の ink のまま。 */
+  & .report-change-from {
+    color: var(--ink-quiet);
+  }
+  & .report-badge {
+    display: inline-block;
+    padding: 0 0.5rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: var(--font-secondary);
+    white-space: nowrap;
+  }
+  & .report-badge-ok {
+    color: var(--state-ok);
+  }
+  & .report-badge-warn {
+    color: var(--state-warn);
+  }
+  & .report-badge-ng {
+    color: var(--state-ng);
+  }
+  /* 名前付きの並び（`list` の `label`）。
+   ラベルと本文を2列に組み、項目の間を細い横線で区切る。
+   1列目は `ordered` の番号と `check` のチェックの置き場で、印の無い `bullet` では幅0に縮む。
+   器が狭いときは、同じ理由で1列に積み、ラベル（と番号・チェック）を本文の上の行に置く。 */
+  & .report-labeled-list > :is(ul, ol) {
+    display: grid;
+    grid-template-columns: auto 7.5em minmax(0, 1fr);
+    column-gap: 20px;
+    margin: var(--report-block-gap) 0;
+    padding-left: 0;
+    list-style: none;
+    counter-reset: report-labeled-item;
+  }
+  @container report-body (max-width: calc(40em + 0.75rem)) {
+    & .report-labeled-list > :is(ul, ol) {
+      display: block;
+      padding-left: 0;
+      list-style: none;
+    }
+  }
+  & .report-labeled-list li {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: start;
+    padding: 12px 0;
+    border-top: 1px solid var(--rule-quiet);
+    counter-increment: report-labeled-item;
+  }
+  @container report-body (max-width: calc(40em + 0.75rem)) {
+    & .report-labeled-list li {
+      display: block;
+    }
+  }
+  & .report-labeled-list li:first-child {
+    border-top: none;
+  }
+  & .report-labeled-list ol > li::before {
+    content: counter(report-labeled-item) ".";
+    color: var(--ink-quiet);
+  }
+  & .report-list-label {
+    grid-column: 2;
+    color: var(--ink-quiet);
+    font-size: var(--font-secondary);
+    font-weight: 700;
+    line-height: 1.85;
+  }
+  & .report-list-text {
+    grid-column: 3;
+    min-width: 0;
+    color: var(--ink);
+    font-size: var(--font-subheading);
+    line-height: 1.85;
+    overflow-wrap: anywhere;
+  }
+  @container report-body (max-width: calc(40em + 0.75rem)) {
+    & .report-list-text {
+      display: block;
+      margin-top: 2px;
+    }
+  }
+  & .report-labeled-list code {
+    font-size: 0.86em;
+  }
+  /* 一本道の流れ（`list` の `flow`）。番号の丸を1本の線でつなぐ。
+   段の数に上限を置かないので、縦積みの高さを縛る値は書かない。 */
+  & .report-flow {
+    list-style: none;
+    margin: var(--report-block-gap) 0;
+    padding: 0;
+  }
+  & .report-flow-step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    column-gap: 18px;
+    padding-bottom: 28px;
+    font-size: var(--font-subheading);
+    line-height: 1.95;
+    color: var(--ink);
+  }
+  & .report-flow-step:last-child {
+    padding-bottom: 0;
+  }
+  & .report-flow-number {
+    box-sizing: border-box;
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--report-sequence-ink);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: var(--font-label);
+    font-weight: 600;
+    color: var(--report-sequence-ink);
+  }
+  & .report-flow-step:first-child .report-flow-number {
+    background: color-mix(in srgb, var(--surface-raised), var(--report-sequence-ink) 14%);
+  }
+  /* 段の名前（`<b>`）と本文のあいだの区切り。名前の無い段には `<b>` 自体が無いので掛からない。 */
+  & .report-flow-step > span > b {
+    margin-inline-end: 0.3rem;
+  }
+  & .report-flow-rail {
+    position: absolute;
+    left: 13px;
+    top: 32px;
+    bottom: -6px;
+    width: 2px;
+    border-radius: 1px;
+    background: linear-gradient(
+      var(--report-sequence-ink),
+      color-mix(in srgb, var(--report-sequence-ink), var(--ground) 65%)
+    );
+  }
+  /* 段が少なく短い流れ（`flow-row`）は横の箱の列にする。器が狭いときは縦の流れの見た目へ戻す（丸・線・段の間）。 */
+  & .report-flow-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.75rem 1.5rem;
+  }
+  & .report-flow-row .report-flow-step {
+    position: relative;
+    box-sizing: border-box;
+    margin-top: 0;
+    display: flex;
+    flex: 1 1 7rem;
+    min-width: 0;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--report-chunk-rule, var(--rule));
+    border-radius: 0.5rem;
+    background: var(--surface-raised);
+    line-height: 1.6;
+  }
+  & .report-flow-row .report-flow-number {
+    width: auto;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+  & .report-flow-row .report-flow-step:first-child .report-flow-number {
+    background: none;
+  }
+  & .report-flow-row .report-flow-rail {
+    display: none;
+  }
+  & .report-flow-arrow {
+    display: none;
+  }
+  & .report-flow-row .report-flow-arrow {
+    display: block;
+    position: absolute;
+    right: -1.25rem;
+    top: 50%;
+    translate: 0 -50%;
+    color: var(--report-sequence-ink);
+  }
+  @container report-body (max-width: calc(40em + 0.75rem)) {
+    & .report-flow-row {
+      display: block;
+    }
+    & .report-flow-row .report-flow-step {
+      box-sizing: content-box;
+      display: grid;
+      align-items: normal;
+      gap: 0 18px;
+      padding: 0 0 28px;
+      border: 0;
+      border-radius: 0;
+      background: none;
+      line-height: 1.95;
+    }
+    & .report-flow-row .report-flow-step + .report-flow-step {
+      margin-top: 4px;
+    }
+    & .report-flow-row .report-flow-step:last-child {
+      padding-bottom: 0;
+    }
+    & .report-flow-row .report-flow-number {
+      width: 28px;
+      height: 28px;
+      border: 1.5px solid var(--report-sequence-ink);
+      border-radius: 50%;
+    }
+    & .report-flow-row .report-flow-step:first-child .report-flow-number {
+      background: color-mix(in srgb, var(--surface-raised), var(--report-sequence-ink) 14%);
+    }
+    & .report-flow-row .report-flow-rail {
+      display: block;
+    }
+    & .report-flow-row .report-flow-arrow {
+      display: none;
+    }
+  }
+  /* 段の図（`report` の `progress` の塊と `work_plan` のワークプランから tsukumo が組む）。
+   節（丸）と線でつないだ1本の道。済んだ・いま・まだの見分けは丸の中身（✓／輪と点／空の輪）が持ち、
+   名前の字の色と線の色は補助。 */
+  & .report-progress {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: var(--report-block-gap) 0;
+    padding: 0;
+    row-gap: 8px;
+    column-gap: 10px;
+  }
+  & .report-progress-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  & .report-progress-name {
+    font-size: var(--font-secondary);
+    font-weight: 400;
+    color: var(--ink-quiet);
+    white-space: nowrap;
+  }
+  & .report-progress-dot {
+    box-sizing: border-box;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--rule);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-label);
+    font-weight: 700;
+  }
+  & .report-progress-step-done .report-progress-dot {
+    border: none;
+    background: var(--surface-accent);
+    color: var(--accent);
+  }
+  & .report-progress-step-current .report-progress-dot {
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+  & .report-progress-dot-mark {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  & .report-progress-step-current .report-progress-name {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  & .report-progress-status {
+    font-size: var(--font-label);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  & .report-progress-line {
+    flex-shrink: 0;
+    width: 28px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--rule);
+  }
+  & .report-progress-line-done {
+    background: var(--surface-accent);
+  }
+  /* 候補の比較（`report` の `options` の塊から tsukumo が組む）。
+   1案1行の積み。行は「番号・判定の語・名前と理由」の3列で、行どうしは罫で区切る。並びは書き手の順のまま。
+   頭の番号は入力欄の質問の札の番号と同じ見た目にする。
+   判定は頭の語（採る / 検討 / 採らない）が持ち、色は state-ok / state-warn / ink-quiet。採らない行は字全体を弱くする。
+   器が狭いときは理由を名前の下の行へ落とす（器の幅で決める）。 */
+  & .report-options {
+    container: report-options / inline-size;
+    margin: var(--report-block-gap) 0;
+  }
+  & .report-option {
+    display: grid;
+    grid-template-columns: 1.4rem 4.5em minmax(0, 1fr);
+    column-gap: 0.75rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--report-chunk-rule, var(--rule-soft));
+  }
+  & .report-option:last-child {
+    border-bottom: none;
+  }
+  & .report-option-number {
+    color: var(--ink-quiet);
+    font-family: var(--font-mono);
+    font-size: var(--font-label);
+  }
+  & .report-option-verdict {
+    font-size: var(--font-label);
+    font-weight: 600;
+  }
+  & .report-option-adopt .report-option-verdict {
+    color: var(--state-ok);
+  }
+  & .report-option-consider .report-option-verdict {
+    color: var(--state-warn);
+  }
+  & .report-option-body {
+    min-width: 0;
+  }
+  & .report-option-name {
+    color: var(--ink-bright);
+    font-weight: 600;
+  }
+  & .report-option-reason {
+    color: var(--ink-soft);
+  }
+  & .report-option-reason::before {
+    content: "— ";
+  }
+  & .report-option-reject :is(.report-option-verdict, .report-option-name, .report-option-reason) {
+    color: var(--ink-quiet);
+  }
+  @container report-options (max-width: 30rem) {
+    & .report-option-reason {
+      display: block;
+    }
+    & .report-option-reason::before {
+      content: none;
+    }
+  }
+  /* 確度つきの主張（`report` の `claims` の塊から tsukumo が組む）。
+   1項目1行の積みで、行どうしは罫で区切る。行の中身は Markdown の段落1つ（`path:line` とリンクを効かせるため）で、
+   その段落を「確度・本文」の2列にし、本文の列に主張・根拠・確かめ方を縦に積む。
+   確度は記号と語の字だけが色を持ち（確定 state-ok / 推測 state-warn / 未確認 state-ask）、地は染めない。
+   器が狭いときは確度を主張の上の行に落とす。 */
+  & .report-claims {
+    container: report-claims / inline-size;
+    margin: var(--report-block-gap) 0;
+  }
+  & .report-claim {
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--report-chunk-rule, var(--rule-soft));
+  }
+  & .report-claim:last-child {
+    border-bottom: none;
+  }
+  & .report-claim > p {
+    display: grid;
+    grid-template-columns: 5.5em minmax(0, 1fr);
+    column-gap: 0.75rem;
+    max-inline-size: none;
+    margin: 0;
+  }
+  & .report-claim-certainty {
+    grid-row: 1 / span 3;
+    grid-column: 1;
+    font-size: var(--font-label);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  & .report-claim-mark {
+    margin-right: 0.3em;
+  }
+  & .report-claim-confirmed .report-claim-certainty {
+    color: var(--state-ok);
+  }
+  & .report-claim-inferred .report-claim-certainty {
+    color: var(--state-warn);
+  }
+  & .report-claim-unverified .report-claim-certainty {
+    color: var(--state-ask);
+  }
+  & :is(.report-claim-text, .report-claim-basis, .report-claim-how) {
+    grid-column: 2;
+  }
+  & .report-claim-text {
+    color: var(--ink-bright);
+  }
+  & :is(.report-claim-basis, .report-claim-how) {
+    color: var(--ink-soft);
+  }
+  & .report-claim-field {
+    margin-right: 0.5em;
+    font-size: var(--font-label);
+    color: var(--ink-quiet);
+  }
+  @container report-claims (max-width: 30rem) {
+    & .report-claim > p {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    & :is(.report-claim-certainty, .report-claim-text, .report-claim-basis, .report-claim-how) {
+      grid-row: auto;
+      grid-column: 1;
+    }
+  }
+}

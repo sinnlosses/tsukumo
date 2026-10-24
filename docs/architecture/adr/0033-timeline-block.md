@@ -70,7 +70,7 @@ CSS で、Chart.js にも `svg` の塊の経路にも載せない。形の札 `t
 ### 描き方（論点3）
 
 **shared が HTML の `div`・`span` を組み、位置は `style="margin-left: x%; width: w%"` だけで書き、見た目は
-`report-timeline.module.css` が当てる。** 前例は `report-phase-time.ts` の段の滝（同じ書き方の % の位置）と、
+`report-notation/timeline.css` が当てる。** 前例は `report-phase-time.ts` の段の滝（同じ書き方の % の位置）と、
 `card-chain-markdown.ts` のカードの連鎖（HTML で組み、器の幅で並びを変える）。
 
 | 見た目   | 書き方                                                                                                       |

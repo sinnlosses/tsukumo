@@ -1,0 +1,379 @@
+.detail-block {
+  /* `task` のあるレポートの結論の一文。見出し（`report-head.module.css`）のすぐ下に描く。 */
+  & .report-conclusion {
+    font-size: var(--font-subheading);
+    line-height: 1.85;
+    color: var(--ink);
+  }
+  /* `task` の無いレポートの結論。見出しの代わりに頭に置く。 */
+  & .report-conclusion-lead {
+    font-size: var(--report-heading-3);
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  & :is(.report-conclusion, .report-conclusion-lead) p {
+    margin: 0;
+  }
+  & :is(.report-conclusion, .report-conclusion-lead) :not(pre) > code {
+    font-size: 0.86em;
+    color: var(--ink);
+    background: var(--report-code-surface);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  /* 情報の塊（素の `note`。結論を言う役）。
+   6種（情報・注意・異常・疑問・メモ・お願い）に共通の余白もここが持つ。
+   5種は、意味を固定した色で地を染める。
+   染める割合は段差で、注意・異常は 13%、情報・疑問・メモは 6%（表の状態セルと同じ値）。
+   上に乗る ink は 10:1 以上を保つ。
+   左の色罫は「読み飛ばされると困る」注意・異常とお願いだけが持つ。情報・疑問・メモは種別のラベルの字が種類の色を運ぶ。
+   引用（blockquote）は目立たせないための印なので、灰の縦罫だけで地を染めない。 */
+  & .report-note {
+    margin: var(--report-block-gap) 0;
+    padding: 0.5rem 0.75rem;
+    background: color-mix(in srgb, var(--surface), var(--state-info) 6%);
+  }
+  & .report-note-warn {
+    border-left: 3px solid var(--state-warn);
+    background: color-mix(in srgb, var(--surface), var(--state-warn) 13%);
+  }
+  & .report-note-ng {
+    border-left: 3px solid var(--state-ng);
+    background: color-mix(in srgb, var(--surface), var(--state-ng) 13%);
+  }
+  /* 疑問（答えの出ていない問い）。 */
+  & .report-note-ask {
+    background: color-mix(in srgb, var(--surface), var(--state-ask) 6%);
+  }
+  /* メモ（本筋から外れる覚え書き）。
+   色は ink なので、地を染めないと引用（blockquote）と灰どうしで見分けにくい。 */
+  & .report-note-memo {
+    background: color-mix(in srgb, var(--surface), var(--state-memo) 6%);
+  }
+  /* お願い（レポートのいちばん最後に置く、利用者にしか決められない・できないこと）。
+   縦罫の色・地・枠で他の5種と見分ける。
+   縦罫は accent（文字ではなく罫線の側に載せる）。
+   地は accent で1割染め、枠で囲んで親の地が surface でも ground でも塊として立たせる。 */
+  & .report-note-favor {
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--surface), var(--accent) 10%);
+  }
+  /* 振り返りの結果（`retrospective` の欄。本文の節の後ろ・お願いの前に置く専用の塊）。
+   お願いの縦罫（accent）と取り違えないよう、罫は左でなく上に引き、地は染めない。 */
+  & .report-retrospective {
+    max-inline-size: var(--report-measure);
+    margin: var(--report-block-gap) 0;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--rule);
+    background: var(--surface);
+  }
+  & .report-retrospective-label {
+    margin-bottom: 0.2rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-quiet);
+  }
+  /* 種別のラベル（「情報」「注意」「異常」「疑問」「メモ」「お願い」）。
+   6種すべてに tsukumo 側で足すのは、モデルが見出しの語を書き忘れても色だけで伝えないため（文字そのものは `NotationBlock` が描く）。
+   罫を持たない情報・疑問・メモは、ラベルの字が種類の色を持つ。罫を持つ注意・異常・お願いは ink 系のまま。 */
+  & .report-note-label {
+    display: block;
+    margin-bottom: 0.2rem;
+    letter-spacing: 0.08em;
+  }
+  & .report-note-label-info {
+    color: var(--state-info);
+  }
+  & .report-note-label-ask {
+    color: var(--state-ask);
+  }
+  & .report-note-label-memo {
+    color: var(--state-memo);
+  }
+  /* レポートの見出し（`##` / `###`）。
+   `SectionHeading` / `SubHeading` が `h4` / `h5` として描く（タグは依頼の全文の見出し `h2` と段が被らないよう一段落としてある）。
+   `##` は領域の幅いっぱいの罫を引き、罫の側にだけキャラクターの色を混ぜる（文字は `ink-bright`）。
+   混ぜる割合は `rule` に6割で、依頼・お願いの縦罫（素の accent）より一段弱い。
+   `###` は罫を持たず、大きさと上のあきで段の深さを運ぶ。 */
+  & h4 {
+    max-inline-size: var(--report-measure);
+    margin: 52px 0 var(--report-heading-gap);
+    padding-bottom: 6px;
+    border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
+    font-size: var(--report-heading-2);
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    font-feature-settings: "palt";
+    color: var(--ink-bright);
+  }
+  & h5 {
+    max-inline-size: var(--report-measure);
+    margin: 26px 0 var(--report-heading-gap);
+    font-size: var(--report-heading-3);
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--ink-bright);
+  }
+  & blockquote {
+    margin: var(--report-block-gap) 0;
+    padding-left: 0.75rem;
+    border-left: 3px solid var(--rule);
+    color: var(--ink-quiet);
+  }
+  /* 引用の中の段落の既定 margin（1em）は引用の外へ抜けて引用の上下を 15px にするので、塊のあきに揃え、先頭と末尾は 0 にする。 */
+  & blockquote > :is(p, ul, ol) {
+    margin: var(--report-block-gap) 0;
+  }
+  & blockquote > :first-child {
+    margin-top: 0;
+  }
+  & blockquote > :last-child {
+    margin-bottom: 0;
+  }
+  /* レポートの中の <details>（記法が「長い根拠・ログ・脇道」に勧める畳み方）。
+   畳まれた塊だと分かることが要るので、地と枠で塊にし、開閉できることは summary のカーソルで示す（新しい色は作らない）。
+   地を ground に落とすのは、親の地が surface でも塊として立つため。 */
+  & details {
+    margin: var(--report-block-gap) 0;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--report-chunk-rule, var(--rule));
+    border-radius: 0.5rem;
+    background: var(--ground);
+  }
+  & summary {
+    cursor: pointer;
+    color: var(--ink-quiet);
+  }
+  & details[open] > summary {
+    margin-bottom: 0.5rem;
+  }
+  /* 枠の内側では、最後の塊の margin が padding に足されて下だけ広く空く。 */
+  & details > :last-child:not(summary) {
+    margin-bottom: 0;
+  }
+  /* 話題の区切り（`---`）。
+   ブラウザ既定の hr は立体的な溝で、この配色から浮く。
+   表・カードと同じ罫線の色の1本にして、地の文との切れ目だけを出す。 */
+  & hr {
+    margin: var(--report-block-gap) 0;
+    border: 0;
+    border-top: 1px solid var(--rule);
+  }
+  /* チェックリスト（`- [ ]` / `- [x]`）の印。
+   `remark-gfm` が出す <input type="checkbox"> は許可リストに無く、`rehypeTaskCheck` がこの span に書き替える。
+   済みと未了は枠の中の印（✓）で見分け、済みには差し色を重ねる（印の文字は tsukumo が必ず入れるので、色だけで済みを伝えることにはならない）。
+   意味を固定した色（state-ok）にしないのは、済みは良し悪しではないため。
+   行頭の点は印と二重になるので消す。 */
+  & .report-task-item {
+    list-style: none;
+  }
+  & .report-task-check {
+    display: inline-block;
+    width: 1.1em;
+    height: 1.1em;
+    margin-right: 0.35em;
+    border: 1px solid var(--ink-quiet);
+    border-radius: 0.2em;
+    line-height: 1.1;
+    text-align: center;
+    vertical-align: -0.15em;
+  }
+  & .report-task-check-done {
+    border-color: var(--accent);
+    background: var(--surface-accent);
+    color: var(--accent);
+  }
+  /* 記法の表に無いが許可リスト（`REPORT_SANITIZE_SCHEMA`）が通す要素のうち、ブラウザ既定のままだとこの配色・このタイプスケールから外れるもの。
+   figure は既定で左右に 40px の字下げが付き（img を通さないこの面では svg や表に説明を添える器にしかならないので、字下げは邪魔にしかならない）、small は4段のどれでもない大きさになる。 */
+  & figure {
+    margin: var(--report-block-gap) 0;
+  }
+  & figcaption {
+    color: var(--ink-quiet);
+    font-size: var(--font-secondary);
+  }
+  & small {
+    color: var(--ink-quiet);
+    font-size: var(--font-secondary);
+  }
+  & svg {
+    max-width: 100%;
+    height: auto;
+  }
+  /* 図（graph・mermaid・svg・image）の高さは読む面の高さ（`.layout-main` の内寸）の 70% まで。縦横比を保って縮み、全体は拡大で見る。chart は固定の高さのまま。
+   svg の塊は書き手の `width` の1.5倍まで器の幅へ拡大し、高さの上限に当たるときは幅が縦横比に従う。`attr()` を解さない描画では `width: auto`（書き手の幅まで）に戻る。
+   包みは器の幅まで伸ばす（縮めると `100%` が自分の幅を指して拡大しない）。 */
+  & pre:global(.mermaid) svg {
+    max-height: var(--report-figure-max);
+  }
+  & .report-svg-figure {
+    display: flex;
+    align-self: stretch;
+    justify-content: center;
+  }
+  & .report-svg-figure svg {
+    min-width: 0;
+    width: auto;
+    width: min(
+      100%,
+      calc(attr(width px, 9999px) * 1.5),
+      calc(
+        var(--report-figure-max) * attr(width type(<number>), 1) / attr(height type(<number>), 1)
+      )
+    );
+    max-height: var(--report-figure-max);
+  }
+  & .report-image-zoom img {
+    max-height: var(--report-figure-max);
+  }
+  /* 寸法の属性がある画像は、属性の幅が `width` に写って高さの上限で縦横比が崩れるので、幅を高さの上限から縦横比で決める（読み込み前の箱も同じ寸法）。
+   `%` を `width` に混ぜない（包みのボタンが中身の幅に縮むので、`%` の幅の画像は読み込み前に幅 0 になる）。器より広いときは `max-width: 100%` が縦横比のまま縮める。
+   前後の塊の画像は列の幅いっぱいに描くので除く。`attr()` を解さない描画では `width: auto`（比は保つが、読み込み前は箱を取らない）に戻る。 */
+  & .report-image-zoom img[width][height]:not(.report-before-after-swap img) {
+    width: auto;
+    width: min(
+      attr(width px, 9999px),
+      calc(
+        var(--report-figure-max) * attr(width type(<number>), 1) / attr(height type(<number>), 1)
+      )
+    );
+  }
+  /* 押すと拡大する図（`SvgZoom`）。mermaid は描き終えたものだけ。 */
+  & pre:global(.mermaid)[data-processed],
+  & .report-svg-figure {
+    cursor: zoom-in;
+  }
+
+  /* コードは機械の側の文字なので等幅。
+   ブラウザ既定でも等幅にはなるが、それは汎用の monospace で、インラインのコード（下の `:not(pre) > code`）だけが --font-mono になる不揃いが出る。
+   書体そのものの定義は theme.css のトークン。 */
+  & pre {
+    margin: var(--report-block-gap) 0;
+    font-family: var(--font-code);
+    font-size-adjust: none;
+    padding: 0.5rem;
+    background: var(--ground);
+    border-radius: 0.4rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    /* 等幅の桁を和欧間アキで崩さない。 */
+    text-autospace: no-autospace;
+  }
+  /* テーマ（github-dark）の `.hljs` が敷く地・余白・block を打ち消し、箱は `pre` の1段だけにする。字の色の規則は触らない。 */
+  & pre > code {
+    display: inline;
+    padding: 0;
+    background: none;
+  }
+  /* フェンスの頭に添える帯。ファイル名（```diff src/foo.ts）があれば左のラベルに出し
+   （差分だけを見てどのファイルか分からない、を防ぐ）、右には常にコピーのボタンを置く。
+   別の枠を足さず、コードの地（--ground）を上へ伸ばして1つの塊に見せる（箱が2つ並ぶと、差分そのものより境目のほうが目立つ）。
+   ラベルの文字はパスなので等幅で、寸法は「ID・ツール名・キー」の段。
+   器は Markdown のレンダラ側（`Pre`）が作るので、レポートの記法・許可リストは増えていない。 */
+  & .code-file {
+    margin: var(--report-block-gap) 0;
+  }
+  & .code-file-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.2rem 0.5rem 0.2rem 0.5rem;
+    background: var(--ground);
+    border-radius: 0.4rem 0.4rem 0 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-secondary);
+    color: var(--ink-quiet);
+    overflow-wrap: anywhere;
+  }
+  /* 帯が上に乗るぶん、コード側の上マージンと上の角を落とす（.detail-block pre の既定を消す）。 */
+  & .code-file > pre {
+    margin-top: 0;
+    border-radius: 0 0 0.4rem 0.4rem;
+  }
+  /* 行ごとに描くコード（`marks` のある塊と、コマンドの行のある shell の塊）。1行を1つの塊にし、<pre> の左右の余白まで地と罫を伸ばす。
+   印の行は地を --surface-raised、左端に 2px の --accent を沈めた罫、ラベルは行の右端に 12px・--ink-quiet。 */
+  & .code-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    min-height: 1lh;
+    margin: 0 -0.5rem;
+    padding: 0 0.5rem;
+  }
+  & .code-line-text {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  & .code-line-mark {
+    background: var(--surface-raised);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  & .code-line-output {
+    color: var(--ink-soft);
+  }
+  /* diff の行の地は行の器に塗る（テーマが字の幅だけに付ける hljs-addition / hljs-deletion の地は打ち消す）。値は theme.css の固定の4値。 */
+  & .code-line-added {
+    background: var(--code-diff-line-added);
+  }
+  & .code-line-removed {
+    background: var(--code-diff-line-removed);
+  }
+  & .code-line-added .code-line-text > *,
+  & .code-line-removed .code-line-text > * {
+    background: none;
+  }
+  & .code-line-added .code-line-sign {
+    color: var(--state-ok);
+  }
+  & .code-line-removed .code-line-sign {
+    color: var(--state-ng);
+  }
+  /* diff の対の行の、違う語。 */
+  & .code-diff-added {
+    background: var(--code-diff-word-added);
+  }
+  & .code-diff-removed {
+    background: var(--code-diff-word-removed);
+  }
+  & .code-mark-label {
+    flex: none;
+    font-family: var(--font-sans);
+    font-size: var(--font-label);
+    color: var(--ink-quiet);
+  }
+  /* 畳んだ範囲の 1 行。押すと中身が出る。 */
+  & .code-fold {
+    display: block;
+    width: calc(100% + 1rem);
+    margin: 0 -0.5rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 0;
+    text-align: left;
+    font-family: var(--font-sans);
+  }
+  /* コピーのボタン。ラベルの有無に関わらず帯の右端に置く。 */
+  & .code-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.3rem;
+    flex-shrink: 0;
+  }
+  /* git 管理下のパスを押せる部品にしたときの見た目（inline code・フェンスのファイル名・相対リンクの3か所）。
+   `role="button"` の `<span>` を地の文のリンク（theme.css の `a`）と同じ下線の文字に見せる（色を取り上げるかわりに下線で区別する）。
+   文字は周り（`.code-file-name` の等幅・inline code の地）をそのまま親から継ぐ。 */
+  & .report-file-link {
+    cursor: pointer;
+    overflow-wrap: break-word;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+  & .report-file-link:hover {
+    text-decoration-color: var(--accent);
+  }
+}

@@ -1,9 +1,12 @@
 import { existsSync, readFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
 
 import { uniqueBy } from "remeda"
 import { describe, expect, it } from "vitest"
 
+import {
+  REPORT_DRAWN_MARK_NAMES,
+  REPORT_NOTATION_NAMES,
+} from "../../src/shared/report/report-notation.ts"
 import { commentLineIndexes } from "../comment-line.ts"
 import { listSourceFiles, resolveRelativeImport, SRC_ROOT } from "./source-file.ts"
 
@@ -337,16 +340,6 @@ function jsxUsagesWithClassName(
   return usages
 }
 
-/** CSS を読み、`@import` で取り込むファイルの中身を後ろに足す（取り込んだ規則は入口の class 名になるため）。 */
-function cssContentWithImports(path: string): string {
-  const source = readFileSync(path, "utf8")
-  const imported = [...source.matchAll(/@import\s+["']([^"']+)["']\s*;/g)].flatMap(
-    ([, specifier]) =>
-      specifier === undefined ? [] : [cssContentWithImports(resolve(dirname(path), specifier))],
-  )
-  return [source.replace(/@import\s+["'][^"']+["']\s*;/g, ""), ...imported].join("\n")
-}
-
 describe("components/ui/ の部品の className", () => {
   it('渡す className は styles["…"] の組み合わせだけで、その class は部品の property と重ならない', () => {
     const targets = classNameCheckedUiComponents()
@@ -365,7 +358,7 @@ describe("components/ui/ の部品の className", () => {
       if (cached !== undefined) {
         return cached
       }
-      const content = cssContentWithImports(`${SRC_ROOT}/${cssRelPath}`)
+      const content = readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8")
       cssContentCache.set(cssRelPath, content)
       return content
     }
@@ -403,8 +396,17 @@ describe("components/ui/ の部品の className", () => {
 
 describe("CSS Modules の class", () => {
   it("CSS Modules のセレクタに書いた class は、tsx から styles で参照されているか、許可リストにある", () => {
-    const cssFiles = listSourceFiles(SRC_ROOT, SRC_ROOT, [".module.css"])
-    expect(cssFiles.length).toBeGreaterThan(0)
+    const moduleCssFiles = listSourceFiles(SRC_ROOT, SRC_ROOT, [".module.css"])
+    expect(moduleCssFiles.length).toBeGreaterThan(0)
+    // `<名>.module.css` の隣の `<名>/` の下の `.css` は、その入口に束ねられる部品。
+    const entryOf = (cssRelPath: string): string | undefined =>
+      moduleCssFiles.find(
+        (e) => e === `${cssRelPath.slice(0, cssRelPath.lastIndexOf("/"))}.module.css`,
+      )
+    const cssFiles = listSourceFiles(SRC_ROOT, SRC_ROOT, [".css"]).filter(
+      (cssRelPath) => cssRelPath.endsWith(".module.css") || entryOf(cssRelPath) !== undefined,
+    )
+    expect(cssFiles.length).toBeGreaterThan(moduleCssFiles.length)
 
     const readersByCss = new Map<string, readonly string[]>()
     for (const relPath of listSourceFiles(SRC_ROOT)) {
@@ -417,24 +419,13 @@ describe("CSS Modules の class", () => {
       }
     }
 
-    // `@import` で取り込まれた CSS の class 名は入口の名前になるので、入口を読む tsx がそのまま読み手になる。
-    for (const cssRelPath of cssFiles) {
-      const readers = readersByCss.get(cssRelPath) ?? []
-      const source = readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8")
-      for (const importMatch of source.matchAll(/@import\s+["']([^"']+)["']\s*;/g)) {
-        const importedRelPath = resolveRelativeImport(cssRelPath, importMatch[1] ?? "")
-        readersByCss.set(importedRelPath, [
-          ...(readersByCss.get(importedRelPath) ?? []),
-          ...readers,
-        ])
-      }
-    }
-
     const offenders = cssFiles.flatMap((cssRelPath) => {
-      const readers = readersByCss.get(cssRelPath) ?? []
+      const entry = entryOf(cssRelPath)
+      const readers = readersByCss.get(entry ?? cssRelPath) ?? []
       return cssClassNames(readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8"))
         .filter(
           (className) =>
+            !REPORT_NOTATION_CLASS_NAMES.has(className) &&
             !readers.some((content) => isCssClassReferenced(content, className)) &&
             !FOREIGN_CSS_CLASS_PREFIXES.some((prefix) => className.startsWith(prefix)),
         )
@@ -448,19 +439,25 @@ describe("CSS Modules の class", () => {
 /**
  * 読み手のソースに、class 名が文字列として現れるか。`styles[\`prefix-${x}\`]` のように
  * 後ろを組み立てる綴りは、接頭辞までの一致で参照とみなす。
+ * 接頭辞がちょうど `report-` の綴りは名前の表が引くので数えない。
  */
 function isCssClassReferenced(content: string, className: string): boolean {
   if (content.includes(`"${className}"`) || content.includes(`.${className}`)) {
     return true
   }
-  return [...content.matchAll(/`([\w-]+)\$\{/g)].some((match) =>
-    className.startsWith(match[1] ?? "\0"),
+  return [...content.matchAll(/`([\w-]+)\$\{/g)].some(
+    (match) => match[1] !== "report-" && className.startsWith(match[1] ?? "\0"),
   )
 }
 
+/** `styles[\`report-${name}\`]` が解く、レポートの記法の名前の表。 */
+const REPORT_NOTATION_CLASS_NAMES: ReadonlySet<string> = new Set(
+  [...REPORT_NOTATION_NAMES, ...REPORT_DRAWN_MARK_NAMES].map((name) => `report-${name}`),
+)
+
 // tsx 以外（rehype・CodeMirror）が付ける class と、domain/reveal が生の class 名で選ぶために
 // styles を介さず literal で付ける class の接頭辞。
-const FOREIGN_CSS_CLASS_PREFIXES = ["report-", "cm-", "chart-block"] as const
+const FOREIGN_CSS_CLASS_PREFIXES = ["cm-", "chart-block"] as const
 
 /** CSS のセレクタ部分（`{` の前）に現れる class 名。コメントと宣言の中身は見ない。 */
 function cssClassNames(content: string): readonly string[] {
