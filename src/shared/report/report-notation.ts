@@ -219,6 +219,7 @@ export const REPORT_NOTATION_NAMES = [
  * `phase-times` は検証結果の下の段ごとの所要時間（見出しの行・帯 `phase-band`（測れない段は `phase-band-unknown`）か並列の段のある回の横棒 `phase-waterfall`・一覧）で、`phase-time` が一覧の1行。`phase-time-group` は一覧の並列の段の包み。waterfall の並列の段は `phase-waterfall-group` が中の段の棒を包み、壁時計の区間を `phase-time-wall` が囲む。
  * `conclusion` は `task` のあるレポートの結論の一文、`conclusion-lead` は `task` の無いレポートの結論。
  * 見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
+ * `src/shared/report/` に文字どおり書いた class 名の足し忘れは、アーキテクチャテスト「tsukumo が組む class 名」が落とす。
  */
 export const REPORT_DRAWN_MARK_NAMES = [
   "key-figures",
