@@ -18,7 +18,7 @@ import styles from "./nav-drawer.module.css"
 import { ScreenNavCharacterPicker } from "./screen-nav-character-picker.tsx"
 import { ScreenNavGate } from "./screen-nav-gate.tsx"
 import { ScreenNavSessionTag } from "./screen-nav-session-tag.tsx"
-import { ScreenNavSettingsBody } from "./screen-nav-settings.tsx"
+import { ScreenNavSettingsBody } from "./screen-nav-settings-face.tsx"
 
 /** 引き出しに差し込む中身。 */
 export type NavDrawerSlots = {

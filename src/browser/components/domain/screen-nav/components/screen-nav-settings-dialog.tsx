@@ -1,10 +1,9 @@
 // 設定のダイアログの中身。頭（歯車の線画・「設定」・×）、左のナビ、右の面を組む。
-// 面は `FACES` に1行ずつ宣言し、足すときはここへ1行書けばナビと面の両方に出る。
 // 選んでいる面はこの部品の `useState` が持つ。ダイアログを閉じると部品ごと消えるので、開くたび先頭の面から始まる。
 
 import clsx from "clsx"
-import { Palette, Play, Settings, SlidersHorizontal, Sparkles, Workflow, X } from "lucide-react"
-import { useState, type ComponentType, type ReactElement } from "react"
+import { Settings, X } from "lucide-react"
+import { useState, type ReactElement } from "react"
 
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
@@ -12,61 +11,9 @@ import { Text } from "../../../ui/text/text.tsx"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-settings-dialog.module.css"
 import { ScreenNavSettingsFaceFrame } from "./screen-nav-settings-face-frame.tsx"
-import { ScreenNavSettingsLookFace } from "./screen-nav-settings-look.tsx"
-import { ScreenNavSettingsWorkflowFace } from "./screen-nav-settings-workflow.tsx"
+import { FACES, type Face } from "./screen-nav-settings-face.tsx"
 import gearStyles from "./screen-nav-settings.module.css"
-import {
-  ScreenNavSettingsLaunchSkillFace,
-  ScreenNavSettingsRevealFace,
-  ScreenNavSettingsSessionDefaultFace,
-  type ScreenNavSettingsProps,
-} from "./screen-nav-settings.tsx"
-
-/**
- * `reset` の面はダイアログが枠を組み、下の帯に画面の色の「既定に戻す」を置く。
- * `own` の面は色と関わらない値を書くので、自分で `ScreenNavSettingsFaceFrame` を組んで自分の下の帯を渡す。
- */
-type Face = {
-  readonly key: string
-  readonly label: string
-  readonly icon: ComponentType<{ readonly size: number; readonly strokeWidth: number }>
-} & (
-  | {
-      readonly foot: "reset"
-      readonly Body: (props: ScreenNavSettingsProps) => ReactElement
-    }
-  | {
-      readonly foot: "own"
-      readonly Body: (props: { readonly title: string }) => ReactElement
-    }
-)
-
-const FACES = [
-  { key: "look", label: "見た目", icon: Palette, Body: ScreenNavSettingsLookFace, foot: "reset" },
-  {
-    key: "session-default",
-    label: "セッションの既定",
-    icon: SlidersHorizontal,
-    Body: ScreenNavSettingsSessionDefaultFace,
-    foot: "reset",
-  },
-  { key: "reveal", label: "演出", icon: Sparkles, Body: DialogRevealFace, foot: "reset" },
-  {
-    key: "launch-skill",
-    label: "タスクの実行",
-    icon: Play,
-    Body: ScreenNavSettingsLaunchSkillFace,
-    foot: "reset",
-  },
-  // ワークフローの値は歯車の設定（`settings`）に無く、面が自分で読み書きする。
-  {
-    key: "workflow",
-    label: "ワークフロー",
-    icon: Workflow,
-    Body: ScreenNavSettingsWorkflowFace,
-    foot: "own",
-  },
-] satisfies readonly [Face, ...Face[]]
+import type { ScreenNavSettingsProps } from "./screen-nav-settings.tsx"
 
 const NAV_GROUP_LABEL = "あなたの好み"
 
@@ -204,9 +151,4 @@ function SelectedFace(props: {
       <face.Body settings={settings} />
     </ScreenNavSettingsFaceFrame>
   )
-}
-
-/** 引き出しの行「速さ」と違い、面の名前が「演出」なので行の名前に「書き上げる」を足す。 */
-function DialogRevealFace(props: ScreenNavSettingsProps): ReactElement {
-  return <ScreenNavSettingsRevealFace settings={props.settings} label="書き上げる速さ" />
 }

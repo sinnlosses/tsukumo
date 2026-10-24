@@ -351,7 +351,7 @@ describe("ScreenNav", () => {
           .getAllByRole("link")
           .map((link) => link.textContent),
       ).toEqual(["キャラ›", "トークン›", "成果›"])
-      expect(within(face).getByText("画面の色")).toBeDefined()
+      expect(within(face).getByText("見た目")).toBeDefined()
       expect(
         within(openedDrawer()).getByRole("button", { name: "＋ 新しいやり取り" }),
       ).toBeDefined()

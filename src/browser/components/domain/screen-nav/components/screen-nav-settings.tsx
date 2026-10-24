@@ -1,4 +1,4 @@
-// 設定の4つの面（色・セッションの既定・演出・タスクの実行）と、4つを見出し付きで並べた中身（`ScreenNavSettingsBody`、狭い画面の引き出しの設定の面が置く）。
+// 設定の面のうち、セッションの既定・演出・タスクの実行の中身。面の表は `FACES`。
 // id は `useId()` でこの器ごとに振る（`<label for>` が指す先が重ならないようにする）。
 
 import { useId, type ReactElement } from "react"
@@ -17,7 +17,6 @@ import {
   RunSettingSelect,
   type RunSettingSelectOption,
 } from "../../../../features/run-setting/components/run-setting-select.tsx"
-import { Button } from "../../../ui/button/button.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { useLaunchSkillOptions } from "../hooks/use-launch-skill-setting.ts"
@@ -39,81 +38,6 @@ const REVEAL_SPEED_OPTIONS = REVEAL_SPEED_LABELS.map(([value, label]): RunSettin
   icon: undefined,
   row: <RunSettingName danger={false}>{label}</RunSettingName>,
 }))
-
-/** 設定の中身（4つの面を見出し付きで並べ、末尾に既定に戻す）。狭い画面の引き出しの設定の面が置く。 */
-export function ScreenNavSettingsBody(props: ScreenNavSettingsProps): ReactElement {
-  const { settings } = props
-
-  return (
-    <>
-      <Text
-        element="p"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["screen-nav-settings-heading"]}
-      >
-        画面の色
-      </Text>
-      <ScreenNavSettingsColorFace settings={settings} />
-      <Text
-        element="p"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["screen-nav-settings-heading"]}
-      >
-        新しいセッションの既定
-      </Text>
-      <ScreenNavSettingsSessionDefaultFace settings={settings} />
-      <Text
-        element="p"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["screen-nav-settings-heading"]}
-      >
-        書き上げる演出の速さ
-      </Text>
-      <ScreenNavSettingsRevealFace settings={settings} label="速さ" />
-      <Text
-        element="p"
-        size="label"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["screen-nav-settings-heading"]}
-      >
-        タスクの実行
-      </Text>
-      <ScreenNavSettingsLaunchSkillFace settings={settings} />
-      <HStack
-        element="div"
-        name={{ kind: "none" }}
-        ref={undefined}
-        gap="lg"
-        align="center"
-        justify="between"
-        wrap="nowrap"
-        className={styles["screen-nav-settings-row"]}
-      >
-        <Button
-          variant="link"
-          size="label"
-          pressed="none"
-          disabled={settings.resetDisabled}
-          ariaLabel={undefined}
-          disclosure={{ kind: "none" }}
-          ariaHasPopup={undefined}
-          title={undefined}
-          className={styles["screen-nav-settings-reset"]}
-          onClick={settings.onReset}
-        >
-          既定に戻す
-        </Button>
-      </HStack>
-    </>
-  )
-}
 
 /** セッションの既定の面（見出しなし）。 */
 export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProps): ReactElement {
@@ -215,11 +139,9 @@ export function ScreenNavSettingsSessionDefaultFace(props: ScreenNavSettingsProp
   )
 }
 
-/** 演出の面（見出しなし）。`label` は行の名前。 */
-export function ScreenNavSettingsRevealFace(
-  props: ScreenNavSettingsProps & { readonly label: string },
-): ReactElement {
-  const { settings, label } = props
+/** 演出の面（見出しなし）。 */
+export function ScreenNavSettingsRevealFace(props: ScreenNavSettingsProps): ReactElement {
+  const { settings } = props
   const fieldId = useId()
 
   return (
@@ -234,7 +156,7 @@ export function ScreenNavSettingsRevealFace(
         wrap="nowrap"
         className={styles["screen-nav-settings-row"]}
       >
-        <label htmlFor={`${fieldId}-reveal-speed`}>{label}</label>
+        <label htmlFor={`${fieldId}-reveal-speed`}>書き上げる速さ</label>
         <RunSettingSelect
           id={`${fieldId}-reveal-speed`}
           ariaLabel="書き上げる演出の速さ"
@@ -304,51 +226,6 @@ export function ScreenNavSettingsLaunchSkillFace(props: ScreenNavSettingsProps):
       >
         タスクの実行で呼ぶスキル。未設定なら「タスク GH-xxxx を進めて」と送る。
       </Text>
-    </>
-  )
-}
-
-/** 画面の色の面（見出しなし）。 */
-function ScreenNavSettingsColorFace(props: ScreenNavSettingsProps): ReactElement {
-  const { settings } = props
-  const fieldId = useId()
-
-  return (
-    <>
-      {settings.colors.map((color) => (
-        <HStack
-          element="div"
-          name={{ kind: "none" }}
-          ref={undefined}
-          gap="lg"
-          align="center"
-          justify="between"
-          wrap="nowrap"
-          className={styles["screen-nav-settings-row"]}
-          key={color.key}
-        >
-          <label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>
-          <input
-            id={`${fieldId}-${color.key}`}
-            type="color"
-            value={color.value}
-            onChange={(event) => {
-              color.onChange(event.target.value)
-            }}
-          />
-        </HStack>
-      ))}
-      {settings.colorNotice.kind === "shown" && (
-        <Text
-          element="p"
-          size="label"
-          tone="state-warn"
-          weight="inherit"
-          className={styles["screen-nav-settings-notice"]}
-        >
-          {settings.colorNotice.text}
-        </Text>
-      )}
     </>
   )
 }
