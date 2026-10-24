@@ -1,4 +1,4 @@
-import { cleanup, render } from "@testing-library/react"
+import { act, cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
@@ -43,6 +43,21 @@ describe("Portrait", () => {
     renderPortrait({ motion: "waiting" })
 
     expect(portraitWrapper().getAttribute("data-motion")).toBe("waiting")
+  })
+
+  it("窓が blur の間だけ data-paused を付ける", () => {
+    renderPortrait({})
+    expect(portraitWrapper().hasAttribute("data-paused")).toBe(false)
+
+    act(() => {
+      window.dispatchEvent(new Event("blur"))
+    })
+    expect(portraitWrapper().getAttribute("data-paused")).toBe("true")
+
+    act(() => {
+      window.dispatchEvent(new Event("focus"))
+    })
+    expect(portraitWrapper().hasAttribute("data-paused")).toBe(false)
   })
 })
 

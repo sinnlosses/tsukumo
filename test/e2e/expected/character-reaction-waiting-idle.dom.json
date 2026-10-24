@@ -26,8 +26,7 @@
           "attributes": {
             "role": "img",
             "aria-label": "つくもの精霊（通常）",
-            "data-expression": "default",
-            "data-motion": "reading"
+            "data-expression": "default"
           },
           "children": [
             {

@@ -26,8 +26,7 @@
           "attributes": {
             "role": "img",
             "aria-label": "つくもの精霊（どや顔）",
-            "data-expression": "proud",
-            "data-motion": "reading"
+            "data-expression": "proud"
           },
           "children": [
             {

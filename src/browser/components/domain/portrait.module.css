@@ -9,7 +9,7 @@
   animation: portrait-fade-in 0.25s ease-out;
 
   /* 立ち絵の動きの速さ・大きさ。この5組が唯一の調整箇所。
-     --portrait-breathe-*: 呼吸（常時のごく小さい上下。「居る」の最小単位）。
+     --portrait-breathe-*: 呼吸（ごく小さい上下。「居る」の最小単位。無操作が続くと止まる。止め方は `usePortraitRest`）。
      --portrait-walk-*: 待っている間の移動（ターン進行中に領域の中をゆっくり歩く。横方向）。
      --portrait-write-*: 書いている（`report` の引数を書いている間、筆を運ぶように小さく速く横へ揺れる）。
      --portrait-bounce-*: 完了の反応（ターンが終わると小さく跳ねる）。
@@ -74,6 +74,10 @@
   animation-duration: 0.25s, var(--portrait-flinch-duration);
   animation-timing-function: ease-out, ease-out;
   animation-iteration-count: 1, 1;
+}
+/* 窓のフォーカスが外れている・タブが裏にある間は、どの動きも止める（`<Portrait>` が `data-paused` を付ける）。 */
+.portrait[data-paused] {
+  animation-play-state: paused;
 }
 @keyframes portrait-breathe {
   0%,
