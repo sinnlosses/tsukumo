@@ -61,7 +61,7 @@
 （`[data-region="main"]`。立ち絵は含めない）の見た目が連続2回の撮影で一致するまで待つ
 （`settlePage`。比べる撮影は `animations: "disabled"` で、回る輪のような終わりのない動きだけを
 比べから外す）。途中の手を待つ件（`scene-event`）は、窓ごとに場面を起こし直して同じ手を待つ。印が上限まで立たなければ、
-件の名前と窓の名前を添えて失敗で終わる（途中の画を黙って撮らない）。
+件の名前と窓の名前を添えて失敗で終わる（途中の画を黙って撮らない）。場面を足す段には、その場面を引くカタログの札（`scripts/capture/lib/` の `catalog-*.ts` の `scene`）も同じ段に入れる。答え待ちで終わらない場面の札は `settle` を `phase: "before-prepare"` の `selector` にする（`after-prepare` は操作の前に場面の終わりを待つので、上限で落ちる）。
 
 **要素が出るまで待ってから1枚だけ撮るときは `capture-view.ts --wait-for <selector>`。**
 `capture-catalog.ts` と同じ理由（演出中の要素は現れているだけで書き上がっていない）で、
