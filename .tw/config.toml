@@ -1,7 +1,7 @@
 # タスク運用の設定（tw が読む）
 verify = "pnpm run check"
 verify_before_ship = "pnpm run check --full"
-step_check = "pnpm run typecheck && pnpm run lint && pnpm run test test/architecture/"
+step_check = "pnpm run step-check"
 hook_tally = "node scripts/hook/hook-denial-tally.ts --days 30"
 format = "pnpm run format"
 branch = "切らない"

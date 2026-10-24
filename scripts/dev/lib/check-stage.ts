@@ -82,6 +82,6 @@ export function planStages(
   }
 }
 
-function isCodePath(path: string): boolean {
+export function isCodePath(path: string): boolean {
   return CODE_DIRECTORIES.some((directory) => path.startsWith(directory))
 }

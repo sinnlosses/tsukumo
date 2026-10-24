@@ -65,7 +65,7 @@ hook は書き込みの形を事前に列挙して拒む。Bash の前後の作�
 （最大 600000）を付けて打つよう案内する。`nice`・`timeout`・`env`・`pnpm exec`・`bash -c`・パス付きの
 `tw` 越しの `tw verify` も同じ。メインの呼び出し（`agent_id` が無い）は対象にしない。
 
-段の確かめの単体は `pnpm run test <ファイル or ディレクトリ>` で流す（`pnpm exec vitest` を直に打たない。規約のテストが一緒に走る）。`test/architecture` は `tw step` が打つ `step_check` が段の返却の前に自動で流すので、置き場所や export の違反は段の終わりで落ちる（手で足さない）。
+段の確かめの単体は `pnpm run test <ファイル or ディレクトリ>` で流す（`pnpm exec vitest` を直に打たない。規約のテストが一緒に走る）。`tw step` が打つ `step_check`（`pnpm run step-check`）が段の返却の前に typecheck・lint と、変えたコードのファイルに関連する単体（規約の `test/architecture` を含む）を自動で流すので、置き場所や export の違反は段の終わりで落ちる（手で足さない）。
 
 委譲先が E2E を流す呼び出しは、着手中の1件につき **6回まで**で、7回目は
 E2E の入口（`scripts/dev/e2e.ts`）が vitest を起こさずに終了コード 2 で止める（検証は通常1〜3回で、残りは揺らぎの

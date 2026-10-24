@@ -26,6 +26,7 @@
     "test:e2e": "node scripts/dev/e2e.ts",
     "test:e2e:update": "node scripts/dev/e2e-update.ts",
     "check": "node scripts/dev/check.ts",
+    "step-check": "node scripts/dev/step-check.ts",
     "ship": "node scripts/dev/ship.ts",
     "storybook": "storybook dev --port 6006 --no-open"
   },
