@@ -34,6 +34,7 @@
 | `utils/`               | **それ以外**の汎用の道具（実行環境の API・`react` / `remeda` を含む。下の「`lib/` と `utils/` に置く基準」） | —（`utils` の中だけ）                                                                                                               |
 | `stores/`              | **画面全体で共有する状態**の store・Context と、それを読む hook                                              | `domain` / `lib` / `utils` / `shared`                                                                                               |
 | `styles/`              | **グローバルな CSS だけ**（`theme.css`。領域・機能の見た目はその中）                                         | —                                                                                                                                   |
+| `types/`               | **ambient 宣言だけ**（`*.d.ts`。`css-variable.d.ts` など。どの箱にも属さず、import では辿らない）            | —                                                                                                                                   |
 
 - **部品の箱の向きは `app.tsx` → `components/app` → `components/page` → `components/domain` → `features` →
   `components/ui` の一方通行**。`components/domain` は画面を知らず、`features/` は自分を置く枠も画面も

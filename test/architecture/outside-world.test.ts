@@ -106,11 +106,11 @@ describe("process.cwd() を読む箇所", () => {
 })
 
 // 会話の中身を外へ送る経路を足せないよう、ネットワークの口を2つに限る。
-// 受け口は view-server の server.ts（127.0.0.1 だけに listen する）、呼ぶ口はブラウザの rpc-client.ts の `fetch` だけ。
+// 受け口は view-server の server.ts（127.0.0.1 だけに listen する）、呼ぶ口はブラウザの domain/rpc.ts の `fetch` だけ。
 // 型だけの import（`import type` と全指定子が `type` の import）は数えない。
 const NETWORK_MODULES = new Set(["http", "https", "net", "tls", "dgram", "http2"])
 const NETWORK_SERVER_FILE = "server/view-server/adapter/server.ts"
-const FETCH_CALLER_FILE = "browser/lib/rpc-client.ts"
+const FETCH_CALLER_FILE = "browser/domain/rpc.ts"
 const USER_HOME_FILE = "server/adapter/tsukumo-home.ts"
 
 describe("ネットワークの口", () => {
@@ -130,7 +130,7 @@ describe("ネットワークの口", () => {
     ).toBe(true)
   })
 
-  it("`fetch` を呼ぶのはブラウザの rpc-client.ts だけ", () => {
+  it("`fetch` を呼ぶのはブラウザの domain/rpc.ts だけ", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => relPath !== FETCH_CALLER_FILE)
       .filter((relPath) => callsFetch(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")))
