@@ -44,13 +44,16 @@
   ひとつの実行の負荷は
   `maxWorkers` で抑える。E2E の1本は vitest のワーカーに加えて
   Chrome と `node src/cli.ts` を起こすので、実際に走るプロセスは `maxWorkers` の本数を大きく超える。
-  E2E の設定は `maxWorkers: "15%"`、単体テスト（`vitest.config.ts`）も `"15%"` で、2つ合わせて
-  コア数の 30% までに収める。
+  E2E の設定は `maxWorkers: "40%"`、単体テスト（`vitest.config.ts`）も `"40%"` で、2つ合わせて
+  コア数の 80% までに収める（10 コアで各 4、単体 98 秒・E2E 58 秒前後。手元の操作が重く感じたら
+  下の `TSUKUMO_CHECK_WORKER_BUDGET` で予算を下げる）。
+  単体の `node` project は `isolate: false` でファイルごとの隔離を外す（同じ予算で約 98 秒が約 52 秒）。
+  環境変数やグローバルを書き換えるテストは、自分で戻す。
   **`check` は重い段を起こす前に、共有の git dir の `check-running/` へ自分の pid の印を置き
   （`scripts/dev/lib/check-running.ts`。終了・`SIGTERM`・`SIGINT` で消し、死んだ pid の印は数えるときに消す）、
   走っている検証の本数で worker の予算を割って、単体と E2E の段に `--maxWorkers=<n>` を同じ数ずつ渡す**
-  （`scripts/dev/lib/worker-budget.ts`。予算は 1 本のときの合計 `2 × max(1, round(コア数 × 0.15))`（`maxWorkers: "15%"` が 1 本のときに配る数と同じ）、
-  環境変数 `TSUKUMO_CHECK_WORKER_BUDGET`（正の整数）で上書きできる。1 本あたりは `floor(予算 / 本数 / 2)`、最小 1。
+  （`scripts/dev/lib/worker-budget.ts`。予算は 1 本のときの合計 `2 × max(1, round(コア数 × 0.40))`（`maxWorkers: "40%"` が 1 本のときに配る数と同じ。10 コアで 8）、
+  環境変数 `TSUKUMO_CHECK_WORKER_BUDGET`（正の整数。例: `TSUKUMO_CHECK_WORKER_BUDGET=4 pnpm run check`）で上書きして下げられる。1 本あたりは `floor(予算 / 本数 / 2)`、最小 1。
   並列は止めない。途中から増えた検証は、その時点の本数で自分の分を決め、走っている検証の worker は変えない。
   本数が多く最小 1 に当たるときは予算を超えうる）。単体は `dom` と `node` の2つの project に分け、DOM のグローバルを借りる
   `test/dom-environment.ts` は `dom`（`test/browser/` と、DOM を描くほかの置き場のファイル）にだけ掛ける。

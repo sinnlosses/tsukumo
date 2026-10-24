@@ -9,7 +9,7 @@ export default defineConfig({
     hookTimeout: 60_000,
     env: { TZ: "UTC" },
     expect: { poll: { timeout: 15_000 } },
-    // `scripts/dev/check.ts` は単体テストと並べて走らせるので、vitest.config.ts の 15% と合わせてコア数の 30% に収める。
-    maxWorkers: "15%",
+    // `scripts/dev/check.ts` は単体テストと並べて走らせるので、vitest.config.ts の 40% と合わせてコア数の 80% に収める。
+    maxWorkers: "40%",
   },
 })
